@@ -134,9 +134,10 @@ FREE (char *description, void *ptr)
 void *
 REALLOC (char *description, void *ptr, size_t size)
 {
-  void *oldPtr = ptr;
+  void *oldPtr;
   void *newPtr = NULL;
 
+  oldPtr = ptr;
   newPtr = realloc (ptr, size);
   if (newPtr == NULL)
     {

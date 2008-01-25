@@ -119,7 +119,9 @@ typedef struct modelType
   int maxFlag;                  /* flag for the existence of upper bound */
   double minThreshold;          /* minimum threshold value - in standardized unit */
   double maxThreshold;          /* maximum threshold value - in standardized unit */
-  int *constants;		/* Array of distribution constants (certain QT/CT distributions only) */  int ccFlag;                   /* Case Ctrl flag */
+  int *constants;		/* Array of distribution constants (certain QT/CT distributions only) */  
+  int ccFlag;                   /* Case Ctrl flag */
+  int imprintingFlag;           /* 1 - imprinting pen(1|2) may not be the same as pen(2|1) */
 }
 ModelType;
 
@@ -231,7 +233,7 @@ typedef struct SUMMARY_STAT
 
 void free_likelihood_storage ();
 /* allocate two point analysis result space */
-int allocate_tp_result_storage ();
+int initialize_tp_result_storage ();
 int free_tp_result_storage (int ndprime);
 double calculate_R_square (double p1, double q1, double d);
 /* using the average at each theta to calculate PPL - posterior probability of linkage */

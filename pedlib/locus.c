@@ -558,9 +558,9 @@ add_allele (Locus * pLocus, char *sAlleleName, double freq)
 //  }
 #endif
   /* actual count of the alleles in the pedigree */
-  pLocus->pAlleleCount = (int *) REALLOC ("pLocus->pAlleleCount",
+  pLocus->pAlleleCount = (short *) REALLOC ("pLocus->pAlleleCount",
 					  pLocus->pAlleleCount,
-					  numAllele * sizeof (int));
+					  numAllele * sizeof (short));
 
   /* original allele names */
   pLocus->ppAlleleNames = (char **) REALLOC ("pLocus->ppAlleleNames",
@@ -626,6 +626,10 @@ create_baseline_marker_genotypes (int locus, Pedigree * pPedigree)
   for (i = 0; i < pPedigree->numPerson; i++)
     {
       pPerson = pPedigree->ppPersonList[i];
+
+      /* ignore the loop breaker duplicate */
+      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+	continue;
 
       /* base on phenotype to make up the list */
       if (pPerson->pTypedFlag[locus] == 1)
@@ -715,6 +719,10 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
     {
       pPerson = pPedigree->ppPersonList[i];
 
+      /* ignore the loop breaker duplicate */
+      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+	continue;
+
       /* go through all possible genotype combinations */
       allele1 = 1;
       allele2 = 1;
@@ -748,7 +756,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 		  pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
 					    &pPerson->pNumGenotype[locus],
 					    locus, allele1, allele2);
-		  pGenotype->penetrancePolynomial = penPolynomial;
+		  pGenotype->penslot.penetrancePolynomial = penPolynomial;
 		  if (allele1 != allele2)
 		    {
 		      pGenotype2 =
@@ -757,7 +765,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 				      allele2, allele1);
 		      pGenotype->pDualGenotype = pGenotype2;
 		      pGenotype2->pDualGenotype = pGenotype;
-		      pGenotype2->penetrancePolynomial = penPolynomial;
+		      pGenotype2->penslot.penetrancePolynomial = penPolynomial;
 		    }
 		}
 	      else
@@ -766,7 +774,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 		  pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
 					    &pPerson->pNumGenotype[locus],
 					    locus, allele1, allele2);
-		  pGenotype->penetrance = pen;
+		  pGenotype->penslot.penetrance = pen;
 		  if (allele1 != allele2)
 		    {
 		      pGenotype2 =
@@ -775,7 +783,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 				      allele2, allele1);
 		      pGenotype->pDualGenotype = pGenotype2;
 		      pGenotype2->pDualGenotype = pGenotype;
-		      pGenotype2->penetrance = pen;
+		      pGenotype2->penslot.penetrance = pen;
 		    }
 //              }
 		}
@@ -784,7 +792,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 	      pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
 					&pPerson->pNumGenotype[locus],
 					locus, allele1, allele2);
-	      pGenotype->penetrance = pen;
+	      pGenotype->penslot.penetrance = pen;
 	      if (allele1 != allele2)
 		{
 		  pGenotype2 = add_genotype (&pPerson->ppGenotypeList[locus],
@@ -792,7 +800,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 					     locus, allele2, allele1);
 		  pGenotype->pDualGenotype = pGenotype2;
 		  pGenotype2->pDualGenotype = pGenotype;
-		  pGenotype2->penetrance = pen;
+		  pGenotype2->penslot.penetrance = pen;
 		}
 //      }
 #endif
@@ -1651,7 +1659,7 @@ add_genotype (Genotype ** ppList, int *pCount, int locusIndex,
   /* allocate space for the genotype */
   pGenotype = (Genotype *) MALLOC ("pGenotype", sizeof (Genotype));
   memset (pGenotype, 0, sizeof (Genotype));
-  pGenotype->penetrance = 1;
+  pGenotype->penslot.penetrance = 1;
 
   /* add this to the top of the genotype list */
   pGenotype->pNext = *ppList;
@@ -1659,7 +1667,7 @@ add_genotype (Genotype ** ppList, int *pCount, int locusIndex,
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
-      pGenotype->penetrancePolynomial = constantExp (1);
+      pGenotype->penslot.penetrancePolynomial = constantExp (1);
     }
 #endif
 
@@ -1879,11 +1887,11 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	    {
 	      if (modelOptions.sexLinked && pPerson->sex + 1 == MALE)
 		{
-		  pGenotype->weightPolynomial = alleleFreqPolynomial[DAD];
+		  pGenotype->wtslot.weightPolynomial = alleleFreqPolynomial[DAD];
 		}
 	      else
 		/* build the polynomial sum */
-		pGenotype->weightPolynomial =
+		pGenotype->wtslot.weightPolynomial =
 		  timesExp (2, alleleFreqPolynomial[DAD], 1,
 			    alleleFreqPolynomial[MOM], 1, 0);
 	    }
@@ -1891,18 +1899,18 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	    {
 	      if (modelOptions.sexLinked && pPerson->sex + 1 == MALE)
 		{
-		  pGenotype->weight = alleleFreq[DAD];
+		  pGenotype->wtslot.weight = alleleFreq[DAD];
 		}
 	      else
-		pGenotype->weight = alleleFreq[DAD] * alleleFreq[MOM];
+		pGenotype->wtslot.weight = alleleFreq[DAD] * alleleFreq[MOM];
 	    }
 #else
 	  if (modelOptions.sexLinked && pPerson->sex + 1 == MALE)
 	    {
-	      pGenotype->weight = alleleFreq[DAD];
+	      pGenotype->wtslot.weight = alleleFreq[DAD];
 	    }
 	  else
-	    pGenotype->weight = alleleFreq[DAD] * alleleFreq[MOM];
+	    pGenotype->wtslot.weight = alleleFreq[DAD] * alleleFreq[MOM];
 #endif
 	  pGenotype = pGenotype->pNext;
 	}
@@ -1998,32 +2006,6 @@ allocate_multi_locus_genotype_storage (Pedigree * pPedigree, int numLocus)
 }
 
 int
-count_multi_locus_genotype_storage (Pedigree * pPedigree)
-{
-  int locus;
-  Person *pPerson;
-  int i;
-  int size;
-  int numGeno;
-  int origLocus;
-
-  for (i = 0; i < pPedigree->numPerson; i++)
-    {
-      pPerson = pPedigree->ppPersonList[i];
-      size = 1;
-      for (locus = 0; locus < locusList->numLocus; locus++)
-	{
-	  origLocus = locusList->pLocusIndex[locus];
-	  numGeno = pPerson->pNumGenotype[origLocus];
-	  size *= numGeno;
-	}
-      pPerson->numConditionals = size;
-    }
-
-  return 0;
-}
-
-int
 free_multi_locus_genotype_storage (Pedigree * pPedigree)
 {
   Person *pPerson;
@@ -2056,6 +2038,7 @@ initialize_multi_locus_genotype (Pedigree * pPedigree)
   for (i = 0; i < pPedigree->numPerson; i++)
     {
       pPerson = pPedigree->ppPersonList[i];
+      pPerson->touchedFlag = 0;
       size = 1;
       for (locus = 0; locus < locusList->numLocus; locus++)
 	{
@@ -2069,21 +2052,23 @@ initialize_multi_locus_genotype (Pedigree * pPedigree)
 	      sizeof (ConditionalLikelihood) * pPerson->maxNumConditionals);
       for (j = 0; j < size; j++)
 	{
-	  pPerson->pLikelihood[j].touchedFlag = FALSE;
 #ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE)
 	    {
-	      pPerson->pLikelihood[j].likelihoodPolynomial = constantExp (1);
-	      pPerson->pLikelihood[j].weightPolynomial = constantExp (1);
+	      pPerson->pLikelihood[j].lkslot.likelihoodPolynomial = constantExp (0);
+	      pPerson->pLikelihood[j].wtslot.weightPolynomial = constantExp (1);
+	      pPerson->pLikelihood[j].tmpslot.tmpLikelihoodPolynomial = constantExp(0);
 	    }
 	  else
 	    {
-	      pPerson->pLikelihood[j].likelihood = 1;
-	      pPerson->pLikelihood[j].weight = 1;
+	      pPerson->pLikelihood[j].lkslot.likelihood = 0;
+	      pPerson->pLikelihood[j].wtslot.weight = 1;
+	      pPerson->pLikelihood[j].tmpslot.tmpLikelihood = 0;
 	    }
 #else
-	  pPerson->pLikelihood[j].likelihood = 1;
-	  pPerson->pLikelihood[j].weight = 1;
+	  pPerson->pLikelihood[j].lkslot.likelihood = 0;
+	  pPerson->pLikelihood[j].wtslot.weight = 1;
+	  pPerson->pLikelihood[j].tmpslot.tmpLikelihood = 0;
 #endif
 	}
     }
@@ -2302,7 +2287,7 @@ initialize_loci (PedigreeSet * pPedigreeSet)
 #ifndef NO_POLYNOMIAL  // including polynomial code
                if (modelOptions.polynomial == TRUE )
                {
-               expPrinting(g->penetrancePolynomial);
+               expPrinting(g->penslot.penetrancePolynomial);
                fprintf(stderr," Person %d locus %d genotype %d of %d (%d  %d)\n",
                        i+1,j+1,k+1,pPerson->pNumGenotype[j],
                        g->allele[0],
@@ -2310,13 +2295,13 @@ initialize_loci (PedigreeSet * pPedigreeSet)
                }
                else
                fprintf(stderr,"%f  Person %d locus %d genotype %d of %d (%d  %d)\n",
-                       g->penetrance,
+                       g->penslot.penetrance,
                        i+1,j+1,k+1,pPerson->pNumGenotype[j],
                        g->allele[0],
                        g->allele[1]);
 #else
                fprintf(stderr,"%f  Person %d locus %d genotype %d of %d (%d  %d)\n",
-                       g->penetrance,
+                       g->penslot.penetrance,
                        i+1,j+1,k+1,pPerson->pNumGenotype[j],
                        g->allele[0],
                        g->allele[1]);
@@ -2395,7 +2380,7 @@ update_penetrance (PedigreeSet * pPedigreeSet, int locus)
 				      pGenotype->allele[0],
 				      pGenotype->allele[1], &penPolynomial);
 
-		  pGenotype->penetrancePolynomial = penPolynomial;
+		  pGenotype->penslot.penetrancePolynomial = penPolynomial;
 		}
 	      else
 		{
@@ -2403,14 +2388,14 @@ update_penetrance (PedigreeSet * pPedigreeSet, int locus)
 				      pGenotype->allele[0],
 				      pGenotype->allele[1], &pen);
 
-		  pGenotype->penetrance = pen;
+		  pGenotype->penslot.penetrance = pen;
 		}
 #else
 	      compute_penetrance (pPerson, locus,
 				  pGenotype->allele[0], pGenotype->allele[1],
 				  &pen);
 
-	      pGenotype->penetrance = pen;
+	      pGenotype->penslot.penetrance = pen;
 #endif
 
 
@@ -2425,20 +2410,20 @@ update_penetrance (PedigreeSet * pPedigreeSet, int locus)
 		  compute_penetrance (pPerson, locus,
 				      pGenotype->allele[0],
 				      pGenotype->allele[1], &penPolynomial);
-		  pGenotype->penetrancePolynomial = penPolynomial;
+		  pGenotype->penslot.penetrancePolynomial = penPolynomial;
 		}
 	      else
 		{
 		  compute_penetrance (pPerson, locus,
 				      pGenotype->allele[0],
 				      pGenotype->allele[1], &pen);
-		  pGenotype->penetrance = pen;
+		  pGenotype->penslot.penetrance = pen;
 		}
 #else
 	      compute_penetrance (pPerson, locus,
 				  pGenotype->allele[0], pGenotype->allele[1],
 				  &pen);
-	      pGenotype->penetrance = pen;
+	      pGenotype->penslot.penetrance = pen;
 #endif
 	      pGenotype = pGenotype->pNext;
 	    }
@@ -2451,20 +2436,20 @@ update_penetrance (PedigreeSet * pPedigreeSet, int locus)
 		  compute_penetrance (pPerson, locus,
 				      pGenotype->allele[0],
 				      pGenotype->allele[1], &penPolynomial);
-		  pGenotype->penetrancePolynomial = penPolynomial;
+		  pGenotype->penslot.penetrancePolynomial = penPolynomial;
 		}
 	      else
 		{
 		  compute_penetrance (pPerson, locus,
 				      pGenotype->allele[0],
 				      pGenotype->allele[1], &pen);
-		  pGenotype->penetrance = pen;
+		  pGenotype->penslot.penetrance = pen;
 		}
 #else
 	      compute_penetrance (pPerson, locus,
 				  pGenotype->allele[0], pGenotype->allele[1],
 				  &pen);
-	      pGenotype->penetrance = pen;
+	      pGenotype->penslot.penetrance = pen;
 #endif
 	      pGenotype = pGenotype->pNext;
 	    }

@@ -48,18 +48,14 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
   Person *pParents[2];
   int origLocus = locusList->pLocusIndex[locus];
   int numPair;
-  int adjust[2];
-  int index[2];
-  Genotype *initialGeno[2];
-  int head, spouse;
-  ParentalPair *pPair;
+  int dadAdjust, momAdjust;
+  int dadIndex, momIndex;
+  Genotype *momInitialGeno, *dadInitialGeno;
 
   /* initialize first */
   parentalPairSpace.pNumParentalPair[locus] = 0;
   numPair = 0;
 
-  head = pNucFam->head;
-  spouse = pNucFam->spouse;
   for (i = DAD; i <= MOM; i++)
     {
       pParents[i] = pNucFam->pParents[i];
@@ -70,11 +66,11 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
 	"Nuc Fam %d (Dad: %s - Mom: %s) Proband: %s origLocus %d, #ofChildren: %d\n",
 	pNucFam->nuclearFamilyIndex, pParents[DAD]->sID, pParents[MOM]->sID,
 	pProband->sID, origLocus, pNucFam->numChildren);
-  while (pGenotype[head])
+  while (pGenotype[DAD])
     {
-      initialGeno[head] = pGenotype[head];
-      pGenotype[spouse] = pParents[spouse]->ppGenotypeList[origLocus];
-      while (pGenotype[spouse])
+      dadInitialGeno = pGenotype[DAD];
+      pGenotype[MOM] = pParents[MOM]->ppGenotypeList[origLocus];
+      while (pGenotype[MOM])
 	{
 	  /* do genotype elimination conditional on the pair 
 	   * to get compatible children genotype lists */
@@ -85,55 +81,55 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
 	   * then reject this parental pair and go on to next parental pair */
 	  if (status != -1)
 	    {
-	      adjust[head] = 0;
-	      index[head] = 0;
-	      initialGeno[spouse] = pGenotype[spouse];
-	      while( (index[head] <2) && (index[head]==0 || (pGenotype[head]->pDualGenotype!= NULL && pGenotype[head]->pNext == pGenotype[head]->pDualGenotype)))
+	      dadAdjust = 0;
+	      dadIndex = 0;
+	      momInitialGeno = pGenotype[MOM];
+	      while( (dadIndex <2) && (dadIndex==0 || (pGenotype[DAD]->pDualGenotype!= NULL && pGenotype[DAD]->pNext == pGenotype[DAD]->pDualGenotype)))
 		{
-		  if(index[head] != 0)
+		  if(dadIndex != 0)
 		    {
-		      pGenotype[head] = pGenotype[head]->pDualGenotype;
-		      adjust[head] = 1;
+		      pGenotype[DAD] = pGenotype[DAD]->pDualGenotype;
+		      dadAdjust = 1;
 		    }
-		  index[spouse] = 0;
-		  adjust[spouse] = 0;
-		  pGenotype[spouse] = initialGeno[spouse];
-		  while ((index[spouse] < 2) && (index[spouse]==0 || (pGenotype[spouse]->pDualGenotype != NULL && pGenotype[spouse]->pDualGenotype == pGenotype[spouse]->pNext)))
+		  momIndex = 0;
+		  momAdjust = 0;
+		  pGenotype[MOM] = momInitialGeno;
+		  while ((momIndex < 2) && (momIndex==0 || (pGenotype[MOM]->pDualGenotype != NULL && pGenotype[MOM]->pDualGenotype == pGenotype[MOM]->pNext)))
 		    {
-		      if( index[spouse]!=0  && pGenotype[spouse]->pDualGenotype != NULL)
+		      if( momIndex!=0  && pGenotype[MOM]->pDualGenotype != NULL)
 			{
-			  pGenotype[spouse] = pGenotype[spouse]->pDualGenotype;
-			  if(index[spouse] != 0)
-			    adjust[spouse] = 1;
+			  pGenotype[MOM] = pGenotype[MOM]->pDualGenotype;
+			  if(momIndex != 0)
+			    momAdjust = 1;
 			}
 		      pPair = &parentalPairSpace.ppParentalPair[locus][numPair];
 		      /* 0 - no change in phase  1 - flip of the original phase */
-		      pPair->phase[head]=adjust[head];
-		      pPair->phase[spouse]=adjust[spouse];
+		      pPair->phase_dad=dadAdjust;
+		      pPair->phase_mom=momAdjust;
 		      fill_parental_pair(locus, &numPair, pNucFam, 
 					 pGenotype[DAD], pGenotype[MOM], 
-					 adjust[DAD], adjust[MOM]);
-		      index[spouse]++;
+					 dadAdjust, momAdjust);
+		      momIndex++;
 		    }
-		  index[head]++;
+		  dadIndex++;
 		}
 	      
 	    } /* valid pair found */
 	  else
 	    {
-	      if(pGenotype[spouse]->pDualGenotype!=NULL && pGenotype[spouse]->pDualGenotype == pGenotype[spouse]->pNext)
-		pGenotype[spouse] = pGenotype[spouse]->pNext;
+	      if(pGenotype[MOM]->pDualGenotype!=NULL && pGenotype[MOM]->pDualGenotype == pGenotype[MOM]->pNext)
+		pGenotype[MOM] = pGenotype[MOM]->pNext;
 	    }
 	  /* reset dad genotype pointer */
-	  pGenotype[head] = initialGeno[head];
+	  pGenotype[DAD] = dadInitialGeno;
 
 	  /* move on to next genotype */
-	  pGenotype[spouse] = pGenotype[spouse]->pNext;
+	  pGenotype[MOM] = pGenotype[MOM]->pNext;
 	}
-      if(pGenotype[head]->pDualGenotype != NULL && pGenotype[head]->pDualGenotype == pGenotype[head]->pNext)
-	pGenotype[head] = pGenotype[head]->pNext->pNext;
+      if(pGenotype[DAD]->pDualGenotype != NULL && pGenotype[DAD]->pDualGenotype == pGenotype[DAD]->pNext)
+	pGenotype[DAD] = pGenotype[DAD]->pNext->pNext;
       else
-	pGenotype[head] = pGenotype[head]->pNext;
+	pGenotype[DAD] = pGenotype[DAD]->pNext;
 
     }
 
@@ -315,9 +311,6 @@ initialize_parental_pair_workspace (ParentalPairSpace * pSpace, int numLocus)
 {
   pSpace->pNumParentalPair = (int *) calloc (sizeof (int), numLocus);
   pSpace->pParentalPairInd = (int *) calloc (sizeof (int), numLocus);
-  pSpace->pChildGenoInd = (int *) calloc (sizeof (int), numLocus);
-  pSpace->phase[DAD] = (short *) calloc (sizeof (short), numLocus);
-  pSpace->phase[MOM] = (short *) calloc (sizeof (short), numLocus);
   pSpace->ppParentalPair =
     (ParentalPair **) calloc (sizeof (ParentalPair *), numLocus);
   pSpace->maxNumParentalPair = 0;
@@ -329,9 +322,7 @@ initialize_parental_pair_workspace (ParentalPairSpace * pSpace, int numLocus)
 
 
 /* once we have stat all nuclear families for all loci
- * we can allocate the max 
- * numLocus - the number of loci analyzing at one time
- */
+ * we can allocate the max */
 int
 allocate_parental_pair_workspace (ParentalPairSpace * pSpace, int numLocus)
 {

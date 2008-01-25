@@ -78,7 +78,7 @@ typedef struct Genotype
   /* paternal and maternal allele number. 
    * an integer should be big enough to handle 
    * any locus which can have huge number of alleles */
-  int allele[2];
+  short allele[2];
   /* bit is set for the corresponding paternalAllele
    * example: allele=3, then pAlleleBits[0]=8 
    * since an interger can only handle 32 alleles represented by bit 
@@ -105,37 +105,44 @@ typedef struct Genotype
    * 2 - matches maternal
    * 3 - matches both
    */
-  int inheritance[2];
+  short inheritance[2];
 
   /* index on the list of the genotypes 
    * The value is populated when the initial set recoding and genotype
    * elimination are done, but before likelihood calculations 
    * The value is used when storing and retrieving multi locus 
    * conditional genotype likelihood */
-  int position;
+  short position;
 
   /* the pointer and position of the genotype that is only different than 
    * this one by phase */
+  short dualPosition;
   struct Genotype *pDualGenotype;
-  int dualPosition;
 
   /* this field can have different flags for different things, such
    * as homozygote bit, save bit, delete bit, ....
    * */
   int flagField;
 
-  /* penetrance factor base on this person's phenotype and this genotype 
-   * for marker locus, this is always 1 */
-  double penetrance;
-  /* for a homozygous genotype, the weight is p*p
-   * for a heterozygous unphased genotype, the weight is 2pq
-   * but in this implementation, genotype is phased, so the weight is pq
-   * where p and q are the allele frequencies */
-  double weight;
+  union {
+    /* penetrance factor base on this person's phenotype and this genotype 
+     * for marker locus, this is always 1 */
+    double penetrance;
 #ifndef NO_POLYNOMIAL
-  Polynomial *penetrancePolynomial;
-  Polynomial *weightPolynomial;
+    Polynomial *penetrancePolynomial;
 #endif
+  }penslot;
+
+  union {
+    /* for a homozygous genotype, the weight is p*p
+     * for a heterozygous unphased genotype, the weight is 2pq
+     * but in this implementation, genotype is phased, so the weight is pq
+     * where p and q are the allele frequencies */
+    double weight;
+#ifndef NO_POLYNOMIAL
+    Polynomial *weightPolynomial;
+#endif
+  }wtslot;
 
 } Genotype;
 
@@ -172,7 +179,7 @@ typedef struct AlleleSet
 } AlleleSet;
 
 /* each locus can be for marker, for trait and the trait can be 
- * of different value tyupe - binary, quantitative etc.
+ * of different value type - binary, quantitative etc.
  * trait can also have liability class associated with it
  * This struct assumes all these loci are on the same chromosome
  * */
@@ -202,6 +209,10 @@ typedef struct LocusList
 typedef struct SubLocusList
 {
   int numLocus;
+  /* trait locus index in this locus list. If no trait locus, this index should be -1 */
+  int traitLocusIndex; 
+  /* trait locus index in the original locus list. If no trait locus, this index should be -1 */
+  int traitOrigLocus;
   /* an array of index of the original LocusList index 
    * for example: 2, 1, 4 means
    * original locus 2, 1 and 4 in such given order */
@@ -223,17 +234,17 @@ typedef struct SubLocusList
 typedef struct Locus
 {
   /* type of locus - trait or marker */
-  int locusType;
+  short locusType;
 
   /* number of alleles for this locus including super alleles */
-  int numAllele;
+  short numAllele;
 
   /* number of original alleles for this locus without super alleles */
-  int numOriginalAllele;
+  short numOriginalAllele;
   /* number of integers required to set allele bits for this locus
    * if we need to do set recoding 
    * if < 32 alleles, just 1 */
-  int alleleSetLen;
+  short alleleSetLen;
 
   /* locus name */
   char sName[MAX_LOCUS_NAME_LEN];
@@ -245,15 +256,15 @@ typedef struct Locus
   struct polynomial *pAlleleFrequencyPolynomial;
 #endif
   /* actual count of these alleles in the pedigree data provided */
-  int *pAlleleCount;
+  short *pAlleleCount;
   /* original allele names */
   char **ppAlleleNames;
 
   /* allele set */
   AlleleSet **ppAlleleSetList;
-  int numAlleleSet;
+  short numAlleleSet;
   /* internal memeory allocation counter */
-  int maxNumAlleleSet;
+  short maxNumAlleleSet;
 
   /* code vector ???? */
   //int **ppCodeVector;
@@ -411,19 +422,29 @@ typedef struct LDLoci
  * conidtional on the multi locus genotype of this person */
 typedef struct ConditionalLikelihood
 {
-  double likelihood;
+  union {
+    double likelihood;
+#ifndef NO_POLYNOMIAL
+  struct polynomial *likelihoodPolynomial;
+#endif
+  }lkslot;
   /* possibility of observing this multi locus genotype 
    * with parents - transmission probability * penetrance
    * without parents - genotype possibility * penetrance 
    * */
-  double weight;
-  /* FALSE - this multi-locus genotype has not been processed at all 
-   * this is used to control that we only use the penetrance information once */
-  double touchedFlag;
+  union {
+    double weight;
 #ifndef NO_POLYNOMIAL
-  struct polynomial *likelihoodPolynomial;
-  struct polynomial *weightPolynomial;
+    struct polynomial *weightPolynomial;
 #endif
+  }wtslot;
+  union {
+    /* to save for likelihood calculations with only phase differences */
+    double tmpLikelihood;
+#ifndef NO_POLYNOMIAL
+    struct polynomial *tmpLikelihoodPolynomial;
+#endif
+  }tmpslot;
 } ConditionalLikelihood;
 
 /* global function prototypes */

@@ -33,6 +33,9 @@ typedef struct ParentalPair
    */
   int **ppChildInheritance[2];
 
+  /* the following two helped to remember phase differences between the previous parental pair if they 
+   * are the same except the phase */
+  short phase[2]; 
 
   /* link to next parental pair for this nuclear family on this locus */
   struct ParentalPair *pNext;
@@ -47,7 +50,7 @@ typedef struct HaplotypePair
   /* likelihood of the nuclear family conditional on this haplotype pair */
   double likelihood;
 
-#ifndef NO_POLYNOMAIL
+#ifndef NO_POLYNOMIAL
   Polynomial *likelihoodPolynomial;
 #endif
 
@@ -62,11 +65,10 @@ typedef struct ParentalPairSpace
   ParentalPair **ppParentalPair;
   /* this is used to remember the haplotype (indices of parental pair at each locus ) */
   int *pParentalPairInd;
+  /* remembers the child genotype location */
+  int *pChildGenoInd;
+  short *phase[2];
   int numHaplotypePair;
-  double likelihood;
-#ifndef NO_POLYNOMAIL
-  Polynomial *likelihoodPolynomial;
-#endif
 
   /* internal counter for each locus */
   int maxNumParentalPair;
@@ -76,13 +78,13 @@ typedef struct ParentalPairSpace
 
 typedef struct XMission
 {
-  /* number of parental heterzygous loci */
-  int numHet;
   /* transmission probability */
+  union{
 #ifndef NO_POLYNOMIAL
-  Polynomial *probPoly[3];
+    Polynomial *probPoly[3];
 #endif
-  double prob[3];
+    double prob[3];
+  }slot;
 } XMission;
 
 extern ParentalPairSpace parentalPairSpace;
@@ -100,6 +102,7 @@ int free_parental_pair_workspace (ParentalPairSpace * pSpace, int numLocus);
 int allocate_likelihood_space (PedigreeSet * pPedigreeList, int numLocus);
 int count_likelihood_space (PedigreeSet * pPedigreeList);
 void free_likelihood_space (PedigreeSet * pPedigreeList);
+void allocate_nucfam_het(PedigreeSet *pPedigreeList, int numLocus);
 int build_xmission_matrix (XMission ** ppMatrix, int totalLoci);
 int populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 			      void *prob[3], void *prob2[3],  

@@ -525,33 +525,52 @@ get_average_LR (SUMMARY_STAT *** result)
 
 /* allocate one extra D prime to store average LR for all D primes 
  * allocate one extra marker allele frequency to store average LR per (Dprime, Theta) pair */
-int
-allocate_tp_result_storage ()
+int initialize_tp_result_storage ()
 {
   int i, j, k;
   int num;
 
-  tp_result =
-    (SUMMARY_STAT ***) calloc (pLambdaCell->ndprime + 1,
-			       sizeof (SUMMARY_STAT **));
-  for (i = 0; i < pLambdaCell->ndprime + 1; i++)
+  if(tp_result == NULL)
     {
-      tp_result[i] =
-	(SUMMARY_STAT **) calloc (modelRange.ntheta + 1,
-				  sizeof (SUMMARY_STAT *));
-      for (j = 0; j < modelRange.ntheta + 1; j++)
+      tp_result =
+	(SUMMARY_STAT ***) calloc (pLambdaCell->ndprime + 1,
+				   sizeof (SUMMARY_STAT **));
+      for (i = 0; i < pLambdaCell->ndprime + 1; i++)
 	{
-	  num = modelRange.nafreq + 1;
-	  tp_result[i][j] =
-	    (SUMMARY_STAT *) calloc (num, sizeof (SUMMARY_STAT));
-	  for (k = 0; k < num; k++)
+	  tp_result[i] =
+	    (SUMMARY_STAT **) calloc (modelRange.ntheta + 1,
+				      sizeof (SUMMARY_STAT *));
+	  for (j = 0; j < modelRange.ntheta + 1; j++)
 	    {
-	      tp_result[i][j][k].max_penIdx = -1;
+	      num = modelRange.nafreq + 1;
+	      tp_result[i][j] =
+		(SUMMARY_STAT *) calloc (num, sizeof (SUMMARY_STAT));
+	      for (k = 0; k < num; k++)
+		{
+		  tp_result[i][j][k].max_penIdx = -1;
+		}
+	    }
+	}
+    }
+  else
+    {
+      /* reset it */
+      for (i = 0; i < pLambdaCell->ndprime + 1; i++)
+	{
+	  for (j = 0; j < modelRange.ntheta + 1; j++)
+	    {
+	      num = modelRange.nafreq + 1;
+	      memset(tp_result[i][j], 0, sizeof(SUMMARY_STAT)* num);
+	      for (k = 0; k < num; k++)
+		{
+		  tp_result[i][j][k].max_penIdx = -1;
+		}
 	    }
 	}
     }
   return 0;
 }
+
 
 int
 free_tp_result_storage (int ndprime)
@@ -567,6 +586,7 @@ free_tp_result_storage (int ndprime)
       free (tp_result[i]);
     }
   free (tp_result);
+  tp_result = NULL;
   return 0;
 }
 

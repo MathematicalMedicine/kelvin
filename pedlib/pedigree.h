@@ -140,6 +140,8 @@ typedef struct Pedigree
    * One same person can be in two, three... loops 
    * but it should only be counted as one loop breaker */
   int numLoopBreaker;
+  /* a list of loop breakers - a list of ptrs to the original person */
+  struct Person **loopBreakerList;
 
   /* Peeling will go to this selected person */
   struct Person *pPeelingProband;
@@ -317,6 +319,7 @@ typedef struct Person
   struct ConditionalLikelihood *pLikelihood;
   int numConditionals;
   int maxNumConditionals;
+  int touchedFlag;
 
   /* current haplotype */
   struct Genotype **ppHaplotype;
@@ -335,6 +338,14 @@ typedef struct NuclearFamily
   struct Pedigree *pPedigree;
   /* index of this nuclear family */
   int nuclearFamilyIndex;
+
+  /* head == DAD if dad is the proband or if a child is the proband 
+   * head == MOM only if mom is the proband at computing nuclear family likelihood 
+   */
+  int head; 
+  int spouse; 
+  int childProbandFlag;
+  
 
   /* parents of this nuclear family */
   //Person *pDad;
@@ -387,6 +398,24 @@ typedef struct NuclearFamily
 #ifndef NO_POLYNOMIAL
   Polynomial *likelihoodPolynomial;
 #endif
+
+  /* The followings are for the related parental pairs that are only different in phases */
+  /* numer of heterozygous loci for each parent */
+  int numHetLocus[2];
+  int *tmpNumHet[2];
+  /* first heterozygous locus for each parent */
+  int firstHetLocus[2];
+  /* het/homo flag (het=1) for each locus for each parent */
+  int *hetFlag[2];
+  /* bit mask - all bits set to 1, number of bits == number of het loci for each parent */
+  int hetLocusBits[2];
+  
+  /* first related parental pair index at each locus */
+  int *relatedPPairStart;
+  /* number of related parental pairs at each locus */
+  int *numRelatedPPair;
+  /* accumlative count including all previous loci and current one */
+  int *totalRelatedPPair;
 
 } NuclearFamily;
 

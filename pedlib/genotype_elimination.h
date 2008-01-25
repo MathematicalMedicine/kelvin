@@ -12,3 +12,4 @@ inline int is_parent_child_allele_compatible (int alleleSetLen,
 					      int *pParentAlleleSet,
 					      int parent, int childSex,
 					      Genotype * pChildGenotype);
+inline int isHet(Genotype *pGeno);

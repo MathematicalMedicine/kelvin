@@ -461,6 +461,9 @@ main (int argc, char *argv[])
 	}
     }
 
+  /* allocate storage for keeping track of het locus in nuclear families */
+  allocate_nucfam_het(&pedigreeSet, totalLoci);
+
   /* initialize some work space */
   initialize_parental_pair_workspace (&parentalPairSpace,
 				      originalLocusList.numLocus);
@@ -732,6 +735,17 @@ main (int argc, char *argv[])
 
       total_count = modelRange.npenet * modelRange.ngfreq * modelRange.nalpha;
 
+      if(modelOptions.markerAnalysis == FALSE)
+	{
+	  savedLocusList.traitLocusIndex = 0;
+	  savedLocusList.traitOrigLocus = 0;
+	}
+      else
+	{
+	  savedLocusList.traitLocusIndex = -1;
+	  savedLocusList.traitOrigLocus = -1;
+	}
+
       for (loc1 = 0; loc1 < originalLocusList.numLocus - 1; loc1++)
 	{
 	  savedLocusList.pLocusIndex[0] = loc1;
@@ -785,8 +799,8 @@ main (int argc, char *argv[])
 		  modelRange.afreq[0] = pLocus2->pAlleleFrequency[0];
 		}
 
-	      /* allocate result storage */
-	      allocate_tp_result_storage ();
+	      /* allocate/initialize result storage */
+	      initialize_tp_result_storage ();
 
 	      /* we will force marker allele frequency loop to execute at least once */
 	      for (mkrFreqIdx = 0;
@@ -2205,9 +2219,6 @@ main (int argc, char *argv[])
 	      fprintf (fpPPL, "\n");
 	      fflush (fpPPL);
 
-	      /* free two point result storage */
-	      free_tp_result_storage (prevNumDPrime);
-	      tp_result = NULL;
 	      prevNumDPrime = pLambdaCell->ndprime;
 	      /* need to clear polynomial */
 #ifndef NO_POLYNOMIAL
@@ -2233,11 +2244,15 @@ main (int argc, char *argv[])
 	  if (modelOptions.markerAnalysis == FALSE)
 	    loc1 = originalLocusList.numLocus;
 	}			/* end of looping first locus - loc1 */
+      /* free two point result storage */
+      free_tp_result_storage (prevNumDPrime);
     }				/* end of two point */
   else
     {
       /* multipoint */
       nullLocusList.maxNumLocus = modelType.numMarkers + 1;
+      nullLocusList.traitOrigLocus = traitLocus;
+      nullLocusList.traitLocusIndex = 0;
       nullLocusList.pLocusIndex =
 	(int *) calloc (nullLocusList.maxNumLocus, sizeof (int));
       for (k = 0; k < 3; k++)
@@ -2354,6 +2369,8 @@ main (int argc, char *argv[])
 		  traitIndex = i;
 		}
 	    }
+	  locusList->traitLocusIndex = traitIndex;
+	  locusList->traitOrigLocus = traitLocus;
 	  markerSetChanged = FALSE;
 	  if (prevFirstMarker != mp_result[posIdx].pMarkers[0] ||
 	      prevLastMarker !=

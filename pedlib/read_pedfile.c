@@ -70,6 +70,7 @@ int read_person (char *sPedfileName, int lineNo, char *pLine,
 int setup_pedigree_ptrs (Pedigree * pPed);
 int setup_nuclear_families (Pedigree * pPed);
 int setup_loop_counts (Pedigree * pPed);
+void add_loopbreaker(Pedigree *pPed, Person *pPerson);
 
 
 
@@ -371,16 +372,16 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	  pPerson->pTypedFlag[numMarker] = 1;
 	  sprintf (tmpStr, "%d", pPerson->pPhenotypeList[0][numMarker]);
 	  ret = find_allele (numMarker, tmpStr);
+	  pPerson->pPhenotypeList[0][numMarker] = ret;
 	  KASSERT (ret >= 0,
 		   "Line %d in pedfile %s contains a genotype with unkown allele %s at locus %s.\n",
 		   lineNo, sPedfileName, tmpStr, pLocus->sName);
-          pPerson->pPhenotypeList[0][numMarker] = ret;
 	  sprintf (tmpStr, "%d", pPerson->pPhenotypeList[1][numMarker]);
 	  ret = find_allele (numMarker, tmpStr);
+	  pPerson->pPhenotypeList[1][numMarker] = ret;
 	  KASSERT (ret >= 0,
 		   "Line %d in pedfile %s contains a genotype with unkown allele %s at locus %s.\n",
 		   lineNo, sPedfileName, tmpStr, pLocus->sName);
-          pPerson->pPhenotypeList[1][numMarker] = ret;
 
 	  /* if this is X chromosome and this person is a male, then the genotype needs to be 
 	   * homozygous */
@@ -695,14 +696,20 @@ setup_pedigree_ptrs (Pedigree * pPed)
 	  KASSERT (pOrigPerson != NULL,
 		   "Can't find loop breaker's original information (original ID: %s current ID: %s).\n",
 		   pPerson->sOriginalID, pPerson->sID);
+	  add_loopbreaker(pPed, pOrigPerson);
+
 	  /* free space for the marker phenotype pair */
 	  free (pPerson->pPhenotypeList[0]);
 	  free (pPerson->pPhenotypeList[1]);
+	  free (pPerson->pPhasedFlag);
+	  free (pPerson->pTypedFlag);
 	  /* also need to free trait phenotype information !!!! - add this later */
 
 	  /* Points to the original person's marker genotype list */
 	  pPerson->pPhenotypeList[0] = pOrigPerson->pPhenotypeList[0];
 	  pPerson->pPhenotypeList[1] = pOrigPerson->pPhenotypeList[1];
+	  pPerson->pPhasedFlag = pOrigPerson->pPhasedFlag;
+	  pPerson->pTypedFlag = pOrigPerson->pTypedFlag;
 
 	  /* also need to point to the original person's trait information */
 	}
@@ -1414,4 +1421,26 @@ read_ccfile (char *ccFileName, PedigreeSet * pPedigreeSet)
     }
 
   return 0;
+}
+
+/* add this person to the loop breaker list if not currently in */
+void add_loopbreaker(Pedigree *pPed, Person *pPerson)
+{
+  int num;
+  int i;
+  Person *pBreaker;
+
+  num = pPed->numLoopBreaker;
+  i = 0;
+  while(i < num)
+    {
+      pBreaker = pPed->loopBreakerList[i];
+      if(pBreaker == pPerson)
+	return;
+      i++;
+    }
+  pPed->loopBreakerList = (Person **) realloc(pPed->loopBreakerList, 
+					      (num+1) * sizeof(Person *));
+  pPed->loopBreakerList[num] = pPerson;
+  pPed->numLoopBreaker++;
 }

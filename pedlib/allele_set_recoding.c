@@ -738,7 +738,7 @@ add_allele_set (int locus, unsigned int *pAlleleBits)
     }
 #endif
 
-  pAlleleSet->alleleID = numAlleleSet;
+  pAlleleSet->alleleID = numAlleleSet+1;
   pAlleleSet->pAlleleBits =
     (unsigned int *) MALLOC ("pAlleleSet->pAlleleBits",
 			     sizeof (unsigned int) * alleleSetLen);
