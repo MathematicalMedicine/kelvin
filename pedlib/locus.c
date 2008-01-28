@@ -3089,10 +3089,12 @@ free_person (Person * pPerson)
   for (i = 0; i < originalLocusList.numTraitLocus; i++)
     {
       free (pPerson->ppTraitValue[i]);
+      free (pPerson->ppOrigTraitValue[i]);
       free (pPerson->ppTraitKnown[i]);
       free (pPerson->ppLiabilityClass[i]);
     }
   free (pPerson->ppTraitValue);
+  free (pPerson->ppOrigTraitValue);
   free (pPerson->ppTraitKnown);
   free (pPerson->ppLiabilityClass);
 
