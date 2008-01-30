@@ -213,11 +213,11 @@ main (int argc, char *argv[])
   printf ("FYI, to force a dump of overall stats, \"kill -%d %d\"\n", SIGUSR1, getpid ());
   childPID = fork ();
   if (childPID == 0) {
-      while (1)	{
-	  sleep (10);
-	  kill (getppid (), SIGUSR1);
-	}			/* Does not return */
-    }
+    while (1) {
+      sleep (10);
+      kill (getppid (), SIGUSR1);
+    }                       /* Does not return */
+  }
   swStart (overallSW);
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
@@ -986,6 +986,7 @@ main (int argc, char *argv[])
 								 0);	/* current locus - start with 0 */
 #endif
 
+			      KLOG(LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
 			      compute_likelihood (&pedigreeSet);
 
 
@@ -1122,6 +1123,7 @@ main (int argc, char *argv[])
 									 0);	/* current locus - start with 0 */
 #endif
 
+				      KLOG(LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
 				      compute_likelihood (&pedigreeSet);
 
 				      log10_likelihood_alternative =
@@ -1420,6 +1422,7 @@ main (int argc, char *argv[])
 									 0);	/* current locus - start with 0 */
 #endif
 
+				      KLOG(LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
 				      compute_likelihood (&pedigreeSet);
 
 
@@ -1554,8 +1557,8 @@ main (int argc, char *argv[])
 										 0);	/* current locus - start with 0 */
 #endif
 
-					      compute_likelihood
-						(&pedigreeSet);
+					      KLOG(LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
+					      compute_likelihood(&pedigreeSet);
 					      log10_likelihood_alternative =
 						pedigreeSet.log10Likelihood;
 					      if (pedigreeSet.likelihood ==
@@ -2674,6 +2677,7 @@ main (int argc, char *argv[])
 			  /* get the likelihood at NULL hypothesis - use nullLocusList */
 			  locusList = &nullLocusList;
 			  xmissionMatrix = nullMatrix;
+			  KLOG(LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
 			  compute_likelihood (&pedigreeSet);
 			  //printAllVariables(); 
 			  //fprintf(stderr," Null Likelihood=%e log10Likelihood=%e \n",
@@ -2806,6 +2810,7 @@ main (int argc, char *argv[])
 		      /* ready for the alternative hypothesis */
 		      locusList = &savedLocusList;
 		      xmissionMatrix = altMatrix;
+		      KLOG(LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
 		      compute_likelihood (&pedigreeSet);
 
 		      //fprintf(stderr," Alternative Likelihood=%e log10Likelihood=%e\n",
@@ -3013,6 +3018,7 @@ main (int argc, char *argv[])
 								     -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
 								     0);	/* current locus - start with 0 */
 #endif
+				  KLOG(LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
 				  compute_likelihood (&pedigreeSet);
 				  if (pedigreeSet.likelihood == 0.0 &&
 				      pedigreeSet.log10Likelihood == -9999.99)
@@ -3180,6 +3186,7 @@ main (int argc, char *argv[])
 								 -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
 								 0);	/* current locus - start with 0 */
 #endif
+			      KLOG(LOGLIKELIHOOD, LOGDEBUG, "Likelihood\n");
 			      compute_likelihood (&pedigreeSet);
 			      log10_likelihood_alternative =
 				pedigreeSet.log10Likelihood;
@@ -3387,6 +3394,10 @@ main (int argc, char *argv[])
   time2 = clock ();
 
 
+  fprintf (stderr, "Computation time:  %fs  %fs \n",
+	   (double) (time1 - time0) / CLOCKS_PER_SEC,
+	   (double) (time2 - time1) / CLOCKS_PER_SEC);
+
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
@@ -3394,6 +3405,8 @@ main (int argc, char *argv[])
 //   dismantle();
     }
 #endif
+
+  set_removeGenotypeFlag(TRUE);
 
   if (modelType.type == TP)
     {
@@ -3442,10 +3455,6 @@ main (int argc, char *argv[])
   free (modelOptions.sUnknownPersonID);
   final_cleanup ();
 
-
-  fprintf (stderr, "Computation time:  %fs  %fs \n",
-	   (double) (time1 - time0) / CLOCKS_PER_SEC,
-	   (double) (time2 - time1) / CLOCKS_PER_SEC);
 
 
   /* close file pointers */

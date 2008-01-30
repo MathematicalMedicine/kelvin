@@ -3250,7 +3250,7 @@ void polynomialClearance()
    //release memory occupied by constant hash table
    for(j=0;j<CONSTANT_HASH_SIZE;j++)
    {
-      if(constantHash[j].num>0)
+      if(constantHash[j].length>0)
       {
                 free(constantHash[j].index);
                 free(constantHash[j].key);
@@ -3260,7 +3260,7 @@ void polynomialClearance()
    //release memory occupied by variable hash table
    for(j=0;j<VARIABLE_HASH_SIZE;j++)
    {
-      if(variableHash[j].num>0)
+      if(variableHash[j].length>0)
       {
                 free(variableHash[j].index);
                 free(variableHash[j].key);
@@ -3270,7 +3270,7 @@ void polynomialClearance()
    //release memory occupied by sum hash table
    for(j=0;j<SUM_HASH_SIZE;j++)
    {
-      if(sumHash[j].num>0)
+      if(sumHash[j].length>0)
       {
                 free(sumHash[j].index);
                 free(sumHash[j].key);
@@ -3280,7 +3280,7 @@ void polynomialClearance()
    //release memory occupied by product hash table
    for(j=0;j<PRODUCT_HASH_SIZE;j++)
    {
-       if(productHash[j].num>0)
+       if(productHash[j].length>0)
        {
                 free(productHash[j].index);
                 free(productHash[j].key);
@@ -3290,7 +3290,7 @@ void polynomialClearance()
    //release memory occupied by function call hash table
    for(j=0;j<FUNCTIONCALL_HASH_SIZE;j++)
    {
-       if(functionCallHash[j].num>0)
+       if(functionCallHash[j].length>0)
        {
                 free(functionCallHash[j].index);
                 free(functionCallHash[j].key);

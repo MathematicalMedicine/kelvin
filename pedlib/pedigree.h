@@ -57,6 +57,9 @@ typedef struct PedigreeSet
   /* max number of founders in any pedigree of the pedigree set 
    * not used right now, will we ever??? */
   int maxNumFounder;
+  int maxNumPerson;
+
+  int *pDonePerson;
 
   /* if fields such as mom or dad matches this, it means that person's
    * parent(mom or dad) is unknown */
@@ -167,6 +170,20 @@ typedef struct Pedigree
 
 } Pedigree;
 
+/* loop breaker's multilocus genotype */
+typedef struct LoopBreaker
+{
+  /* pre-allocated size */
+  int maxNumGenotype;
+  /* actual number of genotype vectors */
+  int numGenotype;
+  /* index of genotype we are working on currently */
+  int genotypeIndex;
+  /* list of all vectors - each element points to a multilocus genotype list */
+  struct Genotype ***genotype;
+
+} LoopBreaker;
+
 /* PERSON is a structure of individual information and links related 
  * individuals together in a pedigree 
  * Each person in a pedigree is representeted in this structure 
@@ -253,7 +270,7 @@ typedef struct Person
   /* for a loop breaker, it points to the original person
    * for others, this field is NULL */
   struct Person *pOriginalPerson;
-
+  struct LoopBreaker *loopBreakerStruct;
 
   /* phenotype pairs (paternal & maternal )for each locus */
   int *pPhenotypeList[2];
@@ -271,10 +288,13 @@ typedef struct Person
   /* tally of number of genotypes for each locus */
   int *pNumGenotype;
 
-  /* saved copy of the phased genotype list 
-   * this is used on probands during likelihood calculation */
+  /* saved copy of the phased genotype list */
   struct Genotype **ppSavedGenotypeList;
   int *pSavedNumGenotype;
+
+  /* proband genotype list - sometimes we need to fix proband's genotype during likelihood calc. */
+  struct Genotype **ppProbandGenotypeList;
+  int *pProbandNumGenotype;
 
   /* This is used during likelihood calculation
    * under one parental pair, only certain subset of the original

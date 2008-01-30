@@ -1,3 +1,6 @@
+Version 0.0.31:
+  Add loop handling 
+
 Version 0.0.30:
   Add parental phase pattern consolidations to speed up likelihood calculation
   Fixed bugs with high number of alleles (>32)

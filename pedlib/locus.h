@@ -91,8 +91,15 @@ typedef struct Genotype
   unsigned int *pAlleleBits[2];
 
   /* Link to next possible genotype for the same marker (Note: NOT for 
-   * next marker genotype) */
+   * next marker genotype) 
+   * through this pointer, current active genotypes are linked together 
+   */
   struct Genotype *pNext;
+
+  /* this pointer links the master list of genotypes together 
+   * when doing loops, with fixed loop breaker genotype, a subset of active genotypes 
+   * are linked through pNext, but the original master list is reflected in pSavedNext */
+  struct Genotype *pSavedNext;
 
   /* This is used during likelihood calculation 
    * under one parental pair, only certain subset of the original 
@@ -493,6 +500,11 @@ int copy_dprime (LDLoci * pLocus, double **pSrc);
 int copy_haploFreq (LDLoci * pLocus, double **pSrc);
 int copy_DValue (LDLoci * pLocus, double **pSrc);
 int find_locus(LocusList *pLocusList, char *sName);
+
+void populate_pedigree_saved_genotype_link(int locus, Pedigree *pPed);
+void populate_saved_genotype_link(PedigreeSet *pSet);
+void restore_pedigree_genotype_link_from_saved(Pedigree *pPed);
+void set_removeGenotypeFlag(int flag);
 
 /* global variable */
 extern Map map;

@@ -71,6 +71,7 @@ int setup_pedigree_ptrs (Pedigree * pPed);
 int setup_nuclear_families (Pedigree * pPed);
 int setup_loop_counts (Pedigree * pPed);
 void add_loopbreaker(Pedigree *pPed, Person *pPerson);
+Person *find_original_person (Pedigree * pPed, char *sPersonID);
 
 
 
@@ -149,11 +150,15 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	    }
 	  if (pCurrPedigree)
 	    {
-	      /* set up loop count, loop breaker count for this pedigree */
-	      setup_loop_counts (pCurrPedigree);
+	      pPedigreeSet->pDonePerson = (int *) realloc(pPedigreeSet->pDonePerson, 
+							  sizeof(int) * pPedigreeSet->maxNumPerson);
+	      memset(pPedigreeSet->pDonePerson, 0, sizeof(int)*pPedigreeSet->maxNumPerson);
+
 	      /* set up pointers in the pedigree such as first child, 
 	       * * * next paternal sibling, next maternal sibling */
 	      setup_pedigree_ptrs (pCurrPedigree);
+	      /* set up loop count, loop breaker count for this pedigree */
+	      setup_loop_counts (pCurrPedigree);
 	      /* set up nuclear families inside of this pedigree */
 	      setup_nuclear_families (pCurrPedigree);
 	      /* print out just for debug and verification purpose for now */
@@ -481,6 +486,8 @@ create_person (Pedigree * pPed, char *sID)
       pPed->maxNumPerson = num;
     }
   pPed->numPerson++;
+  if(pPed->pPedigreeSet->maxNumPerson < pPed->numPerson)
+    pPed->pPedigreeSet->maxNumPerson = pPed->numPerson;
 
   /* allocate space for this person */
   pPerson = (Person *) malloc (sizeof (Person));
@@ -528,6 +535,14 @@ create_person (Pedigree * pPed, char *sID)
   pPerson->pSavedNumGenotype =
     (int *) malloc (sizeof (int) * originalLocusList.numLocus);
   memset (pPerson->pSavedNumGenotype, 0,
+	  sizeof (int) * originalLocusList.numLocus);
+  pPerson->ppProbandGenotypeList =
+    (Genotype **) malloc (sizeof (Genotype *) * originalLocusList.numLocus);
+  memset (pPerson->ppProbandGenotypeList, 0,
+	  sizeof (Genotype *) * originalLocusList.numLocus);
+  pPerson->pProbandNumGenotype =
+    (int *) malloc (sizeof (int) * originalLocusList.numLocus);
+  memset (pPerson->pProbandNumGenotype, 0,
 	  sizeof (int) * originalLocusList.numLocus);
   pPerson->ppShadowGenotypeList =
     (Genotype **) malloc (sizeof (Genotype *) * originalLocusList.numLocus);
@@ -601,6 +616,32 @@ find_person (Pedigree * pPed, char *sPersonID)
 	{
 	  /* found it */
 	  return pPed->ppPersonList[i];
+	}
+    }
+
+  /* failed to find matching one */
+  return NULL;
+}
+
+/* This function searchs matching person in a pedigree 
+ * Pedigree pointer is expected as input
+ * it finds the person in the pedigree with the matching person ID */
+Person *
+find_original_person (Pedigree * pPed, char *sPersonID)
+{
+  int i;
+  Person *pPerson;
+
+  if (pPed == NULL)
+    return NULL;
+
+  for (i = 0; i < pPed->numPerson; i++)
+    {
+      pPerson = pPed->ppPersonList[i];
+      if (strcmp (pPerson->sOriginalID, sPersonID) == 0 && pPerson->pParents[DAD] != NULL)
+	{
+	  /* found it */
+	  return pPerson;
 	}
     }
 
@@ -692,24 +733,27 @@ setup_pedigree_ptrs (Pedigree * pPed)
 	{
 	  /* a duplicated person, find the original person */
 	  pOrigPerson =
-	    find_person (pPerson->pPedigree, pPerson->sOriginalID);
+	    find_original_person (pPerson->pPedigree, pPerson->sOriginalID);
 	  KASSERT (pOrigPerson != NULL,
 		   "Can't find loop breaker's original information (original ID: %s current ID: %s).\n",
 		   pPerson->sOriginalID, pPerson->sID);
+	  pPerson->pOriginalPerson = pOrigPerson;
 	  add_loopbreaker(pPed, pOrigPerson);
 
+#if 0
 	  /* free space for the marker phenotype pair */
 	  free (pPerson->pPhenotypeList[0]);
 	  free (pPerson->pPhenotypeList[1]);
 	  free (pPerson->pPhasedFlag);
 	  free (pPerson->pTypedFlag);
-	  /* also need to free trait phenotype information !!!! - add this later */
 
+	  /* also need to free trait phenotype information !!!! - add this later */
 	  /* Points to the original person's marker genotype list */
 	  pPerson->pPhenotypeList[0] = pOrigPerson->pPhenotypeList[0];
 	  pPerson->pPhenotypeList[1] = pOrigPerson->pPhenotypeList[1];
 	  pPerson->pPhasedFlag = pOrigPerson->pPhasedFlag;
 	  pPerson->pTypedFlag = pOrigPerson->pTypedFlag;
+#endif
 
 	  /* also need to point to the original person's trait information */
 	}
@@ -760,7 +804,8 @@ setup_nuclear_families (Pedigree * pPed)
   /* allocate some working space 
    * This is to mark whether we are done with this child 
    * it really only applies if this person is a child */
-  pDoneList = (int *) MALLOC ("pDoneList", sizeof (int) * pPed->numPerson);
+  //  pDoneList = (int *) MALLOC ("pDoneList", sizeof (int) * pPed->numPerson);
+  pDoneList = pPed->pPedigreeSet->pDonePerson;
   memset (pDoneList, 0, sizeof (int) * pPed->numPerson);
 
   pPed->numNuclearFamily = 0;
@@ -839,9 +884,6 @@ setup_nuclear_families (Pedigree * pPed)
 	    }
 	}			/* end of processing any child */
     }				/* end of loop of looking at every person in this pedigree */
-
-  /* free the working space before we return */
-  free (pDoneList);
 
   return 0;
 }
@@ -1253,34 +1295,32 @@ setup_loop_counts (Pedigree * pPed)
   if (pPed->loopFlag == 0)
     /* no loop in this pedigree, don't even count anything */
     return 0;
-  pPed->numLoopBreaker = 0;
+  //  pPed->numLoopBreaker = 0;
   /* allocate some work space to count number of loops and number 
    * of loop breakers */
-  pCount = (int *) malloc (sizeof (int) * (pPed->numPerson + 2));
+  pCount = pPed->pPedigreeSet->pDonePerson;
   /* initialize this workspace */
   memset (pCount, 0, sizeof (int) * pPed->numPerson);
 
   for (i = 0; i < pPed->numPerson; i++)
     {
       pPerson = pPed->ppPersonList[i];
+      /* Assuming the proband column for loop breakers start at 2, then 3 etc. */
       if (pPerson->proband > 1 && pPerson->proband <= pPed->numPerson)
 	{
 	  if (pCount[pPerson->proband] == 0)
-	    /* This is a new loop breaker */
-	    pPed->numLoopBreaker++;
-	  /* increase the count for this proband */
-	  pCount[pPerson->proband]++;
+	    /* increase the count for this proband */
+	    pCount[pPerson->proband]++;
 	  numTotal++;
 	}
     }
   /* get number of loops */
   pPed->numLoop = numTotal - pPed->numLoopBreaker;
-  /* free the work space */
-  free (pCount);
   return 0;
 }
 
-/* return indicator whether this pedigree set needs transmission matrices
+/* NOT USED 
+ * return indicator whether this pedigree set needs transmission matrices
  * There are four conditions, this function returns 1 indicating the need
  * for transmission matrices
  * 1. loop present in any pedigree

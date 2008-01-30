@@ -43,6 +43,7 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
 			 int locus)
 {
   Genotype *pGenotype[2];
+  Genotype *pFirstGenotype[2];
   int i;
   int status;
   Person *pParents[2];
@@ -63,7 +64,13 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
   for (i = DAD; i <= MOM; i++)
     {
       pParents[i] = pNucFam->pParents[i];
-      pGenotype[i] = pParents[i]->ppGenotypeList[origLocus];
+      if(pParents[i]->loopBreaker >=1 && pParents[i]->pParents[DAD] == NULL)
+	{
+	  pGenotype[i] = pParents[i]->pOriginalPerson->ppGenotypeList[origLocus];
+	}
+      else
+	pGenotype[i] = pParents[i]->ppGenotypeList[origLocus];
+      pFirstGenotype[i] = pGenotype[i];
     }
   /* now find the genotype pairs */
   KLOG (LOGPARENTALPAIR, LOGDEBUG,
@@ -73,7 +80,7 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
   while (pGenotype[head])
     {
       initialGeno[head] = pGenotype[head];
-      pGenotype[spouse] = pParents[spouse]->ppGenotypeList[origLocus];
+      pGenotype[spouse] = pFirstGenotype[spouse];
       while (pGenotype[spouse])
 	{
 	  /* do genotype elimination conditional on the pair 
@@ -265,6 +272,7 @@ stat_parental_pair_workspace (PedigreeSet * pPedigreeList)
   int ped;			/* pedigree index */
   int fam;			/* nuclear family index */
   int locus;
+  int numGenotype[2];
 
   pParentalPairSpace = &parentalPairSpace;
 
@@ -277,9 +285,17 @@ stat_parental_pair_workspace (PedigreeSet * pPedigreeList)
 	  for (locus = 0; locus < originalLocusList.numLocus; locus++)
 	    {
 	      /* be generous to pre-allocating work space */
-	      maxNumParentalPair =
-		pNucFam->pParents[DAD]->pSavedNumGenotype[locus] *
-		pNucFam->pParents[MOM]->pSavedNumGenotype[locus];
+	      for(i=DAD; i<=MOM; i++)
+		{
+		  if(pNucFam->pParents[i]->loopBreaker >=1 && pNucFam->pParents[i]->pParents[DAD] == NULL)
+		    {
+		      numGenotype[i] = pNucFam->pParents[i]->pOriginalPerson->pSavedNumGenotype[locus];
+		    }
+		  else
+		    numGenotype[i] = pNucFam->pParents[i]->pSavedNumGenotype[locus];
+		}
+	      
+	      maxNumParentalPair = numGenotype[DAD] * numGenotype[MOM];
 
 	      if (maxNumParentalPair > parentalPairSpace.maxNumParentalPair)
 		{
@@ -408,6 +424,9 @@ free_parental_pair_workspace (ParentalPairSpace * pSpace, int numLocus)
       free (pSpace->ppParentalPair[locus]);
     }
 
+  free (pSpace->phase[DAD]);
+  free (pSpace->phase[MOM]);
+  free (pSpace->pChildGenoInd);
   free (pSpace->pNumParentalPair);
   free (pSpace->pParentalPairInd);
   free (pSpace->ppParentalPair);

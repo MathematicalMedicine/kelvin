@@ -188,6 +188,8 @@ parent_children_genotype_elimination (int locus, NuclearFamily * pNucFam,
       /* if keepFlag is not true, then this parent's genotype is not compatible */
       if (keepFlag != TRUE)
 	{
+	  KLOG (LOGGENOELIM, LOGDEBUG, "Remove person %s genotype (%d, %d) in parent_children.\n",
+		pParent->sID, pElimGenotype->allele[DAD], pElimGenotype->allele[MOM]);
 	  if(pParent->loopBreaker >=1 && pParent->pParents[DAD] == NULL)
 	    remove_genotype (&pParent->pOriginalPerson->ppGenotypeList[locus], pElimGenotype,
 			     &pParent->pOriginalPerson->pNumGenotype[locus]);
@@ -199,9 +201,16 @@ parent_children_genotype_elimination (int locus, NuclearFamily * pNucFam,
 	}
     }				/* end of looping of parent genotypes */
 
-  KASSERT (pParent->ppGenotypeList[locus] != NULL,
-	   "Pedigree %s Person %s is not compatible at locus %s.\n",
-	   pParent->pPedigree->sPedigreeID, pParent->sID, pLocus->sName);
+  if(pParent->loopBreaker >=1 && pParent->pParents[DAD] == NULL)
+    {
+      KASSERT (pParent->pOriginalPerson->ppGenotypeList[locus] != NULL,
+	       "Pedigree %s Person %s is not compatible at locus %s.\n",
+	       pParent->pPedigree->sPedigreeID, pParent->sID, pLocus->sName);
+    }
+  else
+    KASSERT (pParent->ppGenotypeList[locus] != NULL,
+	     "Pedigree %s Person %s is not compatible at locus %s.\n",
+	     pParent->pPedigree->sPedigreeID, pParent->sID, pLocus->sName);
 
   return ret;
 }
@@ -287,6 +296,8 @@ child_parents_genotype_elimination (int locus, NuclearFamily * pNucFam,
       pChildGenotype = pChildGenotype->pNext;
       if (compatibleFlag == FALSE)
 	{
+	  KLOG (LOGGENOELIM, LOGDEBUG, "Remove person %s genotype (%d, %d) in child_parents.\n",
+		pChild->sID, pElimGenotype->allele[DAD], pElimGenotype->allele[MOM]);
 	  remove_genotype (&pChild->ppGenotypeList[locus], pElimGenotype,
 			   &pChild->pNumGenotype[locus]);
 	  /* increase the counter of elimination */
@@ -395,16 +406,34 @@ parent_parent_children_genotype_elimination (int locus,
          current gentoype */
       if (parent2CompatibleFlag == FALSE)
 	{
-	  remove_genotype (&pNucFam->pParents[parent1]->ppGenotypeList[locus],
-			   pElimGeno,
-			   &pNucFam->pParents[parent1]->pNumGenotype[locus]);
+	  KLOG (LOGGENOELIM, LOGDEBUG, 
+		"Remove person %s genotype (%d, %d) in parent_parent_children.\n",
+		pParent1->sID, pElimGeno->allele[DAD], pElimGeno->allele[MOM]);
+	  if(pParent1->loopBreaker>=1 && pParent1->pParents[DAD] == NULL)
+	    {
+	      remove_genotype (&pParent1->pOriginalPerson->ppGenotypeList[locus],
+			       pElimGeno,
+			       &pParent1->pOriginalPerson->pNumGenotype[locus]);
+	    }
+	  else
+	    remove_genotype (&pParent1->ppGenotypeList[locus],
+			     pElimGeno,
+			     &pParent1->pNumGenotype[locus]);
 	  ret++;
 	}
 
     }				/* end of looping parent's genotype list */
-  KASSERT (pParent1->ppGenotypeList[locus] != NULL,
-	   "Pedigree %s Person %s is not compatible at locus %s.\n",
-	   pParent1->pPedigree->sPedigreeID, pParent1->sID, pLocus->sName);
+
+  if(pParent1->loopBreaker>=1 && pParent1->pParents[DAD] == NULL)
+    {
+      KASSERT (pParent1->pOriginalPerson->ppGenotypeList[locus] != NULL,
+	       "Pedigree %s Person %s is not compatible at locus %s.\n",
+	       pParent1->pPedigree->sPedigreeID, pParent1->sID, pLocus->sName);
+    }
+  else
+    KASSERT (pParent1->ppGenotypeList[locus] != NULL,
+	     "Pedigree %s Person %s is not compatible at locus %s.\n",
+	     pParent1->pPedigree->sPedigreeID, pParent1->sID, pLocus->sName);
 
   return ret;
 }
@@ -536,6 +565,9 @@ child_children_parents_genotype_elimination (int locus,
       pChildGenotype = pChildGenotype->pNext;
       if (compatibleFlag != TRUE)
 	{
+	  KLOG (LOGGENOELIM, LOGDEBUG, 
+		"Remove person %s genotype (%d, %d) in child_children_parents.\n",
+		pChild->sID, pElimGenotype->allele[DAD], pElimGenotype->allele[MOM]);
 	  remove_genotype (&pChild->ppGenotypeList[locus], pElimGenotype,
 			   &pChild->pNumGenotype[locus]);
 	  /* increase the counter of elimination */

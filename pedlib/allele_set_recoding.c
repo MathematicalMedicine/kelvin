@@ -20,12 +20,7 @@
 #include "tools.h"
 #include "polynomial.h"
 
-/* Hate to do this, but don't want to put temporary space into person's
- * structure either 
- * This is the flag to mark whether we have finished set recoding
- * an individual */
-int *pDonePerson = NULL;
-
+int initialize_transmitted_alleles (int locus, Pedigree *pPedigree);
 int identify_transmitted_alleles (int locus, Pedigree * pPedigree);
 Person *identify_child_transmitted_alleles (Person * pPerson,
 					    Person * pChild, int locus);
@@ -58,6 +53,8 @@ int is_subset (unsigned int *pAlleleBits1, unsigned int *pAlleleBits2,
 int
 allele_set_recoding (int locus, Pedigree * pPedigree)
 {
+  int numPerson;
+  int *pDonePerson;
 
 #if 0
   /* it only makes sense to do locus with at least 3 alleles */
@@ -68,8 +65,23 @@ allele_set_recoding (int locus, Pedigree * pPedigree)
   if (originalLocusList.ppLocusList[locus]->locusType == LOCUS_TYPE_TRAIT)
     return 0;
 
+
+  /* get number of people for this pedigree */
+  numPerson = pPedigree->numPerson;
+  pDonePerson = pPedigree->pPedigreeSet->pDonePerson;
+  memset (pDonePerson, 0, numPerson * sizeof (int));
+
+  initialize_transmitted_alleles (locus, pPedigree);
+
   /* first identify transmitted and non-transmitted alleles */
   identify_transmitted_alleles (locus, pPedigree);
+
+  if(pPedigree->loopFlag == TRUE)
+    {
+      /* since loop breaker duplicates are tracked separately, make sure it got 
+       * back to the original */
+      identify_transmitted_alleles (locus, pPedigree);
+    }
 
   /* print out some debug messages if the debug level is turned on */
   print_pedigree_allele_sets (locus, pPedigree);
@@ -82,17 +94,10 @@ allele_set_recoding (int locus, Pedigree * pPedigree)
   return 0;
 }
 
-/* This function pulls transmitted and non-transmitted alleles together 
- * for each untyped individual through the line of descent
- * This is a recursive process from parent to children until we exhaust 
- * the pedigree or until we hit a typed individual, through which 
- * transmitted alleles will be reflected to the parents
- * Maternal and paternal alleles are kept track of separately 
- * */
 int
-identify_transmitted_alleles (int locus, Pedigree * pPedigree)
+initialize_transmitted_alleles (int locus, Pedigree *pPedigree)
 {
-  Person *pPerson, *pChild;
+  Person *pPerson;
   int numPerson = pPedigree->numPerson;
   int i, j, k, m;
   Locus *pLocus;
@@ -107,9 +112,6 @@ identify_transmitted_alleles (int locus, Pedigree * pPedigree)
 
   /* get number of people for this pedigree */
   numPerson = pPedigree->numPerson;
-  pDonePerson =
-    REALLOC ("pDonePerson", pDonePerson, numPerson * sizeof (int));
-  memset (pDonePerson, 0, numPerson * sizeof (int));
 
   /* get the locus structure */
   pLocus = originalLocusList.ppLocusList[locus];
@@ -121,11 +123,23 @@ identify_transmitted_alleles (int locus, Pedigree * pPedigree)
    * on this locus */
   alleleSetLen = originalLocusList.alleleSetLen;
 
-  /* initialize to mark every individual as NOT DONE YET 
-   * and initialize the transmitted and non-transmitted allele sets */
+  /* and initialize the transmitted and non-transmitted allele sets */
+  /* loop through each individual to set the initial values of the transmitted 
+   * and non-transmitted allele sets 
+   * basically for the transmitted allele*/
   for (i = 0; i < numPerson; i++)
     {
       pPerson = pPedigree->ppPersonList[i];
+      /* pass the loop breaker duplicates - the tracking will be done 
+       * at the original person 
+       */
+      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+	continue;
+
+      /* 
+       * There shouldn't be any loops in the pedigree as we should have 
+       * broken the loops already 
+       */
       for (k = 0; k < alleleSetLen; k++)
 	{
 	  pPerson->pTransmittedAlleles[MOM][k] = 0;
@@ -133,19 +147,7 @@ identify_transmitted_alleles (int locus, Pedigree * pPedigree)
 	  pPerson->pNonTransmittedAlleles[MOM][k] = 0;
 	  pPerson->pNonTransmittedAlleles[DAD][k] = 0;
 	}
-      pDonePerson[i] = FALSE;
-    }
 
-  /* loop through each individual to set the initial values of the transmitted 
-   * and non-transmitted allele sets 
-   * basically for the transmitted allele*/
-  for (i = 0; i < numPerson; i++)
-    {
-      pPerson = pPedigree->ppPersonList[i];
-      /* mark this person as done 
-       * There shouldn't be any loops in the pedigree as we should have 
-       * broken the loops already 
-       */
 
       /* go through each genotype in the person's list for this locus
        * add the possible alleles to basic non-transmitted allele list
@@ -193,10 +195,49 @@ identify_transmitted_alleles (int locus, Pedigree * pPedigree)
 	}
     }				/* end of loop of person */
 
+  return 0;
+}
+
+/* This function pulls transmitted and non-transmitted alleles together 
+ * for each untyped individual through the line of descent
+ * This is a recursive process from parent to children until we exhaust 
+ * the pedigree or until we hit a typed individual, through which 
+ * transmitted alleles will be reflected to the parents
+ * Maternal and paternal alleles are kept track of separately 
+ * */
+int
+identify_transmitted_alleles (int locus, Pedigree * pPedigree)
+{
+
+  Person *pPerson, *pChild;
+  Person *pOrigPerson;
+  int numPerson = pPedigree->numPerson;
+  int i;
+  /* allele set length for this locus */
+  int alleleSetLen;
+  int alleleCount;
+  int *pDonePerson;
+ 
+  /* how many integers needed to represent one allele in bit mask 
+   * on this locus */
+  alleleSetLen = originalLocusList.alleleSetLen;
+
+  /* initialize to mark every individual as NOT DONE YET */
+  pDonePerson = pPedigree->pPedigreeSet->pDonePerson;
+  for (i = 0; i < numPerson; i++)
+    {
+      pDonePerson[i] = FALSE;
+    }
 
   for (i = 0; i < numPerson; i++)
     {
       pPerson = pPedigree->ppPersonList[i];
+      pChild = pPerson->pFirstChild;
+      pOrigPerson = pPerson;
+      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+	{
+	  pPerson = pPerson->pOriginalPerson;
+	}
       /* only do untyped person */
       if (pPerson->pTypedFlag[locus] == TRUE)
 	continue;
@@ -205,7 +246,6 @@ identify_transmitted_alleles (int locus, Pedigree * pPedigree)
       pDonePerson[i] = TRUE;
       /* we will determine what alleles are transmitted by the line of 
        * descent */
-      pChild = pPerson->pFirstChild;
       while (pChild != NULL)
 	{
 	  /* this function will go through this child's siblings and own and 
@@ -232,8 +272,6 @@ identify_transmitted_alleles (int locus, Pedigree * pPedigree)
 
     }
 
-  free (pDonePerson);
-  pDonePerson = NULL;
   return 0;
 }
 
@@ -271,23 +309,23 @@ identify_child_transmitted_alleles (Person * pFounder,
 	  pChildChild = identify_child_transmitted_alleles (pChild,
 							    pChildChild,
 							    locus);
-	  if (!(modelOptions.sexLinked == TRUE &&
-		pFounder->sex + 1 == MALE && pChild->sex + 1 == MALE))
+	}
+      if (!(modelOptions.sexLinked == TRUE &&
+	    pFounder->sex + 1 == MALE && pChild->sex + 1 == MALE))
+	{
+	  /* we are done with this child and this child's descendents, 
+	   * now update parent's */
+	  for (j = DAD; j <= MOM; j++)
 	    {
-	      /* we are done with this child and this child's descendents, 
-	       * now update parent's */
-	      for (j = DAD; j <= MOM; j++)
+	      for (k = 0; k < alleleSetLen; k++)
 		{
-		  for (k = 0; k < alleleSetLen; k++)
-		    {
-		      pFounder->pNonTransmittedAlleles[j][k] &=
-			pChild->pNonTransmittedAlleles[sex][k];
-		      pFounder->pTransmittedAlleles[j][k] |=
-			pChild->pTransmittedAlleles[sex][k];
-		    }
+		  pFounder->pNonTransmittedAlleles[j][k] &=
+		    pChild->pNonTransmittedAlleles[sex][k];
+		  pFounder->pTransmittedAlleles[j][k] |=
+		    pChild->pTransmittedAlleles[sex][k];
 		}
 	    }
-
+	  
 	}
     }
   else
@@ -315,8 +353,10 @@ identify_child_transmitted_alleles (Person * pFounder,
 	}			/* end of genotype loops */
     }				/* end of child is typed */
 
+
   /* mark this person as done */
-  pDonePerson[pChild->personIndex] = TRUE;
+  if(pChild->loopBreaker == 0)
+    pChild->pPedigree->pPedigreeSet->pDonePerson[pChild->personIndex] = TRUE;
 
   return pChild->pNextSib[pFounder->sex];
 
@@ -400,6 +440,8 @@ print_pedigree_allele_sets (int locus, Pedigree * pPedigree)
 	    sParent = MOMID;
 	  pPerson = pNucFam->pParents[k];
 	  KLOG (LOGSETRECODING, LOGDEBUG, "  %s %s\n", sParent, pPerson->sID);
+	  if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+	    pPerson = pPerson->pOriginalPerson;
 
 	  print_person_allele_set (pPerson, locus, alleleSetLen);
 	}
@@ -439,11 +481,7 @@ recode_genotype (int locus, Pedigree * pPedigree)
   unsigned int *pAlleleBits;
   int allele;
 
-  /* get number of people for this pedigree */
-  numPerson = pPedigree->numPerson;
-  pDonePerson =
-    REALLOC ("pDonePerson", pDonePerson, numPerson * sizeof (int));
-  memset (pDonePerson, 0, numPerson * sizeof (int));
+  //  memset (pDonePerson, 0, numPerson * sizeof (int));
 
   /* get the locus structure */
   pLocus = originalLocusList.ppLocusList[locus];
@@ -457,6 +495,8 @@ recode_genotype (int locus, Pedigree * pPedigree)
     {
       pPerson = pPedigree->ppPersonList[i];
       if (pPerson->pTypedFlag[locus] == TRUE)
+	continue;
+      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
 	continue;
 
       /* go through both paternal and maternal allele sets */
@@ -548,6 +588,7 @@ recode_genotype (int locus, Pedigree * pPedigree)
 void
 print_person_allele_set (Person * pPerson, int locus, int alleleSetLen)
 {
+#if DEBUG
   Genotype *pGenotype;
 
   if (pPerson->pTypedFlag[locus] == TRUE)
@@ -556,11 +597,11 @@ print_person_allele_set (Person * pPerson, int locus, int alleleSetLen)
       pGenotype = pPerson->ppGenotypeList[locus];
       while (pGenotype != NULL)
 	{
-	  KLOG (LOGSETRECODING, LOGDEBUG, "(%d,%d) ",
+	  logMsg (LOGSETRECODING, LOGDEBUG, "(%d,%d) ",
 		pGenotype->allele[DAD], pGenotype->allele[MOM]);
 	  pGenotype = pGenotype->pNext;
 	}
-      KLOG (LOGSETRECODING, LOGDEBUG, "\n");
+      logMsg (LOGSETRECODING, LOGDEBUG, "\n");
     }
   else
     {
@@ -579,17 +620,19 @@ print_person_allele_set (Person * pPerson, int locus, int alleleSetLen)
 	    "    Maternal Non-Transmitted Alleles: \n");
       print_allele_set (pPerson->pNonTransmittedAlleles[MOM], alleleSetLen);
     }
+#endif
 }
 
 int
 print_allele_set (unsigned int *pAlleleSet, int len)
 {
+#if DEBUG
   int i, j;
   int allele;
   unsigned long int mask;
   int base = 0;
 
-  KLOG (LOGSETRECODING, LOGDEBUG, "        ");
+  logMsg (LOGSETRECODING, LOGDEBUG, "        ");
   for (i = 0; i < len; i++)
     {
       mask = 1;
@@ -599,13 +642,14 @@ print_allele_set (unsigned int *pAlleleSet, int len)
 	    {
 	      allele = base + j + 1;
 	      /* to avoid printing out file name and line number info... */
-	      KLOG (LOGSETRECODING, LOGDEBUG, "%d ", allele);
+	      logMsg (LOGSETRECODING, LOGDEBUG, "%d ", allele);
 	    }
 	  mask = mask << 1;
 	}
       base += INT_BITS;
     }
-  KLOG (LOGSETRECODING, LOGDEBUG, "\n");
+  logMsg (LOGSETRECODING, LOGDEBUG, "\n");
+#endif
 
   return 0;
 }
@@ -614,17 +658,18 @@ print_allele_set (unsigned int *pAlleleSet, int len)
 int
 print_locus_allele_set (Locus * pLocus, int alleleSetLen)
 {
+#if DEBUG
   int i;
 
   KLOG (LOGSETRECODING, LOGDEBUG, "Locus %s\n", pLocus->sName);
   for (i = 0; i < pLocus->numAlleleSet; i++)
     {
-      KLOG (LOGSETRECODING, LOGDEBUG, "  AlleleSet %d(%f): ", i,
+      KLOG (LOGSETRECODING, LOGDEBUG, "  AlleleSet %d(%f): ", i+1,
 	    pLocus->ppAlleleSetList[i]->sumFreq);
       print_allele_set (pLocus->ppAlleleSetList[i]->pAlleleBits,
 			alleleSetLen);
     }
-
+#endif
   return 0;
 }
 

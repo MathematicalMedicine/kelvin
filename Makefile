@@ -15,12 +15,12 @@ NICEDIR = /usr/local
 # -DDEBUG
 #     Turns on debugging information.
 #
-#CFLGS	+= -DNOFLOAT -DRADSMM
+#CFLGS	+= -DNOFLOAT 
 CFLGS	+= -Wall			# Always leave this one on
 CFLGS	+= -O3	 			# Production level
 #CFLGS  += -g  -DDEBUG		# Debug level
 #CFLGS   += -DNO_POLYNOMIAL
-CFLGS += -pg                   # profile - debugging 
+#CFLGS += -pg                   # profile - debugging 
 #CFLGS += -pedantic   #memory leak tracing
 
 .EXPORT_ALL_VARIABLES:
@@ -43,11 +43,11 @@ CFLGS  += -Wall -I$(INCDIR) -L$(LIBDIR) -I$(NINCDIR) -L$(NLIBDIR)
 ######################################################################
 # File sets. 
 NBIN	= kelvin
-LIB	= -lped -lutils -lgsl -lgslcblas -lsw -lm # -lRADSMM
+LIB	= -lped -lutils -lgsl -lgslcblas -lsw -lm 
 NLIB	= # -lniceapi -lnicecom -lniceaux
 SRC	= kelvin.c config.c ppl.c
 INC	= kelvin.h
-TAR	= Makefile $(SRC) $(INC) config.c utils pedlib RADSMM .maj .min .pat .dat doc kelvin.conf
+TAR	= Makefile $(SRC) $(INC) config.c utils pedlib .maj .min .pat .dat doc kelvin.conf
 
 ######################################################################
 # Determine application name, which depends on version and
@@ -70,7 +70,7 @@ MSEC	= 1
 
 ######################################################################
 # Kelvin.
-kelvin: Makefile libutils.a libped.a #libRADSMM.a man
+kelvin: Makefile libutils.a libped.a # man
 	$(CC) $(CFLGS) $(SRC) -o $@ $(NLIB) $(LIB)
 
 ######################################################################
@@ -91,13 +91,6 @@ libped.a: Makefile
 	-@if [ ! -x $(INCDIR) ] ; then mkdir $(INCDIR); fi
 	-@if [ ! -x $(LIBDIR) ] ; then mkdir $(LIBDIR); fi
 	-@cd pedlib && $(MAKE) $(MAKECMDGOALS)
-
-######################################################################
-# RADSMM library.
-libRADSMM.a: Makefile
-	-@if [ ! -x $(INCDIR) ] ; then mkdir $(INCDIR); fi
-	-@if [ ! -x $(LIBDIR) ] ; then mkdir $(LIBDIR); fi
-	-@cd RADSMM && $(MAKE) $(MAKECMDGOALS)
 
 ######################################################################
 .PHONY: man
@@ -135,7 +128,6 @@ clean:
 	-@rm -f $(NBIN) TAGS *~ $(NBIN)-$(VERSION).{ps,tgz}
 	-@cd utils && $(MAKE) $(MAKECMDGOALS)
 	-@cd pedlib && $(MAKE) $(MAKECMDGOALS)
-	-@cd RADSMM && $(MAKE) $(MAKECMDGOALS)
 
 .PHONY: ps
 ps:
