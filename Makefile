@@ -20,7 +20,7 @@ CFLGS	+= -Wall			# Always leave this one on
 CFLGS	+= -O3	 			# Production level
 #CFLGS  += -g  -DDEBUG		# Debug level
 #CFLGS   += -DNO_POLYNOMIAL
-#CFLGS += -pg                   # profile - debugging 
+CFLGS += -pg                   # profile - debugging 
 #CFLGS += -pedantic   #memory leak tracing
 
 .EXPORT_ALL_VARIABLES:
@@ -43,7 +43,7 @@ CFLGS  += -Wall -I$(INCDIR) -L$(LIBDIR) -I$(NINCDIR) -L$(NLIBDIR)
 ######################################################################
 # File sets. 
 NBIN	= kelvin
-LIB	= -lped -lutils -lgsl -lgslcblas -lm # -lRADSMM
+LIB	= -lped -lutils -lgsl -lgslcblas -lsw -lm # -lRADSMM
 NLIB	= # -lniceapi -lnicecom -lniceaux
 SRC	= kelvin.c config.c ppl.c
 INC	= kelvin.h

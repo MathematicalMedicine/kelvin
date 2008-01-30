@@ -10,6 +10,9 @@
 //#include "gsl/gsl_sf_gamma.h"
 #include "gsl/gsl_randist.h"
 #include "gsl/gsl_cdf.h"
+#include "sw.h"
+extern signalSeen;
+extern overallSW;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //Recursively evaluate a polynomial.  This version of polynomail evaluation doesn't use
@@ -2196,6 +2199,11 @@ double evaluatePoly(struct polynomial *pp, struct polyList *l)
    register int i,j;
    double pV,re;
    int pE;
+
+   if (signalSeen) {
+     swDump(overallSW);
+     signalSeen = 0;
+   }
 
    if(l->listNext==0)
    {

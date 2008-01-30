@@ -14,6 +14,16 @@
 #include "kelvin.h"
 #include "likelihood.h"
 
+#include "sw.h"
+#include <signal.h>
+struct swStopwatch *overallSW;
+volatile sig_atomic_t signalSeen = 0;
+void
+testSignalHandler (int signal)
+{
+  signalSeen = 1;
+}
+
 /* Some default global values. */
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
 char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";
@@ -187,6 +197,28 @@ main (int argc, char *argv[])
   double initialProb2[3];
   void *initialProbAddr2[3];
   void *initialHetProbAddr[3];
+
+  overallSW = swCreate ("overall");
+  /* Setup a signal handler for SIGUSR1. */
+  struct sigaction userAction;
+  sigset_t blockMask;
+
+  sigfillset (&blockMask);
+  userAction.sa_handler = testSignalHandler;
+  userAction.sa_mask = blockMask;
+  userAction.sa_flags = 0;
+  sigaction (SIGUSR1, &userAction, NULL);
+
+  pid_t childPID;
+  printf ("FYI, to force a dump of overall stats, \"kill -%d %d\"\n", SIGUSR1, getpid ());
+  childPID = fork ();
+  if (childPID == 0) {
+      while (1)	{
+	  sleep (10);
+	  kill (getppid (), SIGUSR1);
+	}			/* Does not return */
+    }
+  swStart (overallSW);
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&nullLocusList, 0, sizeof (nullLocusList));
@@ -3423,5 +3455,10 @@ main (int argc, char *argv[])
     }
   fclose (fpHet);
   //  fclose (fpHomo);
+
+  swStop (overallSW);
+  swDump (overallSW);
+  kill (childPID, SIGHUP);
+
   return 0;
 }
