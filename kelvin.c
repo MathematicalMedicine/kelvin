@@ -3464,7 +3464,6 @@ main (int argc, char *argv[])
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
   swDump (overallSW);
-  /*  kill (childPID, SIGHUP);
-   */
+
   return 0;
 }
