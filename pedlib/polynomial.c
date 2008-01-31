@@ -15,6 +15,9 @@
 extern overallSW;
 extern signalSeen;		/* Signalled dumps */
 
+// #define malloc(X) swMalloc((X), __FILE__, __LINE__)
+// #define free(X) swFree((X), __FILE__, __LINE__)
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //Recursively evaluate a polynomial.  This version of polynomail evaluation doesn't use
 //polynomial sorting list.  It just compute the values of each sub polynomial recursively.  

@@ -20,3 +20,6 @@ void swStart(struct swStopwatch *);
 void swStop(struct swStopwatch *);
 void swDump(struct swStopwatch *);
 void swReset(struct swStopwatch *);
+void *swMalloc(size_t size, char *fileName, int lineNo);
+void swFree(void *pBlock, char *fileName, int lineNo);
+void swDumpBlockUse();
