@@ -14,15 +14,12 @@
 #include "kelvin.h"
 #include "likelihood.h"
 
-#include "sw.h"
-#include <signal.h>
+#include "sw.h"			/* Performance dumps */
 struct swStopwatch *overallSW;
+#include <signal.h>		/* Signalled dumps */
 volatile sig_atomic_t signalSeen = 0;
-void
-testSignalHandler (int signal)
-{
-  signalSeen = 1;
-}
+void usr1SignalHandler (int signal) { signalSeen = 1; }
+void quitSignalHandler (int signal) { swDump(overallSW); }
 
 /* Some default global values. */
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
@@ -198,26 +195,25 @@ main (int argc, char *argv[])
   void *initialProbAddr2[3];
   void *initialHetProbAddr[3];
 
-  overallSW = swCreate ("overall");
-  /* Setup a signal handler for SIGUSR1. */
-  struct sigaction userAction;
-  sigset_t blockMask;
+  overallSW = swCreate ("overall"); /* Overall performance stopwatch */
+  /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
+  struct sigaction usr1Action, quitAction;
+  sigset_t usr1BlockMask, quitBlockMask;
 
-  sigfillset (&blockMask);
-  userAction.sa_handler = testSignalHandler;
-  userAction.sa_mask = blockMask;
-  userAction.sa_flags = 0;
-  sigaction (SIGUSR1, &userAction, NULL);
+  sigfillset (&usr1BlockMask);
+  usr1Action.sa_handler = usr1SignalHandler;
+  usr1Action.sa_mask = usr1BlockMask;
+  usr1Action.sa_flags = 0;
+  sigaction (SIGUSR1, &usr1Action, NULL);
+  sigfillset (&quitBlockMask);
+  quitAction.sa_handler = quitSignalHandler;
+  quitAction.sa_mask = quitBlockMask;
+  quitAction.sa_flags = 0;
+  sigaction (SIGQUIT, &quitAction, NULL);
 
-  pid_t childPID;
-  printf ("FYI, to force a dump of overall stats, \"kill -%d %d\"\n", SIGUSR1, getpid ());
-  childPID = fork ();
-  if (childPID == 0) {
-    while (1) {
-      sleep (10);
-      kill (getppid (), SIGUSR1);
-    }                       /* Does not return */
-  }
+  fprintf (stderr, "To force a dump of stats, type CTRL-\\ (dangerous and terse but always works)\n");
+  fprintf (stderr, "or type \"kill -%d %d\" (safe and thorough, but requires program cooperation).\n",
+	   SIGUSR1, getpid ());
   swStart (overallSW);
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
@@ -697,7 +693,7 @@ main (int argc, char *argv[])
 	   pedigreeSet.numPedigree);
   fprintf (stderr, "Number of loci to use for analysis: %d\n",
 	   modelType.numMarkers + originalLocusList.numTraitLocus);
-
+  sleep(2);
 
   /* Initialize the connection to the infrastructure. */
   /* niceInit (); */
@@ -3465,9 +3461,10 @@ main (int argc, char *argv[])
   fclose (fpHet);
   //  fclose (fpHomo);
 
+  /* Final dump and clean-up for performance. */
   swStop (overallSW);
   swDump (overallSW);
-  kill (childPID, SIGHUP);
-
+  /*  kill (childPID, SIGHUP);
+   */
   return 0;
 }

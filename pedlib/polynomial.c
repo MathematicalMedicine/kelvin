@@ -10,9 +10,10 @@
 //#include "gsl/gsl_sf_gamma.h"
 #include "gsl/gsl_randist.h"
 #include "gsl/gsl_cdf.h"
-#include "sw.h"
-extern signalSeen;
+
+#include "sw.h"			/* Performance dumps */
 extern overallSW;
+extern signalSeen;		/* Signalled dumps */
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //Recursively evaluate a polynomial.  This version of polynomail evaluation doesn't use
@@ -2201,6 +2202,8 @@ double evaluatePoly(struct polynomial *pp, struct polyList *l)
    int pE;
 
    if (signalSeen) {
+     fprintf(stderr, "Signalled dump in %s at line %d (built %s)\n", __FILE__, __LINE__, __DATE__);
+     /* Add fprintfs for any other variables you'd like to see here... */
      swDump(overallSW);
      signalSeen = 0;
    }

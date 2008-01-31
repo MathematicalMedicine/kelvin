@@ -25,6 +25,10 @@
 #include "genotype_elimination.h"
 #include "polynomial.h"
 
+#include "sw.h"			/* Performance dumps */
+extern overallSW;
+extern signalSeen;		/* Signalled dumps */
+
 Genotype **pTempGenoVector;
 
 /* transmission probability matrix */
@@ -322,9 +326,16 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 #endif
   int ret = 0;
 
-  fprintf(stderr, "PEDIGREE: %s (%d/%d)\n", 
-       pPedigree->sPedigreeID, pPedigree->pedigreeIndex+1,
-       pPedigree->pPedigreeSet->numPedigree);
+  if (signalSeen) {
+    fprintf(stderr, "Signalled dump in %s at line %d (built %s)\n", __FILE__, __LINE__, __DATE__);
+    /* Add fprintfs for any other variables you'd like to see here... */
+    fprintf(stderr, "PEDIGREE: %s (%d/%d)\n", 
+	    pPedigree->sPedigreeID, pPedigree->pedigreeIndex+1,
+	    pPedigree->pPedigreeSet->numPedigree);
+    swDump(overallSW);
+    signalSeen = 0;
+  }
+
   if(pPedigree->loopFlag == TRUE)
     {
       populate_pedigree_loopbreaker_genotype_vector(pPedigree);
@@ -2257,6 +2268,12 @@ loop_child_multi_locus_genotype (Person * pChild,
   /* loop through all of this child's compatible genotypes at this locus */
   for (i = 0; i < pParentalPair->pChildGenoLen[child]; i++)
     {
+      if (signalSeen) {
+	fprintf(stderr, "Signalled dump in %s at line %d (built %s)\n", __FILE__, __LINE__, __DATE__);
+	/* Add fprintfs for any other variables you'd like to see here... */
+	swDump(overallSW);
+	signalSeen = 0;
+      }
       pGeno = pParentalPair->pppChildGenoList[child][i];
       /* record the index to the genotype list for this child */
       pHaplo->pChildGenoInd[locus] = i;
