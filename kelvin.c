@@ -3474,7 +3474,7 @@ main (int argc, char *argv[])
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
   swDump (overallSW);
-#ifdef HASHDUMP
+#ifdef DMUSE
   swDumpBlockUse();
 #endif
   swLogMsg("finished run");
