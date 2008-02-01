@@ -211,6 +211,10 @@ main (int argc, char *argv[])
   quitAction.sa_flags = 0;
   sigaction (SIGQUIT, &quitAction, NULL);
 
+#ifdef DMUSE
+#warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+  fprintf (stderr, "Dynamic memory usage dumping is turned on, so performance will be poor!\n");
+#endif
   fprintf (stderr, "To force a dump of stats, type CTRL-\\ (dangerous and terse but always works)\n");
   fprintf (stderr, "or type \"kill -%d %d\" (safe and thorough, but requires program cooperation).\n",
 	   SIGUSR1, getpid ());
@@ -3464,7 +3468,8 @@ main (int argc, char *argv[])
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
   swDump (overallSW);
-  //  swDumpBlockUse();
-
+#ifdef HASHDUMP
+  swDumpBlockUse();
+#endif
   return 0;
 }

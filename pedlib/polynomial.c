@@ -12,11 +12,13 @@
 #include "gsl/gsl_cdf.h"
 
 #include "sw.h"			/* Performance dumps */
-extern overallSW;
-extern signalSeen;		/* Signalled dumps */
+extern struct swStopwatch *overallSW;
+extern struct swStopwatch *signalSeen;		/* Signalled dumps */
 
-// #define malloc(X) swMalloc((X), __FILE__, __LINE__)
-// #define free(X) swFree((X), __FILE__, __LINE__)
+#ifdef DMUSE
+#define malloc(X) swMalloc((X), __FILE__, __LINE__)
+#define free(X) swFree((X), __FILE__, __LINE__)
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //Recursively evaluate a polynomial.  This version of polynomail evaluation doesn't use

@@ -17,11 +17,12 @@ NICEDIR = /usr/local
 #
 #CFLGS	+= -DNOFLOAT 
 CFLGS	+= -Wall			# Always leave this one on
-CFLGS	+= -O3	 			# Production level
+CFLGS	+= -O3	 			# Production level, bad for debug
 #CFLGS  += -g  -DDEBUG		# Debug level
 #CFLGS   += -DNO_POLYNOMIAL
 #CFLGS += -pg                   # profile - debugging 
 #CFLGS += -pedantic   #memory leak tracing
+#CFLGS += -DDMUSE	# Collect and dump dynamic memory usage
 
 .EXPORT_ALL_VARIABLES:
 ######################################################################
