@@ -211,9 +211,15 @@ main (int argc, char *argv[])
   quitAction.sa_flags = 0;
   sigaction (SIGQUIT, &quitAction, NULL);
 
+  /* Annouce ourselves for performance tracking. */
+  char messageBuffer[MAXSWMSG];
+  sprintf(messageBuffer, "At %s(%s %s)%d: %s", __FILE__, __DATE__, __TIME__,
+	  __LINE__, "starting run");
+  swLogMsg(messageBuffer);
+  
 #ifdef DMUSE
 #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
-  fprintf (stderr, "Dynamic memory usage dumping is turned on, so performance will be poor!\n");
+  swLogMsg("Dynamic memory usage dumping is turned on, so performance will be poor!\n");
 #endif
   fprintf (stderr, "To force a dump of stats, type CTRL-\\ (dangerous and terse but always works)\n");
   fprintf (stderr, "or type \"kill -%d %d\" (safe and thorough, but requires program cooperation).\n",
@@ -3471,5 +3477,7 @@ main (int argc, char *argv[])
 #ifdef HASHDUMP
   swDumpBlockUse();
 #endif
+  swLogMsg("finished run");
+
   return 0;
 }
