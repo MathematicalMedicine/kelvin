@@ -26,8 +26,8 @@
 #include "polynomial.h"
 
 #include "sw.h"			/* Performance dumps */
-extern overallSW;
-extern signalSeen;		/* Signalled dumps */
+extern struct swStopwatch *overallSW;
+extern int signalSeen;		/* Signalled dumps */
 
 Genotype **pTempGenoVector;
 
