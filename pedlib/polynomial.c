@@ -17,6 +17,8 @@ extern struct swStopwatch *signalSeen;		/* Signalled dumps */
 
 #ifdef DMUSE
 #define malloc(X) swMalloc((X), __FILE__, __LINE__)
+#define calloc(X,Y) swCalloc((X),(Y), __FILE__, __LINE__)
+#define realloc(X,Y) swRealloc((X),(Y), __FILE__, __LINE__)
 #define free(X) swFree((X), __FILE__, __LINE__)
 #endif
 

@@ -20,7 +20,8 @@ CFLGS	+= -Wall			# Always leave this one on
 CFLGS	+= -O3	 			# Production level, bad for debug
 #CFLGS  += -g  -DDEBUG		# Debug level
 #CFLGS   += -DNO_POLYNOMIAL
-#CFLGS += -pg                   # profile - debugging 
+#CFLGS += -pg                   # profile - debugging, adds 5-10% runtime
+#CFLGS += -fprofile-arcs -ftest-coverage	# coverage - debugging
 #CFLGS += -pedantic   #memory leak tracing
 #CFLGS += -DDMUSE	# Collect and dump dynamic memory usage
 
@@ -44,7 +45,7 @@ CFLGS  += -Wall -I$(INCDIR) -L$(LIBDIR) -I$(NINCDIR) -L$(NLIBDIR)
 ######################################################################
 # File sets. 
 NBIN	= kelvin
-LIB	= -lped -lutils -lgsl -lgslcblas -lsw -lm 
+LIB	= -lped -lutils -lgsl -lgslcblas -lsw -lbj -lm 
 NLIB	= # -lniceapi -lnicecom -lniceaux
 SRC	= kelvin.c config.c ppl.c
 INC	= kelvin.h

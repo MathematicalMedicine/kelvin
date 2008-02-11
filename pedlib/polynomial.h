@@ -7,7 +7,7 @@
 #define SUM_HASH_SIZE      1999993
 #define PRODUCT_HASH_SIZE  1999993
 #define FUNCTIONCALL_HASH_SIZE 99991
-#define HASH_TABLE_INCREASE 20
+#define HASH_TABLE_INCREASE 4
 #include <stdarg.h>
 #include <time.h>
 

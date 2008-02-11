@@ -16,10 +16,30 @@
 
 #include "sw.h"			/* Performance dumps */
 struct swStopwatch *overallSW;
+#ifdef DMUSE
+extern double totalMalloc, totalFree, totalReallocOK, totalReallocMove, totalReallocFree, 
+  currentAlloc, peakAlloc;
+extern int countMalloc, countFree, countReallocOK, countReallocMove, countReallocFree,
+  maxListDepth, maxRecycles;
+#endif
 #include <signal.h>		/* Signalled dumps */
 volatile sig_atomic_t signalSeen = 0;
 void usr1SignalHandler (int signal) { signalSeen = 1; }
-void quitSignalHandler (int signal) { swDump(overallSW); }
+void quitSignalHandler (int signal) {
+  swDump (overallSW);
+#ifdef DMUSE
+  char messageBuffer[MAXSWMSG];
+  sprintf (messageBuffer,
+	   "Count malloc: %d, free: %d, realloc OK: %d, realloc move: %d, realloc free: %d, max depth: %d, max recycles: %d",
+	   countMalloc, countFree, countReallocOK, countReallocMove, countReallocFree, maxListDepth, maxRecycles);
+  swLogMsg (messageBuffer);
+  sprintf (messageBuffer,
+	   "Size malloc: %g, free: %g, realloc OK: %g, realloc move: %g, realloc free: %g, current: %g, peak: %g",
+	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
+	   totalReallocFree, currentAlloc, peakAlloc);
+  swLogMsg (messageBuffer);
+#endif
+}
 
 /* Some default global values. */
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
