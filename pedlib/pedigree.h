@@ -66,6 +66,8 @@ typedef struct PedigreeSet
   char sUnknownID[MAX_PED_LABEL_LEN];
 
   /* likelihood holder */
+  double markerLikelihood;
+  double log10MarkerLikelihood;
   double *nullLikelihood;
   double likelihood;
   double log10Likelihood;
@@ -155,9 +157,12 @@ typedef struct Pedigree
 
   /* likelihood holder */
   double likelihood;
+  double markerLikelihood;
 #ifndef NO_POLYNOMIAL
   struct polynomial *likelihoodPolynomial;
   struct polyList *likelihoodPolyList;
+  struct polynomial *traitLikelihoodPolynomial;
+  struct polyList *traitLikelihoodPolyList;
 #endif
 
   /* Internal counters for memory allocation */

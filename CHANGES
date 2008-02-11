@@ -1,3 +1,9 @@
+Version 0.32.0
+  For NULL, instead of calculate L(T, M1,M2), we do L(T)*L(M1,M2) as 
+  trait and marker loci are indepdent under NULL. This approach speeds
+  up multipoint calculation up to 50%
+  Allow half typed genotypes
+
 Version 0.0.31:
   Add loop handling 
 

@@ -678,12 +678,42 @@ create_baseline_marker_genotypes (int locus, Pedigree * pPedigree)
 	}
       else
 	{
-	  /* marker phenotype is not known, add all possible combinations */
-	  allele1 = 1;
-	  allele2 = 1;
-	  for (allele1 = 1; allele1 <= pLocus->numAllele; allele1++)
+	  if (pPerson->pPhenotypeList[0][locus] == 0 &&
+	      pPerson->pPhenotypeList[1][locus] == 0)
 	    {
-	      for (allele2 = allele1; allele2 <= pLocus->numAllele; allele2++)
+	      /* marker phenotype is not known, add all possible combinations */
+	      allele1 = 1;
+	      allele2 = 1;
+	      for (allele1 = 1; allele1 <= pLocus->numAllele; allele1++)
+		{
+		  for (allele2 = allele1; allele2 <= pLocus->numAllele; allele2++)
+		    {
+		      /* for X chromosome, only add homozygous genotypes for MALE */
+		      if (modelOptions.sexLinked && pPerson->sex + 1 == MALE &&
+			  allele1 != allele2)
+			continue;
+		      pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
+						&pPerson->pNumGenotype[locus],
+						locus, allele1, allele2);
+		      if (allele2 != allele1)
+			{
+			  pGenotype2 =
+			    add_genotype (&pPerson->ppGenotypeList[locus],
+					  &pPerson->pNumGenotype[locus], locus,
+					  allele2, allele1);
+			  pGenotype->pDualGenotype = pGenotype2;
+			  pGenotype2->pDualGenotype = pGenotype;
+			}
+		    } /* end of allele2 loop */
+		} /* end of allele1 loop */
+	    }
+	  else	      /* must be half typed */
+	    {
+	      if (pPerson->pPhenotypeList[0][locus] != 0)
+		allele1 = pPerson->pPhenotypeList[0][locus];
+	      else
+		allele1 = pPerson->pPhenotypeList[1][locus];
+	      for (allele2 = 1; allele2 <= pLocus->numAllele; allele2++)
 		{
 		  /* for X chromosome, only add homozygous genotypes for MALE */
 		  if (modelOptions.sexLinked && pPerson->sex + 1 == MALE &&
@@ -701,10 +731,10 @@ create_baseline_marker_genotypes (int locus, Pedigree * pPedigree)
 		      pGenotype->pDualGenotype = pGenotype2;
 		      pGenotype2->pDualGenotype = pGenotype;
 		    }
-		}
-	    }
-	}
-    }
+		} /* end of allele2 loop */
+	    } /* half typed */
+	} /* not typed or not fully typed */
+    } /* loop of persons in a pedigree */
 
   return 0;
 }
@@ -783,7 +813,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 		}
 	      else
 		{
-//              if ( pen > 0) {
+              if ( pen > 0) {
 		  pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
 					    &pPerson->pNumGenotype[locus],
 					    locus, allele1, allele2);
@@ -798,10 +828,10 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 		      pGenotype2->pDualGenotype = pGenotype;
 		      pGenotype2->penslot.penetrance = pen;
 		    }
-//              }
+              }
 		}
 #else
-//      if ( pen > 0) {
+      if ( pen > 0) {
 	      pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
 					&pPerson->pNumGenotype[locus],
 					locus, allele1, allele2);
@@ -815,7 +845,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 		  pGenotype2->pDualGenotype = pGenotype;
 		  pGenotype2->penslot.penetrance = pen;
 		}
-//      }
+      }
 #endif
 	    }
 	}

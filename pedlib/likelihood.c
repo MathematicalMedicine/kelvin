@@ -25,10 +25,6 @@
 #include "genotype_elimination.h"
 #include "polynomial.h"
 
-#include "sw.h"			/* Performance dumps */
-extern struct swStopwatch *overallSW;
-extern int signalSeen;		/* Signalled dumps */
-
 Genotype **pTempGenoVector;
 
 /* transmission probability matrix */
@@ -175,11 +171,13 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   double product_likelihood = 1;	/* product of the likelihoods for all the pedigrees */
   double sum_log_likelihood = 0;	/* sum of the log10(likelihood) for all the pedigrees */
   double log10Likelihood;
-  int origLocus = locusList->pLocusIndex[1];	/* locus index in the original locus list 
+  int origLocus  = 0;	/* locus index in the original locus list 
 						 * this is used to find out the pedigree counts
 						 * mainly for case control analyses 
 						 */
 
+  if(locusList->numLocus > 1)
+    origLocus = locusList->pLocusIndex[1];
 
   /* initialization */
   sum_log_likelihood = 0;
@@ -326,16 +324,9 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 #endif
   int ret = 0;
 
-  if (signalSeen) {
-    fprintf(stderr, "Signalled dump in %s at line %d (built %s)\n", __FILE__, __LINE__, __DATE__);
-    /* Add fprintfs for any other variables you'd like to see here... */
-    fprintf(stderr, "PEDIGREE: %s (%d/%d)\n", 
-	    pPedigree->sPedigreeID, pPedigree->pedigreeIndex+1,
-	    pPedigree->pPedigreeSet->numPedigree);
-    swDump(overallSW);
-    signalSeen = 0;
-  }
-
+  fprintf(stderr, "PEDIGREE: %s (%d/%d)\n", 
+       pPedigree->sPedigreeID, pPedigree->pedigreeIndex+1,
+       pPedigree->pPedigreeSet->numPedigree);
   if(pPedigree->loopFlag == TRUE)
     {
       populate_pedigree_loopbreaker_genotype_vector(pPedigree);
@@ -604,11 +595,13 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
 #ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE)
 	    {
+#if 0
 	      KLOG (LOGLIKELIHOOD, LOGDEBUG,
 		    "Proband %s Conditional Likelihood (%d) = %e. Weight = %e\n",
 		    pProband->sID, i,
 		    evaluateValue(pProband->pLikelihood[i].lkslot.likelihoodPolynomial),
 		    evaluateValue(pProband->pLikelihood[i].wtslot.weightPolynomial));
+#endif
 	    }
 	  else
 	    {
@@ -783,10 +776,12 @@ loop_child_proband_genotype (NuclearFamily * pNucFam,
 		  //fprintf(stderr,"Likelihood for this entire multi-locus genotype %f %f\n",
 		  //evaluateValue(pNucFam->likelihoodPolynomial),
 		  //evaluateValue(pProband->pLikelihood[multiLocusIndex].likelihoodPolynomial));
+#if 0
 		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 			"Proband %s Conditional Likelihood (%d) = %e.\n",
 			pProband->sID, multiLocusIndex,
 			evaluateValue(pProband->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial));
+#endif
 		}
 	      else
 		{
@@ -1454,12 +1449,14 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 #ifndef NO_POLYNOMIAL
 		  if (modelOptions.polynomial == TRUE)
 		    {
+#if 0
 		    KLOG (LOGLIKELIHOOD, LOGDEBUG,
 			  "\t\t likelihood (%d) = %e\n",
 			  ppairMatrix[phase[proband]][phase[spouse]].
 			  likelihoodIndex,
 			  evaluateValue(ppairMatrix[phase[proband]][phase[spouse]].slot.
 					likelihoodPolynomial));
+#endif
 		    }
 		  else
 		    KLOG (LOGLIKELIHOOD, LOGDEBUG,
@@ -1810,6 +1807,7 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 			      1,
 			      penetrancePolynomial[spouse],
 			      1, childProductPolynomial, 1, 0);
+#if 0
 		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 			"\t\t likelihood (%d) = %e\n",
 			ppairMatrix[multiLocusPhase[proband]][multiLocusPhase
@@ -1818,6 +1816,7 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 			evaluateValue(ppairMatrix[multiLocusPhase[proband]]
 				      [multiLocusPhase[spouse]].slot.
 				      likelihoodPolynomial));
+#endif
 		}
 	      else
 		{
@@ -2078,11 +2077,13 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 		  1,
 		  penetrancePolynomial[spouse],
 		  1, childProductPolynomial, 1, 0);
+#if 0
       KLOG (LOGLIKELIHOOD, LOGDEBUG, "\t\t likelihood (%d) = %e\n",
 	    ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
 	    likelihoodIndex,
 	    evaluateValue(ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
 			  slot.likelihoodPolynomial));
+#endif
     }
   else
     {
@@ -2268,12 +2269,6 @@ loop_child_multi_locus_genotype (Person * pChild,
   /* loop through all of this child's compatible genotypes at this locus */
   for (i = 0; i < pParentalPair->pChildGenoLen[child]; i++)
     {
-      if (signalSeen) {
-	fprintf(stderr, "Signalled dump in %s at line %d (built %s)\n", __FILE__, __LINE__, __DATE__);
-	/* Add fprintfs for any other variables you'd like to see here... */
-	swDump(overallSW);
-	signalSeen = 0;
-      }
       pGeno = pParentalPair->pppChildGenoList[child][i];
       /* record the index to the genotype list for this child */
       pHaplo->pChildGenoInd[locus] = i;
@@ -2342,6 +2337,7 @@ loop_child_multi_locus_genotype (Person * pChild,
 			      probPoly[DAD + 1], 1,
 			      xmissionMatrix[newXmissionIndex[MOM]].slot.
 			      probPoly[MOM + 1], 1, 0);
+#if 0
 		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 			"\t xmission prob: %f = %f * %f\n", 
 			evaluateValue(newProbPolynomial),
@@ -2349,6 +2345,7 @@ loop_child_multi_locus_genotype (Person * pChild,
 											  1]),
 			evaluateValue(xmissionMatrix[newXmissionIndex[MOM]].slot.probPoly[MOM +
 									    1]));
+#endif
 		}
 	      else
 		{
@@ -2389,9 +2386,11 @@ loop_child_multi_locus_genotype (Person * pChild,
 			  /* some likelihood calculation has been calculated for this child */
 			  *(Polynomial **) pSum = plusExp (2, 1.0, *(Polynomial **) pSum, 1.0, timesExp (2, newProbPolynomial, 1, pChild->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial, 1, 0),	//end of timesExp
 							   1);	//end of plusExp
+#if 0
 			  KLOG(LOGLIKELIHOOD, LOGDEBUG, 
 			       "\t use already calculated child prob %e \n", 
 			       evaluateValue(pChild->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial));
+#endif
 			}
 		      else if (locusList->traitLocusIndex >= 0)
 			/* first time working on this child's current multilocus genotype 
@@ -2428,9 +2427,11 @@ loop_child_multi_locus_genotype (Person * pChild,
 						       1.0,
 						       newProbPolynomial, 1);
 		    }
+#if 0		
 		  KLOG(LOGLIKELIHOOD, LOGDEBUG, 
 		       "\t child sum %e \n", 
 		       evaluateValue(*(Polynomial **)pSum));
+#endif
 		}
 	      else		/* PE is not turned on */
 		{
@@ -3083,8 +3084,8 @@ build_xmission_matrix (XMission ** ppMatrix, int totalLoci)
   *ppMatrix = NULL;
   size = pow (3, totalLoci);
   /* minimal two loci */
-  if (size < 9)
-    size = 9;
+  //  if (size < 9)
+  //size = 9;
   *ppMatrix = (XMission *) calloc (size, sizeof (XMission));
   if (*ppMatrix == NULL)
     /* memory allocation failed */

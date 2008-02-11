@@ -162,7 +162,7 @@ double evaluateValue(struct polynomial *p)
            }
            else if(strcmp(fp->name,"sqrt")==0)
            {
-              result=sqrt(fp->para[0]->value);
+              result=sqrt(evaluateValue(fp->para[0]));
            }
            else
            {
@@ -356,14 +356,6 @@ void insertHashTable(struct hashStruct *hash, int location, int key, int index)
       //Insert the new polynomiual in the hash table
       hash->key[location]   = key;
       hash->index[location] = index;
-
-
-      //This piece of code is for performance evaluation
-      if(hash->num>maxHashLength)
-      {
-          maxHash=hash;
-          maxHashLength=hash->num;
-      }
 
 };
 
@@ -899,11 +891,6 @@ struct polynomial *plusExp(int num, ...)
 
 //flag=0;
 
-   if(flag==0)
-       sum0++;
-   else
-       sum1++;
-
    //merge the collected polynomial terms to form a sum polynomial
    counterSum=counter_v1+counter_p1+counter_f1;
    //make sure memory is enough for terms merging
@@ -941,7 +928,6 @@ struct polynomial *plusExp(int num, ...)
    if(counterSum==0)
    {
       rp=constantExp(con);
-      sum2++;
       return rp;
    }
    //We have only one term for this polynomial.  There is no
@@ -949,7 +935,6 @@ struct polynomial *plusExp(int num, ...)
    else if(con==0.0 && counterSum==1 && factorSum[0]==1.0)
    {
       rp=pSum[0];
-      sum3++;
       return rp;
    }
    //The result of plus operation is a more than 2 terms of sum polynomial
@@ -1004,7 +989,6 @@ struct polynomial *plusExp(int num, ...)
 	                 if(k>=counterSum)
 	                 {
                              sumList[sIndex]->count=2;
-                             sum4++;
 	                     return sumList[sIndex];
 	                 }
 	             } //end of if(counter==sumList[sIndex]->e.s->num)
@@ -1107,36 +1091,12 @@ struct polynomial *plusExp(int num, ...)
       rp->valid     = 0;
       rp->count     = 1;
 
-
-      //This piece of code is for performance test
-      numSumTerms+=counterSum;
-       if(counterSum>maxSumLength)
-            maxSumLength=counterSum;
-       if(counterSum>sizeSumLength)
-       {
-          countSumLength=realloc(countSumLength,sizeof(int)*(counterSum+30));
-          if(countSumLength==NULL)
-          {
-             fprintf(stderr,"Memory allocation error, exit!\n");
-             exit(1);
-          }
-          for(i=sizeSumLength;i<counterSum+30;i++)
-          {
-             countSumLength[i]=0;
-          }
-          sizeSumLength=counterSum+30;
-       }
-       countSumLength[counterSum-1]++;
-
-
-
       //Insert the new built polynomial in sum list
 
       //If the first polynomial is the parameter list is freed, its position
       //in the polynomial list is occupied by the newly created sum polynomial
       if(flag!=0 && p0EType==T_SUM && p0Count==1)
       {
-              sum11++;
               sumList[p0Index]=rp;
               sumList[p0Index]->index = p0Index;
               sumList[p0Index]->id   = p0Id;
@@ -1144,7 +1104,6 @@ struct polynomial *plusExp(int num, ...)
       //otherwise, insert the new polynomial is the sum polynomial list
       else
       {
-              sum00++;
 	      if(sumCount>=sumListLength){
 	         sumListLength+=10000;
 	         sumList=realloc(sumList,sumListLength*sizeof(struct polynomial *));
@@ -1200,7 +1159,6 @@ struct polynomial *plusExp(int num, ...)
               insertHashTable(&sumHash[hIndex],location,key,sumCount-1);
      }
 
-     sum5++;
      return rp;
 };
 
@@ -1424,20 +1382,10 @@ struct polynomial *timesExp(int num,...)
    flag= va_arg( args, int );
    va_end(args);
    
-   
-
-   //This is for performance checking use                                                        
-   if(flag==0)
-       product0++;
-   else
-       product1++;
-
-
    //The product is zero, a zero polynomial is returned
    if(isZero)
    {
       rp=constantExp(0.0);
-      product2++;
       return rp;
    }
 
@@ -1474,7 +1422,6 @@ struct polynomial *timesExp(int num,...)
    if(counterProd==0)
    {
       rp=constantExp(factor);
-      product3++;
       return rp;
    }
    //If the result polynomial has only one term, it is not a product polynomial
@@ -1484,14 +1431,12 @@ struct polynomial *timesExp(int num,...)
       if(factor==1.0)
       {
          rp=pProd[0];
-         product4++;
          return rp;
       }
       //If the factor is not 1, then the result polynomial is a sum polynomial
       else
       {
          rp=plusExp(1,factor,pProd[0],0);
-         product5++;
          return rp;
       }
    }
@@ -1541,7 +1486,6 @@ struct polynomial *timesExp(int num,...)
                              //the attribute count is used as a sign to show that this polynomial is
                              //refered in more than one places so that it can't be freed
                              productList[pIndex]->count=2;
-                             product6++;
 	                     return productList[pIndex];
 	                  }
                           //this product polynomail has been existing so that we don't need to construct a 
@@ -1549,7 +1493,6 @@ struct polynomial *timesExp(int num,...)
                           //a sum polynomial
 	                  else
 	                  {
-                             product7++;
                              productList[pIndex]->count=2;
 	                     return plusExp(1,factor, productList[pIndex],0);
 	                  }
@@ -1655,31 +1598,6 @@ struct polynomial *timesExp(int num,...)
       rp->count=1;
 
 
-
-      //This piece of code is for performance evaluation
-      numProductTerms+=counterProd;
-       if(counterProd>maxProductLength)
-            maxProductLength=counterProd;
-       if(counterProd>sizeProductLength)
-       {
-          countProductLength=realloc(countProductLength,sizeof(int)*(counterProd+30));
-          if(countProductLength==NULL)
-          {
-             fprintf(stderr,"Memory allocation error, exit!\n");
-             exit(1);
-          }
-          for(i=sizeProductLength;i<counterProd+30;i++)
-          {
-             countProductLength[i]=0;
-          }
-          sizeProductLength=counterProd+30;
-       }
-       countProductLength[counterProd-1]++;
- 
-
-
-
- 
       //After the new polynomial is built, it is recorded in the product polynomial list
       if(productCount>=productListLength){
          productListLength+=10000;
@@ -1696,7 +1614,6 @@ struct polynomial *timesExp(int num,...)
       if(flag!=0 && p0EType==T_PRODUCT && p0Count==1)
       {
               //Assign the resource of the freed polynomial to the newly constructed polynomial
-              product11++;
               productList[p0Index]=rp;
               productList[p0Index]->index = p0Index;
               productList[p0Index]->id   = p0Id;
@@ -1704,7 +1621,6 @@ struct polynomial *timesExp(int num,...)
       else
       {
               //save the newly constructed polynomial in the polynomial list
-              product00++;
               productList[productCount]=rp;
               productList[productCount]->index=productCount;
               productList[productCount]->id=nodeId;
@@ -1760,13 +1676,11 @@ struct polynomial *timesExp(int num,...)
       //If the factor is 1, return a product polynomial
       if(factor==1.0)
       {
-        product8++;
         return rp;
       }
       //If the factor is not 1, return a sum polynomial
       else
       {
-        product9++;
         return plusExp(1,factor,rp,0);
       }
    }
@@ -2226,8 +2140,8 @@ double evaluatePoly(struct polynomial *pp, struct polyList *l)
 //      expPrinting(p);
 //      fprintf(stderr,"\n");
       switch(p->eType){
-//        case T_CONSTANT:
-//             break;
+        case T_CONSTANT:
+             break;
         //Read the value of the variable
         case T_VARIABLE:
              if(p->e.v->vType=='D')
@@ -2345,7 +2259,7 @@ double evaluatePoly(struct polynomial *pp, struct polyList *l)
            }
            else if(strcmp(p->e.f->name,"exp")==0)
            {
-              p->value=exp(evaluateValue(p->e.f->para[0]));              
+              p->value=exp(p->e.f->para[0]->value);              
            }
            else if(strcmp(p->e.f->name,"sqrt")==0)
            {
@@ -2438,39 +2352,6 @@ void polynomialInitialization()
    int i;
 
    startTime=currentTime=clock();
-
-   //These variables are for performance evaluation
-   maxHashLength=0;  
-   sum0=0;
-   sum1=0;
-   sum2=0;
-   sum3=0;
-   sum4=0;
-   sum5=0;
-   sum00=0;
-   sum11=0;
-   product0=0;
-   product1=0;
-   product2=0;
-   product3=0;
-   product4=0;
-   product5=0;
-   product6=0;
-   product7=0;
-   product8=0;
-   product9=0;
-   product00=0;
-   product11=0;
-   numSumTerms=0;
-   numProductTerms=0;
-   maxSumLength=maxProductLength=0;
-   countSumLength=countProductLength=NULL;
-   sizeSumLength=sizeProductLength=0;
-
-
-
-
-
 
    //Each polynomial has a unique ID
    nodeId=0;
@@ -3436,44 +3317,9 @@ void polyStatistics(FILE *fp)
                        sumSize,productSize,functionCallSize,
   		       constantSize+variableSize+sumSize+productSize+functionCallSize);
 
-   fprintf(stderr,"sum0=%d sum1=%d sum2=%d sum3=%d sum4=%d sum5=%d sum00=%d sum11=%d\n",
-                   sum0,sum1,sum2,sum3,sum4,sum5,sum00,sum11);
-   fprintf(stderr,"product0=%d product1=%d product2=%d product3=%d product4=%d product5=%d product6=%d product7=%d product8=%d product9=%d product00=%d product11=%d \n", 
-                    product0, product1, product2, product3,product4,product5,product6,product7,product8,product9, product00,product11);
-   fprintf(stderr,"time=%f  %f  maxHashLength=%d numSumTerms=%d numProductTerms=%d ",(double) (time0 - currentTime) / CLOCKS_PER_SEC, 
-							(double) (time0 - startTime) / CLOCKS_PER_SEC,
-						      maxHashLength,numSumTerms,numProductTerms);
-   if(sum00+sum11>0)
-      fprintf(stderr,"average sum length: %f ",numSumTerms*1.0/(sum00+sum11));
-   if(product00+product11>0)
-     fprintf(stderr,"average prod length: %f ",numProductTerms*1.0/(product00+product11));
-   fprintf(stderr,"\n");
-
-   fprintf(stderr,"maxSumLength=%d\n",maxSumLength);
-   for(i=0;i<maxSumLength;i++)
-     if(countSumLength[i]>0)
-     {
-       fprintf(stderr,"(s%d %d) ",i+1,countSumLength[i]);
-       countSumLength[i]=0;
-     }
-   fprintf(stderr,"\n");
-   fprintf(stderr,"maxProductLength=%d\n",maxProductLength);
-   for(i=0;i<maxProductLength;i++)
-     if(countProductLength[i]>0)
-     {
-       fprintf(stderr,"(p%d %d) ",i+1,countProductLength[i]);
-       countProductLength[i]=0;
-     }
-   fprintf(stderr,"\n\n");
-
-
+   fprintf(stderr,"time=%f  %f  \n",(double) (time0 - currentTime) / CLOCKS_PER_SEC, 
+							(double) (time0 - startTime) / CLOCKS_PER_SEC);
    currentTime=time0;
-
-   sum0=sum1=sum2=sum3=sum4=sum5=sum00=sum11=0;
-   product0=product1=product2=product3=product4=product5=product6=product7=product8=product9=product00=product11=0;
-   numSumTerms=0;
-   numProductTerms=0;
-
 
    if(fp!=NULL)
    fprintf(fp," %10ld   %10ld   %10ld   %10ld   %10ld   %10ld (%d  %d)\n",constantSize,variableSize,sumSize,productSize,functionCallSize,

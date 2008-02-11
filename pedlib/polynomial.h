@@ -7,7 +7,7 @@
 #define SUM_HASH_SIZE      1999993
 #define PRODUCT_HASH_SIZE  1999993
 #define FUNCTIONCALL_HASH_SIZE 99991
-#define HASH_TABLE_INCREASE 4
+#define HASH_TABLE_INCREASE 20
 #include <stdarg.h>
 #include <time.h>
 
@@ -15,14 +15,6 @@
 //following variables are for debugging
 clock_t startTime;
 clock_t currentTime; 
-int maxHashLength;
-struct hashStruct *maxHash;
-int sum0,sum1,sum2,sum3,sum4,sum5,sum00, sum11;
-int product0, product1, product2, product3,product4,product5,product6,product7,product8,product9, product00,product11;
-int numSumTerms,numProductTerms;
-int maxSumLength,maxProductLength;
-int *countSumLength, *countProductLength;
-int sizeSumLength, sizeProductLength;
 
 //This is a global variable used for giving each polynomial an unique ID
 //so that we can know if two polynomials are the same just from their IDs

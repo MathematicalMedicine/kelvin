@@ -370,38 +370,44 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	       "Line %d in pedfile %s doesn't have enough columns. Is this a post-makeped file? \n",
 	       lineNo, sPedfileName);
       /* check whether this locus is untyped */
-      if (pPerson->pPhenotypeList[0][numMarker] == 0)
+      if (pPerson->pPhenotypeList[0][numMarker] == 0 || pPerson->pPhenotypeList[1][numMarker] == 0)
 	pPerson->pTypedFlag[numMarker] = 0;
       else
+	pPerson->pTypedFlag[numMarker] = 1;
+      
+      if (pPerson->pPhenotypeList[0][numMarker] != 0)
 	{
-	  pPerson->pTypedFlag[numMarker] = 1;
 	  sprintf (tmpStr, "%d", pPerson->pPhenotypeList[0][numMarker]);
 	  ret = find_allele (numMarker, tmpStr);
 	  pPerson->pPhenotypeList[0][numMarker] = ret;
 	  KASSERT (ret >= 0,
 		   "Line %d in pedfile %s contains a genotype with unkown allele %s at locus %s.\n",
 		   lineNo, sPedfileName, tmpStr, pLocus->sName);
+	}
+      if (pPerson->pPhenotypeList[1][numMarker] != 0)
+	{
 	  sprintf (tmpStr, "%d", pPerson->pPhenotypeList[1][numMarker]);
 	  ret = find_allele (numMarker, tmpStr);
 	  pPerson->pPhenotypeList[1][numMarker] = ret;
 	  KASSERT (ret >= 0,
 		   "Line %d in pedfile %s contains a genotype with unkown allele %s at locus %s.\n",
 		   lineNo, sPedfileName, tmpStr, pLocus->sName);
-
-	  /* if this is X chromosome and this person is a male, then the genotype needs to be 
-	   * homozygous */
-	  if (modelOptions.sexLinked && pPerson->sex == 0
-	      && pPerson->pPhenotypeList[0][numMarker] !=
-	      pPerson->pPhenotypeList[1][numMarker])
-	    {
-	      KASSERT (0 == 1,
-		       "Line %d in pedfile %s contains heterozygous genotype(%d, %d) for a male at locus %s while doing X chromosome analysis.\n",
-		       lineNo, sPedfileName,
-		       pPerson->pPhenotypeList[0][numMarker],
-		       pPerson->pPhenotypeList[1][numMarker], pLocus->sName);
-
-	    }
 	}
+
+      /* if this is X chromosome and this person is a male, then the genotype needs to be 
+	   * homozygous */
+      if (modelOptions.sexLinked && pPerson->sex == 0
+	  && pPerson->pPhenotypeList[0][numMarker] !=
+	  pPerson->pPhenotypeList[1][numMarker])
+	{
+	  KASSERT (0 == 1,
+		   "Line %d in pedfile %s contains heterozygous genotype(%d, %d) for a male at locus %s while doing X chromosome analysis.\n",
+		   lineNo, sPedfileName,
+		   pPerson->pPhenotypeList[0][numMarker],
+		   pPerson->pPhenotypeList[1][numMarker], pLocus->sName);
+	  
+	}
+      
       numMarker++;
       /* move the line buffer over to the next pair */
       pLine = &pLine[pos];
