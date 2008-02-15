@@ -11,6 +11,22 @@
 #include <stdarg.h>
 #include <time.h>
 
+#ifdef DMUSE
+#warning "Static replacment of small-size dynamic memory requests is turned on!"
+#define malloc(X) swMalloc((X), __FILE__, __LINE__)
+#define calloc(X,Y) swCalloc((X),(Y), __FILE__, __LINE__)
+#define realloc(X,Y) swRealloc((X),(Y), __FILE__, __LINE__)
+#define free(X) swFree((X), __FILE__, __LINE__)
+#endif
+#ifdef DMTRACK
+#warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+#ifndef DMUSE
+#define malloc(X) swMalloc((X), __FILE__, __LINE__)
+#define calloc(X,Y) swCalloc((X),(Y), __FILE__, __LINE__)
+#define realloc(X,Y) swRealloc((X),(Y), __FILE__, __LINE__)
+#define free(X) swFree((X), __FILE__, __LINE__)
+#endif
+#endif
 
 //following variables are for debugging
 clock_t startTime;

@@ -29,5 +29,5 @@ void swFree(void *, char *, int);
 void swDumpBlockUse();
 int udpSend(char *, int, char *);
 void swLogMsg(char *);
-void swAddChunk (void *, size_t);
-size_t swDelChunk (void *);
+void swAddChunk (void *, size_t, char *, int);
+size_t swDelChunk (void *, char *, int);

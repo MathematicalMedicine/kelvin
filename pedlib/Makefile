@@ -9,8 +9,10 @@
 #
 # -DNO_POLYNOMIAL removes the polynomial version of the code.
 ##CC = gcc
-#CFLGS = -g -Wall
+CFLGS = -g -Wall
 #CFLGS += -DNO_POLYNOMIAL
+#CFLGS += -DDMUSE
+#CFLGS += -DDMTRACK
 
 ######################################################################
 # No user changes below this point!

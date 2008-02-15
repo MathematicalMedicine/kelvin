@@ -17,6 +17,9 @@
 #include "sw.h"			/* Performance dumps */
 struct swStopwatch *overallSW;
 #ifdef DMUSE
+extern int used24s, used48s, used100s, missed24s, missed48s, missed100s;
+#endif
+#ifdef DMTRACK
 extern double totalMalloc, totalFree, totalReallocOK, totalReallocMove, totalReallocFree, 
   currentAlloc, peakAlloc;
 extern int countMalloc, countFree, countReallocOK, countReallocMove, countReallocFree,
@@ -27,7 +30,7 @@ volatile sig_atomic_t signalSeen = 0;
 void usr1SignalHandler (int signal) { signalSeen = 1; }
 void quitSignalHandler (int signal) {
   swDump (overallSW);
-#ifdef DMUSE
+#ifdef DMTRACK
   char messageBuffer[MAXSWMSG];
   sprintf (messageBuffer,
 	   "Count malloc: %d, free: %d, realloc OK: %d, realloc move: %d, realloc free: %d, max depth: %d, max recycles: %d",
@@ -242,7 +245,7 @@ main (int argc, char *argv[])
 	  __LINE__, "starting run");
   swLogMsg(messageBuffer);
   
-#ifdef DMUSE
+#ifdef DMTRACK
 #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
   swLogMsg("Dynamic memory usage dumping is turned on, so performance will be poor!\n");
 #endif
@@ -3529,6 +3532,10 @@ main (int argc, char *argv[])
   swStop (overallSW);
   swDump (overallSW);
 #ifdef DMUSE
+  printf("Missed/Used %d/%d 24s, %d/%d 48s, %d/%d 100s\n",
+	 missed24s, used24s, missed48s, used48s, missed100s, used100s);
+#endif
+#ifdef DMTRACK
   swDumpBlockUse();
 #endif
   swLogMsg("finished run");

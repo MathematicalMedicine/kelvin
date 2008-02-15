@@ -22,6 +22,29 @@ extern struct swStopwatch *signalSeen;		/* Signalled dumps */
 #define free(X) swFree((X), __FILE__, __LINE__)
 #endif
 
+long constantPs = 0, constantHashPs = 0, variablePs = 0, variableHashPs = 0,
+  sumPs = 0, sumHashPs = 0, productPs = 0, productHashPs = 0,
+  functionPs = 0, functionHashPs = 0;
+long peakConstantPs = 0, peakVariablePs = 0, peakSumPs = 0, peakProductPs = 0, peakFunctionPs = 0;
+long constantPLExpansions = 0, variablePLExpansions = 0;
+
+/* For use in other modules.
+extern long constantPs, constantHashPs, variablePs, variableHashPs,
+  sumPs, sumHashPs, productPs, productHashPs,
+  functionPs, functionHashPs;
+extern long peakConstantPs, peakVariablePs, peakSumPs, peakProductPs, peakFunctionPs;
+*/
+
+void dumpPStats() {
+  char messageBuffer[132];
+  sprintf(messageBuffer, "Constant Ps: %ul, HPs: %ul, Variable Ps: %ul, HPs: %ul, Sum Ps: %ul, HPs: %ul\n",
+	  constantPs, constantHashPs, variablePs, variableHashPs, sumPs, sumHashPs);
+  fprintf(stderr, messageBuffer);
+  sprintf(messageBuffer, "Product Ps: %ul, HPs: %ul, Function Ps: %ul, HPs: %ul\n",
+	  productPs, productHashPs, functionPs, functionHashPs);
+  fprintf(stderr, messageBuffer);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //Recursively evaluate a polynomial.  This version of polynomail evaluation doesn't use
 //polynomial sorting list.  It just compute the values of each sub polynomial recursively.  
@@ -448,8 +471,9 @@ struct polynomial *constantExp(double con)
                  //Compare if the two constants are the same
 	         if(tempI2==tempI1 && (int)(tempD2*100000000)==(int)(tempD1*100000000))
 	         {
-	                 //if the two constants are the same, return the constant in the constant list 
-	                 return constantList[cIndex];
+		   //if the two constants are the same, return the constant in the constant list 
+		   constantHashPs++;
+		   return constantList[cIndex];
 	         } 
             } 
 	    location=last;
@@ -471,6 +495,8 @@ struct polynomial *constantExp(double con)
   //next, insert it into the constant list
 
   //Generate a constant polynomial
+  constantPs++;
+  if (constantPs > peakConstantPs) peakConstantPs = constantPs;
   p=(struct polynomial *)malloc(sizeof(struct polynomial));
   if(p==NULL)
   {
@@ -483,6 +509,7 @@ struct polynomial *constantExp(double con)
   //check if the constant polynomial list is full.  Apply for more items if it is full
   if(constantCount>=constantListLength)
   {
+    constantPLExpansions++;
          constantListLength+=1000;
          constantList=realloc(constantList,constantListLength*sizeof(struct polynomial *));
          if(constantList==NULL)
@@ -574,6 +601,7 @@ struct polynomial *variableExp(double *vD, int *vI, char vType, char name[10])
                  if((vType=='D' && variableList[vIndex]->e.v->vAddr.vAddrD==vD) || (vType=='I' && variableList[vIndex]->e.v->vAddr.vAddrI==vI))
 	         {
 	                 //if the two variables are the same, return the variable in the variable list 
+		   variableHashPs++;
 	                 return variableList[vIndex];
 	         } 
 	      } 
@@ -595,6 +623,8 @@ struct polynomial *variableExp(double *vD, int *vI, char vType, char name[10])
 
 
   //This variable polynomial doesn't exist.  We create a new variable polynomial
+  variablePs++;
+  if (variablePs > peakVariablePs) peakVariablePs = variablePs;
   p=(struct polynomial *)malloc(sizeof(struct polynomial));
   vPoly=(struct variablePoly *)malloc(sizeof(struct variablePoly));
   if(p==NULL || vPoly==NULL)
@@ -611,6 +641,7 @@ struct polynomial *variableExp(double *vD, int *vI, char vType, char name[10])
   //If the polynomial list is full, apply for more memory
   if(variableCount>=variableListLength)
   {
+    variablePLExpansions++;
          variableListLength+=50;
          variableList=realloc(variableList,variableListLength*sizeof(struct polynomial *));
          if(variableList==NULL)
