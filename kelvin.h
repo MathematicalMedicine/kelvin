@@ -27,6 +27,7 @@
 #include "RADSMM.h"		/* RADSMM library. */
 #endif
 
+#include "sw.h"
 #ifdef DMUSE
 #define malloc(X) swMalloc((X), __FILE__, __LINE__)
 #define calloc(X,Y) swCalloc((X),(Y), __FILE__, __LINE__)

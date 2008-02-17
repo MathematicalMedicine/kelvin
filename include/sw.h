@@ -22,12 +22,24 @@ void swStart(struct swStopwatch *);
 void swStop(struct swStopwatch *);
 void swDump(struct swStopwatch *);
 void swReset(struct swStopwatch *);
+
+void swLogMsg(char *);
+void udpSend(char *, int, char *);
+
 void *swMalloc(size_t, char *, int);
 void *swCalloc(size_t, size_t, char *, int);
 void *swRealloc(void *, size_t, char *, int);
 void swFree(void *, char *, int);
 void swDumpBlockUse();
-int udpSend(char *, int, char *);
-void swLogMsg(char *);
-void swAddChunk (void *, size_t, char *, int);
-size_t swDelChunk (void *, char *, int);
+void swAddChunk (void *, size_t, int, char *, int);
+size_t swDelChunk (void *, int, char *, int);
+
+#ifdef DMUSE
+extern int used24s, used48s, used100s, missed24s, missed48s, missed100s;
+#endif
+#ifdef DMTRACK
+extern double totalMalloc, totalFree, totalReallocOK, totalReallocMove, totalReallocFree, 
+  currentAlloc, peakAlloc;
+extern int countMalloc, countFree, countReallocOK, countReallocMove, countReallocFree,
+  maxListDepth, maxRecycles;
+#endif

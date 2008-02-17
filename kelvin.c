@@ -14,7 +14,6 @@
 #include "kelvin.h"
 #include "likelihood.h"
 
-#include "sw.h"			/* Performance dumps */
 struct swStopwatch *overallSW;
 #ifdef DMUSE
 extern int used24s, used48s, used100s, missed24s, missed48s, missed100s;

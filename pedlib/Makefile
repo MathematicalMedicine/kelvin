@@ -12,7 +12,7 @@
 CFLGS = -g -Wall
 #CFLGS += -DNO_POLYNOMIAL
 #CFLGS += -DDMUSE
-#CFLGS += -DDMTRACK
+CFLGS += -DDMTRACK
 
 ######################################################################
 # No user changes below this point!
