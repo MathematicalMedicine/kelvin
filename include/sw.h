@@ -1,3 +1,6 @@
+#ifndef SW_H
+#define SW_H
+
 #include <sys/resource.h>
 #include <time.h>
 #include <stdlib.h>
@@ -33,6 +36,7 @@ void swFree(void *, char *, int);
 void swDumpBlockUse();
 void swAddChunk (void *, size_t, int, char *, int);
 size_t swDelChunk (void *, int, char *, int);
+void swDumpSources ();
 
 #ifdef DMUSE
 extern int used24s, used48s, used100s, missed24s, missed48s, missed100s;
@@ -42,4 +46,6 @@ extern double totalMalloc, totalFree, totalReallocOK, totalReallocMove, totalRea
   currentAlloc, peakAlloc;
 extern int countMalloc, countFree, countReallocOK, countReallocMove, countReallocFree,
   maxListDepth, maxRecycles;
+#endif
+
 #endif

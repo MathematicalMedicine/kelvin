@@ -247,7 +247,6 @@ main (int argc, char *argv[])
   swLogMsg(messageBuffer);
   
 #ifdef DMTRACK
-#warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
   swLogMsg("Dynamic memory usage dumping is turned on, so performance will be poor!\n");
 #endif
   fprintf (stderr, "To force a dump of stats, type CTRL-\\ (dangerous and terse but always works)\n");
