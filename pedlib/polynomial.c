@@ -11,38 +11,38 @@
 #include "gsl/gsl_randist.h"
 #include "gsl/gsl_cdf.h"
 
-#include "sw.h"			/* Performance dumps */
 extern struct swStopwatch *overallSW;
 extern struct swStopwatch *signalSeen;		/* Signalled dumps */
 
-#ifdef DMUSE
-#define malloc(X) swMalloc((X), __FILE__, __LINE__)
-#define calloc(X,Y) swCalloc((X),(Y), __FILE__, __LINE__)
-#define realloc(X,Y) swRealloc((X),(Y), __FILE__, __LINE__)
-#define free(X) swFree((X), __FILE__, __LINE__)
-#endif
+/* Variables for tracking internal polynomial memory usage. */
+unsigned long maxHashListLength = HASH_TABLE_INCREASE;
+unsigned long constantPs = 0, constantHashPs = 0, variablePs = 0, variableHashPs = 0, sumPs = 0, 
+  sumHashPs = 0, productPs = 0, productHashPs = 0, functionPs = 0, functionHashPs = 0;
+unsigned long peakConstantPs = 0, peakVariablePs = 0, peakSumPs = 0, peakProductPs = 0, peakFunctionPs = 0;
+unsigned long constantPLExpansions = 0, variablePLExpansions = 0, sumPCollectExpansions = 0,
+  sumPTermMergeExpansions = 0, sumPListExpansions = 0, productPCollectExpansions = 0, 
+  productPTermMergeExpansions = 0, productPListExpansions = 0;
+unsigned long constantPsSize = 0, variablePsSize = 0, variablePsExpSize = 0, sumPsSize = 0, sumPColExpSize = 0, 
+  sumPTrmMrgExpSize = 0, productPsSize = 0, productPColExpSize = 0, productPTrmMrgExpSize = 0;
 
-long constantPs = 0, constantHashPs = 0, variablePs = 0, variableHashPs = 0,
-  sumPs = 0, sumHashPs = 0, productPs = 0, productHashPs = 0,
-  functionPs = 0, functionHashPs = 0;
-long peakConstantPs = 0, peakVariablePs = 0, peakSumPs = 0, peakProductPs = 0, peakFunctionPs = 0;
-long constantPLExpansions = 0, variablePLExpansions = 0;
-
-/* For use in other modules.
-extern long constantPs, constantHashPs, variablePs, variableHashPs,
-  sumPs, sumHashPs, productPs, productHashPs,
-  functionPs, functionHashPs;
-extern long peakConstantPs, peakVariablePs, peakSumPs, peakProductPs, peakFunctionPs;
-*/
-
-void dumpPStats() {
-  char messageBuffer[132];
-  sprintf(messageBuffer, "Constant Ps: %ul, HPs: %ul, Variable Ps: %ul, HPs: %ul, Sum Ps: %ul, HPs: %ul\n",
-	  constantPs, constantHashPs, variablePs, variableHashPs, sumPs, sumHashPs);
-  fprintf(stderr, messageBuffer);
-  sprintf(messageBuffer, "Product Ps: %ul, HPs: %ul, Function Ps: %ul, HPs: %ul\n",
-	  productPs, productHashPs, functionPs, functionHashPs);
-  fprintf(stderr, messageBuffer);
+/* Display the internal polynomial memory usage statistics. */
+void dumpPStats(char *stateDescription) {
+  fprintf(stderr, "State: %s...\n", stateDescription);
+  fprintf(stderr, "Max hash list len is initially %d, now %lu (list growth allocs not reported)\n",
+	  HASH_TABLE_INCREASE, maxHashListLength);
+  fprintf(stderr, "Constant poly count:%lu, hits:%lu, peak:%lu, list expansions (@1000):%lu\n",
+	  constantPs, constantHashPs, peakConstantPs, constantPLExpansions);
+  fprintf(stderr, "Variable poly count:%lu, hits:%lu, peak:%lu, list expansions (@50):%lu\n",
+	  variablePs, variableHashPs, peakVariablePs, variablePLExpansions);
+  fprintf(stderr, "Sum poly count:%lu, hits:%lu, peak:%lu, size:%lu\n", sumPs, sumHashPs, peakSumPs, sumPsSize);
+  fprintf(stderr,
+	  "...term coll realloc sz:%lu, term merge expansions:%lu, realloc sz:%lu, list expansions (@10K):%lu\n",
+	 sumPColExpSize, sumPTermMergeExpansions, sumPTrmMrgExpSize, sumPListExpansions);
+  fprintf(stderr, "Product poly count:%lu, hits:%lu, peak:%lu, sz:%lu\n",
+	 productPs, productHashPs, peakProductPs, productPsSize);
+  fprintf(stderr,
+	  "...term coll realloc sz:%lu, term merge expansions:%lu, realloc sz:%lu, list expansions (@10K):%lu\n",
+	  productPColExpSize, productPTermMergeExpansions, productPTrmMrgExpSize, productPListExpansions);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -358,6 +358,7 @@ void insertHashTable(struct hashStruct *hash, int location, int key, int index)
       if(hash->num>hash->length)
       {
            hash->length += HASH_TABLE_INCREASE;
+	   if (hash->length > maxHashListLength) maxHashListLength = hash->length;
            hash->key     = realloc(hash->key,
                             sizeof(int)*hash->length);
            hash->index   = realloc(hash->index,
@@ -496,6 +497,7 @@ struct polynomial *constantExp(double con)
 
   //Generate a constant polynomial
   constantPs++;
+  constantPsSize += sizeof(struct polynomial);
   if (constantPs > peakConstantPs) peakConstantPs = constantPs;
   p=(struct polynomial *)malloc(sizeof(struct polynomial));
   if(p==NULL)
@@ -625,6 +627,7 @@ struct polynomial *variableExp(double *vD, int *vI, char vType, char name[10])
   //This variable polynomial doesn't exist.  We create a new variable polynomial
   variablePs++;
   if (variablePs > peakVariablePs) peakVariablePs = variablePs;
+  variablePsSize += sizeof(struct polynomial) + sizeof(struct variablePoly);
   p=(struct polynomial *)malloc(sizeof(struct polynomial));
   vPoly=(struct variablePoly *)malloc(sizeof(struct variablePoly));
   if(p==NULL || vPoly==NULL)
@@ -642,6 +645,7 @@ struct polynomial *variableExp(double *vD, int *vI, char vType, char name[10])
   if(variableCount>=variableListLength)
   {
     variablePLExpansions++;
+    
          variableListLength+=50;
          variableList=realloc(variableList,variableListLength*sizeof(struct polynomial *));
          if(variableList==NULL)
@@ -749,6 +753,9 @@ void collectSumTerms(double **factor, struct polynomial ***p, int *counter, int 
               //If container is full, apply for more memory
               if(*counter>=*containerLength-1)
               {
+		sumPCollectExpansions++;
+		sumPColExpSize += 50*sizeof(double) + 50*sizeof(struct polynomial *);
+		
                       (*containerLength)+=50;
                       *factor = (double *)realloc(*factor,(*containerLength)*sizeof(double));
                       *p      = (struct polynomial **)realloc(*p,     (*containerLength)*sizeof(struct polynomial *));
@@ -927,6 +934,8 @@ struct polynomial *plusExp(int num, ...)
    //make sure memory is enough for terms merging
    if(counterSum+1>lengthSum)
    {
+      sumPTermMergeExpansions++;
+      sumPTrmMrgExpSize += (counterSum-lengthSum+1)*(sizeof(double)+sizeof(struct polynomial *));
       lengthSum = counterSum+1;
       factorSum = (double *)realloc(factorSum,        lengthSum*sizeof(double));
       pSum      = (struct polynomial **)realloc(pSum, lengthSum*sizeof(struct polynomial *));
@@ -1020,6 +1029,7 @@ struct polynomial *plusExp(int num, ...)
 	                 if(k>=counterSum)
 	                 {
                              sumList[sIndex]->count=2;
+			     sumHashPs++;
 	                     return sumList[sIndex];
 	                 }
 	             } //end of if(counter==sumList[sIndex]->e.s->num)
@@ -1076,6 +1086,11 @@ struct polynomial *plusExp(int num, ...)
               exit(1);
            }
            //free the memory of the first polynomial in the parameter list
+	   sumPs--;
+	   sumPsSize -= sizeof(p0->e.s->sum);
+	   sumPsSize -= sizeof(p0->e.s->factor);
+	   sumPsSize -= sizeof(p0->e.s);
+	   sumPsSize -= sizeof(p0);
            free(p0->e.s->sum);
            free(p0->e.s->factor);
            free(p0->e.s);
@@ -1089,6 +1104,9 @@ struct polynomial *plusExp(int num, ...)
       }
 
       //If the sum is not found in the sum list, a new polynomial is built 
+      sumPs++;
+      if (sumPs > peakSumPs) peakSumPs = sumPs;
+      sumPsSize += sizeof(struct polynomial);
       rp=(struct polynomial *)malloc(sizeof(struct polynomial));
       if(rp==NULL)
       {
@@ -1096,6 +1114,7 @@ struct polynomial *plusExp(int num, ...)
         exit(1);
       }
       rp->eType=T_SUM;
+      sumPsSize += sizeof(struct sumPoly);
       sP=(struct sumPoly *)malloc(sizeof(struct sumPoly));
       if(sP==NULL)
       {
@@ -1103,6 +1122,7 @@ struct polynomial *plusExp(int num, ...)
          exit(1);
       }
       sP->num    = counterSum;
+      sumPsSize += counterSum*(sizeof(double)+sizeof(struct polynomial));
       sP->sum    = (struct polynomial **)malloc(counterSum*sizeof(struct polynomial *));
       sP->factor = (double *)malloc(counterSum*sizeof(double));
       if(sP->sum==NULL || sP->factor==NULL)
@@ -1137,6 +1157,7 @@ struct polynomial *plusExp(int num, ...)
       {
 	      if(sumCount>=sumListLength){
 	         sumListLength+=10000;
+		 sumPListExpansions++;
 	         sumList=realloc(sumList,sumListLength*sizeof(struct polynomial *));
 	         if(sumList==NULL)
 	         {
@@ -1227,6 +1248,8 @@ void  collectProductTerms(int **exponent, struct polynomial ***p, int *counter, 
                      
                    if((*counter)>=(*containerLength)-1)
                    {
+		     productPCollectExpansions++;
+		     productPColExpSize += 50*sizeof(int) + 50*sizeof(struct polynomial *);
                          (*containerLength)+=50;
                          (*exponent)   = (int *)realloc((*exponent),(*containerLength)*sizeof(int));
                          (*p)          = (struct polynomial **)realloc((*p),     (*containerLength)*sizeof(struct polynomial *));
@@ -1424,6 +1447,7 @@ struct polynomial *timesExp(int num,...)
    counterProd=counter_v2+counter_s2+counter_f2;
    if(counterProd>lengthProd)
    {
+     productPColExpSize += (counterProd=lengthProd) * (sizeof(int)+sizeof(struct polynomial *));
       lengthProd     = counterProd;
       exponentProd   = (int *)realloc(exponentProd,  lengthProd*sizeof(int));
       pProd          = (struct polynomial **)realloc(pProd, lengthProd*sizeof(struct polynomial *));
@@ -1517,6 +1541,7 @@ struct polynomial *timesExp(int num,...)
                              //the attribute count is used as a sign to show that this polynomial is
                              //refered in more than one places so that it can't be freed
                              productList[pIndex]->count=2;
+			     productHashPs++;
 	                     return productList[pIndex];
 	                  }
                           //this product polynomail has been existing so that we don't need to construct a 
@@ -1585,6 +1610,11 @@ struct polynomial *timesExp(int num,...)
            }
 
            //Free the first operand
+	   productPs--;
+	   productPsSize -= sizeof(p0->e.p->exponent);
+	   productPsSize -= sizeof(p0->e.p->product);
+	   productPsSize -= sizeof(p0->e.p);
+	   productPsSize -= sizeof(p0);
            free(p0->e.p->exponent);
            free(p0->e.p->product);
            free(p0->e.p);
@@ -1601,14 +1631,19 @@ struct polynomial *timesExp(int num,...)
 
       //Construct a new product polynomial from the terms
       //saved in the container
+      productPs++;
+      if (productPs > peakProductPs) peakProductPs = productPs;
+      productPsSize += sizeof(struct polynomial);
       rp=(struct polynomial *)malloc(sizeof(struct polynomial));
       if(rp==NULL)
           fprintf(stderr,"Memory allocation error: malloc returned NULL!");
       rp->eType=T_PRODUCT;
+      productPsSize += sizeof(struct productPoly);
       pP=(struct productPoly *)malloc(sizeof(struct productPoly));
       if(pP==NULL)
          fprintf(stderr,"Memory allocation error: malloc returned NULL!");
       pP->num        = counterProd;
+      productPsSize += counterProd*(sizeof(struct polynomial) + sizeof(int));
       pP->product    = (struct polynomial **)malloc(counterProd*sizeof(struct polynomial *));
       pP->exponent   = (int *)malloc(counterProd*sizeof(int));
       if(pP->product==NULL || pP->exponent==NULL)
@@ -1632,6 +1667,7 @@ struct polynomial *timesExp(int num,...)
       //After the new polynomial is built, it is recorded in the product polynomial list
       if(productCount>=productListLength){
          productListLength+=10000;
+	 productPListExpansions++;
          productList=realloc(productList,productListLength*sizeof(struct polynomial *));
          if(productList==NULL){
             fprintf(stderr,"Memory allocation error in timesExp, exit!");
@@ -1893,11 +1929,21 @@ void expPrinting(struct polynomial *p)
 
    switch(p->eType){
      case T_CONSTANT:
-        if(p->value>=0)
-           fprintf(stderr,"%f",p->value);
-        else
-           fprintf(stderr,"(%f)",p->value);
-        break;
+       if(p->value>=0) {
+	 if(p->value==0)
+	   fprintf(stderr,"U");
+	 else
+	   if(p->value==1)
+	     fprintf(stderr,"W");
+	   else
+	     fprintf(stderr,"%f",p->value);
+       } else {
+	 if (p->value==-1)
+	   fprintf(stderr,"M");
+	 else 
+	   fprintf(stderr,"(%f)",p->value);
+       }
+       break;
 
      case T_VARIABLE:
         fprintf(stderr,"%s",p->e.v->vName);
@@ -1906,42 +1952,55 @@ void expPrinting(struct polynomial *p)
      case T_SUM:
         if(p->e.s->num>1)
           fprintf(stderr,"(");
-
-        if(p->e.s->factor[0]>=0)
-          fprintf(stderr,"%f*",p->e.s->factor[0]);
-        else
-          fprintf(stderr,"(%f)*",p->e.s->factor[0]);
-        expPrinting(p->e.s->sum[0]);
-        
-        for(i=1;i<p->e.s->num;i++)
-        {
-            fprintf(stderr,"+");
-            if(p->e.s->factor[i]>=0)
-               fprintf(stderr,"%f*",p->e.s->factor[i]);
-            else
-               fprintf(stderr,"(%f)*",p->e.s->factor[i]);
+        for(i=0;i<p->e.s->num;i++)
+	  {
+	    if (p->e.s->factor[i]>=0) {
+	      if (p->e.s->factor[i]==0)
+		fprintf(stderr,"U*");
+	      else 
+		if (p->e.s->factor[i]==1)
+		  fprintf(stderr,"W*");
+		else 
+		  fprintf(stderr,"%f*",p->e.s->factor[i]);
+	    } else {
+	      if (p->e.s->factor[i]==-1)
+		fprintf(stderr,"M*");
+	      else
+		fprintf(stderr,"(%f)*",p->e.s->factor[i]);
+	    }
             expPrinting(p->e.s->sum[i]);
-        }
+	    if ((i!=0) && (i!=(p->e.s->num-1)))
+	      fprintf(stderr,"+");
+	  }
         if(p->e.s->num>1)
           fprintf(stderr,")");
         break;
 
      case T_PRODUCT:
 
-        expPrinting(p->e.p->product[0]);
-        if(p->e.p->exponent[0]>=0)
-           fprintf(stderr,"^%d",p->e.p->exponent[0]);
-        else
-           fprintf(stderr,"^(%d)",p->e.p->exponent[0]);
-        for(i=1;i<p->e.s->num;i++)
+        if(p->e.p->num>1)
+          fprintf(stderr,"(");
+        for(i=0;i<p->e.s->num;i++)
         {
-          fprintf(stderr,"*");
           expPrinting(p->e.p->product[i]);
-          if(p->e.p->exponent[i]>=0)
-             fprintf(stderr,"^%d",p->e.p->exponent[i]);
-          else
-             fprintf(stderr,"^(%d)",p->e.p->exponent[i]);
-        }
+	  if (p->e.p->exponent[i]>=0) {
+	    if (p->e.p->exponent[i]==0)
+	      fprintf(stderr,"^U");
+	    else 
+	      if (p->e.p->exponent[i]==1)
+		fprintf(stderr,"^W");
+	      else 
+		fprintf(stderr,"^%d",p->e.p->exponent[i]);
+	  } else {
+	    if (p->e.p->exponent[i]==-1)
+	      fprintf(stderr,"^M");
+	    else
+	      fprintf(stderr,"^(%d)",p->e.p->exponent[i]);
+	  }
+          if ((i!=0) && (i!=(p->e.s->num-1))) fprintf(stderr,"*");
+	}
+        if(p->e.p->num>1)
+          fprintf(stderr,")");
 
         break;
       case T_FUNCTIONCALL:
@@ -2643,13 +2702,19 @@ void partialPolynomialClearance()
 //   nodeId=nodeIdStamp;
                 
   //partially clear constant polynomials
-   for(j=constantCountStamp;j<constantCount;j++)
+   for(j=constantCountStamp;j<constantCount;j++) {
+     constantPs--;
+  constantPsSize -= sizeof(struct polynomial);
               free(constantList[j]);
+   }
    constantCount=constantCountStamp;
 
    //partially clear variable polynomials
    for(j=variableCountStamp;j<variableCount;j++)
    {
+     variablePs--;
+     variablePsSize -= sizeof(variableList[j]->e.v);
+     variablePsSize -= sizeof(variableList[j]);
               free(variableList[j]->e.v);
               free(variableList[j]);
    }
@@ -2658,6 +2723,11 @@ void partialPolynomialClearance()
    //partially clear sum polynomials
    for(j=sumCountStamp;j<sumCount;j++)
    {
+	   sumPs--;
+	   sumPsSize -= sizeof(sumList[j]->e.s->sum);
+	   sumPsSize -= sizeof(sumList[j]->e.s->factor);
+	   sumPsSize -= sizeof(sumList[j]->e.s);
+	   sumPsSize -= sizeof(sumList[j]);
               free(sumList[j]->e.s->sum);
               free(sumList[j]->e.s->factor);
               free(sumList[j]->e.s);
@@ -2668,6 +2738,11 @@ void partialPolynomialClearance()
    //partially clear product polynomials
    for(j=productCountStamp;j<productCount;j++)
    {
+	   productPs--;
+	   productPsSize -= sizeof(productList[j]->e.p->product);
+	   productPsSize -= sizeof(productList[j]->e.p->exponent);
+	   productPsSize -= sizeof(productList[j]->e.p);
+	   productPsSize -= sizeof(productList[j]);
               free(productList[j]->e.p->product);
               free(productList[j]->e.p->exponent);
               free(productList[j]->e.p);
@@ -2686,6 +2761,7 @@ void partialPolynomialClearance()
    functionCallCount=functionCallCountStamp;
 
    //adjust the memory for constants
+   constantPLExpansions = 0;
    constantListLength = constantCount+10;
    constantList = realloc(constantList, constantListLength*sizeof(struct polynomial *));
    if(constantList==NULL)
@@ -2695,6 +2771,7 @@ void partialPolynomialClearance()
    }
 
    //adjust the memory for variables
+   variablePLExpansions = 0;
    variableListLength = variableCount+10;
    variableList = realloc(variableList, variableListLength*sizeof(struct polynomial *));
    if(variableList==NULL)
@@ -2704,6 +2781,7 @@ void partialPolynomialClearance()
    } 
              
    //adjust the memory for sums
+   sumPsSize += 10 * sizeof(struct polynomial *);
    sumListLength   =  sumCount+10;
    sumList      = realloc(sumList, sumListLength*sizeof(struct polynomial *));
    if(sumList==NULL)
@@ -2714,6 +2792,7 @@ void partialPolynomialClearance()
 
 
    //adjust the memory for prodcuts
+   productPsSize += 10 * sizeof(struct polynomial *);
    productListLength = productCount+10;
    productList       = realloc(productList,productListLength*sizeof(struct polynomial *));
    if(productList==NULL)
@@ -2944,6 +3023,11 @@ void partialPolynomialClearance2()
        }
        else
        {
+	   sumPs--;
+	   sumPsSize -= sizeof(sumList[j]->e.s->sum);
+	   sumPsSize -= sizeof(sumList[j]->e.s->factor);
+	   sumPsSize -= sizeof(sumList[j]->e.s);
+	   sumPsSize -= sizeof(sumList[j]);
               sumIndex[j-sumCountStamp2]=-1;
               free(sumList[j]->e.s->sum);
               free(sumList[j]->e.s->factor);
@@ -2968,6 +3052,11 @@ void partialPolynomialClearance2()
        }
        else 
        {
+	   productPs--;
+	   productPsSize -= sizeof(productList[j]->e.p->product);
+	   productPsSize -= sizeof(productList[j]->e.p->exponent);
+	   productPsSize -= sizeof(productList[j]->e.p);
+	   productPsSize -= sizeof(productList[j]);
               productIndex[j-productCountStamp2]=-1;
               free(productList[j]->e.p->product);
               free(productList[j]->e.p->exponent);

@@ -24,9 +24,6 @@
 #include "likelihood.h"
 #include "genotype_elimination.h"
 #include "polynomial.h"
-#include <signal.h>
-
-extern struct swStopwatch *overallSW;
 
 Genotype **pTempGenoVector;
 
@@ -200,43 +197,33 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	    {
 	      /* only build likelihood polynomial once, if the ptr is not NULL, it means
 	       * the polynomial has been constructed */
-            fprintf(stderr,"The polynomial building for this pedigree should be only once\n");
+	      fprintf(stderr,"The polynomial building for this pedigree should be only once\n");
 	      /* initialize likelihood space for each pedigree */
 	      initialize_multi_locus_genotype (pPedigree);
-                fprintf(stderr,"Start polynomial building\n");
 	      /* put a stamp in the polynomial list to mark the beginning of likelihood build
 	       * for this pedigree */
 	      makePolynomialStamp2 ();
-	      fprintf(stderr,"Computing pedigree likelihood (as a likelihood polynomial)\n");
 	      status = compute_pedigree_likelihood (pPedigree);
-	      raise(SIGQUIT);
-	      // THIS IS WHERE WE DO REDUCTION
-	      //                expPrinting(pPedigree->likelihoodPolynomial);
-	      //                fprintf(stderr,"\n");
-		fprintf(stderr,"Building polynomial list from...?\n");
+	      //	      expPrinting(pPedigree->likelihoodPolynomial);
+	      //	      fprintf(stderr,"\n");
 	      pPedigree->likelihoodPolyList = buildPolyList ();
-	      raise(SIGQUIT);
-	      fprintf(stderr,"Count the poly list\n");
 	      int cCounter, vCounter, sCounter, pCounter, fCounter;
 	      countPoly(pPedigree->likelihoodPolyList, &cCounter, &vCounter, &sCounter, &pCounter, &fCounter);
 	      fprintf(stderr, "%d constants, %d variables, %d sums, %d products, %d functions\n",
 		      cCounter, vCounter, sCounter, pCounter, fCounter);
-	      raise(SIGQUIT);
-	      fprintf(stderr,"Sort polynomial\n");
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
-	      raise(SIGQUIT);
-	      fprintf(stderr, "Clean-up polynomials not used in final likelihood\n");
 	      /* clean up polynomials that are not used in the final pedigree likelihood */
 	      partialPolynomialClearance2 ();
-	      raise(SIGQUIT);
+	      dumpPStats ("Finished compute_pedigree_likelihood thru partialPolynomailClearance2");
+#ifdef DMTRACK
+	      swDumpSources ();
+#endif
 	    }
 	  /* evaluate likelihood */
-	  fprintf(stderr,"Evaluate likelihood\n");
 	  pPedigree->likelihood =
 	    evaluatePoly (pPedigree->likelihoodPolynomial,
 			  pPedigree->likelihoodPolyList);
-	  raise(SIGQUIT);
 	}
       else
 	{
