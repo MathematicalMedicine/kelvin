@@ -15,15 +15,6 @@
 #include "likelihood.h"
 
 struct swStopwatch *overallSW;
-#ifdef DMUSE
-extern int used24s, used48s, used100s, missed24s, missed48s, missed100s;
-#endif
-#ifdef DMTRACK
-extern double totalMalloc, totalFree, totalReallocOK, totalReallocMove, totalReallocFree, 
-  currentAlloc, peakAlloc;
-extern int countMalloc, countFree, countReallocOK, countReallocMove, countReallocFree,
-  maxListDepth, maxRecycles;
-#endif
 #include <signal.h>		/* Signalled dumps */
 volatile sig_atomic_t signalSeen = 0;
 void usr1SignalHandler (int signal) { signalSeen = 1; }
@@ -32,11 +23,11 @@ void quitSignalHandler (int signal) {
 #ifdef DMTRACK
   char messageBuffer[MAXSWMSG];
   sprintf (messageBuffer,
-	   "Count malloc: %d, free: %d, realloc OK: %d, realloc move: %d, realloc free: %d, max depth: %d, max recycles: %d",
+	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d",
 	   countMalloc, countFree, countReallocOK, countReallocMove, countReallocFree, maxListDepth, maxRecycles);
   swLogMsg (messageBuffer);
   sprintf (messageBuffer,
-	   "Size malloc: %g, free: %g, realloc OK: %g, realloc move: %g, realloc free: %g, current: %g, peak: %g",
+	   "Size malloc:%g, free:%g, realloc OK:%g, realloc move:%g, realloc free:%g, current:%g, peak:%g",
 	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
 	   totalReallocFree, currentAlloc, peakAlloc);
   swLogMsg (messageBuffer);
@@ -221,6 +212,17 @@ main (int argc, char *argv[])
   double initialProb2[3];
   void *initialProbAddr2[3];
   void *initialHetProbAddr[3];
+
+  /* Fork a child that loops sleeping several seconds and then signalling 
+     us with SIGQUIT. */
+  pid_t childPID;
+  childPID = fork ();
+  if (childPID == 0) {
+    while (1) {
+      sleep (10);
+      kill (getppid (), SIGQUIT);
+    } /* Does not return */
+  }
 
   overallSW = swCreate ("overall"); /* Overall performance stopwatch */
   /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
@@ -3535,7 +3537,8 @@ main (int argc, char *argv[])
 	 missed24s, used24s, missed48s, used48s, missed100s, used100s);
 #endif
 #ifdef DMTRACK
-  swDumpBlockUse();
+  swDumpBlockUse ();
+  swDumpSources ();
 #endif
   swLogMsg("finished run");
 
