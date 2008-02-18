@@ -3538,7 +3538,7 @@ main (int argc, char *argv[])
 	 missed24s, used24s, missed48s, used48s, missed100s, used100s);
 #endif
 #ifdef DMTRACK
-  swDumpBlockUse ();
+  //  swDumpBlockUse ();
   swDumpSources ();
 #endif
   swLogMsg("finished run");
