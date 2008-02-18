@@ -17,7 +17,9 @@
 struct swStopwatch *overallSW;
 #include <signal.h>		/* Signalled dumps */
 volatile sig_atomic_t signalSeen = 0;
-void usr1SignalHandler (int signal) { signalSeen = 1; }
+void usr1SignalHandler (int signal) {
+  swLogPeaks ("Timer");
+}
 void quitSignalHandler (int signal) {
   swDump (overallSW);
 #ifdef DMTRACK
@@ -214,13 +216,13 @@ main (int argc, char *argv[])
   void *initialHetProbAddr[3];
 
   /* Fork a child that loops sleeping several seconds and then signalling 
-     us with SIGQUIT. */
+     us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
   pid_t childPID;
   childPID = fork ();
   if (childPID == 0) {
     while (1) {
-      sleep (10);
-      kill (getppid (), SIGQUIT);
+      sleep (15);
+      kill (getppid (), SIGUSR1);
     } /* Does not return */
   }
 
