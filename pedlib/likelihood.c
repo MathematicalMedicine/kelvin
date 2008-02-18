@@ -207,10 +207,6 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	      //	      expPrinting(pPedigree->likelihoodPolynomial);
 	      //	      fprintf(stderr,"\n");
 	      pPedigree->likelihoodPolyList = buildPolyList ();
-	      int cCounter, vCounter, sCounter, pCounter, fCounter;
-	      countPoly(pPedigree->likelihoodPolyList, &cCounter, &vCounter, &sCounter, &pCounter, &fCounter);
-	      fprintf(stderr, "%d constants, %d variables, %d sums, %d products, %d functions\n",
-		      cCounter, vCounter, sCounter, pCounter, fCounter);
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
 	      /* clean up polynomials that are not used in the final pedigree likelihood */
