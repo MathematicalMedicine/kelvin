@@ -13,12 +13,16 @@
  **********************************************************************/
 #include "kelvin.h"
 #include "likelihood.h"
+#include "pedlib/polynomial.h"
 
 struct swStopwatch *overallSW;
 #include <signal.h>		/* Signalled dumps */
 volatile sig_atomic_t signalSeen = 0;
+int handlerDumpCycle = 0;
 void usr1SignalHandler (int signal) {
   swLogPeaks ("Timer");
+  if ((++handlerDumpCycle % 100) == 0)
+    dumpPStats ("Timer");
 }
 void quitSignalHandler (int signal) {
   swDump (overallSW);
@@ -221,7 +225,7 @@ main (int argc, char *argv[])
   childPID = fork ();
   if (childPID == 0) {
     while (1) {
-      sleep (15);
+      sleep (5);
       kill (getppid (), SIGUSR1);
     } /* Does not return */
   }
@@ -3540,6 +3544,7 @@ main (int argc, char *argv[])
 #ifdef DMTRACK
   //  swDumpBlockUse ();
   swDumpSources ();
+  swDumpCrossModuleChunks ();
 #endif
   swLogMsg("finished run");
 

@@ -204,31 +204,41 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	       * for this pedigree */
 	      makePolynomialStamp2 ();
 	      status = compute_pedigree_likelihood (pPedigree);
+	      swLogPeaks ("Finished compute_pedigree_likelihood");
+	      dumpPStats ("Finished compute_pedigree_likelihood");
 	      //	      expPrinting(pPedigree->likelihoodPolynomial);
 	      //	      fprintf(stderr,"\n");
 	      pPedigree->likelihoodPolyList = buildPolyList ();
+	      swLogPeaks ("Finished buildPolyList");
+	      dumpPStats ("Finished buildPolyList");
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
+	      swLogPeaks ("Finished polyListSorting");
+	      dumpPStats ("Finished polyListSorting");
 	      /* clean up polynomials that are not used in the final pedigree likelihood */
 	      partialPolynomialClearance2 ();
-	      dumpPStats ("Finished compute_pedigree_likelihood thru partialPolynomailClearance2");
-#ifdef DMTRACK
-	      swDumpSources ();
-#endif
+	      swLogPeaks ("Finished partialPolynomailClearance2");
+	      dumpPStats ("Finished partialPolynomailClearance2");
 	    }
 	  /* evaluate likelihood */
 	  pPedigree->likelihood =
 	    evaluatePoly (pPedigree->likelihoodPolynomial,
 			  pPedigree->likelihoodPolyList);
+	  swLogPeaks ("Finished evaluatePoly");
+	  dumpPStats ("Finished evaluatePoly");
 	}
       else
 	{
 	  initialize_multi_locus_genotype (pPedigree);
 	  status = compute_pedigree_likelihood (pPedigree);
+	  swLogPeaks ("Finished compute_pedigree_likelihood1");
+	  dumpPStats ("Finished compute_pedigree_likelihood1");
 	}
 #else
       initialize_multi_locus_genotype (pPedigree);
       status = compute_pedigree_likelihood (pPedigree);
+      swLogPeaks ("Finished compute_pedigree_likelihood2");
+      dumpPStats ("Finished compute_pedigree_likelihood2");
 #endif
 
       if (pPedigree->likelihood == 0.0)

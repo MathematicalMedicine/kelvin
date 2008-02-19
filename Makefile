@@ -23,7 +23,7 @@ CFLGS	+= -Wall			# Always leave this one on
 #CFLGS += -pg                   # profile - debugging 
 #CFLGS += -pedantic   #memory leak tracing
 #CFLGS += -DDMUSE	# Manage a list of small chunks of memory
-#CFLGS += -DDMTRACK	# Collect and dump dynamic memory usage
+CFLGS += -DDMTRACK	# Collect and dump dynamic memory usage
 
 .EXPORT_ALL_VARIABLES:
 ######################################################################

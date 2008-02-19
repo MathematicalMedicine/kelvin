@@ -37,6 +37,7 @@ void swDumpBlockUse();
 void swAddChunk (void *, size_t, int, char *, int);
 size_t swDelChunk (void *, int, char *, int);
 void swDumpSources ();
+void swDumpCrossModuleChunks ();
 void swLogPeaks (char *);
 double swGetCurrent ();
 
