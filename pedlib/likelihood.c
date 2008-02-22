@@ -206,6 +206,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	      status = compute_pedigree_likelihood (pPedigree);
 	      swLogPeaks ("Finished compute_pedigree_likelihood");
 	      dumpPStats ("Finished compute_pedigree_likelihood");
+	      printSummaryPoly (pPedigree->likelihoodPolynomial);
+	      printAllPolynomials ();
 	      //	      expPrinting(pPedigree->likelihoodPolynomial);
 	      //	      fprintf(stderr,"\n");
 	      pPedigree->likelihoodPolyList = buildPolyList ();

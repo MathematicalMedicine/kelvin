@@ -1,42 +1,57 @@
 #ifndef __POLYNOMIAL_H__
 #define __POLYNOMIAL_H__
-//All the following constants are prime numbers
-#define MAX_POLYNOMIAL_KEY   2147483629
-#define CONSTANT_HASH_SIZE 99991
-#define VARIABLE_HASH_SIZE 97
-#define SUM_HASH_SIZE      1999993
-#define PRODUCT_HASH_SIZE  1999993
-#define FUNCTIONCALL_HASH_SIZE 99991
-#define HASH_TABLE_INCREASE 20
-#include <stdarg.h>
-#include <time.h>
 
-#include "sw.h"
-void dumpPStats();
-#ifdef DMTRACK
-#warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
-#define malloc(X) swMalloc((X), __FILE__, __LINE__)
-#define calloc(X,Y) swCalloc((X),(Y), __FILE__, __LINE__)
-#define realloc(X,Y) swRealloc((X),(Y), __FILE__, __LINE__)
-#define free(X) swFree((X), __FILE__, __LINE__)
+#define MAX_POLYNOMIAL_KEY   100000000
+#ifdef TINYMEM
+  #define CONSTANT_LIST_INCREASE 50
+  #define VARIABLE_LIST_INCREASE 50
+  #define SUM_LIST_INCREASE 100
+  #define PRODUCT_LIST_INCREASE 100
+  #define CONSTANT_HASH_SIZE 991
+  #define VARIABLE_HASH_SIZE 97
+  #define SUM_HASH_SIZE      1993
+  #define PRODUCT_HASH_SIZE  1993
+  #define FUNCTIONCALL_HASH_SIZE 91
+#else
+  #ifdef SMALLMEM
+    #define CONSTANT_LIST_INCREASE 50
+    #define VARIABLE_LIST_INCREASE 50
+    #define SUM_LIST_INCREASE 1000
+    #define PRODUCT_LIST_INCREASE 1000
+    #define CONSTANT_HASH_SIZE 9991
+    #define VARIABLE_HASH_SIZE 97
+    #define SUM_HASH_SIZE      19993
+    #define PRODUCT_HASH_SIZE  19993
+    #define FUNCTIONCALL_HASH_SIZE 991
+  #else
+    #define CONSTANT_LIST_INCREASE 50
+    #define VARIABLE_LIST_INCREASE 50
+    #define SUM_LIST_INCREASE 10000
+    #define PRODUCT_LIST_INCREASE 10000
+    #define CONSTANT_HASH_SIZE 99991
+    #define VARIABLE_HASH_SIZE 97
+    #define SUM_HASH_SIZE      1999993
+    #define PRODUCT_HASH_SIZE  1999993
+    #define FUNCTIONCALL_HASH_SIZE 99991
+  #endif
 #endif
 
-/* Variables for tracking internal polynomial memory usage. */
-extern unsigned long maxHashListLength;
-extern unsigned long constantPs, constantHashPs, variablePs, variableHashPs,
-  sumPs, sumHashPs, productPs, productHashPs, functionPs, functionHashPs;
-extern unsigned long peakConstantPs, peakVariablePs, peakSumPs, peakProductPs, peakFunctionPs;
-extern unsigned long constantPLExpansions, variablePLExpansions, sumPCollectExpansions,
-  sumPTermMergeExpansions, sumPListExpansions, productPCollectExpansions, 
-  productPTermMergeExpansions, productPListExpansions;
-extern unsigned long constantPsSize, variablePsSize, variablePsExpSize, sumPsSize, sumPColExpSize, 
-  sumPTrmMrgExpSize, productPsSize, productPColExpSize, productPTrmMrgExpSize;
-/* Display the internal polynomial memory usage statistics. */
-void dumpPStats(char *);
+#define HASH_TABLE_INCREASE 4
+#include <stdarg.h>
+#include <time.h>
+#include "polyDiags.h"
 
-//following variables are for debugging
 clock_t startTime;
 clock_t currentTime; 
+int maxHashLength;
+struct hashStruct *maxHash;
+int sum0,sum1,sum2,sum3,sum4,sum5,sum00, sum11;
+int product0, product1, product2, product3,product4,product5,product6,product7,product8,product9, product00,product11;
+int numSumTerms,numProductTerms;
+
+int maxSumLength,maxProductLength;
+int *countSumLength, *countProductLength;
+int sizeSumLength, sizeProductLength;
 
 //This is a global variable used for giving each polynomial an unique ID
 //so that we can know if two polynomials are the same just from their IDs
@@ -55,37 +70,21 @@ enum expressionType {T_CONSTANT=0, T_VARIABLE=1, T_SUM=2, T_PRODUCT=3, T_FUNCTIO
 struct polynomial;
 
 //This structure represents the elements of a variable,
-//a variavle has an address in memory, a name.
-//In general, the number of variable polynomials is very small, say 20.
+//a variavle has an address in memory, a name
 struct variablePoly{
-   char   vType;       //variable type
-   union
-   {
-      double *vAddrD;     //variable address for a double variable
-      int    *vAddrI;     //variable address for an integer variable
-   } vAddr;
-   char   vName[100];  //variable name
+   char   vType;
+   double *vAddrD;
+   int    *vAddrI;
+   char   vName[100];
 };
 
 //This structure represents the elements of a sum.
 //A sum is composed of a number (saved in num) of items.
 //Each item is a factor (saved in factor) times a polynomial (saved in sum).
 struct sumPoly{
-   int num;                    //number of terms
-   struct polynomial **sum;    // polynomial terms
-   double            *factor;  //factors for polynomial terms
-
-   //Answer to the question of why not using constant polynomials to express factors
-   //and a similar question that there is inconsistency in expressing polynomials
-   //because we have constant polynomials while we have double factors
-   //
-   //   
-   //Here, factor is to express components of a sum polynomial.  Factors are constants.  
-   //They can be expressed as constant polynomials.  However, constant polynomials 
-   //need more memory than constants.  Therefore, here, we don't use constant polynomials.
-   //Instead, we use constants firectly.
-  
-
+   int num;
+   struct polynomial **sum;
+   double            *factor;
 };
 
    //Following variables are for building sum polynomials
@@ -136,18 +135,18 @@ struct sumPoly{
 //Each item includes an exponent (saved in exponent) and a 
 //polynomial (saved in product).
 struct productPoly{
-   int num;                       //numer of terms
-   struct polynomial **product;   //polynomial terms
-   int                *exponent;  //exponents for polynomial terms
+   int num;
+   struct polynomial **product;
+   int                *exponent;
 };
 
 //This structure represents the elements of a function call.
 //Each function call is composed of the function name (saved in name)
 // and a number (saved in paraNum) of parameters (saved in para)
 struct functionPoly{
-   char *name;                //function name
-   int              paraNum;  //number of parameters
-   struct polynomial **para;  //parameters
+   char *name;
+   int              paraNum;
+   struct polynomial **para;
 };
 
 //This structure represents a general polynomial.
@@ -156,28 +155,14 @@ struct functionPoly{
 //polynomial structure depending on the polynomial type.
 
 typedef struct polynomial {
-  int id;             //unique id
-  int index;          //index in a polynomial list
-  int  key;           //key of the polynomial
-  int  count;                    //count=1 when the polynomial is built
-				 //count=2 when the polynomial is to be built a second time
-  enum expressionType eType;     //polynomial type: 
-				 //    constant, 
-				 //    variable, 
-				 //    sum, 
-				 //    product, 
-				 //    function call.
-  //
-  //Following is the answer to the question "why do we need constant polynomials instead of constants directly?"
-  //
-  //When we try to understand why we need constant polynomial, we may need to consider that there are two worlds:
-  //polynomial world and non polynomial world.  In non polynomial world, the result of mathematical computations is
-  //a value.  On the other hand, in polynomial world, the result of mathematical computations is a polynomial, no
-  //matter the result is a constant, a sum of a group of terms, or a product of a group of terms.  Therefore, 
-  //constant polynomials are for purpose of consistency in polynomial calculations and polynomial expressions.  
-  //If the result of polynomial calculations is a constant, it has to be expressed as a constant polynomial because 
-  //the calculations are in polynomial world. 
-  double              value;     //value saves the value of the polynomial
+  int id;
+  int index;
+  int  key;
+  int  count;
+  enum expressionType eType;
+  double              value;
+//  int                *count;
+//  double              *values;
   union
   {
     struct variablePoly *v;    /*variable*/
@@ -185,8 +170,7 @@ typedef struct polynomial {
     struct productPoly  *p;    /*product */
     struct functionPoly *f;    /*function*/ 
   } e;
-  int                 valid;   //valid =1 if this polynomial appears in the evaluation list of a polynomial
-                               //valid =0 if this polynomial doesn't appear in the final evaluation list of a polynomial
+  int                 valid;
 } Polynomial;
 
 //List is for polynomail evaluation.  When we evaluate a polynomial,
@@ -199,9 +183,9 @@ typedef struct polynomial {
 //pList is the list of sub polynomials that should be evaluated
 //for the evaluation of the polynomial
 typedef struct polyList {
-    int listSize;                //size of the list preallocated
-    int listNext;                //next free position
-    struct polynomial **pList;   //list of polynomials for evaluation
+    int listSize; 
+    int listNext;
+    struct polynomial **pList;
 } polynomialList;   
 
 //hashStruct is used for speeding up the creation of polynomials.
@@ -212,10 +196,10 @@ typedef struct polyList {
 //key saves keys of all the polynomials that fall into this hash item
 //index saves indexes of all the polynomials that fall into this item
 struct hashStruct {
-     int num;      //number of polynomials in a hash bucket
-     int length;   //length of the hash bucket preallocated
-     int *key;     //keys of polynomials
-     int *index;   //indexes of polynomials
+     int num;
+     int length;
+     int *key;
+     int *index;
 };
 
 //We have a polynomials list to save the polynomials in each polynomial category,
@@ -256,15 +240,6 @@ int                functionCallCount;
 int                functionCallListLength;
 int                functionCallCountStamp;
 int                functionCallCountStamp2;
-
-//Following comments answer the question of "why not freeing all the polynomials before building the likelihood polynomials
-//for next trait position?"
-//
-//Before we even start to build the likelihood polynomials of pedigrees at the first trait position, some polynomials has
-//already been built.  These polynomials are useful for all the trait positions.  Therefore, we can't free everything before
-//we start to build likelihood polynomials of pedigrees at the next trait position.
-
-
 
 //Hash tables
 //Each category of polynomials has a hash table
@@ -344,5 +319,6 @@ void printAllPolynomials();
 void dismantlePolynomialAndSortingList(struct polynomial *p, struct polyList *l);
 //print out polylist
 //void printPolyList(struct polyList *l)
+void printSummaryPoly(struct polynomial *);
 
 #endif

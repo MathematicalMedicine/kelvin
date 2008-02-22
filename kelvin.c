@@ -3544,7 +3544,7 @@ main (int argc, char *argv[])
 #ifdef DMTRACK
   //  swDumpBlockUse ();
   swDumpSources ();
-  swDumpCrossModuleChunks ();
+  //  swDumpCrossModuleChunks ();
 #endif
   swLogMsg("finished run");
 
