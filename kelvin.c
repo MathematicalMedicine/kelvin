@@ -13,6 +13,9 @@
  **********************************************************************/
 #include "kelvin.h"
 #include "likelihood.h"
+#include "pedlib/polynomial.h"
+
+#include "../diags/kelvin.c-head"
 
 /* Some default global values. */
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
@@ -187,6 +190,8 @@ main (int argc, char *argv[])
   double initialProb2[3];
   void *initialProbAddr2[3];
   void *initialHetProbAddr[3];
+
+#include "../diags/kelvin.c-start"
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&nullLocusList, 0, sizeof (nullLocusList));
@@ -3414,7 +3419,7 @@ main (int argc, char *argv[])
   free (modelOptions.sUnknownPersonID);
   final_cleanup ();
 
-
+#include "../diags/kelvin.c-finish"
 
   /* close file pointers */
   if (modelType.type == TP)
