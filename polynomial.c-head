@@ -1,0 +1,10 @@
+/* Variables for tracking internal polynomial memory usage. */
+unsigned long maxHashListLength = HASH_TABLE_INCREASE;
+unsigned long constantPs = 0, constantHashPs = 0, variablePs = 0, variableHashPs = 0, sumPs = 0, 
+  sumHashPs = 0, productPs = 0, productHashPs = 0, functionPs = 0, functionHashPs = 0;
+unsigned long peakConstantPs = 0, peakVariablePs = 0, peakSumPs = 0, peakProductPs = 0, peakFunctionPs = 0;
+unsigned long constantPLExpansions = 0, variablePLExpansions = 0, sumPCollectExpansions = 0,
+  sumPTermMergeExpansions = 0, sumPListExpansions = 0, productPCollectExpansions = 0, 
+  productPTermMergeExpansions = 0, productPListExpansions = 0;
+unsigned long constantPsSize = 0, variablePsSize = 0, variablePsExpSize = 0, sumPsSize = 0, sumPColExpSize = 0, 
+  sumPTrmMrgExpSize = 0, productPsSize = 0, productPColExpSize = 0, productPTrmMrgExpSize = 0;

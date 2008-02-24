@@ -1,0 +1,40 @@
+  /* Fork a child that loops sleeping several seconds and then signalling 
+     us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
+  pid_t childPID;
+  childPID = fork ();
+  if (childPID == 0) {
+    while (1) {
+      sleep (5);
+      kill (getppid (), SIGUSR1);
+    } /* Does not return */
+  }
+
+  overallSW = swCreate ("overall"); /* Overall performance stopwatch */
+  /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
+  struct sigaction usr1Action, quitAction;
+  sigset_t usr1BlockMask, quitBlockMask;
+
+  sigfillset (&usr1BlockMask);
+  usr1Action.sa_handler = usr1SignalHandler;
+  usr1Action.sa_mask = usr1BlockMask;
+  usr1Action.sa_flags = 0;
+  sigaction (SIGUSR1, &usr1Action, NULL);
+  sigfillset (&quitBlockMask);
+  quitAction.sa_handler = quitSignalHandler;
+  quitAction.sa_mask = quitBlockMask;
+  quitAction.sa_flags = 0;
+  sigaction (SIGQUIT, &quitAction, NULL);
+
+  /* Annouce ourselves for performance tracking. */
+  char messageBuffer[MAXSWMSG];
+  sprintf(messageBuffer, "At %s(%s %s)%d: %s", __FILE__, __DATE__, __TIME__,
+	  __LINE__, "starting run");
+  swLogMsg(messageBuffer);
+  
+#ifdef DMTRACK
+  swLogMsg("Dynamic memory usage dumping is turned on, so performance will be poor!\n");
+#endif
+  fprintf (stderr, "To force a dump of stats, type CTRL-\\ (dangerous and terse but always works)\n");
+  fprintf (stderr, "or type \"kill -%d %d\" (safe and thorough, but requires program cooperation).\n",
+	   SIGUSR1, getpid ());
+  swStart (overallSW);

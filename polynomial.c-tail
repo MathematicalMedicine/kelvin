@@ -1,0 +1,131 @@
+/* Display the internal polynomial memory usage statistics. */
+void dumpPStats(char *stateDescription) {
+  fprintf(stderr, "State: %s...\n", stateDescription);
+  fprintf(stderr, "Max hash list len is initially %d, now %lu (list growth allocs not reported)\n",
+	  HASH_TABLE_INCREASE, maxHashListLength);
+  fprintf(stderr, "Constant poly count:%lu, hits:%lu, peak:%lu, list expansions (@%d):%lu\n",
+	  constantPs, constantHashPs, peakConstantPs, CONSTANT_LIST_INCREASE, constantPLExpansions);
+  fprintf(stderr, "Variable poly count:%lu, hits:%lu, peak:%lu, list expansions (@%d):%lu\n",
+	  variablePs, variableHashPs, peakVariablePs, VARIABLE_LIST_INCREASE, variablePLExpansions);
+  fprintf(stderr, "Sum poly count:%lu, hits:%lu, ratio:%d-to-1, peak:%lu, size:%lu\n", 
+	  sumPs, sumHashPs, (int)(sumHashPs/sumPs), peakSumPs, sumPsSize);
+  fprintf(stderr,
+	  "...term coll realloc sz:%lu, term merge expansions:%lu, realloc sz:%lu, list expansions (@%d):%lu\n",
+	 sumPColExpSize, sumPTermMergeExpansions, sumPTrmMrgExpSize, SUM_LIST_INCREASE, sumPListExpansions);
+  fprintf(stderr, "Product poly count:%lu, hits:%lu, ratio:%d-to-1, peak:%lu, sz:%lu\n",
+	 productPs, productHashPs, (int)(productHashPs/productPs), peakProductPs, productPsSize);
+  fprintf(stderr,
+	  "...term coll realloc sz:%lu, term merge expansions:%lu, realloc sz:%lu, list expansions (@%d):%lu\n",
+	  productPColExpSize, productPTermMergeExpansions, productPTrmMrgExpSize, PRODUCT_LIST_INCREASE, 
+	  productPListExpansions);
+}
+
+#define MAXPOLYTIERS 13
+int polyTiers[MAXPOLYTIERS][5];
+int peakPolyTiers;
+char *polyTypes[] = {"constant", "variable", "sum", "product", "function"};
+/* It might not be a sumPoly, but we can treat it as one. */
+void traversePoly(struct polynomial *p, int currentTier)
+{
+  struct sumPoly *pS;
+  struct functionPoly *pF;
+  struct polynomial *q;
+  int i;
+  if (currentTier > peakPolyTiers) peakPolyTiers = currentTier;
+  if (currentTier >= MAXPOLYTIERS) return;
+  polyTiers[currentTier][p->eType]++;
+  switch(p->eType){
+  case T_CONSTANT:
+  case T_VARIABLE:
+    break;
+  case T_SUM:
+  case T_PRODUCT:
+    pS = p->e.s;
+    for (i=0; i<pS->num; i++) {
+      q = pS->sum[i];
+      traversePoly(q, currentTier+1);
+    }
+    break;
+  case T_FUNCTIONCALL:
+    pF = p->e.f;
+    for (i=0; i<pF->paraNum; i++) {
+      q = pF->para[i];
+      traversePoly(q, currentTier+1);
+    }
+    break;
+  default:
+    fprintf(stderr,"Error, Unknown expression type: [%d], exiting!\n", p->eType);
+    exit(1);
+  }
+}
+void printSummaryPoly(struct polynomial *p)
+{
+  int i, j;
+  printf("Summary of Polynomial:\n");
+  memset(polyTiers, 0, sizeof(polyTiers));
+  peakPolyTiers = 0;
+  traversePoly(p, 0);
+  for (i=0; i<=peakPolyTiers; i++) {
+    printf("Tier %d:",i);
+    int firstPrint = 1;
+    for (j=0; j<5; j++) {
+      if (polyTiers[i][j] != 0) {
+	if (!firstPrint) printf(",");
+	firstPrint = 0;
+	printf(" %d %s", polyTiers[i][j], polyTypes[j]);
+	if (polyTiers[i][j] > 1) printf("s");
+      }
+    }
+    printf("\n");
+  }
+  printf("---\n");
+}
+
+void expPrint(struct polynomial *p) {
+  int i;
+
+  switch(p->eType){
+  case T_CONSTANT:
+    fprintf(stderr, "%f", p->value);
+    break;
+  case T_VARIABLE:
+    fprintf(stderr,"%s",p->e.v->vName);
+    break;
+  case T_SUM:
+    if(p->e.s->num>1) fprintf(stderr,"(");
+    if (p->e.s->factor[0] != 1)
+      fprintf(stderr, "%f*", p->e.s->factor[0]);
+    expPrinting(p->e.s->sum[0]);
+    for(i=0;i<p->e.s->num;i++) {
+      fprintf(stderr, "+");
+      if (p->e.s->factor[0] != 1)
+	fprintf(stderr, "%f*", p->e.s->factor[i]);
+      expPrinting(p->e.s->sum[i]);
+    }
+    if(p->e.s->num>1) fprintf(stderr,")");
+    break;
+  case T_PRODUCT:
+    expPrinting(p->e.p->product[0]);
+    if(p->e.p->exponent[0] != 1)
+      fprintf(stderr,"^%d",p->e.p->exponent[0]);
+    for(i=1;i<p->e.s->num;i++) {
+      fprintf(stderr, "*");
+      expPrinting(p->e.p->product[i]);
+      if(p->e.p->exponent[i] != 1)
+	fprintf(stderr,"^%d",p->e.p->exponent[i]);
+    }
+    break;
+  case T_FUNCTIONCALL:
+    fprintf(stderr,"%s(",p->e.f->name);
+    for(i=0;i<p->e.f->paraNum-1;i++) {
+      expPrinting(p->e.f->para[i]);
+      fprintf(stderr,", ");
+    }
+    expPrinting(p->e.f->para[p->e.f->paraNum-1]);
+    fprintf(stderr,")");
+    break;
+  default:
+    fprintf(stderr,"Unknown expression type %d exit!!!!!, exit(5)\n",p->eType);
+    exit(1);
+  }
+}
