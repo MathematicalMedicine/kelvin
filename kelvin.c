@@ -14,6 +14,8 @@
 #include "kelvin.h"
 #include "likelihood.h"
 
+#include "../diags/kelvin.c-head"
+
 /* Some default global values. */
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
 char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";
@@ -187,6 +189,8 @@ main (int argc, char *argv[])
   double initialProb2[3];
   void *initialProbAddr2[3];
   void *initialHetProbAddr[3];
+
+#include "../diags/kelvin.c-start"
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&nullLocusList, 0, sizeof (nullLocusList));
@@ -3403,6 +3407,7 @@ main (int argc, char *argv[])
 	   (double) (time1 - time0) / CLOCKS_PER_SEC,
 	   (double) (time2 - time1) / CLOCKS_PER_SEC);
 
+#include "../diags/kelvin.c-finish"
 
   /* close file pointers */
   if (modelType.type == TP)
