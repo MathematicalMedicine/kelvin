@@ -16,6 +16,7 @@
 #include "pedlib/polynomial.h"
 
 #include "../diags/kelvin.c-head"
+char *kelvinVersion = "0.0.30";
 
 /* Some default global values. */
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
