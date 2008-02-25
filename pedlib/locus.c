@@ -34,6 +34,9 @@
 #ifndef NO_POLYNOMIAL
 #include "polynomial.h"
 #endif
+
+char *locusVersion = "0.0.29";
+
 /* global variables */
 Map map;
 LocusList originalLocusList;

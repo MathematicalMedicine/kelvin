@@ -24,6 +24,8 @@
 #include "genotype_elimination.h"
 #include "polynomial.h"
 
+char *likelihoodVersion = "0.0.29";
+
 //double *half_pow = NULL;
 XMission *xmissionMatrix = NULL;
 

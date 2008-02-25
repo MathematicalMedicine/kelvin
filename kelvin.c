@@ -13,8 +13,10 @@
  **********************************************************************/
 #include "kelvin.h"
 #include "likelihood.h"
+#include "pedlib/polynomial.h"
 
 #include "../diags/kelvin.c-head"
+char *kelvinVersion = "0.0.29";
 
 /* Some default global values. */
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
