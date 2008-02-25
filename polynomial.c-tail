@@ -128,7 +128,7 @@ expPrint (struct polynomial *p)
  This function prints out polynomial statistic information.  It is mainly used for 
  performance evaluation and debugging. */
 void
-polyStatistics (FILE * fp)
+polyStatistics ()
 {
   long constantSize, variableSize, sumSize, productSize, functionCallSize;
   int sumTerms = 0, productTerms = 0;
