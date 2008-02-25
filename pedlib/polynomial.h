@@ -16,6 +16,7 @@
 clock_t startTime;
 clock_t currentTime; 
 int maxHashLength;
+int constantHashHits, variableHashHits, sumHashHits, productHashHits, functionHashHits;
 struct hashStruct *maxHash;
 int sum0,sum1,sum2,sum3,sum4,sum5,sum00, sum11;
 int product0, product1, product2, product3,product4,product5,product6,product7,product8,product9, product00,product11;
