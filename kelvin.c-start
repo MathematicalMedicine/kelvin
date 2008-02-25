@@ -27,8 +27,8 @@
 
   /* Annouce ourselves for performance tracking. */
   char messageBuffer[MAXSWMSG];
-  sprintf(messageBuffer, "At %s(%s %s)%d: %s", __FILE__, __DATE__, __TIME__,
-	  __LINE__, "starting run");
+  sprintf(messageBuffer, "kelvin V%s, likelihood V%s, locus V%s, polynomial V%s starting run",
+	kelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
   swLogMsg(messageBuffer);
   
 #ifdef DMTRACK
