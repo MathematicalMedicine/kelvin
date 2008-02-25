@@ -322,7 +322,7 @@ void polynomialClearance();
 //Show polynomials' structures
 void dismantle();
 //statistics of polynomials
-void polyStatistics(FILE *fp);
+void polyStatistics();
 //print hash tables
 void printHashTables();
 //print out all the variables
@@ -332,5 +332,6 @@ void printAllPolynomials();
 void dismantlePolynomialAndSortingList(struct polynomial *p, struct polyList *l);
 //print out polylist
 //void printPolyList(struct polyList *l)
+void printSummaryPoly(struct polynomial *);
 
 #endif
