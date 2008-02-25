@@ -449,6 +449,7 @@ struct polynomial *constantExp(double con)
 	         if(tempI2==tempI1 && (int)(tempD2*100000000)==(int)(tempD1*100000000))
 	         {
 	                 //if the two constants are the same, return the constant in the constant list 
+		   constantHashHits++;
 	                 return constantList[cIndex];
 	         } 
             } 
@@ -574,6 +575,7 @@ struct polynomial *variableExp(double *vD, int *vI, char vType, char name[10])
                  if((vType=='D' && variableList[vIndex]->e.v->vAddr.vAddrD==vD) || (vType=='I' && variableList[vIndex]->e.v->vAddr.vAddrI==vI))
 	         {
 	                 //if the two variables are the same, return the variable in the variable list 
+		   variableHashHits++;
 	                 return variableList[vIndex];
 	         } 
 	      } 
@@ -997,6 +999,7 @@ struct polynomial *plusExp(int num, ...)
 	                 {
                              sumList[sIndex]->count=2;
                              sum4++;
+			     sumHashHits++;
 	                     return sumList[sIndex];
 	                 }
 	             } //end of if(counter==sumList[sIndex]->e.s->num)
@@ -1534,6 +1537,7 @@ struct polynomial *timesExp(int num,...)
                              //refered in more than one places so that it can't be freed
                              productList[pIndex]->count=2;
                              product6++;
+			     productHashHits++;
 	                     return productList[pIndex];
 	                  }
                           //this product polynomail has been existing so that we don't need to construct a 
@@ -1865,6 +1869,7 @@ struct polynomial *functionCallExp(int num, ...)
 	                 if(k>=num-1)
 	                 {
 	                     free(p);
+			     functionHashHits++;
 	                     return functionCallList[fIndex];
 	                 }
 	             } //end of if(num-1==functionCallList[fIndex]->e.f->paraNum)
@@ -3379,92 +3384,6 @@ void dismantle()
    }
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////
-//This function prints out polynomial statistic information.  It is mainly used for 
-//performance evaluation and debugging
-///////////////////////////////////////////////////////////////////////////////////////////
-void polyStatistics(FILE *fp)
-{ 
-   long constantSize,variableSize,sumSize,productSize,functionCallSize;
-   int sumTerms=0,productTerms=0;
-   int i;
-   clock_t time0;    
-
-   time0=clock();
-
-   if(fp!=NULL)
-   fprintf(fp," %5d   %5d   %5d   %5d  %5d",
-	   constantCount,variableCount,sumCount,productCount,functionCallCount);
-
-   constantSize=constantCount*sizeof(Polynomial);
-   variableSize=variableCount*sizeof(Polynomial);
-   sumSize=sumCount*sizeof(Polynomial)+sumCount*sizeof(struct sumPoly);
-   for(i=0;i<sumCount;i++)
-   {     
-     sumSize+=sumList[i]->e.s->num*(sizeof(Polynomial *)+sizeof(double));
-     sumTerms+=sumList[i]->e.s->num;
-   }
-   productSize=productCount*sizeof(Polynomial)+productCount*sizeof(struct productPoly);
-   for(i=0;i<productCount;i++)
-   {
-      productSize+=productList[i]->e.p->num*(sizeof(Polynomial *)+sizeof(int));
-      productTerms+=productList[i]->e.p->num;
-   }
-   functionCallSize=functionCallCount*sizeof(Polynomial)+functionCallCount*sizeof(struct functionPoly);
-   for(i=0;i<functionCallCount;i++)
-   {  
-      functionCallSize+=strlen(functionCallList[i]->e.f->name)+sizeof(int)+sizeof(Polynomial *);
-   }
-   fprintf(stderr,"Number of polys:  %8d  %3d  %11d  %11d  %5d (%d %d)\n",
-                   constantCount,variableCount,sumCount,productCount,functionCallCount,sumTerms,productTerms);
-   fprintf(stderr,"sizes of polys:   %8ld  %3ld  %11ld  %11ld  %5ld  %12ld\n",constantSize,variableSize,
-                       sumSize,productSize,functionCallSize,
-  		       constantSize+variableSize+sumSize+productSize+functionCallSize);
-
-   fprintf(stderr,"sum0=%d sum1=%d sum2=%d sum3=%d sum4=%d sum5=%d sum00=%d sum11=%d\n",
-                   sum0,sum1,sum2,sum3,sum4,sum5,sum00,sum11);
-   fprintf(stderr,"product0=%d product1=%d product2=%d product3=%d product4=%d product5=%d product6=%d product7=%d product8=%d product9=%d product00=%d product11=%d \n", 
-                    product0, product1, product2, product3,product4,product5,product6,product7,product8,product9, product00,product11);
-   fprintf(stderr,"time=%f  %f  maxHashLength=%d numSumTerms=%d numProductTerms=%d ",(double) (time0 - currentTime) / CLOCKS_PER_SEC, 
-							(double) (time0 - startTime) / CLOCKS_PER_SEC,
-						      maxHashLength,numSumTerms,numProductTerms);
-   if(sum00+sum11>0)
-      fprintf(stderr,"average sum length: %f ",numSumTerms*1.0/(sum00+sum11));
-   if(product00+product11>0)
-     fprintf(stderr,"average prod length: %f ",numProductTerms*1.0/(product00+product11));
-   fprintf(stderr,"\n");
-
-   fprintf(stderr,"maxSumLength=%d\n",maxSumLength);
-   for(i=0;i<maxSumLength;i++)
-     if(countSumLength[i]>0)
-     {
-       fprintf(stderr,"(s%d %d) ",i+1,countSumLength[i]);
-       countSumLength[i]=0;
-     }
-   fprintf(stderr,"\n");
-   fprintf(stderr,"maxProductLength=%d\n",maxProductLength);
-   for(i=0;i<maxProductLength;i++)
-     if(countProductLength[i]>0)
-     {
-       fprintf(stderr,"(p%d %d) ",i+1,countProductLength[i]);
-       countProductLength[i]=0;
-     }
-   fprintf(stderr,"\n\n");
-
-
-   currentTime=time0;
-
-   sum0=sum1=sum2=sum3=sum4=sum5=sum00=sum11=0;
-   product0=product1=product2=product3=product4=product5=product6=product7=product8=product9=product00=product11=0;
-   numSumTerms=0;
-   numProductTerms=0;
-
-
-   if(fp!=NULL)
-   fprintf(fp," %10ld   %10ld   %10ld   %10ld   %10ld   %10ld (%d  %d)\n",constantSize,variableSize,sumSize,productSize,functionCallSize,
-                       constantSize+variableSize+sumSize+productSize+functionCallSize,sumTerms,productTerms);
-
-};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //This function prints out hash table contents.  This function is for performance evaluation 

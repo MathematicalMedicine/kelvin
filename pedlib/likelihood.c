@@ -199,6 +199,7 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 
 //                expPrinting(pPedigree->likelihoodPolynomial);
 //                fprintf(stderr,"\n");
+	      polyStatistics(stderr);
 	      pPedigree->likelihoodPolyList = buildPolyList ();
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
