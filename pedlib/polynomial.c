@@ -13,6 +13,7 @@
 
 #include "../../diags/polynomial.c-head"
 char *polynomialVersion = "0.0.30";
+int polynomialDebugLevel = 0;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //Recursively evaluate a polynomial.  This version of polynomail evaluation doesn't use
@@ -415,8 +416,7 @@ struct polynomial *constantExp(double con)
   int tempI1,tempI2;          //normalized integer component
   double tempD1, tempD2;      //normalized fractional component
 
-//  fprintf(stderr,"con=%f\n",con);
-
+  if (polynomialDebugLevel >= 6) fprintf(stderr,"In constantExp constant=%f\n",con);
 
   tempI1 = tempI2 = -1;
 
@@ -449,6 +449,7 @@ struct polynomial *constantExp(double con)
 	         if(tempI2==tempI1 && (int)(tempD2*100000000)==(int)(tempD1*100000000))
 	         {
 	                 //if the two constants are the same, return the constant in the constant list 
+                             constantList[cIndex]->count++;
 		   constantHashHits++;
 	                 return constantList[cIndex];
 	         } 
@@ -498,6 +499,7 @@ struct polynomial *constantExp(double con)
   p->index=constantCount;
   //give the polynomial a unique ID
   p->id=nodeId;
+  if (polynomialDebugLevel >= 4) fprintf(stderr, "Polynomial %d, (constant %d) added\n", nodeId, constantCount);
   constantCount++;
   nodeId++;
   p->key=key;
@@ -552,6 +554,7 @@ struct polynomial *variableExp(double *vD, int *vI, char vType, char name[10])
   //compuete a key for this variable polynomial
   key = keyVariablePolynomial(vD, vI, vType);
 
+  if (polynomialDebugLevel >= 6) fprintf(stderr,"In variableExp name=%s\n", name);
   
   //Compute the index of this variable polynomial in the hash table of variable polynomials
   hIndex=key % VARIABLE_HASH_SIZE;
@@ -575,6 +578,7 @@ struct polynomial *variableExp(double *vD, int *vI, char vType, char name[10])
                  if((vType=='D' && variableList[vIndex]->e.v->vAddr.vAddrD==vD) || (vType=='I' && variableList[vIndex]->e.v->vAddr.vAddrI==vI))
 	         {
 	                 //if the two variables are the same, return the variable in the variable list 
+                             variableList[vIndex]->count++;
 		   variableHashHits++;
 	                 return variableList[vIndex];
 	         } 
@@ -629,6 +633,7 @@ struct polynomial *variableExp(double *vD, int *vI, char vType, char name[10])
 
   //Insert the variable polynomial in the variable polynomial list
   variableList[variableCount]=p;
+  if (polynomialDebugLevel >= 4) fprintf(stderr, "Polynomial %d, (variable %d) added\n", nodeId, variableCount);
   variableCount++;
   nodeId++;
 
@@ -805,10 +810,11 @@ struct polynomial *plusExp(int num, ...)
       //get the polynomial
       p1= va_arg( args, struct polynomial *);
 
-//        fprintf(stderr,"In Sum factor=%f  item No. %d of %d type=%d\n",f1,i,num,p1->eType);
-//        expPrinting(p1);
-//        fprintf(stderr,"\n");
-
+      if (polynomialDebugLevel >= 6) {
+	fprintf(stderr,"In plusExp factor=%f item No. %d of %d type=%d: ",f1,i+1,num,p1->eType);
+        expPrinting(p1);
+        fprintf(stderr,"\n");
+      }
 
       //Record the first operand of the plus operation.  Often, the first operand and the result are the
       //same variable, which refers to the case of p = p + ..., therefore, when we build a new polynomial
@@ -997,7 +1003,8 @@ struct polynomial *plusExp(int num, ...)
                          }
 	                 if(k>=counterSum)
 	                 {
-                             sumList[sIndex]->count=2;
+			   //                             sumList[sIndex]->count=2;
+                             sumList[sIndex]->count++;
                              sum4++;
 			     sumHashHits++;
 	                     return sumList[sIndex];
@@ -1152,6 +1159,7 @@ struct polynomial *plusExp(int num, ...)
 	      sumList[sumCount]=rp;
 	      sumList[sumCount]->index=sumCount;           
 	      sumList[sumCount]->id=nodeId;
+	      if (polynomialDebugLevel >= 4) fprintf(stderr, "Polynomial %d, (sum %d) added\n", nodeId, sumCount);
 	      sumCount++;
 	      nodeId++;
       }
@@ -1321,10 +1329,12 @@ struct polynomial *timesExp(int num,...)
       e1= va_arg( args, int);
 
 
-   //   fprintf(stderr," TimesExp  exponent=%d item No. %d of %d type=%d\n",
-   //                   e1,i,num,p1->eType);
-   //   expPrinting(p1);
-   //   fprintf(stderr,"\n");
+      if (polynomialDebugLevel >= 6) {
+	fprintf(stderr,"In timesExp exponent=%d item No. %d of %d type=%d: ",
+                      e1,i+1,num,p1->eType);
+	expPrinting(p1);
+	fprintf(stderr,"\n");
+      }
 
 
       //Record the first operand of the times operation.  Often, the first operand and the result are the
@@ -1535,7 +1545,8 @@ struct polynomial *timesExp(int num,...)
 	                  {
                              //the attribute count is used as a sign to show that this polynomial is
                              //refered in more than one places so that it can't be freed
-                             productList[pIndex]->count=2;
+			    //                             productList[pIndex]->count=2;
+                             productList[pIndex]->count++;
                              product6++;
 			     productHashHits++;
 	                     return productList[pIndex];
@@ -1546,7 +1557,8 @@ struct polynomial *timesExp(int num,...)
 	                  else
 	                  {
                              product7++;
-                             productList[pIndex]->count=2;
+			     //                             productList[pIndex]->count=2;
+                             productList[pIndex]->count++;
 	                     return plusExp(1,factor, productList[pIndex],0);
 	                  }
                        }//end of if
@@ -1704,6 +1716,7 @@ struct polynomial *timesExp(int num,...)
               productList[productCount]=rp;
               productList[productCount]->index=productCount;
               productList[productCount]->id=nodeId;
+	      if (polynomialDebugLevel >= 4) fprintf(stderr, "Polynomial %d, (product %d) added\n", nodeId, productCount);
               productCount++;
               nodeId++;
       }
@@ -1829,6 +1842,12 @@ struct polynomial *functionCallExp(int num, ...)
    //num is equal to 1 plus the number of parameters for the called function
    for(i=0;i<num-1;i++)
    {
+     if (polynomialDebugLevel >= 6) {
+       fprintf(stderr,"In functionCallExp item No. %d of %d type=%d: ",i+1,num,p[i]->eType);
+       expPrinting(p[i]);
+       fprintf(stderr,"\n");
+     }
+
       p[i]= va_arg( args, struct polynomial *);
    }  
 
@@ -1923,6 +1942,7 @@ struct polynomial *functionCallExp(int num, ...)
          }
       }      
       functionCallList[functionCallCount]=rp;
+      if (polynomialDebugLevel >= 4) fprintf(stderr, "Polynomial %d, (function %d) added\n", nodeId, functionCallCount);
       functionCallCount++;
       nodeId++;
 
@@ -1935,83 +1955,6 @@ struct polynomial *functionCallExp(int num, ...)
 
 };
 
-//////////////////////////////////////////////////////////////////////////////////
-//This function prints a polynomial.  						//
-//////////////////////////////////////////////////////////////////////////////////
-void expPrinting(struct polynomial *p)
-{
-   int i;
-
-
-   switch(p->eType){
-     case T_CONSTANT:
-        if(p->value>=0)
-           fprintf(stderr,"%f",p->value);
-        else
-           fprintf(stderr,"(%f)",p->value);
-        break;
-
-     case T_VARIABLE:
-        fprintf(stderr,"%s",p->e.v->vName);
-        break;
-  
-     case T_SUM:
-        if(p->e.s->num>1)
-          fprintf(stderr,"(");
-
-        if(p->e.s->factor[0]>=0)
-          fprintf(stderr,"%f*",p->e.s->factor[0]);
-        else
-          fprintf(stderr,"(%f)*",p->e.s->factor[0]);
-        expPrinting(p->e.s->sum[0]);
-        
-        for(i=1;i<p->e.s->num;i++)
-        {
-            fprintf(stderr,"+");
-            if(p->e.s->factor[i]>=0)
-               fprintf(stderr,"%f*",p->e.s->factor[i]);
-            else
-               fprintf(stderr,"(%f)*",p->e.s->factor[i]);
-            expPrinting(p->e.s->sum[i]);
-        }
-        if(p->e.s->num>1)
-          fprintf(stderr,")");
-        break;
-
-     case T_PRODUCT:
-
-        expPrinting(p->e.p->product[0]);
-        if(p->e.p->exponent[0]>=0)
-           fprintf(stderr,"^%d",p->e.p->exponent[0]);
-        else
-           fprintf(stderr,"^(%d)",p->e.p->exponent[0]);
-        for(i=1;i<p->e.s->num;i++)
-        {
-          fprintf(stderr,"*");
-          expPrinting(p->e.p->product[i]);
-          if(p->e.p->exponent[i]>=0)
-             fprintf(stderr,"^%d",p->e.p->exponent[i]);
-          else
-             fprintf(stderr,"^(%d)",p->e.p->exponent[i]);
-        }
-
-        break;
-      case T_FUNCTIONCALL:
-         fprintf(stderr,"%s(",p->e.f->name);
-         for(i=0;i<p->e.f->paraNum-1;i++)
-         {
-           expPrinting(p->e.f->para[i]);
-           fprintf(stderr,", ");
-         }
-         expPrinting(p->e.f->para[p->e.f->paraNum-1]);
-         fprintf(stderr,")");
-         break;
-
-      default:
-        fprintf(stderr,"Unknown expression type %d exit!!!!!, exit(5)\n",p->eType);
-        exit(1);
-     }
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //This function initialize a structure for creating a polynomial list which is used  
@@ -2426,6 +2369,9 @@ void printPolyList(struct polyList *l)
 void polynomialInitialization()
 {
    int i;
+
+   polynomialDebugLevel = atoi(getenv("polynomialDebugLevel"));
+   if (polynomialDebugLevel > 0) fprintf(stderr, "polynomialDebugLevel is at %d\n", polynomialDebugLevel);
 
    startTime=currentTime=clock();
 
@@ -3514,99 +3460,6 @@ void printAllVariables()
 
 }
 
-
-//////////////////////////////////////////////////////////////////////
-//Print all the polynomials.  Used for debugging
-//////////////////////////////////////////////////////////////////////
-void printAllPolynomials()
-{
-   int i,j;
-   if(constantCount>0)
-   {
-           fprintf(stderr,"All %d constants:\n",constantCount );
-           for(i=0;i<CONSTANT_HASH_SIZE;i++)
-           {
-              if(constantHash[i].num<=0)
-                 continue;
-              for(j=0;j<constantHash[i].num;j++)
-              {
-                fprintf(stderr,"(%d  %d) index=%d key=%d valid=%d constant: ",i,j,constantHash[i].index[j],constantHash[i].key[j], constantList[constantHash[i].index[j]]->valid);
-                expPrinting(constantList[constantHash[i].index[j]]);
-                fprintf(stderr,"\n");
-              }
-              fprintf(stderr,"\n");
-           }
-           fprintf(stderr,"\n");
-   }
-   if(variableCount>0)
-   {
-           fprintf(stderr,"All %d variables:\n",variableCount);
-           for(i=0;i<VARIABLE_HASH_SIZE;i++)
-           {
-              if(variableHash[i].num<=0)
-                 continue;
-              for(j=0;j<variableHash[i].num;j++)
-              {
-                fprintf(stderr,"(%d  %d) index=%d key=%d variable: ",i,j,variableHash[i].index[j],variableHash[i].key[j]);
-                expPrinting(variableList[variableHash[i].index[j]]);
-                fprintf(stderr,"\n");
-              }
-           }
-           fprintf(stderr,"\n");
-   }
-   if(sumCount>0)
-   {
-           fprintf(stderr,"All %d sums:\n",sumCount);
-           for(i=0;i<SUM_HASH_SIZE;i++)
-           {
-              if(sumHash[i].num<=0)
-                 continue;
-              for(j=0;j<sumHash[i].num;j++)
-              {
-                fprintf(stderr,"(%d  %d) index=%d Key=%d sum: ",i,j,sumHash[i].index[j],sumHash[i].key[j]);
-                expPrinting(sumList[sumHash[i].index[j]]);
-                fprintf(stderr,"\n");
-              }
-              fprintf(stderr,"\n");
-           }
-           fprintf(stderr,"\n");
-   }
-   if(productCount>0)
-   {
-           fprintf(stderr,"All %d products:\n",productCount);
-           for(i=0;i<PRODUCT_HASH_SIZE;i++)
-           {
-              if(productHash[i].num<=0)
-                 continue;
-              for(j=0;j<productHash[i].num;j++)
-              {
-                fprintf(stderr,"(%d  %d) index=%d Key=%d product: ",i,j,productHash[i].index[j],productHash[i].key[j]);
-                expPrinting(productList[productHash[i].index[j]]);
-                fprintf(stderr,"\n");
-              }
-              fprintf(stderr,"\n");
-           }
-           fprintf(stderr,"\n");
-   }
-
-   if(functionCallCount>0)
-   {
-        fprintf(stderr,"All %d function calls:\n",functionCallCount);
-           for(i=0;i<FUNCTIONCALL_HASH_SIZE;i++)
-           {
-              if(functionCallHash[i].num<=0)
-                 continue;
-              for(j=0;j<functionCallHash[i].num;j++)
-              {
-                fprintf(stderr,"(%d  %d) index=%d Key=%d functionCall: ",i,j,functionCallHash[i].index[j],functionCallHash[i].key[j]);
-                expPrinting(functionCallList[functionCallHash[i].index[j]]);
-                fprintf(stderr,"\n");
-              }
-              fprintf(stderr,"\n");
-           }
-           fprintf(stderr,"\n");
-   }
-}
 
 //////////////////////////////////////////////////////////////////////
 // print out a polynomial and its sorting list.  Used for debugging

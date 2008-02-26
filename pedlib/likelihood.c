@@ -196,11 +196,10 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	       * for this pedigree */
 	      makePolynomialStamp2 ();
 	      status = compute_pedigree_likelihood (pPedigree);
-
-//                expPrinting(pPedigree->likelihoodPolynomial);
-//                fprintf(stderr,"\n");
-	      printSummaryPoly(pPedigree->likelihoodPolynomial);
 	      polyStatistics(stderr);
+	      printSummaryPoly(pPedigree->likelihoodPolynomial);
+	      //	      expPrinting(pPedigree->likelihoodPolynomial);
+	      printAllPolynomials();
 	      pPedigree->likelihoodPolyList = buildPolyList ();
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
