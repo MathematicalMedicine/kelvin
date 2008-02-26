@@ -85,6 +85,14 @@ struct polynomial **p_f1;
 int containerLength_f1;
 int counter_f1;
 
+#ifndef OPTIMIZE
+   //collect sum call terms
+double *factor_s1;
+struct polynomial **p_s1;
+int containerLength_s1;
+int counter_s1;
+#endif
+
    //collect all terms
 double *factorSum;
 struct polynomial **pSum;
@@ -103,6 +111,14 @@ int *exponent_s2;
 struct polynomial **p_s2;
 int containerLength_s2;
 int counter_s2;
+
+#ifndef OPTIMIZE
+   //collect product terms
+int *exponent_p2;
+struct polynomial **p_p2;
+int containerLength_p2;
+int counter_p2;
+#endif
 
    //collect function call terms
 int *exponent_f2;
