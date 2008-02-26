@@ -134,17 +134,16 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 //                fprintf(stderr,"Start polynomial building\n");
 	      makePolynomialStamp2 ();
 	      status = compute_pedigree_likelihood (pPedigree);
-
+	      pPedigree->likelihoodPolyList = buildPolyList ();
+	      polyListSorting (pPedigree->likelihoodPolynomial,
+			       pPedigree->likelihoodPolyList);
 #ifdef DEBUG	      
 	      printAllPolynomials();
 	      polyStatistics();
 	      printSummaryPoly(pPedigree->likelihoodPolynomial);
-              expPrinting(pPedigree->likelihoodPolynomial);
+              expTermPrinting(pPedigree->likelihoodPolynomial);
               fprintf(stderr,"\n");
 #endif
-	      pPedigree->likelihoodPolyList = buildPolyList ();
-	      polyListSorting (pPedigree->likelihoodPolynomial,
-			       pPedigree->likelihoodPolyList);
 	      partialPolynomialClearance2 ();
 	      if(i == pPedigreeList->numPedigree -1)
 		{
