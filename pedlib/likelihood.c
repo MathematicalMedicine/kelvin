@@ -124,18 +124,17 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 //         fprintf(stderr,"modelOptions.polynomial == TRUE\n");
 	  if (pPedigree->likelihoodPolynomial == NULL)
 	    {
-//                fprintf(stderr,"The polynomial building for this pedigree should be only once\n");
-//            free_multi_locus_genotype_storage (pPedigree);
-//            allocate_multi_locus_genotype_storage (pPedigree);
+	      //	      fprintf(stderr,"The polynomial building for this pedigree should be only once\n");
+	      //            free_multi_locus_genotype_storage (pPedigree);
+	      //            allocate_multi_locus_genotype_storage (pPedigree);
 	      initialize_multi_locus_genotype (pPedigree);
-//                fprintf(stderr,"Start polynomial building\n");
+	      fprintf(stderr,"Start polynomial building\n");
 	      makePolynomialStamp2 ();
 	      status = compute_pedigree_likelihood (pPedigree);
-
-//                expPrinting(pPedigree->likelihoodPolynomial);
-//                fprintf(stderr,"\n");
-	      printSummaryPoly(pPedigree->likelihoodPolynomial);
 	      polyStatistics(stderr);
+	      printSummaryPoly(pPedigree->likelihoodPolynomial);
+	      //	      expPrinting(pPedigree->likelihoodPolynomial);
+	      printAllPolynomials();
 	      pPedigree->likelihoodPolyList = buildPolyList ();
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
@@ -1432,9 +1431,9 @@ loop_child_multi_locus_genotype (Person * pChild, Person * pProband,
   for (i = 0; i < pParentalPair->pChildGenoLen[child]; i++)
     {
       pGeno = pParentalPair->pppChildGenoList[child][i];
-      KLOG (LOGLIKELIHOOD, LOGDEBUG,
-	    "\t child %s locus %4d -> %4d|%-4d \n",
-	    pChild->sID, locusList->pLocusIndex[locus], pGeno->allele[DAD], pGeno->allele[MOM]);
+      //      KLOG (LOGLIKELIHOOD, LOGDEBUG,
+      //	    "\t child %s locus %4d -> %4d|%-4d \n",
+      //	    pChild->sID, locusList->pLocusIndex[locus], pGeno->allele[DAD], pGeno->allele[MOM]);
       multiLocusIndex = multiLocusIndex2 + pGeno->position;
       newChromosome2[DAD] = chromosome[DAD];
       newChromosome2[MOM] = chromosome[MOM];
