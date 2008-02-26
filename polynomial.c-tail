@@ -45,7 +45,7 @@ printSummaryPoly (struct polynomial *p)
 {
   int i, j;
 
-  fprintf (stderr, "Summary of Remains of %d Polynomials:\n", nodeId);
+  fprintf (stderr, "Summary of Remains of %d Polynomials (from tree):\n", nodeId);
   memset (polyTiers, 0, sizeof (polyTiers));
   peakPolyTiers = 0;
   traversePoly (p, 0);
@@ -89,7 +89,7 @@ expPrinting (struct polynomial *p)
     if (p->e.s->factor[0] != 1)
       fprintf (stderr, "%G*", p->e.s->factor[0]);
     expPrinting (p->e.s->sum[0]);
-    for (i = 0; i < p->e.s->num; i++) {
+    for (i = 1; i < p->e.s->num; i++) {
       fprintf (stderr, "+");
       if (p->e.s->factor[i] != 1)
 	fprintf (stderr, "%G*", p->e.s->factor[i]);
@@ -129,6 +129,63 @@ expPrinting (struct polynomial *p)
   }
 }
 
+void
+expTermPrinting (struct polynomial *p)
+{
+  int i;
+
+  switch (p->eType) {
+  case T_CONSTANT:
+    fprintf (stderr, "%G", p->value);
+    break;
+  case T_VARIABLE:
+    if (strlen (p->e.v->vName) == 0)
+      fprintf (stderr, "unnamed%d", p->index);
+    else
+      fprintf (stderr, "%s", p->e.v->vName);
+    break;
+  case T_SUM:
+    fprintf (stderr, "(s%d:", p->index);
+    if (p->e.s->factor[0] != 1)
+      fprintf (stderr, "%G*", p->e.s->factor[0]);
+    expTermPrinting (p->e.s->sum[0]);
+    for (i = 1; i < p->e.s->num; i++) {
+      fprintf (stderr, "+");
+      if (p->e.s->factor[i] != 1)
+	fprintf (stderr, "%G*", p->e.s->factor[i]);
+      expTermPrinting (p->e.s->sum[i]);
+    }
+    fprintf (stderr, ")");
+    break;
+  case T_PRODUCT:
+    fprintf (stderr, "(p%d:", p->index);
+    expTermPrinting (p->e.p->product[0]);
+    if (p->e.p->exponent[0] != 1)
+      fprintf (stderr, "^%d", p->e.p->exponent[0]);
+    for (i = 1; i < p->e.s->num; i++) {
+      fprintf (stderr, "*");
+      expTermPrinting (p->e.p->product[i]);
+      if (p->e.p->exponent[i] != 1)
+	fprintf (stderr, "^%d", p->e.p->exponent[i]);
+    }
+    fprintf (stderr, ")");
+    break;
+  case T_FUNCTIONCALL:
+    fprintf (stderr, "%s(", p->e.f->name);
+    for (i = 0; i < p->e.f->paraNum - 1; i++) {
+      expPrinting (p->e.f->para[i]);
+      fprintf (stderr, ", ");
+    }
+    expPrinting (p->e.f->para[p->e.f->paraNum - 1]);
+    fprintf (stderr, ")");
+    break;
+  default:
+    fprintf (stderr, "Unknown expression type %d exit!!!!!, exit(5)\n",
+	     p->eType);
+    exit (1);
+  }
+}
+
 /*
  This function prints out polynomial statistic information.  It is mainly used for 
  performance evaluation and debugging. */
@@ -139,7 +196,7 @@ polyStatistics ()
   int sumTerms = 0, productTerms = 0;
   int i;
 
-  fprintf (stderr, "Dump of polynomial statistics:\n");
+  fprintf (stderr, "Dump of polynomial statistics (from counters and specific lists):\n");
   fprintf (stderr,
 	   "Count of constants=%d, variables=%d, sums=%d, products=%d, functions=%d\n",
 	   constantCount, variableCount, sumCount, productCount,
@@ -227,7 +284,7 @@ printAllPolynomials ()
 {
   int i, j;
 
-  fprintf (stderr, "All Polynomials from Hash:\n");
+  fprintf (stderr, "All Polynomials (from hash):\n");
   if (constantCount > 0) {
     fprintf (stderr, "All %d constants:\n", constantCount);
     for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
@@ -242,7 +299,6 @@ printAllPolynomials ()
 	expPrinting (constantList[constantHash[i].index[j]]);
 	fprintf (stderr, "\n");
       }
-      fprintf (stderr, "\n");
     }
     fprintf (stderr, "\n");
   }
@@ -252,9 +308,10 @@ printAllPolynomials ()
       if (variableHash[i].num <= 0)
 	continue;
       for (j = 0; j < variableHash[i].num; j++) {
-	fprintf (stderr, "(%d %d) index=%d key=%d count=%d variable: ",
+	fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d variable: ",
 		 i, j, variableHash[i].index[j], variableHash[i].key[j],
-		 variableList[variableHash[i].index[j]]->count);
+		 variableList[variableHash[i].index[j]]->count,
+		 variableList[variableHash[i].index[j]]->valid);
 	expPrinting (variableList[variableHash[i].index[j]]);
 	fprintf (stderr, "\n");
       }
@@ -267,13 +324,13 @@ printAllPolynomials ()
       if (sumHash[i].num <= 0)
 	continue;
       for (j = 0; j < sumHash[i].num; j++) {
-	fprintf (stderr, "(%d %d) index=%d key=%d count=%d sum: ",
+	fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d sum: ",
 		 i, j, sumHash[i].index[j], sumHash[i].key[j],
-		 sumList[sumHash[i].index[j]]->count);
+		 sumList[sumHash[i].index[j]]->count,
+		 sumList[sumHash[i].index[j]]->valid);
 	expPrinting (sumList[sumHash[i].index[j]]);
 	fprintf (stderr, "\n");
       }
-      fprintf (stderr, "\n");
     }
     fprintf (stderr, "\n");
   }
@@ -283,13 +340,13 @@ printAllPolynomials ()
       if (productHash[i].num <= 0)
 	continue;
       for (j = 0; j < productHash[i].num; j++) {
-	fprintf (stderr, "(%d %d) index=%d key=%d count=%d product: ",
+	fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d product: ",
 		 i, j, productHash[i].index[j], productHash[i].key[j],
-		 productList[productHash[i].index[j]]->count);
+		 productList[productHash[i].index[j]]->count,
+		 productList[productHash[i].index[j]]->valid);
 	expPrinting (productList[productHash[i].index[j]]);
 	fprintf (stderr, "\n");
       }
-      fprintf (stderr, "\n");
     }
     fprintf (stderr, "\n");
   }
@@ -300,14 +357,14 @@ printAllPolynomials ()
       if (functionCallHash[i].num <= 0)
 	continue;
       for (j = 0; j < functionCallHash[i].num; j++) {
-	fprintf (stderr, "(%d %d) index=%d key=%d count=%d functionCall: ",
+	fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d functionCall: ",
 		 i, j, functionCallHash[i].index[j],
 		 functionCallHash[i].key[j],
-	functionCallList[functionCallHash[i].index[j]]->count);
+	functionCallList[functionCallHash[i].index[j]]->count,
+	functionCallList[functionCallHash[i].index[j]]->valid);
 	expPrinting (functionCallList[functionCallHash[i].index[j]]);
 	fprintf (stderr, "\n");
       }
-      fprintf (stderr, "\n");
     }
     fprintf (stderr, "\n");
   }
