@@ -7,11 +7,9 @@ char *polyTypes[] = { "constant", "variable", "sum", "product", "function" };
 void
 traversePoly (struct polynomial *p, int currentTier)
 {
-  struct sumPoly *pS;
-  struct functionPoly *pF;
-  struct polynomial *q;
   int i;
 
+  fprintf (stderr, "%d(%d) ", p->id, p->count);
   if (currentTier > peakPolyTiers)
     peakPolyTiers = currentTier;
   if (currentTier >= MAXPOLYTIERS)
@@ -22,18 +20,18 @@ traversePoly (struct polynomial *p, int currentTier)
   case T_VARIABLE:
     break;
   case T_SUM:
+    for (i = 0; i < p->e.s->num; i++) {
+      traversePoly (p->e.s->sum[i], currentTier + 1);
+    }
+    break;
   case T_PRODUCT:
-    pS = p->e.s;
-    for (i = 0; i < pS->num; i++) {
-      q = pS->sum[i];
-      traversePoly (q, currentTier + 1);
+    for (i = 0; i < p->e.p->num; i++) {
+      traversePoly (p->e.p->product[i], currentTier + 1);
     }
     break;
   case T_FUNCTIONCALL:
-    pF = p->e.f;
-    for (i = 0; i < pF->paraNum; i++) {
-      q = pF->para[i];
-      traversePoly (q, currentTier + 1);
+    for (i = 0; i < p->e.f->paraNum; i++) {
+      traversePoly (p->e.f->para[i], currentTier + 1);
     }
     break;
   default:
@@ -47,7 +45,7 @@ printSummaryPoly (struct polynomial *p)
 {
   int i, j;
 
-  fprintf (stderr, "Summary of Polynomial:\n");
+  fprintf (stderr, "Summary of Remains of %d Polynomials:\n", nodeId);
   memset (polyTiers, 0, sizeof (polyTiers));
   peakPolyTiers = 0;
   traversePoly (p, 0);
@@ -71,33 +69,38 @@ printSummaryPoly (struct polynomial *p)
 }
 
 void
-expPrint (struct polynomial *p)
+expPrinting (struct polynomial *p)
 {
   int i;
 
   switch (p->eType) {
   case T_CONSTANT:
-    fprintf (stderr, "%f", p->value);
+    fprintf (stderr, "%G", p->value);
     break;
   case T_VARIABLE:
-    fprintf (stderr, "%s", p->e.v->vName);
+    if (strlen (p->e.v->vName) == 0)
+      fprintf (stderr, "unnamed%d", p->index);
+    else
+      fprintf (stderr, "%s", p->e.v->vName);
     break;
   case T_SUM:
     if (p->e.s->num > 1)
       fprintf (stderr, "(");
     if (p->e.s->factor[0] != 1)
-      fprintf (stderr, "%f*", p->e.s->factor[0]);
+      fprintf (stderr, "%G*", p->e.s->factor[0]);
     expPrinting (p->e.s->sum[0]);
     for (i = 0; i < p->e.s->num; i++) {
       fprintf (stderr, "+");
-      if (p->e.s->factor[0] != 1)
-	fprintf (stderr, "%f*", p->e.s->factor[i]);
+      if (p->e.s->factor[i] != 1)
+	fprintf (stderr, "%G*", p->e.s->factor[i]);
       expPrinting (p->e.s->sum[i]);
     }
     if (p->e.s->num > 1)
       fprintf (stderr, ")");
     break;
   case T_PRODUCT:
+    if (p->e.p->num > 1)
+      fprintf (stderr, "(");
     expPrinting (p->e.p->product[0]);
     if (p->e.p->exponent[0] != 1)
       fprintf (stderr, "^%d", p->e.p->exponent[0]);
@@ -107,6 +110,8 @@ expPrint (struct polynomial *p)
       if (p->e.p->exponent[i] != 1)
 	fprintf (stderr, "^%d", p->e.p->exponent[i]);
     }
+    if (p->e.p->num > 1)
+      fprintf (stderr, ")");
     break;
   case T_FUNCTIONCALL:
     fprintf (stderr, "%s(", p->e.f->name);
@@ -216,3 +221,95 @@ polyStatistics ()
   fprintf (stderr, "\n");
   fprintf (stderr, "---\n");
 };
+
+void
+printAllPolynomials ()
+{
+  int i, j;
+
+  fprintf (stderr, "All Polynomials from Hash:\n");
+  if (constantCount > 0) {
+    fprintf (stderr, "All %d constants:\n", constantCount);
+    for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
+      if (constantHash[i].num <= 0)
+	continue;
+      for (j = 0; j < constantHash[i].num; j++) {
+	fprintf (stderr,
+		 "(%d %d) index=%d key=%d count=%d valid=%d constant: ", i, j,
+		 constantHash[i].index[j], constantHash[i].key[j],
+		 constantList[constantHash[i].index[j]]->count,
+		 constantList[constantHash[i].index[j]]->valid);
+	expPrinting (constantList[constantHash[i].index[j]]);
+	fprintf (stderr, "\n");
+      }
+      fprintf (stderr, "\n");
+    }
+    fprintf (stderr, "\n");
+  }
+  if (variableCount > 0) {
+    fprintf (stderr, "All %d variables:\n", variableCount);
+    for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
+      if (variableHash[i].num <= 0)
+	continue;
+      for (j = 0; j < variableHash[i].num; j++) {
+	fprintf (stderr, "(%d %d) index=%d key=%d count=%d variable: ",
+		 i, j, variableHash[i].index[j], variableHash[i].key[j],
+		 variableList[variableHash[i].index[j]]->count);
+	expPrinting (variableList[variableHash[i].index[j]]);
+	fprintf (stderr, "\n");
+      }
+    }
+    fprintf (stderr, "\n");
+  }
+  if (sumCount > 0) {
+    fprintf (stderr, "All %d sums:\n", sumCount);
+    for (i = 0; i < SUM_HASH_SIZE; i++) {
+      if (sumHash[i].num <= 0)
+	continue;
+      for (j = 0; j < sumHash[i].num; j++) {
+	fprintf (stderr, "(%d %d) index=%d key=%d count=%d sum: ",
+		 i, j, sumHash[i].index[j], sumHash[i].key[j],
+		 sumList[sumHash[i].index[j]]->count);
+	expPrinting (sumList[sumHash[i].index[j]]);
+	fprintf (stderr, "\n");
+      }
+      fprintf (stderr, "\n");
+    }
+    fprintf (stderr, "\n");
+  }
+  if (productCount > 0) {
+    fprintf (stderr, "All %d products:\n", productCount);
+    for (i = 0; i < PRODUCT_HASH_SIZE; i++) {
+      if (productHash[i].num <= 0)
+	continue;
+      for (j = 0; j < productHash[i].num; j++) {
+	fprintf (stderr, "(%d %d) index=%d key=%d count=%d product: ",
+		 i, j, productHash[i].index[j], productHash[i].key[j],
+		 productList[productHash[i].index[j]]->count);
+	expPrinting (productList[productHash[i].index[j]]);
+	fprintf (stderr, "\n");
+      }
+      fprintf (stderr, "\n");
+    }
+    fprintf (stderr, "\n");
+  }
+
+  if (functionCallCount > 0) {
+    fprintf (stderr, "All %d function calls:\n", functionCallCount);
+    for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++) {
+      if (functionCallHash[i].num <= 0)
+	continue;
+      for (j = 0; j < functionCallHash[i].num; j++) {
+	fprintf (stderr, "(%d %d) index=%d key=%d count=%d functionCall: ",
+		 i, j, functionCallHash[i].index[j],
+		 functionCallHash[i].key[j],
+	functionCallList[functionCallHash[i].index[j]]->count);
+	expPrinting (functionCallList[functionCallHash[i].index[j]]);
+	fprintf (stderr, "\n");
+      }
+      fprintf (stderr, "\n");
+    }
+    fprintf (stderr, "\n");
+  }
+  fprintf (stderr, "---\n");
+}

@@ -6,8 +6,15 @@
 	 missed24s, used24s, missed48s, used48s, missed100s, used100s);
 #endif
 #ifdef DMTRACK
-  //  swDumpBlockUse ();
+  fprintf (stderr,
+	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d\n",
+	   countMalloc, countFree, countReallocOK, countReallocMove, countReallocFree, maxListDepth, maxRecycles);
+  fprintf (stderr,
+	   "Size malloc:%g, free:%g, realloc OK:%g, realloc move:%g, realloc free:%g, current:%g, peak:%g\n",
+	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
+	   totalReallocFree, currentAlloc, peakAlloc);
   swDumpSources ();
+  //  swDumpBlockUse ();
   //  swDumpCrossModuleChunks ();
 #endif
   swLogMsg("finished run");
