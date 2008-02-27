@@ -286,8 +286,9 @@ struct polynomial *timesExp (int num, ...);
 //constructor of a functionCall polynomial
 struct polynomial *functionCallExp (int num, ...);
 
-//Print a polynomial
+//Print a polynomial (2nd with term flags)
 void expPrinting (struct polynomial *p);
+void expTermPrinting (struct polynomial *p);
 
 //Creation and Initialization of evaluation list for a polynomial
 struct polyList *buildPolyList ();

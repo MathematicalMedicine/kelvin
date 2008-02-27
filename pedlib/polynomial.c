@@ -1123,7 +1123,6 @@ plusExp (int num, ...)
     expPrinting (rp);
     fprintf (stderr, "\n");
   }
-
   return rp;
 };
 
@@ -1408,7 +1407,6 @@ timesExp (int num, ...)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
     return rp;
   }
-#ifdef NEVER
   //If the result polynomial has only one term, it is not a product polynomial
   else if (counterProd == 1 && exponentProd[0] == 1) {
     //If the factor is 1, then the result polynomial is equal to its first term
@@ -1428,7 +1426,6 @@ timesExp (int num, ...)
       return rp;
     }
   }
-#endif
   //The result polynomial is a product polynomial
   else {
 
@@ -1664,7 +1661,6 @@ timesExp (int num, ...)
 	expPrinting (rp);
 	fprintf (stderr, "\n");
       }
-
       return rp;
     }
     //If the factor is not 1, return a sum polynomial
