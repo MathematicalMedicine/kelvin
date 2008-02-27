@@ -2289,8 +2289,11 @@ void
 polynomialInitialization ()
 {
   int i;
+  char *envVar;
 
-  polynomialDebugLevel = atoi (getenv ("polynomialDebugLevel"));
+  if ((envVar = getenv ("polynomialDebugLevel")) != NULL) {
+    polynomialDebugLevel = atoi (envVar);
+  }
   if (polynomialDebugLevel > 0)
     fprintf (stderr, "polynomialDebugLevel is at %d\n", polynomialDebugLevel);
 
