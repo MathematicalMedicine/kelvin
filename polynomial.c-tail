@@ -296,7 +296,7 @@ printAllPolynomials ()
 		 constantHash[i].index[j], constantHash[i].key[j],
 		 constantList[constantHash[i].index[j]]->count,
 		 constantList[constantHash[i].index[j]]->valid);
-	expPrinting (constantList[constantHash[i].index[j]]);
+	expTermPrinting (constantList[constantHash[i].index[j]]);
 	fprintf (stderr, "\n");
       }
     }
@@ -312,7 +312,7 @@ printAllPolynomials ()
 		 i, j, variableHash[i].index[j], variableHash[i].key[j],
 		 variableList[variableHash[i].index[j]]->count,
 		 variableList[variableHash[i].index[j]]->valid);
-	expPrinting (variableList[variableHash[i].index[j]]);
+	expTermPrinting (variableList[variableHash[i].index[j]]);
 	fprintf (stderr, "\n");
       }
     }
@@ -328,7 +328,7 @@ printAllPolynomials ()
 		 i, j, sumHash[i].index[j], sumHash[i].key[j],
 		 sumList[sumHash[i].index[j]]->count,
 		 sumList[sumHash[i].index[j]]->valid);
-	expPrinting (sumList[sumHash[i].index[j]]);
+	expTermPrinting (sumList[sumHash[i].index[j]]);
 	fprintf (stderr, "\n");
       }
     }
@@ -344,7 +344,7 @@ printAllPolynomials ()
 		 i, j, productHash[i].index[j], productHash[i].key[j],
 		 productList[productHash[i].index[j]]->count,
 		 productList[productHash[i].index[j]]->valid);
-	expPrinting (productList[productHash[i].index[j]]);
+	expTermPrinting (productList[productHash[i].index[j]]);
 	fprintf (stderr, "\n");
       }
     }
@@ -362,7 +362,7 @@ printAllPolynomials ()
 		 functionCallHash[i].key[j],
 	functionCallList[functionCallHash[i].index[j]]->count,
 	functionCallList[functionCallHash[i].index[j]]->valid);
-	expPrinting (functionCallList[functionCallHash[i].index[j]]);
+	expTermPrinting (functionCallList[functionCallHash[i].index[j]]);
 	fprintf (stderr, "\n");
       }
     }
