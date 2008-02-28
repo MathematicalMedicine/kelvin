@@ -34,8 +34,14 @@ traversePoly (struct polynomial *p, int currentTier)
       traversePoly (p->e.f->para[i], currentTier + 1);
     }
     break;
+  case T_FREED:
+    fprintf (stderr,
+	     "In traversePoly, evil caller is trying to use a polynomial that was freed:\n");
+    expTermPrinting (p);
+    exit (1);
+    break;
   default:
-    fprintf (stderr, "Error, Unknown expression type: [%d], exiting!\n",
+    fprintf (stderr, "In traversePoly, unknown expression type: [%d], exiting!\n",
 	     p->eType);
     exit (1);
   }
@@ -45,7 +51,8 @@ printSummaryPoly (struct polynomial *p)
 {
   int i, j;
 
-  fprintf (stderr, "Summary of Remains of %d Polynomials (from tree):\n", nodeId);
+  fprintf (stderr, "Summary of Remains of %d Polynomials (from tree):\n",
+	   nodeId);
   memset (polyTiers, 0, sizeof (polyTiers));
   peakPolyTiers = 0;
   traversePoly (p, 0);
@@ -122,8 +129,12 @@ expPrinting (struct polynomial *p)
     expPrinting (p->e.f->para[p->e.f->paraNum - 1]);
     fprintf (stderr, ")");
     break;
+  case T_FREED:
+    fprintf (stderr,
+	     "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n",
+	     (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
-    fprintf (stderr, "Unknown expression type %d exit!!!!!, exit(5)\n",
+    fprintf (stderr, "In expPrinting, unknown expression type %d, exiting\n",
 	     p->eType);
     exit (1);
   }
@@ -173,14 +184,18 @@ expTermPrinting (struct polynomial *p)
   case T_FUNCTIONCALL:
     fprintf (stderr, "%s(", p->e.f->name);
     for (i = 0; i < p->e.f->paraNum - 1; i++) {
-      expPrinting (p->e.f->para[i]);
+      expTermPrinting (p->e.f->para[i]);
       fprintf (stderr, ", ");
     }
-    expPrinting (p->e.f->para[p->e.f->paraNum - 1]);
+    expTermPrinting (p->e.f->para[p->e.f->paraNum - 1]);
     fprintf (stderr, ")");
     break;
+  case T_FREED:
+    fprintf (stderr,
+	     "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n",
+	     (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
-    fprintf (stderr, "Unknown expression type %d exit!!!!!, exit(5)\n",
+    fprintf (stderr, "In expTermPrinting, unknown expression type %d, exiting\n",
 	     p->eType);
     exit (1);
   }
@@ -196,7 +211,8 @@ polyStatistics ()
   int sumTerms = 0, productTerms = 0;
   int i;
 
-  fprintf (stderr, "Dump of polynomial statistics (from counters and specific lists):\n");
+  fprintf (stderr,
+	   "Dump of polynomial statistics (from counters and specific lists):\n");
   fprintf (stderr,
 	   "Count of constants=%d, variables=%d, sums=%d, products=%d, functions=%d\n",
 	   constantCount, variableCount, sumCount, productCount,
@@ -308,8 +324,9 @@ printAllPolynomials ()
       if (variableHash[i].num <= 0)
 	continue;
       for (j = 0; j < variableHash[i].num; j++) {
-	fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d variable: ",
-		 i, j, variableHash[i].index[j], variableHash[i].key[j],
+	fprintf (stderr,
+		 "(%d %d) index=%d key=%d count=%d valid=%d variable: ", i, j,
+		 variableHash[i].index[j], variableHash[i].key[j],
 		 variableList[variableHash[i].index[j]]->count,
 		 variableList[variableHash[i].index[j]]->valid);
 	expTermPrinting (variableList[variableHash[i].index[j]]);
@@ -340,8 +357,9 @@ printAllPolynomials ()
       if (productHash[i].num <= 0)
 	continue;
       for (j = 0; j < productHash[i].num; j++) {
-	fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d product: ",
-		 i, j, productHash[i].index[j], productHash[i].key[j],
+	fprintf (stderr,
+		 "(%d %d) index=%d key=%d count=%d valid=%d product: ", i, j,
+		 productHash[i].index[j], productHash[i].key[j],
 		 productList[productHash[i].index[j]]->count,
 		 productList[productHash[i].index[j]]->valid);
 	expTermPrinting (productList[productHash[i].index[j]]);
@@ -357,11 +375,12 @@ printAllPolynomials ()
       if (functionCallHash[i].num <= 0)
 	continue;
       for (j = 0; j < functionCallHash[i].num; j++) {
-	fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d functionCall: ",
+	fprintf (stderr,
+		 "(%d %d) index=%d key=%d count=%d valid=%d functionCall: ",
 		 i, j, functionCallHash[i].index[j],
 		 functionCallHash[i].key[j],
-	functionCallList[functionCallHash[i].index[j]]->count,
-	functionCallList[functionCallHash[i].index[j]]->valid);
+		 functionCallList[functionCallHash[i].index[j]]->count,
+		 functionCallList[functionCallHash[i].index[j]]->valid);
 	expTermPrinting (functionCallList[functionCallHash[i].index[j]]);
 	fprintf (stderr, "\n");
       }
@@ -369,4 +388,242 @@ printAllPolynomials ()
     fprintf (stderr, "\n");
   }
   fprintf (stderr, "---\n");
+}
+
+void
+keepAllPolys ()
+{
+  int i, j;
+
+  fprintf (stderr, "Keeping all current polynomials (via hashes):\n");
+  if (constantCount > 0) {
+    fprintf (stderr, "All %d constants:\n", constantCount);
+    for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
+      if (constantHash[i].num <= 0)
+	continue;
+      for (j = 0; j < constantHash[i].num; j++)
+	constantList[constantHash[i].index[j]]->valid++;
+    }
+  }
+  if (variableCount > 0) {
+    fprintf (stderr, "All %d variables:\n", variableCount);
+    for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
+      if (variableHash[i].num <= 0)
+	continue;
+      for (j = 0; j < variableHash[i].num; j++)
+	variableList[variableHash[i].index[j]]->valid++;
+    }
+  }
+  if (sumCount > 0) {
+    fprintf (stderr, "All %d sums:\n", sumCount);
+    for (i = 0; i < SUM_HASH_SIZE; i++) {
+      if (sumHash[i].num <= 0)
+	continue;
+      for (j = 0; j < sumHash[i].num; j++)
+	sumList[sumHash[i].index[j]]->valid++;
+    }
+  }
+  if (productCount > 0) {
+    fprintf (stderr, "All %d products:\n", productCount);
+    for (i = 0; i < PRODUCT_HASH_SIZE; i++) {
+      if (productHash[i].num <= 0)
+	continue;
+      for (j = 0; j < productHash[i].num; j++)
+	productList[productHash[i].index[j]]->valid++;
+    }
+  }
+
+  if (functionCallCount > 0) {
+    fprintf (stderr, "All %d function calls:\n", functionCallCount);
+    for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++) {
+      if (functionCallHash[i].num <= 0)
+	continue;
+      for (j = 0; j < functionCallHash[i].num; j++)
+	functionCallList[functionCallHash[i].index[j]]->valid++;
+    }
+  }
+//  printAllPolynomials();
+  fprintf (stderr, "---\n");
+}
+
+void
+incrementValids (struct polynomial *p)
+{
+  int i;
+
+  switch (p->eType) {
+  case T_CONSTANT:
+  case T_VARIABLE:
+    p->valid = p->valid++ % 32;
+    break;
+  case T_SUM:
+  case T_PRODUCT:
+  case T_FUNCTIONCALL:
+    p->valid = p->valid++ % 32;
+    for (i = 0; i < p->e.s->num; i++) {
+      incrementValids (p->e.s->sum[i]);
+    }
+    break;
+  case T_FREED:
+    fprintf (stderr,
+	     "In incrementValids, evil caller is trying to use a polynomial that was freed:\n");
+    expTermPrinting (p);
+    exit (1);
+    break;
+  default:
+    fprintf (stderr, "In incrementValids, unknown expression type %d, exiting\n",
+	     p->eType);
+    exit (1);
+  }
+}
+
+/* Flag all components of the provided polynomial for preservation. We do
+   this by bumping the valid count. */
+void
+keepPoly (struct polynomial *p)
+{
+  if (polynomialDebugLevel >= 6) {
+    fprintf (stderr, "Starting keepPoly\n");
+    if (polynomialDebugLevel >= 7) {
+      expTermPrinting (p);
+      fprintf (stderr, "\n");
+    }
+  }
+  incrementValids (p);
+  if (polynomialDebugLevel >= 6) {
+    fprintf (stderr, "Finished keepPoly\n");
+    if (polynomialDebugLevel >= 7) {
+      printAllPolynomials ();
+    }
+  }
+  return;
+}
+
+/* Free all polynomials that we can, i.e. those that don't have a non-zero
+   valid counts, and decrementing all valid counts. */
+void
+freePolys ()
+{
+  int i, j, k;
+  struct polynomial **newSumList, **newProductList;
+
+  if (polynomialDebugLevel >= 6) {
+    fprintf (stderr, "Starting freePolys\n");
+    if (polynomialDebugLevel >= 7) {
+      printAllPolynomials ();
+    }
+  }
+  /* First create a new polynomial-specific list to transcribe entries
+     we're keeping, and then go thru the old polynomial-specific list flagging
+     entries we're not keeping and replacing pointers with new indexes
+     for the ones we are keeping. */
+  newSumList =
+    (struct polynomial **) malloc (sizeof (struct polynomial *) *
+				   (sumListLength));
+  if (newSumList == NULL) {
+    fprintf (stderr, "In freePolys, newSumList memory application failed, exiting!\n");
+    exit (1);
+  }
+  k = 0;
+  for (i = 0; i < sumCount; i++) {
+    if (sumList[i]->valid > 0) {
+      newSumList[k] = sumList[i];
+      sumList[i] = newSumList[k];
+//      fprintf(stderr, "Index %d is now %d\n", newSumList[k]->index, k);
+      newSumList[k]->index = k;
+      k++;
+    } else {
+//      free (sumList[i]->e.s->sum);
+//      free (sumList[i]->e.s->factor);
+//      free (sumList[i]->e.s);
+//      free (sumList[i]);
+      sumList[i]->value = sumList[i]->eType;
+      sumList[i]->eType = T_FREED;
+      sumList[i] = NULL;
+    }
+  }
+  if (polynomialDebugLevel >= 4) fprintf(stderr, "Kept %d of %d sum polynomials\n", k, sumCount);
+  sumCount = k;
+
+  /* Go thru the hash collapsing entries and freeing the corresponding
+     polynomials and terms. Zero polynomial-specific list entries so they
+     can be collapsed next. */
+  for (j = 0; j < SUM_HASH_SIZE; j++) {
+    if (sumHash[j].num > 0) {
+      k = 0;
+      for (i = 0; i < sumHash[j].num; i++) {
+	if (sumList[sumHash[j].index[i]] != NULL) {
+	  /* It's a keeper, slide it down and bump the count */
+//        fprintf(stderr, "Hash keeper index %d is now %d\n", sumHash[j].index[i],
+//              sumList[sumHash[j].index[i]]->index);
+	  sumHash[j].index[k] = sumList[sumHash[j].index[i]]->index;
+	  sumHash[j].key[k] = sumHash[j].key[i];
+	  k++;
+	}
+      }
+      sumHash[j].num = k;
+    }
+  }
+  free (sumList);
+  sumList = newSumList;
+
+  newProductList =
+    (struct polynomial **) malloc (sizeof (struct polynomial *) *
+				   (productListLength));
+  if (newProductList == NULL) {
+    fprintf (stderr, "In freePolys, newProductList memory application failed, exiting!\n");
+    exit (1);
+  }
+  k = 0;
+  for (i = 0; i < productCount; i++) {
+    if (productList[i]->valid > 0) {
+      newProductList[k] = productList[i];
+      productList[i] = newProductList[k];
+//      fprintf(stderr, "Index %d is now %d\n", newProductList[k]->index, k);
+      newProductList[k]->index = k;
+      k++;
+    } else {
+//      free (productList[i]->e.p->product);
+//      free (productList[i]->e.p->exponent);
+//      free (productList[i]->e.p);
+//      free (productList[i]);
+      productList[i]->value = productList[i]->eType;
+      productList[i]->eType = T_FREED;
+      productList[i] = NULL;
+    }
+  }
+  if (polynomialDebugLevel >= 4) fprintf(stderr, "Kept %d of %d product polynomials\n", k, productCount);
+  productCount = k;
+
+  /* Go thru the hash collapsing entries and freeing the corresponding
+     polynomials and terms. Zero polynomial-specific list entries so they
+     can be collapsed next. */
+  for (j = 0; j < PRODUCT_HASH_SIZE; j++) {
+    if (productHash[j].num > 0) {
+      k = 0;
+      for (i = 0; i < productHash[j].num; i++) {
+	if (productList[productHash[j].index[i]] != NULL) {
+	  /* It's a keeper, slide it down and bump the count */
+//        fprintf(stderr, "Hash keeper index %d is now %d\n", productHash[j].index[i],
+//              productList[productHash[j].index[i]]->index);
+	  productHash[j].index[k] =
+	    productList[productHash[j].index[i]]->index;
+	  productHash[j].key[k] = productHash[j].key[i];
+	  k++;
+	}
+      }
+      productHash[j].num = k;
+    }
+  }
+  free (productList);
+  productList = newProductList;
+
+  if (polynomialDebugLevel >= 6) {
+    fprintf (stderr, "Reduced list of polynomials\n");
+    if (polynomialDebugLevel >= 7) {
+      printAllPolynomials ();
+      printHashTables ();
+    }
+  }
+  return;
 }
