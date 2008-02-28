@@ -2265,6 +2265,7 @@ polynomialInitialization ()
 				  sizeof (struct hashStruct));
   functionCallHash = (struct hashStruct *)
     malloc (FUNCTIONCALL_HASH_SIZE * sizeof (struct hashStruct));
+
   //Initialize the constant hash table, pre-allocate memory for recording polynomials
   for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
     constantHash[i].num = 0;

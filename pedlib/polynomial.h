@@ -7,7 +7,7 @@
 #define SUM_HASH_SIZE      1999993
 #define PRODUCT_HASH_SIZE  1999993
 #define FUNCTIONCALL_HASH_SIZE 99991
-#define HASH_TABLE_INCREASE 20
+#define HASH_TABLE_INCREASE 4
 #include <stdarg.h>
 #include <time.h>
 
@@ -138,8 +138,8 @@ int lengthProd;
 struct productPoly
 {
   int num;
-  struct polynomial **product;
-  int *exponent;
+  struct polynomial **product;	/* Pointer to a list of polynomial pointers */
+  int *exponent;		/* Pointer to a list of integer exponents */
 };
 
 //This structure represents the elements of a function call.
@@ -147,9 +147,9 @@ struct productPoly
 // and a number (saved in paraNum) of parameters (saved in para)
 struct functionPoly
 {
-  char *name;
   int paraNum;
   struct polynomial **para;
+  char *name;
 };
 
 //This structure represents a general polynomial.
@@ -159,14 +159,13 @@ struct functionPoly
 
 typedef struct polynomial
 {
-  int id;
-  int index;
-  int key;
-  int count;
-  enum expressionType eType;
+  unsigned int id;
+  unsigned int index;		/* I want to lose either this or id... */
+  unsigned int key;		/* Hash key */
+  unsigned short count;		/* Reference count */
+  unsigned char valid;		/* Preservation flag(s) */
+  unsigned char eType;
   double value;
-//  int                *count;
-//  double              *values;
   union
   {
     struct variablePoly *v;	/*variable */
@@ -174,7 +173,6 @@ typedef struct polynomial
     struct productPoly *p;	/*product */
     struct functionPoly *f;	/*function */
   } e;
-  int valid;
 } Polynomial;
 
 //List is for polynomail evaluation.  When we evaluate a polynomial,
@@ -202,8 +200,8 @@ typedef struct polyList
 //index saves indexes of all the polynomials that fall into this item
 struct hashStruct
 {
-  int num;
-  int length;
+  unsigned short num;
+  unsigned short length;
   int *key;
   int *index;
 };
@@ -354,5 +352,7 @@ void dismantlePolynomialAndSortingList (struct polynomial *p,
 //print out polylist
 //void printPolyList(struct polyList *l)
 void printSummaryPoly (struct polynomial *);
+
+#include "../../diags/polynomial.h-tail"
 
 #endif

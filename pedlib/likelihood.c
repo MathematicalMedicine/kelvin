@@ -24,7 +24,7 @@
 #include "genotype_elimination.h"
 #include "polynomial.h"
 
-char *likelihoodVersion = "0.0.29a";
+char *likelihoodVersion = "0.0.29a from Yungui 2/27";
 
 //double *half_pow = NULL;
 XMission *xmissionMatrix = NULL;
@@ -134,9 +134,7 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 //                fprintf(stderr,"Start polynomial building\n");
 	      makePolynomialStamp2 ();
 	      status = compute_pedigree_likelihood (pPedigree);
-	      pPedigree->likelihoodPolyList = buildPolyList ();
-	      polyListSorting (pPedigree->likelihoodPolynomial,
-			       pPedigree->likelihoodPolyList);
+
 #ifdef DEBUG	      
 	      printAllPolynomials();
 	      polyStatistics();
@@ -144,6 +142,9 @@ compute_likelihood (PedigreeSet * pPedigreeList)
               expTermPrinting(pPedigree->likelihoodPolynomial);
               fprintf(stderr,"\n");
 #endif
+	      pPedigree->likelihoodPolyList = buildPolyList ();
+	      polyListSorting (pPedigree->likelihoodPolynomial,
+			       pPedigree->likelihoodPolyList);
 	      partialPolynomialClearance2 ();
 	      if(i == pPedigreeList->numPedigree -1)
 		{
@@ -361,6 +362,7 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
   Polynomial *weightPolynomial;
   Polynomial *penetrancePolynomial;
 #endif
+  int i;
 
   if (pNucFam->doneFlag == TRUE)
     return 0;
@@ -447,6 +449,16 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
 	  &pProband->pSavedNumGenotype[0],
 	  sizeof (int) * originalLocusList.numLocus);
 
+#ifndef NO_POLYNOMIAL
+  if (modelOptions.polynomial == TRUE)
+    {
+      for (i = 0; i < pProband->numConditionals; i++)
+	{
+	  keepPoly(pProband->pLikelihood[i].likelihoodPolynomial);
+	}
+      freePolys();
+    }
+#endif
 
   return 0;
 }
