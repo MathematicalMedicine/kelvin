@@ -132,20 +132,20 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 //            allocate_multi_locus_genotype_storage (pPedigree);
 	      initialize_multi_locus_genotype (pPedigree);
 //                fprintf(stderr,"Start polynomial building\n");
-	      makePolynomialStamp2 ();
+//	      makePolynomialStamp2 ();
 	      status = compute_pedigree_likelihood (pPedigree);
 
 #ifdef DEBUG	      
-	      printAllPolynomials();
+	      //	      printAllPolynomials();
 	      polyStatistics();
-	      printSummaryPoly(pPedigree->likelihoodPolynomial);
-              expTermPrinting(pPedigree->likelihoodPolynomial);
+	      //	      printSummaryPoly(pPedigree->likelihoodPolynomial);
+	      //              expTermPrinting(pPedigree->likelihoodPolynomial);
               fprintf(stderr,"\n");
 #endif
 	      pPedigree->likelihoodPolyList = buildPolyList ();
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
-	      partialPolynomialClearance2 ();
+     //	      partialPolynomialClearance2 ();
 	      if(i == pPedigreeList->numPedigree -1)
 		{
 		  time2 = clock();

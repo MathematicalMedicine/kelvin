@@ -767,10 +767,12 @@ plusExp (int num, ...)
     p1 = va_arg (args, struct polynomial *);
 
     if (polynomialDebugLevel >= 6) {
-      fprintf (stderr, "In plusExp factor=%f item No. %d of %d type=%d: ", f1,
+      fprintf (stderr, "In plusExp factor=%f item No. %d of %d type=%d\n", f1,
 	       i + 1, num, p1->eType);
-      expPrinting (p1);
-      fprintf (stderr, "\n");
+      if (polynomialDebugLevel >=7) {
+	expPrinting (p1);
+	fprintf (stderr, "\n");
+      }
     }
     //Record the first operand of the plus operation.  Often, the first operand and the result are the
     //same variable, which refers to the case of p = p + ..., therefore, when we build a new polynomial
@@ -949,8 +951,10 @@ plusExp (int num, ...)
 	    sumHashHits++;
 	    if (polynomialDebugLevel >= 6) {
 	      fprintf (stderr, "Returning an existing sum...\n");
-	      expPrinting (sumList[sIndex]);
-	      fprintf (stderr, "\n");
+	      if (polynomialDebugLevel >= 7) {
+		expPrinting (sumList[sIndex]);
+		fprintf (stderr, "\n");
+	      }
 	    }
 	    return sumList[sIndex];
 	  }
@@ -1120,8 +1124,10 @@ plusExp (int num, ...)
   sum5++;
   if (polynomialDebugLevel >= 6) {
     fprintf (stderr, "Returning a new sum...\n");
-    expPrinting (rp);
-    fprintf (stderr, "\n");
+    if (polynomialDebugLevel >= 7) {
+      expPrinting (rp);
+      fprintf (stderr, "\n");
+    }
   }
   return rp;
 };
@@ -1243,7 +1249,6 @@ timesExp (int num, ...)
   int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Count;
   enum expressionType p0EType;
 
-
   //Initialize the containers for the operands of a times operation 
   counter_v2 = 0;
   counter_s2 = 0;
@@ -1262,10 +1267,12 @@ timesExp (int num, ...)
 
 
     if (polynomialDebugLevel >= 6) {
-      fprintf (stderr, "In timesExp exponent=%d item No. %d of %d type=%d: ",
+      fprintf (stderr, "In timesExp exponent=%d item No. %d of %d type=%d\n",
 	       e1, i + 1, num, p1->eType);
-      expPrinting (p1);
-      fprintf (stderr, "\n");
+      if (polynomialDebugLevel >= 7) {
+	expPrinting (p1);
+	fprintf (stderr, "\n");
+      }
     }
     //Record the first operand of the times operation.  Often, the first operand and the result are the
     //same variable, which refers to the case of p = p * ..., therefore, when we build a new polynomial
@@ -1345,7 +1352,11 @@ timesExp (int num, ...)
 	  }			//end of switch
 	}			//end of for
 	break;
-	//unknown product type
+      case T_FREED:
+	fprintf (stderr, "evil caller is trying to use a polynomial that was freed:\n");
+	expTermPrinting(p1);
+	exit (1);
+	break;
       default:
 	fprintf (stderr, "unknown product expression type\n");
 	exit (1);
@@ -1428,7 +1439,6 @@ timesExp (int num, ...)
   }
   //The result polynomial is a product polynomial
   else {
-
     //compute the key for the product polynomial
     key = keyProductPolynomial (pProd, exponentProd, counterProd);
     //compute hash table index according to the key
@@ -1465,8 +1475,10 @@ timesExp (int num, ...)
 		productHashHits++;
 		if (polynomialDebugLevel >= 6) {
 		  fprintf (stderr, "Returning an existing product...\n");
-		  expPrinting (productList[pIndex]);
-		  fprintf (stderr, "\n");
+		  if (polynomialDebugLevel >= 7) {
+		    expPrinting (productList[pIndex]);
+		    fprintf (stderr, "\n");
+		  }
 		}
 		return productList[pIndex];
 	      }
@@ -1530,6 +1542,7 @@ timesExp (int num, ...)
 	exit (1);
       }
 
+      fprintf(stderr, "Freeing first product operand index %d!\n", p0Index);
       //Free the first operand
       free (p0->e.p->exponent);
       free (p0->e.p->product);
@@ -1539,7 +1552,6 @@ timesExp (int num, ...)
       p0EType = 999;
       p0Count = 999;
     }
-
 
     //Construct a new product polynomial from the terms
     //saved in the container
@@ -1657,9 +1669,11 @@ timesExp (int num, ...)
     if (factor == 1.0) {
       product8++;
       if (polynomialDebugLevel >= 6) {
-	fprintf (stderr, "Returning a new product...\n");
-	expPrinting (rp);
-	fprintf (stderr, "\n");
+	fprintf (stderr, "Returning a new product\n");
+	if (polynomialDebugLevel >= 7) {
+	  expPrinting (rp);
+	  fprintf (stderr, "\n");
+	}
       }
       return rp;
     }
@@ -2417,7 +2431,8 @@ polynomialInitialization ()
 void
 makePolynomialStamp ()
 {
-
+  keepAllPolys();
+  return;
 //           nodeIdStamp            = nodeId;
   constantCountStamp = constantCount;
   variableCountStamp = variableCount;
@@ -2433,7 +2448,8 @@ makePolynomialStamp ()
 void
 makePolynomialStamp2 ()
 {
-
+  keepAllPolys();
+  return;
 //           nodeIdStamp2            = nodeId;
   constantCountStamp2 = constantCount;
   variableCountStamp2 = variableCount;
@@ -2455,6 +2471,7 @@ partialPolynomialClearance ()
 {
   int i, j, k;
 
+  return;
 //   nodeId=nodeIdStamp;
   //partially clear constant polynomials
   for (j = constantCountStamp; j < constantCount; j++)
@@ -2670,6 +2687,7 @@ partialPolynomialClearance2 ()
   int productRecount;
   int functionCallRecount;
 
+  return;
   //
   sumIndex = (int *) malloc (sizeof (int) * (sumCount - sumCountStamp2 + 1));
   if (sumIndex == NULL) {

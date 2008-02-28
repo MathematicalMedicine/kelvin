@@ -22,7 +22,7 @@ CFLGS  += -g  -DDEBUG		# Debug level
 #CFLGS   += -DNO_POLYNOMIAL
 #CFLGS += -pg                   # profile - debugging 
 #CFLGS += -pedantic   #memory leak tracing
-CFLGS += -DDMTRACK
+#CFLGS += -DDMTRACK
 
 .EXPORT_ALL_VARIABLES:
 ######################################################################
