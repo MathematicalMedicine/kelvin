@@ -7,7 +7,7 @@
 #define SUM_HASH_SIZE      1999993
 #define PRODUCT_HASH_SIZE  1999993
 #define FUNCTIONCALL_HASH_SIZE 99991
-#define HASH_TABLE_INCREASE 20
+#define HASH_TABLE_INCREASE 4
 #include <stdarg.h>
 #include <time.h>
 
@@ -147,9 +147,9 @@ struct productPoly
 // and a number (saved in paraNum) of parameters (saved in para)
 struct functionPoly
 {
-  char *name;			//function name
   int paraNum;			//number of parameters
   struct polynomial **para;	//parameters
+  char *name;			//function name
 };
 
 //This structure represents a general polynomial.
@@ -159,12 +159,12 @@ struct functionPoly
 
 typedef struct polynomial
 {
-  int id;			//unique id
-  int index;			//index in a polynomial list
-  int key;			//key of the polynomial
-  int count;			//count=1 when the polynomial is built
-  //count=2 when the polynomial is to be built a second time
-  enum expressionType eType;	//polynomial type: 
+  unsigned int id;			//unique id
+  unsigned int index;			//index in a polynomial list
+  unsigned int key;			//key of the polynomial
+  unsigned short count;			//count=1 when the polynomial is built, 2 when built again?!
+  unsigned char valid;  //valid =0 if this polynomial doesn't appear in the final evaluation list of a polynomial
+  unsigned char eType;	//polynomial type: 
   //    constant, 
   //    variable, 
   //    sum, 
@@ -188,8 +188,6 @@ typedef struct polynomial
     struct productPoly *p;	/*product */
     struct functionPoly *f;	/*function */
   } e;
-  int valid;			//valid =1 if this polynomial appears in the evaluation list of a polynomial
-  //valid =0 if this polynomial doesn't appear in the final evaluation list of a polynomial
 } Polynomial;
 
 //List is for polynomail evaluation.  When we evaluate a polynomial,
@@ -217,8 +215,8 @@ typedef struct polyList
 //index saves indexes of all the polynomials that fall into this item
 struct hashStruct
 {
-  int num;			//number of polynomials in a hash bucket
-  int length;			//length of the hash bucket preallocated
+  unsigned short num;			//number of polynomials in a hash bucket
+  unsigned short length;		//length of the hash bucket preallocated
   int *key;			//keys of polynomials
   int *index;			//indexes of polynomials
 };
@@ -378,5 +376,7 @@ void dismantlePolynomialAndSortingList (struct polynomial *p,
 //print out polylist
 //void printPolyList(struct polyList *l)
 void printSummaryPoly (struct polynomial *);
+
+#include "../../diags/polynomial.h-tail"
 
 #endif

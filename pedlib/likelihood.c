@@ -25,10 +25,13 @@
 #include "genotype_elimination.h"
 #include "polynomial.h"
 
-char *likelihoodVersion = "0.0.30";
+char *likelihoodVersion = "0.0.30p from Yungui 2/27";
 
 /* transmission probability matrix */
 XMission *xmissionMatrix = NULL;
+double lastMem=0;
+double currentMem;
+double totalMem=0;
 
 /* temporary likelihood results for related parental pairs */
 typedef struct PPairElement
@@ -195,11 +198,17 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	      /* put a stamp in the polynomial list to mark the beginning of likelihood build
 	       * for this pedigree */
 	      makePolynomialStamp2 ();
-	      status = compute_pedigree_likelihood (pPedigree);
-	      polyStatistics(stderr);
-	      printSummaryPoly(pPedigree->likelihoodPolynomial);
-	      //	      expPrinting(pPedigree->likelihoodPolynomial);
+	      fprintf(stderr, "Polynomials to be preserved by makePolynomialStamp2:\n");
 	      printAllPolynomials();
+	      fprintf(stderr, "Starting compute_pedigree_likelihood (pPedigree);\n");
+	      status = compute_pedigree_likelihood (pPedigree);
+#ifdef DEBUG	      
+	      printAllPolynomials();
+	      polyStatistics();
+	      printSummaryPoly(pPedigree->likelihoodPolynomial);
+              expTermPrinting(pPedigree->likelihoodPolynomial);
+              fprintf(stderr,"\n");
+#endif
 	      pPedigree->likelihoodPolyList = buildPolyList ();
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
@@ -365,7 +374,12 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 			       pProband->pLikelihood[i].lkslot.
 			       likelihoodPolynomial, 1,
 			       pProband->pLikelihood[i].wtslot.
-			       weightPolynomial, 1, 0), 1);
+			       weightPolynomial, 1, 1), 1);
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - lk x weight, plusExp - added proband likelihood");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 	}
       else
 	{
@@ -485,6 +499,12 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
       /* proband is a parent */
       pNucFam->childProbandFlag = FALSE;
     }
+
+  KLOG(LOGLIKELIHOOD, LOGDEBUG, 
+       "Nuclear Family %d with parents %s x %s.\n", 
+       pNucFam->nuclearFamilyIndex, pNucFam->pParents[DAD]->sID, pNucFam->pParents[MOM]->sID);
+
+
   if (pNucFam->childProbandFlag == TRUE)
     {
       /* proband is a child
@@ -513,12 +533,19 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
 			  1, 
 			  pProband->pLikelihood[i].tmpslot.tmpLikelihoodPolynomial, 
 			  1, 
-			  0);	//Dec 24
+			  1);	//Dec 24
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - lk x tmplk");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
+#if 0
 	      KLOG (LOGLIKELIHOOD, LOGDEBUG,
 		    "Proband %s Conditional Likelihood (%d) = %e. Weight = %e\n",
 		    pProband->sID, i,
 		    evaluateValue(pProband->pLikelihood[i].lkslot.likelihoodPolynomial),
 		    evaluateValue(pProband->pLikelihood[i].wtslot.weightPolynomial));
+#endif
 	    }
 	  else			/* PE is not enabled */
 	    {
@@ -544,6 +571,7 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
 #endif
 	}
     }
+
   /* mark the proband as been touched - we have done some likelihood calculation on this person */
   pProband->touchedFlag = TRUE;
 
@@ -555,6 +583,19 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
 	  &pProband->pSavedNumGenotype[0],
 	  sizeof (int) * originalLocusList.numLocus);
 
+#ifndef NO_POLYNOMIAL
+  if (modelOptions.polynomial == TRUE)
+    {
+      for (i = 0; i < pProband->numConditionals; i++)
+	{
+	  if (pProband->touchedFlag == FALSE)
+	    {
+	      keepPoly(pProband->pLikelihood[i].lkslot.likelihoodPolynomial);
+	    }
+	}
+      freePolys();
+    }
+#endif
 
   return 0;
 }
@@ -662,7 +703,16 @@ loop_child_proband_genotype (NuclearFamily * pNucFam,
 #ifndef NO_POLYNOMIAL
 	      if (modelOptions.polynomial == TRUE)
 		{
-		  pProband->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial = timesExp (2, penetrancePolynomial, 1, pNucFam->likelihoodPolynomial, 1, 0);	//Dec 24
+		  pProband->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial = 
+//		    timesExp (2, penetrancePolynomial, 1, 
+//			      pNucFam->likelihoodPolynomial, 1, 0);	//Dec 24
+		    timesExp (2, pNucFam->likelihoodPolynomial, 1, 
+	penetrancePolynomial, 1, 1);	//Dec 24
+		  KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - pen x lk to proband lk");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 
 		  /* for a child, the weight should be 1 */
 		  pProband->pLikelihood[multiLocusIndex].wtslot.
@@ -696,13 +746,18 @@ loop_child_proband_genotype (NuclearFamily * pNucFam,
 			      pProband->pLikelihood[multiLocusIndex].lkslot.
 			      likelihoodPolynomial, 1,
 			      pNucFam->likelihoodPolynomial, 1, 1);
+		  KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - nucLK x lk to proband lk");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 		  //fprintf(stderr,"Likelihood for this entire multi-locus genotype %f %f\n",
-		  //evaluateValue(pNucFam->likelihoodPolynomial),
-		  //evaluateValue(pProband->pLikelihood[multiLocusIndex].likelihoodPolynomial));
+#if 0
 		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 			"Proband %s Conditional Likelihood (%d) = %e.\n",
 			pProband->sID, multiLocusIndex,
 			evaluateValue(pProband->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial));
+#endif 
 		}
 	      else
 		{
@@ -960,6 +1015,11 @@ loop_parental_pair (NuclearFamily * pNucFam,
 		    timesExp (2, (Polynomial *) dWeight[i], 1,
 			      pPair->pGenotype[i]->wtslot.weightPolynomial, 1,
 			      0);
+		  KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - weight poly");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 		}
 	      else
 		{
@@ -1026,6 +1086,11 @@ loop_parental_pair (NuclearFamily * pNucFam,
 				 pNucFam->likelihoodPolynomial,
 				 1.0,
 				 ppairMatrix[0][0].slot.likelihoodPolynomial, 1); 
+		      KLOG(LOGLIKELIHOOD, LOGDEBUG, "plusExp - added to nuclear family likelihood");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 		    }
 		  else
 		    pNucFam->likelihood += ppairMatrix[0][0].slot.likelihood;
@@ -1046,6 +1111,11 @@ loop_parental_pair (NuclearFamily * pNucFam,
 				 tmpLikelihoodPolynomial, 
 				 1.0,
 				 ppairMatrix[0][0].slot.likelihoodPolynomial, 1); 
+		      KLOG(LOGLIKELIHOOD, LOGDEBUG, "plusExp - added proband tmp likelihood");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 		    }
 		  else
 		    pProband->pLikelihood[multiLocusIndex2[head]].tmpslot.
@@ -1112,8 +1182,13 @@ loop_parental_pair (NuclearFamily * pNucFam,
 						   likelihoodPolynomial, 1,
 						   constantExp (ppairMatrix[j]
 								[k].count), 1,
-						   0), 
+						   1), 
 					 1);
+			      KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - lk x count, plusExp - added nuclear likelihood");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 			    }
 			  else
 			    pNucFam->likelihood +=
@@ -1137,6 +1212,11 @@ loop_parental_pair (NuclearFamily * pNucFam,
 					 1.0,
 					 ppairMatrix[j][k].slot.
 					 likelihoodPolynomial, 1);
+			      KLOG(LOGLIKELIHOOD, LOGDEBUG, "plusExp - added to nuclear family likelihood (count=1)");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 			    }
 			  else
 			    pNucFam->likelihood +=
@@ -1175,8 +1255,13 @@ loop_parental_pair (NuclearFamily * pNucFam,
 						   likelihoodPolynomial, 1,
 						   constantExp (ppairMatrix[j]
 								[k].count), 1,
-						   0), 
+						   1), 
 					 1);
+			      KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - lk x count, plusExp - added proband tmp likelihood");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 			    }
 			  else
 			    pProband->pLikelihood[likelihoodIndex].tmpslot.
@@ -1203,6 +1288,11 @@ loop_parental_pair (NuclearFamily * pNucFam,
 					 tmpLikelihoodPolynomial, 1.0,
 					 ppairMatrix[j][k].slot.
 					 likelihoodPolynomial, 1);
+			      KLOG(LOGLIKELIHOOD, LOGDEBUG, "plusExp - added proband tmp likelihood (count=1)");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 			    }
 			  else
 			    pProband->pLikelihood[likelihoodIndex].tmpslot.
@@ -1363,12 +1453,14 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 #ifndef NO_POLYNOMIAL
 		  if (modelOptions.polynomial == TRUE)
 		    {
-		    KLOG (LOGLIKELIHOOD, LOGDEBUG,
-			  "\t\t likelihood (%d) = %e\n",
-			  ppairMatrix[phase[proband]][phase[spouse]].
-			  likelihoodIndex,
-			  evaluateValue(ppairMatrix[phase[proband]][phase[spouse]].slot.
-					likelihoodPolynomial));
+#if 0
+		      KLOG (LOGLIKELIHOOD, LOGDEBUG,
+			    "\t\t likelihood (%d) = %e\n",
+			    ppairMatrix[phase[proband]][phase[spouse]].
+			    likelihoodIndex,
+			    evaluateValue(ppairMatrix[phase[proband]][phase[spouse]].slot.
+					  likelihoodPolynomial));
+#endif
 		    }
 		  else
 		    KLOG (LOGLIKELIHOOD, LOGDEBUG,
@@ -1525,7 +1617,15 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 			{
 #ifndef NO_POLYNOMIAL
 			  if (modelOptions.polynomial == TRUE)
-			    newWeightPolynomial[i] = timesExp (2, pParent[i]->pLikelihood[multiLocusIndex[i]].lkslot.likelihoodPolynomial, 1, pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.weightPolynomial, 1, 0);	//Dec 24
+			    {
+			      newWeightPolynomial[i] = timesExp (2, pParent[i]->pLikelihood[multiLocusIndex[i]].lkslot.likelihoodPolynomial, 1, pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.weightPolynomial, 1, 0);	//Dec 24
+			      KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - weight");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
+
+			    }
 			  else
 			    newWeight[i] =
 			      pParent[i]->pLikelihood[multiLocusIndex[i]].
@@ -1678,6 +1778,11 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 			timesExp (2,
 				  childProductPolynomial,
 				  1, sumPolynomial, 1, 0);
+		      KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - product child sum");
+		      currentMem = swGetCurrent();
+		      totalMem += currentMem - lastMem;
+		      KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+		      lastMem = currentMem;
 		    }
 		  else
 		    {
@@ -1719,6 +1824,12 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 			      1,
 			      penetrancePolynomial[spouse],
 			      1, childProductPolynomial, 1, 0);
+		  KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - child product x dad x mom both weight & pen ");
+		  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+		  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
+#if 0
 		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 			"\t\t likelihood (%d) = %e\n",
 			ppairMatrix[multiLocusPhase[proband]][multiLocusPhase
@@ -1727,6 +1838,7 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 			evaluateValue(ppairMatrix[multiLocusPhase[proband]]
 				      [multiLocusPhase[spouse]].slot.
 				      likelihoodPolynomial));
+#endif 
 		}
 	      else
 		{
@@ -1817,7 +1929,14 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 	    {
 #ifndef NO_POLYNOMIAL
 	      if (modelOptions.polynomial == TRUE)
-		newWeightPolynomial[i] = timesExp (2, pParent[i]->pLikelihood[multiLocusIndex[i]].lkslot.likelihoodPolynomial, 1, pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.weightPolynomial, 1, 0);	//Dec 24
+		{
+		  newWeightPolynomial[i] = timesExp (2, pParent[i]->pLikelihood[multiLocusIndex[i]].lkslot.likelihoodPolynomial, 1, pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.weightPolynomial, 1, 0);	//Dec 24
+		  KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - lk x weight");
+		  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+		  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+		  lastMem = currentMem;
+		}
 	      else
 		newWeight[i] =
 		  pParent[i]->pLikelihood[multiLocusIndex[i]].lkslot.
@@ -1959,7 +2078,13 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 					   child, 0, 0,
 					   &sumPolynomial, xmissionIndex);
 	  childProductPolynomial =
-	    timesExp (2, childProductPolynomial, 1, sumPolynomial, 1, 0);
+	    timesExp (2, childProductPolynomial, 1, sumPolynomial, 1, 1);
+	  sumPolynomial = timesExp(2, sumPolynomial, 1, constantExp(0), 1, 1);
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - product child sum");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 	}
       else
 	{
@@ -1992,19 +2117,25 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
       ppairMatrix[multiLocusPhase[proband]]
 	[multiLocusPhase[spouse]].slot.likelihoodPolynomial =
 	timesExp (5,
-		  newWeightPolynomial[proband],
-		  1,
-		  newWeightPolynomial[spouse],
-		  1,
-		  penetrancePolynomial[proband],
-		  1,
-		  penetrancePolynomial[spouse],
-		  1, childProductPolynomial, 1, 0);
+		  childProductPolynomial, 1, 
+		  newWeightPolynomial[proband], 1,
+		  newWeightPolynomial[spouse], 1,
+		  penetrancePolynomial[proband], 1,
+		  penetrancePolynomial[spouse], 1, 
+		  1);
+      KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - child product x dad x mom on both weight and pen\n");
+      currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+      KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+      lastMem = currentMem;
+#if 0
       KLOG (LOGLIKELIHOOD, LOGDEBUG, "\t\t likelihood (%d) = %e\n",
 	    ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
 	    likelihoodIndex,
 	    evaluateValue(ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
 			  slot.likelihoodPolynomial));
+#endif
+
     }
   else
     {
@@ -2254,6 +2385,12 @@ loop_child_multi_locus_genotype (Person * pChild,
 			      probPoly[DAD + 1], 1,
 			      xmissionMatrix[newXmissionIndex[MOM]].slot.
 			      probPoly[MOM + 1], 1, 0);
+		  KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - xmission dad x mom");
+		  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+		  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+		  lastMem = currentMem;
+#if 0
 		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 			"\t xmission prob: %f = %f * %f\n", 
 			evaluateValue(newProbPolynomial),
@@ -2261,6 +2398,7 @@ loop_child_multi_locus_genotype (Person * pChild,
 											  1]),
 			evaluateValue(xmissionMatrix[newXmissionIndex[MOM]].slot.probPoly[MOM +
 									    1]));
+#endif
 		}
 	      else
 		{
@@ -2299,11 +2437,23 @@ loop_child_multi_locus_genotype (Person * pChild,
 		      if (pChild->touchedFlag == 1)
 			{
 			  /* some likelihood calculation has been calculated for this child */
-			  *(Polynomial **) pSum = plusExp (2, 1.0, *(Polynomial **) pSum, 1.0, timesExp (2, newProbPolynomial, 1, pChild->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial, 1, 0),	//end of timesExp
+			  *(Polynomial **) pSum = plusExp (2, 
+							   1.0, *(Polynomial **) pSum, 
+							   1.0, 
+							   timesExp (2, newProbPolynomial, 1, 
+								     pChild->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial, 1, 0),	//end of timesExp
 							   1);	//end of plusExp
+			  KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - lk x xmission, plusExp - added child sum");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
+
+#if 0			  
 			  KLOG(LOGLIKELIHOOD, LOGDEBUG, 
 			       "\t use already calculated child prob %e \n", 
 			       evaluateValue(pChild->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial));
+#endif
 			}
 		      else if (locusList->traitLocusIndex >= 0)
 			/* first time working on this child's current multilocus genotype 
@@ -2320,6 +2470,11 @@ loop_child_multi_locus_genotype (Person * pChild,
 								      traitLocusIndex]];
 			  *(Polynomial **) pSum = plusExp (2, 1.0, *(Polynomial **) pSum, 1.0, timesExp (2, newProbPolynomial, 1, pTraitParentalPair->pppChildGenoList[child][genoIndex]->penslot.penetrancePolynomial, 1, 0),	//end of timesExp
 							   1);	//end of plusExp
+			  KLOG(LOGLIKELIHOOD, LOGDEBUG, "timesExp - xmission x pen, plusExp - added child sum");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 			}
 		      else
 			{
@@ -2330,6 +2485,11 @@ loop_child_multi_locus_genotype (Person * pChild,
 							   pSum, 1.0,
 							   newProbPolynomial,
 							   1);
+			  KLOG(LOGLIKELIHOOD, LOGDEBUG, "plusExp - added child sum (xmission)");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 			}
 		    }
 		  else		/* this child is not proband */
@@ -2339,10 +2499,17 @@ loop_child_multi_locus_genotype (Person * pChild,
 						       *(Polynomial **) pSum,
 						       1.0,
 						       newProbPolynomial, 1);
+		      KLOG(LOGLIKELIHOOD, LOGDEBUG, "plusExp - added child sum (xmission)");
+	  currentMem = swGetCurrent();
+	  totalMem += currentMem - lastMem;
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g (%g/%g).\n", currentMem, currentMem-lastMem, totalMem);
+	  lastMem = currentMem;
 		    }
+#if 0
 		  KLOG(LOGLIKELIHOOD, LOGDEBUG, 
 		       "\t child sum %e \n", 
 		       evaluateValue(*(Polynomial **)pSum));
+#endif
 		}
 	      else		/* PE is not turned on */
 		{
@@ -2484,23 +2651,24 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
       /* sex averaged or sex specific map */
       for (i = 0; i < 3; i++)
 	{
+
 #ifndef NO_POLYNOMIAL
-	  if (modelOptions.polynomial == TRUE)
-	    {
-	      newProbPoly[i] = (Polynomial *) prob[i];
-	      newProbPoly2[i] = (Polynomial *) prob2[i];
-	      newHetProbPoly[i] = (Polynomial *) hetProb[i];
-	    }
-	  else
-	    {
-	      newProb[i] = *((double *) prob[i]);
-	      newProb2[i] = *((double *) prob2[i]);
-	      newHetProbPtr[i] = hetProb[i];
-	    }
+          if (modelOptions.polynomial == TRUE)
+            {
+              newProbPoly[i] = (Polynomial *) prob[i];
+              newProbPoly2[i] = (Polynomial *) prob2[i];
+              newHetProbPoly[i] = (Polynomial *) hetProb[i];
+            }
+          else
+          {
+             newProb[i] = *((double *) prob[i]);
+             newProb2[i] = *((double *) prob2[i]);
+             newHetProbPtr[i] = hetProb[i];
+          }
 #else
 	  newProb[i] = *((double *) prob[i]);
 	  newProb2[i] = *((double *) prob2[i]);
-	  newHetProbPtr[i] = hetProb[i];
+	  newHetProbPtr[i] = hetProb[i]; 
 #endif
 	}
       newCellIndex = cellIndex * 3 + pattern - 1;
@@ -2510,7 +2678,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 	  /* parent is not homozygous */
 	  if (lastHetLoc != -1)
 	    {
-	      if (prevPattern != 3)
+	      if (prevPattern != 3 )
 		{
 		  /* previous locus for the parent is het and 
 		     current locus pattern is either paternal or maternal */
@@ -2522,35 +2690,62 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #ifndef NO_POLYNOMIAL
 			  if (modelOptions.polynomial == TRUE)
 			    {
-			      sprintf (vName1, "theta%d_%d", i, loc);
-			      newProbPoly[i] = timesExp (2, newProbPoly[i], 1, plusExp (2, 1.0, constantExp (1.0), -1.0, variableExp (&locusList->pPrevLocusDistance[i][loc], NULL, 'D', vName1), 0), 1, 0);	//Dec 24
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProbPoly[i] = newProbPoly[0];
+				}
+			      else
+				{
+				  sprintf (vName1, "theta%d_%d", i,loc);
+				  newProbPoly[i] =
+				    timesExp (2, newProbPoly[i], 1,
+					      plusExp (2, 1.0, constantExp (1.0),
+					 	        -1.0,
+						        variableExp (&locusList->
+								pPrevLocusDistance
+								[i][loc], NULL,
+								'D', vName1), 0),
+					      1, 0);
+				}
 			    }
 			  else
 			    {
-			      newProb[i] *=
-				(1 - locusList->pPrevLocusDistance[i][loc]);
+			      newProb[i] *= (1 - locusList->pPrevLocusDistance[i][loc]);
 			    }
 #else
-			  newProb[i] *=
-			    (1 - locusList->pPrevLocusDistance[i][loc]);
-#endif
+			  newProb[i] *= (1 - locusList->pPrevLocusDistance[i][loc]);
+#endif 
 			}
 		    }
-		  else
+		  else 
 		    {
 		      /* recombination */
 		      for (i = 0; i < 3; i++)
 #ifndef NO_POLYNOMIAL
-			if (modelOptions.polynomial == TRUE)
+                          if (modelOptions.polynomial == TRUE)
+                            {
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProbPoly[i] = newProbPoly[0];
+				}
+			      else
+				{
+				sprintf (vName1, "theta%d_%d", i,loc);
+				newProbPoly[i] = timesExp (2, newProbPoly[i], 1,
+							      variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),1,0);
+							      
+				}
+                            }
+                          else
 			  {
-			    sprintf (vName1, "theta%d_%d", i, loc);
-			    newProbPoly[i] = timesExp (2, newProbPoly[i], 1, variableExp (&locusList->pPrevLocusDistance[i][loc], NULL, 'D', vName1), 1, 0);	//Dec 24
-
-			  }
-			else
-			  {
-			    newProb[i] *=
-			      locusList->pPrevLocusDistance[i][loc];
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+                            newProb[i] *= locusList->pPrevLocusDistance[i][loc];
+				}
 			  }
 #else
 			newProb[i] *= locusList->pPrevLocusDistance[i][loc];
@@ -2562,370 +2757,368 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		  /* previous locus at parent is homo and current locus is het */
 		  for (i = 0; i < 3; i++)
 		    {
-		      if (pattern == 1)
+		      if(pattern==1)
 			{
 			  /* paternal inheritance for this locus
 			     either no recombination from previous paternal strand 
 			     or recombination from previous maternal strand */
 #ifndef NO_POLYNOMIAL
-			  if (modelOptions.polynomial == TRUE)
-			    {
-			      sprintf (vName1, "theta%d_%d", i, loc);
-			      newProbPoly[i] = plusExp (2,
-							1.0,
-							timesExp (2,
-								  (Polynomial
-								   *) prob[i],
-								  1,
-								  plusExp (2,
-									   1.0,
-									   constantExp
-									   (1.0),
-									   -1.0,
-									   variableExp
-									   (&locusList->
-									    pPrevLocusDistance
-									    [i]
-									    [loc],
-									    NULL,
-									    'D',
-									    vName1),
-									   0),
-								  1, 0), 1.0,
-							timesExp (2,
-								  (Polynomial
-								   *)
-								  prob2[i], 1,
-								  variableExp
-								  (&locusList->
-								   pPrevLocusDistance
-								   [i][loc],
-								   NULL, 'D',
-								   vName1), 1,
-								  0), 0);
+                          if (modelOptions.polynomial == TRUE)
+                            {
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProbPoly[i] = newProbPoly[0];
+				}
+			      else
+				{
+                                sprintf (vName1, "theta%d_%d", i,loc);
+                                newProbPoly[i] = plusExp(2, 
+                                  1.0, timesExp(2, (Polynomial *) prob[i], 
+ 						   1,
+                                                   plusExp(2,1.0, constantExp(1.0),
+							    -1.0, variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),0),
+						   1,0),
+				  1.0, timesExp(2, (Polynomial *) prob2[i],
+						   1,
+						   variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),
+						   1,0),
+				  0);
+				}
 			    }
 			  else
-			    newProb[i] = *((double *) prob[i]) *
+			    {
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+			    newProb[i] = *((double *)prob[i]) * 
 			      (1 - locusList->pPrevLocusDistance[i][loc]) +
-			      *((double *) prob2[i]) *
-			      locusList->pPrevLocusDistance[i][loc];
+			      *((double *) prob2[i]) * locusList->pPrevLocusDistance[i][loc];
+				}
+			    }
 #else
-			  newProb[i] = *((double *) prob[i]) *
-			    (1 - locusList->pPrevLocusDistance[i][loc]) +
-			    *((double *) prob2[i]) *
-			    locusList->pPrevLocusDistance[i][loc];
-#endif
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+                          newProb[i] = *((double *)prob[i]) *
+                            (1 - locusList->pPrevLocusDistance[i][loc]) +
+                            *((double *) prob2[i]) * locusList->pPrevLocusDistance[i][loc];
+				}
+#endif 
 			}
 		      else
 			{
 			  /* has to be maternal */
 #ifndef NO_POLYNOMIAL
-			  if (modelOptions.polynomial == TRUE)
-			    {
-			      sprintf (vName1, "theta%d_%d", i, loc);
-			      newProbPoly[i] = plusExp (2,
-							1.0,
-							timesExp (2,
-								  (Polynomial
-								   *)
-								  prob2[i], 1,
-								  plusExp (2,
-									   1.0,
-									   constantExp
-									   (1.0),
-									   -1.0,
-									   variableExp
-									   (&locusList->
-									    pPrevLocusDistance
-									    [i]
-									    [loc],
-									    NULL,
-									    'D',
-									    vName1),
-									   0),
-								  1, 0), 1.0,
-							timesExp (2,
-								  (Polynomial
-								   *) prob[i],
-								  1,
-								  variableExp
-								  (&locusList->
-								   pPrevLocusDistance
-								   [i][loc],
-								   NULL, 'D',
-								   vName1), 1,
-								  0), 0);
+                          if (modelOptions.polynomial == TRUE)
+                            {
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProbPoly[i] = newProbPoly[0];
+				}
+			      else
+				{
+                                sprintf (vName1, "theta%d_%d", i,loc);
+                                newProbPoly[i] = plusExp(2,
+                                  1.0, timesExp(2, (Polynomial *) prob2[i], 
+                                                   1,
+                                                   plusExp(2,1.0, constantExp(1.0),
+                                                            -1.0, variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),0),
+                                                   1,0),
+                                  1.0, timesExp(2, (Polynomial *) prob[i],
+                                                   1,
+                                                   variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),
+                                                   1,0),
+                                  0);
+				}
 
-			    }
-			  else
-			    newProb[i] = *((double *) prob2[i]) *
+                            }
+			  else			 
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+			    newProb[i] = *((double *)prob2[i]) *
 			      (1 - locusList->pPrevLocusDistance[i][loc]) +
-			      *((double *) prob[i]) *
-			      locusList->pPrevLocusDistance[i][loc];
-
+			      *((double *) prob[i]) * locusList->pPrevLocusDistance[i][loc];
+				}
+			  
 #else
-			  newProb[i] = *((double *) prob2[i]) *
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+			  newProb[i] = *((double *)prob2[i]) * 
 			    (1 - locusList->pPrevLocusDistance[i][loc]) +
-			    *((double *) prob[i]) *
-			    locusList->pPrevLocusDistance[i][loc];
+			    *((double *) prob[i]) * locusList->pPrevLocusDistance[i][loc];
+				}
 #endif
 			}
 		    }
-
-		}		/* end of prevPattern is homo and current pattern is het */
-	    }			/* end of prevHetLoc != -1 */
+		      
+		} /* end of prevPattern is homo and current pattern is het */
+	    }/* end of prevHetLoc != -1 */
 	  else
 	    {
 	      /* we don't have any het locus yet, this locus is the first het */
 #ifndef NO_POLYNOMIAL
-	      if (modelOptions.polynomial == TRUE)
-		{
-		  for (i = 0; i < 3; i++)
-		    newProbPoly[i] = constantExp (0.5);
-		}
-	      else
-		{
-		  for (i = 0; i < 3; i++)
-		    newProb[i] = 0.5;
-		}
+              if (modelOptions.polynomial == TRUE)
+                {
+                  for(i=0; i < 3; i++)
+                    newProbPoly[i] = constantExp (0.5);
+                }
+              else
+	      {
+		for(i=0; i < 3; i++)
+		  newProb[i] = 0.5;
+              }
 #else
-	      for (i = 0; i < 3; i++)
-		newProb[i] = 0.5;
+	      for ( i=0; i < 3; i++)
+		newProb[i] = 0.5; 
 #endif
 	    }
-	  newLastHetLoc = loc;
+	  newLastHetLoc = loc; 
 
 
 #ifndef NO_POLYNOMIAL
-	  if (modelOptions.polynomial == TRUE)
-	    {
-	      for (i = 0; i < 3; i++)
-		newHetProbPoly[i] = newProbPoly[i];
-	    }
-	  else
-	    {
-	      for (i = 0; i < 3; i++)
-		newHetProbPtr[i] = newProbPtr[i];
-	    }
+              if (modelOptions.polynomial == TRUE)
+                {
+		  for(i=0; i < 3; i++)
+		    newHetProbPoly[i] = newProbPoly[i];
+                }
+	      else
+                {
+		  for(i=0; i < 3; i++)
+		    newHetProbPtr[i] = newProbPtr[i];
+                }
 #else
-	  for (i = 0; i < 3; i++)
+	  for(i=0; i < 3; i++)
 	    newHetProbPtr[i] = newProbPtr[i];
 #endif
 
 
-	}			/* end of current pattern is not homo */
-      else
+	} /* end of current pattern is not homo */
+      else 
 	{
-	  /* current pattern is homo */
-	  if (lastHetLoc == -1)
+ 	  /* current pattern is homo */
+	  if(lastHetLoc == -1)
 	    /* nothing needs to be done for this locus */
 	    ;
 	  else
 	    {
-	      if (loc == totalLoci - 1)
+	      if(loc == totalLoci - 1)
 		{
 		  /* this is the last locus and it's homo, take the previous het locus */
-		  for (i = 0; i < 3; i++)
+		  for ( i=0; i < 3; i++)
 		    {
 #ifndef NO_POLYNOMIAL
-		      if (modelOptions.polynomial == TRUE)
-			{
-			  newProbPoly[i] = (Polynomial *) hetProb[i];
-			}
-		      else
-			newProb[i] = *(double *) hetProb[i];
+	              if (modelOptions.polynomial == TRUE)
+        	      {
+			 newProbPoly[i]= (Polynomial *)hetProb[i];
+		      }
+ 		      else
+                         newProb[i] = *(double *)hetProb[i];
 #else
-		      newProb[i] = *(double *) hetProb[i];
+		      newProb[i] = *(double *)hetProb[i];
 #endif
 		    }
 		}
 	      else
 		{
-		  if (prevPattern == 3)
+		  if(prevPattern == 3)
 		    {
 		      /* previous locus pattern is homo */
-		      for (i = 0; i < 3; i++)
+		      for ( i=0; i < 3; i++)
 			{
 
 #ifndef NO_POLYNOMIAL
-			  if (modelOptions.polynomial == TRUE)
-			    {
-			      sprintf (vName1, "theta%d_%d", i, loc);
-			      newProbPoly[i] = plusExp (2,
-							1.0,
-							timesExp (2,
-								  (Polynomial
-								   *) prob[i],
-								  1,
-								  plusExp (2,
-									   1.0,
-									   constantExp
-									   (1.0),
-									   -1.0,
-									   variableExp
-									   (&locusList->
-									    pPrevLocusDistance
-									    [i]
-									    [loc],
-									    NULL,
-									    'D',
-									    vName1),
-									   0),
-								  1, 0), 1.0,
-							timesExp (2,
-								  (Polynomial
-								   *)
-								  prob2[i], 1,
-								  variableExp
-								  (&locusList->
-								   pPrevLocusDistance
-								   [i][loc],
-								   NULL, 'D',
-								   vName1), 1,
-								  0), 0);
-			      newProbPoly2[i] =
-				plusExp (2, 1.0,
-					 timesExp (2, (Polynomial *) prob2[i],
-						   1, plusExp (2, 1.0,
-							       constantExp
-							       (1.0), -1.0,
-							       variableExp
-							       (&locusList->
-								pPrevLocusDistance
-								[i][loc],
-								NULL, 'D',
-								vName1), 0),
-						   1, 0), 1.0, timesExp (2,
-									 (Polynomial
-									  *)
-									 prob
-									 [i],
-									 1,
-									 variableExp
-									 (&locusList->
-									  pPrevLocusDistance
-									  [i]
-									  [loc],
-									  NULL,
-									  'D',
-									  vName1),
-									 1,
-									 0),
-					 0);
+                          if (modelOptions.polynomial == TRUE)
+                          {
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProbPoly[i] = newProbPoly[0];
+				}
+			      else
+				{
+                                sprintf (vName1, "theta%d_%d", i,loc);
+                                newProbPoly[i] = plusExp(2,
+                                  1.0, timesExp(2, (Polynomial *) prob[i],
+                                                   1,
+                                                   plusExp(2,1.0, constantExp(1.0),
+                                                            -1.0, variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),0),
+                                                   1,0),
+                                  1.0, timesExp(2, (Polynomial *) prob2[i],
+                                                   1,
+                                                   variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),
+                                                   1,0),
+                                  0);
+                                newProbPoly2[i] = plusExp(2,
+                                  1.0, timesExp(2, (Polynomial *) prob2[i],
+                                                   1,
+                                                   plusExp(2,1.0, constantExp(1.0),
+                                                            -1.0, variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),0),
+                                                   1,0),
+                                  1.0, timesExp(2, (Polynomial *) prob[i],
+                                                   1,
+                                                   variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),
+                                                   1,0),
+                                  0);
+				}
+                            
+                          }
+                          else
+			  {
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+                             newProb[i] = *(double *)prob[i] *
+                               (1 - locusList->pPrevLocusDistance[i][loc]) +
+                               *((double *) prob2[i]) * locusList->pPrevLocusDistance[i][loc];
 
-			    }
-			  else
-			    {
-			      newProb[i] = *(double *) prob[i] *
-				(1 - locusList->pPrevLocusDistance[i][loc]) +
-				*((double *) prob2[i]) *
-				locusList->pPrevLocusDistance[i][loc];
-
-			      newProb2[i] = *(double *) prob2[i] *
-				(1 - locusList->pPrevLocusDistance[i][loc]) +
-				*((double *) prob[i]) *
-				locusList->pPrevLocusDistance[i][loc];
-			    }
+                             newProb2[i] = *(double *)prob2[i] *
+                               (1 - locusList->pPrevLocusDistance[i][loc]) +
+                               *((double *) prob[i]) * locusList->pPrevLocusDistance[i][loc];
+				}
+			  }
 #else
-			  newProb[i] = *(double *) prob[i] *
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+			  newProb[i] = *(double *)prob[i] * 
 			    (1 - locusList->pPrevLocusDistance[i][loc]) +
-			    *((double *) prob2[i]) *
-			    locusList->pPrevLocusDistance[i][loc];
-
-			  newProb2[i] = *(double *) prob2[i] *
+			    *((double *) prob2[i]) * locusList->pPrevLocusDistance[i][loc];
+			  
+			  newProb2[i] = *(double *)prob2[i] * 
 			    (1 - locusList->pPrevLocusDistance[i][loc]) +
-			    *((double *) prob[i]) *
-			    locusList->pPrevLocusDistance[i][loc];
+			    *((double *) prob[i]) * locusList->pPrevLocusDistance[i][loc];
+				}
 #endif
 			}
 		    }
-		  else
+		  else 
 		    {
-		      for (i = 0; i < 3; i++)
+		      for(i=0; i < 3; i++)
 			{
-			  if (prevPattern == 1)
+			  if(prevPattern == 1)
 			    {
 #ifndef NO_POLYNOMIAL
-			      if (modelOptions.polynomial == TRUE)
+                              if (modelOptions.polynomial == TRUE)
+                              {
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
 				{
-				  sprintf (vName1, "theta%d_%d", i, loc);
-				  newProbPoly[i] =
-				    timesExp (2, (Polynomial *) prob[i], 1,
-					      plusExp (2, 1.0,
-						       constantExp (1.0),
-						       -1.0,
-						       variableExp
-						       (&locusList->
-							pPrevLocusDistance[i]
-							[loc], NULL, 'D',
-							vName1), 0), 1, 0);
-				  newProbPoly2[i] =
-				    timesExp (2, (Polynomial *) prob[i], 1,
-					      variableExp (&locusList->
-							   pPrevLocusDistance
-							   [i][loc], NULL,
-							   'D', vName1), 1,
-					      0);
+				  newProbPoly[i] = newProbPoly[0];
 				}
 			      else
 				{
-				  newProb[i] = *(double *) prob[i] *
-				    (1 -
-				     locusList->pPrevLocusDistance[i][loc]);
-				  newProb2[i] =
-				    *(double *) prob[i] *
-				    locusList->pPrevLocusDistance[i][loc];
+                                   sprintf (vName1, "theta%d_%d", i,loc);
+                                   newProbPoly[i] = timesExp(2, (Polynomial *) prob[i],
+                                                   1,
+                                                   plusExp(2,1.0, constantExp(1.0),
+                                                            -1.0, variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),0),
+                                                   1,0);				   
+                                   newProbPoly2[i] = timesExp(2, (Polynomial *) prob[i],
+                                                   1,
+                                                   variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),
+                                                   1,0);
+				}
+                              }
+			      else
+				{
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+	                              newProb[i] = *(double *)prob[i] *
+	                                (1 - locusList->pPrevLocusDistance[i][loc]);
+	                              newProb2[i] = *(double *)prob[i] *
+	                                locusList->pPrevLocusDistance[i][loc];
+				}
 				}
 #else
-			      newProb[i] = *(double *) prob[i] *
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+			      newProb[i] = *(double *)prob[i] * 
 				(1 - locusList->pPrevLocusDistance[i][loc]);
-
-			      newProb2[i] = *(double *) prob[i] *
+			      
+			      newProb2[i] = *(double *)prob[i] * 
 				locusList->pPrevLocusDistance[i][loc];
+				}
 #endif
 			    }
 			  else
 			    {
 #ifndef NO_POLYNOMIAL
-			      if (modelOptions.polynomial == TRUE)
+                              if (modelOptions.polynomial == TRUE)
+                              {
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
 				{
-				  sprintf (vName1, "theta%d_%d", i, loc);
-				  newProbPoly2[i] =
-				    timesExp (2, (Polynomial *) prob[i], 1,
-					      plusExp (2, 1.0,
-						       constantExp (1.0),
-						       -1.0,
-						       variableExp
-						       (&locusList->
-							pPrevLocusDistance[i]
-							[loc], NULL, 'D',
-							vName1), 0), 1, 0);
-				  newProbPoly[i] =
-				    timesExp (2, (Polynomial *) prob[i], 1,
-					      variableExp (&locusList->
-							   pPrevLocusDistance
-							   [i][loc], NULL,
-							   'D', vName1), 1,
-					      0);
+				  newProbPoly[i] = newProbPoly[0];
 				}
 			      else
 				{
-				  newProb2[i] = *(double *) prob[i] *
-				    (1 -
-				     locusList->pPrevLocusDistance[i][loc]);
-				  newProb[i] =
-				    *(double *) prob[i] *
-				    locusList->pPrevLocusDistance[i][loc];
+                                   sprintf (vName1, "theta%d_%d", i,loc);
+                                   newProbPoly2[i] = timesExp(2, (Polynomial *) prob[i],
+                                                   1,
+                                                   plusExp(2,1.0, constantExp(1.0),
+                                                            -1.0, variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),0),
+                                                   1,0);
+                                   newProbPoly[i] = timesExp(2, (Polynomial *) prob[i],
+                                                   1,
+                                                   variableExp (&locusList->pPrevLocusDistance[i][loc],NULL,'D', vName1),
+                                                   1,0);
 				}
+			      }
+			      else
+			      {
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+                                  newProb2[i] = *(double *)prob[i] *
+                                    (1 - locusList->pPrevLocusDistance[i][loc]);
+                                  newProb[i] = *(double *)prob[i] *
+                                    locusList->pPrevLocusDistance[i][loc];
+				}
+			      }
 #else
-			      newProb2[i] = *(double *) prob[i] *
+			      if(i>0 && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+			      newProb2[i] = *(double *)prob[i] * 
 				(1 - locusList->pPrevLocusDistance[i][loc]);
-
-			      newProb[i] = *(double *) prob[i] *
+			      
+			      newProb[i] = *(double *)prob[i] * 
 				locusList->pPrevLocusDistance[i][loc];
+				}
 #endif
 			    }
-
+			  
 			}
 		    }
 		}
@@ -2958,23 +3151,26 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 	  if (modelOptions.polynomial == TRUE)
 	    {
 	      populate_xmission_matrix (pMatrix, totalLoci,
-					(void *) newProbPoly,
-					(void *) newProbPoly2,
-					(void *) newHetProbPoly, newCellIndex,
-					newLastHetLoc, pattern, loc + 1);
+					(void *) newProbPoly, (void *)newProbPoly2, 
+					(void *) newHetProbPoly, 
+					newCellIndex,
+					newLastHetLoc,
+					pattern, loc + 1);
 	    }
 	  else
 	    populate_xmission_matrix (pMatrix, totalLoci,
-				      (void *) newProbPtr,
-				      (void *) newProbPtr2,
-				      (void *) newHetProbPtr, newCellIndex,
-				      newLastHetLoc, pattern, loc + 1);
+				      (void *) newProbPtr, (void *)newProbPtr2, 
+				      (void *) newHetProbPtr, 
+				      newCellIndex,
+				      newLastHetLoc,
+				      pattern, loc + 1);
 #else
 	  populate_xmission_matrix (pMatrix, totalLoci,
-				    newProbPtr, (void *) newProbPtr2,
-				    (void *) newHetProbPtr,
+				    newProbPtr, (void *)newProbPtr2, 
+				    (void *) newHetProbPtr, 
 				    newCellIndex,
-				    newLastHetLoc, pattern, loc + 1);
+				    newLastHetLoc,
+				    pattern, loc + 1);
 #endif
 	}
     }
