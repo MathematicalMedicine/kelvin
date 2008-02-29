@@ -197,7 +197,7 @@ expTermPrinting (struct polynomial *p)
   default:
     fprintf (stderr, "In expTermPrinting, unknown expression type %d, exiting\n",
 	     p->eType);
-    exit (1);
+    raise(SIGILL);
   }
 }
 
@@ -451,6 +451,7 @@ incrementValids (struct polynomial *p)
 {
   int i;
 
+  if (p->valid) return;
   switch (p->eType) {
   case T_CONSTANT:
   case T_VARIABLE:
@@ -482,7 +483,7 @@ incrementValids (struct polynomial *p)
 void
 keepPoly (struct polynomial *p)
 {
-  if (polynomialDebugLevel >= 6) {
+  if (polynomialDebugLevel >= 3) {
     fprintf (stderr, "Starting keepPoly\n");
     if (polynomialDebugLevel >= 7) {
       expTermPrinting (p);
@@ -490,7 +491,7 @@ keepPoly (struct polynomial *p)
     }
   }
   incrementValids (p);
-  if (polynomialDebugLevel >= 6) {
+  if (polynomialDebugLevel >= 3) {
     fprintf (stderr, "Finished keepPoly\n");
     if (polynomialDebugLevel >= 7) {
       printAllPolynomials ();
@@ -507,7 +508,8 @@ freePolys ()
   int i, j, k;
   struct polynomial **newSumList, **newProductList;
 
-  if (polynomialDebugLevel >= 6) {
+ return;
+  if (polynomialDebugLevel >= 3) {
     fprintf (stderr, "Starting freePolys\n");
     if (polynomialDebugLevel >= 7) {
       printAllPolynomials ();
@@ -533,16 +535,17 @@ freePolys ()
       newSumList[k]->index = k;
       k++;
     } else {
-//      free (sumList[i]->e.s->sum);
-//      free (sumList[i]->e.s->factor);
-//      free (sumList[i]->e.s);
+      free (sumList[i]->e.s->sum);
+      free (sumList[i]->e.s->factor);
+      free (sumList[i]->e.s);
 //      free (sumList[i]);
+// These are for debugging mis-freed pointers
       sumList[i]->value = sumList[i]->eType;
       sumList[i]->eType = T_FREED;
       sumList[i] = NULL;
     }
   }
-  if (polynomialDebugLevel >= 4) fprintf(stderr, "Kept %d of %d sum polynomials\n", k, sumCount);
+  if (polynomialDebugLevel >= 3) fprintf(stderr, "Kept %d of %d sum polynomials\n", k, sumCount);
   sumCount = k;
 
   /* Go thru the hash collapsing entries and freeing the corresponding
@@ -583,16 +586,17 @@ freePolys ()
       newProductList[k]->index = k;
       k++;
     } else {
-//      free (productList[i]->e.p->product);
-//      free (productList[i]->e.p->exponent);
-//      free (productList[i]->e.p);
+      free (productList[i]->e.p->product);
+      free (productList[i]->e.p->exponent);
+      free (productList[i]->e.p);
 //      free (productList[i]);
+// These are for debugging mis-freed pointers
       productList[i]->value = productList[i]->eType;
       productList[i]->eType = T_FREED;
       productList[i] = NULL;
     }
   }
-  if (polynomialDebugLevel >= 4) fprintf(stderr, "Kept %d of %d product polynomials\n", k, productCount);
+  if (polynomialDebugLevel >= 3) fprintf(stderr, "Kept %d of %d product polynomials\n", k, productCount);
   productCount = k;
 
   /* Go thru the hash collapsing entries and freeing the corresponding
@@ -618,7 +622,7 @@ freePolys ()
   free (productList);
   productList = newProductList;
 
-  if (polynomialDebugLevel >= 6) {
+  if (polynomialDebugLevel >= 3) {
     fprintf (stderr, "Reduced list of polynomials\n");
     if (polynomialDebugLevel >= 7) {
       printAllPolynomials ();
