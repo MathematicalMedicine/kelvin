@@ -770,7 +770,7 @@ plusExp (int num, ...)
       fprintf (stderr, "In plusExp factor=%f item No. %d of %d type=%d\n", f1,
 	       i + 1, num, p1->eType);
       if (polynomialDebugLevel >=7) {
-	expPrinting (p1);
+	expTermPrinting (p1);
 	fprintf (stderr, "\n");
       }
     }
@@ -1270,7 +1270,7 @@ timesExp (int num, ...)
       fprintf (stderr, "In timesExp exponent=%d item No. %d of %d type=%d\n",
 	       e1, i + 1, num, p1->eType);
       if (polynomialDebugLevel >= 7) {
-	expPrinting (p1);
+	expTermPrinting (p1);
 	fprintf (stderr, "\n");
       }
     }
@@ -1541,8 +1541,6 @@ timesExp (int num, ...)
 		 "This polynomial is not in the product hash list, exit(3) !\n");
 	exit (1);
       }
-
-      fprintf(stderr, "Freeing first product operand index %d!\n", p0Index);
       //Free the first operand
       free (p0->e.p->exponent);
       free (p0->e.p->product);
@@ -1625,6 +1623,7 @@ timesExp (int num, ...)
       if (polynomialDebugLevel >= 4)
 	fprintf (stderr,
 		 "Polynomial %d, (product %d) added\n", nodeId, productCount);
+      if (nodeId == 741) expTermPrinting(rp);
       productCount++;
       nodeId++;
     }
@@ -1851,6 +1850,18 @@ struct polyList *
 buildPolyList ()
 {
   struct polyList *l;
+  int i;
+
+   for(i=0;i<constantCount;i++)
+       constantList[i]->valid=0;
+   for(i=0;i<variableCount;i++)
+       variableList[i]->valid=0;
+   for(i=0;i<sumCount;i++)
+       sumList[i]->valid=0;
+   for(i=0;i<productCount;i++)
+       productList[i]->valid=0;
+   for(i=0;i<functionCallCount;i++)
+       functionCallList[i]->valid=0;
 
   l = (struct polyList *)
     malloc (sizeof (struct polyList));

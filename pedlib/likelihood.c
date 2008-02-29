@@ -455,6 +455,7 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
       for (i = 0; i < pProband->numConditionals; i++)
 	{
 	  keepPoly(pProband->pLikelihood[i].likelihoodPolynomial);
+	  keepPoly(pProband->pLikelihood[i].weightPolynomial);
 	}
       freePolys();
     }
