@@ -508,7 +508,6 @@ freePolys ()
   int i, j, k;
   struct polynomial **newSumList, **newProductList;
 
- return;
   if (polynomialDebugLevel >= 3) {
     fprintf (stderr, "Starting freePolys\n");
     if (polynomialDebugLevel >= 7) {
