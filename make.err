@@ -1,9 +1,125 @@
-/home/yungui/code/kelvin-0.0.30/utils
-make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.30/utils'
-make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.30/utils'
-/home/yungui/code/kelvin-0.0.30/pedlib
-make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.30/pedlib'
-tools.c: In function ‘REALLOC’:
-tools.c:137: warning: unused variable ‘oldPtr’
-make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.30/pedlib'
-gcc -Wall			 -O3	 			 -Wall -I/home/yungui/code/kelvin-0.0.30/include -L/home/yungui/code/kelvin-0.0.30/lib -I/usr/local/include -L/usr/local/lib kelvin.c config.c ppl.c -o kelvin  -lped -lutils -lgsl -lgslcblas -lm 
+/home/yungui/code/kelvin-0.0.30p/utils
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.30p/utils'
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.30p/utils'
+/home/yungui/code/kelvin-0.0.30p/pedlib
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.30p/pedlib'
+In file included from polynomial.h:14,
+                 from pedigree.h:13,
+                 from pedlib.h:58,
+                 from read_pedfile.c:45:
+../../diags/polynomial.h-head:11:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from pedigree.h:13,
+                 from pedlib.h:58,
+                 from read_pedfile.c:45:
+polynomial.h:356:41: error: ../../diags/polynomial.h-tail: No such file or directory
+make[1]: [read_pedfile.o] Error 1 (ignored)
+In file included from polynomial.h:14,
+                 from pedigree.h:13,
+                 from pedlib.h:58,
+                 from locus.c:31:
+../../diags/polynomial.h-head:11:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from pedigree.h:13,
+                 from pedlib.h:58,
+                 from locus.c:31:
+polynomial.h:356:41: error: ../../diags/polynomial.h-tail: No such file or directory
+make[1]: [locus.o] Error 1 (ignored)
+In file included from polynomial.h:14,
+                 from pedigree.h:13,
+                 from pedlib.h:58,
+                 from allele_set_recoding.c:16:
+../../diags/polynomial.h-head:11:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from pedigree.h:13,
+                 from pedlib.h:58,
+                 from allele_set_recoding.c:16:
+polynomial.h:356:41: error: ../../diags/polynomial.h-tail: No such file or directory
+make[1]: [allele_set_recoding.o] Error 1 (ignored)
+In file included from polynomial.h:14,
+                 from pedigree.h:13,
+                 from pedlib.h:58,
+                 from genotype_elimination.c:22:
+../../diags/polynomial.h-head:11:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from pedigree.h:13,
+                 from pedlib.h:58,
+                 from genotype_elimination.c:22:
+polynomial.h:356:41: error: ../../diags/polynomial.h-tail: No such file or directory
+make[1]: [genotype_elimination.o] Error 1 (ignored)
+In file included from polynomial.h:14,
+                 from pedigree.h:13,
+                 from pedlib.h:58,
+                 from parental_pair.c:23:
+../../diags/polynomial.h-head:11:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from pedigree.h:13,
+                 from pedlib.h:58,
+                 from parental_pair.c:23:
+polynomial.h:356:41: error: ../../diags/polynomial.h-tail: No such file or directory
+make[1]: [parental_pair.o] Error 1 (ignored)
+In file included from polynomial.h:14,
+                 from pedigree.h:13,
+                 from pedlib.h:58,
+                 from likelihood.c:20:
+../../diags/polynomial.h-head:11:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from pedigree.h:13,
+                 from pedlib.h:58,
+                 from likelihood.c:20:
+polynomial.h:356:41: error: ../../diags/polynomial.h-tail: No such file or directory
+likelihood.c: In function ‘peel_graph’:
+likelihood.c:589: warning: implicit declaration of function ‘keepPoly’
+likelihood.c:593: warning: implicit declaration of function ‘freePolys’
+make[1]: [likelihood.o] Error 1 (ignored)
+In file included from polynomial.h:14,
+                 from polynomial.c:9:
+../../diags/polynomial.h-head:11:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from polynomial.c:9:
+polynomial.h:356:41: error: ../../diags/polynomial.h-tail: No such file or directory
+polynomial.c: In function ‘makePolynomialStamp’:
+polynomial.c:2445: warning: implicit declaration of function ‘keepAllPolys’
+make[1]: [polynomial.o] Error 1 (ignored)
+ar: read_pedfile.o: No such file or directory
+make[1]: [libped.a] Error 1 (ignored)
+cp: cannot stat `libped.a': No such file or directory
+make[1]: [install] Error 1 (ignored)
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.30p/pedlib'
+gcc -Wall			 -g  -DDEBUG -DDMTRACK		 -Wall -I/home/yungui/code/kelvin-0.0.30p/include -L/home/yungui/code/kelvin-0.0.30p/lib -I/usr/local/include -L/usr/local/lib kelvin.c config.c ppl.c -o kelvin  -lped -lutils -lgsl -lgslcblas -lm -L ../diags -lsw -lbj 
+In file included from /home/yungui/code/kelvin-0.0.30p/include/polynomial.h:14,
+                 from /home/yungui/code/kelvin-0.0.30p/include/pedigree.h:13,
+                 from /home/yungui/code/kelvin-0.0.30p/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from kelvin.c:14:
+/home/yungui/code/kelvin-0.0.30p/include/../../diags/polynomial.h-head:11:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from /home/yungui/code/kelvin-0.0.30p/include/pedigree.h:13,
+                 from /home/yungui/code/kelvin-0.0.30p/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from kelvin.c:14:
+/home/yungui/code/kelvin-0.0.30p/include/polynomial.h:356:41: error: ../../diags/polynomial.h-tail: No such file or directory
+In file included from kelvin.h:30,
+                 from kelvin.c:14:
+../diags/kelvin.h-head:3:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from /home/yungui/code/kelvin-0.0.30p/include/polynomial.h:14,
+                 from /home/yungui/code/kelvin-0.0.30p/include/pedigree.h:13,
+                 from /home/yungui/code/kelvin-0.0.30p/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from config.c:8:
+/home/yungui/code/kelvin-0.0.30p/include/../../diags/polynomial.h-head:11:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from /home/yungui/code/kelvin-0.0.30p/include/pedigree.h:13,
+                 from /home/yungui/code/kelvin-0.0.30p/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from config.c:8:
+/home/yungui/code/kelvin-0.0.30p/include/polynomial.h:356:41: error: ../../diags/polynomial.h-tail: No such file or directory
+In file included from kelvin.h:30,
+                 from config.c:8:
+../diags/kelvin.h-head:3:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from /home/yungui/code/kelvin-0.0.30p/include/polynomial.h:14,
+                 from /home/yungui/code/kelvin-0.0.30p/include/pedigree.h:13,
+                 from /home/yungui/code/kelvin-0.0.30p/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from ppl.c:8:
+/home/yungui/code/kelvin-0.0.30p/include/../../diags/polynomial.h-head:11:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+In file included from /home/yungui/code/kelvin-0.0.30p/include/pedigree.h:13,
+                 from /home/yungui/code/kelvin-0.0.30p/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from ppl.c:8:
+/home/yungui/code/kelvin-0.0.30p/include/polynomial.h:356:41: error: ../../diags/polynomial.h-tail: No such file or directory
+In file included from kelvin.h:30,
+                 from ppl.c:8:
+../diags/kelvin.h-head:3:2: warning: #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+make: *** [kelvin] Error 1

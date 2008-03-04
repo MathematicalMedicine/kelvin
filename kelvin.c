@@ -15,8 +15,13 @@
 #include "likelihood.h"
 #include "pedlib/polynomial.h"
 
+extern double lastMem;
+extern double currentMem;
+extern double totalMem;
 #include "../diags/kelvin.c-head"
-char *kelvinVersion = "0.0.30";
+char *kelvinVersion = "0.0.30p";
+char *locusVersion ="0.0.30p";
+char *likelihoodVersion = "0.0.30p";
 
 /* Some default global values. */
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
@@ -727,6 +732,7 @@ main (int argc, char *argv[])
       if (modelOptions.polynomial == TRUE)
 	{
 	  /* populate the matrix */
+	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Populating xmission matrix - 2pt poly.\n");
 	  status = populate_xmission_matrix (xmissionMatrix, totalLoci, 
 					     initialProbAddr,	/* probability */
 					     initialProbAddr2,	/* probability */
@@ -735,7 +741,7 @@ main (int argc, char *argv[])
 					     -1,	/* last het locus */
 					     -1,	/* last  pattern (P-1 or M-2) */
 					     0);	/* current locus - start with 0 */
-	  makePolynomialStamp ();
+	  keepAllPolys ();
 	}
 #endif
 
@@ -960,6 +966,9 @@ main (int argc, char *argv[])
 								 0);	/* current locus - start with 0 */
 #endif
 
+			  currentMem = swGetCurrent();
+			  lastMem = currentMem;
+			  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g.\n", currentMem);
 			      compute_likelihood (&pedigreeSet);
 
 
@@ -2233,7 +2242,7 @@ main (int argc, char *argv[])
 		{
 		  /* under case ctrl we don't clear up the polynomial */
 		  pedigreeSetPolynomialClearance (&pedigreeSet);
-		  partialPolynomialClearance ();
+		  freePolys ();
 		}
 #endif
 
@@ -2304,7 +2313,7 @@ main (int argc, char *argv[])
 					     -1,	/* last he locus */
 					     -1,	/* last het pattern (P-1 or M-2) */
 					     0);	/* current locus - start with 0 */
-	  makePolynomialStamp ();
+	  keepAllPolys ();
 	}
 #endif
 
@@ -2576,7 +2585,7 @@ main (int argc, char *argv[])
 		  if (modelOptions.polynomial == TRUE)
 		    {
 		      pedigreeSetPolynomialClearance (&pedigreeSet);
-		      partialPolynomialClearance ();
+		      freePolys ();
 		    }
 		  else
 		    {
@@ -2648,6 +2657,9 @@ main (int argc, char *argv[])
 			  /* get the likelihood at NULL hypothesis - use nullLocusList */
 			  locusList = &nullLocusList;
 			  xmissionMatrix = nullMatrix;
+			  currentMem = swGetCurrent();
+			  lastMem = currentMem;
+			  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Memory is at %g.\n", currentMem);
 			  compute_likelihood (&pedigreeSet);
 			  //printAllVariables(); 
 			  //fprintf(stderr," Null Likelihood=%e log10Likelihood=%e \n",
@@ -2705,7 +2717,7 @@ main (int argc, char *argv[])
 		  if (modelOptions.polynomial == TRUE)
 		    {
 		      pedigreeSetPolynomialClearance (&pedigreeSet);
-		      partialPolynomialClearance ();
+		      freePolys ();
 		    }
 #endif
 		}
@@ -2876,7 +2888,7 @@ main (int argc, char *argv[])
 		  if (modelOptions.polynomial == TRUE)
 		    {
 		      pedigreeSetPolynomialClearance (&pedigreeSet);
-		      partialPolynomialClearance ();
+		      freePolys ();
 		    }
 #endif
 		  for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++)
@@ -3052,7 +3064,7 @@ main (int argc, char *argv[])
 		  if (modelOptions.polynomial == TRUE)
 		    {
 		      pedigreeSetPolynomialClearance (&pedigreeSet);
-		      partialPolynomialClearance ();
+		      freePolys ();
 		    }
 		}
 
@@ -3370,6 +3382,8 @@ main (int argc, char *argv[])
     {
 //   polyStatistics (NULL);
 //   dismantle();
+
+      KLOG(LOGLIKELIHOOD, LOGDEBUG, "Total Memory is at %g.\n", totalMem);
     }
 #endif
 
@@ -3420,6 +3434,11 @@ main (int argc, char *argv[])
   free (modelOptions.sUnknownPersonID);
   final_cleanup ();
 
+
+  fprintf (stderr, "Computation time:  %fs  %fs \n",
+	   (double) (time1 - time0) / CLOCKS_PER_SEC,
+	   (double) (time2 - time1) / CLOCKS_PER_SEC);
+
 #include "../diags/kelvin.c-finish"
 
   /* close file pointers */
@@ -3429,5 +3448,6 @@ main (int argc, char *argv[])
     }
   fclose (fpHet);
   //  fclose (fpHomo);
+
   return 0;
 }

@@ -25,8 +25,6 @@
 #include "genotype_elimination.h"
 #include "polynomial.h"
 
-char *likelihoodVersion = "0.0.30p from Yungui 2/27";
-
 /* transmission probability matrix */
 XMission *xmissionMatrix = NULL;
 double lastMem=0;
@@ -194,26 +192,24 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 //            fprintf(stderr,"The polynomial building for this pedigree should be only once\n");
 	      /* initialize likelihood space for each pedigree */
 	      initialize_multi_locus_genotype (pPedigree);
-//                fprintf(stderr,"Start polynomial building\n");
-	      /* put a stamp in the polynomial list to mark the beginning of likelihood build
-	       * for this pedigree */
-	      makePolynomialStamp2 ();
-	      fprintf(stderr, "Polynomials to be preserved by makePolynomialStamp2:\n");
-	      printAllPolynomials();
-	      fprintf(stderr, "Starting compute_pedigree_likelihood (pPedigree);\n");
+              fprintf(stderr,"Start polynomial building\n");
+	      fprintf(stderr, "keepAllPolys\n");
+	      keepAllPolys ();
+	      fprintf(stderr, "compute_pedigree_likelihood\n");
 	      status = compute_pedigree_likelihood (pPedigree);
 #ifdef DEBUG	      
-	      printAllPolynomials();
+	      //	      printAllPolynomials();
+	      //	      fprintf(stderr, "\n");
 	      polyStatistics();
-	      printSummaryPoly(pPedigree->likelihoodPolynomial);
-              expTermPrinting(pPedigree->likelihoodPolynomial);
-              fprintf(stderr,"\n");
+	      //	      printSummaryPoly(pPedigree->likelihoodPolynomial);
+	      //              expTermPrinting(pPedigree->likelihoodPolynomial);
+	      //              fprintf(stderr,"\n");
 #endif
+	      fprintf(stderr,"buildPolyList\n");
 	      pPedigree->likelihoodPolyList = buildPolyList ();
+	      fprintf(stderr,"polyListSorting\n");
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
-	      /* clean up polynomials that are not used in the final pedigree likelihood */
-	      partialPolynomialClearance2 ();
 	    }
 	  /* evaluate likelihood */
 	  pPedigree->likelihood =
@@ -588,9 +584,10 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
     {
       for (i = 0; i < pProband->numConditionals; i++)
 	{
-	  if (pProband->touchedFlag == FALSE)
+	  if (pProband->touchedFlag == TRUE )
 	    {
 	      keepPoly(pProband->pLikelihood[i].lkslot.likelihoodPolynomial);
+	      keepPoly(pProband->pLikelihood[i].wtslot.weightPolynomial);
 	    }
 	}
       freePolys();

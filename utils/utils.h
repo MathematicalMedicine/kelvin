@@ -134,7 +134,6 @@ void logMsg (unsigned int type, int level, const char *format, ...);
 { \
   logMsg (TYPE, MAX(LOGERROR,LEVEL), "%s (%d): ", (__FILE__),(__LINE__)); \
   logMsg (TYPE, LEVEL, __VA_ARGS__);                                  \
-
 }
 #else
 #define KLOG(TYPE, LEVEL, ...)                                        \
