@@ -732,7 +732,7 @@ main (int argc, char *argv[])
 					     -1,	/* last het locus */
 					     -1,	/* last  pattern (P-1 or M-2) */
 					     0);	/* current locus - start with 0 */
-	  makePolynomialStamp ();
+	  keepAllPolys ();
 	}
 #endif
 
@@ -2222,7 +2222,7 @@ main (int argc, char *argv[])
 		{
 		  /* under case ctrl we don't clear up the polynomial */
 		  pedigreeSetPolynomialClearance (&pedigreeSet);
-		  partialPolynomialClearance ();
+		  freePolys ();
 		}
 #endif
 
@@ -2289,7 +2289,7 @@ main (int argc, char *argv[])
 					     -1,	/* last he locus */
 					     -1,	/* last het pattern (P-1 or M-2) */
 					     0);	/* current locus - start with 0 */
-	  makePolynomialStamp ();
+	  keepAllPolys ();
 	}
 #endif
 
@@ -2562,7 +2562,7 @@ main (int argc, char *argv[])
 		  if (modelOptions.polynomial == TRUE)
 		    {
 		      pedigreeSetPolynomialClearance (&pedigreeSet);
-		      partialPolynomialClearance ();
+		      freePolys ();
 		    }
 		  else
 		    {
@@ -2693,7 +2693,7 @@ main (int argc, char *argv[])
 		  if (modelOptions.polynomial == TRUE)
 		    {
 		      pedigreeSetPolynomialClearance (&pedigreeSet);
-		      partialPolynomialClearance ();
+		      freePolys ();
 		    }
 #endif
 		}
@@ -2864,7 +2864,7 @@ main (int argc, char *argv[])
 		  if (modelOptions.polynomial == TRUE)
 		    {
 		      pedigreeSetPolynomialClearance (&pedigreeSet);
-		      partialPolynomialClearance ();
+		      freePolys ();
 		    }
 #endif
 		  for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++)
@@ -3040,7 +3040,7 @@ main (int argc, char *argv[])
 		  if (modelOptions.polynomial == TRUE)
 		    {
 		      pedigreeSetPolynomialClearance (&pedigreeSet);
-		      partialPolynomialClearance ();
+		      freePolys ();
 		    }
 		}
 
