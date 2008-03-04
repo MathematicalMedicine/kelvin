@@ -162,7 +162,8 @@ typedef struct polynomial
   unsigned int id;
   unsigned int index;		/* I want to lose either this or id... */
   unsigned int key;		/* Hash key */
-  unsigned short count;		/* Reference count */
+  unsigned short count;		/* Reference count, starts at 1, used to see
+				   if we can free a polynomial. */
   unsigned char valid;		/* Preservation flag(s) */
   unsigned char eType;
   double value;
@@ -174,6 +175,8 @@ typedef struct polynomial
     struct functionPoly *f;	/*function */
   } e;
 } Polynomial;
+#define VALID_EVAL_FLAG 1
+#define VALID_KEEP_FLAG 2
 
 //List is for polynomail evaluation.  When we evaluate a polynomial,
 //it is possible that we evaluate only some parts of it because the
@@ -284,9 +287,9 @@ struct polynomial *timesExp (int num, ...);
 //constructor of a functionCall polynomial
 struct polynomial *functionCallExp (int num, ...);
 
-//Print a polynomial (2nd with term flags)
+//Print a polynomial (2nd to other output with term flags and depth)
 void expPrinting (struct polynomial *p);
-void expTermPrinting (struct polynomial *p);
+void expTermPrinting (FILE *, struct polynomial *p, int);
 
 //Creation and Initialization of evaluation list for a polynomial
 struct polyList *buildPolyList ();
