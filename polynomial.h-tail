@@ -1,4 +1,4 @@
 void keepPoly(struct polynomial *);
 void freePolys();
 void keepAllPolys();
-void expTermPrinting(struct polynomial *);
+void expTermPrinting(FILE *, struct polynomial *, int);
