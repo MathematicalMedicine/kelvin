@@ -1,9 +1,9 @@
 /**********************************************************************
- * Copyright 2007, Columbus Children's Research Institute.  
- * All rights reserved.
- * Permission is hereby given to use this software 
- * for non-profit educational purposes only.
- **********************************************************************/
+* Copyright 2007, Columbus Children's Research Institute.  
+* All rights reserved.
+* Permission is hereby given to use this software 
+* for non-profit educational purposes only.
+**********************************************************************/
 
 /* This file contains functions to  compute likelihood for all the pedigrees
  * peeling procedure etc. 
@@ -127,25 +127,27 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 //         fprintf(stderr,"modelOptions.polynomial == TRUE\n");
 	  if (pPedigree->likelihoodPolynomial == NULL)
 	    {
-//                fprintf(stderr,"The polynomial building for this pedigree should be only once\n");
 //            free_multi_locus_genotype_storage (pPedigree);
 //            allocate_multi_locus_genotype_storage (pPedigree);
 	      initialize_multi_locus_genotype (pPedigree);
-//                fprintf(stderr,"Start polynomial building\n");
-//	      makePolynomialStamp2 ();
+              fprintf(stderr,"Start polynomial building\n");
+              fprintf(stderr,"keepAllPolys\n");
+	      keepAllPolys ();
+              fprintf(stderr,"compute_pedigree_likelihood\n");
 	      status = compute_pedigree_likelihood (pPedigree);
-
 #ifdef DEBUG	      
 	      //	      printAllPolynomials();
+	      //              fprintf(stderr,"\n");
 	      polyStatistics();
 	      //	      printSummaryPoly(pPedigree->likelihoodPolynomial);
 	      //              expTermPrinting(pPedigree->likelihoodPolynomial);
-              fprintf(stderr,"\n");
+	      //              fprintf(stderr,"\n");
 #endif
+              fprintf(stderr,"buildPolyList\n");
 	      pPedigree->likelihoodPolyList = buildPolyList ();
+              fprintf(stderr,"polyListSorting\n");
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
-     //	      partialPolynomialClearance2 ();
 	      if(i == pPedigreeList->numPedigree -1)
 		{
 		  time2 = clock();
@@ -153,6 +155,10 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 			  (double)time2/CLOCKS_PER_SEC);
 		}
 	    }
+	  fprintf(stderr,"evaluatePoly\n");
+	  //	  expTermPrinting(stderr, pPedigree->likelihoodPolynomial, 1);
+	  //	  fprintf(stderr, "\n");
+	  sleep(3);
 	  pPedigree->likelihood =
 	    evaluatePoly (pPedigree->likelihoodPolynomial,
 			  pPedigree->likelihoodPolyList);

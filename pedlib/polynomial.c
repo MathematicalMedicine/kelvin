@@ -128,7 +128,11 @@ evaluateValue (struct polynomial *p)
     }
     p->value = result;
     return result;
-
+  case T_FREED:
+    fprintf (stderr, "evil caller is trying to use a polynomial that was freed:\n");
+    expTermPrinting(stderr, p, 1);
+    exit (1);
+    break;
     //If the polynomial type is unknown, something must be wrong
   default:
     fprintf (stderr, "Error, Unknown expression type!!!!, exit(1)");
@@ -2461,6 +2465,9 @@ void
 polynomialClearance ()
 {
   int j;
+
+  /* Hah! Exit works better. */
+  return;
 
   nodeId = 0;
   //clear constant polynomials
