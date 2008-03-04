@@ -448,9 +448,8 @@ constantExp (double con)
   constantCount++;
   nodeId++;
   p->key = key;
-  //valid = 1 if the polynomial is used in evaluation
-  //valid = 0 if the polynomial is not used in evaluation
   p->valid = 0;
+  p->count = 1;
 
   //Record the constant polynomial in the hash table of constant polynomials
   insertHashTable (&constantHash[hIndex], location, key, constantCount - 1);
@@ -577,6 +576,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   p->id = nodeId;
   p->key = key;
   p->valid = 0;
+  p->count = 1;
 
   //Insert the variable polynomial in the variable polynomial list
   variableList[variableCount] = p;
@@ -770,7 +770,7 @@ plusExp (int num, ...)
       fprintf (stderr, "In plusExp factor=%f item No. %d of %d type=%d\n", f1,
 	       i + 1, num, p1->eType);
       if (polynomialDebugLevel >=7) {
-	expTermPrinting (p1);
+	expTermPrinting (stderr, p1, 1);
 	fprintf (stderr, "\n");
       }
     }
@@ -945,7 +945,6 @@ plusExp (int num, ...)
 	      break;
 	  }
 	  if (k >= counterSum) {
-	    //                             sumList[sIndex]->count=2;
 	    sumList[sIndex]->count++;
 	    sum4++;
 	    sumHashHits++;
@@ -981,7 +980,9 @@ plusExp (int num, ...)
 
     if (sumHash[p0HIndex].num <= 0) {
       fprintf (stderr,
-	       "This polynomial is not in the sum hash list, exit(1) !\n");
+	       "This polynomial is not in the sum hash table (1), exiting!\n");
+      expTermPrinting (stderr, p0, 1);
+      fprintf(stderr, "\n");
       exit (1);
     }
     if (searchHashTable (&sumHash[p0HIndex], &first, &last, p0Key)) {
@@ -993,12 +994,16 @@ plusExp (int num, ...)
 	p0SubHIndex = i;
       else {
 	fprintf (stderr,
-		 "This polynomial is not in the sum hash list, exit(2)!\n");
+		 "This polynomial is not in the sum hash list (2), exiting!\n");
+	expTermPrinting (stderr, p0, 1);
+	fprintf(stderr, "\n");
 	exit (1);
       }
     } else {
       fprintf (stderr,
-	       "This polynomial is not in the sum hash list, exit(1) !\n");
+	       "This polynomial is not in the sum hash list (3), exiting!\n");
+      expTermPrinting(stderr, p0, 1);
+      fprintf(stderr, "\n");
       exit (1);
     }
     //free the memory of the first polynomial in the parameter list
@@ -1081,8 +1086,12 @@ plusExp (int num, ...)
     sumList[sumCount] = rp;
     sumList[sumCount]->index = sumCount;
     sumList[sumCount]->id = nodeId;
-    if (polynomialDebugLevel >= 4)
-      fprintf (stderr, "Polynomial %d, (sum %d) added\n", nodeId, sumCount);
+    if (polynomialDebugLevel >= 4) {
+      fprintf (stderr,
+		 "Polynomial %d, (sum %d) added: ", nodeId, sumCount);
+        expTermPrinting(stderr, rp, 1);
+	fprintf(stderr, "\n");
+    }
     sumCount++;
     nodeId++;
   }
@@ -1270,7 +1279,7 @@ timesExp (int num, ...)
       fprintf (stderr, "In timesExp exponent=%d item No. %d of %d type=%d\n",
 	       e1, i + 1, num, p1->eType);
       if (polynomialDebugLevel >= 7) {
-	expTermPrinting (p1);
+	expTermPrinting (stderr, p1, 1);
 	fprintf (stderr, "\n");
       }
     }
@@ -1354,7 +1363,7 @@ timesExp (int num, ...)
 	break;
       case T_FREED:
 	fprintf (stderr, "evil caller is trying to use a polynomial that was freed:\n");
-	expTermPrinting(p1);
+	expTermPrinting(stderr, p1, 1);
 	exit (1);
 	break;
       default:
@@ -1469,7 +1478,6 @@ timesExp (int num, ...)
 	      if (factor == 1.0) {
 		//the attribute count is used as a sign to show that this polynomial is
 		//refered in more than one places so that it can't be freed
-		//                             productList[pIndex]->count=2;
 		productList[pIndex]->count++;
 		product6++;
 		productHashHits++;
@@ -1487,7 +1495,6 @@ timesExp (int num, ...)
 	      //a sum polynomial
 	      else {
 		product7++;
-		//                             productList[pIndex]->count=2;
 		productList[pIndex]->count++;
 		if (polynomialDebugLevel >= 6)
 		  fprintf (stderr,
@@ -1521,7 +1528,9 @@ timesExp (int num, ...)
       //Determine the sub index of the old polynomial in the product hash table
       if (productHash[p0HIndex].num <= 0) {
 	fprintf (stderr,
-		 "This polynomial is not in the product hash table, exit(1) !\n");
+		 "This polynomial is not in the product hash table, exiting!\n");
+	expTermPrinting(stderr, p0, 1);
+	fprintf(stderr, "\n");
 	exit (1);
       }
       if (searchHashTable (&productHash[p0HIndex], &first, &last, p0Key)) {
@@ -1533,12 +1542,16 @@ timesExp (int num, ...)
 	  p0SubHIndex = i;
 	else {
 	  fprintf (stderr,
-		   "This polynomial is not in the product hash list, exit(2)!\n");
+		   "This polynomial is not in the product hash list (1), exiting!\n");
+	  expTermPrinting(stderr, p0, 1);
+	  fprintf(stderr, "\n");
 	  exit (1);
 	}
       } else {
 	fprintf (stderr,
-		 "This polynomial is not in the product hash list, exit(3) !\n");
+		 "This polynomial is not in the product hash list (2), exiting!\n");
+	expTermPrinting(stderr, p0, 1);
+	fprintf(stderr, "\n");
 	exit (1);
       }
       //Free the first operand
@@ -1620,10 +1633,12 @@ timesExp (int num, ...)
       productList[productCount] = rp;
       productList[productCount]->index = productCount;
       productList[productCount]->id = nodeId;
-      if (polynomialDebugLevel >= 4)
+      if (polynomialDebugLevel >= 4) {
 	fprintf (stderr,
-		 "Polynomial %d, (product %d) added\n", nodeId, productCount);
-      if (nodeId == 741) expTermPrinting(rp);
+		 "Polynomial %d, (product %d) added: ", nodeId, productCount);
+        expTermPrinting(stderr, rp, 1);
+	fprintf(stderr, "\n");
+      }
       productCount++;
       nodeId++;
     }
@@ -1817,6 +1832,7 @@ functionCallExp (int num, ...)
   rp->id = nodeId;
   rp->key = key;
   rp->valid = 0;
+  rp->count = 1;
   //Insert the new built polynomial in function call list
   if (functionCallCount >= functionCallListLength) {
     functionCallListLength += 10000;
@@ -1852,16 +1868,17 @@ buildPolyList ()
   struct polyList *l;
   int i;
 
+  /* Clear all of the VALID_EVAL_FLAGs */
    for(i=0;i<constantCount;i++)
-       constantList[i]->valid=0;
+       constantList[i]->valid &= ~VALID_EVAL_FLAG;
    for(i=0;i<variableCount;i++)
-       variableList[i]->valid=0;
+       variableList[i]->valid &= ~VALID_EVAL_FLAG;
    for(i=0;i<sumCount;i++)
-       sumList[i]->valid=0;
+       sumList[i]->valid &= ~VALID_EVAL_FLAG;
    for(i=0;i<productCount;i++)
-       productList[i]->valid=0;
+       productList[i]->valid &= ~VALID_EVAL_FLAG;
    for(i=0;i<functionCallCount;i++)
-       functionCallList[i]->valid=0;
+       functionCallList[i]->valid &= ~VALID_EVAL_FLAG;
 
   l = (struct polyList *)
     malloc (sizeof (struct polyList));
@@ -1879,7 +1896,7 @@ void
 polyListAppend (struct polyList *l, struct polynomial *p)
 {
   //valid is a mark showing that this polynomial appears on a sorting list
-  p->valid = 1;
+  p->valid |= VALID_EVAL_FLAG;
   if (l->listNext >= l->listSize) {
     l->pList =
       realloc (l->pList, sizeof (struct polynomial *) * (l->listSize + 100));
@@ -1911,15 +1928,15 @@ polyListSorting (struct polynomial *p, struct polyList *l)
     break;
     //If the polynomial is a variable, put it in the evaluation list
   case T_VARIABLE:
-    if (p->valid != 1) {
-      polyListAppend (l, p);
+    if (p->valid & VALID_EVAL_FLAG) {
+      break;
     }
-    break;
+    polyListAppend (l, p);
     //If the polynomial is a sum, put all the terms of the sum in the evaluation list
     //except constants and then put the sum in the evaluation list
   case T_SUM:
 
-    if (p->valid == 1)
+    if (p->valid & VALID_EVAL_FLAG)
       break;
     for (i = 0; i < p->e.s->num; i++)
       if (p->e.s->sum[i]->eType != T_CONSTANT && p->e.s->sum[i]->valid != 1) {
@@ -1931,11 +1948,11 @@ polyListSorting (struct polynomial *p, struct polyList *l)
     //evaluation list except constants and then put the product in the evaluation list
   case T_PRODUCT:
 
-    if (p->valid == 1)
+    if (p->valid & VALID_EVAL_FLAG)
       break;
     for (i = 0; i < p->e.p->num; i++)
       if (p->e.p->product[i]->eType != T_CONSTANT
-	  && p->e.p->product[i]->valid != 1) {
+	  && (!(p->e.p->product[i]->valid & VALID_EVAL_FLAG))) {
 	polyListSorting (p->e.p->product[i], l);
       }
     polyListAppend (l, p);
@@ -1944,10 +1961,10 @@ polyListSorting (struct polynomial *p, struct polyList *l)
     //put the functionCall in the evaluation list
   case T_FUNCTIONCALL:
 
-    if (p->valid == 1)
+    if (p->valid & VALID_EVAL_FLAG)
       break;
     for (i = 0; i < p->e.f->paraNum; i++)
-      if (p->e.f->para[i]->eType != T_CONSTANT && p->e.f->para[i]->valid != 1) {
+      if (p->e.f->para[i]->eType != T_CONSTANT && (!(p->e.f->para[i]->valid & VALID_EVAL_FLAG))) {
 	polyListSorting (p->e.f->para[i], l);
       }
     polyListAppend (l, p);
@@ -2436,438 +2453,6 @@ polynomialInitialization ()
     (struct polynomial **) malloc (lengthProd * sizeof (struct polynomial *));
 }
 
-/////////////////////////////////////////////////////////////////////////////////
-//record the current status of the polynomials
-/////////////////////////////////////////////////////////////////////////////////
-void
-makePolynomialStamp ()
-{
-  keepAllPolys();
-  return;
-//           nodeIdStamp            = nodeId;
-  constantCountStamp = constantCount;
-  variableCountStamp = variableCount;
-  sumCountStamp = sumCount;
-  productCountStamp = productCount;
-  functionCallCountStamp = functionCallCount;
-//           printAllPolynomials();  
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//record the current status of the polynomials
-///////////////////////////////////////////////////////////////////////////////
-void
-makePolynomialStamp2 ()
-{
-  keepAllPolys();
-  return;
-//           nodeIdStamp2            = nodeId;
-  constantCountStamp2 = constantCount;
-  variableCountStamp2 = variableCount;
-  sumCountStamp2 = sumCount;
-  productCountStamp2 = productCount;
-  functionCallCountStamp2 = functionCallCount;
-//           printAllPolynomials();
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-//This function clears the polynomials that are built after a time stamp.  The time stamp recorded 
-//the status of polynomials when the time stamp is made.  In genetic likelihood computations, this 
-//function is used to clear the polynomials built for the likelihood polynomials of all pedigrees  
-//at a specific trait position so that we may have enough memory for construction of likelihood    
-//polynomials at next trait position                                                               
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-void
-partialPolynomialClearance ()
-{
-  int i, j, k;
-
-  return;
-//   nodeId=nodeIdStamp;
-  //partially clear constant polynomials
-  for (j = constantCountStamp; j < constantCount; j++)
-    free (constantList[j]);
-  constantCount = constantCountStamp;
-  //partially clear variable polynomials
-  for (j = variableCountStamp; j < variableCount; j++) {
-    free (variableList[j]->e.v);
-    free (variableList[j]);
-  }
-
-  variableCount = variableCountStamp;
-  //partially clear sum polynomials
-  for (j = sumCountStamp; j < sumCount; j++) {
-    free (sumList[j]->e.s->sum);
-    free (sumList[j]->e.s->factor);
-    free (sumList[j]->e.s);
-    free (sumList[j]);
-  }
-  sumCount = sumCountStamp;
-  //partially clear product polynomials
-  for (j = productCountStamp; j < productCount; j++) {
-    free (productList[j]->e.p->product);
-    free (productList[j]->e.p->exponent);
-    free (productList[j]->e.p);
-    free (productList[j]);
-  }
-  productCount = productCountStamp;
-  //partially clear function call polynomials
-  for (j = functionCallCountStamp; j < functionCallCount; j++) {
-    free (functionCallList[j]->e.f->name);
-    free (functionCallList[j]->e.f->para);
-    free (functionCallList[j]->e.f);
-    free (functionCallList[j]);
-  }
-  functionCallCount = functionCallCountStamp;
-  //adjust the memory for constants
-  constantListLength = constantCount + 10;
-  constantList =
-    realloc (constantList, constantListLength * sizeof (struct polynomial *));
-  //adjust the memory for variables
-  variableListLength = variableCount + 10;
-  variableList =
-    realloc (variableList, variableListLength * sizeof (struct polynomial *));
-  //adjust the memory for sums
-  sumListLength = sumCount + 10;
-  sumList = realloc (sumList, sumListLength * sizeof (struct polynomial *));
-  //adjust the memory for prodcuts
-  productListLength = productCount + 10;
-  productList =
-    realloc (productList, productListLength * sizeof (struct polynomial *));
-  //adjust the memory for functioncalls
-  functionCallListLength = functionCallCount + 10;
-  functionCallList =
-    realloc (functionCallList,
-	     functionCallListLength * sizeof (struct polynomial *));
-  //rearrange the hash table of constants, delete the entries of polynomials in the hash table
-  //that are built after the time stamp
-  for (j = 0; j < CONSTANT_HASH_SIZE; j++) {
-    if (constantHash[j].num > 0) {
-      k = 0;
-      for (i = 0; i < constantHash[j].num; i++) {
-	if (constantHash[j].index[i] < constantCountStamp) {
-	  constantHash[j].index[k] = constantHash[j].index[i];
-	  constantHash[j].key[k] = constantHash[j].key[i];
-	  k++;
-	}
-      }
-      constantHash[j].num = k;
-      constantHash[j].length = constantHash[j].num + HASH_TABLE_INCREASE;
-      constantHash[j].key =
-	realloc (constantHash[j].key, sizeof (int) * constantHash[j].length);
-      constantHash[j].index =
-	realloc (constantHash[j].index,
-		 sizeof (int) * constantHash[j].length);
-      if (constantHash[j].key == NULL || constantHash[j].index == NULL) {
-	fprintf (stderr, "memory allocation error, exit\n");
-	exit (1);
-      }
-
-    }
-  }
-
-
-  //rearrange the hash table of variables
-  for (j = 0; j < VARIABLE_HASH_SIZE; j++) {
-    if (variableHash[j].num > 0) {
-      k = 0;
-      for (i = 0; i < variableHash[j].num; i++) {
-	if (variableHash[j].index[i] < variableCountStamp) {
-	  variableHash[j].index[k] = variableHash[j].index[i];
-	  variableHash[j].key[k] = variableHash[j].key[i];
-	  k++;
-	}
-      }
-      variableHash[j].num = k;
-      variableHash[j].length = variableHash[j].num + HASH_TABLE_INCREASE;
-      variableHash[j].key =
-	realloc (variableHash[j].key, sizeof (int) * variableHash[j].length);
-      variableHash[j].index =
-	realloc (variableHash[j].index,
-		 sizeof (int) * variableHash[j].length);
-      if (variableHash[j].key == NULL || variableHash[j].index == NULL) {
-	fprintf (stderr, "memory allocation error, exit\n");
-	exit (1);
-      }
-
-
-    }
-  }
-
-  //rearrange hash table of sums
-  for (j = 0; j < SUM_HASH_SIZE; j++) {
-    if (sumHash[j].num > 0) {
-      k = 0;
-      for (i = 0; i < sumHash[j].num; i++) {
-	if (sumHash[j].index[i] < sumCountStamp) {
-	  sumHash[j].index[k] = sumHash[j].index[i];
-	  sumHash[j].key[k] = sumHash[j].key[i];
-	  k++;
-	}
-      }
-      sumHash[j].num = k;
-      sumHash[j].length = sumHash[j].num + HASH_TABLE_INCREASE;
-      sumHash[j].key =
-	realloc (sumHash[j].key, sizeof (int) * sumHash[j].length);
-      sumHash[j].index =
-	realloc (sumHash[j].index, sizeof (int) * sumHash[j].length);
-      if (sumHash[j].key == NULL || sumHash[j].index == NULL) {
-	fprintf (stderr, "memory allocation error, exit\n");
-	exit (1);
-      }
-    }
-  }
-  //rearrange hash table of products
-  for (j = 0; j < PRODUCT_HASH_SIZE; j++) {
-    if (productHash[j].num > 0) {
-      k = 0;
-      for (i = 0; i < productHash[j].num; i++) {
-	if (productHash[j].index[i] < productCountStamp) {
-	  productHash[j].index[k] = productHash[j].index[i];
-	  productHash[j].key[k] = productHash[j].key[i];
-	  k++;
-	}
-      }
-      productHash[j].num = k;
-      productHash[j].length = productHash[j].num + HASH_TABLE_INCREASE;
-      productHash[j].key =
-	realloc (productHash[j].key, sizeof (int) * productHash[j].length);
-      productHash[j].index =
-	realloc (productHash[j].index, sizeof (int) * productHash[j].length);
-      if (productHash[j].key == NULL || productHash[j].index == NULL) {
-	fprintf (stderr, "memory allocation error, exit\n");
-	exit (1);
-      }
-
-    }
-  }
-  //rearrange hash table of function calls
-  for (j = 0; j < FUNCTIONCALL_HASH_SIZE; j++) {
-    if (functionCallHash[j].num > 0) {
-      k = 0;
-      for (i = 0; i < functionCallHash[j].num; i++) {
-	if (functionCallHash[j].index[i] < functionCallCountStamp) {
-	  functionCallHash[j].index[k] = functionCallHash[j].index[i];
-	  functionCallHash[j].key[k] = functionCallHash[j].key[i];
-	  k++;
-	}
-      }
-      functionCallHash[j].num = k;
-      functionCallHash[j].length =
-	functionCallHash[j].num + HASH_TABLE_INCREASE;
-      functionCallHash[j].key =
-	realloc (functionCallHash[j].key,
-		 sizeof (int) * functionCallHash[j].length);
-      functionCallHash[j].index =
-	realloc (functionCallHash[j].index,
-		 sizeof (int) * functionCallHash[j].length);
-      if (functionCallHash[j].key == NULL
-	  || functionCallHash[j].index == NULL) {
-	fprintf (stderr, "memory allocation error, exit\n");
-	exit (1);
-      }
-    }
-  }
-  //clear the signs for evaluation referenceof the polynomials left after partial clearance 
-  for (j = 0; j < constantCount; j++)
-    constantList[j]->valid = 0;
-  for (j = 0; j < variableCount; j++)
-    variableList[j]->valid = 0;
-  for (j = 0; j < sumCount; j++)
-    sumList[j]->valid = 0;
-  for (j = 0; j < productCount; j++)
-    productList[j]->valid = 0;
-  for (j = 0; j < functionCallCount; j++)
-    functionCallList[j]->valid = 0;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//This function is called for partial clearance of polynomials built after another time stamp.  In Kelvin,    
-//it is used to clear the polynomialls built during the construction of the likelihood of one pedigree, while 
-//the last function partialPolynomialClearance() used to clear the polynomials built during the construction  
-//of the likelihood polynomials of all the pedigrees at the current trait position.                           
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void
-partialPolynomialClearance2 ()
-{
-  int i, j, k;
-  int *sumIndex;
-  int *productIndex;
-  int *functionCallIndex;
-  int sumRecount;
-  int productRecount;
-  int functionCallRecount;
-
-  return;
-  //
-  sumIndex = (int *) malloc (sizeof (int) * (sumCount - sumCountStamp2 + 1));
-  if (sumIndex == NULL) {
-    fprintf (stderr, "sumIndex memory application failed!\n");
-    exit (1);
-  }
-
-  productIndex =
-    (int *) malloc (sizeof (int) * (productCount - productCountStamp2 + 1));
-  if (productIndex == NULL) {
-    fprintf (stderr, "productIndex memory application failed!\n");
-    exit (1);
-  }
-
-  functionCallIndex =
-    (int *) malloc (sizeof (int) *
-		    (functionCallCount - functionCallCountStamp2 + 1));
-  if (functionCallIndex == NULL) {
-    fprintf (stderr, "functionCallIndex memory application failed!\n");
-    exit (1);
-  }
-  //partially clear sums
-  sumRecount = sumCountStamp2;
-  for (j = sumCountStamp2; j < sumCount; j++) {
-    if (sumList[j]->valid >= 1) {
-      sumList[sumRecount] = sumList[j];
-      sumList[sumRecount]->index = sumRecount;
-      sumIndex[j - sumCountStamp2] = sumRecount;
-      sumRecount++;
-    } else {
-      sumIndex[j - sumCountStamp2] = -1;
-      free (sumList[j]->e.s->sum);
-      free (sumList[j]->e.s->factor);
-      free (sumList[j]->e.s);
-      free (sumList[j]);
-    }
-  }
-  sumCount = sumRecount;
-//   fprintf(stderr,"sumList clearance completed!\n");
-  //partially clear products 
-  productRecount = productCountStamp2;
-  for (j = productCountStamp2; j < productCount; j++) {
-    if (productList[j]->valid >= 1) {
-      productList[productRecount] = productList[j];
-      productList[productRecount]->index = productRecount;
-      productIndex[j - productCountStamp2] = productRecount;
-      productRecount++;
-    } else {
-      productIndex[j - productCountStamp2] = -1;
-      free (productList[j]->e.p->product);
-      free (productList[j]->e.p->exponent);
-      free (productList[j]->e.p);
-      free (productList[j]);
-    }
-  }
-  productCount = productRecount;
-//   fprintf(stderr,"productList clearance completed!\n");
-  //partially clear function-calls
-  functionCallRecount = functionCallCountStamp2;
-  for (j = functionCallCountStamp2; j < functionCallCount; j++) {
-    if (functionCallList[j]->valid >= 1) {
-      functionCallList[functionCallRecount] = functionCallList[j];
-      functionCallList[functionCallRecount]->index = functionCallRecount;
-      functionCallIndex[j - functionCallCountStamp2] = functionCallRecount;
-      functionCallRecount++;
-    } else {
-      functionCallIndex[j - functionCallCountStamp2] = -1;
-      free (functionCallList[j]->e.f->name);
-      free (functionCallList[j]->e.f->para);
-      free (functionCallList[j]->e.f);
-      free (functionCallList[j]);
-    }
-  }
-  functionCallCount = functionCallRecount;
-//   fprintf(stderr,"function List clearance completed!\n");
-  //rearrange hash table of sums
-  for (j = 0; j < SUM_HASH_SIZE; j++) {
-    if (sumHash[j].num > 0) {
-      k = 0;
-      for (i = 0; i < sumHash[j].num; i++) {
-	if (sumHash[j].index[i] < sumCountStamp2) {
-	  sumHash[j].index[k] = sumHash[j].index[i];
-	  sumHash[j].key[k] = sumHash[j].key[i];
-	  k++;
-	} else if (sumIndex[sumHash[j].index[i] - sumCountStamp2] != -1) {
-	  sumHash[j].index[k] =
-	    sumIndex[sumHash[j].index[i] - sumCountStamp2];
-	  sumHash[j].key[k] = sumHash[j].key[i];
-	  k++;
-	}
-      }
-      sumHash[j].num = k;
-      sumHash[j].length = sumHash[j].num;
-      sumHash[j].key = realloc (sumHash[j].key,
-				sizeof (int) * sumHash[j].length);
-      sumHash[j].index =
-	realloc (sumHash[j].index, sizeof (int) * sumHash[j].length);
-    }
-  }
-
-  //  fprintf(stderr,"sumHash rearrangement completed!\n");
-
-  //rearrange hash table of products
-  for (j = 0; j < PRODUCT_HASH_SIZE; j++) {
-    if (productHash[j].num > 0) {
-      k = 0;
-      for (i = 0; i < productHash[j].num; i++) {
-	if (productHash[j].index[i] < productCountStamp2) {
-	  productHash[j].index[k] = productHash[j].index[i];
-	  productHash[j].key[k] = productHash[j].key[i];
-	  k++;
-	} else if (productIndex[productHash[j].index[i] - productCountStamp2]
-		   != -1) {
-	  productHash[j].index[k] =
-	    productIndex[productHash[j].index[i] - productCountStamp2];
-	  productHash[j].key[k] = productHash[j].key[i];
-	  k++;
-	}
-      }
-      productHash[j].num = k;
-      productHash[j].length = productHash[j].num;
-      productHash[j].key = realloc (productHash[j].key,
-				    sizeof (int) * productHash[j].length);
-      productHash[j].index =
-	realloc (productHash[j].index, sizeof (int) * productHash[j].length);
-    }
-  }
-
-//   fprintf(stderr,"productHash rearrangement completed!\n");
-
-
-  //rearrange hash table of function calls
-  for (j = 0; j < FUNCTIONCALL_HASH_SIZE; j++) {
-    if (functionCallHash[j].num > 0) {
-      k = 0;
-      for (i = 0; i < functionCallHash[j].num; i++) {
-	if (functionCallHash[j].index[i] < functionCallCountStamp2) {
-	  functionCallHash[j].index[k] = functionCallHash[j].index[i];
-	  functionCallHash[j].key[k] = functionCallHash[j].key[i];
-	  k++;
-	} else
-	  if (functionCallIndex
-	      [functionCallHash[j].index[i] -
-	       functionCallCountStamp2] != -1) {
-	  functionCallHash[j].index[k] =
-	    functionCallIndex[functionCallHash[j].index[i] -
-			      functionCallCountStamp2];
-	  functionCallHash[j].key[k] = functionCallHash[j].key[i];
-	  k++;
-	}
-      }
-      functionCallHash[j].num = k;
-      functionCallHash[j].length = functionCallHash[j].num;
-      functionCallHash[j].key =
-	realloc (functionCallHash[j].key,
-		 sizeof (int) * functionCallHash[j].length);
-      functionCallHash[j].index =
-	realloc (functionCallHash[j].index,
-		 sizeof (int) * functionCallHash[j].length);
-    }
-  }
-
-//   fprintf(stderr,"functionCallHash rearrangement completed!\n");
-
-  free (sumIndex);
-  free (productIndex);
-  free (functionCallIndex);
-};
-
 ///////////////////////////////////////////////////////////////////////////////
 //Release all the memory occupied by the polynomials, polynomial lists, hash 
 //tables
@@ -2983,73 +2568,6 @@ polynomialClearance ()
   free (exponentProd);
   free (pProd);
 }
-
-
-//////////////////////////////////////////////////////////////////////
-//This function display the structure of all the polynomials.  It is
-//used for debugging
-//////////////////////////////////////////////////////////////////////
-void
-dismantle ()
-{
-  int i;
-
-  for (i = 0; i < constantCount; i++)
-    fprintf (stderr,
-	     "Constant index=%d  value=%10.8f key=%d\n",
-	     constantList[i]->index,
-	     constantList[i]->value, constantList[i]->key);
-  for (i = 0; i < variableCount; i++)
-    fprintf (stderr,
-	     "Variable index=%d  value=%10.8f key=%d\n",
-	     variableList[i]->index,
-	     variableList[i]->value, variableList[i]->key);
-  for (i = 0; i < sumCount; i++) {
-    fprintf (stderr,
-	     "Sum      index=%d  value=%10.8f key=%d\n",
-	     sumList[i]->index, sumList[i]->value, sumList[i]->key);
-
-/*
-     for(j=0;j<sumList[i]->e.s->num;j++)
-     {
-        fprintf(stderr,"   %d  %ld  %10.8f  %10.8f\n",
-              j,sumList[i]->e.s->sum[j]->index,sumList[i]->e.s->sum[j]->value, sumList[i]->e.s->factor[j]);
-     }
-*/
-  }
-  for (i = 0; i < productCount; i++) {
-    fprintf (stderr,
-	     "Product  index=%d  value=%10.8f key=%d\n",
-	     productList[i]->index,
-	     productList[i]->value, productList[i]->key);
-
-/*
-     for(j=0;j<productList[i]->e.p->num;j++)
-     {
-        fprintf(stderr,"   %d  %ld  %10.8f  %d\n",
-                j,productList[i]->e.p->product[j]->index,
-                productList[i]->e.p->product[j]->value, 
-                productList[i]->e.p->exponent[j]);
-     }
-*/
-  }
-  for (i = 0; i < functionCallCount; i++) {
-    fprintf (stderr,
-	     "Function Call  id=%d  name: %s  value=%10.8f key=%d\n",
-	     functionCallList[i]->index,
-	     functionCallList[i]->e.f->name,
-	     functionCallList[i]->value, functionCallList[i]->key);
-
-/*
-     for(j=0;j<functionCallList[i]->e.f->paraNum;j++)
-     {
-        fprintf(stderr,"   %d  %ld  %10.8f \n",
-                j,functionCallList[i]->e.f->para[j]->index,
-                functionCallList[i]->e.f->para[j]->value);
-     }
-*/
-  }
-};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //This function prints out hash table contents.  This function is for performance evaluation 
@@ -3183,126 +2701,5 @@ dismantlePolynomialAndSortingList (struct polynomial *p, struct polyList *l)
   }
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//append a polynomial to a list of polynomials. Used for performance evaluation.
-//This function is paired with  polyListSorting3 for construction of evaluation
-//list of a polynomial
-////////////////////////////////////////////////////////////////////////////////
-void
-polyListAppend3 (struct polyList *l, struct polynomial *p, int signature)
-{
-  //valid is a mark showing that this polynomial appears on a sorting list
-  p->valid = signature;
-  if (l->listNext >= l->listSize) {
-    l->pList =
-      realloc (l->pList, sizeof (struct polynomial *) * (l->listSize + 100));
-    l->listSize = l->listSize + 100;
-  }
-  l->pList[l->listNext] = p;
-  l->listNext++;
-};
-
-///////////////////////////////////////////////////////////////////////////////////////
-//Count the number of each type of polynomials in a list of a polynomials that determine
-//the order of evaluation of a complex polynomial.  This is for performance evaluation
-///////////////////////////////////////////////////////////////////////////////////////
-void
-polyListStatistics (struct polyList *l)
-{
-  int j;
-  int numConstant = 0, numVariable = 0, numSum =
-    0, numProduct = 0, numFunctionCall = 0;
-  for (j = 0; j <= l->listNext - 1; j++) {
-    switch (l->pList[j]->eType) {
-    case T_CONSTANT:
-      numConstant++;
-      break;
-    case T_VARIABLE:
-      numVariable++;
-      break;
-    case T_SUM:
-      numSum++;
-      break;
-    case T_PRODUCT:
-      numProduct++;
-      break;
-    case T_FUNCTIONCALL:
-      numFunctionCall++;
-      break;
-    default:
-      fprintf (stderr, "Unknown expression type, exit!\n");
-      exit (1);
-    }
-  }
-  fprintf (stderr, "%d  %d  %d  %d  %d\n",
-	   numConstant, numVariable, numSum, numProduct, numFunctionCall);
-};
-
-///////////////////////////////////////////////////////////////////////////////////////
-//Building a evaluation order of a complex polynomial.  It is used for performance
-//evaluation. For linkage computation, this function allows limited reuse of shared 
-//polynomials, which means that shared polynomials within the likelihood polynomial of 
-//each pedigree are reused while shared polynomials among likelihood polynomials of
-//different pedigrees are not reused
-///////////////////////////////////////////////////////////////////////////////////////
-void
-polyListSorting3 (struct polynomial *p, struct polyList *l, int signature)
-{
-  int i;
-
-//   fprintf(stderr,"sorting3 valid=%d signature=%d \n",p->valid,signature);
-  switch (p->eType) {
-  case T_CONSTANT:
-    polyListAppend3 (l, p, signature);
-    break;
-  case T_VARIABLE:
-    if (p->valid != signature) {
-      polyListAppend3 (l, p, signature);
-    }
-    break;
-  case T_SUM:
-    if (p->valid == signature)
-      break;
-    for (i = 0; i < p->e.s->num; i++)
-      if (p->e.s->sum[i]->eType != T_CONSTANT
-	  && p->e.s->sum[i]->valid != signature) {
-	polyListSorting3 (p->e.s->sum[i], l, signature);
-      }
-    polyListAppend3 (l, p, signature);
-    break;
-  case T_PRODUCT:
-
-    if (p->valid == signature)
-      break;
-    for (i = 0; i < p->e.p->num; i++)
-      if (p->e.p->product[i]->eType != T_CONSTANT
-	  && p->e.p->product[i]->valid != signature) {
-	polyListSorting3 (p->e.p->product[i], l, signature);
-      }
-    polyListAppend3 (l, p, signature);
-    break;
-  case T_FUNCTIONCALL:
-
-    if (p->valid == signature)
-      break;
-    for (i = 0; i < p->e.f->paraNum; i++)
-      if (p->e.f->para[i]->eType != T_CONSTANT
-	  && p->e.f->para[i]->valid != signature) {
-	polyListSorting3 (p->e.f->para[i], l, signature);
-      }
-    polyListAppend3 (l, p, signature);
-    break;
-  default:
-    break;
-  }
-//  for(i=0;i<l->listNext;i++)
-//     if(l->pList[i]->eType==T_VARIABLE)
-//       fprintf(stderr,"List element i=%d of %d l->pList[i].eType=%d  id=%d name=%s\n",
-//                                  i,l->listNext,l->pList[i]->eType,l->pList[i]->id,l->pList[i]->vName);
-//     else
-//       fprintf(stderr,"List element i=%d of %d l->pList[i].eType=%d  id=%d \n",
-//                                 i,l->listNext,l->pList[i]->eType,l->pList[i]->id);
-
-};
 
 #include "../../diags/polynomial.c-tail"
