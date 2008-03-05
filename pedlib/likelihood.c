@@ -212,6 +212,7 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 			       pPedigree->likelihoodPolyList);
 	    }
 	  /* evaluate likelihood */
+	  fprintf(stderr, "evaluatePoly\n");
 	  pPedigree->likelihood =
 	    evaluatePoly (pPedigree->likelihoodPolynomial,
 			  pPedigree->likelihoodPolyList);
