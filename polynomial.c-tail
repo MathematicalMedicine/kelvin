@@ -406,20 +406,20 @@ printAllPolynomials ()
   fprintf (stderr, "---\n");
 }
 
-/* Mark all polynomials as keepers. */
+/* Mark all polynomials as held. */
 void
-keepAllPolys ()
+holdAllPolys ()
 {
   int i, j;
 
-  fprintf (stderr, "Keeping all current polynomials (via hashes):\n");
+  fprintf (stderr, "Holding all current polynomials (via hashes):\n");
   if (constantCount > 0) {
     fprintf (stderr, "%d constants\n", constantCount);
     for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
       if (constantHash[i].num <= 0)
 	continue;
       for (j = 0; j < constantHash[i].num; j++)
-	constantList[constantHash[i].index[j]]->valid |= VALID_KEEP_FLAG;
+	constantList[constantHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
     }
   }
   if (variableCount > 0) {
@@ -428,7 +428,7 @@ keepAllPolys ()
       if (variableHash[i].num <= 0)
 	continue;
       for (j = 0; j < variableHash[i].num; j++)
-	variableList[variableHash[i].index[j]]->valid |= VALID_KEEP_FLAG;
+	variableList[variableHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
     }
   }
   if (sumCount > 0) {
@@ -437,7 +437,7 @@ keepAllPolys ()
       if (sumHash[i].num <= 0)
 	continue;
       for (j = 0; j < sumHash[i].num; j++)
-	sumList[sumHash[i].index[j]]->valid |= VALID_KEEP_FLAG;
+	sumList[sumHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
     }
   }
   if (productCount > 0) {
@@ -446,7 +446,7 @@ keepAllPolys ()
       if (productHash[i].num <= 0)
 	continue;
       for (j = 0; j < productHash[i].num; j++)
-	productList[productHash[i].index[j]]->valid |= VALID_KEEP_FLAG;
+	productList[productHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
     }
   }
 
@@ -456,32 +456,31 @@ keepAllPolys ()
       if (functionCallHash[i].num <= 0)
 	continue;
       for (j = 0; j < functionCallHash[i].num; j++)
-	functionCallList[functionCallHash[i].index[j]]->valid |= VALID_KEEP_FLAG;
+	functionCallList[functionCallHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
     }
   }
 //  printAllPolynomials();
   fprintf (stderr, "---\n");
 }
 
-/* Mod and bump the valid count for this and all sub polynomials until we
-   run-out or hit a non-zero valid count. */
+/* Mark polynomial and all subpolynomials with the provided valid flag. */
 void
-flagValids (struct polynomial *p)
+flagValids (struct polynomial *p, unsigned short validFlag)
 {
   int i;
 
-  if (p->valid) return;
+  if ((p->valid & validFlag) == validFlag) return;
   switch (p->eType) {
   case T_CONSTANT:
   case T_VARIABLE:
-    p->valid |= VALID_KEEP_FLAG;
+    p->valid |= validFlag;
     break;
   case T_SUM:
   case T_PRODUCT:
   case T_FUNCTIONCALL:
-    p->valid |= VALID_KEEP_FLAG;
+    p->valid |= validFlag;
     for (i = 0; i < p->e.s->num; i++) {
-      flagValids (p->e.s->sum[i]);
+      flagValids (p->e.s->sum[i], validFlag);
     }
     break;
   case T_FREED:
@@ -510,7 +509,7 @@ keepPoly (struct polynomial *p)
       fprintf (stderr, "\n");
     }
   }
-  flagValids (p);
+  flagValids (p, VALID_KEEP_FLAG);
   if (polynomialDebugLevel >= 3) {
     fprintf (stderr, "Finished keepPoly\n");
     if (polynomialDebugLevel >= 7) {
@@ -519,11 +518,31 @@ keepPoly (struct polynomial *p)
   }
   return;
 }
-
-/* Free all polynomials that we can, i.e. those that don't have a non-zero
-   valid counts, and decrementing all valid counts. */
+/* Flag all components of the provided polynomial for preservation. We do
+   this by calling flagValids, which will recurse thru the component
+   subpolynomials. */
 void
-freePolys ()
+holdPoly (struct polynomial *p)
+{
+  if (polynomialDebugLevel >= 3) {
+    fprintf (stderr, "Starting holdPoly\n");
+    if (polynomialDebugLevel >= 7) {
+      expTermPrinting (stderr, p, 16);
+      fprintf (stderr, "\n");
+    }
+  }
+  flagValids (p, VALID_HOLD_FLAG);
+  if (polynomialDebugLevel >= 3) {
+    fprintf (stderr, "Finished holdPoly\n");
+    if (polynomialDebugLevel >= 7) {
+      printAllPolynomials ();
+    }
+  }
+  return;
+}
+
+void
+doFreePolys (unsigned short keepMask)
 {
   int i, j, k;
   struct polynomial **newSumList, **newProductList;
@@ -546,7 +565,7 @@ freePolys ()
   }
   k = 0;
   for (i = 0; i < sumCount; i++) {
-    if (sumList[i]->valid > 0) {
+    if (sumList[i]->valid & keepMask) {
       newSumList[k] = sumList[i];
       sumList[i] = newSumList[k];
 //      fprintf(stderr, "Index %d is now %d\n", newSumList[k]->index, k);
@@ -563,7 +582,7 @@ freePolys ()
       sumList[i] = NULL;
     }
   }
-  if (polynomialDebugLevel >= 1) fprintf(stderr, "Kept %d of %d sum polynomials\n", k, sumCount);
+  if (polynomialDebugLevel >= 1) fprintf(stderr, "Preserved %d of %d sum polynomials\n", k, sumCount);
   sumCount = k;
 
   /* Go thru the hash collapsing entries and freeing the corresponding
@@ -597,7 +616,7 @@ freePolys ()
   }
   k = 0;
   for (i = 0; i < productCount; i++) {
-    if (productList[i]->valid > 0) {
+    if (productList[i]->valid & keepMask) {
       newProductList[k] = productList[i];
       productList[i] = newProductList[k];
 //      fprintf(stderr, "Index %d is now %d\n", newProductList[k]->index, k);
@@ -614,7 +633,7 @@ freePolys ()
       productList[i] = NULL;
     }
   }
-  if (polynomialDebugLevel >= 1) fprintf(stderr, "Kept %d of %d product polynomials\n", k, productCount);
+  if (polynomialDebugLevel >= 1) fprintf(stderr, "Preserved %d of %d product polynomials\n", k, productCount);
   productCount = k;
 
   /* Go thru the hash collapsing entries and freeing the corresponding
@@ -647,3 +666,19 @@ freePolys ()
   }
   return;
 }
+
+/* Free all polynomials that aren't held or kept. */
+void
+freePolys ()
+{
+  doFreePolys (VALID_KEEP_FLAG|VALID_HOLD_FLAG);
+  return;
+}
+/* Free all polynomials that aren't held. */
+void
+freeKeptPolys ()
+{
+  doFreePolys (VALID_HOLD_FLAG);
+  return;
+}
+

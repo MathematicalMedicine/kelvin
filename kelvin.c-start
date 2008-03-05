@@ -1,6 +1,6 @@
   /* Fork a child that loops sleeping several seconds and then signalling 
      us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
-
+/*
   pid_t childPID;
   childPID = fork ();
   if (childPID == 0) {
@@ -9,7 +9,7 @@
       kill (getppid (), SIGUSR1);
     }
   }
-
+*/
   overallSW = swCreate ("overall"); /* Overall performance stopwatch */
   /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
   struct sigaction usr1Action, quitAction;
