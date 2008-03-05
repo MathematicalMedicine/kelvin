@@ -128,11 +128,7 @@ evaluateValue (struct polynomial *p)
     }
     p->value = result;
     return result;
-  case T_FREED:
-    fprintf (stderr, "evil caller is trying to use a polynomial that was freed:\n");
-    expTermPrinting(stderr, p, 1);
-    exit (1);
-    break;
+
     //If the polynomial type is unknown, something must be wrong
   default:
     fprintf (stderr, "Error, Unknown expression type!!!!, exit(1)");
@@ -909,8 +905,11 @@ plusExp (int num, ...)
   } else if (con == 0.0 && counterSum == 1 && factorSum[0] == 1.0) {
     rp = pSum[0];
     sum3++;
-    if (polynomialDebugLevel >= 6)
-      fprintf (stderr, "Returning a constant %f\n", rp->value);
+    if (polynomialDebugLevel >= 6) {
+      fprintf (stderr, "Returning a single-term sum\n");
+    expTermPrinting(stderr, rp, 1);
+    fprintf(stderr, "\n");
+    }
     return rp;
   } else {
     if (con != 0.0) {
@@ -1932,10 +1931,10 @@ polyListSorting (struct polynomial *p, struct polyList *l)
     break;
     //If the polynomial is a variable, put it in the evaluation list
   case T_VARIABLE:
-    if (p->valid & VALID_EVAL_FLAG) {
-      break;
+    if (!(p->valid & VALID_EVAL_FLAG)) {
+      polyListAppend (l, p);
     }
-    polyListAppend (l, p);
+    break;
     //If the polynomial is a sum, put all the terms of the sum in the evaluation list
     //except constants and then put the sum in the evaluation list
   case T_SUM:
@@ -1943,7 +1942,7 @@ polyListSorting (struct polynomial *p, struct polyList *l)
     if (p->valid & VALID_EVAL_FLAG)
       break;
     for (i = 0; i < p->e.s->num; i++)
-      if (p->e.s->sum[i]->eType != T_CONSTANT && p->e.s->sum[i]->valid != 1) {
+      if (p->e.s->sum[i]->eType != T_CONSTANT && (!(p->e.s->sum[i]->valid & VALID_EVAL_FLAG))) {
 	polyListSorting (p->e.s->sum[i], l);
       }
     polyListAppend (l, p);
@@ -1969,52 +1968,6 @@ polyListSorting (struct polynomial *p, struct polyList *l)
       break;
     for (i = 0; i < p->e.f->paraNum; i++)
       if (p->e.f->para[i]->eType != T_CONSTANT && (!(p->e.f->para[i]->valid & VALID_EVAL_FLAG))) {
-	polyListSorting (p->e.f->para[i], l);
-      }
-    polyListAppend (l, p);
-    break;
-  default:
-    break;
-  }
-
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-//This function perform similar task as polyListSorting().  In linkage computation, it constructs
-//an evaluation list of the likelihood polynomial of one pedigree which offers no reuse of shared
-//polynomials.  Neither shared polynomials within the likelihood polynomial of one pedigree nor 
-//those across the likelihood polynomials of a set of pedigrees are reused.   This function is for 
-//performance evaluation             
-/////////////////////////////////////////////////////////////////////////////////////////////////
-void
-polyListSorting2 (struct polynomial *p, struct polyList *l)
-{
-  int i;
-
-  switch (p->eType) {
-  case T_CONSTANT:
-    polyListAppend (l, p);
-    break;
-  case T_VARIABLE:
-    polyListAppend (l, p);
-    break;
-  case T_SUM:
-    for (i = 0; i < p->e.s->num; i++)
-      if (p->e.s->sum[i]->eType != T_CONSTANT) {
-	polyListSorting2 (p->e.s->sum[i], l);
-      }
-    polyListAppend (l, p);
-    break;
-  case T_PRODUCT:
-    for (i = 0; i < p->e.p->num; i++)
-      if (p->e.p->product[i]->eType != T_CONSTANT) {
-	polyListSorting2 (p->e.p->product[i], l);
-      }
-    polyListAppend (l, p);
-    break;
-  case T_FUNCTIONCALL:
-    for (i = 0; i < p->e.f->paraNum; i++)
-      if (p->e.f->para[i]->eType != T_CONSTANT) {
 	polyListSorting (p->e.f->para[i], l);
       }
     polyListAppend (l, p);
@@ -2689,24 +2642,5 @@ printAllVariables ()
   }
   fprintf (stderr, "\n");
 }
-
-//////////////////////////////////////////////////////////////////////
-// print out a polynomial and its sorting list.  Used for debugging
-//////////////////////////////////////////////////////////////////////
-void
-dismantlePolynomialAndSortingList (struct polynomial *p, struct polyList *l)
-{
-  int j;
-
-  fprintf (stderr, "Polynomial Value:  %e\n", p->value);
-  expPrinting (p);
-  fprintf (stderr, "\n");
-  for (j = 0; j <= l->listNext - 1; j++) {
-    fprintf (stderr, "%4d  value: %e ", j, l->pList[j]->value);
-    expPrinting (l->pList[j]);
-    fprintf (stderr, "\n");
-  }
-};
-
 
 #include "../../diags/polynomial.c-tail"
