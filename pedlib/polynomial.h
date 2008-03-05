@@ -160,8 +160,8 @@ struct functionPoly
 typedef struct polynomial
 {
   unsigned int id;
-  unsigned int index;		/* I want to lose either this or id... */
-  unsigned int key;		/* Hash key */
+  int index;		/* I want to lose either this or id... */
+  int key;		/* Hash key */
   unsigned short count;		/* Reference count, starts at 1, used to see
 				   if we can free a polynomial. */
   unsigned char valid;		/* Preservation flag(s) */
