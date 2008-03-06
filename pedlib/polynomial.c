@@ -23,7 +23,7 @@ unsigned long constantPsSize = 0, variablePsSize = 0, variablePsExpSize = 0, sum
   sumPTrmMrgExpSize = 0, productPsSize = 0, productPColExpSize = 0, productPTrmMrgExpSize = 0;
 
 char *polynomialVersion = "0.0.32.4";
-int polynomialDebugLevel = 0;
+int polynomialDebugLevel = 0, polynomialLostNodeId = -1;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -421,10 +421,8 @@ constantExp (double con)
   constantCount++;
   nodeId++;
   p->key = key;
-  //valid = 1 if the polynomial is used in evaluation
-  //valid = 0 if the polynomial is not used in evaluation
   p->valid = 0;
-  p->count = 1;
+  p->count = 0;
 
   //Record the constant polynomial in the hash table of constant polynomials
   insertHashTable (&constantHash[hIndex], location, key, constantCount - 1);
@@ -545,7 +543,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   p->id = nodeId;
   p->key = key;
   p->valid = 0;
-  p->count = 1;
+  p->count = 0;
 
   //Insert the variable polynomial in the variable polynomial list
   variableList[variableCount] = p;
@@ -704,7 +702,7 @@ plusExp (int num, ...)
   double tempD, tempD2;		//normalized fractions( for comparison of two double numbers)
   int hIndex, sIndex;		//index of the new polynomial in the hash table, sub index in a hash bucket
   int first, last, location;	//first polynomial for comparison, last polynomial for comparison, location of the new polynomial in a hash bucket
-  int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Valid;
+  int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Valid, p0Count;
 
   //sub index in a hash bucket, index in the hash table, index in the polynomial list, unique id, key, number of times refered of the
   //polynomial to be replaced
@@ -811,7 +809,8 @@ plusExp (int num, ...)
     default:
       fprintf (stderr, "In plusExp, unknown polynomial type %d, exiting!\n",
 	       p1->eType);
-      raise(SIGILL);
+      raise(SIGUSR1);
+      exit (1);
     }
   }
   flag = va_arg (args, int);
@@ -948,7 +947,7 @@ plusExp (int num, ...)
   }
 
   //If the first polynomial in the parameter list can be freed
-  if (flag != 0 && p0->eType == T_SUM && p0->valid == 0) {
+  if (flag != 0 && p0->eType == T_SUM && p0->valid == 0 && p0->count == 0) {
     p0Index = p0->index;
     p0Id = p0->id;
     p0Key = p0->key;
@@ -957,6 +956,7 @@ plusExp (int num, ...)
       p0HIndex += SUM_HASH_SIZE;
     p0EType = p0->eType;
     p0Valid = p0->valid;
+    p0Count = p0->count;
 
     if (sumHash[p0HIndex].num <= 0) {
       fprintf (stderr,
@@ -1023,13 +1023,13 @@ plusExp (int num, ...)
   for (i = 0; i < sP->num; i++) {
     sP->factor[i] = factorSum[i];
     sP->sum[i] = pSum[i];
-    sP->sum[i]->count = 2;
+    sP->sum[i]->count++;
   }
   //assign values to some attributes of the sum polynomial
   rp->e.s = sP;
   rp->key = key;
   rp->valid = 0;
-  rp->count = 1;
+  rp->count = 0;
 
   //This piece of code is for performance test
   numSumTerms += counterSum;
@@ -1049,7 +1049,7 @@ plusExp (int num, ...)
 
   //If the first polynomial is the parameter list is freed, its position
   //in the polynomial list is occupied by the newly created sum polynomial
-  if (flag != 0 && p0EType == T_SUM && p0Valid != 0) {
+  if (flag != 0 && p0EType == T_SUM && p0Valid == 0 && p0Count == 0) {
     sum11++;
     sumList[p0Index] = rp;
     sumList[p0Index]->index = p0Index;
@@ -1070,17 +1070,18 @@ plusExp (int num, ...)
     sumList[sumCount] = rp;
     sumList[sumCount]->index = sumCount;
     sumList[sumCount]->id = nodeId;
-    if (nodeId == 526) {
-      fprintf(stderr, "nodeId 526 has valid of %d\n", rp->valid);
+    if (nodeId == polynomialLostNodeId) {
+      fprintf(stderr, "nodeId %d has valid of %d and count of %d\n", polynomialLostNodeId, rp->valid, rp->count);
       expTermPrinting(stderr, rp, 16);
-      fprintf(stderr, "\n");
+      fprintf(stderr, "\nIf you're in gdb, continue from here to see more.\n");
+      raise(SIGUSR1);
     }
     sumCount++;
     nodeId++;
   }
 
   //Insert the newly built polynomial into the Hash table
-  if (flag != 0 && p0EType == T_SUM && p0Valid != 0) {
+  if (flag != 0 && p0EType == T_SUM && p0Valid == 0 && p0Count == 0) {
     if (p0HIndex != hIndex || p0SubHIndex != location) {
       //insert the newly built polynomial in the hash table
       insertHashTable (&sumHash[hIndex], location, key,
@@ -1226,7 +1227,7 @@ timesExp (int num, ...)
   int pIndex, hIndex;		//index in the polynomial list, index in the hash table
   int first, last, location;	//first and last terms for comparison, position of the new polynomial in a hash bucket
   int flag;			//if the new product polynomial can replace an existing one
-  int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Valid;
+  int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Valid, p0Count;
 
   //sub index in a hash bucket, index in the hash table, index in the polynomial list, unique id, key, number of times refered of the
   //polynomial to be replaced
@@ -1347,7 +1348,8 @@ timesExp (int num, ...)
       default:
 	fprintf (stderr, "In timesExp, unknown polynomial type %d, exiting!\n",
 	       p1->eType);
-	raise(SIGILL);
+	raise(SIGUSR1);
+	exit (1);
 	break;
       }				//end of switch
     }				//end of else
@@ -1506,7 +1508,7 @@ timesExp (int num, ...)
 
     //If the first operand of the times operation can be freed (flag==1)
     // and the first operand is a product that is refered only once
-    if (flag != 0 && p0->eType == T_PRODUCT && p0->valid != 0) {
+    if (flag != 0 && p0->eType == T_PRODUCT && p0->valid == 0 && p0->count == 0) {
       //We save the identity information of the polynomial to be freed
       //so that the resource can be assigned to the newly created polynomial 
       p0Index = p0->index;
@@ -1518,6 +1520,7 @@ timesExp (int num, ...)
 	p0HIndex += PRODUCT_HASH_SIZE;
       p0EType = p0->eType;
       p0Valid = p0->valid;
+      p0Count = p0->count;
 
       //Determine the sub index of the old polynomial in the product hash table
       if (productHash[p0HIndex].num <= 0) {
@@ -1582,14 +1585,14 @@ timesExp (int num, ...)
     for (i = 0; i < counterProd; i++) {
       pP->product[i] = pProd[i];
       pP->exponent[i] = exponentProd[i];
-      pP->product[i]->count = 2;
+      pP->product[i]->count++;
     }
     rp->e.p = pP;
     rp->index = productCount;
     rp->id = nodeId;
     rp->key = key;
     rp->valid = 0;
-    rp->count = 1;
+    rp->count = 0;
 
     //This piece of code is for performance evaluation
     numProductTerms += counterProd;
@@ -1619,7 +1622,7 @@ timesExp (int num, ...)
     //We either apply for a new position in the product list for this polynomial, or
     //replace an existing polynomial with the newly created polynomial at the position
     //occupied by the existing polynomial
-    if (flag != 0 && p0EType == T_PRODUCT && p0Valid != 0) {
+    if (flag != 0 && p0EType == T_PRODUCT && p0Valid == 0 && p0Count == 0) {
       //Assign the resource of the freed polynomial to the newly constructed polynomial
       product11++;
       productList[p0Index] = rp;
@@ -1637,12 +1640,18 @@ timesExp (int num, ...)
 	expTermPrinting (stderr, rp, 1);
 	fprintf (stderr, "\n");
       }
+      if (nodeId == polynomialLostNodeId) {
+	fprintf(stderr, "nodeId %d has valid of %d and count of %d\n", polynomialLostNodeId, rp->valid, rp->count);
+	expTermPrinting(stderr, rp, 16);
+	fprintf(stderr, "\nIf you're in gdb, continue from here to see more.\n");
+	raise(SIGUSR1);
+      }
       productCount++;
       nodeId++;
     }
 
     //the new polynomial is also recorded in the hash table
-    if (flag != 0 && p0EType == T_PRODUCT && p0Valid != 0) {
+    if (flag != 0 && p0EType == T_PRODUCT && p0Valid == 0 && p0Count == 0) {
 
       //If the indexes or sub indexes of the new and old polynomials in the hash table
       //are different
@@ -1844,7 +1853,7 @@ functionCallExp (int num, ...)
   rp->id = nodeId;
   rp->key = key;
   rp->valid = 0;
-  rp->count = 1;
+  rp->count = 0;
 
   //Insert the new built polynomial in function call list
   if (functionCallCount >= functionCallListLength) {
@@ -2242,6 +2251,12 @@ polynomialInitialization ()
   }
   if (polynomialDebugLevel > 0)
     fprintf (stderr, "polynomialDebugLevel is at %d\n", polynomialDebugLevel);
+
+  if ((envVar = getenv ("polynomialLostNodeId")) != NULL) {
+    polynomialLostNodeId = atoi (envVar);
+  }
+  if (polynomialLostNodeId > 0)
+    fprintf (stderr, "polynomialLostNodeId is %d\n", polynomialLostNodeId);
 
   startTime = currentTime = clock ();
 
@@ -2963,7 +2978,8 @@ expTermPrinting (FILE *output, struct polynomial *p, int depth)
   default:
     fprintf (stderr, "In expTermPrinting, unknown expression type %d, exiting\n",
 	     p->eType);
-    raise(SIGILL);
+    raise(SIGUSR1);
+    exit(1);
   }
 }
 
