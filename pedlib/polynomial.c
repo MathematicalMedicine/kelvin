@@ -22,16 +22,19 @@ unsigned long constantPLExpansions = 0, variablePLExpansions = 0, sumPCollectExp
 unsigned long constantPsSize = 0, variablePsSize = 0, variablePsExpSize = 0, sumPsSize = 0, sumPColExpSize = 0, 
   sumPTrmMrgExpSize = 0, productPsSize = 0, productPColExpSize = 0, productPTrmMrgExpSize = 0;
 
-char *polynomialVersion = "0.0.32.4";
-int polynomialDebugLevel = 0, polynomialLostNodeId = -1;
-
+char *polynomialVersion = "0.0.32.4"; /* Make this meaningful since kelvin displays it. */
+/* Both of the following are set by initialization to value of environment variable of same name.
+   They control diagnostic action in a manner not permitted by other approaches since they can
+   be changed without rebuilding. */
+int polynomialDebugLevel = 0;	/* Corresponds roughly to diagnostic output volume */
+int polynomialLostNodeId = -1;	/* For tracking down mis-freed polnomials */
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-//Recursively evaluate a polynomial.  This version of polynomail evaluation doesn't use
+//Recursively evaluate a polynomial.  This version of polynomial evaluation doesn't use
 //polynomial sorting list.  It just compute the values of each sub polynomial recursively.  
 //A reused sub polynomial maybe repeatedly evaluated.  The efficiency is lower than the
 //function of evaluatePoly.  However, we don't need to build a sorting list of sub polynomials
-//before the polynomial can be evaluated. This cannot be used if freePolys() has been called.
+//before the polynomial can be evaluated. This cannot be safely used if polys have been freed.
 ///////////////////////////////////////////////////////////////////////////////////////////////
 double
 evaluateValue (struct polynomial *p)
@@ -817,8 +820,6 @@ plusExp (int num, ...)
 
   va_end (args);
 
-//flag=0;
-
   if (flag == 0)
     sum0++;
   else
@@ -839,7 +840,6 @@ plusExp (int num, ...)
       exit (1);
     }
   }
-//   j=0;
 
   if (counter_v1 > 0) {
     memcpy (&factorSum[0], &factor_v1[0], sizeof (double) * counter_v1);
@@ -3202,8 +3202,12 @@ holdAllPolys ()
     for (i = 0; i < SUM_HASH_SIZE; i++) {
       if (sumHash[i].num <= 0)
 	continue;
-      for (j = 0; j < sumHash[i].num; j++)
+      for (j = 0; j < sumHash[i].num; j++) {
+	if (sumList[sumHash[i].index[j]]->id == polynomialLostNodeId)
+	  fprintf(stderr, "holdAllPolys for sums sees id %d and is flagging with %d\n", 
+		  polynomialLostNodeId, VALID_HOLD_FLAG);
 	sumList[sumHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
+      }
     }
   }
   if (productCount > 0) {
@@ -3211,8 +3215,12 @@ holdAllPolys ()
     for (i = 0; i < PRODUCT_HASH_SIZE; i++) {
       if (productHash[i].num <= 0)
 	continue;
-      for (j = 0; j < productHash[i].num; j++)
+      for (j = 0; j < productHash[i].num; j++) {
+	if (productList[productHash[i].index[j]]->id == polynomialLostNodeId)
+	  fprintf(stderr, "holdAllPolys for products sees id %d and is flagging with %d\n", 
+		  polynomialLostNodeId, VALID_HOLD_FLAG);
 	productList[productHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
+      }
     }
   }
 
@@ -3234,6 +3242,10 @@ void
 flagValids (struct polynomial *p, unsigned short validFlag)
 {
   int i;
+
+  if (p->id == polynomialLostNodeId)
+    fprintf(stderr, "flagValids sees id %d and is flagging with %d\n",
+	    polynomialLostNodeId, validFlag);
 
   if ((p->valid & validFlag) == validFlag) return;
   switch (p->eType) {
@@ -3268,6 +3280,9 @@ flagValids (struct polynomial *p, unsigned short validFlag)
 void
 keepPoly (struct polynomial *p)
 {
+  //  fprintf(stderr, "Keeping: ");
+  //  expTermPrinting (stderr, p, 1);
+  //  fprintf (stderr, "\n");
   if (polynomialDebugLevel >= 3) {
     fprintf (stderr, "Starting keepPoly\n");
     if (polynomialDebugLevel >= 7) {
@@ -3331,6 +3346,9 @@ doFreePolys (unsigned short keepMask)
   }
   k = 0;
   for (i = 0; i < sumCount; i++) {
+    if (sumList[i]->id == polynomialLostNodeId)
+      fprintf(stderr, "doFreePolys sees id %d with valid %d during pass with mask %d\n",
+	      polynomialLostNodeId, sumList[i]->valid, keepMask);
     if (sumList[i]->valid & keepMask) {
       newSumList[k] = sumList[i];
       sumList[i] = newSumList[k];
@@ -3382,6 +3400,9 @@ doFreePolys (unsigned short keepMask)
   }
   k = 0;
   for (i = 0; i < productCount; i++) {
+    if (productList[i]->id == polynomialLostNodeId)
+      fprintf(stderr, "doFreePolys sees id %d with valid %d during pass with mask %d\n",
+	      polynomialLostNodeId, productList[i]->valid, keepMask);
     if (productList[i]->valid & keepMask) {
       newProductList[k] = productList[i];
       productList[i] = newProductList[k];

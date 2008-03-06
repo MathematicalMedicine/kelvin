@@ -416,8 +416,7 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
-      // WHVC      pLikelihoodPolynomial = constant0Poly;
-      pLikelihoodPolynomial = constantExp(0.0);
+      pLikelihoodPolynomial = constant0Poly;
     }
   else
     likelihood = 0;
@@ -513,6 +512,8 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 
       if (pPedigree->loopFlag == TRUE)
 	{
+	  if(modelOptions.polynomial == TRUE)
+	    keepPoly(pLikelihoodPolynomial);
 	  restore_pedigree_genotype_link_from_saved (pPedigree);
 	  ret = set_next_loopbreaker_genotype_vector (pPedigree, FALSE);
 	  KLOG (LOGLIKELIHOOD, LOGDEBUG,
@@ -753,7 +754,7 @@ peel_graph (NuclearFamily * pNucFam1, Person * pProband1,
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
-      fprintf(stderr, "keepPoly for the likelihood and weight polynomials\n");
+      //      fprintf(stderr, "keepPoly for the likelihood and weight polynomials\n");
       for (i = 0; i < pProband->numConditionals; i++)
 	{
 	  if (pProband->touchedFlag == TRUE )
@@ -762,7 +763,7 @@ peel_graph (NuclearFamily * pNucFam1, Person * pProband1,
 	      keepPoly(pProband->pLikelihood[i].wtslot.weightPolynomial);
 	    }
 	}
-      fprintf(stderr, "freePolys after keeping the likelihood and weight polynomials\n");
+      //      fprintf(stderr, "freePolys after keeping the likelihood and weight polynomials\n");
       freePolys();
     }
 #endif
