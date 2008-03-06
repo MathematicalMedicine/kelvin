@@ -17,8 +17,8 @@ NICEDIR = /usr/local
 #
 #CFLGS	+= -DNOFLOAT 
 CFLGS	+= -Wall			# Always leave this one on
-CFLGS	+= -O3	 			# Production level
-#CFLGS  += -g  -DDEBUG		# Debug level
+#CFLGS	+= -O3	 			# Production level
+CFLGS  += -g  -DDEBUG		# Debug level
 #CFLGS   += -DNO_POLYNOMIAL
 #CFLGS += -pg                   # profile - debugging 
 #CFLGS += -pedantic   #memory leak tracing
@@ -44,7 +44,7 @@ CFLGS  += -Wall -I$(INCDIR) -L$(LIBDIR) -I$(NINCDIR) -L$(NLIBDIR)
 ######################################################################
 # File sets. 
 NBIN	= kelvin
-LIB	= -lped -lutils -lgsl -lgslcblas -lm -L../diags -lsw -lbj
+LIB	= -lped -lutils -lgsl -lgslcblas -lm -lsw -lbj
 NLIB	= # -lniceapi -lnicecom -lniceaux
 SRC	= kelvin.c config.c ppl.c
 INC	= kelvin.h

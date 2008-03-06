@@ -416,7 +416,8 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
-      pLikelihoodPolynomial = constant0Poly;
+      // WHVC      pLikelihoodPolynomial = constant0Poly;
+      pLikelihoodPolynomial = constantExp(0.0);
     }
   else
     likelihood = 0;

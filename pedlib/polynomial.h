@@ -11,7 +11,39 @@
 #include <stdarg.h>
 #include <time.h>
 
-#include "../../diags/polynomial.h-head"
+#include <signal.h>
+#include "sw.h"
+
+#define CONSTANT_LIST_INCREASE 50
+#define VARIABLE_LIST_INCREASE 50
+#define SUM_LIST_INCREASE 10000
+#define PRODUCT_LIST_INCREASE 10000
+
+void dumpPStats();
+#ifdef DMTRACK
+#warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+#define malloc(X) swMalloc((X), __FILE__, __LINE__)
+#define calloc(X,Y) swCalloc((X),(Y), __FILE__, __LINE__)
+#define realloc(X,Y) swRealloc((X),(Y), __FILE__, __LINE__)
+#define free(X) swFree((X), __FILE__, __LINE__)
+#endif
+
+extern struct swStopwatch *overallSW;
+extern volatile sig_atomic_t signalSeen;  /* Signalled dumps */
+
+/* Variables for tracking internal polynomial memory usage. */
+extern unsigned long maxHashListLength;
+extern unsigned long constantPs, constantHashPs, variablePs, variableHashPs,
+  sumPs, sumHashPs, productPs, productHashPs, functionPs, functionHashPs;
+extern unsigned long peakConstantPs, peakVariablePs, peakSumPs, peakProductPs, peakFunctionPs;
+extern unsigned long constantPLExpansions, variablePLExpansions, sumPCollectExpansions,
+  sumPTermMergeExpansions, sumPListExpansions, productPCollectExpansions, 
+  productPTermMergeExpansions, productPListExpansions;
+extern unsigned long constantPsSize, variablePsSize, variablePsExpSize, sumPsSize, sumPColExpSize, 
+  sumPTrmMrgExpSize, productPsSize, productPColExpSize, productPTrmMrgExpSize;
+/* Display the internal polynomial memory usage statistics. */
+void dumpPStats(char *);
+void printAllPolynomials();
 
 //following variables are for debugging
 clock_t startTime;
@@ -343,6 +375,11 @@ void dismantlePolynomialAndSortingList (struct polynomial *p,
 //void printPolyList(struct polyList *l)
 void printSummaryPoly (struct polynomial *);
 
-#include "../../diags/polynomial.h-tail"
+void keepPoly(struct polynomial *);
+void holdPoly(struct polynomial *);
+void freePolys();
+void freeKeptPolys();
+void holdAllPolys();
+void expTermPrinting(FILE *, struct polynomial *, int);
 
 #endif

@@ -11,7 +11,17 @@
 #include "gsl/gsl_randist.h"
 #include "gsl/gsl_cdf.h"
 
-#include "../../diags/polynomial.c-head"
+/* Variables for tracking internal polynomial memory usage. */
+unsigned long maxHashListLength = HASH_TABLE_INCREASE;
+unsigned long constantPs = 0, constantHashPs = 0, variablePs = 0, variableHashPs = 0, sumPs = 0, 
+  sumHashPs = 0, productPs = 0, productHashPs = 0, functionPs = 0, functionHashPs = 0;
+unsigned long peakConstantPs = 0, peakVariablePs = 0, peakSumPs = 0, peakProductPs = 0, peakFunctionPs = 0;
+unsigned long constantPLExpansions = 0, variablePLExpansions = 0, sumPCollectExpansions = 0,
+  sumPTermMergeExpansions = 0, sumPListExpansions = 0, productPCollectExpansions = 0, 
+  productPTermMergeExpansions = 0, productPListExpansions = 0;
+unsigned long constantPsSize = 0, variablePsSize = 0, variablePsExpSize = 0, sumPsSize = 0, sumPColExpSize = 0, 
+  sumPTrmMrgExpSize = 0, productPsSize = 0, productPColExpSize = 0, productPTrmMrgExpSize = 0;
+
 char *polynomialVersion = "0.0.32.4";
 int polynomialDebugLevel = 0;
 
@@ -694,7 +704,7 @@ plusExp (int num, ...)
   double tempD, tempD2;		//normalized fractions( for comparison of two double numbers)
   int hIndex, sIndex;		//index of the new polynomial in the hash table, sub index in a hash bucket
   int first, last, location;	//first polynomial for comparison, last polynomial for comparison, location of the new polynomial in a hash bucket
-  int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Count;
+  int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Valid;
 
   //sub index in a hash bucket, index in the hash table, index in the polynomial list, unique id, key, number of times refered of the
   //polynomial to be replaced
@@ -732,10 +742,6 @@ plusExp (int num, ...)
     if (i == 0) {
       f0 = f1;
       p0 = p1;
-
-//        fprintf(stderr,"f0=%f p0=",f0);
-//        expPrinting(p0);
-//        fprintf(stderr,"\n");
     }
     //If a term is contant 0, it has no effect on a sum, therefore we do nothing
     if (f1 == 0.0) {
@@ -789,21 +795,24 @@ plusExp (int num, ...)
 			   f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
 	  break;
 	default:
-	  fprintf (stderr, "UNKNOWN polynomial type, exit!!\n");
+	  fprintf (stderr, "In plusExp, unknown expression type %d\n",
+		   p1->e.s->sum[l]->eType);
 	  exit (1);
 	}
       }
       break;
-    default:
-      fprintf (stderr, "UNKNOWN polynomial type, exit!!\n");
+    case T_FREED:
+      fprintf (stderr,
+	       "In plusExp, polynomial term %d was freed:\n", i);
+      expTermPrinting (stderr, p1, 1);
       exit (1);
-    }
+      break;
 
-//              for(k=0;k<counter;k++)
-//              {
-//                expPrinting(p[k]);
-//                fprintf(stderr," k=%d index=%d factor=%f\n",k,p[k]->index,factor[k]);
-//              }
+    default:
+      fprintf (stderr, "In plusExp, unknown polynomial type %d, exiting!\n",
+	       p1->eType);
+      raise(SIGILL);
+    }
   }
   flag = va_arg (args, int);
 
@@ -939,7 +948,7 @@ plusExp (int num, ...)
   }
 
   //If the first polynomial in the parameter list can be freed
-  if (flag != 0 && p0->eType == T_SUM && p0->count == 1) {
+  if (flag != 0 && p0->eType == T_SUM && p0->valid == 0) {
     p0Index = p0->index;
     p0Id = p0->id;
     p0Key = p0->key;
@@ -947,7 +956,7 @@ plusExp (int num, ...)
     if (p0HIndex < 0)
       p0HIndex += SUM_HASH_SIZE;
     p0EType = p0->eType;
-    p0Count = p0->count;
+    p0Valid = p0->valid;
 
     if (sumHash[p0HIndex].num <= 0) {
       fprintf (stderr,
@@ -982,13 +991,13 @@ plusExp (int num, ...)
     free (p0->e.s->sum);
     free (p0->e.s->factor);
     free (p0->e.s);
-    p0->value = productList[i]->eType;
+    p0->value = -productList[i]->eType;
     p0->eType = T_FREED;
     //    free (p0);
 
   } else {
-    p0EType = 999;
-    p0Count = 999;
+    p0EType = T_FREED;
+    p0Valid = 7;
   }
 
   //If the sum is not found in the sum list, a new polynomial is built 
@@ -1040,7 +1049,7 @@ plusExp (int num, ...)
 
   //If the first polynomial is the parameter list is freed, its position
   //in the polynomial list is occupied by the newly created sum polynomial
-  if (flag != 0 && p0EType == T_SUM && p0Count == 1) {
+  if (flag != 0 && p0EType == T_SUM && p0Valid != 0) {
     sum11++;
     sumList[p0Index] = rp;
     sumList[p0Index]->index = p0Index;
@@ -1061,13 +1070,17 @@ plusExp (int num, ...)
     sumList[sumCount] = rp;
     sumList[sumCount]->index = sumCount;
     sumList[sumCount]->id = nodeId;
+    if (nodeId == 526) {
+      fprintf(stderr, "nodeId 526 has valid of %d\n", rp->valid);
+      expTermPrinting(stderr, rp, 16);
+      fprintf(stderr, "\n");
+    }
     sumCount++;
     nodeId++;
   }
 
-
   //Insert the newly built polynomial into the Hash table
-  if (flag != 0 && p0EType == T_SUM && p0Count == 1) {
+  if (flag != 0 && p0EType == T_SUM && p0Valid != 0) {
     if (p0HIndex != hIndex || p0SubHIndex != location) {
       //insert the newly built polynomial in the hash table
       insertHashTable (&sumHash[hIndex], location, key,
@@ -1213,7 +1226,7 @@ timesExp (int num, ...)
   int pIndex, hIndex;		//index in the polynomial list, index in the hash table
   int first, last, location;	//first and last terms for comparison, position of the new polynomial in a hash bucket
   int flag;			//if the new product polynomial can replace an existing one
-  int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Count;
+  int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Valid;
 
   //sub index in a hash bucket, index in the hash table, index in the polynomial list, unique id, key, number of times refered of the
   //polynomial to be replaced
@@ -1316,32 +1329,24 @@ timesExp (int num, ...)
 				 e1 * p1->e.p->exponent[l],
 				 p1->e.p->product[l]);
 	    break;
-	  case T_FREED:
-	    fprintf (stderr,
-		     "evil caller is trying to use a polynomial that was freed:\n");
-	    expTermPrinting (stderr, p1, 1);
-	    exit (1);
-	    break;
-
-	    //unknown product type
 	  default:
-	    fprintf (stderr, "Unknown expression type %d\n",
+	    fprintf (stderr, "In timesExp, unknown expression type %d\n",
 		     p1->e.p->product[l]->eType);
 	    exit (1);
 	  }			//end of switch
 	}			//end of for
 	break;
-	//unknown product type
+
       case T_FREED:
 	fprintf (stderr,
-		 "evil caller is trying to use a polynomial that was freed:\n");
+		 "In plusExp, polynomial term %d was freed:\n", i);
 	expTermPrinting (stderr, p1, 1);
 	exit (1);
 	break;
 
       default:
-	fprintf (stderr, "Unknown expression type %d\n",
-		 p1->eType);
+	fprintf (stderr, "In timesExp, unknown polynomial type %d, exiting!\n",
+	       p1->eType);
 	raise(SIGILL);
 	break;
       }				//end of switch
@@ -1501,7 +1506,7 @@ timesExp (int num, ...)
 
     //If the first operand of the times operation can be freed (flag==1)
     // and the first operand is a product that is refered only once
-    if (flag != 0 && p0->eType == T_PRODUCT && p0->count == 1) {
+    if (flag != 0 && p0->eType == T_PRODUCT && p0->valid != 0) {
       //We save the identity information of the polynomial to be freed
       //so that the resource can be assigned to the newly created polynomial 
       p0Index = p0->index;
@@ -1512,7 +1517,7 @@ timesExp (int num, ...)
       if (p0HIndex < 0)
 	p0HIndex += PRODUCT_HASH_SIZE;
       p0EType = p0->eType;
-      p0Count = p0->count;
+      p0Valid = p0->valid;
 
       //Determine the sub index of the old polynomial in the product hash table
       if (productHash[p0HIndex].num <= 0) {
@@ -1548,12 +1553,12 @@ timesExp (int num, ...)
       free (p0->e.p->exponent);
       free (p0->e.p->product);
       free (p0->e.p);
-      p0->value = productList[i]->eType;
+      p0->value = -productList[i]->eType;
       p0->eType = T_FREED;
       //    free (p0);
     } else {
-      p0EType = 999;
-      p0Count = 999;
+      p0EType = T_FREED;
+      p0Valid = 7;
     }
 
     //Construct a new product polynomial from the terms
@@ -1614,7 +1619,7 @@ timesExp (int num, ...)
     //We either apply for a new position in the product list for this polynomial, or
     //replace an existing polynomial with the newly created polynomial at the position
     //occupied by the existing polynomial
-    if (flag != 0 && p0EType == T_PRODUCT && p0Count == 1) {
+    if (flag != 0 && p0EType == T_PRODUCT && p0Valid != 0) {
       //Assign the resource of the freed polynomial to the newly constructed polynomial
       product11++;
       productList[p0Index] = rp;
@@ -1637,7 +1642,7 @@ timesExp (int num, ...)
     }
 
     //the new polynomial is also recorded in the hash table
-    if (flag != 0 && p0EType == T_PRODUCT && p0Count == 1) {
+    if (flag != 0 && p0EType == T_PRODUCT && p0Valid != 0) {
 
       //If the indexes or sub indexes of the new and old polynomials in the hash table
       //are different
@@ -2743,4 +2748,687 @@ printAllVariables ()
   fprintf (stderr, "\n");
 }
 
-#include "../../diags/polynomial.c-tail"
+#define MAXPOLYTIERS 16
+int polyTiers[MAXPOLYTIERS][5];
+int peakPolyTiers;
+char *polyTypes[] = { "constant", "variable", "sum", "product", "function" };
+
+/* It might not be a sumPoly, but we can treat it as one. */
+void
+traversePoly (struct polynomial *p, int currentTier)
+{
+  int i;
+
+  if (currentTier > peakPolyTiers)
+    peakPolyTiers = currentTier;
+  if (currentTier >= MAXPOLYTIERS)
+    return;
+  polyTiers[currentTier][p->eType]++;
+  switch (p->eType) {
+  case T_CONSTANT:
+  case T_VARIABLE:
+    break;
+  case T_SUM:
+    for (i = 0; i < p->e.s->num; i++) {
+      traversePoly (p->e.s->sum[i], currentTier + 1);
+    }
+    break;
+  case T_PRODUCT:
+    for (i = 0; i < p->e.p->num; i++) {
+      traversePoly (p->e.p->product[i], currentTier + 1);
+    }
+    break;
+  case T_FUNCTIONCALL:
+    for (i = 0; i < p->e.f->paraNum; i++) {
+      traversePoly (p->e.f->para[i], currentTier + 1);
+    }
+    break;
+  case T_FREED:
+    fprintf (stderr,
+	     "In traversePoly, evil caller is trying to use a polynomial that was freed:\n");
+    expTermPrinting (stderr, p, 1);
+    exit (1);
+    break;
+  default:
+    fprintf (stderr, "In traversePoly, unknown expression type: [%d], exiting!\n",
+	     p->eType);
+    exit (1);
+  }
+}
+void
+printSummaryPoly (struct polynomial *p)
+{
+  int i, j;
+
+  fprintf (stderr, "Summary of Remains of %d Polynomials (from tree):\n",
+	   nodeId);
+  memset (polyTiers, 0, sizeof (polyTiers));
+  peakPolyTiers = 0;
+  traversePoly (p, 0);
+  for (i = 0; i <= peakPolyTiers; i++) {
+    fprintf (stderr, "Tier %d:", i);
+    int firstPrint = 1;
+
+    for (j = 0; j < 5; j++) {
+      if (polyTiers[i][j] != 0) {
+	if (!firstPrint)
+	  fprintf (stderr, ",");
+	firstPrint = 0;
+	fprintf (stderr, " %d %s", polyTiers[i][j], polyTypes[j]);
+	if (polyTiers[i][j] > 1)
+	  fprintf (stderr, "s");
+      }
+    }
+    fprintf (stderr, "\n");
+  }
+  fprintf (stderr, "---\n");
+}
+
+void
+expPrinting (struct polynomial *p)
+{
+  int i;
+
+  switch (p->eType) {
+  case T_CONSTANT:
+    fprintf (stderr, "%G", p->value);
+    break;
+  case T_VARIABLE:
+    if (strlen (p->e.v->vName) == 0)
+      fprintf (stderr, "u%d", p->index);
+    else
+      fprintf (stderr, "%s", p->e.v->vName);
+    break;
+  case T_SUM:
+    if (p->e.s->num > 1)
+      fprintf (stderr, "(");
+    if (p->e.s->factor[0] != 1)
+      fprintf (stderr, "%G*", p->e.s->factor[0]);
+    expPrinting (p->e.s->sum[0]);
+    for (i = 1; i < p->e.s->num; i++) {
+      fprintf (stderr, "+");
+      if (p->e.s->factor[i] != 1)
+	fprintf (stderr, "%G*", p->e.s->factor[i]);
+      expPrinting (p->e.s->sum[i]);
+    }
+    if (p->e.s->num > 1)
+      fprintf (stderr, ")");
+    break;
+  case T_PRODUCT:
+    if (p->e.p->num > 1)
+      fprintf (stderr, "(");
+    expPrinting (p->e.p->product[0]);
+    if (p->e.p->exponent[0] != 1)
+      fprintf (stderr, "^%d", p->e.p->exponent[0]);
+    for (i = 1; i < p->e.s->num; i++) {
+      fprintf (stderr, "*");
+      expPrinting (p->e.p->product[i]);
+      if (p->e.p->exponent[i] != 1)
+	fprintf (stderr, "^%d", p->e.p->exponent[i]);
+    }
+    if (p->e.p->num > 1)
+      fprintf (stderr, ")");
+    break;
+  case T_FUNCTIONCALL:
+    fprintf (stderr, "%s(", p->e.f->name);
+    for (i = 0; i < p->e.f->paraNum - 1; i++) {
+      expPrinting (p->e.f->para[i]);
+      fprintf (stderr, ", ");
+    }
+    expPrinting (p->e.f->para[p->e.f->paraNum - 1]);
+    fprintf (stderr, ")");
+    break;
+  case T_FREED:
+    fprintf (stderr,
+	     "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n",
+	     (int) p->value, p->id, p->index, p->key, p->count, p->valid);
+  default:
+    fprintf (stderr, "In expPrinting, unknown expression type %d, exiting\n",
+	     p->eType);
+    exit (1);
+  }
+}
+
+/* Print the provided polynomial with sum and product terms in
+   parentheses and preceeded by their type ('s' or 'p') and index
+   down to depth indicated. At that level, simply refer to
+   polynomial ids. */
+
+void
+expTermPrinting (FILE *output, struct polynomial *p, int depth)
+{
+  int i;
+
+  switch (p->eType) {
+  case T_CONSTANT:
+    fprintf (output, "%G", p->value);
+    break;
+  case T_VARIABLE:
+    if (strlen (p->e.v->vName) == 0)
+      fprintf (output, "u%d", p->index);
+    else
+      fprintf (output, "%s", p->e.v->vName);
+    break;
+  case T_SUM:
+    if (depth <= 0) {
+      fprintf (output, "s%d", p->index);
+      return;
+    }
+    fprintf (output, "(s%d:", p->index);
+    if (p->e.s->factor[0] != 1)
+      fprintf (output, "%G*", p->e.s->factor[0]);
+    expTermPrinting (output, p->e.s->sum[0], depth-1);
+    for (i = 1; i < p->e.s->num; i++) {
+      fprintf (output, "+");
+      if (p->e.s->factor[i] != 1)
+	fprintf (output, "%G*", p->e.s->factor[i]);
+      expTermPrinting (output, p->e.s->sum[i], depth-1);
+    }
+    fprintf (output, ")");
+    break;
+  case T_PRODUCT:
+    if (depth <= 0) {
+      fprintf (output, "p%d", p->index);
+      return;
+    }
+    fprintf (output, "(p%d:", p->index);
+    expTermPrinting (output, p->e.p->product[0], depth-1);
+    if (p->e.p->exponent[0] != 1)
+      fprintf (output, "^%d", p->e.p->exponent[0]);
+    for (i = 1; i < p->e.s->num; i++) {
+      fprintf (output, "*");
+      expTermPrinting (output, p->e.p->product[i], depth-1);
+      if (p->e.p->exponent[i] != 1)
+	fprintf (output, "^%d", p->e.p->exponent[i]);
+    }
+    fprintf (output, ")");
+    break;
+  case T_FUNCTIONCALL:
+    if (depth <= 0) {
+      fprintf (output, "f%d", p->index);
+      return;
+    }
+    fprintf (output, "%s(", p->e.f->name);
+    for (i = 0; i < p->e.f->paraNum - 1; i++) {
+      expTermPrinting (output, p->e.f->para[i], depth-1);
+      fprintf (output, ", ");
+    }
+    expTermPrinting (output, p->e.f->para[p->e.f->paraNum - 1], depth-1);
+    fprintf (output, ")");
+    break;
+  case T_FREED:
+    fprintf (stderr,
+	     "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n",
+	     (int) p->value, p->id, p->index, p->key, p->count, p->valid);
+  default:
+    fprintf (stderr, "In expTermPrinting, unknown expression type %d, exiting\n",
+	     p->eType);
+    raise(SIGILL);
+  }
+}
+
+/*
+ This function prints out polynomial statistic information.  It is mainly used for 
+ performance evaluation and debugging. */
+void
+polyStatistics ()
+{
+  long constantSize, variableSize, sumSize, productSize, functionCallSize;
+  int sumTerms = 0, productTerms = 0;
+  int i;
+
+  fprintf (stderr,
+	   "Dump of polynomial statistics (from counters and specific lists):\n");
+  fprintf (stderr,
+	   "Count of constants=%d, variables=%d, sums=%d, products=%d, functions=%d\n",
+	   constantCount, variableCount, sumCount, productCount,
+	   functionCallCount);
+  fprintf (stderr,
+	   "Hits for constants=%d, variables=%d, sums=%d(%d-to-1), products=%d(%d-to-1), functions=%d\n",
+	   constantHashHits, variableHashHits, sumHashHits,
+	   sumHashHits / sumCount, productHashHits,
+	   productHashHits / productCount, functionHashHits);
+
+  constantSize = constantCount * sizeof (Polynomial);
+  variableSize = variableCount * sizeof (Polynomial);
+  sumSize =
+    sumCount * sizeof (Polynomial) + sumCount * sizeof (struct sumPoly);
+  for (i = 0; i < sumCount; i++) {
+    sumSize +=
+      sumList[i]->e.s->num * (sizeof (Polynomial *) + sizeof (double));
+    sumTerms += sumList[i]->e.s->num;
+  }
+  productSize =
+    productCount * sizeof (Polynomial) +
+    productCount * sizeof (struct productPoly);
+  for (i = 0; i < productCount; i++) {
+    productSize +=
+      productList[i]->e.p->num * (sizeof (Polynomial *) + sizeof (int));
+    productTerms += productList[i]->e.p->num;
+  }
+  functionCallSize =
+    functionCallCount * sizeof (Polynomial) +
+    functionCallCount * sizeof (struct functionPoly);
+  for (i = 0; i < functionCallCount; i++) {
+    functionCallSize +=
+      strlen (functionCallList[i]->e.f->name) + sizeof (int) +
+      sizeof (Polynomial *);
+  }
+
+  fprintf (stderr, "Term counts of sums=%d, products=%d\n", sumTerms,
+	   productTerms);
+  fprintf (stderr,
+	   "Sizes: constants=%ld, variables=%ld, sums=%ld, products=%ld, functions=%ld, total=%ld\n",
+	   constantSize, variableSize, sumSize, productSize, functionCallSize,
+	   constantSize + variableSize + sumSize + productSize +
+	   functionCallSize);
+  fprintf (stderr,
+	   "Sum polys: to release=%d or not=%d are constant=%d single term sum=%d referred to=%d\n",
+	   sum0, sum1, sum2, sum3, sum4);
+  fprintf (stderr,
+	   "...really new=%d new on sumList=%d replaced on sumList=%d\n",
+	   sum5, sum00, sum11);
+  fprintf (stderr,
+	   "Product polys: to release=%d or not=%d are zero=%d are constant=%d same as 1st term=%d\n",
+	   product0, product1, product2, product3, product4);
+  fprintf (stderr,
+	   "...actually a sum poly=%d referred to=%d pre-existing now sum=%d factor is 1=%d\n",
+	   product5, product6, product7, product8);
+  fprintf (stderr,
+	   "...factor not 1 now sum=%d new on productList=%d replaced on productList=%d\n",
+	   product9, product00, product11);
+  if (sum00 + sum11 > 0)
+    fprintf (stderr, "Average sum length=%f ",
+	     numSumTerms * 1.0 / (sum00 + sum11));
+  if (product00 + product11 > 0)
+    fprintf (stderr, "product length=%f\n",
+	     numProductTerms * 1.0 / (product00 + product11));
+
+  fprintf (stderr, "Maximum sum length=%d ", maxSumLength);
+  for (i = 0; i < maxSumLength; i++)
+    if (countSumLength[i] > 0) {
+      fprintf (stderr, "(s%d %d) ", i + 1, countSumLength[i]);
+      countSumLength[i] = 0;
+    }
+  fprintf (stderr, "\n");
+  fprintf (stderr, "Maximum product length=%d ", maxProductLength);
+  for (i = 0; i < maxProductLength; i++)
+    if (countProductLength[i] > 0) {
+      fprintf (stderr, "(p%d %d) ", i + 1, countProductLength[i]);
+      countProductLength[i] = 0;
+    }
+  fprintf (stderr, "\n");
+  fprintf (stderr, "---\n");
+};
+
+void
+printAllPolynomials ()
+{
+  int i, j;
+
+  fprintf (stderr, "All Polynomials (from hash):\n");
+  if (constantCount > 0) {
+    fprintf (stderr, "All %d constants:\n", constantCount);
+    for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
+      if (constantHash[i].num <= 0)
+	continue;
+      for (j = 0; j < constantHash[i].num; j++) {
+	fprintf (stderr,
+		 "(%d %d) index=%d key=%d count=%d valid=%d constant: ", i, j,
+		 constantHash[i].index[j], constantHash[i].key[j],
+		 constantList[constantHash[i].index[j]]->count,
+		 constantList[constantHash[i].index[j]]->valid);
+	expTermPrinting (stderr, constantList[constantHash[i].index[j]], 1);
+	fprintf (stderr, "\n");
+      }
+    }
+    fprintf (stderr, "\n");
+  }
+  if (variableCount > 0) {
+    fprintf (stderr, "All %d variables:\n", variableCount);
+    for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
+      if (variableHash[i].num <= 0)
+	continue;
+      for (j = 0; j < variableHash[i].num; j++) {
+	fprintf (stderr,
+		 "(%d %d) index=%d key=%d count=%d valid=%d variable: ", i, j,
+		 variableHash[i].index[j], variableHash[i].key[j],
+		 variableList[variableHash[i].index[j]]->count,
+		 variableList[variableHash[i].index[j]]->valid);
+	expTermPrinting (stderr, variableList[variableHash[i].index[j]], 1);
+	fprintf (stderr, "\n");
+      }
+    }
+    fprintf (stderr, "\n");
+  }
+  if (sumCount > 0) {
+    fprintf (stderr, "All %d sums:\n", sumCount);
+    for (i = 0; i < SUM_HASH_SIZE; i++) {
+      if (sumHash[i].num <= 0)
+	continue;
+      for (j = 0; j < sumHash[i].num; j++) {
+	fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d sum: ",
+		 i, j, sumHash[i].index[j], sumHash[i].key[j],
+		 sumList[sumHash[i].index[j]]->count,
+		 sumList[sumHash[i].index[j]]->valid);
+	expTermPrinting (stderr, sumList[sumHash[i].index[j]], 1);
+	fprintf (stderr, "\n");
+      }
+    }
+    fprintf (stderr, "\n");
+  }
+  if (productCount > 0) {
+    fprintf (stderr, "All %d products:\n", productCount);
+    for (i = 0; i < PRODUCT_HASH_SIZE; i++) {
+      if (productHash[i].num <= 0)
+	continue;
+      for (j = 0; j < productHash[i].num; j++) {
+	fprintf (stderr,
+		 "(%d %d) index=%d key=%d count=%d valid=%d product: ", i, j,
+		 productHash[i].index[j], productHash[i].key[j],
+		 productList[productHash[i].index[j]]->count,
+		 productList[productHash[i].index[j]]->valid);
+	expTermPrinting (stderr, productList[productHash[i].index[j]], 1);
+	fprintf (stderr, "\n");
+      }
+    }
+    fprintf (stderr, "\n");
+  }
+
+  if (functionCallCount > 0) {
+    fprintf (stderr, "All %d function calls:\n", functionCallCount);
+    for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++) {
+      if (functionCallHash[i].num <= 0)
+	continue;
+      for (j = 0; j < functionCallHash[i].num; j++) {
+	fprintf (stderr,
+		 "(%d %d) index=%d key=%d count=%d valid=%d functionCall: ",
+		 i, j, functionCallHash[i].index[j],
+		 functionCallHash[i].key[j],
+		 functionCallList[functionCallHash[i].index[j]]->count,
+		 functionCallList[functionCallHash[i].index[j]]->valid);
+	expTermPrinting (stderr, functionCallList[functionCallHash[i].index[j]], 1);
+	fprintf (stderr, "\n");
+      }
+    }
+    fprintf (stderr, "\n");
+  }
+  fprintf (stderr, "---\n");
+}
+
+/* Mark all polynomials as held. */
+void
+holdAllPolys ()
+{
+  int i, j;
+
+  fprintf (stderr, "Holding all current polynomials (via hashes):\n");
+  if (constantCount > 0) {
+    fprintf (stderr, "%d constants\n", constantCount);
+    for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
+      if (constantHash[i].num <= 0)
+	continue;
+      for (j = 0; j < constantHash[i].num; j++)
+	constantList[constantHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
+    }
+  }
+  if (variableCount > 0) {
+    fprintf (stderr, "%d variables\n", variableCount);
+    for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
+      if (variableHash[i].num <= 0)
+	continue;
+      for (j = 0; j < variableHash[i].num; j++)
+	variableList[variableHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
+    }
+  }
+  if (sumCount > 0) {
+    fprintf (stderr, "%d sums\n", sumCount);
+    for (i = 0; i < SUM_HASH_SIZE; i++) {
+      if (sumHash[i].num <= 0)
+	continue;
+      for (j = 0; j < sumHash[i].num; j++)
+	sumList[sumHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
+    }
+  }
+  if (productCount > 0) {
+    fprintf (stderr, "%d products\n", productCount);
+    for (i = 0; i < PRODUCT_HASH_SIZE; i++) {
+      if (productHash[i].num <= 0)
+	continue;
+      for (j = 0; j < productHash[i].num; j++)
+	productList[productHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
+    }
+  }
+
+  if (functionCallCount > 0) {
+    fprintf (stderr, "%d function calls\n", functionCallCount);
+    for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++) {
+      if (functionCallHash[i].num <= 0)
+	continue;
+      for (j = 0; j < functionCallHash[i].num; j++)
+	functionCallList[functionCallHash[i].index[j]]->valid |= VALID_HOLD_FLAG;
+    }
+  }
+//  printAllPolynomials();
+  fprintf (stderr, "---\n");
+}
+
+/* Mark polynomial and all subpolynomials with the provided valid flag. */
+void
+flagValids (struct polynomial *p, unsigned short validFlag)
+{
+  int i;
+
+  if ((p->valid & validFlag) == validFlag) return;
+  switch (p->eType) {
+  case T_CONSTANT:
+  case T_VARIABLE:
+    p->valid |= validFlag;
+    break;
+  case T_SUM:
+  case T_PRODUCT:
+  case T_FUNCTIONCALL:
+    p->valid |= validFlag;
+    for (i = 0; i < p->e.s->num; i++) {
+      flagValids (p->e.s->sum[i], validFlag);
+    }
+    break;
+  case T_FREED:
+    fprintf (stderr,
+	     "In flagValids, evil caller is trying to use a polynomial that was freed:\n");
+    expTermPrinting (stderr, p, 1);
+    exit (1);
+    break;
+  default:
+    fprintf (stderr, "In flagValids, unknown expression type %d, exiting\n",
+	     p->eType);
+    exit (1);
+  }
+}
+
+/* Flag all components of the provided polynomial for preservation. We do
+   this by calling flagValids, which will recurse thru the component
+   subpolynomials. */
+void
+keepPoly (struct polynomial *p)
+{
+  if (polynomialDebugLevel >= 3) {
+    fprintf (stderr, "Starting keepPoly\n");
+    if (polynomialDebugLevel >= 7) {
+      expTermPrinting (stderr, p, 16);
+      fprintf (stderr, "\n");
+    }
+  }
+  flagValids (p, VALID_KEEP_FLAG);
+  if (polynomialDebugLevel >= 3) {
+    fprintf (stderr, "Finished keepPoly\n");
+    if (polynomialDebugLevel >= 7) {
+      printAllPolynomials ();
+    }
+  }
+  return;
+}
+/* Flag all components of the provided polynomial for preservation. We do
+   this by calling flagValids, which will recurse thru the component
+   subpolynomials. */
+void
+holdPoly (struct polynomial *p)
+{
+  if (polynomialDebugLevel >= 3) {
+    fprintf (stderr, "Starting holdPoly\n");
+    if (polynomialDebugLevel >= 7) {
+      expTermPrinting (stderr, p, 16);
+      fprintf (stderr, "\n");
+    }
+  }
+  flagValids (p, VALID_HOLD_FLAG);
+  if (polynomialDebugLevel >= 3) {
+    fprintf (stderr, "Finished holdPoly\n");
+    if (polynomialDebugLevel >= 7) {
+      printAllPolynomials ();
+    }
+  }
+  return;
+}
+
+void
+doFreePolys (unsigned short keepMask)
+{
+  int i, j, k;
+  struct polynomial **newSumList, **newProductList;
+
+  if (polynomialDebugLevel >= 1) fprintf (stderr, "Starting doFreePolys\n");
+  if (polynomialDebugLevel >= 7) {
+    fprintf(stderr, "...with the following:\n");
+    printAllPolynomials ();
+  }
+  /* First create a new polynomial-specific list to transcribe entries
+     we're keeping, and then go thru the old polynomial-specific list flagging
+     entries we're not keeping and replacing pointers with new indexes
+     for the ones we are keeping. */
+  newSumList =
+    (struct polynomial **) malloc (sizeof (struct polynomial *) *
+				   (sumListLength));
+  if (newSumList == NULL) {
+    fprintf (stderr, "In doFreePolys, newSumList memory application failed, exiting!\n");
+    exit (1);
+  }
+  k = 0;
+  for (i = 0; i < sumCount; i++) {
+    if (sumList[i]->valid & keepMask) {
+      newSumList[k] = sumList[i];
+      sumList[i] = newSumList[k];
+//      fprintf(stderr, "Index %d is now %d\n", newSumList[k]->index, k);
+      newSumList[k]->index = k;
+      k++;
+    } else {
+      free (sumList[i]->e.s->sum);
+      free (sumList[i]->e.s->factor);
+      free (sumList[i]->e.s);
+//      free (sumList[i]);
+// These are for debugging mis-freed pointers
+      sumList[i]->value = sumList[i]->eType;
+      sumList[i]->eType = T_FREED;
+      sumList[i] = NULL;
+    }
+  }
+  if (polynomialDebugLevel >= 1) fprintf(stderr, "Preserved %d of %d sum polynomials\n", k, sumCount);
+  sumCount = k;
+
+  /* Go thru the hash collapsing entries and freeing the corresponding
+     polynomials and terms. Zero polynomial-specific list entries so they
+     can be collapsed next. */
+  for (j = 0; j < SUM_HASH_SIZE; j++) {
+    if (sumHash[j].num > 0) {
+      k = 0;
+      for (i = 0; i < sumHash[j].num; i++) {
+	if (sumList[sumHash[j].index[i]] != NULL) {
+	  /* It's a keeper, slide it down and bump the count */
+//        fprintf(stderr, "Hash keeper index %d is now %d\n", sumHash[j].index[i],
+//              sumList[sumHash[j].index[i]]->index);
+	  sumHash[j].index[k] = sumList[sumHash[j].index[i]]->index;
+	  sumHash[j].key[k] = sumHash[j].key[i];
+	  k++;
+	}
+      }
+      sumHash[j].num = k;
+    }
+  }
+  free (sumList);
+  sumList = newSumList;
+
+  newProductList =
+    (struct polynomial **) malloc (sizeof (struct polynomial *) *
+				   (productListLength));
+  if (newProductList == NULL) {
+    fprintf (stderr, "In doFreePolys, newProductList memory application failed, exiting!\n");
+    exit (1);
+  }
+  k = 0;
+  for (i = 0; i < productCount; i++) {
+    if (productList[i]->valid & keepMask) {
+      newProductList[k] = productList[i];
+      productList[i] = newProductList[k];
+//      fprintf(stderr, "Index %d is now %d\n", newProductList[k]->index, k);
+      newProductList[k]->index = k;
+      k++;
+    } else {
+      free (productList[i]->e.p->product);
+      free (productList[i]->e.p->exponent);
+      free (productList[i]->e.p);
+//      free (productList[i]);
+// These are for debugging mis-freed pointers
+      productList[i]->value = productList[i]->eType;
+      productList[i]->eType = T_FREED;
+      productList[i] = NULL;
+    }
+  }
+  if (polynomialDebugLevel >= 1) fprintf(stderr, "Preserved %d of %d product polynomials\n", k, productCount);
+  productCount = k;
+
+  /* Go thru the hash collapsing entries and freeing the corresponding
+     polynomials and terms. Zero polynomial-specific list entries so they
+     can be collapsed next. */
+  for (j = 0; j < PRODUCT_HASH_SIZE; j++) {
+    if (productHash[j].num > 0) {
+      k = 0;
+      for (i = 0; i < productHash[j].num; i++) {
+	if (productList[productHash[j].index[i]] != NULL) {
+	  /* It's a keeper, slide it down and bump the count */
+//        fprintf(stderr, "Hash keeper index %d is now %d\n", productHash[j].index[i],
+//              productList[productHash[j].index[i]]->index);
+	  productHash[j].index[k] =
+	    productList[productHash[j].index[i]]->index;
+	  productHash[j].key[k] = productHash[j].key[i];
+	  k++;
+	}
+      }
+      productHash[j].num = k;
+    }
+  }
+  free (productList);
+  productList = newProductList;
+
+  if (polynomialDebugLevel >= 1) fprintf (stderr, "Reduced list of polynomials\n");
+  if (polynomialDebugLevel >= 7) {
+    fprintf(stderr,"...to the following:\n");
+    printAllPolynomials ();
+  }
+  return;
+}
+
+/* Free all polynomials that aren't held or kept. */
+void
+freePolys ()
+{
+  doFreePolys (VALID_KEEP_FLAG|VALID_HOLD_FLAG);
+  return;
+}
+/* Free all polynomials that aren't held. */
+void
+freeKeptPolys ()
+{
+  doFreePolys (VALID_HOLD_FLAG);
+  return;
+}
+

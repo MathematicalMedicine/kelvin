@@ -18,7 +18,32 @@ extern double lastMem;
 extern double currentMem;
 extern double totalMem;
 extern Polynomial *constant1Poly;
-#include "../diags/kelvin.c-head"
+extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
+struct swStopwatch *overallSW;
+#include <signal.h>		/* Signalled dumps */
+volatile sig_atomic_t signalSeen = 0;
+int handlerDumpCycle = 0;
+void usr1SignalHandler (int signal) {
+  swLogPeaks ("Timer");
+//  if ((++handlerDumpCycle % 100) == 0)
+//    dumpPStats ("Timer");
+}
+void quitSignalHandler (int signal) {
+  swDump (overallSW);
+#ifdef DMTRACK
+  char messageBuffer[MAXSWMSG];
+  sprintf (messageBuffer,
+	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d",
+	   countMalloc, countFree, countReallocOK, countReallocMove, countReallocFree, maxListDepth, maxRecycles);
+  swLogMsg (messageBuffer);
+  sprintf (messageBuffer,
+	   "Size malloc:%g, free:%g, realloc OK:%g, realloc move:%g, realloc free:%g, current:%g, peak:%g",
+	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
+	   totalReallocFree, currentAlloc, peakAlloc);
+  swLogMsg (messageBuffer);
+#endif
+}
+
 char *kelvinVersion = "0.32.4";
 
 /* Some default global values. */
@@ -197,7 +222,48 @@ main (int argc, char *argv[])
   void *initialProbAddr2[3];
   void *initialHetProbAddr[3];
 
-#include "../diags/kelvin.c-start"
+  /* Fork a child that loops sleeping several seconds and then signalling 
+     us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
+#ifdef DMTRACK
+  pid_t childPID;
+  childPID = fork ();
+  if (childPID == 0) {
+    while (1) {
+      sleep (5);
+      kill (getppid (), SIGUSR1);
+    }
+  }
+#endif
+  overallSW = swCreate ("overall"); /* Overall performance stopwatch */
+  /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
+  struct sigaction usr1Action, quitAction;
+  sigset_t usr1BlockMask, quitBlockMask;
+
+  sigfillset (&usr1BlockMask);
+  usr1Action.sa_handler = usr1SignalHandler;
+  usr1Action.sa_mask = usr1BlockMask;
+  usr1Action.sa_flags = 0;
+  sigaction (SIGUSR1, &usr1Action, NULL);
+  sigfillset (&quitBlockMask);
+  quitAction.sa_handler = quitSignalHandler;
+  quitAction.sa_mask = quitBlockMask;
+  quitAction.sa_flags = 0;
+  sigaction (SIGQUIT, &quitAction, NULL);
+
+  /* Annouce ourselves for performance tracking. */
+  char messageBuffer[MAXSWMSG];
+  sprintf(messageBuffer, "kelvin V%s, likelihood V%s, locus V%s, polynomial V%s starting run",
+	kelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
+  swLogMsg(messageBuffer);
+  
+#ifdef DMTRACK
+  swLogMsg("Dynamic memory usage dumping is turned on, so performance will be poor!\n");
+#endif
+  fprintf (stderr, "To force a dump of stats, type CTRL-\\ (dangerous and terse but always works)\n");
+  fprintf (stderr, "or type \"kill -%d %d\" (safe and thorough, but requires program cooperation).\n",
+	   SIGUSR1, getpid ());
+  swStart (overallSW);
+
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&markerLocusList, 0, sizeof (markerLocusList));
@@ -3468,7 +3534,26 @@ main (int argc, char *argv[])
 	   (double) (time1 - time0) / CLOCKS_PER_SEC,
 	   (double) (time2 - time1) / CLOCKS_PER_SEC);
 
-#include "../diags/kelvin.c-finish"
+  /* Final dump and clean-up for performance. */
+  swStop (overallSW);
+  swDump (overallSW);
+#ifdef DMUSE
+  printf("Missed/Used %d/%d 24s, %d/%d 48s, %d/%d 100s\n",
+	 missed24s, used24s, missed48s, used48s, missed100s, used100s);
+#endif
+#ifdef DMTRACK
+  fprintf (stderr,
+	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d\n",
+	   countMalloc, countFree, countReallocOK, countReallocMove, countReallocFree, maxListDepth, maxRecycles);
+  fprintf (stderr,
+	   "Size malloc:%g, free:%g, realloc OK:%g, realloc move:%g, realloc free:%g, current:%g, peak:%g\n",
+	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
+	   totalReallocFree, currentAlloc, peakAlloc);
+  swDumpSources ();
+  //  swDumpBlockUse ();
+  //  swDumpCrossModuleChunks ();
+#endif
+  swLogMsg("finished run");
 
   /* close file pointers */
   if (modelType.type == TP)

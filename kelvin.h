@@ -27,7 +27,14 @@
 #include "RADSMM.h"		/* RADSMM library. */
 #endif
 
-#include "../diags/kelvin.h-head"
+#include "sw.h"
+#ifdef DMTRACK
+#warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+#define malloc(X) swMalloc((X), __FILE__, __LINE__)
+#define calloc(X,Y) swCalloc((X),(Y), __FILE__, __LINE__)
+#define realloc(X,Y) swRealloc((X),(Y), __FILE__, __LINE__)
+#define free(X) swFree((X), __FILE__, __LINE__)
+#endif
 
 /**********************************************************************
  * Some internal defines.
