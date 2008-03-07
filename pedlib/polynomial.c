@@ -264,6 +264,7 @@ insertHashTable (struct hashStruct *hash, int location, int key, int index)
   hash->num++;
   if (hash->num > hash->length) {
     hash->length += HASH_TABLE_INCREASE;
+    if (hash->length > maxHashLength) maxHashLength = hash->length;
     hash->key = realloc (hash->key, sizeof (int) * hash->length);
     hash->index = realloc (hash->index, sizeof (int) * hash->length);
     if (hash->key == NULL || hash->index == NULL) {
@@ -821,9 +822,9 @@ plusExp (int num, ...)
   va_end (args);
 
   if (flag == 0)
-    sum0++;
+    sumNotReleaseableCount++;
   else
-    sum1++;
+    sumReleaseableCount++;
 
   //merge the collected polynomial terms to form a sum polynomial
   counterSum = counter_v1 + counter_p1 + counter_f1;
@@ -861,7 +862,7 @@ plusExp (int num, ...)
   //we get only a constant
   if (counterSum == 0) {
     rp = constantExp (con);
-    sum2++;
+    sumReturnConstantCount++;
     return rp;
     if (polynomialDebugLevel >= 6)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
@@ -871,7 +872,7 @@ plusExp (int num, ...)
   //need to create a new polynomial
   else if (con == 0.0 && counterSum == 1 && factorSum[0] == 1.0) {
     rp = pSum[0];
-    sum3++;
+    sumReturn1TermCount++;
     if (polynomialDebugLevel >= 6) {
       fprintf (stderr, "Returning a single term sum\n");
       expTermPrinting (stderr, rp, 1);
@@ -922,7 +923,6 @@ plusExp (int num, ...)
 	  }
 	  if (k >= counterSum) {
 	    sumList[sIndex]->count++;
-	    sum4++;
 	    sumHashHits++;
 	    if (polynomialDebugLevel >= 6) {
 	      fprintf (stderr, "Returning an existing sum...\n");
@@ -988,6 +988,7 @@ plusExp (int num, ...)
       exit (1);
     }
     //free the memory of the first polynomial in the parameter list
+    sum1stTermsFreedCount++;
     free (p0->e.s->sum);
     free (p0->e.s->factor);
     free (p0->e.s);
@@ -1031,26 +1032,12 @@ plusExp (int num, ...)
   rp->valid = 0;
   rp->count = 0;
 
-  //This piece of code is for performance test
-  numSumTerms += counterSum;
-  if (counterSum > maxSumLength)
-    maxSumLength = counterSum;
-  if (counterSum > sizeSumLength) {
-    countSumLength =
-      realloc (countSumLength, sizeof (int) * (counterSum + 30));
-    for (i = sizeSumLength; i < counterSum + 30; i++) {
-      countSumLength[i] = 0;
-    }
-    sizeSumLength = counterSum + 30;
-  }
-  countSumLength[counterSum - 1]++;
-
   //Insert the new built polynomial in sum list
 
   //If the first polynomial is the parameter list is freed, its position
   //in the polynomial list is occupied by the newly created sum polynomial
   if (flag != 0 && p0EType == T_SUM && p0Valid == 0 && p0Count == 0) {
-    sum11++;
+    sumListReplacementCount++;
     sumList[p0Index] = rp;
     sumList[p0Index]->index = p0Index;
     sumList[p0Index]->id = p0Id;
@@ -1066,7 +1053,7 @@ plusExp (int num, ...)
 	exit (1);
       }
     }
-    sum00++;
+    sumListNewCount++;
     sumList[sumCount] = rp;
     sumList[sumCount]->index = sumCount;
     sumList[sumCount]->id = nodeId;
@@ -1110,7 +1097,7 @@ plusExp (int num, ...)
     insertHashTable (&sumHash[hIndex], location, key, sumCount - 1);
   }
 
-  sum5++;
+  sumNewCount++;
   if (polynomialDebugLevel >= 6) {
     fprintf (stderr, "Returning a new sum...\n");
     if (polynomialDebugLevel >= 7) {
@@ -1364,14 +1351,14 @@ timesExp (int num, ...)
 
   //This is for performance checking use                                                        
   if (flag == 0)
-    product0++;
+    productNotReleaseableCount++;
   else
-    product1++;
+    productReleaseableCount++;
 
   //The product is zero, a zero polynomial is returned
   if (isZero) {
     rp = constantExp (0.0);
-    product2++;
+    productReturn0Count++;
     if (polynomialDebugLevel >= 6)
       fprintf (stderr, "Returning a constant zero\n");
     return rp;
@@ -1409,7 +1396,7 @@ timesExp (int num, ...)
   //The product has 0 items, the result is a constant polynomial
   if (counterProd == 0) {
     rp = constantExp (factor);
-    product3++;
+    productReturnConstantCount++;
     if (polynomialDebugLevel >= 6)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
     return rp;
@@ -1421,7 +1408,7 @@ timesExp (int num, ...)
       rp = pProd[0];
       if (polynomialDebugLevel >= 6)
 	fprintf (stderr, "Returning first term from caller\n");
-      product4++;
+      productReturn1stTermCount++;
       return rp;
     }
     //If the factor is not 1, then the result polynomial is a sum polynomial
@@ -1429,7 +1416,7 @@ timesExp (int num, ...)
       rp = plusExp (1, factor, pProd[0], 0);
       if (polynomialDebugLevel >= 6)
 	fprintf (stderr, "Returning via plusExp\n");
-      product5++;
+      productReturn1TermSumCount++;
       return rp;
     }
   }
@@ -1471,7 +1458,6 @@ timesExp (int num, ...)
 		//the attribute count is used as a sign to show that this polynomial is
 		//refered in more than one places so that it can't be freed
 		productList[pIndex]->count++;
-		product6++;
 		productHashHits++;
 		if (polynomialDebugLevel >= 6) {
 		  fprintf (stderr, "Returning an existing product...\n");
@@ -1486,7 +1472,7 @@ timesExp (int num, ...)
 	      //new one.  However, the factor is not 1, therefore the result polynomial is 
 	      //a sum polynomial
 	      else {
-		product7++;
+		productHashHitIsSumCount++;
 		productList[pIndex]->count++;
 		if (polynomialDebugLevel >= 6)
 		  fprintf (stderr,
@@ -1553,6 +1539,7 @@ timesExp (int num, ...)
       }
 
       //Free the first operand
+      product1stTermsFreedCount++;
       free (p0->e.p->exponent);
       free (p0->e.p->product);
       free (p0->e.p);
@@ -1594,20 +1581,6 @@ timesExp (int num, ...)
     rp->valid = 0;
     rp->count = 0;
 
-    //This piece of code is for performance evaluation
-    numProductTerms += counterProd;
-    if (counterProd > maxProductLength)
-      maxProductLength = counterProd;
-    if (counterProd > sizeProductLength) {
-      countProductLength =
-	realloc (countProductLength, sizeof (int) * (counterProd + 30));
-      for (i = sizeProductLength; i < counterProd + 30; i++) {
-	countProductLength[i] = 0;
-      }
-      sizeProductLength = counterProd + 30;
-    }
-    countProductLength[counterProd - 1]++;
-
     //After the new polynomial is built, it is recorded in the product polynomial list
     if (productCount >= productListLength) {
       productListLength += 10000;
@@ -1624,13 +1597,13 @@ timesExp (int num, ...)
     //occupied by the existing polynomial
     if (flag != 0 && p0EType == T_PRODUCT && p0Valid == 0 && p0Count == 0) {
       //Assign the resource of the freed polynomial to the newly constructed polynomial
-      product11++;
+      productListReplacementCount++;
       productList[p0Index] = rp;
       productList[p0Index]->index = p0Index;
       productList[p0Index]->id = p0Id;
     } else {
       //save the newly constructed polynomial in the polynomial list
-      product00++;
+      productListNewCount++;
       productList[productCount] = rp;
       productList[productCount]->index = productCount;
       productList[productCount]->id = nodeId;
@@ -1689,7 +1662,7 @@ timesExp (int num, ...)
 
     //If the factor is 1, return a product polynomial
     if (factor == 1.0) {
-      product8++;
+      productReturnNormalCount++;
       if (polynomialDebugLevel >= 6) {
 	fprintf (stderr, "Returning a new product\n");
 	if (polynomialDebugLevel >= 7) {
@@ -1701,7 +1674,7 @@ timesExp (int num, ...)
     }
     //If the factor is not 1, return a sum polynomial
     else {
-      product9++;
+      productNon1FactorIsSumCount++;
       if (polynomialDebugLevel >= 6)
 	fprintf (stderr, "Returning new product via plusExp\n");
       return plusExp (1, factor, rp, 0);
@@ -2258,37 +2231,17 @@ polynomialInitialization ()
   if (polynomialLostNodeId > 0)
     fprintf (stderr, "polynomialLostNodeId is %d\n", polynomialLostNodeId);
 
-  startTime = currentTime = clock ();
-
-  //These variables are for performance evaluation
+  /* These variables are for performance evaluation, see header for details */
   maxHashLength = 0;
-  sum0 = 0;
-  sum1 = 0;
-  sum2 = 0;
-  sum3 = 0;
-  sum4 = 0;
-  sum5 = 0;
-  sum00 = 0;
-  sum11 = 0;
-  product0 = 0;
-  product1 = 0;
-  product2 = 0;
-  product3 = 0;
-  product4 = 0;
-  product5 = 0;
-  product6 = 0;
-  product7 = 0;
-  product8 = 0;
-  product9 = 0;
-  product00 = 0;
-  product11 = 0;
-  numSumTerms = 0;
-  numProductTerms = 0;
-  maxSumLength = maxProductLength = 0;
-  countSumLength = countProductLength = NULL;
-  sizeSumLength = sizeProductLength = 0;
+  sumNotReleaseableCount = sumReleaseableCount = sumReturnConstantCount = 
+    sumReturn1TermCount = sumNewCount = sumListNewCount = sumListReplacementCount = 
+    sumFreedCount = sum1stTermsFreedCount = 0;
+  productNotReleaseableCount = productReleaseableCount = productReturn0Count =
+    productReturnConstantCount = productReturn1stTermCount = productReturn1TermSumCount = 
+    productHashHitIsSumCount = productReturnNormalCount = productNon1FactorIsSumCount = 
+    productListNewCount = productListReplacementCount = productFreedCount =
+    product1stTermsFreedCount = 0;
 
-  //Each polynomial has a unique ID
   nodeId = 0;
 
   //allocate memory for polynomial list of each type of polynomials, set the counter of each
@@ -2990,20 +2943,17 @@ void
 polyStatistics ()
 {
   long constantSize, variableSize, sumSize, productSize, functionCallSize;
-  int sumTerms = 0, productTerms = 0;
+  int sumTerms = 0, productTerms = 0, maxSumTerms = 0, maxProductTerms = 0;
   int i;
 
   fprintf (stderr,
 	   "Dump of polynomial statistics (from counters and specific lists):\n");
   fprintf (stderr,
-	   "Count of constants=%d, variables=%d, sums=%d, products=%d, functions=%d\n",
-	   constantCount, variableCount, sumCount, productCount,
-	   functionCallCount);
-  fprintf (stderr,
-	   "Hits for constants=%d, variables=%d, sums=%d(%d-to-1), products=%d(%d-to-1), functions=%d\n",
-	   constantHashHits, variableHashHits, sumHashHits,
-	   sumHashHits / sumCount, productHashHits,
-	   productHashHits / productCount, functionHashHits);
+	   "Counts/Hits: c=%d/%d, v=%d/%d, s=%d/%d(%d-to-1), p=%d/%d(%d-to-1), f=%d/%d\n",
+ 	   constantCount, constantHashHits, variableCount, variableHashHits, sumCount, 
+	   sumHashHits, sumHashHits / sumCount, productCount, 
+	   productHashHits, productHashHits / productCount,
+	   functionCallCount, functionHashHits);
 
   constantSize = constantCount * sizeof (Polynomial);
   variableSize = variableCount * sizeof (Polynomial);
@@ -3013,6 +2963,7 @@ polyStatistics ()
     sumSize +=
       sumList[i]->e.s->num * (sizeof (Polynomial *) + sizeof (double));
     sumTerms += sumList[i]->e.s->num;
+    if (sumList[i]->e.s->num > maxSumTerms) maxSumTerms = sumList[i]->e.s->num;
   }
   productSize =
     productCount * sizeof (Polynomial) +
@@ -3021,6 +2972,8 @@ polyStatistics ()
     productSize +=
       productList[i]->e.p->num * (sizeof (Polynomial *) + sizeof (int));
     productTerms += productList[i]->e.p->num;
+    if (productList[i]->e.p->num > maxProductTerms) 
+      maxProductTerms = productList[i]->e.p->num;
   }
   functionCallSize =
     functionCallCount * sizeof (Polynomial) +
@@ -3031,49 +2984,30 @@ polyStatistics ()
       sizeof (Polynomial *);
   }
 
-  fprintf (stderr, "Term counts of sums=%d, products=%d\n", sumTerms,
-	   productTerms);
+  fprintf (stderr, "Term counts(current max): s=%d(%d), p=%d(%d)\n",
+	   sumTerms, maxSumTerms,  productTerms, maxProductTerms);
   fprintf (stderr,
-	   "Sizes: constants=%ld, variables=%ld, sums=%ld, products=%ld, functions=%ld, total=%ld\n",
+	   "Sizes: c=%ld, v=%ld, s+terms=%ld, p+terms=%ld, f=%ld, total=%ld\n",
 	   constantSize, variableSize, sumSize, productSize, functionCallSize,
 	   constantSize + variableSize + sumSize + productSize +
 	   functionCallSize);
   fprintf (stderr,
-	   "Sum polys: to release=%d or not=%d are constant=%d single term sum=%d referred to=%d\n",
-	   sum0, sum1, sum2, sum3, sum4);
+	   "Sum polys: can release=%d or not=%d return constant=%d return 1-term=%d hash hits=%d\n",
+	   sumReleaseableCount, sumNotReleaseableCount, sumReturnConstantCount, sumReturn1TermCount, sumHashHits);
   fprintf (stderr,
-	   "...really new=%d new on sumList=%d replaced on sumList=%d\n",
-	   sum5, sum00, sum11);
+	   "...really new=%d new on sumList=%d replaced on sumList=%d freed=%d 1st-term freed=%d\n",
+	   sumNewCount, sumListNewCount, sumListReplacementCount, sumFreedCount, sum1stTermsFreedCount);
   fprintf (stderr,
-	   "Product polys: to release=%d or not=%d are zero=%d are constant=%d same as 1st term=%d\n",
-	   product0, product1, product2, product3, product4);
+	   "Product polys: to release=%d or not=%d return 0=%d return constant=%d return 1st term=%d\n",
+	   productReleaseableCount, productNotReleaseableCount, productReturn0Count, productReturnConstantCount,
+	   productReturn1stTermCount);
   fprintf (stderr,
-	   "...actually a sum poly=%d referred to=%d pre-existing now sum=%d factor is 1=%d\n",
-	   product5, product6, product7, product8);
+	   "...actually a sum poly=%d hash hits=%d hash hit but sum=%d return normal (factor is 1)=%d\n",
+	   productReturn1TermSumCount, productHashHits, productHashHitIsSumCount, productReturnNormalCount);
   fprintf (stderr,
 	   "...factor not 1 now sum=%d new on productList=%d replaced on productList=%d\n",
-	   product9, product00, product11);
-  if (sum00 + sum11 > 0)
-    fprintf (stderr, "Average sum length=%f ",
-	     numSumTerms * 1.0 / (sum00 + sum11));
-  if (product00 + product11 > 0)
-    fprintf (stderr, "product length=%f\n",
-	     numProductTerms * 1.0 / (product00 + product11));
+	   productNon1FactorIsSumCount, productListNewCount, productListReplacementCount);
 
-  fprintf (stderr, "Maximum sum length=%d ", maxSumLength);
-  for (i = 0; i < maxSumLength; i++)
-    if (countSumLength[i] > 0) {
-      fprintf (stderr, "(s%d %d) ", i + 1, countSumLength[i]);
-      countSumLength[i] = 0;
-    }
-  fprintf (stderr, "\n");
-  fprintf (stderr, "Maximum product length=%d ", maxProductLength);
-  for (i = 0; i < maxProductLength; i++)
-    if (countProductLength[i] > 0) {
-      fprintf (stderr, "(p%d %d) ", i + 1, countProductLength[i]);
-      countProductLength[i] = 0;
-    }
-  fprintf (stderr, "\n");
   fprintf (stderr, "---\n");
 };
 
@@ -3280,9 +3214,9 @@ flagValids (struct polynomial *p, unsigned short validFlag)
 void
 keepPoly (struct polynomial *p)
 {
-  //  fprintf(stderr, "Keeping: ");
-  //  expTermPrinting (stderr, p, 1);
-  //  fprintf (stderr, "\n");
+  // fprintf(stderr, "Keeping: ");
+  // expTermPrinting (stderr, p, 1);
+  // fprintf (stderr, "\n");
   if (polynomialDebugLevel >= 3) {
     fprintf (stderr, "Starting keepPoly\n");
     if (polynomialDebugLevel >= 7) {
@@ -3356,6 +3290,7 @@ doFreePolys (unsigned short keepMask)
       newSumList[k]->index = k;
       k++;
     } else {
+      sumFreedCount++;
       free (sumList[i]->e.s->sum);
       free (sumList[i]->e.s->factor);
       free (sumList[i]->e.s);
@@ -3410,6 +3345,7 @@ doFreePolys (unsigned short keepMask)
       newProductList[k]->index = k;
       k++;
     } else {
+      productFreedCount++;
       free (productList[i]->e.p->product);
       free (productList[i]->e.p->exponent);
       free (productList[i]->e.p);
