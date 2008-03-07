@@ -45,34 +45,48 @@ extern unsigned long constantPsSize, variablePsSize, variablePsExpSize, sumPsSiz
 void dumpPStats(char *);
 void printAllPolynomials();
 
-//following variables are for debugging
-clock_t startTime;
-clock_t currentTime;
-int maxHashLength;
-int constantHashHits, variableHashHits, sumHashHits, productHashHits,
-  functionHashHits;
-struct hashStruct *maxHash;
-int sum0, sum1, sum2, sum3, sum4, sum5, sum00, sum11;
-int product0, product1, product2, product3, product4, product5, product6,
-  product7, product8, product9, product00, product11;
-int numSumTerms, numProductTerms;
+/* The following dynamically-maintained variables are for debugging. */
+int maxHashLength,		/* Length of longest hash table collision list */
+  constantHashHits, variableHashHits, productHashHits,
+  functionHashHits;		/* Lookup hits for each hash table */
+int sumReleaseableCount, 	/* Indicates if flag was set to release 1st term in sum */
+  sumNotReleaseableCount,	/* ...or not. */
+  sumReturnConstantCount,	/* plusExp return is actually a constant. */
+  sumReturn1TermCount,	        /* plusExp return is single-term polynomial */
+  sumHashHits,			/* plusExp return is pre-existing polynomial */
+  sumNewCount,			/* plusExp return is a new polynomial */
+  sumListNewCount,		/* New sumList entry created */
+  sumListReplacementCount,	/* Existing sumList entry used */
+  sumFreedCount,		/* Count of sumPolys freed */
+  sum1stTermsFreedCount;	/* Count of 1st-terms successfully freed */
 
-int maxSumLength, maxProductLength;
-int *countSumLength, *countProductLength;
-int sizeSumLength, sizeProductLength;
+int productReleaseableCount,
+  productNotReleaseableCount,
+  productReturn0Count,
+  productReturnConstantCount,
+  productReturn1stTermCount,
+  productReturn1TermSumCount,
+  productHashHits,
+  productHashHitIsSumCount,
+  productReturnNormalCount,
+  productNon1FactorIsSumCount,
+  productListNewCount,
+  productListReplacementCount,
+  productFreedCount,		/* Count of productPolys freed */
+  product1stTermsFreedCount;	/* Count of 1st-terms successfully freed */
 
-//This is a global variable used for giving each polynomial an unique ID
-//so that we can know if two polynomials are the same just from their IDs
+/* This is a global variable used for giving each polynomial an unique ID
+   so that we can know if two polynomials are the same just from their IDs */
 int nodeId;
-long nodeIdStamp;
-long nodeIdStamp2;
 
-//There are following categories of polynomails
-//T_CONSTANT    : the polynomial represents a constant value for exampel, 0, 1, 1.5 ...
-//T_VARIABLE    : the polynomial represents a variable such as x, y, z, ...
-//T_SUM         : the polynomial represents a sum such as 2x+3y+5.6z+...
-//T_PRODUCT     : the polynomial represents a product such as x^2y^10z^100
-//T_FUNCTIONCALL: the polynomial represents a function call such as log10(x);
+/* There are following categories of polynomials
+   T_CONSTANT    : the polynomial represents a constant value for exampel, 0, 1, 1.5 ...
+   T_VARIABLE    : the polynomial represents a variable such as x, y, z, ...
+   T_SUM         : the polynomial represents a sum such as 2x+3y+5.6z+...
+   T_PRODUCT     : the polynomial represents a product such as x^2y^10z^100
+   T_FUNCTIONCALL: the polynomial represents a function call such as log10(x)
+   T_FREED       : a polynomial that was freed but the structure kept for diagnostics.
+*/
 enum expressionType
   { T_CONSTANT = 0, T_VARIABLE = 1, T_SUM = 2, T_PRODUCT = 3, T_FUNCTIONCALL = 4, T_FREED = 5 };
 
@@ -173,9 +187,9 @@ struct productPoly
 // and a number (saved in paraNum) of parameters (saved in para)
 struct functionPoly
 {
-  char *name;			//function name
   int paraNum;			//number of parameters
   struct polynomial **para;	//parameters
+  char *name;			//function name
 };
 
 //This structure represents a general polynomial.
