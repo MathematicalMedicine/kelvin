@@ -3280,10 +3280,10 @@ doHoldPoly (struct polynomial *p)
 void
 holdPoly (struct polynomial *p)
 {
-  fprintf(stderr, "Into holdPoly\n");
+  if (polnomialDebugLevel >= 1) fprintf(stderr, "Into holdPoly\n");
   clearValidEvalFlag ();
   doHoldPoly (p);
-  fprintf(stderr, "Out of holdPoly\n");
+  if (polnomialDebugLevel >= 1) fprintf(stderr, "Out of holdPoly\n");
   return;
 }
 
