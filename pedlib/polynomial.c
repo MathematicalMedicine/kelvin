@@ -66,7 +66,7 @@ char *polynomialVersion = "0.0.32.4"; /* Make this meaningful since kelvin displ
    They control diagnostic action in a manner not permitted by other approaches since they can
    be changed without rebuilding. */
 int polynomialDebugLevel = 0;	/* Corresponds roughly to diagnostic output volume */
-int polynomialLostNodeId = -1;	/* For tracking down mis-freed polnomials */
+int polynomialLostNodeId = -1;	/* For tracking down mis-freed polynomials */
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //Recursively evaluate a polynomial.  This version of polynomial evaluation doesn't use
@@ -661,7 +661,7 @@ searchPolynomialList (struct polynomial **p, int length,
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Collect the terms and their coefficients of a sum polynomial.  A plus operation can have any number of
 //operands which are polynomials.  We collect these operand polynomials and organize them in a unique order
-//as a basis for comparisons between the resulted polynomail and other polynomials 
+//as a basis for comparisons between the resulted polynomial and other polynomials 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 inline void
 collectSumTerms (double **factor, struct polynomial ***p, int *counter,
@@ -1505,7 +1505,7 @@ timesExp (int num, ...)
 		}
 		return productList[pIndex];
 	      }
-	      //this product polynomail has been existing so that we don't need to construct a 
+	      //this product polynomial has been existing so that we don't need to construct a 
 	      //new one.  However, the factor is not 1, therefore the result polynomial is 
 	      //a sum polynomial
 	      else {
@@ -1760,7 +1760,7 @@ functionCallExp (int num, ...)
   struct polynomial **p;	//parameters of the newly built function call polynomial
   int first, last, location;	//first and last polynomial in a hash bucket for comparison
 
-  //location of the newly built variable polynomail in the hash bucket
+  //location of the newly built variable polynomial in the hash bucket
   va_list args;			//arguments
   struct polynomial *rp;	//newly built function call polynomial
   struct functionPoly *fP;	//function-call structure of the newly built function call polynomial
@@ -1962,7 +1962,7 @@ polyListAppend (struct polyList *l, struct polynomial *p)
 };
 
 /////////////////////////////////////////////////////////////////////////////////////
-// Sort the polynomial list to prepare for polynomial evaluation.  Polynomails are 
+// Sort the polynomial list to prepare for polynomial evaluation.  Polynomials are 
 //evaluated in order.  This function is to determine a order for evaluation.  Also,
 //shared terms are evaluated only once.  Together with polyListAppend(), this function
 //construct a evaluation list for evaluation of the polynomial.  For linkage computation, 
@@ -3280,10 +3280,10 @@ doHoldPoly (struct polynomial *p)
 void
 holdPoly (struct polynomial *p)
 {
-  if (polnomialDebugLevel >= 1) fprintf(stderr, "Into holdPoly\n");
+  if (polynomialDebugLevel >= 1) fprintf(stderr, "Into holdPoly\n");
   clearValidEvalFlag ();
   doHoldPoly (p);
-  if (polnomialDebugLevel >= 1) fprintf(stderr, "Out of holdPoly\n");
+  if (polynomialDebugLevel >= 1) fprintf(stderr, "Out of holdPoly\n");
   return;
 }
 
