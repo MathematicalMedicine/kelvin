@@ -28,52 +28,16 @@ void dumpPStats();
 #define free(X) swFree((X), __FILE__, __LINE__)
 #endif
 
-extern struct swStopwatch *overallSW;
-extern volatile sig_atomic_t signalSeen;  /* Signalled dumps */
-
-/* Variables for tracking internal polynomial memory usage. */
-extern unsigned long maxHashListLength;
-extern unsigned long constantPs, constantHashPs, variablePs, variableHashPs,
-  sumPs, sumHashPs, productPs, productHashPs, functionPs, functionHashPs;
-extern unsigned long peakConstantPs, peakVariablePs, peakSumPs, peakProductPs, peakFunctionPs;
-extern unsigned long constantPLExpansions, variablePLExpansions, sumPCollectExpansions,
-  sumPTermMergeExpansions, sumPListExpansions, productPCollectExpansions, 
-  productPTermMergeExpansions, productPListExpansions;
-extern unsigned long constantPsSize, variablePsSize, variablePsExpSize, sumPsSize, sumPColExpSize, 
-  sumPTrmMrgExpSize, productPsSize, productPColExpSize, productPTrmMrgExpSize;
-/* Display the internal polynomial memory usage statistics. */
-void dumpPStats(char *);
-void printAllPolynomials();
-
 /* The following dynamically-maintained variables are for debugging. */
-int maxHashLength,		/* Length of longest hash table collision list */
-  constantHashHits, variableHashHits, productHashHits,
-  functionHashHits;		/* Lookup hits for each hash table */
-int sumReleaseableCount, 	/* Indicates if flag was set to release 1st term in sum */
-  sumNotReleaseableCount,	/* ...or not. */
-  sumReturnConstantCount,	/* plusExp return is actually a constant. */
-  sumReturn1TermCount,	        /* plusExp return is single-term polynomial */
-  sumHashHits,			/* plusExp return is pre-existing polynomial */
-  sumNewCount,			/* plusExp return is a new polynomial */
-  sumListNewCount,		/* New sumList entry created */
-  sumListReplacementCount,	/* Existing sumList entry used */
-  sumFreedCount,		/* Count of sumPolys freed */
-  sum1stTermsFreedCount;	/* Count of 1st-terms successfully freed */
-
-int productReleaseableCount,
-  productNotReleaseableCount,
-  productReturn0Count,
-  productReturnConstantCount,
-  productReturn1stTermCount,
-  productReturn1TermSumCount,
-  productHashHits,
-  productHashHitIsSumCount,
-  productReturnNormalCount,
-  productNon1FactorIsSumCount,
-  productListNewCount,
-  productListReplacementCount,
-  productFreedCount,		/* Count of productPolys freed */
-  product1stTermsFreedCount;	/* Count of 1st-terms successfully freed */
+extern int maxHashLength, constantHashHits, variableHashHits, functionHashHits;
+extern int sumReleaseableCount, sumNotReleaseableCount, sumReturnConstantCount, sumReturn1TermCount,
+	  sumHashHits, sumNewCount, sumListNewCount, sumListReplacementCount, sumFreedCount, sum1stTermsFreedCount;
+extern int productReleaseableCount, productNotReleaseableCount, productReturn0Count, productReturnConstantCount,
+	 productReturn1stTermCount, productReturn1TermSumCount, productHashHits, productHashHitIsSumCount,
+	 productReturnNormalCount, productNon1FactorIsSumCount, productListNewCount, productListReplacementCount,
+	 productFreedCount, product1stTermsFreedCount;
+extern int constantPLExpansions, variablePLExpansions, sumPCollectExpansions, sumPTermMergeExpansions,
+	 sumPListExpansions, productPCollectExpansions, productPTermMergeExpansions, productPListExpansions;
 
 /* This is a global variable used for giving each polynomial an unique ID
    so that we can know if two polynomials are the same just from their IDs */
@@ -202,7 +166,7 @@ typedef struct polynomial
   unsigned int id;			//unique id
   int index;			//index in a polynomial list
   int key;			//key of the polynomial
-  unsigned short count;			// Reference count, starts at 1
+  unsigned short count;			// Hold reference count
   unsigned char valid;			// Preservation flag(s)
   unsigned char eType;	//polynomial type: 
   double value;			//value saves the value of the polynomial
@@ -224,9 +188,9 @@ typedef struct polynomial
     struct functionPoly *f;	/*function */
   } e;
 } Polynomial;
-#define VALID_EVAL_FLAG 1
-#define VALID_KEEP_FLAG 2	/* Weaker than HOLD */
-#define VALID_HOLD_FLAG 4	/* Stronger than KEEP! */
+#define VALID_EVAL_FLAG 1	/* Used by polyListSorting to manage inclusion */
+#define VALID_KEEP_FLAG 2	/* Weaker than HOLD, only kept until a freeKeptPolys() call */
+#define VALID_REF_FLAG 5	/* Weakest of all, but keeps 1st freeing on-track */
 
 //List is for polynomail evaluation.  When we evaluate a polynomial,
 //it is possible that we evaluate only some parts of it because the
@@ -377,6 +341,7 @@ void polynomialClearance ();
 void dismantle ();
 //statistics of polynomials
 void polyStatistics ();
+void polyDynamicStatistics ();
 //print hash tables
 void printHashTables ();
 //print out all the variables
@@ -395,5 +360,6 @@ void freePolys();
 void freeKeptPolys();
 void holdAllPolys();
 void expTermPrinting(FILE *, struct polynomial *, int);
+void printAllPolynomials();
 
 #endif

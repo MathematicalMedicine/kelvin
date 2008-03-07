@@ -275,13 +275,14 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	      initialize_multi_locus_genotype (pPedigree);
 	      //fprintf(stderr, "Start polynomial building\n");
 	      status = compute_pedigree_likelihood (pPedigree);
-	      fprintf(stderr, "holdPoly for the pedigree polynomial\n");
-	      expTermPrinting(stderr, pPedigree->likelihoodPolynomial, 1);
-	      fprintf(stderr, "\n");
+	      //	      fprintf(stderr, "holdPoly for the pedigree polynomial\n");
+	      //	      expTermPrinting(stderr, pPedigree->likelihoodPolynomial, 1);
+	      //	      fprintf(stderr, "\n");
 	      holdPoly(pPedigree->likelihoodPolynomial);
-	      fprintf(stderr, "freeKeptPolys after likelihood build and hold for pedigree\n");
+	      printSummaryPoly (pPedigree->likelihoodPolynomial);
+	      //	      fprintf(stderr, "freeKeptPolys after likelihood build and hold for pedigree\n");
 	      freeKeptPolys ();
-	      //	      printAllPolynomials();
+	      //	      polyStatistics();
 	      pPedigree->likelihoodPolyList = buildPolyList ();
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);

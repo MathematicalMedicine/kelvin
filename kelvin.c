@@ -25,11 +25,13 @@ volatile sig_atomic_t signalSeen = 0;
 int handlerDumpCycle = 0;
 void usr1SignalHandler (int signal) {
   swLogPeaks ("Timer");
-//  if ((++handlerDumpCycle % 100) == 0)
-//    dumpPStats ("Timer");
 }
 void quitSignalHandler (int signal) {
   swDump (overallSW);
+#ifndef NO_POLYNOMIAL
+  if (modelOptions.polynomial == TRUE)
+    polyDynamicStatistics ();
+#endif
 #ifdef DMTRACK
   char messageBuffer[MAXSWMSG];
   sprintf (messageBuffer,

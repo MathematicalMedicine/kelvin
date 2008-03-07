@@ -17,8 +17,8 @@ NICEDIR = /usr/local
 #
 #CFLGS	+= -DNOFLOAT 
 CFLGS	+= -Wall			# Always leave this one on
-CFLGS	+= -O3	 			# Production level
-#CFLGS  += -g  -DDEBUG		# Debug level
+#CFLGS	+= -O3	 			# Production level
+CFLGS  += -g  -DDEBUG		# Debug level
 #CFLGS   += -DNO_POLYNOMIAL
 #CFLGS += -pg                   # profile - debugging 
 #CFLGS += -pedantic   #memory leak tracing
