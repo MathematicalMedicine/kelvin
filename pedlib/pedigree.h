@@ -156,8 +156,14 @@ typedef struct Pedigree
   struct NuclearFamily *pPeelingNuclearFamily;
 
   /* likelihood holder */
+  int    load_flag;    /* 1 if alternative likelihood is already stored in  */
   double likelihood;
   double markerLikelihood;
+  double **traitLikelihoodDT;
+  double ***traitLikelihoodQT;
+  double **alternativeLikelihoodDT;
+
+
 #ifndef NO_POLYNOMIAL
   struct polynomial *likelihoodPolynomial;
   struct polyList *likelihoodPolyList;
