@@ -3300,8 +3300,8 @@ doHoldPoly (struct polynomial *p)
   int i;
 
   if (p->id == polynomialLostNodeId)
-    fprintf (stderr, "holdPoly sees id %d and is bumping hold count\n",
-	     polynomialLostNodeId);
+    fprintf (stderr, "holdPoly sees id %d and is bumping hold count to %d\n",
+	     polynomialLostNodeId, p->count);
 
   if (p->valid & VALID_EVAL_FLAG)
     return;
@@ -3347,8 +3347,8 @@ doUnHoldPoly (struct polynomial *p)
   int i;
 
   if (p->id == polynomialLostNodeId)
-    fprintf (stderr, "UnHoldPoly sees id %d and is decrementing hold count\n",
-	     polynomialLostNodeId);
+    fprintf (stderr, "UnHoldPoly sees id %d and is decrementing hold count from %d\n",
+	     polynomialLostNodeId, p->count);
 
   if (p->valid & VALID_EVAL_FLAG)
     return;
