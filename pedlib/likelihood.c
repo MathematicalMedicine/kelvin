@@ -1,13 +1,16 @@
 /**********************************************************************
- * Copyright 2007, Columbus Children's Research Institute.  
+ * Copyright 2007, Columbus Children's Research Institute.
  * All rights reserved.
- * Permission is hereby given to use this software 
+ * Permission is hereby given to use this software
  * for non-profit educational purposes only.
  **********************************************************************/
 
-/* This file contains functions to  compute likelihood for all the pedigrees,
- * peeling procedure etc. 
- * */
+char *likelihoodVersion = "0.32.4";
+
+/*
+ * This file contains functions to  compute likelihood for all the pedigrees,
+ * peeling procedure etc.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -25,6 +28,7 @@
 #include "genotype_elimination.h"
 #include "polynomial.h"
 
+/* this is for working out loop breaker's multilocus genotypes */
 Genotype **pTempGenoVector;
 
 /* transmission probability matrix */
@@ -48,74 +52,119 @@ typedef struct PPairElement
   } slot;
 } PPairElement;
 
+/* this matrix is used to keep the counts of likelihood under different parental pair phases */
 PPairElement **ppairMatrix = NULL;
+/* maximum is 2^n * sizeof(PPairElement) */
 int ppairMatrixRowSize;
+/* this is number of loci we analyze at a time */
 int ppairMatrixNumLocus;
+/* this is used to flip parental pair phases */
 int *bitMask = NULL;
 
-int peel_graph (NuclearFamily * pNucFam, Person * pProband,
-		int peelingDirection);
-int compute_nuclear_family_likelihood (NuclearFamily * pNucFam,
-				       Person * pProband,
-				       int peelingDirection);
-int
-loop_parental_pair (NuclearFamily * pNucFam,
-		    Person * pPerson,
-		    int locus, ParentalPairSpace * pHaplo, 
-		    int multiLocusIndex[2],
-		    void *dWeight[2]);
-int
-loop_child_multi_locus_genotype (Person * pPChild, Person * pProband,
-				 ParentalPairSpace * pHaplo, int child,
-				 int locus, int multiLocusIndex,
-				 void *pSum, int xmissionIndex[2]);
-void
-get_haplotype_freq (int locus, int parent, void *freqPtr,
-		    ParentalPairSpace * pHaplo);
+#ifndef NO_POLYNOMIAL
+Polynomial *constant0Poly;
+Polynomial *constant1Poly;
+#endif
+
+/* these are work space for likelihood calculation 
+ * reluctant to use global variables, but they do save stack and heap space, time to allocate
+ */
+Person *pChild;
+Person *pProband;
+ParentalPairSpace *pHaplo;
+int child;
+void *childSum;
+Genotype *pGenotype;
+int traitGenoIndex;
+ParentalPair *pTraitParentalPair;
+int parent;
+double newProb = 1;
+#ifndef NO_POLYNOMIAL
+Polynomial *newProbPolynomial = NULL;
+#endif
+int newChromosome[2];
+int numLocus;
+NuclearFamily *pNucFam;
+/* 0 - don't keep result, 1 - keep result, 2 - use result */
+int calcFlag; 
+
+/* the following will facilitate parenatl pattern flip */
+typedef struct ChildElement {
+  /* xmission index of the paternal and maternal haplotypes */
+  int xmissionIndex[2];
+  /* the factor could be 1, or penetrance or existing likelihood for this child */
+  union{
+    double factor;
+    Polynomial *factorPolynomial;
+  }fslot;
+} ChildElement;
+
+ChildElement *likelihoodChildElements;
+int maxChildElements;
+
+int *likelihoodChildCount;
+int maxChildren;
+
+int multCount; 
+
+/* function prototypes */
+void recalculate_child_likelihood(int flipMask[2], void *childProduct);
+int peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection);
+int compute_nuclear_family_likelihood (int peelingDirection);
+int loop_parental_pair (int locus, int multiLocusIndex[2], void *dWeight[2]);
+int loop_child_multi_locus_genotype (int locus, int multiLocusIndex,
+				     int xmissionIndex[2]);
+void get_haplotype_freq (int locus, int parent, void *freqPtr);
 
 int
-loop_child_proband_genotype (NuclearFamily * pNucFam, Person * pProband,
-			     int peelingDirection, int locus,
+loop_child_proband_genotype (int peelingDirection, int locus,
 			     int multiLocusIndex);
 
 void
-loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
-	     Person * pProband, int locus, int multiLocusIndex[2],
-	     int multiLocusPhase[2], void *dWeight[2]);
-int
-calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
-		      Person * pProband, int locus, int multiLocusIndex[2],
-		      int multiLocusPhase[2], void *dWeight[2]);
-		      
+loop_phases (int locus, int multiLocusIndex[2], int multiLocusPhase[2], 
+	     int flipMask[2], void *dWeight[2]);
+int calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
+			  void *dWeight[2], void *childProductPtr);
+
 inline void clear_ppairMatrix (PPairElement ** ppMatrix);
 inline void initialize_proband_tmpLikelihood (Person * pPerson);
-void populate_pedigree_loopbreaker_genotype_vector(Pedigree *pPed);
-void populate_loopbreaker_genotype_vector(Person *pLoopBreaker, int locus);
-int set_next_loopbreaker_genotype_vector(Pedigree *pPed, int initialFlag);
+void populate_pedigree_loopbreaker_genotype_vector (Pedigree * pPed);
+void populate_loopbreaker_genotype_vector (Person * pLoopBreaker, int locus);
+int set_next_loopbreaker_genotype_vector (Pedigree * pPed, int initialFlag);
 
 
-/* before likelihood calculation, pre-allocate space to store conditional likelihoods 
+/*
+ * before likelihood calculation, pre-allocate space to store conditional
+ * likelihoods 
  * numLocus - number of loci we analyze at a time
  */
 int
-allocate_likelihood_space (PedigreeSet * pPedigreeList, int numLocus)
+allocate_likelihood_space (PedigreeSet * pPedigreeList, int numLocus1)
 {
   Pedigree *pPedigree;
   int i;
   int size;
 
-  pTempGenoVector = (Genotype **) malloc(sizeof(Genotype *) * numLocus);
+  numLocus = numLocus1;
+  /* this is for loop breaker multilocus genotypes */
+  pTempGenoVector = (Genotype **) malloc (sizeof (Genotype *) * numLocus);
 
   for (i = 0; i < pPedigreeList->numPedigree; i++)
     {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
-      /* allocate conditional likelihood storage for each person/pedigree */
+      /*
+       * allocate conditional likelihood storage for each
+       * person/pedigree
+       */
       allocate_multi_locus_genotype_storage (pPedigree, numLocus);
     }
 
-  /* allocate storage for temporarily stored likelihood for similar parental pairs (only with
-   * phase differences 
-   * either likelihood itself will be stored there or a pointer to likelihood polynomial will be */
+  /*
+   * allocate storage for temporarily stored likelihood for similar
+   * parental pairs (only with phase differences either likelihood
+   * itself will be stored there or a pointer to likelihood polynomial
+   * will be
+   */
   size = pow (2, numLocus);
   ppairMatrixNumLocus = numLocus;
   ppairMatrixRowSize = size * sizeof (PPairElement);
@@ -131,6 +180,16 @@ allocate_likelihood_space (PedigreeSet * pPedigreeList, int numLocus)
     {
       bitMask[i] = pow (2, i) - 1;
     }
+
+  /* likelihood work space */
+  pHaplo = &parentalPairSpace;
+
+  /* pre allocate child likelihood elements */
+  maxChildElements = 1024;
+  likelihoodChildElements = (ChildElement *) calloc(sizeof(ChildElement), maxChildElements);
+
+  maxChildren = 20;
+  likelihoodChildCount = (int *) calloc(sizeof(int), maxChildren);
 
   return 0;
 }
@@ -149,7 +208,7 @@ free_likelihood_space (PedigreeSet * pPedigreeList)
     }
 
   /* free storage for temporary likelihood for similar parental pairs */
-  for (i = 0; i < pow(2, locusList->numLocus); i++)
+  for (i = 0; i < pow (2, locusList->numLocus); i++)
     {
       free (ppairMatrix[i]);
     }
@@ -157,8 +216,12 @@ free_likelihood_space (PedigreeSet * pPedigreeList)
   ppairMatrix = NULL;
   free (bitMask);
   bitMask = NULL;
-  free(pTempGenoVector);
+  free (pTempGenoVector);
   pTempGenoVector = NULL;
+  free(likelihoodChildElements);
+  free(likelihoodChildCount);
+  likelihoodChildElements = NULL;
+  likelihoodChildCount = NULL;
 }
 
 /* the main API to compute likelihood for all pedigrees in a data set */
@@ -168,16 +231,20 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   Pedigree *pPedigree;
   int i;
   int status;			/* return status of function calls */
-  double product_likelihood = 1;	/* product of the likelihoods for all the pedigrees */
-  double sum_log_likelihood = 0;	/* sum of the log10(likelihood) for all the pedigrees */
+  double product_likelihood = 1;	/* product of the likelihoods
+					 * for all the pedigrees */
+  double sum_log_likelihood = 0;	/* sum of the
+					 * log10(likelihood) for all
+					 * the pedigrees */
   double log10Likelihood;
-  int origLocus  = 0;	/* locus index in the original locus list 
-						 * this is used to find out the pedigree counts
-						 * mainly for case control analyses 
-						 */
+  int origLocus = 0;		/* locus index in the original locus list
+				 * this is used to find out the pedigree
+				 * counts mainly for case control analyses */
+  clock_t time2;
 
-  if(locusList->numLocus > 1)
+  if (locusList->numLocus > 1)
     origLocus = locusList->pLocusIndex[1];
+  numLocus = locusList->numLocus;
 
   /* initialization */
   sum_log_likelihood = 0;
@@ -195,54 +262,54 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	{
 	  if (pPedigree->likelihoodPolynomial == NULL)
 	    {
-	      /* only build likelihood polynomial once, if the ptr is not NULL, it means
-	       * the polynomial has been constructed */
-	      fprintf(stderr,"The polynomial building for this pedigree should be only once\n");
-	      /* initialize likelihood space for each pedigree */
+	      /*
+	       * only build likelihood polynomial once, if
+	       * the ptr is not NULL, it means the
+	       * polynomial has been constructed
+	       */
+	      //fprintf(stderr, "The polynomial building for this pedigree should be only once\n");
+	      /*
+	       * initialize likelihood space for each
+	       * pedigree
+	       */
 	      initialize_multi_locus_genotype (pPedigree);
-	      /* put a stamp in the polynomial list to mark the beginning of likelihood build
-	       * for this pedigree */
-	      makePolynomialStamp2 ();
+	      //fprintf(stderr, "Start polynomial building\n");
 	      status = compute_pedigree_likelihood (pPedigree);
-	      swLogPeaks ("Finished compute_pedigree_likelihood");
-	      dumpPStats ("Finished compute_pedigree_likelihood");
-	      printSummaryPoly (pPedigree->likelihoodPolynomial);
-	      printAllPolynomials ();
-	      //	      expPrinting(pPedigree->likelihoodPolynomial);
-	      //	      fprintf(stderr,"\n");
+	      fprintf(stderr, "holdPoly for the pedigree polynomial\n");
+	      expTermPrinting(stderr, pPedigree->likelihoodPolynomial, 1);
+	      fprintf(stderr, "\n");
+	      holdPoly(pPedigree->likelihoodPolynomial);
+	      fprintf(stderr, "freeKeptPolys after likelihood build and hold for pedigree\n");
+	      freeKeptPolys ();
+	      //	      printAllPolynomials();
 	      pPedigree->likelihoodPolyList = buildPolyList ();
-	      swLogPeaks ("Finished buildPolyList");
-	      dumpPStats ("Finished buildPolyList");
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
-	      swLogPeaks ("Finished polyListSorting");
-	      dumpPStats ("Finished polyListSorting");
-	      /* clean up polynomials that are not used in the final pedigree likelihood */
-	      partialPolynomialClearance2 ();
-	      swLogPeaks ("Finished partialPolynomailClearance2");
-	      dumpPStats ("Finished partialPolynomailClearance2");
+	      if (i == pPedigreeList->numPedigree - 1)
+		{
+		  time2 = clock ();
+		  fprintf (stderr, "Finished polynomial building: %f\n",
+			   (double) time2 / CLOCKS_PER_SEC);
+		}
 	    }
 	  /* evaluate likelihood */
 	  pPedigree->likelihood =
 	    evaluatePoly (pPedigree->likelihoodPolynomial,
 			  pPedigree->likelihoodPolyList);
-	  swLogPeaks ("Finished evaluatePoly");
-	  dumpPStats ("Finished evaluatePoly");
+
 	}
       else
 	{
 	  initialize_multi_locus_genotype (pPedigree);
 	  status = compute_pedigree_likelihood (pPedigree);
-	  swLogPeaks ("Finished compute_pedigree_likelihood1");
-	  dumpPStats ("Finished compute_pedigree_likelihood1");
 	}
 #else
       initialize_multi_locus_genotype (pPedigree);
       status = compute_pedigree_likelihood (pPedigree);
-      swLogPeaks ("Finished compute_pedigree_likelihood2");
-      dumpPStats ("Finished compute_pedigree_likelihood2");
 #endif
 
+      if(modelOptions.dryRun == 0)
+	{
       if (pPedigree->likelihood == 0.0)
 	{
 	  KLOG (LOGLIKELIHOOD, LOGWARNING,
@@ -284,6 +351,7 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	     pPedigree->sPedigreeID);
 	   */
 	  sum_log_likelihood += log10Likelihood;
+	}
 	}
     }
 
@@ -329,27 +397,45 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
   NuclearFamily *pNucFam;	/* nuclear families within the pedigree */
   int status;			/* function return status */
   Person *pProband;		/* peeling proband */
-  double likelihood;
-  double tmpLikelihood;
+  double likelihood = 0;
+  double tmpLikelihood = 0;
+  ConditionalLikelihood *pConditional;
 #ifndef NO_POLYNOMIAL
   Polynomial *pLikelihoodPolynomial = NULL;
-  Polynomial *pTmpLikelihoodPolynomial = NULL;
 #endif
   int ret = 0;
 
-  fprintf(stderr, "PEDIGREE: %s (%d/%d)\n", 
-       pPedigree->sPedigreeID, pPedigree->pedigreeIndex+1,
-       pPedigree->pPedigreeSet->numPedigree);
-  if(pPedigree->loopFlag == TRUE)
+#if 1
+  if(modelOptions.dryRun == 0)
+  {
+  fprintf (stderr, "PEDIGREE: %s (%d/%d)\n",
+	   pPedigree->sPedigreeID, pPedigree->pedigreeIndex + 1,
+	   pPedigree->pPedigreeSet->numPedigree);
+  }
+#endif
+
+  for (i = 0; i < pPedigree->numNuclearFamily; i++)
     {
-      populate_pedigree_loopbreaker_genotype_vector(pPedigree);
-      ret = set_next_loopbreaker_genotype_vector(pPedigree, TRUE);
+      pNucFam = pPedigree->ppNuclearFamilyList[i];
+      pNucFam->totalNumPairGroups = 0;
+      pNucFam->totalNumSimilarPairs = 0;
     }
 
+  if (pPedigree->loopFlag == TRUE)
+    {
+      populate_pedigree_loopbreaker_genotype_vector (pPedigree);
+      ret = -2;
+      while(ret == -2)
+	{
+	  ret = set_next_loopbreaker_genotype_vector (pPedigree, TRUE);
+	  if(ret == -2)
+	    restore_pedigree_genotype_link_from_saved (pPedigree);
+	}
+    }
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
-      pLikelihoodPolynomial = constantExp (0);
+      pLikelihoodPolynomial = constant0Poly;
     }
   else
     likelihood = 0;
@@ -357,47 +443,56 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
   likelihood = 0;
 #endif
 
-  while(ret == 0)
+  while (ret == 0)
     {
       initialize_multi_locus_genotype (pPedigree);
-      /* initialize all the nuclear families before peeling starts
-       * in many cases, multiple likelihoods are computed for the same family
-       * with different parameters, we need to clean up before (or after) 
-       * each calculation */
+      /*
+       * initialize all the nuclear families before peeling starts
+       * in many cases, multiple likelihoods are computed for the
+       * same family with different parameters, we need to clean up
+       * before (or after) each calculation
+       */
       for (i = 0; i < pPedigree->numNuclearFamily; i++)
 	{
 	  pNucFam = pPedigree->ppNuclearFamilyList[i];
 	  pNucFam->doneFlag = 0;
+	  pNucFam->numPairGroups = 0;
+	  pNucFam->numSimilarPairs = 0;
 	}
-      
-      /* peeling starts from the peeling proband and eventually will come back to 
-       * the same proband 
-       * this process will obtain the conditional likelihoods for the proband 
+
+      /*
+       * peeling starts from the peeling proband and eventually
+       * will come back to the same proband this process will
+       * obtain the conditional likelihoods for the proband
        */
       status = peel_graph (pPedigree->pPeelingNuclearFamily,
 			   pPedigree->pPeelingProband,
 			   pPedigree->peelingDirection);
-      
-      /* done peeling, need to add up the conditional likelihood for the leading peeling proband */
+
+      /*
+       * done peeling, need to add up the conditional likelihood
+       * for the leading peeling proband
+       */
       pProband = pPedigree->pPeelingProband;
 #ifndef NO_POLYNOMIAL
-      if (modelOptions.polynomial == TRUE)
-	{
-	  pTmpLikelihoodPolynomial = constantExp (0);
-	}
-      else
+      if (modelOptions.polynomial != TRUE)
 	tmpLikelihood = 0;
 #else
       tmpLikelihood = 0;
 #endif
-      
+
       /* loop over all conditional likelihoods */
       for (i = 0; i < pProband->numConditionals; i++)
 	{
-	  /* Get the joint likelihood = marginal * p(G) 
-	   * when the proband is a founder, the weight will be the multilocus genotype probabilities
-	   * under LE or haplotype frequencies under LD
-	   * otherwise the weight should be 1
+	  pConditional = &pProband->pLikelihood[i];
+	  if (pConditional->touchedFlag == 0)
+	    continue;
+	  /*
+	   * Get the joint likelihood = marginal * p(G) when
+	   * the proband is a founder, the weight will be the
+	   * multilocus genotype probabilities under LE or
+	   * haplotype frequencies under LD otherwise the
+	   * weight should be 1
 	   *
 	   */
 #ifndef NO_POLYNOMIAL
@@ -410,36 +505,57 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 			 pLikelihoodPolynomial,
 			 1.0,
 			 timesExp (2,
-				   pProband->pLikelihood[i].lkslot.
+				   pConditional->lkslot.
 				   likelihoodPolynomial, 1,
-				   pProband->pLikelihood[i].wtslot.
-				   weightPolynomial, 1, 0), 1);
+				   pConditional->wtslot.
+				   weightPolynomial, 1, 
+				   0), 
+			 1);
 	    }
 	  else
 	    {
-	      tmpLikelihood += pProband->pLikelihood[i].lkslot.likelihood *
-		pProband->pLikelihood[i].wtslot.weight;
-	      likelihood += pProband->pLikelihood[i].lkslot.likelihood *
-		pProband->pLikelihood[i].wtslot.weight;
+	      tmpLikelihood += pConditional->lkslot.likelihood *
+		pConditional->wtslot.weight;
 	    }
 #else
-	  tmpLikelihood += pProband->pLikelihood[i].lkslot.likelihood *
-	    pProband->pLikelihood[i].wtslot.weight;
-	  likelihood += pProband->pLikelihood[i].lkslot.likelihood *
-	    pProband->pLikelihood[i].wtslot.weight;
+	  tmpLikelihood += pConditional->lkslot.likelihood *
+	    pConditional->wtslot.weight;
 #endif
-	}				/* end of looping over all conditionals */
-      
-      if(pPedigree->loopFlag == TRUE)
+	}			/* end of looping over all conditionals */
+
+
+#ifndef NO_POLYNOMIAL
+      if (modelOptions.polynomial != TRUE)
+	likelihood += tmpLikelihood;
+#else
+      likelihood += tmpLikelihood;
+#endif
+
+      if (pPedigree->loopFlag == TRUE)
 	{
-	  restore_pedigree_genotype_link_from_saved(pPedigree);
-	  ret = set_next_loopbreaker_genotype_vector(pPedigree, FALSE);
-	  KLOG (LOGLIKELIHOOD, LOGDEBUG, "Log Likelihood for this fixed looped pedigree %s is: %e\n",
-		pPedigree->sPedigreeID, log10 (tmpLikelihood));
+	  if(modelOptions.polynomial == TRUE)
+	    keepPoly(pLikelihoodPolynomial);
+	  else
+	    KLOG (LOGLIKELIHOOD, LOGDEBUG,
+		  "Log Likelihood for this fixed looped pedigree %s is: %e\n",
+		  pPedigree->sPedigreeID, log10 (tmpLikelihood));
+	  ret = -2;
+	  while(ret == -2)
+	    {
+	      restore_pedigree_genotype_link_from_saved (pPedigree);
+	      ret = set_next_loopbreaker_genotype_vector (pPedigree, FALSE);
+	    }
 	}
       else
 	{
 	  ret = -1;
+	}
+      
+      for (i = 0; i < pPedigree->numNuclearFamily; i++)
+	{
+	  pNucFam = pPedigree->ppNuclearFamilyList[i];
+	  pNucFam->totalNumPairGroups += pNucFam->numPairGroups;
+	  pNucFam->totalNumSimilarPairs += pNucFam->numSimilarPairs;
 	}
     }
 #ifndef NO_POLYNOMIAL
@@ -450,8 +566,9 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
     {
       /* save the likelihood in the pedigree structure */
       pPedigree->likelihood = likelihood;
-      KLOG (LOGLIKELIHOOD, LOGDEBUG, "log Likelihood for pedigree %s is: %e\n",
-	    pPedigree->sPedigreeID, log10 (likelihood));
+      KLOG (LOGLIKELIHOOD, LOGDEBUG,
+	    "log Likelihood for pedigree %s is: %e\n", pPedigree->sPedigreeID,
+	    log10 (likelihood));
     }
 #else
   pPedigree->likelihood = likelihood;
@@ -462,30 +579,41 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
   return 0;
 }
 
-/* recursive procedure to go through all nuclear families within one pedigree 
- * pNucFam -- input nuclear family, the top layer is the peeling nuclear family which 
- *            is the nuclear family contains the peeling proband 
- * pProband -- connector 
- * peelingDireciton -- UP/DOWN -- currently it is not used at all 
+/*
+ * recursive procedure to go through all nuclear families within one pedigree
+ * pNucFam -- input nuclear family, the top layer is the peeling nuclear
+ * family which is the nuclear family contains the peeling proband pProband
+ * -- connector peelingDireciton -- UP/DOWN -- currently it is not used at
+ * all
  */
 int
-peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
+peel_graph (NuclearFamily * pNucFam1, Person * pProband1,
+	    int peelingDirection)
 {
-  NuclearFamilyConnector *pConnector;	/* connector structure which represents connector 
-					   from one nuc to the other within a pedigree */
-  NuclearFamily *pNucFam2;	/* another nuc family input nuc family is connected to */
+  NuclearFamilyConnector *pConnector;	/* connector structure which
+					 * represents connector from one nuc
+					 * to the other within a pedigree */
+  NuclearFamily *pNucFam2;	/* another nuc family input nuc family is
+				 * connected to */
   Person *pConnectPerson;	/* connector individual */
   int i;
+  ConditionalLikelihood *pConditional;
 
-  /* if this nuclear family has been processed or in the middle of process, skip it */
-  if (pNucFam->doneFlag == TRUE)
+  /*
+   * if this nuclear family has been processed or in the middle of
+   * process, skip it
+   */
+  if (pNucFam1->doneFlag == TRUE)
     return 0;
 
-  /* mark this nuclear family as done to avoid potential endless recurisve calls */
-  pNucFam->doneFlag = TRUE;
+  /*
+   * mark this nuclear family as done to avoid potential endless
+   * recurisve calls
+   */
+  pNucFam1->doneFlag = TRUE;
 
   /* go up through the connectors if any */
-  pConnector = pNucFam->pUpConnectors;
+  pConnector = pNucFam1->pUpConnectors;
   while (pConnector)
     {
       pNucFam2 = pConnector->pConnectedNuclearFamily;
@@ -493,7 +621,10 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
       if (pConnectPerson == pNucFam2->pParents[DAD] ||
 	  pConnectPerson == pNucFam2->pParents[MOM])
 	{
-	  /* these two families are connected through multiple marraige */
+	  /*
+	   * these two families are connected through multiple
+	   * marraige
+	   */
 	  peel_graph (pConnector->pConnectedNuclearFamily,
 		      pConnector->pConnectedPerson, PEDIGREE_UP);
 	}
@@ -506,7 +637,7 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
     }
 
   /* go down through the down connectors if any */
-  pConnector = pNucFam->pDownConnectors;
+  pConnector = pNucFam1->pDownConnectors;
   while (pConnector)
     {
       /* peel up to the proband */
@@ -516,14 +647,20 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
       pConnector = pConnector->pNextConnector;
     }
 
-  /* we are done with the up or down linked nuclear families or we are a leave
-   * or top. ready for likelihood computation for this nuclear family 
-   * save the original genotype list first 
-   * during likelihood calculation, we limit the child proband's genotype to one at a time
-   * once done, the original list will be copied back
-   * loop breaker's duplicate can't be a proband as the duplicate is the one doesn't 
-   * have parents, so it can't be a connector and can't be a proband 
+  /*
+   * we are done with the up or down linked nuclear families or we are
+   * a leave or top. ready for likelihood computation for this nuclear
+   * family save the original genotype list first during likelihood
+   * calculation, we limit the child proband's genotype to one at a
+   * time once done, the original list will be copied back loop
+   * breaker's duplicate can't be a proband as the duplicate is the one
+   * doesn't have parents, so it can't be a connector and can't be a
+   * proband
    */
+  pProband = pProband1;
+  pNucFam = pNucFam1;
+  pNucFam->pProband = pProband;
+
   memcpy (&pProband->ppProbandGenotypeList[0],
 	  &pProband->ppGenotypeList[0],
 	  sizeof (Genotype *) * originalLocusList.numLocus);
@@ -535,12 +672,14 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
 	pProband->sID);
   if (pProband->ppHaplotype == NULL)
     {
-      /* allocate space for storing proband's haplotype if not already done */
+      /*
+       * allocate space for storing proband's haplotype if not
+       * already done
+       */
       pProband->ppHaplotype = MALLOC ("pProband->ppHaplotype",
 				      sizeof (Genotype *) * sizeof (int) *
 				      ppairMatrixNumLocus);
     }
-
   if (pProband->touchedFlag == TRUE)
     initialize_proband_tmpLikelihood (pProband);
 
@@ -557,83 +696,87 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
     }
   if (pNucFam->childProbandFlag == TRUE)
     {
-      /* proband is a child
-       * construct all possible multilocus genotype for the proband
-       * for each of them, calculate the conditional likelihood of the nuclear family
+      /*
+       * proband is a child construct all possible multilocus
+       * genotype for the proband for each of them, calculate the
+       * conditional likelihood of the nuclear family
        */
-      loop_child_proband_genotype (pNucFam, pProband, peelingDirection, 0, 0);
+      loop_child_proband_genotype (peelingDirection, 0, 0);
     }
-  else				/* A parent is the proband */
-    {
-      compute_nuclear_family_likelihood (pNucFam, pProband, peelingDirection);
-      /* copy the temporary results back */
-      for (i = 0; i < pProband->numConditionals; i++)
+  else
+    {				/* A parent is the proband */
+      compute_nuclear_family_likelihood (peelingDirection);
+      if(modelOptions.dryRun ==0)
 	{
+      /* copy the touched temporary results back */
+      for (i = 0; i < pProband->numTmpLikelihood; i++)
+	{
+	  pConditional =
+	    &pProband->pLikelihood[pProband->pTmpLikelihoodIndex[i]];
+	  //      if (pConditional->tmpTouched == FALSE)
+	  //        continue;
+	  pConditional->touchedFlag = TRUE;
 #ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE)
 	    {
 	      if (pProband->touchedFlag == FALSE)
 		{
-		  pProband->pLikelihood[i].lkslot.likelihoodPolynomial =
-		    constantExp (1.0);
+		  pConditional->lkslot.likelihoodPolynomial = constant1Poly;
 		}
-	      pProband->pLikelihood[i].lkslot.likelihoodPolynomial = 
-		timesExp (2, 
-			  pProband->pLikelihood[i].lkslot.likelihoodPolynomial, 
-			  1, 
-			  pProband->pLikelihood[i].tmpslot.tmpLikelihoodPolynomial, 
-			  1, 
-			  0);	//Dec 24
-	    }
-	  else			/* PE is not enabled */
-	    {
-	      if (pProband->touchedFlag == FALSE)
-		pProband->pLikelihood[i].lkslot.likelihood = 1;
-	      pProband->pLikelihood[i].lkslot.likelihood *=
-		pProband->pLikelihood[i].tmpslot.tmpLikelihood;
-	    }
-#else
-	  if (pProband->touchedFlag == FALSE)
-	    pProband->pLikelihood[i].lkslot.likelihood = 1;
-	  pProband->pLikelihood[i].lkslot.likelihood *=
-	    pProband->pLikelihood[i].tmpslot.tmpLikelihood;
-#endif
-	}
-    }
-
-#if DEBUG
-      /* debug purpose only */
-      for (i = 0; i < pProband->numConditionals; i++)
-	{
-#ifndef NO_POLYNOMIAL
-	  if (modelOptions.polynomial == TRUE)
-	    {
+	      pConditional->lkslot.likelihoodPolynomial =
+		timesExp (2,
+			  pConditional->lkslot.likelihoodPolynomial, 1,
+			  pConditional->tmpslot.tmpLikelihoodPolynomial, 1,
+			  0);
+	      pConditional->tmpslot.tmpLikelihoodPolynomial = constant0Poly;
 #if 0
 	      KLOG (LOGLIKELIHOOD, LOGDEBUG,
 		    "Proband %s Conditional Likelihood (%d) = %e. Weight = %e\n",
 		    pProband->sID, i,
-		    evaluateValue(pProband->pLikelihood[i].lkslot.likelihoodPolynomial),
-		    evaluateValue(pProband->pLikelihood[i].wtslot.weightPolynomial));
+		    evaluateValue (pConditional->lkslot.
+				   likelihoodPolynomial),
+		    evaluateValue (pConditional->wtslot.weightPolynomial));
 #endif
 	    }
 	  else
-	    {
+	    {			/* PE is not enabled */
+	      if (pProband->touchedFlag == FALSE)
+		pConditional->lkslot.likelihood = 1;
+	      pConditional->lkslot.likelihood *=
+		pConditional->tmpslot.tmpLikelihood;
+	      pConditional->tmpslot.tmpLikelihood = 0;
 	      KLOG (LOGLIKELIHOOD, LOGDEBUG,
 		    "Proband %s Conditional Likelihood (%d) = %e. Weight = %e\n",
 		    pProband->sID, i,
-		    pProband->pLikelihood[i].lkslot.likelihood,
-		    pProband->pLikelihood[i].wtslot.weight);
+		    pConditional->lkslot.likelihood,
+		    pConditional->wtslot.weight);
 	    }
 #else
+	  if (pProband->touchedFlag == FALSE)
+	    pConditional->lkslot.likelihood = 1;
+	  pConditional->lkslot.likelihood *=
+	    pConditional->tmpslot.tmpLikelihood;
+	  pConditional->tmpslot.tmpLikelihood = 0;
 	  KLOG (LOGLIKELIHOOD, DEBUG,
 		"Proband %s Conditional Likelihood (%d) = %e. Weight = %e \n",
-		pProband->sID, i, pProband->pLikelihood[i].lkslot.likelihood,
-		pProband->pLikelihood[i].wtslot.weight);
+		pProband->sID, pProband->pTmpLikelihoodIndex[i],
+		pConditional->lkslot.likelihood, pConditional->wtslot.weight);
 #endif
+	  pConditional->tmpTouched = FALSE;
 	}
-#endif
+      pProband->numTmpLikelihood = 0;
+	}
+    }
 
-  /* mark the proband as been touched - we have done some likelihood calculation on this person */
+  KLOG (LOGLIKELIHOOD, LOGDEBUG,
+	"Nuclear Family %d with parents %s x %s.\n",
+	pNucFam->nuclearFamilyIndex, pNucFam->pParents[DAD]->sID,
+	pNucFam->pParents[MOM]->sID);
+
+  /*
+   * mark the proband as been touched - we have done some likelihood
+   * calculation on this person
+   */
   pProband->touchedFlag = TRUE;
 
   /* copy back the genotypes for the proband */
@@ -644,52 +787,74 @@ peel_graph (NuclearFamily * pNucFam, Person * pProband, int peelingDirection)
 	  &pProband->pProbandNumGenotype[0],
 	  sizeof (int) * originalLocusList.numLocus);
 
+#ifndef NO_POLYNOMIAL
+  if (modelOptions.polynomial == TRUE)
+    {
+      fprintf(stderr, "keepPoly for the likelihood and weight polynomials\n");
+      for (i = 0; i < pProband->numConditionals; i++)
+	{
+	  if (pProband->touchedFlag == TRUE )
+	    {
+	      keepPoly(pProband->pLikelihood[i].lkslot.likelihoodPolynomial);
+	      keepPoly(pProband->pLikelihood[i].wtslot.weightPolynomial);
+	    }
+	}
+      fprintf(stderr, "freePolys after keeping the likelihood and weight polynomials\n");
+      freePolys();
+    }
+#endif
 
   return 0;
 }
 
-/* This function loops over child proband's multilocus genotypes recursively and 
- * calls compute_nuclear_family_likelihood for each multilocus genotype 
- * pNucFam - the nuclear family we are working on 
- * locus - current working locus 
- * multiLocusIndex - index to the flattened array of conditional likelihood for the proband
+/*
+ * This function loops over child proband's multilocus genotypes recursively
+ * and calls compute_nuclear_family_likelihood for each multilocus genotype
+ * pNucFam - the nuclear family we are working on locus - current working
+ * locus multiLocusIndex - index to the flattened array of conditional
+ * likelihood for the proband
  */
 int
-loop_child_proband_genotype (NuclearFamily * pNucFam,
-			     Person * pProband,
-			     int peelingDirection,
+loop_child_proband_genotype (int peelingDirection,
 			     int locus, int multiLocusIndex)
 {
-  int origLocus = locusList->pLocusIndex[locus];	/* locus index in the original locus list */
+  int origLocus = locusList->pLocusIndex[locus];	/* locus index in the
+							 * original locus list */
   Genotype *pGenotype;
   int position;			/* genotype position */
   Genotype *pNextGenotype;
-  int numGenotype;		/* number of possible genotypes for this proband at this locus */
+  int numGenotype;		/* number of possible genotypes for this
+				 * proband at this locus */
   int multiLocusIndex2;
   int traitLocus;
-
+  ConditionalLikelihood *pConditional;
   double penetrance = 1;
 #ifndef NO_POLYNOMIAL
   Polynomial *penetrancePolynomial = NULL;
 #endif
 
-  /* we loop over the genotypes of the proband to condition the 
-   * likelihood calculation on it */
+  /*
+   * we loop over the genotypes of the proband to condition the
+   * likelihood calculation on it
+   */
   numGenotype = pProband->pSavedNumGenotype[origLocus];
   /* calculate the flattened conditional likelihood array index */
   multiLocusIndex2 = multiLocusIndex * numGenotype;
   pGenotype = pProband->ppProbandGenotypeList[origLocus];
   while (pGenotype != NULL)
     {
-      /* record this locus's genotype in the haplotype structure - it's really just phased
-       * multilocus genotype (not single chromosome haplotype)
+      /*
+       * record this locus's genotype in the haplotype structure -
+       * it's really just phased multilocus genotype (not single
+       * chromosome haplotype)
        */
       pProband->ppHaplotype[locus] = pGenotype;
       KLOG (LOGLIKELIHOOD, LOGDEBUG, "\t proband (%s) %d|%d \n",
-	    pProband->sID,
-	    pGenotype->allele[DAD], pGenotype->allele[MOM]);
-      /* temporarilly set the next pointer to NULL so to restrict
-       * the genotype on the proband to current genotype only */
+	    pProband->sID, pGenotype->allele[DAD], pGenotype->allele[MOM]);
+      /*
+       * temporarilly set the next pointer to NULL so to restrict
+       * the genotype on the proband to current genotype only
+       */
       pProband->ppGenotypeList[origLocus] = pGenotype;
       pNextGenotype = pGenotype->pNext;
       pGenotype->pNext = NULL;
@@ -700,19 +865,30 @@ loop_child_proband_genotype (NuclearFamily * pNucFam,
 
       if (locus < locusList->numLocus - 1)
 	{
-	  loop_child_proband_genotype (pNucFam, pProband,
-				       peelingDirection, locus + 1,
+	  loop_child_proband_genotype (peelingDirection, locus + 1,
 				       multiLocusIndex);
 	}
       else
 	{
-	  /* we have got the entire multi-locus genotype for the proband */
-	  compute_nuclear_family_likelihood (pNucFam, pProband,
-					     peelingDirection);
-	  /* store the likelihood in the corresponding flattened array */
+	  /*
+	   * we have got the entire multi-locus genotype for
+	   * the proband
+	   */
+	  compute_nuclear_family_likelihood (peelingDirection);
+	  pConditional = &pProband->pLikelihood[multiLocusIndex];
+	  pConditional->touchedFlag = TRUE;
+	  if(modelOptions.dryRun == 0)
+	    {
+	  /*
+	   * store the likelihood in the corresponding
+	   * flattened array
+	   */
 	  if (pProband->touchedFlag == FALSE)
 	    {
-	      /* if trait locus exists, we need to retrieve the penetrance */
+	      /*
+	       * if trait locus exists, we need to retrieve
+	       * the penetrance
+	       */
 	      traitLocus = locusList->traitLocusIndex;
 	      if (traitLocus >= 0)
 		{
@@ -733,12 +909,12 @@ loop_child_proband_genotype (NuclearFamily * pNucFam,
 		    pProband->ppHaplotype[traitLocus]->penslot.penetrance;
 #endif
 		}
-	      else		/* no trait locus */
-		{
+	      else
+		{		/* no trait locus */
 #ifndef NO_POLYNOMIAL
 		  if (modelOptions.polynomial == TRUE)
 		    {
-		      penetrancePolynomial = constantExp (1);
+		      penetrancePolynomial = constant1Poly;
 		    }
 		  else
 		    {
@@ -747,80 +923,94 @@ loop_child_proband_genotype (NuclearFamily * pNucFam,
 #else
 		  penetrance = 1;
 #endif
-		}		/* no trait locus */
+		}		/* end of trait locus processing */
 
 #ifndef NO_POLYNOMIAL
 	      if (modelOptions.polynomial == TRUE)
 		{
-		  pProband->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial = timesExp (2, penetrancePolynomial, 1, pNucFam->likelihoodPolynomial, 1, 0);	//Dec 24
+		  pConditional->lkslot.likelihoodPolynomial =
+		    timesExp (2, penetrancePolynomial, 1,
+			      pNucFam->likelihoodPolynomial, 1, 0);
 
-		  /* for a child, the weight should be 1 */
-		  pProband->pLikelihood[multiLocusIndex].wtslot.
-		    weightPolynomial = constantExp (1);
+		  /*
+		   * for a child, the weight should be
+		   * 1
+		   */
+		  pConditional->wtslot.weightPolynomial = constant1Poly;
 		}
 	      else
 		{
-		  /* need to update the penetrance factors */
-		  pProband->pLikelihood[multiLocusIndex].lkslot.likelihood =
+		  /*
+		   * need to update the penetrance
+		   * factors
+		   */
+		  pConditional->lkslot.likelihood =
 		    penetrance * pNucFam->likelihood;
-		  /* for a child, the weight should be 1 */
-		  pProband->pLikelihood[multiLocusIndex].wtslot.weight = 1;
+		  /*
+		   * for a child, the weight should be
+		   * 1
+		   */
+		  pConditional->wtslot.weight = 1;
 		}
 #else
 	      /* need to update the penetrance factors */
-	      pProband->pLikelihood[multiLocusIndex].lkslot.likelihood =
+	      pConditional->lkslot.likelihood =
 		penetrance * pNucFam->likelihood;
 	      /* for a child, the weight should be 1 */
-	      pProband->pLikelihood[multiLocusIndex].wtslot.weight = 1;
+	      pConditional->wtslot.weight = 1;
 #endif
-	    }			/* first time updating the likelihood for this phased multilocus genotype */
-	  else			/* NOT first time updating the likelihood for this phased multilocus genotypes */
-	    {
+	    }
+	  /*
+	   * first time updating the likelihood for this phased
+	   * multilocus genotype
+	   */
+	  else
+	    {			/* NOT first time updating the likelihood for
+				 * this phased multilocus genotypes */
 	      /* no need to consider penetrance anymore */
 #ifndef NO_POLYNOMIAL
 	      if (modelOptions.polynomial == TRUE)
 		{
-		  pProband->pLikelihood[multiLocusIndex].lkslot.
+		  pConditional->lkslot.
 		    likelihoodPolynomial =
 		    timesExp (2,
-			      pProband->pLikelihood[multiLocusIndex].lkslot.
-			      likelihoodPolynomial, 1,
+			      pConditional->lkslot.likelihoodPolynomial, 1,
 			      pNucFam->likelihoodPolynomial, 1, 1);
-		  //fprintf(stderr,"Likelihood for this entire multi-locus genotype %f %f\n",
+		  //fprintf(stderr, "Likelihood for this entire multi-locus genotype %f %f\n",
 		  //evaluateValue(pNucFam->likelihoodPolynomial),
 		  //evaluateValue(pProband->pLikelihood[multiLocusIndex].likelihoodPolynomial));
 #if 0
 		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 			"Proband %s Conditional Likelihood (%d) = %e.\n",
 			pProband->sID, multiLocusIndex,
-			evaluateValue(pProband->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial));
+			evaluateValue (pConditional->lkslot.
+				       likelihoodPolynomial));
 #endif
 		}
 	      else
 		{
-		  pProband->pLikelihood[multiLocusIndex].lkslot.likelihood *=
-		    pNucFam->likelihood;
-		  /*  fprintf (stderr,
-		     "Likelihood for this entire multi-locus genotype %f %f\n",
-		     pNucFam->likelihood,
-		     pProband->pLikelihood[multiLocusIndex].likelihood);
-		   */
+		  pConditional->lkslot.likelihood *= pNucFam->likelihood;
 		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 			"Proband %s Conditional Likelihood (%d) = %e.\n",
 			pProband->sID, multiLocusIndex,
-			pProband->pLikelihood[multiLocusIndex].lkslot.likelihood);
+			pConditional->lkslot.likelihood);
 		}
 #else
-	      pProband->pLikelihood[multiLocusIndex].lkslot.likelihood *=
-		pNucFam->likelihood;
+	      pConditional->lkslot.likelihood *= pNucFam->likelihood;
 	      KLOG (LOGLIKELIHOOD, LOGDEBUG,
 		    "Proband %s Conditional Likelihood (%d) = %e.\n",
 		    pProband->sID, multiLocusIndex,
-		    pProband->pLikelihood[multiLocusIndex].lkslot.likelihood);
+		    pConditional->lkslot.likelihood);
 #endif
 	    }
-	}			/* end of processing complete child multilocus genotype  */
-      /*when we are done, need to restore the genotype link list pointer */
+	    }
+	}			/* end of processing complete child
+				 * multilocus genotype  */
+	
+      /*
+       * when we are done, need to restore the genotype link list
+       * pointer
+       */
       pGenotype->pNext = pNextGenotype;
       pGenotype = pNextGenotype;
     }				/* loop over all possible genotypes */
@@ -828,13 +1018,13 @@ loop_child_proband_genotype (NuclearFamily * pNucFam,
   return 0;
 }
 
-/* for now, we only use parental pair algorithm 
- * This function goes through all possible parental pairs, for each parental pair, it 
- * calculates likelihood
+/*
+ * for now, we only use parental pair algorithm This function goes through
+ * all possible parental pairs, for each parental pair, it calculates
+ * likelihood
  */
 int
-compute_nuclear_family_likelihood (NuclearFamily * pNucFam,
-				   Person * pProband, int peelingDirection)
+compute_nuclear_family_likelihood (int peelingDirection)
 {
   int locus;			/* locus index to construct parental pairs */
   double weight[2] = { 1, 1 };	/* weight for the two parents */
@@ -845,20 +1035,23 @@ compute_nuclear_family_likelihood (NuclearFamily * pNucFam,
   int numHaplotypePair = 1;	/* number of multilocus genotypes */
   int numChild;			/* number of children in this nuclear family */
   int i, j;
-  int multiLocusIndex[2] = {0, 0};
+  int multiLocusIndex[2] = { 0, 0 };
 
   /* initialize the weight for each parent */
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
-      weightPolynomial[0] = constantExp (1);
-      weightPolynomial[1] = constantExp (1);
-      pNucFam->likelihoodPolynomial = constantExp (0);
+      weightPolynomial[0] = constant1Poly;
+      weightPolynomial[1] = constant1Poly;
+      pNucFam->likelihoodPolynomial = constant0Poly;
     }
 #endif
   pNucFam->likelihood = 0;
 
-  /* the following is to help to set the order which parent's genotype to flip first */
+  /*
+   * the following is to help to set the order which parent's genotype
+   * to flip first
+   */
   if (pProband == pNucFam->pParents[MOM])
     {
       /* MOM is the proband */
@@ -874,8 +1067,10 @@ compute_nuclear_family_likelihood (NuclearFamily * pNucFam,
 
   numChild = pNucFam->numChildren;
 
-  /* first construct the parental pair for this nuclear family locus
-   * by locus */
+  /*
+   * first construct the parental pair for this nuclear family locus by
+   * locus
+   */
   numHaplotypePair = 1;
   for (locus = 0; locus < locusList->numLocus; locus++)
     {
@@ -898,19 +1093,20 @@ compute_nuclear_family_likelihood (NuclearFamily * pNucFam,
 	pNucFam->nuclearFamilyIndex);
   KLOG (LOGPARENTALPAIR, LOGDEBUG, "\t\t\t DAD(%s)\t\t\t MOM(%s)\n",
 	pNucFam->pParents[DAD]->sID, pNucFam->pParents[MOM]->sID);
-  /* recursively call loop_parental_pair to get a complete multlocus genotype */
+  /*
+   * recursively call loop_parental_pair to get a complete multlocus
+   * genotype
+   */
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
-      loop_parental_pair (pNucFam, pProband, 0, &parentalPairSpace,
-			  multiLocusIndex, (void *) weightPolynomial);
-//      fprintf(stderr,"Conditional likelihood for nuclear family %d is: %e\n",
-//            pNucFam->nuclearFamilyIndex, evaluateValue(sumPolynomial));
+      loop_parental_pair (0, multiLocusIndex, (void *) weightPolynomial);
+      //fprintf(stderr, "Conditional likelihood for nuclear family %d is: %e\n",
+      //pNucFam->nuclearFamilyIndex, evaluateValue(sumPolynomial));
     }
   else
     {
-      loop_parental_pair (pNucFam, pProband, 0, &parentalPairSpace,
-			  multiLocusIndex, (void *) weight);
+      loop_parental_pair (0, multiLocusIndex, (void *) weight);
       /*
          KLOG (LOGLIKELIHOOD, LOGDEBUG,
          "Conditional likelihood for nuclear family %d is: %e\n",
@@ -918,8 +1114,7 @@ compute_nuclear_family_likelihood (NuclearFamily * pNucFam,
        */
     }
 #else
-  loop_parental_pair (pNucFam, pProband, 0, &parentalPairSpace,
-		      multiLocusIndex, (void *) weight);
+  loop_parental_pair (0, multiLocusIndex, (void *) weight);
   /*
      KLOG (LOGLIKELIHOOD, LOGDEBUG,
      "Conditional likelihood for nuclear family %d is: %e\n",
@@ -930,14 +1125,13 @@ compute_nuclear_family_likelihood (NuclearFamily * pNucFam,
   return 0;
 }
 
-/* using the parental pair algorithm to go through all possible 
- * parental pairs and calculate the likelihood of each parental pair 
- * nested looping is for the multi-locus */
+/*
+ * using the parental pair algorithm to go through all possible parental
+ * pairs and calculate the likelihood of each parental pair nested looping is
+ * for the multi-locus
+ */
 int
-loop_parental_pair (NuclearFamily * pNucFam,
-		    Person * pProband,
-		    int locus, ParentalPairSpace * pHaplo, 
-		    int multiLocusIndex[2], void *dWeight[2])
+loop_parental_pair (int locus, int multiLocusIndex[2], void *dWeight[2])
 {
   ParentalPair *pPair;		/* parental pair for current locus */
   int origLocus;		/* locus index in the original locus list */
@@ -950,10 +1144,16 @@ loop_parental_pair (NuclearFamily * pNucFam,
 #ifndef NO_POLYNOMIAL
   Polynomial *newWeightPolynomial[2];
 #endif
-  int head;			/* proband if no child is a proband, otherwise DAD  */
+  int head;			/* proband if no child is a proband,
+				 * otherwise DAD  */
   int spouse;			/* spouse of the head */
   int likelihoodIndex;		/* likelihood index for the proband */
-  int multiLocusPhase[2] = { 0, 0 };	/* index to the related parental pair matrix */
+  int multiLocusPhase[2] = { 0, 0 };	/* index to the related
+					 * parental pair matrix */
+  int flipMask[2] = { 0, 0}; 
+  ConditionalLikelihood *pConditional;
+  PPairElement *pElement;
+  
 
   head = pNucFam->head;
   spouse = pNucFam->spouse;
@@ -971,8 +1171,9 @@ loop_parental_pair (NuclearFamily * pNucFam,
 #endif
       pParent[i] = pNucFam->pParents[i];
       /* find the max number of possible genotypes for this parent */
-      if(pParent[i]->loopBreaker >= 1 && pParent[i]->pParents[DAD] == NULL)
-	numGenotype[i] = pParent[i]->pOriginalPerson->pSavedNumGenotype[origLocus];
+      if (pParent[i]->loopBreaker >= 1 && pParent[i]->pParents[DAD] == NULL)
+	numGenotype[i] =
+	  pParent[i]->pOriginalPerson->pSavedNumGenotype[origLocus];
       else
 	numGenotype[i] = pParent[i]->pSavedNumGenotype[origLocus];
       /* calculate this parent's conditional likelihood's offset */
@@ -986,15 +1187,22 @@ loop_parental_pair (NuclearFamily * pNucFam,
       numPair++;
       /* get the parental pair */
       pPair = &pHaplo->ppParentalPair[locus][numPair];
-      multiLocusIndex2[DAD] = multiLocusIndex[DAD] * numGenotype[DAD] + pPair->pGenotype[DAD]->position;
-      multiLocusIndex2[MOM] = multiLocusIndex[MOM] * numGenotype[MOM] + pPair->pGenotype[MOM]->position;
+      multiLocusIndex2[DAD] =
+	multiLocusIndex[DAD] * numGenotype[DAD] +
+	pPair->pGenotype[DAD]->position;
+      multiLocusIndex2[MOM] =
+	multiLocusIndex[MOM] * numGenotype[MOM] +
+	pPair->pGenotype[MOM]->position;
       pHaplo->pParentalPairInd[locus] = numPair;
       /* set the het flag */
       for (i = DAD; i <= MOM; i++)
 	{
 	  if (locus == 0)
 	    {
-	      /* keep track of how many heterogenous loci there are at and before this locus */
+	      /*
+	       * keep track of how many heterogenous loci
+	       * there are at and before this locus
+	       */
 	      pNucFam->tmpNumHet[i][0] = 0;
 	    }
 	  else
@@ -1016,10 +1224,16 @@ loop_parental_pair (NuclearFamily * pNucFam,
 	  else
 	    pNucFam->hetFlag[i][locus] = 0;
 	}
-      /* record the start of the related parental pairs for this locus */
+      /*
+       * record the start of the related parental pairs for this
+       * locus
+       */
       pNucFam->relatedPPairStart[locus] = numPair;
       pNucFam->numRelatedPPair[locus] = 1;
-      /* find the related parental pairs that have same pair of genotypes only differ in phases */
+      /*
+       * find the related parental pairs that have same pair of
+       * genotypes only differ in phases
+       */
       while ((numPair + 1) < pHaplo->pNumParentalPair[locus] &&
 	     (pHaplo->ppParentalPair[locus][numPair + 1].phase[DAD] > 0 ||
 	      pHaplo->ppParentalPair[locus][numPair + 1].phase[MOM] > 0))
@@ -1027,14 +1241,15 @@ loop_parental_pair (NuclearFamily * pNucFam,
 	  numPair++;
 	  pNucFam->numRelatedPPair[locus]++;
 	}
-      if(locus == 0)
+      if (locus == 0)
 	{
 	  pNucFam->totalRelatedPPair[locus] = pNucFam->numRelatedPPair[0];
 	}
       else
 	{
-	  pNucFam->totalRelatedPPair[locus] = pNucFam->totalRelatedPPair[locus-1] * 
-	    pNucFam->numRelatedPPair[locus];
+	  pNucFam->totalRelatedPPair[locus] =
+	    pNucFam->totalRelatedPPair[locus -
+				       1] * pNucFam->numRelatedPPair[locus];
 	}
 
       for (i = DAD; i <= MOM; i++)
@@ -1042,13 +1257,15 @@ loop_parental_pair (NuclearFamily * pNucFam,
 	  if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM
 	      && pParent[i]->pParents[DAD] == NULL)
 	    {
-	      if(pParent[i]->loopBreaker >= 1)
+	      if (pParent[i]->loopBreaker >= 1)
 		continue;
-	      /* 
-	       * For founders:
-	       *   under LE, we just multiply the founder weights, 
-	       *   under LD, we need to use haplotype freq - which we will do in loop_phases
-	       * For non-founders, we don't even care, they should remain as 1 as initialized
+	      /*
+	       * For founders: under LE, we just multiply
+	       * the founder weights, under LD, we need to
+	       * use haplotype freq - which we will do in
+	       * loop_phases For non-founders, we don't
+	       * even care, they should remain as 1 as
+	       * initialized
 	       */
 #ifndef NO_POLYNOMIAL
 	      if (modelOptions.polynomial == TRUE)
@@ -1061,11 +1278,13 @@ loop_parental_pair (NuclearFamily * pNucFam,
 	      else
 		{
 		  newWeight[i] =
-		    *((double *) dWeight + i) * pPair->pGenotype[i]->wtslot.weight;
+		    *((double *) dWeight +
+		      i) * pPair->pGenotype[i]->wtslot.weight;
 		}
 #else
 	      newWeight[i] =
-		*((double *) dWeight + i) * pPair->pGenotype[i]->wtslot.weight;
+		*((double *) dWeight +
+		  i) * pPair->pGenotype[i]->wtslot.weight;
 #endif
 	    }
 	}			/* looping dad and mom genotypes */
@@ -1073,245 +1292,298 @@ loop_parental_pair (NuclearFamily * pNucFam,
 
       if (locus < locusList->numLocus - 1)
 	{
-	  /* recursively calling this function to get a complete multilocus genotype */
+	  /*
+	   * recursively calling this function to get a
+	   * complete multilocus genotype
+	   */
 #ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE)
 	    {
 
-	      loop_parental_pair (pNucFam, pProband, locus + 1, pHaplo,
-				  multiLocusIndex2, (void *) newWeightPolynomial);
+	      loop_parental_pair (locus + 1, multiLocusIndex2,
+				  (void *) newWeightPolynomial);
 	    }
 	  else
 	    {
-	      loop_parental_pair (pNucFam, pProband, locus + 1, pHaplo,
-				  multiLocusIndex2, (void *) newWeight);
+	      loop_parental_pair (locus + 1, multiLocusIndex2,
+				  (void *) newWeight);
 	    }
 #else
-	  loop_parental_pair (pNucFam, pProband, locus + 1, pHaplo,
-			      multiLocusIndex2, (void *) newWeight);
+	  loop_parental_pair (locus + 1, multiLocusIndex2,
+			      (void *) newWeight);
 #endif
 	}
-      else			/* got a complete set of parental pairs */
-	{
-
-	  if(pNucFam->totalRelatedPPair[locus] == 1)
+      else
+	{			/* got a complete set of parental pairs */
+	  pNucFam->numPairGroups++;
+	  pNucFam->numSimilarPairs += pNucFam->totalRelatedPPair[locus]-1;
+	  if(modelOptions.dryRun != 0)
+	    {
+	      /* no actual calculations under dry run, continue to next set of ppair */
+	      continue;
+	    }
+	    
+	  if (pNucFam->totalRelatedPPair[locus] == 1)
 	    {
 	      multiLocusPhase[DAD] = 0;
 	      multiLocusPhase[MOM] = 0;
+	      calcFlag = 0;
 #ifndef NO_POLYNOMIAL
 	      if (modelOptions.polynomial == TRUE)
-		calculate_likelihood(pNucFam, pHaplo, pProband, locus, 
-				     multiLocusIndex2, multiLocusPhase, (void *)newWeightPolynomial);
+		calculate_likelihood (multiLocusIndex2, multiLocusPhase,
+				      (void *) newWeightPolynomial, NULL);
 	      else
-		calculate_likelihood(pNucFam, pHaplo, pProband, locus, 
-				     multiLocusIndex2, multiLocusPhase, (void *)newWeight);
+		calculate_likelihood (multiLocusIndex2, multiLocusPhase,
+				      (void *) newWeight, NULL);
 #else
-	      calculate_likelihood(pNucFam, pHaplo, pProband, locus, 
-				   multiLocusIndex2, multiLocusPhase, (void *)newWeight);
+	      calculate_likelihood (multiLocusIndex2, multiLocusPhase,
+				    (void *) newWeight, NULL);
 #endif
 
-	      if(pNucFam->childProbandFlag == TRUE)
+	      /* when there is only one parental pair, the likelihood is saved at the first cell,
+	       * as the phase index passed in was 0,0
+	       */
+	      pElement = &ppairMatrix[0][0];
+	      if (pNucFam->childProbandFlag == TRUE)
 		{
 #ifndef NO_POLYNOMIAL
-		  if(modelOptions.polynomial == TRUE)
+		  if (modelOptions.polynomial == TRUE)
 		    {
 		      pNucFam->likelihoodPolynomial =
 			plusExp (2,
 				 1.0,
 				 pNucFam->likelihoodPolynomial,
-				 1.0,
-				 ppairMatrix[0][0].slot.likelihoodPolynomial, 1); 
+				 1.0, pElement->slot.likelihoodPolynomial, 1);
 		    }
 		  else
-		    pNucFam->likelihood += ppairMatrix[0][0].slot.likelihood;
+		    pNucFam->likelihood += pElement->slot.likelihood;
 #else
-		  pNucFam->likelihood += ppairMatrix[0][0].slot.likelihood;
+		  pNucFam->likelihood += pElement->slot.likelihood;
 #endif
 		}
-	      else /* one of the parent is the proband */
-		{
+	      else
+		{		/* one of the parent is the proband */
+		  likelihoodIndex = multiLocusIndex2[head];
+		  pConditional = &pProband->pLikelihood[likelihoodIndex];
 #ifndef NO_POLYNOMIAL
-		  if(modelOptions.polynomial == TRUE)
+		  if (modelOptions.polynomial == TRUE)
 		    {
-		      pProband->pLikelihood[multiLocusIndex2[head]].tmpslot.
-			tmpLikelihoodPolynomial =
+		      pConditional->tmpslot.tmpLikelihoodPolynomial =
 			plusExp (2,
 				 1.0,
-				 pProband->pLikelihood[multiLocusIndex2[head]].tmpslot.
-				 tmpLikelihoodPolynomial, 
-				 1.0,
-				 ppairMatrix[0][0].slot.likelihoodPolynomial, 1); 
+				 pConditional->tmpslot.
+				 tmpLikelihoodPolynomial, 1.0,
+				 pElement->slot.likelihoodPolynomial, 1);
 		    }
 		  else
-		    pProband->pLikelihood[multiLocusIndex2[head]].tmpslot.
-		      tmpLikelihood += ppairMatrix[0][0].slot.likelihood;
+		    pConditional->tmpslot.tmpLikelihood +=
+		      pElement->slot.likelihood;
 #else
-		  pProband->pLikelihood[multiLocusIndex2[head]].tmpslot.
-		    tmpLikelihood += ppairMatrix[0][0].slot.likelihood;
+		  pConditional->tmpslot.tmpLikelihood +=
+		    pElement->slot.likelihood;
 #endif
-
-		}
-	    }
-	  else if(pNucFam->totalRelatedPPair[locus] > 0)
-	    {
-	  /* initialize the phase matrix */
-	  clear_ppairMatrix (ppairMatrix);
-
-	  /* set some information */
-	  pNucFam->numHetLocus[head] = pNucFam->tmpNumHet[head][locus];
-	  pNucFam->numHetLocus[spouse] = pNucFam->tmpNumHet[spouse][locus];
-	  /* set bit mask - all bits set to 1 - number of bits == number of het loci */
-	  pNucFam->hetLocusBits[head] = bitMask[pNucFam->numHetLocus[head]];
-	  pNucFam->hetLocusBits[spouse] =
-	    bitMask[pNucFam->numHetLocus[spouse]];
-
-	  multiLocusIndex2[DAD] = 0;
-	  multiLocusIndex2[MOM] = 0;
-	  multiLocusPhase[DAD] = 0;
-	  multiLocusPhase[MOM] = 0;
-#ifndef NO_POLYNOMIAL
-	  if (modelOptions.polynomial == TRUE)
-	    loop_phases (pNucFam, pHaplo, pProband, 0, multiLocusIndex2,
-			 multiLocusPhase, (void *) newWeightPolynomial);
-	  else
-	    loop_phases (pNucFam, pHaplo, pProband, 0, multiLocusIndex2,
-			 multiLocusPhase, (void *) newWeight);
-#else
-	  loop_phases (pNucFam, pHaplo, pProband, 0, multiLocusIndex2,
-		       multiLocusPhase, (void *) newWeight);
-#endif
-
-	  /* post processing of results of similar parental pairs and store them 
-	   * in the proband's likelihood space */
-	  if (pNucFam->childProbandFlag == TRUE)
-	    {
-	      /* child is the proband, sum likelihood across all rows and columns  
-	       * save it at the tmpLikelihood
-	       */
-	      for (j = 0; j <= bitMask[pNucFam->numHetLocus[head]]; j++)
-		{
-		  for (k = 0; k <= bitMask[pNucFam->numHetLocus[spouse]]; k++)
+		  if (pConditional->tmpTouched == FALSE)
 		    {
-		      if (ppairMatrix[j][k].count > 1)
-			{
+		      pConditional->tmpTouched = TRUE;
+		      pProband->pTmpLikelihoodIndex[pProband->
+						    numTmpLikelihood] =
+			likelihoodIndex;
+		      pProband->numTmpLikelihood++;
+		    }
+		}
+	      /* reset count */
+	      pElement->count = 0;
+	    }
+	  else if (pNucFam->totalRelatedPPair[locus] > 0)
+	    {
+	      /*
+	       * initialize the phase matrix - we will
+	       * count on count being reset after each use
+	       * - this is to save time
+	       */
+	      //clear_ppairMatrix(ppairMatrix);
+
+	      /* set some information */
+	      pNucFam->numHetLocus[head] = pNucFam->tmpNumHet[head][locus];
+	      pNucFam->numHetLocus[spouse] =
+		pNucFam->tmpNumHet[spouse][locus];
+	      /*
+	       * set bit mask - all bits set to 1 - number
+	       * of bits == number of het loci
+	       */
+	      pNucFam->hetLocusBits[head] =
+		bitMask[pNucFam->numHetLocus[head]];
+	      pNucFam->hetLocusBits[spouse] =
+		bitMask[pNucFam->numHetLocus[spouse]];
+
+	      multiLocusIndex2[DAD] = 0;
+	      multiLocusIndex2[MOM] = 0;
+	      multiLocusPhase[DAD] = 0;
+	      multiLocusPhase[MOM] = 0;
 #ifndef NO_POLYNOMIAL
-			  if (modelOptions.polynomial == TRUE)
-			    {
-			      pNucFam->likelihoodPolynomial =
-				plusExp (2,
-					 1.0,
-					 pNucFam->likelihoodPolynomial,
-					 1.0,
-					 timesExp (2,
-						   ppairMatrix[j][k].slot.
-						   likelihoodPolynomial, 1,
-						   constantExp (ppairMatrix[j]
-								[k].count), 1,
-						   0), 
-					 1);
-			    }
-			  else
-			    pNucFam->likelihood +=
-			      ppairMatrix[j][k].slot.likelihood *
-			      ppairMatrix[j][k].count;
+	      if (modelOptions.polynomial == TRUE)
+		loop_phases (0, multiLocusIndex2, multiLocusPhase, flipMask, 
+			     (void *) newWeightPolynomial);
+	      else
+		loop_phases (0, multiLocusIndex2, multiLocusPhase, flipMask, 
+			     (void *) newWeight);
 #else
-			  pNucFam->likelihood +=
-			    ppairMatrix[j][k].slot.likelihood *
-			    ppairMatrix[j][k].count;
+	      loop_phases (0, multiLocusIndex2, multiLocusPhase, flipMask, 
+			   (void *) newWeight);
 #endif
-			}
-		      else if (ppairMatrix[j][k].count > 0)	/* count == 1 */
+
+	      /*
+	       * post processing of results of similar
+	       * parental pairs and store them in the
+	       * proband's likelihood space
+	       */
+	      if (pNucFam->childProbandFlag == TRUE)
+		{
+		  /*
+		   * child is the proband, sum
+		   * likelihood across all rows and
+		   * columns  save in the nuclear
+		   * family
+		   */
+		  for (j = 0; j <= bitMask[pNucFam->numHetLocus[head]]; j++)
+		    {
+		      for (k = 0; k <= bitMask[pNucFam->numHetLocus[spouse]];
+			   k++)
 			{
-#ifndef NO_POLYNOMIAL
-			  if (modelOptions.polynomial == TRUE)
+			  pElement = &ppairMatrix[j][k];
+			  if (pElement->count > 1)
 			    {
-			      pNucFam->likelihoodPolynomial =
-				plusExp (2,
-					 1.0,
-					 pNucFam->likelihoodPolynomial,
-					 1.0,
-					 ppairMatrix[j][k].slot.
-					 likelihoodPolynomial, 1);
-			    }
-			  else
-			    pNucFam->likelihood +=
-			      ppairMatrix[j][k].slot.likelihood;
+#ifndef NO_POLYNOMIAL
+			      if (modelOptions.polynomial == TRUE)
+				{
+				  pNucFam->likelihoodPolynomial =
+				    plusExp (2,
+					     1.0,
+					     pNucFam->likelihoodPolynomial,
+					     1.0,
+					     timesExp (2,
+						       pElement->slot.
+						       likelihoodPolynomial,
+						       1,
+						       constantExp
+						       (pElement->count), 1,
+						       0), 1);
+				}
+			      else
+				pNucFam->likelihood +=
+				  pElement->slot.likelihood * pElement->count;
 #else
-			  pNucFam->likelihood +=
-			    ppairMatrix[j][k].slot.likelihood;
+			      pNucFam->likelihood +=
+				pElement->slot.likelihood * pElement->count;
 #endif
+			    }
+			  else if (pElement->count > 0)
+			    {	/* count == 1 */
+#ifndef NO_POLYNOMIAL
+			      if (modelOptions.polynomial == TRUE)
+				{
+				  pNucFam->likelihoodPolynomial =
+				    plusExp (2,
+					     1.0,
+					     pNucFam->likelihoodPolynomial,
+					     1.0,
+					     pElement->slot.
+					     likelihoodPolynomial, 1);
+				}
+			      else
+				pNucFam->likelihood +=
+				  pElement->slot.likelihood;
+#else
+			      pNucFam->likelihood +=
+				pElement->slot.likelihood;
+#endif
+			    }	/* end of count = 1 */
+			  /* reset count to 0 */
+			  pElement->count = 0;
 			}
 		    }
 		}
-	    }
-	  else
-	    {			/* one of the parent is the proband */
-	      for (j = 0; j <= bitMask[pNucFam->numHetLocus[head]]; j++)
-		{
-		  /* get the proband's conditional likelihood index for this row
-		   * sum up across this row and save them to the proband's likelihood storage
-		   */
-		  likelihoodIndex = ppairMatrix[j][0].likelihoodIndex;
-		  for (k = 0; k <= bitMask[pNucFam->numHetLocus[spouse]]; k++)
+	      else
+		{		/* one of the parent is the proband */
+		  for (j = 0; j <= bitMask[pNucFam->numHetLocus[head]]; j++)
 		    {
-		      if (ppairMatrix[j][k].count > 1)
+		      /*
+		       * get the proband's
+		       * conditional likelihood
+		       * index for this row sum up
+		       * across this row and save
+		       * them to the proband's
+		       * likelihood storage
+		       */
+		      likelihoodIndex = ppairMatrix[j][0].likelihoodIndex;
+		      pConditional = &pProband->pLikelihood[likelihoodIndex];
+		      for (k = 0; k <= bitMask[pNucFam->numHetLocus[spouse]];
+			   k++)
 			{
-#ifndef NO_POLYNOMIAL
-			  if (modelOptions.polynomial == TRUE)
+			  pElement = &ppairMatrix[j][k];
+			  if (pElement->count == 0)
+			    continue;
+			  if (pConditional->tmpTouched == FALSE)
 			    {
-			      pProband->pLikelihood[likelihoodIndex].tmpslot.
-				tmpLikelihoodPolynomial =
-				plusExp (2, 1.0,
-					 pProband->
-					 pLikelihood[likelihoodIndex].tmpslot.
-					 tmpLikelihoodPolynomial, 1.0,
-					 timesExp (2,
-						   ppairMatrix[j][k].slot.
-						   likelihoodPolynomial, 1,
-						   constantExp (ppairMatrix[j]
-								[k].count), 1,
-						   0), 
-					 1);
+			      pConditional->tmpTouched = TRUE;
+			      pProband->pTmpLikelihoodIndex[pProband->
+							    numTmpLikelihood]
+				= likelihoodIndex;
+			      pProband->numTmpLikelihood++;
 			    }
-			  else
-			    pProband->pLikelihood[likelihoodIndex].tmpslot.
-			      tmpLikelihood +=
-			      ppairMatrix[j][k].slot.likelihood *
-			      ppairMatrix[j][k].count;
-#else
-			  pProband->pLikelihood[likelihoodIndex].tmpslot.
-			    tmpLikelihood +=
-			    ppairMatrix[j][k].slot.likelihood *
-			    ppairMatrix[j][k].count;
-#endif
-			}	/* count > 1 */
-		      else if (ppairMatrix[j][k].count > 0)
-			{
-#ifndef NO_POLYNOMIAL
-			  if (modelOptions.polynomial == TRUE)
+			  if (pElement->count > 1)
 			    {
-			      pProband->pLikelihood[likelihoodIndex].tmpslot.
-				tmpLikelihoodPolynomial =
-				plusExp (2, 1.0,
-					 pProband->
-					 pLikelihood[likelihoodIndex].tmpslot.
-					 tmpLikelihoodPolynomial, 1.0,
-					 ppairMatrix[j][k].slot.
-					 likelihoodPolynomial, 1);
-			    }
-			  else
-			    pProband->pLikelihood[likelihoodIndex].tmpslot.
-			      tmpLikelihood +=
-			      ppairMatrix[j][k].slot.likelihood;
+#ifndef NO_POLYNOMIAL
+			      if (modelOptions.polynomial == TRUE)
+				{
+				  pConditional->tmpslot.
+				    tmpLikelihoodPolynomial =
+				    plusExp (2, 1.0,
+					     pConditional->tmpslot.
+					     tmpLikelihoodPolynomial, 1.0,
+					     timesExp (2,
+						       pElement->slot.
+						       likelihoodPolynomial,
+						       1,
+						       constantExp (pElement->
+								    count), 1,
+						       0), 1);
+				}
+			      else
+				pConditional->tmpslot.tmpLikelihood +=
+				  pElement->slot.likelihood * pElement->count;
 #else
-			  pProband->pLikelihood[likelihoodIndex].tmpslot.
-			    tmpLikelihood +=
-			    ppairMatrix[j][k].slot.likelihood;
+			      pConditional->tmpslot.tmpLikelihood +=
+				pElement->slot.likelihood * pElement->count;
 #endif
-			}	/* count > 0 */
-		    }		/* loop through column */
-		}		/* loop through row */
-	    }			/* one parent is proband */
+			    }
+			  /* count > 1 */
+			  else
+			    {	/* count==1 */
+#ifndef NO_POLYNOMIAL
+			      if (modelOptions.polynomial == TRUE)
+				{
+				  pConditional->tmpslot.
+				    tmpLikelihoodPolynomial =
+				    plusExp (2, 1.0,
+					     pConditional->tmpslot.
+					     tmpLikelihoodPolynomial, 1.0,
+					     pElement->slot.
+					     likelihoodPolynomial, 1);
+				}
+			      else
+				pConditional->tmpslot.tmpLikelihood +=
+				  pElement->slot.likelihood;
+#else
+			      pConditional->tmpslot.tmpLikelihood +=
+				pElement->slot.likelihood;
+#endif
+			    }	/* count > 0 */
+			  /* reset the count */
+			  pElement->count = 0;
+			}	/* loop through column */
+		    }		/* loop through row */
+		}		/* one parent is proband */
 	    }
 	}			/* end of processing one parental pair */
     }
@@ -1321,80 +1593,93 @@ loop_parental_pair (NuclearFamily * pNucFam,
 
 
 
-/* Compute likelihood for parental multilocus genotypes pairs that are only different in phases 
- * Input: parental pairs for this nuclear family
- *        parental pairs with different phases are next to each other
- *        weight - genotype weights for the parental genotypes 
- *                 LE:
- *                   founder - phase doesn't matter
- *                   non-founder - phase will come to play
- *                 LD: 
- *                   phase matters for both founders and non-founders
- *        penetrance - is not an input as it can be different for different phases if we consider
- *                     imprinting effect
- *                     penetrance only applies to disease locus if it's included in the list 
-*/
+/*
+ * Compute likelihood for parental multilocus genotypes pairs that are only
+ * different in phases Input: parental pairs for this nuclear family parental
+ * pairs with different phases are next to each other weight - genotype
+ * weights for the parental genotypes LE: founder - phase doesn't matter
+ * non-founder - phase will come to play LD: phase matters for both founders
+ * and non-founders penetrance - is not an input as it can be different for
+ * different phases if we consider imprinting effect penetrance only applies
+ * to disease locus if it's included in the list
+ */
 void
-loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
-	     Person * pProband, int locus, int multiLocusIndex[2],
-	     int multiLocusPhase[2], void *dWeight[2])
+loop_phases (int locus, int multiLocusIndex[2], int multiLocusPhase[2], 
+	     int flipMask[2], void *dWeight[2])
 {
   /* conditional likelihood index for each parent */
   int multiLocusIndex2[2];
   /* index to related parental pair matrix */
   int multiLocusPhase2[2];
-  /* index of the flip of current pattern in related parental pair matrix */
+  /*
+   * index of the flip of current pattern in related parental pair
+   * matrix
+   */
   int multiLocusPhaseFlip[2];
   Person *pParent[2];
   int numGenotype[2];
   int i;
   int numPair;
   int end;
-  int origLocus = locusList->pLocusIndex[locus];	/* locus index in the original locus list */
+  int origLocus = locusList->pLocusIndex[locus];	/* locus index in the
+							 * original locus list */
   ParentalPair *pPair;
-  /* whether a fresh calculation is needed or we could find existing pattern result */
+  /*
+   * whether a fresh calculation is needed or we could find existing
+   * pattern result
+   */
   int calculateFlag;
   int phase[2];
   int proband;
   int spouse;
   int likelihoodIndex;
-  /*
-  double newWeight[2];
-  double sum;
-  int child;
-  int xmissionIndex[2];
+  int newFlipMask[2];
   double childProduct;
-  double penetrance[2];
-  int traitLocus;
-  int genoIndex;
-#ifndef NO_POlYNOMIAL
-  Polynomial *newWeightPolynomial[2];
-  Polynomial *penetrancePolynomial[2];
-  Polynomial *sumPolynomial;
-  Polynomial *childProductPolynomial = NULL;
-#endif
-  */
+  Polynomial *childProductPoly; 
+  void *childProductPtr;
+
+  if(modelOptions.polynomial == TRUE)
+    childProductPtr = &childProductPoly;
+  else
+    childProductPtr = &childProduct;
+
+  /*
+     double newWeight[2];
+     double sum;
+     int child;
+     int xmissionIndex[2];
+     double childProduct;
+     double penetrance[2];
+     int traitLocus;
+     int genoIndex;
+     #ifndef NO_POlYNOMIAL
+     Polynomial *newWeightPolynomial[2];
+     Polynomial *penetrancePolynomial[2];
+     Polynomial *sumPolynomial;
+     Polynomial *childProductPolynomial = NULL;
+     #endif
+   */
 
   for (i = DAD; i <= MOM; i++)
     {
       pParent[i] = pNucFam->pParents[i];
       /* find the max number of possible genotypes for this parent */
-      if(pParent[i]->loopBreaker >= 1 && pParent[i]->pParents[DAD] == NULL)
-	numGenotype[i] = pParent[i]->pOriginalPerson->pSavedNumGenotype[origLocus];
+      if (pParent[i]->loopBreaker >= 1 && pParent[i]->pParents[DAD] == NULL)
+	numGenotype[i] =
+	  pParent[i]->pOriginalPerson->pSavedNumGenotype[origLocus];
       else
 	numGenotype[i] = pParent[i]->pSavedNumGenotype[origLocus];
       /* likelihood storage index */
-      multiLocusIndex2[i] = multiLocusIndex[i] * numGenotype[i];
+      multiLocusIndex[i] *= numGenotype[i];
       if (pNucFam->hetFlag[i][locus] == 1)
 	{
 	  /* phase combination index */
-	  multiLocusPhase2[i] = multiLocusPhase[i] * 2;
-	}
-      else
-	{
-	  multiLocusPhase2[i] = multiLocusPhase[i];
+	  multiLocusPhase[i] <<= 1;
 	}
     }
+
+  flipMask[DAD] <<= 2;
+  flipMask[MOM] <<= 2;
 
   proband = pNucFam->head;
   spouse = pNucFam->spouse;
@@ -1416,39 +1701,51 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
       for (i = DAD; i <= MOM; i++)
 	{
 	  pHaplo->phase[i][locus] = pPair->phase[i];
-	  multiLocusPhase[i] = multiLocusPhase2[i] + pPair->phase[i];
-	  multiLocusIndex[i] =
-	    multiLocusIndex2[i] + pPair->pGenotype[i]->position;
+	  multiLocusPhase2[i] = multiLocusPhase[i] | pPair->phase[i];
+	  if(pPair->phase[i] == 0)
+	    newFlipMask[i] = flipMask[i];
+	  else
+	    newFlipMask[i] = flipMask[i] | 3; 
+	  multiLocusIndex2[i] =
+	    multiLocusIndex[i] + pPair->pGenotype[i]->position;
 	}
       if (locus < locusList->numLocus - 1)
 	{
-	  loop_phases (pNucFam, pHaplo, pProband, locus + 1, multiLocusIndex,
-		       multiLocusPhase, dWeight);
+	  loop_phases (locus + 1, multiLocusIndex2, multiLocusPhase2, newFlipMask, dWeight);
 	}
-      else			/* got a complete multilocus parental pair */
-	{
+      else
+	{			/* got a complete multilocus parental pair */
 	  calculateFlag = 1;
-	  ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
-	    likelihoodIndex = multiLocusIndex[proband];
+	  ppairMatrix[multiLocusPhase2[proband]][multiLocusPhase2[spouse]].
+	    likelihoodIndex = multiLocusIndex2[proband];
 	  if (pNucFam->childProbandFlag == TRUE)
-	    {
-	      phase[DAD] = multiLocusPhase[DAD];
-	      phase[MOM] = multiLocusPhase[MOM];
+	    {	  /* a child is the proband */
+	      phase[DAD] = multiLocusPhase2[DAD];
+	      phase[MOM] = multiLocusPhase2[MOM];
 	      /* child is the proband */
 	      for (i = DAD; i <= MOM; i++)
 		{
 		  if (pNucFam->firstHetLocus[i] >= 0 &&
 		      pHaplo->phase[i][pNucFam->firstHetLocus[i]] != 0)
 		    {
-		      /* first het locus has a reverse phase than the origninal 
-		       * potentially we could benefit from directly using the likelihood calculated 
-		       * with different phase
+		      /*
+		       * first het locus has a
+		       * reverse phase than the
+		       * origninal potentially we
+		       * could benefit from
+		       * directly using the
+		       * likelihood calculated with
+		       * different phase
 		       */
-		      /* if this parent is a founder or a proband, then flip==original */
+		      /*
+		       * if this parent is a
+		       * founder or a proband, then
+		       * flip==original
+		       */
 		      if (pNucFam->pParents[i]->pParents[DAD] == NULL)
 			{
 			  multiLocusPhaseFlip[i] =
-			    ~multiLocusPhase[i] & pNucFam->hetLocusBits[i];
+			    multiLocusPhase2[i] ^ pNucFam->hetLocusBits[i];
 			  phase[i] = multiLocusPhaseFlip[i];
 			  if (ppairMatrix[phase[proband]][phase[spouse]].
 			      count > 0)
@@ -1463,12 +1760,13 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 		  if (modelOptions.polynomial == TRUE)
 		    {
 #if 0
-		    KLOG (LOGLIKELIHOOD, LOGDEBUG,
-			  "\t\t likelihood (%d) = %e\n",
-			  ppairMatrix[phase[proband]][phase[spouse]].
-			  likelihoodIndex,
-			  evaluateValue(ppairMatrix[phase[proband]][phase[spouse]].slot.
-					likelihoodPolynomial));
+		      KLOG (LOGLIKELIHOOD, LOGDEBUG,
+			    "\t\t likelihood (%d) = %e\n",
+			    ppairMatrix[phase[proband]][phase[spouse]].
+			    likelihoodIndex,
+			    evaluateValue (ppairMatrix[phase[proband]]
+					   [phase[spouse]].slot.
+					   likelihoodPolynomial));
 #endif
 		    }
 		  else
@@ -1487,42 +1785,48 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 			likelihood);
 #endif
 		}
-	    }			/* a child is the proband */
-	  else			/* proband is a parent */
-	    {
+	    }
+	  else
+	    {			/* proband is a parent */
 	      if (pNucFam->firstHetLocus[spouse] >= 0 &&
 		  pHaplo->phase[spouse][pNucFam->firstHetLocus[spouse]] != 0)
 		{
 		  if (pNucFam->pParents[spouse]->pParents[DAD] == NULL)
 		    {
-		      /* non-proband parent is a founder */
+		      /*
+		       * non-proband parent is a
+		       * founder
+		       */
 		      /* find the reverse pattern */
 		      multiLocusPhaseFlip[spouse] =
-			~multiLocusPhase[spouse] & pNucFam->
+			multiLocusPhase2[spouse] ^ pNucFam->
 			hetLocusBits[spouse];
-		      if (ppairMatrix[multiLocusPhase[proband]]
+		      if (ppairMatrix[multiLocusPhase2[proband]]
 			  [multiLocusPhaseFlip[spouse]].count > 0)
 			{
 
-			  /* increase the count on the original  */
-			  ppairMatrix[multiLocusPhase[proband]]
+			  /*
+			   * increase the count
+			   * on the original
+			   */
+			  ppairMatrix[multiLocusPhase2[proband]]
 			    [multiLocusPhaseFlip[spouse]].count++;
 #ifndef NO_POLYNOMIAL
 			  if (modelOptions.polynomial == FALSE)
 			    KLOG (LOGLIKELIHOOD, LOGDEBUG,
 				  "\t\t likelihood (%d) = %e\n",
-				  ppairMatrix[multiLocusPhase[proband]]
+				  ppairMatrix[multiLocusPhase2[proband]]
 				  [multiLocusPhaseFlip[spouse]].
 				  likelihoodIndex,
-				  ppairMatrix[multiLocusPhase[proband]]
+				  ppairMatrix[multiLocusPhase2[proband]]
 				  [multiLocusPhaseFlip[spouse]].slot.
 				  likelihood);
 #else
 			  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 				"\t\t likelihood (%d) = %e\n",
-				ppairMatrix[multiLocusPhase[proband]]
+				ppairMatrix[multiLocusPhase2[proband]]
 				[multiLocusPhaseFlip[spouse]].likelihoodIndex,
-				ppairMatrix[multiLocusPhase[proband]]
+				ppairMatrix[multiLocusPhase2[proband]]
 				[multiLocusPhaseFlip[spouse]].slot.
 				likelihood);
 #endif
@@ -1536,62 +1840,66 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 		{
 		  /* find the reverse pattern */
 		  multiLocusPhaseFlip[proband] =
-		    ~multiLocusPhase[proband] & pNucFam->
+		    multiLocusPhase2[proband] ^ pNucFam->
 		    hetLocusBits[proband];
 		  if (ppairMatrix[multiLocusPhaseFlip[proband]]
-		      [multiLocusPhase[spouse]].count > 0)
+		      [multiLocusPhase2[spouse]].count > 0)
 		    {
-		      /* make sure we have calculated for this pattern before */
-		      ppairMatrix[multiLocusPhase[proband]]
-			[multiLocusPhase[spouse]].count = 1;
+		      /*
+		       * make sure we have
+		       * calculated for this
+		       * pattern before
+		       */
+		      ppairMatrix[multiLocusPhase2[proband]]
+			[multiLocusPhase2[spouse]].count = 1;
 		      likelihoodIndex =
 			ppairMatrix[multiLocusPhaseFlip[proband]]
-			[multiLocusPhase[spouse]].likelihoodIndex;
+			[multiLocusPhase2[spouse]].likelihoodIndex;
 #ifndef NO_POLYNOMIAL
 		      if (modelOptions.polynomial == TRUE)
 			{
-			  ppairMatrix[multiLocusPhase[proband]]
-			    [multiLocusPhase[spouse]].slot.
+			  ppairMatrix[multiLocusPhase2[proband]]
+			    [multiLocusPhase2[spouse]].slot.
 			    likelihoodPolynomial =
 			    ppairMatrix[multiLocusPhaseFlip[proband]]
-			    [multiLocusPhase[spouse]].slot.
+			    [multiLocusPhase2[spouse]].slot.
 			    likelihoodPolynomial;
-			  pProband->pLikelihood[multiLocusIndex[proband]].
+			  pProband->pLikelihood[multiLocusIndex2[proband]].
 			    wtslot.weightPolynomial =
 			    pProband->pLikelihood[likelihoodIndex].wtslot.
 			    weightPolynomial;
 			}
 		      else
 			{
-			  ppairMatrix[multiLocusPhase[proband]]
-			    [multiLocusPhase[spouse]].slot.likelihood =
+			  ppairMatrix[multiLocusPhase2[proband]]
+			    [multiLocusPhase2[spouse]].slot.likelihood =
 			    ppairMatrix[multiLocusPhaseFlip[proband]]
-			    [multiLocusPhase[spouse]].slot.likelihood;
-			  pProband->pLikelihood[multiLocusIndex[proband]].
+			    [multiLocusPhase2[spouse]].slot.likelihood;
+			  pProband->pLikelihood[multiLocusIndex2[proband]].
 			    wtslot.weight =
 			    pProband->pLikelihood[likelihoodIndex].wtslot.
 			    weight;
 			  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 				"\t\t likelihood (%d) = %e\n",
-				ppairMatrix[multiLocusPhase[proband]]
-				[multiLocusPhase[spouse]].likelihoodIndex,
-				ppairMatrix[multiLocusPhase[proband]]
-				[multiLocusPhase[spouse]].slot.likelihood);
+				ppairMatrix[multiLocusPhase2[proband]]
+				[multiLocusPhase2[spouse]].likelihoodIndex,
+				ppairMatrix[multiLocusPhase2[proband]]
+				[multiLocusPhase2[spouse]].slot.likelihood);
 			}
 #else
-		      ppairMatrix[multiLocusPhase[proband]]
-			[multiLocusPhase[spouse]].slot.likelihood =
+		      ppairMatrix[multiLocusPhase2[proband]]
+			[multiLocusPhase2[spouse]].slot.likelihood =
 			ppairMatrix[multiLocusPhaseFlip[proband]]
-			[multiLocusPhase[spouse]].slot.likelihood;
-		      pProband->pLikelihood[multiLocusIndex[proband]].wtslot.
+			[multiLocusPhase2[spouse]].slot.likelihood;
+		      pProband->pLikelihood[multiLocusIndex2[proband]].wtslot.
 			weight =
 			pProband->pLikelihood[likelihoodIndex].wtslot.weight;
 		      KLOG (LOGLIKELIHOOD, LOGDEBUG,
 			    "\t\t likelihood (%d) = %e\n",
-			    ppairMatrix[multiLocusPhase[proband]]
-			    [multiLocusPhase[spouse]].likelihoodIndex,
-			    ppairMatrix[multiLocusPhase[proband]]
-			    [multiLocusPhase[spouse]].likelihood);
+			    ppairMatrix[multiLocusPhase2[proband]]
+			    [multiLocusPhase2[spouse]].likelihoodIndex,
+			    ppairMatrix[multiLocusPhase2[proband]]
+			    [multiLocusPhase2[spouse]].likelihood);
 #endif
 		      calculateFlag = 0;
 		    }
@@ -1600,316 +1908,154 @@ loop_phases (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 
 	  if (calculateFlag == 1)
 	    {
-#if 1
-	      calculate_likelihood(pNucFam, pHaplo, pProband, locus, 
-				   multiLocusIndex, multiLocusPhase, dWeight);
-#endif 
-
-#if 0
-	      for (i = DAD; i <= MOM; i++)
+	      /* 0 - don't keep result, 1 - keep result, 2 - use result */
+	      if(multiLocusPhase2[DAD] == 0 && multiLocusPhase2[MOM] == 0)
 		{
-		  if (pParent[i]->touchedFlag == TRUE)
-		    {
-		      /* we have worked on this parent before */
-		      if (pParent[i] == pProband)
-			{
-#ifndef NO_POLYNOMIAL
-			  if (modelOptions.polynomial == TRUE)
-			    newWeightPolynomial[i] = constantExp (1);
-			  else
-			    newWeight[i] = 1.0;
-#else
-			  newWeight[i] = 1.0;
-#endif
-			}
-		      else
-			{
-#ifndef NO_POLYNOMIAL
-			  if (modelOptions.polynomial == TRUE)
-			    newWeightPolynomial[i] = timesExp (2, pParent[i]->pLikelihood[multiLocusIndex[i]].lkslot.likelihoodPolynomial, 1, pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.weightPolynomial, 1, 0);	//Dec 24
-			  else
-			    newWeight[i] =
-			      pParent[i]->pLikelihood[multiLocusIndex[i]].
-			      lkslot.likelihood *
-			      pParent[i]->pLikelihood[multiLocusIndex[i]].
-			      wtslot.weight;
-#else
-			  newWeight[i] =
-			    pParent[i]->pLikelihood[multiLocusIndex[i]].
-			    lkslot.likelihood *
-			    pParent[i]->pLikelihood[multiLocusIndex[i]].
-			    wtslot.weight;
-#endif
-
-			}
-		    }
-		  else		/* first time we work on this parent */
-		    {
-		      if (pNucFam->pParents[i]->pParents[DAD] == NULL)
-			{
-			  /* this parent is a founder. the weight is just the multiplication of 
-			     genotype weights at each locus under LE. The weight should have been passed 
-			     in as an input */
-			  if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
-			    {
-#ifndef NO_POLYNOMIAL
-
-			      if (modelOptions.polynomial == TRUE)
-				newWeightPolynomial[i] =
-				  (Polynomial *) dWeight[i];
-			      else
-				newWeight[i] = *((double *) dWeight + i);
-#else
-			      newWeight[i] = *((double *) dWeight + i);
-#endif
-			    }
-			  else	/* founder under LD */
-			    {
-#ifndef NO_POlYNOMIAL
-			      if (modelOptions.polynomial == TRUE)
-				{
-				  get_haplotype_freq (locus, i,
-						      &newWeightPolynomial[i],
-						      pHaplo);
-				}
-			      else
-				{
-				  get_haplotype_freq (locus, i, &newWeight[i],
-						      pHaplo);
-				}
-#else
-			      get_haplotype_freq (locus, i, &newWeight[i],
-						  pHaplo);
-#endif
-			    }	/* end of founder and LD */
-			}	/* founder */
-		      else	/* first time on this nonfounder parent */
-			{
-#ifndef NO_POLYNOMIAL
-			  if (modelOptions.polynomial == TRUE)
-			    newWeightPolynomial[i] = constantExp (1.0);
-			  else
-			    newWeight[i] = 1.0;
-#else
-			  newWeight[i] = 1.0;
-#endif
-			}
-		    }		/* end of first time on this parent */
-		  if (pParent[i]->touchedFlag != TRUE
-		      && pParent[i] == pProband)
-		    {
-#ifndef NO_POLYNOMIAL
-		      if (modelOptions.polynomial == TRUE)
-			{
-			  pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.
-			    weightPolynomial = newWeightPolynomial[i];
-			  newWeightPolynomial[i] = constantExp (1.0);
-			}
-		      else
-			{
-			  pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.
-			    weight = newWeight[i];
-			  newWeight[i] = 1.0;
-			}
-#else
-		      pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.
-			weight = newWeight[i];
-		      newWeight[i] = 1.0;
-#endif
-		    }
-
-		  /* need to multiply the penetrance if disease locus is in and 
-		   * we haven't calculated any likelihood on this parent before 
-		   */
-		  traitLocus = locusList->traitLocusIndex;
-		  if (traitLocus >= 0 && pParent[i]->touchedFlag != TRUE)
-		    {
-		      genoIndex = pHaplo->pParentalPairInd[traitLocus];
-#ifndef NO_POLYNOMIAL
-		      if (modelOptions.polynomial == TRUE)
-			penetrancePolynomial[i] =
-			  pHaplo->ppParentalPair[traitLocus][genoIndex].
-			  pGenotype[i]->penslot.penetrancePolynomial;
-		      else
-			penetrance[i] =
-			  pHaplo->ppParentalPair[traitLocus][genoIndex].
-			  pGenotype[i]->penslot.penetrance;
-#else
-		      penetrance[i] =
-			pHaplo->ppParentalPair[traitLocus][genoIndex].
-			pGenotype[i]->penslot.penetrance;
-#endif
-		    }
-		  else
-		    {
-#ifndef NO_POLYNOMIAL
-		      if (modelOptions.polynomial == TRUE)
-			penetrancePolynomial[i] = constantExp (1);
-		      else
-			penetrance[i] = 1.0;
-#else
-		      penetrance[i] = 1.0;
-#endif
-
-		    }
-		}		/* loop over each parent */
-
-	      /* now work on the children conditional on this parental pair */
-	      childProduct = 1;
-#ifndef NO_POLYNOMIAL
-	      if (modelOptions.polynomial == TRUE)
-		childProductPolynomial = constantExp (1);
-#endif
-	      for (child = 0; child < pNucFam->numChildren; child++)
-		{
-		  xmissionIndex[DAD] = 0;
-		  xmissionIndex[MOM] = 0;
-
-#ifndef NO_POLYNOMIAL
-		  if (modelOptions.polynomial == TRUE)
-		    {
-		      sumPolynomial = constantExp (0.0);
-		      loop_child_multi_locus_genotype (pNucFam->
-						       ppChildrenList[child],
-						       pProband, pHaplo,
-						       child, 0, 0,
-						       &sumPolynomial,
-						       xmissionIndex);
-		      childProductPolynomial =
-			timesExp (2,
-				  childProductPolynomial,
-				  1, sumPolynomial, 1, 0);
-		    }
-		  else
-		    {
-		      sum = 0;
-		      loop_child_multi_locus_genotype (pNucFam->
-						       ppChildrenList[child],
-						       pProband, pHaplo,
-						       child, 0, 0,
-						       &sum, xmissionIndex);
-
-		      childProduct *= sum;
-		    }
-#else
-		  sum = 0;
-		  loop_child_multi_locus_genotype (pNucFam->
-						   ppChildrenList[child],
-						   pProband, pHaplo,
-						   child, 0, 0,
-						   &sum, xmissionIndex);
-
-		  childProduct *= sum;
-#endif
-		}		/* looping over all children */
-	      ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
-		likelihoodIndex = multiLocusIndex[proband];
-	      ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
-		count = 1;
-#ifndef NO_POLYNOMIAL
-	      if (modelOptions.polynomial == TRUE)
-		{
-		  ppairMatrix[multiLocusPhase[proband]]
-		    [multiLocusPhase[spouse]].slot.likelihoodPolynomial =
-		    timesExp (5,
-			      newWeightPolynomial[proband],
-			      1,
-			      newWeightPolynomial[spouse],
-			      1,
-			      penetrancePolynomial[proband],
-			      1,
-			      penetrancePolynomial[spouse],
-			      1, childProductPolynomial, 1, 0);
-#if 0
-		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
-			"\t\t likelihood (%d) = %e\n",
-			ppairMatrix[multiLocusPhase[proband]][multiLocusPhase
-							      [spouse]].
-			likelihoodIndex,
-			evaluateValue(ppairMatrix[multiLocusPhase[proband]]
-				      [multiLocusPhase[spouse]].slot.
-				      likelihoodPolynomial));
-#endif
+		  memset(likelihoodChildCount, 0, sizeof(int)*maxChildren);
+		  calcFlag = 1;
 		}
 	      else
 		{
-		  /* save it */
-		  ppairMatrix[multiLocusPhase[proband]][multiLocusPhase
-							[spouse]].slot.
-		    likelihood =
-		    newWeight[proband] * newWeight[spouse] *
-		    penetrance[proband] * penetrance[spouse] * childProduct;
-		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
-			"\t\t likelihood (%d) = %e\n",
-			ppairMatrix[multiLocusPhase[proband]][multiLocusPhase
-							      [spouse]].
-			likelihoodIndex,
-			ppairMatrix[multiLocusPhase[proband]][multiLocusPhase
-							      [spouse]].slot.
-			likelihood);
+		  calcFlag = 2; 
+		  recalculate_child_likelihood(newFlipMask, childProductPtr);
 		}
-#else
-	      /* save it */
-	      ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
-		slot.likelihood = newWeight[proband] * newWeight[spouse] *
-		penetrance[proband] * penetrance[spouse] * childProduct;
-	      KLOG (LOGLIKELIHOOD, LOGDEBUG, "\t\t likelihood (%d) = %e\n",
-		    ppairMatrix[multiLocusPhase[proband]][multiLocusPhase
-							  [spouse]].
-		    likelihoodIndex,
-		    ppairMatrix[multiLocusPhase[proband]][multiLocusPhase
-							  [spouse]].slot.
-		    likelihood);
-#endif
-#endif /* if 0 */
-
+	      calculate_likelihood (multiLocusIndex2, multiLocusPhase2,
+				    dWeight, childProductPtr);
 	    }			/* fresh likelihood calculation */
-
-	}			/* end of processing a complete multilocus parental pair */
+	}			/* end of processing a complete multilocus
+				 * parental pair */
 
     }				/* move on to next pair on this locus */
 
 }				/* end of loop_phases() */
 
+
+/* calculating childProduct base on previous pattern */
+void
+recalculate_child_likelihood(int flipMask[2], void *childProduct)
+{
+  int i, j; 
+  double childSum =0; 
+  Polynomial *childSumPoly = NULL; 
+  ChildElement *pElement;
+  int xmissionIndex[2];
+
+  multCount = 0;
+#ifndef NO_POLYNOMIAL
+  if (modelOptions.polynomial == TRUE)
+    *(Polynomial **)childProduct = constant1Poly;
+  else
+    *(double *)childProduct = 1;
+#endif
+
+  for(i=0; i < pNucFam->numChildren; i++)
+    {
+#ifndef NO_POLYNOMIAL
+  if (modelOptions.polynomial == TRUE)
+    childSumPoly = constant0Poly;
+  else
+    childSum = 0;
+#endif
+      for(j= 0; j < likelihoodChildCount[i]; j++)
+	{
+	  pElement = &likelihoodChildElements[multCount+j]; 
+	  for(parent=DAD; parent <= MOM; parent++)
+	    {
+	      xmissionIndex[parent] = pElement->xmissionIndex[parent] ^ flipMask[parent]; 
+	    }
+
+#ifndef NO_POLYNOMIAL
+	  if (modelOptions.polynomial == TRUE)
+	    {
+	      childSumPoly = 
+		plusExp(2, 
+			1.0, childSumPoly, 
+			1.0, timesExp (3,
+				       xmissionMatrix[xmissionIndex[DAD]].slot.probPoly[1], 1,
+				       xmissionMatrix[xmissionIndex[MOM]].slot.probPoly[2], 1, 
+				       pElement->fslot.factorPolynomial, 1, 
+				       0), 
+			1);
+	    }
+	  else
+	    {
+	    childSum += xmissionMatrix[xmissionIndex[DAD]].slot.prob[1] * 
+	      xmissionMatrix[xmissionIndex[MOM]].slot.prob[2] *
+	      pElement->fslot.factor;
+	    }
+#endif
+	}
+#ifndef NO_POLYNOMIAL
+      if (modelOptions.polynomial == TRUE)
+	*(Polynomial **)childProduct = 
+	  timesExp(2, 
+		   *(Polynomial **)childProduct, 1, 
+		   childSumPoly, 1, 
+		   1);
+      else
+	*(double *)childProduct *= childSum;
+#endif
+      multCount += likelihoodChildCount[i];
+      
+    }
+}
+
 int
-calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
-		      Person * pProband, int locus, int multiLocusIndex[2],
-		      int multiLocusPhase[2], void *dWeight[2])
-		      
+calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2], 
+		      void *dWeight[2], void *childProductPtr)
 {
   int i;
   int proband;
   int spouse;
   Person *pParent[2];
   double newWeight[2];
-  double sum;
-  int child;
-  int xmissionIndex[2];
-  double childProduct;
+  double childProduct = 1;
   double penetrance[2];
   int traitLocus;
   int genoIndex;
-#ifndef NO_POlYNOMIAL
+  double sum;
+#ifndef NO_POLYNOMIAL
   Polynomial *newWeightPolynomial[2];
   Polynomial *penetrancePolynomial[2];
-  Polynomial *sumPolynomial;
   Polynomial *childProductPolynomial = NULL;
+  Polynomial *sumPolynomial = NULL;
 #endif
+  ConditionalLikelihood *pConditional;
 
   pParent[DAD] = pNucFam->pParents[DAD];
   pParent[MOM] = pNucFam->pParents[MOM];
   proband = pNucFam->head;
   spouse = pNucFam->spouse;
+  int xmissionIndex[2] = { 0, 0 };
+
+#ifndef NO_POLYNOMIAL
+  if (modelOptions.polynomial == TRUE)
+    {
+      childSum = &sumPolynomial;
+      if(calcFlag == 2)
+	childProductPolynomial = *(Polynomial **)childProductPtr;
+    }
+  else
+    {
+      childSum = &sum;
+      if(calcFlag == 2)
+	childProduct = *(double *)childProductPtr;
+    }
+#else
+  childSum = &sum;
+#endif
+
   for (i = DAD; i <= MOM; i++)
     {
 #ifndef NO_POLYNOMIAL
       if (modelOptions.polynomial == TRUE)
-	newWeightPolynomial[i] = constantExp (1);
+	newWeightPolynomial[i] = constant1Poly;
       else
 	newWeight[i] = 1.0;
 #else
       newWeight[i] = 1.0;
 #endif
+      pConditional = &pParent[i]->pLikelihood[multiLocusIndex[i]];
       if (pParent[i]->touchedFlag == TRUE)
 	{
 	  /* we have worked on this parent before */
@@ -1917,28 +2063,32 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 	    {
 #ifndef NO_POLYNOMIAL
 	      if (modelOptions.polynomial == TRUE)
-		newWeightPolynomial[i] = timesExp (2, pParent[i]->pLikelihood[multiLocusIndex[i]].lkslot.likelihoodPolynomial, 1, pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.weightPolynomial, 1, 0);	//Dec 24
+		newWeightPolynomial[i] =
+		  timesExp (2,
+			    pConditional->lkslot.likelihoodPolynomial, 1,
+			    pConditional->wtslot.weightPolynomial, 1, 0);
+	      //Dec 24
 	      else
 		newWeight[i] =
-		  pParent[i]->pLikelihood[multiLocusIndex[i]].lkslot.
-		  likelihood *
-		  pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.weight;
+		  pConditional->lkslot.likelihood *
+		  pConditional->wtslot.weight;
 #else
 	      newWeight[i] =
-		pParent[i]->pLikelihood[multiLocusIndex[i]].lkslot.
-		likelihood *
-		pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.weight;
+		pConditional->lkslot.likelihood * pConditional->wtslot.weight;
 #endif
 
 	    }
 	}
-      else			/* first time we work on this parent */
-	{
+      else
+	{			/* first time we work on this parent */
 	  if (pNucFam->pParents[i]->pParents[DAD] == NULL)
 	    {
-	      /* this parent is a founder. the weight is just the multiplication of 
-	         genotype weights at each locus under LE. The weight should have been passed 
-	         in as an input */
+	      /*
+	       * this parent is a founder. the weight is
+	       * just the multiplication of genotype
+	       * weights at each locus under LE. The weight
+	       * should have been passed in as an input
+	       */
 	      if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
 		{
 #ifndef NO_POLYNOMIAL
@@ -1951,20 +2101,20 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 		  newWeight[i] = *((double *) dWeight + i);
 #endif
 		}
-	      else if(pParent[i]->loopBreaker == 0)		/* founder under LD */
-		{
+	      else if (pParent[i]->loopBreaker == 0)
+		{		/* founder under LD */
 #ifndef NO_POlYNOMIAL
 		  if (modelOptions.polynomial == TRUE)
 		    {
-		      get_haplotype_freq (locus, i, &newWeightPolynomial[i],
-					  pHaplo);
+		      get_haplotype_freq (numLocus - 1, i,
+					  &newWeightPolynomial[i]);
 		    }
 		  else
 		    {
-		      get_haplotype_freq (locus, i, &newWeight[i], pHaplo);
+		      get_haplotype_freq (numLocus - 1, i, &newWeight[i]);
 		    }
 #else
-		  get_haplotype_freq (locus, i, &newWeight[i], pHaplo);
+		  get_haplotype_freq (numLocus - 1, i, &newWeight[i]);
 #endif
 		}		/* end of founder and LD */
 	    }			/* founder */
@@ -1974,28 +2124,25 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 #ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE)
 	    {
-	      pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.
-		weightPolynomial = newWeightPolynomial[i];
-	      newWeightPolynomial[i] = constantExp (1.0);
+	      pConditional->wtslot.weightPolynomial = newWeightPolynomial[i];
+	      newWeightPolynomial[i] = constant1Poly;
 	    }
 	  else
 	    {
-	      pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.weight =
-		newWeight[i];
+	      pConditional->wtslot.weight = newWeight[i];
 	      newWeight[i] = 1.0;
 	    }
 #else
-	  pParent[i]->pLikelihood[multiLocusIndex[i]].wtslot.weight =
-	    newWeight[i];
+	  pConditional->weight = newWeight[i];
 	  newWeight[i] = 1.0;
 #endif
 	}
-
-      /* need to multiply the penetrance if disease locus is in and 
-       * we haven't calculated any likelihood on this parent before 
+      /*
+       * need to multiply the penetrance if disease locus is in and
+       * we haven't calculated any likelihood on this parent before
        */
       traitLocus = locusList->traitLocusIndex;
-      if (traitLocus >= 0 && pParent[i]->touchedFlag != TRUE && 
+      if (traitLocus >= 0 && pParent[i]->touchedFlag != TRUE &&
 	  (pParent[i]->loopBreaker == 0 || pParent[i]->pParents[DAD] != NULL))
 	{
 	  genoIndex = pHaplo->pParentalPairInd[traitLocus];
@@ -2018,7 +2165,7 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 	{
 #ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE)
-	    penetrancePolynomial[i] = constantExp (1);
+	    penetrancePolynomial[i] = constant1Poly;
 	  else
 	    penetrance[i] = 1.0;
 #else
@@ -2028,49 +2175,45 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 	}
     }				/* loop over each parent */
 
-  /* now work on the children conditional on this parental pair */
+  /* when calcFlag ==2, we just use existing results */
+  if(calcFlag != 2)
+    {
+      /* now work on the children conditional on this parental pair */
   childProduct = 1;
+  multCount = 0;
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
-    childProductPolynomial = constantExp (1);
+    childProductPolynomial = constant1Poly;
 #endif
   for (child = 0; child < pNucFam->numChildren; child++)
     {
+      pChild = pNucFam->ppChildrenList[child];
+
       xmissionIndex[DAD] = 0;
       xmissionIndex[MOM] = 0;
 
 #ifndef NO_POLYNOMIAL
       if (modelOptions.polynomial == TRUE)
 	{
-	  sumPolynomial = constantExp (0.0);
-	  loop_child_multi_locus_genotype (pNucFam->
-					   ppChildrenList[child],
-					   pProband, pHaplo,
-					   child, 0, 0,
-					   &sumPolynomial, xmissionIndex);
+	  sumPolynomial = constant0Poly;
+	  loop_child_multi_locus_genotype (0, 0, xmissionIndex);
 	  childProductPolynomial =
-	    timesExp (2, childProductPolynomial, 1, sumPolynomial, 1, 0);
+	    timesExp (2, childProductPolynomial, 1,
+		      (Polynomial *) sumPolynomial, 1, 0);
 	}
       else
 	{
 	  sum = 0;
-	  loop_child_multi_locus_genotype (pNucFam->
-					   ppChildrenList[child],
-					   pProband, pHaplo,
-					   child, 0, 0, &sum, xmissionIndex);
-
+	  loop_child_multi_locus_genotype (0, 0, xmissionIndex);
 	  childProduct *= sum;
 	}
 #else
       sum = 0;
-      loop_child_multi_locus_genotype (pNucFam->
-				       ppChildrenList[child],
-				       pProband, pHaplo,
-				       child, 0, 0, &sum, xmissionIndex);
-
+      loop_child_multi_locus_genotype (0, 0, xmissionIndex);
       childProduct *= sum;
 #endif
     }				/* looping over all children */
+    }
 
   /* results processing */
   ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
@@ -2082,20 +2225,18 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
       ppairMatrix[multiLocusPhase[proband]]
 	[multiLocusPhase[spouse]].slot.likelihoodPolynomial =
 	timesExp (5,
-		  newWeightPolynomial[proband],
-		  1,
-		  newWeightPolynomial[spouse],
-		  1,
-		  penetrancePolynomial[proband],
-		  1,
-		  penetrancePolynomial[spouse],
-		  1, childProductPolynomial, 1, 0);
+		  childProductPolynomial, 1,
+		  newWeightPolynomial[proband], 1,
+		  newWeightPolynomial[spouse], 1,
+		  penetrancePolynomial[proband], 1,
+		  penetrancePolynomial[spouse], 1, 1);
 #if 0
       KLOG (LOGLIKELIHOOD, LOGDEBUG, "\t\t likelihood (%d) = %e\n",
 	    ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
 	    likelihoodIndex,
-	    evaluateValue(ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
-			  slot.likelihoodPolynomial));
+	    evaluateValue (ppairMatrix[multiLocusPhase[proband]]
+			   [multiLocusPhase[spouse]].slot.
+			   likelihoodPolynomial));
 #endif
     }
   else
@@ -2104,10 +2245,13 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
       ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
 	slot.likelihood = newWeight[proband] * newWeight[spouse] *
 	penetrance[proband] * penetrance[spouse] * childProduct;
-      KLOG(LOGLIKELIHOOD, LOGDEBUG, "Parents: DAD(%s) weight %e   MOM(%s) weight %e \n",
-	   pParent[DAD]->sID, newWeight[proband], pParent[MOM]->sID, newWeight[spouse]);
-      KLOG(LOGLIKELIHOOD, LOGDEBUG, "Parents: DAD(%s) pen %e   MOM(%s) pen %e \n",
-	   pParent[DAD]->sID, penetrance[proband], pParent[MOM]->sID, penetrance[spouse]);
+      KLOG (LOGLIKELIHOOD, LOGDEBUG,
+	    "Parents: DAD(%s) weight %e   MOM(%s) weight %e \n",
+	    pParent[DAD]->sID, newWeight[proband], pParent[MOM]->sID,
+	    newWeight[spouse]);
+      KLOG (LOGLIKELIHOOD, LOGDEBUG,
+	    "Parents: DAD(%s) pen %e   MOM(%s) pen %e \n", pParent[DAD]->sID,
+	    penetrance[proband], pParent[MOM]->sID, penetrance[spouse]);
       KLOG (LOGLIKELIHOOD, LOGDEBUG, "\t\t likelihood (%d) = %e\n",
 	    ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
 	    likelihoodIndex,
@@ -2133,11 +2277,13 @@ calculate_likelihood (NuclearFamily * pNucFam, ParentalPairSpace * pHaplo,
 /*
  * Get haplotype frequency for founders under LD analysis */
 void
-get_haplotype_freq (int locus, int parent, void *freqPtr,
-		    ParentalPairSpace * pHaplo)
+get_haplotype_freq (int locus, int parent, void *freqPtr)
 {
-  int origLocus1, origLocus2;	/* locus indices in the original locus list for the two loci in LD */
-  double freq[2] = { 0, 0 };	/* variable to store the calculated frequency */
+  int origLocus1, origLocus2;	/* locus indices in the
+				 * original locus list for
+				 * the two loci in LD */
+  double freq[2] = { 0, 0 };	/* variable to store the calculated
+				 * frequency */
 #ifndef NO_POLYNOMIAL
   Polynomial *freqPolynomial[2] = { NULL, NULL };
   char vName[100];
@@ -2156,8 +2302,8 @@ get_haplotype_freq (int locus, int parent, void *freqPtr,
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
-      freqPolynomial[0] = constantExp (0);
-      freqPolynomial[1] = constantExp (0);
+      freqPolynomial[0] = constant0Poly;
+      freqPolynomial[1] = constant0Poly;
     }
 #endif
 
@@ -2173,8 +2319,10 @@ get_haplotype_freq (int locus, int parent, void *freqPtr,
   KASSERT (pLDLoci != NULL,
 	   "Can't find LD parameter between loci %d,%d.\n",
 	   origLocus1, origLocus2);
-  /* now find the corresponding haplotype frequency : 2 haplotypes 
-   * paternal haplotype & maternal haplotype */
+  /*
+   * now find the corresponding haplotype frequency : 2 haplotypes
+   * paternal haplotype & maternal haplotype
+   */
   pPair1 =
     &pHaplo->ppParentalPair[locus - 1][pHaplo->pParentalPairInd[locus - 1]];
   pPair2 = &pHaplo->ppParentalPair[locus][pHaplo->pParentalPairInd[locus]];
@@ -2189,7 +2337,7 @@ get_haplotype_freq (int locus, int parent, void *freqPtr,
 #ifndef NO_POLYNOMIAL
       if (modelOptions.polynomial == TRUE)
 	{
-	  freqPolynomial[i] = constantExp (0);
+	  freqPolynomial[i] = constant0Poly;
 	}
       else
 	freq[i] = 0;
@@ -2240,154 +2388,113 @@ get_haplotype_freq (int locus, int parent, void *freqPtr,
     }				/* end of loop of parents */
 }
 
-/* loop over a child's list of genotypes that are compatible with the parental pair
- * retrieve the transmission probability saved in the transmission matrix 
- * sum the likelihood for each genotype configuration
+/*
+ * loop over a child's list of genotypes that are compatible with the
+ * parental pair retrieve the transmission probability saved in the
+ * transmission matrix sum the likelihood for each genotype configuration
  */
 int
-loop_child_multi_locus_genotype (Person * pChild,
-				 Person * pProband,
-				 ParentalPairSpace * pHaplo,
-				 int child,
-				 int locus,
-				 int multiLocusIndex,
-				 void *pSum, int xmissionIndex[2])
+loop_child_multi_locus_genotype (int locus, int multiLocusIndex, int xmissionIndex[2])
 {
   int i;
-  Genotype *pGeno;		/* this child's genotype at current locus */
-  int genoIndex;		/* index of the geno in the list */
-  /* parental pair we are working on now */
-  ParentalPair *pParentalPair =
-    &pHaplo->ppParentalPair[locus][pHaplo->pParentalPairInd[locus]];
-  int parent;			/* parent - DAD or MOM */
-  int origLocus = locusList->pLocusIndex[locus];
-  double newProb = 1;
-#ifndef NO_POLYNOMIAL
-  Polynomial *newProbPolynomial = NULL;
-#endif
-  int newChromosome[2];
-  int numGenotype;
-  int multiLocusIndex2;
+  int newMultiLocusIndex;
   int newXmissionIndex[2];
-  ParentalPair *pTraitParentalPair;
+  ParentalPair *pParentalPair;
 
   /* number of possible genotypes at this locus for this child */
-  numGenotype = pChild->pSavedNumGenotype[origLocus];
   /* child's conditional likelihood offset for the multilocus genotype this function is building */
-  multiLocusIndex2 = multiLocusIndex * numGenotype;
+  multiLocusIndex *= pChild->pSavedNumGenotype[locusList->pLocusIndex[locus]];
   /* build the index to xmission matrix for paternal inheritance and maternal inheritance */
-  xmissionIndex[DAD] *= 3;
-  xmissionIndex[MOM] *= 3;
+  xmissionIndex[DAD] <<= 2;
+  xmissionIndex[MOM] <<= 2;
 
   /* loop through all of this child's compatible genotypes at this locus */
+  pParentalPair =
+    &pHaplo->ppParentalPair[locus][pHaplo->pParentalPairInd[locus]];
   for (i = 0; i < pParentalPair->pChildGenoLen[child]; i++)
     {
-      pGeno = pParentalPair->pppChildGenoList[child][i];
+      pGenotype = pParentalPair->pppChildGenoList[child][i];
       /* record the index to the genotype list for this child */
       pHaplo->pChildGenoInd[locus] = i;
       KLOG (LOGLIKELIHOOD, LOGDEBUG,
-	    "\t child (%s) locus %4d -> %4d|%-4d \n",
-	    pChild->sID, locusList->pLocusIndex[locus], pGeno->allele[DAD],
-	    pGeno->allele[MOM]);
+	    "\t child %s locus %4d -> %4d|%-4d \n",
+	    pChild->sID, locusList->pLocusIndex[locus],
+	    pGenotype->allele[DAD], pGenotype->allele[MOM]);
       /* record this child's conditional likelihood index */
-      multiLocusIndex = multiLocusIndex2 + pGeno->position;
+      newMultiLocusIndex = multiLocusIndex + pGenotype->position;
 
-      if (locus < locusList->numLocus)
-	{
 	  /* check the transmission probability */
 	  for (parent = DAD; parent <= MOM; parent++)
 	    {
 	      newChromosome[parent] =
 		pParentalPair->ppChildInheritance[parent][child][i];
-	      /* xmissionIndex has already been multiplied by 3 before the loop */
+	      /* xmissionIndex has already been multiplied by 4 before the loop */
 	      newXmissionIndex[parent] =
-		xmissionIndex[parent] + newChromosome[parent] - 1;
+		xmissionIndex[parent] | newChromosome[parent];
 	    }			/* looping paternal and maternal chromosomes */
 	  if (locus < locusList->numLocus - 1)
 	    {
-#ifndef NO_POLYNOMIAL
-	      if (modelOptions.polynomial == TRUE)
-		{
-//                fprintf(stderr,"AAlocus=%d newPen=%f pSum=%f newProb=%f i=%d\n",
-//                        locus,evaluateValue(newPenetrancePolynomial),
-//                evaluateValue(*(Polynomial **)pSum),evaluateValue(newProbPolynomial),i);      
-		  loop_child_multi_locus_genotype (pChild, pProband, pHaplo,
-						   child, locus + 1,
-						   multiLocusIndex,
-						   pSum, newXmissionIndex);
-//                fprintf(stderr,"BBlocus=%d newPen=%f pSum=%f newProb=%f\n",
-//                        locus,evaluateValue(newPenetrancePolynomial),
-//                evaluateValue(*(Polynomial **)pSum),evaluateValue(newProbPolynomial));                   
-		}
-	      else
-		{
-//                   fprintf(stderr,"AAlocus=%d newPen=%f, pSum=%f newProb=%f i=%d\n",
-//                                   locus, newPenetrance, *((double *)pSum),newProb,i);
-		  loop_child_multi_locus_genotype (pChild, pProband, pHaplo,
-						   child, locus + 1,
-						   multiLocusIndex,
-						   pSum, newXmissionIndex);
-//                   fprintf(stderr,"BBlocus=%d newPen=%f, pSum=%f newProb=%f\n",
-//                                   locus,newPenetrance, *((double *)pSum),newProb);
-		}
-#else
-	      loop_child_multi_locus_genotype (pChild, pProband, pHaplo,
-					       child, locus + 1,
-					       multiLocusIndex,
-					       pSum, newXmissionIndex);
-#endif
+	      loop_child_multi_locus_genotype (locus + 1, newMultiLocusIndex,
+					       newXmissionIndex);
 	    }
 	  else
 	    {
+	      
 	      /* get the transmission probability from the matrix */
-
 #ifndef NO_POLYNOMIAL
 	      if (modelOptions.polynomial == TRUE)
 		{
 		  newProbPolynomial =
 		    timesExp (2,
-			      xmissionMatrix[newXmissionIndex[DAD]].slot.
-			      probPoly[DAD + 1], 1,
-			      xmissionMatrix[newXmissionIndex[MOM]].slot.
-			      probPoly[MOM + 1], 1, 0);
+			      xmissionMatrix[newXmissionIndex[DAD]].slot. probPoly[1], 1,
+			      xmissionMatrix[newXmissionIndex[MOM]].slot. probPoly[2], 1, 
+			      0);
 #if 0
 		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
-			"\t xmission prob: %f = %f * %f\n", 
-			evaluateValue(newProbPolynomial),
-			evaluateValue(xmissionMatrix[newXmissionIndex[DAD]].slot.probPoly[DAD +
-											  1]),
-			evaluateValue(xmissionMatrix[newXmissionIndex[MOM]].slot.probPoly[MOM +
-									    1]));
+			"\t xmission prob: %f = %f * %f\n",
+			evaluateValue (newProbPolynomial),
+			evaluateValue (xmissionMatrix[newXmissionIndex[DAD]].
+				       slot.probPoly[1]),
+			evaluateValue (xmissionMatrix[newXmissionIndex[MOM]].
+				       slot.probPoly[2]));
 #endif
 		}
 	      else
 		{
 		  newProb =
-		    xmissionMatrix[newXmissionIndex[DAD]].slot.prob[DAD + 1] *
-		    xmissionMatrix[newXmissionIndex[MOM]].slot.prob[MOM + 1];
+		    xmissionMatrix[newXmissionIndex[DAD]].slot.prob[1] *
+		    xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2];
 		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 			"\t xmission prob: %f = %f * %f\n", newProb,
-			xmissionMatrix[newXmissionIndex[DAD]].slot.prob[DAD +
-									1],
-			xmissionMatrix[newXmissionIndex[MOM]].slot.prob[MOM +
-									1]);
-//                 fprintf(stderr,"newProb=%f newPenetrance=%f\n",newProb,newPenetrance);
+			xmissionMatrix[newXmissionIndex[DAD]].slot.prob[1],
+			xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2]);
+		  //fprintf(stderr, "newProb=%f newPenetrance=%f\n", newProb, newPenetrance);
 		}
 #else
 	      newProb =
-		xmissionMatrix[newXmissionIndex[DAD]].slot.prob[DAD +
-								1] *
-		xmissionMatrix[newXmissionIndex[MOM]].slot.prob[MOM + 1];
+		xmissionMatrix[newXmissionIndex[DAD]].slot.prob[1] *
+		xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2];
 	      KLOG (LOGLIKELIHOOD, LOGDEBUG,
 		    "\t xmission prob: %f = %f * %f\n", newProb,
-		    xmissionMatrix[newXmissionIndex[DAD]].slot.prob[DAD + 1],
-		    xmissionMatrix[newXmissionIndex[MOM]].slot.prob[MOM + 1]);
+		    xmissionMatrix[newXmissionIndex[DAD]].slot.prob[1],
+		    xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2]);
 #endif
 
 	      /* we have completed one multilocus genotype for this child */
-	      /* check whether we already have some information about this kid
-	       * we should have if this kid is a connector to another nuclear
-	       * family we have processed before */
+	      /*
+	       * check whether we already have some information about this
+	       * kid we should have if this kid is a connector to another
+	       * nuclear family we have processed before
+	       */
+	      if(calcFlag == 1 && multCount >= maxChildElements)
+		{
+		  /* resizing likelihoodchildElements array */
+		  maxChildElements += 1024; 
+		  likelihoodChildElements = 
+		    (ChildElement *) realloc(likelihoodChildElements, 
+					     sizeof(ChildElement)*maxChildElements);
+		  
+		}
 #ifndef NO_POLYNOMIAL
 	      if (modelOptions.polynomial == TRUE)
 		{
@@ -2396,21 +2503,34 @@ loop_child_multi_locus_genotype (Person * pChild,
 		      /* the child is not a proband */
 		      if (pChild->touchedFlag == 1)
 			{
-			  /* some likelihood calculation has been calculated for this child */
-			  *(Polynomial **) pSum = plusExp (2, 1.0, *(Polynomial **) pSum, 1.0, timesExp (2, newProbPolynomial, 1, pChild->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial, 1, 0),	//end of timesExp
-							   1);	//end of plusExp
+			  /*
+			   * some likelihood calculation has
+			   * been calculated for this child
+			   */
+			  *(Polynomial **) childSum = plusExp (2, 1.0, *(Polynomial **) childSum, 1.0, timesExp (2, newProbPolynomial, 1, pChild->pLikelihood[newMultiLocusIndex].lkslot.likelihoodPolynomial, 1, 0),	//end of timesExp
+							       1);
+			  if(calcFlag == 1)
+			    {
+			      likelihoodChildElements[multCount].fslot.factorPolynomial =
+				pChild->pLikelihood[newMultiLocusIndex].lkslot.likelihoodPolynomial;
+			    }
+			  //end of plusExp
 #if 0
-			  KLOG(LOGLIKELIHOOD, LOGDEBUG, 
-			       "\t use already calculated child prob %e \n", 
-			       evaluateValue(pChild->pLikelihood[multiLocusIndex].lkslot.likelihoodPolynomial));
+			  KLOG (LOGLIKELIHOOD, LOGDEBUG,
+				"\t use already calculated child prob %e \n",
+				evaluateValue (pChild->
+					       pLikelihood[newMultiLocusIndex].
+					       lkslot.likelihoodPolynomial));
 #endif
 			}
 		      else if (locusList->traitLocusIndex >= 0)
-			/* first time working on this child's current multilocus genotype 
-			 * and we need to consider penetrance 
+			/*
+			 * first time working on this child's
+			 * current multilocus genotype and we
+			 * need to consider penetrance
 			 */
 			{
-			  genoIndex =
+			  traitGenoIndex =
 			    pHaplo->pChildGenoInd[locusList->traitLocusIndex];
 			  pTraitParentalPair =
 			    &pHaplo->ppParentalPair[locusList->
@@ -2418,55 +2538,95 @@ loop_child_multi_locus_genotype (Person * pChild,
 								     pParentalPairInd
 								     [locusList->
 								      traitLocusIndex]];
-			  *(Polynomial **) pSum = plusExp (2, 1.0, *(Polynomial **) pSum, 1.0, timesExp (2, newProbPolynomial, 1, pTraitParentalPair->pppChildGenoList[child][genoIndex]->penslot.penetrancePolynomial, 1, 0),	//end of timesExp
-							   1);	//end of plusExp
+			  *(Polynomial **) childSum = 
+			    plusExp (2, 
+				     1.0, *(Polynomial **) childSum, 
+				     1.0, timesExp (2, 
+						    newProbPolynomial, 1, 
+						    pTraitParentalPair->pppChildGenoList[child]
+						    [traitGenoIndex]->penslot.penetrancePolynomial, 1, 
+						    0),	//end of timesExp
+				     1);
+			  
+			  if(calcFlag == 1)
+			    {
+			      likelihoodChildElements[multCount].fslot.factorPolynomial =
+				pTraitParentalPair->pppChildGenoList[child]
+				[traitGenoIndex]->penslot.penetrancePolynomial;
+			    }
 			}
 		      else
 			{
-			  /* no trait locus and new to this child */
-			  *(Polynomial **) pSum = plusExp (2,
-							   1.0,
-							   *(Polynomial **)
-							   pSum, 1.0,
-							   newProbPolynomial,
-							   1);
+			  /*
+			   * no trait locus and new to this
+			   * child
+			   */
+			  *(Polynomial **) childSum = plusExp (2,
+							       1.0,
+							       *(Polynomial
+								 **) childSum,
+							       1.0,
+							       newProbPolynomial,
+							       1);
+			  if(calcFlag == 1)
+			    {
+			      likelihoodChildElements[multCount].fslot.factorPolynomial =
+				constant1Poly;
+			    }
 			}
 		    }
-		  else		/* this child is not proband */
-		    {
-		      *(Polynomial **) pSum = plusExp (2,
-						       1.0,
-						       *(Polynomial **) pSum,
-						       1.0,
-						       newProbPolynomial, 1);
+		  else
+		    {		/* this child is proband */
+		      *(Polynomial **) childSum = plusExp (2,
+							   1.0,
+							   *(Polynomial **)
+							   childSum, 1.0,
+							   newProbPolynomial,
+							   1);
+			  if(calcFlag == 1)
+			    {
+			      likelihoodChildElements[multCount].fslot.factorPolynomial =
+				constant1Poly;
+			    }
 		    }
-#if 0		
-		  KLOG(LOGLIKELIHOOD, LOGDEBUG, 
-		       "\t child sum %e \n", 
-		       evaluateValue(*(Polynomial **)pSum));
+#if 0
+		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
+			"\t child sum %e \n",
+			evaluateValue (*(Polynomial **) childSum));
 #endif
 		}
-	      else		/* PE is not turned on */
-		{
+	      else
+		{		/* PE is not turned on */
 		  if (pChild != pProband)
 		    {
 		      /* the child is not a proband */
 		      if (pChild->touchedFlag == 1)
 			{
-			  /* some likelihood calculation has been done for this child */
-			  *(double *) pSum += newProb *
-			    pChild->pLikelihood[multiLocusIndex].lkslot.
+			  /*
+			   * some likelihood calculation has
+			   * been done for this child
+			   */
+			  *(double *) childSum += newProb *
+			    pChild->pLikelihood[newMultiLocusIndex].lkslot.
 			    likelihood;
-			  KLOG(LOGLIKELIHOOD, LOGDEBUG, 
-			       "\t use already calculated child prob %e \n", 
-			       pChild->pLikelihood[multiLocusIndex].lkslot.likelihood);
+			  KLOG (LOGLIKELIHOOD, LOGDEBUG,
+				"\t use already calculated child prob %e \n",
+				pChild->pLikelihood[newMultiLocusIndex].lkslot.
+				likelihood);
+			  if(calcFlag == 1)
+			    {
+			      likelihoodChildElements[multCount].fslot.factor =
+				pChild->pLikelihood[newMultiLocusIndex].lkslot.likelihood;
+			    }
 			}
 		      else if (locusList->traitLocusIndex >= 0)
-			/* first time working on this child's current multilocus genotype 
-			 * and we need to consider penetrance 
+			/*
+			 * first time working on this child's
+			 * current multilocus genotype and we
+			 * need to consider penetrance
 			 */
 			{
-			  genoIndex =
+			  traitGenoIndex =
 			    pHaplo->pChildGenoInd[locusList->traitLocusIndex];
 			  pTraitParentalPair =
 			    &pHaplo->ppParentalPair[locusList->
@@ -2474,30 +2634,46 @@ loop_child_multi_locus_genotype (Person * pChild,
 								     pParentalPairInd
 								     [locusList->
 								      traitLocusIndex]];
-			  *(double *) pSum +=
+			  *(double *) childSum +=
 			    newProb *
 			    pTraitParentalPair->
-			    pppChildGenoList[child][genoIndex]->penslot.
+			    pppChildGenoList[child][traitGenoIndex]->penslot.
 			    penetrance;
-			  KLOG(LOGLIKELIHOOD, LOGDEBUG, "child penetrance %e\n", 
-			       pTraitParentalPair->
-			       pppChildGenoList[child][genoIndex]->penslot.
-			       penetrance);
-			       
+			  if(calcFlag == 1)
+			    {
+			      likelihoodChildElements[multCount].fslot.factor =
+				pTraitParentalPair->pppChildGenoList[child][traitGenoIndex]->penslot.penetrance;
+			    }
+			  KLOG (LOGLIKELIHOOD, LOGDEBUG,
+				"child penetrance %e\n",
+				pTraitParentalPair->
+				pppChildGenoList[child][traitGenoIndex]->
+				penslot.penetrance);
+
 			}
 		      else
 			{
-			  *(double *) pSum += newProb;
+			  *(double *) childSum += newProb;
+			  if(calcFlag == 1)
+			    {
+			      likelihoodChildElements[multCount].fslot.factor = 1;
+			    }
 			}
 		    }
-		  else		/* this child is proband */
-		    {
-		      /* penetrance if applicable will be figured into later */
-		      *(double *) pSum += newProb;
+		  else
+		    {		/* this child is proband */
+		      /*
+		       * penetrance if applicable will be figured
+		       * into later
+		       */
+		      *(double *) childSum += newProb;
+		      if(calcFlag == 1)
+			{
+			  likelihoodChildElements[multCount].fslot.factor = 1;
+			}
 		    }
-		  KLOG(LOGLIKELIHOOD, LOGDEBUG, 
-		       "\t child sum %e \n", 
-		       *(double *)pSum);
+		  KLOG (LOGLIKELIHOOD, LOGDEBUG,
+			"\t child sum %e \n", *(double *) childSum);
 		}
 #else /* PE is not compiled in */
 	      if (pChild != pProband)
@@ -2505,20 +2681,26 @@ loop_child_multi_locus_genotype (Person * pChild,
 		  /* the child is not a proband */
 		  if (pChild->touchedFlag == 1)
 		    {
-		      /* some likelihood calculation has been done for this child */
-		      *(double *) pSum += newProb *
-			pChild->pLikelihood[multiLocusIndex].lkslot.
+		      /*
+		       * some likelihood calculation has been done
+		       * for this child
+		       */
+		      *(double *) childSum += newProb *
+			pChild->pLikelihood[newMultiLocusIndex].lkslot.
 			likelihood;
-		      KLOG(LOGLIKELIHOOD, LOGDEBUG, 
-			   "\t use already calculated child prob %e \n", 
-			   pChild->pLikelihood[multiLocusIndex].lkslot.likelihood);
+		      KLOG (LOGLIKELIHOOD, LOGDEBUG,
+			    "\t use already calculated child prob %e \n",
+			    pChild->pLikelihood[newMmultiLocusIndex].lkslot.
+			    likelihood);
 		    }
 		  else if (locusList->traitLocusIndex >= 0)
-		    /* first time working on this child's current multilocus genotype 
-		     * and we need to consider penetrance 
+		    /*
+		     * first time working on this child's current
+		     * multilocus genotype and we need to
+		     * consider penetrance
 		     */
 		    {
-		      genoIndex =
+		      traitGenoIndex =
 			pHaplo->pChildGenoInd[locusList->traitLocusIndex];
 		      pTraitParentalPair =
 			&pHaplo->ppParentalPair[locusList->
@@ -2526,39 +2708,48 @@ loop_child_multi_locus_genotype (Person * pChild,
 								 pParentalPairInd
 								 [locusList->
 								  traitLocusIndex]];
-		      *(double *) pSum +=
+		      *(double *) childSum +=
 			newProb *
 			pTraitParentalPair->
-			pppChildGenoList[child][genoIndex]->penslot.
+			pppChildGenoList[child][traitGenoIndex]->penslot.
 			penetrance;
 		    }
 		  else
 		    {
-		      *(double *) pSum += newProb;
+		      *(double *) childSum += newProb;
 		    }
 		}
-	      else		/* this child is proband */
-		{
-		  /* penetrance if applicable will be figured into later */
-		  *(double *) pSum += newProb;
+	      else
+		{		/* this child is proband */
+		  /*
+		   * penetrance if applicable will be figured into
+		   * later
+		   */
+		  *(double *) childSum += newProb;
 		}
-		  KLOG(LOGLIKELIHOOD, LOGDEBUG, 
-		       "\t child sum %e \n", 
-		       *(double *)pSum);
+	      KLOG (LOGLIKELIHOOD, LOGDEBUG,
+		    "\t child sum %e \n", *(double *) childSum);
 #endif
 
+
+	      if(calcFlag == 1)
+		{
+		  likelihoodChildElements[multCount].xmissionIndex[DAD] = newXmissionIndex[DAD];
+		  likelihoodChildElements[multCount].xmissionIndex[MOM] = newXmissionIndex[MOM];
+		  likelihoodChildCount[child]++;
+		  multCount++;
+		}
 	    }			/* end of processing one complete multilocus genotype */
-	}
-    }				/* end of looping the genotype list for this locus */
+
+    }				/* loop possible genotypes at this locus */
   return 0;
 }
 
 
-/* A recursive call to build transmission probability matrix 
- * pMatrix - pass in matrix pointer - This should have been pre-allocated
- * totalLoci - total number of loci
- * loc - current locus 
- * prob - 
+/*
+ * A recursive call to build transmission probability matrix pMatrix - pass
+ * in matrix pointer - This should have been pre-allocated totalLoci - total
+ * number of loci loc - current locus prob -
  */
 
 int
@@ -2585,12 +2776,14 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
   char vName1[100];
 
   /* at each locus, the inheritance could be paternal only (1), maternal only (2), and
-   * both (3) which indicates the parent is homozygous at that locus */
-  for (pattern = 1; pattern <= 3; pattern++)
+   * both (3) which indicates the parent is homozygous at that locus 
+   * added 0 for easy handle of pattern flip, 0 is equivalent of 3 */
+  for (pattern = 0; pattern <= 3; pattern++)
     {
       /* sex averaged or sex specific map */
       for (i = 0; i < 3; i++)
 	{
+
 #ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE)
 	    {
@@ -2610,14 +2803,14 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 	  newHetProbPtr[i] = hetProb[i];
 #endif
 	}
-      newCellIndex = cellIndex * 3 + pattern - 1;
+      newCellIndex = cellIndex * 4 + pattern;
       newLastHetLoc = lastHetLoc;
-      if (pattern != 3)
+      if (pattern != 3 && pattern != 0 )
 	{
 	  /* parent is not homozygous */
 	  if (lastHetLoc != -1)
 	    {
-	      if (prevPattern != 3)
+	      if (prevPattern != 3 && prevPattern != 0)
 		{
 		  /* previous locus for the parent is het and 
 		     current locus pattern is either paternal or maternal */
@@ -2629,8 +2822,26 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #ifndef NO_POLYNOMIAL
 			  if (modelOptions.polynomial == TRUE)
 			    {
-			      sprintf (vName1, "theta%d_%d", i, loc);
-			      newProbPoly[i] = timesExp (2, newProbPoly[i], 1, plusExp (2, 1.0, constantExp (1.0), -1.0, variableExp (&locusList->pPrevLocusDistance[i][loc], NULL, 'D', vName1), 0), 1, 0);	//Dec 24
+			      if (i > 0
+				  && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProbPoly[i] = newProbPoly[0];
+				}
+			      else
+				{
+				  sprintf (vName1, "theta%d_%d", i, loc);
+				  newProbPoly[i] =
+				    timesExp (2, newProbPoly[i], 1,
+					      plusExp (2, 1.0,
+						       constantExp
+						       (1.0), -1.0,
+						       variableExp
+						       (&locusList->
+							pPrevLocusDistance
+							[i][loc], NULL,
+							'D', vName1),
+						       0), 1, 0);
+				}
 			    }
 			  else
 			    {
@@ -2650,14 +2861,33 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #ifndef NO_POLYNOMIAL
 			if (modelOptions.polynomial == TRUE)
 			  {
-			    sprintf (vName1, "theta%d_%d", i, loc);
-			    newProbPoly[i] = timesExp (2, newProbPoly[i], 1, variableExp (&locusList->pPrevLocusDistance[i][loc], NULL, 'D', vName1), 1, 0);	//Dec 24
+			    if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED)
+			      {
+				newProbPoly[i] = newProbPoly[0];
+			      }
+			    else
+			      {
+				sprintf (vName1, "theta%d_%d", i, loc);
+				newProbPoly[i] =
+				  timesExp (2, newProbPoly[i], 1,
+					    variableExp (&locusList->
+							 pPrevLocusDistance
+							 [i][loc], NULL,
+							 'D', vName1), 1, 0);
 
+			      }
 			  }
 			else
 			  {
-			    newProb[i] *=
-			      locusList->pPrevLocusDistance[i][loc];
+			    if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED)
+			      {
+				newProb[i] = newProb[0];
+			      }
+			    else
+			      {
+				newProb[i] *=
+				  locusList->pPrevLocusDistance[i][loc];
+			      }
 			  }
 #else
 			newProb[i] *= locusList->pPrevLocusDistance[i][loc];
@@ -2677,50 +2907,75 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #ifndef NO_POLYNOMIAL
 			  if (modelOptions.polynomial == TRUE)
 			    {
-			      sprintf (vName1, "theta%d_%d", i, loc);
-			      newProbPoly[i] = plusExp (2,
-							1.0,
-							timesExp (2,
-								  (Polynomial
-								   *) prob[i],
-								  1,
-								  plusExp (2,
-									   1.0,
-									   constantExp
-									   (1.0),
-									   -1.0,
-									   variableExp
-									   (&locusList->
-									    pPrevLocusDistance
-									    [i]
-									    [loc],
-									    NULL,
-									    'D',
-									    vName1),
-									   0),
-								  1, 0), 1.0,
-							timesExp (2,
-								  (Polynomial
-								   *)
-								  prob2[i], 1,
-								  variableExp
-								  (&locusList->
-								   pPrevLocusDistance
-								   [i][loc],
-								   NULL, 'D',
-								   vName1), 1,
-								  0), 0);
+			      if (i > 0
+				  && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProbPoly[i] = newProbPoly[0];
+				}
+			      else
+				{
+				  sprintf (vName1, "theta%d_%d", i, loc);
+				  newProbPoly[i] =
+				    plusExp (2, 1.0,
+					     timesExp (2,
+						       (Polynomial *)
+						       prob[i], 1,
+						       plusExp (2, 1.0,
+								constantExp
+								(1.0),
+								-1.0,
+								variableExp
+								(&locusList->
+								 pPrevLocusDistance
+								 [i]
+								 [loc],
+								 NULL,
+								 'D',
+								 vName1),
+								0), 1,
+						       0), 1.0,
+					     timesExp (2,
+						       (Polynomial *)
+						       prob2[i], 1,
+						       variableExp
+						       (&locusList->
+							pPrevLocusDistance
+							[i][loc], NULL,
+							'D', vName1), 1,
+						       0), 0);
+				}
 			    }
 			  else
-			    newProb[i] = *((double *) prob[i]) *
-			      (1 - locusList->pPrevLocusDistance[i][loc]) +
-			      *((double *) prob2[i]) *
-			      locusList->pPrevLocusDistance[i][loc];
+			    {
+			      if (i > 0
+				  && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+				  newProb[i] = *((double *) prob[i]) *
+				    (1 -
+				     locusList->
+				     pPrevLocusDistance[i][loc]) +
+				    *((double *) prob2[i]) *
+				    locusList->pPrevLocusDistance[i][loc];
+				}
+			    }
 #else
-			  newProb[i] = *((double *) prob[i]) *
-			    (1 - locusList->pPrevLocusDistance[i][loc]) +
-			    *((double *) prob2[i]) *
-			    locusList->pPrevLocusDistance[i][loc];
+			  if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED)
+			    {
+			      newProb[i] = newProb[0];
+			    }
+			  else
+			    {
+			      newProb[i] = *((double *) prob[i]) *
+				(1 -
+				 locusList->
+				 pPrevLocusDistance[i][loc]) +
+				*((double *) prob2[i]) *
+				locusList->pPrevLocusDistance[i][loc];
+			    }
 #endif
 			}
 		      else
@@ -2729,52 +2984,74 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #ifndef NO_POLYNOMIAL
 			  if (modelOptions.polynomial == TRUE)
 			    {
-			      sprintf (vName1, "theta%d_%d", i, loc);
-			      newProbPoly[i] = plusExp (2,
-							1.0,
-							timesExp (2,
-								  (Polynomial
-								   *)
-								  prob2[i], 1,
-								  plusExp (2,
-									   1.0,
-									   constantExp
-									   (1.0),
-									   -1.0,
-									   variableExp
-									   (&locusList->
-									    pPrevLocusDistance
-									    [i]
-									    [loc],
-									    NULL,
-									    'D',
-									    vName1),
-									   0),
-								  1, 0), 1.0,
-							timesExp (2,
-								  (Polynomial
-								   *) prob[i],
-								  1,
-								  variableExp
-								  (&locusList->
-								   pPrevLocusDistance
-								   [i][loc],
-								   NULL, 'D',
-								   vName1), 1,
-								  0), 0);
+			      if (i > 0
+				  && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProbPoly[i] = newProbPoly[0];
+				}
+			      else
+				{
+				  sprintf (vName1, "theta%d_%d", i, loc);
+				  newProbPoly[i] =
+				    plusExp (2, 1.0,
+					     timesExp (2,
+						       (Polynomial *)
+						       prob2[i], 1,
+						       plusExp (2, 1.0,
+								constantExp
+								(1.0),
+								-1.0,
+								variableExp
+								(&locusList->
+								 pPrevLocusDistance
+								 [i]
+								 [loc],
+								 NULL,
+								 'D',
+								 vName1),
+								0), 1,
+						       0), 1.0,
+					     timesExp (2,
+						       (Polynomial *)
+						       prob[i], 1,
+						       variableExp
+						       (&locusList->
+							pPrevLocusDistance
+							[i][loc], NULL,
+							'D', vName1), 1,
+						       0), 0);
+				}
 
 			    }
 			  else
-			    newProb[i] = *((double *) prob2[i]) *
-			      (1 - locusList->pPrevLocusDistance[i][loc]) +
-			      *((double *) prob[i]) *
-			      locusList->pPrevLocusDistance[i][loc];
+			    if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED)
+			    {
+			      newProb[i] = newProb[0];
+			    }
+			  else
+			    {
+			      newProb[i] = *((double *) prob2[i]) *
+				(1 -
+				 locusList->
+				 pPrevLocusDistance[i][loc]) +
+				*((double *) prob[i]) *
+				locusList->pPrevLocusDistance[i][loc];
+			    }
 
 #else
-			  newProb[i] = *((double *) prob2[i]) *
-			    (1 - locusList->pPrevLocusDistance[i][loc]) +
-			    *((double *) prob[i]) *
-			    locusList->pPrevLocusDistance[i][loc];
+			  if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED)
+			    {
+			      newProb[i] = newProb[0];
+			    }
+			  else
+			    {
+			      newProb[i] = *((double *) prob2[i]) *
+				(1 -
+				 locusList->
+				 pPrevLocusDistance[i][loc]) +
+				*((double *) prob[i]) *
+				locusList->pPrevLocusDistance[i][loc];
+			    }
 #endif
 			}
 		    }
@@ -2822,8 +3099,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 
 	}			/* end of current pattern is not homo */
       else
-	{
-	  /* current pattern is homo */
+	{ /* current pattern is homo */
 	  if (lastHetLoc == -1)
 	    /* nothing needs to be done for this locus */
 	    ;
@@ -2848,106 +3124,131 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		}
 	      else
 		{
-		  if (prevPattern == 3)
-		    {
-		      /* previous locus pattern is homo */
+		  if (prevPattern == 3 || prevPattern == 0)
+		    { /* previous locus pattern is homo */
 		      for (i = 0; i < 3; i++)
 			{
 
 #ifndef NO_POLYNOMIAL
 			  if (modelOptions.polynomial == TRUE)
 			    {
-			      sprintf (vName1, "theta%d_%d", i, loc);
-			      newProbPoly[i] = plusExp (2,
-							1.0,
-							timesExp (2,
-								  (Polynomial
-								   *) prob[i],
-								  1,
-								  plusExp (2,
-									   1.0,
-									   constantExp
-									   (1.0),
-									   -1.0,
-									   variableExp
-									   (&locusList->
-									    pPrevLocusDistance
-									    [i]
-									    [loc],
-									    NULL,
-									    'D',
-									    vName1),
-									   0),
-								  1, 0), 1.0,
-							timesExp (2,
-								  (Polynomial
-								   *)
-								  prob2[i], 1,
-								  variableExp
-								  (&locusList->
-								   pPrevLocusDistance
-								   [i][loc],
-								   NULL, 'D',
-								   vName1), 1,
-								  0), 0);
-			      newProbPoly2[i] =
-				plusExp (2, 1.0,
-					 timesExp (2, (Polynomial *) prob2[i],
-						   1, plusExp (2, 1.0,
-							       constantExp
-							       (1.0), -1.0,
-							       variableExp
-							       (&locusList->
-								pPrevLocusDistance
-								[i][loc],
-								NULL, 'D',
-								vName1), 0),
-						   1, 0), 1.0, timesExp (2,
-									 (Polynomial
-									  *)
-									 prob
-									 [i],
-									 1,
-									 variableExp
-									 (&locusList->
-									  pPrevLocusDistance
-									  [i]
-									  [loc],
-									  NULL,
-									  'D',
-									  vName1),
-									 1,
-									 0),
-					 0);
+			      if (i > 0
+				  && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProbPoly[i] = newProbPoly[0];
+				}
+			      else
+				{
+				  sprintf (vName1, "theta%d_%d", i, loc);
+				  newProbPoly[i] =
+				    plusExp (2, 1.0,
+					     timesExp (2,
+						       (Polynomial *)
+						       prob[i], 1,
+						       plusExp (2, 1.0,
+								constantExp
+								(1.0),
+								-1.0,
+								variableExp
+								(&locusList->
+								 pPrevLocusDistance
+								 [i]
+								 [loc],
+								 NULL,
+								 'D',
+								 vName1),
+								0), 1,
+						       0), 1.0,
+					     timesExp (2,
+						       (Polynomial *)
+						       prob2[i], 1,
+						       variableExp
+						       (&locusList->
+							pPrevLocusDistance
+							[i][loc], NULL,
+							'D', vName1), 1,
+						       0), 0);
+				  newProbPoly2[i] =
+				    plusExp (2, 1.0,
+					     timesExp (2,
+						       (Polynomial *)
+						       prob2[i], 1,
+						       plusExp (2, 1.0,
+								constantExp
+								(1.0),
+								-1.0,
+								variableExp
+								(&locusList->
+								 pPrevLocusDistance
+								 [i]
+								 [loc],
+								 NULL,
+								 'D',
+								 vName1),
+								0), 1,
+						       0), 1.0,
+					     timesExp (2,
+						       (Polynomial *)
+						       prob[i], 1,
+						       variableExp
+						       (&locusList->
+							pPrevLocusDistance
+							[i][loc], NULL,
+							'D', vName1), 1,
+						       0), 0);
+				}
 
 			    }
 			  else
 			    {
+			      if (i > 0
+				  && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
+				}
+			      else
+				{
+				  newProb[i] = *(double *) prob[i] *
+				    (1 -
+				     locusList->
+				     pPrevLocusDistance[i][loc]) +
+				    *((double *) prob2[i]) *
+				    locusList->pPrevLocusDistance[i][loc];
+
+				  newProb2[i] = *(double *) prob2[i] *
+				    (1 -
+				     locusList->
+				     pPrevLocusDistance[i][loc]) +
+				    *((double *) prob[i]) *
+				    locusList->pPrevLocusDistance[i][loc];
+				}
+			    }
+#else
+			  if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED)
+			    {
+			      newProb[i] = newProb[0];
+			    }
+			  else
+			    {
 			      newProb[i] = *(double *) prob[i] *
-				(1 - locusList->pPrevLocusDistance[i][loc]) +
+				(1 -
+				 locusList->
+				 pPrevLocusDistance[i][loc]) +
 				*((double *) prob2[i]) *
 				locusList->pPrevLocusDistance[i][loc];
 
 			      newProb2[i] = *(double *) prob2[i] *
-				(1 - locusList->pPrevLocusDistance[i][loc]) +
+				(1 -
+				 locusList->
+				 pPrevLocusDistance[i][loc]) +
 				*((double *) prob[i]) *
 				locusList->pPrevLocusDistance[i][loc];
 			    }
-#else
-			  newProb[i] = *(double *) prob[i] *
-			    (1 - locusList->pPrevLocusDistance[i][loc]) +
-			    *((double *) prob2[i]) *
-			    locusList->pPrevLocusDistance[i][loc];
-
-			  newProb2[i] = *(double *) prob2[i] *
-			    (1 - locusList->pPrevLocusDistance[i][loc]) +
-			    *((double *) prob[i]) *
-			    locusList->pPrevLocusDistance[i][loc];
 #endif
 			}
 		    }
 		  else
-		    {
+		    { /* prev pattern is het */
 		      for (i = 0; i < 3; i++)
 			{
 			  if (prevPattern == 1)
@@ -2955,40 +3256,72 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #ifndef NO_POLYNOMIAL
 			      if (modelOptions.polynomial == TRUE)
 				{
-				  sprintf (vName1, "theta%d_%d", i, loc);
-				  newProbPoly[i] =
-				    timesExp (2, (Polynomial *) prob[i], 1,
-					      plusExp (2, 1.0,
-						       constantExp (1.0),
-						       -1.0,
-						       variableExp
-						       (&locusList->
-							pPrevLocusDistance[i]
-							[loc], NULL, 'D',
-							vName1), 0), 1, 0);
-				  newProbPoly2[i] =
-				    timesExp (2, (Polynomial *) prob[i], 1,
-					      variableExp (&locusList->
-							   pPrevLocusDistance
-							   [i][loc], NULL,
-							   'D', vName1), 1,
-					      0);
+				  if (i > 0
+				      && modelOptions.mapFlag == SEX_AVERAGED)
+				    {
+				      newProbPoly[i] = newProbPoly[0];
+				    }
+				  else
+				    {
+				      sprintf (vName1, "theta%d_%d", i, loc);
+				      newProbPoly[i] =
+					timesExp (2,
+						  (Polynomial *)
+						  prob[i], 1,
+						  plusExp (2, 1.0,
+							   constantExp
+							   (1.0), -1.0,
+							   variableExp
+							   (&locusList->
+							    pPrevLocusDistance
+							    [i][loc],
+							    NULL, 'D',
+							    vName1), 0),
+						  1, 0);
+				      newProbPoly2[i] =
+					timesExp (2,
+						  (Polynomial *)
+						  prob[i], 1,
+						  variableExp
+						  (&locusList->
+						   pPrevLocusDistance[i]
+						   [loc], NULL, 'D',
+						   vName1), 1, 0);
+				    }
+				}
+			      else
+				{
+				  if (i > 0
+				      && modelOptions.mapFlag == SEX_AVERAGED)
+				    {
+				      newProb[i] = newProb[0];
+				    }
+				  else
+				    {
+				      newProb[i] = *(double *) prob[i] *
+					(1 -
+					 locusList->
+					 pPrevLocusDistance[i][loc]);
+				      newProb2[i] =
+					*(double *) prob[i] *
+					locusList->pPrevLocusDistance[i][loc];
+				    }
+				}
+#else
+			      if (i > 0
+				  && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
 				}
 			      else
 				{
 				  newProb[i] = *(double *) prob[i] *
 				    (1 -
 				     locusList->pPrevLocusDistance[i][loc]);
-				  newProb2[i] =
-				    *(double *) prob[i] *
+
+				  newProb2[i] = *(double *) prob[i] *
 				    locusList->pPrevLocusDistance[i][loc];
 				}
-#else
-			      newProb[i] = *(double *) prob[i] *
-				(1 - locusList->pPrevLocusDistance[i][loc]);
-
-			      newProb2[i] = *(double *) prob[i] *
-				locusList->pPrevLocusDistance[i][loc];
 #endif
 			    }
 			  else
@@ -2996,40 +3329,73 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #ifndef NO_POLYNOMIAL
 			      if (modelOptions.polynomial == TRUE)
 				{
-				  sprintf (vName1, "theta%d_%d", i, loc);
-				  newProbPoly2[i] =
-				    timesExp (2, (Polynomial *) prob[i], 1,
-					      plusExp (2, 1.0,
-						       constantExp (1.0),
-						       -1.0,
-						       variableExp
-						       (&locusList->
-							pPrevLocusDistance[i]
-							[loc], NULL, 'D',
-							vName1), 0), 1, 0);
-				  newProbPoly[i] =
-				    timesExp (2, (Polynomial *) prob[i], 1,
-					      variableExp (&locusList->
-							   pPrevLocusDistance
-							   [i][loc], NULL,
-							   'D', vName1), 1,
-					      0);
+				  if (i > 0
+				      && modelOptions.mapFlag == SEX_AVERAGED)
+				    {
+				      newProbPoly[i] = newProbPoly[0];
+				    }
+				  else
+				    {
+				      sprintf (vName1, "theta%d_%d", i, loc);
+				      newProbPoly2[i] =
+					timesExp (2,
+						  (Polynomial *)
+						  prob[i], 1,
+						  plusExp (2, 1.0,
+							   constantExp
+							   (1.0), -1.0,
+							   variableExp
+							   (&locusList->
+							    pPrevLocusDistance
+							    [i][loc],
+							    NULL, 'D',
+							    vName1), 0),
+						  1, 0);
+				      newProbPoly[i] =
+					timesExp (2,
+						  (Polynomial *)
+						  prob[i], 1,
+						  variableExp
+						  (&locusList->
+						   pPrevLocusDistance[i]
+						   [loc], NULL, 'D',
+						   vName1), 1, 0);
+				    }
+				}
+			      else
+				{
+				  if (i > 0
+				      && modelOptions.mapFlag == SEX_AVERAGED)
+				    {
+				      newProb[i] = newProb[0];
+				    }
+				  else
+				    {
+				      newProb2[i] =
+					*(double *) prob[i] * (1 -
+							       locusList->
+							       pPrevLocusDistance
+							       [i][loc]);
+				      newProb[i] =
+					*(double *) prob[i] *
+					locusList->pPrevLocusDistance[i][loc];
+				    }
+				}
+#else
+			      if (i > 0
+				  && modelOptions.mapFlag == SEX_AVERAGED)
+				{
+				  newProb[i] = newProb[0];
 				}
 			      else
 				{
 				  newProb2[i] = *(double *) prob[i] *
 				    (1 -
 				     locusList->pPrevLocusDistance[i][loc]);
-				  newProb[i] =
-				    *(double *) prob[i] *
+
+				  newProb[i] = *(double *) prob[i] *
 				    locusList->pPrevLocusDistance[i][loc];
 				}
-#else
-			      newProb2[i] = *(double *) prob[i] *
-				(1 - locusList->pPrevLocusDistance[i][loc]);
-
-			      newProb[i] = *(double *) prob[i] *
-				locusList->pPrevLocusDistance[i][loc];
 #endif
 			    }
 
@@ -3067,15 +3433,17 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 	      populate_xmission_matrix (pMatrix, totalLoci,
 					(void *) newProbPoly,
 					(void *) newProbPoly2,
-					(void *) newHetProbPoly, newCellIndex,
-					newLastHetLoc, pattern, loc + 1);
+					(void *) newHetProbPoly,
+					newCellIndex, newLastHetLoc,
+					pattern, loc + 1);
 	    }
 	  else
 	    populate_xmission_matrix (pMatrix, totalLoci,
 				      (void *) newProbPtr,
 				      (void *) newProbPtr2,
-				      (void *) newHetProbPtr, newCellIndex,
-				      newLastHetLoc, pattern, loc + 1);
+				      (void *) newHetProbPtr,
+				      newCellIndex, newLastHetLoc,
+				      pattern, loc + 1);
 #else
 	  populate_xmission_matrix (pMatrix, totalLoci,
 				    newProbPtr, (void *) newProbPtr2,
@@ -3092,12 +3460,12 @@ int
 build_xmission_matrix (XMission ** ppMatrix, int totalLoci)
 {
   int size;
-  //  int i;
+  //int           i;
 
   *ppMatrix = NULL;
-  size = pow (3, totalLoci);
+  size = pow (4, totalLoci);
   /* minimal two loci */
-  //  if (size < 9)
+  //if (size < 9)
   //size = 9;
   *ppMatrix = (XMission *) calloc (size, sizeof (XMission));
   if (*ppMatrix == NULL)
@@ -3115,9 +3483,9 @@ print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
   int newCellIndex;
   int i;
 
-  for (pattern = 1; pattern <= 3; pattern++)
+  for (pattern = 0; pattern <= 3; pattern++)
     {
-      newCellIndex = cellIndex * 3 + pattern - 1;
+      newCellIndex = cellIndex * 4 + pattern - 1;
       if (pattern == 1)
 	{
 	  pID[loc] = 'P';
@@ -3133,8 +3501,8 @@ print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
       if (loc != totalLoci - 1)
 	{
 	  /* not complete multi-locus haplotype yet */
-	  print_xmission_matrix (pMatrix, totalLoci, loc + 1, newCellIndex,
-				 pID);
+	  print_xmission_matrix (pMatrix, totalLoci, loc + 1,
+				 newCellIndex, pID);
 	}
       else
 	{
@@ -3148,7 +3516,8 @@ print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
     }
 }
 
-/* allocate storage for keeping track of het locus in nuclear families 
+/*
+ * allocate storage for keeping track of het locus in nuclear families
  * numLocus - number of loci analyzing at a time
  */
 void
@@ -3200,107 +3569,115 @@ inline void
 initialize_proband_tmpLikelihood (Person * pPerson)
 {
   int i;
-  int size = pPerson->numConditionals;
+  //  int             size = pPerson->numConditionals;
+  ConditionalLikelihood *pConditional;
 
-  for (i = 0; i < size; i++)
+  for (i = 0; i < pPerson->numTmpLikelihood; i++)
     {
+      pConditional = &pPerson->pLikelihood[pPerson->pTmpLikelihoodIndex[i]];
+      pConditional->tmpTouched = FALSE;
 #ifndef NO_POLYNOMIAL
       if (modelOptions.polynomial == TRUE)
-	pPerson->pLikelihood[i].tmpslot.tmpLikelihoodPolynomial =
-	  constantExp (0);
+	pConditional->tmpslot.tmpLikelihoodPolynomial = constant0Poly;
       else
-	pPerson->pLikelihood[i].tmpslot.tmpLikelihood = 0;
+	pConditional->tmpslot.tmpLikelihood = 0;
 #else
-      pPerson->pLikelihood[i].tmpslot.tmpLikelihood = 0;
+      pConditional->tmpslot.tmpLikelihood = 0;
 #endif
     }
+  pPerson->numTmpLikelihood = 0;
 }
 
-void populate_pedigree_loopbreaker_genotype_vector(Pedigree *pPed)
+void
+populate_pedigree_loopbreaker_genotype_vector (Pedigree * pPed)
 {
   int numLoopBreaker = pPed->numLoopBreaker;
-  int i; 
+  int i;
   Person *pLoopBreaker;
-  
-  for(i=0; i < numLoopBreaker; i++)
+
+  for (i = 0; i < numLoopBreaker; i++)
     {
       pLoopBreaker = pPed->loopBreakerList[i];
       pLoopBreaker->loopBreakerStruct->numGenotype = 0;
-      populate_loopbreaker_genotype_vector(pLoopBreaker, 0);
+      populate_loopbreaker_genotype_vector (pLoopBreaker, 0);
       pLoopBreaker->loopBreakerStruct->genotypeIndex = 0;
     }
 }
 
-void populate_loopbreaker_genotype_vector(Person *pLoopBreaker, int locus)
+void
+populate_loopbreaker_genotype_vector (Person * pLoopBreaker, int locus)
 {
-  int origLocus = locusList->pLocusIndex[locus];	/* locus index in the original locus list */
   Genotype *pGenotype;
   int index;
   LoopBreaker *pLoopBreakerStruct;
 
-  pGenotype = pLoopBreaker->ppSavedGenotypeList[origLocus];
-  while(pGenotype != NULL)
+  pGenotype =
+    pLoopBreaker->ppSavedGenotypeList[locusList->pLocusIndex[locus]];
+  while (pGenotype != NULL)
     {
       pTempGenoVector[locus] = pGenotype;
-      if(locus < locusList->numLocus -1)
+      if (locus < locusList->numLocus - 1)
 	{
-	  populate_loopbreaker_genotype_vector(pLoopBreaker, locus+1);
+	  populate_loopbreaker_genotype_vector (pLoopBreaker, locus + 1);
 	}
       else
 	{
 	  /* one complete multilocus genotype */
 	  pLoopBreakerStruct = pLoopBreaker->loopBreakerStruct;
 	  index = pLoopBreakerStruct->numGenotype;
-	  memcpy(pLoopBreakerStruct->genotype[index], pTempGenoVector, 
-		 sizeof(Genotype *) * locusList->numLocus);
+	  memcpy (pLoopBreakerStruct->genotype[index], pTempGenoVector,
+		  sizeof (Genotype *) * locusList->numLocus);
 	  pLoopBreakerStruct->numGenotype++;
-	  
+
 	}
       pGenotype = pGenotype->pSavedNext;
     }
 }
 
 /* this function is not needed - so not finished */
-void sync_loopbreaker_duplicates(Pedigree *pPed)
+void
+sync_loopbreaker_duplicates (Pedigree * pPed)
 {
   int i;
   Person *pPerson;
 
-  for(i=0; i < pPed->numPerson; i++)
+  for (i = 0; i < pPed->numPerson; i++)
     {
       pPerson = pPed->ppPersonList[i];
-      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+      if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
 	{
 	}
     }
 }
 
 /* initialFlag - TRUE - first vector (index all 0) */
-int set_next_loopbreaker_genotype_vector(Pedigree *pPed, int initialFlag)
+int
+set_next_loopbreaker_genotype_vector (Pedigree * pPed, int initialFlag)
 {
   int numLoopBreaker = pPed->numLoopBreaker;
-  int i; 
+  int i;
   Person *pLoopBreaker;
   int found;
   LoopBreaker *loopStruct;
   int index;
   int origLocus;
   int locus;
+  int ret;
 
   /* find the next genotype vector for at least one of the loop breaker */
-  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Set next loop breaker genotype\n");
+  KLOG (LOGLIKELIHOOD, LOGDEBUG, "Set next loop breaker genotype\n");
   found = FALSE;
-  if(initialFlag != TRUE)
+  if (initialFlag != TRUE)
     {
-      for(i=0; i < numLoopBreaker; i++)
+      for (i = 0; i < numLoopBreaker; i++)
 	{
 	  pLoopBreaker = pPed->loopBreakerList[i];
 	  loopStruct = pLoopBreaker->loopBreakerStruct;
 	  /* increase index */
 	  loopStruct->genotypeIndex++;
-	  if(loopStruct->genotypeIndex >= loopStruct->numGenotype)
+	  if (loopStruct->genotypeIndex >= loopStruct->numGenotype)
 	    {
-	      loopStruct->genotypeIndex=0;
+	      loopStruct->genotypeIndex = 0;
 	    }
 	  else
 	    {
@@ -3308,52 +3685,58 @@ int set_next_loopbreaker_genotype_vector(Pedigree *pPed, int initialFlag)
 	      break;
 	    }
 	}
-      
+
     }
   else
     {
       found = TRUE;
 #if 0
-      for(i=0; i < numLoopBreaker; i++)
+      for (i = 0; i < numLoopBreaker; i++)
 	{
 	  pLoopBreaker = pPed->loopBreakerList[i];
 	  loopStruct = pLoopBreaker->loopBreakerStruct;
-	  loopStruct->genotypeIndex = loopStruct->numGenotype -1;
+	  loopStruct->genotypeIndex = loopStruct->numGenotype - 1;
 	}
 #endif
     }
 
-  if(found == FALSE)
+  if (found == FALSE)
     return -1;
 
   /* set the genotype list with the selected genotype vector */
-  for(i=0; i < numLoopBreaker; i++)
+  for (i = 0; i < numLoopBreaker; i++)
     {
       pLoopBreaker = pPed->loopBreakerList[i];
       loopStruct = pLoopBreaker->loopBreakerStruct;
       index = loopStruct->genotypeIndex;
-      KLOG(LOGLIKELIHOOD, LOGDEBUG, 
-	   "Fix pedigree %s loop breaker %s to the genotype below (%d/%d):\n", 
-	   pPed->sPedigreeID, pLoopBreaker->sID, 
-	   loopStruct->genotypeIndex+1, loopStruct->numGenotype);
-      for(locus = 0; locus < locusList->numLocus; locus++)
+      KLOG (LOGLIKELIHOOD, LOGDEBUG,
+	    "Fix pedigree %s loop breaker %s to the genotype below (%d/%d):\n",
+	    pPed->sPedigreeID, pLoopBreaker->sID,
+	    loopStruct->genotypeIndex + 1, loopStruct->numGenotype);
+      for (locus = 0; locus < locusList->numLocus; locus++)
 	{
 	  origLocus = locusList->pLocusIndex[locus];
-	  pLoopBreaker->ppGenotypeList[origLocus] = loopStruct->genotype[index][locus];
+	  pLoopBreaker->ppGenotypeList[origLocus] =
+	    loopStruct->genotype[index][locus];
 	  loopStruct->genotype[index][locus]->pNext = NULL;
 	  pLoopBreaker->pNumGenotype[origLocus] = 1;
-	  KLOG(LOGLIKELIHOOD, LOGDEBUG, "\t %d-> %d|%d \n", 
-	       locus, loopStruct->genotype[index][locus]->allele[DAD],
-	       loopStruct->genotype[index][locus]->allele[MOM]);
+	  KLOG (LOGLIKELIHOOD, LOGDEBUG, "\t %d-> %d|%d \n",
+		locus, loopStruct->genotype[index][locus]->allele[DAD],
+		loopStruct->genotype[index][locus]->allele[MOM]);
 	}
     }
 
-  /* as the loop breakers are set with fixed genotype, redo genotype elimination (without
-   * actually remove any genotype - only the links will get updated */
-  for(i=0; i < locusList->numLocus; i++)
+  /*
+   * as the loop breakers are set with fixed genotype, redo genotype
+   * elimination (without actually remove any genotype - only the links
+   * will get updated
+   */
+  for (i = 0; i < locusList->numLocus; i++)
     {
       origLocus = locusList->pLocusIndex[i];
-      pedigree_genotype_elimination(origLocus, pPed);
+      ret = pedigree_genotype_elimination (origLocus, pPed);
+      if(ret < 0)
+	return -2;
     }
 
   return 0;
