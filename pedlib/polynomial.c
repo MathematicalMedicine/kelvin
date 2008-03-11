@@ -1,6 +1,6 @@
 
 /**********************************************************************
- * polynomial - build and evaluate arbitrarily complex polynomials
+ * polynomial - build and evaluate arbitrarily complex polynomials.
  * Hongling Wang
  * 
  * Polynomial reduction optimizations - Bill Valentine-Cooper
@@ -10,6 +10,32 @@
  * Permission is hereby given to use this software 
  * for non-profit educational purposes only.
  **********************************************************************/
+/*
+  Builds and evaluates arbitrarily complex polynomials. Collects
+  subpolynomials of the same type (addition or multiplication) into
+  a single tier. This process will cause the tree to be alternating
+  layers of additions and multiplications. Identifies redundant 
+  polynomials and maintains only one copy with multiple references.
+
+  Usage:
+
+  1. Call polynomialInitialization before any other routines.
+  2. Create constants and variables with calls to constantExp and
+  variableExp. Use the returned Polynomials in future calls.
+  3. Call plusExp to build a new Polynomial by adding subpolynomials
+  multiplied by double factors. Use returned Polynomial in future calls.
+  4. Call timesExp to build a new Polynomial by multiplying
+  subpolynomials raised to integer powers. Use returned Polynomial in
+  future calls.
+  5. Set the values of the referenced variables.
+  6. Evaluate your Polynomial by calling evaluatePoly.
+  
+  Limits:
+
+  Maximum constant accuracy is 9 digits due to integer comparison.
+  Total polynomials ever seen (kept or not) is INT_MAX due to nodeId.
+  
+*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -249,7 +275,7 @@ binarySearch (int *array, int length, int target, int *location)
       binaryStart = binaryMiddle + 1;
     else
       binaryEnd = binaryMiddle - 1;
-  }				//end of while
+  } //end of while
   *location = binaryStart;
   return 0;
 };
@@ -384,14 +410,8 @@ constantExp (double con)
   int first, last, location;	//first and last polynomial in a hash bucket for comparison, 
 
   //location of the newly built constant polynomial in the bucket
-  int tempI1, tempI2;		//normalized integer component
+  int tempI1=-1, tempI2=-1;	//normalized integer component
   double tempD1, tempD2;	//normalized fractional component
-
-//  fprintf(stderr,"con=%f\n",con);
-
-
-  tempI1 = tempI2 = -1;
-
 
   //Compute a key for the constant  
   tempD1 = frexp (con, &tempI1);
