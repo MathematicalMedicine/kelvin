@@ -45,9 +45,9 @@ CFLGS  += -Wall -I$(INCDIR) -L$(LIBDIR) -I$(NINCDIR) -L$(NLIBDIR)
 ######################################################################
 # File sets. 
 NBIN	= kelvin
-LIB	= -lped -lutils -lgsl -lgslcblas -lm -lsw -lbj
+LIB	= -lped -lutils -lgsl -lgslcblas -lm -lsw -ltpl -lbj
 NLIB	= # -lniceapi -lnicecom -lniceaux
-SRC	= kelvin.c config.c ppl.c
+SRC	= kelvin.c config.c ppl.c saveResults.c
 INC	= kelvin.h
 TAR	= Makefile $(SRC) $(INC) config.c utils pedlib .maj .min .pat .dat doc kelvin.conf
 

@@ -37,7 +37,7 @@ restoreTrait(char *pedigree)
   }
   sprintf(fileName, traitFileFormat, pedigree);
   tn = tpl_map(tplFormat, lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275, lDT[5], 275);
-  if (file = fopen(fileName, "r")) {
+  if ((file = fopen(fileName, "r"))) {
     fclose(file);
     tpl_load(tn, TPL_FILE, fileName);
     tpl_unpack(tn, 0);
