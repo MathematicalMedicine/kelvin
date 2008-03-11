@@ -53,6 +53,7 @@ typedef struct ModelOptions
   double LDprior;		/* prior probability of LD (D' not 0) given linkage and theta
 				 *  is within thetaCutoff */
 
+  int dryRun;                   /* 1 - dry run to get statistics for complexity */
 } ModelOptions;
 
 extern ModelOptions modelOptions;

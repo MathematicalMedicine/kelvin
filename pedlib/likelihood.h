@@ -35,7 +35,7 @@ typedef struct ParentalPair
 
   /* the following two helped to remember phase differences between the previous parental pair if they 
    * are the same except the phase */
-  short phase[2]; 
+  short phase[2];
 
   /* link to next parental pair for this nuclear family on this locus */
   struct ParentalPair *pNext;
@@ -79,12 +79,13 @@ typedef struct ParentalPairSpace
 typedef struct XMission
 {
   /* transmission probability */
-  union{
+  union
+  {
 #ifndef NO_POLYNOMIAL
     Polynomial *probPoly[3];
 #endif
     double prob[3];
-  }slot;
+  } slot;
 } XMission;
 
 extern ParentalPairSpace parentalPairSpace;
@@ -102,15 +103,15 @@ int free_parental_pair_workspace (ParentalPairSpace * pSpace, int numLocus);
 int allocate_likelihood_space (PedigreeSet * pPedigreeList, int numLocus);
 int count_likelihood_space (PedigreeSet * pPedigreeList);
 void free_likelihood_space (PedigreeSet * pPedigreeList);
-void allocate_nucfam_het(PedigreeSet *pPedigreeList, int numLocus);
+void allocate_nucfam_het (PedigreeSet * pPedigreeList, int numLocus);
 int build_xmission_matrix (XMission ** ppMatrix, int totalLoci);
 int populate_xmission_matrix (XMission * pMatrix, int totalLoci,
-			      void *prob[3], void *prob2[3],  
-			      void *hetProb[3], 
+			      void *prob[3], void *prob2[3],
+			      void *hetProb[3],
 			      int cellIndex,
-			      int lastHetLoc, int prevPattern,
-			      int loc);
+			      int lastHetLoc, int prevPattern, int loc);
 void
-print_xmission_matrix(XMission *pMatrix, int totalLoci, int loc, int cellIndex, char *pID);
+print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
+		       int cellIndex, char *pID);
 
 #endif

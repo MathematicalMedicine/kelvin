@@ -297,6 +297,10 @@ typedef struct Person
   struct Genotype **ppSavedGenotypeList;
   int *pSavedNumGenotype;
 
+  /* index to the flattened array */
+  int *multiLocusAdjust;
+  int *numSavedGenotype2;
+
   /* proband genotype list - sometimes we need to fix proband's genotype during likelihood calc. */
   struct Genotype **ppProbandGenotypeList;
   int *pProbandNumGenotype;
@@ -344,6 +348,12 @@ typedef struct Person
   struct ConditionalLikelihood *pLikelihood;
   int numConditionals;
   int maxNumConditionals;
+  /* this keep tracks of the indices of the tmpLikelihood under conditional that 
+   * has been touched during the calculation, should be a small subset, that's
+   * why we use this list instead of check on all of them */
+  int *pTmpLikelihoodIndex;
+  int numTmpLikelihood;
+
   int touchedFlag;
 
   /* current haplotype */
@@ -367,10 +377,10 @@ typedef struct NuclearFamily
   /* head == DAD if dad is the proband or if a child is the proband 
    * head == MOM only if mom is the proband at computing nuclear family likelihood 
    */
-  int head; 
-  int spouse; 
+  int head;
+  int spouse;
   int childProbandFlag;
-  
+
 
   /* parents of this nuclear family */
   //Person *pDad;
@@ -434,7 +444,7 @@ typedef struct NuclearFamily
   int *hetFlag[2];
   /* bit mask - all bits set to 1, number of bits == number of het loci for each parent */
   int hetLocusBits[2];
-  
+
   /* first related parental pair index at each locus */
   int *relatedPPairStart;
   /* number of related parental pairs at each locus */
@@ -442,6 +452,13 @@ typedef struct NuclearFamily
   /* accumlative count including all previous loci and current one */
   int *totalRelatedPPair;
 
+
+  /* the following is used to store statistics for dry run for analyzing complexity */
+  long numPairGroups;
+  long numSimilarPairs;
+  /* for the looped pedigrees */
+  long totalNumPairGroups;
+  long totalNumSimilarPairs;
 } NuclearFamily;
 
 typedef struct NuclearFamilyConnector

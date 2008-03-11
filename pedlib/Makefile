@@ -7,20 +7,22 @@
 
 # Compile options:
 #
-#     Everything is carried down from the parent Makefile
+# -DNO_POLYNOMIAL removes the polynomial version of the code.
+##CC = gcc
+#CFLGS = -g -Wall
+#CFLGS += -DNO_POLYNOMIAL
 
 ######################################################################
 # No user changes below this point!
 
 # Object files
 OBJ = read_pedfile.o locus.o tools.o allele_set_recoding.o \
-	genotype_elimination.o parental_pair.o likelihood.o \
-	polynomial.o polyDiags.o
+	genotype_elimination.o parental_pair.o likelihood.o polynomial.o
 
 # Include files
 INCS = pedigree.h locus.h model_options.h  \
 	genotype_elimination.h likelihood.h polynomial.h \
-	polyDiags.h pedlib.h allele_set_recoding.h tools.h 
+	pedlib.h allele_set_recoding.h tools.h 
 
 # Libraries
 LIB = -lutils -lped -lgsl -lgslcblas -lm 
@@ -34,7 +36,7 @@ LIB = -lutils -lped -lgsl -lgslcblas -lm
 # Default target
 .PHONY: install
 install: libped.a
-	-@cp {pedlib,pedigree,locus,model_options,polynomial,polyDiags,likelihood}.h $(INCDIR)
+	-@cp {pedlib,pedigree,locus,model_options,polynomial,likelihood}.h $(INCDIR)
 	-@cp libped.a $(LIBDIR)
 
 libped.a: Makefile $(OBJ)
@@ -52,6 +54,5 @@ fresh: clean libped.a
 .PHONY: clean
 clean:
 	-@rm -f libped.a *.o *~ test
-	-@rm -f $(INCDIR)/{pedlib,pedigree,locus,model_options,likelihood,\
-	polydiags,polynomial}.h
+	-@rm -f $(INCDIR)/{pedlib,pedigree,locus,model_options,likelihood,polynomial}.h
 	-@rm -f $(LIBDIR)/libped.a

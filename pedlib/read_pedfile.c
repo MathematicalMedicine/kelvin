@@ -70,8 +70,9 @@ int read_person (char *sPedfileName, int lineNo, char *pLine,
 int setup_pedigree_ptrs (Pedigree * pPed);
 int setup_nuclear_families (Pedigree * pPed);
 int setup_loop_counts (Pedigree * pPed);
-void add_loopbreaker(Pedigree *pPed, Person *pPerson);
+void add_loopbreaker (Pedigree * pPed, Person * pPerson);
 Person *find_original_person (Pedigree * pPed, char *sPersonID);
+Person *find_loop_breaker (Person *breaker);
 
 
 
@@ -150,9 +151,11 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	    }
 	  if (pCurrPedigree)
 	    {
-	      pPedigreeSet->pDonePerson = (int *) realloc(pPedigreeSet->pDonePerson, 
-							  sizeof(int) * pPedigreeSet->maxNumPerson);
-	      memset(pPedigreeSet->pDonePerson, 0, sizeof(int)*pPedigreeSet->maxNumPerson);
+	      pPedigreeSet->pDonePerson =
+		(int *) realloc (pPedigreeSet->pDonePerson,
+				 sizeof (int) * pPedigreeSet->maxNumPerson);
+	      memset (pPedigreeSet->pDonePerson, 0,
+		      sizeof (int) * pPedigreeSet->maxNumPerson);
 
 	      /* set up pointers in the pedigree such as first child, 
 	       * * * next paternal sibling, next maternal sibling */
@@ -370,11 +373,12 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	       "Line %d in pedfile %s doesn't have enough columns. Is this a post-makeped file? \n",
 	       lineNo, sPedfileName);
       /* check whether this locus is untyped */
-      if (pPerson->pPhenotypeList[0][numMarker] == 0 || pPerson->pPhenotypeList[1][numMarker] == 0)
+      if (pPerson->pPhenotypeList[0][numMarker] == 0
+	  || pPerson->pPhenotypeList[1][numMarker] == 0)
 	pPerson->pTypedFlag[numMarker] = 0;
       else
 	pPerson->pTypedFlag[numMarker] = 1;
-      
+
       if (pPerson->pPhenotypeList[0][numMarker] != 0)
 	{
 	  sprintf (tmpStr, "%d", pPerson->pPhenotypeList[0][numMarker]);
@@ -395,7 +399,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	}
 
       /* if this is X chromosome and this person is a male, then the genotype needs to be 
-	   * homozygous */
+       * homozygous */
       if (modelOptions.sexLinked && pPerson->sex == 0
 	  && pPerson->pPhenotypeList[0][numMarker] !=
 	  pPerson->pPhenotypeList[1][numMarker])
@@ -405,9 +409,9 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 		   lineNo, sPedfileName,
 		   pPerson->pPhenotypeList[0][numMarker],
 		   pPerson->pPhenotypeList[1][numMarker], pLocus->sName);
-	  
+
 	}
-      
+
       numMarker++;
       /* move the line buffer over to the next pair */
       pLine = &pLine[pos];
@@ -492,7 +496,7 @@ create_person (Pedigree * pPed, char *sID)
       pPed->maxNumPerson = num;
     }
   pPed->numPerson++;
-  if(pPed->pPedigreeSet->maxNumPerson < pPed->numPerson)
+  if (pPed->pPedigreeSet->maxNumPerson < pPed->numPerson)
     pPed->pPedigreeSet->maxNumPerson = pPed->numPerson;
 
   /* allocate space for this person */
@@ -644,7 +648,36 @@ find_original_person (Pedigree * pPed, char *sPersonID)
   for (i = 0; i < pPed->numPerson; i++)
     {
       pPerson = pPed->ppPersonList[i];
-      if (strcmp (pPerson->sOriginalID, sPersonID) == 0 && pPerson->pParents[DAD] != NULL)
+      if (strcmp (pPerson->sOriginalID, sPersonID) == 0
+	  && pPerson->pParents[DAD] != NULL)
+	{
+	  /* found it */
+	  return pPerson;
+	}
+    }
+
+  /* failed to find matching one */
+  return NULL;
+}
+
+/* This function searchs for another person that has the same proband ID as
+ * the input person 
+ */
+Person *
+find_loop_breaker (Person *breaker)
+{
+  int i;
+  Person *pPerson;
+  Pedigree *pPed = breaker->pPedigree;
+
+  if (pPed == NULL)
+    return NULL;
+
+  for (i = 0; i < pPed->numPerson; i++)
+    {
+      pPerson = pPed->ppPersonList[i];
+      if (pPerson != breaker && pPerson->proband == breaker->proband 
+	  && pPerson->pParents[DAD] != NULL)
 	{
 	  /* found it */
 	  return pPerson;
@@ -739,12 +772,12 @@ setup_pedigree_ptrs (Pedigree * pPed)
 	{
 	  /* a duplicated person, find the original person */
 	  pOrigPerson =
-	    find_original_person (pPerson->pPedigree, pPerson->sOriginalID);
+	    find_loop_breaker (pPerson);
 	  KASSERT (pOrigPerson != NULL,
 		   "Can't find loop breaker's original information (original ID: %s current ID: %s).\n",
 		   pPerson->sOriginalID, pPerson->sID);
 	  pPerson->pOriginalPerson = pOrigPerson;
-	  add_loopbreaker(pPed, pOrigPerson);
+	  add_loopbreaker (pPed, pOrigPerson);
 
 #if 0
 	  /* free space for the marker phenotype pair */
@@ -1470,7 +1503,8 @@ read_ccfile (char *ccFileName, PedigreeSet * pPedigreeSet)
 }
 
 /* add this person to the loop breaker list if not currently in */
-void add_loopbreaker(Pedigree *pPed, Person *pPerson)
+void
+add_loopbreaker (Pedigree * pPed, Person * pPerson)
 {
   int num;
   int i;
@@ -1478,15 +1512,15 @@ void add_loopbreaker(Pedigree *pPed, Person *pPerson)
 
   num = pPed->numLoopBreaker;
   i = 0;
-  while(i < num)
+  while (i < num)
     {
       pBreaker = pPed->loopBreakerList[i];
-      if(pBreaker == pPerson)
+      if (pBreaker == pPerson)
 	return;
       i++;
     }
-  pPed->loopBreakerList = (Person **) realloc(pPed->loopBreakerList, 
-					      (num+1) * sizeof(Person *));
+  pPed->loopBreakerList = (Person **) realloc (pPed->loopBreakerList,
+					       (num + 1) * sizeof (Person *));
   pPed->loopBreakerList[num] = pPerson;
   pPed->numLoopBreaker++;
 }

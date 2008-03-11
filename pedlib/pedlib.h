@@ -49,8 +49,8 @@ typedef enum
 /* conditional penetrance given genotype function 
  * under t-distribution, we also need the degree of freedom in addition
  * to the means and variances. */
-//#define NORMAL_DISTRIBUTION 	0
-//#define T_DISTRIBUTION		1
+//#define NORMAL_DISTRIBUTION   0
+//#define T_DISTRIBUTION                1
 
 /* maximum length for pedigree label, individual IDs */
 #define MAX_PED_LABEL_LEN       128
@@ -78,7 +78,7 @@ void FREE (char *description, void *ptr);
 void *REALLOC (char *description, void *ptr, size_t size);
 
 extern char *flexBuffer;
-extern int  flexBufferSize;
+extern int flexBufferSize;
 
 
 

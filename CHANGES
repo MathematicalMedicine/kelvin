@@ -1,3 +1,26 @@
+Version 0.33.1
+  Fixed genotype_elimination problem when we fix loop breaker genotype
+  when there are more than 1 loop breaker, some combination might not 
+  be possible
+
+Version 0.33.0
+  Added polynomial garbage collection after each nuclear family
+
+Version 0.32.4
+  Use 4^n xmission matrix instead of 3^n to improve the search of 
+  cells during the flip of the parent phase through bit wise operations
+
+Version 0.32.2 
+  Undo the recursion unrolling for loop_child_multilocus_genotype, as
+  it decreased the performance 
+
+Version 0.32.1
+  For sex averaged, make sure under polynomial, theta_female and 
+  theta_male all point to the same theta_average
+  Untangle the recursion call of loop_child_multilocus_genotype
+  Clean up some function calls to reduce stack/heap
+  Added some counters to reduce tmpLikelihood collection for the proband
+
 Version 0.32.0
   For NULL, instead of calculate L(T, M1,M2), we do L(T)*L(M1,M2) as 
   trait and marker loci are indepdent under NULL. This approach speeds

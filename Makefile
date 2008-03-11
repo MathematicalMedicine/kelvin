@@ -17,14 +17,12 @@ NICEDIR = /usr/local
 #
 #CFLGS	+= -DNOFLOAT 
 CFLGS	+= -Wall			# Always leave this one on
-#CFLGS	+= -O3	 			# Production level
+CFLGS	+= -O3	 			# Production level
 #CFLGS  += -g  -DDEBUG		# Debug level
 #CFLGS   += -DNO_POLYNOMIAL
 #CFLGS += -pg                   # profile - debugging 
 #CFLGS += -pedantic   #memory leak tracing
-#CFLGS += -DDMUSE	# Manage a list of small chunks of memory
-CFLGS += -DDMTRACK	# Collect and dump dynamic memory usage
-#CFLGS += -DTINYMEM	# Tiny hashes and lists for small models
+#CFLGS += -DDMTRACK
 
 .EXPORT_ALL_VARIABLES:
 ######################################################################
@@ -32,6 +30,7 @@ CFLGS += -DDMTRACK	# Collect and dump dynamic memory usage
 ARCH 	:= $(shell uname -m)
 OS  	:= $(shell uname -s)	# Cygwin needs -o?
 VERSION	:= $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
+PWD	:= $(shell pwd)
 
 # Nice library and header files
 NLIBDIR		:= $(NICEDIR)/lib
@@ -46,7 +45,7 @@ CFLGS  += -Wall -I$(INCDIR) -L$(LIBDIR) -I$(NINCDIR) -L$(NLIBDIR)
 ######################################################################
 # File sets. 
 NBIN	= kelvin
-LIB	= -lped -lutils -lgsl -lgslcblas -lsw -lbj -lm 
+LIB	= -lped -lutils -lgsl -lgslcblas -lm -lsw -lbj
 NLIB	= # -lniceapi -lnicecom -lniceaux
 SRC	= kelvin.c config.c ppl.c
 INC	= kelvin.h

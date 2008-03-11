@@ -520,12 +520,6 @@ readConfigFile (char *file, ModelType * modelType,
 		avghetfile);
 	  continue;
 	}
-      if (sscanf (line, "HO %s", avghomofile) == 1)	/* Average homogeneity LR file */
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure output file %s\n",
-		avghomofile);
-	  continue;
-	}
       if (sscanf (line, "PF %s", pplfile) == 1)	/* PPL output file */
 	{
 	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure PPL output file %s\n",
@@ -582,6 +576,14 @@ readConfigFile (char *file, ModelType * modelType,
 	    logLevel = LOGFATAL;
 
 	  logSet(logType, logLevel);
+	  continue;
+	}
+
+      if (strncmp (line, "DRY", 3) == 0)
+	{
+	  modelOptions->dryRun = 1;
+	  KLOG (LOGINPUTFILE, LOGDEBUG,
+		"Configuring for a dry run.\n");
 	  continue;
 	}
 

@@ -20,7 +20,7 @@
 #include "tools.h"
 #include "polynomial.h"
 
-int initialize_transmitted_alleles (int locus, Pedigree *pPedigree);
+int initialize_transmitted_alleles (int locus, Pedigree * pPedigree);
 int identify_transmitted_alleles (int locus, Pedigree * pPedigree);
 Person *identify_child_transmitted_alleles (Person * pPerson,
 					    Person * pChild, int locus);
@@ -76,7 +76,7 @@ allele_set_recoding (int locus, Pedigree * pPedigree)
   /* first identify transmitted and non-transmitted alleles */
   identify_transmitted_alleles (locus, pPedigree);
 
-  if(pPedigree->loopFlag == TRUE)
+  if (pPedigree->loopFlag == TRUE)
     {
       /* since loop breaker duplicates are tracked separately, make sure it got 
        * back to the original */
@@ -95,7 +95,7 @@ allele_set_recoding (int locus, Pedigree * pPedigree)
 }
 
 int
-initialize_transmitted_alleles (int locus, Pedigree *pPedigree)
+initialize_transmitted_alleles (int locus, Pedigree * pPedigree)
 {
   Person *pPerson;
   int numPerson = pPedigree->numPerson;
@@ -133,7 +133,7 @@ initialize_transmitted_alleles (int locus, Pedigree *pPedigree)
       /* pass the loop breaker duplicates - the tracking will be done 
        * at the original person 
        */
-      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+      if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
 	continue;
 
       /* 
@@ -217,7 +217,7 @@ identify_transmitted_alleles (int locus, Pedigree * pPedigree)
   int alleleSetLen;
   int alleleCount;
   int *pDonePerson;
- 
+
   /* how many integers needed to represent one allele in bit mask 
    * on this locus */
   alleleSetLen = originalLocusList.alleleSetLen;
@@ -234,7 +234,7 @@ identify_transmitted_alleles (int locus, Pedigree * pPedigree)
       pPerson = pPedigree->ppPersonList[i];
       pChild = pPerson->pFirstChild;
       pOrigPerson = pPerson;
-      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+      if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
 	{
 	  pPerson = pPerson->pOriginalPerson;
 	}
@@ -325,7 +325,7 @@ identify_child_transmitted_alleles (Person * pFounder,
 		    pChild->pTransmittedAlleles[sex][k];
 		}
 	    }
-	  
+
 	}
     }
   else
@@ -355,7 +355,7 @@ identify_child_transmitted_alleles (Person * pFounder,
 
 
   /* mark this person as done */
-  if(pChild->loopBreaker == 0)
+  if (pChild->loopBreaker == 0)
     pChild->pPedigree->pPedigreeSet->pDonePerson[pChild->personIndex] = TRUE;
 
   return pChild->pNextSib[pFounder->sex];
@@ -440,7 +440,7 @@ print_pedigree_allele_sets (int locus, Pedigree * pPedigree)
 	    sParent = MOMID;
 	  pPerson = pNucFam->pParents[k];
 	  KLOG (LOGSETRECODING, LOGDEBUG, "  %s %s\n", sParent, pPerson->sID);
-	  if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+	  if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
 	    pPerson = pPerson->pOriginalPerson;
 
 	  print_person_allele_set (pPerson, locus, alleleSetLen);
@@ -496,7 +496,7 @@ recode_genotype (int locus, Pedigree * pPedigree)
       pPerson = pPedigree->ppPersonList[i];
       if (pPerson->pTypedFlag[locus] == TRUE)
 	continue;
-      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+      if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
 	continue;
 
       /* go through both paternal and maternal allele sets */
@@ -598,7 +598,7 @@ print_person_allele_set (Person * pPerson, int locus, int alleleSetLen)
       while (pGenotype != NULL)
 	{
 	  logMsg (LOGSETRECODING, LOGDEBUG, "(%d,%d) ",
-		pGenotype->allele[DAD], pGenotype->allele[MOM]);
+		  pGenotype->allele[DAD], pGenotype->allele[MOM]);
 	  pGenotype = pGenotype->pNext;
 	}
       logMsg (LOGSETRECODING, LOGDEBUG, "\n");
@@ -664,7 +664,7 @@ print_locus_allele_set (Locus * pLocus, int alleleSetLen)
   KLOG (LOGSETRECODING, LOGDEBUG, "Locus %s\n", pLocus->sName);
   for (i = 0; i < pLocus->numAlleleSet; i++)
     {
-      KLOG (LOGSETRECODING, LOGDEBUG, "  AlleleSet %d(%f): ", i+1,
+      KLOG (LOGSETRECODING, LOGDEBUG, "  AlleleSet %d(%f): ", i + 1,
 	    pLocus->ppAlleleSetList[i]->sumFreq);
       print_allele_set (pLocus->ppAlleleSetList[i]->pAlleleBits,
 			alleleSetLen);
@@ -783,7 +783,7 @@ add_allele_set (int locus, unsigned int *pAlleleBits)
     }
 #endif
 
-  pAlleleSet->alleleID = numAlleleSet+1;
+  pAlleleSet->alleleID = numAlleleSet + 1;
   pAlleleSet->pAlleleBits =
     (unsigned int *) MALLOC ("pAlleleSet->pAlleleBits",
 			     sizeof (unsigned int) * alleleSetLen);

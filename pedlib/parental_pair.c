@@ -32,9 +32,9 @@ ParentalPairSpace parentalPairSpace;
 
 int shadow_genotype_elimnation (Genotype * pGenotype1, Genotype * pGenotype2,
 				NuclearFamily * pNucFam, int locus);
-void fill_parental_pair(int locus, int *numPair, NuclearFamily *pNucFam, 
-			Genotype *pDad, Genotype *pMom, 
-			int dadAdjust, int momAdjust);
+void fill_parental_pair (int locus, int *numPair, NuclearFamily * pNucFam,
+			 Genotype * pDad, Genotype * pMom,
+			 int dadAdjust, int momAdjust);
 
 /* construct the parental pair list for one locus */
 /* locus is the index in the sub locusList */
@@ -64,9 +64,10 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
   for (i = DAD; i <= MOM; i++)
     {
       pParents[i] = pNucFam->pParents[i];
-      if(pParents[i]->loopBreaker >=1 && pParents[i]->pParents[DAD] == NULL)
+      if (pParents[i]->loopBreaker >= 1 && pParents[i]->pParents[DAD] == NULL)
 	{
-	  pGenotype[i] = pParents[i]->pOriginalPerson->ppGenotypeList[origLocus];
+	  pGenotype[i] =
+	    pParents[i]->pOriginalPerson->ppGenotypeList[origLocus];
 	}
       else
 	pGenotype[i] = pParents[i]->ppGenotypeList[origLocus];
@@ -95,9 +96,13 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
 	      adjust[head] = 0;
 	      index[head] = 0;
 	      initialGeno[spouse] = pGenotype[spouse];
-	      while( (index[head] <2) && (index[head]==0 || (pGenotype[head]->pDualGenotype!= NULL && pGenotype[head]->pNext == pGenotype[head]->pDualGenotype)))
+	      while ((index[head] < 2)
+		     && (index[head] == 0
+			 || (pGenotype[head]->pDualGenotype != NULL
+			     && pGenotype[head]->pNext ==
+			     pGenotype[head]->pDualGenotype)))
 		{
-		  if(index[head] != 0)
+		  if (index[head] != 0)
 		    {
 		      pGenotype[head] = pGenotype[head]->pDualGenotype;
 		      adjust[head] = 1;
@@ -105,30 +110,39 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
 		  index[spouse] = 0;
 		  adjust[spouse] = 0;
 		  pGenotype[spouse] = initialGeno[spouse];
-		  while ((index[spouse] < 2) && (index[spouse]==0 || (pGenotype[spouse]->pDualGenotype != NULL && pGenotype[spouse]->pDualGenotype == pGenotype[spouse]->pNext)))
+		  while ((index[spouse] < 2)
+			 && (index[spouse] == 0
+			     || (pGenotype[spouse]->pDualGenotype != NULL
+				 && pGenotype[spouse]->pDualGenotype ==
+				 pGenotype[spouse]->pNext)))
 		    {
-		      if( index[spouse]!=0  && pGenotype[spouse]->pDualGenotype != NULL)
+		      if (index[spouse] != 0
+			  && pGenotype[spouse]->pDualGenotype != NULL)
 			{
-			  pGenotype[spouse] = pGenotype[spouse]->pDualGenotype;
-			  if(index[spouse] != 0)
+			  pGenotype[spouse] =
+			    pGenotype[spouse]->pDualGenotype;
+			  if (index[spouse] != 0)
 			    adjust[spouse] = 1;
 			}
-		      pPair = &parentalPairSpace.ppParentalPair[locus][numPair];
+		      pPair =
+			&parentalPairSpace.ppParentalPair[locus][numPair];
 		      /* 0 - no change in phase  1 - flip of the original phase */
-		      pPair->phase[head]=adjust[head];
-		      pPair->phase[spouse]=adjust[spouse];
-		      fill_parental_pair(locus, &numPair, pNucFam, 
-					 pGenotype[DAD], pGenotype[MOM], 
-					 adjust[DAD], adjust[MOM]);
+		      pPair->phase[head] = adjust[head];
+		      pPair->phase[spouse] = adjust[spouse];
+		      fill_parental_pair (locus, &numPair, pNucFam,
+					  pGenotype[DAD], pGenotype[MOM],
+					  adjust[DAD], adjust[MOM]);
 		      index[spouse]++;
 		    }
 		  index[head]++;
 		}
-	      
-	    } /* valid pair found */
+
+	    }			/* valid pair found */
 	  else
 	    {
-	      if(pGenotype[spouse]->pDualGenotype!=NULL && pGenotype[spouse]->pDualGenotype == pGenotype[spouse]->pNext)
+	      if (pGenotype[spouse]->pDualGenotype != NULL
+		  && pGenotype[spouse]->pDualGenotype ==
+		  pGenotype[spouse]->pNext)
 		pGenotype[spouse] = pGenotype[spouse]->pNext;
 	    }
 	  /* reset dad genotype pointer */
@@ -137,7 +151,8 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
 	  /* move on to next genotype */
 	  pGenotype[spouse] = pGenotype[spouse]->pNext;
 	}
-      if(pGenotype[head]->pDualGenotype != NULL && pGenotype[head]->pDualGenotype == pGenotype[head]->pNext)
+      if (pGenotype[head]->pDualGenotype != NULL
+	  && pGenotype[head]->pDualGenotype == pGenotype[head]->pNext)
 	pGenotype[head] = pGenotype[head]->pNext->pNext;
       else
 	pGenotype[head] = pGenotype[head]->pNext;
@@ -147,13 +162,14 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
   return 0;
 }
 
-void fill_parental_pair(int locus, int *numPair, NuclearFamily *pNucFam, 
-			Genotype *pDad, Genotype *pMom, 
-			int dadAdjust, int momAdjust)
+void
+fill_parental_pair (int locus, int *numPair, NuclearFamily * pNucFam,
+		    Genotype * pDad, Genotype * pMom,
+		    int dadAdjust, int momAdjust)
 {
   ParentalPair *pPair;
   Person *pChild;
-  int genoLen; 
+  int genoLen;
   int i, j;
   Genotype *pChildGeno;
   int origLocus = locusList->pLocusIndex[locus];
@@ -172,8 +188,7 @@ void fill_parental_pair(int locus, int *numPair, NuclearFamily *pNucFam,
 	parentalPairSpace.pNumParentalPair[locus],
 	pNucFam->pParents[DAD]->sID,
 	pDad->allele[DAD], pDad->allele[MOM],
-	pNucFam->pParents[MOM]->sID,
-	pMom->allele[DAD], pMom->allele[MOM]);
+	pNucFam->pParents[MOM]->sID, pMom->allele[DAD], pMom->allele[MOM]);
   for (i = 0; i < pNucFam->numChildren; i++)
     {
       pChild = pNucFam->ppChildrenList[i];
@@ -185,23 +200,19 @@ void fill_parental_pair(int locus, int *numPair, NuclearFamily *pNucFam,
       for (j = 0; j < genoLen; j++)
 	{
 	  pPair->pppChildGenoList[i][j] = pChildGeno;
-	  if(dadAdjust == 0 || pChildGeno->inheritance[DAD]==3)
+	  if (dadAdjust == 0)
 	    pPair->ppChildInheritance[DAD][i][j] =
 	      pChildGeno->inheritance[DAD];
- 	  else if(pChildGeno->inheritance[DAD] == 1)
-	    pPair->ppChildInheritance[DAD][i][j] = 2;
-	  else
-	    pPair->ppChildInheritance[DAD][i][j] = 1;
-	    
-	  //	      pChildGeno->inheritance[DAD] % 2 + 1; 
+	  else 
+	    pPair->ppChildInheritance[DAD][i][j] = 
+	      pChildGeno->inheritance[DAD] ^ 3;
 
-	  if(momAdjust == 0 || pChildGeno->inheritance[MOM]==3)
+	  if (momAdjust == 0)
 	    pPair->ppChildInheritance[MOM][i][j] =
 	      pChildGeno->inheritance[MOM];
- 	  else if(pChildGeno->inheritance[MOM] == 1)
-	    pPair->ppChildInheritance[MOM][i][j] = 2;
-	  else
-	    pPair->ppChildInheritance[MOM][i][j] = 1;
+	  else 
+	    pPair->ppChildInheritance[MOM][i][j] =
+	      pChildGeno->inheritance[MOM] ^ 3;
 
 
 	  KLOG (LOGPARENTALPAIR, LOGDEBUG, "  (%d, %d)\n",
@@ -209,8 +220,8 @@ void fill_parental_pair(int locus, int *numPair, NuclearFamily *pNucFam,
 	  pChildGeno = pChildGeno->pShadowNext;
 	}
     }
-  
-  
+
+
 }
 
 /* locus is the index in the locusList */
@@ -285,16 +296,20 @@ stat_parental_pair_workspace (PedigreeSet * pPedigreeList)
 	  for (locus = 0; locus < originalLocusList.numLocus; locus++)
 	    {
 	      /* be generous to pre-allocating work space */
-	      for(i=DAD; i<=MOM; i++)
+	      for (i = DAD; i <= MOM; i++)
 		{
-		  if(pNucFam->pParents[i]->loopBreaker >=1 && pNucFam->pParents[i]->pParents[DAD] == NULL)
+		  if (pNucFam->pParents[i]->loopBreaker >= 1
+		      && pNucFam->pParents[i]->pParents[DAD] == NULL)
 		    {
-		      numGenotype[i] = pNucFam->pParents[i]->pOriginalPerson->pSavedNumGenotype[locus];
+		      numGenotype[i] =
+			pNucFam->pParents[i]->pOriginalPerson->
+			pSavedNumGenotype[locus];
 		    }
 		  else
-		    numGenotype[i] = pNucFam->pParents[i]->pSavedNumGenotype[locus];
+		    numGenotype[i] =
+		      pNucFam->pParents[i]->pSavedNumGenotype[locus];
 		}
-	      
+
 	      maxNumParentalPair = numGenotype[DAD] * numGenotype[MOM];
 
 	      if (maxNumParentalPair > parentalPairSpace.maxNumParentalPair)

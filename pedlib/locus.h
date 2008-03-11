@@ -131,16 +131,18 @@ typedef struct Genotype
    * */
   int flagField;
 
-  union {
+  union
+  {
     /* penetrance factor base on this person's phenotype and this genotype 
      * for marker locus, this is always 1 */
     double penetrance;
 #ifndef NO_POLYNOMIAL
     Polynomial *penetrancePolynomial;
 #endif
-  }penslot;
+  } penslot;
 
-  union {
+  union
+  {
     /* for a homozygous genotype, the weight is p*p
      * for a heterozygous unphased genotype, the weight is 2pq
      * but in this implementation, genotype is phased, so the weight is pq
@@ -149,7 +151,7 @@ typedef struct Genotype
 #ifndef NO_POLYNOMIAL
     Polynomial *weightPolynomial;
 #endif
-  }wtslot;
+  } wtslot;
 
 } Genotype;
 
@@ -217,7 +219,7 @@ typedef struct SubLocusList
 {
   int numLocus;
   /* trait locus index in this locus list. If no trait locus, this index should be -1 */
-  int traitLocusIndex; 
+  int traitLocusIndex;
   /* trait locus index in the original locus list. If no trait locus, this index should be -1 */
   int traitOrigLocus;
   /* an array of index of the original LocusList index 
@@ -402,9 +404,9 @@ typedef struct lambdaCell
   int n;			/* Marker. */
   int ndprime;			/* number of D prime combinations */
   double ***lambda;		/* Lambda array. */
-  int *impossibleFlag;          /* whether combinatoin of D's is possible */
-  double ***haploFreq;          /* haplotype frequency */
-  double ***DValue;             /* D value */
+  int *impossibleFlag;		/* whether combinatoin of D's is possible */
+  double ***haploFreq;		/* haplotype frequency */
+  double ***DValue;		/* D value */
 }
 LambdaCell;
 
@@ -429,29 +431,34 @@ typedef struct LDLoci
  * conidtional on the multi locus genotype of this person */
 typedef struct ConditionalLikelihood
 {
-  union {
+  union
+  {
     double likelihood;
 #ifndef NO_POLYNOMIAL
-  struct polynomial *likelihoodPolynomial;
+    struct polynomial *likelihoodPolynomial;
 #endif
-  }lkslot;
+  } lkslot;
   /* possibility of observing this multi locus genotype 
    * with parents - transmission probability * penetrance
    * without parents - genotype possibility * penetrance 
    * */
-  union {
+  union
+  {
     double weight;
 #ifndef NO_POLYNOMIAL
     struct polynomial *weightPolynomial;
 #endif
-  }wtslot;
-  union {
+  } wtslot;
+  union
+  {
     /* to save for likelihood calculations with only phase differences */
     double tmpLikelihood;
 #ifndef NO_POLYNOMIAL
     struct polynomial *tmpLikelihoodPolynomial;
 #endif
-  }tmpslot;
+  } tmpslot;
+  short touchedFlag;
+  short tmpTouched;
 } ConditionalLikelihood;
 
 /* global function prototypes */
@@ -464,6 +471,7 @@ int create_baseline_trait_genotypes (int locus, Pedigree * pPedigree);
 int create_baseline_marker_genotypes (int locus, Pedigree * pPedigree);
 void print_person_locus_genotype_list (Person * pPerson, int locus);
 void print_pedigree_locus_genotype_list (Pedigree * pPedigree, int locus);
+void print_pedigree_locus_genotype_count (Pedigree * pPedigree, int locus);
 int remove_genotype (Genotype ** pHead, Genotype * pGenotype, int *pCount);
 LDLoci *find_LD_loci (int locus1, int locus2);
 int allocate_multi_locus_genotype_storage (Pedigree * pPedigree,
@@ -478,8 +486,9 @@ int update_locus (PedigreeSet * pPedigreeSet, int locus);
 int update_penetrance (PedigreeSet * pPedigreeSet, int locus);
 double cm_to_recombination_fraction (double distance, int mapFunctionFlag);
 /* int setup_LD_haplotype_freq (LDLoci * pLDLoci); */
-int setup_LD_haplotype_freq (LDLoci *pLDLoci, LambdaCell *pCell, int dprimeIdx);
-int isDPrime0(double **ppDrime, int m, int n);
+int setup_LD_haplotype_freq (LDLoci * pLDLoci, LambdaCell * pCell,
+			     int dprimeIdx);
+int isDPrime0 (double **ppDrime, int m, int n);
 double *get_map_position (int locus);
 int add_analysis_locus (SubLocusList * pLocusList, int locus,
 			int directionFlag, int mapFlag);
@@ -499,12 +508,12 @@ int set_null_dprime (LDLoci * pLocus);
 int copy_dprime (LDLoci * pLocus, double **pSrc);
 int copy_haploFreq (LDLoci * pLocus, double **pSrc);
 int copy_DValue (LDLoci * pLocus, double **pSrc);
-int find_locus(LocusList *pLocusList, char *sName);
+int find_locus (LocusList * pLocusList, char *sName);
 
-void populate_pedigree_saved_genotype_link(int locus, Pedigree *pPed);
-void populate_saved_genotype_link(PedigreeSet *pSet);
-void restore_pedigree_genotype_link_from_saved(Pedigree *pPed);
-void set_removeGenotypeFlag(int flag);
+void populate_pedigree_saved_genotype_link (int locus, Pedigree * pPed);
+void populate_saved_genotype_link (PedigreeSet * pSet);
+void restore_pedigree_genotype_link_from_saved (Pedigree * pPed);
+void set_removeGenotypeFlag (int flag);
 
 /* global variable */
 extern Map map;

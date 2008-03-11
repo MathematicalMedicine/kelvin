@@ -16,6 +16,9 @@
  * markers (never should be smaller set)
  * 
  * */
+
+char *locusVersion = "0.32.4";
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -34,10 +37,16 @@
 #ifndef NO_POLYNOMIAL
 #include "polynomial.h"
 #endif
+
 /* global variables */
 Map map;
 LocusList originalLocusList;
 SubLocusList *locusList;
+
+#ifndef NO_POLYNOMIAL
+extern Polynomial *constant0Poly;
+extern Polynomial *constant1Poly;
+#endif
 
 /* internal functions */
 MapUnit *add_map_unit (Map * map);
@@ -57,7 +66,8 @@ void free_nuclear_family (NuclearFamily * pNucFam);
 /* hard removal of genotype flag */
 int removeGenotypeFlag = TRUE;
 
-void set_removeGenotypeFlag(int flag)
+void
+set_removeGenotypeFlag (int flag)
 {
   removeGenotypeFlag = flag;
 }
@@ -160,9 +170,9 @@ read_mapfile (char *sMapfileName)
 	      pMarker->mapPos[MAP_SEX_AVERAGE]))
 	{
 	  /* this will kick the program out */
-	  KLOG (LOGINPUTFILE, LOGFATAL,
-		"Marker map given by %s is out of order between %s and %s.\n",
-		sMapfileName, pPrevMarker->sName, pMarker->sName);
+	  KASSERT (1 == 0,
+		   "Marker map given by %s is out of order between %s and %s.\n",
+		   sMapfileName, pPrevMarker->sName, pMarker->sName);
 	}
 
       /* we should move on to next marker */
@@ -483,9 +493,10 @@ free_locus_list (LocusList * pLocusList)
     {
       pLocus = pLocusList->ppLocusList[i];
 #ifndef NO_POLYNOMIAL
-      if(modelOptions.polynomial == TRUE) {
-	free(pLocus->pAlleleFrequencyPolynomial);
-      }
+      if (modelOptions.polynomial == TRUE)
+	{
+	  free (pLocus->pAlleleFrequencyPolynomial);
+	}
 #endif
       if (pLocus->locusType == LOCUS_TYPE_TRAIT)
 	{
@@ -532,7 +543,7 @@ find_allele (int locus, char *sAlleleName)
     {
       if (!strcmp (pLocus->ppAlleleNames[j], sAlleleName))
 	/* match found */
-	return j+1;
+	return j + 1;
     }
   return -1;
 }
@@ -563,17 +574,18 @@ add_allele (Locus * pLocus, char *sAlleleName, double freq)
 
   /* allocate space for frequency and count */
 #ifndef NO_POLYNOMIAL
-  if(modelOptions.polynomial == TRUE) {
-  pLocus->pAlleleFrequencyPolynomial =
-    (Polynomial *) REALLOC ("pLocus->pAlleleFrequencyPolynomial",
-			    pLocus->pAlleleFrequencyPolynomial,
-			    numAllele * sizeof (Polynomial));
-  }
+  if (modelOptions.polynomial == TRUE)
+    {
+      pLocus->pAlleleFrequencyPolynomial =
+	(Polynomial *) REALLOC ("pLocus->pAlleleFrequencyPolynomial",
+				pLocus->pAlleleFrequencyPolynomial,
+				numAllele * sizeof (Polynomial));
+    }
 #endif
   /* actual count of the alleles in the pedigree */
   pLocus->pAlleleCount = (short *) REALLOC ("pLocus->pAlleleCount",
-					  pLocus->pAlleleCount,
-					  numAllele * sizeof (short));
+					    pLocus->pAlleleCount,
+					    numAllele * sizeof (short));
 
   /* original allele names */
   pLocus->ppAlleleNames = (char **) REALLOC ("pLocus->ppAlleleNames",
@@ -641,7 +653,7 @@ create_baseline_marker_genotypes (int locus, Pedigree * pPedigree)
       pPerson = pPedigree->ppPersonList[i];
 
       /* ignore the loop breaker duplicate */
-      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+      if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
 	continue;
 
       /* base on phenotype to make up the list */
@@ -686,28 +698,30 @@ create_baseline_marker_genotypes (int locus, Pedigree * pPedigree)
 	      allele2 = 1;
 	      for (allele1 = 1; allele1 <= pLocus->numAllele; allele1++)
 		{
-		  for (allele2 = allele1; allele2 <= pLocus->numAllele; allele2++)
+		  for (allele2 = allele1; allele2 <= pLocus->numAllele;
+		       allele2++)
 		    {
 		      /* for X chromosome, only add homozygous genotypes for MALE */
-		      if (modelOptions.sexLinked && pPerson->sex + 1 == MALE &&
-			  allele1 != allele2)
+		      if (modelOptions.sexLinked && pPerson->sex + 1 == MALE
+			  && allele1 != allele2)
 			continue;
-		      pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
-						&pPerson->pNumGenotype[locus],
-						locus, allele1, allele2);
+		      pGenotype =
+			add_genotype (&pPerson->ppGenotypeList[locus],
+				      &pPerson->pNumGenotype[locus], locus,
+				      allele1, allele2);
 		      if (allele2 != allele1)
 			{
 			  pGenotype2 =
 			    add_genotype (&pPerson->ppGenotypeList[locus],
-					  &pPerson->pNumGenotype[locus], locus,
-					  allele2, allele1);
+					  &pPerson->pNumGenotype[locus],
+					  locus, allele2, allele1);
 			  pGenotype->pDualGenotype = pGenotype2;
 			  pGenotype2->pDualGenotype = pGenotype;
 			}
-		    } /* end of allele2 loop */
-		} /* end of allele1 loop */
+		    }		/* end of allele2 loop */
+		}		/* end of allele1 loop */
 	    }
-	  else	      /* must be half typed */
+	  else			/* must be half typed */
 	    {
 	      if (pPerson->pPhenotypeList[0][locus] != 0)
 		allele1 = pPerson->pPhenotypeList[0][locus];
@@ -731,10 +745,10 @@ create_baseline_marker_genotypes (int locus, Pedigree * pPedigree)
 		      pGenotype->pDualGenotype = pGenotype2;
 		      pGenotype2->pDualGenotype = pGenotype;
 		    }
-		} /* end of allele2 loop */
-	    } /* half typed */
-	} /* not typed or not fully typed */
-    } /* loop of persons in a pedigree */
+		}		/* end of allele2 loop */
+	    }			/* half typed */
+	}			/* not typed or not fully typed */
+    }				/* loop of persons in a pedigree */
 
   return 0;
 }
@@ -763,7 +777,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
       pPerson = pPedigree->ppPersonList[i];
 
       /* ignore the loop breaker duplicate */
-      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+      if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
 	continue;
 
       /* go through all possible genotype combinations */
@@ -808,12 +822,37 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 				      allele2, allele1);
 		      pGenotype->pDualGenotype = pGenotype2;
 		      pGenotype2->pDualGenotype = pGenotype;
-		      pGenotype2->penslot.penetrancePolynomial = penPolynomial;
+		      pGenotype2->penslot.penetrancePolynomial =
+			penPolynomial;
 		    }
 		}
 	      else
 		{
-              if ( pen > 0) {
+		  /* we can't add genotype base on pen here, as for the first input pen
+		   * vector, some genotype might not be compatible, but as we move
+		   * to next pen vector, it may be very well compatible */
+		  //		  if (pen > 0)
+		    {
+		      pGenotype =
+			add_genotype (&pPerson->ppGenotypeList[locus],
+				      &pPerson->pNumGenotype[locus], locus,
+				      allele1, allele2);
+		      pGenotype->penslot.penetrance = pen;
+		      if (allele1 != allele2)
+			{
+			  pGenotype2 =
+			    add_genotype (&pPerson->ppGenotypeList[locus],
+					  &pPerson->pNumGenotype[locus],
+					  locus, allele2, allele1);
+			  pGenotype->pDualGenotype = pGenotype2;
+			  pGenotype2->pDualGenotype = pGenotype;
+			  pGenotype2->penslot.penetrance = pen;
+			}
+		    }
+		}
+#else
+	      //if (pen > 0)
+		{
 		  pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
 					    &pPerson->pNumGenotype[locus],
 					    locus, allele1, allele2);
@@ -828,24 +867,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 		      pGenotype2->pDualGenotype = pGenotype;
 		      pGenotype2->penslot.penetrance = pen;
 		    }
-              }
 		}
-#else
-      if ( pen > 0) {
-	      pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
-					&pPerson->pNumGenotype[locus],
-					locus, allele1, allele2);
-	      pGenotype->penslot.penetrance = pen;
-	      if (allele1 != allele2)
-		{
-		  pGenotype2 = add_genotype (&pPerson->ppGenotypeList[locus],
-					     &pPerson->pNumGenotype[locus],
-					     locus, allele2, allele1);
-		  pGenotype->pDualGenotype = pGenotype2;
-		  pGenotype2->pDualGenotype = pGenotype;
-		  pGenotype2->penslot.penetrance = pen;
-		}
-      }
 #endif
 	    }
 	}
@@ -878,7 +900,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
   tempPoly2 = NULL;
 #endif
 
-  if(pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
+  if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
     pPerson = pPerson->pOriginalPerson;
 
   /* now go through all related traits and see whether 
@@ -932,7 +954,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 			       AFFECTION_STATUS_AFFECTED, liabilityClass - 1,
 			       allele1 - 1, allele2 - 1);
 		      *(Polynomial **) pen =
-			plusExp (2, 1.0, constantExp (1), -1.0,
+			plusExp (2, 1.0, constant1Poly, -1.0,
 				 variableExp (&pTrait->
 					      penetrance
 					      [AFFECTION_STATUS_AFFECTED]
@@ -969,7 +991,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 #ifndef NO_POLYNOMIAL
 	      if (modelOptions.polynomial == TRUE)
 		{
-		  *(Polynomial **) pen = constantExp (1);
+		  *(Polynomial **) pen = constant1Poly;
 		}
 	      else
 		*(double *) pen = 1;
@@ -991,7 +1013,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 #ifndef NO_POLYNOMIAL
 		  if (modelOptions.polynomial == TRUE)
 		    {
-		      *(Polynomial **) pen = constantExp (1);
+		      *(Polynomial **) pen = constant1Poly;
 		    }
 		  else
 		    *(double *) pen = 1;
@@ -1713,7 +1735,7 @@ add_genotype (Genotype ** ppList, int *pCount, int locusIndex,
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
-      pGenotype->penslot.penetrancePolynomial = constantExp (1);
+      pGenotype->penslot.penetrancePolynomial = constant1Poly;
     }
 #endif
 
@@ -1773,7 +1795,7 @@ remove_genotype (Genotype ** pHead, Genotype * pGenotype, int *pCount)
     }
 
   /* free the space */
-  if(removeGenotypeFlag == TRUE)
+  if (removeGenotypeFlag == TRUE)
     {
       free (pGenotype->pAlleleBits[DAD]);
       free (pGenotype->pAlleleBits[MOM]);
@@ -1796,12 +1818,13 @@ print_person_locus_genotype_list (Person * pPerson, int locus)
   Genotype *pGenotype = pPerson->ppGenotypeList[locus];
 
   /* print out person lable */
-  logMsg (LOGGENOELIM, LOGDEBUG, "    Person %s locus %d num of geno %d: \n\t", 
-	pPerson->sID, locus, pPerson->pNumGenotype[locus]);
+  logMsg (LOGGENOELIM, LOGDEBUG,
+	  "    Person %s locus %d num of geno %d: \n\t", pPerson->sID, locus,
+	  pPerson->pNumGenotype[locus]);
   while (pGenotype != NULL)
     {
       logMsg (LOGGENOELIM, LOGDEBUG, "(%d,%d) ", pGenotype->allele[DAD],
-	    pGenotype->allele[MOM]);
+	      pGenotype->allele[MOM]);
       pGenotype = pGenotype->pNext;
     }
   logMsg (LOGGENOELIM, LOGDEBUG, "\n");
@@ -1816,10 +1839,27 @@ print_pedigree_locus_genotype_list (Pedigree * pPedigree, int locus)
   int i;
 
   KLOG (LOGGENOELIM, LOGDEBUG, "Pedigree %3s Locus %d: \n",
-	pPedigree->sPedigreeID, locus );
+	pPedigree->sPedigreeID, locus);
   for (i = 0; i < pPedigree->numPerson; i++)
     {
       print_person_locus_genotype_list (pPedigree->ppPersonList[i], locus);
+    }
+  return;
+}
+
+void
+print_pedigree_locus_genotype_count (Pedigree * pPedigree, int locus)
+{
+  int i;
+  Person *pPerson;
+
+  fprintf(stderr, "Pedigree %3s:\n", pPedigree->sPedigreeID);
+  for (i = 0; i < pPedigree->numPerson; i++)
+    {
+      pPerson = pPedigree->ppPersonList[i];
+      fprintf(stderr, "    Person %s has %d genotypes.\n", 
+	      pPerson->sID, 
+	      pPerson->pNumGenotype[locus]);
     }
   return;
 }
@@ -1940,7 +1980,8 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	    {
 	      if (modelOptions.sexLinked && pPerson->sex + 1 == MALE)
 		{
-		  pGenotype->wtslot.weightPolynomial = alleleFreqPolynomial[DAD];
+		  pGenotype->wtslot.weightPolynomial =
+		    alleleFreqPolynomial[DAD];
 		}
 	      else
 		/* build the polynomial sum */
@@ -2023,6 +2064,8 @@ allocate_multi_locus_genotype_storage (Pedigree * pPedigree, int numLocus)
   for (i = 0; i < pPedigree->numPerson; i++)
     {
       pPerson = pPedigree->ppPersonList[i];
+      pPerson->multiLocusAdjust = (int *) malloc (numLocus * sizeof (int));
+      pPerson->numSavedGenotype2 = (int *) malloc (numLocus * sizeof (int));
       for (locus = 0; locus < originalLocusList.numLocus; locus++)
 	{
 	  numGeno = pPerson->pSavedNumGenotype[locus];
@@ -2049,18 +2092,22 @@ allocate_multi_locus_genotype_storage (Pedigree * pPedigree, int numLocus)
 	(ConditionalLikelihood *) MALLOC ("pPerson->pLikelihood ",
 					  sizeof (ConditionalLikelihood) *
 					  size);
-      memset (pPerson->pLikelihood, 0, sizeof (ConditionalLikelihood) * size);
+      //memset (pPerson->pLikelihood, 0, sizeof (ConditionalLikelihood) * size);
       pPerson->maxNumConditionals = size;
+      pPerson->pTmpLikelihoodIndex = (int *) malloc (sizeof (int) * size);
 
       /* allocate loop breaker work space */
-      if(pPerson->loopBreaker>=1 && pPerson->pParents[DAD] != NULL)
+      if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] != NULL)
 	{
-	  pPerson->loopBreakerStruct = (LoopBreaker *)calloc(1, sizeof(LoopBreaker));
+	  pPerson->loopBreakerStruct =
+	    (LoopBreaker *) calloc (1, sizeof (LoopBreaker));
 	  pPerson->loopBreakerStruct->maxNumGenotype = size;
-	  pPerson->loopBreakerStruct->genotype = (Genotype ***)malloc(sizeof(Genotype **) * size);
-	  for(j=0; j < size; j++)
+	  pPerson->loopBreakerStruct->genotype =
+	    (Genotype ***) malloc (sizeof (Genotype **) * size);
+	  for (j = 0; j < size; j++)
 	    {
-	      pPerson->loopBreakerStruct->genotype[j] = (Genotype **)calloc(numLocus, sizeof(Genotype *));
+	      pPerson->loopBreakerStruct->genotype[j] =
+		(Genotype **) calloc (numLocus, sizeof (Genotype *));
 	    }
 	}
     }
@@ -2079,6 +2126,9 @@ free_multi_locus_genotype_storage (Pedigree * pPedigree)
   for (i = 0; i < pPedigree->numPerson; i++)
     {
       pPerson = pPedigree->ppPersonList[i];
+      free(pPerson->multiLocusAdjust);
+      free(pPerson->numSavedGenotype2);
+      free(pPerson->pTmpLikelihoodIndex);
       if (pPerson->pLikelihood != NULL)
 	{
 	  /* free space */
@@ -2096,44 +2146,56 @@ initialize_multi_locus_genotype (Pedigree * pPedigree)
   Person *pPerson;
   int i, j;
   int size;
-  int numGeno;
+  int numGeno = 1;
   int locus;
   int origLocus;
+  ConditionalLikelihood *pConditional;
 
   for (i = 0; i < pPedigree->numPerson; i++)
     {
       pPerson = pPedigree->ppPersonList[i];
       pPerson->touchedFlag = 0;
+      pPerson->numTmpLikelihood = 0;
       size = 1;
-      for (locus = 0; locus < locusList->numLocus; locus++)
+      for (locus = locusList->numLocus - 1; locus >= 0; locus--)
 	{
 	  origLocus = locusList->pLocusIndex[locus];
+	  if (locus == locusList->numLocus - 1)
+	    pPerson->multiLocusAdjust[locus] = 1;
+	  else
+	    pPerson->multiLocusAdjust[locus] =
+	      pPerson->multiLocusAdjust[locus + 1] * numGeno;
 	  numGeno = pPerson->pSavedNumGenotype[origLocus];
+	  pPerson->numSavedGenotype2[locus] = numGeno;
 	  size *= numGeno;
 	}
       pPerson->numConditionals = size;
 
-      memset (pPerson->pLikelihood, 0,
-	      sizeof (ConditionalLikelihood) * pPerson->maxNumConditionals);
+      /*      memset (pPerson->pLikelihood, 0,
+         sizeof (ConditionalLikelihood) * pPerson->maxNumConditionals);
+       */
       for (j = 0; j < size; j++)
 	{
+	  pConditional = &pPerson->pLikelihood[j];
+	  pConditional->touchedFlag = 0;
+	  pConditional->tmpTouched = 0;
 #ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE)
 	    {
-	      pPerson->pLikelihood[j].lkslot.likelihoodPolynomial = constantExp (0);
-	      pPerson->pLikelihood[j].wtslot.weightPolynomial = constantExp (1);
-	      pPerson->pLikelihood[j].tmpslot.tmpLikelihoodPolynomial = constantExp(0);
+	      pConditional->lkslot.likelihoodPolynomial =
+		pConditional->tmpslot.tmpLikelihoodPolynomial = constant0Poly;
+	      pConditional->wtslot.weightPolynomial = constant1Poly;
 	    }
 	  else
 	    {
-	      pPerson->pLikelihood[j].lkslot.likelihood = 0;
-	      pPerson->pLikelihood[j].wtslot.weight = 1;
-	      pPerson->pLikelihood[j].tmpslot.tmpLikelihood = 0;
+	      pConditional->lkslot.likelihood =
+		pConditional->tmpslot.tmpLikelihood = 0;
+	      pConditional->wtslot.weight = 1;
 	    }
 #else
-	  pPerson->pLikelihood[j].lkslot.likelihood = 0;
-	  pPerson->pLikelihood[j].wtslot.weight = 1;
-	  pPerson->pLikelihood[j].tmpslot.tmpLikelihood = 0;
+	  pConditional->lkslot.likelihood =
+	    pConditional->tmpslot.tmpLikelihood = 0;
+	  pConditional->wtslot.weight = 1;
 #endif
 	}
     }
@@ -2272,8 +2334,16 @@ initialize_loci (PedigreeSet * pPedigreeSet)
   int ped;
   Pedigree *pPedigree;
   Locus *pLocus;
+  int ret;
 
-  set_removeGenotypeFlag(TRUE);
+  set_removeGenotypeFlag (TRUE);
+#ifndef NO_POLYNOMIAL
+  if (modelOptions.polynomial == TRUE)
+    {
+      constant1Poly = constantExp (1);
+      constant0Poly = constantExp (0);
+    }
+#endif
 
   /* go through all loci in the original locus list */
   locus = 0;
@@ -2304,7 +2374,8 @@ initialize_loci (PedigreeSet * pPedigreeSet)
 	  //fprintf(stderr,"After  allele_set_recoding\n");
 
 	  /* do genotype elimination next */
-	  pedigree_genotype_elimination (locus, pPedigree);
+	  ret = pedigree_genotype_elimination (locus, pPedigree);
+	  KASSERT(ret==0, "Genotype incompatibility has been detected.\n");
 	  KLOG (LOGGENOELIM, LOGDEBUG,
 		"Genotype Lists after genotype elimination :\n");
 	  print_pedigree_locus_genotype_list (pPedigree, locus);
@@ -2381,12 +2452,12 @@ initialize_loci (PedigreeSet * pPedigreeSet)
     }
 */
 
-    } /* loop over pedigrees */
+    }				/* loop over pedigrees */
 
   /* populate the master genotype list */
-  populate_saved_genotype_link(pPedigreeSet);
+  populate_saved_genotype_link (pPedigreeSet);
 
-  set_removeGenotypeFlag(FALSE);
+  set_removeGenotypeFlag (FALSE);
 
   return 0;
 }
@@ -2443,7 +2514,7 @@ update_penetrance (PedigreeSet * pPedigreeSet, int locus)
 	{
 	  pPerson = pPedigree->ppPersonList[i];
 	  /* pass the loop breaker duplicates */
-	  if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+	  if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
 	    continue;
 	  pGenotype = pPerson->ppSavedGenotypeList[locus];
 	  while (pGenotype)
@@ -3077,7 +3148,7 @@ free_pedigree_set (PedigreeSet * pPedigreeSet)
   for (i = 0; i < pPedigreeSet->numPedigree; i++)
     {
       pPedigree = pPedigreeSet->ppPedigreeSet[i];
-      free_multi_locus_genotype_storage (pPedigree);
+      //      free_multi_locus_genotype_storage (pPedigree);
 
       free (pPedigree->ppFounderList);
 
@@ -3129,7 +3200,7 @@ free_person (Person * pPerson)
   free (pPerson->pPhasedFlag);
   free (pPerson->pTypedFlag);
 
-  if(pPerson->loopBreaker == 0  || pPerson->pParents[DAD] != NULL)
+  if (pPerson->loopBreaker == 0 || pPerson->pParents[DAD] != NULL)
     {
       /* go through each locus for the genotypes */
       for (i = 0; i < originalLocusList.numLocus; i++)
@@ -3138,18 +3209,19 @@ free_person (Person * pPerson)
 	  while (pPerson->ppSavedGenotypeList[i] != NULL)
 	    {
 	      remove_genotype (&(pPerson->ppSavedGenotypeList[i]),
-			       pPerson->ppSavedGenotypeList[i], &pPerson->pSavedNumGenotype[i]);
+			       pPerson->ppSavedGenotypeList[i],
+			       &pPerson->pSavedNumGenotype[i]);
 	    }
 	}
-      if(pPerson->loopBreaker == 1)
+      if (pPerson->loopBreaker == 1)
 	{
-	  for(i=0; i < pPerson->loopBreakerStruct->maxNumGenotype; i++)
-	    free(pPerson->loopBreakerStruct->genotype[i]);
-	  free(pPerson->loopBreakerStruct->genotype);
-	  free(pPerson->loopBreakerStruct);
+	  for (i = 0; i < pPerson->loopBreakerStruct->maxNumGenotype; i++)
+	    free (pPerson->loopBreakerStruct->genotype[i]);
+	  free (pPerson->loopBreakerStruct->genotype);
+	  free (pPerson->loopBreakerStruct);
 	}
     }
-  
+
   free (pPerson->ppGenotypeList);
   free (pPerson->pNumGenotype);
   free (pPerson->ppSavedGenotypeList);
@@ -3158,7 +3230,7 @@ free_person (Person * pPerson)
   free (pPerson->pShadowGenotypeListLen);
   free (pPerson->ppProbandGenotypeList);
   free (pPerson->pProbandNumGenotype);
-    
+
   free (pPerson->ppHaplotype);
 
   free (pPerson->pTransmittedAlleles[DAD]);
@@ -3298,7 +3370,7 @@ int
 copy_DValue (LDLoci * pLocus, double **pSrc)
 {
   int i;
-  for (i = 0; i < pLocus->numAllele1-1; i++)
+  for (i = 0; i < pLocus->numAllele1 - 1; i++)
     {
       memcpy (pLocus->ppDValue[i], pSrc[i],
 	      sizeof (double) * (pLocus->numAllele2 - 1));
@@ -3340,16 +3412,17 @@ find_locus (LocusList * pLocusList, char *sName)
 
 /* populate the master list of valid genotype list for given pedigree 
  * locus - index in original locus list */
-void populate_pedigree_saved_genotype_link(int locus, Pedigree *pPed)
+void
+populate_pedigree_saved_genotype_link (int locus, Pedigree * pPed)
 {
   Person *pPerson;
   int i;
   Genotype *pGeno;
 
-  for(i=0; i < pPed->numPerson; i++)
+  for (i = 0; i < pPed->numPerson; i++)
     {
       pPerson = pPed->ppPersonList[i];
-      if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+      if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
 	{
 	  /* pass the duplicated loop breaker */
 	  continue;
@@ -3357,7 +3430,7 @@ void populate_pedigree_saved_genotype_link(int locus, Pedigree *pPed)
       pGeno = pPerson->ppGenotypeList[locus];
       pPerson->ppSavedGenotypeList[locus] = pGeno;
       pPerson->pSavedNumGenotype[locus] = pPerson->pSavedNumGenotype[locus];
-      while(pGeno != NULL)
+      while (pGeno != NULL)
 	{
 	  pGeno->pSavedNext = pGeno->pNext;
 	  pGeno = pGeno->pNext;
@@ -3366,47 +3439,51 @@ void populate_pedigree_saved_genotype_link(int locus, Pedigree *pPed)
 }
 
 /* populate the master list of valid genotype list for all pedigrees */
-void populate_saved_genotype_link(PedigreeSet *pSet)
+void
+populate_saved_genotype_link (PedigreeSet * pSet)
 {
   int i, j;
   Pedigree *pPed;
 
-  for(i=0; i < originalLocusList.numLocus; i++)
+  for (i = 0; i < originalLocusList.numLocus; i++)
     {
-      for(j=0; j < pSet->numPedigree; j++)
+      for (j = 0; j < pSet->numPedigree; j++)
 	{
 	  pPed = pSet->ppPedigreeSet[j];
-	  populate_pedigree_saved_genotype_link(i, pPed);
+	  populate_pedigree_saved_genotype_link (i, pPed);
 	}
     }
 }
+
 /* likelihood on pedigrees with loops are calculated with fixing loop breaker
  * genotype vector one at a time, followed by genotype elimination on the entire
  * pedigree. so after each calculation, the genotype list
  * needs to be restored for everyone from the saved master list */
-void restore_pedigree_genotype_link_from_saved(Pedigree *pPed)
+void
+restore_pedigree_genotype_link_from_saved (Pedigree * pPed)
 {
   int i, j;
   int origLocus;
   Genotype *pGeno;
   Person *pPerson;
 
-  for(j=0; j < locusList->numLocus; j++)
+  for (j = 0; j < locusList->numLocus; j++)
     {
       origLocus = locusList->pLocusIndex[j];
-      
-      for(i=0; i < pPed->numPerson; i++)
+
+      for (i = 0; i < pPed->numPerson; i++)
 	{
 	  pPerson = pPed->ppPersonList[i];
-	  if(pPerson->loopBreaker >=1 && pPerson->pParents[DAD] == NULL)
+	  if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
 	    {
 	      /* pass the duplicated loop breaker */
 	      continue;
 	    }
 	  pGeno = pPerson->ppSavedGenotypeList[origLocus];
 	  pPerson->ppGenotypeList[origLocus] = pGeno;
-	  pPerson->pNumGenotype[origLocus] = pPerson->pSavedNumGenotype[origLocus];
-	  while(pGeno != NULL)
+	  pPerson->pNumGenotype[origLocus] =
+	    pPerson->pSavedNumGenotype[origLocus];
+	  while (pGeno != NULL)
 	    {
 	      pGeno->pNext = pGeno->pSavedNext;
 	      pGeno = pGeno->pSavedNext;

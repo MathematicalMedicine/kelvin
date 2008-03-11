@@ -4,7 +4,6 @@
  * Polynomial features - Hongling Wang
  * config.c and error logging modules - Alberto Maria Segre
  * Regex code - Nathan Burnette
- * RADSMM storage code - Martin Milder
  * 
  * Copyright 2007, Columbus Children's Research Institute.  
  * All rights reserved.
@@ -15,14 +14,19 @@
 #include "likelihood.h"
 #include "pedlib/polynomial.h"
 
+extern double lastMem;
+extern double currentMem;
+extern double totalMem;
+extern Polynomial *constant1Poly;
+extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 struct swStopwatch *overallSW;
 #include <signal.h>		/* Signalled dumps */
 volatile sig_atomic_t signalSeen = 0;
 int handlerDumpCycle = 0;
 void usr1SignalHandler (int signal) {
   swLogPeaks ("Timer");
-  if ((++handlerDumpCycle % 100) == 0)
-    dumpPStats ("Timer");
+//  if ((++handlerDumpCycle % 100) == 0)
+//    dumpPStats ("Timer");
 }
 void quitSignalHandler (int signal) {
   swDump (overallSW);
@@ -40,20 +44,20 @@ void quitSignalHandler (int signal) {
 #endif
 }
 
+char *kelvinVersion = "0.33.1";
+
+void print_dryrun_stat(PedigreeSet *pSet, double pos);
 /* Some default global values. */
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
 char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";
 char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";
 char datafile[KMAXFILENAMELEN + 1] = "datafile.dat";
-char loopsfile[KMAXFILENAMELEN + 1] = "loops.dat";
 char ccfile[KMAXFILENAMELEN + 1] = "";	/* case control count file */
 char outfile[KMAXFILENAMELEN + 1] = "lods.out";
 char avghetfile[KMAXFILENAMELEN + 1] = "avghet.out";
-char avghomofile[KMAXFILENAMELEN + 1] = "avghomo.out";
 char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";
 char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
 FILE *fpHet = NULL;		/* average HET LR file */
-//FILE *fpHomo = NULL;          /* average HOMO LR file */
 FILE *fpPPL = NULL;		/* PPL output file */
 
 /* Model datastructures. modelOptions is defined in the pedigree library. */
@@ -221,15 +225,16 @@ main (int argc, char *argv[])
 
   /* Fork a child that loops sleeping several seconds and then signalling 
      us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
+#ifdef DMTRACK
   pid_t childPID;
   childPID = fork ();
   if (childPID == 0) {
     while (1) {
       sleep (5);
       kill (getppid (), SIGUSR1);
-    } /* Does not return */
+    }
   }
-
+#endif
   overallSW = swCreate ("overall"); /* Overall performance stopwatch */
   /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
   struct sigaction usr1Action, quitAction;
@@ -248,8 +253,8 @@ main (int argc, char *argv[])
 
   /* Annouce ourselves for performance tracking. */
   char messageBuffer[MAXSWMSG];
-  sprintf(messageBuffer, "At %s(%s %s)%d: %s", __FILE__, __DATE__, __TIME__,
-	  __LINE__, "starting run");
+  sprintf(messageBuffer, "kelvin V%s, likelihood V%s, locus V%s, polynomial V%s starting run",
+	kelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
   swLogMsg(messageBuffer);
   
 #ifdef DMTRACK
@@ -259,6 +264,7 @@ main (int argc, char *argv[])
   fprintf (stderr, "or type \"kill -%d %d\" (safe and thorough, but requires program cooperation).\n",
 	   SIGUSR1, getpid ());
   swStart (overallSW);
+
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&markerLocusList, 0, sizeof (markerLocusList));
@@ -395,10 +401,6 @@ main (int argc, char *argv[])
   fpHet = fopen (avghetfile, "w");
   KASSERT (fpHet != NULL, "Error in opening file %s for write.\n",
 	   avghetfile);
-  /*  fpHomo = fopen (avghomofile, "w");
-     KASSERT (fpHomo != NULL, "Error in opening file %s for write.\n",
-     avghomofile);
-   */
   if (modelType.type == TP)
     {
       fpPPL = fopen (pplfile, "w");
@@ -550,13 +552,29 @@ main (int argc, char *argv[])
   /* initialize loci by doing genotype elimination, set recoding */
   initialize_loci (&pedigreeSet);
 
+  if(modelOptions.dryRun != 0)
+    {
+      for(loc1=0; loc1 < originalLocusList.numLocus; loc1++)
+	{
+	  fprintf(stderr, "Locus %d:\n", loc1);
+	  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++)
+	    {
+	      pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+	      print_pedigree_locus_genotype_count (pPedigree, loc1);
+	    }
+
+	}
+    }
+
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
+      //      constant1Poly = constantExp (1);
+      // constant0Poly = constantExp (0);
       for (k = 0; k < 3; k++)
 	{
-	  initialProbPoly[k] = constantExp (1.0);
-	  initialProbPoly2[k] = constantExp (1.0);
+	  initialProbPoly[k] = constant1Poly;
+	  initialProbPoly2[k] = constant1Poly;
 	  initialProbAddr[k] = initialProbPoly[k];
 	  initialProbAddr2[k] = initialProbPoly2[k];
 	  initialHetProbAddr[k] = NULL; 
@@ -804,7 +822,8 @@ main (int argc, char *argv[])
 					     -1,	/* last het locus */
 					     -1,	/* last  pattern (P-1 or M-2) */
 					     0);	/* current locus - start with 0 */
-	  makePolynomialStamp ();
+	  fprintf(stderr, "holdAllPolys from population of transmission matrix\n");
+	  holdAllPolys ();
 	}
 #endif
 
@@ -1377,13 +1396,9 @@ main (int argc, char *argv[])
 						  QT_FUNCTION_CHI_SQUARE)
 						{
 						  constraint =
-						    pow (1.0 - gfreq,
-							 2) * mean_dd *
-						    SD_dd + 2 * gfreq * (1 -
-									 gfreq)
-						    * mean_Dd * SD_Dd +
-						    pow (gfreq,
-							 2) * mean_DD * SD_DD;
+						    (1-gfreq)*(1-gfreq)*mean_dd *SD_dd + 
+						    2*gfreq* (1-gfreq)* mean_Dd * SD_Dd +
+						    gfreq*gfreq * mean_DD * SD_DD;
 						  /*      fprintf(stderr, "constraint: %f gfreq:%f DD (%f,%f) Dd(%f,%f) dd(%f,%f)\n",
 						     constraint, gfreq, mean_DD, SD_DD, 
 						     mean_Dd, SD_DD, 
@@ -1929,7 +1944,7 @@ main (int argc, char *argv[])
 			}
 		      
 		      fprintf (fpHet,
-			       "(%6.4f, %6.4f) %6d %8.4f %8.4f %6.4f %5.2f %6.4f %6.4f ",
+			       "(%6.4f, %6.4f) %6d %10.8e %8.4f %6.4f %5.2f %6.4f %6.4f ",
 			       theta[0], theta[1],
 			       modelRange.nalpha *
 			       tp_result[dprimeIdx][thetaInd][modelRange.
@@ -2305,7 +2320,8 @@ main (int argc, char *argv[])
 		{
 		  /* under case ctrl we don't clear up the polynomial */
 		  pedigreeSetPolynomialClearance (&pedigreeSet);
-		  partialPolynomialClearance ();
+		  fprintf(stderr, "freePolys since not under case control?\n");
+		  freePolys ();
 		}
 #endif
 
@@ -2414,18 +2430,20 @@ main (int argc, char *argv[])
 					     -1,	/* last het locus */
 					     -1,	/* last het pattern (P-1 or M-2) */
 					     0);	/* current locus - start with 0 */
+      fprintf(stderr, "holdAllPolys from further population of transmission matrix\n");
+      holdAllPolys ();
 	}
-      makePolynomialStamp ();
 #endif
 
       /* for trait likelihood */
+      fprintf(stderr, "MP start time: %f\n", (double)time0/CLOCKS_PER_SEC);
       locusList = &traitLocusList;
       xmissionMatrix = traitMatrix;
       if (pTrait->type == DICHOTOMOUS)
 	{
-	  for (penIdx = 0; penIdx < modelRange.npenet; penIdx++)
+	  for (penIdx = 0; (penIdx==0) || (modelOptions.dryRun==0 && penIdx < modelRange.npenet); penIdx++)
 	    {
-	      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+	      for (liabIdx = 0; (liabIdx==0) || (modelOptions.dryRun==0 && liabIdx < modelRange.nlclass); liabIdx++)
 		{
 		  pen_DD = modelRange.penet[liabIdx][0][penIdx];
 		  pen_Dd = modelRange.penet[liabIdx][1][penIdx];
@@ -2452,7 +2470,8 @@ main (int argc, char *argv[])
 	      update_penetrance (&pedigreeSet, traitLocus);
 #endif
 	  
-	      for (gfreqInd = 0; gfreqInd < modelRange.ngfreq;
+	      for (gfreqInd = 0; 
+		   (gfreqInd==0) || (modelOptions.dryRun==0 && gfreqInd < modelRange.ngfreq);
 		   gfreqInd++)
 		{
 		  /* updated trait locus allele frequencies */
@@ -2473,6 +2492,9 @@ main (int argc, char *argv[])
 		  KLOG(LOGLIKELIHOOD, LOGDEBUG, "Trait Likelihood\n");
 		  compute_likelihood (&pedigreeSet);
 	      
+		  if(modelOptions.dryRun != 0)
+		    continue;
+
 		  if (pedigreeSet.likelihood == 0.0 &&
 		      pedigreeSet.log10Likelihood == -9999.99)
 		    {
@@ -2560,12 +2582,9 @@ main (int argc, char *argv[])
 				  QT_FUNCTION_CHI_SQUARE)
 				{
 				  constraint =
-				    pow (1.0 - gfreq,
-					 2) * mean_dd * SD_dd +
-				    2 * gfreq * (1 -
-						 gfreq) * mean_Dd *
-				    SD_Dd + pow (gfreq,
-						 2) * mean_DD * SD_DD;
+				    (1-gfreq)*(1-gfreq)*mean_dd *SD_dd + 
+				    2*gfreq* (1-gfreq)* mean_Dd * SD_Dd +
+				    gfreq*gfreq * mean_DD * SD_DD;
 				  /*      fprintf(stderr, "constraint: %f gfreq:%f DD (%f,%f) Dd(%f,%f) dd(%f,%f)\n",
 					  constraint, gfreq, mean_DD, SD_DD, 
 					  mean_Dd, SD_DD, 
@@ -2657,8 +2676,10 @@ main (int argc, char *argv[])
 	    }		/* gfreq */
 	  
 	} /* end of QT */
+      time2 = clock(); 
+      fprintf(stderr, "MP done trait: %f\n", (double)time2/CLOCKS_PER_SEC);
 
- #ifndef NO_POLYNOMIAL
+#ifndef NO_POLYNOMIAL
       if (modelOptions.polynomial == TRUE)
 	{
 	  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++)
@@ -2670,6 +2691,12 @@ main (int argc, char *argv[])
 	    }
 	}
 #endif
+
+      /* print out some statistics under dry run */
+      if(modelOptions.dryRun != 0)
+	{
+	  print_dryrun_stat(&pedigreeSet, -1);  
+	}
 
       /* get the trait locations we need to evaluate at */
       numPositions = modelRange.ntloc;
@@ -2738,6 +2765,17 @@ main (int argc, char *argv[])
 	    }
 	  locusList->traitLocusIndex = traitIndex;
 	  locusList->traitOrigLocus = traitLocus;
+	  if(modelOptions.dryRun !=0)
+	    {
+	      fprintf(stderr, "POS %f (%d/%d) markers", 
+		      traitPos, posIdx, numPositions);
+	      for (k = 0; k < modelType.numMarkers; k++)
+		{
+		  fprintf (stderr, " %d", mp_result[posIdx].pMarkers[k]);
+		}
+	      fprintf(stderr, "\n");
+	    }
+
 	  markerSetChanged = FALSE;
 	  if (prevFirstMarker != mp_result[posIdx].pMarkers[0] ||
 	      prevLastMarker !=
@@ -2781,7 +2819,8 @@ main (int argc, char *argv[])
 	      if (modelOptions.polynomial == TRUE)
 		{
 		  pedigreeSetPolynomialClearance (&pedigreeSet);
-		  partialPolynomialClearance ();
+		  fprintf(stderr, "freePolys after calculate likelihood for marker set\n");
+		  freePolys ();
 		}
 #endif
 #endif
@@ -2830,8 +2869,18 @@ main (int argc, char *argv[])
 	      
 	      KLOG(LOGLIKELIHOOD, LOGDEBUG, "Marker Likelihood\n");
 	      compute_likelihood (&pedigreeSet);
+	      time2 = clock(); 
+	      fprintf(stderr, "MP done marker set on pos %d: %f\n", 
+		      posIdx, (double)time2/CLOCKS_PER_SEC);
 	      modelOptions.polynomial = polynomialFlag;
 
+      /* print out some statistics under dry run */
+      if(modelOptions.dryRun != 0)
+	{
+	  print_dryrun_stat(&pedigreeSet, -1); 
+	}
+      else
+	{
 	      /* save the results for marker likelihood */
 	      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++)
 		{
@@ -2841,6 +2890,7 @@ main (int argc, char *argv[])
 		}
 	      pedigreeSet.markerLikelihood = pedigreeSet.likelihood;
 	      pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
+	}
 	    } /* end of marker set change */
 	  prevFirstMarker = mp_result[posIdx].pMarkers[0];
 	  prevLastMarker =
@@ -2987,7 +3037,8 @@ main (int argc, char *argv[])
 	      if (modelOptions.polynomial == TRUE)
 		{
 		  pedigreeSetPolynomialClearance (&pedigreeSet);
-		  partialPolynomialClearance ();
+		  fprintf(stderr, "freePolys when marker set or locus list changed\n");
+		  freePolys ();
 		}
 #endif
 	    }
@@ -3016,9 +3067,9 @@ main (int argc, char *argv[])
 	  if (pTrait->type == DICHOTOMOUS)
 	    {
 	      /* for alternative */
-	      for (penIdx = 0; penIdx < modelRange.npenet; penIdx++)
+	      for (penIdx = 0; (penIdx==0) || (modelOptions.dryRun==0 && penIdx < modelRange.npenet); penIdx++)
 		{
-		  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+		  for (liabIdx = 0; (liabIdx==0) || (modelOptions.dryRun==0 && liabIdx < modelRange.nlclass); liabIdx++)
 		    {
 		      pen_DD = modelRange.penet[liabIdx][0][penIdx];
 		      pen_Dd = modelRange.penet[liabIdx][1][penIdx];
@@ -3043,7 +3094,7 @@ main (int argc, char *argv[])
 #else
 		  update_penetrance (&pedigreeSet, traitLocus);
 #endif
-		  for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++)
+		  for (gfreqInd = 0; (gfreqInd==0) || (modelOptions.dryRun==0 && gfreqInd < modelRange.ngfreq); gfreqInd++)
 		    {
 		      /* updated trait locus allele frequencies */
 		      gfreq = modelRange.gfreq[gfreqInd];
@@ -3063,6 +3114,14 @@ main (int argc, char *argv[])
 		      /* ready for the alternative hypothesis */
 		      KLOG(LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
 		      compute_likelihood (&pedigreeSet);
+
+      /* print out some statistics under dry run */
+      if(modelOptions.dryRun != 0)
+	{
+	  print_dryrun_stat(&pedigreeSet, traitPos); 
+	}
+      else
+	{
 
 		      //fprintf(stderr," Alternative Likelihood=%e log10Likelihood=%e\n",
 		      //pedigreeSet.likelihood,pedigreeSet.log10Likelihood);
@@ -3146,6 +3205,7 @@ main (int argc, char *argv[])
 			      mp_result[posIdx].max_penIdx = penIdx;
 			    }
 			}	/* end of calculating HET LR */
+	}
 		    }		/* end of genFreq loop */
 		}		/* end of penetrance loop */
 	    }			/* end of TP */
@@ -3192,12 +3252,9 @@ main (int argc, char *argv[])
 				    {
 				      /* check against the hard coded constraint */
 				      constraint =
-					pow (1.0 - gfreq,
-					     2) * mean_dd * SD_dd +
-					2 * gfreq * (1 -
-						     gfreq) * mean_Dd *
-					SD_Dd + pow (gfreq,
-						     2) * mean_DD * SD_DD;
+					(1-gfreq)*(1-gfreq)*mean_dd *SD_dd + 
+					2*gfreq* (1-gfreq)* mean_Dd * SD_Dd +
+					gfreq*gfreq * mean_DD * SD_DD;
 				      /*      fprintf(stderr, "constraint: %f gfreq:%f DD (%f,%f) Dd(%f,%f) dd(%f,%f)\n",
 				         constraint, gfreq, mean_DD, SD_DD, 
 				         mean_Dd, SD_DD, 
@@ -3399,6 +3456,8 @@ main (int argc, char *argv[])
 		}		/* end of gene freq */
 	    }			/* end of QT */
 
+	  time2 = clock(); 
+	  fprintf(stderr, "MP done ALT on pos %d: %f\n", posIdx, (double)time2/CLOCKS_PER_SEC);
 	  /* print out average and log10(max) and maximizing parameters */
 	  //      if (modelType.trait == DT || modelType.distrib != QT_FUNCTION_CHI_SQUARE)
 	  if (modelType.trait == DT)
@@ -3424,7 +3483,7 @@ main (int argc, char *argv[])
 	  penIdx = mp_result[posIdx].max_penIdx;
 	  paramIdx = mp_result[posIdx].max_paramIdx;
 	  thresholdIdx = mp_result[posIdx].max_thresholdIdx;
-	  fprintf (fpHet, "\t %f  %6.4f %12.8f(%d) %10.6f %f %f ",
+	  fprintf (fpHet, "\t %f  %6.4f %10.8e(%d) %10.6f %f %f ",
 		   traitPos, ppl, avgLR,
 		   mp_result[posIdx].lr_count, log10 (max), alphaV, gfreq);
 	  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
@@ -3512,7 +3571,7 @@ main (int argc, char *argv[])
   if (modelOptions.polynomial == TRUE)
     {
       pedigreeSetPolynomialClearance (&pedigreeSet);
-      polynomialClearance ();
+      fprintf(stderr, "skipping freePolys at end of run as unneeded\n");
     }
 #endif
   free_likelihood_storage (&pedigreeSet);
@@ -3524,15 +3583,9 @@ main (int argc, char *argv[])
   free (modelOptions.sUnknownPersonID);
   final_cleanup ();
 
-
-
-  /* close file pointers */
-  if (modelType.type == TP)
-    {
-      fclose (fpPPL);
-    }
-  fclose (fpHet);
-  //  fclose (fpHomo);
+  fprintf (stderr, "Computation time:  %fs  %fs \n",
+	   (double) (time1 - time0) / CLOCKS_PER_SEC,
+	   (double) (time2 - time1) / CLOCKS_PER_SEC);
 
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
@@ -3542,11 +3595,67 @@ main (int argc, char *argv[])
 	 missed24s, used24s, missed48s, used48s, missed100s, used100s);
 #endif
 #ifdef DMTRACK
-  //  swDumpBlockUse ();
+  fprintf (stderr,
+	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d\n",
+	   countMalloc, countFree, countReallocOK, countReallocMove, countReallocFree, maxListDepth, maxRecycles);
+  fprintf (stderr,
+	   "Size malloc:%g, free:%g, realloc OK:%g, realloc move:%g, realloc free:%g, current:%g, peak:%g\n",
+	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
+	   totalReallocFree, currentAlloc, peakAlloc);
   swDumpSources ();
+  //  swDumpBlockUse ();
   //  swDumpCrossModuleChunks ();
 #endif
   swLogMsg("finished run");
 
+  /* close file pointers */
+  if (modelType.type == TP)
+    {
+      fclose (fpPPL);
+    }
+  fclose (fpHet);
+  //  fclose (fpHomo);
   return 0;
+}
+
+void print_dryrun_stat(PedigreeSet *pSet, double pos)
+{
+  int pedIdx;
+  long subTotalPairGroups, subTotalSimilarPairs;
+  long totalPairGroups, totalSimilarPairs;
+  NuclearFamily *pNucFam;
+  Pedigree *pPedigree;
+  int i;
+
+  totalPairGroups = 0;
+  totalSimilarPairs = 0;
+	  for (pedIdx = 0; pedIdx < pSet->numPedigree;
+	       pedIdx++)
+	    {
+	      /* save the likelihood at null */
+	      pPedigree = pSet->ppPedigreeSet[pedIdx];
+	      fprintf(stderr, "Ped %s(%d) has %d loops, %d nuclear families.\n", 
+		      pPedigree->sPedigreeID, pedIdx,
+		      pPedigree->numLoop, pPedigree->numNuclearFamily);
+              subTotalPairGroups = 0;
+              subTotalSimilarPairs = 0;
+	      for(i=0; i < pPedigree->numNuclearFamily; i++)
+		{
+		  pNucFam = pPedigree->ppNuclearFamilyList[i];
+		  fprintf(stderr, "    Nuc %d w/ proband %s(%s) has %ld unique pp groups, %ld similar pp, total %ld.\n", 
+			  i, pNucFam->pProband->sID, pNucFam->childProbandFlag?"child":"parent", 
+			  pNucFam->totalNumPairGroups, pNucFam->totalNumSimilarPairs,
+	pNucFam->totalNumPairGroups + pNucFam->totalNumSimilarPairs);
+                  subTotalPairGroups += pNucFam->totalNumPairGroups;
+                  subTotalSimilarPairs += pNucFam->totalNumSimilarPairs;
+		}
+               fprintf(stderr, "    Ped has total %ld unique pp groups, %ld similar pp, total %ld.\n", 
+                subTotalPairGroups, subTotalSimilarPairs, 
+                subTotalPairGroups + subTotalSimilarPairs);
+             totalPairGroups += subTotalPairGroups;
+             totalSimilarPairs += subTotalSimilarPairs; 
+	    }
+    fprintf(stderr, "POS %f has %ld unique pp groups, %ld similar pp, total %ld.\n",
+      pos, totalPairGroups, totalSimilarPairs, 
+      totalPairGroups + totalSimilarPairs);
 }
