@@ -3300,7 +3300,7 @@ doHoldPoly (struct polynomial *p)
   int i;
 
   if (p->id == polynomialLostNodeId)
-    fprintf (stderr, "holdPoly sees id %d and is bumping hold count to %d\n",
+    fprintf (stderr, "holdPoly sees id %d and is bumping hold count from %d\n",
 	     polynomialLostNodeId, p->count);
 
   if (p->valid & VALID_EVAL_FLAG)
