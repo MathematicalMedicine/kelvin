@@ -150,10 +150,62 @@ int restoreMarker(char *pedigree, int markerNo, int markerCount, char **markerNa
   tpl_free (tn);
   return 0;
 }
-int saveAlternative(char *p, int i, double q, double **r) {
+
+char *alternativeTPLFormat = "siff#f#f#f#f#f#";	/* String and six fixed vectors of doubles */
+char *alternativeFileFormat = "%s_%i_%G_alternative.tpl";
+
+int saveAlternative(char *pedigree, int chromosome, double traitPosition, double **lDT) {
+  tpl_node *tn;
+
+  fprintf(stderr, "in saveAlternative for pedigree %s, chromosome %d, trait position %d\n",
+	  pedigree, chromosome, (int) traitPosition);
+  sprintf (fileName, alternativeFileFormat, pedigree, chromosome, traitPosition);
+  tn = tpl_map (alternativeTPLFormat, &pedigree, &chromosome, &traitPosition,
+		lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275, lDT[5], 275);
+  tpl_pack(tn, 0);
+  tpl_dump (tn, TPL_FILE, fileName);
+  tpl_free (tn);
+
   return 0;
 }
-int restoreAlternative(char *p, int i, double q, double **r) {
+int restoreAlternative(char *pedigree, int chromosome, double traitPosition, double **lDT) {
+  int i;
+  tpl_node *tn;
+  FILE *file;
+  char *checkPedigree;
+  int checkChromosome;
+  double checkTraitPosition;
+
+  fprintf(stderr, "in restoreAlternative\n");
+  if ((lDT = (double **) malloc (6 * sizeof (double *))) == NULL) {
+    fprintf (stderr, "In restoreTrait, malloc of 1st dimension failed!\n");
+    exit (1);
+  }
+  for (i = 0; i < 6; i++) {
+    if ((lDT[i] = (double *) malloc (275 * sizeof (double))) == NULL) {
+      fprintf (stderr, "malloc of 2nd dimension failed\n");
+      exit (1);
+    }
+  }
+  sprintf (fileName, alternativeFileFormat, pedigree, chromosome, traitPosition);
+  tn =
+    tpl_map (alternativeTPLFormat, &checkPedigree, &checkChromosome, &checkTraitPosition,
+	     lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275, lDT[5], 275);
+  if ((file = fopen (fileName, "r"))) {
+    fclose (file);
+    tpl_load (tn, TPL_FILE, fileName);
+    tpl_unpack (tn, 0);
+    if ((strcmp(pedigree, checkPedigree) == 0) && (chromosome == checkChromosome) &&
+	(traitPosition == checkTraitPosition)) {
+      tpl_free (tn);
+      return 1;
+    } else {
+      fprintf(stderr, "restoreAlternative check of pedigree/chromosome/traitPosition %s/%d/%G vs %s/%d/%G failed, exiting!\n",
+	      pedigree, chromosome, traitPosition, checkPedigree, checkChromosome, checkTraitPosition);
+      exit(1);
+    }
+  }
+  tpl_free (tn);
   return 0;
 }
 

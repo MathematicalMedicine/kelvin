@@ -275,11 +275,11 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	      initialize_multi_locus_genotype (pPedigree);
 	      //fprintf(stderr, "Start polynomial building\n");
 	      status = compute_pedigree_likelihood (pPedigree);
-	      fprintf(stderr, "holdPoly for the pedigree polynomial\n");
-	      expTermPrinting(stderr, pPedigree->likelihoodPolynomial, 1);
-	      fprintf(stderr, "\n");
+	      //	      fprintf(stderr, "holdPoly for the pedigree polynomial\n");
+	      //	      expTermPrinting(stderr, pPedigree->likelihoodPolynomial, 1);
+	      //	      fprintf(stderr, "\n");
 	      holdPoly(pPedigree->likelihoodPolynomial);
-	      fprintf(stderr, "freeKeptPolys after likelihood build and hold for pedigree\n");
+	      //	      fprintf(stderr, "freeKeptPolys after likelihood build and hold for pedigree\n");
 	      freeKeptPolys ();
 	      //	      printAllPolynomials();
 	      pPedigree->likelihoodPolyList = buildPolyList ();
@@ -790,7 +790,7 @@ peel_graph (NuclearFamily * pNucFam1, Person * pProband1,
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     {
-      fprintf(stderr, "keepPoly for the likelihood and weight polynomials\n");
+      //      fprintf(stderr, "keepPoly for the likelihood and weight polynomials\n");
       for (i = 0; i < pProband->numConditionals; i++)
 	{
 	  if (pProband->touchedFlag == TRUE )
@@ -799,7 +799,7 @@ peel_graph (NuclearFamily * pNucFam1, Person * pProband1,
 	      keepPoly(pProband->pLikelihood[i].wtslot.weightPolynomial);
 	    }
 	}
-      fprintf(stderr, "freePolys after keeping the likelihood and weight polynomials\n");
+      //      fprintf(stderr, "freePolys after keeping the likelihood and weight polynomials\n");
       freePolys();
     }
 #endif

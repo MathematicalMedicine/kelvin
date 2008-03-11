@@ -610,22 +610,23 @@ free_likelihood_storage (PedigreeSet * pedSet)
   if (likelihoodDT == NULL && likelihoodQT == NULL)
     return;
 
-  if (modelType.trait == DT)
-    {
+  if (modelType.trait != DT)
+    {/*
       for (pedIdx = 0; pedIdx < pedSet->numPedigree + 1; pedIdx++)
 	{
 	  for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++)
 	    {
-	      /* third dimension is penetrance */
+	      * third dimension is penetrance *
 	      free (likelihoodDT[pedIdx][gfreqInd]);
 	    }
-	  /* second dimension is gene freq */
+	  * second dimension is gene freq *
 	  free (likelihoodDT[pedIdx]);
 	}
-      free (likelihoodDT);
+free (likelihoodDT);
+  
     }
   else
-    {				/* QT */
+    {			*/	/* QT */
       for (pedIdx = 0; pedIdx < pedSet->numPedigree + 1; pedIdx++)
 	{
 	  for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++)
