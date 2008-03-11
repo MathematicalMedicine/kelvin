@@ -240,6 +240,7 @@ typedef struct SUMMARY_STAT
   int trait;			/* trait locus index in the locus list for MP */
 } SUMMARY_STAT;
 
+
 void free_likelihood_storage ();
 /* allocate two point analysis result space */
 int initialize_tp_result_storage ();
@@ -260,7 +261,7 @@ extern ModelRange modelRange;
 extern ModelOptions modelOptions;
 
 /* storage for the NULL likelihood for the multipoint calculation under polynomial */
-extern double ***likelihoodDT;
+extern double **likelihoodDT;
 extern double *****likelihoodQT;
 
 /* three dimensional array for the two point summary results *
