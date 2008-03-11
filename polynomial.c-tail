@@ -547,7 +547,7 @@ doFreePolys (unsigned short keepMask)
   int i, j, k;
   struct polynomial **newSumList, **newProductList;
 
-  if (polynomialDebugLevel >= 1) fprintf (stderr, "Starting freePolys\n");
+  if (polynomialDebugLevel >= 1) fprintf (stderr, "Starting doFreePolys\n");
   if (polynomialDebugLevel >= 7) {
     fprintf(stderr, "...with the following:\n");
     printAllPolynomials ();
@@ -560,7 +560,7 @@ doFreePolys (unsigned short keepMask)
     (struct polynomial **) malloc (sizeof (struct polynomial *) *
 				   (sumListLength));
   if (newSumList == NULL) {
-    fprintf (stderr, "In freePolys, newSumList memory application failed, exiting!\n");
+    fprintf (stderr, "In doFreePolys, newSumList memory application failed, exiting!\n");
     exit (1);
   }
   k = 0;
@@ -611,7 +611,7 @@ doFreePolys (unsigned short keepMask)
     (struct polynomial **) malloc (sizeof (struct polynomial *) *
 				   (productListLength));
   if (newProductList == NULL) {
-    fprintf (stderr, "In freePolys, newProductList memory application failed, exiting!\n");
+    fprintf (stderr, "In doFreePolys, newProductList memory application failed, exiting!\n");
     exit (1);
   }
   k = 0;
