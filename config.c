@@ -491,6 +491,12 @@ readConfigFile (char *file, ModelType * modelType,
 		markerfile);
 	  continue;
 	}
+      if (sscanf (line, "SR %s", resultsprefix) == 1)	/* Results file prefix */
+	{
+	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure results file prefix %s\n",
+		resultsprefix);
+	  continue;
+	}
       if (sscanf (line, "MP %s", mapfile) == 1)	/* Map file */
 	{
 	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure map file %s\n", mapfile);
