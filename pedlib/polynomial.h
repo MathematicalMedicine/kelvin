@@ -397,6 +397,7 @@ void printSummaryPoly (struct polynomial *);
 
 void keepPoly (struct polynomial *);
 void holdPoly (struct polynomial *);
+void unHoldPoly (struct polynomial *);
 void freePolys ();
 void freeKeptPolys ();
 void holdAllPolys ();
