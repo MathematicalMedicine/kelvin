@@ -713,7 +713,8 @@ collectSumTerms (double **factor, struct polynomial ***p, int *counter,
     }
   }
   //this is a new item in the sum, insert it at the start or end of the sum
-  if (*counter == 0 || location >= *counter) {
+  //  if (*counter == 0 || location >= *counter) {
+  if (location >= *counter) {
     (*p)[*counter] = p1;
     (*factor)[*counter] = f1;
     (*counter)++;
@@ -1130,7 +1131,7 @@ plusExp (int num, ...)
 
   //Insert the newly built polynomial into the Hash table
   if (flag != 0 && p0EType == T_SUM && p0Valid == 0) {
-    if (p0HIndex != hIndex || p0SubHIndex != location) {
+    if (p0SubHIndex != location || p0HIndex != hIndex) {
       //insert the newly built polynomial in the hash table
       insertHashTable (&sumHash[hIndex], location, key,
 		       sumList[p0Index]->index);
@@ -1219,7 +1220,8 @@ collectProductTerms (int **exponent, struct polynomial ***p, int *counter,
     }
   }
   //If this item should be in the start or end
-  if ((*counter) == 0 || location >= (*counter)) {
+  //  if ((*counter) == 0 || location >= (*counter)) {
+  if (location >= (*counter)) {
     (*p)[(*counter)] = p1;
     (*exponent)[(*counter)] = e1;
     (*counter)++;
@@ -1689,7 +1691,7 @@ timesExp (int num, ...)
 
       //If the indexes or sub indexes of the new and old polynomials in the hash table
       //are different
-      if (p0HIndex != hIndex || p0SubHIndex != location) {
+      if (p0SubHIndex != location || p0HIndex != hIndex) {
 	//Insert the new polynomial in the hash table of the product polynomial
 	insertHashTable (&productHash[hIndex], location, key, p0Index);
 
@@ -2092,8 +2094,6 @@ evaluatePoly (struct polynomial *pp, struct polyList *l)
 
   for (j = 0; j <= l->listNext - 1; j++) {
     p = l->pList[j];
-//      expPrinting(p);
-//      fprintf(stderr,"\n");
     switch (p->eType) {
     case T_CONSTANT:
       break;
@@ -2114,7 +2114,10 @@ evaluatePoly (struct polynomial *pp, struct polyList *l)
       p->value = 0;
       sP = p->e.s;
       for (i = 0; i < sP->num; i++) {
-	p->value += sP->sum[i]->value * sP->factor[i];
+	if (sP->factor[i] == 1)
+	  p->value += sP->sum[i]->value;
+	else
+	  p->value += sP->sum[i]->value * sP->factor[i];
       }
       break;
 
@@ -3263,16 +3266,17 @@ keepPoly (struct polynomial *p)
 {
   int i;
 
-  if (p->id == polynomialLostNodeId)
-    fprintf (stderr, "flagValids sees id %d and is flagging with %d\n",
-	     polynomialLostNodeId, VALID_KEEP_FLAG);
-
   /* If we hit a term with the flag already set, we can stop, because
      all of it's subpolys will have it set as well. This flag is only
      cleared en-masse so there will never be a freeing of a subpoly
      without those it contributes to being freed as well. */
   if (p->valid & VALID_KEEP_FLAG)
     return;
+
+  if (p->id == polynomialLostNodeId)
+    fprintf (stderr, "flagValids sees id %d and is flagging with %d\n",
+	     polynomialLostNodeId, VALID_KEEP_FLAG);
+
   p->valid |= VALID_KEEP_FLAG;
   switch (p->eType) {
   case T_CONSTANT:
@@ -3299,13 +3303,13 @@ doHoldPoly (struct polynomial *p)
 {
   int i;
 
-  if (p->id == polynomialLostNodeId)
-    fprintf (stderr, "holdPoly sees id %d and is bumping hold count from %d\n",
-	     polynomialLostNodeId, p->count);
-
   if (p->valid & VALID_EVAL_FLAG)
     return;
   p->valid |= VALID_EVAL_FLAG;
+
+  if (p->id == polynomialLostNodeId)
+    fprintf (stderr, "holdPoly sees id %d and is bumping hold count from %d\n",
+	     polynomialLostNodeId, p->count);
 
   switch (p->eType) {
   case T_CONSTANT:
@@ -3346,13 +3350,13 @@ doUnHoldPoly (struct polynomial *p)
 {
   int i;
 
-  if (p->id == polynomialLostNodeId)
-    fprintf (stderr, "UnHoldPoly sees id %d and is decrementing hold count from %d\n",
-	     polynomialLostNodeId, p->count);
-
   if (p->valid & VALID_EVAL_FLAG)
     return;
   p->valid |= VALID_EVAL_FLAG;
+
+  if (p->id == polynomialLostNodeId)
+    fprintf (stderr, "UnHoldPoly sees id %d and is decrementing hold count from %d\n",
+	     polynomialLostNodeId, p->count);
 
   switch (p->eType) {
   case T_CONSTANT:
@@ -3414,7 +3418,7 @@ doFreePolys (unsigned short keepMask)
 	       "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
 	       polynomialLostNodeId, sumList[i]->valid, sumList[i]->count,
 	       keepMask);
-    if ((sumList[i]->valid & keepMask) || (sumList[i]->count > 0)) {
+    if ((sumList[i]->count > 0) || (sumList[i]->valid & keepMask)) {
       newSumList[k] = sumList[i];
       sumList[i] = newSumList[k];
 //      fprintf(stderr, "Index %d is now %d\n", newSumList[k]->index, k);
@@ -3473,7 +3477,7 @@ doFreePolys (unsigned short keepMask)
 	       "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
 	       polynomialLostNodeId, productList[i]->valid,
 	       productList[i]->count, keepMask);
-    if ((productList[i]->valid & keepMask) || (productList[i]->count > 0)) {
+    if ((productList[i]->count > 0) || (productList[i]->valid & keepMask)) {
       newProductList[k] = productList[i];
       productList[i] = newProductList[k];
 //      fprintf(stderr, "Index %d is now %d\n", newProductList[k]->index, k);
