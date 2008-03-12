@@ -40,7 +40,7 @@ quitSignalHandler (int signal)
   swDump (overallSW);
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
-    polyDynamicStatistics();
+    polyDynamicStatistics ();
 #endif
 #ifdef DMTRACK
   char messageBuffer[MAXSWMSG];
@@ -58,7 +58,7 @@ quitSignalHandler (int signal)
 #endif
 }
 
-char *kelvinVersion = "0.33.1";
+char *kelvinVersion = "0.34.0";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
 
@@ -2017,114 +2017,111 @@ main (int argc, char *argv[])
     locusList = &traitLocusList;
     xmissionMatrix = traitMatrix;
     if (pTrait->type == DICHOTOMOUS) {
-      pedIdx = 0;
-      pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-      pPedigree->load_flag =
-	restoreTrait (pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
-      if (pPedigree->load_flag == 0) {	/* calculate trait likelihood  */
-	for (penIdx = 0;
-	     (penIdx == 0) || (modelOptions.dryRun == 0
-			       && penIdx < modelRange.npenet); penIdx++) {
-	  for (liabIdx = 0;
-	       (liabIdx == 0) || (modelOptions.dryRun == 0
-				  && liabIdx < modelRange.nlclass);
-	       liabIdx++) {
-	    pen_DD = modelRange.penet[liabIdx][0][penIdx];
-	    pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-	    pen_dd = modelRange.penet[liabIdx][2][penIdx];
-	    pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
-	    pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
-	    pTrait->penetrance[2][liabIdx][1][0] = pen_Dd;
-	    pTrait->penetrance[2][liabIdx][1][1] = pen_dd;
-	    pTrait->penetrance[1][liabIdx][0][0] = 1 - pen_DD;
-	    pTrait->penetrance[1][liabIdx][0][1] = 1 - pen_Dd;
-	    pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_Dd;
-	    pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
-	  }
+      /* load all saved trait likelihood */
+      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+	pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+	pPedigree->load_flag =
+	  restoreTrait (pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
+      }
+
+
+      for (penIdx = 0;
+	   (penIdx == 0) || (modelOptions.dryRun == 0
+			     && penIdx < modelRange.npenet); penIdx++) {
+	for (liabIdx = 0;
+	     (liabIdx == 0) || (modelOptions.dryRun == 0
+				&& liabIdx < modelRange.nlclass); liabIdx++) {
+	  pen_DD = modelRange.penet[liabIdx][0][penIdx];
+	  pen_Dd = modelRange.penet[liabIdx][1][penIdx];
+	  pen_dd = modelRange.penet[liabIdx][2][penIdx];
+	  pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
+	  pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
+	  pTrait->penetrance[2][liabIdx][1][0] = pen_Dd;
+	  pTrait->penetrance[2][liabIdx][1][1] = pen_dd;
+	  pTrait->penetrance[1][liabIdx][0][0] = 1 - pen_DD;
+	  pTrait->penetrance[1][liabIdx][0][1] = 1 - pen_Dd;
+	  pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_Dd;
+	  pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
+	}
+
+
+#ifndef NO_POLYNOMIAL
+	if (modelOptions.polynomial == TRUE);
+	else
+	  /* only need to update trait locus */
+	  update_penetrance (&pedigreeSet, traitLocus);
+#else
+	/* only need to update trait locus */
+	update_penetrance (&pedigreeSet, traitLocus);
+#endif
+
+	for (gfreqInd = 0;
+	     (gfreqInd == 0) || (modelOptions.dryRun == 0
+				 && gfreqInd < modelRange.ngfreq);
+	     gfreqInd++) {
+	  /* updated trait locus allele frequencies */
+	  gfreq = modelRange.gfreq[gfreqInd];
+	  pLocus->pAlleleFrequency[0] = gfreq;
+	  pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
 
 #ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE);
 	  else
-	    /* only need to update trait locus */
-	    update_penetrance (&pedigreeSet, traitLocus);
-#else
-	  /* only need to update trait locus */
-	  update_penetrance (&pedigreeSet, traitLocus);
-#endif
-
-	  for (gfreqInd = 0;
-	       (gfreqInd == 0) || (modelOptions.dryRun == 0
-				   && gfreqInd < modelRange.ngfreq);
-	       gfreqInd++) {
-	    /* updated trait locus allele frequencies */
-	    gfreq = modelRange.gfreq[gfreqInd];
-	    pLocus->pAlleleFrequency[0] = gfreq;
-	    pLocus->pAlleleFrequency[1] = 1 - gfreq;
-
-
-#ifndef NO_POLYNOMIAL
-	    if (modelOptions.polynomial == TRUE);
-	    else
-	      update_locus (&pedigreeSet, traitLocus);
-#else
 	    update_locus (&pedigreeSet, traitLocus);
+#else
+	  update_locus (&pedigreeSet, traitLocus);
 #endif
-	    /* get the likelihood for the trait */
-	    KLOG (LOGLIKELIHOOD, LOGDEBUG, "Trait Likelihood\n");
-	    compute_likelihood (&pedigreeSet);
+	  /* get the likelihood for the trait */
+	  KLOG (LOGLIKELIHOOD, LOGDEBUG, "Trait Likelihood\n");
+	  compute_likelihood (&pedigreeSet);
 
-	    if (modelOptions.dryRun != 0)
-	      continue;
+	  if (modelOptions.dryRun != 0)
+	    continue;
 
-	    if (pedigreeSet.likelihood == 0.0 &&
-		pedigreeSet.log10Likelihood == -9999.99) {
-	      fprintf (stderr, "Trait has likelihood 0\n");
-	      fprintf (stderr, "dgf=%f\n", gfreq);
-	      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-		pen_DD = modelRange.penet[liabIdx][0][penIdx];
-		pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-		pen_dd = modelRange.penet[liabIdx][2][penIdx];
-		fprintf (stderr,
-			 "Liab %d penentrance %f %f %f\n",
-			 liabIdx + 1, pen_DD, pen_Dd, pen_dd);
-	      }
-
-	      exit (-1);
+	  if (pedigreeSet.likelihood == 0.0 &&
+	      pedigreeSet.log10Likelihood == -9999.99) {
+	    fprintf (stderr, "Trait has likelihood 0\n");
+	    fprintf (stderr, "dgf=%f\n", gfreq);
+	    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+	      pen_DD = modelRange.penet[liabIdx][0][penIdx];
+	      pen_Dd = modelRange.penet[liabIdx][1][penIdx];
+	      pen_dd = modelRange.penet[liabIdx][2][penIdx];
+	      fprintf (stderr,
+		       "Liab %d penentrance %f %f %f\n",
+		       liabIdx + 1, pen_DD, pen_Dd, pen_dd);
 	    }
-	    /* save the results for NULL */
-	    for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-	      /* save the likelihood at null */
-	      pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+
+	    exit (-1);
+	  }
+	  /* save the results for NULL */
+	  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+	    /* save the likelihood at null */
+	    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+	    if (pPedigree->load_flag == 0) {	/*update only for the pedigrees which were add for this run */
 	      pedigreeSet.nullLikelihood[pedIdx] = pPedigree->likelihood;
 	      pPedigree->traitLikelihoodDT[gfreqInd][penIdx] =
 		pPedigree->likelihood;
 	    }
+	  }
 
-	    log10_likelihood_null = pedigreeSet.log10Likelihood;
-	    likelihoodDT[gfreqInd][penIdx] = log10_likelihood_null;
-	  }			/* gfreq */
-	}			/* pen */
-	for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-	  /* save the likelihood at null */
-	  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+	  log10_likelihood_null = pedigreeSet.log10Likelihood;
+	  likelihoodDT[gfreqInd][penIdx] = log10_likelihood_null;
+	}			/* gfreq */
+      }				/* pen */
+      /* save all  trait likelihood which were created in this run */
+      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+	/* save the likelihood at null */
+	pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+	if (pPedigree->load_flag == 0) {	/*save only for the pedigrees which were add for this run */
 	  pPedigree->load_flag =
 	    saveTrait (pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
-	}
-
-      } else {
-	/* load all saved trait likelihood */
-	for (pedIdx = 1; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-	  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	  pPedigree->load_flag =
-	    restoreTrait (pPedigree->sPedigreeID,
-			  pPedigree->traitLikelihoodDT);
-	  if (pPedigree->traitLikelihoodDT == NULL) {
-	    fprintf (stderr,
-		     "%s pedigree failed to load trait likelihoods which should be stored before \n",
-		     pPedigree->sPedigreeID);
+	  if (pPedigree->load_flag != 0) {
+	    fprintf (stderr, "load flag should be 0\n");
 	    exit (0);
 	  }
+	} else {
+	  pPedigree->load_flag = 0;
 	}
       }
 
@@ -2384,7 +2381,7 @@ main (int argc, char *argv[])
 
 
 	/* */
-	for (k = 0; k<modelType.numMarkers; k++) {
+	for (k = 0; k < modelType.numMarkers; k++) {
 	  markerNameList[k] =
 	    (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[k]])->
 	    sName;
@@ -2394,9 +2391,10 @@ main (int argc, char *argv[])
 	  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 	  pPedigree->load_flag =
 	    restoreMarker (pPedigree->sPedigreeID,
-			   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-			   modelType.numMarkers, markerNameList,
-			   &(pPedigree->markerLikelihood));
+			   (originalLocusList.
+			    ppLocusList[mp_result[posIdx].pMarkers[0]])->
+			   pMapUnit->chromosome, modelType.numMarkers,
+			   markerNameList, &(pPedigree->markerLikelihood));
 	}
 
 
@@ -2415,15 +2413,16 @@ main (int argc, char *argv[])
 	  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	    /* save the likelihood at null */
 	    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	    if (pPedigree->load_flag == 0) {
+	    if (pPedigree->load_flag == 0) {	/*update only for the pedigrees which were add for this run */
 
 	      /* save the marker likelihood */
 
 	      pPedigree->load_flag =
 		saveMarker (pPedigree->sPedigreeID,
-			    (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-			    modelType.numMarkers, markerNameList,
-			    &(pPedigree->markerLikelihood));
+			    (originalLocusList.
+			     ppLocusList[mp_result[posIdx].pMarkers[0]])->
+			    pMapUnit->chromosome, modelType.numMarkers,
+			    markerNameList, &(pPedigree->markerLikelihood));
 	      if (pPedigree->load_flag != 0) {
 		fprintf (stderr, "load flag should be 0\n");
 		exit (0);
@@ -2581,8 +2580,9 @@ main (int argc, char *argv[])
 	  pPedigree->load_flag
 	    =
 	    restoreAlternative (pPedigree->sPedigreeID,
-				(originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-                                traitPos,
+				(originalLocusList.
+				 ppLocusList[mp_result[posIdx].pMarkers[0]])->
+				pMapUnit->chromosome, traitPos,
 				pPedigree->alternativeLikelihoodDT);
 	}
 
@@ -2674,61 +2674,69 @@ main (int argc, char *argv[])
 
 	      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 		pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-		if (pPedigree->load_flag == 0)
+		if (pPedigree->load_flag == 0) {
 		  pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx] =
 		    pPedigree->likelihood;
+		}
 	      }
-
-	      /* caculating the HET */
-	      for (j = 0; j < modelRange.nalpha; j++) {
-		alphaV = modelRange.alpha[j];
-		alphaV2 = 1 - alphaV;
-		if (alphaV2 < 0)
-		  alphaV2 = 0;
-		log10HetLR = 0;
-		for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-		  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-		  homoLR =
-		    pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx] /
-		    (pPedigree->traitLikelihoodDT[gfreqInd][penIdx] *
-		     pPedigree->markerLikelihood);
-		  if (alphaV * homoLR + alphaV2 < 0)
-		    fprintf (stderr, "HET LR less than 0. Check!!!\n");
-		  log10HetLR += log10 (alphaV * homoLR + alphaV2);
-		}
-		if (log10HetLR >= DBL_MAX_10_EXP - 1) {
-		  hetLR = DBL_MAX;
-		  mp_result[posIdx].het_lr_total = DBL_MAX;
-		} else if (log10HetLR <= DBL_MIN_10_EXP + 1) {
-		  hetLR = 0;
-		} else {
-		  hetLR = pow (10, log10HetLR);
-		  mp_result[posIdx].het_lr_total += hetLR;
-		}
-		if (mp_result[posIdx].max_penIdx <
-		    0 || hetLR > mp_result[posIdx].max_lr) {
-		  mp_result[posIdx].max_lr = hetLR;
-		  mp_result[posIdx].max_alpha = alphaV;
-		  mp_result[posIdx].max_gfreq = gfreq;
-		  mp_result[posIdx].max_penIdx = penIdx;
-		}
-	      }			/* end of calculating HET LR */
 	    }
+
+	    /* caculating the HET */
+	    for (j = 0; j < modelRange.nalpha; j++) {
+	      alphaV = modelRange.alpha[j];
+	      alphaV2 = 1 - alphaV;
+	      if (alphaV2 < 0)
+		alphaV2 = 0;
+	      log10HetLR = 0;
+	      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+		pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+		homoLR =
+		  pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx] /
+		  (pPedigree->traitLikelihoodDT[gfreqInd][penIdx] *
+		   pPedigree->markerLikelihood);
+		if (alphaV * homoLR + alphaV2 < 0)
+		  fprintf (stderr, "HET LR less than 0. Check!!!\n");
+		log10HetLR += log10 (alphaV * homoLR + alphaV2);
+	      }
+	      if (log10HetLR >= DBL_MAX_10_EXP - 1) {
+		hetLR = DBL_MAX;
+		mp_result[posIdx].het_lr_total = DBL_MAX;
+	      } else if (log10HetLR <= DBL_MIN_10_EXP + 1) {
+		hetLR = 0;
+	      } else {
+		hetLR = pow (10, log10HetLR);
+		mp_result[posIdx].het_lr_total += hetLR;
+	      }
+	      if (mp_result[posIdx].max_penIdx <
+		  0 || hetLR > mp_result[posIdx].max_lr) {
+		mp_result[posIdx].max_lr = hetLR;
+		mp_result[posIdx].max_alpha = alphaV;
+		mp_result[posIdx].max_gfreq = gfreq;
+		mp_result[posIdx].max_penIdx = penIdx;
+	      }
+	    }			/* end of calculating HET LR */
+
 	  }			/* end of genFreq loop */
-	}			/* end of penetrance loop */
+	}
 
 
+	/* end of penetrance loop */
 	/* save the alternative likelihood */
 	for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 	  if (pPedigree->load_flag == 0) {
 	    pPedigree->load_flag =
 	      saveAlternative (pPedigree->sPedigreeID,
-			       (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-                               traitPos,
+			       (originalLocusList.
+				ppLocusList[mp_result[posIdx].pMarkers[0]])->
+			       pMapUnit->chromosome, traitPos,
 			       pPedigree->alternativeLikelihoodDT);
+	    if (pPedigree->load_flag != 0) {
+	      fprintf (stderr, "load flag should be 0\n");
+	      exit (0);
+	    }
+	    pPedigree->load_flag = 0;
 	  }
-	  pPedigree->load_flag = 0;
 	}
       } /* end of TP */
       else
@@ -2872,8 +2880,8 @@ main (int argc, char *argv[])
 		      } else if (thresholdIdx == modelRange.ntthresh - 1) {
 			adjustedHetLR *=
 			  (2 * modelType.maxThreshold -
-			   threshold -
-			   modelRange.tthresh[0][thresholdIdx - 1]);
+			   threshold - modelRange.tthresh[0][thresholdIdx -
+							     1]);
 		      } else if (thresholdIdx == 0) {
 			adjustedHetLR *=
 			  (threshold +
