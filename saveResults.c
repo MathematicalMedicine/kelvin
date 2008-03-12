@@ -33,8 +33,8 @@ saveTrait (char *pedigree, double **lDT)
   tn =
     tpl_map (traitTPLFormat, &pedigree, lDT[0], 275, lDT[1], 275, lDT[2], 275, 
 	     lDT[3], 275, lDT[4], 275, lDT[5], 275);
-  dump_lDT(lDT);
   tpl_pack (tn, 0);
+  tpl_dump (tn, TPL_FILE, fileName);
   tpl_free (tn);
   return 0;
 }
@@ -47,7 +47,7 @@ restoreTrait (char *pedigree, double **lDT)
   FILE *file;
   char *checkPedigree;
 
-  fprintf(stderr, "in restoreTrait\n");
+  fprintf(stderr, "in restoreTrait for pedigree %s\n", pedigree);
   if ((lDT = (double **) malloc (6 * sizeof (double *))) == NULL) {
     fprintf (stderr, "In restoreTrait, malloc of 1st dimension failed!\n");
     exit (1);
@@ -68,6 +68,7 @@ restoreTrait (char *pedigree, double **lDT)
     tpl_unpack (tn, 0);
     if (strcmp(pedigree, checkPedigree) == 0) {
       tpl_free (tn);
+      fprintf(stderr, "restoreTrait successfully restored trait data\n");
       return 1;
     } else {
       fprintf(stderr, "restoreTrait check of requested pedigree of %s vs restored of %s failed, exiting!\n",
@@ -75,6 +76,7 @@ restoreTrait (char *pedigree, double **lDT)
       exit(1);
     }
   }
+  fprintf(stderr, "restoreTrait found no trait data\n");
   tpl_free (tn);
   return 0;
 }
@@ -83,15 +85,15 @@ char *markerTPLFormat = "siiA(s)A(f)"; /* String, two ints, array of string
 					  and array of float */
 char *markerFileFormat = "%s_%i_%i_marker.tpl";
 
-int saveMarker(char *pedigree, int markerNo, int markerCount, char **markerNames, double *mDT) {
+int saveMarker(char *pedigree, int chromosome, int markerCount, char **markerNames, double *mDT) {
   tpl_node *tn;
   int i;
   char *markerName;
   double markerValue;
 
-  fprintf(stderr, "in saveMarker for pedigree %s, marker %d of %d\n", pedigree, markerNo, markerCount);
-  sprintf (fileName, markerFileFormat, pedigree, markerNo, markerCount);
-  tn = tpl_map (markerTPLFormat, &pedigree, &markerNo, &markerCount, &markerName, &markerValue);
+  fprintf(stderr, "in saveMarker for pedigree %s, chromosome %d w/%d markers\n", pedigree, chromosome, markerCount);
+  sprintf (fileName, markerFileFormat, pedigree, chromosome, markerCount);
+  tn = tpl_map (markerTPLFormat, &pedigree, &chromosome, &markerCount, &markerName, &markerValue);
   tpl_pack(tn, 0);
 
   for (i=0; i<markerCount; i++) {
@@ -110,17 +112,17 @@ int saveMarker(char *pedigree, int markerNo, int markerCount, char **markerNames
 
   return 0;
 }
-int restoreMarker(char *pedigree, int markerNo, int markerCount, char **markerNames, double *markerValues) {
-  int i, checkMarkerNo, checkMarkerCount;
+int restoreMarker(char *pedigree, int chromosome, int markerCount, char **markerNames, double *markerValues) {
+  int i, checkChromosome, checkMarkerCount;
   tpl_node *tn;
   FILE *file;
   char *checkPedigree;
   char *markerName;
   double markerValue;
 
-  fprintf(stderr, "in restoreMarker\n");
-  sprintf (fileName, markerFileFormat, pedigree, markerNo, markerCount);
-  tn = tpl_map (markerTPLFormat, &checkPedigree, &checkMarkerNo, &checkMarkerCount, &markerName, &markerValue);
+  fprintf(stderr, "in restoreMarker for pedigree %s, chromosome %d w/%d markers\n", pedigree, chromosome, markerCount);
+  sprintf (fileName, markerFileFormat, pedigree, chromosome, markerCount);
+  tn = tpl_map (markerTPLFormat, &checkPedigree, &checkChromosome, &checkMarkerCount, &markerName, &markerValue);
   if ((file = fopen (fileName, "r"))) {
     fclose (file);
     tpl_load (tn, TPL_FILE, fileName);
@@ -134,19 +136,18 @@ int restoreMarker(char *pedigree, int markerNo, int markerCount, char **markerNa
     while (tpl_unpack(tn, 2) > 0)
       markerValue = markerValues[i++];
 
-    for (i=0; i<markerCount; i++)
-      fprintf(stderr, "Marker %s has value %G\n", markerNames[i], markerValues[i]);
-
-    if ((strcmp(pedigree, checkPedigree) == 0) && (checkMarkerNo == markerNo) &&
+    if ((strcmp(pedigree, checkPedigree) == 0) && (checkChromosome == chromosome) &&
 	(checkMarkerCount == markerCount)) {
       tpl_free (tn);
+      fprintf(stderr, "restoreMarker successfully restored marker data\n");
       return 1;
     } else {
       fprintf(stderr, "restoreMarker check of pedigree/marker/count of %s/%d/%d vs %s/%d/%d failed, exiting!\n",
-	      pedigree, markerNo, markerCount, checkPedigree, checkMarkerNo, checkMarkerCount);
+	      pedigree, chromosome, markerCount, checkPedigree, checkChromosome, checkMarkerCount);
       exit(1);
     }
   }
+  fprintf(stderr, "restoreMarker found no marker data\n");
   tpl_free (tn);
   return 0;
 }
@@ -176,7 +177,8 @@ int restoreAlternative(char *pedigree, int chromosome, double traitPosition, dou
   int checkChromosome;
   double checkTraitPosition;
 
-  fprintf(stderr, "in restoreAlternative\n");
+  fprintf(stderr, "in restoreAlternative for pedigree %s, chromosome %d, trait position %d\n",
+	  pedigree, chromosome, (int) traitPosition);
   if ((lDT = (double **) malloc (6 * sizeof (double *))) == NULL) {
     fprintf (stderr, "In restoreTrait, malloc of 1st dimension failed!\n");
     exit (1);
@@ -198,6 +200,7 @@ int restoreAlternative(char *pedigree, int chromosome, double traitPosition, dou
     if ((strcmp(pedigree, checkPedigree) == 0) && (chromosome == checkChromosome) &&
 	(traitPosition == checkTraitPosition)) {
       tpl_free (tn);
+      fprintf(stderr, "restoreAlternative successfully restored alternative data\n");
       return 1;
     } else {
       fprintf(stderr, "restoreAlternative check of pedigree/chromosome/traitPosition %s/%d/%G vs %s/%d/%G failed, exiting!\n",
@@ -205,6 +208,7 @@ int restoreAlternative(char *pedigree, int chromosome, double traitPosition, dou
       exit(1);
     }
   }
+  fprintf(stderr, "restoreAlternative found no alternative data\n");
   tpl_free (tn);
   return 0;
 }
