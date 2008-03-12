@@ -21,7 +21,7 @@ dump_lDT(double **lDT) {
 }
 
 char *traitTPLFormat = "sf#f#f#f#f#f#";	/* String and six fixed vectors of doubles */
-char *traitFileFormat = "%s_trait.tpl";
+char *traitFileFormat = "%s%s_trait.tpl";
 
 int
 saveTrait (char *pedigree, double **lDT)
@@ -29,7 +29,7 @@ saveTrait (char *pedigree, double **lDT)
   tpl_node *tn;
 
   fprintf(stderr, "in saveTrait for pedigree %s\n", pedigree);
-  sprintf (fileName, traitFileFormat, pedigree);
+  sprintf (fileName, traitFileFormat, resultsprefix, pedigree);
   tn =
     tpl_map (traitTPLFormat, &pedigree, lDT[0], 275, lDT[1], 275, lDT[2], 275, 
 	     lDT[3], 275, lDT[4], 275, lDT[5], 275);
@@ -58,7 +58,7 @@ restoreTrait (char *pedigree, double **lDT)
       exit (1);
     }
   }
-  sprintf (fileName, traitFileFormat, pedigree);
+  sprintf (fileName, traitFileFormat, resultsprefix, pedigree);
   tn =
     tpl_map (traitTPLFormat, &checkPedigree, lDT[0], 275, lDT[1], 275, lDT[2], 275, 
 	     lDT[3], 275, lDT[4], 275, lDT[5], 275);
@@ -83,7 +83,7 @@ restoreTrait (char *pedigree, double **lDT)
 
 char *markerTPLFormat = "siiA(s)A(f)"; /* String, two ints, array of string
 					  and array of float */
-char *markerFileFormat = "%s_%i_%i_marker.tpl";
+char *markerFileFormat = "%s%s_%i_%i_marker.tpl";
 
 int saveMarker(char *pedigree, int chromosome, int markerCount, char **markerNames, double *mDT) {
   tpl_node *tn;
@@ -92,7 +92,7 @@ int saveMarker(char *pedigree, int chromosome, int markerCount, char **markerNam
   double markerValue;
 
   fprintf(stderr, "in saveMarker for pedigree %s, chromosome %d w/%d markers\n", pedigree, chromosome, markerCount);
-  sprintf (fileName, markerFileFormat, pedigree, chromosome, markerCount);
+  sprintf (fileName, markerFileFormat, resultsprefix, pedigree, chromosome, markerCount);
   tn = tpl_map (markerTPLFormat, &pedigree, &chromosome, &markerCount, &markerName, &markerValue);
   tpl_pack(tn, 0);
 
@@ -121,7 +121,7 @@ int restoreMarker(char *pedigree, int chromosome, int markerCount, char **marker
   double markerValue;
 
   fprintf(stderr, "in restoreMarker for pedigree %s, chromosome %d w/%d markers\n", pedigree, chromosome, markerCount);
-  sprintf (fileName, markerFileFormat, pedigree, chromosome, markerCount);
+  sprintf (fileName, markerFileFormat, resultsprefix, pedigree, chromosome, markerCount);
   tn = tpl_map (markerTPLFormat, &checkPedigree, &checkChromosome, &checkMarkerCount, &markerName, &markerValue);
   if ((file = fopen (fileName, "r"))) {
     fclose (file);
@@ -153,14 +153,14 @@ int restoreMarker(char *pedigree, int chromosome, int markerCount, char **marker
 }
 
 char *alternativeTPLFormat = "siff#f#f#f#f#f#";	/* String and six fixed vectors of doubles */
-char *alternativeFileFormat = "%s_%i_%G_alternative.tpl";
+char *alternativeFileFormat = "%s%s_%i_%G_alternative.tpl";
 
 int saveAlternative(char *pedigree, int chromosome, double traitPosition, double **lDT) {
   tpl_node *tn;
 
   fprintf(stderr, "in saveAlternative for pedigree %s, chromosome %d, trait position %d\n",
 	  pedigree, chromosome, (int) traitPosition);
-  sprintf (fileName, alternativeFileFormat, pedigree, chromosome, traitPosition);
+  sprintf (fileName, alternativeFileFormat, resultsprefix, pedigree, chromosome, traitPosition);
   tn = tpl_map (alternativeTPLFormat, &pedigree, &chromosome, &traitPosition,
 		lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275, lDT[5], 275);
   tpl_pack(tn, 0);
@@ -189,7 +189,7 @@ int restoreAlternative(char *pedigree, int chromosome, double traitPosition, dou
       exit (1);
     }
   }
-  sprintf (fileName, alternativeFileFormat, pedigree, chromosome, traitPosition);
+  sprintf (fileName, alternativeFileFormat, resultsprefix, pedigree, chromosome, traitPosition);
   tn =
     tpl_map (alternativeTPLFormat, &checkPedigree, &checkChromosome, &checkTraitPosition,
 	     lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275, lDT[5], 275);
