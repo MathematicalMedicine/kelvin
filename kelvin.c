@@ -63,6 +63,7 @@ char *kelvinVersion = "0.33.1";
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
 
 /* Some default global values. */
+char resultsprefix[KMAXFILENAMELEN + 1] = "./";
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
 char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";
 char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";
@@ -1908,8 +1909,6 @@ main (int argc, char *argv[])
 	if (modelOptions.polynomial == TRUE && modelType.ccFlag == 0) {
 	  /* under case ctrl we don't clear up the polynomial */
 	  pedigreeSetPolynomialClearance (&pedigreeSet);
-	  fprintf (stderr, "freePolys since not under case control?\n");
-	  freePolys ();
 	}
 #endif
 
@@ -2345,9 +2344,6 @@ main (int argc, char *argv[])
 #ifndef NO_POLYNOMIAL
 	if (modelOptions.polynomial == TRUE) {
 	  pedigreeSetPolynomialClearance (&pedigreeSet);
-	  fprintf (stderr,
-		   "freePolys after calculate likelihood for marker set\n");
-	  freePolys ();
 	}
 #endif
 #endif
@@ -2555,9 +2551,6 @@ main (int argc, char *argv[])
 #ifndef NO_POLYNOMIAL
 	if (modelOptions.polynomial == TRUE) {
 	  pedigreeSetPolynomialClearance (&pedigreeSet);
-	  fprintf (stderr,
-		   "freePolys when marker set or locus list changed\n");
-	  freePolys ();
 	}
 #endif
       }
@@ -3044,7 +3037,6 @@ main (int argc, char *argv[])
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE) {
     pedigreeSetPolynomialClearance (&pedigreeSet);
-    fprintf (stderr, "skipping freePolys at end of run as unneeded\n");
   }
 #endif
   free_likelihood_storage (&pedigreeSet);
