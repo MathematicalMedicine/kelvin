@@ -83,7 +83,7 @@ restoreTrait (char *pedigree, double **lDT)
 
 char *markerTPLFormat = "siiA(s)A(f)"; /* String, two ints, array of string
 					  and array of float */
-char *markerFileFormat = "%s%s_%i_%i_marker.tpl";
+char *markerFileFormat = "%s%s_%i_";
 
 int saveMarker(char *pedigree, int chromosome, int markerCount, char **markerNames, double *mDT) {
   tpl_node *tn;
@@ -92,17 +92,20 @@ int saveMarker(char *pedigree, int chromosome, int markerCount, char **markerNam
   double markerValue;
 
   fprintf(stderr, "in saveMarker for pedigree %s, chromosome %d w/%d markers\n", pedigree, chromosome, markerCount);
-  sprintf (fileName, markerFileFormat, resultsprefix, pedigree, chromosome, markerCount);
+  sprintf (fileName, markerFileFormat, resultsprefix, pedigree, chromosome);
+  for (i=0; i<markerCount; i++) {
+    strcat(fileName, markerNames[i]);
+    strcat(fileName, "_");
+  }
+  strcat(fileName, "marker.tpl");
   tn = tpl_map (markerTPLFormat, &pedigree, &chromosome, &markerCount, &markerName, &markerValue);
   tpl_pack(tn, 0);
 
   for (i=0; i<markerCount; i++) {
     markerName = markerNames[i];
-    fprintf(stderr, "Marker is %s\n", markerName);
     tpl_pack(tn, 1);
   }
   for (i=0; i<markerCount; i++) {
-    fprintf(stderr, "Marker has value %G\n", markerValue);
     markerValue = mDT[i];
     tpl_pack(tn, 2);
   }
@@ -121,7 +124,12 @@ int restoreMarker(char *pedigree, int chromosome, int markerCount, char **marker
   double markerValue;
 
   fprintf(stderr, "in restoreMarker for pedigree %s, chromosome %d w/%d markers\n", pedigree, chromosome, markerCount);
-  sprintf (fileName, markerFileFormat, resultsprefix, pedigree, chromosome, markerCount);
+  sprintf (fileName, markerFileFormat, resultsprefix, pedigree, chromosome);
+  for (i=0; i<markerCount; i++) {
+    strcat(fileName, markerNames[i]);
+    strcat(fileName, "_");
+  }
+  strcat(fileName, "marker.tpl");
   tn = tpl_map (markerTPLFormat, &checkPedigree, &checkChromosome, &checkMarkerCount, &markerName, &markerValue);
   if ((file = fopen (fileName, "r"))) {
     fclose (file);
