@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>		/* To get mkdir */
 #include "kelvin.h"
 #include "saveResults.h"
 #include "tpl.h"		/* TPL serialization, open source under
 				 * Berkeley license */
 
+char pathName[128];
 char fileName[128];
 
 /* I'm being passed data that is both self-referential and not contiguous in
@@ -23,15 +25,20 @@ dump_lDT (double **lDT)
 }
 
 char *traitTPLFormat = "sf#f#f#f#f#f#";	/* String and six fixed vectors of doubles */
-char *traitFileFormat = "%s%s_trait.tpl";
+char *traitFileFormat = "%sped-%s_trait.tpl";
 
 int
 saveTrait (char *pedigree, double **lDT)
 {
   tpl_node *tn;
 
-  //  fprintf(stderr, "in saveTrait for pedigree %s\n", pedigree);
-  sprintf (fileName, traitFileFormat, resultsprefix, pedigree);
+  mkdir(resultsprefix, S_IRWXU|S_IRWXG|S_IROTH);
+  sprintf (pathName, "%strait/", resultsprefix);
+  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+  sprintf (pathName, "%strait/ped-%s/", resultsprefix, pedigree);
+  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+  sprintf (fileName, traitFileFormat, pathName, pedigree);
+  //  fprintf(stderr, "in saveTrait for pedigree %s as %s\n", pedigree, fileName);
   tn =
     tpl_map (traitTPLFormat, &pedigree, lDT[0], 275, lDT[1], 275, lDT[2], 275,
 	     lDT[3], 275, lDT[4], 275, lDT[5], 275);
@@ -48,8 +55,9 @@ restoreTrait (char *pedigree, double **lDT)
   FILE *file;
   char *checkPedigree;
 
-  //  fprintf(stderr, "in restoreTrait for pedigree %s\n", pedigree);
-  sprintf (fileName, traitFileFormat, resultsprefix, pedigree);
+  sprintf (pathName, "%strait/ped-%s/", resultsprefix, pedigree);
+  sprintf (fileName, traitFileFormat, pathName, pedigree);
+  //  fprintf(stderr, "in restoreTrait for pedigree %s as %s\n", pedigree, fileName);
   tn =
     tpl_map (traitTPLFormat, &checkPedigree, lDT[0], 275, lDT[1], 275, lDT[2],
 	     275, lDT[3], 275, lDT[4], 275, lDT[5], 275);
@@ -74,7 +82,7 @@ restoreTrait (char *pedigree, double **lDT)
 }
 
 char *markerTPLFormat = "siiA(s)f";	/* String, two ints, array of string and a single float */
-char *markerFileFormat = "%s%s_%i_";
+char *markerFileFormat = "%schr-%d_ped-%s_";
 
 int
 saveMarker (char *pedigree, int chromosome, int markerCount,
@@ -84,14 +92,19 @@ saveMarker (char *pedigree, int chromosome, int markerCount,
   int i;
   char *markerName;
 
-  //  fprintf(stderr, "in saveMarker for pedigree %s, chromosome %d w/%d markers of value %G\n",
-  //      pedigree, chromosome, markerCount, *mDT);
-  sprintf (fileName, markerFileFormat, resultsprefix, pedigree, chromosome);
+  mkdir(resultsprefix, S_IRWXU|S_IRWXG|S_IROTH);
+  sprintf (pathName, "%schr-%d/", resultsprefix, chromosome);
+  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+  sprintf (pathName, "%schr-%d/ped-%s/", resultsprefix, chromosome, pedigree);
+  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+  sprintf (fileName, markerFileFormat, pathName, chromosome, pedigree);
   for (i = 0; i < markerCount; i++) {
     strcat (fileName, markerNames[i]);
     strcat (fileName, "_");
   }
   strcat (fileName, "marker.tpl");
+  //  fprintf(stderr, "in saveMarker for pedigree %s, chromosome %d w/%d markers of value %G as %s\n",
+  //	  pedigree, chromosome, markerCount, *mDT, fileName);
   tn =
     tpl_map (markerTPLFormat, &pedigree, &chromosome, &markerCount,
 	     &markerName, mDT);
@@ -118,14 +131,15 @@ restoreMarker (char *pedigree, int chromosome, int markerCount,
   char *checkPedigree;
   char *markerName;
 
-  //  fprintf(stderr, "in restoreMarker for pedigree %s, chromosome %d w/%d markers\n", 
-  //      pedigree, chromosome, markerCount);
-  sprintf (fileName, markerFileFormat, resultsprefix, pedigree, chromosome);
+  sprintf (pathName, "%schr-%d/ped-%s/", resultsprefix, chromosome, pedigree);
+  sprintf (fileName, markerFileFormat, pathName, chromosome, pedigree);
   for (i = 0; i < markerCount; i++) {
     strcat (fileName, markerNames[i]);
     strcat (fileName, "_");
   }
   strcat (fileName, "marker.tpl");
+  //  fprintf(stderr, "in restoreMarker for pedigree %s, chromosome %d w/%d markers as %s\n",
+  //	  pedigree, chromosome, markerCount, fileName);
   tn =
     tpl_map (markerTPLFormat, &checkPedigree, &checkChromosome,
 	     &checkMarkerCount, &markerName, mDT);
@@ -158,7 +172,7 @@ restoreMarker (char *pedigree, int chromosome, int markerCount,
 }
 
 char *alternativeTPLFormat = "siff#f#f#f#f#f#";	/* String and six fixed vectors of doubles */
-char *alternativeFileFormat = "%s%s_%i_%G_alternative.tpl";
+char *alternativeFileFormat = "%schr-%d_ped-%s_pos-%G_alternative.tpl";
 
 int
 saveAlternative (char *pedigree, int chromosome, double traitPosition,
@@ -166,10 +180,14 @@ saveAlternative (char *pedigree, int chromosome, double traitPosition,
 {
   tpl_node *tn;
 
-  //  fprintf(stderr, "in saveAlternative for pedigree %s, chromosome %d, trait position %d\n",
-  //      pedigree, chromosome, (int) traitPosition);
-  sprintf (fileName, alternativeFileFormat, resultsprefix, pedigree,
-	   chromosome, traitPosition);
+  mkdir(resultsprefix, S_IRWXU|S_IRWXG|S_IROTH);
+  sprintf (pathName, "%schr-%d/", resultsprefix, chromosome);
+  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+  sprintf (pathName, "%schr-%d/ped-%s/", resultsprefix, chromosome, pedigree);
+  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+  sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree, traitPosition);
+  //  fprintf(stderr, "in saveAlternative for pedigree %s, chromosome %d, trait position %G as %s\n",
+  //	  pedigree, chromosome, traitPosition, fileName);
   tn =
     tpl_map (alternativeTPLFormat, &pedigree, &chromosome, &traitPosition,
 	     lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275,
@@ -191,10 +209,10 @@ restoreAlternative (char *pedigree, int chromosome, double traitPosition,
   int checkChromosome;
   double checkTraitPosition;
 
-  //  fprintf(stderr, "in restoreAlternative for pedigree %s, chromosome %d, trait position %d\n",
-  //      pedigree, chromosome, (int) traitPosition);
-  sprintf (fileName, alternativeFileFormat, resultsprefix, pedigree,
-	   chromosome, traitPosition);
+  sprintf (pathName, "%schr-%d/ped-%s/", resultsprefix, chromosome, pedigree);
+  sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree, traitPosition);
+  //  fprintf(stderr, "in restoreAlternative for pedigree %s, chromosome %d, trait position %G as %s\n",
+  //	  pedigree, chromosome, traitPosition, fileName);
   tn =
     tpl_map (alternativeTPLFormat, &checkPedigree, &checkChromosome,
 	     &checkTraitPosition, lDT[0], 275, lDT[1], 275, lDT[2], 275,
