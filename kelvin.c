@@ -61,6 +61,7 @@ quitSignalHandler (int signal)
 char *kelvinVersion = "0.34.0";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
+void test_darray (double **);
 
 /* Some default global values. */
 char resultsprefix[KMAXFILENAMELEN + 1] = "./";
@@ -2022,6 +2023,9 @@ main (int argc, char *argv[])
 	pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 	pPedigree->load_flag =
 	  restoreTrait (pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
+
+	//        if(pPedigree->load_flag==1)
+	//        test_darray(pPedigree->traitLikelihoodDT);
       }
 
 
@@ -2397,7 +2401,6 @@ main (int argc, char *argv[])
 			   markerNameList, &(pPedigree->markerLikelihood));
 	}
 
-
 	KLOG (LOGLIKELIHOOD, LOGDEBUG, "Marker Likelihood\n");
 	compute_likelihood (&pedigreeSet);
 	time2 = clock ();
@@ -2414,6 +2417,7 @@ main (int argc, char *argv[])
 	    /* save the likelihood at null */
 	    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 	    if (pPedigree->load_flag == 0) {	/*update only for the pedigrees which were add for this run */
+	      pPedigree->markerLikelihood = pPedigree->likelihood;
 
 	      /* save the marker likelihood */
 
@@ -2428,9 +2432,12 @@ main (int argc, char *argv[])
 		exit (0);
 	      }
 	    } else {		/* save the marker likelihood */
-	      pPedigree->markerLikelihood = pPedigree->likelihood;
+	      //pPedigree->markerLikelihood = pPedigree->likelihood;
 	      pPedigree->load_flag = 0;
 	    }
+	    //	    printf ("%d ped with %f marker likelihood\n", pedIdx,
+	    //		    pPedigree->markerLikelihood);
+
 	  }
 	  pedigreeSet.markerLikelihood = pedigreeSet.likelihood;
 	  pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
@@ -2584,6 +2591,8 @@ main (int argc, char *argv[])
 				 ppLocusList[mp_result[posIdx].pMarkers[0]])->
 				pMapUnit->chromosome, traitPos,
 				pPedigree->alternativeLikelihoodDT);
+	  //          if(pPedigree->load_flag==1)
+	  //    test_darray(pPedigree->alternativeLikelihoodDT);
 	}
 
 	for (penIdx = 0;
@@ -2677,45 +2686,45 @@ main (int argc, char *argv[])
 		if (pPedigree->load_flag == 0) {
 		  pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx] =
 		    pPedigree->likelihood;
+
 		}
 	      }
+
+	      /* caculating the HET */
+	      for (j = 0; j < modelRange.nalpha; j++) {
+		alphaV = modelRange.alpha[j];
+		alphaV2 = 1 - alphaV;
+		if (alphaV2 < 0)
+		  alphaV2 = 0;
+		log10HetLR = 0;
+		for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+		  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+		  homoLR =
+		    pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx] /
+		    (pPedigree->traitLikelihoodDT[gfreqInd][penIdx] *
+		     pPedigree->markerLikelihood);
+		  if (alphaV * homoLR + alphaV2 < 0)
+		    fprintf (stderr, "HET LR less than 0. Check!!!\n");
+		  log10HetLR += log10 (alphaV * homoLR + alphaV2);
+		}
+		if (log10HetLR >= DBL_MAX_10_EXP - 1) {
+		  hetLR = DBL_MAX;
+		  mp_result[posIdx].het_lr_total = DBL_MAX;
+		} else if (log10HetLR <= DBL_MIN_10_EXP + 1) {
+		  hetLR = 0;
+		} else {
+		  hetLR = pow (10, log10HetLR);
+		  mp_result[posIdx].het_lr_total += hetLR;
+		}
+		if (mp_result[posIdx].max_penIdx <
+		    0 || hetLR > mp_result[posIdx].max_lr) {
+		  mp_result[posIdx].max_lr = hetLR;
+		  mp_result[posIdx].max_alpha = alphaV;
+		  mp_result[posIdx].max_gfreq = gfreq;
+		  mp_result[posIdx].max_penIdx = penIdx;
+		}
+	      }			/* end of calculating HET LR */
 	    }
-
-	    /* caculating the HET */
-	    for (j = 0; j < modelRange.nalpha; j++) {
-	      alphaV = modelRange.alpha[j];
-	      alphaV2 = 1 - alphaV;
-	      if (alphaV2 < 0)
-		alphaV2 = 0;
-	      log10HetLR = 0;
-	      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-		pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-		homoLR =
-		  pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx] /
-		  (pPedigree->traitLikelihoodDT[gfreqInd][penIdx] *
-		   pPedigree->markerLikelihood);
-		if (alphaV * homoLR + alphaV2 < 0)
-		  fprintf (stderr, "HET LR less than 0. Check!!!\n");
-		log10HetLR += log10 (alphaV * homoLR + alphaV2);
-	      }
-	      if (log10HetLR >= DBL_MAX_10_EXP - 1) {
-		hetLR = DBL_MAX;
-		mp_result[posIdx].het_lr_total = DBL_MAX;
-	      } else if (log10HetLR <= DBL_MIN_10_EXP + 1) {
-		hetLR = 0;
-	      } else {
-		hetLR = pow (10, log10HetLR);
-		mp_result[posIdx].het_lr_total += hetLR;
-	      }
-	      if (mp_result[posIdx].max_penIdx <
-		  0 || hetLR > mp_result[posIdx].max_lr) {
-		mp_result[posIdx].max_lr = hetLR;
-		mp_result[posIdx].max_alpha = alphaV;
-		mp_result[posIdx].max_gfreq = gfreq;
-		mp_result[posIdx].max_penIdx = penIdx;
-	      }
-	    }			/* end of calculating HET LR */
-
 	  }			/* end of genFreq loop */
 	}
 
@@ -2735,8 +2744,8 @@ main (int argc, char *argv[])
 	      fprintf (stderr, "load flag should be 0\n");
 	      exit (0);
 	    }
-	    pPedigree->load_flag = 0;
 	  }
+	  pPedigree->load_flag = 0;
 	}
       } /* end of TP */
       else
@@ -3133,4 +3142,25 @@ print_dryrun_stat (PedigreeSet * pSet, double pos)
 	   "POS %f has %ld unique pp groups, %ld similar pp, total %ld.\n",
 	   pos, totalPairGroups, totalSimilarPairs,
 	   totalPairGroups + totalSimilarPairs);
+}
+
+
+void
+test_darray (double **tpl)
+{
+  int i, j;
+  double *gene_tpl;
+
+  for (i = 0; i < 6; i++) {
+    gene_tpl = tpl[i];
+
+    for (j = 0; j < 275; j++) {
+      if (gene_tpl[j] > 1.0e20 || gene_tpl[j] < 1.0e-20) {
+	printf ("gfId= %d penId%d  likelihood = %G\n", i, j, gene_tpl[j]);
+	break;
+      }
+    }
+  }
+
+
 }
