@@ -43,6 +43,9 @@ typedef struct ModelOptions
   /* set recoding (super alleles) or not - we always use set recoding to speed up */
   /* int alleleSetRecodingFlag; *//* Unused */
 
+  /* save results flag; either TRUE or FALSE */
+  int saveResults;
+
   /* marker analysis flag; either MARKERTOMARKER or ADJACENTMARKER */
   int markerAnalysis;
 
