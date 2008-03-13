@@ -2021,11 +2021,12 @@ main (int argc, char *argv[])
       /* load all saved trait likelihood */
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	pPedigree->load_flag =
-	  restoreTrait (pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
-
-	//        if(pPedigree->load_flag==1)
-	//        test_darray(pPedigree->traitLikelihoodDT);
+	if (modelOptions.saveResults == TRUE) {
+	  pPedigree->load_flag =
+	    restoreTrait (pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
+	} else {
+	  pPedigree->load_flag = 0;
+	}
       }
 
 
@@ -2117,18 +2118,14 @@ main (int argc, char *argv[])
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	/* save the likelihood at null */
 	pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	if (pPedigree->load_flag == 0) {	/*save only for the pedigrees which were add for this run */
+	if ((modelOptions.saveResults == TRUE) &&
+	    (pPedigree->load_flag == 0)) {	/*save only for the pedigrees which were add for this run */
 	  pPedigree->load_flag =
 	    saveTrait (pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
-	  if (pPedigree->load_flag != 0) {
-	    fprintf (stderr, "load flag should be 0\n");
-	    exit (0);
-	  }
 	} else {
 	  pPedigree->load_flag = 0;
 	}
       }
-
     } else
       /* multipoint QT or COMBINED */
     {
@@ -2393,12 +2390,16 @@ main (int argc, char *argv[])
 	for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	  /* save the marker likelihood   */
 	  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	  pPedigree->load_flag =
-	    restoreMarker (pPedigree->sPedigreeID,
-			   (originalLocusList.
-			    ppLocusList[mp_result[posIdx].pMarkers[0]])->
-			   pMapUnit->chromosome, modelType.numMarkers,
-			   markerNameList, &(pPedigree->markerLikelihood));
+	  if (modelOptions.saveResults == TRUE) {
+	    pPedigree->load_flag =
+	      restoreMarker (pPedigree->sPedigreeID,
+			     (originalLocusList.
+			      ppLocusList[mp_result[posIdx].pMarkers[0]])->
+			     pMapUnit->chromosome, modelType.numMarkers,
+			     markerNameList, &(pPedigree->markerLikelihood));
+	  } else {
+	    pPedigree->load_flag = 0;
+	  }
 	}
 
 	KLOG (LOGLIKELIHOOD, LOGDEBUG, "Marker Likelihood\n");
@@ -2416,28 +2417,18 @@ main (int argc, char *argv[])
 	  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	    /* save the likelihood at null */
 	    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	    if (pPedigree->load_flag == 0) {	/*update only for the pedigrees which were add for this run */
-	      pPedigree->markerLikelihood = pPedigree->likelihood;
-
-	      /* save the marker likelihood */
-
+	    pPedigree->markerLikelihood = pPedigree->likelihood;
+	    if ((modelOptions.saveResults == TRUE) &&
+		(pPedigree->load_flag == 0)) {	/*save only for the pedigrees which were add for this run */
 	      pPedigree->load_flag =
 		saveMarker (pPedigree->sPedigreeID,
 			    (originalLocusList.
 			     ppLocusList[mp_result[posIdx].pMarkers[0]])->
 			    pMapUnit->chromosome, modelType.numMarkers,
 			    markerNameList, &(pPedigree->markerLikelihood));
-	      if (pPedigree->load_flag != 0) {
-		fprintf (stderr, "load flag should be 0\n");
-		exit (0);
-	      }
-	    } else {		/* save the marker likelihood */
-	      //pPedigree->markerLikelihood = pPedigree->likelihood;
+	    } else {
 	      pPedigree->load_flag = 0;
 	    }
-	    //	    printf ("%d ped with %f marker likelihood\n", pedIdx,
-	    //		    pPedigree->markerLikelihood);
-
 	  }
 	  pedigreeSet.markerLikelihood = pedigreeSet.likelihood;
 	  pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
@@ -2584,15 +2575,16 @@ main (int argc, char *argv[])
 	for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 	  /* load stored alternative likelihood if they were already stored */
-	  pPedigree->load_flag
-	    =
-	    restoreAlternative (pPedigree->sPedigreeID,
-				(originalLocusList.
-				 ppLocusList[mp_result[posIdx].pMarkers[0]])->
-				pMapUnit->chromosome, traitPos,
-				pPedigree->alternativeLikelihoodDT);
-	  //          if(pPedigree->load_flag==1)
-	  //    test_darray(pPedigree->alternativeLikelihoodDT);
+	  if (modelOptions.saveResults == TRUE) {
+	    pPedigree->load_flag =
+	      restoreAlternative (pPedigree->sPedigreeID,
+				  (originalLocusList.
+				   ppLocusList[mp_result[posIdx].pMarkers[0]])->
+				  pMapUnit->chromosome, traitPos,
+				  pPedigree->alternativeLikelihoodDT);
+	  } else {
+	    pPedigree->load_flag = 0;
+	  }
 	}
 
 	for (penIdx = 0;
@@ -2733,17 +2725,14 @@ main (int argc, char *argv[])
 	/* save the alternative likelihood */
 	for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	  if (pPedigree->load_flag == 0) {
+	  if ((modelOptions.saveResults == TRUE) &&
+	      (pPedigree->load_flag == 0)) {	/*save only for the pedigrees which were add for this run */
 	    pPedigree->load_flag =
 	      saveAlternative (pPedigree->sPedigreeID,
 			       (originalLocusList.
 				ppLocusList[mp_result[posIdx].pMarkers[0]])->
 			       pMapUnit->chromosome, traitPos,
 			       pPedigree->alternativeLikelihoodDT);
-	    if (pPedigree->load_flag != 0) {
-	      fprintf (stderr, "load flag should be 0\n");
-	      exit (0);
-	    }
 	  }
 	  pPedigree->load_flag = 0;
 	}
