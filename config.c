@@ -205,6 +205,7 @@ readConfigFile (char *file, ModelType * modelType,
   modelType->trait = DT;
   modelOptions->equilibrium = LINKAGE_EQUILIBRIUM;
   modelOptions->markerAnalysis = FALSE;
+  modelOptions->saveResults = FALSE;
   modelOptions->polynomial = FALSE;
   modelRange->nalleles = 2;
   modelRange->nlclass = 1;
@@ -491,10 +492,18 @@ readConfigFile (char *file, ModelType * modelType,
 		markerfile);
 	  continue;
 	}
-      if (sscanf (line, "SR %s", resultsprefix) == 1)	/* Results file prefix */
+      if (strncmp (line, "SR", 2) == 0)
 	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure results file prefix %s\n",
-		resultsprefix);
+	  modelOptions->saveResults = TRUE;
+	  if (sscanf (line, "SR %s", resultsprefix) == 1)	/* Results file prefix */
+	    {
+	      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure for saving results w/file prefix %s\n",
+		    resultsprefix);
+	    } else {
+	      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure for saving results w/o file prefix %s\n",
+		    resultsprefix);
+	      *resultsprefix = '\0';
+	  }
 	  continue;
 	}
       if (sscanf (line, "MP %s", mapfile) == 1)	/* Map file */
