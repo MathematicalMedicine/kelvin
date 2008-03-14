@@ -58,7 +58,7 @@ quitSignalHandler (int signal)
 #endif
 }
 
-char *kelvinVersion = "0.34.0";
+char *kelvinVersion = "0.34.0.1";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
 void test_darray (double **);
@@ -2251,7 +2251,8 @@ main (int argc, char *argv[])
     prevLastMarker = -1;
     prevTraitInd = -1;
     leftMarker = -1;
-    for (posIdx = 0; posIdx < numPositions; posIdx++) {
+    // Temporary change WHVC    for (posIdx = 0; posIdx < numPositions; posIdx++) {
+    for (posIdx = 0; posIdx < 2; posIdx++) {
       /* positions listed are sex average positions */
       traitPos = modelRange.tloc[posIdx];
       /* set the sex average position first 
@@ -2417,20 +2418,22 @@ main (int argc, char *argv[])
 	  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	    /* save the likelihood at null */
 	    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	    if ((modelOptions.saveResults == TRUE) &&
-		(pPedigree->load_flag == 0)) {	/*save only for the pedigrees which were add for this run */
-	      pPedigree->markerLikelihood = pPedigree->likelihood;
-	      pPedigree->load_flag =
-		saveMarker (pPedigree->sPedigreeID,
+	    if (modelOptions.saveResults == TRUE){
+	      if(pPedigree->load_flag == 0) {	/*save only for the pedigrees which were add for this run */
+	        pPedigree->markerLikelihood = pPedigree->likelihood;
+	        pPedigree->load_flag =
+		  saveMarker (pPedigree->sPedigreeID,
 			    (originalLocusList.
 			     ppLocusList[mp_result[posIdx].pMarkers[0]])->
 			    pMapUnit->chromosome, modelType.numMarkers,
 			    markerNameList, &(pPedigree->markerLikelihood));
-	    } else {
-	      pPedigree->load_flag = 0;
+	      }
+	    }else{
+              pPedigree->markerLikelihood = pPedigree->likelihood;
 	    }
+            pPedigree->load_flag = 0;
 	  }
-	  pedigreeSet.markerLikelihood = pedigreeSet.likelihood;
+	  // Removed 3/14	  pedigreeSet.markerLikelihood = pedigreeSet.likelihood;
 	  pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
 	}
       }				/* end of marker set change */
@@ -2682,7 +2685,7 @@ main (int argc, char *argv[])
 		}
 	      }
 
-	      /* caculating the HET */
+	      /* caculating the Het */
 	      for (j = 0; j < modelRange.nalpha; j++) {
 		alphaV = modelRange.alpha[j];
 		alphaV2 = 1 - alphaV;
@@ -2695,9 +2698,23 @@ main (int argc, char *argv[])
 		    pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx] /
 		    (pPedigree->traitLikelihoodDT[gfreqInd][penIdx] *
 		     pPedigree->markerLikelihood);
+		  /*		  if (homoLR > 1.0e40 || homoLR < 1.0e-40) {
+		    fprintf(stderr, "homoLR %G, alt %G, trait %G, mrk %G\n",
+			    homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
+			    pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
+			    pPedigree->markerLikelihood);
+			    }*/
 		  if (alphaV * homoLR + alphaV2 < 0)
 		    fprintf (stderr, "HET LR less than 0. Check!!!\n");
 		  log10HetLR += log10 (alphaV * homoLR + alphaV2);
+		  /*if (log10HetLR > 40 || log10HetLR < -40) {
+		    fprintf(stderr, "log10HetLR %G, homoLR %G, alt %G, trait %G, mrk %G\n",
+			    log10HetLR,
+			    homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
+			    pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
+			    pPedigree->markerLikelihood);
+                    exit(0);
+		    }*/
 		}
 		if (log10HetLR >= DBL_MAX_10_EXP - 1) {
 		  hetLR = DBL_MAX;
@@ -3144,7 +3161,7 @@ test_darray (double **tpl)
     gene_tpl = tpl[i];
 
     for (j = 0; j < 275; j++) {
-      if (gene_tpl[j] > 1.0e20 || gene_tpl[j] < 1.0e-20) {
+      if (gene_tpl[j] > 1.0e40 || gene_tpl[j] < 1.0e-40) {
 	printf ("gfId= %d penId%d  likelihood = %G\n", i, j, gene_tpl[j]);
 	break;
       }
