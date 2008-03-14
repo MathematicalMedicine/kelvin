@@ -103,8 +103,8 @@ saveMarker (char *pedigree, int chromosome, int markerCount,
     strcat (fileName, "_");
   }
   strcat (fileName, "marker.tpl");
-  //  fprintf(stderr, "in saveMarker for pedigree %s, chromosome %d w/%d markers of value %G as %s\n",
-  //	  pedigree, chromosome, markerCount, *mDT, fileName);
+  //  fprintf(stderr, "in saveMarker for pedigree %s, chromosome %d w/%d markers of value %G...\n\tas %s\n",
+  //  	  pedigree, chromosome, markerCount, *mDT, fileName);
   tn =
     tpl_map (markerTPLFormat, &pedigree, &chromosome, &markerCount,
 	     &markerName, mDT);
@@ -138,8 +138,8 @@ restoreMarker (char *pedigree, int chromosome, int markerCount,
     strcat (fileName, "_");
   }
   strcat (fileName, "marker.tpl");
-  //  fprintf(stderr, "in restoreMarker for pedigree %s, chromosome %d w/%d markers as %s\n",
-  //	  pedigree, chromosome, markerCount, fileName);
+  //  fprintf(stderr, "in restoreMarker for pedigree %s, chromosome %d w/%d markers...\n\tas %s\n",
+  //  	  pedigree, chromosome, markerCount, fileName);
   tn =
     tpl_map (markerTPLFormat, &checkPedigree, &checkChromosome,
 	     &checkMarkerCount, &markerName, mDT);
@@ -186,8 +186,8 @@ saveAlternative (char *pedigree, int chromosome, double traitPosition,
   sprintf (pathName, "%schr-%d/ped-%s/", resultsprefix, chromosome, pedigree);
   mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
   sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree, traitPosition);
-  //  fprintf(stderr, "in saveAlternative for pedigree %s, chromosome %d, trait position %G as %s\n",
-  //	  pedigree, chromosome, traitPosition, fileName);
+  //  fprintf(stderr, "in saveAlternative for pedigree %s, chromosome %d, trait position %G...\n\tas %s\n",
+  //  	  pedigree, chromosome, traitPosition, fileName);
   tn =
     tpl_map (alternativeTPLFormat, &pedigree, &chromosome, &traitPosition,
 	     lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275,
@@ -211,8 +211,8 @@ restoreAlternative (char *pedigree, int chromosome, double traitPosition,
 
   sprintf (pathName, "%schr-%d/ped-%s/", resultsprefix, chromosome, pedigree);
   sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree, traitPosition);
-  //  fprintf(stderr, "in restoreAlternative for pedigree %s, chromosome %d, trait position %G as %s\n",
-  //	  pedigree, chromosome, traitPosition, fileName);
+  //  fprintf(stderr, "in restoreAlternative for pedigree %s, chromosome %d, trait position %G...\n\tas %s\n",
+  //  	  pedigree, chromosome, traitPosition, fileName);
   tn =
     tpl_map (alternativeTPLFormat, &checkPedigree, &checkChromosome,
 	     &checkTraitPosition, lDT[0], 275, lDT[1], 275, lDT[2], 275,
@@ -239,35 +239,3 @@ restoreAlternative (char *pedigree, int chromosome, double traitPosition,
   tpl_free (tn);
   return 0;
 }
-
-
-#ifdef TEST_MAIN
-
-#include <math.h>
-
-int
-main ()
-{
-  int i, j;
-  double **lDT;
-
-  if ((lDT = (double **) malloc (6 * sizeof (double *))) == NULL) {
-    fprintf (stderr, "malloc of 1st dimension failed!\n");
-    exit (1);
-  }
-  for (i = 0; i < 6; i++) {
-    if ((lDT[i] = (double *) malloc (275 * sizeof (double))) == NULL) {
-      fprintf (stderr, "malloc of 2nd dimension failed\n");
-      exit (1);
-    }
-    for (j = 0; j < 275; j++)
-      lDT[i][j] = (double) i + sqrt (j + 1);
-  }
-  saveTrait ("test", lDT);
-  free (lDT);
-  lDT = restoreTrait ("test");
-  dump_lDT (lDT);
-  return 0;
-}
-
-#endif

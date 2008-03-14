@@ -209,7 +209,7 @@ typedef struct polynomial
 
 #define VALID_EVAL_FLAG 1	/* Used by polyListSorting to manage inclusion */
 #define VALID_KEEP_FLAG 2	/* Weaker than HOLD, only kept until a freeKeptPolys() call */
-#define VALID_REF_FLAG 5	/* Weakest of all, but keeps 1st freeing on-track */
+#define VALID_REF_FLAG 4	/* Weakest of all, but keeps 1st freeing on-track */
 
 //List is for polynomail evaluation.  When we evaluate a polynomial,
 //it is possible that we evaluate only some parts of it because the
