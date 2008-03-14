@@ -389,7 +389,7 @@ pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList)
 	      pPedigree->likelihoodPolyList = NULL;
 	    }
 	}
-      freePolys();
+      freeKeptPolys();		/* Because holds overlapped keeps. */
     }
 #endif
 }
