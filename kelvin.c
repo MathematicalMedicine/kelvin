@@ -2251,8 +2251,7 @@ main (int argc, char *argv[])
     prevLastMarker = -1;
     prevTraitInd = -1;
     leftMarker = -1;
-    // Temporary change WHVC    for (posIdx = 0; posIdx < numPositions; posIdx++) {
-    for (posIdx = 0; posIdx < 2; posIdx++) {
+    for (posIdx = 0; posIdx < numPositions; posIdx++) {
       /* positions listed are sex average positions */
       traitPos = modelRange.tloc[posIdx];
       /* set the sex average position first 
