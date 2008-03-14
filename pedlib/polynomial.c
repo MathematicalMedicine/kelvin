@@ -3091,9 +3091,11 @@ polyStatistics ()
       strlen (functionCallList[i]->e.f->name) + sizeof (int) +
       sizeof (Polynomial *);
   }
+  fprintf (stderr, "Counts: sums(avg)=%d(%d), products(avg)=%d(%d)\n",
+	   sumTerms, sumTerms/sumCount, productTerms, productTerms/productCount);
   fprintf (stderr,
-	   "Sizes: sums(terms)=%ld(%d), products(terms)=%ld(%d), functions=%ld\n",
-	   sumSize, sumTerms, productSize, productTerms, functionCallSize);
+	   "Sizes: sums=%ld, products=%ld, functions=%ld\n",
+	   sumSize, productSize, functionCallSize);
   fprintf (stderr, "---\n");
 };
 
