@@ -2417,9 +2417,9 @@ main (int argc, char *argv[])
 	  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	    /* save the likelihood at null */
 	    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	    pPedigree->markerLikelihood = pPedigree->likelihood;
 	    if ((modelOptions.saveResults == TRUE) &&
 		(pPedigree->load_flag == 0)) {	/*save only for the pedigrees which were add for this run */
+	      pPedigree->markerLikelihood = pPedigree->likelihood;
 	      pPedigree->load_flag =
 		saveMarker (pPedigree->sPedigreeID,
 			    (originalLocusList.
