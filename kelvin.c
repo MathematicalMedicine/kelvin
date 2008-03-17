@@ -2023,7 +2023,8 @@ main (int argc, char *argv[])
 	pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 	if (modelOptions.saveResults == TRUE) {
 	  pPedigree->load_flag =
-	    restoreTrait (pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
+	    restoreTrait (modelOptions.sexLinked,
+                          pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
 	} else {
 	  pPedigree->load_flag = 0;
 	}
@@ -2121,7 +2122,8 @@ main (int argc, char *argv[])
 	if ((modelOptions.saveResults == TRUE) &&
 	    (pPedigree->load_flag == 0)) {	/*save only for the pedigrees which were add for this run */
 	  pPedigree->load_flag =
-	    saveTrait (pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
+	    saveTrait (modelOptions.sexLinked,
+                       pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
 	} else {
 	  pPedigree->load_flag = 0;
 	}
@@ -2417,6 +2419,8 @@ main (int argc, char *argv[])
 	  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	    /* save the likelihood at null */
 	    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+
+            //fprintf(stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx, pPedigree->likelihood);
 	    if (modelOptions.saveResults == TRUE){
 	      if(pPedigree->load_flag == 0) {	/*save only for the pedigrees which were add for this run */
 	        pPedigree->markerLikelihood = pPedigree->likelihood;
@@ -2431,6 +2435,7 @@ main (int argc, char *argv[])
               pPedigree->markerLikelihood = pPedigree->likelihood;
 	    }
             pPedigree->load_flag = 0;
+            fprintf(stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx, pPedigree->markerLikelihood);
 	  }
 	  // Removed 3/14	  pedigreeSet.markerLikelihood = pedigreeSet.likelihood;
 	  pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
@@ -2706,13 +2711,14 @@ main (int argc, char *argv[])
 		  if (alphaV * homoLR + alphaV2 < 0)
 		    fprintf (stderr, "HET LR less than 0. Check!!!\n");
 		  log10HetLR += log10 (alphaV * homoLR + alphaV2);
-		  /*if (log10HetLR > 40 || log10HetLR < -40) {
-		    fprintf(stderr, "log10HetLR %G, homoLR %G, alt %G, trait %G, mrk %G\n",
-			    log10HetLR,
+		  // if (log10HetLR > 10 || log10HetLR < -40) {
+                  /*if(gfreqInd ==0 && j==0){
+		    fprintf(stderr, "gf=%d pen=%d log10HetLR %G, homoLR %G, alt %G, trait %G, mrk %G\n",
+			    gfreqInd, penIdx,log10HetLR,
 			    homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
 			    pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
 			    pPedigree->markerLikelihood);
-                    exit(0);
+		    //  exit(0);
 		    }*/
 		}
 		if (log10HetLR >= DBL_MAX_10_EXP - 1) {
