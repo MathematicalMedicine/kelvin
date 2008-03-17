@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-use lib "./";
 use Tpl;
 
 $fileName = shift();
@@ -20,6 +19,8 @@ if ($fileName =~ /$alternativeFileFormat/) {
     } else {
 	if ($fileName =~ /$traitFileFormat/) {
 	    dumpTrait();
+	} else {
+	    print "Usage: $0 <saved results filename>\n";
 	}
     }
 }
