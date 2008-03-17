@@ -34,9 +34,9 @@ saveTrait (int chr23Flag, char *pedigree, double **lDT)
 
   mkdir(resultsprefix, S_IRWXU|S_IRWXG|S_IROTH);
   if (chr23Flag) {
-    sprintf (pathName, "%strait-Y/", resultsprefix);
+    sprintf (pathName, "%strait-23/", resultsprefix);
     mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
-    sprintf (pathName, "%strait-Y/ped-%s/", resultsprefix, pedigree);
+    sprintf (pathName, "%strait-23/ped-%s/", resultsprefix, pedigree);
   } else {
     sprintf (pathName, "%strait/", resultsprefix);
     mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
@@ -62,7 +62,7 @@ restoreTrait (int chr23Flag, char *pedigree, double **lDT)
   char *checkPedigree;
 
   if (chr23Flag)
-    sprintf (pathName, "%strait-Y/ped-%s/", resultsprefix, pedigree);
+    sprintf (pathName, "%strait-23/ped-%s/", resultsprefix, pedigree);
   else
     sprintf (pathName, "%strait/ped-%s/", resultsprefix, pedigree);
   sprintf (fileName, traitFileFormat, pathName, pedigree);
