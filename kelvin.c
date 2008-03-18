@@ -35,6 +35,12 @@ usr1SignalHandler (int signal)
 }
 
 void
+termSignalHandler (int signal)
+{
+  exit(-1);
+}
+
+void
 quitSignalHandler (int signal)
 {
   swDump (overallSW);
@@ -267,18 +273,27 @@ main (int argc, char *argv[])
   /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
   struct sigaction usr1Action, quitAction;
   sigset_t usr1BlockMask, quitBlockMask;
+  struct sigaction termAction;
+  sigset_t termBlockMask;
 
   sigfillset (&usr1BlockMask);
   usr1Action.sa_handler = usr1SignalHandler;
   usr1Action.sa_mask = usr1BlockMask;
   usr1Action.sa_flags = 0;
   sigaction (SIGUSR1, &usr1Action, NULL);
+
   sigfillset (&quitBlockMask);
   quitAction.sa_handler = quitSignalHandler;
   quitAction.sa_mask = quitBlockMask;
   quitAction.sa_flags = 0;
   sigaction (SIGQUIT, &quitAction, NULL);
-
+  
+  sigfillset (&termBlockMask);
+  termAction.sa_handler = termSignalHandler;
+  termAction.sa_mask = termBlockMask;
+  termAction.sa_flags = 0;
+  sigaction (SIGTERM, &termAction, NULL);
+  
   /* Annouce ourselves for performance tracking. */
   char messageBuffer[MAXSWMSG];
 
