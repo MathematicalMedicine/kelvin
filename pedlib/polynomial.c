@@ -87,7 +87,7 @@ int constantPLExpansions = 0,
   productPCollectExpansions = 0,
   productPTermMergeExpansions = 0, productPListExpansions = 0;
 
-char *polynomialVersion = "0.0.32.4";	/* Make this meaningful since kelvin displays it. */
+char *polynomialVersion = "0.34.0.160";	/* Make this meaningful since kelvin displays it. */
 
 /* Both of the following are set by initialization to value of environment variable of same name.
    They control diagnostic action in a manner not permitted by other approaches since they can
