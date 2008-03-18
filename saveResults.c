@@ -28,14 +28,20 @@ char *traitTPLFormat = "sf#f#f#f#f#f#";	/* String and six fixed vectors of doubl
 char *traitFileFormat = "%sped-%s_trait.tpl";
 
 int
-saveTrait (char *pedigree, double **lDT)
+saveTrait (int chr23Flag, char *pedigree, double **lDT)
 {
   tpl_node *tn;
 
   mkdir(resultsprefix, S_IRWXU|S_IRWXG|S_IROTH);
-  sprintf (pathName, "%strait/", resultsprefix);
-  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
-  sprintf (pathName, "%strait/ped-%s/", resultsprefix, pedigree);
+  if (chr23Flag) {
+    sprintf (pathName, "%strait-23/", resultsprefix);
+    mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+    sprintf (pathName, "%strait-23/ped-%s/", resultsprefix, pedigree);
+  } else {
+    sprintf (pathName, "%strait/", resultsprefix);
+    mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+    sprintf (pathName, "%strait/ped-%s/", resultsprefix, pedigree);
+  }
   mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
   sprintf (fileName, traitFileFormat, pathName, pedigree);
   //  fprintf(stderr, "in saveTrait for pedigree %s as %s\n", pedigree, fileName);
@@ -49,13 +55,16 @@ saveTrait (char *pedigree, double **lDT)
 }
 
 int
-restoreTrait (char *pedigree, double **lDT)
+restoreTrait (int chr23Flag, char *pedigree, double **lDT)
 {
   tpl_node *tn;
   FILE *file;
   char *checkPedigree;
 
-  sprintf (pathName, "%strait/ped-%s/", resultsprefix, pedigree);
+  if (chr23Flag)
+    sprintf (pathName, "%strait-23/ped-%s/", resultsprefix, pedigree);
+  else
+    sprintf (pathName, "%strait/ped-%s/", resultsprefix, pedigree);
   sprintf (fileName, traitFileFormat, pathName, pedigree);
   //  fprintf(stderr, "in restoreTrait for pedigree %s as %s\n", pedigree, fileName);
   tn =
