@@ -1,3 +1,4 @@
+
 /*
 --------------------------------------------------------------------
 By Bob Jenkins, 1996.  hash.h.  Public Domain.
@@ -39,27 +40,27 @@ This implements a hash table.
 
 struct hitem
 {
-  ub1          *key;      /* key that is hashed */
-  ub4           keyl;     /* length of key */
-  void         *stuff;    /* stuff stored in this hitem */
-  ub4           hval;     /* hash value */
-  struct hitem *next;     /* next hitem in list */
+  ub1 *key;			/* key that is hashed */
+  ub4 keyl;			/* length of key */
+  void *stuff;			/* stuff stored in this hitem */
+  ub4 hval;			/* hash value */
+  struct hitem *next;		/* next hitem in list */
 };
-typedef  struct hitem  hitem;
+typedef struct hitem hitem;
 
 
 struct htab
 {
-  struct hitem **table;   /* hash table, array of size 2^logsize */
-  word           logsize; /* log of size of table */
-  size_t         mask;    /* (hashval & mask) is position in table */
-  ub4            count;   /* how many items in this hash table so far? */
-  ub4            apos;    /* position in the array */
-  struct hitem  *ipos;    /* current item in the array */
-  struct reroot *space;   /* space for the hitems */
-  ub4            bcount;  /* # hitems useable in current block */
+  struct hitem **table;		/* hash table, array of size 2^logsize */
+  word logsize;			/* log of size of table */
+  size_t mask;			/* (hashval & mask) is position in table */
+  ub4 count;			/* how many items in this hash table so far? */
+  ub4 apos;			/* position in the array */
+  struct hitem *ipos;		/* current item in the array */
+  struct reroot *space;		/* space for the hitems */
+  ub4 bcount;			/* # hitems useable in current block */
 };
-typedef  struct htab  htab;
+typedef struct htab htab;
 
 
 
@@ -73,7 +74,8 @@ typedef  struct htab  htab;
    RETURNS:
      the new table
  */
-htab *hcreate(/*_ word logsize _*/);
+
+htab *hcreate ( /*_ word logsize _*/ );
 
 
 /* hdestroy - destroy a hash table
@@ -84,7 +86,8 @@ htab *hcreate(/*_ word logsize _*/);
    RETURNS:
      nothing
  */
-void  hdestroy(/*_ htab *t _*/);
+
+void hdestroy ( /*_ htab *t _*/ );
 
 
 /* hcount, hkey, hkeyl, hstuff
@@ -117,7 +120,8 @@ void  hdestroy(/*_ htab *t _*/);
      TRUE if the item exists, FALSE if it does not.
      If the item exists, moves the current position to that item.
  */
-word  hfind(/*_ htab *t, ub1 *key, ub4 keyl _*/);
+
+word hfind ( /*_ htab *t, ub1 *key, ub4 keyl _*/ );
 
 
 /* hadd - add a new item to the hash table
@@ -130,7 +134,8 @@ word  hfind(/*_ htab *t, ub1 *key, ub4 keyl _*/);
    RETURNS:
      FALSE if the operation fails (because that key is already there).
  */
-word  hadd(/*_ htab *t, ub1 *key, ub4 keyl, void *stuff _*/);
+
+word hadd ( /*_ htab *t, ub1 *key, ub4 keyl, void *stuff _*/ );
 
 
 /* hdel - delete the item at the current position
@@ -149,7 +154,7 @@ word  hadd(/*_ htab *t, ub1 *key, ub4 keyl, void *stuff _*/);
         hdel(tab);
       }
  */
-word  hdel(/* htab *t */);
+word hdel ( /* htab *t */ );
 
 
 /* hfirst - move position to the first item in the table
@@ -159,7 +164,8 @@ word  hdel(/* htab *t */);
     FALSE if there is no current item (meaning the table is empty)
   NOTE:
  */
-word hfirst(/*_ htab *t _*/);
+
+word hfirst ( /*_ htab *t _*/ );
 
 
 /* hnext - move position to the next item in the table
@@ -176,6 +182,7 @@ word hfirst(/*_ htab *t _*/);
       }
       while (hnext(t));
  */
+
 /* word hnext(/o_ htab *t _o/); */
 #define hnext(t) \
   ((!(t)->ipos) ? FALSE :  \
@@ -189,7 +196,8 @@ word hfirst(/*_ htab *t _*/);
   NOTE:
     This is private to hashtab; do not use it externally.
  */
-word hnbucket(/*_ htab *t _*/);
+
+word hnbucket ( /*_ htab *t _*/ );
 
 
 /* hstat - print statistics about the hash table
@@ -208,6 +216,7 @@ word hnbucket(/*_ htab *t _*/);
     have n items.  That is, .3678 0, .3678 1, .1839 2, ...
     Also expect "existing" to be about 2.
  */
-void hstat(/*_ htab *t _*/);
 
-#endif   /* HASHTAB */
+void hstat ( /*_ htab *t _*/ );
+
+#endif /* HASHTAB */

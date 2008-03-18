@@ -1,3 +1,4 @@
+
 /*
 $Id$
 
@@ -265,11 +266,14 @@ int used100s = 0, missed100s = 0;
 /* Dynamic memory debugging. */
 
 struct swStopwatch *internalDMSW;
+
 /* The proper way to do this would be another hash, but there are very
    few calls and even fewer modules, so a simple ordered list and a
    binary search should suffice. */
-enum callTypes {cTMalloc, ctCalloc, cTRealloc, cTFree};
-char *callTypeNames[] = {"malloc", "calloc", "realloc", "free"};
+enum callTypes
+{ cTMalloc, ctCalloc, cTRealloc, cTFree };
+char *callTypeNames[] = { "malloc", "calloc", "realloc", "free" };
+
 #define MAXMEMCHUNKSOURCECOUNT 2048
 struct memChunkSource
 {
@@ -281,7 +285,7 @@ struct memChunkSource
   size_t totalBytes;
 } memChunkSources[MAXMEMCHUNKSOURCECOUNT];
 int memChunkSourceCount = 0;
- 
+
 struct memChunk
 {
   void *chunkAddress;
@@ -321,7 +325,7 @@ void
 swFirstDM ()
 {
   internalDMSW = swCreate ("internalDMSW");
-  swStart(internalDMSW);
+  swStart (internalDMSW);
   firstMallocCall = 0;
 
 #ifdef DMTRACK
@@ -331,6 +335,7 @@ swFirstDM ()
   /* Experiment in memory self-management */
 #ifdef DMUSE
   int i;
+
   for (i = 0; i < MAXFREE24S - 1; i++)
     free24s[i].next = &free24s[i + 1];
   free24s[MAXFREE24S - 1].next = NULL;
@@ -346,59 +351,80 @@ swFirstDM ()
 
 #ifdef DMTRACK
 
-int compareSourcesByName(const void *left, const void *right) {
+int
+compareSourcesByName (const void *left, const void *right)
+{
   int result;
   struct memChunkSource *mCSLeft, *mCSRight;
+
   mCSLeft = (struct memChunkSource *) left;
   mCSRight = (struct memChunkSource *) right;
- if ((result = strcmp(mCSLeft->moduleName,mCSRight->moduleName)) == 0) {
+  if ((result = strcmp (mCSLeft->moduleName, mCSRight->moduleName)) == 0) {
     result = mCSLeft->lineNo - mCSRight->lineNo;
   }
   return result;
 }
-int compareSourcesByEntryNo(const void *left, const void *right) {
+
+int
+compareSourcesByEntryNo (const void *left, const void *right)
+{
   struct memChunkSource *mCSLeft, *mCSRight;
+
   mCSLeft = (struct memChunkSource *) left;
   mCSRight = (struct memChunkSource *) right;
-  return(mCSLeft->entryNo - mCSRight->entryNo);
+  return (mCSLeft->entryNo - mCSRight->entryNo);
 }
-int compareSourcesByTotalBytes(const void *left, const void *right) {
+
+int
+compareSourcesByTotalBytes (const void *left, const void *right)
+{
   struct memChunkSource *mCSLeft, *mCSRight;
+
   mCSLeft = (struct memChunkSource *) left;
   mCSRight = (struct memChunkSource *) right;
-  if (labs(mCSRight->totalBytes) - labs(mCSLeft->totalBytes) > 0) return 1;
-  if (labs(mCSRight->totalBytes) - labs(mCSLeft->totalBytes) < 0) return -1;
+  if (labs (mCSRight->totalBytes) - labs (mCSLeft->totalBytes) > 0)
+    return 1;
+  if (labs (mCSRight->totalBytes) - labs (mCSLeft->totalBytes) < 0)
+    return -1;
   return 0;
 }
+
 /* Find it's source or add a new one. */
 short
-findOrAddSource(char *fileName, int lineNo, int callType, size_t chunkSize) {
+findOrAddSource (char *fileName, int lineNo, int callType, size_t chunkSize)
+{
   struct memChunkSource target, *result;
-  strcpy(target.moduleName,fileName);
+
+  strcpy (target.moduleName, fileName);
   target.lineNo = lineNo;
-  result = bsearch (&target, memChunkSources, memChunkSourceCount, sizeof(struct memChunkSource), compareSourcesByName);
+  result =
+    bsearch (&target, memChunkSources, memChunkSourceCount,
+	     sizeof (struct memChunkSource), compareSourcesByName);
   if (result) {
     result->totalCalls++;
     result->totalBytes += chunkSize;
     return (result->entryNo);
   } else {
     if (memChunkSourceCount >= MAXMEMCHUNKSOURCECOUNT) {
-      fprintf(stderr, "Exceeded maximum chunkSourceCount, no more locations can be monitored\n");
+      fprintf (stderr,
+	       "Exceeded maximum chunkSourceCount, no more locations can be monitored\n");
       return 0;
     }
-    strcpy(memChunkSources[memChunkSourceCount].moduleName, fileName);
+    strcpy (memChunkSources[memChunkSourceCount].moduleName, fileName);
     memChunkSources[memChunkSourceCount].lineNo = lineNo;
     memChunkSources[memChunkSourceCount].callType = callType;
     memChunkSources[memChunkSourceCount].entryNo = memChunkSourceCount;
     memChunkSources[memChunkSourceCount].totalCalls = 1;
     memChunkSources[memChunkSourceCount].totalBytes = chunkSize;
-    qsort(memChunkSources, ++memChunkSourceCount, sizeof(struct memChunkSource), compareSourcesByName);
-    return (memChunkSourceCount-1);
+    qsort (memChunkSources, ++memChunkSourceCount,
+	   sizeof (struct memChunkSource), compareSourcesByName);
+    return (memChunkSourceCount - 1);
   }
 }
 
 void
-swAddChunk (void *chunkAddress, size_t chunkSize, int callType, char *fileName, int lineNo)
+swAddChunk (void *chunkAddress, size_t chunkSize, int callType,
+	    char *fileName, int lineNo)
 {
   struct memChunk *newChunk, *oldChunk;
   int currentListDepth = 0;
@@ -406,7 +432,8 @@ swAddChunk (void *chunkAddress, size_t chunkSize, int callType, char *fileName, 
   newChunk->chunkSize = chunkSize;
   newChunk->chunkAddress = chunkAddress;
   newChunk->recycleCount = 1;
-  newChunk->allocSource = findOrAddSource(fileName, lineNo, callType, chunkSize);
+  newChunk->allocSource =
+    findOrAddSource (fileName, lineNo, callType, chunkSize);
   newChunk->next = NULL;
   newChunk->hashKey = lookup (&chunkAddress, sizeof (chunkAddress), 0);
   if (hadd
@@ -428,11 +455,11 @@ swAddChunk (void *chunkAddress, size_t chunkSize, int callType, char *fileName, 
     }
     if ((oldChunk->recycleCount % 2) != 0) {
       /*
-      fprintf (stderr,
-	       "ERROR!! (%s: %d) - alloc of %u for size %u is in use for size %u, recycled %d times!\n",
-	       fileName, lineNo, chunkAddress, chunkSize, oldChunk->chunkSize,
-	       oldChunk->recycleCount);
-      */
+         fprintf (stderr,
+         "ERROR!! (%s: %d) - alloc of %u for size %u is in use for size %u, recycled %d times!\n",
+         fileName, lineNo, chunkAddress, chunkSize, oldChunk->chunkSize,
+         oldChunk->recycleCount);
+       */
       oldChunk->recycleCount++;
     }
     oldChunk->recycleCount++;
@@ -457,7 +484,7 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
        fprintf (stderr,
        "WARNING!! (%s: %d) - free() of address %u that was never allocated (head)!\n",
        fileName, lineNo, chunkAddress);
-    */
+     */
     return 0;
   } else {
     oldChunk = (struct memChunk *) hstuff (chunkHash);
@@ -475,14 +502,15 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
     }
     if ((oldChunk->recycleCount % 2) == 0) {
       /*
-      fprintf (stderr,
-	       "ERROR!! (%s: %d) - free() of address %u that is no longer in use for size %u and recycled %d times!\n",
-	       fileName, lineNo, chunkAddress, oldChunk->chunkSize,
-	       oldChunk->recycleCount);
-      */
+         fprintf (stderr,
+         "ERROR!! (%s: %d) - free() of address %u that is no longer in use for size %u and recycled %d times!\n",
+         fileName, lineNo, chunkAddress, oldChunk->chunkSize,
+         oldChunk->recycleCount);
+       */
       oldChunk->recycleCount++;
     }
-    oldChunk->freeSource = findOrAddSource(fileName, lineNo, callType, -oldChunk->chunkSize);
+    oldChunk->freeSource =
+      findOrAddSource (fileName, lineNo, callType, -oldChunk->chunkSize);
     oldChunk->recycleCount++;
     if (oldChunk->recycleCount > maxRecycles) {
       maxRecycles = oldChunk->recycleCount;
@@ -496,14 +524,16 @@ swDumpSources ()
 {
   int i;
 
-  fprintf(stderr, "There are %d sources - only printing top forty\n", memChunkSourceCount);
-  qsort(memChunkSources, memChunkSourceCount, sizeof(struct memChunkSource), compareSourcesByTotalBytes);
+  fprintf (stderr, "There are %d sources - only printing top forty\n",
+	   memChunkSourceCount);
+  qsort (memChunkSources, memChunkSourceCount, sizeof (struct memChunkSource),
+	 compareSourcesByTotalBytes);
   //  for (i=0; i<min(memChunkSourceCount, 40); i++) {
-  for (i=0; i<memChunkSourceCount; i++) {
-    fprintf(stderr,"At %s line %d, %s called %d times for %ld bytes\n",
-	    memChunkSources[i].moduleName, memChunkSources[i].lineNo,
-	    callTypeNames[memChunkSources[i].callType], memChunkSources[i].totalCalls,
-	    memChunkSources[i].totalBytes);
+  for (i = 0; i < memChunkSourceCount; i++) {
+    fprintf (stderr, "At %s line %d, %s called %d times for %ld bytes\n",
+	     memChunkSources[i].moduleName, memChunkSources[i].lineNo,
+	     callTypeNames[memChunkSources[i].callType],
+	     memChunkSources[i].totalCalls, memChunkSources[i].totalBytes);
   }
 }
 
@@ -514,42 +544,50 @@ swDumpCrossModuleChunks ()
      old free and send people off on a wild goose chase. */
   struct memChunk *chunk;
   struct memChunkSource target, *allocResult, *freeResult;
-  fprintf(stderr, "Finding any cross-module alloc/free usage...\n");
+
+  fprintf (stderr, "Finding any cross-module alloc/free usage...\n");
   /* Change the sort order of memChunkSources to expedite cross-module checking */
-  qsort(memChunkSources, memChunkSourceCount, sizeof(struct memChunkSource), compareSourcesByEntryNo);
+  qsort (memChunkSources, memChunkSourceCount, sizeof (struct memChunkSource),
+	 compareSourcesByEntryNo);
   /* Now traverse our chunkHash comparing alloc and free source modules */
-  if (hfirst(chunkHash)) do {
-    if ((chunk->recycleCount % 2) == 0) {
-      chunk = (struct memChunk *) hstuff (chunkHash);
-      target.entryNo = chunk->allocSource;
-      allocResult = bsearch (&target, memChunkSources, memChunkSourceCount, sizeof(struct memChunkSource), 
-			     compareSourcesByEntryNo);
-      if (allocResult) {
-	target.entryNo = chunk->freeSource;
-	freeResult = bsearch (&target, memChunkSources, memChunkSourceCount, sizeof(struct memChunkSource), 
-			      compareSourcesByEntryNo);
-	if (freeResult) {
-	  if (strcmp(allocResult->moduleName, freeResult->moduleName)) {
-	    fprintf(stderr, "Block of size %lu allocated in %s at line %d and freed in %s at line %d!\n",
-		    chunk->chunkSize, allocResult->moduleName, allocResult->lineNo,
-		    freeResult->moduleName, freeResult->lineNo);
+  if (hfirst (chunkHash))
+    do {
+      if ((chunk->recycleCount % 2) == 0) {
+	chunk = (struct memChunk *) hstuff (chunkHash);
+	target.entryNo = chunk->allocSource;
+	allocResult =
+	  bsearch (&target, memChunkSources, memChunkSourceCount,
+		   sizeof (struct memChunkSource), compareSourcesByEntryNo);
+	if (allocResult) {
+	  target.entryNo = chunk->freeSource;
+	  freeResult =
+	    bsearch (&target, memChunkSources, memChunkSourceCount,
+		     sizeof (struct memChunkSource), compareSourcesByEntryNo);
+	  if (freeResult) {
+	    if (strcmp (allocResult->moduleName, freeResult->moduleName)) {
+	      fprintf (stderr,
+		       "Block of size %lu allocated in %s at line %d and freed in %s at line %d!\n",
+		       chunk->chunkSize, allocResult->moduleName,
+		       allocResult->lineNo, freeResult->moduleName,
+		       freeResult->lineNo);
+	    }
 	  }
 	}
       }
-    }
-  } while (hnext(chunkHash));
+    } while (hnext (chunkHash));
 }
 
 void
 swLogPeaks (char *reason)
 {
   if (firstMallocCall) {
-    fprintf(stderr, "=> (%s): Before first memory allocation\n", reason);
+    fprintf (stderr, "=> (%s): Before first memory allocation\n", reason);
     return;
   }
   swStop (internalDMSW);
-  fprintf(stderr, "=> (%s): %lu seconds since 1st allocation, %g bytes in use, peak was %g\n",
-	  reason, internalDMSW->swAccumWallTime, currentAlloc,  peakAlloc);
+  fprintf (stderr,
+	   "=> (%s): %lu seconds since 1st allocation, %g bytes in use, peak was %g\n",
+	   reason, internalDMSW->swAccumWallTime, currentAlloc, peakAlloc);
   swStart (internalDMSW);
   return;
 }
@@ -570,8 +608,8 @@ swDumpChunks ()
       for (i = 0; i < 4; i++) {
 	printf ("%d ", hashKey[i]);
       }
-      printf ("for address %lu and size %lu\n", (unsigned long) newChunk->chunkAddress,
-	      newChunk->chunkSize);
+      printf ("for address %lu and size %lu\n",
+	      (unsigned long) newChunk->chunkAddress, newChunk->chunkSize);
     }
     while (hnext (chunkHash));
 }
@@ -645,6 +683,7 @@ void *
 swMalloc (size_t size, char *fileName, int lineNo)
 {
   void *newBlock;
+
 #ifdef DMTRACK
   char messageBuffer[MAXSWMSG];
 #endif
@@ -652,9 +691,9 @@ swMalloc (size_t size, char *fileName, int lineNo)
   if (firstMallocCall) {
     swFirstDM ();
   }
-
 #ifdef DMUSE
   struct free24 *your24;
+
   if (size <= 24) {
     used24s++;
     if (nextFree24 != NULL) {
@@ -667,6 +706,7 @@ swMalloc (size_t size, char *fileName, int lineNo)
     }
   }
   struct free48 *your48;
+
   if (size <= 48) {
     used48s++;
     if (nextFree48 != NULL) {
@@ -677,8 +717,9 @@ swMalloc (size_t size, char *fileName, int lineNo)
       missed48s++;
       return (malloc (size));
     }
-O  }
+  O}
   struct free100 *your100;
+
   if (size <= 100) {
     used100s++;
     if (nextFree100 != NULL) {
@@ -726,6 +767,7 @@ void *
 swRealloc (void *pBlock, size_t newSize, char *fileName, int lineNo)
 {
   void *newBlock;
+
 #ifdef DMTRACK
   char messageBuffer[MAXSWMSG];
   int reallocFlag, oldSize;
@@ -734,12 +776,12 @@ swRealloc (void *pBlock, size_t newSize, char *fileName, int lineNo)
   if (firstMallocCall) {
     swFirstDM ();
   }
-
 #ifdef DMUSE
   struct free24 *your24, *start24, *end24;
+
   start24 = &free24s[0];
   end24 = &free24s[MAXFREE24S - 1];
-  if ((pBlock >= (void *)start24) && (pBlock <= (void *)end24)) {
+  if ((pBlock >= (void *) start24) && (pBlock <= (void *) end24)) {
     if (newSize <= 24)
       return (pBlock);
     your24 = (struct free24 *) pBlock;
@@ -748,9 +790,10 @@ swRealloc (void *pBlock, size_t newSize, char *fileName, int lineNo)
     return (swMalloc (newSize, fileName, lineNo));
   }
   struct free48 *your48, *start48, *end48;
+
   start48 = &free48s[0];
   end48 = &free48s[MAXFREE48S - 1];
-  if ((pBlock >= (void *)start48) && (pBlock <= (void *)end48)) {
+  if ((pBlock >= (void *) start48) && (pBlock <= (void *) end48)) {
     if (newSize <= 48)
       return (pBlock);
     your48 = (struct free48 *) pBlock;
@@ -759,11 +802,13 @@ swRealloc (void *pBlock, size_t newSize, char *fileName, int lineNo)
     return (swMalloc (newSize, fileName, lineNo));
   }
   struct free100 *your100, *start100, *end100;
+
   start100 = &free100s[0];
   end100 = &free100s[MAXFREE100S - 1];
-  if ((pBlock >= (void *)start100) && (pBlock <= (void *)end100)) {
+  if ((pBlock >= (void *) start100) && (pBlock <= (void *) end100)) {
     if (newSize <= 100)
-O      return (pBlock);
+      O return (pBlock);
+
     your100 = (struct free100 *) pBlock;
     your100->next = nextFree100;
     nextFree100 = your100;
@@ -821,28 +866,31 @@ swFree (void *pBlock, char *fileName, int lineNo)
 #endif
 
 #ifdef DMUSE
-O  struct free24 *your24, *start24, *end24;
+  O struct free24 *your24, *start24, *end24;
+
   start24 = &free24s[0];
   end24 = &free24s[MAXFREE24S - 1];
-  if ((pBlock >= (void *)start24) && (pBlock <= (void *)end24)) {
+  if ((pBlock >= (void *) start24) && (pBlock <= (void *) end24)) {
     your24 = (struct free24 *) pBlock;
     your24->next = nextFree24;
     nextFree24 = your24;
     return;
   }
   struct free48 *your48, *start48, *end48;
+
   start48 = &free48s[0];
   end48 = &free48s[MAXFREE48S - 1];
-  if ((pBlock >= (void *)start48) && (pBlock <= (void *)end48)) {
+  if ((pBlock >= (void *) start48) && (pBlock <= (void *) end48)) {
     your48 = (struct free48 *) pBlock;
     your48->next = nextFree48;
     nextFree48 = your48;
     return;
   }
   struct free100 *your100, *start100, *end100;
+
   start100 = &free100s[0];
   end100 = &free100s[MAXFREE100S - 1];
-  if ((pBlock >= (void *)start100) && (pBlock <= (void *)end100)) {
+  if ((pBlock >= (void *) start100) && (pBlock <= (void *) end100)) {
     your100 = (struct free100 *) pBlock;
     your100->next = nextFree100;
     nextFree100 = your100;
@@ -1117,7 +1165,7 @@ main (int argc, char *argv[])
 
   p[0] = (char *) swMalloc (4 * 1024 * 1024, __FILE__, __LINE__);
   for (i = 3; i >= 0; i--) {
-    printf("realloc down %d\n", i);
+    printf ("realloc down %d\n", i);
     p[0] = swRealloc (p[0], i * 1024 * 1024, __FILE__, __LINE__);
   }
 
@@ -1147,8 +1195,8 @@ main (int argc, char *argv[])
   swLogPeaks ("End of run");
 #endif
 #ifdef DMUSE
-  printf("Missed/Used %d/%d 24s, %d/%d 48s, %d/%d 100s\n",
-	 missed24s, used24s, missed48s, used48s, missed100s, used100s);
+  printf ("Missed/Used %d/%d 24s, %d/%d 48s, %d/%d 100s\n",
+	  missed24s, used24s, missed48s, used48s, missed100s, used100s);
 #endif
   swLogMsg ("finished run");
   return 0;
