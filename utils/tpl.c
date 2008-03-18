@@ -44,11 +44,7 @@ static const char id[] = "$Id$";
 #include <errno.h>
 #include <inttypes.h>		/* uint32_t, uint64_t, etc */
 
-#if ( defined __CYGWIN__ || defined __MINGW32__ )
-#include <win/mman.h>		/* mmap */
-#else
 #include <sys/mman.h>		/* mmap */
-#endif
 
 #include "tpl.h"
 

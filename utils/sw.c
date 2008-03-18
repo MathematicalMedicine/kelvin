@@ -85,6 +85,7 @@ then #include sw.h in your source code, and link with sw.o.
 #include <sys/types.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include "sw.h"
 #include "hashtab.h"
 #include "lookupa.h"
