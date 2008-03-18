@@ -1082,9 +1082,9 @@ tpl_peek (int mode, ...)
 {
   va_list ap;
   int xendian = 0, found_nul = 0;
-  char *filename;
-  void *addr, *dv;
-  size_t sz, fmt_len;
+  char *filename = NULL;
+  void *addr = NULL, *dv;
+  size_t sz = 0, fmt_len;
   tpl_mmap_rec mr;
   char *fmt, *fmt_cpy, c;
   uint32_t intlsz;
