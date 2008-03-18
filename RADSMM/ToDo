@@ -1,8 +1,0 @@
-0. why are penets floats while theta and gfreqs are double?
-
-1. thetas are odd: looks like RADSMM only supports a single theta
-vector in two modes (grid or vector) rather than truly separate
-male/female thetas (two distinct theta vectors).
-
-1. doesn't handle combined models (Q+D).
-2. doesn't handle multiallelic diseases.
