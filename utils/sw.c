@@ -86,6 +86,7 @@ then #include sw.h in your source code, and link with sw.o.
 #include <netdb.h>
 #include "sw.h"
 #include "hashtab.h"
+#include "lookupa.h"
 
 /* All we do to create a new stopwatch is allocate space for the structure, 
    zero the accumulated information and return a pointer to it. */
@@ -356,14 +357,12 @@ int compareSourcesByName(const void *left, const void *right) {
   return result;
 }
 int compareSourcesByEntryNo(const void *left, const void *right) {
-  int result;
   struct memChunkSource *mCSLeft, *mCSRight;
   mCSLeft = (struct memChunkSource *) left;
   mCSRight = (struct memChunkSource *) right;
   return(mCSLeft->entryNo - mCSRight->entryNo);
 }
 int compareSourcesByTotalBytes(const void *left, const void *right) {
-  int result;
   struct memChunkSource *mCSLeft, *mCSRight;
   mCSLeft = (struct memChunkSource *) left;
   mCSRight = (struct memChunkSource *) right;
@@ -549,7 +548,7 @@ swLogPeaks (char *reason)
     return;
   }
   swStop (internalDMSW);
-  fprintf(stderr, "=> (%s): %u seconds since 1st allocation, %g bytes in use, peak was %g\n",
+  fprintf(stderr, "=> (%s): %lu seconds since 1st allocation, %g bytes in use, peak was %g\n",
 	  reason, internalDMSW->swAccumWallTime, currentAlloc,  peakAlloc);
   swStart (internalDMSW);
   return;
@@ -571,7 +570,7 @@ swDumpChunks ()
       for (i = 0; i < 4; i++) {
 	printf ("%d ", hashKey[i]);
       }
-      printf ("for address %u and size %d\n", newChunk->chunkAddress,
+      printf ("for address %lu and size %lu\n", (unsigned long) newChunk->chunkAddress,
 	      newChunk->chunkSize);
     }
     while (hnext (chunkHash));
@@ -709,7 +708,7 @@ O  }
 	largeBlocks[size / (MAXMEDIUMBLOCK * MAXSMALLBLOCK)][0]++;
       else {
 	sprintf (messageBuffer,
-		 "Block of size %d exceeds %dMb, not tracked", size,
+		 "Block of size %lu exceeds %dMb, not tracked", size,
 		 MAXLARGEBLOCK);
 	swLogMsg (messageBuffer);
       }
@@ -803,7 +802,7 @@ O      return (pBlock);
 		    (MAXMEDIUMBLOCK * MAXSMALLBLOCK)][reallocFlag]++;
       else {
 	sprintf (messageBuffer,
-		 "Block of size %d exceeds %dMb, not tracked", newSize,
+		 "Block of size %lu exceeds %dMb, not tracked", newSize,
 		 MAXLARGEBLOCK);
 	swLogMsg (messageBuffer);
       }

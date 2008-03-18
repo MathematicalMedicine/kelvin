@@ -3291,9 +3291,14 @@ keepPoly (struct polynomial *p)
       keepPoly (p->e.s->sum[i]);
     }
     break;
+  case T_FREED:
+    fprintf (stderr,
+	     "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n",
+	     (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
     fprintf (stderr, "In keepPoly, unknown expression type %d, exiting\n",
 	     p->eType);
+    raise (SIGUSR1);
     exit (1);
   }
   return;
