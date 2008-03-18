@@ -28,7 +28,10 @@ volatile sig_atomic_t signalSeen = 0;
 void
 usr1SignalHandler (int signal)
 {
+  swDump (overallSW);
+#ifdef DMTRACK
   swLogPeaks ("Timer");
+#endif
 }
 
 void
