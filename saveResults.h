@@ -1,5 +1,5 @@
 void dump_lDT (double **);
-int saveTrait (int ,char *, double **);
+int saveTrait (int, char *, double **);
 int restoreTrait (int, char *, double **);
 int saveMarker (char *, int, int, char **, double *);
 int restoreMarker (char *, int, int, char **, double *);

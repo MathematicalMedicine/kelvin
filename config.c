@@ -1,3 +1,4 @@
+
 /**********************************************************************
  * Copyright 2007, Columbus Children's Research Institute.  
  * All rights reserved.
@@ -27,19 +28,26 @@
  * Regular expressions used to parse configuration file
  * lines. 
  **********************************************************************/
+
 /* DIRECTIVE matches: GF, DD, Dd, dd, Th, Tm, Tf, 00..99, AF, AL, MM, AM, TL, TM, TT, LD */
 #define DIRECTIVE "^[[:space:]]*[[:digit:]AdDLMGT][[:digit:]dDfFhLMmT]"
+
 /* PARAMETER matches: P[0-9] (note implicit 1 digit limit on distrib params index) */
 #define PARAMETER "^[[:space:]]*P([[:digit:]])"
+
 /* Match 1 or 3 floating point numbers with optional trailing semicolon. */
 #define DOUBLE1 "[[:space:]]*([-]?[[:digit:]]*.?[[:digit:]]+)[[:space:]]*[;]?"
 #define DOUBLE3 "[[:space:]]*([-]?[[:digit:]]*.?[[:digit:]]+)[[:space:]]+([-]?[[:digit:]]*.?[[:digit:]]+)[[:space:]]+([-]?[[:digit:]]*.?[[:digit:]]+)[[:space:]]*[;]?"
+
 /* Match a constraint of the form, e.g., DD < Dd */
 #define CONSTRAINT2 "[[:space:]]*([[:digit:]dDT][[:digit:]dDfmT])[[:space:]]*([>]|[>][=]|[=][=]|[!][=])[[:space:]]*([[:digit:]dDT][[:digit:]dDfmT])[[:space:]]*[;]?"
+
 /* Match a constraint with liability classes, e.g., DD 1 < DD 2 */
 #define CLASSCONSTRAINT2 "[[:space:]]*([[:digit:]dDT][[:digit:]dDfmT])[[:space:]]*([[:digit:]])[[:space:]]*([>]|[>][=]|[=][=]|[!][=])[[:space:]]*([[:digit:]dDT][[:digit:]dDfmT])[[:space:]]*([[:digit:]])[[:space:]]*[;]?"
+
 /* Match a constraint of the form, e.g., Px DD < Px Dd */
 #define PCONSTRAINT2 "[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([>]|[>][=]|[=][=]|[!][=])[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*[;]?"
+
 /* Match a constraint of the form, e.g., Px DD 1 < Px Dd 2 */
 #define PCLASSCONSTRAINT2 "[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([[:digit:]])[[:space:]]*([>]|[>][=]|[=][=]|[!][=])[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([[:digit:]])[[:space:]]*[;]?"
 
@@ -57,6 +65,7 @@
 #define DD 9			/* Must be last for numeric directives to work */
 #define Dd 10
 #define dd 11
+
 /* Strings used to parse configuration file constraints (see
  * getOperator). Matches:
  *   ==, !=, >, >=
@@ -143,6 +152,7 @@ void addTheta (ModelRange * range, int type, double val);
 void addPenetrance (ModelRange * range, int type, double val);
 void addGeneFreq (ModelRange * range, double val);
 void addAlpha (ModelRange * range, double val);
+
 /* void addTraitLocus (ModelRange *range, double val); */
 void addTraitThreshold (ModelRange * range, double val);
 void addDPrime (ModelRange * range, double val);
@@ -252,678 +262,577 @@ readConfigFile (char *file, ModelType * modelType,
   /* Start scanning each line of configuration file input. We'll parse
    * each line by looking for the easy cases first, then using C
    * regexps to parse the harder configuration directives. */
-  while (fgets (line, KMAXLINELEN, fp))
-    {
-      /* Before we try to parse it, check to see if the line may be
-       * too long, and give up if it is. */
-      KASSERT ((strlen (line) < KMAXLINELEN),
-	       "Line %d in configuration file %s exceeds %d characters; aborting.\n",
-	       i, file, KMAXLINELEN);
+  while (fgets (line, KMAXLINELEN, fp)) {
+    /* Before we try to parse it, check to see if the line may be
+     * too long, and give up if it is. */
+    KASSERT ((strlen (line) < KMAXLINELEN),
+	     "Line %d in configuration file %s exceeds %d characters; aborting.\n",
+	     i, file, KMAXLINELEN);
 
-      /* Flush lines starting with a comment character or consisting
-       * of only a newline. */
-      if ((strlen (line) == 1) || (strncmp (line, "#", 1) == 0))
-	continue;
+    /* Flush lines starting with a comment character or consisting
+     * of only a newline. */
+    if ((strlen (line) == 1) || (strncmp (line, "#", 1) == 0))
+      continue;
 
-      /* TODO: flushing lines containing only whitespace characters
-       * will make everything slightly more efficient. */
+    /* TODO: flushing lines containing only whitespace characters
+     * will make everything slightly more efficient. */
 
-      /* Type of analysis; 2 point or multipoint. */
-      if (strncmp (line, "TP", 2) == 0)
-	{
-	  modelType->type = TP;	/* 2 point (default) */
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for 2 point analysis\n");
-	  continue;
-	}
-      if (sscanf (line, "SS %d", &(modelType->numMarkers)) == 1)
-	{
-	  modelType->type = MP;	/* Multipoint */
-	  modelOptions->mapFlag = SS;
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for sex-specific multipoint analysis\n");
-	  continue;
-	}
-      if (sscanf (line, "SA %d", &(modelType->numMarkers)) == 1)
-	{
-	  modelType->type = MP;	/* Multipoint */
-	  modelOptions->mapFlag = SA;
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for sex-averaged multipoint analysis\n");
-	  continue;
-	}
-      if (strncmp (line, "XC", 2) == 0)
-	{
-	  modelOptions->sexLinked = 1;
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for X Chromosome analysis\n");
-	  continue;
-	}
-      if (strncmp (line, "TM", 2) == 0)
-	{
-	  modelRange->tlmark = TRUE;
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for on-marker trait loci\n");
-	  continue;
-	}
-      if (strncmp (line, "MM", 2) == 0)
-	{
-	  modelOptions->markerAnalysis = MM;
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for marker to marker analysis\n");
-	  continue;
-	}
-      if (strncmp (line, "AM", 2) == 0)
-	{
-	  modelOptions->markerAnalysis = AM;
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for adjacent marker analysis\n");
-	  continue;
-	}
-      if (strncmp (line, "PE", 2) == 0)
-	{
-	  modelOptions->polynomial = TRUE;	/* Polynomial evaluation */
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for polynomial evaluation\n");
-	  continue;
-	}
-      if (sscanf (line, "LC %d", &modelRange->nlclass) == 1)
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for %d liability classes\n",
-		modelRange->nlclass);
-	  continue;
-	}
-
-      if (sscanf (line, "DA %d", &modelRange->nalleles) == 1)	/* Disease alleles */
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for %d disease alleles\n", modelRange->nalleles);
-	  continue;
-	}
-
-      if (sscanf (line, "AS %lg %lg %lg",	/* Affection status values */
-		  &(modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN]),
-		  &(modelOptions->
-		    affectionStatus[AFFECTION_STATUS_UNAFFECTED]),
-		  &(modelOptions->
-		    affectionStatus[AFFECTION_STATUS_AFFECTED])) == 3)
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Resetting affection status values (%g, %g, %g)\n",
-		modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN],
-		modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED],
-		modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED]);
-	  continue;
-	}
-
-      /* Dichotomous trait directive. */
-      if (strncmp (line, "DT", 2) == 0)
-	{
-	  modelType->trait = DT;	/* Dichotomous trait */
-	  /* Establish the default affected, unaffected, and unknown
-	   * values for DT. These can be overridden elsewhere. */
-	  modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] =
-	    AFFECTION_STATUS_UNKNOWN;
-	  modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] =
-	    AFFECTION_STATUS_UNAFFECTED;
-	  modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] =
-	    AFFECTION_STATUS_AFFECTED;
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for dichotomous traits\n");
-	  continue;
-	}
-
-      /* Quantitative trait directives; each different distribution
-       * may require a different pattern of parameters. */
-      if (sscanf (line, "QT normal %lf %lf", &modelType->mean, &modelType->sd)
-	  == 2)
-	{
-	  modelType->trait = QT;	/* Quantitative trait */
-	  modelType->distrib = QT_FUNCTION_NORMAL;
-	  /* Establish the default affected, unaffected, and unknown
-	   * values for QT/CT. These can be overridden elsewhere. */
-	  modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-	  modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] =
-	    -88.88;
-	  modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
-	  /* The normal distribution has a two distributional
-	   * parameters, mean (specified as the penetrance) and std
-	   * dev, specified as the first additional parameter P1. */
-	  modelRange->npardim = 1;
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for quantitative traits (normal distribution)\n");
-	  continue;
-	}
-      if (sscanf
-	  (line, "QT T %d %lf %lf", &a1, &modelType->mean,
-	   &modelType->sd) == 3)
-	{
-	  modelType->trait = QT;	/* Quantitative trait */
-	  modelType->distrib = QT_FUNCTION_T;
-	  /* The T distribution has single distribution constant, the
-	   * degrees of freedom, which is fixed at definition. We'll
-	   * use integer a1 temporarily so as to set up the
-	   * appropriate number of constants in modelType. */
-	  modelType->constants =
-	    realloc (modelType->constants, 1 * sizeof (int));
-	  modelType->constants[0] = a1;
-	  /* Establish the default affected, unaffected, and unknown
-	   * values for QT/CT. These can be overridden elsewhere. */
-	  modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-	  modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] =
-	    -88.88;
-	  modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
-
-	  /* The T distribution, like the normal distribution, also
-	   * has two distributional parameters, the mean (specified as
-	   * the penetrance) and the std dev, specified as the first
-	   * additional parameter P1. */
-	  modelRange->npardim = 1;
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for quantitative traits (T distribution)\n");
-	  continue;
-	}
-      if (sscanf (line, "QT chisq %lf %lf", &modelType->mean, &modelType->sd)
-	  == 2)
-	{
-	  modelType->trait = QT;	/* Quantitative trait */
-	  modelType->distrib = QT_FUNCTION_CHI_SQUARE;
-	  /* Establish the default affected, unaffected, and unknown
-	   * values for QT/CT. These can be overridden elsewhere. */
-	  modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-	  modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] =
-	    -88.88;
-	  modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
-	  /* The chi sqaure distribution only has one distributional
-	   * parameters, df - degree of freedom (specified as the penetrance) 
-	   */
-	  modelRange->npardim = 1;
-	  /* add a fake parameter to facilitate loop */
-	  addParameter(modelRange, 0, 1.0);
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for quantitative traits (chi square distribution)\n");
-	  continue;
-	}
-
-      /* these only apply to QT/CT analyses */
-      if (sscanf(line, "MIN %lf", &modelType->minOriginal) == 1)
-	{
-	  modelType->minFlag = 1;
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Lower bound for QT distribution is at %f\n", 
-		modelType->min);
-	  continue;
-	}
-      if (sscanf(line, "MAX %lf", &modelType->maxOriginal) == 1)
-	{
-	  modelType->maxFlag = 1;
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Upper bound for QT distribution is at %f\n", 
-		modelType->max);
-	  continue;
-	}
-  
-      if (sscanf(line, "T_MIN %lf", &modelType->minThreshold) == 1)
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Lower bound for QT threshold is at %f\n", 
-		modelType->minThreshold);
-	  continue;
-	}
-      if (sscanf(line, "T_MAX %lf", &modelType->maxThreshold) == 1)
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Upper bound for QT threshold is at %f\n", 
-		modelType->maxThreshold);
-	  continue;
-	}
-
-      /* Directives that take a single string argument. */
-      if (sscanf (line, "PD %s", pedfile) == 1)	/* Pedigree file */
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure pedigree file %s\n",
-		pedfile);
-	  continue;
-	}
-      if (sscanf (line, "DF %s", datafile) == 1)	/* Data file - a list of loci */
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure data file %s\n", datafile);
-	  continue;
-	}
-      if (sscanf (line, "MK %s", markerfile) == 1)	/* Marker file - marker allele frequencies */
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure marker file %s\n",
-		markerfile);
-	  continue;
-	}
-      if (strncmp (line, "SR", 2) == 0)
-	{
-	  modelOptions->saveResults = TRUE;
-	  if (sscanf (line, "SR %s", resultsprefix) == 1)	/* Results file prefix */
-	    {
-	      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure for saving results w/file prefix %s\n",
-		    resultsprefix);
-	    } else {
-	      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure for saving results w/o file prefix %s\n",
-		    resultsprefix);
-	      *resultsprefix = '\0';
-	  }
-	  continue;
-	}
-      if (sscanf (line, "MP %s", mapfile) == 1)	/* Map file */
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure map file %s\n", mapfile);
-	  continue;
-	}
-#if FALSE
-      if (sscanf (line, "LP %s", loopfile) == 1)
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure loop file %s\n", loopfile);
-	  continue;
-	}
-#endif
-      if (sscanf (line, "CF %s", ccfile) == 1)
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure case control count file %s\n", ccfile);
-	  continue;
-	}
-      if (sscanf (line, "OF %s", outfile) == 1)	/* Output file */
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure output file %s\n",
-		outfile);
-	  continue;
-	}
-      if (sscanf (line, "HE %s", avghetfile) == 1)	/* Average hetergeneity LR file */
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure output file %s\n",
-		avghetfile);
-	  continue;
-	}
-      if (sscanf (line, "PF %s", pplfile) == 1)	/* PPL output file */
-	{
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Configure PPL output file %s\n",
-		pplfile);
-	  continue;
-	}
-
-      if (sscanf (line, "UP %d", &dir1) == 1)
-	{
-	  /* Allocate space for the identifier based on how many
-	   * digits in the scanned integer. Remember to leave a space
-	   * for the terminator. */
-	  modelOptions->sUnknownPersonID =
-	    realloc (modelOptions->sUnknownPersonID,
-		     (dir1 / 10) + 2 * sizeof (char));
-	  snprintf (modelOptions->sUnknownPersonID, (dir1 / 10) + 2, "%d",
-		    dir1);
-	  KLOG (LOGINPUTFILE, LOGDEBUG, "Unknown person identifier is %s\n",
-		modelOptions->sUnknownPersonID);
-	  continue;
-	}
-
-      /* setting debug levels */
-      if (sscanf(line, "LOG %s %s", sLogType, sLogLevel) == 2)
-	{
-	  if(!strcasecmp(sLogType, "pedfile"))
-	    logType = LOGPEDFILE;
-	  else if(!strcasecmp(sLogType, "inputfile"))
-	    logType = LOGINPUTFILE;
-	  else if(!strcasecmp(sLogType, "genoelim"))
-	    logType = LOGGENOELIM;
-	  else if(!strcasecmp(sLogType, "parentalpair"))
-	    logType = LOGPARENTALPAIR;
-	  else if(!strcasecmp(sLogType, "peelgraph"))
-	    logType = LOGPEELGRAPH;
-	  else if(!strcasecmp(sLogType, "likelihood"))
-	    logType = LOGLIKELIHOOD;
-	  else if(!strcasecmp(sLogType, "setrecoding"))
-	    logType = LOGSETRECODING;
-	  else
-	    logType=LOGDEFAULT;
-
-	  if(!strcasecmp(sLogLevel, "fatal"))
-	    logLevel = LOGFATAL;
-	  else if(!strcasecmp(sLogLevel, "error"))
-	    logLevel = LOGERROR;
-	  else if(!strcasecmp(sLogLevel, "warning"))
-	    logLevel = LOGWARNING;
-	  else if(!strcasecmp(sLogLevel, "advise"))
-	    logLevel = LOGADVISE;
-	  else if(!strcasecmp(sLogLevel, "debug"))
-	    logLevel = LOGDEBUG;
-	  else
-	    logLevel = LOGFATAL;
-
-	  logSet(logType, logLevel);
-	  continue;
-	}
-
-      if (strncmp (line, "DRY", 3) == 0)
-	{
-	  modelOptions->dryRun = 1;
-	  KLOG (LOGINPUTFILE, LOGDEBUG,
-		"Configuring for a dry run.\n");
-	  continue;
-	}
-
-      /* Complex directives that require regular expression matching
-       * to handle the arguments. Most of these take at least one
-       * floating point argument, and sometimes two or three.
-       *
-       * We'll handle each type of directive separately. But, first,
-       * "chomp" the newline to remove the newline and ensure null
-       * termination. */
-      line[strlen (line) - 1] = '\0';
-
-      /* First, look for simple constraints on thetas, gene
-       * frequencies, or penetrances. */
-      if (regexec (buffer3, line, 4, &match[0], 0) != REG_NOMATCH)
-	{
-	  /* Matching constraint line (CONSTRAINT2):
-	   *   DD < Dd 
-	   * Find out what type of constraint it is by looking it up
-	   * in DIRECTIVES. */
-	  KASSERT (((dir1 = getType (line)) != ERROR),
-		   "Bad constraint directive '%s'; aborting.\n", line);
-	  KASSERT (((op = getOperator (line + match[2].rm_so)) != ERROR),
-		   "Bad constraint operator '%s'; aborting.\n", line);
-	  KASSERT (((dir2 = getType (line + match[3].rm_so)) != ERROR),
-		   "Bad constraint directive '%s'; aborting.\n", line);
-	  /* Constraints not supported for AL or TL */
-	  KASSERT (((dir1 != AL) && (dir2 != AL)),
-		   "Bad constraint directive '%s'; aborting.\n", line);
-	  KASSERT (((dir1 != TL) && (dir2 != TL)),
-		   "Bad constraint directive '%s'; aborting.\n", line);
-
-	  /* Add the constraint. */
-	  addConstraint (SIMPLE, dir1, 0, 0, op, dir2, 0, 0, FALSE);
-
-	  /* Next, loop through any semicolon-separated disjuncts. */
-	  start = line;
-	  while ((start = start + match[0].rm_eo) < line + strlen (line))
-	    {
-	      /* Add the disjunction to the first constraint. */
-	      if (regexec (buffer3, start, 4, &match[0], REG_NOTBOL) !=
-		  REG_NOMATCH)
-		{
-		  KASSERT (((dir1 =
-			     getType (start + match[1].rm_so)) != ERROR),
-			   "Bad constraint directive '%s'; aborting.\n",
-			   start);
-		  KASSERT (((op =
-			     getOperator (start + match[2].rm_so)) != ERROR),
-			   "Bad constraint directive '%s'; aborting.\n",
-			   start);
-		  KASSERT (((dir2 =
-			     getType (start + match[3].rm_so)) != ERROR),
-			   "Bad constraint directive '%s'; aborting.\n",
-			   start);
-		  addConstraint (SIMPLE, dir1, 0, 0, op, dir2, 0, 0, TRUE);
-		}
-	      else
-		break;
-	    }
-	  continue;
-	}
-      else if (regexec (buffer4, line, 6, &match[0], 0) != REG_NOMATCH)
-	{
-	  /* Next, look for class constraints on penetrances, gene
-	   * frequencies, thetas, or thresholds (CLASSCONSTRAINT2):
-	   *   Px DD 1 < Px Dd 2 
-	   * Find out what type of constraint it is by looking it up
-	   * in DIRECTIVES. */
-	  KASSERT (((dir1 = getType (line)) != ERROR),
-		   "Bad constraint directive '%s'; aborting.\n", line);
-	  KASSERT (((op = getOperator (line + match[3].rm_so)) != ERROR),
-		   "Bad constraint operator '%s'; aborting.\n", line);
-	  KASSERT (((dir2 = getType (line + match[4].rm_so)) != ERROR),
-		   "Bad constraint directive '%s'; aborting.\n", line);
-	  /* Constraints not supported for AL or TL */
-	  KASSERT (((dir1 != AL) && (dir2 != AL)),
-		   "Bad constraint directive '%s'; aborting.\n", line);
-	  KASSERT (((dir1 != TL) && (dir2 != TL)),
-		   "Bad constraint directive '%s'; aborting.\n", line);
-
-	  /* Add the constraint. */
-	  addConstraint (CLASSC,
-			 dir1, getInteger (line + match[2].rm_so), 0,
-			 op,
-			 dir2, getInteger (line + match[5].rm_so), 0, FALSE);
-
-	  /* Next, loop through any semicolon-separated disjuncts. */
-	  start = line;
-	  while ((start = start + match[0].rm_eo) < line + strlen (line))
-	    {
-	      /* Add the disjunction to the first constraint. */
-	      if (regexec (buffer4, start, 6, &match[0], REG_NOTBOL) !=
-		  REG_NOMATCH)
-		{
-		  KASSERT (((dir1 =
-			     getType (start + match[1].rm_so)) != ERROR),
-			   "Bad constraint directive '%s'; aborting.\n",
-			   start);
-		  KASSERT (((op =
-			     getOperator (start + match[3].rm_so)) != ERROR),
-			   "Bad constraint directive '%s'; aborting.\n",
-			   start);
-		  KASSERT (((dir2 =
-			     getType (start + match[4].rm_so)) != ERROR),
-			   "Bad constraint directive '%s'; aborting.\n",
-			   start);
-		  addConstraint (CLASSC, dir1,
-				 getInteger (start + match[2].rm_so), -1, op,
-				 dir2, getInteger (start + match[5].rm_so),
-				 -1, TRUE);
-		}
-	      else
-		break;
-	    }
-	  continue;
-	}
-      else if (regexec (buffer6, line, 6, &match[0], 0) != REG_NOMATCH)
-	{
-	  /* Now look for constraints on parameters (PCONSTRAINT2):
-	   *   Px DD < Px Dd */
-	  dir1 = getInteger (line + match[1].rm_so);
-	  a1 = getType (line + match[2].rm_so);
-	  op = getOperator (line + match[3].rm_so);
-	  dir2 = getInteger (line + match[4].rm_so);
-	  a2 = getType (line + match[5].rm_so);
-
-	  /* SHOULD CHECK CONSTRAINT FORMAT! */
-
-	  /* Add the constraint */
-	  addConstraint (PARAMC, a1, 0, dir1, op, a2, 0, dir2, FALSE);
-
-	  /* Next, loop through any semicolon-separated disjuncts. */
-	  start = line;
-	  while ((start = start + match[0].rm_eo) < line + strlen (line))
-	    {
-	      /* Add the disjunction to the first constraint. */
-	      if (regexec (buffer6, start, 6, &match[0], REG_NOTBOL) !=
-		  REG_NOMATCH)
-		{
-		  /* Matching parameter constraint line. */
-		  dir1 = getInteger (start + match[1].rm_so);
-		  a1 = getType (start + match[2].rm_so);
-		  op = getOperator (start + match[3].rm_so);
-		  dir2 = getInteger (start + match[4].rm_so);
-		  a2 = getType (start + match[5].rm_so);
-
-		  /* Add the constraint */
-		  addConstraint (PARAMC, a1, 0, dir1, op, a2, 0, dir2, TRUE);
-		}
-	      else
-		break;
-	    }
-	  continue;
-	}
-      else if (regexec (buffer7, line, 8, &match[0], 0) != REG_NOMATCH)
-	{
-	  /* Finally, look for cross-class constraints on
-	   * parameters: (PCLASSCONSTRAINT2):
-	   *   Px DD 1 < Px Dd 2 */
-	  dir1 = getInteger (line + match[1].rm_so);
-	  a1 = getType (line + match[2].rm_so);
-	  c1 = getInteger (line + match[3].rm_so);
-	  op = getOperator (line + match[4].rm_so);
-	  dir2 = getInteger (line + match[5].rm_so);
-	  a2 = getType (line + match[6].rm_so);
-	  c2 = getInteger (line + match[7].rm_so);
-
-	  /* SHOULD CHECK CONSTRAINT FORMAT! */
-
-	  /* Add the constraint */
-	  addConstraint (PARAMCLASSC, a1, c1, dir1, op, a2, c2, dir2, FALSE);
-
-	  /* Next, loop through any semicolon-separated disjuncts. */
-	  start = line;
-	  while ((start = start + match[0].rm_eo) < line + strlen (line))
-	    {
-	      /* Add the disjunction to the first constraint. */
-	      if (regexec (buffer6, start, 6, &match[0], REG_NOTBOL) !=
-		  REG_NOMATCH)
-		{
-		  /* Matching parameter constraint line. */
-		  dir1 = getInteger (start + match[1].rm_so);
-		  a1 = getType (start + match[2].rm_so);
-		  c1 = getInteger (start + match[3].rm_so);
-		  op = getOperator (start + match[4].rm_so);
-		  dir2 = getInteger (start + match[5].rm_so);
-		  a2 = getType (start + match[6].rm_so);
-		  c2 = getInteger (start + match[7].rm_so);
-
-		  /* Add the constraint */
-		  addConstraint (PARAMCLASSC, dir1, a1, c1, op,
-				 dir2, a2, c2, TRUE);
-		}
-	      else
-		break;
-	    }
-	  continue;
-	}
-      else if (regexec (buffer0, line, 1, &match[0], 0) != REG_NOMATCH)
-	{
-	  /* Look for value specifications (DIRECTIVE). 
-	   *   xx <number or numbers>
-	   * Find out what type of directive it is by looking it up in
-	   * DIRECTIVES. */
-	  dir1 = getType (line);
-
-	  /* Next, loop through the semicolon-separated arguments. */
-	  start = line + match[0].rm_eo;
-	  while (TRUE)
-	    {
-	      if (regexec (buffer2, start, 4, &(match[1]), REG_NOTBOL) !=
-		  REG_NOMATCH)
-		{
-		  /* Matches three numbers. */
-		  addRange (modelRange, dir1,
-			    strtod (start + match[2].rm_so, NULL),
-			    strtod (start + match[3].rm_so, NULL),
-			    strtod (start + match[4].rm_so, NULL));
-		}
-	      else if (regexec (buffer1, start, 2, &(match[1]), REG_NOTBOL) !=
-		       REG_NOMATCH)
-		{
-		  /* Matches one number. */
-		  if (dir1 == Th || dir1 == Tm || dir1 == Tf)
-		    addTheta (modelRange, dir1,
-			      strtod (start + match[2].rm_so, NULL));
-		  else if (dir1 == GF)
-		    addGeneFreq (modelRange,
-				 strtod (start + match[2].rm_so, NULL));
-		  else if (dir1 == AL)
-		    addAlpha (modelRange,
-			      strtod (start + match[2].rm_so, NULL));
-		  else if (dir1 == TL)
-		    addTraitLocus (modelRange,
-				   strtod (start + match[2].rm_so, NULL));
-		  else if (dir1 == TT)
-		    addTraitThreshold (modelRange,
-				       strtod (start + match[2].rm_so, NULL));
-		  else if (dir1 == LD)
-		    addDPrime (modelRange,
-			       strtod (start + match[2].rm_so, NULL));
-		  else if (dir1 == AF)
-		    addAlleleFreq (modelRange,
-				   strtod (start + match[2].rm_so, NULL));
-		  else
-		    /* All parsing is done only in pre-expansion mode,
-		     * hence class is always moot. Also, subtract base
-		     * value of DD from dir1 to get 0-offset value.*/
-		    addPenetrance (modelRange, dir1 - DD,
-				   strtod (start + match[2].rm_so, NULL));
-		}
-	      else
-		{
-		  /* Doesn't match anything. This is a badly formatted
-		   * line which should be flagged. */
-		  KASSERT (FALSE,
-			   "Ill-formed line in configuration file: '%s'\n",
-			   line);
-		}
-
-	      /* Update the start pointer and check for termination. */
-	      start = start + match[1].rm_eo;
-	      if (start >= line + strlen (line))
-		break;
-	    }
-	  continue;
-	}
-      else if (regexec (buffer5, line, 1, &match[0], 0) != REG_NOMATCH)
-	{
-	  /* Matching a parameter specification.
-	   *   P[0-9] <number or numbers>
-	   * Find out which parameter it is by parsing the parameter
-	   * directive (the +1 ensures we skip over the leading P in,
-	   * e.g., P1).  Remember, the parameter number read in will
-	   * be 1-indexed, and you need to make it 0-indexed first. */
-	  p1 = strtod (line + match[0].rm_so + 1, NULL) - 1;
-	  /* Make sure that the parameter number is within the
-	   * expected number of parameters for this distribution. */
-	  KASSERT ((p1 < modelRange->npardim), "Illegal parameter P%d.\n",
-		   p1 + 1);
-
-	  /* Next, loop through the semicolon-separated arguments. */
-	  start = line + match[0].rm_eo;
-	  while (TRUE)
-	    {
-	      if (regexec (buffer2, start, 4, &(match[1]), REG_NOTBOL) !=
-		  REG_NOMATCH)
-		{
-		  /* Matches three numbers. We'll fake out addRange by
-		   * giving it a negative type to distinguish it from
-		   * the other types of values we handle. So, for
-		   * example, parameter 2 would be -3. */
-		  addRange (modelRange, -(p1 + 1),
-			    strtod (start + match[2].rm_so, NULL),
-			    strtod (start + match[3].rm_so, NULL),
-			    strtod (start + match[4].rm_so, NULL));
-		}
-	      else if (regexec (buffer1, start, 2, &(match[1]), REG_NOTBOL) !=
-		       REG_NOMATCH)
-		{
-		  /* Matches one number. */
-		  addParameter (modelRange, p1,
-				strtod (start + match[2].rm_so, NULL));
-		}
-	      else
-		{
-		  /* Doesn't match anything. This is a badly formatted
-		   * line which should be flagged. */
-		  KASSERT (FALSE,
-			   "Ill-formed line in configuration file: '%s'\n",
-			   line);
-		}
-
-	      /* Update the start pointer and check for termination. */
-	      start = start + match[1].rm_eo;
-	      if (start >= line + strlen (line))
-		break;
-	    }
-	  continue;
-	}
-      else
-	KASSERT (FALSE, "Ill-formed line in configuration file: '%s'\n",
-		 line);
+    /* Type of analysis; 2 point or multipoint. */
+    if (strncmp (line, "TP", 2) == 0) {
+      modelType->type = TP;	/* 2 point (default) */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for 2 point analysis\n");
+      continue;
     }
+    if (sscanf (line, "SS %d", &(modelType->numMarkers)) == 1) {
+      modelType->type = MP;	/* Multipoint */
+      modelOptions->mapFlag = SS;
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for sex-specific multipoint analysis\n");
+      continue;
+    }
+    if (sscanf (line, "SA %d", &(modelType->numMarkers)) == 1) {
+      modelType->type = MP;	/* Multipoint */
+      modelOptions->mapFlag = SA;
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for sex-averaged multipoint analysis\n");
+      continue;
+    }
+    if (strncmp (line, "XC", 2) == 0) {
+      modelOptions->sexLinked = 1;
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for X Chromosome analysis\n");
+      continue;
+    }
+    if (strncmp (line, "TM", 2) == 0) {
+      modelRange->tlmark = TRUE;
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for on-marker trait loci\n");
+      continue;
+    }
+    if (strncmp (line, "MM", 2) == 0) {
+      modelOptions->markerAnalysis = MM;
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for marker to marker analysis\n");
+      continue;
+    }
+    if (strncmp (line, "AM", 2) == 0) {
+      modelOptions->markerAnalysis = AM;
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for adjacent marker analysis\n");
+      continue;
+    }
+    if (strncmp (line, "PE", 2) == 0) {
+      modelOptions->polynomial = TRUE;	/* Polynomial evaluation */
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for polynomial evaluation\n");
+      continue;
+    }
+    if (sscanf (line, "LC %d", &modelRange->nlclass) == 1) {
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for %d liability classes\n", modelRange->nlclass);
+      continue;
+    }
+
+    if (sscanf (line, "DA %d", &modelRange->nalleles) == 1) {	/* Disease alleles */
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for %d disease alleles\n", modelRange->nalleles);
+      continue;
+    }
+
+    if (sscanf (line, "AS %lg %lg %lg",	/* Affection status values */
+		&(modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN]),
+		&(modelOptions->
+		  affectionStatus[AFFECTION_STATUS_UNAFFECTED]),
+		&(modelOptions->
+		  affectionStatus[AFFECTION_STATUS_AFFECTED])) == 3) {
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Resetting affection status values (%g, %g, %g)\n",
+	    modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN],
+	    modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED],
+	    modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED]);
+      continue;
+    }
+
+    /* Dichotomous trait directive. */
+    if (strncmp (line, "DT", 2) == 0) {
+      modelType->trait = DT;	/* Dichotomous trait */
+      /* Establish the default affected, unaffected, and unknown
+       * values for DT. These can be overridden elsewhere. */
+      modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] =
+	AFFECTION_STATUS_UNKNOWN;
+      modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] =
+	AFFECTION_STATUS_UNAFFECTED;
+      modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] =
+	AFFECTION_STATUS_AFFECTED;
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for dichotomous traits\n");
+      continue;
+    }
+
+    /* Quantitative trait directives; each different distribution
+     * may require a different pattern of parameters. */
+    if (sscanf (line, "QT normal %lf %lf", &modelType->mean, &modelType->sd)
+	== 2) {
+      modelType->trait = QT;	/* Quantitative trait */
+      modelType->distrib = QT_FUNCTION_NORMAL;
+      /* Establish the default affected, unaffected, and unknown
+       * values for QT/CT. These can be overridden elsewhere. */
+      modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
+      modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
+      modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+      /* The normal distribution has a two distributional
+       * parameters, mean (specified as the penetrance) and std
+       * dev, specified as the first additional parameter P1. */
+      modelRange->npardim = 1;
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for quantitative traits (normal distribution)\n");
+      continue;
+    }
+    if (sscanf
+	(line, "QT T %d %lf %lf", &a1, &modelType->mean,
+	 &modelType->sd) == 3) {
+      modelType->trait = QT;	/* Quantitative trait */
+      modelType->distrib = QT_FUNCTION_T;
+      /* The T distribution has single distribution constant, the
+       * degrees of freedom, which is fixed at definition. We'll
+       * use integer a1 temporarily so as to set up the
+       * appropriate number of constants in modelType. */
+      modelType->constants = realloc (modelType->constants, 1 * sizeof (int));
+      modelType->constants[0] = a1;
+      /* Establish the default affected, unaffected, and unknown
+       * values for QT/CT. These can be overridden elsewhere. */
+      modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
+      modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
+      modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+
+      /* The T distribution, like the normal distribution, also
+       * has two distributional parameters, the mean (specified as
+       * the penetrance) and the std dev, specified as the first
+       * additional parameter P1. */
+      modelRange->npardim = 1;
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for quantitative traits (T distribution)\n");
+      continue;
+    }
+    if (sscanf (line, "QT chisq %lf %lf", &modelType->mean, &modelType->sd)
+	== 2) {
+      modelType->trait = QT;	/* Quantitative trait */
+      modelType->distrib = QT_FUNCTION_CHI_SQUARE;
+      /* Establish the default affected, unaffected, and unknown
+       * values for QT/CT. These can be overridden elsewhere. */
+      modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
+      modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
+      modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+      /* The chi sqaure distribution only has one distributional
+       * parameters, df - degree of freedom (specified as the penetrance) 
+       */
+      modelRange->npardim = 1;
+      /* add a fake parameter to facilitate loop */
+      addParameter (modelRange, 0, 1.0);
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for quantitative traits (chi square distribution)\n");
+      continue;
+    }
+
+    /* these only apply to QT/CT analyses */
+    if (sscanf (line, "MIN %lf", &modelType->minOriginal) == 1) {
+      modelType->minFlag = 1;
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Lower bound for QT distribution is at %f\n", modelType->min);
+      continue;
+    }
+    if (sscanf (line, "MAX %lf", &modelType->maxOriginal) == 1) {
+      modelType->maxFlag = 1;
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Upper bound for QT distribution is at %f\n", modelType->max);
+      continue;
+    }
+
+    if (sscanf (line, "T_MIN %lf", &modelType->minThreshold) == 1) {
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Lower bound for QT threshold is at %f\n",
+	    modelType->minThreshold);
+      continue;
+    }
+    if (sscanf (line, "T_MAX %lf", &modelType->maxThreshold) == 1) {
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Upper bound for QT threshold is at %f\n",
+	    modelType->maxThreshold);
+      continue;
+    }
+
+    /* Directives that take a single string argument. */
+    if (sscanf (line, "PD %s", pedfile) == 1) {	/* Pedigree file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure pedigree file %s\n", pedfile);
+      continue;
+    }
+    if (sscanf (line, "DF %s", datafile) == 1) {	/* Data file - a list of loci */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure data file %s\n", datafile);
+      continue;
+    }
+    if (sscanf (line, "MK %s", markerfile) == 1) {	/* Marker file - marker allele frequencies */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure marker file %s\n", markerfile);
+      continue;
+    }
+    if (strncmp (line, "SR", 2) == 0) {
+      modelOptions->saveResults = TRUE;
+      if (sscanf (line, "SR %s", resultsprefix) == 1) {	/* Results file prefix */
+	KLOG (LOGINPUTFILE, LOGDEBUG,
+	      "Configure for saving results w/file prefix %s\n",
+	      resultsprefix);
+      } else {
+	KLOG (LOGINPUTFILE, LOGDEBUG,
+	      "Configure for saving results w/o file prefix %s\n",
+	      resultsprefix);
+	*resultsprefix = '\0';
+      }
+      continue;
+    }
+    if (sscanf (line, "MP %s", mapfile) == 1) {	/* Map file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure map file %s\n", mapfile);
+      continue;
+    }
+#if FALSE
+    if (sscanf (line, "LP %s", loopfile) == 1) {
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure loop file %s\n", loopfile);
+      continue;
+    }
+#endif
+    if (sscanf (line, "CF %s", ccfile) == 1) {
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure case control count file %s\n",
+	    ccfile);
+      continue;
+    }
+    if (sscanf (line, "OF %s", outfile) == 1) {	/* Output file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure output file %s\n", outfile);
+      continue;
+    }
+    if (sscanf (line, "HE %s", avghetfile) == 1) {	/* Average hetergeneity LR file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure output file %s\n", avghetfile);
+      continue;
+    }
+    if (sscanf (line, "PF %s", pplfile) == 1) {	/* PPL output file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure PPL output file %s\n",
+	    pplfile);
+      continue;
+    }
+
+    if (sscanf (line, "UP %d", &dir1) == 1) {
+      /* Allocate space for the identifier based on how many
+       * digits in the scanned integer. Remember to leave a space
+       * for the terminator. */
+      modelOptions->sUnknownPersonID =
+	realloc (modelOptions->sUnknownPersonID,
+		 (dir1 / 10) + 2 * sizeof (char));
+      snprintf (modelOptions->sUnknownPersonID, (dir1 / 10) + 2, "%d", dir1);
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Unknown person identifier is %s\n",
+	    modelOptions->sUnknownPersonID);
+      continue;
+    }
+
+    /* setting debug levels */
+    if (sscanf (line, "LOG %s %s", sLogType, sLogLevel) == 2) {
+      if (!strcasecmp (sLogType, "pedfile"))
+	logType = LOGPEDFILE;
+      else if (!strcasecmp (sLogType, "inputfile"))
+	logType = LOGINPUTFILE;
+      else if (!strcasecmp (sLogType, "genoelim"))
+	logType = LOGGENOELIM;
+      else if (!strcasecmp (sLogType, "parentalpair"))
+	logType = LOGPARENTALPAIR;
+      else if (!strcasecmp (sLogType, "peelgraph"))
+	logType = LOGPEELGRAPH;
+      else if (!strcasecmp (sLogType, "likelihood"))
+	logType = LOGLIKELIHOOD;
+      else if (!strcasecmp (sLogType, "setrecoding"))
+	logType = LOGSETRECODING;
+      else
+	logType = LOGDEFAULT;
+
+      if (!strcasecmp (sLogLevel, "fatal"))
+	logLevel = LOGFATAL;
+      else if (!strcasecmp (sLogLevel, "error"))
+	logLevel = LOGERROR;
+      else if (!strcasecmp (sLogLevel, "warning"))
+	logLevel = LOGWARNING;
+      else if (!strcasecmp (sLogLevel, "advise"))
+	logLevel = LOGADVISE;
+      else if (!strcasecmp (sLogLevel, "debug"))
+	logLevel = LOGDEBUG;
+      else
+	logLevel = LOGFATAL;
+
+      logSet (logType, logLevel);
+      continue;
+    }
+
+    if (strncmp (line, "DRY", 3) == 0) {
+      modelOptions->dryRun = 1;
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for a dry run.\n");
+      continue;
+    }
+
+    /* Complex directives that require regular expression matching
+     * to handle the arguments. Most of these take at least one
+     * floating point argument, and sometimes two or three.
+     *
+     * We'll handle each type of directive separately. But, first,
+     * "chomp" the newline to remove the newline and ensure null
+     * termination. */
+    line[strlen (line) - 1] = '\0';
+
+    /* First, look for simple constraints on thetas, gene
+     * frequencies, or penetrances. */
+    if (regexec (buffer3, line, 4, &match[0], 0) != REG_NOMATCH) {
+      /* Matching constraint line (CONSTRAINT2):
+       *   DD < Dd 
+       * Find out what type of constraint it is by looking it up
+       * in DIRECTIVES. */
+      KASSERT (((dir1 = getType (line)) != ERROR),
+	       "Bad constraint directive '%s'; aborting.\n", line);
+      KASSERT (((op = getOperator (line + match[2].rm_so)) != ERROR),
+	       "Bad constraint operator '%s'; aborting.\n", line);
+      KASSERT (((dir2 = getType (line + match[3].rm_so)) != ERROR),
+	       "Bad constraint directive '%s'; aborting.\n", line);
+      /* Constraints not supported for AL or TL */
+      KASSERT (((dir1 != AL) && (dir2 != AL)),
+	       "Bad constraint directive '%s'; aborting.\n", line);
+      KASSERT (((dir1 != TL) && (dir2 != TL)),
+	       "Bad constraint directive '%s'; aborting.\n", line);
+
+      /* Add the constraint. */
+      addConstraint (SIMPLE, dir1, 0, 0, op, dir2, 0, 0, FALSE);
+
+      /* Next, loop through any semicolon-separated disjuncts. */
+      start = line;
+      while ((start = start + match[0].rm_eo) < line + strlen (line)) {
+	/* Add the disjunction to the first constraint. */
+	if (regexec (buffer3, start, 4, &match[0], REG_NOTBOL) != REG_NOMATCH) {
+	  KASSERT (((dir1 =
+		     getType (start + match[1].rm_so)) != ERROR),
+		   "Bad constraint directive '%s'; aborting.\n", start);
+	  KASSERT (((op =
+		     getOperator (start + match[2].rm_so)) != ERROR),
+		   "Bad constraint directive '%s'; aborting.\n", start);
+	  KASSERT (((dir2 =
+		     getType (start + match[3].rm_so)) != ERROR),
+		   "Bad constraint directive '%s'; aborting.\n", start);
+	  addConstraint (SIMPLE, dir1, 0, 0, op, dir2, 0, 0, TRUE);
+	} else
+	  break;
+      }
+      continue;
+    } else if (regexec (buffer4, line, 6, &match[0], 0) != REG_NOMATCH) {
+      /* Next, look for class constraints on penetrances, gene
+       * frequencies, thetas, or thresholds (CLASSCONSTRAINT2):
+       *   Px DD 1 < Px Dd 2 
+       * Find out what type of constraint it is by looking it up
+       * in DIRECTIVES. */
+      KASSERT (((dir1 = getType (line)) != ERROR),
+	       "Bad constraint directive '%s'; aborting.\n", line);
+      KASSERT (((op = getOperator (line + match[3].rm_so)) != ERROR),
+	       "Bad constraint operator '%s'; aborting.\n", line);
+      KASSERT (((dir2 = getType (line + match[4].rm_so)) != ERROR),
+	       "Bad constraint directive '%s'; aborting.\n", line);
+      /* Constraints not supported for AL or TL */
+      KASSERT (((dir1 != AL) && (dir2 != AL)),
+	       "Bad constraint directive '%s'; aborting.\n", line);
+      KASSERT (((dir1 != TL) && (dir2 != TL)),
+	       "Bad constraint directive '%s'; aborting.\n", line);
+
+      /* Add the constraint. */
+      addConstraint (CLASSC,
+		     dir1, getInteger (line + match[2].rm_so), 0,
+		     op, dir2, getInteger (line + match[5].rm_so), 0, FALSE);
+
+      /* Next, loop through any semicolon-separated disjuncts. */
+      start = line;
+      while ((start = start + match[0].rm_eo) < line + strlen (line)) {
+	/* Add the disjunction to the first constraint. */
+	if (regexec (buffer4, start, 6, &match[0], REG_NOTBOL) != REG_NOMATCH) {
+	  KASSERT (((dir1 =
+		     getType (start + match[1].rm_so)) != ERROR),
+		   "Bad constraint directive '%s'; aborting.\n", start);
+	  KASSERT (((op =
+		     getOperator (start + match[3].rm_so)) != ERROR),
+		   "Bad constraint directive '%s'; aborting.\n", start);
+	  KASSERT (((dir2 =
+		     getType (start + match[4].rm_so)) != ERROR),
+		   "Bad constraint directive '%s'; aborting.\n", start);
+	  addConstraint (CLASSC, dir1,
+			 getInteger (start + match[2].rm_so), -1, op,
+			 dir2, getInteger (start + match[5].rm_so), -1, TRUE);
+	} else
+	  break;
+      }
+      continue;
+    } else if (regexec (buffer6, line, 6, &match[0], 0) != REG_NOMATCH) {
+      /* Now look for constraints on parameters (PCONSTRAINT2):
+       *   Px DD < Px Dd */
+      dir1 = getInteger (line + match[1].rm_so);
+      a1 = getType (line + match[2].rm_so);
+      op = getOperator (line + match[3].rm_so);
+      dir2 = getInteger (line + match[4].rm_so);
+      a2 = getType (line + match[5].rm_so);
+
+      /* SHOULD CHECK CONSTRAINT FORMAT! */
+
+      /* Add the constraint */
+      addConstraint (PARAMC, a1, 0, dir1, op, a2, 0, dir2, FALSE);
+
+      /* Next, loop through any semicolon-separated disjuncts. */
+      start = line;
+      while ((start = start + match[0].rm_eo) < line + strlen (line)) {
+	/* Add the disjunction to the first constraint. */
+	if (regexec (buffer6, start, 6, &match[0], REG_NOTBOL) != REG_NOMATCH) {
+	  /* Matching parameter constraint line. */
+	  dir1 = getInteger (start + match[1].rm_so);
+	  a1 = getType (start + match[2].rm_so);
+	  op = getOperator (start + match[3].rm_so);
+	  dir2 = getInteger (start + match[4].rm_so);
+	  a2 = getType (start + match[5].rm_so);
+
+	  /* Add the constraint */
+	  addConstraint (PARAMC, a1, 0, dir1, op, a2, 0, dir2, TRUE);
+	} else
+	  break;
+      }
+      continue;
+    } else if (regexec (buffer7, line, 8, &match[0], 0) != REG_NOMATCH) {
+      /* Finally, look for cross-class constraints on
+       * parameters: (PCLASSCONSTRAINT2):
+       *   Px DD 1 < Px Dd 2 */
+      dir1 = getInteger (line + match[1].rm_so);
+      a1 = getType (line + match[2].rm_so);
+      c1 = getInteger (line + match[3].rm_so);
+      op = getOperator (line + match[4].rm_so);
+      dir2 = getInteger (line + match[5].rm_so);
+      a2 = getType (line + match[6].rm_so);
+      c2 = getInteger (line + match[7].rm_so);
+
+      /* SHOULD CHECK CONSTRAINT FORMAT! */
+
+      /* Add the constraint */
+      addConstraint (PARAMCLASSC, a1, c1, dir1, op, a2, c2, dir2, FALSE);
+
+      /* Next, loop through any semicolon-separated disjuncts. */
+      start = line;
+      while ((start = start + match[0].rm_eo) < line + strlen (line)) {
+	/* Add the disjunction to the first constraint. */
+	if (regexec (buffer6, start, 6, &match[0], REG_NOTBOL) != REG_NOMATCH) {
+	  /* Matching parameter constraint line. */
+	  dir1 = getInteger (start + match[1].rm_so);
+	  a1 = getType (start + match[2].rm_so);
+	  c1 = getInteger (start + match[3].rm_so);
+	  op = getOperator (start + match[4].rm_so);
+	  dir2 = getInteger (start + match[5].rm_so);
+	  a2 = getType (start + match[6].rm_so);
+	  c2 = getInteger (start + match[7].rm_so);
+
+	  /* Add the constraint */
+	  addConstraint (PARAMCLASSC, dir1, a1, c1, op, dir2, a2, c2, TRUE);
+	} else
+	  break;
+      }
+      continue;
+    } else if (regexec (buffer0, line, 1, &match[0], 0) != REG_NOMATCH) {
+      /* Look for value specifications (DIRECTIVE). 
+       *   xx <number or numbers>
+       * Find out what type of directive it is by looking it up in
+       * DIRECTIVES. */
+      dir1 = getType (line);
+
+      /* Next, loop through the semicolon-separated arguments. */
+      start = line + match[0].rm_eo;
+      while (TRUE) {
+	if (regexec (buffer2, start, 4, &(match[1]), REG_NOTBOL) !=
+	    REG_NOMATCH) {
+	  /* Matches three numbers. */
+	  addRange (modelRange, dir1,
+		    strtod (start + match[2].rm_so, NULL),
+		    strtod (start + match[3].rm_so, NULL),
+		    strtod (start + match[4].rm_so, NULL));
+	} else if (regexec (buffer1, start, 2, &(match[1]), REG_NOTBOL) !=
+		   REG_NOMATCH) {
+	  /* Matches one number. */
+	  if (dir1 == Th || dir1 == Tm || dir1 == Tf)
+	    addTheta (modelRange, dir1,
+		      strtod (start + match[2].rm_so, NULL));
+	  else if (dir1 == GF)
+	    addGeneFreq (modelRange, strtod (start + match[2].rm_so, NULL));
+	  else if (dir1 == AL)
+	    addAlpha (modelRange, strtod (start + match[2].rm_so, NULL));
+	  else if (dir1 == TL)
+	    addTraitLocus (modelRange, strtod (start + match[2].rm_so, NULL));
+	  else if (dir1 == TT)
+	    addTraitThreshold (modelRange,
+			       strtod (start + match[2].rm_so, NULL));
+	  else if (dir1 == LD)
+	    addDPrime (modelRange, strtod (start + match[2].rm_so, NULL));
+	  else if (dir1 == AF)
+	    addAlleleFreq (modelRange, strtod (start + match[2].rm_so, NULL));
+	  else
+	    /* All parsing is done only in pre-expansion mode,
+	     * hence class is always moot. Also, subtract base
+	     * value of DD from dir1 to get 0-offset value.*/
+	    addPenetrance (modelRange, dir1 - DD,
+			   strtod (start + match[2].rm_so, NULL));
+	} else {
+	  /* Doesn't match anything. This is a badly formatted
+	   * line which should be flagged. */
+	  KASSERT (FALSE,
+		   "Ill-formed line in configuration file: '%s'\n", line);
+	}
+
+	/* Update the start pointer and check for termination. */
+	start = start + match[1].rm_eo;
+	if (start >= line + strlen (line))
+	  break;
+      }
+      continue;
+    } else if (regexec (buffer5, line, 1, &match[0], 0) != REG_NOMATCH) {
+      /* Matching a parameter specification.
+       *   P[0-9] <number or numbers>
+       * Find out which parameter it is by parsing the parameter
+       * directive (the +1 ensures we skip over the leading P in,
+       * e.g., P1).  Remember, the parameter number read in will
+       * be 1-indexed, and you need to make it 0-indexed first. */
+      p1 = strtod (line + match[0].rm_so + 1, NULL) - 1;
+      /* Make sure that the parameter number is within the
+       * expected number of parameters for this distribution. */
+      KASSERT ((p1 < modelRange->npardim), "Illegal parameter P%d.\n",
+	       p1 + 1);
+
+      /* Next, loop through the semicolon-separated arguments. */
+      start = line + match[0].rm_eo;
+      while (TRUE) {
+	if (regexec (buffer2, start, 4, &(match[1]), REG_NOTBOL) !=
+	    REG_NOMATCH) {
+	  /* Matches three numbers. We'll fake out addRange by
+	   * giving it a negative type to distinguish it from
+	   * the other types of values we handle. So, for
+	   * example, parameter 2 would be -3. */
+	  addRange (modelRange, -(p1 + 1),
+		    strtod (start + match[2].rm_so, NULL),
+		    strtod (start + match[3].rm_so, NULL),
+		    strtod (start + match[4].rm_so, NULL));
+	} else if (regexec (buffer1, start, 2, &(match[1]), REG_NOTBOL) !=
+		   REG_NOMATCH) {
+	  /* Matches one number. */
+	  addParameter (modelRange, p1,
+			strtod (start + match[2].rm_so, NULL));
+	} else {
+	  /* Doesn't match anything. This is a badly formatted
+	   * line which should be flagged. */
+	  KASSERT (FALSE,
+		   "Ill-formed line in configuration file: '%s'\n", line);
+	}
+
+	/* Update the start pointer and check for termination. */
+	start = start + match[1].rm_eo;
+	if (start >= line + strlen (line))
+	  break;
+      }
+      continue;
+    } else
+      KASSERT (FALSE, "Ill-formed line in configuration file: '%s'\n", line);
+  }
 
   /* Done. Release the pattern spaces and free the buffers. */
   regfree (buffer0);
@@ -947,14 +856,12 @@ readConfigFile (char *file, ModelType * modelType,
    * options are implict by the configuration parameters given. The
    * only example that comes to mind is linkage disequilibrium, but
    * there may later be others. */
-  if (modelRange->dprime && modelOptions->equilibrium == LINKAGE_EQUILIBRIUM)
-    {
-      /* If dprime exists, we must have set it explicitly, and we must
-       * be doing LD. */
-      modelOptions->equilibrium = LINKAGE_DISEQUILIBRIUM;	/* Linkage disequilibrium */
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for linkage disequilibrium\n");
-    }
+  if (modelRange->dprime && modelOptions->equilibrium == LINKAGE_EQUILIBRIUM) {
+    /* If dprime exists, we must have set it explicitly, and we must
+     * be doing LD. */
+    modelOptions->equilibrium = LINKAGE_DISEQUILIBRIUM;	/* Linkage disequilibrium */
+    KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for linkage disequilibrium\n");
+  }
 
   /* Now check the integrity of the parameters you've read. Here is
    * where you check for things like, e.g., no parameters specified
@@ -1040,12 +947,11 @@ getType (char *line)
   char types[25] = DIRECTIVES;
   char *ptr = types;
 
-  while (ptr < types + strlen (types))
-    {
-      if (strncmp (ptr, line, 2) == 0)
-	break;
-      ptr += 2;
-    }
+  while (ptr < types + strlen (types)) {
+    if (strncmp (ptr, line, 2) == 0)
+      break;
+    ptr += 2;
+  }
   /* If no match is found, return ERROR. */
   if (ptr - types >= strlen (types))
     return (ERROR);
@@ -1064,12 +970,11 @@ getOperator (char *line)
   char types[13] = OPERATORS;
   char *ptr = types;
 
-  while (ptr < types + strlen (types))
-    {
-      if (strncmp (ptr, line, 2) == 0)
-	break;
-      ptr += 2;
-    }
+  while (ptr < types + strlen (types)) {
+    if (strncmp (ptr, line, 2) == 0)
+      break;
+    ptr += 2;
+  }
   /* If no match is found, return ERROR. */
   if (ptr - types >= strlen (types))
     return (ERROR);
@@ -1100,53 +1005,47 @@ addTheta (ModelRange * range, int type, double val)
   KASSERT ((val >= 0 && val <= 0.5), "Bad theta value %g; aborting.\n", val);
 
   /* Initialize the structure if first access. */
-  if (!range->theta)
-    {
-      range->ngender = 2;
-      range->theta = malloc (range->ngender * sizeof (double *));
-      range->theta[SEXML] = malloc (CHUNKSIZE * sizeof (double));
-      range->theta[SEXFM] = malloc (CHUNKSIZE * sizeof (double));
-      range->thetacnt = malloc (range->ngender * sizeof (int *));
-      thetamax = malloc (range->ngender * sizeof (int *));
-      range->thetacnt[SEXML] = thetamax[SEXML] = 0;
-      range->thetacnt[SEXFM] = thetamax[SEXFM] = 0;
-      if (type != Th)
-	{
-	  modelOptions.mapFlag = SS;
-	}
+  if (!range->theta) {
+    range->ngender = 2;
+    range->theta = malloc (range->ngender * sizeof (double *));
+    range->theta[SEXML] = malloc (CHUNKSIZE * sizeof (double));
+    range->theta[SEXFM] = malloc (CHUNKSIZE * sizeof (double));
+    range->thetacnt = malloc (range->ngender * sizeof (int *));
+    thetamax = malloc (range->ngender * sizeof (int *));
+    range->thetacnt[SEXML] = thetamax[SEXML] = 0;
+    range->thetacnt[SEXFM] = thetamax[SEXFM] = 0;
+    if (type != Th) {
+      modelOptions.mapFlag = SS;
     }
+  }
 
   /* Finally, add the thetas as specified. */
   /* Sex-specific thetas. Update one or both arrays separately. */
-  if (type == Th || type == Tf)
-    {
-      /* Enlarge array if necessary. */
-      if (range->thetacnt[SEXFM] == thetamax[SEXFM])
-	{
-	  range->theta[SEXFM] = realloc (range->theta[SEXFM],
-					 (thetamax[SEXFM] +
-					  CHUNKSIZE) * sizeof (double));
-	  thetamax[SEXFM] = thetamax[SEXFM] + CHUNKSIZE;
-	}
-      /* Add the element. */
-      range->theta[SEXFM][range->thetacnt[SEXFM]] = val;
-      range->thetacnt[SEXFM]++;
+  if (type == Th || type == Tf) {
+    /* Enlarge array if necessary. */
+    if (range->thetacnt[SEXFM] == thetamax[SEXFM]) {
+      range->theta[SEXFM] = realloc (range->theta[SEXFM],
+				     (thetamax[SEXFM] +
+				      CHUNKSIZE) * sizeof (double));
+      thetamax[SEXFM] = thetamax[SEXFM] + CHUNKSIZE;
     }
+    /* Add the element. */
+    range->theta[SEXFM][range->thetacnt[SEXFM]] = val;
+    range->thetacnt[SEXFM]++;
+  }
   /* Next, update the other array. */
-  if (type == Th || type == Tm)
-    {
-      /* Enlarge array if necessary. */
-      if (range->thetacnt[SEXML] == thetamax[SEXML])
-	{
-	  range->theta[SEXML] = realloc (range->theta[SEXML],
-					 (thetamax[SEXML] +
-					  CHUNKSIZE) * sizeof (double));
-	  thetamax[SEXML] = thetamax[SEXML] + CHUNKSIZE;
-	}
-      /* Add the element. */
-      range->theta[SEXML][range->thetacnt[SEXML]] = val;
-      range->thetacnt[SEXML]++;
+  if (type == Th || type == Tm) {
+    /* Enlarge array if necessary. */
+    if (range->thetacnt[SEXML] == thetamax[SEXML]) {
+      range->theta[SEXML] = realloc (range->theta[SEXML],
+				     (thetamax[SEXML] +
+				      CHUNKSIZE) * sizeof (double));
+      thetamax[SEXML] = thetamax[SEXML] + CHUNKSIZE;
     }
+    /* Add the element. */
+    range->theta[SEXML][range->thetacnt[SEXML]] = val;
+    range->thetacnt[SEXML]++;
+  }
 }
 
 /**********************************************************************
@@ -1175,43 +1074,40 @@ addPenetrance (ModelRange * range, int type, double val)
   /* KASSERT ((val >= 0 && val <= 1.0), "Bad penetrance value %g; aborting.\n", val); */
 
   /* Initialize the structure if first access. */
-  if (!range->penet)
-    {
-      /* Initialize: remember, if you are a pre-expansion penet[][][]
-       * array, the first dimension (liability class) will always have
-       * a dimension of size 1. */
-      range->penet = malloc (sizeof (double **));
-      i = NPENET (range->nalleles);
-      range->penet[0] = malloc (i * sizeof (double *));
-      for (j = 0; j < i; j++)
-	range->penet[0][j] = malloc (CHUNKSIZE * sizeof (double));
+  if (!range->penet) {
+    /* Initialize: remember, if you are a pre-expansion penet[][][]
+     * array, the first dimension (liability class) will always have
+     * a dimension of size 1. */
+    range->penet = malloc (sizeof (double **));
+    i = NPENET (range->nalleles);
+    range->penet[0] = malloc (i * sizeof (double *));
+    for (j = 0; j < i; j++)
+      range->penet[0][j] = malloc (CHUNKSIZE * sizeof (double));
 
-      /* Remember, liability class is not a true "independent" index
-       * in the sense that we are storing combinations across
-       * liability classes; hence we only need NPENET() individual
-       * values for the counters (indeed, we only need one of each,
-       * but that would complicate things too much I suspect). */
-      penetcnt = malloc (i * sizeof (int));
-      penetmax = malloc (i * sizeof (int));
-      for (j = 0; j < i; j++)
-	{
-	  penetcnt[j] = 0;
-	  penetmax[j] = CHUNKSIZE;
-	}
+    /* Remember, liability class is not a true "independent" index
+     * in the sense that we are storing combinations across
+     * liability classes; hence we only need NPENET() individual
+     * values for the counters (indeed, we only need one of each,
+     * but that would complicate things too much I suspect). */
+    penetcnt = malloc (i * sizeof (int));
+    penetmax = malloc (i * sizeof (int));
+    for (j = 0; j < i; j++) {
+      penetcnt[j] = 0;
+      penetmax[j] = CHUNKSIZE;
     }
+  }
 
   /* Next, add the penetrance to the appropriate location in the
    * penet[][][] array, which may entail allocating more space. Recall
    * type is an integer, where DD=00=0; Dd=01=1; and dd=10=2. We
    * get the type by subtracting DD, the "base type" from the
    * integer count at invocation. */
-  if (penetcnt[type] == penetmax[type])
-    {
-      range->penet[0][type] = realloc (range->penet[0][type],
-				       (penetmax[type] +
-					CHUNKSIZE) * sizeof (double));
-      penetmax[type] = penetmax[type] + CHUNKSIZE;
-    }
+  if (penetcnt[type] == penetmax[type]) {
+    range->penet[0][type] = realloc (range->penet[0][type],
+				     (penetmax[type] +
+				      CHUNKSIZE) * sizeof (double));
+    penetmax[type] = penetmax[type] + CHUNKSIZE;
+  }
   /* Add the element. */
   range->penet[0][type][penetcnt[type]] = val;
   penetcnt[type]++;
@@ -1233,12 +1129,11 @@ addGeneFreq (ModelRange * range, double val)
   if (!range->gfreq)
     range->ngfreq = maxgfreq = 0;
   /* Enlarge array if necessary. */
-  if (range->ngfreq == maxgfreq)
-    {
-      range->gfreq = realloc (range->gfreq,
-			      (maxgfreq + CHUNKSIZE) * sizeof (double));
-      maxgfreq = maxgfreq + CHUNKSIZE;
-    }
+  if (range->ngfreq == maxgfreq) {
+    range->gfreq = realloc (range->gfreq,
+			    (maxgfreq + CHUNKSIZE) * sizeof (double));
+    maxgfreq = maxgfreq + CHUNKSIZE;
+  }
   /* Add the element. */
   range->gfreq[range->ngfreq] = val;
   range->ngfreq++;
@@ -1259,12 +1154,11 @@ addAlpha (ModelRange * range, double val)
   if (!range->alpha)
     range->nalpha = maxalpha = 0;
   /* Enlarge array if necessary. */
-  if (range->nalpha == maxalpha)
-    {
-      range->alpha = realloc (range->alpha,
-			      (maxalpha + CHUNKSIZE) * sizeof (double));
-      maxalpha = maxalpha + CHUNKSIZE;
-    }
+  if (range->nalpha == maxalpha) {
+    range->alpha = realloc (range->alpha,
+			    (maxalpha + CHUNKSIZE) * sizeof (double));
+    maxalpha = maxalpha + CHUNKSIZE;
+  }
   /* Add the element. */
   range->alpha[range->nalpha] = val;
   range->nalpha++;
@@ -1284,6 +1178,7 @@ void
 addTraitLocus (ModelRange * range, double val)
 {
   int i = 0, j;
+
   /* Validate value. But trait loci may be negative! So no reasonable
    * validation is really possible. */
   /* KASSERT ((val >=0), "Bad trait locus %g; aborting.\n", val); */
@@ -1292,12 +1187,11 @@ addTraitLocus (ModelRange * range, double val)
   if (!range->tloc)
     range->ntloc = maxtloc = 0;
   /* Enlarge array if necessary. */
-  if (range->ntloc == maxtloc)
-    {
-      range->tloc = realloc (range->tloc,
-			     (maxtloc + CHUNKSIZE) * sizeof (double));
-      maxtloc = maxtloc + CHUNKSIZE;
-    }
+  if (range->ntloc == maxtloc) {
+    range->tloc = realloc (range->tloc,
+			   (maxtloc + CHUNKSIZE) * sizeof (double));
+    maxtloc = maxtloc + CHUNKSIZE;
+  }
 
   /* Add the element. First, cue up to where the new element belongs. */
   while (i < range->ntloc && range->tloc[i] < val)
@@ -1339,25 +1233,22 @@ addTraitThreshold (ModelRange * range, double val)
   /* KASSERT ((val >=0), "Bad trait threshold %g; aborting.\n", val); */
 
   /* Initialize the structure if first access. */
-  if (!range->tthresh)
-    {
-      /* Initialize: remember, if you are a pre-expansion tthresh[][]
-       * array, the first dimension (liability class) will always have
-       * a dimension of size 1. */
-      range->tthresh = malloc (sizeof (double *));
-      range->tthresh[0] = malloc (CHUNKSIZE * sizeof (double));
-      maxtthresh = CHUNKSIZE;
-      range->ntthresh = 0;
-    }
+  if (!range->tthresh) {
+    /* Initialize: remember, if you are a pre-expansion tthresh[][]
+     * array, the first dimension (liability class) will always have
+     * a dimension of size 1. */
+    range->tthresh = malloc (sizeof (double *));
+    range->tthresh[0] = malloc (CHUNKSIZE * sizeof (double));
+    maxtthresh = CHUNKSIZE;
+    range->ntthresh = 0;
+  }
 
   /* Enlarge array if necessary. */
-  if (range->ntthresh == maxtthresh)
-    {
-      range->tthresh[0] = realloc (range->tthresh[0],
-				   (maxtthresh +
-				    CHUNKSIZE) * sizeof (double));
-      maxtthresh = maxtthresh + CHUNKSIZE;
-    }
+  if (range->ntthresh == maxtthresh) {
+    range->tthresh[0] = realloc (range->tthresh[0],
+				 (maxtthresh + CHUNKSIZE) * sizeof (double));
+    maxtthresh = maxtthresh + CHUNKSIZE;
+  }
   /* Add the element. */
   range->tthresh[0][range->ntthresh] = val;
   range->ntthresh++;
@@ -1381,12 +1272,11 @@ addDPrime (ModelRange * range, double val)
   if (!range->dprime)
     range->ndprime = maxdprime = 0;
   /* Enlarge array if necessary. */
-  if (range->ndprime == maxdprime)
-    {
-      range->dprime = realloc (range->dprime,
-			       (maxdprime + CHUNKSIZE) * sizeof (double));
-      maxdprime = maxdprime + CHUNKSIZE;
-    }
+  if (range->ndprime == maxdprime) {
+    range->dprime = realloc (range->dprime,
+			     (maxdprime + CHUNKSIZE) * sizeof (double));
+    maxdprime = maxdprime + CHUNKSIZE;
+  }
   /* Add the element. */
   range->dprime[range->ndprime] = val;
   range->ndprime++;
@@ -1409,12 +1299,11 @@ addAlleleFreq (ModelRange * range, double val)
   if (!range->afreq)
     range->nafreq = maxafreq = 0;
   /* Enlarge array if necessary. */
-  if (range->nafreq == maxafreq)
-    {
-      range->afreq = realloc (range->afreq,
-			      (maxafreq + CHUNKSIZE) * sizeof (double));
-      maxafreq = maxafreq + CHUNKSIZE;
-    }
+  if (range->nafreq == maxafreq) {
+    range->afreq = realloc (range->afreq,
+			    (maxafreq + CHUNKSIZE) * sizeof (double));
+    maxafreq = maxafreq + CHUNKSIZE;
+  }
   /* Add the element. */
   range->afreq[range->nafreq] = val;
   range->nafreq++;
@@ -1449,43 +1338,40 @@ addParameter (ModelRange * range, int dim, double val)
 
   /* First, if this is the first access to the structure, you must
    * initialize it. */
-  if (!range->param)
-    {
-      /* Initialize: remember, if you are a pre-expansion
-       * param[][][][] array, the first dimension (liability class)
-       * will always have a dimension of size 1, and the second
-       * dimension (allele) will also always have a dimension of size
-       * 1, since we "share" values, at least before applying
-       * constraints, across all allele combinations. */
-      range->param = malloc (sizeof (double ***));
-      range->param[0] = malloc (sizeof (double **));
-      range->param[0][0] = malloc (range->npardim * sizeof (double *));
-      for (i = 0; i < range->npardim; i++)
-	range->param[0][0][i] = malloc (CHUNKSIZE * sizeof (double));
+  if (!range->param) {
+    /* Initialize: remember, if you are a pre-expansion
+     * param[][][][] array, the first dimension (liability class)
+     * will always have a dimension of size 1, and the second
+     * dimension (allele) will also always have a dimension of size
+     * 1, since we "share" values, at least before applying
+     * constraints, across all allele combinations. */
+    range->param = malloc (sizeof (double ***));
+    range->param[0] = malloc (sizeof (double **));
+    range->param[0][0] = malloc (range->npardim * sizeof (double *));
+    for (i = 0; i < range->npardim; i++)
+      range->param[0][0][i] = malloc (CHUNKSIZE * sizeof (double));
 
-      /* The only "real" dimension of param[][][][] reflected in
-       * paramcnt and parammax is the dim dimension, since that's the
-       * only one that will vary at input time. Recall that all
-       * parameters are shared across all alleles and liability
-       * classes.  */
-      paramcnt = malloc (range->npardim * sizeof (int));
-      parammax = malloc (range->npardim * sizeof (int));
-      for (i = 0; i < range->npardim; i++)
-	{
-	  paramcnt[i] = 0;
-	  parammax[i] = CHUNKSIZE;
-	}
+    /* The only "real" dimension of param[][][][] reflected in
+     * paramcnt and parammax is the dim dimension, since that's the
+     * only one that will vary at input time. Recall that all
+     * parameters are shared across all alleles and liability
+     * classes.  */
+    paramcnt = malloc (range->npardim * sizeof (int));
+    parammax = malloc (range->npardim * sizeof (int));
+    for (i = 0; i < range->npardim; i++) {
+      paramcnt[i] = 0;
+      parammax[i] = CHUNKSIZE;
     }
+  }
 
   /* Next, add the parameter to the appropriate location in the
    * param[][][][] array, which may entail allocating more space. */
-  if (paramcnt[dim] == parammax[dim])
-    {
-      range->param[0][0][dim] = realloc (range->param[0][0][dim],
-					 (parammax[dim] +
-					  CHUNKSIZE) * sizeof (double));
-      parammax[dim] = parammax[dim] + CHUNKSIZE;
-    }
+  if (paramcnt[dim] == parammax[dim]) {
+    range->param[0][0][dim] = realloc (range->param[0][0][dim],
+				       (parammax[dim] +
+					CHUNKSIZE) * sizeof (double));
+    parammax[dim] = parammax[dim] + CHUNKSIZE;
+  }
   /* Add the element. */
   range->param[0][0][dim][paramcnt[dim]] = val;
   paramcnt[dim]++;
@@ -1511,37 +1397,36 @@ addRange (ModelRange * range, int type, double lo, double hi, double incr)
    * like 0, 4, 1 stopping because you get to 4.00001; we'll use
    * ERROR_MARGIN from locus.h as our safety margin, and clean up
    * values that go astray before adding them. */
-  while (val <= hi + ERROR_MARGIN)
-    {
-      /* Clean things up before adding the value. */
-      val = MIN (hi, val);
+  while (val <= hi + ERROR_MARGIN) {
+    /* Clean things up before adding the value. */
+    val = MIN (hi, val);
 
-      /* Add value as needed. */
-      if (type == Th || type == Tm || type == Tf)
-	addTheta (range, type, val);
-      else if (type == GF)
-	addGeneFreq (range, val);
-      else if (type < 0)
-	addParameter (range, -type - 1, val);
-      else if (type == AL)
-	addAlpha (range, val);
-      else if (type == TL)
-	addTraitLocus (range, val);
-      else if (type == TT)
-	addTraitThreshold (range, val);
-      else if (type == LD)
-	addDPrime (range, val);
-      else if (type == AF)
-	addAlleleFreq (range, val);
-      else
-	/* addRange() is only used in pre-expansion mode, hence class
-	 * is always ERROR. Also, subtract base value of DD from type
-	 * to get 0-offset value.*/
-	addPenetrance (range, type - DD, val);
+    /* Add value as needed. */
+    if (type == Th || type == Tm || type == Tf)
+      addTheta (range, type, val);
+    else if (type == GF)
+      addGeneFreq (range, val);
+    else if (type < 0)
+      addParameter (range, -type - 1, val);
+    else if (type == AL)
+      addAlpha (range, val);
+    else if (type == TL)
+      addTraitLocus (range, val);
+    else if (type == TT)
+      addTraitThreshold (range, val);
+    else if (type == LD)
+      addDPrime (range, val);
+    else if (type == AF)
+      addAlleleFreq (range, val);
+    else
+      /* addRange() is only used in pre-expansion mode, hence class
+       * is always ERROR. Also, subtract base value of DD from type
+       * to get 0-offset value.*/
+      addPenetrance (range, type - DD, val);
 
-      /* Go on to next value. */
-      val = val + incr;
-    }
+    /* Go on to next value. */
+    val = val + incr;
+  }
 }
 
 /**********************************************************************
@@ -1567,14 +1452,13 @@ addConstraint (int type, int a1, int c1, int p1,
 	   types[a2 * 2 + 1], (disjunct == TRUE) ? "*" : "");
 
   /* Allocate more space if necessary. */
-  if (constmax[type] == constcnt[type])
-    {
-      constraints[type] = (Constraint *) realloc (constraints[type],
-						  (constmax[type] +
-						   CHUNKSIZE) *
-						  sizeof (Constraint));
-      constmax[type] = constmax[type] + CHUNKSIZE;
-    }
+  if (constmax[type] == constcnt[type]) {
+    constraints[type] = (Constraint *) realloc (constraints[type],
+						(constmax[type] +
+						 CHUNKSIZE) *
+						sizeof (Constraint));
+    constmax[type] = constmax[type] + CHUNKSIZE;
+  }
 
   /* Mark previous constraint as having a disjunct, if applicable. */
   if (disjunct && constcnt[type] > 0)
@@ -1585,16 +1469,14 @@ addConstraint (int type, int a1, int c1, int p1,
   constraints[type][constcnt[type]].a2 = a2;
   constraints[type][constcnt[type]].alt = FALSE;
 
-  if (type == CLASSC || type == PARAMCLASSC)
-    {
-      constraints[type][constcnt[type]].c1 = c1;
-      constraints[type][constcnt[type]].c2 = c2;
-    }
-  if (type == PARAMC || type == PARAMCLASSC)
-    {
-      constraints[type][constcnt[type]].p1 = p1;
-      constraints[type][constcnt[type]].p2 = p2;
-    }
+  if (type == CLASSC || type == PARAMCLASSC) {
+    constraints[type][constcnt[type]].c1 = c1;
+    constraints[type][constcnt[type]].c2 = c2;
+  }
+  if (type == PARAMC || type == PARAMCLASSC) {
+    constraints[type][constcnt[type]].p1 = p1;
+    constraints[type][constcnt[type]].p2 = p2;
+  }
   /* Increment constraint count. */
   constcnt[type]++;
 }
@@ -1611,56 +1493,51 @@ int
 checkThetas (ModelRange * range, int i)
 {
   int j = 0;
+
 #if FALSE
   char types[15] = DIRECTIVES;
 #endif
 
   /* Scan through each constraint. */
-  while (j < constcnt[SIMPLE])
-    {
-      /* Relies on Tm being the lowest numbered penetrance. */
-      if ((constraints[SIMPLE][j].a1 == Tm && constraints[SIMPLE][j].a2 == Tf)
-	  || (constraints[SIMPLE][j].a1 == Tf
-	      && constraints[SIMPLE][j].a2 == Tm))
-	{
-	  if ((constraints[SIMPLE][j].op == EQ &&
-	       range->theta[constraints[SIMPLE][j].a1 - Tm][i] ==
-	       range->theta[constraints[SIMPLE][j].a2 - Tm][i]) ||
-	      (constraints[SIMPLE][j].op == NE &&
-	       range->theta[constraints[SIMPLE][j].a1 - Tm][i] !=
-	       range->theta[constraints[SIMPLE][j].a2 - Tm][i]) ||
-	      (constraints[SIMPLE][j].op == GT &&
-	       range->theta[constraints[SIMPLE][j].a1 - Tm][i] >
-	       range->theta[constraints[SIMPLE][j].a2 - Tm][i]) ||
-	      (constraints[SIMPLE][j].op == GE &&
-	       range->theta[constraints[SIMPLE][j].a1 - Tm][i] >=
-	       range->theta[constraints[SIMPLE][j].a2 - Tm][i]))
-	    {
-	      /* Satisfied; skip other disjuncts. */
-	      while (constraints[SIMPLE][j].alt == TRUE)
-		j++;
-	    }
-	  else if (constraints[SIMPLE][j].alt == FALSE)
-	    {
+  while (j < constcnt[SIMPLE]) {
+    /* Relies on Tm being the lowest numbered penetrance. */
+    if ((constraints[SIMPLE][j].a1 == Tm && constraints[SIMPLE][j].a2 == Tf)
+	|| (constraints[SIMPLE][j].a1 == Tf
+	    && constraints[SIMPLE][j].a2 == Tm)) {
+      if ((constraints[SIMPLE][j].op == EQ &&
+	   range->theta[constraints[SIMPLE][j].a1 - Tm][i] ==
+	   range->theta[constraints[SIMPLE][j].a2 - Tm][i]) ||
+	  (constraints[SIMPLE][j].op == NE &&
+	   range->theta[constraints[SIMPLE][j].a1 - Tm][i] !=
+	   range->theta[constraints[SIMPLE][j].a2 - Tm][i]) ||
+	  (constraints[SIMPLE][j].op == GT &&
+	   range->theta[constraints[SIMPLE][j].a1 - Tm][i] >
+	   range->theta[constraints[SIMPLE][j].a2 - Tm][i]) ||
+	  (constraints[SIMPLE][j].op == GE &&
+	   range->theta[constraints[SIMPLE][j].a1 - Tm][i] >=
+	   range->theta[constraints[SIMPLE][j].a2 - Tm][i])) {
+	/* Satisfied; skip other disjuncts. */
+	while (constraints[SIMPLE][j].alt == TRUE)
+	  j++;
+      } else if (constraints[SIMPLE][j].alt == FALSE) {
 #if FALSE
-	      fprintf (stderr, "%c%c %s %c%c %s => %g %g %g\n",
-		       types[(constraints[SIMPLE][j].a1) * 2],
-		       types[(constraints[SIMPLE][j].a1) * 2 + 1],
-		       ((constraints[SIMPLE][j].op ==
-			 EQ) ? "==" : (constraints[SIMPLE][j].op ==
-				       NE) ? "!=" : (constraints[SIMPLE][j].
-						     op == GE) ? ">=" : ">"),
-		       types[(constraints[SIMPLE][j].a2) * 2],
-		       types[(constraints[SIMPLE][j].a2) * 2 + 1],
-		       (constraints[SIMPLE][j].alt == TRUE) ? "*" : "",
-		       range->penet[0][i], range->penet[1][i],
-		       range->penet[2][i]);
+	fprintf (stderr, "%c%c %s %c%c %s => %g %g %g\n",
+		 types[(constraints[SIMPLE][j].a1) * 2],
+		 types[(constraints[SIMPLE][j].a1) * 2 + 1],
+		 ((constraints[SIMPLE][j].op ==
+		   EQ) ? "==" : (constraints[SIMPLE][j].op ==
+				 NE) ? "!=" : (constraints[SIMPLE][j].
+					       op == GE) ? ">=" : ">"),
+		 types[(constraints[SIMPLE][j].a2) * 2],
+		 types[(constraints[SIMPLE][j].a2) * 2 + 1],
+		 (constraints[SIMPLE][j].alt == TRUE) ? "*" : "",
+		 range->penet[0][i], range->penet[1][i], range->penet[2][i]);
 #endif
-	      return (FALSE);
-	    }
-	}
-      j++;
+	return (FALSE);
+      }
     }
+    j++;
+  }
   return (TRUE);
 }
 
@@ -1677,61 +1554,55 @@ int
 checkPenets (ModelRange * range, int i)
 {
   int j = 0;
+
 #if FALSE
   char types[15] = DIRECTIVES;
 #endif
 
   /* Scan through each constraint. */
-  while (j < constcnt[SIMPLE])
-    {
-      if (constraints[SIMPLE][j].a1 == TT || constraints[SIMPLE][j].a2 == TT)
-	{
-	  /* Skip threshold constraints; they are irrelevant for penetrances. */
-	  j++;
-	  continue;
-	}
-      else if (constraints[SIMPLE][j].a1 >= DD
-	       && constraints[SIMPLE][j].a2 >= DD)
-	{
-	  /* Relies on DD being the lowest numbered penetrance. */
-	  if ((constraints[SIMPLE][j].op == EQ &&
-	       range->penet[0][constraints[SIMPLE][j].a1 - DD][i] ==
-	       range->penet[0][constraints[SIMPLE][j].a2 - DD][i]) ||
-	      (constraints[SIMPLE][j].op == NE &&
-	       range->penet[0][constraints[SIMPLE][j].a1 - DD][i] !=
-	       range->penet[0][constraints[SIMPLE][j].a2 - DD][i]) ||
-	      (constraints[SIMPLE][j].op == GT &&
-	       range->penet[0][constraints[SIMPLE][j].a1 - DD][i] >
-	       range->penet[0][constraints[SIMPLE][j].a2 - DD][i]) ||
-	      (constraints[SIMPLE][j].op == GE &&
-	       range->penet[0][constraints[SIMPLE][j].a1 - DD][i] >=
-	       range->penet[0][constraints[SIMPLE][j].a2 - DD][i]))
-	    {
-	      /* Satisfied; skip other disjuncts. */
-	      while (constraints[SIMPLE][j].alt == TRUE)
-		j++;
-	    }
-	  else if (constraints[SIMPLE][j].alt == FALSE)
-	    {
-#if FALSE
-	      fprintf (stderr, "%c%c %s %c%c %s => %g %g %g\n",
-		       types[(constraints[SIMPLE][j].a1) * 2],
-		       types[(constraints[SIMPLE][j].a1) * 2 + 1],
-		       ((constraints[SIMPLE][j].op ==
-			 EQ) ? "==" : (constraints[SIMPLE][j].op ==
-				       NE) ? "!=" : (constraints[SIMPLE][j].
-						     op == GE) ? ">=" : ">"),
-		       types[(constraints[SIMPLE][j].a2) * 2],
-		       types[(constraints[SIMPLE][j].a2) * 2 + 1],
-		       (constraints[SIMPLE][j].alt == TRUE) ? "*" : "",
-		       range->penet[0][0][i], range->penet[0][1][i],
-		       range->penet[0][2][i]);
-#endif
-	      return (FALSE);
-	    }
-	}
+  while (j < constcnt[SIMPLE]) {
+    if (constraints[SIMPLE][j].a1 == TT || constraints[SIMPLE][j].a2 == TT) {
+      /* Skip threshold constraints; they are irrelevant for penetrances. */
       j++;
+      continue;
+    } else if (constraints[SIMPLE][j].a1 >= DD
+	       && constraints[SIMPLE][j].a2 >= DD) {
+      /* Relies on DD being the lowest numbered penetrance. */
+      if ((constraints[SIMPLE][j].op == EQ &&
+	   range->penet[0][constraints[SIMPLE][j].a1 - DD][i] ==
+	   range->penet[0][constraints[SIMPLE][j].a2 - DD][i]) ||
+	  (constraints[SIMPLE][j].op == NE &&
+	   range->penet[0][constraints[SIMPLE][j].a1 - DD][i] !=
+	   range->penet[0][constraints[SIMPLE][j].a2 - DD][i]) ||
+	  (constraints[SIMPLE][j].op == GT &&
+	   range->penet[0][constraints[SIMPLE][j].a1 - DD][i] >
+	   range->penet[0][constraints[SIMPLE][j].a2 - DD][i]) ||
+	  (constraints[SIMPLE][j].op == GE &&
+	   range->penet[0][constraints[SIMPLE][j].a1 - DD][i] >=
+	   range->penet[0][constraints[SIMPLE][j].a2 - DD][i])) {
+	/* Satisfied; skip other disjuncts. */
+	while (constraints[SIMPLE][j].alt == TRUE)
+	  j++;
+      } else if (constraints[SIMPLE][j].alt == FALSE) {
+#if FALSE
+	fprintf (stderr, "%c%c %s %c%c %s => %g %g %g\n",
+		 types[(constraints[SIMPLE][j].a1) * 2],
+		 types[(constraints[SIMPLE][j].a1) * 2 + 1],
+		 ((constraints[SIMPLE][j].op ==
+		   EQ) ? "==" : (constraints[SIMPLE][j].op ==
+				 NE) ? "!=" : (constraints[SIMPLE][j].
+					       op == GE) ? ">=" : ">"),
+		 types[(constraints[SIMPLE][j].a2) * 2],
+		 types[(constraints[SIMPLE][j].a2) * 2 + 1],
+		 (constraints[SIMPLE][j].alt == TRUE) ? "*" : "",
+		 range->penet[0][0][i], range->penet[0][1][i],
+		 range->penet[0][2][i]);
+#endif
+	return (FALSE);
+      }
     }
+    j++;
+  }
   return (TRUE);
 }
 
@@ -1754,6 +1625,7 @@ int
 checkClassPenets (ModelRange * range, int i)
 {
   int j = 0;
+
 #if FALSE
   char types[15] = DIRECTIVES;
 #endif
@@ -1761,15 +1633,12 @@ checkClassPenets (ModelRange * range, int i)
   /* Scan through each constraint: inter-class constraints are on
    * penetrances or trait thresholds, not, e.g., gene frequencies or
    * thetas. */
-  while (j < constcnt[CLASSC])
-    {
-      if (constraints[CLASSC][j].a1 == TT || constraints[CLASSC][j].a2 == TT)
-	{
-	  /* Skip threshold constraints; they are irrelevant for penetrances. */
-	  j++;
-	  continue;
-	}
-      else if ((constraints[CLASSC][j].op == EQ &&
+  while (j < constcnt[CLASSC]) {
+    if (constraints[CLASSC][j].a1 == TT || constraints[CLASSC][j].a2 == TT) {
+      /* Skip threshold constraints; they are irrelevant for penetrances. */
+      j++;
+      continue;
+    } else if ((constraints[CLASSC][j].op == EQ &&
 		range->penet[constraints[CLASSC][j].c1 -
 			     1][constraints[CLASSC][j].a1 - DD][i] ==
 		range->penet[constraints[CLASSC][j].c2 -
@@ -1788,42 +1657,39 @@ checkClassPenets (ModelRange * range, int i)
 		   && range->penet[constraints[CLASSC][j].c1 -
 				   1][constraints[CLASSC][j].a1 - DD][i] >=
 		   range->penet[constraints[CLASSC][j].c2 -
-				1][constraints[CLASSC][j].a2 - DD][i]))
-	{
-	  /* Satisfied; skip other disjuncts. */
-	  while (constraints[CLASSC][j].alt == TRUE)
-	    j++;
-	}
-      else if (constraints[CLASSC][j].alt == FALSE)
-	{
+				1][constraints[CLASSC][j].a2 - DD][i])) {
+      /* Satisfied; skip other disjuncts. */
+      while (constraints[CLASSC][j].alt == TRUE)
+	j++;
+    } else if (constraints[CLASSC][j].alt == FALSE) {
 #if FALSE
-	  fprintf (stderr, "!%c%c %d %s %c%c %d %s => %g %s %g\n",
-		   types[(constraints[CLASSC][j].a1) * 2],
-		   types[(constraints[CLASSC][j].a1) * 2 + 1],
-		   constraints[CLASSC][i].c1,
-		   ((constraints[CLASSC][j].op ==
-		     EQ) ? "==" : (constraints[CLASSC][j].op ==
-				   NE) ? "!=" : (constraints[CLASSC][j].op ==
-						 GE) ? ">=" : ">"),
-		   types[(constraints[CLASSC][j].a2) * 2],
-		   types[(constraints[CLASSC][j].a2) * 2 + 1],
-		   constraints[CLASSC][i].c2,
-		   (constraints[CLASSC][j].alt == TRUE) ? "*" : "",
-		   (range->
-		    penet[constraints[CLASSC][j].c1 -
-			  1][constraints[CLASSC][j].a1 - DD][i]),
-		   ((constraints[CLASSC][j].op ==
-		     EQ) ? "==" : (constraints[CLASSC][j].op ==
-				   NE) ? "!=" : (constraints[CLASSC][j].op ==
-						 GE) ? ">=" : ">"),
-		   (range->
-		    penet[constraints[CLASSC][j].c2 -
-			  1][constraints[CLASSC][j].a2 - DD][i]));
+      fprintf (stderr, "!%c%c %d %s %c%c %d %s => %g %s %g\n",
+	       types[(constraints[CLASSC][j].a1) * 2],
+	       types[(constraints[CLASSC][j].a1) * 2 + 1],
+	       constraints[CLASSC][i].c1,
+	       ((constraints[CLASSC][j].op ==
+		 EQ) ? "==" : (constraints[CLASSC][j].op ==
+			       NE) ? "!=" : (constraints[CLASSC][j].op ==
+					     GE) ? ">=" : ">"),
+	       types[(constraints[CLASSC][j].a2) * 2],
+	       types[(constraints[CLASSC][j].a2) * 2 + 1],
+	       constraints[CLASSC][i].c2,
+	       (constraints[CLASSC][j].alt == TRUE) ? "*" : "",
+	       (range->
+		penet[constraints[CLASSC][j].c1 -
+		      1][constraints[CLASSC][j].a1 - DD][i]),
+	       ((constraints[CLASSC][j].op ==
+		 EQ) ? "==" : (constraints[CLASSC][j].op ==
+			       NE) ? "!=" : (constraints[CLASSC][j].op ==
+					     GE) ? ">=" : ">"),
+	       (range->
+		penet[constraints[CLASSC][j].c2 -
+		      1][constraints[CLASSC][j].a2 - DD][i]));
 #endif
-	  return (FALSE);
-	}
-      j++;
+      return (FALSE);
     }
+    j++;
+  }
   return (TRUE);
 }
 
@@ -1840,68 +1706,64 @@ int
 checkParams (ModelRange * range, int i)
 {
   int j = 0;
+
 #if FALSE
   char types[15] = DIRECTIVES;
 #endif
 
   /* Scan through each constraint. */
-  while (j < constcnt[PARAMC])
-    {
+  while (j < constcnt[PARAMC]) {
 #if FALSE
-      fprintf (stderr, "%d: P%d %c%c %s P%d %c%c %s => ", i,
-	       constraints[PARAMC][j].a1,
-	       types[(constraints[PARAMC][j].a1) * 2],
-	       types[(constraints[PARAMC][j].a1) * 2 + 1],
-	       ((constraints[PARAMC][j].op ==
-		 EQ) ? "==" : (constraints[PARAMC][j].op ==
-			       NE) ? "!=" : (constraints[PARAMC][j].op ==
-					     GE) ? ">=" : ">"),
-	       constraints[PARAMC][j].a2,
-	       types[(constraints[PARAMC][j].a2) * 2],
-	       types[(constraints[PARAMC][j].a2) * 2 + 1],
-	       (constraints[PARAMC][j].alt == TRUE) ? "*" : "");
+    fprintf (stderr, "%d: P%d %c%c %s P%d %c%c %s => ", i,
+	     constraints[PARAMC][j].a1,
+	     types[(constraints[PARAMC][j].a1) * 2],
+	     types[(constraints[PARAMC][j].a1) * 2 + 1],
+	     ((constraints[PARAMC][j].op ==
+	       EQ) ? "==" : (constraints[PARAMC][j].op ==
+			     NE) ? "!=" : (constraints[PARAMC][j].op ==
+					   GE) ? ">=" : ">"),
+	     constraints[PARAMC][j].a2,
+	     types[(constraints[PARAMC][j].a2) * 2],
+	     types[(constraints[PARAMC][j].a2) * 2 + 1],
+	     (constraints[PARAMC][j].alt == TRUE) ? "*" : "");
 #endif
-      /* Relies on DD being the lowest numbered penetrance. */
-      if (constraints[PARAMC][j].a1 >= DD && constraints[PARAMC][j].a2 >= DD)
-	{
-	  if ((constraints[PARAMC][j].op == EQ &&
-	       range->param[0][constraints[PARAMC][j].a1 -
-			       DD][constraints[PARAMC][j].p1 - 1][i] ==
-	       range->param[0][constraints[PARAMC][j].a2 -
-			       DD][constraints[PARAMC][j].p2 - 1][i])
-	      || (constraints[PARAMC][j].op == NE
-		  && range->param[0][constraints[PARAMC][j].a1 -
-				     DD][constraints[PARAMC][j].p1 - 1][i] !=
-		  range->param[0][constraints[PARAMC][j].a2 -
-				  DD][constraints[PARAMC][j].p2 - 1][i])
-	      || (constraints[PARAMC][j].op == GT
-		  && range->param[0][constraints[PARAMC][j].a1 -
-				     DD][constraints[PARAMC][j].p1 - 1][i] >
-		  range->param[0][constraints[PARAMC][j].a2 -
-				  DD][constraints[PARAMC][j].p2 - 1][i])
-	      || (constraints[PARAMC][j].op == GE
-		  && range->param[0][constraints[PARAMC][j].a1 -
-				     DD][constraints[PARAMC][j].p1 - 1][i] >=
-		  range->param[0][constraints[PARAMC][j].a2 -
-				  DD][constraints[PARAMC][j].p2 - 1][i]))
-	    {
-	      /* Satisfied; skip other disjuncts. */
+    /* Relies on DD being the lowest numbered penetrance. */
+    if (constraints[PARAMC][j].a1 >= DD && constraints[PARAMC][j].a2 >= DD) {
+      if ((constraints[PARAMC][j].op == EQ &&
+	   range->param[0][constraints[PARAMC][j].a1 -
+			   DD][constraints[PARAMC][j].p1 - 1][i] ==
+	   range->param[0][constraints[PARAMC][j].a2 -
+			   DD][constraints[PARAMC][j].p2 - 1][i])
+	  || (constraints[PARAMC][j].op == NE
+	      && range->param[0][constraints[PARAMC][j].a1 -
+				 DD][constraints[PARAMC][j].p1 - 1][i] !=
+	      range->param[0][constraints[PARAMC][j].a2 -
+			      DD][constraints[PARAMC][j].p2 - 1][i])
+	  || (constraints[PARAMC][j].op == GT
+	      && range->param[0][constraints[PARAMC][j].a1 -
+				 DD][constraints[PARAMC][j].p1 - 1][i] >
+	      range->param[0][constraints[PARAMC][j].a2 -
+			      DD][constraints[PARAMC][j].p2 - 1][i])
+	  || (constraints[PARAMC][j].op == GE
+	      && range->param[0][constraints[PARAMC][j].a1 -
+				 DD][constraints[PARAMC][j].p1 - 1][i] >=
+	      range->param[0][constraints[PARAMC][j].a2 -
+			      DD][constraints[PARAMC][j].p2 - 1][i])) {
+	/* Satisfied; skip other disjuncts. */
 #if FALSE
-	      fprintf (stderr, "satisfied\n");
+	fprintf (stderr, "satisfied\n");
 #endif
-	      while (constraints[PARAMC][j].alt == TRUE)
-		j++;
-	    }
-	  else if (constraints[PARAMC][j].alt == FALSE)
-	    {
+	while (constraints[PARAMC][j].alt == TRUE)
+	  j++;
+      } else if (constraints[PARAMC][j].alt == FALSE) {
 #if FALSE
-	      fprintf (stderr, "fail\n");
+	fprintf (stderr, "fail\n");
 #endif
-	      return (FALSE);
-	    }
-	}
-      j++;
+	return (FALSE);
+      }
     }
+    j++;
+  }
   return (TRUE);
 }
 
@@ -1924,66 +1786,62 @@ int
 checkClassParams (ModelRange * range, int i)
 {
   int j = 0;
+
 #if FLASE
   char types[15] = DIRECTIVES;
 #endif
 
   /* Scan through each constraint. */
-  while (j < constcnt[PARAMCLASSC])
-    {
-      /* Relies on DD being the lowest numbered penetrance. */
-      if (constraints[PARAMCLASSC][j].a1 >= DD
-	  && constraints[PARAMCLASSC][j].a2 >= DD)
-	{
-	  if ((constraints[PARAMCLASSC][j].op == EQ &&
-	       range->param[constraints[PARAMCLASSC][j].c1 -
-			    1][constraints[PARAMCLASSC][j].a1 -
-			       DD][constraints[PARAMCLASSC][j].p1 - 1][i] ==
-	       range->param[constraints[PARAMCLASSC][j].c2 -
-			    1][constraints[PARAMCLASSC][j].a2 -
-			       DD][constraints[PARAMCLASSC][j].p2 - 1][i])
-	      || (constraints[PARAMCLASSC][j].op == NE
-		  && range->param[constraints[PARAMCLASSC][j].c1 -
-				  1][constraints[PARAMCLASSC][j].a1 -
-				     DD][constraints[PARAMCLASSC][j].p1 -
-					 1][i] !=
-		  range->param[constraints[PARAMCLASSC][j].c2 -
-			       1][constraints[PARAMCLASSC][j].a2 -
-				  DD][constraints[PARAMCLASSC][j].p2 - 1][i])
-	      || (constraints[PARAMCLASSC][j].op == GT
-		  && range->param[constraints[PARAMCLASSC][j].c1 -
-				  1][constraints[PARAMCLASSC][j].a1 -
-				     DD][constraints[PARAMCLASSC][j].p1 -
-					 1][i] >
-		  range->param[constraints[PARAMCLASSC][j].c2 -
-			       1][constraints[PARAMCLASSC][j].a2 -
-				  DD][constraints[PARAMCLASSC][j].p2 - 1][i])
-	      || (constraints[PARAMCLASSC][j].op == GE
-		  && range->param[constraints[PARAMCLASSC][j].c1 -
-				  1][constraints[PARAMCLASSC][j].a1 -
-				     DD][constraints[PARAMCLASSC][j].p1 -
-					 1][i] >=
-		  range->param[constraints[PARAMCLASSC][j].c2 -
-			       1][constraints[PARAMCLASSC][j].a2 -
-				  DD][constraints[PARAMCLASSC][j].p2 - 1][i]))
-	    {
-	      /* Satisfied; skip other disjuncts. */
+  while (j < constcnt[PARAMCLASSC]) {
+    /* Relies on DD being the lowest numbered penetrance. */
+    if (constraints[PARAMCLASSC][j].a1 >= DD
+	&& constraints[PARAMCLASSC][j].a2 >= DD) {
+      if ((constraints[PARAMCLASSC][j].op == EQ &&
+	   range->param[constraints[PARAMCLASSC][j].c1 -
+			1][constraints[PARAMCLASSC][j].a1 -
+			   DD][constraints[PARAMCLASSC][j].p1 - 1][i] ==
+	   range->param[constraints[PARAMCLASSC][j].c2 -
+			1][constraints[PARAMCLASSC][j].a2 -
+			   DD][constraints[PARAMCLASSC][j].p2 - 1][i])
+	  || (constraints[PARAMCLASSC][j].op == NE
+	      && range->param[constraints[PARAMCLASSC][j].c1 -
+			      1][constraints[PARAMCLASSC][j].a1 -
+				 DD][constraints[PARAMCLASSC][j].p1 -
+				     1][i] !=
+	      range->param[constraints[PARAMCLASSC][j].c2 -
+			   1][constraints[PARAMCLASSC][j].a2 -
+			      DD][constraints[PARAMCLASSC][j].p2 - 1][i])
+	  || (constraints[PARAMCLASSC][j].op == GT
+	      && range->param[constraints[PARAMCLASSC][j].c1 -
+			      1][constraints[PARAMCLASSC][j].a1 -
+				 DD][constraints[PARAMCLASSC][j].p1 -
+				     1][i] >
+	      range->param[constraints[PARAMCLASSC][j].c2 -
+			   1][constraints[PARAMCLASSC][j].a2 -
+			      DD][constraints[PARAMCLASSC][j].p2 - 1][i])
+	  || (constraints[PARAMCLASSC][j].op == GE
+	      && range->param[constraints[PARAMCLASSC][j].c1 -
+			      1][constraints[PARAMCLASSC][j].a1 -
+				 DD][constraints[PARAMCLASSC][j].p1 -
+				     1][i] >=
+	      range->param[constraints[PARAMCLASSC][j].c2 -
+			   1][constraints[PARAMCLASSC][j].a2 -
+			      DD][constraints[PARAMCLASSC][j].p2 - 1][i])) {
+	/* Satisfied; skip other disjuncts. */
 #if FALSE
-	      fprintf (stderr, "satisfied\n");
+	fprintf (stderr, "satisfied\n");
 #endif
-	      while (constraints[PARAMCLASSC][j].alt == TRUE)
-		j++;
-	    }
-	  else if (constraints[PARAMCLASSC][j].alt == FALSE)
-	    {
+	while (constraints[PARAMCLASSC][j].alt == TRUE)
+	  j++;
+      } else if (constraints[PARAMCLASSC][j].alt == FALSE) {
 #if FALSE
-	      fprintf (stderr, "fail\n");
+	fprintf (stderr, "fail\n");
 #endif
-	      return (FALSE);
-	    }
-	}
-      j++;
+	return (FALSE);
+      }
     }
+    j++;
+  }
   return (TRUE);
 }
 
@@ -2014,6 +1872,7 @@ int
 checkClassThreshold (ModelRange * range, int i)
 {
   int j = 0;
+
 #if FALSE
   char types[15] = DIRECTIVES;
 #endif
@@ -2021,15 +1880,12 @@ checkClassThreshold (ModelRange * range, int i)
   /* Scan through each constraint: inter-class constraints are on
    * penetrances or trait thresholds, not, e.g., gene frequencies or
    * thetas. */
-  while (j < constcnt[CLASSC])
-    {
-      if (constraints[CLASSC][j].a1 != TT || constraints[CLASSC][j].a2 != TT)
-	{
-	  /* Skip non threshold constraints. */
-	  j++;
-	  continue;
-	}
-      else if ((constraints[CLASSC][j].op == EQ &&
+  while (j < constcnt[CLASSC]) {
+    if (constraints[CLASSC][j].a1 != TT || constraints[CLASSC][j].a2 != TT) {
+      /* Skip non threshold constraints. */
+      j++;
+      continue;
+    } else if ((constraints[CLASSC][j].op == EQ &&
 		range->tthresh[constraints[CLASSC][j].c1 - 1][i] ==
 		range->tthresh[constraints[CLASSC][j].c2 - 1][i]) ||
 	       (constraints[CLASSC][j].op == NE &&
@@ -2040,39 +1896,36 @@ checkClassThreshold (ModelRange * range, int i)
 		range->tthresh[constraints[CLASSC][j].c2 - 1][i]) ||
 	       (constraints[CLASSC][j].op == GE &&
 		range->tthresh[constraints[CLASSC][j].c1 - 1][i] >=
-		range->tthresh[constraints[CLASSC][j].c2 - 1][i]))
-	{
-	  /* Satisfied; skip other disjuncts. */
-	  while (constraints[CLASSC][j].alt == TRUE)
-	    j++;
-	}
-      else if (constraints[CLASSC][j].alt == FALSE)
-	{
+		range->tthresh[constraints[CLASSC][j].c2 - 1][i])) {
+      /* Satisfied; skip other disjuncts. */
+      while (constraints[CLASSC][j].alt == TRUE)
+	j++;
+    } else if (constraints[CLASSC][j].alt == FALSE) {
 #if FALSE
-	  fprintf (stderr, "!%c%c %d %s %c%c %d %s => %g %s %g\n",
-		   types[(constraints[CLASSC][j].a1) * 2],
-		   types[(constraints[CLASSC][j].a1) * 2 + 1],
-		   constraints[CLASSC][i].c1,
-		   ((constraints[CLASSC][j].op ==
-		     EQ) ? "==" : (constraints[CLASSC][j].op ==
-				   NE) ? "!=" : (constraints[CLASSC][j].op ==
-						 GE) ? ">=" : ">"),
-		   types[(constraints[CLASSC][j].a2) * 2],
-		   types[(constraints[CLASSC][j].a2) * 2 + 1],
-		   constraints[CLASSC][i].c2,
-		   (constraints[CLASSC][j].alt == TRUE) ? "*" : "",
-		   ((constraints[CLASSC][j].type !=
-		     TT) ? (range->penet[constraints[CLASSC][j].c1 -
-					 1][constraints[CLASSC][j].a1 -
-					    DD][i]) : (range->
-						       tthresh[constraints
-							       [CLASSC][j].
-							       a1][i])) ((constraints[CLASSC][j].op == EQ) ? "==" : (constraints[CLASSC][j].op == NE) ? "!=" : (constraints[CLASSC][j].op == GE) ? ">=" : ">"), ((constraints[CLASSC][j].type != TT) ? (range->penet[constraints[CLASSC][j].c2 - 1][constraints[CLASSC][j].a2 - DD][i]) : (range->tthresh[constraints[CLASSC][j].a2][i])));
+      fprintf (stderr, "!%c%c %d %s %c%c %d %s => %g %s %g\n",
+	       types[(constraints[CLASSC][j].a1) * 2],
+	       types[(constraints[CLASSC][j].a1) * 2 + 1],
+	       constraints[CLASSC][i].c1,
+	       ((constraints[CLASSC][j].op ==
+		 EQ) ? "==" : (constraints[CLASSC][j].op ==
+			       NE) ? "!=" : (constraints[CLASSC][j].op ==
+					     GE) ? ">=" : ">"),
+	       types[(constraints[CLASSC][j].a2) * 2],
+	       types[(constraints[CLASSC][j].a2) * 2 + 1],
+	       constraints[CLASSC][i].c2,
+	       (constraints[CLASSC][j].alt == TRUE) ? "*" : "",
+	       ((constraints[CLASSC][j].type !=
+		 TT) ? (range->penet[constraints[CLASSC][j].c1 -
+				     1][constraints[CLASSC][j].a1 -
+					DD][i]) : (range->
+						   tthresh[constraints
+							   [CLASSC][j].
+							   a1][i])) ((constraints[CLASSC][j].op == EQ) ? "==" : (constraints[CLASSC][j].op == NE) ? "!=" : (constraints[CLASSC][j].op == GE) ? ">=" : ">"), ((constraints[CLASSC][j].type != TT) ? (range->penet[constraints[CLASSC][j].c2 - 1][constraints[CLASSC][j].a2 - DD][i]) : (range->tthresh[constraints[CLASSC][j].a2][i])));
 #endif
-	  return (FALSE);
-	}
-      j++;
+      return (FALSE);
     }
+    j++;
+  }
   return (TRUE);
 }
 
@@ -2091,6 +1944,7 @@ void
 sortRange (ModelRange * range)
 {
   int i;
+
   quicksort (range->gfreq, 0, range->ngfreq);
   if (range->penet[0])
     for (i = 0; i < NPENET (range->nalleles); i++)
@@ -2107,9 +1961,9 @@ sortRange (ModelRange * range)
     quicksort (range->tthresh[0], 0, range->ntthresh);
   if (range->alpha)
     quicksort (range->alpha, 0, range->nalpha);
-  if( range->afreq)
+  if (range->afreq)
     quicksort (range->afreq, 0, range->nafreq);
-  if( range->dprime)
+  if (range->dprime)
     quicksort (range->dprime, 0, range->ndprime);
 }
 
@@ -2124,6 +1978,7 @@ inline void
 swap (double *array, int i, int j)
 {
   double temp = array[i];
+
   array[i] = array[j];
   array[j] = temp;
 }
@@ -2144,11 +1999,10 @@ quicksort (double *array, int lo, int hi)
 
   mid = lo;
   for (i = lo + 1; i < hi; i++)
-    if (array[i] < pivot)
-      {
-	mid++;
-	swap (array, mid, i);
-      }
+    if (array[i] < pivot) {
+      mid++;
+      swap (array, mid, i);
+    }
   swap (array, lo, mid);
 
   quicksort (array, lo, mid);
@@ -2159,22 +2013,21 @@ quicksort (double *array, int lo, int hi)
  * Remove duplicate values from the model for efficiency's sake.  Both
  * double and float versions are given.
  **********************************************************************/
+
 /* Remove exact duplicates in an array. */
 inline int
 uniquify (double *array, int len)
 {
   int i = 0, j;
-  while (i < len - 1)
-    {
-      if (array[i] == array[i + 1])
-	{
-	  for (j = i + 1; j < len - 1; j++)
-	    array[j] = array[j + 1];
-	  len--;
-	}
-      else
-	i++;
-    }
+
+  while (i < len - 1) {
+    if (array[i] == array[i + 1]) {
+      for (j = i + 1; j < len - 1; j++)
+	array[j] = array[j + 1];
+      len--;
+    } else
+      i++;
+  }
   return (len);
 }
 
@@ -2190,6 +2043,7 @@ void
 uniqRange (ModelRange * range)
 {
   int i;
+
   range->ngfreq = uniquify (range->gfreq, range->ngfreq);
   for (i = 0; i < NPENET (range->nalleles); i++)
     penetcnt[i] = uniquify (range->penet[0][i], penetcnt[i]);
@@ -2245,44 +2099,40 @@ expandRange (ModelRange * range, ModelType * type)
    * though, in the end, constraint application may reduce this
    * number. The actualy number of combinations will be stored in
    * range->nthetas. */
-  if ((tmp2 = range->theta))
-    {
-      range->theta = malloc (range->ngender * sizeof (double *));
-      if (modelOptions.mapFlag == SA)
-	{
-	  /* Easy case is that you have only one gender anyway. Since
-	   * there is only one dimension, there can be no constraints
-	   * worth enforcing. */
-	  range->theta[0] = tmp2[0];
-	  range->theta[1] = tmp2[1];
-	  range->ntheta = range->thetacnt[SEXAV];
-	}
-      else
-	{
-	  /* sex specific */
-	  /* If you have 2 genders, you need to factor their respective
-	   * values while checking constraints. */
-	  for (i = 0; i < range->ngender; i++)
-	    range->theta[i] =
-	      malloc ((range->thetacnt[SEXML] * range->thetacnt[SEXFM]) * sizeof (double));
-	  range->ntheta = 0;
-	  for (i = 0; i < range->thetacnt[SEXML]; i++)
-	    for (j = 0; j < range->thetacnt[SEXFM]; j++)
-	      {
-		range->theta[SEXML][range->ntheta] = tmp2[SEXML][i];
-		range->theta[SEXFM][range->ntheta] = tmp2[SEXFM][j];
+  if ((tmp2 = range->theta)) {
+    range->theta = malloc (range->ngender * sizeof (double *));
+    if (modelOptions.mapFlag == SA) {
+      /* Easy case is that you have only one gender anyway. Since
+       * there is only one dimension, there can be no constraints
+       * worth enforcing. */
+      range->theta[0] = tmp2[0];
+      range->theta[1] = tmp2[1];
+      range->ntheta = range->thetacnt[SEXAV];
+    } else {
+      /* sex specific */
+      /* If you have 2 genders, you need to factor their respective
+       * values while checking constraints. */
+      for (i = 0; i < range->ngender; i++)
+	range->theta[i] =
+	  malloc ((range->thetacnt[SEXML] * range->thetacnt[SEXFM]) *
+		  sizeof (double));
+      range->ntheta = 0;
+      for (i = 0; i < range->thetacnt[SEXML]; i++)
+	for (j = 0; j < range->thetacnt[SEXFM]; j++) {
+	  range->theta[SEXML][range->ntheta] = tmp2[SEXML][i];
+	  range->theta[SEXFM][range->ntheta] = tmp2[SEXFM][j];
 
-		if (checkThetas (range, range->ntheta))
-		  range->ntheta++;
-	      }
-	  /* Free old copies of range->theta[i]. */
-	  for (i = 0; i < range->ngender; i++)
-	    free (tmp2[i]);
+	  if (checkThetas (range, range->ntheta))
+	    range->ntheta++;
 	}
-      /* Free old copy of range->theta. */
-      free (tmp2);
-      free (thetamax);
+      /* Free old copies of range->theta[i]. */
+      for (i = 0; i < range->ngender; i++)
+	free (tmp2[i]);
     }
+    /* Free old copy of range->theta. */
+    free (tmp2);
+    free (thetamax);
+  }
 
   /* Next, we expand the penetrances. The goal here is just to get the
    * combinations right, while ignoring the liability classes. It's a
@@ -2313,19 +2163,17 @@ expandRange (ModelRange * range, ModelType * type)
     range->penet[0][j] = malloc (i * sizeof (double));
 
   /* OK, now populate the array. */
-  for (k = 0; k < i; k++)
-    {
-      l = 1;
-      for (m = 0; m < NPENET (range->nalleles); m++)
-	{
-	  range->penet[0][m][range->npenet] =
-	    tmp2[m][((int) (k / l)) % penetcnt[m]];
-	  l = l * penetcnt[m];
-	}
-      /* Check the constraints. */
-      if (checkPenets (range, range->npenet))
-	range->npenet++;
+  for (k = 0; k < i; k++) {
+    l = 1;
+    for (m = 0; m < NPENET (range->nalleles); m++) {
+      range->penet[0][m][range->npenet] =
+	tmp2[m][((int) (k / l)) % penetcnt[m]];
+      l = l * penetcnt[m];
     }
+    /* Check the constraints. */
+    if (checkPenets (range, range->npenet))
+      range->npenet++;
+  }
 
   /* OK, we're done with penetcnt and penetmax, since we're using
    * range->npenet to keep track of the number of combinations. We
@@ -2345,71 +2193,71 @@ expandRange (ModelRange * range, ModelType * type)
    *
    * Note that the resulting param[0][][][] array will be of uniform
    * dimension, that being ((#value)^#dim)^#allcombos). */
-  if (range->param)
-    {
-      /* Stash the original values somewhere, to be freed
-       * appropriately. */
-      tmp4 = range->param;
-      tmp3 = range->param[0];
-      tmp2 = range->param[0][0];
+  if (range->param) {
+    /* Stash the original values somewhere, to be freed
+     * appropriately. */
+    tmp4 = range->param;
+    tmp3 = range->param[0];
+    tmp2 = range->param[0][0];
 
-      /* Since the resulting parameter array will be uniform, we can
-       * allocate, in advance, the appropriate amount of memory. This
-       * will be large! Hopefully, the constraints will limit how many
-       * elements are actually in use, which will be stored in
-       * range->nparam. */
+    /* Since the resulting parameter array will be uniform, we can
+     * allocate, in advance, the appropriate amount of memory. This
+     * will be large! Hopefully, the constraints will limit how many
+     * elements are actually in use, which will be stored in
+     * range->nparam. */
 
-      /* Let i be the max number of entries you might see for each
-       * dimension, then raise it to the power of the dimensions. */
-      i = pow (paramcnt[0], NPENET (range->nalleles));
-      i = pow (i, range->npardim);
+    /* Let i be the max number of entries you might see for each
+     * dimension, then raise it to the power of the dimensions. */
+    i = pow (paramcnt[0], NPENET (range->nalleles));
+    i = pow (i, range->npardim);
 
-      /* Since the parameter vector is to be replicated across all of
-       * the dimensions, they will all initially have the same number
-       * of parameter values, although this will surely change as the
-       * constraints are applied. Go ahead and allocate what you might
-       * need. */
-      range->param = malloc (sizeof (double ***));
-      range->param[0] =
-	malloc (NPENET (range->nalleles) * sizeof (double **));
-      for (j = 0; j < NPENET (range->nalleles); j++)
-	{
-	  range->param[0][j] = malloc (range->npardim * sizeof (double *));
-	  /* Corrected by Yungui: used to read:
-	   *  for (k = 0; k < paramcnt[0]; k++) */
-	  for (k = 0; k < range->npardim; k++)
-	    range->param[0][j][k] = malloc (i * sizeof (double));
-	}
-
-      /* Time to populate the range->param array. Recall the first
-       * index will always be 0 since we're not yet dealing with
-       * liability classes. We'll use range->nparam to store the
-       * number of valid combinations. */
-      range->nparam = 0;
-      for (j = 0; j < i; j++)
-	{
-	  for (k = 0; k < NPENET (range->nalleles); k++)
-	    for (l = 0; l < range->npardim; l++)
-	      range->param[0][k][l][range->nparam] =
-		tmp2[l][((int)
-			 (j /
-			  (pow (paramcnt[l], (l + k * range->npardim))))) %
-			paramcnt[l]];
-	  /* Check the constraints. */
-	  if (checkParams (range, range->nparam))
-	    range->nparam++;
-	}
-
-      /* Done. Free copies of original parameters you'd stashed away,
-       * including the paramcnt and parammax arrays; you won't be
-       * needing them again, since the (uniform) number of entries
-       * stored is given by range->nparam. */
-      free (tmp2);
-      free (tmp3);
-      free (tmp4);
-      free (paramcnt);
-      free (parammax);
+    /* Since the parameter vector is to be replicated across all of
+     * the dimensions, they will all initially have the same number
+     * of parameter values, although this will surely change as the
+     * constraints are applied. Go ahead and allocate what you might
+     * need. */
+    range->param = malloc (sizeof (double ***));
+    range->param[0] = malloc (NPENET (range->nalleles) * sizeof (double **));
+    for (j = 0; j < NPENET (range->nalleles); j++) {
+      range->param[0][j] = malloc (range->npardim * sizeof (double *));
+      /* Corrected by Yungui: used to read:
+       *  for (k = 0; k < paramcnt[0]; k++) */
+      for (k = 0; k < range->npardim; k++)
+	range->param[0][j][k] = malloc (i * sizeof (double));
     }
+
+    /* Time to populate the range->param array. Recall the first
+     * index will always be 0 since we're not yet dealing with
+     * liability classes. We'll use range->nparam to store the
+     * number of valid combinations. */
+    range->nparam = 0;
+    for (j = 0; j < i; j++) {
+      for (k = 0; k < NPENET (range->nalleles); k++)
+	for (l = 0; l < range->npardim; l++)
+	  range->param[0][k][l][range->nparam] = tmp2[l][((int)
+							  (j /
+							   (pow
+							    (paramcnt[l],
+							     (l +
+							      k *
+							      range->
+							      npardim))))) %
+							 paramcnt[l]];
+      /* Check the constraints. */
+      if (checkParams (range, range->nparam))
+	range->nparam++;
+    }
+
+    /* Done. Free copies of original parameters you'd stashed away,
+     * including the paramcnt and parammax arrays; you won't be
+     * needing them again, since the (uniform) number of entries
+     * stored is given by range->nparam. */
+    free (tmp2);
+    free (tmp3);
+    free (tmp4);
+    free (paramcnt);
+    free (parammax);
+  }
 }
 
 /**********************************************************************
@@ -2428,42 +2276,39 @@ expandClass (ModelRange * range, ModelType * type)
   double ****tmp4;
 
   /* Threshold expansion by liability class. */
-  if (range->tthresh)
-    {
-      /* Stash pointers so you can free properly. Recall
-       * range->tthresh[0] is the only dimension originally allocated;
-       * we'll use the values stored there during expansion, producing
-       * a new multidimensional range->tthresh array. */
-      tmp2 = range->tthresh;
-      tmp1 = range->tthresh[0];
-      i = range->ntthresh;
+  if (range->tthresh) {
+    /* Stash pointers so you can free properly. Recall
+     * range->tthresh[0] is the only dimension originally allocated;
+     * we'll use the values stored there during expansion, producing
+     * a new multidimensional range->tthresh array. */
+    tmp2 = range->tthresh;
+    tmp1 = range->tthresh[0];
+    i = range->ntthresh;
 
-      /* Barring constraints, how many values might you have? */
-      j = pow (i, range->nlclass);
+    /* Barring constraints, how many values might you have? */
+    j = pow (i, range->nlclass);
 
-      /* Allocate a new tthresh array structure. */
-      range->tthresh = malloc (range->nlclass * sizeof (double *));
-      for (k = 0; k < range->nlclass; k++)
-	range->tthresh[k] = malloc (j * sizeof (double));
+    /* Allocate a new tthresh array structure. */
+    range->tthresh = malloc (range->nlclass * sizeof (double *));
+    for (k = 0; k < range->nlclass; k++)
+      range->tthresh[k] = malloc (j * sizeof (double));
 
-      /* OK, now populate the array. */
-      range->ntthresh = 0;
-      for (k = 0; k < j; k++)
-	{
-	  l = 1;
-	  for (m = 0; m < range->nlclass; m++)
-	    {
-	      range->tthresh[m][range->ntthresh] = tmp1[((int) (k / l)) % i];
-	      l = l * i;
-	    }
-	  /* Check the class constraints. */
-	  if (checkClassThreshold (range, range->ntthresh))
-	    range->ntthresh++;
-	}
-      /* Done. Free up the old copy of the array. */
-      free (tmp1);
-      free (tmp2);
+    /* OK, now populate the array. */
+    range->ntthresh = 0;
+    for (k = 0; k < j; k++) {
+      l = 1;
+      for (m = 0; m < range->nlclass; m++) {
+	range->tthresh[m][range->ntthresh] = tmp1[((int) (k / l)) % i];
+	l = l * i;
+      }
+      /* Check the class constraints. */
+      if (checkClassThreshold (range, range->ntthresh))
+	range->ntthresh++;
     }
+    /* Done. Free up the old copy of the array. */
+    free (tmp1);
+    free (tmp2);
+  }
 
   /* Penetrance expansion by liability class. Here, we want to factor
    * the existing penetrances over multiple liability classes.
@@ -2482,29 +2327,25 @@ expandClass (ModelRange * range, ModelType * type)
 
   /* Allocate a new penet array structure. */
   range->penet = malloc (range->nlclass * sizeof (double **));
-  for (k = 0; k < range->nlclass; k++)
-    {
-      range->penet[k] = malloc (NPENET (range->nalleles) * sizeof (double *));
-      for (l = 0; l < NPENET (range->nalleles); l++)
-	range->penet[k][l] = malloc (j * sizeof (double));
-    }
+  for (k = 0; k < range->nlclass; k++) {
+    range->penet[k] = malloc (NPENET (range->nalleles) * sizeof (double *));
+    for (l = 0; l < NPENET (range->nalleles); l++)
+      range->penet[k][l] = malloc (j * sizeof (double));
+  }
 
   /* OK, now populate the array. */
   range->npenet = 0;
-  for (k = 0; k < j; k++)
-    {
-      l = 1;
-      for (m = 0; m < range->nlclass; m++)
-	{
-	  for (n = 0; n < NPENET (range->nalleles); n++)
-	    range->penet[m][n][range->npenet] =
-	      tmp2[n][(((int) (k / l)) % i)];
-	  l = l * i;
-	}
-      /* Check the class constraints. */
-      if (checkClassPenets (range, range->npenet))
-	range->npenet++;
+  for (k = 0; k < j; k++) {
+    l = 1;
+    for (m = 0; m < range->nlclass; m++) {
+      for (n = 0; n < NPENET (range->nalleles); n++)
+	range->penet[m][n][range->npenet] = tmp2[n][(((int) (k / l)) % i)];
+      l = l * i;
     }
+    /* Check the class constraints. */
+    if (checkClassPenets (range, range->npenet))
+      range->npenet++;
+  }
   /* Done. Free up the old copy of the range->penet array. */
   for (i = 0; i < NPENET (range->nalleles); i++)
     free (tmp2[i]);
@@ -2514,142 +2355,126 @@ expandClass (ModelRange * range, ModelType * type)
   /* Ready to work on the param array, if necessary.
    *
    * Again, stash a copy of the current param array and its size. */
-  if (range->param)
-    {
-      tmp4 = range->param;
-      tmp3 = range->param[0];
-      i = range->nparam;
+  if (range->param) {
+    tmp4 = range->param;
+    tmp3 = range->param[0];
+    i = range->nparam;
 
-      /* Barring constraints, how many values might you have? */
-      j = pow (range->nparam, range->nlclass);
+    /* Barring constraints, how many values might you have? */
+    j = pow (range->nparam, range->nlclass);
 
-      /* Allocate a new param array structure. */
-      range->param = malloc (range->nlclass * sizeof (double ***));
-      for (k = 0; k < range->nlclass; k++)
-	{
-	  range->param[k] =
-	    malloc (NPENET (range->nalleles) * sizeof (double **));
-	  for (l = 0; l < NPENET (range->nalleles); l++)
-	    {
-	      range->param[k][l] =
-		malloc (range->npardim * sizeof (double *));
-	      for (m = 0; m < range->npardim; m++)
-		range->param[k][l][m] = malloc (j * sizeof (double));
-	    }
-	}
-
-      /* OK, now populate the array. */
-      range->nparam = 0;
-      for (k = 0; k < j; k++)
-	{
-	  l = 1;
-	  for (m = 0; m < range->nlclass; m++)
-	    {
-	      for (n = 0; n < NPENET (range->nalleles); n++)
-		for (o = 0; o < range->npardim; o++)
-		  range->param[m][n][o][range->nparam] =
-		    tmp3[n][o][((int) (k / l)) % i];
-	      l = l * i;
-	    }
-
-	  /* Check the class constraints. */
-	  if (checkClassParams (range, range->nparam))
-	    range->nparam++;
-	}
-
-      /* Done. Free up the old copy of the array. */
-      for (i = 0; i < NPENET (range->nalleles); i++)
-	{
-	  for (j = 0; j < range->npardim; j++)
-	    free (tmp3[i][j]);
-	  free (tmp3[i]);
-	}
-      free (tmp4);
-
-#if FALSE
-      /* This block "factors" the QT parameters (stdev) with the
-       * penetrance array (mean). There is little reason to do this,
-       * because there are no constraints imposed at this factoring
-       * step, so you may as well just go ahead and loop over the
-       * parameters and penetrances together. Also, this code won't
-       * work for QT model distributions that have more than one
-       * parameter. Probably should just delete it.
-       *
-       * If you do want it, though, you'll also need to uncomment
-       * variable tmp3 defined above.
-       *
-       * OK, you're almost done. Just need to factor the parameter and
-       * penetrance arrays together. Since there can be no constraints
-       * enforced here, these just factor together brute force. 
-       *
-       * There will be range->npenet * range->nparam combinations. */
-      tmp2 = range->penet;
-      tmp3 = range->param;
-      i = range->npenet;
-
-      /* Barring constraints, how many values might you have? */
-      j = range->npenet * range->nparam;
-
-      /* Allocate new penet and param array structures. */
-      range->penet = malloc (range->nlclass * sizeof (double **));
-      for (k = 0; k < range->nlclass; k++)
-	{
-	  range->penet[k] =
-	    malloc (NPENET (range->nalleles) * sizeof (double *));
-	  for (l = 0; l < NPENET (range->nalleles); l++)
-	    range->penet[k][l] = malloc (j * sizeof (double));
-	}
-      range->param = malloc (range->nlclass * sizeof (double ***));
-      for (k = 0; k < range->nlclass; k++)
-	{
-	  range->param[k] =
-	    malloc (NPENET (range->nalleles) * sizeof (double **));
-	  for (l = 0; l < NPENET (range->nalleles); l++)
-	    {
-	      range->param[k][l] =
-		malloc (range->npardim * sizeof (double *));
-	      for (m = 0; m < range->npardim; m++)
-		range->param[k][l][m] = malloc (j * sizeof (double));
-	    }
-	}
-
-      /* Populate the arrays. */
-      range->npenet = 0;
-      for (k = 0; k < j; k++)
-	{
-	  l = 1;
-	  for (m = 0; m < range->nlclass; m++)
-	    for (n = 0; n < NPENET (range->nalleles); n++)
-	      {
-		range->penet[m][n][range->npenet] =
-		  tmp2[m][n][(((int) (k / l)) % i)];
-		for (o = 0; o < range->npardim; o++)
-		  range->param[m][n][o][range->npenet] =
-		    tmp3[m][n][o][(((int) (k / l)) % i)];
-	      }
-	  range->npenet++;
-	}
-      /* Make sure nparam returns the same number. */
-      range->nparam = range->npenet;
-#if FALSE
-      /* Free up the old copies. */
-      for (i = 0; i < nlclass; i++)
-	{
-	  for (j = 0; j < NPENET (range->nalleles); j++)
-	    {
-	      free (tmp2[i][j]);
-	      for (k = 0; k < range->npardim; k++)
-		free (tmp3[i][j][k]);
-	      free (tmp3[i][j]);
-	    }
-	  free (tmp2[i]);
-	  free (tmp3[i]);
-	}
-      free (tmp2);
-      free (tmp3);
-#endif
-#endif
+    /* Allocate a new param array structure. */
+    range->param = malloc (range->nlclass * sizeof (double ***));
+    for (k = 0; k < range->nlclass; k++) {
+      range->param[k] =
+	malloc (NPENET (range->nalleles) * sizeof (double **));
+      for (l = 0; l < NPENET (range->nalleles); l++) {
+	range->param[k][l] = malloc (range->npardim * sizeof (double *));
+	for (m = 0; m < range->npardim; m++)
+	  range->param[k][l][m] = malloc (j * sizeof (double));
+      }
     }
+
+    /* OK, now populate the array. */
+    range->nparam = 0;
+    for (k = 0; k < j; k++) {
+      l = 1;
+      for (m = 0; m < range->nlclass; m++) {
+	for (n = 0; n < NPENET (range->nalleles); n++)
+	  for (o = 0; o < range->npardim; o++)
+	    range->param[m][n][o][range->nparam] =
+	      tmp3[n][o][((int) (k / l)) % i];
+	l = l * i;
+      }
+
+      /* Check the class constraints. */
+      if (checkClassParams (range, range->nparam))
+	range->nparam++;
+    }
+
+    /* Done. Free up the old copy of the array. */
+    for (i = 0; i < NPENET (range->nalleles); i++) {
+      for (j = 0; j < range->npardim; j++)
+	free (tmp3[i][j]);
+      free (tmp3[i]);
+    }
+    free (tmp4);
+
+#if FALSE
+    /* This block "factors" the QT parameters (stdev) with the
+     * penetrance array (mean). There is little reason to do this,
+     * because there are no constraints imposed at this factoring
+     * step, so you may as well just go ahead and loop over the
+     * parameters and penetrances together. Also, this code won't
+     * work for QT model distributions that have more than one
+     * parameter. Probably should just delete it.
+     *
+     * If you do want it, though, you'll also need to uncomment
+     * variable tmp3 defined above.
+     *
+     * OK, you're almost done. Just need to factor the parameter and
+     * penetrance arrays together. Since there can be no constraints
+     * enforced here, these just factor together brute force. 
+     *
+     * There will be range->npenet * range->nparam combinations. */
+    tmp2 = range->penet;
+    tmp3 = range->param;
+    i = range->npenet;
+
+    /* Barring constraints, how many values might you have? */
+    j = range->npenet * range->nparam;
+
+    /* Allocate new penet and param array structures. */
+    range->penet = malloc (range->nlclass * sizeof (double **));
+    for (k = 0; k < range->nlclass; k++) {
+      range->penet[k] = malloc (NPENET (range->nalleles) * sizeof (double *));
+      for (l = 0; l < NPENET (range->nalleles); l++)
+	range->penet[k][l] = malloc (j * sizeof (double));
+    }
+    range->param = malloc (range->nlclass * sizeof (double ***));
+    for (k = 0; k < range->nlclass; k++) {
+      range->param[k] =
+	malloc (NPENET (range->nalleles) * sizeof (double **));
+      for (l = 0; l < NPENET (range->nalleles); l++) {
+	range->param[k][l] = malloc (range->npardim * sizeof (double *));
+	for (m = 0; m < range->npardim; m++)
+	  range->param[k][l][m] = malloc (j * sizeof (double));
+      }
+    }
+
+    /* Populate the arrays. */
+    range->npenet = 0;
+    for (k = 0; k < j; k++) {
+      l = 1;
+      for (m = 0; m < range->nlclass; m++)
+	for (n = 0; n < NPENET (range->nalleles); n++) {
+	  range->penet[m][n][range->npenet] =
+	    tmp2[m][n][(((int) (k / l)) % i)];
+	  for (o = 0; o < range->npardim; o++)
+	    range->param[m][n][o][range->npenet] =
+	      tmp3[m][n][o][(((int) (k / l)) % i)];
+	}
+      range->npenet++;
+    }
+    /* Make sure nparam returns the same number. */
+    range->nparam = range->npenet;
+#if FALSE
+    /* Free up the old copies. */
+    for (i = 0; i < nlclass; i++) {
+      for (j = 0; j < NPENET (range->nalleles); j++) {
+	free (tmp2[i][j]);
+	for (k = 0; k < range->npardim; k++)
+	  free (tmp3[i][j][k]);
+	free (tmp3[i][j]);
+      }
+      free (tmp2[i]);
+      free (tmp3[i]);
+    }
+    free (tmp2);
+    free (tmp3);
+#endif
+#endif
+  }
 }
 
 /**********************************************************************
@@ -2680,23 +2505,21 @@ findLambdas (ModelRange * range, int m, int n)
   int i = 0, j, k, l = pow (range->ndprime, ((m - 1) * (n - 1)));
 
   /* First, see if the array of lambdas already exists. */
-  while (i < range->nlambdas)
-    {
-      if (range->lambdas[i].m == m && range->lambdas[i].n == n)
-	/* return (range->lambdas[i].lambda); */
-	return (&range->lambdas[i]);
-      i++;
-    }
+  while (i < range->nlambdas) {
+    if (range->lambdas[i].m == m && range->lambdas[i].n == n)
+      /* return (range->lambdas[i].lambda); */
+      return (&range->lambdas[i]);
+    i++;
+  }
 
   /* OK, no matching cached array found. Check to make sure there's
    * room for a new one. */
-  if (range->nlambdas == range->maxnlambdas)
-    {
-      range->lambdas =
-	realloc (range->lambdas,
-		 (range->maxnlambdas + CHUNKSIZE) * sizeof (LambdaCell));
-      range->maxnlambdas = range->maxnlambdas + CHUNKSIZE;
-    }
+  if (range->nlambdas == range->maxnlambdas) {
+    range->lambdas =
+      realloc (range->lambdas,
+	       (range->maxnlambdas + CHUNKSIZE) * sizeof (LambdaCell));
+    range->maxnlambdas = range->maxnlambdas + CHUNKSIZE;
+  }
   /* Create the new entry. */
   range->lambdas[range->nlambdas].m = m;
   range->lambdas[range->nlambdas].n = n;
@@ -2705,32 +2528,31 @@ findLambdas (ModelRange * range, int m, int n)
     (double ***) malloc (l * sizeof (double **));
   range->lambdas[range->nlambdas].impossibleFlag =
     (int *) malloc (l * sizeof (int));
-  memset( range->lambdas[range->nlambdas].impossibleFlag, 0, l*sizeof(int));
+  memset (range->lambdas[range->nlambdas].impossibleFlag, 0,
+	  l * sizeof (int));
   range->lambdas[range->nlambdas].haploFreq =
     (double ***) malloc (l * sizeof (double **));
   range->lambdas[range->nlambdas].DValue =
     (double ***) malloc (l * sizeof (double **));
-  for (i = 0; i < l; i++)
-    {
-      range->lambdas[range->nlambdas].lambda[i] =
-	(double **) malloc ((m - 1) * sizeof (double *));
-      for (j = 0; j < (m - 1); j++)
-	range->lambdas[range->nlambdas].lambda[i][j] =
-	  (double *) malloc ((n - 1) * sizeof (double));
+  for (i = 0; i < l; i++) {
+    range->lambdas[range->nlambdas].lambda[i] =
+      (double **) malloc ((m - 1) * sizeof (double *));
+    for (j = 0; j < (m - 1); j++)
+      range->lambdas[range->nlambdas].lambda[i][j] =
+	(double *) malloc ((n - 1) * sizeof (double));
 
-      range->lambdas[range->nlambdas].haploFreq[i] =
-	(double **) malloc (m * sizeof (double *));
-      range->lambdas[range->nlambdas].DValue[i] =
-	(double **) malloc (m * sizeof (double *));
-      for (j = 0; j < m; j++)
-	{
-	  range->lambdas[range->nlambdas].haploFreq[i][j] =
-	    (double *) malloc (n * sizeof (double));
-	  range->lambdas[range->nlambdas].DValue[i][j] =
-	    (double *) malloc (n * sizeof (double));
-	}
-      
+    range->lambdas[range->nlambdas].haploFreq[i] =
+      (double **) malloc (m * sizeof (double *));
+    range->lambdas[range->nlambdas].DValue[i] =
+      (double **) malloc (m * sizeof (double *));
+    for (j = 0; j < m; j++) {
+      range->lambdas[range->nlambdas].haploFreq[i][j] =
+	(double *) malloc (n * sizeof (double));
+      range->lambdas[range->nlambdas].DValue[i][j] =
+	(double *) malloc (n * sizeof (double));
     }
+
+  }
   range->nlambdas++;
 
   /* Now populate the values in the appropriate array. */
@@ -2757,6 +2579,7 @@ void
 showRange (ModelRange * range, ModelType * type, int level)
 {
   int i, j, k, l;
+
   printf
     ("======================================================================\n");
   printf ("LEVEL %d MODEL\n", level);
@@ -2766,96 +2589,82 @@ showRange (ModelRange * range, ModelType * type, int level)
   for (i = 0; i < range->ngfreq; i++)
     printf ("%3.2g ", range->gfreq[i]);
 
-  if (type->trait == DT)
-    {
-      if (level > 0)
-	printf ("\n%d Thetas", range->ntheta);
-      for (i = 0; i < range->ngender; i++)
-	{
-	  if (level == 0)
-	    printf ("\n%d Theta[%d]=",
-		    (level == 0 ? range->thetacnt[i] : range->ntheta), i);
-	  else
-	    printf ("\n  Theta[%d]=", i);
-	  for (j = 0; j < (level == 0 ? range->thetacnt[i] : range->ntheta); j++)
-	    printf ("%3.2g ", range->theta[i][j]);
-	}
+  if (type->trait == DT) {
+    if (level > 0)
+      printf ("\n%d Thetas", range->ntheta);
+    for (i = 0; i < range->ngender; i++) {
+      if (level == 0)
+	printf ("\n%d Theta[%d]=",
+		(level == 0 ? range->thetacnt[i] : range->ntheta), i);
+      else
+	printf ("\n  Theta[%d]=", i);
+      for (j = 0; j < (level == 0 ? range->thetacnt[i] : range->ntheta); j++)
+	printf ("%3.2g ", range->theta[i][j]);
     }
-  else
-    {
-      if (range->tloc)
-	{
-	  printf ("\n%d Trait Loci", range->ntloc);
-	  printf ("\n  Trait Loci=");
-	  for (i = 0; i < range->ntloc; i++)
-	    printf ("%3.2g ", range->tloc[i]);
-	}
-      if (range->tthresh)
-	{
-	  printf ("\n%d Trait Thresholds", range->ntthresh);
-	  for (i = 0; i < (level == 2 ? range->nlclass : 1); i++)
-	    {
-	      printf ("\n  Trait Threshold[%d]=", i);
-	      for (j = 0; j < range->ntthresh; j++)
-		printf ("%3.2g ", range->tthresh[i][j]);
-	    }
-	}
+  } else {
+    if (range->tloc) {
+      printf ("\n%d Trait Loci", range->ntloc);
+      printf ("\n  Trait Loci=");
+      for (i = 0; i < range->ntloc; i++)
+	printf ("%3.2g ", range->tloc[i]);
     }
+    if (range->tthresh) {
+      printf ("\n%d Trait Thresholds", range->ntthresh);
+      for (i = 0; i < (level == 2 ? range->nlclass : 1); i++) {
+	printf ("\n  Trait Threshold[%d]=", i);
+	for (j = 0; j < range->ntthresh; j++)
+	  printf ("%3.2g ", range->tthresh[i][j]);
+      }
+    }
+  }
 
   printf ("\n%d Penetrances", (level == 0 ? penetcnt[0] : range->npenet));
   for (i = 0; i < (level == 2 ? range->nlclass : 1); i++)
-    for (j = 0; j < NPENET (range->nalleles); j++)
-      {
-	printf ("\n  Penet[%d][%d]=", i, j);
-	for (k = 0; k < (level == 0 ? penetcnt[j] : range->npenet); k++)
-	  printf ("%3.2g ", range->penet[i][j][k]);
-      }
-
-  if (range->param)
-    {
-      printf ("\n%d Parameters", ((level == 2 ? range->nlclass : 1) *
-				  (level ==
-				   0 ? paramcnt[0] : range->nparam)));
-      /* for (i = 0; i < (level==2?range->nlclass:1); i++) */
-      for (i = 0; i < (level == 2 ? range->nlclass : 1); i++)
-	for (j = 0; j < (level == 0 ? 1 : NPENET (range->nalleles)); j++)
-	  for (k = 0; k < (level > 0 ? range->npardim : 1); k++)
-	    {
-	      printf ("\n  Param[%d][%d][%d]=", i, j, k);
-	      for (l = 0; l < (level == 0 ? paramcnt[k] : range->nparam); l++)
-		printf ("%3.2g ", range->param[i][j][k][l]);
-	    }
+    for (j = 0; j < NPENET (range->nalleles); j++) {
+      printf ("\n  Penet[%d][%d]=", i, j);
+      for (k = 0; k < (level == 0 ? penetcnt[j] : range->npenet); k++)
+	printf ("%3.2g ", range->penet[i][j][k]);
     }
 
-  if (range->afreq)
-    {
-      printf ("\n%d AF=", range->nafreq);
-      for (i = 0; i < range->nafreq; i++)
-	printf ("%3.2g ", range->afreq[i]);
-    }
+  if (range->param) {
+    printf ("\n%d Parameters", ((level == 2 ? range->nlclass : 1) *
+				(level == 0 ? paramcnt[0] : range->nparam)));
+    /* for (i = 0; i < (level==2?range->nlclass:1); i++) */
+    for (i = 0; i < (level == 2 ? range->nlclass : 1); i++)
+      for (j = 0; j < (level == 0 ? 1 : NPENET (range->nalleles)); j++)
+	for (k = 0; k < (level > 0 ? range->npardim : 1); k++) {
+	  printf ("\n  Param[%d][%d][%d]=", i, j, k);
+	  for (l = 0; l < (level == 0 ? paramcnt[k] : range->nparam); l++)
+	    printf ("%3.2g ", range->param[i][j][k][l]);
+	}
+  }
 
-  if (range->dprime)
-    {
-      printf ("\n%d DPrime", range->ndprime);
-      printf ("\n  DPrime=");
-      for (i = 0; i < range->ndprime; i++)
-	printf ("%3.2g ", range->dprime[i]);
+  if (range->afreq) {
+    printf ("\n%d AF=", range->nafreq);
+    for (i = 0; i < range->nafreq; i++)
+      printf ("%3.2g ", range->afreq[i]);
+  }
+
+  if (range->dprime) {
+    printf ("\n%d DPrime", range->ndprime);
+    printf ("\n  DPrime=");
+    for (i = 0; i < range->ndprime; i++)
+      printf ("%3.2g ", range->dprime[i]);
 #if FALSE
-      /* Just for kicks, show a few off. Recall findLambdas() is
-       * called on the fly, so usually these would not be precomputed
-       * at all. */
-      findLambdas (range, 2, 4);
-      findLambdas (range, 2, 3);
-      findLambdas (range, 2, 4);
+    /* Just for kicks, show a few off. Recall findLambdas() is
+     * called on the fly, so usually these would not be precomputed
+     * at all. */
+    findLambdas (range, 2, 4);
+    findLambdas (range, 2, 3);
+    findLambdas (range, 2, 4);
 #endif
-    }
-  if (range->alpha)
-    {
-      printf ("\n%d Alphas", range->nalpha);
-      printf ("\n  Alpha=");
-      for (i = 0; i < range->nalpha; i++)
-	printf ("%3.2g ", range->alpha[i]);
-    }
+  }
+  if (range->alpha) {
+    printf ("\n%d Alphas", range->nalpha);
+    printf ("\n  Alpha=");
+    for (i = 0; i < range->nalpha; i++)
+      printf ("%3.2g ", range->alpha[i]);
+  }
   printf ("\n");
 }
 
@@ -2871,63 +2680,60 @@ showConstraints ()
   printf
     ("======================================================================\n");
 
-  for (i = 0; i < 4; i++)
-    {
-      if (constcnt[i] == 0)
-	continue;
-      printf ("%s constraints:\n",
-	      ((i ==
-		3) ? "PCC" : ((i == 2) ? "PC" : ((i == 1) ? "CC" : "C"))));
-      for (j = 0; j < constcnt[i]; j++)
-	{
-	  if (i == SIMPLE)
-	    printf (" %c%c %s %c%c %s\n",
-		    types[constraints[i][j].a1 * 2],
-		    types[constraints[i][j].a1 * 2 + 1],
-		    ((constraints[i][j].op ==
-		      EQ) ? "==" : (constraints[i][j].op ==
-				    NE) ? "!=" : (constraints[i][j].op ==
-						  GE) ? ">=" : ">"),
-		    types[constraints[i][j].a2 * 2],
-		    types[constraints[i][j].a2 * 2 + 1],
-		    (constraints[i][j].alt == TRUE) ? "|" : "");
-	  else if (i == CLASSC)
-	    printf (" %c%c %d %s %c%c %d %s\n",
-		    types[constraints[i][j].a1 * 2],
-		    types[constraints[i][j].a1 * 2 + 1],
-		    constraints[i][j].c1,
-		    ((constraints[i][j].op ==
-		      EQ) ? "==" : (constraints[i][j].op ==
-				    NE) ? "!=" : (constraints[i][j].op ==
-						  GE) ? ">=" : ">"),
-		    types[constraints[i][j].a2 * 2],
-		    types[constraints[i][j].a2 * 2 + 1], constraints[i][j].c2,
-		    (constraints[i][j].alt == TRUE) ? "|" : "");
-	  else if (i == PARAMC)
-	    printf (" P%d %c%c %s P%d %c%c %s\n",
-		    constraints[i][j].p1,
-		    types[constraints[i][j].a1 * 2],
-		    types[constraints[i][j].a1 * 2 + 1],
-		    ((constraints[i][j].op ==
-		      EQ) ? "==" : (constraints[i][j].op ==
-				    NE) ? "!=" : (constraints[i][j].op ==
-						  GE) ? ">=" : ">"),
-		    constraints[i][j].p2, types[constraints[i][j].a2 * 2],
-		    types[constraints[i][j].a2 * 2 + 1],
-		    (constraints[i][j].alt == TRUE) ? "|" : "");
-	  else if (i == PARAMCLASSC)
-	    printf (" P%d %c%c %d %s P%d %c%c %d %s\n",
-		    constraints[i][j].p1,
-		    types[constraints[i][j].a1 * 2],
-		    types[constraints[i][j].a1 * 2 + 1],
-		    constraints[i][j].c1,
-		    ((constraints[i][j].op ==
-		      EQ) ? "==" : (constraints[i][j].op ==
-				    NE) ? "!=" : (constraints[i][j].op ==
-						  GE) ? ">=" : ">"),
-		    constraints[i][j].p2, types[constraints[i][j].a2 * 2],
-		    types[constraints[i][j].a2 * 2 + 1], constraints[i][j].c2,
-		    (constraints[i][j].alt == TRUE) ? "|" : "");
-	}
+  for (i = 0; i < 4; i++) {
+    if (constcnt[i] == 0)
+      continue;
+    printf ("%s constraints:\n",
+	    ((i == 3) ? "PCC" : ((i == 2) ? "PC" : ((i == 1) ? "CC" : "C"))));
+    for (j = 0; j < constcnt[i]; j++) {
+      if (i == SIMPLE)
+	printf (" %c%c %s %c%c %s\n",
+		types[constraints[i][j].a1 * 2],
+		types[constraints[i][j].a1 * 2 + 1],
+		((constraints[i][j].op ==
+		  EQ) ? "==" : (constraints[i][j].op ==
+				NE) ? "!=" : (constraints[i][j].op ==
+					      GE) ? ">=" : ">"),
+		types[constraints[i][j].a2 * 2],
+		types[constraints[i][j].a2 * 2 + 1],
+		(constraints[i][j].alt == TRUE) ? "|" : "");
+      else if (i == CLASSC)
+	printf (" %c%c %d %s %c%c %d %s\n",
+		types[constraints[i][j].a1 * 2],
+		types[constraints[i][j].a1 * 2 + 1],
+		constraints[i][j].c1,
+		((constraints[i][j].op ==
+		  EQ) ? "==" : (constraints[i][j].op ==
+				NE) ? "!=" : (constraints[i][j].op ==
+					      GE) ? ">=" : ">"),
+		types[constraints[i][j].a2 * 2],
+		types[constraints[i][j].a2 * 2 + 1], constraints[i][j].c2,
+		(constraints[i][j].alt == TRUE) ? "|" : "");
+      else if (i == PARAMC)
+	printf (" P%d %c%c %s P%d %c%c %s\n",
+		constraints[i][j].p1,
+		types[constraints[i][j].a1 * 2],
+		types[constraints[i][j].a1 * 2 + 1],
+		((constraints[i][j].op ==
+		  EQ) ? "==" : (constraints[i][j].op ==
+				NE) ? "!=" : (constraints[i][j].op ==
+					      GE) ? ">=" : ">"),
+		constraints[i][j].p2, types[constraints[i][j].a2 * 2],
+		types[constraints[i][j].a2 * 2 + 1],
+		(constraints[i][j].alt == TRUE) ? "|" : "");
+      else if (i == PARAMCLASSC)
+	printf (" P%d %c%c %d %s P%d %c%c %d %s\n",
+		constraints[i][j].p1,
+		types[constraints[i][j].a1 * 2],
+		types[constraints[i][j].a1 * 2 + 1],
+		constraints[i][j].c1,
+		((constraints[i][j].op ==
+		  EQ) ? "==" : (constraints[i][j].op ==
+				NE) ? "!=" : (constraints[i][j].op ==
+					      GE) ? ">=" : ">"),
+		constraints[i][j].p2, types[constraints[i][j].a2 * 2],
+		types[constraints[i][j].a2 * 2 + 1], constraints[i][j].c2,
+		(constraints[i][j].alt == TRUE) ? "|" : "");
     }
+  }
 }

@@ -1,3 +1,4 @@
+
 /**********************************************************************
  * Copyright 2007, Columbus Children's Research Institute.  
  * All rights reserved.
@@ -15,7 +16,7 @@
 #include <limits.h>		/* USHRT_MAX */
 #include <math.h>		/* for calculating logs */
 #include <float.h>
-//#include <bits/nan.h>		/* NAN (not included by math.h?) */ 
+//#include <bits/nan.h>         /* NAN (not included by math.h?) */ 
 #if FALSE
 #include "niceaux.h"		/* NICE utilities. */
 #include "nicecom.h"
@@ -39,14 +40,17 @@
 /**********************************************************************
  * Some internal defines.
  **********************************************************************/
+
 /* Maximum number of characters in an KELVIN filename. */
 #define KMAXFILENAMELEN 64
+
 /* Maximum number of characters in a KELVIN input line. */
 #define KMAXLINELEN 1024
 
 /**********************************************************************
  * Nagging parameters.
  **********************************************************************/
+
 /* Sleep interval when your master tells you to back off. */
 #define NAGSLEEP	60	/* In seconds. */
 
@@ -80,6 +84,7 @@ extern char markerfile[KMAXFILENAMELEN + 1];
 extern char resultsprefix[KMAXFILENAMELEN + 1];
 extern char pedfile[KMAXFILENAMELEN + 1];
 extern char datafile[KMAXFILENAMELEN + 1];
+
 #if FALSE
 extern char loopsfile[KMAXFILENAMELEN + 1];
 #endif
@@ -121,17 +126,17 @@ typedef struct modelType
   int distrib;			/* Distribution type (QT/CT only) */
   double mean;			/* mean (QT/CT only) */
   double sd;			/* standard deviation (QT/CT only) */
-  double minOriginal;           /* QT - minimum value of QT - left truncate */
-  double min;                   /* QT - min after standardization */
-  double maxOriginal;           /* QT - maximum value of QT - right truncate */
-  double max;                   /* QT - max after standardization */
-  int minFlag;                  /* flag for the existence of lower bound */
-  int maxFlag;                  /* flag for the existence of upper bound */
-  double minThreshold;          /* minimum threshold value - in standardized unit */
-  double maxThreshold;          /* maximum threshold value - in standardized unit */
-  int *constants;		/* Array of distribution constants (certain QT/CT distributions only) */  
-  int ccFlag;                   /* Case Ctrl flag */
-  int imprintingFlag;           /* 1 - imprinting pen(1|2) may not be the same as pen(2|1) */
+  double minOriginal;		/* QT - minimum value of QT - left truncate */
+  double min;			/* QT - min after standardization */
+  double maxOriginal;		/* QT - maximum value of QT - right truncate */
+  double max;			/* QT - max after standardization */
+  int minFlag;			/* flag for the existence of lower bound */
+  int maxFlag;			/* flag for the existence of upper bound */
+  double minThreshold;		/* minimum threshold value - in standardized unit */
+  double maxThreshold;		/* maximum threshold value - in standardized unit */
+  int *constants;		/* Array of distribution constants (certain QT/CT distributions only) */
+  int ccFlag;			/* Case Ctrl flag */
+  int imprintingFlag;		/* 1 - imprinting pen(1|2) may not be the same as pen(2|1) */
 }
 ModelType;
 
@@ -139,18 +144,18 @@ ModelType;
 The following has been moved to locus.h
 
 /* LD cell type (used in modelRange below). */
-typedef struct lambdaCell
+  typedef struct lambdaCell
 {
   int m;			/* Trait/disease. */
   int n;			/* Marker. */
   int ndprime;			/* number of D prime combinations */
   double ***lambda;		/* Lambda array. */
-  int *impossibleFlag;          /* whether combinatoin of D's is possible */
-  double ***haploFreq;          /* haplotype frequency */
-  double ***DValue;             /* D value */
+  int *impossibleFlag;		/* whether combinatoin of D's is possible */
+  double ***haploFreq;		/* haplotype frequency */
+  double ***DValue;		/* D value */
 }
 LambdaCell;
-#endif 
+#endif
 
 /* Information about the analysis parameters. */
 typedef struct modelRange
@@ -170,7 +175,7 @@ typedef struct modelRange
   double **theta;		/* Array of theta arrays */
   int ngender;			/* Default is sex-averaged */
   int ntheta;			/* Number of theta records */
-  int *thetacnt;                /* number of theta for male and female */
+  int *thetacnt;		/* number of theta for male and female */
 
   /* Currently can only handle SNP marker frequencies. */
   double *afreq;		/* Allele frequencies */
@@ -226,8 +231,8 @@ typedef struct SUMMARY_STAT
   double max_mf;		/* marker allele frequency that maximizes lr 
 				 * only applies in bi-allelic case */
   double R_square;		/* only applies in bi-allelic, i.e. SNPs */
-  double max_paramIdx;          /* parameter - SD index */
-  double max_thresholdIdx;      /* threshold index */
+  double max_paramIdx;		/* parameter - SD index */
+  double max_thresholdIdx;	/* threshold index */
 
   /* for max BR */
   double max_br_lr;		/* max for BR - with trait parameters integrated out */
@@ -243,16 +248,21 @@ typedef struct SUMMARY_STAT
 
 
 void free_likelihood_storage ();
+
 /* allocate two point analysis result space */
 int initialize_tp_result_storage ();
 int free_tp_result_storage (int ndprime);
 double calculate_R_square (double p1, double q1, double d);
+
 /* using the average at each theta to calculate PPL - posterior probability of linkage */
 double calculate_PPL (SUMMARY_STAT ** result);
+
 /* calculate posterior probability of LD given linakge */
 double calculate_PPLD (SUMMARY_STAT *** result);
+
 /* get the mean of LR among all D primes for each theta */
 int get_average_LD_LR (SUMMARY_STAT *** result);
+
 /* integrate out marker allele frequencies and get the max MOD */
 int get_average_LR (SUMMARY_STAT *** result);
 
@@ -272,4 +282,3 @@ extern double *****likelihoodQT;
  * third dimension is marker allele frequency, for LE, only one element in this dimension */
 extern SUMMARY_STAT ***tp_result;
 extern LambdaCell *pLambdaCell;
-
