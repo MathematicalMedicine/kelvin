@@ -1,3 +1,4 @@
+
 /**********************************************************************
  * Copyright 2007, Columbus Children's Research Institute.  
  * All rights reserved.
@@ -12,16 +13,20 @@
 #ifndef NO_POLYNOMIAL
 #include "polynomial.h"
 #endif
+
 /* Most of the structures defined in this file were taken from the original
  * vitesse codeset v_prog.h and trimed down to the bare neccessities
  * */
 
 /* maximum line length in pedigree file */
 #define MAX_LINE_LEN            4096
+
 /* maximum length for pedigree label, individual IDs */
 #define MAX_PED_LABEL_LEN       128
+
 /* delimiter to separate fields in the pedfile */
 #define PED_DELIM               " \t\n"
+
 /* default pedigree malloc increment */
 #define DEF_PED_MALLOC_INCREMENT 10
 
@@ -86,6 +91,7 @@ typedef struct PedigreeSet
   int maxNumPedigree;
 
 } PedigreeSet;
+
 /* Pedigree structure. Each pedigree is represented by this structure
  * It has information for each pedigree such as:
  *   number of persons 
@@ -156,7 +162,7 @@ typedef struct Pedigree
   struct NuclearFamily *pPeelingNuclearFamily;
 
   /* likelihood holder */
-  int    load_flag;    /* 1 if alternative likelihood is already stored in  */
+  int load_flag;		/* 1 if alternative likelihood is already stored in  */
   double likelihood;
   double markerLikelihood;
   double **traitLikelihoodDT;

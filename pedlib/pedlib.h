@@ -1,3 +1,4 @@
+
 /**********************************************************************
  * Copyright 2007, Columbus Children's Research Institute.  
  * All rights reserved.
@@ -8,6 +9,7 @@
 
 #ifndef __PEDLIB_H__
 #define __PEDLIB_H__
+
 /********************************************************************
  * Include file for Kelvin
  * This library reads in pedigree file and build pedigree structure
@@ -26,10 +28,12 @@
 
 /* Trait value type */
 #define DICHOTOMOUS	0
+
 /* The main difference between DT and QT are in the way how conditional
  * penetrances are determined. For DT, penetrances are given, while for
  * QT, they are calculated using means and variances. */
 #define QUANTITATIVE	1
+
 /* Combination of dichotomous and quantitative trait 
  * some individuals in the pedigree has known quantitative trait values
  * individuals with unknown trait values are handled in a way similar to 
