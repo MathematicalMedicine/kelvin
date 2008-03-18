@@ -25,13 +25,10 @@ struct swStopwatch *overallSW;
 
 #include <signal.h>		/* Signalled dumps */
 volatile sig_atomic_t signalSeen = 0;
-int handlerDumpCycle = 0;
 void
 usr1SignalHandler (int signal)
 {
   swLogPeaks ("Timer");
-//  if ((++handlerDumpCycle % 100) == 0)
-//    dumpPStats ("Timer");
 }
 
 void
@@ -235,7 +232,7 @@ main (int argc, char *argv[])
   SubLocusList traitLocusList;
   SubLocusList markerLocusList;
 
-  char **markerNameList;
+  char **markerNameList = NULL;
 
   clock_t time0, time1, time2;
   int numberOfCompute = 0;
@@ -1244,7 +1241,13 @@ main (int argc, char *argv[])
 		      }		/* liability class Index */
 		      if (breakFlag == TRUE)
 			continue;
+#ifndef NO_POLYNOMIAL
+		      if (modelOptions.polynomial == TRUE);
+		      else
+			update_penetrance (&pedigreeSet, traitLocus);
+#else
 		      update_penetrance (&pedigreeSet, traitLocus);
+#endif
 		    }
 		    /* marker to marker analysis */
 		    /* get the likelihood at 0.5 first and LD=0 */
@@ -2183,7 +2186,13 @@ main (int argc, char *argv[])
 	      }			/* liability class Index */
 	      if (breakFlag == TRUE)
 		continue;
+#ifndef NO_POLYNOMIAL
+	      if (modelOptions.polynomial == TRUE);
+	      else
+		update_penetrance (&pedigreeSet, traitLocus);
+#else
 	      update_penetrance (&pedigreeSet, traitLocus);
+#endif
 	      KLOG (LOGLIKELIHOOD, LOGDEBUG, "Trait Likelihood\n");
 	      compute_likelihood (&pedigreeSet);
 	      if (pedigreeSet.likelihood == 0.0 &&
@@ -2814,10 +2823,14 @@ main (int argc, char *argv[])
 		}		/* liability class Index */
 		if (breakFlag == TRUE)
 		  continue;
+#ifndef NO_POLYNOMIAL
+		if (modelOptions.polynomial == TRUE);
+		else
+		  update_penetrance (&pedigreeSet, traitLocus);
+#else
 		update_penetrance (&pedigreeSet, traitLocus);
-
 #endif
-
+#endif
 		/* ready for the alternative hypothesis */
 		locusList = &savedLocusList;
 		xmissionMatrix = altMatrix;
