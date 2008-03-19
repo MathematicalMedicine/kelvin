@@ -32,17 +32,17 @@ saveTrait (int chr23Flag, char *pedigree, double **lDT)
 {
   tpl_node *tn;
 
-  mkdir(resultsprefix, S_IRWXU|S_IRWXG|S_IROTH);
+  mkdir (resultsprefix, S_IRWXU | S_IRWXG | S_IROTH);
   if (chr23Flag) {
     sprintf (pathName, "%strait-23/", resultsprefix);
-    mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+    mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
     sprintf (pathName, "%strait-23/ped-%s/", resultsprefix, pedigree);
   } else {
     sprintf (pathName, "%strait/", resultsprefix);
-    mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+    mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
     sprintf (pathName, "%strait/ped-%s/", resultsprefix, pedigree);
   }
-  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+  mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
   sprintf (fileName, traitFileFormat, pathName, pedigree);
   //  fprintf(stderr, "in saveTrait for pedigree %s as %s\n", pedigree, fileName);
   tn =
@@ -101,11 +101,11 @@ saveMarker (char *pedigree, int chromosome, int markerCount,
   int i;
   char *markerName;
 
-  mkdir(resultsprefix, S_IRWXU|S_IRWXG|S_IROTH);
+  mkdir (resultsprefix, S_IRWXU | S_IRWXG | S_IROTH);
   sprintf (pathName, "%schr-%d/", resultsprefix, chromosome);
-  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+  mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
   sprintf (pathName, "%schr-%d/ped-%s/", resultsprefix, chromosome, pedigree);
-  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+  mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
   sprintf (fileName, markerFileFormat, pathName, chromosome, pedigree);
   for (i = 0; i < markerCount; i++) {
     strcat (fileName, markerNames[i]);
@@ -113,7 +113,7 @@ saveMarker (char *pedigree, int chromosome, int markerCount,
   }
   strcat (fileName, "marker.tpl");
   //  fprintf(stderr, "in saveMarker for pedigree %s, chromosome %d w/%d markers of value %G...\n\tas %s\n",
-  //  	  pedigree, chromosome, markerCount, *mDT, fileName);
+  //      pedigree, chromosome, markerCount, *mDT, fileName);
   tn =
     tpl_map (markerTPLFormat, &pedigree, &chromosome, &markerCount,
 	     &markerName, mDT);
@@ -148,7 +148,7 @@ restoreMarker (char *pedigree, int chromosome, int markerCount,
   }
   strcat (fileName, "marker.tpl");
   //  fprintf(stderr, "in restoreMarker for pedigree %s, chromosome %d w/%d markers...\n\tas %s\n",
-  //  	  pedigree, chromosome, markerCount, fileName);
+  //      pedigree, chromosome, markerCount, fileName);
   tn =
     tpl_map (markerTPLFormat, &checkPedigree, &checkChromosome,
 	     &checkMarkerCount, &markerName, mDT);
@@ -189,14 +189,15 @@ saveAlternative (char *pedigree, int chromosome, double traitPosition,
 {
   tpl_node *tn;
 
-  mkdir(resultsprefix, S_IRWXU|S_IRWXG|S_IROTH);
+  mkdir (resultsprefix, S_IRWXU | S_IRWXG | S_IROTH);
   sprintf (pathName, "%schr-%d/", resultsprefix, chromosome);
-  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
+  mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
   sprintf (pathName, "%schr-%d/ped-%s/", resultsprefix, chromosome, pedigree);
-  mkdir(pathName, S_IRWXU|S_IRWXG|S_IROTH);
-  sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree, traitPosition);
+  mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
+  sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree,
+	   traitPosition);
   //  fprintf(stderr, "in saveAlternative for pedigree %s, chromosome %d, trait position %G...\n\tas %s\n",
-  //  	  pedigree, chromosome, traitPosition, fileName);
+  //      pedigree, chromosome, traitPosition, fileName);
   tn =
     tpl_map (alternativeTPLFormat, &pedigree, &chromosome, &traitPosition,
 	     lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275,
@@ -219,9 +220,10 @@ restoreAlternative (char *pedigree, int chromosome, double traitPosition,
   double checkTraitPosition;
 
   sprintf (pathName, "%schr-%d/ped-%s/", resultsprefix, chromosome, pedigree);
-  sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree, traitPosition);
+  sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree,
+	   traitPosition);
   //  fprintf(stderr, "in restoreAlternative for pedigree %s, chromosome %d, trait position %G...\n\tas %s\n",
-  //  	  pedigree, chromosome, traitPosition, fileName);
+  //      pedigree, chromosome, traitPosition, fileName);
   tn =
     tpl_map (alternativeTPLFormat, &checkPedigree, &checkChromosome,
 	     &checkTraitPosition, lDT[0], 275, lDT[1], 275, lDT[2], 275,

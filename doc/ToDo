@@ -1,13 +1,21 @@
 **************
 Current Issues:
-1. memory usage is huge under polynomial mode
+1. performance problem
+2. memory runs out for >4 markers w/polynomial (snps)
+3. walking chromosome works but gets slower on each position
 
 *********************
-Future Additions:
+Near future Additions:
+Write out lods.out file
 sex specific LD for TP
 Allele frequency estimation - MLE
+loops
 Allow imprinting
 Lander green algorithm
+
+*******************
+Associated Programs:
+seq_update needs to be updated to reflect the new output file
 
 ************************
 Long shots (low priority):

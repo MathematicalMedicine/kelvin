@@ -28,7 +28,16 @@ volatile sig_atomic_t signalSeen = 0;
 void
 usr1SignalHandler (int signal)
 {
+  swDump (overallSW);
+#ifdef DMTRACK
   swLogPeaks ("Timer");
+#endif
+}
+
+void
+termSignalHandler (int signal)
+{
+  exit(-1);
 }
 
 void
@@ -37,7 +46,7 @@ quitSignalHandler (int signal)
   swDump (overallSW);
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
-    polyDynamicStatistics ();
+    polyStatistics ();
 #endif
 #ifdef DMTRACK
   char messageBuffer[MAXSWMSG];
@@ -264,18 +273,27 @@ main (int argc, char *argv[])
   /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
   struct sigaction usr1Action, quitAction;
   sigset_t usr1BlockMask, quitBlockMask;
+  struct sigaction termAction;
+  sigset_t termBlockMask;
 
   sigfillset (&usr1BlockMask);
   usr1Action.sa_handler = usr1SignalHandler;
   usr1Action.sa_mask = usr1BlockMask;
   usr1Action.sa_flags = 0;
   sigaction (SIGUSR1, &usr1Action, NULL);
+
   sigfillset (&quitBlockMask);
   quitAction.sa_handler = quitSignalHandler;
   quitAction.sa_mask = quitBlockMask;
   quitAction.sa_flags = 0;
   sigaction (SIGQUIT, &quitAction, NULL);
-
+  
+  sigfillset (&termBlockMask);
+  termAction.sa_handler = termSignalHandler;
+  termAction.sa_mask = termBlockMask;
+  termAction.sa_flags = 0;
+  sigaction (SIGTERM, &termAction, NULL);
+  
   /* Annouce ourselves for performance tracking. */
   char messageBuffer[MAXSWMSG];
 
@@ -2027,7 +2045,8 @@ main (int argc, char *argv[])
 	if (modelOptions.saveResults == TRUE) {
 	  pPedigree->load_flag =
 	    restoreTrait (modelOptions.sexLinked,
-                          pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
+			  pPedigree->sPedigreeID,
+			  pPedigree->traitLikelihoodDT);
 	} else {
 	  pPedigree->load_flag = 0;
 	}
@@ -2122,11 +2141,10 @@ main (int argc, char *argv[])
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	/* save the likelihood at null */
 	pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	if ((modelOptions.saveResults == TRUE) &&
-	    (pPedigree->load_flag == 0)) {	/*save only for the pedigrees which were add for this run */
+	if ((modelOptions.saveResults == TRUE) && (pPedigree->load_flag == 0)) {	/*save only for the pedigrees which were add for this run */
 	  pPedigree->load_flag =
 	    saveTrait (modelOptions.sexLinked,
-                       pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
+		       pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
 	} else {
 	  pPedigree->load_flag = 0;
 	}
@@ -2429,24 +2447,25 @@ main (int argc, char *argv[])
 	    /* save the likelihood at null */
 	    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 
-            //fprintf(stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx, pPedigree->likelihood);
-	    if (modelOptions.saveResults == TRUE){
-	      if(pPedigree->load_flag == 0) {	/*save only for the pedigrees which were add for this run */
-	        pPedigree->markerLikelihood = pPedigree->likelihood;
-	        pPedigree->load_flag =
+	    //fprintf(stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx, pPedigree->likelihood);
+	    if (modelOptions.saveResults == TRUE) {
+	      if (pPedigree->load_flag == 0) {	/*save only for the pedigrees which were add for this run */
+		pPedigree->markerLikelihood = pPedigree->likelihood;
+		pPedigree->load_flag =
 		  saveMarker (pPedigree->sPedigreeID,
-			    (originalLocusList.
-			     ppLocusList[mp_result[posIdx].pMarkers[0]])->
-			    pMapUnit->chromosome, modelType.numMarkers,
-			    markerNameList, &(pPedigree->markerLikelihood));
+			      (originalLocusList.
+			       ppLocusList[mp_result[posIdx].pMarkers[0]])->
+			      pMapUnit->chromosome, modelType.numMarkers,
+			      markerNameList, &(pPedigree->markerLikelihood));
 	      }
-	    }else{
-              pPedigree->markerLikelihood = pPedigree->likelihood;
+	    } else {
+	      pPedigree->markerLikelihood = pPedigree->likelihood;
 	    }
-            pPedigree->load_flag = 0;
-            fprintf(stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx, pPedigree->markerLikelihood);
+	    pPedigree->load_flag = 0;
+	    fprintf (stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx,
+		     pPedigree->markerLikelihood);
 	  }
-	  // Removed 3/14	  pedigreeSet.markerLikelihood = pedigreeSet.likelihood;
+	  // Removed 3/14         pedigreeSet.markerLikelihood = pedigreeSet.likelihood;
 	  pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
 	}
       }				/* end of marker set change */
@@ -2595,8 +2614,9 @@ main (int argc, char *argv[])
 	    pPedigree->load_flag =
 	      restoreAlternative (pPedigree->sPedigreeID,
 				  (originalLocusList.
-				   ppLocusList[mp_result[posIdx].pMarkers[0]])->
-				  pMapUnit->chromosome, traitPos,
+				   ppLocusList[mp_result[posIdx].
+					       pMarkers[0]])->pMapUnit->
+				  chromosome, traitPos,
 				  pPedigree->alternativeLikelihoodDT);
 	  } else {
 	    pPedigree->load_flag = 0;
@@ -2711,24 +2731,24 @@ main (int argc, char *argv[])
 		    pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx] /
 		    (pPedigree->traitLikelihoodDT[gfreqInd][penIdx] *
 		     pPedigree->markerLikelihood);
-		  /*		  if (homoLR > 1.0e40 || homoLR < 1.0e-40) {
-		    fprintf(stderr, "homoLR %G, alt %G, trait %G, mrk %G\n",
-			    homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
-			    pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
-			    pPedigree->markerLikelihood);
-			    }*/
+		  /*              if (homoLR > 1.0e40 || homoLR < 1.0e-40) {
+		     fprintf(stderr, "homoLR %G, alt %G, trait %G, mrk %G\n",
+		     homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
+		     pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
+		     pPedigree->markerLikelihood);
+		     } */
 		  if (alphaV * homoLR + alphaV2 < 0)
 		    fprintf (stderr, "HET LR less than 0. Check!!!\n");
 		  log10HetLR += log10 (alphaV * homoLR + alphaV2);
 		  // if (log10HetLR > 10 || log10HetLR < -40) {
-                  /*if(gfreqInd ==0 && j==0){
-		    fprintf(stderr, "gf=%d pen=%d log10HetLR %G, homoLR %G, alt %G, trait %G, mrk %G\n",
-			    gfreqInd, penIdx,log10HetLR,
-			    homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
-			    pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
-			    pPedigree->markerLikelihood);
-		    //  exit(0);
-		    }*/
+		  /*if(gfreqInd ==0 && j==0){
+		     fprintf(stderr, "gf=%d pen=%d log10HetLR %G, homoLR %G, alt %G, trait %G, mrk %G\n",
+		     gfreqInd, penIdx,log10HetLR,
+		     homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
+		     pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
+		     pPedigree->markerLikelihood);
+		     //  exit(0);
+		     } */
 		}
 		if (log10HetLR >= DBL_MAX_10_EXP - 1) {
 		  hetLR = DBL_MAX;
@@ -2756,8 +2776,7 @@ main (int argc, char *argv[])
 	/* save the alternative likelihood */
 	for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	  if ((modelOptions.saveResults == TRUE) &&
-	      (pPedigree->load_flag == 0)) {	/*save only for the pedigrees which were add for this run */
+	  if ((modelOptions.saveResults == TRUE) && (pPedigree->load_flag == 0)) {	/*save only for the pedigrees which were add for this run */
 	    pPedigree->load_flag =
 	      saveAlternative (pPedigree->sPedigreeID,
 			       (originalLocusList.

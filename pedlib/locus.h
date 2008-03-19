@@ -1,3 +1,4 @@
+
 /**********************************************************************
  * Copyright 2007, Columbus Children's Research Institute.  
  * All rights reserved.
@@ -26,16 +27,21 @@
 #define SEX_SPECIFIC	(MAP_SEX_AVERAGE+1)
 
 /* these affect and limit the size of pentrance matrix */
+
 /* When we do categorial traits, there are potentially more than 3 possible values */
 #define MAX_NUM_AFFECTION_STATUS 	3
 #define MAX_NUM_LIABILITY_CLASS		50
+
 /* usually only 2 alleles for a trait locus */
 #define MAX_NUM_TRAIT_ALLELE		5
+
 /* max number of trait locus genotypes - unphased */
 #define MAX_NUM_TRAIT_GENOTYPE		(MAX_NUM_TRAIT_ALLELE * (MAX_NUM_TRAIT_ALLELE + 1) /2 )
+
 /* max number of trait variables - usually 1, or bi-variate ...
  * can't see it go up to 3 or more */
 #define MAX_NUM_TRAIT			2
+
 /* covariance between trait variables */
 #define MAX_NUM_TRAIT_COVARIANCE	(MAX_NUM_TRAIT* (MAX_NUM_TRAIT-1) /2 )
 
@@ -301,8 +307,7 @@ typedef struct TraitLocus
   int numTrait;
   struct Trait *pTraits[MAX_NUM_TRAIT];
   //double covariance[MAX_NUM_TRAIT_COVARIANCE][MAX_NUM_TRAIT_GENOTYPE];
-  double
-    covariance[MAX_NUM_TRAIT][MAX_NUM_TRAIT][MAX_NUM_TRAIT_ALLELE]
+  double covariance[MAX_NUM_TRAIT][MAX_NUM_TRAIT][MAX_NUM_TRAIT_ALLELE]
     [MAX_NUM_TRAIT_ALLELE];
 } TraitLocus;
 
@@ -319,18 +324,15 @@ typedef struct Trait
    * 3rd - allele 1
    * 4th - allele 2
    * */
-  double
-    penetrance[MAX_NUM_AFFECTION_STATUS][MAX_NUM_LIABILITY_CLASS]
+  double penetrance[MAX_NUM_AFFECTION_STATUS][MAX_NUM_LIABILITY_CLASS]
     [MAX_NUM_TRAIT_ALLELE][MAX_NUM_TRAIT_ALLELE];
   /* 3-dimension matrix for quantitative trait
    * means & standard deviation
    * */
-  double
-    means[MAX_NUM_LIABILITY_CLASS][MAX_NUM_TRAIT_ALLELE]
+  double means[MAX_NUM_LIABILITY_CLASS][MAX_NUM_TRAIT_ALLELE]
     [MAX_NUM_TRAIT_ALLELE];
   /* standard deviation */
-  double
-    stddev[MAX_NUM_LIABILITY_CLASS][MAX_NUM_TRAIT_ALLELE]
+  double stddev[MAX_NUM_LIABILITY_CLASS][MAX_NUM_TRAIT_ALLELE]
     [MAX_NUM_TRAIT_ALLELE];
   /* unknown trait value used in the input pedigree file */
   double unknownTraitValue;
@@ -485,6 +487,7 @@ int initialize_loci (PedigreeSet * pPedigreeSet);
 int update_locus (PedigreeSet * pPedigreeSet, int locus);
 int update_penetrance (PedigreeSet * pPedigreeSet, int locus);
 double cm_to_recombination_fraction (double distance, int mapFunctionFlag);
+
 /* int setup_LD_haplotype_freq (LDLoci * pLDLoci); */
 int setup_LD_haplotype_freq (LDLoci * pLDLoci, LambdaCell * pCell,
 			     int dprimeIdx);
@@ -517,14 +520,18 @@ void set_removeGenotypeFlag (int flag);
 
 /* global variable */
 extern Map map;
+
 /* extern LocusList markerList;
 extern LocusList traitList;
 */
+
 /* a master locus list with both marker and trait loci in */
 extern LocusList originalLocusList;
+
 /* the analysis locus list - this will be different than the originalLocusList in MP */
 extern SubLocusList *locusList;
 extern SubLocusList savedLocusList;
+
 /* for MP null hypothesis */
 extern SubLocusList nullLocusList;
 

@@ -1,3 +1,4 @@
+
 /**********************************************************************
  * Kelvin utilities.
  * Alberto Maria Segre
@@ -10,6 +11,7 @@
 /**********************************************************************
  * Some convenient and commonly used defines.
  **********************************************************************/
+
 /**********************************************************************
  * NULL/FALSE/TRUE are probably already defined.
  **********************************************************************/
@@ -100,20 +102,28 @@ void logMsg (unsigned int type, int level, const char *format, ...);
  * logFlag[].
  **********************************************************************/
 #define LOGDEFAULT      1
+
 /* processing pedigree file */
 #define LOGPEDFILE	(1 << 1)
+
 /* allele set recoding */
 #define LOGSETRECODING	(1 << 2)
+
 /* genotype elimination */
 #define LOGGENOELIM	(1 << 3)
+
 /* parental pair construction */
 #define LOGPARENTALPAIR (1 << 4)
+
 /* peel graph algorithm */
 #define LOGPEELGRAPH    (1 << 5)
+
 /* likelihood caluclation */
 #define LOGLIKELIHOOD   (1 << 6)
+
 /* input configuration file */
 #define LOGINPUTFILE    (1 << 7)
+
 /* memory management */
 #define LOGMEMORY	(1 << 8)
 
@@ -121,6 +131,7 @@ void logMsg (unsigned int type, int level, const char *format, ...);
  * Macros for use in invoking the log function. These macro "wrappers"
  * provide for automatic inclusion of source filename and line number.
  **********************************************************************/
+
 /**********************************************************************
  * KLOG() invokes an error of a given type at a given level. If the
  * level is LOGFATAL, will also abort.
@@ -129,7 +140,7 @@ void logMsg (unsigned int type, int level, const char *format, ...);
  *   KLOG(type, level, formatString, args...)
  * No space allowed between KLOG and leading argument paren!
  **********************************************************************/
-#ifdef DEBUG                                                                    
+#ifdef DEBUG
 #define KLOG(TYPE, LEVEL, ...)                                        \
 { \
   logMsg (TYPE, MAX(LOGERROR,LEVEL), "%s (%d): ", (__FILE__),(__LINE__)); \

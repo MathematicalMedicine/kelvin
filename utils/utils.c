@@ -1,3 +1,4 @@
+
 /**********************************************************************
  * Kelvin utilities.
  * Alberto Maria Segre
@@ -38,6 +39,7 @@ void
 logInit ()
 {
   int i;
+
   for (i = 0; i < MAXLOGLEVELS; i++)
     logFlag[i] = LOGDEFAULT;
 }
@@ -52,6 +54,7 @@ void
 logSet (unsigned int type, int level)
 {
   int i;
+
   for (i = 0; i < level; i++)
     logFlag[i] |= type;
 }
@@ -62,19 +65,19 @@ logSet (unsigned int type, int level)
 void
 logMsg (unsigned int type, int level, const char *format, ...)
 {
- va_list argp;
+  va_list argp;
 
- /* Initialize the variable arguments list. */
- va_start (argp, format);
- /* Check to see if the criteria for making the message appear are
-  * met. Level 0 errors are always produced. */
- if ((level == 0) || (type & logFlag[level-1]))
-   vfprintf (stderr, format, argp);
- /* Close the variable arguments list. */
- va_end (argp);
+  /* Initialize the variable arguments list. */
+  va_start (argp, format);
+  /* Check to see if the criteria for making the message appear are
+   * met. Level 0 errors are always produced. */
+  if ((level == 0) || (type & logFlag[level - 1]))
+    vfprintf (stderr, format, argp);
+  /* Close the variable arguments list. */
+  va_end (argp);
 
- /* If this was a fatal error, dump. Level 0 errors are always checked
-  * and are always fatal. */
- if (level == LOGFATAL)
-   exit (ERROR);
+  /* If this was a fatal error, dump. Level 0 errors are always checked
+   * and are always fatal. */
+  if (level == LOGFATAL)
+    exit (ERROR);
 }

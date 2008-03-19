@@ -1,3 +1,4 @@
+
 /**********************************************************************
  * Copyright 2007, Columbus Children's Research Institute.  
  * All rights reserved.
@@ -9,6 +10,7 @@
 #define __PARENTALPAIR_H__
 
 #include "polynomial.h"
+
 /* each nuclear family can have many ParentalPair depends on the 
  * possible genotypes of the father and mother 
  * these parental pairs are phased single locus . */
@@ -42,6 +44,7 @@ typedef struct ParentalPair
 } ParentalPair;
 
 #if 0
+
 /* multi-locus parental pair */
 typedef struct HaplotypePair
 {

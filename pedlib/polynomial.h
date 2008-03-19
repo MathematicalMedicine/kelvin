@@ -64,7 +64,8 @@ int nodeId;
 */
 enum expressionType
 { T_CONSTANT = 0, T_VARIABLE = 1, T_SUM = 2, T_PRODUCT = 3, T_FUNCTIONCALL =
-    4, T_FREED = 5 };
+    4, T_FREED = 5
+};
 
 struct polynomial;
 

@@ -45,7 +45,7 @@ CFLGS  += -Wall -I$(INCDIR) -L$(LIBDIR) -I$(NINCDIR) -L$(NLIBDIR)
 ######################################################################
 # File sets. 
 NBIN	= kelvin
-LIB	= -lped -lutils -lgsl -lgslcblas -lm -ltpl -lsw -lbj
+LIB	= -lped -lutils -lgsl -lgslcblas -lm
 NLIB	= # -lniceapi -lnicecom -lniceaux
 SRC	= kelvin.c config.c ppl.c saveResults.c
 INC	= kelvin.h
