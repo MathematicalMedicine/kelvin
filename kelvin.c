@@ -46,7 +46,7 @@ quitSignalHandler (int signal)
   swDump (overallSW);
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
-    polyStatistics ();
+    polyDynamicStatistics ();
 #endif
 #ifdef DMTRACK
   char messageBuffer[MAXSWMSG];
