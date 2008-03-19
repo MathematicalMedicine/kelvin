@@ -188,7 +188,7 @@ swDumpOutput (struct swStopwatch *theStopwatch)
 
   sprintf
     (buffer,
-     "stopwatch %s(%d) e:%lus u:%lu.%06lus s:%lu.%06lus, vx:%ld, ivx:%ld, sf:%ld, hf:%ld",
+     "stopwatch %s(%d) e:%lus u:%lu.%06us s:%lu.%06us, vx:%lu, ivx:%lu, sf:%lu, hf:%lu",
      theStopwatch->swName, theStopwatch->swStartedCount,
      theStopwatch->swAccumWallTime, theStopwatch->swAccumRU.ru_utime.tv_sec,
      theStopwatch->swAccumRU.ru_utime.tv_usec,
