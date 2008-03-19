@@ -6,8 +6,8 @@
 #include "tpl.h"		/* TPL serialization, open source under
 				 * Berkeley license */
 
-char pathName[128];
-char fileName[128];
+char pathName[256];
+char fileName[256];
 
 /* I'm being passed data that is both self-referential and not contiguous in
  * memory, so I can't serialize the whole thing in one shot. What a pain! */
