@@ -473,6 +473,11 @@ readConfigFile (char *file, ModelType * modelType,
     if (strncmp (line, "SR", 2) == 0) {
       modelOptions->saveResults = TRUE;
       if (sscanf (line, "SR %s", resultsprefix) == 1) {	/* Results file prefix */
+	if ((i = strlen(resultsprefix)) != 0)
+	  if (resultsprefix[i-1] != '/') {
+	    resultsprefix[i] = '/';
+	    resultsprefix[i+1] = 0;
+	  }
 	KLOG (LOGINPUTFILE, LOGDEBUG,
 	      "Configure for saving results w/file prefix %s\n",
 	      resultsprefix);
