@@ -5,7 +5,7 @@
  * 
  * Polynomial reduction optimizations - Bill Valentine-Cooper
  * 
- * Copyright 2007, Columbus Children's Research Institute.  
+ * Copyright 2008, Nationwide Children's Research Institute.  
  * All rights reserved.
  * Permission is hereby given to use this software 
  * for non-profit educational purposes only.
@@ -86,6 +86,7 @@ int constantPLExpansions = 0,
   sumPListExpansions = 0,
   productPCollectExpansions = 0,
   productPTermMergeExpansions = 0, productPListExpansions = 0;
+unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount = 0, highSPLCount = 0;
 
 char *polynomialVersion = "0.34.0.160";	/* Make this meaningful since kelvin displays it. */
 
@@ -661,10 +662,20 @@ searchPolynomialList (struct polynomial **p, int length,
 {
   int binaryStart, binaryEnd, binaryMiddle;
 
+  totalSPLLengths += length;
+  totalSPLCalls++;
+
   if (length == 0) {
+    lowSPLCount++;
     *location = 0;
     return 0;
   }
+  if (target->index > p[length - 1]->index) {
+    highSPLCount++;
+    *location = length;
+    return 0;
+  }
+
   binaryStart = 0;
   binaryEnd = length - 1;
   while (binaryStart <= binaryEnd) {
@@ -3049,8 +3060,8 @@ polyDynamicStatistics ()
 	   productListReplacementCount);
   fprintf (stderr, "...freed=%d 1st-term freed=%d\n", productFreedCount,
 	   product1stTermsFreedCount);
-  fprintf (stderr, "NodeId: %d Hash: max list len=%d\n", nodeId,
-	   maxHashLength);
+  fprintf (stderr, "NodeId: %d Hash: max list len=%d, SPL: calls=%lu, average length=%lu, low=%lu, high=%lu\n", 
+	   nodeId, maxHashLength, totalSPLCalls, totalSPLLengths / totalSPLCalls, lowSPLCount, highSPLCount);
 }
 
 /*

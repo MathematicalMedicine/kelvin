@@ -6,7 +6,7 @@
  * config.c and error logging modules - Alberto Maria Segre
  * Regex code - Nathan Burnette
  * 
- * Copyright 2007, Columbus Children's Research Institute.  
+ * Copyright 2008, Nationwide Children's Research Institute.  
  * All rights reserved.
  * Permission is hereby given to use this software 
  * for non-profit educational purposes only.
@@ -307,12 +307,8 @@ main (int argc, char *argv[])
     ("Dynamic memory usage dumping is turned on, so performance will be poor!\n");
 #endif
   fprintf (stderr,
-	   "To force a dump of stats, type CTRL-\\ (dangerous and terse but always works)\n");
-  fprintf (stderr,
-	   "or type \"kill -%d %d\" (safe and thorough, but requires program cooperation).\n",
-	   SIGUSR1, getpid ());
+	   "To force a dump of stats, type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, getpid ());
   swStart (overallSW);
-
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&markerLocusList, 0, sizeof (markerLocusList));

@@ -1,3 +1,11 @@
+
+/**********************************************************************
+ * Copyright 2008, Nationwide Children's Research Institute.  
+ * All rights reserved.
+ * Permission is hereby given to use this software 
+ * for non-profit educational purposes only.
+ **********************************************************************/
+
 #ifndef __POLYNOMIAL_H__
 #define __POLYNOMIAL_H__
 #include <stdarg.h>

@@ -1,3 +1,11 @@
+
+/**********************************************************************
+ * Copyright 2008, Nationwide Children's Research Institute.  
+ * All rights reserved.
+ * Permission is hereby given to use this software 
+ * for non-profit educational purposes only.
+ **********************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
