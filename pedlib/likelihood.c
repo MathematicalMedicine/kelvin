@@ -1,6 +1,6 @@
 
 /**********************************************************************
- * Copyright 2007, Columbus Children's Research Institute.
+ * Copyright 2008, Nationwide Children's Research Institute.
  * All rights reserved.
  * Permission is hereby given to use this software
  * for non-profit educational purposes only.
@@ -377,8 +377,8 @@ pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList)
       }
     }
     freeKeptPolys ();		/* Because holds overlapped keeps. */
-    fprintf (stderr, "Post-pedigree free minimum:\n");
-    polyStatistics ();
+    //    fprintf (stderr, "Post-pedigree free minimum:\n");
+    //    polyStatistics ();
   }
 #endif
 }

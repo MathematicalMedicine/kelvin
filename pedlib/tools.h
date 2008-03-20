@@ -1,3 +1,11 @@
+
+/**********************************************************************
+ * Copyright 2008, Nationwide Children's Research Institute.  
+ * All rights reserved.
+ * Permission is hereby given to use this software 
+ * for non-profit educational purposes only.
+ **********************************************************************/
+
 #ifndef __TOOLS_H__
 #define __TOOLS_H__
 

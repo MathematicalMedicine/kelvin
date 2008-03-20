@@ -1,4 +1,11 @@
 
+/**********************************************************************
+ * Copyright 2008, Nationwide Children's Research Institute.  
+ * All rights reserved.
+ * Permission is hereby given to use this software 
+ * for non-profit educational purposes only.
+ **********************************************************************/
+
 /*
 $Id$
 
@@ -191,9 +198,9 @@ swDumpOutput (struct swStopwatch *theStopwatch)
      "stopwatch %s(%d) e:%lus u:%lu.%06us s:%lu.%06us, vx:%lu, ivx:%lu, sf:%lu, hf:%lu",
      theStopwatch->swName, theStopwatch->swStartedCount,
      theStopwatch->swAccumWallTime, theStopwatch->swAccumRU.ru_utime.tv_sec,
-     theStopwatch->swAccumRU.ru_utime.tv_usec,
+     (unsigned int) theStopwatch->swAccumRU.ru_utime.tv_usec,
      theStopwatch->swAccumRU.ru_stime.tv_sec,
-     theStopwatch->swAccumRU.ru_stime.tv_usec,
+     (unsigned int) theStopwatch->swAccumRU.ru_stime.tv_usec,
      theStopwatch->swAccumRU.ru_nvcsw, theStopwatch->swAccumRU.ru_nivcsw,
      theStopwatch->swAccumRU.ru_minflt, theStopwatch->swAccumRU.ru_majflt);
   swLogMsg (buffer);
