@@ -3571,6 +3571,7 @@ doFreePolys (unsigned short keepMask)
     productHashHits = productHashHitIsSumCount = productReturnNormalCount =
     productNon1FactorIsSumCount = productListNewCount = productListReplacementCount = 
     productFreedCount = product1stTermsFreedCount = 0;
+  totalSPLLengths = totalSPLCalls = lowSPLCount = highSPLCount = 0;
 
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Reduced list of polynomials (and cleared hits)\n");
