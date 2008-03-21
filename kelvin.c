@@ -603,6 +603,10 @@ main (int argc, char *argv[])
   }
 #endif
 
+  // TEMP WVC
+  markerNameList =
+    (char **) calloc (sizeof (char *), modelType.numMarkers);
+
   /* only for multipoint - we don't handle LD under multipoint yet */
   if (modelType.type == MP) {
     /* allocate space to save temporary results */
@@ -633,8 +637,6 @@ main (int argc, char *argv[])
 	}
       }
 
-      markerNameList =
-	(char **) calloc (sizeof (char *), modelType.numMarkers);
     } else {			/* QT */
       /* first dimension is pedigree */
       likelihoodQT =
@@ -2443,7 +2445,7 @@ main (int argc, char *argv[])
 	    /* save the likelihood at null */
 	    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 
-	    //fprintf(stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx, pPedigree->likelihood);
+	    //	    fprintf(stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx, pPedigree->likelihood);
 	    if (modelOptions.saveResults == TRUE) {
 	      if (pPedigree->load_flag == 0) {	/*save only for the pedigrees which were add for this run */
 		pPedigree->markerLikelihood = pPedigree->likelihood;
@@ -2458,8 +2460,8 @@ main (int argc, char *argv[])
 	      pPedigree->markerLikelihood = pPedigree->likelihood;
 	    }
 	    pPedigree->load_flag = 0;
-	    fprintf (stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx,
-		     pPedigree->markerLikelihood);
+	    //	    fprintf (stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx,
+	    //		     pPedigree->markerLikelihood);
 	  }
 	  // Removed 3/14         pedigreeSet.markerLikelihood = pedigreeSet.likelihood;
 	  pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
