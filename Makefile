@@ -44,7 +44,7 @@ LIBDIR := $(PWD)/lib
 CFLGS  += -Wall -I$(INCDIR) -L$(LIBDIR) -I$(NINCDIR) -L$(NLIBDIR)
 ######################################################################
 # File sets. 
-NBIN	= kelvin
+NBIN	= kelvin calc_updated_ppl
 LIB	= -lped -lutils -lgsl -lgslcblas -lm
 NLIB	= # -lniceapi -lnicecom -lniceaux
 SRC	= kelvin.c config.c ppl.c saveResults.c
@@ -70,15 +70,16 @@ endif
 # Manual section.
 MSEC	= 1
 
+all: kelvin calc_updated_ppl
+
 ######################################################################
 # Kelvin.
 kelvin: Makefile libutils.a libped.a # man
 	$(CC) $(CFLGS) $(SRC) -o $@ $(NLIB) $(LIB)
 
-######################################################################
-# Default target.  Installs application in $NBINDIR.
-.PHONY: install
-install: $(NBIN)
+# Sequential Update tools
+calc_updated_ppl: seq_update/calc_updated_ppl.c
+	$(CC) -o $@ seq_update/calc_updated_ppl.c
 
 ######################################################################
 # Kelvin utils library.
@@ -105,9 +106,11 @@ man: kelvin.man
 ######################################################################
 # Installs application in $NBINDIR.
 .PHONY: install
-install: kelvin #man
+install: kelvin calc_updated_ppl seq_update/seq_update_avghet.pl
 	@chmod 755 $(NBIN)
 	/bin/cp kelvin $(NBINDIR)/kelvin-$(VERSION)
+	/bin/cp calc_updated_ppl $(NBINDIR)/
+	/bin/cp seq_update/seq_update_avghet.pl $(NBINDIR)/
 #	@cp $(NBIN) $(NICEEXE)
 #	@-cp kelvin.$(MSEC) /usr/local/man/man$(MSEC)
 
