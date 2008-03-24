@@ -585,7 +585,12 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   if (p == NULL || vPoly == NULL)
     fprintf (stderr, "Memory allocation error: malloc returned NULL!");
   p->eType = T_VARIABLE;
-  strcpy (vPoly->vName, name);
+  /* Make sure we always have a name, either provided or based upon arrival order. */
+  if (strlen(name) == 0)
+    sprintf(vPoly->vName, "u%d", variableCount);
+  else
+    strcpy (vPoly->vName, name);
+  fprintf(stderr, "New variable %s\n", vPoly->vName);
   if (vType == 'D')
     vPoly->vAddr.vAddrD = vD;
   else
@@ -2886,10 +2891,7 @@ expPrinting (struct polynomial *p)
     fprintf (stderr, "%G", p->value);
     break;
   case T_VARIABLE:
-    if (strlen (p->e.v->vName) == 0)
-      fprintf (stderr, "u%d", p->index);
-    else
-      fprintf (stderr, "%s", p->e.v->vName);
+    fprintf (stderr, "%s", p->e.v->vName);
     break;
   case T_SUM:
     if (p->e.s->num > 1)
@@ -2956,10 +2958,7 @@ expTermPrinting (FILE * output, struct polynomial *p, int depth)
     fprintf (output, "%G", p->value);
     break;
   case T_VARIABLE:
-    if (strlen (p->e.v->vName) == 0)
-      fprintf (output, "u%d", p->index);
-    else
-      fprintf (output, "%s", p->e.v->vName);
+    fprintf (output, "%s", p->e.v->vName);
     break;
   case T_SUM:
     if (depth <= 0) {
@@ -3061,7 +3060,8 @@ polyDynamicStatistics ()
   fprintf (stderr, "...freed=%d 1st-term freed=%d\n", productFreedCount,
 	   product1stTermsFreedCount);
   fprintf (stderr, "NodeId: %d Hash: max list len=%d, SPL: calls=%lu, average length=%lu, low=%lu, high=%lu\n", 
-	   nodeId, maxHashLength, totalSPLCalls, totalSPLLengths / totalSPLCalls, lowSPLCount, highSPLCount);
+	   nodeId, maxHashLength, totalSPLCalls, totalSPLLengths / 
+	   (totalSPLCalls ? totalSPLCalls : 1), lowSPLCount, highSPLCount);
 }
 
 /*
@@ -3109,7 +3109,8 @@ polyStatistics ()
       sizeof (Polynomial *);
   }
   fprintf (stderr, "Term counts: sums(avg)=%d(%d), products(avg)=%d(%d)\n",
-	   sumTerms, sumTerms/sumCount, productTerms, productTerms/productCount);
+	   sumTerms, sumTerms / (sumCount ? sumCount : 1), productTerms, 
+	   productTerms / (productCount ? productCount : 1));
   fprintf (stderr,
 	   "Sizes (including terms): sums=%ld, products=%ld, functions=%ld\n",
 	   sumSize, productSize, functionCallSize);
@@ -3229,12 +3230,14 @@ holdAllPolys ()
     }
   }
   if (variableCount > 0) {
-    fprintf (stderr, "%d variables\n", variableCount);
+    fprintf (stderr, "%d variables:\n", variableCount);
     for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
       if (variableHash[i].num <= 0)
 	continue;
-      for (j = 0; j < variableHash[i].num; j++)
+      for (j = 0; j < variableHash[i].num; j++) {
+	//	fprintf (stderr, "%s\n", variableList[variableHash[i].index[j]]->e.v->vName);
 	variableList[variableHash[i].index[j]]->count++;
+      }
     }
   }
   if (sumCount > 0) {
@@ -3430,7 +3433,7 @@ void
 doFreePolys (unsigned short keepMask)
 {
   int i, j, k;
-  struct polynomial **newSumList, **newProductList;
+  struct polynomial **newConstantList, **newVariableList, **newSumList, **newProductList;
 
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Starting doFreePolys\n");
@@ -3442,6 +3445,118 @@ doFreePolys (unsigned short keepMask)
      we're keeping, and then go thru the old polynomial-specific list flagging
      entries we're not keeping and replacing pointers with new indexes
      for the ones we are keeping. */
+
+  newConstantList =
+    (struct polynomial **) malloc (sizeof (struct polynomial *) *
+				   (constantListLength));
+  if (newConstantList == NULL) {
+    fprintf (stderr,
+	     "In doFreePolys, newConstantList memory application failed, exiting!\n");
+    exit (1);
+  }
+  k = 0;
+  for (i = 0; i < constantCount; i++) {
+    if (constantList[i]->id == polynomialLostNodeId)
+      fprintf (stderr,
+	       "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
+	       polynomialLostNodeId, constantList[i]->valid, constantList[i]->count,
+	       keepMask);
+    if ((constantList[i]->count > 0) || (constantList[i]->valid & keepMask)) {
+      newConstantList[k] = constantList[i];
+      constantList[i] = newConstantList[k];
+//      fprintf(stderr, "Index %d is now %d\n", newConstantList[k]->index, k);
+      newConstantList[k]->index = k;
+      k++;
+    } else {
+//      free (constantList[i]);
+// These are for debugging mis-freed pointers
+      constantList[i]->value = constantList[i]->eType;
+      constantList[i]->eType = T_FREED;
+      constantList[i] = NULL;
+    }
+  }
+  if (polynomialDebugLevel >= 5)
+    fprintf (stderr, "Free w/mask of %d preserved %d of %d constant", keepMask, k, constantCount);
+  constantCount = k;
+
+  /* Go thru the hash collapsing entries and freeing the corresponding
+     polynomials and terms. Zero polynomial-specific list entries so they
+     can be collapsed next. */
+  for (j = 0; j < CONSTANT_HASH_SIZE; j++) {
+    if (constantHash[j].num > 0) {
+      k = 0;
+      for (i = 0; i < constantHash[j].num; i++) {
+	if (constantList[constantHash[j].index[i]] != NULL) {
+	  /* It's a keeper, slide it down and bump the count */
+//        fprintf(stderr, "Hash keeper index %d is now %d\n", constantHash[j].index[i],
+//              constantList[constantHash[j].index[i]]->index);
+	  constantHash[j].index[k] = constantList[constantHash[j].index[i]]->index;
+	  constantHash[j].key[k] = constantHash[j].key[i];
+	  k++;
+	}
+      }
+      constantHash[j].num = k;
+    }
+  }
+  free (constantList);
+  constantList = newConstantList;
+
+
+  newVariableList =
+    (struct polynomial **) malloc (sizeof (struct polynomial *) *
+				   (variableListLength));
+  if (newVariableList == NULL) {
+    fprintf (stderr,
+	     "In doFreePolys, newVariableList memory application failed, exiting!\n");
+    exit (1);
+  }
+  k = 0;
+  for (i = 0; i < variableCount; i++) {
+    if (variableList[i]->id == polynomialLostNodeId)
+      fprintf (stderr,
+	       "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
+	       polynomialLostNodeId, variableList[i]->valid, variableList[i]->count,
+	       keepMask);
+    if ((variableList[i]->count > 0) || (variableList[i]->valid & keepMask)) {
+      newVariableList[k] = variableList[i];
+      variableList[i] = newVariableList[k];
+//      fprintf(stderr, "Index %d is now %d\n", newVariableList[k]->index, k);
+      newVariableList[k]->index = k;
+      k++;
+    } else {
+//      free (variableList[i]);
+// These are for debugging mis-freed pointers
+      variableList[i]->value = variableList[i]->eType;
+      variableList[i]->eType = T_FREED;
+      variableList[i] = NULL;
+    }
+  }
+  if (polynomialDebugLevel >= 5)
+    fprintf (stderr, "Free w/mask of %d preserved %d of %d variable", keepMask, k, variableCount);
+  variableCount = k;
+
+  /* Go thru the hash collapsing entries and freeing the corresponding
+     polynomials and terms. Zero polynomial-specific list entries so they
+     can be collapsed next. */
+  for (j = 0; j < VARIABLE_HASH_SIZE; j++) {
+    if (variableHash[j].num > 0) {
+      k = 0;
+      for (i = 0; i < variableHash[j].num; i++) {
+	if (variableList[variableHash[j].index[i]] != NULL) {
+	  /* It's a keeper, slide it down and bump the count */
+//        fprintf(stderr, "Hash keeper index %d is now %d\n", variableHash[j].index[i],
+//              variableList[variableHash[j].index[i]]->index);
+	  variableHash[j].index[k] = variableList[variableHash[j].index[i]]->index;
+	  variableHash[j].key[k] = variableHash[j].key[i];
+	  k++;
+	}
+      }
+      variableHash[j].num = k;
+    }
+  }
+  free (variableList);
+  variableList = newVariableList;
+
   newSumList =
     (struct polynomial **) malloc (sizeof (struct polynomial *) *
 				   (sumListLength));
