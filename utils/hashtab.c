@@ -43,6 +43,7 @@ This implements a hash table.
 #endif
 
 /* sanity check -- make sure ipos, apos, and count make sense */
+#ifdef 0
 static void
 hsanity (t)
      htab *t;
@@ -70,7 +71,7 @@ hsanity (t)
   if (counter != t->count)
     printf ("error: counter %ld  t->count %ld\n", counter, t->count);
 }
-
+#endif
 
 /*
  * hgrow - Double the size of a hash table.
