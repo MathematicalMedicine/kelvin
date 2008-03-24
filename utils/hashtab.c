@@ -43,7 +43,7 @@ This implements a hash table.
 #endif
 
 /* sanity check -- make sure ipos, apos, and count make sense */
-#ifdef 0
+#ifdef SANITY
 static void
 hsanity (t)
      htab *t;
