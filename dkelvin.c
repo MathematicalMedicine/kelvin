@@ -12,8 +12,10 @@
  * Permission is hereby given to use this software 
  * for non-profit educational purposes only.
  **********************************************************************/
-#include "kelvin.h"
+#include "dkelvin.h"
 #include "likelihood.h"
+#include "pedlib/polynomial.h"
+#include "saveResults.h"
 #include "dcuhre.h"
 
 
@@ -78,6 +80,7 @@ dcuhre_state *s;
 
 
 /* Some default global values. */
+char resultsprefix[KMAXFILENAMELEN + 1] = "./";
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
 char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";
 char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";
@@ -804,7 +807,9 @@ main (int argc, char *argv[])
 					     -1,	/* last het locus */
 					     -1,	/* last  pattern (P-1 or M-2) */
 					     0);	/* current locus - start with 0 */
-	  makePolynomialStamp ();
+	  fprintf (stderr,
+		   "holdAllPolys from population of transmission matrix\n");
+	  holdAllPolys ();
 	}
 #endif
 
@@ -1049,7 +1054,6 @@ main (int argc, char *argv[])
 		if (modelOptions.polynomial == TRUE && modelType.ccFlag == 0){
 		  /* under case ctrl we don't clear up the polynomial */
 		  pedigreeSetPolynomialClearance (&pedigreeSet);
-		  partialPolynomialClearance ();
 		}
 #endif
 
@@ -1210,7 +1214,6 @@ main (int argc, char *argv[])
 		
 		//fprintf(stderr,"Building traitPoly pedIdx =%d Null likelihood = %20.15f\n",pedIdx, pPedigree->likelihood);
 		//fprintf(stderr,"pedIdx %d eType= %d\n", pedIdx, ((pPedigree->traitLikelihoodPolyList)->pList[0])->eType);
-		makePolynomialStamp ();
 	  }
 	 
 	}
@@ -1301,7 +1304,6 @@ main (int argc, char *argv[])
 #ifndef NO_POLYNOMIAL
 	    if (modelOptions.polynomial == TRUE){
 		  pedigreeSetPolynomialClearance (&pedigreeSet);
-		  partialPolynomialClearance ();
 		}
 #endif
 #endif
@@ -1442,7 +1444,6 @@ main (int argc, char *argv[])
 #ifndef NO_POLYNOMIAL
 		if (modelOptions.polynomial == TRUE){
 		  pedigreeSetPolynomialClearance (&pedigreeSet);
-		  partialPolynomialClearance ();
 		}
 #endif
 	  }
@@ -1551,7 +1552,6 @@ main (int argc, char *argv[])
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE){
 	pedigreeSetPolynomialClearance (&pedigreeSet);
-	polynomialClearance ();
   }
 #endif
   free_likelihood_storage (&pedigreeSet);
