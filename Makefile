@@ -44,12 +44,12 @@ LIBDIR := $(PWD)/lib
 CFLGS  += -Wall -I$(INCDIR) -L$(LIBDIR) -I$(NINCDIR) -L$(NLIBDIR)
 ######################################################################
 # File sets. 
-NBIN	= kelvin calc_updated_ppl
+NBIN	= kelvin calc_updated_ppl dkelvin
 LIB	= -lped -lutils -lgsl -lgslcblas -lm
 NLIB	= # -lniceapi -lnicecom -lniceaux
-SRC	= kelvin.c config.c ppl.c saveResults.c
+SRC	= config.c ppl.c saveResults.c
 INC	= kelvin.h
-TAR	= Makefile $(SRC) $(INC) config.c utils pedlib .maj .min .pat .dat doc kelvin.conf
+TAR	= Makefile kelvin.c dkelvin.c $(SRC) $(INC) config.c utils pedlib .maj .min .pat .dat doc kelvin.conf
 
 ######################################################################
 # Determine application name, which depends on version and
@@ -70,12 +70,15 @@ endif
 # Manual section.
 MSEC	= 1
 
-all: kelvin calc_updated_ppl
+all: kelvin dkelvin calc_updated_ppl
 
 ######################################################################
 # Kelvin.
 kelvin: Makefile libutils.a libped.a # man
-	$(CC) $(CFLGS) $(SRC) -o $@ $(NLIB) $(LIB)
+	$(CC) $(CFLGS) kelvin.c $(SRC) -o $@ $(NLIB) $(LIB)
+
+dkelvin: Makefile libutils.a libped.a # man
+	$(CC) $(CFLGS) dkelvin.c dcuhre.c $(SRC) -o $@ $(NLIB) $(LIB)
 
 # Sequential Update tools
 calc_updated_ppl: seq_update/calc_updated_ppl.c
@@ -137,7 +140,7 @@ clean:
 .PHONY: ps
 ps:
 	@enscript -Ec -2r -o $(NBIN)-$(VERSION).ps Makefile kelvin.h kelvin.c config.c
-#	@enscript -Ec -2r -o $(NBIN)-$(VERSION).ps Makefile $(INC) $(SRC) 
+#	@enscript -Ec -2r -o $(NBIN)-$(VERSION).ps Makefile $(INC) kelvin.c $(SRC) 
 
 .PHONY: tags
 tags:
