@@ -463,7 +463,7 @@ constantExp (double con)
   //Generate a constant polynomial
   p = (struct polynomial *) malloc (sizeof (struct polynomial));
   if (p == NULL) {
-    fprintf (stderr, "Memory allocation error: malloc returned NULL!");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   p->eType = T_CONSTANT;
@@ -476,7 +476,7 @@ constantExp (double con)
       realloc (constantList,
 	       constantListLength * sizeof (struct polynomial *));
     if (constantList == NULL) {
-      fprintf (stderr, "Memory allocation error, exit!\n");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
   }
@@ -583,7 +583,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   p = (struct polynomial *) malloc (sizeof (struct polynomial));
   vPoly = (struct variablePoly *) malloc (sizeof (struct variablePoly));
   if (p == NULL || vPoly == NULL)
-    fprintf (stderr, "Memory allocation error: malloc returned NULL!");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
   p->eType = T_VARIABLE;
   /* Make sure we always have a name, either provided or based upon arrival order. */
   if (strlen(name) == 0)
@@ -605,7 +605,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
       realloc (variableList,
 	       variableListLength * sizeof (struct polynomial *));
     if (variableList == NULL) {
-      fprintf (stderr, "Memory allocation error in variableExp(), exit!");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
   }
@@ -724,7 +724,7 @@ collectSumTerms (double **factor, struct polynomial ***p, int *counter,
 				      (*containerLength) *
 				      sizeof (struct polynomial *));
     if (*factor == NULL || *p == NULL) {
-      fprintf (stderr, "Momery allocation error!\n");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
   }
@@ -914,7 +914,7 @@ plusExp (int num, ...)
 				      lengthSum *
 				      sizeof (struct polynomial *));
     if (factorSum == NULL || pSum == NULL) {
-      fprintf (stderr, "Memory allocation error, exit!\n");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
   }
@@ -1080,13 +1080,13 @@ plusExp (int num, ...)
   //If the sum is not found in the sum list, a new polynomial is built 
   rp = (struct polynomial *) malloc (sizeof (struct polynomial));
   if (rp == NULL) {
-    fprintf (stderr, "Memory allocation error: malloc returned NULL!");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   rp->eType = T_SUM;
   sP = (struct sumPoly *) malloc (sizeof (struct sumPoly));
   if (sP == NULL) {
-    fprintf (stderr, "Memory allocation error: malloc returned NULL!");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   sP->num = counterSum;
@@ -1094,7 +1094,7 @@ plusExp (int num, ...)
     (struct polynomial **) malloc (counterSum * sizeof (struct polynomial *));
   sP->factor = (double *) malloc (counterSum * sizeof (double));
   if (sP->sum == NULL || sP->factor == NULL) {
-    fprintf (stderr, "Memory allocation error: malloc returned NULL!");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   for (i = 0; i < sP->num; i++) {
@@ -1125,7 +1125,7 @@ plusExp (int num, ...)
       sumList =
 	realloc (sumList, sumListLength * sizeof (struct polynomial *));
       if (sumList == NULL) {
-	fprintf (stderr, "Memory allocation error in plusExp, exit!");
+	fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
 	exit (1);
       }
     }
@@ -1231,7 +1231,7 @@ collectProductTerms (int **exponent, struct polynomial ***p, int *counter,
 				      (*containerLength) *
 				      sizeof (struct polynomial *));
     if ((*exponent) == NULL || (*p) == NULL) {
-      fprintf (stderr, "Momery allocation error!\n");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
   }
@@ -1451,7 +1451,7 @@ timesExp (int num, ...)
 				      lengthProd *
 				      sizeof (struct polynomial *));
     if (exponentProd == NULL || pProd == NULL) {
-      fprintf (stderr, "Memory allocation error, exit!\n");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
   }
@@ -1632,18 +1632,18 @@ timesExp (int num, ...)
     //saved in the container
     rp = (struct polynomial *) malloc (sizeof (struct polynomial));
     if (rp == NULL)
-      fprintf (stderr, "Memory allocation error: malloc returned NULL!");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     rp->eType = T_PRODUCT;
     pP = (struct productPoly *) malloc (sizeof (struct productPoly));
     if (pP == NULL)
-      fprintf (stderr, "Memory allocation error: malloc returned NULL!");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     pP->num = counterProd;
     pP->product =
       (struct polynomial **) malloc (counterProd *
 				     sizeof (struct polynomial *));
     pP->exponent = (int *) malloc (counterProd * sizeof (int));
     if (pP->product == NULL || pP->exponent == NULL)
-      fprintf (stderr, "Memory allocation error: malloc returned NULL!");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     //copy the collected polynomial terms and exponents into the
     //product polynomial structure
     for (i = 0; i < counterProd; i++) {
@@ -1665,7 +1665,7 @@ timesExp (int num, ...)
 	realloc (productList,
 		 productListLength * sizeof (struct polynomial *));
       if (productList == NULL) {
-	fprintf (stderr, "Memory allocation error in timesExp, exit!");
+	fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
 	exit (1);
       }
     }
@@ -1814,9 +1814,8 @@ functionCallExp (int num, ...)
 
   p =
     (struct polynomial **) malloc ((num - 1) * sizeof (struct polynomial *));
-
   if (p == NULL) {
-    fprintf (stderr, "Memory allocation error, exit!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   //num is equal to 1 plus the number of parameters for the called function
@@ -1886,14 +1885,14 @@ functionCallExp (int num, ...)
   rp = (struct polynomial *) malloc (sizeof (struct polynomial));
   fP = (struct functionPoly *) malloc (sizeof (struct functionPoly));
   if (rp == NULL || fP == NULL)
-    fprintf (stderr, "Memory allocation error: malloc returned NULL!");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
   rp->eType = T_FUNCTIONCALL;
   fP->paraNum = num - 1;
   fP->para =
     (struct polynomial **) malloc ((num - 1) * sizeof (struct polynomial *));
   fP->name = (char *) malloc (strlen (fName) + 1);
   if (fP->para == NULL || fP->name == NULL) {
-    fprintf (stderr, "Memory allocation error: malloc returned NULL!");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   strcpy (fP->name, fName);
@@ -1914,7 +1913,7 @@ functionCallExp (int num, ...)
       realloc (functionCallList,
 	       functionCallListLength * sizeof (struct polynomial *));
     if (functionCallList == NULL) {
-      fprintf (stderr, "Memory allocation error in functionCallExp, exit!");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
   }
@@ -1968,17 +1967,15 @@ buildPolyList ()
 
   l = (struct polyList *) malloc (sizeof (struct polyList));
   if (l == NULL) {
-    fprintf (stderr, "Memory allocation error, exit!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
 
   l->listSize = 1000;
   l->listNext = 0;
-  l->pList =
-    (struct polynomial **) malloc (sizeof (struct polynomial *) *
-				   l->listSize);
+  l->pList = (struct polynomial **) malloc (sizeof (struct polynomial *) *l->listSize);
   if (l->pList == NULL) {
-    fprintf (stderr, "Memory allocation error, exit!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   return l;
@@ -1997,7 +1994,7 @@ polyListAppend (struct polyList *l, struct polynomial *p)
     l->pList =
       realloc (l->pList, sizeof (struct polynomial *) * (l->listSize + 1000));
     if (l->pList == NULL) {
-      fprintf (stderr, "Memory allocation error, exit!\n");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
     l->listSize = l->listSize + 1000;
@@ -2332,7 +2329,7 @@ polynomialInitialization ()
     (struct polynomial **) malloc (constantListLength *
 				   sizeof (struct polynomial *));
   if (constantList == NULL) {
-    fprintf (stderr, "Memory allocation error, exit!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
 
@@ -2342,7 +2339,7 @@ polynomialInitialization ()
     (struct polynomial **) malloc (variableListLength *
 				   sizeof (struct polynomial *));
   if (variableList == NULL) {
-    fprintf (stderr, "Memory allocation error, exit!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
 
@@ -2352,7 +2349,7 @@ polynomialInitialization ()
     (struct polynomial **) malloc (sumListLength *
 				   sizeof (struct polynomial *));
   if (sumList == NULL) {
-    fprintf (stderr, "Memory allocation error, exit!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
 
@@ -2362,7 +2359,7 @@ polynomialInitialization ()
     (struct polynomial **) malloc (productListLength *
 				   sizeof (struct polynomial *));
   if (productList == NULL) {
-    fprintf (stderr, "Memory allocation error, exit!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
 
@@ -2372,7 +2369,7 @@ polynomialInitialization ()
     (struct polynomial **) malloc (functionCallListLength *
 				   sizeof (struct polynomial *));
   if (functionCallList == NULL) {
-    fprintf (stderr, "Memory allocation error, exit!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   //allocate memory for hash tables, each type of polynomials has its own hash table
@@ -2392,7 +2389,7 @@ polynomialInitialization ()
 				  sizeof (struct hashStruct));
   if (constantHash == NULL || variableHash == NULL || sumHash == NULL
       || productHash == NULL || functionCallHash == NULL) {
-    fprintf (stderr, "Memory allocation error, exit!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   //Initialize the constant hash table, pre-allocate memory for recording polynomials
@@ -2404,7 +2401,7 @@ polynomialInitialization ()
     constantHash[i].key =
       (int *) malloc (constantHash[i].length * sizeof (int));
     if (constantHash[i].index == NULL || constantHash[i].key == NULL) {
-      fprintf (stderr, "Memory allocation for hash table error!");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
   }
@@ -2418,7 +2415,7 @@ polynomialInitialization ()
     variableHash[i].key =
       (int *) malloc (variableHash[i].length * sizeof (int));
     if (variableHash[i].index == NULL || variableHash[i].key == NULL) {
-      fprintf (stderr, "Memory allocation for hash table error!");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
   }
@@ -2430,7 +2427,7 @@ polynomialInitialization ()
     sumHash[i].index = (int *) malloc (sumHash[i].length * sizeof (int));
     sumHash[i].key = (int *) malloc (sumHash[i].length * sizeof (int));
     if (sumHash[i].index == NULL || sumHash[i].key == NULL) {
-      fprintf (stderr, "Memory allocation for hash table error!");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
 
@@ -2445,7 +2442,7 @@ polynomialInitialization ()
     productHash[i].key =
       (int *) malloc (productHash[i].length * sizeof (int));
     if (productHash[i].index == NULL || productHash[i].key == NULL) {
-      fprintf (stderr, "Memory allocation for hash table error!");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
   }
@@ -2459,7 +2456,7 @@ polynomialInitialization ()
     functionCallHash[i].key =
       (int *) malloc (functionCallHash[i].length * sizeof (int));
     if (functionCallHash[i].index == NULL || functionCallHash[i].key == NULL) {
-      fprintf (stderr, "Memory allocation for hash table error!");
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
     }
 
@@ -2474,7 +2471,7 @@ polynomialInitialization ()
     (struct polynomial **) malloc (containerLength_v1 *
 				   sizeof (struct polynomial *));
   if (factor_v1 == NULL || p_v1 == NULL) {
-    fprintf (stderr, "Momery allocation error!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   //For product polynomials
@@ -2484,7 +2481,7 @@ polynomialInitialization ()
     (struct polynomial **) malloc (containerLength_p1 *
 				   sizeof (struct polynomial *));
   if (factor_p1 == NULL || p_p1 == NULL) {
-    fprintf (stderr, "Momery allocation error!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   //For function call polynomials
@@ -2494,7 +2491,7 @@ polynomialInitialization ()
     (struct polynomial **) malloc (containerLength_f1 *
 				   sizeof (struct polynomial *));
   if (factor_f1 == NULL || p_f1 == NULL) {
-    fprintf (stderr, "Momery allocation error!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   //Containers for organizing a sum polynomial
@@ -2503,7 +2500,7 @@ polynomialInitialization ()
   pSum =
     (struct polynomial **) malloc (lengthSum * sizeof (struct polynomial *));
   if (factorSum == NULL || pSum == NULL) {
-    fprintf (stderr, "Momery allocation error!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   //apply memory for container to hold terms for a product polynomial
@@ -2515,7 +2512,7 @@ polynomialInitialization ()
     (struct polynomial **) malloc (containerLength_v2 *
 				   sizeof (struct polynomial *));
   if (exponent_v2 == NULL || p_v2 == NULL) {
-    fprintf (stderr, "Momery allocation error!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   //For sum polynmials
@@ -2525,7 +2522,7 @@ polynomialInitialization ()
     (struct polynomial **) malloc (containerLength_s2 *
 				   sizeof (struct polynomial *));
   if (exponent_s2 == NULL || p_s2 == NULL) {
-    fprintf (stderr, "Momery allocation error!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   //For function call polynomials
@@ -2535,7 +2532,7 @@ polynomialInitialization ()
     (struct polynomial **) malloc (containerLength_f2 *
 				   sizeof (struct polynomial *));
   if (exponent_f2 == NULL || p_f2 == NULL) {
-    fprintf (stderr, "Momery allocation error!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   //Containers for organizing a product polynomial
@@ -2544,7 +2541,7 @@ polynomialInitialization ()
   pProd =
     (struct polynomial **) malloc (lengthProd * sizeof (struct polynomial *));
   if (exponentProd == NULL || pProd == NULL) {
-    fprintf (stderr, "Memory allocation error!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
 
@@ -3450,8 +3447,7 @@ doFreePolys (unsigned short keepMask)
     (struct polynomial **) malloc (sizeof (struct polynomial *) *
 				   (constantListLength));
   if (newConstantList == NULL) {
-    fprintf (stderr,
-	     "In doFreePolys, newConstantList memory application failed, exiting!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   k = 0;
@@ -3506,8 +3502,7 @@ doFreePolys (unsigned short keepMask)
     (struct polynomial **) malloc (sizeof (struct polynomial *) *
 				   (variableListLength));
   if (newVariableList == NULL) {
-    fprintf (stderr,
-	     "In doFreePolys, newVariableList memory application failed, exiting!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   k = 0;
@@ -3561,8 +3556,7 @@ doFreePolys (unsigned short keepMask)
     (struct polynomial **) malloc (sizeof (struct polynomial *) *
 				   (sumListLength));
   if (newSumList == NULL) {
-    fprintf (stderr,
-	     "In doFreePolys, newSumList memory application failed, exiting!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   k = 0;
@@ -3620,8 +3614,7 @@ doFreePolys (unsigned short keepMask)
     (struct polynomial **) malloc (sizeof (struct polynomial *) *
 				   (productListLength));
   if (newProductList == NULL) {
-    fprintf (stderr,
-	     "In doFreePolys, newProductList memory application failed, exiting!\n");
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
   k = 0;
