@@ -603,13 +603,13 @@ main (int argc, char *argv[])
   }
 #endif
 
-  // TEMP WVC
-  markerNameList =
-    (char **) calloc (sizeof (char *), modelType.numMarkers);
+
 
   /* only for multipoint - we don't handle LD under multipoint yet */
   if (modelType.type == MP) {
     /* allocate space to save temporary results */
+    markerNameList =
+      (char **) calloc (sizeof (char *), modelType.numMarkers);
     if (modelType.trait == DT) {
       /* likelihoodDT is for homoLR */
       likelihoodDT =
