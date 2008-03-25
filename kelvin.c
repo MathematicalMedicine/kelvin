@@ -604,7 +604,11 @@ main (int argc, char *argv[])
   }
 #endif
 
-
+  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+    pPedigree->load_flag = 0;	/* Initially 0 and changes to 1 when marker or 
+				   alternative likelihood values are retrieved */
+  }
 
   /* only for multipoint - we don't handle LD under multipoint yet */
   if (modelType.type == MP) {
@@ -623,7 +627,6 @@ main (int argc, char *argv[])
 
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-	pPedigree->load_flag = 0;	/* initially 0 and changes to 1 when marker or alternative likelihood values are retrieved */
 	/* first dimension is gene freq */
 	pPedigree->traitLikelihoodDT =
 	  (double **) calloc (sizeof (double *), modelRange.ngfreq);
