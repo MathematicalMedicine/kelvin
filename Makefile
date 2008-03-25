@@ -53,7 +53,7 @@ libs :
 clean :
 	make -C pedlib -f Makefile clean
 	make -C utils -f Makefile clean
-	rm -f $(kOBJS) $(DKOBJS) $(OBJS) kelvin dkelvin calc_updated_ppl
+	rm -f $(KOBJS) $(DKOBJS) $(OBJS) kelvin dkelvin calc_updated_ppl
 
 $(BINDIR)/kelvin-$(VERSION) : kelvin
 	install -o root -g root -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
