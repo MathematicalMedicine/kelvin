@@ -43,6 +43,7 @@ termSignalHandler (int signal)
 void
 quitSignalHandler (int signal)
 {
+  /* cygwin requires stty quit ^C */
   swDump (overallSW);
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
