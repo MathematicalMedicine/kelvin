@@ -3025,8 +3025,8 @@ polyDynamicStatistics ()
   fprintf (stderr,
 	   "Counts/Hits: c=%d/%d, v=%d/%d, s=%d/%d(%d-to-1), p=%d/%d(%d-to-1), f=%d/%d\n",
 	   constantCount, constantHashHits, variableCount, variableHashHits,
-	   sumCount, sumHashHits, sumHashHits / sumCount, productCount,
-	   productHashHits, productHashHits / productCount, functionCallCount,
+	   sumCount, sumHashHits, sumHashHits / (sumCount ? sumCount : 1), productCount,
+	   productHashHits, productHashHits / (productCount ? productCount : 1), functionCallCount,
 	   functionHashHits);
 
   if (sumReleaseableCount == 0 && sumNotReleaseableCount == 0 &&
