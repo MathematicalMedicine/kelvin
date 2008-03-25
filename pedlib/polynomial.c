@@ -282,7 +282,7 @@ binarySearch (int *array, int length, int target, int *location)
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
-//search for a polynomial in the hash table with a key.  Because more than one polynomials
+//Search for a polynomial in the hash table with a key.  Because more than one polynomials
 //may have the same key, the search in a hash table may return a list of polynomials that
 //have the same key as the key of the target polynomial 
 //////////////////////////////////////////////////////////////////////////////////////////
