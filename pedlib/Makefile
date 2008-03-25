@@ -1,58 +1,55 @@
-# Pedigree Library
-# Yungui Huang
-#
-# Copyright (c) 2005, The University of Iowa.  All rights reserved.
-# Permission is hereby given to use and reproduce this software 
-# for non-profit educational purposes only.
+# Kelvin
+# Copyright 2008, The Research Institute At Nationwide Children's Hospital
+# Permission granted to distribute and use for non-profit educational purposes only.
 
-# Compile options:
-#
-# -DNO_POLYNOMIAL removes the polynomial version of the code.
-##CC = gcc
-#CFLGS = -g -Wall
-#CFLGS += -DNO_POLYNOMIAL
+# Invoked by main Kelvin Makefile. You'll get undefined symbols otherwise.
 
-######################################################################
-# No user changes below this point!
+INCS = pedigree.h locus.h model_options.h genotype_elimination.h \
+       likelihood.h polynomial.h pedlib.h allele_set_recoding.h tools.h
 
-# Object files
-OBJ = read_pedfile.o locus.o tools.o allele_set_recoding.o \
-	genotype_elimination.o parental_pair.o likelihood.o polynomial.o
+OBJS = read_pedfile.o locus.o tools.o allele_set_recoding.o \
+       genotype_elimination.o parental_pair.o likelihood.o polynomial.o
 
-# Include files
-INCS = pedigree.h locus.h model_options.h  \
-	genotype_elimination.h likelihood.h polynomial.h \
-	pedlib.h allele_set_recoding.h tools.h 
+all : $(KVNLIBDIR)/libped.a $(KVNINCDIR)/pedigree.h $(KVNINCDIR)/locus.h \
+      $(KVNINCDIR)/model_options.h $(KVNINCDIR)/genotype_elimination.h \
+      $(KVNINCDIR)/likelihood.h $(KVNINCDIR)/polynomial.h $(KVNINCDIR)/pedlib.h \
+      $(KVNINCDIR)/allele_set_recoding.h $(KVNINCDIR)/tools.h
 
-# Libraries
-LIB = -lutils -lped -lgsl -lgslcblas -lm 
+clean :
+	rm -f $(OBJS) libped.a $(KVNLIBDIR)/libped.a
 
-######################################################################
-# Make an object file from source
-%.o : %.c $(INCS)
-	-@$(CC) -c $(CFLGS) -I ../utils -o $@ $<
+$(KVNINCDIR)/pedigree.h : pedigree.h
+	 cp pedigree.h $(KVNINCDIR)
 
-######################################################################
-# Default target
-.PHONY: install
-install: libped.a
-	-@cp {pedlib,pedigree,locus,model_options,polynomial,likelihood}.h $(INCDIR)
-	-@cp libped.a $(LIBDIR)
+$(KVNINCDIR)/locus.h : locus.h
+	 cp locus.h $(KVNINCDIR)
 
-libped.a: Makefile $(OBJ)
-	-@ar -rsc libped.a $(OBJ)
+$(KVNINCDIR)/model_options.h : model_options.h
+	 cp model_options.h $(KVNINCDIR)
 
+$(KVNINCDIR)/genotype_elimination.h : genotype_elimination.h
+	 cp genotype_elimination.h $(KVNINCDIR)
 
-######################################################################
-# Utilities.
+$(KVNINCDIR)/likelihood.h : likelihood.h
+	 cp likelihood.h $(KVNINCDIR)
 
-# To ensure a clean build, use "make fresh."
-.PHONY: fresh
-fresh: clean libped.a
+$(KVNINCDIR)/polynomial.h : polynomial.h
+	 cp polynomial.h $(KVNINCDIR)
 
-# Deletes all compiled files.
-.PHONY: clean
-clean:
-	-@rm -f libped.a *.o *~ test
-	-@rm -f $(INCDIR)/{pedlib,pedigree,locus,model_options,likelihood,polynomial}.h
-	-@rm -f $(LIBDIR)/libped.a
+$(KVNINCDIR)/pedlib.h : pedlib.h
+	 cp pedlib.h $(KVNINCDIR)
+
+$(KVNINCDIR)/allele_set_recoding.h : allele_set_recoding.h
+	 cp allele_set_recoding.h $(KVNINCDIR)
+
+$(KVNINCDIR)/tools.h : tools.h
+	 cp tools.h $(KVNINCDIR)
+
+$(KVNLIBDIR)/libped.a : libped.a
+	cp libped.a $(KVNLIBDIR)
+
+libped.a : $(OBJS)
+	ar -rsc libped.a $(OBJS)
+
+$(OBJS) : %.o : %.c $(INCS)
+	$(CC) -c $(CFLAGS) $(INCFLAGS) $< -o $@

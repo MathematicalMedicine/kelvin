@@ -1,42 +1,51 @@
-# Utilities
-# Alberto Maria Segre et. al.
-#
-# Copyright (c) 2005, The University of Iowa.  All rights reserved.
-# Permission is hereby given to use and reproduce this software 
-# for non-profit educational purposes only.
+# Kelvin
+# Copyright 2008, The Research Institute At Nationwide Children's Hospital
+# Permission granted to distribute and use for non-profit educational purposes only.
 
-######################################################################
-# No user changes below this point!
+# Invoked by main Kelvin Makefile. You'll get undefined symbols otherwise.
 
-# Object files
-OBJ = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o
+INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h
+OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o
 
-# Include files
-INC = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h
+all : $(KVNLIBDIR)/libutils.a \
+      $(KVNINCDIR)/utils.h \
+      $(KVNINCDIR)/sw.h \
+      $(KVNINCDIR)/tpl.h \
+      $(KVNINCDIR)/hashtab.h \
+      $(KVNINCDIR)/lookupa.h \
+      $(KVNINCDIR)/recycle.h \
+      $(KVNINCDIR)/standard.h
 
-# Libraries
-LIB =
+$(KVNLIBDIR)/libutils.a : libutils.a
+	cp libutils.a $(KVNLIBDIR)
 
-######################################################################
-# Make an object file from source
-%.o      : %.c $(INC)
-	-@$(CC) -c $(CFLGS) -o $@ $<
+$(KVNINCDIR)/utils.h : utils.h
+	cp utils.h $(KVNINCDIR)
 
-######################################################################
-.PHONY: install
-install: libutils.a
-	-@cp $(INC) $(INCDIR)
-	-@cp libutils.a $(LIBDIR)
+$(KVNINCDIR)/sw.h : sw.h
+	cp sw.h $(KVNINCDIR)
 
-libutils.a: Makefile $(OBJ)
-	-@ar -rsc libutils.a $(OBJ)
+$(KVNINCDIR)/tpl.h : tpl.h
+	cp tpl.h $(KVNINCDIR)
 
-# To ensure a clean build, use "make fresh."
-.PHONY: fresh
-fresh: clean install
+$(KVNINCDIR)/hashtab.h : hashtab.h
+	cp hashtab.h $(KVNINCDIR)
 
-# Deletes all compiled files.
-.PHONY: clean
-clean:
-	-@rm -f libutils.a *.o *~ 
-	-@rm -f $(LIBDIR)/libutils.a
+$(KVNINCDIR)/lookupa.h : lookupa.h
+	cp lookupa.h $(KVNINCDIR)
+
+$(KVNINCDIR)/recycle.h : recycle.h
+	cp recycle.h $(KVNINCDIR)
+
+$(KVNINCDIR)/standard.h : standard.h
+	cp standard.h $(KVNINCDIR)
+
+libutils.a : $(OBJS)
+	ar -rsc libutils.a $(OBJS)
+
+$(OBJS) : %.o : %.c $(INCS)
+	$(CC) -c $(CFLAGS) $(INCFLAGS) $< -o $@
+
+.PHONY : clean
+clean :
+	rm -f $(OBJS) libutils.a $(KVNLIBDIR)/libutils.a

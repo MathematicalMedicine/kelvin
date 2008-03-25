@@ -1,208 +1,71 @@
-# Multiprocessor Linkage Analysis
-# Alberto Maria Segre, Yungui Huang, Nathan Burnette, others?
-#
-# Copyright (c) 2006, The University of Iowa.  All rights reserved.
-# Permission is hereby given to use and reproduce this software 
-# for non-profit educational purposes only.
+# Kelvin
+# Copyright 2008, The Research Institute At Nationwide Children's Hospital
+# Permission granted to distribute and use for non-profit educational purposes only.
 
-CC = gcc
+# Compiled executables and scripts will be installed in $BINDIR
+BINDIR=/usr/local/bin
 
-# Base location for NICE installation.
-#NICEDIR = /usr/local/nice
-NICEDIR = /usr/local
+# $INCDIR and $LIBDIR should point to where headers and libraries for
+# GSL (GNU Scientific Library) can be found
+INCDIR=/usr/local/include
+LIBDIR=/usr/local/lib
 
-# Compile options:
-# -DDEBUG
-#     Turns on debugging information.
-#
-#CFLGS	+= -DNOFLOAT 
-CFLGS	+= -Wall			# Always leave this one on
-CFLGS	+= -O3	 			# Production level
-#CFLGS  += -g  -DDEBUG		# Debug level
-#CFLGS   += -DNO_POLYNOMIAL
-#CFLGS += -pg                   # profile - debugging 
-#CFLGS += -pedantic   #memory leak tracing
-#CFLGS += -DDMTRACK
+CC := gcc
+CFLAGS := -Wall -O3
 
-.EXPORT_ALL_VARIABLES:
-######################################################################
-# No user changes below this point!
-ARCH 	:= $(shell uname -m)
-OS  	:= $(shell uname -s)	# Cygwin needs -o?
-VERSION	:= $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
-PWD	:= $(shell pwd)
+KVNLIBDIR := $(shell pwd)/lib
+KVNINCDIR := $(shell pwd)/include
+VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
+INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm
+export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS INCFLAGS
 
-# Nice library and header files
-NLIBDIR		:= $(NICEDIR)/lib
-NINCDIR		:= $(NICEDIR)/include
-NBINDIR		:= $(NICEDIR)/bin
+KOBJS = kelvin.o
+DKOBJS = dkelvin.o dcuhre.o
+OBJS = ppl.o config.o saveResults.o
+INCS = kelvin.h dkelvin.h dcuhre.h saveResults.h
 
-# Destination for utilities and libraries
-INCDIR := $(PWD)/include
-LIBDIR := $(PWD)/lib
+all : kelvin dkelvin calc_updated_ppl
 
-CFLGS  += -Wall -I$(INCDIR) -L$(LIBDIR) -I$(NINCDIR) -L$(NLIBDIR)
-######################################################################
-# File sets. 
-NBIN	= kelvin calc_updated_ppl dkelvin
-LIB	= -lped -lutils -lgsl -lgslcblas -lm
-NLIB	= # -lniceapi -lnicecom -lniceaux
-SRC	= config.c ppl.c saveResults.c
-INC	= kelvin.h
-TAR	= Makefile kelvin.c dkelvin.c $(SRC) $(INC) config.c utils pedlib .maj .min .pat .dat doc kelvin.conf
+install : $(BINDIR)/kelvin-$(VERSION) \
+          $(BINDIR)/dkelvin-$(VERSION) \
+          $(BINDIR)/calc_updated_ppl \
+          $(BINDIR)/seq_update_avghet.pl
 
-######################################################################
-# Determine application name, which depends on version and
-# architecture information.
-NICEAPP = $(NBIN)-$(VERSION)-$(ARCH)
-ifneq ($(NICEOS),Cygwin)
-  NICEEXE = $(NBINDIR)/$(NICEAPP)
-else
-  NICEEXE = $(NBINDIR)/$(NICEAPP).exe
-endif
+kelvin : libs $(KOBJS) $(OBJS)
+	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS)
 
-######################################################################
-# Make an object file from source
-%.o      : %.c $(INCS)
-	$(CC) -c $(CFLGS) -o $@ $<
+dkelvin : libs $(DKOBJS) $(OBJS)
+	$(CC) -o $@ $(DKOBJS) $(OBJS) $(LDFLAGS)
 
-######################################################################
-# Manual section.
-MSEC	= 1
+calc_updated_ppl : seq_update/calc_updated_ppl.c
+	$(CC) -o $@ $(CFLAGS) seq_update/calc_updated_ppl.c
 
-all: kelvin dkelvin calc_updated_ppl
+%.o : %.c $(INCS)
+	$(CC) -c $(CFLAGS) $(INCFLAGS) $< -o $@
 
-######################################################################
-# Kelvin.
-kelvin: Makefile libutils.a libped.a # man
-	$(CC) $(CFLGS) kelvin.c $(SRC) -o $@ $(NLIB) $(LIB)
+.PHONY : libs
+libs :
+	make -C utils -f Makefile all
+	make -C pedlib -f Makefile all
 
-dkelvin: Makefile libutils.a libped.a # man
-	$(CC) $(CFLGS) dkelvin.c dcuhre.c $(SRC) -o $@ $(NLIB) $(LIB)
+.PHONY : clean
+clean :
+	make -C pedlib -f Makefile clean
+	make -C utils -f Makefile clean
+	rm -f $(kOBJS) $(DKOBJS) $(OBJS) kelvin dkelvin calc_updated_ppl
 
-# Sequential Update tools
-calc_updated_ppl: seq_update/calc_updated_ppl.c
-	$(CC) -o $@ seq_update/calc_updated_ppl.c
+$(BINDIR)/kelvin-$(VERSION) : kelvin
+	install -o root -g root -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
 
-######################################################################
-# Kelvin utils library.
-libutils.a: Makefile
-	-@if [ ! -x $(INCDIR) ] ; then mkdir $(INCDIR); fi
-	-@if [ ! -x $(LIBDIR) ] ; then mkdir $(LIBDIR); fi
-	-@cd utils && $(MAKE) $(MAKECMDGOALS)
+$(BINDIR)/dkelvin-$(VERSION) : dkelvin
+	install -o root -g root -m 0755 -p dkelvin $(BINDIR)/dkelvin-$(VERSION)
 
-######################################################################
-# Kelvin pedigree library.
-libped.a: Makefile
-	-@if [ ! -x $(INCDIR) ] ; then mkdir $(INCDIR); fi
-	-@if [ ! -x $(LIBDIR) ] ; then mkdir $(LIBDIR); fi
-	-@cd pedlib && $(MAKE) $(MAKECMDGOALS)
+$(BINDIR)/calc_updated_ppl : calc_updated_ppl
+	install -o root -g root -m 0755 -p calc_updated_ppl $(BINDIR)/calc_updated_ppl
 
-######################################################################
-.PHONY: man
-man: kelvin.man
-	@sed -e 's/%%DATE%%/$(DATE)/' < kelvin.man > kelvin.$(MSEC)
-#	@gtbl kelvin.$(MSEC) | groff -man -Tps > Manual.ps
-#	@ps2pdf Manual.ps
-#	@rm Manual.ps
+$(BINDIR)/seq_update_avghet.pl : seq_update/seq_update_avghet.pl
+	install -o root -g root -m 0755 -p seq_update/seq_update_avghet.pl $(BINDIR)/seq_update_avghet.pl
 
-######################################################################
-# Installs application in $NBINDIR.
-.PHONY: install
-install: kelvin calc_updated_ppl seq_update/seq_update_avghet.pl
-	@chmod 755 $(NBIN)
-	/bin/cp kelvin $(NBINDIR)/kelvin-$(VERSION)
-	/bin/cp calc_updated_ppl $(NBINDIR)/
-	/bin/cp seq_update/seq_update_avghet.pl $(NBINDIR)/
-#	@cp $(NBIN) $(NICEEXE)
-#	@-cp kelvin.$(MSEC) /usr/local/man/man$(MSEC)
 
-######################################################################
-# Remove installed version; leaves local binary.
-.PHONY: remove
-remove:
-	-@rm $(NICEEXE)
-
-######################################################################
-# Utilities.
-
-# To ensure a clean build, use "make fresh."
-.PHONY: fresh
-fresh: clean $(NBIN)
-
-# Deletes all compiled files.
-.PHONY: clean
-clean:
-	-@rm -f $(NBIN) TAGS *~ $(NBIN)-$(VERSION).{ps,tgz}
-	-@cd utils && $(MAKE) $(MAKECMDGOALS)
-	-@cd pedlib && $(MAKE) $(MAKECMDGOALS)
-
-.PHONY: ps
-ps:
-	@enscript -Ec -2r -o $(NBIN)-$(VERSION).ps Makefile kelvin.h kelvin.c config.c
-#	@enscript -Ec -2r -o $(NBIN)-$(VERSION).ps Makefile $(INC) kelvin.c $(SRC) 
-
-.PHONY: tags
-tags:
-	@etags *.[ch]
-
-.PHONY: tgz
-tgz: clean
-	@tar -czf $(NBIN)-$(VERSION).tgz -C .. $(foreach ENTRY,$(TAR),$(NBIN)-$(VERSION)/$(ENTRY))
-	-@ls -lsag $(NBIN)-$(VERSION).tgz
-
-######################################################################
-# Creates a new release.
-.PHONY: major
-major:
-	@echo `cat .maj`.`cat .min`.`cat .pat` > /tmp/$(NBIN).1
-	@cat .maj > /tmp/$(NBIN).2
-	@echo "1 + p" >> /tmp/$(NBIN).2
-	@dc < /tmp/$(NBIN).2 > .maj
-	@echo "0" > .min
-	@echo "0" > .pat
-	@date > .dat
-	@echo `cat .maj`.`cat .min`.`cat .pat` > /tmp/$(NBIN).2
-	@echo "Version" `cat /tmp/$(NBIN).2`";" `cat .dat`
-	@mv ../$(NBIN)-`cat /tmp/$(NBIN).1` ../$(NBIN)-`cat /tmp/$(NBIN).2`
-	@cd ../$(NBIN)-`cat /tmp/$(NBIN).2`
-	@rm /tmp/$(NBIN).1 /tmp/$(NBIN).2
-
-# Creates a new minor version.
-.PHONY: minor
-minor:
-	@echo `cat .maj`.`cat .min`.`cat .pat` > /tmp/$(NBIN).1
-	@cat .min > /tmp/$(NBIN).2
-	@echo "1 + p" >> /tmp/$(NBIN).2
-	@dc < /tmp/$(NBIN).2 > .min
-	@echo "0" > .pat
-	@date > .dat
-	@echo `cat .maj`.`cat .min`.`cat .pat` > /tmp/$(NBIN).2
-	@echo "Version" `cat /tmp/$(NBIN).2`";" `cat .dat`
-	@mv ../$(NBIN)-`cat /tmp/$(NBIN).1` ../$(NBIN)-`cat /tmp/$(NBIN).2`
-	@cd ../$(NBIN)-`cat /tmp/$(NBIN).2`
-	@rm /tmp/$(NBIN).1 /tmp/$(NBIN).2
-
-# Creates a new patch version.
-.PHONY: patch
-patch:
-	@echo `cat .maj`.`cat .min`.`cat .pat` > /tmp/$(NBIN).1
-	@cat .pat > /tmp/$(NBIN).2
-	@echo "1 + p" >> /tmp/$(NBIN).2
-	@dc < /tmp/$(NBIN).2 > .pat
-	@date > .dat
-	@echo `cat .maj`.`cat .min`.`cat .pat` > /tmp/$(NBIN).2
-	@echo "Version" `cat /tmp/$(NBIN).2`";" `cat .dat`
-	@mv ../$(NBIN)-`cat /tmp/$(NBIN).1` ../$(NBIN)-`cat /tmp/$(NBIN).2`
-	@cd ../$(NBIN)-`cat /tmp/$(NBIN).2`
-	@rm /tmp/$(NBIN).1 /tmp/$(NBIN).2
-
-# Check variable values.
-.PHONY: check
-check:
-	@echo "$(NBIN) version $(VERSION) for $(OS)"
-	@echo NICEDIR=$(NICEDIR)
-	@echo NBINDIR=$(NBINDIR)
-	@echo INCDIR=$(INCDIR)
-	@echo LIBDIR=$(LIBDIR)
 
