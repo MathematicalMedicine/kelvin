@@ -19,7 +19,7 @@
  * at the end of the lines )
  *
  * Pre-makedped is simpler, only has:
- * PedID IndividualID FathterID MomID Sex AffectionStatus(QuantitativeTrait)
+ * PedID IndividualID FatherID MotherID Sex AffectionStatus(QuantitativeTrait)
  * Genotyping pairs for each marker
  *
  * The benefit of reading in post-makeped is that we don't have to deal with
