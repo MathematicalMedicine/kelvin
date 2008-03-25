@@ -49,12 +49,21 @@
 #include "gsl/gsl_randist.h"
 #include "gsl/gsl_cdf.h"
 
+/* These used to be constants, hence their case. Now they're scaled, but I kept the
+   case because they act like constants. */
+
+int CONSTANT_HASH_SIZE, VARIABLE_HASH_SIZE, SUM_HASH_SIZE, PRODUCT_HASH_SIZE, 
+  FUNCTIONCALL_HASH_SIZE, HASH_TABLE_INCREASE, CONSTANT_LIST_INITIAL, 
+  CONSTANT_LIST_INCREASE, VARIABLE_LIST_INITIAL, VARIABLE_LIST_INCREASE, 
+  SUM_LIST_INITIAL, SUM_LIST_INCREASE, PRODUCT_LIST_INITIAL, 
+  PRODUCT_LIST_INCREASE, FUNCTIONCALL_LIST_INITIAL, FUNCTIONCALL_LIST_INCREASE = 0;
+
 /* Variables for tracking internal polynomial memory usage. These dynamic ones are
    also externs in polynomial.h. */
-int maxHashLength = HASH_TABLE_INCREASE;	/* Length of longest hash table collision list */
-int constantHashHits = 0,	/* constantExp return is a pre-existing polynomial */
-  variableHashHits = 0,		/* variableExp return is a pre-existing polynomial (surprise!) */
-  functionHashHits = 0;		/* functionCallExp return is a pre-existing polynomial */
+int maxHashLength = 0;          /* Length of longest hash table collision list */
+int constantHashHits = 0,       /* constantExp return is a pre-existing polynomial */
+  variableHashHits = 0,	        /* variableExp return is a pre-existing polynomial (surprise!) */
+  functionHashHits = 0;	        /* functionCallExp return is a pre-existing polynomial */
 int sumReleaseableCount = 0,	/* Indicates if flag was set to release 1st term in sum */
   sumNotReleaseableCount = 0,	/* ...or not. */
   sumReturnConstantCount = 0,	/* plusExp return is actually a constant */
@@ -95,6 +104,7 @@ char *polynomialVersion = "0.34.0($Id$)";	/* Make this meaningful since kelvin d
    be changed without rebuilding. */
 int polynomialDebugLevel = 0;	/* Corresponds roughly to diagnostic output volume */
 int polynomialLostNodeId = -1;	/* For tracking down mis-freed polynomials */
+int polynomialScale = 10;	/* Scaling factor for hash and other storage, default is 10 */
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //Recursively evaluate a polynomial.  This version of polynomial evaluation doesn't use
@@ -2312,6 +2322,32 @@ polynomialInitialization ()
   }
   if (polynomialDebugLevel > 0)
     fprintf (stderr, "polynomialDebugLevel is at %d\n", polynomialDebugLevel);
+
+  if ((envVar = getenv ("polynomialScale")) != NULL) {
+    polynomialScale = atoi (envVar);
+    if (polynomialScale <= 0) polynomialScale = 10;
+    fprintf (stderr, "polynomialScale is %d (1-10, 10 is default)\n", polynomialScale);
+  }
+
+  /* Scale all initial and growth sizes up by the polynomial scale (default 10) */
+
+  CONSTANT_HASH_SIZE = MIN_CONSTANT_HASH_SIZE * polynomialScale;
+  VARIABLE_HASH_SIZE = MIN_VARIABLE_HASH_SIZE * polynomialScale;
+  SUM_HASH_SIZE = MIN_SUM_HASH_SIZE * polynomialScale;
+  PRODUCT_HASH_SIZE = MIN_PRODUCT_HASH_SIZE * polynomialScale;
+  FUNCTIONCALL_HASH_SIZE = MIN_FUNCTIONCALL_HASH_SIZE * polynomialScale;
+  HASH_TABLE_INCREASE = MIN_HASH_TABLE_INCREASE * polynomialScale;
+  maxHashLength = HASH_TABLE_INCREASE; /* Set to actual default. */
+  CONSTANT_LIST_INITIAL = MIN_CONSTANT_LIST_INITIAL * polynomialScale;
+  CONSTANT_LIST_INCREASE = MIN_CONSTANT_LIST_INCREASE * polynomialScale;
+  VARIABLE_LIST_INITIAL = MIN_VARIABLE_LIST_INITIAL * polynomialScale;
+  VARIABLE_LIST_INCREASE = MIN_VARIABLE_LIST_INCREASE * polynomialScale;
+  SUM_LIST_INITIAL = MIN_SUM_LIST_INITIAL * polynomialScale;
+  SUM_LIST_INCREASE = MIN_SUM_LIST_INCREASE * polynomialScale;
+  PRODUCT_LIST_INITIAL = MIN_PRODUCT_LIST_INITIAL * polynomialScale;
+  PRODUCT_LIST_INCREASE = MIN_PRODUCT_LIST_INCREASE * polynomialScale;
+  FUNCTIONCALL_LIST_INITIAL = MIN_FUNCTIONCALL_LIST_INITIAL * polynomialScale;
+  FUNCTIONCALL_LIST_INCREASE = MIN_FUNCTIONCALL_LIST_INCREASE * polynomialScale;
 
   if ((envVar = getenv ("polynomialLostNodeId")) != NULL) {
     polynomialLostNodeId = atoi (envVar);

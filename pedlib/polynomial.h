@@ -16,23 +16,26 @@
 
 //All the following constants are prime numbers
 #define MAX_POLYNOMIAL_KEY   2147483629
-#define CONSTANT_HASH_SIZE 99991
-#define VARIABLE_HASH_SIZE 97
-#define SUM_HASH_SIZE      1999993
-#define PRODUCT_HASH_SIZE  1999993
-#define FUNCTIONCALL_HASH_SIZE 99991
-#define HASH_TABLE_INCREASE 10
 
-#define CONSTANT_LIST_INITIAL 1000
-#define CONSTANT_LIST_INCREASE 1000
-#define VARIABLE_LIST_INITIAL 50
-#define VARIABLE_LIST_INCREASE 50
-#define SUM_LIST_INITIAL 10000
-#define SUM_LIST_INCREASE 10000
-#define PRODUCT_LIST_INITIAL 10000
-#define PRODUCT_LIST_INCREASE 10000
-#define FUNCTIONCALL_LIST_INITIAL 1000
-#define FUNCTIONCALL_LIST_INCREASE 100
+/* Hash and other storage sizes for claustrophobic environments, must
+   be scaled-up for larger models. Original was 10x, and that's the
+   default if no other value is provided. */
+#define MIN_CONSTANT_HASH_SIZE 9991
+#define MIN_VARIABLE_HASH_SIZE 97
+#define MIN_SUM_HASH_SIZE      199993
+#define MIN_PRODUCT_HASH_SIZE  199993
+#define MIN_FUNCTIONCALL_HASH_SIZE 9991
+#define MIN_HASH_TABLE_INCREASE 2
+#define MIN_CONSTANT_LIST_INITIAL 100
+#define MIN_CONSTANT_LIST_INCREASE 10
+#define MIN_VARIABLE_LIST_INITIAL 5
+#define MIN_VARIABLE_LIST_INCREASE 5
+#define MIN_SUM_LIST_INITIAL 1000
+#define MIN_SUM_LIST_INCREASE 100
+#define MIN_PRODUCT_LIST_INITIAL 1000
+#define MIN_PRODUCT_LIST_INCREASE 100
+#define MIN_FUNCTIONCALL_LIST_INITIAL 100
+#define MIN_FUNCTIONCALL_LIST_INCREASE 10
 
 #ifdef DMTRACK
 #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
@@ -78,7 +81,7 @@ enum expressionType
 struct polynomial;
 
 //This structure represents the elements of a variable,
-//a variavle has an address in memory, a name.
+//a variable has an address in memory, a name.
 //In general, the number of variable polynomials is very small, say 20.
 struct variablePoly
 {
