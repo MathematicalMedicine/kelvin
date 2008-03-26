@@ -89,13 +89,11 @@ int productReleaseableCount = 0,	/* Indicates if flag was set to release 1st ter
   productListReplacementCount = 0,	/* Existing productList entry used */
   productFreedCount = 0,	/* Count of productPolys freed */
   product1stTermsFreedCount = 0;	/* Count of 1st-terms successfully freed */
-int constantPLExpansions = 0,
-  variablePLExpansions = 0,
-  sumPCollectExpansions = 0,
-  sumPTermMergeExpansions = 0,
-  sumPListExpansions = 0,
-  productPCollectExpansions = 0,
-  productPTermMergeExpansions = 0, productPListExpansions = 0;
+int constantPListExpansions = 0,	/* Count of constantList expansions */
+  variablePListExpansions = 0,	/* Count of variableList expansions */
+  sumPListExpansions = 0,	/* Count of sumList expansions */
+  productPListExpansions = 0,	/* Count of productList expansions */
+  functionCallPListExpansions = 0; /* Count of functionCallList expansions */
 unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount = 0, highSPLCount = 0;
 
 char *polynomialVersion = "0.34.0($Id$)";	/* Make this meaningful since kelvin displays it. */
@@ -483,6 +481,7 @@ constantExp (double con)
   //check if the constant polynomial list is full.  Apply for more items if it is full
   if (constantCount >= constantListLength) {
     constantListLength += CONSTANT_LIST_INCREASE;
+    constantPListExpansions++;
     constantList =
       realloc (constantList,
 	       constantListLength * sizeof (struct polynomial *));
@@ -612,6 +611,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   //If the polynomial list is full, apply for more memory
   if (variableCount >= variableListLength) {
     variableListLength += VARIABLE_LIST_INCREASE;
+    variablePListExpansions++;
     variableList =
       realloc (variableList,
 	       variableListLength * sizeof (struct polynomial *));
@@ -728,12 +728,9 @@ collectSumTerms (double **factor, struct polynomial ***p, int *counter,
   //If container is full, apply for more memory
   if (*counter >= *containerLength - 1) {
     (*containerLength) += 50;
-    *factor =
-      (double *) realloc (*factor, (*containerLength) * sizeof (double));
-    *p =
-      (struct polynomial **) realloc (*p,
-				      (*containerLength) *
-				      sizeof (struct polynomial *));
+    *factor = (double *) realloc (*factor, (*containerLength) * sizeof (double));
+    *p = (struct polynomial **) realloc (*p, (*containerLength) *
+					 sizeof (struct polynomial *));
     if (*factor == NULL || *p == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
@@ -920,10 +917,7 @@ plusExp (int num, ...)
   if (counterSum + 1 > lengthSum) {
     lengthSum = counterSum + 1;
     factorSum = (double *) realloc (factorSum, lengthSum * sizeof (double));
-    pSum =
-      (struct polynomial **) realloc (pSum,
-				      lengthSum *
-				      sizeof (struct polynomial *));
+    pSum = (struct polynomial **) realloc (pSum, lengthSum * sizeof (struct polynomial *));
     if (factorSum == NULL || pSum == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
@@ -1133,6 +1127,7 @@ plusExp (int num, ...)
   else {
     if (sumCount >= sumListLength) {
       sumListLength += SUM_LIST_INCREASE;
+      sumPListExpansions++;
       sumList =
 	realloc (sumList, sumListLength * sizeof (struct polynomial *));
       if (sumList == NULL) {
@@ -1235,11 +1230,8 @@ collectProductTerms (int **exponent, struct polynomial ***p, int *counter,
 
   if ((*counter) >= (*containerLength) - 1) {
     (*containerLength) += 50;
-    (*exponent) =
-      (int *) realloc ((*exponent), (*containerLength) * sizeof (int));
-    (*p) =
-      (struct polynomial **) realloc ((*p),
-				      (*containerLength) *
+    (*exponent) =  (int *) realloc ((*exponent), (*containerLength) * sizeof (int));
+    (*p) = (struct polynomial **) realloc ((*p), (*containerLength) *
 				      sizeof (struct polynomial *));
     if ((*exponent) == NULL || (*p) == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
@@ -1672,6 +1664,7 @@ timesExp (int num, ...)
     //After the new polynomial is built, it is recorded in the product polynomial list
     if (productCount >= productListLength) {
       productListLength += PRODUCT_LIST_INCREASE;
+      productPListExpansions++;
       productList =
 	realloc (productList,
 		 productListLength * sizeof (struct polynomial *));
@@ -1920,6 +1913,7 @@ functionCallExp (int num, ...)
   //Insert the new built polynomial in function call list
   if (functionCallCount >= functionCallListLength) {
     functionCallListLength += FUNCTIONCALL_LIST_INCREASE;
+    functionCallPListExpansions++;
     functionCallList =
       realloc (functionCallList,
 	       functionCallListLength * sizeof (struct polynomial *));
@@ -3072,6 +3066,18 @@ polyDynamicStatistics ()
 	   productHashHits, productHashHits / (productCount ? productCount : 1), functionCallCount,
 	   functionHashHits);
 
+  fprintf (stderr,
+	   "List expansions(@size): c=%d(@%d), v=%d(@%d), s=%d(@%d), p=%d(@%d), f=%d(@%d)\n",
+	   constantPListExpansions, CONSTANT_LIST_INCREASE, 
+	   variablePListExpansions, VARIABLE_LIST_INCREASE,
+	   sumPListExpansions, SUM_LIST_INCREASE, productPListExpansions, PRODUCT_LIST_INCREASE,
+	   functionCallPListExpansions, FUNCTIONCALL_LIST_INCREASE);
+
+  fprintf (stderr, "NodeId: %d Hash: max list len=%d, SPL: eff=%lu%%, avg len=%lu\n", 
+	   nodeId, maxHashLength, 100 * (lowSPLCount+highSPLCount) / 
+	   (totalSPLCalls ? totalSPLCalls : 1), totalSPLLengths / 
+	   (totalSPLCalls ? totalSPLCalls : 1));
+
   if (sumReleaseableCount == 0 && sumNotReleaseableCount == 0 &&
       productReleaseableCount == 0 && productNotReleaseableCount == 0)
     return;
@@ -3099,9 +3105,6 @@ polyDynamicStatistics ()
 	   productListReplacementCount);
   fprintf (stderr, "...freed=%d 1st-term freed=%d\n", productFreedCount,
 	   product1stTermsFreedCount);
-  fprintf (stderr, "NodeId: %d Hash: max list len=%d, SPL: calls=%lu, average length=%lu, low=%lu, high=%lu\n", 
-	   nodeId, maxHashLength, totalSPLCalls, totalSPLLengths / 
-	   (totalSPLCalls ? totalSPLCalls : 1), lowSPLCount, highSPLCount);
 }
 
 /*
@@ -3112,9 +3115,11 @@ polyStatistics ()
 {
   long constantSize, variableSize, sumSize, productSize, functionCallSize;
   int sumTerms = 0, productTerms = 0, maxSumTerms = 0, maxProductTerms = 0;
-  int constantHashTotal = 0, constantHashPeak = 0, variableHashTotal = 0,
-    variableHashPeak = 0, sumHashTotal = 0, sumHashPeak = 0,
-    productHashTotal = 0, productHashPeak = 0, functionCallHashTotal = 0,
+  int constantHashCount = 0, constantHashSize = 0, constantHashPeak = 0, 
+    variableHashCount = 0, variableHashSize = 0, variableHashPeak = 0, 
+    sumHashCount = 0, sumHashSize = 0, sumHashPeak = 0,
+    productHashCount = 0, productHashSize = 0, productHashPeak = 0, 
+    functionCallHashCount = 0, functionCallHashSize = 0,
     functionCallHashPeak = 0;
   int i;
 
@@ -3161,48 +3166,53 @@ polyStatistics ()
 
   if (constantCount > 0) {
     for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
-      constantHashTotal += constantHash[i].num;
+      constantHashCount++;
+      constantHashSize += constantHash[i].num;
       if (constantHash[i].num > constantHashPeak)
 	constantHashPeak = constantHash[i].num;
     }
   }
   if (variableCount > 0) {
     for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
-      variableHashTotal += variableHash[i].num;
+      variableHashCount++;
+      variableHashSize += variableHash[i].num;
       if (variableHash[i].num > variableHashPeak)
 	variableHashPeak = variableHash[i].num;
     }
   }
   if (sumCount > 0) {
     for (i = 0; i < SUM_HASH_SIZE; i++) {
-      sumHashTotal += sumHash[i].num;
+      sumHashCount++;
+      sumHashSize += sumHash[i].num;
       if (sumHash[i].num > sumHashPeak)
 	sumHashPeak = sumHash[i].num;
     }
   }
   if (productCount > 0) {
     for (i = 0; i < PRODUCT_HASH_SIZE; i++) {
-      productHashTotal += productHash[i].num;
+      productHashCount++;
+      productHashSize += productHash[i].num;
       if (productHash[i].num > productHashPeak)
 	productHashPeak = productHash[i].num;
     }
   }
   if (functionCallCount > 0) {
     for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++) {
-      functionCallHashTotal += functionCallHash[i].num;
+      functionCallHashCount++;
+      functionCallHashSize += functionCallHash[i].num;
       if (functionCallHash[i].num > functionCallHashPeak)
 	functionCallHashPeak = functionCallHash[i].num;
     }
   }
 
   fprintf (stderr, "Hash length peak(avg): c=%d(%d), v=%d(%d), s=%d(%d), ",
-	   constantHashPeak, constantHashTotal / (constantCount ? constantCount : 1),
-	   variableHashPeak, variableHashTotal / (variableCount ? variableCount : 1),
-	   sumHashPeak, sumHashTotal / (sumCount ? sumCount : 1));
+	   constantHashPeak, constantHashSize / (constantHashCount ? constantHashCount : 1),
+	   variableHashPeak, variableHashSize / (variableHashCount ? variableHashCount : 1),
+	   sumHashPeak, sumHashSize / (sumHashCount ? sumHashCount : 1));
   fprintf (stderr, "p=%d(%d), f=%d(%d)\n",
-	   productHashPeak, productHashTotal / (productCount ? productCount : 1),
-	   functionCallHashPeak, functionCallHashTotal /
-	   (functionCallCount ? functionCallCount : 1));
+	   productHashPeak, productHashSize / (productHashCount ? productHashCount : 1),
+	   functionCallHashPeak, functionCallHashSize /
+	   (functionCallHashCount ? functionCallHashCount : 1));
 
   fprintf (stderr, "---\n");
 };
