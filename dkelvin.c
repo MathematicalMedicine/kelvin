@@ -76,10 +76,12 @@ void test_darray (double **);
 
 #define checkpt() fprintf(stderr,"Checkpoint at line %d of file \"%s\"\n",__LINE__,__FILE__)
 
-void compute_hlod_2p_dt (int *ndim, double x[], double *f);
-void compute_hlod_mp_dt (int *ndim, double x[], double *f);
-void compute_hlod_2p_qt (int *ndim, double x[], double *f);
-void compute_hlod_mp_qt (int *ndim, double x[], double *f);
+
+void compute_hlod_2p_dt (double x[], double *f);
+void compute_hlod_mp_dt ( double x[], double *f);
+void compute_hlod_2p_qt ( double x[], double *f);
+void compute_hlod_mp_qt ( double x[], double *f);
+
 int kelvin_dcuhre_integrate (double xl[], double xu[], double *integral,
 			     double *abserr);
 
@@ -2211,9 +2213,10 @@ kelvin_dcuhre_integrate (double xl[], double xu[], double *integral,
 
 
 
+ 
 
 void
-compute_hlod_mp_dt (int *ndim, double x[], double *f)
+compute_hlod_mp_dt ( double x[], double *f)
 {
 
   int j;
@@ -2237,24 +2240,27 @@ compute_hlod_mp_dt (int *ndim, double x[], double *f)
   if (locusList->numLocus > 1)
     origLocus = locusList->pLocusIndex[1];
 
-
+  //fprintf(stderr,"in compute hlod x %G %G %G %G\n", x[0],x[1],x[2],x[3]);
   gfreq = x[0];
 
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
-    {
-      pen_DD = x[3 * liabIdx + 1];
-      pen_Dd = x[3 * liabIdx + 2] * x[3 * liabIdx + 1];
-      pen_dd = x[3 * liabIdx + 3] * x[3 * liabIdx + 1] * x[3 * liabIdx + 2];
-      pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
-      pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
-      pTrait->penetrance[2][liabIdx][1][0] = pen_Dd;
-      pTrait->penetrance[2][liabIdx][1][1] = pen_dd;
-      pTrait->penetrance[1][liabIdx][0][0] = 1 - pen_DD;
-      pTrait->penetrance[1][liabIdx][0][1] = 1 - pen_Dd;
-      pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_Dd;
-      pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
-    }
+  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+    pen_DD = x[3 * liabIdx + 1];
+    pen_Dd = x[3 * liabIdx + 2] * x[3 * liabIdx + 1];
+    pen_dd = x[3 * liabIdx + 3] * x[3 * liabIdx + 1] * x[3 * liabIdx + 2];
+    pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
+    pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
+    pTrait->penetrance[2][liabIdx][1][0] = pen_Dd;
+    pTrait->penetrance[2][liabIdx][1][1] = pen_dd;
+    pTrait->penetrance[1][liabIdx][0][0] = 1 - pen_DD;
+    pTrait->penetrance[1][liabIdx][0][1] = 1 - pen_Dd;
+    pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_Dd;
+    pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
 
+    //fprintf(stderr,"pene   DD=%G Dd=%G dd=%G\n", pen_DD, pen_Dd, pen_dd);
+
+  }
+
+  
 
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
@@ -2269,7 +2275,7 @@ compute_hlod_mp_dt (int *ndim, double x[], double *f)
   pLocus->pAlleleFrequency[0] = gfreq;
   pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
-
+  
 #ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE)
     ;
@@ -2278,12 +2284,13 @@ compute_hlod_mp_dt (int *ndim, double x[], double *f)
 #else
   update_locus (&pedigreeSet, traitLocus);
 #endif
-
+  
   /* for trait likelihood */
   locusList = &traitLocusList;
   xmissionMatrix = traitMatrix;
 
-  //printf("Null likelihood computation is starting for %d pedigrees \n",pedigreeSet.numPedigree);
+  // fprintf(stderr, "Null likelihood computation is starting for %d pedigrees \n",pedigreeSet.numPedigree);
+
   /* compute the null likelihood with   */
   pedigreeSet.likelihood = 1;
   pedigreeSet.log10Likelihood = 0;
@@ -2296,24 +2303,33 @@ compute_hlod_mp_dt (int *ndim, double x[], double *f)
       /* save the likelihood at null */
       pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 
-      //printf("pedIdx =%d ", pedIdx); 
 
-      if (modelOptions.polynomial == TRUE)
-	{
-	  KASSERT (pPedigree->traitLikelihoodPolynomial != NULL,
-		   "Error in  \n");
-	  /* evaluate likelihood */
-	  //printf("evaluaing poly ");
-	 
-	    evaluatePoly (pPedigree->traitLikelihoodPolynomial,
-			  pPedigree->traitLikelihoodPolyList, &pPedigree->likelihood);
-	  //printf(" is done %f with %d pedigrees\n",pPedigree->likelihood, pedigreeSet.numPedigree);
-	}
-      else
-	{
-	  initialize_multi_locus_genotype (pPedigree);
-	  status = compute_pedigree_likelihood (pPedigree);
-	}
+    //    fprintf(stderr, "pedIdx =%d ", pedIdx); 
+
+
+
+    if (modelOptions.polynomial == TRUE) {
+      KASSERT (pPedigree->traitLikelihoodPolynomial != NULL, "Error in  \n");
+      /* evaluate likelihood */
+      //fprintf(stderr, "evaluaing poly ");
+      // printAllVariables();
+       //expTermPrinting(stderr, pPedigree->traitLikelihoodPolynomial, 1);
+      //fprintf(stderr, "\n");
+    
+	evaluatePoly (pPedigree->traitLikelihoodPolynomial,
+		      pPedigree->traitLikelihoodPolyList, &pPedigree->likelihood);
+	//fprintf(stderr, " is done %f with %d pedigrees\n",pPedigree->likelihood, pedigreeSet.numPedigree);
+
+      if(isnan(pPedigree->likelihood)){
+        fprintf(stderr," likelihood is nan\n");
+        exit(1);
+      }
+
+    } else {
+      initialize_multi_locus_genotype (pPedigree);
+      status = compute_pedigree_likelihood (pPedigree);
+    }
+
 
 
       /*pPedigree->likelihood is now computed and now check it */
@@ -2356,6 +2372,7 @@ compute_hlod_mp_dt (int *ndim, double x[], double *f)
       pedigreeSet.nullLikelihood[pedIdx] = pPedigree->likelihood;
       //fprintf(stderr,"null likelihood pedIdx=%d is done %20.18f with product =%20.16f\n",pedIdx,pPedigree->likelihood,product_likelihood );
     }
+
 
   pedigreeSet.likelihood = product_likelihood;
   pedigreeSet.log10Likelihood = sum_log_likelihood;
@@ -2479,12 +2496,14 @@ compute_hlod_mp_dt (int *ndim, double x[], double *f)
 
   avg_hetLR = alpha_integral;
   //fprintf(stderr,"avg hetLR =%15.10f \n", avg_hetLR);
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
-    {
-      avg_hetLR *=
-	x[3 * liabIdx + 1] * x[3 * liabIdx + 1] * x[3 * liabIdx + 2];
-    }
-  //fprintf(stderr," hetLR =%f\n", avg_hetLR);
+
+  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+    avg_hetLR *= x[3 * liabIdx + 1] * x[3 * liabIdx + 1] * x[3 * liabIdx + 2];
+  }
+
+  //  fprintf(stderr,"   hetLR =%f   ", avg_hetLR);
+
+
   *f = avg_hetLR;
 
   // return avg_hetLR;
@@ -2494,7 +2513,7 @@ compute_hlod_mp_dt (int *ndim, double x[], double *f)
 
 
 void
-compute_hlod_2p_dt (int *ndim, double x[], double *f)
+compute_hlod_2p_dt ( double x[], double *f)
 {
 //double compute_hlod(PedigreeSet *pedigreeSet,double x[], int loc1, int loc2, Locus *pLocus, Trait *pTrait, int traitLocus, int totalLoci, double * initialProbAddr[3], Locus *pLocus1){
 /*  Limit of this function
@@ -2783,6 +2802,7 @@ compute_hlod_2p_dt (int *ndim, double x[], double *f)
 
 
   f[0] = avg_hetLR;
+
   //  return 0.0;
 
 }
