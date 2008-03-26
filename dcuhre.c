@@ -414,7 +414,14 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
     }
   }
 
-  (s->funsub) (s->ndim, x, &(cw_sbrg->local_error));
+  (s->funsub) ( x, &(cw_sbrg->local_error));
+  //fprintf (stderr, "1 local result =%10.8f  and local error =%10.8f\n", cw_sbrg->local_result,cw_sbrg->local_error);
+  //fprintf(stderr," sw00 is %G   %p %p\n", s->w[0][0], s->w, s->w[0]);
+
+  if(isnan(s->w[0][0])){
+    fprintf(stderr,"sw00 is nan \n");
+    exit(1);
+  }
   cw_sbrg->local_result = s->w[0][0] * cw_sbrg->local_error;	//rgnerr[j];
   for (k = 0; k < 4; ++k) {
     null[k] = s->w[k + 1][0] * cw_sbrg->local_error;	//  rgnerr[j];
@@ -425,13 +432,17 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   ratio = d__1 * d__1;
   for (i = 0; i < s->ndim; i++) {
     x[i] = cw_sbrg->center[i] - cw_sbrg->hwidth[i] * s->g[0][1];
-    (s->funsub) (s->ndim, x, &null[4]);
+    (s->funsub) ( x, &null[4]);
+
     x[i] = cw_sbrg->center[i] + cw_sbrg->hwidth[i] * s->g[0][1];
-    (s->funsub) (s->ndim, x, &null[5]);
+    (s->funsub) ( x, &null[5]);
+
     x[i] = cw_sbrg->center[i] - cw_sbrg->hwidth[i] * s->g[0][2];
-    (s->funsub) (s->ndim, x, &null[6]);
+    (s->funsub) ( x, &null[6]);
+
     x[i] = cw_sbrg->center[i] + cw_sbrg->hwidth[i] * s->g[0][2];
-    (s->funsub) (s->ndim, x, &null[7]);
+    (s->funsub) (x, &null[7]);
+
     x[i] = cw_sbrg->center[i];
     difsum = 0.;
 
@@ -476,7 +487,13 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
 
   }
 
-  //fprintf (stderr, "local result =%10.8f  and local error =%10.8f\n", cw_sbrg->local_result,cw_sbrg->local_error);
+  fprintf (stderr, "local result =%10.8f  and local error =%10.8f\n", cw_sbrg->local_result,cw_sbrg->local_error);
+  if(isnan(cw_sbrg->local_result)){
+    fprintf(stderr,"local result is nan \n");
+    exit(1);
+  }
+
+
   /*    Compute errors. */
   /*    We search for the null rule, in the linear space spanned by two */
   /*    successive null rules in our sequence, which gives the greatest */
@@ -528,7 +545,7 @@ dfshre_ (dcuhre_state * s, sub_region * cw_sbrg, double *x, int g_work_col,
 
   *fulsms = 0.;
 
-
+  // fprintf(stderr," sw00 is %G   %p %p\n", s->w[0][0], s->w, s->w[0]);
   /* Compute centrally symmetric sum for permutation of G */
 L20:
 
@@ -537,7 +554,7 @@ L20:
   }
 
 L40:
-  (s->funsub) (s->ndim, x, funvls);
+  (s->funsub) ( x, funvls);
 
   *fulsms += *funvls;
 
