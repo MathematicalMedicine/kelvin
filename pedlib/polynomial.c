@@ -1,4 +1,5 @@
 
+#undef FREEDEBUG
 /**********************************************************************
  * polynomial - build and evaluate arbitrarily complex polynomials.
  * Hongling Wang
@@ -3111,6 +3112,10 @@ polyStatistics ()
 {
   long constantSize, variableSize, sumSize, productSize, functionCallSize;
   int sumTerms = 0, productTerms = 0, maxSumTerms = 0, maxProductTerms = 0;
+  int constantHashTotal = 0, constantHashPeak = 0, variableHashTotal = 0,
+    variableHashPeak = 0, sumHashTotal = 0, sumHashPeak = 0,
+    productHashTotal = 0, productHashPeak = 0, functionCallHashTotal = 0,
+    functionCallHashPeak = 0;
   int i;
 
   polyDynamicStatistics ();
@@ -3147,12 +3152,58 @@ polyStatistics ()
       strlen (functionCallList[i]->e.f->name) + sizeof (int) +
       sizeof (Polynomial *);
   }
-  fprintf (stderr, "Term counts: sums(avg)=%d(%d), products(avg)=%d(%d)\n",
+  fprintf (stderr, "Term count(avg): sums=%d(%d), products=%d(%d)\n",
 	   sumTerms, sumTerms / (sumCount ? sumCount : 1), productTerms, 
 	   productTerms / (productCount ? productCount : 1));
   fprintf (stderr,
 	   "Sizes (including terms): sums=%ld, products=%ld, functions=%ld\n",
 	   sumSize, productSize, functionCallSize);
+
+  if (constantCount > 0) {
+    for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
+      constantHashTotal += constantHash[i].num;
+      if (constantHash[i].num > constantHashPeak)
+	constantHashPeak = constantHash[i].num;
+    }
+  }
+  if (variableCount > 0) {
+    for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
+      variableHashTotal += variableHash[i].num;
+      if (variableHash[i].num > variableHashPeak)
+	variableHashPeak = variableHash[i].num;
+    }
+  }
+  if (sumCount > 0) {
+    for (i = 0; i < SUM_HASH_SIZE; i++) {
+      sumHashTotal += sumHash[i].num;
+      if (sumHash[i].num > sumHashPeak)
+	sumHashPeak = sumHash[i].num;
+    }
+  }
+  if (productCount > 0) {
+    for (i = 0; i < PRODUCT_HASH_SIZE; i++) {
+      productHashTotal += productHash[i].num;
+      if (productHash[i].num > productHashPeak)
+	productHashPeak = productHash[i].num;
+    }
+  }
+  if (functionCallCount > 0) {
+    for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++) {
+      functionCallHashTotal += functionCallHash[i].num;
+      if (functionCallHash[i].num > functionCallHashPeak)
+	functionCallHashPeak = functionCallHash[i].num;
+    }
+  }
+
+  fprintf (stderr, "Hash length peak(avg): c=%d(%d), v=%d(%d), s=%d(%d), ",
+	   constantHashPeak, constantHashTotal / (constantCount ? constantCount : 1),
+	   variableHashPeak, variableHashTotal / (variableCount ? variableCount : 1),
+	   sumHashPeak, sumHashTotal / (sumCount ? sumCount : 1));
+  fprintf (stderr, "p=%d(%d), f=%d(%d)\n",
+	   productHashPeak, productHashTotal / (productCount ? productCount : 1),
+	   functionCallHashPeak, functionCallHashTotal /
+	   (functionCallCount ? functionCallCount : 1));
+
   fprintf (stderr, "---\n");
 };
 
@@ -3506,11 +3557,14 @@ doFreePolys (unsigned short keepMask)
       newConstantList[k]->index = k;
       k++;
     } else {
-//      free (constantList[i]);
+#ifndef FREEDEBUG
+      free (constantList[i]);
+#else
 // These are for debugging mis-freed pointers
       constantList[i]->value = constantList[i]->eType;
       constantList[i]->eType = T_FREED;
       constantList[i] = NULL;
+#endif
     }
   }
   if (polynomialDebugLevel >= 5)
@@ -3561,11 +3615,14 @@ doFreePolys (unsigned short keepMask)
       newVariableList[k]->index = k;
       k++;
     } else {
-//      free (variableList[i]);
+#ifndef FREEDEBUG
+      free (variableList[i]);
+#else
 // These are for debugging mis-freed pointers
       variableList[i]->value = variableList[i]->eType;
       variableList[i]->eType = T_FREED;
       variableList[i] = NULL;
+#endif
     }
   }
   if (polynomialDebugLevel >= 5)
@@ -3619,11 +3676,14 @@ doFreePolys (unsigned short keepMask)
       free (sumList[i]->e.s->sum);
       free (sumList[i]->e.s->factor);
       free (sumList[i]->e.s);
-//      free (sumList[i]);
+#ifndef FREEDEBUG
+      free (sumList[i]);
+#else
 // These are for debugging mis-freed pointers
       sumList[i]->value = sumList[i]->eType;
       sumList[i]->eType = T_FREED;
       sumList[i] = NULL;
+#endif
     }
   }
   if (polynomialDebugLevel >= 5)
@@ -3677,11 +3737,14 @@ doFreePolys (unsigned short keepMask)
       free (productList[i]->e.p->product);
       free (productList[i]->e.p->exponent);
       free (productList[i]->e.p);
-//      free (productList[i]);
+#ifndef FREEDEBUG
+      free (productList[i]);
+#else
 // These are for debugging mis-freed pointers
       productList[i]->value = productList[i]->eType;
       productList[i]->eType = T_FREED;
       productList[i] = NULL;
+#endif
     }
   }
   if (polynomialDebugLevel >= 5)
