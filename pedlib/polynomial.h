@@ -367,7 +367,7 @@ void polyListSorting2 (struct polynomial *p, struct polyList *l);
 void polyListSorting3 (struct polynomial *p, struct polyList *l,
 		       int signature);
 //Evaluate a polynomial with the help of the evaluation list 
-double evaluatePoly (struct polynomial *pp, struct polyList *l);
+void evaluatePoly (struct polynomial *pp, struct polyList *l, double *pd);
 
 //Print a evaluation list
 void printPolyList (struct polyList *l);

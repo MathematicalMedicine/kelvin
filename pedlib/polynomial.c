@@ -600,7 +600,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
     sprintf(vPoly->vName, "u%d", variableCount);
   else
     strcpy (vPoly->vName, name);
-  fprintf(stderr, "New variable %s\n", vPoly->vName);
+  //  fprintf(stderr, "New variable %s\n", vPoly->vName);
   if (vType == 'D')
     vPoly->vAddr.vAddrD = vD;
   else
@@ -2097,8 +2097,8 @@ polyListSorting (struct polynomial *p, struct polyList *l)
 //After the polynomials are completed, this is the only function 
 //to be executed for evaluation.  This function is not recursive 
 ///////////////////////////////////////////////////////////////////
-double
-evaluatePoly (struct polynomial *pp, struct polyList *l)
+void
+evaluatePoly (struct polynomial *pp, struct polyList *l, double *pReturnValue)
 {
   struct polynomial *p;
   struct sumPoly *sP;
@@ -2113,7 +2113,8 @@ evaluatePoly (struct polynomial *pp, struct polyList *l)
   if (l->listNext == 0) {
     if (polynomialDebugLevel >= 10)
       fprintf (stderr, "...finished evaluatePoly with a zero!\n");
-    return pp->value;
+    *pReturnValue = pp->value;
+    return;
   }
 
   for (j = 0; j <= l->listNext - 1; j++) {
@@ -2236,11 +2237,16 @@ evaluatePoly (struct polynomial *pp, struct polyList *l)
       fprintf (stderr, "Error, unknown polynomial type!!!! exit(7)");
       break;
     }
+    if (isnan(p->value)) {
+      fprintf(stderr, "In evaluatePoly, evaluated value of type %d as not a number\n", p->eType);
+      exit (1);
+    }
   }
   if (polynomialDebugLevel >= 3) fprintf(stderr,"E");
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "...finished evaluatePoly with %G\n", pp->value);
-  return pp->value;
+  *pReturnValue = pp->value;
+  return;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

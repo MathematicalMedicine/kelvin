@@ -296,10 +296,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	  }
 	}
 	/* evaluate likelihood */
-	pPedigree->likelihood =
-	  evaluatePoly (pPedigree->likelihoodPolynomial,
-			pPedigree->likelihoodPolyList);
-
+	evaluatePoly (pPedigree->likelihoodPolynomial,
+		      pPedigree->likelihoodPolyList, &pPedigree->likelihood);
       } else {
 	initialize_multi_locus_genotype (pPedigree);
 	status = compute_pedigree_likelihood (pPedigree);
