@@ -2304,9 +2304,9 @@ compute_hlod_mp_dt (int *ndim, double x[], double *f)
 		   "Error in  \n");
 	  /* evaluate likelihood */
 	  //printf("evaluaing poly ");
-	  pPedigree->likelihood =
+	 
 	    evaluatePoly (pPedigree->traitLikelihoodPolynomial,
-			  pPedigree->traitLikelihoodPolyList);
+			  pPedigree->traitLikelihoodPolyList, &pPedigree->likelihood);
 	  //printf(" is done %f with %d pedigrees\n",pPedigree->likelihood, pedigreeSet.numPedigree);
 	}
       else
