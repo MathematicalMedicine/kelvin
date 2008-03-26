@@ -1,0 +1,20 @@
+where=`dirname "$1"`
+if builtin cd "$where"
+then
+  echo -n $where...
+  $HOME/kelvin/trunk/kelvin kelvin.conf >&kelvin.out
+  if diff avghet.out avghet.out-baseline
+  then
+    echo -n avghet.out = baseline 
+  else
+    echo -n ERROR - avghet.out != baseline 
+  fi
+  if -e ppl.out
+  then
+    echo ppl.out = baseline
+  else
+    echo -n ERROR - ppl.out != baseline
+  fi
+  echo ""
+  builtin cd "$OLDPWD"
+fi
