@@ -51,9 +51,8 @@ swReset(pSW); to reset the stopwatch to all zeroes.
 You can reference and use the members of the structure pointer returned by
 swCreate if you want to write your own output instead of relying upon swDump.
 
-To do either dynamic memory tracking or try the experimental static-for-dynamic
-memory use, build with -DDMTRACK and put the following macros into
-the modules to be affected:
+To do dynamic memory tracking, build with -DDMTRACK and put the following macros 
+into the modules to be affected:
 
 #ifdef DMTRACK
 #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
@@ -426,11 +425,9 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
 
   hashKey = lookup (&chunkAddress, sizeof (chunkAddress), 0);
   if (hfind (chunkHash, &hashKey, sizeof (hashKey)) == FALSE) {
-    /*
-       fprintf (stderr,
-       "WARNING!! (%s: %d) - free() of address %u that was never allocated (head)!\n",
-       fileName, lineNo, chunkAddress);
-     */
+    fprintf (stderr,
+	     "WARNING!! (%s: %d) - free() of address %lu that was never allocated (head)!\n",
+	     fileName, lineNo, (unsigned long) chunkAddress);
     return 0;
   } else {
     oldChunk = (struct memChunk *) hstuff (chunkHash);
@@ -438,21 +435,17 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
       if (oldChunk->next != NULL) {
 	oldChunk = oldChunk->next;
       } else {
-	/*
-	   fprintf (stderr,
-	   "WARNING!! (%s: %d) = free() of address %u that was never allocated (not head)!\n",
-	   fileName, lineNo, chunkAddress);
-	 */
+	fprintf (stderr,
+		 "WARNING!! (%s: %d) = free() of address %lu that was never allocated (not head)!\n",
+		 fileName, lineNo, (unsigned long) chunkAddress);
 	return 0;
       }
     }
     if ((oldChunk->recycleCount % 2) == 0) {
-      /*
-         fprintf (stderr,
-         "ERROR!! (%s: %d) - free() of address %u that is no longer in use for size %u and recycled %d times!\n",
-         fileName, lineNo, chunkAddress, oldChunk->chunkSize,
-         oldChunk->recycleCount);
-       */
+      fprintf (stderr,
+	       "ERROR!! (%s: %d) - free() of address %lu that is no longer in use for size %u and recycled %d times!\n",
+	       fileName, lineNo, (unsigned long) chunkAddress, (unsigned int) oldChunk->chunkSize,
+	       oldChunk->recycleCount);
       oldChunk->recycleCount++;
     }
     oldChunk->freeSource =
@@ -470,12 +463,11 @@ swDumpSources ()
 {
   int i;
 
-  fprintf (stderr, "There are %d sources - only printing top forty\n",
+  fprintf (stderr, "There are %d sources - only printing top 10\n",
 	   memChunkSourceCount);
   qsort (memChunkSources, memChunkSourceCount, sizeof (struct memChunkSource),
 	 compareSourcesByTotalBytes);
-  //  for (i=0; i<min(memChunkSourceCount, 40); i++) {
-  for (i = 0; i < memChunkSourceCount; i++) {
+  for (i=0; i<min(memChunkSourceCount, 10); i++) {
     fprintf (stderr, "At %s line %d, %s called %d times for %ld bytes\n",
 	     memChunkSources[i].moduleName, memChunkSources[i].lineNo,
 	     callTypeNames[memChunkSources[i].callType],
