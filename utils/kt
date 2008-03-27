@@ -1,20 +1,28 @@
 where=`dirname "$1"`
-if builtin cd "$where"
+builtin cd "$where"
+echo -n $where...
+here=`pwd`
+a=`expr "$here" : '.*dkelvin.*'`
+if [ $a -eq 0 ]
 then
-  echo -n $where...
-  $HOME/kelvin/trunk/kelvin kelvin.conf >&kelvin.out
-  if diff avghet.out avghet.out-baseline
-  then
-    echo -n avghet.out = baseline 
-  else
-    echo -n ERROR - avghet.out != baseline 
-  fi
-  if -e ppl.out
-  then
-    echo ppl.out = baseline
-  else
-    echo -n ERROR - ppl.out != baseline
-  fi
-  echo ""
-  builtin cd "$OLDPWD"
+  time $HOME/kelvin/trunk/kelvin kelvin.conf >&kelvin.out
+else
+  time $HOME/kelvin/trunk/dkelvin kelvin.conf >&dkelvin.out
 fi
+if diff avghet.out avghet.out-baseline
+then
+  echo -n "avghet.out=baseline "
+else
+  echo -n "ERROR! - avghet.out!=baseline "
+fi
+if [ "-e" "ppl.out" ];
+then
+  if diff ppl.out ppl.out-baseline
+  then
+    echo -n "ppl.out=baseline"
+  else
+    echo -n ERROR! - ppl.out!=baseline
+  fi
+fi
+echo ""
+builtin cd "$OLDPWD"
