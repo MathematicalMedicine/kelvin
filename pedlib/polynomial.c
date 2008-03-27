@@ -2726,13 +2726,16 @@ printHashTables ()
       constantHashCount++;
       constantHashSize += constantHash[i].num * sizeof (int) * 2;
       for (j = 0; j < constantHash[i].num; j++) {
-	fprintf (stderr, "(%d %d %d) ", j, constantHash[i].index[j],
-		 constantHash[i].key[j]);
+	fprintf (stderr, "(%d %d %d %d=%G) ", j, constantHash[i].index[j],
+		 constantHash[i].key[j], constantHash[i].index[j],
+		 constantList[constantHash[i].index[j]]->value);
       }
       fprintf (stderr, "\n");
     }
   }
   fprintf (stderr, "\n");
+
+  exit(0);
 
   fprintf (stderr, "Hash table usage for variables:\n");
   for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
@@ -3573,8 +3576,8 @@ doFreePolys (unsigned short keepMask)
 // These are for debugging mis-freed pointers
       constantList[i]->value = constantList[i]->eType;
       constantList[i]->eType = T_FREED;
-      constantList[i] = NULL;
 #endif
+      constantList[i] = NULL;
     }
   }
   if (polynomialDebugLevel >= 5)
@@ -3631,8 +3634,8 @@ doFreePolys (unsigned short keepMask)
 // These are for debugging mis-freed pointers
       variableList[i]->value = variableList[i]->eType;
       variableList[i]->eType = T_FREED;
-      variableList[i] = NULL;
 #endif
+      variableList[i] = NULL;
     }
   }
   if (polynomialDebugLevel >= 5)
@@ -3692,8 +3695,8 @@ doFreePolys (unsigned short keepMask)
 // These are for debugging mis-freed pointers
       sumList[i]->value = sumList[i]->eType;
       sumList[i]->eType = T_FREED;
-      sumList[i] = NULL;
 #endif
+      sumList[i] = NULL;
     }
   }
   if (polynomialDebugLevel >= 5)
@@ -3753,8 +3756,8 @@ doFreePolys (unsigned short keepMask)
 // These are for debugging mis-freed pointers
       productList[i]->value = productList[i]->eType;
       productList[i]->eType = T_FREED;
-      productList[i] = NULL;
 #endif
+      productList[i] = NULL;
     }
   }
   if (polynomialDebugLevel >= 5)
