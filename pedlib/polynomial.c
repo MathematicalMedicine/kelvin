@@ -105,6 +105,26 @@ int polynomialDebugLevel = 0;	/* Corresponds roughly to diagnostic output volume
 int polynomialLostNodeId = -1;	/* For tracking down mis-freed polynomials */
 int polynomialScale = 10;	/* Scaling factor for hash and other storage, default is 10 */
 
+/* Clear the evaluation flag on the entire tree so we can mark
+   where we've been and not retrace our steps regardless of
+   redundancy. */
+void
+clearValidEvalFlag ()
+{
+  int i;
+
+  for (i = 0; i < constantCount; i++)
+    constantList[i]->valid &= ~VALID_EVAL_FLAG;
+  for (i = 0; i < variableCount; i++)
+    variableList[i]->valid &= ~VALID_EVAL_FLAG;
+  for (i = 0; i < sumCount; i++)
+    sumList[i]->valid &= ~VALID_EVAL_FLAG;
+  for (i = 0; i < productCount; i++)
+    productList[i]->valid &= ~VALID_EVAL_FLAG;
+  for (i = 0; i < functionCallCount; i++)
+    functionCallList[i]->valid &= ~VALID_EVAL_FLAG;
+  return;
+}
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //Recursively evaluate a polynomial.  This version of polynomial evaluation doesn't use
 //polynomial sorting list.  It just compute the values of each sub polynomial recursively.  
@@ -114,7 +134,7 @@ int polynomialScale = 10;	/* Scaling factor for hash and other storage, default 
 //and even if they haven't, it can become so slow you'll think the process is hung.
 ///////////////////////////////////////////////////////////////////////////////////////////////
 double
-evaluateValue (struct polynomial *p)
+doEvaluateValue (struct polynomial *p)
 {
   int i;
   double result;
@@ -122,6 +142,10 @@ evaluateValue (struct polynomial *p)
   struct productPoly *pP;
   struct functionPoly *fp;
   double value0, value1;
+
+  if (p->valid & VALID_EVAL_FLAG)
+    return p->value;
+  p->valid |= VALID_EVAL_FLAG;
 
   switch (p->eType) {
     //If a sub polynomial is a contant, return the value
@@ -148,7 +172,7 @@ evaluateValue (struct polynomial *p)
     result = 0;
     sP = p->e.s;
     for (i = 0; i < sP->num; i++)
-      result += evaluateValue (sP->sum[i]) * sP->factor[i];
+      result += doEvaluateValue (sP->sum[i]) * sP->factor[i];
     p->value = result;
     return result;
 
@@ -158,7 +182,7 @@ evaluateValue (struct polynomial *p)
     result = 1;
     pP = p->e.p;
     for (i = 0; i < pP->num; i++) {
-      result *= pow (evaluateValue (pP->product[i]), pP->exponent[i]);
+      result *= pow (doEvaluateValue (pP->product[i]), pP->exponent[i]);
 
     }
     p->value = result;
@@ -171,55 +195,55 @@ evaluateValue (struct polynomial *p)
     fp = p->e.f;
     //log10 is for LOD score computation
     if (strcmp (fp->name, "log10") == 0)
-      result = log10 (evaluateValue (fp->para[0]));
+      result = log10 (doEvaluateValue (fp->para[0]));
     //gsl_ran_tdist_pdf,gsl_cdf_tdist_Q,gsl_cdf_tdist_P,
     //gsl_ran_ugaussian_pdf,gsl_cdf_ugaussian_Q,gsl_cdf_ugaussian_P,
     //gsl_cdf_chisq_P, gsl_cdf_chisq_Q, and gsl_ran_chisq_pdf
     //are for quantitative trait gene's penetrance computation
     else if (strcmp (fp->name, "gsl_ran_tdist_pdf") == 0) {
-      value0 = evaluateValue (fp->para[0]);
-      value1 = evaluateValue (fp->para[1]);
+      value0 = doEvaluateValue (fp->para[0]);
+      value1 = doEvaluateValue (fp->para[1]);
       result = gsl_ran_tdist_pdf (value0, value1);
     } else if (strcmp (fp->name, "gsl_cdf_tdist_Q") == 0) {
-      value0 = evaluateValue (fp->para[0]);
-      value1 = evaluateValue (fp->para[1]);
+      value0 = doEvaluateValue (fp->para[0]);
+      value1 = doEvaluateValue (fp->para[1]);
       result = gsl_cdf_tdist_Q (value0, value1);
     } else if (strcmp (fp->name, "gsl_cdf_tdist_P") == 0) {
-      value0 = evaluateValue (fp->para[0]);
-      value1 = evaluateValue (fp->para[1]);
+      value0 = doEvaluateValue (fp->para[0]);
+      value1 = doEvaluateValue (fp->para[1]);
       result = gsl_cdf_tdist_P (value0, value1);
     } else if (strcmp (fp->name, "gsl_ran_ugaussian_pdf") == 0) {
-      value0 = evaluateValue (fp->para[0]);
+      value0 = doEvaluateValue (fp->para[0]);
       result = gsl_ran_ugaussian_pdf (value0);
     } else if (strcmp (fp->name, "gsl_cdf_ugaussian_Q") == 0) {
-      value0 = evaluateValue (fp->para[0]);
+      value0 = doEvaluateValue (fp->para[0]);
       result = gsl_cdf_ugaussian_Q (value0);
     } else if (strcmp (fp->name, "gsl_cdf_ugaussian_P") == 0) {
-      value0 = evaluateValue (fp->para[0]);
+      value0 = doEvaluateValue (fp->para[0]);
       result = gsl_cdf_ugaussian_P (value0);
     } else if (strcmp (fp->name, "gsl_cdf_chisq_P") == 0) {
-      value0 = evaluateValue (fp->para[0]);
-      value1 = evaluateValue (fp->para[1]);
+      value0 = doEvaluateValue (fp->para[0]);
+      value1 = doEvaluateValue (fp->para[1]);
       result = gsl_cdf_chisq_P (value0, value1);
     } else if (strcmp (fp->name, "gsl_cdf_chisq_Q") == 0) {
-      value0 = evaluateValue (fp->para[0]);
-      value1 = evaluateValue (fp->para[1]);
+      value0 = doEvaluateValue (fp->para[0]);
+      value1 = doEvaluateValue (fp->para[1]);
       result = gsl_cdf_chisq_Q (value0, value1);
     } else if (strcmp (fp->name, "gsl_ran_chisq_pdf") == 0) {
-      value0 = evaluateValue (fp->para[0]);
-      value1 = evaluateValue (fp->para[1]);
+      value0 = doEvaluateValue (fp->para[0]);
+      value1 = doEvaluateValue (fp->para[1]);
       result = gsl_ran_chisq_pdf (value0, value1);
     }
     //pow, exp, sqrt are standard functions
     else if (strcmp (fp->name, "pow") == 0) {
-      value0 = evaluateValue (fp->para[0]);
-      value1 = evaluateValue (fp->para[1]);
+      value0 = doEvaluateValue (fp->para[0]);
+      value1 = doEvaluateValue (fp->para[1]);
       result = pow (value0, value1);
 
     } else if (strcmp (fp->name, "exp") == 0) {
-      result = exp (evaluateValue (fp->para[0]));
+      result = exp (doEvaluateValue (fp->para[0]));
     } else if (strcmp (fp->name, "sqrt") == 0) {
-      result = sqrt (evaluateValue (fp->para[0]));
+      result = sqrt (doEvaluateValue (fp->para[0]));
     } else {
       fprintf (stderr, "unknown function name %s in polynomials\n", fp->name);
       exit (1);
@@ -232,7 +256,14 @@ evaluateValue (struct polynomial *p)
     fprintf (stderr, "Error, Unknown expression type!!!!, exit(1)");
     exit (1);
   }
-};
+}
+double
+evaluateValue (struct polynomial *p)
+{
+  /* Clear all of the VALID_EVAL_FLAGs */
+  clearValidEvalFlag ();
+  return doEvaluateValue (p);
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 //A polynomial is zero if it is a constant polynomial and its value is 0.
@@ -1940,24 +1971,6 @@ functionCallExp (int num, ...)
 
 };
 
-void
-clearValidEvalFlag ()
-{
-  int i;
-
-  for (i = 0; i < constantCount; i++)
-    constantList[i]->valid &= ~VALID_EVAL_FLAG;
-  for (i = 0; i < variableCount; i++)
-    variableList[i]->valid &= ~VALID_EVAL_FLAG;
-  for (i = 0; i < sumCount; i++)
-    sumList[i]->valid &= ~VALID_EVAL_FLAG;
-  for (i = 0; i < productCount; i++)
-    productList[i]->valid &= ~VALID_EVAL_FLAG;
-  for (i = 0; i < functionCallCount; i++)
-    functionCallList[i]->valid &= ~VALID_EVAL_FLAG;
-  return;
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //This function initialize a structure for creating a polynomial list which is used  
 //for polynomial evaluation                                                          
@@ -1983,6 +1996,7 @@ buildPolyList ()
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
+
   return l;
 };
 
@@ -3724,10 +3738,16 @@ doFreePolys (unsigned short keepMask)
   }
   free (sumList);
   sumList = newSumList;
+  if ((sumCount + (2 * SUM_LIST_INITIAL)) < sumListLength) {
+    fprintf(stderr, "Reducing sumListLength from %d to %d\n",
+	    sumListLength, sumCount + SUM_LIST_INITIAL);
+    sumListLength = sumCount + SUM_LIST_INITIAL;
+    sumList = (struct polynomial **) realloc (sumList, sizeof (struct polynomial *) *
+					      (sumListLength));
+  }
 
   newProductList =
-    (struct polynomial **) malloc (sizeof (struct polynomial *) *
-				   (productListLength));
+    (struct polynomial **) malloc (sizeof (struct polynomial *) * (productListLength));
   if (newProductList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -3786,6 +3806,13 @@ doFreePolys (unsigned short keepMask)
   }
   free (productList);
   productList = newProductList;
+  if ((productCount + (2 * PRODUCT_LIST_INITIAL)) < productListLength) {
+    fprintf(stderr, "Reducing productListLength from %d to %d\n",
+	    productListLength, productCount + PRODUCT_LIST_INITIAL);
+    productListLength = productCount + PRODUCT_LIST_INITIAL;
+    productList = (struct polynomial **) realloc (productList, sizeof (struct polynomial *) *
+						  (productListLength));
+  }
 
   /* Reset building statistics. */
   constantHashHits = variableHashHits = functionHashHits = 0;
