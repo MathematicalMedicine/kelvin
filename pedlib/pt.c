@@ -59,17 +59,18 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
   int i, freeFlag;
   double fO1, fO2;
   int eO1, eO2;
+  char *promptString = "C/V/S/P/E/?> ";
 
-  fprintf(outputFile,"C/V/S/P/?> ");
+  fprintf(outputFile, promptString);
   while (fgets(iB, sizeof(iB), inputFile) != NULL) {
     switch (toupper(iB[0])) {
     case '?':			/* Dump our work thus far */
       for (i=0;i<hI;i++) {
-        fprintf(outputFile,"%i: %s ", i, hIList[i].handle);
+        fprintf(stderr,"%i: %s ", i, hIList[i].handle);
 	expPrinting(hIList[i].pP);
-	fprintf(outputFile," or ");
-	expTermPrinting(outputFile, hIList[i].pP, 1);
-	fprintf(outputFile,"\n");
+	fprintf(stderr," or ");
+	expTermPrinting(stderr, hIList[i].pP, 1);
+	fprintf(stderr,"\n");
       }
       break;
     case 'C':			/* Add a constant polynomial */
