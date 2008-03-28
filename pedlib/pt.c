@@ -9,6 +9,8 @@
 
   Very primitive, but it gets the job done.
 
+  Build with: gcc -o pt pt.c polynomial.c -I ../utils/ -lm -lgsl -lgslcblas
+
 */
 #include <stdlib.h>
 #include <stdio.h>
@@ -59,7 +61,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
   int i, freeFlag;
   double fO1, fO2;
   int eO1, eO2;
-  char *promptString = "C/V/S/P/E/?> ";
+  char *promptString = "C/V/S/P/E/#/%/?> ";
 
   fprintf(outputFile, promptString);
   while (fgets(iB, sizeof(iB), inputFile) != NULL) {
@@ -73,6 +75,9 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
 	fprintf(stderr,"\n");
       }
       break;
+    case '%':
+      polyStatistics();
+      break;
     case 'C':			/* Add a constant polynomial */
       pHI = getHandle(inputFile, outputFile,"constant poly name");
       if (!preExisting) {
@@ -83,7 +88,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
         fprintf(outputFile,"Can't overwrite existing poly\n");
       break;
     case 'V':			/* Add a variable polynomial */
-      pHI = getHandle(inputFile, outputFile,"variable poly name");
+      pHI = getHandle(inputFile, outputFile,"variable poly name (case-sensistive)");
       if (!preExisting)
         pHI->pP = variableExp(&pHI->value, 0, 'D', pHI->handle);
       else
@@ -132,6 +137,8 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       break;
     case 'F':
       break;
+    case '#':			/* Comment line */
+      break;
     case 'E':			/* Evaluate the polynomial */
       pHI = getHandle(inputFile, outputFile," poly to evaluate");
       if (!preExisting) {
@@ -146,7 +153,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
 	fprintf(outputFile, "=%G\n", evaluateValue(pHI->pP));
       }
     }
-    fprintf(outputFile,"C/V/S/P/?> ");
+    fprintf(outputFile, promptString);
   }
   fprintf(outputFile,"\n");
   return;
