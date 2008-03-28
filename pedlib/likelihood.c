@@ -2745,6 +2745,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 	      if (modelOptions.polynomial == TRUE) {
 		if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		  newProbPoly[i] = newProbPoly[0];
+                  newProbPoly2[i] = newProbPoly2[0];
 		} else {
 		  sprintf (vName1, "theta%d_%d", i, loc);
 		  newProbPoly[i] =
@@ -2798,6 +2799,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 	      } else {
 		if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		  newProb[i] = newProb[0];
+		  newProb2[i] = newProb2[0];
 		} else {
 		  newProb[i] = *(double *) prob[i] *
 		    (1 -
@@ -2817,6 +2819,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #else
 	      if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		newProb[i] = newProb[0];
+		newProb2[i] = newProb2[0];
 	      } else {
 		newProb[i] = *(double *) prob[i] *
 		  (1 -
@@ -2841,6 +2844,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		if (modelOptions.polynomial == TRUE) {
 		  if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		    newProbPoly[i] = newProbPoly[0];
+		    newProbPoly2[i] = newProbPoly2[0];
 		  } else {
 		    sprintf (vName1, "theta%d_%d", i, loc);
 		    newProbPoly[i] = timesExp (2, (Polynomial *)
@@ -2865,6 +2869,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		} else {
 		  if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		    newProb[i] = newProb[0];
+		    newProb2[i] = newProb2[0];
 		  } else {
 		    newProb[i] = *(double *) prob[i] *
 		      (1 - locusList->pPrevLocusDistance[i][loc]);
@@ -2876,6 +2881,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #else
 		if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		  newProb[i] = newProb[0];
+		  newProb2[i] = newProb2[0];
 		} else {
 		  newProb[i] = *(double *) prob[i] *
 		    (1 - locusList->pPrevLocusDistance[i][loc]);
@@ -2889,6 +2895,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		if (modelOptions.polynomial == TRUE) {
 		  if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		    newProbPoly[i] = newProbPoly[0];
+		    newProbPoly2[i] = newProbPoly2[0];
 		  } else {
 		    sprintf (vName1, "theta%d_%d", i, loc);
 		    newProbPoly2[i] = timesExp (2, (Polynomial *)
@@ -2913,6 +2920,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		} else {
 		  if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		    newProb[i] = newProb[0];
+		    newProb2[i] = newProb2[0];
 		  } else {
 		    newProb2[i] =
 		      *(double *) prob[i] * (1 -
@@ -2926,6 +2934,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #else
 		if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		  newProb[i] = newProb[0];
+		  newProb2[i] = newProb2[0];
 		} else {
 		  newProb2[i] = *(double *) prob[i] *
 		    (1 - locusList->pPrevLocusDistance[i][loc]);
@@ -3013,8 +3022,8 @@ print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
   int newCellIndex;
   int i;
 
-  for (pattern = 0; pattern <= 3; pattern++) {
-    newCellIndex = cellIndex * 4 + pattern - 1;
+  for (pattern = 0; pattern <= 2; pattern++) {
+    newCellIndex = cellIndex * 4 + pattern;
     if (pattern == 1) {
       pID[loc] = 'P';
     } else if (pattern == 2) {
@@ -3030,7 +3039,15 @@ print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
       for (i = 0; i <= loc; i++) {
 	fprintf (stderr, "%c", pID[i]);
       }
-      fprintf (stderr, ":%f\n", pMatrix[newCellIndex].slot.prob[0]);
+      fprintf(stderr, ": ");
+      /* print out sex averaged xmission probability */
+      if(modelOptions.polynomial == TRUE)
+	{
+	  expTermPrinting(stderr, pMatrix[newCellIndex].slot.probPoly[0], 16);
+	  fprintf(stderr, "\n");
+	}
+      else
+        fprintf (stderr, ":%f\n", pMatrix[newCellIndex].slot.prob[0]);
     }
   }
 }
