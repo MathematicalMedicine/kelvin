@@ -134,7 +134,7 @@ clearValidEvalFlag ()
 //and even if they haven't, it can become so slow you'll think the process is hung.
 ///////////////////////////////////////////////////////////////////////////////////////////////
 double
-doEvaluateValue (struct polynomial *p)
+doEvaluateValue (Polynomial *p)
 {
   int i;
   double result;
@@ -258,7 +258,7 @@ doEvaluateValue (struct polynomial *p)
   }
 }
 double
-evaluateValue (struct polynomial *p)
+evaluateValue (Polynomial *p)
 {
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
@@ -272,7 +272,7 @@ evaluateValue (struct polynomial *p)
 //product expression can be build as 0.
 /////////////////////////////////////////////////////////////////////////////////
 int
-isZeroExp (struct polynomial *p)
+isZeroExp (Polynomial *p)
 {
   if (p->eType != T_CONSTANT)
     return 0;
@@ -441,11 +441,11 @@ keyConstantPolynomial (double tempD1, int tempI1)
 //pretty small compared with the number of sum and product polynomials and therefore is
 //not a big burden for memory supply
 /////////////////////////////////////////////////////////////////////////////////////////////
-struct polynomial *
+Polynomial *
 constantExp (double con)
 {
   int i;
-  struct polynomial *p;		//newly built constant polynomial
+  Polynomial *p;		//newly built constant polynomial
   int key;			//key of the new constant polynomial
   int hIndex, cIndex;		//index in hash table, index in constant polynomial list
   int first, last, location;	//first and last polynomial in a hash bucket for comparison, 
@@ -501,7 +501,7 @@ constantExp (double con)
   //next, insert it into the constant list
 
   //Generate a constant polynomial
-  p = (struct polynomial *) malloc (sizeof (struct polynomial));
+  p = (Polynomial *) malloc (sizeof (Polynomial));
   if (p == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -515,7 +515,7 @@ constantExp (double con)
     constantPListExpansions++;
     constantList =
       realloc (constantList,
-	       constantListLength * sizeof (struct polynomial *));
+	       constantListLength * sizeof (Polynomial *));
     if (constantList == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
@@ -567,11 +567,11 @@ keyVariablePolynomial (double *vD, int *vI, char vType)
 // Therefore, the computation in this function must be very efficient.  The efficiency of this function 
 //will affect the efficiency of the construction of almost every term in every polynomial
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct polynomial *
+Polynomial *
 variableExp (double *vD, int *vI, char vType, char name[10])
 {
   int i;
-  struct polynomial *p;		//newly built variable polynomial
+  Polynomial *p;		//newly built variable polynomial
   struct variablePoly *vPoly;	//variable structure for newly built variable polynomial
   int key;			//key of the newly buily variable polynomial
   int hIndex, vIndex;		//index in the hash table, index in the polynomial list
@@ -621,7 +621,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   }
 
   //This variable polynomial doesn't exist.  We create a new variable polynomial
-  p = (struct polynomial *) malloc (sizeof (struct polynomial));
+  p = (Polynomial *) malloc (sizeof (Polynomial));
   vPoly = (struct variablePoly *) malloc (sizeof (struct variablePoly));
   if (p == NULL || vPoly == NULL)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
@@ -645,7 +645,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
     variablePListExpansions++;
     variableList =
       realloc (variableList,
-	       variableListLength * sizeof (struct polynomial *));
+	       variableListLength * sizeof (Polynomial *));
     if (variableList == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
@@ -675,7 +675,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
 //we have a good hash strategy so that the polynomials are well distributed in the hash table.
 ///////////////////////////////////////////////////////////////////////////////////////////////
 inline int
-keySumPolynomial (struct polynomial **p, double *factor, int counter)
+keySumPolynomial (Polynomial **p, double *factor, int counter)
 {
 
   int key = 0;
@@ -704,8 +704,8 @@ keySumPolynomial (struct polynomial **p, double *factor, int counter)
 //If the target polynomial is found, then its index in the polynomial list is returned in parameter location
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 inline int
-searchPolynomialList (struct polynomial **p, int length,
-		      struct polynomial *target, int *location)
+searchPolynomialList (Polynomial **p, int length,
+		      Polynomial *target, int *location)
 {
   int binaryStart, binaryEnd, binaryMiddle;
 
@@ -745,8 +745,8 @@ searchPolynomialList (struct polynomial **p, int length,
 //as a basis for comparisons between the resulted polynomial and other polynomials 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 inline void
-collectSumTerms (double **factor, struct polynomial ***p, int *counter,
-		 int *containerLength, double f1, struct polynomial *p1)
+collectSumTerms (double **factor, Polynomial ***p, int *counter,
+		 int *containerLength, double f1, Polynomial *p1)
 {
   int location;
 
@@ -760,8 +760,8 @@ collectSumTerms (double **factor, struct polynomial ***p, int *counter,
   if (*counter >= *containerLength - 1) {
     (*containerLength) += 50;
     *factor = (double *) realloc (*factor, (*containerLength) * sizeof (double));
-    *p = (struct polynomial **) realloc (*p, (*containerLength) *
-					 sizeof (struct polynomial *));
+    *p = (Polynomial **) realloc (*p, (*containerLength) *
+					 sizeof (Polynomial *));
     if (*factor == NULL || *p == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
@@ -806,17 +806,17 @@ collectSumTerms (double **factor, struct polynomial ***p, int *counter,
 //                       polynomial and therefore the parameter polynomial p can be
 //                       freed   
 /////////////////////////////////////////////////////////////////////////////////////////////
-struct polynomial *
+Polynomial *
 plusExp (int num, ...)
 {
   int i, k, l;
   va_list args;			//parameters
   struct sumPoly *sP;		//element of a sum polynomial
-  struct polynomial *rp;	//pointer of the new sum polynomial
+  Polynomial *rp;	//pointer of the new sum polynomial
   int counterSum;		//counter of the number of terms in the new sum polynomial
   int flag;			//replacement flag
   double f1, f0;		//factoors
-  struct polynomial *p1 = 0, *p0 = 0;	//polynomial terms
+  Polynomial *p1 = 0, *p0 = 0;	//polynomial terms
   double con = 0;		//accumulate constant values appearing in the function parameters
   int key = 0;			//key for the new polynomial
   int tempI, tempI2;		//normalized powers (for comparison of two double numbers)
@@ -843,7 +843,7 @@ plusExp (int num, ...)
     f1 = va_arg (args, double);
 
     //get the polynomial
-    p1 = va_arg (args, struct polynomial *);
+    p1 = va_arg (args, Polynomial *);
 
     if (polynomialDebugLevel >= 60) {
       fprintf (stderr, "In plusExp factor=%f item No. %d of %d type=%d\n", f1,
@@ -948,7 +948,7 @@ plusExp (int num, ...)
   if (counterSum + 1 > lengthSum) {
     lengthSum = counterSum + 1;
     factorSum = (double *) realloc (factorSum, lengthSum * sizeof (double));
-    pSum = (struct polynomial **) realloc (pSum, lengthSum * sizeof (struct polynomial *));
+    pSum = (Polynomial **) realloc (pSum, lengthSum * sizeof (Polynomial *));
     if (factorSum == NULL || pSum == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
@@ -957,19 +957,19 @@ plusExp (int num, ...)
 
   if (counter_v1 > 0) {
     memcpy (&factorSum[0], &factor_v1[0], sizeof (double) * counter_v1);
-    memcpy (&pSum[0], &p_v1[0], sizeof (struct polynomial *) * counter_v1);
+    memcpy (&pSum[0], &p_v1[0], sizeof (Polynomial *) * counter_v1);
   }
   if (counter_p1 > 0) {
     memcpy (&factorSum[counter_v1], &factor_p1[0],
 	    sizeof (double) * counter_p1);
     memcpy (&pSum[counter_v1], &p_p1[0],
-	    sizeof (struct polynomial *) * counter_p1);
+	    sizeof (Polynomial *) * counter_p1);
   }
   if (counter_f1 > 0) {
     memcpy (&factorSum[counter_v1 + counter_p1], &factor_f1[0],
 	    sizeof (double) * counter_f1);
     memcpy (&pSum[counter_v1 + counter_p1], &p_f1[0],
-	    sizeof (struct polynomial *) * counter_f1);
+	    sizeof (Polynomial *) * counter_f1);
   }
   //After we go through all the items in the sum,
   //we get only a constant
@@ -1114,7 +1114,7 @@ plusExp (int num, ...)
   }
 
   //If the sum is not found in the sum list, a new polynomial is built 
-  rp = (struct polynomial *) malloc (sizeof (struct polynomial));
+  rp = (Polynomial *) malloc (sizeof (Polynomial));
   if (rp == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -1127,7 +1127,7 @@ plusExp (int num, ...)
   }
   sP->num = counterSum;
   sP->sum =
-    (struct polynomial **) malloc (counterSum * sizeof (struct polynomial *));
+    (Polynomial **) malloc (counterSum * sizeof (Polynomial *));
   sP->factor = (double *) malloc (counterSum * sizeof (double));
   if (sP->sum == NULL || sP->factor == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
@@ -1160,7 +1160,7 @@ plusExp (int num, ...)
       sumListLength += SUM_LIST_INCREASE;
       sumPListExpansions++;
       sumList =
-	realloc (sumList, sumListLength * sizeof (struct polynomial *));
+	realloc (sumList, sumListLength * sizeof (Polynomial *));
       if (sumList == NULL) {
 	fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
 	exit (1);
@@ -1229,7 +1229,7 @@ plusExp (int num, ...)
 //are required for good distribution of product polynomials in product hash table
 ////////////////////////////////////////////////////////////////////////////////
 inline int
-keyProductPolynomial (struct polynomial **p, int *exponent, int counter)
+keyProductPolynomial (Polynomial **p, int *exponent, int counter)
 {
   int key = 0;
   int j;
@@ -1248,8 +1248,8 @@ keyProductPolynomial (struct polynomial **p, int *exponent, int counter)
 //so that these terms can have a unique order in the constructed product polynomial.
 ////////////////////////////////////////////////////////////////////////////////////////////
 inline void
-collectProductTerms (int **exponent, struct polynomial ***p, int *counter,
-		     int *containerLength, int e1, struct polynomial *p1)
+collectProductTerms (int **exponent, Polynomial ***p, int *counter,
+		     int *containerLength, int e1, Polynomial *p1)
 {
   int location;
 
@@ -1262,8 +1262,8 @@ collectProductTerms (int **exponent, struct polynomial ***p, int *counter,
   if ((*counter) >= (*containerLength) - 1) {
     (*containerLength) += 50;
     (*exponent) =  (int *) realloc ((*exponent), (*containerLength) * sizeof (int));
-    (*p) = (struct polynomial **) realloc ((*p), (*containerLength) *
-				      sizeof (struct polynomial *));
+    (*p) = (Polynomial **) realloc ((*p), (*containerLength) *
+				      sizeof (Polynomial *));
     if ((*exponent) == NULL || (*p) == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
@@ -1312,14 +1312,14 @@ collectProductTerms (int **exponent, struct polynomial ***p, int *counter,
 //                       freed
 ////////////////////////////////////////////////////////////////////////////////////////
 
-struct polynomial *
+Polynomial *
 timesExp (int num, ...)
 {
   int i, k, l, counterProd;	//i,k and l are loop variables, counterProd is the number of terms in the new product polynomial
   va_list args;			//parameters
   struct productPoly *pP;	//product structure for the new polynomial
-  struct polynomial *rp;	//new product polynomial
-  struct polynomial *p1 = 0, *p0 = 0;	//pointer to a term
+  Polynomial *rp;	//new product polynomial
+  Polynomial *p1 = 0, *p0 = 0;	//pointer to a term
   int e1, e0;			//component of a term
   int isZero = 0;		//if the result is zero
   double factor = 1;		//collect the constant terms in the parameter list
@@ -1344,7 +1344,7 @@ timesExp (int num, ...)
   //go through operand and its exponent of the product
   for (i = 0; i < num; i++) {
     //get the polynomial
-    p1 = va_arg (args, struct polynomial *);
+    p1 = va_arg (args, Polynomial *);
 
     //get the exponent
     e1 = va_arg (args, int);
@@ -1481,9 +1481,9 @@ timesExp (int num, ...)
     lengthProd = counterProd;
     exponentProd = (int *) realloc (exponentProd, lengthProd * sizeof (int));
     pProd =
-      (struct polynomial **) realloc (pProd,
+      (Polynomial **) realloc (pProd,
 				      lengthProd *
-				      sizeof (struct polynomial *));
+				      sizeof (Polynomial *));
     if (exponentProd == NULL || pProd == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
@@ -1491,19 +1491,19 @@ timesExp (int num, ...)
   }
   if (counter_v2 > 0) {
     memcpy (&exponentProd[0], &exponent_v2[0], sizeof (int) * counter_v2);
-    memcpy (&pProd[0], &p_v2[0], sizeof (struct polynomial *) * counter_v2);
+    memcpy (&pProd[0], &p_v2[0], sizeof (Polynomial *) * counter_v2);
   }
   if (counter_s2 > 0) {
     memcpy (&exponentProd[counter_v2], &exponent_s2[0],
 	    sizeof (int) * counter_s2);
     memcpy (&pProd[counter_v2], &p_s2[0],
-	    sizeof (struct polynomial *) * counter_s2);
+	    sizeof (Polynomial *) * counter_s2);
   }
   if (counter_f2 > 0) {
     memcpy (&exponentProd[counter_v2 + counter_s2], &exponent_f2[0],
 	    sizeof (int) * counter_f2);
     memcpy (&pProd[counter_v2 + counter_s2], &p_f2[0],
-	    sizeof (struct polynomial *) * counter_f2);
+	    sizeof (Polynomial *) * counter_f2);
   }
   //The product has 0 items, the result is a constant polynomial
   if (counterProd == 0) {
@@ -1664,7 +1664,7 @@ timesExp (int num, ...)
 
     //Construct a new product polynomial from the terms
     //saved in the container
-    rp = (struct polynomial *) malloc (sizeof (struct polynomial));
+    rp = (Polynomial *) malloc (sizeof (Polynomial));
     if (rp == NULL)
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     rp->eType = T_PRODUCT;
@@ -1673,8 +1673,8 @@ timesExp (int num, ...)
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     pP->num = counterProd;
     pP->product =
-      (struct polynomial **) malloc (counterProd *
-				     sizeof (struct polynomial *));
+      (Polynomial **) malloc (counterProd *
+				     sizeof (Polynomial *));
     pP->exponent = (int *) malloc (counterProd * sizeof (int));
     if (pP->product == NULL || pP->exponent == NULL)
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
@@ -1698,7 +1698,7 @@ timesExp (int num, ...)
       productPListExpansions++;
       productList =
 	realloc (productList,
-		 productListLength * sizeof (struct polynomial *));
+		 productListLength * sizeof (Polynomial *));
       if (productList == NULL) {
 	fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
 	exit (1);
@@ -1801,7 +1801,7 @@ timesExp (int num, ...)
 //to the name of the called function and the parameters               
 ////////////////////////////////////////////////////////////////////////
 inline int
-keyFunctionCallPolynomial (char *fName, struct polynomial **p, int num)
+keyFunctionCallPolynomial (char *fName, Polynomial **p, int num)
 {
   int key = 0;
   int i;
@@ -1829,18 +1829,18 @@ keyFunctionCallPolynomial (char *fName, struct polynomial **p, int num)
 //  (2) The name of the called function
 //  (3) A group of parameters to the called function
 ////////////////////////////////////////////////////////////////////////////////////////
-struct polynomial *
+Polynomial *
 functionCallExp (int num, ...)
 {
   int i, k, hIndex, fIndex;	//hIndex: index in hash table, fIndex: index in polynomiall list
   char *fName;			//function name
   int key;			//key of the newly built function call polynomial
-  struct polynomial **p;	//parameters of the newly built function call polynomial
+  Polynomial **p;	//parameters of the newly built function call polynomial
   int first, last, location;	//first and last polynomial in a hash bucket for comparison
 
   //location of the newly built variable polynomial in the hash bucket
   va_list args;			//arguments
-  struct polynomial *rp;	//newly built function call polynomial
+  Polynomial *rp;	//newly built function call polynomial
   struct functionPoly *fP;	//function-call structure of the newly built function call polynomial
 
   //get the number of parameters for functionCallExp
@@ -1848,7 +1848,7 @@ functionCallExp (int num, ...)
   fName = va_arg (args, char *);
 
   p =
-    (struct polynomial **) malloc ((num - 1) * sizeof (struct polynomial *));
+    (Polynomial **) malloc ((num - 1) * sizeof (Polynomial *));
   if (p == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -1863,7 +1863,7 @@ functionCallExp (int num, ...)
 	expPrinting (p[i]);
 	fprintf (stderr, "\n");
       }
-      p[i] = va_arg (args, struct polynomial *);
+      p[i] = va_arg (args, Polynomial *);
     }
   }
   va_end (args);
@@ -1917,14 +1917,14 @@ functionCallExp (int num, ...)
 
   //If the function call is not found in the list, insert it in the list
   //Build a new polynomial
-  rp = (struct polynomial *) malloc (sizeof (struct polynomial));
+  rp = (Polynomial *) malloc (sizeof (Polynomial));
   fP = (struct functionPoly *) malloc (sizeof (struct functionPoly));
   if (rp == NULL || fP == NULL)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
   rp->eType = T_FUNCTIONCALL;
   fP->paraNum = num - 1;
   fP->para =
-    (struct polynomial **) malloc ((num - 1) * sizeof (struct polynomial *));
+    (Polynomial **) malloc ((num - 1) * sizeof (Polynomial *));
   fP->name = (char *) malloc (strlen (fName) + 1);
   if (fP->para == NULL || fP->name == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
@@ -1947,7 +1947,7 @@ functionCallExp (int num, ...)
     functionCallPListExpansions++;
     functionCallList =
       realloc (functionCallList,
-	       functionCallListLength * sizeof (struct polynomial *));
+	       functionCallListLength * sizeof (Polynomial *));
     if (functionCallList == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
@@ -1991,7 +1991,7 @@ buildPolyList ()
 
   l->listSize = 1000;
   l->listNext = 0;
-  l->pList = (struct polynomial **) malloc (sizeof (struct polynomial *) *l->listSize);
+  l->pList = (Polynomial **) malloc (sizeof (Polynomial *) *l->listSize);
   if (l->pList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2004,14 +2004,14 @@ buildPolyList ()
 //This function appends a polynomial onto a polynomial list                         
 //////////////////////////////////////////////////////////////////////////////////////
 void
-polyListAppend (struct polyList *l, struct polynomial *p)
+polyListAppend (struct polyList *l, Polynomial *p)
 {
   //valid is a mark showing that this polynomial appears on a sorting list
   p->valid |= VALID_EVAL_FLAG;
 
   if (l->listNext >= l->listSize) {
     l->pList =
-      realloc (l->pList, sizeof (struct polynomial *) * (l->listSize + 1000));
+      realloc (l->pList, sizeof (Polynomial *) * (l->listSize + 1000));
     if (l->pList == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
       exit (1);
@@ -2031,7 +2031,7 @@ polyListAppend (struct polyList *l, struct polynomial *p)
 //polynomials of a set of pedigrees fully reused
 /////////////////////////////////////////////////////////////////////////////////////
 void
-polyListSorting (struct polynomial *p, struct polyList *l)
+polyListSorting (Polynomial *p, struct polyList *l)
 {
   int i;
 
@@ -2107,9 +2107,9 @@ polyListSorting (struct polynomial *p, struct polyList *l)
 //to be executed for evaluation.  This function is not recursive 
 ///////////////////////////////////////////////////////////////////
 void
-evaluatePoly (struct polynomial *pp, struct polyList *l, double *pReturnValue)
+evaluatePoly (Polynomial *pp, struct polyList *l, double *pReturnValue)
 {
-  struct polynomial *p;
+  Polynomial *p;
   struct sumPoly *sP;
   struct productPoly *pP;
   register int i, j;
@@ -2264,7 +2264,7 @@ evaluatePoly (struct polynomial *pp, struct polyList *l, double *pReturnValue)
 void
 printPolyList (struct polyList *l)
 {
-  struct polynomial *p;
+  Polynomial *p;
   register int i, j;
 
   for (j = l->listNext - 1; j >= 0; j--) {
@@ -2377,8 +2377,8 @@ polynomialInitialization ()
   constantListLength = CONSTANT_LIST_INITIAL;
   constantCount = 0;
   constantList =
-    (struct polynomial **) malloc (constantListLength *
-				   sizeof (struct polynomial *));
+    (Polynomial **) malloc (constantListLength *
+				   sizeof (Polynomial *));
   if (constantList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2387,8 +2387,8 @@ polynomialInitialization ()
   variableListLength = 50;
   variableCount = 0;
   variableList =
-    (struct polynomial **) malloc (variableListLength *
-				   sizeof (struct polynomial *));
+    (Polynomial **) malloc (variableListLength *
+				   sizeof (Polynomial *));
   if (variableList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2397,8 +2397,8 @@ polynomialInitialization ()
   sumListLength = SUM_LIST_INITIAL;
   sumCount = 0;
   sumList =
-    (struct polynomial **) malloc (sumListLength *
-				   sizeof (struct polynomial *));
+    (Polynomial **) malloc (sumListLength *
+				   sizeof (Polynomial *));
   if (sumList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2407,8 +2407,8 @@ polynomialInitialization ()
   productListLength = PRODUCT_LIST_INITIAL;
   productCount = 0;
   productList =
-    (struct polynomial **) malloc (productListLength *
-				   sizeof (struct polynomial *));
+    (Polynomial **) malloc (productListLength *
+				   sizeof (Polynomial *));
   if (productList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2417,8 +2417,8 @@ polynomialInitialization ()
   functionCallListLength = FUNCTIONCALL_LIST_INITIAL;
   functionCallCount = 0;
   functionCallList =
-    (struct polynomial **) malloc (functionCallListLength *
-				   sizeof (struct polynomial *));
+    (Polynomial **) malloc (functionCallListLength *
+				   sizeof (Polynomial *));
   if (functionCallList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2519,8 +2519,8 @@ polynomialInitialization ()
   containerLength_v1 = 100;
   factor_v1 = (double *) malloc (containerLength_v1 * sizeof (double));
   p_v1 =
-    (struct polynomial **) malloc (containerLength_v1 *
-				   sizeof (struct polynomial *));
+    (Polynomial **) malloc (containerLength_v1 *
+				   sizeof (Polynomial *));
   if (factor_v1 == NULL || p_v1 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2529,8 +2529,8 @@ polynomialInitialization ()
   containerLength_p1 = 100;
   factor_p1 = (double *) malloc (containerLength_p1 * sizeof (double));
   p_p1 =
-    (struct polynomial **) malloc (containerLength_p1 *
-				   sizeof (struct polynomial *));
+    (Polynomial **) malloc (containerLength_p1 *
+				   sizeof (Polynomial *));
   if (factor_p1 == NULL || p_p1 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2539,8 +2539,8 @@ polynomialInitialization ()
   containerLength_f1 = 100;
   factor_f1 = (double *) malloc (containerLength_f1 * sizeof (double));
   p_f1 =
-    (struct polynomial **) malloc (containerLength_f1 *
-				   sizeof (struct polynomial *));
+    (Polynomial **) malloc (containerLength_f1 *
+				   sizeof (Polynomial *));
   if (factor_f1 == NULL || p_f1 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2549,7 +2549,7 @@ polynomialInitialization ()
   lengthSum = 300;
   factorSum = (double *) malloc (lengthSum * sizeof (double));
   pSum =
-    (struct polynomial **) malloc (lengthSum * sizeof (struct polynomial *));
+    (Polynomial **) malloc (lengthSum * sizeof (Polynomial *));
   if (factorSum == NULL || pSum == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2560,8 +2560,8 @@ polynomialInitialization ()
   containerLength_v2 = 100;
   exponent_v2 = (int *) malloc (containerLength_v2 * sizeof (int));
   p_v2 =
-    (struct polynomial **) malloc (containerLength_v2 *
-				   sizeof (struct polynomial *));
+    (Polynomial **) malloc (containerLength_v2 *
+				   sizeof (Polynomial *));
   if (exponent_v2 == NULL || p_v2 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2570,8 +2570,8 @@ polynomialInitialization ()
   containerLength_s2 = 100;
   exponent_s2 = (int *) malloc (containerLength_s2 * sizeof (int));
   p_s2 =
-    (struct polynomial **) malloc (containerLength_s2 *
-				   sizeof (struct polynomial *));
+    (Polynomial **) malloc (containerLength_s2 *
+				   sizeof (Polynomial *));
   if (exponent_s2 == NULL || p_s2 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2580,8 +2580,8 @@ polynomialInitialization ()
   containerLength_f2 = 100;
   exponent_f2 = (int *) malloc (containerLength_f2 * sizeof (double));
   p_f2 =
-    (struct polynomial **) malloc (containerLength_f2 *
-				   sizeof (struct polynomial *));
+    (Polynomial **) malloc (containerLength_f2 *
+				   sizeof (Polynomial *));
   if (exponent_f2 == NULL || p_f2 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2590,7 +2590,7 @@ polynomialInitialization ()
   lengthProd = 300;
   exponentProd = (int *) malloc (lengthProd * sizeof (int));
   pProd =
-    (struct polynomial **) malloc (lengthProd * sizeof (struct polynomial *));
+    (Polynomial **) malloc (lengthProd * sizeof (Polynomial *));
   if (exponentProd == NULL || pProd == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -2854,7 +2854,7 @@ char *polyTypes[] = { "constant", "variable", "sum", "product", "function" };
 
 /* It might not be a sumPoly, but we can treat it as one. */
 void
-traversePoly (struct polynomial *p, int currentTier)
+traversePoly (Polynomial *p, int currentTier)
 {
   int i;
 
@@ -2901,7 +2901,7 @@ traversePoly (struct polynomial *p, int currentTier)
 }
 
 void
-printSummaryPoly (struct polynomial *p)
+printSummaryPoly (Polynomial *p)
 {
   int i, j;
 
@@ -2933,7 +2933,7 @@ printSummaryPoly (struct polynomial *p)
 }
 
 void
-expPrinting (struct polynomial *p)
+expPrinting (Polynomial *p)
 {
   int i;
 
@@ -3000,7 +3000,7 @@ expPrinting (struct polynomial *p)
    polynomial ids. */
 
 void
-expTermPrinting (FILE * output, struct polynomial *p, int depth)
+expTermPrinting (FILE * output, Polynomial *p, int depth)
 {
   int i;
 
@@ -3147,39 +3147,29 @@ polyStatistics ()
 
   constantSize = constantCount * sizeof (Polynomial);
   variableSize = variableCount * sizeof (Polynomial);
-  sumSize =
-    sumCount * sizeof (Polynomial) + sumCount * sizeof (struct sumPoly);
+  sumSize = sumCount * sizeof (Polynomial);
   for (i = 0; i < sumCount; i++) {
-    sumSize +=
-      sumList[i]->e.s->num * (sizeof (Polynomial *) + sizeof (double));
     sumTerms += sumList[i]->e.s->num;
     if (sumList[i]->e.s->num > maxSumTerms)
       maxSumTerms = sumList[i]->e.s->num;
   }
-  productSize =
-    productCount * sizeof (Polynomial) +
-    productCount * sizeof (struct productPoly);
+  productSize =  productCount * sizeof (Polynomial);
   for (i = 0; i < productCount; i++) {
-    productSize +=
-      productList[i]->e.p->num * (sizeof (Polynomial *) + sizeof (int));
     productTerms += productList[i]->e.p->num;
     if (productList[i]->e.p->num > maxProductTerms)
       maxProductTerms = productList[i]->e.p->num;
   }
   functionCallSize =
-    functionCallCount * sizeof (Polynomial) +
-    functionCallCount * sizeof (struct functionPoly);
-  for (i = 0; i < functionCallCount; i++) {
-    functionCallSize +=
-      strlen (functionCallList[i]->e.f->name) + sizeof (int) +
-      sizeof (Polynomial *);
-  }
+    functionCallCount * sizeof (Polynomial);
+
   fprintf (stderr, "Term count(avg): sums=%d(%d), products=%d(%d)\n",
 	   sumTerms, sumTerms / (sumCount ? sumCount : 1), productTerms, 
 	   productTerms / (productCount ? productCount : 1));
   fprintf (stderr,
 	   "Sizes (including terms): sums=%ld, products=%ld, functions=%ld\n",
-	   sumSize, productSize, functionCallSize);
+	   sumSize+(sumTerms * (sizeof(Polynomial) + sizeof(double))),
+	   productSize+(productTerms * (sizeof(Polynomial) + sizeof(int))),
+	   functionCallSize);
 
   if (constantCount > 0) {
     for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
@@ -3401,7 +3391,7 @@ holdAllPolys ()
 
 /* Flag all components of the provided polynomial for preservation. */
 void
-doKeepPoly (struct polynomial *p)
+doKeepPoly (Polynomial *p)
 {
   int i;
 
@@ -3442,7 +3432,7 @@ doKeepPoly (struct polynomial *p)
 }
 
 void
-keepPoly (struct polynomial *p)
+keepPoly (Polynomial *p)
 {
   if (polynomialDebugLevel >= 3) fprintf(stderr,"k");
   if (polynomialDebugLevel >= 10)
@@ -3456,7 +3446,7 @@ keepPoly (struct polynomial *p)
 
 /* Bump the hold count for this and all component subpolynomials. */
 void
-doHoldPoly (struct polynomial *p)
+doHoldPoly (Polynomial *p)
 {
   int i;
 
@@ -3490,7 +3480,7 @@ doHoldPoly (struct polynomial *p)
 }
 
 void
-holdPoly (struct polynomial *p)
+holdPoly (Polynomial *p)
 {
   if (polynomialDebugLevel >= 3) fprintf(stderr,"h");
   if (polynomialDebugLevel >= 10)
@@ -3504,7 +3494,7 @@ holdPoly (struct polynomial *p)
 
 /* Decrement the hold count for this and all component subpolynomials. */
 void
-doUnHoldPoly (struct polynomial *p)
+doUnHoldPoly (Polynomial *p)
 {
   int i;
 
@@ -3538,7 +3528,7 @@ doUnHoldPoly (struct polynomial *p)
 }
 
 void
-unHoldPoly (struct polynomial *p)
+unHoldPoly (Polynomial *p)
 {
   if (polynomialDebugLevel >= 3) fprintf(stderr,"H");
   clearValidEvalFlag ();
@@ -3550,7 +3540,7 @@ void
 doFreePolys (unsigned short keepMask)
 {
   int i, j, k;
-  struct polynomial **newConstantList, **newVariableList, **newSumList, **newProductList;
+  Polynomial **newConstantList, **newVariableList, **newSumList, **newProductList;
 
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Starting doFreePolys\n");
@@ -3564,7 +3554,7 @@ doFreePolys (unsigned short keepMask)
      for the ones we are keeping. */
 
   newConstantList =
-    (struct polynomial **) malloc (sizeof (struct polynomial *) *
+    (Polynomial **) malloc (sizeof (Polynomial *) *
 				   (constantListLength));
   if (newConstantList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
@@ -3622,7 +3612,7 @@ doFreePolys (unsigned short keepMask)
 
 
   newVariableList =
-    (struct polynomial **) malloc (sizeof (struct polynomial *) *
+    (Polynomial **) malloc (sizeof (Polynomial *) *
 				   (variableListLength));
   if (newVariableList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
@@ -3679,7 +3669,7 @@ doFreePolys (unsigned short keepMask)
   variableList = newVariableList;
 
   newSumList =
-    (struct polynomial **) malloc (sizeof (struct polynomial *) *
+    (Polynomial **) malloc (sizeof (Polynomial *) *
 				   (sumListLength));
   if (newSumList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
@@ -3742,12 +3732,13 @@ doFreePolys (unsigned short keepMask)
     fprintf(stderr, "Reducing sumListLength from %d to %d\n",
 	    sumListLength, sumCount + SUM_LIST_INITIAL);
     sumListLength = sumCount + SUM_LIST_INITIAL;
-    sumList = (struct polynomial **) realloc (sumList, sizeof (struct polynomial *) *
+    sumList = (Polynomial **) realloc (sumList, sizeof (Polynomial *) *
 					      (sumListLength));
+    polyStatistics();
   }
 
   newProductList =
-    (struct polynomial **) malloc (sizeof (struct polynomial *) * (productListLength));
+    (Polynomial **) malloc (sizeof (Polynomial *) * (productListLength));
   if (newProductList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
@@ -3810,8 +3801,9 @@ doFreePolys (unsigned short keepMask)
     fprintf(stderr, "Reducing productListLength from %d to %d\n",
 	    productListLength, productCount + PRODUCT_LIST_INITIAL);
     productListLength = productCount + PRODUCT_LIST_INITIAL;
-    productList = (struct polynomial **) realloc (productList, sizeof (struct polynomial *) *
+    productList = (Polynomial **) realloc (productList, sizeof (Polynomial *) *
 						  (productListLength));
+    polyStatistics();
   }
 
   /* Reset building statistics. */
