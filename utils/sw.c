@@ -425,9 +425,9 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
 
   hashKey = lookup (&chunkAddress, sizeof (chunkAddress), 0);
   if (hfind (chunkHash, &hashKey, sizeof (hashKey)) == FALSE) {
-    fprintf (stderr,
-	     "WARNING!! (%s: %d) - free() of address %lu that was never allocated (head)!\n",
-	     fileName, lineNo, (unsigned long) chunkAddress);
+    //    fprintf (stderr,
+    //	     "WARNING!! (%s: %d) - free() of address %lu that was never allocated (head)!\n",
+    //	     fileName, lineNo, (unsigned long) chunkAddress);
     return 0;
   } else {
     oldChunk = (struct memChunk *) hstuff (chunkHash);
@@ -435,17 +435,17 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
       if (oldChunk->next != NULL) {
 	oldChunk = oldChunk->next;
       } else {
-	fprintf (stderr,
-		 "WARNING!! (%s: %d) = free() of address %lu that was never allocated (not head)!\n",
-		 fileName, lineNo, (unsigned long) chunkAddress);
+	//	fprintf (stderr,
+	//		 "WARNING!! (%s: %d) = free() of address %lu that was never allocated (not head)!\n",
+	//		 fileName, lineNo, (unsigned long) chunkAddress);
 	return 0;
       }
     }
     if ((oldChunk->recycleCount % 2) == 0) {
-      fprintf (stderr,
-	       "ERROR!! (%s: %d) - free() of address %lu that is no longer in use for size %u and recycled %d times!\n",
-	       fileName, lineNo, (unsigned long) chunkAddress, (unsigned int) oldChunk->chunkSize,
-	       oldChunk->recycleCount);
+      //      fprintf (stderr,
+      //	       "ERROR!! (%s: %d) - free() of address %lu that is no longer in use for size %u and recycled %d times!\n",
+      //	       fileName, lineNo, (unsigned long) chunkAddress, (unsigned int) oldChunk->chunkSize,
+      //	       oldChunk->recycleCount);
       oldChunk->recycleCount++;
     }
     oldChunk->freeSource =
