@@ -50,6 +50,57 @@
 #include "gsl/gsl_randist.h"
 #include "gsl/gsl_cdf.h"
 
+/* This is a global variable used for giving each polynomial an unique ID
+   so that we can know if two polynomials are the same just from their IDs */
+int nodeId;
+
+/* We have a polynomials list to save the polynomials in each polynomial category,
+   which is named constantList, variableList, sumList, productList, and functionCallList.
+   The length of these lists are saved in constantCount, variableCount, productCount,
+   functionCallCount respectively.  Each of the lists is dynamically applied since we are
+   not sure how many polynomials we may have.  Therefore, we apply to have a short list
+   initially and increase its length gradually with the increase of the number of 
+   polynomials. The current length of the lists is recorded in constantListLength,
+   variableListLength, sumListLength, productListLength, and functionCallListLength
+   respectively. */
+
+/* Why not free all the polynomials before building the likelihood polynomials for the 
+   next trait position? Before we even start to build the likelihood polynomials of 
+   pedigrees at the first trait position, some polynomials have already been built. 
+   These polynomials are useful for all the trait positions.  Therefore, we can't free 
+   everything before we start to build likelihood polynomials of pedigrees at the next 
+   trait position. */
+
+struct polynomial **constantList;
+int constantCount;
+int constantListLength;
+int constantCountStamp;
+int constantCountStamp2;
+
+struct polynomial **variableList;
+int variableCount;
+int variableListLength;
+int variableCountStamp;
+int variableCountStamp2;
+
+struct polynomial **sumList;
+int sumCount;
+int sumListLength;
+int sumCountStamp;
+int sumCountStamp2;
+
+struct polynomial **productList;
+int productCount;
+int productListLength;
+int productCountStamp;
+int productCountStamp2;
+
+struct polynomial **functionCallList;
+int functionCallCount;
+int functionCallListLength;
+int functionCallCountStamp;
+int functionCallCountStamp2;
+
 /* These used to be constants, hence their case. Now they're scaled, but I kept the
    case because they act like constants. */
 
