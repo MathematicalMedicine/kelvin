@@ -2958,6 +2958,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #ifndef NO_POLYNOMIAL
 	if (modelOptions.polynomial == TRUE) {
 	  pMatrix[newCellIndex].slot.probPoly[i] = newProbPoly[i];
+	  holdPoly(newProbPoly[i]);
 	} else
 	  pMatrix[newCellIndex].slot.prob[i] = newProb[i];
 #else
