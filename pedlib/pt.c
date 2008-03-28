@@ -105,14 +105,19 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       } else {
         pHIO1 = getHandle(inputFile, outputFile,"1st operand poly name");
         freeFlag = FALSE;
+	if (!preExisting) {
+	  fprintf(outputFile,"Can't use undefined poly name\n");
+	  break;
+	}
       }
       fprintf(outputFile,"Factor of 2nd operand> ");
       fO2 = atof(fgets(iB, sizeof(iB), inputFile));
       pHIO2 = getHandle(inputFile, outputFile,"2nd operand poly name");
-      if (!preExisting)
+      if (!preExisting) {
 	printf("Can't use undefined poly name\n");
-      else
-        pHI->pP = plusExp(2, fO1, pHIO1->pP, fO2, pHIO2->pP, freeFlag);
+	break;
+      }
+      pHI->pP = plusExp(2, fO1, pHIO1->pP, fO2, pHIO2->pP, freeFlag);
       break;
     case 'P':			/* Add a 2-operand product polynomial */
       pHI = getHandle(inputFile, outputFile,"result poly name");
@@ -123,35 +128,40 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       } else {
         pHIO1 = getHandle(inputFile, outputFile,"1st operand poly name");
         freeFlag = FALSE;
+	if (!preExisting) {
+	  printf("Can't use undefined poly name\n");
+	  break;
+	}
       }
       fprintf(outputFile,"Exponent of %s> ", pHIO1->handle);
       eO1 = atoi(fgets(iB, sizeof(iB), inputFile));
       pHIO2 = getHandle(inputFile, outputFile,"2nd operand poly name");
-      if (!preExisting)
+      if (!preExisting) {
 	fprintf(outputFile,"Can't use undefined poly name\n");
-      else {
-        fprintf(outputFile,"Exponent of %s> ", pHIO2->handle);
-        eO2 = atoi(fgets(iB, sizeof(iB), inputFile));
-        pHI->pP = timesExp(2, pHIO1->pP, eO1, pHIO2->pP, eO2, freeFlag);
+	break;
       }
+      fprintf(outputFile,"Exponent of %s> ", pHIO2->handle);
+      eO2 = atoi(fgets(iB, sizeof(iB), inputFile));
+      pHI->pP = timesExp(2, pHIO1->pP, eO1, pHIO2->pP, eO2, freeFlag);
       break;
     case 'F':
       break;
     case '#':			/* Comment line */
+      fprintf(stderr, "%s\n", iB);
       break;
     case 'E':			/* Evaluate the polynomial */
       pHI = getHandle(inputFile, outputFile," poly to evaluate");
       if (!preExisting) {
 	fprintf(outputFile, "Can't evaluate undefined poly\n");
-      } else {
-	for (i=0;i<hI;i++) {
-	  if (hIList[i].pP->eType == T_VARIABLE) {
-	    fprintf(outputFile,"Value for %s> ", hIList[i].handle);
-	    hIList[i].value = atof(fgets(iB, sizeof(iB), inputFile));
-	  }
-	}
-	fprintf(outputFile, "=%G\n", evaluateValue(pHI->pP));
+	break;
       }
+      for (i=0;i<hI;i++) {
+	if (hIList[i].pP->eType == T_VARIABLE) {
+	  fprintf(outputFile,"Value for %s> ", hIList[i].handle);
+	  hIList[i].value = atof(fgets(iB, sizeof(iB), inputFile));
+	}
+      }
+      fprintf(outputFile, "=%G\n", evaluateValue(pHI->pP));
     }
     fprintf(outputFile, promptString);
   }
