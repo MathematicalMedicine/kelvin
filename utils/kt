@@ -1,12 +1,14 @@
 where=`dirname "$1"`
 builtin cd "$where"
-echo -n $where...
+echo -n "$where "
 here=`pwd`
 a=`expr "$here" : '.*dkelvin.*'`
 if [ $a -eq 0 ]
 then
+  echo -n w/kelvin...
   time $HOME/kelvin/trunk/kelvin kelvin.conf >&kelvin.out
 else
+  echo -n w/dkelvin...
   time $HOME/kelvin/trunk/dkelvin kelvin.conf >&dkelvin.out
 fi
 if diff avghet.out avghet.out-baseline
