@@ -1,3 +1,15 @@
+/*
+
+  Exercise the polynomial code by manually adding constants, variables, and
+  two-operand sums and products. Print and evaluate the polynomials.
+
+  If a file name is provided on the command line, it is read as keystrokes
+  defining an initial set of polynomials and then the user is prompted for
+  further input.
+
+  Very primitive, but it gets the job done.
+
+*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -25,10 +37,11 @@ int compareHandles (const void *left, const void *right) {
   return strcmp (mHILeft->handle, mHIRight->handle);
 }
 
-struct handleInfo *getHandle(char *type) {
+struct handleInfo *getHandle(FILE *inputFile, FILE *outputFile, char *type) {
   struct handleInfo target, *result;
-  printf("%s handle> ", type);
-  gets(target.handle);
+  fprintf(outputFile, "%s > ", type);
+  fgets(target.handle, sizeof(target.handle), inputFile);
+  target.handle[strlen(target.handle)-1] = 0;
   result = bsearch (&target, hIList, hI, sizeof (struct handleInfo), compareHandles);
   if (result) {
     preExisting = TRUE;
@@ -41,87 +54,117 @@ struct handleInfo *getHandle(char *type) {
   }
 }
 
-int main(int argc, char *argv[]) {
+void loopReading(FILE *inputFile, FILE *outputFile) {
   struct handleInfo target, *result, *pHI, *pHIO1, *pHIO2;
   int i, freeFlag;
   double fO1, fO2;
   int eO1, eO2;
 
-  polynomialInitialization();
-
-  fprintf(stderr,"C/V/S/P/?> ");
-  while (gets(iB) != NULL) {
+  fprintf(outputFile,"C/V/S/P/?> ");
+  while (fgets(iB, sizeof(iB), inputFile) != NULL) {
     switch (toupper(iB[0])) {
-    case '?':
+    case '?':			/* Dump our work thus far */
       for (i=0;i<hI;i++) {
-        fprintf(stderr,"%i: %s, ", i, hIList[i].handle);
-        expPrinting(hIList[i].pP);
-        fprintf(stderr," or ");
-        expTermPrinting(stderr, hIList[i].pP, 1);
-        fprintf(stderr,"\n");
+        fprintf(outputFile,"%i: %s ", i, hIList[i].handle);
+	expPrinting(hIList[i].pP);
+	fprintf(outputFile," or ");
+	expTermPrinting(outputFile, hIList[i].pP, 1);
+	fprintf(outputFile,"\n");
       }
       break;
-    case 'C':
-      pHI = getHandle("constant poly name");
+    case 'C':			/* Add a constant polynomial */
+      pHI = getHandle(inputFile, outputFile,"constant poly name");
       if (!preExisting) {
-        fprintf(stderr,"Value> ");
-        pHI->value = atof(gets(iB));
+        fprintf(outputFile,"Value> ");
+        pHI->value = atof(fgets(iB, sizeof(iB), inputFile));
         pHI->pP = constantExp(pHI->value);
       } else
-        fprintf(stderr,"Can't overwrite existing poly\n");
+        fprintf(outputFile,"Can't overwrite existing poly\n");
       break;
-    case 'V':
-      pHI = getHandle("variable poly name");
+    case 'V':			/* Add a variable polynomial */
+      pHI = getHandle(inputFile, outputFile,"variable poly name");
       if (!preExisting)
         pHI->pP = variableExp(&pHI->value, 0, 'D', pHI->handle);
       else
-        fprintf(stderr,"Can't overwrite existing poly\n");
+        fprintf(outputFile,"Can't overwrite existing poly\n");
       break;
-    case 'S':
-      pHI = getHandle("result poly name");
-      fprintf(stderr,"Factor of 1st operand> ");
-      fO1 = atof(gets(iB));
+    case 'S':			/* Add a 2-operand sum polynomial */
+      pHI = getHandle(inputFile, outputFile,"result poly name");
+      fprintf(outputFile,"Factor of 1st operand> ");
+      fO1 = atof(fgets(iB, sizeof(iB), inputFile));
       if (preExisting) {
-        fprintf(stderr,"Assuming 1st operand same as result\n");
+        fprintf(outputFile,"Assuming 1st operand same as result\n");
         pHIO1 = pHI;
         freeFlag = TRUE;
       } else {
-        pHIO1 = getHandle("1st operand poly name");
+        pHIO1 = getHandle(inputFile, outputFile,"1st operand poly name");
         freeFlag = FALSE;
       }
-      fprintf(stderr,"Factor of 2nd operand> ");
-      fO2 = atof(gets(iB));
-      pHIO2 = getHandle("2nd operand poly name");
+      fprintf(outputFile,"Factor of 2nd operand> ");
+      fO2 = atof(fgets(iB, sizeof(iB), inputFile));
+      pHIO2 = getHandle(inputFile, outputFile,"2nd operand poly name");
       if (!preExisting)
 	printf("Can't use undefined poly name\n");
       else
         pHI->pP = plusExp(2, fO1, pHIO1->pP, fO2, pHIO2->pP, freeFlag);
       break;
-    case 'P':
-      pHI = getHandle("result poly name");
+    case 'P':			/* Add a 2-operand product polynomial */
+      pHI = getHandle(inputFile, outputFile,"result poly name");
       if (preExisting) {
-        fprintf(stderr,"Assuming 1st operand same as result\n");
+        fprintf(outputFile,"Assuming 1st operand same as result\n");
         pHIO1 = pHI;
         freeFlag = TRUE;
       } else {
-        pHIO1 = getHandle("1st operand poly name");
+        pHIO1 = getHandle(inputFile, outputFile,"1st operand poly name");
         freeFlag = FALSE;
       }
-      fprintf(stderr,"Exponent of %s> ", pHIO1->handle);
-      eO1 = atoi(gets(iB));
-      pHIO2 = getHandle("2nd operand poly name");
+      fprintf(outputFile,"Exponent of %s> ", pHIO1->handle);
+      eO1 = atoi(fgets(iB, sizeof(iB), inputFile));
+      pHIO2 = getHandle(inputFile, outputFile,"2nd operand poly name");
       if (!preExisting)
-	fprintf(stderr,"Can't use undefined poly name\n");
+	fprintf(outputFile,"Can't use undefined poly name\n");
       else {
-        fprintf(stderr,"Exponent of %s> ", pHIO2->handle);
-        eO2 = atoi(gets(iB));
+        fprintf(outputFile,"Exponent of %s> ", pHIO2->handle);
+        eO2 = atoi(fgets(iB, sizeof(iB), inputFile));
         pHI->pP = timesExp(2, pHIO1->pP, eO1, pHIO2->pP, eO2, freeFlag);
       }
       break;
     case 'F':
       break;
+    case 'E':			/* Evaluate the polynomial */
+      pHI = getHandle(inputFile, outputFile," poly to evaluate");
+      if (!preExisting) {
+	fprintf(outputFile, "Can't evaluate undefined poly\n");
+      } else {
+	for (i=0;i<hI;i++) {
+	  if (hIList[i].pP->eType == T_VARIABLE) {
+	    fprintf(outputFile,"Value for %s> ", hIList[i].handle);
+	    hIList[i].value = atof(fgets(iB, sizeof(iB), inputFile));
+	  }
+	}
+	fprintf(outputFile, "=%G\n", evaluateValue(pHI->pP));
+      }
     }
-    fprintf(stderr,"C/V/S/P/?> ");
+    fprintf(outputFile,"C/V/S/P/?> ");
   }
-  return 0;
+  fprintf(outputFile,"\n");
+  return;
+}
+
+int main(int argc, char *argv[]) {
+  FILE *initFile, *nullFile;
+  polynomialInitialization();
+
+  if (argc > 1) {
+    if ((initFile = fopen(argv[1],"r")) != NULL) {
+      nullFile = fopen("/dev/null","w");
+      loopReading(initFile, nullFile);
+      close(initFile);
+    } else {
+      perror("Cannot open input file");
+      return(1);
+    }
+  }
+  loopReading(stdin, stderr);
+  return(0);
 }
