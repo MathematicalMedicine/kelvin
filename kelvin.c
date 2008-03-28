@@ -2012,27 +2012,29 @@ main (int argc, char *argv[])
 
 #ifndef NO_POLYNOMIAL
     if (modelOptions.polynomial == TRUE) {
-      locusList = &savedLocusList;
-      xmissionMatrix = altMatrix;
-      /* populate the matrix */
-      status = populate_xmission_matrix (altMatrix, savedLocusList.numLocus, initialProbAddr,	/* probability */
-					 initialProbAddr2,	/* probability */
-					 initialHetProbAddr, 0,	/* cell index */
-					 -1,	/* last het locus */
-					 -1,	/* last het pattern (P-1 or M-2) */
-					 0);	/* current locus - start with 0 */
+      holdAllPolys ();
+      fprintf (stderr,
+	       "holdAllPolys from further population of transmission matrix\n");
       locusList = &markerLocusList;
       xmissionMatrix = markerMatrix;
-      /* populate the matrix */
+      /* populate marker matrix */
       status = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,	/* probability */
 					 initialProbAddr2,	/* probability */
 					 initialHetProbAddr, 0,	/* cell index */
 					 -1,	/* last het locus */
 					 -1,	/* last het pattern (P-1 or M-2) */
 					 0);	/* current locus - start with 0 */
-      fprintf (stderr,
-	       "holdAllPolys from further population of transmission matrix\n");
-      holdAllPolys ();
+      freePolys();
+      locusList = &savedLocusList;
+      xmissionMatrix = altMatrix;
+      /* populate alternative matrix */
+      status = populate_xmission_matrix (altMatrix, savedLocusList.numLocus, initialProbAddr,	/* probability */
+					 initialProbAddr2,	/* probability */
+					 initialHetProbAddr, 0,	/* cell index */
+					 -1,	/* last het locus */
+					 -1,	/* last het pattern (P-1 or M-2) */
+					 0);	/* current locus - start with 0 */
+      freePolys();
     }
 #endif
 
