@@ -9,7 +9,7 @@
 
   Very primitive, but it gets the job done.
 
-  Build with: gcc -o pt pt.c polynomial.c -I ../utils/ -lm -lgsl -lgslcblas
+  Build with: gcc -o pt pt.c polynomial.c -L../utils/ -I../include/ -lm -lgsl -lgslcblas
 
 */
 #include <stdlib.h>
@@ -61,7 +61,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
   int i, freeFlag;
   double fO1, fO2;
   int eO1, eO2;
-  char *promptString = "C/V/S/P/E/#/%/?> ";
+  char *promptString = "C/V/S/P/E/#/%%/?> ";
 
   fprintf(outputFile, promptString);
   while (fgets(iB, sizeof(iB), inputFile) != NULL) {
