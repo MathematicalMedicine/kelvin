@@ -270,9 +270,9 @@ main (int argc, char *argv[])
     while (1) {
       //      sleep (5);
       //      kill (getppid (), SIGUSR1);
+      sleep (30);
       sprintf(commandString, "pmap %d 2>/dev/null | grep 'total'", getppid ());
       system(commandString);	/* We do want to fail silently here! */
-      sleep (30);
     }
   }
   //#endif
@@ -3138,8 +3138,8 @@ main (int argc, char *argv[])
 	   "Size malloc:%g, free:%g, realloc OK:%g, realloc move:%g, realloc free:%g, current:%g, peak:%g\n",
 	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
 	   totalReallocFree, currentAlloc, peakAlloc);
+  swDumpHeldTotals ();
   swDumpSources ();
-  //  swDumpBlockUse ();
   //  swDumpCrossModuleChunks ();
 #endif
   swLogMsg ("finished run");
