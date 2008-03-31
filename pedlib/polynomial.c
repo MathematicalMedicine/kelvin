@@ -154,7 +154,7 @@ char *polynomialVersion = "0.34.0($Id$)";	/* Make this meaningful since kelvin d
    be changed without rebuilding. */
 int polynomialDebugLevel = 0;	/* Corresponds roughly to diagnostic output volume */
 int polynomialLostNodeId = -1;	/* For tracking down mis-freed polynomials */
-int polynomialScale = 10;	/* Scaling factor for hash and other storage, default is 10 */
+extern int polynomialScale;	/* Scaling factor for hash and other storage */
 
 /* Clear the evaluation flag on the entire tree so we can mark
    where we've been and not retrace our steps regardless of
@@ -2389,11 +2389,9 @@ polynomialInitialization ()
   if (polynomialDebugLevel > 0)
     fprintf (stderr, "polynomialDebugLevel is at %d\n", polynomialDebugLevel);
 
-  if ((envVar = getenv ("polynomialScale")) != NULL) {
-    polynomialScale = atoi (envVar);
-    if (polynomialScale <= 0) polynomialScale = 10;
-    fprintf (stderr, "polynomialScale is %d (1-10, 10 is default)\n", polynomialScale);
-  }
+  if (polynomialScale <= 0) polynomialScale = 1;
+  if (polynomialScale > 10) polynomialScale = 10;
+  fprintf (stderr, "polynomialScale is %d (1-10, 1 is default)\n", polynomialScale);
 
   /* Scale all initial and growth sizes up by the polynomial scale (default 10) */
 

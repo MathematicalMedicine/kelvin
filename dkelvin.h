@@ -62,6 +62,9 @@ extern unsigned long int nLodsTotal;
 extern unsigned long int nLodsSlave;
 extern unsigned long int nLodsRoot;
 
+/* Performance knobs. */
+extern int polynomialScale;
+
 /**********************************************************************
  * Input files. These are not saved in the model structure because
  * they are really only ever needed by the root process.

@@ -83,6 +83,9 @@ char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";
 char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
 FILE *fpHet = NULL;		/* average HET LR file */
 FILE *fpPPL = NULL;		/* PPL output file */
+int polynomialScale = 1;	/* Scale of static allocation and dynamic
+				   growth in polynomial.c, 1-10 with 1 as
+				   the default, and 10 the old standard. */
 
 /* Model datastructures. modelOptions is defined in the pedigree library. */
 ModelType modelType;

@@ -322,8 +322,16 @@ readConfigFile (char *file, ModelType * modelType,
     }
     if (strncmp (line, "PE", 2) == 0) {
       modelOptions->polynomial = TRUE;	/* Polynomial evaluation */
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for polynomial evaluation\n");
+      if (sscanf (line, "PE %d", &polynomialScale) == 1) {	/* Polynomial scale */
+	KLOG (LOGINPUTFILE, LOGDEBUG,
+	      "Configure for polynomial evaluation w/polynomialScale %d\n",
+	      polynomialScale);
+      } else {
+	polynomialScale = 1;
+	KLOG (LOGINPUTFILE, LOGDEBUG,
+	      "Configure for polynomial evaluation w/default polynomialScale %d\n",
+	      polynomialScale);
+      }
       continue;
     }
     if (sscanf (line, "LC %d", &modelRange->nlclass) == 1) {
