@@ -65,7 +65,7 @@ quitSignalHandler (int signal)
 #endif
 }
 
-char *kelvinVersion = "0.34.0.1";
+char *kelvinVersion = "0.34.1.0";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
 void test_darray (double **);
