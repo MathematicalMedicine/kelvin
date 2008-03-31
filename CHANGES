@@ -1,3 +1,16 @@
+Version 0.34.1
+  Added polynomial scale option to PE directive to support smaller
+  memory environments. Further clean-ups of polynomial code, with
+  more dynamic diagnostics and performance improvements.
+  Added fork to dump pmap total of virtual memory every 30 seconds
+  if available.
+
+Version 0.34.0
+  Added SR directive to have the option to save intermediate results.
+  Extensive clean-ups of polynomial code, including stricter memory
+  management, extensive dynamic diagnostics and significant performance
+  improvements.
+
 Version 0.33.1
   Fixed genotype_elimination problem when we fix loop breaker genotype
   when there are more than 1 loop breaker, some combination might not 
