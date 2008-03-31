@@ -242,6 +242,7 @@ struct memChunkSource
   int lineNo;			/* Calling module line number */
   int totalCalls;
   size_t totalBytes;
+  size_t remainingBytes;
 } memChunkSources[MAXMEMCHUNKSOURCECOUNT];
 int memChunkSourceCount = 0;
 
@@ -330,6 +331,20 @@ compareSourcesByTotalBytes (const void *left, const void *right)
   if (labs (mCSRight->totalBytes) - labs (mCSLeft->totalBytes) > 0)
     return 1;
   if (labs (mCSRight->totalBytes) - labs (mCSLeft->totalBytes) < 0)
+    return -1;
+  return 0;
+}
+
+int
+compareSourcesByRemainingBytes (const void *left, const void *right)
+{
+  struct memChunkSource *mCSLeft, *mCSRight;
+
+  mCSLeft = (struct memChunkSource *) left;
+  mCSRight = (struct memChunkSource *) right;
+  if (labs (mCSRight->remainingBytes) - labs (mCSLeft->remainingBytes) > 0)
+    return 1;
+  if (labs (mCSRight->remainingBytes) - labs (mCSLeft->remainingBytes) < 0)
     return -1;
   return 0;
 }
@@ -447,6 +462,8 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
       //	       fileName, lineNo, (unsigned long) chunkAddress, (unsigned int) oldChunk->chunkSize,
       //	       oldChunk->recycleCount);
       oldChunk->recycleCount++;
+    } else {
+      oldChunk->allocSource      ;
     }
     oldChunk->freeSource =
       findOrAddSource (fileName, lineNo, callType, -oldChunk->chunkSize);
@@ -463,15 +480,44 @@ swDumpSources ()
 {
   int i;
 
-  fprintf (stderr, "There are %d sources - only printing top 10\n",
+  fprintf (stderr, "Top 20 sources out of %d total:\n",
 	   memChunkSourceCount);
   qsort (memChunkSources, memChunkSourceCount, sizeof (struct memChunkSource),
 	 compareSourcesByTotalBytes);
-  for (i=0; i<min(memChunkSourceCount, 10); i++) {
+  for (i=0; i<min(memChunkSourceCount, 20); i++) {
     fprintf (stderr, "At %s line %d, %s called %d times for %ld bytes\n",
 	     memChunkSources[i].moduleName, memChunkSources[i].lineNo,
 	     callTypeNames[memChunkSources[i].callType],
 	     memChunkSources[i].totalCalls, memChunkSources[i].totalBytes);
+  }
+}
+
+void
+swDumpHeldTotals ()
+{
+  struct memChunk *chunk = NULL;
+  int i;
+
+  fprintf (stderr, "Top 20 lines still holding memory:\n");
+  qsort (memChunkSources, memChunkSourceCount, sizeof (struct memChunkSource),
+	 compareSourcesByEntryNo);
+
+  /* Now traverse our chunkHash looking for in-use chunks */
+  if (hfirst (chunkHash))
+    do {
+      chunk = (struct memChunk *) hstuff (chunkHash);
+      if ((chunk->recycleCount % 2) == 1)
+	memChunkSources[chunk->allocSource].remainingBytes += chunk->chunkSize;
+    } while (hnext (chunkHash));
+      
+  qsort (memChunkSources, memChunkSourceCount, sizeof (struct memChunkSource),
+	 compareSourcesByRemainingBytes);
+
+  for (i=0; i<min(memChunkSourceCount, 20); i++) {
+    fprintf (stderr, "At %s line %d, %s still holds %ld bytes\n",
+	     memChunkSources[i].moduleName, memChunkSources[i].lineNo,
+	     callTypeNames[memChunkSources[i].callType],
+	     memChunkSources[i].remainingBytes);
   }
 }
 
@@ -490,8 +536,8 @@ swDumpCrossModuleChunks ()
   /* Now traverse our chunkHash comparing alloc and free source modules */
   if (hfirst (chunkHash))
     do {
+      chunk = (struct memChunk *) hstuff (chunkHash);
       if ((chunk->recycleCount % 2) == 0) {
-	chunk = (struct memChunk *) hstuff (chunkHash);
 	target.entryNo = chunk->allocSource;
 	allocResult =
 	  bsearch (&target, memChunkSources, memChunkSourceCount,
