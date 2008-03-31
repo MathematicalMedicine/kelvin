@@ -1155,10 +1155,12 @@ plusExp (int num, ...)
     free (p0->e.s->sum);
     free (p0->e.s->factor);
     free (p0->e.s);
+#ifdef FREEDEBUG
     p0->value = -productList[i]->eType;
     p0->eType = T_FREED;
-    //    free (p0);
-
+#else
+    free (p0);
+#endif
   } else {
     p0EType = T_FREED;
     p0Valid = 7;
@@ -1705,9 +1707,12 @@ timesExp (int num, ...)
       free (p0->e.p->exponent);
       free (p0->e.p->product);
       free (p0->e.p);
+#ifdef FREEDEBUG
       p0->value = -productList[i]->eType;
       p0->eType = T_FREED;
-      //    free (p0);
+#else
+      free (p0);
+#endif
     } else {
       p0EType = T_FREED;
       p0Valid = 7;
