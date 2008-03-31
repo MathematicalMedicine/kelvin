@@ -1,6 +1,7 @@
-PID: 14226, kelvin V0.34.0.1, likelihood V0.32.4, locus V0.32.4, polynomial V0.34.0($Id: polynomial.c 270 2008-03-28 11:50:56Z whv001 $) starting run
-To force a dump of stats, type CTRL-\ or type "kill -3 14226".
- total            23620K
+PID: 7474, kelvin V0.34.0.1, likelihood V0.32.4, locus V0.32.4, polynomial V0.34.0($Id: polynomial.c 280 2008-03-28 16:41:29Z whv001 $) starting run
+To force a dump of stats, type CTRL-\ or type "kill -3 7474".
+ total            23616K
+polynomialScale is 1 (1-10, 1 is default)
 !!!!!!!!!!!The Computation is done in polynomial mode!!!!!!!!!!!!!!!
 Dichotomous Trait & LE
 Total number of markers in data: 2
@@ -14,7 +15,7 @@ Holding all current polynomials (via hashes):
 3 products
 ---
 holdAllPolys from further population of transmission matrix
-MP start time: 1.340000
+MP start time: 0.100000
 PEDIGREE: 1 (1/10)
 PEDIGREE: 3 (2/10)
 PEDIGREE: 5 (3/10)
@@ -25,8 +26,8 @@ PEDIGREE: 13 (7/10)
 PEDIGREE: 15 (8/10)
 PEDIGREE: 17 (9/10)
 PEDIGREE: 19 (10/10)
-Finished polynomial building: 4.930000
-MP done trait: 5.000000
+Finished polynomial building: 0.560000
+MP done trait: 0.740000
 PEDIGREE: 1 (1/10)
 PEDIGREE: 3 (2/10)
 PEDIGREE: 5 (3/10)
@@ -37,8 +38,8 @@ PEDIGREE: 13 (7/10)
 PEDIGREE: 15 (8/10)
 PEDIGREE: 17 (9/10)
 PEDIGREE: 19 (10/10)
-Finished polynomial building: 8.700000
-MP done marker set on pos 0: 8.700000
+Finished polynomial building: 1.150000
+MP done marker set on pos 0: 1.150000
 PEDIGREE: 1 (1/10)
 PEDIGREE: 3 (2/10)
 PEDIGREE: 5 (3/10)
@@ -49,8 +50,8 @@ PEDIGREE: 13 (7/10)
 PEDIGREE: 15 (8/10)
 PEDIGREE: 17 (9/10)
 PEDIGREE: 19 (10/10)
-Finished polynomial building: 12.550000
-MP done ALT on pos 0: 12.980000
+Finished polynomial building: 1.660000
+MP done ALT on pos 0: 2.620000
 PEDIGREE: 1 (1/10)
 PEDIGREE: 3 (2/10)
 PEDIGREE: 5 (3/10)
@@ -61,8 +62,8 @@ PEDIGREE: 13 (7/10)
 PEDIGREE: 15 (8/10)
 PEDIGREE: 17 (9/10)
 PEDIGREE: 19 (10/10)
-Finished polynomial building: 16.820000
-MP done ALT on pos 1: 17.290000
+Finished polynomial building: 3.110000
+MP done ALT on pos 1: 4.140000
 PEDIGREE: 1 (1/10)
 PEDIGREE: 3 (2/10)
 PEDIGREE: 5 (3/10)
@@ -73,9 +74,9 @@ PEDIGREE: 13 (7/10)
 PEDIGREE: 15 (8/10)
 PEDIGREE: 17 (9/10)
 PEDIGREE: 19 (10/10)
-Finished polynomial building: 21.090000
-MP done ALT on pos 2: 21.590000
-Computation time:  0.000000s  20.250000s 
-Computation time:  0.000000s  20.250000s 
-PID: 14226, stopwatch overall(1) e:22s u:20.821834s s:0.847871s, vx:5, ivx:9997, sf:222145, hf:0
-PID: 14226, finished run
+Finished polynomial building: 4.650000
+MP done ALT on pos 2: 5.720000
+Computation time:  0.000000s  5.620000s 
+Computation time:  0.000000s  5.620000s 
+PID: 7474, stopwatch overall(1) e:6s u:5.674137s s:0.062991s, vx:6, ivx:1797, sf:9678, hf:0
+PID: 7474, finished run
