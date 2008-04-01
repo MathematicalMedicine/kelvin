@@ -53,9 +53,7 @@ typedef struct HaplotypePair
   /* likelihood of the nuclear family conditional on this haplotype pair */
   double likelihood;
 
-#ifndef NO_POLYNOMIAL
   Polynomial *likelihoodPolynomial;
-#endif
 
 } HaplotypePair;
 #endif
@@ -84,9 +82,7 @@ typedef struct XMission
   /* transmission probability */
   union
   {
-#ifndef NO_POLYNOMIAL
     Polynomial *probPoly[3];
-#endif
     double prob[3];
   } slot;
 } XMission;

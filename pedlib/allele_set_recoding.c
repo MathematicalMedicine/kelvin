@@ -671,7 +671,6 @@ construct_original_allele_set_list (int locus)
 
     pAlleleSet->maxFreq = pLocus->pAlleleFrequency[i];
 
-#ifndef NO_POLYNOMIAL
     if (modelOptions.polynomial == TRUE) {
       char vName[100];
 
@@ -686,9 +685,6 @@ construct_original_allele_set_list (int locus)
       //fprintf(stderr, "variable: %s value: %f \n",pLocus->pAlleleFrequency[i]);
     } else
       pAlleleSet->sumFreq = pAlleleSet->maxFreq;
-#else
-    pAlleleSet->sumFreq = pAlleleSet->maxFreq;
-#endif
 
   }
 
@@ -729,11 +725,9 @@ add_allele_set (int locus, unsigned int *pAlleleBits)
   memset (pAlleleSet, 0, sizeof (AlleleSet));
 
 
-#ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE) {
     pAlleleSet->sumFreqPolynomial = constantExp (0);
   }
-#endif
 
   pAlleleSet->alleleID = numAlleleSet + 1;
   pAlleleSet->pAlleleBits =
@@ -771,7 +765,6 @@ add_allele_set (int locus, unsigned int *pAlleleBits)
 	if (pAlleleSet->maxFreq < freq)
 	  pAlleleSet->maxFreq = freq;
 
-#ifndef NO_POLYNOMIAL
 	if (modelOptions.polynomial == TRUE) {
 	  char vName[100];
 
@@ -800,9 +793,6 @@ add_allele_set (int locus, unsigned int *pAlleleBits)
 
 	} else
 	  pAlleleSet->sumFreq += freq;
-#else
-	pAlleleSet->sumFreq += freq;
-#endif
 
 
       }

@@ -10,9 +10,7 @@
 #ifndef __PEDIGREE_H__
 #define __PEDIGREE_H__
 
-#ifndef NO_POLYNOMIAL
 #include "polynomial.h"
-#endif
 
 /* Most of the structures defined in this file were taken from the original
  * vitesse codeset v_prog.h and trimed down to the bare neccessities
@@ -82,9 +80,7 @@ typedef struct PedigreeSet
   double log10HetLR[21];
 #endif
 
-#ifndef NO_POLYNOMIAL
   struct polynomial *likelihoodPolynomial;
-#endif
 
   /* for internal memory allocation tracking purpose 
    * This is the number of pedigrees we have allocated space for the list */
@@ -170,12 +166,10 @@ typedef struct Pedigree
   double **alternativeLikelihoodDT;
 
 
-#ifndef NO_POLYNOMIAL
   struct polynomial *likelihoodPolynomial;
   struct polyList *likelihoodPolyList;
   struct polynomial *traitLikelihoodPolynomial;
   struct polyList *traitLikelihoodPolyList;
-#endif
 
   /* Internal counters for memory allocation */
   int maxNumPerson;
@@ -442,9 +436,7 @@ typedef struct NuclearFamily
 #endif
 
   double likelihood;
-#ifndef NO_POLYNOMIAL
   Polynomial *likelihoodPolynomial;
-#endif
 
   /* The followings are for the related parental pairs that are only different in phases */
   /* numer of heterozygous loci for each parent */

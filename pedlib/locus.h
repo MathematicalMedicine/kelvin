@@ -9,9 +9,7 @@
 #ifndef __LOCUS_H__
 #define __LOCUS_H__
 
-#ifndef NO_POLYNOMIAL
 #include "polynomial.h"
-#endif
 
 #define ERROR_MARGIN            1.0E-9
 
@@ -142,9 +140,7 @@ typedef struct Genotype
     /* penetrance factor base on this person's phenotype and this genotype 
      * for marker locus, this is always 1 */
     double penetrance;
-#ifndef NO_POLYNOMIAL
     Polynomial *penetrancePolynomial;
-#endif
   } penslot;
 
   union
@@ -154,9 +150,7 @@ typedef struct Genotype
      * but in this implementation, genotype is phased, so the weight is pq
      * where p and q are the allele frequencies */
     double weight;
-#ifndef NO_POLYNOMIAL
     Polynomial *weightPolynomial;
-#endif
   } wtslot;
 
 } Genotype;
@@ -180,9 +174,7 @@ typedef struct AlleleSet
   double maxFreq;
   /* the sum of freqs of all the constituent allees in the set */
   double sumFreq;
-#ifndef NO_POLYNOMIAL
   Polynomial *sumFreqPolynomial;
-#endif
   /* an array of the alleles */
   int *pAlleles;
 
@@ -235,10 +227,8 @@ typedef struct SubLocusList
   /* distance is expressed in recombination fraction */
   double *pPrevLocusDistance[3];
   double *pNextLocusDistance[3];
-#ifndef NO_POLYNOMIAL
   struct polynomial *pPrevLocusDistancePolynomial[3];
   struct polynomial *pNextLocusDistancePolynomial[3];
-#endif
 
   /* internal counter for memory allocation */
   int maxNumLocus;
@@ -267,9 +257,7 @@ typedef struct Locus
   /* assumed frequencies of these alleles 
    * pointer to an array of doubles of the actual frequencies */
   double *pAlleleFrequency;
-#ifndef NO_POLYNOMIAL
   struct polynomial *pAlleleFrequencyPolynomial;
-#endif
   /* actual count of these alleles in the pedigree data provided */
   short *pAlleleCount;
   /* original allele names */
@@ -436,9 +424,7 @@ typedef struct ConditionalLikelihood
   union
   {
     double likelihood;
-#ifndef NO_POLYNOMIAL
     struct polynomial *likelihoodPolynomial;
-#endif
   } lkslot;
   /* possibility of observing this multi locus genotype 
    * with parents - transmission probability * penetrance
@@ -447,17 +433,13 @@ typedef struct ConditionalLikelihood
   union
   {
     double weight;
-#ifndef NO_POLYNOMIAL
     struct polynomial *weightPolynomial;
-#endif
   } wtslot;
   union
   {
     /* to save for likelihood calculations with only phase differences */
     double tmpLikelihood;
-#ifndef NO_POLYNOMIAL
     struct polynomial *tmpLikelihoodPolynomial;
-#endif
   } tmpslot;
   short touchedFlag;
   short tmpTouched;
