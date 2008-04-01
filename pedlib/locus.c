@@ -35,19 +35,15 @@ char *locusVersion = "0.32.4";
 #include "pedlib.h"
 #include "utils.h"		/* for logging */
 #include "tools.h"
-#ifndef NO_POLYNOMIAL
 #include "polynomial.h"
-#endif
 
 /* global variables */
 Map map;
 LocusList originalLocusList;
 SubLocusList *locusList;
 
-#ifndef NO_POLYNOMIAL
 extern Polynomial *constant0Poly;
 extern Polynomial *constant1Poly;
-#endif
 
 /* internal functions */
 MapUnit *add_map_unit (Map * map);
@@ -459,11 +455,9 @@ free_locus_list (LocusList * pLocusList)
 
   for (i = 0; i < pLocusList->numLocus; i++) {
     pLocus = pLocusList->ppLocusList[i];
-#ifndef NO_POLYNOMIAL
     if (modelOptions.polynomial == TRUE) {
       free (pLocus->pAlleleFrequencyPolynomial);
     }
-#endif
     if (pLocus->locusType == LOCUS_TYPE_TRAIT) {
       free (pLocus->pTraitLocus->pTraits[0]);
       free (pLocus->pTraitLocus);
@@ -535,14 +529,12 @@ add_allele (Locus * pLocus, char *sAlleleName, double freq)
     originalLocusList.alleleSetLen = pLocus->alleleSetLen;
 
   /* allocate space for frequency and count */
-#ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE) {
     pLocus->pAlleleFrequencyPolynomial =
       (Polynomial *) REALLOC ("pLocus->pAlleleFrequencyPolynomial",
 			      pLocus->pAlleleFrequencyPolynomial,
 			      numAllele * sizeof (Polynomial));
   }
-#endif
   /* actual count of the alleles in the pedigree */
   pLocus->pAlleleCount = (short *) REALLOC ("pLocus->pAlleleCount",
 					    pLocus->pAlleleCount,
@@ -715,9 +707,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
   //TraitLocus *pTraitLocus = pLocus->pTraitLocus;
   double pen = 1.0;
 
-#ifndef NO_POLYNOMIAL
   Polynomial *penPolynomial;
-#endif
 
   /* go through everyone in the pedigree */
   for (i = 0; i < pPedigree->numPerson; i++) {
@@ -737,21 +727,16 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 	    allele1 != allele2)
 	  continue;
 
-#ifndef NO_POLYNOMIAL		// including polynomial code
 	if (modelOptions.polynomial == TRUE) {
 	  compute_penetrance (pPerson, locus, allele1, allele2,
 			      &penPolynomial);
 	}
 	//              else
 	//        compute_penetrance (pPerson, locus, allele1, allele2, &pen);
-#else
-	//              compute_penetrance (pPerson, locus, allele1, allele2, &pen);
-#endif
 	/* if this genotype hasn't been rejected, then add it 
 	 * under polynomial, penetrance is a variable (parameter), we
 	 * can't check against one single value, so we include all
 	 * trait genotypes */
-#ifndef NO_POLYNOMIAL		// including polynomial code
 	if (modelOptions.polynomial == TRUE) {
 	  pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
 				    &pPerson->pNumGenotype[locus],
@@ -788,24 +773,6 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 	    }
 	  }
 	}
-#else
-	//if (pen > 0)
-	{
-	  pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
-				    &pPerson->pNumGenotype[locus],
-				    locus, allele1, allele2);
-	  pGenotype->penslot.penetrance = pen;
-	  if (allele1 != allele2) {
-	    pGenotype2 =
-	      add_genotype (&pPerson->ppGenotypeList[locus],
-			    &pPerson->pNumGenotype[locus], locus,
-			    allele2, allele1);
-	    pGenotype->pDualGenotype = pGenotype2;
-	    pGenotype2->pDualGenotype = pGenotype;
-	    pGenotype2->penslot.penetrance = pen;
-	  }
-	}
-#endif
       }
     }
   }
@@ -830,12 +797,10 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
   double trait, mean, stddev, temp;
   double df;
 
-#ifndef NO_POLYNOMIAL
   Polynomial *tempPoly = NULL, *tempPoly2 = NULL;
 
   tempPoly = NULL;
   tempPoly2 = NULL;
-#endif
 
   if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
     pPerson = pPerson->pOriginalPerson;
@@ -860,7 +825,6 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
       if (pPerson->ppTraitKnown[locus][i] == TRUE) {
 	affectionStatus = (int) pPerson->ppTraitValue[locus][i];
 
-#ifndef NO_POLYNOMIAL
 	if (modelOptions.polynomial == TRUE) {
 	  if (affectionStatus == AFFECTION_STATUS_AFFECTED) {
 	    /* build the penetrance polynomial - single variable */
@@ -904,24 +868,14 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 //                                          [allele1-1][allele2-1]);
 
 	}
-#else
-	/* no polynomial */
-	*(double *) pen =
-	  pTrait->penetrance[affectionStatus][liabilityClass - 1]
-	  [allele1 - 1][allele2 - 1];
-#endif
       } else {
 	affectionStatus = AFFECTION_STATUS_UNKNOWN;
 	/* when the affection status is unknown, the penetrance is set to 1 */
 
-#ifndef NO_POLYNOMIAL
 	if (modelOptions.polynomial == TRUE) {
 	  *(Polynomial **) pen = constant1Poly;
 	} else
 	  *(double *) pen = 1;
-#else
-	*(double *) pen = 1;
-#endif
       }
     } /* end of affection status trait handling */
     else if (pTrait->type == QUANTITATIVE || pTrait->type == COMBINED) {
@@ -931,14 +885,10 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	/* if the quantitative trait value is not known for any trait, then
 	 * we can't calculate "exact" penetrance, just return 1 */
 	if (pPerson->ppTraitKnown[locus][j] == FALSE) {
-#ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE) {
 	    *(Polynomial **) pen = constant1Poly;
 	  } else
 	    *(double *) pen = 1;
-#else
-	  *(double *) pen = 1;
-#endif
 	  return;
 	}
       }
@@ -971,7 +921,6 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	     trait <= pTrait->lessCutoffFlag + 0.000001)) {
 	  /* the cutoff is number of SD, so it's already been converted to X in N(0,1) */
 
-#ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE) {
 	    tempPoly = plusExp (2, 1.0,
 				variableExp (&pTrait->
@@ -1002,18 +951,10 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    temp = temp / stddev;
 	    *(double *) pen = gsl_cdf_ugaussian_P (temp);
 	  }
-#else
-	  temp = pTrait->cutoffValue[liabilityClass - 1] - mean;
-	  /* if standard deviation is 1, don't do the division calculation */
-	  //if (0.999999 > stddev || stddev > 1.000001)
-	  temp /= stddev;
-	  *(double *) pen = gsl_cdf_ugaussian_P (temp);
-#endif
 	} else if (pTrait->type == COMBINED &&
 		   (trait >= pTrait->moreCutoffFlag - 0.000001 &&
 		    trait <= pTrait->moreCutoffFlag + 0.000001)) {
 	  /* the cutoff is number of SD, so it's already been converted to X in N(0,1) */
-#ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE) {
 	    tempPoly = plusExp (2, 1.0,
 				variableExp (&pTrait->
@@ -1045,15 +986,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    temp /= stddev;
 	    *(double *) pen = gsl_cdf_ugaussian_Q (temp);
 	  }
-#else
-	  temp = pTrait->cutoffValue[liabilityClass - 1] - mean;
-	  /* if standard deviation is 1, don't do the division calculation */
-	  //if (0.999999 > stddev || stddev > 1.000001)
-	  temp /= stddev;
-	  *(double *) pen = gsl_cdf_ugaussian_Q (temp);
-#endif
 	} else {		/* point PDF */
-#ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE) {
 	    tempPoly =
 	      timesExp (2,
@@ -1108,25 +1041,6 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	      *(double *) pen = gsl_ran_ugaussian_pdf (temp);
 	    }
 	  }
-#else
-	  temp = trait - mean;
-	  /* if standard deviation is 1, don't do the division calculation */
-	  //if (0.999999 > stddev || stddev > 1.000001)
-	  temp /= stddev;
-
-	  /* if lower bound exists and the point is right at the lower bound
-	   * use CDF instead of pdf */
-	  if (pTrait->minFlag && trait >= pTrait->min - 0.000001 &&
-	      trait <= pTrait->min + 0.000001) {
-	    *(double *) pen = gsl_cdf_ugaussian_P (temp);
-	  } else
-	    if (pTrait->maxFlag && trait >= pTrait->max - 0.000001 &&
-		trait <= pTrait->max + 0.000001) {
-	    *(double *) pen = gsl_cdf_ugaussian_Q (temp);
-	  } else {
-	    *(double *) pen = gsl_ran_ugaussian_pdf (temp);
-	  }
-#endif
 	}
       } else if (pTrait->functionQT == QT_FUNCTION_T) {
 	df = pTrait->dfQT;
@@ -1134,7 +1048,6 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    (trait >= pTrait->lessCutoffFlag - 0.000001 &&
 	     trait <= pTrait->lessCutoffFlag + 0.000001)) {
 
-#ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE) {
 	    tempPoly = plusExp (2, 1.0,
 				variableExp (&pTrait->
@@ -1194,15 +1107,9 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    temp /= stddev * sqrt ((df - 2) / df);
 	    *(double *) pen = gsl_cdf_tdist_P (temp, df);
 	  }
-#else
-	  temp = pTrait->cutoffValue[liabilityClass - 1] - mean;
-	  temp /= stddev * sqrt ((df - 2) / df);
-	  *(double *) pen = gsl_cdf_tdist_P (temp, df);
-#endif
 	} else if (pTrait->type == COMBINED &&
 		   (trait >= pTrait->moreCutoffFlag - 0.000001 &&
 		    trait <= pTrait->moreCutoffFlag + 0.000001)) {
-#ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE) {
 
 	    tempPoly = plusExp (2, 1.0, variableExp (&pTrait->
@@ -1265,14 +1172,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    temp /= stddev * sqrt ((df - 2) / df);
 	    *(double *) pen = gsl_cdf_tdist_Q (temp, df);
 	  }
-#else
-	  temp = pTrait->cutoffValue[liabilityClass - 1] - mean;
-	  temp /= stddev * sqrt ((df - 2) / df);
-	  *(double *) pen = gsl_cdf_tdist_Q (temp, df);
-#endif
 
 	} else {		/* point pdf */
-#ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE) {
 	    tempPoly = plusExp (2, 1.0,
 				variableExp (&pPerson->ppTraitValue[locus]
@@ -1361,30 +1262,12 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	      *(double *) pen = gsl_ran_tdist_pdf (temp, df);
 	    }
 	  }
-#else
-	  temp = trait - mean;
-	  temp /= stddev * sqrt ((df - 2) / df);
-
-	  /* if lower bound exists and the point is right at the lower bound
-	   * use CDF instead of pdf */
-	  if (pTrait->minFlag && trait >= pTrait->min - 0.000001 &&
-	      trait <= pTrait->min + 0.000001) {
-	    *(double *) pen = gsl_cdf_tdist_P (temp, df);
-	  } else
-	    if (pTrait->maxFlag && trait >= pTrait->max - 0.000001 &&
-		trait <= pTrait->max + 0.000001) {
-	    *(double *) pen = gsl_cdf_tdist_Q (temp, df);
-	  } else {
-	    *(double *) pen = gsl_ran_tdist_pdf (temp, df);
-	  }
-#endif
 	}
       } /* t-dsitribution */
       else if (pTrait->functionQT == QT_FUNCTION_CHI_SQUARE) {
 	if (pTrait->type == COMBINED &&
 	    (trait >= pTrait->lessCutoffFlag - 0.000001 &&
 	     trait <= pTrait->lessCutoffFlag + 0.000001)) {
-#ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE) {
 	    *(Polynomial **) pen =
 	      functionCallExp (3, "gsl_cdf_chisq_P",
@@ -1403,15 +1286,10 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    *(double *) pen =
 	      gsl_cdf_chisq_P (pTrait->cutoffValue[liabilityClass - 1], mean);
 	  }
-#else
-	  *(double *) pen =
-	    gsl_cdf_chisq_P (pTrait->cutoffValue[liabilityClass - 1], mean);
-#endif
 	} else if (pTrait->type == COMBINED &&
 		   (trait >= pTrait->moreCutoffFlag - 0.000001 &&
 		    trait <= pTrait->moreCutoffFlag + 0.000001)) {
 	  /* the cutoff is number of SD, so it's already been converted to X in N(0,1) */
-#ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE) {
 	    *(Polynomial **) pen =
 	      functionCallExp (3, "gsl_cdf_chisq_Q",
@@ -1429,12 +1307,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    *(double *) pen =
 	      gsl_cdf_chisq_Q (pTrait->cutoffValue[liabilityClass - 1], mean);
 	  }
-#else
-	  *(double *) pen =
-	    gsl_cdf_chisq_Q (pTrait->cutoffValue[liabilityClass - 1], mean);
-#endif
 	} else {		/* point PDF */
-#ifndef NO_POLYNOMIAL
 	  if (modelOptions.polynomial == TRUE) {
 	    if (pTrait->minFlag && trait >= pTrait->min - 0.000001
 		&& trait <= pTrait->min + 0.000001) {
@@ -1495,20 +1368,6 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	      *(double *) pen = gsl_ran_chisq_pdf (trait, mean);
 	    }
 	  }
-#else
-	  /* if lower bound exists and the point is right at the lower bound
-	   * use CDF instead of pdf */
-	  if (pTrait->minFlag && trait >= pTrait->min - 0.000001 &&
-	      trait <= pTrait->min + 0.000001) {
-	    *(double *) pen = gsl_cdf_chisq_P (trait, mean);
-	  } else
-	    if (pTrait->maxFlag && trait >= pTrait->max - 0.000001 &&
-		trait <= pTrait->max + 0.000001) {
-	    *(double *) pen = gsl_cdf_chisq_Q (trait, mean);
-	  } else {
-	    *(double *) pen = gsl_ran_chisq_pdf (trait, mean);
-	  }
-#endif
 	}
       }
       /* end of chi square distribution */
@@ -1534,11 +1393,9 @@ add_genotype (Genotype ** ppList, int *pCount, int locusIndex,
   /* add this to the top of the genotype list */
   pGenotype->pNext = *ppList;
   *ppList = pGenotype;
-#ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE) {
     pGenotype->penslot.penetrancePolynomial = constant1Poly;
   }
-#endif
 
   /* increase the counter */
   (*pCount)++;
@@ -1672,9 +1529,7 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
   int i;
   Locus *pLocus;
   double alleleFreq[2] = { 0, 0 };
-#ifndef NO_POLYNOMIAL
   Polynomial *alleleFreqPolynomial[2];
-#endif
 
   pLocus = originalLocusList.ppLocusList[locus];
   for (i = 0; i < pPedigree->numPerson; i++) {
@@ -1683,7 +1538,6 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	    sizeof (int) * originalLocusList.numLocus);
     pGenotype = pPerson->ppGenotypeList[locus];
     while (pGenotype) {
-#ifndef NO_POLYNOMIAL
       if (modelOptions.polynomial == TRUE) {
 	if (pGenotype->allele[DAD] <= pLocus->numAllele) {
 	  char vName[100];
@@ -1735,21 +1589,6 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	  alleleFreq[MOM] =
 	    pLocus->ppAlleleSetList[pGenotype->allele[MOM] - 1]->sumFreq;
       }
-#else
-      if (pGenotype->allele[DAD] <= pLocus->numAllele)
-	alleleFreq[DAD] =
-	  pLocus->pAlleleFrequency[pGenotype->allele[DAD] - 1];
-      else
-	alleleFreq[DAD] =
-	  pLocus->ppAlleleSetList[pGenotype->allele[DAD] - 1]->sumFreq;
-      if (pGenotype->allele[MOM] <= pLocus->numAllele)
-	alleleFreq[MOM] =
-	  pLocus->pAlleleFrequency[pGenotype->allele[MOM] - 1];
-      else
-	alleleFreq[MOM] =
-	  pLocus->ppAlleleSetList[pGenotype->allele[MOM] - 1]->sumFreq;
-#endif
-#ifndef NO_POLYNOMIAL
       if (modelOptions.polynomial == TRUE) {
 	if (modelOptions.sexLinked && pPerson->sex + 1 == MALE) {
 	  pGenotype->wtslot.weightPolynomial = alleleFreqPolynomial[DAD];
@@ -1764,12 +1603,6 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	} else
 	  pGenotype->wtslot.weight = alleleFreq[DAD] * alleleFreq[MOM];
       }
-#else
-      if (modelOptions.sexLinked && pPerson->sex + 1 == MALE) {
-	pGenotype->wtslot.weight = alleleFreq[DAD];
-      } else
-	pGenotype->wtslot.weight = alleleFreq[DAD] * alleleFreq[MOM];
-#endif
       pGenotype = pGenotype->pNext;
     }
   }				/* end of looping over persons in the given pedigree */
@@ -1929,7 +1762,6 @@ initialize_multi_locus_genotype (Pedigree * pPedigree)
       pConditional = &pPerson->pLikelihood[j];
       pConditional->touchedFlag = 0;
       pConditional->tmpTouched = 0;
-#ifndef NO_POLYNOMIAL
       if (modelOptions.polynomial == TRUE) {
 	pConditional->lkslot.likelihoodPolynomial =
 	  pConditional->tmpslot.tmpLikelihoodPolynomial = constant0Poly;
@@ -1939,11 +1771,6 @@ initialize_multi_locus_genotype (Pedigree * pPedigree)
 	  pConditional->tmpslot.tmpLikelihood = 0;
 	pConditional->wtslot.weight = 1;
       }
-#else
-      pConditional->lkslot.likelihood =
-	pConditional->tmpslot.tmpLikelihood = 0;
-      pConditional->wtslot.weight = 1;
-#endif
     }
   }
 
@@ -2077,12 +1904,10 @@ initialize_loci (PedigreeSet * pPedigreeSet)
   int ret;
 
   set_removeGenotypeFlag (TRUE);
-#ifndef NO_POLYNOMIAL
   if (modelOptions.polynomial == TRUE) {
     constant1Poly = constantExp (1);
     constant0Poly = constantExp (0);
   }
-#endif
 
   /* go through all loci in the original locus list */
   locus = 0;
@@ -2156,8 +1981,6 @@ initialize_loci (PedigreeSet * pPedigreeSet)
            k=0;
            while(g)
            {
-
-#ifndef NO_POLYNOMIAL  // including polynomial code
                if (modelOptions.polynomial == TRUE )
                {
                expPrinting(g->penslot.penetrancePolynomial);
@@ -2172,14 +1995,6 @@ initialize_loci (PedigreeSet * pPedigreeSet)
                        i+1,j+1,k+1,pPerson->pNumGenotype[j],
                        g->allele[0],
                        g->allele[1]);
-#else
-               fprintf(stderr,"%f  Person %d locus %d genotype %d of %d (%d  %d)\n",
-                       g->penslot.penetrance,
-                       i+1,j+1,k+1,pPerson->pNumGenotype[j],
-                       g->allele[0],
-                       g->allele[1]);
-#endif
-
                g = g->pNext;
                k++;
            }
@@ -2238,9 +2053,7 @@ update_penetrance (PedigreeSet * pPedigreeSet, int locus)
    * in the genotype list 
    * this will be done on the loci in the original locus list */
 
-#ifndef NO_POLYNOMIAL
   Polynomial *penPolynomial;
-#endif
 
   ped = 0;
   while (ped < pPedigreeSet->numPedigree) {
@@ -2252,7 +2065,6 @@ update_penetrance (PedigreeSet * pPedigreeSet, int locus)
 	continue;
       pGenotype = pPerson->ppSavedGenotypeList[locus];
       while (pGenotype) {
-#ifndef NO_POLYNOMIAL
 	if (modelOptions.polynomial == TRUE) {
 	  compute_penetrance (pPerson, locus,
 			      pGenotype->allele[0],
@@ -2266,12 +2078,6 @@ update_penetrance (PedigreeSet * pPedigreeSet, int locus)
 
 	  pGenotype->penslot.penetrance = pen;
 	}
-#else
-	compute_penetrance (pPerson, locus,
-			    pGenotype->allele[0], pGenotype->allele[1], &pen);
-
-	pGenotype->penslot.penetrance = pen;
-#endif
 
 
 	pGenotype = pGenotype->pSavedNext;
