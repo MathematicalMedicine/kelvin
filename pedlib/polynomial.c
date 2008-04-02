@@ -3914,6 +3914,7 @@ void
 freeKeptPolys ()
 {
   freeKeptPolysCount++;
+  keepPolyCount = 0;
   if (polynomialDebugLevel >= 3) fprintf(stderr,"F");
   doFreePolys (0);
   return;
