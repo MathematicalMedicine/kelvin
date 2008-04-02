@@ -46,7 +46,7 @@ quitSignalHandler (int signal)
   /* cygwin requires stty quit ^C */
   swDump (overallSW);
   if (modelOptions.polynomial == TRUE)
-    polyDynamicStatistics ();
+    polyDynamicStatistics ("Signal received");
 #ifdef DMTRACK
   char messageBuffer[MAXSWMSG];
 
@@ -2907,7 +2907,6 @@ main (int argc, char *argv[])
 	   (double) (time2 - time1) / CLOCKS_PER_SEC);
 
   if (modelOptions.polynomial == TRUE) {
-//   polyStatistics (NULL);
 //   dismantle();
   }
 
@@ -2985,7 +2984,7 @@ main (int argc, char *argv[])
   swStop (overallSW);
   swDump (overallSW);
   if (modelOptions.polynomial == TRUE)
-    polyStatistics();
+    polyStatistics("End of run");
 #ifdef DMTRACK
   fprintf (stderr,
 	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d\n",

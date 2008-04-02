@@ -339,9 +339,9 @@ void polynomialClearance ();
 //Show polynomials' structures
 void dismantle ();
 
-//statistics of polynomials
-void polyStatistics ();
-void polyDynamicStatistics ();
+//Statistics of polynomials
+void polyStatistics (char *);
+void polyDynamicStatistics (char *);
 
 //print hash tables
 void printHashTables ();

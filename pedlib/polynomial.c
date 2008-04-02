@@ -580,7 +580,7 @@ constantExp (double con)
   constantCount++;
   nodeId++;
   if ((nodeId & 0x1FFFFF) == 0)
-    polyStatistics();
+    polyStatistics("At 2M poly count");
   p->key = key;
   p->valid = 0;
   p->count = 0;
@@ -716,7 +716,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   variableCount++;
   nodeId++;
   if ((nodeId & 0x1FFFFF) == 0)
-    polyStatistics();
+    polyStatistics("At 2M poly count");
 
   //Record the variable polynomial in the hash table of the variable polynomials
   insertHashTable (&variableHash[hIndex], location, key, variableCount - 1);
@@ -1238,7 +1238,7 @@ plusExp (int num, ...)
     sumCount++;
     nodeId++;
     if ((nodeId & 0x1FFFFF) == 0)
-      polyStatistics();
+      polyStatistics("At 2M poly count");
   }
 
   //Insert the newly built polynomial into the Hash table
@@ -1798,7 +1798,7 @@ timesExp (int num, ...)
       productCount++;
       nodeId++;
       if ((nodeId & 0x1FFFFF) == 0)
-	polyStatistics();
+	polyStatistics("At 2M poly count");
     }
 
     //the new polynomial is also recorded in the hash table
@@ -2025,7 +2025,7 @@ functionCallExp (int num, ...)
 	     nodeId, functionCallCount);
   nodeId++;
   if ((nodeId & 0x1FFFFF) == 0)
-    polyStatistics();
+    polyStatistics("At 2M poly count");
 
   //insert the polynomial in the hash table of the function call polynomials
   insertHashTable (&functionCallHash[hIndex], location, key,
@@ -3136,9 +3136,9 @@ expTermPrinting (FILE * output, Polynomial *p, int depth)
 }
 
 void
-polyDynamicStatistics ()
+polyDynamicStatistics (char *title)
 {
-  fprintf (stderr, "Dynamic polynomial statistics (from counters):\n");
+  fprintf (stderr, "Dynamic polynomial statistics (%s):\n", title);
 
   fprintf (stderr,
 	   "Counts/Hits: c=%d/%d, v=%d/%d, s=%d/%d(%d-to-1), p=%d/%d(%d-to-1), f=%d/%d\n",
@@ -3192,7 +3192,7 @@ polyDynamicStatistics ()
  This function prints out polynomial statistic information.  It is mainly used for 
  performance evaluation and debugging. */
 void
-polyStatistics ()
+polyStatistics (char *title)
 {
   long constantSize, variableSize, sumSize, productSize, functionCallSize;
   int sumTerms = 0, productTerms = 0, maxSumTerms = 0, maxProductTerms = 0;
@@ -3204,10 +3204,10 @@ polyStatistics ()
     functionCallHashPeak = 0;
   int i;
 
-  polyDynamicStatistics ();
+  polyDynamicStatistics (title);
 
   fprintf (stderr,
-	   "Calculated polynomial statistics (from specific lists):\n");
+	   "Calculated polynomial statistics (%s):\n", title);
 
   constantSize = constantCount * sizeof (Polynomial);
   variableSize = variableCount * sizeof (Polynomial);
@@ -3798,7 +3798,6 @@ doFreePolys (unsigned short keepMask)
     sumListLength = sumCount + SUM_LIST_INITIAL;
     sumList = (Polynomial **) realloc (sumList, sizeof (Polynomial *) *
 					      (sumListLength));
-    polyStatistics();
   }
 
   newProductList =
@@ -3867,19 +3866,16 @@ doFreePolys (unsigned short keepMask)
     productListLength = productCount + PRODUCT_LIST_INITIAL;
     productList = (Polynomial **) realloc (productList, sizeof (Polynomial *) *
 						  (productListLength));
-    polyStatistics();
   }
 
   /* Reset building statistics. */
   constantHashHits = variableHashHits = functionHashHits = 0;
   sumReleaseableCount = sumNotReleaseableCount = sumReturnConstantCount = sumReturn1TermCount =
-    sumHashHits = sumNewCount = sumListNewCount = sumListReplacementCount = sumFreedCount =
-    sum1stTermsFreedCount = 0;
+    sumHashHits = sumNewCount = sumListNewCount = sumListReplacementCount = 0;
   productReleaseableCount = productNotReleaseableCount = productReturn0Count = 
     productReturnConstantCount = productReturn1stTermCount = productReturn1TermSumCount =
     productHashHits = productHashHitIsSumCount = productReturnNormalCount =
-    productNon1FactorIsSumCount = productListNewCount = productListReplacementCount = 
-    productFreedCount = product1stTermsFreedCount = 0;
+    productNon1FactorIsSumCount = productListNewCount = productListReplacementCount = 0;
   totalSPLLengths = totalSPLCalls = lowSPLCount = highSPLCount = 0;
 
   if (polynomialDebugLevel >= 10)

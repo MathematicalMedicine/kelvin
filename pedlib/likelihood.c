@@ -363,8 +363,6 @@ pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList)
       }
     }
     freeKeptPolys ();		/* Because holds overlapped keeps. */
-    //    fprintf (stderr, "Post-pedigree free minimum:\n");
-    //    polyStatistics ();
   }
 }
 
