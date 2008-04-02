@@ -2984,10 +2984,8 @@ main (int argc, char *argv[])
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
   swDump (overallSW);
-#ifdef DMUSE
-  printf ("Missed/Used %d/%d 24s, %d/%d 48s, %d/%d 100s\n",
-	  missed24s, used24s, missed48s, used48s, missed100s, used100s);
-#endif
+  if (modelOptions.polynomial == TRUE)
+    polyStatistics();
 #ifdef DMTRACK
   fprintf (stderr,
 	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d\n",

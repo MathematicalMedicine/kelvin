@@ -453,17 +453,20 @@ main (int argc, char *argv[])
 
   /* Fork a child that loops sleeping several seconds and then signalling 
      us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
-#ifdef DMTRACK
+  //#ifdef DMTRACK
   pid_t childPID;
-
+  char commandString[128];
   childPID = fork ();
   if (childPID == 0) {
     while (1) {
-      sleep (5);
-      kill (getppid (), SIGUSR1);
+      //      sleep (5);
+      //      kill (getppid (), SIGUSR1);
+      sleep (30);
+      sprintf(commandString, "pmap %d 2>/dev/null | grep 'total'", getppid ());
+      system(commandString);	/* We do want to fail silently here! */
     }
   }
-#endif
+  //#endif
   overallSW = swCreate ("overall");	/* Overall performance stopwatch */
   /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
   struct sigaction usr1Action, quitAction;
@@ -1936,10 +1939,8 @@ main (int argc, char *argv[])
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
   swDump (overallSW);
-#ifdef DMUSE
-  printf ("Missed/Used %d/%d 24s, %d/%d 48s, %d/%d 100s\n",
-	  missed24s, used24s, missed48s, used48s, missed100s, used100s);
-#endif
+  if (modelOptions.polynomial == TRUE)
+    polyStatistics();
 #ifdef DMTRACK
   fprintf (stderr,
 	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d\n",
