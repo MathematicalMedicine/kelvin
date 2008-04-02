@@ -144,7 +144,9 @@ int constantPListExpansions = 0,	/* Count of constantList expansions */
   variablePListExpansions = 0,	/* Count of variableList expansions */
   sumPListExpansions = 0,	/* Count of sumList expansions */
   productPListExpansions = 0,	/* Count of productList expansions */
-  functionCallPListExpansions = 0; /* Count of functionCallList expansions */
+  functionCallPListExpansions = 0, /* Count of functionCallList expansions */
+  evaluatePolyCount = 0, evaluateValueCount = 0, keepPolyCount = 0, freePolysCount = 0,
+  holdPolyCount = 0, holdAllPolysCount = 0, unHoldPolyCount = 0, freeKeptPolysCount = 0;
 unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount = 0, highSPLCount = 0;
 
 char *polynomialVersion = "0.34.1($Id$)";	/* Make this meaningful since kelvin displays it. */
@@ -311,6 +313,8 @@ doEvaluateValue (Polynomial *p)
 double
 evaluateValue (Polynomial *p)
 {
+  evaluateValueCount++;
+
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
   return doEvaluateValue (p);
@@ -580,7 +584,7 @@ constantExp (double con)
   constantCount++;
   nodeId++;
   if ((nodeId & 0x1FFFFF) == 0)
-    polyStatistics("At 2M poly count");
+    polyStatistics("At 2M poly multiple");
   p->key = key;
   p->valid = 0;
   p->count = 0;
@@ -716,7 +720,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   variableCount++;
   nodeId++;
   if ((nodeId & 0x1FFFFF) == 0)
-    polyStatistics("At 2M poly count");
+    polyStatistics("At 2M poly multiple");
 
   //Record the variable polynomial in the hash table of the variable polynomials
   insertHashTable (&variableHash[hIndex], location, key, variableCount - 1);
@@ -1238,7 +1242,7 @@ plusExp (int num, ...)
     sumCount++;
     nodeId++;
     if ((nodeId & 0x1FFFFF) == 0)
-      polyStatistics("At 2M poly count");
+      polyStatistics("At 2M poly multiple");
   }
 
   //Insert the newly built polynomial into the Hash table
@@ -1798,7 +1802,7 @@ timesExp (int num, ...)
       productCount++;
       nodeId++;
       if ((nodeId & 0x1FFFFF) == 0)
-	polyStatistics("At 2M poly count");
+	polyStatistics("At 2M poly multiple");
     }
 
     //the new polynomial is also recorded in the hash table
@@ -2025,7 +2029,7 @@ functionCallExp (int num, ...)
 	     nodeId, functionCallCount);
   nodeId++;
   if ((nodeId & 0x1FFFFF) == 0)
-    polyStatistics("At 2M poly count");
+    polyStatistics("At 2M poly multiple");
 
   //insert the polynomial in the hash table of the function call polynomials
   insertHashTable (&functionCallHash[hIndex], location, key,
@@ -2181,6 +2185,8 @@ evaluatePoly (Polynomial *pp, struct polyList *l, double *pReturnValue)
   register int i, j;
   double pV, re;
   int pE;
+
+  evaluatePolyCount++;
 
   if (polynomialDebugLevel >= 3) fprintf(stderr,"e");
   if (polynomialDebugLevel >= 10)
@@ -3154,10 +3160,14 @@ polyDynamicStatistics (char *title)
 	   sumPListExpansions, SUM_LIST_INCREASE, productPListExpansions, PRODUCT_LIST_INCREASE,
 	   functionCallPListExpansions, FUNCTIONCALL_LIST_INCREASE);
 
-  fprintf (stderr, "NodeId: %d Hash: max list len=%d, SPL: eff=%lu%%, avg len=%lu\n", 
+  fprintf (stderr, "NodeId: %d Hash: max len=%d, SPL: eff=%lu%%, avg len=%lu\n",
 	   nodeId, maxHashLength, 100 * (lowSPLCount+highSPLCount) / 
 	   (totalSPLCalls ? totalSPLCalls : 1), totalSPLLengths / 
 	   (totalSPLCalls ? totalSPLCalls : 1));
+
+  fprintf (stderr, "Calls: eP=%d eV=%d hAP=%d kP=%d hP=%d uHP=%d fP=%d fKP=%d\n", 
+	   evaluatePolyCount, evaluateValueCount, holdAllPolysCount, keepPolyCount,
+	   holdPolyCount, unHoldPolyCount, freePolysCount, freeKeptPolysCount);
 
   if (sumReleaseableCount == 0 && sumNotReleaseableCount == 0 &&
       productReleaseableCount == 0 && productNotReleaseableCount == 0)
@@ -3390,6 +3400,8 @@ holdAllPolys ()
 {
   int i, j;
 
+  holdAllPolysCount++;
+
   fprintf (stderr, "Holding all current polynomials (via hashes):\n");
   if (constantCount > 0) {
     fprintf (stderr, "%d constants\n", constantCount);
@@ -3498,7 +3510,7 @@ doKeepPoly (Polynomial *p)
 void
 keepPoly (Polynomial *p)
 {
-  if (polynomialDebugLevel >= 3) fprintf(stderr,"k");
+  keepPolyCount++;
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Into keepPoly\n");
   clearValidEvalFlag ();
@@ -3546,7 +3558,7 @@ doHoldPoly (Polynomial *p)
 void
 holdPoly (Polynomial *p)
 {
-  if (polynomialDebugLevel >= 3) fprintf(stderr,"h");
+  holdPolyCount++;
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Into holdPoly\n");
   clearValidEvalFlag ();
@@ -3594,7 +3606,7 @@ doUnHoldPoly (Polynomial *p)
 void
 unHoldPoly (Polynomial *p)
 {
-  if (polynomialDebugLevel >= 3) fprintf(stderr,"H");
+  unHoldPolyCount++;
   clearValidEvalFlag ();
   doUnHoldPoly (p);
   return;
@@ -3891,6 +3903,7 @@ doFreePolys (unsigned short keepMask)
 void
 freePolys ()
 {
+  freePolysCount++;
   if (polynomialDebugLevel >= 3) fprintf(stderr,"f");
   doFreePolys (VALID_KEEP_FLAG);
   return;
@@ -3900,6 +3913,7 @@ freePolys ()
 void
 freeKeptPolys ()
 {
+  freeKeptPolysCount++;
   if (polynomialDebugLevel >= 3) fprintf(stderr,"F");
   doFreePolys (0);
   return;
