@@ -579,6 +579,8 @@ constantExp (double con)
   p->id = nodeId;
   constantCount++;
   nodeId++;
+  if ((nodeId & 0x1FFFFF) == 0)
+    polyStatistics();
   p->key = key;
   p->valid = 0;
   p->count = 0;
@@ -713,6 +715,8 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   variableList[variableCount] = p;
   variableCount++;
   nodeId++;
+  if ((nodeId & 0x1FFFFF) == 0)
+    polyStatistics();
 
   //Record the variable polynomial in the hash table of the variable polynomials
   insertHashTable (&variableHash[hIndex], location, key, variableCount - 1);
@@ -1233,6 +1237,8 @@ plusExp (int num, ...)
     }
     sumCount++;
     nodeId++;
+    if ((nodeId & 0x1FFFFF) == 0)
+      polyStatistics();
   }
 
   //Insert the newly built polynomial into the Hash table
@@ -1791,6 +1797,8 @@ timesExp (int num, ...)
       }
       productCount++;
       nodeId++;
+      if ((nodeId & 0x1FFFFF) == 0)
+	polyStatistics();
     }
 
     //the new polynomial is also recorded in the hash table
@@ -2016,6 +2024,8 @@ functionCallExp (int num, ...)
 	     "Polynomial %d, (function %d) added\n",
 	     nodeId, functionCallCount);
   nodeId++;
+  if ((nodeId & 0x1FFFFF) == 0)
+    polyStatistics();
 
   //insert the polynomial in the hash table of the function call polynomials
   insertHashTable (&functionCallHash[hIndex], location, key,
