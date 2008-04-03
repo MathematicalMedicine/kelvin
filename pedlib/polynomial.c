@@ -146,7 +146,8 @@ int constantPListExpansions = 0,	/* Count of constantList expansions */
   productPListExpansions = 0,	/* Count of productList expansions */
   functionCallPListExpansions = 0, /* Count of functionCallList expansions */
   evaluatePolyCount = 0, evaluateValueCount = 0, keepPolyCount = 0, freePolysCount = 0,
-  holdPolyCount = 0, holdAllPolysCount = 0, unHoldPolyCount = 0, freeKeptPolysCount = 0;
+  holdPolyCount = 0, holdAllPolysCount = 0, unHoldPolyCount = 0, freeKeptPolysCount = 0,
+  freePolysAttemptCount = 0;
 unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount = 0, highSPLCount = 0;
 
 char *polynomialVersion = "0.34.1($Id$)";	/* Make this meaningful since kelvin displays it. */
@@ -2188,7 +2189,6 @@ evaluatePoly (Polynomial *pp, struct polyList *l, double *pReturnValue)
 
   evaluatePolyCount++;
 
-  if (polynomialDebugLevel >= 3) fprintf(stderr,"e");
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Starting evaluatePoly...\n");
   if (l->listNext == 0) {
@@ -2323,7 +2323,6 @@ evaluatePoly (Polynomial *pp, struct polyList *l, double *pReturnValue)
       exit (1);
     }
   }
-  if (polynomialDebugLevel >= 3) fprintf(stderr,"E");
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "...finished evaluatePoly with %G\n", pp->value);
   *pReturnValue = pp->value;
@@ -3165,9 +3164,9 @@ polyDynamicStatistics (char *title)
 	   (totalSPLCalls ? totalSPLCalls : 1), totalSPLLengths / 
 	   (totalSPLCalls ? totalSPLCalls : 1));
 
-  fprintf (stderr, "Calls: eP=%d eV=%d hAP=%d kP=%d hP=%d uHP=%d fP=%d fKP=%d\n", 
+  fprintf (stderr, "Calls: eP=%d eV=%d hAP=%d kP=%d hP=%d uHP=%d fP=%d(%d) fKP=%d\n", 
 	   evaluatePolyCount, evaluateValueCount, holdAllPolysCount, keepPolyCount,
-	   holdPolyCount, unHoldPolyCount, freePolysCount, freeKeptPolysCount);
+	   holdPolyCount, unHoldPolyCount, freePolysAttemptCount, freePolysCount, freeKeptPolysCount);
 
   if (sumReleaseableCount == 0 && sumNotReleaseableCount == 0 &&
       productReleaseableCount == 0 && productNotReleaseableCount == 0)
@@ -3513,7 +3512,6 @@ keepPoly (Polynomial *p)
   keepPolyCount++;
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Into keepPoly\n");
-  clearValidEvalFlag ();
   doKeepPoly (p);
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Out of keepPoly\n");
@@ -3899,12 +3897,18 @@ doFreePolys (unsigned short keepMask)
   return;
 }
 
-/* Free all polynomials that aren't held or kept. */
+/* Free all polynomials that aren't held or kept. Be a bit circumspect
+   about freeing when we don't really need to, so that caching is 
+   improved, and even more, so we don't constantly go thru the work
+   of freeing without much to show for it. */
 void
 freePolys ()
 {
+  if (sumCount+productCount <= 512*1024) {
+    freePolysAttemptCount++;
+    return;
+  }
   freePolysCount++;
-  if (polynomialDebugLevel >= 3) fprintf(stderr,"f");
   doFreePolys (VALID_KEEP_FLAG);
   return;
 }
@@ -3915,7 +3919,6 @@ freeKeptPolys ()
 {
   freeKeptPolysCount++;
   keepPolyCount = 0;
-  if (polynomialDebugLevel >= 3) fprintf(stderr,"F");
   doFreePolys (0);
   return;
 }
