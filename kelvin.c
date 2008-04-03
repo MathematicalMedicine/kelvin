@@ -15,10 +15,8 @@
 #include "likelihood.h"
 #include "pedlib/polynomial.h"
 #include "saveResults.h"
+#include <malloc.h>
 
-extern double lastMem;
-extern double currentMem;
-extern double totalMem;
 extern Polynomial *constant1Poly;
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 struct swStopwatch *overallSW;
@@ -37,6 +35,7 @@ usr1SignalHandler (int signal)
 void
 termSignalHandler (int signal)
 {
+  fprintf(stderr, "Exiting normally!\n");
   exit(-1);
 }
 
@@ -256,23 +255,32 @@ main (int argc, char *argv[])
   void *initialProbAddr2[3];
   void *initialHetProbAddr[3];
 
+  overallSW = swCreate ("overall");	/* Overall performance stopwatch */
+
   /* Fork a child that loops sleeping several seconds and then signalling 
      us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
-  //#ifdef DMTRACK
+
+  time_t startTime;
   pid_t childPID;
-  char commandString[128];
-  childPID = fork ();
-  if (childPID == 0) {
-    while (1) {
-      //      sleep (5);
-      //      kill (getppid (), SIGUSR1);
-      sleep (30);
-      sprintf(commandString, "pmap %d 2>/dev/null | grep 'total'", getppid ());
-      system(commandString);	/* We do want to fail silently here! */
+  int currentVMK, maximumVMK;
+
+  startTime = time (NULL);
+
+  if ((maximumVMK = swGetMaximumVMK()) != 0) {
+    childPID = fork ();
+    if (childPID == 0) {
+      while (1) {
+	sleep (30);
+	//      kill (getppid (), SIGUSR1);
+	currentVMK = swGetCurrentVMK(getppid());
+	fprintf (stderr, "%lus, %-8dKb (%2d%% of %-2.1fGb)\n",
+		 time(NULL) - startTime,
+		 currentVMK, (currentVMK * 100) / maximumVMK,
+		 maximumVMK / (1024.0 * 1024.0));
+      }
     }
   }
-  //#endif
-  overallSW = swCreate ("overall");	/* Overall performance stopwatch */
+
   /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
   struct sigaction usr1Action, quitAction;
   sigset_t usr1BlockMask, quitBlockMask;
