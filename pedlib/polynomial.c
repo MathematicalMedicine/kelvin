@@ -3146,10 +3146,10 @@ polyDynamicStatistics (char *title)
   fprintf (stderr, "Dynamic polynomial statistics (%s):\n", title);
 
   fprintf (stderr,
-	   "Counts/Hits: c=%d/%d, v=%d/%d, s=%d/%d(%d-to-1), p=%d/%d(%d-to-1), f=%d/%d\n",
+	   "Counts/Hits: c=%d/%d, v=%d/%d, s=%d/%d(%2.1f:1), p=%d/%d(%2.1f:1), f=%d/%d\n",
 	   constantCount, constantHashHits, variableCount, variableHashHits,
-	   sumCount, sumHashHits, sumHashHits / (sumCount ? sumCount : 1), productCount,
-	   productHashHits, productHashHits / (productCount ? productCount : 1), functionCallCount,
+	   sumCount, sumHashHits, sumHashHits / (float) (sumCount ? sumCount : 1), productCount,
+	   productHashHits, productHashHits / (float) (productCount ? productCount : 1), functionCallCount,
 	   functionHashHits);
 
   fprintf (stderr,
@@ -3219,14 +3219,14 @@ polyStatistics (char *title)
 	   "Calculated polynomial statistics (%s):\n", title);
 
   constantSize = constantCount * sizeof (Polynomial);
-  variableSize = variableCount * sizeof (Polynomial);
-  sumSize = sumCount * sizeof (Polynomial);
+  variableSize = variableCount * (sizeof (Polynomial) + sizeof (struct variablePoly));
+  sumSize = sumCount * (sizeof (Polynomial) + sizeof (struct sumPoly));
   for (i = 0; i < sumCount; i++) {
     sumTerms += sumList[i]->e.s->num;
     if (sumList[i]->e.s->num > maxSumTerms)
       maxSumTerms = sumList[i]->e.s->num;
   }
-  productSize =  productCount * sizeof (Polynomial);
+  productSize =  productCount * (sizeof (Polynomial) + sizeof (struct productPoly));
   for (i = 0; i < productCount; i++) {
     productTerms += productList[i]->e.p->num;
     if (productList[i]->e.p->num > maxProductTerms)
@@ -3904,7 +3904,7 @@ doFreePolys (unsigned short keepMask)
 void
 freePolys ()
 {
-  if (sumCount+productCount <= 512*1024) {
+  if (sumNotReleaseableCount+productNotReleaseableCount < 1024*512) {
     freePolysAttemptCount++;
     return;
   }
