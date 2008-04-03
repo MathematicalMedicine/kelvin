@@ -824,6 +824,36 @@ swLogMsg (char *message)
   return;
 }
 
+int swGetCurrentVMK(pid_t pid) {
+  char commandString[128];
+  FILE *gCFP;
+  int currentVMK;
+
+  /* I've tried mallinfo and malloc_info (don't work), and mstats (DNE). Help. */
+
+  sprintf(commandString, "pmap %d 2>/dev/null | grep 'total' | cut -c 17-23", pid);
+  if ((gCFP = popen(commandString, "r")) != NULL) {
+    fscanf(gCFP, "%d", &currentVMK);
+    pclose(gCFP);
+  }
+  return currentVMK;
+}
+
+int swGetMaximumVMK(void) {
+  char commandString[] = "cat /proc/meminfo | grep 'MemTotal' | cut -f 6 -d ' '";
+  FILE *gCFP;
+  int maximumVMK;
+  
+  if ((gCFP = popen(commandString, "r")) != NULL) {
+    fscanf(gCFP, "%d", &maximumVMK);
+    pclose(gCFP);
+  }
+  if (swGetCurrentVMK(getpid()) != 0)
+    return (maximumVMK);
+  else
+    return (0);
+}
+
 #ifdef MAIN
 
 #include <math.h>
