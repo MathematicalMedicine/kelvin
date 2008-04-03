@@ -3215,8 +3215,13 @@ polyStatistics (char *title)
 
   polyDynamicStatistics (title);
 
-  fprintf (stderr,
-	   "Calculated polynomial statistics (%s):\n", title);
+  if (swGetMaximumVMK() != 0) {
+    if (swGetCurrentVMK(getpid()) > (0.9 * swGetMaximumVMK())) {
+      fprintf (stderr, "VM usage too high to permit list traversals for statistics.\n");
+      return;
+    }
+  }
+  fprintf (stderr, "Calculated polynomial statistics (%s):\n", title);
 
   constantSize = constantCount * sizeof (Polynomial);
   variableSize = variableCount * (sizeof (Polynomial) + sizeof (struct variablePoly));
