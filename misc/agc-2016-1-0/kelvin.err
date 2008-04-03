@@ -1,0 +1,19 @@
+PID: 4795, kelvin V0.34.0.1, likelihood V0.32.4, locus V0.32.4, polynomial V0.0.32.4 starting run
+To force a dump of stats, type CTRL-\ (dangerous and terse but always works)
+or type "kill -10 4795" (safe and thorough, but requires program cooperation).
+!!!!!!!!!!!The Computation is done in polynomial mode!!!!!!!!!!!!!!!
+Dichotomous Trait & LE
+Total number of markers in data: 6
+Total number of trait locus in data: 1
+Total number of families in pedigree file: 1
+Number of loci to use for analysis: 7
+holdAllPolys from further population of transmission matrix
+Holding all current polynomials (via hashes):
+31 constants
+16 variables
+676 sums
+951 products
+---
+MP start time: 0.860000
+MP done trait: 0.930000
+/export/n1ge6/default/spool/Levi-Montalcini19/job_scripts/505700: line 7:  4795 Segmentation fault      kelvin-0.34.0 kelvin.conf

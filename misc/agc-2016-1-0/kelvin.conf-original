@@ -1,0 +1,86 @@
+######################################################################
+# KELVIN - Linkage and Linkage Disequilibrium Analysis Program
+#
+# Copyright (c) 2007, Columbus Children's Research Institute
+# Permission is hereby given to use and reproduce this software
+# for non-profit educational purposes only.
+#
+# Please report bugs to kelvin@ccri.net
+# Sample Kelvin Input File
+######################################################################
+
+######################################################################
+# Input file specification
+######################################################################
+# result files 
+#SR /export/projects/agc/20080218/2016/results
+SR
+
+# Pedigree file (post-makeped format)
+PD kelvin.post
+
+# Locus description file
+# T <trait name>
+# M <marker name>
+# ....
+DF kelvin.data
+
+# Marker file
+# repeats of the following two line of information
+# M <marker-name>
+# F <allele frequency list>
+MK kelvin.markers
+
+# Map file
+# mapFunction=<KOSAMBI or Haldane>
+# CHR MARKER AVG MALE FEMALE
+MP kelvin.map
+
+######################################################################
+# Type of analysis
+######################################################################
+
+# multipoint sex averaged using 6 markers
+SA 6
+
+# Linkage equilibrium case (default; else linkage disequilibrium is LD)
+
+
+# How many liability classes? (default is to ignore liability classes).
+LC 1
+
+######################################################################
+# Trait model specification
+######################################################################
+
+# dichotomous trait
+DT
+
+# Affection Status - unknown, unaffected, affected
+AS 0 1 2
+
+# Use polynomial to represent likelihood - PE - polynomial Evaluation
+PE
+
+# Gene frequencies
+GF 0.001; 0.01; 0.1; 0.3; 0.5; 0.8
+
+# Calculation will be done at marker locations also
+TM
+
+# penetrance or mean value
+DD 0.0 0.9 0.1
+Dd 0.0 0.9 0.1
+dd 0.0 0.9 0.1
+DD 0.999
+Dd 0.999
+
+# penetrance or mean constraints
+DD >= Dd
+Dd >= dd
+DD != Dd; Dd != dd
+
+# alpha values
+AL 0.05 1.0 0.05
+
+TL 0

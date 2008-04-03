@@ -1,0 +1,850 @@
+PID: 498, kelvin V0.34.1, likelihood V0.34.1, locus V0.32.4, polynomial V0.34.1($Id: polynomial.c 305 2008-03-31 19:22:07Z whv001 $) starting run
+To force a dump of stats, type CTRL-\ or type "kill -3 498".
+polynomialScale is 10 (1-10, 1 is default)
+!!!!!!!!!!!The Computation is done in polynomial mode!!!!!!!!!!!!!!!
+Dichotomous Trait & LE
+Total number of markers in data: 6
+Total number of trait locus in data: 1
+Total number of families in pedigree file: 1
+Number of loci to use for analysis: 6
+Holding all current polynomials (via hashes):
+31 constants
+5 variables:
+3 sums
+3 products
+---
+holdAllPolys from further population of transmission matrix
+MP start time: 1.460000
+PEDIGREE: 2016 (1/1)
+Finished polynomial building: 1.730000
+MP done trait: 1.740000
+PEDIGREE: 2016 (1/1)
+Finished polynomial building: 7.310000
+MP done marker set on pos 0: 7.330000
+PEDIGREE: 2016 (1/1)
+ total          1399052K
+ total          1641604K
+ total          1715500K
+ total          1947876K
+ total          2169032K
+ total          2491612K
+ total          2561548K
+ total          2561548K
+ total          2561548K
+ total          2561548K
+ total          2561548K
+ total          2561548K
+ total          2561548K
+ total          2561548K
+ total          2561548K
+ total          2561548K
+Reducing sumListLength from 2700000 to 1097580
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=32/462526, v=14/0, s=97580/10215977(104-to-1), p=4978742/7154399(1-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=17(@100000), p=40(@100000), f=0(@100)
+NodeId: 7893143 Hash: max list len=20, SPL: eff=98%, avg len=150
+Sum polys: try release=20572416 or not=11013992 return constant=0 return 1-term=273240 hash hits=10215977
+...really new=21097191 new on sumList=2631392 replaced on sumList=18465799 freed=2540513 1st-term freed=18465799
+Product polys: try release=655776 or not=20735538 return 0=0 return constant=1728 return 1st term=82920
+...actually a sum poly=147456 hash hits=7154399 hash hit but sum=8606023 return normal (factor is 1)=3138275
+...factor not 1 now sum=2260513 new on productList=4962842 replaced on productList=435946
+...freed=0 1st-term freed=435946
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=9265966(94), products=32125152(6)
+Sizes (including terms): sums=373761200, products=1315825216, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=3(0), p=14(2), f=0(0)
+---
+Finished polynomial building: 503.830000
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+MP done ALT on pos 0: 2203.640000
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+ total          2579620K
+MP done ALT on pos 1: 3903.190000
+Reducing productListLength from 5000000 to 1000307
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=31/0, v=14/0, s=254/0(0-to-1), p=307/0(0-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=17(@100000), p=40(@100000), f=0(@100)
+NodeId: 7893792 Hash: max list len=20, SPL: eff=0%, avg len=0
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=425(1), products=924(3)
+Sizes (including terms): sums=25128, products=43088, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=2(0), p=2(0), f=0(0)
+---
+PEDIGREE: 2016 (1/1)
+ total          2501388K
+ total          2501388K
+ total          2501388K
+ total          2501388K
+ total          2501388K
+ total          2504160K
+ total          2522376K
+ total          2522376K
+ total          2522376K
+ total          2522376K
+ total          2522376K
+ total          2522376K
+ total          2522376K
+ total          2522376K
+ total          2522376K
+ total          2522376K
+Reducing sumListLength from 2397580 to 1097887
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=32/462532, v=14/0, s=97887/9042426(92-to-1), p=4968420/8250544(1-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=30(@100000), p=80(@100000), f=0(@100)
+NodeId: 15252882 Hash: max list len=20, SPL: eff=98%, avg len=151
+Sum polys: try release=20572416 or not=9639496 return constant=0 return 1-term=329640 hash hits=9042426
+...really new=20839846 new on sumList=2365726 replaced on sumList=18474120 freed=2274540 1st-term freed=18474120
+Product polys: try release=655776 or not=20735526 return 0=0 return constant=1734 return 1st term=82920
+...actually a sum poly=147456 hash hits=8250544 hash hit but sum=7498958 return normal (factor is 1)=3416608
+...factor not 1 now sum=1993082 new on productList=4952520 replaced on productList=457170
+...freed=0 1st-term freed=457170
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=9270706(94), products=32022554(6)
+Sizes (including terms): sums=373960624, products=1311801384, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=4(0), p=16(2), f=0(0)
+---
+Finished polynomial building: 4398.000000
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+ total          2541120K
+MP done ALT on pos 2: 6117.760000
+Reducing productListLength from 5000307 to 1000307
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=31/0, v=14/0, s=254/0(0-to-1), p=307/0(0-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=30(@100000), p=80(@100000), f=0(@100)
+NodeId: 15253531 Hash: max list len=20, SPL: eff=0%, avg len=0
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=425(1), products=924(3)
+Sizes (including terms): sums=25128, products=43088, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=2(0), p=2(0), f=0(0)
+---
+PEDIGREE: 2016 (1/1)
+ total          1629072K
+Finished polynomial building: 6128.130000
+MP done marker set on pos 3: 6128.160000
+PEDIGREE: 2016 (1/1)
+ total          1629072K
+ total          1674728K
+ total          2004572K
+ total          2098404K
+ total          2345156K
+ total          2630988K
+ total          2683116K
+ total          2683116K
+ total          2683116K
+ total          2683116K
+ total          2683116K
+ total          2683116K
+ total          2683116K
+ total          2683116K
+ total          2683116K
+ total          2683116K
+ total          2683116K
+Reducing sumListLength from 2597887 to 1115488
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=32/520708, v=14/0, s=115488/8991420(77-to-1), p=5665515/8741597(1-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=45(@100000), p=127(@100000), f=0(@100)
+NodeId: 23802970 Hash: max list len=20, SPL: eff=98%, avg len=149
+Sum polys: try release=21689856 or not=9745914 return constant=0 return 1-term=383344 hash hits=8991420
+...really new=22061006 new on sumList=2569792 replaced on sumList=19491214 freed=2460977 1st-term freed=19491214
+Product polys: try release=736128 or not=21881028 return 0=0 return constant=2310 return 1st term=93640
+...actually a sum poly=166384 hash hits=8741597 hash hit but sum=7429861 return normal (factor is 1)=4033695
+...factor not 1 now sum=2149669 new on productList=5649391 replaced on productList=533973
+...freed=0 1st-term freed=533973
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=9786336(84), products=34620316(6)
+Sizes (including terms): sums=395149056, products=1427627856, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=4(0), p=16(2), f=0(0)
+---
+Finished polynomial building: 6661.940000
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+ total          2748248K
+MP done ALT on pos 3: 9139.290000
+Reducing productListLength from 5700307 to 1000307
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=31/0, v=14/0, s=254/0(0-to-1), p=307/0(0-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=45(@100000), p=127(@100000), f=0(@100)
+NodeId: 23803619 Hash: max list len=20, SPL: eff=0%, avg len=0
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=425(1), products=924(3)
+Sizes (including terms): sums=25128, products=43088, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=2(0), p=2(0), f=0(0)
+---
+PEDIGREE: 2016 (1/1)
+ total          2658952K
+ total          2658952K
+ total          2658952K
+ total          2658952K
+ total          2658952K
+ total          2658952K
+ total          2658952K
+ total          2705052K
+ total          2705052K
+ total          2705052K
+ total          2705052K
+ total          2705052K
+ total          2705052K
+ total          2705052K
+ total          2705052K
+ total          2705052K
+ total          2705052K
+ total          2705052K
+ total          2705052K
+Reducing sumListLength from 2515488 to 1118410
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=31/520711, v=14/0, s=118410/8447886(71-to-1), p=5810908/9166142(1-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=59(@100000), p=176(@100000), f=0(@100)
+NodeId: 32081227 Hash: max list len=20, SPL: eff=98%, avg len=149
+Sum polys: try release=21689856 or not=9031312 return constant=0 return 1-term=410804 hash hits=8447886
+...really new=21862478 new on sumList=2440245 replaced on sumList=19422233 freed=2328688 1st-term freed=19422233
+Product polys: try release=736128 or not=21880980 return 0=0 return constant=2316 return 1st term=93792
+...actually a sum poly=166536 hash hits=9166142 hash hit but sum=6844040 return normal (factor is 1)=4323546
+...factor not 1 now sum=2020736 new on productList=5794622 replaced on productList=549660
+...freed=0 1st-term freed=549660
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=9806970(82), products=34365712(5)
+Sizes (including terms): sums=396067920, products=1423114688, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=4(0), p=18(2), f=0(0)
+---
+Finished polynomial building: 9703.400000
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+ total          2751032K
+MP done ALT on pos 4: 12855.140000
+Reducing productListLength from 5900307 to 1000307
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=31/0, v=14/0, s=254/0(0-to-1), p=307/0(0-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=59(@100000), p=176(@100000), f=0(@100)
+NodeId: 32081876 Hash: max list len=20, SPL: eff=0%, avg len=0
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=425(1), products=924(3)
+Sizes (including terms): sums=25128, products=43088, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=2(0), p=2(0), f=0(0)
+---
+PEDIGREE: 2016 (1/1)
+ total          2550760K
+ total          2550760K
+ total          2550760K
+ total          2550760K
+ total          2550760K
+ total          2550760K
+ total          2686612K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2715324K
+ total          2735780K
+Reducing sumListLength from 2618410 to 1121876
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=32/520726, v=14/0, s=121876/8531627(70-to-1), p=5922416/8972345(1-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=74(@100000), p=226(@100000), f=0(@100)
+NodeId: 40558678 Hash: max list len=20, SPL: eff=98%, avg len=149
+Sum polys: try release=21689856 or not=9203774 return constant=0 return 1-term=393876 hash hits=8531627
+...really new=21968127 new on sumList=2525605 replaced on sumList=19442522 freed=2410656 1st-term freed=19442522
+Product polys: try release=736128 or not=21880944 return 0=0 return constant=2334 return 1st term=93784
+...actually a sum poly=166632 hash hits=8972345 hash hit but sum=6937181 return normal (factor is 1)=4344835
+...factor not 1 now sum=2099961 new on productList=5906054 replaced on productList=538742
+...freed=0 1st-term freed=538742
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=9821820(80), products=34304932(5)
+Sizes (including terms): sums=396772832, products=1424494864, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=4(0), p=15(2), f=0(0)
+---
+Finished polynomial building: 13520.270000
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+ total          2756652K
+MP done ALT on pos 5: 16735.890000
+Reducing productListLength from 6000307 to 1000307
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=31/0, v=14/0, s=254/0(0-to-1), p=307/0(0-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=74(@100000), p=226(@100000), f=0(@100)
+NodeId: 40559327 Hash: max list len=20, SPL: eff=0%, avg len=0
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=425(1), products=924(3)
+Sizes (including terms): sums=25128, products=43088, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=2(0), p=2(0), f=0(0)
+---
+PEDIGREE: 2016 (1/1)
+ total          2573300K
+ total          2565484K
+ total          2565484K
+ total          2565484K
+ total          2565484K
+ total          2565484K
+ total          2565484K
+ total          2565484K
+ total          2735908K
+ total          2761648K
+ total          2761648K
+ total          2761648K
+ total          2761648K
+ total          2761648K
+ total          2761648K
+ total          2761648K
+ total          2761648K
+ total          2761648K
+ total          2761648K
+ total          2761648K
+ total          2761648K
+ total          2761648K
+Reducing sumListLength from 2721876 to 1129174
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=32/520790, v=14/0, s=129174/8684302(67-to-1), p=6110414/8634295(1-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=90(@100000), p=278(@100000), f=0(@100)
+NodeId: 49362745 Hash: max list len=20, SPL: eff=98%, avg len=149
+Sum polys: try release=21689856 or not=9507516 return constant=0 return 1-term=374108 hash hits=8684302
+...really new=22138962 new on sumList=2667211 replaced on sumList=19471751 freed=2545100 1st-term freed=19471751
+Product polys: try release=736128 or not=21880854 return 0=0 return constant=2406 return 1st term=93864
+...actually a sum poly=166728 hash hits=8634295 hash hit but sum=7108597 return normal (factor is 1)=4378901
+...factor not 1 now sum=2232191 new on productList=6093086 replaced on productList=518006
+...freed=0 1st-term freed=518006
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=9845987(76), products=35019444(5)
+Sizes (including terms): sums=397973048, products=1456233232, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=4(0), p=16(3), f=0(0)
+---
+Finished polynomial building: 17385.960000
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+ total          2830864K
+MP done ALT on pos 6: 19375.750000
+Computation time:  0.000000s  19374.290000s 
+Reducing productListLength from 6200307 to 1000307
+Dynamic polynomial statistics (from counters):
+Counts/Hits: c=31/0, v=14/0, s=254/0(0-to-1), p=307/0(0-to-1), f=0/0
+List expansions(@size): c=0(@100), v=0(@50), s=90(@100000), p=278(@100000), f=0(@100)
+NodeId: 49363394 Hash: max list len=20, SPL: eff=0%, avg len=0
+Calculated polynomial statistics (from specific lists):
+Term count(avg): sums=425(1), products=924(3)
+Sizes (including terms): sums=25128, products=43088, functions=0
+Hash length peak(avg): c=1(0), v=1(0), s=2(0), p=2(0), f=0(0)
+---
+Computation time:  0.000000s  19374.290000s 
+PID: 498, stopwatch overall(1) e:19386s u:19375.702445s s:5.099225s, vx:14, ivx:355673, sf:1200531, hf:1
+PID: 498, finished run
