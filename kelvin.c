@@ -273,7 +273,7 @@ main (int argc, char *argv[])
 	sleep (30);
 	//      kill (getppid (), SIGUSR1);
 	currentVMK = swGetCurrentVMK(getppid());
-	fprintf (stderr, "%lus, %-8dKb (%2d%% of %-2.1fGb)\n",
+	fprintf (stderr, "%lus, %dKb (%2d%% of %2.1fGb)\n",
 		 time(NULL) - startTime,
 		 currentVMK, (currentVMK * 100) / maximumVMK,
 		 maximumVMK / (1024.0 * 1024.0));
