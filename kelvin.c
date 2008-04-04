@@ -15,7 +15,6 @@
 #include "likelihood.h"
 #include "pedlib/polynomial.h"
 #include "saveResults.h"
-#include <malloc.h>
 
 extern Polynomial *constant1Poly;
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
