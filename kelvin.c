@@ -261,7 +261,7 @@ main (int argc, char *argv[])
      us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
 
   time_t startTime;
-  pid_t childPID;
+  pid_t childPID = 0;
   int currentVMK, maximumVMK;
 
   startTime = time (NULL);
@@ -3014,6 +3014,9 @@ main (int argc, char *argv[])
   }
   fclose (fpHet);
   //  fclose (fpHomo);
+
+  if (childPID != 0)
+    kill(childPID,SIGKILL);		/* Sweep away any errant children */
   return 0;
 }
 
