@@ -829,7 +829,8 @@ int swGetCurrentVMK(pid_t pid) {
   FILE *gCFP;
   int currentVMK;
 
-  /* I've tried mallinfo and malloc_info (don't work), and mstats (DNE). Help. */
+  /* I've tried mallinfo and malloc_info (don't work), and mstats (DNE for Linux,
+     On Crack for Mac). Help. */
 
   sprintf(commandString, "pmap %d 2>/dev/null | grep 'total' | cut -c 8-23", pid);
   if ((gCFP = popen(commandString, "r")) != NULL) {
