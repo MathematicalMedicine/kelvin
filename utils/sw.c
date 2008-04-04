@@ -840,7 +840,8 @@ int swGetCurrentVMK(pid_t pid) {
 }
 
 int swGetMaximumVMK(void) {
-  char commandString[] = "cat /proc/meminfo | grep 'MemTotal' | cut -c 11-22";
+  char commandString[] = "cat /proc/meminfo 2>/dev/null | grep 'MemTotal' | cut -c 11-22";
+  // For Mac  char commandString[] = "sysctl hw.memsize | cut -f 2 -d ' '";
   FILE *gCFP;
   int maximumVMK;
   
