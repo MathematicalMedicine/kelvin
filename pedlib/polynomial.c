@@ -158,6 +158,9 @@ char *polynomialVersion = "0.34.1";	/* Make this meaningful since kelvin display
 int polynomialDebugLevel = 0;	/* Corresponds roughly to diagnostic output volume */
 int polynomialLostNodeId = -1;	/* For tracking down mis-freed polynomials */
 extern int polynomialScale;	/* Scaling factor for hash and other storage */
+extern struct swStopwatch *overallSW;
+
+struct swStopwatch *evaluatePolySW, *evaluateValueSW;
 
 /* Clear the evaluation flag on the entire tree so we can mark
    where we've been and not retrace our steps regardless of
@@ -314,11 +317,18 @@ doEvaluateValue (Polynomial *p)
 double
 evaluateValue (Polynomial *p)
 {
+  double returnValue;
+
   evaluateValueCount++;
+  swStart (evaluateValueSW);
 
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
-  return doEvaluateValue (p);
+  swStart (evaluateValueSW);
+  returnValue = doEvaluateValue (p);
+  swStop (evaluateValueSW);
+
+  return returnValue;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -2188,6 +2198,7 @@ evaluatePoly (Polynomial *pp, struct polyList *l, double *pReturnValue)
   int pE;
 
   evaluatePolyCount++;
+  swStart (evaluatePolySW);
 
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Starting evaluatePoly...\n");
@@ -2195,6 +2206,7 @@ evaluatePoly (Polynomial *pp, struct polyList *l, double *pReturnValue)
     if (polynomialDebugLevel >= 10)
       fprintf (stderr, "...finished evaluatePoly with a zero!\n");
     *pReturnValue = pp->value;
+    swStop (evaluatePolySW);
     return;
   }
 
@@ -2326,6 +2338,7 @@ evaluatePoly (Polynomial *pp, struct polyList *l, double *pReturnValue)
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "...finished evaluatePoly with %G\n", pp->value);
   *pReturnValue = pp->value;
+  swStop (evaluatePolySW);
   return;
 }
 
@@ -2412,6 +2425,9 @@ polynomialInitialization ()
   if (polynomialScale <= 0) polynomialScale = 1;
   if (polynomialScale > 10) polynomialScale = 10;
   fprintf (stderr, "polynomialScale is %d (1-10, 1 is default)\n", polynomialScale);
+
+  evaluatePolySW = swCreate ("evaluatePoly");
+  evaluateValueSW = swCreate ("evaluateValue");
 
   /* Scale all initial and growth sizes up by the polynomial scale (default 10) */
 
@@ -3144,6 +3160,12 @@ void
 polyDynamicStatistics (char *title)
 {
   fprintf (stderr, "Dynamic polynomial statistics (%s):\n", title);
+
+  swDump (overallSW);
+  if (evaluatePolyCount)
+    swDump (evaluatePolySW);
+  if (evaluateValueCount)
+    swDump (evaluateValueSW);
 
   fprintf (stderr,
 	   "Counts/Hits: c=%d/%d, v=%d/%d, s=%d/%d(%2.1f:1), p=%d/%d(%2.1f:1), f=%d/%d\n",
