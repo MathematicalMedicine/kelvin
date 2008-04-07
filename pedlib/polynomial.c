@@ -150,7 +150,7 @@ int constantPListExpansions = 0,	/* Count of constantList expansions */
   freePolysAttemptCount = 0;
 unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount = 0, highSPLCount = 0;
 
-char *polynomialVersion = "0.34.1($Id$)";	/* Make this meaningful since kelvin displays it. */
+char *polynomialVersion = "0.34.1";	/* Make this meaningful since kelvin displays it. */
 
 /* Both of the following are set by initialization to value of environment variable of same name.
    They control diagnostic action in a manner not permitted by other approaches since they can
