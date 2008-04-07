@@ -1169,6 +1169,12 @@ main (int argc, char *argv[])
 	    fprintf (fpHet, "\n");
 	  }
 
+          low_theta_integral = 0.0;
+          high_theta_integral = 0.0;
+          low_integral = 0.0;
+          high_integral = 0.0;
+          low_ld_integral = 0.0;
+
 	  for (i = 0; i < 140; i++) {
 	    fixed_dprime = dcuhre2[i][0];
 	    fixed_theta = dcuhre2[i][1];
@@ -1278,7 +1284,7 @@ main (int argc, char *argv[])
 		}
 	      }
 	    }			/* End of writing max */
-
+            fflush(fpHet);
 	    fprintf (stderr, "tp result %f %f is %13.10f   \n",
 		     fixed_theta, fixed_dprime, integral);
 
