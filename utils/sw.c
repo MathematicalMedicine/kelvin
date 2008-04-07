@@ -853,7 +853,8 @@ int swGetCurrentVMK(pid_t pid) {
 
 int swGetMaximumVMK(void) {
   char commandString[] = "cat /proc/meminfo 2>/dev/null | grep 'MemTotal' | cut -c 11-22";
-  // For Mac  char commandString[] = "sysctl hw.memsize | cut -f 2 -d ' '";
+  /* For Mac  char commandString[] = "sysctl hw.memsize | cut -f 2 -d ' '";
+     ...so now all we need is a reliable way to get current usage. */
   FILE *gCFP;
   int maximumVMK;
   
@@ -861,7 +862,7 @@ int swGetMaximumVMK(void) {
     fscanf(gCFP, "%d", &maximumVMK);
     pclose(gCFP);
   }
-  if (swGetCurrentVMK(getpid()) != 0)
+  if (swGetCurrentVMK(getpid()) > 0)
     return (maximumVMK);
   else
     return (0);
