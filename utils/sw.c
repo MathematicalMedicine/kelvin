@@ -564,14 +564,25 @@ swDumpCrossModuleChunks ()
 void
 swLogPeaks (char *reason)
 {
+  char messageBuffer[MAXSWMSG];
   if (firstMallocCall) {
     fprintf (stderr, "=> (%s): Before first memory allocation\n", reason);
     return;
   }
   swStop (internalDMSW);
-  fprintf (stderr,
+  sprintf (messageBuffer,
 	   "=> (%s): %lu seconds since 1st allocation, %g bytes in use, peak was %g\n",
 	   reason, internalDMSW->swAccumWallTime, currentAlloc, peakAlloc);
+  sprintf (messageBuffer,
+	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d",
+	   countMalloc, countFree, countReallocOK, countReallocMove,
+	   countReallocFree, maxListDepth, maxRecycles);
+  swLogMsg (messageBuffer);
+  sprintf (messageBuffer,
+	   "Size malloc:%g, free:%g, realloc OK:%g, realloc move:%g, realloc free:%g, current:%g, peak:%g",
+	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
+	   totalReallocFree, currentAlloc, peakAlloc);
+  swLogMsg (messageBuffer);
   swStart (internalDMSW);
   return;
 }

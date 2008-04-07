@@ -10,7 +10,7 @@ BINDIR=/usr/local/bin
 INCDIR=/usr/local/include
 LIBDIR=/usr/local/lib
 
-CC := gcc
+CC := gcc4
 CFLAGS := -Wall -O3
 
 KVNLIBDIR := $(shell pwd)/lib

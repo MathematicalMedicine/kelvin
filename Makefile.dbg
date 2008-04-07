@@ -13,8 +13,8 @@ LIBDIR=/usr/local/lib
 CC := gcc
 CFLAGS := -Wall
 CFLAGS += -g -DDEBUG
-#CFLAGS += -pg # For gprof
-#CFLAGS += -fprofile-arcs -ftest-coverage # For gcov
+CFLAGS += -pg -DGPROF  # For gprof, the definition permits notification of the user
+#CFLAGS += -fprofile-arcs -ftest-coverage -DGCOV # For gcov
 #CFLAGS += -DDMTRACK # For our own memory tracking
 
 KVNLIBDIR := $(shell pwd)/lib
