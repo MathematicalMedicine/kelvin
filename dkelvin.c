@@ -19,51 +19,43 @@
 #include "saveResults.h"
 #include "dcuhre.h"
 
-
-extern double lastMem;
-extern double currentMem;
-extern double totalMem;
 extern Polynomial *constant1Poly;
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 struct swStopwatch *overallSW;
 
-#include <signal.h>		/* Signalled dumps */
-volatile sig_atomic_t signalSeen = 0;
-void
-usr1SignalHandler (int signal)
-{
-  swDump (overallSW);
-#ifdef DMTRACK
-  swLogPeaks ("Timer");
-#endif
-}
+#include <signal.h>		/* Signalled dumps, exits, whatever */
+volatile sig_atomic_t signalSeen = 0; /* If we wanted to be really gentle. */
+/* Typing ^\ or issuing a kill -s SIGQUIT gets a dump of statistics.
+   We used to set the signalSeen flag and watch for it in breaks in the
+   code, but so long as we don't interfere with kelvin when we dump out
+   statistics, that is unnecessary.
 
-void
-termSignalHandler (int signal)
-{
-  exit (-1);
-}
-
+   P.S. - cygwin requires "stty quit ^C" first for this to work. */
 void
 quitSignalHandler (int signal)
 {
   swDump (overallSW);
+#ifdef DMTRACK
+  swLogPeaks ("Signal");
+#endif
   if (modelOptions.polynomial == TRUE)
     polyDynamicStatistics ("Signal received");
-#ifdef DMTRACK
-  char messageBuffer[MAXSWMSG];
-
-  sprintf (messageBuffer,
-	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d",
-	   countMalloc, countFree, countReallocOK, countReallocMove,
-	   countReallocFree, maxListDepth, maxRecycles);
-  swLogMsg (messageBuffer);
-  sprintf (messageBuffer,
-	   "Size malloc:%g, free:%g, realloc OK:%g, realloc move:%g, realloc free:%g, current:%g, peak:%g",
-	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
-	   totalReallocFree, currentAlloc, peakAlloc);
-  swLogMsg (messageBuffer);
+}
+#if defined (GPROF) || (GCOV)
+/* We catch a SIGTERM to allow early exit() for profiling. */
+void
+termSignalHandler (int signal)
+{
+  fprintf(stderr, "Exiting early for gprof or gcov!\n");
+  exit(EXIT_SUCCESS);
+}
 #endif
+pid_t childPID = 0;		/* For a child process producing timed statistics. */
+void
+/* Exit handler to clean-up after we hit any of our widely-distributed exit points. */
+exit_kelvin() {
+  if (childPID != 0)
+    kill(childPID,SIGKILL);		/* Sweep away any errant children */
 }
 
 char *kelvinVersion = "0.34.1";
@@ -453,6 +445,13 @@ main (int argc, char *argv[])
 
   overallSW = swCreate ("overall");	/* Overall performance stopwatch */
 
+  /* Add an exit handler to deal with wayward children. */
+
+  if (atexit(exit_kelvin)) {
+    perror("Could not register exit handler!");
+    exit(EXIT_FAILURE);
+  }
+
   /* Fork a child that loops sleeping several seconds and then signalling 
      us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
 
@@ -477,49 +476,55 @@ main (int argc, char *argv[])
     }
   }
 
-  /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
-  struct sigaction usr1Action, quitAction;
-  sigset_t usr1BlockMask, quitBlockMask;
+  /* Setup signal handlers */
+  struct sigaction quitAction;
+  sigset_t quitBlockMask;
+#if defined (GPROF) || (GCOV)
   struct sigaction termAction;
   sigset_t termBlockMask;
-
-  sigfillset (&usr1BlockMask);
-  usr1Action.sa_handler = usr1SignalHandler;
-  usr1Action.sa_mask = usr1BlockMask;
-  usr1Action.sa_flags = 0;
-  sigaction (SIGUSR1, &usr1Action, NULL);
-
+#endif
   sigfillset (&quitBlockMask);
   quitAction.sa_handler = quitSignalHandler;
   quitAction.sa_mask = quitBlockMask;
   quitAction.sa_flags = 0;
   sigaction (SIGQUIT, &quitAction, NULL);
-
+  
+#if defined (GPROF) || (GCOV)
   sigfillset (&termBlockMask);
   termAction.sa_handler = termSignalHandler;
   termAction.sa_mask = termBlockMask;
   termAction.sa_flags = 0;
   sigaction (SIGTERM, &termAction, NULL);
+#endif  
 
   /* Annouce ourselves for performance tracking. */
   char messageBuffer[MAXSWMSG];
 
   sprintf (messageBuffer,
-	   "kelvin V%s, likelihood V%s, locus V%s, polynomial V%s starting run",
+	   "dkelvin V%s, likelihood V%s, locus V%s, polynomial V%s\n($Id$)\n",
 	   kelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
   swLogMsg (messageBuffer);
 
 #ifdef DMTRACK
   swLogMsg
-    ("Dynamic memory usage dumping is turned on, so performance will be poor!\n");
+    ("Dynamic memory usage dumping is turned on, so performance will be poor!");
+#endif
+#ifdef GPROF
+  sprintf (messageBuffer, 
+	   "GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.", 
+	   SIGTERM, getpid ());
+  swLogMsg (messageBuffer);
+#endif
+#ifdef GCOV
+    sprintf (messageBuffer, 
+	     "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", 
+	     SIGTERM, getpid ());
+    swLogMsg (messageBuffer);
 #endif
   fprintf (stderr,
-	   "To force a dump of stats, type CTRL-\\ or type \"kill -%d %d\".\n",
-	   SIGQUIT, getpid ());
+	   "To force a dump of stats, type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, getpid ());
   swStart (overallSW);
 
-
-  /* Memory allocation */
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&markerLocusList, 0, sizeof (markerLocusList));
   memset (&traitLocusList, 0, sizeof (traitLocusList));
@@ -1950,21 +1955,12 @@ main (int argc, char *argv[])
   if (modelOptions.polynomial == TRUE)
     polyStatistics("End of run");
 #ifdef DMTRACK
-  fprintf (stderr,
-	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d\n",
-	   countMalloc, countFree, countReallocOK, countReallocMove,
-	   countReallocFree, maxListDepth, maxRecycles);
-  fprintf (stderr,
-	   "Size malloc:%g, free:%g, realloc OK:%g, realloc move:%g, realloc free:%g, current:%g, peak:%g\n",
-	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
-	   totalReallocFree, currentAlloc, peakAlloc);
+  swLogPeaks ();
+  swDumpHeldTotals ();
   swDumpSources ();
-  //  swDumpBlockUse ();
   //  swDumpCrossModuleChunks ();
 #endif
   swLogMsg ("finished run");
-
-
 
   /* close file pointers */
   if (modelType.type == TP) {
@@ -1973,8 +1969,6 @@ main (int argc, char *argv[])
   fclose (fpHet);
   //  fclose (fpHomo);
 
-  if (childPID != 0)
-    kill(childPID,SIGKILL);		/* Sweep away any errant children */
   return 0;
 }
 
