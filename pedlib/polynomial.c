@@ -824,6 +824,8 @@ collectSumTerms (double **factor, Polynomial ***p, int *counter,
   if (searchPolynomialList (*p, *counter, p1, &location) == 1) {
     //this item is currently in the sum, just merge their coefficients
     (*factor)[location] += f1;
+    if ((*factor)[location] == 0)
+      fprintf(stderr, "Zero factor terms could be replaced with constant 0!\n");
     return;
   }
   //If container is full, apply for more memory
@@ -932,7 +934,7 @@ plusExp (int num, ...)
       f0 = f1;
       p0 = p1;
     }
-    //If a term is contant 0, it has no effect on a sum, therefore we do nothing
+    //If a term is constant 0, it has no effect on a sum, therefore we do nothing
     if (f1 == 0.0) {
       continue;
     }
@@ -1330,6 +1332,8 @@ collectProductTerms (int **exponent, Polynomial ***p, int *counter,
   //search for a position for this component in the container
   if (searchPolynomialList (*p, *counter, p1, &location) == 1) {
     (*exponent)[location] += e1;
+    if ((*exponent)[location] == 0)
+      fprintf(stderr, "Zero exponent terms could be replaced with constant 1!\n");
     return;
   }
 
