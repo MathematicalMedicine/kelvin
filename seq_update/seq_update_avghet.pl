@@ -90,10 +90,10 @@ while (1) {
 	    (join (',', sort (keys (%{$files[0]{cmpheaders}}))) eq 
 	     join (',', sort (keys (%{$$href{cmpheaders}}))))
 		or die ("file '$$href{name}', line $$href{lineno}, header name mismatch\n");
-	    #print ("headers: ", join (', ', @{$$href{headers}}), "\n");
-	    #print ("cmpheaders: ", join (', ', keys (%{$$href{cmpheaders}})), "\n");
-	    #print ("regex: $$href{regex}\n");
-	    #print ("fmt: $$href{fmt}\n");
+	    print ("headers: ", join (', ', @{$$href{headers}}), "\n");
+	    print ("cmpheaders: ", join (', ', keys (%{$$href{cmpheaders}})), "\n");
+	    print ("regex: $$href{regex}\n");
+	    print ("fmt: $$href{fmt}\n");
 	    
 	} elsif ($$href{linetype} eq 'data line') {
 	    foreach $key (keys (%{$files[0]{cmpheaders}})) {
@@ -140,6 +140,8 @@ sub get_next_line
     my (@flds);
     my $va;
 
+    my $realregex = '[\-\d\.]+(?:[eE][\+\-]\d+)?';
+
     $$f{lineno}++;
     $buff = $$f{fp}->getline;
     if (! defined ($buff)) {
@@ -156,7 +158,7 @@ sub get_next_line
 	$$f{mrknum} = $mrknum;
 	@{$$f{mrknames}} = split (/\s+/, $mrknames);
 
-    } elsif ($buff =~ /\s+(AVG_?LR|BR)\s+/i) {
+    } elsif ($buff =~ /\s+(AVG_?LR|BR)[\(\s]/i) {
 	$$f{linetype} = 'header line';
 	$$f{expect} = 'data line';
 
@@ -193,13 +195,13 @@ sub get_next_line
 		# of reals.
 
 		@exts = split (/,/, $ext);
-		$str = '\(' . '[\-\d\.]+' . '[,\s]+[\-\d\.]+' x (scalar (@exts)-1) . '\)';
+		$str = '\(' . $realregex . ('[,\s]+' . $realregex) x (scalar (@exts)-1) . '\)';
 
 	    } else {
 		# Otherwise it's just a simple field.
 
 		$base = $headers[$va];
-		$str = '[\-\d\.]+';
+		$str = $realregex;
 	    }
 	    if ($base =~ /(D\d\d|Dprime|Theta|Pos|Markers)/i) {
 		# D-Prime, Theta, or Position fields we need to keep, so build
@@ -233,7 +235,7 @@ sub get_next_line
 		# format: recognize but don't capture the parethesized column.
 
 		if (($options{mode} eq 'multipoint') && (scalar (@exts) == 1)) {
-		    push (@regex, '([\-\d\.]+)\(\d+\)');
+		    push (@regex, '(' . $realregex . ')\(\d+\)');
 		    $$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' %.4f(0)' : '%.4f(0)';
 		} else {
 		    push (@regex, '(' . $str . ')');
@@ -274,7 +276,7 @@ sub get_next_line
 	}
 	$$f{fmt} .= "\n";
 
-    } elsif ($buff =~ /^[\-\d\.]+/) {
+    } elsif ($buff =~ /^$realregex/) {
 	$$f{linetype} = 'data line';
 	($$f{regex})
 	    or die ("file '$$f{name}', line $$f{lineno}, no previous header line\n");
