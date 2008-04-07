@@ -9,7 +9,7 @@
 
   Very primitive, but it gets the job done.
 
-  Build with: gcc -o pt pt.c polynomial.c -L../utils/ -I../include/ -lm -lgsl -lgslcblas
+  Build with: gcc -o pt pt.c polynomial.c -L../utils/ -I../include/ -lutils -lm -lgsl -lgslcblas
 
 */
 #include <stdlib.h>
@@ -17,6 +17,9 @@
 #include <math.h>
 
 #include "polynomial.h"
+
+int polynomialScale = 1;
+struct swStopwatch *overallSW;
 
 #define TRUE 1==1
 #define FALSE !TRUE
@@ -45,19 +48,19 @@ struct handleInfo *getHandle(FILE *inputFile, FILE *outputFile, char *type) {
   fgets(target.handle, sizeof(target.handle), inputFile);
   target.handle[strlen(target.handle)-1] = 0;
   result = bsearch (&target, hIList, hI, sizeof (struct handleInfo), compareHandles);
-  if (result) {
+  if (result)
     preExisting = TRUE;
-    return result;
-  } else {
-    strcpy(hIList[hI].handle, target.handle);
+  else {
+    strcpy(hIList[hI++].handle, target.handle);
     qsort (hIList, hI, sizeof (struct handleInfo), compareHandles);
     preExisting = FALSE;
-    return &hIList[hI++];
+    result = bsearch (&target, hIList, hI, sizeof (struct handleInfo), compareHandles);
   }
+  return result;
 }
 
 void loopReading(FILE *inputFile, FILE *outputFile) {
-  struct handleInfo target, *result, *pHI, *pHIO1, *pHIO2;
+  struct handleInfo *pHI, *pHIO1, *pHIO2;
   int i, freeFlag;
   double fO1, fO2;
   int eO1, eO2;
@@ -76,7 +79,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       }
       break;
     case '%':
-      polyStatistics();
+      polyStatistics("");
       break;
     case 'C':			/* Add a constant polynomial */
       pHI = getHandle(inputFile, outputFile,"constant poly name");
@@ -106,7 +109,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
         pHIO1 = getHandle(inputFile, outputFile,"1st operand poly name");
         freeFlag = FALSE;
 	if (!preExisting) {
-	  fprintf(outputFile,"Can't use undefined poly name\n");
+	  fprintf(outputFile,"Can't use undefined poly name for 1st\n");
 	  break;
 	}
       }
@@ -114,7 +117,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       fO2 = atof(fgets(iB, sizeof(iB), inputFile));
       pHIO2 = getHandle(inputFile, outputFile,"2nd operand poly name");
       if (!preExisting) {
-	printf("Can't use undefined poly name\n");
+	printf("Can't use undefined poly name for 2nd\n");
 	break;
       }
       pHI->pP = plusExp(2, fO1, pHIO1->pP, fO2, pHIO2->pP, freeFlag);
