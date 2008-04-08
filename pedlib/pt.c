@@ -81,7 +81,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       }
       break;
     case '%':
-      polyStatistics("");
+      polyStatistics("Requested");
       break;
     case 'C':			/* Add a constant polynomial */
       pHI = getHandle(inputFile, outputFile,"constant poly name");
@@ -176,6 +176,9 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
 
 int main(int argc, char *argv[]) {
   FILE *initFile, *nullFile;
+
+  overallSW = swCreate("overall");
+  swStart(overallSW);
   polynomialInitialization();
 
   if (argc > 1) {
@@ -189,5 +192,8 @@ int main(int argc, char *argv[]) {
     }
   }
   loopReading(stdin, stderr);
+  swStop(overallSW);
+  swDump(overallSW);
+
   return(0);
 }
