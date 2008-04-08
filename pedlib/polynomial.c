@@ -824,8 +824,6 @@ collectSumTerms (double **factor, Polynomial ***p, int *counter,
   if (searchPolynomialList (*p, *counter, p1, &location) == 1) {
     //this item is currently in the sum, just merge their coefficients
     (*factor)[location] += f1;
-    if ((*factor)[location] == 0)
-      fprintf(stderr, "Zero factor terms could be replaced with constant 0!\n");
     return;
   }
   //If container is full, apply for more memory
@@ -1026,7 +1024,8 @@ plusExp (int num, ...)
       exit (1);
     }
   }
-
+  /* While we do end-up with zero factors for variables here, they get swallowed-up
+     into the next tier where they become non-zero, so it all comes out in the wash. */
   if (counter_v1 > 0) {
     memcpy (&factorSum[0], &factor_v1[0], sizeof (double) * counter_v1);
     memcpy (&pSum[0], &p_v1[0], sizeof (Polynomial *) * counter_v1);
