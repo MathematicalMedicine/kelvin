@@ -90,10 +90,10 @@ while (1) {
 	    (join (',', sort (keys (%{$files[0]{cmpheaders}}))) eq 
 	     join (',', sort (keys (%{$$href{cmpheaders}}))))
 		or die ("file '$$href{name}', line $$href{lineno}, header name mismatch\n");
-	    print ("headers: ", join (', ', @{$$href{headers}}), "\n");
-	    print ("cmpheaders: ", join (', ', keys (%{$$href{cmpheaders}})), "\n");
-	    print ("regex: $$href{regex}\n");
-	    print ("fmt: $$href{fmt}\n");
+	    #print ("headers: ", join (', ', @{$$href{headers}}), "\n");
+	    #print ("cmpheaders: ", join (', ', keys (%{$$href{cmpheaders}})), "\n");
+	    #print ("regex: $$href{regex}\n");
+	    #print ("fmt: $$href{fmt}\n");
 	    
 	} elsif ($$href{linetype} eq 'data line') {
 	    foreach $key (keys (%{$files[0]{cmpheaders}})) {
@@ -236,10 +236,10 @@ sub get_next_line
 
 		if (($options{mode} eq 'multipoint') && (scalar (@exts) == 1)) {
 		    push (@regex, '(' . $realregex . ')\(\d+\)');
-		    $$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' %.4f(0)' : '%.4f(0)';
+		    $$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' %.6e(0)' : '%.6e(0)';
 		} else {
 		    push (@regex, '(' . $str . ')');
-		    $$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' %.4f' : '%.4f';
+		    $$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' %.6e' : '%.6e';
 		}
 		$$f{regex} = ($$f{regex}) ? join ('\s+', $$f{regex}, @regex) :
 		    join ('\s+', @regex) ;
@@ -276,15 +276,14 @@ sub get_next_line
 	}
 	$$f{fmt} .= "\n";
 
-    } elsif ($buff =~ /^$realregex/) {
-	$$f{linetype} = 'data line';
-	($$f{regex})
-	    or die ("file '$$f{name}', line $$f{lineno}, no previous header line\n");
+    } elsif ($$f{regex}) {
 	(@flds = ($buff =~ /^$$f{regex}/))
 	    or die ("file '$$f{name}', line $$f{lineno}, malformed data line\n");
 	@{$$f{flds}} = @flds;
+	$$f{linetype} = 'data line';
+    } else {
+	die ("file '$$f{name}', line $$f{lineno}, no previous header line\n");
     }
-
     return (1);
 }
 
