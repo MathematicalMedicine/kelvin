@@ -45,6 +45,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <errno.h>
+#include <omp.h>
 #include "polynomial.h"
 //#include "gsl/gsl_sf_gamma.h"
 #include "gsl/gsl_randist.h"
@@ -318,13 +319,25 @@ double
 evaluateValue (Polynomial *p)
 {
   double returnValue;
+  int i;
 
   evaluateValueCount++;
   swStart (evaluateValueSW);
 
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
+
   swStart (evaluateValueSW);
+
+  if (p->eType == T_SUM || p->eType == T_PRODUCT) {
+    /* Step down a level where there are enough terms to keep the work interesting. */
+    fprintf(stderr, "evaluateValue split %d-ways\n", p->e.s->num);
+
+    #pragma omp parallel for
+    for (i=0; i<p->e.s->num; i++) {
+      doEvaluateValue (p->e.s->sum[i]);
+    }
+  }
   returnValue = doEvaluateValue (p);
   swStop (evaluateValueSW);
 
