@@ -64,11 +64,13 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
   int i, freeFlag;
   double fO1, fO2;
   int eO1, eO2;
-  char *promptString = "C/V/S/P/E/#/%%/?> ";
+  char *promptString = "C/V/S/P/E/#/%%/?/q> ";
 
   fprintf(outputFile, promptString);
   while (fgets(iB, sizeof(iB), inputFile) != NULL) {
     switch (toupper(iB[0])) {
+    case 'Q':			/* Quit! */
+      exit(EXIT_SUCCESS);
     case '?':			/* Dump our work thus far */
       for (i=0;i<hI;i++) {
         fprintf(stderr,"%i: %s ", i, hIList[i].handle);
@@ -150,7 +152,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
     case 'F':
       break;
     case '#':			/* Comment line */
-      fprintf(stderr, "%s\n", iB);
+      fprintf(stderr, "%s", iB);
       break;
     case 'E':			/* Evaluate the polynomial */
       pHI = getHandle(inputFile, outputFile," poly to evaluate");
