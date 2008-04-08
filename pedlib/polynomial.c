@@ -331,7 +331,6 @@ evaluateValue (Polynomial *p)
 
   if (p->eType == T_SUM || p->eType == T_PRODUCT) {
     /* Step down a level where there are enough terms to keep the work interesting. */
-    fprintf(stderr, "evaluateValue split %d-ways\n", p->e.s->num);
 
     #pragma omp parallel for
     for (i=0; i<p->e.s->num; i++) {
