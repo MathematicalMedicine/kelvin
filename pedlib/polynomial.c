@@ -45,7 +45,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <errno.h>
-#include <omp.h>
+//#include <omp.h>
 #include "polynomial.h"
 //#include "gsl/gsl_sf_gamma.h"
 #include "gsl/gsl_randist.h"
