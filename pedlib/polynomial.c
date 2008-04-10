@@ -229,8 +229,12 @@ doEvaluateValue (Polynomial *p)
   case T_SUM:
     result = 0;
     sP = p->e.s;
-    for (i = 0; i < sP->num; i++)
-      result += doEvaluateValue (sP->sum[i]) * sP->factor[i];
+    for (i = 0; i < sP->num; i++) {
+      if (sP->factor[i] == 1)
+	result += doEvaluateValue (sP->sum[i]);
+      else
+	result += doEvaluateValue (sP->sum[i]) * sP->factor[i];
+    }
     p->value = result;
     return result;
 
@@ -240,8 +244,16 @@ doEvaluateValue (Polynomial *p)
     result = 1;
     pP = p->e.p;
     for (i = 0; i < pP->num; i++) {
-      result *= pow (doEvaluateValue (pP->product[i]), pP->exponent[i]);
-
+      switch (pP->exponent[i]) {
+      case 0:
+	break;
+      case 1:
+	result *= doEvaluateValue (pP->product[i]);
+	break;
+      default:
+	result *= pow (doEvaluateValue (pP->product[i]), pP->exponent[i]);
+	break;
+      }
     }
     p->value = result;
     return result;
@@ -2293,7 +2305,6 @@ evaluatePoly (Polynomial *pp, struct polyList *l, double *pReturnValue)
 	  break;
 	}
 	p->value *= re;
-
       }
       break;
 
