@@ -268,9 +268,11 @@ main (int argc, char *argv[])
   if ((maximumVMK = swGetMaximumVMK()) != 0) {
     childPID = fork ();
     if (childPID == 0) {
+      pid_t parentPID = 0;
       while (1) {
 	sleep (30);
-	//      kill (getppid (), SIGUSR1);
+	if (parentPID == 1)
+	  exit(EXIT_SUCCESS);
 	currentVMK = swGetCurrentVMK(getppid());
 	fprintf (stderr, "%lus, %dKb (%2d%% of %2.1fGb)\n",
 		 time(NULL) - startTime,
