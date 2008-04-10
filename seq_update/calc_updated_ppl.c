@@ -845,7 +845,7 @@ int get_marker_line (st_marker *marker, FILE *fp)
 int get_header_line (st_marker *marker, st_data *data, FILE *fp)
 { 
   char buff[256], token[32];
-  char *pa, *pb, *pc;
+  char *pa, *pb, *pc=NULL;
   int actualcols, numlrcols=0;
 
   if (fgets (buff, 256, fp) == NULL) {
