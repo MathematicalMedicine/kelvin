@@ -464,7 +464,7 @@ main (int argc, char *argv[])
   if ((maximumVMK = swGetMaximumVMK()) != 0) {
     childPID = fork ();
     if (childPID == 0) {
-      pid_t parentPID;
+      pid_t parentPID = 0;
       while (1) {
 	sleep (30);
 	parentPID = getppid();
