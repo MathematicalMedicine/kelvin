@@ -464,10 +464,13 @@ main (int argc, char *argv[])
   if ((maximumVMK = swGetMaximumVMK()) != 0) {
     childPID = fork ();
     if (childPID == 0) {
+      pid_t parentPID;
       while (1) {
 	sleep (30);
-	//      kill (getppid (), SIGUSR1);
-	currentVMK = swGetCurrentVMK(getppid());
+	parentPID = getppid();
+	if (parentPID == 1)
+	  exit(EXIT_SUCCESS);
+	currentVMK = swGetCurrentVMK(parentPID);
 	fprintf (stderr, "%lus, %dKb (%2d%% of %2.1fGb)\n",
 		 time(NULL) - startTime,
 		 currentVMK, (currentVMK * 100) / maximumVMK,
