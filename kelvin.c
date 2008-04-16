@@ -55,7 +55,7 @@ exit_kelvin() {
     kill(childPID,SIGKILL);		/* Sweep away any errant children */
 }
 
-char *kelvinVersion = "0.34.2";
+char *kelvinVersion = "0.34.1a";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
 void test_darray (double **);
@@ -247,7 +247,6 @@ main (int argc, char *argv[])
   double initialProb2[3];
   void *initialProbAddr2[3];
   void *initialHetProbAddr[3];
-  char *tmpID;
 
   overallSW = swCreate ("overall");	/* Overall performance stopwatch */
 
@@ -272,7 +271,6 @@ main (int argc, char *argv[])
       pid_t parentPID = 0;
       while (1) {
 	sleep (30);
-	parentPID = getppid();
 	if (parentPID == 1)
 	  exit(EXIT_SUCCESS);
 	currentVMK = swGetCurrentVMK(getppid());
@@ -578,7 +576,6 @@ main (int argc, char *argv[])
   build_xmission_matrix (&traitMatrix, 1);
   build_xmission_matrix (&markerMatrix, totalLoci - 1);
   xmissionMatrix = nullMatrix;
-  tmpID = (char *)calloc(totalLoci, sizeof(char));
 
   /* initialize loci by doing genotype elimination, set recoding */
   initialize_loci (&pedigreeSet);
@@ -1967,6 +1964,26 @@ main (int argc, char *argv[])
       holdAllPolys ();
       fprintf (stderr,
 	       "holdAllPolys from further population of transmission matrix\n");
+      locusList = &markerLocusList;
+      xmissionMatrix = markerMatrix;
+      /* populate marker matrix */
+      status = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,	/* probability */
+					 initialProbAddr2,	/* probability */
+					 initialHetProbAddr, 0,	/* cell index */
+					 -1,	/* last het locus */
+					 -1,	/* last het pattern (P-1 or M-2) */
+					 0);	/* current locus - start with 0 */
+      freePolys();
+      locusList = &savedLocusList;
+      xmissionMatrix = altMatrix;
+      /* populate alternative matrix */
+      status = populate_xmission_matrix (altMatrix, savedLocusList.numLocus, initialProbAddr,	/* probability */
+					 initialProbAddr2,	/* probability */
+					 initialHetProbAddr, 0,	/* cell index */
+					 -1,	/* last het locus */
+					 -1,	/* last het pattern (P-1 or M-2) */
+					 0);	/* current locus - start with 0 */
+      freePolys();
     }
 
     /* for trait likelihood */
@@ -2307,18 +2324,16 @@ main (int argc, char *argv[])
 
 	modelOptions.polynomial = FALSE;
 #endif
-	/* populate the matrix */
-	status = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,	/* probability */
-					   initialProbAddr2,	/* probability */
-					   initialHetProbAddr, 0,	/* cell index */
-					   -1,	/* last he locus */
-					   -1,	/* last het pattern (P-1 or M-2) */
-					   0);	/* current locus - start with 0 */
+	if (modelOptions.polynomial != TRUE)
+	  /* populate the matrix */
+	  status = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,	/* probability */
+					     initialProbAddr2,	/* probability */
+					     initialHetProbAddr, 0,	/* cell index */
+					     -1,	/* last he locus */
+					     -1,	/* last het pattern (P-1 or M-2) */
+					     0);	/* current locus - start with 0 */
 
-	if(modelOptions.polynomial == TRUE)
-	  freePolys();
-	
-	print_xmission_matrix(markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);
+
 	/* */
 	for (k = 0; k < modelType.numMarkers; k++) {
 	  markerNameList[k] =
@@ -2491,26 +2506,16 @@ main (int argc, char *argv[])
       if (markerSetChanged || locusListChanged) {
 	if (modelOptions.polynomial == TRUE) {
 	  pedigreeSetPolynomialClearance (&pedigreeSet);
-	  /* populate the matrix */
-	  status = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,	/* probability */
-					     initialProbAddr2,	/* probability */
-					     initialHetProbAddr, 0,	/* cell index */
-					     -1, -1, /* last het locus & last het pattern (P-1 or M-2) */
-					     0);     /* current locus - start with 0 */
-	  print_xmission_matrix(altMatrix, savedLocusList.numLocus, 0, 0, tmpID);
-	  if(modelOptions.polynomial == TRUE)
-	    freePolys();
 	}
       }
-
-      if (modelOptions.polynomial != TRUE) {
+      if (modelOptions.polynomial == TRUE);
+      else
 	/* populate the matrix */
-	status = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr, /* probability */
+	status = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,	/* probability */
 					   initialProbAddr2,	/* probability */
 					   initialHetProbAddr, 0,	/* cell index */
-					   -1, -1, /* last het locus & last het pattern (P-1 or M-2) */
+					   -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
 					   0);	/* current locus - start with 0 */
-      }
 
       if (pTrait->type == DICHOTOMOUS) {
 	/* for alternative */
@@ -2912,10 +2917,14 @@ main (int argc, char *argv[])
   }				/* end of multipoint */
 
 
+  time2 = clock ();
 
+
+  fprintf (stderr, "Computation time:  %fs  %fs \n",
+	   (double) (time1 - time0) / CLOCKS_PER_SEC,
+	   (double) (time2 - time1) / CLOCKS_PER_SEC);
 
   if (modelOptions.polynomial == TRUE) {
-//   polyStatistics (NULL);
 //   dismantle();
   }
 
@@ -2985,9 +2994,9 @@ main (int argc, char *argv[])
   free (modelOptions.sUnknownPersonID);
   final_cleanup ();
 
-  time2 = clock ();
-  fprintf (stderr, "Computation time:  %fs \n",
-	   (double) (time2 - time0) / CLOCKS_PER_SEC);
+  fprintf (stderr, "Computation time:  %fs  %fs \n",
+	   (double) (time1 - time0) / CLOCKS_PER_SEC,
+	   (double) (time2 - time1) / CLOCKS_PER_SEC);
 
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
@@ -3008,6 +3017,7 @@ main (int argc, char *argv[])
   }
   fclose (fpHet);
   //  fclose (fpHomo);
+
   return 0;
 }
 
