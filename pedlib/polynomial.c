@@ -2450,6 +2450,11 @@ polynomialInitialization ()
   int i;
   char *envVar;
 
+#ifdef FREEDEBUG
+#warning "freePoly protection is turned on, so memory will purposefully leak!"
+  swLogMsg ("freePoly protection is turned on, so memory will purposefully leak!");
+#endif
+
   if ((envVar = getenv ("polynomialDebugLevel")) != NULL) {
     polynomialDebugLevel = atoi (envVar);
   }
