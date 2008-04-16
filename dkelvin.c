@@ -789,7 +789,7 @@ main (int argc, char *argv[])
   }
 
   /* read in marker allele frequencies */
-  read_markerfile (markerfile);
+  read_markerfile (markerfile, modelType.numMarkers);
 
   /* build allele set information */
   for (locus = 0; locus < originalLocusList.numLocus; locus++) {
