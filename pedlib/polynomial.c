@@ -45,7 +45,9 @@
 #include <ctype.h>
 #include <math.h>
 #include <errno.h>
-//#include <omp.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include "polynomial.h"
 //#include "gsl/gsl_sf_gamma.h"
 #include "gsl/gsl_randist.h"
@@ -203,16 +205,17 @@ doEvaluateValue (Polynomial *p)
 
   if (p->valid & VALID_EVAL_FLAG)
     return p->value;
-  p->valid |= VALID_EVAL_FLAG;
 
   switch (p->eType) {
     //If a sub polynomial is a contant, return the value
     //of this constant
   case T_CONSTANT:
+    p->valid |= VALID_EVAL_FLAG;
     return p->value;
     //If a sub polynomial is a variable, return the value
     //of this variable
   case T_VARIABLE:
+    p->valid |= VALID_EVAL_FLAG;
     if (p->e.v->vType == 'D') {
       p->value = *(p->e.v->vAddr.vAddrD);
       return *(p->e.v->vAddr.vAddrD);
@@ -236,6 +239,7 @@ doEvaluateValue (Polynomial *p)
 	result += doEvaluateValue (sP->sum[i]) * sP->factor[i];
     }
     p->value = result;
+    p->valid |= VALID_EVAL_FLAG;
     return result;
 
     //If a sub polynomial is a product, evaluate the values of all the terms.  Multiply the
@@ -256,6 +260,7 @@ doEvaluateValue (Polynomial *p)
       }
     }
     p->value = result;
+    p->valid |= VALID_EVAL_FLAG;
     return result;
 
     //If a sub polynomial is a function call, evaluate the values of all the parameters
@@ -319,6 +324,7 @@ doEvaluateValue (Polynomial *p)
       exit (1);
     }
     p->value = result;
+    p->valid |= VALID_EVAL_FLAG;
     return result;
 
     //If the polynomial type is unknown, something must be wrong
@@ -344,7 +350,9 @@ evaluateValue (Polynomial *p)
   if (p->eType == T_SUM || p->eType == T_PRODUCT) {
     /* Step down a level where there are enough terms to keep the work interesting. */
 
-    //    #pragma omp parallel for
+#ifdef _OPENMP
+    #pragma omp parallel for 
+#endif
     for (i=0; i<p->e.s->num; i++) {
       doEvaluateValue (p->e.s->sum[i]);
     }
