@@ -1,6 +1,5 @@
-Version 0.34.2
-  Added xmission_matrix modification to improve multipoint
-  performance. Numerous other minor performance improvements. Fixed
+Version 0.34.1a
+  Numerous minor performance improvements. Fixed
   bug with orphaned status processes hanging about. Clean-up
   memory monitoring and reporting. Parallel evaluation for
   polynomial present but inactive.
