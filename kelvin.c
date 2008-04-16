@@ -188,6 +188,19 @@ main (int argc, char *argv[])
   void *initialProbAddr2[3];
   void *initialHetProbAddr[3];
 
+  pid_t childPID;
+  char commandString[128];
+  childPID = fork ();
+  if (childPID == 0) {
+    while (1) {
+      //      sleep (5);
+      //      kill (getppid (), SIGUSR1);
+      sleep (5);
+      sprintf(commandString, "pmap %d 2>/dev/null | grep 'total'", getppid ());
+      system(commandString);	/* We do want to fail silently here! */
+    }
+  }
+
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&nullLocusList, 0, sizeof (nullLocusList));
 
