@@ -18,8 +18,8 @@ CC := gcc
 CFLAGS := -Wall -O3
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas
 
-CFLAGS += -fopenmp # Uncomment BOTH of these if you have an OpenMP-capable compiler...
-LDFLAGS += -fopenmp # ...and want to use multiple threads for evaluations.
+#CFLAGS += -fopenmp # Uncomment BOTH of these if you have an OpenMP-capable compiler...
+#LDFLAGS += -fopenmp # ...and want to use multiple threads for evaluations.
 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
