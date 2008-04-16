@@ -3209,10 +3209,12 @@ polyDynamicStatistics (char *title)
   fprintf (stderr, "Dynamic polynomial statistics (%s):\n", title);
 
   swDump (overallSW);
+#ifdef EVALUATESW
   if (evaluatePolyCount)
     swDump (evaluatePolySW);
   if (evaluateValueCount)
     swDump (evaluateValueSW);
+#endif
 
   fprintf (stderr,
 	   "Counts/Hits: c=%d/%d, v=%d/%d, s=%d/%d(%2.1f:1), p=%d/%d(%2.1f:1), f=%d/%d\n",
