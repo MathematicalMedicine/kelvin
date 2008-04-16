@@ -258,17 +258,21 @@ main (int argc, char *argv[])
 
   /* Fork a child that loops sleeping several seconds and then signalling 
      us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
-#ifdef DMTRACK
+  //#ifdef DMTRACK
   pid_t childPID;
 
   childPID = fork ();
+  char commandString[128];
   if (childPID == 0) {
     while (1) {
-      sleep (5);
-      kill (getppid (), SIGUSR1);
+      //      sleep (5);
+      //      kill (getppid (), SIGUSR1);
+      sleep (30);
+      sprintf(commandString, "pmap %d 2>/dev/null | grep 'total'", getppid ());
+      system(commandString);	/* We do want to fail silently here! */
     }
   }
-#endif
+  //#endif
   overallSW = swCreate ("overall");	/* Overall performance stopwatch */
   /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
   struct sigaction usr1Action, quitAction;
