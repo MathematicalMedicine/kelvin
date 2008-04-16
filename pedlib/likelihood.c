@@ -289,8 +289,12 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	  }
 	}
 	/* evaluate likelihood */
+#ifndef _OPENMP
 	evaluatePoly (pPedigree->likelihoodPolynomial,
 		      pPedigree->likelihoodPolyList, &pPedigree->likelihood);
+#else
+	pPedigree->likelihood = evaluateValue (pPedigree->likelihoodPolynomial);
+#endif
       } else {
 	initialize_multi_locus_genotype (pPedigree);
 	status = compute_pedigree_likelihood (pPedigree);
@@ -299,11 +303,11 @@ compute_likelihood (PedigreeSet * pPedigreeList)
       if (modelOptions.dryRun == 0) {
 	if (pPedigree->likelihood == 0.0) {
 	  KLOG (LOGLIKELIHOOD, LOGWARNING,
-		"Pedigree %s has likelihood of 0 or too small.\n",
-		pPedigree->sPedigreeID);
+		"Pedigree %s has likelihood %G that's too small.\n",
+		pPedigree->sPedigreeID, pPedigree->likelihood);
 	  fprintf (stderr,
-		   "Pedigree %s has likelihood of 0 or too small.\n",
-		   pPedigree->sPedigreeID);
+		   "Pedigree %s has likelihood %G that's too small.\n",
+		   pPedigree->sPedigreeID, pPedigree->likelihood);
 	  product_likelihood = 0.0;
 	  sum_log_likelihood = -9999.99;
 	  break;
@@ -326,8 +330,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	  }
 	  /*
 	     if(log10Likelihood <= __DBL_MIN_10_EXP__ + 1)
-	     fprintf(stderr, "Pedigree %s has likelihood that's too small.\n",
-	     pPedigree->sPedigreeID);
+	     fprintf(stderr, "Pedigree %s has likelihood %G that's too small.\n",
+	     pPedigree->sPedigreeID, pPedigree->likelihood);
 	   */
 	  sum_log_likelihood += log10Likelihood;
 	}
