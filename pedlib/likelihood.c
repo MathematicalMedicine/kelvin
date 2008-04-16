@@ -6,7 +6,7 @@
  * for non-profit educational purposes only.
  **********************************************************************/
 
-char *likelihoodVersion = "0.34.2";
+char *likelihoodVersion = "0.34.1a";
 
 /*
  * This file contains functions to  compute likelihood for all the pedigrees,
