@@ -328,7 +328,7 @@ read_datafile (char *sDatafileName)
 
 /* read marker frequency file with specifications for each marker */
 int
-read_markerfile (char *sMarkerfileName)
+read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
 {
   FILE *fp;
   int lineNo = 0;
@@ -340,6 +340,7 @@ read_markerfile (char *sMarkerfileName)
   char sLocusName[MAX_LINE_LEN];
   int found;
   Locus *pTempLocus;
+  int markerCount = 0;
   int allele = 1;
   double freq;
   char sAlleleName[MAX_LINE_LEN];
@@ -373,6 +374,7 @@ read_markerfile (char *sMarkerfileName)
     /* now read allele frequencies */
     if (sscanf (line, "M %s", sLocusName) == 1) {
       /* got to a marker line - find the locus in the locus list */
+      markerCount++;
       found = FALSE;
       for (i = 0; i < originalLocusList.numLocus; i++) {
 	pTempLocus = originalLocusList.ppLocusList[i];
@@ -403,8 +405,10 @@ read_markerfile (char *sMarkerfileName)
     } else if (sscanf (line, "A %s %lf", sAlleleName, &freq) == 2) {
       add_allele (pLocus, sAlleleName, freq);
     }
-
   }				/* continue reading input */
+
+  KASSERT (markerCount >= requiredMarkerCount, "Only %d of %d required markers found in file %s.\n",
+	   markerCount, requiredMarkerCount, sMarkerfileName);
 
   fclose (fp);
   return 0;
