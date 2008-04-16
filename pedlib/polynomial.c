@@ -340,12 +340,12 @@ evaluateValue (Polynomial *p)
   int i;
 
   evaluateValueCount++;
+#ifdef EVALUATESW
   swStart (evaluateValueSW);
+#endif
 
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
-
-  swStart (evaluateValueSW);
 
   if (p->eType == T_SUM || p->eType == T_PRODUCT) {
     /* Step down a level where there are enough terms to keep the work interesting. */
@@ -358,7 +358,9 @@ evaluateValue (Polynomial *p)
     }
   }
   returnValue = doEvaluateValue (p);
+#ifdef EVALUATESW
   swStop (evaluateValueSW);
+#endif
 
   return returnValue;
 }
@@ -2233,7 +2235,9 @@ evaluatePoly (Polynomial *pp, struct polyList *l, double *pReturnValue)
   int pE;
 
   evaluatePolyCount++;
+#ifdef EVALUATESW
   swStart (evaluatePolySW);
+#endif
 
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Starting evaluatePoly...\n");
@@ -2241,7 +2245,9 @@ evaluatePoly (Polynomial *pp, struct polyList *l, double *pReturnValue)
     if (polynomialDebugLevel >= 10)
       fprintf (stderr, "...finished evaluatePoly with a zero!\n");
     *pReturnValue = pp->value;
+#ifdef EVALUATESW
     swStop (evaluatePolySW);
+#endif
     return;
   }
 
@@ -2372,7 +2378,9 @@ evaluatePoly (Polynomial *pp, struct polyList *l, double *pReturnValue)
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "...finished evaluatePoly with %G\n", pp->value);
   *pReturnValue = pp->value;
+#ifdef EVALUATESW
   swStop (evaluatePolySW);
+#endif
   return;
 }
 
