@@ -6,7 +6,7 @@
  * for non-profit educational purposes only.
  **********************************************************************/
 
-char *likelihoodVersion = "0.34.1a";
+char *likelihoodVersion = "0.34.1";
 
 /*
  * This file contains functions to  compute likelihood for all the pedigrees,
@@ -289,12 +289,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	  }
 	}
 	/* evaluate likelihood */
-#ifndef _OPENMP
 	evaluatePoly (pPedigree->likelihoodPolynomial,
 		      pPedigree->likelihoodPolyList, &pPedigree->likelihood);
-#else
-	pPedigree->likelihood = evaluateValue (pPedigree->likelihoodPolynomial);
-#endif
       } else {
 	initialize_multi_locus_genotype (pPedigree);
 	status = compute_pedigree_likelihood (pPedigree);
@@ -303,11 +299,11 @@ compute_likelihood (PedigreeSet * pPedigreeList)
       if (modelOptions.dryRun == 0) {
 	if (pPedigree->likelihood == 0.0) {
 	  KLOG (LOGLIKELIHOOD, LOGWARNING,
-		"Pedigree %s has likelihood %G that's too small.\n",
-		pPedigree->sPedigreeID, pPedigree->likelihood);
+		"Pedigree %s has likelihood of 0 or too small.\n",
+		pPedigree->sPedigreeID);
 	  fprintf (stderr,
-		   "Pedigree %s has likelihood %G that's too small.\n",
-		   pPedigree->sPedigreeID, pPedigree->likelihood);
+		   "Pedigree %s has likelihood of 0 or too small.\n",
+		   pPedigree->sPedigreeID);
 	  product_likelihood = 0.0;
 	  sum_log_likelihood = -9999.99;
 	  break;
@@ -330,8 +326,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	  }
 	  /*
 	     if(log10Likelihood <= __DBL_MIN_10_EXP__ + 1)
-	     fprintf(stderr, "Pedigree %s has likelihood %G that's too small.\n",
-	     pPedigree->sPedigreeID, pPedigree->likelihood);
+	     fprintf(stderr, "Pedigree %s has likelihood that's too small.\n",
+	     pPedigree->sPedigreeID);
 	   */
 	  sum_log_likelihood += log10Likelihood;
 	}
@@ -2205,38 +2201,17 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		  newProbPoly[i] = newProbPoly[0];
 		} else {
-		  if(locusList->traitLocusIndex < 0 || /* no trait locus in the list */
-		     /* trait locus is not current locus or previous locus */
-		     (locusList->traitLocusIndex!=loc && locusList->traitLocusIndex != loc-1))
-		    {
-		      /* theta is constant between marker loci 
-		       * prob * (1-th)
-		       */
-		     newProbPoly[i] =
-		       timesExp (2, 
-				 newProbPoly[i], 1, 
-				 plusExp(2, 
-					 1.0, constantExp(1.0), 
-					 -1.0, constantExp(locusList->pPrevLocusDistance[i][loc]),
-					 0), 1, 
-				 0); 
-					 
-		    }
-		  else
-		    {
-		      /* prob * (1-th) */
-		      sprintf (vName1, "theta%d_%d", i, loc);
-		      newProbPoly[i] =
-			timesExp (2, newProbPoly[i], 1,
-				  plusExp (2, 1.0,
-					   constantExp
-					   (1.0), -1.0,
-					   variableExp
-					   (&locusList->
-					    pPrevLocusDistance
-					    [i][loc], NULL,
-					    'D', vName1), 0), 1, 0);
-		    }
+		  sprintf (vName1, "theta%d_%d", i, loc);
+		  newProbPoly[i] =
+		    timesExp (2, newProbPoly[i], 1,
+			      plusExp (2, 1.0,
+				       constantExp
+				       (1.0), -1.0,
+				       variableExp
+				       (&locusList->
+					pPrevLocusDistance
+					[i][loc], NULL,
+					'D', vName1), 0), 1, 0);
 		}
 	      } else {
 		newProb[i] *= (1 - locusList->pPrevLocusDistance[i][loc]);
@@ -2249,26 +2224,14 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		  newProbPoly[i] = newProbPoly[0];
 		} else {
-		  if(locusList->traitLocusIndex < 0 || /* no trait locus in the list */
-		     /* trait locus is not current locus or previous locus */
-		     (locusList->traitLocusIndex!=loc && locusList->traitLocusIndex != loc-1))
-		    {
-		      /* theta is constant between marker loci */
-		      newProbPoly[i] =
-			timesExp (2, newProbPoly[i], 1,
-				  constantExp (locusList->pPrevLocusDistance[i][loc]), 1, 
-				  0);
-		    }
-		  else
-		    {
-		      sprintf (vName1, "theta%d_%d", i, loc);
-		      newProbPoly[i] =
-			timesExp (2, newProbPoly[i], 1,
-				  variableExp (&locusList->
-					       pPrevLocusDistance
-					       [i][loc], NULL,
-					       'D', vName1), 1, 0);
-		    }
+		  sprintf (vName1, "theta%d_%d", i, loc);
+		  newProbPoly[i] =
+		    timesExp (2, newProbPoly[i], 1,
+			      variableExp (&locusList->
+					   pPrevLocusDistance
+					   [i][loc], NULL,
+					   'D', vName1), 1, 0);
+
 		}
 	      } else {
 		if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
@@ -2289,52 +2252,30 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		  newProbPoly[i] = newProbPoly[0];
 		} else {
-		  if(locusList->traitLocusIndex < 0 || /* no trait locus in the list */
-		     /* trait locus is not current locus or previous locus */
-		     (locusList->traitLocusIndex!=loc && locusList->traitLocusIndex != loc-1))
-		    {
-		      newProbPoly[i] =
-			plusExp (2, 
-				 1.0, timesExp (2, 
-						(Polynomial *)prob[i], 1,
-						plusExp (2, 
-							 1.0, constantExp(1.0),
-							 -1.0,constantExp(locusList->pPrevLocusDistance[i][loc]), 
-							 0), 1,
-						0), 1.0,
-				 timesExp (2, (Polynomial *)prob2[i], 1,
-					   constantExp(locusList->pPrevLocusDistance[i][loc]), 1,
-					   0), 
-				 0);
-
-		    }
-		  else
-		    {
-		      sprintf (vName1, "theta%d_%d", i, loc);
-		      newProbPoly[i] =
-			plusExp (2, 1.0, timesExp (2, (Polynomial *)
-						   prob[i], 1,
-						   plusExp (2, 1.0,
-							    constantExp
-							    (1.0),
-							    -1.0,
-							    variableExp
-							    (&locusList->
-							     pPrevLocusDistance[i]
-							     [loc],
-							     NULL,
-							     'D',
-							     vName1),
-							    0), 1,
-						   0), 1.0,
-				 timesExp (2, (Polynomial *)
-					   prob2[i], 1,
-					   variableExp
-					   (&locusList->
-					    pPrevLocusDistance
-					    [i][loc], NULL,
-					    'D', vName1), 1, 0), 0);
-		    }
+		  sprintf (vName1, "theta%d_%d", i, loc);
+		  newProbPoly[i] =
+		    plusExp (2, 1.0, timesExp (2, (Polynomial *)
+					       prob[i], 1,
+					       plusExp (2, 1.0,
+							constantExp
+							(1.0),
+							-1.0,
+							variableExp
+							(&locusList->
+							 pPrevLocusDistance[i]
+							 [loc],
+							 NULL,
+							 'D',
+							 vName1),
+							0), 1,
+					       0), 1.0,
+			     timesExp (2, (Polynomial *)
+				       prob2[i], 1,
+				       variableExp
+				       (&locusList->
+					pPrevLocusDistance
+					[i][loc], NULL,
+					'D', vName1), 1, 0), 0);
 		}
 	      } else {
 		if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
@@ -2354,30 +2295,6 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		  newProbPoly[i] = newProbPoly[0];
 		} else {
-		  if(locusList->traitLocusIndex < 0 || /* no trait locus in the list */
-		     /* trait locus is not current locus or previous locus */
-		     (locusList->traitLocusIndex!=loc && locusList->traitLocusIndex != loc-1))
-		    {
-		  newProbPoly[i] =
-		    plusExp (2, 
-			     1.0, timesExp (2, 
-					    (Polynomial *)prob2[i], 1,
-					    plusExp (2, 1.0,
-						     constantExp(1.0),
-						     -1.0,
-						     constantExp
-						     (locusList->
-						      pPrevLocusDistance[i][loc]), 
-						     0), 1,
-					    0), 
-			     1.0, timesExp (2, 
-					    (Polynomial *)prob[i], 1,
-					    constantExp(locusList->pPrevLocusDistance[i][loc]), 1, 
-					    0), 
-			     0);
-		    }
-		  else
-		    {
 		  sprintf (vName1, "theta%d_%d", i, loc);
 		  newProbPoly[i] =
 		    plusExp (2, 1.0, timesExp (2, (Polynomial *)
@@ -2402,7 +2319,6 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 					pPrevLocusDistance
 					[i][loc], NULL,
 					'D', vName1), 1, 0), 0);
-		    }
 		}
 
 	      } else if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
@@ -2464,59 +2380,9 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 	      if (modelOptions.polynomial == TRUE) {
 		if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
 		  newProbPoly[i] = newProbPoly[0];
-		  newProbPoly2[i] = newProbPoly2[0];
+                  newProbPoly2[i] = newProbPoly2[0];
 		} else {
-		    if(locusList->traitLocusIndex < 0 || /* no trait locus in the list */
-		       /* trait locus is not current locus or previous locus */
-		       (locusList->traitLocusIndex!=loc && locusList->traitLocusIndex != loc-1))
-		      {
-			/* theta is constant between marker loci */
-		  newProbPoly[i] =
-		    plusExp (2, 1.0, timesExp (2, (Polynomial *)
-					       prob[i], 1,
-					       plusExp (2, 1.0,
-							constantExp
-							(1.0),
-							-1.0,
-							constantExp
-							(locusList->
-							 pPrevLocusDistance[i]
-							 [loc]), 
-							0), 1,
-					       0), 1.0,
-			     timesExp (2, (Polynomial *)
-				       prob2[i], 1,
-				       constantExp
-				       (locusList->
-					pPrevLocusDistance
-					[i][loc]), 
-					1, 0), 0);
-		  /* prevProb2 * (1-th1) + prevProb * th1 */
-		  newProbPoly2[i] =
-		    plusExp (2, 1.0, timesExp (2, (Polynomial *)
-					       prob2[i], 1,
-					       plusExp (2, 1.0,
-							constantExp
-							(1.0),
-							-1.0,
-							constantExp
-							(locusList->
-							 pPrevLocusDistance[i]
-							 [loc]),
-							0), 1,
-					       0), 1.0,
-			     timesExp (2, (Polynomial *)
-				       prob[i], 1,
-				       constantExp
-				       (locusList->
-					pPrevLocusDistance
-					[i][loc]), 1, 0), 0);
-			
-		      }
-		    else /* dealing with trait locus */
-		      { 
 		  sprintf (vName1, "theta%d_%d", i, loc);
-		  /* prevProb * (1-th1) + prevProb2 * th1 */
 		  newProbPoly[i] =
 		    plusExp (2, 1.0, timesExp (2, (Polynomial *)
 					       prob[i], 1,
@@ -2540,7 +2406,6 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 					pPrevLocusDistance
 					[i][loc], NULL,
 					'D', vName1), 1, 0), 0);
-		  /* prevProb2 * (1-th1) + prevProb * th1 */
 		  newProbPoly2[i] =
 		    plusExp (2, 1.0, timesExp (2, (Polynomial *)
 					       prob2[i], 1,
@@ -2564,7 +2429,6 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 					pPrevLocusDistance
 					[i][loc], NULL,
 					'D', vName1), 1, 0), 0);
-		      }
 		}
 
 	      } else {
@@ -2596,32 +2460,6 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		    newProbPoly[i] = newProbPoly[0];
 		    newProbPoly2[i] = newProbPoly2[0];
 		  } else {
-		    if(locusList->traitLocusIndex < 0 || /* no trait locus in the list */
-		       /* trait locus is not current locus or previous locus */
-		       (locusList->traitLocusIndex!=loc && locusList->traitLocusIndex != loc-1))
-		      {
-			/* theta is constant between marker loci */
-			newProbPoly[i] = timesExp (2, (Polynomial *)
-					       prob[i], 1,
-					       plusExp (2, 1.0,
-							constantExp
-							(1.0), -1.0,
-							constantExp
-							(locusList->
-							 pPrevLocusDistance
-							 [i][loc]), 
-							 0), 1, 0);
-		    newProbPoly2[i] = timesExp (2, (Polynomial *)
-						prob[i], 1,
-						constantExp
-						(locusList->
-						 pPrevLocusDistance[i]
-						 [loc]), 
-						 1, 0);
-			
-		      }
-		    else /* dealing with trait locus */
-		      { 
 		    sprintf (vName1, "theta%d_%d", i, loc);
 		    newProbPoly[i] = timesExp (2, (Polynomial *)
 					       prob[i], 1,
@@ -2641,7 +2479,6 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 						 pPrevLocusDistance[i]
 						 [loc], NULL, 'D',
 						 vName1), 1, 0);
-		      }
 		  }
 		} else {
 		  if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
@@ -2661,52 +2498,25 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		    newProbPoly[i] = newProbPoly[0];
 		    newProbPoly2[i] = newProbPoly2[0];
 		  } else {
-		    if(locusList->traitLocusIndex < 0 || /* no trait locus in the list */
-		       /* trait locus is not current locus or previous locus */
-		       (locusList->traitLocusIndex!=loc && locusList->traitLocusIndex != loc-1))
-		      {
-			/* theta is constant between marker loci */
-			newProbPoly2[i] = timesExp (2, (Polynomial *)
-						    prob[i], 1,
-						    plusExp (2, 1.0,
-							     constantExp
-							     (1.0), -1.0,
-							     constantExp
-							     (locusList->
-							      pPrevLocusDistance
-							      [i][loc]),
-							      0), 1, 0);
-			newProbPoly[i] = timesExp (2, (Polynomial *)
-						   prob[i], 1,
-						   constantExp
-						   (locusList->
-						    pPrevLocusDistance[i]
-						    [loc]), 
-						    1, 0);
-			
-		      }
-		    else /* dealing with trait locus */
-		      { 
-			sprintf (vName1, "theta%d_%d", i, loc);
-			newProbPoly2[i] = timesExp (2, (Polynomial *)
-						    prob[i], 1,
-						    plusExp (2, 1.0,
-							     constantExp
-							     (1.0), -1.0,
-							     variableExp
-							     (&locusList->
-							      pPrevLocusDistance
-							      [i][loc],
-							      NULL, 'D',
-							      vName1), 0), 1, 0);
-			newProbPoly[i] = timesExp (2, (Polynomial *)
-						   prob[i], 1,
-						   variableExp
-						   (&locusList->
-						    pPrevLocusDistance[i]
-						    [loc], NULL, 'D',
-						    vName1), 1, 0);
-		      }
+		    sprintf (vName1, "theta%d_%d", i, loc);
+		    newProbPoly2[i] = timesExp (2, (Polynomial *)
+						prob[i], 1,
+						plusExp (2, 1.0,
+							 constantExp
+							 (1.0), -1.0,
+							 variableExp
+							 (&locusList->
+							  pPrevLocusDistance
+							  [i][loc],
+							  NULL, 'D',
+							  vName1), 0), 1, 0);
+		    newProbPoly[i] = timesExp (2, (Polynomial *)
+					       prob[i], 1,
+					       variableExp
+					       (&locusList->
+						pPrevLocusDistance[i]
+						[loc], NULL, 'D',
+						vName1), 1, 0);
 		  }
 		} else {
 		  if (i > 0 && modelOptions.mapFlag == SEX_AVERAGED) {
@@ -2735,8 +2545,6 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 
       for (i = 0; i < 3; i++) {
 	if (modelOptions.polynomial == TRUE) {
-	  if(pMatrix[newCellIndex].slot.probPoly[i] != NULL)
-	    unHoldPoly(pMatrix[newCellIndex].slot.probPoly[i]);
 	  pMatrix[newCellIndex].slot.probPoly[i] = newProbPoly[i];
 	  holdPoly(newProbPoly[i]);
 	} else
@@ -2811,13 +2619,13 @@ print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
       }
       fprintf(stderr, ": ");
       /* print out sex averaged xmission probability */
-      //      if(modelOptions.polynomial == TRUE)
-      //	{
-      //	  expTermPrinting(stderr, pMatrix[newCellIndex].slot.probPoly[0], 4);
-      //	  fprintf(stderr, "\n");
-      //	}
-      //      else
-      //	fprintf (stderr, "%f\n", pMatrix[newCellIndex].slot.prob[0]);
+      if(modelOptions.polynomial == TRUE)
+	{
+	  expTermPrinting(stderr, pMatrix[newCellIndex].slot.probPoly[0], 16);
+	  fprintf(stderr, "\n");
+	}
+      else
+        fprintf (stderr, ":%f\n", pMatrix[newCellIndex].slot.prob[0]);
     }
   }
 }
