@@ -22,9 +22,12 @@
 extern Polynomial *constant1Poly;
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 struct swStopwatch *overallSW;
+time_t startTime;
+int currentVMK, maximumVMK;
 
 #include <signal.h>		/* Signalled dumps, exits, whatever */
-volatile sig_atomic_t signalSeen = 0; /* If we wanted to be really gentle. */
+volatile sig_atomic_t signalSeen = 0;	/* If we wanted to be really gentle. */
+
 /* Typing ^\ or issuing a kill -s SIGQUIT gets a dump of statistics.
    We used to set the signalSeen flag and watch for it in breaks in the
    code, but so long as we don't interfere with kelvin when we dump out
@@ -40,22 +43,33 @@ quitSignalHandler (int signal)
 #endif
   if (modelOptions.polynomial == TRUE)
     polyDynamicStatistics ("Signal received");
+  if (maximumVMK != 0) {
+    currentVMK = swGetCurrentVMK (getpid ());
+    fprintf (stderr, "%lus, %dKb (%2d%% of %2.1fGb)\n",
+	     time (NULL) - startTime,
+	     currentVMK, (currentVMK * 100) / maximumVMK,
+	     maximumVMK / (1024.0 * 1024.0));
+  }
 }
+
 #if defined (GPROF) || (GCOV)
+
 /* We catch a SIGTERM to allow early exit() for profiling. */
 void
 termSignalHandler (int signal)
 {
-  fprintf(stderr, "Exiting early for gprof or gcov!\n");
-  exit(EXIT_SUCCESS);
+  fprintf (stderr, "Exiting early for gprof or gcov!\n");
+  exit (EXIT_SUCCESS);
 }
 #endif
 pid_t childPID = 0;		/* For a child process producing timed statistics. */
 void
+
 /* Exit handler to clean-up after we hit any of our widely-distributed exit points. */
-exit_kelvin() {
+exit_kelvin ()
+{
   if (childPID != 0)
-    kill(childPID,SIGKILL);		/* Sweep away any errant children */
+    kill (childPID, SIGKILL);	/* Sweep away any errant children */
 }
 
 char *kelvinVersion = "0.34.1";
@@ -63,10 +77,7 @@ char *kelvinVersion = "0.34.1";
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
 void test_darray (double **);
 
-
-
 #define checkpt() fprintf(stderr,"Checkpoint at line %d of file \"%s\"\n",__LINE__,__FILE__)
-
 
 void compute_hlod_2p_dt (double x[], double *f);
 void compute_hlod_mp_dt (double x[], double *f);
@@ -74,7 +85,6 @@ void compute_hlod_2p_qt (double x[], double *f);
 void compute_hlod_mp_qt (double x[], double *f);
 
 int kelvin_dcuhre_integrate (double *integral, double *abserr);
-
 
 /* Variables became global from local */
 PedigreeSet pedigreeSet;	/* Pedigrees. */
@@ -119,7 +129,6 @@ double alpha[5][2] = { {0.04691, 0.118463443},
 {0.95309, 0.118463443}
 };
 
-
 SubLocusList savedLocusList;
 SubLocusList traitLocusList;
 SubLocusList markerLocusList;
@@ -153,12 +162,10 @@ int polynomialScale = 1;	/* Scale of static allocation and dynamic
 				   the default, and 10 the old standard. */
 FILE *fphlod = NULL;
 
-
 /* Model datastructures. modelOptions is defined in the pedigree library. */
 ModelType modelType;
 ModelRange modelRange;
 ModelOptions modelOptions;
-
 
 /* number of D primes 
  * if there are more than 2 alleles in the marker/trait, number of D primes
@@ -236,9 +243,6 @@ main (int argc, char *argv[])
   //int breakFlag = FALSE;
 
   // PedigreeSet pedigreeSet;    /* Pedigrees. */
-#if FALSE
-  RADSMM_header_type header;	/* RADSMM */
-#endif
 
   /* Local variable declaration */
   Pedigree *pPedigree;
@@ -440,39 +444,38 @@ main (int argc, char *argv[])
   {-0.2077777777778, 0.1475000000000, 0.0156250000000, 0.0}
   };
 
-
 /*********  end of local variable declaration   **********/
 
   overallSW = swCreate ("overall");	/* Overall performance stopwatch */
+  startTime = time (NULL);
 
   /* Add an exit handler to deal with wayward children. */
 
-  if (atexit(exit_kelvin)) {
-    perror("Could not register exit handler!");
-    exit(EXIT_FAILURE);
+  if (atexit (exit_kelvin)) {
+    perror ("Could not register exit handler!");
+    exit (EXIT_FAILURE);
   }
 
   /* Fork a child that loops sleeping several seconds and then signalling 
      us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
 
-  time_t startTime;
   pid_t childPID = 0;
-  int currentVMK, maximumVMK;
 
   startTime = time (NULL);
 
-  if ((maximumVMK = swGetMaximumVMK()) != 0) {
+  if ((maximumVMK = swGetMaximumVMK ()) != 0) {
     childPID = fork ();
     if (childPID == 0) {
       pid_t parentPID = 0;
+
       while (1) {
 	sleep (30);
-	parentPID = getppid();
+	parentPID = getppid ();
 	if (parentPID == 1)
-	  exit(EXIT_SUCCESS);
-	currentVMK = swGetCurrentVMK(parentPID);
+	  exit (EXIT_SUCCESS);
+	currentVMK = swGetCurrentVMK (parentPID);
 	fprintf (stderr, "%lus, %dKb (%2d%% of %2.1fGb)\n",
-		 time(NULL) - startTime,
+		 time (NULL) - startTime,
 		 currentVMK, (currentVMK * 100) / maximumVMK,
 		 maximumVMK / (1024.0 * 1024.0));
       }
@@ -482,6 +485,7 @@ main (int argc, char *argv[])
   /* Setup signal handlers */
   struct sigaction quitAction;
   sigset_t quitBlockMask;
+
 #if defined (GPROF) || (GCOV)
   struct sigaction termAction;
   sigset_t termBlockMask;
@@ -491,14 +495,14 @@ main (int argc, char *argv[])
   quitAction.sa_mask = quitBlockMask;
   quitAction.sa_flags = 0;
   sigaction (SIGQUIT, &quitAction, NULL);
-  
+
 #if defined (GPROF) || (GCOV)
   sigfillset (&termBlockMask);
   termAction.sa_handler = termSignalHandler;
   termAction.sa_mask = termBlockMask;
   termAction.sa_flags = 0;
   sigaction (SIGTERM, &termAction, NULL);
-#endif  
+#endif
 
   /* Annouce ourselves for performance tracking. */
   char messageBuffer[MAXSWMSG];
@@ -513,19 +517,20 @@ main (int argc, char *argv[])
     ("Dynamic memory usage dumping is turned on, so performance will be poor!");
 #endif
 #ifdef GPROF
-  sprintf (messageBuffer, 
-	   "GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.", 
+  sprintf (messageBuffer,
+	   "GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.",
 	   SIGTERM, getpid ());
   swLogMsg (messageBuffer);
 #endif
 #ifdef GCOV
-    sprintf (messageBuffer, 
-	     "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", 
-	     SIGTERM, getpid ());
-    swLogMsg (messageBuffer);
+  sprintf (messageBuffer,
+	   "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.",
+	   SIGTERM, getpid ());
+  swLogMsg (messageBuffer);
 #endif
   fprintf (stderr,
-	   "To force a dump of stats, type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, getpid ());
+	   "To force a dump of stats, type CTRL-\\ or type \"kill -%d %d\".\n",
+	   SIGQUIT, getpid ());
   swStart (overallSW);
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
@@ -1043,7 +1048,6 @@ main (int argc, char *argv[])
 	       "holdAllPolys from population of transmission matrix\n");
       holdAllPolys ();
     }
-
     //total_count = modelRange.npenet * modelRange.ngfreq * modelRange.nalpha;
 
     if (modelOptions.markerAnalysis == FALSE) {
@@ -1172,11 +1176,11 @@ main (int argc, char *argv[])
 	    fprintf (fpHet, "\n");
 	  }
 
-          low_theta_integral = 0.0;
-          high_theta_integral = 0.0;
-          low_integral = 0.0;
-          high_integral = 0.0;
-          low_ld_integral = 0.0;
+	  low_theta_integral = 0.0;
+	  high_theta_integral = 0.0;
+	  low_integral = 0.0;
+	  high_integral = 0.0;
+	  low_ld_integral = 0.0;
 
 	  for (i = 0; i < 140; i++) {
 	    fixed_dprime = dcuhre2[i][0];
@@ -1287,7 +1291,7 @@ main (int argc, char *argv[])
 		}
 	      }
 	    }			/* End of writing max */
-            fflush(fpHet);
+	    fflush (fpHet);
 	    fprintf (stderr, "tp result %f %f is %13.10f   \n",
 		     fixed_theta, fixed_dprime, integral);
 
@@ -1962,7 +1966,7 @@ main (int argc, char *argv[])
   swStop (overallSW);
   swDump (overallSW);
   if (modelOptions.polynomial == TRUE)
-    polyStatistics("End of run");
+    polyStatistics ("End of run");
 #ifdef DMTRACK
   swLogPeaks ();
   swDumpHeldTotals ();
@@ -2229,11 +2233,11 @@ compute_hlod_mp_qt (double x[], double *f)
 
   }				/* liability class Index */
   //  checkpt ();
-	  if (modelOptions.polynomial == TRUE);
-	  else
-	    /* only need to update trait locus */
-	    update_penetrance (&pedigreeSet, traitLocus);
-	  //  update_penetrance (&pedigreeSet, traitLocus);
+  if (modelOptions.polynomial == TRUE);
+  else
+    /* only need to update trait locus */
+    update_penetrance (&pedigreeSet, traitLocus);
+  //  update_penetrance (&pedigreeSet, traitLocus);
 
   if (print_point_flag)
     fprintf (fphlod, "\n");
@@ -2342,7 +2346,7 @@ compute_hlod_mp_qt (double x[], double *f)
   } else {
     log10_likelihood_ratio =
       log10_likelihood_alternative - log10_likelihood_null -
-		    pedigreeSet.log10MarkerLikelihood;
+      pedigreeSet.log10MarkerLikelihood;
   }
   /* check for overflow problem !!! */
   if (log10_likelihood_ratio >= DBL_MAX_10_EXP - 1) {
