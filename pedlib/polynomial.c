@@ -151,7 +151,9 @@ int constantPListExpansions = 0,	/* Count of constantList expansions */
   evaluatePolyCount = 0, evaluateValueCount = 0, keepPolyCount = 0, freePolysCount = 0,
   holdPolyCount = 0, holdAllPolysCount = 0, unHoldPolyCount = 0, freeKeptPolysCount = 0,
   freePolysAttemptCount = 0;
+int containerExpansions = 0;	/* Count of expansions of any term-collection container.  */
 unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount = 0, highSPLCount = 0;
+unsigned long totalHashMemory = 0; /* Total memory used for hash table and collision lists */
 
 char *polynomialVersion = "0.34.2";	/* Make this meaningful since kelvin displays it. */
 
@@ -468,20 +470,21 @@ searchHashTable (struct hashStruct *hash, int *start, int *end, int key)
 inline void
 insertHashTable (struct hashStruct *hash, int location, int key, int index)
 {
-  //If the hash table is full, allocate more memory
   hash->num++;
+  // If the hash collision list is full, allocate more memory
   if (hash->num > hash->length) {
     hash->length += HASH_TABLE_INCREASE;
     if (hash->length > maxHashLength)
       maxHashLength = hash->length;
     hash->key = realloc (hash->key, sizeof (int) * hash->length);
     hash->index = realloc (hash->index, sizeof (int) * hash->length);
+    totalHashMemory += HASH_TABLE_INCREASE * sizeof (int) * 2;
     if (hash->key == NULL || hash->index == NULL) {
       fprintf (stderr, "Memory allocation for hash table failed!\n");
       exit (1);
     }
   }
-  //Prepare a place in hash table for the new polynomial
+  // Prepare a place in hash table for the new polynomial
   if (location <= hash->num - 2) {
     memmove (&hash->key[location + 1], &hash->key[location],
 	     sizeof (int) * (hash->num - location - 1));
@@ -863,6 +866,7 @@ collectSumTerms (double **factor, Polynomial ***p, int *counter,
   //If container is full, apply for more memory
   if (*counter >= *containerLength - 1) {
     (*containerLength) += 50;
+    containerExpansions++;
     *factor = (double *) realloc (*factor, (*containerLength) * sizeof (double));
     *p = (Polynomial **) realloc (*p, (*containerLength) *
 					 sizeof (Polynomial *));
@@ -2508,7 +2512,7 @@ polynomialInitialization ()
 
   nodeId = 0;
 
-  //allocate memory for polynomial list of each type of polynomials, set the counter of each
+  // Allocate memory for polynomial list of each type of polynomials, set the counter of each
   //type of polynomials to be 0
   constantListLength = CONSTANT_LIST_INITIAL;
   constantCount = 0;
@@ -2559,7 +2563,7 @@ polynomialInitialization ()
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
-  //allocate memory for hash tables, each type of polynomials has its own hash table
+  // Allocate memory for hash tables, each type of polynomials has its own hash table
   constantHash =
     (struct hashStruct *) malloc (CONSTANT_HASH_SIZE *
 				  sizeof (struct hashStruct));
@@ -2579,6 +2583,7 @@ polynomialInitialization ()
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,__LINE__);
     exit (1);
   }
+
   //Initialize the constant hash table, pre-allocate memory for recording polynomials
   for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
     constantHash[i].num = 0;
@@ -2648,6 +2653,11 @@ polynomialInitialization ()
     }
 
   }
+
+  totalHashMemory = (sizeof (struct hashStruct) + (2 * HASH_TABLE_INCREASE * sizeof (int))) *
+		      (CONSTANT_HASH_SIZE + VARIABLE_HASH_SIZE + 
+		       SUM_HASH_SIZE + PRODUCT_HASH_SIZE + 
+		       FUNCTIONCALL_HASH_SIZE);
 
   //Apply memory for containers to hold terms for a sum polynomial
 
@@ -3221,21 +3231,31 @@ polyDynamicStatistics (char *title)
 #endif
 
   fprintf (stderr,
-	   "Counts/Hits: c=%d/%d, v=%d/%d, s=%d/%d(%2.1f:1), p=%d/%d(%2.1f:1), f=%d/%d\n",
-	   constantCount, constantHashHits, variableCount, variableHashHits,
+	   "Counts/Hits: c=%d/%d(%2.1f:1), v=%d/%d, s=%d/%d(%2.1f:1), p=%d/%d(%2.1f:1), f=%d/%d\n",
+	   constantCount, constantHashHits, constantHashHits / (float) (constantCount ? constantCount : 1), 
+	   variableCount, variableHashHits,
 	   sumCount, sumHashHits, sumHashHits / (float) (sumCount ? sumCount : 1), productCount,
 	   productHashHits, productHashHits / (float) (productCount ? productCount : 1), functionCallCount,
 	   functionHashHits);
 
   fprintf (stderr,
-	   "List expansions(@size): c=%d(@%d), v=%d(@%d), s=%d(@%d), p=%d(@%d), f=%d(@%d)\n",
+	   "List expansions(@size): c=%d(@%d), v=%d(@%d), s=%d(@%d), p=%d(@%d), f=%d(@%d), tcc=%d(@%lu)\n",
 	   constantPListExpansions, CONSTANT_LIST_INCREASE, 
 	   variablePListExpansions, VARIABLE_LIST_INCREASE,
 	   sumPListExpansions, SUM_LIST_INCREASE, productPListExpansions, PRODUCT_LIST_INCREASE,
-	   functionCallPListExpansions, FUNCTIONCALL_LIST_INCREASE);
+	   functionCallPListExpansions, FUNCTIONCALL_LIST_INCREASE,
+	   containerExpansions, sizeof (Polynomial *) + sizeof (double));
 
-  fprintf (stderr, "NodeId: %d Hash: max len=%d, SPL: eff=%lu%%, avg len=%lu\n",
-	   nodeId, maxHashLength, 100 * (lowSPLCount+highSPLCount) / 
+  fprintf (stderr,
+	   "List sizes: c=%lu, v=%lu, s=%lu, p=%lu, f=%lu\n",
+	   sizeof (void *) * (constantPListExpansions * CONSTANT_LIST_INCREASE + CONSTANT_LIST_INITIAL), 
+	   sizeof (void *) * (variablePListExpansions * VARIABLE_LIST_INCREASE + VARIABLE_LIST_INITIAL),
+	   sizeof (void *) * (sumPListExpansions * SUM_LIST_INCREASE + SUM_LIST_INITIAL),
+	   sizeof (void *) * (productPListExpansions * PRODUCT_LIST_INCREASE + PRODUCT_LIST_INITIAL),
+	   sizeof (void *) * (functionCallPListExpansions * FUNCTIONCALL_LIST_INCREASE + FUNCTIONCALL_LIST_INITIAL));
+
+  fprintf (stderr, "NodeId: %d Hash: max len=%d, size=%lu, SPL: eff=%lu%%, avg len=%lu\n",
+	   nodeId, maxHashLength, totalHashMemory, 100 * (lowSPLCount+highSPLCount) / 
 	   (totalSPLCalls ? totalSPLCalls : 1), totalSPLLengths / 
 	   (totalSPLCalls ? totalSPLCalls : 1));
 
@@ -3315,11 +3335,12 @@ polyStatistics (char *title)
   functionCallSize =
     functionCallCount * sizeof (Polynomial);
 
-  fprintf (stderr, "Term count(avg): sums=%d(%d), products=%d(%d)\n",
+  fprintf (stderr, "Term count(avg): s=%d(%d), p=%d(%d), ",
 	   sumTerms, sumTerms / (sumCount ? sumCount : 1), productTerms, 
 	   productTerms / (productCount ? productCount : 1));
   fprintf (stderr,
-	   "Sizes (including terms): sums=%ld, products=%ld, functions=%ld\n",
+	   "sizes (w/terms): c=%ld, s=%ld, p=%ld, f=%ld\n",
+	   constantSize,
 	   sumSize+(sumTerms * (sizeof(Polynomial) + sizeof(double))),
 	   productSize+(productTerms * (sizeof(Polynomial) + sizeof(int))),
 	   functionCallSize);
