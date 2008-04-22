@@ -37,13 +37,13 @@ install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/seq_update_avghet.pl
 
 kelvin : libs $(KOBJS) $(OBJS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS)
+	$(CC) -o $@ $(KOBJS) $(OBJS) $(CFLAGS) $(LDFLAGS)
 
 dkelvin : libs $(DKOBJS) $(OBJS)
-	$(CC) -o $@ $(DKOBJS) $(OBJS) $(LDFLAGS)
+	$(CC) -o $@ $(DKOBJS) $(OBJS) $(CFLAGS) $(LDFLAGS)
 
 calc_updated_ppl : seq_update/calc_updated_ppl.c
-	$(CC) -o $@ $(CFLAGS) seq_update/calc_updated_ppl.c
+	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) seq_update/calc_updated_ppl.c
 
 %.o : %.c $(INCS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $< -o $@
