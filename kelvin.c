@@ -42,7 +42,7 @@ quitSignalHandler (int signal)
     polyDynamicStatistics ("Signal received");
   if (maximumVMK != 0) {
     currentVMK = swGetCurrentVMK (getpid ());
-    fprintf (stderr, "%lus, %dKb (%2d%% of %2.1fGb)\n",
+    fprintf (stderr, "%lus, %dKb (%.0d%% of %2.1fGb)\n",
 	     time (NULL) - startTime,
 	     currentVMK, (currentVMK * 100) / maximumVMK,
 	     maximumVMK / (1024.0 * 1024.0));
@@ -274,15 +274,19 @@ main (int argc, char *argv[])
   if ((maximumVMK = swGetMaximumVMK ()) != 0) {
     childPID = fork ();
     if (childPID == 0) {
+      /* Code executed by child only! */
       pid_t parentPID = 0;
+      /* Ignore QUIT signals, 'cause they're actually status requests for Mom. */
+      signal(SIGQUIT, SIG_IGN);
 
       while (1) {
 	sleep (30);
+	/* See if we've been reparented due to Mom's demise. */
 	parentPID = getppid ();
 	if (parentPID == 1)
 	  exit (EXIT_SUCCESS);
 	currentVMK = swGetCurrentVMK (getppid ());
-	fprintf (stderr, "%lus, %dKb (%2d%% of %2.1fGb)\n",
+	fprintf (stderr, "%lus, %dKb (%.0d%% of %2.1fGb)\n",
 		 time (NULL) - startTime,
 		 currentVMK, (currentVMK * 100) / maximumVMK,
 		 maximumVMK / (1024.0 * 1024.0));
@@ -768,9 +772,9 @@ main (int argc, char *argv[])
   if (modelType.trait == DT)
     fprintf (stderr, "Dichotomous Trait & ");
   else if (modelType.trait == QT)
-    fprintf (stderr, "Quantitative Trait without threshoold & ");
+    fprintf (stderr, "Quantitative Trait without threshold & ");
   else
-    fprintf (stderr, "Quantitative Trait with threshoold & ");
+    fprintf (stderr, "Quantitative Trait with threshold & ");
   fprintf (stderr, "%s\n",
 	   (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) ? "LE" : "LD");
 
@@ -1247,7 +1251,7 @@ main (int argc, char *argv[])
 			continue;
 		      if (modelOptions.polynomial == TRUE);
 		      else
-			update_penetrance (&pedigreeSet, traitLocus);
+/* &&& Bill's progress */			update_penetrance (&pedigreeSet, traitLocus);
 		    }
 		    /* marker to marker analysis */
 		    /* get the likelihood at 0.5 first and LD=0 */

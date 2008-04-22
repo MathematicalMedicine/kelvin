@@ -167,6 +167,8 @@ extern struct swStopwatch *overallSW;
 
 struct swStopwatch *evaluatePolySW, *evaluateValueSW;
 
+unsigned long lastPDSAccumWallTime = 0, lastPDSAccumUserTime = 0; /* For thrashing check. */
+
 /* Clear the evaluation flag on the entire tree so we can mark
    where we've been and not retrace our steps regardless of
    redundancy. */
@@ -3220,6 +3222,8 @@ expTermPrinting (FILE * output, Polynomial *p, int depth)
 void
 polyDynamicStatistics (char *title)
 {
+  unsigned long deltaAccumWallTime, deltaAccumUserTime;
+
   fprintf (stderr, "Dynamic polynomial statistics (%s):\n", title);
 
   swDump (overallSW);
@@ -3290,6 +3294,27 @@ polyDynamicStatistics (char *title)
 	   productListReplacementCount);
   fprintf (stderr, "...freed=%d 1st-term freed=%d\n", productFreedCount,
 	   product1stTermsFreedCount);
+
+  /* Now we check to see if we're thrashing... If we didn't get at least 25% CPU since the last
+     time we did statistics, we should bail. */
+  swStop (overallSW);
+
+  if (lastPDSAccumWallTime == 0) {
+    lastPDSAccumWallTime = overallSW->swAccumWallTime;
+    lastPDSAccumUserTime = overallSW->swAccumRU.ru_utime.tv_sec;
+  } else {
+    deltaAccumWallTime = overallSW->swAccumWallTime - lastPDSAccumWallTime;
+    deltaAccumUserTime = overallSW->swAccumRU.ru_utime.tv_sec - lastPDSAccumUserTime;
+    fprintf(stderr, "Overall user CPU utilization was %lus for last period of %lus, or %lu%%\n",
+	    deltaAccumUserTime, deltaAccumWallTime,
+	    100 * deltaAccumUserTime / deltaAccumWallTime);
+    if (100 * deltaAccumUserTime / deltaAccumWallTime < 25) {
+      fprintf(stderr, "We're thrashing, time to abort!\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+  swStart (overallSW);
+  return;
 }
 
 /*
@@ -3311,7 +3336,7 @@ polyStatistics (char *title)
   polyDynamicStatistics (title);
 
   if (swGetMaximumVMK() != 0) {
-    if (swGetCurrentVMK(getpid()) > (0.9 * swGetMaximumVMK())) {
+    if (swGetCurrentVMK(getpid()) > (0.95 * swGetMaximumVMK())) {
       fprintf (stderr, "VM usage too high to permit list traversals for statistics.\n");
       return;
     }
