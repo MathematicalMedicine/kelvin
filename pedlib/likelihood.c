@@ -2787,7 +2787,7 @@ print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
 {
   int pattern;
   int newCellIndex;
-  int i;
+  //  int i;
 
   for (pattern = 0; pattern <= 2; pattern++) {
     newCellIndex = cellIndex * 4 + pattern;
