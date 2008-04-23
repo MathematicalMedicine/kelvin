@@ -1,6 +1,13 @@
 Version 0.34.2
-  Added xmission_matrix modification to improve multipoint
-  performance. Numerous other minor performance improvements. Fixed
+  Status child no longer dies on SIGQUIT. Monitors utilization
+  each cycle of poly statistics dump and bails if user CPU was
+  less than 25% (thrashing). Poly statistics now accurately
+  reflect nearly all memory usage. Parallel building for
+  polynomial (mostly reducing memory management overhead) present 
+  but inactive.
+
+Version 0.34.1a
+  Numerous minor performance improvements. Fixed
   bug with orphaned status processes hanging about. Clean-up
   memory monitoring and reporting. Parallel evaluation for
   polynomial present but inactive.

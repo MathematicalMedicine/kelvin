@@ -9,16 +9,19 @@ BINDIR=/usr/local/bin
 # GSL (GNU Scientific Library) can be found
 INCDIR=/usr/local/include
 LIBDIR=/usr/local/lib
-
-CC := gcc
-CFLAGS := -Wall -O3
-
 KVNLIBDIR := $(shell pwd)/lib
 KVNINCDIR := $(shell pwd)/include
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm
-export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS INCFLAGS
+
+CC := gcc
+CFLAGS := -Wall -O3
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas
+
+#CFLAGS += -fopenmp # Uncomment BOTH of these if you have an OpenMP-capable compiler...
+#LDFLAGS += -fopenmp # ...and want to use multiple threads for evaluations.
+
+export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
 KOBJS = kelvin.o
 DKOBJS = dkelvin.o dcuhre.o
@@ -33,10 +36,10 @@ install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/seq_update_avghet.pl
 
 kelvin : libs $(KOBJS) $(OBJS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS)
+	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS)
 
 dkelvin : libs $(DKOBJS) $(OBJS)
-	$(CC) -o $@ $(DKOBJS) $(OBJS) $(LDFLAGS)
+	$(CC) -o $@ $(DKOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS)
 
 calc_updated_ppl : seq_update/calc_updated_ppl.c
 	$(CC) -o $@ $(CFLAGS) seq_update/calc_updated_ppl.c

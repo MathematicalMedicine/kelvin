@@ -448,7 +448,7 @@ typedef struct ConditionalLikelihood
 /* global function prototypes */
 int read_mapfile (char *sMapfileName);
 int read_datafile (char *sMarkerfileName);
-int read_markerfile (char *sMarkerfileName);
+int read_markerfile (char *sMarkerfileName, int requiredMarkerCount);
 int add_allele (Locus * pLocus, char *sAlleleName, double freq);
 Trait *add_trait (int trait, TraitLocus * pTraitLocus, int traitType);
 int create_baseline_trait_genotypes (int locus, Pedigree * pPedigree);
