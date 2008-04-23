@@ -45,7 +45,7 @@ quitSignalHandler (int signal)
     polyDynamicStatistics ("Signal received");
   if (maximumVMK != 0) {
     currentVMK = swGetCurrentVMK (getpid ());
-    fprintf (stderr, "%lus, %dKb (%2d%% of %2.1fGb)\n",
+    fprintf (stderr, "%lus, %dKb (%.0d%% of %2.1fGb)\n",
 	     time (NULL) - startTime,
 	     currentVMK, (currentVMK * 100) / maximumVMK,
 	     maximumVMK / (1024.0 * 1024.0));
@@ -72,7 +72,7 @@ exit_kelvin ()
     kill (childPID, SIGKILL);	/* Sweep away any errant children */
 }
 
-char *kelvinVersion = "0.34.1";
+char *dkelvinVersion = "0.34.2";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
 void test_darray (double **);
@@ -96,6 +96,7 @@ Trait *pTrait;
 int traitLocus;
 int totalLoci;
 void *initialProbAddr[3];
+char *tmpID;
 LDLoci *pLDLoci = NULL;
 
 int R_square_flag = FALSE;
@@ -509,7 +510,7 @@ main (int argc, char *argv[])
 
   sprintf (messageBuffer,
 	   "dkelvin V%s, likelihood V%s, locus V%s, polynomial V%s\n($Id$)\n",
-	   kelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
+	   dkelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
   swLogMsg (messageBuffer);
 
 #ifdef DMTRACK
@@ -855,6 +856,7 @@ main (int argc, char *argv[])
   build_xmission_matrix (&traitMatrix, 1);
   build_xmission_matrix (&markerMatrix, totalLoci - 1);
   xmissionMatrix = nullMatrix;
+  tmpID = (char *) calloc (totalLoci, sizeof (char));
 
   /* initialize loci by doing genotype elimination, set recoding */
   initialize_loci (&pedigreeSet);
@@ -912,62 +914,6 @@ main (int argc, char *argv[])
   /* conditional likelihood storage space for each individual */
   allocate_likelihood_space (&pedigreeSet, modelType.numMarkers + 1);
 
-  /* The following segments are for RADSMM - store lods in binary format to a file */
-#if FALSE
-  /* Set up storage before you try to write LOD scores. */
-  KASSERT ((RADSMM_setup_init (&header, 255) == 0),
-	   "RADSMM initialization error.\n");
-
-  /* Set up the analysis type. */
-  KASSERT ((RADSMM_setup_type (&header, ((modelType.type == TP) ? '2' : 'M'),
-			       ((modelType.trait ==
-				 DT) ? 'D' : ((modelType.trait ==
-					       QT) ? 'Q' : 'C')),
-			       ((modelOptions.equilibrium ==
-				 LE) ? 'N' : 'Y')) == 0),
-	   "RADSMM type initialization error.\n");
-
-  /* Set up ordering of array dimensions (TODO: check this out). */
-  KASSERT ((RADSMM_setup_ordering (&header, 'B') == 0),
-	   "RADSMM ordering initialization error.\n");
-
-  /* Set up the pedigrees. */
-  KASSERT ((RADSMM_setup_pedigree
-	    (&header, NULL, (long) pedigreeSet.numPedigree) == 0),
-	   "RADSMM pedigree initialization error.\n");
-
-  /* Set up the theta structures. */
-  KASSERT ((RADSMM_setup_theta
-	    (&header, modelRange.theta, (long) modelRange.ntheta,
-	     ((modelRange.ngender == 1) ? 'D' : 'G'))),
-	   "RADSMM theta initialization error.\n");
-
-  /* Set up the liability classes. */
-  KASSERT ((RADSMM_setup_LC (&header, modelRange.nlclass) == 0),
-	   "RADSMM liability class initialization error.\n");
-
-  /* Set up the penetrance arrays. TODO: will need work for
-   * multiallelic diseases. Here, we just assume we're dealing with
-   * DD, Dd, and dd. */
-  for (i = 0; i < modelRange.nlclass; i++)
-    KASSERT ((RADSMM_setup_penetrance
-	      (&header, i, modelRange.penet[i][0], modelRange.penet[i][1],
-	       modelRange.penet[i][2], (long) modelRange.npenet) == 0),
-	     "RADSMM penetrance initialization error.\n");
-
-  /* Gene frequencies are next. */
-  KASSERT ((RADSMM_setup_geneFreq
-	    (&header, modelRange.gfreq, (long) modelRange.ngfreq) == 0),
-	   "RADSMM gene frequency initialization error.\n");
-#endif
-
-
-  /**********/
-//  exit(ERROR);
-
-  /**********/
-
-
   time0 = clock ();
   time1 = clock ();
 
@@ -975,9 +921,9 @@ main (int argc, char *argv[])
   if (modelType.trait == DT)
     fprintf (stderr, "Dichotomous Trait & ");
   else if (modelType.trait == QT)
-    fprintf (stderr, "Quantitative Trait without threshoold & ");
+    fprintf (stderr, "Quantitative Trait without threshold & ");
   else
-    fprintf (stderr, "Quantitative Trait with threshoold & ");
+    fprintf (stderr, "Quantitative Trait with threshold & ");
 
   fprintf (stderr, "%s\n",
 	   (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) ? "LE" : "LD");
@@ -1462,28 +1408,7 @@ main (int argc, char *argv[])
       holdAllPolys ();
       fprintf (stderr,
 	       "holdAllPolys from further population of transmission matrix\n");
-      locusList = &markerLocusList;
-      xmissionMatrix = markerMatrix;
-      /* populate marker matrix */
-      status = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,	/* probability */
-					 initialProbAddr2,	/* probability */
-					 initialHetProbAddr, 0,	/* cell index */
-					 -1,	/* last het locus */
-					 -1,	/* last het pattern (P-1 or M-2) */
-					 0);	/* current locus - start with 0 */
-      freePolys ();
-      locusList = &savedLocusList;
-      xmissionMatrix = altMatrix;
-      /* populate alternative matrix */
-      status = populate_xmission_matrix (altMatrix, savedLocusList.numLocus, initialProbAddr,	/* probability */
-					 initialProbAddr2,	/* probability */
-					 initialHetProbAddr, 0,	/* cell index */
-					 -1,	/* last het locus */
-					 -1,	/* last het pattern (P-1 or M-2) */
-					 0);	/* current locus - start with 0 */
-      freePolys ();
     }
-
 
     /* for trait likelihood */
     fprintf (stderr, "MP start time: %f\n", (double) time0 / CLOCKS_PER_SEC);
@@ -1691,14 +1616,19 @@ main (int argc, char *argv[])
 
 	modelOptions.polynomial = FALSE;
 #endif
-	if (modelOptions.polynomial != TRUE)
-	  /* populate the matrix */
-	  status = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,	/* probability */
-					     initialProbAddr2,	/* probability */
-					     initialHetProbAddr, 0,	/* cell index */
-					     -1,	/* last he locus */
-					     -1,	/* last het pattern (P-1 or M-2) */
-					     0);	/* current locus - start with 0 */
+	/* populate the matrix */
+	status = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,	/* probability */
+					   initialProbAddr2,	/* probability */
+					   initialHetProbAddr, 0,	/* cell index */
+					   -1,	/* last he locus */
+					   -1,	/* last het pattern (P-1 or M-2) */
+					   0);	/* current locus - start with 0 */
+
+	if (modelOptions.polynomial == TRUE)
+	  freePolys ();
+
+	print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0,
+			       tmpID);
 
 	KLOG (LOGLIKELIHOOD, LOGDEBUG, "Marker Likelihood\n");
 	compute_likelihood (&pedigreeSet);
@@ -1827,10 +1757,20 @@ main (int argc, char *argv[])
       if (markerSetChanged || locusListChanged) {
 	if (modelOptions.polynomial == TRUE) {
 	  pedigreeSetPolynomialClearance (&pedigreeSet);
+	  /* populate the matrix */
+	  status = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,	/* probability */
+					     initialProbAddr2,	/* probability */
+					     initialHetProbAddr, 0,	/* cell index */
+					     -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
+					     0);	/* current locus - start with 0 */
+	  print_xmission_matrix (altMatrix, savedLocusList.numLocus, 0, 0,
+				 tmpID);
+	  if (modelOptions.polynomial == TRUE)
+	    freePolys ();
 	}
       }
-      if (modelOptions.polynomial == TRUE);
-      else
+
+      if (modelOptions.polynomial != TRUE);
 	/* populate the matrix */
 	status = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,	/* probability */
 					   initialProbAddr2,	/* probability */
