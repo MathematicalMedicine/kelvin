@@ -2787,7 +2787,7 @@ print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
 {
   int pattern;
   int newCellIndex;
-  int i;
+  //  int i;
 
   for (pattern = 0; pattern <= 2; pattern++) {
     newCellIndex = cellIndex * 4 + pattern;
@@ -2803,10 +2803,10 @@ print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
       print_xmission_matrix (pMatrix, totalLoci, loc + 1, newCellIndex, pID);
     } else {
       /* print the xmission probability out */
-      for (i = 0; i <= loc; i++) {
-	fprintf (stderr, "%c", pID[i]);
-      }
-      fprintf(stderr, ": ");
+      //      for (i = 0; i <= loc; i++) {
+      //	fprintf (stderr, "%c", pID[i]);
+      //      }
+      //      fprintf(stderr, ": ");
       /* print out sex averaged xmission probability */
       //      if(modelOptions.polynomial == TRUE)
       //	{
