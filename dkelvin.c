@@ -24,6 +24,7 @@ extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 struct swStopwatch *overallSW;
 time_t startTime;
 int currentVMK, maximumVMK;
+char messageBuffer[MAXSWMSG];
 
 #include <signal.h>		/* Signalled dumps, exits, whatever */
 volatile sig_atomic_t signalSeen = 0;	/* If we wanted to be really gentle. */
@@ -37,19 +38,13 @@ volatile sig_atomic_t signalSeen = 0;	/* If we wanted to be really gentle. */
 void
 quitSignalHandler (int signal)
 {
-  swDump (overallSW);
+  if (modelOptions.polynomial == TRUE)
+    polyDynamicStatistics ("Signal received");
+  else
+    swDumpM (overallSW);
 #ifdef DMTRACK
   swLogPeaks ("Signal");
 #endif
-  if (modelOptions.polynomial == TRUE)
-    polyDynamicStatistics ("Signal received");
-  if (maximumVMK != 0) {
-    currentVMK = swGetCurrentVMK (getpid ());
-    fprintf (stderr, "%lus, %dKb (%.0d%% of %2.1fGb)\n",
-	     time (NULL) - startTime,
-	     currentVMK, (currentVMK * 100) / maximumVMK,
-	     maximumVMK / (1024.0 * 1024.0));
-  }
 }
 
 #if defined (GPROF) || (GCOV)
@@ -58,16 +53,24 @@ quitSignalHandler (int signal)
 void
 termSignalHandler (int signal)
 {
-  fprintf (stderr, "Exiting early for gprof or gcov!\n");
+  fprintf (stderr, "Terminating early for gprof or gcov!\n");
   exit (EXIT_SUCCESS);
 }
 #endif
-pid_t childPID = 0;		/* For a child process producing timed statistics. */
-void
 
+void
+intSignalHandler (int signal)
+{
+  fprintf (stderr, "Terminating early via interrupt!\n");
+  exit (EXIT_FAILURE);
+}
+
+pid_t childPID = 0;		/* For a child process producing timed statistics. */
 /* Exit handler to clean-up after we hit any of our widely-distributed exit points. */
+void
 exit_kelvin ()
 {
+  swLogMsg ("Exiting");
   if (childPID != 0)
     kill (childPID, SIGKILL);	/* Sweep away any errant children */
 }
@@ -75,6 +78,7 @@ exit_kelvin ()
 char *dkelvinVersion = "0.34.2";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
+void logStatistics(PedigreeSet *pSet, int posIdx);
 void test_darray (double **);
 
 #define checkpt() fprintf(stderr,"Checkpoint at line %d of file \"%s\"\n",__LINE__,__FILE__)
@@ -229,17 +233,12 @@ int flexBufferSize = 0;
  * analysis run. All information about, e.g., which markers to use,
  * what outputs to calculate, and so on, are stored in this
  * configuration file.
- *
- * -s : run serially
- * -c : restart from checkpoint
  **********************************************************************/
 int
 main (int argc, char *argv[])
 {
   int i, j, k;			/*index variables */
-  int serial = FALSE;
   char configfile[KMAXFILENAMELEN] = "";
-  char ckptfile[KMAXFILENAMELEN] = "";
 
   //int breakFlag = FALSE;
 
@@ -287,7 +286,8 @@ main (int argc, char *argv[])
   Polynomial *initialProbPoly[3];
   Polynomial *initialProbPoly2[3];
   double initialProb[3];
-
+  char *envVar;
+  int threadCount = 0;
 
   /* Variables for DCUHRE   added 1/2008 */
   double integral = 0.0, abserr = 0;
@@ -460,14 +460,13 @@ main (int argc, char *argv[])
   /* Fork a child that loops sleeping several seconds and then signalling 
      us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
 
-  pid_t childPID = 0;
-
-  startTime = time (NULL);
-
   if ((maximumVMK = swGetMaximumVMK ()) != 0) {
     childPID = fork ();
     if (childPID == 0) {
+      /* Code executed by child only! */
       pid_t parentPID = 0;
+      /* Ignore QUIT signals, 'cause they're actually status requests for Mom. */
+      signal(SIGQUIT, SIG_IGN);
 
       while (1) {
 	sleep (30);
@@ -484,8 +483,8 @@ main (int argc, char *argv[])
   }
 
   /* Setup signal handlers */
-  struct sigaction quitAction;
-  sigset_t quitBlockMask;
+  struct sigaction quitAction, intAction;
+  sigset_t quitBlockMask, intBlockMask;
 
 #if defined (GPROF) || (GCOV)
   struct sigaction termAction;
@@ -497,6 +496,12 @@ main (int argc, char *argv[])
   quitAction.sa_flags = 0;
   sigaction (SIGQUIT, &quitAction, NULL);
 
+  sigfillset (&intBlockMask);
+  intAction.sa_handler = intSignalHandler;
+  intAction.sa_mask = intBlockMask;
+  intAction.sa_flags = 0;
+  sigaction (SIGINT, &intAction, NULL);
+
 #if defined (GPROF) || (GCOV)
   sigfillset (&termBlockMask);
   termAction.sa_handler = termSignalHandler;
@@ -506,12 +511,19 @@ main (int argc, char *argv[])
 #endif
 
   /* Annouce ourselves for performance tracking. */
-  char messageBuffer[MAXSWMSG];
+  char currentWorkingDirectory[MAXSWMSG-32];
 
   sprintf (messageBuffer,
-	   "dkelvin V%s, likelihood V%s, locus V%s, polynomial V%s\n($Id$)\n",
+	   "dkelvin V%s, likelihood V%s, locus V%s, polynomial V%s\n($Id$)",
 	   dkelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
   swLogMsg (messageBuffer);
+
+#ifdef _OPENMP
+  if ((envVar = getenv ("OMP_NUM_THREADS")) != NULL)
+    threadCount = atoi (envVar);
+  sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", threadCount);
+  swLogMsg (messageBuffer);
+#endif
 
 #ifdef DMTRACK
   swLogMsg
@@ -530,7 +542,7 @@ main (int argc, char *argv[])
   swLogMsg (messageBuffer);
 #endif
   fprintf (stderr,
-	   "To force a dump of stats, type CTRL-\\ or type \"kill -%d %d\".\n",
+	   "To force a dump of stats (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n",
 	   SIGQUIT, getpid ());
   swStart (overallSW);
 
@@ -562,22 +574,11 @@ main (int argc, char *argv[])
       case '?':
 	/* Help */
 	fprintf (stdout, "Usage:\n");
-	fprintf (stdout, "  %s [-?][-s][-c <file>]\nwhere:\n", argv[0]);
+	fprintf (stdout, "  %s [-?] <configuration file>\nwhere:\n", argv[0]);
 	fprintf (stdout, "      -? : this output;\n");
-	fprintf (stdout, "      -s : run serially;\n");
 	fprintf (stdout,
-		 "      -c <file> : restart calculation from specified file.\n");
-	fprintf (stdout,
-		 "Checkpoint data (for restarting) appears on stderr.\n");
+		 "      <configuration file> : file containing run parameters.\n");
 	exit (EXIT_FAILURE);
-	break;
-      case 's':
-	/* Run serially. */
-	serial = TRUE;
-	break;
-      case 'c':
-	/* Restart from checkpoint file. */
-	strncpy (ckptfile, argv[i + 1], KMAXFILENAMELEN);
 	break;
       }
     } else if (strlen (configfile) != 0) {
@@ -592,19 +593,16 @@ main (int argc, char *argv[])
     } else {
       /* Got a configuration file name. Copy it. */
       strncpy (configfile, argv[i], KMAXFILENAMELEN);
+      getcwd (currentWorkingDirectory, sizeof(currentWorkingDirectory));
+      sprintf(messageBuffer, "Running in [%s] w/config [%s]", currentWorkingDirectory, configfile);
+      swLogMsg(messageBuffer);
     }
     i++;
   }
 
-
-
   /* Check to see if the configuration file name was specified. */
   KASSERT ((strlen (configfile) > 0),
 	   "No configuration file specified; aborting.\n");
-
-
-
-
 
   /* set the default unknown person ID */
   modelOptions.sUnknownPersonID = malloc (sizeof (char) * 2);
@@ -637,8 +635,6 @@ main (int argc, char *argv[])
    * give appropriate error message otherwise. */
   KASSERT (modelRange.nalleles == 2, "Only biallelic traits supported.\n");
 
-
-
   /* the difference between QT and CT is whether we use threshold or not. Under CT -  yes to
    * threshold, under QT - no threshold */
   if (modelRange.ntthresh > 0 && modelType.trait != DT) {
@@ -647,7 +643,6 @@ main (int argc, char *argv[])
 	     && modelType.maxThreshold < 999999998,
 	     "Under QT threshold model, MIN and MAX of the QT threshold values need to be provided through keywords T_MIN and T_MAX.\n");
   }
-
 
   total_dim = 2;		// alpha gf
   total_dim += 3 * modelRange.nlclass;	//DD Dd dd
@@ -668,9 +663,6 @@ main (int argc, char *argv[])
   }
 
   fprintf (stderr, "total dim =%d\n", total_dim);
-
-
-
 
   if (modelType.trait == QT) {
     /* threshold value will not be used in any meaningful way, but we will use it for 
@@ -1904,16 +1896,17 @@ main (int argc, char *argv[])
 
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
-  swDump (overallSW);
   if (modelOptions.polynomial == TRUE)
     polyStatistics ("End of run");
+  else
+    swDump (overallSW);
 #ifdef DMTRACK
   swLogPeaks ();
   swDumpHeldTotals ();
   swDumpSources ();
   //  swDumpCrossModuleChunks ();
 #endif
-  swLogMsg ("finished run");
+  swLogMsg ("Finished run");
 
   /* close file pointers */
   if (modelType.type == TP) {
@@ -1925,6 +1918,26 @@ main (int argc, char *argv[])
   return 0;
 }
 
+void
+logStatistics(PedigreeSet *pSet, int posIdx) {
+  int pedIdx, i;
+  NuclearFamily *pNucFam;
+  Pedigree *pPedigree;
+  int l = 0, nf = 0, pg = 0, sg = 0;
+  for (pedIdx = 0; pedIdx < pSet->numPedigree; pedIdx++) {
+    pPedigree = pSet->ppPedigreeSet[pedIdx];
+    l += pPedigree->numLoop;
+    nf += pPedigree->numNuclearFamily;
+    for (i = 0; i < pPedigree->numNuclearFamily; i++) {
+      pNucFam = pPedigree->ppNuclearFamilyList[i];
+      pg += pNucFam->totalNumPairGroups;
+      sg += pNucFam->totalNumSimilarPairs;
+    }
+  }
+  sprintf(messageBuffer, "At %d: p:%d, l:%d, nf:%d, pg:%d, sg:%d, n:%d",
+	  posIdx, pSet->numPedigree, l, nf, pg, sg, nodeId);
+  swLogMsg(messageBuffer);
+}
 
 void
 print_dryrun_stat (PedigreeSet * pSet, double pos)
