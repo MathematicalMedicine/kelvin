@@ -826,9 +826,12 @@ udpSend (char *hostName, int serverPort, char *message)
   char *envVar;
 
   if ((he = gethostbyname (hostName)) == NULL) { /* Get the host info */
-    if ((envVar = getenv ("swLogMsgHost")) != NULL) /* Can't get out, try a local relay */
+    if ((envVar = getenv ("swLogMsgHost")) != NULL) { /* Can't get out, try a local relay */
       if ((he = gethostbyname (envVar)) == NULL)
 	return EXIT_FAILURE;
+    } else {
+      return EXIT_FAILURE;
+    }
   }
 
   if ((sockfd = socket (AF_INET, SOCK_DGRAM, 0)) == -1) {
@@ -859,7 +862,7 @@ swLogMsg (char *message)
 
   sprintf (messageBuffer, "PID: %d, %s\n", getpid (), message);
   if (udpSend ("levi-montalcini.ccri.net", 4950, messageBuffer) ==
-      EXIT_FAILURE) strcat(messageBuffer, "-");
+      EXIT_FAILURE) messageBuffer[0] = 'p'; /* Yeah, it's embarassing */
   fprintf (stderr, messageBuffer);
   return;
 }
