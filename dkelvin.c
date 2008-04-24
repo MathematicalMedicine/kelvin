@@ -286,8 +286,10 @@ main (int argc, char *argv[])
   Polynomial *initialProbPoly[3];
   Polynomial *initialProbPoly2[3];
   double initialProb[3];
+#ifdef _OPENMP
   char *envVar;
   int threadCount = 0;
+#endif
 
   /* Variables for DCUHRE   added 1/2008 */
   double integral = 0.0, abserr = 0;

@@ -256,8 +256,10 @@ main (int argc, char *argv[])
   void *initialProbAddr2[3];
   void *initialHetProbAddr[3];
   char *tmpID;
+#ifdef _OPENMP
   char *envVar;
   int threadCount = 0;
+#endif
 
   overallSW = swCreate ("overall");	/* Overall performance stopwatch */
   startTime = time (NULL);
