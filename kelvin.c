@@ -1609,8 +1609,8 @@ main (int argc, char *argv[])
 	}
 	fprintf (stderr,
 		 "Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dd\n");
-	/* overal maximizing model - MOD */
-	fprintf (stderr, "# Overal MOD maximizing model:\n");
+	/* overall maximizing model - MOD */
+	fprintf (stderr, "# Overall MOD maximizing model:\n");
 	theta[0] = modelRange.theta[0][maxThetaIdx];
 	theta[1] = modelRange.theta[1][maxThetaIdx];
 	gfreq =
@@ -1755,7 +1755,7 @@ main (int argc, char *argv[])
 	fprintf (stderr, "\n");
 	fflush (stderr);
 
-	/* find the overal maximizing theta and dprime - LR
+	/* find the overall maximizing theta and dprime - LR
 	 * with the other parameter integrated out */
 	max = -9999.99;
 	max_at_dprime0 = -9999.99;
@@ -1788,8 +1788,8 @@ main (int argc, char *argv[])
 
 	  }
 	}
-	/* overal maximizing model - LR */
-	fprintf (stderr, "# Overal LR maximizing model:\n");
+	/* overall maximizing model - LR */
+	fprintf (stderr, "# Overall LR maximizing model:\n");
 	theta[0] = modelRange.theta[0][maxThetaIdx];
 	theta[1] = modelRange.theta[1][maxThetaIdx];
 	//gfreq = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_gfreq;
