@@ -408,7 +408,7 @@ main (int argc, char *argv[])
       /* Got a configuration file name. Copy it. */
       strncpy (configfile, argv[i], KMAXFILENAMELEN);
       getcwd (currentWorkingDirectory, sizeof(currentWorkingDirectory));
-      sprintf(messageBuffer, "Running in [%s] w/config [%s]", currentWorkingDirectory, configfile);
+      sprintf(messageBuffer, "In %s w/%s", currentWorkingDirectory, configfile);
       swLogMsg(messageBuffer);
     }
     i++;
@@ -2534,7 +2534,8 @@ main (int argc, char *argv[])
 	    KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
 	    compute_likelihood (&pedigreeSet);
 
-	    logStatistics (&pedigreeSet, posIdx);
+	    if (gfreqInd == 0 && penIdx == 0)
+	      logStatistics (&pedigreeSet, posIdx);
 
 	    /* print out some statistics under dry run */
 	    if (modelOptions.dryRun != 0) {
