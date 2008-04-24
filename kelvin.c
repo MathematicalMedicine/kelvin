@@ -21,6 +21,7 @@ extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 struct swStopwatch *overallSW;
 time_t startTime;
 int currentVMK, maximumVMK;
+char messageBuffer[MAXSWMSG];
 
 #include <signal.h>		/* Signalled dumps, exits, whatever */
 volatile sig_atomic_t signalSeen = 0;	/* If we wanted to be really gentle. */
@@ -34,19 +35,13 @@ volatile sig_atomic_t signalSeen = 0;	/* If we wanted to be really gentle. */
 void
 quitSignalHandler (int signal)
 {
-  swDump (overallSW);
+  if (modelOptions.polynomial == TRUE)
+    polyDynamicStatistics ("Signal received");
+  else
+    swDumpM (overallSW);
 #ifdef DMTRACK
   swLogPeaks ("Signal");
 #endif
-  if (modelOptions.polynomial == TRUE)
-    polyDynamicStatistics ("Signal received");
-  if (maximumVMK != 0) {
-    currentVMK = swGetCurrentVMK (getpid ());
-    fprintf (stderr, "%lus, %dKb (%.0d%% of %2.1fGb)\n",
-	     time (NULL) - startTime,
-	     currentVMK, (currentVMK * 100) / maximumVMK,
-	     maximumVMK / (1024.0 * 1024.0));
-  }
 }
 
 #if defined (GPROF) || (GCOV)
@@ -55,16 +50,24 @@ quitSignalHandler (int signal)
 void
 termSignalHandler (int signal)
 {
-  fprintf (stderr, "Exiting early for gprof or gcov!\n");
+  fprintf (stderr, "Terminating early for gprof or gcov!\n");
   exit (EXIT_SUCCESS);
 }
 #endif
-pid_t childPID = 0;		/* For a child process producing timed statistics. */
-void
 
+void
+intSignalHandler (int signal)
+{
+  fprintf (stderr, "Terminating early via interrupt!\n");
+  exit (EXIT_FAILURE);
+}
+
+pid_t childPID = 0;		/* For a child process producing timed statistics. */
 /* Exit handler to clean-up after we hit any of our widely-distributed exit points. */
+void
 exit_kelvin ()
 {
+  swLogMsg ("Exiting");
   if (childPID != 0)
     kill (childPID, SIGKILL);	/* Sweep away any errant children */
 }
@@ -72,6 +75,7 @@ exit_kelvin ()
 char *kelvinVersion = "0.34.2";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
+void logStatistics(PedigreeSet *pSet, int posIdx);
 void test_darray (double **);
 
 /* Some default global values. */
@@ -155,17 +159,12 @@ int flexBufferSize = 0;
  * analysis run. All information about, e.g., which markers to use,
  * what outputs to calculate, and so on, are stored in this
  * configuration file.
- *
- * -s : run serially
- * -c : restart from checkpoint
  **********************************************************************/
 int
 main (int argc, char *argv[])
 {
   int i, j;
-  int serial = FALSE;
   char configfile[KMAXFILENAMELEN] = "";
-  char ckptfile[KMAXFILENAMELEN] = "";
   int breakFlag = FALSE;
   double alphaV, alphaV2;
   int loc1, loc2;
@@ -257,6 +256,8 @@ main (int argc, char *argv[])
   void *initialProbAddr2[3];
   void *initialHetProbAddr[3];
   char *tmpID;
+  char *envVar;
+  int threadCount = 0;
 
   overallSW = swCreate ("overall");	/* Overall performance stopwatch */
   startTime = time (NULL);
@@ -295,8 +296,8 @@ main (int argc, char *argv[])
   }
 
   /* Setup signal handlers */
-  struct sigaction quitAction;
-  sigset_t quitBlockMask;
+  struct sigaction quitAction, intAction;
+  sigset_t quitBlockMask, intBlockMask;
 
 #if defined (GPROF) || (GCOV)
   struct sigaction termAction;
@@ -308,6 +309,12 @@ main (int argc, char *argv[])
   quitAction.sa_flags = 0;
   sigaction (SIGQUIT, &quitAction, NULL);
 
+  sigfillset (&intBlockMask);
+  intAction.sa_handler = intSignalHandler;
+  intAction.sa_mask = intBlockMask;
+  intAction.sa_flags = 0;
+  sigaction (SIGINT, &intAction, NULL);
+
 #if defined (GPROF) || (GCOV)
   sigfillset (&termBlockMask);
   termAction.sa_handler = termSignalHandler;
@@ -317,12 +324,19 @@ main (int argc, char *argv[])
 #endif
 
   /* Annouce ourselves for performance tracking. */
-  char messageBuffer[MAXSWMSG];
+  char currentWorkingDirectory[MAXSWMSG-32];
 
   sprintf (messageBuffer,
-	   "kelvin V%s, likelihood V%s, locus V%s, polynomial V%s\n($Id$)\n",
+	   "kelvin V%s, likelihood V%s, locus V%s, polynomial V%s\n($Id$)",
 	   kelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
   swLogMsg (messageBuffer);
+
+#ifdef _OPENMP
+  if ((envVar = getenv ("OMP_NUM_THREADS")) != NULL)
+    threadCount = atoi (envVar);
+  sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", threadCount);
+  swLogMsg (messageBuffer);
+#endif
 
 #ifdef DMTRACK
   swLogMsg
@@ -341,7 +355,7 @@ main (int argc, char *argv[])
   swLogMsg (messageBuffer);
 #endif
   fprintf (stderr,
-	   "To force a dump of stats, type CTRL-\\ or type \"kill -%d %d\".\n",
+	   "To force a dump of stats (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n",
 	   SIGQUIT, getpid ());
   swStart (overallSW);
 
@@ -373,22 +387,11 @@ main (int argc, char *argv[])
       case '?':
 	/* Help */
 	fprintf (stdout, "Usage:\n");
-	fprintf (stdout, "  %s [-?][-s][-c <file>]\nwhere:\n", argv[0]);
+	fprintf (stdout, "  %s [-?] <configuration file>\nwhere:\n", argv[0]);
 	fprintf (stdout, "      -? : this output;\n");
-	fprintf (stdout, "      -s : run serially;\n");
 	fprintf (stdout,
-		 "      -c <file> : restart calculation from specified file.\n");
-	fprintf (stdout,
-		 "Checkpoint data (for restarting) appears on stderr.\n");
+		 "      <configuration file> : file containing run parameters.\n");
 	exit (EXIT_FAILURE);
-	break;
-      case 's':
-	/* Run serially. */
-	serial = TRUE;
-	break;
-      case 'c':
-	/* Restart from checkpoint file. */
-	strncpy (ckptfile, argv[i + 1], KMAXFILENAMELEN);
 	break;
     } else if (strlen (configfile) != 0) {
       /* Unexpected argument; we already have a configuration file! Punt. */
@@ -402,6 +405,9 @@ main (int argc, char *argv[])
     } else {
       /* Got a configuration file name. Copy it. */
       strncpy (configfile, argv[i], KMAXFILENAMELEN);
+      getcwd (currentWorkingDirectory, sizeof(currentWorkingDirectory));
+      sprintf(messageBuffer, "Running in [%s] w/config [%s]", currentWorkingDirectory, configfile);
+      swLogMsg(messageBuffer);
     }
     i++;
   }
@@ -705,65 +711,6 @@ main (int argc, char *argv[])
 
   /* conditional likelihood storage space for each individual */
   allocate_likelihood_space (&pedigreeSet, modelType.numMarkers + 1);
-
-  /* The following segments are for RADSMM - store lods in binary format to a file */
-#if FALSE
-  /* Set up storage before you try to write LOD scores. */
-  KASSERT ((RADSMM_setup_init (&header, 255) == 0),
-	   "RADSMM initialization error.\n");
-
-  /* Set up the analysis type. */
-  KASSERT ((RADSMM_setup_type (&header,
-			       ((modelType.type == TP) ? '2' : 'M'),
-			       ((modelType.trait ==
-				 DT) ? 'D' : ((modelType.trait ==
-					       QT) ? 'Q' : 'C')),
-			       ((modelOptions.equilibrium ==
-				 LE) ? 'N' : 'Y')) == 0),
-	   "RADSMM type initialization error.\n");
-
-  /* Set up ordering of array dimensions (TODO: check this out). */
-  KASSERT ((RADSMM_setup_ordering (&header, 'B') == 0),
-	   "RADSMM ordering initialization error.\n");
-
-  /* Set up the pedigrees. */
-  KASSERT ((RADSMM_setup_pedigree
-	    (&header, NULL, (long) pedigreeSet.numPedigree) == 0),
-	   "RADSMM pedigree initialization error.\n");
-
-  /* Set up the theta structures. */
-  KASSERT ((RADSMM_setup_theta
-	    (&header, modelRange.theta, (long) modelRange.ntheta,
-	     ((modelRange.ngender == 1) ? 'D' : 'G'))),
-	   "RADSMM theta initialization error.\n");
-
-  /* Set up the liability classes. */
-  KASSERT ((RADSMM_setup_LC (&header, modelRange.nlclass) == 0),
-	   "RADSMM liability class initialization error.\n");
-
-  /* Set up the penetrance arrays. TODO: will need work for
-   * multiallelic diseases. Here, we just assume we're dealing with
-   * DD, Dd, and dd. */
-  for (i = 0; i < modelRange.nlclass; i++)
-    KASSERT ((RADSMM_setup_penetrance (&header, i, modelRange.penet[i][0],
-				       modelRange.penet[i][1],
-				       modelRange.penet[i][2],
-				       (long) modelRange.npenet) == 0),
-	     "RADSMM penetrance initialization error.\n");
-
-  /* Gene frequencies are next. */
-  KASSERT ((RADSMM_setup_geneFreq (&header, modelRange.gfreq,
-				   (long) modelRange.ngfreq) == 0),
-	   "RADSMM gene frequency initialization error.\n");
-#endif
-
-
-
-  /**********/
-//  exit(ERROR);
-
-  /**********/
-
 
   time0 = clock ();
   time1 = clock ();
@@ -2184,7 +2131,6 @@ main (int argc, char *argv[])
     }				/* end of QT */
     time2 = clock ();
     fprintf (stderr, "MP done trait: %f\n", (double) time2 / CLOCKS_PER_SEC);
-
     if (modelOptions.polynomial == TRUE) {
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 	/* save the likelihood at trait */
@@ -2585,6 +2531,8 @@ main (int argc, char *argv[])
 	    /* ready for the alternative hypothesis */
 	    KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
 	    compute_likelihood (&pedigreeSet);
+
+	    logStatistics (&pedigreeSet, posIdx);
 
 	    /* print out some statistics under dry run */
 	    if (modelOptions.dryRun != 0) {
@@ -3004,16 +2952,17 @@ main (int argc, char *argv[])
 
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
-  swDump (overallSW);
   if (modelOptions.polynomial == TRUE)
     polyStatistics ("End of run");
+  else
+    swDumpM (overallSW);
 #ifdef DMTRACK
   swLogPeaks ();
   swDumpHeldTotals ();
   swDumpSources ();
   //  swDumpCrossModuleChunks ();
 #endif
-  swLogMsg ("finished run");
+  swLogMsg ("Finished run");
 
   /* close file pointers */
   if (modelType.type == TP) {
@@ -3022,6 +2971,27 @@ main (int argc, char *argv[])
   fclose (fpHet);
   //  fclose (fpHomo);
   return 0;
+}
+
+void
+logStatistics(PedigreeSet *pSet, int posIdx) {
+  int pedIdx, i;
+  NuclearFamily *pNucFam;
+  Pedigree *pPedigree;
+  int l = 0, nf = 0, pg = 0, sg = 0;
+  for (pedIdx = 0; pedIdx < pSet->numPedigree; pedIdx++) {
+    pPedigree = pSet->ppPedigreeSet[pedIdx];
+    l += pPedigree->numLoop;
+    nf += pPedigree->numNuclearFamily;
+    for (i = 0; i < pPedigree->numNuclearFamily; i++) {
+      pNucFam = pPedigree->ppNuclearFamilyList[i];
+      pg += pNucFam->totalNumPairGroups;
+      sg += pNucFam->totalNumSimilarPairs;
+    }
+  }
+  sprintf(messageBuffer, "At %d: p:%d, l:%d, nf:%d, pg:%d, sg:%d, n:%d",
+	  posIdx, pSet->numPedigree, l, nf, pg, sg, nodeId);
+  swLogMsg(messageBuffer);
 }
 
 void
