@@ -32,11 +32,12 @@ struct swStopwatch
 struct swStopwatch *swCreate (char *);
 void swStart (struct swStopwatch *);
 void swStop (struct swStopwatch *);
+void swDumpM (struct swStopwatch *);
 void swDump (struct swStopwatch *);
 void swReset (struct swStopwatch *);
 
 void swLogMsg (char *);
-void udpSend (char *, int, char *);
+int udpSend (char *, int, char *);
 
 void *swMalloc (size_t, char *, int);
 void *swCalloc (size_t, size_t, char *, int);

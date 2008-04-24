@@ -87,6 +87,8 @@ then #include sw.h in your source code, and link with sw.o.
 #include "hashtab.h"
 #include "lookupa.h"
 
+int currentVMK, maximumVMK = -1;
+
 /* All we do to create a new stopwatch is allocate space for the structure, 
    zero the accumulated information and return a pointer to it. */
 struct swStopwatch *
@@ -179,21 +181,45 @@ swStop (struct swStopwatch *theStopwatch)
 }
 
 void
-swDumpOutput (struct swStopwatch *theStopwatch)
+swDumpOutput (struct swStopwatch *theStopwatch, char *appendText)
 {
   char buffer[MAXUDPMSG];
-
   sprintf
     (buffer,
-     "stopwatch %s(%d) e:%lus u:%lu.%06us s:%lu.%06us, vx:%lu, ivx:%lu, sf:%lu, hf:%lu",
+     "stopwatch %s(%d) e:%lus u:%lus s:%lus, vx:%lu, ivx:%lu, sf:%lu, hf:%lu%s",
      theStopwatch->swName, theStopwatch->swStartedCount,
      theStopwatch->swAccumWallTime, theStopwatch->swAccumRU.ru_utime.tv_sec,
-     (unsigned int) theStopwatch->swAccumRU.ru_utime.tv_usec,
      theStopwatch->swAccumRU.ru_stime.tv_sec,
-     (unsigned int) theStopwatch->swAccumRU.ru_stime.tv_usec,
      theStopwatch->swAccumRU.ru_nvcsw, theStopwatch->swAccumRU.ru_nivcsw,
-     theStopwatch->swAccumRU.ru_minflt, theStopwatch->swAccumRU.ru_majflt);
+     theStopwatch->swAccumRU.ru_minflt, theStopwatch->swAccumRU.ru_majflt,
+     appendText);
   swLogMsg (buffer);
+  return;
+}
+
+void
+swDumpM (struct swStopwatch *theStopwatch)
+{
+  char memoryBuffer[MAXUDPMSG];
+
+  if (maximumVMK == -1) {
+    maximumVMK = swGetMaximumVMK ();
+    memoryBuffer[0] = 0;
+  }
+  if (maximumVMK != 0) {
+    currentVMK = swGetCurrentVMK (getpid ());
+    sprintf (memoryBuffer, ", vmG:%2.1f/%2.1f",
+	     currentVMK / (1024.0 * 1024.0),
+	     maximumVMK / (1024.0 * 1024.0));
+  }
+
+  if (theStopwatch->swRunning) {
+    swStop (theStopwatch);
+    swDumpOutput (theStopwatch, memoryBuffer);
+    swStart (theStopwatch);
+  } else {
+    swDumpOutput (theStopwatch, memoryBuffer);
+  }
   return;
 }
 
@@ -202,10 +228,10 @@ swDump (struct swStopwatch *theStopwatch)
 {
   if (theStopwatch->swRunning) {
     swStop (theStopwatch);
-    swDumpOutput (theStopwatch);
+    swDumpOutput (theStopwatch, "");
     swStart (theStopwatch);
   } else {
-    swDumpOutput (theStopwatch);
+    swDumpOutput (theStopwatch, "");
   }
   return;
 }
@@ -790,22 +816,24 @@ swFree (void *pBlock, char *fileName, int lineNo)
   return;
 }
 
-void
+int
 udpSend (char *hostName, int serverPort, char *message)
 {
   int sockfd;
   struct sockaddr_in their_addr;	// connector's address information
   struct hostent *he;
   int numbytes;
+  char *envVar;
 
-  if ((he = gethostbyname (hostName)) == NULL) {	// get the host info
-    perror ("gethostbyname");
-    return;
+  if ((he = gethostbyname (hostName)) == NULL) { /* Get the host info */
+    if ((envVar = getenv ("swLogMsgHost")) != NULL) /* Can't get out, try a local relay */
+      if ((he = gethostbyname (envVar)) == NULL)
+	return EXIT_FAILURE;
   }
 
   if ((sockfd = socket (AF_INET, SOCK_DGRAM, 0)) == -1) {
     perror ("socket");
-    return;
+    return EXIT_FAILURE;
   }
 
   their_addr.sin_family = AF_INET;	// host byte order
@@ -817,11 +845,11 @@ udpSend (char *hostName, int serverPort, char *message)
 			  (struct sockaddr *) &their_addr,
 			  sizeof their_addr)) == -1) {
     perror ("sendto");
-    return;
+    return EXIT_FAILURE;
   }
   close (sockfd);
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 void
@@ -830,8 +858,9 @@ swLogMsg (char *message)
   char messageBuffer[MAXUDPMSG];
 
   sprintf (messageBuffer, "PID: %d, %s\n", getpid (), message);
+  if (udpSend ("levi-montalcini.ccri.net", 4950, messageBuffer) ==
+      EXIT_FAILURE) strcat(messageBuffer, "-");
   fprintf (stderr, messageBuffer);
-  udpSend ("levi-montalcini.ccri.net", 4950, messageBuffer);
   return;
 }
 

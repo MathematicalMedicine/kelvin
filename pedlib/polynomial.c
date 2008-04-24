@@ -2497,9 +2497,6 @@ polynomialInitialization ()
   int i;
   char *envVar;
 
-#ifdef _OPENMP
-  swLogMsg ("Polynomial evaluation is OpenMP-enabled.");
-#endif
 #ifdef FREEDEBUG
 #warning "freePoly protection is turned on, so memory will purposefully leak!"
   swLogMsg
@@ -3272,7 +3269,7 @@ polyDynamicStatistics (char *title)
 
   fprintf (stderr, "Dynamic polynomial statistics (%s):\n", title);
 
-  swDump (overallSW);
+  swDumpM (overallSW);
 #ifdef EVALUATESW
   if (evaluatePolyCount)
     swDump (evaluatePolySW);
