@@ -199,7 +199,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
   int numRet;			/* number of items read by sscanf() */
   int pos;			/* position of the unread in the buffer */
   int numMarker;		/* number of markers we have read genotypes */
-  char tmpStr[MAX_LINE_LEN];
+  //  char tmpStr[MAX_LINE_LEN];
 
   //Pedigree *pPed = pPerson->pPedigree;
   Trait *pTrait;
@@ -208,6 +208,9 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
   int i, j;
   int ret;
   Locus *pLocus;
+  /* input allele length is limited to 7 */
+  char a1[8];
+  char a2[8];
 
   //numRet = sscanf (pLine, "%s %s %n", pPerson->sDadID, pPerson->sMomID, &pos);
   numRet = sscanf (pLine, "%s %s %n",
@@ -334,43 +337,41 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     pLocus = originalLocusList.ppLocusList[numMarker];
 
     /* read a pair of genotypes for the current marker */
-    numRet = sscanf (pLine, "%d %d %n",
-		     &pPerson->pPhenotypeList[0][numMarker],
-		     &pPerson->pPhenotypeList[1][numMarker], &pos);
+    numRet = sscanf (pLine, "%s %s %n", a1, a2, &pos);
     if (numRet != 2) {
       /* phase of alleles might be known 
        * paternal | maternal     is assumed */
-      numRet = sscanf (pLine, "%d | %d %n",
-		       &pPerson->pPhenotypeList[0][numMarker],
-		       &pPerson->pPhenotypeList[1][numMarker], &pos);
+      numRet = sscanf (pLine, "%s | %s %n", a1, a2, &pos);
       pPerson->pPhasedFlag[numMarker] = 1;
     }
     KASSERT (numRet == 2,
 	     "Line %d in pedfile %s doesn't have enough columns. Is this a post-makeped file? \n",
 	     lineNo, sPedfileName);
     /* check whether this locus is untyped */
-    if (pPerson->pPhenotypeList[0][numMarker] == 0
-	|| pPerson->pPhenotypeList[1][numMarker] == 0)
+    if (strcmp(a1, "0") == 0 || strcmp(a2, "0") == 0 || strcasecmp(a1, "X") == 0 || strcasecmp(a2, "X") == 0)
       pPerson->pTypedFlag[numMarker] = 0;
     else
       pPerson->pTypedFlag[numMarker] = 1;
 
-    if (pPerson->pPhenotypeList[0][numMarker] != 0) {
-      sprintf (tmpStr, "%d", pPerson->pPhenotypeList[0][numMarker]);
-      ret = find_allele (numMarker, tmpStr);
+    if (strcmp(a1, "0") != 0 && strcasecmp(a1, "X") != 0) {
+      ret = find_allele (numMarker, a1);
       pPerson->pPhenotypeList[0][numMarker] = ret;
       KASSERT (ret >= 0,
 	       "Line %d in pedfile %s contains a genotype with unkown allele %s at locus %s.\n",
-	       lineNo, sPedfileName, tmpStr, pLocus->sName);
+	       lineNo, sPedfileName, a1, pLocus->sName);
     }
-    if (pPerson->pPhenotypeList[1][numMarker] != 0) {
-      sprintf (tmpStr, "%d", pPerson->pPhenotypeList[1][numMarker]);
-      ret = find_allele (numMarker, tmpStr);
+    else
+      pPerson->pPhenotypeList[0][numMarker] = 0;
+
+    if (strcmp(a2, "0") != 0 && strcasecmp(a2, "X") != 0) {
+      ret = find_allele (numMarker, a2);
       pPerson->pPhenotypeList[1][numMarker] = ret;
       KASSERT (ret >= 0,
 	       "Line %d in pedfile %s contains a genotype with unkown allele %s at locus %s.\n",
-	       lineNo, sPedfileName, tmpStr, pLocus->sName);
+	       lineNo, sPedfileName, a2, pLocus->sName);
     }
+    else
+      pPerson->pPhenotypeList[1][numMarker] = 0;
 
     /* if this is X chromosome and this person is a male, then the genotype needs to be 
      * homozygous */
