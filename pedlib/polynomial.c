@@ -3294,19 +3294,19 @@ polyDynamicStatistics (char *title)
 	   sumPListExpansions, SUM_LIST_INCREASE, productPListExpansions,
 	   PRODUCT_LIST_INCREASE, functionCallPListExpansions,
 	   FUNCTIONCALL_LIST_INCREASE, containerExpansions,
-	   sizeof (Polynomial *) + sizeof (double));
+	   (unsigned long) sizeof (Polynomial *) + sizeof (double));
 
   fprintf (stderr,
 	   "List sizes: c=%lu, v=%lu, s=%lu, p=%lu, f=%lu\n",
-	   sizeof (void *) * (constantPListExpansions *
+	   (unsigned long) sizeof (void *) * (constantPListExpansions *
 			      CONSTANT_LIST_INCREASE + CONSTANT_LIST_INITIAL),
-	   sizeof (void *) * (variablePListExpansions *
+	   (unsigned long) sizeof (void *) * (variablePListExpansions *
 			      VARIABLE_LIST_INCREASE + VARIABLE_LIST_INITIAL),
-	   sizeof (void *) * (sumPListExpansions * SUM_LIST_INCREASE +
+	   (unsigned long) sizeof (void *) * (sumPListExpansions * SUM_LIST_INCREASE +
 			      SUM_LIST_INITIAL),
-	   sizeof (void *) * (productPListExpansions * PRODUCT_LIST_INCREASE +
+	   (unsigned long) sizeof (void *) * (productPListExpansions * PRODUCT_LIST_INCREASE +
 			      PRODUCT_LIST_INITIAL),
-	   sizeof (void *) * (functionCallPListExpansions *
+	   (unsigned long) sizeof (void *) * (functionCallPListExpansions *
 			      FUNCTIONCALL_LIST_INCREASE +
 			      FUNCTIONCALL_LIST_INITIAL));
 
