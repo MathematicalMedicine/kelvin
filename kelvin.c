@@ -547,6 +547,11 @@ main (int argc, char *argv[])
   /* Initialize the pedigree set datastructure and read in the pedigrees. */
   memset (&pedigreeSet, 0, sizeof (PedigreeSet));
   read_pedfile (pedfile, &pedigreeSet);
+  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+    if (pPedigree->currentLoopFlag)
+      fprintf(stderr, "Pedigree %s has at least one loop not broken yet\n", pPedigree->sPedigreeID);
+  }
 
   /* read in case control file if provided */
   if (strlen (ccfile) > 0) {
