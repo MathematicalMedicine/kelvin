@@ -8,7 +8,7 @@ Version 0.34.2
   No more misleading non-options for kelvin. Centralized dry-
   run statistic reporting regardless of run type. Alleles can
   now be represented as character strings as well as numeric
-  values.
+  values. Issue warning if there are still loops in a pedigree.
 
 Version 0.34.1a
   Numerous minor performance improvements. Fixed
