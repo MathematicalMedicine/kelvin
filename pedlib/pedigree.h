@@ -137,6 +137,8 @@ typedef struct Pedigree
   /* internal tracking for memory allocation */
   int maxNumFounderNuclearFamily;
 
+  /* 1 -f there is currently a loop in this pedigree, 0 - no loop. */
+  int currentLoopFlag;
   /* 1 - if there is loop in this pedigree   0 - no loop 
    * loop is present if there are at least two paths between any pair
    * of individuals */
