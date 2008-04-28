@@ -74,8 +74,7 @@ int setup_loop_counts (Pedigree * pPed);
 void add_loopbreaker (Pedigree * pPed, Person * pPerson);
 Person *find_original_person (Pedigree * pPed, char *sPersonID);
 Person *find_loop_breaker (Person * breaker);
-
-
+void check_for_loop(Pedigree *);
 
 /* Function to read the pedigree file - expected to be postmakeped format 
  * and load data into PedigreeSet and Person
@@ -156,6 +155,8 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	/* set up pointers in the pedigree such as first child, 
 	 * * * next paternal sibling, next maternal sibling */
 	setup_pedigree_ptrs (pCurrPedigree);
+	/* Really figure out if there is a loop */
+	check_for_loop (pCurrPedigree);
 	/* set up loop count, loop breaker count for this pedigree */
 	setup_loop_counts (pCurrPedigree);
 	/* set up nuclear families inside of this pedigree */
@@ -1419,4 +1420,54 @@ add_loopbreaker (Pedigree * pPed, Person * pPerson)
 					       (num + 1) * sizeof (Person *));
   pPed->loopBreakerList[num] = pPerson;
   pPed->numLoopBreaker++;
+}
+
+unsigned long vPedigreeAncestry[64];
+unsigned long
+getAncestryVector(int personIndex, Pedigree *pPed) {
+  int momIndex = 0, dadIndex = 0;
+  Person *pPerson, *pDad, *pMom;
+  
+  /* If we already have the vector, return it. */
+  if (vPedigreeAncestry[personIndex] && 1)
+    return vPedigreeAncestry[personIndex];
+  /* Since we don't have it, compose it from Mom's and Dad's. */
+  vPedigreeAncestry[personIndex] = 0;
+  pPerson = pPed->ppPersonList[personIndex];
+  if ((pMom = pPerson->pParents[MOM]) != NULL) {
+    momIndex = pMom->personIndex;
+    if (!(vPedigreeAncestry[momIndex] && 1))
+      getAncestryVector(momIndex, pPed);
+    vPedigreeAncestry[personIndex] = vPedigreeAncestry[momIndex];
+    vPedigreeAncestry[personIndex] |= 1 << momIndex;
+  }
+  if ((pDad = pPerson->pParents[DAD]) != NULL) {
+    dadIndex = pDad->personIndex;
+    if (!(vPedigreeAncestry[dadIndex] && 1))
+      getAncestryVector(dadIndex, pPed);
+    if ((vPedigreeAncestry[personIndex] & vPedigreeAncestry[dadIndex]) > 1)
+      pPed->currentLoopFlag = 1;
+    vPedigreeAncestry[personIndex] |= vPedigreeAncestry[dadIndex];
+    vPedigreeAncestry[personIndex] |= 1 << dadIndex;
+  }
+  /* Indicate that we have it now. */
+  vPedigreeAncestry[personIndex] |= 1;
+  return vPedigreeAncestry[personIndex];
+}
+
+void
+check_for_loop (Pedigree *pPed) {
+  int i;
+
+  /* For each parental pair, look for any common ancestors. Do it fast by
+   just populating an ancestry bit matrix and watching to see if we've
+   already set an ancestry bit earlier for this person. */
+
+  if (pPed->numPerson > 63) {
+    fprintf(stderr, "Current loop checking doesn't handle pedigrees of more than 63 individuals\n");
+    return;
+  }
+  for (i = 0; i < pPed->numPerson; i++)
+    getAncestryVector(i, pPed);
+  return;
 }
