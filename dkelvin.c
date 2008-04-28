@@ -1908,7 +1908,7 @@ main (int argc, char *argv[])
   else
     swDump (overallSW);
 #ifdef DMTRACK
-  swLogPeaks ();
+  swLogPeaks ("End of run");
   swDumpHeldTotals ();
   swDumpSources ();
   //  swDumpCrossModuleChunks ();
