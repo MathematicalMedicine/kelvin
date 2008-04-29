@@ -2,9 +2,9 @@ PD test3.ped
 MP test3.map
 MK test3.mrk
 DF test3.dat
-OF test3.lods.out
-HE test3.avghet.out
-PF test3.ppl.out
+#OF test3.lods.out
+#HE test3.avghet.out
+#PF test3.ppl.out
 PE
 SA 3
 DT
