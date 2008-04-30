@@ -3268,7 +3268,7 @@ polyDynamicStatistics (char *title)
 
   fprintf (stderr, "Dynamic polynomial statistics (%s):\n", title);
 
-  swDumpM (overallSW);
+  swDump (overallSW);
 #ifdef EVALUATESW
   if (evaluatePolyCount)
     swDump (evaluatePolySW);
