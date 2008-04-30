@@ -1422,42 +1422,46 @@ add_loopbreaker (Pedigree * pPed, Person * pPerson)
   pPed->numLoopBreaker++;
 }
 
-unsigned long vPedigreeAncestry[64];
+unsigned long ancestryVectors[64];
+unsigned long aVDoneFlag = 1UL << 63;
 unsigned long
 getAncestryVector(int personIndex, Pedigree *pPed) {
   int momIndex = 0, dadIndex = 0;
   Person *pPerson, *pDad, *pMom;
   
   /* If we already have the vector, return it. */
-  if (vPedigreeAncestry[personIndex] && 1)
-    return vPedigreeAncestry[personIndex];
+  if (ancestryVectors[personIndex] & aVDoneFlag)
+    return ancestryVectors[personIndex];
   /* Since we don't have it, compose it from Mom's and Dad's. */
-  vPedigreeAncestry[personIndex] = 0;
+  ancestryVectors[personIndex] = 0;
   pPerson = pPed->ppPersonList[personIndex];
   if ((pMom = pPerson->pParents[MOM]) != NULL) {
     momIndex = pMom->personIndex;
-    if (!(vPedigreeAncestry[momIndex] && 1))
+    if (!(ancestryVectors[momIndex] & aVDoneFlag))
       getAncestryVector(momIndex, pPed);
-    vPedigreeAncestry[personIndex] = vPedigreeAncestry[momIndex];
-    vPedigreeAncestry[personIndex] |= 1 << momIndex;
+    ancestryVectors[personIndex] = ancestryVectors[momIndex];
+    ancestryVectors[personIndex] |= 1 << momIndex;
   }
   if ((pDad = pPerson->pParents[DAD]) != NULL) {
     dadIndex = pDad->personIndex;
-    if (!(vPedigreeAncestry[dadIndex] && 1))
+    if (!(ancestryVectors[dadIndex] & aVDoneFlag))
       getAncestryVector(dadIndex, pPed);
-    if ((vPedigreeAncestry[personIndex] & vPedigreeAncestry[dadIndex]) > 1)
+    if (((ancestryVectors[personIndex] & ancestryVectors[dadIndex]) & (~aVDoneFlag)) > 1)
       pPed->currentLoopFlag = 1;
-    vPedigreeAncestry[personIndex] |= vPedigreeAncestry[dadIndex];
-    vPedigreeAncestry[personIndex] |= 1 << dadIndex;
+    ancestryVectors[personIndex] |= ancestryVectors[dadIndex];
+    ancestryVectors[personIndex] |= 1 << dadIndex;
   }
   /* Indicate that we have it now. */
-  vPedigreeAncestry[personIndex] |= 1;
-  return vPedigreeAncestry[personIndex];
+  ancestryVectors[personIndex] |= aVDoneFlag;
+  return ancestryVectors[personIndex];
 }
 
 void
 check_for_loop (Pedigree *pPed) {
   int i;
+
+  for (i=0; i<64; i++)
+    ancestryVectors[i] = 0;
 
   /* For each parental pair, look for any common ancestors. Do it fast by
    just populating an ancestry bit matrix and watching to see if we've

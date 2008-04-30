@@ -41,7 +41,7 @@ quitSignalHandler (int signal)
   if (modelOptions.polynomial == TRUE)
     polyDynamicStatistics ("Signal received");
   else
-    swDumpM (overallSW);
+    swDump (overallSW);
 #ifdef DMTRACK
   swLogPeaks ("Signal");
 #endif
@@ -286,6 +286,7 @@ main (int argc, char *argv[])
   Polynomial *initialProbPoly[3];
   Polynomial *initialProbPoly2[3];
   double initialProb[3];
+  int exitDueToLoop = FALSE;
 #ifdef _OPENMP
   char *envVar;
   int threadCount = 0;
@@ -801,9 +802,12 @@ main (int argc, char *argv[])
   read_pedfile (pedfile, &pedigreeSet);
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
     pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-    if (pPedigree->currentLoopFlag)
+    if (pPedigree->currentLoopFlag) {
       fprintf(stderr, "Pedigree %s has at least one loop not broken yet\n", pPedigree->sPedigreeID);
+      exitDueToLoop = TRUE;
+    }
   }
+  KASSERT (exitDueToLoop == FALSE, "Not all loops in pedigrees are broken.\n");
 
   /* read in case control file if provided */
   if (strlen (ccfile) > 0) {
@@ -1908,7 +1912,7 @@ main (int argc, char *argv[])
   else
     swDump (overallSW);
 #ifdef DMTRACK
-  swLogPeaks ();
+  swLogPeaks ("End of run");
   swDumpHeldTotals ();
   swDumpSources ();
   //  swDumpCrossModuleChunks ();
