@@ -3485,6 +3485,13 @@ polyStatistics (char *title)
 	   functionCallHashSize /
 	   (functionCallHashCount ? functionCallHashCount : 1));
 
+  fprintf (stderr, "Hash list size: c=%lu, v=%lu, s=%lu, p=%lu, f=%lu\n",
+	   constantHashSize * 2 * sizeof(int),
+	   variableHashSize * 2 * sizeof(int),
+	   sumHashSize * 2 * sizeof(int),
+	   productHashSize * 2 * sizeof(int),
+	   functionCallHashSize * 2 * sizeof(int));
+
   fprintf (stderr, "---\n");
   return;
 };
