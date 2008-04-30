@@ -3427,9 +3427,9 @@ polyStatistics (char *title)
   fprintf (stderr,
 	   "sizes (w/terms): c=%ld, s=%ld, p=%ld, f=%ld\n",
 	   constantSize,
-	   sumSize + (sumTerms * (sizeof (Polynomial) + sizeof (double))),
+	   sumSize + (sumTerms * (sizeof (Polynomial *) + sizeof (double))),
 	   productSize +
-	   (productTerms * (sizeof (Polynomial) + sizeof (int))),
+	   (productTerms * (sizeof (Polynomial *) + sizeof (int))),
 	   functionCallSize);
 
   if (constantCount > 0) {
