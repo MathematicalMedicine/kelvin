@@ -867,18 +867,23 @@ swLogMsg (char *message)
   return;
 }
 
+int haveVMChildRunning = FALSE;
 int swGetCurrentVMK(pid_t pid) {
   char commandString[128];
   FILE *gCFP;
-  int currentVMK;
 
   /* I've tried mallinfo and malloc_info (don't work), and mstats (DNE for Linux,
      On Crack for Mac). Help. */
 
+  if ((maximumVMK == 0) || (haveVMChildRunning))
+    return 0;
+
+  haveVMChildRunning = TRUE;
   sprintf(commandString, "pmap %d 2>/dev/null | grep 'total' | cut -c 8-23", pid);
   if ((gCFP = popen(commandString, "r")) != NULL) {
     fscanf(gCFP, "%d", &currentVMK);
     pclose(gCFP);
+    haveVMChildRunning = FALSE;
   }
   return currentVMK;
 }
@@ -888,16 +893,22 @@ int swGetMaximumVMK(void) {
   /* For Mac  char commandString[] = "sysctl hw.memsize | cut -f 2 -d ' '";
      ...so now all we need is a reliable way to get current usage. */
   FILE *gCFP;
-  int maximumVMK;
   
+  if (maximumVMK != -1)
+    return maximumVMK;
+
+  if (haveVMChildRunning)
+    return 0;
+
+  haveVMChildRunning = TRUE;
   if ((gCFP = popen(commandString, "r")) != NULL) {
     fscanf(gCFP, "%d", &maximumVMK);
     pclose(gCFP);
+    haveVMChildRunning = FALSE;
   }
-  if (swGetCurrentVMK(getpid()) > 0)
-    return (maximumVMK);
-  else
-    return (0);
+  if (swGetCurrentVMK(getpid()) <= 0)
+    maximumVMK = 0;
+  return (maximumVMK);
 }
 
 #ifdef MAIN

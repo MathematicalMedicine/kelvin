@@ -208,8 +208,7 @@ clearValidEvalFlag ()
 //polynomial sorting list.  It just compute the values of each sub polynomial recursively.  
 //A reused sub polynomial maybe repeatedly evaluated.  The efficiency is lower than the
 //function of evaluatePoly.  However, we don't need to build a sorting list of sub polynomials
-//before the polynomial can be evaluated. This cannot be safely used if polys have been freed,
-//and even if they haven't, it can become so slow you'll think the process is hung.
+//before the polynomial can be evaluated.
 ///////////////////////////////////////////////////////////////////////////////////////////////
 double
 doEvaluateValue (Polynomial * p)
@@ -3352,26 +3351,25 @@ polyDynamicStatistics (char *title)
 	   product1stTermsFreedCount);
 
   /* Now we check to see if we're thrashing... If we didn't get at least 25% CPU since the last
-     time we did statistics, we should bail. */
-  swStop (overallSW);
+     time we did statistics (provided thats at least a second ago), we should bail. */
 
-  if (lastPDSAccumWallTime == 0) {
-    lastPDSAccumWallTime = overallSW->swAccumWallTime;
-    lastPDSAccumUserTime = overallSW->swAccumRU.ru_utime.tv_sec;
-  } else {
+  if (lastPDSAccumWallTime != 0) {
     deltaAccumWallTime = overallSW->swAccumWallTime - lastPDSAccumWallTime;
     deltaAccumUserTime =
       overallSW->swAccumRU.ru_utime.tv_sec - lastPDSAccumUserTime;
     fprintf (stderr,
 	     "Overall user CPU utilization was %lus for last period of %lus, or %lu%%\n",
 	     deltaAccumUserTime, deltaAccumWallTime,
-	     100 * deltaAccumUserTime / deltaAccumWallTime);
-    if (100 * deltaAccumUserTime / deltaAccumWallTime < 25) {
+	     100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1));
+    if ((deltaAccumUserTime != 0) &&
+	(100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < 25)) {
       fprintf (stderr, "We're thrashing, time to abort!\n");
       exit (EXIT_FAILURE);
     }
   }
-  swStart (overallSW);
+  lastPDSAccumWallTime = overallSW->swAccumWallTime;
+  lastPDSAccumUserTime = overallSW->swAccumRU.ru_utime.tv_sec;
+
   return;
 }
 
@@ -3393,6 +3391,7 @@ polyStatistics (char *title)
 
   polyDynamicStatistics (title);
 
+  /* VM calls have been known to block, so we're not going to do this in-line
   if (swGetMaximumVMK () != 0) {
     if (swGetCurrentVMK (getpid ()) > (0.95 * swGetMaximumVMK ())) {
       fprintf (stderr,
@@ -3400,6 +3399,8 @@ polyStatistics (char *title)
       return;
     }
   }
+  */
+
   fprintf (stderr, "Calculated polynomial statistics (%s):\n", title);
 
   constantSize = constantCount * sizeof (Polynomial);
@@ -3485,6 +3486,7 @@ polyStatistics (char *title)
 	   (functionCallHashCount ? functionCallHashCount : 1));
 
   fprintf (stderr, "---\n");
+  return;
 };
 
 void
@@ -3493,6 +3495,8 @@ printAllPolynomials ()
   int i, j;
 
   fprintf (stderr, "All Polynomials (from hash):\n");
+
+  /*
   if (constantCount > 0) {
     fprintf (stderr, "All %d constants:\n", constantCount);
     for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
@@ -3510,6 +3514,8 @@ printAllPolynomials ()
     }
     fprintf (stderr, "\n");
   }
+  */
+
   if (variableCount > 0) {
     fprintf (stderr, "All %d variables:\n", variableCount);
     for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
