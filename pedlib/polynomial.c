@@ -3287,7 +3287,7 @@ polyDynamicStatistics (char *title)
 	   functionCallCount, functionHashHits);
 
   fprintf (stderr,
-	   "List expansions(@size): c=%d(@%d), v=%d(@%d), s=%d(@%d), p=%d(@%d), f=%d(@%d), tcc=%d(@%lu)\n",
+	   "Lists: expansions(@size): c=%d(@%d), v=%d(@%d), s=%d(@%d), p=%d(@%d), f=%d(@%d), tcc=%d(@%lu)\n",
 	   constantPListExpansions, CONSTANT_LIST_INCREASE,
 	   variablePListExpansions, VARIABLE_LIST_INCREASE,
 	   sumPListExpansions, SUM_LIST_INCREASE, productPListExpansions,
@@ -3296,18 +3296,12 @@ polyDynamicStatistics (char *title)
 	   (unsigned long) sizeof (Polynomial *) + sizeof (double));
 
   fprintf (stderr,
-	   "List sizes: c=%lu, v=%lu, s=%lu, p=%lu, f=%lu\n",
-	   (unsigned long) sizeof (void *) * (constantPListExpansions *
-			      CONSTANT_LIST_INCREASE + CONSTANT_LIST_INITIAL),
-	   (unsigned long) sizeof (void *) * (variablePListExpansions *
-			      VARIABLE_LIST_INCREASE + VARIABLE_LIST_INITIAL),
-	   (unsigned long) sizeof (void *) * (sumPListExpansions * SUM_LIST_INCREASE +
-			      SUM_LIST_INITIAL),
-	   (unsigned long) sizeof (void *) * (productPListExpansions * PRODUCT_LIST_INCREASE +
-			      PRODUCT_LIST_INITIAL),
-	   (unsigned long) sizeof (void *) * (functionCallPListExpansions *
-			      FUNCTIONCALL_LIST_INCREASE +
-			      FUNCTIONCALL_LIST_INITIAL));
+	   "...sizes: c=%lu, v=%lu, s=%lu, p=%lu, f=%lu\n",
+	   (unsigned long) sizeof (void *) * constantListLength,
+	   (unsigned long) sizeof (void *) * variableListLength,
+	   (unsigned long) sizeof (void *) * sumListLength,
+	   (unsigned long) sizeof (void *) * productListLength,
+	   (unsigned long) sizeof (void *) * functionCallListLength);
 
   fprintf (stderr,
 	   "NodeId: %d Hash: max len=%d, size=%lu, SPL: eff=%lu%%, avg len=%lu\n",
@@ -3473,7 +3467,7 @@ polyStatistics (char *title)
     }
   }
 
-  fprintf (stderr, "Hash length peak(avg): c=%d(%d), v=%d(%d), s=%d(%d), ",
+  fprintf (stderr, "Hash list: length peak(avg): c=%d(%d), v=%d(%d), s=%d(%d), ",
 	   constantHashPeak,
 	   constantHashSize / (constantHashCount ? constantHashCount : 1),
 	   variableHashPeak,
@@ -3485,7 +3479,7 @@ polyStatistics (char *title)
 	   functionCallHashSize /
 	   (functionCallHashCount ? functionCallHashCount : 1));
 
-  fprintf (stderr, "Hash list size: c=%lu, v=%lu, s=%lu, p=%lu, f=%lu\n",
+  fprintf (stderr, "...size: c=%lu, v=%lu, s=%lu, p=%lu, f=%lu\n",
 	   constantHashSize * 2 * sizeof(int),
 	   variableHashSize * 2 * sizeof(int),
 	   sumHashSize * 2 * sizeof(int),
