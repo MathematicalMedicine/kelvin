@@ -256,8 +256,8 @@ struct swStopwatch *internalDMSW;
    few calls and even fewer modules, so a simple ordered list and a
    binary search should suffice. */
 enum callTypes
-{ cTMalloc, ctCalloc, cTRealloc, cTFree };
-char *callTypeNames[] = { "malloc", "calloc", "realloc", "free" };
+  { cTMalloc, ctCalloc, cTReAlloc, cTReFree, cTFree };
+char *callTypeNames[] = { "malloc", "calloc", "realloc", "realloc", "free" };
 
 #define MAXMEMCHUNKSOURCECOUNT 2048
 struct memChunkSource
@@ -389,6 +389,8 @@ findOrAddSource (char *fileName, int lineNo, int callType, size_t chunkSize)
   if (result) {
     result->totalCalls++;
     result->totalBytes += chunkSize;
+    if (callType != cTFree && callType != cTReFree)
+      result->remainingBytes += chunkSize;
     return (result->entryNo);
   } else {
     if (memChunkSourceCount >= MAXMEMCHUNKSOURCECOUNT) {
@@ -396,6 +398,8 @@ findOrAddSource (char *fileName, int lineNo, int callType, size_t chunkSize)
 	       "Exceeded maximum chunkSourceCount, no more locations can be monitored\n");
       return 0;
     }
+    if (callType != cTFree && callType != cTReFree)
+      memChunkSources[memChunkSourceCount].remainingBytes = chunkSize;
     strcpy (memChunkSources[memChunkSourceCount].moduleName, fileName);
     memChunkSources[memChunkSourceCount].lineNo = lineNo;
     memChunkSources[memChunkSourceCount].callType = callType;
@@ -453,6 +457,7 @@ swAddChunk (void *chunkAddress, size_t chunkSize, int callType,
       maxRecycles = oldChunk->recycleCount;
     }
     oldChunk->chunkSize = newChunk->chunkSize;
+    oldChunk->allocSource = newChunk->allocSource;
     free (newChunk);
   }
   return;
@@ -489,7 +494,15 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
       //	       oldChunk->recycleCount);
       oldChunk->recycleCount++;
     } else {
-      oldChunk->allocSource      ;
+      int i;
+      for (i=0; i<memChunkSourceCount; i++)
+        if (memChunkSources[i].entryNo == oldChunk->allocSource) {
+//	  if (callType == cTReAlloc || callType == cTReFree)
+	    //	    fprintf(stderr, "For %s: %d, subtracting %d from %d\n",
+	    //		    fileName, lineNo, oldChunk->chunkSize, memChunkSources[i].remainingBytes);
+          memChunkSources[i].remainingBytes -= oldChunk->chunkSize;
+          break;
+        }
     }
     oldChunk->freeSource =
       findOrAddSource (fileName, lineNo, callType, -oldChunk->chunkSize);
@@ -516,35 +529,26 @@ swDumpSources ()
 	     callTypeNames[memChunkSources[i].callType],
 	     memChunkSources[i].totalCalls, memChunkSources[i].totalBytes);
   }
+  qsort (memChunkSources, ++memChunkSourceCount,
+         sizeof (struct memChunkSource), compareSourcesByName);
 }
 
 void
 swDumpHeldTotals ()
 {
-  struct memChunk *chunk = NULL;
   int i;
-
-  fprintf (stderr, "Top 20 lines still holding memory:\n");
-  qsort (memChunkSources, memChunkSourceCount, sizeof (struct memChunkSource),
-	 compareSourcesByEntryNo);
-
-  /* Now traverse our chunkHash looking for in-use chunks */
-  if (hfirst (chunkHash))
-    do {
-      chunk = (struct memChunk *) hstuff (chunkHash);
-      if ((chunk->recycleCount % 2) == 1)
-	memChunkSources[chunk->allocSource].remainingBytes += chunk->chunkSize;
-    } while (hnext (chunkHash));
-      
+  fprintf (stderr, "Top 20 still-held (net) sources out of %d total:\n",
+	   memChunkSourceCount);
   qsort (memChunkSources, memChunkSourceCount, sizeof (struct memChunkSource),
 	 compareSourcesByRemainingBytes);
-
   for (i=0; i<min(memChunkSourceCount, 20); i++) {
-    fprintf (stderr, "At %s line %d, %s still holds %ld bytes\n",
+    fprintf (stderr, "At %s line %d, %s called for net %ld bytes\n",
 	     memChunkSources[i].moduleName, memChunkSources[i].lineNo,
 	     callTypeNames[memChunkSources[i].callType],
 	     memChunkSources[i].remainingBytes);
   }
+  qsort (memChunkSources, ++memChunkSourceCount,
+         sizeof (struct memChunkSource), compareSourcesByName);
 }
 
 void
@@ -585,6 +589,8 @@ swDumpCrossModuleChunks ()
 	}
       }
     } while (hnext (chunkHash));
+  qsort (memChunkSources, ++memChunkSourceCount,
+         sizeof (struct memChunkSource), compareSourcesByName);
 }
 
 void
@@ -758,7 +764,7 @@ swRealloc (void *pBlock, size_t newSize, char *fileName, int lineNo)
   }
 
 #ifdef DMTRACK
-  oldSize = swDelChunk (pBlock, cTRealloc, fileName, lineNo);
+  oldSize = swDelChunk (pBlock, cTReFree, fileName, lineNo);
   countReallocFree += 1;
   totalReallocFree += oldSize;
   currentAlloc -= oldSize;
@@ -794,7 +800,7 @@ swRealloc (void *pBlock, size_t newSize, char *fileName, int lineNo)
       }
     }
   }
-  swAddChunk (newBlock, newSize, cTRealloc, fileName, lineNo);
+  swAddChunk (newBlock, newSize, cTReAlloc, fileName, lineNo);
 #endif
   return (newBlock);
 }
