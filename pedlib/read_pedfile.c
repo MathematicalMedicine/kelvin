@@ -1440,7 +1440,7 @@ getAncestryVector(int personIndex, Pedigree *pPed) {
     if (!(ancestryVectors[momIndex] & aVDoneFlag))
       getAncestryVector(momIndex, pPed);
     ancestryVectors[personIndex] = ancestryVectors[momIndex];
-    ancestryVectors[personIndex] |= 1 << momIndex;
+    ancestryVectors[personIndex] |= 1UL << momIndex;
   }
   if ((pDad = pPerson->pParents[DAD]) != NULL) {
     dadIndex = pDad->personIndex;
@@ -1449,7 +1449,7 @@ getAncestryVector(int personIndex, Pedigree *pPed) {
     if (((ancestryVectors[personIndex] & ancestryVectors[dadIndex]) & (~aVDoneFlag)) > 1)
       pPed->currentLoopFlag = 1;
     ancestryVectors[personIndex] |= ancestryVectors[dadIndex];
-    ancestryVectors[personIndex] |= 1 << dadIndex;
+    ancestryVectors[personIndex] |= 1UL << dadIndex;
   }
   /* Indicate that we have it now. */
   ancestryVectors[personIndex] |= aVDoneFlag;
