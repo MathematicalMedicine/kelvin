@@ -3471,6 +3471,9 @@ polyStatistics (char *title)
       productListLength + functionCallListLength) * sizeof (void *));
 
   fprintf (stderr, "---Total data storage estimate: %.0fKb---\n", grandTotal / 1024);
+#ifdef DMTRACK
+  swDumpHeldTotals ();
+#endif
   return;
 };
 
