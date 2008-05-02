@@ -361,6 +361,9 @@ evaluateValue (Polynomial * p)
   swStart (evaluateValueSW);
 #endif
 
+  if ((evaluateValueCount & 0xFFFF) == 0)
+    fprintf (stderr, "%d polynomial value calculations performed\n", evaluateValueCount);
+
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
 
@@ -2276,6 +2279,9 @@ evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 #ifdef EVALUATESW
   swStart (evaluatePolySW);
 #endif
+
+  if ((evaluatePolyCount & 0xFFFF) == 0)
+    fprintf (stderr, "%d polynomial evaluations performed\n", evaluatePolyCount);
 
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Starting evaluatePoly...\n");
