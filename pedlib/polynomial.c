@@ -3374,6 +3374,7 @@ void
 polyStatistics (char *title)
 {
   long constantSize, variableSize, sumSize, productSize, functionCallSize;
+  double grandTotal;
   int sumTerms = 0, productTerms = 0, maxSumTerms = 0, maxProductTerms = 0;
   int constantHashSize = 0, constantHashPeak = 0,
     variableHashSize = 0, variableHashPeak = 0,
@@ -3457,12 +3458,19 @@ polyStatistics (char *title)
       functionCallHashPeak = functionCallHash[i].num;
   }
   fprintf (stderr, "Hash: size(peak length): c=%d(%d), v=%d(%d), s=%d(%d), p=%d(%d), f=%d(%d)\n",
-	   
 	   constantHashSize, constantHashPeak, variableHashSize, variableHashPeak,
 	   sumHashSize, sumHashPeak, productHashSize, productHashPeak,
 	   functionCallHashSize, functionCallHashPeak);
 
-  fprintf (stderr, "---\n");
+  grandTotal = constantHashSize + variableHashSize + sumHashSize + productHashSize +
+    functionCallHashSize + constantSize + variableSize +
+    sumSize + (sumTerms * (sizeof (Polynomial *) + sizeof (double))) +
+    productSize + (productTerms * (sizeof (Polynomial *) + sizeof (int))) +
+    functionCallSize + 
+    ((constantListLength + variableListLength + sumListLength +
+      productListLength + functionCallListLength) * sizeof (void *));
+
+  fprintf (stderr, "---Total data storage estimate: %.0fKb---\n", grandTotal / 1024);
   return;
 };
 
