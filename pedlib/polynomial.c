@@ -157,7 +157,7 @@ int constantPListExpansions = 0,	/* Count of constantList expansions */
 int containerExpansions = 0;	/* Count of expansions of any term-collection container.  */
 unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount =
   0, highSPLCount = 0;
-unsigned long totalHashMemory = 0;	/* Total memory used for hash table and collision lists */
+unsigned long initialHashSize = 0;	/* Total initial size of hash table and collision lists */
 
 char *polynomialVersion = "0.34.2";	/* Make this meaningful since kelvin displays it. */
 
@@ -493,7 +493,7 @@ insertHashTable (struct hashStruct *hash, int location, int key, int index)
       maxHashLength = hash->length;
     hash->key = realloc (hash->key, sizeof (int) * hash->length);
     hash->index = realloc (hash->index, sizeof (int) * hash->length);
-    totalHashMemory += HASH_TABLE_INCREASE * sizeof (int) * 2;
+    initialHashSize += HASH_TABLE_INCREASE * sizeof (int) * 2;
     if (hash->key == NULL || hash->index == NULL) {
       fprintf (stderr, "Memory allocation for hash table failed!\n");
       exit (1);
@@ -1259,8 +1259,8 @@ plusExp (int num, ...)
     exit (1);
   }
   sP->num = counterSum;
-  sP->sum = (Polynomial **) malloc (counterSum * sizeof (Polynomial *));
   sP->factor = (double *) malloc (counterSum * sizeof (double));
+  sP->sum = (Polynomial **) malloc (counterSum * sizeof (Polynomial *));
   if (sP->sum == NULL || sP->factor == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,
 	     __LINE__);
@@ -2702,7 +2702,7 @@ polynomialInitialization ()
 
   }
 
-  totalHashMemory =
+  initialHashSize =
     (sizeof (struct hashStruct) +
      (2 * HASH_TABLE_INCREASE * sizeof (int))) * (CONSTANT_HASH_SIZE +
 						  VARIABLE_HASH_SIZE +
@@ -3304,8 +3304,8 @@ polyDynamicStatistics (char *title)
 	   (unsigned long) sizeof (void *) * functionCallListLength);
 
   fprintf (stderr,
-	   "NodeId: %d Hash: max len=%d, size=%lu, SPL: eff=%lu%%, avg len=%lu\n",
-	   nodeId, maxHashLength, totalHashMemory,
+	   "NodeId: %d Hash: max len=%d, init size=%lu, SPL: eff=%lu%%, avg len=%lu\n",
+	   nodeId, maxHashLength, initialHashSize,
 	   100 * (lowSPLCount +
 		  highSPLCount) / (totalSPLCalls ? totalSPLCalls : 1),
 	   totalSPLLengths / (totalSPLCalls ? totalSPLCalls : 1));
@@ -3375,11 +3375,11 @@ polyStatistics (char *title)
 {
   long constantSize, variableSize, sumSize, productSize, functionCallSize;
   int sumTerms = 0, productTerms = 0, maxSumTerms = 0, maxProductTerms = 0;
-  int constantHashCount = 0, constantHashSize = 0, constantHashPeak = 0,
-    variableHashCount = 0, variableHashSize = 0, variableHashPeak = 0,
-    sumHashCount = 0, sumHashSize = 0, sumHashPeak = 0,
-    productHashCount = 0, productHashSize = 0, productHashPeak = 0,
-    functionCallHashCount = 0, functionCallHashSize = 0,
+  int constantHashSize = 0, constantHashPeak = 0,
+    variableHashSize = 0, variableHashPeak = 0,
+    sumHashSize = 0, sumHashPeak = 0,
+    productHashSize = 0, productHashPeak = 0,
+    functionCallHashSize = 0,
     functionCallHashPeak = 0;
   int i;
 
@@ -3426,65 +3426,41 @@ polyStatistics (char *title)
 	   (productTerms * (sizeof (Polynomial *) + sizeof (int))),
 	   functionCallSize);
 
-  if (constantCount > 0) {
-    for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
-      constantHashCount++;
-      constantHashSize += constantHash[i].num;
-      if (constantHash[i].num > constantHashPeak)
-	constantHashPeak = constantHash[i].num;
-    }
+  constantHashSize = CONSTANT_HASH_SIZE * sizeof (struct hashStruct);
+  for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
+    constantHashSize += constantHash[i].length * 2 * sizeof (int);
+    if (constantHash[i].num > constantHashPeak)
+      constantHashPeak = constantHash[i].num;
   }
-  if (variableCount > 0) {
-    for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
-      variableHashCount++;
-      variableHashSize += variableHash[i].num;
-      if (variableHash[i].num > variableHashPeak)
-	variableHashPeak = variableHash[i].num;
-    }
+  variableHashSize = VARIABLE_HASH_SIZE * sizeof (struct hashStruct);
+  for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
+    variableHashSize += variableHash[i].length * 2 * sizeof (int);
+    if (variableHash[i].num > variableHashPeak)
+      variableHashPeak = variableHash[i].num;
   }
-  if (sumCount > 0) {
-    for (i = 0; i < SUM_HASH_SIZE; i++) {
-      sumHashCount++;
-      sumHashSize += sumHash[i].num;
-      if (sumHash[i].num > sumHashPeak)
-	sumHashPeak = sumHash[i].num;
-    }
+  sumHashSize = SUM_HASH_SIZE * sizeof (struct hashStruct);
+  for (i = 0; i < SUM_HASH_SIZE; i++) {
+    sumHashSize += sumHash[i].length * 2 * sizeof (int);
+    if (sumHash[i].num > sumHashPeak)
+      sumHashPeak = sumHash[i].num;
   }
-  if (productCount > 0) {
-    for (i = 0; i < PRODUCT_HASH_SIZE; i++) {
-      productHashCount++;
-      productHashSize += productHash[i].num;
-      if (productHash[i].num > productHashPeak)
-	productHashPeak = productHash[i].num;
-    }
+  productHashSize = PRODUCT_HASH_SIZE * sizeof (struct hashStruct);
+  for (i = 0; i < PRODUCT_HASH_SIZE; i++) {
+    productHashSize += productHash[i].length * 2 * sizeof (int);
+    if (productHash[i].num > productHashPeak)
+      productHashPeak = productHash[i].num;
   }
-  if (functionCallCount > 0) {
-    for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++) {
-      functionCallHashCount++;
-      functionCallHashSize += functionCallHash[i].num;
-      if (functionCallHash[i].num > functionCallHashPeak)
-	functionCallHashPeak = functionCallHash[i].num;
-    }
+  functionCallHashSize = FUNCTIONCALL_HASH_SIZE * sizeof (struct hashStruct);
+  for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++) {
+    functionCallHashSize += functionCallHash[i].length * 2 * sizeof (int);
+    if (functionCallHash[i].num > functionCallHashPeak)
+      functionCallHashPeak = functionCallHash[i].num;
   }
-
-  fprintf (stderr, "Hash list: length peak(avg): c=%d(%d), v=%d(%d), s=%d(%d), ",
-	   constantHashPeak,
-	   constantHashSize / (constantHashCount ? constantHashCount : 1),
-	   variableHashPeak,
-	   variableHashSize / (variableHashCount ? variableHashCount : 1),
-	   sumHashPeak, sumHashSize / (sumHashCount ? sumHashCount : 1));
-  fprintf (stderr, "p=%d(%d), f=%d(%d)\n", productHashPeak,
-	   productHashSize / (productHashCount ? productHashCount : 1),
-	   functionCallHashPeak,
-	   functionCallHashSize /
-	   (functionCallHashCount ? functionCallHashCount : 1));
-
-  fprintf (stderr, "...size: c=%lu, v=%lu, s=%lu, p=%lu, f=%lu\n",
-	   constantHashSize * 2 * sizeof(int),
-	   variableHashSize * 2 * sizeof(int),
-	   sumHashSize * 2 * sizeof(int),
-	   productHashSize * 2 * sizeof(int),
-	   functionCallHashSize * 2 * sizeof(int));
+  fprintf (stderr, "Hash: size(peak length): c=%d(%d), v=%d(%d), s=%d(%d), p=%d(%d), f=%d(%d)\n",
+	   
+	   constantHashSize, constantHashPeak, variableHashSize, variableHashPeak,
+	   sumHashSize, sumHashPeak, productHashSize, productHashPeak,
+	   functionCallHashSize, functionCallHashPeak);
 
   fprintf (stderr, "---\n");
   return;
