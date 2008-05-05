@@ -1538,7 +1538,7 @@ main (int argc, char *argv[])
 	    }
 
 	    fprintf (fpHet,
-		     "(%6.4f, %6.4f) %6d %10.8e %8.4f %6.4f %5.2f %6.4f %6.4f ",
+		     "(%6.4f, %6.4f) %6d %10.6e %8.4f %6.4f %5.2f %6.4f %6.4f ",
 		     theta[0], theta[1],
 		     modelRange.nalpha *
 		     tp_result[dprimeIdx][thetaInd][modelRange.
@@ -2854,7 +2854,7 @@ main (int argc, char *argv[])
       penIdx = mp_result[posIdx].max_penIdx;
       paramIdx = mp_result[posIdx].max_paramIdx;
       thresholdIdx = mp_result[posIdx].max_thresholdIdx;
-      fprintf (fpHet, "\t %f  %6.4f %10.8e(%d) %10.6f %f %f ",
+      fprintf (fpHet, "\t %f  %6.4f %10.6e(%d) %10.6f %f %f ",
 	       traitPos, ppl, avgLR,
 	       mp_result[posIdx].lr_count, log10 (max), alphaV, gfreq);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
