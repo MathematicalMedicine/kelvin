@@ -9,6 +9,8 @@ Version 0.34.2
   run statistic reporting regardless of run type. Alleles can
   now be represented as character strings as well as numeric
   values. Issue warning if there are still loops in a pedigree.
+  Changed avgLR precision in avghet.out to 6 places to right
+  of decimal instead of 8.
 
 Version 0.34.1a
   Numerous minor performance improvements. Fixed
