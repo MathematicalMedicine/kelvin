@@ -1,0 +1,9 @@
+PID: 6161, kelvin V0.34.2, likelihood V0.34.2, locus V0.32.4, polynomial V0.34.2
+($Id: kelvin.c 438 2008-04-30 17:36:12Z whv001 $)
+PID: 6161, OpenMP-enabled w/0 threads.
+To force a dump of stats (at some risk), type CTRL-\ or type "kill -3 6161".
+PID: 6161, In /export/home/whv001/kelvin/test-suite/regression/mlt-peds_pe w/kelvin.conf
+polynomialScale is 1 (1-10, 1 is default)
+!!!!!!!!!!!The Computation is done in polynomial mode!!!!!!!!!!!!!!!
+locus.c (411): Only 3 of 5 required markers found in file markers.dat.
+PID: 6161, Exiting
