@@ -159,7 +159,7 @@ unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount =
   0, highSPLCount = 0;
 unsigned long initialHashSize = 0;	/* Total initial size of hash table and collision lists */
 
-char *polynomialVersion = "0.34.2";	/* Make this meaningful since kelvin displays it. */
+char *polynomialVersion = "$Id$";	/* Make this meaningful since kelvin displays it. */
 
 /* Both of the following are set by initialization to value of environment variable of same name.
    They control diagnostic action in a manner not permitted by other approaches since they can
