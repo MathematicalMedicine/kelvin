@@ -72,6 +72,7 @@ exit_kelvin ()
     kill (childPID, SIGKILL);	/* Sweep away any errant children */
 }
 
+char *programVersion = "V0.34.2";
 char *kelvinVersion = "$Id$";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
@@ -328,9 +329,13 @@ main (int argc, char *argv[])
 
   /* Annouce ourselves for performance tracking. */
   char currentWorkingDirectory[MAXSWMSG-32];
-  sprintf (messageBuffer, "kelvin V0.34.2 built %s %s\n\t%s\n\t%s\n\t%s\n",
-	   kelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
+  sprintf (messageBuffer, "kelvin %s built %s %s",
+	   programVersion, __DATE__, __TIME__);
   swLogMsg (messageBuffer);
+  swLogMsg (kelvinVersion);
+  swLogMsg (likelihoodVersion);
+  swLogMsg (locusVersion);
+  swLogMsg (polynomialVersion);
 
 #ifdef _OPENMP
   if ((envVar = getenv ("OMP_NUM_THREADS")) != NULL)
@@ -474,8 +479,10 @@ main (int argc, char *argv[])
   fpHet = fopen (avghetfile, "w");
   KASSERT (fpHet != NULL, "Error in opening file %s for write.\n",
 	   avghetfile);
+  //  fprintf (fpHet, "# Version %s\n", programVersion);
   if (modelType.type == TP) {
     fpPPL = fopen (pplfile, "w");
+    //    fprintf (fpPPL, "# Version %s\n", programVersion);
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
     fprintf (fpPPL, "%4s %15s %9s %6s ", "CHR", "MARKER", "cM", "PPL");
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
@@ -486,10 +493,9 @@ main (int argc, char *argv[])
   }
   if (modelOptions.polynomial == TRUE) {
     polynomialInitialization ();
-    fprintf (stderr,
-	     "!!!!!!!!!!!The Computation is done in polynomial mode!!!!!!!!!!!!!!!\n");
+    swLogMsg ("Computation is done in polynomial mode");
   } else {
-    fprintf (stderr, "Polynomial is off!\n");
+    swLogMsg ("Computation is done in non-polynomial (iterative) mode");
   }
 
   /* Read in the map file. */

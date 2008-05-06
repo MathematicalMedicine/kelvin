@@ -75,7 +75,8 @@ exit_kelvin ()
     kill (childPID, SIGKILL);	/* Sweep away any errant children */
 }
 
-char *dkelvinVersion = "0.34.2";
+char *programVersion = "V0.34.2";
+char *dkelvinVersion = "$Id$";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
 void logStatistics(PedigreeSet *pSet, int posIdx);
@@ -515,11 +516,13 @@ main (int argc, char *argv[])
 
   /* Annouce ourselves for performance tracking. */
   char currentWorkingDirectory[MAXSWMSG-32];
-
-  sprintf (messageBuffer,
-	   "dkelvin V%s, likelihood V%s, locus V%s, polynomial V%s\n($Id$)",
-	   dkelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
+  sprintf (messageBuffer, "dkelvin %s built %s %s",
+	   programVersion, __DATE__, __TIME__);
   swLogMsg (messageBuffer);
+  swLogMsg (kelvinVersion);
+  swLogMsg (likelihoodVersion);
+  swLogMsg (locusVersion);
+  swLogMsg (polynomialVersion);
 
 #ifdef _OPENMP
   if ((envVar = getenv ("OMP_NUM_THREADS")) != NULL)
@@ -722,13 +725,16 @@ main (int argc, char *argv[])
   fpHet = fopen (avghetfile, "w");
   KASSERT (fpHet != NULL,
 	   "Error in opening file Theta result file for write.\n");
+  //  fprintf (fpHet, "# Version %s\n", programVersion);
 
   if (print_point_flag)
     fphlod = fopen ("hlod.pts", "w");
+  //  fprintf (fphlod, "# Version %s\n", programVersion);
 
 
   if (modelType.type == TP) {
     fpPPL = fopen (pplfile, "w");
+  //  fprintf (fpPPL, "# Version %s\n", programVersion);
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
     fprintf (fpPPL, "%4s %15s %9s %6s ", "CHR", "MARKER", "cM", "PPL");
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
