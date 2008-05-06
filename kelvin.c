@@ -329,9 +329,8 @@ main (int argc, char *argv[])
   /* Annouce ourselves for performance tracking. */
   char currentWorkingDirectory[MAXSWMSG-32];
 
-  sprintf (messageBuffer,
-	   "kelvin V%s, likelihood V%s, locus V%s, polynomial V%s\n($Id$)",
-	   kelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
+  sprintf (messageBuffer, "kelvin V%s (svn $Id$)",
+	   kelvinVersion);
   swLogMsg (messageBuffer);
 
 #ifdef _OPENMP
