@@ -1422,12 +1422,24 @@ add_loopbreaker (Pedigree * pPed, Person * pPerson)
   pPed->numLoopBreaker++;
 }
 
+
+/* Return an ancestry vector for the specified individual.
+   Recursively compose it if it's not already defined. The
+   ancestry vector is a bit vector with bits set for each
+   ancestral personIndex. We are currently limited, therefore
+   to 63 individuals per pedigree (we use the 64th bit to
+   indicate if the vector is complete).
+   If, in the process of composing a vector, we find that 
+   the Mom's vector and Dad's vector have common bits set, 
+   then they've got a common ancestor, and that constitutes 
+   a loop. */
 unsigned long ancestryVectors[64];
 unsigned long aVDoneFlag = 1UL << 63;
 unsigned long
 getAncestryVector(int personIndex, Pedigree *pPed) {
-  int momIndex = 0, dadIndex = 0;
+  int momIndex = 0, dadIndex = 0, i;
   Person *pPerson, *pDad, *pMom;
+  unsigned long commonAncestors;
   
   /* If we already have the vector, return it. */
   if (ancestryVectors[personIndex] & aVDoneFlag)
@@ -1446,8 +1458,17 @@ getAncestryVector(int personIndex, Pedigree *pPed) {
     dadIndex = pDad->personIndex;
     if (!(ancestryVectors[dadIndex] & aVDoneFlag))
       getAncestryVector(dadIndex, pPed);
-    if (((ancestryVectors[personIndex] & ancestryVectors[dadIndex]) & (~aVDoneFlag)) > 1)
+    if ((commonAncestors = ((ancestryVectors[personIndex] & ancestryVectors[dadIndex]) & (~aVDoneFlag))) > 1) {
       pPed->currentLoopFlag = 1;
+      fprintf (stderr, "Pedigree %s, individual %s has Mom %s and Dad %s with common ancestor(s) ",
+	       pPed->sPedigreeID, pPerson->sID, pMom->sID, pDad->sID);
+      for (i=0; i<64; i++) {
+	if (commonAncestors & 1)
+	  fprintf (stderr, "%s ", pPed->ppPersonList[i]->sID);
+	commonAncestors = commonAncestors >> 1;
+      }
+      fprintf (stderr, "\n");
+    }
     ancestryVectors[personIndex] |= ancestryVectors[dadIndex];
     ancestryVectors[personIndex] |= 1UL << dadIndex;
   }
