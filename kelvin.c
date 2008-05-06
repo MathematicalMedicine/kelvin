@@ -72,7 +72,7 @@ exit_kelvin ()
     kill (childPID, SIGKILL);	/* Sweep away any errant children */
 }
 
-char *kelvinVersion = "0.34.2";
+char *kelvinVersion = "$Id$";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
 void logStatistics(PedigreeSet *pSet, int posIdx);
@@ -328,9 +328,8 @@ main (int argc, char *argv[])
 
   /* Annouce ourselves for performance tracking. */
   char currentWorkingDirectory[MAXSWMSG-32];
-
-  sprintf (messageBuffer, "kelvin V%s (svn $Id$)",
-	   kelvinVersion);
+  sprintf (messageBuffer, "kelvin V0.34.2 built %s %s\n\t%s\n\t%s\n\t%s\n",
+	   kelvinVersion, likelihoodVersion, locusVersion, polynomialVersion);
   swLogMsg (messageBuffer);
 
 #ifdef _OPENMP

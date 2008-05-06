@@ -18,7 +18,7 @@
  * 
  * */
 
-char *locusVersion = "0.32.4";
+char *locusVersion = "$Id$";
 
 #include <stdio.h>
 #include <stdlib.h>
