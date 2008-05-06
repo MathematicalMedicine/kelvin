@@ -519,7 +519,7 @@ main (int argc, char *argv[])
   sprintf (messageBuffer, "dkelvin %s built %s %s",
 	   programVersion, __DATE__, __TIME__);
   swLogMsg (messageBuffer);
-  swLogMsg (kelvinVersion);
+  swLogMsg (dkelvinVersion);
   swLogMsg (likelihoodVersion);
   swLogMsg (locusVersion);
   swLogMsg (polynomialVersion);
