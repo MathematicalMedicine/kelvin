@@ -1,3 +1,7 @@
+Verison 0.34.3
+  Added conditionalized dump of polynomial source parenting
+  information in DOT format for digraph generation.
+
 Version 0.34.2
   Status child no longer dies on SIGQUIT. Monitors utilization
   each cycle of poly statistics dump and bails if user CPU was
