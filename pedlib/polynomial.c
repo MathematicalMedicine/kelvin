@@ -51,6 +51,8 @@
 #include <omp.h>
 #endif
 #include "polynomial.h"
+#undef plusExp
+#undef timesExp
 //#include "gsl/gsl_sf_gamma.h"
 #include "gsl/gsl_randist.h"
 #include "gsl/gsl_cdf.h"
@@ -172,6 +174,20 @@ extern struct swStopwatch *overallSW;
 struct swStopwatch *evaluatePolySW, *evaluateValueSW;
 
 unsigned long lastPDSAccumWallTime = 0, lastPDSAccumUserTime = 0;	/* For thrashing check. */
+
+#ifdef DIGRAPH
+struct polySource
+{
+  int entryNo;
+  int lineNo;
+  char moduleName[255];
+  unsigned char eType;
+  int totalCalls;
+  int originalChildren[MAXPOLYSOURCES];
+} polySources[MAXPOLYSOURCES];
+int polySourceCount = 0;
+int originalChildren[MAXPOLYSOURCES];
+#endif
 
 /* Clear the evaluation flag on the entire tree so we can mark
    where we've been and not retrace our steps regardless of
@@ -920,6 +936,63 @@ collectSumTerms (double **factor, Polynomial *** p, int *counter,
   }
 };
 
+#ifdef DIGRAPH
+int
+compareSourcesByName (const void *left, const void *right)
+{
+  int result;
+  struct polySource *pSLeft, *pSRight;
+
+  pSLeft = (struct polySource *) left;
+  pSRight = (struct polySource *) right;
+  if ((result = strcmp (pSLeft->moduleName, pSRight->moduleName)) == 0) {
+    result = pSLeft->lineNo - pSRight->lineNo;
+  }
+  return result;
+}
+
+int
+compareSourcesByEntryNo (const void *left, const void *right)
+{
+  struct polySource *pSLeft, *pSRight;
+
+  pSLeft = (struct polySource *) left;
+  pSRight = (struct polySource *) right;
+  return (pSLeft->entryNo - pSRight->entryNo);
+}
+
+/* Find it's source or add a new one. */
+short
+findOrAddSource (char *fileName, int lineNo, unsigned char eType)
+{
+  struct polySource target, *result;
+  int i;
+
+  strcpy (target.moduleName, fileName);
+  target.lineNo = lineNo;
+  result =bsearch (&target, polySources, polySourceCount,
+		   sizeof (struct polySource), compareSourcesByName);
+  if (result == NULL) {
+    if (polySourceCount >= MAXPOLYSOURCES) {
+      fprintf (stderr,
+               "Exceeded maximum polynomial source count, no more locations can be monitored\n");
+      return 0;
+    }
+    result = &polySources[polySourceCount];
+    strcpy (result->moduleName, fileName);
+    result->lineNo = lineNo;
+    result->entryNo = polySourceCount;
+    qsort (polySources, ++polySourceCount,
+           sizeof (struct polySource), compareSourcesByName);
+  }
+  result->eType = eType;
+  result->totalCalls++;
+  for (i=0; i<MAXPOLYSOURCES; i++) {
+    result->originalChildren[i] += originalChildren[i];
+  }
+  return (result->entryNo);
+}
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //This function generates a sum polynomial.  It accepts a group of <factor, poly> pairs. 
@@ -938,7 +1011,7 @@ collectSumTerms (double **factor, Polynomial *** p, int *counter,
 //                       freed   
 /////////////////////////////////////////////////////////////////////////////////////////////
 Polynomial *
-plusExp (int num, ...)
+plusExp (char *fileName, int lineNo, int num, ...)
 {
   int i, k, l;
   va_list args;			//parameters
@@ -968,6 +1041,10 @@ plusExp (int num, ...)
   //get the number of items for this sum from the parameter list of the function
   va_start (args, num);
 
+#ifdef DIGRAPH
+  memset (originalChildren, 0, sizeof(originalChildren));
+#endif
+
   //iterate through all the items in the parameter list
   for (i = 0; i < num; i++) {
     //get the coefficient
@@ -975,6 +1052,10 @@ plusExp (int num, ...)
 
     //get the polynomial
     p1 = va_arg (args, Polynomial *);
+
+#ifdef DIGRAPH
+    originalChildren[p1->source]++; // Bump the count of children of this subpoly source for this parent
+#endif
 
     if (polynomialDebugLevel >= 60) {
       fprintf (stderr, "In plusExp factor=%f item No. %d of %d type=%d\n", f1,
@@ -984,6 +1065,7 @@ plusExp (int num, ...)
 	fprintf (stderr, "\n");
       }
     }
+
     //Record the first operand of the plus operation.  Often, the first operand and the result are the
     //same variable, which refers to the case of p = p + ..., therefore, when we build a new polynomial
     //for the result of the plus operation, the polynomial that represents the first operand of the
@@ -1274,11 +1356,14 @@ plusExp (int num, ...)
     sP->sum[i] = pSum[i];
     sP->sum[i]->valid |= VALID_REF_FLAG;
   }
-  //assign values to some attributes of the sum polynomial
+  // Assign values to some attributes of the sum polynomial
   rp->e.s = sP;
   rp->key = key;
   rp->valid = 0;
   rp->count = 0;
+#ifdef DIGRAPH
+  rp->source = findOrAddSource (fileName, lineNo, T_SUM);
+#endif
 
   //Insert the new built polynomial in sum list
 
@@ -1457,7 +1542,7 @@ collectProductTerms (int **exponent, Polynomial *** p, int *counter,
 ////////////////////////////////////////////////////////////////////////////////////////
 
 Polynomial *
-timesExp (int num, ...)
+timesExp (char *fileName, int lineNo, int num, ...)
 {
   int i, k, l, counterProd;	//i,k and l are loop variables, counterProd is the number of terms in the new product polynomial
   va_list args;			//parameters
@@ -1473,7 +1558,7 @@ timesExp (int num, ...)
   int flag;			//if the new product polynomial can replace an existing one
   int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Valid;
 
-  //sub index in a hash bucket, index in the hash table, index in the polynomial list, unique id, key, number of times refered of the
+//sub index in a hash bucket, index in the hash table, index in the polynomial list, unique id, key, number of times refered of the
   //polynomial to be replaced
   enum expressionType p0EType;
 
@@ -1482,6 +1567,10 @@ timesExp (int num, ...)
   counter_s2 = 0;
   counter_f2 = 0;
 
+#ifdef DIGRAPH
+  memset (originalChildren, 0, sizeof(originalChildren));
+#endif
+
   //Get the number of operands for this times operation
   va_start (args, num);
 
@@ -1489,6 +1578,10 @@ timesExp (int num, ...)
   for (i = 0; i < num; i++) {
     //get the polynomial
     p1 = va_arg (args, Polynomial *);
+
+#ifdef DIGRAPH
+    originalChildren[p1->source]++; // Bump the count of children of this subpoly source for this parent
+#endif
 
     //get the exponent
     e1 = va_arg (args, int);
@@ -1667,7 +1760,7 @@ timesExp (int num, ...)
     }
     //If the factor is not 1, then the result polynomial is a sum polynomial
     else {
-      rp = plusExp (1, factor, pProd[0], 0);
+      rp = plusExp (fileName, lineNo, 1, factor, pProd[0], 0);
       if (polynomialDebugLevel >= 60)
 	fprintf (stderr, "Returning via plusExp\n");
       productReturn1TermSumCount++;
@@ -1731,7 +1824,7 @@ timesExp (int num, ...)
 		if (polynomialDebugLevel >= 60)
 		  fprintf (stderr,
 			   "Returning existing product via plusExp\n");
-		return plusExp (1, factor, productList[pIndex], 0);
+		return plusExp (fileName, lineNo, 1, factor, productList[pIndex], 0);
 	      }
 	    }			//end of if
 	  }			//end of if
@@ -1838,6 +1931,9 @@ timesExp (int num, ...)
     rp->key = key;
     rp->valid = 0;
     rp->count = 0;
+#ifdef DIGRAPH
+    rp->source = findOrAddSource (fileName, lineNo, T_PRODUCT);
+#endif
 
     //After the new polynomial is built, it is recorded in the product polynomial list
     if (productCount >= productListLength) {
@@ -1940,7 +2036,7 @@ timesExp (int num, ...)
       productNon1FactorIsSumCount++;
       if (polynomialDebugLevel >= 60)
 	fprintf (stderr, "Returning new product via plusExp\n");
-      return plusExp (1, factor, rp, 0);
+      return plusExp (fileName, lineNo, 1, factor, rp, 0);
     }
   }
 };
@@ -3043,6 +3139,50 @@ printAllVariables ()
   fprintf (stderr, "\n");
 }
 
+#ifdef DIGRAPH
+void
+dumpSourceParenting ()
+{
+  int i, j;
+  qsort (polySources, polySourceCount,
+	 sizeof (struct polySource), compareSourcesByEntryNo);
+  FILE *diGraph;
+  
+  if ((diGraph = fopen("pSP.dot","w")) == NULL) {
+    perror ("Cannot open polynomial source parenting digraph file\n");
+    exit(EXIT_FAILURE);
+  }
+  fprintf (diGraph, "digraph G {\n");
+  for (i=0; i<MAXPOLYSOURCES; i++)
+    if (polySources[i].lineNo != 0)
+      fprintf (diGraph, "%d [label=\"%s(%d)\"];\n", i, polySources[i].moduleName, polySources[i].lineNo);
+  for (i=0; i<MAXPOLYSOURCES; i++) {
+    if (polySources[i].lineNo != 0) {
+      for (j=0; j<MAXPOLYSOURCES; j++) {
+	if (i != j) {
+	  if (polySources[i].originalChildren[j] != 0)
+	    fprintf (diGraph, "%d -> %d [label=\"%d\"];\n", i, j,
+		     polySources[i].originalChildren[j]);
+	}
+      }
+    }
+  }
+  fprintf (diGraph, "}\n");
+  fclose (diGraph);
+}
+
+void
+dumpPolySources ()
+{
+  int i;
+  for (i=0; i<polySourceCount; i++) {
+    fprintf (stderr, "From %s line %d, %d type %d polynomials\n",
+	     polySources[i].moduleName, polySources[i].lineNo,
+	     polySources[i].totalCalls, polySources[i].eType);
+  }
+}
+#endif
+
 #define MAXPOLYTIERS 16
 int polyTiers[MAXPOLYTIERS][5];
 int peakPolyTiers;
@@ -3050,7 +3190,7 @@ char *polyTypes[] = { "constant", "variable", "sum", "product", "function" };
 
 /* It might not be a sumPoly, but we can treat it as one. */
 void
-traversePoly (Polynomial * p, int currentTier)
+doPrintSummaryPoly (Polynomial * p, int currentTier)
 {
   int i;
 
@@ -3069,28 +3209,28 @@ traversePoly (Polynomial * p, int currentTier)
     break;
   case T_SUM:
     for (i = 0; i < p->e.s->num; i++) {
-      traversePoly (p->e.s->sum[i], currentTier + 1);
+      doPrintSummaryPoly (p->e.s->sum[i], currentTier + 1);
     }
     break;
   case T_PRODUCT:
     for (i = 0; i < p->e.p->num; i++) {
-      traversePoly (p->e.p->product[i], currentTier + 1);
+      doPrintSummaryPoly (p->e.p->product[i], currentTier + 1);
     }
     break;
   case T_FUNCTIONCALL:
     for (i = 0; i < p->e.f->paraNum; i++) {
-      traversePoly (p->e.f->para[i], currentTier + 1);
+      doPrintSummaryPoly (p->e.f->para[i], currentTier + 1);
     }
     break;
   case T_FREED:
     fprintf (stderr,
-	     "In traversePoly, evil caller is trying to use a polynomial that was freed:\n");
+	     "In doPrintSummaryPoly, evil caller is trying to use a polynomial that was freed:\n");
     expTermPrinting (stderr, p, 1);
     exit (1);
     break;
   default:
     fprintf (stderr,
-	     "In traversePoly, unknown expression type: [%d], exiting!\n",
+	     "In doPrintSummaryPoly, unknown expression type: [%d], exiting!\n",
 	     p->eType);
     exit (1);
   }
@@ -3108,7 +3248,7 @@ printSummaryPoly (Polynomial * p)
   clearValidEvalFlag ();
   memset (polyTiers, 0, sizeof (polyTiers));
   peakPolyTiers = 0;
-  traversePoly (p, 0);
+  doPrintSummaryPoly (p, 0);
   for (i = 0; i <= peakPolyTiers; i++) {
     fprintf (stderr, "Tier %d:", i);
     int firstPrint = 1;

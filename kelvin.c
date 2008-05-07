@@ -2966,6 +2966,11 @@ main (int argc, char *argv[])
   fprintf (stderr, "Computation time:  %fs \n",
 	   (double) (time2 - time0) / CLOCKS_PER_SEC);
 
+#ifdef DIGRAPH
+  if (modelOptions.polynomial == TRUE)
+    dumpSourceParenting ();
+#endif
+
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
   if (modelOptions.polynomial == TRUE)

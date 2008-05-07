@@ -1,3 +1,4 @@
+#undef DIGRAPH
 
 /**********************************************************************
  * Copyright 2008, Nationwide Children's Research Institute.  
@@ -184,6 +185,13 @@ struct functionPoly
   char *name;			//function name
 };
 
+/* Track the full source code module name and line number of calls to create
+   polynomials so that we only have to store an index (unsigned char) with 
+   the polynomial itself to know it's origin. */
+#ifdef DIGRAPH
+#define MAXPOLYSOURCES 256
+#endif
+
 //This structure represents a general polynomial.
 //A polynomial has a unique id, an polynomial type (eType),
 //a value, and the pointer that refers the specific 
@@ -197,6 +205,9 @@ typedef struct polynomial
   unsigned short count;		// Hold reference count
   unsigned char valid;		// Preservation flag(s)
   unsigned char eType;		//polynomial type: 
+#ifdef DIGRAPH
+  unsigned char source;		// Index of entry in polySources
+#endif
   double value;			//value saves the value of the polynomial
   //
   //Following is the answer to the question "why do we need constant polynomials instead of constants directly?"
@@ -283,10 +294,12 @@ struct polynomial *constantExp (double con);
 struct polynomial *variableExp (double *vD, int *vI, char vType,
 				char name[10]);
 //constructor of a sum polynomial
-struct polynomial *plusExp (int num, ...);
+struct polynomial *plusExp (char *fileName, int lineNo, int num, ...);
+#define plusExp(num, ...) plusExp(__FILE__, __LINE__, num, __VA_ARGS__)
 
 //constructor of a product polynomial
-struct polynomial *timesExp (int num, ...);
+struct polynomial *timesExp (char *fileName, int lineNo, int num, ...);
+#define timesExp(num, ...) timesExp(__FILE__, __LINE__, num, __VA_ARGS__)
 
 //constructor of a functionCall polynomial
 struct polynomial *functionCallExp (int num, ...);
@@ -365,5 +378,8 @@ void freeKeptPolys ();
 void holdAllPolys ();
 void expTermPrinting (FILE *, struct polynomial *, int);
 void printAllPolynomials ();
+#ifdef DIGRAPH
+void dumpSourceParenting ();
+#endif
 
 #endif
