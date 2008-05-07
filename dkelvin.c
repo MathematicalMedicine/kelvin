@@ -1911,6 +1911,11 @@ main (int argc, char *argv[])
 	   (double) (time1 - time0) / CLOCKS_PER_SEC,
 	   (double) (time2 - time1) / CLOCKS_PER_SEC);
 
+#ifdef DIGRAPH
+  if (modelOptions.polynomial == TRUE)
+    dumpSourceParenting ();
+#endif
+
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
   if (modelOptions.polynomial == TRUE)
