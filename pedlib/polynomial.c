@@ -175,7 +175,7 @@ struct swStopwatch *evaluatePolySW, *evaluateValueSW;
 
 unsigned long lastPDSAccumWallTime = 0, lastPDSAccumUserTime = 0;	/* For thrashing check. */
 
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
 struct polySource
 {
   int entryNo;
@@ -936,7 +936,7 @@ collectSumTerms (double **factor, Polynomial *** p, int *counter,
   }
 };
 
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
 int
 compareSourcesByName (const void *left, const void *right)
 {
@@ -1041,7 +1041,7 @@ plusExp (char *fileName, int lineNo, int num, ...)
   //get the number of items for this sum from the parameter list of the function
   va_start (args, num);
 
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
   memset (originalChildren, 0, sizeof(originalChildren));
 #endif
 
@@ -1053,7 +1053,7 @@ plusExp (char *fileName, int lineNo, int num, ...)
     //get the polynomial
     p1 = va_arg (args, Polynomial *);
 
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
     originalChildren[p1->source]++; // Bump the count of children of this subpoly source for this parent
 #endif
 
@@ -1361,7 +1361,7 @@ plusExp (char *fileName, int lineNo, int num, ...)
   rp->key = key;
   rp->valid = 0;
   rp->count = 0;
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
   rp->source = findOrAddSource (fileName, lineNo, T_SUM);
 #endif
 
@@ -1567,7 +1567,7 @@ timesExp (char *fileName, int lineNo, int num, ...)
   counter_s2 = 0;
   counter_f2 = 0;
 
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
   memset (originalChildren, 0, sizeof(originalChildren));
 #endif
 
@@ -1579,7 +1579,7 @@ timesExp (char *fileName, int lineNo, int num, ...)
     //get the polynomial
     p1 = va_arg (args, Polynomial *);
 
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
     originalChildren[p1->source]++; // Bump the count of children of this subpoly source for this parent
 #endif
 
@@ -1931,7 +1931,7 @@ timesExp (char *fileName, int lineNo, int num, ...)
     rp->key = key;
     rp->valid = 0;
     rp->count = 0;
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
     rp->source = findOrAddSource (fileName, lineNo, T_PRODUCT);
 #endif
 
@@ -2229,9 +2229,6 @@ buildPolyList ()
 {
   struct polyList *l;
 
-  /* Clear all of the VALID_EVAL_FLAGs */
-  clearValidEvalFlag ();
-
   l = (struct polyList *) malloc (sizeof (struct polyList));
   if (l == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,
@@ -2352,6 +2349,9 @@ doPolyListSorting (Polynomial * p, struct polyList *l)
 
 void polyListSorting (Polynomial * p, struct polyList *l) {
   polyListSortingCount++;
+  //  writePolyDigraph(p);
+  /* Clear all of the VALID_EVAL_FLAGs */
+  clearValidEvalFlag ();
   doPolyListSorting(p, l);
 }
 
@@ -3139,7 +3139,7 @@ printAllVariables ()
   fprintf (stderr, "\n");
 }
 
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
 void
 dumpSourceParenting ()
 {
@@ -3188,7 +3188,6 @@ int polyTiers[MAXPOLYTIERS][5];
 int peakPolyTiers;
 char *polyTypes[] = { "constant", "variable", "sum", "product", "function" };
 
-/* It might not be a sumPoly, but we can treat it as one. */
 void
 doPrintSummaryPoly (Polynomial * p, int currentTier)
 {
@@ -3267,6 +3266,83 @@ printSummaryPoly (Polynomial * p)
   }
   fprintf (stderr, "---\n");
 }
+
+void
+doWritePolyDigraph (Polynomial * p, FILE *diGraph)
+{
+  int i;
+
+  if (p->valid & VALID_EVAL_FLAG)
+    return;
+  p->valid |= VALID_EVAL_FLAG;
+
+  switch (p->eType) {
+  case T_CONSTANT:
+    fprintf (diGraph, "%d [label=\"%G\"];\n", p->id, p->value);
+    break;
+  case T_VARIABLE:
+    fprintf (diGraph, "%d [label=\"%s\"];\n", p->id, p->e.v->vName);
+    break;
+  case T_SUM:
+    fprintf (diGraph, "%d [label=\"+\"];\n", p->id);
+    for (i = 0; i < p->e.s->num; i++) {
+      doWritePolyDigraph (p->e.s->sum[i], diGraph);
+      fprintf (diGraph, "%d -> %d;\n", p->id, p->e.s->sum[i]->id);
+    }
+    break;
+  case T_PRODUCT:
+    fprintf (diGraph, "%d [label=\"*\"];\n", p->id);
+    for (i = 0; i < p->e.p->num; i++) {
+      doWritePolyDigraph (p->e.p->product[i], diGraph);
+      fprintf (diGraph, "%d -> %d;\n", p->id, p->e.p->product[i]->id);
+    }
+    break;
+  case T_FUNCTIONCALL:
+    fprintf (diGraph, "%d [label=\"fn\"];\n", p->id);
+    for (i = 0; i < p->e.f->paraNum; i++) {
+      doWritePolyDigraph (p->e.f->para[i], diGraph);
+      fprintf (diGraph, "%d -> %d;\n", p->id, p->e.f->para[i]->id);
+    }
+    break;
+  case T_FREED:
+    fprintf (stderr,
+	     "In doWritePolyDigraph, evil caller is trying to use a polynomial that was freed:\n");
+    expTermPrinting (stderr, p, 1);
+    exit (1);
+    break;
+  default:
+    fprintf (stderr,
+	     "In doWritePolyDigraph, unknown expression type: [%d], exiting!\n",
+	     p->eType);
+    exit (1);
+  }
+}
+
+void
+writePolyDigraph (Polynomial * p)
+{
+  FILE *diGraph;
+  char fileName[32];
+
+  sprintf (fileName, "pD_%d.dot", p->id);
+  if ((diGraph = fopen(fileName,"w")) == NULL) {
+    perror ("Cannot open polynomial digraph file\n");
+    exit(EXIT_FAILURE);
+  }
+  fprintf (diGraph, "digraph G {\n");
+
+  clearValidEvalFlag ();
+
+  doWritePolyDigraph (p, diGraph);
+
+  fprintf (diGraph, "}\n");
+  fclose (diGraph);
+}
+
+
+
+
+
 
 void
 expPrinting (Polynomial * p)
