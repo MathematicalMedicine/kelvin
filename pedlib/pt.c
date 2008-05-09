@@ -23,9 +23,10 @@ struct swStopwatch *overallSW;
 
 #define TRUE 1==1
 #define FALSE !TRUE
+#define MAXHANDLE 32
 
 struct handleInfo {
-  char handle[32];
+  char handle[MAXHANDLE];
   double value;
   struct polynomial *pP;
 } hIList[1024];
@@ -33,6 +34,8 @@ int hI = 0;
 
 char iB[256];
 int preExisting = FALSE;
+
+FILE *responseFile = NULL;
 
 int compareHandles (const void *left, const void *right) {
   int result;
@@ -47,6 +50,8 @@ struct handleInfo *getHandle(FILE *inputFile, FILE *outputFile, char *type) {
   fprintf(outputFile, "%s > ", type);
   fgets(target.handle, sizeof(target.handle), inputFile);
   target.handle[strlen(target.handle)-1] = 0;
+  if (responseFile != NULL)
+    fprintf(responseFile, "%s\n", target.handle);
   result = bsearch (&target, hIList, hI, sizeof (struct handleInfo), compareHandles);
   if (result)
     preExisting = TRUE;
@@ -64,10 +69,12 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
   int i, freeFlag;
   double fO1, fO2;
   int eO1, eO2;
-  char *promptString = "C/V/S/P/E/#/%%/?/q> ";
+  char *promptString = "C/V/S/P/E/G/#/%%/?/Q> ";
 
   fprintf(outputFile, promptString);
   while (fgets(iB, sizeof(iB), inputFile) != NULL) {
+    if (responseFile != NULL)
+      fprintf(responseFile, "%s", iB);
     switch (toupper(iB[0])) {
     case 'Q':			/* Quit! */
       exit(EXIT_SUCCESS);
@@ -88,21 +95,25 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       if (!preExisting) {
         fprintf(outputFile,"Value> ");
         pHI->value = atof(fgets(iB, sizeof(iB), inputFile));
+	if (responseFile != NULL)
+	  fprintf(responseFile, "%s", iB);
         pHI->pP = constantExp(pHI->value);
       } else
-        fprintf(outputFile,"Can't overwrite existing poly\n");
+        fprintf(stderr,"Can't overwrite existing poly\n");
       break;
     case 'V':			/* Add a variable polynomial */
       pHI = getHandle(inputFile, outputFile,"variable poly name (case-sensistive)");
       if (!preExisting)
         pHI->pP = variableExp(&pHI->value, 0, 'D', pHI->handle);
       else
-        fprintf(outputFile,"Can't overwrite existing poly\n");
+        fprintf(stderr,"Can't overwrite existing poly\n");
       break;
     case 'S':			/* Add a 2-operand sum polynomial */
       pHI = getHandle(inputFile, outputFile,"result poly name");
       fprintf(outputFile,"Factor of 1st operand> ");
       fO1 = atof(fgets(iB, sizeof(iB), inputFile));
+      if (responseFile != NULL)
+	fprintf(responseFile, "%s", iB);
       if (preExisting) {
         fprintf(outputFile,"Assuming 1st operand same as result\n");
         pHIO1 = pHI;
@@ -111,12 +122,14 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
         pHIO1 = getHandle(inputFile, outputFile,"1st operand poly name");
         freeFlag = FALSE;
 	if (!preExisting) {
-	  fprintf(outputFile,"Can't use undefined poly name for 1st\n");
+	  fprintf(stderr,"Can't use undefined poly name for 1st\n");
 	  break;
 	}
       }
       fprintf(outputFile,"Factor of 2nd operand> ");
       fO2 = atof(fgets(iB, sizeof(iB), inputFile));
+      if (responseFile != NULL)
+	fprintf(responseFile, "%s", iB);
       pHIO2 = getHandle(inputFile, outputFile,"2nd operand poly name");
       if (!preExisting) {
 	printf("Can't use undefined poly name for 2nd\n");
@@ -140,13 +153,17 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       }
       fprintf(outputFile,"Exponent of %s> ", pHIO1->handle);
       eO1 = atoi(fgets(iB, sizeof(iB), inputFile));
+      if (responseFile != NULL)
+	fprintf(responseFile, "%s", iB);
       pHIO2 = getHandle(inputFile, outputFile,"2nd operand poly name");
       if (!preExisting) {
-	fprintf(outputFile,"Can't use undefined poly name\n");
+	fprintf(stderr,"Can't use undefined poly name\n");
 	break;
       }
       fprintf(outputFile,"Exponent of %s> ", pHIO2->handle);
       eO2 = atoi(fgets(iB, sizeof(iB), inputFile));
+      if (responseFile != NULL)
+	fprintf(responseFile, "%s", iB);
       pHI->pP = timesExp(2, pHIO1->pP, eO1, pHIO2->pP, eO2, freeFlag);
       break;
     case 'F':
@@ -157,16 +174,37 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
     case 'E':			/* Evaluate the polynomial */
       pHI = getHandle(inputFile, outputFile," poly to evaluate");
       if (!preExisting) {
-	fprintf(outputFile, "Can't evaluate undefined poly\n");
+	fprintf(stderr, "Can't evaluate undefined poly\n");
 	break;
       }
       for (i=0;i<hI;i++) {
 	if (hIList[i].pP->eType == T_VARIABLE) {
 	  fprintf(outputFile,"Value for %s> ", hIList[i].handle);
 	  hIList[i].value = atof(fgets(iB, sizeof(iB), inputFile));
+	  if (responseFile != NULL)
+	    fprintf(responseFile, "%s", iB);
 	}
       }
-      fprintf(outputFile, "=%G\n", evaluateValue(pHI->pP));
+      fprintf(stdout, "=%G\n", evaluateValue(pHI->pP));
+      break;
+    case 'G':			/* Graph the polynomial */
+      pHI = getHandle(inputFile, outputFile," poly to evaluate");
+      if (!preExisting) {
+	fprintf(stderr, "Can't graph undefined poly\n");
+	break;
+      }
+      writePolyDigraph(pHI->pP);
+      fprintf(outputFile, "Dot-format digraph written to pD_%d.dot\n", pHI->pP->id);
+      break;
+    default:
+      fprintf(stderr, "One of:\n"
+	      "C/V/S/P - create a Constant/Variable/Sum/Product poly\n"
+	      "E - evaluate a poly\n"
+	      "G - generate a digraph of a poly\n"
+	      "%% - display poly statistics\n"
+	      "? - print all polys\n"
+	      "Q or <EOF> - quit\n");
+      break;
     }
     fprintf(outputFile, promptString);
   }
@@ -191,7 +229,12 @@ int main(int argc, char *argv[]) {
       return(1);
     }
   }
+  if ((responseFile = fopen("pt.log","w")) == NULL) {
+    perror("Cannot open response log file");
+    return(1);
+  }
   loopReading(stdin, stderr);
+  fclose(responseFile);
   swStop(overallSW);
   swDump(overallSW);
 
