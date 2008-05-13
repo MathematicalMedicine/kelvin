@@ -28,6 +28,9 @@ char *likelihoodVersion = "$Id$";
 #include "likelihood.h"
 #include "genotype_elimination.h"
 #include "polynomial.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 /* this is for working out loop breaker's multilocus genotypes */
 Genotype **pTempGenoVector;
@@ -251,34 +254,16 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   pPedigreeList->likelihood = 1;
   pPedigreeList->log10Likelihood = 0;
 
-  /* loop over pedigrees in the data set */
-  for (i = 0; i < pPedigreeList->numPedigree; i++) {
-    pPedigree = pPedigreeList->ppPedigreeSet[i];
-
-    if (pPedigree->load_flag == 0) {
-
-      if (modelOptions.polynomial == TRUE) {
+  if (modelOptions.polynomial == TRUE) {
+    /* First build all of the pedigrees */
+    for (i = 0; i < pPedigreeList->numPedigree; i++) {
+      pPedigree = pPedigreeList->ppPedigreeSet[i];
+      if (pPedigree->load_flag == 0) {
 	if (pPedigree->likelihoodPolynomial == NULL) {
-	  /*
-	   * only build likelihood polynomial once, if
-	   * the ptr is not NULL, it means the
-	   * polynomial has been constructed
-	   */
-	  //fprintf(stderr, "The polynomial building for this pedigree should be only once\n");
-	  /*
-	   * initialize likelihood space for each
-	   * pedigree
-	   */
 	  initialize_multi_locus_genotype (pPedigree);
-	  //fprintf(stderr, "Start polynomial building\n");
 	  status = compute_pedigree_likelihood (pPedigree);
-	  //fprintf(stderr, "holdPoly for the pedigree polynomial\n");
-	  //expTermPrinting(stderr, pPedigree->likelihoodPolynomial, 1);
-	  //fprintf(stderr, "\n");
 	  holdPoly (pPedigree->likelihoodPolynomial);
-	  //fprintf(stderr, "freeKeptPolys after likelihood build and hold for pedigree\n");
 	  freeKeptPolys ();
-	  //              printAllPolynomials();
 	  pPedigree->likelihoodPolyList = buildPolyList ();
 	  polyListSorting (pPedigree->likelihoodPolynomial,
 			   pPedigree->likelihoodPolyList);
@@ -288,15 +273,27 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 		     (double) time2 / CLOCKS_PER_SEC);
 	  }
 	}
-	/* evaluate likelihood */
-	evaluatePoly (pPedigree->likelihoodPolynomial,
-		      pPedigree->likelihoodPolyList, &pPedigree->likelihood);
-	//	pPedigree->likelihood = evaluateValue (pPedigree->likelihoodPolynomial);
-      } else {
+      }
+    }
+    /* Now evaluate them all */
+#ifdef _OPENMP
+#pragma omp parallel for private(pPedigree)
+#endif
+    for (i = 0; i < pPedigreeList->numPedigree; i++) {
+      pPedigree = pPedigreeList->ppPedigreeSet[i];
+      evaluatePoly (pPedigree->likelihoodPolynomial,
+		    pPedigree->likelihoodPolyList,
+		    &pPedigree->likelihood);
+    }
+  }
+  /* Now (optional non-poly) and incorporate results */
+  for (i = 0; i < pPedigreeList->numPedigree; i++) {
+    pPedigree = pPedigreeList->ppPedigreeSet[i];
+    if (pPedigree->load_flag == 0) {
+      if (modelOptions.polynomial == FALSE) {
 	initialize_multi_locus_genotype (pPedigree);
 	status = compute_pedigree_likelihood (pPedigree);
-      }
-
+      }	
       if (modelOptions.dryRun == 0) {
 	if (pPedigree->likelihood == 0.0) {
 	  KLOG (LOGLIKELIHOOD, LOGWARNING,

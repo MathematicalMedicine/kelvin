@@ -2368,8 +2368,7 @@ evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
   struct sumPoly *sP;
   struct productPoly *pP;
   register int i, j;
-  double pV, re;
-  int pE;
+  double pV;
 
   evaluatePolyCount++;
 #ifdef EVALUATESW
@@ -2410,58 +2409,46 @@ evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 
       //Sum up all the items in a sum
     case T_SUM:
-      p->value = 0;
+      pV = 0;
       sP = p->e.s;
       for (i = 0; i < sP->num; i++) {
 	if (sP->factor[i] == 1)
-	  p->value += sP->sum[i]->value;
+	  pV += sP->sum[i]->value;
 	else
-	  p->value += sP->sum[i]->value * sP->factor[i];
+	  pV += sP->sum[i]->value * sP->factor[i];
       }
+      p->value = pV;
       break;
 
-      //Multify all the items
+      //Multiply all the items
     case T_PRODUCT:
-      p->value = 1;
       pP = p->e.p;
+      pV = 1;
       for (i = 0; i < pP->num; i++) {
-
-	pV = pP->product[i]->value;
-	pE = pP->exponent[i];
-
-	switch (pE) {
+	switch (pP->exponent[i]) {
 	case 1:
-	  re = pV;
+	  pV *= pP->product[i]->value;
 	  break;
 	case 2:
-	  re = pV * pV;
+	  pV *= pP->product[i]->value * pP->product[i]->value;
 	  break;
 	case 3:
-	  re = pV * pV * pV;
+	  pV *= pP->product[i]->value * pP->product[i]->value * pP->product[i]->value;
 	  break;
 	case 4:
-	  re = pV * pV;
-	  re = re * re;
-	  break;
-	case 5:
-	  re = pV * pV;
-	  re = re * re;
-	  re = re * pV;
-	  break;
-	case 6:
-	  re = pV * pV * pV;
-	  re = re * re;
+	  pV *= pP->product[i]->value * pP->product[i]->value *
+	    pP->product[i]->value *  pP->product[i]->value;
 	  break;
 	default:
-	  re = pow (pV, pE);
+	  pV *= pow (pP->product[i]->value, pP->exponent[i]);
 	  break;
 	}
-	p->value *= re;
       }
+      p->value = pV;
       break;
 
-      //Function calls are evaluated by calling the refered functions.
-      //The refered function must be included in the linked library.  
+      //Function calls are evaluated by calling the referred functions.
+      //The referred function must be included in the linked library.  
       //Otherwise, the program will exit. 
     case T_FUNCTIONCALL:
       if (strcmp (p->e.f->name, "log10") == 0) {
