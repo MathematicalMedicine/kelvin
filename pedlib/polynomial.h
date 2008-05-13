@@ -1,4 +1,4 @@
-#undef DIGRAPH
+#undef SOURCEDIGRAPH
 
 /**********************************************************************
  * Copyright 2008, Nationwide Children's Research Institute.  
@@ -188,7 +188,7 @@ struct functionPoly
 /* Track the full source code module name and line number of calls to create
    polynomials so that we only have to store an index (unsigned char) with 
    the polynomial itself to know it's origin. */
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
 #define MAXPOLYSOURCES 256
 #endif
 
@@ -232,7 +232,7 @@ typedef struct polynomial
 #define VALID_KEEP_FLAG 2	/* Weaker than HOLD, only kept until a freeKeptPolys() call */
 #define VALID_REF_FLAG 4	/* Weakest of all, but keeps 1st freeing on-track */
 
-//List is for polynomail evaluation.  When we evaluate a polynomial,
+//List for polynomial evaluation.  When we evaluate a polynomial,
 //it is possible that we evaluate only some parts of it because the
 //other parts have been evaluated when other polynomials are evaluated.
 //List is a structure that records the sub polynomials that need evaluation
@@ -378,8 +378,9 @@ void freeKeptPolys ();
 void holdAllPolys ();
 void expTermPrinting (FILE *, struct polynomial *, int);
 void printAllPolynomials ();
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
 void dumpSourceParenting ();
 #endif
+void writePolyDigraph (Polynomial *);
 
 #endif
