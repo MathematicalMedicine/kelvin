@@ -1,4 +1,5 @@
 
+#undef FAKEEVALUATE
 /**********************************************************************
  * Copyright 2008, Nationwide Children's Research Institute.
  * All rights reserved.
@@ -281,9 +282,13 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 #endif
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
+#ifdef FAKEEVALUATE
+      pPedigree->likelihood = .05;
+#else
       evaluatePoly (pPedigree->likelihoodPolynomial,
 		    pPedigree->likelihoodPolyList,
 		    &pPedigree->likelihood);
+#endif
     }
   }
   /* Now (optional non-poly) and incorporate results */
