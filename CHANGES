@@ -1,6 +1,7 @@
 Verison 0.34.3
   Added conditionalized dump of polynomial source parenting
-  information in DOT format for digraph generation.
+  information in DOT format for digraph generation. Evaluation
+  now multi-threaded. Uses drop-in memory allocator.
 
 Version 0.34.2
   Status child no longer dies on SIGQUIT. Monitors utilization
