@@ -18,8 +18,10 @@ CC := gcc
 CFLAGS := -Wall -O3
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas
 
-#CFLAGS += -fopenmp # Uncomment BOTH of these if you have an OpenMP-capable compiler...
-#LDFLAGS += -fopenmp # ...and want to use multiple threads for evaluations.
+CFLAGS += -fopenmp # Uncomment BOTH of these if you have an OpenMP-capable compiler...
+LDFLAGS += -fopenmp # ...and want to use multiple threads for evaluations.
+#CFLAGS += -DDMUSE # For our own static memory management
+#LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator
 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 

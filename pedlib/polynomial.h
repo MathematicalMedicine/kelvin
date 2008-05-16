@@ -205,7 +205,7 @@ typedef struct polynomial
   unsigned short count;		// Hold reference count
   unsigned char valid;		// Preservation flag(s)
   unsigned char eType;		//polynomial type: 
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
   unsigned char source;		// Index of entry in polySources
 #endif
   double value;			//value saves the value of the polynomial

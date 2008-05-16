@@ -478,9 +478,9 @@ main (int argc, char *argv[])
 	if (parentPID == 1)
 	  exit (EXIT_SUCCESS);
 	currentVMK = swGetCurrentVMK (parentPID);
-	fprintf (stderr, "%lus, %dKb (%2d%% of %2.1fGb)\n",
+	fprintf (stderr, "%lus, %dKb (%.1f%% of %.1fGb)\n",
 		 time (NULL) - startTime,
-		 currentVMK, (currentVMK * 100) / maximumVMK,
+		 currentVMK, currentVMK / (maximumVMK / 100.0),
 		 maximumVMK / (1024.0 * 1024.0));
       }
     }
@@ -530,7 +530,14 @@ main (int argc, char *argv[])
   sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", threadCount);
   swLogMsg (messageBuffer);
 #endif
-
+#ifdef FAKEEVALUATE
+  swLogMsg
+    ("Polynomial evaluation is being SKIPPED FOR TESTING, results will be wrong!");
+#endif
+#ifdef DMUSE
+  swLogMsg
+    ("Experimental static memory handling enabled!");
+#endif
 #ifdef DMTRACK
   swLogMsg
     ("Dynamic memory usage dumping is turned on, so performance will be poor!");
@@ -1911,7 +1918,7 @@ main (int argc, char *argv[])
 	   (double) (time1 - time0) / CLOCKS_PER_SEC,
 	   (double) (time2 - time1) / CLOCKS_PER_SEC);
 
-#ifdef DIGRAPH
+#ifdef SOURCEDIGRAPH
   if (modelOptions.polynomial == TRUE)
     dumpSourceParenting ();
 #endif
@@ -1922,6 +1929,10 @@ main (int argc, char *argv[])
     polyStatistics ("End of run");
   else
     swDump (overallSW);
+#ifdef DMUSE
+  fprintf (stderr, "Missed/Used %d/%d 24s, %d/%d 48s, %d/%d 100s\n",
+	  missed24s, used24s, missed48s, used48s, missed100s, used100s);
+#endif
 #ifdef DMTRACK
   swLogPeaks ("End of run");
   swDumpHeldTotals ();
