@@ -13,7 +13,8 @@ LIBDIR=/usr/local/lib
 CC := gcc
 CFLAGS := -Wall
 CFLAGS += -g -DDEBUG
-CFLAGS += -pg -DGPROF  # For gprof, the definition permits notification of the user
+#CFLAGS += -DDMUSE
+#CFLAGS += -pg -DGPROF -fno-inline  # For gprof, the definition permits notification of the user
 #CFLAGS += -fprofile-arcs -ftest-coverage -DGCOV # For gcov
 #CFLAGS += -DDMTRACK # For our own memory tracking
 
