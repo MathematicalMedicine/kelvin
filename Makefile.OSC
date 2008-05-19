@@ -17,12 +17,13 @@ VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
 
 CC := gcc
-#CFLAGS := -Wall -O3
-CFLAGS := -g -DDEBUG
+CFLAGS := -Wall -O3
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lptmalloc3 -lped -lutils -lgsl -lgslcblas -lm
 
 CFLAGS += -fopenmp # Uncomment BOTH of these if you have an OpenMP-capable compiler...
 LDFLAGS += -fopenmp # ...and want to use multiple threads for evaluations.
+#CFLAGS += -DDMUSE # For our own static memory management
+#LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator
 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
