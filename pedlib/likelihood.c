@@ -281,13 +281,15 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 #endif
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
+      if (pPedigree->load_flag == 0) {
 #ifdef FAKEEVALUATE
-      pPedigree->likelihood = .05;
+	pPedigree->likelihood = .05;
 #else
-      evaluatePoly (pPedigree->likelihoodPolynomial,
-		    pPedigree->likelihoodPolyList,
-		    &pPedigree->likelihood);
+	evaluatePoly (pPedigree->likelihoodPolynomial,
+		      pPedigree->likelihoodPolyList,
+		      &pPedigree->likelihood);
 #endif
+      }
     }
   }
   /* Now (optional non-poly) and incorporate results */
