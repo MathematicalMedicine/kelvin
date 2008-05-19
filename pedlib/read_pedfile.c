@@ -1433,13 +1433,13 @@ add_loopbreaker (Pedigree * pPed, Person * pPerson)
    the Mom's vector and Dad's vector have common bits set, 
    then they've got a common ancestor, and that constitutes 
    a loop. */
-unsigned long ancestryVectors[64];
-unsigned long aVDoneFlag = 1UL << 63;
-unsigned long
+unsigned long long ancestryVectors[64];
+unsigned long long aVDoneFlag = 1ULL << 63;
+unsigned long long
 getAncestryVector(int personIndex, Pedigree *pPed) {
   int momIndex = 0, dadIndex = 0, i;
   Person *pPerson, *pDad, *pMom;
-  unsigned long commonAncestors;
+  unsigned long long commonAncestors;
   
   /* If we already have the vector, return it. */
   if (ancestryVectors[personIndex] & aVDoneFlag)
@@ -1452,7 +1452,7 @@ getAncestryVector(int personIndex, Pedigree *pPed) {
     if (!(ancestryVectors[momIndex] & aVDoneFlag))
       getAncestryVector(momIndex, pPed);
     ancestryVectors[personIndex] = ancestryVectors[momIndex];
-    ancestryVectors[personIndex] |= 1UL << momIndex;
+    ancestryVectors[personIndex] |= 1ULL << momIndex;
   }
   if ((pDad = pPerson->pParents[DAD]) != NULL) {
     dadIndex = pDad->personIndex;
@@ -1470,7 +1470,7 @@ getAncestryVector(int personIndex, Pedigree *pPed) {
       fprintf (stderr, "\n");
     }
     ancestryVectors[personIndex] |= ancestryVectors[dadIndex];
-    ancestryVectors[personIndex] |= 1UL << dadIndex;
+    ancestryVectors[personIndex] |= 1ULL << dadIndex;
   }
   /* Indicate that we have it now. */
   ancestryVectors[personIndex] |= aVDoneFlag;
