@@ -23,7 +23,7 @@ LDFLAGS += -fopenmp # ...and want to use multiple threads for evaluations.
 #CFLAGS += -DDMUSE # For our own static memory management
 #LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator
 
-export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS INCFLAGS LIBDIR INCDIR
+export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
 KOBJS = kelvin.o
 DKOBJS = dkelvin.o dcuhre.o
