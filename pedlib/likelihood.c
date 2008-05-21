@@ -285,9 +285,14 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 #ifdef FAKEEVALUATE
 	pPedigree->likelihood = .05;
 #else
+#ifdef MANYSMALLEVALUATE
+	pPedigree->likelihood =
+	  evaluateValue (pPedigree->likelihoodPolynomial);
+#else
 	evaluatePoly (pPedigree->likelihoodPolynomial,
 		      pPedigree->likelihoodPolyList,
 		      &pPedigree->likelihood);
+#endif
 #endif
       }
     }
