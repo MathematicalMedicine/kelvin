@@ -31,6 +31,22 @@ dump_lDT (double **lDT)
   return;
 }
 
+/*
+
+Save trait information in either:
+
+<results-prefix>trait-23/ped-<p>/ped-<p>_trait.tpl
+for chromosome 23, or
+<results-prefix>trait/ped-<p>/ped-<p>_trait.tpl
+for other chromosomes
+
+where:
+
+<results-prefix> is the parameter to the SR directive in the configuration file, or "./" by default.
+<p> is the pedigree ID string
+
+*/
+
 char *traitTPLFormat = "sf#f#f#f#f#f#";	/* String and six fixed vectors of doubles */
 char *traitFileFormat = "%sped-%s_trait.tpl";
 
@@ -96,6 +112,23 @@ restoreTrait (int chr23Flag, char *pedigree, double **lDT)
   tpl_free (tn);
   return 0;
 }
+
+/*
+
+Save marker information in:
+
+<results-prefix>chr-<c>/ped-<p>/chr-<c>_ped-<p>_<mk1>_<mk2>{_<mkn>...}_marker.tpl
+
+where:
+
+<results-prefix> is the parameter to the SR directive in the configuration file, or "./" by default.
+<c> is the chromosome number
+<p> is the pedigree ID string
+<mk1> is the name of the first marker
+<mk2> is the name of the second marker
+<mkn> is the name of the nth marker
+
+*/
 
 char *markerTPLFormat = "siiA(s)f";	/* String, two ints, array of string and a single float */
 char *markerFileFormat = "%schr-%d_ped-%s_";
@@ -186,6 +219,21 @@ restoreMarker (char *pedigree, int chromosome, int markerCount,
   tpl_free (tn);
   return 0;
 }
+
+/*
+
+Save alternative information in:
+
+<results-prefix>chr-<c>/ped-<p>/chr-<c>_ped-<p>/chr-<c>_ped-<p>_pos-<t>_alternative.tpl
+
+where:
+
+<results-prefix> is the parameter to the SR directive in the configuration file, or "./" by default.
+<c> is the chromosome number
+<p> is the pedigree ID string
+<t> is the trait position number
+
+*/
 
 char *alternativeTPLFormat = "siff#f#f#f#f#f#";	/* String and six fixed vectors of doubles */
 char *alternativeFileFormat = "%schr-%d_ped-%s_pos-%G_alternative.tpl";
