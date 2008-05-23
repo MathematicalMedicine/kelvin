@@ -19,6 +19,8 @@
 #include "saveResults.h"
 #include "dcuhre.h"
 
+#include "sw.h"
+
 extern Polynomial *constant1Poly;
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 struct swStopwatch *overallSW;
