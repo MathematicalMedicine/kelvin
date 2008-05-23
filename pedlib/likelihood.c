@@ -17,6 +17,7 @@ char *likelihoodVersion = "$Id$";
 #include <unistd.h>
 #include <strings.h>
 #include <string.h>
+#include <time.h>
 #include <ctype.h>
 #include <math.h>
 #include <sys/types.h>
@@ -271,6 +272,7 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	    time2 = clock ();
 	    fprintf (stderr, "Finished polynomial building: %f\n",
 		     (double) time2 / CLOCKS_PER_SEC);
+	    polyDynamicStatistics ("Post-build");
 	  }
 	}
       }
