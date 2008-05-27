@@ -356,6 +356,12 @@ doEvaluateValue (Polynomial * p)
     // log10 is for LOD score computation
     if (strcmp (fp->name, "log10") == 0)
       result = log10 (doEvaluateValue (fp->para[0]));
+    else if (strcmp (fp->name, "log") == 0)
+      result = log (doEvaluateValue (fp->para[0]));
+    else if (strcmp (fp->name, "tanh") == 0)
+      result = tanh (doEvaluateValue (fp->para[0]));
+    else if (strcmp (fp->name, "atanh") == 0)
+      result = atanh (doEvaluateValue (fp->para[0]));
     /* gsl_ran_tdist_pdf,gsl_cdf_tdist_Q,gsl_cdf_tdist_P,
        gsl_ran_ugaussian_pdf,gsl_cdf_ugaussian_Q,gsl_cdf_ugaussian_P, and
        gsl_cdf_chisq_P, gsl_cdf_chisq_Q, and gsl_ran_chisq_pdf
@@ -2455,6 +2461,12 @@ evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
     case T_FUNCTIONCALL:
       if (strcmp (p->e.f->name, "log10") == 0) {
 	p->value = log10 (p->e.f->para[0]->value);
+      } else if (strcmp (p->e.f->name, "log") == 0) {
+	p->value = log (p->e.f->para[0]->value);
+      } else if (strcmp (p->e.f->name, "tanh") == 0) {
+	p->value = tanh (p->e.f->para[0]->value);
+      } else if (strcmp (p->e.f->name, "atanh") == 0) {
+	p->value = atanh (p->e.f->para[0]->value);
       } else if (strcmp (p->e.f->name, "gsl_ran_tdist_pdf") == 0) {
 	p->value =
 	  gsl_ran_tdist_pdf (p->e.f->para[0]->value, p->e.f->para[1]->value);
@@ -3369,8 +3381,8 @@ polyDynamicStatistics (char *title)
   fprintf (stderr, "...freed=%d 1st-term freed=%d\n", productFreedCount,
 	   product1stTermsFreedCount);
 
-  /* Now we check to see if we're thrashing... If we didn't get at least 25% CPU since the last
-     time we did statistics (provided thats at least a second ago), we should bail. */
+  /* Now we check to see if we're thrashing... If we didn't get at least 10% CPU since the last
+     time we did statistics (provided that was at least a second ago), we should bail. */
 
   if (lastPDSAccumWallTime != 0) {
     deltaAccumWallTime = overallSW->swAccumWallTime - lastPDSAccumWallTime;
@@ -3381,8 +3393,8 @@ polyDynamicStatistics (char *title)
 	     deltaAccumUserTime, deltaAccumWallTime,
 	     100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1));
     if ((deltaAccumUserTime != 0) &&
-	(100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < 25)) {
-      fprintf (stderr, "We're thrashing, time to abort!\n");
+	(100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < 10)) {
+      swLogMsg ("Thrashing detected (utilization under 10%), aborting run!");
       exit (EXIT_FAILURE);
     }
   }
