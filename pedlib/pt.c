@@ -184,7 +184,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       fgets(iB, sizeof(iB), inputFile);
       iB[strlen(iB)-1] = 0;
       if (responseFile != NULL)
-	fprintf(responseFile, "%s", iB);
+	fprintf(responseFile, "%s\n", iB);
       pHI->pP = functionCallExp(2, iB, pHIO1->pP);
       break;
     case '#':			/* Comment line */
