@@ -15,8 +15,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 #include "polynomial.h"
+#include "sw.h"
 
 int polynomialScale = 1;
 struct swStopwatch *overallSW;
@@ -27,7 +29,7 @@ struct swStopwatch *overallSW;
 
 struct handleInfo {
   char handle[MAXHANDLE];
-  double value;
+  double *pValue;
   struct polynomial *pP;
 } hIList[1024];
 int hI = 0;
@@ -56,6 +58,7 @@ struct handleInfo *getHandle(FILE *inputFile, FILE *outputFile, char *type) {
   if (result)
     preExisting = TRUE;
   else {
+    hIList[hI].pValue = (double *) malloc(sizeof(double));
     strcpy(hIList[hI++].handle, target.handle);
     qsort (hIList, hI, sizeof (struct handleInfo), compareHandles);
     preExisting = FALSE;
@@ -69,7 +72,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
   int i, freeFlag;
   double fO1, fO2;
   int eO1, eO2;
-  char *promptString = "C/V/S/P/E/G/#/%%/?/Q> ";
+  char *promptString = "C/V/S/P/F/E/G/#/%%/?/Q> ";
 
   fprintf(outputFile, promptString);
   while (fgets(iB, sizeof(iB), inputFile) != NULL) {
@@ -94,17 +97,17 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       pHI = getHandle(inputFile, outputFile,"constant poly name");
       if (!preExisting) {
         fprintf(outputFile,"Value> ");
-        pHI->value = atof(fgets(iB, sizeof(iB), inputFile));
+        *pHI->pValue = atof(fgets(iB, sizeof(iB), inputFile));
 	if (responseFile != NULL)
 	  fprintf(responseFile, "%s", iB);
-        pHI->pP = constantExp(pHI->value);
+        pHI->pP = constantExp(*pHI->pValue);
       } else
         fprintf(stderr,"Can't overwrite existing poly\n");
       break;
     case 'V':			/* Add a variable polynomial */
       pHI = getHandle(inputFile, outputFile,"variable poly name (case-sensistive)");
       if (!preExisting)
-        pHI->pP = variableExp(&pHI->value, 0, 'D', pHI->handle);
+        pHI->pP = variableExp(pHI->pValue, 0, 'D', pHI->handle);
       else
         fprintf(stderr,"Can't overwrite existing poly\n");
       break;
@@ -166,7 +169,23 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
 	fprintf(responseFile, "%s", iB);
       pHI->pP = timesExp(2, pHIO1->pP, eO1, pHIO2->pP, eO2, freeFlag);
       break;
-    case 'F':
+    case 'F':			/* Add a single-operand function call polynomial */
+      pHI = getHandle(inputFile, outputFile,"result poly name");
+      if (preExisting) {
+	printf("Can't overwrite existing poly\n");
+	break;
+      }
+      pHIO1 = getHandle(inputFile, outputFile,"operand poly name");
+      if (!preExisting) {
+	printf("Can't use undefined poly name\n");
+	break;
+      }
+      fprintf(outputFile,"Function name> ");
+      fgets(iB, sizeof(iB), inputFile);
+      iB[strlen(iB)-1] = 0;
+      if (responseFile != NULL)
+	fprintf(responseFile, "%s", iB);
+      pHI->pP = functionCallExp(2, iB, pHIO1->pP);
       break;
     case '#':			/* Comment line */
       fprintf(stderr, "%s", iB);
@@ -180,9 +199,14 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       for (i=0;i<hI;i++) {
 	if (hIList[i].pP->eType == T_VARIABLE) {
 	  fprintf(outputFile,"Value for %s> ", hIList[i].handle);
-	  hIList[i].value = atof(fgets(iB, sizeof(iB), inputFile));
+	  *hIList[i].pValue = atof(fgets(iB, sizeof(iB), inputFile));
 	  if (responseFile != NULL)
 	    fprintf(responseFile, "%s", iB);
+	}
+      }
+      for (i=0;i<hI;i++) {
+	if (hIList[i].pP->eType == T_VARIABLE) {
+	  fprintf(outputFile,"Value for %s is %G\n", hIList[i].handle, *hIList[i].pValue);
 	}
       }
       fprintf(stdout, "=%G\n", evaluateValue(pHI->pP));
