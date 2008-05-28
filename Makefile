@@ -18,10 +18,13 @@ CC := gcc
 CFLAGS := -Wall -O3
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas
 
+CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
 CFLAGS += -fopenmp # Uncomment BOTH of these if you have an OpenMP-capable compiler...
 LDFLAGS += -fopenmp # ...and want to use multiple threads for evaluations.
-#CFLAGS += -DDMUSE # For our own static memory management
-#LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator
+LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator, big performance gains, especially w/OpenMP.
+#CFLAGS += -DDMUSE # For our own static memory management, not beneficial as yet.
+#CFLAGS += -DTREEEVALUATE # Use evaluateValue of tree instead of evaluatePoly of list.
+#CFLAGS += -DFAKEEVALUATE # Don't evaluate at all - use only for exercising build. Results will be wrong!
 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
