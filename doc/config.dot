@@ -1,0 +1,42 @@
+digraph kelvin_conf {
+	label="kelvin configuration paths"
+	"start" [shape=diamond, label="Start Here", height=.1, width=.1] ;
+	"eitherMM" [shape=diamond, label="", height=.1, width=.1] ;
+	"TP" [shape=ellipse, label="Two-Point\n(TP, specify Th/Tm/Tf)"] ;
+	"DTTP" [shape=ellipse, label="Dichotomous\nTrait (DT)"] ;
+	"DTMP" [shape=ellipse, label="Dichotomous\nTrait (DT)"] ;
+	"LE" [shape=ellipse, label="Linkage\nEqualibrium (LE)"] ;
+	"noMM" [shape=ellipse, label="no Marker-to-Marker\nAnalysis"] ;
+	"noCC" [shape=ellipse, label="no Case Control"] ;
+	"MP" [shape=box, label="Multi-Point\n(SA/SS, specify TL/TM)"] ;
+	"QTTP" [shape=box, label="Quantitative\nTrait (QT)"] ;
+	"QTMP" [shape=box, label="Quantitative\nTrait (QT)"] ;
+	"MP" [shape=box, label="Multi-Point\n(SA/SS, specify TL/TM)"] ;
+	"LDDTTP" [shape=box, label="Linkage\nDisequalibrium (LD)"] ;
+	"LD" [shape=box, label="Linkage\Disequalibrium (LD)"] ;
+	"MM" [shape=box, label="Marker-to-Marker\nAnalysis (MM/AM)"] ;
+	"CC" [shape=box, label="Case Control (CF)"] ;
+	"CTTP" [shape=box, label="Combined\nTrait (CT, specify TT,\nT_MIN and T_MAX)"] ;
+	"CTMP"  [shape=box, label="Combined\nTrait (CT, specify TT,\nT_MIN and T_MAX)"] ;
+
+	"start" -> "TP" ;
+	"start" -> "MP" ;
+	"TP" -> "DTTP" ;
+	"TP" -> "QTTP" ;
+	"TP" -> "CTTP" ;
+	"MP" -> "DTMP" ;
+	"MP" -> "QTMP" ;
+	"MP" -> "CTMP" ;
+	"DTTP" -> "MM" ;
+	"DTTP" -> "noMM" ;
+	"CTTP" -> "LE" ;
+	"CTTP" -> "LD" ;
+	"MM" -> "eitherMM" [arrowhead=none] ;
+	"noMM" -> "eitherMM" [arrowhead=none] ;
+	"eitherMM" -> "LE" ;
+	"eitherMM" -> "LDDTTP" ;
+	"LDDTTP" -> "CC" ;
+	"LDDTTP" -> "noCC" ;
+	"QTTP" -> "LE" ;
+	"QTTP" -> "LD" ;
+}
