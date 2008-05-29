@@ -57,7 +57,7 @@ kelvin is currently distributed as a compressed tarball of the directory hierarc
 latest release, e.g. <tt>kelvin-0.34.2.tar.gz</tt>.
 <h4>Directory Structure and Components</h4>
 <ul>
-<li><tt>&lt;RELEASE&gt;/</tt> - kelvin, dkelvin and calc_updated_ppl components. Includes normal and debug versios of the master Makefile.
+<li><tt>&lt;RELEASE&gt;/</tt> - kelvin, dkelvin and calc_updated_ppl components. Includes normal and debug versions of the master Makefile.
 kelvin is the primary linkage analysis program and the focus of this documentation. dkelvin is a variant that
 uses a multidimensional integration approach to analysis, and is still under development. calc_updated_ppl is
 a tool for combining the results of an analysis broken into separate kelvin runs.
@@ -85,7 +85,7 @@ the executable components into production.
 kelvin takes all of its configuration information from a single file specified on the command line.
 This file is composed of directives that describe the analysis to be performed, and the locations
 of supporting data files.
-Extensive information on the directives used in the kelvin configuration file is provided in doc/ReadMe.conf.
+Extensive information on the directives used in the kelvin configuration file is provided in <tt>doc/ReadMe.conf</tt>.
 It is the final authority on the behavior of the directives, and the only source of information on the
 specification of
 parameters and ranges.
@@ -108,10 +108,11 @@ be used for any analysis:
 </ul>
 
 The distribution includes subdirectories with sample configuration files for a few of
-the configuration "paths". We typically name the configuration files kelvin.conf.
+the configuration "paths". We typically name the configuration files <tt>kelvin.conf</tt>.
 These illustrate the required configuration information, and can serve as starting points for your own
 versions. Unless otherwise noted, we have externally verified the results of analysis for these tests,
-and they are provided in each directory in avghet.out-baseline and (as appropriate) ppl.out-baseline. The runtimes
+and they are provided in each directory in <tt>avghet.out-baseline</tt> and (as appropriate) 
+<tt>ppl.out-baseline</tt>. The runtimes
 listed are on an Macintosh OSX 10.4 i386 with GCC 4.0.1 (no OpenMP).
 <ul>
 <li>Two-point analysis of a dichotomous trait: <tt>&lt;RELEASE&gt;/test-suite/TP_DT_LE/</tt>, runs in 50s.
