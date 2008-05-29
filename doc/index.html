@@ -1,15 +1,20 @@
+<html>
+<head><title>kelvin ReadMe</title></head>
+<body>
+<h1>kelvin ReadMe</h1>
 <h2>INTRODUCTION</h2>
 kelvin is an ANSI C implementation of the Elston-Stewart algorithm for linkage
 analysis. It currently supports two-point and multipoint analyses, dichotomous and
 quantitative traits, linkage equalibrium and disequalibrium, case control, and many
 other options. It is copyright 2008, Nationwide Children's Research Institute. All
 rights reserved. Permission is hereby given to use this software for non-profit
-educational purposes only.
+educational purposes only. Please address any e-mail regarding kelvin to
+<a href="mailto:kelvin@nationwidechildrens.org">kelvin@nationwidechildrens.org</a>.
 <h2>BUILDING THE PROGRAMS</h2>
 <h3>Requirements</h3>
 <h4>Platforms</h4>
-kelvin is written in ANSI C and should build correctly on most platforms. 
-kelvin releases are currently tested under the following platforms:
+kelvin is written in ANSI C, with some supporting scripts in Perl.
+kelvin releases are currently tested on the following platforms:
 <ul>
 <li>Redhat Enterprise Linux x86_64 with GCC 4.1.1
 <li>Debian Linux i386 with GCC 4.1.1
@@ -17,13 +22,13 @@ kelvin releases are currently tested under the following platforms:
 <li>Macintosh OSX 10.4 PowerMac with GCC 4.0.1 (no OpenMP)
 <li>Cygwin under Windows XP i386 with GCC 3.4.4 (cygming special)
 </ul>
-We don't know of any reason why it shouldn't run on any platform supported by GNU CC and the GNU Scientific
+We don't know of any reason why kelvin shouldn't run on any platform supported by GNU CC and the GNU Scientific
 Library, so if you encounter incompatabilities, please let us know.
 
 <h4>Libraries</h4>
 kelvin currently only requires the <a href="http://www.gnu.org/software/gsl/">GNU Scientific Library</a>
-(GSL), a free numerical library for C and C++. Make a note of the location of the library and include
-files so that you can modify the kelvin Makefile if necessary.
+(GSL), a free numerical library for C and C++. You will want to make a note of the location of the library and include
+files on your system so that you can modify the kelvin Makefile if necessary.
 <p>
 When kelvin is run in polynomial mode, it makes very extensive use of memory management, and can, under most
 circumstances, definitely benefit from a drop-in allocator such as <a href="http://www.hoard.org/">hoard</a>
@@ -33,83 +38,212 @@ keep memory fragmentation down when running in mult-threaded mode, but they are 
 <h4>Resources</h4>
 kelvin's resource requirements vary wildly depending upon the complexity of the analysis
 being performed. In general, the memory requirements are negligible unless you use polynomial
-mode (PE in the configuration file) to speed-up calculations. The idea of peeding-up calculations can become
-quite attractive, as some seemingly simple analyses can involve millions of iterations and
+mode (PE in the configuration file) to speed-up calculations. The idea of speeding-up calculations can become
+quite attractive, as some seemingly simple analyses involve millions of iterations and
 take literally months to run.
 Polynomial mode can reduce
 runtime by several orders of magnitude, but can also easily exceed 16Gb of memory for
-complex pedigrees or those with untyped founders. The best approach is probably to normally use
-polynomial mode and fall-back to non-polynomial mode if memory becomes an issue.
+complex pedigrees or those with untyped founders. The best approach is to normally use
+polynomial mode, and fall back to non-polynomial mode if memory becomes an issue. Recent releases of kelvin
+monitor CPU and memory utilization and will self-terminate if thrashing memory.
 <p>
 If you are running on a mult-core platform, and your compiler supports OpenMP 2.0, you can build kelvin
-to use multiple threads and reduce your runtime significantly at a marginal increase in memory, less if
+to use multiple threads and reduce your single-analysis runtime significantly at a marginal increase in memory, less if
 you use a drop-in allocator as described above.
 <h3>Installation</h3>
+kelvin is developed in a Linux environment, so standard unix tools are used for build management and
+distribution.
 kelvin is currently distributed as a compressed tarball of the directory hierarchy of our
-latest release, e.g. kelvin-0.34.2.tar.gz. 
-<h4>Directory Structure</h4>
+latest release, e.g. <tt>kelvin-0.34.2.tar.gz</tt>.
+<h4>Directory Structure and Components</h4>
 <ul>
-<li>./ - kelvin and dkelvin main programs. Includes several varieties of the master Makefile.
-<li>doc - (very) limited documentation.
-<li>include - a work directory for builds.
-<li>lib - a work directory for builds.
-<li>pedlib - pedigree, likelihood, and polynomial components. Includes a dependent Makefile - don't try
+<li><tt>&lt;RELEASE&gt;/</tt> - kelvin, dkelvin and calc_updated_ppl components. Includes normal and debug versios of the master Makefile.
+kelvin is the primary linkage analysis program and the focus of this documentation. dkelvin is a variant that
+uses a multidimensional integration approach to analysis, and is still under development. calc_updated_ppl is
+a tool for combining the results of an analysis broken into separate kelvin runs.
+<li><tt>&lt;RELEASE&gt;/doc/</tt> - (very) limited documentation.
+<li><tt>&lt;RELEASE&gt;include/</tt> - a work directory for builds.
+<li><tt>&lt;RELEASE&gt;/lib/</tt> - a work directory for builds.
+<li><tt>&lt;RELEASE&gt;pedlib/</tt> - pedigree, likelihood, and polynomial components. Includes a dependent Makefile - don't try
 to use it by itself.
-<li>test-suite - analyses that can be used for build validation as well as configuration examples.
-<li>utils - general-purpose utility components. Includes a dependent Makefile.
+<li><tt>&lt;RELEASE&gt;/seq_update/</tt> - routines to perform a sequential update of the average likelihood ratios of separate
+kelvin runs.
+<li><tt>&lt;RELEASE&gt;/test-suite/</tt> - analyses that can be used for build validation as well as configuration examples.
+<li><tt>&lt;RELEASE&gt;/utils/</tt> - general-purpose utility components. Includes a dependent Makefile.
 </ul>
-
-<h4>Building</h4>
+<h4>Building and Testing</h4>
 Edit the master Makefile to specify the location of the gsl libraries and include files on your system.
 If you do not have an OpenMP-capable compiler, comment-out the lines that reference "-fopenmp" as indicated
-in the Makefile comments. Type "make clean" and then "make" and keep your fingers crossed.
-<h4>Testing</h4>
+in the Makefile comments. Type <kbd>make clean</kbd> and then <kbd>make</kbd>.
+This should build supporting libraries and then the three executable images kelvin, dkelvin and calc_updated_ppl. 
+Next, type <kbd>make test</kbd> to run a suite of tests.
+If you should see errors during the build or test, or run into other problems with kelvin,
+please send us a log of the build and test. Finally, type <kbd>make install</kbd> to move
+the executable components into production. 
 
 <h2>PREPARING YOUR CONFIGURATION FILE</h2>
 kelvin takes all of its configuration information from a single file specified on the command line.
-This file is composed of directives that describe the linkage analysis to be performed, and the locations
+This file is composed of directives that describe the analysis to be performed, and the locations
 of supporting data files.
 Extensive information on the directives used in the kelvin configuration file is provided in doc/ReadMe.conf.
+It is the final authority on the behavior of the directives, and the only source of information on the
+specification of
+parameters and ranges.
 <p>
 kelvin provides such a wide variety of options for linkage analysis that it can be confusing to
 determine what combinations of directives are appropriate. <a href="config.gif">This chart</a>
-illustrates the thirteen current configuration "paths" for kelvin, and the directives they use.
-In addition to those that are specific to a particular type of analysis, the following directives can
+illustrates the thirteen current configuration "paths" for kelvin, and the directives they use. Ellipses
+represent defaults that will be taken in the absence of relevant directives, while squares represent
+analysis attributes that must always be explicity specified.
+In addition to those directives that are specific to a particular type of analysis, the following directives can
 be used for any analysis:
 <ul>
-<li>all data file-specification directives, such as PD, DF, MK, MP, LP, OF, HE and PPL
-<li>all value description directives, such as UP and AS
-<li>Gene frequency (GF)
-<li>Penetrance directives (DD, Dd, dd, etc.)
-<li>X-chromosome analysis (XC) as opposed to allosomes.
-<li>Alpha (AL)
-<li>Polynomial evaluation (PE)
+<li>all data file-specification directives, such as <tt>PD, DF, MK, MP, LP, OF, HE</tt> and <tt>PPL</tt>
+<li>all value description directives, such as <tt>UP</tt> and <tt>AS</tt>
+<li>Gene frequency (<tt>GF</tt>)
+<li>Penetrance directives (<tt>DD, Dd, dd</tt>, etc.)
+<li>X-chromosome analysis (<tt>XC</tt>) as opposed to allosomes.
+<li>Alpha (<tt>AL</tt>)
+<li>Polynomial evaluation (<tt>PE</tt>)
 </ul>
 
 The distribution includes subdirectories with sample configuration files for a few of
-the configuration "paths".
+the configuration "paths". We typically name the configuration files kelvin.conf.
 These illustrate the required configuration information, and can serve as starting points for your own
-versions.
-<ol>
-<li>TP, DT, LD - 
-<li>TP, DT, LD, CF - 
-<li>TP, DT, LE -
-<li>TP, DT, MM, LD -
-<li>TP, DT, MM, LD, CF -
-<li>TP, DT, MM, LE -
-<li>TP, QT, LE - test-suite/distrib/TP_QT_LE/kelvin.conf
-<li>TP, QT, LD - test-suite/distrib/TP_QT_LD/kelvin.conf
-<li>TP, CT, LE -
-<li>TP, CT, LD -
-<li>MP, DT -
-<li>MP, QT -
-<li>MP, CT -
-</ol>
+versions. Unless otherwise noted, we have externally verified the results of analysis for these tests,
+and they are provided in each directory in avghet.out-baseline and (as appropriate) ppl.out-baseline. The runtimes
+listed are on an Macintosh OSX 10.4 i386 with GCC 4.0.1 (no OpenMP).
+<ul>
+<li>Two-point analysis of a dichotomous trait: <tt>&lt;RELEASE&gt;/test-suite/TP_DT_LE/</tt>, runs in 50s.
+<li>Two-point analysis of a dichotomous trait with linkage disequalibrium: <tt>&lt;RELEASE&gt;/test-suite/TP_DT_LD/</tt>, runs in 1m 23s.
+<li>Two-point analysis of a dichotomous trait going marker-to-marker: <tt>&lt;RELEASE&gt;/test-suite/TP_DT_MM_LE/</tt>, runs in less than 1s.
+<li>Two-point analysis of a dichotomous trait going marker-to-marker with linkage disequalibrium: <tt>&lt;RELEASE&gt;/test-suite/TP_DT_MM_LD/</tt>, runs in less than 1s.
+<li>Two-point analysis of a quantitative trait: <tt>&lt;RELEASE&gt;/test-suite/TP_QT_LE/</tt>, runs in 27s.
+<li>Multipoint analysis of a dichotomous trait: <tt>&lt;RELEASE&gt;/test-suite/MP_DT/</tt>, runs in 2s.
+<li>Multipoint analysis of a quantitative trait: <tt>&lt;RELEASE&gt;/test-suite/MP_QT/</tt>, runs in 1s.
+</ul>
 
 <h2>RUNNING THE PROGRAMS</h2>
+Once you have installed kelvin, you can run it from your data directory, where you keep your
+configuration and data files. kelvin takes only one parameter, which is the name of the
+configuration file, e.g.:
 
-<h3>Estimating Runtime</h3>
+<pre>
+_$ kelvin kelvin.conf
+</pre>
+Remember that if you did not specify absolute paths for output files in the configuration file, they
+will be written to your current directory.
+<p>
+It is often convenient to capture all output from a run into a file so that you may review it more
+conveniently, or send it to us for diagnosis. The following command runs kelvin with all output
+redirected to a file called <tt>kelvin.out</tt>:
+<pre>
+_$ kelvin kelvin.conf >&kelvin.out
+</pre>
+If you do need to send us information for diagnosis, please include the configuration and data files
+along with the output from the run.
+<h3>Diagnostic Messages</h3>
+When kelvin or dkelvin are run, they first display version, build and run configuration information, e.g.:
+<pre>
+PID: 3072, kelvin V0.34.2 built May 29 2008 10:06:56
+PID: 3072, $Id: kelvin.c 506 2008-05-16 12:43:30Z whv001 $
+PID: 3072, $Id: likelihood.c 533 2008-05-23 17:26:34Z whv001 $
+PID: 3072, $Id: locus.c 471 2008-05-06 20:17:17Z whv001 $
+PID: 3072, $Id: polynomial.c 536 2008-05-27 19:06:35Z whv001 $
+PID: 3072, OpenMP-enabled w/0 threads.
+To force a dump of stats (at some risk), type CTRL-\ or type "kill -3 3072".
+PID: 3072, In /Users/whv001/kelvin/trunk/test-suite/MP_DT w/kelvin.conf
+polynomialScale is 1 (1-10, 1 is default)
+PID: 3072, Computation is done in polynomial mode
 
+</pre>
+The first line is the kelvin major version and build information, and the subsequent lines
+that contain "$Id:" are source-managed component version information. Subsequent lines 
+describe important build options as specified in the Makefile and run
+characteristics as influenced by environment variables.
+<p>
+Next, the analysis characteristics as read from the configuration and data files
+are displayed:
+<pre>
+Dichotomous Trait & LE
+Total number of markers in data: 9
+Total number of trait locus in data: 1
+Total number of families in pedigree file: 11
+Number of loci to use for analysis: 3
+</pre>
+Finally, progress indicators are displayed up thru the end of the run.
 
-
+<h3>Monitoring Progress and Estimating Runtime</h3>
+We are currently working on mechanisms to facilitate estimating runtime, but in the meantime
+there are a number of progress reports that can be monitored during a run.
+<ol>
+<li>As each pedigree is processed, its identifier and index in the total number of pedigrees is displayed.
+<li>For two-point analyses, the pair of loci being compared is displayed.
+<li>For multipoint analyses, the completion of trait (if changed), marker and alternate evaluation 
+at each position is displayed.
+<li>When kelvin or dkelvin are run on compatible platforms (currently only those with a pmap command),
+a child process is created that monitors elapsed time and memory utilization, and displays it every 30 seconds.
+<li>If polynomial evaluation is enabled, a count of evaluations peformed thus far is displayed every 64K
+evaluations.
+<li>If polynomial evaluation is enabled, extensive statistics on the polynomial build process are displayed
+every 2M polynomial creations, when polynomial builds finish, and at the end of the run. Statistics will
+include an estimation of internal memory usage when feasible and relevant.
+</ol>
 <h2>INTERPRETING THE RESULTS</h2>
+kelvin produces one or two different files of results depending upon the type of analysis performed. 
+<h3>Average Heterogeneity</h3>
+Average heterogeneity information is produce for all runs. It is written to the file specified by
+the <tt>HE</tt> directive, or <tt>avghet.out</tt> by default. 
+It contains different information for each type of analysis being performed:
+<h4>Multipoint Analysis</h4>
+For multipoint runs, a single table with a header line is output. The table consists of
+one row for each position in the analysis:
+<ol>
+<li>pos - position in centiMorgans.
+<li>PPL - the imputed posterior probability of linkage.
+<li>avgLR(count) - average likelihood ratio for the count of points sampled.
+<li>MOD - maximum LOD score achieved at this position.
+<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score.
+<li>dfg - the maximizing disease gene frequency, i.e. the frequency that maximized the LOD score.
+<li>pen_vector - penetrance vector. For dichotomous trait runs, it is three columns of 
+the maximizing penetrance for
+DD, Dd and dd, i.e. the penetrance that maximized the LOD score.
+
+For quantitative trait runs, it is three columns of means then three of standard deviations for
+the maximizing distributions for DD, Dd and dd, followed by the threshold.
+<li>markerList - parenthesised list of the closest two markers for each position.
+</ol>
+<h4>Two-point Analysis</h4>
+Two-point analyses output separate tables for each pair of adjacent loci. For marker-to-marker runs,
+this is each pair of adjacent markers. For normal runs, this is the disease locus with each marker.
+Each table consists of one row for each value of theta:
+<ol>
+<li>D11 - the D' (d-prime) between disease allele 1 and marker locus allele 1. Not present on LE runs because
+LE is a special case of LD where D' is always 0.
+<li>Theta(M, F) - male and female theta values.
+<li>COUNT - count of points sampled to determine average likelihood ratio.
+<li>AVG_LR - average likelihood ratio.
+<li>MAX_HLOD - maximum heterozygous LOD score achieved at this theta.
+<li>R2 - R square
+<li>ALPHA - the maximizing alpha, i.e. the value of alpha that maximized the HLOD score.
+<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the HLOD score.
+<li>MF
+<li>pen_vector - maximizing penetrance values for DD, Dd, and dd.  
+There will be one set of these for each liability class in the analysis.
+</ol>
+
+In a 2-point LD run, it contains a table for each of
+the markers in the run. In a 2-point LE run, it contains 
+<h3>Posterior Probability of Linkage</h3>
+Separate PPL information is only produced for two-point analyses, because PPL is imputed for multipoint runs.
+It is written to the file specified by the <tt>PF</tt> directive, or <tt>ppl.out</tt> by default. It contains a header
+line and one line of output for each marker in the run.
+<ol>
+<li>CHR - chromosome number
+<li>MARKER - marker name
+<li>cM - position in centiMorgans
+<li>PPL - posterior probability of linkage to the disease locus
+<li>LD-PPL (only for LD analyses)
+<li>PPLD (only for LD analyses)
+</ol>
+</body>
