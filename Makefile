@@ -18,10 +18,10 @@ CC := gcc
 CFLAGS := -Wall -O3
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas
 
-CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
+#CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
 CFLAGS += -fopenmp # Uncomment BOTH of these if you have an OpenMP-capable compiler...
 LDFLAGS += -fopenmp # ...and want to use multiple threads for evaluations.
-LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator, big performance gains, especially w/OpenMP.
+#LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator, big performance gains, especially w/OpenMP.
 #CFLAGS += -DDMUSE # For our own static memory management, not beneficial as yet.
 #CFLAGS += -DTREEEVALUATE # Use evaluateValue of tree instead of evaluatePoly of list.
 #CFLAGS += -DFAKEEVALUATE # Don't evaluate at all - use only for exercising build. Results will be wrong!
@@ -62,6 +62,10 @@ clean :
 	make -C pedlib -f Makefile clean
 	make -C utils -f Makefile clean
 	rm -f $(KOBJS) $(DKOBJS) $(OBJS) kelvin dkelvin calc_updated_ppl
+
+.PHONY : test
+test :
+	make -C test-suite -f Makefile all
 
 $(BINDIR)/kelvin-$(VERSION) : kelvin
 	install -o root -g root -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
