@@ -171,7 +171,7 @@ Total number of trait locus in data: 1
 Total number of families in pedigree file: 11
 Number of loci to use for analysis: 3
 </pre>
-Finally, progress indicators are displayed up thru the end of the run.
+Finally, progress indicators are displayed up through the end of the run.
 
 <h3>Monitoring Progress and Estimating Runtime</h3>
 We are currently working on mechanisms to facilitate estimating runtime, but in the meantime
@@ -191,8 +191,8 @@ include an estimation of internal memory usage when feasible and relevant.
 </ol>
 <h2>INTERPRETING THE RESULTS</h2>
 kelvin produces one or two different files of results depending upon the type of analysis performed. 
-<h3>Average Heterogeneity</h3>
-Average heterogeneity information is produce for all runs. It is written to the file specified by
+<h3>Bayes Ratio</h3>
+Average heterogeneity information is produced for all runs. It is written to the file specified by
 the <tt>HE</tt> directive, or <tt>avghet.out</tt> by default. 
 It contains different information for each type of analysis being performed:
 <h4>Multipoint Analysis</h4>
@@ -211,7 +211,8 @@ DD, Dd and dd, i.e. the penetrance that maximized the LOD score.
 
 For quantitative trait runs, it is three columns of means then three of standard deviations for
 the maximizing distributions for DD, Dd and dd, followed by the threshold.
-<li>markerList - parenthesised list of the closest two markers for each position.
+<li>markerList - parenthesised list of the closest N markers for each position, where N is the number
+of markers being considered at a time.
 </ol>
 <h4>Two-point Analysis</h4>
 Two-point analyses output separate tables for each pair of adjacent loci. For marker-to-marker runs,
