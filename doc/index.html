@@ -245,4 +245,46 @@ line and one line of output for each marker in the run.
 <li>LD-PPL (only for LD analyses)
 <li>PPLD (only for LD analyses)
 </ol>
+<h2>SEQUENTIAL UPDATING</h2>
+Sequential updating is a method for combining the results of mutiple analyses in post-processing.
+Two tools are provided for performing sequential updating. Both tools expect kelvin average
+heterogeneity files as input.
+
+<h3>seq_update_avghet.pl</h3>
+
+This perl script will perform sequential updates on either two-point (the default) or multipoint
+files (with '-m multipoint' specified). The script will attempt to determine which columns
+contain what data based on column headers. This feature should work with output from recent
+versions of Kelvin. The script will generate output that resembles the input, but will fill 
+non-relevant columns with zeros. There may be fewer output columns than input columns, but
+relevant columns (cM position, D', theta, PPL, Bayes ratio) should be present. Multiple
+input files may be specified on the command line. In two-point mode, all files should 
+contain information for the same markers, in the same order. If <tt>--relax</tt> is specified,
+marker name checking will be skipped, but there should still be the same number of markers
+in each file. In multi-point mode, there should be information for the same number of
+positions in every file. In multi-point mode only, the new PPL will be calculated directly,
+based on the updated Bayes ratios. Output is always to the terminal. Here's an example, that
+captures the output to a file:
+
+<pre>
+_$ seq_update_avghet.pl avghet-1.out avghet-2.out avghet-3.out > updated-avghet.out
+</pre>
+
+A full description of command line syntax is available by typing:
+
+<pre>
+_$ seq_update_avghet.pl --help
+</pre>
+
+<h3>calc_updated_ppl</h3>
+
+This program will calculate PPL, LD-PPL and PPL scores based on a two-point kelvin average
+heterogeneity file, or the output from seq_update_avghet.pl. It handles multi-allele (multiple
+D's) and sex-specific thetas. It takes only one argument, the name of the input file. Output
+is alway to the terminal. Here's an example that, again, captures the output to a file:
+
+<pre>
+_$ calc_updated_ppl updated-avghet.out > updated-ppl.out
+</pre>
+
 </body>
