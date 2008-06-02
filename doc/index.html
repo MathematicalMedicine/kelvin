@@ -193,7 +193,7 @@ include an estimation of internal memory usage when feasible and relevant.
 </ol>
 <h2>INTERPRETING THE RESULTS</h2>
 kelvin produces one or two different files of results depending upon the type of analysis performed. 
-<h3>Bayes Ratio</h3>
+<h3>Bayes Ratio File</h3>
 Average heterogeneity information is produced for all runs. It is written to the file specified by
 the <tt>HE</tt> directive, or <tt>br.out</tt> by default. 
 It contains different information for each type of analysis being performed:
@@ -233,7 +233,7 @@ LE is a special case of LD where D' is always 0.
 <li>PenetranceVector - maximizing penetrance values for DD, Dd, and dd.  
 There will be one set of these for each liability class in the analysis.
 </ol>
-<h3>Posterior Probability of Linkage</h3>
+<h3>Posterior Probability of Linkage File</h3>
 Separate PPL information is only produced for two-point analyses, because PPL is imputed for multipoint runs.
 It is written to the file specified by the <tt>PF</tt> directive, or <tt>ppl.out</tt> by default. It contains a header
 line and one line of whitespace-delimited values for each marker in the run.
