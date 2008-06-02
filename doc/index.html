@@ -88,7 +88,7 @@ of supporting data files.
 Extensive information on the directives used in the kelvin configuration file is provided in <tt>doc/ReadMe.conf</tt>.
 It is the final authority on the behavior of the directives, and the only source of information on the
 specification of
-parameters and ranges.
+parameters and ranges. A <a href="Directives.html">rewrite</a> of that document is in-progress.
 <p>
 kelvin provides such a wide variety of options for linkage analysis that it can be confusing to
 determine what combinations of directives are appropriate. <a href="config.gif">This chart</a>
@@ -194,19 +194,19 @@ include an estimation of internal memory usage when feasible and relevant.
 kelvin produces one or two different files of results depending upon the type of analysis performed. 
 <h3>Bayes Ratio</h3>
 Average heterogeneity information is produced for all runs. It is written to the file specified by
-the <tt>HE</tt> directive, or <tt>avghet.out</tt> by default. 
+the <tt>HE</tt> directive, or <tt>br.out</tt> by default. 
 It contains different information for each type of analysis being performed:
 <h4>Multipoint Analysis</h4>
 For multipoint runs, a single table with a header line is output. The table consists of
-one row for each position in the analysis:
+one row of whitespace-delimited values for each position in the analysis:
 <ol>
-<li>pos - position in centiMorgans.
+<li>Position - position in centiMorgans.
 <li>PPL - the imputed posterior probability of linkage.
-<li>avgLR(count) - average likelihood ratio for the count of points sampled.
+<li>BayesRatio - average likelihood ratio.
 <li>MOD - maximum LOD score achieved at this position.
 <li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score.
-<li>dfg - the maximizing disease gene frequency, i.e. the frequency that maximized the LOD score.
-<li>pen_vector - penetrance vector. For dichotomous trait runs, it is three columns of 
+<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the LOD score.
+<li>PenetranceVector - penetrance vector. For dichotomous trait runs, it is three columns of 
 the maximizing penetrance for
 DD, Dd and dd, i.e. the penetrance that maximized the LOD score.
 
@@ -218,29 +218,28 @@ of markers being considered at a time.
 <h4>Two-point Analysis</h4>
 Two-point analyses output separate tables for each pair of adjacent loci. For marker-to-marker runs,
 this is each pair of adjacent markers. For normal runs, this is the disease locus with each marker.
-Each table consists of one row for each value of theta:
+Each table consists of one row of whitespace-delimited values for each value of theta:
 <ol>
 <li>D11 - the D' (d-prime) between disease allele 1 and marker locus allele 1. Not present on LE runs because
 LE is a special case of LD where D' is always 0.
-<li>Theta(M, F) - male and female theta values.
-<li>COUNT - count of points sampled to determine average likelihood ratio.
-<li>AVG_LR - average likelihood ratio.
-<li>MAX_HLOD - maximum heterozygous LOD score achieved at this theta.
+<li>Theta(M,F) - male and female theta values.
+<li>BayesRatio - average likelihood ratio.
+<li>MOD - maximum LOD score achieved for this value of theta.
 <li>R2 - R square, a measurement of LD.
-<li>ALPHA - the maximizing alpha, i.e. the value of alpha that maximized the HLOD score.
+<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score.
 <li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the HLOD score.
 <li>MF - marker allele frequency for the first marker.
-<li>pen_vector - maximizing penetrance values for DD, Dd, and dd.  
+<li>PenetranceVector - maximizing penetrance values for DD, Dd, and dd.  
 There will be one set of these for each liability class in the analysis.
 </ol>
 <h3>Posterior Probability of Linkage</h3>
 Separate PPL information is only produced for two-point analyses, because PPL is imputed for multipoint runs.
 It is written to the file specified by the <tt>PF</tt> directive, or <tt>ppl.out</tt> by default. It contains a header
-line and one line of output for each marker in the run.
+line and one line of whitespace-delimited values for each marker in the run.
 <ol>
-<li>CHR - chromosome number
-<li>MARKER - marker name
-<li>cM - position in centiMorgans
+<li>Chr - chromosome number
+<li>Marker - marker name
+<li>Position - position in centiMorgans
 <li>PPL - posterior probability of linkage to the disease locus
 <li>LD-PPL (only for LD analyses)
 <li>PPLD (only for LD analyses)
