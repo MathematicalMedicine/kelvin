@@ -95,18 +95,7 @@ determine what combinations of directives are appropriate. <a href="config.gif">
 illustrates the twenty-two current configuration "paths" for kelvin, and the directives they use. Ellipses
 represent defaults that will be taken in the absence of relevant directives, while squares represent
 analysis attributes that must always be explicity specified.
-In addition to those directives that are specific to a particular type of analysis, the following directives can
-be used for any analysis:
-<ul>
-<li>all data file-specification directives, such as <tt>PD, DF, MK, MP, LP, OF, HE</tt> and <tt>PPL</tt>
-<li>value description directives, such as <tt>UP</tt> and <tt>AS</tt>
-<li>Gene frequency (<tt>GF</tt>)
-<li>Penetrance directives (<tt>DD, Dd, dd</tt>, etc.)
-<li>X-chromosome analysis (<tt>XC</tt>) as opposed to allosomes.
-<li>Alpha (<tt>AL</tt>)
-<li>Polynomial evaluation (<tt>PE</tt>)
-</ul>
-
+<p>
 The distribution includes subdirectories with sample configuration files for a few of
 the configuration "paths". We typically name the configuration files <tt>kelvin.conf</tt>.
 These illustrate the required configuration information, and can serve as starting points for your own
@@ -194,7 +183,7 @@ include an estimation of internal memory usage when feasible and relevant.
 <h2>INTERPRETING THE RESULTS</h2>
 kelvin produces one or two different files of results depending upon the type of analysis performed. 
 <h3>Bayes Ratio File</h3>
-Average heterogeneity information is produced for all runs. It is written to the file specified by
+Integrated likelihood ratio information is produced for all runs. It is written to the file specified by
 the <tt>HE</tt> directive, or <tt>br.out</tt> by default.
 The first line written to the file is a comment that contains the kelvin version number, e.g.:
 <pre>
@@ -207,17 +196,18 @@ Subsequent lines contain different information for each type of analysis being p
 For multipoint runs, a single table with a header line is output. The table consists of
 one row of whitespace-delimited values for each position in the analysis:
 <ol>
+<li>Chr - chromosome number
 <li>Position - trait position in centiMorgans.
 <li>PPL - the imputed posterior probability of linkage.
 <li>BayesRatio - average likelihood ratio.
 <li>MOD - maximum LOD score achieved at this position.
 <li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score.
 <li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the LOD score.
-<li>PenetranceVector - penetrance vector. For dichotomous trait runs, it is three columns of 
+<li>PenetranceVector - penetrance vector. For dichotomous trait runs, it is three (or four) columns of 
 the maximizing penetrance for
-DD, Dd and dd, i.e. the penetrance that maximized the LOD score.
-For quantitative trait runs, it is three columns of means then three of standard deviations for
-the maximizing distributions for DD, Dd and dd, followed by the threshold.
+DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the LOD score.
+For quantitative trait runs, it is three (or four columns) of means followed by three (or four) of standard deviations for
+the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold.
 <li>MarkerList - parenthesised list of the closest N markers for each position, where N is the number
 of markers being considered at a time.
 </ol>
@@ -226,7 +216,7 @@ Two-point analyses output separate tables for each pair of adjacent loci. For ma
 this is each pair of adjacent markers. For normal runs, this is the disease locus with each marker.
 Each table is prefaced with a comment line that specifies the two loci of interest, e.g.:
 <pre>
-# 2  Loci_1 Loci_3 
+# 2  Loci_1 at (location) Loci_3 at (location)
 </pre>
 and consists of one row of whitespace-delimited values for each value of theta:
 <ol>
@@ -234,14 +224,15 @@ and consists of one row of whitespace-delimited values for each value of theta:
 second locus. There will be (<i>n</i>-1)*(<i>m</i>-1) columns present for linkage disequilibrium runs. These
 columns are not present on LE runs because
 LE is a special case of LD where D' is always 0.
+<li>Chr - chromosome number
 <li>Theta(M,F) - male and female theta values.
 <li>BayesRatio - average likelihood ratio.
 <li>MOD - maximum LOD score achieved for this value of theta.
 <li>R2 - R square, a measurement of LD.
 <li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score.
-<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the HLOD score.
+<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the LOD score.
 <li>MF - marker allele frequency for the first marker.
-<li>PenetranceVector - maximizing penetrance values for DD, Dd, and dd.  
+<li>PenetranceVector - maximizing penetrance values for DD, Dd, (optionally dD,) and dd.
 There will be one set of these for each liability class in the analysis.
 </ol>
 <h3>Posterior Probability of Linkage File</h3>
