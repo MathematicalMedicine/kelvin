@@ -92,14 +92,14 @@ parameters and ranges. A <a href="Directives.html">rewrite</a> of that document 
 <p>
 kelvin provides such a wide variety of options for linkage analysis that it can be confusing to
 determine what combinations of directives are appropriate. <a href="config.gif">This chart</a>
-illustrates the thirteen current configuration "paths" for kelvin, and the directives they use. Ellipses
+illustrates the twenty-two current configuration "paths" for kelvin, and the directives they use. Ellipses
 represent defaults that will be taken in the absence of relevant directives, while squares represent
 analysis attributes that must always be explicity specified.
 In addition to those directives that are specific to a particular type of analysis, the following directives can
 be used for any analysis:
 <ul>
 <li>all data file-specification directives, such as <tt>PD, DF, MK, MP, LP, OF, HE</tt> and <tt>PPL</tt>
-<li>all value description directives, such as <tt>UP</tt> and <tt>AS</tt>
+<li>value description directives, such as <tt>UP</tt> and <tt>AS</tt>
 <li>Gene frequency (<tt>GF</tt>)
 <li>Penetrance directives (<tt>DD, Dd, dd</tt>, etc.)
 <li>X-chromosome analysis (<tt>XC</tt>) as opposed to allosomes.
@@ -136,10 +136,11 @@ Remember that if you did not specify absolute paths for output files in the conf
 will be written to your current directory.
 <p>
 It is often convenient to capture all output from a run into a file so that you may review it more
-conveniently, or send it to us for diagnosis. The following command runs kelvin with all output
+conveniently, or send it to us for diagnosis. The following command (using bash shell syntax)
+runs kelvin with all output
 redirected to a file called <tt>kelvin.out</tt>:
 <pre>
-_$ kelvin kelvin.conf >&kelvin.out
+_$ kelvin kelvin.conf >& kelvin.out
 </pre>
 If you do need to send us information for diagnosis, please include the configuration and data files
 along with the output from the run.
@@ -212,7 +213,7 @@ DD, Dd and dd, i.e. the penetrance that maximized the LOD score.
 
 For quantitative trait runs, it is three columns of means then three of standard deviations for
 the maximizing distributions for DD, Dd and dd, followed by the threshold.
-<li>markerList - parenthesised list of the closest N markers for each position, where N is the number
+<li>MarkerList - parenthesised list of the closest N markers for each position, where N is the number
 of markers being considered at a time.
 </ol>
 <h4>Two-point Analysis</h4>
