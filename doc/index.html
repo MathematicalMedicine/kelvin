@@ -231,7 +231,8 @@ Each table is prefaced with a comment line that specifies the two loci of intere
 and consists of one row of whitespace-delimited values for each value of theta:
 <ol>
 <li>multiple columns of D<i>nm</i> - the D' (d-prime) between allele <i>m</i> of the first locus and allele <i>n</i> of the
-second locus. Not present on LE runs because
+second locus. There will be (<i>n</i>-1)*(<i>m</i>-1) columns present for linkage disequilibrium runs. These
+columns are not present on LE runs because
 LE is a special case of LD where D' is always 0.
 <li>Theta(M,F) - male and female theta values.
 <li>BayesRatio - average likelihood ratio.
