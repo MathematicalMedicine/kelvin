@@ -1,37 +1,138 @@
-<h2>Types of Analysis</h2>
+<h1>kelvin Configuration File</h1>
 
-<ol>
-<li>Trait-to-marker, sex-averaged, dichotomous trait (SA, DT)
-<li>Trait-to-marker, sex-averaged, quantitative trait using chi-square distribution. (SA, QT, X2-dist)
-<li>Trait-to-marker, sex-averaged, quantitative trait using Student's t-distribution. (SA, QT, T-dist)
-<li>Trait-to-marker, sex-averaged, quantitative trait with threshold using chi-square distribution. (SA, CT, X2-dist)
-<li>Trait-to-marker, sex-averaged, quantitative trait with threshold using Student's t-distribution. (SA, CT, T-dist)
-<li>Trait-to-marker, sex-specific, dichotomous trait (SS, DT)
-<li>TM, SS, QT, X2-dist
-<li>TM, SS, QT, T-dist
-<li>TM, SS, CT, X2-dist
-<li>TM, SS, CT, T-dist
-<li>TM, TP, DT, LE
-<li>TM, TP, DT, LD
-<li>TM, TP, QT, T-dist, LE
-<li>TM, TP, QT, T-dist, LD
-<li>TM, TP, QT, X2-dist, LE
-<li>TM, TP, QT, X2-dist, LD
-<li>TM, TP, CT, T-dist, LE
-<li>TM, TP, CT, T-dist, LD
-<li>TM, TP, CT, X2-dist, LE
-<li>TM, TP, CT, X2-dist, LD
-<li>MM, LE
-<li>MM, LD
-</ol>
+<a href="#analysis">Types of Analysis</a><br>
+<a href="#summary">Directive Summary</a><br>
+<a href="#reference">Directive Reference</a><br>
+<a href="#ranges">Specifying Ranges</a><br>
+<hr>
 
-<h2>Summary of Directives</h2>
+<h2 id="analysis">Types of Analysis</h2>
+<ul>
+<li>Trait-to-marker
+<ul>
+<li>Multipoint sex-averaged
+<ul>
+<li>Dichotomous trait (<a href="#SA">SA</a>, <a href="#DT">DT</a>)
+<li>Quantitative trait
+<ul>
+<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#QT">QT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#QT">QT T</a>)
+</ul>
+<li>Quantitative trait with threshold
+<ul>
+<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#CT">CT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#CT">CT T</a>)
+</ul>
+</ul>
+<li>Multipoint sex-specific
+<ul>
+<li>Dichotomous trait (<a href="#SS">SS</a>, <a href="#DT">DT</a>)
+<li>Quantitative trait
+<ul>
+<li>Chi-square distribution (<a href="#SS">SS</a>, <a href="#QT">QT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SS">SS</a>, <a href="#QT">QT T</a>)
+</ul>
+<li>Quantitative trait with threshold
+<ul>
+<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#CT">CT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#CT">CT T</a>)
+</ul>
+</ul>
+<li>Two-point
+<ul>
+<li>Dichotomous trait
+<ul>
+<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#DT">DT</a>)
+<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#DT">DT</a>, <a href="#LD">LD</a>)
+</ul>
+<li>Quantitative trait
+<ul>
+<li>Chi-square distribution
+<ul>
+<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#QT">QT chisq</a>)
+<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#QT">QT chisq</a>, <a href="#LD">LD</a>)
+</ul>
+<li>Truncated Student's t-distribution
+<ul>
+<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#QT">QT T</a>)
+<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#QT">QT T</a>, <a href="#LD">LD</a>)
+</ul>
+</ul>
+<li>Quantitative trait with threshold
+<ul>
+<li>Chi-square distribution
+<ul>
+<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#CT">CT chisq</a>)
+<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#CT">CT chisq</a>, <a href="#LD">LD</a>)
+</ul>
+<li>Truncated Student's t-distribution
+<ul>
+<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#CT">CT T</a>)
+<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#CT">CT T</a>, <a href="#LD">LD</a>)
+</ul>
+</ul>
+</ul>
+</ul>
+<li>Marker-to-marker
+<ul>
+<li>Linkage equilibrium (<a href="#MM">MM</a>)
+<li>Linkage disequilibrium (<a href="#MM">MM</a>, <a href="#LD">LD</a>)
+</ul>
+</ul>
+<hr>
 
-Directives are provided here in <a href="#alphabetic">alphabetic order</a>, by
-<a href="#functional">functional groupings</a>, and <a href="#detail">in detail</a>.
+<h2 id="summary">Directive Summary</h2>
 
-<h3 id="alphabetic">Alphabetic Listing</h3>
+<h4>Analysis Type</h4>
+<ul>
+<li><a href="#SS">SS &lt;m&gt;</a>: sex-specific multipoint analysis with &lt;m&gt; markers.
+<li><a href="#SA">SA &lt;m&gt;</a>: sex-averaged multipoint analysis with &lt;m&gt; markers.
+<li><a href="#TP">TP</a>: two-point analysis.
+<li><a href="#DT">DT</a>: 
+<li><a href="#MM">MM</a>: 
+<li><a href="#QT">QT</a>: 
+<li><a href="#LD">LD</a>: 
+</ul>
+<h4>File Specification</h4>
+<ul>
+<li><a href="#HE">HE &lt;file name&gt;</a>: bayes ratio output file, default bf.out.
+<li><a href="#PF">PF &lt;file name&gt;</a>: posterior probability of linkage output file, default ppl.out.
+<li><a href="#PD">PD &lt;file name&gt;</a>: pedigree input file, default pedfile.dat.
+<li><a href="#DF">DF &lt;file name&gt;</a>: pedigree locus description data input file, default datafile.dat.
+<li><a href="#MK">MK &lt;file name&gt;</a>: marker input file, default markers.dat.
+<li><a href="#MP">MP &lt;file name&gt;</a>: map input file, default mapfile.dat.
+<li><a href="#CF">CF &lt;file name&gt;</a>: case control input file.
+<li><a href="#SR">SR &lt;path&gt;</a>: saved results input/output path.
+</ul>
+<h4>Data Values</h4>
+<ul>
+<li><a href="#UP">UP &lt;n&gt;</a>: unknown person ID, default "0".
+<li><a href="#AS">AS &lt;n&gt; &lt;m&gt; &lt;l&gt;</a>: affection status values
+<li><a href="#XC">XC</a>: analysis of X-chromosome instead of default autosome.
+</ul>
+<h4>Dichotomous Model</h4>
 
+<li><a href="#PE">PE &lt;n&gt;</a>: polynomial evaluation with scaling &lt;m&gt; instead of iterative calculation.
+<li><a href="#GF">GF</a>: 
+<li><a href="#DD, Dd, dd">DD, Dd, dd</a>:
+<li><a href="#DA">DA</a>: 
+<li><a href="#AF">AF</a>: 
+<li><a href="#LC">LC</a>: 
+<li><a href="#Th">Th</a>: 
+<li><a href="#Tm">Tm</a>: 
+<li><a href="#Tf">Tf</a>: 
+<li><a href="#TL">TL</a>: 
+<li><a href="#P1">P1</a>: 
+<li><a href="#TT">TT</a>: 
+<li><a href="#T_MIN">T_MIN</a>: 
+<li><a href="#T_MAX">T_MAX</a>: 
+<li><a href="#MIN">MIN</a>: 
+<li><a href="#MAX">MAX</a>: 
+<li>
+</ul>
+<hr>
+
+<h2 id="Reference">Directive Reference</h2>
 <table border="1">
 <tr>
 <td width="10%">
@@ -75,59 +176,9 @@ Directives are provided here in <a href="#alphabetic">alphabetic order</a>, by
 </tr>
 </table>
 
-<h3 id="functional">Functional Grouping</h3>
-<h4>Analysis Type</h4>
-<ul>
-<li><a href="#SS">SS &lt;m&gt;</a>: sex-specific multipoint analysis with &lt;m&gt; markers.
-<li><a href="#SA">SA &lt;m&gt;</a>: sex-averaged multipoint analysis with &lt;m&gt; markers.
-<li><a href="#XC">XC</a>: analysis of X-chromosome instead of default autosome.
-<li><a href="#PE">PE &lt;n&gt;</a>: polynomial evaluation with scaling &lt;m&gt; instead of iterative calculation.
-<li><a href="#TP">TP</a>: two-point analysis.
-</ul>
-<h4>File Specification</h4>
-<ul>
-<li><a href="#HE">HE &lt;file name&gt;</a>: bayes ratio output file, default bf.out.
-<li><a href="#PF">PF &lt;file name&gt;</a>: posterior probability of linkage output file, default ppl.out.
-<li><a href="#PD">PD &lt;file name&gt;</a>: pedigree input file, default pedfile.dat.
-<li><a href="#DF">DF &lt;file name&gt;</a>: pedigree locus description data input file, default datafile.dat.
-<li><a href="#MK">MK &lt;file name&gt;</a>: marker input file, default markers.dat.
-<li><a href="#MP">MP &lt;file name&gt;</a>: map input file, default mapfile.dat.
-<li><a href="#CF">CF &lt;file name&gt;</a>: case control input file.
-<li><a href="#SR">SR &lt;path&gt;</a>: saved results input/output path.
-</ul>
-<h4>Data Values</h4>
-<ul>
-<li><a href="#UP">UP &lt;n&gt;</a>: unknown person ID, default "0".
-<li><a href="#AS">AS &lt;n&gt; &lt;m&gt; &lt;l&gt;</a>: affection status values
-</ul>
-<h4>Dichotomous Model</h4>
-<li><a href="#DT">DT</a>: 
-<li><a href="#GF">GF</a>: 
-<li><a href="#DD, Dd, dd">DD, Dd, dd</a>:
-<li><a href="#DA">DA</a>: 
-<li><a href="#AF">AF</a>: 
-<li><a href="#LC">LC</a>: 
-<li><a href="#Th">Th</a>: 
-<li><a href="#Tm">Tm</a>: 
-<li><a href="#Tf">Tf</a>: 
-<li><a href="#TL">TL</a>: 
-<li><a href="#QT">QT</a>: 
-<li><a href="#LD">LD</a>: 
-<li><a href="#P1">P1</a>: 
-<li><a href="#TT">TT</a>: 
-<li><a href="#T_MIN">T_MIN</a>: 
-<li><a href="#T_MAX">T_MAX</a>: 
-<li><a href="#MIN">MIN</a>: 
-<li><a href="#MAX">MAX</a>: 
-<li><a href="#MM">MM</a>: 
-<li>
-</ul>
+<h3 id="AF">AF</h3>
 
-<h2 id="detail">Detailed Directive Descriptions</h2>
-
-<h3 id="AF">AF Directive</h3>
-
-<h3 id="AS">AS Directive</h3>
+<h3 id="AS">AS</h3>
 Specifies the values used to represent affection status in the pedigree data file.
 <pre>
    AS 0 1 2
@@ -137,39 +188,39 @@ where the first value is the "unknown" value, the second value is the
 numbers shown reflect the defaults for DT; for multipoint, the
 defaults are NAN, -9999.99, and 9999.99, respectively).
 
-<h3 id="CF">CF Directive</h3>
+<h3 id="CF">CF</h3>
 
-<h3 id="DA">DA Directive</h3>
+<h3 id="DA">DA</h3>
 
-<h3 id="DD, Dd, dd">DD, Dd, dd Directive</h3>
+<h3 id="DD, Dd, dd">DD, Dd, dd</h3>
 
-<h3 id="DF">DF Directive</h3>
+<h3 id="DF">DF</h3>
 
-<h3 id="DT">DT Directive</h3>
+<h3 id="DT">DT</h3>
 
-<h3 id="GF">GF Directive</h3>
+<h3 id="GF">GF</h3>
 
-<h3 id="HE">HE Directive</h3>
+<h3 id="HE">HE</h3>
 
-<h3 id="LC">LC Directive</h3>
+<h3 id="LC">LC</h3>
 
-<h3 id="LD">LD Directive</h3>
+<h3 id="LD">LD</h3>
 
-<h3 id="MAX">MAX Directive</h3>
+<h3 id="MAX">MAX</h3>
 
-<h3 id="MIN">MIN Directive</h3>
+<h3 id="MIN">MIN</h3>
 
-<h3 id="MK">MK Directive</h3>
+<h3 id="MK">MK</h3>
 
-<h3 id="MM">MM Directive</h3>
+<h3 id="MM">MM</h3>
 
-<h3 id="MP">MP Directive</h3>
+<h3 id="MP">MP</h3>
 
-<h3 id="P1">P1 Directive</h3>
+<h3 id="P1">P1</h3>
 
-<h3 id="PD">PD Directive</h3>
+<h3 id="PD">PD</h3>
 
-<h3 id="PE">PE Directive</h3>
+<h3 id="PE">PE</h3>
 Applicable to all types of analyses.
 <p>
 Indicates that polynomial evaluation should be performed for likelihood
@@ -183,7 +234,7 @@ scaling factor in the range of 1-10. Default is 1, and best for
 environments with limited memory resources. Higher values will generally
 trade memory for execution time.
 
-<h3 id="PF">PF Directive</h3>
+<h3 id="PF">PF</h3>
 Applicable to all types of analyses.
 <p>
 Specifies the name of the post-MAKEPED format pedigree file to be used
@@ -200,31 +251,33 @@ subdirectories as:
 </pre>
 For information on the format of the pedigree file itself, see <emp>TBS</emp>.
 
-<h3 id="QT">QT Directive</h3>
+<h3 id="QT">QT</h3>
 
-<h3 id="SA">SA Directive</h3>
+<h3 id="SA">SA</h3>
 
-<h3 id="SR">SR Directive</h3>
+<h3 id="SR">SR</h3>
 
-<h3 id="SS">SS Directive</h3>
+<h3 id="SS">SS</h3>
 
-<h3 id="TL">TL Directive</h3>
+<h3 id="TL">TL</h3>
 
-<h3 id="TP">TP Directive</h3>
+<h3 id="TP">TP</h3>
 
-<h3 id="TT">TT Directive</h3>
+<h3 id="TT">TT</h3>
 
-<h3 id="T_MAX">T_MAX Directive</h3>
+<h3 id="T_MAX">T_MAX</h3>
 
-<h3 id="T_MIN">T_MIN Directive</h3>
+<h3 id="T_MIN">T_MIN</h3>
 
-<h3 id="Tf">Tf Directive</h3>
+<h3 id="Tf">Tf</h3>
 
-<h3 id="Th">Th Directive</h3>
+<h3 id="Th">Th</h3>
 
-<h3 id="Tm">Tm Directive</h3>
+<h3 id="Tm">Tm</h3>
 
-<h3 id="UP">UP Directive</h3>
+<h3 id="UP">UP</h3>
 
-<h3 id="XC">XC Directive</h3>
+<h3 id="XC">XC</h3>
+<hr>
 
+<h2 id="ranges">Specifying Ranges</h2>
