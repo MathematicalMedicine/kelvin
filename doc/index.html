@@ -195,13 +195,19 @@ include an estimation of internal memory usage when feasible and relevant.
 kelvin produces one or two different files of results depending upon the type of analysis performed. 
 <h3>Bayes Ratio File</h3>
 Average heterogeneity information is produced for all runs. It is written to the file specified by
-the <tt>HE</tt> directive, or <tt>br.out</tt> by default. 
-It contains different information for each type of analysis being performed:
+the <tt>HE</tt> directive, or <tt>br.out</tt> by default.
+The first line written to the file is a comment that contains the kelvin version number, e.g.:
+<pre>
+# kelvin V0.34.2 built May 29 2008 10:06:56
+</pre>
+This is included so that results can be associated with the version of kelvin that
+produced them, and will allow for variations in algorithms, file formats and data precision.
+Subsequent lines contain different information for each type of analysis being performed:
 <h4>Multipoint Analysis</h4>
 For multipoint runs, a single table with a header line is output. The table consists of
 one row of whitespace-delimited values for each position in the analysis:
 <ol>
-<li>Position - position in centiMorgans.
+<li>Position - trait position in centiMorgans.
 <li>PPL - the imputed posterior probability of linkage.
 <li>BayesRatio - average likelihood ratio.
 <li>MOD - maximum LOD score achieved at this position.
@@ -210,7 +216,6 @@ one row of whitespace-delimited values for each position in the analysis:
 <li>PenetranceVector - penetrance vector. For dichotomous trait runs, it is three columns of 
 the maximizing penetrance for
 DD, Dd and dd, i.e. the penetrance that maximized the LOD score.
-
 For quantitative trait runs, it is three columns of means then three of standard deviations for
 the maximizing distributions for DD, Dd and dd, followed by the threshold.
 <li>MarkerList - parenthesised list of the closest N markers for each position, where N is the number
@@ -219,9 +224,14 @@ of markers being considered at a time.
 <h4>Two-point Analysis</h4>
 Two-point analyses output separate tables for each pair of adjacent loci. For marker-to-marker runs,
 this is each pair of adjacent markers. For normal runs, this is the disease locus with each marker.
-Each table consists of one row of whitespace-delimited values for each value of theta:
+Each table is prefaced with a comment line that specifies the two loci of interest, e.g.:
+<pre>
+# 2  Loci_1 Loci_3 
+</pre>
+and consists of one row of whitespace-delimited values for each value of theta:
 <ol>
-<li>D11 - the D' (d-prime) between disease allele 1 and marker locus allele 1. Not present on LE runs because
+<li>multiple columns of D<i>nm</i> - the D' (d-prime) between allele <i>m</i> of the first locus and allele <i>n</i> of the
+second locus. Not present on LE runs because
 LE is a special case of LD where D' is always 0.
 <li>Theta(M,F) - male and female theta values.
 <li>BayesRatio - average likelihood ratio.
@@ -235,8 +245,10 @@ There will be one set of these for each liability class in the analysis.
 </ol>
 <h3>Posterior Probability of Linkage File</h3>
 Separate PPL information is only produced for two-point analyses, because PPL is imputed for multipoint runs.
-It is written to the file specified by the <tt>PF</tt> directive, or <tt>ppl.out</tt> by default. It contains a header
-line and one line of whitespace-delimited values for each marker in the run.
+It is written to the file specified by the <tt>PF</tt> directive, or <tt>ppl.out</tt> by default.
+The first line is a comment that contains the kelvin version number as with the Bayes Ratio file.
+The next line is a header, followed by
+one line of whitespace-delimited values for each marker in the run.
 <ol>
 <li>Chr - chromosome number
 <li>Marker - marker name
@@ -253,7 +265,7 @@ heterogeneity files as input.
 <h3>seq_update_avghet.pl</h3>
 
 This perl script will perform sequential updates on either two-point (the default) or multipoint
-files (with '-m multipoint' specified). The script will attempt to determine which columns
+files (with <tt>-m multipoint</tt> specified). The script will attempt to determine which columns
 contain what data based on column headers. This feature should work with output from recent
 versions of kelvin. The script will generate output that resembles the input, but will fill 
 non-relevant columns with zeros. There may be fewer output columns than input columns, but
