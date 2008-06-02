@@ -1,8 +1,6 @@
 
-#undef FREEDEBUG
-
 /**********************************************************************
- * polynomial - build and evaluate arbitrarily complex polynomials.
+ * Polynomial - build and evaluate arbitrarily complex polynomials.
  * Hongling Wang
  * 
  * Polynomial reduction optimizations - Bill Valentine-Cooper
@@ -20,7 +18,10 @@
   layers of additions and multiplications. Identifies redundant 
   polynomials and maintains only one copy with multiple references.
 
-  Usage:
+  Polynomial has been validated against GiNaC for computational
+  accuracy (and performance, for our specific purposes).
+
+  SIMPLIFIED USAGE:
 
   1. Call polynomialInitialization before any other routines.
   2. Create constants and variables with calls to constantExp and
@@ -31,13 +32,67 @@
   subpolynomials raised to integer powers. Use returned Polynomial in
   future calls.
   5. Set the values of the referenced variables.
-  6. Evaluate your Polynomial by calling evaluatePoly.
+  6. Evaluate your Polynomial by calling evaluatePoly or evaluateValue.
+  Use evaluatePoly if you're going to re-evaluate numerous times, as
+  the cost of having to call polyListSorting pays for itself quickly.
+  Use evaluateValue if you're only going to evaluate a few times.
   
-  Limits:
+  LIMITS:
 
   Maximum constant accuracy is 9 digits due to integer comparison.
   Total polynomials ever seen (kept or not) is INT_MAX due to nodeId.
   
+  CONDITIONALS:
+
+  There are several compilation conditionals in the polynomial code:
+
+  FREEDEBUG - define this to enable debugging diagnosis of situations
+  where polynomials that have been freed by one mechanism or another
+  end up being referenced later on. This leads to segmentation faults
+  and bus errors, and is typically caused by mis-management of calls
+  to freePolys(), freeKeptPolys(), and unHoldPoly(). FREEDEBUG causes
+  the code that actually frees the polynomial structure to instead
+  modify it's eType to T_FREED, and store it's original type in its
+  value. Most polynomial handling functions recognize this and will
+  dump structure information that can be used to track down the 
+  problem. The key bit of information is the nodeId, which is unique
+  across all types of polynomials. This can be used in conjunction 
+  with the environment variable polynomialLostNodeId to track down
+  usage of a particular nodeId (under gdb, it will breakout of 
+  execution when defined and when referenced).
+  
+  _OPENMP
+
+  SOURCEDIGRAPH
+
+  EVALUATESW
+
+  DMTRACK
+
+  ENVIRONMENT VARIABLES:
+
+  polynomialLostNodeId - used with FREEDEBUG conditional to track
+  down inappropriately freed polynomials. See FREEDEBUG.
+
+  polynomialDebugLevel - used to control level of diagnostic
+  output. Not referenced in recursive or otherwise intense code,
+  so not a performance problem. Will probably be integrated into
+  the older disused diagnostic routines used in other parts of
+  kelvin.
+
+  polynomialScale - this is referenced by polynomialInitialization
+  to set the initial size of polynomial management lists, and to
+  set the permanent size of the polynomial hash tables. Kelvin
+  parses a value for it from the 'PE' directive, but that can be
+  overridden by the environment variable. The default is 10, which
+  corresponds to the original maximum reasonable sizes for all
+  data structures, and consumes just under a gigabyte of memory.
+  Obviously small-memory environments benefit from setting it to
+  a lower value, and we have yet to encounter a significant 
+  performance degredation when it's set as low as 1. More testing
+  needs to be done in a wider variety of environments to assess
+  all of the ramifications, but it's certainly handy under cygwin!
+
 */
 #include <stdlib.h>
 #include <stdio.h>
@@ -247,6 +302,7 @@ int polySourceCount = 0;
 int originalChildren[MAXPOLYSOURCES];
 #endif
 
+
 /* Clear the evaluation flag on the entire tree so we can mark
    where we've been and not retrace our steps regardless of
    redundancy. */
@@ -686,17 +742,18 @@ constantExp (double con)
   return p;
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-//The key of a variable polynomial is computed by the address of the variable.  Different variables have
-//different addresses in memory which tend to provide different keys for different variable polynomials.
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+  The key of a variable polynomial is computed by the address of the variable.
+  Different variables have different addresses in memory which provide nicely
+  random keys. */
+
 inline int
 keyVariablePolynomial (double *vD, int *vI, char vType)
 {
   int key;
 
-  //currently we can deal with integer and double variables.
-  //We use the address of the variable as the key of the variable polynomial
+  // Currently we can deal with integer and double variables.
+  // We use the address of the variable as the key of the variable polynomial
   if (vType == 'D')
     key = (long int) vD;
   else if (vType == 'I')
@@ -709,78 +766,63 @@ keyVariablePolynomial (double *vD, int *vI, char vType)
   return key;
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-//This function builds a variable polynomial.  The construction of the product and sum polynomials starts
-// from calling this function for constructing variable polynomials or indexing variable polynomials.  
-// Therefore, the computation in this function must be very efficient.  The efficiency of this function 
-//will affect the efficiency of the construction of almost every term in every polynomial
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* Builds a variable polynomial. Essentially just a name and a place to find
+   it's value before evaluation. */
+
 Polynomial *
 variableExp (double *vD, int *vI, char vType, char name[10])
 {
   int i;
-  Polynomial *p;		//newly built variable polynomial
-  struct variablePoly *vPoly;	//variable structure for newly built variable polynomial
-  int key;			//key of the newly buily variable polynomial
-  int hIndex, vIndex;		//index in the hash table, index in the polynomial list
+  Polynomial *p;		// Newly built variable polynomial
+  struct variablePoly *vPoly;	// Variable structure for newly-built polynomial
+  int key;			// Key of the newly-built variable polynomial
+  int hIndex, vIndex;		// Index in the hash table and polynomial list
   int first, last, location;
 
-  //compuete a key for this variable polynomial
+  // Create a key for this variable polynomial
   key = keyVariablePolynomial (vD, vI, vType);
 
-
-  //Compute the index of this variable polynomial in the hash table of variable polynomials
+  // Compute the index of this variable poly in the hash table of variable polynomials
   hIndex = key % VARIABLE_HASH_SIZE;
   if (hIndex < 0)
     hIndex += VARIABLE_HASH_SIZE;
-  //If the hash table item is not empty, determine if the variable has been in the 
-  //variable polynomial list.  If it is not, determine a position in the hash table to
-  //save the key and the index in the variable list of this variable polynomial and 
-  //save this variable polynomial in the variable polynomial list
+  /* If the hash table item is not empty, determine if the variable is already in the 
+     variable polynomial list.  If it is not, determine a position in the hash table to
+     save the key and an index in the variable list. Save this variable polynomial in 
+     the variable polynomial list. */
   if (variableHash[hIndex].num > 0) {
-
-    //if the key of this variable is equal to the keys of some polynomials in the 
-    //variable list, compare if the variable has already been there
+    /* If the key of this variable is equal to the keys of some polynomials in the 
+       variable list, check if the variable is already there. */
     if (searchHashTable (&variableHash[hIndex], &first, &last, key)) {
       for (i = first; i <= last; i++) {
 	vIndex = variableHash[hIndex].index[i];
-	//Compare if the two variables are the same
+	// Compare if the two variables are the same
 	if ((vType == 'D' && variableList[vIndex]->e.v->vAddr.vAddrD == vD)
 	    || (vType == 'I'
 		&& variableList[vIndex]->e.v->vAddr.vAddrI == vI)) {
-	  //if the two variables are the same, return the variable in the variable list 
+	  // If the two variables are the same, return the address from the list 
 	  variableList[vIndex]->valid |= VALID_REF_FLAG;
 	  variableHashHits++;
 	  return variableList[vIndex];
 	}
       }
-      location = last;
     }
-    //If the newly generated key is unique, we are sure that this variable appears
-    //the first time.
-    else {
-      location = last;
-    }
-  }
-  //If the hash table item is empty, we are sure that this variable appears
-  //the first time
-  else {
+    location = last;
+  } else
     location = 0;
-  }
 
-  //This variable polynomial doesn't exist.  We create a new variable polynomial
+  // This variable polynomial doesn't exist, so we'll create it.
   p = (Polynomial *) malloc (sizeof (Polynomial));
   vPoly = (struct variablePoly *) malloc (sizeof (struct variablePoly));
   if (p == NULL || vPoly == NULL)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,
 	     __LINE__);
   p->eType = T_VARIABLE;
-  /* Make sure we always have a name, either provided or based upon arrival order. */
+  // Make sure we always have a name, either provided or based upon arrival order.
   if (strlen (name) == 0)
     sprintf (vPoly->vName, "u%d", variableCount);
   else
     strcpy (vPoly->vName, name);
-  //  fprintf(stderr, "New variable %s\n", vPoly->vName);
   if (vType == 'D')
     vPoly->vAddr.vAddrD = vD;
   else
@@ -788,7 +830,7 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   vPoly->vType = vType;
   p->e.v = vPoly;
 
-  //If the polynomial list is full, apply for more memory
+  // If the polynomial list is full, get  more memory
   if (variableCount >= variableListLength) {
     variableListLength += VARIABLE_LIST_INCREASE;
     variablePListExpansions++;
@@ -807,56 +849,45 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   p->valid = 0;
   p->count = 0;
 
-  //Insert the variable polynomial in the variable polynomial list
+  // Insert the variable polynomial in the variable polynomial list
   variableList[variableCount] = p;
   variableCount++;
   nodeId++;
   if ((nodeId & 0x1FFFFF) == 0)
     polyStatistics ("At 2M poly multiple");
 
-  //Record the variable polynomial in the hash table of the variable polynomials
+  // Record the variable polynomial in the hash table of the variable polynomials
   insertHashTable (&variableHash[hIndex], location, key, variableCount - 1);
 
   return p;
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////
-//This function compute a key for a sum polynomial.  The number of sum polynomials for complex
-//pedigrees and large number of pedigrees tend to be very big.  Therefore it is important that
-//we have a good hash strategy so that the polynomials are well distributed in the hash table.
-///////////////////////////////////////////////////////////////////////////////////////////////
+/* This function compute a key for a sum polynomial. There tends to be a huge number of sum
+   and product polynomials in likelihood calculations, so it is important that we have a 
+   good hash strategy so that the polynomials are well distributed in the hash table. */
 inline int
 keySumPolynomial (Polynomial ** p, double *factor, int counter)
 {
-
   int key = 0;
   int j;
   double tempD1;
   int tempI1;
 
-  //Here we use the ids and keys of all terms in a sum polynomial, their coefficients, their
-  //order in the sum to compute a key for the sum polynomial 
+  /* Here we use the ids and keys of all terms in a sum polynomial, their coefficients, their
+     order in the sum to compute a key for the sum polynomial. */
   for (j = 0; j < counter; j++) {
     tempD1 = frexp (factor[j], &tempI1);
     key +=
-      p[j]->id + p[j]->key * (j + 1) + (int) (tempD1 * 12345 +
-					      tempI1) * ((int) p[j]->eType +
-							 1);
+      p[j]->id + p[j]->key * (j + 1) + (int) (tempD1 * 12345 + tempI1) * ((int) p[j]->eType + 1);
   }
-
   return key;
-
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//search for a polynomial in a polynomial list.  If the target polynomial is not in the polynomial list,
-//return value:  0 not found
-//               1 found
-//If the target polynomial is found, then its index in the polynomial list is returned in parameter location
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* Search for a polynomial in a polynomial list. If the target polynomial is not in the list,
+   return 0, otherwise return 1 and it's index in the location parameter. This function has 
+   been heavily optimized for degenerate cases due to it's intensive use. */
 inline int
-searchPolynomialList (Polynomial ** p, int length,
-		      Polynomial * target, int *location)
+searchPolynomialList (Polynomial ** p, int length, Polynomial * target, int *location)
 {
   int binaryStart, binaryEnd, binaryMiddle;
 
@@ -885,64 +916,59 @@ searchPolynomialList (Polynomial ** p, int length,
       binaryStart = binaryMiddle + 1;
     else
       binaryEnd = binaryMiddle - 1;
-  }				//end of while
+  }
   *location = binaryStart;
   return 0;
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Collect the terms and their coefficients of a sum polynomial.  A plus operation can have any number of
-//operands which are polynomials.  We collect these operand polynomials and organize them in a unique order
-//as a basis for comparisons between the resulted polynomial and other polynomials 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* Collect the terms and their coefficients of a sum polynomial.  A plus operation can 
+   have any number of operands which are themselves polynomials.  We collect these operand 
+   polynomials and organize them in a unique manner as a basis for comparisons between the 
+   resulting polynomial and other polynomials.  */
 inline void
 collectSumTerms (double **factor, Polynomial *** p, int *counter,
 		 int *containerLength, double f1, Polynomial * p1)
 {
   int location;
 
-  //search for the position where the new item should be inserted
+  // Search for the position where the new item should be inserted
   if (searchPolynomialList (*p, *counter, p1, &location) == 1) {
-    //this item is currently in the sum, just merge their coefficients
+    // This item is currently in the sum, just merge their coefficients
     (*factor)[location] += f1;
     return;
   }
-  //If container is full, apply for more memory
+  // If container is full, apply for more memory
   if (*counter >= *containerLength - 1) {
     (*containerLength) += 50;
     containerExpansions++;
-    *factor =
-      (double *) realloc (*factor, (*containerLength) * sizeof (double));
-    *p =
-      (Polynomial **) realloc (*p,
-			       (*containerLength) * sizeof (Polynomial *));
+    *factor = (double *) realloc (*factor, (*containerLength) * sizeof (double));
+    *p = (Polynomial **) realloc (*p,(*containerLength) * sizeof (Polynomial *));
     if (*factor == NULL || *p == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__,
 	       __LINE__);
       exit (1);
     }
   }
-  //this is a new item in the sum, insert it at the start or end of the sum
-  //  if (*counter == 0 || location >= *counter) {
+  //This is a new item in the sum, insert it at the start or end of the sum
   if (location >= *counter) {
     (*p)[*counter] = p1;
     (*factor)[*counter] = f1;
     (*counter)++;
   }
-  //insert the item in the middle of the sum
+  // Insert the item in the middle of the sum
   else {
-    //Move the items backward
+    // Move the items backward
     memmove (&((*p)[location + 1]), &((*p)[location]),
 	     sizeof (Polynomial *) * ((*counter) - location));
     memmove (&((*factor)[location + 1]), &((*factor)[location]),
 	     sizeof (double) * ((*counter) - location));
 
-    //insert the new item
+    // Insert the new item
     (*p)[location] = p1;
     (*factor)[location] = f1;
     (*counter)++;
   }
-};
+}
 
 #ifdef SOURCEDIGRAPH
 int
@@ -3154,11 +3180,6 @@ writePolyDigraph (Polynomial * p)
   fclose (diGraph);
 }
 
-
-
-
-
-
 void
 expPrinting (Polynomial * p)
 {
@@ -3521,7 +3542,6 @@ printAllPolynomials ()
 
   fprintf (stderr, "All Polynomials (from hash):\n");
 
-  /*
   if (constantCount > 0) {
     fprintf (stderr, "All %d constants:\n", constantCount);
     for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
@@ -3539,7 +3559,6 @@ printAllPolynomials ()
     }
     fprintf (stderr, "\n");
   }
-  */
 
   if (variableCount > 0) {
     fprintf (stderr, "All %d variables:\n", variableCount);
