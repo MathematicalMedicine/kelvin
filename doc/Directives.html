@@ -1,0 +1,230 @@
+<h2>Types of Analysis</h2>
+
+<ol>
+<li>Trait-to-marker, sex-averaged, dichotomous trait (SA, DT)
+<li>Trait-to-marker, sex-averaged, quantitative trait using chi-square distribution. (SA, QT, X2-dist)
+<li>Trait-to-marker, sex-averaged, quantitative trait using Student's t-distribution. (SA, QT, T-dist)
+<li>Trait-to-marker, sex-averaged, quantitative trait with threshold using chi-square distribution. (SA, CT, X2-dist)
+<li>Trait-to-marker, sex-averaged, quantitative trait with threshold using Student's t-distribution. (SA, CT, T-dist)
+<li>Trait-to-marker, sex-specific, dichotomous trait (SS, DT)
+<li>TM, SS, QT, X2-dist
+<li>TM, SS, QT, T-dist
+<li>TM, SS, CT, X2-dist
+<li>TM, SS, CT, T-dist
+<li>TM, TP, DT, LE
+<li>TM, TP, DT, LD
+<li>TM, TP, QT, T-dist, LE
+<li>TM, TP, QT, T-dist, LD
+<li>TM, TP, QT, X2-dist, LE
+<li>TM, TP, QT, X2-dist, LD
+<li>TM, TP, CT, T-dist, LE
+<li>TM, TP, CT, T-dist, LD
+<li>TM, TP, CT, X2-dist, LE
+<li>TM, TP, CT, X2-dist, LD
+<li>MM, LE
+<li>MM, LD
+</ol>
+
+<h2>Summary of Directives</h2>
+
+Directives are provided here in <a href="#alphabetic">alphabetic order</a>, by
+<a href="#functional">functional groupings</a>, and <a href="#detail">in detail</a>.
+
+<h3 id="alphabetic">Alphabetic Listing</h3>
+
+<table border="1">
+<tr>
+<td width="10%">
+<a href="#AF">AF</a><br>
+<a href="#AS">AS</a><br>
+<a href="#CF">CF</a><br>
+<a href="#DA">DA</a><br>
+<a href="#DD, Dd, dd">DD, Dd, dd</a><br>
+<a href="#DF">DF</a><br>
+<a href="#DT">DT</a><br>
+<a href="#GF">GF</a><br>
+<a href="#HE">HE</a><br>
+<td width="10%">
+<a href="#LC">LC</a><br>
+<a href="#LD">LD</a><br>
+<a href="#MAX">MAX</a><br>
+<a href="#MIN">MIN</a><br>
+<a href="#MK">MK</a><br>
+<a href="#MM">MM</a><br>
+<a href="#MP">MP</a><br>
+<a href="#P1">P1</a><br>
+<a href="#PD">PD</a><br>
+<td width="10%">
+<a href="#PE">PE</a><br>
+<a href="#PF">PF</a><br>
+<a href="#QT">QT</a><br>
+<a href="#SA">SA</a><br>
+<a href="#SR">SR</a><br>
+<a href="#SS">SS</a><br>
+<a href="#TL">TL</a><br>
+<a href="#TP">TP</a><br>
+<a href="#TT">TT</a><br>
+<td width="10%">
+<a href="#T_MAX">T_MAX</a><br>
+<a href="#T_MIN">T_MIN</a><br>
+<a href="#Tf">Tf</a><br>
+<a href="#Th">Th</a><br>
+<a href="#Tm">Tm</a><br>
+<a href="#UP">UP</a><br>
+<a href="#XC">XC</a><br>
+</tr>
+</table>
+
+<h3 id="functional">Functional Grouping</h3>
+<h4>Analysis Type</h4>
+<ul>
+<li><a href="#SS">SS &lt;m&gt;</a>: sex-specific multipoint analysis with &lt;m&gt; markers.
+<li><a href="#SA">SA &lt;m&gt;</a>: sex-averaged multipoint analysis with &lt;m&gt; markers.
+<li><a href="#XC">XC</a>: analysis of X-chromosome instead of default autosome.
+<li><a href="#PE">PE &lt;n&gt;</a>: polynomial evaluation with scaling &lt;m&gt; instead of iterative calculation.
+<li><a href="#TP">TP</a>: two-point analysis.
+</ul>
+<h4>File Specification</h4>
+<ul>
+<li><a href="#HE">HE &lt;file name&gt;</a>: bayes ratio output file, default bf.out.
+<li><a href="#PF">PF &lt;file name&gt;</a>: posterior probability of linkage output file, default ppl.out.
+<li><a href="#PD">PD &lt;file name&gt;</a>: pedigree input file, default pedfile.dat.
+<li><a href="#DF">DF &lt;file name&gt;</a>: pedigree locus description data input file, default datafile.dat.
+<li><a href="#MK">MK &lt;file name&gt;</a>: marker input file, default markers.dat.
+<li><a href="#MP">MP &lt;file name&gt;</a>: map input file, default mapfile.dat.
+<li><a href="#CF">CF &lt;file name&gt;</a>: case control input file.
+<li><a href="#SR">SR &lt;path&gt;</a>: saved results input/output path.
+</ul>
+<h4>Data Values</h4>
+<ul>
+<li><a href="#UP">UP &lt;n&gt;</a>: unknown person ID, default "0".
+<li><a href="#AS">AS &lt;n&gt; &lt;m&gt; &lt;l&gt;</a>: affection status values
+</ul>
+<h4>Dichotomous Model</h4>
+<li><a href="#DT">DT</a>: 
+<li><a href="#GF">GF</a>: 
+<li><a href="#DD, Dd, dd">DD, Dd, dd</a>:
+<li><a href="#DA">DA</a>: 
+<li><a href="#AF">AF</a>: 
+<li><a href="#LC">LC</a>: 
+<li><a href="#Th">Th</a>: 
+<li><a href="#Tm">Tm</a>: 
+<li><a href="#Tf">Tf</a>: 
+<li><a href="#TL">TL</a>: 
+<li><a href="#QT">QT</a>: 
+<li><a href="#LD">LD</a>: 
+<li><a href="#P1">P1</a>: 
+<li><a href="#TT">TT</a>: 
+<li><a href="#T_MIN">T_MIN</a>: 
+<li><a href="#T_MAX">T_MAX</a>: 
+<li><a href="#MIN">MIN</a>: 
+<li><a href="#MAX">MAX</a>: 
+<li><a href="#MM">MM</a>: 
+<li>
+</ul>
+
+<h2 id="detail">Detailed Directive Descriptions</h2>
+
+<h3 id="AF">AF Directive</h3>
+
+<h3 id="AS">AS Directive</h3>
+Specifies the values used to represent affection status in the pedigree data file.
+<pre>
+   AS 0 1 2
+</pre>
+where the first value is the "unknown" value, the second value is the
+"unaffected" value, and the third value is the "affected" value (the
+numbers shown reflect the defaults for DT; for multipoint, the
+defaults are NAN, -9999.99, and 9999.99, respectively).
+
+<h3 id="CF">CF Directive</h3>
+
+<h3 id="DA">DA Directive</h3>
+
+<h3 id="DD, Dd, dd">DD, Dd, dd Directive</h3>
+
+<h3 id="DF">DF Directive</h3>
+
+<h3 id="DT">DT Directive</h3>
+
+<h3 id="GF">GF Directive</h3>
+
+<h3 id="HE">HE Directive</h3>
+
+<h3 id="LC">LC Directive</h3>
+
+<h3 id="LD">LD Directive</h3>
+
+<h3 id="MAX">MAX Directive</h3>
+
+<h3 id="MIN">MIN Directive</h3>
+
+<h3 id="MK">MK Directive</h3>
+
+<h3 id="MM">MM Directive</h3>
+
+<h3 id="MP">MP Directive</h3>
+
+<h3 id="P1">P1 Directive</h3>
+
+<h3 id="PD">PD Directive</h3>
+
+<h3 id="PE">PE Directive</h3>
+Applicable to all types of analyses.
+<p>
+Indicates that polynomial evaluation should be performed for likelihood
+calculations; overrides the default explicit
+evaluation condition.
+<pre>
+   PE n
+</pre>
+Where n is an optional integer parameter which specifies the polynomial
+scaling factor in the range of 1-10. Default is 1, and best for
+environments with limited memory resources. Higher values will generally
+trade memory for execution time.
+
+<h3 id="PF">PF Directive</h3>
+Applicable to all types of analyses.
+<p>
+Specifies the name of the post-MAKEPED format pedigree file to be used
+in the analysis.
+<pre>
+   PF pedfile.dat
+</pre>
+Shown with default file name. The parameter can include a path which can be absolute or
+relative to the current default directory. A common use of this is
+specifying a single pedigree file to be shared by multiple analyses in separate
+subdirectories as:
+<pre>
+   PF ../pedfile.dat
+</pre>
+For information on the format of the pedigree file itself, see <emp>TBS</emp>.
+
+<h3 id="QT">QT Directive</h3>
+
+<h3 id="SA">SA Directive</h3>
+
+<h3 id="SR">SR Directive</h3>
+
+<h3 id="SS">SS Directive</h3>
+
+<h3 id="TL">TL Directive</h3>
+
+<h3 id="TP">TP Directive</h3>
+
+<h3 id="TT">TT Directive</h3>
+
+<h3 id="T_MAX">T_MAX Directive</h3>
+
+<h3 id="T_MIN">T_MIN Directive</h3>
+
+<h3 id="Tf">Tf Directive</h3>
+
+<h3 id="Th">Th Directive</h3>
+
+<h3 id="Tm">Tm Directive</h3>
+
+<h3 id="UP">UP Directive</h3>
+
+<h3 id="XC">XC Directive</h3>
+
