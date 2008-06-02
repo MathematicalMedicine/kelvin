@@ -1474,36 +1474,6 @@ main (int argc, char *argv[])
 	/* calculate the average BR */
 	get_average_LR (tp_result);
 
-#if 0
-	fprintf (fpHomo, "# %-d  \"%s %s \" \n", loc2, pLocus2->sName,
-		 pLocus1->sName);
-	for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-	  for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
-	    /* male theta */
-	    theta[0] = modelRange.theta[0][thetaInd];
-	    /* female theta */
-	    theta[1] = modelRange.theta[1][thetaInd];
-	    if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) {
-	      fprintf (fpHomo, "\t (%f,%f)  %f(%d)\n",
-		       theta[0], theta[1],
-		       tp_result[dprimeIdx][thetaInd][0].
-		       lr_total /
-		       tp_result[dprimeIdx][thetaInd][0].lr_count,
-		       tp_result[dprimeIdx][thetaInd][0].lr_count);
-	    } else {
-	      fprintf (fpHomo, "\t %f (%f,%f)  %f(%d)\n",
-		       pLambdaCell->lambda[dprimeIdx][0][0],
-		       theta[0], theta[1],
-		       tp_result[dprimeIdx][thetaInd][0].
-		       lr_total /
-		       tp_result[dprimeIdx][thetaInd][0].lr_count,
-		       tp_result[dprimeIdx][thetaInd][0].lr_count);
-	    }
-	  }
-	}
-	fprintf (fpHomo, "-	Total 1234(1234)\n");
-	fflush (fpHomo);
-#endif
 	/* for each D prime and theta, print out average and maximizing model information - MOD */
 	fprintf (fpHet, "# %-d  %s %s \n", loc2, pLocus1->sName,
 		 pLocus2->sName);
@@ -3001,7 +2971,6 @@ main (int argc, char *argv[])
     fclose (fpPPL);
   }
   fclose (fpHet);
-  //  fclose (fpHomo);
   return 0;
 }
 
