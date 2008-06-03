@@ -336,6 +336,8 @@ main (int argc, char *argv[])
   swLogMsg (likelihoodVersion);
   swLogMsg (locusVersion);
   swLogMsg (polynomialVersion);
+  sprintf (messageBuffer, "Compiler verison  %s\n", __VERSION__);
+  swLogMsg (messageBuffer);
 
 #ifdef _OPENMP
   if ((envVar = getenv ("OMP_NUM_THREADS")) != NULL)
