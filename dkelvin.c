@@ -6,13 +6,13 @@
  * Polynomial features - Hongling Wang
  * config.c and error logging modules - Alberto Maria Segre
  * Regex code - Nathan Burnette
- * RADSMM storage code - Martin Milder
  * 
  * Copyright 2007, Columbus Children's Research Institute.  
  * All rights reserved.
  * Permission is hereby given to use this software 
  * for non-profit educational purposes only.
  **********************************************************************/
+#include <gsl/gsl_version.h>
 #include "dkelvin.h"
 #include "likelihood.h"
 #include "pedlib/polynomial.h"
@@ -524,7 +524,7 @@ main (int argc, char *argv[])
   swLogMsg (likelihoodVersion);
   swLogMsg (locusVersion);
   swLogMsg (polynomialVersion);
-  sprintf (messageBuffer, "Compiler verison  %s\n", __VERSION__);
+  sprintf (messageBuffer, "Compiler %s, GSL %s\n", __VERSION__, GSL_VERSION);
   swLogMsg (messageBuffer);
 
 #ifdef _OPENMP
