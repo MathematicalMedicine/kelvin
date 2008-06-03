@@ -52,7 +52,11 @@
 #define PCLASSCONSTRAINT2 "[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([[:digit:]])[[:space:]]*([>]|[>][=]|[=][=]|[!][=])[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([[:digit:]])[[:space:]]*[;]?"
 
 /* Strings used to parse configuration file lines (see getType). */
-#define DIRECTIVES "GFThTmTfALTLTTLDAFDDDddd"
+#ifdef IMPRINTING
+  #define DIRECTIVES "GFThTmTfALTLTTLDAFDDDddDdd"
+#else
+  #define DIRECTIVES "GFThTmTfALTLTTLDAFDDDddd"
+#endif
 #define GF 0			/* gene frequency */
 #define Th 1			/* theta */
 #define Tm 2			/* male theta */
@@ -64,7 +68,13 @@
 #define AF 8
 #define DD 9			/* Must be last for numeric directives to work */
 #define Dd 10
-#define dd 11
+#ifdef IMPRINTING
+  #define dD 11
+  #define dd 12
+#else
+  #define dd 11
+  #define dD 12
+#endif
 
 /* Strings used to parse configuration file constraints (see
  * getOperator). Matches:
@@ -780,12 +790,13 @@ readConfigFile (char *file, ModelType * modelType,
 	    addDPrime (modelRange, strtod (start + match[2].rm_so, NULL));
 	  else if (dir1 == AF)
 	    addAlleleFreq (modelRange, strtod (start + match[2].rm_so, NULL));
-	  else
+	  else {
 	    /* All parsing is done only in pre-expansion mode,
 	     * hence class is always moot. Also, subtract base
 	     * value of DD from dir1 to get 0-offset value.*/
 	    addPenetrance (modelRange, dir1 - DD,
 			   strtod (start + match[2].rm_so, NULL));
+	  }
 	} else {
 	  /* Doesn't match anything. This is a badly formatted
 	   * line which should be flagged. */
@@ -957,7 +968,7 @@ readConfigFile (char *file, ModelType * modelType,
 int
 getType (char *line)
 {
-  char types[25] = DIRECTIVES;
+  char types[27] = DIRECTIVES;
   char *ptr = types;
 
   while (ptr < types + strlen (types)) {
@@ -1112,7 +1123,7 @@ addPenetrance (ModelRange * range, int type, double val)
 
   /* Next, add the penetrance to the appropriate location in the
    * penet[][][] array, which may entail allocating more space. Recall
-   * type is an integer, where DD=00=0; Dd=01=1; and dd=10=2. We
+   * type is an integer, where DD=00=0; Dd=01=1; dD=10=2; and dd=11=3. We
    * get the type by subtracting DD, the "base type" from the
    * integer count at invocation. */
   if (penetcnt[type] == penetmax[type]) {
@@ -1453,7 +1464,7 @@ void
 addConstraint (int type, int a1, int c1, int p1,
 	       int op, int a2, int c2, int p2, int disjunct)
 {
-  char types[25] = DIRECTIVES;
+  char types[27] = DIRECTIVES;
 
   /* Check for meaningless constraints. TODO: do more of this! */
   KASSERT ((((a1 == Tm && a2 == Tf) || (a1 == Tf && a2 == Tm))
@@ -1508,7 +1519,7 @@ checkThetas (ModelRange * range, int i)
   int j = 0;
 
 #if FALSE
-  char types[15] = DIRECTIVES;
+  char types[27] = DIRECTIVES;
 #endif
 
   /* Scan through each constraint. */
@@ -1569,7 +1580,7 @@ checkPenets (ModelRange * range, int i)
   int j = 0;
 
 #if FALSE
-  char types[15] = DIRECTIVES;
+  char types[27] = DIRECTIVES;
 #endif
 
   /* Scan through each constraint. */
@@ -1640,7 +1651,7 @@ checkClassPenets (ModelRange * range, int i)
   int j = 0;
 
 #if FALSE
-  char types[15] = DIRECTIVES;
+  char types[27] = DIRECTIVES;
 #endif
 
   /* Scan through each constraint: inter-class constraints are on
@@ -1721,7 +1732,7 @@ checkParams (ModelRange * range, int i)
   int j = 0;
 
 #if FALSE
-  char types[15] = DIRECTIVES;
+  char types[27] = DIRECTIVES;
 #endif
 
   /* Scan through each constraint. */
@@ -1799,10 +1810,6 @@ int
 checkClassParams (ModelRange * range, int i)
 {
   int j = 0;
-
-#if FLASE
-  char types[15] = DIRECTIVES;
-#endif
 
   /* Scan through each constraint. */
   while (j < constcnt[PARAMCLASSC]) {
@@ -1887,7 +1894,7 @@ checkClassThreshold (ModelRange * range, int i)
   int j = 0;
 
 #if FALSE
-  char types[15] = DIRECTIVES;
+  char types[27] = DIRECTIVES;
 #endif
 
   /* Scan through each constraint: inter-class constraints are on
@@ -2685,7 +2692,7 @@ void
 showConstraints ()
 {
   int i, j;
-  char types[25] = DIRECTIVES;
+  char types[27] = DIRECTIVES;
 
   printf
     ("======================================================================\n");
