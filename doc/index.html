@@ -137,10 +137,11 @@ along with the output from the run.
 When kelvin or dkelvin are run, they first display version, build and run configuration information, e.g.:
 <pre>
 PID: 3072, kelvin V0.34.2 built May 29 2008 10:06:56
-PID: 3072, $Id$
-PID: 3072, $Id$
-PID: 3072, $Id$
-PID: 3072, $Id$
+PID: 3072, Id: kelvin.c 579 2008-06-03 13:28:20Z whv001
+PID: 3072, Id: likelihood.c 533 2008-05-23 17:26:34Z whv001
+PID: 3072, Id: locus.c 471 2008-05-06 20:17:17Z whv001
+PID: 3072, Id: polynomial.c 570 2008-06-02 19:28:31Z whv001
+PID: 3072, Compiler 4.1.1 20070105 (Red Hat 4.1.1-52), GSL 1.9
 PID: 3072, OpenMP-enabled w/0 threads.
 To force a dump of stats (at some risk), type CTRL-\ or type "kill -3 3072".
 PID: 3072, In /Users/whv001/kelvin/trunk/test-suite/MP_DT w/kelvin.conf
@@ -149,7 +150,8 @@ PID: 3072, Computation is done in polynomial mode
 
 </pre>
 The first line is the kelvin major version and build information, and the subsequent lines
-that contain "$Id:" are source-managed component version information. Subsequent lines 
+that contain "Id:" are source-managed component version information. Next is the compiler
+and GNU Scientific Library verison numbers. Lines after that
 describe important build options as specified in the Makefile and run
 characteristics as influenced by environment variables.
 <p>
