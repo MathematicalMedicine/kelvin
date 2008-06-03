@@ -72,7 +72,7 @@ exit_kelvin ()
     kill (childPID, SIGKILL);	/* Sweep away any errant children */
 }
 
-char *programVersion = "V0.34.2";
+char *programVersion = "V0.34.3";
 char *kelvinVersion = "$Id$";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
@@ -154,9 +154,9 @@ int flexBufferSize = 0;
 
 /**********************************************************************
  * Usage:
- *    kelvin [-s][-c] config.dat
+ *    kelvin kelvin.conf
  *
- * The config.dat file gives information about the specific linkage
+ * The kelvin.conf file gives information about the specific linkage
  * analysis run. All information about, e.g., which markers to use,
  * what outputs to calculate, and so on, are stored in this
  * configuration file.

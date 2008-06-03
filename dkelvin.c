@@ -77,7 +77,7 @@ exit_kelvin ()
     kill (childPID, SIGKILL);	/* Sweep away any errant children */
 }
 
-char *programVersion = "V0.34.2";
+char *programVersion = "V0.34.3";
 char *dkelvinVersion = "$Id$";
 
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
@@ -163,7 +163,6 @@ char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";
 char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
 FILE *fpHet = NULL;		/* average HET LR file */
 
-  //FILE *fpHomo = NULL;          /* average HOMO LR file */
 FILE *fpPPL = NULL;		/* PPL output file */
 int polynomialScale = 1;	/* Scale of static allocation and dynamic
 				   growth in polynomial.c, 1-10 with 1 as
@@ -230,9 +229,9 @@ int flexBufferSize = 0;
 
 /**********************************************************************
  * Usage:
- *    kelvin [-s][-c] config.dat
+ *    kelvin kelvin.conf
  *
- * The config.dat file gives information about the specific linkage
+ * The kelvin.conf file gives information about the specific linkage
  * analysis run. All information about, e.g., which markers to use,
  * what outputs to calculate, and so on, are stored in this
  * configuration file.
@@ -525,6 +524,8 @@ main (int argc, char *argv[])
   swLogMsg (likelihoodVersion);
   swLogMsg (locusVersion);
   swLogMsg (polynomialVersion);
+  sprintf (messageBuffer, "Compiler verison  %s\n", __VERSION__);
+  swLogMsg (messageBuffer);
 
 #ifdef _OPENMP
   if ((envVar = getenv ("OMP_NUM_THREADS")) != NULL)
@@ -1948,7 +1949,6 @@ main (int argc, char *argv[])
     fclose (fpPPL);
   }
   fclose (fpHet);
-  //  fclose (fpHomo);
 
   return 0;
 }
