@@ -137,10 +137,10 @@ along with the output from the run.
 When kelvin or dkelvin are run, they first display version, build and run configuration information, e.g.:
 <pre>
 PID: 3072, kelvin V0.34.2 built May 29 2008 10:06:56
-PID: 3072, $Id: kelvin.c 506 2008-05-16 12:43:30Z whv001 $
-PID: 3072, $Id: likelihood.c 533 2008-05-23 17:26:34Z whv001 $
-PID: 3072, $Id: locus.c 471 2008-05-06 20:17:17Z whv001 $
-PID: 3072, $Id: polynomial.c 536 2008-05-27 19:06:35Z whv001 $
+PID: 3072, $Id$
+PID: 3072, $Id$
+PID: 3072, $Id$
+PID: 3072, $Id$
 PID: 3072, OpenMP-enabled w/0 threads.
 To force a dump of stats (at some risk), type CTRL-\ or type "kill -3 3072".
 PID: 3072, In /Users/whv001/kelvin/trunk/test-suite/MP_DT w/kelvin.conf
@@ -206,7 +206,7 @@ one row of whitespace-delimited values for each position in the analysis:
 <li>PenetranceVector - penetrance vector. For dichotomous trait runs, it is three (or four) columns of 
 the maximizing penetrance for
 DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the LOD score.
-For quantitative trait runs, it is three (or four columns) of means followed by three (or four) of standard deviations for
+For quantitative trait runs, it is three (or four) columns of means followed by three (or four) of standard deviations for
 the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold.
 <li>MarkerList - parenthesised list of the closest N markers for each position, where N is the number
 of markers being considered at a time.
@@ -290,5 +290,8 @@ is alway to the terminal. Here's an example that, again, captures the output to 
 <pre>
 _$ calc_updated_ppl updated-avghet.out > updated-ppl.out
 </pre>
-
+<hr>
+Last updated $Date$
 </body>
+
+</html>
