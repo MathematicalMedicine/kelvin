@@ -204,11 +204,6 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
 	    fprintf(responseFile, "%s", iB);
 	}
       }
-      for (i=0;i<hI;i++) {
-	if (hIList[i].pP->eType == T_VARIABLE) {
-	  fprintf(outputFile,"Value for %s is %G\n", hIList[i].handle, *hIList[i].pValue);
-	}
-      }
       fprintf(stdout, "=%G\n", evaluateValue(pHI->pP));
       break;
     case 'G':			/* Graph the polynomial */
