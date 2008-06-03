@@ -204,7 +204,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
 	    fprintf(responseFile, "%s", iB);
 	}
       }
-      fprintf(stdout, "=%G\n", evaluateValue(pHI->pP));
+      fprintf(stdout, "=%20.15g\n", evaluateValue(pHI->pP));
       break;
     case 'G':			/* Graph the polynomial */
       pHI = getHandle(inputFile, outputFile," poly to evaluate");
