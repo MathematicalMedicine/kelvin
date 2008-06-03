@@ -191,6 +191,15 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       fprintf(stderr, "%s", iB);
       break;
     case 'E':			/* Evaluate the polynomial */
+      pHIO1 = getHandle(inputFile, outputFile,"result variable poly name");
+      if (!preExisting) {
+	printf("Can't use undefined poly name\n");
+	break;
+      }
+      if (pHIO1->pP->eType != T_VARIABLE) {
+	printf("Can't assign to non-variable poly\n");
+	break;
+      }
       pHI = getHandle(inputFile, outputFile," poly to evaluate");
       if (!preExisting) {
 	fprintf(stderr, "Can't evaluate undefined poly\n");
@@ -199,12 +208,21 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       for (i=0;i<hI;i++) {
 	if (hIList[i].pP->eType == T_VARIABLE) {
 	  fprintf(outputFile,"Value for %s> ", hIList[i].handle);
-	  *hIList[i].pValue = atof(fgets(iB, sizeof(iB), inputFile));
+	  if (hIList[i].pP == pHIO1->pP) {
+	    fprintf(outputFile,"(return to keep %G) ", hIList[i].pP->value);
+	    fgets(iB, sizeof(iB), inputFile);
+	    if (strlen(iB) >= 2)
+	      *hIList[i].pValue = atof(iB);
+	    else
+	      *hIList[i].pValue = hIList[i].pP->value;
+	  } else
+	    *hIList[i].pValue = atof(fgets(iB, sizeof(iB), inputFile));
 	  if (responseFile != NULL)
 	    fprintf(responseFile, "%s", iB);
 	}
+	//	fprintf(outputFile,"Value for %s is %G\n", hIList[i].handle, *hIList[i].pValue);
       }
-      fprintf(stdout, "=%20.15g\n", evaluateValue(pHI->pP));
+      fprintf(stdout, "=%20.15g\n", (pHIO1->pP->value = evaluateValue(pHI->pP)));
       break;
     case 'G':			/* Graph the polynomial */
       pHI = getHandle(inputFile, outputFile," poly to evaluate");
