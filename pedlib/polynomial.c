@@ -2134,16 +2134,14 @@ functionCallExp (int num, ...)
   }
   //num is equal to 1 plus the number of parameters for the called function
   for (i = 0; i < num - 1; i++) {
-    for (i = 0; i < num - 1; i++) {
-      if (polynomialDebugLevel >= 60) {
-	fprintf (stderr,
-		 "In functionCallExp item No. %d of %d type=%d: ",
-		 i + 1, num, p[i]->eType);
-	expPrinting (p[i]);
-	fprintf (stderr, "\n");
-      }
-      p[i] = va_arg (args, Polynomial *);
+    if (polynomialDebugLevel >= 60) {
+      fprintf (stderr,
+	       "In functionCallExp item No. %d of %d type=%d: ",
+	       i + 1, num, p[i]->eType);
+      expPrinting (p[i]);
+      fprintf (stderr, "\n");
     }
+    p[i] = va_arg (args, Polynomial *);
   }
   va_end (args);
 
