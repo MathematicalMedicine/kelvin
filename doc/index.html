@@ -155,6 +155,19 @@ and GNU Scientific Library verison numbers. Lines after that
 describe important build options as specified in the Makefile and run
 characteristics as influenced by environment variables.
 <p>
+In the midst of this is a line describing the action to take in order to force a dump of
+statistics. You can use this as a sort of "pulse check" to make sure kelvin is still alive
+and well and making progress should there be a lull between automatic progress updates. If
+you are running kelvin interactively, you can type <tt>CTRL-\</tt> (that means to hold down the CTRL
+or CONTROL key while pressing the backslash). If you are running under cygwin, you will need to
+type <tt>stty quit ^C</tt> first for this to work. Strangely enough, that <tt>^C</tt> is the two
+character sequence of 'carat' (shifted 6) and 'C'. This sends a SIGQUIT signal to kelvin, which it
+interprets as a request for status. If you are running kelvin as a detached
+process or in a queue, you can send a SIGQUIT to the process using the <tt>kill</tt> command
+as described in the diagnostic output. Note that the signal number (-3 in the example) can be
+different from platform-to-platform, and the
+process ID (3072 in the example) will be different from run-to-run.
+<p>
 Next, the analysis characteristics as read from the configuration and data files
 are displayed:
 <pre>
