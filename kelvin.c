@@ -1,6 +1,6 @@
 
 /**********************************************************************
- * Kelvin - Linkage and Linkage Disequalibrium Analysis Program
+ * Kelvin - Linkage and Linkage Disequilibrium Analysis Program
  * Yungui Huang
  * Polynomial features - Hongling Wang
  * config.c and error logging modules - Alberto Maria Segre
