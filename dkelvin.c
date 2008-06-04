@@ -130,7 +130,8 @@ double initialProb2[3];
 void *initialProbAddr2[3];
 void *initialHetProbAddr[3];
 
-double alpha[5][2] = { {0.04691, 0.118463443},
+double alpha[6][2] = { {0.8, 1.0},  //This is for LOD not for HLOD
+{0.04691, 0.118463443},
 {0.230765, 0.239314335},
 {0.5, 0.284444444},
 {0.769235, 0.239314335},
@@ -142,7 +143,7 @@ SubLocusList traitLocusList;
 SubLocusList markerLocusList;
 int polynomialFlag;
 
-dcuhre_state *s;
+dcuhre_state *s,init_state;
 double xl[15] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 double xu[15] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
@@ -711,7 +712,7 @@ main (int argc, char *argv[])
       k += 3;
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
 	xl[k] = xl[k + 1] = xl[k + 2] = 0.5;
-	xu[k] = xu[k + 1] = xu[k + 2] = 3.0;
+	xu[k] = xu[k + 1] = xu[k + 2] = 6;//3.0;
 	volume_region *= (xu[k] - xl[k]);
 	volume_region *= (xu[k + 1] - xl[k + 1]);
 	volume_region *= (xu[k + 2] - xl[k + 2]);
@@ -1174,6 +1175,7 @@ main (int argc, char *argv[])
 
 	    num_out_constraint = 0;
 	    kelvin_dcuhre_integrate (&integral, &abserr);
+	    
 	    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
 	      integral *= 6;
 	      abserr *= 6;
@@ -1182,10 +1184,12 @@ main (int argc, char *argv[])
 	    abserr /= volume_region;
 	    dcuhre2[i][3] = integral;
 
+
 	    if (modelType.trait == DICHOTOMOUS) {
-	      if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-		fprintf (fpHet, "%6.4f ", fixed_dprime);
-	      }
+              if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+	      	fprintf (fpHet, "%6.4f ", fixed_dprime);
+              }
+              
 	      fprintf (fpHet, "%6.4f %6d %8.4f %8.4f %8.4f %6.4f %6.4f  ",
 		       fixed_theta, s->total_neval, integral, abserr,
 		       log10 (localmax_value), localmax_x[1], localmax_x[0]);
@@ -1800,9 +1804,8 @@ main (int argc, char *argv[])
       /* multipoint DT */
       integral = 0.0;
       abserr = 0.0;
-
-
       num_out_constraint = 0;
+
       num_eval = kelvin_dcuhre_integrate (&integral, &abserr);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
 	integral *= 6;
@@ -2046,7 +2049,7 @@ kelvin_dcuhre_integrate (double *integral, double *abserr)
   /* Local variables */
   //double a[15], b[15];
   int dim, return_val;
-  dcuhre_state init_state;
+  //  dcuhre_state init_state;
 
   //extern /* Subroutine */ int ftest_();  
 
@@ -2353,8 +2356,9 @@ compute_hlod_mp_qt (double x[], double *f)
 
   //checkpt ();
   /* caculating the HET */
-  for (j = 0; j < 5; j++) {
-    alphaV = alpha[j][0];
+  for (j = 0; j < 6; j++) {
+  // for (j = 0; j < 1; j++) {
+    alphaV=alpha[j][0];
     alphaV2 = 1 - alphaV;
     if (alphaV2 < 0)
       alphaV2 = 0;
@@ -2377,7 +2381,9 @@ compute_hlod_mp_qt (double x[], double *f)
     } else {
       hetLR = pow (10, log10HetLR);
     }
-    alpha_integral += hetLR * alpha[j][1];
+    if(j ==0){
+      alpha_integral = hetLR ;//* alpha[j][1];
+    }
 
     if (print_point_flag)
       fprintf (fphlod, "al=%f Hlod=%f\n", alphaV, hetLR);
@@ -2629,7 +2635,8 @@ compute_hlod_mp_dt (double x[], double *f)
   //mp_result[posIdx].lr_count++;
   //fprintf(stderr," %f %f %f %f %20.15f  ", gfreq,pen_DD, pen_Dd,pen_dd, log10_likelihood_alternative);
   /* caculating the HET */
-  for (j = 0; j < 5; j++) {
+  for (j = 0; j < 6; j++) {
+    //for (j = 0; j < 1; j++) {
     alphaV = alpha[j][0];
     alphaV2 = 1 - alphaV;
     if (alphaV2 < 0)
@@ -2658,7 +2665,9 @@ compute_hlod_mp_dt (double x[], double *f)
 
     //fprintf(stderr,"j=%d het LR=%15.10f ",j, hetLR);
 
-    alpha_integral += hetLR * alpha[j][1];
+    if( j==0){
+      alpha_integral = hetLR; // * alpha[j][1];
+    }
 
     if (hetLR > localmax_value) {
       localmax_value = hetLR;
@@ -2910,7 +2919,8 @@ compute_hlod_2p_qt (double x[], double *f)
   }
 
   /* caculating the HET */
-  for (j = 0; j < 5; j++) {
+  for (j = 0; j < 6; j++) {
+    //for (j = 0; j < 1; j++) {
     alphaV = alpha[j][0];
     alphaV2 = 1 - alphaV;
     if (alphaV2 < 0)
@@ -2929,7 +2939,9 @@ compute_hlod_2p_qt (double x[], double *f)
     } else {
       hetLR = pow (10, log10HetLR);
     }
-    alpha_integral += hetLR * alpha[j][1];
+    if( j==0){
+      alpha_integral += hetLR ;//* alpha[j][1];
+    }
 
     if (print_point_flag)
       fprintf (fphlod, "al=%f Hlod=%f\n", alphaV, hetLR);
@@ -3174,10 +3186,9 @@ compute_hlod_2p_dt (double x[], double *f)
     }
   }
   /* caculating the HET */
-  for (j = 0; j < 5; j++) {
+  for (j = 0; j < 6; j++) {
+    //for (j = 0; j < 1; j++) {
     alphaV = alpha[j][0];
-    //for (j = 0; j < modelRange.nalpha; j++){
-    //alphaV = modelRange.alpha[j];         
     alphaV2 = 1 - alphaV;
     if (alphaV2 < 0)
       alphaV2 = 0;
@@ -3199,8 +3210,10 @@ compute_hlod_2p_dt (double x[], double *f)
       hetLR = pow (10, log10HetLR);
     }
 
-    alpha_integral += hetLR * alpha[j][1];
-    //alpha_integral +=hetLR;
+    if(j==0){
+      alpha_integral += hetLR;// * alpha[j][1];
+    }
+    
 
     if (hetLR > localmax_value) {
       localmax_value = hetLR;

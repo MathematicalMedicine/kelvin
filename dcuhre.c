@@ -282,7 +282,8 @@ dadhre_ (dcuhre_state * s)
     //}
 
     //if ((s->error > s->epsrel *fabs(s->result)) && (s->error > s->epsabs)) {    
-    if ((s->diff_result[s->sbrgns - 1] > s->epsabs) && (s->error > s->epsabs)) {
+    //if ((s->diff_result[s->sbrgns - 1] > s->epsabs) && (s->error > s->epsabs)) { // before 5/18/2008
+    if ((s->result <0)||((s->diff_result[s->sbrgns - 1] > s->epsabs) && (s->error > s->epsabs))) {
       //if ( s->error > s->epsabs) {    //this is for stopping criterion 
 
       /*   If we are allowed to divide further, */
