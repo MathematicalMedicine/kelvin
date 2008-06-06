@@ -243,7 +243,6 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   int origLocus = 0;		/* locus index in the original locus list
 				 * this is used to find out the pedigree
 				 * counts mainly for case control analyses */
-  clock_t time2;
 
   if (locusList->numLocus > 1)
     origLocus = locusList->pLocusIndex[1];
@@ -268,12 +267,11 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	  pPedigree->likelihoodPolyList = buildPolyList ();
 	  polyListSorting (pPedigree->likelihoodPolynomial,
 			   pPedigree->likelihoodPolyList);
+#ifdef POLYSTATISTICS
 	  if (i == pPedigreeList->numPedigree - 1) {
-	    time2 = clock ();
-	    fprintf (stderr, "Finished polynomial building: %f\n",
-		     (double) time2 / CLOCKS_PER_SEC);
 	    polyDynamicStatistics ("Post-build");
 	  }
+#endif
 	}
       }
     }
@@ -374,8 +372,9 @@ pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList)
       }
     }
     freeKeptPolys ();		/* Because holds overlapped keeps. */
+#ifdef POLYSTATISTICS
     polyStatistics ("Post-pedigree free");
-    //    printAllPolynomials();
+#endif
   }
 }
 
