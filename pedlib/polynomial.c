@@ -730,8 +730,10 @@ constantExp (double con)
   p->id = nodeId;
   constantCount++;
   nodeId++;
+#ifdef POLYSTATISTICS
   if ((nodeId & 0x1FFFFF) == 0)
     polyStatistics ("At 2M poly multiple");
+#endif
   p->key = key;
   p->valid = 0;
   p->count = 0;
@@ -853,8 +855,10 @@ variableExp (double *vD, int *vI, char vType, char name[10])
   variableList[variableCount] = p;
   variableCount++;
   nodeId++;
+#ifdef POLYSTATISTICS
   if ((nodeId & 0x1FFFFF) == 0)
     polyStatistics ("At 2M poly multiple");
+#endif
 
   // Record the variable polynomial in the hash table of the variable polynomials
   insertHashTable (&variableHash[hIndex], location, key, variableCount - 1);
@@ -1435,8 +1439,10 @@ plusExp (char *fileName, int lineNo, int num, ...)
     }
     sumCount++;
     nodeId++;
+#ifdef POLYSTATISTICS
     if ((nodeId & 0x1FFFFF) == 0)
       polyStatistics ("At 2M poly multiple");
+#endif
   }
 
   //Insert the newly built polynomial into the Hash table
@@ -2012,8 +2018,10 @@ timesExp (char *fileName, int lineNo, int num, ...)
       }
       productCount++;
       nodeId++;
+#ifdef POLYSTATISTICS
       if ((nodeId & 0x1FFFFF) == 0)
 	polyStatistics ("At 2M poly multiple");
+#endif
     }
 
     //the new polynomial is also recorded in the hash table
@@ -2239,9 +2247,10 @@ functionCallExp (int num, ...)
 	     "Polynomial %d, (function %d) added\n",
 	     nodeId, functionCallCount);
   nodeId++;
+#ifdef POLYSTATISTICS
   if ((nodeId & 0x1FFFFF) == 0)
     polyStatistics ("At 2M poly multiple");
-
+#endif
   //insert the polynomial in the hash table of the function call polynomials
   insertHashTable (&functionCallHash[hIndex], location, key,
 		   functionCallCount - 1);
@@ -3648,9 +3657,9 @@ holdAllPolys ()
 #pragma omp section
 #endif
     {
-      fprintf (stderr, "Holding all current polynomials (via hashes):\n");
+      //      fprintf (stderr, "Holding all current polynomials (via hashes):\n");
       if (constantCount > 0) {
-	fprintf (stderr, "%d constants\n", constantCount);
+	//	fprintf (stderr, "%d constants\n", constantCount);
 	for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
 	  if (constantHash[i].num <= 0)
 	    continue;
@@ -3665,7 +3674,7 @@ holdAllPolys ()
 #endif
     {
       if (variableCount > 0) {
-	fprintf (stderr, "%d variables:\n", variableCount);
+	//	fprintf (stderr, "%d variables:\n", variableCount);
 	for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
 	  if (variableHash[i].num <= 0)
 	    continue;
@@ -3682,7 +3691,7 @@ holdAllPolys ()
 #endif
     {
       if (sumCount > 0) {
-	fprintf (stderr, "%d sums\n", sumCount);
+	//	fprintf (stderr, "%d sums\n", sumCount);
 	for (i = 0; i < SUM_HASH_SIZE; i++) {
 	  if (sumHash[i].num <= 0)
 	    continue;
@@ -3702,7 +3711,7 @@ holdAllPolys ()
 #endif
     {
       if (productCount > 0) {
-	fprintf (stderr, "%d products\n", productCount);
+	//	fprintf (stderr, "%d products\n", productCount);
 	for (i = 0; i < PRODUCT_HASH_SIZE; i++) {
 	  if (productHash[i].num <= 0)
 	    continue;
@@ -3723,7 +3732,7 @@ holdAllPolys ()
 #endif
     {
       if (functionCallCount > 0) {
-	fprintf (stderr, "%d function calls\n", functionCallCount);
+	//	fprintf (stderr, "%d function calls\n", functionCallCount);
 	for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++) {
 	  if (functionCallHash[i].num <= 0)
 	    continue;
@@ -3734,7 +3743,7 @@ holdAllPolys ()
     }
   }
 //  printAllPolynomials();
-  fprintf (stderr, "---\n");
+//  fprintf (stderr, "---\n");
 }
 
 /* Flag all components of the provided polynomial for preservation. */
@@ -4109,8 +4118,8 @@ doFreePolys (unsigned short keepMask)
       free (sumList);
       sumList = newSumList;
       if ((sumCount + (2 * SUM_LIST_INITIAL)) < sumListLength) {
-	fprintf (stderr, "Reducing sumListLength from %d to %d\n",
-		 sumListLength, sumCount + SUM_LIST_INITIAL);
+	//	fprintf (stderr, "Reducing sumListLength from %d to %d\n",
+	//		 sumListLength, sumCount + SUM_LIST_INITIAL);
 	sumListLength = sumCount + SUM_LIST_INITIAL;
 	sumList = (Polynomial **) realloc (sumList, sizeof (Polynomial *) *
 					   (sumListLength));
@@ -4187,8 +4196,8 @@ doFreePolys (unsigned short keepMask)
       free (productList);
       productList = newProductList;
       if ((productCount + (2 * PRODUCT_LIST_INITIAL)) < productListLength) {
-	fprintf (stderr, "Reducing productListLength from %d to %d\n",
-		 productListLength, productCount + PRODUCT_LIST_INITIAL);
+	//	fprintf (stderr, "Reducing productListLength from %d to %d\n",
+	//		 productListLength, productCount + PRODUCT_LIST_INITIAL);
 	productListLength = productCount + PRODUCT_LIST_INITIAL;
 	productList =
 	  (Polynomial **) realloc (productList,
