@@ -33,7 +33,8 @@ files on your system so that you can modify the kelvin Makefile if necessary.
 When kelvin is run in polynomial mode, it makes very extensive use of memory management, and can, under most
 circumstances, definitely benefit from a drop-in allocator such as <a href="http://www.hoard.org/">hoard</a>
 or <a href="http://www.malloc.de/en/">ptmalloc3</a>. Either of these can easily halve execution time, and will
-keep memory fragmentation down when running in mult-threaded mode, but they are not required.
+keep memory fragmentation down when running in mult-threaded mode, but they are not required. For more
+details on using drop-in allocators with kelvin, see <a href="Allocators.html">the allocators section</a>.
 
 <h4>Resources</h4>
 kelvin's resource requirements vary wildly depending upon the complexity of the analysis

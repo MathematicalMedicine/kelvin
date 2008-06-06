@@ -319,6 +319,20 @@ subdirectories as:
 For information on the format of the pedigree file itself, see <emp>TBS</emp>.
 
 <h3 id="QT">QT</h3>
+Quantitative trait analysis requires specification of a trait distribution. Currently
+normal, Student's T, and Chi-squared distributions are supported.
+<p>
+Normal is not
+recommended except with test data.
+<p>
+Student's T-distribution is specified as:
+<tt>
+QT T df mean sd
+</tt>
+where <tt>df</tt> is the number of degrees of freedom, e.g. 30, <tt>mean</tt> is the mean of the
+trait values, and <tt>sd</tt> is their standard deviation.
+<p>
+Chi-squared distribution is specified as:
 
 <h3 id="SA">SA</h3>
 
