@@ -30,8 +30,8 @@ export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
 KOBJS = kelvin.o
 DKOBJS = dkelvin.o dcuhre.o
-OBJS = ppl.o config.o saveResults.o
-INCS = kelvin.h dkelvin.h dcuhre.h saveResults.h
+OBJS = ppl.o config.o saveResults.o trackProgress.o
+INCS = kelvin.h dkelvin.h dcuhre.h saveResults.h trackProgress.h
 
 all : kelvin dkelvin calc_updated_ppl
 
