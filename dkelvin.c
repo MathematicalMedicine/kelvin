@@ -17,6 +17,7 @@
 #include "likelihood.h"
 #include "pedlib/polynomial.h"
 #include "saveResults.h"
+#include "trackProgress.h"
 #include "dcuhre.h"
 
 #include "sw.h"
@@ -79,10 +80,6 @@ exit_kelvin ()
 
 char *programVersion = "V0.34.3";
 char *dkelvinVersion = "$Id$";
-
-void print_dryrun_stat (PedigreeSet * pSet, double pos);
-void logStatistics(PedigreeSet *pSet, int posIdx);
-void test_darray (double **);
 
 #define checkpt() fprintf(stderr,"Checkpoint at line %d of file \"%s\"\n",__LINE__,__FILE__)
 
@@ -1955,93 +1952,6 @@ main (int argc, char *argv[])
 
   return 0;
 }
-
-void
-logStatistics(PedigreeSet *pSet, int posIdx) {
-  int pedIdx, i;
-  NuclearFamily *pNucFam;
-  Pedigree *pPedigree;
-  int l = 0, nf = 0, pg = 0, sg = 0;
-  for (pedIdx = 0; pedIdx < pSet->numPedigree; pedIdx++) {
-    pPedigree = pSet->ppPedigreeSet[pedIdx];
-    l += pPedigree->numLoop;
-    nf += pPedigree->numNuclearFamily;
-    for (i = 0; i < pPedigree->numNuclearFamily; i++) {
-      pNucFam = pPedigree->ppNuclearFamilyList[i];
-      pg += pNucFam->totalNumPairGroups;
-      sg += pNucFam->totalNumSimilarPairs;
-    }
-  }
-  sprintf(messageBuffer, "At %d: p:%d, l:%d, nf:%d, pg:%d, sg:%d, n:%d",
-	  posIdx, pSet->numPedigree, l, nf, pg, sg, nodeId);
-  swLogMsg(messageBuffer);
-}
-
-void
-print_dryrun_stat (PedigreeSet * pSet, double pos)
-{
-  int pedIdx;
-  long subTotalPairGroups, subTotalSimilarPairs;
-  long totalPairGroups, totalSimilarPairs;
-  NuclearFamily *pNucFam;
-  Pedigree *pPedigree;
-  int i;
-
-  totalPairGroups = 0;
-  totalSimilarPairs = 0;
-  for (pedIdx = 0; pedIdx < pSet->numPedigree; pedIdx++) {
-    /* save the likelihood at null */
-    pPedigree = pSet->ppPedigreeSet[pedIdx];
-    fprintf (stderr, "Ped %s(%d) has %d loops, %d nuclear families.\n",
-	     pPedigree->sPedigreeID, pedIdx,
-	     pPedigree->numLoop, pPedigree->numNuclearFamily);
-    subTotalPairGroups = 0;
-    subTotalSimilarPairs = 0;
-    for (i = 0; i < pPedigree->numNuclearFamily; i++) {
-      pNucFam = pPedigree->ppNuclearFamilyList[i];
-      fprintf (stderr,
-	       "    Nuc %d w/ proband %s(%s) has %ld unique pp groups, %ld similar pp, total %ld.\n",
-	       i, pNucFam->pProband->sID,
-	       pNucFam->childProbandFlag ? "child" : "parent",
-	       pNucFam->totalNumPairGroups, pNucFam->totalNumSimilarPairs,
-	       pNucFam->totalNumPairGroups + pNucFam->totalNumSimilarPairs);
-      subTotalPairGroups += pNucFam->totalNumPairGroups;
-      subTotalSimilarPairs += pNucFam->totalNumSimilarPairs;
-    }
-    fprintf (stderr,
-	     "    Ped has total %ld unique pp groups, %ld similar pp, total %ld.\n",
-	     subTotalPairGroups, subTotalSimilarPairs,
-	     subTotalPairGroups + subTotalSimilarPairs);
-    totalPairGroups += subTotalPairGroups;
-    totalSimilarPairs += subTotalSimilarPairs;
-  }
-  fprintf (stderr,
-	   "POS %f has %ld unique pp groups, %ld similar pp, total %ld.\n",
-	   pos, totalPairGroups, totalSimilarPairs,
-	   totalPairGroups + totalSimilarPairs);
-}
-
-
-void
-test_darray (double **tpl)
-{
-  int i, j;
-  double *gene_tpl;
-
-  for (i = 0; i < 6; i++) {
-    gene_tpl = tpl[i];
-
-    for (j = 0; j < 275; j++) {
-      if (gene_tpl[j] > 1.0e40 || gene_tpl[j] < 1.0e-40) {
-	printf ("gfId= %d penId%d  likelihood = %G\n", i, j, gene_tpl[j]);
-	break;
-      }
-    }
-  }
-
-
-}
-
 
 int
 kelvin_dcuhre_integrate (double *integral, double *abserr)
