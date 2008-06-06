@@ -1839,7 +1839,6 @@ main (int argc, char *argv[])
       }
       /* select markers to be used for the multipoint analysis */
       add_markers_to_locuslist (locusList, modelType.numMarkers, &leftMarker, 0, originalLocusList.numLocus - 1, traitPos, 0);
-      fprintf (stderr, "locusList->numLocus is %d\n", locusList->numLocus);
       /* store the markers used */
       mp_result[posIdx].pMarkers = (int *) calloc (modelType.numMarkers, sizeof (int));
       k = 0;                    /* marker index */
