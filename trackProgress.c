@@ -91,12 +91,12 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
   } else { // not AM/MM
     sprintf (analysisType, "Trait-to-marker, ");
     if (modelType.type == TP) {
-      
+      /*      
       fprintf (stderr, "modelRange. ngfreq %d, npenet %d, ntheta %d, nafreq %d, nalpha %d, ntthresh %d\n",
 	       modelRange.ngfreq, modelRange.npenet, modelRange.ntheta, 
 	       modelRange.nafreq, modelRange.nalpha, modelRange.ntthresh);
       fprintf (stderr, "...pLambdaCell->ndprime %d\n", pLambdaCell->ndprime);
-      
+      */      
       strcat (analysisType, "Two-Point, ");
       if (modelType.trait == DT) {
 	strcat (analysisType, "Dichotomous Trait, ");

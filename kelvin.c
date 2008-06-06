@@ -28,7 +28,7 @@ extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 extern Polynomial *constant1Poly;
 
 struct swStopwatch *overallSW; //!< Performance timer used throughout code for overall statistics.
-time_t startTime; //!< Soon this will die.
+time_t startTime;
 char messageBuffer[MAXSWMSG]; //!< Commonly-used message buffer sized to work with swLogMsg().
 
 /****************//**\brief Handler for SIGQUIT.
@@ -506,11 +506,11 @@ main (int argc, char *argv[])
   fprintf (fpHet, "# Version %s\n", programVersion);
   if (modelType.type == TP) {
     fpPPL = fopen (pplfile, "w");
-    //    fprintf (fpPPL, "# Version %s\n", programVersion);
+    fprintf (fpPPL, "# Version %s\n", programVersion);
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
-    fprintf (fpPPL, "%4s %15s %9s %6s ", "CHR", "MARKER", "cM", "PPL");
+    fprintf (fpPPL, "Chr Marker Position PPL");
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      fprintf (fpPPL, "%6s %6s ", "LD-PPL", "PPLD");
+      fprintf (fpPPL, "LD-PPL PPLD");
     }
     fprintf (fpPPL, "\n");
     fflush (fpPPL);
@@ -651,8 +651,6 @@ main (int argc, char *argv[])
     }
   }
   if (modelOptions.polynomial == TRUE) {
-    //      constant1Poly = constantExp (1);
-    // constant0Poly = constantExp (0);
     for (k = 0; k < 3; k++) {
       initialProbPoly[k] = constant1Poly;
       initialProbPoly2[k] = constant1Poly;
@@ -1275,9 +1273,7 @@ main (int argc, char *argv[])
           for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
             for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
               fprintf (fpHet, "D%1d%1d ", i + 1, j + 1);
-        fprintf (fpHet,
-                 "%16s %8s %8s %6s %4s %6s %6s %5s %5s %5s \n",
-                 "Theta(M, F)", "AVG_LR", "MAX_HLOD", "R2", "ALPHA", "DGF", "MF", "PEN_DD", "PEN_Dd", "PEN_dd");
+        fprintf (fpHet, "Chr Theta(M,F) BayesRatio MOD R2 Alpha DGF MF PenetranceVector\n");
         for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
           for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
             if (tp_result[dprimeIdx][thetaInd]
@@ -1296,10 +1292,11 @@ main (int argc, char *argv[])
             if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
               for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
                 for (j = 0; j < pLocus2->numOriginalAllele - 1; j++) {
-                  fprintf (fpHet, "%6.2f ", pLambdaCell->lambda[dprimeIdx][i][j]);
+                  fprintf (fpHet, "%.2f ", pLambdaCell->lambda[dprimeIdx][i][j]);
                 }
             }
-            fprintf (fpHet, "(%6.4f, %6.4f) %10.6e %8.4f %6.4f %5.2f %6.4f %6.4f ", theta[0], theta[1],
+            fprintf (fpHet, "%d (%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f",
+		     pLocus2->pMapUnit->chromosome, theta[0], theta[1],
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg, max,
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square, alphaV, gfreq,
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_mf);
@@ -1307,16 +1304,16 @@ main (int argc, char *argv[])
               pen_DD = modelRange.penet[liabIdx][0][penIdx];
               pen_Dd = modelRange.penet[liabIdx][1][penIdx];
               pen_dd = modelRange.penet[liabIdx][2][penIdx];
-              fprintf (fpHet, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
+              fprintf (fpHet, " %.3f %.3f %.3f", pen_DD, pen_Dd, pen_dd);
               if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
                 SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
                 SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
                 SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
-                fprintf (fpHet, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
+                fprintf (fpHet, " %.3f %.3f %.3f", SD_DD, SD_Dd, SD_dd);
               }
               if (modelType.trait != DT) {
                 threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-                fprintf (fpHet, " %5.3f ", threshold);
+                fprintf (fpHet, " %.3f", threshold);
               }
             }
             fprintf (fpHet, "\n");
@@ -1526,7 +1523,7 @@ main (int argc, char *argv[])
         /* output PPL now */
         /* chromosome, marker name, position, PPL */
         ppl = calculate_PPL (tp_result[dprime0Idx]);
-        fprintf (fpPPL, "%4d %15s %9.4f %6.4f ",
+        fprintf (fpPPL, "%d %s %.4f %.4f ",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED], ppl);
         fflush (fpPPL);
         /* output LD-PPL now if needed */
@@ -1537,7 +1534,7 @@ main (int argc, char *argv[])
           ldppl = calculate_PPL (tp_result[pLambdaCell->ndprime]);
           /* now calculate the PPLD - posterior probability of LD given linkage */
           ppld = calculate_PPLD (tp_result);
-          fprintf (fpPPL, "%6.4f %6.4f ", ldppl, ppld);
+          fprintf (fpPPL, "%.4f %.4f ", ldppl, ppld);
 
         }
         fprintf (fpPPL, "\n");
@@ -1812,7 +1809,7 @@ main (int argc, char *argv[])
     numPositions = modelRange.ntloc;
     mp_result = (SUMMARY_STAT *) calloc (numPositions, sizeof (SUMMARY_STAT));
     /* Need to output the results */
-    fprintf (fpHet, "pos PPL avgLR MOD Alpha dgf pen_vector markerList\n");
+    fprintf (fpHet, "Chr Position PPL BayesRatio MOD Alpha DGF PenetranceVector MarkerList\n");
     prevFirstMarker = -1;
     prevLastMarker = -1;
     prevTraitInd = -1;
@@ -2373,25 +2370,27 @@ main (int argc, char *argv[])
       penIdx = mp_result[posIdx].max_penIdx;
       paramIdx = mp_result[posIdx].max_paramIdx;
       thresholdIdx = mp_result[posIdx].max_thresholdIdx;
-      fprintf (fpHet, "\t %f  %6.4f %10.6e %10.6f %f %f ", traitPos, ppl, avgLR, log10 (max), alphaV, gfreq);
+      fprintf (fpHet, "%d %f %.4f %.6e %.6f %f %f",
+	       (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+	       traitPos, ppl, avgLR, log10 (max), alphaV, gfreq);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
         pen_DD = modelRange.penet[liabIdx][0][penIdx];
         pen_Dd = modelRange.penet[liabIdx][1][penIdx];
         pen_dd = modelRange.penet[liabIdx][2][penIdx];
-        fprintf (fpHet, " %f %f %f ", pen_DD, pen_Dd, pen_dd);
+        fprintf (fpHet, " %f %f %f", pen_DD, pen_Dd, pen_dd);
         if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
           SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
           SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
           SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
-          fprintf (fpHet, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
+          fprintf (fpHet, " %.3f %.3f %.3f", SD_DD, SD_Dd, SD_dd);
         }
         if (modelType.trait != DT) {
           threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-          fprintf (fpHet, " %5.3f ", threshold);
+          fprintf (fpHet, " %.3f", threshold);
         }
       }
       /* print out markers used for this position */
-      fprintf (fpHet, "(%d", mp_result[posIdx].pMarkers[0]);
+      fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
       for (k = 1; k < modelType.numMarkers; k++) {
         fprintf (fpHet, ",%d", mp_result[posIdx].pMarkers[k]);
       }
