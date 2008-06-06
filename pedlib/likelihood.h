@@ -9,8 +9,6 @@
 #ifndef __PARENTALPAIR_H__
 #define __PARENTALPAIR_H__
 
-#include "polynomial.h"
-
 /* each nuclear family can have many ParentalPair depends on the 
  * possible genotypes of the father and mother 
  * these parental pairs are phased single locus . */

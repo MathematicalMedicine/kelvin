@@ -28,7 +28,6 @@ char *likelihoodVersion = "$Id$";
 #include "tools.h"
 #include "likelihood.h"
 #include "genotype_elimination.h"
-#include "polynomial.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
