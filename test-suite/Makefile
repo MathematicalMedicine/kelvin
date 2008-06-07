@@ -6,8 +6,8 @@ TESTS = \
 	TP_DT_MM_LD \
 	TP_DT_MM_LE \
 	TP_QT_LE \
-	MP_DT \
-	MP_QT
+	SA_DT \
+	SA_QT
 
 .PHONY : all $(TESTS)
 
