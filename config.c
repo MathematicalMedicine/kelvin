@@ -522,10 +522,6 @@ readConfigFile (char *file, ModelType * modelType,
 	    ccfile);
       continue;
     }
-    if (sscanf (line, "OF %s", outfile) == 1) {	/* Output file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure output file %s\n", outfile);
-      continue;
-    }
     if (sscanf (line, "HE %s", avghetfile) == 1) {	/* Average hetergeneity LR file */
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure output file %s\n", avghetfile);
       continue;

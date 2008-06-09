@@ -27,9 +27,9 @@
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 extern Polynomial *constant1Poly;
 
-struct swStopwatch *overallSW; //!< Performance timer used throughout code for overall statistics.
+struct swStopwatch *overallSW; ///< Performance timer used throughout code for overall statistics.
 time_t startTime;
-char messageBuffer[MAXSWMSG]; //!< Commonly-used message buffer sized to work with swLogMsg().
+char messageBuffer[MAXSWMSG]; ///< Commonly-used message buffer sized to work with swLogMsg().
 
 /****************//**\brief Handler for SIGQUIT.
 
@@ -56,12 +56,14 @@ quitSignalHandler (int signal)
 }
 
 #if defined (GPROF) || (GCOV)
-/*!\brief Handler for SIGTERM.
+/****************//**\brief Handler for SIGTERM.
 
   If we're profiling or doing coverage analysis, we catch a SIGTERM to 
-  allow early exit().
+  allow early exit(). An orderly exit like this (with EXIT_SUCCESS
+  status, ensures that the profileing or coverage information completely
+  written and fit for analysis.
 
-*/
+**//*****************/
 void
 termSignalHandler (int signal)
 {
@@ -70,7 +72,7 @@ termSignalHandler (int signal)
 }
 #endif
 
-//! Handler for SIGINT
+/// Handler for SIGINT
 void
 intSignalHandler (int signal)
 {
@@ -78,14 +80,14 @@ intSignalHandler (int signal)
   exit (EXIT_FAILURE);
 }
 
-
-/**********************************************************************
+pid_t childPID = 0; ///< For a child process producing timed statistics.
+/****************//**\brief General-purpose exit handler
 
   Exit handler to clean-up after we hit any of our widely-distributed 
-  exit points.
+  exit points. Ensures that errant child processes are handled so
+  we don't pester people with unnecessary messages.
 
- **********************************************************************/
-pid_t childPID = 0;             /* For a child process producing timed statistics. */
+**//*****************/
 void
 exit_kelvin ()
 {
@@ -94,30 +96,27 @@ exit_kelvin ()
     kill (childPID, SIGKILL);   /* Sweep away any errant children */
 }
 
-/**********************************************************************
+/********************
 
   Global variables
 
- **********************************************************************/
-char *programVersion = "V0.34.3";
-char *kelvinVersion = "$Id$";
+ *********************/
+char *programVersion = "V0.34.3"; ///< Overall kelvin version set upon release.
+char *kelvinVersion = "$Id$"; ///< svn's version for kelvin.c
 
 /* Some default global values. */
-char resultsprefix[KMAXFILENAMELEN + 1] = "./";
-char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
-char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";
-char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";
-char datafile[KMAXFILENAMELEN + 1] = "datafile.dat";
-char ccfile[KMAXFILENAMELEN + 1] = "";  /* case control count file */
-char outfile[KMAXFILENAMELEN + 1] = "lods.out";
-char avghetfile[KMAXFILENAMELEN + 1] = "br.out";
-char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";
+char resultsprefix[KMAXFILENAMELEN + 1] = "./"; ///< Path for SR directive result storage
+char markerfile[KMAXFILENAMELEN + 1] = "markers.dat"; ///< Default name (and storage) for marker file
+char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat"; ///< Default name (and storage) for map file
+char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat"; ///< Default name (and storage) for pedigree file
+char datafile[KMAXFILENAMELEN + 1] = "datafile.dat"; ///< Default name (and storage) for marker data file
+char ccfile[KMAXFILENAMELEN + 1] = "";  ///< Case control count file
+char avghetfile[KMAXFILENAMELEN + 1] = "br.out"; ///< Default name (and storage) for Bayes Ratio file
+char pplfile[KMAXFILENAMELEN + 1] = "ppl.out"; ///< Default name (and storage) for PPL file
 char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
-FILE *fpHet = NULL;             /* average HET LR file */
-FILE *fpPPL = NULL;             /* PPL output file */
-int polynomialScale = 1;        /* Scale of static allocation and dynamic
-                                   growth in polynomial.c, 1-10 with 1 as
-                                   the default, and 10 the old standard. */
+FILE *fpHet = NULL;             ///< Average HET LR file (Bayes Ratio file) pointer
+FILE *fpPPL = NULL;             ///< PPL output file pointer
+int polynomialScale = 1;        ///< Scale of static allocation and dynamic growth in polynomial.c.
 
 /* Model datastructures. modelOptions is defined in the pedigree library. */
 ModelType modelType;
@@ -176,19 +175,17 @@ char *flexBuffer = NULL;
 int flexBufferSize = 0;
 
 
-/**********************************************************************
-
-  main.
-
+/****************//**\brief Driver for all types of analyses.
+  <pre>
   Usage:
      kelvin kelvin.conf
- 
+  </pre>
   The kelvin.conf file gives information about the specific linkage
   analysis run. All information about, e.g., which markers to use,
   what outputs to calculate, and so on, are stored in this
   configuration file.
 
- **********************************************************************/
+**//*****************/
 int
 main (int argc, char *argv[])
 {
@@ -307,7 +304,8 @@ main (int argc, char *argv[])
   /* Fork a child that loops sleeping several seconds and then signalling 
      us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
 
-  int currentVMK, maximumVMK; //!< Properly the property of the child process.
+  int currentVMK,
+    maximumVMK; ///< Properly the property of the child process.
   if ((maximumVMK = swGetMaximumVMK ()) != 0) {
     childPID = fork ();
     if (childPID == 0) {
@@ -401,19 +399,8 @@ main (int argc, char *argv[])
 
   memset (&modelType, 0, sizeof (modelType));
 
-#ifdef DEBUG
-  //  mtrace();
-#endif
-
-  /* Initialize the logging system. */
+  // Initialize the logging system.
   logInit ();
-  /* logSet(LOGINPUTFILE, LOGDEBUG); */
-  //logSet(LOGGENOELIM, LOGDEBUG);
-  /* logSet(LOGPEELGRAPH, LOGFATAL); */
-  //logSet (LOGLIKELIHOOD, LOGWARNING);
-  //logSet(LOGLIKELIHOOD, LOGDEBUG); 
-  //logSet(LOGPARENTALPAIR, LOGDEBUG); 
-  //logSet(LOGSETRECODING, LOGDEBUG);
 
   /* Start by parsing command line arguments. Most essential: figure
    * out where the configuration file lives. */
@@ -433,7 +420,7 @@ main (int argc, char *argv[])
       KLOG (LOGDEFAULT, LOGFATAL, "Unexpected command line argument '%s'; aborting.\n", argv[i]);
     } else if (strlen (argv[i]) >= KMAXFILENAMELEN) {
       /* Configuration file name too long! Punt. */
-      KLOG (LOGDEFAULT, LOGFATAL, "Configuration file name '%s' exceeds limit of %d; aborting.\n", argv[i], KMAXFILENAMELEN);
+      KLOG (LOGDEFAULT, LOGFATAL, "Config file name '%s' too long (>=%d); aborting.\n", argv[i], KMAXFILENAMELEN);
     } else {
       /* Got a configuration file name. Copy it. */
       strncpy (configfile, argv[i], KMAXFILENAMELEN);
@@ -443,9 +430,10 @@ main (int argc, char *argv[])
     }
     i++;
   }
-
   /* Check to see if the configuration file name was specified. */
   KASSERT ((strlen (configfile) > 0), "No configuration file specified; aborting.\n");
+
+  // IMHO, ALL OF THE FOLLOWING UP TO OPENING FILES BELONGS IN CONFIG.C
 
   /* set the default unknown person ID */
   modelOptions.sUnknownPersonID = malloc (sizeof (char) * 2);
@@ -472,10 +460,7 @@ main (int argc, char *argv[])
   KASSERT (readConfigFile (configfile, &modelType, &modelRange, &modelOptions)
            != ERROR, "Error in configuration file; aborting.\n");
 
-  /* For now, reject all models we can't deal with. So use KASSERT to
-   * check that we're looking at, e.g., twopoint dichotomous models
-   * with direct eval (not polynomial --> add this to model?) and
-   * give appropriate error message otherwise. */
+  /* For now, reject all models we can't deal with. */
   KASSERT (modelRange.nalleles == 2, "Only biallelic traits supported.\n");
 
   /* the difference between QT and CT is whether we use threshold or not. Under CT -  yes to
@@ -500,7 +485,7 @@ main (int argc, char *argv[])
     }
   }
 
-  /* open output files */
+  /* Open output files */
   fpHet = fopen (avghetfile, "w");
   KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", avghetfile);
   fprintf (fpHet, "# Version %s\n", programVersion);
@@ -519,7 +504,7 @@ main (int argc, char *argv[])
     polynomialInitialization ();
     swLogMsg ("Computation is done in polynomial mode");
   } else {
-    swLogMsg ("Computation is done in non-polynomial (iterative) mode");
+    swLogMsg ("Computation is done in non-polynomial (direct evaluation) mode");
   }
 
   /* Read in the map file. */
@@ -622,7 +607,6 @@ main (int argc, char *argv[])
 
   /* Estimate iterations and display model information at this point since markers have
      already been added to locus list */
-
   swLogMsg (estimateIterations (modelType, modelOptions, modelRange, eCl));
 
   /* allocate storage for keeping track of het locus in nuclear families */
