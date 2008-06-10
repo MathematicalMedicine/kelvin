@@ -1,17 +1,16 @@
 
-/**********************************************************************
- * Polynomial - build and evaluate arbitrarily complex polynomials.
- * Hongling Wang
- * 
- * Polynomial reduction optimizations - Bill Valentine-Cooper
- * 
- * Copyright 2008, Nationwide Children's Research Institute.  
- * All rights reserved.
- * Permission is hereby given to use this software 
- * for non-profit educational purposes only.
- **********************************************************************/
+/********************************************************************//**
+@file polynomial.c
 
-/*
+ Polynomial - build and evaluate arbitrarily complex polynomials.
+
+ Written by Hongling Wang. Polynomial reduction optimizations by Bill
+ Valentine-Cooper
+  
+ Copyright 2008, Nationwide Children's Research Institute.  All rights
+ reserved.  Permission is hereby given to use this software for
+ non-profit educational purposes only.
+
   Builds and evaluates arbitrarily complex polynomials. Collects
   subpolynomials of the same type (addition or multiplication) into
   a single tier. This process will cause the tree to be alternating
@@ -93,7 +92,7 @@
   needs to be done in a wider variety of environments to assess
   all of the ramifications, but it's certainly handy under cygwin!
 
-*/
+**//**********************************************************************/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -120,56 +119,49 @@
 
 #include "sw.h"
 
-/* This is a global variable used for giving each polynomial an unique ID
+/**  This is a global variable used for giving each polynomial an unique ID
    so that we can know if two polynomials are the same just from their IDs */
 int nodeId;
 
-/* We have a polynomials list to save the polynomials in each polynomial category,
-   which is named constantList, variableList, sumList, productList, and functionCallList.
-   The length of these lists are saved in constantCount, variableCount, productCount,
-   functionCallCount respectively.  Each of the lists is dynamically applied since we are
-   not sure how many polynomials we may have.  Therefore, we apply to have a short list
-   initially and increase its length gradually with the increase of the number of 
-   polynomials. The current length of the lists is recorded in constantListLength,
-   variableListLength, sumListLength, productListLength, and functionCallListLength
-   respectively. */
+/*****************//**
 
-/* Why not free all the polynomials before building the likelihood polynomials for the 
-   next trait position? Before we even start to build the likelihood polynomials of 
-   pedigrees at the first trait position, some polynomials have already been built. 
-   These polynomials are useful for all the trait positions.  Therefore, we can't free 
-   everything before we start to build likelihood polynomials of pedigrees at the next 
-   trait position. */
+  We have a polynomials list to save the polynomials in each polynomial category,
+  which is named constantList, variableList, sumList, productList, and functionCallList.
+  The length of these lists are saved in constantCount, variableCount, productCount,
+  functionCallCount respectively.  Each of the lists is dynamically applied since we are
+  not sure how many polynomials we may have.  Therefore, we apply to have a short list
+  initially and increase its length gradually with the increase of the number of 
+  polynomials. The current length of the lists is recorded in constantListLength,
+  variableListLength, sumListLength, productListLength, and functionCallListLength
+  respectively.
 
+  Why not free all the polynomials before building the likelihood polynomials for the 
+  next trait position? Before we even start to build the likelihood polynomials of 
+  pedigrees at the first trait position, some polynomials have already been built. 
+  These polynomials are useful for all the trait positions.  Therefore, we can't free 
+  everything before we start to build likelihood polynomials of pedigrees at the next 
+  trait position.
+
+**//*****************/
 struct polynomial **constantList;
-int constantCount;
-int constantListLength;
-int constantCountStamp;
-int constantCountStamp2;
+int constantCount; ///< The number of constants in constantList
+int constantListLength; ///< The total space available for constants in constantList
 
-struct polynomial **variableList;
-int variableCount;
-int variableListLength;
-int variableCountStamp;
-int variableCountStamp2;
+struct polynomial **variableList; ///< The list of all variables
+int variableCount; ///< The number of variables in variableList
+int variableListLength; ///< The total space available for variables in variableList
 
-struct polynomial **sumList;
-int sumCount;
-int sumListLength;
-int sumCountStamp;
-int sumCountStamp2;
+struct polynomial **sumList; ///< The list of all sums
+int sumCount; ///< The number of sums in sumList
+int sumListLength; ///< The total space available for sums in sumList
 
 struct polynomial **productList;
 int productCount;
 int productListLength;
-int productCountStamp;
-int productCountStamp2;
 
 struct polynomial **functionCallList;
 int functionCallCount;
 int functionCallListLength;
-int functionCallCountStamp;
-int functionCallCountStamp2;
 
 /* These used to be constants, hence their case. Now they're scaled, but I kept the
    case because they act like constants. */
@@ -303,9 +295,15 @@ int originalChildren[MAXPOLYSOURCES];
 #endif
 
 
-/* Clear the evaluation flag on the entire tree so we can mark
-   where we've been and not retrace our steps regardless of
-   redundancy. */
+/****************//**
+
+  Clear the evaluation flag on the entire tree so we can mark where
+  we've been and not retrace our steps regardless of redundancy.
+
+  This code has been adapted for parallel execution by breaking-up
+  the iteration over constants, sums and products.
+
+**//*****************/
 void
 clearValidEvalFlag ()
 {
@@ -333,9 +331,14 @@ clearValidEvalFlag ()
   return;
 }
 
-/* Recursively evaluate a polynomial.  This version of polynomial evaluation doesn't 
-   use the polynomial sorting list, so if you're just doing a few evaluations, this
-   can be faster. */
+/****************//**
+
+  Recursively evaluate a polynomial without the benefit of a
+  polynomial list.  This version of polynomial evaluation doesn't use
+  the polynomial sorting list, so if you're just doing a few
+  evaluations, this can be faster.
+
+**//*****************/
 double
 doEvaluateValue (Polynomial * p)
 {
@@ -479,6 +482,17 @@ doEvaluateValue (Polynomial * p)
     exit (1);
   }
 }
+/****************//**
+
+  Single point-of-entry for evaluateValue. Does housekeeping and calls
+  doEvaluateValue.
+
+  This code has been adapted for parallel execution by stepping down
+  one level in the tree and starting a separate thread for each of the
+  subpolys at that point. After they finish, the root of the tree is
+  processed to ensure that everything is done.
+
+**//*****************/
 double
 evaluateValue (Polynomial * p)
 {
@@ -491,7 +505,7 @@ evaluateValue (Polynomial * p)
 #endif
 
   if ((evaluateValueCount & 0xFFFF) == 0)
-    fprintf (stderr, "%d polynomial value calculations performed\n", evaluateValueCount);
+    fprintf (stdout, "%d polynomial value calculations performed\n", evaluateValueCount);
 
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
@@ -514,8 +528,12 @@ evaluateValue (Polynomial * p)
   return returnValue;
 }
 
-// A polynomial is zero if it is a constant polynomial and its value is 0.
-int
+/****************//**
+
+  A polynomial is zero if it is a constant polynomial and its value is 0.
+
+**//*****************/
+inline int
 isZeroExp (Polynomial * p)
 {
   if (p->eType != T_CONSTANT)
@@ -526,9 +544,13 @@ isZeroExp (Polynomial * p)
     return 0;
 };
 
-/* Binary search in an array of integers. Return 1 if found, 0 if not. location
-   is the position for insertion of the target into the array. The polynomials are
-   searched based on their keys. */
+/****************//**
+
+  Binary search in an array of integers. Return 1 if found, 0 if
+  not. location is the position for insertion of the target into the
+  array. The polynomials are searched based on their keys.
+
+**//*****************/
 inline int
 binarySearch (int *array, int length, int target, int *location)
 {
@@ -2417,7 +2439,7 @@ evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 #endif
 
   if ((evaluatePolyCount & 0xFFFF) == 0)
-    fprintf (stderr, "%d polynomial evaluations performed\n", evaluatePolyCount);
+    fprintf (stdout, "%d polynomial evaluations performed\n", evaluatePolyCount);
 
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Starting evaluatePoly...\n");
@@ -2587,7 +2609,7 @@ polynomialInitialization ()
     polynomialScale = 1;
   if (polynomialScale > 10)
     polynomialScale = 10;
-  fprintf (stderr, "polynomialScale is %d (1-10, 1 is default)\n",
+  fprintf (stdout, "polynomialScale is %d (1-10, 1 is default)\n",
 	   polynomialScale);
 
   evaluatePolySW = swCreate ("evaluatePoly");
@@ -3451,6 +3473,7 @@ polyStatistics (char *title)
 
   polyDynamicStatistics (title);
 
+  //  malloc_stats();
   /* VM calls have been known to block, so we're not going to do this in-line
   if (swGetMaximumVMK () != 0) {
     if (swGetCurrentVMK (getpid ()) > (0.95 * swGetMaximumVMK ())) {
