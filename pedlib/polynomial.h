@@ -1,11 +1,11 @@
+/** @file polynomial.h
 
-/**********************************************************************
- * Copyright 2008, Nationwide Children's Research Institute.  
- * All rights reserved.
- * Permission is hereby given to use this software 
- * for non-profit educational purposes only.
- **********************************************************************/
+ Copyright 2008, Nationwide Children's Research Institute.  
+ All rights reserved.
+ Permission is hereby given to use this software 
+ for non-profit educational purposes only.
 
+*/
 #ifndef __POLYNOMIAL_H__
 #define __POLYNOMIAL_H__
 
@@ -175,11 +175,17 @@ struct hashStruct
   int *index;			// indexes of unique polynomials matching this key
 };
 
-/* Hash and other storage sizes for claustrophobic environments, must
-   be scaled-up for larger models. Original was 10x, and that's the
-   default if no other value is provided. */
+/** @ingroup PolyCons
+    @{
+  Hash and other storage sizes for claustrophobic environments. Will be
+  scaled-up as needed in polynomialInitialization. Original scale-up was 
+  10x. Currently 1 is the default if no other value is provided. Use larger
+  values to gain run-time efficiency in large analyses, but watch as you
+  run out of memory -- that's always been the real problem.
 
-// All the following constants are prime numbers
+  All the following constants are prime numbers.
+
+*/
 #define MAX_POLYNOMIAL_KEY   2147483629
 #define MIN_CONSTANT_HASH_SIZE 9991
 #define MIN_VARIABLE_HASH_SIZE 97
@@ -197,6 +203,7 @@ struct hashStruct
 #define MIN_PRODUCT_LIST_INCREASE 10000
 #define MIN_FUNCTIONCALL_LIST_INITIAL 100
 #define MIN_FUNCTIONCALL_LIST_INCREASE 10
+/*@}*/
 
 /* Prototypes */
 

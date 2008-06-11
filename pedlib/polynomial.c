@@ -169,18 +169,25 @@ struct polynomial **functionCallList;
 int functionCallCount;
 int functionCallListLength;
 
-/** Constants (not really) for static size of hashes and initial size of lists.
-    These used to be constants, hence their case. Now they're scaled, but I kept the
-    case because they act like constants. */
+
+/** @defgroup PolyCons Polynomial Scaling Constants
+    @{
+  Constants (not really) for static size of hashes and initial size of lists.
+  These used to be constants, hence their case. Now they're scaled, but I kept the
+  case because they act like constants. */
 
 int CONSTANT_HASH_SIZE, VARIABLE_HASH_SIZE, SUM_HASH_SIZE, PRODUCT_HASH_SIZE,
   FUNCTIONCALL_HASH_SIZE, HASH_TABLE_INCREASE, CONSTANT_LIST_INITIAL,
   CONSTANT_LIST_INCREASE, VARIABLE_LIST_INITIAL, VARIABLE_LIST_INCREASE,
   SUM_LIST_INITIAL, SUM_LIST_INCREASE, PRODUCT_LIST_INITIAL,
   PRODUCT_LIST_INCREASE, FUNCTIONCALL_LIST_INITIAL, FUNCTIONCALL_LIST_INCREASE = 0;
+/*@}*/
 
-/** Variables for tracking internal polynomial memory usage. These dynamic ones are
-   also externs in polynomial.h. */
+/** @defgroup PolyPerf Polynomial Performance Monitoring Variables
+    @{
+  Variables for tracking internal polynomial memory usage. They are
+  also externs in polynomial.h so you can monitor them from wherever
+  you like. */
 
 int maxHashLength = 0;  ///< Length of longest hash table collision list
 int constantHashHits = 0,       ///< constantExp return is a pre-existing polynomial
@@ -225,6 +232,7 @@ unsigned long totalSPLLengths = 0,
   lowSPLCount = 0,
   highSPLCount = 0;
 unsigned long initialHashSize = 0;      ///< Total initial size of hash table and collision lists
+/*@}*/
 
 /// The svn version of this module displayed by kelvin.
 char *polynomialVersion = "$Id$";
