@@ -1,20 +1,49 @@
-
-/********************************************************************//**
+/**
 @file kelvin.c
 
- kelvin - Linkage and Linkage Disequilibrium Analysis Program.
+  kelvin - Linkage and Linkage Disequilibrium Analysis Program.
 
-  - Yungui Huang
-  - Polynomial features - Hongling Wang
-  - config.c and error logging modules - Alberto Maria Segre
-  - Regex code - Nathan Burnette
+  Implementation of the Elston-Stewart algorithm for linkage
+  analysis. Currently supports two-point and multipoint analyses,
+  dichotomous and quantitative traits, linkage equilibrium and
+  disequilibrium, case control, and many other options.
   
-  Copyright 2008, Nationwide Children's Research Institute.  
-  All rights reserved.
-  Permission is hereby given to use this software 
+  Copyright 2008, Nationwide Children's Research Institute.  All
+  rights reserved.  Permission is hereby given to use this software
   for non-profit educational purposes only.
 
-**//**********************************************************************/
+  AUTHORS
+
+  - Yungui Huang - principle author
+  - Hongling Wang - Polynomial features
+  - Alberto Maria Segre - config and error logging modules
+  - Nathan Burnette - Regex code
+  - Bill Valentine-Cooper - clean-up, performance and tracking
+
+  USAGE:
+  <pre>
+  kelvin <kelvin.conf>
+
+  where <kelvin.conf> is a text file containing directives
+  describing the locations of supporting files and specifying the
+  nature of the analysis to be performed. See the provided documentation
+  for details.
+  </pre>
+  LIMITATIONS
+
+  Currently only handles biallelic traits.
+
+  CONDITIONALS
+
+  There are numerous compilation conditions that affect kelvin. All
+  of them are diagnostic in nature.
+
+  - POLYSTATISTICS
+  - DMTRACK
+  - DMUSE
+  - SOURCEDIGRAPH
+
+*/
 #include <signal.h>
 #include <gsl/gsl_version.h>
 #include "kelvin.h"
@@ -25,11 +54,11 @@
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 extern Polynomial *constant1Poly;
 
-struct swStopwatch *overallSW; ///< Performance timer used throughout code for overall statistics.
+struct swStopwatch *overallSW;  ///< Performance timer used throughout code for overall statistics.
 time_t startTime;
-char messageBuffer[MAXSWMSG]; ///< Commonly-used message buffer sized to work with swLogMsg().
+char messageBuffer[MAXSWMSG];   ///< Commonly-used message buffer sized to work with swLogMsg().
 
-/****************//**
+/**
 
   Handler for SIGQUIT.
 
@@ -40,9 +69,8 @@ char messageBuffer[MAXSWMSG]; ///< Commonly-used message buffer sized to work wi
 
   P.S. - cygwin requires "stty quit ^C" first for this to work.
 
-**//*****************/
-void
-quitSignalHandler (int signal)
+*/
+void quitSignalHandler (int signal)
 {
 #ifdef POLYSTATISTICS
   if (modelOptions.polynomial == TRUE)
@@ -56,7 +84,7 @@ quitSignalHandler (int signal)
 }
 
 #if defined (GPROF) || (GCOV)
-/****************//**
+/*
 
   Handler for SIGTERM.
 
@@ -65,9 +93,8 @@ quitSignalHandler (int signal)
   status, ensures that the profileing or coverage information completely
   written and fit for analysis.
 
-**//*****************/
-void
-termSignalHandler (int signal)
+*/
+void termSignalHandler (int signal)
 {
   fprintf (stderr, "Terminating early for gprof or gcov!\n");
   exit (EXIT_SUCCESS);
@@ -75,15 +102,14 @@ termSignalHandler (int signal)
 #endif
 
 /// Handler for SIGINT
-void
-intSignalHandler (int signal)
+void intSignalHandler (int signal)
 {
   fprintf (stderr, "Terminating early via interrupt!\n");
   exit (EXIT_FAILURE);
 }
 
-pid_t childPID = 0; ///< For a child process producing timed statistics.
-/****************//**
+pid_t childPID = 0;     ///< For a child process producing timed statistics.
+/**
 
   General-purpose exit handler
 
@@ -91,77 +117,75 @@ pid_t childPID = 0; ///< For a child process producing timed statistics.
   exit points. Ensures that errant child processes are handled so
   we don't pester people with unnecessary messages.
 
-**//*****************/
-void
-exit_kelvin ()
+*/
+void exit_kelvin ()
 {
   swLogMsg ("Exiting");
   if (childPID != 0)
     kill (childPID, SIGKILL);   /* Sweep away any errant children */
 }
 
-/********************
+/**
 
   Global variables
 
- *********************/
-char *programVersion = "V0.34.3"; ///< Overall kelvin version set upon release.
-char *kelvinVersion = "$Id$"; ///< svn's version for kelvin.c
+*/
+char *programVersion = "V0.34.3";       ///< Overall kelvin version set upon release.
+char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
 
 /* Some default global values. */
 char resultsprefix[KMAXFILENAMELEN + 1] = "./"; ///< Path for SR directive result storage
-char markerfile[KMAXFILENAMELEN + 1] = "markers.dat"; ///< Default name (and storage) for marker file
-char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat"; ///< Default name (and storage) for map file
-char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat"; ///< Default name (and storage) for pedigree file
-char datafile[KMAXFILENAMELEN + 1] = "datafile.dat"; ///< Default name (and storage) for marker data file
+char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";   ///< Default name (and storage) for marker file
+char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";      ///< Default name (and storage) for map file
+char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";      ///< Default name (and storage) for pedigree file
+char datafile[KMAXFILENAMELEN + 1] = "datafile.dat";    ///< Default name (and storage) for marker data file
 char ccfile[KMAXFILENAMELEN + 1] = "";  ///< Case control count file
-char avghetfile[KMAXFILENAMELEN + 1] = "br.out"; ///< Default name (and storage) for Bayes Ratio file
-char pplfile[KMAXFILENAMELEN + 1] = "ppl.out"; ///< Default name (and storage) for PPL file
+char avghetfile[KMAXFILENAMELEN + 1] = "br.out";        ///< Default name (and storage) for Bayes Ratio file
+char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";  ///< Default name (and storage) for PPL file
 char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
-FILE *fpHet = NULL;             ///< Average HET LR file (Bayes Ratio file) pointer
-FILE *fpPPL = NULL;             ///< PPL output file pointer
+FILE *fpHet = NULL;     ///< Average HET LR file (Bayes Ratio file) pointer
+FILE *fpPPL = NULL;     ///< PPL output file pointer
 int polynomialScale = 1;        ///< Scale of static allocation and dynamic growth in polynomial.c.
 
-/* Model datastructures. modelOptions is defined in the pedigree library. */
+/** Model datastructures. modelOptions is defined in the pedigree library. */
 ModelType modelType;
 ModelRange modelRange;
 ModelOptions modelOptions;
 
-/* number of D primes 
- * if there are more than 2 alleles in the marker/trait, number of D primes
- * and D prime ranges are assumed to be the same to reduce complexity 
- * for initial phase of this project */
+/** Number of D primes. If there are more than 2 alleles in the
+  marker/trait, number of D primes and D prime ranges are assumed to
+  be the same to reduce complexity for initial phase of this
+  project. */
 int num_of_d_prime;
 double *d_prime;
 int num_of_theta;
 
-/* three dimensional array for the two point summary results *
- * first dimension is the D prime, for LE, D prime=0 with just one element
- * in this dimension 
- * second dimension is theta values 
- * third dimension is marker allele frequency, for LE, only one element in this dimension */
+/** Three dimensional array for the two point summary results.
+  - first dimension is the D prime, for LE, D prime=0 with just one element
+    in this dimension
+  - second dimension is theta values 
+  - third dimension is marker allele frequency, for LE, only one element in 
+    this dimension */
 SUMMARY_STAT ***tp_result;
 
-/* two dimensional array per (dprime, theta) 
- * this will be used to calculate PPL
- */
+/** Two dimensional array per (dprime, theta).
+  This will be used to calculate PPL. */
 
-/* storage for the NULL likelihood for the multipoint calculation under polynomial */
+/** Storage for the NULL likelihood for the multipoint calculation under polynomial. */
 //double ***likelihoodDT = NULL;   // This is now moved into each pedigree
-double **likelihoodDT = NULL;   // This is now for homeLR
-double *****likelihoodQT = NULL;        // This is now moved into each pedigree
+double **likelihoodDT = NULL;   ///< This is now for homeLR
+double *****likelihoodQT = NULL;        ///< This is now moved into each pedigree (really?)
 double markerSetLikelihood;
 
-/* for multipoint, we use genetic map positions on a chromosome */
+/** For multipoint, we use genetic map positions on a chromosome. */
 double *map_position;
 int num_of_map_position;
 
-/* one dimensional array, indexing by map position 
- * for multipoint, we don't know how to incorporate LD in yet 
- * This map could be sex specific map or sex averaged map 
- * For two point, we don't have to distinguish sex specific/avearge 
- * as we use theta relative to marker during analysis and after analysis
- * (result) */
+/** One dimensional array, indexing by map position.  For multipoint,
+ we don't know how to incorporate LD yet.  This map could be sex
+ specific map or sex averaged map. For two point, we don't have to
+ distinguish sex specific/avearge as we use theta relative to marker
+ during analysis and after analysis (result) */
 SUMMARY_STAT *mp_result;
 int numPositions;
 
@@ -178,8 +202,7 @@ int total_count;
 char *flexBuffer = NULL;
 int flexBufferSize = 0;
 
-
-/****************//**
+/**
 
   Driver for all types of analyses.
 
@@ -192,9 +215,8 @@ int flexBufferSize = 0;
   what outputs to calculate, and so on, are stored in this
   configuration file.
 
-**//*****************/
-int
-main (int argc, char *argv[])
+*/
+int main (int argc, char *argv[])
 {
   int i, j;
   char configfile[KMAXFILENAMELEN] = "";
@@ -211,8 +233,8 @@ main (int argc, char *argv[])
   double pen_DD, pen_Dd, pen_dd;
   double mean_DD, mean_Dd, mean_dd;
   double SD_DD, SD_Dd, SD_dd;
-  double gfreq;                 /* disease gene frequency */
-  double theta[2];              /* theta */
+  double gfreq; /* disease gene frequency */
+  double theta[2];      /* theta */
   int penIdx, liabIdx, gfreqInd, thetaInd;
   int paramIdx = -1;
   int dprimeIdx;
@@ -233,7 +255,7 @@ main (int argc, char *argv[])
   double max;
   double constraint;
   LDLoci *pLDLoci = NULL;
-  double traitPos;              /* trait position for multipoint analysis */
+  double traitPos;      /* trait position for multipoint analysis */
   TraitLocus *pTraitLocus;
   int traitLocus;
   int leftMarker = -1;
@@ -242,10 +264,10 @@ main (int argc, char *argv[])
   double avgLR;
   double ppl;
   double ldppl, ppld;
-  int markerSetChanged;         /* flag for multipoint analysis */
-  int locusListChanged;         /* flag for multipoint analysis */
-  int prevFirstMarker;          /* first marker in the set for multipoint analysis */
-  int prevLastMarker;           /* last marker in the set for multipoint analysis */
+  int markerSetChanged; /* flag for multipoint analysis */
+  int locusListChanged; /* flag for multipoint analysis */
+  int prevFirstMarker;  /* first marker in the set for multipoint analysis */
+  int prevLastMarker;   /* last marker in the set for multipoint analysis */
   int prevTraitInd;
   double *prevPos, *currPos;    /* for MP */
   int locus;
@@ -309,10 +331,9 @@ main (int argc, char *argv[])
   }
 
   /* Fork a child that loops sleeping several seconds and then signalling 
-     us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
+   * us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
 
-  int currentVMK,
-    maximumVMK; ///< Properly the property of the child process.
+  int currentVMK, maximumVMK;   ///< Properly the property of the child process.
   if ((maximumVMK = swGetMaximumVMK ()) != 0) {
     childPID = fork ();
     if (childPID == 0) {
@@ -480,7 +501,7 @@ main (int argc, char *argv[])
   }
   if (modelType.trait == QT) {
     /* threshold value will not be used in any meaningful way, but we will use it for 
-       the loop */
+     * the loop */
     modelRange.ntthresh = 1;
     modelType.minOriginal = 0;
     modelType.maxOriginal = 1;
@@ -613,7 +634,7 @@ main (int argc, char *argv[])
   }
 
   /* Estimate iterations and display model information at this point since markers have
-     already been added to locus list */
+   * already been added to locus list */
   swLogMsg (estimateIterations (modelType, modelOptions, modelRange, eCl));
 
   /* allocate storage for keeping track of het locus in nuclear families */
@@ -662,7 +683,7 @@ main (int argc, char *argv[])
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
     pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
     pPedigree->load_flag = 0;   /* Initially 0 and changes to 1 when marker or 
-                                   alternative likelihood values are retrieved */
+                                 * alternative likelihood values are retrieved */
   }
 
   /* only for multipoint - we don't handle LD under multipoint yet */
@@ -687,7 +708,7 @@ main (int argc, char *argv[])
           pPedigree->alternativeLikelihoodDT[gfreqInd] = (double *) calloc (sizeof (double), modelRange.npenet);
         }
       }
-    } else {                    /* QT */
+    } else {    /* QT */
       /* first dimension is pedigree */
       likelihoodQT = (double *****) calloc (sizeof (double ****), pedigreeSet.numPedigree + 1);
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree + 1; pedIdx++) {
@@ -838,8 +859,8 @@ main (int argc, char *argv[])
               update_locus (&pedigreeSet, loc2);
           }
           /* Loop over the penetrances, genefrequencies, thetas and call
-             the likelihood calculation, storing each value obtained to
-             disk. */
+           * the likelihood calculation, storing each value obtained to
+           * disk. */
           for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
             gfreq = modelRange.gfreq[gfreqInd];
             if (1 && modelOptions.markerAnalysis == FALSE) {
@@ -1027,9 +1048,9 @@ main (int argc, char *argv[])
                         tp_result[dprimeIdx][thetaInd][mkrFreqIdx].R_square = R_square;
                         tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_mf = mkrFreq;
                       }
-                    }           /* end of calculating HET LR */
-                  }             /* end of theta loop */
-                }               /* end of D prime loop */
+                    }   /* end of calculating HET LR */
+                  }     /* end of theta loop */
+                }       /* end of D prime loop */
                 if (modelOptions.markerAnalysis != FALSE) {
                   /* marker to marker analysis, marker allele frequency is fixed */
                   gfreqInd = modelRange.ngfreq;
@@ -1039,7 +1060,7 @@ main (int argc, char *argv[])
                   /* marker to marker analysis, penetrance stays at 1 */
                   break;
                 }
-              }                 /* end of penetrance loop */
+              } /* end of penetrance loop */
             } /* end of TP */
             else
               /* should be QT or COMBINED - twopoint */
@@ -1082,7 +1103,7 @@ main (int argc, char *argv[])
                         /* threshold for QT */
                         pTrait->cutoffValue[liabIdx] = threshold;
 
-                      }         /* liability class Index */
+                      } /* liability class Index */
                       if (breakFlag == TRUE)
                         continue;
                       if (modelOptions.polynomial == TRUE);
@@ -1232,28 +1253,28 @@ main (int argc, char *argv[])
                             tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_mf = mkrFreq;
                           }
                         }
-                      }         /* end of theta */
-                    }           /* end of D prime */
+                      } /* end of theta */
+                    }   /* end of D prime */
                     if (modelOptions.markerAnalysis != FALSE)
                       break;
-                  }             /* end of threshold loop */
+                  }     /* end of threshold loop */
                   if (modelOptions.markerAnalysis != FALSE)
                     break;
-                }               /* end of penetrance loop */
+                }       /* end of penetrance loop */
                 if (modelOptions.markerAnalysis != FALSE)
                   break;
-              }                 /* end of parameter loop */
+              } /* end of parameter loop */
               if (modelOptions.markerAnalysis != FALSE)
                 break;
-            }                   /* end of QT */
-          }                     /* end of gene freq */
+            }   /* end of QT */
+          }     /* end of gene freq */
           /* only loop marker allele frequencies when doing LD */
           if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
             break;
           /* we can only do SNPs when looping over marker allele frequency */
           if (pLocus2->numOriginalAllele > 2)
             break;
-        }                       /* end of marker allele frequency looping */
+        }       /* end of marker allele frequency looping */
 
         /* calculate the average BR */
         get_average_LR (tp_result);
@@ -1287,7 +1308,7 @@ main (int argc, char *argv[])
                 }
             }
             fprintf (fpHet, "%d (%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f",
-		     pLocus2->pMapUnit->chromosome, theta[0], theta[1],
+                     pLocus2->pMapUnit->chromosome, theta[0], theta[1],
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg, max,
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square, alphaV, gfreq,
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_mf);
@@ -1309,8 +1330,8 @@ main (int argc, char *argv[])
             }
             fprintf (fpHet, "\n");
             fflush (fpHet);
-          }                     /* theta loop */
-        }                       /* dprime loop */
+          }     /* theta loop */
+        }       /* dprime loop */
         fprintf (stderr, "# %-d  %s %s Max Het LR\n", loc2, pLocus2->sName, pLocus1->sName);
         initialFlag = 1;
         max = -99999;
@@ -1542,20 +1563,20 @@ main (int argc, char *argv[])
 
         if (modelOptions.markerAnalysis == ADJACENTMARKER)
           loc2 = originalLocusList.numLocus;
-      }                         /* end of looping second locus - loc2 */
+      } /* end of looping second locus - loc2 */
       /* if we are doing trait marker, then we are done */
       /* Used to read: modelOptions.markerToMarker != TRUE which
-         is the same as markerAnalysis == FALSE as long as the old
-         markerToMarker and adjacentMarker flags were truly
-         orthogonal. Otherwise, it should be markerAnalysis !=
-         ADJACENTMARKER. */
+       * is the same as markerAnalysis == FALSE as long as the old
+       * markerToMarker and adjacentMarker flags were truly
+       * orthogonal. Otherwise, it should be markerAnalysis !=
+       * ADJACENTMARKER. */
       if (modelOptions.markerAnalysis == FALSE)
         loc1 = originalLocusList.numLocus;
-    }                           /* end of looping first locus - loc1 */
+    }   /* end of looping first locus - loc1 */
     /* free two point result storage */
     free_tp_result_storage (prevNumDPrime);
   } /* end of two point */
-  else {                        /* multipoint */
+  else {        /* multipoint */
 
     /* marker set locus list for each position */
     markerLocusList.maxNumLocus = modelType.numMarkers;
@@ -1677,8 +1698,8 @@ main (int argc, char *argv[])
 
           log10_likelihood_null = pedigreeSet.log10Likelihood;
           likelihoodDT[gfreqInd][penIdx] = log10_likelihood_null;
-        }                       /* gfreq */
-      }                         /* pen */
+        }       /* gfreq */
+      } /* pen */
       /* save all  trait likelihood which were created in this run */
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         /* save the likelihood at null */
@@ -1719,9 +1740,9 @@ main (int argc, char *argv[])
                                    gfreq) * mean_dd *
                     SD_dd + 2 * gfreq * (1 - gfreq) * mean_Dd * SD_Dd + gfreq * gfreq * mean_DD * SD_DD;
                   /*      fprintf(stderr, "constraint: %f gfreq:%f DD (%f,%f) Dd(%f,%f) dd(%f,%f)\n",
-                     constraint, gfreq, mean_DD, SD_DD, 
-                     mean_Dd, SD_DD, 
-                     mean_dd, SD_dd);
+                   * constraint, gfreq, mean_DD, SD_DD, 
+                   * mean_Dd, SD_DD, 
+                   * mean_dd, SD_dd);
                    */
                   if (constraint >= 3.0 || constraint <= -3.0) {
                     breakFlag = TRUE;
@@ -1740,7 +1761,7 @@ main (int argc, char *argv[])
                 /* threshold for QT */
                 pTrait->cutoffValue[liabIdx] = threshold;
 
-              }                 /* liability class Index */
+              } /* liability class Index */
               if (breakFlag == TRUE)
                 continue;
               if (modelOptions.polynomial == TRUE);
@@ -1775,11 +1796,11 @@ main (int argc, char *argv[])
 
               likelihoodQT[pedigreeSet.numPedigree][gfreqInd][penIdx]
                 [paramIdx][thresholdIdx] = log10_likelihood_null;
-            }                   /* thresholdIdx */
-          }                     /* penIdx */
-        }                       /* paramIdx */
-      }                         /* gfreq */
-    }                           /* end of QT */
+            }   /* thresholdIdx */
+          }     /* penIdx */
+        }       /* paramIdx */
+      } /* gfreq */
+    }   /* end of QT */
     time2 = clock ();
     fprintf (stderr, "MP done trait: %f\n", (double) time2 / CLOCKS_PER_SEC);
     if (modelOptions.polynomial == TRUE) {
@@ -1832,7 +1853,7 @@ main (int argc, char *argv[])
       add_markers_to_locuslist (locusList, modelType.numMarkers, &leftMarker, 0, originalLocusList.numLocus - 1, traitPos, 0);
       /* store the markers used */
       mp_result[posIdx].pMarkers = (int *) calloc (modelType.numMarkers, sizeof (int));
-      k = 0;                    /* marker index */
+      k = 0;    /* marker index */
       for (i = 0; i < locusList->numLocus; i++) {
         j = locusList->pLocusIndex[i];
         if (originalLocusList.ppLocusList[j]->locusType == LOCUS_TYPE_MARKER) {
@@ -1876,7 +1897,7 @@ main (int argc, char *argv[])
             }
           }
           prevPos = currPos;
-        }                       /* end of loop over the markers to set up locus list */
+        }       /* end of loop over the markers to set up locus list */
 
         /* calculate likelihood for the marker set */
         locusList = &markerLocusList;
@@ -1941,7 +1962,7 @@ main (int argc, char *argv[])
           }
           pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
         }
-      }                         /* end of marker set change */
+      } /* end of marker set change */
       prevFirstMarker = mp_result[posIdx].pMarkers[0];
       prevLastMarker = mp_result[posIdx].pMarkers[modelType.numMarkers - 1];
       if (markerSetChanged || prevTraitInd != mp_result[posIdx].trait)
@@ -2143,23 +2164,23 @@ main (int argc, char *argv[])
                   homoLR = pPedigree->alternativeLikelihoodDT[gfreqInd]
                     [penIdx] / (pPedigree->traitLikelihoodDT[gfreqInd][penIdx] * pPedigree->markerLikelihood);
                   /*              if (homoLR > 1.0e40 || homoLR < 1.0e-40) {
-                     fprintf(stderr, "homoLR %G, alt %G, trait %G, mrk %G\n",
-                     homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
-                     pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
-                     pPedigree->markerLikelihood);
-                     } */
+                   * fprintf(stderr, "homoLR %G, alt %G, trait %G, mrk %G\n",
+                   * homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
+                   * pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
+                   * pPedigree->markerLikelihood);
+                   * } */
                   if (alphaV * homoLR + alphaV2 < 0)
                     fprintf (stderr, "HET LR less than 0. Check!!!\n");
                   log10HetLR += log10 (alphaV * homoLR + alphaV2);
                   // if (log10HetLR > 10 || log10HetLR < -40) {
                   /*if(gfreqInd ==0 && j==0){
-                     fprintf(stderr, "gf=%d pen=%d log10HetLR %G, homoLR %G, alt %G, trait %G, mrk %G\n",
-                     gfreqInd, penIdx,log10HetLR,
-                     homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
-                     pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
-                     pPedigree->markerLikelihood);
-                     //  exit(0);
-                     } */
+                   * fprintf(stderr, "gf=%d pen=%d log10HetLR %G, homoLR %G, alt %G, trait %G, mrk %G\n",
+                   * gfreqInd, penIdx,log10HetLR,
+                   * homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
+                   * pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
+                   * pPedigree->markerLikelihood);
+                   * //  exit(0);
+                   * } */
                 }
                 if (log10HetLR >= DBL_MAX_10_EXP - 1) {
                   hetLR = DBL_MAX;
@@ -2176,9 +2197,9 @@ main (int argc, char *argv[])
                   mp_result[posIdx].max_gfreq = gfreq;
                   mp_result[posIdx].max_penIdx = penIdx;
                 }
-              }                 /* end of calculating HET LR */
+              } /* end of calculating HET LR */
             }
-          }                     /* end of genFreq loop */
+          }     /* end of genFreq loop */
         }
 
 
@@ -2225,9 +2246,9 @@ main (int argc, char *argv[])
                                      gfreq) * mean_dd *
                       SD_dd + 2 * gfreq * (1 - gfreq) * mean_Dd * SD_Dd + gfreq * gfreq * mean_DD * SD_DD;
                     /*      fprintf(stderr, "constraint: %f gfreq:%f DD (%f,%f) Dd(%f,%f) dd(%f,%f)\n",
-                       constraint, gfreq, mean_DD, SD_DD, 
-                       mean_Dd, SD_DD, 
-                       mean_dd, SD_dd);
+                     * constraint, gfreq, mean_DD, SD_DD, 
+                     * mean_Dd, SD_DD, 
+                     * mean_dd, SD_dd);
                      */
                     if (constraint >= 3.0 || constraint <= -3.0) {
                       breakFlag = TRUE;
@@ -2246,7 +2267,7 @@ main (int argc, char *argv[])
                   /* threshold for QT */
                   pTrait->cutoffValue[liabIdx] = threshold;
 
-                }               /* liability class Index */
+                }       /* liability class Index */
                 if (breakFlag == TRUE)
                   continue;
                 if (modelOptions.polynomial == TRUE);
@@ -2332,11 +2353,11 @@ main (int argc, char *argv[])
                     mp_result[posIdx].max_thresholdIdx = thresholdIdx;
                   }
                 }
-              }                 /* end of threshold loop */
-            }                   /* end of penetrance loop */
-          }                     /* end of parameter loop */
-        }                       /* end of gene freq */
-      }                         /* end of QT */
+              } /* end of threshold loop */
+            }   /* end of penetrance loop */
+          }     /* end of parameter loop */
+        }       /* end of gene freq */
+      } /* end of QT */
 
       time2 = clock ();
       fprintf (stderr, "MP done ALT on pos %d: %f\n", posIdx, (double) time2 / CLOCKS_PER_SEC);
@@ -2361,8 +2382,8 @@ main (int argc, char *argv[])
       paramIdx = mp_result[posIdx].max_paramIdx;
       thresholdIdx = mp_result[posIdx].max_thresholdIdx;
       fprintf (fpHet, "%d %f %.4f %.6e %.6f %f %f",
-	       (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-	       traitPos, ppl, avgLR, log10 (max), alphaV, gfreq);
+               (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+               traitPos, ppl, avgLR, log10 (max), alphaV, gfreq);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
         pen_DD = modelRange.penet[liabIdx][0][penIdx];
         pen_Dd = modelRange.penet[liabIdx][1][penIdx];
@@ -2386,8 +2407,8 @@ main (int argc, char *argv[])
       }
       fprintf (fpHet, ")\n");
       fflush (fpHet);
-    }                           /* end of walking down the chromosome */
-  }                             /* end of multipoint */
+    }   /* end of walking down the chromosome */
+  }     /* end of multipoint */
 
   /* only for multipoint - deallocate memory  */
   if (modelType.type == MP) {
