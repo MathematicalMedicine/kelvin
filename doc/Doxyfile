@@ -132,7 +132,12 @@ EXCLUDE_PATTERNS       = d*.c \
                          */test-suite/* \
                          */doc/* \
                          */include/* \
-                         */lib/*
+                         */lib/* \
+                         *ginshStub.c \
+                         sizes.c \
+                         limits.c \
+                         main.c \
+                         skeleton.c
 EXCLUDE_SYMBOLS        = 
 EXAMPLE_PATH           = 
 EXAMPLE_PATTERNS       = *
@@ -267,11 +272,11 @@ TEMPLATE_RELATIONS     = NO
 INCLUDE_GRAPH          = YES
 INCLUDED_BY_GRAPH      = YES
 CALL_GRAPH             = YES
-CALLER_GRAPH           = NO
+CALLER_GRAPH           = YES
 GRAPHICAL_HIERARCHY    = NO
 DIRECTORY_GRAPH        = YES
 DOT_IMAGE_FORMAT       = png
-DOT_PATH               = /Volumes/Doxygen/Doxygen.app/Contents/Resources/
+DOT_PATH               = /Users/whv001/Applications/Doxygen.app/Contents/Resources/
 DOTFILE_DIRS           = 
 DOT_GRAPH_MAX_NODES    = 50
 MAX_DOT_GRAPH_DEPTH    = 1000
