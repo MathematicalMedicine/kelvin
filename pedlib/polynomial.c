@@ -35,16 +35,19 @@
   the cost of having to call polyListSorting pays for itself quickly.
   Use evaluateValue if you're only going to evaluate a few times.
 
-  LIMITS:
+  See the test driver pt.c for a very simple example of usage.
+
+  LIMITATIONS:
 
   Maximum constant accuracy is 9 digits due to integer comparison.
   Total polynomials ever seen (kept or not) is INT_MAX due to nodeId.
 
   CONDITIONALS:
 
-  There are several compilation conditionals in the polynomial code:
+  There are several compilation conditionals in the polynomial code.
+  All of them are diagnostic in nature.
 
-  FREEDEBUG - define this to enable debugging diagnosis of situations
+  - FREEDEBUG - define this to enable debugging diagnosis of situations
   where polynomials that have been freed by one mechanism or another
   end up being referenced later on. This leads to segmentation faults
   and bus errors, and is typically caused by mis-management of calls
@@ -59,26 +62,26 @@
   usage of a particular nodeId (under gdb, it will breakout of
   execution when defined and when referenced).
 
-  _OPENMP
+  - _OPENMP
 
-  SOURCEDIGRAPH
+  - SOURCEDIGRAPH
 
-  EVALUATESW
+  - EVALUATESW
 
-  DMTRACK
+  - DMTRACK
 
   ENVIRONMENT VARIABLES:
 
-  polynomialLostNodeId - used with FREEDEBUG conditional to track
+  - polynomialLostNodeId - used with FREEDEBUG conditional to track
   down inappropriately freed polynomials. See FREEDEBUG.
 
-  polynomialDebugLevel - used to control level of diagnostic
+  - polynomialDebugLevel - used to control level of diagnostic
   output. Not referenced in recursive or otherwise intense code,
   so not a performance problem. Will probably be integrated into
   the older disused diagnostic routines used in other parts of
   kelvin.
 
-  polynomialScale - this is referenced by polynomialInitialization
+  - polynomialScale - this is referenced by polynomialInitialization
   to set the initial size of polynomial management lists, and to
   set the permanent size of the polynomial hash tables. Kelvin
   parses a value for it from the 'PE' directive, but that can be
