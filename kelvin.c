@@ -1,5 +1,5 @@
 /**
-@file kelvin.c
+@mainpage
 
   kelvin - Linkage and Linkage Disequilibrium Analysis Program.
 
@@ -12,6 +12,9 @@
   rights reserved.  Permission is hereby given to use this software
   for non-profit educational purposes only.
 
+  See http://hodgkin.ccri.net/software/kelvin/index.html for full
+  documentation.
+
   AUTHORS
 
   - Yungui Huang - principle author
@@ -19,6 +22,11 @@
   - Alberto Maria Segre - config and error logging modules
   - Nathan Burnette - Regex code
   - Bill Valentine-Cooper - clean-up, performance and tracking
+
+
+@file kelvin.c
+
+  Main driver and way too many loops.
 
   USAGE:
   <pre>
