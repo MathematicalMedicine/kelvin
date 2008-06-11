@@ -1,8 +1,8 @@
 
 /********************************************************************//**
-\file kelvin.c
+@file kelvin.c
 
-\brief kelvin - Linkage and Linkage Disequilibrium Analysis Program.
+ kelvin - Linkage and Linkage Disequilibrium Analysis Program.
 
 <pre>
   Yungui Huang
@@ -31,7 +31,9 @@ struct swStopwatch *overallSW; ///< Performance timer used throughout code for o
 time_t startTime;
 char messageBuffer[MAXSWMSG]; ///< Commonly-used message buffer sized to work with swLogMsg().
 
-/****************//**\brief Handler for SIGQUIT.
+/****************//**
+
+  Handler for SIGQUIT.
 
   Typing ^\ or issuing a kill -s SIGQUIT gets a dump of statistics.
   We used to set the signalSeen flag and watch for it in breaks in the
@@ -56,7 +58,9 @@ quitSignalHandler (int signal)
 }
 
 #if defined (GPROF) || (GCOV)
-/****************//**\brief Handler for SIGTERM.
+/****************//**
+
+  Handler for SIGTERM.
 
   If we're profiling or doing coverage analysis, we catch a SIGTERM to 
   allow early exit(). An orderly exit like this (with EXIT_SUCCESS
@@ -81,7 +85,9 @@ intSignalHandler (int signal)
 }
 
 pid_t childPID = 0; ///< For a child process producing timed statistics.
-/****************//**\brief General-purpose exit handler
+/****************//**
+
+  General-purpose exit handler
 
   Exit handler to clean-up after we hit any of our widely-distributed 
   exit points. Ensures that errant child processes are handled so
@@ -175,7 +181,10 @@ char *flexBuffer = NULL;
 int flexBufferSize = 0;
 
 
-/****************//**\brief Driver for all types of analyses.
+/****************//**
+
+  Driver for all types of analyses.
+
   <pre>
   Usage:
      kelvin kelvin.conf
