@@ -241,7 +241,7 @@ second locus. There will be (<i>n</i>-1)*(<i>m</i>-1) columns present for linkag
 columns are not present on LE runs because
 LE is a special case of LD where D' is always 0.
 <li>Chr - chromosome number
-<li>Theta(M,F) - male and female theta values.
+<li>Theta(M,F) - male and female theta values. They are identical for a sex-averaged analysis.
 <li>BayesRatio - average likelihood ratio.
 <li>MOD - maximum LOD score achieved for this value of theta.
 <li>R2 - R square, a measurement of LD.
@@ -261,7 +261,8 @@ one line of whitespace-delimited values for each marker in the run.
 <li>Chr - chromosome number
 <li>Marker - marker name
 <li>Position - position in centiMorgans
-<li>PPL - posterior probability of linkage to the disease locus
+<li>PPL - posterior probability of linkage to the disease locus. PPLs of 2.5% or greater are rounded to
+the nearest whole percentage point.
 <li>LD-PPL (only for LD analyses)
 <li>PPLD (only for LD analyses)
 </ol>
