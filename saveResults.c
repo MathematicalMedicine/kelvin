@@ -1,27 +1,44 @@
 
-/**********************************************************************
- * Copyright 2008, Nationwide Children's Research Institute.  
- * All rights reserved.
- * Permission is hereby given to use this software 
- * for non-profit educational purposes only.
- **********************************************************************/
+/********************************************************************//**
+@file saveResults.c
+
+  Routines to save and restore trait, marker and alternative likelhood
+  result grids from a 6 disease gene frequency by 275 penetrance
+  analysis. Eventually this will be a variable-sized grid.  The data
+  being passed is both self-referential and not contiguous in memory,
+  so it cannot be serialized all in one shot.
+
+  Uses TPL serialization, which is open source under the Berkeley license.
+
+  Author: Bill Valentine-Cooper
+
+  Copyright 2008, Nationwide Children's Research Institute.
+  All rights reserved.
+  Permission is hereby given to use this software
+  for non-profit educational purposes only.
+
+**//**********************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>		/* To get mkdir */
+#include <sys/stat.h>
 #include "kelvin.h"
 #include "saveResults.h"
-#include "tpl.h"		/* TPL serialization, open source under
-				 * Berkeley license */
+#include "tpl.h"
 
-char pathName[256];
-char fileName[256];
+char pathName[256]; ///< Where the path to saved results will be built. Should malloc.
+char fileName[256]; ///< Filename for saved results files. Should malloc.
 
-/* I'm being passed data that is both self-referential and not contiguous in
- * memory, so I can't serialize the whole thing in one shot. What a pain! */
+/****************//**
 
+  Dump a 6x275 grid of doubles. Used to prove that we are actually
+  saving what we're passed, and restoring what we saved.
+
+
+**//*****************/
 void
-dump_lDT (double **lDT)
-{
+dump_lDT (
+  double **lDT ///< Pointer to list of 6x275 pointers to doubles.
+) {
   int i, j;
 
   for (i = 0; i < 6; i++)
@@ -31,28 +48,35 @@ dump_lDT (double **lDT)
   return;
 }
 
-/*
+char *traitTPLFormat = "sf#f#f#f#f#f#";	///< String and six fixed vectors of doubles for trait
+char *traitFileFormat = "%sped-%s_trait.tpl"; ///< Trait filename components
+/****************//**
 
-Save trait information in either:
+  Save a 6x275 grid of doubles of trait information along with descriptive attributes.
+  Use either:
 
-<results-prefix>trait-23/ped-<p>/ped-<p>_trait.tpl
-for chromosome 23, or
-<results-prefix>trait/ped-<p>/ped-<p>_trait.tpl
-for other chromosomes
+  <pre>
+  <results-prefix>trait-23/ped-<pid>/ped-<pid>_trait.tpl
+  for chromosome 23, or
+  <results-prefix>trait/ped-<pid>/ped-<pid>_trait.tpl
+  for other chromosomes
 
-where:
+  where:
 
-<results-prefix> is the parameter to the SR directive in the configuration file, or "./" by default.
-<p> is the pedigree ID string
+  <results-prefix> is the parameter to the SR directive in the configuration
+      file, or "./" by default.
+  <pid> is the pedigree ID string
+  </pre>
 
-*/
+  Always returns a 0.
 
-char *traitTPLFormat = "sf#f#f#f#f#f#";	/* String and six fixed vectors of doubles */
-char *traitFileFormat = "%sped-%s_trait.tpl";
-
+**//*****************/
 int
-saveTrait (int chr23Flag, char *pedigree, double **lDT)
-{
+saveTrait (
+  int chr23Flag, ///< Flag is 1 if doing chromosome 23, 0 otherwise.
+  char *pedigree, ///< Name of the pedigree to use in path and filename.
+  double **lDT ///< Pointer to list of 6x275 pointers to doubles of likelihoods.
+) {
   tpl_node *tn;
 
   mkdir (resultsprefix, S_IRWXU | S_IRWXG | S_IROTH);
@@ -67,19 +91,26 @@ saveTrait (int chr23Flag, char *pedigree, double **lDT)
   }
   mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
   sprintf (fileName, traitFileFormat, pathName, pedigree);
-  //  fprintf(stderr, "in saveTrait for pedigree %s as %s\n", pedigree, fileName);
-  tn =
-    tpl_map (traitTPLFormat, &pedigree, lDT[0], 275, lDT[1], 275, lDT[2], 275,
-	     lDT[3], 275, lDT[4], 275, lDT[5], 275);
+  tn = tpl_map (traitTPLFormat, &pedigree, lDT[0], 275, lDT[1], 275, lDT[2], 275,
+                lDT[3], 275, lDT[4], 275, lDT[5], 275);
   tpl_pack (tn, 0);
   tpl_dump (tn, TPL_FILE, fileName);
   tpl_free (tn);
   return 0;
 }
 
+/****************//**
+
+  Restore any saved trait results matching the parameters
+  provided. Parameters are identical to saveTrait.
+
+  Return a 0 if no matching saved trait results are found. Internal
+  consistency is checked as well, i.e. if the parameter values do not
+  match file contents, the program will exit.
+
+**//*****************/
 int
-restoreTrait (int chr23Flag, char *pedigree, double **lDT)
-{
+restoreTrait (int chr23Flag, char *pedigree, double **lDT) {
   tpl_node *tn;
   FILE *file;
   char *checkPedigree;
@@ -92,19 +123,18 @@ restoreTrait (int chr23Flag, char *pedigree, double **lDT)
   //  fprintf(stderr, "in restoreTrait for pedigree %s as %s\n", pedigree, fileName);
   tn =
     tpl_map (traitTPLFormat, &checkPedigree, lDT[0], 275, lDT[1], 275, lDT[2],
-	     275, lDT[3], 275, lDT[4], 275, lDT[5], 275);
+             275, lDT[3], 275, lDT[4], 275, lDT[5], 275);
   if ((file = fopen (fileName, "r"))) {
     fclose (file);
     tpl_load (tn, TPL_FILE, fileName);
     tpl_unpack (tn, 0);
     if (strcmp (pedigree, checkPedigree) == 0) {
       tpl_free (tn);
-      //      fprintf(stderr, "restoreTrait successfully restored trait data\n");
       return 1;
     } else {
       fprintf (stderr,
-	       "restoreTrait check of requested pedigree of %s vs restored of %s failed, exiting!\n",
-	       pedigree, checkPedigree);
+               "restoreTrait check of requested pedigree of %s vs restored of %s failed, exiting!\n",
+               pedigree, checkPedigree);
       exit (1);
     }
   }
@@ -113,30 +143,37 @@ restoreTrait (int chr23Flag, char *pedigree, double **lDT)
   return 0;
 }
 
-/*
+char *markerTPLFormat = "siiA(s)f"; ///< String, two ints, array of string and a single float
+char *markerFileFormat = "%schr-%d_ped-%s_"; ///< Marker filename components
+/****************//**
 
-Save marker information in:
+  Save a 6x275 grid of doubles of marker information along with descriptive attributes.
+  Use path and name:
 
-<results-prefix>chr-<c>/ped-<p>/chr-<c>_ped-<p>_<mk1>_<mk2>{_<mkn>...}_marker.tpl
+  <pre>
+  <results-prefix>chr-<chr>/ped-<pid>/chr-<chr>_ped-<pid>_<mk1>_<mk2>{_<mkn>...}_marker.tpl
 
-where:
+  where:
 
-<results-prefix> is the parameter to the SR directive in the configuration file, or "./" by default.
-<c> is the chromosome number
-<p> is the pedigree ID string
-<mk1> is the name of the first marker
-<mk2> is the name of the second marker
-<mkn> is the name of the nth marker
+  <results-prefix> is the parameter to the SR directive in the configuration file, or "./" by default.
+  <chr> is the chromosome number
+  <pid> is the pedigree ID string
+  <mk1> is the name of the first marker
+  <mk2> is the name of the second marker
+  <mkn> is the name of the nth marker
+  <pre>
 
-*/
+  Always returns a 0.
 
-char *markerTPLFormat = "siiA(s)f";	/* String, two ints, array of string and a single float */
-char *markerFileFormat = "%schr-%d_ped-%s_";
-
+**//*****************/
 int
-saveMarker (char *pedigree, int chromosome, int markerCount,
-	    char **markerNames, double *mDT)
-{
+saveMarker (
+  char *pedigree, ///< Name of pedigree to use in path and filename.
+  int chromosome, ///< Chromosome number to use in path and filename.
+  int markerCount, ///< Number of markers in analysis, currently just 2.
+  char **markerNames, ///< List of pointers to marker names.
+  double *mDT ///< Pointer to double of marker likelihood.
+) {
   tpl_node *tn;
   int i;
   char *markerName;
@@ -152,11 +189,7 @@ saveMarker (char *pedigree, int chromosome, int markerCount,
     strcat (fileName, "_");
   }
   strcat (fileName, "marker.tpl");
-  //  fprintf(stderr, "in saveMarker for pedigree %s, chromosome %d w/%d markers of value %G...\n\tas %s\n",
-  //      pedigree, chromosome, markerCount, *mDT, fileName);
-  tn =
-    tpl_map (markerTPLFormat, &pedigree, &chromosome, &markerCount,
-	     &markerName, mDT);
+  tn = tpl_map (markerTPLFormat, &pedigree, &chromosome, &markerCount, &markerName, mDT);
   tpl_pack (tn, 0);
 
   for (i = 0; i < markerCount; i++) {
@@ -170,10 +203,20 @@ saveMarker (char *pedigree, int chromosome, int markerCount,
   return 0;
 }
 
+
+/****************//**
+
+  Restore any saved marker results matching the parameters
+  provided. Parameters are identical to saveTrait.
+
+  Return a 0 if no matching saved marker results are found. Internal
+  consistency is checked as well, i.e. if the parameter values do not
+  match file contents, the program will exit.
+
+**//*****************/
 int
 restoreMarker (char *pedigree, int chromosome, int markerCount,
-	       char **markerNames, double *mDT)
-{
+               char **markerNames, double *mDT) {
   int i, checkChromosome, checkMarkerCount;
   tpl_node *tn;
   FILE *file;
@@ -191,7 +234,7 @@ restoreMarker (char *pedigree, int chromosome, int markerCount,
   //      pedigree, chromosome, markerCount, fileName);
   tn =
     tpl_map (markerTPLFormat, &checkPedigree, &checkChromosome,
-	     &checkMarkerCount, &markerName, mDT);
+             &checkMarkerCount, &markerName, mDT);
   if ((file = fopen (fileName, "r"))) {
     fclose (file);
     tpl_load (tn, TPL_FILE, fileName);
@@ -202,46 +245,46 @@ restoreMarker (char *pedigree, int chromosome, int markerCount,
       markerName = markerNames[i++];
 
     if ((strcmp (pedigree, checkPedigree) == 0)
-	&& (checkChromosome == chromosome)
-	&& (checkMarkerCount == markerCount)) {
+        && (checkChromosome == chromosome)
+        && (checkMarkerCount == markerCount)) {
       tpl_free (tn);
-      //      fprintf(stderr, "restoreMarker successfully restored marker data of value %G\n", *mDT);
       return 1;
     } else {
       fprintf (stderr,
-	       "restoreMarker check of pedigree/marker/count of %s/%d/%d vs %s/%d/%d failed, exiting!\n",
-	       pedigree, chromosome, markerCount, checkPedigree,
-	       checkChromosome, checkMarkerCount);
+               "restoreMarker check of pedigree/marker/count of %s/%d/%d vs %s/%d/%d failed, exiting!\n",
+               pedigree, chromosome, markerCount, checkPedigree,
+               checkChromosome, checkMarkerCount);
       exit (1);
     }
   }
-  //  fprintf(stderr, "restoreMarker found no marker data\n");
   tpl_free (tn);
   return 0;
 }
 
-/*
-
-Save alternative information in:
-
-<results-prefix>chr-<c>/ped-<p>/chr-<c>_ped-<p>/chr-<c>_ped-<p>_pos-<t>_alternative.tpl
-
-where:
-
-<results-prefix> is the parameter to the SR directive in the configuration file, or "./" by default.
-<c> is the chromosome number
-<p> is the pedigree ID string
-<t> is the trait position number
-
-*/
-
 char *alternativeTPLFormat = "siff#f#f#f#f#f#";	/* String and six fixed vectors of doubles */
 char *alternativeFileFormat = "%schr-%d_ped-%s_pos-%G_alternative.tpl";
+/****************//**
 
+  Save a 6x275 grid of doubles of alternative likelihood information along with descriptive
+  attributes. Use:
+
+  <pre>
+  <results-prefix>chr-<chr>/ped-<pid>/chr-<chr>_ped-<pid>/chr-<chr>_ped-<pid>_pos-<trt>_alternative.tpl
+
+  where:
+
+  <results-prefix> is the parameter to the SR directive in the configuration file, or "./" by default.
+  <chr> is the chromosome number
+  <pid> is the pedigree ID string
+  <trt> is the trait position number
+  </pre>
+
+  Always returns a 0.
+
+**//*****************/
 int
 saveAlternative (char *pedigree, int chromosome, double traitPosition,
-		 double **lDT)
-{
+                 double **lDT) {
   tpl_node *tn;
 
   mkdir (resultsprefix, S_IRWXU | S_IRWXG | S_IROTH);
@@ -250,13 +293,10 @@ saveAlternative (char *pedigree, int chromosome, double traitPosition,
   sprintf (pathName, "%schr-%d/ped-%s/", resultsprefix, chromosome, pedigree);
   mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
   sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree,
-	   traitPosition);
-  //  fprintf(stderr, "in saveAlternative for pedigree %s, chromosome %d, trait position %G...\n\tas %s\n",
-  //      pedigree, chromosome, traitPosition, fileName);
-  tn =
-    tpl_map (alternativeTPLFormat, &pedigree, &chromosome, &traitPosition,
-	     lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275,
-	     lDT[5], 275);
+           traitPosition);
+  tn = tpl_map (alternativeTPLFormat, &pedigree, &chromosome, &traitPosition,
+                lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275,
+                lDT[5], 275);
   tpl_pack (tn, 0);
   tpl_dump (tn, TPL_FILE, fileName);
   tpl_free (tn);
@@ -264,10 +304,19 @@ saveAlternative (char *pedigree, int chromosome, double traitPosition,
   return 0;
 }
 
+/****************//**
+
+  Restore any saved alternative results matching the parameters
+  provided. Parameters are identical to saveTrait.
+
+  Return a 0 if no matching saved alternative results are found. Internal
+  consistency is checked as well, i.e. if the parameter values do not
+  match file contents, the program will exit.
+
+**//*****************/
 int
 restoreAlternative (char *pedigree, int chromosome, double traitPosition,
-		    double **lDT)
-{
+                    double **lDT) {
   tpl_node *tn;
   FILE *file;
   char *checkPedigree;
@@ -276,32 +325,27 @@ restoreAlternative (char *pedigree, int chromosome, double traitPosition,
 
   sprintf (pathName, "%schr-%d/ped-%s/", resultsprefix, chromosome, pedigree);
   sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree,
-	   traitPosition);
-  //  fprintf(stderr, "in restoreAlternative for pedigree %s, chromosome %d, trait position %G...\n\tas %s\n",
-  //      pedigree, chromosome, traitPosition, fileName);
-  tn =
-    tpl_map (alternativeTPLFormat, &checkPedigree, &checkChromosome,
-	     &checkTraitPosition, lDT[0], 275, lDT[1], 275, lDT[2], 275,
-	     lDT[3], 275, lDT[4], 275, lDT[5], 275);
+           traitPosition);
+  tn = tpl_map (alternativeTPLFormat, &checkPedigree, &checkChromosome,
+                &checkTraitPosition, lDT[0], 275, lDT[1], 275, lDT[2], 275,
+                lDT[3], 275, lDT[4], 275, lDT[5], 275);
   if ((file = fopen (fileName, "r"))) {
     fclose (file);
     tpl_load (tn, TPL_FILE, fileName);
     tpl_unpack (tn, 0);
     if ((strcmp (pedigree, checkPedigree) == 0)
-	&& (chromosome == checkChromosome)
-	&& (traitPosition == checkTraitPosition)) {
+        && (chromosome == checkChromosome)
+        && (traitPosition == checkTraitPosition)) {
       tpl_free (tn);
-      //      fprintf(stderr, "restoreAlternative successfully restored alternative data\n");
       return 1;
     } else {
       fprintf (stderr,
-	       "restoreAlternative check of pedigree/chromosome/traitPosition %s/%d/%G vs %s/%d/%G failed, exiting!\n",
-	       pedigree, chromosome, traitPosition, checkPedigree,
-	       checkChromosome, checkTraitPosition);
+               "restoreAlternative check of pedigree/chromosome/traitPosition %s/%d/%G vs %s/%d/%G failed, exiting!\n",
+               pedigree, chromosome, traitPosition, checkPedigree,
+               checkChromosome, checkTraitPosition);
       exit (1);
     }
   }
-  //  fprintf(stderr, "restoreAlternative found no alternative data\n");
   tpl_free (tn);
   return 0;
 }

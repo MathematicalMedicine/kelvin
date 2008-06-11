@@ -4,17 +4,15 @@
 
  kelvin - Linkage and Linkage Disequilibrium Analysis Program.
 
-<pre>
-  Yungui Huang
-  Polynomial features - Hongling Wang
-  config.c and error logging modules - Alberto Maria Segre
-  Regex code - Nathan Burnette
+  - Yungui Huang
+  - Polynomial features - Hongling Wang
+  - config.c and error logging modules - Alberto Maria Segre
+  - Regex code - Nathan Burnette
   
   Copyright 2008, Nationwide Children's Research Institute.  
   All rights reserved.
   Permission is hereby given to use this software 
   for non-profit educational purposes only.
-</pre>
 
 **//**********************************************************************/
 #include <signal.h>
@@ -39,7 +37,7 @@ char messageBuffer[MAXSWMSG]; ///< Commonly-used message buffer sized to work wi
   We used to set the signalSeen flag and watch for it in breaks in the
   code, but so long as we don't interfere with kelvin when we dump out
   statistics, that is unnecessary.
-  <p>
+
   P.S. - cygwin requires "stty quit ^C" first for this to work.
 
 **//*****************/
@@ -330,7 +328,7 @@ main (int argc, char *argv[])
         if (parentPID == 1)
           exit (EXIT_SUCCESS);
         currentVMK = swGetCurrentVMK (getppid ());
-        fprintf (stderr, "%lus, %dKb (%.1f%% of %.1fGb)\n", time (NULL) - startTime, currentVMK,
+        fprintf (stdout, "%lus, %dKb (%.1f%% of %.1fGb)\n", time (NULL) - startTime, currentVMK,
                  currentVMK / (maximumVMK / 100.0), maximumVMK / (1024.0 * 1024.0));
       }
     }
@@ -399,7 +397,7 @@ main (int argc, char *argv[])
   sprintf (messageBuffer, "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, getpid ());
   swLogMsg (messageBuffer);
 #endif
-  fprintf (stderr, "To force a dump of stats (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, getpid ());
+  fprintf (stdout, "To force a dump of stats (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, getpid ());
   swStart (overallSW);
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
@@ -570,7 +568,7 @@ main (int argc, char *argv[])
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
     pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
     if (pPedigree->currentLoopFlag) {
-      fprintf (stderr, "Pedigree %s has at least one loop not broken yet\n", pPedigree->sPedigreeID);
+      fprintf (stdout, "Pedigree %s has at least one loop not broken yet\n", pPedigree->sPedigreeID);
       exitDueToLoop = TRUE;
     }
   }
