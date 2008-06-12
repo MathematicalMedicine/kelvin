@@ -2130,13 +2130,13 @@ int main (int argc, char *argv[])
 
 	    if (gfreqInd != 0 || penIdx != 0) {
 	      swStop(altComputeSW);
+	      int percentDone = cL[7] * 100 / eCL[7];
 	      if (cL[7] % (eCL[7] / altComputeScale) == 0) {
-		sprintf (messageBuffer, "%s %d%%%% complete (%ld min left)", "MP DT alt evaluation",
+		sprintf (messageBuffer, "%s %d%%%% complete (~%ld min left)", "MP DT alt evaluation",
 			 cL[7] * 100 / eCL[7], (altComputeSW->swAccumWallTime * 100 /
-						(cL[7] * 100 / eCL[7]) *
-						(100 - (cL[7] * 100 / eCL[7])) / 6000));
+						MAX( 1, percentDone)) * (100 - percentDone) / 6000);
 		swLogMsg (messageBuffer);
-		altComputeScale = eCL[7] / (cL[7] * 300 / altComputeSW->swAccumWallTime);
+		altComputeScale = MAX( 1, eCL[7] / (cL[7] * 300 / MAX( 1, altComputeSW->swAccumWallTime)));
 	      }
 	    }
 
