@@ -1,8 +1,23 @@
+/**
+@file trackProgress.c
+
+  kelvin support routines for estimating and tracking progress thru analyses.
+
+  In-progress.
+
+*/
 #include "kelvin.h"
 #include "trackProgress.h"
 
-void
-print_dryrun_stat (PedigreeSet * pSet, double pos)
+/**
+
+  Dump out statistics for estimating the complexity of the pedigrees
+  involved in the analysis.
+
+*/
+void print_dryrun_stat (PedigreeSet *pSet, ///< Pointer to set of pedigrees in analysis
+			double pos ///< Position being analyzed.
+)
 {
   int pedIdx;
   long subTotalPairGroups, subTotalSimilarPairs;
@@ -42,8 +57,17 @@ print_dryrun_stat (PedigreeSet * pSet, double pos)
            pos, totalPairGroups, totalSimilarPairs, totalPairGroups + totalSimilarPairs);
 }
 
-void
-logStatistics (PedigreeSet * pSet, int posIdx)
+/**
+
+  Log position and pedigree complexity statistics as produced by dry-run.
+
+  At each position, after the determination of family pair groupingss, summarize and
+  log the complexity data.
+
+*/
+void logStatistics (PedigreeSet *pSet, ///< Pointer to pedigree set to be considered ala dry-run.
+	       int posIdx ///< Position for complexity analysis.
+	       )
 {
   char messageBuffer[MAXSWMSG];
   int pedIdx, i;
@@ -61,12 +85,17 @@ logStatistics (PedigreeSet * pSet, int posIdx)
       sg += pNucFam->totalNumSimilarPairs;
     }
   }
-  sprintf (messageBuffer, "At %d: p:%d, l:%d, nf:%d, pg:%d, sg:%d, n:%d", posIdx, pSet->numPedigree, l, nf, pg, sg, nodeId);
+  sprintf (messageBuffer, "At %d: p:%d, l:%d, nf:%d, pg:%d, sg:%d, n:%d",
+	   posIdx, pSet->numPedigree, l, nf, pg, sg, nodeId);
   swLogMsg (messageBuffer);
 }
 
-char analysisType[MAXSWMSG];
+char analysisType[MAXSWMSG]; ///< Textual summary of analysis type built by dumpTrackingStats.
+/**
 
+  Derive textual summary of analysis type and build expected compute_likelihood() call counts.
+
+*/
 void dumpTrackingStats(ModelType modelType, ModelOptions modelOptions, ModelRange modelRange, int cl[], int eCl[])
 {
   int i;
@@ -145,6 +174,7 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
 	strcat (analysisType, "Dichotomous Trait.");
 	eCl[4] = modelRange.npenet * modelRange.nlclass * modelRange.ngfreq;
 	eCl[7] = modelRange.ntloc * modelRange.npenet * modelRange.ngfreq;
+	fprintf(stderr, "4, 6 and 7 are: %d, %d and %d\n", eCl[4], eCl[6], eCl[7]);
       } else { // SA/SS multipoint, but not DT
 	eCl[5] = modelRange.npenet * modelRange.ntthresh * modelRange.ngfreq * 
 	  modelRange.nparam;

@@ -231,7 +231,7 @@ int main (int argc, char *argv[])
   int breakFlag = FALSE;
   double alphaV, alphaV2;
   int loc1, loc2;
-  int cl[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }, eCl[9] = {
+  int cL[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }, eCL[9] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   PedigreeSet pedigreeSet;      /* Pedigrees. */
@@ -328,7 +328,11 @@ int main (int argc, char *argv[])
   int threadCount = 0;
 #endif
 
-  overallSW = swCreate ("overall");     /* Overall performance stopwatch */
+  struct swStopwatch *altComputeSW; ///< Alternative hypothesis likelihood compute stopwatch
+  int altComputeScale = 100; ///< Computed iteration factor to output about every 5 minutes
+
+  overallSW = swCreate ("overall");
+  altComputeSW = swCreate("altComputeSW");
   startTime = time (NULL);
 
   /* Add an exit handler to deal with wayward children. */
@@ -643,7 +647,7 @@ int main (int argc, char *argv[])
 
   /* Estimate iterations and display model information at this point since markers have
    * already been added to locus list */
-  swLogMsg (estimateIterations (modelType, modelOptions, modelRange, eCl));
+  swLogMsg (estimateIterations (modelType, modelOptions, modelRange, eCL));
 
   /* allocate storage for keeping track of het locus in nuclear families */
   allocate_nucfam_het (&pedigreeSet, totalLoci);
@@ -931,8 +935,7 @@ int main (int argc, char *argv[])
                     populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2,
                                               initialHetProbAddr, 0, -1, -1, 0);
                 KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
-                compute_likelihood (&pedigreeSet);
-                cl[0]++;
+                compute_likelihood (&pedigreeSet); cL[0]++;
                 if (numberOfCompute == 0) {
                   time1 = clock ();
                 }
@@ -995,8 +998,7 @@ int main (int argc, char *argv[])
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
                     KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
-                    compute_likelihood (&pedigreeSet);
-                    cl[1]++;
+                    compute_likelihood (&pedigreeSet); cL[1]++;
 
                     log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                     if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
@@ -1137,8 +1139,7 @@ int main (int argc, char *argv[])
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
                     KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
-                    compute_likelihood (&pedigreeSet);
-                    cl[2]++;
+                    compute_likelihood (&pedigreeSet); cL[2]++;
                     if (numberOfCompute == 0) {
                       time1 = clock ();
                     }
@@ -1191,8 +1192,7 @@ int main (int argc, char *argv[])
                                                       initialHetProbAddr, 0, -1, -1, 0);
 
                         KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
-                        compute_likelihood (&pedigreeSet);
-                        cl[3]++;
+                        compute_likelihood (&pedigreeSet); cL[3]++;
                         log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                         if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                           log10_likelihood_ratio = 0;
@@ -1677,8 +1677,9 @@ int main (int argc, char *argv[])
             update_locus (&pedigreeSet, traitLocus);
           /* get the likelihood for the trait */
           KLOG (LOGLIKELIHOOD, LOGDEBUG, "Trait Likelihood\n");
-          compute_likelihood (&pedigreeSet);
-          cl[4]++;
+          compute_likelihood (&pedigreeSet); cL[4]++;
+	  if (cL[4] % (eCL[4] / 10) == 0)
+	    fprintf (stdout, "MP DT trait likelihood computation %d%% complete\n", cL[4] * 100 / eCL[4]);
 
           if (modelOptions.dryRun != 0)
             continue;
@@ -1776,8 +1777,10 @@ int main (int argc, char *argv[])
               else
                 update_penetrance (&pedigreeSet, traitLocus);
               KLOG (LOGLIKELIHOOD, LOGDEBUG, "Trait Likelihood\n");
-              compute_likelihood (&pedigreeSet);
-              cl[5]++;
+              compute_likelihood (&pedigreeSet); cL[5]++;
+	      if (cL[5] % (eCL[5] / 10) == 0)
+		fprintf (stdout, "MP QT/CT trait likelihood computation %d%% complete\n", cL[5] *100 / eCL[5]);
+
               if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                 fprintf (stderr, "Trait has likelihood 0\n");
                 fprintf (stderr, "dgf=%f\n", gfreq);
@@ -1939,8 +1942,10 @@ int main (int argc, char *argv[])
         }
 
         KLOG (LOGLIKELIHOOD, LOGDEBUG, "Marker Likelihood\n");
-        compute_likelihood (&pedigreeSet);
-        cl[6]++;
+        compute_likelihood (&pedigreeSet); cL[6]++;
+	if (cL[6] % (MAX(1,eCL[6] / 10)) == 0)
+	    fprintf (stdout, "MP marker likelihood computation at least %d%% complete\n", cL[6] * 100 / eCL[6]);
+
         time2 = clock ();
         fprintf (stderr, "MP done marker set on pos %d: %f\n", posIdx, (double) time2 / CLOCKS_PER_SEC);
         modelOptions.polynomial = polynomialFlag;
@@ -2118,8 +2123,22 @@ int main (int argc, char *argv[])
 
             /* ready for the alternative hypothesis */
             KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
-            compute_likelihood (&pedigreeSet);
-            cl[7]++;
+
+	    if (gfreqInd != 0 || penIdx != 0)
+	      swStart(altComputeSW);
+	    compute_likelihood (&pedigreeSet); cL[7]++;
+
+	    if (gfreqInd != 0 || penIdx != 0) {
+	      swStop(altComputeSW);
+	      if (cL[7] % (eCL[7] / altComputeScale) == 0) {
+		sprintf (messageBuffer, "%s %d%%%% complete (%ld min left)", "MP DT alt evaluation",
+			 cL[7] * 100 / eCL[7], (altComputeSW->swAccumWallTime * 100 /
+						(cL[7] * 100 / eCL[7]) *
+						(100 - (cL[7] * 100 / eCL[7])) / 6000));
+		swLogMsg (messageBuffer);
+		altComputeScale = eCL[7] / (cL[7] * 300 / altComputeSW->swAccumWallTime);
+	      }
+	    }
 
             if (gfreqInd == 0 && penIdx == 0)
               logStatistics (&pedigreeSet, posIdx);
@@ -2290,8 +2309,11 @@ int main (int argc, char *argv[])
                     populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2,
                                               initialHetProbAddr, 0, -1, -1, 0);
                 KLOG (LOGLIKELIHOOD, LOGDEBUG, "Likelihood\n");
-                compute_likelihood (&pedigreeSet);
-                cl[8]++;
+                compute_likelihood (&pedigreeSet); cL[8]++;
+		if (cL[8] % (eCL[8] / 10) == 0)
+		  fprintf (stdout, "MP QT/CT alternative likelihood computation %d%% complete\n",
+			   cL[8] * 100 / eCL[8]);
+
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                 if (isnan (log10_likelihood_alternative))
                   fprintf (stderr, "ALT likelihood is NAN.\n");
@@ -2484,7 +2506,7 @@ int main (int argc, char *argv[])
   time2 = clock ();
   fprintf (stderr, "Computation time:  %fs \n", (double) (time2 - time0) / CLOCKS_PER_SEC);
 
-  dumpTrackingStats (modelType, modelOptions, modelRange, cl, eCl);
+  dumpTrackingStats (modelType, modelOptions, modelRange, cL, eCL);
 
 #ifdef SOURCEDIGRAPH
   if (modelOptions.polynomial == TRUE)
