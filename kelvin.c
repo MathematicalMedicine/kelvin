@@ -231,8 +231,8 @@ int main (int argc, char *argv[])
   int breakFlag = FALSE;
   double alphaV, alphaV2;
   int loc1, loc2;
-  int cL[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }, eCL[9] = {
-  0, 0, 0, 0, 0, 0, 0, 0, 0};
+  int cL[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }, ///< Actual # calls to each instance of compute_likelihood
+    eCL[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0}; ///< Est. final # calls to each instance of compute_likelihood
 
   PedigreeSet pedigreeSet;      /* Pedigrees. */
 
@@ -645,8 +645,9 @@ int main (int argc, char *argv[])
     }
   }
 
-  /* Estimate iterations and display model information at this point since markers have
-   * already been added to locus list */
+  /* Estimate number of calls to each (appropriate) instance of compute_likelihood for
+     use in progress reporting, and display model information at this point since markers have
+     already been added to locus list */
   swLogMsg (estimateIterations (modelType, modelOptions, modelRange, eCL));
 
   /* allocate storage for keeping track of het locus in nuclear families */
@@ -2121,20 +2122,19 @@ int main (int argc, char *argv[])
             else
               update_locus (&pedigreeSet, traitLocus);
 
-            /* ready for the alternative hypothesis */
-            KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
-
+	    /* If we're not on the first iteration, it's not a polynomial build, so
+	       show progress at 1%, and the best approximation of 5-minute (300 second)
+	       intervals after that. And have a care to avoid division by zero. */
 	    if (gfreqInd != 0 || penIdx != 0)
 	      swStart(altComputeSW);
 	    compute_likelihood (&pedigreeSet); cL[7]++;
-
 	    if (gfreqInd != 0 || penIdx != 0) {
 	      swStop(altComputeSW);
-	      int percentDone = cL[7] * 100 / eCL[7];
 	      if (cL[7] % (eCL[7] / altComputeScale) == 0) {
-		sprintf (messageBuffer, "%s %d%%%% complete (~%ld min left)", "MP DT alt evaluation",
-			 cL[7] * 100 / eCL[7], (altComputeSW->swAccumWallTime * 100 /
-						MAX( 1, percentDone)) * (100 - percentDone) / 6000);
+		sprintf (messageBuffer, "%s %d%%%% complete (~%ld min left)", 
+			 "MP DT alt evaluation", cL[7] * 100 / eCL[7],
+			 (altComputeSW->swAccumWallTime * 100 / MAX( 1, (cL[7] * 100 / eCL[7]))) *
+			 (100 - (cL[7] * 100 / eCL[7])) / 6000);
 		swLogMsg (messageBuffer);
 		altComputeScale = MAX( 1, eCL[7] / (cL[7] * 300 / MAX( 1, altComputeSW->swAccumWallTime)));
 	      }
