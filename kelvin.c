@@ -1668,6 +1668,9 @@ int main (int argc, char *argv[])
     /* For trait likelihood */
 #ifndef SIMPLEPROGRESS
     fprintf (stdout, "Determining trait likelihood...\n");
+#else
+    fprintf (stdout, "Calculations 0%% complete\r");
+    fflush (stdout);
 #endif
 
     locusList = &traitLocusList;
@@ -1723,8 +1726,6 @@ int main (int argc, char *argv[])
 	    fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[4] * 100 / eCL[4]);
 	    fflush (stdout);
 	  }
-#else
-	  fprintf (stdout, "Calculations 0%% complete\r");
 #endif
           if (modelOptions.dryRun != 0)
             continue;
@@ -1827,6 +1828,8 @@ int main (int argc, char *argv[])
 		fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[5] *100 / eCL[5]);
 		fflush (stdout);
 	      }
+#else
+	      fprintf (stdout, "Calculations 0%% complete\r");
 #endif
               if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                 fprintf (stderr, "Trait has likelihood 0\n");
@@ -2199,11 +2202,12 @@ int main (int argc, char *argv[])
 	      swStop(combinedComputeSW);
 	      if (statusRequestSignal || (cL[7] % (eCL[7] / combinedComputeScale) == 0)) {
 		statusRequestSignal = FALSE;
-		fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+		fprintf (stdout, "%s %d%% complete (~%ld min left) [cCS %d, cL %d, eCL %d]\r",
 #ifndef SIMPLEPROGRESS
 			 "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
 			 (combinedComputeSW->swAccumWallTime * 100 / MAX( 1, (cL[7] * 100 / eCL[7]))) *
-			 (100 - (cL[7] * 100 / eCL[7])) / 6000);
+			 (100 - (cL[7] * 100 / eCL[7])) / 6000,
+			 combinedComputeScale, cL[7], eCL[7]);
 		fflush (stdout);
 		combinedComputeScale = MAX( 1, eCL[7] / (cL[7] * (1 /* <- Update frequency in minutes */ * 60) / 
 						    MAX( 1, combinedComputeSW->swAccumWallTime)));
@@ -2211,7 +2215,8 @@ int main (int argc, char *argv[])
 			 "Calculations", (cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7]),
 			 (combinedComputeSW->swAccumWallTime * 100 /
 			  MAX( 1, ((cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7])))) *
-			 (100 - ((cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7]))) / 6000);
+			   (100 - ((cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7]))) / 6000,
+			 combinedComputeScale, cL[7], eCL[7]);
 		fflush (stdout);
 		combinedComputeScale = MAX( 1, (eCL[6]+eCL[7]) / ((cL[6]+cL[7]) *
 							     (1 /* <- Update frequency in minutes */ * 60) / 
