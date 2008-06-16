@@ -9,21 +9,33 @@ BINDIR=/usr/local/bin
 # GSL (GNU Scientific Library) can be found
 INCDIR=/usr/local/include
 LIBDIR=/usr/local/lib
-
-CC := gcc
-CFLAGS := -Wall
-CFLAGS += -g -DDEBUG
-#CFLAGS += -DDMUSE
-#CFLAGS += -pg -DGPROF -fno-inline  # For gprof, the definition permits notification of the user
-#CFLAGS += -fprofile-arcs -ftest-coverage -DGCOV # For gcov
-#CFLAGS += -DDMTRACK # For our own memory tracking
-
 KVNLIBDIR := $(shell pwd)/lib
 KVNINCDIR := $(shell pwd)/include
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm
-export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS INCFLAGS
+
+CC := gcc
+CFLAGS := -Wall
+CFLAGS += -g -DDEBUG
+#CFLAGS += -pg -DGPROF -fno-inline  # For gprof, the definition permits notification of the user
+#CFLAGS += -fprofile-arcs -ftest-coverage -DGCOV # For gcov
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas
+
+# For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
+
+#CFLAGS += -fopenmp # Uncomment BOTH of these if you have an OpenMP-capable compiler...
+#LDFLAGS += -fopenmp # ...and want to use multiple threads for evaluations.
+#LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator, big performance gains, especially w/OpenMP.
+#CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
+#CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
+#CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
+#CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every 2Mp and at milestones
+#CFLAGS += -DDMUSE # For our own static memory management, not beneficial as yet.
+#CFLAGS += -DDMTRACK # For our own memory tracking
+#CFLAGS += -DTREEEVALUATE # Use evaluateValue of tree instead of evaluatePoly of list.
+#CFLAGS += -DFAKEEVALUATE # Don't evaluate at all - use only for exercising build. Results will be wrong!
+
+export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
 KOBJS = kelvin.o
 DKOBJS = dkelvin.o dcuhre.o
