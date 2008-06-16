@@ -2335,9 +2335,10 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
   swStart (evaluatePolySW);
 #endif
 
+#ifdef POLYSTATISTICS
   if ((evaluatePolyCount & 0xFFFF) == 0)
-    fprintf (stdout, "%d polynomial evaluations performed\n", evaluatePolyCount);
-
+    fprintf (stderr, "%d polynomial evaluations performed\n", evaluatePolyCount);
+#endif
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Starting evaluatePoly...\n");
   if (l->listNext == 0) {

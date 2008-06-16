@@ -392,13 +392,15 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
   Polynomial *pLikelihoodPolynomial = NULL;
   int ret = 0;
 
-#if 1
-  if (modelOptions.dryRun == 0) {
-    fprintf (stderr, "PEDIGREE: %s (%d/%d)\n",
+  if (modelOptions.dryRun == 0 && modelOptions.polynomial == TRUE) {
+#ifndef SIMPLEPROGRESS
+    fprintf (stderr, "Building polynomial w/pedigree: %s (%d/%d)\r",
 	     pPedigree->sPedigreeID, pPedigree->pedigreeIndex + 1,
 	     pPedigree->pPedigreeSet->numPedigree);
-  }
+    if (pPedigree->pedigreeIndex + 1 == pPedigree->pPedigreeSet->numPedigree)
+      fprintf (stdout, "\n");
 #endif
+  }
 
   for (i = 0; i < pPedigree->numNuclearFamily; i++) {
     pNucFam = pPedigree->ppNuclearFamilyList[i];

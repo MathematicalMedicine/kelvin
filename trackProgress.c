@@ -65,7 +65,7 @@ void print_dryrun_stat (PedigreeSet *pSet, ///< Pointer to set of pedigrees in a
   log the complexity data.
 
 */
-void logStatistics (PedigreeSet *pSet, ///< Pointer to pedigree set to be considered ala dry-run.
+void logPedigreeSetStatistics (PedigreeSet *pSet, ///< Pointer to pedigree set to be described ala dry-run.
 	       int posIdx ///< Position for complexity analysis.
 	       )
 {
@@ -85,8 +85,8 @@ void logStatistics (PedigreeSet *pSet, ///< Pointer to pedigree set to be consid
       sg += pNucFam->totalNumSimilarPairs;
     }
   }
-  sprintf (messageBuffer, "At %d: p:%d, l:%d, nf:%d, pg:%d, sg:%d, n:%d",
-	   posIdx, pSet->numPedigree, l, nf, pg, sg, nodeId);
+  sprintf (messageBuffer, "For %d pedigrees: unique groups:%d, similar groups:%d, polynomial terms:%d",
+	   pSet->numPedigree, pg, sg, nodeId);
   swLogMsg (messageBuffer);
 }
 
@@ -174,7 +174,6 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
 	strcat (analysisType, "Dichotomous Trait.");
 	eCl[4] = modelRange.npenet * modelRange.nlclass * modelRange.ngfreq;
 	eCl[7] = modelRange.ntloc * modelRange.npenet * modelRange.ngfreq;
-	fprintf(stderr, "4, 6 and 7 are: %d, %d and %d\n", eCl[4], eCl[6], eCl[7]);
       } else { // SA/SS multipoint, but not DT
 	eCl[5] = modelRange.npenet * modelRange.ntthresh * modelRange.ngfreq * 
 	  modelRange.nparam;

@@ -2580,7 +2580,7 @@ get_map_position (int locus)
 {
   Locus *pLocus;
 
-  if (locus < 0 && locus >= originalLocusList.numLocus) {
+  if (locus < 0 || locus >= originalLocusList.numLocus) {
     return NULL;
   }
   pLocus = originalLocusList.ppLocusList[locus];
