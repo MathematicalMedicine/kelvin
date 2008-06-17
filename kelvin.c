@@ -90,7 +90,7 @@ extern Polynomial *constant1Poly;
 struct swStopwatch *overallSW;  ///< Performance timer used throughout code for overall statistics.
 time_t startTime;
 char messageBuffer[MAXSWMSG];   ///< Commonly-used message buffer sized to work with swLogMsg().
-volatile sig_atomic_t statusRequestSignal = FALSE; ///< Status update requested via signal
+volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update requested via signal
 
 /**
 
@@ -257,8 +257,9 @@ int main (int argc, char *argv[])
   int breakFlag = FALSE;
   double alphaV, alphaV2;
   int loc1, loc2;
-  int cL[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 }, ///< Actual # calls to each instance of compute_likelihood
-    eCL[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0}; ///< Est. final # calls to each instance of compute_likelihood
+  int cL[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 },    ///< Actual # calls to each instance of compute_likelihood
+    eCL[9] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0};   ///< Est. final # calls to each instance of compute_likelihood
 
   PedigreeSet pedigreeSet;      /* Pedigrees. */
 
@@ -351,11 +352,11 @@ int main (int argc, char *argv[])
   int threadCount = 0;
 #endif
 
-  struct swStopwatch *combinedComputeSW; ///< Combined likelihood compute stopwatch
-  int combinedComputeScale = 100; ///< Computed iteration factor to output about every 5 minutes
+  struct swStopwatch *combinedComputeSW;        ///< Combined likelihood compute stopwatch
+  int combinedComputeScale = 100;       ///< Computed iteration factor to output about every 5 minutes
 
   overallSW = swCreate ("overall");
-  combinedComputeSW = swCreate("combinedComputeSW");
+  combinedComputeSW = swCreate ("combinedComputeSW");
   startTime = time (NULL);
 
   /* Add an exit handler to deal with wayward children. */
@@ -382,28 +383,28 @@ int main (int argc, char *argv[])
       char graphFileName[64];
       sprintf (graphFileName, "kelvin_%d_memory.dat", parentPID);
       if ((graphFile = fopen (graphFileName, "w")) == NULL) {
-	perror("Cannot open memory graph file!");
-	exit (EXIT_FAILURE);
+        perror ("Cannot open memory graph file!");
+        exit (EXIT_FAILURE);
       }
 #endif
       int wakeCount = 0;
       while (1) {
         sleep (30);
-	wakeCount++;
+        wakeCount++;
         /* See if we've been reparented due to Mom's demise. */
         parentPID = getppid ();
         if (parentPID == 1) {
 #ifdef MEMGRAPH
-	  fclose (graphFile);
+          fclose (graphFile);
 #endif
           exit (EXIT_SUCCESS);
-	}
-	if (wakeCount % 2)
-	  statusRequestSignal = TRUE;
+        }
+        if (wakeCount % 2)
+          statusRequestSignal = TRUE;
         currentVMK = swGetCurrentVMK (getppid ());
 #ifdef MEMGRAPH
         fprintf (graphFile, "%lu, %d\n", time (NULL) - startTime, currentVMK);
-	fflush (graphFile);
+        fflush (graphFile);
 #endif
 #ifdef MEMSTATUS
         fprintf (stdout, "%lus, %dKb (%.1f%% of %.1fGb)\n", time (NULL) - startTime, currentVMK,
@@ -690,8 +691,8 @@ int main (int argc, char *argv[])
   }
 
   /* Estimate number of calls to each (appropriate) instance of compute_likelihood for
-     use in progress reporting, and display model information at this point since markers have
-     already been added to locus list */
+   * use in progress reporting, and display model information at this point since markers have
+   * already been added to locus list */
   swLogMsg (estimateIterations (modelType, modelOptions, modelRange, eCL));
 
   /* allocate storage for keeping track of het locus in nuclear families */
@@ -748,7 +749,7 @@ int main (int argc, char *argv[])
     /* allocate space to save temporary results */
     markerNameList = (char **) calloc (sizeof (char *), modelType.numMarkers);
     if (modelType.trait == DT) {
-      combinedComputeScale = eCL[7] / 100; // This will force an initial dump after 100 iterations
+      combinedComputeScale = eCL[7] / 100;      // This will force an initial dump after 100 iterations
 
       /* likelihoodDT is for homoLR */
       likelihoodDT = (double **) calloc (sizeof (double *), modelRange.ngfreq);
@@ -768,7 +769,7 @@ int main (int argc, char *argv[])
         }
       }
     } else {    /* QT */
-      combinedComputeScale = eCL[8] / 100; // This will force an initial dump after 100 iterations
+      combinedComputeScale = eCL[8] / 100;      // This will force an initial dump after 100 iterations
 
       /* first dimension is pedigree */
       likelihoodQT = (double *****) calloc (sizeof (double ****), pedigreeSet.numPedigree + 1);
@@ -981,7 +982,8 @@ int main (int argc, char *argv[])
                     populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2,
                                               initialHetProbAddr, 0, -1, -1, 0);
                 KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
-                compute_likelihood (&pedigreeSet); cL[0]++;
+                compute_likelihood (&pedigreeSet);
+                cL[0]++;
 
                 if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                   fprintf (stderr, "Theta 0.5 has likelihood 0\n");
@@ -1039,7 +1041,8 @@ int main (int argc, char *argv[])
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
                     KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
-                    compute_likelihood (&pedigreeSet); cL[1]++;
+                    compute_likelihood (&pedigreeSet);
+                    cL[1]++;
 
                     log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                     if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
@@ -1180,7 +1183,8 @@ int main (int argc, char *argv[])
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
                     KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
-                    compute_likelihood (&pedigreeSet); cL[2]++;
+                    compute_likelihood (&pedigreeSet);
+                    cL[2]++;
 
                     if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                       fprintf (stderr, "Theta 0.5 has likelihood 0\n");
@@ -1230,7 +1234,8 @@ int main (int argc, char *argv[])
                                                       initialHetProbAddr, 0, -1, -1, 0);
 
                         KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
-                        compute_likelihood (&pedigreeSet); cL[3]++;
+                        compute_likelihood (&pedigreeSet);
+                        cL[3]++;
                         log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                         if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                           log10_likelihood_ratio = 0;
@@ -1707,10 +1712,8 @@ int main (int argc, char *argv[])
           /* only need to update trait locus */
           update_penetrance (&pedigreeSet, traitLocus);
 
-	/* Iterate over gene frequencies, but only one time thru if doing a dry-run. */
-        for (gfreqInd = 0; (gfreqInd == 0) ||
-	       (modelOptions.dryRun == 0 &&
-		gfreqInd < modelRange.ngfreq); gfreqInd++) {
+        /* Iterate over gene frequencies, but only one time thru if doing a dry-run. */
+        for (gfreqInd = 0; (gfreqInd == 0) || (modelOptions.dryRun == 0 && gfreqInd < modelRange.ngfreq); gfreqInd++) {
 
           /* updated trait locus allele frequencies */
           gfreq = modelRange.gfreq[gfreqInd];
@@ -1722,12 +1725,13 @@ int main (int argc, char *argv[])
             update_locus (&pedigreeSet, traitLocus);
 
           /* Compute the likelihood for the trait */
-          compute_likelihood (&pedigreeSet); cL[4]++;
+          compute_likelihood (&pedigreeSet);
+          cL[4]++;
 #ifndef SIMPLEPROGRESS
-	  if (cL[4] % MAX(1, eCL[4] / 5) == 1) {
-	    fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[4] * 100 / eCL[4]);
-	    fflush (stdout);
-	  }
+          if (cL[4] % MAX (1, eCL[4] / 5) == 1) {
+            fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[4] * 100 / eCL[4]);
+            fflush (stdout);
+          }
 #endif
           if (modelOptions.dryRun != 0)
             continue;
@@ -1757,6 +1761,7 @@ int main (int argc, char *argv[])
           likelihoodDT[gfreqInd][penIdx] = log10_likelihood_null;
         }       /* gfreq */
       } /* pen */
+
       /* save all  trait likelihood which were created in this run */
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         /* save the likelihood at null */
@@ -1824,12 +1829,13 @@ int main (int argc, char *argv[])
               if (modelOptions.polynomial == TRUE);
               else
                 update_penetrance (&pedigreeSet, traitLocus);
-              compute_likelihood (&pedigreeSet); cL[5]++;
+              compute_likelihood (&pedigreeSet);
+              cL[5]++;
 #ifndef SIMPLEPROGRESS
-	      if (cL[5] % (MAX(1, eCL[5]) / 5) == 1) {
-		fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[5] *100 / eCL[5]);
-		fflush (stdout);
-	      }
+              if (cL[5] % (MAX (1, eCL[5]) / 5) == 1) {
+                fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[5] * 100 / eCL[5]);
+                fflush (stdout);
+              }
 #endif
               if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                 fprintf (stderr, "Trait has likelihood 0\n");
@@ -1862,6 +1868,10 @@ int main (int argc, char *argv[])
       } /* gfreq */
     }   /* end of QT */
 
+#ifndef SIMPLEPROGRESS
+    fprintf (stderr, "Trait likelihood evaluations 100%% complete\n");
+#endif
+
     if (modelOptions.polynomial == TRUE) {
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         /* save the likelihood at trait */
@@ -1891,7 +1901,7 @@ int main (int argc, char *argv[])
       /* positions listed are sex average positions */
       traitPos = modelRange.tloc[posIdx];
       /* Set the sex-averaged position first. The sex-specific positions will be updated 
-	 once markers are selected since interpolation might be needed. */
+       * once markers are selected since interpolation might be needed. */
       pTraitLocus->mapPosition[0] = traitPos;
       pTraitLocus->mapPosition[1] = traitPos;
       pTraitLocus->mapPosition[2] = traitPos;
@@ -1925,12 +1935,10 @@ int main (int argc, char *argv[])
       }
       locusList->traitLocusIndex = traitIndex;
       locusList->traitOrigLocus = traitLocus;
-      
+
 #ifndef SIMPLEPROGRESS
       /* Say where we're at with the trait locus and markers. */
-      fprintf (stdout, "Trait likelihood evaluations 100%% complete\n"
-	       "Starting w/trait locus at %.2f (%d/%d positions) with",
-	       traitPos, posIdx+1, numPositions);
+      fprintf (stdout, "Starting w/trait locus at %.2f (%d/%d positions) with", traitPos, posIdx + 1, numPositions);
 #endif
 
       markerSetChanged = FALSE;
@@ -1959,14 +1967,13 @@ int main (int argc, char *argv[])
         }       /* end of loop over the markers to set up locus list */
 
 #ifndef SIMPLEPROGRESS
-	fprintf (stdout, " new markers");
-	for (k=0; k<modelType.numMarkers; k++)
-	  fprintf (stdout, " %d(%.2f)", markerLocusList.pLocusIndex[k],
-		   *get_map_position (markerLocusList.pLocusIndex[k]));
-	fprintf (stdout, "\n");
+        fprintf (stdout, " new markers");
+        for (k = 0; k < modelType.numMarkers; k++)
+          fprintf (stdout, " %d(%.2f)", markerLocusList.pLocusIndex[k], *get_map_position (markerLocusList.pLocusIndex[k]));
+        fprintf (stdout, "\n");
 
         /* Calculate likelihood for the marker set */
-	fprintf (stdout, "Determining marker set likelihood...\n");
+        fprintf (stdout, "Determining marker set likelihood...\n");
 #endif
 
         locusList = &markerLocusList;
@@ -1999,14 +2006,15 @@ int main (int argc, char *argv[])
           }
         }
 
-        compute_likelihood (&pedigreeSet); cL[6]++;
+        compute_likelihood (&pedigreeSet);
+        cL[6]++;
 
 #ifndef SIMPLEPROGRESS
-	if (cL[6] % (MAX(1, eCL[6] / 10)) == 1) {
-	    fprintf (stdout, "Marker set likelihood evaluations %d%% complete...\r",
-		     MAX(cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
-	    fflush (stdout);
-	}
+        if (cL[6] % (MAX (1, eCL[6] / 10)) == 1) {
+          fprintf (stdout, "Marker set likelihood evaluations %d%% complete...\r",
+                   MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
+          fflush (stdout);
+        }
 #endif
 
         modelOptions.polynomial = polynomialFlag;
@@ -2036,13 +2044,13 @@ int main (int argc, char *argv[])
           }
           pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
         }
-	fprintf (stdout, "\n");
+        fprintf (stdout, "\n");
       } /* end of marker set change */
       else
 #ifndef SIMPLEPROGRESS
-	fprintf (stdout, " same markers\n");
+        fprintf (stdout, " same markers\n");
 #else
-      ;
+        ;
 #endif
       prevFirstMarker = mp_result[posIdx].pMarkers[0];
       prevLastMarker = mp_result[posIdx].pMarkers[modelType.numMarkers - 1];
@@ -2178,12 +2186,10 @@ int main (int argc, char *argv[])
           }
 
           if (modelOptions.polynomial != TRUE)
-            update_penetrance (&pedigreeSet, traitLocus); // Only need to update trait locus
+            update_penetrance (&pedigreeSet, traitLocus);       // Only need to update trait locus
 
-	  /* Iterate over gene frequencies -- just one loop for dry-runs. */
-          for (gfreqInd = 0; (gfreqInd == 0) ||
-		 (modelOptions.dryRun == 0 &&
-		  gfreqInd < modelRange.ngfreq); gfreqInd++) {
+          /* Iterate over gene frequencies -- just one loop for dry-runs. */
+          for (gfreqInd = 0; (gfreqInd == 0) || (modelOptions.dryRun == 0 && gfreqInd < modelRange.ngfreq); gfreqInd++) {
 
             /* Updated trait locus allele frequencies */
             gfreq = modelRange.gfreq[gfreqInd];
@@ -2191,41 +2197,45 @@ int main (int argc, char *argv[])
             pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
             if (modelOptions.polynomial != TRUE)
-	      update_locus (&pedigreeSet, traitLocus);
+              update_locus (&pedigreeSet, traitLocus);
 
-	    /* If we're not on the first iteration, it's not a polynomial build, so
-	       show progress at 1 minute intervals. Have a care to avoid division by zero. */
-	    if (gfreqInd != 0 || penIdx != 0) {
-	      swStart(combinedComputeSW);
-	      compute_likelihood (&pedigreeSet); cL[7]++;
-	      swStop(combinedComputeSW);
-	      if (statusRequestSignal) {
-		statusRequestSignal = FALSE;
-		if (cL[7] > 1) { // The first time thru we have no basis for estimation
-		  fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+            /* If we're not on the first iteration, it's not a polynomial build, so
+             * show progress at 1 minute intervals. Have a care to avoid division by zero. */
+            if (gfreqInd != 0 || penIdx != 0) {
+              swStart (combinedComputeSW);
+              compute_likelihood (&pedigreeSet);
+              cL[7]++;
+              swStop (combinedComputeSW);
+              if (statusRequestSignal) {
+                statusRequestSignal = FALSE;
+                if (cL[7] > 1) {        // The first time thru we have no basis for estimation
 #ifndef SIMPLEPROGRESS
-			   "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
-			   (combinedComputeSW->swAccumWallTime * 100 / MAX( 1, (cL[7] * 100 / eCL[7]))) *
-			   (100 - (cL[7] * 100 / eCL[7])) / 6000);
+                  fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                           "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
+                           (combinedComputeSW->swAccumWallTime * 100 / MAX (1, (cL[7] * 100 / eCL[7]))) *
+                           (100 - (cL[7] * 100 / eCL[7])) / 6000);
 #else
-		           "Calculations", (cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7]),
-			     (combinedComputeSW->swAccumWallTime * 100 /
-			      MAX( 1, ((cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7])))) *
-			     (100 - ((cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7]))) / 6000);
+                  fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                           "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]),
+                           (combinedComputeSW->swAccumWallTime * 100 /
+                            MAX (1, ((cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7])))) *
+                           (100 - ((cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]))) / 6000);
 #endif
-	          fflush (stdout);
-		}
-	      }
-	    } else // This _is_ the first iteration
-	      if (modelOptions.polynomial == TRUE) {
+                  fflush (stdout);
+                }
+              }
+            } else      // This _is_ the first iteration
+            if (modelOptions.polynomial == TRUE) {
 #ifndef SIMPLEPROGRESS
-		compute_likelihood (&pedigreeSet); cL[7]++;
-		fprintf (stdout, "%s 0%% complete\r", "Combined likelihood evaluations");
-		fflush (stdout);
+              compute_likelihood (&pedigreeSet);
+              cL[7]++;
+              fprintf (stdout, "%s 0%% complete\r", "Combined likelihood evaluations");
+              fflush (stdout);
 #else
-		compute_likelihood (&pedigreeSet); cL[7]++;
+              compute_likelihood (&pedigreeSet);
+              cL[7]++;
 #endif
-	      }
+            }
             /* print out some statistics under dry run */
             if (modelOptions.dryRun != 0) {
               print_dryrun_stat (&pedigreeSet, traitPos);
@@ -2321,6 +2331,20 @@ int main (int argc, char *argv[])
           }
           pPedigree->load_flag = 0;
         }
+
+#ifndef SIMPLEPROGRESS
+	fprintf (stdout, "%s %d%% complete (~%ld min left)\n",
+		 "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
+		 (combinedComputeSW->swAccumWallTime * 100 / MAX (1, (cL[7] * 100 / eCL[7]))) *
+		 (100 - (cL[7] * 100 / eCL[7])) / 6000);
+#else
+	fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+		 "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]),
+		 (combinedComputeSW->swAccumWallTime * 100 /
+		  MAX (1, ((cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7])))) *
+		 (100 - ((cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]))) / 6000);
+#endif
+
       } /* end of TP */
       else
         /* multipoint QT or COMBINED */
@@ -2388,40 +2412,43 @@ int main (int argc, char *argv[])
                     populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2,
                                               initialHetProbAddr, 0, -1, -1, 0);
 
-		/* If we're not on the first iteration, it's not a polynomial build, so
-		   show progress at 1 minute intervals. Have a care to avoid division by zero. */
-		if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
-		  swStart(combinedComputeSW);
-		  compute_likelihood (&pedigreeSet); cL[8]++;
-		  swStop(combinedComputeSW);
-		  if (statusRequestSignal) {
-		    statusRequestSignal = FALSE;
-		    if (cL[8] > 1) { // The first time thru we have no basis for estimation
-		      fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                /* If we're not on the first iteration, it's not a polynomial build, so
+                 * show progress at 1 minute intervals. Have a care to avoid division by zero. */
+                if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
+                  swStart (combinedComputeSW);
+                  compute_likelihood (&pedigreeSet);
+                  cL[8]++;
+                  swStop (combinedComputeSW);
+                  if (statusRequestSignal) {
+                    statusRequestSignal = FALSE;
+                    if (cL[8] > 1) {    // The first time thru we have no basis for estimation
 #ifndef SIMPLEPROGRESS
-			       "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
-			       (combinedComputeSW->swAccumWallTime * 100 / MAX( 1, (cL[8] * 100 / eCL[7]))) *
-			       (100 - (cL[8] * 100 / eCL[8])) / 6000);
+                      fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                               "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
+                               (combinedComputeSW->swAccumWallTime * 100 / MAX (1, (cL[8] * 100 / eCL[8]))) *
+                               (100 - (cL[8] * 100 / eCL[8])) / 6000);
 #else
-		    "Calculations", (cL[6]+cL[8]) * 100 / (eCL[6]+eCL[8]),
-		      (combinedComputeSW->swAccumWallTime * 100 /
-		       MAX( 1, ((cL[6]+cL[8]) * 100 / (eCL[6]+eCL[8])))) *
-		      (100 - ((cL[6]+cL[8]) * 100 / (eCL[6]+eCL[8]))) / 6000);
+                      fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                               "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]),
+                               (combinedComputeSW->swAccumWallTime * 100 /
+                                MAX (1, ((cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8])))) *
+                               (100 - ((cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]))) / 6000);
 #endif
-		    fflush (stdout);
-		  }
-		}
-	      } else // This _is_ the first iteration
-		if (modelOptions.polynomial == TRUE) {
+                      fflush (stdout);
+                    }
+                  }
+                } else  // This _is_ the first iteration
+                if (modelOptions.polynomial == TRUE) {
 #ifndef SIMPLEPROGRESS
-		  compute_likelihood (&pedigreeSet); cL[8]++;
-		  fprintf (stdout, "%s 0%% complete\r", "Combined likelihood evaluations");
-		  fflush (stdout);
+                  compute_likelihood (&pedigreeSet);
+                  cL[8]++;
+                  fprintf (stdout, "%s 0%% complete\r", "Combined likelihood evaluations");
+                  fflush (stdout);
 #else
-		  compute_likelihood (&pedigreeSet); cL[8]++;
+                  compute_likelihood (&pedigreeSet);
+                  cL[8]++;
 #endif
-		}  
-
+                }
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                 if (isnan (log10_likelihood_alternative))
                   fprintf (stderr, "ALT likelihood is NAN.\n");
@@ -2495,6 +2522,20 @@ int main (int argc, char *argv[])
             }   /* end of penetrance loop */
           }     /* end of parameter loop */
         }       /* end of gene freq */
+
+#ifndef SIMPLEPROGRESS
+	fprintf (stdout, "%s %d%% complete (~%ld min left)\n",
+		 "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
+		 (combinedComputeSW->swAccumWallTime * 100 / MAX (1, (cL[8] * 100 / eCL[8]))) *
+		 (100 - (cL[8] * 100 / eCL[8])) / 6000);
+#else
+	fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+		 "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]),
+		 (combinedComputeSW->swAccumWallTime * 100 /
+		  MAX (1, ((cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8])))) *
+		 (100 - ((cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]))) / 6000);
+#endif
+
       } /* end of QT */
 
       /* print out average and log10(max) and maximizing parameters */
@@ -2543,15 +2584,13 @@ int main (int argc, char *argv[])
       }
       fprintf (fpHet, ")\n");
       fflush (fpHet);
-
-#ifndef SIMPLEPROGRESS
-      fprintf (stdout, "Combined likelihood evaluations 100%% complete\n");
-#endif
     }   /* end of walking down the chromosome */
   }     /* end of multipoint */
 
-#ifdef SIMPLEPROGRESS
-      fprintf (stdout, "Calculations 100%% complete\n");
+#ifndef SIMPLEPROGRESS
+  fprintf (stdout, "Combined likelihood evaluations 100%% complete\n");
+#else
+  fprintf (stdout, "Calculations 100%% complete\n");
 #endif
 
   /* only for multipoint - deallocate memory  */
