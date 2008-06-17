@@ -3,8 +3,8 @@
 
  Polynomial - build and evaluate arbitrarily complex polynomials.
 
- Written by Hongling Wang. Polynomial reduction optimizations by Bill
- Valentine-Cooper
+ Written by Hongling Wang. Polynomial reduction optimizations,
+ reorganization, tuning and documentation by Bill Valentine-Cooper.
 
  Copyright 2008, Nationwide Children's Research Institute.  All rights
  reserved.  Permission is hereby given to use this software for
@@ -45,7 +45,6 @@
   CONDITIONALS:
 
   There are several compilation conditionals in the polynomial code.
-  All of them are diagnostic in nature.
 
   - FREEDEBUG - define this to enable debugging diagnosis of situations
   where polynomials that have been freed by one mechanism or another
@@ -62,11 +61,24 @@
   usage of a particular nodeId (under gdb, it will breakout of
   execution when defined and when referenced).
 
-  - _OPENMP
+  - _OPENMP - this will be automagically defined when the compiler
+  supports OpenMP and directive processing is enabled. For the GNU
+  C compiler, this means the -fopenmp flag has been specified.
 
-  - SOURCEDIGRAPH
+  - SOURCEDIGRAPH - define this to enable the generation of DOT-format
+  data files that illustrate term source parenting. The data is
+  collected for all polynomial build calls, and dumped to a file when
+  the function dumpSourceParenting is invoked. This was used to
+  determine if a dynamic hybrid direct-evaluation /
+  polynomial-evaluation approach could be implemented to trade memory
+  for execution time.  Unfortunately there were too few good
+  "breakpoints". It still serves to illustrate the complexity of the
+  code and resultant polynomials.
 
-  - EVALUATESW
+  - EVALUATESW - define this to enable the tracking and display of
+  polynomial evaluation statistics. It _does_ affect performance as
+  the stopwatch has to be turned on and off with each evaluation, and
+  there can be millions of evaluations.
 
   - DMTRACK
 
@@ -385,7 +397,7 @@ double doEvaluateValue (Polynomial * p)
       return *(p->e.v->vAddr.vAddrI);
     } else {
       fprintf (stderr, "Wrong variable type, exit!\n");
-      exit (1);
+      exit (EXIT_FAILURE);
     }
 
     /* If a sub polynomial is a sum, evaluate the values of all the terms.
@@ -487,14 +499,14 @@ double doEvaluateValue (Polynomial * p)
       result = sqrt (doEvaluateValue (fp->para[0]));
     } else {
       fprintf (stderr, "Unknown function name %s in polynomial\n", fp->name);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
     p->value = result;
     p->valid |= VALID_EVAL_FLAG;
     return result;
   default:
     fprintf (stderr, "In evaluateValue, unknown expression type: [%d], exiting!\n", p->eType);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 }
 
@@ -644,7 +656,7 @@ inline void insertHashTable (struct hashStruct *hash, int location, int key, int
     initialHashSize += HASH_TABLE_INCREASE * sizeof (int) * 2;
     if (hash->key == NULL || hash->index == NULL) {
       fprintf (stderr, "Memory allocation for hash table failed!\n");
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
   // Prepare a place in hash table for the new polynomial
@@ -663,7 +675,7 @@ inline void deleteHashTable (struct hashStruct *hash, int location)
 {
   if (location >= hash->num) {
     fprintf (stderr, "Deletion in hash table failed\n");
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   memmove (&hash->key[location], &hash->key[location + 1], sizeof (int) * (hash->num - location - 1));
   memmove (&hash->index[location], &hash->index[location + 1], sizeof (int) * (hash->num - location - 1));
@@ -716,12 +728,12 @@ Polynomial *constantExp (double con)
     hIndex += CONSTANT_HASH_SIZE;
 
   /* If the hash table item is not empty, determine if the constant is in the
-   * constant polynomial list.  If it is not, find a position in the hash table to
-   * save the key and the index in the constant list */
+     constant polynomial list.  If it is not, find a position in the hash table to
+     save the key and the index in the constant list */
   if (constantHash[hIndex].num > 0) {
     /* If the key of this constant is equal to the keys of some polynomials in the
-     * constant list, see if the value of the new constant is equal to the value
-     * of an existing constant */
+       constant list, see if the value of the new constant is equal to the value
+       of an existing constant */
     if (searchHashTable (&constantHash[hIndex], &first, &last, key)) {
       for (i = first; i <= last; i++) {
         cIndex = constantHash[hIndex].index[i];
@@ -745,7 +757,7 @@ Polynomial *constantExp (double con)
   p = (Polynomial *) malloc (sizeof (Polynomial));
   if (p == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   p->eType = T_CONSTANT;
   p->value = con;
@@ -757,7 +769,7 @@ Polynomial *constantExp (double con)
     constantList = realloc (constantList, constantListLength * sizeof (Polynomial *));
     if (constantList == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
   // Save the constant in the constant polynomial list
@@ -781,31 +793,39 @@ Polynomial *constantExp (double con)
   return p;
 };
 
-/*
+/**
+
+  Generate a key for a variable polynomial.
+
   The key of a variable polynomial is computed by the address of the variable.
   Different variables have different addresses in memory which provide nicely
-  random keys. */
+  random keys.
 
+*/
 inline int keyVariablePolynomial (double *vD, int *vI, char vType)
 {
   int key;
 
-  // Currently we can deal with integer and double variables.
-  // We use the address of the variable as the key of the variable polynomial
+  /* Currently we can deal with integer and double variables. We use the address 
+     of the variable as the key of the variable polynomial. */
   if (vType == 'D')
     key = (long int) vD;
   else if (vType == 'I')
     key = (long int) vI;
   else {
     fprintf (stderr, "UNKNOWN variable type !");
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 
   return key;
 };
 
-/* Builds a variable polynomial. Essentially just a name and a place to find
-   it's value before evaluation. */
+/**
+
+  Builds a variable polynomial. Essentially just a name and a place to find
+  it's value before evaluation.
+
+*/
 
 Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
 {
@@ -824,12 +844,12 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   if (hIndex < 0)
     hIndex += VARIABLE_HASH_SIZE;
   /* If the hash table item is not empty, determine if the variable is already in the
-   * variable polynomial list.  If it is not, determine a position in the hash table to
-   * save the key and an index in the variable list. Save this variable polynomial in
-   * the variable polynomial list. */
+     variable polynomial list.  If it is not, determine a position in the hash table to
+     save the key and an index in the variable list. Save this variable polynomial in
+     the variable polynomial list. */
   if (variableHash[hIndex].num > 0) {
     /* If the key of this variable is equal to the keys of some polynomials in the
-     * variable list, check if the variable is already there. */
+       variable list, check if the variable is already there. */
     if (searchHashTable (&variableHash[hIndex], &first, &last, key)) {
       for (i = first; i <= last; i++) {
         vIndex = variableHash[hIndex].index[i];
@@ -872,7 +892,7 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
     variableList = realloc (variableList, variableListLength * sizeof (Polynomial *));
     if (variableList == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
 
@@ -897,9 +917,13 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   return p;
 };
 
-/* This function compute a key for a sum polynomial. There tends to be a huge number of sum
+/**
+
+   Compute a key for a sum polynomial. There tends to be a huge number of sum
    and product polynomials in likelihood calculations, so it is important that we have a
-   good hash strategy so that the polynomials are well distributed in the hash table. */
+   good hash strategy so that the polynomials are well distributed in the hash table.
+
+*/
 inline int keySumPolynomial (Polynomial ** p, double *factor, int counter)
 {
   int key = 0;
@@ -916,9 +940,13 @@ inline int keySumPolynomial (Polynomial ** p, double *factor, int counter)
   return key;
 };
 
-/* Search for a polynomial in a polynomial list. If the target polynomial is not in the list,
-   return 0, otherwise return 1 and it's index in the location parameter. This function has
-   been heavily optimized for degenerate cases due to it's intensive use. */
+/*
+
+  Search for a polynomial in a polynomial list. If the target polynomial is not in the list,
+  return 0, otherwise return 1 and it's index in the location parameter. This function has
+  been heavily optimized for degenerate cases due to it's intensive use.
+
+*/
 inline int searchPolynomialList (Polynomial ** p, int length, Polynomial * target, int *location)
 {
   int binaryStart, binaryEnd, binaryMiddle;
@@ -953,11 +981,21 @@ inline int searchPolynomialList (Polynomial ** p, int length, Polynomial * targe
   return 0;
 };
 
-/* Collect the terms and their coefficients of a sum polynomial.  A plus operation can
-   have any number of operands which are themselves polynomials.  We collect these operand
-   polynomials and organize them in a unique manner as a basis for comparisons between the
-   resulting polynomial and other polynomials.  */
-inline void collectSumTerms (double **factor, Polynomial *** p, int *counter, int *containerLength, double f1, Polynomial * p1)
+/**
+
+  Collect the terms and their coefficients of a sum polynomial.  A plus operation can
+  have any number of operands which are themselves polynomials.  We collect these operand
+  polynomials and organize them in a unique manner as a basis for comparisons between the
+  resulting polynomial and other polynomials.
+
+*/
+inline void collectSumTerms (double **factor, ///< Container, pointer to a list of double factors
+			     Polynomial ***p, ///< Container, Pointer to a list of pointers to polynomials
+			     int *counter, ///< Number of terms currently in the container lists
+			     int *containerLength, ///< Current size of the container lists
+			     double f1, ///< Factor of term to add to the container
+			     Polynomial * p1 ///< Pointer to polynomial of term to add to container
+			     )
 {
   int location;
 
@@ -975,7 +1013,7 @@ inline void collectSumTerms (double **factor, Polynomial *** p, int *counter, in
     *p = (Polynomial **) realloc (*p, (*containerLength) * sizeof (Polynomial *));
     if (*factor == NULL || *p == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
   //This is a new item in the sum, insert it at the start or end of the sum
@@ -998,6 +1036,11 @@ inline void collectSumTerms (double **factor, Polynomial *** p, int *counter, in
 }
 
 #ifdef SOURCEDIGRAPH
+/**
+
+  qsort-referenced function to put sources in name order for source digraph.
+
+*/
 int compareSourcesByName (const void *left, const void *right)
 {
   int result;
@@ -1011,6 +1054,11 @@ int compareSourcesByName (const void *left, const void *right)
   return result;
 }
 
+/**
+
+  qsort-referenced function to put sources in entryNo order for source digraph.
+
+*/
 int compareSourcesByEntryNo (const void *left, const void *right)
 {
   struct polySource *pSLeft, *pSRight;
@@ -1020,7 +1068,11 @@ int compareSourcesByEntryNo (const void *left, const void *right)
   return (pSLeft->entryNo - pSRight->entryNo);
 }
 
-/* Find it's source or add a new one. */
+/**
+
+  Find and return a polynomial term's source or add a new one.
+
+*/
 short findOrAddSource (char *fileName, int lineNo, unsigned char eType)
 {
   struct polySource target, *result;
@@ -1057,6 +1109,7 @@ short findOrAddSource (char *fileName, int lineNo, unsigned char eType)
   simplification.  Also, if the sum is a constant, the result will be a constant.
   If the polynomial being created exists, the existing polynomial is returned.  Otherwise,
   a new polynomial is constructed.
+
   The parameters are:
   -# the number of <factor, poly> pairs in the parameter list
   -# a group of <factor, poly> pairs
@@ -1071,44 +1124,43 @@ short findOrAddSource (char *fileName, int lineNo, unsigned char eType)
 Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
 {
   int i, k, l;
-  va_list args; //parameters
-  struct sumPoly *sP;   //element of a sum polynomial
-  Polynomial *rp;       //pointer of the new sum polynomial
-  int counterSum;       //counter of the number of terms in the new sum polynomial
-  int flag;     //replacement flag
-  double f1, f0;        //factoors
-  Polynomial *p1 = 0, *p0 = 0;  //polynomial terms
-  double con = 0;       //accumulate constant values appearing in the function parameters
-  int key = 0;  //key for the new polynomial
-  int tempI, tempI2;    //normalized powers (for comparison of two double numbers)
-  double tempD, tempD2; //normalized fractions( for comparison of two double numbers)
-  int hIndex, sIndex;   //index of the new polynomial in the hash table, sub index in a hash bucket
-  int first, last, location;    //first polynomial for comparison, last polynomial for comparison, location of the new polynomial in a hash bucket
-  int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Valid;
+  va_list args; ///< Variable list of parameters
+  struct sumPoly *sP;   ///< Element of a sum polynomial
+  Polynomial *rp;       ///< Pointer of the new sum polynomial
+  int counterSum;       ///< Counter of the number of terms in the new sum polynomial
+  int flag;     //< 1st-term replacement flag
+  double f1, f0;        ///< Some factors
+  Polynomial *p1 = 0, *p0 = 0;  ///< Some polynomial terms
+  double con = 0;       ///< Accumulates constant values appearing in the function parameters
+  int key = 0;  ///< Key for the new polynomial
+  int tempI, tempI2;    ///< Normalized powers (for comparison of two double numbers)
+  double tempD, tempD2; ///< Normalized fractions( for comparison of two double numbers)
+  int hIndex, sIndex;   ///< Index of the new polynomial in the hash table, sub index in a hash bucket
+  int first,     ///< First polynomial for comparison
+    last, ///< Last polynomial for comparison
+    location; ///< Location of the new polynomial in a hash bucket 
+  int p0SubHIndex = 0, ///< Sub-index in a hash bucket
+    p0HIndex = 0, ///< Index in the hash table
+    p0Index = 0, ///< Index in the polynomial list
+    p0Id = 0, p0Key, p0Valid;
+  enum expressionType p0EType;
 
-  //sub index in a hash bucket, index in the hash table, index in the polynomial list, unique id, key, number of times refered of the
-  //polynomial to be replaced
-  enum expressionType p0EType;  //polynomial type of the polynomial to be replaced
-
-  //Initialize the variables that keep tracks the number of terms collected for the new sum polynomial
+  // Initialize the variables that keep tracks the number of terms collected for the new sum polynomial
   counter_v1 = 0;
   counter_p1 = 0;
   counter_f1 = 0;
 
-  //get the number of items for this sum from the parameter list of the function
+  // Get the number of items for this sum from the parameter list of the function
   va_start (args, num);
 
 #ifdef SOURCEDIGRAPH
   memset (originalChildren, 0, sizeof (originalChildren));
 #endif
 
-  //iterate through all the items in the parameter list
+  // Iterate through all the items in the parameter list
   for (i = 0; i < num; i++) {
-    //get the coefficient
-    f1 = va_arg (args, double);
-
-    //get the polynomial
-    p1 = va_arg (args, Polynomial *);
+    f1 = va_arg (args, double); // Get the coefficient
+    p1 = va_arg (args, Polynomial *);  // ...and the polynomial
 
 #ifdef SOURCEDIGRAPH
     originalChildren[p1->source]++;     // Bump the count of children of this subpoly source for this parent
@@ -1121,51 +1173,38 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
         fprintf (stderr, "\n");
       }
     }
-    //Record the first operand of the plus operation.  Often, the first operand and the result are the
-    //same variable, which refers to the case of p = p + ..., therefore, when we build a new polynomial
-    //for the result of the plus operation, the polynomial that represents the first operand of the
-    //plus operation can be freed.
-
+    /* Record the first operand of the plus operation.  Often, the first operand and the result are the
+       same variable, e.g. p=p+..., therefore, when we build a new polynomial for the result of the
+       plus operation, the first operand polynomial of the plus operation can be freed. */
     if (i == 0) {
-      f0 = f1;
-      p0 = p1;
+      f0 = f1;  p0 = p1;
     }
-    //If a term is constant 0, it has no effect on a sum, therefore we do nothing
-    if (f1 == 0.0) {
+    // If a term is constant 0, it has no effect on a sum, therefore we do nothing
+    if (f1 == 0.0)
       continue;
-    }
     switch (p1->eType) {
-      //If the term is a non-zero constant, we collect it
-    case T_CONSTANT:
+    case T_CONSTANT: // If the term is a non-zero constant, we collect it
       con += p1->value * f1;
       break;
-      //The term is either a variable
-    case T_VARIABLE:
+    case T_VARIABLE: // The term is a variable
       collectSumTerms (&factor_v1, &p_v1, &counter_v1, &containerLength_v1, f1, p1);
       break;
-      //The item is a product
-    case T_PRODUCT:
+    case T_PRODUCT: // The item is a product
       collectSumTerms (&factor_p1, &p_p1, &counter_p1, &containerLength_p1, f1, p1);
       break;
-      //The term is a function call
-    case T_FUNCTIONCALL:
+    case T_FUNCTIONCALL: // The term is a function call
       collectSumTerms (&factor_f1, &p_f1, &counter_f1, &containerLength_f1, f1, p1);
       break;
-      //The term is a sum
-    case T_SUM:
-      //This item is a sum, we go through the items of this sum item
-      //each item in this sum is called sum item
+    case T_SUM: // The term is a sum
+      // Fold the components of the sum subpolynomial up into this sum polynomial
       for (l = 0; l < p1->e.s->num; l++) {
         switch (p1->e.s->sum[l]->eType) {
-          //If this sum item is a constant, collected it into con
-        case T_CONSTANT:
+        case T_CONSTANT: // Item is a constant, collected it into con
           con += f1 * p1->e.s->sum[l]->value * p1->e.s->factor[l];
           break;
-          //Variable
         case T_VARIABLE:
           collectSumTerms (&factor_v1, &p_v1, &counter_v1, &containerLength_v1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
-          //product
         case T_PRODUCT:
           collectSumTerms (&factor_p1, &p_p1, &counter_p1, &containerLength_p1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
@@ -1174,20 +1213,19 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
           break;
         default:
           fprintf (stderr, "In plusExp, unknown expression type %d\n", p1->e.s->sum[l]->eType);
-          exit (1);
+          exit (EXIT_FAILURE);
         }
       }
       break;
-    case T_FREED:
+    case T_FREED: // The term being referenced has been freed!
       fprintf (stderr, "In plusExp, polynomial term %d was freed:\n", i);
       expTermPrinting (stderr, p1, 1);
-      exit (1);
+      exit (EXIT_FAILURE);
       break;
-
     default:
       fprintf (stderr, "In plusExp, unknown polynomial type %d, exiting!\n", p1->eType);
       raise (SIGUSR1);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
   flag = va_arg (args, int);
@@ -1199,20 +1237,19 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   else
     sumReleaseableCount++;
 
-  //merge the collected polynomial terms to form a sum polynomial
+  // Merge the collected polynomial terms to form a sum polynomial
   counterSum = counter_v1 + counter_p1 + counter_f1;
-  //make sure memory is enough for terms merging
   if (counterSum + 1 > lengthSum) {
     lengthSum = counterSum + 1;
     factorSum = (double *) realloc (factorSum, lengthSum * sizeof (double));
     pSum = (Polynomial **) realloc (pSum, lengthSum * sizeof (Polynomial *));
     if (factorSum == NULL || pSum == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
   /* While we do end-up with zero factors for variables here, they get swallowed-up
-   * into the next tier where they become non-zero, so it all comes out in the wash. */
+     into the next tier where they become non-zero, so it all comes out in the wash. */
   if (counter_v1 > 0) {
     memcpy (&factorSum[0], &factor_v1[0], sizeof (double) * counter_v1);
     memcpy (&pSum[0], &p_v1[0], sizeof (Polynomial *) * counter_v1);
@@ -1225,19 +1262,17 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     memcpy (&factorSum[counter_v1 + counter_p1], &factor_f1[0], sizeof (double) * counter_f1);
     memcpy (&pSum[counter_v1 + counter_p1], &p_f1[0], sizeof (Polynomial *) * counter_f1);
   }
-  //After we go through all the items in the sum,
-  //we get only a constant
+  // Handle the possible simple outcomes of collecting terms...
   if (counterSum == 0) {
+    // After we go through all the items in the sum, we get only a constant.
     rp = constantExp (con);
     sumReturnConstantCount++;
     return rp;
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
     return rp;
-  }
-  //We have only one term for this polynomial.  There is no
-  //need to create a new polynomial
-  else if (con == 0.0 && counterSum == 1 && factorSum[0] == 1.0) {
+  } else if (con == 0.0 && counterSum == 1 && factorSum[0] == 1.0) {
+    // We have only one term, no need to create a new polynomial
     rp = pSum[0];
     sumReturn1TermCount++;
     if (polynomialDebugLevel >= 60) {
@@ -1246,9 +1281,8 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       fprintf (stderr, "\n");
     }
     return rp;
-  }
-  //The result of plus operation is a more than 2 terms of sum polynomial
-  else {
+  } else {
+    // We've got more than one term, so we're going to go ahead and create it.
     if (con != 0.0) {
       p1 = constantExp (con);
       factorSum[counterSum] = 1.0;
@@ -1257,28 +1291,25 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     }
   }
 
-  //compute the key for this polynomial
+  // Compute the key for this polynomial
   key = keySumPolynomial (pSum, factorSum, counterSum);
 
   hIndex = key % SUM_HASH_SIZE;
   if (hIndex < 0)
     hIndex += SUM_HASH_SIZE;
 
-  //If the hash table item is not empty, determine if the sum has been in the
-  //sum polynomial list.  If it is not, determine a position in the hash table to
-  //save the key and the index in the hash table and save this sum polynomial
-  //in the sum polynomial list
+  /* If the hash table item is not empty, look for the sum in the sum polynomial 
+     list. If it is not there, determine a position in the hash table to
+     save the key and the index, and add this polynomial to the list */
   if (sumHash[hIndex].num > 0) {
-    //if the key of this sum is equal to the keys of some polynomials in the
-    //sum list, compare if the sum has already been there
+    // If the key is already there, compare to polynomials under that key
     if (searchHashTable (&sumHash[hIndex], &first, &last, key)) {
       for (i = first; i <= last; i++) {
         sIndex = sumHash[hIndex].index[i];
         if (counterSum == sumList[sIndex]->e.s->num) {
-          //compare the two sums item by item
+          // Compare the two sums term-by-term
           for (k = 0; k < counterSum; k++) {
-            //If the cooresponding terms are identical,
-            //we compare their factors
+            // If the terms are identical, compare their factors
             if (pSum[k] == sumList[sIndex]->e.s->sum[k]) {
               tempD = frexp (factorSum[k], &tempI);
               tempD2 = frexp (sumList[sIndex]->e.s->factor[k], &tempI2);
@@ -1299,20 +1330,16 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
             }
             return sumList[sIndex];
           }
-        }       //end of if(counter==sumList[sIndex]->e.s->num)
-      } //end of for(i=binaryStart;i<=binaryEnd;i++)
-      //identical key, but not identical polynomial
+        }
+      }
+      // Identical key, but not identical polynomial
       location = last;
-    }   //end of if(binaryStart>=0 && binarySt
-    else {
+    } else
       location = last;
-    }
-  }     //end of if(sumHash[hIndex].num>0)
-  else {
+  } else
     location = 0;
-  }
 
-  //If the first polynomial in the parameter list can be freed
+  // If the first polynomial in the parameter list can be freed, do so.
   if (flag != 0 && p0->eType == T_SUM && p0->valid == 0) {
     p0Index = p0->index;
     p0Id = p0->id;
@@ -1327,9 +1354,9 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       fprintf (stderr, "This polynomial is not in the sum hash table (1), exiting!\n");
       expTermPrinting (stderr, p0, 1);
       fprintf (stderr, "\n");
-      exit (1);
+      exit (EXIT_FAILURE);
     }
-    //locate the polynomial in the hash table
+    // Locate the polynomial in the hash table
     if (searchHashTable (&sumHash[p0HIndex], &first, &last, p0Key)) {
       for (i = first; i <= last; i++) {
         if (p0Index == sumHash[p0HIndex].index[i])
@@ -1341,15 +1368,15 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
         fprintf (stderr, "This polynomial is not in the sum hash list (2), exiting!\n");
         expTermPrinting (stderr, p0, 1);
         fprintf (stderr, "\n");
-        exit (1);
+        exit (EXIT_FAILURE);
       }
     } else {
       fprintf (stderr, "This polynomial is not in the sum hash list (3), exiting!\n");
       expTermPrinting (stderr, p0, 1);
       fprintf (stderr, "\n");
-      exit (1);
+      exit (EXIT_FAILURE);
     }
-    //free the memory of the first polynomial in the parameter list
+    // Free the memory of the first polynomial in the parameter list
     sum1stTermsFreedCount++;
     free (p0->e.s->sum);
     free (p0->e.s->factor);
@@ -1365,24 +1392,24 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     p0Valid = 7;
   }
 
-  //If the sum is not found in the sum list, a new polynomial is built
+  // Since the sum was not found in the sum list, a new polynomial is built
   rp = (Polynomial *) malloc (sizeof (Polynomial));
   if (rp == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   rp->eType = T_SUM;
   sP = (struct sumPoly *) malloc (sizeof (struct sumPoly));
   if (sP == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   sP->num = counterSum;
   sP->factor = (double *) malloc (counterSum * sizeof (double));
   sP->sum = (Polynomial **) malloc (counterSum * sizeof (Polynomial *));
   if (sP->sum == NULL || sP->factor == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   for (i = 0; i < sP->num; i++) {
     sP->factor[i] = factorSum[i];
@@ -1398,25 +1425,23 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   rp->source = findOrAddSource (fileName, lineNo, T_SUM);
 #endif
 
-  //Insert the new built polynomial in sum list
+  // Insert the new built polynomial in sum list
 
-  //If the first polynomial is the parameter list is freed, its position
-  //in the polynomial list is occupied by the newly created sum polynomial
+  /* If the first polynomial is the parameter list is freed, its position
+     in the polynomial list is occupied by the newly created sum polynomial. */
   if (flag != 0 && p0EType == T_SUM && p0Valid == 0) {
     sumListReplacementCount++;
     sumList[p0Index] = rp;
     sumList[p0Index]->index = p0Index;
     sumList[p0Index]->id = p0Id;
-  }
-  //otherwise, insert the new polynomial is the sum polynomial list
-  else {
+  } else {
     if (sumCount >= sumListLength) {
       sumListLength += SUM_LIST_INCREASE;
       sumPListExpansions++;
       sumList = realloc (sumList, sumListLength * sizeof (Polynomial *));
       if (sumList == NULL) {
         fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (1);
+        exit (EXIT_FAILURE);
       }
     }
     sumListNewCount++;
@@ -1437,32 +1462,25 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
 #endif
   }
 
-  //Insert the newly built polynomial into the Hash table
+  // Insert the newly built polynomial into the Hash table
   if (flag != 0 && p0EType == T_SUM && p0Valid == 0) {
     if (p0SubHIndex != location || p0HIndex != hIndex) {
-      //insert the newly built polynomial in the hash table
       insertHashTable (&sumHash[hIndex], location, key, sumList[p0Index]->index);
-      //delete the replaced polynomial from the hash table
-      if (p0HIndex != hIndex) {
+      // Delete the replaced polynomial from the hash table
+      if (p0HIndex != hIndex)
         deleteHashTable (&sumHash[p0HIndex], p0SubHIndex);
-
-      } else {  //p0SubHIndex!=binaryEnd
-        if (p0SubHIndex < location) {
+      else
+        if (p0SubHIndex < location)
           deleteHashTable (&sumHash[p0HIndex], p0SubHIndex);
-        } else {
+        else
           deleteHashTable (&sumHash[p0HIndex], p0SubHIndex + 1);
-        }
-      }
-    }
-    //If the newly built polynomial and the one to be replaced are at the same position
-    //in the hash table, just replace the key of the old polynomial with the key of the
-    //new polynomial
-    else {      //p0HIndex==hIndex && p0SubHIndex==binaryEnd
+    } else 
+    /* If the newly built polynomial and the one to be replaced are at the same position
+       in the hash table, just replace the key of the old polynomial with the key of the
+       new one. */
       sumHash[hIndex].key[location] = key;
-    }
-  } else {
+  } else
     insertHashTable (&sumHash[hIndex], location, key, sumCount - 1);
-  }
 
   sumNewCount++;
   if (polynomialDebugLevel >= 60) {
@@ -1475,11 +1493,13 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   return rp;
 };
 
-/////////////////////////////////////////////////////////////////////////////////
-//This function compute a key for a product polynomial.  The number of
-//product polynomial is usually very big.  Good keys for product polynomials
-//are required for good distribution of product polynomials in product hash table
-////////////////////////////////////////////////////////////////////////////////
+/**
+
+  This function computes a key for a product polynomial.  The number of
+  product polynomials is usually very big.  Good keys for product polynomials
+  are required for good distribution of product polynomials in product hash table.
+
+*/
 inline int keyProductPolynomial (Polynomial ** p, int *exponent, int counter)
 {
   int key = 0;
@@ -1492,11 +1512,14 @@ inline int keyProductPolynomial (Polynomial ** p, int *exponent, int counter)
 
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-//This function collects the terms for constructing a product polynomial.  The terms are sorted
-//so that these terms can have a unique order in the constructed product polynomial.
-////////////////////////////////////////////////////////////////////////////////////////////
-inline void collectProductTerms (int **exponent, Polynomial *** p, int *counter, int *containerLength, int e1, Polynomial * p1)
+// &&& HERE WORKING ON COMMENTS
+/**
+
+  This function collects the terms for constructing a product polynomial.  The terms are sorted
+  so that these terms can have a unique order in the constructed product polynomial.
+
+*/
+inline void collectProductTerms (int **exponent, Polynomial ***p, int *counter, int *containerLength, int e1, Polynomial * p1)
 {
   int location;
 
@@ -1514,7 +1537,7 @@ inline void collectProductTerms (int **exponent, Polynomial *** p, int *counter,
     (*p) = (Polynomial **) realloc ((*p), (*containerLength) * sizeof (Polynomial *));
     if ((*exponent) == NULL || (*p) == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
   //If this item should be in the start or end
@@ -1674,7 +1697,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
             break;
           default:
             fprintf (stderr, "In timesExp, unknown expression type %d\n", p1->e.p->product[l]->eType);
-            exit (1);
+            exit (EXIT_FAILURE);
           }     //end of switch
         }       //end of for
         break;
@@ -1682,13 +1705,13 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       case T_FREED:
         fprintf (stderr, "In plusExp, polynomial term %d was freed:\n", i);
         expTermPrinting (stderr, p1, 1);
-        exit (1);
+        exit (EXIT_FAILURE);
         break;
 
       default:
         fprintf (stderr, "In timesExp, unknown polynomial type %d, exiting!\n", p1->eType);
         raise (SIGUSR1);
-        exit (1);
+        exit (EXIT_FAILURE);
         break;
       } //end of switch
     }   //end of else
@@ -1723,7 +1746,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     pProd = (Polynomial **) realloc (pProd, lengthProd * sizeof (Polynomial *));
     if (exponentProd == NULL || pProd == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
   if (counter_v2 > 0) {
@@ -1856,7 +1879,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         fprintf (stderr, "This polynomial is not in the product hash list (1), exiting!\n");
         expTermPrinting (stderr, p0, 1);
         fprintf (stderr, "\n");
-        exit (1);
+        exit (EXIT_FAILURE);
       }
       if (searchHashTable (&productHash[p0HIndex], &first, &last, p0Key)) {
         for (i = first; i <= last; i++) {
@@ -1869,13 +1892,13 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
           fprintf (stderr, "This polynomial is not in the product hash list (2), exiting!\n");
           expTermPrinting (stderr, p0, 1);
           fprintf (stderr, "\n");
-          exit (1);
+          exit (EXIT_FAILURE);
         }
       } else {
         fprintf (stderr, "This polynomial is not in the product hash list (3), exiting!\n");
         expTermPrinting (stderr, p0, 1);
         fprintf (stderr, "\n");
-        exit (1);
+        exit (EXIT_FAILURE);
       }
 
       //Free the first operand
@@ -1932,7 +1955,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       productList = realloc (productList, productListLength * sizeof (Polynomial *));
       if (productList == NULL) {
         fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (1);
+        exit (EXIT_FAILURE);
       }
     }
     //We either apply for a new position in the product list for this polynomial, or
@@ -2078,7 +2101,7 @@ Polynomial *functionCallExp (int num, ...)
   p = (Polynomial **) malloc ((num - 1) * sizeof (Polynomial *));
   if (p == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   //num is equal to 1 plus the number of parameters for the called function
   for (i = 0; i < num - 1; i++) {
@@ -2149,7 +2172,7 @@ Polynomial *functionCallExp (int num, ...)
   fP->name = (char *) malloc (strlen (fName) + 1);
   if (fP->para == NULL || fP->name == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   strcpy (fP->name, fName);
   for (i = 0; i < fP->paraNum; i++) {
@@ -2169,7 +2192,7 @@ Polynomial *functionCallExp (int num, ...)
     functionCallList = realloc (functionCallList, functionCallListLength * sizeof (Polynomial *));
     if (functionCallList == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
   functionCallList[functionCallCount] = rp;
@@ -2201,7 +2224,7 @@ struct polyList *buildPolyList ()
   l = (struct polyList *) malloc (sizeof (struct polyList));
   if (l == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 
   l->listSize = 1000;
@@ -2209,7 +2232,7 @@ struct polyList *buildPolyList ()
   l->pList = (Polynomial **) malloc (sizeof (Polynomial *) * l->listSize);
   if (l->pList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 
   return l;
@@ -2227,7 +2250,7 @@ void polyListAppend (struct polyList *l, Polynomial * p)
     l->pList = realloc (l->pList, sizeof (Polynomial *) * (l->listSize + 1000));
     if (l->pList == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
     l->listSize = l->listSize + 1000;
   }
@@ -2364,7 +2387,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
         p->value = *(p->e.v->vAddr.vAddrI);
       else {
         fprintf (stderr, "Wrong variable type, exit!\n");
-        exit (1);
+        exit (EXIT_FAILURE);
       }
       break;
 
@@ -2446,18 +2469,18 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
         p->value = sqrt (p->e.f->para[0]->value);
       } else {
         fprintf (stderr, "unknown function name %s in polynomials\n", p->e.f->name);
-        exit (1);
+        exit (EXIT_FAILURE);
       }
       break;
 
     default:
       fprintf (stderr, "In evaluatePoly, unknown expression type: [%d], exiting!\n", p->eType);
-      exit (1);
+      exit (EXIT_FAILURE);
       break;
     }
     if (isnan (p->value)) {
       fprintf (stderr, "In evaluatePoly, evaluated value of type %d as not a number\n", p->eType);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
   if (polynomialDebugLevel >= 10)
@@ -2533,7 +2556,7 @@ void polynomialInitialization ()
   constantList = (Polynomial **) malloc (constantListLength * sizeof (Polynomial *));
   if (constantList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 
   variableListLength = 50;
@@ -2541,7 +2564,7 @@ void polynomialInitialization ()
   variableList = (Polynomial **) malloc (variableListLength * sizeof (Polynomial *));
   if (variableList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 
   sumListLength = SUM_LIST_INITIAL;
@@ -2549,7 +2572,7 @@ void polynomialInitialization ()
   sumList = (Polynomial **) malloc (sumListLength * sizeof (Polynomial *));
   if (sumList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 
   productListLength = PRODUCT_LIST_INITIAL;
@@ -2557,7 +2580,7 @@ void polynomialInitialization ()
   productList = (Polynomial **) malloc (productListLength * sizeof (Polynomial *));
   if (productList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 
   functionCallListLength = FUNCTIONCALL_LIST_INITIAL;
@@ -2565,7 +2588,7 @@ void polynomialInitialization ()
   functionCallList = (Polynomial **) malloc (functionCallListLength * sizeof (Polynomial *));
   if (functionCallList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   // Allocate memory for hash tables, each type of polynomials has its own hash table
   constantHash = (struct hashStruct *) malloc (CONSTANT_HASH_SIZE * sizeof (struct hashStruct));
@@ -2575,7 +2598,7 @@ void polynomialInitialization ()
   functionCallHash = (struct hashStruct *) malloc (FUNCTIONCALL_HASH_SIZE * sizeof (struct hashStruct));
   if (constantHash == NULL || variableHash == NULL || sumHash == NULL || productHash == NULL || functionCallHash == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   //Initialize the constant hash table, pre-allocate memory for recording polynomials
 #ifdef _OPENMP
@@ -2588,7 +2611,7 @@ void polynomialInitialization ()
     constantHash[i].key = (int *) malloc (constantHash[i].length * sizeof (int));
     if (constantHash[i].index == NULL || constantHash[i].key == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
 
@@ -2600,7 +2623,7 @@ void polynomialInitialization ()
     variableHash[i].key = (int *) malloc (variableHash[i].length * sizeof (int));
     if (variableHash[i].index == NULL || variableHash[i].key == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
 
@@ -2615,7 +2638,7 @@ void polynomialInitialization ()
     sumHash[i].key = (int *) malloc (sumHash[i].length * sizeof (int));
     if (sumHash[i].index == NULL || sumHash[i].key == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
 
   }
@@ -2631,7 +2654,7 @@ void polynomialInitialization ()
     productHash[i].key = (int *) malloc (productHash[i].length * sizeof (int));
     if (productHash[i].index == NULL || productHash[i].key == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   }
 
@@ -2643,7 +2666,7 @@ void polynomialInitialization ()
     functionCallHash[i].key = (int *) malloc (functionCallHash[i].length * sizeof (int));
     if (functionCallHash[i].index == NULL || functionCallHash[i].key == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
 
   }
@@ -2662,7 +2685,7 @@ void polynomialInitialization ()
   p_v1 = (Polynomial **) malloc (containerLength_v1 * sizeof (Polynomial *));
   if (factor_v1 == NULL || p_v1 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   //For product polynomials
   containerLength_p1 = 100;
@@ -2670,7 +2693,7 @@ void polynomialInitialization ()
   p_p1 = (Polynomial **) malloc (containerLength_p1 * sizeof (Polynomial *));
   if (factor_p1 == NULL || p_p1 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   //For function call polynomials
   containerLength_f1 = 100;
@@ -2678,7 +2701,7 @@ void polynomialInitialization ()
   p_f1 = (Polynomial **) malloc (containerLength_f1 * sizeof (Polynomial *));
   if (factor_f1 == NULL || p_f1 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   //Containers for organizing a sum polynomial
   lengthSum = 300;
@@ -2686,7 +2709,7 @@ void polynomialInitialization ()
   pSum = (Polynomial **) malloc (lengthSum * sizeof (Polynomial *));
   if (factorSum == NULL || pSum == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   //apply memory for container to hold terms for a product polynomial
 
@@ -2696,7 +2719,7 @@ void polynomialInitialization ()
   p_v2 = (Polynomial **) malloc (containerLength_v2 * sizeof (Polynomial *));
   if (exponent_v2 == NULL || p_v2 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   //For sum polynmials
   containerLength_s2 = 100;
@@ -2704,7 +2727,7 @@ void polynomialInitialization ()
   p_s2 = (Polynomial **) malloc (containerLength_s2 * sizeof (Polynomial *));
   if (exponent_s2 == NULL || p_s2 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   //For function call polynomials
   containerLength_f2 = 100;
@@ -2712,7 +2735,7 @@ void polynomialInitialization ()
   p_f2 = (Polynomial **) malloc (containerLength_f2 * sizeof (Polynomial *));
   if (exponent_f2 == NULL || p_f2 == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   //Containers for organizing a product polynomial
   lengthProd = 300;
@@ -2720,7 +2743,7 @@ void polynomialInitialization ()
   pProd = (Polynomial **) malloc (lengthProd * sizeof (Polynomial *));
   if (exponentProd == NULL || pProd == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 
 }
@@ -2927,11 +2950,11 @@ void doPrintSummaryPoly (Polynomial * p, int currentTier)
   case T_FREED:
     fprintf (stderr, "In doPrintSummaryPoly, evil caller is trying to use a polynomial that was freed:\n");
     expTermPrinting (stderr, p, 1);
-    exit (1);
+    exit (EXIT_FAILURE);
     break;
   default:
     fprintf (stderr, "In doPrintSummaryPoly, unknown expression type: [%d], exiting!\n", p->eType);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 }
 
@@ -3003,11 +3026,11 @@ void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
   case T_FREED:
     fprintf (stderr, "In doWritePolyDigraph, evil caller is trying to use a polynomial that was freed:\n");
     expTermPrinting (stderr, p, 1);
-    exit (1);
+    exit (EXIT_FAILURE);
     break;
   default:
     fprintf (stderr, "In doWritePolyDigraph, unknown expression type: [%d], exiting!\n", p->eType);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 }
 
@@ -3087,7 +3110,7 @@ void expPrinting (Polynomial * p)
              (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
     fprintf (stderr, "In expPrinting, unknown expression type %d, exiting\n", p->eType);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 }
 
@@ -3161,7 +3184,7 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
   default:
     fprintf (stderr, "In expTermPrinting, unknown expression type %d, exiting\n", p->eType);
     raise (SIGUSR1);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
 }
 
@@ -3581,7 +3604,7 @@ void doKeepPoly (Polynomial * p)
   default:
     fprintf (stderr, "In doKeepPoly, unknown expression type %d, exiting\n", p->eType);
     raise (SIGUSR1);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   return;
 }
@@ -3624,7 +3647,7 @@ void doHoldPoly (Polynomial * p)
     break;
   default:
     fprintf (stderr, "In holdPoly, unknown expression type %d, exiting\n", p->eType);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   return;
 }
@@ -3668,7 +3691,7 @@ void doUnHoldPoly (Polynomial * p)
     break;
   default:
     fprintf (stderr, "In holdPoly, unknown expression type %d, exiting\n", p->eType);
-    exit (1);
+    exit (EXIT_FAILURE);
   }
   return;
 }
@@ -3708,7 +3731,7 @@ void doFreePolys (unsigned short keepMask)
       newConstantList = (Polynomial **) malloc (sizeof (Polynomial *) * (constantListLength));
       if (newConstantList == NULL) {
         fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (1);
+        exit (EXIT_FAILURE);
       }
       k = 0;
       for (i = 0; i < constantCount; i++) {
@@ -3771,7 +3794,7 @@ void doFreePolys (unsigned short keepMask)
       newVariableList = (Polynomial **) malloc (sizeof (Polynomial *) * (variableListLength));
       if (newVariableList == NULL) {
         fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (1);
+        exit (EXIT_FAILURE);
       }
       k = 0;
       for (i = 0; i < variableCount; i++) {
@@ -3831,7 +3854,7 @@ void doFreePolys (unsigned short keepMask)
       newSumList = (Polynomial **) malloc (sizeof (Polynomial *) * (sumListLength));
       if (newSumList == NULL) {
         fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (1);
+        exit (EXIT_FAILURE);
       }
       k = 0;
       for (i = 0; i < sumCount; i++) {
@@ -3903,7 +3926,7 @@ void doFreePolys (unsigned short keepMask)
       newProductList = (Polynomial **) malloc (sizeof (Polynomial *) * (productListLength));
       if (newProductList == NULL) {
         fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (1);
+        exit (EXIT_FAILURE);
       }
       k = 0;
       for (i = 0; i < productCount; i++) {
