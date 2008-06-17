@@ -2553,7 +2553,7 @@ int main (int argc, char *argv[])
   }     /* end of multipoint */
 
 #ifdef SIMPLEPROGRESS
-      fprintf (stdout, "\n");
+      fprintf (stdout, "Calculations 100%% complete\n");
 #endif
 
   /* only for multipoint - deallocate memory  */
