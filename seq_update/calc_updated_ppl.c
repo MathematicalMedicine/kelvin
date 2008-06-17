@@ -921,7 +921,8 @@ int get_header_line (st_marker *marker, st_data *data, FILE *fp)
 	  marker->datacols[marker->numcols - actualcols] = 0;
       }
       
-    } else if ((strcasecmp (token, "AVG_LR") == 0) || (strcasecmp (token, "AVGLR") == 0)) {
+    } else if ((strcasecmp (token, "AVG_LR") == 0) || (strcasecmp (token, "AVGLR") == 0) ||
+	       (strcasecmp (token, "BR") == 0)) {
       /* The average LR column */
       marker->datacols[marker->numcols - 1] = LR_COL;
       numlrcols++;
