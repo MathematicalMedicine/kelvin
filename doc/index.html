@@ -186,6 +186,9 @@ action in order for progress to be displayed in this manner:
 <pre>
 Calculations 18% complete (~15 min left)
 </pre>
+While the simple progress display incorporates trait and marker calculations in its estimations, it doesn't report
+progress while they're being performed, so there might be a significant delay before seeing the first non-zero percentage for complex
+analyses.
 <p>
 The alternative level of complexity is much more informative, but can overwhelm with details under certain
 circumstances. You will need to edit the <tt>Makefile</tt> to enable the compile-time conditional
