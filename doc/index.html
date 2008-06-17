@@ -156,8 +156,9 @@ and GNU Scientific Library verison numbers. Lines after that
 describe important build options as specified in the Makefile and run
 characteristics as influenced by environment variables.
 <p>
-In the midst of this is a line describing the action to take in order to force a dump of
-statistics. You can use this as a sort of "pulse check" to make sure kelvin is still alive
+In the midst of this is a line describing the action to take in order to force a dump of a line of
+statistics. The format of these statistics is described in the next section.
+You can use this as a sort of "pulse check" to make sure kelvin is still alive
 and well and making progress should there be a lull between automatic progress updates. If
 you are running kelvin interactively, you can type <tt>CTRL-\</tt> (that means to hold down the CTRL
 or CONTROL key while pressing the backslash). If you are running under cygwin, you will need to
@@ -169,32 +170,101 @@ as described in the diagnostic output. Note that the signal number (-3 in the ex
 different from platform-to-platform, and the
 process ID (3072 in the example) will be different from run-to-run.
 <p>
-Next, the analysis characteristics as read from the configuration and data files
-are displayed:
+Next, the analysis characteristics as determined from the configuration and data files
+are displayed, e.g.:
 <pre>
-Dichotomous Trait & LE
-Total number of markers in data: 9
-Total number of trait locus in data: 1
-Total number of families in pedigree file: 11
-Number of loci to use for analysis: 3
+Trait-to-marker, Sex-Averaged Multipoint, Dichotomous Trait.
 </pre>
 Finally, progress indicators are displayed up through the end of the run.
 
-<h3>Monitoring Progress and Estimating Runtime</h3>
-We are currently working on mechanisms to facilitate estimating runtime, but in the meantime
-there are a number of progress reports that can be monitored during a run.
+<h3>Monitoring Progress</h3>
+There are two levels of detail of progress information for you to choose from. The default is to simply display
+a rough percentage of work completed and a wobbly estimate of how many minutes of work remain. These
+numbers are necessarily rough and wobbly, because not all aspects of the complex operations
+they describe can be accurately estimated, even when they're in-progress. You need not take any special
+action in order for progress to be displayed in this manner:
+<pre>
+Calculations 18% complete (~15 min left)
+</pre>
+<p>
+The alternative level of complexity is much more informative, but can overwhelm with details under certain
+circumstances. You will need to edit the <tt>Makefile</tt> to enable the compile-time conditional
+<tt>DETAILEDPROGRESS</tt>, and rebuild kelvin (<tt>make clean</tt> and <tt>make</tt>) to turn it on. When it is enabled, kelvin displays
+detailed information about each of the steps it goes thru to perform an analysis. These steps are
+fundamentally different for Two-Point and Multipoint analyses.
+
+<h4>Detailed Multipoint</h4>
 <ol>
-<li>As each pedigree is processed, its identifier and index in the total number of pedigrees is displayed.
-<li>For two-point analyses, the pair of loci being compared is displayed.
-<li>For multipoint analyses, the completion of trait (if changed), marker and alternate evaluation 
-at each position is displayed.
-<li>When kelvin or dkelvin are run on compatible platforms (currently only those with a pmap command),
+<li>Trait likelihood determination progress in percentage until completion. This is only done once
+at the beginning of an analysis, so it will proceed to 100%. This is the simplest and therefore fastest
+calculation. If this step takes a lot of time, your patience will be sorely tried by subsequent steps:
+<pre>
+Determining trait likelihood...
+Building polynomial w/pedigree: 11 (11/11)
+Trait likelihood evaluations 100% complete
+...done.
+</pre>
+<li>For each trait position:
+<ol>
+<li>The new trait position, and the markers to be used in this step of the analysis along with their positions if they are new:
+<pre>
+Starting w/trait locus at 0.00 (1/8 positions) with new markers 1(0.00) 2(0.64)
+Determining marker set likelihood...
+</pre>
+<li>Likelihood polynomial build progress for new markers. This is shown as progress thru the set of
+pedigrees, and is a function of the pedigree complexity and number of markers in the analysis. Unfortunately
+this cannot be reliably estimated at this time:
+<pre>
+Building polynomial w/pedigree: 1 (1/11)
+</pre>
+<li>Marker likelihood evaluation progress for new markers. This is displayed as an incrementing percentage 
+until it is interrupted by the completion of the current position. At completion of a position it will reflect 
+overall minimum percentage progress of marker likelihood evaluation thru all positions. This is a minimum because
+we skip marker likelihood evaluation when the marker set does not change in relation to the trait position:
+<pre>
+...done w/marker set likelihood evaluations at least 12% complete.
+Determining combined likelihood...
+</pre>
+<li>Combined likelihood polynomial build progress. This is show as progress thru the set of pedigrees. This is
+the most memory-intensive step:
+<pre>
+Building polynomial w/pedigree: 11 (11/11)
+...done.
+</pre>
+<li>Combined likelihood evaluation progress. This is displays every 2 minutes until completion for this position:
+<pre>
+Combined likelihood evaluations 1% complete (~83 minutes left)
+</pre>
+</ol>
+</ol>
+If polynomial evaluation is not enabled, the progress reports involving polynomials are not displayed.
+<h4>Detailed Two-point</h4>
+<h4>Ad Hoc Status</h4>
+Under either level of complexity, a line of statistics will be displayed at the end of the run that looks
+something like this:
+<pre>
+PID: 3072, stopwatch overall(1) e:462s u:460s s:1s, vx:0, ivx:0, sf:0, hf:0
+</pre>
+This is a dump of the current values of a virtual stopwatch that was started at the beginning of the analysis.
+Of greatest interest are the elapsed time in seconds (<tt>e:462</tt> in the example) and the user CPU time used in seconds
+(<tt>u:460</tt>), which can be lower or higher than the elapsed time depending upon if kelvin is competing with
+other processes for CPU time or if it is efficiently using multiple threads. The system CPU time (<tt>s:1s</tt>) is also
+provided along with some other statistics (voluntary context switches, involuntary context switches, soft faults
+and hard faults) that may or may not be available on your platform.
+<h4>Additional Options</h4>
+There are a number of additional progress reports that can be monitored during a run using compile-time
+conditionals. You will need to edit the <tt>Makefile</tt> and rebuild kelvin (<tt>make clean</tt> and <tt>make</tt>) to turn them on
+or off:
+<ol>
+<li><tt>MEMSTATUS</tt> conditional - When kelvin or dkelvin are run on compatible platforms (currently only those with a pmap command),
 a child process is created that monitors elapsed time and memory utilization, and displays it every 30 seconds.
-<li>If polynomial evaluation is enabled, a count of evaluations peformed thus far is displayed every 64K
-evaluations.
-<li>If polynomial evaluation is enabled, extensive statistics on the polynomial build process are displayed
+<li><tt>POLYSTATISTICS</tt> conditional - If polynomial evaluation is enabled:
+<ul>
+<li>a count of evaluations peformed thus-far is displayed every 64K evaluations.
+<li>extensive statistics on the polynomial build process are displayed
 every 2M polynomial creations, when polynomial builds finish, and at the end of the run. Statistics will
 include an estimation of internal memory usage when feasible and relevant.
+</ul>
 </ol>
 <h2>INTERPRETING THE RESULTS</h2>
 kelvin produces one or two different files of results depending upon the type of analysis performed. 
