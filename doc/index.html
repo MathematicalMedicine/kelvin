@@ -200,7 +200,7 @@ at the beginning of an analysis, so it will proceed to 100%. This is the simples
 calculation. If this step takes a lot of time, your patience will be sorely tried by subsequent steps:
 <pre>
 Determining trait likelihood...
-Building polynomial w/pedigree: 11 (11/11)
+Building polynomial w/pedigree: 87 (11/11)
 Trait likelihood evaluations 100% complete
 ...done.
 </pre>
@@ -215,20 +215,20 @@ Determining marker set likelihood...
 pedigrees, and is a function of the pedigree complexity and number of markers in the analysis. Unfortunately
 this cannot be reliably estimated at this time:
 <pre>
-Building polynomial w/pedigree: 1 (1/11)
+Building polynomial w/pedigree: 77 (1/11)
 </pre>
 <li>Marker likelihood evaluation progress for new markers. This is displayed as an incrementing percentage 
 until it is interrupted by the completion of the current position. At completion of a position it will reflect 
-overall minimum percentage progress of marker likelihood evaluation thru all positions. This is a minimum because
+overall percentage progress of marker likelihood evaluation thru all positions. This may jump because 
 we skip marker likelihood evaluation when the marker set does not change in relation to the trait position:
 <pre>
-...done w/marker set likelihood evaluations at least 12% complete.
+...done w/marker set likelihood evaluations 12% complete.
 Determining combined likelihood...
 </pre>
 <li>Combined likelihood polynomial build progress. This is show as progress thru the set of pedigrees. This is
 the most memory-intensive step:
 <pre>
-Building polynomial w/pedigree: 11 (11/11)
+Building polynomial w/pedigree: 87 (11/11)
 ...done.
 </pre>
 <li>Combined likelihood evaluation progress. This is displays every minute until completion for this position. Note
