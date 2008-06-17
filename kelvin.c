@@ -2226,15 +2226,8 @@ int main (int argc, char *argv[])
               }
             } else      // This _is_ the first iteration
             if (modelOptions.polynomial == TRUE) {
-#ifndef SIMPLEPROGRESS
               compute_likelihood (&pedigreeSet);
               cL[7]++;
-              fprintf (stdout, "%s 0%% complete\r", "Combined likelihood evaluations");
-              fflush (stdout);
-#else
-              compute_likelihood (&pedigreeSet);
-              cL[7]++;
-#endif
             }
             /* print out some statistics under dry run */
             if (modelOptions.dryRun != 0) {
@@ -2439,15 +2432,8 @@ int main (int argc, char *argv[])
                   }
                 } else  // This _is_ the first iteration
                 if (modelOptions.polynomial == TRUE) {
-#ifndef SIMPLEPROGRESS
                   compute_likelihood (&pedigreeSet);
                   cL[8]++;
-                  fprintf (stdout, "%s 0%% complete\r", "Combined likelihood evaluations");
-                  fflush (stdout);
-#else
-                  compute_likelihood (&pedigreeSet);
-                  cL[8]++;
-#endif
                 }
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                 if (isnan (log10_likelihood_alternative))
