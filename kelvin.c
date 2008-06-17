@@ -2402,24 +2402,24 @@ int main (int argc, char *argv[])
 		  swStop(combinedComputeSW);
 		  if (statusRequestSignal) {
 		    statusRequestSignal = FALSE;
+		    if (cL[8] > 1) { // The first time thru we have no basis for estimation
 		    fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
 #ifndef SIMPLEPROGRESS
-			     "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
-			     (combinedComputeSW->swAccumWallTime * 100 / MAX( 1, (cL[8] * 100 / eCL[7]))) *
-			     (100 - (cL[8] * 100 / eCL[8])) / 6000);
-		    fflush (stdout);
+			       "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
+			       (combinedComputeSW->swAccumWallTime * 100 / MAX( 1, (cL[8] * 100 / eCL[7]))) *
+			       (100 - (cL[8] * 100 / eCL[8])) / 6000);
 #else
 		    "Calculations", (cL[6]+cL[8]) * 100 / (eCL[6]+eCL[8]),
 		      (combinedComputeSW->swAccumWallTime * 100 /
 		       MAX( 1, ((cL[6]+cL[8]) * 100 / (eCL[6]+eCL[8])))) *
 		      (100 - ((cL[6]+cL[8]) * 100 / (eCL[6]+eCL[8]))) / 6000);
-		  fflush (stdout);
 #endif
+		  fflush (stdout);
+		  }
 		}
 	      } else // This _is_ the first iteration
 		if (modelOptions.polynomial == TRUE) {
 #ifndef SIMPLEPROGRESS
-		  fprintf (stdout, "Starting polynomial build...\n");
 		  compute_likelihood (&pedigreeSet); cL[8]++;
 		  fprintf (stdout, "...done\n");
 #else
