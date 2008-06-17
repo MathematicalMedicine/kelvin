@@ -1,3 +1,6 @@
+<html>
+<head><title>Alloators</title></head>
+<body>
 <h3>Why Use a Replacement Allocator?</h3>
 There are two good reasons to use a replacement allocator -- runtime performance improvement and better control of
 memory utilization. In either case, the presumption is that the default allocator provided by your runtime
@@ -6,11 +9,11 @@ Linux, but not so much under Darwin.
 <p>
 For most applications, runtime performance improvement is the primary motivation for using a replacement
 allocator, but with
-polynomial's unquenchable thirst for memory, good memory utilizaiton control is critical. This is especially true when
+polynomial's well-night unquenchable thirst for memory, good memory utilizaiton control is critical. This is especially true when
 running with multiple execution threads, as each thread has its own memory allocation arena, and
 poor management can waste large amounts of memory. Simply put, if it weren't for drop-in allocators,
 we would not use OpenMP with polynomial evaluation in kelvin, because our primary constrait is always memory. Any 
-runtime performance improvement we happen to get is just gravy.
+runtime performance improvement we happen to get is just icing on the cake.
 
 <h3>Using Replacement Allocators</h3>
 There are two ways of incorporating replacement memory allocators -- linking or preloading. Linking is the
@@ -32,8 +35,8 @@ you're running kelvin. If you inadvertently leave it loaded with other programs,
 <p>
 Build ptmalloc3 with <tt>make linux-pthread</tt> for a linkable library, or <tt>make linux-shared</tt>
 for a loadable library.
+<hr>
+$Date: 2008-06-17 09:05:32 -0400 (Tue, 17 Jun 2008) $
+</body>
 
-        Darwin  i686L   i386L
-none    687     1031-1110
-ptmalloc3 same
-hoard   hangs   800
+</html>
