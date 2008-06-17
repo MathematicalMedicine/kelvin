@@ -386,8 +386,10 @@ int main (int argc, char *argv[])
 	exit (EXIT_FAILURE);
       }
 #endif
+      int wakeCount = 0;
       while (1) {
         sleep (30);
+	wakeCount++;
         /* See if we've been reparented due to Mom's demise. */
         parentPID = getppid ();
         if (parentPID == 1) {
@@ -396,6 +398,8 @@ int main (int argc, char *argv[])
 #endif
           exit (EXIT_SUCCESS);
 	}
+	if (wakeCount % 2)
+	  statusRequestSignal = TRUE;
         currentVMK = swGetCurrentVMK (getppid ());
 #ifdef MEMGRAPH
         fprintf (graphFile, "%lu, %d\n", time (NULL) - startTime, currentVMK);
@@ -2194,46 +2198,39 @@ int main (int argc, char *argv[])
 	      update_locus (&pedigreeSet, traitLocus);
 
 	    /* If we're not on the first iteration, it's not a polynomial build, so
-	       show progress at 1% and the best approximation of 5-minute (300 second)
-	       intervals after that. And have a care to avoid division by zero. */
+	       show progress at 1 minute intervals. Have a care to avoid division by zero. */
 	    if (gfreqInd != 0 || penIdx != 0) {
 	      swStart(combinedComputeSW);
 	      compute_likelihood (&pedigreeSet); cL[7]++;
 	      swStop(combinedComputeSW);
-	      if (statusRequestSignal || (cL[7] % (eCL[7] / combinedComputeScale) == 0)) {
+	      if (statusRequestSignal) {
 		statusRequestSignal = FALSE;
-		fprintf (stdout, "%s %d%% complete (~%ld min left) [cCS %d, cL %d, eCL %d]\r",
+		if (cL[7] > 1) { // The first time thru we have no basis for estimation
+		  fprintf (stdout, "%s %d%% complete (~%ld min left) [cCS %d, cL %d, eCL %d]\r",
 #ifndef SIMPLEPROGRESS
-			 "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
-			 (combinedComputeSW->swAccumWallTime * 100 / MAX( 1, (cL[7] * 100 / eCL[7]))) *
-			 (100 - (cL[7] * 100 / eCL[7])) / 6000,
-			 combinedComputeScale, cL[7], eCL[7]);
-		fflush (stdout);
-		combinedComputeScale = MAX( 1, eCL[7] / (cL[7] * (1 /* <- Update frequency in minutes */ * 60) / 
-						    MAX( 1, combinedComputeSW->swAccumWallTime)));
+			   "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
+			   (combinedComputeSW->swAccumWallTime * 100 / MAX( 1, (cL[7] * 100 / eCL[7]))) *
+			   (100 - (cL[7] * 100 / eCL[7])) / 6000,
+			   combinedComputeScale, cL[7], eCL[7]);
 #else
-			 "Calculations", (cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7]),
-			 (combinedComputeSW->swAccumWallTime * 100 /
-			  MAX( 1, ((cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7])))) *
-			   (100 - ((cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7]))) / 6000,
-			 combinedComputeScale, cL[7], eCL[7]);
-		fflush (stdout);
-		combinedComputeScale = MAX( 1, (eCL[6]+eCL[7]) / ((cL[6]+cL[7]) *
-							     (1 /* <- Update frequency in minutes */ * 60) / 
-							     MAX( 1, combinedComputeSW->swAccumWallTime)));
+		           "Calculations", (cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7]),
+			     (combinedComputeSW->swAccumWallTime * 100 /
+			      MAX( 1, ((cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7])))) *
+			     (100 - ((cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7]))) / 6000,
+			     combinedComputeScale, cL[7], eCL[7]);
 #endif
+		  fflush (stdout);
+		}
 	      }
 	    } else // This _is_ the first iteration
 	      if (modelOptions.polynomial == TRUE) {
 #ifndef SIMPLEPROGRESS
-		fprintf (stdout, "Starting polynomial build...\n");
 		compute_likelihood (&pedigreeSet); cL[7]++;
-		fprintf (stdout, "...done\n");
+		fprintf (stdout, "...done.\n");
 #else
 		compute_likelihood (&pedigreeSet); cL[7]++;
 #endif
 	      }	    
-
             /* print out some statistics under dry run */
             if (modelOptions.dryRun != 0) {
               print_dryrun_stat (&pedigreeSet, traitPos);
@@ -2403,7 +2400,7 @@ int main (int argc, char *argv[])
 		  swStart(combinedComputeSW);
 		  compute_likelihood (&pedigreeSet); cL[8]++;
 		  swStop(combinedComputeSW);
-		  if (statusRequestSignal || (cL[8] % (eCL[8] / combinedComputeScale) == 0)) {
+		  if (statusRequestSignal) {
 		    statusRequestSignal = FALSE;
 		    fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
 #ifndef SIMPLEPROGRESS
@@ -2411,17 +2408,12 @@ int main (int argc, char *argv[])
 			     (combinedComputeSW->swAccumWallTime * 100 / MAX( 1, (cL[8] * 100 / eCL[7]))) *
 			     (100 - (cL[8] * 100 / eCL[8])) / 6000);
 		    fflush (stdout);
-		    combinedComputeScale = MAX( 1, eCL[8] / (cL[8] * (1 /* <- Update frequency in minutes */ * 60) / 
-							     MAX( 1, combinedComputeSW->swAccumWallTime)));
 #else
 		    "Calculations", (cL[6]+cL[8]) * 100 / (eCL[6]+eCL[8]),
 		      (combinedComputeSW->swAccumWallTime * 100 /
 		       MAX( 1, ((cL[6]+cL[8]) * 100 / (eCL[6]+eCL[8])))) *
 		      (100 - ((cL[6]+cL[8]) * 100 / (eCL[6]+eCL[8]))) / 6000);
 		  fflush (stdout);
-		  combinedComputeScale = MAX( 1, (eCL[6]+eCL[8]) / ((cL[6]+cL[8]) *
-								    (1 /* <- Update frequency in minutes */ * 60) / 
-								    MAX( 1, combinedComputeSW->swAccumWallTime)));
 #endif
 		}
 	      } else // This _is_ the first iteration
