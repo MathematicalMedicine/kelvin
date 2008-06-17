@@ -1832,8 +1832,6 @@ int main (int argc, char *argv[])
 		fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[5] *100 / eCL[5]);
 		fflush (stdout);
 	      }
-#else
-	      fprintf (stdout, "Calculations 0%% complete\r");
 #endif
               if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                 fprintf (stderr, "Trait has likelihood 0\n");
@@ -1865,10 +1863,6 @@ int main (int argc, char *argv[])
         }       /* paramIdx */
       } /* gfreq */
     }   /* end of QT */
-
-#ifndef SIMPLEPROGRESS
-    fprintf (stdout, "\n...done.\n");
-#endif
 
     if (modelOptions.polynomial == TRUE) {
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -2010,8 +2004,9 @@ int main (int argc, char *argv[])
 
 #ifndef SIMPLEPROGRESS
 	if (cL[6] % (MAX(1,eCL[6] / 10)) == 0)
-	    fprintf (stdout, "...done w/marker set likelihood evaluations at least %d%% complete.\n",
-		     cL[6] * 100 / eCL[6]);
+	    fprintf (stdout, "...done w/marker set likelihood evaluations %d%% complete.\n",
+		     MAX(cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
+
 #endif
 
         modelOptions.polynomial = polynomialFlag;
@@ -2219,14 +2214,15 @@ int main (int argc, char *argv[])
 			     (100 - ((cL[6]+cL[7]) * 100 / (eCL[6]+eCL[7]))) / 6000,
 			     combinedComputeScale, cL[7], eCL[7]);
 #endif
-		  fflush (stdout);
+	          fflush (stdout);
 		}
 	      }
 	    } else // This _is_ the first iteration
 	      if (modelOptions.polynomial == TRUE) {
 #ifndef SIMPLEPROGRESS
 		compute_likelihood (&pedigreeSet); cL[7]++;
-		fprintf (stdout, "...done.\n");
+		fprintf (stdout, "...done.\n%s 0%% complete\r", "Combined likelihood evaluations");
+		fflush (stdout);
 #else
 		compute_likelihood (&pedigreeSet); cL[7]++;
 #endif
@@ -2396,14 +2392,14 @@ int main (int argc, char *argv[])
 		/* If we're not on the first iteration, it's not a polynomial build, so
 		   show progress at 1% and the best approximation of 5-minute (300 second)
 		   intervals after that. And have a care to avoid division by zero. */
-		if (gfreqInd != 0 || penIdx != 0) {
+		if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
 		  swStart(combinedComputeSW);
 		  compute_likelihood (&pedigreeSet); cL[8]++;
 		  swStop(combinedComputeSW);
 		  if (statusRequestSignal) {
 		    statusRequestSignal = FALSE;
 		    if (cL[8] > 1) { // The first time thru we have no basis for estimation
-		    fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+		      fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
 #ifndef SIMPLEPROGRESS
 			       "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
 			       (combinedComputeSW->swAccumWallTime * 100 / MAX( 1, (cL[8] * 100 / eCL[7]))) *
@@ -2414,14 +2410,15 @@ int main (int argc, char *argv[])
 		       MAX( 1, ((cL[6]+cL[8]) * 100 / (eCL[6]+eCL[8])))) *
 		      (100 - ((cL[6]+cL[8]) * 100 / (eCL[6]+eCL[8]))) / 6000);
 #endif
-		  fflush (stdout);
+		    fflush (stdout);
 		  }
 		}
 	      } else // This _is_ the first iteration
 		if (modelOptions.polynomial == TRUE) {
 #ifndef SIMPLEPROGRESS
 		  compute_likelihood (&pedigreeSet); cL[8]++;
-		  fprintf (stdout, "...done\n");
+		  fprintf (stdout, "...done.\n%s 0%% complete\r", "Combined likelihood evaluations");
+		  fflush (stdout);
 #else
 		  compute_likelihood (&pedigreeSet); cL[8]++;
 #endif
@@ -2550,7 +2547,7 @@ int main (int argc, char *argv[])
       fflush (fpHet);
 
 #ifndef SIMPLEPROGRESS
-      fprintf (stdout, "\n...done.\n");
+      fprintf (stdout, "Combined likelihood evaluations 100%% complete\n");
 #endif
     }   /* end of walking down the chromosome */
   }     /* end of multipoint */
