@@ -947,6 +947,7 @@ int main (int argc, char *argv[])
            * disk. */
           for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
             gfreq = modelRange.gfreq[gfreqInd];
+	    // WHAT ON EARTH IS THIS ALL ABOUT? &&&
             if (1 && modelOptions.markerAnalysis == FALSE) {
               pLocus->pAlleleFrequency[0] = gfreq;
               pLocus->pAlleleFrequency[1] = 1 - gfreq;
@@ -2706,8 +2707,6 @@ int main (int argc, char *argv[])
   free_sub_locus_list (&savedLocusList);
   free (modelOptions.sUnknownPersonID);
   final_cleanup ();
-
-  dumpTrackingStats (modelType, modelOptions, modelRange, cL, eCL);
 
 #ifdef SOURCEDIGRAPH
   if (modelOptions.polynomial == TRUE)

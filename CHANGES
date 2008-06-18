@@ -4,6 +4,8 @@ Verison 0.34.3
   now multi-threaded. Uses drop-in memory allocator. Cleaned-up
   versioning and build dating. Fixed loop detection for 32bit
   environments. Added html documentation and a test-suite.
+  Added detailed and streamlined progress tracking and hid (by
+  default) all of the diagnostic output.
 
 Version 0.34.2
   Status child no longer dies on SIGQUIT. Monitors utilization

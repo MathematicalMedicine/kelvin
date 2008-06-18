@@ -96,12 +96,12 @@ char analysisType[MAXSWMSG]; ///< Textual summary of analysis type built by dump
   Derive textual summary of analysis type and build expected compute_likelihood() call counts.
 
 */
-void dumpTrackingStats(ModelType modelType, ModelOptions modelOptions, ModelRange modelRange, int cl[], int eCl[])
+void dumpTrackingStats(ModelType modelType, ModelOptions modelOptions, ModelRange modelRange, int cl[], int eCL[])
 {
   int i;
   fprintf (stderr, "compute_pedigree_likelihood counts: ");
   for (i=0; i<9; i++)
-    fprintf (stderr, "%d=%d(%d) ", i, cl[i], eCl[i]);
+    fprintf (stderr, "%d=%d(%d) ", i, cl[i], eCL[i]);
   fprintf (stderr, "\n");
   fprintf (stderr, "modelRange. ntloc %d, npenet %d, nlclass %d, ngfreq %d, nafreq %d, "
 	   "nparam %d, ntthresh %d, nalpha %d, modelType.numMarkers %d\n",
@@ -111,9 +111,11 @@ void dumpTrackingStats(ModelType modelType, ModelOptions modelOptions, ModelRang
 }
 
 // Construct string describing the type of analysis and determine evaluations required.
-char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelRange modelRange, int eCl[])
+char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelRange modelRange, int eCL[])
 {
   if (modelOptions.markerAnalysis != FALSE) {
+    eCL[0] = 0;
+    eCL[1] = (originalLocusList.numLocus-1) * modelRange.ntheta;
     sprintf (analysisType, "Marker-to-marker, Linkage ");
     strcat (analysisType, (modelOptions.equilibrium == 
 			    LINKAGE_EQUILIBRIUM) ? "Equilibrium." : "Disequilibrium.");
@@ -131,11 +133,11 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
       strcat (analysisType, "Two-Point, ");
       if (modelType.trait == DT) {
 	strcat (analysisType, "Dichotomous Trait, ");
-	eCl[0] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1);
-	eCl[1] = eCl[0] * modelRange.ndprime * modelRange.ntheta;
+	eCL[0] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1);
+	eCL[1] = eCL[0] * modelRange.ndprime * modelRange.ntheta;
       } else { // TP not DT
-	eCl[2] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1) * modelRange.nparam * modelRange.ntthresh;
-	eCl[3] = eCl[2] * modelRange.ndprime * modelRange.ntheta;
+	eCL[2] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1) * modelRange.nparam * modelRange.ntthresh;
+	eCL[3] = eCL[2] * modelRange.ndprime * modelRange.ntheta;
 	if (modelType.trait == QT) { //QT
 	  strcat (analysisType, "Quantitative Trait, ");
 	} else { // TP not DT or QT, so CT
@@ -175,15 +177,15 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
       } else { // Multipoint but not SS, so SA
 	strcat (analysisType, "Sex-Averaged Multipoint, ");
       }
-      eCl[6] = modelRange.ntloc;
+      eCL[6] = modelRange.ntloc;
       if (modelType.trait == DT) {
 	strcat (analysisType, "Dichotomous Trait.");
-	eCl[4] = modelRange.npenet * modelRange.nlclass * modelRange.ngfreq;
-	eCl[7] = modelRange.ntloc * modelRange.npenet * modelRange.ngfreq;
+	eCL[4] = modelRange.npenet * modelRange.nlclass * modelRange.ngfreq;
+	eCL[7] = modelRange.ntloc * modelRange.npenet * modelRange.ngfreq;
       } else { // SA/SS multipoint, but not DT
-	eCl[5] = modelRange.npenet * modelRange.ntthresh * modelRange.ngfreq * 
+	eCL[5] = modelRange.npenet * modelRange.ntthresh * modelRange.ngfreq * 
 	  modelRange.nparam;
-	eCl[8] = modelRange.ntloc * modelRange.npenet * modelRange.ngfreq * 
+	eCL[8] = modelRange.ntloc * modelRange.npenet * modelRange.ngfreq * 
 	  modelRange.ntthresh * modelRange.nparam;
 	if (modelType.trait == QT) {
 	  strcat (analysisType, "Quantitative Trait, ");
