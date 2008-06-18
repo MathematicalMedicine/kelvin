@@ -1019,8 +1019,7 @@ int main (int argc, char *argv[])
 		      fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
 			       "Calculations", (cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]),
 			       ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-				100 / MAX (1, ((cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1])))) *
-			       (100 - ((cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]))) / 6000);
+				(eCL[0]+eCL[1]) / (cL[0]+cL[1]) / 60));
 		      fflush (stdout);
 		    }
 		  }
@@ -1098,8 +1097,7 @@ int main (int argc, char *argv[])
 			fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
 				 "Calculations", (cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]),
 				 ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-				  100 / MAX (1, ((cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1])))) *
-				 (100 - ((cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]))) / 6000);
+				  (eCL[0]+eCL[1]) / (cL[0]+cL[1]) / 60));
 			fflush (stdout);
 		      }
 		    }
@@ -2267,14 +2265,13 @@ int main (int argc, char *argv[])
 #ifndef SIMPLEPROGRESS
                   fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
                            "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
-                           ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-			    100 / MAX (1, (cL[7] * 100 / eCL[7]))) * (100 - (cL[7] * 100 / eCL[7])) / 6000);
+                           (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+			    eCL[7] / cL[7] / 60);
 #else
                   fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
                            "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]),
-                           ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-			    100 / MAX (1, ((cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7])))) *
-                           (100 - ((cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]))) / 6000);
+                           (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+			   (eCL[6]+eCL[7]) / (cL[6]+cL[7]) / 60);
 #endif
                   fflush (stdout);
                 }
@@ -2392,14 +2389,12 @@ int main (int argc, char *argv[])
 #ifndef SIMPLEPROGRESS
 	fprintf (stdout, "%s %d%% complete (~%ld min left)\n",
 		 "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
-		 (combinedComputeSW->swAccumWallTime * 100 / MAX (1, (cL[7] * 100 / eCL[7]))) *
-		 (100 - (cL[7] * 100 / eCL[7])) / 6000);
+		 combinedComputeSW->swAccumWallTime * eCL[7] / cL[7] / 60);
 #else
 	fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
 		 "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]),
-		 (combinedComputeSW->swAccumWallTime * 100 /
-		  MAX (1, ((cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7])))) *
-		 (100 - ((cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]))) / 6000);
+		 combinedComputeSW->swAccumWallTime * 100 /
+		 (eCL[6]+eCL[7]) / (cL[6]+cL[7]) / 60);
 #endif
 
       } /* end of TP */
@@ -2481,14 +2476,13 @@ int main (int argc, char *argv[])
 #ifndef SIMPLEPROGRESS
                       fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
                                "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
-                               ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-				100 / MAX (1, (cL[8] * 100 / eCL[8]))) * (100 - (cL[8] * 100 / eCL[8])) / 6000);
+                               (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+				eCL[8] / cL[8] / 60);
 #else
                       fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
                                "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]),
-                               ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-				100 / MAX (1, ((cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8])))) *
-                               (100 - ((cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]))) / 6000);
+                               (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+				(eCL[6]+eCL[8]) / (cL[6]+cL[8]) / 60);
 #endif
                       fflush (stdout);
                     }
@@ -2584,14 +2578,11 @@ int main (int argc, char *argv[])
 #ifndef SIMPLEPROGRESS
 	fprintf (stdout, "%s %d%% complete (~%ld min left)\n",
 		 "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
-		 (combinedComputeSW->swAccumWallTime * 100 / MAX (1, (cL[8] * 100 / eCL[8]))) *
-		 (100 - (cL[8] * 100 / eCL[8])) / 6000);
+		 combinedComputeSW->swAccumWallTime * eCL[8] / cL[8] / 60);
 #else
 	fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
 		 "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]),
-		 (combinedComputeSW->swAccumWallTime * 100 /
-		  MAX (1, ((cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8])))) *
-		 (100 - ((cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]))) / 6000);
+		 combinedComputeSW->swAccumWallTime * (eCL[6]+eCL[8]) / (cL[6]+cL[8]) / 60);
 #endif
 
       } /* end of QT */
