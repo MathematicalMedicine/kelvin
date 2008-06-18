@@ -191,7 +191,7 @@ char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";  ///< Default name (and storage) 
 char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
 FILE *fpHet = NULL;     ///< Average HET LR file (Bayes Ratio file) pointer
 FILE *fpPPL = NULL;     ///< PPL output file pointer
-FILE *fpTP = NULL; ///< Ancillary Two-point output, used to go to stderr
+FILE *fpTP = NULL;      ///< Ancillary Two-point output, used to go to stderr
 int polynomialScale = 1;        ///< Scale of static allocation and dynamic growth in polynomial.c.
 
 /** Model datastructures. modelOptions is defined in the pedigree library. */
@@ -366,7 +366,7 @@ int main (int argc, char *argv[])
 #endif
 
   struct swStopwatch *combinedComputeSW,        ///< Combined likelihood compute stopwatch
-    *combinedBuildSW; ///< Combined likelihood polynomial build stopwatch
+   *combinedBuildSW;    ///< Combined likelihood polynomial build stopwatch
 
   overallSW = swCreate ("overall");
   combinedComputeSW = swCreate ("combinedComputeSW");
@@ -414,7 +414,7 @@ int main (int argc, char *argv[])
           exit (EXIT_SUCCESS);
         }
         if (wakeCount % 2)
-	  kill (getppid (), SIGUSR1);	  // Send a status-updating signal to parent.
+          kill (getppid (), SIGUSR1);   // Send a status-updating signal to parent.
         currentVMK = swGetCurrentVMK (getppid ());
 #ifdef MEMGRAPH
         fprintf (graphFile, "%lu, %d\n", time (NULL) - startTime, currentVMK);
@@ -896,7 +896,7 @@ int main (int argc, char *argv[])
 
 #ifndef SIMPLEPROGRESS
         fprintf (stdout, "Starting w/loci %s and %s (%d of %d pairs)\n", pLocus1->sName, pLocus2->sName,
-		 loc2, originalLocusList.numLocus - 1);
+                 loc2, originalLocusList.numLocus - 1);
 #endif
 
         /* find out number of alleles this marker locus has */
@@ -1007,31 +1007,33 @@ int main (int argc, char *argv[])
                     populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2,
                                               initialHetProbAddr, 0, -1, -1, 0);
 
-		/* If we're not on the first iteration, it's not a polynomial build, so
-		 * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-		if (gfreqInd != 0 || penIdx != 0) {
-		  swStart (combinedComputeSW);
-		  compute_likelihood (&pedigreeSet); cL[0]++;
-		  swStop (combinedComputeSW);
-		  if (statusRequestSignal) {
-		    statusRequestSignal = FALSE;
-		    if (cL[0] > 1) {        // The first time thru we have no basis for estimation
-		      fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
-			       "Calculations", (cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]),
-			       ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-				(eCL[0]+eCL[1]) / (cL[0]+cL[1]) / 60));
-		      fflush (stdout);
-		    }
-		  }
-		} else      // This _is_ the first iteration
-		  if (modelOptions.polynomial == TRUE) {
-		    swStart (combinedBuildSW);
-		    compute_likelihood (&pedigreeSet); cL[7]++;
-		    swStop (combinedBuildSW);
-		    fprintf (stdout, "%s %d%% complete\r",
-			     "Calculations", (cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]));
-		    fflush (stdout);
-		  }
+                /* If we're not on the first iteration, it's not a polynomial build, so
+                 * show progress at 1 minute intervals. Have a care to avoid division by zero. */
+                if (gfreqInd != 0 || penIdx != 0) {
+                  swStart (combinedComputeSW);
+                  compute_likelihood (&pedigreeSet);
+                  cL[0]++;
+                  swStop (combinedComputeSW);
+                  if (statusRequestSignal) {
+                    statusRequestSignal = FALSE;
+                    if (cL[0] > 1) {    // The first time thru we have no basis for estimation
+                      fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                               "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
+                               ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+                                (eCL[0] + eCL[1]) / (cL[0] + cL[1]) -
+                                (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
+                      fflush (stdout);
+                    }
+                  }
+                } else  // This _is_ the first iteration
+                if (modelOptions.polynomial == TRUE) {
+                  swStart (combinedBuildSW);
+                  compute_likelihood (&pedigreeSet);
+                  cL[7]++;
+                  swStop (combinedBuildSW);
+                  fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]));
+                  fflush (stdout);
+                }
 
                 if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                   fprintf (stderr, "Theta 0.5 has likelihood 0\n");
@@ -1088,19 +1090,21 @@ int main (int argc, char *argv[])
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
-		    swStart (combinedComputeSW);
-		    compute_likelihood (&pedigreeSet); cL[1]++;
-		    swStop (combinedComputeSW);
-		    if (statusRequestSignal) {
-		      statusRequestSignal = FALSE;
-		      if (cL[1] > 1) {        // The first time thru we have no basis for estimation
-			fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
-				 "Calculations", (cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]),
-				 ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-				  (eCL[0]+eCL[1]) / (cL[0]+cL[1]) / 60));
-			fflush (stdout);
-		      }
-		    }
+                    swStart (combinedComputeSW);
+                    compute_likelihood (&pedigreeSet);
+                    cL[1]++;
+                    swStop (combinedComputeSW);
+                    if (statusRequestSignal) {
+                      statusRequestSignal = FALSE;
+                      if (cL[1] > 1) {  // The first time thru we have no basis for estimation
+                        fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                                 "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
+                                 ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+                                  (eCL[0] + eCL[1]) / (cL[0] + cL[1]) -
+                                  (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
+                        fflush (stdout);
+                      }
+                    }
 
                     log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                     if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
@@ -1672,7 +1676,7 @@ int main (int argc, char *argv[])
           loc2 = originalLocusList.numLocus;
 
 #ifndef SIMPLEPROGRESS
-	fprintf (stdout, "\n");
+        fprintf (stdout, "\n");
 #endif
       } /* end of looping second locus - loc2 */
       /* if we are doing trait marker, then we are done */
@@ -1892,10 +1896,10 @@ int main (int argc, char *argv[])
               compute_likelihood (&pedigreeSet);
               cL[5]++;
 #ifndef SIMPLEPROGRESS
-	      if (cL[5] % MAX (1, eCL[5] / 5) == 1) {
-		fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[4] * 100 / eCL[4]);
-		fflush (stdout);
-	      }
+              if (cL[5] % MAX (1, eCL[5] / 5) == 1) {
+                fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[4] * 100 / eCL[4]);
+                fflush (stdout);
+              }
 #endif
               if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                 fprintf (stderr, "Trait has likelihood 0\n");
@@ -2066,10 +2070,11 @@ int main (int argc, char *argv[])
           }
         }
 
-        compute_likelihood (&pedigreeSet); cL[6]++;
+        compute_likelihood (&pedigreeSet);
+        cL[6]++;
 #ifndef SIMPLEPROGRESS
-	fprintf (stdout, "Marker set likelihood evaluations %d%% complete...\n",
-		 MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
+        fprintf (stdout, "Marker set likelihood evaluations %d%% complete...\n",
+                 MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
 #endif
 
         modelOptions.polynomial = polynomialFlag;
@@ -2257,7 +2262,8 @@ int main (int argc, char *argv[])
              * show progress at 1 minute intervals. Have a care to avoid division by zero. */
             if (gfreqInd != 0 || penIdx != 0) {
               swStart (combinedComputeSW);
-              compute_likelihood (&pedigreeSet); cL[7]++;
+              compute_likelihood (&pedigreeSet);
+              cL[7]++;
               swStop (combinedComputeSW);
               if (statusRequestSignal) {
                 statusRequestSignal = FALSE;
@@ -2265,13 +2271,14 @@ int main (int argc, char *argv[])
 #ifndef SIMPLEPROGRESS
                   fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
                            "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
-                           (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-			    eCL[7] / cL[7] / 60);
+                           ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+                            eCL[7] / cL[7] - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
 #else
                   fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
                            "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]),
-                           (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-			   (eCL[6]+eCL[7]) / (cL[6]+cL[7]) / 60);
+                           ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+                            (eCL[6] + eCL[7]) / (cL[6] + cL[7]) -
+                            (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
 #endif
                   fflush (stdout);
                 }
@@ -2279,16 +2286,15 @@ int main (int argc, char *argv[])
             } else      // This _is_ the first iteration
             if (modelOptions.polynomial == TRUE) {
               swStart (combinedBuildSW);
-              compute_likelihood (&pedigreeSet); cL[7]++;
+              compute_likelihood (&pedigreeSet);
+              cL[7]++;
               swStop (combinedBuildSW);
 #ifndef SIMPLEPROGRESS
-	      fprintf (stdout, "%s %d%% complete\r",
-		       "Combined likelihood evaluations", cL[7] * 100 / eCL[7]);
+              fprintf (stdout, "%s %d%% complete\r", "Combined likelihood evaluations", cL[7] * 100 / eCL[7]);
 #else
-	      fprintf (stdout, "%s %d%% complete\r",
-		       "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]));
+              fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]));
 #endif
-	      fflush (stdout);
+              fflush (stdout);
             }
             /* print out some statistics under dry run */
             if (modelOptions.dryRun != 0) {
@@ -2387,14 +2393,14 @@ int main (int argc, char *argv[])
         }
 
 #ifndef SIMPLEPROGRESS
-	fprintf (stdout, "%s %d%% complete (~%ld min left)\n",
-		 "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
-		 combinedComputeSW->swAccumWallTime * eCL[7] / cL[7] / 60);
+        fprintf (stdout, "%s %d%% complete (~%ld min left)\n",
+                 "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
+                 (combinedComputeSW->swAccumWallTime * eCL[7] / cL[7] - combinedComputeSW->swAccumWallTime) / 60);
 #else
-	fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
-		 "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]),
-		 combinedComputeSW->swAccumWallTime *
-		 (eCL[6]+eCL[7]) / (cL[6]+cL[7]) / 60);
+        fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                 "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]),
+                 (combinedComputeSW->swAccumWallTime * (eCL[6] + eCL[7]) / (cL[6] + cL[7]) -
+                  combinedComputeSW->swAccumWallTime) / 60);
 #endif
 
       } /* end of TP */
@@ -2468,7 +2474,8 @@ int main (int argc, char *argv[])
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
                 if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
                   swStart (combinedComputeSW);
-                  compute_likelihood (&pedigreeSet); cL[8]++;
+                  compute_likelihood (&pedigreeSet);
+                  cL[8]++;
                   swStop (combinedComputeSW);
                   if (statusRequestSignal) {
                     statusRequestSignal = FALSE;
@@ -2476,30 +2483,30 @@ int main (int argc, char *argv[])
 #ifndef SIMPLEPROGRESS
                       fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
                                "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
-                               (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-				eCL[8] / cL[8] / 60);
+                               ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+                                eCL[8] / cL[8] - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
 #else
                       fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
                                "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]),
-                               (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-				(eCL[6]+eCL[8]) / (cL[6]+cL[8]) / 60);
+                               ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+                                (eCL[6] + eCL[8]) / (cL[6] + cL[8]) -
+                                (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
 #endif
                       fflush (stdout);
                     }
                   }
                 } else  // This _is_ the first iteration
                 if (modelOptions.polynomial == TRUE) {
-		  swStart (combinedBuildSW);
-                  compute_likelihood (&pedigreeSet); cL[8]++;
-		  swStop (combinedBuildSW);
+                  swStart (combinedBuildSW);
+                  compute_likelihood (&pedigreeSet);
+                  cL[8]++;
+                  swStop (combinedBuildSW);
 #ifndef SIMPLEPROGRESS
-		  fprintf (stdout, "%s %d%% complete\r",
-			   "Combined likelihood evaluations", cL[7] * 100 / eCL[7]);
+                  fprintf (stdout, "%s %d%% complete\r", "Combined likelihood evaluations", cL[7] * 100 / eCL[7]);
 #else
-		  fprintf (stdout, "%s %d%% complete\r",
-			   "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]));
+                  fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]));
 #endif
-		  fflush (stdout);
+                  fflush (stdout);
                 }
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                 if (isnan (log10_likelihood_alternative))
@@ -2576,13 +2583,14 @@ int main (int argc, char *argv[])
         }       /* end of gene freq */
 
 #ifndef SIMPLEPROGRESS
-	fprintf (stdout, "%s %d%% complete (~%ld min left)\n",
-		 "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
-		 combinedComputeSW->swAccumWallTime * eCL[8] / cL[8] / 60);
+        fprintf (stdout, "%s %d%% complete (~%ld min left)\n",
+                 "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
+                 (combinedComputeSW->swAccumWallTime * eCL[8] / cL[8] - combinedComputeSW->swAccumWallTime) / 60);
 #else
-	fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
-		 "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]),
-		 combinedComputeSW->swAccumWallTime * (eCL[6]+eCL[8]) / (cL[6]+cL[8]) / 60);
+        fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                 "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]),
+                 (combinedComputeSW->swAccumWallTime * (eCL[6] + eCL[8]) / (cL[6] + cL[8]) -
+                  combinedComputeSW->swAccumWallTime) / 60);
 #endif
 
       } /* end of QT */
