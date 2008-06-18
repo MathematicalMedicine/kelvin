@@ -180,9 +180,11 @@ Finally, progress indicators are displayed up through the end of the run.
 <h3>Monitoring Progress</h3>
 There are two levels of detail of progress information for you to choose from. The default is to simply display
 a rough percentage of work completed and a wobbly estimate of how many minutes of work remain. These
-numbers are necessarily rough and wobbly, because not all aspects of the complex operations
-they describe can be accurately estimated, even when they're in-progress. You need not take any special
-action in order for progress to be displayed in this manner:
+numbers become extremely rough and wobbly in polynomial evaluation mode, because few aspects of the complex operations
+they must consider can be accurately estimated, even while they're in-progress. Progress reporting will be most
+accurate and useful when you are doing many evaluations of simple pedigrees.
+<p>
+You need not take any special action in order for progress to be displayed in this manner:
 <pre>
 Calculations 18% complete (~15 min left)
 </pre>
@@ -228,7 +230,9 @@ Marker set likelihood evaluations 12% complete.
 Determining combined likelihood...
 </pre>
 <li>Combined likelihood polynomial build progress. This is show as progress thru the set of pedigrees. This is
-the most memory-intensive step:
+the most memory-intensive step, and can be very time-consuming as well. Worse yet, it is nearly completely unpredictable
+across trait positions, as it is a function of phenotypic and genotypic constraints for the trait and markers thru
+the pedigrees:
 <pre>
 Building polynomial w/pedigree: 87 (11/11)
 </pre>
