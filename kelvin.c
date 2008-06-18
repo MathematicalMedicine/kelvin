@@ -97,8 +97,6 @@ volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update reque
   Handler for SIGQUIT.
 
   Typing ^\ or issuing a kill -s SIGQUIT gets a dump of statistics.
-  We also set the signalSeen flag and watch for it in breaks in the
-  code.
 
   P.S. - cygwin requires "stty quit ^C" first for this to work.
 
@@ -115,6 +113,20 @@ void quitSignalHandler (int signal)
 #ifdef DMTRACK
   swLogPeaks ("Signal");
 #endif
+}
+
+/**
+
+  Handler for SIGUSR1.
+
+  Handles signal is raised by our child process to get status update.
+  Sets the signalSeen flag which is watched for in breaks in the
+  code.
+
+*/
+void usr1SignalHandler (int signal)
+{
+  statusRequestSignal = TRUE;
 }
 
 #if defined (GPROF) || (GCOV)
@@ -402,7 +414,7 @@ int main (int argc, char *argv[])
           exit (EXIT_SUCCESS);
         }
         if (wakeCount % 2)
-          statusRequestSignal = TRUE;
+	  kill (getppid (), SIGUSR1);	  // Send a status-updating signal to parent.
         currentVMK = swGetCurrentVMK (getppid ());
 #ifdef MEMGRAPH
         fprintf (graphFile, "%lu, %d\n", time (NULL) - startTime, currentVMK);
@@ -417,13 +429,19 @@ int main (int argc, char *argv[])
   }
 
   /* Setup signal handlers */
-  struct sigaction quitAction, intAction;
-  sigset_t quitBlockMask, intBlockMask;
+  struct sigaction usr1Action, quitAction, intAction;
+  sigset_t usr1BlockMask, quitBlockMask, intBlockMask;
 
 #if defined (GPROF) || (GCOV)
   struct sigaction termAction;
   sigset_t termBlockMask;
 #endif
+  sigfillset (&usr1BlockMask);
+  usr1Action.sa_handler = usr1SignalHandler;
+  usr1Action.sa_mask = usr1BlockMask;
+  usr1Action.sa_flags = 0;
+  sigaction (SIGUSR1, &usr1Action, NULL);
+
   sigfillset (&quitBlockMask);
   quitAction.sa_handler = quitSignalHandler;
   quitAction.sa_mask = quitBlockMask;
