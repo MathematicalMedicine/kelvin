@@ -2393,7 +2393,7 @@ int main (int argc, char *argv[])
 #else
 	fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
 		 "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]),
-		 combinedComputeSW->swAccumWallTime * 100 /
+		 combinedComputeSW->swAccumWallTime *
 		 (eCL[6]+eCL[7]) / (cL[6]+cL[7]) / 60);
 #endif
 
