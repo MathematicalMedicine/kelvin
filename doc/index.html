@@ -180,7 +180,7 @@ Finally, progress indicators are displayed up through the end of the run.
 <h3>Monitoring Progress</h3>
 There are two levels of detail of progress information for you to choose from. The default is to simply display
 a rough percentage of work completed and a wobbly estimate of how many minutes of work remain. These
-numbers become extremely rough and wobbly in polynomial evaluation mode, because few aspects of the complex operations
+numbers can become extremely rough and wobbly in polynomial evaluation mode, because few aspects of the complex operations
 they must consider can be accurately estimated, even while they're in-progress. Progress reporting will be most
 accurate and useful when you are doing many evaluations of simple pedigrees.
 <p>
@@ -216,8 +216,8 @@ Starting w/trait locus at 0.00 (1/8 positions) with new markers 1(0.00) 2(0.64)
 Determining marker set likelihood...
 </pre>
 <li>Likelihood polynomial build progress for new markers. This is shown as progress thru the set of
-pedigrees, and is a function of the pedigree complexity and number of markers in the analysis. Unfortunately
-this cannot be reliably estimated at this time:
+pedigrees, and is a function of the pedigree complexity and number of markers in the analysis. 
+This cannot be reliably estimated at this time, but is typically one of the less time-consuming steps:
 <pre>
 Building polynomial w/pedigree: 77 (1/11)
 </pre>
@@ -229,10 +229,14 @@ we skip marker likelihood evaluation when the marker set does not change in rela
 Marker set likelihood evaluations 12% complete.
 Determining combined likelihood...
 </pre>
-<li>Combined likelihood polynomial build progress. This is show as progress thru the set of pedigrees. This is
-the most memory-intensive step, and can be very time-consuming as well. Worse yet, it is nearly completely unpredictable
+<li>Combined likelihood polynomial build progress. This is shown as progress thru the set of pedigrees. This is
+the most memory-intensive step, and can be very time-consuming as well. Unfortunately, it is nearly completely unpredictable
 across trait positions, as it is a function of phenotypic and genotypic constraints for the trait and markers thru
-the pedigrees:
+the pedigrees. If your analysis is going to fail due to lack of memory, it will be here. You can anticipate problem 
+pedigrees by noting those that took longer than average during
+the marker set likelihood polynomial build phase. Accurate estimation would almost require performing the analysis before performing the analysis.
+The good news is that evaluation is radically improved by having the polynomial, so if you are analyzing a grid of
+penetrances, disease gene frequencies and alpha values, polynomial mode will be much faster.
 <pre>
 Building polynomial w/pedigree: 87 (11/11)
 </pre>
