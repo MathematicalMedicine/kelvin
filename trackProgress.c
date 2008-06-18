@@ -120,16 +120,22 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
   } else { // not AM/MM
     sprintf (analysisType, "Trait-to-marker, ");
     if (modelType.type == TP) {
-      /*      
-      fprintf (stderr, "modelRange. ngfreq %d, npenet %d, ntheta %d, nafreq %d, nalpha %d, ntthresh %d\n",
-	       modelRange.ngfreq, modelRange.npenet, modelRange.ntheta, 
-	       modelRange.nafreq, modelRange.nalpha, modelRange.ntthresh);
-      fprintf (stderr, "...pLambdaCell->ndprime %d\n", pLambdaCell->ndprime);
+      /* 
+
+      TP DT NULL hypothesis is cL[0], looped for marker pair, marker allele frequency (not really), modelRange. ngfreq, npenet
+      TP DT alternative hypothesis is cL[1], looped for all of cL[0] and ndprime, ntheta
+      TP QT NULL hypothesis is cL[2], looped for marker pair, marker allele frequency (not really),  modelRange. ngfreq, nparam, npenet, ntthresh
+      TP QT alternative hypothesis is cL[3], looped for all of cL[2] and ndprime, ntheta
+
       */      
       strcat (analysisType, "Two-Point, ");
       if (modelType.trait == DT) {
 	strcat (analysisType, "Dichotomous Trait, ");
+	eCl[0] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1);
+	eCl[1] = eCl[0] * modelRange.ndprime * modelRange.ntheta;
       } else { // TP not DT
+	eCl[2] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1) * modelRange.nparam * modelRange.ntthresh;
+	eCl[3] = eCl[2] * modelRange.ndprime * modelRange.ntheta;
 	if (modelType.trait == QT) { //QT
 	  strcat (analysisType, "Quantitative Trait, ");
 	} else { // TP not DT or QT, so CT

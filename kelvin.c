@@ -179,6 +179,7 @@ char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";  ///< Default name (and storage) 
 char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
 FILE *fpHet = NULL;     ///< Average HET LR file (Bayes Ratio file) pointer
 FILE *fpPPL = NULL;     ///< PPL output file pointer
+FILE *fpTP = NULL; ///< Ancillary Two-point output, used to go to stderr
 int polynomialScale = 1;        ///< Scale of static allocation and dynamic growth in polynomial.c.
 
 /** Model datastructures. modelOptions is defined in the pedigree library. */
@@ -578,6 +579,8 @@ int main (int argc, char *argv[])
   KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", avghetfile);
   fprintf (fpHet, "# Version %s\n", programVersion);
   if (modelType.type == TP) {
+    fpTP = fopen ("tp.out", "w");
+    KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", "tp.out");
     fpPPL = fopen (pplfile, "w");
     fprintf (fpPPL, "# Version %s\n", programVersion);
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
@@ -873,6 +876,11 @@ int main (int argc, char *argv[])
           continue;
         savedLocusList.pLocusIndex[1] = loc2;
 
+#ifndef SIMPLEPROGRESS
+        fprintf (stdout, "Starting w/loci %s and %s (%d of %d pairs)\n", pLocus1->sName, pLocus2->sName,
+		 loc2, originalLocusList.numLocus - 1);
+#endif
+
         /* find out number of alleles this marker locus has */
         if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) {
           /* get the LD parameters */
@@ -980,9 +988,33 @@ int main (int argc, char *argv[])
                   status =
                     populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2,
                                               initialHetProbAddr, 0, -1, -1, 0);
-                KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
-                compute_likelihood (&pedigreeSet);
-                cL[0]++;
+
+		/* If we're not on the first iteration, it's not a polynomial build, so
+		 * show progress at 1 minute intervals. Have a care to avoid division by zero. */
+		if (gfreqInd != 0 || penIdx != 0) {
+		  swStart (combinedComputeSW);
+		  compute_likelihood (&pedigreeSet); cL[0]++;
+		  swStop (combinedComputeSW);
+		  if (statusRequestSignal) {
+		    statusRequestSignal = FALSE;
+		    if (cL[0] > 1) {        // The first time thru we have no basis for estimation
+		      fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+			       "Calculations", (cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]),
+			       ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+				100 / MAX (1, ((cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1])))) *
+			       (100 - ((cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]))) / 6000);
+		      fflush (stdout);
+		    }
+		  }
+		} else      // This _is_ the first iteration
+		  if (modelOptions.polynomial == TRUE) {
+		    swStart (combinedBuildSW);
+		    compute_likelihood (&pedigreeSet); cL[7]++;
+		    swStop (combinedBuildSW);
+		    fprintf (stdout, "%s %d%% complete\r",
+			     "Calculations", (cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]));
+		    fflush (stdout);
+		  }
 
                 if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                   fprintf (stderr, "Theta 0.5 has likelihood 0\n");
@@ -1039,9 +1071,20 @@ int main (int argc, char *argv[])
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
-                    KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
-                    compute_likelihood (&pedigreeSet);
-                    cL[1]++;
+		    swStart (combinedComputeSW);
+		    compute_likelihood (&pedigreeSet); cL[1]++;
+		    swStop (combinedComputeSW);
+		    if (statusRequestSignal) {
+		      statusRequestSignal = FALSE;
+		      if (cL[1] > 1) {        // The first time thru we have no basis for estimation
+			fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+				 "Calculations", (cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]),
+				 ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+				  100 / MAX (1, ((cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1])))) *
+				 (100 - ((cL[0]+cL[1]) * 100 / (eCL[0]+eCL[1]))) / 6000);
+			fflush (stdout);
+		      }
+		    }
 
                     log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                     if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
@@ -1063,7 +1106,6 @@ int main (int argc, char *argv[])
                     }
                     tp_result[dprimeIdx][thetaInd]
                       [mkrFreqIdx].lr_count++;
-                    //fprintf(stderr, "likelihood ratio: %e.\n", likelihood_ratio);
 
                     /* caculating the HET */
                     for (j = 0; j < modelRange.nalpha; j++) {
@@ -1382,7 +1424,7 @@ int main (int argc, char *argv[])
             fflush (fpHet);
           }     /* theta loop */
         }       /* dprime loop */
-        fprintf (stderr, "# %-d  %s %s Max Het LR\n", loc2, pLocus2->sName, pLocus1->sName);
+        fprintf (fpTP, "# %-d  %s %s Max Het LR\n", loc2, pLocus2->sName, pLocus1->sName);
         initialFlag = 1;
         max = -99999;
         max_at_theta0 = -99999;
@@ -1418,9 +1460,9 @@ int main (int argc, char *argv[])
           }
           initialFlag = 0;
         }
-        fprintf (stderr, "Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dd\n");
+        fprintf (fpTP, "Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dd\n");
         /* overall maximizing model - MOD */
-        fprintf (stderr, "# Overall MOD maximizing model:\n");
+        fprintf (fpTP, "# Overall MOD maximizing model:\n");
         theta[0] = modelRange.theta[0][maxThetaIdx];
         theta[1] = modelRange.theta[1][maxThetaIdx];
         gfreq = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_gfreq;
@@ -1430,7 +1472,7 @@ int main (int argc, char *argv[])
         R_square = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].R_square;
         paramIdx = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_paramIdx;
         thresholdIdx = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_thresholdIdx;
-        fprintf (stderr,
+        fprintf (fpTP,
                  "%4d %15s %8.4f %8.4f %5.2f (%6.4f, %6.4f) %5.3f %4.2f %6.4f %6.4f",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName,
                  pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max),
@@ -1439,23 +1481,23 @@ int main (int argc, char *argv[])
           pen_DD = modelRange.penet[liabIdx][0][penIdx];
           pen_Dd = modelRange.penet[liabIdx][1][penIdx];
           pen_dd = modelRange.penet[liabIdx][2][penIdx];
-          fprintf (stderr, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
+          fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
           if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
             SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
             SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
             SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
-            fprintf (stderr, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
+            fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
           }
           if (modelType.trait != DT) {
             threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-            fprintf (stderr, " %5.3f ", threshold);
+            fprintf (fpTP, " %5.3f ", threshold);
           }
         }
-        fprintf (stderr, "\n");
-        fflush (stderr);
+        fprintf (fpTP, "\n");
+        fflush (fpTP);
 
         /* maximizing model at theta equal to 0 - MOD */
-        fprintf (stderr, "# MOD maximizing model for theta=0:\n");
+        fprintf (fpTP, "# MOD maximizing model for theta=0:\n");
         gfreq = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].max_gfreq;
         mkrFreq = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].max_mf;
         alphaV = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].max_alpha;
@@ -1463,7 +1505,7 @@ int main (int argc, char *argv[])
         R_square = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].R_square;
         paramIdx = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].max_paramIdx;
         thresholdIdx = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].max_thresholdIdx;
-        fprintf (stderr,
+        fprintf (fpTP,
                  "%4d %15s %8.4f %8.4f %5.2f %6.4f %5.3f %4.2f %6.4f %6.4f",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName,
                  pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
@@ -1473,23 +1515,23 @@ int main (int argc, char *argv[])
           pen_DD = modelRange.penet[liabIdx][0][penIdx];
           pen_Dd = modelRange.penet[liabIdx][1][penIdx];
           pen_dd = modelRange.penet[liabIdx][2][penIdx];
-          fprintf (stderr, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
+          fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
           if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
             SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
             SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
             SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
-            fprintf (stderr, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
+            fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
           }
           if (modelType.trait != DT) {
             threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-            fprintf (stderr, " %5.3f ", threshold);
+            fprintf (fpTP, " %5.3f ", threshold);
           }
         }
-        fprintf (stderr, "\n");
-        fflush (stderr);
+        fprintf (fpTP, "\n");
+        fflush (fpTP);
 
         /* maximizing model at d prime equal to 0 - MOD */
-        fprintf (stderr, "# MOD maximizing model for dprime=0:\n");
+        fprintf (fpTP, "# MOD maximizing model for dprime=0:\n");
         gfreq = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].max_gfreq;
         mkrFreq = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].max_mf;
         alphaV = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].max_alpha;
@@ -1497,7 +1539,7 @@ int main (int argc, char *argv[])
         R_square = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].R_square;
         paramIdx = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].max_paramIdx;
         thresholdIdx = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].max_thresholdIdx;
-        fprintf (stderr,
+        fprintf (fpTP,
                  "%4d %15s %8.4f %8.4f %5.2f %6.4f %5.3f %4.2f %6.4f %6.4f ",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName,
                  pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max_at_dprime0), 0.0, 0.0, R_square, alphaV, gfreq, mkrFreq);
@@ -1505,20 +1547,20 @@ int main (int argc, char *argv[])
           pen_DD = modelRange.penet[liabIdx][0][penIdx];
           pen_Dd = modelRange.penet[liabIdx][1][penIdx];
           pen_dd = modelRange.penet[liabIdx][2][penIdx];
-          fprintf (stderr, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
+          fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
           if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
             SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
             SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
             SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
-            fprintf (stderr, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
+            fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
           }
           if (modelType.trait != DT) {
             threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-            fprintf (stderr, " %5.3f ", threshold);
+            fprintf (fpTP, " %5.3f ", threshold);
           }
         }
-        fprintf (stderr, "\n");
-        fflush (stderr);
+        fprintf (fpTP, "\n");
+        fflush (fpTP);
 
         /* find the overall maximizing theta and dprime - LR
          * with the other parameter integrated out */
@@ -1553,34 +1595,33 @@ int main (int argc, char *argv[])
           }
         }
         /* overall maximizing model - LR */
-        fprintf (stderr, "# Overall LR maximizing model:\n");
+        fprintf (fpTP, "# Overall LR maximizing model:\n");
         theta[0] = modelRange.theta[0][maxThetaIdx];
         theta[1] = modelRange.theta[1][maxThetaIdx];
         //gfreq = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_gfreq;
-        fprintf (stderr,
+        fprintf (fpTP,
                  "%4d %15s %8.4f %8.4f %5.2f (%6.4f %6.4f)\n",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName,
                  pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max),
                  pLambdaCell->lambda[maxDPrimeIdx][0][0], theta[0], theta[1]);
-        fflush (stderr);
+        fflush (fpTP);
 
         /* maximizing model at theta equal to 0 - LR */
-        fprintf (stderr, "# LR maximizing model for theta (0, 0):\n");
-        fprintf (stderr,
+        fprintf (fpTP, "# LR maximizing model for theta (0, 0):\n");
+        fprintf (fpTP,
                  "%4d %15s %8.4f %8.4f %5.2f %6.4f\n",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName,
                  pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
                  log10 (max_at_theta0), pLambdaCell->lambda[maxDPrimeIdx_at_theta0][0][0], 0.0);
-        fflush (stderr);
+        fflush (fpTP);
 
         /* maximizing model at d prime equal to 0 - LR */
-        fprintf (stderr, "# LR maximizing model for dprime=0:\n");
-        fprintf (stderr,
+        fprintf (fpTP, "# LR maximizing model for dprime=0:\n");
+        fprintf (fpTP,
                  "%4d %15s %8.4f %8.4f %5.2f %6.4f\n",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName,
                  pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max_at_dprime0), 0.0, 0.0);
-        fflush (stderr);
-
+        fflush (fpTP);
 
         /* output PPL now */
         /* chromosome, marker name, position, PPL */
@@ -1613,6 +1654,10 @@ int main (int argc, char *argv[])
 
         if (modelOptions.markerAnalysis == ADJACENTMARKER)
           loc2 = originalLocusList.numLocus;
+
+#ifndef SIMPLEPROGRESS
+	fprintf (stdout, "\n");
+#endif
       } /* end of looping second locus - loc2 */
       /* if we are doing trait marker, then we are done */
       /* Used to read: modelOptions.markerToMarker != TRUE which
@@ -2645,7 +2690,7 @@ int main (int argc, char *argv[])
   free (modelOptions.sUnknownPersonID);
   final_cleanup ();
 
-//  dumpTrackingStats (modelType, modelOptions, modelRange, cL, eCL);
+  dumpTrackingStats (modelType, modelOptions, modelRange, cL, eCL);
 
 #ifdef SOURCEDIGRAPH
   if (modelOptions.polynomial == TRUE)
@@ -2674,6 +2719,7 @@ int main (int argc, char *argv[])
   /* close file pointers */
   if (modelType.type == TP) {
     fclose (fpPPL);
+    fclose (fpTP);
   }
   fclose (fpHet);
   return 0;

@@ -157,7 +157,7 @@ describe important build options as specified in the Makefile and run
 characteristics as influenced by environment variables.
 <p>
 In the midst of this is a line describing the action to take in order to force a dump of a line of
-statistics. The format of these statistics is described at the end of this section (<a href="#adhoc">ad hoc status</a>).
+statistics. The format of these statistics is described at the end of the next subsection (<a href="#adhoc">ad hoc status</a>).
 You can use this as a sort of "pulse check" to make sure kelvin is still alive
 and well and making progress should there be a lull between automatic progress updates. If
 you are running kelvin interactively, you can type <tt>CTRL-\</tt> (that means to hold down the CTRL
@@ -215,18 +215,18 @@ Trait likelihood evaluations 100% complete
 Starting w/trait locus at 0.00 (1/8 positions) with new markers 1(0.00) 2(0.64)
 Determining marker set likelihood...
 </pre>
-or
+or if they are the same:
 <pre>
 Starting w/trait locus at 0.50 (2/8 positions) with same markers.
 Determining combined likelihood...
 </pre>
-<li>Likelihood polynomial build progress for new markers. This is shown as progress thru the set of
+<li>Likelihood polynomial build progress when there are new markers. This is shown as progress thru the set of
 pedigrees, and is a function of the pedigree complexity and number of markers in the analysis. 
 This cannot be reliably estimated at this time, but is typically one of the less time-consuming steps:
 <pre>
 Building polynomial w/pedigree: 77 (1/11)
 </pre>
-<li>Marker likelihood evaluation progress for new markers. This is displayed as an incrementing percentage 
+<li>Marker likelihood evaluation progress when there are new markers. This is displayed as an incrementing percentage 
 until it is interrupted by the completion of the current position. At completion of a position it will reflect 
 overall percentage progress of marker likelihood evaluation thru all positions. This may jump because 
 we skip marker likelihood evaluation when the marker set does not change in relation to the trait position:
@@ -234,7 +234,7 @@ we skip marker likelihood evaluation when the marker set does not change in rela
 Marker set likelihood evaluations 12% complete.
 Determining combined likelihood...
 </pre>
-<li>Combined likelihood polynomial build progress for new markers. This is shown as progress thru the set of pedigrees. This is
+<li>Combined likelihood polynomial build progress when there are new markers. This is shown as progress thru the set of pedigrees. This is
 the most memory-intensive step, and can be very time-consuming as well. Unfortunately, it is nearly completely unpredictable
 across trait positions, as it is a function of phenotypic and genotypic constraints for the trait and markers thru
 the pedigrees. If your analysis is going to fail due to lack of memory, it will be here. You can anticipate problem 
@@ -254,6 +254,27 @@ Combined likelihood evaluations 1% complete (~83 minutes left)
 </ol>
 If polynomial evaluation is not enabled, the progress reports involving polynomials are not displayed.
 <h4>Detailed Two-point Displays</h4>
+<ol>
+<li>The names of the pair of loci (trait and marker) to be used in this step of the analysis:
+<pre>
+Starting w/loci Disease and Locus_7 at 0.00 (1/8 pairs)
+</pre>
+<li>Likelihood polynomial build progress. This is shown as progress thru the set of
+pedigrees, and is a function of the pedigree complexity. This cannot be reliably estimated 
+at this time, but is one of the less time-consuming steps:
+<pre>
+Building polynomial w/pedigree: 77 (1/11)
+</pre>
+<li>Likelihood evaluation progress. This is displayed as an incrementing percentage 
+until it is interrupted by the completion for the current pair of loci. At completion of a pair it will reflect 
+overall percentage progress of likelihood evaluation thru the entire analysis.
+<pre>
+Calculations 12% complete (~15 min left)
+</pre>
+</ol>
+</ol>
+If polynomial evaluation is not enabled, the progress reports involving polynomials are not displayed.
+
 <h4 id="adhoc">Final (and Ad Hoc) Status</h4>
 Under either level of complexity, a line of statistics will be displayed at the end of the run that looks
 something like this:
