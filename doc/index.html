@@ -188,9 +188,9 @@ You need not take any special action in order for progress to be displayed in th
 <pre>
 Calculations 18% complete (~15 min left)
 </pre>
-While the simple progress display incorporates trait and marker calculations in its estimations, it doesn't report
+While the simple progress display incorporates trait and marker calculations and polynomial builds in its estimations, it doesn't report
 progress while they're being performed, so there might be a significant delay before seeing the first non-zero percentage for complex
-analyses.
+analyses, and during polynomial builds.
 <p>
 The alternative level of complexity is much more informative, but can overwhelm with details under certain
 circumstances. You will need to edit the <tt>Makefile</tt> to enable the compile-time conditional
@@ -198,11 +198,11 @@ circumstances. You will need to edit the <tt>Makefile</tt> to enable the compile
 detailed information about each of the steps it goes thru to perform an analysis. These steps are
 fundamentally different for Two-Point and Multipoint analyses.
 
-<h4>Detailed Multipoint</h4>
+<h4>Detailed Multipoint Displays</h4>
 <ol>
 <li>Trait likelihood determination progress in percentage until completion. This is only done once
 at the beginning of an analysis, so it will proceed to 100%. This is the simplest and therefore fastest
-calculation. If this step takes a lot of time, your patience will be sorely tried by subsequent steps:
+calculation. If this step takes a lot of time, subsequent steps may not complete in a reasonable timeframe.
 <pre>
 Determining trait likelihood...
 Building polynomial w/pedigree: 87 (11/11)
@@ -214,6 +214,10 @@ Trait likelihood evaluations 100% complete
 <pre>
 Starting w/trait locus at 0.00 (1/8 positions) with new markers 1(0.00) 2(0.64)
 Determining marker set likelihood...
+</pre>
+or
+<pre>
+Starting w/trait locus at 0.50 (2/8 positions) with same markers.
 </pre>
 <li>Likelihood polynomial build progress for new markers. This is shown as progress thru the set of
 pedigrees, and is a function of the pedigree complexity and number of markers in the analysis. 
@@ -229,7 +233,7 @@ we skip marker likelihood evaluation when the marker set does not change in rela
 Marker set likelihood evaluations 12% complete.
 Determining combined likelihood...
 </pre>
-<li>Combined likelihood polynomial build progress. This is shown as progress thru the set of pedigrees. This is
+<li>Combined likelihood polynomial build progress for new markers. This is shown as progress thru the set of pedigrees. This is
 the most memory-intensive step, and can be very time-consuming as well. Unfortunately, it is nearly completely unpredictable
 across trait positions, as it is a function of phenotypic and genotypic constraints for the trait and markers thru
 the pedigrees. If your analysis is going to fail due to lack of memory, it will be here. You can anticipate problem 
@@ -248,7 +252,7 @@ Combined likelihood evaluations 1% complete (~83 minutes left)
 </ol>
 </ol>
 If polynomial evaluation is not enabled, the progress reports involving polynomials are not displayed.
-<h4>Detailed Two-point</h4>
+<h4>Detailed Two-point Displays</h4>
 <h4 id="adhoc">Final (and Ad Hoc) Status</h4>
 Under either level of complexity, a line of statistics will be displayed at the end of the run that looks
 something like this:
