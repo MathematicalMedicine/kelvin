@@ -2618,9 +2618,10 @@ int main (int argc, char *argv[])
       penIdx = mp_result[posIdx].max_penIdx;
       paramIdx = mp_result[posIdx].max_paramIdx;
       thresholdIdx = mp_result[posIdx].max_thresholdIdx;
-      fprintf (fpHet, "%d %f %.4f %.6e %.6f %f %f",
+      fprintf (fpHet, "%d %f %.*f %.6e %.6f %f %f",
                (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-               traitPos, ppl, avgLR, log10 (max), alphaV, gfreq);
+               traitPos, ppl >= 2.5 ? 0 : 1, ppl >= 2.5 ? rint(ppl) : rint(ppl*10.0)/10.0,
+	       avgLR, log10 (max), alphaV, gfreq);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
         pen_DD = modelRange.penet[liabIdx][0][penIdx];
         pen_Dd = modelRange.penet[liabIdx][1][penIdx];
