@@ -1,5 +1,5 @@
 <html>
-<head><title>Alloators</title></head>
+<head><title>Allocators</title></head>
 <body>
 <h3>Why Use a Replacement Allocator?</h3>
 There are two good reasons to use a replacement allocator -- runtime performance improvement and better control of
@@ -35,6 +35,13 @@ you're running kelvin. If you inadvertently leave it loaded with other programs,
 <p>
 Build ptmalloc3 with <tt>make linux-pthread</tt> for a linkable library, or <tt>make linux-shared</tt>
 for a loadable library.
+
+<h4>Linking</h4>
+We've only tried ptmalloc3 as a linked-in replacement allocator. The vestiges of this are still in the
+<tt>Makefile</tt> for the adventurous to try. We don't distribute kelvin with ptmalloc3 linked-in 
+by default because we cannot anticipate
+what platform will be used, and we don't complicate the build with extra dependencies.
+
 <hr>
 $Date: 2008-06-17 09:05:32 -0400 (Tue, 17 Jun 2008) $
 </body>
