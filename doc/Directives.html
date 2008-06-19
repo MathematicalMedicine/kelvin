@@ -3,10 +3,87 @@
 <body>
 <h1>kelvin Configuration File</h1>
 
-<a href="#analysis">Types of Analysis</a><br>
-<a href="#summary">Directive Summary</a><br>
-<a href="#reference">Directive Reference</a><br>
-<a href="#ranges">Specifying Ranges</a><br>
+If you are just getting started with kelvin, or are uncomfortable working directly with the
+configuration file, you can use the <a href="http://hodgkin.ccri.net/software/gKelvin/">graphic
+configuration file editor</a> instead.
+<p>
+The kelvin configuration file is a text file specified on the kelvin command line that 
+contains directives that describe the nature
+of the analysis to be performed. The file can contain blank lines, comments (specified by a '#'-sign in the first
+column), or directives. Directives start in the first column, and may take one or more parameters. Directives
+that take either no parameters or a fixed number of parameters (i.e., not ranges), can end with a comment.
+<p>
+A simple configuration file might look like this:
+<pre>
+ 1: #
+ 2: # Sample kelvin.conf file for TP_DT_LD
+ 3: #
+ 4:
+ 5: #
+ 6: # Analysis type
+ 7: #
+ 8: TP # Trait-to-marker two-point analysis (also the default)
+ 9: DT # Dichotomous trait (also the default)
+10: # Linkage disequilibrium with D' (D-prime) range specified
+11: LD -1 1 0.1
+12:
+13: # Polynomial evaluation with default allocation factor of 1
+14: PE
+15: 
+16: #
+17: # Input files (currently using all default names)
+18: #
+19: PD pedpost.dat # Post-MAKEPED pedigree file
+20: DF datafile.dat # Marker types and names
+21: MK markers.dat # Marker frequencies
+22: MP mapfile.dat # Chromosome map (selected marker locations)
+23:
+24: #
+25: # Input data interpretation values
+26: #
+27: AS 0 1 2 # Affection status "Unknown", "Unaffected" and "Affected" values
+28:
+29: #
+30: # Output files (all currently using default names)
+31: #
+32: HE bf.out # Bayes Ratio output file
+33: PF ppl.out # PPL output file
+34:
+35: #
+36: # Analysis grid values
+37: #
+38: # Analysis grid trait gene frequency values
+39: GF 0.001;0.01;0.1;0.3;0.5;0.8
+40:
+41: # Standard penetrances or mean values
+42: DD 0.0 0.9 0.1
+43: DD 0.999
+44: Dd 0.0 0.9 0.1
+45: Dd 0.999
+46: dd 0.0 0.9 0.1
+47: dd 0.999
+48:
+49: # Standard penetrances or mean value constraints
+50: DD >= Dd
+51: Dd >= dd
+52: DD != Dd; Dd != dd
+53: 
+54: # Analysis grid theta values
+55: Th 0 0.5 0.01
+56: 
+57: # Analysis grid alpha values
+58: AL 0.05 1 0.05
+</pre>
+Where lines 8, 9 and 10 specify the type of analysis, 19-22 specify input files, 32 and 33
+specify output files, and 35-58 specify a standard analysis grid.
+<p>
+kelvin currently supports wide variety of types analyses,
+so a good starting point for writing a configuration file is to review the
+ <a href="#analysis">outline of analyses</a>, which indicates the directives used to specify each
+of the 22 different types currently available. The <a href="#summary">directive summary</a> gives
+a brief description of directives and organizes them by category. Finally, there is an exhaustive
+<a href="#reference">directive reference</a>.
+
 <hr>
 
 <h2 id="analysis">Types of Analysis</h2>
@@ -48,8 +125,9 @@ directives that are required for each type of analysis are provided in parenthes
 <ul>
 <li>Dichotomous trait
 <ul>
-<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#DT">DT</a>)
-<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#DT">DT</a>, <a href="#LD">LD</a>)
+<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#DT">DT</a>) - The default type of analysis if no directives
+are specified. A validated test case is provided.
+<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#DT">DT</a>, <a href="#LD">LD</a>) -  A test case is provided.
 </ul>
 <li>Quantitative trait
 <ul>
@@ -90,70 +168,70 @@ directives that are required for each type of analysis are provided in parenthes
 <h2 id="summary">Directive Summary</h2>
 
 <h4>Analysis Type</h4>
-<ul>
-<li><a href="#SS">SS &lt;m&gt;</a>: sex-specific multipoint analysis with &lt;m&gt; markers.
-<li><a href="#SA">SA &lt;m&gt;</a>: sex-averaged multipoint analysis with &lt;m&gt; markers.
-<li><a href="#TP">TP</a>: two-point analysis.
-<li><a href="#DT">DT</a>: dichotomous (binary) trait analysis.
-<li><a href="#QT">QT</a>: quantitative trait analysis, specifying distribution type and values.
-<li><a href="#CT">CT</a>: quantitative trait analysis with threshold (combined), specifying distribution type and values.
-<li><a href="#MM">MM</a>: marker-to-marker analysis as opposed to the default trait-to-marker analysis.
-<li><a href="#LD">LD</a>: linkage disequilibrium analysis as opposed to the default linkage equilibrium,
+<dl>
+<dt><a href="#SS">SS &lt;m&gt;</a></dt><dd>sex-specific multipoint analysis with &lt;m&gt; markers.</dd>
+<dt><a href="#SA">SA &lt;m&gt;</a></dt><dd>sex-averaged multipoint analysis with &lt;m&gt; markers.</dd>
+<dt><a href="#TP">TP</a></dt><dd>two-point analysis.</dd>
+<dt><a href="#DT">DT</a></dt><dd>dichotomous (binary) trait analysis.</dd>
+<dt><a href="#QT">QT</a></dt><dd>quantitative trait analysis, specifying distribution type and values.</dd>
+<dt><a href="#CT">CT</a></dt><dd>quantitative trait analysis with threshold (combined), specifying distribution type and values.</dd>
+<dt><a href="#MM">MM</a></dt><dd>marker-to-marker analysis as opposed to the default trait-to-marker analysis.</dd>
+<dt><a href="#LD">LD</a></dt><dd>linkage disequilibrium analysis as opposed to the default linkage equilibrium,</dd>
 specifying multiple D' values or a range.
-</ul>
+</dl>
 <h4>File Specification</h4>
-<ul>
-<li><a href="#HE">HE &lt;file name&gt;</a>: bayes ratio output file, default bf.out.
-<li><a href="#PF">PF &lt;file name&gt;</a>: posterior probability of linkage output file, default ppl.out.
-<li><a href="#PD">PD &lt;file name&gt;</a>: pedigree input file in LINKAGE (FASTLINK) post-MAKEPED format, default pedfile.dat.
-<li><a href="#DF">DF &lt;file name&gt;</a>: pedigree locus description data input file, default datafile.dat.
-<li><a href="#MK">MK &lt;file name&gt;</a>: marker input file, default markers.dat.
-<li><a href="#MP">MP &lt;file name&gt;</a>: map input file, default mapfile.dat.
-<li><a href="#CF">CF &lt;file name&gt;</a>: case control input file.
-<li><a href="#SR">SR &lt;path&gt;</a>: saved results input/output path.
-</ul>
+<dl>
+<dt><a href="#HE">HE &lt;file name&gt;</a></dt><dd>bayes ratio output file, default bf.out.</dd>
+<dt><a href="#PF">PF &lt;file name&gt;</a></dt><dd>posterior probability of linkage output file, default ppl.out.</dd>
+<dt><a href="#PD">PD &lt;file name&gt;</a></dt><dd>pedigree input file in LINKAGE (FASTLINK) post-MAKEPED format, default pedfile.dat.</dd>
+<dt><a href="#DF">DF &lt;file name&gt;</a></dt><dd>pedigree locus description data input file, default datafile.dat.</dd>
+<dt><a href="#MK">MK &lt;file name&gt;</a></dt><dd>marker input file, default markers.dat.</dd>
+<dt><a href="#MP">MP &lt;file name&gt;</a></dt><dd>map input file, default mapfile.dat.</dd>
+<dt><a href="#CF">CF &lt;file name&gt;</a></dt><dd>case control input file.</dd>
+<dt><a href="#SR">SR &lt;path&gt;</a></dt><dd>saved results input/output path.</dd>
+</dl>
 <h4>Data Values</h4>
-<ul>
-<li><a href="#UP">UP &lt;n&gt;</a>: unknown person ID, default "0".
-<li><a href="#AS">AS &lt;n&gt; &lt;m&gt; &lt;l&gt;</a>: affection status values
-</ul>
+<dl>
+<dt><a href="#UP">UP &lt;n&gt;</a></dt><dd>unknown person ID, default "0".</dd>
+<dt><a href="#AS">AS &lt;n&gt; &lt;m&gt; &lt;l&gt;</a></dt><dd>affection status values "Unknown", "Unaffected" and "Affected"</dd>
+</dl>
 <h4>Multipoint Analysis Only</h4>
-<ul>
-<li><a href="#TL">TL</a>: trait locations, specifying multiple values or a range.
-<li><a href="#TM">TM</a>: trait loci that map exactly to markers are included in tested trait loci.
-<li><a href="#AL">AL</a>: alpha parameter values, specifying multiple values or a range.
-</ul>
+<dl>
+<dt><a href="#TL">TL</a></dt><dd>trait locations, specifying multiple values or a range.</dd>
+<dt><a href="#TM">TM</a></dt><dd>trait loci that map exactly to markers are included in tested trait loci.</dd>
+<dt><a href="#AL">AL</a></dt><dd>alpha parameter values, specifying multiple values or a range.</dd>
+</dl>
 <h4>Two-Point Analysis Only</h4>
-<ul>
-<li><a href="#Th">Th</a>: theta, specifying multiple sex-averaged values or a range.
-<li><a href="#Tm">Tm</a>: theta, specifying multiple sex-specific male values or a range.
-<li><a href="#Tf">Tf</a>: theta, specifying multiple sex-specific female values or a range.
-</ul>
+<dl>
+<dt><a href="#Th">Th</a></dt><dd>theta, specifying multiple sex-averaged values or a range.</dd>
+<dt><a href="#Tm">Tm</a></dt><dd>theta, specifying multiple sex-specific male values or a range.</dd>
+<dt><a href="#Tf">Tf</a></dt><dd>theta, specifying multiple sex-specific female values or a range.</dd>
+</dl>
 <h4>Quantitative Trait with Threshold Only</h4>
-<ul>
-<li><a href="#TT">TT</a>: 
-<li><a href="#T_MIN">T_MIN</a>: 
-<li><a href="#T_MAX">T_MAX</a>: 
-</ul>
+<dl>
+<dt><a href="#TT">TT</a></dt><dd></dd>
+<dt><a href="#T_MIN">T_MIN</a></dt><dd></dd>
+<dt><a href="#T_MAX">T_MAX</a></dt><dd></dd>
+</dl>
 <h4>Truncated Student's T-Distribution Only</h4>
-<ul>
-<li><a href="#MIN">MIN</a>: 
-<li><a href="#MAX">MAX</a>: 
-</ul>
+<dl>
+<dt><a href="#MIN">MIN</a></dt><dd></dd>
+<dt><a href="#MAX">MAX</a></dt><dd></dd>
+</dl>
 <h4>All Types of Analyses</h4>
-<ul>
-<li><a href="#XC">XC</a>: analysis of X-chromosome instead of default autosome.
-<li><a href="#PE">PE &lt;n&gt;</a>: polynomial evaluation with scaling &lt;m&gt; instead of iterative calculation.
-<li><a href="#DD, Dd, dd">DD, Dd, dd</a>: penetrance, specifying multiple values or a range, and constraints.
-<li><a href="#P1">P1</a>: used in conjunction with penetrance.
-<li><a href="#GF">GF</a>: gene frequency, specifying multiple values or a range.
-<li><a href="#DA">DA</a>: number of disease alleles, currently must be 2, defaults to 2.
-<li><a href="#AF">AF</a>: allele frequencies for SNPs, specifying multiple values or a range.
-</ul>
+<dl>
+<dt><a href="#XC">XC</a></dt><dd>analysis of X-chromosome instead of default autosome.</dd>
+<dt><a href="#PE">PE &lt;n&gt;</a></dt><dd>polynomial evaluation with scaling &lt;m&gt; instead of iterative calculation.</dd>
+<dt><a href="#DD, Dd, dd">DD, Dd, dd</a></dt><dd>penetrance, specifying multiple values or a range, and constraints.</dd>
+<dt><a href="#P1">P1</a></dt><dd>used in conjunction with penetrance.</dd>
+<dt><a href="#GF">GF</a></dt><dd>gene frequency, specifying multiple values or a range.</dd>
+<dt><a href="#DA">DA</a></dt><dd>number of disease alleles, currently must be 2, defaults to 2.</dd>
+<dt><a href="#AF">AF</a></dt><dd>allele frequencies for SNPs, specifying multiple values or a range.</dd>
+</dl>
 <h4>Other Directives</h4>
-<ul>
-<li><a href="#LC">LC &lt;n&gt;</a>: use  &lt;n&gt; liability classes.
-</ul>
+<dl>
+<dt><a href="#LC">LC &lt;n&gt;</a></dt><dd>use  &lt;n&gt; liability classes.</dd>
+</dl>
 <hr>
 
 <h2 id="reference">Directive Reference</h2>
@@ -225,7 +303,37 @@ defaults are NAN, -9999.99, and 9999.99, respectively).
 <h3 id="DD, Dd, dd">DD, Dd, dd</h3>
 
 <h3 id="DF">DF</h3>
-
+Applicable to all types of analyses.
+<p>
+Specifies the name of the pedigree trait and marker description companion file, which identifies and
+enumerates the columns after "Proband status" in the pedigree file. 
+<p>
+The variable number of columns
+after the "Proband status" in the pedigree file correspond to:
+<ol>
+<li>Affection status. A single number for the trait phenotype. 
+For discrete trait analyses, kelvin only supports a biallelic trait, so the
+number must be a '1' or a '2'. For quantitative trait analyses, the number will be floating point value.
+<li>Pairs of numbers representing  marker genotypes, one pair for each marker in the analysis. Numbers
+represent the alleles of the marker, e.g. for SNPs, the numbers will be a '1' or a '2'.
+</ol>
+This file describes these columns with one row for each type. Rows consist of the following space-separated fields:
+<ol>
+<li>Locus type, either "T" for affection status (trait), which will be specified by one column, 
+or "M" for marker, which
+will be specified by two columns (pair of haplotypes).
+<li>Name of the locus.
+</ol>
+For example the following describes four loci -- the trait and 3 markers:
+<pre>
+T disease_locus
+M locus_1
+M locus_2
+M locus_3
+</pre>
+Where "disease_locus" is represented by the first column after "Proband status" in the pedigree file,
+"locus_1" is represented by the 2nd and 3rd columns after "Proband status", "locus_2" is represented
+by the 4th and 5th columns, and "locus_3" by the 6th and 7th.
 <h3 id="DT">DT</h3>
 
 <h3 id="GF">GF</h3>
@@ -277,7 +385,27 @@ specifications and instead use single-digit integers.
 <h3 id="MIN">MIN</h3>
 
 <h3 id="MK">MK</h3>
-
+Applicable to all types of analyses.
+<p>
+Specifies the name of the marker allele frequency file, which provides the allele
+frequencies for markers used in the analysis. For each marker there is a header
+line identified by an "M" in the first column, followed by frequency lines for each
+allele for that marker identified by an "F" in the first column. The header line has 
+the marker name as specified in the pedigree companion file (<a href="#DF">DF</a> directive).
+The frequency lines have allele frequencies for the marker. There should be one frequency
+line for each allele of a marker, and all of the frequencies for a marker should add up to 1.
+<P>
+For example the following provides allele frequency data for 2 SNPs:
+<pre>
+M locus_1
+F .4
+F .6
+M locus_2
+F .375
+f .625
+</pre>
+Where the first allele (a '1' in the pedigree file) of the first marker has a frequency of .4, and the
+second allele (a '2' in the pedigree file) has a frequency of .6.
 <h3 id="MM">MM</h3>
 The MM directive indicates marker to marker analysis. By default, it
 will do all possible pairwise analyses between any two markers. In
@@ -285,7 +413,19 @@ contrast, the AM directive specifies that only adjacent markers will
 be analyzed.
 
 <h3 id="MP">MP</h3>
-
+Applicable to all types of analyses.
+<p>
+Specifies the name of the marker map file, which provides relative chromosome map positions for all markers
+in the analysis. All markers referenced in the pedigree companion file (<a href="#DF">DF</a> directive)
+must be included. Positions can be on any scale as long as their relative
+position is accurate. Whitespace-separated columns are:
+<ol>
+<li>Chromosome number
+<li>Marker name as specified in the pedigree companion file
+<li>Sex-Averaged map position in centiMorgans
+<li>Male map position in centiMorgans (optional)
+<li>Female map position in centiMorgans (optional)
+</ol>
 <h3 id="P1">P1</h3>
 
 <h3 id="PD">PD</h3>
@@ -300,15 +440,28 @@ evaluation condition.
    PE n
 </pre>
 Where n is an optional integer parameter which specifies the polynomial
-scaling factor in the range of 1-10. Default is 1, and best for
+allocation scaling factor in the range of 1-10. Default is 1, and best for
 environments with limited memory resources. Higher values will generally
 trade memory for execution time.
 
 <h3 id="PF">PF</h3>
 Applicable to all types of analyses.
 <p>
-Specifies the name of the post-MAKEPED format pedigree file to be used
-in the analysis.
+Specifies the name of the LINKAGE (FASTLINK) post-MAKEPED format pedigree file to be used
+in the analysis. Whitespace-separated columns are:
+<ol>
+<li>Pedigree number
+<li>Individual ID number
+<li>ID of father
+<li>ID of mother
+<li>First offspring ID
+<li>Next paternal sibling ID
+<li>Next maternal sibling ID
+<li>Sex (1 for male, 2 for female)
+<li>Proband status (1 for proband, other non-zero numbers indicated doubled IDs from loop-breaking.
+<li>Trait phenotype and marker genotype information columns. Variable in number and described by the file specified
+by the pedigree companion file (<a href="#DF">DF</a> directive).
+</ol>
 <pre>
    PF pedfile.dat
 </pre>
@@ -319,8 +472,6 @@ subdirectories as:
 <pre>
    PF ../pedfile.dat
 </pre>
-For information on the format of the pedigree file itself, see <emp>TBS</emp>.
-
 <h3 id="QT">QT</h3>
 Quantitative trait analysis requires specification of a trait distribution. Currently
 normal, Student's T, and Chi-squared distributions are supported.
@@ -359,14 +510,14 @@ DD != Dd; Dd != dd
 </pre>
 Trait, marker, and alternative results are stored in files named:
 <pre>
-<optional path/>trait/ped-<pn>/ped-<pn>_trait.tpl - for 22 allosomes
-<optional path/>trait-23/ped-<pn>/ped-<pn>_trait.tpl - for autosome
-<optional path/>chr-<cn>_ped-<pn>/chr-<cn>_ped-<pn>_<m1>_<m2>_marker.tpl
-<optional path/>chr-<cn>_ped-<pn>/chr-<cn>_ped-<pn>_pos-<po>_alternative.tpl
+&lt;optional path/>trait/ped-&lt;pn>/ped-&lt;pn>_trait.tpl - for 22 allosomes
+&lt;optional path/>trait-23/ped-&lt;pn>/ped-&lt;pn>_trait.tpl - for autosome
+&lt;optional path/>chr-&lt;cn>_ped-&lt;pn>/chr-&lt;cn>_ped-&lt;pn>_&lt;m1>_&lt;m2>_marker.tpl
+&lt;optional path/>chr-&lt;cn>_ped-&lt;pn>/chr-&lt;cn>_ped-&lt;pn>_pos-&lt;po>_alternative.tpl
 </pre>
-where <optional path> is the parameter to the SR directive, if specified,
-<i><pn></i> is pedigree number, <i><cn></i> is chromosome number, <i><m1></i> and <i><m2></i>
-are marker names, and <i><po></i> is position.
+where &lt;optional path> is the parameter to the SR directive, if specified,
+<tt>&lt;pn></tt> is pedigree number, <tt>&lt;cn></tt> is chromosome number, <tt>&lt;m1></tt> and <tt>&lt;m2></tt>
+are marker names, and <tt>&lt;po></tt> is position.
 <p>
 Paths are created as needed. If trait, marker or alternative result files
 are found, they are loaded and the corresponding calculations skipped. When
