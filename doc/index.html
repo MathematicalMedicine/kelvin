@@ -320,7 +320,8 @@ one row of whitespace-delimited values for each position in the analysis:
 <ol>
 <li>Chr - chromosome number
 <li>Position - trait position in centiMorgans.
-<li>PPL - the imputed posterior probability of linkage.
+<li>PPL - the imputed posterior probability of linkage. This is rounded to a whole number if 2.5 or
+greater, and one decimal place otherwise.
 <li>BayesRatio - average likelihood ratio.
 <li>MOD - maximum LOD score achieved at this position.
 <li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score.
@@ -367,10 +368,12 @@ one line of whitespace-delimited values for each marker in the run.
 <li>Chr - chromosome number
 <li>Marker - marker name
 <li>Position - position in centiMorgans
-<li>PPL - posterior probability of linkage to the disease locus. PPLs of 2.5% or greater are rounded to
-the nearest whole percentage point.
-<li>LD-PPL (only for LD analyses)
-<li>PPLD (only for LD analyses)
+<li>PPL - posterior probability of linkage to the disease locus. This is rounded to a whole number if 2.5 or
+greater, and one decimal place otherwise.
+<li>LD-PPL (only for LD analyses). This is rounded to a whole number if 2.5 or
+greater, and one decimal place otherwise.
+<li>PPLD (only for LD analyses). This is rounded to a whole number if 2.5 or
+greater, and one decimal place otherwise.
 </ol>
 <h2>SEQUENTIAL UPDATING</h2>
 Sequential updating is a method for combining the results of mutiple analyses in post-processing.
