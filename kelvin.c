@@ -1649,7 +1649,7 @@ int main (int argc, char *argv[])
         ppl = calculate_PPL (tp_result[dprime0Idx]);
         fprintf (fpPPL, "%d %s %.4f %.*f ",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-		 ppl >= 2.5 ? 0 : 1, ppl >= 2.5 ? rint(ppl) : rint(ppl*10.0)/10.0);
+		 ppl >= .025 ? 2 : 3, ppl >= .025 ? rint(ppl*100.)/100. : rint(ppl*1000.)/1000.);
         fflush (fpPPL);
         /* output LD-PPL now if needed */
         if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
@@ -1660,8 +1660,8 @@ int main (int argc, char *argv[])
           /* now calculate the PPLD - posterior probability of LD given linkage */
           ppld = calculate_PPLD (tp_result);
           fprintf (fpPPL, "%.*f %.*f ", 
-		   ldppl >= 2.5 ? 0 : 1, ldppl >= 2.5 ? rint(ldppl) : rint(ldppl*10.0)/10.0,
-		   ppld >= 2.5 ? 0 : 1, ppld >= 2.5 ? rint(ppld) : rint(ppld*10.0)/10.0);
+		   ldppl >= .025 ? 2 : 3, ldppl >= .025 ? rint(ldppl*100.)/100. : rint(ldppl*1000.)/1000.,
+		   ppld >= .025 ? 2 : 3, ppld >= .025 ? rint(ppld*100.)/100. : rint(ppld*1000.)/1000.);
         }
         fprintf (fpPPL, "\n");
         fflush (fpPPL);
