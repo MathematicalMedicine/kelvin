@@ -50,32 +50,31 @@ A simple configuration file might look like this:
 33: PF ppl.out # PPL output file
 34:
 35: #
-36: # Analysis grid values
+36: # Analysis grid components
 37: #
-38: # Analysis grid trait gene frequency values
-39: GF 0.001;0.01;0.1;0.3;0.5;0.8
-40:
-41: # Standard penetrances or mean values
-42: DD 0.0 0.9 0.1
-43: DD 0.999
-44: Dd 0.0 0.9 0.1
-45: Dd 0.999
-46: dd 0.0 0.9 0.1
-47: dd 0.999
-48:
-49: # Standard penetrances or mean value constraints
-50: DD >= Dd
-51: Dd >= dd
-52: DD != Dd; Dd != dd
-53: 
-54: # Analysis grid theta values
-55: Th 0 0.5 0.01
-56: 
-57: # Analysis grid alpha values
-58: AL 0.05 1 0.05
+38: # Range of theta values for which to maximize LOD
+39: Th 0 0.5 0.01
+40
+41: # Trait gene frequency values to use in determining maximum LOD
+42: GF 0.001;0.01;0.1;0.3;0.5;0.8
+43:
+44: # Standard penetrances or mean values to use in determining maximum LOD
+45: DD 0.0 0.9 0.1
+46: DD 0.999
+47: Dd 0.0 0.9 0.1
+48: Dd 0.999
+49: dd 0.0 0.9 0.1
+50: dd 0.999
+51: # Standard penetrances or mean value constraints
+52: DD >= Dd
+53: Dd >= dd
+54: DD != Dd; Dd != dd
+55: 
+56: # Alpha values to use in determining maximum LOD
+57: AL 0.05 1 0.05
 </pre>
 Where lines 8, 9 and 10 specify the type of analysis, 19-22 specify input files, 32 and 33
-specify output files, and 35-58 specify a standard analysis grid.
+specify output files, and 35-57 specify a standard analysis grid.
 <p>
 kelvin currently supports wide variety of types analyses,
 so a good starting point for writing a configuration file is to review the
