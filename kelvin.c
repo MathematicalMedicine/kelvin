@@ -395,7 +395,7 @@ int main (int argc, char *argv[])
 #ifdef MEMGRAPH
       FILE *graphFile;
       char graphFileName[64];
-      sprintf (graphFileName, "kelvin_%d_memory.dat", parentPID);
+      sprintf (graphFileName, "kelvin_%d_memory.dat", getppid ());
       if ((graphFile = fopen (graphFileName, "w")) == NULL) {
         perror ("Cannot open memory graph file!");
         exit (EXIT_FAILURE);
