@@ -16,19 +16,19 @@ that take either no parameters or a fixed number of parameters (i.e., not ranges
 A simple configuration file might look like this:
 <pre>
  1: #
- 2: # Sample kelvin.conf file for TP_DT_LD
+ 2: # Sample kelvin.conf file for a two-point dichotomous trait LD analysis
  3: #
  4:
  5: #
  6: # Analysis type
  7: #
- 8: TP # Trait-to-marker two-point analysis (also the default)
- 9: DT # Dichotomous trait (also the default)
+ 8: TP # Trait-to-marker two-point analysis (the default)
+ 9: DT # Dichotomous trait (the default)
 10: # Linkage disequilibrium with D' (D-prime) range specified
 11: LD -1 1 0.1
 12:
 13: # Polynomial evaluation with default allocation factor of 1
-14: PE
+14: PE 1
 15: 
 16: #
 17: # Input files (currently using all default names)
@@ -50,15 +50,15 @@ A simple configuration file might look like this:
 33: PF ppl.out # PPL output file
 34:
 35: #
-36: # Analysis grid components
+36: # Analysis grid and sample space components
 37: #
 38: # Range of theta values for which to maximize LOD
 39: Th 0 0.5 0.01
 40
-41: # Trait gene frequency values to use in determining maximum LOD
+41: # Trait gene frequency values to evaluate in finding maximum LOD
 42: GF 0.001;0.01;0.1;0.3;0.5;0.8
 43:
-44: # Standard penetrances or mean values to use in determining maximum LOD
+44: # Standard penetrances or mean values to evaluate in finding maximum LOD
 45: DD 0.0 0.9 0.1
 46: DD 0.999
 47: Dd 0.0 0.9 0.1
@@ -70,7 +70,7 @@ A simple configuration file might look like this:
 53: Dd >= dd
 54: DD != Dd; Dd != dd
 55: 
-56: # Alpha values to use in determining maximum LOD
+56: # Alpha values to evaluate in finding maximum LOD
 57: AL 0.05 1 0.05
 </pre>
 Where lines 8, 9 and 10 specify the type of analysis, 19-22 specify input files, 32 and 33
@@ -388,20 +388,19 @@ Applicable to all types of analyses.
 <p>
 Specifies the name of the marker allele frequency file, which provides the allele
 frequencies for markers used in the analysis. For each marker there is a header
-line identified by an "M" in the first column, followed by frequency lines for each
-allele for that marker identified by an "F" in the first column. The header line has 
+line identified by an "M" in the first column, followed by a frequency line for that 
+marker identified by an "F" in the first column. The header line has 
 the marker name as specified in the pedigree companion file (<a href="#DF">DF</a> directive).
-The frequency lines have allele frequencies for the marker. There should be one frequency
-line for each allele of a marker, and all of the frequencies for a marker should add up to 1.
+The frequency line has a space-separated list of allele frequencies for the marker.
+There should be one frequency provided for each allele of a marker, and all of the 
+frequencies for a marker should add up to 1.
 <P>
 For example the following provides allele frequency data for 2 SNPs:
 <pre>
 M locus_1
-F .4
-F .6
+F .4 .6
 M locus_2
-F .375
-f .625
+F .375 .625
 </pre>
 Where the first allele (a '1' in the pedigree file) of the first marker has a frequency of .4, and the
 second allele (a '2' in the pedigree file) has a frequency of .6.
@@ -415,7 +414,9 @@ be analyzed.
 Applicable to all types of analyses.
 <p>
 Specifies the name of the marker map file, which provides relative chromosome map positions for all markers
-in the analysis. All markers referenced in the pedigree companion file (<a href="#DF">DF</a> directive)
+in the analysis. There must be a line of text (typically the column header) before the actual data in this
+file. This line cannot be blank or a comment.
+All markers referenced in the pedigree companion file (<a href="#DF">DF</a> directive)
 must be included. Positions can be on any scale as long as their relative
 position is accurate. Whitespace-separated columns are:
 <ol>
@@ -460,6 +461,7 @@ in the analysis. Whitespace-separated columns are:
 <li>Proband status (1 for proband, other non-zero numbers indicated doubled IDs from loop-breaking.
 <li>Trait phenotype and marker genotype information columns. Variable in number and described by the file specified
 by the pedigree companion file (<a href="#DF">DF</a> directive).
+<li>
 </ol>
 <pre>
    PF pedfile.dat
