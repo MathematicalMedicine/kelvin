@@ -120,7 +120,6 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
     strcat (analysisType, (modelOptions.equilibrium == 
 			    LINKAGE_EQUILIBRIUM) ? "Equilibrium." : "Disequilibrium.");
   } else { // not AM/MM
-    sprintf (analysisType, "Trait-to-marker, ");
     if (modelType.type == TP) {
       /* 
 
@@ -130,7 +129,7 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
       TP QT alternative hypothesis is cL[3], looped for all of cL[2] and ndprime, ntheta
 
       */      
-      strcat (analysisType, "Two-Point, ");
+      sprintf (analysisType, "Trait-to-marker, Two-Point, ");
       if (modelType.trait == DT) {
 	strcat (analysisType, "Dichotomous Trait, ");
 	eCL[0] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1);
@@ -173,9 +172,11 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
 
       */
       if (modelOptions.mapFlag == SS) {
-	strcat (analysisType, "Sex-Specific Multipoint, ");
+	sprintf (analysisType, "Trait-to-marker, Sex-Specific Multipoint (%d loci at a time), ",
+		modelType.numMarkers + originalLocusList.numTraitLocus);
       } else { // Multipoint but not SS, so SA
-	strcat (analysisType, "Sex-Averaged Multipoint, ");
+	sprintf (analysisType, "Trait-to-marker, Sex-Averaged Multipoint (%d loci at a time), ",
+		modelType.numMarkers + originalLocusList.numTraitLocus);
       }
       eCL[6] = modelRange.ntloc;
       if (modelType.trait == DT) {
