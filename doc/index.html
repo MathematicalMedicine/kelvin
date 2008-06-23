@@ -113,8 +113,8 @@ listed are on an Macintosh OSX 10.4 i386 with GCC 4.0.1 (no OpenMP).
 <li>Two-point analysis of a dichotomous trait going marker-to-marker: <tt>&lt;RELEASE&gt;/test-suite/TP_DT_MM_LE/</tt>, runs in less than 1s.
 <li>Two-point analysis of a dichotomous trait going marker-to-marker with linkage disequilibrium: <tt>&lt;RELEASE&gt;/test-suite/TP_DT_MM_LD/</tt>, runs in less than 1s.
 <li>Two-point analysis of a quantitative trait: <tt>&lt;RELEASE&gt;/test-suite/TP_QT_LE/</tt>, runs in 27s.
-<li>Multipoint analysis of a dichotomous trait: <tt>&lt;RELEASE&gt;/test-suite/MP_DT/</tt>, runs in 2s.
-<li>Multipoint analysis of a quantitative trait: <tt>&lt;RELEASE&gt;/test-suite/MP_QT/</tt>, runs in 1s.
+<li>Sex-averaged multipoint analysis of a dichotomous trait: <tt>&lt;RELEASE&gt;/test-suite/SA_DT/</tt>, runs in 2s.
+<li>Sex-averaged multipoint analysis of a quantitative trait: <tt>&lt;RELEASE&gt;/test-suite/SA_QT/</tt>, runs in 1s.
 </ul>
 
 <h2>RUNNING THE PROGRAMS</h2>
@@ -307,7 +307,7 @@ include an estimation of internal memory usage when feasible and relevant.
 </ul>
 </ol>
 <h2>INTERPRETING THE RESULTS</h2>
-kelvin produces one or two different files of results depending upon the type of analysis performed. 
+kelvin produces one or two different files of results depending upon the type of analysis performed.
 <h3>Bayes Ratio File</h3>
 Integrated likelihood ratio information is produced for all runs. It is written to the file specified by
 the <tt>HE</tt> directive, or <tt>br.out</tt> by default.
@@ -319,8 +319,11 @@ This is included so that results can be associated with the version of kelvin th
 produced them, and will allow for variations in algorithms, file formats and data precision.
 Subsequent lines contain different information for each type of analysis being performed:
 <h4>Multipoint Analysis</h4>
-For multipoint runs, a single table with a header line is output. The table consists of
-one row of whitespace-delimited values for each position in the analysis:
+For multipoint runs, a single table with a header line is output. 
+The table consists of one row for each trait position with integrated likelihood ratio information for
+the position,
+and the values for alpha, disease gene frequency and penetrance that maximized the LOD at the
+position. Columns are whitespace-delimited:
 <ol>
 <li>Chr - chromosome number
 <li>Position - trait position in centiMorgans.
@@ -345,7 +348,9 @@ Each table is prefaced with a comment line that specifies the two loci of intere
 <pre>
 # 2  Loci_1 at (location) Loci_3 at (location)
 </pre>
-and consists of one row of whitespace-delimited values for each value of theta:
+and consists of one row of whitespace-delimited values for each value of D' (d-prime) if this is an
+LD analysis, theta, integrated likelihood information, and the values for alpha, disease gene frequency and
+penetrance that maximized the LOD for this D' and theta.
 <ol>
 <li>multiple columns of D<i>nm</i> - the D' (d-prime) between allele <i>m</i> of the first locus and allele <i>n</i> of the
 second locus. There will be (<i>n</i>-1)*(<i>m</i>-1) columns present for linkage disequilibrium runs. These
@@ -354,7 +359,7 @@ LE is a special case of LD where D' is always 0.
 <li>Chr - chromosome number
 <li>Theta(M,F) - male and female theta values. They are identical for a sex-averaged analysis.
 <li>BayesRatio - average likelihood ratio.
-<li>MOD - maximum LOD score achieved for this value of theta.
+<li>MOD - maximum LOD score achieved for these loci at these values of D' (if LD) and theta.
 <li>R2 - R square, a measurement of LD.
 <li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score.
 <li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the LOD score.
@@ -362,7 +367,7 @@ LE is a special case of LD where D' is always 0.
 <li>PenetranceVector - maximizing penetrance values for DD, Dd, (optionally dD,) and dd.
 There will be one set of these for each liability class in the analysis.
 </ol>
-<h3>Posterior Probability of Linkage File</h3>
+<h3>Posterior Probability of Linkage (PPL) File</h3>
 Separate PPL information is only produced for trait-to-marker two-point and marker-to-marker analyses, because PPL is imputed for multipoint runs.
 It is written to the file specified by the <tt>PF</tt> directive, or <tt>ppl.out</tt> by default.
 The first line is a comment that contains the kelvin version number as with the Bayes Ratio file.
