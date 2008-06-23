@@ -990,7 +990,7 @@ inline int searchPolynomialList (Polynomial ** p, int length, Polynomial * targe
 
 */
 inline void collectSumTerms (double **factor, ///< Container, pointer to a list of double factors
-			     Polynomial ***p, ///< Container, Pointer to a list of pointers to polynomials
+			     Polynomial ***p, ///< Container, pointer to a list of pointers to polynomials
 			     int *counter, ///< Number of terms currently in the container lists
 			     int *containerLength, ///< Current size of the container lists
 			     double f1, ///< Factor of term to add to the container
@@ -1016,15 +1016,14 @@ inline void collectSumTerms (double **factor, ///< Container, pointer to a list 
       exit (EXIT_FAILURE);
     }
   }
-  //This is a new item in the sum, insert it at the start or end of the sum
+  // This is a new item in the sum, insert it at the start or end
   if (location >= *counter) {
     (*p)[*counter] = p1;
     (*factor)[*counter] = f1;
     (*counter)++;
   }
-  // Insert the item in the middle of the sum
+  // Make space so we can insert the item where it goes in the middle of the sum
   else {
-    // Move the items backward
     memmove (&((*p)[location + 1]), &((*p)[location]), sizeof (Polynomial *) * ((*counter) - location));
     memmove (&((*factor)[location + 1]), &((*factor)[location]), sizeof (double) * ((*counter) - location));
 
@@ -1203,13 +1202,16 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
           con += f1 * p1->e.s->sum[l]->value * p1->e.s->factor[l];
           break;
         case T_VARIABLE:
-          collectSumTerms (&factor_v1, &p_v1, &counter_v1, &containerLength_v1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
+          collectSumTerms (&factor_v1, &p_v1, &counter_v1,
+			   &containerLength_v1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
         case T_PRODUCT:
-          collectSumTerms (&factor_p1, &p_p1, &counter_p1, &containerLength_p1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
+          collectSumTerms (&factor_p1, &p_p1, &counter_p1,
+			   &containerLength_p1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
         case T_FUNCTIONCALL:
-          collectSumTerms (&factor_f1, &p_f1, &counter_f1, &containerLength_f1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
+          collectSumTerms (&factor_f1, &p_f1, &counter_f1,
+			   &containerLength_f1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
         default:
           fprintf (stderr, "In plusExp, unknown expression type %d\n", p1->e.s->sum[l]->eType);
@@ -1512,18 +1514,23 @@ inline int keyProductPolynomial (Polynomial ** p, int *exponent, int counter)
 
 }
 
-// &&& HERE WORKING ON COMMENTS
 /**
 
   This function collects the terms for constructing a product polynomial.  The terms are sorted
   so that these terms can have a unique order in the constructed product polynomial.
 
 */
-inline void collectProductTerms (int **exponent, Polynomial ***p, int *counter, int *containerLength, int e1, Polynomial * p1)
+inline void collectProductTerms (int **exponent, ///< Container, pointer to a list of int exponents
+				 Polynomial ***p, ///< Container, pointer to a list of pointers to polynomials
+				 int *counter, ///< Number of terms currently in the container lists
+				 int *containerLength, ///< Current size of the container lists
+				 int e1, ///< Exponent of term to add to container
+				 Polynomial * p1 ///< Pointer to polynomial of term to add to container
+				 )
 {
   int location;
 
-  //search for a position for this component in the container
+  // Search for a position for this component in the container
   if (searchPolynomialList (*p, *counter, p1, &location) == 1) {
     (*exponent)[location] += e1;
     if ((*exponent)[location] == 0)
@@ -1540,23 +1547,18 @@ inline void collectProductTerms (int **exponent, Polynomial ***p, int *counter, 
       exit (EXIT_FAILURE);
     }
   }
-  //If this item should be in the start or end
-  //  if ((*counter) == 0 || location >= (*counter)) {
+  // This is a new item in the product, insert it at the start or end
   if (location >= (*counter)) {
     (*p)[(*counter)] = p1;
     (*exponent)[(*counter)] = e1;
     (*counter)++;
   }
-  //Otherwise, insert it in the container
+  // Make space so we can insert the item where it goes in the middle of the product
   else {
     memmove (&((*p)[location + 1]), &((*p)[location]), sizeof (Polynomial *) * ((*counter) - location));
     memmove (&((*exponent)[location + 1]), &((*exponent)[location]), sizeof (int) * ((*counter) - location));
-    //for(k=(*counter)-1;k>=j;k--)
-    //{
-    //  (*p)[k+1]        = (*p)[k];
-    //  (*exponent)[k+1] = (*exponent)[k];
-    //}
-    //put this component in the container
+
+    // Insert the new item.
     (*p)[location] = p1;
     (*exponent)[location] = e1;
     (*counter)++;
@@ -1564,44 +1566,52 @@ inline void collectProductTerms (int **exponent, Polynomial ***p, int *counter, 
 };
 
 
-////////////////////////////////////////////////////////////////////////////////////////
-//This function create a product polynomial.  It accepts a group of <exponent, poly>
-//pairs as the operands of a times operation of
-//poly_1^exponet1*poly_2^exponent_2*...*poly_n^exponent_n.
-//It checks the operands to see whether they can be combined for simplification.
-//It is also possible the result is a polynomial other than type of a product if the
-//the result can't be expressed by a product polynomial.
-//The parameters are  1) the number of <poly, exponent> pairs in the parameter list
-//                    2) a group of <poly, exponent> pairs
-//                    3) a flag whose value is set to be 0 for times operations like
-//                       p=p1 * p2 * p3 ... where p1, p2, p3 may not be freed and
-//                       1 for times operations like p = p  * p2 * p3 ... where the
-//                       the parameter polynomial p will be replaced by the new product
-//                       polynomial and therefore the parameter polynomial p can be
-//                       freed
-////////////////////////////////////////////////////////////////////////////////////////
+/**
 
+  This function creates a product polynomial.  It accepts a group of <exponent, poly>
+  pairs as the operands of a times operation of poly_1^exponet1*poly_2^exponent_2*...
+  *poly_n^exponent_n. It checks the operands to see whether they can be combined for 
+  simplification. It is also possible the result is a polynomial other than type of a
+  product if the the result isn't expressed by a product polynomial.
+
+  The parameters are:
+  -# the number of <poly, exponent> pairs in the parameter list
+  -# a group of <poly, exponent> pairs
+
+  -# a flag whose value is set to be 0 for times operations like
+     p=p1 * p2 * p3 ... where p1, p2, p3 may not be freed
+     and 1 for times operations like p = p * p2 * p3... where 
+     the the parameter polynomial p will be replaced by the new
+     product polynomial and therefore the parameter polynomial p 
+     can be freed.
+
+*/
 Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
 {
-  int i, k, l, counterProd;     //i,k and l are loop variables, counterProd is the number of terms in the new product polynomial
-  va_list args; //parameters
-  struct productPoly *pP;       //product structure for the new polynomial
-  Polynomial *rp;       //new product polynomial
-  Polynomial *p1 = 0, *p0 = 0;  //pointer to a term
-  int e1, e0;   //component of a term
-  int isZero = 0;       //if the result is zero
-  double factor = 1;    //collect the constant terms in the parameter list
-  int key = 0;  //key of the new polynomial
-  int pIndex, hIndex;   //index in the polynomial list, index in the hash table
-  int first, last, location;    //first and last terms for comparison, position of the new polynomial in a hash bucket
-  int flag;     //if the new product polynomial can replace an existing one
-  int p0SubHIndex = 0, p0HIndex = 0, p0Index = 0, p0Id = 0, p0Key, p0Valid;
-
-//sub index in a hash bucket, index in the hash table, index in the polynomial list, unique id, key, number of times refered of the
-  //polynomial to be replaced
+  int i, k, l;
+  int counterProd; ///< Number of terms in the new product polynomial
+  va_list args; ///< Variable list of parameters
+  struct productPoly *pP;       ///< Product structure for the new polynomial
+  Polynomial *rp;       ///< New product polynomial
+  Polynomial *p1 = 0, *p0 = 0;  ///< Some polynomial terms
+  int e1, e0;   ///< Component of a term
+  int isZero = 0;       ///< If the result is zero
+  double factor = 1;    ///< Collect the constant terms in the parameter list
+  int key = 0;  ///< Key of the new polynomial
+  int pIndex, hIndex;   ///< Index in the polynomial list, index in the hash table
+  int first,    ///< First term for comparison
+    last,    ///< Last term for comparison
+    location;    ///< Position of the new polynomial in a hash bucket
+  int flag;     ///< If the new product polynomial can replace an existing one
+  int p0SubHIndex = 0, ///< Sub index in a hash bucket
+    p0HIndex = 0, ///< Index in the hash table
+    p0Index = 0, ///< Index in the polynomial list
+    p0Id = 0, ///< Unique Id
+    p0Key, ///< Key
+    p0Valid; ///< Valid byte
   enum expressionType p0EType;
 
-  //Initialize the containers for the operands of a times operation
+  // Initialize the containers for the operands of a times operation
   counter_v2 = 0;
   counter_s2 = 0;
   counter_f2 = 0;
@@ -1610,19 +1620,18 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
   memset (originalChildren, 0, sizeof (originalChildren));
 #endif
 
-  //Get the number of operands for this times operation
+  // Get the number of operands for this times operation
   va_start (args, num);
 
-  //go through operand and its exponent of the product
+  // Go through operand and its exponent of the product
   for (i = 0; i < num; i++) {
-    //get the polynomial
     p1 = va_arg (args, Polynomial *);
 
 #ifdef SOURCEDIGRAPH
     originalChildren[p1->source]++;     // Bump the count of children of this subpoly source for this parent
 #endif
 
-    //get the exponent
+    // Get the exponent
     e1 = va_arg (args, int);
 
     if (polynomialDebugLevel >= 60) {
@@ -1632,65 +1641,53 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         fprintf (stderr, "\n");
       }
     }
-    //Record the first operand of the times operation.  Often, the first operand and the result are the
-    //same variable, which refers to the case of p = p * ..., therefore, when we build a new polynomial
-    //for the result of the times operation, the polynomial that represents the first operand of the
-    //times operation can be freed.
-
+    /* Record the first operand of the times operation.  Often, the first operand and the result are the
+       same variable, which refers to the case of p=p*..., therefore, when we build a new polynomial
+       for the result of the times operation, the polynomial that represents the first operand of the
+       times operation can be freed. */
     if (i == 0) {
-      e0 = e1;
-      p0 = p1;
+      e0 = e1; p0 = p1;
     }
-    //If any of the operand is zero, then the product is zero
+    // If any of the operand is zero, then the product is zero
     if (isZeroExp (p1)) {
       isZero = 1;
       break;
     }
-    //If this operand is a constant, this constant and its exponent
-    //is accumulated into factor
+    // If this operand is a constant, this constant and its exponent are accumulated into factor
     else if (p1->eType == T_CONSTANT) {
       factor *= pow (p1->value, e1);
       continue;
     }
-    //If the operand is variable/sum/product/function call
     else {
-      //If this operand is a sum polynomial and this sum polynomial
-      //has only one item
-      if (p1->eType == T_SUM && p1->e.s->num == 1) {
+      if (p1->eType == T_SUM && p1->e.s->num == 1) { // A sum with only one item?
+
         factor *= pow (p1->e.s->factor[0], e1);
         p1 = p1->e.s->sum[0];
       }
-      //If this operand is a variable, a sum that has
-      //more than one items, or a function call, we directly
-      //collect it.  If this operand is a product, we then
-      //collect each term of it.
+      /* If this operand is a variable, a sum that has more than one items, or a function call, 
+	 we directly collect it.  If this operand is a product, we then collect each term of it. */
       switch (p1->eType) {
       case T_VARIABLE:
         collectProductTerms (&exponent_v2, &p_v2, &counter_v2, &containerLength_v2, e1, p1);
         break;
-
       case T_SUM:
         collectProductTerms (&exponent_s2, &p_s2, &counter_s2, &containerLength_s2, e1, p1);
         break;
-
       case T_FUNCTIONCALL:
         collectProductTerms (&exponent_f2, &p_f2, &counter_f2, &containerLength_f2, e1, p1);
         break;
-        //For a product term, we open it and check each of its terms
+        // For a product term, we open it and check each of its terms
       case T_PRODUCT:
-
         for (l = 0; l < p1->e.p->num; l++) {
           switch (p1->e.p->product[l]->eType) {
           case T_VARIABLE:
             collectProductTerms (&exponent_v2, &p_v2, &counter_v2,
                                  &containerLength_v2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
             break;
-
           case T_SUM:
             collectProductTerms (&exponent_s2, &p_s2, &counter_s2,
                                  &containerLength_s2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
             break;
-
           case T_FUNCTIONCALL:
             collectProductTerms (&exponent_f2, &p_f2, &counter_f2,
                                  &containerLength_f2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
@@ -1698,47 +1695,41 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
           default:
             fprintf (stderr, "In timesExp, unknown expression type %d\n", p1->e.p->product[l]->eType);
             exit (EXIT_FAILURE);
-          }     //end of switch
-        }       //end of for
+          }
+        }
         break;
-
-      case T_FREED:
+      case T_FREED: // The term being referenced has been freed!
         fprintf (stderr, "In plusExp, polynomial term %d was freed:\n", i);
         expTermPrinting (stderr, p1, 1);
         exit (EXIT_FAILURE);
         break;
-
       default:
         fprintf (stderr, "In timesExp, unknown polynomial type %d, exiting!\n", p1->eType);
         raise (SIGUSR1);
         exit (EXIT_FAILURE);
         break;
-      } //end of switch
-    }   //end of else
-  }     //end of for
-
-  //Get the last parameter for this function.  It is a parameter to show if the
-  //first operand of the times operation as a polynomial can be freed after the
-  //result polynomial is constructed
+      }
+    }
+  }
   flag = va_arg (args, int);
 
   va_end (args);
 
-  //This is for performance checking use
   if (flag == 0)
     productNotReleaseableCount++;
   else
     productReleaseableCount++;
 
-  //The product is zero, a zero polynomial is returned
   if (isZero) {
+    // The product is zero, a zero polynomial is returned
     rp = constantExp (0.0);
     productReturn0Count++;
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant zero\n");
     return rp;
   }
-  //combine all the items generated by collecting the operands of the times operation into one polynomial
+  /* Combine all the items generated by collecting the operands of the times operation 
+     into one polynomial */
   counterProd = counter_v2 + counter_s2 + counter_f2;
   if (counterProd > lengthProd) {
     lengthProd = counterProd;
@@ -1761,70 +1752,54 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     memcpy (&exponentProd[counter_v2 + counter_s2], &exponent_f2[0], sizeof (int) * counter_f2);
     memcpy (&pProd[counter_v2 + counter_s2], &p_f2[0], sizeof (Polynomial *) * counter_f2);
   }
-  //The product has 0 items, the result is a constant polynomial
   if (counterProd == 0) {
+    // The product has 0 items, the result is a constant polynomial
     rp = constantExp (factor);
     productReturnConstantCount++;
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
     return rp;
-  }
-  //If the result polynomial has only one term, it is not a product polynomial
-  else if (counterProd == 1 && exponentProd[0] == 1) {
-    //If the factor is 1, then the result polynomial is equal to its first term
+  } else  // If the result polynomial has only one term, it is not a product polynomial
+    if (counterProd == 1 && exponentProd[0] == 1) {
     if (factor == 1.0) {
+      // If the factor is 1, then the result polynomial is equal to its first term
       rp = pProd[0];
       if (polynomialDebugLevel >= 60)
         fprintf (stderr, "Returning first term from caller\n");
       productReturn1stTermCount++;
       return rp;
-    }
-    //If the factor is not 1, then the result polynomial is a sum polynomial
-    else {
+    } else {
+      // If the factor is not 1, then the result polynomial is a sum polynomial
       rp = plusExp (fileName, lineNo, 1, factor, pProd[0], 0);
       if (polynomialDebugLevel >= 60)
         fprintf (stderr, "Returning via plusExp\n");
       productReturn1TermSumCount++;
       return rp;
     }
-  }
-  //The result polynomial is a product polynomial
-  else {
-
-    //compute the key for the product polynomial
+  } else {
+    // The result polynomial is a product polynomial, compute the key
     key = keyProductPolynomial (pProd, exponentProd, counterProd);
-
-
-    //compute hash table index according to the key
+    // Compute hash table index according to the key
     hIndex = key % PRODUCT_HASH_SIZE;
     if (hIndex < 0)
       hIndex += PRODUCT_HASH_SIZE;
-    //If the hash table item is not empty, determine if the product has been in the
-    //product polynomial list.  If it is not, determine a position in the hash table to
-    //save the key and the index in the hash table and save this product polynomial
-    //in the product polynomial list
+    /* If the hash table item is not empty, look for the product in the product polynomial
+       list.  If it is not there, determine a position in the hash table to save the 
+       key and the index in the hash table. */
     if (productHash[hIndex].num > 0) {
-      //if the key of this product is equal to the keys of some polynomials in the
-      //product list, compare the new product polynomial with the polynomials having
-      //the identical key to determine if the product polynomial has already been constructed
+      // If the key is already there, compare to polynomials under that key
       if (searchHashTable (&productHash[hIndex], &first, &last, key)) {
         for (i = first; i <= last; i++) {
           pIndex = productHash[hIndex].index[i];
-          //If the numer of items of the new polynomial is equal to the number of
-          //items of another polynomial whose key is equal to that of the new polynomial,
-          //we need to compare them term by term to determine if they are identical
+          // Compare the two products term-by-term
           if (counterProd == productList[pIndex]->e.p->num) {
             for (k = 0; k < counterProd; k++)
               if (pProd[k] != productList[pIndex]->e.p->product[k]
                   || exponentProd[k] != productList[pIndex]->e.p->exponent[k])
                 break;
-            //If the polynomials are the same
             if (k >= counterProd) {
-              //this product polynomial has been existing and the factor is 1, return the
-              //existing polynomial
+	      //If the polynomials are the same compare the exponents
               if (factor == 1.0) {
-                //the attribute count is used as a sign to show that this polynomial is
-                //refered in more than one places so that it can't be freed
                 productList[pIndex]->valid |= VALID_REF_FLAG;
                 productHashHits++;
                 if (polynomialDebugLevel >= 60) {
@@ -1835,46 +1810,40 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
                   }
                 }
                 return productList[pIndex];
-              }
-              //this product polynomial has been existing so that we don't need to construct a
-              //new one.  However, the factor is not 1, therefore the result polynomial is
-              //a sum polynomial
-              else {
-                productHashHitIsSumCount++;
+              } else {
+		/* This product polynomial already exists so we don't need to construct a
+		   new one, however, the factor is not 1, therefore the result polynomial is
+		   a sum polynomial */
+		productHashHitIsSumCount++;
                 productList[pIndex]->valid |= VALID_REF_FLAG;
                 if (polynomialDebugLevel >= 60)
                   fprintf (stderr, "Returning existing product via plusExp\n");
                 return plusExp (fileName, lineNo, 1, factor, productList[pIndex], 0);
               }
-            }   //end of if
-          }     //end of if
-        }       //end of for
-        location = last;
-      } //end of if
-      else {
+            }
+          }
+        }
+	// Identical key, but not identical polynomial
         location = last;
       }
-    }   //end of if
-    else {
+      location = last;
+    } else
       location = 0;
-    }
 
-    //If the first operand of the times operation can be freed (flag==1)
-    // and the first operand is a product that is refered only once
+    // If the first operand can be freed, do so.
     if (flag != 0 && p0->eType == T_PRODUCT && p0->valid == 0) {
-      //We save the identity information of the polynomial to be freed
-      //so that the resource can be assigned to the newly created polynomial
+      /* We save the identity information of the polynomial to be freed
+	 so that it can be used by the newly created polynomial. */
       p0Index = p0->index;
       p0Id = p0->id;
       p0Key = p0->key;
-      //      p0HIndex = p0->key % PRODUCT_HASH_SIZE;
       p0HIndex = p0Key % PRODUCT_HASH_SIZE;
       if (p0HIndex < 0)
         p0HIndex += PRODUCT_HASH_SIZE;
       p0EType = p0->eType;
       p0Valid = p0->valid;
 
-      //Determine the sub index of the old polynomial in the product hash table
+      // Determine the sub index of the old polynomial in the product hash table
       if (productHash[p0HIndex].num <= 0) {
         fprintf (stderr, "This polynomial is not in the product hash list (1), exiting!\n");
         expTermPrinting (stderr, p0, 1);
@@ -1901,7 +1870,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         exit (EXIT_FAILURE);
       }
 
-      //Free the first operand
+      // Free the first operand
       product1stTermsFreedCount++;
       free (p0->e.p->exponent);
       free (p0->e.p->product);
@@ -1917,8 +1886,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       p0Valid = 7;
     }
 
-    //Construct a new product polynomial from the terms
-    //saved in the container
+    // Construct a new product polynomial from the terms saved in the container
     rp = (Polynomial *) malloc (sizeof (Polynomial));
     if (rp == NULL)
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
@@ -1931,8 +1899,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     pP->exponent = (int *) malloc (counterProd * sizeof (int));
     if (pP->product == NULL || pP->exponent == NULL)
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    //copy the collected polynomial terms and exponents into the
-    //product polynomial structure
+    // Copy the collected terms and exponents into the product polynomial structure
     for (i = 0; i < counterProd; i++) {
       pP->product[i] = pProd[i];
       pP->exponent[i] = exponentProd[i];
@@ -1948,7 +1915,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     rp->source = findOrAddSource (fileName, lineNo, T_PRODUCT);
 #endif
 
-    //After the new polynomial is built, it is recorded in the product polynomial list
+    // After the new polynomial is built, it is saved in the product polynomial list
     if (productCount >= productListLength) {
       productListLength += PRODUCT_LIST_INCREASE;
       productPListExpansions++;
@@ -1958,17 +1925,17 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         exit (EXIT_FAILURE);
       }
     }
-    //We either apply for a new position in the product list for this polynomial, or
-    //replace an existing polynomial with the newly created polynomial at the position
-    //occupied by the existing polynomial
+    /* We either use a new position in the product list for this polynomial, or
+       replace an existing polynomial with the newly created polynomial at the position
+       occupied by the existing polynomial. */
     if (flag != 0 && p0EType == T_PRODUCT && p0Valid == 0) {
-      //Assign the resource of the freed polynomial to the newly constructed polynomial
+      // Use the resource of the freed polynomial for the newly-constructed polynomial
       productListReplacementCount++;
       productList[p0Index] = rp;
       productList[p0Index]->index = p0Index;
       productList[p0Index]->id = p0Id;
     } else {
-      //save the newly constructed polynomial in the polynomial list
+      // Save the newly-constructed polynomial in the polynomial list
       productListNewCount++;
       productList[productCount] = rp;
       productList[productCount]->index = productCount;
@@ -1992,20 +1959,13 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
 #endif
     }
 
-    //the new polynomial is also recorded in the hash table
+    // The new polynomial is also recorded in the hash table
     if (flag != 0 && p0EType == T_PRODUCT && p0Valid == 0) {
-
-      //If the indexes or sub indexes of the new and old polynomials in the hash table
-      //are different
       if (p0SubHIndex != location || p0HIndex != hIndex) {
-        //Insert the new polynomial in the hash table of the product polynomial
         insertHashTable (&productHash[hIndex], location, key, p0Index);
-
-        //Delete the old polynomial from the hash table
         if (p0HIndex != hIndex) {
           deleteHashTable (&productHash[p0HIndex], p0SubHIndex);
-        } else {        //p0SubHIndex!=binaryEnd
-
+        } else {
           if (p0SubHIndex < location) {
             deleteHashTable (&productHash[p0HIndex], p0SubHIndex);
           } else {
@@ -2013,21 +1973,16 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
           }
         }
       }
-      //If the indexes and sub indexes of the old and new polynomials in the hash
-      //table are identical, we don't need deletion and insertion any more, just
-      //replace the key of the old polynomial with the key of the new polynomial
-      //in the hash table
-      else {    //p0HIndex==hIndex && p0SubHIndex==binaryEnd
+      /* If the indexes and sub indexes of the old and new polynomials in the hash
+	 table are identical, we don't need to do any more, just replace the key
+	 of the old polynomial with the key of the new polynomial. */
+      else
         productHash[hIndex].key[location] = key;
-      }
     } else
-      //There is no polynomial replacement problem, just insert the newly created polynomial
-      //in the hash table
-    {
+      // Just insert the newly-created polynomial into the hash table
       insertHashTable (&productHash[hIndex], location, key, productCount - 1);
-    }
 
-    //If the factor is 1, return a product polynomial
+    // If the factor is 1, return a product polynomial
     if (factor == 1.0) {
       productReturnNormalCount++;
       if (polynomialDebugLevel >= 60) {
@@ -2038,9 +1993,8 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         }
       }
       return rp;
-    }
-    //If the factor is not 1, return a sum polynomial
-    else {
+    } else {
+      // If the factor is not 1, return a sum polynomial
       productNon1FactorIsSumCount++;
       if (polynomialDebugLevel >= 60)
         fprintf (stderr, "Returning new product via plusExp\n");
@@ -2049,38 +2003,41 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
   }
 };
 
-////////////////////////////////////////////////////////////////////////
-//This function creates a key for a function call polynomial according
-//to the name of the called function and the parameters
-////////////////////////////////////////////////////////////////////////
+/**
+
+   Create a key for a function call polynomial using the name of the 
+   called function and the parameters.
+
+*/
 inline int keyFunctionCallPolynomial (char *fName, Polynomial ** p, int num)
 {
   int key = 0;
   int i;
 
-  //compute a key from function name,
+  // Compute a key from function name...
   for (i = 0; i < strlen (fName); i++)
     key += (int) fName[i];
-  //and parameters
+  //...and parameters
   for (i = 0; i < num - 1; i++) {
     key = key + p[i]->key;
   }
-
   return key;
-
 };
 
-////////////////////////////////////////////////////////////////////////////////////////
-//This function create a function call.  It accepts the function name and parameters of
-//the function.  Either a different function is called, or a same function is called but
-//with different parameters, a new function call polynomials is created.  If, on the other
-//hand, a same function is called and with the same parameters, the existing function call
-//polynomial is returned.
-//The parameters include
-//  (1) The number of parameters to the called function plus 1
-//  (2) The name of the called function
-//  (3) A group of parameters to the called function
-////////////////////////////////////////////////////////////////////////////////////////
+/**
+
+  This function create a function call polynomial.  It accepts the function name 
+  and parameters of the function.  If either the function or the parameters are 
+  different, a new function call polynomial is created and returned. If everything 
+  is the same as an existing function call polynomial, the existing one is returned.
+
+  The parameters are:
+  -# the number of parameters to the called function plus 1
+  -# the name of the called function
+  -# a group of parameters to the called function
+
+*/
+///// &&& THIS FAR IN COMMENTS
 Polynomial *functionCallExp (int num, ...)
 {
   int i, k, hIndex, fIndex;     //hIndex: index in hash table, fIndex: index in polynomiall list
