@@ -289,3 +289,5 @@ void dumpSourceParenting ();
 void writePolyDigraph (Polynomial *);
 
 #endif
+
+void compilePoly (Polynomial * p, struct polyList *l);

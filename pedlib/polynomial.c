@@ -2294,6 +2294,7 @@ void polyListSorting (Polynomial * p, struct polyList *l)
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
   doPolyListSorting (p, l);
+  //  compilePoly(p, l);
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -4009,3 +4010,120 @@ Polynomial *importPoly (void *exportedPoly)
 
   return (importedPoly);
 }
+
+void compilePoly (Polynomial * p, struct polyList *l)
+{
+  char srcFileName[128];
+  FILE *srcFile;
+  int i, j;
+  Polynomial * result;
+  struct sumPoly *sP;
+  struct productPoly *pP;
+  char *eTypes[6] = {"C", "V", "S", "P", "F", "U"};
+
+  if (l->listNext == 0) {
+    return;
+  }
+
+  result = p;
+  sprintf (srcFileName, "P%d.c", p->id);
+
+  if ((srcFile = fopen (srcFileName, "w")) == NULL) {
+    perror ("Cannot open polynomial source file\n");
+    exit (EXIT_FAILURE);
+  }
+
+  fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n\ndouble P%d (int num, ...) {\n", p->id);
+
+  fprintf (srcFile, "\tdouble C[%d], V[%d], S[%d], P[%d], F[%d];\n\n", constantCount, 
+	   variableCount, sumCount, productCount, functionCallCount);
+  for (i = 0; i < variableCount; i++)
+    fprintf (srcFile, "\tdouble %s;\n", variableList[i]->e.v->vName);
+  fprintf (srcFile, "\n");
+
+  fprintf (srcFile, "\tva_list args;\n\n\tva_start (args, num);\n\n");
+
+  for (i = 0; i < variableCount; i++)
+    fprintf (srcFile, "\t%s = va_arg (args, double);\n", variableList[i]->e.v->vName);
+  fprintf (srcFile, "\n\tva_end (args);\n\n");
+
+  for (i = 0; i < constantCount; i++)
+    fprintf (srcFile, "\tC[%d] = %g;\n", i, constantList[i]->value);
+  fprintf (srcFile, "\n\n");
+
+  for (j = 0; j <= l->listNext - 1; j++) {
+    p = l->pList[j];
+    switch (p->eType) {
+
+    case T_CONSTANT:
+      break;
+
+    case T_VARIABLE:
+      fprintf (srcFile, "\t%s[%d] = %s", eTypes[p->eType], p->index, p->e.v->vName);
+      break;
+
+    case T_SUM:
+      fprintf (srcFile, "\t%s[%d] = ", eTypes[p->eType], p->index);
+      sP = p->e.s;
+      for (i = 0; i < sP->num; i++) {
+	if (i != 0) fprintf (srcFile, "+");
+        if (sP->factor[i] == 1)
+	  fprintf (srcFile, "%s[%d]", eTypes[sP->sum[i]->eType], sP->sum[i]->index);
+        else
+	  fprintf (srcFile, "%g*%s[%d]", sP->factor[i], eTypes[sP->sum[i]->eType],
+		   sP->sum[i]->index);
+      }
+      break;
+
+    case T_PRODUCT:
+      fprintf (srcFile, "\t%s[%d] = ", eTypes[p->eType], p->index);
+      pP = p->e.p;
+      for (i = 0; i < pP->num; i++) {
+	if (i != 0) fprintf (srcFile, "*");
+        switch (pP->exponent[i]) {
+        case 1:
+	  fprintf (srcFile, "%s[%d]", eTypes[pP->product[i]->eType], pP->product[i]->index);
+          break;
+        case 2:
+	  fprintf (srcFile, "%s[%d]*%s[%d]", eTypes[pP->product[i]->eType], pP->product[i]->index,
+		   eTypes[pP->product[i]->eType], pP->product[i]->index);
+          break;
+        case 3:
+	  fprintf (srcFile, "%s[%d]*%s[%d]*%s[%d]", eTypes[pP->product[i]->eType], pP->product[i]->index, 
+		   eTypes[pP->product[i]->eType], pP->product[i]->index, eTypes[pP->product[i]->eType],
+		   pP->product[i]->index);
+          break;
+        case 4:
+	  fprintf (srcFile, "%s[%d]*%s[%d]*%s[%d]*%s[%d]", eTypes[pP->product[i]->eType], 
+		   pP->product[i]->index, eTypes[pP->product[i]->eType], pP->product[i]->index,
+		   eTypes[pP->product[i]->eType], pP->product[i]->index, 
+		   eTypes[pP->product[i]->eType], pP->product[i]->index);
+          break;
+        default:
+	  fprintf (srcFile, "pow(%s[%d],%d)", eTypes[pP->product[i]->eType], pP->product[i]->index, pP->exponent[i]);
+          break;
+        }
+      }
+      break;
+
+    case T_FUNCTIONCALL:
+      fprintf (srcFile, "\tF[%d] = %s(", p->index, p->e.f->name);
+      for (i=0; i<p->e.f->paraNum; i++) {
+	if (i != 0) fprintf (srcFile, ",");
+	fprintf (srcFile, "%s[%d]", eTypes[p->e.f->para[i]->eType], p->e.f->para[i]->index);
+      }
+      fprintf (srcFile, ")");
+      break;
+      
+    default:
+      fprintf (stderr, "In compilePoly, unknown expression type: [%d], exiting!\n", p->eType);
+      exit (EXIT_FAILURE);
+      break;
+    }
+    fprintf (srcFile, ";\n");
+  }
+  fprintf (srcFile, "\n\treturn %s[%d];\n}\n", eTypes[result->eType], result->index);
+  fclose (srcFile);
+  return;
+}
+
