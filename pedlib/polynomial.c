@@ -2447,6 +2447,12 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 #ifdef EVALUATESW
   swStop (evaluatePolySW);
 #endif
+  /* ...for verifying compilePoly results
+  printf("./P%d", pp->id);
+  for (i=0; i<variableCount; i++)
+    printf(" %g", variableList[i]->value);
+  printf("\n...should give %g\n", *pReturnValue);
+  */
   return;
 }
 
@@ -4022,6 +4028,7 @@ void compilePoly (Polynomial * p, struct polyList *l)
   char *eTypes[6] = {"C", "V", "S", "P", "F", "U"};
 
   if (l->listNext == 0) {
+    fprintf (stderr, "Whoops!\n");
     return;
   }
 
@@ -4123,6 +4130,16 @@ void compilePoly (Polynomial * p, struct polyList *l)
     fprintf (srcFile, ";\n");
   }
   fprintf (srcFile, "\n\treturn %s[%d];\n}\n", eTypes[result->eType], result->index);
+  fprintf (srcFile, "#ifdef MAIN\n\n#include <stdio.h>\n#include <stdlib.h>\n\n"
+	   "int main(int argc, char *argv[]) {\n\tint i;\n\n");
+  fprintf (srcFile, "\tif (argc != %d) {\n\t\tfprintf(stderr, \"%d floating arguments required\\n\");"
+	   "\n\t\texit(EXIT_FAILURE);\n\t}\n\tprintf(\"%%g\\n\", P%d(1, ", 
+	   variableCount+1, variableCount, p->id);
+  for (i=0; i<variableCount; i++) {
+    if (i != 0) fprintf (srcFile, ", ");
+    fprintf (srcFile, "atof(argv[%d])", i+1);
+  }
+  fprintf (srcFile, "));\n}\n\n#endif\n");
   fclose (srcFile);
   return;
 }
