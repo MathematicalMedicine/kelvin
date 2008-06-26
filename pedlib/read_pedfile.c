@@ -358,7 +358,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
       ret = find_allele (numMarker, a1);
       pPerson->pPhenotypeList[0][numMarker] = ret;
       KASSERT (ret >= 0,
-	       "Line %d in pedfile %s contains a genotype with unkown allele %s at locus %s.\n",
+	       "Line %d in pedfile %s contains a genotype with unknown allele %s at locus %s.\n",
 	       lineNo, sPedfileName, a1, pLocus->sName);
     }
     else
