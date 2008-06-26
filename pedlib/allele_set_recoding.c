@@ -674,7 +674,7 @@ construct_original_allele_set_list (int locus)
     if (modelOptions.polynomial == TRUE) {
       char vName[100];
 
-      sprintf (vName, "f[%d][%d]", locus, i);
+      sprintf (vName, "freq_l%d_i%d", locus, i);
 
       if (pLocus->locusType == LOCUS_TYPE_MARKER)
 	pAlleleSet->sumFreqPolynomial =
