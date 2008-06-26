@@ -4017,30 +4017,26 @@ Polynomial *importPoly (void *exportedPoly)
   return (importedPoly);
 }
 
+#define MAXSRCLINES (8192)
 void compilePoly (Polynomial * p, struct polyList *l)
 {
-  char srcFileName[128];
-  FILE *srcFile;
-  int i, j;
+  char srcFileName[128], srcCalledFileName[128];
+  FILE *srcFile, *srcCalledFile = NULL;
+  int i, j, lineCount = MAXSRCLINES, fileCount = 0;
   Polynomial * result;
   struct sumPoly *sP;
   struct productPoly *pP;
   char *eTypes[6] = {"C", "V", "S", "P", "F", "U"};
 
-  if (l->listNext == 0) {
-    fprintf (stderr, "Whoops!\n");
-    return;
-  }
-
   result = p;
-  sprintf (srcFileName, "P%d.c", p->id);
 
+  sprintf (srcFileName, "P%d.c", p->id);
   if ((srcFile = fopen (srcFileName, "w")) == NULL) {
     perror ("Cannot open polynomial source file\n");
     exit (EXIT_FAILURE);
   }
 
-  fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n\ndouble P%d (int num, ...) {\n", p->id);
+  fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n\n");
 
   fprintf (srcFile, "\tdouble C[%d], V[%d], S[%d], P[%d], F[%d];\n\n", constantCount, 
 	   variableCount, sumCount, productCount, functionCallCount);
@@ -4048,6 +4044,7 @@ void compilePoly (Polynomial * p, struct polyList *l)
     fprintf (srcFile, "\tdouble %s;\n", variableList[i]->e.v->vName);
   fprintf (srcFile, "\n");
 
+  fprintf (srcFile, "double P%d (int num, ...) {\n", p->id);
   fprintf (srcFile, "\tva_list args;\n\n\tva_start (args, num);\n\n");
 
   for (i = 0; i < variableCount; i++)
@@ -4059,6 +4056,34 @@ void compilePoly (Polynomial * p, struct polyList *l)
   fprintf (srcFile, "\n\n");
 
   for (j = 0; j <= l->listNext - 1; j++) {
+    lineCount++;
+
+    if (lineCount > MAXSRCLINES) {
+      lineCount = 0;
+
+      if (fileCount != 0) {
+	fprintf (srcCalledFile, "}\n");
+	fclose (srcCalledFile);
+      }
+      
+      sprintf (srcCalledFileName, "P%d_%03d.c", result->id, fileCount);
+      if ((srcCalledFile = fopen (srcCalledFileName, "w")) == NULL) {
+	perror ("Cannot open polynomial source called file\n");
+	exit (EXIT_FAILURE);
+      }
+      fprintf (srcFile, "\tP%d_%03d();\n", result->id, fileCount);
+
+      fprintf (srcCalledFile, "#include <math.h>\n\n");
+      fprintf (srcCalledFile, "\textern double C[], V[], S[], P[], F[];\n\n");
+      for (i = 0; i < variableCount; i++)
+	fprintf (srcCalledFile, "\textern double %s;\n", variableList[i]->e.v->vName);
+      fprintf (srcCalledFile, "\n");
+
+      fprintf (srcCalledFile, "double P%d_%03d () {\n", result->id, fileCount);
+
+      fileCount++;
+    }
+
     p = l->pList[j];
     switch (p->eType) {
 
@@ -4066,60 +4091,61 @@ void compilePoly (Polynomial * p, struct polyList *l)
       break;
 
     case T_VARIABLE:
-      fprintf (srcFile, "\t%s[%d] = %s", eTypes[p->eType], p->index, p->e.v->vName);
+      fprintf (srcCalledFile, "\t%s[%d] = %s", eTypes[p->eType], p->index, p->e.v->vName);
       break;
 
     case T_SUM:
-      fprintf (srcFile, "\t%s[%d] = ", eTypes[p->eType], p->index);
+      fprintf (srcCalledFile, "\t%s[%d] = ", eTypes[p->eType], p->index);
       sP = p->e.s;
       for (i = 0; i < sP->num; i++) {
-	if (i != 0) fprintf (srcFile, "+");
+	if (i != 0) fprintf (srcCalledFile, "+");
         if (sP->factor[i] == 1)
-	  fprintf (srcFile, "%s[%d]", eTypes[sP->sum[i]->eType], sP->sum[i]->index);
+	  fprintf (srcCalledFile, "%s[%d]", eTypes[sP->sum[i]->eType], sP->sum[i]->index);
         else
-	  fprintf (srcFile, "%g*%s[%d]", sP->factor[i], eTypes[sP->sum[i]->eType],
+	  fprintf (srcCalledFile, "%g*%s[%d]", sP->factor[i], eTypes[sP->sum[i]->eType],
 		   sP->sum[i]->index);
       }
       break;
 
     case T_PRODUCT:
-      fprintf (srcFile, "\t%s[%d] = ", eTypes[p->eType], p->index);
+      fprintf (srcCalledFile, "\t%s[%d] = ", eTypes[p->eType], p->index);
       pP = p->e.p;
       for (i = 0; i < pP->num; i++) {
-	if (i != 0) fprintf (srcFile, "*");
+	if (i != 0) fprintf (srcCalledFile, "*");
         switch (pP->exponent[i]) {
         case 1:
-	  fprintf (srcFile, "%s[%d]", eTypes[pP->product[i]->eType], pP->product[i]->index);
+	  fprintf (srcCalledFile, "%s[%d]", eTypes[pP->product[i]->eType], pP->product[i]->index);
           break;
         case 2:
-	  fprintf (srcFile, "%s[%d]*%s[%d]", eTypes[pP->product[i]->eType], pP->product[i]->index,
+	  fprintf (srcCalledFile, "%s[%d]*%s[%d]", eTypes[pP->product[i]->eType], pP->product[i]->index,
 		   eTypes[pP->product[i]->eType], pP->product[i]->index);
           break;
         case 3:
-	  fprintf (srcFile, "%s[%d]*%s[%d]*%s[%d]", eTypes[pP->product[i]->eType], pP->product[i]->index, 
+	  fprintf (srcCalledFile, "%s[%d]*%s[%d]*%s[%d]", eTypes[pP->product[i]->eType], pP->product[i]->index, 
 		   eTypes[pP->product[i]->eType], pP->product[i]->index, eTypes[pP->product[i]->eType],
 		   pP->product[i]->index);
           break;
         case 4:
-	  fprintf (srcFile, "%s[%d]*%s[%d]*%s[%d]*%s[%d]", eTypes[pP->product[i]->eType], 
+	  fprintf (srcCalledFile, "%s[%d]*%s[%d]*%s[%d]*%s[%d]", eTypes[pP->product[i]->eType], 
 		   pP->product[i]->index, eTypes[pP->product[i]->eType], pP->product[i]->index,
 		   eTypes[pP->product[i]->eType], pP->product[i]->index, 
 		   eTypes[pP->product[i]->eType], pP->product[i]->index);
           break;
         default:
-	  fprintf (srcFile, "pow(%s[%d],%d)", eTypes[pP->product[i]->eType], pP->product[i]->index, pP->exponent[i]);
+	  fprintf (srcCalledFile, "pow(%s[%d],%d)", eTypes[pP->product[i]->eType],
+		   pP->product[i]->index, pP->exponent[i]);
           break;
         }
       }
       break;
 
     case T_FUNCTIONCALL:
-      fprintf (srcFile, "\tF[%d] = %s(", p->index, p->e.f->name);
+      fprintf (srcCalledFile, "\tF[%d] = %s(", p->index, p->e.f->name);
       for (i=0; i<p->e.f->paraNum; i++) {
-	if (i != 0) fprintf (srcFile, ",");
-	fprintf (srcFile, "%s[%d]", eTypes[p->e.f->para[i]->eType], p->e.f->para[i]->index);
+	if (i != 0) fprintf (srcCalledFile, ",");
+	fprintf (srcCalledFile, "%s[%d]", eTypes[p->e.f->para[i]->eType], p->e.f->para[i]->index);
       }
-      fprintf (srcFile, ")");
+      fprintf (srcCalledFile, ")");
       break;
       
     default:
@@ -4127,8 +4153,12 @@ void compilePoly (Polynomial * p, struct polyList *l)
       exit (EXIT_FAILURE);
       break;
     }
-    fprintf (srcFile, ";\n");
+    fprintf (srcCalledFile, ";\n");
   }
+
+  fprintf (srcCalledFile, "}\n");
+  fclose (srcCalledFile);
+
   fprintf (srcFile, "\n\treturn %s[%d];\n}\n", eTypes[result->eType], result->index);
   fprintf (srcFile, "#ifdef MAIN\n\n#include <stdio.h>\n#include <stdlib.h>\n\n"
 	   "int main(int argc, char *argv[]) {\n\tint i;\n\n");
