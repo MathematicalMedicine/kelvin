@@ -1876,7 +1876,7 @@ get_haplotype_freq (int locus, int parent, void *freqPtr)
 	allele1 = pAlleleSet1->pAlleles[k];
 	allele2 = pAlleleSet2->pAlleles[l];
 	if (modelOptions.polynomial == TRUE) {
-	  sprintf (vName, "ppHaploFreq[%d][%d]", allele1 - 1, allele2 - 1);
+	  sprintf (vName, "ppHaploFreq_lA%d_rA%d", allele1 - 1, allele2 - 1);
 	  freqPolynomial[i] =
 	    plusExp (2, 1.0, freqPolynomial[i], 1.0,
 		     variableExp (&pLDLoci->
@@ -2232,7 +2232,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		  else
 		    {
 		      /* prob * (1-th) */
-		      sprintf (vName1, "theta%d_%d", i, loc);
+		      sprintf (vName1, "theta_i%d_l%d", i, loc);
 		      newProbPoly[i] =
 			timesExp (2, newProbPoly[i], 1,
 				  plusExp (2, 1.0,
@@ -2268,7 +2268,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		    }
 		  else
 		    {
-		      sprintf (vName1, "theta%d_%d", i, loc);
+		      sprintf (vName1, "theta_i%d_l%d", i, loc);
 		      newProbPoly[i] =
 			timesExp (2, newProbPoly[i], 1,
 				  variableExp (&locusList->
@@ -2317,7 +2317,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		    }
 		  else
 		    {
-		      sprintf (vName1, "theta%d_%d", i, loc);
+		      sprintf (vName1, "theta_i%d_l%d", i, loc);
 		      newProbPoly[i] =
 			plusExp (2, 1.0, timesExp (2, (Polynomial *)
 						   prob[i], 1,
@@ -2385,7 +2385,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		    }
 		  else
 		    {
-		  sprintf (vName1, "theta%d_%d", i, loc);
+		  sprintf (vName1, "theta_i%d_l%d", i, loc);
 		  newProbPoly[i] =
 		    plusExp (2, 1.0, timesExp (2, (Polynomial *)
 					       prob2[i], 1,
@@ -2522,7 +2522,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		      }
 		    else /* dealing with trait locus */
 		      { 
-		  sprintf (vName1, "theta%d_%d", i, loc);
+		  sprintf (vName1, "theta_i%d_l%d", i, loc);
 		  /* prevProb * (1-th1) + prevProb2 * th1 */
 		  newProbPoly[i] =
 		    plusExp (2, 1.0, timesExp (2, (Polynomial *)
@@ -2629,7 +2629,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		      }
 		    else /* dealing with trait locus */
 		      { 
-		    sprintf (vName1, "theta%d_%d", i, loc);
+		    sprintf (vName1, "theta_i%d_l%d", i, loc);
 		    newProbPoly[i] = timesExp (2, (Polynomial *)
 					       prob[i], 1,
 					       plusExp (2, 1.0,
@@ -2694,7 +2694,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 		      }
 		    else /* dealing with trait locus */
 		      { 
-			sprintf (vName1, "theta%d_%d", i, loc);
+			sprintf (vName1, "theta_i%d_l%d", i, loc);
 			newProbPoly2[i] = timesExp (2, (Polynomial *)
 						    prob[i], 1,
 						    plusExp (2, 1.0,

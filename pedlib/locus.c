@@ -834,7 +834,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    /* build the penetrance polynomial - single variable */
 	    char vName[100];
 
-	    sprintf (vName, "p[%d][%d][%d][%d]",
+	    sprintf (vName, "pen_aS%d_lC%d_lA1%d_rA%d",
 		     AFFECTION_STATUS_AFFECTED, liabilityClass - 1,
 		     allele1 - 1, allele2 - 1);
 
@@ -842,14 +842,14 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	      variableExp (&pTrait->penetrance[AFFECTION_STATUS_AFFECTED]
 			   [liabilityClass - 1][allele1 -
 						1][allele2 - 1],
-			   NULL, 'D', "");
+			   NULL, 'D', vName);
 	  } else {
 	    /* unaffected: 1 - pen[affected] 
 	     * 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][liabilityClass - 1]
 	     *                                 [allele1-1][allele2-1] */
 	    char vName[100];
 
-	    sprintf (vName, "p[%d][%d][%d][%d]",
+	    sprintf (vName, "pen_aS%d_lC%d_lA%d_rA%d",
 		     AFFECTION_STATUS_AFFECTED, liabilityClass - 1,
 		     allele1 - 1, allele2 - 1);
 	    *(Polynomial **) pen =
@@ -1546,7 +1546,7 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	if (pGenotype->allele[DAD] <= pLocus->numAllele) {
 	  char vName[100];
 
-	  sprintf (vName, "f[%d][%d]", locus, pGenotype->allele[DAD] - 1);
+	  sprintf (vName, "fDad_l%d_a%d", locus, pGenotype->allele[DAD] - 1);
 
 	  if (pLocus->locusType == LOCUS_TYPE_MARKER)
 	    alleleFreqPolynomial[DAD] =
@@ -1565,7 +1565,7 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	if (pGenotype->allele[MOM] <= pLocus->numAllele) {
 	  char vName[100];
 
-	  sprintf (vName, "f[%d][%d]", locus, pGenotype->allele[MOM] - 1);
+	  sprintf (vName, "fMom_l%d_a%d", locus, pGenotype->allele[MOM] - 1);
 	  if (pLocus->locusType == LOCUS_TYPE_MARKER)
 	    alleleFreqPolynomial[MOM] =
 	      constantExp (pLocus->
