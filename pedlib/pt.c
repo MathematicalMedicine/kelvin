@@ -72,7 +72,8 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
   int i, freeFlag;
   double fO1, fO2;
   int eO1, eO2;
-  char *promptString = "C/V/S/P/F/E/G/#/%%/?/Q> ";
+  struct polyList *pL;
+  char *promptString = "C/V/S/P/F/E/G/L/#/%%/?/Q> ";
 
   fprintf(outputFile, promptString);
   while (fgets(iB, sizeof(iB), inputFile) != NULL) {
@@ -225,7 +226,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       fprintf(stdout, "=%20.15g\n", (pHIO1->pP->value = evaluateValue(pHI->pP)));
       break;
     case 'G':			/* Graph the polynomial */
-      pHI = getHandle(inputFile, outputFile," poly to evaluate");
+      pHI = getHandle(inputFile, outputFile," poly to graph");
       if (!preExisting) {
 	fprintf(stderr, "Can't graph undefined poly\n");
 	break;
@@ -233,11 +234,23 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       writePolyDigraph(pHI->pP);
       fprintf(outputFile, "Dot-format digraph written to pD_%d.dot\n", pHI->pP->id);
       break;
+    case 'L':			/* Generate polynomial sort list and C function */
+      pHI = getHandle(inputFile, outputFile," poly to process");
+      if (!preExisting) {
+	fprintf(stderr, "Can't process undefined poly\n");
+	break;
+      }
+      pL = buildPolyList();
+      polyListSorting(pHI->pP, pL);
+      compilePoly(pHI->pP, pL);
+      fprintf(outputFile, "Polynomial C function written to P%d.c\n", nodeId - 1);
+      break;
     default:
       fprintf(stderr, "One of:\n"
 	      "C/V/S/P - create a Constant/Variable/Sum/Product poly\n"
 	      "E - evaluate a poly\n"
 	      "G - generate a digraph of a poly\n"
+	      "L - generate poly list and separate C function\n"
 	      "%% - display poly statistics\n"
 	      "? - print all polys\n"
 	      "Q or <EOF> - quit\n");
