@@ -1,40 +1,44 @@
+/**
+@file read_pedfile.c
 
-/**********************************************************************
- * Copyright 2008, Nationwide Children's Research Institute.  
- * All rights reserved.
- * Permission is hereby given to use this software 
- * for non-profit educational purposes only.
- **********************************************************************/
+ As for Vitesse, reads in post-makeped format pedigree files.
 
-/* Vitesse reads in post-makeped format pedigree files 
- * For the initial design, this library will read in post-makepd format
- * file only. Standard post-makeped format has the following columns: 
- * PedID IndividualID FatherID MomID 1stChildID NextPaternalSiblingID
- * NextMaternalSiblingID Sex ProbandIndicator 
- * AffectionStatus(or QuantitativeTrait) 
- * Genotypes(a pair for each marker. One for a chromosome)
- * Pedigree ID (again)
- * Original Person ID (This can tell which individual is doubled. That is 
- * two lines with different individual IDs with the same original Person IDs 
- * at the end of the lines )
- *
- * Pre-makedped is simpler, only has:
- * PedID IndividualID FatherID MotherID Sex AffectionStatus(QuantitativeTrait)
- * Genotyping pairs for each marker
- *
- * The benefit of reading in post-makeped is that we don't have to deal with
- * breaking loops as presumbly that some other program has been called 
- * to break the loops or individuals have been doubled manually and
- * proband is selected as well. Programs to set up post-makeped file and 
- * break up loops are:
- *
- * makeped <pre-makeped pedfile> <pedfile.dat> n
- *   even though there are loops, still provide "n" when you run makeped
- * unknown -l   (it needs pedfile.dat-post-makeped and datafile.dat to be
- * in the same directory where you run unknown 
- *
- * 
- * */
+ Copyright 2008, Nationwide Children's Research Institute.  All rights
+ reserved.  Permission is hereby given to use this software for
+ non-profit educational purposes only.
+
+ For the initial design, this library will read in post-makepd format
+ file only. Standard post-makeped format has the following columns: 
+
+ - PedID IndividualID FatherID MomID 1stChildID NextPaternalSiblingID
+ - NextMaternalSiblingID Sex ProbandIndicator 
+ - AffectionStatus(or QuantitativeTrait) 
+ - Genotypes(a pair for each marker. One for a chromosome)
+ - Pedigree ID (again)
+ - Original Person ID (This can tell which individual is doubled. That is 
+   two lines with different individual IDs with the same original Person IDs 
+   at the end of the lines )
+
+ Pre-makedped is simpler, only has:
+
+ - PedID IndividualID FatherID MotherID Sex AffectionStatus(QuantitativeTrait)
+ - Genotyping pairs for each marker
+
+ The benefit of reading in post-makeped is that we don't have to deal with
+ breaking loops as presumbly that some other program has been called 
+ to break the loops or individuals have been doubled manually and
+ proband is selected as well. Programs to set up post-makeped file and 
+ break up loops are:
+
+ <pre>
+ makeped <pre-makeped pedfile> <pedfile.dat> n
+   even though there are loops, still provide "n" when you run makeped
+
+ unknown -l   (it needs pedfile.dat-post-makeped and datafile.dat to be
+ in the same directory where you run unknown 
+ </pre>
+
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -48,8 +52,7 @@
 #include "utils.h"
 #include "tools.h"
 
-
-/* functions listed below should not be called outside this library */
+// Functions listed below should not be called outside this library:
 Pedigree *create_pedigree (PedigreeSet * pPedigreeSet, char *sPedLabel);
 Person *create_person (Pedigree * pPed, char *sPersonLabel);
 int add_founder (Pedigree * pPed, Person * pPerson);
@@ -76,9 +79,12 @@ Person *find_original_person (Pedigree * pPed, char *sPersonID);
 Person *find_loop_breaker (Person * breaker);
 void check_for_loop(Pedigree *);
 
-/* Function to read the pedigree file - expected to be postmakeped format 
- * and load data into PedigreeSet and Person
- * */
+/**
+
+ Function to read the pedigree file - expected to be postmakeped format 
+ and load data into PedigreeSet and Person structures.
+
+*/
 int
 read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 {
@@ -1423,18 +1429,20 @@ add_loopbreaker (Pedigree * pPed, Person * pPerson)
 }
 
 
-/* Return an ancestry vector for the specified individual.
-   Recursively compose it if it's not already defined. The
-   ancestry vector is a bit vector with bits set for each
-   ancestral personIndex. We are currently limited, therefore
-   to 63 individuals per pedigree (we use the 64th bit to
-   indicate if the vector is complete).
-   If, in the process of composing a vector, we find that 
-   the Mom's vector and Dad's vector have common bits set, 
-   then they've got a common ancestor, and that constitutes 
-   a loop. */
 unsigned long long ancestryVectors[64];
 unsigned long long aVDoneFlag = 1ULL << 63;
+/**
+
+  Return an ancestry vector for the specified individual.  Recursively
+  compose it if it's not already defined. The ancestry vector is a bit
+  vector with bits set for each ancestral personIndex. We are
+  currently limited, therefore to 63 individuals per pedigree (we use
+  the 64th bit to indicate if the vector is complete).  If, in the
+  process of composing a vector, we find that the Mom's vector and
+  Dad's vector have common bits set, then they've got a common
+  ancestor, and that constitutes a loop.
+
+*/
 unsigned long long
 getAncestryVector(int personIndex, Pedigree *pPed) {
   int momIndex = 0, dadIndex = 0, i;
@@ -1477,8 +1485,15 @@ getAncestryVector(int personIndex, Pedigree *pPed) {
   return ancestryVectors[personIndex];
 }
 
+/**
+
+  Find only cosanguinity loops. This was never developed beyond a limitation
+  of 63 individuals because it only detects cosanguinity loops, and we need
+  to know about marriage loops as well. It is a kind of slick approach, though.
+
+*/
 void
-check_for_loop (Pedigree *pPed) {
+check_for_common_ancestor (Pedigree *pPed) {
   int i;
 
   for (i=0; i<64; i++)
@@ -1495,4 +1510,111 @@ check_for_loop (Pedigree *pPed) {
   for (i = 0; i < pPed->numPerson; i++)
     getAncestryVector(i, pPed);
   return;
+}
+
+
+/**
+
+  Find both marriage and cosanguinity loops.
+
+  This approach relies upon the fact that all vertices in a loop must have
+  at least two edges connecting them to other vertices.
+
+  1. Convert the pedigree to a graph using individuals and "productive
+     relationships" as vertices, and links between individuals and "productive
+     relationships" as edges. For example if we have parents 1 & 2 with 
+     children 3 & 4, then there are 5 vertices, one of which is the 
+     "productive relationship" (we'll number it 5), and there are 4 edges,
+     1-to-5 , 2-to-5, 3-to-5, and 4-to-5.
+  2. Eliminate all singly-connected vertices. If none can be eliminated, then 
+     you're done, and there is at least one loop.
+  3. Recount vertex connections. If none are left, you're done and there are no 
+     loops, otherwise go to 2.
+
+*/
+void
+check_for_loop (Pedigree *pPed) {
+
+  int tuple[256][3]; ///< Self, Mom, Dad
+  Person *pPerson;
+  int i, j, numPRs = 0, firstPR, secondPR, potentialPR, remainingPersons, removedSome,
+    referenceCount;
+
+  /// Copy individual and parent indexes to a structure we can destroy.
+  for (i = 0; i < pPed->numPerson; i++) {
+    pPerson = pPed->ppPersonList[i];
+    tuple[i][0] = atoi(pPerson->sID);
+    tuple[i][1] = atoi(pPerson->sParentID[MOM]);
+    tuple[i][2] = atoi(pPerson->sParentID[DAD]);
+    potentialPR = tuple[i][1] * 1000 + tuple[i][2];
+    for (j = pPed->numPerson; j < (pPed->numPerson + numPRs); j++)
+      if (tuple[j][0] == potentialPR) break;
+    if (j == (pPed->numPerson + numPRs)) {
+      tuple[j][0] = potentialPR; tuple[j][1] = tuple[i][1]; tuple[j][2] = tuple[i][2];
+      //      printf("Adding %d %d %d at %d\n", tuple[j][0], tuple[j][1], tuple[j][2], j);
+      numPRs++;
+    }
+  }
+  //  printf("numPRs now %d\n", numPRs);
+
+  remainingPersons = pPed->numPerson; removedSome = TRUE;
+  while (remainingPersons > 0 && removedSome) {
+    //    for (i = 0; i < (pPed->numPerson + numPRs); i++)
+    //      printf("%d: %d %d %d\n", i, tuple[i][0], tuple[i][1], tuple[i][2]);
+    removedSome = FALSE;
+    // Try to remove individuals
+    for (i = 0; i < pPed->numPerson; i++) { // Check everyone...
+      if (tuple[i][0] == 0) continue; // ...still in the pedigree
+      firstPR = 0; secondPR = 0; // Start with no links
+      firstPR = tuple[i][1] * 1000 + tuple[i][2]; // A non-founder?
+      // Now look for the individual as a parent...
+      for (j = 0; j < (pPed->numPerson + numPRs); j++) { // ...of anyone...
+	if (tuple[j][0] == 0) continue; // ...still in the pedigree
+	if ((tuple[i][0] == tuple[j][1]) || (tuple[i][0] == tuple[j][2])) {
+	  potentialPR = tuple[j][1] * 1000 + tuple[j][2];
+	  if (firstPR == 0)
+	    firstPR = potentialPR;
+	  else
+	    if (potentialPR != firstPR) {
+	      secondPR = potentialPR;
+	      break;
+	    }
+	}
+      }
+      if (secondPR == 0) {
+	//	printf("Removing %d\n", tuple[i][0]);
+	tuple[i][0] = 0; // tuple[i][1] = 0; tuple[i][2] = 0;
+	remainingPersons--;
+	removedSome = TRUE;
+      } // else
+	//	printf("%d has %d and %d\n", tuple[i][0], firstPR, secondPR);
+    }
+    // Try to remove pRs
+    for (i = pPed->numPerson; i < (pPed->numPerson + numPRs); i++) { // Check all PRs..
+      if (tuple[i][0] == 0) continue; // ...still in the pedigree
+      // Now look for references to the PRs
+      referenceCount = 0;
+      for (j = 0; j < pPed->numPerson; j++) { // ...by anyone...
+	if (tuple[j][0] == 0) continue; // ...still in the pedigree
+	if (tuple[j][0] == tuple[i][1] || tuple[j][0] == tuple[i][2] ||
+	    (tuple[j][1] == tuple[i][1] && tuple[j][2] == tuple[i][2])) {
+	  referenceCount++;
+	  //	  printf("PR %d got one from %d\n", i, j);
+	}
+      }
+      if (referenceCount < 2) {
+	//	printf("Removing %d\n", tuple[i][0]);
+	tuple[i][0] = 0;
+	removedSome = TRUE;
+      }
+    }
+  }
+  if (remainingPersons > 0) {
+    pPed->currentLoopFlag = 1;
+    printf("Pedigree %s, loop(s) found involving individuals ", pPed->sPedigreeID);
+    for (i = 0; i< pPed->numPerson; i++)
+      if (tuple[i][0] != 0)
+	printf("%d ", tuple[i][0]);
+    printf("\n");
+  }
 }
