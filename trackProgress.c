@@ -104,18 +104,26 @@ void dumpTrackingStats(ModelType modelType, ModelOptions modelOptions, ModelRang
     fprintf (stderr, "%d=%d(%d) ", i, cl[i], eCL[i]);
   fprintf (stderr, "\n");
   fprintf (stderr, "modelRange. ntloc %d, npenet %d, nlclass %d, ngfreq %d, nafreq %d, "
-	   "nparam %d, ntthresh %d, nalpha %d, modelType.numMarkers %d\n",
+	   "nparam %d, ntthresh %d, nalpha %d, ntheta %d, ndprime %d, originalLocusList.numLocus %d, "
+	   "modelType.numMarkers %d\n",
 	   modelRange.ntloc, modelRange.npenet, modelRange.nlclass, modelRange.ngfreq, 
 	   modelRange.nafreq, modelRange.nparam, modelRange.ntthresh, modelRange.nalpha,
-	   modelType.numMarkers);
+	   modelRange.ntheta, modelRange.ndprime, originalLocusList.numLocus, modelType.numMarkers);
 }
 
 // Construct string describing the type of analysis and determine evaluations required.
 char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelRange modelRange, int eCL[])
 {
+  int cL[9];
+  //  dumpTrackingStats(modelType,  modelOptions,  modelRange, cL, eCL);
   if (modelOptions.markerAnalysis != FALSE) {
+    /*
+      Marker pair (not # in analysis, but locus list)
+      Marker allele frequencies and penetrances stay at 1
+      Theta and D' are still involved
+    */
     eCL[0] = 0;
-    eCL[1] = (originalLocusList.numLocus-1) * modelRange.ntheta;
+    eCL[1] = (originalLocusList.numLocus-2) * modelRange.ndprime * modelRange.ntheta;
     sprintf (analysisType, "Marker-to-marker, Linkage ");
     strcat (analysisType, (modelOptions.equilibrium == 
 			    LINKAGE_EQUILIBRIUM) ? "Equilibrium." : "Disequilibrium.");
