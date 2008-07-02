@@ -1551,26 +1551,37 @@ check_for_loop (Pedigree *pPed) {
       if (tuple[j][0] == potentialPR) break;
     if (j == (pPed->numPerson + numPRs)) {
       tuple[j][0] = potentialPR; tuple[j][1] = tuple[i][1]; tuple[j][2] = tuple[i][2];
-      //      printf("Adding %d %d %d at %d\n", tuple[j][0], tuple[j][1], tuple[j][2], j);
+      //            printf("Adding %d %d %d at %d\n", tuple[j][0], tuple[j][1], tuple[j][2], j);
       numPRs++;
     }
   }
-  //  printf("numPRs now %d\n", numPRs);
+  //    printf("numPRs now %d\n", numPRs);
 
   remainingPersons = pPed->numPerson; removedSome = TRUE;
   while (remainingPersons > 0 && removedSome) {
-    //    for (i = 0; i < (pPed->numPerson + numPRs); i++)
-    //      printf("%d: %d %d %d\n", i, tuple[i][0], tuple[i][1], tuple[i][2]);
+    //        for (i = 0; i < (pPed->numPerson + numPRs); i++)
+    //    printf("%d: %d %d %d\n", i, tuple[i][0], tuple[i][1], tuple[i][2]);
     removedSome = FALSE;
     // Try to remove individuals
     for (i = 0; i < pPed->numPerson; i++) { // Check everyone...
       if (tuple[i][0] == 0) continue; // ...still in the pedigree
       firstPR = 0; secondPR = 0; // Start with no links
-      firstPR = tuple[i][1] * 1000 + tuple[i][2]; // A non-founder?
       // Now look for the individual as a parent...
       for (j = 0; j < (pPed->numPerson + numPRs); j++) { // ...of anyone...
 	if (tuple[j][0] == 0) continue; // ...still in the pedigree
+	// Credit if subject is a parent...
 	if ((tuple[i][0] == tuple[j][1]) || (tuple[i][0] == tuple[j][2])) {
+	  potentialPR = tuple[j][1] * 1000 + tuple[j][2];
+	  if (firstPR == 0)
+	    firstPR = potentialPR;
+	  else
+	    if (potentialPR != firstPR) {
+	      secondPR = potentialPR;
+	      break;
+	    }
+	}
+	// Credit if parental relationship still around
+	if (j >= pPed->numPerson && tuple[i][1] == tuple[j][1] && tuple[i][2] == tuple[j][2]) {
 	  potentialPR = tuple[j][1] * 1000 + tuple[j][2];
 	  if (firstPR == 0)
 	    firstPR = potentialPR;
@@ -1582,12 +1593,12 @@ check_for_loop (Pedigree *pPed) {
 	}
       }
       if (secondPR == 0) {
-	//	printf("Removing %d\n", tuple[i][0]);
-	tuple[i][0] = 0; // tuple[i][1] = 0; tuple[i][2] = 0;
+	//	printf("Removing %d, had only %d\n", tuple[i][0], firstPR);
+	tuple[i][0] = 0; tuple[i][1] = 0; tuple[i][2] = 0;
 	remainingPersons--;
 	removedSome = TRUE;
-      } // else
-	//	printf("%d has %d and %d\n", tuple[i][0], firstPR, secondPR);
+      }//  else
+      //	printf("%d has %d and %d\n", tuple[i][0], firstPR, secondPR);
     }
     // Try to remove pRs
     for (i = pPed->numPerson; i < (pPed->numPerson + numPRs); i++) { // Check all PRs..
@@ -1599,19 +1610,19 @@ check_for_loop (Pedigree *pPed) {
 	if (tuple[j][0] == tuple[i][1] || tuple[j][0] == tuple[i][2] ||
 	    (tuple[j][1] == tuple[i][1] && tuple[j][2] == tuple[i][2])) {
 	  referenceCount++;
-	  //	  printf("PR %d got one from %d\n", i, j);
+	  //	  printf("PR %d got one from %d\n", i, tuple[j][0]);
 	}
       }
       if (referenceCount < 2) {
 	//	printf("Removing %d\n", tuple[i][0]);
-	tuple[i][0] = 0;
+	tuple[i][0] = 0; tuple[i][1] = 0; tuple[i][2] = 0;
 	removedSome = TRUE;
       }
     }
   }
   if (remainingPersons > 0) {
     pPed->currentLoopFlag = 1;
-    printf("Pedigree %s, loop(s) found involving individuals ", pPed->sPedigreeID);
+    fprintf(stdout, "Pedigree %s, loop(s) found involving individuals ", pPed->sPedigreeID);
     for (i = 0; i< pPed->numPerson; i++)
       if (tuple[i][0] != 0)
 	printf("%d ", tuple[i][0]);
