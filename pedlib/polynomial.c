@@ -2294,8 +2294,8 @@ void polyListSorting (Polynomial * p, struct polyList *l)
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
   doPolyListSorting (p, l);
-  if (p->eType != T_CONSTANT && p->eType != T_VARIABLE)
-    compilePoly(p, l);
+  //  if (p->eType != T_CONSTANT && p->eType != T_VARIABLE)
+  //    compilePoly(p, l);
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -2448,12 +2448,12 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 #ifdef EVALUATESW
   swStop (evaluatePolySW);
 #endif
-
+  /* For testing compiled polynomial results
   printf("./P%d", pp->id);
   for (i=0; i<variableCount; i++)
     printf(" %g", variableList[i]->value);
   printf("\n...should give %g\n", *pReturnValue);
-
+  */
   return;
 }
 
