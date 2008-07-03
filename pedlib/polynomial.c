@@ -2294,8 +2294,6 @@ void polyListSorting (Polynomial * p, struct polyList *l)
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
   doPolyListSorting (p, l);
-  //  if (p->eType != T_CONSTANT && p->eType != T_VARIABLE)
-  //    compilePoly(p, l);
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -4019,9 +4017,9 @@ Polynomial *importPoly (void *exportedPoly)
 }
 
 #define MAXSRCLINES (8192)
-void compilePoly (Polynomial * p, struct polyList *l)
+void compilePoly (Polynomial * p, struct polyList * l, char * name)
 {
-  char srcFileName[128], srcCalledFileName[128], includeFileName[128];
+  char srcFileName[128], srcCalledFileName[128], includeFileName[128], compileCommand[256];
   FILE *srcFile, *srcCalledFile = NULL, *includeFile;
   int i, j, lineCount = MAXSRCLINES, fileCount = 0;
   int variablesUsed = 0, sumsUsed = 0, productsUsed = 0, functionCallsUsed = 0;
@@ -4042,10 +4040,12 @@ void compilePoly (Polynomial * p, struct polyList *l)
   fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n\n");
   fprintf (srcFile, "#include \"P%d.h\"\n\n", p->id);
 
-  fprintf (srcFile, "\tdouble V[VARIABLESUSED], S[SUMSUSED], "
+  fprintf (srcFile, "double V[VARIABLESUSED], S[SUMSUSED], "
 	   "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
+
+  /// Make sure all variables are present, since we don't know yet which are used.
   for (i = 0; i < variableCount; i++)
-    fprintf (srcFile, "\tdouble %s;\n", variableList[i]->e.v->vName);
+    fprintf (srcFile, "double %s;\n", variableList[i]->e.v->vName);
   fprintf (srcFile, "\n");
 
   fprintf (srcFile, "double P%d (int num, ...) {\n", p->id);
@@ -4176,12 +4176,16 @@ void compilePoly (Polynomial * p, struct polyList *l)
   fprintf (srcCalledFile, "}\n");
   fclose (srcCalledFile);
 
-  fprintf (srcFile, "\n\treturn %s[%g];\n}\n", eTypes[result->eType], result->value);
+  if (result->eType == T_CONSTANT)
+    fprintf (srcFile, "\n\treturn %g;\n}\n", result->value);
+  else
+    fprintf (srcFile, "\n\treturn %s[%g];\n}\n", eTypes[result->eType], result->value);
+
   fprintf (srcFile, "#ifdef MAIN\n\n#include <stdio.h>\n#include <stdlib.h>\n\n"
 	   "int main(int argc, char *argv[]) {\n\tint i;\n\n");
   fprintf (srcFile, "\tif (argc != %d) {\n\t\tfprintf(stderr, \"%d floating arguments required\\n\");"
 	   "\n\t\texit(EXIT_FAILURE);\n\t}\n\tprintf(\"%%g\\n\", P%d(1, ", 
-	   variableCount+1, variableCount, p->id);
+	   variableCount+1, variableCount, result->id);
   for (i=0; i<variableCount; i++) {
     if (i != 0) fprintf (srcFile, ", ");
     fprintf (srcFile, "atof(argv[%d])", i+1);
@@ -4198,6 +4202,13 @@ void compilePoly (Polynomial * p, struct polyList *l)
   fprintf (includeFile, "#define PRODUCTSUSED %d\n", productsUsed);
   fprintf (includeFile, "#define FUNCTIONCALLSUSED %d\n", functionCallsUsed);
   fclose (includeFile);
+
+  sprintf (compileCommand, "time gcc -lm -DMAIN -o P%d P%d* >& P%d.out", 
+	   result->id, result->id, result->id);
+  fprintf (stdout, "Compiling P%d...", result->id);
+  fflush (stdout);
+  system (compileCommand);
+  fprintf (stdout, "OK\n");
 
   return;
 }

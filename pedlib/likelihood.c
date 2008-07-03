@@ -242,6 +242,7 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   int origLocus = 0;		/* locus index in the original locus list
 				 * this is used to find out the pedigree
 				 * counts mainly for case control analyses */
+  char polyName[128];
 
   if (locusList->numLocus > 1)
     origLocus = locusList->pLocusIndex[1];
@@ -266,6 +267,15 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	  pPedigree->likelihoodPolyList = buildPolyList ();
 	  polyListSorting (pPedigree->likelihoodPolynomial,
 			   pPedigree->likelihoodPolyList);
+#ifdef POLYCOMP
+	  // NEED A UNIQUE NAME HERE, AND THIS ISN'T IT!
+	  sprintf (polyName, "Likelihood for pedigree %s origLocus %d\n",
+		   pPedigree->sPedigreeID, origLocus);
+	  if (pPedigree->likelihoodPolynomial->eType != T_CONSTANT &&
+	      pPedigree->likelihoodPolynomial->eType != T_VARIABLE)
+	    compilePoly(pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList,
+			polyName);
+#endif
 #ifdef POLYSTATISTICS
 	  if (i == pPedigreeList->numPedigree - 1) {
 	    polyDynamicStatistics ("Post-build");
