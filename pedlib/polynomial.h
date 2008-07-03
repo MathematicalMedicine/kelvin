@@ -290,4 +290,4 @@ void writePolyDigraph (Polynomial *);
 
 #endif
 
-void compilePoly (Polynomial * p, struct polyList *l);
+void compilePoly (Polynomial * p, struct polyList * l, char * name);
