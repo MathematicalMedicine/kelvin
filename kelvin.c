@@ -1013,6 +1013,7 @@ int main (int argc, char *argv[])
 
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
+		strcpy (partialPolynomialFunctionName, "cL0_P%s");
                 if (gfreqInd != 0 || penIdx != 0) {
                   swStart (combinedComputeSW);
                   compute_likelihood (&pedigreeSet);
@@ -1033,7 +1034,7 @@ int main (int argc, char *argv[])
                 if (modelOptions.polynomial == TRUE) {
                   swStart (combinedBuildSW);
                   compute_likelihood (&pedigreeSet);
-                  cL[7]++;
+                  cL[0]++;
                   swStop (combinedBuildSW);
                   fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]));
                   fflush (stdout);
@@ -1094,6 +1095,7 @@ int main (int argc, char *argv[])
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
+		    strcpy (partialPolynomialFunctionName, "cL1_P%s");
                     swStart (combinedComputeSW);
                     compute_likelihood (&pedigreeSet);
                     cL[1]++;
@@ -1248,6 +1250,7 @@ int main (int argc, char *argv[])
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
                     KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
+		    strcpy (partialPolynomialFunctionName, "cL2_P%s");
                     compute_likelihood (&pedigreeSet);
                     cL[2]++;
 
@@ -1299,6 +1302,7 @@ int main (int argc, char *argv[])
                                                       initialHetProbAddr, 0, -1, -1, 0);
 
                         KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
+			strcpy (partialPolynomialFunctionName, "cL3_P%s");
                         compute_likelihood (&pedigreeSet);
                         cL[3]++;
                         log10_likelihood_alternative = pedigreeSet.log10Likelihood;
@@ -1796,7 +1800,6 @@ int main (int argc, char *argv[])
 
           /* Compute the likelihood for the trait */
 	  sprintf (partialPolynomialFunctionName, "T_P%%sSL%d", modelOptions.sexLinked);
-        compute_likelihood (&pedigreeSet);
           compute_likelihood (&pedigreeSet);
           cL[4]++;
 #ifndef SIMPLEPROGRESS
@@ -1901,6 +1904,7 @@ int main (int argc, char *argv[])
               if (modelOptions.polynomial == TRUE);
               else
                 update_penetrance (&pedigreeSet, traitLocus);
+	      sprintf (partialPolynomialFunctionName, "T_P%%sSL%d", modelOptions.sexLinked);
               compute_likelihood (&pedigreeSet);
               cL[5]++;
 #ifndef SIMPLEPROGRESS
@@ -2270,11 +2274,11 @@ int main (int argc, char *argv[])
 
             /* If we're not on the first iteration, it's not a polynomial build, so
              * show progress at 1 minute intervals. Have a care to avoid division by zero. */
+	    sprintf (partialPolynomialFunctionName, "CL_P%%sC%dFM%dof%d",
+		     (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+		     mp_result[posIdx].pMarkers[0], modelType.numMarkers);
             if (gfreqInd != 0 || penIdx != 0) {
               swStart (combinedComputeSW);
-	      sprintf (partialPolynomialFunctionName, "CL_P%%sC%dFM%dfor%d",
-		       (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-		       mp_result[posIdx].pMarkers[0], modelType.numMarkers);
               compute_likelihood (&pedigreeSet);
               cL[7]++;
               swStop (combinedComputeSW);
@@ -2485,6 +2489,9 @@ int main (int argc, char *argv[])
 
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
+		sprintf (partialPolynomialFunctionName, "CL_P%%sC%dFM%dof%d",
+			 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+			 mp_result[posIdx].pMarkers[0], modelType.numMarkers);
                 if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
                   swStart (combinedComputeSW);
                   compute_likelihood (&pedigreeSet);
