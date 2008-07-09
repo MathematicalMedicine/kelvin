@@ -2637,7 +2637,7 @@ int main (int argc, char *argv[])
       thresholdIdx = mp_result[posIdx].max_thresholdIdx;
       fprintf (fpHet, "%d %f %.*f %.6e %.6f %f %f",
                (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-               traitPos, ppl >= .025 ? 0 : 1, ppl >= .025 ? rint(ppl) : rint(ppl*1000.0)/1000.0,
+               traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint(ppl) : rint(ppl*1000.0)/1000.0,
 	       avgLR, log10 (max), alphaV, gfreq);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
         pen_DD = modelRange.penet[liabIdx][0][penIdx];
