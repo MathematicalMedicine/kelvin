@@ -350,7 +350,6 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 			&pPedigree->likelihood);
 #endif
 #endif
-	printf ("Result is %g\n", pPedigree->likelihood);
       }
     }
   }
