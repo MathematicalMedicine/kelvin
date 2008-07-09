@@ -329,7 +329,6 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 #pragma omp parallel for private(pPedigree)
 #endif
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
-      printf ("Evaluate %d\n", i);
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       if (pPedigree->load_flag == 0) {
 #ifdef FAKEEVALUATE
