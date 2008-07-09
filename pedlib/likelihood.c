@@ -252,7 +252,9 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   if (locusList->numLocus > 1)
     origLocus = locusList->pLocusIndex[1];
   numLocus = locusList->numLocus;
+#ifdef POLYCOMP
   char polynomialFunctionName[MAX_PFN_LEN+1];
+#endif
 
   /* initialization */
   sum_log_likelihood = 0;
@@ -348,6 +350,7 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 			&pPedigree->likelihood);
 #endif
 #endif
+	printf ("Result is %g\n", pPedigree->likelihood);
       }
     }
   }
