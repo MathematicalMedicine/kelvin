@@ -2512,8 +2512,7 @@ int main (int argc, char *argv[])
                       fflush (stdout);
                     }
                   }
-                } else  // This _is_ the first iteration
-                if (modelOptions.polynomial == TRUE) {
+                } else {  // This _is_ the first iteration
                   swStart (combinedBuildSW);
                   compute_likelihood (&pedigreeSet);
                   cL[8]++;
