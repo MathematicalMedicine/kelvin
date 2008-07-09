@@ -88,6 +88,7 @@ typedef struct XMission
 extern ParentalPairSpace parentalPairSpace;
 extern XMission *xmissionMatrix;
 extern double *half_pow;
+extern char partialPolynomialFunctionName[];
 
 int construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
 			     int locus);

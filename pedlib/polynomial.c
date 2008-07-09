@@ -119,6 +119,10 @@
 #include <time.h>
 #include <signal.h>
 
+#ifdef POLYCOMP_DL
+#include <dlfcn.h>
+#endif
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -181,6 +185,7 @@ struct polynomial **functionCallList;
 int functionCallCount;
 int functionCallListLength;
 
+char *eTypes[6] = {"C", "V", "S", "P", "F", "U"}; ///< Useful prefixes for polynomial types
 
 /** @defgroup PolyCons Polynomial Scaling Constants
     @{
@@ -2439,6 +2444,8 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
       fprintf (stderr, "In evaluatePoly, evaluated value of type %d as not a number\n", p->eType);
       exit (EXIT_FAILURE);
     }
+    //    expTermPrinting (stderr, p, 1);
+    //    fprintf (stderr, "\n%s[%d] = %g\n", eTypes[p->eType], p->id, p->value);
   }
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "...finished evaluatePoly with %G\n", pp->value);
@@ -4016,30 +4023,55 @@ Polynomial *importPoly (void *exportedPoly)
   return (importedPoly);
 }
 
-#define MAXSRCLINES (8192)
-void compilePoly (Polynomial * p, struct polyList * l, char * name)
+#ifdef POLYCOMP_DL
+/// Attempt to load an existing dynamic library for the specified polynomial.
+void *loadPoly (char *name)
 {
-  char srcFileName[128], srcCalledFileName[128], includeFileName[128], compileCommand[256];
+  char dLName[128];
+  void *dl;
+
+  sprintf (dLName, "./%s.so", name);
+  printf ("Attempting load of [%s]\n", dLName);
+  if ((dl = dlopen(dLName, RTLD_NOW)) != NULL) {
+    fprintf (stdout, "Using existing dynamic library for polynomial %s\n", name);
+    return dl;
+  } else {
+    fprintf (stdout, "Couldn't find existing dynamic library for polynomial %s\n", name);
+    return NULL;
+  }
+}
+#endif
+
+#define MAXSRCSIZE (8192*128)
+void *compilePoly (Polynomial * p, struct polyList * l, char * name)
+{
+  char srcFileName[128], srcCalledFileName[128], includeFileName[128], command[256];
   FILE *srcFile, *srcCalledFile = NULL, *includeFile;
-  int i, j, lineCount = MAXSRCLINES, fileCount = 0;
-  int variablesUsed = 0, sumsUsed = 0, productsUsed = 0, functionCallsUsed = 0;
+  int i, j, srcSize = MAXSRCSIZE+1, fileCount = 0;
+  int sumsUsed = 0, productsUsed = 0, functionCallsUsed = 0;
   Polynomial * result;
   struct sumPoly *sP;
   struct productPoly *pP;
-  char *eTypes[6] = {"C", "V", "S", "P", "F", "U"};
+#ifdef POLYCOMP_DL
+  void *dl;
+#endif
 
   result = p;
 
-  sprintf (srcFileName, "P%d.c", p->id);
-  sprintf (includeFileName, "P%d.h", p->id);
+  sprintf (srcFileName, "%s.c", name);
+  sprintf (includeFileName, "%s.h", name);
   if ((srcFile = fopen (srcFileName, "w")) == NULL) {
     perror ("Cannot open polynomial source file\n");
     exit (EXIT_FAILURE);
   }
 
   fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n\n");
-  fprintf (srcFile, "#include \"P%d.h\"\n\n", p->id);
+  fprintf (srcFile, "#include \"%s.h\"\n\n", name);
 
+#ifdef POLYCOMP_DL
+  fprintf (srcFile, "#include \"polynomial.h\"\n\n");
+  fprintf (srcFile, "struct polynomial **variableList;\n\n");
+#endif
   fprintf (srcFile, "double V[VARIABLESUSED], S[SUMSUSED], "
 	   "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
 
@@ -4048,38 +4080,49 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
     fprintf (srcFile, "double %s;\n", variableList[i]->e.v->vName);
   fprintf (srcFile, "\n");
 
-  fprintf (srcFile, "double P%d (int num, ...) {\n", p->id);
+  fprintf (srcFile, "double %s (int num, ...) {\n", name);
+
   fprintf (srcFile, "\tva_list args;\n\n\tva_start (args, num);\n\n");
 
+#ifdef POLYCOMP_DL
+  fprintf (srcFile, "\tvariableList = va_arg (args, struct polynomial **);\n");
   for (i = 0; i < variableCount; i++)
-    fprintf (srcFile, "\t%s = va_arg (args, double);\n", variableList[i]->e.v->vName);
-  fprintf (srcFile, "\n\tva_end (args);\n\n");
+    if (variableList[i]->e.v->vType == 'I')
+      fprintf (srcFile, "\t\t%s = (double) *(variableList[%d]->e.v->vAddr.vAddrI);\n",
+	       variableList[i]->e.v->vName, i);
+    else
+      fprintf (srcFile, "\t\t%s = *(variableList[%d]->e.v->vAddr.vAddrD);\n",
+	       variableList[i]->e.v->vName, i);
+#else
+  for (i = 0; i < variableCount; i++)
+    fprintf (srcFile, "\t\t%s = va_arg (args, double);\n", variableList[i]->e.v->vName);
+#endif
+  fprintf (srcFile, "\tva_end (args);\n\n");
 
   for (j = 0; j <= l->listNext - 1; j++) {
-    lineCount++;
 
-    if (lineCount > MAXSRCLINES) {
-      lineCount = 0;
+    if (srcSize >= MAXSRCSIZE) {
+      srcSize = 0;
 
       if (fileCount != 0) {
-	fprintf (srcCalledFile, "}\n");
+	srcSize += fprintf (srcCalledFile, "}\n");
 	fclose (srcCalledFile);
       }
       
-      sprintf (srcCalledFileName, "P%d_%03d.c", result->id, fileCount);
+      sprintf (srcCalledFileName, "%s_%03d.c", name, fileCount);
       if ((srcCalledFile = fopen (srcCalledFileName, "w")) == NULL) {
 	perror ("Cannot open polynomial source called file\n");
 	exit (EXIT_FAILURE);
       }
-      fprintf (srcFile, "\tP%d_%03d();\n", result->id, fileCount);
+      fprintf (srcFile, "\t%s_%03d();\n", name, fileCount);
 
-      fprintf (srcCalledFile, "#include <math.h>\n\n");
-      fprintf (srcCalledFile, "\textern double V[], S[], P[], F[];\n\n");
+      srcSize += fprintf (srcCalledFile, "#include <math.h>\n#include <stdio.h>\n\n");
+      srcSize += fprintf (srcCalledFile, "\textern double V[], S[], P[], F[];\n\n");
       for (i = 0; i < variableCount; i++)
-	fprintf (srcCalledFile, "\textern double %s;\n", variableList[i]->e.v->vName);
-      fprintf (srcCalledFile, "\n");
+	srcSize += fprintf (srcCalledFile, "\textern double %s;\n", variableList[i]->e.v->vName);
+      srcSize += fprintf (srcCalledFile, "\n");
 
-      fprintf (srcCalledFile, "double P%d_%03d () {\n", result->id, fileCount);
+      srcSize += fprintf (srcCalledFile, "double %s_%03d () {\n", name, fileCount);
 
       fileCount++;
     }
@@ -4091,77 +4134,80 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
       break;
 
     case T_VARIABLE:
-      fprintf (srcCalledFile, "\t%s[%d] = %s", eTypes[p->eType], variablesUsed,
+      srcSize += fprintf (srcCalledFile, "\t%s[%d] = %s", eTypes[p->eType], p->index,
 	       p->e.v->vName);
-      p->value = variablesUsed++;
+      //      srcSize += fprintf (srcCalledFile, ";\n\tprintf (\"%%g\\n\", %s[%d])", eTypes[p->eType], p->index);
+      p->value = p->index;
       break;
 
     case T_SUM:
-      fprintf (srcCalledFile, "\t%s[%d] = ", eTypes[p->eType], sumsUsed);
+      srcSize += fprintf (srcCalledFile, "\t%s[%d] = ", eTypes[p->eType], sumsUsed);
       sP = p->e.s;
       for (i = 0; i < sP->num; i++) {
-	if (i != 0) fprintf (srcCalledFile, "+");
+	if (i != 0) srcSize += fprintf (srcCalledFile, "+");
 	if (sP->sum[i]->eType == T_CONSTANT)
-	  fprintf (srcCalledFile, "%g", sP->sum[i]->value /* still the constant */);
+	  srcSize += fprintf (srcCalledFile, "%g", sP->sum[i]->value /* still the constant */);
 	else {
 	  if (sP->factor[i] == 1)
-	    fprintf (srcCalledFile, "%s[%g]", eTypes[sP->sum[i]->eType], 
+	    srcSize += fprintf (srcCalledFile, "%s[%g]", eTypes[sP->sum[i]->eType], 
 		     sP->sum[i]->value /* actually <whatever>Used */);
 	  else
-	    fprintf (srcCalledFile, "%g*%s[%g]", sP->factor[i], eTypes[sP->sum[i]->eType],
+	    srcSize += fprintf (srcCalledFile, "%g*%s[%g]", sP->factor[i], eTypes[sP->sum[i]->eType],
 		     sP->sum[i]->value /* actually <whatever>Used */);
 	}
       }
+      //      srcSize += fprintf (srcCalledFile, ";\n\tprintf (\"%%g\\n\", %s[%d])", eTypes[p->eType], sumsUsed);
       p->value = sumsUsed++;
       break;
 
     case T_PRODUCT:
-      fprintf (srcCalledFile, "\t%s[%d] = ", eTypes[p->eType], productsUsed);
+      srcSize += fprintf (srcCalledFile, "\t%s[%d] = ", eTypes[p->eType], productsUsed);
       pP = p->e.p;
       for (i = 0; i < pP->num; i++) {
-	if (i != 0) fprintf (srcCalledFile, "*");
+	if (i != 0) srcSize += fprintf (srcCalledFile, "*");
 	if (pP->product[i]->eType == T_CONSTANT)
-	  fprintf (srcCalledFile, "%g", pP->product[i]->value /* still the constant */);
+	  srcSize += fprintf (srcCalledFile, "%g", pP->product[i]->value /* still the constant */);
 	else {
 	  switch (pP->exponent[i]) {
 	  case 1:
-	    fprintf (srcCalledFile, "%s[%g]", eTypes[pP->product[i]->eType], pP->product[i]->value);
+	    srcSize += fprintf (srcCalledFile, "%s[%g]", eTypes[pP->product[i]->eType], pP->product[i]->value);
 	    break;
 	  case 2:
-	    fprintf (srcCalledFile, "%s[%g]*%s[%g]", eTypes[pP->product[i]->eType], pP->product[i]->value,
+	    srcSize += fprintf (srcCalledFile, "%s[%g]*%s[%g]", eTypes[pP->product[i]->eType], pP->product[i]->value,
 		     eTypes[pP->product[i]->eType], pP->product[i]->value);
 	    break;
 	  case 3:
-	    fprintf (srcCalledFile, "%s[%g]*%s[%g]*%s[%g]", eTypes[pP->product[i]->eType], pP->product[i]->value, 
+	    srcSize += fprintf (srcCalledFile, "%s[%g]*%s[%g]*%s[%g]", eTypes[pP->product[i]->eType], pP->product[i]->value, 
 		     eTypes[pP->product[i]->eType], pP->product[i]->value, eTypes[pP->product[i]->eType],
 		     pP->product[i]->value);
 	    break;
 	  case 4:
-	    fprintf (srcCalledFile, "%s[%g]*%s[%g]*%s[%g]*%s[%g]", eTypes[pP->product[i]->eType], 
+	    srcSize += fprintf (srcCalledFile, "%s[%g]*%s[%g]*%s[%g]*%s[%g]", eTypes[pP->product[i]->eType], 
 		     pP->product[i]->value, eTypes[pP->product[i]->eType], pP->product[i]->value,
 		     eTypes[pP->product[i]->eType], pP->product[i]->value, 
 		     eTypes[pP->product[i]->eType], pP->product[i]->value);
 	    break;
 	  default:
-	    fprintf (srcCalledFile, "pow(%s[%g],%d)", eTypes[pP->product[i]->eType],
+	    srcSize += fprintf (srcCalledFile, "pow(%s[%g],%d)", eTypes[pP->product[i]->eType],
 		     pP->product[i]->value, pP->exponent[i]);
 	    break;
 	  }
         }
       }
+      //      srcSize += fprintf (srcCalledFile, ";\n\tprintf (\"%%g\\n\", %s[%d])", eTypes[p->eType], productsUsed);
       p->value = productsUsed++;
       break;
 
     case T_FUNCTIONCALL:
-      fprintf (srcCalledFile, "\tF[%d] = %s(", functionCallsUsed, p->e.f->name);
+      srcSize += fprintf (srcCalledFile, "\tF[%d] = %s(", functionCallsUsed, p->e.f->name);
       for (i=0; i<p->e.f->paraNum; i++) {
-	if (i != 0) fprintf (srcCalledFile, ",");
+	if (i != 0) srcSize += fprintf (srcCalledFile, ",");
 	if (p->e.f->para[i]->eType == T_CONSTANT)
-	  fprintf (srcCalledFile, "%g", p->e.f->para[i]->value /* still the constant */);
+	  srcSize += fprintf (srcCalledFile, "%g", p->e.f->para[i]->value /* still the constant */);
 	else
-	  fprintf (srcCalledFile, "%s[%g]", eTypes[p->e.f->para[i]->eType], p->e.f->para[i]->value);
+	  srcSize += fprintf (srcCalledFile, "%s[%g]", eTypes[p->e.f->para[i]->eType], p->e.f->para[i]->value);
       }
-      fprintf (srcCalledFile, ")");
+      srcSize += fprintf (srcCalledFile, ")");
       p->value = functionCallsUsed++;
       break;
       
@@ -4170,10 +4216,10 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
       exit (EXIT_FAILURE);
       break;
     }
-    fprintf (srcCalledFile, ";\n");
+    srcSize += fprintf (srcCalledFile, ";\n");
   }
 
-  fprintf (srcCalledFile, "}\n");
+  srcSize += fprintf (srcCalledFile, "}\n");
   fclose (srcCalledFile);
 
   if (result->eType == T_CONSTANT)
@@ -4184,8 +4230,8 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
   fprintf (srcFile, "#ifdef MAIN\n\n#include <stdio.h>\n#include <stdlib.h>\n\n"
 	   "int main(int argc, char *argv[]) {\n\tint i;\n\n");
   fprintf (srcFile, "\tif (argc != %d) {\n\t\tfprintf(stderr, \"%d floating arguments required\\n\");"
-	   "\n\t\texit(EXIT_FAILURE);\n\t}\n\tprintf(\"%%g\\n\", P%d(1, ", 
-	   variableCount+1, variableCount, result->id);
+	   "\n\t\texit(EXIT_FAILURE);\n\t}\n\tprintf(\"%%g\\n\", %s(1, ", 
+	   variableCount+1, variableCount, name);
   for (i=0; i<variableCount; i++) {
     if (i != 0) fprintf (srcFile, ", ");
     fprintf (srcFile, "atof(argv[%d])", i+1);
@@ -4197,19 +4243,29 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
     perror ("Cannot open polynomial include file\n");
     exit (EXIT_FAILURE);
   }
-  fprintf (includeFile, "#define VARIABLESUSED %d\n", variablesUsed);
+  fprintf (includeFile, "#define VARIABLESUSED %d\n", variableCount);
   fprintf (includeFile, "#define SUMSUSED %d\n", sumsUsed);
   fprintf (includeFile, "#define PRODUCTSUSED %d\n", productsUsed);
   fprintf (includeFile, "#define FUNCTIONCALLSUSED %d\n", functionCallsUsed);
   fclose (includeFile);
 
-  sprintf (compileCommand, "time gcc -lm -DMAIN -o P%d P%d* >& P%d.out", 
-	   result->id, result->id, result->id);
-  fprintf (stdout, "Compiling P%d...", result->id);
+  sprintf (command, "time gcc -O -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", 
+	   name, name, name);
   fflush (stdout);
-  system (compileCommand);
-  fprintf (stdout, "OK\n");
-
-  return;
+  int status;
+  if ((status = system (command)) != 0) {
+    perror("system()");
+    exit (EXIT_FAILURE);
+  }
+#ifdef POLYCOMP_DL
+  sprintf (command, "./%s.so", name);
+  if ((dl = dlopen(command, RTLD_NOW)) == NULL) {
+    perror(dlerror());
+    exit (EXIT_FAILURE);
+  }
+  return dl;
+#else
+  return 0;
+#endif
 }
 

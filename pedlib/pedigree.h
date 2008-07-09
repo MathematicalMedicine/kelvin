@@ -16,6 +16,9 @@
  * vitesse codeset v_prog.h and trimed down to the bare neccessities
  * */
 
+/* Maximum size of a polynomial function name or "signature" */
+#define MAX_PFN_LEN 128
+
 /* maximum line length in pedigree file */
 #define MAX_LINE_LEN            4096
 
@@ -94,6 +97,7 @@ typedef struct PedigreeSet
  *   number of nuclear families
  *   number of founders etc. 
  * */
+
 typedef struct Pedigree
 {
   /* Links to the pedigree set this pedigree is in */
@@ -167,7 +171,9 @@ typedef struct Pedigree
   double ***traitLikelihoodQT;
   double **alternativeLikelihoodDT;
 
-
+  char *polynomialFunctionName;
+  double (*polynomialFunction)();
+  void *polynomialFunctionHandle;
   struct polynomial *likelihoodPolynomial;
   struct polyList *likelihoodPolyList;
   struct polynomial *traitLikelihoodPolynomial;

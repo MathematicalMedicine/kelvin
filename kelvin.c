@@ -764,6 +764,9 @@ int main (int argc, char *argv[])
     pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
     pPedigree->load_flag = 0;   /* Initially 0 and changes to 1 when marker or 
                                  * alternative likelihood values are retrieved */
+    pPedigree->polynomialFunction = NULL;
+    pPedigree->polynomialFunctionHandle = NULL;
+    pPedigree->polynomialFunctionName = NULL;
   }
 
   /* only for multipoint - we don't handle LD under multipoint yet */
@@ -1792,6 +1795,8 @@ int main (int argc, char *argv[])
             update_locus (&pedigreeSet, traitLocus);
 
           /* Compute the likelihood for the trait */
+	  sprintf (partialPolynomialFunctionName, "T_P%%sSL%d", modelOptions.sexLinked);
+        compute_likelihood (&pedigreeSet);
           compute_likelihood (&pedigreeSet);
           cL[4]++;
 #ifndef SIMPLEPROGRESS
@@ -2072,7 +2077,9 @@ int main (int argc, char *argv[])
             pPedigree->load_flag = 0;
           }
         }
-
+	sprintf (partialPolynomialFunctionName, "ML_P%%sC%dFM%dof%d",
+		 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+		 mp_result[posIdx].pMarkers[0], modelType.numMarkers);
         compute_likelihood (&pedigreeSet);
         cL[6]++;
 #ifndef SIMPLEPROGRESS
@@ -2265,6 +2272,9 @@ int main (int argc, char *argv[])
              * show progress at 1 minute intervals. Have a care to avoid division by zero. */
             if (gfreqInd != 0 || penIdx != 0) {
               swStart (combinedComputeSW);
+	      sprintf (partialPolynomialFunctionName, "CL_P%%sC%dFM%dfor%d",
+		       (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+		       mp_result[posIdx].pMarkers[0], modelType.numMarkers);
               compute_likelihood (&pedigreeSet);
               cL[7]++;
               swStop (combinedComputeSW);

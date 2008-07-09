@@ -32,6 +32,13 @@ char *likelihoodVersion = "$Id$";
 #include <omp.h>
 #endif
 
+#include <dlfcn.h>
+
+
+extern struct polynomial **variableList;
+
+char partialPolynomialFunctionName[MAX_PFN_LEN+1];
+
 /* this is for working out loop breaker's multilocus genotypes */
 Genotype **pTempGenoVector;
 
@@ -242,11 +249,10 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   int origLocus = 0;		/* locus index in the original locus list
 				 * this is used to find out the pedigree
 				 * counts mainly for case control analyses */
-  char polyName[128];
-
   if (locusList->numLocus > 1)
     origLocus = locusList->pLocusIndex[1];
   numLocus = locusList->numLocus;
+  char polynomialFunctionName[MAX_PFN_LEN+1];
 
   /* initialization */
   sum_log_likelihood = 0;
@@ -255,33 +261,67 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   pPedigreeList->log10Likelihood = 0;
 
   if (modelOptions.polynomial == TRUE) {
-    /* First build all of the pedigrees */
+    /* First build (or restore) all of the pedigrees */
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
-      if (pPedigree->load_flag == 0) {
-	if (pPedigree->likelihoodPolynomial == NULL) {
-	  initialize_multi_locus_genotype (pPedigree);
-	  status = compute_pedigree_likelihood (pPedigree);
-	  holdPoly (pPedigree->likelihoodPolynomial);
-	  freeKeptPolys ();
-	  pPedigree->likelihoodPolyList = buildPolyList ();
-	  polyListSorting (pPedigree->likelihoodPolynomial,
-			   pPedigree->likelihoodPolyList);
+
+      if (pPedigree->load_flag == 0) { // Skip everything, we're using saved results
+#ifdef POLYCOMP_DL
+	sprintf (polynomialFunctionName, partialPolynomialFunctionName, pPedigree->sPedigreeID);
+	if (pPedigree->polynomialFunctionName == NULL ||
+	    strcmp (polynomialFunctionName, pPedigree->polynomialFunctionName)) { // Not the current one
+	  if (pPedigree->polynomialFunctionHandle != NULL) { // ...but something is loaded
+	    printf ("\nClosing [%s] for [%s]\n", pPedigree->polynomialFunctionName, polynomialFunctionName);
+	    dlclose (pPedigree->polynomialFunctionHandle); // ...so close the current one
+	  }
+	  free (pPedigree->polynomialFunctionName);
+	  pPedigree->polynomialFunctionName = (char *) malloc (MAX_PFN_LEN+1);
+	  strcpy (pPedigree->polynomialFunctionName, polynomialFunctionName);
+	  if (!(pPedigree->polynomialFunctionHandle = loadPoly (polynomialFunctionName))) { // Not loadable
+#endif
+	    if (pPedigree->likelihoodPolynomial == NULL) { // There's no polynomial, so do build
+	      initialize_multi_locus_genotype (pPedigree);
+	      status = compute_pedigree_likelihood (pPedigree);
+	      holdPoly (pPedigree->likelihoodPolynomial);
+	      freeKeptPolys ();
+	      pPedigree->likelihoodPolyList = buildPolyList ();
+	      polyListSorting (pPedigree->likelihoodPolynomial,
+			       pPedigree->likelihoodPolyList);
 #ifdef POLYCOMP
-	  // NEED A UNIQUE NAME HERE, AND THIS ISN'T IT!
-	  sprintf (polyName, "Likelihood for pedigree %s origLocus %d\n",
-		   pPedigree->sPedigreeID, origLocus);
-	  if (pPedigree->likelihoodPolynomial->eType != T_CONSTANT &&
-	      pPedigree->likelihoodPolynomial->eType != T_VARIABLE)
-	    compilePoly(pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList,
-			polyName);
+	      //	      if (pPedigree->likelihoodPolynomial->eType != T_CONSTANT &&
+	      //		  pPedigree->likelihoodPolynomial->eType != T_VARIABLE) { // Worth compiling
+		fprintf (stdout, "Compiling polynomial P%d (%s)...\n",
+			 pPedigree->likelihoodPolynomial->id, pPedigree->polynomialFunctionName);
+		pPedigree->polynomialFunctionHandle = compilePoly(pPedigree->likelihoodPolynomial, 
+							    pPedigree->likelihoodPolyList,
+							    pPedigree->polynomialFunctionName);
+#ifdef POLYCOMP_DL
+		pPedigree->polynomialFunction = dlsym(pPedigree->polynomialFunctionHandle,
+						      pPedigree->polynomialFunctionName);
+#endif
+		fprintf (stderr, "OK\n");
+		//	      } else {
+		//		pPedigree->polynomialFunction = NULL;
+		//		pPedigree->polynomialFunctionHandle = NULL;
+		//		fprintf (stdout, "Not worth compiling\n");
+		//	      }
 #endif
 #ifdef POLYSTATISTICS
-	  if (i == pPedigreeList->numPedigree - 1) {
-	    polyDynamicStatistics ("Post-build");
-	  }
+	      if (i == pPedigreeList->numPedigree - 1)
+		polyDynamicStatistics ("Post-build");
 #endif
-	}
+	    }
+#ifdef POLYCOMP_DL
+	  } else { // There is a polynomial, so try to load it
+	    if ((pPedigree->polynomialFunction = dlsym(pPedigree->polynomialFunctionHandle,
+						       pPedigree->polynomialFunctionName)) != NULL)
+	      fprintf (stderr, "Loaded polynomial %s\n", polynomialFunctionName);
+	    else
+	      fprintf (stderr, "Failed to load polynomial %s\n", polynomialFunctionName);
+	  }
+	} else
+	  fprintf (stderr, "Still referencing %s\n", polynomialFunctionName);
+#endif
       }
     }
     /* Now evaluate them all */
@@ -289,6 +329,7 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 #pragma omp parallel for private(pPedigree)
 #endif
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
+      printf ("Evaluate %d\n", i);
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       if (pPedigree->load_flag == 0) {
 #ifdef FAKEEVALUATE
@@ -298,9 +339,14 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	pPedigree->likelihood =
 	  evaluateValue (pPedigree->likelihoodPolynomial);
 #else
-	evaluatePoly (pPedigree->likelihoodPolynomial,
-		      pPedigree->likelihoodPolyList,
-		      &pPedigree->likelihood);
+#ifdef POLYCOMP_DL
+	if (pPedigree->polynomialFunction != NULL)
+	  pPedigree->likelihood = pPedigree->polynomialFunction(1, variableList);
+	else
+#endif
+	  evaluatePoly (pPedigree->likelihoodPolynomial,
+			pPedigree->likelihoodPolyList,
+			&pPedigree->likelihood);
 #endif
 #endif
       }

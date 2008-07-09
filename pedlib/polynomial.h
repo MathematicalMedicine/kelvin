@@ -9,6 +9,8 @@
 #ifndef __POLYNOMIAL_H__
 #define __POLYNOMIAL_H__
 
+#include <stdio.h>
+
 #ifdef DMTRACK
 #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
 #define malloc(X) swMalloc((X), __FILE__, __LINE__)
@@ -290,4 +292,5 @@ void writePolyDigraph (Polynomial *);
 
 #endif
 
-void compilePoly (Polynomial * p, struct polyList * l, char * name);
+void *compilePoly (Polynomial * p, struct polyList * l, char * name);
+void *loadPoly (char * name);
