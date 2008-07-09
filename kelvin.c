@@ -950,7 +950,7 @@ int main (int argc, char *argv[])
            * disk. */
           for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
             gfreq = modelRange.gfreq[gfreqInd];
-	    // WHAT ON EARTH IS THIS ALL ABOUT? &&&
+            // WHAT ON EARTH IS THIS ALL ABOUT? &&&
             if (1 && modelOptions.markerAnalysis == FALSE) {
               pLocus->pAlleleFrequency[0] = gfreq;
               pLocus->pAlleleFrequency[1] = 1 - gfreq;
@@ -1013,7 +1013,7 @@ int main (int argc, char *argv[])
 
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-		strcpy (partialPolynomialFunctionName, "cL0_P%s");
+                strcpy (partialPolynomialFunctionName, "cL0_P%s");
                 if (gfreqInd != 0 || penIdx != 0) {
                   swStart (combinedComputeSW);
                   compute_likelihood (&pedigreeSet);
@@ -1095,7 +1095,7 @@ int main (int argc, char *argv[])
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
-		    strcpy (partialPolynomialFunctionName, "cL1_P%s");
+                    strcpy (partialPolynomialFunctionName, "cL1_P%s");
                     swStart (combinedComputeSW);
                     compute_likelihood (&pedigreeSet);
                     cL[1]++;
@@ -1250,7 +1250,7 @@ int main (int argc, char *argv[])
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
                     KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
-		    strcpy (partialPolynomialFunctionName, "cL2_P%s");
+                    strcpy (partialPolynomialFunctionName, "cL2_P%s");
                     compute_likelihood (&pedigreeSet);
                     cL[2]++;
 
@@ -1302,7 +1302,7 @@ int main (int argc, char *argv[])
                                                       initialHetProbAddr, 0, -1, -1, 0);
 
                         KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
-			strcpy (partialPolynomialFunctionName, "cL3_P%s");
+                        strcpy (partialPolynomialFunctionName, "cL3_P%s");
                         compute_likelihood (&pedigreeSet);
                         cL[3]++;
                         log10_likelihood_alternative = pedigreeSet.log10Likelihood;
@@ -1656,7 +1656,7 @@ int main (int argc, char *argv[])
         ppl = calculate_PPL (tp_result[dprime0Idx]);
         fprintf (fpPPL, "%d %s %.4f %.*f ",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-		 ppl >= .025 ? 2 : 3, ppl >= .025 ? rint(ppl*100.)/100. : rint(ppl*1000.)/1000.);
+                 ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.);
         fflush (fpPPL);
         /* output LD-PPL now if needed */
         if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
@@ -1666,9 +1666,9 @@ int main (int argc, char *argv[])
           ldppl = calculate_PPL (tp_result[pLambdaCell->ndprime]);
           /* now calculate the PPLD - posterior probability of LD given linkage */
           ppld = calculate_PPLD (tp_result);
-          fprintf (fpPPL, "%.*f %.*f ", 
-		   ldppl >= .025 ? 2 : 3, ldppl >= .025 ? rint(ldppl*100.)/100. : rint(ldppl*1000.)/1000.,
-		   ppld >= .025 ? 2 : 3, ppld >= .025 ? rint(ppld*100.)/100. : rint(ppld*1000.)/1000.);
+          fprintf (fpPPL, "%.*f %.*f ",
+                   ldppl >= .025 ? 2 : 3, ldppl >= .025 ? rint (ldppl * 100.) / 100. : rint (ldppl * 1000.) / 1000.,
+                   ppld >= .025 ? 2 : 3, ppld >= .025 ? rint (ppld * 100.) / 100. : rint (ppld * 1000.) / 1000.);
         }
         fprintf (fpPPL, "\n");
         fflush (fpPPL);
@@ -1799,7 +1799,7 @@ int main (int argc, char *argv[])
             update_locus (&pedigreeSet, traitLocus);
 
           /* Compute the likelihood for the trait */
-	  sprintf (partialPolynomialFunctionName, "T_P%%sSL%d", modelOptions.sexLinked);
+          sprintf (partialPolynomialFunctionName, "T_P%%sSL%d", modelOptions.sexLinked);
           compute_likelihood (&pedigreeSet);
           cL[4]++;
 #ifndef SIMPLEPROGRESS
@@ -1904,7 +1904,7 @@ int main (int argc, char *argv[])
               if (modelOptions.polynomial == TRUE);
               else
                 update_penetrance (&pedigreeSet, traitLocus);
-	      sprintf (partialPolynomialFunctionName, "T_P%%sSL%d", modelOptions.sexLinked);
+              sprintf (partialPolynomialFunctionName, "T_P%%sSL%d", modelOptions.sexLinked);
               compute_likelihood (&pedigreeSet);
               cL[5]++;
 #ifndef SIMPLEPROGRESS
@@ -2081,9 +2081,9 @@ int main (int argc, char *argv[])
             pPedigree->load_flag = 0;
           }
         }
-	sprintf (partialPolynomialFunctionName, "ML_P%%sC%dFM%dof%d",
-		 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-		 mp_result[posIdx].pMarkers[0], modelType.numMarkers);
+        sprintf (partialPolynomialFunctionName, "ML_P%%sC%dFM%dof%d",
+                 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+                 mp_result[posIdx].pMarkers[0], modelType.numMarkers);
         compute_likelihood (&pedigreeSet);
         cL[6]++;
 #ifndef SIMPLEPROGRESS
@@ -2274,9 +2274,9 @@ int main (int argc, char *argv[])
 
             /* If we're not on the first iteration, it's not a polynomial build, so
              * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-	    sprintf (partialPolynomialFunctionName, "CL_P%%sC%dFM%dof%d",
-		     (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-		     mp_result[posIdx].pMarkers[0], modelType.numMarkers);
+            sprintf (partialPolynomialFunctionName, "CL_P%%sC%dFM%dof%d",
+                     (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+                     mp_result[posIdx].pMarkers[0], modelType.numMarkers);
             if (gfreqInd != 0 || penIdx != 0) {
               swStart (combinedComputeSW);
               compute_likelihood (&pedigreeSet);
@@ -2489,9 +2489,9 @@ int main (int argc, char *argv[])
 
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-		sprintf (partialPolynomialFunctionName, "CL_P%%sC%dFM%dof%d",
-			 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-			 mp_result[posIdx].pMarkers[0], modelType.numMarkers);
+                sprintf (partialPolynomialFunctionName, "CL_P%%sC%dFM%dof%d",
+                         (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+                         mp_result[posIdx].pMarkers[0], modelType.numMarkers);
                 if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
                   swStart (combinedComputeSW);
                   compute_likelihood (&pedigreeSet);
@@ -2637,8 +2637,8 @@ int main (int argc, char *argv[])
       thresholdIdx = mp_result[posIdx].max_thresholdIdx;
       fprintf (fpHet, "%d %f %.*f %.6e %.6f %f %f",
                (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-               traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint(ppl*100.)/100. : rint(ppl*1000.)/1000.,
-	       avgLR, log10 (max), alphaV, gfreq);
+               traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.,
+               avgLR, log10 (max), alphaV, gfreq);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
         pen_DD = modelRange.penet[liabIdx][0][penIdx];
         pen_Dd = modelRange.penet[liabIdx][1][penIdx];
