@@ -2515,9 +2515,9 @@ int main (int argc, char *argv[])
                   cL[8]++;
                   swStop (combinedBuildSW);
 #ifndef SIMPLEPROGRESS
-                  fprintf (stdout, "%s %d%% complete\r", "Combined likelihood evaluations", cL[7] * 100 / eCL[7]);
+                  fprintf (stdout, "%s %d%% complete\r", "Combined likelihood evaluations", cL[8] * 100 / eCL[8]);
 #else
-                  fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]));
+                  fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]));
 #endif
                   fflush (stdout);
                 }
