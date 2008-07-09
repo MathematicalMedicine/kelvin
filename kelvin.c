@@ -1030,16 +1030,14 @@ int main (int argc, char *argv[])
                       fflush (stdout);
                     }
                   }
-                } else  // This _is_ the first iteration
-                if (modelOptions.polynomial == TRUE) {
-                  swStart (combinedBuildSW);
-                  compute_likelihood (&pedigreeSet);
-                  cL[0]++;
-                  swStop (combinedBuildSW);
-                  fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]));
-                  fflush (stdout);
-                }
-
+                } else { // This _is_ the first iteration
+		  swStart (combinedBuildSW);
+		  compute_likelihood (&pedigreeSet);
+		  cL[0]++;
+		  swStop (combinedBuildSW);
+		  fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]));
+		  fflush (stdout);
+		}
                 if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                   fprintf (stderr, "Theta 0.5 has likelihood 0\n");
                   fprintf (stderr, "dgf=%f\n", gfreq);
@@ -2300,8 +2298,7 @@ int main (int argc, char *argv[])
                   fflush (stdout);
                 }
               }
-            } else      // This _is_ the first iteration
-            if (modelOptions.polynomial == TRUE) {
+            } else {     // This _is_ the first iteration
               swStart (combinedBuildSW);
               compute_likelihood (&pedigreeSet);
               cL[7]++;
