@@ -114,7 +114,9 @@ void dumpTrackingStats(ModelType modelType, ModelOptions modelOptions, ModelRang
 // Construct string describing the type of analysis and determine evaluations required.
 char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelRange modelRange, int eCL[])
 {
+#ifndef SIMPLEPROGRESS
   int cL[9];
+#endif
   //  dumpTrackingStats(modelType,  modelOptions,  modelRange, cL, eCL);
   if (modelOptions.markerAnalysis != FALSE) {
     /*
