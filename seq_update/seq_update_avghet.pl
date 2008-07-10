@@ -142,11 +142,15 @@ sub get_next_line
 
     my $realregex = '[\-\d\.]+(?:[eE][\+\-]\d+)?';
 
-    $$f{lineno}++;
-    $buff = $$f{fp}->getline;
-    if (! defined ($buff)) {
-	$$f{linetype} = 'end of file';
-	return (1);
+    while (1) {
+	$$f{lineno}++;
+	$buff = $$f{fp}->getline;
+	if (! defined ($buff)) {
+	    $$f{linetype} = 'end of file';
+	    return (1);
+	}
+	# For now, we just ignore Version lines where ever they appear
+	($buff !~ /\#\s*Version/) and last;
     }
 
     $buff =~ s/^\s*(\S|\S.*\S)\s*$/$1/s;
@@ -158,7 +162,7 @@ sub get_next_line
 	$$f{mrknum} = $mrknum;
 	@{$$f{mrknames}} = split (/\s+/, $mrknames);
 
-    } elsif ($buff =~ /\s+(AVG_?LR|BR)[\(\s]/i) {
+    } elsif ($buff =~ /\s+(AVG_?LR|BR|BayesRatio)[\(\s]/i) {
 	$$f{linetype} = 'header line';
 	$$f{expect} = 'data line';
 
@@ -203,7 +207,7 @@ sub get_next_line
 		$base = $headers[$va];
 		$str = $realregex;
 	    }
-	    if ($base =~ /(D\d\d|Dprime|Theta|Pos|Markers)/i) {
+	    if ($base =~ /(D\d\d|Dprime|Theta|Pos|Markers|Chr)/i) {
 		# D-Prime, Theta, or Position fields we need to keep, so build
 		# the regex such that those fields will be captured.
 
@@ -226,7 +230,7 @@ sub get_next_line
 		$$f{cmpheaders}{PPL} = $keepers;
 		$keepers++;
 
-	    } elsif ($base =~ /(AVG_?LR|BR)/i) {
+	    } elsif ($base =~ /(AVG_?LR|BR|BayesRatio)/i) {
 		# Same with Avg_LR field, except we force the header name in
 		# the cmpheaders hash to 'AVG_LR' so we can look for that 
 		# specific string later. Also, if the mode is multipoint and
@@ -247,7 +251,7 @@ sub get_next_line
 		$$f{cmpheaders}{AVG_LR} = $keepers;
 		$keepers++;
 		
-	    } elsif (($base =~ /pen_?vector/i) && ($options{mode} eq 'multipoint')) {
+	    } elsif (($base =~ /pen\S+vector/i) && ($options{mode} eq 'multipoint')) {
 		# An unfortunate hack: multipoint output only emits one header
 		# for the three columns of the penetrance vector.
 
