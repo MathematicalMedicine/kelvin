@@ -1,13 +1,18 @@
 Verison 0.35.0
-  Added conditionalized dump of polynomial source parenting
-  information in DOT format for digraph generation. Evaluation
-  now multi-threaded. Uses drop-in memory allocator. Cleaned-up
-  versioning and build dating. Replaced loop detection with new
-  algorithm for both marriage and cosanguinous loops. Added html 
-  documentation and a test-suite. Added detailed and streamlined 
-  progress tracking and hid (by default) all of the diagnostic 
-  output. Prototype polynomial compilation for speed and ease of
-  workload distribution to BOINC etc.
+  Major polynomial evaluation performance improvement via
+  multi-threading. Can use drop-in memory allocators as
+  needed. Cleaned-up versioning and build dating. Replaced 
+  loop detection with new algorithm for both marriage and 
+  cosanguinous loops. Improved configuration file error
+  handling. Adding extensive internal documentation.
+  For kelvin only (not dkelvin): Adding user documentation and 
+  a test-suite (in progress). Added both detailed and 
+  streamlined (default) progress tracking and hid (by default)
+  all of the diagnostic output. Standardized output file 
+  naming and format as described in new documentation.
+  Prototyping polynomial compilation for speed and ease of 
+  workload distribution via BOINC etc. dkelvin will merge into 
+  kelvin in a future release.
 
 Version 0.34.2
   Status child no longer dies on SIGQUIT. Monitors utilization
