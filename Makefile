@@ -24,7 +24,7 @@ LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas
 CFLAGS += -fopenmp # Uncomment BOTH of these if you have an OpenMP-capable compiler...
 LDFLAGS += -fopenmp # ...and want to use multiple threads for evaluations.
 #LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
-CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
+#CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
 #CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
 #CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every 2Mp and at milestones
@@ -33,7 +33,7 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 #CFLAGS += -DTREEEVALUATE # Use evaluateValue of tree instead of evaluatePoly of list.
 #CFLAGS += -DFAKEEVALUATE # Don't evaluate at all - use only for exercising build. Results will be wrong!
 #CFLAGS += -DPOLYCOMP # Enable compilation and distribution of selected polynomials for faster evaluation
-#CFLAGS += -DPOLYCOMP_DL # Dynamically load compiled polynomials for in-process use
+#CFLAGS += -DPOLYCOMP_DL -ldl # Dynamically load compiled polynomials for in-process use
 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
