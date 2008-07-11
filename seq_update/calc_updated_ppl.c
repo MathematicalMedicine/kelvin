@@ -821,6 +821,10 @@ int get_marker_line (st_marker *marker, FILE *fp)
   }
   lineno++;
 
+  /* A cheap hack to skip a leading version line */
+  if (strncmp (buff, "# Version", 9) == 0)
+    return (get_marker_line (marker, fp));
+
   if (((pa = strtok_r (buff, " \t\n", &pb)) == NULL) ||
       (strcmp (pa, "#") != 0))
     return (-1);
@@ -898,8 +902,9 @@ int get_header_line (st_marker *marker, st_data *data, FILE *fp)
       exit (-1);
     }
 
-    if ((token[0] == 'D') && ((token[1] >= '0') && (token[1] <= '9')) &&
-	((token[1] >= '0') && (token[1] <= '9'))) {
+    if (((token[0] == 'D') && ((token[1] >= '0') && (token[1] <= '9')) &&
+	 ((token[1] >= '0') && (token[1] <= '9'))) ||
+	(strcasecmp (token, "DPrime") == 0)) {
       /* A D-prime column */
       marker->numdprimes += actualcols;
       /*printf ("number of dprime cols %d\n", marker->numdprimes);*/
@@ -922,7 +927,7 @@ int get_header_line (st_marker *marker, st_data *data, FILE *fp)
       }
       
     } else if ((strcasecmp (token, "AVG_LR") == 0) || (strcasecmp (token, "AVGLR") == 0) ||
-	       (strcasecmp (token, "BR") == 0)) {
+	       (strcasecmp (token, "BR") == 0) || (strcasecmp (token, "BayesRatio") == 0)) {
       /* The average LR column */
       marker->datacols[marker->numcols - 1] = LR_COL;
       numlrcols++;
