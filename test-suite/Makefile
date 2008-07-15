@@ -3,6 +3,8 @@
 TESTS = \
 	cosanguinous_loop \
 	marriage_loop \
+	broken_loop \
+	multi-founder \
         PE \
         NonPE
 
