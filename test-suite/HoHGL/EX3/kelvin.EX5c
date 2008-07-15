@@ -1,0 +1,15 @@
+#
+# Example 5 part 3 from Handbook of Human Genetic Linkage by Terwilliger and Ott, 1994.
+#
+# Compare resultant MOD in br.out to Lod Scores on Table 12-4
+#
+TP
+DT
+Th 0.0 0.5 0.1
+#Th .076 .080 .0001
+AS 0 1 2
+GF 0.999990 0.000010
+DD 0.0
+Dd 0.30
+dd 0.30
+AL 1
