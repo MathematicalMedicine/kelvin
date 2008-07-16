@@ -7,7 +7,6 @@ TESTS = \
 	TP_DT_LE \
 	TP_DT_MM_LD \
 	TP_DT_MM_LE \
-	TP_QT_LD \
         TP_QT_LE
 
 .PHONY : test $(TESTS)
