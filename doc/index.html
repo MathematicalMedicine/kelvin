@@ -36,7 +36,7 @@ files on your system so that you can modify the kelvin Makefile if necessary.
 When kelvin is run in polynomial mode, it makes very extensive use of memory management, and can, under most
 circumstances, definitely benefit from a drop-in allocator such as <a href="http://www.hoard.org/">hoard</a>
 or <a href="http://www.malloc.de/en/">ptmalloc3</a>. Either of these can easily halve execution time, and will
-keep memory fragmentation down when running in mult-threaded mode, but they are not required. For more
+keep memory fragmentation down when running in multi-threaded mode, but they are not required. For more
 details on using drop-in allocators with kelvin, see <a href="Allocators.html">the allocators section</a>.
 
 <h4>Resources</h4>
@@ -51,7 +51,7 @@ complex pedigrees or those with untyped founders. The best approach is to normal
 polynomial mode, and fall back to non-polynomial mode if memory becomes an issue. Recent releases of kelvin
 monitor CPU and memory utilization and will self-terminate if thrashing memory.
 <p>
-If you are running on a mult-core platform, and your compiler supports OpenMP 2.0, you can build kelvin
+If you are running on a multi-core platform, and your compiler supports OpenMP 2.0, you can build kelvin
 to use multiple threads and reduce your single-analysis runtime significantly at a marginal increase in memory, less if
 you use a drop-in allocator as described above.
 <h3>Installation</h3>
@@ -326,20 +326,29 @@ and the values for alpha, disease gene frequency and penetrance that maximized t
 position. Columns are whitespace-delimited:
 <ol>
 <li>Chr - chromosome number
-<li>Position - trait position in centiMorgans.
+<li>Position(M,F) - trait positions in centiMorgans, male and female comma-separated in parentheses.
 <li>PPL - the imputed posterior probability of linkage. This is rounded to two places if .025 or
 greater, and three decimal places otherwise.
 <li>BayesRatio - average likelihood ratio.
 <li>MOD - maximum LOD score achieved at this position.
-<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score.
+<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score. Alpha is an admixture
+parameter which is defined at the level of the whole pedigree, and represents the probability that the pedigree
+is of the "linked" versus "unlinked" type. Inclusion of alpha allows for the common phenomenon of locus 
+heterogeneity, whereby a single clinical disease can be caused by different underlying genes in different families.
 <li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the LOD score.
-<li>PenetranceVector - penetrance vector. For dichotomous trait runs, it is three (or four) columns of 
+<li>LC<tt>n</tt>PV(...) - penetrance vector, one for each liability class in the analysis. 
+For dichotomous trait runs, it is three (or four) columns of 
 the maximizing penetrance for
 DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the LOD score.
-For quantitative trait runs, it is three (or four) columns of means followed by three (or four) of standard deviations for
-the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold.
-<li>MarkerList - parenthesised list of the closest N markers for each position, where N is the number
-of markers being considered at a time.
+For quantitative trait runs with normal or Student's-T distributions,
+it is three (or four) columns of means followed by three 
+(or four) of standard deviations for
+the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold. Quantitative
+trait runs with the Chi-Square distribution  have only three (or four) columns of degrees of freedom followed
+by the threshold. Values are
+comma-separated and enclosed in parentheses. Header text reflects actual count and nature of columns.
+<li>MarkerList(...) - parenthesised list of the closest N markers for each position, where N is the number
+of markers being considered at a time. Header text reflects actual count of columns.
 </ol>
 <h4>Two-point and Marker-to-Marker Analysis</h4>
 Two-point analyses output separate tables for each pair of adjacent loci. For marker-to-marker runs,
@@ -364,8 +373,17 @@ LE is a special case of LD where D' is always 0.
 <li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score.
 <li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the LOD score.
 <li>MF - marker allele frequency for the first marker.
-<li>PenetranceVector - maximizing penetrance values for DD, Dd, (optionally dD,) and dd.
-There will be one set of these for each liability class in the analysis.
+<li>LC<tt>n</tt>PV(...) - penetrance vector, one for each liability class in the analysis. 
+For dichotomous trait runs, it is three (or four) columns of 
+the maximizing penetrance for
+DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the LOD score.
+For quantitative trait runs with normal or Student's-T distributions,
+it is three (or four) columns of means followed by three 
+(or four) of standard deviations for
+the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold. Quantitative
+trait runs with the Chi-Square distribution  have only three (or four) columns of degrees of freedom followed
+by the threshold. Values are
+comma-separated and enclosed in parentheses. Header text reflects actual count and nature of columns.
 </ol>
 <h3>Posterior Probability of Linkage (PPL) File</h3>
 Separate PPL information is only produced for trait-to-marker two-point and marker-to-marker analyses, because PPL is imputed for multipoint runs.

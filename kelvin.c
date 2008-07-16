@@ -1422,7 +1422,16 @@ int main (int argc, char *argv[])
           for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
             for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
               fprintf (fpHet, "D%1d%1d ", i + 1, j + 1);
-        fprintf (fpHet, "Theta(M,F) BayesRatio MOD R2 Alpha DGF MF PenetranceVector\n");
+        fprintf (fpHet, "Theta(M,F) BayesRatio MOD R2 Alpha DGF MF ");
+	for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+	  if (modelType.trait == DT)
+	    fprintf (fpHet, "LC%dPV(DD,Dd,dd) ", liabIdx);
+	  else
+	    if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
+	      fprintf (fpHet, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
+	    else
+	      fprintf (fpHet, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
+	fprintf (fpHet, "\n");
         for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
           for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
             if (tp_result[dprimeIdx][thetaInd]
@@ -1445,7 +1454,7 @@ int main (int argc, char *argv[])
                   fprintf (fpHet, "%.2f ", pLambdaCell->lambda[dprimeIdx][i][j]);
                 }
             }
-            fprintf (fpHet, "(%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f",
+            fprintf (fpHet, "(%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f (",
                      theta[0], theta[1],
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg, max,
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square, alphaV, gfreq,
@@ -1454,20 +1463,23 @@ int main (int argc, char *argv[])
               pen_DD = modelRange.penet[liabIdx][0][penIdx];
               pen_Dd = modelRange.penet[liabIdx][1][penIdx];
               pen_dd = modelRange.penet[liabIdx][2][penIdx];
-              fprintf (fpHet, " %.3f %.3f %.3f", pen_DD, pen_Dd, pen_dd);
+	      if (liabIdx == 0)
+		fprintf (fpHet, "%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
+	      else
+		fprintf (fpHet, ",%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
               if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
                 SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
                 SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
                 SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
-                fprintf (fpHet, " %.3f %.3f %.3f", SD_DD, SD_Dd, SD_dd);
+                fprintf (fpHet, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
               }
               if (modelType.trait != DT) {
                 threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-                fprintf (fpHet, " %.3f", threshold);
-              }
+                fprintf (fpHet, ",%.3f)", threshold);
+              } else
+		fprintf (fpHet, ")");
             }
             fprintf (fpHet, "\n");
-            fflush (fpHet);
           }     /* theta loop */
         }       /* dprime loop */
         fprintf (fpTP, "# %-d  %s %s Max Het LR\n", loc2, pLocus2->sName, pLocus1->sName);
@@ -1984,7 +1996,20 @@ int main (int argc, char *argv[])
     numPositions = modelRange.ntloc;
     mp_result = (SUMMARY_STAT *) calloc (numPositions, sizeof (SUMMARY_STAT));
     /* Need to output the results */
-    fprintf (fpHet, "Chr Position PPL BayesRatio MOD Alpha DGF PenetranceVector MarkerList\n");
+    fprintf (fpHet, "Chr Position PPL BayesRatio MOD Alpha DGF ");
+    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+      if (modelType.trait == DT)
+        fprintf (fpHet, "LC%dPV(DD,Dd,dd) ", liabIdx);
+      else
+	if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
+	  fprintf (fpHet, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
+	else
+	  fprintf (fpHet, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
+    fprintf (fpHet, "MarkerList(0");
+    for (k = 1; k < modelType.numMarkers; k++)
+      fprintf (fpHet, ",%d", k);
+    fprintf (fpHet, ")\n");
+
     prevFirstMarker = -1;
     prevLastMarker = -1;
     prevTraitInd = -1;
@@ -2651,7 +2676,7 @@ int main (int argc, char *argv[])
       penIdx = mp_result[posIdx].max_penIdx;
       paramIdx = mp_result[posIdx].max_paramIdx;
       thresholdIdx = mp_result[posIdx].max_thresholdIdx;
-      fprintf (fpHet, "%d %f %.*f %.6e %.6f %f %f",
+      fprintf (fpHet, "%d %f %.*f %.6e %.6f %f %f (",
                (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
                traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.,
                avgLR, log10 (max), alphaV, gfreq);
@@ -2659,17 +2684,21 @@ int main (int argc, char *argv[])
         pen_DD = modelRange.penet[liabIdx][0][penIdx];
         pen_Dd = modelRange.penet[liabIdx][1][penIdx];
         pen_dd = modelRange.penet[liabIdx][2][penIdx];
-        fprintf (fpHet, " %f %f %f", pen_DD, pen_Dd, pen_dd);
+	if (liabIdx == 0)
+	  fprintf (fpHet, "%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
+	else
+	  fprintf (fpHet, ",%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
         if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
           SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
           SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
           SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
-          fprintf (fpHet, " %.3f %.3f %.3f", SD_DD, SD_Dd, SD_dd);
+          fprintf (fpHet, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
         }
         if (modelType.trait != DT) {
           threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-          fprintf (fpHet, " %.3f", threshold);
-        }
+          fprintf (fpHet, ",%.3f)", threshold);
+        } else
+	  fprintf (fpHet, ")");
       }
       /* print out markers used for this position */
       fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
