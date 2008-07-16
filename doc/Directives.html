@@ -458,7 +458,7 @@ in the analysis. Whitespace-separated columns are:
 <li>Next paternal sibling ID
 <li>Next maternal sibling ID
 <li>Sex (1 for male, 2 for female)
-<li>Proband status (1 for proband, other non-zero numbers indicated doubled IDs from loop-breaking.
+<li>Proband status (1 for proband, other non-zero numbers indicated doubled IDs from loop-breaking.)
 <li>Trait phenotype and marker genotype information columns. Variable in number and described by the file specified
 by the pedigree companion file (<a href="#DF">DF</a> directive).
 <li>
@@ -488,7 +488,11 @@ where <tt>df</tt> is the number of degrees of freedom, e.g. 30, <tt>mean</tt> is
 trait values, and <tt>sd</tt> is their standard deviation.
 <p>
 Chi-squared distribution is specified as:
-
+<tt>
+QT chisq shift scale
+</tt>
+where <tt>shift</tt> is the offset from zero (normally 0), and <tt>scale</tt> is the scaling factor,
+(normally 1).
 <h3 id="SA">SA</h3>
 
 <h3 id="SR">SR</h3>

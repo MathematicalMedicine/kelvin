@@ -340,9 +340,12 @@ heterogeneity, whereby a single clinical disease can be caused by different unde
 For dichotomous trait runs, it is three (or four) columns of 
 the maximizing penetrance for
 DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the LOD score.
-For quantitative trait runs, it is three (or four) columns of means followed by three 
+For quantitative trait runs with normal or Student's-T distributions,
+it is three (or four) columns of means followed by three 
 (or four) of standard deviations for
-the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold. Values are
+the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold. Quantitative
+trait runs with the Chi-Square distribution  have only three (or four) columns of degrees of freedom followed
+by the threshold. Values are
 comma-separated and enclosed in parentheses. Header text reflects actual count and nature of columns.
 <li>MarkerList(...) - parenthesised list of the closest N markers for each position, where N is the number
 of markers being considered at a time. Header text reflects actual count of columns.
@@ -374,9 +377,12 @@ LE is a special case of LD where D' is always 0.
 For dichotomous trait runs, it is three (or four) columns of 
 the maximizing penetrance for
 DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the LOD score.
-For quantitative trait runs, it is three (or four) columns of means followed by three 
+For quantitative trait runs with normal or Student's-T distributions,
+it is three (or four) columns of means followed by three 
 (or four) of standard deviations for
-the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold. Values are
+the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold. Quantitative
+trait runs with the Chi-Square distribution  have only three (or four) columns of degrees of freedom followed
+by the threshold. Values are
 comma-separated and enclosed in parentheses. Header text reflects actual count and nature of columns.
 </ol>
 <h3>Posterior Probability of Linkage (PPL) File</h3>
