@@ -207,7 +207,7 @@ sub get_next_line
 		$base = $headers[$va];
 		$str = $realregex;
 	    }
-	    if ($base =~ /(D\d\d|Dprime|Theta|Pos|Markers|Chr)/i) {
+	    if ($base =~ /(D\d\d|Dprime|Theta|Markers|Chr)/i) {
 		# D-Prime, Theta, or Position fields we need to keep, so build
 		# the regex such that those fields will be captured.
 
@@ -215,7 +215,7 @@ sub get_next_line
 		$$f{regex} = ($$f{regex}) ? join ('\s+', $$f{regex}, @regex) :
 		    join ('\s+', @regex) ;
 		@regex = ();
-		$$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' %s' : '%s';
+		$$f{fmt} = exists ($$f{fmt}) ? $$f{fmt} . ' %s' : '%s';
 		$$f{cmpheaders}{$headers[$va]} = $keepers;
 		$keepers++;
 		
@@ -226,8 +226,19 @@ sub get_next_line
 		$$f{regex} = ($$f{regex}) ? join ('\s+', $$f{regex}, @regex) :
 		    join ('\s+', @regex) ;
 		@regex = ();
-		$$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' %.4f' : '%.4f';
+		$$f{fmt} = exists ($$f{fmt}) ? $$f{fmt} . ' %.4f' : '%.4f';
 		$$f{cmpheaders}{PPL} = $keepers;
+		$keepers++;
+
+	    } elsif ($base =~ /pos/i) {
+		# Same as with D-Prime, etc., except we force the field name 
+	    
+		push (@regex, '(' . $str . ')');
+		$$f{regex} = ($$f{regex}) ? join ('\s+', $$f{regex}, @regex) :
+		    join ('\s+', @regex) ;
+		@regex = ();
+		$$f{fmt} = exists ($$f{fmt}) ? $$f{fmt} . ' %.4f' : '%.4f';
+		$$f{cmpheaders}{Position} = $keepers;
 		$keepers++;
 
 	    } elsif ($base =~ /(AVG_?LR|BR|BayesRatio)/i) {
@@ -240,10 +251,10 @@ sub get_next_line
 
 		if (($options{mode} eq 'multipoint') && (scalar (@exts) == 1)) {
 		    push (@regex, '(' . $realregex . ')\(\d+\)');
-		    $$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' %.6e(0)' : '%.6e(0)';
+		    $$f{fmt} = exists ($$f{fmt}) ? $$f{fmt} . ' %.6e(0)' : '%.6e(0)';
 		} else {
 		    push (@regex, '(' . $str . ')');
-		    $$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' %.6e' : '%.6e';
+		    $$f{fmt} = exists ($$f{fmt}) ? $$f{fmt} . ' %.6e' : '%.6e';
 		}
 		$$f{regex} = ($$f{regex}) ? join ('\s+', $$f{regex}, @regex) :
 		    join ('\s+', @regex) ;
@@ -256,7 +267,7 @@ sub get_next_line
 		# for the three columns of the penetrance vector.
 
 		map { push (@regex, $str); } (0, 1, 2);
-		$$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' 0 0 0' : '0 0 0';
+		$$f{fmt} = exists ($$f{fmt}) ? $$f{fmt} . ' 0 0 0' : '0 0 0';
 
 	    } elsif (($base =~ /markerlist/i) && ($options{mode} eq 'multipoint')) {
 		# Another unfortunate hack: multipoint output emits a plain header
@@ -267,13 +278,13 @@ sub get_next_line
 		$$f{regex} = ($$f{regex}) ? join ('\s+', $$f{regex}, @regex) :
 		    join ('\s+', @regex) ;
 		@regex = ();
-		$$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' %s' : '%s';
+		$$f{fmt} = exists ($$f{fmt}) ? $$f{fmt} . ' %s' : '%s';
 
 	    } else {
 		# Chaffe fields. Build the regex to recognize them, but not capture.
 
 		push (@regex, $str);
-		$$f{fmt} = ($$f{fmt}) ? $$f{fmt} . ' 0' : '0';
+		$$f{fmt} = exists ($$f{fmt}) ? $$f{fmt} . ' 0' : '0';
 	    }
 	    push (@{$$f{headers}}, $headers[$va]);
 	    $va++;
@@ -283,6 +294,7 @@ sub get_next_line
     } elsif ($$f{regex}) {
 	(@flds = ($buff =~ /^$$f{regex}/))
 	    or die ("file '$$f{name}', line $$f{lineno}, malformed data line\n");
+	map { $flds[$_] =~ s/,\s+/,/ } (0 .. scalar (@flds)-1);
 	@{$$f{flds}} = @flds;
 	$$f{linetype} = 'data line';
     } else {
