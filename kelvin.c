@@ -1927,7 +1927,7 @@ int main (int argc, char *argv[])
               cL[5]++;
 #ifndef SIMPLEPROGRESS
               if (cL[5] % MAX (1, eCL[5] / 5) == 1) {
-                fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[4] * 100 / eCL[4]);
+                fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[5] * 100 / eCL[5]);
                 fflush (stdout);
               }
 #endif
