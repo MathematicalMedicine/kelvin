@@ -43,8 +43,26 @@
 
   COMPILE-TIME CONDITIONALS
 
-  There are numerous compilation conditions that affect kelvin. All
+  There are numerous compilation conditions that affect kelvin. Many
   of them are diagnostic in nature.
+
+  - _OPENMP - this conditional is not defined by the user, but rather
+  set by the compiler when the -fopenmp flag is specified to enable
+  OpenMP multithreading. Aspects of polynomial build and evaluation
+  are currently setup to handle multithreading.  As a caveat --
+  polynomial evaluation performance is only improved with
+  multi-threading if the analysis has more unique pedigrees than
+  threads. Performance will actually degrade when there are only a few
+  unique pedigrees because term optimization will cause their
+  polynomials to share most of their terms, and then per-pedigree
+  evaluation threads will get into extensive synchronization conflicts
+  traversing those polynomials. You can monitor this by watching the
+  System CPU time as opposed to User CPU time. System CPU time is
+  almost exclusively wasted time due to thread synchronization
+  conflicts. Note that it is not, however, necessary to disable
+  multi-threading by rebuilding kelvin for these situations. Simply
+  set the OMP_NUM_THREADS environment variable to 1, and no locking
+  conflicts will occur.
 
   - MEMSTATUS - handy when there is concern about memory capacity,
   but can really clutter-up the display. Runs in a child process and
@@ -1399,11 +1417,12 @@ int main (int argc, char *argv[])
 
         /* for each D prime and theta, print out average and maximizing model information - MOD */
         fprintf (fpHet, "# %-d  %s %s \n", loc2, pLocus1->sName, pLocus2->sName);
+        fprintf (fpHet, "Chr ");
         if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
           for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
             for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
               fprintf (fpHet, "D%1d%1d ", i + 1, j + 1);
-        fprintf (fpHet, "Chr Theta(M,F) BayesRatio MOD R2 Alpha DGF MF PenetranceVector\n");
+        fprintf (fpHet, "Theta(M,F) BayesRatio MOD R2 Alpha DGF MF PenetranceVector\n");
         for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
           for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
             if (tp_result[dprimeIdx][thetaInd]
@@ -1419,14 +1438,15 @@ int main (int argc, char *argv[])
             paramIdx = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_paramIdx;
             thresholdIdx = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_thresholdIdx;
             R_square = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square;
+            fprintf (fpHet, "%d ", pLocus2->pMapUnit->chromosome);
             if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
               for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
                 for (j = 0; j < pLocus2->numOriginalAllele - 1; j++) {
                   fprintf (fpHet, "%.2f ", pLambdaCell->lambda[dprimeIdx][i][j]);
                 }
             }
-            fprintf (fpHet, "%d (%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f",
-                     pLocus2->pMapUnit->chromosome, theta[0], theta[1],
+            fprintf (fpHet, "(%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f",
+                     theta[0], theta[1],
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg, max,
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square, alphaV, gfreq,
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_mf);
