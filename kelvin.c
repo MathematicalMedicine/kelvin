@@ -1472,9 +1472,9 @@ int main (int argc, char *argv[])
               }
               if (modelType.trait != DT) {
                 threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-                fprintf (fpHet, ",%.3f)", threshold);
+                fprintf (fpHet, ",%.3f) ", threshold);
               } else
-		fprintf (fpHet, ")");
+		fprintf (fpHet, ") ");
             }
             fprintf (fpHet, "\n");
           }     /* theta loop */
