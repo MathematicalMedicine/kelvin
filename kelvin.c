@@ -1454,7 +1454,7 @@ int main (int argc, char *argv[])
                   fprintf (fpHet, "%.2f ", pLambdaCell->lambda[dprimeIdx][i][j]);
                 }
             }
-            fprintf (fpHet, "(%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f (",
+            fprintf (fpHet, "(%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f ",
                      theta[0], theta[1],
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg, max,
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square, alphaV, gfreq,
@@ -1463,10 +1463,7 @@ int main (int argc, char *argv[])
               pen_DD = modelRange.penet[liabIdx][0][penIdx];
               pen_Dd = modelRange.penet[liabIdx][1][penIdx];
               pen_dd = modelRange.penet[liabIdx][2][penIdx];
-	      if (liabIdx == 0)
-		fprintf (fpHet, "%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
-	      else
-		fprintf (fpHet, ",%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
+	      fprintf (fpHet, "(%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
               if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
                 SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
                 SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
