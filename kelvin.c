@@ -1454,7 +1454,7 @@ int main (int argc, char *argv[])
                   fprintf (fpHet, "%.2f ", pLambdaCell->lambda[dprimeIdx][i][j]);
                 }
             }
-            fprintf (fpHet, "(%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f (",
+            fprintf (fpHet, "(%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f",
                      theta[0], theta[1],
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg, max,
                      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square, alphaV, gfreq,
@@ -1463,10 +1463,7 @@ int main (int argc, char *argv[])
               pen_DD = modelRange.penet[liabIdx][0][penIdx];
               pen_Dd = modelRange.penet[liabIdx][1][penIdx];
               pen_dd = modelRange.penet[liabIdx][2][penIdx];
-	      if (liabIdx == 0)
-		fprintf (fpHet, "%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
-	      else
-		fprintf (fpHet, ",%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
+	      fprintf (fpHet, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
               if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
                 SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
                 SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
@@ -2676,7 +2673,7 @@ int main (int argc, char *argv[])
       penIdx = mp_result[posIdx].max_penIdx;
       paramIdx = mp_result[posIdx].max_paramIdx;
       thresholdIdx = mp_result[posIdx].max_thresholdIdx;
-      fprintf (fpHet, "%d %f %.*f %.6e %.6f %f %f (",
+      fprintf (fpHet, "%d %f %.*f %.6e %.6f %f %f",
                (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
                traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.,
                avgLR, log10 (max), alphaV, gfreq);
@@ -2684,10 +2681,7 @@ int main (int argc, char *argv[])
         pen_DD = modelRange.penet[liabIdx][0][penIdx];
         pen_Dd = modelRange.penet[liabIdx][1][penIdx];
         pen_dd = modelRange.penet[liabIdx][2][penIdx];
-	if (liabIdx == 0)
-	  fprintf (fpHet, "%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
-	else
-	  fprintf (fpHet, ",%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
+	fprintf (fpHet, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
         if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
           SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
           SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
