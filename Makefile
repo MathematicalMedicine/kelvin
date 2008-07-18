@@ -6,7 +6,8 @@
 BINDIR=/usr/local/bin
 
 # $INCDIR and $LIBDIR should point to where headers and libraries for
-# GSL (GNU Scientific Library) can be found
+# GSL (GNU Scientific Library) can be found. Remember you can specify these
+# as command-line macros, e.g. $ make "INCDIR=$HOME/usr/local/include"
 INCDIR=/usr/local/include
 LIBDIR=/usr/local/lib
 KVNLIBDIR := $(shell pwd)/lib
@@ -23,7 +24,7 @@ LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas
 #CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
 CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
 #LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
-CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
+#CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
 #CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
 #CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every 2Mp and at milestones
