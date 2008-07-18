@@ -7,7 +7,9 @@ BINDIR=/usr/local/bin
 
 # $INCDIR and $LIBDIR should point to where headers and libraries for
 # GSL (GNU Scientific Library) can be found. Remember you can specify these
-# as command-line macros, e.g. $ make "INCDIR=$HOME/usr/local/include"
+# as command-line macros, e.g. at OSC:
+# $ make INCDIR=INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib
+#
 INCDIR=/usr/local/include
 LIBDIR=/usr/local/lib
 KVNLIBDIR := $(shell pwd)/lib
@@ -17,7 +19,7 @@ INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
 
 CC := gcc
 CFLAGS := -Wall -O3
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
