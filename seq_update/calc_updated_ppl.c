@@ -821,6 +821,10 @@ int get_marker_line (st_marker *marker, FILE *fp)
   }
   lineno++;
 
+  /* A cheap hack to skip a leading version line */
+  if (strncmp (buff, "# Version", 9) == 0)
+    return (get_marker_line (marker, fp));
+
   if (((pa = strtok_r (buff, " \t\n", &pb)) == NULL) ||
       (strcmp (pa, "#") != 0))
     return (-1);
@@ -865,15 +869,21 @@ int get_header_line (st_marker *marker, st_data *data, FILE *fp)
 
   pa = strtok_r (buff, " \t\n", &pb);
   while (pa != NULL) {
-    /*printf ("initial token '%s'\n", pa);*/
+#ifdef DEBUG
+    printf ("initial token '%s'\n", pa);
+#endif
     strcpy (token, pa);
     while ((strchr (token, '(') != NULL) && (strrchr (token, ')') == NULL)) {
       if ((pa = strtok_r (NULL, " \t\n", &pb)) == NULL)
 	return (-1);
-      /*printf ("  tacking on '%s'\n", pa);*/
+#ifdef DEBUG
+      printf ("  tacking on '%s'\n", pa);
+#endif
       strcat (token, pa);
     }
-    /*printf ("final token '%s'\n", token);*/
+#ifdef DEBUG
+    printf ("final token '%s'\n", token);
+#endif
     if (token[0] == '(')
       return (-1);
 
@@ -889,7 +899,9 @@ int get_header_line (st_marker *marker, st_data *data, FILE *fp)
 	pa = strtok_r (NULL, ",", &pc);
       }
     }
-    /*printf ("token is '%s', actualcols %d\n", token, actualcols);*/
+#ifdef DEBUG
+    printf ("token is '%s', actualcols %d\n", token, actualcols);
+#endif
 
     marker->numcols += actualcols;
     /*printf ("reallocating marker cols to %d\n", marker->numcols);*/
@@ -898,11 +910,14 @@ int get_header_line (st_marker *marker, st_data *data, FILE *fp)
       exit (-1);
     }
 
-    if ((token[0] == 'D') && ((token[1] >= '0') && (token[1] <= '9')) &&
-	((token[1] >= '0') && (token[1] <= '9'))) {
+    if (((token[0] == 'D') && ((token[1] >= '0') && (token[1] <= '9')) &&
+	 ((token[1] >= '0') && (token[1] <= '9'))) ||
+	(strcasecmp (token, "DPrime") == 0)) {
       /* A D-prime column */
       marker->numdprimes += actualcols;
-      /*printf ("number of dprime cols %d\n", marker->numdprimes);*/
+#ifdef DEBUG
+      printf ("number of dprime cols %d\n", marker->numdprimes);
+#endif
       for (; actualcols > 0; actualcols--) 
 	marker->datacols[marker->numcols - actualcols] = DPRIME_COL;
       
@@ -910,30 +925,38 @@ int get_header_line (st_marker *marker, st_data *data, FILE *fp)
       /* A Theta column */
       if (sexspecific) {
 	marker->numthetas += actualcols;
-	/*printf ("number of theta cols %d\n", marker->numthetas);*/
+#ifdef DEBUG
+	printf ("number of theta cols %d\n", marker->numthetas);
+#endif
 	for (; actualcols > 0; actualcols--) 
 	  marker->datacols[marker->numcols - actualcols] = THETA_COL;
       } else {
 	marker->numthetas++;
-	/*printf ("number of theta cols %d\n", marker->numthetas);*/
+#ifdef DEBUG
+	printf ("number of theta cols %d\n", marker->numthetas);
+#endif
 	marker->datacols[marker->numcols - actualcols] = THETA_COL;
 	for (--actualcols; actualcols > 0; actualcols--) 
 	  marker->datacols[marker->numcols - actualcols] = 0;
       }
       
     } else if ((strcasecmp (token, "AVG_LR") == 0) || (strcasecmp (token, "AVGLR") == 0) ||
-	       (strcasecmp (token, "BR") == 0)) {
+	       (strcasecmp (token, "BR") == 0) || (strcasecmp (token, "BayesRatio") == 0)) {
       /* The average LR column */
       marker->datacols[marker->numcols - 1] = LR_COL;
       numlrcols++;
-      /*printf ("number of lr cols %d\n", numlrcols);*/
+#ifdef DEBUG
+      printf ("number of lr cols %d\n", numlrcols);
+#endif
       
     } else {
       /* Something else */
       marker->datacols[marker->numcols - 1] = 0;
     }
 
-    /*printf ("\n");*/
+#ifdef DEBUG
+    printf ("\n");
+#endif
     pa = strtok_r (NULL, " \t\n", &pb);
   }
 
