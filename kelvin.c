@@ -296,9 +296,9 @@ int main (int argc, char *argv[])
 
   /* Start GAW */
   Pedigree *pPedigree;
-  double pen_DD, pen_Dd, pen_dd;
-  double mean_DD, mean_Dd, mean_dd;
-  double SD_DD, SD_Dd, SD_dd;
+  double pen_DD, pen_Dd, pen_dD, pen_dd;
+  double mean_DD, mean_Dd, mean_dD, mean_dd;
+  double SD_DD, SD_Dd, SD_dD, SD_dd;
   double gfreq; /* disease gene frequency */
   double theta[2];      /* theta */
   int penIdx, liabIdx, gfreqInd, thetaInd;
@@ -996,14 +996,15 @@ int main (int argc, char *argv[])
                   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
                     pen_DD = modelRange.penet[liabIdx][0][penIdx];
                     pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-                    pen_dd = modelRange.penet[liabIdx][2][penIdx];
+                    pen_dD = modelRange.penet[liabIdx][2][penIdx];
+                    pen_dd = modelRange.penet[liabIdx][3][penIdx];
                     pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
                     pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
-                    pTrait->penetrance[2][liabIdx][1][0] = pen_Dd;
+                    pTrait->penetrance[2][liabIdx][1][0] = pen_dD;
                     pTrait->penetrance[2][liabIdx][1][1] = pen_dd;
                     pTrait->penetrance[1][liabIdx][0][0] = 1 - pen_DD;
                     pTrait->penetrance[1][liabIdx][0][1] = 1 - pen_Dd;
-                    pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_Dd;
+                    pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_dD;
                     pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
                   }
                   if (modelOptions.polynomial == TRUE);
@@ -1062,7 +1063,8 @@ int main (int argc, char *argv[])
                   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
                     pen_DD = modelRange.penet[liabIdx][0][penIdx];
                     pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-                    pen_dd = modelRange.penet[liabIdx][2][penIdx];
+                    pen_dD = modelRange.penet[liabIdx][2][penIdx];
+                    pen_dd = modelRange.penet[liabIdx][3][penIdx];
                     fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
                   }
                   exit (EXIT_FAILURE);
@@ -1212,10 +1214,12 @@ int main (int argc, char *argv[])
                       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
                         mean_DD = modelRange.penet[liabIdx][0][penIdx];
                         mean_Dd = modelRange.penet[liabIdx][1][penIdx];
-                        mean_dd = modelRange.penet[liabIdx][2][penIdx];
+                        mean_dD = modelRange.penet[liabIdx][2][penIdx];
+                        mean_dd = modelRange.penet[liabIdx][3][penIdx];
                         SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
                         SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-                        SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
+                        SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
+                        SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
                         /* threshold for QT */
                         threshold = modelRange.tthresh[liabIdx][thresholdIdx];
                         /* check against the hard coded constraint */
@@ -1300,7 +1304,8 @@ int main (int argc, char *argv[])
                       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
                         pen_DD = modelRange.penet[liabIdx][0][penIdx];
                         pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-                        pen_dd = modelRange.penet[liabIdx][2][penIdx];
+                        pen_dD = modelRange.penet[liabIdx][2][penIdx];
+                        pen_dd = modelRange.penet[liabIdx][3][penIdx];
                         fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
                       }
                       exit (EXIT_FAILURE);
@@ -1499,12 +1504,14 @@ int main (int argc, char *argv[])
             for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
               pen_DD = modelRange.penet[liabIdx][0][penIdx];
               pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-              pen_dd = modelRange.penet[liabIdx][2][penIdx];
+              pen_dD = modelRange.penet[liabIdx][2][penIdx];
+              pen_dd = modelRange.penet[liabIdx][3][penIdx];
 	      fprintf (fpHet, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
               if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
                 SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
                 SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-                SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
+                SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
+                SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
                 fprintf (fpHet, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
               }
               if (modelType.trait != DT) {
@@ -1572,12 +1579,14 @@ int main (int argc, char *argv[])
         for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
           pen_DD = modelRange.penet[liabIdx][0][penIdx];
           pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-          pen_dd = modelRange.penet[liabIdx][2][penIdx];
+          pen_dD = modelRange.penet[liabIdx][2][penIdx];
+          pen_dd = modelRange.penet[liabIdx][3][penIdx];
           fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
           if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
             SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
             SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-            SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
+            SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
+            SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
             fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
           }
           if (modelType.trait != DT) {
@@ -1606,12 +1615,14 @@ int main (int argc, char *argv[])
         for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
           pen_DD = modelRange.penet[liabIdx][0][penIdx];
           pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-          pen_dd = modelRange.penet[liabIdx][2][penIdx];
+          pen_dD = modelRange.penet[liabIdx][2][penIdx];
+          pen_dd = modelRange.penet[liabIdx][3][penIdx];
           fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
           if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
             SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
             SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-            SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
+            SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
+            SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
             fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
           }
           if (modelType.trait != DT) {
@@ -1638,12 +1649,14 @@ int main (int argc, char *argv[])
         for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
           pen_DD = modelRange.penet[liabIdx][0][penIdx];
           pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-          pen_dd = modelRange.penet[liabIdx][2][penIdx];
+          pen_dD = modelRange.penet[liabIdx][2][penIdx];
+          pen_dd = modelRange.penet[liabIdx][3][penIdx];
           fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
           if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
             SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
             SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-            SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
+            SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
+            SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
             fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
           }
           if (modelType.trait != DT) {
@@ -1834,14 +1847,15 @@ int main (int argc, char *argv[])
         for (liabIdx = 0; (liabIdx == 0) || (modelOptions.dryRun == 0 && liabIdx < modelRange.nlclass); liabIdx++) {
           pen_DD = modelRange.penet[liabIdx][0][penIdx];
           pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-          pen_dd = modelRange.penet[liabIdx][2][penIdx];
+          pen_dD = modelRange.penet[liabIdx][2][penIdx];
+          pen_dd = modelRange.penet[liabIdx][3][penIdx];
           pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
           pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
-          pTrait->penetrance[2][liabIdx][1][0] = pen_Dd;
+          pTrait->penetrance[2][liabIdx][1][0] = pen_dD;
           pTrait->penetrance[2][liabIdx][1][1] = pen_dd;
           pTrait->penetrance[1][liabIdx][0][0] = 1 - pen_DD;
           pTrait->penetrance[1][liabIdx][0][1] = 1 - pen_Dd;
-          pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_Dd;
+          pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_dD;
           pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
         }
 
@@ -1881,7 +1895,8 @@ int main (int argc, char *argv[])
             for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
               pen_DD = modelRange.penet[liabIdx][0][penIdx];
               pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-              pen_dd = modelRange.penet[liabIdx][2][penIdx];
+              pen_dD = modelRange.penet[liabIdx][2][penIdx];
+              pen_dd = modelRange.penet[liabIdx][3][penIdx];
               fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
             }
             exit (EXIT_FAILURE);
@@ -1928,10 +1943,12 @@ int main (int argc, char *argv[])
               for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
                 mean_DD = modelRange.penet[liabIdx][0][penIdx];
                 mean_Dd = modelRange.penet[liabIdx][1][penIdx];
-                mean_dd = modelRange.penet[liabIdx][2][penIdx];
+                mean_dD = modelRange.penet[liabIdx][2][penIdx];
+                mean_dd = modelRange.penet[liabIdx][3][penIdx];
                 SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
                 SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-                SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
+                SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
+                SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
                 threshold = modelRange.tthresh[liabIdx][thresholdIdx];
 
                 /* check against the hard coded constraint */
@@ -1983,7 +2000,8 @@ int main (int argc, char *argv[])
                 for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
                   pen_DD = modelRange.penet[liabIdx][0][penIdx];
                   pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-                  pen_dd = modelRange.penet[liabIdx][2][penIdx];
+                  pen_dD = modelRange.penet[liabIdx][2][penIdx];
+                  pen_dd = modelRange.penet[liabIdx][3][penIdx];
                   fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
                 }
                 exit (EXIT_FAILURE);
@@ -2324,14 +2342,15 @@ int main (int argc, char *argv[])
           for (liabIdx = 0; (liabIdx == 0) || (modelOptions.dryRun == 0 && liabIdx < modelRange.nlclass); liabIdx++) {
             pen_DD = modelRange.penet[liabIdx][0][penIdx];
             pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-            pen_dd = modelRange.penet[liabIdx][2][penIdx];
+            pen_dD = modelRange.penet[liabIdx][2][penIdx];
+            pen_dd = modelRange.penet[liabIdx][3][penIdx];
             pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
             pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
-            pTrait->penetrance[2][liabIdx][1][0] = pen_Dd;
+            pTrait->penetrance[2][liabIdx][1][0] = pen_dD;
             pTrait->penetrance[2][liabIdx][1][1] = pen_dd;
             pTrait->penetrance[1][liabIdx][0][0] = 1 - pen_DD;
             pTrait->penetrance[1][liabIdx][0][1] = 1 - pen_Dd;
-            pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_Dd;
+            pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_dD;
             pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
           }
 
@@ -2514,10 +2533,12 @@ int main (int argc, char *argv[])
                 for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
                   mean_DD = modelRange.penet[liabIdx][0][penIdx];
                   mean_Dd = modelRange.penet[liabIdx][1][penIdx];
-                  mean_dd = modelRange.penet[liabIdx][2][penIdx];
+                  mean_dD = modelRange.penet[liabIdx][2][penIdx];
+                  mean_dd = modelRange.penet[liabIdx][3][penIdx];
                   SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
                   SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-                  SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
+                  SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
+                  SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
                   threshold = modelRange.tthresh[liabIdx][thresholdIdx];
 
                   if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
@@ -2717,12 +2738,14 @@ int main (int argc, char *argv[])
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
         pen_DD = modelRange.penet[liabIdx][0][penIdx];
         pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-        pen_dd = modelRange.penet[liabIdx][2][penIdx];
+        pen_dD = modelRange.penet[liabIdx][2][penIdx];
+        pen_dd = modelRange.penet[liabIdx][3][penIdx];
 	fprintf (fpHet, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
         if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
           SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
           SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-          SD_dd = modelRange.param[liabIdx][2][0][paramIdx];
+          SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
+          SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
           fprintf (fpHet, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
         }
         if (modelType.trait != DT) {
