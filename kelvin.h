@@ -142,7 +142,6 @@ typedef struct modelType
   double maxThreshold;		/* maximum threshold value - in standardized unit */
   int *constants;		/* Array of distribution constants (certain QT/CT distributions only) */
   int ccFlag;			/* Case Ctrl flag */
-  int imprintingFlag;		/* 1 - imprinting pen(1|2) may not be the same as pen(2|1) */
 }
 ModelType;
 
