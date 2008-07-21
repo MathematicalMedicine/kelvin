@@ -1265,10 +1265,34 @@ int main (int argc, char *argv[])
                     else
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
-                    KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
+
+		    /* If we're not on the first iteration, it's not a polynomial build, so
+		     * show progress at 1 minute intervals. Have a care to avoid division by zero. */
                     strcpy (partialPolynomialFunctionName, "cL2_P%s");
-                    compute_likelihood (&pedigreeSet);
-                    cL[2]++;
+		    if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
+		      swStart (combinedComputeSW);
+		      compute_likelihood (&pedigreeSet);
+		      cL[2]++;
+		      swStop (combinedComputeSW);
+		      if (statusRequestSignal) {
+			statusRequestSignal = FALSE;
+			if (cL[2] > 1) {    // The first time thru we have no basis for estimation
+			  fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                               "Calculations", (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]),
+                               ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+                                (eCL[2] + eCL[3]) / (cL[2] + cL[3]) -
+                                (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
+			  fflush (stdout);
+			}
+		      }
+		    } else { // This _is_ the first iteration
+		      swStart (combinedBuildSW);
+		      compute_likelihood (&pedigreeSet);
+		      cL[2]++;
+		      swStop (combinedBuildSW);
+		      fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]));
+		      fflush (stdout);
+		    }
 
                     if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                       fprintf (stderr, "Theta 0.5 has likelihood 0\n");
@@ -1317,10 +1341,23 @@ int main (int argc, char *argv[])
                             populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2,
                                                       initialHetProbAddr, 0, -1, -1, 0);
 
-                        KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
                         strcpy (partialPolynomialFunctionName, "cL3_P%s");
+			swStart (combinedComputeSW);
                         compute_likelihood (&pedigreeSet);
                         cL[3]++;
+			swStop (combinedComputeSW);
+			if (statusRequestSignal) {
+			  statusRequestSignal = FALSE;
+			  if (cL[3] > 1) {  // The first time thru we have no basis for estimation
+			    fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+				     "Calculations", (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]),
+				     ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+				      (eCL[2] + eCL[3]) / (cL[2] + cL[3]) -
+				      (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
+			    fflush (stdout);
+			  }
+			}
+
                         log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                         if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                           log10_likelihood_ratio = 0;

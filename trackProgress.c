@@ -137,8 +137,8 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
       TP QT alternative hypothesis is cL[3], looped for all of cL[2] and ndprime, ntheta
 
       */      
-      sprintf (analysisType, "%d*%d*%d space, Trait-to-marker, Two-Point, ",
-	       modelRange.nalpha, modelRange.ngfreq, modelRange.npenet);
+      sprintf (analysisType, "%da*%dgf*%dp*%dlc space, Trait-to-marker, Two-Point, ",
+	       modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass);
       if (modelType.trait == DT) {
 	strcat (analysisType, "Dichotomous Trait, ");
 	eCL[0] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1);
@@ -157,7 +157,7 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
 	  if (modelType.distrib == QT_FUNCTION_CHI_SQUARE) {
 	    strcat (analysisType, "Chi-Square Distribution, Linkage ");
 	  } else { // not T-Dist or Chi-Sq Dist, so Normal Dist
-	    strcat (analysisType, "Normal Distribution.");
+	    strcat (analysisType, "Normal Distribution, Linkage ");
 	  }
 	}
       }
@@ -180,15 +180,10 @@ char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelR
       polynomials for each pedigree incorporate alpha?, # MP markers used in analysis.
 
       */
-      if (modelOptions.mapFlag == SS) {
-	sprintf (analysisType, "%d*%d*%d space, Trait-to-marker, Sex-Specific Multipoint (w/%d loci), ",
-		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet,
-		 modelType.numMarkers + originalLocusList.numTraitLocus);
-      } else { // Multipoint but not SS, so SA
-	sprintf (analysisType, "%d*%d*%d space, Trait-to-marker, Sex-Averaged Multipoint (w/%d loci), ",
-		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet,
-		 modelType.numMarkers + originalLocusList.numTraitLocus);
-      }
+      sprintf (analysisType, "%da*%dgf*%dp*%dlc space, Trait-to-marker, Sex-%s Multipoint (w/%d loci), ",
+	       modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
+	       modelOptions.mapFlag == SS ? "Specific" : "Averaged",
+	       modelType.numMarkers + originalLocusList.numTraitLocus);
       eCL[6] = modelRange.ntloc;
       if (modelType.trait == DT) {
 	strcat (analysisType, "Dichotomous Trait.");
