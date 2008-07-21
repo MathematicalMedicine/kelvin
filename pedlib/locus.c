@@ -709,7 +709,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
   Locus *pLocus = originalLocusList.ppLocusList[locus];
 
   //TraitLocus *pTraitLocus = pLocus->pTraitLocus;
-  double pen = 1.0;
+  //  double pen = 1.0;
 
   Polynomial *penPolynomial;
 
@@ -753,6 +753,11 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 			    allele2, allele1);
 	    pGenotype->pDualGenotype = pGenotype2;
 	    pGenotype2->pDualGenotype = pGenotype;
+	    if(modelOptions.imprintingFlag == TRUE)
+	      {
+		compute_penetrance (pPerson, locus, allele2, allele1,
+				    &penPolynomial);
+	      }
 	    pGenotype2->penslot.penetrancePolynomial = penPolynomial;
 	  }
 	} else {
@@ -765,7 +770,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 	      add_genotype (&pPerson->ppGenotypeList[locus],
 			    &pPerson->pNumGenotype[locus], locus,
 			    allele1, allele2);
-	    pGenotype->penslot.penetrance = pen;
+	    //	    pGenotype->penslot.penetrance = pen;
 	    if (allele1 != allele2) {
 	      pGenotype2 =
 		add_genotype (&pPerson->ppGenotypeList[locus],
@@ -773,7 +778,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 			      locus, allele2, allele1);
 	      pGenotype->pDualGenotype = pGenotype2;
 	      pGenotype2->pDualGenotype = pGenotype;
-	      pGenotype2->penslot.penetrance = pen;
+	      //	      pGenotype2->penslot.penetrance = pen;
 	    }
 	  }
 	}
