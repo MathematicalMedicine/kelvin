@@ -289,7 +289,7 @@ Specifies the values used to represent affection status in the pedigree data fil
    AS 0 1 2
 </pre>
 where the first value is the "unknown" value, the second value is the
-"unaffected" value, and the third value is the "affected" value (the
+"unaffected" value, and the third value is the "affection" value (the
 numbers shown reflect the defaults for DT; for multipoint, the
 defaults are NAN, -9999.99, and 9999.99, respectively).
 
@@ -320,7 +320,8 @@ This file describes these columns with one row for each type. Rows consist of th
 <ol>
 <li>Locus type, either "T" for affection status (trait), which will be specified by one column, 
 or "M" for marker, which
-will be specified by two columns (pair of haplotypes).
+will be specified by two columns (pair of haplotypes). The exception is when multiple <a href="#LC">liability classes</a>, in which case the affection status (trait) includes a second column specifying the liability class number
+membership.
 <li>Name of the locus.
 </ol>
 For example the following describes four loci -- the trait and 3 markers:
@@ -340,29 +341,38 @@ by the 4th and 5th columns, and "locus_3" by the 6th and 7th.
 <h3 id="HE">HE</h3>
 
 <h3 id="LC">LC</h3>
-We need to accomodate liability classes for all three models, and also
-support constraints between liability classes. Thus liability classes
-allow you to apply different penetrance models to individuals,
-supporting things like, e.g., age of onset, or imprinting if you use
+Applicable to all types of analyses.
+<p>
+Liability classes
+allow you to apply different penetrance models to different groups of individuals,
+supporting things like age of onset, or imprinting if you use
 liability classes to code for M/F parents.
-<p>
-In practice, what this means is that when you have multiple liability
-classes, you get "extra" dimensions for the LOD scores. Moreover, you
-need to support cross-class constraints, as well as differing
-within-class constraints. What you don't need to do is to support,
-e.g., dichotomouse traits for one class and quantitative traits for
-the other class, or different grid specifications for the different
-classes.
-<p>
-For example, if you have two liability classes LC 1 and LC 2 in a DT
-model:
 <pre>
+LC n
+</pre>
+Where <tt>n</tt> is the number of liability classes. When there are multiple
+liability classes, an additional column for liability class number
+membership
+must be added to the pedigree file immediately after the affection status. Liability
+class numbers are 1-<tt>n</tt>.
+
+When you have multiple liability
+classes, the number of penetrance vectors in the analysis will be
+multiplied by the number of liability classes unless you specify 
+inter- or intra-class penetrance constraints.
+For example, if you have two liability classes (1 and 2) in a DT
+model, your configuration file might look like this:
+<pre>
+    # Two liability classes
     LC 2
+    # Penetrance values for all classes
     DD 0.0 0.8 0.1; 0.9 0.999 0.099
     Dd 0.0 0.8 0.1; 0.9 0.999 0.099
     dd 0.0 0.8 0.1; 0.9 0.999 0.099
     Dd > dd
+    # An intra-class penetrance constraint
     DD 1 > Dd 1
+    # An inter-class penetrance constraint
     DD 1 > DD 2
 </pre>
 Note the extension to the constraint language; keywords without an
@@ -370,12 +380,12 @@ integer class number apply uniformly to all classes, while those with
 integer class numbers provide inter-class constraints or within-class
 constraints applied to only select classes.
 <p>
-This specification says that Dd>dd for both LC 1 and LC 2, but DD>Dd
-only for LC 1 and not LC 2, and LC 1's DD always exceeds LC 2's DD,
+This specification says that Dd>dd for both liability classes 1 and 2, but DD>Dd
+only for liability class 1 and not 2, and liability class 1's DD always exceeds 2's DD,
 excluding grid points where this is not the case.
 <p>
-As before, for multiallelic diseases, we would lose the Dd
-specifications and instead use single-digit integers.
+For multiallelic diseases, use single-digit integers instead of Dd
+specifications.
 
 <h3 id="LD">LD</h3>
 
