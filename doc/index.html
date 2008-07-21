@@ -51,11 +51,12 @@ complex pedigrees or those with untyped founders. The best approach is to normal
 polynomial mode, and fall back to non-polynomial mode if memory becomes an issue. Recent releases of kelvin
 monitor CPU and memory utilization and will self-terminate if thrashing memory.
 <p>
-If you are running on a multi-core platform, and your compiler supports OpenMP 2.0, you can build kelvin
+If you are running on a multi-core platform and your compiler supports 
+OpenMP 2.0, you can build kelvin
 to use multiple threads and reduce your single-analysis runtime significantly at a marginal increase in memory, less if
 you use a drop-in allocator as described above.
 <h3>Installation</h3>
-kelvin is developed in a Linux environment, so standard unix tools are used for build management and
+kelvin is developed in unix environments, so standard unix tools are used for build management and
 distribution.
 kelvin is currently distributed as a compressed tarball of the directory hierarchy of our
 latest release, e.g. <tt>kelvin-0.34.2.tar.gz</tt>.
@@ -65,7 +66,7 @@ latest release, e.g. <tt>kelvin-0.34.2.tar.gz</tt>.
 kelvin is the primary linkage analysis program and the focus of this documentation. dkelvin is a variant that
 uses a multidimensional integration approach to analysis, and is still under development. calc_updated_ppl is
 a tool for combining the results of an analysis broken into separate kelvin runs.
-<li><tt>&lt;RELEASE&gt;/doc/</tt> - (very) limited documentation.
+<li><tt>&lt;RELEASE&gt;/doc/</tt> - (very) limited documentation, including these HTML files.
 <li><tt>&lt;RELEASE&gt;include/</tt> - a work directory for builds.
 <li><tt>&lt;RELEASE&gt;/lib/</tt> - a work directory for builds.
 <li><tt>&lt;RELEASE&gt;pedlib/</tt> - pedigree, likelihood, and polynomial components. Includes a dependent Makefile - don't try
@@ -104,17 +105,21 @@ The distribution includes subdirectories with sample configuration files for a f
 the configuration "paths". We typically name the configuration files <tt>kelvin.conf</tt>.
 These illustrate the required configuration information, and can serve as starting points for your own
 versions. Unless otherwise noted, we have externally verified the results of analysis for these tests,
-and they are provided in each directory in <tt>avghet.out-baseline</tt> and (as appropriate) 
+and they are provided in each directory in <tt>br.out-baseline</tt> and (as appropriate) 
 <tt>ppl.out-baseline</tt>. The runtimes
 listed are on an Macintosh OSX 10.4 i386 with GCC 4.0.1 (no OpenMP).
 <ul>
-<li>Two-point analysis of a dichotomous trait: <tt>&lt;RELEASE&gt;/test-suite/TP_DT_LE/</tt>, runs in 50s.
-<li>Two-point analysis of a dichotomous trait with linkage disequilibrium: <tt>&lt;RELEASE&gt;/test-suite/TP_DT_LD/</tt>, runs in 1m 23s.
-<li>Two-point analysis of a dichotomous trait going marker-to-marker: <tt>&lt;RELEASE&gt;/test-suite/TP_DT_MM_LE/</tt>, runs in less than 1s.
-<li>Two-point analysis of a dichotomous trait going marker-to-marker with linkage disequilibrium: <tt>&lt;RELEASE&gt;/test-suite/TP_DT_MM_LD/</tt>, runs in less than 1s.
-<li>Two-point analysis of a quantitative trait: <tt>&lt;RELEASE&gt;/test-suite/TP_QT_LE/</tt>, runs in 27s.
-<li>Sex-averaged multipoint analysis of a dichotomous trait: <tt>&lt;RELEASE&gt;/test-suite/SA_DT/</tt>, runs in 2s.
-<li>Sex-averaged multipoint analysis of a quantitative trait: <tt>&lt;RELEASE&gt;/test-suite/SA_QT/</tt>, runs in 1s.
+<li>Two-point analysis of a dichotomous trait: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_LE/</tt>, runs in 53s.
+<li>Two-point analysis of a dichotomous trait with linkage disequilibrium: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_LD/</tt>, runs in 1m 43s.
+<li>Two-point analysis of a dichotomous trait going marker-to-marker: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_MM_LE/</tt>, 
+runs in less than 1s with a minor deviation (1 in 7th position) in one bayes ratio value from runs on other
+platforms. This sort of deviation in test results is attributable to the different C and gsl libraries used on
+different platforms.
+<li>Two-point analysis of a dichotomous trait going marker-to-marker with linkage disequilibrium: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_MM_LD/</tt>, runs in less than 1s.
+<li>Two-point analysis of a quantitative trait: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_QT_LE/</tt>, runs in 26s.
+<li>Sex-averaged multipoint analysis of a dichotomous trait: <tt>&lt;RELEASE&gt;/test-suite/PE/SA_DT/</tt>, runs in 2s.
+<li>Sex-averaged multipoint analysis of a quantitative trait: <tt>&lt;RELEASE&gt;/test-suite/PE/SA_QT/</tt>, runs in 1s.
+<li>Two liability class version of sex-averaged multipoint analysis of a quantitative trait: <tt>&lt;RELEASE&gt;/test-suite/PE/SA_QT_LC2/</tt>, runs in 1s.
 </ul>
 
 <h2>RUNNING THE PROGRAMS</h2>
