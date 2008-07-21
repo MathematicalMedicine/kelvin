@@ -3,6 +3,7 @@
 TESTS = \
 	SA_DT \
 	SA_QT \
+	SA_QT_LC2 \
 	TP_DT_LD \
 	TP_DT_LE \
 	TP_DT_MM_LD \
