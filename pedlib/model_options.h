@@ -27,6 +27,8 @@ typedef struct ModelOptions
    * QT/CT. */
   int mapFlag;
 
+  int imprintingFlag;		/* 1 - imprinting pen(1|2) may not be the same as pen(2|1) */
+
   /* affection status: DT defaults are {0,1,2} while QT/CT defaults
    * are {NAN, -INFINITY, INFINITY}. values are cast to double in both
    * cases. */
