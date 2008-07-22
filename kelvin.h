@@ -84,6 +84,7 @@ extern int polynomialScale;
  ***********************************************************************/
 extern char mapfile[KMAXFILENAMELEN + 1];
 extern char markerfile[KMAXFILENAMELEN + 1];
+extern char maxmodelfile[KMAXFILENAMELEN + 1];
 extern char resultsprefix[KMAXFILENAMELEN + 1];
 extern char pedfile[KMAXFILENAMELEN + 1];
 extern char datafile[KMAXFILENAMELEN + 1];

@@ -200,6 +200,7 @@ char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
 /* Some default global values. */
 char resultsprefix[KMAXFILENAMELEN + 1] = "./"; ///< Path for SR directive result storage
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";   ///< Default name (and storage) for marker file
+char maxmodelfile[KMAXFILENAMELEN + 1] = "tp.out";   ///< Default name (and storage) for maximizing model file
 char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";      ///< Default name (and storage) for map file
 char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";      ///< Default name (and storage) for pedigree file
 char datafile[KMAXFILENAMELEN + 1] = "datafile.dat";    ///< Default name (and storage) for marker data file
@@ -615,8 +616,8 @@ int main (int argc, char *argv[])
   KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", avghetfile);
   fprintf (fpHet, "# Version %s\n", programVersion);
   if (modelType.type == TP) {
-    fpTP = fopen ("tp.out", "w");
-    KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", "tp.out");
+    fpTP = fopen (maxmodelfile, "w");
+    KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
     fpPPL = fopen (pplfile, "w");
     fprintf (fpPPL, "# Version %s\n", programVersion);
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);

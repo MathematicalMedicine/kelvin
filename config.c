@@ -479,6 +479,10 @@ readConfigFile (char *file, ModelType * modelType,
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure marker file %s\n", markerfile);
       continue;
     }
+    if (sscanf (line, "MX %s", maxmodelfile) == 1) {	/* Maximizing model output file for 2pt */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure maximizing model file %s\n", maxmodelfile);
+      continue;
+    }
     if (strncmp (line, "SR", 2) == 0) {
       modelOptions->saveResults = TRUE;
       if (sscanf (line, "SR %s", resultsprefix) == 1) {	/* Results file prefix */

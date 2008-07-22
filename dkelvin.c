@@ -148,6 +148,7 @@ int print_point_flag = 0;
 
 /* Some default global values. */
 char resultsprefix[KMAXFILENAMELEN + 1] = "./";
+char maxmodelfile[KMAXFILENAMELEN + 1] = "tp.out";   ///< Default name (and storage) for maximizing model file
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
 char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";
 char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";
