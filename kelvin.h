@@ -115,11 +115,7 @@ extern char pplfile[KMAXFILENAMELEN + 1];
 #define AM ADJACENTMARKER
 #define ND NORMAL_DISTRIBUTION	/* normal distribution */
 #define TD T_DISTRIBUTION	/* t distribution */
-#ifdef IMPRINTING
-  #define NPENET(x) ((x)*(x))
-#else
-  #define NPENET(x) (((x)*((x)+1))/2)
-#endif
+#define NPENET(x) ((x)*(x))
 
 /* Information about the type of analysis. The array of constants is
  * only used for some types of QT/CT models (for example, the degrees
