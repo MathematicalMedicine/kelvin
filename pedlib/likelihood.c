@@ -273,7 +273,7 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	if (pPedigree->polynomialFunctionName == NULL ||
 	    strcmp (polynomialFunctionName, pPedigree->polynomialFunctionName)) { // Not the current one
 	  if (pPedigree->polynomialFunctionHandle != NULL) { // ...but something is loaded
-	    printf ("\nClosing [%s] for [%s]\n", pPedigree->polynomialFunctionName, polynomialFunctionName);
+//	    printf ("\nClosing [%s] for [%s]\n", pPedigree->polynomialFunctionName, polynomialFunctionName);
 	    dlclose (pPedigree->polynomialFunctionHandle); // ...so close the current one
 	  }
 	  free (pPedigree->polynomialFunctionName);
@@ -316,13 +316,11 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 #ifdef POLYCOMP_DL
 	  } else { // There is a polynomial, so try to load it
 	    if ((pPedigree->polynomialFunction = dlsym(pPedigree->polynomialFunctionHandle,
-						       pPedigree->polynomialFunctionName)) != NULL)
-	      fprintf (stderr, "Loaded polynomial %s\n", polynomialFunctionName);
-	    else
+						       pPedigree->polynomialFunctionName)) == NULL)
 	      fprintf (stderr, "Failed to load polynomial %s\n", polynomialFunctionName);
 	  }
-	} else
-	  fprintf (stderr, "Still referencing %s\n", polynomialFunctionName);
+	} // else
+//	  fprintf (stderr, "Still referencing %s\n", polynomialFunctionName);
 #endif
       }
     }
