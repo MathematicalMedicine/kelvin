@@ -4031,12 +4031,12 @@ void *loadPoly (char *name)
   void *dl;
 
   sprintf (dLName, "./%s.so", name);
-  printf ("Attempting load of [%s]\n", dLName);
+//  printf ("Attempting load of [%s]\n", dLName);
   if ((dl = dlopen(dLName, RTLD_NOW)) != NULL) {
-    fprintf (stdout, "Using existing dynamic library for polynomial %s\n", name);
+//    fprintf (stdout, "Using existing dynamic library for polynomial %s\n", name);
     return dl;
   } else {
-    fprintf (stdout, "Couldn't find existing dynamic library for polynomial %s\n", name);
+//    fprintf (stdout, "Couldn't find existing dynamic library for polynomial %s\n", name);
     return NULL;
   }
 }
