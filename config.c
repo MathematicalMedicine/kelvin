@@ -52,11 +52,7 @@
 #define PCLASSCONSTRAINT2 "[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([[:digit:]])[[:space:]]*([>]|[>][=]|[=][=]|[!][=])[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([[:digit:]])[[:space:]]*[;]?"
 
 /* Strings used to parse configuration file lines (see getType). */
-#ifdef IMPRINTING
-  #define DIRECTIVES "GFThTmTfALTLTTLDAFDDDddDdd"
-#else
-  #define DIRECTIVES "GFThTmTfALTLTTLDAFDDDddd"
-#endif
+#define DIRECTIVES "GFThTmTfALTLTTLDAFDDDddDdd"
 #define GF 0			/* gene frequency */
 #define Th 1			/* theta */
 #define Tm 2			/* male theta */
@@ -68,13 +64,8 @@
 #define AF 8
 #define DD 9			/* Must be last for numeric directives to work */
 #define Dd 10
-#ifdef IMPRINTING
-  #define dD 11
-  #define dd 12
-#else
-  #define dd 11
-  #define dD 12
-#endif
+#define dD 11
+#define dd 12
 
 /* Strings used to parse configuration file constraints (see
  * getOperator). Matches:
@@ -902,6 +893,17 @@ readConfigFile (char *file, ModelType * modelType,
 	   "Trait loci specification only for multipoint analysis.\n");
   KASSERT ((modelType->type != TP || !modelRange->tlmark),
 	   "On-marker trait locus specification only for multipoint analysis.\n");
+
+  /* Copy Dd to dD if needed, i.e. if none were specified, so no imprinting. &&& */
+  if (penetcnt[dD-DD] == 0) {
+    modelRange->penet[0][dD-DD] = malloc ((penetmax[Dd-DD] + CHUNKSIZE) * sizeof (double));
+    penetcnt[dD-DD] = penetcnt[Dd-DD];
+    for (i=0; i<penetcnt[Dd-DD]; i++) 
+      modelRange->penet[0][dD-DD][i] = modelRange->penet[0][Dd-DD][i];
+    addConstraint (SIMPLE, dD, 0, 0, EQ, Dd, 0, 0, FALSE);
+    modelOptions->imprintingFlag = FALSE;
+  } else
+    modelOptions->imprintingFlag = TRUE;
 
   /* Sort the values in the final model. Sorted values better support
    * the application of constraints. */

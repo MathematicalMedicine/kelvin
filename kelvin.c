@@ -1065,7 +1065,10 @@ int main (int argc, char *argv[])
                     pen_Dd = modelRange.penet[liabIdx][1][penIdx];
                     pen_dD = modelRange.penet[liabIdx][2][penIdx];
                     pen_dd = modelRange.penet[liabIdx][3][penIdx];
-                    fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
+		    if (modelOptions.imprintingFlag)
+		      fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
+		    else
+		      fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
                   }
                   exit (EXIT_FAILURE);
                 }
@@ -1306,7 +1309,10 @@ int main (int argc, char *argv[])
                         pen_Dd = modelRange.penet[liabIdx][1][penIdx];
                         pen_dD = modelRange.penet[liabIdx][2][penIdx];
                         pen_dd = modelRange.penet[liabIdx][3][penIdx];
-                        fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
+			if (modelOptions.imprintingFlag)
+			  fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
+			else
+			  fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
                       }
                       exit (EXIT_FAILURE);
                     }
@@ -1467,12 +1473,21 @@ int main (int argc, char *argv[])
         fprintf (fpHet, "Theta(M,F) BayesRatio MOD R2 Alpha DGF MF ");
 	for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
 	  if (modelType.trait == DT)
-	    fprintf (fpHet, "LC%dPV(DD,Dd,dd) ", liabIdx);
+	    if (modelOptions.imprintingFlag)
+	      fprintf (fpHet, "LC%dPV(DD,Dd,dD,dd) ", liabIdx);
+	    else
+	      fprintf (fpHet, "LC%dPV(DD,Dd,dd) ", liabIdx);
 	  else
 	    if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-	      fprintf (fpHet, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
+	      if (modelOptions.imprintingFlag)
+		fprintf (fpHet, "LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh) ", liabIdx);
+	      else
+		fprintf (fpHet, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
 	    else
-	      fprintf (fpHet, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
+	      if (modelOptions.imprintingFlag)
+		fprintf (fpHet, "LC%dPV(DDDF,DdDF,dDDF,ddDF,Thresh) ", liabIdx);
+	      else
+		fprintf (fpHet, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
 	fprintf (fpHet, "\n");
         for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
           for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
@@ -1506,13 +1521,19 @@ int main (int argc, char *argv[])
               pen_Dd = modelRange.penet[liabIdx][1][penIdx];
               pen_dD = modelRange.penet[liabIdx][2][penIdx];
               pen_dd = modelRange.penet[liabIdx][3][penIdx];
-	      fprintf (fpHet, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
+	      if (modelOptions.imprintingFlag)
+		fprintf (fpHet, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
+	      else
+		fprintf (fpHet, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
               if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
                 SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
                 SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
                 SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
                 SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
-                fprintf (fpHet, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
+		if (modelOptions.imprintingFlag)
+		  fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
+		else
+		  fprintf (fpHet, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
               }
               if (modelType.trait != DT) {
                 threshold = modelRange.tthresh[liabIdx][thresholdIdx];
@@ -1559,7 +1580,10 @@ int main (int argc, char *argv[])
           }
           initialFlag = 0;
         }
-        fprintf (fpTP, "Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dd\n");
+	if (modelOptions.imprintingFlag)
+	  fprintf (fpTP, "Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dD PEN_dd\n");
+	else
+	  fprintf (fpTP, "Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dd\n");
         /* overall maximizing model - MOD */
         fprintf (fpTP, "# Overall MOD maximizing model:\n");
         theta[0] = modelRange.theta[0][maxThetaIdx];
@@ -1581,13 +1605,19 @@ int main (int argc, char *argv[])
           pen_Dd = modelRange.penet[liabIdx][1][penIdx];
           pen_dD = modelRange.penet[liabIdx][2][penIdx];
           pen_dd = modelRange.penet[liabIdx][3][penIdx];
-          fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
+	  if (modelOptions.imprintingFlag)
+	    fprintf (fpTP, " %5.3f %5.3f %5.3f %5.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
+	  else
+	    fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
           if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
             SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
             SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
             SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
             SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
-            fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
+	    if (modelOptions.imprintingFlag)
+	      fprintf (fpTP, " %5.3f %5.3f %5.3f %5.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
+	    else
+	      fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
           }
           if (modelType.trait != DT) {
             threshold = modelRange.tthresh[liabIdx][thresholdIdx];
@@ -1617,13 +1647,19 @@ int main (int argc, char *argv[])
           pen_Dd = modelRange.penet[liabIdx][1][penIdx];
           pen_dD = modelRange.penet[liabIdx][2][penIdx];
           pen_dd = modelRange.penet[liabIdx][3][penIdx];
-          fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
+	  if (modelOptions.imprintingFlag)
+	    fprintf (fpTP, " %5.3f %5.3f %5.3f %5.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
+	  else
+	    fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
           if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
             SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
             SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
             SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
             SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
-            fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
+	    if (modelOptions.imprintingFlag)
+	      fprintf (fpTP, " %5.3f %5.3f %5.3f %5.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
+	    else
+	      fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
           }
           if (modelType.trait != DT) {
             threshold = modelRange.tthresh[liabIdx][thresholdIdx];
@@ -1651,13 +1687,19 @@ int main (int argc, char *argv[])
           pen_Dd = modelRange.penet[liabIdx][1][penIdx];
           pen_dD = modelRange.penet[liabIdx][2][penIdx];
           pen_dd = modelRange.penet[liabIdx][3][penIdx];
-          fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
+	  if (modelOptions.imprintingFlag)
+	    fprintf (fpTP, " %5.3f %5.3f %5.3f %5.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
+	  else
+	    fprintf (fpTP, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd, pen_dd);
           if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
             SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
             SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
             SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
             SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
-            fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
+	    if (modelOptions.imprintingFlag)
+	      fprintf (fpTP, " %5.3f %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dD, SD_dd);
+	    else
+	      fprintf (fpTP, " %5.3f %5.3f %5.3f ", SD_DD, SD_Dd, SD_dd);
           }
           if (modelType.trait != DT) {
             threshold = modelRange.tthresh[liabIdx][thresholdIdx];
@@ -1897,6 +1939,9 @@ int main (int argc, char *argv[])
               pen_Dd = modelRange.penet[liabIdx][1][penIdx];
               pen_dD = modelRange.penet[liabIdx][2][penIdx];
               pen_dd = modelRange.penet[liabIdx][3][penIdx];
+	    if (modelOptions.imprintingFlag)
+              fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
+	    else
               fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
             }
             exit (EXIT_FAILURE);
@@ -2002,7 +2047,10 @@ int main (int argc, char *argv[])
                   pen_Dd = modelRange.penet[liabIdx][1][penIdx];
                   pen_dD = modelRange.penet[liabIdx][2][penIdx];
                   pen_dd = modelRange.penet[liabIdx][3][penIdx];
-                  fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
+		  if (modelOptions.imprintingFlag)
+		    fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
+		  else
+		    fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
                 }
                 exit (EXIT_FAILURE);
               }
@@ -2051,12 +2099,21 @@ int main (int argc, char *argv[])
     fprintf (fpHet, "Chr Position PPL BayesRatio MOD Alpha DGF ");
     for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
       if (modelType.trait == DT)
-        fprintf (fpHet, "LC%dPV(DD,Dd,dd) ", liabIdx);
+	if (modelOptions.imprintingFlag)
+	  fprintf (fpHet, "LC%dPV(DD,Dd,dD, dd) ", liabIdx);
+	else
+	  fprintf (fpHet, "LC%dPV(DD,Dd,dd) ", liabIdx);
       else
 	if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-	  fprintf (fpHet, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
+	  if (modelOptions.imprintingFlag)
+	    fprintf (fpHet, "LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh) ", liabIdx);
+	  else
+	    fprintf (fpHet, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
 	else
-	  fprintf (fpHet, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
+	  if (modelOptions.imprintingFlag)
+	    fprintf (fpHet, "LC%dPV(DDDF,DdDF,dDF,ddDF,Thresh) ", liabIdx);
+	  else
+	    fprintf (fpHet, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
     fprintf (fpHet, "MarkerList(0");
     for (k = 1; k < modelType.numMarkers; k++)
       fprintf (fpHet, ",%d", k);
@@ -2740,13 +2797,19 @@ int main (int argc, char *argv[])
         pen_Dd = modelRange.penet[liabIdx][1][penIdx];
         pen_dD = modelRange.penet[liabIdx][2][penIdx];
         pen_dd = modelRange.penet[liabIdx][3][penIdx];
-	fprintf (fpHet, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
+	if (modelOptions.imprintingFlag)
+	  fprintf (fpHet, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
+	else
+	  fprintf (fpHet, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
         if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
           SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
           SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
           SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
           SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
-          fprintf (fpHet, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
+	  if (modelOptions.imprintingFlag)
+	    fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
+	  else
+	    fprintf (fpHet, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
         }
         if (modelType.trait != DT) {
           threshold = modelRange.tthresh[liabIdx][thresholdIdx];
