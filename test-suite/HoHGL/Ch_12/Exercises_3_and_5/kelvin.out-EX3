@@ -1,19 +1,19 @@
-PID: 4170, kelvin V0.35.0 built Jul 21 2008 13:19:25
-PID: 4170, $Id: kelvin.c 877 2008-07-21 13:09:07Z whv001 $
-PID: 4170, $Id: likelihood.c 708 2008-07-09 15:30:59Z whv001 $
-PID: 4170, $Id: locus.c 683 2008-06-26 14:28:17Z whv001 $
-PID: 4170, $Id: polynomial.c 704 2008-07-09 13:31:54Z whv001 $
-PID: 4170, Compiler 4.3.0 20080125 (experimental), GSL 1.8
+PID: 4337, kelvin V0.35.0 built Jul 21 2008 13:19:25
+PID: 4337, $Id: kelvin.c 877 2008-07-21 13:09:07Z whv001 $
+PID: 4337, $Id: likelihood.c 708 2008-07-09 15:30:59Z whv001 $
+PID: 4337, $Id: locus.c 683 2008-06-26 14:28:17Z whv001 $
+PID: 4337, $Id: polynomial.c 704 2008-07-09 13:31:54Z whv001 $
+PID: 4337, Compiler 4.3.0 20080125 (experimental), GSL 1.8
 
-PID: 4170, OpenMP-enabled w/0 threads.
-PID: 4170, In /Users/whv001/kelvin/trunk/test-suite/HoHGL/Ch_12/Exercises_3_and_5 w/kelvin.EX3
-PID: 4170, Computation is done in non-polynomial (direct evaluation) mode
-To check status (at some risk), type CTRL-\ or type "kill -3 4170".
-PID: 4170, 1a*2gf*1p*1lc space, Trait-to-marker, Two-Point, Dichotomous Trait, Equilibrium.
+PID: 4337, OpenMP-enabled w/0 threads.
+PID: 4337, In /Users/whv001/kelvin/trunk/test-suite/HoHGL/Ch_12/Exercises_3_and_5 w/kelvin.EX3
+PID: 4337, Computation is done in non-polynomial (direct evaluation) mode
+To check status (at some risk), type CTRL-\ or type "kill -3 4337".
+PID: 4337, 1a*2gf*1p*1lc space, Trait-to-marker, Two-Point, Dichotomous Trait, Equilibrium.
 Starting w/loci disease and locus2 (1 of 1 pairs)
 Calculations 7% completePedigree 1 has likelihood 0 that's too small.
 Pedigree 1 has likelihood 0 that's too small.
-PID: 4170, stopwatch overall(1) e:0s u:0s s:0s, vx:0, ivx:0, sf:0, hf:0
-PID: 4170, Finished run
-PID: 4170, Exiting
+PID: 4337, stopwatch overall(1) e:0s u:0s s:0s, vx:0, ivx:0, sf:0, hf:0
+PID: 4337, Finished run
+PID: 4337, Exiting
 

@@ -1,8 +1,8 @@
 # Makefile to perform kelvin tests
 
 TESTS = \
-	Exercises_3_and_5 \
-        Exercise_6
+	Ch_6 \
+        Ch_12
 
 .PHONY : test $(TESTS)
 
