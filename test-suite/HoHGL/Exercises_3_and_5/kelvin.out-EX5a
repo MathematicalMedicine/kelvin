@@ -1,0 +1,15 @@
+PID: 17405, kelvin V0.35.0 built Jul 16 2008 13:24:16
+PID: 17405, $Id: kelvin.c 831 2008-07-16 13:56:31Z whv001 $
+PID: 17405, $Id: likelihood.c 708 2008-07-09 15:30:59Z whv001 $
+PID: 17405, $Id: locus.c 683 2008-06-26 14:28:17Z whv001 $
+PID: 17405, $Id: polynomial.c 704 2008-07-09 13:31:54Z whv001 $
+PID: 17405, Compiler 4.1.2 20070626 (Red Hat 4.1.2-14), GSL 1.9
+
+PID: 17405, OpenMP-enabled w/1 threads.
+PID: 17405, In /export/home/whv001/kelvin/trunk/test-suite/HoHGL/Exercises_3_and_5 w/kelvin.EX5a
+PID: 17405, Computation is done in non-polynomial (direct evaluation) mode
+To check status (at some risk), type CTRL-\ or type "kill -3 17405".
+PID: 17405, 1*2*1 space, Trait-to-marker, Two-Point, Dichotomous Trait, Equilibrium.
+Calculations 7% completePID: 17405, stopwatch overall(1) e:0s u:0s s:0s, vx:17, ivx:1, sf:163, hf:0
+PID: 17405, Finished run
+PID: 17405, Exiting
