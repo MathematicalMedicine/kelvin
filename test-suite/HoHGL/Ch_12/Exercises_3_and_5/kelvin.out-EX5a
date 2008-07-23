@@ -1,17 +1,0 @@
-PID: 4446, kelvin V0.35.0 built Jul 21 2008 13:19:25
-PID: 4446, $Id: kelvin.c 877 2008-07-21 13:09:07Z whv001 $
-PID: 4446, $Id: likelihood.c 708 2008-07-09 15:30:59Z whv001 $
-PID: 4446, $Id: locus.c 683 2008-06-26 14:28:17Z whv001 $
-PID: 4446, $Id: polynomial.c 704 2008-07-09 13:31:54Z whv001 $
-PID: 4446, Compiler 4.3.0 20080125 (experimental), GSL 1.8
-
-PID: 4446, OpenMP-enabled w/0 threads.
-PID: 4446, In /Users/whv001/kelvin/trunk/test-suite/HoHGL/Ch_12/Exercises_3_and_5 w/kelvin.EX5a
-PID: 4446, Computation is done in non-polynomial (direct evaluation) mode
-To check status (at some risk), type CTRL-\ or type "kill -3 4446".
-PID: 4446, 1a*1gf*1p*1lc space, Trait-to-marker, Two-Point, Dichotomous Trait, Equilibrium.
-Starting w/loci disease and locus2 (1 of 1 pairs)
-Calculations 14% completePID: 4446, stopwatch overall(1) e:0s u:0s s:0s, vx:0, ivx:0, sf:0, hf:0
-PID: 4446, Finished run
-PID: 4446, Exiting
-
