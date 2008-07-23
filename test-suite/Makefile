@@ -6,7 +6,8 @@ TESTS = \
 	broken_loop \
 	multi-founder \
         PE \
-        NonPE
+        NonPE \
+	HoHGL
 
 .PHONY : all $(TESTS)
 
