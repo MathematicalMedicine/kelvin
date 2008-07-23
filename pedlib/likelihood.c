@@ -1484,7 +1484,7 @@ loop_phases (int locus, int multiLocusIndex[2], int multiLocusPhase[2],
 	phase[MOM] = multiLocusPhase2[MOM];
 	/* child is the proband */
 	for (i = DAD; i <= MOM; i++) {
-	  if (pNucFam->firstHetLocus[i] >= 0 &&
+	  if (modelOptions.imprintingFlag != TRUE && pNucFam->firstHetLocus[i] >= 0 &&
 	      pHaplo->phase[i][pNucFam->firstHetLocus[i]] != 0) {
 	    /*
 	     * first het locus has a
@@ -1528,7 +1528,7 @@ loop_phases (int locus, int multiLocusIndex[2], int multiLocusPhase[2],
 		  ppairMatrix[phase[proband]][phase[spouse]].slot.likelihood);
 	}
       } else {			/* proband is a parent */
-	if (pNucFam->firstHetLocus[spouse] >= 0 &&
+	if (modelOptions.imprintingFlag != TRUE && pNucFam->firstHetLocus[spouse] >= 0 &&
 	    pHaplo->phase[spouse][pNucFam->firstHetLocus[spouse]] != 0) {
 	  if (pNucFam->pParents[spouse]->pParents[DAD] == NULL) {
 	    /*
@@ -1557,7 +1557,7 @@ loop_phases (int locus, int multiLocusIndex[2], int multiLocusPhase[2],
 	      calculateFlag = 0;
 	    }
 	  }
-	} else if (pNucFam->firstHetLocus[proband] >= 0 &&
+	} else if (modelOptions.imprintingFlag != TRUE && pNucFam->firstHetLocus[proband] >= 0 &&
 		   pHaplo->phase[proband][pNucFam->
 					  firstHetLocus[proband]] != 0) {
 	  /* find the reverse pattern */
@@ -1606,12 +1606,17 @@ loop_phases (int locus, int multiLocusIndex[2], int multiLocusPhase[2],
 
       if (calculateFlag == 1) {
 	/* 0 - don't keep result, 1 - keep result, 2 - use result */
+	if(modelOptions.imprintingFlag == TRUE) {
+	  calcFlag = 0;
+	}
+	else {
 	if (multiLocusPhase2[DAD] == 0 && multiLocusPhase2[MOM] == 0) {
 	  memset (likelihoodChildCount, 0, sizeof (int) * maxChildren);
 	  calcFlag = 1;
 	} else {
 	  calcFlag = 2;
 	  recalculate_child_likelihood (newFlipMask, childProductPtr);
+	}
 	}
 	calculate_likelihood (multiLocusIndex2, multiLocusPhase2,
 			      dWeight, childProductPtr);
