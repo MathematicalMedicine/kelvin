@@ -175,8 +175,7 @@ typedef struct{
   /* variables for KELVIN*/
   double *diff_result;         /* diff_error(i)= abs(Br_{i-1} - Br_{i}) Use this for another stopping criterion */
   int nlclass;
-
-
+  double vol_rate ;    /* Use this to convert results to average function value*/
   enum model_Type mType;
   
   //FILE *fp=NULL;
