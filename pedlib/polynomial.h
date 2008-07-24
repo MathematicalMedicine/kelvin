@@ -53,7 +53,8 @@ enum expressionType
   T_SUM = 2,			// a sum such as 2x+3y+5.6z+...
   T_PRODUCT = 3,		// a product such as x^2y^10z^100
   T_FUNCTIONCALL = 4,		// a function call such as log10(x)
-  T_FREED = 5			// freed, but the structure kept for diagnostics.
+  T_EXTERNAL = 5,               // an external reference
+  T_FREED = 6			// freed, but the structure kept for diagnostics.
 };
 
 /* Constants are represented as polynomials, but have no subcomponent - just a value.
@@ -113,6 +114,16 @@ struct functionPoly
   char *name;			// function name
 };
 
+/* This structure represents a term that has been moved outside of the context of 
+   current polynomial memory structures. It is not created by the caller, but internally
+   when a referenced polynomial of some other type is flushed from memory. */
+
+struct externalPoly
+{
+  unsigned char formerEType;    // eType of original polynomial
+  char *signature;              // unique signature for value determination (P<id> for now)
+};
+
 /* This structure represents a general polynomial. It is composed of
    a unique id, an polynomial type (eType), a value, and, for types
    other than constant polynomials, a pointer to the type-specific 
@@ -136,13 +147,15 @@ typedef struct polynomial
     struct sumPoly *s;		// sum
     struct productPoly *p;	// product
     struct functionPoly *f;	// function
+    struct externalPoly *e;     // external
   } e;				// unused by constants
 } Polynomial;
 
 /* Bit masks for the polynomial valid flag. */
 #define VALID_EVAL_FLAG 1	// Used by tree traversal routines to limit to unique terms
-#define VALID_KEEP_FLAG 2	// Weaker than HOLD, only kept until a freeKeptPolys() call
-#define VALID_REF_FLAG 4	// Weakest of all, but keeps 1st freeing on-track
+#define VALID_KEEP_FLAG 2	// Kept. Weaker than HOLD, only kept until a freeKeptPolys() call
+#define VALID_REF_FLAG 4	// Multiply-referenced
+#define VALID_TOP_FLAG 8        // Explicitly kept or held (top polynomial in call)
 
 /* Track the full source code module name and line number of calls to create
    polynomials so that we only have to store an index (unsigned char) with 
@@ -294,3 +307,4 @@ void writePolyDigraph (Polynomial *);
 
 void *compilePoly (Polynomial * p, struct polyList * l, char * name);
 void *loadPoly (char * name);
+void externalizePolys ();
