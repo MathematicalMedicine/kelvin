@@ -1,0 +1,70 @@
+# 1  rs850819 Trait Max Het LR
+Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dD PEN_dd
+# Overall MOD maximizing model:
+  15        rs850819   3.6117   0.0000  0.00 (0.5000, 0.5000) 0.000 1.00 0.1000 0.9329 0.900 0.800 0.600 0.000
+# MOD maximizing model for theta=0:
+  15        rs850819   3.6117  -1.3742  0.00 0.0000 0.000 1.00 0.1000 0.9329 0.900 0.800 0.600 0.000
+# MOD maximizing model for dprime=0:
+  15        rs850819   3.6117   0.0000  0.00 0.0000 0.000 1.00 0.1000 0.9329  0.900 0.800 0.600 0.000
+# Overall LR maximizing model:
+  15        rs850819   3.6117   0.0000  0.00 (0.5000 0.5000)
+# LR maximizing model for theta (0, 0):
+  15        rs850819   3.6117  -1.3742  0.00 0.0000
+# LR maximizing model for dprime=0:
+  15        rs850819   3.6117   0.0000  0.00 0.0000
+# 2  rs2354726 Trait Max Het LR
+Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dD PEN_dd
+# Overall MOD maximizing model:
+  15       rs2354726   4.5390   0.0000  0.00 (0.5000, 0.5000) 0.000 1.00 0.1000 0.8495 0.900 0.800 0.600 0.000
+# MOD maximizing model for theta=0:
+  15       rs2354726   4.5390  -9.4108  0.00 0.0000 0.000 1.00 0.1000 0.8495 0.900 0.800 0.600 0.000
+# MOD maximizing model for dprime=0:
+  15       rs2354726   4.5390   0.0000  0.00 0.0000 0.000 1.00 0.1000 0.8495  0.900 0.800 0.600 0.000
+# Overall LR maximizing model:
+  15       rs2354726   4.5390   0.0000  0.00 (0.5000 0.5000)
+# LR maximizing model for theta (0, 0):
+  15       rs2354726   4.5390  -9.4108  0.00 0.0000
+# LR maximizing model for dprime=0:
+  15       rs2354726   4.5390   0.0000  0.00 0.0000
+# 3  rs1110961 Trait Max Het LR
+Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dD PEN_dd
+# Overall MOD maximizing model:
+  15       rs1110961   4.5934   0.0000  0.00 (0.5000, 0.5000) 0.000 1.00 0.1000 0.6296 0.900 0.800 0.600 0.000
+# MOD maximizing model for theta=0:
+  15       rs1110961   4.5934 -14.1018  0.00 0.0000 0.000 1.00 0.1000 0.6296 0.900 0.800 0.600 0.000
+# MOD maximizing model for dprime=0:
+  15       rs1110961   4.5934   0.0000  0.00 0.0000 0.000 1.00 0.1000 0.6296  0.900 0.800 0.600 0.000
+# Overall LR maximizing model:
+  15       rs1110961   4.5934   0.0000  0.00 (0.5000 0.5000)
+# LR maximizing model for theta (0, 0):
+  15       rs1110961   4.5934 -14.1018  0.00 0.0000
+# LR maximizing model for dprime=0:
+  15       rs1110961   4.5934   0.0000  0.00 0.0000
+# 4  rs2014715 Trait Max Het LR
+Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dD PEN_dd
+# Overall MOD maximizing model:
+  15       rs2014715   4.5934   0.0000  0.00 (0.5000, 0.5000) 0.000 1.00 0.1000 0.7997 0.900 0.800 0.600 0.000
+# MOD maximizing model for theta=0:
+  15       rs2014715   4.5934 -13.3910  0.00 0.0000 0.000 1.00 0.1000 0.7997 0.900 0.800 0.600 0.000
+# MOD maximizing model for dprime=0:
+  15       rs2014715   4.5934   0.0000  0.00 0.0000 0.000 1.00 0.1000 0.7997  0.900 0.800 0.600 0.000
+# Overall LR maximizing model:
+  15       rs2014715   4.5934   0.0000  0.00 (0.5000 0.5000)
+# LR maximizing model for theta (0, 0):
+  15       rs2014715   4.5934 -13.3910  0.00 0.0000
+# LR maximizing model for dprime=0:
+  15       rs2014715   4.5934   0.0000  0.00 0.0000
+# 5  rs1961475 Trait Max Het LR
+Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dD PEN_dd
+# Overall MOD maximizing model:
+  15       rs1961475   4.5934   0.0000  0.00 (0.5000, 0.5000) 0.000 1.00 0.1000 0.6248 0.900 0.800 0.600 0.000
+# MOD maximizing model for theta=0:
+  15       rs1961475   4.5934 -13.9331  0.00 0.0000 0.000 1.00 0.1000 0.6248 0.900 0.800 0.600 0.000
+# MOD maximizing model for dprime=0:
+  15       rs1961475   4.5934   0.0000  0.00 0.0000 0.000 1.00 0.1000 0.6248  0.900 0.800 0.600 0.000
+# Overall LR maximizing model:
+  15       rs1961475   4.5934   0.0000  0.00 (0.5000 0.5000)
+# LR maximizing model for theta (0, 0):
+  15       rs1961475   4.5934 -13.9331  0.00 0.0000
+# LR maximizing model for dprime=0:
+  15       rs1961475   4.5934   0.0000  0.00 0.0000
