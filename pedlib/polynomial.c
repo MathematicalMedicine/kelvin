@@ -1362,8 +1362,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     location = 0;
 
   // If the first polynomial in the parameter list can be freed, do so.
-  //  if (flag != 0 && p0->eType == T_SUM && p0->valid == 0) {
-  if (flag != 0 && p0->eType == T_SUM) {
+  if (flag != 0 && p0->eType == T_SUM && p0->valid == 0) {
     p0Index = p0->index;
     p0Id = p0->id;
     p0Key = p0->key;
@@ -1452,8 +1451,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
 
   /* If the first polynomial is the parameter list is freed, its position
      in the polynomial list is occupied by the newly created sum polynomial. */
-  //  if (flag != 0 && p0EType == T_SUM && p0Valid == 0) {
-  if (flag != 0 && p0EType == T_SUM) {
+  if (flag != 0 && p0EType == T_SUM && p0Valid == 0) {
     sumListReplacementCount++;
     sumList[p0Index] = rp;
     sumList[p0Index]->index = p0Index;
@@ -1489,8 +1487,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   }
 
   // Insert the newly built polynomial into the Hash table
-  //  if (flag != 0 && p0EType == T_SUM && p0Valid == 0) {
-  if (flag != 0 && p0EType == T_SUM) {
+  if (flag != 0 && p0EType == T_SUM && p0Valid == 0) {
     if (p0SubHIndex != location || p0HIndex != hIndex) {
       insertHashTable (&sumHash[hIndex], location, key, sumList[p0Index]->index);
       // Delete the replaced polynomial from the hash table
@@ -1859,8 +1856,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       location = 0;
 
     // If the first operand can be freed, do so.
-    //    if (flag != 0 && p0->eType == T_PRODUCT && p0->valid == 0) {
-    if (flag != 0 && p0->eType == T_PRODUCT) {
+    if (flag != 0 && p0->eType == T_PRODUCT && p0->valid == 0) {
       /* We save the identity information of the polynomial to be freed
 	 so that it can be used by the newly created polynomial. */
       p0Index = p0->index;
@@ -1957,8 +1953,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     /* We either use a new position in the product list for this polynomial, or
        replace an existing polynomial with the newly created polynomial at the position
        occupied by the existing polynomial. */
-    //    if (flag != 0 && p0EType == T_PRODUCT && p0Valid == 0) {
-    if (flag != 0 && p0EType == T_PRODUCT) {
+    if (flag != 0 && p0EType == T_PRODUCT && p0Valid == 0) {
       // Use the resource of the freed polynomial for the newly-constructed polynomial
       productListReplacementCount++;
       productList[p0Index] = rp;
@@ -1992,8 +1987,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     }
 
     // The new polynomial is also recorded in the hash table
-    //    if (flag != 0 && p0EType == T_PRODUCT && p0Valid == 0) {
-    if (flag != 0 && p0EType == T_PRODUCT) {
+    if (flag != 0 && p0EType == T_PRODUCT && p0Valid == 0) {
       if (p0SubHIndex != location || p0HIndex != hIndex) {
         insertHashTable (&productHash[hIndex], location, key, p0Index);
         if (p0HIndex != hIndex) {
