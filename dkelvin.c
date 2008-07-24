@@ -88,7 +88,7 @@ void compute_hlod_mp_dt (double x[], double *f);
 void compute_hlod_2p_qt (double x[], double *f);
 void compute_hlod_mp_qt (double x[], double *f);
 
-int kelvin_dcuhre_integrate (double *integral, double *abserr);
+int kelvin_dcuhre_integrate (double *integral, double *abserr, double);
 
 /* Variables became global from local */
 PedigreeSet pedigreeSet;	/* Pedigrees. */
@@ -304,10 +304,11 @@ main (int argc, char *argv[])
   double low_theta_integral = 0.0, high_theta_integral = 0.0;
   double low_integral = 0.0, high_integral = 0.0;
   double low_ld_integral = 0.0;
+  double dprime_integral =0.0;
   double volume_region = 1.0;
 
   /*Dcuhre rule points and weights for D' and theta or only theta */
-  double dcuhre2[140][4] = { {0.0, 0.00234550385, 0.118463442, 0.0},
+  double dcuhre2[147][4] = { {0.0, 0.00234550385, 0.118463442, 0.0},
   {0.0, 0.0115382672, 0.239314336, 0.0},
   {0.0, 0.025, 0.284444444, 0.0},
   {0.0, 0.0384617328, 0.239314336, 0.0},
@@ -445,8 +446,15 @@ main (int argc, char *argv[])
   {-0.5666666666667, 0.2282500000000, 0.0156250000000, 0.0},
   {0.2077777777778, 0.4025000000000, 0.0156250000000, 0.0},
   {-0.2077777777778, 0.4025000000000, 0.0156250000000, 0.0},
-  {0.2077777777778, 0.1475000000000, 0.0156250000000, 0.0},
-  {-0.2077777777778, 0.1475000000000, 0.0156250000000, 0.0}
+  {0.2077777777778, 0.1475000000000, 0.0156250000000, 0.0},			     
+  {-0.2077777777778, 0.1475000000000, 0.0156250000000, 0.0},
+			     {-0.949107912342759,0.5, 0.06474248308, 0.0},
+			     {-0.741531185599394,0.5, 0.13985269574, 0.0},
+			     {-0.405845151377397,0.5, 0.19090502525, 0.0},
+			     {0.0,0.5,               0.2089795184 , 0.0},
+			     {0.405845151377397,0.5, 0.19090502525, 0.0},
+			     {0.741531185599394,0.5, 0.13985269574, 0.0},
+			     {0.949107912342759,0.5, 0.06474248308, 0.0},
   };
 
 /*********  end of local variable declaration   **********/
@@ -709,8 +717,8 @@ main (int argc, char *argv[])
       volume_region *= (xu[k + 2] - xl[k + 2]);
       k += 3;
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-	xl[k] = xl[k + 1] = xl[k + 2] = 0.5;
-	xu[k] = xu[k + 1] = xu[k + 2] = 6;//3.0;
+	xl[k] = xl[k + 1] = xl[k + 2] = 0.3;
+	xu[k] = xu[k + 1] = xu[k + 2] = 1.0;//3.0;
 	volume_region *= (xu[k] - xl[k]);
 	volume_region *= (xu[k + 1] - xl[k + 1]);
 	volume_region *= (xu[k + 2] - xl[k + 2]);
@@ -1145,8 +1153,9 @@ main (int argc, char *argv[])
 	  low_integral = 0.0;
 	  high_integral = 0.0;
 	  low_ld_integral = 0.0;
+          dprime_integral=0.0;
 
-	  for (i = 0; i < 140; i++) {
+	  for (i = 0; i < 147; i++) {
 	    fixed_dprime = dcuhre2[i][0];
 	    fixed_theta = dcuhre2[i][1];
 
@@ -1157,7 +1166,7 @@ main (int argc, char *argv[])
 	    // fprintf(fpSeok_theta,"%f %f ",      fixed_dprime, fixed_theta);
 
 	    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-	      for (dprimeIdx = 0; dprimeIdx < 33; dprimeIdx++) {
+	      for (dprimeIdx = 0; dprimeIdx < 39; dprimeIdx++) {
 		if (fabs
 		    (pLambdaCell->lambda[dprimeIdx][0][0] -
 		     fixed_dprime) < 0.0001) {
@@ -1165,14 +1174,14 @@ main (int argc, char *argv[])
 		  break;
 		}
 	      }
-	      if (dprimeIdx == 33) {
+	      if (dprimeIdx == 39) {
 		fprintf (stderr, "dprimeIdx is %d\n", dprimeIdx);
 		exit (0);
 	      }
 	    }
 
 	    num_out_constraint = 0;
-	    kelvin_dcuhre_integrate (&integral, &abserr);
+	    kelvin_dcuhre_integrate (&integral, &abserr, volume_region);
 	    
 	    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
 	      integral *= 6;
@@ -1266,17 +1275,19 @@ main (int argc, char *argv[])
 	      low_theta_integral += integral * dcuhre2[i][2];
 	    } else if (i < 10) {
 	      high_theta_integral += integral * dcuhre2[i][2];
-	    } else {
+	    } else if (i < 140){
 	      if (fixed_theta < modelOptions.thetaCutoff[0]) {
 		low_integral += integral * dcuhre2[i][2];
 	      } else {
 		high_integral += integral * dcuhre2[i][2];
 	      }
+	    } else {
+              dprime_integral += integral * dcuhre2[i][2];
 	    }
 
 	    if ((modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) && (i == 9)) {
 	      printf ("End of LE case\n");
-	      i = 140;
+	      i = 147;
 	    }
 
 
@@ -1304,7 +1315,7 @@ main (int argc, char *argv[])
 							 thetaWeight)
 	      * high_integral;
 	    ldppl =
-	      ldppl / (ldppl + (1 - modelOptions.prior) / modelOptions.prior);
+	      ldppl / (ldppl + (1 - modelOptions.prior) / modelOptions.prior  * dprime_integral);
 	    // this is temp in ppl.c
 	    low_ld_integral =
 	      low_integral * modelOptions.LDprior * modelOptions.thetaWeight;
@@ -1804,7 +1815,7 @@ main (int argc, char *argv[])
       abserr = 0.0;
       num_out_constraint = 0;
 
-      num_eval = kelvin_dcuhre_integrate (&integral, &abserr);
+      num_eval = kelvin_dcuhre_integrate (&integral, &abserr, volume_region);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
 	integral *= 6;
 	abserr *= 6;
@@ -1955,11 +1966,11 @@ main (int argc, char *argv[])
 }
 
 int
-kelvin_dcuhre_integrate (double *integral, double *abserr)
+kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
 {
   /* Local variables */
   //double a[15], b[15];
-  int dim, return_val;
+  int dim, return_val,i;
   //  dcuhre_state init_state;
 
   //extern /* Subroutine */ int ftest_();  
@@ -1999,6 +2010,8 @@ kelvin_dcuhre_integrate (double *integral, double *abserr)
     s->verbose = 1;
     s->nlclass = modelRange.nlclass;
 
+    s->maxcls = 20000;
+   
     if (modelType.type == TP) {
       s->funsub = (U_fp) compute_hlod_2p_qt;
       s->mType = TP_DT;
@@ -2008,6 +2021,10 @@ kelvin_dcuhre_integrate (double *integral, double *abserr)
     }
   }
 
+  for(i=0; i<s->nlclass; i++){
+    s->vol_rate /= 6.0;
+  }
+  s->vol_rate *= vol_region;   /*This is the rate to convert to average function value*/
 
   fprintf (stderr, "Starting DCUHRE with dim=%d\n", dim);
   return_val = dcuhre_ (s);
@@ -2830,7 +2847,7 @@ compute_hlod_2p_qt (double x[], double *f)
   }
 
   /* caculating the HET */
-  for (j = 0; j < 6; j++) {
+  for (j = 1; j < 6; j++) {
     //for (j = 0; j < 1; j++) {
     alphaV = alpha[j][0];
     alphaV2 = 1 - alphaV;
@@ -2850,9 +2867,9 @@ compute_hlod_2p_qt (double x[], double *f)
     } else {
       hetLR = pow (10, log10HetLR);
     }
-    if( j==0){
-      alpha_integral += hetLR ;//* alpha[j][1];
-    }
+    
+      alpha_integral += hetLR * alpha[j][1];
+    
 
     if (print_point_flag)
       fprintf (fphlod, "al=%f Hlod=%f\n", alphaV, hetLR);
