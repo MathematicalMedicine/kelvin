@@ -127,7 +127,10 @@ struct externalPoly
 /* This structure represents a general polynomial. It is composed of
    a unique id, an polynomial type (eType), a value, and, for types
    other than constant polynomials, a pointer to the type-specific 
-   polynomial structure. */
+   polynomial structure. An attempt to reduce memory consumption by
+   eliminating the linking pointer between the base polynomial and
+   type-specific storage only reduced storage consumption by ~5% and
+   increased runtime significantly, and so has been abandoned. */
 
 typedef struct polynomial
 {
@@ -143,11 +146,11 @@ typedef struct polynomial
   double value;			// the value of the polynomial
   union
   {
-    struct variablePoly v;	// variable
-    struct sumPoly s;		// sum
-    struct productPoly p;	// product
-    struct functionPoly f;	// function
-    struct externalPoly e;     // external
+    struct variablePoly *v;	// variable
+    struct sumPoly *s;		// sum
+    struct productPoly *p;	// product
+    struct functionPoly *f;	// function
+    struct externalPoly *e;     // external
   } e;				// unused by constants
 } Polynomial;
 
