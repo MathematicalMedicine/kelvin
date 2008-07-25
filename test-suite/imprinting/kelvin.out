@@ -1,0 +1,16 @@
+PID: 23322, kelvin V0.35.0 built Jul 21 2008 08:16:06
+PID: 23322, $Id: kelvin.c 866 2008-07-17 17:39:50Z whv001 $
+PID: 23322, $Id: likelihood.c 708 2008-07-09 15:30:59Z whv001 $
+PID: 23322, $Id: locus.c 683 2008-06-26 14:28:17Z whv001 $
+PID: 23322, $Id: polynomial.c 704 2008-07-09 13:31:54Z whv001 $
+PID: 23322, Compiler 4.1.1 20070105 (Red Hat 4.1.1-52), GSL 1.9
+
+PID: 23322, OpenMP-enabled w/0 threads.
+PID: 23322, In /export/home/whv001/kelvin/trunk/test-suite/PE/TP_DT_LE w/kelvin.conf
+PID: 23322, Computation is done in polynomial mode
+To check status (at some risk), type CTRL-\ or type "kill -3 23322".
+polynomialScale is 1 (1-10, 1 is default)
+PID: 23322, 20a*6gf*275p*1lc space, Trait-to-marker, Two-Point, Dichotomous Trait, Equilibrium.
+Calculations 0% completeCalculations 11% completeCalculations 14% complete (~1 min left)Calculations 22% completeCalculations 33% completeCalculations 44% completeCalculations 55% completeCalculations 59% complete (~0 min left)Calculations 66% completeCalculations 77% completeCalculations 81% complete (~0 min left)Calculations 88% completePID: 23322, stopwatch overall(1) e:179s u:227s s:28s, vx:4715673, ivx:946673, sf:9560, hf:0
+PID: 23322, Finished run
+PID: 23322, Exiting
