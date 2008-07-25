@@ -194,7 +194,7 @@ void exit_kelvin ()
   Global variables
 
 */
-char *programVersion = "V0.35.0";       ///< Overall kelvin version set upon release.
+char *programVersion = "V0.36.0";       ///< Overall kelvin version set upon release.
 char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
 
 /* Some default global values. */

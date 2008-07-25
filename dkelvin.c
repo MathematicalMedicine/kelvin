@@ -78,7 +78,7 @@ exit_kelvin ()
     kill (childPID, SIGKILL);	/* Sweep away any errant children */
 }
 
-char *programVersion = "V0.34.3";
+char *programVersion = "V0.36.0";
 char *dkelvinVersion = "$Id$";
 
 #define checkpt() fprintf(stderr,"Checkpoint at line %d of file \"%s\"\n",__LINE__,__FILE__)
