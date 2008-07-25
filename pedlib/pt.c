@@ -242,7 +242,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       }
       pL = buildPolyList();
       polyListSorting(pHI->pP, pL);
-      compilePoly(pHI->pP, pL);
+      compilePoly(pHI->pP, pL, "Huh?");
       fprintf(outputFile, "Polynomial C function written to P%d.c\n", nodeId - 1);
       break;
     default:
