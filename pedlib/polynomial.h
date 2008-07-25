@@ -89,20 +89,20 @@ struct variablePoly
 
 struct sumPoly
 {
-  int num;			// number of terms
-  struct polynomial **sum;	// polynomial terms
-  double *factor;		// factors for polynomial terms
-};
+  int num;			// number of terms - 4 bytes
+  struct polynomial **sum;	// polynomial terms - 8 bytes
+  double *factor;		// factors for polynomial terms - 8 bytes
+}; // 20(24) bytes
 
 /* This structure represents the elements of a product. A product is composed of a 
    list of subpolynomial terms and their exponents. */
 
 struct productPoly
 {
-  int num;			// number of terms
-  struct polynomial **product;	// polynomial terms
-  int *exponent;		// exponents for polynomial terms
-};
+  int num;			// number of terms - 4 bytes
+  struct polynomial **product;	// polynomial terms - 8 bytes
+  int *exponent;		// exponents for polynomial terms - 4 bytes
+}; // 16 bytes
 
 /* This structure represents the elements of a function call. Each function call is 
    composed of the function name, and a list of parameters. */
@@ -134,16 +134,16 @@ struct externalPoly
 
 typedef struct polynomial
 {
-  unsigned int id;		// unique id
-  int index;			// index in a polynomial list
-  int key;			// key of the polynomial
-  unsigned short count;		// hold reference count
-  unsigned char valid;		// preservation flag(s)
-  unsigned char eType;		// polynomial type: 
+  unsigned int id;		// unique id - 4 bytes
+  int index;			// index in a polynomial list - 4 bytes
+  int key;			// key of the polynomial - 4 bytes
+  unsigned short count;		// hold reference count - 2 bytes
+  unsigned char valid;		// preservation flag(s) - 1 byte
+  unsigned char eType;		// polynomial type:  - 1 byte
 #ifdef SOURCEDIGRAPH
   unsigned char source;		// index of entry in polySources
 #endif
-  double value;			// the value of the polynomial
+  double value;			// the value of the polynomial - 8 bytes
   union
   {
     struct variablePoly *v;	// variable
@@ -151,8 +151,8 @@ typedef struct polynomial
     struct productPoly *p;	// product
     struct functionPoly *f;	// function
     struct externalPoly *e;     // external
-  } e;				// unused by constants
-} Polynomial;
+  } e;				// unused by constants - 8 bytes
+} Polynomial; // 4 + 4 + 2 + 1 + 1 + 8 + 8 = 28(32) bytes
 
 /* Bit masks for the polynomial valid flag. */
 #define VALID_EVAL_FLAG 1	// Used by tree traversal routines to limit to unique terms
