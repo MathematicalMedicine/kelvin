@@ -544,9 +544,10 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
       likelihood += tmpLikelihood;
 
     if (pPedigree->loopFlag == TRUE) {
-      if (modelOptions.polynomial == TRUE)
+      if (modelOptions.polynomial == TRUE) {
+	//	fprintf(stderr, "keepPoly for pedigree\n");
 	keepPoly (pLikelihoodPolynomial);
-      else
+      } else
 	KLOG (LOGLIKELIHOOD, LOGDEBUG,
 	      "Log Likelihood for this fixed looped pedigree %s is: %e\n",
 	      pPedigree->sPedigreeID, log10 (tmpLikelihood));
@@ -756,7 +757,8 @@ peel_graph (NuclearFamily * pNucFam1, Person * pProband1,
 	  sizeof (int) * originalLocusList.numLocus);
 
   if (modelOptions.polynomial == TRUE) {
-    //fprintf(stderr, "keepPoly for the likelihood and weight polynomials\n");
+    //    fprintf(stderr, "keepPoly for the %d likelihood and weight polynomials of proband %s\n",
+    //	    pProband->numConditionals, pProband->sID);
     for (i = 0; i < pProband->numConditionals; i++) {
       if (pProband->touchedFlag == TRUE) {
 	keepPoly (pProband->pLikelihood[i].lkslot.likelihoodPolynomial);
