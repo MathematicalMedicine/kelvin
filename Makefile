@@ -18,7 +18,7 @@ VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
 
 CC := gcc
-CFLAGS := -Wall -O3
+CFLAGS := -Wall # -O3
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
@@ -26,7 +26,7 @@ LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm
 #CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
 CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
 #LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
-#CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
+CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
 #CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
 #CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every 2Mp and at milestones
