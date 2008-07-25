@@ -769,7 +769,7 @@ Polynomial *constantExp (double con)
   // Next, insert it into the constant list
 
   // Generate a constant polynomial
-  p = (Polynomial *) malloc (sizeof (Polynomial));
+  p = (Polynomial *) malloc (sizeof (Polynomial) - sizeof (struct variablePoly));
   if (p == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
@@ -1412,7 +1412,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   }
 
   // Since the sum was not found in the sum list, a new polynomial is built
-  rp = (Polynomial *) malloc (sizeof (Polynomial));
+  rp = (Polynomial *) malloc (sizeof (Polynomial) - sizeof (struct variablePoly) + sizeof (struct sumPoly));
   if (rp == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
@@ -1901,7 +1901,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     }
 
     // Construct a new product polynomial from the terms saved in the container
-    rp = (Polynomial *) malloc (sizeof (Polynomial));
+    rp = (Polynomial *) malloc (sizeof (Polynomial) - sizeof (struct variablePoly) + sizeof (struct productPoly));
     if (rp == NULL)
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     rp->eType = T_PRODUCT;
@@ -2132,7 +2132,7 @@ Polynomial *functionCallExp (int num, ...)
 
   //If the function call is not found in the list, insert it in the list
   //Build a new polynomial
-  rp = (Polynomial *) malloc (sizeof (Polynomial));
+  rp = (Polynomial *) malloc (sizeof (Polynomial) - sizeof (struct variablePoly) + sizeof (struct functionPoly));
   if (rp == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
