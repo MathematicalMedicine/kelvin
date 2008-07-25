@@ -1,3 +1,6 @@
+Version 0.36.0
+  Imprinting is now supported.
+
 Verison 0.35.0
   Major polynomial evaluation performance improvement via
   multi-threading. Can use drop-in memory allocators as
