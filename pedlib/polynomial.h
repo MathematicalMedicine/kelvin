@@ -143,11 +143,11 @@ typedef struct polynomial
   double value;			// the value of the polynomial
   union
   {
-    struct variablePoly *v;	// variable
-    struct sumPoly *s;		// sum
-    struct productPoly *p;	// product
-    struct functionPoly *f;	// function
-    struct externalPoly *e;     // external
+    struct variablePoly v;	// variable
+    struct sumPoly s;		// sum
+    struct productPoly p;	// product
+    struct functionPoly f;	// function
+    struct externalPoly e;     // external
   } e;				// unused by constants
 } Polynomial;
 
