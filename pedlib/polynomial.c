@@ -398,12 +398,12 @@ double doEvaluateValue (Polynomial * p)
     // If a sub polynomial is a variable, return the value
   case T_VARIABLE:
     p->valid |= VALID_EVAL_FLAG;
-    if (p->e.v.vType == 'D') {
-      p->value = *(p->e.v.vAddr.vAddrD);
-      return *(p->e.v.vAddr.vAddrD);
-    } else if (p->e.v.vType == 'I') {
-      p->value = *(p->e.v.vAddr.vAddrI);
-      return *(p->e.v.vAddr.vAddrI);
+    if (p->e.v->vType == 'D') {
+      p->value = *(p->e.v->vAddr.vAddrD);
+      return *(p->e.v->vAddr.vAddrD);
+    } else if (p->e.v->vType == 'I') {
+      p->value = *(p->e.v->vAddr.vAddrI);
+      return *(p->e.v->vAddr.vAddrI);
     } else {
       fprintf (stderr, "Wrong variable type, exit!\n");
       exit (EXIT_FAILURE);
@@ -413,7 +413,7 @@ double doEvaluateValue (Polynomial * p)
      * Add the values of the terms weighted by their coefficients. */
   case T_SUM:
     result = 0;
-    sP = &(p->e.s);
+    sP = p->e.s;
     for (i = 0; i < sP->num; i++) {
       if (sP->factor[i] == 1)
         result += doEvaluateValue (sP->sum[i]);
@@ -428,7 +428,7 @@ double doEvaluateValue (Polynomial * p)
      * Multiply the values of the terms powered by their exponents */
   case T_PRODUCT:
     result = 1;
-    pP = &(p->e.p);
+    pP = p->e.p;
     for (i = 0; i < pP->num; i++) {
       switch (pP->exponent[i]) {
       case 0:
@@ -449,7 +449,7 @@ double doEvaluateValue (Polynomial * p)
      * and then the function according to the name of the function.  Therefore, a function
      * must have a unique name and a unique set of parameters. */
   case T_FUNCTIONCALL:
-    fp = &(p->e.f);
+    fp = p->e.f;
     // log10 is for LOD score computation
     if (strcmp (fp->name, "log10") == 0)
       result = log10 (doEvaluateValue (fp->para[0]));
@@ -515,7 +515,7 @@ double doEvaluateValue (Polynomial * p)
     return result;
 
   case T_EXTERNAL:
-    fprintf (stderr, "Setting value for externalPoly w/signature %s\n", p->e.e.signature);
+    fprintf (stderr, "Setting value for externalPoly w/signature %s\n", p->e.e->signature);
     p->value = .00005;
     return p->value;
 
@@ -558,8 +558,8 @@ double evaluateValue (Polynomial * p)
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (i = 0; i < p->e.s.num; i++) {
-      doEvaluateValue (p->e.s.sum[i]);
+    for (i = 0; i < p->e.s->num; i++) {
+      doEvaluateValue (p->e.s->sum[i]);
     }
   }
   returnValue = doEvaluateValue (p);
@@ -769,7 +769,7 @@ Polynomial *constantExp (double con)
   // Next, insert it into the constant list
 
   // Generate a constant polynomial
-  p = (Polynomial *) malloc (sizeof (Polynomial) - sizeof (struct variablePoly));
+  p = (Polynomial *) malloc (sizeof (Polynomial));
   if (p == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
@@ -846,6 +846,7 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
 {
   int i;
   Polynomial *p;        // Newly built variable polynomial
+  struct variablePoly *vPoly;   // Variable structure for newly-built polynomial
   int key;      // Key of the newly-built variable polynomial
   int hIndex, vIndex;   // Index in the hash table and polynomial list
   int first, last, location;
@@ -868,8 +869,8 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
       for (i = first; i <= last; i++) {
         vIndex = variableHash[hIndex].index[i];
         // Compare if the two variables are the same
-        if ((vType == 'D' && variableList[vIndex]->e.v.vAddr.vAddrD == vD)
-            || (vType == 'I' && variableList[vIndex]->e.v.vAddr.vAddrI == vI)) {
+        if ((vType == 'D' && variableList[vIndex]->e.v->vAddr.vAddrD == vD)
+            || (vType == 'I' && variableList[vIndex]->e.v->vAddr.vAddrI == vI)) {
           // If the two variables are the same, return the address from the list
           variableList[vIndex]->valid |= VALID_REF_FLAG;
           variableHashHits++;
@@ -883,21 +884,23 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
 
   // This variable polynomial doesn't exist, so we'll create it.
   p = (Polynomial *) malloc (sizeof (Polynomial));
-  if (p == NULL) {
+  vPoly = (struct variablePoly *) malloc (sizeof (struct variablePoly));
+  if (p == NULL || vPoly == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
   p->eType = T_VARIABLE;
   // Make sure we always have a name, either provided or based upon arrival order.
   if (strlen (name) == 0)
-    sprintf (p->e.v.vName, "u%d", variableCount);
+    sprintf (vPoly->vName, "u%d", variableCount);
   else
-    strcpy (p->e.v.vName, name);
+    strcpy (vPoly->vName, name);
   if (vType == 'D')
-    p->e.v.vAddr.vAddrD = vD;
+    vPoly->vAddr.vAddrD = vD;
   else
-    p->e.v.vAddr.vAddrI = vI;
-  p->e.v.vType = vType;
+    vPoly->vAddr.vAddrI = vI;
+  vPoly->vType = vType;
+  p->e.v = vPoly;
 
   // If the polynomial list is full, get  more memory
   if (variableCount >= variableListLength) {
@@ -1138,6 +1141,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
 {
   int i, k, l;
   va_list args; ///< Variable list of parameters
+  struct sumPoly *sP;   ///< Element of a sum polynomial
   Polynomial *rp;       ///< Pointer of the new sum polynomial
   int counterSum;       ///< Counter of the number of terms in the new sum polynomial
   int flag;     //< 1st-term replacement flag
@@ -1214,25 +1218,25 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       break;
     case T_SUM: // The term is a sum
       // Fold the components of the sum subpolynomial up into this sum polynomial
-      for (l = 0; l < p1->e.s.num; l++) {
-        switch (p1->e.s.sum[l]->eType) {
+      for (l = 0; l < p1->e.s->num; l++) {
+        switch (p1->e.s->sum[l]->eType) {
         case T_CONSTANT: // Item is a constant, collected it into con
-          con += f1 * p1->e.s.sum[l]->value * p1->e.s.factor[l];
+          con += f1 * p1->e.s->sum[l]->value * p1->e.s->factor[l];
           break;
         case T_VARIABLE:
           collectSumTerms (&factor_v1, &p_v1, &counter_v1,
-			   &containerLength_v1, f1 * p1->e.s.factor[l], p1->e.s.sum[l]);
+			   &containerLength_v1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
         case T_PRODUCT:
           collectSumTerms (&factor_p1, &p_p1, &counter_p1,
-			   &containerLength_p1, f1 * p1->e.s.factor[l], p1->e.s.sum[l]);
+			   &containerLength_p1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
         case T_FUNCTIONCALL:
           collectSumTerms (&factor_f1, &p_f1, &counter_f1,
-			   &containerLength_f1, f1 * p1->e.s.factor[l], p1->e.s.sum[l]);
+			   &containerLength_f1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
         default:
-          fprintf (stderr, "In plusExp, unknown expression type %d\n", p1->e.s.sum[l]->eType);
+          fprintf (stderr, "In plusExp, unknown expression type %d\n", p1->e.s->sum[l]->eType);
           exit (EXIT_FAILURE);
         }
       }
@@ -1326,13 +1330,13 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     if (searchHashTable (&sumHash[hIndex], &first, &last, key)) {
       for (i = first; i <= last; i++) {
         sIndex = sumHash[hIndex].index[i];
-        if (counterSum == sumList[sIndex]->e.s.num) {
+        if (counterSum == sumList[sIndex]->e.s->num) {
           // Compare the two sums term-by-term
           for (k = 0; k < counterSum; k++) {
             // If the terms are identical, compare their factors
-            if (pSum[k] == sumList[sIndex]->e.s.sum[k]) {
+            if (pSum[k] == sumList[sIndex]->e.s->sum[k]) {
               tempD = frexp (factorSum[k], &tempI);
-              tempD2 = frexp (sumList[sIndex]->e.s.factor[k], &tempI2);
+              tempD2 = frexp (sumList[sIndex]->e.s->factor[k], &tempI2);
               if (tempI2 != tempI || (int) (tempD2 * 100000000) != (int) (tempD * 100000000))
                 break;
             } else
@@ -1398,8 +1402,9 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     }
     // Free the memory of the first polynomial in the parameter list
     sum1stTermsFreedCount++;
-    free (p0->e.s.sum);
-    free (p0->e.s.factor);
+    free (p0->e.s->sum);
+    free (p0->e.s->factor);
+    free (p0->e.s);
 #ifdef FREEDEBUG
     p0->value = -sumList[i]->eType;
     p0->eType = T_FREED;
@@ -1412,25 +1417,31 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   }
 
   // Since the sum was not found in the sum list, a new polynomial is built
-  rp = (Polynomial *) malloc (sizeof (Polynomial) - sizeof (struct variablePoly) + sizeof (struct sumPoly));
+  rp = (Polynomial *) malloc (sizeof (Polynomial));
   if (rp == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
   rp->eType = T_SUM;
-  rp->e.s.num = counterSum;
-  rp->e.s.factor = (double *) malloc (counterSum * sizeof (double));
-  rp->e.s.sum = (Polynomial **) malloc (counterSum * sizeof (Polynomial *));
-  if (rp->e.s.sum == NULL || rp->e.s.factor == NULL) {
+  sP = (struct sumPoly *) malloc (sizeof (struct sumPoly));
+  if (sP == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  for (i = 0; i < rp->e.s.num; i++) {
-    rp->e.s.factor[i] = factorSum[i];
-    rp->e.s.sum[i] = pSum[i];
-    rp->e.s.sum[i]->valid |= VALID_REF_FLAG;
+  sP->num = counterSum;
+  sP->factor = (double *) malloc (counterSum * sizeof (double));
+  sP->sum = (Polynomial **) malloc (counterSum * sizeof (Polynomial *));
+  if (sP->sum == NULL || sP->factor == NULL) {
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+    exit (EXIT_FAILURE);
+  }
+  for (i = 0; i < sP->num; i++) {
+    sP->factor[i] = factorSum[i];
+    sP->sum[i] = pSum[i];
+    sP->sum[i]->valid |= VALID_REF_FLAG;
   }
   // Assign values to some attributes of the sum polynomial
+  rp->e.s = sP;
   rp->key = key;
   rp->valid = 0;
   rp->count = 0;
@@ -1604,6 +1615,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
   int i, k, l;
   int counterProd; ///< Number of terms in the new product polynomial
   va_list args; ///< Variable list of parameters
+  struct productPoly *pP;       ///< Product structure for the new polynomial
   Polynomial *rp;       ///< New product polynomial
   Polynomial *p1 = 0, *p0 = 0;  ///< Some polynomial terms
   int e1, e0;   ///< Component of a term
@@ -1674,10 +1686,10 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       continue;
     }
     else {
-      if (p1->eType == T_SUM && p1->e.s.num == 1) { // A sum with only one item?
+      if (p1->eType == T_SUM && p1->e.s->num == 1) { // A sum with only one item?
 
-        factor *= pow (p1->e.s.factor[0], e1);
-        p1 = p1->e.s.sum[0];
+        factor *= pow (p1->e.s->factor[0], e1);
+        p1 = p1->e.s->sum[0];
       }
       /* If this operand is a variable, a sum that has more than one items, or a function call, 
 	 we directly collect it.  If this operand is a product, we then collect each term of it. */
@@ -1693,22 +1705,22 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         break;
         // For a product term, we open it and check each of its terms
       case T_PRODUCT:
-        for (l = 0; l < p1->e.p.num; l++) {
-          switch (p1->e.p.product[l]->eType) {
+        for (l = 0; l < p1->e.p->num; l++) {
+          switch (p1->e.p->product[l]->eType) {
           case T_VARIABLE:
             collectProductTerms (&exponent_v2, &p_v2, &counter_v2,
-                                 &containerLength_v2, e1 * p1->e.p.exponent[l], p1->e.p.product[l]);
+                                 &containerLength_v2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
             break;
           case T_SUM:
             collectProductTerms (&exponent_s2, &p_s2, &counter_s2,
-                                 &containerLength_s2, e1 * p1->e.p.exponent[l], p1->e.p.product[l]);
+                                 &containerLength_s2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
             break;
           case T_FUNCTIONCALL:
             collectProductTerms (&exponent_f2, &p_f2, &counter_f2,
-                                 &containerLength_f2, e1 * p1->e.p.exponent[l], p1->e.p.product[l]);
+                                 &containerLength_f2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
             break;
           default:
-            fprintf (stderr, "In timesExp, unknown expression type %d\n", p1->e.p.product[l]->eType);
+            fprintf (stderr, "In timesExp, unknown expression type %d\n", p1->e.p->product[l]->eType);
             exit (EXIT_FAILURE);
           }
         }
@@ -1807,10 +1819,10 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         for (i = first; i <= last; i++) {
           pIndex = productHash[hIndex].index[i];
           // Compare the two products term-by-term
-          if (counterProd == productList[pIndex]->e.p.num) {
+          if (counterProd == productList[pIndex]->e.p->num) {
             for (k = 0; k < counterProd; k++)
-              if (pProd[k] != productList[pIndex]->e.p.product[k]
-                  || exponentProd[k] != productList[pIndex]->e.p.exponent[k])
+              if (pProd[k] != productList[pIndex]->e.p->product[k]
+                  || exponentProd[k] != productList[pIndex]->e.p->exponent[k])
                 break;
             if (k >= counterProd) {
 	      //If the polynomials are the same compare the exponents
@@ -1887,8 +1899,9 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
 
       // Free the first operand
       product1stTermsFreedCount++;
-      free (p0->e.p.exponent);
-      free (p0->e.p.product);
+      free (p0->e.p->exponent);
+      free (p0->e.p->product);
+      free (p0->e.p);
 #ifdef FREEDEBUG
       p0->value = -productList[i]->eType;
       p0->eType = T_FREED;
@@ -1901,23 +1914,31 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     }
 
     // Construct a new product polynomial from the terms saved in the container
-    rp = (Polynomial *) malloc (sizeof (Polynomial) - sizeof (struct variablePoly) + sizeof (struct productPoly));
-    if (rp == NULL)
+    rp = (Polynomial *) malloc (sizeof (Polynomial));
+    if (rp == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+      exit (EXIT_FAILURE);
+    }
     rp->eType = T_PRODUCT;
-    rp->e.p.num = counterProd;
-    rp->e.p.product = (Polynomial **) malloc (counterProd * sizeof (Polynomial *));
-    rp->e.p.exponent = (int *) malloc (counterProd * sizeof (int));
-    if (rp->e.p.product == NULL || rp->e.p.exponent == NULL) {
+    pP = (struct productPoly *) malloc (sizeof (struct productPoly));
+    if (pP == NULL) {
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+      exit (EXIT_FAILURE);
+    }
+    pP->num = counterProd;
+    pP->product = (Polynomial **) malloc (counterProd * sizeof (Polynomial *));
+    pP->exponent = (int *) malloc (counterProd * sizeof (int));
+    if (pP->product == NULL || pP->exponent == NULL) {
       fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
       exit (EXIT_FAILURE);
     }
     // Copy the collected terms and exponents into the product polynomial structure
     for (i = 0; i < counterProd; i++) {
-      rp->e.p.product[i] = pProd[i];
-      rp->e.p.exponent[i] = exponentProd[i];
-      rp->e.p.product[i]->valid |= VALID_REF_FLAG;
+      pP->product[i] = pProd[i];
+      pP->exponent[i] = exponentProd[i];
+      pP->product[i]->valid |= VALID_REF_FLAG;
     }
+    rp->e.p = pP;
     rp->index = productCount;
     rp->id = nodeId;
     rp->key = key;
@@ -2063,6 +2084,7 @@ Polynomial *functionCallExp (int num, ...)
   //location of the newly built variable polynomial in the hash bucket
   va_list args; //arguments
   Polynomial *rp;       //newly built function call polynomial
+  struct functionPoly *fP;      //function-call structure of the newly built function call polynomial
 
   //get the number of parameters for functionCallExp
   va_start (args, num);
@@ -2105,10 +2127,10 @@ Polynomial *functionCallExp (int num, ...)
         fIndex = functionCallHash[hIndex].index[i];
         //If the names of the called functions are identical and the numbers of parameters are identical,
         //we compare their parameters
-        if (strcmp (fName, functionCallList[fIndex]->e.f.name) == 0 && num - 1 == functionCallList[fIndex]->e.f.paraNum) {
+        if (strcmp (fName, functionCallList[fIndex]->e.f->name) == 0 && num - 1 == functionCallList[fIndex]->e.f->paraNum) {
           //compare the two function calls item by item
           for (k = 0; k < num - 1; k++)
-            if (p[k] != functionCallList[fIndex]->e.f.para[k])
+            if (p[k] != functionCallList[fIndex]->e.f->para[k])
               break;
           //if the two function calls are the same,
           //return the function call in the function call list
@@ -2117,7 +2139,7 @@ Polynomial *functionCallExp (int num, ...)
             functionHashHits++;
             return functionCallList[fIndex];
           }
-        }       //end of if(num-1==functionCallList[fIndex]->e.f.paraNum)
+        }       //end of if(num-1==functionCallList[fIndex]->e.f->paraNum)
       } //end of for(i=binaryStart;i<=binaryEnd;i++)
       location = last;
     }   //end of if(binaryStart>=0 && binarySt
@@ -2132,23 +2154,25 @@ Polynomial *functionCallExp (int num, ...)
 
   //If the function call is not found in the list, insert it in the list
   //Build a new polynomial
-  rp = (Polynomial *) malloc (sizeof (Polynomial) - sizeof (struct variablePoly) + sizeof (struct functionPoly));
-  if (rp == NULL) {
+  rp = (Polynomial *) malloc (sizeof (Polynomial));
+  fP = (struct functionPoly *) malloc (sizeof (struct functionPoly));
+  if (rp == NULL || fP == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
   rp->eType = T_FUNCTIONCALL;
-  rp->e.f.paraNum = num - 1;
-  rp->e.f.para = (Polynomial **) malloc ((num - 1) * sizeof (Polynomial *));
-  rp->e.f.name = (char *) malloc (strlen (fName) + 1);
-  if (rp->e.f.para == NULL || rp->e.f.name == NULL) {
+  fP->paraNum = num - 1;
+  fP->para = (Polynomial **) malloc ((num - 1) * sizeof (Polynomial *));
+  fP->name = (char *) malloc (strlen (fName) + 1);
+  if (fP->para == NULL || fP->name == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  strcpy (rp->e.f.name, fName);
-  for (i = 0; i < rp->e.f.paraNum; i++) {
-    rp->e.f.para[i] = p[i];
+  strcpy (fP->name, fName);
+  for (i = 0; i < fP->paraNum; i++) {
+    fP->para[i] = p[i];
   }
+  rp->e.f = fP;
   rp->index = functionCallCount;
   rp->id = nodeId;
   rp->key = key;
@@ -2260,9 +2284,9 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     if (p->valid & VALID_EVAL_FLAG)
       break;
 
-    for (i = 0; i < p->e.s.num; i++)
-      if (p->e.s.sum[i]->eType != T_CONSTANT && (!(p->e.s.sum[i]->valid & VALID_EVAL_FLAG))) {
-        doPolyListSorting (p->e.s.sum[i], l);
+    for (i = 0; i < p->e.s->num; i++)
+      if (p->e.s->sum[i]->eType != T_CONSTANT && (!(p->e.s->sum[i]->valid & VALID_EVAL_FLAG))) {
+        doPolyListSorting (p->e.s->sum[i], l);
       }
     polyListAppend (l, p);
     break;
@@ -2274,9 +2298,9 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     if (p->valid & VALID_EVAL_FLAG)
       break;
 
-    for (i = 0; i < p->e.p.num; i++)
-      if (p->e.p.product[i]->eType != T_CONSTANT && (!(p->e.p.product[i]->valid & VALID_EVAL_FLAG))) {
-        doPolyListSorting (p->e.p.product[i], l);
+    for (i = 0; i < p->e.p->num; i++)
+      if (p->e.p->product[i]->eType != T_CONSTANT && (!(p->e.p->product[i]->valid & VALID_EVAL_FLAG))) {
+        doPolyListSorting (p->e.p->product[i], l);
       }
     polyListAppend (l, p);
     break;
@@ -2288,9 +2312,9 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     if (p->valid & VALID_EVAL_FLAG)
       break;
 
-    for (i = 0; i < p->e.f.paraNum; i++)
-      if (p->e.f.para[i]->eType != T_CONSTANT && (!(p->e.f.para[i]->valid & VALID_EVAL_FLAG))) {
-        doPolyListSorting (p->e.f.para[i], l);
+    for (i = 0; i < p->e.f->paraNum; i++)
+      if (p->e.f->para[i]->eType != T_CONSTANT && (!(p->e.f->para[i]->valid & VALID_EVAL_FLAG))) {
+        doPolyListSorting (p->e.f->para[i], l);
       }
     polyListAppend (l, p);
     break;
@@ -2351,10 +2375,10 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
       break;
       //Read the value of the variable
     case T_VARIABLE:
-      if (p->e.v.vType == 'D')
-        p->value = *(p->e.v.vAddr.vAddrD);
-      else if (p->e.v.vType == 'I')
-        p->value = *(p->e.v.vAddr.vAddrI);
+      if (p->e.v->vType == 'D')
+        p->value = *(p->e.v->vAddr.vAddrD);
+      else if (p->e.v->vType == 'I')
+        p->value = *(p->e.v->vAddr.vAddrI);
       else {
         fprintf (stderr, "Wrong variable type, exit!\n");
         exit (EXIT_FAILURE);
@@ -2364,7 +2388,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
       //Sum up all the items in a sum
     case T_SUM:
       pV = 0;
-      sP = &(p->e.s);
+      sP = p->e.s;
       for (i = 0; i < sP->num; i++) {
         if (sP->factor[i] == 1)
           pV += sP->sum[i]->value;
@@ -2376,7 +2400,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 
       //Multiply all the items
     case T_PRODUCT:
-      pP = &(p->e.p);
+      pP = p->e.p;
       pV = 1;
       for (i = 0; i < pP->num; i++) {
         switch (pP->exponent[i]) {
@@ -2404,47 +2428,47 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
       //The referred function must be included in the linked library.
       //Otherwise, the program will exit.
     case T_FUNCTIONCALL:
-      if (strcmp (p->e.f.name, "log10") == 0) {
-        p->value = log10 (p->e.f.para[0]->value);
-      } else if (strcmp (p->e.f.name, "log") == 0) {
-        p->value = log (p->e.f.para[0]->value);
-      } else if (strcmp (p->e.f.name, "tanh") == 0) {
-        p->value = tanh (p->e.f.para[0]->value);
-      } else if (strcmp (p->e.f.name, "atanh") == 0) {
-        p->value = atanh (p->e.f.para[0]->value);
-      } else if (strcmp (p->e.f.name, "gsl_ran_tdist_pdf") == 0) {
-        p->value = gsl_ran_tdist_pdf (p->e.f.para[0]->value, p->e.f.para[1]->value);
-      } else if (strcmp (p->e.f.name, "gsl_cdf_tdist_Q") == 0) {
-        p->value = gsl_cdf_tdist_Q (p->e.f.para[0]->value, p->e.f.para[1]->value);
-      } else if (strcmp (p->e.f.name, "gsl_cdf_tdist_P") == 0) {
-        p->value = gsl_cdf_tdist_P (p->e.f.para[0]->value, p->e.f.para[1]->value);
-      } else if (strcmp (p->e.f.name, "gsl_ran_ugaussian_pdf") == 0) {
-        p->value = gsl_ran_ugaussian_pdf (p->e.f.para[0]->value);
-      } else if (strcmp (p->e.f.name, "gsl_cdf_ugaussian_Q") == 0) {
-        p->value = gsl_cdf_ugaussian_Q (p->e.f.para[0]->value);
-      } else if (strcmp (p->e.f.name, "gsl_cdf_ugaussian_P") == 0) {
-        p->value = gsl_cdf_ugaussian_P (p->e.f.para[0]->value);
-      } else if (strcmp (p->e.f.name, "gsl_cdf_chisq_P") == 0) {
-        p->value = gsl_cdf_chisq_P (p->e.f.para[0]->value, p->e.f.para[1]->value);
-      } else if (strcmp (p->e.f.name, "gsl_cdf_chisq_Q") == 0) {
-        p->value = gsl_cdf_chisq_Q (p->e.f.para[0]->value, p->e.f.para[1]->value);
-      } else if (strcmp (p->e.f.name, "gsl_ran_chisq_pdf") == 0) {
-        p->value = gsl_ran_chisq_pdf (p->e.f.para[0]->value, p->e.f.para[1]->value);
-      } else if (strcmp (p->e.f.name, "pow") == 0) {
-        p->value = pow (p->e.f.para[0]->value, p->e.f.para[1]->value);
+      if (strcmp (p->e.f->name, "log10") == 0) {
+        p->value = log10 (p->e.f->para[0]->value);
+      } else if (strcmp (p->e.f->name, "log") == 0) {
+        p->value = log (p->e.f->para[0]->value);
+      } else if (strcmp (p->e.f->name, "tanh") == 0) {
+        p->value = tanh (p->e.f->para[0]->value);
+      } else if (strcmp (p->e.f->name, "atanh") == 0) {
+        p->value = atanh (p->e.f->para[0]->value);
+      } else if (strcmp (p->e.f->name, "gsl_ran_tdist_pdf") == 0) {
+        p->value = gsl_ran_tdist_pdf (p->e.f->para[0]->value, p->e.f->para[1]->value);
+      } else if (strcmp (p->e.f->name, "gsl_cdf_tdist_Q") == 0) {
+        p->value = gsl_cdf_tdist_Q (p->e.f->para[0]->value, p->e.f->para[1]->value);
+      } else if (strcmp (p->e.f->name, "gsl_cdf_tdist_P") == 0) {
+        p->value = gsl_cdf_tdist_P (p->e.f->para[0]->value, p->e.f->para[1]->value);
+      } else if (strcmp (p->e.f->name, "gsl_ran_ugaussian_pdf") == 0) {
+        p->value = gsl_ran_ugaussian_pdf (p->e.f->para[0]->value);
+      } else if (strcmp (p->e.f->name, "gsl_cdf_ugaussian_Q") == 0) {
+        p->value = gsl_cdf_ugaussian_Q (p->e.f->para[0]->value);
+      } else if (strcmp (p->e.f->name, "gsl_cdf_ugaussian_P") == 0) {
+        p->value = gsl_cdf_ugaussian_P (p->e.f->para[0]->value);
+      } else if (strcmp (p->e.f->name, "gsl_cdf_chisq_P") == 0) {
+        p->value = gsl_cdf_chisq_P (p->e.f->para[0]->value, p->e.f->para[1]->value);
+      } else if (strcmp (p->e.f->name, "gsl_cdf_chisq_Q") == 0) {
+        p->value = gsl_cdf_chisq_Q (p->e.f->para[0]->value, p->e.f->para[1]->value);
+      } else if (strcmp (p->e.f->name, "gsl_ran_chisq_pdf") == 0) {
+        p->value = gsl_ran_chisq_pdf (p->e.f->para[0]->value, p->e.f->para[1]->value);
+      } else if (strcmp (p->e.f->name, "pow") == 0) {
+        p->value = pow (p->e.f->para[0]->value, p->e.f->para[1]->value);
 
-      } else if (strcmp (p->e.f.name, "exp") == 0) {
-        p->value = exp (p->e.f.para[0]->value);
-      } else if (strcmp (p->e.f.name, "sqrt") == 0) {
-        p->value = sqrt (p->e.f.para[0]->value);
+      } else if (strcmp (p->e.f->name, "exp") == 0) {
+        p->value = exp (p->e.f->para[0]->value);
+      } else if (strcmp (p->e.f->name, "sqrt") == 0) {
+        p->value = sqrt (p->e.f->para[0]->value);
       } else {
-        fprintf (stderr, "unknown function name %s in polynomials\n", p->e.f.name);
+        fprintf (stderr, "unknown function name %s in polynomials\n", p->e.f->name);
         exit (EXIT_FAILURE);
       }
       break;
 
     case T_EXTERNAL:
-      fprintf (stderr, "Setting value for externalPoly w/signature %s\n", p->e.e.signature);
+      fprintf (stderr, "Setting value for externalPoly w/signature %s\n", p->e.e->signature);
       p->value = .00005;
       break;
 
@@ -2749,27 +2773,31 @@ void polynomialClearance ()
   constantCount = 0;
   //clear variable polynomials
   for (j = 0; j < variableCount; j++) {
+    free (variableList[j]->e.v);
     free (variableList[j]);
   }
   variableCount = 0;
   //clear sum polynomials
   for (j = 0; j < sumCount; j++) {
-    free (sumList[j]->e.s.sum);
-    free (sumList[j]->e.s.factor);
+    free (sumList[j]->e.s->sum);
+    free (sumList[j]->e.s->factor);
+    free (sumList[j]->e.s);
     free (sumList[j]);
   }
   sumCount = 0;
   //clear product polynomials
   for (j = 0; j < productCount; j++) {
-    free (productList[j]->e.p.product);
-    free (productList[j]->e.p.exponent);
+    free (productList[j]->e.p->product);
+    free (productList[j]->e.p->exponent);
+    free (productList[j]->e.p);
     free (productList[j]);
   }
   productCount = 0;
   //clear function call polynomials
   for (j = 0; j < functionCallCount; j++) {
-    free (functionCallList[j]->e.f.name);
-    free (functionCallList[j]->e.f.para);
+    free (functionCallList[j]->e.f->name);
+    free (functionCallList[j]->e.f->para);
+    free (functionCallList[j]->e.f);
     free (functionCallList[j]);
   }
   functionCallCount = 0;
@@ -2912,18 +2940,18 @@ void doPrintSummaryPoly (Polynomial * p, int currentTier)
   case T_VARIABLE:
     break;
   case T_SUM:
-    for (i = 0; i < p->e.s.num; i++) {
-      doPrintSummaryPoly (p->e.s.sum[i], currentTier + 1);
+    for (i = 0; i < p->e.s->num; i++) {
+      doPrintSummaryPoly (p->e.s->sum[i], currentTier + 1);
     }
     break;
   case T_PRODUCT:
-    for (i = 0; i < p->e.p.num; i++) {
-      doPrintSummaryPoly (p->e.p.product[i], currentTier + 1);
+    for (i = 0; i < p->e.p->num; i++) {
+      doPrintSummaryPoly (p->e.p->product[i], currentTier + 1);
     }
     break;
   case T_FUNCTIONCALL:
-    for (i = 0; i < p->e.f.paraNum; i++) {
-      doPrintSummaryPoly (p->e.f.para[i], currentTier + 1);
+    for (i = 0; i < p->e.f->paraNum; i++) {
+      doPrintSummaryPoly (p->e.f->para[i], currentTier + 1);
     }
     break;
   case T_FREED:
@@ -2979,27 +3007,27 @@ void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
     fprintf (diGraph, "%d [label=\"%G\"];\n", p->id, p->value);
     break;
   case T_VARIABLE:
-    fprintf (diGraph, "%d [label=\"%s\"];\n", p->id, p->e.v.vName);
+    fprintf (diGraph, "%d [label=\"%s\"];\n", p->id, p->e.v->vName);
     break;
   case T_SUM:
     fprintf (diGraph, "%d [label=\"+\"];\n", p->id);
-    for (i = 0; i < p->e.s.num; i++) {
-      doWritePolyDigraph (p->e.s.sum[i], diGraph);
-      fprintf (diGraph, "%d -> %d;\n", p->id, p->e.s.sum[i]->id);
+    for (i = 0; i < p->e.s->num; i++) {
+      doWritePolyDigraph (p->e.s->sum[i], diGraph);
+      fprintf (diGraph, "%d -> %d;\n", p->id, p->e.s->sum[i]->id);
     }
     break;
   case T_PRODUCT:
     fprintf (diGraph, "%d [label=\"*\"];\n", p->id);
-    for (i = 0; i < p->e.p.num; i++) {
-      doWritePolyDigraph (p->e.p.product[i], diGraph);
-      fprintf (diGraph, "%d -> %d;\n", p->id, p->e.p.product[i]->id);
+    for (i = 0; i < p->e.p->num; i++) {
+      doWritePolyDigraph (p->e.p->product[i], diGraph);
+      fprintf (diGraph, "%d -> %d;\n", p->id, p->e.p->product[i]->id);
     }
     break;
   case T_FUNCTIONCALL:
     fprintf (diGraph, "%d [label=\"fn\"];\n", p->id);
-    for (i = 0; i < p->e.f.paraNum; i++) {
-      doWritePolyDigraph (p->e.f.para[i], diGraph);
-      fprintf (diGraph, "%d -> %d;\n", p->id, p->e.f.para[i]->id);
+    for (i = 0; i < p->e.f->paraNum; i++) {
+      doWritePolyDigraph (p->e.f->para[i], diGraph);
+      fprintf (diGraph, "%d -> %d;\n", p->id, p->e.f->para[i]->id);
     }
     break;
   case T_FREED:
@@ -3042,45 +3070,45 @@ void expPrinting (Polynomial * p)
     fprintf (stderr, "%G", p->value);
     break;
   case T_VARIABLE:
-    fprintf (stderr, "%s", p->e.v.vName);
+    fprintf (stderr, "%s", p->e.v->vName);
     break;
   case T_SUM:
-    if (p->e.s.num > 1)
+    if (p->e.s->num > 1)
       fprintf (stderr, "(");
-    if (p->e.s.factor[0] != 1)
-      fprintf (stderr, "%G*", p->e.s.factor[0]);
-    expPrinting (p->e.s.sum[0]);
-    for (i = 1; i < p->e.s.num; i++) {
+    if (p->e.s->factor[0] != 1)
+      fprintf (stderr, "%G*", p->e.s->factor[0]);
+    expPrinting (p->e.s->sum[0]);
+    for (i = 1; i < p->e.s->num; i++) {
       fprintf (stderr, "+");
-      if (p->e.s.factor[i] != 1)
-        fprintf (stderr, "%G*", p->e.s.factor[i]);
-      expPrinting (p->e.s.sum[i]);
+      if (p->e.s->factor[i] != 1)
+        fprintf (stderr, "%G*", p->e.s->factor[i]);
+      expPrinting (p->e.s->sum[i]);
     }
-    if (p->e.s.num > 1)
+    if (p->e.s->num > 1)
       fprintf (stderr, ")");
     break;
   case T_PRODUCT:
-    if (p->e.p.num > 1)
+    if (p->e.p->num > 1)
       fprintf (stderr, "(");
-    expPrinting (p->e.p.product[0]);
-    if (p->e.p.exponent[0] != 1)
-      fprintf (stderr, "^%d", p->e.p.exponent[0]);
-    for (i = 1; i < p->e.s.num; i++) {
+    expPrinting (p->e.p->product[0]);
+    if (p->e.p->exponent[0] != 1)
+      fprintf (stderr, "^%d", p->e.p->exponent[0]);
+    for (i = 1; i < p->e.s->num; i++) {
       fprintf (stderr, "*");
-      expPrinting (p->e.p.product[i]);
-      if (p->e.p.exponent[i] != 1)
-        fprintf (stderr, "^%d", p->e.p.exponent[i]);
+      expPrinting (p->e.p->product[i]);
+      if (p->e.p->exponent[i] != 1)
+        fprintf (stderr, "^%d", p->e.p->exponent[i]);
     }
-    if (p->e.p.num > 1)
+    if (p->e.p->num > 1)
       fprintf (stderr, ")");
     break;
   case T_FUNCTIONCALL:
-    fprintf (stderr, "%s(", p->e.f.name);
-    for (i = 0; i < p->e.f.paraNum - 1; i++) {
-      expPrinting (p->e.f.para[i]);
+    fprintf (stderr, "%s(", p->e.f->name);
+    for (i = 0; i < p->e.f->paraNum - 1; i++) {
+      expPrinting (p->e.f->para[i]);
       fprintf (stderr, ", ");
     }
-    expPrinting (p->e.f.para[p->e.f.paraNum - 1]);
+    expPrinting (p->e.f->para[p->e.f->paraNum - 1]);
     fprintf (stderr, ")");
     break;
   case T_FREED:
@@ -3107,7 +3135,7 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
     fprintf (output, "%G", p->value);
     break;
   case T_VARIABLE:
-    fprintf (output, "%s", p->e.v.vName);
+    fprintf (output, "%s", p->e.v->vName);
     break;
   case T_SUM:
     if (depth <= 0) {
@@ -3115,14 +3143,14 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
       return;
     }
     fprintf (output, "(s%d:", p->index);
-    if (p->e.s.factor[0] != 1)
-      fprintf (output, "%G*", p->e.s.factor[0]);
-    expTermPrinting (output, p->e.s.sum[0], depth - 1);
-    for (i = 1; i < p->e.s.num; i++) {
+    if (p->e.s->factor[0] != 1)
+      fprintf (output, "%G*", p->e.s->factor[0]);
+    expTermPrinting (output, p->e.s->sum[0], depth - 1);
+    for (i = 1; i < p->e.s->num; i++) {
       fprintf (output, "+");
-      if (p->e.s.factor[i] != 1)
-        fprintf (output, "%G*", p->e.s.factor[i]);
-      expTermPrinting (output, p->e.s.sum[i], depth - 1);
+      if (p->e.s->factor[i] != 1)
+        fprintf (output, "%G*", p->e.s->factor[i]);
+      expTermPrinting (output, p->e.s->sum[i], depth - 1);
     }
     fprintf (output, ")");
     break;
@@ -3132,14 +3160,14 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
       return;
     }
     fprintf (output, "(p%d:", p->index);
-    expTermPrinting (output, p->e.p.product[0], depth - 1);
-    if (p->e.p.exponent[0] != 1)
-      fprintf (output, "^%d", p->e.p.exponent[0]);
-    for (i = 1; i < p->e.s.num; i++) {
+    expTermPrinting (output, p->e.p->product[0], depth - 1);
+    if (p->e.p->exponent[0] != 1)
+      fprintf (output, "^%d", p->e.p->exponent[0]);
+    for (i = 1; i < p->e.s->num; i++) {
       fprintf (output, "*");
-      expTermPrinting (output, p->e.p.product[i], depth - 1);
-      if (p->e.p.exponent[i] != 1)
-        fprintf (output, "^%d", p->e.p.exponent[i]);
+      expTermPrinting (output, p->e.p->product[i], depth - 1);
+      if (p->e.p->exponent[i] != 1)
+        fprintf (output, "^%d", p->e.p->exponent[i]);
     }
     fprintf (output, ")");
     break;
@@ -3148,12 +3176,12 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
       fprintf (output, "f%d", p->index);
       return;
     }
-    fprintf (output, "%s(", p->e.f.name);
-    for (i = 0; i < p->e.f.paraNum - 1; i++) {
-      expTermPrinting (output, p->e.f.para[i], depth - 1);
+    fprintf (output, "%s(", p->e.f->name);
+    for (i = 0; i < p->e.f->paraNum - 1; i++) {
+      expTermPrinting (output, p->e.f->para[i], depth - 1);
       fprintf (output, ", ");
     }
-    expTermPrinting (output, p->e.f.para[p->e.f.paraNum - 1], depth - 1);
+    expTermPrinting (output, p->e.f->para[p->e.f->paraNum - 1], depth - 1);
     fprintf (output, ")");
     break;
   case T_FREED:
@@ -3290,15 +3318,15 @@ void polyStatistics (char *title)
   variableSize = variableCount * (sizeof (Polynomial) + sizeof (struct variablePoly));
   sumSize = sumCount * (sizeof (Polynomial) + sizeof (struct sumPoly));
   for (i = 0; i < sumCount; i++) {
-    sumTerms += sumList[i]->e.s.num;
-    if (sumList[i]->e.s.num > maxSumTerms)
-      maxSumTerms = sumList[i]->e.s.num;
+    sumTerms += sumList[i]->e.s->num;
+    if (sumList[i]->e.s->num > maxSumTerms)
+      maxSumTerms = sumList[i]->e.s->num;
   }
   productSize = productCount * (sizeof (Polynomial) + sizeof (struct productPoly));
   for (i = 0; i < productCount; i++) {
-    productTerms += productList[i]->e.p.num;
-    if (productList[i]->e.p.num > maxProductTerms)
-      maxProductTerms = productList[i]->e.p.num;
+    productTerms += productList[i]->e.p->num;
+    if (productList[i]->e.p->num > maxProductTerms)
+      maxProductTerms = productList[i]->e.p->num;
   }
   functionCallSize = functionCallCount * sizeof (Polynomial);
 
@@ -3488,7 +3516,7 @@ void holdAllPolys ()
           if (variableHash[i].num <= 0)
             continue;
           for (j = 0; j < variableHash[i].num; j++) {
-            //      fprintf (stderr, "%s\n", variableList[variableHash[i].index[j]]->e.v.vName);
+            //      fprintf (stderr, "%s\n", variableList[variableHash[i].index[j]]->e.v->vName);
             variableList[variableHash[i].index[j]]->count++;
           }
         }
@@ -3573,8 +3601,8 @@ void doKeepPoly (Polynomial * p)
   case T_SUM:
   case T_PRODUCT:
   case T_FUNCTIONCALL:
-    for (i = 0; i < p->e.s.num; i++) {
-      doKeepPoly (p->e.s.sum[i]);
+    for (i = 0; i < p->e.s->num; i++) {
+      doKeepPoly (p->e.s->sum[i]);
     }
     break;
   case T_FREED:
@@ -3623,8 +3651,8 @@ void doHoldPoly (Polynomial * p)
   case T_PRODUCT:
   case T_FUNCTIONCALL:
     p->count++;
-    for (i = 0; i < p->e.s.num; i++) {
-      doHoldPoly (p->e.s.sum[i]);
+    for (i = 0; i < p->e.s->num; i++) {
+      doHoldPoly (p->e.s->sum[i]);
     }
     break;
   default:
@@ -3667,8 +3695,8 @@ void doUnHoldPoly (Polynomial * p)
   case T_PRODUCT:
   case T_FUNCTIONCALL:
     p->count--;
-    for (i = 0; i < p->e.s.num; i++) {
-      doUnHoldPoly (p->e.s.sum[i]);
+    for (i = 0; i < p->e.s->num; i++) {
+      doUnHoldPoly (p->e.s->sum[i]);
     }
     break;
   default:
@@ -3852,8 +3880,9 @@ void doFreePolys (unsigned short keepMask)
           k++;
         } else {
           sumFreedCount++;
-          free (sumList[i]->e.s.sum);
-          free (sumList[i]->e.s.factor);
+          free (sumList[i]->e.s->sum);
+          free (sumList[i]->e.s->factor);
+          free (sumList[i]->e.s);
 #ifndef FREEDEBUG
           free (sumList[i]);
 #else
@@ -3923,8 +3952,9 @@ void doFreePolys (unsigned short keepMask)
           k++;
         } else {
           productFreedCount++;
-          free (productList[i]->e.p.product);
-          free (productList[i]->e.p.exponent);
+          free (productList[i]->e.p->product);
+          free (productList[i]->e.p->exponent);
+          free (productList[i]->e.p);
 #ifndef FREEDEBUG
           free (productList[i]);
 #else
@@ -4033,12 +4063,13 @@ void doExternalizePolys ()
     if (sumList[i]->count || sumList[i]->valid) {
       // Convert to external
       externalList[externalCount] = sumList[i];
-      //	  externalList[externalCount]->e.e.formerEType = T_SUM;
-      //	  sprintf (externalList[externalCount]->e.e.signature, "S%d", sumList[i]->id);
+      //	  externalList[externalCount]->e.e->formerEType = T_SUM;
+      //	  sprintf (externalList[externalCount]->e.e->signature, "S%d", sumList[i]->id);
       externalList[externalCount]->index = externalCount;
       externalCount++;
-      free (sumList[i]->e.s.sum);
-      free (sumList[i]->e.s.factor);
+      free (sumList[i]->e.s->sum);
+      free (sumList[i]->e.s->factor);
+      free (sumList[i]->e.s);
       //          free (sumList[i]);
       sumList[i] = NULL;
     }
@@ -4075,12 +4106,13 @@ void doExternalizePolys ()
     if (productList[i]->count || productList[i]->valid) {
       // Convert to external
       externalList[externalCount] = productList[i];
-      //	  externalList[externalCount]->e.e.formerEType = T_PRODUCT;
-      //	  sprintf (externalList[externalCount]->e.e.signature, "P%d", productList[i]->id);
+      //	  externalList[externalCount]->e.e->formerEType = T_PRODUCT;
+      //	  sprintf (externalList[externalCount]->e.e->signature, "P%d", productList[i]->id);
       externalList[externalCount]->index = externalCount;
       externalCount++;
-      free (productList[i]->e.p.product);
-      free (productList[i]->e.p.exponent);
+      free (productList[i]->e.p->product);
+      free (productList[i]->e.p->exponent);
+      free (productList[i]->e.p);
       //          free (productList[i]);
       productList[i] = NULL;
     }
@@ -4197,7 +4229,7 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
 
   /// Make sure all variables are present, since we don't know yet which are used.
   for (i = 0; i < variableCount; i++)
-    fprintf (srcFile, "double %s;\n", variableList[i]->e.v.vName);
+    fprintf (srcFile, "double %s;\n", variableList[i]->e.v->vName);
   fprintf (srcFile, "\n");
 
   fprintf (srcFile, "double %s (int num, ...) {\n", name);
@@ -4207,15 +4239,15 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
 #ifdef POLYCOMP_DL
   fprintf (srcFile, "\tvariableList = va_arg (args, struct polynomial **);\n");
   for (i = 0; i < variableCount; i++)
-    if (variableList[i]->e.v.vType == 'I')
-      fprintf (srcFile, "\t\t%s = (double) *(variableList[%d]->e.v.vAddr.vAddrI);\n",
-	       variableList[i]->e.v.vName, i);
+    if (variableList[i]->e.v->vType == 'I')
+      fprintf (srcFile, "\t\t%s = (double) *(variableList[%d]->e.v->vAddr.vAddrI);\n",
+	       variableList[i]->e.v->vName, i);
     else
-      fprintf (srcFile, "\t\t%s = *(variableList[%d]->e.v.vAddr.vAddrD);\n",
-	       variableList[i]->e.v.vName, i);
+      fprintf (srcFile, "\t\t%s = *(variableList[%d]->e.v->vAddr.vAddrD);\n",
+	       variableList[i]->e.v->vName, i);
 #else
   for (i = 0; i < variableCount; i++)
-    fprintf (srcFile, "\t\t%s = va_arg (args, double);\n", variableList[i]->e.v.vName);
+    fprintf (srcFile, "\t\t%s = va_arg (args, double);\n", variableList[i]->e.v->vName);
 #endif
   fprintf (srcFile, "\tva_end (args);\n\n");
 
@@ -4239,7 +4271,7 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
       srcSize += fprintf (srcCalledFile, "#include <math.h>\n#include <stdio.h>\n\n");
       srcSize += fprintf (srcCalledFile, "\textern double V[], S[], P[], F[];\n\n");
       for (i = 0; i < variableCount; i++)
-	srcSize += fprintf (srcCalledFile, "\textern double %s;\n", variableList[i]->e.v.vName);
+	srcSize += fprintf (srcCalledFile, "\textern double %s;\n", variableList[i]->e.v->vName);
       srcSize += fprintf (srcCalledFile, "\n");
 
       srcSize += fprintf (srcCalledFile, "double %s_%03d () {\n", name, fileCount);
@@ -4255,14 +4287,14 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
 
     case T_VARIABLE:
       srcSize += fprintf (srcCalledFile, "\t%s[%d] = %s", eTypes[p->eType], p->index,
-	       p->e.v.vName);
+	       p->e.v->vName);
       //      srcSize += fprintf (srcCalledFile, ";\n\tprintf (\"%%g\\n\", %s[%d])", eTypes[p->eType], p->index);
       p->value = p->index;
       break;
 
     case T_SUM:
       srcSize += fprintf (srcCalledFile, "\t%s[%d] = ", eTypes[p->eType], sumsUsed);
-      sP = &(p->e.s);
+      sP = p->e.s;
       for (i = 0; i < sP->num; i++) {
 	if (i != 0) srcSize += fprintf (srcCalledFile, "+");
 	if (sP->sum[i]->eType == T_CONSTANT)
@@ -4282,7 +4314,7 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
 
     case T_PRODUCT:
       srcSize += fprintf (srcCalledFile, "\t%s[%d] = ", eTypes[p->eType], productsUsed);
-      pP = &(p->e.p);
+      pP = p->e.p;
       for (i = 0; i < pP->num; i++) {
 	if (i != 0) srcSize += fprintf (srcCalledFile, "*");
 	if (pP->product[i]->eType == T_CONSTANT)
@@ -4319,13 +4351,13 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
       break;
 
     case T_FUNCTIONCALL:
-      srcSize += fprintf (srcCalledFile, "\tF[%d] = %s(", functionCallsUsed, p->e.f.name);
-      for (i=0; i<p->e.f.paraNum; i++) {
+      srcSize += fprintf (srcCalledFile, "\tF[%d] = %s(", functionCallsUsed, p->e.f->name);
+      for (i=0; i<p->e.f->paraNum; i++) {
 	if (i != 0) srcSize += fprintf (srcCalledFile, ",");
-	if (p->e.f.para[i]->eType == T_CONSTANT)
-	  srcSize += fprintf (srcCalledFile, "%g", p->e.f.para[i]->value /* still the constant */);
+	if (p->e.f->para[i]->eType == T_CONSTANT)
+	  srcSize += fprintf (srcCalledFile, "%g", p->e.f->para[i]->value /* still the constant */);
 	else
-	  srcSize += fprintf (srcCalledFile, "%s[%g]", eTypes[p->e.f.para[i]->eType], p->e.f.para[i]->value);
+	  srcSize += fprintf (srcCalledFile, "%s[%g]", eTypes[p->e.f->para[i]->eType], p->e.f->para[i]->value);
       }
       srcSize += fprintf (srcCalledFile, ")");
       p->value = functionCallsUsed++;
