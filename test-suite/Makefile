@@ -5,6 +5,7 @@ TESTS = \
 	marriage_loop \
 	broken_loop \
 	multi-founder \
+	imprinting \
         PE \
         NonPE \
 	HoHGL
