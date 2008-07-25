@@ -3275,8 +3275,10 @@ void polyDynamicStatistics (char *title)
              "Overall user CPU utilization was %lus for last period of %lus, or %lu%%\n",
              deltaAccumUserTime, deltaAccumWallTime, 100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1));
     if ((deltaAccumUserTime != 0) && (100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < 10)) {
-      swLogMsg ("Thrashing detected (utilization under 10%), externalizing polynomials!");
-      externalizePolys ();
+      swLogMsg ("Thrashing detected (utilization under 10%), exiting!");
+      exit (EXIT_FAILURE);
+      //      swLogMsg ("Thrashing detected (utilization under 10%), externalizing polynomials!");
+      //      externalizePolys ();
     }
   }
   lastPDSAccumWallTime = overallSW->swAccumWallTime;
