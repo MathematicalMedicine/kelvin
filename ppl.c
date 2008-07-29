@@ -365,7 +365,8 @@ get_average_LR (SUMMARY_STAT *** result)
 		   modelRange.theta[1][thetaInd], thetaInd, dprime,
 		   dprimeIdx);
 	} else
-	  if (isinf (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total))
+	  if (isnan (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total -
+ 		     tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total))
 	{
 	  fprintf (stderr,
 		   "het_lr_total is INF at theta (%f,%f)(%d) and dprime %f(%d).\n",
