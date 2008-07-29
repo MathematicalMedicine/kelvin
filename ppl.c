@@ -216,7 +216,8 @@ get_average_LD_LR (SUMMARY_STAT *** result)
 	    fprintf (stderr, "%f ", pLambdaCell->lambda[j][k][l]);
 	fprintf (stderr, ") is NAN.\n");
 
-      } else if (isinf (result[j][i][modelRange.nafreq].het_lr_avg)) {
+      } else if (isnan (result[j][i][modelRange.nafreq].het_lr_avg - 
+			result[j][i][modelRange.nafreq].het_lr_avg)) {
 	fprintf (stderr, "Average LR at theta (%f,%f)(%d) and dprime %d(",
 		 modelRange.theta[0][i], modelRange.theta[1][i], i, j);
 	for (k = 0; k < pLambdaCell->m - 1; k++)

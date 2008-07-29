@@ -83,8 +83,10 @@ then #include sw.h in your source code, and link with sw.o.
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
+#ifdef TELLRITA
 #include <netdb.h>
 #include <netinet/in.h>
+#endif
 #include "sw.h"
 #include "hashtab.h"
 #include "lookupa.h"
@@ -990,6 +992,7 @@ swFree (void *pBlock, char *fileName, int lineNo)
   return;
 }
 
+#ifdef TELLRITA
 int
 udpSend (char *hostName, int serverPort, char *message)
 {
@@ -1028,6 +1031,7 @@ udpSend (char *hostName, int serverPort, char *message)
 
   return EXIT_SUCCESS;
 }
+#endif
 
 void
 swLogMsg (char *message)
@@ -1035,8 +1039,10 @@ swLogMsg (char *message)
   char messageBuffer[MAXUDPMSG];
 
   sprintf (messageBuffer, "PID: %d, %s\n", getpid (), message);
+#ifdef TELLRITA
   if (udpSend ("levi-montalcini.ccri.net", 4950, messageBuffer) ==
       EXIT_FAILURE) messageBuffer[0] = 'p'; /* Yeah, it's embarassing */
+#endif
   fprintf (stderr, messageBuffer);
   return;
 }
