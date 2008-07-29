@@ -1038,7 +1038,7 @@ swLogMsg (char *message)
 {
   char messageBuffer[MAXUDPMSG];
 
-  sprintf (messageBuffer, "PID: %d, %s\n", getpid (), message);
+  sprintf (messageBuffer, "PID: %d, %s\n", (int) getpid (), message);
 #ifdef TELLRITA
   if (udpSend ("levi-montalcini.ccri.net", 4950, messageBuffer) ==
       EXIT_FAILURE) messageBuffer[0] = 'p'; /* Yeah, it's embarassing */
@@ -1059,7 +1059,7 @@ int swGetCurrentVMK(pid_t pid) {
     return 0;
 
   haveVMChildRunning = TRUE;
-  sprintf(commandString, "pmap %d 2>/dev/null | grep 'total' | cut -c 8-23", pid);
+  sprintf(commandString, "pmap %d 2>/dev/null | grep 'total' | cut -c 8-23", (int) pid);
   if ((gCFP = popen(commandString, "r")) != NULL) {
     fscanf(gCFP, "%d", &currentVMK);
     pclose(gCFP);
