@@ -414,7 +414,7 @@ int main (int argc, char *argv[])
 #ifdef MEMGRAPH
       FILE *graphFile;
       char graphFileName[64];
-      sprintf (graphFileName, "kelvin_%d_memory.dat", getppid ());
+      sprintf (graphFileName, "kelvin_%d_memory.dat", (int) getppid ());
       if ((graphFile = fopen (graphFileName, "w")) == NULL) {
         perror ("Cannot open memory graph file!");
         exit (EXIT_FAILURE);
@@ -509,14 +509,14 @@ int main (int argc, char *argv[])
   swLogMsg ("Dynamic memory usage dumping is turned on, so performance will be poor!");
 #endif
 #ifdef GPROF
-  sprintf (messageBuffer, "GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.", SIGTERM, getpid ());
+  sprintf (messageBuffer, "GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
   swLogMsg (messageBuffer);
 #endif
 #ifdef GCOV
-  sprintf (messageBuffer, "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, getpid ());
+  sprintf (messageBuffer, "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
   swLogMsg (messageBuffer);
 #endif
-  fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, getpid ());
+  fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, (int) getpid ());
   swStart (overallSW);
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
