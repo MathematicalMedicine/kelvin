@@ -36,6 +36,7 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 #CFLAGS += -DFAKEEVALUATE # Don't evaluate at all - use only for exercising build. Results will be wrong!
 #CFLAGS += -DPOLYCOMP # Enable compilation and distribution of selected polynomials for faster evaluation
 #CFLAGS += -DPOLYCOMP_DL -ldl # Dynamically load compiled polynomials for in-process use
+#CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
