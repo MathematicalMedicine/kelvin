@@ -49,7 +49,7 @@ XMission *xmissionMatrix = NULL;
 typedef struct PPairElement
 {
   /* index to the conditional likelihood array of the proband's */
-  u_int32_t likelihoodIndex;
+  int likelihoodIndex;
   /* number of the same likelihood */
   short count;
   /* temporary likelihood result */
