@@ -1,5 +1,6 @@
 Version 0.36.0
-  Imprinting is now supported.
+  Imprinting is now supported. Changes to enable use on
+  older versions of 64-bit Solaris.
 
 Verison 0.35.0
   Major polynomial evaluation performance improvement via

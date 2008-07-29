@@ -555,18 +555,18 @@ main (int argc, char *argv[])
 #ifdef GPROF
   sprintf (messageBuffer,
 	   "GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.",
-	   SIGTERM, getpid ());
+	   SIGTERM, (int) getpid ());
   swLogMsg (messageBuffer);
 #endif
 #ifdef GCOV
   sprintf (messageBuffer,
 	   "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.",
-	   SIGTERM, getpid ());
+	   SIGTERM, (int) getpid ());
   swLogMsg (messageBuffer);
 #endif
   fprintf (stderr,
 	   "To force a dump of stats (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n",
-	   SIGQUIT, getpid ());
+	   SIGQUIT, (int) getpid ());
   swStart (overallSW);
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
