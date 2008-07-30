@@ -1,13 +1,14 @@
 # Makefile to perform kelvin tests
 
-TESTS = \
-	Exercises_3_and_5 \
-        Exercise_6
+TESTS = $(shell find * -maxdepth 0 -type d)
 
-.PHONY : test $(TESTS)
+.PHONY : test clean $(TESTS)
 
+test : ACTION := test
 test : $(TESTS)
 
-$(TESTS) : 
-	$(MAKE) -C $@ -f Makefile test
+clean : ACTION := clean
+clean : $(TESTS)
 
+$(TESTS) : 
+	$(MAKE) -C $@ -f Makefile $(ACTION)
