@@ -1,7 +1,7 @@
 # Makefile to perform kelvin tests
 
 TESTS = \
-	cosanguinous_loop \
+	consanguinity_loop \
 	marriage_loop \
 	broken_loop \
 	multi-founder \
