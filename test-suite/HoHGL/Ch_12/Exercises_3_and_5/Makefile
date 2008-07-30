@@ -13,3 +13,6 @@ test :
 	diff br.out br.out-EX5c
 	diff ppl.out ppl.out-EX5c
 
+clean :
+	- rm -f *.out *memory.dat *~
+
