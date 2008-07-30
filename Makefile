@@ -74,10 +74,11 @@ clean :
 	make -C pedlib -f Makefile clean
 	make -C utils -f Makefile clean
 	rm -f $(KOBJS) $(DKOBJS) $(OBJS) kelvin dkelvin calc_updated_ppl
+	make -C test-suite -f Makefile clean
 
 .PHONY : test
 test :
-	make -C test-suite -f Makefile all
+	make -C test-suite -f Makefile test
 
 $(BINDIR)/kelvin-$(VERSION) : kelvin
 	install -o root -g root -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
