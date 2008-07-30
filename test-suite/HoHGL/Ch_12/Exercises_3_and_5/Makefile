@@ -14,5 +14,5 @@ test :
 	diff ppl.out ppl.out-EX5c
 
 clean :
-	- rm -f *.out *memory.dat *~
+	- rm -f *.out kelvin.out-EX* *memory.dat *~
 
