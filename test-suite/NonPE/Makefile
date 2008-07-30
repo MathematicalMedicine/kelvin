@@ -1,18 +1,14 @@
 # Makefile to perform kelvin tests
 
-TESTS = \
-	SA_DT \
-	SA_QT \
-	TP_DT_LD \
-	TP_DT_LE \
-	TP_DT_MM_LD \
-	TP_DT_MM_LE \
-        TP_QT_LE
+TESTS = $(shell find * -maxdepth 0 -type d)
 
-.PHONY : test $(TESTS)
+.PHONY : test clean $(TESTS)
 
+test : ACTION := test
 test : $(TESTS)
 
-$(TESTS) : 
-	$(MAKE) -C $@ -f Makefile test
+clean : ACTION := clean
+clean : $(TESTS)
 
+$(TESTS) : 
+	$(MAKE) -C $@ -f Makefile $(ACTION)
