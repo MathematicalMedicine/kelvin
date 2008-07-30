@@ -4,3 +4,5 @@ test :
 	diff br.out br.out-baseline
 	diff ppl.out ppl.out-baseline
 
+clean :
+	- rm -f *.out *memory.dat *~
