@@ -1,19 +1,14 @@
 # Makefile to perform kelvin tests
 
-TESTS = \
-	consanguinity_loop \
-	marriage_loop \
-	broken_loop \
-	multi-founder \
-	imprinting \
-        PE \
-        NonPE \
-	HoHGL
+TESTS = $(shell find * -maxdepth 0 -type d)
 
-.PHONY : all $(TESTS)
+.PHONY : test clean $(TESTS)
 
-all : $(TESTS)
+test : ACTION := test
+test : $(TESTS)
+
+clean : ACTION := clean
+clean : $(TESTS)
 
 $(TESTS) : 
-	$(MAKE) -C $@ -f Makefile test
-
+	$(MAKE) -C $@ -f Makefile $(ACTION)
