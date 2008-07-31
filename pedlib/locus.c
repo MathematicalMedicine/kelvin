@@ -1008,7 +1008,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 						    1][allele1 -
 						       1][allele2 -
 							  1], NULL,
-					      'D', "mean"), 0), 1,
+					      'D', "mean"), 1), 1,
 			variableExp (&pTrait->
 				     stddev[liabilityClass -
 					    1][allele1 -
@@ -1106,7 +1106,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 								 "df"),
 								-1,
 								0)),
-					   1, 0), -1, 1);
+					   1, 1), -1, 1);
 
 	    *(Polynomial **) pen =
 	      functionCallExp (3, "gsl_cdf_tdist_P", tempPoly,
@@ -1171,7 +1171,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 								 "df"),
 								-1,
 								0)),
-					   1, 0), -1, 1);
+					   1, 1), -1, 1);
 
 	    *(Polynomial **) pen =
 	      functionCallExp (3, "gsl_cdf_tdist_Q", tempPoly,
@@ -1232,7 +1232,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 								 "df"),
 								-1,
 								0)),
-					   1, 0), -1, 1);
+					   1, 1), -1, 1);
 
 	    if (pTrait->minFlag && trait >= pTrait->min - 0.000001
 		&& trait <= pTrait->min + 0.000001) {

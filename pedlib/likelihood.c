@@ -2095,7 +2095,7 @@ timesExp (2, newProbPolynomial, 1, pChild->pLikelihood[newMultiLocusIndex].lkslo
 				      newProbPolynomial, 1,
 				      pTraitParentalPair->
 				      pppChildGenoList[child]
-				      [traitGenoIndex]->penslot.penetrancePolynomial, 1, 0),	//end of timesExp
+				      [traitGenoIndex]->penslot.penetrancePolynomial, 1, 1),	//end of timesExp
 		       1);
 
 	    if (calcFlag == 1) {
@@ -2288,7 +2288,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 				 plusExp(2, 
 					 1.0, constantExp(1.0), 
 					 -1.0, constantExp(locusList->pPrevLocusDistance[i][loc]),
-					 0), 1, 
+					 1), 1, 
 				 0); 
 					 
 		    }
@@ -2305,7 +2305,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 					   (&locusList->
 					    pPrevLocusDistance
 					    [i][loc], NULL,
-					    'D', vName1), 0), 1, 0);
+					    'D', vName1), 1), 1, 0);
 		    }
 		}
 	      } else {
