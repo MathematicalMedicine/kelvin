@@ -532,7 +532,7 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 		   timesExp (2,
 			     pConditional->lkslot.
 			     likelihoodPolynomial, 1,
-			     pConditional->wtslot.weightPolynomial, 1, 0), 1);
+			     pConditional->wtslot.weightPolynomial, 1, 1), 1);
       } else {
 	tmpLikelihood += pConditional->lkslot.likelihood *
 	  pConditional->wtslot.weight;
@@ -1274,7 +1274,7 @@ loop_parental_pair (int locus, int multiLocusIndex[2], void *dWeight[2])
 				       likelihoodPolynomial,
 				       1,
 				       constantExp
-				       (pElement->count), 1, 0), 1);
+				       (pElement->count), 1, 1), 1);
 		} else
 		  pNucFam->likelihood +=
 		    pElement->slot.likelihood * pElement->count;
@@ -1327,7 +1327,7 @@ loop_parental_pair (int locus, int multiLocusIndex[2], void *dWeight[2])
 				       likelihoodPolynomial,
 				       1,
 				       constantExp (pElement->
-						    count), 1, 0), 1);
+						    count), 1, 1), 1);
 		} else
 		  pConditional->tmpslot.tmpLikelihood +=
 		    pElement->slot.likelihood * pElement->count;
@@ -2057,7 +2057,8 @@ loop_child_multi_locus_genotype (int locus, int multiLocusIndex,
 	     * some likelihood calculation has
 	     * been calculated for this child
 	     */
-	    *(Polynomial **) childSum = plusExp (2, 1.0, *(Polynomial **) childSum, 1.0, timesExp (2, newProbPolynomial, 1, pChild->pLikelihood[newMultiLocusIndex].lkslot.likelihoodPolynomial, 1, 0),	//end of timesExp
+	    *(Polynomial **) childSum = plusExp (2, 1.0, *(Polynomial **) childSum, 1.0, 
+timesExp (2, newProbPolynomial, 1, pChild->pLikelihood[newMultiLocusIndex].lkslot.likelihoodPolynomial, 1, 1),	//end of timesExp
 						 1);
 	    if (calcFlag == 1) {
 	      likelihoodChildElements[multCount].fslot.factorPolynomial =
@@ -2369,11 +2370,11 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 						plusExp (2, 
 							 1.0, constantExp(1.0),
 							 -1.0,constantExp(locusList->pPrevLocusDistance[i][loc]), 
-							 0), 1,
-						0), 1.0,
+							 1), 1,
+						1), 1.0,
 				 timesExp (2, (Polynomial *)prob2[i], 1,
 					   constantExp(locusList->pPrevLocusDistance[i][loc]), 1,
-					   0), 
+					   1), 
 				 0);
 
 		    }
@@ -2394,15 +2395,15 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 							     NULL,
 							     'D',
 							     vName1),
-							    0), 1,
-						   0), 1.0,
+							    1), 1,
+						   1), 1.0,
 				 timesExp (2, (Polynomial *)
 					   prob2[i], 1,
 					   variableExp
 					   (&locusList->
 					    pPrevLocusDistance
 					    [i][loc], NULL,
-					    'D', vName1), 1, 0), 0);
+					    'D', vName1), 1, 1), 0);
 		    }
 		}
 	      } else {
@@ -2437,12 +2438,12 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 						     constantExp
 						     (locusList->
 						      pPrevLocusDistance[i][loc]), 
-						     0), 1,
-					    0), 
+						     1), 1,
+					    1), 
 			     1.0, timesExp (2, 
 					    (Polynomial *)prob[i], 1,
 					    constantExp(locusList->pPrevLocusDistance[i][loc]), 1, 
-					    0), 
+					    1), 
 			     0);
 		    }
 		  else
@@ -2462,15 +2463,15 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 							 NULL,
 							 'D',
 							 vName1),
-							0), 1,
-					       0), 1.0,
+							1), 1,
+					       1), 1.0,
 			     timesExp (2, (Polynomial *)
 				       prob[i], 1,
 				       variableExp
 				       (&locusList->
 					pPrevLocusDistance
 					[i][loc], NULL,
-					'D', vName1), 1, 0), 0);
+					'D', vName1), 1, 1), 0);
 		    }
 		}
 
@@ -2551,15 +2552,15 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 							(locusList->
 							 pPrevLocusDistance[i]
 							 [loc]), 
-							0), 1,
-					       0), 1.0,
+							1), 1,
+					       1), 1.0,
 			     timesExp (2, (Polynomial *)
 				       prob2[i], 1,
 				       constantExp
 				       (locusList->
 					pPrevLocusDistance
 					[i][loc]), 
-					1, 0), 0);
+					1, 1), 0);
 		  /* prevProb2 * (1-th1) + prevProb * th1 */
 		  newProbPoly2[i] =
 		    plusExp (2, 1.0, timesExp (2, (Polynomial *)
@@ -2572,14 +2573,14 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 							(locusList->
 							 pPrevLocusDistance[i]
 							 [loc]),
-							0), 1,
-					       0), 1.0,
+							1), 1,
+					       1), 1.0,
 			     timesExp (2, (Polynomial *)
 				       prob[i], 1,
 				       constantExp
 				       (locusList->
 					pPrevLocusDistance
-					[i][loc]), 1, 0), 0);
+					[i][loc]), 1, 1), 0);
 			
 		      }
 		    else /* dealing with trait locus */
@@ -2600,15 +2601,15 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 							 NULL,
 							 'D',
 							 vName1),
-							0), 1,
-					       0), 1.0,
+							1), 1,
+					       1), 1.0,
 			     timesExp (2, (Polynomial *)
 				       prob2[i], 1,
 				       variableExp
 				       (&locusList->
 					pPrevLocusDistance
 					[i][loc], NULL,
-					'D', vName1), 1, 0), 0);
+					'D', vName1), 1, 1), 0);
 		  /* prevProb2 * (1-th1) + prevProb * th1 */
 		  newProbPoly2[i] =
 		    plusExp (2, 1.0, timesExp (2, (Polynomial *)
@@ -2624,15 +2625,15 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 							 NULL,
 							 'D',
 							 vName1),
-							0), 1,
-					       0), 1.0,
+							1), 1,
+					       1), 1.0,
 			     timesExp (2, (Polynomial *)
 				       prob[i], 1,
 				       variableExp
 				       (&locusList->
 					pPrevLocusDistance
 					[i][loc], NULL,
-					'D', vName1), 1, 0), 0);
+					'D', vName1), 1, 1), 0);
 		      }
 		}
 
@@ -2679,7 +2680,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 							(locusList->
 							 pPrevLocusDistance
 							 [i][loc]), 
-							 0), 1, 0);
+							 1), 1, 0);
 		    newProbPoly2[i] = timesExp (2, (Polynomial *)
 						prob[i], 1,
 						constantExp
@@ -2702,7 +2703,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 							 pPrevLocusDistance
 							 [i][loc],
 							 NULL, 'D',
-							 vName1), 0), 1, 0);
+							 vName1), 1), 1, 0);
 		    newProbPoly2[i] = timesExp (2, (Polynomial *)
 						prob[i], 1,
 						variableExp
@@ -2744,7 +2745,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 							     (locusList->
 							      pPrevLocusDistance
 							      [i][loc]),
-							      0), 1, 0);
+							      1), 1, 0);
 			newProbPoly[i] = timesExp (2, (Polynomial *)
 						   prob[i], 1,
 						   constantExp
@@ -2767,7 +2768,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 							      pPrevLocusDistance
 							      [i][loc],
 							      NULL, 'D',
-							      vName1), 0), 1, 0);
+							      vName1), 1), 1, 0);
 			newProbPoly[i] = timesExp (2, (Polynomial *)
 						   prob[i], 1,
 						   variableExp
