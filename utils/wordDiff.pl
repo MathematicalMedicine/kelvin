@@ -11,7 +11,7 @@
 
 if ($#ARGV < 2) {
     print "Usage: ".$ARGV[0]." <file> <file> <maximum numeric error factor, 0 for equality>\n";
-    exit 2;
+    exit (2);
 }
 # Read in both files into scalars in their entirety so we can use split on them.
 $file_LEFT = shift;
@@ -34,18 +34,18 @@ for ($i = 0; $i < $#chunks_LEFT; $i++) {
 	    if ($left != $right) {
 		# Not simply equal, get the deviation and compare to maximum allowable
 		$offByFactor = ($left-$right)/$left;
-		print "Off by $offByFactor vs limit of $maxOffByFactor\n";
+#		print "Off by $offByFactor vs limit of $maxOffByFactor\n";
 		if (abs($offByFactor) > $maxOffByFactor) {
 		    print "Difference of factor of $offByFactor between $left and $right ".
 			"is over limit of $maxOffByFactor\n";
-		    exit 1;
+		    exit (1);
 		}
 	    }
 	} else {
 	    # Non-numeric match problem, try case folding
 	    if (lc($left) ne lc($right)) {
 		print "Difference between [$left] and [$right]\n";
-		exit 1;
+		exit (1);
 	    }
 	}
     }
