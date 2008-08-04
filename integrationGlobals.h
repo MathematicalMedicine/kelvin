@@ -1,20 +1,5 @@
 char *dkelvinVersion = "$Id$";        ///< svn's version for dkelvin.c
 
-/* Variables became global from local */
-PedigreeSet pedigreeSet;	/* Pedigrees. */
-int loc1, loc2;
-Locus *pLocus;
-Locus *pLocus1;
-Locus *pLocus2;
-Trait *pTrait;
-int traitLocus;
-int totalLoci;
-void *initialProbAddr[3];
-char *tmpID;
-LDLoci *pLDLoci = NULL;
-
-int R_square_flag = FALSE;
-double R_square = 0;
 int dprimeIdx, dprime0Idx;
 int num_out_constraint;
 
