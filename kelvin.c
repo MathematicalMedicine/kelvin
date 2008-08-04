@@ -95,6 +95,7 @@
   - SOURCEDIGRAPH
 
 */
+#include <pthread.h>
 #include <signal.h>
 #include <gsl/gsl_version.h>
 #include "kelvin.h"
@@ -106,7 +107,6 @@ extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 extern Polynomial *constant1Poly;
 
 struct swStopwatch *overallSW;  ///< Performance timer used throughout code for overall statistics.
-time_t startTime;
 char messageBuffer[MAXSWMSG];   ///< Commonly-used message buffer sized to work with swLogMsg().
 volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update requested via signal
 
@@ -390,7 +390,6 @@ int main (int argc, char *argv[])
   overallSW = swCreate ("overall");
   combinedComputeSW = swCreate ("combinedComputeSW");
   combinedBuildSW = swCreate ("combinedBuildSW");
-  startTime = time (NULL);
 
   /* Add an exit handler to deal with wayward children. */
 
@@ -399,55 +398,9 @@ int main (int argc, char *argv[])
     exit (EXIT_FAILURE);
   }
 
-  /* Fork a child that loops sleeping several seconds and then signalling 
-   * us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
+  /** Setup signal handlers. Be sure to do this before starting
+   any threads, or interrupts might not be handled properly. */
 
-  int currentVMK, maximumVMK;   ///< Properly the property of the child process.
-  if ((maximumVMK = swGetMaximumVMK ()) != 0) {
-    childPID = fork ();
-    if (childPID == 0) {
-      /* Code executed by child only! */
-      pid_t parentPID = 0;
-
-      /* Ignore QUIT signals, 'cause they're actually status requests for Mom. */
-      signal (SIGQUIT, SIG_IGN);
-#ifdef MEMGRAPH
-      FILE *graphFile;
-      char graphFileName[64];
-      sprintf (graphFileName, "kelvin_%d_memory.dat", getppid ());
-      if ((graphFile = fopen (graphFileName, "w")) == NULL) {
-        perror ("Cannot open memory graph file!");
-        exit (EXIT_FAILURE);
-      }
-#endif
-      int wakeCount = 0;
-      while (1) {
-        sleep (30);
-        wakeCount++;
-        /* See if we've been reparented due to Mom's demise. */
-        parentPID = getppid ();
-        if (parentPID == 1) {
-#ifdef MEMGRAPH
-          fclose (graphFile);
-#endif
-          exit (EXIT_SUCCESS);
-        }
-        if (wakeCount % 2)
-          kill (getppid (), SIGUSR1);   // Send a status-updating signal to parent.
-        currentVMK = swGetCurrentVMK (getppid ());
-#ifdef MEMGRAPH
-        fprintf (graphFile, "%lu, %d\n", time (NULL) - startTime, currentVMK);
-        fflush (graphFile);
-#endif
-#ifdef MEMSTATUS
-        fprintf (stdout, "%lus, %dKb (%.1f%% of %.1fGb)\n", time (NULL) - startTime, currentVMK,
-                 currentVMK / (maximumVMK / 100.0), maximumVMK / (1024.0 * 1024.0));
-#endif
-      }
-    }
-  }
-
-  /* Setup signal handlers */
   struct sigaction usr1Action, quitAction, intAction;
   sigset_t usr1BlockMask, quitBlockMask, intBlockMask;
 
@@ -480,6 +433,14 @@ int main (int argc, char *argv[])
   termAction.sa_flags = 0;
   sigaction (SIGTERM, &termAction, NULL);
 #endif
+
+  /* Start a thread with a timer to do the memory checks. It can afford
+     to hang, while the main process cannot. */
+  pthread_t statusThread;
+  if (pthread_create ( &statusThread, NULL, monitorStatus, NULL)) {
+    perror ("Failed to create status monitoring thread");
+    exit (EXIT_FAILURE);
+  }
 
   /* Annouce ourselves for performance tracking. */
   char currentWorkingDirectory[MAXSWMSG - 32];
@@ -2676,7 +2637,7 @@ int main (int argc, char *argv[])
                   cL[8]++;
                   swStop (combinedBuildSW);
 #ifndef SIMPLEPROGRESS
-                  fprintf (stdout, "%s %d%% complete\r", "Combined likelihood evaluations", cL[8] * 100 / eCL[8]);
+                  fprintf (stdout, "%s %d%% complete at %d\r", "Combined likelihood evaluations", cL[8] * 100 / eCL[8], nodeId);
 #else
                   fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]));
 #endif
