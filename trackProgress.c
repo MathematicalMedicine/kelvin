@@ -10,7 +10,11 @@
 #include "polynomial.h"
 #include "trackProgress.h"
 
-/** Loop sleeping for 30 seconds and then:
+/** 
+
+Make sure this thread is started AFTER signal handling has been setup.
+
+Loop sleeping for 30 seconds and then:
 
 - signal with SIGUSR1 to do allow a synchronous dump of statically-collected
 statistitics.
