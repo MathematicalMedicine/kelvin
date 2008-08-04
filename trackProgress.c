@@ -56,7 +56,7 @@ void *monitorStatus () {
 #endif
     }
   }
-  return;
+  return NULL;
 }
 
 /**
