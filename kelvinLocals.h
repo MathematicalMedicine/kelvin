@@ -6,7 +6,6 @@
 
   /* Start GAW */
   Pedigree *pPedigree;
-  double gfreq; /* disease gene frequency */
   int liabIdx;
   int dprimeIdx;
 

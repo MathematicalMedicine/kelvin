@@ -35,4 +35,5 @@
   0, 0, 0, 0, 0, 0, 0, 0, 0};   ///< Est. final # calls to each instance of compute_likelihood
   int breakFlag = FALSE;
   double alphaV, alphaV2;
+  double gfreq; /* disease gene frequency */
 
