@@ -1,6 +1,9 @@
 # Makefile to perform kelvin tests
 
-TESTS = $(shell find * -maxdepth 0 -type d)
+# find -maxdepth DNE on Solaris...
+#TESTS = $(shell find * -maxdepth 0 -type d)
+SHELL = bash
+TESTS = $(shell ls -d */ | cut -f1 -d\/)
 
 .PHONY : test clean $(TESTS)
 
