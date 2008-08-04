@@ -1,4 +1,5 @@
 char *programVersion = "V0.37.0";       ///< Overall kelvin version set upon release.
+char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
 
 struct swStopwatch *overallSW;
 char messageBuffer[MAXSWMSG];

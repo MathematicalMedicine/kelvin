@@ -40,7 +40,7 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
-KOBJS = kelvin.o
+KOBJS = kelvin.o dcuhre.o
 DKOBJS = dkelvin.o dcuhre.o
 OBJS = ppl.o config.o saveResults.o trackProgress.o kelvinHandlers.o
 INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \

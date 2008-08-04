@@ -1,5 +1,3 @@
-  struct swStopwatch *combinedComputeSW,        ///< Combined likelihood compute stopwatch
-   *combinedBuildSW;    ///< Combined likelihood polynomial build stopwatch
   char **markerNameList = NULL;
 
   int initialFlag = 0;

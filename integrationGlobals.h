@@ -1,5 +1,3 @@
-char *dkelvinVersion = "$Id$";        ///< svn's version for dkelvin.c
-
 int dprimeIdx, dprime0Idx;
 int num_out_constraint;
 

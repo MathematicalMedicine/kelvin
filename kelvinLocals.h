@@ -1,3 +1,6 @@
+  struct swStopwatch *combinedComputeSW,        ///< Combined likelihood compute stopwatch
+   *combinedBuildSW;    ///< Combined likelihood polynomial build stopwatch
+
   Pedigree *pPedigree;
   Polynomial *initialProbPoly2[3];
   Polynomial *initialProbPoly[3];
