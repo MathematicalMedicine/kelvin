@@ -10,7 +10,6 @@
   double max_at_theta0;
   int maxDPrimeIdx = 0;
   int maxDPrimeIdx_at_theta0 = 0;
-  double R_square = 0;
   int thresholdIdx = -1;
   double threshold = 0;
   double avgLR;

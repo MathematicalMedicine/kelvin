@@ -115,7 +115,9 @@ extern Polynomial *constant1Poly;
   Global variables
 
 */
+#include "dcuhre.h"
 #include "iterationGlobals.h"
+#include "integrationGlobals.h"
 #include "kelvinGlobals.h"
 
 /**
@@ -134,8 +136,10 @@ extern Polynomial *constant1Poly;
 */
 int main (int argc, char *argv[])
 {
-  #include "kelvinLocals.h"
+
   #include "iterationLocals.h"
+  #include "integrationLocals.h"
+  #include "kelvinLocals.h"
 
   overallSW = swCreate ("overall");
   combinedComputeSW = swCreate ("combinedComputeSW");
