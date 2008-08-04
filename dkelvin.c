@@ -12,74 +12,24 @@
  * Permission is hereby given to use this software 
  * for non-profit educational purposes only.
  **********************************************************************/
+#include <pthread.h>
 #include <gsl/gsl_version.h>
 #include "dkelvin.h"
+#include "kelvinHandlers.h"
 #include "likelihood.h"
 #include "pedlib/polynomial.h"
 #include "saveResults.h"
 #include "trackProgress.h"
 #include "dcuhre.h"
 
-#include "sw.h"
-
-extern Polynomial *constant1Poly;
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
+extern Polynomial *constant1Poly;
+
 struct swStopwatch *overallSW;
-time_t startTime;
-int currentVMK, maximumVMK;
 char messageBuffer[MAXSWMSG];
 
-#include <signal.h>		/* Signalled dumps, exits, whatever */
-volatile sig_atomic_t signalSeen = 0;	/* If we wanted to be really gentle. */
-
-/* Typing ^\ or issuing a kill -s SIGQUIT gets a dump of statistics.
-   We used to set the signalSeen flag and watch for it in breaks in the
-   code, but so long as we don't interfere with kelvin when we dump out
-   statistics, that is unnecessary.
-
-   P.S. - cygwin requires "stty quit ^C" first for this to work. */
-void
-quitSignalHandler (int signal)
-{
-  if (modelOptions.polynomial == TRUE)
-    polyDynamicStatistics ("Signal received");
-  else
-    swDump (overallSW);
-#ifdef DMTRACK
-  swLogPeaks ("Signal");
-#endif
-}
-
-#if defined (GPROF) || (GCOV)
-
-/* We catch a SIGTERM to allow early exit() for profiling. */
-void
-termSignalHandler (int signal)
-{
-  fprintf (stderr, "Terminating early for gprof or gcov!\n");
-  exit (EXIT_SUCCESS);
-}
-#endif
-
-void
-intSignalHandler (int signal)
-{
-  fprintf (stderr, "Terminating early via interrupt!\n");
-  exit (EXIT_FAILURE);
-}
-
-pid_t childPID = 0;		/* For a child process producing timed statistics. */
-/* Exit handler to clean-up after we hit any of our widely-distributed exit points. */
-void
-exit_kelvin ()
-{
-  swLogMsg ("Exiting");
-  if (childPID != 0)
-    kill (childPID, SIGKILL);	/* Sweep away any errant children */
-}
-
-char *programVersion = "V0.34.3";
-char *dkelvinVersion = "$Id$";
+#include "integrationGlobals.h"
+#include "kelvinGlobals.h"
 
 #define checkpt() fprintf(stderr,"Checkpoint at line %d of file \"%s\"\n",__LINE__,__FILE__)
 
@@ -145,27 +95,6 @@ double xl[15] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 double xu[15] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
 int print_point_flag = 0;
-
-/* Some default global values. */
-char resultsprefix[KMAXFILENAMELEN + 1] = "./";
-char maxmodelfile[KMAXFILENAMELEN + 1] = "tp.out";   ///< Default name (and storage) for maximizing model file
-char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";
-char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";
-char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";
-char datafile[KMAXFILENAMELEN + 1] = "datafile.dat";
-char loopsfile[KMAXFILENAMELEN + 1] = "loops.dat";
-char ccfile[KMAXFILENAMELEN + 1] = "";	/* case control count file */
-char outfile[KMAXFILENAMELEN + 1] = "lods.out";
-char avghetfile[KMAXFILENAMELEN + 1] = "avghet.out";
-char avghomofile[KMAXFILENAMELEN + 1] = "avghomo.out";
-char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";
-char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
-FILE *fpHet = NULL;		/* average HET LR file */
-
-FILE *fpPPL = NULL;		/* PPL output file */
-int polynomialScale = 1;	/* Scale of static allocation and dynamic
-				   growth in polynomial.c, 1-10 with 1 as
-				   the default, and 10 the old standard. */
 FILE *fphlod = NULL;
 
 /* Model datastructures. modelOptions is defined in the pedigree library. */
@@ -218,13 +147,8 @@ XMission *altMatrix;
 XMission *traitMatrix;
 XMission *markerMatrix;
 
-LambdaCell *pLambdaCell = NULL;
-int prevNumDPrime = 0;
-int loopMarkerFreqFlag = 0;
 int total_count;
 
-char *flexBuffer = NULL;
-int flexBufferSize = 0;
 
 /**********************************************************************
  * Usage:
@@ -460,67 +384,17 @@ main (int argc, char *argv[])
 /*********  end of local variable declaration   **********/
 
   overallSW = swCreate ("overall");	/* Overall performance stopwatch */
-  startTime = time (NULL);
 
-  /* Add an exit handler to deal with wayward children. */
+  /* Setup all of our signal handlers BEFORE we start any threads. */
+  setupHandlers ();
 
-  if (atexit (exit_kelvin)) {
-    perror ("Could not register exit handler!");
+  /* Start a thread with a timer to do the memory checks. It can afford
+     to hang, while the main process cannot. */
+  pthread_t statusThread;
+  if (pthread_create ( &statusThread, NULL, monitorStatus, NULL)) {
+    perror ("Failed to create status monitoring thread");
     exit (EXIT_FAILURE);
   }
-
-  /* Fork a child that loops sleeping several seconds and then signalling 
-     us with SIGUSR1 to do an asynchronous dump of peak statistitics to stderr. */
-
-  if ((maximumVMK = swGetMaximumVMK ()) != 0) {
-    childPID = fork ();
-    if (childPID == 0) {
-      /* Code executed by child only! */
-      pid_t parentPID = 0;
-      /* Ignore QUIT signals, 'cause they're actually status requests for Mom. */
-      signal(SIGQUIT, SIG_IGN);
-
-      while (1) {
-	sleep (30);
-	parentPID = getppid ();
-	if (parentPID == 1)
-	  exit (EXIT_SUCCESS);
-	currentVMK = swGetCurrentVMK (parentPID);
-	fprintf (stderr, "%lus, %dKb (%.1f%% of %.1fGb)\n",
-		 time (NULL) - startTime,
-		 currentVMK, currentVMK / (maximumVMK / 100.0),
-		 maximumVMK / (1024.0 * 1024.0));
-      }
-    }
-  }
-
-  /* Setup signal handlers */
-  struct sigaction quitAction, intAction;
-  sigset_t quitBlockMask, intBlockMask;
-
-#if defined (GPROF) || (GCOV)
-  struct sigaction termAction;
-  sigset_t termBlockMask;
-#endif
-  sigfillset (&quitBlockMask);
-  quitAction.sa_handler = quitSignalHandler;
-  quitAction.sa_mask = quitBlockMask;
-  quitAction.sa_flags = 0;
-  sigaction (SIGQUIT, &quitAction, NULL);
-
-  sigfillset (&intBlockMask);
-  intAction.sa_handler = intSignalHandler;
-  intAction.sa_mask = intBlockMask;
-  intAction.sa_flags = 0;
-  sigaction (SIGINT, &intAction, NULL);
-
-#if defined (GPROF) || (GCOV)
-  sigfillset (&termBlockMask);
-  termAction.sa_handler = termSignalHandler;
-  termAction.sa_mask = termBlockMask;
-  termAction.sa_flags = 0;
-  sigaction (SIGTERM, &termAction, NULL);
-#endif
 
   /* Annouce ourselves for performance tracking. */
   char currentWorkingDirectory[MAXSWMSG-32];

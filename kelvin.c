@@ -45,6 +45,29 @@
 
   There are numerous compilation conditions that affect kelvin. Many
   of them are diagnostic in nature.
+  
+  - DMTRACK - enable exhaustive memory management tracking. Keeps track
+  of all allocations and frees by source code line, and can provide
+  cross-references at any time by total utilization or retention. Can
+  also report on cross-module operations, i.e. one module allocates and
+  another module frees the same chunk of memory.
+
+  - DMUSE
+  - FAKEEVALUATE
+  - GCOV
+  - GPROF
+
+  - MEMGRAPH - provides the same information as MEMSTATUS but in a
+  format appropriate for graphing with a tool like gnuplot. The file
+  is named kelvin_<pid>_memory.dat, where <pid> is the process id.
+  These files will need to be cleaned-up periodically, so this 
+  conditional is not on by default. This is only possible on systems
+  with a supported pmap command.
+
+  - MEMSTATUS - handy when there is concern about memory capacity,
+  but can really clutter-up the display. Runs in a child process and
+  reports on the main process' memory usage every 30 seconds. This
+  is only possible on systems with a supported pmap command.
 
   - _OPENMP - this conditional is not defined by the user, but rather
   set by the compiler when the -fopenmp flag is specified to enable
@@ -64,41 +87,22 @@
   set the OMP_NUM_THREADS environment variable to 1, and no locking
   conflicts will occur.
 
-  - MEMSTATUS - handy when there is concern about memory capacity,
-  but can really clutter-up the display. Runs in a child process and
-  reports on the main process' memory usage every 30 seconds. This
-  is only possible on systems with a supported pmap command.
-
-  - MEMGRAPH - provides the same information as MEMSTATUS but in a
-  format appropriate for graphing with a tool like gnuplot. The file
-  is named kelvin_<pid>_memory.dat, where <pid> is the process id.
-  These files will need to be cleaned-up periodically, so this 
-  conditional is not on by default. This is only possible on systems
-  with a supported pmap command.
+  - POLYSTATISTICS - enable or disable display of extensive polynomial
+  statistics at 2Mp creation intervals as well as at key points in
+  pedigree processing. This does not affect performance or processing.
 
   - SIMPLEPROGRESS - suppresses more complicated progress reports in
   favor of a single percentage progress and estimated remaining time.
   This simple progress indication cannot be linear, but is easier to
   understand. This conditional is on by default.
 
-  - POLYSTATISTICS - enable or disable display of extensive polynomial
-  statistics at 2Mp creation intervals as well as at key points in
-  pedigree processing. This does not affect performance or processing.
-  
-  - DMTRACK - enable exhaustive memory management tracking. Keeps track
-  of all allocations and frees by source code line, and can provide
-  cross-references at any time by total utilization or retention. Can
-  also report on cross-module operations, i.e. one module allocates and
-  another module frees the same chunk of memory.
-
-  - DMUSE
   - SOURCEDIGRAPH
 
 */
 #include <pthread.h>
-#include <signal.h>
 #include <gsl/gsl_version.h>
 #include "kelvin.h"
+#include "kelvinHandlers.h"
 #include "likelihood.h"
 #include "saveResults.h"
 #include "trackProgress.h"
@@ -108,165 +112,14 @@ extern Polynomial *constant1Poly;
 
 struct swStopwatch *overallSW;  ///< Performance timer used throughout code for overall statistics.
 char messageBuffer[MAXSWMSG];   ///< Commonly-used message buffer sized to work with swLogMsg().
-volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update requested via signal
-
-/**
-
-  Handler for SIGQUIT.
-
-  Typing ^\ or issuing a kill -s SIGQUIT gets a dump of statistics.
-
-  P.S. - cygwin requires "stty quit ^C" first for this to work.
-
-*/
-void quitSignalHandler (int signal)
-{
-  statusRequestSignal = TRUE;
-#ifdef POLYSTATISTICS
-  if (modelOptions.polynomial == TRUE)
-    polyDynamicStatistics ("Signal received");
-  else
-#endif
-    swDump (overallSW);
-#ifdef DMTRACK
-  swLogPeaks ("Signal");
-#endif
-}
-
-/**
-
-  Handler for SIGUSR1.
-
-  Handles signal is raised by our child process to get status update.
-  Sets the signalSeen flag which is watched for in breaks in the
-  code.
-
-*/
-void usr1SignalHandler (int signal)
-{
-  statusRequestSignal = TRUE;
-}
-
-#if defined (GPROF) || (GCOV)
-/*
-
-  Handler for SIGTERM.
-
-  If we're profiling or doing coverage analysis, we catch a SIGTERM to 
-  allow early exit(). An orderly exit like this (with EXIT_SUCCESS
-  status, ensures that the profileing or coverage information completely
-  written and fit for analysis.
-
-*/
-void termSignalHandler (int signal)
-{
-  fprintf (stderr, "Terminating early for gprof or gcov!\n");
-  exit (EXIT_SUCCESS);
-}
-#endif
-
-/// Handler for SIGINT
-void intSignalHandler (int signal)
-{
-  fprintf (stderr, "Terminating early via interrupt!\n");
-  exit (EXIT_FAILURE);
-}
-
-pid_t childPID = 0;     ///< For a child process producing timing (and memory?) statistics.
-/**
-
-  General-purpose exit handler
-
-  Exit handler to clean-up after we hit any of our widely-distributed 
-  exit points. Ensures that errant child processes are handled so
-  we don't pester people with unnecessary messages.
-
-*/
-void exit_kelvin ()
-{
-  swLogMsg ("Exiting");
-  if (childPID != 0)
-    kill (childPID, SIGKILL);   /* Sweep away any errant children */
-}
 
 /**
 
   Global variables
 
 */
-char *programVersion = "V0.35.0";       ///< Overall kelvin version set upon release.
-char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
-
-/* Some default global values. */
-char resultsprefix[KMAXFILENAMELEN + 1] = "./"; ///< Path for SR directive result storage
-char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";   ///< Default name (and storage) for marker file
-char maxmodelfile[KMAXFILENAMELEN + 1] = "tp.out";   ///< Default name (and storage) for maximizing model file
-char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";      ///< Default name (and storage) for map file
-char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";      ///< Default name (and storage) for pedigree file
-char datafile[KMAXFILENAMELEN + 1] = "datafile.dat";    ///< Default name (and storage) for marker data file
-char ccfile[KMAXFILENAMELEN + 1] = "";  ///< Case control count file
-char avghetfile[KMAXFILENAMELEN + 1] = "br.out";        ///< Default name (and storage) for Bayes Ratio file
-char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";  ///< Default name (and storage) for PPL file
-char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
-FILE *fpHet = NULL;     ///< Average HET LR file (Bayes Ratio file) pointer
-FILE *fpPPL = NULL;     ///< PPL output file pointer
-FILE *fpTP = NULL;      ///< Ancillary Two-point output, used to go to stderr
-int polynomialScale = 1;        ///< Scale of static allocation and dynamic growth in polynomial.c.
-
-/** Model datastructures. modelOptions is defined in the pedigree library. */
-ModelType modelType;
-ModelRange modelRange;
-ModelOptions modelOptions;
-
-/** Number of D primes. If there are more than 2 alleles in the
-  marker/trait, number of D primes and D prime ranges are assumed to
-  be the same to reduce complexity for initial phase of this
-  project. */
-int num_of_d_prime;
-double *d_prime;
-int num_of_theta;
-
-/** Three dimensional array for the two point summary results.
-  - first dimension is the D prime, for LE, D prime=0 with just one element
-    in this dimension
-  - second dimension is theta values 
-  - third dimension is marker allele frequency, for LE, only one element in 
-    this dimension */
-SUMMARY_STAT ***tp_result;
-
-/** Two dimensional array per (dprime, theta).
-  This will be used to calculate PPL. */
-
-/** Storage for the NULL likelihood for the multipoint calculation under polynomial. */
-//double ***likelihoodDT = NULL;   // This is now moved into each pedigree
-double **likelihoodDT = NULL;   ///< This is now for homeLR
-double *****likelihoodQT = NULL;        ///< This is now moved into each pedigree (really?)
-double markerSetLikelihood;
-
-/** For multipoint, we use genetic map positions on a chromosome. */
-double *map_position;
-int num_of_map_position;
-
-/** One dimensional array, indexing by map position.  For multipoint,
- we don't know how to incorporate LD yet.  This map could be sex
- specific map or sex averaged map. For two point, we don't have to
- distinguish sex specific/avearge as we use theta relative to marker
- during analysis and after analysis (result) */
-SUMMARY_STAT *mp_result;
-int numPositions;
-
-XMission *nullMatrix;
-XMission *altMatrix;
-XMission *traitMatrix;
-XMission *markerMatrix;
-
-LambdaCell *pLambdaCell = NULL;
-int prevNumDPrime = 0;
-int loopMarkerFreqFlag = 0;
-int total_count;
-
-char *flexBuffer = NULL;
-int flexBufferSize = 0;
+#include "iterationGlobals.h"
+#include "kelvinGlobals.h"
 
 /**
 
@@ -391,48 +244,8 @@ int main (int argc, char *argv[])
   combinedComputeSW = swCreate ("combinedComputeSW");
   combinedBuildSW = swCreate ("combinedBuildSW");
 
-  /* Add an exit handler to deal with wayward children. */
-
-  if (atexit (exit_kelvin)) {
-    perror ("Could not register exit handler!");
-    exit (EXIT_FAILURE);
-  }
-
-  /** Setup signal handlers. Be sure to do this before starting
-   any threads, or interrupts might not be handled properly. */
-
-  struct sigaction usr1Action, quitAction, intAction;
-  sigset_t usr1BlockMask, quitBlockMask, intBlockMask;
-
-#if defined (GPROF) || (GCOV)
-  struct sigaction termAction;
-  sigset_t termBlockMask;
-#endif
-  sigfillset (&usr1BlockMask);
-  usr1Action.sa_handler = usr1SignalHandler;
-  usr1Action.sa_mask = usr1BlockMask;
-  usr1Action.sa_flags = 0;
-  sigaction (SIGUSR1, &usr1Action, NULL);
-
-  sigfillset (&quitBlockMask);
-  quitAction.sa_handler = quitSignalHandler;
-  quitAction.sa_mask = quitBlockMask;
-  quitAction.sa_flags = 0;
-  sigaction (SIGQUIT, &quitAction, NULL);
-
-  sigfillset (&intBlockMask);
-  intAction.sa_handler = intSignalHandler;
-  intAction.sa_mask = intBlockMask;
-  intAction.sa_flags = 0;
-  sigaction (SIGINT, &intAction, NULL);
-
-#if defined (GPROF) || (GCOV)
-  sigfillset (&termBlockMask);
-  termAction.sa_handler = termSignalHandler;
-  termAction.sa_mask = termBlockMask;
-  termAction.sa_flags = 0;
-  sigaction (SIGTERM, &termAction, NULL);
-#endif
+  /* Setup all of our signal handlers BEFORE we start any threads. */
+  setupHandlers ();
 
   /* Start a thread with a timer to do the memory checks. It can afford
      to hang, while the main process cannot. */

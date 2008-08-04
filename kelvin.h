@@ -74,6 +74,7 @@
 extern unsigned long int nLodsTotal;
 extern unsigned long int nLodsSlave;
 extern unsigned long int nLodsRoot;
+extern struct swStopwatch *overallSW;
 
 /* Performance knobs. */
 extern int polynomialScale;
