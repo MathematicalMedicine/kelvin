@@ -7,7 +7,52 @@
 
 */
 #include "kelvin.h"
+#include "polynomial.h"
 #include "trackProgress.h"
+
+/** Loop sleeping for 30 seconds and then:
+
+- signal with SIGUSR1 to do allow a synchronous dump of statically-collected
+statistitics.
+- optionally write performance statistics to a file for graphing with gnuplot.
+- optionally display dynamic statistics.
+
+*/
+void *monitorStatus () {
+
+  int currentVMK, maximumVMK;
+  time_t startTime;
+
+  startTime = time (NULL);
+
+  if ((maximumVMK = swGetMaximumVMK ()) != 0) {
+#ifdef MEMGRAPH
+    FILE *graphFile;
+    char graphFileName[64];
+    sprintf (graphFileName, "kelvin_%d_memory.dat", getpid ());
+    if ((graphFile = fopen (graphFileName, "w")) == NULL) {
+      perror ("Cannot open memory graph file!");
+      exit (EXIT_FAILURE);
+    }
+#endif
+    int wakeCount = 0;
+    while (1) {
+      sleep (30);
+      wakeCount++;
+      if (wakeCount % 2)
+	kill (getppid (), SIGUSR1);   // Send a status-updating signal to parent.
+      currentVMK = swGetCurrentVMK (getpid ());
+#ifdef MEMGRAPH
+      fprintf (graphFile, "%lu, %d, %d\n", time (NULL) - startTime, currentVMK, nodeId);
+      fflush (graphFile);
+#endif
+#ifdef MEMSTATUS
+      fprintf (stdout, "%lus, %dKb (%.1f%% of %.1fGb) at %d\n", time (NULL) - startTime, currentVMK,
+	       currentVMK / (maximumVMK / 100.0), maximumVMK / (1024.0 * 1024.0), nodeId);
+#endif
+    }
+  }
+}
 
 /**
 
