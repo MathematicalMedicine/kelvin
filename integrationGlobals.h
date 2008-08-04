@@ -57,4 +57,3 @@ double xu[15] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 int print_point_flag = 0;
 FILE *fphlod = NULL;
 
-double ***likelihoodDT = NULL;

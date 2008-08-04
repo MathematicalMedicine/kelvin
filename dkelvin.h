@@ -265,7 +265,7 @@ extern ModelRange modelRange;
 extern ModelOptions modelOptions;
 
 /* storage for the NULL likelihood for the multipoint calculation under polynomial */
-extern double ***likelihoodDT;
+//extern double ***likelihoodDT;
 extern double *****likelihoodQT;
 
 /* three dimensional array for the two point summary results *

@@ -72,3 +72,4 @@ char *flexBuffer = NULL;
 int flexBufferSize = 0;
 
 double *****likelihoodQT = NULL;
+double **likelihoodDT = NULL;   ///< This is now for homeLR
