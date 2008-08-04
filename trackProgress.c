@@ -43,8 +43,6 @@ void *monitorStatus () {
     while (1) {
       sleep (30);
       wakeCount++;
-      if (wakeCount % 2)
-	kill (getppid (), SIGUSR1);   // Send a status-updating signal to parent.
       currentVMK = swGetCurrentVMK (getpid ());
 #ifdef MEMGRAPH
       fprintf (graphFile, "%lu, %d, %d\n", time (NULL) - startTime, currentVMK, nodeId);

@@ -26,20 +26,6 @@ void quitSignalHandler (int signal)
 #endif
 }
 
-/**
-
-  Handler for SIGUSR1.
-
-  Handles signal is raised by our child process to get status update.
-  Sets the signalSeen flag which is watched for in breaks in the
-  code.
-
-*/
-void usr1SignalHandler (int signal)
-{
-  statusRequestSignal = TRUE;
-}
-
 #if defined (GPROF) || (GCOV)
 /*
 
@@ -83,8 +69,8 @@ void exitKelvin ()
 }
 
 void setupHandlers () {
-  struct sigaction usr1Action, quitAction, intAction;
-  sigset_t usr1BlockMask, quitBlockMask, intBlockMask;
+  struct sigaction quitAction, intAction;
+  sigset_t quitBlockMask, intBlockMask;
 
   /* Add an exit handler to deal with wayward children. */
 
@@ -100,12 +86,6 @@ void setupHandlers () {
   struct sigaction termAction;
   sigset_t termBlockMask;
 #endif
-  sigfillset (&usr1BlockMask);
-  usr1Action.sa_handler = usr1SignalHandler;
-  usr1Action.sa_mask = usr1BlockMask;
-  usr1Action.sa_flags = 0;
-  sigaction (SIGUSR1, &usr1Action, NULL);
-
   sigfillset (&quitBlockMask);
   quitAction.sa_handler = quitSignalHandler;
   quitAction.sa_mask = quitBlockMask;
