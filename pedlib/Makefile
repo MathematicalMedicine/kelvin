@@ -52,4 +52,4 @@ libped.a : $(OBJS)
 	ar -rsc libped.a $(OBJS)
 
 $(OBJS) : %.o : %.c $(INCS)
-	$(CC) -c $(CFLAGS) $(INCFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
