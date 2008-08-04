@@ -110,9 +110,6 @@
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 extern Polynomial *constant1Poly;
 
-struct swStopwatch *overallSW;  ///< Performance timer used throughout code for overall statistics.
-char messageBuffer[MAXSWMSG];   ///< Commonly-used message buffer sized to work with swLogMsg().
-
 /**
 
   Global variables

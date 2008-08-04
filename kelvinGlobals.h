@@ -1,5 +1,8 @@
 char *programVersion = "V0.37.0";       ///< Overall kelvin version set upon release.
 
+struct swStopwatch *overallSW;
+char messageBuffer[MAXSWMSG];
+
 /* Some default global values. */
 char resultsprefix[KMAXFILENAMELEN + 1] = "./"; ///< Path for SR directive result storage
 char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";   ///< Default name (and storage) for marker file
@@ -67,3 +70,5 @@ int total_count;
 
 char *flexBuffer = NULL;
 int flexBufferSize = 0;
+
+double *****likelihoodQT = NULL;

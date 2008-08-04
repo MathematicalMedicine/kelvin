@@ -239,6 +239,13 @@ typedef struct SUMMARY_STAT
 } SUMMARY_STAT;
 
 void free_likelihood_storage ();
+
+void compute_hlod_2p_dt (double x[], double *f);
+void compute_hlod_mp_dt (double x[], double *f);
+void compute_hlod_2p_qt (double x[], double *f);
+void compute_hlod_mp_qt (double x[], double *f);
+int kelvin_dcuhre_integrate (double *integral, double *abserr, double);
+
 /* allocate two point analysis result space */
 int initialize_tp_result_storage ();
 int free_tp_result_storage (int ndprime);
