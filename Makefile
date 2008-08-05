@@ -44,7 +44,9 @@ KOBJS = kelvin.o dcuhre.o
 DKOBJS = dkelvin.o dcuhre.o
 OBJS = ppl.o config.o saveResults.o trackProgress.o kelvinHandlers.o
 INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
-	kelvinGlobals.h iterationGlobals.h integrationGlobals.h
+	kelvinGlobals.h iterationGlobals.h integrationGlobals.h \
+	kelvinLocals.h iterationLocals.h integrationLocals.h \
+	kelvinInit.c kelvinTerm.c
 
 all : kelvin dkelvin calc_updated_ppl
 
