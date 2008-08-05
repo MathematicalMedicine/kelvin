@@ -48,15 +48,6 @@ main (int argc, char *argv[])
 
   #include "kelvinInit.c"
 
-  /* the difference between QT and CT is whether we use threshold or not. Under CT -  yes to
-   * threshold, under QT - no threshold */
-  if (modelRange.ntthresh > 0 && modelType.trait != DT) {
-    modelType.trait = CT;
-    KASSERT (modelType.minThreshold > -999999998
-	     && modelType.maxThreshold < 999999998,
-	     "Under QT threshold model, MIN and MAX of the QT threshold values need to be provided through keywords T_MIN and T_MAX.\n");
-  }
-
   total_dim = 2;		// alpha gf
   total_dim += 3 * modelRange.nlclass;	//DD Dd dd
   if (modelType.type == TP) {
@@ -76,20 +67,6 @@ main (int argc, char *argv[])
   }
 
   fprintf (stderr, "total dim =%d\n", total_dim);
-
-  if (modelType.trait == QT) {
-    /* threshold value will not be used in any meaningful way, but we will use it for 
-       the loop */
-    modelRange.ntthresh = 1;
-    modelType.minOriginal = 0;
-    modelType.maxOriginal = 1;
-    if (modelRange.tthresh == NULL) {
-      modelRange.tthresh = (double **) malloc (sizeof (double *));
-      for (i = 0; i < modelRange.nlclass; i++) {
-	modelRange.tthresh[i] = malloc (sizeof (double));
-      }
-    }
-  }
 
   if (modelType.trait != DT) {
     /* Setting ranges for each variables. Default is [0,1] */
