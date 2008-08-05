@@ -48,3 +48,6 @@
   int threadCount = 0;
 #endif
 
+  int cL[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 },    ///< Actual # calls to each instance of compute_likelihood
+    eCL[9] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0};   ///< Est. final # calls to each instance of compute_likelihood

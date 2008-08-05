@@ -27,9 +27,6 @@
   double mean_DD, mean_Dd, mean_dD, mean_dd;
   double SD_DD, SD_Dd, SD_dD, SD_dd;
   double theta[2];      /* theta */
-  int cL[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 },    ///< Actual # calls to each instance of compute_likelihood
-    eCL[9] = {
-  0, 0, 0, 0, 0, 0, 0, 0, 0};   ///< Est. final # calls to each instance of compute_likelihood
   int breakFlag = FALSE;
   double alphaV, alphaV2;
   double gfreq; /* disease gene frequency */
