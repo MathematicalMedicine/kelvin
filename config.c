@@ -218,6 +218,7 @@ readConfigFile (char *file, ModelType * modelType,
   modelOptions->markerAnalysis = FALSE;
   modelOptions->saveResults = FALSE;
   modelOptions->polynomial = FALSE;
+  modelOptions->integration = FALSE;
   modelRange->nalleles = 2;
   modelRange->nlclass = 1;
   modelRange->npardim = 0;
@@ -319,6 +320,12 @@ readConfigFile (char *file, ModelType * modelType,
       modelOptions->markerAnalysis = AM;
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for adjacent marker analysis\n");
+      continue;
+    }
+    if (strncmp (line, "DK", 2) == 0) {
+      modelOptions->integration = TRUE;  /* dkelvin integration */
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for dkelvin integration\n");
       continue;
     }
     if (strncmp (line, "PE", 2) == 0) {

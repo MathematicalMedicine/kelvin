@@ -15,6 +15,8 @@ typedef struct ModelOptions
 
   int polynomial;		/* TRUE if using polynomial to represent likelihood */
 
+  int integration;              /* TRUE if using dkelvin integration method */
+
   /* whether the chromosome is X chromosome
    * For some segments mainly at the telomeres, they can cross over with Y chromosome
    * so they behave like an autosomal segment, we call it pseudo autosomal regions
