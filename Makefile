@@ -41,25 +41,20 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
 KOBJS = kelvin.o dcuhre.o
-DKOBJS = dkelvin.o dcuhre.o
 OBJS = ppl.o config.o saveResults.o trackProgress.o kelvinHandlers.o
 INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
 	kelvinGlobals.h iterationGlobals.h integrationGlobals.h \
 	kelvinLocals.h iterationLocals.h integrationLocals.h \
 	kelvinInit.c kelvinTerm.c
 
-all : kelvin dkelvin calc_updated_ppl
+all : kelvin calc_updated_ppl
 
 install : $(BINDIR)/kelvin-$(VERSION) \
-          $(BINDIR)/dkelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
           $(BINDIR)/seq_update_avghet.pl
 
 kelvin : libs $(KOBJS) $(OBJS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
-
-dkelvin : libs $(DKOBJS) $(OBJS)
-	$(CC) -o $@ $(DKOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 calc_updated_ppl : seq_update/calc_updated_ppl.c
 	$(CC) -o $@ $(CFLAGS) seq_update/calc_updated_ppl.c
@@ -76,7 +71,7 @@ libs :
 clean :
 	make -C pedlib -f Makefile clean
 	make -C utils -f Makefile clean
-	rm -f $(KOBJS) $(DKOBJS) $(OBJS) kelvin dkelvin calc_updated_ppl
+	rm -f $(KOBJS) $(OBJS) kelvin calc_updated_ppl
 	make -C test-suite -f Makefile clean
 
 .PHONY : test
@@ -85,9 +80,6 @@ test :
 
 $(BINDIR)/kelvin-$(VERSION) : kelvin
 	install -o root -g root -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
-
-$(BINDIR)/dkelvin-$(VERSION) : dkelvin
-	install -o root -g root -m 0755 -p dkelvin $(BINDIR)/dkelvin-$(VERSION)
 
 $(BINDIR)/calc_updated_ppl : calc_updated_ppl
 	install -o root -g root -m 0755 -p calc_updated_ppl $(BINDIR)/calc_updated_ppl
