@@ -1304,7 +1304,7 @@
     }   /* end of QT */
 
 #ifndef SIMPLEPROGRESS
-    fprintf (stderr, "Trait likelihood evaluations 100%% complete\n");
+    fprintf (stdout, "Trait likelihood evaluations 100%% complete\n");
 #endif
 
     if (modelOptions.polynomial == TRUE) {
