@@ -18,7 +18,7 @@ VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
 
 CC := gcc
-CFLAGS := -Wall # -O3
+CFLAGS := -Wall -O3
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
