@@ -301,7 +301,7 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 		pPedigree->polynomialFunction = dlsym(pPedigree->polynomialFunctionHandle,
 						      pPedigree->polynomialFunctionName);
 #endif
-		fprintf (stderr, "OK\n");
+		fprintf (stdout, "OK\n");
 		//	      } else {
 		//		pPedigree->polynomialFunction = NULL;
 		//		pPedigree->polynomialFunctionHandle = NULL;
@@ -449,7 +449,7 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 
   if (modelOptions.dryRun == 0 && modelOptions.polynomial == TRUE) {
 #ifndef SIMPLEPROGRESS
-    fprintf (stderr, "Building polynomial w/pedigree: %s (%d/%d)\r",
+    fprintf (stdout, "Building polynomial w/pedigree: %s (%d/%d)\r",
 	     pPedigree->sPedigreeID, pPedigree->pedigreeIndex + 1,
 	     pPedigree->pPedigreeSet->numPedigree);
     if (pPedigree->pedigreeIndex + 1 == pPedigree->pPedigreeSet->numPedigree)
