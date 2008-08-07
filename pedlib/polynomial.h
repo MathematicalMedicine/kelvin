@@ -311,3 +311,4 @@ void writePolyDigraph (Polynomial *);
 void *compilePoly (Polynomial * p, struct polyList * l, char * name);
 void *loadPoly (char * name);
 void externalizePolys ();
+void thrashingCheck ();
