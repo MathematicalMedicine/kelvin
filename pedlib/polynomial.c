@@ -3195,9 +3195,35 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
   }
 }
 
-void polyDynamicStatistics (char *title)
+void thrashingCheck ()
 {
   unsigned long deltaAccumWallTime, deltaAccumUserTime;
+
+  /* Now we check to see if we're thrashing... If we didn't get at least 10% CPU since the last
+     time we did statistics (provided that was at least a second ago), we should externalize polynomials,
+     or exit or take some evasive action. */
+
+  if (lastPDSAccumWallTime != 0) {
+    deltaAccumWallTime = overallSW->swAccumWallTime - lastPDSAccumWallTime;
+    deltaAccumUserTime = overallSW->swAccumRU.ru_utime.tv_sec - lastPDSAccumUserTime;
+    fprintf (stderr,
+             "Overall user CPU utilization was %lus for last period of %lus, or %lu%%\n",
+             deltaAccumUserTime, deltaAccumWallTime, 100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1));
+    if ((deltaAccumUserTime != 0) && (100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < 10)) {
+      swLogMsg ("Thrashing detected (utilization under 10%), exiting!");
+      exit (EXIT_FAILURE);
+      //      swLogMsg ("Thrashing detected (utilization under 10%), externalizing polynomials!");
+      //      externalizePolys ();
+    }
+  }
+  lastPDSAccumWallTime = overallSW->swAccumWallTime;
+  lastPDSAccumUserTime = overallSW->swAccumRU.ru_utime.tv_sec;
+
+  return;
+}
+
+void polyDynamicStatistics (char *title)
+{
 
   fprintf (stderr, "Dynamic polynomial statistics (%s):\n", title);
 
@@ -3264,25 +3290,6 @@ void polyDynamicStatistics (char *title)
            "...factor not 1 now sum=%d new on productList=%d replaced on productList=%d\n",
            productNon1FactorIsSumCount, productListNewCount, productListReplacementCount);
   fprintf (stderr, "...freed=%d 1st-term freed=%d\n", productFreedCount, product1stTermsFreedCount);
-
-  /* Now we check to see if we're thrashing... If we didn't get at least 10% CPU since the last
-   * time we did statistics (provided that was at least a second ago), we should externalize polynomials. */
-
-  if (lastPDSAccumWallTime != 0) {
-    deltaAccumWallTime = overallSW->swAccumWallTime - lastPDSAccumWallTime;
-    deltaAccumUserTime = overallSW->swAccumRU.ru_utime.tv_sec - lastPDSAccumUserTime;
-    fprintf (stderr,
-             "Overall user CPU utilization was %lus for last period of %lus, or %lu%%\n",
-             deltaAccumUserTime, deltaAccumWallTime, 100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1));
-    if ((deltaAccumUserTime != 0) && (100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < 10)) {
-      swLogMsg ("Thrashing detected (utilization under 10%), exiting!");
-      exit (EXIT_FAILURE);
-      //      swLogMsg ("Thrashing detected (utilization under 10%), externalizing polynomials!");
-      //      externalizePolys ();
-    }
-  }
-  lastPDSAccumWallTime = overallSW->swAccumWallTime;
-  lastPDSAccumUserTime = overallSW->swAccumRU.ru_utime.tv_sec;
 
   return;
 }
