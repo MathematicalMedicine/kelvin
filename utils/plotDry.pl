@@ -4,7 +4,7 @@ open DATA, ">$name.dat";
 open CMD, ">$name.cmd";
 print CMD "set terminal gif size 1024,768;\n";
 print CMD "set output \"$name.gif\";\n"; 
-print CMD "set title \"Computational Complexity for Ch 2\"\n";
+print CMD "set title \"Computational Complexity for $name\"\n";
 print CMD "set xlabel \"Chromosome Position (cM)\"\n";
 print CMD "set ylabel \"Pedigree (in sequence)\"\n";
 print CMD "set pm3d map;\n";
@@ -31,10 +31,9 @@ while (<IN>) {
 		$i = 0;
 		for $pedigree (sort(keys %Uniques)) {
 		    if ($pedigree > 0) {
-			print DATA $position." ".(++$i)." ".$Uniques{$pedigree}." ".$Similars{$pedigree}."\n";
-#			if (($Uniques{$pedigree} + $Similars{$pedigree}) > 10000000000) {
-			if (($Uniques{$pedigree} > 1e+10) || ($Similars{$pedigree} > 1e+10)) {
-			    print CMD "set label $i \"$pedigree\" at -30,$i\n";
+			print DATA $position." ".(++$i)." ".($Uniques{$pedigree}+$Similars{$pedigree})."\n";
+			if (($Uniques{$pedigree}+$Similars{$pedigree}) > 1e+9) {
+			    print CMD "set label $i \"$pedigree\" at -20,$i,1\n";
 			}
 		    }
 		}
@@ -47,6 +46,7 @@ close IN;
 close DATA;
 print CMD "set xrange [$lowPos:$highPos];\n";
 print CMD "set yrange [1:".((scalar keys %Uniques)-1)."];\n";
+#print CMD "set zrange [0:2e+9];\n";
 print CMD "splot \"$name.dat\";\n";
 close CMD;
 system("gnuplot $name.cmd");
