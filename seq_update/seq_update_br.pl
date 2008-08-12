@@ -4,7 +4,7 @@ use IO::File;
 
 #
 # seq_update_avghet - Sequentially update two-point or multipoint, Kelvin-
-#                     format average Het LR files. 
+#                     format Bayes ratio files. 
 #
 # John Burian - john.burian@nationwidechildrens.org
 #
@@ -304,14 +304,14 @@ sub versionnum
 
 =head1 USAGE
 
-seq_update_ld.pl [-m mode] [--relax] avgfile1 avgfile2 [avgfile3 ...]
+seq_update_br.pl [-m mode] [--relax] brfile1 brfile2 [brfile3 ...]
 
-Performs a sequential update of the average likelihood ratios (avgLR)
+Performs a sequential update of the Bayes ratios (BR)
 across multilple files.
 
 =head1 COMMAND LINE ARGUMENTS
 
-=item -m <twopoint|multipoint>
+=item -m <twopoint | multipoint>
 
 =over 3
 
