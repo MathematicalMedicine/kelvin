@@ -43,8 +43,8 @@ void *monitorStatus () {
     while (1) {
       sleep (30);
       wakeCount++;
-      if (wakeCount % 10)
-	kill (getpid (), SIGQUIT);   // Send a status-updating signal
+      //      if (!(wakeCount % 2))
+      //	kill (getpid (), SIGQUIT);   // Send a status-updating signal
       currentVMK = swGetCurrentVMK (getpid ());
 #ifdef MEMGRAPH
       fprintf (graphFile, "%lu, %d, %d\n", time (NULL) - startTime, currentVMK, nodeId);

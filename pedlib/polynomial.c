@@ -3203,6 +3203,7 @@ void thrashingCheck ()
      time we did statistics (provided that was at least a second ago), we should externalize polynomials,
      or exit or take some evasive action. */
 
+  swStop (overallSW);
   if (lastPDSAccumWallTime != 0) {
     deltaAccumWallTime = overallSW->swAccumWallTime - lastPDSAccumWallTime;
     deltaAccumUserTime = overallSW->swAccumRU.ru_utime.tv_sec - lastPDSAccumUserTime;
@@ -3216,6 +3217,7 @@ void thrashingCheck ()
       //      externalizePolys ();
     }
   }
+  swStart (overallSW);
   lastPDSAccumWallTime = overallSW->swAccumWallTime;
   lastPDSAccumUserTime = overallSW->swAccumRU.ru_utime.tv_sec;
 
