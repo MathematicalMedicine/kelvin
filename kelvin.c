@@ -151,7 +151,7 @@ int main (int argc, char *argv[])
 
   #include "kelvinTerm.c"
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 #include "integrationSupport.c"
