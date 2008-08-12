@@ -3207,9 +3207,9 @@ void thrashingCheck ()
   if (lastPDSAccumWallTime != 0) {
     deltaAccumWallTime = overallSW->swAccumWallTime - lastPDSAccumWallTime;
     deltaAccumUserTime = overallSW->swAccumRU.ru_utime.tv_sec - lastPDSAccumUserTime;
-    fprintf (stderr,
-             "Overall user CPU utilization was %lus for last period of %lus, or %lu%%\n",
-             deltaAccumUserTime, deltaAccumWallTime, 100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1));
+    //    fprintf (stderr,
+    //             "Overall user CPU utilization was %lus for last period of %lus, or %lu%%\n",
+    //             deltaAccumUserTime, deltaAccumWallTime, 100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1));
     if ((deltaAccumUserTime != 0) && (100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < 10)) {
       swLogMsg ("Thrashing detected (utilization under 10%), exiting!");
       exit (EXIT_FAILURE);
