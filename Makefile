@@ -8,7 +8,7 @@ BINDIR=/usr/local/bin
 # $INCDIR and $LIBDIR should point to where headers and libraries for
 # GSL (GNU Scientific Library) can be found. Remember you can specify these
 # as command-line macros, e.g. at OSC:
-# $ make INCDIR=INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib
+# $ make INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib
 #
 INCDIR=/usr/local/include
 LIBDIR=/usr/local/lib
