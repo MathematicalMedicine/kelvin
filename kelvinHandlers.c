@@ -15,7 +15,6 @@ volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update reque
 void quitSignalHandler (int signal)
 {
   statusRequestSignal = TRUE;
-  thrashingCheck ();
 #ifdef POLYSTATISTICS
   if (modelOptions.polynomial == TRUE)
     polyDynamicStatistics ("Signal received");
