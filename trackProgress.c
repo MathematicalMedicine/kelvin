@@ -7,6 +7,7 @@
 
 */
 #include "kelvin.h"
+#include "kelvinHandlers.h"
 #include "polynomial.h"
 #include "trackProgress.h"
 
@@ -43,7 +44,8 @@ void *monitorStatus () {
     while (1) {
       sleep (30);
       wakeCount++;
-      //      if (!(wakeCount % 2))
+      if (!(wakeCount % 2))
+	statusRequestSignal = TRUE;
       //	kill (getpid (), SIGQUIT);   // Send a status-updating signal
       currentVMK = swGetCurrentVMK (getpid ());
 #ifdef MEMGRAPH
