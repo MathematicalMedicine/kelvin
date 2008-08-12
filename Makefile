@@ -51,7 +51,8 @@ all : kelvin calc_updated_ppl
 
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
-          $(BINDIR)/seq_update_avghet.pl
+          $(BINDIR)/seq_update_br.pl \
+          $(BINDIR)/convert_br.pl
 
 kelvin : libs $(KOBJS) $(OBJS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
@@ -84,8 +85,9 @@ $(BINDIR)/kelvin-$(VERSION) : kelvin
 $(BINDIR)/calc_updated_ppl : calc_updated_ppl
 	install -o root -g root -m 0755 -p calc_updated_ppl $(BINDIR)/calc_updated_ppl
 
-$(BINDIR)/seq_update_avghet.pl : seq_update/seq_update_avghet.pl
-	install -o root -g root -m 0755 -p seq_update/seq_update_avghet.pl $(BINDIR)/seq_update_avghet.pl
+$(BINDIR)/seq_update_br.pl : seq_update/seq_update_br.pl
+	install -o root -g root -m 0755 -p seq_update/seq_update_br.pl $(BINDIR)/seq_update_br.pl
 
-
+$(BINDIR)/convert_br.pl : seq_update/convert_br.pl
+	install -o root -g root -m 0755 -p seq_update/convert_br.pl $(BINDIR)/convert_br.pl
 
