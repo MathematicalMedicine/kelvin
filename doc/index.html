@@ -415,11 +415,15 @@ one line of whitespace-delimited values for each marker in the run.
 <li>Chr - chromosome number
 <li>Marker - marker name
 <li>Position - position in centiMorgans
-<li>PPL - posterior probability of linkage to the disease locus.  This is rounded to two places if .025 or
+<li>PPL - posterior probability of linkage. Evidence for or against linkage to the disease 
+locus, not allowing for disequilibrium, i.e.
+D' is fixed at 0.  It is rounded to two places if .025 or
 greater, and three decimal places otherwise.
-<li>LD-PPL (only for LD analyses).  This is rounded to two places if .025 or
+<li>LD-PPL (only for LD analyses) - evidence for or against linkage allowing disequilibrium, i.e.
+D' can range from -1 to 1. It is rounded to two places if .025 or
 greater, and three decimal places otherwise.
-<li>PPLD (only for LD analyses).  This is rounded to two places if .025 or
+<li>PPLD (only for LD analyses) - posterior probability of linkage disequilibrium, a measure of
+LD. It is rounded to two places if .025 or
 greater, and three decimal places otherwise.
 </ol>
 <h2>SEQUENTIAL UPDATING</h2>
