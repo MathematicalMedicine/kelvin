@@ -52,7 +52,7 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
   int origLocus = locusList->pLocusIndex[locus];
   int numPair;
   int adjust[2];
-  int index[2];
+  int ourIndex[2];
   Genotype *initialGeno[2];
   int head, spouse;
   ParentalPair *pPair;
@@ -89,29 +89,29 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
        * then reject this parental pair and go on to next parental pair */
       if (status != -1) {
 	adjust[head] = 0;
-	index[head] = 0;
+	ourIndex[head] = 0;
 	initialGeno[spouse] = pGenotype[spouse];
-	while ((index[head] < 2)
-	       && (index[head] == 0
+	while ((ourIndex[head] < 2)
+	       && (ourIndex[head] == 0
 		   || (pGenotype[head]->pDualGenotype != NULL
 		       && pGenotype[head]->pNext ==
 		       pGenotype[head]->pDualGenotype))) {
-	  if (index[head] != 0) {
+	  if (ourIndex[head] != 0) {
 	    pGenotype[head] = pGenotype[head]->pDualGenotype;
 	    adjust[head] = 1;
 	  }
-	  index[spouse] = 0;
+	  ourIndex[spouse] = 0;
 	  adjust[spouse] = 0;
 	  pGenotype[spouse] = initialGeno[spouse];
-	  while ((index[spouse] < 2)
-		 && (index[spouse] == 0
+	  while ((ourIndex[spouse] < 2)
+		 && (ourIndex[spouse] == 0
 		     || (pGenotype[spouse]->pDualGenotype != NULL
 			 && pGenotype[spouse]->pDualGenotype ==
 			 pGenotype[spouse]->pNext))) {
-	    if (index[spouse] != 0
+	    if (ourIndex[spouse] != 0
 		&& pGenotype[spouse]->pDualGenotype != NULL) {
 	      pGenotype[spouse] = pGenotype[spouse]->pDualGenotype;
-	      if (index[spouse] != 0)
+	      if (ourIndex[spouse] != 0)
 		adjust[spouse] = 1;
 	    }
 	    pPair = &parentalPairSpace.ppParentalPair[locus][numPair];
@@ -121,9 +121,9 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
 	    fill_parental_pair (locus, &numPair, pNucFam,
 				pGenotype[DAD], pGenotype[MOM],
 				adjust[DAD], adjust[MOM]);
-	    index[spouse]++;
+	    ourIndex[spouse]++;
 	  }
-	  index[head]++;
+	  ourIndex[head]++;
 	}
 
       } /* valid pair found */

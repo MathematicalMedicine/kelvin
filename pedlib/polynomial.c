@@ -658,7 +658,7 @@ inline int searchHashTable (struct hashStruct *hash, int *start, int *end, int k
   sorted by their keys in increasing order.
 
 */
-inline void insertHashTable (struct hashStruct *hash, int location, int key, int index)
+inline void insertHashTable (struct hashStruct *hash, int location, int key, int ourIndex)
 {
   hash->num++;
   // If the hash collision list is full, allocate more memory
@@ -681,7 +681,7 @@ inline void insertHashTable (struct hashStruct *hash, int location, int key, int
   }
   //Insert the new polynomiual in the hash table
   hash->key[location] = key;
-  hash->index[location] = index;
+  hash->index[location] = ourIndex;
 
 };
 

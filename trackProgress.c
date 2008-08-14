@@ -149,7 +149,7 @@ char analysisType[MAXSWMSG]; ///< Textual summary of analysis type built by dump
   Derive textual summary of analysis type and build expected compute_likelihood() call counts.
 
 */
-void dumpTrackingStats(ModelType modelType, ModelOptions modelOptions, ModelRange modelRange, int cl[], int eCL[])
+void dumpTrackingStats(int cl[], int eCL[])
 {
   int i;
   fprintf (stderr, "compute_pedigree_likelihood counts: ");
@@ -165,7 +165,7 @@ void dumpTrackingStats(ModelType modelType, ModelOptions modelOptions, ModelRang
 }
 
 // Construct string describing the type of analysis and determine evaluations required.
-char *estimateIterations (ModelType modelType, ModelOptions modelOptions, ModelRange modelRange, int eCL[])
+char *estimateIterations (int eCL[])
 {
   //  int cL[9];
   //  dumpTrackingStats(modelType,  modelOptions,  modelRange, cL, eCL);

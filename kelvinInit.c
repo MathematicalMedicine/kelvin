@@ -121,7 +121,7 @@
   modelType.maxThreshold = 999999999.00;
 
   /* Parse the configuration file. */
-  KASSERT (readConfigFile (configfile, &modelType, &modelRange, &modelOptions)
+KASSERT (readConfigFile (configfile)
            != ERROR, "Error in configuration file; aborting.\n");
 
   /* For now, reject all models we can't deal with. */
@@ -262,7 +262,7 @@
   /* Estimate number of calls to each (appropriate) instance of compute_likelihood for
    * use in progress reporting, and display model information at this point since markers have
    * already been added to locus list */
-  swLogMsg (estimateIterations (modelType, modelOptions, modelRange, eCL));
+  swLogMsg (estimateIterations (eCL));
 
   /* allocate storage for keeping track of het locus in nuclear families */
   allocate_nucfam_het (&pedigreeSet, totalLoci);

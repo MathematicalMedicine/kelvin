@@ -12,7 +12,7 @@ volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update reque
   P.S. - cygwin requires "stty quit ^C" first for this to work.
 
 */
-void quitSignalHandler (int signal)
+void quitSignalHandler (int ourSignal)
 {
   statusRequestSignal = TRUE;
 #ifdef POLYSTATISTICS
@@ -45,7 +45,7 @@ void termSignalHandler (int signal)
 #endif
 
 /// Handler for SIGINT
-void intSignalHandler (int signal)
+void intSignalHandler (int ourSignal)
 {
   fprintf (stderr, "Terminating early via interrupt!\n");
   exit (EXIT_FAILURE);

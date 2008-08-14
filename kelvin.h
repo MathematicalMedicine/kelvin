@@ -211,8 +211,7 @@ ModelRange;
 /**********************************************************************
  * Function prototypes.
  **********************************************************************/
-int readConfigFile (char *file, ModelType * modelType,
-		    ModelRange * modelRange, ModelOptions * modelOptions);
+int readConfigFile (char *file);
 void addTraitLocus (ModelRange * range, double val);
 LambdaCell *findLambdas (ModelRange * range, int m, int n);
 void addAlleleFreq (ModelRange * range, double val);

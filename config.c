@@ -188,8 +188,7 @@ void showConstraints ();
  * arbitrary patterns of arguments from a single line where necessary.
  **********************************************************************/
 int
-readConfigFile (char *file, ModelType * modelType,
-		ModelRange * modelRange, ModelOptions * modelOptions)
+readConfigFile (char *file)
 {
   FILE *fp;			/* Filepointer. */
   int i = 0;			/* Number of lines read. */
@@ -212,19 +211,19 @@ readConfigFile (char *file, ModelType * modelType,
   regmatch_t match[8];		/* Store extracted values. */
 
   /* Set up the default model values. */
-  modelType->type = TP;
-  modelType->trait = DT;
-  modelOptions->equilibrium = LINKAGE_EQUILIBRIUM;
-  modelOptions->markerAnalysis = FALSE;
-  modelOptions->saveResults = FALSE;
-  modelOptions->polynomial = FALSE;
-  modelOptions->integration = FALSE;
-  modelRange->nalleles = 2;
-  modelRange->nlclass = 1;
-  modelRange->npardim = 0;
-  modelRange->nlambdas = 0;
-  modelRange->maxnlambdas = 0;
-  modelRange->tlmark = FALSE;
+  modelType.type = TP;
+  modelType.trait = DT;
+  modelOptions.equilibrium = LINKAGE_EQUILIBRIUM;
+  modelOptions.markerAnalysis = FALSE;
+  modelOptions.saveResults = FALSE;
+  modelOptions.polynomial = FALSE;
+  modelOptions.integration = FALSE;
+  modelRange.nalleles = 2;
+  modelRange.nlclass = 1;
+  modelRange.npardim = 0;
+  modelRange.nlambdas = 0;
+  modelRange.maxnlambdas = 0;
+  modelRange.tlmark = FALSE;
 
   /* Allocate storage for pattern spaces. */
   buffer0 = malloc (KMAXLINELEN + 1);
@@ -281,55 +280,55 @@ readConfigFile (char *file, ModelType * modelType,
 
     /* Type of analysis; 2 point or multipoint. */
     if (strncmp (line, "TP", 2) == 0) {
-      modelType->type = TP;	/* 2 point (default) */
+      modelType.type = TP;	/* 2 point (default) */
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for 2 point analysis\n");
       continue;
     }
-    if (sscanf (line, "SS %d", &(modelType->numMarkers)) == 1) {
-      modelType->type = MP;	/* Multipoint */
-      modelOptions->mapFlag = SS;
+    if (sscanf (line, "SS %d", &(modelType.numMarkers)) == 1) {
+      modelType.type = MP;	/* Multipoint */
+      modelOptions.mapFlag = SS;
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for sex-specific multipoint analysis\n");
       continue;
     }
-    if (sscanf (line, "SA %d", &(modelType->numMarkers)) == 1) {
-      modelType->type = MP;	/* Multipoint */
-      modelOptions->mapFlag = SA;
+    if (sscanf (line, "SA %d", &(modelType.numMarkers)) == 1) {
+      modelType.type = MP;	/* Multipoint */
+      modelOptions.mapFlag = SA;
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for sex-averaged multipoint analysis\n");
       continue;
     }
     if (strncmp (line, "XC", 2) == 0) {
-      modelOptions->sexLinked = 1;
+      modelOptions.sexLinked = 1;
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for X Chromosome analysis\n");
       continue;
     }
     if (strncmp (line, "TM", 2) == 0) {
-      modelRange->tlmark = TRUE;
+      modelRange.tlmark = TRUE;
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for on-marker trait loci\n");
       continue;
     }
     if (strncmp (line, "MM", 2) == 0) {
-      modelOptions->markerAnalysis = MM;
+      modelOptions.markerAnalysis = MM;
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for marker to marker analysis\n");
       continue;
     }
     if (strncmp (line, "AM", 2) == 0) {
-      modelOptions->markerAnalysis = AM;
+      modelOptions.markerAnalysis = AM;
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for adjacent marker analysis\n");
       continue;
     }
     if (strncmp (line, "DK", 2) == 0) {
-      modelOptions->integration = TRUE;  /* dkelvin integration */
+      modelOptions.integration = TRUE;  /* dkelvin integration */
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for dkelvin integration\n");
       continue;
     }
     if (strncmp (line, "PE", 2) == 0) {
-      modelOptions->polynomial = TRUE;	/* Polynomial evaluation */
+      modelOptions.polynomial = TRUE;	/* Polynomial evaluation */
       if (sscanf (line, "PE %d", &polynomialScale) == 1) {	/* Polynomial scale */
 	KLOG (LOGINPUTFILE, LOGDEBUG,
 	      "Configure for polynomial evaluation w/polynomialScale %d\n",
@@ -342,42 +341,42 @@ readConfigFile (char *file, ModelType * modelType,
       }
       continue;
     }
-    if (sscanf (line, "LC %d", &modelRange->nlclass) == 1) {
+    if (sscanf (line, "LC %d", &modelRange.nlclass) == 1) {
       KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for %d liability classes\n", modelRange->nlclass);
+	    "Configuring for %d liability classes\n", modelRange.nlclass);
       continue;
     }
 
-    if (sscanf (line, "DA %d", &modelRange->nalleles) == 1) {	/* Disease alleles */
+    if (sscanf (line, "DA %d", &modelRange.nalleles) == 1) {	/* Disease alleles */
       KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for %d disease alleles\n", modelRange->nalleles);
+	    "Configuring for %d disease alleles\n", modelRange.nalleles);
       continue;
     }
 
     if (sscanf (line, "AS %lg %lg %lg",	/* Affection status values */
-		&(modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN]),
-		&(modelOptions->
+		&(modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN]),
+		&(modelOptions.
 		  affectionStatus[AFFECTION_STATUS_UNAFFECTED]),
-		&(modelOptions->
+		&(modelOptions.
 		  affectionStatus[AFFECTION_STATUS_AFFECTED])) == 3) {
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Resetting affection status values (%g, %g, %g)\n",
-	    modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN],
-	    modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED],
-	    modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED]);
+	    modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN],
+	    modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED],
+	    modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED]);
       continue;
     }
 
     /* Dichotomous trait directive. */
     if (strncmp (line, "DT", 2) == 0) {
-      modelType->trait = DT;	/* Dichotomous trait */
+      modelType.trait = DT;	/* Dichotomous trait */
       /* Establish the default affected, unaffected, and unknown
        * values for DT. These can be overridden elsewhere. */
-      modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] =
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] =
 	AFFECTION_STATUS_UNKNOWN;
-      modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] =
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] =
 	AFFECTION_STATUS_UNAFFECTED;
-      modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] =
+      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] =
 	AFFECTION_STATUS_AFFECTED;
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for dichotomous traits\n");
       continue;
@@ -385,91 +384,91 @@ readConfigFile (char *file, ModelType * modelType,
 
     /* Quantitative trait directives; each different distribution
      * may require a different pattern of parameters. */
-    if (sscanf (line, "QT normal %lf %lf", &modelType->mean, &modelType->sd)
+    if (sscanf (line, "QT normal %lf %lf", &modelType.mean, &modelType.sd)
 	== 2) {
-      modelType->trait = QT;	/* Quantitative trait */
-      modelType->distrib = QT_FUNCTION_NORMAL;
+      modelType.trait = QT;	/* Quantitative trait */
+      modelType.distrib = QT_FUNCTION_NORMAL;
       /* Establish the default affected, unaffected, and unknown
        * values for QT/CT. These can be overridden elsewhere. */
-      modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-      modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
-      modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
+      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
       /* The normal distribution has a two distributional
        * parameters, mean (specified as the penetrance) and std
        * dev, specified as the first additional parameter P1. */
-      modelRange->npardim = 1;
+      modelRange.npardim = 1;
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for quantitative traits (normal distribution)\n");
       continue;
     }
     if (sscanf
-	(line, "QT T %d %lf %lf", &a1, &modelType->mean,
-	 &modelType->sd) == 3) {
-      modelType->trait = QT;	/* Quantitative trait */
-      modelType->distrib = QT_FUNCTION_T;
+	(line, "QT T %d %lf %lf", &a1, &modelType.mean,
+	 &modelType.sd) == 3) {
+      modelType.trait = QT;	/* Quantitative trait */
+      modelType.distrib = QT_FUNCTION_T;
       /* The T distribution has single distribution constant, the
        * degrees of freedom, which is fixed at definition. We'll
        * use integer a1 temporarily so as to set up the
        * appropriate number of constants in modelType. */
-      modelType->constants = realloc (modelType->constants, 1 * sizeof (int));
-      modelType->constants[0] = a1;
+      modelType.constants = realloc (modelType.constants, 1 * sizeof (int));
+      modelType.constants[0] = a1;
       /* Establish the default affected, unaffected, and unknown
        * values for QT/CT. These can be overridden elsewhere. */
-      modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-      modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
-      modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
+      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
 
       /* The T distribution, like the normal distribution, also
        * has two distributional parameters, the mean (specified as
        * the penetrance) and the std dev, specified as the first
        * additional parameter P1. */
-      modelRange->npardim = 1;
+      modelRange.npardim = 1;
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for quantitative traits (T distribution)\n");
       continue;
     }
-    if (sscanf (line, "QT chisq %lf %lf", &modelType->mean, &modelType->sd)
+    if (sscanf (line, "QT chisq %lf %lf", &modelType.mean, &modelType.sd)
 	== 2) {
-      modelType->trait = QT;	/* Quantitative trait */
-      modelType->distrib = QT_FUNCTION_CHI_SQUARE;
+      modelType.trait = QT;	/* Quantitative trait */
+      modelType.distrib = QT_FUNCTION_CHI_SQUARE;
       /* Establish the default affected, unaffected, and unknown
        * values for QT/CT. These can be overridden elsewhere. */
-      modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-      modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
-      modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
+      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
       /* The chi sqaure distribution only has one distributional
        * parameters, df - degree of freedom (specified as the penetrance) 
        */
-      modelRange->npardim = 1;
+      modelRange.npardim = 1;
       /* add a fake parameter to facilitate loop */
-      addParameter (modelRange, 0, 1.0);
+      addParameter (&modelRange, 0, 1.0);
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for quantitative traits (chi square distribution)\n");
       continue;
     }
 
     /* these only apply to QT/CT analyses */
-    if (sscanf (line, "MIN %lf", &modelType->minOriginal) == 1) {
-      modelType->minFlag = 1;
+    if (sscanf (line, "MIN %lf", &modelType.minOriginal) == 1) {
+      modelType.minFlag = 1;
       KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Lower bound for QT distribution is at %f\n", modelType->min);
+	    "Lower bound for QT distribution is at %f\n", modelType.min);
       continue;
     }
-    if (sscanf (line, "MAX %lf", &modelType->maxOriginal) == 1) {
-      modelType->maxFlag = 1;
+    if (sscanf (line, "MAX %lf", &modelType.maxOriginal) == 1) {
+      modelType.maxFlag = 1;
       KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Upper bound for QT distribution is at %f\n", modelType->max);
+	    "Upper bound for QT distribution is at %f\n", modelType.max);
       continue;
     }
 
-    if (sscanf (line, "T_MIN %lf", &modelType->minThreshold) == 1) {
+    if (sscanf (line, "T_MIN %lf", &modelType.minThreshold) == 1) {
       KLOG (LOGINPUTFILE, LOGDEBUG, "Lower bound for QT threshold is at %f\n",
-	    modelType->minThreshold);
+	    modelType.minThreshold);
       continue;
     }
-    if (sscanf (line, "T_MAX %lf", &modelType->maxThreshold) == 1) {
+    if (sscanf (line, "T_MAX %lf", &modelType.maxThreshold) == 1) {
       KLOG (LOGINPUTFILE, LOGDEBUG, "Upper bound for QT threshold is at %f\n",
-	    modelType->maxThreshold);
+	    modelType.maxThreshold);
       continue;
     }
 
@@ -491,7 +490,7 @@ readConfigFile (char *file, ModelType * modelType,
       continue;
     }
     if (strncmp (line, "SR", 2) == 0) {
-      modelOptions->saveResults = TRUE;
+      modelOptions.saveResults = TRUE;
       if (sscanf (line, "SR %s", resultsprefix) == 1) {	/* Results file prefix */
 	if ((i = strlen(resultsprefix)) != 0)
 	  if (resultsprefix[i-1] != '/') {
@@ -538,12 +537,12 @@ readConfigFile (char *file, ModelType * modelType,
       /* Allocate space for the identifier based on how many
        * digits in the scanned integer. Remember to leave a space
        * for the terminator. */
-      modelOptions->sUnknownPersonID =
-	realloc (modelOptions->sUnknownPersonID,
+      modelOptions.sUnknownPersonID =
+	realloc (modelOptions.sUnknownPersonID,
 		 (dir1 / 10) + 2 * sizeof (char));
-      snprintf (modelOptions->sUnknownPersonID, (dir1 / 10) + 2, "%d", dir1);
+      snprintf (modelOptions.sUnknownPersonID, (dir1 / 10) + 2, "%d", dir1);
       KLOG (LOGINPUTFILE, LOGDEBUG, "Unknown person identifier is %s\n",
-	    modelOptions->sUnknownPersonID);
+	    modelOptions.sUnknownPersonID);
       continue;
     }
 
@@ -584,7 +583,7 @@ readConfigFile (char *file, ModelType * modelType,
     }
 
     if (strncmp (line, "DRY", 3) == 0) {
-      modelOptions->dryRun = 1;
+      modelOptions.dryRun = 1;
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for a dry run.\n");
       continue;
     }
@@ -765,7 +764,7 @@ readConfigFile (char *file, ModelType * modelType,
 	if (regexec (buffer2, start, 4, &(match[1]), REG_NOTBOL) !=
 	    REG_NOMATCH) {
 	  /* Matches three numbers. */
-	  addRange (modelRange, dir1,
+	  addRange (&modelRange, dir1,
 		    strtod (start + match[2].rm_so, NULL),
 		    strtod (start + match[3].rm_so, NULL),
 		    strtod (start + match[4].rm_so, NULL));
@@ -773,26 +772,26 @@ readConfigFile (char *file, ModelType * modelType,
 		   REG_NOMATCH) {
 	  /* Matches one number. */
 	  if (dir1 == Th || dir1 == Tm || dir1 == Tf)
-	    addTheta (modelRange, dir1,
+	    addTheta (&modelRange, dir1,
 		      strtod (start + match[2].rm_so, NULL));
 	  else if (dir1 == GF)
-	    addGeneFreq (modelRange, strtod (start + match[2].rm_so, NULL));
+	    addGeneFreq (&modelRange, strtod (start + match[2].rm_so, NULL));
 	  else if (dir1 == AL)
-	    addAlpha (modelRange, strtod (start + match[2].rm_so, NULL));
+	    addAlpha (&modelRange, strtod (start + match[2].rm_so, NULL));
 	  else if (dir1 == TL)
-	    addTraitLocus (modelRange, strtod (start + match[2].rm_so, NULL));
+	    addTraitLocus (&modelRange, strtod (start + match[2].rm_so, NULL));
 	  else if (dir1 == TT)
-	    addTraitThreshold (modelRange,
+	    addTraitThreshold (&modelRange,
 			       strtod (start + match[2].rm_so, NULL));
 	  else if (dir1 == LD)
-	    addDPrime (modelRange, strtod (start + match[2].rm_so, NULL));
+	    addDPrime (&modelRange, strtod (start + match[2].rm_so, NULL));
 	  else if (dir1 == AF)
-	    addAlleleFreq (modelRange, strtod (start + match[2].rm_so, NULL));
+	    addAlleleFreq (&modelRange, strtod (start + match[2].rm_so, NULL));
 	  else {
 	    /* All parsing is done only in pre-expansion mode,
 	     * hence class is always moot. Also, subtract base
 	     * value of DD from dir1 to get 0-offset value.*/
-	    addPenetrance (modelRange, dir1 - DD,
+	    addPenetrance (&modelRange, dir1 - DD,
 			   strtod (start + match[2].rm_so, NULL));
 	  }
 	} else {
@@ -818,7 +817,7 @@ readConfigFile (char *file, ModelType * modelType,
       p1 = strtod (line + match[0].rm_so + 1, NULL) - 1;
       /* Make sure that the parameter number is within the
        * expected number of parameters for this distribution. */
-      KASSERT ((p1 < modelRange->npardim), "Illegal parameter P%d.\n",
+      KASSERT ((p1 < modelRange.npardim), "Illegal parameter P%d.\n",
 	       p1 + 1);
 
       /* Next, loop through the semicolon-separated arguments. */
@@ -830,14 +829,14 @@ readConfigFile (char *file, ModelType * modelType,
 	   * giving it a negative type to distinguish it from
 	   * the other types of values we handle. So, for
 	   * example, parameter 2 would be -3. */
-	  addRange (modelRange, -(p1 + 1),
+	  addRange (&modelRange, -(p1 + 1),
 		    strtod (start + match[2].rm_so, NULL),
 		    strtod (start + match[3].rm_so, NULL),
 		    strtod (start + match[4].rm_so, NULL));
 	} else if (regexec (buffer1, start, 2, &(match[1]), REG_NOTBOL) !=
 		   REG_NOMATCH) {
 	  /* Matches one number. */
-	  addParameter (modelRange, p1,
+	  addParameter (&modelRange, p1,
 			strtod (start + match[2].rm_so, NULL));
 	} else {
 	  /* Doesn't match anything. This is a badly formatted
@@ -878,50 +877,50 @@ readConfigFile (char *file, ModelType * modelType,
    * options are implict by the configuration parameters given. The
    * only example that comes to mind is linkage disequilibrium, but
    * there may later be others. */
-  if (modelRange->dprime && modelOptions->equilibrium == LINKAGE_EQUILIBRIUM) {
+  if (modelRange.dprime && modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) {
     /* If dprime exists, we must have set it explicitly, and we must
      * be doing LD. */
-    modelOptions->equilibrium = LINKAGE_DISEQUILIBRIUM;	/* Linkage disequilibrium */
+    modelOptions.equilibrium = LINKAGE_DISEQUILIBRIUM;	/* Linkage disequilibrium */
     KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for linkage disequilibrium\n");
   }
 
   /* Now check the integrity of the parameters you've read. Here is
    * where you check for things like, e.g., no parameters specified
    * for QT/CT, or parameters specified for DT. */
-  KASSERT ((modelType->trait != QT || modelRange->param),
+  KASSERT ((modelType.trait != QT || modelRange.param),
 	   "Failure to provide distribution parameters for quantitative trait.\n");
-  KASSERT ((modelType->trait != CT || modelRange->param),
+  KASSERT ((modelType.trait != CT || modelRange.param),
 	   "Failure to provide distribution parameters for combined trait.\n");
-  KASSERT ((modelType->trait != DT || !modelRange->param),
+  KASSERT ((modelType.trait != DT || !modelRange.param),
 	   "Attempt to provide distribution parameters for dichotomous trait.\n");
-  KASSERT ((modelType->type == TP || !modelRange->dprime),
+  KASSERT ((modelType.type == TP || !modelRange.dprime),
 	   "Linkage disequilibrium only supported for two point analysis.\n");
-  KASSERT ((modelType->type == TP || !modelRange->theta),
+  KASSERT ((modelType.type == TP || !modelRange.theta),
 	   "Theta specification only for two point analysis.\n");
-  KASSERT ((modelType->type == TP || !modelRange->afreq),
+  KASSERT ((modelType.type == TP || !modelRange.afreq),
 	   "Marker allele frequencies only supported for two point analysis.\n");
-  KASSERT ((modelType->type != TP || !modelRange->tloc),
+  KASSERT ((modelType.type != TP || !modelRange.tloc),
 	   "Trait loci specification only for multipoint analysis.\n");
-  KASSERT ((modelType->type != TP || !modelRange->tlmark),
+  KASSERT ((modelType.type != TP || !modelRange.tlmark),
 	   "On-marker trait locus specification only for multipoint analysis.\n");
 
   /* Copy Dd to dD if needed, i.e. if none were specified, so no imprinting. &&& */
   if (penetcnt[dD-DD] == 0) {
-    modelRange->penet[0][dD-DD] = malloc ((penetmax[Dd-DD] + CHUNKSIZE) * sizeof (double));
+    modelRange.penet[0][dD-DD] = malloc ((penetmax[Dd-DD] + CHUNKSIZE) * sizeof (double));
     penetcnt[dD-DD] = penetcnt[Dd-DD];
     for (i=0; i<penetcnt[Dd-DD]; i++) 
-      modelRange->penet[0][dD-DD][i] = modelRange->penet[0][Dd-DD][i];
+      modelRange.penet[0][dD-DD][i] = modelRange.penet[0][Dd-DD][i];
     addConstraint (SIMPLE, dD, 0, 0, EQ, Dd, 0, 0, FALSE);
-    modelOptions->imprintingFlag = FALSE;
+    modelOptions.imprintingFlag = FALSE;
   } else
-    modelOptions->imprintingFlag = TRUE;
+    modelOptions.imprintingFlag = TRUE;
 
   /* Sort the values in the final model. Sorted values better support
    * the application of constraints. */
-  sortRange (modelRange);
+  sortRange (&modelRange);
 
   /* Once sorted, removing duplicates is easy. */
-  uniqRange (modelRange);
+  uniqRange (&modelRange);
 
 #if FALSE
   /* Show the unexpanded model. At level 0, all elements are sorted
@@ -936,19 +935,19 @@ readConfigFile (char *file, ModelType * modelType,
 #endif
 
   /* Expand the model, honoring constraints. */
-  expandRange (modelRange, modelType);
+  expandRange (&modelRange, &modelType);
 #if FALSE
   /* Show the partially expanded model. At level 1, following
    * expandRange(), we will have refined the model specification while
    * enforcing all specified constraints that do not involve liability
    * classes. */
-  showRange (modelRange, modelType, 1);
+  showRange (&modelRange, &modelType, 1);
 #endif
 
   /* Expand the liability classes, but only if necessary and always
    * honoring inter-class constraints. */
-  if (modelRange->nlclass > 1)
-    expandClass (modelRange, modelType);
+  if (modelRange.nlclass > 1)
+    expandClass (&modelRange, &modelType);
 
   //#if FALSE
   /* At level 2, all constraints (including those between classes) are
@@ -2293,7 +2292,7 @@ expandRange (ModelRange * range, ModelType * type)
  * Fully expand the threshold, penetrance and parameter values by
  * liability class while honoring any inter-class constraints. This
  * only gets called if we are using liability classes (i.e.,
- * modelRange->nlclass is greater than 1).
+ * modelRange.nlclass is greater than 1).
  **********************************************************************/
 void
 expandClass (ModelRange * range, ModelType * type)
@@ -2515,7 +2514,7 @@ expandClass (ModelRange * range, ModelType * type)
  *
  * Since n and m may be repeated over the course of an analysis, we
  * cache the lambda arrays produced from the dprime values for each
- * value of n and m in modelRange->lambdas, an array of structures of
+ * value of n and m in modelRange lambdas, an array of structures of
  * type lambdaCell. That way, we can retrieve the appropriate array if
  * its already been generated, otherwise, we build the array from the
  * dprimes, cache it, and return a pointer to it.
