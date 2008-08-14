@@ -51,6 +51,11 @@
 #endif
   fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, getpid ());
   swStart (overallSW);
+#ifdef __OPTIMIZE__
+  swLogMsg ("GCC optimization enabled");
+#else
+  swLogMsg ("GCC optimization disabled");
+#endif
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&markerLocusList, 0, sizeof (markerLocusList));
