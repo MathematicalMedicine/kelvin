@@ -18,17 +18,19 @@ VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
 
 CC := gcc
-CFLAGS := -Wall -O3
+#CC := icc # For the Intel C Compiler at OSC
+CFLAGS := -Wall -O3 -Wshadow
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
 #CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
 CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
-#LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
-CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
+#CFLAGS += -openmp # Same as above, but only for Intel C Compiler
+LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
+#CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
-#CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
+CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
 #CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every 2Mp and at milestones
 #CFLAGS += -DDMUSE # For our own static memory management, not beneficial as yet.
 #CFLAGS += -DDMTRACK # For our own memory tracking
@@ -36,7 +38,7 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 #CFLAGS += -DFAKEEVALUATE # Don't evaluate at all - use only for exercising build. Results will be wrong!
 #CFLAGS += -DPOLYCOMP # Enable compilation and distribution of selected polynomials for faster evaluation
 #CFLAGS += -DPOLYCOMP_DL -ldl # Dynamically load compiled polynomials for in-process use
-#CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
+CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
