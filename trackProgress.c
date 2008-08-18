@@ -44,9 +44,11 @@ void *monitorStatus () {
     while (1) {
       sleep (30);
       wakeCount++;
-      if (!(wakeCount % 2))
+      if (!(wakeCount % 2)) {
+	thrashingCheck ();
 	statusRequestSignal = TRUE;
       //	kill (getpid (), SIGQUIT);   // Send a status-updating signal
+      }
       currentVMK = swGetCurrentVMK (getpid ());
 #ifdef MEMGRAPH
       fprintf (graphFile, "%lu, %d, %d\n", time (NULL) - startTime, currentVMK, nodeId);
@@ -56,7 +58,6 @@ void *monitorStatus () {
       fprintf (stdout, "%lus, %dKb (%.1f%% of %.1fGb) at %d\n", time (NULL) - startTime, currentVMK,
 	       currentVMK / (maximumVMK / 100.0), maximumVMK / (1024.0 * 1024.0), nodeId);
 #endif
-      thrashingCheck ();
     }
   }
   return NULL;
