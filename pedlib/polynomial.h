@@ -113,7 +113,7 @@ struct productPoly
 
 struct functionPoly
 {
-  int paraNum;			// number of parameters
+  int num;			// number of parameters
   struct polynomial **para;	// parameters
   char *name;			// function name
 };
@@ -141,6 +141,9 @@ typedef struct polynomial
   unsigned int id;		// unique id - 4 bytes
   int index;			// index in a polynomial list - 4 bytes
   int key;			// key of the polynomial - 4 bytes
+#ifdef POLYSIZE
+  unsigned int totalSize;       // total size of this polynomial (sum of self and sub-polys) - 4 bytes
+#endif
   unsigned short count;		// hold reference count - 2 bytes
   unsigned char valid;		// preservation flag(s) - 1 byte
   unsigned char eType;		// polynomial type:  - 1 byte
@@ -156,7 +159,7 @@ typedef struct polynomial
     struct functionPoly *f;	// function
     struct externalPoly *e;     // external
   } e;				// unused by constants - 8 bytes
-} Polynomial; // 4 + 4 + 2 + 1 + 1 + 8 + 8 = 28(32) bytes
+} Polynomial; // 4 + 4 + 4 (+ 4) + 2 + 1 + 1 + 8 + 8 = 32 (36->40) bytes
 
 /* Bit masks for the polynomial valid flag. */
 #define VALID_EVAL_FLAG 1	// Used by tree traversal routines to limit to unique terms

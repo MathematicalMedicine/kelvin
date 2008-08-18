@@ -335,6 +335,47 @@ int originalChildren[MAXPOLYSOURCES];
 #endif
 
 
+#ifdef POLYSIZE
+void setPolyTotalSize (Polynomial *p)
+{
+  int i;
+
+  /* All of them require a basic Polynomial, a pointer in a type-specific list,
+     and hash information. */
+  p->totalSize = sizeof (Polynomial) + sizeof (Polynomial *);
+  switch (p->eType) {
+  case T_CONSTANT:
+    break;
+  case T_VARIABLE:
+    /* Variable polys have some additional parts. */
+    p->totalSize += sizeof (struct variablePoly);
+    break;
+  case T_SUM:
+    /* Sum polys have additional parts and lists of factors and term polys */
+    p->totalSize += sizeof (struct sumPoly);
+    for (i = 0; i< p->e.s->num; i++)
+      p->totalSize += sizeof (Polynomial *) + sizeof (int *) + p->e.s->sum[i]->totalSize;
+    break;
+  case T_PRODUCT:
+    /* Product polys have additional parts and lists of term polys and exponents */
+    p->totalSize += sizeof (struct productPoly);
+    for (i = 0; i< p->e.p->num; i++)
+      p->totalSize += sizeof (Polynomial *) + sizeof (int *) + p->e.p->product[i]->totalSize;
+    break;
+  case T_FUNCTIONCALL:
+    /* Function polys have additional parts and a list of term polys. */
+    p->totalSize += sizeof (struct functionPoly);
+    for (i = 0; i< p->e.f->num; i++)
+      p->totalSize += sizeof (Polynomial *) + sizeof (int *) + p->e.f->para[i]->totalSize;
+    break;
+  default:
+    fprintf (stderr, "In setPolyTotalSize, unexpected expression type: [%d], exiting!\n", p->eType);
+    exit (EXIT_FAILURE);
+    break;
+  }
+}
+#endif
+
 /**
 
   Clear the evaluation flag on the entire tree so we can mark where
@@ -793,6 +834,9 @@ Polynomial *constantExp (double con)
   // Give the polynomial a unique ID
   p->id = nodeId;
   constantCount++;
+#ifdef POLYSIZE
+  setPolyTotalSize (p);
+#endif
   nodeId++;
 #ifdef POLYSTATISTICS
   if ((nodeId & 0x1FFFFF) == 0)
@@ -922,6 +966,9 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   // Insert the variable polynomial in the variable polynomial list
   variableList[variableCount] = p;
   variableCount++;
+#ifdef POLYSIZE
+  setPolyTotalSize (p);
+#endif
   nodeId++;
 #ifdef POLYSTATISTICS
   if ((nodeId & 0x1FFFFF) == 0)
@@ -1481,6 +1528,9 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     sumList[sumCount]->valid |= VALID_TOP_FLAG; // Currently unreferenced
 
     sumCount++;
+#ifdef POLYSIZE
+    setPolyTotalSize (rp);
+#endif
     nodeId++;
 #ifdef POLYSTATISTICS
     if ((nodeId & 0x1FFFFF) == 0)
@@ -1987,6 +2037,9 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       productList[productCount]->valid |= VALID_TOP_FLAG; // Currently unreferenced
 
       productCount++;
+#ifdef POLYSIZE
+      setPolyTotalSize (rp);
+#endif
       nodeId++;
 #ifdef POLYSTATISTICS
       if ((nodeId & 0x1FFFFF) == 0)
@@ -2127,7 +2180,7 @@ Polynomial *functionCallExp (int num, ...)
         fIndex = functionCallHash[hIndex].index[i];
         //If the names of the called functions are identical and the numbers of parameters are identical,
         //we compare their parameters
-        if (strcmp (fName, functionCallList[fIndex]->e.f->name) == 0 && num - 1 == functionCallList[fIndex]->e.f->paraNum) {
+        if (strcmp (fName, functionCallList[fIndex]->e.f->name) == 0 && num - 1 == functionCallList[fIndex]->e.f->num) {
           //compare the two function calls item by item
           for (k = 0; k < num - 1; k++)
             if (p[k] != functionCallList[fIndex]->e.f->para[k])
@@ -2139,7 +2192,7 @@ Polynomial *functionCallExp (int num, ...)
             functionHashHits++;
             return functionCallList[fIndex];
           }
-        }       //end of if(num-1==functionCallList[fIndex]->e.f->paraNum)
+        }       //end of if(num-1==functionCallList[fIndex]->e.f->num)
       } //end of for(i=binaryStart;i<=binaryEnd;i++)
       location = last;
     }   //end of if(binaryStart>=0 && binarySt
@@ -2161,7 +2214,7 @@ Polynomial *functionCallExp (int num, ...)
     exit (EXIT_FAILURE);
   }
   rp->eType = T_FUNCTIONCALL;
-  fP->paraNum = num - 1;
+  fP->num = num - 1;
   fP->para = (Polynomial **) malloc ((num - 1) * sizeof (Polynomial *));
   fP->name = (char *) malloc (strlen (fName) + 1);
   if (fP->para == NULL || fP->name == NULL) {
@@ -2169,7 +2222,7 @@ Polynomial *functionCallExp (int num, ...)
     exit (EXIT_FAILURE);
   }
   strcpy (fP->name, fName);
-  for (i = 0; i < fP->paraNum; i++) {
+  for (i = 0; i < fP->num; i++) {
     fP->para[i] = p[i];
   }
   rp->e.f = fP;
@@ -2193,6 +2246,9 @@ Polynomial *functionCallExp (int num, ...)
   functionCallCount++;
   if (polynomialDebugLevel >= 40)
     fprintf (stderr, "Polynomial %d, (function %d) added\n", nodeId, functionCallCount);
+#ifdef POLYSIZE
+  setPolyTotalSize (rp);
+#endif
   nodeId++;
 #ifdef POLYSTATISTICS
   if ((nodeId & 0x1FFFFF) == 0)
@@ -2312,7 +2368,7 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     if (p->valid & VALID_EVAL_FLAG)
       break;
 
-    for (i = 0; i < p->e.f->paraNum; i++)
+    for (i = 0; i < p->e.f->num; i++)
       if (p->e.f->para[i]->eType != T_CONSTANT && (!(p->e.f->para[i]->valid & VALID_EVAL_FLAG))) {
         doPolyListSorting (p->e.f->para[i], l);
       }
@@ -2950,7 +3006,7 @@ void doPrintSummaryPoly (Polynomial * p, int currentTier)
     }
     break;
   case T_FUNCTIONCALL:
-    for (i = 0; i < p->e.f->paraNum; i++) {
+    for (i = 0; i < p->e.f->num; i++) {
       doPrintSummaryPoly (p->e.f->para[i], currentTier + 1);
     }
     break;
@@ -3025,7 +3081,7 @@ void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
     break;
   case T_FUNCTIONCALL:
     fprintf (diGraph, "%d [label=\"fn\"];\n", p->id);
-    for (i = 0; i < p->e.f->paraNum; i++) {
+    for (i = 0; i < p->e.f->num; i++) {
       doWritePolyDigraph (p->e.f->para[i], diGraph);
       fprintf (diGraph, "%d -> %d;\n", p->id, p->e.f->para[i]->id);
     }
@@ -3104,11 +3160,11 @@ void expPrinting (Polynomial * p)
     break;
   case T_FUNCTIONCALL:
     fprintf (stderr, "%s(", p->e.f->name);
-    for (i = 0; i < p->e.f->paraNum - 1; i++) {
+    for (i = 0; i < p->e.f->num - 1; i++) {
       expPrinting (p->e.f->para[i]);
       fprintf (stderr, ", ");
     }
-    expPrinting (p->e.f->para[p->e.f->paraNum - 1]);
+    expPrinting (p->e.f->para[p->e.f->num - 1]);
     fprintf (stderr, ")");
     break;
   case T_FREED:
@@ -3177,11 +3233,11 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
       return;
     }
     fprintf (output, "%s(", p->e.f->name);
-    for (i = 0; i < p->e.f->paraNum - 1; i++) {
+    for (i = 0; i < p->e.f->num - 1; i++) {
       expTermPrinting (output, p->e.f->para[i], depth - 1);
       fprintf (output, ", ");
     }
-    expTermPrinting (output, p->e.f->para[p->e.f->paraNum - 1], depth - 1);
+    expTermPrinting (output, p->e.f->para[p->e.f->num - 1], depth - 1);
     fprintf (output, ")");
     break;
   case T_FREED:
@@ -4361,7 +4417,7 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
 
     case T_FUNCTIONCALL:
       srcSize += fprintf (srcCalledFile, "\tF[%d] = %s(", functionCallsUsed, p->e.f->name);
-      for (i=0; i<p->e.f->paraNum; i++) {
+      for (i=0; i<p->e.f->num; i++) {
 	if (i != 0) srcSize += fprintf (srcCalledFile, ",");
 	if (p->e.f->para[i]->eType == T_CONSTANT)
 	  srcSize += fprintf (srcCalledFile, "%g", p->e.f->para[i]->value /* still the constant */);
