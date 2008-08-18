@@ -21,9 +21,11 @@
 struct swStopwatch
 {
   char swName[MAXSWNAME + 1];
-  struct rusage swStartRU;
+  struct rusage swStartRUSelf;
+  struct rusage swStartRUChildren;
   time_t swStartWallTime;
-  struct rusage swAccumRU;
+  struct rusage swAccumRUSelf;
+  struct rusage swAccumRUChildren;
   time_t swAccumWallTime;
   int swStartedCount;
   int swRunning;

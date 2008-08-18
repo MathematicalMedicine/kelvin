@@ -122,9 +122,15 @@ swStart (struct swStopwatch *theStopwatch)
   /* We need to tolerate multiple starts for recursive routines. */
   if (theStopwatch->swRunning)
     return;
-  if (getrusage (RUSAGE_SELF, &theStopwatch->swStartRU) != 0) {
+  if (getrusage (RUSAGE_SELF, &theStopwatch->swStartRUSelf) != 0) {
     fprintf (stderr,
-	     "Unable to get resource information using rusage call (%s)\n",
+	     "Unable to get resource information for self using rusage call (%s)\n",
+	     theStopwatch->swName);
+    exit (EXIT_FAILURE);
+  }
+  if (getrusage (RUSAGE_CHILDREN, &theStopwatch->swStartRUChildren) != 0) {
+    fprintf (stderr,
+	     "Unable to get resource information for children using rusage call (%s)\n",
 	     theStopwatch->swName);
     exit (EXIT_FAILURE);
   }
@@ -142,43 +148,73 @@ void
 swStop (struct swStopwatch *theStopwatch)
 {
 
-  struct rusage stopStats;
+  struct rusage stopStatsSelf, stopStatsChildren;
   time_t stopTime;
   unsigned long usec;
 
   if (!theStopwatch->swRunning)
     return;
-  if (getrusage (RUSAGE_SELF, &stopStats) != 0) {
+  if (getrusage (RUSAGE_SELF, &stopStatsSelf) != 0) {
     fprintf (stderr,
-	     "Unable to get resource information using rusage call (%s)\n",
+	     "Unable to get resource information for self using rusage call (%s)\n",
+	     theStopwatch->swName);
+    exit (EXIT_FAILURE);
+  }
+  if (getrusage (RUSAGE_CHILDREN, &stopStatsChildren) != 0) {
+    fprintf (stderr,
+	     "Unable to get resource information for children using rusage call (%s)\n",
 	     theStopwatch->swName);
     exit (EXIT_FAILURE);
   }
   stopTime = time (NULL);
   theStopwatch->swAccumWallTime +=
     difftime (stopTime, theStopwatch->swStartWallTime);
+
   usec =
-    1000000 + theStopwatch->swAccumRU.ru_utime.tv_usec +
-    stopStats.ru_utime.tv_usec - theStopwatch->swStartRU.ru_utime.tv_usec;
-  theStopwatch->swAccumRU.ru_utime.tv_sec +=
-    stopStats.ru_utime.tv_sec - theStopwatch->swStartRU.ru_utime.tv_sec +
+    1000000 + theStopwatch->swAccumRUSelf.ru_utime.tv_usec +
+    stopStatsSelf.ru_utime.tv_usec - theStopwatch->swStartRUSelf.ru_utime.tv_usec;
+  theStopwatch->swAccumRUSelf.ru_utime.tv_sec +=
+    stopStatsSelf.ru_utime.tv_sec - theStopwatch->swStartRUSelf.ru_utime.tv_sec +
     (usec / 1000000) - 1;
-  theStopwatch->swAccumRU.ru_utime.tv_usec = usec % 1000000;
+  theStopwatch->swAccumRUSelf.ru_utime.tv_usec = usec % 1000000;
 
-  usec = 1000000 + theStopwatch->swAccumRU.ru_stime.tv_usec +
-    stopStats.ru_stime.tv_usec - theStopwatch->swStartRU.ru_stime.tv_usec;
-  theStopwatch->swAccumRU.ru_stime.tv_sec += stopStats.ru_stime.tv_sec -
-    theStopwatch->swStartRU.ru_stime.tv_sec + (usec / 1000000) - 1;
-  theStopwatch->swAccumRU.ru_stime.tv_usec = usec % 1000000;
+  usec = 1000000 + theStopwatch->swAccumRUSelf.ru_stime.tv_usec +
+    stopStatsSelf.ru_stime.tv_usec - theStopwatch->swStartRUSelf.ru_stime.tv_usec;
+  theStopwatch->swAccumRUSelf.ru_stime.tv_sec += stopStatsSelf.ru_stime.tv_sec -
+    theStopwatch->swStartRUSelf.ru_stime.tv_sec + (usec / 1000000) - 1;
+  theStopwatch->swAccumRUSelf.ru_stime.tv_usec = usec % 1000000;
 
-  theStopwatch->swAccumRU.ru_nvcsw +=
-    stopStats.ru_nvcsw - theStopwatch->swStartRU.ru_nvcsw;
-  theStopwatch->swAccumRU.ru_nivcsw +=
-    stopStats.ru_nivcsw - theStopwatch->swStartRU.ru_nivcsw;
-  theStopwatch->swAccumRU.ru_minflt +=
-    stopStats.ru_minflt - theStopwatch->swStartRU.ru_minflt;
-  theStopwatch->swAccumRU.ru_majflt +=
-    stopStats.ru_majflt - theStopwatch->swStartRU.ru_majflt;
+  theStopwatch->swAccumRUSelf.ru_nvcsw +=
+    stopStatsSelf.ru_nvcsw - theStopwatch->swStartRUSelf.ru_nvcsw;
+  theStopwatch->swAccumRUSelf.ru_nivcsw +=
+    stopStatsSelf.ru_nivcsw - theStopwatch->swStartRUSelf.ru_nivcsw;
+  theStopwatch->swAccumRUSelf.ru_minflt +=
+    stopStatsSelf.ru_minflt - theStopwatch->swStartRUSelf.ru_minflt;
+  theStopwatch->swAccumRUSelf.ru_majflt +=
+    stopStatsSelf.ru_majflt - theStopwatch->swStartRUSelf.ru_majflt;
+
+  usec =
+    1000000 + theStopwatch->swAccumRUChildren.ru_utime.tv_usec +
+    stopStatsChildren.ru_utime.tv_usec - theStopwatch->swStartRUChildren.ru_utime.tv_usec;
+  theStopwatch->swAccumRUChildren.ru_utime.tv_sec +=
+    stopStatsChildren.ru_utime.tv_sec - theStopwatch->swStartRUChildren.ru_utime.tv_sec +
+    (usec / 1000000) - 1;
+  theStopwatch->swAccumRUChildren.ru_utime.tv_usec = usec % 1000000;
+
+  usec = 1000000 + theStopwatch->swAccumRUChildren.ru_stime.tv_usec +
+    stopStatsChildren.ru_stime.tv_usec - theStopwatch->swStartRUChildren.ru_stime.tv_usec;
+  theStopwatch->swAccumRUChildren.ru_stime.tv_sec += stopStatsChildren.ru_stime.tv_sec -
+    theStopwatch->swStartRUChildren.ru_stime.tv_sec + (usec / 1000000) - 1;
+  theStopwatch->swAccumRUChildren.ru_stime.tv_usec = usec % 1000000;
+
+  theStopwatch->swAccumRUChildren.ru_nvcsw +=
+    stopStatsChildren.ru_nvcsw - theStopwatch->swStartRUChildren.ru_nvcsw;
+  theStopwatch->swAccumRUChildren.ru_nivcsw +=
+    stopStatsChildren.ru_nivcsw - theStopwatch->swStartRUChildren.ru_nivcsw;
+  theStopwatch->swAccumRUChildren.ru_minflt +=
+    stopStatsChildren.ru_minflt - theStopwatch->swStartRUChildren.ru_minflt;
+  theStopwatch->swAccumRUChildren.ru_majflt +=
+    stopStatsChildren.ru_majflt - theStopwatch->swStartRUChildren.ru_majflt;
 
   theStopwatch->swRunning = 0;
   return;
@@ -192,10 +228,13 @@ swDumpOutput (struct swStopwatch *theStopwatch, char *appendText)
     (buffer,
      "stopwatch %s(%d) e:%lus u:%lus s:%lus, vx:%lu, ivx:%lu, sf:%lu, hf:%lu%s",
      theStopwatch->swName, theStopwatch->swStartedCount,
-     theStopwatch->swAccumWallTime, theStopwatch->swAccumRU.ru_utime.tv_sec,
-     theStopwatch->swAccumRU.ru_stime.tv_sec,
-     theStopwatch->swAccumRU.ru_nvcsw, theStopwatch->swAccumRU.ru_nivcsw,
-     theStopwatch->swAccumRU.ru_minflt, theStopwatch->swAccumRU.ru_majflt,
+     theStopwatch->swAccumWallTime,
+     theStopwatch->swAccumRUSelf.ru_utime.tv_sec + theStopwatch->swAccumRUChildren.ru_utime.tv_sec,
+     theStopwatch->swAccumRUSelf.ru_stime.tv_sec + theStopwatch->swAccumRUChildren.ru_stime.tv_sec,
+     theStopwatch->swAccumRUSelf.ru_nvcsw + theStopwatch->swAccumRUChildren.ru_nvcsw,
+     theStopwatch->swAccumRUSelf.ru_nivcsw + theStopwatch->swAccumRUChildren.ru_nivcsw,
+     theStopwatch->swAccumRUSelf.ru_minflt + theStopwatch->swAccumRUChildren.ru_minflt,
+     theStopwatch->swAccumRUSelf.ru_majflt + theStopwatch->swAccumRUChildren.ru_majflt,
      appendText);
   swLogMsg (buffer);
   return;
