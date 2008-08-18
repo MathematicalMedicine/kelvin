@@ -45,6 +45,10 @@ extern int containerExpansions;
 extern unsigned long totalSPLLengths, totalSPLCalls, lowSPLCount, highSPLCount;
 extern unsigned long initialHashSize;
 
+/* If CPU utilization % is below this in a check interval, we're thrashing
+   and should take some kind of action (currently exit) */
+#define THRASH_CPU 2
+
 /* These are the types of polynomials */
 enum expressionType
 {
