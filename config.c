@@ -595,7 +595,7 @@ readConfigFile (char *file)
       continue;
     }
 
-    if(sscanf(line, "condLoop %s", modelOptions->loopBreaker) == 1){
+    if(sscanf(line, "condLoop %s", modelOptions.loopBreaker) == 1){
       modelOptions.loopCondRun = 1;
       modelOptions.conditionalRun = 0;
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring to print out loop breaker's conditional LR.\n");
