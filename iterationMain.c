@@ -1,4 +1,10 @@
   /* Open output files */
+if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
+  fpCond = fopen (condFile, "w");
+  KASSERT (fpCond != NULL, "Error in opening file %s for write.\n", condFile); 
+  //  fprintf( fpCond, "# Version %s\n", programVersion);
+ }
+
   fpHet = fopen (avghetfile, "w");
   KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", avghetfile);
   fprintf (fpHet, "# Version %s\n", programVersion);

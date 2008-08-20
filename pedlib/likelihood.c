@@ -34,7 +34,7 @@ char *likelihoodVersion = "$Id$";
 
 #include <dlfcn.h>
 
-
+extern FILE *fpCond; 
 extern struct polynomial **variableList;
 
 char partialPolynomialFunctionName[MAX_PFN_LEN+1];
@@ -119,6 +119,20 @@ int maxChildren;
 
 int multCount;
 
+typedef struct probandCondL {
+  char *pPedigreeID;
+  char *pProbandID;
+  char *pAllele1;
+  char *pAllele2;
+  int allele1; 
+  int allele2;
+  double trait;
+  double condL;
+  float prob;
+} probandCondL;
+probandCondL *pCondSet = NULL;
+int numCond;
+
 /* function prototypes */
 void recalculate_child_likelihood (int flipMask[2], void *childProduct);
 int peel_graph (NuclearFamily * pNucFam, Person * pProband,
@@ -201,6 +215,11 @@ allocate_likelihood_space (PedigreeSet * pPedigreeList, int numLocus1)
 
   maxChildren = 20;
   likelihoodChildCount = (int *) calloc (sizeof (int), maxChildren);
+
+  if(pCondSet == NULL) {
+    pCondSet = (probandCondL *) malloc(sizeof(probandCondL) * 4); 
+    numCond = 4; 
+  }
 
   return 0;
 }
@@ -446,7 +465,20 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 
   Polynomial *pLikelihoodPolynomial = NULL;
   int ret = 0;
+  int origLocus = locusList->pLocusIndex[0];
+  Genotype *pGenotype = NULL;
+  //  int genoIdx = 0;
+  Locus *pLocus = originalLocusList.ppLocusList[origLocus];
+  int allele1, allele2;
+  double sumFreq1, sumFreq2, freq1, freq2;
+  AlleleSet *alleleSet1, *alleleSet2;
+  double condL, condL2, sumCondL; 
+  int k, l, j, condIdx, idx;
+  Person *pLoopBreaker;
+  LoopBreaker *loopStruct;
 
+  condIdx = 0;
+  sumCondL = 0;
   if (modelOptions.dryRun == 0 && modelOptions.polynomial == TRUE) {
 #ifndef SIMPLEPROGRESS
     fprintf (stdout, "Building polynomial w/pedigree: %s (%d/%d)\r",
@@ -509,6 +541,7 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
     if (modelOptions.polynomial != TRUE)
       tmpLikelihood = 0;
 
+    pGenotype = pProband->ppProbandGenotypeList[origLocus];
     /* loop over all conditional likelihoods */
     for (i = 0; i < pProband->numConditionals; i++) {
       pConditional = &pProband->pLikelihood[i];
@@ -534,11 +567,66 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 			     likelihoodPolynomial, 1,
 			     pConditional->wtslot.weightPolynomial, 1, 1), 1);
       } else {
-	tmpLikelihood += pConditional->lkslot.likelihood *
-	  pConditional->wtslot.weight;
-      }
-    }				/* end of looping over all conditionals */
+	condL = pConditional->lkslot.likelihood * pConditional->wtslot.weight; 
+	tmpLikelihood += condL;
+	sumCondL += condL; 
+	if(modelOptions.conditionalRun == 1) {
+	  /* find out the genotype index for the first locus - assuming that's the locus
+	     we are interested in */
+	  //	  genoIdx = i / pProband->pSavedNumGenotype[origLocus]; 
+	  alleleSet1 = pLocus->ppAlleleSetList[pGenotype->allele[DAD]-1];
+	  alleleSet2 = pLocus->ppAlleleSetList[pGenotype->allele[MOM]-1];
+	  sumFreq1 = alleleSet1->sumFreq;
+	  sumFreq2 = alleleSet2->sumFreq; 
+	  for(k=0; k < alleleSet1->numAllele; k++) {
+	    allele1 = alleleSet1->pAlleles[k]; 
+	    freq1 = pLocus->pAlleleFrequency[allele1-1]; 
+	    for(j=0; j < alleleSet2->numAllele; j++){
+	      allele2 = alleleSet2->pAlleles[j];
+	      freq2 = pLocus->pAlleleFrequency[allele2-1]; 
+	      if(condIdx >= numCond) {
+		pCondSet = (probandCondL *) realloc(pCondSet, sizeof(probandCondL) * (numCond+4));
+		numCond += 4;
+	      }
+	      condL2 = condL * (freq1/sumFreq1) * (freq2 /sumFreq2); 
+	      /* if heterzygous, find the matching one if there */
+	      for (idx=0; idx < condIdx; idx++) {
+		if ((pCondSet[idx].allele1 == allele2 && pCondSet[idx].allele2 == allele1) ||
+		    (pCondSet[idx].allele1 == allele1 && pCondSet[idx].allele2 == allele2)) {
+		  /* found the matching one */
+		  condL2 += pCondSet[idx].condL; 
+		  /* remove it */
+		  for(; idx < condIdx -1; idx++) {
+		    memcpy(&pCondSet[idx], &pCondSet[idx+1], sizeof(probandCondL)); 
+		  }
+		  condIdx--;
+		  break; 
+		}
+	      }
 
+	      for(idx=0; idx < condIdx; idx++) {
+		if(pCondSet[idx].condL <= condL2)
+		  break; 
+	      }
+	      for(l=condIdx; l > idx; l--) {
+		memcpy(&pCondSet[l], &pCondSet[l-1], sizeof(probandCondL));
+	      }
+	      pCondSet[idx].pPedigreeID = pPedigree->sPedigreeID; 
+	      pCondSet[idx].pProbandID = pProband->sID;
+	      pCondSet[idx].trait = pProband->ppTraitValue[0][0];
+	      pCondSet[idx].pAllele1 = pLocus->ppAlleleNames[allele1-1]; 
+	      pCondSet[idx].pAllele2 = pLocus->ppAlleleNames[allele2-1]; 
+	      pCondSet[idx].allele1 = allele1; 
+	      pCondSet[idx].allele2 = allele2;
+	      pCondSet[idx].condL = condL2; 
+	      condIdx++;
+	    }
+	  }
+	  // fflush(fpCond);
+	  pGenotype = pGenotype->pNext;
+	} /* end of conditional Run flag is on */
+      } /* non polynomial mode */
+    }				/* end of looping over all conditionals */
 
     if (modelOptions.polynomial != TRUE)
       likelihood += tmpLikelihood;
@@ -547,10 +635,73 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
       if (modelOptions.polynomial == TRUE) {
 	//	fprintf(stderr, "keepPoly for pedigree\n");
 	keepPoly (pLikelihoodPolynomial);
-      } else
+      } else {
 	KLOG (LOGLIKELIHOOD, LOGDEBUG,
 	      "Log Likelihood for this fixed looped pedigree %s is: %e\n",
 	      pPedigree->sPedigreeID, log10 (tmpLikelihood));
+	condL = tmpLikelihood;
+	if(modelOptions.loopCondRun == 1) {
+	  /* find the loop breaker we want */
+	  for(i=0; i < pPedigree->numLoopBreaker; i++) {
+	    pLoopBreaker = pPedigree->loopBreakerList[i];
+	    if(strcmp(pLoopBreaker->sID, modelOptions.loopBreaker)!=0)
+	      continue;
+	    loopStruct = pLoopBreaker->loopBreakerStruct;
+	    pGenotype = loopStruct->genotype[loopStruct->genotypeIndex][0];
+	    alleleSet1 = pLocus->ppAlleleSetList[pGenotype->allele[DAD]-1];
+	    alleleSet2 = pLocus->ppAlleleSetList[pGenotype->allele[MOM]-1];
+	    sumFreq1 = alleleSet1->sumFreq;
+	    sumFreq2 = alleleSet2->sumFreq; 
+	    for(k=0; k < alleleSet1->numAllele; k++) {
+	      allele1 = alleleSet1->pAlleles[k]; 
+	      freq1 = pLocus->pAlleleFrequency[allele1-1]; 
+	      for(j=0; j < alleleSet2->numAllele; j++){
+		allele2 = alleleSet2->pAlleles[j];
+		freq2 = pLocus->pAlleleFrequency[allele2-1]; 
+		if(condIdx >= numCond) {
+		  pCondSet = (probandCondL *) realloc(pCondSet, sizeof(probandCondL) * (numCond+4));
+		  numCond += 4;
+		}
+		condL2 = condL * (freq1/sumFreq1) * (freq2 /sumFreq2); 
+		/* find the matching one if there */
+		for (idx=0; idx < condIdx; idx++) {
+		  if ((pCondSet[idx].allele1 == allele2 && pCondSet[idx].allele2 == allele1) ||
+		      (pCondSet[idx].allele1 == allele1 && pCondSet[idx].allele2 == allele2)) {
+		    /* found the matching one */
+		    condL2 += pCondSet[idx].condL; 
+		    /* remove it */
+		    for(; idx < condIdx -1; idx++) {
+		      memcpy(&pCondSet[idx], &pCondSet[idx+1], sizeof(probandCondL)); 
+		    }
+		    condIdx--;
+		    break; 
+		  }
+		}
+
+		/* find the right place to put it */
+		for(idx=0; idx < condIdx; idx++) {
+		  if(pCondSet[idx].condL <= condL2)
+		    break; 
+		}
+		for(l=condIdx; l > idx; l--) {
+		  memcpy(&pCondSet[l], &pCondSet[l-1], sizeof(probandCondL));
+		}
+		pCondSet[idx].pPedigreeID = pPedigree->sPedigreeID; 
+		pCondSet[idx].pProbandID = pLoopBreaker->sID;
+		pCondSet[idx].trait = pLoopBreaker->ppTraitValue[0][0];
+		pCondSet[idx].pAllele1 = pLocus->ppAlleleNames[allele1-1]; 
+		pCondSet[idx].pAllele2 = pLocus->ppAlleleNames[allele2-1]; 
+		pCondSet[idx].allele1 = allele1; 
+		pCondSet[idx].allele2 = allele2;
+		pCondSet[idx].condL = condL2; 
+		condIdx++;
+	      }
+	    }
+	    
+	  }
+	}
+      }
+
       ret = -2;
       while (ret == -2) {
 	restore_pedigree_genotype_link_from_saved (pPedigree);
@@ -575,6 +726,19 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
     KLOG (LOGLIKELIHOOD, LOGDEBUG,
 	  "log Likelihood for pedigree %s is: %e\n", pPedigree->sPedigreeID,
 	  log10 (likelihood));
+    if( (modelOptions.loopCondRun == 1 || modelOptions.conditionalRun==1)
+	&& modelOptions.polynomial != TRUE) {
+      for(k=0; k < condIdx; k++) {
+	fprintf(fpCond, "%s %s %d %s %s %e %5.1f%%\n", 
+		pCondSet[k].pPedigreeID,
+		pCondSet[k].pProbandID,
+		(int) pCondSet[k].trait, 
+		pCondSet[k].pAllele1,
+		pCondSet[k].pAllele2,
+		pCondSet[k].condL, 
+		pCondSet[k].condL/sumCondL*100);
+      }
+    }
   }
 
   return 0;

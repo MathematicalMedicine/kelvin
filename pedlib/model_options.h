@@ -61,6 +61,9 @@ typedef struct ModelOptions
 				 *  is within thetaCutoff */
 
   int dryRun;                   /* 1 - dry run to get statistics for complexity */
+  int conditionalRun;           /* 1 - print out proband's conditional LR */
+  int loopCondRun;              /* 1 - print out loop breaker's conditional LR */
+  char loopBreaker[16];         /* loop breaker's individual ID */
 } ModelOptions;
 
 extern ModelOptions modelOptions;
