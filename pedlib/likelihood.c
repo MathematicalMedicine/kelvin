@@ -285,62 +285,54 @@ compute_likelihood (PedigreeSet * pPedigreeList)
     /* First build (or restore) all of the pedigrees */
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
-
       if (pPedigree->load_flag == 0) { // Skip everything, we're using saved results
-#ifdef POLYCOMP_DL
-	sprintf (polynomialFunctionName, partialPolynomialFunctionName, pPedigree->sPedigreeID);
-	if (pPedigree->polynomialFunctionName == NULL ||
-	    strcmp (polynomialFunctionName, pPedigree->polynomialFunctionName)) { // Not the current one
-	  if (pPedigree->polynomialFunctionHandle != NULL) { // ...but something is loaded
-//	    printf ("\nClosing [%s] for [%s]\n", pPedigree->polynomialFunctionName, polynomialFunctionName);
-	    dlclose (pPedigree->polynomialFunctionHandle); // ...so close the current one
-	  }
-	  free (pPedigree->polynomialFunctionName);
-	  pPedigree->polynomialFunctionName = (char *) malloc (MAX_PFN_LEN+1);
-	  strcpy (pPedigree->polynomialFunctionName, polynomialFunctionName);
-	  if (!(pPedigree->polynomialFunctionHandle = loadPoly (polynomialFunctionName))) { // Not loadable
-#endif
-	    if (pPedigree->likelihoodPolynomial == NULL) { // There's no polynomial, so do build
-	      initialize_multi_locus_genotype (pPedigree);
-	      status = compute_pedigree_likelihood (pPedigree);
-	      holdPoly (pPedigree->likelihoodPolynomial);
-	      freeKeptPolys ();
-	      pPedigree->likelihoodPolyList = buildPolyList ();
-	      polyListSorting (pPedigree->likelihoodPolynomial,
-			       pPedigree->likelihoodPolyList);
+	if (pPedigree->likelihoodPolynomial == NULL) { // There's no polynomial, so come up with one
+	  // Construct polynomialFunctionName for attempted load and maybe compilation
+	  sprintf (polynomialFunctionName, partialPolynomialFunctionName, pPedigree->sPedigreeID);
+	  if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
+	    // Failed to load, construct it
+	    initialize_multi_locus_genotype (pPedigree);
+	    status = compute_pedigree_likelihood (pPedigree);
+	    holdPoly (pPedigree->likelihoodPolynomial);
+	    freeKeptPolys ();
+	    pPedigree->likelihoodPolyList = buildPolyList ();
+	    polyListSorting (pPedigree->likelihoodPolynomial,
+			     pPedigree->likelihoodPolyList);
 #ifdef POLYCOMP
-	      //	      if (pPedigree->likelihoodPolynomial->eType != T_CONSTANT &&
-	      //		  pPedigree->likelihoodPolynomial->eType != T_VARIABLE) { // Worth compiling
-		fprintf (stdout, "Compiling polynomial P%d (%s)...\n",
-			 pPedigree->likelihoodPolynomial->id, pPedigree->polynomialFunctionName);
-		pPedigree->polynomialFunctionHandle = compilePoly(pPedigree->likelihoodPolynomial, 
-							    pPedigree->likelihoodPolyList,
-							    pPedigree->polynomialFunctionName);
-#ifdef POLYCOMP_DL
-		pPedigree->polynomialFunction = dlsym(pPedigree->polynomialFunctionHandle,
-						      pPedigree->polynomialFunctionName);
+	    if (pPedigree->likelihoodPolynomial->eType == T_SUM ||
+		pPedigree->likelihoodPolynomial->eType == T_PRODUCT) { // Worth compiling
+	      fprintf (stdout, "Compiling polynomial P%d (%s)...\n",
+		       pPedigree->likelihoodPolynomial->id, polynomialFunctionName);
+	      compilePoly(pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList,
+			  polynomialFunctionName);
+	      // Soon we'll try to load this new one and ditch the old one
+#ifdef POLYCOMPCHECK
+	      if ((pPedigree->cLikelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
+#else
+	      if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
 #endif
-		fprintf (stdout, "OK\n");
-		//	      } else {
-		//		pPedigree->polynomialFunction = NULL;
-		//		pPedigree->polynomialFunctionHandle = NULL;
-		//		fprintf (stdout, "Not worth compiling\n");
-		//	      }
+		fprintf (stdout, "Couldn't load compiled likelihood polynomial we just created!\n");
+		exit (EXIT_FAILURE);
+	      } else {
+		pPedigree->likelihoodPolyList = buildPolyList ();
+		polyListSorting (pPedigree->likelihoodPolynomial,  pPedigree->likelihoodPolyList);
+	      }
+	    } else
+	      fprintf (stdout, "Not compiling polynomial P%d (%s) as it is unworthy...\n",
+		       pPedigree->likelihoodPolynomial->id, polynomialFunctionName);
+	      
 #endif
 #ifdef POLYSTATISTICS
-	      if (i == pPedigreeList->numPedigree - 1)
-		polyDynamicStatistics ("Post-build");
+	    if (i == pPedigreeList->numPedigree - 1)
+	      polyDynamicStatistics ("Post-build");
 #endif
-	    }
-#ifdef POLYCOMP_DL
-	  } else { // There is a polynomial, so try to load it
-	    if ((pPedigree->polynomialFunction = dlsym(pPedigree->polynomialFunctionHandle,
-						       pPedigree->polynomialFunctionName)) == NULL)
-	      fprintf (stderr, "Failed to load polynomial %s\n", polynomialFunctionName);
+	  } else {
+	    pPedigree->likelihoodPolyList = buildPolyList ();
+	    polyListSorting (pPedigree->likelihoodPolynomial,  pPedigree->likelihoodPolyList);
+	    fprintf (stdout, "Loaded polynomial P%d (%s)...\n",
+		     pPedigree->likelihoodPolynomial->id, polynomialFunctionName);
 	  }
-	} // else
-//	  fprintf (stderr, "Still referencing %s\n", polynomialFunctionName);
-#endif
+	}
       }
     }
     /* Now evaluate them all */
@@ -357,14 +349,17 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	pPedigree->likelihood =
 	  evaluateValue (pPedigree->likelihoodPolynomial);
 #else
-#ifdef POLYCOMP_DL
-	if (pPedigree->polynomialFunction != NULL)
-	  pPedigree->likelihood = pPedigree->polynomialFunction(1, variableList);
-	else
+	evaluatePoly (pPedigree->likelihoodPolynomial,
+		      pPedigree->likelihoodPolyList,
+		      &pPedigree->likelihood);
+#ifdef POLYCOMPCHECK
+	double eValue =
+	  evaluateValue (pPedigree->cLikelihoodPolynomial);
+	if (eValue != pPedigree->likelihood)
+	  fprintf (stderr, "Discrepency between eV of %.20g and v of %.20g\n",
+		   eValue, pPedigree->likelihood);
+	
 #endif
-	  evaluatePoly (pPedigree->likelihoodPolynomial,
-			pPedigree->likelihoodPolyList,
-			&pPedigree->likelihood);
 #endif
 #endif
       }
