@@ -582,11 +582,26 @@ readConfigFile (char *file)
       continue;
     }
 
-    if (strncmp (line, "DRY", 3) == 0) {
+    if (strncasecmp (line, "DRY", 3) == 0) {
       modelOptions.dryRun = 1;
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for a dry run.\n");
       continue;
     }
+
+    if (strncasecmp (line, "condRun", 7) == 0) {
+      modelOptions->conditionalRun = 1;
+      modelOptions->loopCondRun = 0;
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring to print out (nonloop) proband's conditional LR.\n");
+      continue;
+    }
+
+    if(sscanf(line, "condLoop %s", modelOptions->loopBreaker) == 1){
+      modelOptions->loopCondRun = 1;
+      modelOptions->conditionalRun = 0;
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring to print out loop breaker's conditional LR.\n");
+      continue;
+    }
+      
 
     /* Complex directives that require regular expression matching
      * to handle the arguments. Most of these take at least one
