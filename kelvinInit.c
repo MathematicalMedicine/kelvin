@@ -311,7 +311,4 @@ KASSERT (readConfigFile (configfile)
     pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
     pPedigree->load_flag = 0;   /* Initially 0 and changes to 1 when marker or 
                                  * alternative likelihood values are retrieved */
-    pPedigree->polynomialFunction = NULL;
-    pPedigree->polynomialFunctionHandle = NULL;
-    pPedigree->polynomialFunctionName = NULL;
   }
