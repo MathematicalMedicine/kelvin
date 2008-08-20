@@ -335,9 +335,9 @@ int originalChildren[MAXPOLYSOURCES];
 #endif
 
 
-#ifdef POLYSIZE
-void setPolyTotalSize (Polynomial *p)
+Polynomial *polyReturnWrapper (Polynomial *p)
 {
+#ifdef POLYSIZE
   int i;
 
   /* All of them require a basic Polynomial, a pointer in a type-specific list,
@@ -353,14 +353,18 @@ void setPolyTotalSize (Polynomial *p)
   case T_SUM:
     /* Sum polys have additional parts and lists of factors and term polys */
     p->totalSize += sizeof (struct sumPoly);
-    for (i = 0; i< p->e.s->num; i++)
+    for (i = 0; i< p->e.s->num; i++) {
+      //      printf ("%d(%d) ", p->e.s->sum[i]->id, p->e.s->sum[i]->totalSize);
       p->totalSize += sizeof (Polynomial *) + sizeof (int *) + p->e.s->sum[i]->totalSize;
+    }
     break;
   case T_PRODUCT:
     /* Product polys have additional parts and lists of term polys and exponents */
     p->totalSize += sizeof (struct productPoly);
-    for (i = 0; i< p->e.p->num; i++)
+    for (i = 0; i< p->e.p->num; i++) {
+      //      printf ("%d(%d) ", p->e.p->product[i]->id, p->e.p->product[i]->totalSize);
       p->totalSize += sizeof (Polynomial *) + sizeof (int *) + p->e.p->product[i]->totalSize;
+    }
     break;
   case T_FUNCTIONCALL:
     /* Function polys have additional parts and a list of term polys. */
@@ -369,12 +373,14 @@ void setPolyTotalSize (Polynomial *p)
       p->totalSize += sizeof (Polynomial *) + sizeof (int *) + p->e.f->para[i]->totalSize;
     break;
   default:
-    fprintf (stderr, "In setPolyTotalSize, unexpected expression type: [%d], exiting!\n", p->eType);
+    fprintf (stderr, "In polyReturnWrapper, unexpected expression type: [%d], exiting!\n", p->eType);
     exit (EXIT_FAILURE);
     break;
   }
-}
+  //  printf ("total %d\n", p->totalSize);
 #endif
+  return p;
+}
 
 /**
 
@@ -556,8 +562,7 @@ double doEvaluateValue (Polynomial * p)
     return result;
 
   case T_EXTERNAL:
-    fprintf (stderr, "Setting value for externalPoly w/signature %s\n", p->e.e->signature);
-    p->value = .00005;
+    p->value = p->e.e->polynomialFunctionRoutine(1, variableList);
     return p->value;
 
   default:
@@ -799,7 +804,7 @@ Polynomial *constantExp (double con)
           // If the two constants are the same, return the constant in the constant list
           constantList[cIndex]->valid |= VALID_REF_FLAG;
           constantHashHits++;
-          return constantList[cIndex];
+          return polyReturnWrapper(constantList[cIndex]);
         }
       }
     }
@@ -834,9 +839,6 @@ Polynomial *constantExp (double con)
   // Give the polynomial a unique ID
   p->id = nodeId;
   constantCount++;
-#ifdef POLYSIZE
-  setPolyTotalSize (p);
-#endif
   nodeId++;
 #ifdef POLYSTATISTICS
   if ((nodeId & 0x1FFFFF) == 0)
@@ -849,7 +851,7 @@ Polynomial *constantExp (double con)
   // Record the constant polynomial in the hash table of constant polynomials
   insertHashTable (&constantHash[hIndex], location, key, constantCount - 1);
 
-  return p;
+  return polyReturnWrapper(p);
 };
 
 /**
@@ -918,7 +920,7 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
           // If the two variables are the same, return the address from the list
           variableList[vIndex]->valid |= VALID_REF_FLAG;
           variableHashHits++;
-          return variableList[vIndex];
+          return polyReturnWrapper(variableList[vIndex]);
         }
       }
     }
@@ -966,9 +968,6 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   // Insert the variable polynomial in the variable polynomial list
   variableList[variableCount] = p;
   variableCount++;
-#ifdef POLYSIZE
-  setPolyTotalSize (p);
-#endif
   nodeId++;
 #ifdef POLYSTATISTICS
   if ((nodeId & 0x1FFFFF) == 0)
@@ -978,7 +977,7 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   // Record the variable polynomial in the hash table of the variable polynomials
   insertHashTable (&variableHash[hIndex], location, key, variableCount - 1);
 
-  return p;
+  return polyReturnWrapper(p);
 };
 
 /**
@@ -1338,10 +1337,10 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     // After we go through all the items in the sum, we get only a constant.
     rp = constantExp (con);
     sumReturnConstantCount++;
-    return rp;
+    return polyReturnWrapper(rp);
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
-    return rp;
+    return polyReturnWrapper(rp);
   } else if (con == 0.0 && counterSum == 1 && factorSum[0] == 1.0) {
     // We have only one term, no need to create a new polynomial
     rp = pSum[0];
@@ -1351,7 +1350,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       expTermPrinting (stderr, rp, 1);
       fprintf (stderr, "\n");
     }
-    return rp;
+    return polyReturnWrapper(rp);
   } else {
     // We've got more than one term, so we're going to go ahead and create it.
     if (con != 0.0) {
@@ -1399,7 +1398,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
                 fprintf (stderr, "\n");
               }
             }
-            return sumList[sIndex];
+            return polyReturnWrapper(sumList[sIndex]);
           }
         }
       }
@@ -1528,9 +1527,6 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     sumList[sumCount]->valid |= VALID_TOP_FLAG; // Currently unreferenced
 
     sumCount++;
-#ifdef POLYSIZE
-    setPolyTotalSize (rp);
-#endif
     nodeId++;
 #ifdef POLYSTATISTICS
     if ((nodeId & 0x1FFFFF) == 0)
@@ -1566,7 +1562,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       fprintf (stderr, "\n");
     }
   }
-  return rp;
+  return polyReturnWrapper(rp);
 };
 
 /**
@@ -1803,7 +1799,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     productReturn0Count++;
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant zero\n");
-    return rp;
+    return polyReturnWrapper(rp);
   }
   /* Combine all the items generated by collecting the operands of the times operation 
      into one polynomial */
@@ -1835,7 +1831,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     productReturnConstantCount++;
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
-    return rp;
+    return polyReturnWrapper(rp);
   } else  // If the result polynomial has only one term, it is not a product polynomial
     if (counterProd == 1 && exponentProd[0] == 1) {
     if (factor == 1.0) {
@@ -1844,14 +1840,14 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       if (polynomialDebugLevel >= 60)
         fprintf (stderr, "Returning first term from caller\n");
       productReturn1stTermCount++;
-      return rp;
+      return polyReturnWrapper(rp);
     } else {
       // If the factor is not 1, then the result polynomial is a sum polynomial
       rp = plusExp (fileName, lineNo, 1, factor, pProd[0], 0);
       if (polynomialDebugLevel >= 60)
         fprintf (stderr, "Returning via plusExp\n");
       productReturn1TermSumCount++;
-      return rp;
+      return polyReturnWrapper(rp);
     }
   } else {
     // The result polynomial is a product polynomial, compute the key
@@ -1886,7 +1882,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
                     fprintf (stderr, "\n");
                   }
                 }
-                return productList[pIndex];
+                return polyReturnWrapper(productList[pIndex]);
               } else {
 		/* This product polynomial already exists so we don't need to construct a
 		   new one, however, the factor is not 1, therefore the result polynomial is
@@ -2037,9 +2033,6 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       productList[productCount]->valid |= VALID_TOP_FLAG; // Currently unreferenced
 
       productCount++;
-#ifdef POLYSIZE
-      setPolyTotalSize (rp);
-#endif
       nodeId++;
 #ifdef POLYSTATISTICS
       if ((nodeId & 0x1FFFFF) == 0)
@@ -2080,13 +2073,13 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
           fprintf (stderr, "\n");
         }
       }
-      return rp;
+      return polyReturnWrapper(rp);
     } else {
       // If the factor is not 1, return a sum polynomial
       productNon1FactorIsSumCount++;
       if (polynomialDebugLevel >= 60)
         fprintf (stderr, "Returning new product via plusExp\n");
-      return plusExp (fileName, lineNo, 1, factor, rp, 0);
+      return polyReturnWrapper(plusExp (fileName, lineNo, 1, factor, rp, 0));
     }
   }
 };
@@ -2190,7 +2183,7 @@ Polynomial *functionCallExp (int num, ...)
           if (k >= num - 1) {
             free (p);
             functionHashHits++;
-            return functionCallList[fIndex];
+            return polyReturnWrapper(functionCallList[fIndex]);
           }
         }       //end of if(num-1==functionCallList[fIndex]->e.f->num)
       } //end of for(i=binaryStart;i<=binaryEnd;i++)
@@ -2246,9 +2239,6 @@ Polynomial *functionCallExp (int num, ...)
   functionCallCount++;
   if (polynomialDebugLevel >= 40)
     fprintf (stderr, "Polynomial %d, (function %d) added\n", nodeId, functionCallCount);
-#ifdef POLYSIZE
-  setPolyTotalSize (rp);
-#endif
   nodeId++;
 #ifdef POLYSTATISTICS
   if ((nodeId & 0x1FFFFF) == 0)
@@ -2259,7 +2249,7 @@ Polynomial *functionCallExp (int num, ...)
 
   free (p);
 
-  return rp;
+  return polyReturnWrapper(rp);
 
 };
 
@@ -2331,6 +2321,18 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     if (!(p->valid & VALID_EVAL_FLAG)) {
       polyListAppend (l, p);
     }
+    break;
+
+    //If the polynomial is an external, put it in the evaluation list after all variables
+  case T_EXTERNAL:
+    if (p->valid & VALID_EVAL_FLAG)
+      break;
+
+    for (i = 0; i < variableCount; i++)
+      if (!(variableList[i]->valid & VALID_EVAL_FLAG))
+	doPolyListSorting (variableList[i], l);
+
+    polyListAppend (l, p);
     break;
 
     //If the polynomial is a sum, put all the terms of the sum in the evaluation list
@@ -2524,8 +2526,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
       break;
 
     case T_EXTERNAL:
-      fprintf (stderr, "Setting value for externalPoly w/signature %s\n", p->e.e->signature);
-      p->value = .00005;
+      p->value = p->e.e->polynomialFunctionRoutine(1, variableList);
       break;
 
     default:
@@ -4240,27 +4241,51 @@ Polynomial *importPoly (void *exportedPoly)
   return (importedPoly);
 }
 
-#ifdef POLYCOMP_DL
-/// Attempt to load an existing dynamic library for the specified polynomial.
-void *loadPoly (char *name)
+Polynomial *restoreExternalPoly (char *functionName)
 {
+  Polynomial *rp;
+  struct externalPoly *eP;
   char dLName[128];
-  void *dl;
+  double (*dLRoutine)();
+  void *dLHandle;
 
-  sprintf (dLName, "./%s.so", name);
-//  printf ("Attempting load of [%s]\n", dLName);
-  if ((dl = dlopen(dLName, RTLD_NOW)) != NULL) {
-//    fprintf (stdout, "Using existing dynamic library for polynomial %s\n", name);
-    return dl;
+  sprintf (dLName, "./%s.so", functionName);
+  printf ("Attempting load of [%s]\n", dLName);
+  if ((dLHandle = dlopen(dLName, RTLD_NOW)) != NULL) {
+    fprintf (stdout, "Using existing dynamic library for polynomial %s\n", functionName);
+    // Loaded it! Make sure the function is in there...
+    if ((dLRoutine = dlsym(dLHandle, functionName)) != NULL) {
+      // Found it! Create a new externalPoly for it.
+      rp = (Polynomial *) malloc (sizeof (Polynomial));
+      if (rp == NULL) {
+	fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+	exit (EXIT_FAILURE);
+      }
+      rp->eType = T_EXTERNAL;
+      eP = (struct externalPoly *) malloc (sizeof (struct externalPoly));
+      if (eP == NULL) {
+	fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+	exit (EXIT_FAILURE);
+      }
+      rp->e.e = eP;
+      strcpy (eP->polynomialFunctionName, functionName);
+      eP->polynomialFunctionHandle = dLHandle;
+      eP->polynomialFunctionRoutine = dLRoutine;
+    } else {
+      fprintf (stdout, "Couldn't find routine in dynamic library for polynomial %s\n", functionName);
+      dlclose(dLHandle);
+      return NULL;
+    }
   } else {
-//    fprintf (stdout, "Couldn't find existing dynamic library for polynomial %s\n", name);
+    fprintf (stdout, "Couldn't find existing dynamic library for polynomial %s\n", functionName);
     return NULL;
   }
+  // These aren't hashed or listed
+  return rp;
 }
-#endif
 
 #define MAXSRCSIZE (8192*128)
-void *compilePoly (Polynomial * p, struct polyList * l, char * name)
+void compilePoly (Polynomial * p, struct polyList * l, char * name)
 {
   char srcFileName[128], srcCalledFileName[128], includeFileName[128], command[256];
   FILE *srcFile, *srcCalledFile = NULL, *includeFile;
@@ -4269,9 +4294,6 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
   Polynomial * result;
   struct sumPoly *sP;
   struct productPoly *pP;
-#ifdef POLYCOMP_DL
-  void *dl;
-#endif
 
   result = p;
 
@@ -4304,12 +4326,8 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
 #ifdef POLYCOMP_DL
   fprintf (srcFile, "\tvariableList = va_arg (args, struct polynomial **);\n");
   for (i = 0; i < variableCount; i++)
-    if (variableList[i]->e.v->vType == 'I')
-      fprintf (srcFile, "\t\t%s = (double) *(variableList[%d]->e.v->vAddr.vAddrI);\n",
-	       variableList[i]->e.v->vName, i);
-    else
-      fprintf (srcFile, "\t\t%s = *(variableList[%d]->e.v->vAddr.vAddrD);\n",
-	       variableList[i]->e.v->vName, i);
+    fprintf (srcFile, "\t\t%s = variableList[%d]->value;\n",
+	     variableList[i]->e.v->vName, i);
 #else
   for (i = 0; i < variableCount; i++)
     fprintf (srcFile, "\t\t%s = va_arg (args, double);\n", variableList[i]->e.v->vName);
@@ -4363,13 +4381,13 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
       for (i = 0; i < sP->num; i++) {
 	if (i != 0) srcSize += fprintf (srcCalledFile, "+");
 	if (sP->sum[i]->eType == T_CONSTANT)
-	  srcSize += fprintf (srcCalledFile, "%g", sP->sum[i]->value /* still the constant */);
+	  srcSize += fprintf (srcCalledFile, "%.24e", sP->sum[i]->value /* still the constant */);
 	else {
 	  if (sP->factor[i] == 1)
 	    srcSize += fprintf (srcCalledFile, "%s[%g]", eTypes[sP->sum[i]->eType], 
 		     sP->sum[i]->value /* actually <whatever>Used */);
 	  else
-	    srcSize += fprintf (srcCalledFile, "%g*%s[%g]", sP->factor[i], eTypes[sP->sum[i]->eType],
+	    srcSize += fprintf (srcCalledFile, "%.24e*%s[%g]", sP->factor[i], eTypes[sP->sum[i]->eType],
 		     sP->sum[i]->value /* actually <whatever>Used */);
 	}
       }
@@ -4383,7 +4401,7 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
       for (i = 0; i < pP->num; i++) {
 	if (i != 0) srcSize += fprintf (srcCalledFile, "*");
 	if (pP->product[i]->eType == T_CONSTANT)
-	  srcSize += fprintf (srcCalledFile, "%g", pP->product[i]->value /* still the constant */);
+	  srcSize += fprintf (srcCalledFile, "%.24e", pP->product[i]->value /* still the constant */);
 	else {
 	  switch (pP->exponent[i]) {
 	  case 1:
@@ -4420,7 +4438,7 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
       for (i=0; i<p->e.f->num; i++) {
 	if (i != 0) srcSize += fprintf (srcCalledFile, ",");
 	if (p->e.f->para[i]->eType == T_CONSTANT)
-	  srcSize += fprintf (srcCalledFile, "%g", p->e.f->para[i]->value /* still the constant */);
+	  srcSize += fprintf (srcCalledFile, "%.24e", p->e.f->para[i]->value /* still the constant */);
 	else
 	  srcSize += fprintf (srcCalledFile, "%s[%g]", eTypes[p->e.f->para[i]->eType], p->e.f->para[i]->value);
       }
@@ -4440,7 +4458,7 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
   fclose (srcCalledFile);
 
   if (result->eType == T_CONSTANT)
-    fprintf (srcFile, "\n\treturn %g;\n}\n", result->value);
+    fprintf (srcFile, "\n\treturn %.24e;\n}\n", result->value);
   else
     fprintf (srcFile, "\n\treturn %s[%g];\n}\n", eTypes[result->eType], result->value);
 
@@ -4466,23 +4484,22 @@ void *compilePoly (Polynomial * p, struct polyList * l, char * name)
   fprintf (includeFile, "#define FUNCTIONCALLSUSED %d\n", functionCallsUsed);
   fclose (includeFile);
 
-  sprintf (command, "time gcc -O -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", 
+  sprintf (command, "time gcc -g -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", 
 	   name, name, name);
-  fflush (stdout);
   int status;
   if ((status = system (command)) != 0) {
     perror("system()");
     exit (EXIT_FAILURE);
   }
-#ifdef POLYCOMP_DL
-  sprintf (command, "./%s.so", name);
-  if ((dl = dlopen(command, RTLD_NOW)) == NULL) {
-    perror(dlerror());
+#ifdef POLYSIZE
+  sprintf (command, "echo %s, poly %d, is %d internally, and `wc -c %s.so` externally.",
+	   name, result->id, result->totalSize, name);
+  if ((status = system (command)) != 0) {
+    perror("system()");
     exit (EXIT_FAILURE);
   }
-  return dl;
-#else
-  return 0;
 #endif
+
+  return;
 }
 
