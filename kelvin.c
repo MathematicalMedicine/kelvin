@@ -105,7 +105,6 @@
 #include "kelvinHandlers.h"
 #include "likelihood.h"
 #include "saveResults.h"
-#include "trackProgress.h"
 
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 extern Polynomial *constant1Poly;

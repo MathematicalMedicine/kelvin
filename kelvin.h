@@ -24,6 +24,7 @@
 #endif
 #include "utils.h"		/* Kelvin utilities. */
 #include "pedlib.h"		/* Pedigree library. */
+#include "trackProgress.h"
 #ifdef RADSMM
 #include "RADSMM.h"		/* RADSMM library. */
 #endif

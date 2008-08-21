@@ -119,9 +119,7 @@
 #include <time.h>
 #include <signal.h>
 
-#ifdef POLYCOMP_DL
 #include <dlfcn.h>
-#endif
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -136,6 +134,7 @@
 #include "gsl/gsl_cdf.h"
 
 #include "sw.h"
+#include "../trackProgress.h"
 
 extern int polynomialScale;     ///< Scaling factor for hash and other storage set in config.c
 extern struct swStopwatch *overallSW; ///< Total run statistics stopwatch defined in kelvin.c
@@ -4250,7 +4249,7 @@ Polynomial *restoreExternalPoly (char *functionName)
   void *dLHandle;
 
   sprintf (dLName, "./%s.so", functionName);
-  printf ("Attempting load of [%s]\n", dLName);
+  //  printf ("Attempting load of [%s]\n", dLName);
   if ((dLHandle = dlopen(dLName, RTLD_NOW)) != NULL) {
     fprintf (stdout, "Using existing dynamic library for polynomial %s\n", functionName);
     // Loaded it! Make sure the function is in there...
@@ -4277,7 +4276,7 @@ Polynomial *restoreExternalPoly (char *functionName)
       return NULL;
     }
   } else {
-    fprintf (stdout, "Couldn't find existing dynamic library for polynomial %s\n", functionName);
+    //    fprintf (stdout, "Couldn't find existing dynamic library for polynomial %s\n", functionName);
     return NULL;
   }
   // These aren't hashed or listed
@@ -4295,6 +4294,7 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
   struct sumPoly *sP;
   struct productPoly *pP;
 
+  pushStatus ("saving poly C");
   result = p;
 
   sprintf (srcFileName, "%s.c", name);
@@ -4484,6 +4484,7 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
   fprintf (includeFile, "#define FUNCTIONCALLSUSED %d\n", functionCallsUsed);
   fclose (includeFile);
 
+  pushStatus ("compile poly");
   sprintf (command, "time gcc -g -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", 
 	   name, name, name);
   int status;
@@ -4491,6 +4492,7 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
     perror("system()");
     exit (EXIT_FAILURE);
   }
+  popStatus ();
 #ifdef POLYSIZE
   sprintf (command, "echo %s, poly %d, is %d internally, and `wc -c %s.so` externally.",
 	   name, result->id, result->totalSize, name);
@@ -4500,6 +4502,7 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
   }
 #endif
 
+  popStatus ();
   return;
 }
 

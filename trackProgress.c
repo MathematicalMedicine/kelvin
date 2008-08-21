@@ -10,6 +10,42 @@
 #include "kelvinHandlers.h"
 #include "polynomial.h"
 #include "trackProgress.h"
+#include <linux/prctl.h>
+
+/**
+
+Show the current state of the process in some obvious manner -- currently
+(on linux) set the process name.
+
+*/
+#define STATUS_LENGTH 13
+#define STATUS_STACK_DEPTH 32
+char statusStack[STATUS_STACK_DEPTH][STATUS_LENGTH+1];
+int statusStackPosition = 0;
+void pushStatus (char *currentStatus)
+{
+  char processName[16+1];
+  if (statusStackPosition == STATUS_STACK_DEPTH) {
+    fprintf (stderr, "Status stack overflow (not serious), status not changed to [%s]\n",
+	     currentStatus);
+    return;
+  }
+  strncpy (statusStack[++statusStackPosition], currentStatus, STATUS_LENGTH);
+  sprintf (processName, "k(%-.*s)", STATUS_LENGTH, currentStatus);
+  prctl (PR_SET_NAME, processName);
+  return;
+}
+void popStatus ()
+{
+  char processName[16+1];
+  if (statusStackPosition == 0) {
+    fprintf (stderr, "Status stack underflow (not serious), status not reverted\n");
+    return;
+  }
+  sprintf (processName, "k(%-.*s)", STATUS_LENGTH, statusStack[--statusStackPosition]);
+  prctl (PR_SET_NAME, processName);
+  return;
+}
 
 /** 
 

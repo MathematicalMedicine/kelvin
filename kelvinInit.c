@@ -15,8 +15,8 @@
   }
 
   /* Annouce ourselves for performance tracking. */
-  char currentWorkingDirectory[MAXSWMSG - 32];
 
+  pushStatus ("NonSpecific");
   sprintf (messageBuffer, "kelvin %s built %s %s", programVersion, __DATE__, __TIME__);
   swLogMsg (messageBuffer);
   swLogMsg (kelvinVersion);
@@ -88,6 +88,7 @@
     } else {
       /* Got a configuration file name. Copy it. */
       strncpy (configfile, argv[i], KMAXFILENAMELEN);
+      char currentWorkingDirectory[MAXSWMSG - 32];
       getcwd (currentWorkingDirectory, sizeof (currentWorkingDirectory));
       sprintf (messageBuffer, "In %s w/%s", currentWorkingDirectory, configfile);
       swLogMsg (messageBuffer);

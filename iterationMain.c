@@ -269,6 +269,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
                 strcpy (partialPolynomialFunctionName, "cL0_P%s");
                 if (gfreqInd != 0 || penIdx != 0) {
+		  pushStatus ("evaluating");
                   swStart (combinedComputeSW);
                   compute_likelihood (&pedigreeSet);
                   cL[0]++;
@@ -284,13 +285,16 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
                       fflush (stdout);
                     }
                   }
+		  popStatus ();
                 } else { // This _is_ the first iteration
+		  pushStatus ("poly build");
 		  swStart (combinedBuildSW);
 		  compute_likelihood (&pedigreeSet);
 		  cL[0]++;
 		  swStop (combinedBuildSW);
 		  fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]));
 		  fflush (stdout);
+		  popStatus ();
 		}
                 if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                   fprintf (stderr, "Theta 0.5 has likelihood 0\n");
@@ -512,6 +516,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
 		     * show progress at 1 minute intervals. Have a care to avoid division by zero. */
                     strcpy (partialPolynomialFunctionName, "cL2_P%s");
 		    if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
+		      pushStatus ("evaluating");
 		      swStart (combinedComputeSW);
 		      compute_likelihood (&pedigreeSet);
 		      cL[2]++;
@@ -527,13 +532,16 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
 			  fflush (stdout);
 			}
 		      }
+		      popStatus ();
 		    } else { // This _is_ the first iteration
+		      pushStatus ("build poly");
 		      swStart (combinedBuildSW);
 		      compute_likelihood (&pedigreeSet);
 		      cL[2]++;
 		      swStop (combinedBuildSW);
 		      fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]));
 		      fflush (stdout);
+		      popStatus ();
 		    }
 
                     if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
@@ -1666,6 +1674,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
                      (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
                      mp_result[posIdx].pMarkers[0], modelType.numMarkers);
             if (gfreqInd != 0 || penIdx != 0) {
+	      pushStatus ("evaluating");
               swStart (combinedComputeSW);
               compute_likelihood (&pedigreeSet);
               cL[7]++;
@@ -1688,7 +1697,9 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
                   fflush (stdout);
                 }
               }
+	      popStatus ();
             } else {     // This _is_ the first iteration
+	      pushStatus ("build poly");
               swStart (combinedBuildSW);
               compute_likelihood (&pedigreeSet);
               cL[7]++;
@@ -1699,6 +1710,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
               fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]));
 #endif
               fflush (stdout);
+	      popStatus ();
             }
             /* print out some statistics under dry run */
             if (modelOptions.dryRun != 0) {
@@ -1882,6 +1894,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
                          (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
                          mp_result[posIdx].pMarkers[0], modelType.numMarkers);
                 if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
+		  pushStatus ("evaluating");
                   swStart (combinedComputeSW);
                   compute_likelihood (&pedigreeSet);
                   cL[8]++;
@@ -1904,7 +1917,9 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
                       fflush (stdout);
                     }
                   }
+		  popStatus ();
                 } else {  // This _is_ the first iteration
+		  pushStatus ("build poly");
                   swStart (combinedBuildSW);
                   compute_likelihood (&pedigreeSet);
                   cL[8]++;
@@ -1915,6 +1930,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
                   fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]));
 #endif
                   fflush (stdout);
+		  popStatus ();
                 }
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                 if (isnan (log10_likelihood_alternative))
