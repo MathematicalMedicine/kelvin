@@ -349,6 +349,10 @@ Polynomial *polyReturnWrapper (Polynomial *p)
     /* Variable polys have some additional parts. */
     p->totalSize += sizeof (struct variablePoly);
     break;
+  case T_EXTERNAL:
+    /* Variable polys have some additional parts. */
+    p->totalSize += sizeof (struct externalPoly);
+    break;
   case T_SUM:
     /* Sum polys have additional parts and lists of factors and term polys */
     p->totalSize += sizeof (struct sumPoly);
@@ -455,6 +459,10 @@ double doEvaluateValue (Polynomial * p)
       exit (EXIT_FAILURE);
     }
 
+  case T_EXTERNAL:
+    p->value = p->e.e->polynomialFunctionRoutine(1, variableList);
+    return p->value;
+
     /* If a sub polynomial is a sum, evaluate the values of all the terms.
      * Add the values of the terms weighted by their coefficients. */
   case T_SUM:
@@ -559,10 +567,6 @@ double doEvaluateValue (Polynomial * p)
     p->value = result;
     p->valid |= VALID_EVAL_FLAG;
     return result;
-
-  case T_EXTERNAL:
-    p->value = p->e.e->polynomialFunctionRoutine(1, variableList);
-    return p->value;
 
   default:
     fprintf (stderr, "In evaluateValue, unknown expression type: [%d], exiting!\n", p->eType);
@@ -2442,6 +2446,10 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
       }
       break;
 
+    case T_EXTERNAL:
+      p->value = p->e.e->polynomialFunctionRoutine(1, variableList);
+      break;
+
       //Sum up all the items in a sum
     case T_SUM:
       pV = 0;
@@ -2522,10 +2530,6 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
         fprintf (stderr, "unknown function name %s in polynomials\n", p->e.f->name);
         exit (EXIT_FAILURE);
       }
-      break;
-
-    case T_EXTERNAL:
-      p->value = p->e.e->polynomialFunctionRoutine(1, variableList);
       break;
 
     default:
@@ -2994,6 +2998,7 @@ void doPrintSummaryPoly (Polynomial * p, int currentTier)
   switch (p->eType) {
   case T_CONSTANT:
   case T_VARIABLE:
+  case T_EXTERNAL:
     break;
   case T_SUM:
     for (i = 0; i < p->e.s->num; i++) {
@@ -3065,6 +3070,9 @@ void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
   case T_VARIABLE:
     fprintf (diGraph, "%d [label=\"%s\"];\n", p->id, p->e.v->vName);
     break;
+  case T_EXTERNAL:
+    fprintf (diGraph, "%d [label=\"%s()\"];\n", p->id, p->e.e->polynomialFunctionName);
+    break;
   case T_SUM:
     fprintf (diGraph, "%d [label=\"+\"];\n", p->id);
     for (i = 0; i < p->e.s->num; i++) {
@@ -3127,6 +3135,9 @@ void expPrinting (Polynomial * p)
     break;
   case T_VARIABLE:
     fprintf (stderr, "%s", p->e.v->vName);
+    break;
+  case T_EXTERNAL:
+    fprintf (stderr, "%s()", p->e.e->polynomialFunctionName);
     break;
   case T_SUM:
     if (p->e.s->num > 1)
@@ -3192,6 +3203,9 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
     break;
   case T_VARIABLE:
     fprintf (output, "%s", p->e.v->vName);
+    break;
+  case T_EXTERNAL:
+    fprintf (output, "%s()", p->e.e->polynomialFunctionName);
     break;
   case T_SUM:
     if (depth <= 0) {
@@ -3662,6 +3676,7 @@ void doKeepPoly (Polynomial * p)
   switch (p->eType) {
   case T_CONSTANT:
   case T_VARIABLE:
+  case T_EXTERNAL:
     break;
   case T_SUM:
   case T_PRODUCT:
@@ -3710,6 +3725,7 @@ void doHoldPoly (Polynomial * p)
   switch (p->eType) {
   case T_CONSTANT:
   case T_VARIABLE:
+  case T_EXTERNAL:
     p->count++;
     break;
   case T_SUM:
@@ -3754,6 +3770,7 @@ void doUnHoldPoly (Polynomial * p)
   switch (p->eType) {
   case T_CONSTANT:
   case T_VARIABLE:
+  case T_EXTERNAL:
     p->count--;
     break;
   case T_SUM:

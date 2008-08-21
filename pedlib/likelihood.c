@@ -291,8 +291,6 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	    // Failed to load, construct it
 	    initialize_multi_locus_genotype (pPedigree);
 	    status = compute_pedigree_likelihood (pPedigree);
-	    holdPoly (pPedigree->likelihoodPolynomial);
-	    freeKeptPolys ();
 	    pPedigree->likelihoodPolyList = buildPolyList ();
 	    polyListSorting (pPedigree->likelihoodPolynomial,
 			     pPedigree->likelihoodPolyList);
@@ -304,31 +302,36 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	      compilePoly(pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList,
 			  polynomialFunctionName);
 	      // Soon we'll try to load this new one and ditch the old one
+	      if ((
 #ifdef POLYCOMPCHECK
-	      if ((pPedigree->cLikelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
+		  pPedigree->cLikelihoodPolynomial
 #else
-	      if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
+		  pPedigree->likelihoodPolynomial
 #endif
+		  = restoreExternalPoly (polynomialFunctionName)) == NULL) {
 		fprintf (stdout, "Couldn't load compiled likelihood polynomial we just created!\n");
 		exit (EXIT_FAILURE);
 	      } else {
+		fprintf (stdout, "Loaded DL for polynomial %s...\n", polynomialFunctionName);
 		pPedigree->likelihoodPolyList = buildPolyList ();
 		polyListSorting (pPedigree->likelihoodPolynomial,  pPedigree->likelihoodPolyList);
 	      }
-	    } else
-	      fprintf (stdout, "Not compiling polynomial P%d (%s) as it is unworthy...\n",
-		       pPedigree->likelihoodPolynomial->id, polynomialFunctionName);
-	      
+	    }
+#ifdef POLYCOMPCHECK
+	    holdPoly (pPedigree->cLikelihoodPolynomial);
+#endif
+	    // Notice we might be holding only the external (compiled) poly!
+	    holdPoly (pPedigree->likelihoodPolynomial);
+	    freeKeptPolys ();
 #endif
 #ifdef POLYSTATISTICS
 	    if (i == pPedigreeList->numPedigree - 1)
 	      polyDynamicStatistics ("Post-build");
 #endif
 	  } else {
+	    fprintf (stdout, "Loaded DL for polynomial %s...\n", polynomialFunctionName);
 	    pPedigree->likelihoodPolyList = buildPolyList ();
 	    polyListSorting (pPedigree->likelihoodPolynomial,  pPedigree->likelihoodPolyList);
-	    fprintf (stdout, "Loaded polynomial P%d (%s)...\n",
-		     pPedigree->likelihoodPolynomial->id, polynomialFunctionName);
 	  }
 	}
       }
