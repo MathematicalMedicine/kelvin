@@ -1162,7 +1162,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
             update_locus (&pedigreeSet, traitLocus);
 
           /* Compute the likelihood for the trait */
-          sprintf (partialPolynomialFunctionName, "T_P%%sSL%d", modelOptions.sexLinked);
+          sprintf (partialPolynomialFunctionName, "TL4_P%%sSL%d", modelOptions.sexLinked);
           compute_likelihood (&pedigreeSet);
           cL[4]++;
 #ifndef SIMPLEPROGRESS
@@ -1273,7 +1273,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
               if (modelOptions.polynomial == TRUE);
               else
                 update_penetrance (&pedigreeSet, traitLocus);
-              sprintf (partialPolynomialFunctionName, "T_P%%sSL%d", modelOptions.sexLinked);
+              sprintf (partialPolynomialFunctionName, "TL5_P%%sSL%d", modelOptions.sexLinked);
               compute_likelihood (&pedigreeSet);
               cL[5]++;
 #ifndef SIMPLEPROGRESS
@@ -1476,9 +1476,15 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
             pPedigree->load_flag = 0;
           }
         }
-        sprintf (partialPolynomialFunctionName, "ML_P%%sC%dFM%dof%d",
-                 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-                 mp_result[posIdx].pMarkers[0], modelType.numMarkers);
+	if (markerSetChanged) {
+	  char markerNo[8];
+	  sprintf (partialPolynomialFunctionName, "CL6_P%%sC%dM",
+		   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+	  for (k = 0; k < modelType.numMarkers; k++) {
+	    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
+	    strcat (partialPolynomialFunctionName, markerNo);
+	  }
+	}
         compute_likelihood (&pedigreeSet);
         cL[6]++;
 #ifndef SIMPLEPROGRESS
@@ -1670,9 +1676,15 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
 
             /* If we're not on the first iteration, it's not a polynomial build, so
              * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-            sprintf (partialPolynomialFunctionName, "CL_P%%sC%dFM%dof%d",
-                     (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-                     mp_result[posIdx].pMarkers[0], modelType.numMarkers);
+	    if (markerSetChanged) {
+	      char markerNo[8];
+	      sprintf (partialPolynomialFunctionName, "CL7_P%%sC%dM",
+		       (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+	      for (k = 0; k < modelType.numMarkers; k++) {
+		sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
+		strcat (partialPolynomialFunctionName, markerNo);
+	      }
+	    }
             if (gfreqInd != 0 || penIdx != 0) {
 	      pushStatus ("evaluating");
               swStart (combinedComputeSW);
@@ -1890,9 +1902,15 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
 
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-                sprintf (partialPolynomialFunctionName, "CL_P%%sC%dFM%dof%d",
-                         (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-                         mp_result[posIdx].pMarkers[0], modelType.numMarkers);
+		if (markerSetChanged) {
+		  char markerNo[8];
+		  sprintf (partialPolynomialFunctionName, "CL8_P%%sC%dM",
+			   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+		  for (k = 0; k < modelType.numMarkers; k++) {
+		    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
+		    strcat (partialPolynomialFunctionName, markerNo);
+		  }
+		}
                 if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
 		  pushStatus ("evaluating");
                   swStart (combinedComputeSW);
