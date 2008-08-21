@@ -2550,12 +2550,6 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 #ifdef EVALUATESW
   swStop (evaluatePolySW);
 #endif
-  /* For testing compiled polynomial results
-  printf("./P%d", pp->id);
-  for (i=0; i<variableCount; i++)
-    printf(" %g", variableList[i]->value);
-  printf("\n...should give %g\n", *pReturnValue);
-  */
   return;
 }
 
@@ -3280,9 +3274,9 @@ void thrashingCheck ()
     deltaAccumUserTime = overallSW->swAccumRUSelf.ru_utime.tv_sec + overallSW->swAccumRUChildren.ru_utime.tv_sec -
 			  lastPDSAccumUserTime;
     if ((deltaAccumUserTime != 0) && (100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < THRASH_CPU)) {
-      sprintf (messageBuffer, "Thrashing detected (utilization under %d%%), exiting!", THRASH_CPU);
+      sprintf (messageBuffer, "Thrashing detected (utilization under %d%%), consider exiting!", THRASH_CPU);
       swLogMsg (messageBuffer);
-      exit (EXIT_FAILURE);
+      //      exit (EXIT_FAILURE);
     }
   }
   swStart (overallSW);
@@ -4301,7 +4295,7 @@ Polynomial *restoreExternalPoly (char *functionName)
 }
 
 #define MAXSRCSIZE (8192*128)
-void compilePoly (Polynomial * p, struct polyList * l, char * name)
+void codePoly (Polynomial * p, struct polyList * l, char * name)
 {
   char srcFileName[128], srcCalledFileName[128], includeFileName[128], command[256];
   FILE *srcFile, *srcCalledFile = NULL, *includeFile;
@@ -4464,7 +4458,7 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
       break;
       
     default:
-      fprintf (stderr, "In compilePoly, unknown expression type: [%d], exiting!\n", p->eType);
+      fprintf (stderr, "In codePoly, unknown expression type: [%d], exiting!\n", p->eType);
       exit (EXIT_FAILURE);
       break;
     }
@@ -4501,8 +4495,9 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
   fprintf (includeFile, "#define FUNCTIONCALLSUSED %d\n", functionCallsUsed);
   fclose (includeFile);
 
+#ifndef FAKEEVALUATE
   pushStatus ("compile poly");
-  sprintf (command, "time gcc -g -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", 
+  sprintf (command, "time gcc -O -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", 
 	   name, name, name);
   int status;
   if ((status = system (command)) != 0) {
@@ -4517,6 +4512,7 @@ void compilePoly (Polynomial * p, struct polyList * l, char * name)
     perror("system()");
     exit (EXIT_FAILURE);
   }
+#endif
 #endif
 
   popStatus ();

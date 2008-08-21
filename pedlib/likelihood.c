@@ -297,17 +297,18 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 #ifdef POLYCOMP
 	    if (pPedigree->likelihoodPolynomial->eType == T_SUM ||
 		pPedigree->likelihoodPolynomial->eType == T_PRODUCT) { // Worth compiling
-	      fprintf (stdout, "Compiling polynomial P%d (%s)...\n",
+	      fprintf (stdout, "Coding polynomial P%d (%s)...\n",
 		       pPedigree->likelihoodPolynomial->id, polynomialFunctionName);
-	      compilePoly(pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList,
+	      codePoly(pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList,
 			  polynomialFunctionName);
 	      // Soon we'll try to load this new one and ditch the old one
+  #ifndef FAKEEVALUATE
 	      if ((
-#ifdef POLYCOMPCHECK
+    #ifdef POLYCOMPCHECK
 		  pPedigree->cLikelihoodPolynomial
-#else
+    #else
 		  pPedigree->likelihoodPolynomial
-#endif
+    #endif
 		  = restoreExternalPoly (polynomialFunctionName)) == NULL) {
 		fprintf (stdout, "Couldn't load compiled likelihood polynomial we just created!\n");
 		exit (EXIT_FAILURE);
@@ -316,11 +317,20 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 		pPedigree->likelihoodPolyList = buildPolyList ();
 		polyListSorting (pPedigree->likelihoodPolynomial,  pPedigree->likelihoodPolyList);
 	      }
+  #endif
 	    }
-#ifdef POLYCOMPCHECK
+  #ifdef FAKEEVALUATE
+	    else {
+	      holdPoly (pPedigree->likelihoodPolynomial);
+	      freeKeptPolys ();
+	    }
+  #endif
+  #ifdef POLYCOMPCHECK
 	    holdPoly (pPedigree->cLikelihoodPolynomial);
+  #endif
 #endif
 	    // Notice we might be holding only the external (compiled) poly!
+#ifndef FAKEEVALUATE
 	    holdPoly (pPedigree->likelihoodPolynomial);
 	    freeKeptPolys ();
 #endif

@@ -319,7 +319,7 @@ void writePolyDigraph (Polynomial *);
 
 #endif
 
-void compilePoly (Polynomial * p, struct polyList * l, char * name);
+void codePoly (Polynomial * p, struct polyList * l, char * name);
 Polynomial *restoreExternalPoly (char * name);
 void externalizePolys ();
 void thrashingCheck ();
