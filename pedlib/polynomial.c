@@ -172,6 +172,10 @@ struct polynomial **variableList;       ///< The list of all variables
 int variableCount;      ///< The number of variables in variableList
 int variableListLength; ///< The total space available for variables in variableList
 
+struct polynomial **externalList;       ///< The list of all external functions
+int externalCount;      ///< The number of externals in externalList
+int externalListLength; ///< The total space available for externals in externalList
+
 struct polynomial **sumList;    ///< The list of all sums
 int sumCount;   ///< The number of sums in sumList
 int sumListLength;      ///< The total space available for sums in sumList
@@ -184,10 +188,6 @@ struct polynomial **functionCallList;
 int functionCallCount;
 int functionCallListLength;
 
-struct polynomial *externalList[20480];
-int externalCount = 0;
-int holdAllPolysNodeId = 0;
-
 char *eTypes[7] = { "C", "V", "S", "P", "F", "E", "U" };        ///< Useful prefixes for polynomial types
 
 /** @defgroup PolyCons Polynomial Scaling Constants
@@ -197,8 +197,13 @@ char *eTypes[7] = { "C", "V", "S", "P", "F", "E", "U" };        ///< Useful pref
   case because they act like constants. */
 
 int CONSTANT_HASH_SIZE, VARIABLE_HASH_SIZE, SUM_HASH_SIZE, PRODUCT_HASH_SIZE,
-    FUNCTIONCALL_HASH_SIZE, HASH_TABLE_INCREASE, CONSTANT_LIST_INITIAL,
-    CONSTANT_LIST_INCREASE, VARIABLE_LIST_INITIAL, VARIABLE_LIST_INCREASE, SUM_LIST_INITIAL, SUM_LIST_INCREASE, PRODUCT_LIST_INITIAL, PRODUCT_LIST_INCREASE, FUNCTIONCALL_LIST_INITIAL, FUNCTIONCALL_LIST_INCREASE = 0;
+  FUNCTIONCALL_HASH_SIZE, HASH_TABLE_INCREASE,
+  CONSTANT_LIST_INITIAL, CONSTANT_LIST_INCREASE,
+  VARIABLE_LIST_INITIAL, VARIABLE_LIST_INCREASE, 
+  EXTERNAL_LIST_INITIAL, EXTERNAL_LIST_INCREASE, 
+  SUM_LIST_INITIAL, SUM_LIST_INCREASE, 
+  PRODUCT_LIST_INITIAL, PRODUCT_LIST_INCREASE, 
+  FUNCTIONCALL_LIST_INITIAL, FUNCTIONCALL_LIST_INCREASE = 0;
 /*@}*/
 
 /** @defgroup PolyPerf Polynomial Performance Monitoring Variables
@@ -391,6 +396,15 @@ void clearValidEvalFlag ()
 {
   int i;
 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (i = 0; i < constantCount; i++)
+    constantList[i]->valid &= ~VALID_EVAL_FLAG;
+  for (i = 0; i < variableCount; i++)
+    variableList[i]->valid &= ~VALID_EVAL_FLAG;
+  for (i = 0; i < externalCount; i++)
+    externalList[i]->valid &= ~VALID_EVAL_FLAG;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -2582,6 +2596,8 @@ void polynomialInitialization ()
   CONSTANT_LIST_INCREASE = MIN_CONSTANT_LIST_INCREASE * polynomialScale;
   VARIABLE_LIST_INITIAL = MIN_VARIABLE_LIST_INITIAL * polynomialScale;
   VARIABLE_LIST_INCREASE = MIN_VARIABLE_LIST_INCREASE * polynomialScale;
+  EXTERNAL_LIST_INITIAL = MIN_EXTERNAL_LIST_INITIAL * polynomialScale;
+  EXTERNAL_LIST_INCREASE = MIN_EXTERNAL_LIST_INCREASE * polynomialScale;
   SUM_LIST_INITIAL = MIN_SUM_LIST_INITIAL * polynomialScale;
   SUM_LIST_INCREASE = MIN_SUM_LIST_INCREASE * polynomialScale;
   PRODUCT_LIST_INITIAL = MIN_PRODUCT_LIST_INITIAL * polynomialScale;
@@ -2607,10 +2623,18 @@ void polynomialInitialization ()
     exit (EXIT_FAILURE);
   }
 
-  variableListLength = 50;
+  variableListLength = VARIABLE_LIST_INITIAL;
   variableCount = 0;
   variableList = (Polynomial **) malloc (variableListLength * sizeof (Polynomial *));
   if (variableList == NULL) {
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+    exit (EXIT_FAILURE);
+  }
+
+  externalListLength = EXTERNAL_LIST_INITIAL;
+  externalCount = 0;
+  externalList = (Polynomial **) malloc (externalListLength * sizeof (Polynomial *));
+  if (externalList == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
@@ -3485,7 +3509,6 @@ void holdAllPolys ()
 {
   int i, j;
 
-  holdAllPolysNodeId = nodeId;  // Keep track of this for externalizing polys
   holdAllPolysCount++;
 
 #ifdef _OPENMP
@@ -4037,111 +4060,6 @@ void freeKeptPolys ()
   return;
 }
 
-void doExternalizePolys ()
-{
-  int i, j, k, newCount;
-
-  if (polynomialDebugLevel >= 10)
-    fprintf (stderr, "Starting doExternalizePolys\n");
-
-  // The sumList (and others) never get out of nodeId order, so skip over holdAllPolys entries.
-  i = 0;
-  while (sumList[i++]->id <= holdAllPolysNodeId);
-  newCount = i;
-  for (; i < sumCount; i++) {
-    if (sumList[i]->id == polynomialLostNodeId)
-      fprintf (stderr, "doExternalizePolys sees id %d with valid %d and count %d\n", polynomialLostNodeId, sumList[i]->valid, sumList[i]->count);
-    if (sumList[i]->count || sumList[i]->valid) {
-      // Convert to external
-      externalList[externalCount] = sumList[i];
-      //          externalList[externalCount]->e.e->formerEType = T_SUM;
-      //          sprintf (externalList[externalCount]->e.e->signature, "S%d", sumList[i]->id);
-      externalList[externalCount]->index = externalCount;
-      externalCount++;
-      free (sumList[i]->e.s->sum);
-      free (sumList[i]->e.s->factor);
-      free (sumList[i]->e.s);
-      //          free (sumList[i]);
-      sumList[i] = NULL;
-    }
-  }
-
-  // Go thru the hash collapsing entries.
-  for (j = 0; j < SUM_HASH_SIZE; j++) {
-    if (sumHash[j].num > 0) {
-      k = 0;
-      for (i = 0; i < sumHash[j].num; i++) {
-        if (sumList[sumHash[j].index[i]] != NULL) {
-          /* It's a keeper, slide it down and bump the count */
-          //        fprintf(stderr, "Hash keeper index %d is now %d\n", sumHash[j].index[i],
-          //              sumList[sumHash[j].index[i]]->index);
-          sumHash[j].index[k] = sumList[sumHash[j].index[i]]->index;
-          sumHash[j].key[k] = sumHash[j].key[i];
-          k++;
-        }
-      }
-      sumHash[j].num = k;
-    }
-  }
-  sumCount = newCount;  // Reset the sum list
-
-  // The productList (and others) never get out of nodeId order, so skip over holdAllPolys entries.
-  i = 0;
-  while (productList[i++]->id <= holdAllPolysNodeId);
-  newCount = i;
-  for (i = 0; i < productCount; i++) {
-    if (productList[i]->id == polynomialLostNodeId)
-      fprintf (stderr, "doExternalizePolys sees id %d with valid %d and count %d\n", polynomialLostNodeId, productList[i]->valid, productList[i]->count);
-    if (productList[i]->count || productList[i]->valid) {
-      // Convert to external
-      externalList[externalCount] = productList[i];
-      //          externalList[externalCount]->e.e->formerEType = T_PRODUCT;
-      //          sprintf (externalList[externalCount]->e.e->signature, "P%d", productList[i]->id);
-      externalList[externalCount]->index = externalCount;
-      externalCount++;
-      free (productList[i]->e.p->product);
-      free (productList[i]->e.p->exponent);
-      free (productList[i]->e.p);
-      //          free (productList[i]);
-      productList[i] = NULL;
-    }
-  }
-
-  // Go thru the hash collapsing entries.
-  for (j = 0; j < PRODUCT_HASH_SIZE; j++) {
-    if (productHash[j].num > 0) {
-      k = 0;
-      for (i = 0; i < productHash[j].num; i++) {
-        if (productList[productHash[j].index[i]] != NULL) {
-          /* It's a keeper, slide it down and bump the count */
-          //        fprintf(stderr, "Hash keeper index %d is now %d\n", productHash[j].index[i],
-          //              productList[productHash[j].index[i]]->index);
-          productHash[j].index[k] = productList[productHash[j].index[i]]->index;
-          productHash[j].key[k] = productHash[j].key[i];
-          k++;
-        }
-      }
-      productHash[j].num = k;
-    }
-  }
-  productCount = newCount;      // Reset the product list
-
-  /* Reset building statistics. */
-  sumReleaseableCount = sumNotReleaseableCount = sumReturnConstantCount = sumReturn1TermCount = sumHashHits = sumNewCount = sumListNewCount = sumListReplacementCount = 0;
-  productReleaseableCount = productNotReleaseableCount = productReturn0Count =
-      productReturnConstantCount = productReturn1stTermCount = productReturn1TermSumCount = productHashHits = productHashHitIsSumCount = productReturnNormalCount = productNon1FactorIsSumCount = productListNewCount = productListReplacementCount = 0;
-  totalSPLLengths = totalSPLCalls = lowSPLCount = highSPLCount = 0;
-
-  return;
-}
-
-/* Free all termed polynomials replacing held and kept with externalPolys. */
-void externalizePolys ()
-{
-  doExternalizePolys ();
-  return;
-}
-
 /* Serialize and compress a polynomial and all subpolys for transfer
    Addresses can be left as-is since we'll create a translation table when we
    reload, and compression will eliminate any temporary inefficiency of size. */
@@ -4181,16 +4099,32 @@ Polynomial *restoreExternalPoly (char *functionName)
         fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
         exit (EXIT_FAILURE);
       }
+      if (externalCount >= externalListLength) {
+	externalListLength += EXTERNAL_LIST_INCREASE;
+	externalList = realloc (externalList, externalListLength * sizeof (Polynomial *));
+	if (externalList == NULL) {
+	  fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+	  exit (EXIT_FAILURE);
+	}
+      }
+      rp->index = externalCount;
+      rp->id = nodeId;
       rp->eType = T_EXTERNAL;
+      rp->valid = 0;
+      rp->count = 0;
+      externalList[externalCount] = rp;
+      externalCount++;
+      nodeId++;
       eP = (struct externalPoly *) malloc (sizeof (struct externalPoly));
       if (eP == NULL) {
         fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
         exit (EXIT_FAILURE);
       }
-      rp->e.e = eP;
       strcpy (eP->polynomialFunctionName, functionName);
       eP->polynomialFunctionHandle = dLHandle;
       eP->polynomialFunctionRoutine = dLRoutine;
+      rp->e.e = eP;
+      
     } else {
       fprintf (stdout, "Couldn't find routine in dynamic library for polynomial %s\n", functionName);
       dlclose (dLHandle);
