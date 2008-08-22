@@ -4381,8 +4381,7 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
 
     case T_VARIABLE:
       srcSize += fprintf (srcCalledFile, "\t%s[%d] = %s", eTypes[p->eType], p->index,
-	       p->e.v->vName);
-      //      srcSize += fprintf (srcCalledFile, ";\n\tprintf (\"%%g\\n\", %s[%d])", eTypes[p->eType], p->index);
+			  p->e.v->vName);
       p->value = p->index;
       break;
 
@@ -4395,14 +4394,13 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
 	  srcSize += fprintf (srcCalledFile, "%.24e", sP->sum[i]->value /* still the constant */);
 	else {
 	  if (sP->factor[i] == 1)
-	    srcSize += fprintf (srcCalledFile, "%s[%g]", eTypes[sP->sum[i]->eType], 
-		     sP->sum[i]->value /* actually <whatever>Used */);
+	    srcSize += fprintf (srcCalledFile, "%s[%lu]", eTypes[sP->sum[i]->eType], 
+				(unsigned long) sP->sum[i]->value /* actually <whatever>Used */);
 	  else
-	    srcSize += fprintf (srcCalledFile, "%.24e*%s[%g]", sP->factor[i], eTypes[sP->sum[i]->eType],
-		     sP->sum[i]->value /* actually <whatever>Used */);
+	    srcSize += fprintf (srcCalledFile, "%.24e*%s[%lu]", sP->factor[i], eTypes[sP->sum[i]->eType],
+				(unsigned long) sP->sum[i]->value /* actually <whatever>Used */);
 	}
       }
-      //      srcSize += fprintf (srcCalledFile, ";\n\tprintf (\"%%g\\n\", %s[%d])", eTypes[p->eType], sumsUsed);
       p->value = sumsUsed++;
       break;
 
@@ -4416,26 +4414,30 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
 	else {
 	  switch (pP->exponent[i]) {
 	  case 1:
-	    srcSize += fprintf (srcCalledFile, "%s[%g]", eTypes[pP->product[i]->eType], pP->product[i]->value);
+	    srcSize += fprintf (srcCalledFile, "%s[%lu]", eTypes[pP->product[i]->eType], 
+				(unsigned long) pP->product[i]->value);
 	    break;
 	  case 2:
-	    srcSize += fprintf (srcCalledFile, "%s[%g]*%s[%g]", eTypes[pP->product[i]->eType], pP->product[i]->value,
-		     eTypes[pP->product[i]->eType], pP->product[i]->value);
+	    srcSize += fprintf (srcCalledFile, "%s[%lu]*%s[%lu]", eTypes[pP->product[i]->eType], 
+				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType],
+				(unsigned long) pP->product[i]->value);
 	    break;
 	  case 3:
-	    srcSize += fprintf (srcCalledFile, "%s[%g]*%s[%g]*%s[%g]", eTypes[pP->product[i]->eType], pP->product[i]->value, 
-		     eTypes[pP->product[i]->eType], pP->product[i]->value, eTypes[pP->product[i]->eType],
-		     pP->product[i]->value);
+	    srcSize += fprintf (srcCalledFile, "%s[%lu]*%s[%lu]*%s[%lu]", eTypes[pP->product[i]->eType], 
+				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType], 
+				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType],
+				(unsigned long) pP->product[i]->value);
 	    break;
 	  case 4:
-	    srcSize += fprintf (srcCalledFile, "%s[%g]*%s[%g]*%s[%g]*%s[%g]", eTypes[pP->product[i]->eType], 
-		     pP->product[i]->value, eTypes[pP->product[i]->eType], pP->product[i]->value,
-		     eTypes[pP->product[i]->eType], pP->product[i]->value, 
-		     eTypes[pP->product[i]->eType], pP->product[i]->value);
+	    srcSize += fprintf (srcCalledFile, "%s[%lu]*%s[%lu]*%s[%lu]*%s[%lu]", eTypes[pP->product[i]->eType], 
+				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType], 
+				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType],
+				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType],
+				(unsigned long) pP->product[i]->value);
 	    break;
 	  default:
-	    srcSize += fprintf (srcCalledFile, "pow(%s[%g],%d)", eTypes[pP->product[i]->eType],
-		     pP->product[i]->value, pP->exponent[i]);
+	    srcSize += fprintf (srcCalledFile, "pow(%s[%lu],%d)", eTypes[pP->product[i]->eType],
+				(unsigned long) pP->product[i]->value, pP->exponent[i]);
 	    break;
 	  }
         }
@@ -4451,7 +4453,8 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
 	if (p->e.f->para[i]->eType == T_CONSTANT)
 	  srcSize += fprintf (srcCalledFile, "%.24e", p->e.f->para[i]->value /* still the constant */);
 	else
-	  srcSize += fprintf (srcCalledFile, "%s[%g]", eTypes[p->e.f->para[i]->eType], p->e.f->para[i]->value);
+	  srcSize += fprintf (srcCalledFile, "%s[%lu]", eTypes[p->e.f->para[i]->eType], 
+			      (unsigned long) p->e.f->para[i]->value);
       }
       srcSize += fprintf (srcCalledFile, ")");
       p->value = functionCallsUsed++;
