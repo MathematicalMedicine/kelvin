@@ -137,7 +137,7 @@
 #include "../trackProgress.h"
 
 extern int polynomialScale;     ///< Scaling factor for hash and other storage set in config.c
-extern struct swStopwatch *overallSW; ///< Total run statistics stopwatch defined in kelvin.c
+extern struct swStopwatch *overallSW;   ///< Total run statistics stopwatch defined in kelvin.c
 
 /** This is a global variable used for giving each polynomial an unique ID
    so that we can know if two polynomials are the same just from their IDs */
@@ -188,7 +188,7 @@ struct polynomial *externalList[20480];
 int externalCount = 0;
 int holdAllPolysNodeId = 0;
 
-char *eTypes[7] = {"C", "V", "S", "P", "F", "E", "U"}; ///< Useful prefixes for polynomial types
+char *eTypes[7] = { "C", "V", "S", "P", "F", "E", "U" };        ///< Useful prefixes for polynomial types
 
 /** @defgroup PolyCons Polynomial Scaling Constants
     @{
@@ -197,10 +197,8 @@ char *eTypes[7] = {"C", "V", "S", "P", "F", "E", "U"}; ///< Useful prefixes for 
   case because they act like constants. */
 
 int CONSTANT_HASH_SIZE, VARIABLE_HASH_SIZE, SUM_HASH_SIZE, PRODUCT_HASH_SIZE,
-  FUNCTIONCALL_HASH_SIZE, HASH_TABLE_INCREASE, CONSTANT_LIST_INITIAL,
-  CONSTANT_LIST_INCREASE, VARIABLE_LIST_INITIAL, VARIABLE_LIST_INCREASE,
-  SUM_LIST_INITIAL, SUM_LIST_INCREASE, PRODUCT_LIST_INITIAL,
-  PRODUCT_LIST_INCREASE, FUNCTIONCALL_LIST_INITIAL, FUNCTIONCALL_LIST_INCREASE = 0;
+    FUNCTIONCALL_HASH_SIZE, HASH_TABLE_INCREASE, CONSTANT_LIST_INITIAL,
+    CONSTANT_LIST_INCREASE, VARIABLE_LIST_INITIAL, VARIABLE_LIST_INCREASE, SUM_LIST_INITIAL, SUM_LIST_INCREASE, PRODUCT_LIST_INITIAL, PRODUCT_LIST_INCREASE, FUNCTIONCALL_LIST_INITIAL, FUNCTIONCALL_LIST_INCREASE = 0;
 /*@}*/
 
 /** @defgroup PolyPerf Polynomial Performance Monitoring Variables
@@ -211,46 +209,41 @@ int CONSTANT_HASH_SIZE, VARIABLE_HASH_SIZE, SUM_HASH_SIZE, PRODUCT_HASH_SIZE,
 
 int maxHashLength = 0;  ///< Length of longest hash table collision list
 int constantHashHits = 0,       ///< constantExp return is a pre-existing polynomial
-  variableHashHits = 0, ///< variableExp return is a pre-existing polynomial (surprise!)
-  functionHashHits = 0; ///< functionCallExp return is a pre-existing polynomial
+    variableHashHits = 0,       ///< variableExp return is a pre-existing polynomial (surprise!)
+    functionHashHits = 0;       ///< functionCallExp return is a pre-existing polynomial
 int sumReleaseableCount = 0,    ///< Indicates if flag was set to release 1st term in sum
-  sumNotReleaseableCount,       ///< ...or not.
-  sumReturnConstantCount,       ///< plusExp return is actually a constant
-  sumReturn1TermCount,  ///< plusExp return is single-term polynomial
-  sumHashHits,  ///< plusExp return is pre-existing polynomial
-  sumNewCount,  ///< plusExp return is a new polynomial
-  sumListNewCount,      ///< New sumList entry created
-  sumListReplacementCount,      ///< Existing sumList entry used
-  sumFreedCount = 0,    ///< Count of sumPolys freed
-  sum1stTermsFreedCount = 0;    ///< Count of 1st-terms successfully freed
+    sumNotReleaseableCount,     ///< ...or not.
+    sumReturnConstantCount,     ///< plusExp return is actually a constant
+    sumReturn1TermCount,        ///< plusExp return is single-term polynomial
+    sumHashHits,        ///< plusExp return is pre-existing polynomial
+    sumNewCount,        ///< plusExp return is a new polynomial
+    sumListNewCount,    ///< New sumList entry created
+    sumListReplacementCount,    ///< Existing sumList entry used
+    sumFreedCount = 0,  ///< Count of sumPolys freed
+    sum1stTermsFreedCount = 0;  ///< Count of 1st-terms successfully freed
 int productReleaseableCount = 0,        ///< Indicates if flag was set to release 1st term in product
-  productNotReleaseableCount = 0,       ///< ...or not.
-  productReturn0Count = 0,      ///< timesExp return is actually zero
-  productReturnConstantCount = 0,       ///< timesExp return is actually a non-zero constant
-  productReturn1stTermCount = 0,        ///< timesExp return is actually the first term itself
-  productReturn1TermSumCount = 0,       ///< timesExp return is a sum built from the first term itself
-  productHashHits = 0,  ///< timesExp return is a pre-existing polynomial
-  productHashHitIsSumCount = 0, ///< timesExp return is a sum built from a pre-existing polynomial
-  productReturnNormalCount = 0, ///< timesExp return is a new product polynomial (not a sum)
-  productNon1FactorIsSumCount = 0,      ///< timesExp return is a new sum of a new product
-  productListNewCount = 0,      ///< New productList entry created
-  productListReplacementCount = 0,      ///< Existing productList entry used
-  productFreedCount = 0,        ///< Count of productPolys freed
-  product1stTermsFreedCount = 0;        ///< Count of 1st-terms successfully freed
+    productNotReleaseableCount = 0,     ///< ...or not.
+    productReturn0Count = 0,    ///< timesExp return is actually zero
+    productReturnConstantCount = 0,     ///< timesExp return is actually a non-zero constant
+    productReturn1stTermCount = 0,      ///< timesExp return is actually the first term itself
+    productReturn1TermSumCount = 0,     ///< timesExp return is a sum built from the first term itself
+    productHashHits = 0,        ///< timesExp return is a pre-existing polynomial
+    productHashHitIsSumCount = 0,       ///< timesExp return is a sum built from a pre-existing polynomial
+    productReturnNormalCount = 0,       ///< timesExp return is a new product polynomial (not a sum)
+    productNon1FactorIsSumCount = 0,    ///< timesExp return is a new sum of a new product
+    productListNewCount = 0,    ///< New productList entry created
+    productListReplacementCount = 0,    ///< Existing productList entry used
+    productFreedCount = 0,      ///< Count of productPolys freed
+    product1stTermsFreedCount = 0;      ///< Count of 1st-terms successfully freed
 int constantPListExpansions = 0,        ///< Count of constantList expansions
-  variablePListExpansions = 0,  ///< Count of variableList expansions
-  sumPListExpansions = 0,       ///< Count of sumList expansions
-  productPListExpansions = 0,   ///< Count of productList expansions
-  functionCallPListExpansions = 0;      ///< Count of functionCallList expansions
+    variablePListExpansions = 0,        ///< Count of variableList expansions
+    sumPListExpansions = 0,     ///< Count of sumList expansions
+    productPListExpansions = 0, ///< Count of productList expansions
+    functionCallPListExpansions = 0;    ///< Count of functionCallList expansions
 /// Count of calls to various statistically interesting functions
-int polyListSortingCount = 0, evaluatePolyCount = 0, evaluateValueCount = 0, keepPolyCount = 0,
-  freePolysCount = 0, holdPolyCount = 0, holdAllPolysCount = 0, unHoldPolyCount = 0,
-  freeKeptPolysCount = 0, freePolysAttemptCount = 0;
+int polyListSortingCount = 0, evaluatePolyCount = 0, evaluateValueCount = 0, keepPolyCount = 0, freePolysCount = 0, holdPolyCount = 0, holdAllPolysCount = 0, unHoldPolyCount = 0, freeKeptPolysCount = 0, freePolysAttemptCount = 0;
 int containerExpansions = 0;    ///< Count of expansions of any term-collection container.
-unsigned long totalSPLLengths = 0,
-  totalSPLCalls = 0,
-  lowSPLCount = 0,
-  highSPLCount = 0;
+unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount = 0, highSPLCount = 0;
 unsigned long initialHashSize = 0;      ///< Total initial size of hash table and collision lists
 /*@}*/
 
@@ -264,11 +257,11 @@ char *polynomialVersion = "$Id$";
 int polynomialDebugLevel = 0;   ///< Corresponds roughly to diagnostic output volume
 int polynomialLostNodeId = -1;  ///< For tracking down mis-freed polynomials
 
-struct swStopwatch *evaluatePolySW, ///< Conditional stopwatch for evaluatePoly stats.
-  *evaluateValueSW; ///< Conditional stopwatch for evaluateValue stats.
+struct swStopwatch *evaluatePolySW,     ///< Conditional stopwatch for evaluatePoly stats.
+ *evaluateValueSW;      ///< Conditional stopwatch for evaluateValue stats.
 
 unsigned long lastPDSAccumWallTime = 0, ///< last polyDynamicStatistics walltime for thrashing check.
-  lastPDSAccumUserTime = 0; ///< ...same but CPU time.
+    lastPDSAccumUserTime = 0;   ///< ...same but CPU time.
 
 // The following are used for building sum polynomials...
 /// Collecting variable terms...
@@ -334,13 +327,13 @@ int originalChildren[MAXPOLYSOURCES];
 #endif
 
 
-Polynomial *polyReturnWrapper (Polynomial *p)
+Polynomial *polyReturnWrapper (Polynomial * p)
 {
 #ifdef POLYSIZE
   int i;
 
   /* All of them require a basic Polynomial, a pointer in a type-specific list,
-     and hash information. */
+   * and hash information. */
   p->totalSize = sizeof (Polynomial) + sizeof (Polynomial *);
   switch (p->eType) {
   case T_CONSTANT:
@@ -356,7 +349,7 @@ Polynomial *polyReturnWrapper (Polynomial *p)
   case T_SUM:
     /* Sum polys have additional parts and lists of factors and term polys */
     p->totalSize += sizeof (struct sumPoly);
-    for (i = 0; i< p->e.s->num; i++) {
+    for (i = 0; i < p->e.s->num; i++) {
       //      printf ("%d(%d) ", p->e.s->sum[i]->id, p->e.s->sum[i]->totalSize);
       p->totalSize += sizeof (Polynomial *) + sizeof (int *) + p->e.s->sum[i]->totalSize;
     }
@@ -364,7 +357,7 @@ Polynomial *polyReturnWrapper (Polynomial *p)
   case T_PRODUCT:
     /* Product polys have additional parts and lists of term polys and exponents */
     p->totalSize += sizeof (struct productPoly);
-    for (i = 0; i< p->e.p->num; i++) {
+    for (i = 0; i < p->e.p->num; i++) {
       //      printf ("%d(%d) ", p->e.p->product[i]->id, p->e.p->product[i]->totalSize);
       p->totalSize += sizeof (Polynomial *) + sizeof (int *) + p->e.p->product[i]->totalSize;
     }
@@ -372,7 +365,7 @@ Polynomial *polyReturnWrapper (Polynomial *p)
   case T_FUNCTIONCALL:
     /* Function polys have additional parts and a list of term polys. */
     p->totalSize += sizeof (struct functionPoly);
-    for (i = 0; i< p->e.f->num; i++)
+    for (i = 0; i < p->e.f->num; i++)
       p->totalSize += sizeof (Polynomial *) + sizeof (int *) + p->e.f->para[i]->totalSize;
     break;
   default:
@@ -460,7 +453,7 @@ double doEvaluateValue (Polynomial * p)
     }
 
   case T_EXTERNAL:
-    p->value = p->e.e->polynomialFunctionRoutine(1, variableList);
+    p->value = p->e.e->polynomialFunctionRoutine (1, variableList);
     return p->value;
 
     /* If a sub polynomial is a sum, evaluate the values of all the terms.
@@ -792,12 +785,12 @@ Polynomial *constantExp (double con)
     hIndex += CONSTANT_HASH_SIZE;
 
   /* If the hash table item is not empty, determine if the constant is in the
-     constant polynomial list.  If it is not, find a position in the hash table to
-     save the key and the index in the constant list */
+   * constant polynomial list.  If it is not, find a position in the hash table to
+   * save the key and the index in the constant list */
   if (constantHash[hIndex].num > 0) {
     /* If the key of this constant is equal to the keys of some polynomials in the
-       constant list, see if the value of the new constant is equal to the value
-       of an existing constant */
+     * constant list, see if the value of the new constant is equal to the value
+     * of an existing constant */
     if (searchHashTable (&constantHash[hIndex], &first, &last, key)) {
       for (i = first; i <= last; i++) {
         cIndex = constantHash[hIndex].index[i];
@@ -807,7 +800,7 @@ Polynomial *constantExp (double con)
           // If the two constants are the same, return the constant in the constant list
           constantList[cIndex]->valid |= VALID_REF_FLAG;
           constantHashHits++;
-          return polyReturnWrapper(constantList[cIndex]);
+          return polyReturnWrapper (constantList[cIndex]);
         }
       }
     }
@@ -854,7 +847,7 @@ Polynomial *constantExp (double con)
   // Record the constant polynomial in the hash table of constant polynomials
   insertHashTable (&constantHash[hIndex], location, key, constantCount - 1);
 
-  return polyReturnWrapper(p);
+  return polyReturnWrapper (p);
 };
 
 /**
@@ -871,7 +864,7 @@ inline int keyVariablePolynomial (double *vD, int *vI, char vType)
   int key;
 
   /* Currently we can deal with integer and double variables. We use the address 
-     of the variable as the key of the variable polynomial. */
+   * of the variable as the key of the variable polynomial. */
   if (vType == 'D')
     key = (long int) vD;
   else if (vType == 'I')
@@ -908,12 +901,12 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   if (hIndex < 0)
     hIndex += VARIABLE_HASH_SIZE;
   /* If the hash table item is not empty, determine if the variable is already in the
-     variable polynomial list.  If it is not, determine a position in the hash table to
-     save the key and an index in the variable list. Save this variable polynomial in
-     the variable polynomial list. */
+   * variable polynomial list.  If it is not, determine a position in the hash table to
+   * save the key and an index in the variable list. Save this variable polynomial in
+   * the variable polynomial list. */
   if (variableHash[hIndex].num > 0) {
     /* If the key of this variable is equal to the keys of some polynomials in the
-       variable list, check if the variable is already there. */
+     * variable list, check if the variable is already there. */
     if (searchHashTable (&variableHash[hIndex], &first, &last, key)) {
       for (i = first; i <= last; i++) {
         vIndex = variableHash[hIndex].index[i];
@@ -923,7 +916,7 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
           // If the two variables are the same, return the address from the list
           variableList[vIndex]->valid |= VALID_REF_FLAG;
           variableHashHits++;
-          return polyReturnWrapper(variableList[vIndex]);
+          return polyReturnWrapper (variableList[vIndex]);
         }
       }
     }
@@ -980,7 +973,7 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   // Record the variable polynomial in the hash table of the variable polynomials
   insertHashTable (&variableHash[hIndex], location, key, variableCount - 1);
 
-  return polyReturnWrapper(p);
+  return polyReturnWrapper (p);
 };
 
 /**
@@ -1055,13 +1048,13 @@ inline int searchPolynomialList (Polynomial ** p, int length, Polynomial * targe
   resulting polynomial and other polynomials.
 
 */
-inline void collectSumTerms (double **factor, ///< Container, pointer to a list of double factors
-			     Polynomial ***p, ///< Container, pointer to a list of pointers to polynomials
-			     int *counter, ///< Number of terms currently in the container lists
-			     int *containerLength, ///< Current size of the container lists
-			     double f1, ///< Factor of term to add to the container
-			     Polynomial * p1 ///< Pointer to polynomial of term to add to container
-			     )
+inline void collectSumTerms (double **factor,   ///< Container, pointer to a list of double factors
+    Polynomial *** p,   ///< Container, pointer to a list of pointers to polynomials
+    int *counter,       ///< Number of terms currently in the container lists
+    int *containerLength,       ///< Current size of the container lists
+    double f1,  ///< Factor of term to add to the container
+    Polynomial * p1     ///< Pointer to polynomial of term to add to container
+    )
 {
   int location;
 
@@ -1201,13 +1194,13 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   int tempI, tempI2;    ///< Normalized powers (for comparison of two double numbers)
   double tempD, tempD2; ///< Normalized fractions( for comparison of two double numbers)
   int hIndex, sIndex;   ///< Index of the new polynomial in the hash table, sub index in a hash bucket
-  int first,     ///< First polynomial for comparison
-    last, ///< Last polynomial for comparison
-    location; ///< Location of the new polynomial in a hash bucket 
-  int p0SubHIndex = 0, ///< Sub-index in a hash bucket
-    p0HIndex = 0, ///< Index in the hash table
-    p0Index = 0, ///< Index in the polynomial list
-    p0Id = 0, p0Key, p0Valid;
+  int first,    ///< First polynomial for comparison
+    last,       ///< Last polynomial for comparison
+    location;   ///< Location of the new polynomial in a hash bucket 
+  int p0SubHIndex = 0,  ///< Sub-index in a hash bucket
+      p0HIndex = 0,     ///< Index in the hash table
+      p0Index = 0,      ///< Index in the polynomial list
+      p0Id = 0, p0Key, p0Valid;
   enum expressionType p0EType;
 
   // Initialize the variables that keep tracks the number of terms collected for the new sum polynomial
@@ -1225,12 +1218,12 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   // Iterate through all the items in the parameter list
   for (i = 0; i < num; i++) {
     f1 = va_arg (args, double); // Get the coefficient
-    p1 = va_arg (args, Polynomial *);  // ...and the polynomial
+    p1 = va_arg (args, Polynomial *);   // ...and the polynomial
 
     //    if (p1->count == 0 && !((p1->valid & VALID_TOP_FLAG) == 0))
     //      fprintf (stderr, "UnHeld, non-top SUM %d referenced!\n", p1->id);
 
-    p1->valid &= ~VALID_TOP_FLAG; // No longer unreferenced
+    p1->valid &= ~VALID_TOP_FLAG;       // No longer unreferenced
 
 #ifdef SOURCEDIGRAPH
     originalChildren[p1->source]++;     // Bump the count of children of this subpoly source for this parent
@@ -1244,45 +1237,43 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       }
     }
     /* Record the first operand of the plus operation.  Often, the first operand and the result are the
-       same variable, e.g. p=p+..., therefore, when we build a new polynomial for the result of the
-       plus operation, the first operand polynomial of the plus operation can be freed. */
+     * same variable, e.g. p=p+..., therefore, when we build a new polynomial for the result of the
+     * plus operation, the first operand polynomial of the plus operation can be freed. */
     if (i == 0) {
-      f0 = f1;  p0 = p1;
+      f0 = f1;
+      p0 = p1;
     }
     // If a term is constant 0, it has no effect on a sum, therefore we do nothing
     if (f1 == 0.0)
       continue;
     switch (p1->eType) {
-    case T_CONSTANT: // If the term is a non-zero constant, we collect it
+    case T_CONSTANT:   // If the term is a non-zero constant, we collect it
       con += p1->value * f1;
       break;
-    case T_VARIABLE: // The term is a variable
+    case T_VARIABLE:   // The term is a variable
       collectSumTerms (&factor_v1, &p_v1, &counter_v1, &containerLength_v1, f1, p1);
       break;
-    case T_PRODUCT: // The item is a product
+    case T_PRODUCT:    // The item is a product
       collectSumTerms (&factor_p1, &p_p1, &counter_p1, &containerLength_p1, f1, p1);
       break;
-    case T_FUNCTIONCALL: // The term is a function call
+    case T_FUNCTIONCALL:       // The term is a function call
       collectSumTerms (&factor_f1, &p_f1, &counter_f1, &containerLength_f1, f1, p1);
       break;
-    case T_SUM: // The term is a sum
+    case T_SUM:        // The term is a sum
       // Fold the components of the sum subpolynomial up into this sum polynomial
       for (l = 0; l < p1->e.s->num; l++) {
         switch (p1->e.s->sum[l]->eType) {
-        case T_CONSTANT: // Item is a constant, collected it into con
+        case T_CONSTANT:       // Item is a constant, collected it into con
           con += f1 * p1->e.s->sum[l]->value * p1->e.s->factor[l];
           break;
         case T_VARIABLE:
-          collectSumTerms (&factor_v1, &p_v1, &counter_v1,
-			   &containerLength_v1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
+          collectSumTerms (&factor_v1, &p_v1, &counter_v1, &containerLength_v1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
         case T_PRODUCT:
-          collectSumTerms (&factor_p1, &p_p1, &counter_p1,
-			   &containerLength_p1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
+          collectSumTerms (&factor_p1, &p_p1, &counter_p1, &containerLength_p1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
         case T_FUNCTIONCALL:
-          collectSumTerms (&factor_f1, &p_f1, &counter_f1,
-			   &containerLength_f1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
+          collectSumTerms (&factor_f1, &p_f1, &counter_f1, &containerLength_f1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
         default:
           fprintf (stderr, "In plusExp, unknown expression type %d\n", p1->e.s->sum[l]->eType);
@@ -1290,7 +1281,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
         }
       }
       break;
-    case T_FREED: // The term being referenced has been freed!
+    case T_FREED:      // The term being referenced has been freed!
       fprintf (stderr, "In plusExp, polynomial term %d was freed:\n", i);
       expTermPrinting (stderr, p1, 1);
       exit (EXIT_FAILURE);
@@ -1322,7 +1313,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     }
   }
   /* While we do end-up with zero factors for variables here, they get swallowed-up
-     into the next tier where they become non-zero, so it all comes out in the wash. */
+   * into the next tier where they become non-zero, so it all comes out in the wash. */
   if (counter_v1 > 0) {
     memcpy (&factorSum[0], &factor_v1[0], sizeof (double) * counter_v1);
     memcpy (&pSum[0], &p_v1[0], sizeof (Polynomial *) * counter_v1);
@@ -1340,10 +1331,10 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     // After we go through all the items in the sum, we get only a constant.
     rp = constantExp (con);
     sumReturnConstantCount++;
-    return polyReturnWrapper(rp);
+    return polyReturnWrapper (rp);
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
-    return polyReturnWrapper(rp);
+    return polyReturnWrapper (rp);
   } else if (con == 0.0 && counterSum == 1 && factorSum[0] == 1.0) {
     // We have only one term, no need to create a new polynomial
     rp = pSum[0];
@@ -1353,7 +1344,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       expTermPrinting (stderr, rp, 1);
       fprintf (stderr, "\n");
     }
-    return polyReturnWrapper(rp);
+    return polyReturnWrapper (rp);
   } else {
     // We've got more than one term, so we're going to go ahead and create it.
     if (con != 0.0) {
@@ -1372,8 +1363,8 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     hIndex += SUM_HASH_SIZE;
 
   /* If the hash table item is not empty, look for the sum in the sum polynomial 
-     list. If it is not there, determine a position in the hash table to
-     save the key and the index, and add this polynomial to the list */
+   * list. If it is not there, determine a position in the hash table to
+   * save the key and the index, and add this polynomial to the list */
   if (sumHash[hIndex].num > 0) {
     // If the key is already there, compare to polynomials under that key
     if (searchHashTable (&sumHash[hIndex], &first, &last, key)) {
@@ -1401,7 +1392,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
                 fprintf (stderr, "\n");
               }
             }
-            return polyReturnWrapper(sumList[sIndex]);
+            return polyReturnWrapper (sumList[sIndex]);
           }
         }
       }
@@ -1501,7 +1492,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   // Insert the new built polynomial in sum list
 
   /* If the first polynomial is the parameter list is freed, its position
-     in the polynomial list is occupied by the newly created sum polynomial. */
+   * in the polynomial list is occupied by the newly created sum polynomial. */
   if (flag != 0 && p0EType == T_SUM && p0Valid == 0) {
     sumListReplacementCount++;
     sumList[p0Index] = rp;
@@ -1544,15 +1535,14 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       // Delete the replaced polynomial from the hash table
       if (p0HIndex != hIndex)
         deleteHashTable (&sumHash[p0HIndex], p0SubHIndex);
+      else if (p0SubHIndex < location)
+        deleteHashTable (&sumHash[p0HIndex], p0SubHIndex);
       else
-        if (p0SubHIndex < location)
-          deleteHashTable (&sumHash[p0HIndex], p0SubHIndex);
-        else
-          deleteHashTable (&sumHash[p0HIndex], p0SubHIndex + 1);
-    } else 
-    /* If the newly built polynomial and the one to be replaced are at the same position
-       in the hash table, just replace the key of the old polynomial with the key of the
-       new one. */
+        deleteHashTable (&sumHash[p0HIndex], p0SubHIndex + 1);
+    } else
+      /* If the newly built polynomial and the one to be replaced are at the same position
+       * in the hash table, just replace the key of the old polynomial with the key of the
+       * new one. */
       sumHash[hIndex].key[location] = key;
   } else
     insertHashTable (&sumHash[hIndex], location, key, sumCount - 1);
@@ -1565,7 +1555,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       fprintf (stderr, "\n");
     }
   }
-  return polyReturnWrapper(rp);
+  return polyReturnWrapper (rp);
 };
 
 /**
@@ -1593,13 +1583,13 @@ inline int keyProductPolynomial (Polynomial ** p, int *exponent, int counter)
   so that these terms can have a unique order in the constructed product polynomial.
 
 */
-inline void collectProductTerms (int **exponent, ///< Container, pointer to a list of int exponents
-				 Polynomial ***p, ///< Container, pointer to a list of pointers to polynomials
-				 int *counter, ///< Number of terms currently in the container lists
-				 int *containerLength, ///< Current size of the container lists
-				 int e1, ///< Exponent of term to add to container
-				 Polynomial * p1 ///< Pointer to polynomial of term to add to container
-				 )
+inline void collectProductTerms (int **exponent,        ///< Container, pointer to a list of int exponents
+    Polynomial *** p,   ///< Container, pointer to a list of pointers to polynomials
+    int *counter,       ///< Number of terms currently in the container lists
+    int *containerLength,       ///< Current size of the container lists
+    int e1,     ///< Exponent of term to add to container
+    Polynomial * p1     ///< Pointer to polynomial of term to add to container
+    )
 {
   int location;
 
@@ -1662,7 +1652,7 @@ inline void collectProductTerms (int **exponent, ///< Container, pointer to a li
 Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
 {
   int i, k, l;
-  int counterProd; ///< Number of terms in the new product polynomial
+  int counterProd;      ///< Number of terms in the new product polynomial
   va_list args; ///< Variable list of parameters
   struct productPoly *pP;       ///< Product structure for the new polynomial
   Polynomial *rp;       ///< New product polynomial
@@ -1673,15 +1663,15 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
   int key = 0;  ///< Key of the new polynomial
   int pIndex, hIndex;   ///< Index in the polynomial list, index in the hash table
   int first,    ///< First term for comparison
-    last,    ///< Last term for comparison
-    location;    ///< Position of the new polynomial in a hash bucket
+    last,       ///< Last term for comparison
+    location;   ///< Position of the new polynomial in a hash bucket
   int flag;     ///< If the new product polynomial can replace an existing one
-  int p0SubHIndex = 0, ///< Sub index in a hash bucket
-    p0HIndex = 0, ///< Index in the hash table
-    p0Index = 0, ///< Index in the polynomial list
-    p0Id = 0, ///< Unique Id
-    p0Key, ///< Key
-    p0Valid; ///< Valid byte
+  int p0SubHIndex = 0,  ///< Sub index in a hash bucket
+      p0HIndex = 0,     ///< Index in the hash table
+      p0Index = 0,      ///< Index in the polynomial list
+      p0Id = 0, ///< Unique Id
+      p0Key,    ///< Key
+      p0Valid;  ///< Valid byte
   enum expressionType p0EType;
 
   // Initialize the containers for the operands of a times operation
@@ -1704,7 +1694,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     //    if (p1->count == 0 && !((p1->valid & VALID_TOP_FLAG) == 0))
     //      fprintf (stderr, "UnHeld, non-top PRODUCT %d referenced!\n", p1->id);
 
-    p1->valid &= ~VALID_TOP_FLAG; // No longer unreferenced
+    p1->valid &= ~VALID_TOP_FLAG;       // No longer unreferenced
 
 #ifdef SOURCEDIGRAPH
     originalChildren[p1->source]++;     // Bump the count of children of this subpoly source for this parent
@@ -1718,11 +1708,12 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       }
     }
     /* Record the first operand of the times operation.  Often, the first operand and the result are the
-       same variable, which refers to the case of p=p*..., therefore, when we build a new polynomial
-       for the result of the times operation, the polynomial that represents the first operand of the
-       times operation can be freed. */
+     * same variable, which refers to the case of p=p*..., therefore, when we build a new polynomial
+     * for the result of the times operation, the polynomial that represents the first operand of the
+     * times operation can be freed. */
     if (i == 0) {
-      e0 = e1; p0 = p1;
+      e0 = e1;
+      p0 = p1;
     }
     // If any of the operand is zero, then the product is zero
     if (isZeroExp (p1)) {
@@ -1733,15 +1724,14 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     else if (p1->eType == T_CONSTANT) {
       factor *= pow (p1->value, e1);
       continue;
-    }
-    else {
-      if (p1->eType == T_SUM && p1->e.s->num == 1) { // A sum with only one item?
+    } else {
+      if (p1->eType == T_SUM && p1->e.s->num == 1) {    // A sum with only one item?
 
         factor *= pow (p1->e.s->factor[0], e1);
         p1 = p1->e.s->sum[0];
       }
       /* If this operand is a variable, a sum that has more than one items, or a function call, 
-	 we directly collect it.  If this operand is a product, we then collect each term of it. */
+       * we directly collect it.  If this operand is a product, we then collect each term of it. */
       switch (p1->eType) {
       case T_VARIABLE:
         collectProductTerms (&exponent_v2, &p_v2, &counter_v2, &containerLength_v2, e1, p1);
@@ -1757,16 +1747,13 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         for (l = 0; l < p1->e.p->num; l++) {
           switch (p1->e.p->product[l]->eType) {
           case T_VARIABLE:
-            collectProductTerms (&exponent_v2, &p_v2, &counter_v2,
-                                 &containerLength_v2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
+            collectProductTerms (&exponent_v2, &p_v2, &counter_v2, &containerLength_v2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
             break;
           case T_SUM:
-            collectProductTerms (&exponent_s2, &p_s2, &counter_s2,
-                                 &containerLength_s2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
+            collectProductTerms (&exponent_s2, &p_s2, &counter_s2, &containerLength_s2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
             break;
           case T_FUNCTIONCALL:
-            collectProductTerms (&exponent_f2, &p_f2, &counter_f2,
-                                 &containerLength_f2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
+            collectProductTerms (&exponent_f2, &p_f2, &counter_f2, &containerLength_f2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
             break;
           default:
             fprintf (stderr, "In timesExp, unknown expression type %d\n", p1->e.p->product[l]->eType);
@@ -1774,7 +1761,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
           }
         }
         break;
-      case T_FREED: // The term being referenced has been freed!
+      case T_FREED:    // The term being referenced has been freed!
         fprintf (stderr, "In plusExp, polynomial term %d was freed:\n", i);
         expTermPrinting (stderr, p1, 1);
         exit (EXIT_FAILURE);
@@ -1802,10 +1789,10 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     productReturn0Count++;
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant zero\n");
-    return polyReturnWrapper(rp);
+    return polyReturnWrapper (rp);
   }
   /* Combine all the items generated by collecting the operands of the times operation 
-     into one polynomial */
+   * into one polynomial */
   counterProd = counter_v2 + counter_s2 + counter_f2;
   if (counterProd > lengthProd) {
     lengthProd = counterProd;
@@ -1834,23 +1821,23 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     productReturnConstantCount++;
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
-    return polyReturnWrapper(rp);
-  } else  // If the result polynomial has only one term, it is not a product polynomial
-    if (counterProd == 1 && exponentProd[0] == 1) {
+    return polyReturnWrapper (rp);
+  } else        // If the result polynomial has only one term, it is not a product polynomial
+  if (counterProd == 1 && exponentProd[0] == 1) {
     if (factor == 1.0) {
       // If the factor is 1, then the result polynomial is equal to its first term
       rp = pProd[0];
       if (polynomialDebugLevel >= 60)
         fprintf (stderr, "Returning first term from caller\n");
       productReturn1stTermCount++;
-      return polyReturnWrapper(rp);
+      return polyReturnWrapper (rp);
     } else {
       // If the factor is not 1, then the result polynomial is a sum polynomial
       rp = plusExp (fileName, lineNo, 1, factor, pProd[0], 0);
       if (polynomialDebugLevel >= 60)
         fprintf (stderr, "Returning via plusExp\n");
       productReturn1TermSumCount++;
-      return polyReturnWrapper(rp);
+      return polyReturnWrapper (rp);
     }
   } else {
     // The result polynomial is a product polynomial, compute the key
@@ -1860,8 +1847,8 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     if (hIndex < 0)
       hIndex += PRODUCT_HASH_SIZE;
     /* If the hash table item is not empty, look for the product in the product polynomial
-       list.  If it is not there, determine a position in the hash table to save the 
-       key and the index in the hash table. */
+     * list.  If it is not there, determine a position in the hash table to save the 
+     * key and the index in the hash table. */
     if (productHash[hIndex].num > 0) {
       // If the key is already there, compare to polynomials under that key
       if (searchHashTable (&productHash[hIndex], &first, &last, key)) {
@@ -1874,7 +1861,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
                   || exponentProd[k] != productList[pIndex]->e.p->exponent[k])
                 break;
             if (k >= counterProd) {
-	      //If the polynomials are the same compare the exponents
+              //If the polynomials are the same compare the exponents
               if (factor == 1.0) {
                 productList[pIndex]->valid |= VALID_REF_FLAG;
                 productHashHits++;
@@ -1885,12 +1872,12 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
                     fprintf (stderr, "\n");
                   }
                 }
-                return polyReturnWrapper(productList[pIndex]);
+                return polyReturnWrapper (productList[pIndex]);
               } else {
-		/* This product polynomial already exists so we don't need to construct a
-		   new one, however, the factor is not 1, therefore the result polynomial is
-		   a sum polynomial */
-		productHashHitIsSumCount++;
+                /* This product polynomial already exists so we don't need to construct a
+                 * new one, however, the factor is not 1, therefore the result polynomial is
+                 * a sum polynomial */
+                productHashHitIsSumCount++;
                 productList[pIndex]->valid |= VALID_REF_FLAG;
                 if (polynomialDebugLevel >= 60)
                   fprintf (stderr, "Returning existing product via plusExp\n");
@@ -1899,7 +1886,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
             }
           }
         }
-	// Identical key, but not identical polynomial
+        // Identical key, but not identical polynomial
         location = last;
       }
       location = last;
@@ -1909,7 +1896,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     // If the first operand can be freed, do so.
     if (flag != 0 && p0->eType == T_PRODUCT && p0->valid == 0) {
       /* We save the identity information of the polynomial to be freed
-	 so that it can be used by the newly created polynomial. */
+       * so that it can be used by the newly created polynomial. */
       p0Index = p0->index;
       p0Id = p0->id;
       p0Key = p0->key;
@@ -2008,8 +1995,8 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       }
     }
     /* We either use a new position in the product list for this polynomial, or
-       replace an existing polynomial with the newly created polynomial at the position
-       occupied by the existing polynomial. */
+     * replace an existing polynomial with the newly created polynomial at the position
+     * occupied by the existing polynomial. */
     if (flag != 0 && p0EType == T_PRODUCT && p0Valid == 0) {
       // Use the resource of the freed polynomial for the newly-constructed polynomial
       productListReplacementCount++;
@@ -2033,7 +2020,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         fprintf (stderr, "\nIf you're in gdb, continue from here to see more.\n");
         raise (SIGUSR1);
       }
-      productList[productCount]->valid |= VALID_TOP_FLAG; // Currently unreferenced
+      productList[productCount]->valid |= VALID_TOP_FLAG;       // Currently unreferenced
 
       productCount++;
       nodeId++;
@@ -2058,8 +2045,8 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         }
       }
       /* If the indexes and sub indexes of the old and new polynomials in the hash
-	 table are identical, we don't need to do any more, just replace the key
-	 of the old polynomial with the key of the new polynomial. */
+       * table are identical, we don't need to do any more, just replace the key
+       * of the old polynomial with the key of the new polynomial. */
       else
         productHash[hIndex].key[location] = key;
     } else
@@ -2076,13 +2063,13 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
           fprintf (stderr, "\n");
         }
       }
-      return polyReturnWrapper(rp);
+      return polyReturnWrapper (rp);
     } else {
       // If the factor is not 1, return a sum polynomial
       productNon1FactorIsSumCount++;
       if (polynomialDebugLevel >= 60)
         fprintf (stderr, "Returning new product via plusExp\n");
-      return polyReturnWrapper(plusExp (fileName, lineNo, 1, factor, rp, 0));
+      return polyReturnWrapper (plusExp (fileName, lineNo, 1, factor, rp, 0));
     }
   }
 };
@@ -2186,7 +2173,7 @@ Polynomial *functionCallExp (int num, ...)
           if (k >= num - 1) {
             free (p);
             functionHashHits++;
-            return polyReturnWrapper(functionCallList[fIndex]);
+            return polyReturnWrapper (functionCallList[fIndex]);
           }
         }       //end of if(num-1==functionCallList[fIndex]->e.f->num)
       } //end of for(i=binaryStart;i<=binaryEnd;i++)
@@ -2252,7 +2239,7 @@ Polynomial *functionCallExp (int num, ...)
 
   free (p);
 
-  return polyReturnWrapper(rp);
+  return polyReturnWrapper (rp);
 
 };
 
@@ -2333,7 +2320,7 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
 
     for (i = 0; i < variableCount; i++)
       if (!(variableList[i]->valid & VALID_EVAL_FLAG))
-	doPolyListSorting (variableList[i], l);
+        doPolyListSorting (variableList[i], l);
 
     polyListAppend (l, p);
     break;
@@ -2447,7 +2434,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
       break;
 
     case T_EXTERNAL:
-      p->value = p->e.e->polynomialFunctionRoutine(1, variableList);
+      p->value = p->e.e->polynomialFunctionRoutine (1, variableList);
       break;
 
       //Sum up all the items in a sum
@@ -2732,11 +2719,7 @@ void polynomialInitialization ()
 
   }
 
-  initialHashSize =
-    (sizeof (struct hashStruct) +
-     (2 * HASH_TABLE_INCREASE * sizeof (int))) * (CONSTANT_HASH_SIZE +
-                                                  VARIABLE_HASH_SIZE +
-                                                  SUM_HASH_SIZE + PRODUCT_HASH_SIZE + FUNCTIONCALL_HASH_SIZE);
+  initialHashSize = (sizeof (struct hashStruct) + (2 * HASH_TABLE_INCREASE * sizeof (int))) * (CONSTANT_HASH_SIZE + VARIABLE_HASH_SIZE + SUM_HASH_SIZE + PRODUCT_HASH_SIZE + FUNCTIONCALL_HASH_SIZE);
 
   //Apply memory for containers to hold terms for a sum polynomial
 
@@ -2964,8 +2947,7 @@ void dumpPolySources ()
 {
   int i;
   for (i = 0; i < polySourceCount; i++) {
-    fprintf (stderr, "From %s line %d, %d type %d polynomials\n",
-             polySources[i].moduleName, polySources[i].lineNo, polySources[i].totalCalls, polySources[i].eType);
+    fprintf (stderr, "From %s line %d, %d type %d polynomials\n", polySources[i].moduleName, polySources[i].lineNo, polySources[i].totalCalls, polySources[i].eType);
   }
 }
 #endif
@@ -3173,9 +3155,7 @@ void expPrinting (Polynomial * p)
     fprintf (stderr, ")");
     break;
   case T_FREED:
-    fprintf (stderr,
-             "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n",
-             (int) p->value, p->id, p->index, p->key, p->count, p->valid);
+    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
     fprintf (stderr, "In expPrinting, unknown expression type %d, exiting\n", p->eType);
     exit (EXIT_FAILURE);
@@ -3249,9 +3229,7 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
     fprintf (output, ")");
     break;
   case T_FREED:
-    fprintf (stderr,
-             "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n",
-             (int) p->value, p->id, p->index, p->key, p->count, p->valid);
+    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
     fprintf (stderr, "In expTermPrinting, unknown expression type %d, exiting\n", p->eType);
     raise (SIGUSR1);
@@ -3265,14 +3243,13 @@ void thrashingCheck ()
   char messageBuffer[MAXSWMSG];
 
   /* Now we check to see if we're thrashing... If we didn't get at least 10% CPU since the last
-     time we did statistics (provided that was at least a second ago), we should externalize polynomials,
-     or exit or take some evasive action. */
+   * time we did statistics (provided that was at least a second ago), we should externalize polynomials,
+   * or exit or take some evasive action. */
 
   swStop (overallSW);
   if (lastPDSAccumWallTime != 0) {
     deltaAccumWallTime = overallSW->swAccumWallTime - lastPDSAccumWallTime;
-    deltaAccumUserTime = overallSW->swAccumRUSelf.ru_utime.tv_sec + overallSW->swAccumRUChildren.ru_utime.tv_sec -
-			  lastPDSAccumUserTime;
+    deltaAccumUserTime = overallSW->swAccumRUSelf.ru_utime.tv_sec + overallSW->swAccumRUChildren.ru_utime.tv_sec - lastPDSAccumUserTime;
     if ((deltaAccumUserTime != 0) && (100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < THRASH_CPU)) {
       sprintf (messageBuffer, "Thrashing detected (utilization under %d%%), consider exiting!", THRASH_CPU);
       swLogMsg (messageBuffer);
@@ -3300,59 +3277,37 @@ void polyDynamicStatistics (char *title)
 #endif
 
   fprintf (stderr,
-           "Counts/Hits: c=%d/%d(%2.1f:1), v=%d/%d, s=%d/%d(%2.1f:1), p=%d/%d(%2.1f:1), f=%d/%d\n",
-           constantCount, constantHashHits,
-           constantHashHits / (float) (constantCount ? constantCount : 1),
-           variableCount, variableHashHits, sumCount, sumHashHits,
-           sumHashHits / (float) (sumCount ? sumCount : 1), productCount,
-           productHashHits, productHashHits / (float) (productCount ? productCount : 1), functionCallCount, functionHashHits);
+      "Counts/Hits: c=%d/%d(%2.1f:1), v=%d/%d, s=%d/%d(%2.1f:1), p=%d/%d(%2.1f:1), f=%d/%d\n",
+      constantCount, constantHashHits,
+      constantHashHits / (float) (constantCount ? constantCount : 1),
+      variableCount, variableHashHits, sumCount, sumHashHits, sumHashHits / (float) (sumCount ? sumCount : 1), productCount, productHashHits, productHashHits / (float) (productCount ? productCount : 1), functionCallCount, functionHashHits);
 
   fprintf (stderr,
-           "Lists: expansions(@size): c=%d(@%d), v=%d(@%d), s=%d(@%d), p=%d(@%d), f=%d(@%d), tcc=%d(@%lu)\n",
-           constantPListExpansions, CONSTANT_LIST_INCREASE,
-           variablePListExpansions, VARIABLE_LIST_INCREASE,
-           sumPListExpansions, SUM_LIST_INCREASE, productPListExpansions,
-           PRODUCT_LIST_INCREASE, functionCallPListExpansions,
-           FUNCTIONCALL_LIST_INCREASE, containerExpansions, (unsigned long) sizeof (Polynomial *) + sizeof (double));
+      "Lists: expansions(@size): c=%d(@%d), v=%d(@%d), s=%d(@%d), p=%d(@%d), f=%d(@%d), tcc=%d(@%lu)\n",
+      constantPListExpansions, CONSTANT_LIST_INCREASE,
+      variablePListExpansions, VARIABLE_LIST_INCREASE,
+      sumPListExpansions, SUM_LIST_INCREASE, productPListExpansions, PRODUCT_LIST_INCREASE, functionCallPListExpansions, FUNCTIONCALL_LIST_INCREASE, containerExpansions, (unsigned long) sizeof (Polynomial *) + sizeof (double));
 
   fprintf (stderr,
-           "...sizes: c=%lu, v=%lu, s=%lu, p=%lu, f=%lu\n",
-           (unsigned long) sizeof (void *) * constantListLength,
-           (unsigned long) sizeof (void *) * variableListLength,
-           (unsigned long) sizeof (void *) * sumListLength,
-           (unsigned long) sizeof (void *) * productListLength, (unsigned long) sizeof (void *) * functionCallListLength);
+      "...sizes: c=%lu, v=%lu, s=%lu, p=%lu, f=%lu\n",
+      (unsigned long) sizeof (void *) * constantListLength,
+      (unsigned long) sizeof (void *) * variableListLength, (unsigned long) sizeof (void *) * sumListLength, (unsigned long) sizeof (void *) * productListLength, (unsigned long) sizeof (void *) * functionCallListLength);
 
   fprintf (stderr,
-           "NodeId: %d Hash: max len=%d, init size=%lu, SPL: eff=%lu%%, avg len=%lu\n",
-           nodeId, maxHashLength, initialHashSize,
-           100 * (lowSPLCount +
-                  highSPLCount) / (totalSPLCalls ? totalSPLCalls : 1), totalSPLLengths / (totalSPLCalls ? totalSPLCalls : 1));
+      "NodeId: %d Hash: max len=%d, init size=%lu, SPL: eff=%lu%%, avg len=%lu\n", nodeId, maxHashLength, initialHashSize, 100 * (lowSPLCount + highSPLCount) / (totalSPLCalls ? totalSPLCalls : 1), totalSPLLengths / (totalSPLCalls ? totalSPLCalls : 1));
 
   fprintf (stderr,
-           "Calls: pLS=%d eP=%d eV=%d hAP=%d kP=%d hP=%d uHP=%d fP=%d(%d) fKP=%d\n",
-           polyListSortingCount, evaluatePolyCount, evaluateValueCount, holdAllPolysCount,
-           keepPolyCount, holdPolyCount, unHoldPolyCount, freePolysAttemptCount, freePolysCount, freeKeptPolysCount);
+      "Calls: pLS=%d eP=%d eV=%d hAP=%d kP=%d hP=%d uHP=%d fP=%d(%d) fKP=%d\n",
+      polyListSortingCount, evaluatePolyCount, evaluateValueCount, holdAllPolysCount, keepPolyCount, holdPolyCount, unHoldPolyCount, freePolysAttemptCount, freePolysCount, freeKeptPolysCount);
 
-  if (sumReleaseableCount == 0 && sumNotReleaseableCount == 0 &&
-      productReleaseableCount == 0 && productNotReleaseableCount == 0)
+  if (sumReleaseableCount == 0 && sumNotReleaseableCount == 0 && productReleaseableCount == 0 && productNotReleaseableCount == 0)
     return;
 
-  fprintf (stderr,
-           "Sum polys: try release=%d or not=%d return constant=%d return 1-term=%d hash hits=%d\n",
-           sumReleaseableCount, sumNotReleaseableCount, sumReturnConstantCount, sumReturn1TermCount, sumHashHits);
-  fprintf (stderr,
-           "...really new=%d new on sumList=%d replaced on sumList=%d freed=%d 1st-term freed=%d\n",
-           sumNewCount, sumListNewCount, sumListReplacementCount, sumFreedCount, sum1stTermsFreedCount);
-  fprintf (stderr,
-           "Product polys: try release=%d or not=%d return 0=%d return constant=%d return 1st term=%d\n",
-           productReleaseableCount, productNotReleaseableCount,
-           productReturn0Count, productReturnConstantCount, productReturn1stTermCount);
-  fprintf (stderr,
-           "...actually a sum poly=%d hash hits=%d hash hit but sum=%d return normal (factor is 1)=%d\n",
-           productReturn1TermSumCount, productHashHits, productHashHitIsSumCount, productReturnNormalCount);
-  fprintf (stderr,
-           "...factor not 1 now sum=%d new on productList=%d replaced on productList=%d\n",
-           productNon1FactorIsSumCount, productListNewCount, productListReplacementCount);
+  fprintf (stderr, "Sum polys: try release=%d or not=%d return constant=%d return 1-term=%d hash hits=%d\n", sumReleaseableCount, sumNotReleaseableCount, sumReturnConstantCount, sumReturn1TermCount, sumHashHits);
+  fprintf (stderr, "...really new=%d new on sumList=%d replaced on sumList=%d freed=%d 1st-term freed=%d\n", sumNewCount, sumListNewCount, sumListReplacementCount, sumFreedCount, sum1stTermsFreedCount);
+  fprintf (stderr, "Product polys: try release=%d or not=%d return 0=%d return constant=%d return 1st term=%d\n", productReleaseableCount, productNotReleaseableCount, productReturn0Count, productReturnConstantCount, productReturn1stTermCount);
+  fprintf (stderr, "...actually a sum poly=%d hash hits=%d hash hit but sum=%d return normal (factor is 1)=%d\n", productReturn1TermSumCount, productHashHits, productHashHitIsSumCount, productReturnNormalCount);
+  fprintf (stderr, "...factor not 1 now sum=%d new on productList=%d replaced on productList=%d\n", productNon1FactorIsSumCount, productListNewCount, productListReplacementCount);
   fprintf (stderr, "...freed=%d 1st-term freed=%d\n", productFreedCount, product1stTermsFreedCount);
 
   return;
@@ -3366,10 +3321,7 @@ void polyStatistics (char *title)
   long constantSize, variableSize, sumSize, productSize, functionCallSize;
   double grandTotal;
   int sumTerms = 0, productTerms = 0, maxSumTerms = 0, maxProductTerms = 0;
-  int constantHashSize = 0, constantHashPeak = 0,
-    variableHashSize = 0, variableHashPeak = 0,
-    sumHashSize = 0, sumHashPeak = 0,
-    productHashSize = 0, productHashPeak = 0, functionCallHashSize = 0, functionCallHashPeak = 0;
+  int constantHashSize = 0, constantHashPeak = 0, variableHashSize = 0, variableHashPeak = 0, sumHashSize = 0, sumHashPeak = 0, productHashSize = 0, productHashPeak = 0, functionCallHashSize = 0, functionCallHashPeak = 0;
   int i;
 
   polyDynamicStatistics (title);
@@ -3403,13 +3355,8 @@ void polyStatistics (char *title)
   }
   functionCallSize = functionCallCount * sizeof (Polynomial);
 
-  fprintf (stderr, "Term count(avg): s=%d(%d), p=%d(%d), ",
-           sumTerms, sumTerms / (sumCount ? sumCount : 1), productTerms, productTerms / (productCount ? productCount : 1));
-  fprintf (stderr,
-           "sizes (w/terms): c=%ld, s=%ld, p=%ld, f=%ld\n",
-           constantSize,
-           sumSize + (sumTerms * (sizeof (Polynomial *) + sizeof (double))),
-           productSize + (productTerms * (sizeof (Polynomial *) + sizeof (int))), functionCallSize);
+  fprintf (stderr, "Term count(avg): s=%d(%d), p=%d(%d), ", sumTerms, sumTerms / (sumCount ? sumCount : 1), productTerms, productTerms / (productCount ? productCount : 1));
+  fprintf (stderr, "sizes (w/terms): c=%ld, s=%ld, p=%ld, f=%ld\n", constantSize, sumSize + (sumTerms * (sizeof (Polynomial *) + sizeof (double))), productSize + (productTerms * (sizeof (Polynomial *) + sizeof (int))), functionCallSize);
 
   constantHashSize = CONSTANT_HASH_SIZE * sizeof (struct hashStruct);
   for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
@@ -3442,15 +3389,12 @@ void polyStatistics (char *title)
       functionCallHashPeak = functionCallHash[i].num;
   }
   fprintf (stderr, "Hash: size(peak length): c=%d(%d), v=%d(%d), s=%d(%d), p=%d(%d), f=%d(%d)\n",
-           constantHashSize, constantHashPeak, variableHashSize, variableHashPeak,
-           sumHashSize, sumHashPeak, productHashSize, productHashPeak, functionCallHashSize, functionCallHashPeak);
+      constantHashSize, constantHashPeak, variableHashSize, variableHashPeak, sumHashSize, sumHashPeak, productHashSize, productHashPeak, functionCallHashSize, functionCallHashPeak);
 
   grandTotal = constantHashSize + variableHashSize + sumHashSize + productHashSize +
-    functionCallHashSize + constantSize + variableSize +
-    sumSize + (sumTerms * (sizeof (Polynomial *) + sizeof (double))) +
-    productSize + (productTerms * (sizeof (Polynomial *) + sizeof (int))) +
-    functionCallSize +
-    ((constantListLength + variableListLength + sumListLength + productListLength + functionCallListLength) * sizeof (void *));
+      functionCallHashSize + constantSize + variableSize +
+      sumSize + (sumTerms * (sizeof (Polynomial *) + sizeof (double))) +
+      productSize + (productTerms * (sizeof (Polynomial *) + sizeof (int))) + functionCallSize + ((constantListLength + variableListLength + sumListLength + productListLength + functionCallListLength) * sizeof (void *));
 
   fprintf (stderr, "---Total data storage estimate: %.0fKb---\n", grandTotal / 1024);
 #ifdef DMTRACK
@@ -3471,10 +3415,7 @@ void printAllPolynomials ()
       if (constantHash[i].num <= 0)
         continue;
       for (j = 0; j < constantHash[i].num; j++) {
-        fprintf (stderr,
-                 "(%d %d) index=%d key=%d count=%d valid=%d constant: ", i, j,
-                 constantHash[i].index[j], constantHash[i].key[j],
-                 constantList[constantHash[i].index[j]]->count, constantList[constantHash[i].index[j]]->valid);
+        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d constant: ", i, j, constantHash[i].index[j], constantHash[i].key[j], constantList[constantHash[i].index[j]]->count, constantList[constantHash[i].index[j]]->valid);
         expTermPrinting (stderr, constantList[constantHash[i].index[j]], 1);
         fprintf (stderr, "\n");
       }
@@ -3488,10 +3429,7 @@ void printAllPolynomials ()
       if (variableHash[i].num <= 0)
         continue;
       for (j = 0; j < variableHash[i].num; j++) {
-        fprintf (stderr,
-                 "(%d %d) index=%d key=%d count=%d valid=%d variable: ", i, j,
-                 variableHash[i].index[j], variableHash[i].key[j],
-                 variableList[variableHash[i].index[j]]->count, variableList[variableHash[i].index[j]]->valid);
+        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d variable: ", i, j, variableHash[i].index[j], variableHash[i].key[j], variableList[variableHash[i].index[j]]->count, variableList[variableHash[i].index[j]]->valid);
         expTermPrinting (stderr, variableList[variableHash[i].index[j]], 1);
         fprintf (stderr, "\n");
       }
@@ -3504,9 +3442,7 @@ void printAllPolynomials ()
       if (sumHash[i].num <= 0)
         continue;
       for (j = 0; j < sumHash[i].num; j++) {
-        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d sum: ",
-                 i, j, sumHash[i].index[j], sumHash[i].key[j],
-                 sumList[sumHash[i].index[j]]->count, sumList[sumHash[i].index[j]]->valid);
+        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d sum: ", i, j, sumHash[i].index[j], sumHash[i].key[j], sumList[sumHash[i].index[j]]->count, sumList[sumHash[i].index[j]]->valid);
         expTermPrinting (stderr, sumList[sumHash[i].index[j]], 1);
         fprintf (stderr, "\n");
       }
@@ -3519,10 +3455,7 @@ void printAllPolynomials ()
       if (productHash[i].num <= 0)
         continue;
       for (j = 0; j < productHash[i].num; j++) {
-        fprintf (stderr,
-                 "(%d %d) index=%d key=%d count=%d valid=%d product: ", i, j,
-                 productHash[i].index[j], productHash[i].key[j],
-                 productList[productHash[i].index[j]]->count, productList[productHash[i].index[j]]->valid);
+        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d product: ", i, j, productHash[i].index[j], productHash[i].key[j], productList[productHash[i].index[j]]->count, productList[productHash[i].index[j]]->valid);
         expTermPrinting (stderr, productList[productHash[i].index[j]], 1);
         fprintf (stderr, "\n");
       }
@@ -3537,10 +3470,7 @@ void printAllPolynomials ()
         continue;
       for (j = 0; j < functionCallHash[i].num; j++) {
         fprintf (stderr,
-                 "(%d %d) index=%d key=%d count=%d valid=%d functionCall: ",
-                 i, j, functionCallHash[i].index[j],
-                 functionCallHash[i].key[j],
-                 functionCallList[functionCallHash[i].index[j]]->count, functionCallList[functionCallHash[i].index[j]]->valid);
+            "(%d %d) index=%d key=%d count=%d valid=%d functionCall: ", i, j, functionCallHash[i].index[j], functionCallHash[i].key[j], functionCallList[functionCallHash[i].index[j]]->count, functionCallList[functionCallHash[i].index[j]]->valid);
         expTermPrinting (stderr, functionCallList[functionCallHash[i].index[j]], 1);
         fprintf (stderr, "\n");
       }
@@ -3555,7 +3485,7 @@ void holdAllPolys ()
 {
   int i, j;
 
-  holdAllPolysNodeId = nodeId; // Keep track of this for externalizing polys
+  holdAllPolysNodeId = nodeId;  // Keep track of this for externalizing polys
   holdAllPolysCount++;
 
 #ifdef _OPENMP
@@ -3680,9 +3610,7 @@ void doKeepPoly (Polynomial * p)
     }
     break;
   case T_FREED:
-    fprintf (stderr,
-             "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n",
-             (int) p->value, p->id, p->index, p->key, p->count, p->valid);
+    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
     fprintf (stderr, "In doKeepPoly, unknown expression type %d, exiting\n", p->eType);
     raise (SIGUSR1);
@@ -3822,9 +3750,7 @@ void doFreePolys (unsigned short keepMask)
       k = 0;
       for (i = 0; i < constantCount; i++) {
         if (constantList[i]->id == polynomialLostNodeId)
-          fprintf (stderr,
-                   "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
-                   polynomialLostNodeId, constantList[i]->valid, constantList[i]->count, keepMask);
+          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, constantList[i]->valid, constantList[i]->count, keepMask);
         if ((constantList[i]->count > 0)
             || (constantList[i]->valid & keepMask)) {
           newConstantList[k] = constantList[i];
@@ -3885,9 +3811,7 @@ void doFreePolys (unsigned short keepMask)
       k = 0;
       for (i = 0; i < variableCount; i++) {
         if (variableList[i]->id == polynomialLostNodeId)
-          fprintf (stderr,
-                   "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
-                   polynomialLostNodeId, variableList[i]->valid, variableList[i]->count, keepMask);
+          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, variableList[i]->valid, variableList[i]->count, keepMask);
         if ((variableList[i]->count > 0)
             || (variableList[i]->valid & keepMask)) {
           newVariableList[k] = variableList[i];
@@ -3945,9 +3869,7 @@ void doFreePolys (unsigned short keepMask)
       k = 0;
       for (i = 0; i < sumCount; i++) {
         if (sumList[i]->id == polynomialLostNodeId)
-          fprintf (stderr,
-                   "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
-                   polynomialLostNodeId, sumList[i]->valid, sumList[i]->count, keepMask);
+          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, sumList[i]->valid, sumList[i]->count, keepMask);
         if ((sumList[i]->count > 0) || (sumList[i]->valid & keepMask)) {
           newSumList[k] = sumList[i];
           sumList[i] = newSumList[k];
@@ -4017,9 +3939,7 @@ void doFreePolys (unsigned short keepMask)
       k = 0;
       for (i = 0; i < productCount; i++) {
         if (productList[i]->id == polynomialLostNodeId)
-          fprintf (stderr,
-                   "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
-                   polynomialLostNodeId, productList[i]->valid, productList[i]->count, keepMask);
+          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, productList[i]->valid, productList[i]->count, keepMask);
         if ((productList[i]->count > 0) || (productList[i]->valid & keepMask)) {
           newProductList[k] = productList[i];
           productList[i] = newProductList[k];
@@ -4079,12 +3999,9 @@ void doFreePolys (unsigned short keepMask)
   }
   /* Reset building statistics. */
   constantHashHits = variableHashHits = functionHashHits = 0;
-  sumReleaseableCount = sumNotReleaseableCount = sumReturnConstantCount =
-    sumReturn1TermCount = sumHashHits = sumNewCount = sumListNewCount = sumListReplacementCount = 0;
+  sumReleaseableCount = sumNotReleaseableCount = sumReturnConstantCount = sumReturn1TermCount = sumHashHits = sumNewCount = sumListNewCount = sumListReplacementCount = 0;
   productReleaseableCount = productNotReleaseableCount = productReturn0Count =
-    productReturnConstantCount = productReturn1stTermCount =
-    productReturn1TermSumCount = productHashHits = productHashHitIsSumCount =
-    productReturnNormalCount = productNon1FactorIsSumCount = productListNewCount = productListReplacementCount = 0;
+      productReturnConstantCount = productReturn1stTermCount = productReturn1TermSumCount = productHashHits = productHashHitIsSumCount = productReturnNormalCount = productNon1FactorIsSumCount = productListNewCount = productListReplacementCount = 0;
   totalSPLLengths = totalSPLCalls = lowSPLCount = highSPLCount = 0;
 
   if (polynomialDebugLevel >= 10)
@@ -4129,18 +4046,16 @@ void doExternalizePolys ()
 
   // The sumList (and others) never get out of nodeId order, so skip over holdAllPolys entries.
   i = 0;
-  while (sumList[i++]->id <= holdAllPolysNodeId) ;
+  while (sumList[i++]->id <= holdAllPolysNodeId);
   newCount = i;
   for (; i < sumCount; i++) {
     if (sumList[i]->id == polynomialLostNodeId)
-      fprintf (stderr,
-	       "doExternalizePolys sees id %d with valid %d and count %d\n",
-	       polynomialLostNodeId, sumList[i]->valid, sumList[i]->count);
+      fprintf (stderr, "doExternalizePolys sees id %d with valid %d and count %d\n", polynomialLostNodeId, sumList[i]->valid, sumList[i]->count);
     if (sumList[i]->count || sumList[i]->valid) {
       // Convert to external
       externalList[externalCount] = sumList[i];
-      //	  externalList[externalCount]->e.e->formerEType = T_SUM;
-      //	  sprintf (externalList[externalCount]->e.e->signature, "S%d", sumList[i]->id);
+      //          externalList[externalCount]->e.e->formerEType = T_SUM;
+      //          sprintf (externalList[externalCount]->e.e->signature, "S%d", sumList[i]->id);
       externalList[externalCount]->index = externalCount;
       externalCount++;
       free (sumList[i]->e.s->sum);
@@ -4156,14 +4071,14 @@ void doExternalizePolys ()
     if (sumHash[j].num > 0) {
       k = 0;
       for (i = 0; i < sumHash[j].num; i++) {
-	if (sumList[sumHash[j].index[i]] != NULL) {
-	  /* It's a keeper, slide it down and bump the count */
-	  //        fprintf(stderr, "Hash keeper index %d is now %d\n", sumHash[j].index[i],
-	  //              sumList[sumHash[j].index[i]]->index);
-	  sumHash[j].index[k] = sumList[sumHash[j].index[i]]->index;
-	  sumHash[j].key[k] = sumHash[j].key[i];
-	  k++;
-	}
+        if (sumList[sumHash[j].index[i]] != NULL) {
+          /* It's a keeper, slide it down and bump the count */
+          //        fprintf(stderr, "Hash keeper index %d is now %d\n", sumHash[j].index[i],
+          //              sumList[sumHash[j].index[i]]->index);
+          sumHash[j].index[k] = sumList[sumHash[j].index[i]]->index;
+          sumHash[j].key[k] = sumHash[j].key[i];
+          k++;
+        }
       }
       sumHash[j].num = k;
     }
@@ -4172,18 +4087,16 @@ void doExternalizePolys ()
 
   // The productList (and others) never get out of nodeId order, so skip over holdAllPolys entries.
   i = 0;
-  while (productList[i++]->id <= holdAllPolysNodeId) ;
+  while (productList[i++]->id <= holdAllPolysNodeId);
   newCount = i;
   for (i = 0; i < productCount; i++) {
     if (productList[i]->id == polynomialLostNodeId)
-      fprintf (stderr,
-	       "doExternalizePolys sees id %d with valid %d and count %d\n",
-	       polynomialLostNodeId, productList[i]->valid, productList[i]->count);
+      fprintf (stderr, "doExternalizePolys sees id %d with valid %d and count %d\n", polynomialLostNodeId, productList[i]->valid, productList[i]->count);
     if (productList[i]->count || productList[i]->valid) {
       // Convert to external
       externalList[externalCount] = productList[i];
-      //	  externalList[externalCount]->e.e->formerEType = T_PRODUCT;
-      //	  sprintf (externalList[externalCount]->e.e->signature, "P%d", productList[i]->id);
+      //          externalList[externalCount]->e.e->formerEType = T_PRODUCT;
+      //          sprintf (externalList[externalCount]->e.e->signature, "P%d", productList[i]->id);
       externalList[externalCount]->index = externalCount;
       externalCount++;
       free (productList[i]->e.p->product);
@@ -4199,27 +4112,24 @@ void doExternalizePolys ()
     if (productHash[j].num > 0) {
       k = 0;
       for (i = 0; i < productHash[j].num; i++) {
-	if (productList[productHash[j].index[i]] != NULL) {
-	  /* It's a keeper, slide it down and bump the count */
-	  //        fprintf(stderr, "Hash keeper index %d is now %d\n", productHash[j].index[i],
-	  //              productList[productHash[j].index[i]]->index);
-	  productHash[j].index[k] = productList[productHash[j].index[i]]->index;
-	  productHash[j].key[k] = productHash[j].key[i];
-	  k++;
-	}
+        if (productList[productHash[j].index[i]] != NULL) {
+          /* It's a keeper, slide it down and bump the count */
+          //        fprintf(stderr, "Hash keeper index %d is now %d\n", productHash[j].index[i],
+          //              productList[productHash[j].index[i]]->index);
+          productHash[j].index[k] = productList[productHash[j].index[i]]->index;
+          productHash[j].key[k] = productHash[j].key[i];
+          k++;
+        }
       }
       productHash[j].num = k;
     }
   }
-  productCount = newCount;  // Reset the product list
+  productCount = newCount;      // Reset the product list
 
   /* Reset building statistics. */
-  sumReleaseableCount = sumNotReleaseableCount = sumReturnConstantCount =
-    sumReturn1TermCount = sumHashHits = sumNewCount = sumListNewCount = sumListReplacementCount = 0;
+  sumReleaseableCount = sumNotReleaseableCount = sumReturnConstantCount = sumReturn1TermCount = sumHashHits = sumNewCount = sumListNewCount = sumListReplacementCount = 0;
   productReleaseableCount = productNotReleaseableCount = productReturn0Count =
-    productReturnConstantCount = productReturn1stTermCount =
-    productReturn1TermSumCount = productHashHits = productHashHitIsSumCount =
-    productReturnNormalCount = productNon1FactorIsSumCount = productListNewCount = productListReplacementCount = 0;
+      productReturnConstantCount = productReturn1stTermCount = productReturn1TermSumCount = productHashHits = productHashHitIsSumCount = productReturnNormalCount = productNon1FactorIsSumCount = productListNewCount = productListReplacementCount = 0;
   totalSPLLengths = totalSPLCalls = lowSPLCount = highSPLCount = 0;
 
   return;
@@ -4256,26 +4166,26 @@ Polynomial *restoreExternalPoly (char *functionName)
   Polynomial *rp;
   struct externalPoly *eP;
   char dLName[128];
-  double (*dLRoutine)();
+  double (*dLRoutine) ();
   void *dLHandle;
 
   sprintf (dLName, "./%s.so", functionName);
   //  printf ("Attempting load of [%s]\n", dLName);
-  if ((dLHandle = dlopen(dLName, RTLD_NOW)) != NULL) {
+  if ((dLHandle = dlopen (dLName, RTLD_NOW)) != NULL) {
     fprintf (stdout, "Using existing dynamic library for polynomial %s\n", functionName);
     // Loaded it! Make sure the function is in there...
-    if ((dLRoutine = dlsym(dLHandle, functionName)) != NULL) {
+    if ((dLRoutine = dlsym (dLHandle, functionName)) != NULL) {
       // Found it! Create a new externalPoly for it.
       rp = (Polynomial *) malloc (sizeof (Polynomial));
       if (rp == NULL) {
-	fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-	exit (EXIT_FAILURE);
+        fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+        exit (EXIT_FAILURE);
       }
       rp->eType = T_EXTERNAL;
       eP = (struct externalPoly *) malloc (sizeof (struct externalPoly));
       if (eP == NULL) {
-	fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-	exit (EXIT_FAILURE);
+        fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+        exit (EXIT_FAILURE);
       }
       rp->e.e = eP;
       strcpy (eP->polynomialFunctionName, functionName);
@@ -4283,7 +4193,7 @@ Polynomial *restoreExternalPoly (char *functionName)
       eP->polynomialFunctionRoutine = dLRoutine;
     } else {
       fprintf (stdout, "Couldn't find routine in dynamic library for polynomial %s\n", functionName);
-      dlclose(dLHandle);
+      dlclose (dLHandle);
       return NULL;
     }
   } else {
@@ -4295,17 +4205,17 @@ Polynomial *restoreExternalPoly (char *functionName)
 }
 
 #define MAXSRCSIZE (8192*128)
-void codePoly (Polynomial * p, struct polyList * l, char * name)
+void codePoly (Polynomial * p, struct polyList *l, char *name)
 {
   char srcFileName[128], srcCalledFileName[128], includeFileName[128], command[256];
   FILE *srcFile, *srcCalledFile = NULL, *includeFile;
-  int i, j, srcSize = MAXSRCSIZE+1, fileCount = 0;
+  int i, j, srcSize = MAXSRCSIZE + 1, fileCount = 0;
   int sumsUsed = 0, productsUsed = 0, functionCallsUsed = 0;
-  Polynomial * result;
+  Polynomial *result;
   struct sumPoly *sP;
   struct productPoly *pP;
 
-  pushStatus ("saving poly C");
+  pushStatus ("encode poly");
   result = p;
 
   sprintf (srcFileName, "%s.c", name);
@@ -4318,12 +4228,11 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
   fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n\n");
   fprintf (srcFile, "#include \"%s.h\"\n\n", name);
 
-#ifdef POLYCOMP_DL
+#ifdef POLYCODE_DL
   fprintf (srcFile, "#include \"polynomial.h\"\n\n");
   fprintf (srcFile, "struct polynomial **variableList;\n\n");
 #endif
-  fprintf (srcFile, "double V[VARIABLESUSED], S[SUMSUSED], "
-	   "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
+  fprintf (srcFile, "double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
 
   /// Make sure all variables are present, since we don't know yet which are used.
   for (i = 0; i < variableCount; i++)
@@ -4334,11 +4243,10 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
 
   fprintf (srcFile, "\tva_list args;\n\n\tva_start (args, num);\n\n");
 
-#ifdef POLYCOMP_DL
+#ifdef POLYCODE_DL
   fprintf (srcFile, "\tvariableList = va_arg (args, struct polynomial **);\n");
   for (i = 0; i < variableCount; i++)
-    fprintf (srcFile, "\t\t%s = variableList[%d]->value;\n",
-	     variableList[i]->e.v->vName, i);
+    fprintf (srcFile, "\t\t%s = variableList[%d]->value;\n", variableList[i]->e.v->vName, i);
 #else
   for (i = 0; i < variableCount; i++)
     fprintf (srcFile, "\t\t%s = va_arg (args, double);\n", variableList[i]->e.v->vName);
@@ -4351,21 +4259,21 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
       srcSize = 0;
 
       if (fileCount != 0) {
-	srcSize += fprintf (srcCalledFile, "}\n");
-	fclose (srcCalledFile);
+        srcSize += fprintf (srcCalledFile, "}\n");
+        fclose (srcCalledFile);
       }
-      
+
       sprintf (srcCalledFileName, "%s_%03d.c", name, fileCount);
       if ((srcCalledFile = fopen (srcCalledFileName, "w")) == NULL) {
-	perror ("Cannot open polynomial source called file\n");
-	exit (EXIT_FAILURE);
+        perror ("Cannot open polynomial source called file\n");
+        exit (EXIT_FAILURE);
       }
       fprintf (srcFile, "\t%s_%03d();\n", name, fileCount);
 
       srcSize += fprintf (srcCalledFile, "#include <math.h>\n#include <stdio.h>\n\n");
       srcSize += fprintf (srcCalledFile, "\textern double V[], S[], P[], F[];\n\n");
       for (i = 0; i < variableCount; i++)
-	srcSize += fprintf (srcCalledFile, "\textern double %s;\n", variableList[i]->e.v->vName);
+        srcSize += fprintf (srcCalledFile, "\textern double %s;\n", variableList[i]->e.v->vName);
       srcSize += fprintf (srcCalledFile, "\n");
 
       srcSize += fprintf (srcCalledFile, "double %s_%03d () {\n", name, fileCount);
@@ -4380,8 +4288,7 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
       break;
 
     case T_VARIABLE:
-      srcSize += fprintf (srcCalledFile, "\t%s[%d] = %s", eTypes[p->eType], p->index,
-			  p->e.v->vName);
+      srcSize += fprintf (srcCalledFile, "\t%s[%d] = %s", eTypes[p->eType], p->index, p->e.v->vName);
       p->value = p->index;
       break;
 
@@ -4389,17 +4296,16 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
       srcSize += fprintf (srcCalledFile, "\t%s[%d] = ", eTypes[p->eType], sumsUsed);
       sP = p->e.s;
       for (i = 0; i < sP->num; i++) {
-	if (i != 0) srcSize += fprintf (srcCalledFile, "+");
-	if (sP->sum[i]->eType == T_CONSTANT)
-	  srcSize += fprintf (srcCalledFile, "%.24e", sP->sum[i]->value /* still the constant */);
-	else {
-	  if (sP->factor[i] == 1)
-	    srcSize += fprintf (srcCalledFile, "%s[%lu]", eTypes[sP->sum[i]->eType], 
-				(unsigned long) sP->sum[i]->value /* actually <whatever>Used */);
-	  else
-	    srcSize += fprintf (srcCalledFile, "%.24e*%s[%lu]", sP->factor[i], eTypes[sP->sum[i]->eType],
-				(unsigned long) sP->sum[i]->value /* actually <whatever>Used */);
-	}
+        if (i != 0)
+          srcSize += fprintf (srcCalledFile, "+");
+        if (sP->sum[i]->eType == T_CONSTANT)
+          srcSize += fprintf (srcCalledFile, "%.24e", sP->sum[i]->value /* still the constant */ );
+        else {
+          if (sP->factor[i] == 1)
+            srcSize += fprintf (srcCalledFile, "%s[%lu]", eTypes[sP->sum[i]->eType], (unsigned long) sP->sum[i]->value /* actually <whatever>Used */ );
+          else
+            srcSize += fprintf (srcCalledFile, "%.24e*%s[%lu]", sP->factor[i], eTypes[sP->sum[i]->eType], (unsigned long) sP->sum[i]->value /* actually <whatever>Used */ );
+        }
       }
       p->value = sumsUsed++;
       break;
@@ -4408,38 +4314,31 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
       srcSize += fprintf (srcCalledFile, "\t%s[%d] = ", eTypes[p->eType], productsUsed);
       pP = p->e.p;
       for (i = 0; i < pP->num; i++) {
-	if (i != 0) srcSize += fprintf (srcCalledFile, "*");
-	if (pP->product[i]->eType == T_CONSTANT)
-	  srcSize += fprintf (srcCalledFile, "%.24e", pP->product[i]->value /* still the constant */);
-	else {
-	  switch (pP->exponent[i]) {
-	  case 1:
-	    srcSize += fprintf (srcCalledFile, "%s[%lu]", eTypes[pP->product[i]->eType], 
-				(unsigned long) pP->product[i]->value);
-	    break;
-	  case 2:
-	    srcSize += fprintf (srcCalledFile, "%s[%lu]*%s[%lu]", eTypes[pP->product[i]->eType], 
-				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType],
-				(unsigned long) pP->product[i]->value);
-	    break;
-	  case 3:
-	    srcSize += fprintf (srcCalledFile, "%s[%lu]*%s[%lu]*%s[%lu]", eTypes[pP->product[i]->eType], 
-				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType], 
-				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType],
-				(unsigned long) pP->product[i]->value);
-	    break;
-	  case 4:
-	    srcSize += fprintf (srcCalledFile, "%s[%lu]*%s[%lu]*%s[%lu]*%s[%lu]", eTypes[pP->product[i]->eType], 
-				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType], 
-				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType],
-				(unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType],
-				(unsigned long) pP->product[i]->value);
-	    break;
-	  default:
-	    srcSize += fprintf (srcCalledFile, "pow(%s[%lu],%d)", eTypes[pP->product[i]->eType],
-				(unsigned long) pP->product[i]->value, pP->exponent[i]);
-	    break;
-	  }
+        if (i != 0)
+          srcSize += fprintf (srcCalledFile, "*");
+        if (pP->product[i]->eType == T_CONSTANT)
+          srcSize += fprintf (srcCalledFile, "%.24e", pP->product[i]->value /* still the constant */ );
+        else {
+          switch (pP->exponent[i]) {
+          case 1:
+            srcSize += fprintf (srcCalledFile, "%s[%lu]", eTypes[pP->product[i]->eType], (unsigned long) pP->product[i]->value);
+            break;
+          case 2:
+            srcSize += fprintf (srcCalledFile, "%s[%lu]*%s[%lu]", eTypes[pP->product[i]->eType], (unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType], (unsigned long) pP->product[i]->value);
+            break;
+          case 3:
+            srcSize += fprintf (srcCalledFile, "%s[%lu]*%s[%lu]*%s[%lu]", eTypes[pP->product[i]->eType],
+                (unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType], (unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType], (unsigned long) pP->product[i]->value);
+            break;
+          case 4:
+            srcSize += fprintf (srcCalledFile, "%s[%lu]*%s[%lu]*%s[%lu]*%s[%lu]", eTypes[pP->product[i]->eType],
+                (unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType],
+                (unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType], (unsigned long) pP->product[i]->value, eTypes[pP->product[i]->eType], (unsigned long) pP->product[i]->value);
+            break;
+          default:
+            srcSize += fprintf (srcCalledFile, "pow(%s[%lu],%d)", eTypes[pP->product[i]->eType], (unsigned long) pP->product[i]->value, pP->exponent[i]);
+            break;
+          }
         }
       }
       //      srcSize += fprintf (srcCalledFile, ";\n\tprintf (\"%%g\\n\", %s[%d])", eTypes[p->eType], productsUsed);
@@ -4448,18 +4347,18 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
 
     case T_FUNCTIONCALL:
       srcSize += fprintf (srcCalledFile, "\tF[%d] = %s(", functionCallsUsed, p->e.f->name);
-      for (i=0; i<p->e.f->num; i++) {
-	if (i != 0) srcSize += fprintf (srcCalledFile, ",");
-	if (p->e.f->para[i]->eType == T_CONSTANT)
-	  srcSize += fprintf (srcCalledFile, "%.24e", p->e.f->para[i]->value /* still the constant */);
-	else
-	  srcSize += fprintf (srcCalledFile, "%s[%lu]", eTypes[p->e.f->para[i]->eType], 
-			      (unsigned long) p->e.f->para[i]->value);
+      for (i = 0; i < p->e.f->num; i++) {
+        if (i != 0)
+          srcSize += fprintf (srcCalledFile, ",");
+        if (p->e.f->para[i]->eType == T_CONSTANT)
+          srcSize += fprintf (srcCalledFile, "%.24e", p->e.f->para[i]->value /* still the constant */ );
+        else
+          srcSize += fprintf (srcCalledFile, "%s[%lu]", eTypes[p->e.f->para[i]->eType], (unsigned long) p->e.f->para[i]->value);
       }
       srcSize += fprintf (srcCalledFile, ")");
       p->value = functionCallsUsed++;
       break;
-      
+
     default:
       fprintf (stderr, "In codePoly, unknown expression type: [%d], exiting!\n", p->eType);
       exit (EXIT_FAILURE);
@@ -4476,14 +4375,12 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
   else
     fprintf (srcFile, "\n\treturn %s[%g];\n}\n", eTypes[result->eType], result->value);
 
-  fprintf (srcFile, "#ifdef MAIN\n\n#include <stdio.h>\n#include <stdlib.h>\n\n"
-	   "int main(int argc, char *argv[]) {\n\tint i;\n\n");
-  fprintf (srcFile, "\tif (argc != %d) {\n\t\tfprintf(stderr, \"%d floating arguments required\\n\");"
-	   "\n\t\texit(EXIT_FAILURE);\n\t}\n\tprintf(\"%%g\\n\", %s(1, ", 
-	   variableCount+1, variableCount, name);
-  for (i=0; i<variableCount; i++) {
-    if (i != 0) fprintf (srcFile, ", ");
-    fprintf (srcFile, "atof(argv[%d])", i+1);
+  fprintf (srcFile, "#ifdef MAIN\n\n#include <stdio.h>\n#include <stdlib.h>\n\n" "int main(int argc, char *argv[]) {\n\tint i;\n\n");
+  fprintf (srcFile, "\tif (argc != %d) {\n\t\tfprintf(stderr, \"%d floating arguments required\\n\");" "\n\t\texit(EXIT_FAILURE);\n\t}\n\tprintf(\"%%g\\n\", %s(1, ", variableCount + 1, variableCount, name);
+  for (i = 0; i < variableCount; i++) {
+    if (i != 0)
+      fprintf (srcFile, ", ");
+    fprintf (srcFile, "atof(argv[%d])", i + 1);
   }
   fprintf (srcFile, "));\n}\n\n#endif\n");
   fclose (srcFile);
@@ -4498,21 +4395,19 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
   fprintf (includeFile, "#define FUNCTIONCALLSUSED %d\n", functionCallsUsed);
   fclose (includeFile);
 
-#ifndef FAKEEVALUATE
+#ifdef POLYCOMP_DL
   pushStatus ("compile poly");
-  sprintf (command, "time gcc -O -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", 
-	   name, name, name);
+  sprintf (command, "time gcc -O -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", name, name, name);
   int status;
   if ((status = system (command)) != 0) {
-    perror("system()");
+    perror ("system()");
     exit (EXIT_FAILURE);
   }
   popStatus ();
 #ifdef POLYSIZE
-  sprintf (command, "echo %s, poly %d, is %d internally, and `wc -c %s.so` externally.",
-	   name, result->id, result->totalSize, name);
+  sprintf (command, "echo %s, poly %d, is %d internally, and `wc -c %s.so` externally.", name, result->id, result->totalSize, name);
   if ((status = system (command)) != 0) {
-    perror("system()");
+    perror ("system()");
     exit (EXIT_FAILURE);
   }
 #endif
@@ -4521,4 +4416,3 @@ void codePoly (Polynomial * p, struct polyList * l, char * name)
   popStatus ();
   return;
 }
-
