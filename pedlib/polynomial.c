@@ -4233,12 +4233,12 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
         if (i != 0)
           srcSize += fprintf (srcCalledFile, "+");
         if (sP->sum[i]->eType == T_CONSTANT)
-          srcSize += fprintf (srcCalledFile, "%.16e", sP->sum[i]->value /* still the constant */ );
+          srcSize += fprintf (srcCalledFile, "%.DBL_DIGe", sP->sum[i]->value /* still the constant */ );
         else {
           if (sP->factor[i] == 1)
             srcSize += fprintf (srcCalledFile, "%s[%lu]", eTypes[sP->sum[i]->eType], (unsigned long) sP->sum[i]->value /* actually <whatever>Used */ );
           else
-            srcSize += fprintf (srcCalledFile, "%.16e*%s[%lu]", sP->factor[i], eTypes[sP->sum[i]->eType], (unsigned long) sP->sum[i]->value /* actually <whatever>Used */ );
+            srcSize += fprintf (srcCalledFile, "%.DBL_DIGe*%s[%lu]", sP->factor[i], eTypes[sP->sum[i]->eType], (unsigned long) sP->sum[i]->value /* actually <whatever>Used */ );
         }
       }
       p->value = sumsUsed++;
@@ -4251,7 +4251,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
         if (i != 0)
           srcSize += fprintf (srcCalledFile, "*");
         if (pP->product[i]->eType == T_CONSTANT)
-          srcSize += fprintf (srcCalledFile, "%.16e", pP->product[i]->value /* still the constant */ );
+          srcSize += fprintf (srcCalledFile, "%.DBL_DIGe", pP->product[i]->value /* still the constant */ );
         else {
           switch (pP->exponent[i]) {
           case 1:
@@ -4285,7 +4285,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
         if (i != 0)
           srcSize += fprintf (srcCalledFile, ",");
         if (p->e.f->para[i]->eType == T_CONSTANT)
-          srcSize += fprintf (srcCalledFile, "%.16e", p->e.f->para[i]->value /* still the constant */ );
+          srcSize += fprintf (srcCalledFile, "%.DBL_DIGe", p->e.f->para[i]->value /* still the constant */ );
         else
           srcSize += fprintf (srcCalledFile, "%s[%lu]", eTypes[p->e.f->para[i]->eType], (unsigned long) p->e.f->para[i]->value);
       }
@@ -4305,7 +4305,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   fclose (srcCalledFile);
 
   if (result->eType == T_CONSTANT)
-    fprintf (srcFile, "\n\treturn %.16e;\n}\n", result->value);
+    fprintf (srcFile, "\n\treturn %.DBL_DIGe;\n}\n", result->value);
   else
     fprintf (srcFile, "\n\treturn %s[%g];\n}\n", eTypes[result->eType], result->value);
 
