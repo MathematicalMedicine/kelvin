@@ -28,6 +28,7 @@ char *likelihoodVersion = "$Id$";
 #include "tools.h"
 #include "likelihood.h"
 #include "genotype_elimination.h"
+#include "float.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -307,7 +308,6 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	      // Try to load the DL and ditch the in-memory polynomial
     #ifdef POLYCHECK_DL
 	      holdPoly (pPedigree->likelihoodPolynomial);
-	      printf ("HOLDING A CHECKER\n");
 	      pPedigree->cLikelihoodPolynomial = pPedigree->likelihoodPolynomial;
     #endif
 	      if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
@@ -358,8 +358,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 #ifdef POLYCHECK_DL
 	double eValue =
 	  evaluateValue (pPedigree->cLikelihoodPolynomial);
-	if (eValue != pPedigree->likelihood)
-	  fprintf (stderr, "Discrepency between eV of %.20g and v of %.20g\n",
+	if (fabs (eValue - pPedigree->likelihood) > 1E-9)
+	  fprintf (stderr, "Discrepency between eV of %.*g and v of %.*g\n", DBL_DIG, DBL_DIG,
 		   eValue, pPedigree->likelihood);
 	
 #endif
