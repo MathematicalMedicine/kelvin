@@ -172,7 +172,9 @@ typedef struct Pedigree
   struct polyList *likelihoodPolyList;
   struct polynomial *traitLikelihoodPolynomial;
   struct polyList *traitLikelihoodPolyList;
+#ifdef POLYCHECK_DL
   struct polynomial *cLikelihoodPolynomial;
+#endif
 
   /* Internal counters for memory allocation */
   int maxNumPerson;

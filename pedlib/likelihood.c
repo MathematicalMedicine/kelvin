@@ -287,47 +287,36 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	if (pPedigree->likelihoodPolynomial == NULL) { // There's no polynomial, so come up with one
 	  // Construct polynomialFunctionName for attempted load and maybe compilation
 	  sprintf (polynomialFunctionName, partialPolynomialFunctionName, pPedigree->sPedigreeID);
+#ifdef POLYUSE_DL
 	  if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
+#endif
 	    // Failed to load, construct it
 	    initialize_multi_locus_genotype (pPedigree);
 	    status = compute_pedigree_likelihood (pPedigree);
-	    pPedigree->likelihoodPolyList = buildPolyList ();
-	    polyListSorting (pPedigree->likelihoodPolynomial,
-			     pPedigree->likelihoodPolyList);
-#ifdef POLYCOMP
+#ifdef POLYCODE_DL
 	    if (pPedigree->likelihoodPolynomial->eType == T_SUM ||
 		pPedigree->likelihoodPolynomial->eType == T_PRODUCT) { // Worth compiling
 	      fprintf (stdout, "Coding polynomial P%d (%s)...\n",
 		       pPedigree->likelihoodPolynomial->id, polynomialFunctionName);
+	      pPedigree->likelihoodPolyList = buildPolyList ();
+	      polyListSorting (pPedigree->likelihoodPolynomial,
+			       pPedigree->likelihoodPolyList);
 	      codePoly(pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList,
-			  polynomialFunctionName);
-	      // Soon we'll try to load this new one and ditch the old one
-  #ifndef FAKEEVALUATE
-	      if ((
-    #ifdef POLYCOMPCHECK
-		  pPedigree->cLikelihoodPolynomial
-    #else
-		  pPedigree->likelihoodPolynomial
+		       polynomialFunctionName);
+  #ifdef POLYUSE_DL
+	      // Try to load the DL and ditch the in-memory polynomial
+    #ifdef POLYCHECK_DL
+	      holdPoly (pPedigree->likelihoodPolynomial);
+	      printf ("HOLDING A CHECKER\n");
+	      pPedigree->cLikelihoodPolynomial = pPedigree->likelihoodPolynomial;
     #endif
-		  = restoreExternalPoly (polynomialFunctionName)) == NULL) {
+	      if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
 		fprintf (stdout, "Couldn't load compiled likelihood polynomial we just created!\n");
 		exit (EXIT_FAILURE);
-	      } else {
-		fprintf (stdout, "Loaded DL for polynomial %s...\n", polynomialFunctionName);
-		pPedigree->likelihoodPolyList = buildPolyList ();
-		polyListSorting (pPedigree->likelihoodPolynomial,  pPedigree->likelihoodPolyList);
-	      }
+	      } else
+		fprintf (stdout, "Loaded new DL for polynomial %s...\n", polynomialFunctionName);
   #endif
 	    }
-  #ifdef FAKEEVALUATE
-	    else {
-	      holdPoly (pPedigree->likelihoodPolynomial);
-	      freeKeptPolys ();
-	    }
-  #endif
-  #ifdef POLYCOMPCHECK
-	    holdPoly (pPedigree->cLikelihoodPolynomial);
-  #endif
 #endif
 	    // Notice we might be holding only the external (compiled) poly!
 #ifndef FAKEEVALUATE
@@ -338,11 +327,12 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	    if (i == pPedigreeList->numPedigree - 1)
 	      polyDynamicStatistics ("Post-build");
 #endif
-	  } else {
+#ifdef POLYUSE_DL
+	  } else
 	    fprintf (stdout, "Loaded DL for polynomial %s...\n", polynomialFunctionName);
-	    pPedigree->likelihoodPolyList = buildPolyList ();
-	    polyListSorting (pPedigree->likelihoodPolynomial,  pPedigree->likelihoodPolyList);
-	  }
+#endif
+	  pPedigree->likelihoodPolyList = buildPolyList ();
+	  polyListSorting (pPedigree->likelihoodPolynomial,  pPedigree->likelihoodPolyList);
 	}
       }
     }
@@ -360,10 +350,12 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	pPedigree->likelihood =
 	  evaluateValue (pPedigree->likelihoodPolynomial);
 #else
+	if (pPedigree->likelihoodPolyList->listNext == 0)
+	  printf ("NOTHING FOR NORMAL POLY LIST!\n");
 	evaluatePoly (pPedigree->likelihoodPolynomial,
 		      pPedigree->likelihoodPolyList,
 		      &pPedigree->likelihood);
-#ifdef POLYCOMPCHECK
+#ifdef POLYCHECK_DL
 	double eValue =
 	  evaluateValue (pPedigree->cLikelihoodPolynomial);
 	if (eValue != pPedigree->likelihood)
