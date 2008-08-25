@@ -356,7 +356,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 		      pPedigree->likelihoodPolyList,
 		      &pPedigree->likelihood);
 #ifdef POLYCHECK_DL
-	if (pPedigree->likelihoodPolynomial->eType == T_EXTERNAL) {
+	if ((pPedigree->cLikelihoodPolynomial != NULL) &&
+	    (pPedigree->cLikelihoodPolynomial->id == pPedigree->likelihoodPolynomial->id)) {
 	  double eValue =
 	    evaluateValue (pPedigree->cLikelihoodPolynomial);
 	  if (fabs (eValue - pPedigree->likelihood) > 1E-9) {
