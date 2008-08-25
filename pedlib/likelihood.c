@@ -356,12 +356,15 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 		      pPedigree->likelihoodPolyList,
 		      &pPedigree->likelihood);
 #ifdef POLYCHECK_DL
-	double eValue =
-	  evaluateValue (pPedigree->cLikelihoodPolynomial);
-	if (fabs (eValue - pPedigree->likelihood) > 1E-9)
-	  fprintf (stderr, "Discrepency between eV of %.*g and v of %.*g\n", DBL_DIG, DBL_DIG,
-		   eValue, pPedigree->likelihood);
-	
+	if (pPedigree->likelihoodPolynomial->eType == T_EXTERNAL) {
+	  double eValue =
+	    evaluateValue (pPedigree->cLikelihoodPolynomial);
+	  if (fabs (eValue - pPedigree->likelihood) > 1E-9) {
+	    fprintf (stderr, "Discrepency between eV of %.*g and v of %.*g for %s(%d)\n", 
+		     DBL_DIG, eValue, DBL_DIG, pPedigree->likelihood,
+		     polynomialFunctionName, pPedigree->likelihoodPolynomial->id);
+	  }
+	}
 #endif
 #endif
 #endif

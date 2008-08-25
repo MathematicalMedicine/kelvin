@@ -1478,7 +1478,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
         }
 	if (markerSetChanged) {
 	  char markerNo[8];
-	  sprintf (partialPolynomialFunctionName, "CL6_P%%sC%dM",
+	  sprintf (partialPolynomialFunctionName, "ML6_P%%sC%dM",
 		   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
 	  for (k = 0; k < modelType.numMarkers; k++) {
 	    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
