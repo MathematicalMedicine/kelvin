@@ -173,7 +173,9 @@ typedef struct Pedigree
   struct polynomial *traitLikelihoodPolynomial;
   struct polyList *traitLikelihoodPolyList;
 #ifdef POLYCHECK_DL
+  double cLikelihood;
   struct polynomial *cLikelihoodPolynomial;
+  struct polyList *cLikelihoodPolyList;
 #endif
 
   /* Internal counters for memory allocation */
