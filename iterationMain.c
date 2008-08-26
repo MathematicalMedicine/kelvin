@@ -1676,15 +1676,18 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
 
             /* If we're not on the first iteration, it's not a polynomial build, so
              * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-	    if (markerSetChanged) {
-	      char markerNo[8];
-	      sprintf (partialPolynomialFunctionName, "CL7_P%%sC%dM",
-		       (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
-	      for (k = 0; k < modelType.numMarkers; k++) {
-		sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
-		strcat (partialPolynomialFunctionName, markerNo);
-	      }
+	    char markerNo[8];
+	    sprintf (partialPolynomialFunctionName, "CL7_P%%sC%dM",
+		     (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+	    for (k = 0; k < modelType.numMarkers; k++) {
+	      if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
+		  (strstr (partialPolynomialFunctionName, "_T") == NULL))
+		strcat (partialPolynomialFunctionName, "_T");
+	      sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
+	      strcat (partialPolynomialFunctionName, markerNo);
 	    }
+	    if (strstr (partialPolynomialFunctionName, "_T") == NULL)
+	      strcat (partialPolynomialFunctionName, "_T");
             if (gfreqInd != 0 || penIdx != 0) {
 	      pushStatus ("evaluating");
               swStart (combinedComputeSW);
@@ -1902,15 +1905,18 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
 
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-		if (markerSetChanged) {
-		  char markerNo[8];
-		  sprintf (partialPolynomialFunctionName, "CL8_P%%sC%dM",
-			   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
-		  for (k = 0; k < modelType.numMarkers; k++) {
-		    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
-		    strcat (partialPolynomialFunctionName, markerNo);
-		  }
+		char markerNo[8];
+		sprintf (partialPolynomialFunctionName, "CL8_P%%sC%dM",
+			 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+		for (k = 0; k < modelType.numMarkers; k++) {
+		  if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
+		      (strstr (partialPolynomialFunctionName, "_T") == NULL))
+		    strcat (partialPolynomialFunctionName, "_T");
+		  sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
+		  strcat (partialPolynomialFunctionName, markerNo);
 		}
+		if (strstr (partialPolynomialFunctionName, "_T") == NULL)
+		  strcat (partialPolynomialFunctionName, "_T");
                 if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
 		  pushStatus ("evaluating");
                   swStart (combinedComputeSW);
