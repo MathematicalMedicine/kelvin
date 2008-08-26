@@ -3768,7 +3768,12 @@ void unHoldPoly (Polynomial * p)
 void doFreePolys (unsigned short keepMask)
 {
   int i, j, k;
-  Polynomial **newConstantList, **newVariableList, **newSumList, **newProductList;
+  Polynomial **newConstantList,
+#ifdef VARIABLE_C_MESSES_UP_COMPILED_DL_ARGUMENTS
+    **newVariableList,
+#endif
+    **newSumList,
+    **newProductList;
 
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Starting doFreePolys\n");
@@ -3846,7 +3851,7 @@ void doFreePolys (unsigned short keepMask)
       constantList = newConstantList;
     }
 
-#ifdef VARIABLE_GC_MESSES-UP_COMPILED_DL_ARGUMENTS
+#ifdef VARIABLE_C_MESSES_UP_COMPILED_DL_ARGUMENTS
 #ifdef _OPENMP
 #pragma omp section
 #endif
@@ -4196,7 +4201,7 @@ int loadPolyDL (Polynomial * p)
 #define MAXSRCSIZE (8192*128)
 void codePoly (Polynomial * p, struct polyList *l, char *name)
 {
-  char srcFileName[128], srcCalledFileName[128], includeFileName[128], command[256];
+  char srcFileName[128], srcCalledFileName[128], includeFileName[128];
   FILE *srcFile, *srcCalledFile = NULL, *includeFile;
   int i, j, srcSize = MAXSRCSIZE + 1, fileCount = 0;
   int sumsUsed = 0, productsUsed = 0, functionCallsUsed = 0;
@@ -4386,6 +4391,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   fclose (includeFile);
 
 #ifdef POLYCOMP_DL
+  char command[256];
   pushStatus ("compile poly");
   sprintf (command, "time gcc -O -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", name, name, name);
   int status;

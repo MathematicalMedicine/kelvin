@@ -10,6 +10,7 @@
 #define __POLYNOMIAL_H__
 
 #include <stdio.h>
+#include "utils.h"		/* Kelvin utilities. */
 
 #ifdef DMTRACK
 #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
@@ -127,6 +128,9 @@ struct functionPoly
 
 struct externalPoly
 {
+  int fileOK;
+  int entryOK;
+  char polynomialFileName[MAX_PFN_LEN+1];
   char polynomialFunctionName[MAX_PFN_LEN+1];
   double (*polynomialFunctionRoutine)();
   void *polynomialFunctionHandle;
@@ -323,5 +327,6 @@ void writePolyDigraph (Polynomial *);
 
 void codePoly (Polynomial * p, struct polyList * l, char * name);
 Polynomial *restoreExternalPoly (char * name);
+int loadPolyDL (Polynomial * p);
 void externalizePolys ();
 void thrashingCheck ();

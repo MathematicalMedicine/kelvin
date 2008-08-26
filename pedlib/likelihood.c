@@ -317,6 +317,10 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 		fprintf (stderr, "Couldn't load compiled likelihood polynomial we just created!\n");
 		exit (EXIT_FAILURE);
 	      }
+    #else
+      #ifdef FAKEEVALUATE
+	      pPedigree->likelihoodPolynomial = constantExp(.05);
+      #endif
     #endif
   #endif
 	    }
@@ -324,8 +328,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	    // Notice we are normally holding only the external (compiled) poly!
 #ifndef FAKEEVALUATE
 	    holdPoly (pPedigree->likelihoodPolynomial);
-#endif
 	    freeKeptPolys ();
+#endif
 #ifdef POLYSTATISTICS
 	    if (i == pPedigreeList->numPedigree - 1)
 	      polyDynamicStatistics ("Post-build");
@@ -345,17 +349,15 @@ compute_likelihood (PedigreeSet * pPedigreeList)
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       if (pPedigree->load_flag == 0) {
-#ifdef FAKEEVALUATE
-	pPedigree->likelihood = .05;
-#else
-  #ifdef MANYSMALLEVALUATE
+#ifdef MANYSMALLEVALUATE
 	pPedigree->likelihood =
 	  evaluateValue (pPedigree->likelihoodPolynomial);
-  #else
+#else
 	evaluatePoly (pPedigree->likelihoodPolynomial,
 		      pPedigree->likelihoodPolyList,
 		      &pPedigree->likelihood);
-    #ifdef POLYCHECK_DL
+#endif
+#ifdef POLYCHECK_DL
 	// Check the result only if we actually just built a polynomial to check
 	if (pPedigree->cLikelihoodPolynomial != NULL) {
 	  evaluatePoly (pPedigree->cLikelihoodPolynomial, 
@@ -367,8 +369,6 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 		     polynomialFunctionName, pPedigree->likelihoodPolynomial->id);
 	  }
 	}
-    #endif
-  #endif
 #endif
       }
     }
