@@ -1,4 +1,3 @@
-
 /**********************************************************************
  * Copyright 2008, Nationwide Children's Research Institute.
  * All rights reserved.
@@ -20,6 +19,7 @@ char *likelihoodVersion = "$Id$";
 #include <time.h>
 #include <ctype.h>
 #include <math.h>
+#include <float.h>
 #include <sys/types.h>
 
 #include "pedlib.h"
@@ -28,7 +28,6 @@ char *likelihoodVersion = "$Id$";
 #include "tools.h"
 #include "likelihood.h"
 #include "genotype_elimination.h"
-#include "float.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -286,6 +285,9 @@ compute_likelihood (PedigreeSet * pPedigreeList)
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       if (pPedigree->load_flag == 0) { // Skip everything, we're using saved results
 	if (pPedigree->likelihoodPolynomial == NULL) { // There's no polynomial, so come up with one
+#ifdef POLYCHECK_DL
+	  pPedigree->cLikelihoodPolynomial = NULL; // Get rid of the old tree comparison poly
+#endif
 	  // Construct polynomialFunctionName for attempted load and maybe compilation
 	  sprintf (polynomialFunctionName, partialPolynomialFunctionName, pPedigree->sPedigreeID);
 #ifdef POLYUSE_DL
@@ -297,39 +299,39 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 #ifdef POLYCODE_DL
 	    if (pPedigree->likelihoodPolynomial->eType == T_SUM ||
 		pPedigree->likelihoodPolynomial->eType == T_PRODUCT) { // Worth compiling
-	      fprintf (stdout, "Coding polynomial P%d (%s)...\n",
-		       pPedigree->likelihoodPolynomial->id, polynomialFunctionName);
 	      pPedigree->likelihoodPolyList = buildPolyList ();
 	      polyListSorting (pPedigree->likelihoodPolynomial,
 			       pPedigree->likelihoodPolyList);
 	      codePoly(pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList,
 		       polynomialFunctionName);
   #ifdef POLYUSE_DL
-	      // Try to load the DL and ditch the in-memory polynomial
+	      // Try to load the DL and ditch the tree polynomial
     #ifdef POLYCHECK_DL
-	      holdPoly (pPedigree->likelihoodPolynomial);
+	      // Squirrel-away the tree polynomial for later check
 	      pPedigree->cLikelihoodPolynomial = pPedigree->likelihoodPolynomial;
+	      holdPoly (pPedigree->cLikelihoodPolynomial);
+	      pPedigree->cLikelihoodPolyList = pPedigree->likelihoodPolyList;
     #endif
+    #ifdef POLYCOMP_DL
 	      if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
-		fprintf (stdout, "Couldn't load compiled likelihood polynomial we just created!\n");
+		fprintf (stderr, "Couldn't load compiled likelihood polynomial we just created!\n");
 		exit (EXIT_FAILURE);
-	      } else
-		fprintf (stdout, "Loaded new DL for polynomial %s...\n", polynomialFunctionName);
+	      }
+    #endif
   #endif
 	    }
 #endif
-	    // Notice we might be holding only the external (compiled) poly!
+	    // Notice we are normally holding only the external (compiled) poly!
 #ifndef FAKEEVALUATE
 	    holdPoly (pPedigree->likelihoodPolynomial);
-	    freeKeptPolys ();
 #endif
+	    freeKeptPolys ();
 #ifdef POLYSTATISTICS
 	    if (i == pPedigreeList->numPedigree - 1)
 	      polyDynamicStatistics ("Post-build");
 #endif
 #ifdef POLYUSE_DL
-	  } else
-	    fprintf (stdout, "Loaded DL for polynomial %s...\n", polynomialFunctionName);
+	  }
 #endif
 	  pPedigree->likelihoodPolyList = buildPolyList ();
 	  polyListSorting (pPedigree->likelihoodPolynomial,  pPedigree->likelihoodPolyList);
@@ -346,28 +348,27 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 #ifdef FAKEEVALUATE
 	pPedigree->likelihood = .05;
 #else
-#ifdef MANYSMALLEVALUATE
+  #ifdef MANYSMALLEVALUATE
 	pPedigree->likelihood =
 	  evaluateValue (pPedigree->likelihoodPolynomial);
-#else
-	if (pPedigree->likelihoodPolyList->listNext == 0)
-	  printf ("NOTHING FOR NORMAL POLY LIST!\n");
+  #else
 	evaluatePoly (pPedigree->likelihoodPolynomial,
 		      pPedigree->likelihoodPolyList,
 		      &pPedigree->likelihood);
-#ifdef POLYCHECK_DL
-	if ((pPedigree->cLikelihoodPolynomial != NULL) &&
-	    (pPedigree->cLikelihoodPolynomial->id == pPedigree->likelihoodPolynomial->id)) {
-	  double eValue =
-	    evaluateValue (pPedigree->cLikelihoodPolynomial);
-	  if (fabs (eValue - pPedigree->likelihood) > 1E-9) {
+    #ifdef POLYCHECK_DL
+	// Check the result only if we actually just built a polynomial to check
+	if (pPedigree->cLikelihoodPolynomial != NULL) {
+	  evaluatePoly (pPedigree->cLikelihoodPolynomial, 
+			pPedigree->cLikelihoodPolyList,
+			&pPedigree->cLikelihood);
+	  if (fabs (pPedigree->likelihood - pPedigree->cLikelihood) > 1E-15) {
 	    fprintf (stderr, "Discrepency between eV of %.*g and v of %.*g for %s(%d)\n", 
-		     DBL_DIG, eValue, DBL_DIG, pPedigree->likelihood,
+		     DBL_DIG, pPedigree->likelihood, DBL_DIG, pPedigree->cLikelihood,
 		     polynomialFunctionName, pPedigree->likelihoodPolynomial->id);
 	  }
 	}
-#endif
-#endif
+    #endif
+  #endif
 #endif
       }
     }
@@ -440,6 +441,8 @@ pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList)
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       if (pPedigree->likelihoodPolynomial != NULL) {
 	unHoldPoly (pPedigree->likelihoodPolynomial);
+	if (pPedigree->likelihoodPolynomial->eType == T_EXTERNAL)
+	  releaseExternalPoly (pPedigree->likelihoodPolynomial);
 	pPedigree->likelihoodPolynomial = NULL;
 	free (pPedigree->likelihoodPolyList->pList);
 	free (pPedigree->likelihoodPolyList);

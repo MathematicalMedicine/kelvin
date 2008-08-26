@@ -122,6 +122,16 @@
 
 #include <dlfcn.h>
 
+#ifndef POLYUSE_DL
+#undef POLYCODE_DL
+#undef POLYCOMP_DL
+#undef POLYCHECK_DL
+#endif
+
+#ifndef POLYCOMP_DL
+#undef POLYCHECK_DL
+#endif
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -468,6 +478,12 @@ double doEvaluateValue (Polynomial * p)
     }
 
   case T_EXTERNAL:
+    if (!p->e.e->entryOK)
+      if (!loadPolyDL (p)) {
+	fprintf (stderr, "Cannot (re)load DL-based polynomial %s for evaluateValue\n", 
+		 p->e.e->polynomialFunctionName);
+	exit (EXIT_FAILURE);
+      }
     p->value = p->e.e->polynomialFunctionRoutine (1, variableList);
     return p->value;
 
@@ -2428,6 +2444,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 #ifdef EVALUATESW
     swStop (evaluatePolySW);
 #endif
+    fprintf (stderr, "%u gives %.16g\n", evaluatePolyCount, pp->value);
     return;
   }
 
@@ -2449,6 +2466,12 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
       break;
 
     case T_EXTERNAL:
+      if (!p->e.e->entryOK)
+	if (!loadPolyDL (p)) {
+	  fprintf (stderr, "Cannot (re)load DL-based polynomial %s for evaluatePoly\n",
+		   p->e.e->polynomialFunctionName);
+	  exit (EXIT_FAILURE);
+	}
       p->value = p->e.e->polynomialFunctionRoutine (1, variableList);
       break;
 
@@ -3823,6 +3846,7 @@ void doFreePolys (unsigned short keepMask)
       constantList = newConstantList;
     }
 
+#ifdef VARIABLE_GC_MESSES-UP_COMPILED_DL_ARGUMENTS
 #ifdef _OPENMP
 #pragma omp section
 #endif
@@ -3880,6 +3904,7 @@ void doFreePolys (unsigned short keepMask)
       free (variableList);
       variableList = newVariableList;
     }
+#endif
 
 #ifdef _OPENMP
 #pragma omp section
@@ -4080,63 +4105,92 @@ Polynomial *importPoly (void *exportedPoly)
   return (importedPoly);
 }
 
+void releaseExternalPoly (Polynomial *rp)
+{
+  if (rp->eType != T_EXTERNAL) {
+    fprintf (stderr, "releaseExternalPoly called with polynomial eType of %d\n", rp->eType);
+    exit (EXIT_FAILURE);
+  }
+  dlclose (rp->e.e->polynomialFunctionHandle);
+  //  fprintf (stderr, "Released polynomial DL %s\n", rp->e.e->polynomialFunctionName);
+  rp->e.e->fileOK = FALSE;
+  rp->e.e->entryOK = FALSE;
+  return;
+}
+
 Polynomial *restoreExternalPoly (char *functionName)
 {
   Polynomial *rp;
   struct externalPoly *eP;
-  char dLName[128];
-  double (*dLRoutine) ();
-  void *dLHandle;
+  int i;
 
-  sprintf (dLName, "./%s.so", functionName);
-  //  printf ("Attempting load of [%s]\n", dLName);
-  if ((dLHandle = dlopen (dLName, RTLD_NOW)) != NULL) {
-    fprintf (stdout, "Using existing dynamic library for polynomial %s\n", functionName);
-    // Loaded it! Make sure the function is in there...
-    if ((dLRoutine = dlsym (dLHandle, functionName)) != NULL) {
-      // Found it! Create a new externalPoly for it.
-      rp = (Polynomial *) malloc (sizeof (Polynomial));
-      if (rp == NULL) {
-        fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (EXIT_FAILURE);
-      }
-      if (externalCount >= externalListLength) {
-	externalListLength += EXTERNAL_LIST_INCREASE;
-	externalList = realloc (externalList, externalListLength * sizeof (Polynomial *));
-	if (externalList == NULL) {
-	  fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-	  exit (EXIT_FAILURE);
-	}
-      }
-      rp->index = externalCount;
-      rp->id = nodeId;
-      rp->eType = T_EXTERNAL;
-      rp->valid = 0;
-      rp->count = 0;
-      externalList[externalCount] = rp;
-      externalCount++;
-      nodeId++;
-      eP = (struct externalPoly *) malloc (sizeof (struct externalPoly));
-      if (eP == NULL) {
-        fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (EXIT_FAILURE);
-      }
-      strcpy (eP->polynomialFunctionName, functionName);
-      eP->polynomialFunctionHandle = dLHandle;
-      eP->polynomialFunctionRoutine = dLRoutine;
-      rp->e.e = eP;
-      
-    } else {
-      fprintf (stdout, "Couldn't find routine in dynamic library for polynomial %s\n", functionName);
-      dlclose (dLHandle);
-      return NULL;
-    }
-  } else {
-    //    fprintf (stdout, "Couldn't find existing dynamic library for polynomial %s\n", functionName);
+  // See if it already exists
+  for (i = 0; i<externalCount; i++)
+    if (strncmp (functionName, externalList[i]->e.e->polynomialFunctionName, MAX_PFN_LEN) == 0)
+      return externalList[i];
+
+  // New polynomial to create!
+
+  rp = (Polynomial *) malloc (sizeof (Polynomial));
+  if (rp == NULL) {
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+    exit (EXIT_FAILURE);
+  }
+  eP = (struct externalPoly *) malloc (sizeof (struct externalPoly));
+  if (eP == NULL) {
+    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+    exit (EXIT_FAILURE);
+  }
+  rp->e.e = eP;
+  strcpy (eP->polynomialFunctionName, functionName);
+  sprintf (eP->polynomialFileName, "./%s.so", functionName);
+  if (!loadPolyDL(rp)) {
+    free (eP);
+    free (rp);
     return NULL;
   }
-  // These aren't hashed or listed
-  return rp;
+  rp->index = externalCount;
+  rp->id = nodeId;
+  rp->eType = T_EXTERNAL;
+  rp->valid = 0;
+  rp->count = 0;
+  externalList[externalCount] = rp;
+  externalCount++;
+  if (externalCount >= externalListLength) {
+    externalListLength += EXTERNAL_LIST_INCREASE;
+    externalList = realloc (externalList, externalListLength * sizeof (Polynomial *));
+    if (externalList == NULL) {
+      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
+      exit (EXIT_FAILURE);
+    }
+  }
+  nodeId++;
+
+  // These polynomials aren't hashed or listed
+  return (rp);
+}
+
+int loadPolyDL (Polynomial * p)
+{
+  if ((p->e.e->polynomialFunctionHandle = dlopen (p->e.e->polynomialFileName, RTLD_NOW)) != NULL) {
+    //    fprintf (stderr, "Using existing dynamic library %s for polynomial %s\n",
+    //	     p->e.e->polynomialFileName, p->e.e->polynomialFunctionName);
+    // Loaded it! Make sure the function is in there...
+    if ((p->e.e->polynomialFunctionRoutine = 
+	 dlsym (p->e.e->polynomialFunctionHandle, p->e.e->polynomialFunctionName)) != NULL) {
+      // Found it!
+      p->e.e->fileOK = TRUE;
+      p->e.e->entryOK = TRUE;
+      fprintf (stdout, "Using DL for %s\n", p->e.e->polynomialFunctionName);
+    } else {
+      fprintf (stderr, "dlsym() error [%s] for polynomial %s\n", dlerror(),
+	       p->e.e->polynomialFunctionName);
+      dlclose (p->e.e->polynomialFunctionHandle);
+      return FALSE;
+    }
+  } else
+    return FALSE;
+  return TRUE;
 }
 
 #define MAXSRCSIZE (8192*128)
@@ -4152,6 +4206,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
   pushStatus ("encode poly");
   result = p;
+  fprintf (stdout, "\nGenerating DL for %s...\n", name);
 
   sprintf (srcFileName, "%s.c", name);
   sprintf (includeFileName, "%s.h", name);
@@ -4332,7 +4387,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
 #ifdef POLYCOMP_DL
   pushStatus ("compile poly");
-  sprintf (command, "time gcc -g -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", name, name, name);
+  sprintf (command, "time gcc -O -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", name, name, name);
   int status;
   if ((status = system (command)) != 0) {
     perror ("system()");
