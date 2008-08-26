@@ -2559,7 +2559,8 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 
     default:
       fprintf (stderr, "In evaluatePoly, unknown expression type: [%d], exiting!\n", p->eType);
-      exit (EXIT_FAILURE);
+      fprintf (stderr, "\nIf you're in gdb, continue from here to see more.\n");
+      raise (SIGUSR1);
       break;
     }
     if (isnan (p->value)) {
