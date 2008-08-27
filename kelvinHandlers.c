@@ -37,7 +37,7 @@ void quitSignalHandler (int ourSignal)
   written and fit for analysis.
 
 */
-void termSignalHandler (int signal)
+void termSignalHandler (int ourSignal)
 {
   fprintf (stderr, "Terminating early for gprof or gcov!\n");
   exit (EXIT_SUCCESS);
