@@ -1,7 +1,7 @@
-void quitSignalHandler (int signal);
-void usr1SignalHandler (int signal);
-void termSignalHandler (int signal);
-void intSignalHandler (int signal);
+void quitSignalHandler (int ourSignal);
+void usr1SignalHandler (int ourSignal);
+void termSignalHandler (int ourSignal);
+void intSignalHandler (int ourSignal);
 void exitKelvin ();
 void setupHandlers ();
 
