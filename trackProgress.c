@@ -10,7 +10,9 @@
 #include "kelvinHandlers.h"
 #include "polynomial.h"
 #include "trackProgress.h"
+#ifdef HAVE_SYS_PRCTL_H
 #include <linux/prctl.h>
+#endif
 
 /**
 
@@ -32,7 +34,9 @@ void pushStatus (char *currentStatus)
   }
   strncpy (statusStack[++statusStackPosition], currentStatus, STATUS_LENGTH);
   sprintf (processName, "k(%-.*s)", STATUS_LENGTH, currentStatus);
+#ifdef HAVE_SYS_PRCTL_H
   prctl (PR_SET_NAME, processName);
+#endif
   return;
 }
 void popStatus ()
@@ -43,7 +47,9 @@ void popStatus ()
     return;
   }
   sprintf (processName, "k(%-.*s)", STATUS_LENGTH, statusStack[--statusStackPosition]);
+#ifdef HAVE_SYS_PRCTL_H
   prctl (PR_SET_NAME, processName);
+#endif
   return;
 }
 
