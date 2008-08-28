@@ -18,7 +18,7 @@ VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
 empty:=
 space:= $(empty) $(empty)
-PLATFORM = $(subst $(space),_,$(PLATFORM_NAME))
+PLATFORM = $(subst $(space),-,$(PLATFORM_NAME))
 INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
 
 CC := gcc
