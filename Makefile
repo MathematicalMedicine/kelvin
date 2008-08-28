@@ -16,7 +16,9 @@ KVNLIBDIR := $(shell pwd)/lib
 KVNINCDIR := $(shell pwd)/include
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
-PLATFORM = $(subst " ","-",$(PLATFORM_NAME))
+empty:=
+space:= $(empty) $(empty)
+PLATFORM = $(subst $(space),_,$(PLATFORM_NAME))
 INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
 
 CC := gcc
