@@ -4239,14 +4239,9 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
   fprintf (srcFile, "\tva_list args;\n\n\tva_start (args, num);\n\n");
 
-#ifdef POLYCODE_DL
   fprintf (srcFile, "\tvariableList = va_arg (args, struct polynomial **);\n");
   for (i = 0; i < variableCount; i++)
     fprintf (srcFile, "\t\t%s = variableList[%d]->value;\n", variableList[i]->e.v->vName, i);
-#else
-  for (i = 0; i < variableCount; i++)
-    fprintf (srcFile, "\t\t%s = va_arg (args, double);\n", variableList[i]->e.v->vName);
-#endif
   fprintf (srcFile, "\tva_end (args);\n\n");
 
   for (j = 0; j <= l->listNext - 1; j++) {
@@ -4369,7 +4364,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   if (result->eType == T_CONSTANT)
     fprintf (srcFile, "\n\treturn %.*g;\n}\n", DBL_DIG, result->value);
   else
-    fprintf (srcFile, "\n\treturn %s[%g];\n}\n", eTypes[result->eType], result->value);
+    fprintf (srcFile, "\n\treturn %s[%lu];\n}\n", eTypes[result->eType], (unsigned long) result->value);
 
   fprintf (srcFile, "#ifdef MAIN\n\n#include <stdio.h>\n#include <stdlib.h>\n\n" "int main(int argc, char *argv[]) {\n\tint i;\n\n");
   fprintf (srcFile, "\tif (argc != %d) {\n\t\tfprintf(stderr, \"%d floating arguments required\\n\");" "\n\t\texit(EXIT_FAILURE);\n\t}\n\tprintf(\"%%g\\n\", %s(1, ", variableCount + 1, variableCount, name);
@@ -4394,7 +4389,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 #ifdef POLYCOMP_DL
   char command[256];
   pushStatus ("compile poly");
-  sprintf (command, "time gcc -O -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", name, name, name);
+  sprintf (command, "time gcc -I/home/whv001/kelvin/trunk/include -O -fPIC -shared  -Wl,-soname,dl.so -o %s.so %s* >& %s.out", name, name, name);
   int status;
   if ((status = system (command)) != 0) {
     perror ("system()");
