@@ -16,7 +16,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
     fprintf (fpPPL, "Chr Marker Position PPL");
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      fprintf (fpPPL, "LD-PPL PPLD");
+      fprintf (fpPPL, " LD-PPL PPLD");
     }
     fprintf (fpPPL, "\n");
     fflush (fpPPL);
