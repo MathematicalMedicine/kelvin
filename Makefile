@@ -24,14 +24,14 @@ INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
 CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
 CFLAGS := -Wall -O3 -Wshadow
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm -lpthread -ldl
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm -lpthread
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
 #CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
-#CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
+CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
-#LDFLAGS += -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
+LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
 #CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
 #CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
@@ -40,12 +40,12 @@ LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm -lpthre
 #CFLAGS += -DDMTRACK # For our own memory tracking
 #CFLAGS += -DTREEEVALUATE # Use evaluateValue of tree instead of evaluatePoly of list.
 #CFLAGS += -DFAKEEVALUATE # Don't evaluate at all - use only for exercise/compilation. Results will be wrong!
-#CFLAGS += -DPOLYUSE_DL # Dynamically load compiled polynomials for in-process use
+#CFLAGS += -ldl -DPOLYUSE_DL # Dynamically load compiled polynomials for in-process use
 #CFLAGS += -DPOLYCODE_DL # Enable generation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCOMP_DL # Enable compilation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCHECK_DL # Keep both built and compiled DL polys and compare results (can be noisy!)
 #CFLAGS += -DPOLYSIZE # Use per-polynomial storage to track total polynomial size
-CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
+#CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
@@ -56,7 +56,7 @@ INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
 	kelvinLocals.h iterationLocals.h integrationLocals.h \
 	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c
 
-all : kelvin calc_updated_ppl
+all : kelvin kelvin_$(PLATFORM) calc_updated_ppl
 
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
@@ -64,8 +64,10 @@ install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/convert_br.pl
 
 kelvin : libs $(KOBJS) $(OBJS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
-	cp kelvin kelvin_$(PLATFORM)
+	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG) $(LPTMFLAG)
+
+kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
+	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 calc_updated_ppl : seq_update/calc_updated_ppl.c
 	$(CC) -o $@ $(CFLAGS) seq_update/calc_updated_ppl.c
