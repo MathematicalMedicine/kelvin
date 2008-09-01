@@ -112,9 +112,43 @@ parameters and ranges. A <a href="Directives.html">rewrite</a> of that document 
 <p>
 kelvin provides such a wide variety of options for linkage analysis that it can be confusing to
 determine what combinations of directives are appropriate. The following chart shows the flow of
-available configuration choices. <img src="config.gif" alt="Directed Graph of
-Configuration Alternatives">. This chart
-illustrates the twenty-two current configuration "paths" for kelvin, and the directives they use. Ellipses
+available configuration choices.
+<table border="1">
+<tr>
+<th colspan=3>Features and Options</th>
+<tr>
+<th>Marker/Map</th>
+<th>Phenotypes</th>
+<th>Genetic Model</th>
+<tr>
+<td>
+<ul>
+<li>multipoint (MP) or two point (2pt)
+<li>marker-to-marker LD (2pt only)
+<li>haldane or kosambi scale
+<li>sex-specific or averaged (MP only)
+</ul>
+</td>
+<td>
+<ul>
+<li>dichotomous trait (DT)
+<li>quantitative trait (QT)
+<li>QT with threshold
+<li>right/left truncated QT model (not tested)
+</ul>
+</td>
+<td>
+<ul>
+<li>parent-of-origin dependent penetrance
+<li>multiple liability classes
+<li>trait-to-marker LD (2pt only)
+</ul>
+</td>
+</table>
+<a href="config.gif">Here is a directed graph</a> illustrating the same information.
+<p>
+This chart
+illustrates the twenty-two current configuration "paths" for kelvin, and the directives they use. Ovals
 represent defaults that will be taken in the absence of relevant directives, while squares represent
 analysis attributes that must always be explicity specified.
 <p>
@@ -352,16 +386,13 @@ position. Columns are whitespace-delimited:
 <li>PPL - the posterior probability of linkage. This is rounded to two places if .025 or
 greater, and three decimal places otherwise.
 <li>BayesRatio - integrated likelihood ratio.
-<li>MOD - maximum LOD score achieved at this position.
-<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score. Alpha is an admixture
-parameter which is defined at the level of the whole pedigree, and represents the probability that the pedigree
-is of the "linked" versus "unlinked" type. Inclusion of alpha allows for the common phenomenon of locus 
-heterogeneity, whereby a single clinical disease can be caused by different underlying genes in different families.
-<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the LOD score.
+<li>MOD - maximum HLOD score achieved at this position.
+<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the HLOD score. 
+<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the HLOD score.
 <li>LC<tt>n</tt>PV(...) - penetrance vector, one for each liability class in the analysis. 
 For dichotomous trait runs, it is three (or four) columns of 
 the maximizing penetrance for
-DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the LOD score.
+DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the HLOD score.
 For quantitative trait (QT) runs with normal or Student's-T distributions,
 it is three (or four) columns of means followed by three 
 (or four) of standard deviations for
@@ -382,7 +413,7 @@ Each table is prefaced with a comment line that specifies the two loci of intere
 </pre>
 and consists of one row of whitespace-delimited values for each value of D' (d-prime) if this is an
 LD analysis, theta, integrated likelihood information, and the values for alpha, disease gene frequency and
-penetrance that maximized the LOD for this D' and theta.
+penetrance that maximized the HLOD for this D' and theta.
 <ol>
 <li>Chr - chromosome number
 <li>multiple columns of D<i>nm</i> - the D' (d-prime) between allele <i>m</i> of the first locus and allele <i>n</i> of the
@@ -391,15 +422,15 @@ columns are not present on LE runs because
 LE is a special case of LD where D' is always 0.
 <li>Theta(M,F) - male and female theta values. They are identical for a sex-averaged analysis.
 <li>BayesRatio - integrated likelihood ratio.
-<li>MOD - maximum LOD score achieved for these loci at these values of D' (if LD) and theta.
+<li>MOD - maximum HLOD score achieved for these loci at these values of D' (if LD) and theta.
 <li>R2 - R square, an alternative measurement of LD.
-<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score.
-<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the LOD score.
+<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the HLOD score.
+<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the HLOD score.
 <li>MF - marker allele frequency for the first marker.
 <li>LC<tt>n</tt>PV(...) - penetrance vector, one for each liability class in the analysis. 
 For dichotomous trait runs, it is three (or four) columns of 
 the maximizing penetrance for
-DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the LOD score.
+DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the HLOD score.
 For quantitative trait runs with normal or Student's-T distributions,
 it is three (or four) columns of means followed by three 
 (or four) of standard deviations for
