@@ -111,7 +111,9 @@ specification of
 parameters and ranges. A <a href="Directives.html">rewrite</a> of that document is in-progress.
 <p>
 kelvin provides such a wide variety of options for linkage analysis that it can be confusing to
-determine what combinations of directives are appropriate. <a href="config.gif">This chart</a>
+determine what combinations of directives are appropriate. The following chart shows the flow of
+available configuration choices. <img src="config.gif" alt="Directed Graph of
+Configuration Alternatives">. This chart
 illustrates the twenty-two current configuration "paths" for kelvin, and the directives they use. Ellipses
 represent defaults that will be taken in the absence of relevant directives, while squares represent
 analysis attributes that must always be explicity specified.
@@ -126,7 +128,7 @@ listed are on an Macintosh OSX 10.4 i386 with GCC 4.0.1 (no OpenMP).
 <ul>
 <li>Two-point analysis of a dichotomous trait: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_LE/</tt>, runs in 53s.
 <li>Two-point analysis of a dichotomous trait with linkage disequilibrium: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_LD/</tt>, runs in 1m 43s.
-<li>Two-point analysis of a dichotomous trait going marker-to-marker: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_MM_LE/</tt>, 
+<li>Two-point marker-to-marker analysis: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_MM_LE/</tt>, 
 runs in less than 1s with a minor deviation (1 in 7th position) in one bayes ratio value from runs on other
 platforms. This sort of deviation in test results is attributable to the different C and gsl libraries used on
 different platforms.
@@ -329,7 +331,7 @@ include an estimation of internal memory usage when feasible and relevant.
 <h2>INTERPRETING THE RESULTS</h2>
 kelvin produces one or two different files of results depending upon the type of analysis performed.
 <h3>Bayes Ratio File</h3>
-Integrated likelihood ratio information is produced for all runs. It is written to the file specified by
+Integrated likelihood ratio (BR) information is produced for all runs. It is written to the file specified by
 the <tt>HE</tt> directive, or <tt>br.out</tt> by default.
 The first line written to the file is a comment that contains the kelvin version number, e.g.:
 <pre>
@@ -340,16 +342,16 @@ produced them, and will allow for variations in algorithms, file formats and dat
 Subsequent lines contain different information for each type of analysis being performed:
 <h4>Multipoint Analysis</h4>
 For multipoint runs, a single table with a header line is output. 
-The table consists of one row for each trait position with integrated likelihood ratio information for
+The table consists of one row for each trait position with bayes ratio information for
 the position,
 and the values for alpha, disease gene frequency and penetrance that maximized the LOD at the
 position. Columns are whitespace-delimited:
 <ol>
 <li>Chr - chromosome number
 <li>Position(M,F) - trait positions in centiMorgans, male and female comma-separated in parentheses.
-<li>PPL - the imputed posterior probability of linkage. This is rounded to two places if .025 or
+<li>PPL - the posterior probability of linkage. This is rounded to two places if .025 or
 greater, and three decimal places otherwise.
-<li>BayesRatio - average likelihood ratio.
+<li>BayesRatio - integrated likelihood ratio.
 <li>MOD - maximum LOD score achieved at this position.
 <li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score. Alpha is an admixture
 parameter which is defined at the level of the whole pedigree, and represents the probability that the pedigree
@@ -360,10 +362,11 @@ heterogeneity, whereby a single clinical disease can be caused by different unde
 For dichotomous trait runs, it is three (or four) columns of 
 the maximizing penetrance for
 DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the LOD score.
-For quantitative trait runs with normal or Student's-T distributions,
+For quantitative trait (QT) runs with normal or Student's-T distributions,
 it is three (or four) columns of means followed by three 
 (or four) of standard deviations for
-the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold. Quantitative
+the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold
+in the case of the QT threshold model. Quantitative
 trait runs with the Chi-Square distribution  have only three (or four) columns of degrees of freedom followed
 by the threshold. Values are
 comma-separated and enclosed in parentheses. Header text reflects actual count and nature of columns.
@@ -387,9 +390,9 @@ second locus. There will be (<i>n</i>-1)*(<i>m</i>-1) columns present for linkag
 columns are not present on LE runs because
 LE is a special case of LD where D' is always 0.
 <li>Theta(M,F) - male and female theta values. They are identical for a sex-averaged analysis.
-<li>BayesRatio - average likelihood ratio.
+<li>BayesRatio - integrated likelihood ratio.
 <li>MOD - maximum LOD score achieved for these loci at these values of D' (if LD) and theta.
-<li>R2 - R square, a measurement of LD.
+<li>R2 - R square, an alternative measurement of LD.
 <li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the LOD score.
 <li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the LOD score.
 <li>MF - marker allele frequency for the first marker.
@@ -400,13 +403,14 @@ DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the LOD scor
 For quantitative trait runs with normal or Student's-T distributions,
 it is three (or four) columns of means followed by three 
 (or four) of standard deviations for
-the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold. Quantitative
+the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold, if applicable. 
+Quantitative
 trait runs with the Chi-Square distribution  have only three (or four) columns of degrees of freedom followed
 by the threshold. Values are
 comma-separated and enclosed in parentheses. Header text reflects actual count and nature of columns.
 </ol>
 <h3>Posterior Probability of Linkage (PPL) File</h3>
-Separate PPL information is only produced for trait-to-marker two-point and marker-to-marker analyses, because PPL is imputed for multipoint runs.
+Separate PPL information is produced for two-point analyses.
 It is written to the file specified by the <tt>PF</tt> directive, or <tt>ppl.out</tt> by default.
 The first line is a comment that contains the kelvin version number as with the Bayes Ratio file.
 The next line is a header, followed by
