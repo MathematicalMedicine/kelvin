@@ -189,9 +189,12 @@ class FileNamePanel(wx.Panel):
     def onBrowse(self, event):
         """Event when the browse button is pressed"""
         if self.textbox.IsEnabled():
-            # start the dialog box in the same folder as the kelvin config file 
-            startFolder = os.path.dirname(os.path.abspath(self.fm.fileName))
-            dlg = wx.FileDialog(self, "Choose File", startFolder,style=wx.OPEN)
+            # start the dialog box in the same folder as the kelvin config file, if there is one
+            if self.fm.fileName:
+               startFolder = os.path.dirname(os.path.abspath(self.fm.fileName))
+            else:
+               startFolder = os.path.abspath("")
+            dlg = wx.FileDialog(self, "Choose File (using filename)", startFolder, style=wx.OPEN)
             if dlg.ShowModal() == wx.ID_OK:
                 fileName = dlg.GetPath()
 
@@ -288,4 +291,7 @@ class FileNamePanel(wx.Panel):
             spath2 = os.path.pardir + os.path.sep + spath2
 
         return spath2
+
+
+
 
