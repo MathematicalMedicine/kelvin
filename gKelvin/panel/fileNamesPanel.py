@@ -193,13 +193,14 @@ class FileNamePanel(wx.Panel):
             if self.fm.fileName:
                startFolder = os.path.dirname(os.path.abspath(self.fm.fileName))
             else:
-               startFolder = os.path.abspath("")
-            dlg = wx.FileDialog(self, "Choose File (using filename)", startFolder, style=wx.OPEN)
+               startFolder = os.getcwd()
+            dlg = wx.FileDialog(self, "Choose File", startFolder, style=wx.OPEN)
             if dlg.ShowModal() == wx.ID_OK:
                 fileName = dlg.GetPath()
 
                 # only show the relative path to the file in the textbox
-                relativePath = self.relpath(self.fm.fileName, fileName)
+                # The "foo" bit is to make both arguments into paths *with* filenames
+                relativePath = self.relpath(os.path.join(startFolder, "foo"), fileName)
                 self.textbox.ChangeValue(relativePath)
                 self.onTextEntry(None)
             dlg.Destroy()
