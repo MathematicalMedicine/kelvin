@@ -13,7 +13,7 @@ rights reserved. Permission is hereby given to use this software for non-profit
 educational purposes only. Please address any e-mail regarding kelvin to
 <a href="mailto:kelvin@nationwidechildrens.org">kelvin@nationwidechildrens.org</a>.
 <p>
-<h2>BUILDING THE PROGRAMS</h2>
+<h2>INSTALLING THE PROGRAMS</h2>
 <h3>Requirements</h3>
 <h4>Platforms</h4>
 kelvin is written in ANSI C, with some supporting scripts in Perl.
@@ -31,8 +31,9 @@ Library, so if you encounter incompatabilities, please let us know.
 
 <h4>Libraries</h4>
 kelvin currently only requires the <a href="http://www.gnu.org/software/gsl/">GNU Scientific Library</a>
-(GSL), a free numerical library for C and C++. You will want to make a note of the location of the library and include
-files on your system so that you can modify the kelvin Makefile if necessary.
+(GSL), a free numerical library for C and C++. These are already linked-into the binary versions provided,
+but if you want to build your own version, You will need to make a note of the location of the library and include
+files on your system so that you can modify the kelvin Makefile.
 <p>
 When kelvin is run in polynomial mode, it makes very extensive use of memory management, and can, under most
 circumstances, definitely benefit from a drop-in allocator such as <a href="http://www.hoard.org/">hoard</a>
