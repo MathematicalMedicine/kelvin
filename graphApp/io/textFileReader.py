@@ -179,11 +179,16 @@ def parseTextFile(mainFrame, file, filename, overlap, info):
     prevPos = None
     curPos = None
     curNum = None
-    for eachLine in file.readlines()[header_lines:]:
+    skipLines = header_lines
+    for eachLine in file.readlines()[:]:
         prevPos = curPos
         curLine = eachLine.split()
         if len(curLine) == 0 or curLine[0][0] == '#':
             # a blank line or a comment, skip the line
+            continue
+        # Skip header lines *after* checking for comments or blank lines
+        skipLines = skipLines - 1
+        if skipLines >= 0:
             continue
         curPos = float(curLine[pos_col])
         curPPL = float(curLine[ppl_col])
