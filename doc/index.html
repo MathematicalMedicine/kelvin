@@ -562,10 +562,11 @@ still be the same number of markers in each file. In multi-point mode, there sho
 information for the same number of positions in every file. In multi-point mode only, the
 new PPL will be calculated directly, based on the updated Bayes ratios. New PPLs can
 be generated for two-point Bayes ratios using <tt>calc_updated_ppl</tt> (see below).
-Output is always to the terminal. Here's an example, that captures the output to a file:
+Output is always to the terminal. Here's an example of updating across three multipoint
+files that captures the output to a file:
 
 <pre>
-_$ seq_update_br.pl br-1.out br-2.out br-3.out > updated-br.out
+_$ seq_update_br.pl -m multipoint br-1.out br-2.out br-3.out > updated-br.out
 </pre>
 
 A full description of command line syntax is available by typing:
