@@ -25,11 +25,15 @@ my $br;
 my $ppl;
 my $va;
 
-my $usage = "$0: [-m mode] [--relax] avgfile1 avgfile2 [avgfile3 ...]\n";
+my $usage = "$0: [-m {twopoint|multipoint}] [--relax] avgfile1 avgfile2 [avgfile3 ...]\n";
 
 while ($arg = shift (@ARGV)) {
     if ($arg =~ /^--relax$/) {
 	$options{relax} = 1;
+    } elsif ($arg =~ /^--twopoint$/) {
+        $options{mode} = 'twopoint';
+    } elsif ($arg =~ /^--multipoint$/) {
+        $options{mode} = 'multipoint';
     } elsif (($flag, $opt) = ($arg =~ /^-([m])(\S+)?$/)) {
         ($opt || ($opt = shift (@ARGV))) or die ($usage);
         if ($flag eq 'm') {
@@ -304,18 +308,34 @@ sub versionnum
 
 =head1 USAGE
 
-seq_update_br.pl [-m mode] [--relax] brfile1 brfile2 [brfile3 ...]
+seq_update_br.pl [-m {twopoint|multipoint}|--twopoint|--multipoint] [--relax] brfile1 brfile2 [brfile3 ...]
 
 Performs a sequential update of the Bayes ratios (BR)
 across multilple files.
 
 =head1 COMMAND LINE ARGUMENTS
 
-=item -m <twopoint | multipoint>
+=item -m {twopoint | multipoint}
 
 =over 3
 
 Sets the mode. The default is 'twopoint'.
+
+=back
+
+=item --twopoint
+
+=over 3
+
+A synonym for '-m twopoint'.
+
+=back
+
+=item --multipoint
+
+=over 3
+
+A synonym for '-m multipoint'.
 
 =back
 
