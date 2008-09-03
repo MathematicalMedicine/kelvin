@@ -32,7 +32,7 @@ Library, so if you encounter incompatabilities, please let us know.
 <h4>Libraries</h4>
 kelvin currently only requires the <a href="http://www.gnu.org/software/gsl/">GNU Scientific Library</a>
 (GSL), a free numerical library for C and C++. This is already linked into the binary versions provided,
-but if you want to build your own version, You will need to make a note of the location of the library and include
+but if you want to build your own version, you will need to make a note of the location of the library and include
 files on your system so that you can modify the kelvin Makefile.
 <p>
 When kelvin is run in polynomial mode, it makes very extensive use of memory management, and can, under most
@@ -80,7 +80,7 @@ kelvin runs.
 <li><tt>&lt;RELEASE&gt;/utils/</tt> - general-purpose utility components. Includes a dependent Makefile.
 </ul>
 <p>
-<h4>Building and Testing</h4>
+<h4 id="building">Building and Testing</h4>
 If you cannot or do not wish to build a version of kelvin specific to your computing platform, 
 you might be able to run one of the binary
 versions provided in the distribution. Binary versions of kelvin are statically-linked executables
@@ -91,8 +91,56 @@ a link to it named kelvin.
 <p>
 If you are inclined to build your own version of kelvin, edit 
 the master Makefile to specify the location of the gsl libraries and include files on your system.
-If you do not have an OpenMP-capable compiler, comment-out the lines that reference "-fopenmp" as indicated
-in the Makefile comments. Type <kbd>make clean</kbd> and then <kbd>make</kbd>.
+<p>
+There are a number of compilation conditionals that can be set in the Makefile to affect the behavior of kelvin.
+These are disabled when commented-out with a pound-sign (#) at the start of the line, and enabled otherwise. Some
+of the less useful diagnostic conditionals will not be covered here.
+<ul>
+<li><tt>-fopenmp</tt> Enables OpenMP multi-threading. This must be commented-out if your compiler does not
+support OpenMP. This is enabled in the Makefile by default, but disabled in the prebuilt binaries. The number
+of threads used is determined from the environment variable <tt>OMP_THREAD_COUNT</tt>. If this variable is not
+set or is set to 0 (zero) the behavior depends upon the operating system, but typically the number of threads used
+will correspond to the number of cores available. If <tt>OMP_THREAD_COUNT</tt> is set to 1 (one), then only a single
+thread is used and it is as if OpenMP multi-threading is disabled. OpenMP multi-threading can greatly improve
+polynomial evaluation, but at a moderate memory cost. The thread count should be less than the number of pedigrees 
+in your analysis, up to the maximum of the number of cores on your platform. Monitoring user and system mode CPU
+utilization with <tt>ps</tt> during polynomial evaluation will be your best indicator of the efficiency of threading
+in your situation, and should guide you in selecting the right number of threads. Obviously you want the highest-
+possible user-mode CPU utilization, but you need to watch out for increased system-mode CPU utilization, as it
+is an indication that time is being wasted on thread synchronization, and that you probably have too many threads.
+If OpenMP multi-threading support is built
+into the binary, kelvin displays the thread count in a  diagnostic message on startup. 
+<li><tt>SIMPLEPROGRESS</tt> Enables a simplified, but unfortunately non-linear percentage-completion display,
+as opposed to a more detailed and more linear version. This is enabled by default.
+<li><tt>MEMSTATUS</tt> Enables display of elapsed time and memory consumption every 30 seconds. Disabled by default.
+<li><tt>MEMGRAPH</tt> Logs elapsed time and memory consumption to a file named <tt>kelvin_&lt;PID&gt;_memory.dat</tt>
+every 30 seconds. This format can be graphed by <tt>gnuplot</tt> with a simple <tt>load "&lt;filename&gt;"</tt> command.
+Disabled by default.
+<li><tt>POLYSTATISTICS</tt> Enables a dump of extensive polynomial build statistics at every 2 million terms and
+at build milestones. Disabled by default.
+<li><tt>TREEEVALUATE</tt> Enables use of a polynomial evaluation technique that is optimal in situations where
+polynomials are evaluated only a few times each. This is useful only in rare cases, and is disabled by default.
+<li><tt>FAKEEVALUATE</tt> Does not do polynomial evaluation at all. This is used for exercise, evaluation, and
+polynomial compilation. It will display a warning during compilation and when the program is run to the effect that
+evaluation is disabled and result file data will be meaningless. This is disabled by default, and should only be
+enabled with caution. It is documented here because an optimal performance strategy for analyses with extremely large
+amounts of evaluation is to build compiled polynomials without evaluation on a single-core, large memory-
+capacity machine, and then evaluate them on multi-core, smaller memory-capacity machines.
+<li><tt>POLYUSE_DL</tt> Enables the use of dynamic libraries built for named polynomials should they be present in
+the current default directory. Currently the only named polynomials implemented in kelvin are for
+pedigrees, and these polynomials are specific to each marker set and relative trait position in the analysis. 
+Compiled polynomials can be evaluated up to 10 times faster than internal polynomials, take up much less memory,
+and do not need to be rebuilt in subsequent runs. A more detailed discussion of polynomial compilation is currently
+under development. Disabled by default.
+<li><tt>POLYCODE_DL</tt> Enables the writing of C source code implementing named polynomials when a previously-built
+dynamic library for that polynomial has not been found. Disabled by default, requires POLYUSE_DL.
+<li><tt>POLYCOMP_DL</tt> Enables the in-run compilation of any C source code written and the loading and use of the 
+dynamic library built. Disabled by default, requires POLYCODE_DL.
+<li><tt>POLYCHECK_DL</tt> Enables the comparison of evaluation results from any newly-built polynomial dynamic 
+library with those of its source (internal) polynomial. Disabled by default, requires POLYCODE_DL.
+</ul>
+<p>
+Once you have edited the Makefile to your satisfaction, type <kbd>make clean</kbd> and then <kbd>make</kbd>.
 This should build supporting libraries and then the three executable images kelvin, dkelvin and calc_updated_ppl. 
 <p>
 Whether you use one of the prebuilt binaries or have built your own, it should be tested to
@@ -213,8 +261,11 @@ PID: 3072, Computation is done in polynomial mode
 The first line is the kelvin major version and build information, and the subsequent lines
 that contain "Id:" are source-managed component version information. Next is the compiler
 and GNU Scientific Library verison numbers. Lines after that
-describe important build options as specified in the Makefile and run
-characteristics as influenced by environment variables.
+describe important compilation conditionals as specified in the Makefile and run
+characteristics as influenced by environment variables. In the example given, OpenMP support
+status and the number of threads used (0 selects the platform-specific default number of threads)
+is displayed. Other options and their corresponding messages are covered in the <a href="#building">
+Building and Testing</a> section.
 <p>
 In the midst of this is a line describing the action to take in order to force a dump of a line of
 statistics. The format of these statistics is described at the end of the next subsection (<a href="#adhoc">ad hoc status</a>).
@@ -254,8 +305,9 @@ progress while they're being performed, so there might be a significant delay be
 analyses, and during polynomial builds.
 <p>
 The alternative level of complexity is much more informative, but can overwhelm with details under certain
-circumstances. You will need to edit the <tt>Makefile</tt> to enable the compile-time conditional
-<tt>DETAILEDPROGRESS</tt>, and rebuild kelvin (<tt>make clean</tt> and <tt>make</tt>) to turn it on. When it is enabled, kelvin displays
+circumstances. You will need to edit the <tt>Makefile</tt> to disable the compile-time conditional
+<tt>SIMPLEPROGRESS</tt>, and rebuild kelvin (<tt>make clean</tt> and <tt>make</tt>) to turn it on. When 
+<tt>SIMPLEPROGRESS</tt> is disabled, kelvin displays
 detailed information about each of the steps it goes thru to perform an analysis. These steps are
 fundamentally different for Two-Point and Multipoint analyses.
 
@@ -364,7 +416,7 @@ include an estimation of internal memory usage when feasible and relevant.
 </ul>
 </ol>
 <h2>INTERPRETING THE RESULTS</h2>
-kelvin produces one or two different files of results depending upon the type of analysis performed.
+kelvin produces several different files of results depending upon the type of analysis performed.
 <h3>Bayes Ratio File</h3>
 Integrated likelihood ratio (BR) information is produced for all runs. It is written to the file specified by
 the <tt>HE</tt> directive, or <tt>br.out</tt> by default.
@@ -462,6 +514,35 @@ greater, and three decimal places otherwise.
 LD. It is rounded to two places if .025 or
 greater, and three decimal places otherwise.
 </ol>
+<h3>Two-Point Maximizing Models (TP) File</h3>
+A file describing the maximizing model parameters for each pair of loci is
+produced for two-point analyses. It is written to the file specified by the <tt>MX</tt> directive,
+or <tt>tp.out</tt> by default. This file is currently being brought into compliance with our
+standards, so column layout and naming will change.
+For each pair of loci, it displays maximizing information for each of:
+<ol>
+<li>Overall MOD maximizing model
+<li>MOD maximizing model for theta=0
+<li>MOD maximizing model for dprime=0
+<li>Overall LR maximizing model
+<li>LR maximizing model for theta=0
+<li>LR maximizing model for dprime=0
+</ol>
+The maximizing values are provided under the following column headings:
+<ol>
+<li>Chr - chromosome number
+<li>Marker - marker name
+<li>Position - position in centiMorgans
+<li>MOD - maximum HLOD score achieved for these loci at these values of D' (if LD) and theta
+<li>DPrime - maximizing D'
+<li>Theta
+<li>R2
+<li>ALPHA
+<li>DGF
+<li>MF
+<li>PEN_DD PEN_Dd PEN_dd
+</ol>
+
 <h2>SEQUENTIAL UPDATING</h2>
 Sequential updating is a method for combining the results of mutiple analyses in post-processing.
 Three tools are provided for performing sequential updating. All tools expect kelvin Bayes
