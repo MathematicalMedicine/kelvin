@@ -326,10 +326,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	    }
 #endif
 	    // Notice we are normally holding only the external (compiled) poly!
-#ifndef FAKEEVALUATE
 	    holdPoly (pPedigree->likelihoodPolynomial);
 	    freeKeptPolys ();
-#endif
 #ifdef POLYSTATISTICS
 	    if (i == pPedigreeList->numPedigree - 1)
 	      polyDynamicStatistics ("Post-build");
@@ -489,6 +487,7 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
     fprintf (stdout, "Building polynomial w/pedigree: %s (%d/%d)\r",
 	     pPedigree->sPedigreeID, pPedigree->pedigreeIndex + 1,
 	     pPedigree->pPedigreeSet->numPedigree);
+    fflush (stdout);
     if (pPedigree->pedigreeIndex + 1 == pPedigree->pPedigreeSet->numPedigree)
       fprintf (stdout, "\n");
 #endif
@@ -1172,18 +1171,10 @@ compute_nuclear_family_likelihood (int peelingDirection)
    * recursively call loop_parental_pair to get a complete multlocus
    * genotype
    */
-  if (modelOptions.polynomial == TRUE) {
+  if (modelOptions.polynomial == TRUE)
     loop_parental_pair (0, multiLocusIndex, (void *) weightPolynomial);
-    //fprintf(stderr, "Conditional likelihood for nuclear family %d is: %e\n",
-    //pNucFam->nuclearFamilyIndex, evaluateValue(sumPolynomial));
-  } else {
+  else
     loop_parental_pair (0, multiLocusIndex, (void *) weight);
-    /*
-       KLOG (LOGLIKELIHOOD, LOGDEBUG,
-       "Conditional likelihood for nuclear family %d is: %e\n",
-       pNucFam->nuclearFamilyIndex, sum);
-     */
-  }
 
   return 0;
 }
