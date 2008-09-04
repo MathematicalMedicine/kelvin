@@ -4376,14 +4376,12 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     exit (EXIT_FAILURE);
   }
   popStatus ();
-#ifdef POLYSIZE
   sprintf (command, "echo %s is %d internally, %d as code and `wc -c %s.so` externally.", 
 	   name, totalInternalSize, totalSourceSize, name);
   if ((status = system (command)) != 0) {
     perror ("system()");
     exit (EXIT_FAILURE);
   }
-#endif
 #endif
 
   popStatus ();
