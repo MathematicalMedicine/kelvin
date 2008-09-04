@@ -233,13 +233,16 @@ char *estimateIterations (int eCL[])
       TP QT alternative hypothesis is cL[3], looped for all of cL[2] and ndprime, ntheta
 
       */      
-      sprintf (analysisType, "%da*%dgf*%dp*%dlc space, Trait-to-marker, Two-Point, ",
-	       modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass);
       if (modelType.trait == DT) {
+	sprintf (analysisType, "%da*%dgf*%dp*%dlc space, Trait-to-marker, Two-Point, ",
+		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass);
 	strcat (analysisType, "Dichotomous Trait, ");
 	eCL[0] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1);
 	eCL[1] = eCL[0] * modelRange.ndprime * modelRange.ntheta;
       } else { // TP not DT
+	sprintf (analysisType, "%da*%dgf*%dp*%dlc*%dd' space, Trait-to-marker, Two-Point, ",
+		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
+		 modelRange.ndprime);
 	eCL[2] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1) * modelRange.nparam * modelRange.ntthresh;
 	eCL[3] = eCL[2] * modelRange.ndprime * modelRange.ntheta;
 	if (modelType.trait == QT) { //QT
@@ -276,16 +279,21 @@ char *estimateIterations (int eCL[])
       polynomials for each pedigree incorporate alpha?, # MP markers used in analysis.
 
       */
-      sprintf (analysisType, "%da*%dgf*%dp*%dlc space, Trait-to-marker, Sex-%s Multipoint (w/%d loci), ",
-	       modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
-	       modelOptions.mapFlag == SS ? "Specific" : "Averaged",
-	       modelType.numMarkers + originalLocusList.numTraitLocus);
       eCL[6] = modelRange.ntloc;
       if (modelType.trait == DT) {
+	sprintf (analysisType, "%da*%dgf*%dp*%dlc space, Trait-to-marker, Sex-%s Multipoint (w/%d loci), ",
+		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
+		 modelOptions.mapFlag == SS ? "Specific" : "Averaged",
+		 modelType.numMarkers + originalLocusList.numTraitLocus);
 	strcat (analysisType, "Dichotomous Trait.");
 	eCL[4] = modelRange.npenet * modelRange.nlclass * modelRange.ngfreq;
 	eCL[7] = modelRange.ntloc * modelRange.npenet * modelRange.ngfreq;
       } else { // SA/SS multipoint, but not DT
+	sprintf (analysisType, "%da*%dgf*%dp*%dlc*%dd' space, Trait-to-marker, Sex-%s Multipoint (w/%d loci), ",
+		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
+		 modelOptions.mapFlag == SS ? "Specific" : "Averaged",
+		 modelType.numMarkers + originalLocusList.numTraitLocus,
+		 modelRange.ndprime);
 	eCL[5] = modelRange.npenet * modelRange.ntthresh * modelRange.ngfreq * 
 	  modelRange.nparam;
 	eCL[8] = modelRange.ntloc * modelRange.npenet * modelRange.ngfreq * 
