@@ -49,13 +49,13 @@
   sprintf (messageBuffer, "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, getpid ());
   swLogMsg (messageBuffer);
 #endif
-  fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, getpid ());
   swStart (overallSW);
 #ifdef __OPTIMIZE__
   swLogMsg ("GCC optimization enabled");
 #else
   swLogMsg ("GCC optimization disabled");
 #endif
+  fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, getpid ());
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&markerLocusList, 0, sizeof (markerLocusList));
@@ -139,15 +139,18 @@ KASSERT (readConfigFile (configfile)
   }
 
   if (modelOptions.polynomial == TRUE) {
-    polynomialInitialization ();
     swLogMsg ("Computation is done in polynomial mode");
+#ifdef POLYUSE_DL
+    swLogMsg ("Dynamic libraries for polynomial evaluation will be used if found");
+#endif
+    polynomialInitialization ();
   } else {
     swLogMsg ("Computation is done in non-polynomial (direct evaluation) mode");
   }
   if (modelOptions.integration == TRUE) {
-    swLogMsg ("Computation is done with integration (dkelvin)");
+    swLogMsg ("Integration is done numerically (dkelvin)");
   } else {
-    swLogMsg ("Computation is done with iteration (normal kelvin)");
+    swLogMsg ("Integration is done with iteration (original kelvin)");
   }
 
   /* Read in the map file. */
