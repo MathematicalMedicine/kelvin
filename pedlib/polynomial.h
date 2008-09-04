@@ -156,9 +156,6 @@ typedef struct polynomial
   unsigned char source;		// index of entry in polySources
 #endif
   double value;			// the value of the polynomial - 8 bytes
-#ifdef POLYSIZE
-  unsigned int totalSize;       // total size of this polynomial (sum of self and sub-polys) - 4 bytes
-#endif
   union
   {
     struct variablePoly *v;	// variable
