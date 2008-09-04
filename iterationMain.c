@@ -708,7 +708,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
 
         /* for each D prime and theta, print out average and maximizing model information - MOD */
         fprintf (fpHet, "# %-d  %s %s \n", loc2, pLocus1->sName, pLocus2->sName);
-        fprintf (fpHet, "Chr ");
+        fprintf (fpHet, "Chr Position ");
         if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
           for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
             for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
@@ -747,7 +747,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
             paramIdx = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_paramIdx;
             thresholdIdx = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_thresholdIdx;
             R_square = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square;
-            fprintf (fpHet, "%d ", pLocus2->pMapUnit->chromosome);
+            fprintf (fpHet, "%d %.4f ", pLocus2->pMapUnit->chromosome, pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
             if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
               for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
                 for (j = 0; j < pLocus2->numOriginalAllele - 1; j++) {
