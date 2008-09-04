@@ -245,18 +245,20 @@ along with the output from the run.
 <h3>Diagnostic Messages</h3>
 When kelvin or dkelvin are run, they first display version, build and run configuration information, e.g.:
 <pre>
-PID: 3072, kelvin V0.34.2 built May 29 2008 10:06:56
-PID: 3072, Id: kelvin.c 579 2008-06-03 13:28:20Z whv001
-PID: 3072, Id: likelihood.c 533 2008-05-23 17:26:34Z whv001
-PID: 3072, Id: locus.c 471 2008-05-06 20:17:17Z whv001
-PID: 3072, Id: polynomial.c 570 2008-06-02 19:28:31Z whv001
-PID: 3072, Compiler 4.1.1 20070105 (Red Hat 4.1.1-52), GSL 1.9
-PID: 3072, OpenMP-enabled w/0 threads.
-To force a dump of stats (at some risk), type CTRL-\ or type "kill -3 3072".
-PID: 3072, In /Users/whv001/kelvin/trunk/test-suite/MP_DT w/kelvin.conf
-polynomialScale is 1 (1-10, 1 is default)
-PID: 3072, Computation is done in polynomial mode
-
+PID: 26577, kelvin V0.37.0 built Sep  4 2008 14:58:32
+PID: 26577, $Id$
+PID: 26577, $Id$
+PID: 26577, $Id$
+PID: 26577, $Id$
+PID: 26577, Compiler 4.1.1 20070105 (Red Hat 4.1.1-52), GSL 1.9
+PID: 26577, OpenMP-enabled w/0 threads.
+PID: 26577, GCC optimization enabled
+To check status (at some risk), type CTRL-\ or type "kill -3 26577".
+PID: 26577, In /export/home/whv001/kelvin/trunk/test-suite/PE/TP_DT_LD w/kelvin.conf
+PID: 26577, Computation is done in polynomial mode
+PID: 26577, polynomialScale is 1 (1-10, 1 is default)
+PID: 26577, Integration is done with iteration (original kelvin)
+PID: 26577, 1a*3gf*275p*1lc*21d' space, Trait-to-marker, Two-Point, Dichotomous Trait, Disequilibrium.
 </pre>
 The first line is the kelvin major version and build information, and the subsequent lines
 that contain "Id:" are source-managed component version information. Next is the compiler
@@ -280,7 +282,7 @@ process or in a batch queue, you can send a SIGQUIT to the process by being logg
 node as it is running on, and using the <tt>kill</tt> command
 as described in the diagnostic output. Note that the signal number (-3 in the example) can be
 different from platform-to-platform, and the
-process ID (3072 in the example) will be different from run-to-run.
+process ID (26577 in the example) will be different from run-to-run.
 <p>
 Next, the analysis characteristics as determined from the configuration and data files
 are displayed, e.g.:
