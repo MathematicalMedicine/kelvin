@@ -2101,6 +2101,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
       fflush (fpHet);
     }   /* end of walking down the chromosome */
   }     /* end of multipoint */
+  fprintf (stdout, "\n");
 
   /* only for multipoint - deallocate memory  */
   if (modelType.type == MP) {
