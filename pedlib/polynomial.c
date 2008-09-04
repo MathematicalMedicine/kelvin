@@ -2553,6 +2553,7 @@ void polynomialInitialization ()
 {
   int i;
   char *envVar;
+  char messageBuffer[MAXSWMSG];
 
 #ifdef FREEDEBUG
 #warning "freePoly protection is turned on, so memory will purposefully leak!"
@@ -2569,7 +2570,8 @@ void polynomialInitialization ()
     polynomialScale = 1;
   if (polynomialScale > 10)
     polynomialScale = 10;
-  fprintf (stderr, "polynomialScale is %d (1-10, 1 is default)\n", polynomialScale);
+  sprintf (messageBuffer, "polynomialScale is %d (1-10, 1 is default)", polynomialScale);
+  swLogMsg (messageBuffer);
 
   evaluatePolySW = swCreate ("evaluatePoly");
   evaluateValueSW = swCreate ("evaluateValue");
