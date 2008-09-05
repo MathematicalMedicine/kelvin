@@ -286,18 +286,18 @@ different from platform-to-platform, and the
 process ID (26577 in the example) will be different from run-to-run.
 <p>
 Next, location of the configuration file and the analysis characteristics as determined from that file
-are displayed. The last of these starts with a fairly cryptic description of the analysis, e.g.
-9 pair(s)*51Th of 20AL*6GF*275pv(1LC) space for 11 pedigree(s). This indicates that for each of the 9
-pairs of loci, 51 values of theta will be evaluated in a 3-dimentional model space composed of 20 alpha 
-values by 6 gene 
-frequencies and 275 penetrance values (from 1 liability class), which is 33,000 points. Likelihood will be
-derived from the phenotypic and genotypic information in 11 pedigrees. This can give you
-an idea of how complex your run is.
+are displayed. The last of these starts with a fairly cryptic description of the analysis, for example:
 <pre>
-
+9 pair(s)*51Th of 20AL*6GF*275pv(1LC) space for 11 pedigree(s)
 </pre>
+This indicates that for each of the 9
+pairs of loci, 51 values of theta will be evaluated in the standard 3-dimensional trait model space of 20 alpha 
+values by 6 gene 
+frequencies and 275 penetrance values (from 1 liability class), which is 459 integrations over a 33,000 point grid. 
+Likelihoods for the evaluation  will be derived from the phenotypic and genotypic information in 11 pedigrees.
+This can give you an idea of how complex your run is.
+<p>
 Finally, progress indicators are displayed up through the end of the run.
-
 <h3>Monitoring Progress</h3>
 There are two levels of detail of progress information for you to choose from. The default is to simply display
 a rough percentage of work completed and a wobbly estimate of how many minutes of work remain. These
