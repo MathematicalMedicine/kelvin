@@ -2110,14 +2110,27 @@ get_haplotype_freq (int locus, int parent, void *freqPtr)
       }
     }
 
-    if (modelOptions.polynomial == TRUE) {
-
-      *(Polynomial **) freqPtr =
-	timesExp (2, freqPolynomial[0], 1, freqPolynomial[1], 1, 0);
-    } else {
-      *(double *) freqPtr = freq[0] * freq[1];
+    /* for xchr and father, there is only one haplotype */
+    if(modelOptions.sexLinked && parent==DAD) {
+      
+	if (modelOptions.polynomial == TRUE) {
+	  freqPolynomial[i+1] = constant1Poly;
+	} else{
+	  freq[i+1] = 1.0;
+	}
+      break;
     }
+
   }				/* end of loop of parents */
+
+  if (modelOptions.polynomial == TRUE) {
+    
+    *(Polynomial **) freqPtr =
+      timesExp (2, freqPolynomial[0], 1, freqPolynomial[1], 1, 0);
+  } else {
+    *(double *) freqPtr = freq[0] * freq[1];
+  }
+
 }
 
 /*
@@ -2170,11 +2183,16 @@ loop_child_multi_locus_genotype (int locus, int multiLocusIndex,
 
       /* get the transmission probability from the matrix */
       if (modelOptions.polynomial == TRUE) {
-	newProbPolynomial =
-	  timesExp (2,
-		    xmissionMatrix[newXmissionIndex[DAD]].slot.probPoly[1], 1,
-		    xmissionMatrix[newXmissionIndex[MOM]].slot.probPoly[2], 1,
-		    0);
+	if(modelOptions.sexLinked && pChild->sex+1 == MALE) {
+	  newProbPolynomial =  xmissionMatrix[newXmissionIndex[MOM]].slot.probPoly[2]; 
+	}
+	else {
+	  newProbPolynomial =
+	    timesExp (2,
+		      xmissionMatrix[newXmissionIndex[DAD]].slot.probPoly[1], 1,
+		      xmissionMatrix[newXmissionIndex[MOM]].slot.probPoly[2], 1,
+		      0);
+	}
 #if 0
 	KLOG (LOGLIKELIHOOD, LOGDEBUG,
 	      "\t xmission prob: %f = %f * %f\n",
@@ -2185,13 +2203,21 @@ loop_child_multi_locus_genotype (int locus, int multiLocusIndex,
 			     slot.probPoly[2]));
 #endif
       } else {
-	newProb =
-	  xmissionMatrix[newXmissionIndex[DAD]].slot.prob[1] *
-	  xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2];
-	KLOG (LOGLIKELIHOOD, LOGDEBUG,
-	      "\t xmission prob: %f = %f * %f\n", newProb,
-	      xmissionMatrix[newXmissionIndex[DAD]].slot.prob[1],
-	      xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2]);
+	if(modelOptions.sexLinked && pChild->sex+1 == MALE) {
+	  newProb =  xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2]; 
+	  KLOG (LOGLIKELIHOOD, LOGDEBUG,
+		"\t xmission prob: %f = %f\n", newProb,
+		xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2]);
+	}
+	else {
+	  newProb =
+	    xmissionMatrix[newXmissionIndex[DAD]].slot.prob[1] *
+	    xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2];
+	  KLOG (LOGLIKELIHOOD, LOGDEBUG,
+		"\t xmission prob: %f = %f * %f\n", newProb,
+		xmissionMatrix[newXmissionIndex[DAD]].slot.prob[1],
+		xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2]);
+	}
 	//fprintf(stderr, "newProb=%f newPenetrance=%f\n", newProb, newPenetrance);
       }
 
