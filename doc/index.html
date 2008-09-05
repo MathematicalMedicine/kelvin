@@ -258,7 +258,8 @@ PID: 26577, In /export/home/whv001/kelvin/trunk/test-suite/PE/TP_DT_LD w/kelvin.
 PID: 26577, Computation is done in polynomial mode
 PID: 26577, polynomialScale is 1 (1-10, 1 is default)
 PID: 26577, Integration is done with iteration (original kelvin)
-PID: 26577, 1a*3gf*275p*1lc*21d' space, Trait-to-marker, Two-Point, Dichotomous Trait, Disequilibrium.
+PID: 26577, 9 pair(s)*51Th of 20AL*6GF*275pv(1LC) space for 11 pedigree(s)
+Trait-to-marker, Two-Point, Dichotomous Trait, Equilibrium.
 </pre>
 The first line is the kelvin major version and build information, and the subsequent lines
 that contain "Id:" are source-managed component version information. Next is the compiler
@@ -269,7 +270,7 @@ status and the number of threads used (0 selects the platform-specific default n
 is displayed. Other options and their corresponding messages are covered in the <a href="#building">
 Building and Testing</a> section.
 <p>
-In the midst of this is a line describing the action to take in order to force a dump of a line of
+Following this is a line describing the action to take in order to force a dump of a line of
 statistics. The format of these statistics is described at the end of the next subsection (<a href="#adhoc">ad hoc status</a>).
 You can use this as a sort of "pulse check" to make sure kelvin is still alive
 and well and making progress should there be a lull between automatic progress updates. If
@@ -284,10 +285,16 @@ as described in the diagnostic output. Note that the signal number (-3 in the ex
 different from platform-to-platform, and the
 process ID (26577 in the example) will be different from run-to-run.
 <p>
-Next, the analysis characteristics as determined from the configuration and data files
-are displayed, e.g.:
+Next, location of the configuration file and the analysis characteristics as determined from that file
+are displayed. The last of these starts with a fairly cryptic description of the analysis, e.g.
+9 pair(s)*51Th of 20AL*6GF*275pv(1LC) space for 11 pedigree(s). This indicates that for each of the 9
+pairs of loci, 51 values of theta will be evaluated in a 3-dimentional model space composed of 20 alpha 
+values by 6 gene 
+frequencies and 275 penetrance values (from 1 liability class), which is 33,000 points. Likelihood will be
+derived from the phenotypic and genotypic information in 11 pedigrees. This can give you
+an idea of how complex your run is.
 <pre>
-Trait-to-marker, Sex-Averaged Multipoint (3 loci at a time), Dichotomous Trait.
+
 </pre>
 Finally, progress indicators are displayed up through the end of the run.
 
