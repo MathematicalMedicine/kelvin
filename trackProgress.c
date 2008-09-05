@@ -7,6 +7,7 @@
 
 */
 #include "kelvin.h"
+extern PedigreeSet pedigreeSet;
 #include "kelvinHandlers.h"
 #include "polynomial.h"
 #include "trackProgress.h"
@@ -207,11 +208,23 @@ void dumpTrackingStats(int cl[], int eCL[])
 	   modelRange.ntheta, modelRange.ndprime, originalLocusList.numLocus, modelType.numMarkers);
 }
 
-// Construct string describing the type of analysis and determine evaluations required.
+/** 
+    Construct string describing the type of analysis and determine evaluations required. Note that
+    the model numbers we're going to display along with the type of the analysis does not directly
+    relate to the number of iterations we're concerned about. Iterations are about likelihood
+    evaluation, while model numbers describe two things -- iterations over the model space which will
+    show up as enumerated values in the results, and the model space itself which is everything that
+    is variable but unenumerated in the results. As an example, alpha is definitely always a part of the 
+    model space, but doesn't show up anywhere in the iterations for likelihood because it is iterated 
+    over after combined likelihood is calculated. Another is pedigrees, which is always in the 
+    iterations for likelihood but not a part of the model space (they don't vary) and not a part of the 
+    enumerated results.
+
+*/
 char *estimateIterations (int eCL[])
 {
   //  int cL[9];
-  //  dumpTrackingStats(modelType,  modelOptions,  modelRange, cL, eCL);
+  //  dumpTrackingStats(cL, eCL);
   if (modelOptions.markerAnalysis != FALSE) {
     /*
       Marker pair (not # in analysis, but locus list)
@@ -234,12 +247,17 @@ char *estimateIterations (int eCL[])
 
       */      
       if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
-	sprintf (analysisType, "%da*%dgf*%dp*%dlc space, Trait-to-marker, Two-Point, ",
-		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass);
-      else
-	sprintf (analysisType, "%da*%dgf*%dp*%dlc*%dd' space, Trait-to-marker, Two-Point, ",
+	sprintf (analysisType, "%d pair(s)*%dTh of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)\n"
+		 "Trait-to-marker, Two-Point, ",
+		 (originalLocusList.numLocus-1), modelRange.ntheta,
 		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
-		 modelRange.ndprime);
+		 pedigreeSet.numPedigree);
+      else
+	sprintf (analysisType, "%d pair(s)*%dTh*%dd' of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)\n"
+		 "Trait-to-marker, Two-Point, ",
+		 (originalLocusList.numLocus-1), modelRange.ntheta, modelRange.ndprime,
+		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
+		 pedigreeSet.numPedigree);
       if (modelType.trait == DT) {
 	strcat (analysisType, "Dichotomous Trait, ");
 	eCL[0] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1);
@@ -283,8 +301,11 @@ char *estimateIterations (int eCL[])
       polynomials for each pedigree incorporate alpha?, # MP markers used in analysis.
 
       */
-      sprintf (analysisType, "%da*%dgf*%dp*%dlc space, Trait-to-marker, Sex-%s Multipoint (w/%d loci), ",
+      sprintf (analysisType, "%dTL of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)\n"
+	       "Trait-to-marker, Sex-%s Multipoint (w/%d markers), ",
+	       modelRange.ntloc,
 	       modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
+	       pedigreeSet.numPedigree,
 	       modelOptions.mapFlag == SS ? "Specific" : "Averaged",
 	       modelType.numMarkers + originalLocusList.numTraitLocus);
       eCL[6] = modelRange.ntloc;
