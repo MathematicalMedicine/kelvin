@@ -1,3 +1,6 @@
+Verion 0.36.1
+  Fixed X Chromosome LD bug
+
 Version 0.36.0
   Imprinting is now supported. Changes to enable use on
   older versions of 64-bit Solaris.
