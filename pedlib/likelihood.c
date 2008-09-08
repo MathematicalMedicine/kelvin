@@ -88,7 +88,6 @@ Genotype *pGenotype;
 int traitGenoIndex;
 ParentalPair *pTraitParentalPair;
 int parent;
-double newProb = 1;
 
 Polynomial *newProbPolynomial = NULL;
 int newChromosome[2];
@@ -2142,6 +2141,7 @@ int
 loop_child_multi_locus_genotype (int locus, int multiLocusIndex,
 				 int xmissionIndex[2])
 {
+  double newProb = 1;
   int i;
   int newMultiLocusIndex;
   int newXmissionIndex[2];
@@ -3083,25 +3083,25 @@ print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
  * numLocus - number of loci analyzing at a time
  */
 void
-allocate_nucfam_het (PedigreeSet * pPedigreeList, int numLocus)
+allocate_nucfam_het (PedigreeSet * pPedigreeList, int myNumLocus)
 {
   int ped;
   Pedigree *pPedigree;
   int fam;
-  NuclearFamily *pNucFam;
+  NuclearFamily *pMyNucFam;
 
   for (ped = 0; ped < pPedigreeList->numPedigree; ped++) {
     pPedigree = pPedigreeList->ppPedigreeSet[ped];
     for (fam = 0; fam < pPedigree->numNuclearFamily; fam++) {
-      pNucFam = pPedigree->ppNuclearFamilyList[fam];
-      if (pNucFam->hetFlag[DAD] == NULL) {
-	pNucFam->hetFlag[DAD] = (int *) calloc (sizeof (int), numLocus);
-	pNucFam->hetFlag[MOM] = (int *) calloc (sizeof (int), numLocus);
-	pNucFam->tmpNumHet[DAD] = (int *) calloc (sizeof (int), numLocus);
-	pNucFam->tmpNumHet[MOM] = (int *) calloc (sizeof (int), numLocus);
-	pNucFam->relatedPPairStart = (int *) calloc (sizeof (int), numLocus);
-	pNucFam->numRelatedPPair = (int *) calloc (sizeof (int), numLocus);
-	pNucFam->totalRelatedPPair = (int *) calloc (sizeof (int), numLocus);
+      pMyNucFam = pPedigree->ppNuclearFamilyList[fam];
+      if (pMyNucFam->hetFlag[DAD] == NULL) {
+	pMyNucFam->hetFlag[DAD] = (int *) calloc (sizeof (int), myNumLocus);
+	pMyNucFam->hetFlag[MOM] = (int *) calloc (sizeof (int), myNumLocus);
+	pMyNucFam->tmpNumHet[DAD] = (int *) calloc (sizeof (int), myNumLocus);
+	pMyNucFam->tmpNumHet[MOM] = (int *) calloc (sizeof (int), myNumLocus);
+	pMyNucFam->relatedPPairStart = (int *) calloc (sizeof (int), myNumLocus);
+	pMyNucFam->numRelatedPPair = (int *) calloc (sizeof (int), myNumLocus);
+	pMyNucFam->totalRelatedPPair = (int *) calloc (sizeof (int), myNumLocus);
       }
     }
   }
@@ -3155,26 +3155,26 @@ populate_pedigree_loopbreaker_genotype_vector (Pedigree * pPed)
 void
 populate_loopbreaker_genotype_vector (Person * pLoopBreaker, int locus)
 {
-  Genotype *pGenotype;
-  int index;
+  Genotype *pMyGenotype;
+  int i;
   LoopBreaker *pLoopBreakerStruct;
 
-  pGenotype =
+  pMyGenotype =
     pLoopBreaker->ppSavedGenotypeList[locusList->pLocusIndex[locus]];
-  while (pGenotype != NULL) {
-    pTempGenoVector[locus] = pGenotype;
+  while (pMyGenotype != NULL) {
+    pTempGenoVector[locus] = pMyGenotype;
     if (locus < locusList->numLocus - 1) {
       populate_loopbreaker_genotype_vector (pLoopBreaker, locus + 1);
     } else {
       /* one complete multilocus genotype */
       pLoopBreakerStruct = pLoopBreaker->loopBreakerStruct;
-      index = pLoopBreakerStruct->numGenotype;
-      memcpy (pLoopBreakerStruct->genotype[index], pTempGenoVector,
+      i = pLoopBreakerStruct->numGenotype;
+      memcpy (pLoopBreakerStruct->genotype[i], pTempGenoVector,
 	      sizeof (Genotype *) * locusList->numLocus);
       pLoopBreakerStruct->numGenotype++;
 
     }
-    pGenotype = pGenotype->pSavedNext;
+    pMyGenotype = pMyGenotype->pSavedNext;
   }
 }
 
@@ -3197,11 +3197,10 @@ int
 set_next_loopbreaker_genotype_vector (Pedigree * pPed, int initialFlag)
 {
   int numLoopBreaker = pPed->numLoopBreaker;
-  int i;
+  int i, j;
   Person *pLoopBreaker;
   int found;
   LoopBreaker *loopStruct;
-  int index;
   int origLocus;
   int locus;
   int ret;
@@ -3241,7 +3240,7 @@ set_next_loopbreaker_genotype_vector (Pedigree * pPed, int initialFlag)
   for (i = 0; i < numLoopBreaker; i++) {
     pLoopBreaker = pPed->loopBreakerList[i];
     loopStruct = pLoopBreaker->loopBreakerStruct;
-    index = loopStruct->genotypeIndex;
+    j = loopStruct->genotypeIndex;
     KLOG (LOGLIKELIHOOD, LOGDEBUG,
 	  "Fix pedigree %s loop breaker %s to the genotype below (%d/%d):\n",
 	  pPed->sPedigreeID, pLoopBreaker->sID,
@@ -3249,12 +3248,12 @@ set_next_loopbreaker_genotype_vector (Pedigree * pPed, int initialFlag)
     for (locus = 0; locus < locusList->numLocus; locus++) {
       origLocus = locusList->pLocusIndex[locus];
       pLoopBreaker->ppGenotypeList[origLocus] =
-	loopStruct->genotype[index][locus];
-      loopStruct->genotype[index][locus]->pNext = NULL;
+	loopStruct->genotype[j][locus];
+      loopStruct->genotype[j][locus]->pNext = NULL;
       pLoopBreaker->pNumGenotype[origLocus] = 1;
       KLOG (LOGLIKELIHOOD, LOGDEBUG, "\t %d-> %d|%d \n",
-	    locus, loopStruct->genotype[index][locus]->allele[DAD],
-	    loopStruct->genotype[index][locus]->allele[MOM]);
+	    locus, loopStruct->genotype[j][locus]->allele[DAD],
+	    loopStruct->genotype[j][locus]->allele[MOM]);
     }
   }
 
