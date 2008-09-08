@@ -52,6 +52,8 @@ extern unsigned long initialHashSize;
 
 /* Maximum size of a polynomial function name */
 #define MAX_PFN_LEN 128
+/* Maximum number of DLs supporting a single polynomial (up to 32K modules!) */
+#define MAX_POLY_DL 32
 
 /* These are the types of polynomials */
 enum expressionType
@@ -130,10 +132,9 @@ struct externalPoly
 {
   int fileOK;
   int entryOK;
-  char polynomialFileName[MAX_PFN_LEN+1];
   char polynomialFunctionName[MAX_PFN_LEN+1];
   double (*polynomialFunctionRoutine)();
-  void *polynomialFunctionHandle;
+  void *polynomialFunctionHandle[MAX_POLY_DL];
 };
 
 /* This structure represents a general polynomial. It is composed of
@@ -327,3 +328,4 @@ Polynomial *restoreExternalPoly (char * name);
 int loadPolyDL (Polynomial * p);
 void externalizePolys ();
 void thrashingCheck ();
+void releaseExternalPoly (Polynomial *);
