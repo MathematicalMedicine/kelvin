@@ -1,3 +1,32 @@
+void printPenetrance() {
+  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+    pen_DD = modelRange.penet[liabIdx][0][penIdx];
+    pen_Dd = modelRange.penet[liabIdx][1][penIdx];
+    pen_dD = modelRange.penet[liabIdx][2][penIdx];
+    pen_dd = modelRange.penet[liabIdx][3][penIdx];
+    if (modelOptions.imprintingFlag)
+      fprintf (fpTP, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
+    else
+      fprintf (fpTP, " (%.3f %.3f %.3f ", pen_DD, pen_Dd, pen_dd);
+    if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+      SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
+      SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
+      SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
+      SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
+      if (modelOptions.imprintingFlag)
+	fprintf (fpTP, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
+      else
+	fprintf (fpTP, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
+    }
+    if (modelType.trait != DT) {
+      threshold = modelRange.tthresh[liabIdx][thresholdIdx];
+      fprintf (fpTP, ",%.3f)", threshold);
+    } else
+      fprintf (fpTP, ")");
+  }
+  fprintf (fpTP, "\n");
+  fflush (fpTP);
+}
 
   overallSW = swCreate ("overall");
   combinedComputeSW = swCreate ("combinedComputeSW");
