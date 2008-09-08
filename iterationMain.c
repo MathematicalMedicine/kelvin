@@ -845,57 +845,17 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
 	      else
 		fprintf (fpTP, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
 	fprintf (fpTP, "\n");
+
         /* Overall maximizing model - MOD */
-        fprintf (fpTP, "# Overall MOD maximizing model:\n");
-        theta[0] = modelRange.theta[0][maxThetaIdx];
-        theta[1] = modelRange.theta[1][maxThetaIdx];
-        gfreq = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_gfreq;
-        mkrFreq = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_mf;
-        alphaV = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_alpha;
-        penIdx = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_penIdx;
-        R_square = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].R_square;
-        paramIdx = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_paramIdx;
-        thresholdIdx = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_thresholdIdx;
-	fprintf (fpTP,
-		 "%d %s %.4f %.4f %.2f (%.4f,%.4f) %.3f %.2f %.4f %.4f",
-		 pLocus2->pMapUnit->chromosome, pLocus2->sName,
-		 pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max),
-		 pLambdaCell->lambda[maxDPrimeIdx][0][0], theta[0], theta[1], R_square, alphaV, gfreq, mkrFreq);
-	printPenetrance();
+	printFullMaximizingModel ("Overall MOD maximizing model", max, maxDPrimeIdx, maxThetaIdx);
 
         /* Maximizing model at theta equal to 0 - MOD */
-        fprintf (fpTP, "# MOD maximizing model for theta=0:\n");
-        gfreq = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].max_gfreq;
-        mkrFreq = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].max_mf;
-        alphaV = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].max_alpha;
-        penIdx = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].max_penIdx;
-        R_square = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].R_square;
-        paramIdx = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].max_paramIdx;
-        thresholdIdx = tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.nafreq].max_thresholdIdx;
-        fprintf (fpTP,
-                 "%d %s %.4f %.4f %.2f (%.4f,%.4f) %.3f %.2f %.4f %.4f",
-                 pLocus2->pMapUnit->chromosome, pLocus2->sName,
-                 pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-                 log10 (max_at_theta0),
-                 pLambdaCell->lambda[maxDPrimeIdx_at_theta0][0][0], 0.0, 0.0, R_square, alphaV, gfreq, mkrFreq);
-	printPenetrance();
+	printFullMaximizingModel ("MOD maximizing model for theta=0", max_at_theta0, 
+				  maxDPrimeIdx_at_theta0, theta0Idx);
 
         /* Maximizing model at d prime equal to 0 - MOD */
-        fprintf (fpTP, "# MOD maximizing model for dprime=0:\n");
-        gfreq = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].max_gfreq;
-        mkrFreq = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].max_mf;
-        alphaV = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].max_alpha;
-        penIdx = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].max_penIdx;
-        R_square = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].R_square;
-        paramIdx = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].max_paramIdx;
-        thresholdIdx = tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].max_thresholdIdx;
-        fprintf (fpTP,
-                 "%d %s %.4f %.4f %.2f (%.4f,%.4f) %.3f %.2f %.4f %.4f ",
-                 pLocus2->pMapUnit->chromosome, pLocus2->sName,
-                 pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-		 log10 (max_at_dprime0),
-		 0.0, 0.0, 0.0, R_square, alphaV, gfreq, mkrFreq);
-	printPenetrance();
+	printFullMaximizingModel ("MOD maximizing model for dprime=0", max_at_dprime0, 
+				  dprime0Idx, maxTheta_at_dprime0);
 
         /* find the overall maximizing theta and dprime - LR
          * with the other parameter integrated out */

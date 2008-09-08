@@ -1,4 +1,21 @@
-void printPenetrance() {
+void printFullMaximizingModel(char *modelDescription, double myMOD, int myDPrimeIdx, int myThetaIdx) {
+
+  fprintf (fpTP, "# %s:\n", modelDescription);
+  theta[0] = modelRange.theta[0][myThetaIdx];
+  theta[1] = modelRange.theta[1][myThetaIdx];
+  gfreq = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_gfreq;
+  mkrFreq = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_mf;
+  alphaV = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_alpha;
+  penIdx = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_penIdx;
+  R_square = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].R_square;
+  paramIdx = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_paramIdx;
+  thresholdIdx = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_thresholdIdx;
+  fprintf (fpTP,
+	   "%d %s %.4f %.4f %.2f (%.4f,%.4f) %.3f %.2f %.4f %.4f",
+	   pLocus2->pMapUnit->chromosome, pLocus2->sName,
+	   pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (myMOD),
+	   pLambdaCell->lambda[myDPrimeIdx][0][0], 
+	   theta[0], theta[1], R_square, alphaV, gfreq, mkrFreq);
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
     pen_DD = modelRange.penet[liabIdx][0][penIdx];
     pen_Dd = modelRange.penet[liabIdx][1][penIdx];
@@ -7,7 +24,7 @@ void printPenetrance() {
     if (modelOptions.imprintingFlag)
       fprintf (fpTP, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
     else
-      fprintf (fpTP, " (%.3f %.3f %.3f ", pen_DD, pen_Dd, pen_dd);
+      fprintf (fpTP, " (%.3f %.3f %.3f", pen_DD, pen_Dd, pen_dd);
     if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
       SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
       SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
