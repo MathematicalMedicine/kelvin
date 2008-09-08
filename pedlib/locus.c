@@ -46,19 +46,17 @@ extern Polynomial *constant0Poly;
 extern Polynomial *constant1Poly;
 
 /* internal functions */
-MapUnit *add_map_unit (Map * map);
-Locus *add_locus (LocusList * pLocusList, char *sName, int locusType);
-int add_allele (Locus * pLocus, char *sAlleleName, double freq);
+MapUnit *add_map_unit (Map *);
+Locus *add_locus (LocusList *, char *, int);
+int add_allele (Locus *, char *, double);
 
-Genotype *add_genotype (Genotype ** ppList, int *pCount, int locusIndex,
-			int allele1, int allele2);
+Genotype *add_genotype (Genotype **, int *, int, int, int);
 
-Trait *add_trait (int trait, TraitLocus * pTraitLocus, int traitType);
-void compute_penetrance (Person * pPerson, int locus,
-			 int allele1, int allele2, void *pen);
-void free_allele_set (AlleleSet * pAlleleSet);
-void free_person (Person * pPerson);
-void free_nuclear_family (NuclearFamily * pNucFam);
+Trait *add_trait (int, TraitLocus *, int);
+void compute_penetrance (Person *, int, int, int, void *);
+void free_allele_set (AlleleSet *);
+void free_person (Person *);
+void free_nuclear_family (NuclearFamily *);
 
 /* hard removal of genotype flag */
 int removeGenotypeFlag = TRUE;

@@ -133,30 +133,23 @@ probandCondL *pCondSet = NULL;
 int numCond;
 
 /* function prototypes */
-void recalculate_child_likelihood (int flipMask[2], void *childProduct);
-int peel_graph (NuclearFamily * pNucFam, Person * pProband,
-		int peelingDirection);
-int compute_nuclear_family_likelihood (int peelingDirection);
-int loop_parental_pair (int locus, int multiLocusIndex[2], void *dWeight[2]);
-int loop_child_multi_locus_genotype (int locus, int multiLocusIndex,
-				     int xmissionIndex[2]);
-void get_haplotype_freq (int locus, int parent, void *freqPtr);
+void recalculate_child_likelihood (int [], void *);
+int peel_graph (NuclearFamily *, Person *, int);
+int compute_nuclear_family_likelihood (int);
+int loop_parental_pair (int, int [], void *[]);
+int loop_child_multi_locus_genotype (int, int, int []);
+void get_haplotype_freq (int, int, void *);
 
-int
-loop_child_proband_genotype (int peelingDirection, int locus,
-			     int multiLocusIndex);
+int loop_child_proband_genotype (int, int, int);
 
-void
-loop_phases (int locus, int multiLocusIndex[2], int multiLocusPhase[2],
-	     int flipMask[2], void *dWeight[2]);
-int calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
-			  void *dWeight[2], void *childProductPtr);
+void loop_phases (int, int [], int [], int [], void *[]);
+int calculate_likelihood (int [], int [], void *[], void *);
 
-inline void clear_ppairMatrix (PPairElement ** ppMatrix);
-inline void initialize_proband_tmpLikelihood (Person * pPerson);
-void populate_pedigree_loopbreaker_genotype_vector (Pedigree * pPed);
-void populate_loopbreaker_genotype_vector (Person * pLoopBreaker, int locus);
-int set_next_loopbreaker_genotype_vector (Pedigree * pPed, int initialFlag);
+inline void clear_ppairMatrix (PPairElement **);
+inline void initialize_proband_tmpLikelihood (Person *);
+void populate_pedigree_loopbreaker_genotype_vector (Pedigree *);
+void populate_loopbreaker_genotype_vector (Person *, int);
+int set_next_loopbreaker_genotype_vector (Pedigree *, int);
 
 
 /*
