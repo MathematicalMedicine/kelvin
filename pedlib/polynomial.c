@@ -4081,12 +4081,18 @@ Polynomial *importPoly (void *exportedPoly)
 
 void releaseExternalPoly (Polynomial *rp)
 {
+  int i;
+
   if (rp->eType != T_EXTERNAL) {
     fprintf (stderr, "releaseExternalPoly called with polynomial eType of %d\n", rp->eType);
     exit (EXIT_FAILURE);
   }
 #ifdef POLYUSE_DL
-  dlclose (rp->e.e->polynomialFunctionHandle);
+  for (i=0; i<32; i++)
+    if (rp->e.e->polynomialFunctionHandle[i] != NULL)
+      dlclose (rp->e.e->polynomialFunctionHandle[i]);
+    else
+      break;
 #endif
   //  fprintf (stderr, "Released polynomial DL %s\n", rp->e.e->polynomialFunctionName);
   rp->e.e->fileOK = FALSE;
@@ -4119,7 +4125,6 @@ Polynomial *restoreExternalPoly (char *functionName)
   }
   rp->e.e = eP;
   strcpy (eP->polynomialFunctionName, functionName);
-  sprintf (eP->polynomialFileName, "./%s.so", functionName);
 #ifdef POLYUSE_DL
   if (!loadPolyDL(rp)) {
     free (eP);
@@ -4151,29 +4156,53 @@ Polynomial *restoreExternalPoly (char *functionName)
 #ifdef POLYUSE_DL
 int loadPolyDL (Polynomial * p)
 {
-  if ((p->e.e->polynomialFunctionHandle = dlopen (p->e.e->polynomialFileName, RTLD_NOW)) != NULL) {
-    //    fprintf (stderr, "Using existing dynamic library %s for polynomial %s\n",
-    //	     p->e.e->polynomialFileName, p->e.e->polynomialFunctionName);
-    // Loaded it! Make sure the function is in there...
+  int i = 0;
+  char polynomialFileName[MAX_PFN_LEN+1];
+
+  sprintf (polynomialFileName, "%s.so", p->e.e->polynomialFunctionName);
+  if ((p->e.e->polynomialFunctionHandle[0] = 
+       dlopen (polynomialFileName, RTLD_LAZY|RTLD_GLOBAL)) != NULL) {
+
+    // Loaded! Do any supporting 1K clump DLs.
+    for (i=0; i>=32; i--) {
+      sprintf (polynomialFileName, "%s_%dK.so", p->e.e->polynomialFunctionName, i);
+      if ((p->e.e->polynomialFunctionHandle[i+1] = dlopen (polynomialFileName, RTLD_LAZY|RTLD_GLOBAL)) == NULL)
+	break;
+    }
+
+    // Now get the first entry point symbol
     if ((p->e.e->polynomialFunctionRoutine = 
-	 dlsym (p->e.e->polynomialFunctionHandle, p->e.e->polynomialFunctionName)) != NULL) {
+	 dlsym (p->e.e->polynomialFunctionHandle[0], p->e.e->polynomialFunctionName)) != NULL) {
       // Found it!
       p->e.e->fileOK = TRUE;
       p->e.e->entryOK = TRUE;
-      fprintf (stdout, "Using DL for %s\n", p->e.e->polynomialFunctionName);
+      fprintf (stdout, "Using %d DL(s) for %s\n", i, p->e.e->polynomialFunctionName);
     } else {
       fprintf (stderr, "dlsym() error [%s] for polynomial %s\n", dlerror(),
 	       p->e.e->polynomialFunctionName);
-      dlclose (p->e.e->polynomialFunctionHandle);
+      for (i=0; i<32; i++)
+	if (p->e.e->polynomialFunctionHandle[i] != NULL)
+	  dlclose (p->e.e->polynomialFunctionHandle[i]);
+	else
+	  break;
       return FALSE;
     }
-  } else
+  } else {
+    fprintf (stderr, "dlload() error [%s] for polynomial %s\n", dlerror(),
+	       p->e.e->polynomialFunctionName);
     return FALSE;
+  }
   return TRUE;
 }
 #endif
 
-#define MAXSRCSIZE (8192*128)
+/**
+   8192*496 is carefully tested to compile in just under 16Gb in our environment.
+   Use 8192*128 for a 4Gb compile size, but be aware that large polynomials (over
+   1,000 source files) might not compile due to command line size limitations.
+
+*/
+#define MAXSRCSIZE (8192*496)
 void codePoly (Polynomial * p, struct polyList *l, char *name)
 {
   char srcFileName[128], srcCalledFileName[128], includeFileName[128];
@@ -4229,7 +4258,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
       }
       srcSize = 0;
 
-      sprintf (srcCalledFileName, "%s_%04d.c", name, fileCount);
+      sprintf (srcCalledFileName, "%s_%03d.c", name, fileCount);
       if ((srcCalledFile = fopen (srcCalledFileName, "w")) == NULL) {
         perror ("Cannot open polynomial source called file\n");
         exit (EXIT_FAILURE);
