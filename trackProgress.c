@@ -13,6 +13,7 @@ extern PedigreeSet pedigreeSet;
 #include "trackProgress.h"
 #ifdef linux
 #include <linux/prctl.h>
+int prctl (int, char *); // Strangely this is not included!
 #endif
 
 /**
