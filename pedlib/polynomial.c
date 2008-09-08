@@ -4081,13 +4081,12 @@ Polynomial *importPoly (void *exportedPoly)
 
 void releaseExternalPoly (Polynomial *rp)
 {
-  int i;
-
   if (rp->eType != T_EXTERNAL) {
     fprintf (stderr, "releaseExternalPoly called with polynomial eType of %d\n", rp->eType);
     exit (EXIT_FAILURE);
   }
 #ifdef POLYUSE_DL
+  int i;
   for (i=0; i<32; i++)
     if (rp->e.e->polynomialFunctionHandle[i] != NULL)
       dlclose (rp->e.e->polynomialFunctionHandle[i]);
