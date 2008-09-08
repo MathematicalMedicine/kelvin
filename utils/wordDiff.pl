@@ -21,9 +21,9 @@ open LEFT, $file_LEFT; open RIGHT, $file_RIGHT;
 $whole_LEFT = do { local $/; <LEFT> }; # Briefly change newline to NULL
 $whole_RIGHT = do { local $/; <RIGHT> }; # Briefly change newline to NULL
 close LEFT; close RIGHT;
-# Split the files into lists delimited by whitespace commas and newlines, and keep delimiters
-@chunks_LEFT = split (/([\s,\n])/, $whole_LEFT);
-@chunks_RIGHT = split (/([\s,\n])/, $whole_RIGHT);
+# Split the files into lists delimited by whitespace commas, newlines and parens, and keep delimiters
+@chunks_LEFT = split (/([\s,\n\(\)])/, $whole_LEFT);
+@chunks_RIGHT = split (/([\s,\n\(\)])/, $whole_RIGHT);
 # Compare all of the tokens and delimiters
 for ($i = 0; $i < $#chunks_LEFT; $i++) {
     $left = $chunks_LEFT[$i]; $right = $chunks_RIGHT[$i];
