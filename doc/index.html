@@ -283,7 +283,9 @@ process or in a batch queue, you can send a SIGQUIT to the process by being logg
 node as it is running on, and using the <tt>kill</tt> command
 as described in the diagnostic output. Note that the signal number (-3 in the example) can be
 different from platform-to-platform, and the
-process ID (26577 in the example) will be different from run-to-run.
+process ID (26577 in the example) will be different from run-to-run. The "at some risk" bit is because
+some status information is displayed asynchronously, i.e. regardless of the current context of the
+evaluation, and has been known, albeit extremely infrequently, to crash the program.
 <p>
 Next, location of the configuration file and the analysis characteristics as determined from that file
 are displayed. The last of these starts with a fairly cryptic description of the analysis, for example:

@@ -29,10 +29,10 @@ LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm -lpthre
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
 #CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
-CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
+#CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
-LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
-#CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
+#LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
+CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
 #CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
 #CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every 2Mp and at milestones
@@ -44,7 +44,6 @@ LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tight
 #CFLAGS += -DPOLYCODE_DL # Enable generation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCOMP_DL # Enable compilation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCHECK_DL # Keep both built and compiled DL polys and compare results (can be noisy!)
-#CFLAGS += -DPOLYSIZE # Use per-polynomial storage to track total polynomial size
 #CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS

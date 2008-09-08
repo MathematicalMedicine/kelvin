@@ -1,5 +1,10 @@
 Verion 0.36.1
-  Fixed X Chromosome LD bug
+  Fixed X Chromosome LD bug. dkelvin now lightly merged into
+  kelvin -- specify DK directive in configuration file
+  to use dkelvin-style numeric integration. Position
+  column re-added to 2pt BR output. Numerous minor bug
+  fixes. Polynomial compilation works using dynamic
+  libraries. Documentation improved but still in-progress.
 
 Version 0.36.0
   Imprinting is now supported. Changes to enable use on
