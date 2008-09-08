@@ -459,9 +459,9 @@ int
 compute_pedigree_likelihood (Pedigree * pPedigree)
 {
   int i;
-  NuclearFamily *pNucFam;	/* nuclear families within the pedigree */
+  NuclearFamily *pMyNucFam;	/* nuclear families within the pedigree */
   int status;			/* function return status */
-  Person *pProband;		/* peeling proband */
+  Person *pMyProband;		/* peeling proband */
   double likelihood = 0;
   double tmpLikelihood = 0;
   ConditionalLikelihood *pConditional;
@@ -469,7 +469,7 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
   Polynomial *pLikelihoodPolynomial = NULL;
   int ret = 0;
   int origLocus = locusList->pLocusIndex[0];
-  Genotype *pGenotype = NULL;
+  Genotype *pMyGenotype = NULL;
   //  int genoIdx = 0;
   Locus *pLocus = originalLocusList.ppLocusList[origLocus];
   int allele1, allele2;
@@ -494,9 +494,9 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
   }
 
   for (i = 0; i < pPedigree->numNuclearFamily; i++) {
-    pNucFam = pPedigree->ppNuclearFamilyList[i];
-    pNucFam->totalNumPairGroups = 0;
-    pNucFam->totalNumSimilarPairs = 0;
+    pMyNucFam = pPedigree->ppNuclearFamilyList[i];
+    pMyNucFam->totalNumPairGroups = 0;
+    pMyNucFam->totalNumSimilarPairs = 0;
   }
 
   if (pPedigree->loopFlag == TRUE) {
@@ -522,10 +522,10 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
      * before (or after) each calculation
      */
     for (i = 0; i < pPedigree->numNuclearFamily; i++) {
-      pNucFam = pPedigree->ppNuclearFamilyList[i];
-      pNucFam->doneFlag = 0;
-      pNucFam->numPairGroups = 0;
-      pNucFam->numSimilarPairs = 0;
+      pMyNucFam = pPedigree->ppNuclearFamilyList[i];
+      pMyNucFam->doneFlag = 0;
+      pMyNucFam->numPairGroups = 0;
+      pMyNucFam->numSimilarPairs = 0;
     }
 
     /*
@@ -541,14 +541,14 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
      * done peeling, need to add up the conditional likelihood
      * for the leading peeling proband
      */
-    pProband = pPedigree->pPeelingProband;
+    pMyProband = pPedigree->pPeelingProband;
     if (modelOptions.polynomial != TRUE)
       tmpLikelihood = 0;
 
-    pGenotype = pProband->ppProbandGenotypeList[origLocus];
+    pMyGenotype = pMyProband->ppProbandGenotypeList[origLocus];
     /* loop over all conditional likelihoods */
-    for (i = 0; i < pProband->numConditionals; i++) {
-      pConditional = &pProband->pLikelihood[i];
+    for (i = 0; i < pMyProband->numConditionals; i++) {
+      pConditional = &pMyProband->pLikelihood[i];
       if (pConditional->touchedFlag == 0)
 	continue;
       /*
@@ -577,9 +577,9 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 	if(modelOptions.conditionalRun == 1) {
 	  /* find out the genotype index for the first locus - assuming that's the locus
 	     we are interested in */
-	  //	  genoIdx = i / pProband->pSavedNumGenotype[origLocus]; 
-	  alleleSet1 = pLocus->ppAlleleSetList[pGenotype->allele[DAD]-1];
-	  alleleSet2 = pLocus->ppAlleleSetList[pGenotype->allele[MOM]-1];
+	  //	  genoIdx = i / pMyProband->pSavedNumGenotype[origLocus]; 
+	  alleleSet1 = pLocus->ppAlleleSetList[pMyGenotype->allele[DAD]-1];
+	  alleleSet2 = pLocus->ppAlleleSetList[pMyGenotype->allele[MOM]-1];
 	  sumFreq1 = alleleSet1->sumFreq;
 	  sumFreq2 = alleleSet2->sumFreq; 
 	  for(k=0; k < alleleSet1->numAllele; k++) {
@@ -616,8 +616,8 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 		memcpy(&pCondSet[l], &pCondSet[l-1], sizeof(probandCondL));
 	      }
 	      pCondSet[idx].pPedigreeID = pPedigree->sPedigreeID; 
-	      pCondSet[idx].pProbandID = pProband->sID;
-	      pCondSet[idx].trait = pProband->ppTraitValue[0][0];
+	      pCondSet[idx].pProbandID = pMyProband->sID;
+	      pCondSet[idx].trait = pMyProband->ppTraitValue[0][0];
 	      pCondSet[idx].pAllele1 = pLocus->ppAlleleNames[allele1-1]; 
 	      pCondSet[idx].pAllele2 = pLocus->ppAlleleNames[allele2-1]; 
 	      pCondSet[idx].allele1 = allele1; 
@@ -627,7 +627,7 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 	    }
 	  }
 	  // fflush(fpCond);
-	  pGenotype = pGenotype->pNext;
+	  pMyGenotype = pMyGenotype->pNext;
 	} /* end of conditional Run flag is on */
       } /* non polynomial mode */
     }				/* end of looping over all conditionals */
@@ -651,9 +651,9 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 	    if(strcmp(pLoopBreaker->sID, modelOptions.loopBreaker)!=0)
 	      continue;
 	    loopStruct = pLoopBreaker->loopBreakerStruct;
-	    pGenotype = loopStruct->genotype[loopStruct->genotypeIndex][0];
-	    alleleSet1 = pLocus->ppAlleleSetList[pGenotype->allele[DAD]-1];
-	    alleleSet2 = pLocus->ppAlleleSetList[pGenotype->allele[MOM]-1];
+	    pMyGenotype = loopStruct->genotype[loopStruct->genotypeIndex][0];
+	    alleleSet1 = pLocus->ppAlleleSetList[pMyGenotype->allele[DAD]-1];
+	    alleleSet2 = pLocus->ppAlleleSetList[pMyGenotype->allele[MOM]-1];
 	    sumFreq1 = alleleSet1->sumFreq;
 	    sumFreq2 = alleleSet2->sumFreq; 
 	    for(k=0; k < alleleSet1->numAllele; k++) {
@@ -716,9 +716,9 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
     }
 
     for (i = 0; i < pPedigree->numNuclearFamily; i++) {
-      pNucFam = pPedigree->ppNuclearFamilyList[i];
-      pNucFam->totalNumPairGroups += pNucFam->numPairGroups;
-      pNucFam->totalNumSimilarPairs += pNucFam->numSimilarPairs;
+      pMyNucFam = pPedigree->ppNuclearFamilyList[i];
+      pMyNucFam->totalNumPairGroups += pMyNucFam->numPairGroups;
+      pMyNucFam->totalNumSimilarPairs += pMyNucFam->numSimilarPairs;
     }
   }
   if (modelOptions.polynomial == TRUE)
@@ -953,7 +953,7 @@ loop_child_proband_genotype (int peelingDirection,
 {
   int origLocus = locusList->pLocusIndex[locus];	/* locus index in the
 							 * original locus list */
-  Genotype *pGenotype;
+  Genotype *pMyGenotype;
   int position;			/* genotype position */
   Genotype *pNextGenotype;
   int numGenotype;		/* number of possible genotypes for this
@@ -972,25 +972,25 @@ loop_child_proband_genotype (int peelingDirection,
   numGenotype = pProband->pSavedNumGenotype[origLocus];
   /* calculate the flattened conditional likelihood array index */
   multiLocusIndex2 = multiLocusIndex * numGenotype;
-  pGenotype = pProband->ppProbandGenotypeList[origLocus];
-  while (pGenotype != NULL) {
+  pMyGenotype = pProband->ppProbandGenotypeList[origLocus];
+  while (pMyGenotype != NULL) {
     /*
      * record this locus's genotype in the haplotype structure -
      * it's really just phased multilocus genotype (not single
      * chromosome haplotype)
      */
-    pProband->ppHaplotype[locus] = pGenotype;
+    pProband->ppHaplotype[locus] = pMyGenotype;
     KLOG (LOGLIKELIHOOD, LOGDEBUG, "\t proband (%s) %d|%d \n",
-	  pProband->sID, pGenotype->allele[DAD], pGenotype->allele[MOM]);
+	  pProband->sID, pMyGenotype->allele[DAD], pMyGenotype->allele[MOM]);
     /*
      * temporarilly set the next pointer to NULL so to restrict
      * the genotype on the proband to current genotype only
      */
-    pProband->ppGenotypeList[origLocus] = pGenotype;
-    pNextGenotype = pGenotype->pNext;
-    pGenotype->pNext = NULL;
+    pProband->ppGenotypeList[origLocus] = pMyGenotype;
+    pNextGenotype = pMyGenotype->pNext;
+    pMyGenotype->pNext = NULL;
     pProband->pNumGenotype[origLocus] = 1;
-    position = pGenotype->position;
+    position = pMyGenotype->position;
     /* calculate the flattened conditional likelihood array index */
     multiLocusIndex = multiLocusIndex2 + position;
 
@@ -1095,8 +1095,8 @@ loop_child_proband_genotype (int peelingDirection,
      * when we are done, need to restore the genotype link list
      * pointer
      */
-    pGenotype->pNext = pNextGenotype;
-    pGenotype = pNextGenotype;
+    pMyGenotype->pNext = pNextGenotype;
+    pMyGenotype = pNextGenotype;
   }				/* loop over all possible genotypes */
 
   return 0;
@@ -1796,7 +1796,7 @@ void
 recalculate_child_likelihood (int flipMask[2], void *childProduct)
 {
   int i, j;
-  double childSum = 0;
+  double myChildSum = 0;
   Polynomial *childSumPoly = NULL;
   ChildElement *pElement;
   int xmissionIndex[2];
@@ -1811,7 +1811,7 @@ recalculate_child_likelihood (int flipMask[2], void *childProduct)
     if (modelOptions.polynomial == TRUE)
       childSumPoly = constant0Poly;
     else
-      childSum = 0;
+      myChildSum = 0;
     for (j = 0; j < likelihoodChildCount[i]; j++) {
       pElement = &likelihoodChildElements[multCount + j];
       for (parent = DAD; parent <= MOM; parent++) {
@@ -1830,7 +1830,7 @@ recalculate_child_likelihood (int flipMask[2], void *childProduct)
 				  probPoly[2], 1,
 				  pElement->fslot.factorPolynomial, 1, 0), 1);
       } else {
-	childSum += xmissionMatrix[xmissionIndex[DAD]].slot.prob[1] *
+	myChildSum += xmissionMatrix[xmissionIndex[DAD]].slot.prob[1] *
 	  xmissionMatrix[xmissionIndex[MOM]].slot.prob[2] *
 	  pElement->fslot.factor;
       }
@@ -1839,7 +1839,7 @@ recalculate_child_likelihood (int flipMask[2], void *childProduct)
       *(Polynomial **) childProduct =
 	timesExp (2, *(Polynomial **) childProduct, 1, childSumPoly, 1, 1);
     else
-      *(double *) childProduct *= childSum;
+      *(double *) childProduct *= myChildSum;
     multCount += likelihoodChildCount[i];
 
   }
@@ -2037,7 +2037,7 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 /*
  * Get haplotype frequency for founders under LD analysis */
 void
-get_haplotype_freq (int locus, int parent, void *freqPtr)
+get_haplotype_freq (int locus, int myParent, void *freqPtr)
 {
   int origLocus1, origLocus2;	/* locus indices in the
 				 * original locus list for
@@ -2083,9 +2083,9 @@ get_haplotype_freq (int locus, int parent, void *freqPtr)
   pPair2 = &pHaplo->ppParentalPair[locus][pHaplo->pParentalPairInd[locus]];
   for (i = DAD; i <= MOM; i++) {
     /* allele ID in the first locus */
-    alleleID1 = pPair1->pGenotype[parent]->allele[i];
+    alleleID1 = pPair1->pGenotype[myParent]->allele[i];
     /* allele ID in the second locus */
-    alleleID2 = pPair2->pGenotype[parent]->allele[i];
+    alleleID2 = pPair2->pGenotype[myParent]->allele[i];
     pAlleleSet1 = pLocus1->ppAlleleSetList[alleleID1 - 1];
     pAlleleSet2 = pLocus2->ppAlleleSetList[alleleID2 - 1];
     if (modelOptions.polynomial == TRUE) {
@@ -2111,7 +2111,7 @@ get_haplotype_freq (int locus, int parent, void *freqPtr)
     }
 
     /* for xchr and father, there is only one haplotype */
-    if(modelOptions.sexLinked && parent==DAD) {
+    if(modelOptions.sexLinked && myParent==DAD) {
       
 	if (modelOptions.polynomial == TRUE) {
 	  freqPolynomial[i+1] = constant1Poly;
