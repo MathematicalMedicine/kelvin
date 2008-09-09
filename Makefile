@@ -53,7 +53,7 @@ OBJS = ppl.o config.o saveResults.o trackProgress.o kelvinHandlers.o
 INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
 	kelvinGlobals.h iterationGlobals.h integrationGlobals.h \
 	kelvinLocals.h iterationLocals.h integrationLocals.h \
-	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c
+	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c kelvinWriteFiles.c
 
 all : kelvin kelvin_$(PLATFORM) calc_updated_ppl
 
