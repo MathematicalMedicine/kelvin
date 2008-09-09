@@ -140,6 +140,8 @@ int main (int argc, char *argv[])
   #include "integrationLocals.h"
   #include "kelvinLocals.h"
 
+  #include "kelvinWriteFiles.c"
+
   #include "kelvinInit.c"
 
   if (modelOptions.integration) {

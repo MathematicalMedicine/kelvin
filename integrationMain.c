@@ -57,20 +57,12 @@
 	     k);
   }
 
-  fpHet = fopen (avghetfile, "w");
-  KASSERT (fpHet != NULL,
-	   "Error in opening file Theta result file for write.\n");
-  //  fprintf (fpHet, "# Version %s\n", programVersion);
-
   if (print_point_flag)
     fphlod = fopen ("hlod.pts", "w");
   //  fprintf (fphlod, "# Version %s\n", programVersion);
 
 
   if (modelType.type == TP) {
-    fpPPL = fopen (pplfile, "w");
-  //  fprintf (fpPPL, "# Version %s\n", programVersion);
-    KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
     fprintf (fpPPL, "%4s %15s %9s %6s ", "CHR", "MARKER", "cM", "PPL");
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
       fprintf (fpPPL, "%6s %6s ", "LD-PPL", "PPLD");

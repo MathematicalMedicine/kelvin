@@ -1,27 +1,3 @@
-  /* Open output files */
-if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
-  fpCond = fopen (condFile, "w");
-  KASSERT (fpCond != NULL, "Error in opening file %s for write.\n", condFile); 
-  //  fprintf( fpCond, "# Version %s\n", programVersion);
- }
-
-  fpHet = fopen (avghetfile, "w");
-  KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", avghetfile);
-  fprintf (fpHet, "# Version %s\n", programVersion);
-  if (modelType.type == TP) {
-    fpTP = fopen (maxmodelfile, "w");
-    KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
-    fpPPL = fopen (pplfile, "w");
-    fprintf (fpPPL, "# Version %s\n", programVersion);
-    KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
-    fprintf (fpPPL, "Chr Marker Position PPL");
-    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      fprintf (fpPPL, " LD-PPL PPLD");
-    }
-    fprintf (fpPPL, "\n");
-    fflush (fpPPL);
-  }
-
   /* only for multipoint - we don't handle LD under multipoint yet */
   if (modelType.type == MP) {
     /* allocate space to save temporary results */
@@ -706,236 +682,9 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
         /* calculate the average BR */
         get_average_LR (tp_result);
 
-        /* for each D prime and theta, print out average and maximizing model information - MOD */
-        fprintf (fpHet, "# %-d  %s %s \n", loc2, pLocus1->sName, pLocus2->sName);
-        fprintf (fpHet, "Chr Position ");
-        if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
-          for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
-            for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
-              fprintf (fpHet, "D%1d%1d ", i + 1, j + 1);
-        fprintf (fpHet, "Theta(M,F) BayesRatio MOD R2 Alpha DGF MF ");
-	for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
-	  if (modelType.trait == DT)
-	    if (modelOptions.imprintingFlag)
-	      fprintf (fpHet, "LC%dPV(DD,Dd,dD,dd) ", liabIdx);
-	    else
-	      fprintf (fpHet, "LC%dPV(DD,Dd,dd) ", liabIdx);
-	  else
-	    if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-	      if (modelOptions.imprintingFlag)
-		fprintf (fpHet, "LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh) ", liabIdx);
-	      else
-		fprintf (fpHet, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
-	    else
-	      if (modelOptions.imprintingFlag)
-		fprintf (fpHet, "LC%dPV(DDDF,DdDF,dDDF,ddDF,Thresh) ", liabIdx);
-	      else
-		fprintf (fpHet, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
-	fprintf (fpHet, "\n");
-        for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-          for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
-            if (tp_result[dprimeIdx][thetaInd]
-                [modelRange.nafreq].lr_count == 0)
-              continue;
-            theta[0] = modelRange.theta[0][thetaInd];
-            theta[1] = modelRange.theta[1][thetaInd];
-            max = log10 (tp_result[dprimeIdx][thetaInd]
-                         [modelRange.nafreq].max_lr);
-            gfreq = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_gfreq;
-            alphaV = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_alpha;
-            penIdx = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_penIdx;
-            paramIdx = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_paramIdx;
-            thresholdIdx = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_thresholdIdx;
-            R_square = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square;
-            fprintf (fpHet, "%d %.4f ", pLocus2->pMapUnit->chromosome, pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
-            if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-              for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
-                for (j = 0; j < pLocus2->numOriginalAllele - 1; j++) {
-                  fprintf (fpHet, "%.2f ", pLambdaCell->lambda[dprimeIdx][i][j]);
-                }
-            }
-            fprintf (fpHet, "(%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f",
-                     theta[0], theta[1],
-                     tp_result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg, max,
-                     tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square, alphaV, gfreq,
-                     tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_mf);
-            for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-              pen_DD = modelRange.penet[liabIdx][0][penIdx];
-              pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-              pen_dD = modelRange.penet[liabIdx][2][penIdx];
-              pen_dd = modelRange.penet[liabIdx][3][penIdx];
-	      if (modelOptions.imprintingFlag)
-		fprintf (fpHet, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
-	      else
-		fprintf (fpHet, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
-              if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-                SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
-                SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-                SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
-                SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
-		if (modelOptions.imprintingFlag)
-		  fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
-		else
-		  fprintf (fpHet, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
-              }
-              if (modelType.trait != DT) {
-                threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-                fprintf (fpHet, ",%.3f)", threshold);
-              } else
-		fprintf (fpHet, ")");
-            }
-            fprintf (fpHet, "\n");
-          }     /* theta loop */
-        }       /* dprime loop */
-        fprintf (fpTP, "# %-d  %s %s\n", loc2, pLocus2->sName, pLocus1->sName);
-        initialFlag = 1;
-        max = -99999;
-        max_at_theta0 = -99999;
-        max_at_dprime0 = -99999;
-        for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-          //dprime = pLambdaCell->lambda[dprimeIdx][0][0];
-          for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
-            theta[0] = modelRange.theta[0][thetaInd];
-            theta[1] = modelRange.theta[1][thetaInd];
-            lr = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_lr;
-            if (initialFlag || lr > max) {
-              /* overall max */
-              max = lr;
-              maxDPrimeIdx = dprimeIdx;
-              maxThetaIdx = thetaInd;
-            }
-            if (initialFlag || (-ERROR_MARGIN <= theta[0] && theta[0] <= ERROR_MARGIN && -ERROR_MARGIN <= theta[1]
-                                && theta[1] <= ERROR_MARGIN)) {
-              /* find the max for models with theta equal to 0 */
-              theta0Idx = thetaInd;
-              if (lr > max_at_theta0) {
-                max_at_theta0 = lr;
-                maxDPrimeIdx_at_theta0 = dprimeIdx;
-              }
-            }
-            if (dprimeIdx == dprime0Idx) {
-              if (initialFlag || maxTheta_at_dprime0 < 0 || lr > max_at_dprime0) {
-                max_at_dprime0 = lr;
-                maxTheta_at_dprime0 = thetaInd;
-              }
-            }
-            initialFlag = 0;
-          }
-          initialFlag = 0;
-        }
-	if (modelOptions.imprintingFlag)
-	  fprintf (fpTP, "Chr Marker Position MOD DPrime Theta(M,F) R2 Alpha DGF MF ");
-	else
-	  fprintf (fpTP, "Chr Marker Position MOD DPrime Theta(M,F) R2 Alpha DGF MF ");
-	for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
-	  if (modelType.trait == DT)
-	    if (modelOptions.imprintingFlag)
-	      fprintf (fpTP, "LC%dPV(DD,Dd,dD,dd) ", liabIdx);
-	    else
-	      fprintf (fpTP, "LC%dPV(DD,Dd,dd) ", liabIdx);
-	  else
-	    if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-	      if (modelOptions.imprintingFlag)
-		fprintf (fpTP, "LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh) ", liabIdx);
-	      else
-		fprintf (fpTP, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
-	    else
-	      if (modelOptions.imprintingFlag)
-		fprintf (fpTP, "LC%dPV(DDDF,DdDF,dDDF,ddDF,Thresh) ", liabIdx);
-	      else
-		fprintf (fpTP, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
-	fprintf (fpTP, "\n");
-
-        /* Overall maximizing model - MOD */
-	printFullMaximizingModel ("Overall MOD maximizing model", max, maxDPrimeIdx, maxThetaIdx);
-
-        /* Maximizing model at theta equal to 0 - MOD */
-	printFullMaximizingModel ("MOD maximizing model for theta=0", max_at_theta0, 
-				  maxDPrimeIdx_at_theta0, theta0Idx);
-
-        /* Maximizing model at d prime equal to 0 - MOD */
-	printFullMaximizingModel ("MOD maximizing model for dprime=0", max_at_dprime0, 
-				  dprime0Idx, maxTheta_at_dprime0);
-
-        /* find the overall maximizing theta and dprime - LR
-         * with the other parameter integrated out */
-        max = -9999.99;
-        max_at_dprime0 = -9999.99;
-        max_at_theta0 = -9999.99;
-        for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-          for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
-            theta[0] = modelRange.theta[0][thetaInd];
-            theta[1] = modelRange.theta[1][thetaInd];
-            lr = tp_result[dprimeIdx][thetaInd][0].het_lr_avg;
-            if (lr > max) {
-              max = lr;
-              maxThetaIdx = thetaInd;
-              maxDPrimeIdx = dprimeIdx;
-            }
-            if (-ERROR_MARGIN <= theta[0] && theta[0] <= ERROR_MARGIN &&
-		-ERROR_MARGIN <= theta[1] && theta[1] <= ERROR_MARGIN) {
-              if (lr > max_at_theta0) {
-                max_at_theta0 = lr;
-                maxDPrimeIdx_at_theta0 = dprimeIdx;
-              }
-            }
-            if (dprime0Idx == dprimeIdx) {
-              if (lr > max_at_dprime0) {
-                max_at_dprime0 = lr;
-                maxTheta_at_dprime0 = thetaInd;
-              }
-            }
-          }
-        }
-        /* Overall maximizing model - LR */
-        fprintf (fpTP, "# Overall LR maximizing model:\n");
-        theta[0] = modelRange.theta[0][maxThetaIdx];
-        theta[1] = modelRange.theta[1][maxThetaIdx];
-        fprintf (fpTP,
-                 "%d %s %.4f %.4f %.2f (%.4f,%.4f)\n",
-                 pLocus2->pMapUnit->chromosome, pLocus2->sName,
-                 pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max),
-                 pLambdaCell->lambda[maxDPrimeIdx][0][0], theta[0], theta[1]);
-        fflush (fpTP);
-
-        /* Maximizing model at theta equal to 0 - LR */
-        fprintf (fpTP, "# LR maximizing model for theta (0, 0):\n");
-        fprintf (fpTP,
-                 "%d %s %.4f %.4f %.2f (%.4f,%.4f)\n",
-                 pLocus2->pMapUnit->chromosome, pLocus2->sName,
-                 pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-                 log10 (max_at_theta0), pLambdaCell->lambda[maxDPrimeIdx_at_theta0][0][0], 0.0, 0.0);
-        fflush (fpTP);
-
-        /* Maximizing model at d prime equal to 0 - LR */
-        fprintf (fpTP, "# LR maximizing model for dprime=0:\n");
-        fprintf (fpTP,
-                 "%d %s %.4f %.4f %.2f (%.4f,%.4f)\n",
-                 pLocus2->pMapUnit->chromosome, pLocus2->sName,
-                 pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max_at_dprime0), 0.0, 0.0, 0.0);
-        fflush (fpTP);
-
-        /* Output PPL now */
-        /* chromosome, marker name, position, PPL */
-        ppl = calculate_PPL (tp_result[dprime0Idx]);
-        fprintf (fpPPL, "%d %s %.4f %.*f ",
-                 pLocus2->pMapUnit->chromosome, pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-                 ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.);
-        fflush (fpPPL);
-        /* output LD-PPL now if needed */
-        if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-          /* calculate the LD LR average first */
-          get_average_LD_LR (tp_result);
-          /* calculate the LD-PPL - posterior probability of linkage allowing for LD */
-          ldppl = calculate_PPL (tp_result[pLambdaCell->ndprime]);
-          /* now calculate the PPLD - posterior probability of LD given linkage */
-          ppld = calculate_PPLD (tp_result);
-          fprintf (fpPPL, "%.*f %.*f ",
-                   ldppl >= .025 ? 2 : 3, ldppl >= .025 ? rint (ldppl * 100.) / 100. : rint (ldppl * 1000.) / 1000.,
-                   ppld >= .025 ? 2 : 3, ppld >= .025 ? rint (ppld * 100.) / 100. : rint (ppld * 1000.) / 1000.);
-        }
-        fprintf (fpPPL, "\n");
-        fflush (fpPPL);
+	write2ptBRFile ();
+	writeMMFileDetail ();
+	writePPLFileDetail ();
 
         prevNumDPrime = pLambdaCell->ndprime;
         /* need to clear polynomial */
@@ -1240,29 +989,8 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
     /* get the trait locations we need to evaluate at */
     numPositions = modelRange.ntloc;
     mp_result = (SUMMARY_STAT *) calloc (numPositions, sizeof (SUMMARY_STAT));
-    /* Need to output the results */
-    fprintf (fpHet, "Chr Position PPL BayesRatio MOD Alpha DGF ");
-    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
-      if (modelType.trait == DT)
-	if (modelOptions.imprintingFlag)
-	  fprintf (fpHet, "LC%dPV(DD,Dd,dD, dd) ", liabIdx);
-	else
-	  fprintf (fpHet, "LC%dPV(DD,Dd,dd) ", liabIdx);
-      else
-	if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-	  if (modelOptions.imprintingFlag)
-	    fprintf (fpHet, "LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh) ", liabIdx);
-	  else
-	    fprintf (fpHet, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
-	else
-	  if (modelOptions.imprintingFlag)
-	    fprintf (fpHet, "LC%dPV(DDDF,DdDF,dDF,ddDF,Thresh) ", liabIdx);
-	  else
-	    fprintf (fpHet, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
-    fprintf (fpHet, "MarkerList(0");
-    for (k = 1; k < modelType.numMarkers; k++)
-      fprintf (fpHet, ",%d", k);
-    fprintf (fpHet, ")\n");
+
+    writeMPBRFileHeader ();
 
     prevFirstMarker = -1;
     prevLastMarker = -1;
@@ -1945,8 +1673,7 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
 
       } /* end of QT */
 
-      /* print out average and log10(max) and maximizing parameters */
-      //      if (modelType.trait == DT || modelType.distrib != QT_FUNCTION_CHI_SQUARE)
+      /* Print out average and log10(max) and maximizing parameters */
       if (modelType.trait == DT)
         avgLR = mp_result[posIdx].het_lr_total / (modelRange.nalpha * mp_result[posIdx].lr_count);
       else
@@ -1959,48 +1686,9 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
         ppl = (avgLR * avgLR) / (-5.77 + 54 * avgLR + avgLR * avgLR);
       else
         ppl = 0;
-      max = mp_result[posIdx].max_lr;
-      gfreq = mp_result[posIdx].max_gfreq;
-      alphaV = mp_result[posIdx].max_alpha;
-      penIdx = mp_result[posIdx].max_penIdx;
-      paramIdx = mp_result[posIdx].max_paramIdx;
-      thresholdIdx = mp_result[posIdx].max_thresholdIdx;
-      fprintf (fpHet, "%d %f %.*f %.6e %.6f %f %f",
-               (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-               traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.,
-               avgLR, log10 (max), alphaV, gfreq);
-      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-        pen_DD = modelRange.penet[liabIdx][0][penIdx];
-        pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-        pen_dD = modelRange.penet[liabIdx][2][penIdx];
-        pen_dd = modelRange.penet[liabIdx][3][penIdx];
-	if (modelOptions.imprintingFlag)
-	  fprintf (fpHet, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
-	else
-	  fprintf (fpHet, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
-        if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-          SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
-          SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-          SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
-          SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
-	  if (modelOptions.imprintingFlag)
-	    fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
-	  else
-	    fprintf (fpHet, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
-        }
-        if (modelType.trait != DT) {
-          threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-          fprintf (fpHet, ",%.3f)", threshold);
-        } else
-	  fprintf (fpHet, ")");
-      }
-      /* print out markers used for this position */
-      fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
-      for (k = 1; k < modelType.numMarkers; k++) {
-        fprintf (fpHet, ",%d", mp_result[posIdx].pMarkers[k]);
-      }
-      fprintf (fpHet, ")\n");
-      fflush (fpHet);
+
+      writeMPBRFileDetail ();
+
     }   /* end of walking down the chromosome */
   }     /* end of multipoint */
   fprintf (stdout, "\n");

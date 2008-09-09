@@ -63,9 +63,9 @@
 #endif
   swLogMsg ("Finished run");
 
-  /* close file pointers */
-  if (modelType.type == TP) {
-    fclose (fpPPL);
-    fclose (fpTP);
-  }
-  fclose (fpHet);
+/* Close file pointers */
+if (modelType.type == TP) {
+  fclose (fpPPL);
+  fclose (fpTP);
+}
+fclose (fpHet);

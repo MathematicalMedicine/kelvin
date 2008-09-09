@@ -1,50 +1,3 @@
-void printFullMaximizingModel(char *modelDescription, double myMOD, int myDPrimeIdx, int myThetaIdx) {
-
-  fprintf (fpTP, "# %s:\n", modelDescription);
-  theta[0] = modelRange.theta[0][myThetaIdx];
-  theta[1] = modelRange.theta[1][myThetaIdx];
-  gfreq = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_gfreq;
-  mkrFreq = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_mf;
-  alphaV = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_alpha;
-  penIdx = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_penIdx;
-  R_square = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].R_square;
-  paramIdx = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_paramIdx;
-  thresholdIdx = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_thresholdIdx;
-  fprintf (fpTP,
-	   "%d %s %.4f %.4f %.2f (%.4f,%.4f) %.3f %.2f %.4f %.4f",
-	   pLocus2->pMapUnit->chromosome, pLocus2->sName,
-	   pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (myMOD),
-	   pLambdaCell->lambda[myDPrimeIdx][0][0], 
-	   theta[0], theta[1], R_square, alphaV, gfreq, mkrFreq);
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-    pen_DD = modelRange.penet[liabIdx][0][penIdx];
-    pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-    pen_dD = modelRange.penet[liabIdx][2][penIdx];
-    pen_dd = modelRange.penet[liabIdx][3][penIdx];
-    if (modelOptions.imprintingFlag)
-      fprintf (fpTP, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
-    else
-      fprintf (fpTP, " (%.3f %.3f %.3f", pen_DD, pen_Dd, pen_dd);
-    if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-      SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
-      SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-      SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
-      SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
-      if (modelOptions.imprintingFlag)
-	fprintf (fpTP, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
-      else
-	fprintf (fpTP, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
-    }
-    if (modelType.trait != DT) {
-      threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-      fprintf (fpTP, ",%.3f)", threshold);
-    } else
-      fprintf (fpTP, ")");
-  }
-  fprintf (fpTP, "\n");
-  fflush (fpTP);
-}
-
   overallSW = swCreate ("overall");
   combinedComputeSW = swCreate ("combinedComputeSW");
   combinedBuildSW = swCreate ("combinedBuildSW");
@@ -361,4 +314,34 @@ KASSERT (readConfigFile (configfile)
     pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
     pPedigree->load_flag = 0;   /* Initially 0 and changes to 1 when marker or 
                                  * alternative likelihood values are retrieved */
+  }
+
+  /* Open output files that get written across loops. */
+
+  if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
+    fpCond = fopen (condFile, "w");
+    KASSERT (fpCond != NULL, "Error in opening file %s for write.\n", condFile); 
+    //  fprintf( fpCond, "# Version %s\n", programVersion);
+   }
+  fpHet = fopen (avghetfile, "w");
+  KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", avghetfile);
+  fprintf (fpHet, "# Version %s\n", programVersion);
+
+  if (modelType.type == TP) {
+
+    fpTP = fopen (maxmodelfile, "w");
+    KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
+    fpPPL = fopen (pplfile, "w");
+    fprintf (fpPPL, "# Version %s\n", programVersion);
+    KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
+    fprintf (fpPPL, "Chr Marker Position PPL");
+    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+      fprintf (fpPPL, " LD-PPL PPLD");
+    }
+    fprintf (fpPPL, "\n");
+    fflush (fpPPL);
+
+    fpTP = fopen (maxmodelfile, "w");
+    KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
+
   }
