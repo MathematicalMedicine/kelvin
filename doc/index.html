@@ -65,8 +65,8 @@ latest release, e.g. <tt>kelvin-0.34.2.tar.gz</tt>.
 <h4>Directory Structure and Components</h4>
 <ul>
 <li><tt>&lt;RELEASE&gt;/</tt> - K<font size="-1">ELVIN</font> and calc_updated_ppl source components. Includes normal and debug versions of the master Makefile.
-K<font size="-1">ELVIN</font> is the primary linkage analysis program and the focus of this documentation. dkelvin is a variant that
-uses a multidimensional integration approach to analysis, and is still under development. calc_updated_ppl is
+K<font size="-1">ELVIN</font> is the primary linkage analysis program and the focus of this documentation.
+calc_updated_ppl is
 a tool for combining the results of an analysis broken into separate K<font size="-1">ELVIN</font> runs.
 <li><tt>&lt;RELEASE&gt;/bin/</tt> - prebuilt K<font size="-1">ELVIN</font> binaries for different platforms. One of these may work for you.
 <li><tt>&lt;RELEASE&gt;/doc/</tt> - (very) limited documentation, including these HTML files.
@@ -141,7 +141,7 @@ library with those of its source (internal) polynomial. Disabled by default, req
 </ul>
 <p>
 Once you have edited the Makefile to your satisfaction, type <kbd>make clean</kbd> and then <kbd>make</kbd>.
-This should build supporting libraries and then the three executable images K<font size="-1">ELVIN</font>, dkelvin and calc_updated_ppl. 
+This should build supporting libraries and then the two executable images K<font size="-1">ELVIN</font> and calc_updated_ppl. 
 <p>
 Whether you use one of the prebuilt binaries or have built your own, it should be tested to
 verify functionality. Type <kbd>make test</kbd> to run a suite of tests.
@@ -244,7 +244,7 @@ _$ kelvin kelvin.conf >& kelvin.out
 If you do need to send us information for diagnosis, please include the configuration and data files
 along with the output from the run.
 <h3>Diagnostic Messages</h3>
-When K<font size="-1">ELVIN</font> or dkelvin are run, they first display version, build and run configuration information, e.g.:
+When K<font size="-1">ELVIN</font> is run, it first display version, build and run configuration information, e.g.:
 <pre>
 PID: 26577, kelvin V0.37.0 built Sep  4 2008 14:58:32
 PID: 26577, $Id$
@@ -275,9 +275,10 @@ Following this is a line describing the action to take in order to force a dump 
 statistics. The format of these statistics is described at the end of the next subsection (<a href="#adhoc">ad hoc status</a>).
 You can use this as a sort of "pulse check" to make sure K<font size="-1">ELVIN</font> is still alive
 and well and making progress should there be a lull between automatic progress updates. If
-you are running K<font size="-1">ELVIN</font> interactively, you can type <tt>CTRL-\</tt> (that means to hold down the CTRL
-or CONTROL key while pressing the backslash). If you are running under cygwin, you will need to
-type <tt>stty quit ^C</tt> first for this to work. Note that the aforementioned <tt>^C</tt> is actually the two
+you are running K<font size="-1">ELVIN</font> interactively, you can 
+perform this "pulse check" by type <tt>CTRL-\</tt> (that means to hold down the CTRL
+or CONTROL key while pressing the backslash). If you are running under cygwin, you will first need to
+type <tt>stty quit ^C</tt> to make this to work. Note that the aforementioned <tt>^C</tt> is actually the two
 character sequence of 'carat' (shifted 6) and 'C'. Pressing <tt>CTRL-\</tt> sends a SIGQUIT signal to K<font size="-1">ELVIN</font>, which it
 interprets as a request for status. If you are running K<font size="-1">ELVIN</font> as a detached
 process or in a batch queue, you can send a SIGQUIT to the process by being logged-into the same
@@ -417,7 +418,7 @@ There are a number of additional progress reports that can be monitored during a
 conditionals. You will need to edit the <tt>Makefile</tt> and rebuild K<font size="-1">ELVIN</font> (<tt>make clean</tt> and <tt>make</tt>) to turn them on
 or off:
 <ol>
-<li><tt>MEMSTATUS</tt> conditional - When K<font size="-1">ELVIN</font> or dkelvin are run on compatible platforms (currently only those with a pmap command),
+<li><tt>MEMSTATUS</tt> conditional - When K<font size="-1">ELVIN</font> is run on compatible platforms (currently only those with a pmap command),
 a child process is created that monitors elapsed time and memory utilization, and displays it every 30 seconds.
 <li><tt>POLYSTATISTICS</tt> conditional - If polynomial evaluation is enabled:
 <ul>
