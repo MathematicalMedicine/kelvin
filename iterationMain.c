@@ -863,7 +863,6 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
         max_at_dprime0 = -9999.99;
         max_at_theta0 = -9999.99;
         for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-          //              dprime = pLambdaCell->lambda[dprimeIdx][0][0];
           for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
             theta[0] = modelRange.theta[0][thetaInd];
             theta[1] = modelRange.theta[1][thetaInd];
@@ -873,9 +872,8 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
               maxThetaIdx = thetaInd;
               maxDPrimeIdx = dprimeIdx;
             }
-            if (-ERROR_MARGIN <= theta[0]
-                && theta[0] <= ERROR_MARGIN && -ERROR_MARGIN <= theta[1]
-                && theta[1] <= ERROR_MARGIN) {
+            if (-ERROR_MARGIN <= theta[0] && theta[0] <= ERROR_MARGIN &&
+		-ERROR_MARGIN <= theta[1] && theta[1] <= ERROR_MARGIN) {
               if (lr > max_at_theta0) {
                 max_at_theta0 = lr;
                 maxDPrimeIdx_at_theta0 = dprimeIdx;
@@ -889,36 +887,35 @@ if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
             }
           }
         }
-        /* overall maximizing model - LR */
+        /* Overall maximizing model - LR */
         fprintf (fpTP, "# Overall LR maximizing model:\n");
         theta[0] = modelRange.theta[0][maxThetaIdx];
         theta[1] = modelRange.theta[1][maxThetaIdx];
-        //gfreq = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_gfreq;
         fprintf (fpTP,
-                 "%4d %15s %8.4f %8.4f %5.2f (%6.4f %6.4f)\n",
+                 "%d %s %.4f %.4f %.2f (%.4f,%.4f)\n",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName,
                  pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max),
                  pLambdaCell->lambda[maxDPrimeIdx][0][0], theta[0], theta[1]);
         fflush (fpTP);
 
-        /* maximizing model at theta equal to 0 - LR */
+        /* Maximizing model at theta equal to 0 - LR */
         fprintf (fpTP, "# LR maximizing model for theta (0, 0):\n");
         fprintf (fpTP,
-                 "%4d %15s %8.4f %8.4f %5.2f %6.4f\n",
+                 "%d %s %.4f %.4f %.2f (%.4f,%.4f)\n",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName,
                  pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-                 log10 (max_at_theta0), pLambdaCell->lambda[maxDPrimeIdx_at_theta0][0][0], 0.0);
+                 log10 (max_at_theta0), pLambdaCell->lambda[maxDPrimeIdx_at_theta0][0][0], 0.0, 0.0);
         fflush (fpTP);
 
-        /* maximizing model at d prime equal to 0 - LR */
+        /* Maximizing model at d prime equal to 0 - LR */
         fprintf (fpTP, "# LR maximizing model for dprime=0:\n");
         fprintf (fpTP,
-                 "%4d %15s %8.4f %8.4f %5.2f %6.4f\n",
+                 "%d %s %.4f %.4f %.2f (%.4f,%.4f)\n",
                  pLocus2->pMapUnit->chromosome, pLocus2->sName,
-                 pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max_at_dprime0), 0.0, 0.0);
+                 pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max_at_dprime0), 0.0, 0.0, 0.0);
         fflush (fpTP);
 
-        /* output PPL now */
+        /* Output PPL now */
         /* chromosome, marker name, position, PPL */
         ppl = calculate_PPL (tp_result[dprime0Idx]);
         fprintf (fpPPL, "%d %s %.4f %.*f ",
