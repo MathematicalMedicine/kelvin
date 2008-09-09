@@ -55,7 +55,8 @@ INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
 	kelvinLocals.h iterationLocals.h integrationLocals.h \
 	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c kelvinWriteFiles.c
 
-all : kelvin kelvin_$(PLATFORM) calc_updated_ppl
+# Binary releases include kelvin_$(PLATFORM)
+all : kelvin calc_updated_ppl 
 
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
