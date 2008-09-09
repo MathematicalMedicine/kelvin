@@ -530,9 +530,8 @@ greater, and three decimal places otherwise.
 <h3>Two-Point Maximizing Models (TP) File</h3>
 A file describing the maximizing model parameters for each pair of loci is
 produced for two-point analyses. It is written to the file specified by the <tt>MX</tt> directive,
-or <tt>tp.out</tt> by default. This file is currently being brought into compliance with our
-standards, so column layout and naming will change.
-For each pair of loci, it displays maximizing information for each of:
+or <tt>tp.out</tt> by default.
+For each pair of loci, it displays a single row of  maximizing information for each of:
 <ol>
 <li>Overall MOD maximizing model
 <li>MOD maximizing model for theta=0
@@ -549,14 +548,14 @@ The maximizing values are provided under the following column headings:
 <li>MOD - maximum HLOD score achieved for these loci at these values of D' (if LD) and theta
 <li>DPrime - maximizing D'
 <li>Theta(M,F) - male and female theta values. They are identical for a sex-averaged analysis.
-<li>R2 - R square, an alternative measurement of LD.
+<li>R2 - R square, an alternative measurement of LD. N/A for LR maximizing.
 <li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the HLOD score.
-<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the HLOD score.
-<li>MF - marker allele frequency for the first marker.
+<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the HLOD score. N/A for LR maximizing.
+<li>MF - marker allele frequency for the first marker. N/A for LR maximizing.
 <li>LC<tt>n</tt>PV(...) - penetrance vector, one for each liability class in the analysis. 
 For dichotomous trait runs, it is three (or four) columns of 
 the maximizing penetrance for
-DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the HLOD score.
+DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the HLOD score. N/A for LR maximizing.
 For quantitative trait runs with normal or Student's-T distributions,
 it is three (or four) columns of means followed by three 
 (or four) of standard deviations for
