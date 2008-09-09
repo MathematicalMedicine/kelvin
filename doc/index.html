@@ -277,8 +277,8 @@ You can use this as a sort of "pulse check" to make sure K<font size="-1">ELVIN<
 and well and making progress should there be a lull between automatic progress updates. If
 you are running K<font size="-1">ELVIN</font> interactively, you can type <tt>CTRL-\</tt> (that means to hold down the CTRL
 or CONTROL key while pressing the backslash). If you are running under cygwin, you will need to
-type <tt>stty quit ^C</tt> first for this to work. Strangely enough, that <tt>^C</tt> is the two
-character sequence of 'carat' (shifted 6) and 'C'. <tt>CTRL-\</tt> sends a SIGQUIT signal to K<font size="-1">ELVIN</font>, which it
+type <tt>stty quit ^C</tt> first for this to work. Note that the aforementioned <tt>^C</tt> is actually the two
+character sequence of 'carat' (shifted 6) and 'C'. Pressing <tt>CTRL-\</tt> sends a SIGQUIT signal to K<font size="-1">ELVIN</font>, which it
 interprets as a request for status. If you are running K<font size="-1">ELVIN</font> as a detached
 process or in a batch queue, you can send a SIGQUIT to the process by being logged-into the same
 node as it is running on, and using the <tt>kill</tt> command
@@ -611,7 +611,7 @@ data from an analysis of chromosome 12.
 
 <h3>calc_updated_ppl</h3>
 
-This program will calculate PPL, LD-PPL and PPL scores based on a two-point K<font size="-1">ELVIN</font> Bayes
+This program will calculate PPL, LD-PPL and PPLD scores based on a two-point K<font size="-1">ELVIN</font> Bayes
 Ratio file, or the output from seq_update_br.pl. It handles multi-allele (multiple
 D's) and sex-specific thetas. It takes only one argument, the name of the input file. Output
 is alway to the terminal. Here's an example that, again, captures the output to a file:
