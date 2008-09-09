@@ -548,12 +548,19 @@ The maximizing values are provided under the following column headings:
 <li>Position - position in centiMorgans
 <li>MOD - maximum HLOD score achieved for these loci at these values of D' (if LD) and theta
 <li>DPrime - maximizing D'
-<li>Theta
-<li>R2
-<li>ALPHA
-<li>DGF
-<li>MF
-<li>PEN_DD PEN_Dd PEN_dd
+<li>Theta(M,F) - male and female theta values. They are identical for a sex-averaged analysis.
+<li>R2 - R square, an alternative measurement of LD.
+<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the HLOD score.
+<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the HLOD score.
+<li>MF - marker allele frequency for the first marker.
+<li>LC<tt>n</tt>PV(...) - penetrance vector, one for each liability class in the analysis. 
+For dichotomous trait runs, it is three (or four) columns of 
+the maximizing penetrance for
+DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the HLOD score.
+For quantitative trait runs with normal or Student's-T distributions,
+it is three (or four) columns of means followed by three 
+(or four) of standard deviations for
+the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold, if applicable. 
 </ol>
 
 <h2>SEQUENTIAL UPDATING</h2>
