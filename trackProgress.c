@@ -36,7 +36,7 @@ void pushStatus (char *currentStatus)
   }
   strncpy (statusStack[++statusStackPosition], currentStatus, STATUS_LENGTH);
   sprintf (processName, "k(%-.*s)", STATUS_LENGTH, currentStatus);
-#ifdef linux
+#ifdef PR_SET_NAME
   prctl (PR_SET_NAME, processName);
 #endif
   return;
@@ -49,7 +49,7 @@ void popStatus ()
     return;
   }
   sprintf (processName, "k(%-.*s)", STATUS_LENGTH, statusStack[--statusStackPosition]);
-#ifdef linux
+#ifdef PR_SET_NAME
   prctl (PR_SET_NAME, processName);
 #endif
   return;
