@@ -318,7 +318,7 @@ compute_hlod_mp_qt (double x[], double *f)
 
   //checkpt ();
   /* caculating the HET */
-  for (j = 0; j < 6; j++) {
+  for (j = 0; j < 5; j++) {
   // for (j = 0; j < 1; j++) {
     alphaV=alpha[j][0];
     alphaV2 = 1 - alphaV;
@@ -343,9 +343,10 @@ compute_hlod_mp_qt (double x[], double *f)
     } else {
       hetLR = pow (10, log10HetLR);
     }
-    if(j ==0){
-      alpha_integral = hetLR ;//* alpha[j][1];
-    }
+
+    //    if(j ==0){
+    alpha_integral += hetLR * alpha[j][1];
+      //}
 
     if (print_point_flag)
       fprintf (fphlod, "al=%f Hlod=%f\n", alphaV, hetLR);
@@ -597,7 +598,7 @@ compute_hlod_mp_dt (double x[], double *f)
   //mp_result[posIdx].lr_count++;
   //fprintf(stderr," %f %f %f %f %20.15f  ", gfreq,pen_DD, pen_Dd,pen_dd, log10_likelihood_alternative);
   /* caculating the HET */
-  for (j = 0; j < 6; j++) {
+  for (j = 0; j < 5; j++) {
     //for (j = 0; j < 1; j++) {
     alphaV = alpha[j][0];
     alphaV2 = 1 - alphaV;
@@ -615,6 +616,8 @@ compute_hlod_mp_dt (double x[], double *f)
 	fprintf (stderr, "HET LR less than 0. Check!!!\n");
       log10HetLR += log10 (alphaV * homoLR + alphaV2);
     }
+
+    log10HetLR *= 1.1;
     if (log10HetLR >= DBL_MAX_10_EXP - 1) {
       hetLR = DBL_MAX;
       //mp_result[posIdx].het_lr_total = DBL_MAX;
@@ -627,9 +630,9 @@ compute_hlod_mp_dt (double x[], double *f)
 
     //fprintf(stderr,"j=%d het LR=%15.10f ",j, hetLR);
 
-    if( j==0){
-      alpha_integral = hetLR; // * alpha[j][1];
-    }
+    // if( j==0){
+    alpha_integral += hetLR * alpha[j][1];
+      //}
 
     if (hetLR > localmax_value) {
       localmax_value = hetLR;
@@ -881,7 +884,7 @@ compute_hlod_2p_qt (double x[], double *f)
   }
 
   /* caculating the HET */
-  for (j = 1; j < 6; j++) {
+  for (j = 1; j < 5; j++) {
     //for (j = 0; j < 1; j++) {
     alphaV = alpha[j][0];
     alphaV2 = 1 - alphaV;
@@ -1164,6 +1167,7 @@ compute_hlod_2p_dt (double x[], double *f)
       log10HetLR += tmp * pPedigree->pCount[loc2];
     }
 
+    log10HetLR *= 1.1;
     if (log10HetLR >= __DBL_MAX_10_EXP__ - 1) {
       hetLR = __DBL_MAX__;
     } else if (log10HetLR <= __DBL_MIN_10_EXP__ + 1) {
@@ -1172,9 +1176,9 @@ compute_hlod_2p_dt (double x[], double *f)
       hetLR = pow (10, log10HetLR);
     }
 
-    if(j==0){
-      alpha_integral += hetLR;// * alpha[j][1];
-    }
+    //    if(j==0){
+    alpha_integral += hetLR * alpha[j][1];
+      //}
     
 
     if (hetLR > localmax_value) {

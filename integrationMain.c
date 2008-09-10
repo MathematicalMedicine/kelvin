@@ -310,7 +310,7 @@
 	    // fprintf(fpSeok_theta,"%f %f ",      fixed_dprime, fixed_theta);
 
 	    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-	      for (dprimeIdx = 0; dprimeIdx < 39; dprimeIdx++) {
+	      for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
 		if (fabs
 		    (pLambdaCell->lambda[dprimeIdx][0][0] -
 		     fixed_dprime) < 0.0001) {
@@ -318,7 +318,7 @@
 		  break;
 		}
 	      }
-	      if (dprimeIdx == 39) {
+	      if (dprimeIdx == pLambdaCell->ndprime) {
 		fprintf (stderr, "dprimeIdx is %d\n", dprimeIdx);
 		exit (0);
 	      }

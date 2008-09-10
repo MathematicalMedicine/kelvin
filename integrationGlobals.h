@@ -20,7 +20,7 @@ double initialProb2[3];
 void *initialProbAddr2[3];
 void *initialHetProbAddr[3];
 
-double alpha[6][2] = { {0.8, 1.0},  //This is for LOD not for HLOD
+double alpha[5][2] = { //{0.8, 1.0},  //This is for LOD not for HLOD
 {0.04691, 0.118463443},
 {0.230765, 0.239314335},
 {0.5, 0.284444444},

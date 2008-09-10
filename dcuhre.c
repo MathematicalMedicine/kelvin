@@ -136,13 +136,14 @@ dcuhre_ (dcuhre_state * s)
   if (s->verbose > 1) {
     print_rule (s);
   }
-  //checkpt();
+  //   checkpt();
+   printf("maxsub is %d  in \n", s->maxsub);
   /* Step 3. free all memory */
   /* free the array of subregions */
   sbrg_free (s->sbrg_heap, s->maxsub);
-  //checkpt();
+  //    checkpt();
   free (s->sbrg_heap);
-  //checkpt(); 
+  //    checkpt(); 
   /* free global variables */
   for (i = 0; i < s->ndim; i++) {
     free (s->g[i]);
@@ -176,7 +177,7 @@ dadhre_ (dcuhre_state * s)
   int intsgn;			//, pointr;
   sub_region *cw_sbrg, *parent_sbrg;	/* currently working subregion */
   double tmp_result;		/*store the just previous error to calculate the difference in error from the previous one to currrent one */
-  double real_result;
+  double real_result, real_error;
 
   intsgn = 1;
   i = s->ndim;
@@ -231,7 +232,8 @@ dadhre_ (dcuhre_state * s)
   s->total_neval += s->num;
   s->result += cw_sbrg->local_result;
   s->error += cw_sbrg->local_error;
-  tmp_result = s->result;
+  tmp_result = s->result /s->vol_rate;
+
 
   if (s->verbose > 0) {
     fprintf (stderr, "After %d sub regions result=%20.18f error=%20.18f\n",
@@ -255,10 +257,13 @@ dadhre_ (dcuhre_state * s)
     //if(s->mType == MT_DT){
     s->epsabs = 0.01;		/*This is error tolerance */
 
-    real_result = s->result;
-    for (i = 0; i < s->nlclass; i++) {
+    real_result = s->result / s->vol_rate; 
+    real_error = s->error / s->vol_rate;
+    /*    for (i = 0; i < s->nlclass; i++) {
       real_result *= 6.0;
-    }
+      }*/
+    fprintf(stderr, "s result %f  real result %f\n ", s->result, real_result);
+
     s->epsabs *=
       (-5.77 + 54.0 * real_result + real_result * real_result) * (-5.77 +
 								  54.0 *
@@ -268,22 +273,22 @@ dadhre_ (dcuhre_state * s)
 								  *
 								  real_result);
     s->epsabs /= (-11.54 * real_result + 54.0 * real_result * real_result);
-    for (i = 0; i < s->nlclass; i++) {
-      s->epsabs /= 6.0;		/* because of the constraint */
-    }
+    /* for (i = 0; i < s->nlclass; i++) {
+      s->epsabs /= 6.0;		* because of the constraint *
+      }*/
     //s->epsrel = s->epsabs / (s->result);
     if (s->sbrgns == 1) {
       s->diff_result[0] = s->epsabs * 2;	/*Dummy number for the main while loop */
     }
-    fprintf (stderr, "Setting absolute error %12.8f  diff =%f  error = %f\n",
-	     s->epsabs, s->diff_result[s->sbrgns - 1], s->error);
+    fprintf (stderr, "Setting absolute error %12.8f  diff =%f  real error = %f real result=%f \n",
+	     s->epsabs, s->diff_result[s->sbrgns - 1], real_error, real_result);
 
 
     //}
 
     //if ((s->error > s->epsrel *fabs(s->result)) && (s->error > s->epsabs)) {    
     //if ((s->diff_result[s->sbrgns - 1] > s->epsabs) && (s->error > s->epsabs)) { // before 5/18/2008
-    if ((s->result <0)||((s->diff_result[s->sbrgns - 1] > s->epsabs) && (s->error > s->epsabs))) {
+    if ((s->result <0)||((s->diff_result[s->sbrgns - 1] > s->epsabs) && (real_error > s->epsabs))) {
       //if ( s->error > s->epsabs) {    //this is for stopping criterion 
 
       /*   If we are allowed to divide further, */
@@ -357,13 +362,15 @@ dadhre_ (dcuhre_state * s)
       s->total_neval += s->num;
       s->result += cw_sbrg->local_result;
       s->error += cw_sbrg->local_error;
+      real_result = s->result / s->vol_rate;
+      real_error = s->error / s->vol_rate;
 
-      s->diff_result[s->sbrgns] = fabs (s->result - tmp_result);
-      tmp_result = s->result;
+      s->diff_result[s->sbrgns] = fabs (real_result  - tmp_result);
+      tmp_result = real_result;
       if (s->verbose > 0) {
 	fprintf (stderr,
 		 "After %d sub regions result=%10.8f error=%10.8f and difference=%10.8f\n",
-		 s->sbrgns, s->result, s->error, s->diff_result[s->sbrgns]);
+		 s->sbrgns, real_result, real_error, s->diff_result[s->sbrgns]);
       }
 
       s->sbrgns++;
@@ -385,7 +392,21 @@ dadhre_ (dcuhre_state * s)
       s->ifail = 0;
       break;
     }
+    
+    if((s->sbrgns  == s->maxsub) && (s->result / s->vol_rate <0)){   
+                  /* in case of a negative result, double the current maxsub*/
+      s->maxsub = 2* s->maxsub+1;
+      s->diff_result=realloc(s->diff_result, sizeof (double) *s->maxsub);
+      s->sbrg_heap=realloc(s->sbrg_heap, sizeof (sub_region *) * s->maxsub);
+      for (i = s->maxsub/2; i < s->maxsub; i++) {
+        s->sbrg_heap[i] = NULL;
+      }
+      printf("maxsub is doubled to %d \n",s->maxsub );
+    } 
+     
   }
+  //  checkpt();
+  printf("maxsub is %d in dadddd\n", s->maxsub);
 
   return 0;
 
@@ -1453,6 +1474,8 @@ initialize_state (dcuhre_state * s, double *a, double *b, int dim)
 
   s->numfun = 1;		/*change this for vector functions */
 
+  s->vol_rate =1.0;
+
   return 0;
 }
 
@@ -1479,12 +1502,22 @@ sbrg_free (sub_region ** sbrg_heap, int maxsub)
   int i = 0;
   sub_region *cw_sbrg;
 
-
+  //  checkpt();
+  //  printf("maxsub is %d\n", maxsub);
+  
   while (sbrg_heap[i] != NULL && i < maxsub) {
+    //    checkpt();
+    //    printf("i=%d\n",i);
+    //       printf("i=%d when max =%d \n", i, maxsub);
+
     cw_sbrg = sbrg_heap[i];
+    //     checkpt();
     free (cw_sbrg->center);
+    //     checkpt();
     free (cw_sbrg->hwidth);
+    //       checkpt();
     free (sbrg_heap[i++]);
+    //    checkpt();
   }
 
   return 0;
