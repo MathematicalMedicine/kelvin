@@ -63,8 +63,9 @@ enum expressionType
   T_SUM = 2,			// a sum such as 2x+3y+5.6z+...
   T_PRODUCT = 3,		// a product such as x^2y^10z^100
   T_FUNCTIONCALL = 4,		// a function call such as log10(x)
-  T_EXTERNAL = 5,               // an external reference
-  T_FREED = 6			// freed, but the structure kept for diagnostics.
+  T_EXTERNAL = 5,               // an external reference, e.g. compiled DL
+  T_FREED = 6,			// freed, but the structure kept for diagnostics
+  T_OFFLINE = 7			// not in memory currently, must be restored
 };
 
 /* Constants are represented as polynomials, but have no subcomponent - just a value.
@@ -165,7 +166,8 @@ typedef struct polynomial
     struct functionPoly *f;	// function
     struct externalPoly *e;     // external
   } e;				// unused by constants - 8 bytes
-} Polynomial; // 4 + 4 + 4 (+ 1 + 4) + 2 + 1 + 1 + 8 + 8 = 32 (37->40) bytes
+  unsigned char oldEType;
+} Polynomial; // 4 + 4 + 4 + 2 + 1 + 1 (+ 1) + 8 + 8 = 32 (33->40) bytes
 
 /* Bit masks for the polynomial valid flag. */
 #define VALID_EVAL_FLAG 1	// Used by tree traversal routines to limit to unique terms
@@ -326,6 +328,7 @@ void writePolyDigraph (Polynomial *);
 void codePoly (Polynomial * p, struct polyList * l, char * name);
 Polynomial *restoreExternalPoly (char * name);
 int loadPolyDL (Polynomial * p);
-void externalizePolys ();
+Polynomial * exportPoly (Polynomial * p);
+Polynomial * importPoly (Polynomial * p);
 void thrashingCheck ();
 void releaseExternalPoly (Polynomial *);

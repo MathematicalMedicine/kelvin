@@ -199,7 +199,7 @@ struct polynomial **functionCallList;
 int functionCallCount;
 int functionCallListLength;
 
-char *eTypes[7] = { "C", "V", "S", "P", "F", "E", "U" };        ///< Useful prefixes for polynomial types
+char *eTypes[8] = { "C", "V", "S", "P", "F", "E", "U", "O" }; ///< Useful prefixes for polynomial types
 
 /** @defgroup PolyCons Polynomial Scaling Constants
     @{
@@ -353,7 +353,9 @@ int originalChildren[MAXPOLYSOURCES];
 */
 Polynomial *polyReturnWrapper (Polynomial * p)
 {
-  return p;
+  // For testing purposes, we're going to export every polynomial!
+  //  return exportPoly (p);
+  return (p);
 }
 
 /**
@@ -421,6 +423,10 @@ double doEvaluateValue (Polynomial * p)
     return p->value;
 
   switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
     // If a sub polynomial is a contant, return the value
   case T_CONSTANT:
     p->valid |= VALID_EVAL_FLAG;
@@ -589,6 +595,7 @@ double evaluateValue (Polynomial * p)
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
 
+  if (p->eType == T_OFFLINE) importPoly (p);
   if (p->eType == T_SUM || p->eType == T_PRODUCT) {
     /* Step down a level where there are enough terms to keep the work interesting. */
 
@@ -614,6 +621,7 @@ double evaluateValue (Polynomial * p)
 */
 inline int isZeroExp (Polynomial * p)
 {
+  if (p->eType == T_OFFLINE) importPoly (p);
   if (p->eType != T_CONSTANT)
     return 0;
   if (p->value == 0.0)
@@ -989,6 +997,7 @@ inline int keySumPolynomial (Polynomial ** p, double *factor, int counter)
    * order in the sum to compute a key for the sum polynomial. */
   for (j = 0; j < counter; j++) {
     tempD1 = frexp (factor[j], &tempI1);
+    if (p[j]->eType == T_OFFLINE) importPoly (p[j]);
     key += p[j]->id + p[j]->key * (j + 1) + (int) (tempD1 * 12345 + tempI1) * ((int) p[j]->eType + 1);
   }
   return key;
@@ -1214,6 +1223,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   for (i = 0; i < num; i++) {
     f1 = va_arg (args, double); // Get the coefficient
     p1 = va_arg (args, Polynomial *);   // ...and the polynomial
+    if (p1->eType == T_OFFLINE) importPoly (p1);
 
     //    if (p1->count == 0 && !((p1->valid & VALID_TOP_FLAG) == 0))
     //      fprintf (stderr, "UnHeld, non-top SUM %d referenced!\n", p1->id);
@@ -1242,6 +1252,10 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     if (f1 == 0.0)
       continue;
     switch (p1->eType) {
+    case T_OFFLINE:
+      importPoly(p1);
+      // Notice that there's no break here...
+
     case T_CONSTANT:   // If the term is a non-zero constant, we collect it
       con += p1->value * f1;
       break;
@@ -1258,6 +1272,10 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       // Fold the components of the sum subpolynomial up into this sum polynomial
       for (l = 0; l < p1->e.s->num; l++) {
         switch (p1->e.s->sum[l]->eType) {
+	case T_OFFLINE:
+	  importPoly(p1->e.s->sum[l]);
+	// Notice that there's no break here...
+
         case T_CONSTANT:       // Item is a constant, collected it into con
           con += f1 * p1->e.s->sum[l]->value * p1->e.s->factor[l];
           break;
@@ -1565,9 +1583,10 @@ inline int keyProductPolynomial (Polynomial ** p, int *exponent, int counter)
   int key = 0;
   int j;
 
-  for (j = 0; j < counter; j++)
+  for (j = 0; j < counter; j++) {
+    if (p[j]->eType == T_OFFLINE) importPoly (p[j]);
     key += p[j]->id + p[j]->key * (j + 1) + (exponent[j] * 12345 * (int) (p[j]->eType + 1));
-
+  }
   return key;
 
 }
@@ -1684,6 +1703,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
   // Go through operand and its exponent of the product
   for (i = 0; i < num; i++) {
     p1 = va_arg (args, Polynomial *);
+    if (p1->eType == T_OFFLINE) importPoly (p1);
     e1 = va_arg (args, int);
 
     //    if (p1->count == 0 && !((p1->valid & VALID_TOP_FLAG) == 0))
@@ -1728,6 +1748,10 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       /* If this operand is a variable, a sum that has more than one items, or a function call, 
        * we directly collect it.  If this operand is a product, we then collect each term of it. */
       switch (p1->eType) {
+      case T_OFFLINE:
+	importPoly(p1);
+	// Notice that there's no break here...
+
       case T_VARIABLE:
         collectProductTerms (&exponent_v2, &p_v2, &counter_v2, &containerLength_v2, e1, p1);
         break;
@@ -1741,6 +1765,10 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       case T_PRODUCT:
         for (l = 0; l < p1->e.p->num; l++) {
           switch (p1->e.p->product[l]->eType) {
+	  case T_OFFLINE:
+	    importPoly(p1->e.p->product[l]);
+	    // Notice that there's no break here...
+
           case T_VARIABLE:
             collectProductTerms (&exponent_v2, &p_v2, &counter_v2, &containerLength_v2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
             break;
@@ -2128,12 +2156,13 @@ Polynomial *functionCallExp (int num, ...)
   }
   //num is equal to 1 plus the number of parameters for the called function
   for (i = 0; i < num - 1; i++) {
+    p[i] = va_arg (args, Polynomial *);
+    if (p[i]->eType == T_OFFLINE) importPoly (p[i]);
     if (polynomialDebugLevel >= 60) {
       fprintf (stderr, "In functionCallExp item No. %d of %d type=%d: ", i + 1, num, p[i]->eType);
       expPrinting (p[i]);
       fprintf (stderr, "\n");
     }
-    p[i] = va_arg (args, Polynomial *);
   }
   va_end (args);
 
@@ -2296,6 +2325,10 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
   int i;
 
   switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
     //If the polynomial is a constant, put it in the evaluation list
   case T_CONSTANT:
     polyListAppend (l, p);
@@ -2327,10 +2360,12 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     if (p->valid & VALID_EVAL_FLAG)
       break;
 
-    for (i = 0; i < p->e.s->num; i++)
+    for (i = 0; i < p->e.s->num; i++) {
+      if (p->e.s->sum[i]->eType == T_OFFLINE) importPoly (p->e.s->sum[i]);
       if (p->e.s->sum[i]->eType != T_CONSTANT && (!(p->e.s->sum[i]->valid & VALID_EVAL_FLAG))) {
         doPolyListSorting (p->e.s->sum[i], l);
       }
+    }
     polyListAppend (l, p);
     break;
 
@@ -2341,10 +2376,12 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     if (p->valid & VALID_EVAL_FLAG)
       break;
 
-    for (i = 0; i < p->e.p->num; i++)
+    for (i = 0; i < p->e.p->num; i++) {
+      if (p->e.p->product[i]->eType == T_OFFLINE) importPoly (p->e.p->product[i]);
       if (p->e.p->product[i]->eType != T_CONSTANT && (!(p->e.p->product[i]->valid & VALID_EVAL_FLAG))) {
         doPolyListSorting (p->e.p->product[i], l);
       }
+    }
     polyListAppend (l, p);
     break;
 
@@ -2355,10 +2392,12 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     if (p->valid & VALID_EVAL_FLAG)
       break;
 
-    for (i = 0; i < p->e.f->num; i++)
+    for (i = 0; i < p->e.f->num; i++) {
+      if (p->e.f->para[i]->eType == T_OFFLINE) importPoly (p->e.f->para[i]);
       if (p->e.f->para[i]->eType != T_CONSTANT && (!(p->e.f->para[i]->valid & VALID_EVAL_FLAG))) {
         doPolyListSorting (p->e.f->para[i], l);
       }
+    }
     polyListAppend (l, p);
     break;
 
@@ -2415,6 +2454,10 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
   for (j = 0; j <= l->listNext - 1; j++) {
     p = l->pList[j];
     switch (p->eType) {
+    case T_OFFLINE:
+      importPoly(p);
+      // Notice that there's no break here...
+
     case T_CONSTANT:
       break;
       //Read the value of the variable
@@ -2437,8 +2480,8 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 		   p->e.e->polynomialFunctionName);
 	  exit (EXIT_FAILURE);
 	}
-#endif
       p->value = p->e.e->polynomialFunctionRoutine (1, variableList);
+#endif
       break;
 
       //Sum up all the items in a sum
@@ -2979,6 +3022,7 @@ void doPrintSummaryPoly (Polynomial * p, int currentTier)
 {
   int i;
 
+  if (p->eType == T_OFFLINE) importPoly (p);
   if (p->valid & VALID_EVAL_FLAG)
     return;
   p->valid |= VALID_EVAL_FLAG;
@@ -2989,6 +3033,10 @@ void doPrintSummaryPoly (Polynomial * p, int currentTier)
     return;
   polyTiers[currentTier][p->eType]++;
   switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
   case T_CONSTANT:
   case T_VARIABLE:
   case T_EXTERNAL:
@@ -3057,6 +3105,10 @@ void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
   p->valid |= VALID_EVAL_FLAG;
 
   switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
   case T_CONSTANT:
     fprintf (diGraph, "%d [label=\"%G\"];\n", p->id, p->value);
     break;
@@ -3123,6 +3175,10 @@ void expPrinting (Polynomial * p)
   int i;
 
   switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
   case T_CONSTANT:
     fprintf (stderr, "%G", p->value);
     break;
@@ -3189,6 +3245,10 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
   int i;
 
   switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
   case T_CONSTANT:
     fprintf (output, "%G", p->value);
     break;
@@ -3614,6 +3674,10 @@ void doKeepPoly (Polynomial * p)
 
   p->valid |= VALID_KEEP_FLAG;
   switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
   case T_CONSTANT:
   case T_VARIABLE:
   case T_EXTERNAL:
@@ -3661,6 +3725,10 @@ void doHoldPoly (Polynomial * p)
     fprintf (stderr, "holdPoly sees id %d and is bumping hold count from %d\n", polynomialLostNodeId, p->count);
 
   switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
   case T_CONSTANT:
   case T_VARIABLE:
   case T_EXTERNAL:
@@ -3706,6 +3774,10 @@ void doUnHoldPoly (Polynomial * p)
     fprintf (stderr, "UnHoldPoly sees id %d and is decrementing hold count from %d\n", polynomialLostNodeId, p->count);
 
   switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
   case T_CONSTANT:
   case T_VARIABLE:
   case T_EXTERNAL:
@@ -3770,6 +3842,7 @@ void doFreePolys (unsigned short keepMask)
       }
       k = 0;
       for (i = 0; i < constantCount; i++) {
+	if (constantList[i]->eType == T_OFFLINE) importPoly (constantList[i]);
         if (constantList[i]->id == polynomialLostNodeId)
           fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, constantList[i]->valid, constantList[i]->count, keepMask);
         if ((constantList[i]->count > 0)
@@ -3832,6 +3905,7 @@ void doFreePolys (unsigned short keepMask)
       }
       k = 0;
       for (i = 0; i < variableCount; i++) {
+	if (variableList[i]->eType == T_OFFLINE) importPoly (variableList[i]);
         if (variableList[i]->id == polynomialLostNodeId)
           fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, variableList[i]->valid, variableList[i]->count, keepMask);
         if ((variableList[i]->count > 0)
@@ -3891,6 +3965,7 @@ void doFreePolys (unsigned short keepMask)
       }
       k = 0;
       for (i = 0; i < sumCount; i++) {
+	if (sumList[i]->eType == T_OFFLINE) importPoly (sumList[i]);
         if (sumList[i]->id == polynomialLostNodeId)
           fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, sumList[i]->valid, sumList[i]->count, keepMask);
         if ((sumList[i]->count > 0) || (sumList[i]->valid & keepMask)) {
@@ -3961,6 +4036,7 @@ void doFreePolys (unsigned short keepMask)
       }
       k = 0;
       for (i = 0; i < productCount; i++) {
+	if (productList[i]->eType == T_OFFLINE) importPoly (productList[i]);
         if (productList[i]->id == polynomialLostNodeId)
           fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, productList[i]->valid, productList[i]->count, keepMask);
         if ((productList[i]->count > 0) || (productList[i]->valid & keepMask)) {
@@ -4063,24 +4139,23 @@ void freeKeptPolys ()
 /* Serialize and compress a polynomial and all subpolys for transfer
    Addresses can be left as-is since we'll create a translation table when we
    reload, and compression will eliminate any temporary inefficiency of size. */
-void *exportPoly (Polynomial * p)
+Polynomial *exportPoly (Polynomial * p)
 {
-  void *exportedPoly = NULL;
-
-  return (exportedPoly);
+  p->oldEType = p->eType;
+  return (p);
 }
 
 /* Decompress and deserialize a polynomial and all subpolys. Use an address
    translation table to maintain internal consistency. */
-Polynomial *importPoly (void *exportedPoly)
+Polynomial *importPoly (Polynomial * p)
 {
-  Polynomial *importedPoly = NULL;
-
-  return (importedPoly);
+  p->eType = p->oldEType;
+  return (p);
 }
 
 void releaseExternalPoly (Polynomial *rp)
 {
+  if (rp->eType == T_OFFLINE) importPoly (rp);
   if (rp->eType != T_EXTERNAL) {
     fprintf (stderr, "releaseExternalPoly called with polynomial eType of %d\n", rp->eType);
     exit (EXIT_FAILURE);
@@ -4163,7 +4238,7 @@ int loadPolyDL (Polynomial * p)
        dlopen (polynomialFileName, RTLD_LAZY|RTLD_GLOBAL)) != NULL) {
 
     // Loaded! Do any supporting 1K clump DLs.
-    for (i=0; i>=32; i--) {
+    for (i=0; i<=32; i++) {
       sprintf (polynomialFileName, "%s_%dK.so", p->e.e->polynomialFunctionName, i);
       if ((p->e.e->polynomialFunctionHandle[i+1] = dlopen (polynomialFileName, RTLD_LAZY|RTLD_GLOBAL)) == NULL)
 	break;
@@ -4175,7 +4250,7 @@ int loadPolyDL (Polynomial * p)
       // Found it!
       p->e.e->fileOK = TRUE;
       p->e.e->entryOK = TRUE;
-      fprintf (stdout, "Using %d DL(s) for %s\n", i, p->e.e->polynomialFunctionName);
+      fprintf (stdout, "Using %d DL(s) for %s\n", i+1, p->e.e->polynomialFunctionName);
     } else {
       fprintf (stderr, "dlsym() error [%s] for polynomial %s\n", dlerror(),
 	       p->e.e->polynomialFunctionName);
@@ -4200,8 +4275,13 @@ int loadPolyDL (Polynomial * p)
    Use 8192*128 for a 4Gb compile size, but be aware that large polynomials (over
    1,000 source files) might not compile due to command line size limitations.
 
+   Dagnabit, the only problem is that while compilation seemed to only take that
+   much space, I finally got the error:
+
+cc1: out of memory allocating 18446744058046806904 bytes after a total of 289832960 bytes
+
 */
-#define MAXSRCSIZE (8192*496)
+#define MAXSRCSIZE (8192*256)
 void codePoly (Polynomial * p, struct polyList *l, char *name)
 {
   char srcFileName[128], srcCalledFileName[128], includeFileName[128];
@@ -4278,6 +4358,9 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     totalInternalSize += sizeof (Polynomial) + sizeof (Polynomial *);
     p = l->pList[j];
     switch (p->eType) {
+    case T_OFFLINE:
+      importPoly(p);
+      // Notice that there's no break here...
 
     case T_CONSTANT:
       break;
@@ -4293,6 +4376,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
       sP = p->e.s;
       totalInternalSize += sizeof (struct sumPoly) + sP->num * (sizeof (Polynomial *) + sizeof (double *));
       for (i = 0; i < sP->num; i++) {
+	if (sP->sum[i]->eType == T_OFFLINE) importPoly (sP->sum[i]);
         if (i != 0)
           srcSize += fprintf (srcCalledFile, "+");
         if (sP->sum[i]->eType == T_CONSTANT)
@@ -4312,6 +4396,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
       pP = p->e.p;
       totalInternalSize += sizeof (struct productPoly) + pP->num * (sizeof (Polynomial *) + sizeof (int *));
       for (i = 0; i < pP->num; i++) {
+	if (pP->product[i]->eType == T_OFFLINE) importPoly (pP->product[i]);
         if (i != 0)
           srcSize += fprintf (srcCalledFile, "*");
         if (pP->product[i]->eType == T_CONSTANT)
@@ -4348,6 +4433,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
       srcSize += fprintf (srcCalledFile, "\tF[%d] = %s(", functionCallsUsed, p->e.f->name);
       for (i = 0; i < p->e.f->num; i++) {
+	if (p->e.f->para[i]->eType == T_OFFLINE) importPoly (p->e.f->para[i]);
         if (i != 0)
           srcSize += fprintf (srcCalledFile, ",");
         if (p->e.f->para[i]->eType == T_CONSTANT)
