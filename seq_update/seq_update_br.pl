@@ -13,7 +13,7 @@ use IO::File;
 # non-profit educational purposes only.
 #
 
-my $current = "0.35.0";
+my $current = "0.36.1";
 
 my ($arg, $flag, $opt);
 my %options = (relax => 0, mode => 'twopoint');
@@ -112,6 +112,7 @@ while (1) {
 	} elsif ($$href{linetype} eq 'data') {
 	    foreach $key (keys (%{$files[0]{cmpheaders}})) {
 		(($key eq 'BayesRatio') || ($key eq 'PPL')) and next;
+		(($options{relax} == 1) && ($key eq 'Position')) and next;
 		$va = $files[0]{cmpheaders}{$key};
 		($files[0]{flds}[$va] eq $$href{flds}[$va])
 		    or die ("file '$$href{name}', line $$href{lineno}, ".
@@ -174,7 +175,7 @@ sub get_next_line
 	return (1);
     }
     $$f{lineno}++;
-    # These should not be necessary with versioned (non-obsolete) format avghet files
+    # These should not be necessary with versioned (non-obsolete) format BR files
     # $buff =~ s/^\s*(\S|\S.*\S)\s*$/$1/s;
     # $buff =~ s/, +/,/;
 

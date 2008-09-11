@@ -15,14 +15,25 @@ use strict;
 my $line;
 my $lineno = 1;
 my $version;
-my $current = "0.35.0";
+my $current = "0.36.1";
 my ($maj, $min, $patch);
+my $br_file = undef;
 my @flds;
 my @arr;
 my $va;
 
 my $force_chr = '';
+# These are all used when a map file is necessary to insert a position 
+# column in the converted file.
+my $map_file = '';
+my $map_fmt = undef;
+my ($mrk_idx, $pos_idx);
+my $pos_value;
+my %marker_pos = ();
+
+# How many markers in a multipoint file
 my $markerlist_len = 0;
+# Penetrance vector format: DT, QT w/ std dist, or QT w/ Chi**2 dist
 my $penvector_type = '';
 my $liability_classes = 1;
 
@@ -37,29 +48,70 @@ my $header = '';
 my $data_regex = '';
 my $data_fmt = '';
 my @fld_idxs = ();
+# Controls whether the value for the position column should be appended
+# to the array of fields after a data line is parsed.
+my $append_pos = 0;
 
 my %header_parsers = ( "unknown" => \&pre_0_35_0,
-		       "0.35.0" => \&ver_0_35_0 );
+		       "0.35.0" => \&ver_0_35_0,
+		       "0.36.0" => \&ver_0_35_0,
+		       "0.36.1" => \&ver_0_36_1 );
 
-my $usage = "usage: $0 [ -c <chr_num> ] <filename>\n";
+my $usage = "usage: $0 [-c <chr_num>] [-m <map_file>] <filename>\n";
 
-if (scalar (@ARGV)) {
-    if (($force_chr) = ($ARGV[0] =~ /-c(\d+)?/)) {
+while (scalar (@ARGV)) {
+    if ($ARGV[0] =~ /-c(\d+)?/) {
         shift (@ARGV);
-        ($force_chr || ($force_chr = shift (@ARGV))) or die ($usage);
-        ($force_chr =~ /^\d+$/) or die ($usage);
+	$force_chr = (defined ($1)) ? $1 : shift (@ARGV);
+        (defined ($force_chr) && ($force_chr =~ /^\d+$/)) or die ($usage);
+    } elsif ($ARGV[0] =~ /-m(\S+)?/) {
+        shift (@ARGV);
+	$map_file = (defined ($1)) ? $1 : shift (@ARGV);
+        (defined ($map_file)) or die ($usage);
     } elsif ($ARGV[0] =~ /(\?|help)/) {
         system ("/usr/bin/pod2text $0");
         exit (0);
     } else {
-        $force_chr = '';
+	defined ($br_file) and die ($usage);
+	$br_file = shift (@ARGV);
     }
 }
-(scalar (@ARGV) == 1) or die ($usage);
-open (FH, $ARGV[0]) or die ("open '$ARGV[0]' failed, $!|n");
+
+if (($map_file) && ($map_file ne 'nomap')) {
+    open (FH, $map_file) or die ("$0: map file '$map_file': $!\n");
+    while (! defined ($map_fmt)) {
+	(defined ($line = <FH>)) or die ("$0: unknown map format in '$map_file'\n");
+	if ($line =~ /\s*CHR(OMOSOME)?\s+(HALDANE|KOSAMBI|POSITION)\s+(NAME|MARKER)/i) {
+	    $map_fmt = '\d+\s+([\-\d\.]+(?:e[\-\+]\d+)?)\s+(\S+)';
+	    ($mrk_idx, $pos_idx) = (1, 0);
+	} elsif ($line =~ /\s*CHR(OMOSOME)?\s+(NAME|MARKER)\s+(HALDANE|KOSAMBI|POSITION)/i) {
+	    $map_fmt = '\d+\s+(\S+)\s+([\-\d\.]+(?:e[\-\+]\d+)?)';
+	    ($mrk_idx, $pos_idx) = (0, 1);
+	} elsif ($line =~ /\d+\s+([\-\d\.]+(?:e[\-\+]\d+)?)\s+(\S+)/) {
+	    $marker_pos{$2} = $1;
+	    $map_fmt = '\d+\s+([\-\d\.]+(?:e[\-\+]\d+)?)\s+(\S+)';
+	    ($mrk_idx, $pos_idx) = (1, 0);
+	} elsif ($line =~ /\d+\s+(\S+)\s+([\-\d\.]+(?:e[\-\+]\d+)?)/) {
+	    $marker_pos{$1} = $2;
+	    $map_fmt = '\d+\s+(\S+)\s+([\-\d\.]+(?:e[\-\+]\d+)?)';
+	    ($mrk_idx, $pos_idx) = (0, 1);
+	}
+    }
+    while ($line = <FH>) {
+	unless (@arr = ($line =~ /$map_fmt/)) {
+	    chomp ($line);
+	    die ("$0: badly formatted line in '$map_file': '$line'\n");
+	}
+	$marker_pos{$arr[$mrk_idx]} = $arr[$pos_idx];
+    }
+    close (FH);
+}
+
+open (FH, $br_file) or die ("open '$br_file' failed, $!\n");
 (defined ($line = <FH>)) or die ("$0: empty input file\n");
 
 # Version information line, only appears in 0.35.0 and later
+# All files with no Version line are treated as 'unknown'
 if (($version) = ($line =~ /\#\s+Version\s+(\S+)/)) {
     (($maj, $min, $patch) = ($version =~ /(\d+)\.(\d+)\.(\d+)/))
 	or die ("$0: badly formed version number '$version' at line $lineno\n");
@@ -77,13 +129,13 @@ exists ($header_parsers{$version})
 (($version eq 'unknown') && (length ($force_chr) <= 0))
     and die ("$0: -c <chr_num> is required for this file\n");
 
-# We have to build a general $data_regex and try to match one data line,
-# then count fields in PenetranceVector and MarkerList to figure out the
-# penetrance vector type, number of liability classes and how the converted
-# header line should look like.
 if ($version eq 'unknown') {
+    # We have to build a general $data_regex and try to match one data line,
+    # then count fields in PenetranceVector and MarkerList to figure out the
+    # penetrance vector type, number of liability classes and how the converted
+    # header line should look like.
 
-    # 2-Point marker info line
+    # If a 2-point marker info line, skip it
     if ($line =~ /^\#/) {
 	(defined ($line = <FH>))
 	    or die ("$0: input file ends unexpectedly at line $lineno\n");
@@ -122,13 +174,24 @@ if ($version eq 'unknown') {
     seek (FH, 0, 0);
     $line = <FH>;
     $lineno = 1;
+
+} elsif (versionnum ($version) < versionnum ("0.36.1")) {
+    # Versioned 2-point BR files less than V0.36.1 have no position column.
+    # If we find a marker information line (which only appears in 2-point
+    # files), then set $append_pos.
+
+    if ($line =~ /^\#/) {
+	($map_file) or die ("$0: can't convert without a map file (use -m <map_file>)\n");
+	$append_pos = 1;
+    }
 }
 
-print ("# Version $current (converted from $version)\n");
+print ("# Version V$current (converted from V$version)\n");
 while (1) {
 
     if ($line =~ /^\#/) {
 	# 2-Point marker info line
+	($append_pos) and $pos_value = lookup_pos ($line);
 	print ($line);
 
     } elsif ($line !~ /^[\-\+\d\.\s\(\,\)e]+$/) {
@@ -146,6 +209,7 @@ while (1) {
 
 	(@flds) = ($line =~ /^\s*$data_regex\s*$/)
 	    or die ("$0: badly formed data line at line $lineno\n");
+	($append_pos) and push (@flds, $pos_value);
 	printf ($data_fmt, @flds[@fld_idxs]);
     }
     
@@ -178,60 +242,60 @@ sub pre_0_35_0 {
 	$str = uc ($str);
 	if ($str =~ /^D\d\d/) {
 	    push (@dprimes, $str);
-	    $mapped{$str} = [ $va ];
+	    $mapped{$str}{idx} = [ $va ];
+	    $mapped{$str}{fmt} = '%s ';
 	    $data_regex .= '([\-\d\.]+) ';
-	    $data_fmt .= '%s ';
 
 	} elsif ($str eq "DPRIME") {
 	    push (@dprimes, "D11");
 	    (exists ($mapped{"D11"}))
 		and die ("$0: multiple 'DPrime' columns in header at line $lineno\n");
-	    $mapped{D11} = [ $va ];
+	    $mapped{D11}{idx} = [ $va ];
+	    $mapped{D11}{fmt} = '%s ';
 	    $data_regex .= '([\-\d\.]+) ';
-	    $data_fmt .= '%s ';
 
 	} elsif ($str eq "THETA(M,F)") {
-	    $mapped{"Theta(M,F)"} = [ $va ];
+	    $mapped{"Theta(M,F)"}{idx} = [ $va ];
+	    $mapped{"Theta(M,F)"}{fmt} = '%s ';
 	    $data_regex .= '(\([\d\.]+,[\d\.]+\)) ';
-	    $data_fmt .= '%s ';
 	    
 	} elsif ($str eq "COUNT") {
 	    $data_regex .= '(\d+) ';
 
 	} elsif ($str =~ /^(AVG_?LR|BR)$/) {
-	    $mapped{"BayesRatio"} = [ $va ];
+	    $mapped{"BayesRatio"}{idx} = [ $va ];
+	    $mapped{"BayesRatio"}{fmt} = '%s ';
 	    $data_regex .= '([\-\d\.]+(?:[eE][\+\-]\d+)?) ';
-	    $data_fmt .= '%s ';
 
 	} elsif ($str eq "AVGLR(COUNT)") {
-	    $mapped{"BayesRatio"} = [ $va ];
+	    $mapped{"BayesRatio"}{idx} = [ $va ];
+	    $mapped{"BayesRatio"}{fmt} = '%s ';
 	    $data_regex .= '([\-\d\.]+(?:[eE][\+\-]\d+)?)\(\d+\) ';
-	    $data_fmt .= '%s ';
 
 	} elsif (($str eq "MAX_HLOD") || ($str eq "MOD")) {
-	    $mapped{"MOD"} =  [$va ];
+	    $mapped{"MOD"}{idx} =  [$va ];
+	    $mapped{"MOD"}{fmt} = '%s ';
 	    $data_regex .= '([\-\d\.]+) ';
-	    $data_fmt .= '%s ';
 
 	} elsif ($str eq "R2") {
-	    $mapped{"R2"} = [ $va ];
+	    $mapped{"R2"}{idx} = [ $va ];
+	    $mapped{"R2"}{fmt} = '%s ';
 	    $data_regex .= '([\-\d\.]+) ';
-	    $data_fmt .= '%s ';
 
 	} elsif ($str eq "ALPHA") {
-	    $mapped{"Alpha"} = [ $va ];
+	    $mapped{"Alpha"}{idx} = [ $va ];
+	    $mapped{"Alpha"}{fmt} = '%s ';
 	    $data_regex .= '([\d\.]+) ';
-	    $data_fmt .= '%s ';
 
 	} elsif ($str eq "DGF") {
-	    $mapped{"DGF"} = [ $va ];
+	    $mapped{"DGF"}{idx} = [ $va ];
+	    $mapped{"DGF"}{fmt} = '%s ';
 	    $data_regex .= '([\d\.]+) ';
-	    $data_fmt .= '%s ';
 
 	} elsif ($str eq "MF") {
-	    $mapped{"MF"} = [ $va ];
+	    $mapped{"MF"}{idx} = [ $va ];
+	    $mapped{"MF"}{fmt} = '%s ';
 	    $data_regex .= '([\d\.]+) ';
-	    $data_fmt .= '%s ';
 
 	} elsif (($str eq "PEN_VECTOR") || ($str eq "PEN_DD")) {
 	    if ($str eq "PEN_DD") {
@@ -239,66 +303,75 @@ sub pre_0_35_0 {
 		    or die ("$0: one or more penetrance headers missing at line $lineno\n");
 		splice (@names, 0, 2);
 	    }
-	    $mapped{"PenetranceVector"} = [ ];
+	    $mapped{"PenetranceVector"}{idx} = [ ];
+	    $mapped{"PenetranceVector"}{fmt} = '';
 	    if ($penvector_type eq "") {
-		push (@{$mapped{"PenetranceVector"}}, $va);
+		push (@{$mapped{"PenetranceVector"}{idx}}, $va);
+		$mapped{"PenetranceVector"}{fmt} .= '%s ';
 		$penvector_col = $va;
 		$data_regex .= '([\-\d\.]+(?: [\-\d\.]+)+) ';
-		$data_fmt .= '%s ';
 	    } elsif ($penvector_type eq "DT") {
 		for ($lc = 0; $lc < $liability_classes; $lc++) {
-		    push (@{$mapped{"PenetranceVector"}}, $va, $va+1, $va+2);
+		    push (@{$mapped{"PenetranceVector"}{idx}}, $va, $va+1, $va+2);
+		    $mapped{"PenetranceVector"}{fmt} .= '(%s,%s,%s) ';
 		    $data_regex .= '([\-\d\.]+) ' x 3;
-		    $data_fmt .= '(%s,%s,%s) ';
 		    $va += 3;
 		}
 		$va--;
 	    } elsif ($penvector_type eq "QT_Chi") {
 		for ($lc = 0; $lc < $liability_classes; $lc++) {
-		    push (@{$mapped{"PenetranceVector"}}, $va, $va+1, $va+2, $va+3);
+		    push (@{$mapped{"PenetranceVector"}{idx}}, $va, $va+1, $va+2, $va+3);
+		    $mapped{"PenetranceVector"}{fmt} .= '(%s,%s,%s,%s) ';
 		    $data_regex .= '([\-\d\.]+) ' x 4;
-		    $data_fmt .= '(%s,%s,%s,%s) ';
 		    $va += 4;
 		}
 		$va--;
 	    } elsif ($penvector_type eq "QT_T") {
 		for ($lc = 0; $lc < $liability_classes; $lc++) {
-		    push (@{$mapped{"PenetranceVector"}}, $va, $va+1, $va+2, $va+3, $va+4,
-			  $va+5, $va+6);
+		    push (@{$mapped{"PenetranceVector"}{idx}}, $va, $va+1, $va+2, $va+3,
+			  $va+4, $va+5, $va+6);
+		    $mapped{"PenetranceVector"}{fmt} .= '(%s,%s,%s,%s,%s,%s,%s) ';
 		    $data_regex .= '([\-\d\.]+) ' x 7;
-		    $data_fmt .= '(%s,%s,%s,%s,%s,%s,%s) ';
 		    $va += 7;
 		}
 		$va--;
 	    }
 	    
 	} elsif ($str =~ /^POS(ITION)?/) {
-	    $mapped{"Position"} = [ $va ];
+	    $mapped{"Position"}{idx} = [ $va ];
+	    $mapped{"Position"}{fmt} = '%s ';
 	    $data_regex .= '([\d\.]+) ';
-	    $data_fmt .= '%s ';
 	    
 	} elsif ($str eq "PPL") {
-	    $mapped{"PPL"} = [ $va ];
+	    $mapped{"PPL"}{idx} = [ $va ];
+	    $mapped{"PPL"}{fmt} = '%s ';
 	    $data_regex .= '([\d\.]+) ';
-	    $data_fmt .= '%s ';
 	    
 	} elsif ($str eq "MARKERLIST") {
-	    $mapped{"MarkerList"} = [ $va ];
+	    $mapped{"MarkerList"}{idx} = [ $va ];
+	    $mapped{"MarkerList"}{fmt} = '%s ';
 	    if ($markerlist_len == 0) {
 		$markerlist_col = $va;
 	    } 
 	    $data_regex .= '(\([\d\,]+\)) ';
-	    $data_fmt .= '%s ';
 	    
 	} else {
 	    die ("$0: unknown header '$str' at line $lineno\n");
 	}
 	$va++;
     }
-    
+
+    if (! exists ($mapped{Position})) {
+	($map_file) or die ("$0: can't convert without a map file (use -m <map_file>)\n");
+	$header .= "Position ";
+	push (@fld_idxs, $va);
+	$data_fmt .= "%s ";
+	$append_pos = 1;
+    }
     foreach $str (@dprimes) {
 	$header .= "$str ";
-	push (@fld_idxs, @{$mapped{$str}});
+	push (@fld_idxs, @{$mapped{$str}{idx}});
+	$data_fmt .= $mapped{$str}{fmt};
     }
     foreach $str ('Theta(M,F)', qw/Position PPL BayesRatio MOD R2 Alpha
 		  DGF MF PenetranceVector MarkerList/) {
@@ -324,7 +397,8 @@ sub pre_0_35_0 {
 	} else {
 	    $header .= "$str ";
 	}
-	push (@fld_idxs, @{$mapped{$str}});
+	push (@fld_idxs, @{$mapped{$str}{idx}});
+	$data_fmt .= $mapped{$str}{fmt};
     }
     
     chop ($data_regex, $data_fmt, $header);
@@ -334,8 +408,30 @@ sub pre_0_35_0 {
 }
 
 
-# A stub that should never be called (at least, not until 0.36 is released)
 sub ver_0_35_0
+{
+    my ($line) = @_;
+
+    if ($line =~ /Position/) {
+	$append_pos = 0;
+	$header = $line;
+	$data_regex = '(\S.*\S)';
+	$data_fmt = "%s\n";
+	@fld_idxs = (0);
+    } else {
+	# This should be redundant with the first-line logic, above
+	$append_pos = 1;
+	($header = $line) =~ s/(Chr)\s+(\S.*)/$1 Position $2/;
+	$data_regex = '(\d+)\s+(\S.*)';
+	$data_fmt = "%s %s %s\n";
+	@fld_idxs = (0, 2, 1);
+    }
+    return;
+}
+
+
+# A stub that should never be called
+sub ver_0_36_1
 {
     ;
 }
@@ -352,23 +448,51 @@ sub versionnum
 }
 
 
+sub lookup_pos
+{
+    my ($line) = @_;
+    my ($num, $name1, $name2);
+
+    unless (($num, $name1, $name2) = ($line =~ /\#\s+(\d+)\s+(\S+)\s+(\S+)/)) {
+	chomp ($line);
+	die ("$0: badly formatted marker info at line $lineno\n");
+    }
+    ($map_file eq 'nomap') and return ($num);
+    exists ($marker_pos{$name1}) and return ($marker_pos{$name1});
+    exists ($marker_pos{$name2}) and return ($marker_pos{$name2});
+    die ("$0: can't find position based on marker info at line $lineno\n");
+}
+
+
 =head1 USAGE
 
-convert_br.pl [-c <chrnum>] infile
+convert_br.pl [-c <chr_num>] [-m <map_file>] infile
 
 Converts Bayes ratio (br.out) or average heterogeneity (avghet.out) files
 generated by older version of Kelvin the most recent br.out format.
 
 =head1 COMMAND LINE ARGUMENTS
 
-=item -c <chrnum>
+=item -c <chr_num>
 
 =over 3
 
-Specifiy the chromosome number. Required if the input file does not contain
+Specifies the chromosome number. Required if the input file does not contain
 a chromosome number column, and optional otherwise. If specified, and the input
 file already contains a chromosome column, the chromosome number in the output
 will be forced to <chrnum>.
+
+=back
+
+=item -m <map_file>
+
+=over 3
+
+Specifies a map file that lists centiMorgan positions of markers. Required if
+the input file contains two-point Bayes ratios and does not contain a marker
+position column, and ignored otherwise. If map_file is specified as the literal
+string 'nomap', the marker positions in the output will be filled with the
+sequential marker number.
 
 =back
 
