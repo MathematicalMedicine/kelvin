@@ -4235,12 +4235,14 @@ int loadPolyDL (Polynomial * p)
 
   sprintf (polynomialFileName, "%s.so", p->e.e->polynomialFunctionName);
   if ((p->e.e->polynomialFunctionHandle[0] = 
-       dlopen (polynomialFileName, RTLD_LAZY|RTLD_GLOBAL)) != NULL) {
+       /* DO NOT USE RTLD_GLOBAL, as it for some reason doesn't actually set the input
+	  variables when they are assigned in the DLs. I need to research this. */
+       dlopen (polynomialFileName, RTLD_LAZY|RTLD_LOCAL)) != NULL) {
 
     // Loaded! Do any supporting 1K clump DLs.
     for (i=0; i<=32; i++) {
       sprintf (polynomialFileName, "%s_%dK.so", p->e.e->polynomialFunctionName, i);
-      if ((p->e.e->polynomialFunctionHandle[i+1] = dlopen (polynomialFileName, RTLD_LAZY|RTLD_GLOBAL)) == NULL)
+      if ((p->e.e->polynomialFunctionHandle[i+1] = dlopen (polynomialFileName, RTLD_LAZY|RTLD_LOCAL)) == NULL)
 	break;
     }
 
@@ -4280,8 +4282,11 @@ int loadPolyDL (Polynomial * p)
 
 cc1: out of memory allocating 18446744058046806904 bytes after a total of 289832960 bytes
 
+   8192*384 works, though. And crazy as it may seem, renaming the source files to something
+   short during compilation and linkage works as well.
+
 */
-#define MAXSRCSIZE (8192*256)
+#define MAXSRCSIZE (8192*384)
 void codePoly (Polynomial * p, struct polyList *l, char *name)
 {
   char srcFileName[128], srcCalledFileName[128], includeFileName[128];
@@ -4337,12 +4342,12 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
       }
       srcSize = 0;
 
-      sprintf (srcCalledFileName, "%s_%03d.c", name, fileCount);
+      sprintf (srcCalledFileName, "%s_%04d.c", name, fileCount);
       if ((srcCalledFile = fopen (srcCalledFileName, "w")) == NULL) {
         perror ("Cannot open polynomial source called file\n");
         exit (EXIT_FAILURE);
       }
-      fprintf (srcFile, "\t%s_%03d();\n", name, fileCount);
+      fprintf (srcFile, "\t%s_%04d();\n", name, fileCount);
 
       srcSize += fprintf (srcCalledFile, "#include <math.h>\n#include <stdio.h>\n\n");
       srcSize += fprintf (srcCalledFile, "\textern double V[], S[], P[], F[];\n\n");
@@ -4350,7 +4355,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
         srcSize += fprintf (srcCalledFile, "\textern double %s;\n", variableList[i]->e.v->vName);
       srcSize += fprintf (srcCalledFile, "\n");
 
-      srcSize += fprintf (srcCalledFile, "double %s_%03d () {\n", name, fileCount);
+      srcSize += fprintf (srcCalledFile, "double %s_%04d () {\n", name, fileCount);
 
       fileCount++;
     }
@@ -4485,7 +4490,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 #ifdef POLYCOMP_DL
   char command[256];
   pushStatus ("compile poly");
-  sprintf (command, "time gcc -I/home/whv001/kelvin/trunk/include -O -fPIC -shared -o %s.so %s* >& %s.out", name, name, name);
+  sprintf (command, "time gcc -g -I/home/whv001/kelvin/trunk/include -O -fPIC -shared -o %s.so %s* >& %s.out", name, name, name);
   int status;
   if ((status = system (command)) != 0) {
     perror ("system()");
