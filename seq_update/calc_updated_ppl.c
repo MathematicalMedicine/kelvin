@@ -68,12 +68,22 @@ double cutoff = 0.05;  /* -c theta cutoff */
 /* Globally available for error messages */
 int lineno = 0;
 
+/* global variables to facilitate posterior probability calculations */
+double ld_small_theta, ld_big_theta, ld_unlink;
+double le_small_theta, le_big_theta, le_unlink;
+double linkprior, ldprior;
+
+
+int calc_br_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr);
 double calc_ppl_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr);
 double calc_ppl_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr);
-double calc_ldppl_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr);
+double calc_ldppl_sexavg ();
 double calc_ldppl_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr);
-double calc_ppld_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr);
-double calc_ppld_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr);
+double calc_ppld_sexavg ();
+double calc_ppld_given_linkage_sexavg ();
+double calc_ppld_given_linkage_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr);
+double calc_ppld_and_linkage_sexavg ();
+
 int parse_command_line (int argc, char **argv);
 int get_marker_line (st_marker *marker, FILE *fp);
 int get_header_line (st_marker *marker, st_data *data, FILE *fp);
@@ -155,7 +165,7 @@ int main (int argc, char **argv)
   }
 
   if (! marker.no_ld)
-    printf ("%34s %6s %6s %6s\n", " ", "PPL","LD-PPL", "PPLD");
+    printf ("%34s %6s %6s %6s %6s %6s\n", " ", "PPL","LD-PPL", "PPLD|L", "PPLD", "PPLD&L");
   else
     printf ("%34s %6s\n", " ", "PPL");
 
@@ -203,10 +213,18 @@ int main (int argc, char **argv)
     printf (" %6.4f", (! sexspecific) ? calc_ppl_sexavg (&dprimes, &thetas, lr) : 
 	    calc_ppl_sexspc (&dprimes, &thetas, lr));
     if (! marker.no_ld) {
+      /* under LD */
+      calc_br_sexavg(&dprimes, &thetas, lr);
+      /*
       printf (" %6.4f", (! sexspecific) ? calc_ldppl_sexavg (&dprimes, &thetas, lr) : 
 	      calc_ldppl_sexspc (&dprimes, &thetas, lr));
       printf (" %6.4f", (! sexspecific) ? calc_ppld_sexavg (&dprimes, &thetas, lr) : 
 	      calc_ppld_sexspc (&dprimes, &thetas, lr));
+      */
+      printf (" %6.4f", calc_ldppl_sexavg()); 
+      printf (" %6.4f", calc_ppld_given_linkage_sexavg()); 
+      printf (" %6.4f", calc_ppld_sexavg()); 
+      printf (" %6.4f", calc_ppld_and_linkage_sexavg()); 
     }
     printf ("\n");
   }
@@ -394,6 +412,7 @@ double calc_ppl_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr)
  * all D', and calculate the area under the curve defined by 
  * theta vs. avg LR.
  */
+#if 0
 double calc_ldppl_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr)
 {
   int va, vb, numdprimes=0;
@@ -442,7 +461,7 @@ double calc_ldppl_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr
   ldppl = (prior * integral) / (prior * integral + (1 - prior));
   return (ldppl);
 }
-
+#endif
 
 /* This is just like calc_ppl_sexspc, except instead of calculating
  * the volume using the LRs where D' is 0, we average each LR across
@@ -559,7 +578,7 @@ double calc_ldppl_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr
   return (ldppl);
 }
 
-
+#if 0
 double calc_ppld_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr)
 {
   int va, vb, ndprimes = 0, zero_idx;
@@ -640,7 +659,7 @@ double calc_ppld_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr)
   ppld = (ld_pre + ld_post) / denom;
   return (ppld);
 }
-
+#endif
 
 double calc_ppld_sexspc (st_multidim *dprimes, st_multidim *thetas, double**lr)
 {
@@ -1168,3 +1187,162 @@ void multi_dump (st_multidim *md)
   printf ("totalelems %d\n", md->totalelems);
   return;
 }
+
+int calc_br_sexavg(st_multidim *dprimes, st_multidim *thetas, double **lr)
+{
+  int va, vb;
+  double mtheta;
+  //int numdprimes;
+  st_dim *mthetas;
+  float *zeros;
+  int zero_idx;
+  double lr_small, lr_big, lr_unlink;
+  int lr_small_count, lr_big_count;
+
+  if ((zeros = malloc (sizeof (float) * dprimes->numdims)) == NULL) {
+    fprintf (stderr, "malloc failed, %s\n", strerror (errno));
+    exit (-1);
+  }
+  for (va = 0; va < dprimes->numdims; va++)
+    zeros[va] = 0.0;
+  if ((zero_idx = multi_find (dprimes, zeros, dprimes->numdims)) == -1) {
+    fprintf (stderr, "can't calculate PPL, no dprime == 0\n");
+    exit (-1);
+  }
+  free (zeros);
+
+  linkprior = prior;
+  ldprior = 0.021;
+  mthetas = &thetas->dims[0];
+  for (va = 0; va < dprimes->totalelems; va++) {
+    lr_small = lr_big = lr_unlink = 0;
+    lr_small_count = lr_big_count = 0;
+    for (vb = 0; vb < mthetas->numelems; vb++) {
+      mtheta = mthetas->arr[vb];
+      if (lr[va][vb] == FLT_MAX)
+	continue;
+      if(mtheta <= cutoff + 0.000001) {
+	lr_small += lr[va][vb];
+	lr_small_count++;
+      }
+      else if (mtheta <= 0.49999999) {
+	lr_big += lr[va][vb];
+	lr_big_count++;
+      }
+      else {
+	lr_unlink = lr[va][vb];
+	//printf("lr_unlink: %f", lr_unlink);
+      }
+    }
+    lr_small /= lr_small_count;
+    lr_small *= weight;
+    lr_big /= lr_big_count;
+    lr_big *= 1 - weight;
+    if(va != zero_idx){
+      /* D' not 0 */
+      ld_small_theta += lr_small;
+      ld_big_theta += lr_big;
+      ld_unlink += lr_unlink;
+    }
+    else {
+      /* D' == 0 */
+      le_small_theta += lr_small;
+      le_big_theta += lr_big;
+      le_unlink += lr_unlink;
+    }
+  }
+
+  if(dprimes->totalelems > 1) {
+    /* always assume dprime of 0 is included in the grid - is this correct ???? */
+    ld_small_theta /= (dprimes->totalelems -1); 
+    ld_big_theta /= (dprimes->totalelems -1); 
+    ld_unlink /= (dprimes->totalelems -1); 
+  }
+
+  return 0;
+}
+
+double calc_ldppl_sexavg ()
+{
+  double numerator;
+  double denomRight;
+  double ldppl;
+
+  /* LD-PPL */
+  numerator = (ld_small_theta * linkprior * 0.021 + 
+	       ld_big_theta * linkprior *  0.0011+ 
+	       le_small_theta * linkprior * 0.979 + 
+	       le_big_theta * linkprior * 0.9989
+	       );
+  denomRight = le_unlink *(1-linkprior);
+  ldppl = numerator/(numerator + denomRight);
+  fprintf(stderr, "LDPPL: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
+	  ldppl, numerator, denomRight, numerator + denomRight);
+
+  return(ldppl);
+}
+
+double calc_ppld_sexavg()
+{
+  double numerator;
+  double denomRight;
+  double ppld; 
+
+  /* PPLD */
+  numerator = ld_small_theta * linkprior * 0.021 +
+    ld_big_theta * linkprior * 0.0011; 
+  denomRight = le_small_theta *linkprior * 0.979 + 
+    le_big_theta*linkprior * 0.9989 + 
+    le_unlink*(1-linkprior);
+  ppld = numerator / (numerator + denomRight); 
+  fprintf(stderr, "PPLD: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
+	  ppld, numerator, denomRight, numerator + denomRight);
+
+  return ppld;
+}
+
+double calc_ppld_and_linkage_sexavg ()
+{
+  double numerator;
+  double denomRight;
+  double ppld_andL;
+
+  /* PPLD&L */
+  numerator = ld_small_theta * linkprior * 0.021 + 
+    ld_big_theta * linkprior * 0.0011;
+  denomRight = 
+    le_small_theta * linkprior * 0.979 + 
+    le_big_theta *linkprior * 0.9989 + 
+    le_unlink * (1-linkprior);
+  ppld_andL = numerator / (numerator + denomRight);
+
+  fprintf(stderr, "PPL&LD: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
+	  ppld_andL, numerator, denomRight, numerator + denomRight);
+  
+  return(ppld_andL);
+}
+
+double calc_ppld_given_linkage_sexavg ()
+{
+  double numerator;
+  double denomRight;
+  double ppld_givenL;
+
+  /* PPLD | L */
+  numerator = ld_small_theta * linkprior * 0.021 + 
+    ld_big_theta * linkprior * 0.0011;
+  denomRight = le_small_theta * linkprior * 0.979 + 
+    le_big_theta * linkprior * 0.9989;
+  //printf("\nPPLD|L Numerator %f ", numerator);
+  ppld_givenL = numerator / (numerator + denomRight);
+  /*
+  printf("Denominator %f \n", le_small_theta * linkprior * (1-ldprior) + 
+	 le_big_theta *linkprior);
+  */
+  fprintf(stderr, "PPLD|L: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
+	  ppld_givenL, numerator, denomRight, numerator + denomRight);
+
+  return(ppld_givenL);
+}
+
+
