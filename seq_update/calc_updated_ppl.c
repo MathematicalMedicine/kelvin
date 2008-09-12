@@ -25,6 +25,7 @@
 #define DPRIME_COL 1
 #define THETA_COL  2
 #define LR_COL     3
+#define POS_COL    4
 
 typedef struct {
   char name1[32],
@@ -41,7 +42,8 @@ typedef struct {
 typedef struct {
   float *dprimes,
     *thetas;
-  double lr;
+  double lr,
+    pos;
 } st_data;
 
 typedef struct {
@@ -165,9 +167,10 @@ int main (int argc, char **argv)
   }
 
   if (! marker.no_ld)
-    printf ("%34s %6s %6s %6s %6s %6s\n", " ", "PPL","LD-PPL", "PPLD|L", "PPLD", "PPLD&L");
+    printf ("%34s %8s %6s %6s %6s %6s %6s\n", " ", "Position", "PPL","LD-PPL", "PPLD|L",
+	    "PPLD", "PPLD&L");
   else
-    printf ("%34s %6s\n", " ", "PPL");
+    printf ("%34s %8s %6s\n", " ", "Position", "PPL");
 
   while ((ret = get_marker_line (&marker, fp)) != 0) {
     if ((ret = get_header_line (&marker, &data, fp)) == 0) {
@@ -209,7 +212,7 @@ int main (int argc, char **argv)
 	       datalines, lineno);
       exit (-1);
     }
-    printf ("%2d %15s %15s", marker.num, marker.name1, marker.name2);
+    printf ("%2d %15s %15s %8.4f", marker.num, marker.name1, marker.name2, data.pos);
     printf (" %6.4f", (! sexspecific) ? calc_ppl_sexavg (&dprimes, &thetas, lr) : 
 	    calc_ppl_sexspc (&dprimes, &thetas, lr));
     if (! marker.no_ld) {
@@ -968,6 +971,13 @@ int get_header_line (st_marker *marker, st_data *data, FILE *fp)
       printf ("number of lr cols %d\n", numlrcols);
 #endif
       
+    } else if ((strcasecmp (token, "Pos") == 0) || (strcasecmp (token, "Position") == 0)) {
+      /* The position column */
+      marker->datacols[marker->numcols - 1] = POS_COL;
+#ifdef DEBUG
+      printf ("position col\n");
+#endif
+      
     } else {
       /* Something else */
       marker->datacols[marker->numcols - 1] = 0;
@@ -1045,6 +1055,8 @@ int get_data_line (st_marker *marker, st_data *data, FILE *fp)
       data->thetas[thetacnt++] = (float) strtod (pa, NULL);
     } else if (marker->datacols[va] == LR_COL) {
       data->lr = strtod (pa, NULL);
+    } else if (marker->datacols[va] == POS_COL) {
+      data->pos = strtod (pa, NULL);
     }
     if (++va >= marker->numcols)
       break;
