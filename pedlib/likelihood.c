@@ -3094,7 +3094,7 @@ allocate_nucfam_het (PedigreeSet * pPedigreeList, int myNumLocus)
 	pMyNucFam->tmpNumHet[MOM] = (int *) calloc (sizeof (int), myNumLocus);
 	pMyNucFam->relatedPPairStart = (int *) calloc (sizeof (int), myNumLocus);
 	pMyNucFam->numRelatedPPair = (int *) calloc (sizeof (int), myNumLocus);
-	pMyNucFam->totalRelatedPPair = (int *) calloc (sizeof (int), myNumLocus);
+	pMyNucFam->totalRelatedPPair = (int *) calloc ((size_t) sizeof (int), myNumLocus);
       }
     }
   }
