@@ -8,10 +8,8 @@
   /* Start a thread with a timer to do the memory checks. It can afford
      to hang, while the main process cannot. */
   pthread_t statusThread;
-  if (pthread_create ( &statusThread, NULL, monitorStatus, NULL)) {
-    perror ("Failed to create status monitoring thread");
-    exit (EXIT_FAILURE);
-  }
+  if (pthread_create ( &statusThread, NULL, monitorStatus, NULL))
+    perror ("Failed to create status monitoring thread, no progress status will be displayed or written");
 
   /* Annouce ourselves for performance tracking. */
 
@@ -41,11 +39,11 @@
   swLogMsg ("Dynamic memory usage dumping is turned on, so performance will be poor!");
 #endif
 #ifdef GPROF
-  sprintf (messageBuffer, "GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.", SIGTERM, getpid ());
+  sprintf (messageBuffer, "GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
   swLogMsg (messageBuffer);
 #endif
 #ifdef GCOV
-  sprintf (messageBuffer, "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, getpid ());
+  sprintf (messageBuffer, "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
   swLogMsg (messageBuffer);
 #endif
   swStart (overallSW);
@@ -54,7 +52,7 @@
 #else
   swLogMsg ("GCC optimization disabled");
 #endif
-  fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, getpid ());
+  fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, (int) getpid ());
 
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&markerLocusList, 0, sizeof (markerLocusList));
