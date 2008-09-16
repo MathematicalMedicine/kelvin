@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include "utils.h"		/* Kelvin utilities. */
 
-#ifdef DMTRACK
+#if defined (DMTRACK) || defined (DMUSE)
 #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
 #define malloc(X) swMalloc((X), __FILE__, __LINE__)
 #define calloc(X,Y) swCalloc((X),(Y), __FILE__, __LINE__)
