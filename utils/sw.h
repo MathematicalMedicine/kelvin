@@ -42,7 +42,7 @@ void swLogMsg (char *);
 int udpSend (char *, int, char *);
 
 void *swMalloc (size_t, char *, int);
-void *swCalloc (size_t, size_t, char *, int);
+void *swCalloc (size_t, int, char *, int);
 void *swRealloc (void *, size_t, char *, int);
 void swFree (void *, char *, int);
 void swDumpHeldTotals ();
