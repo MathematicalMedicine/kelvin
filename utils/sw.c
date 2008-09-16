@@ -791,7 +791,7 @@ swDumpBlockUse ()
 #endif
 
 void *
-swCalloc (size_t count, size_t size, char *fileName, int lineNo)
+swCalloc (size_t size, int count, char *fileName, int lineNo)
 {
   void *newBlock;
   size_t totalSize;
