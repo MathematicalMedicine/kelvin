@@ -1,11 +1,36 @@
+void writePPLFileHeader () {
+  fprintf (fpPPL, "# Version %s\n", programVersion);
+  if (modelOptions.markerAnalysis != FALSE) {
+    fprintf (fpPPL, "Chr Marker1 Position1 Marker2 Position2 PPL");
+    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+      fprintf (fpPPL, " LD-PPL PPLD");
+    }
+  } else {
+    fprintf (fpPPL, "Chr Trait Marker Position PPL");
+    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+      fprintf (fpPPL, " LD-PPL PPLD");
+    }
+  }
+    fprintf (fpPPL, "\n");
+    fflush (fpPPL);
+}
+
 void writePPLFileDetail () {
 
   /* Chromosome, marker name, position, PPL */
 
   ppl = calculate_PPL (tp_result[dprime0Idx]);
-  fprintf (fpPPL, "%d %s %.4f %.*f ",
-	   pLocus2->pMapUnit->chromosome, pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-	   ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.);
+  if (modelOptions.markerAnalysis != FALSE) {
+    fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ",
+	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[SEX_AVERAGED],
+	     pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
+	     ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.);
+  } else {
+    fprintf (fpPPL, "%d %s %s %.4f %.*f ",
+	     pLocus2->pMapUnit->chromosome, pLocus1->sName,
+	     pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
+	     ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.);
+  }
   fflush (fpPPL);
   /* output LD-PPL now if needed */
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
@@ -231,7 +256,7 @@ void writeMaximizingModel(char *modelDescription, double myMOD, int myDPrimeIdx,
 
 void writeMMFileDetail() {
 
-  fprintf (fpTP, "# %-d  %s %s\n", loc2, pLocus2->sName, pLocus1->sName);
+  fprintf (fpTP, "# %-d  %s %s\n", loc2, pLocus1->sName, pLocus2->sName);
   initialFlag = 1;
   max = -99999;
   max_at_theta0 = -99999;

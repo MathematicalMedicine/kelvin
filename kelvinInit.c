@@ -330,15 +330,8 @@ KASSERT (readConfigFile (configfile)
     fpTP = fopen (maxmodelfile, "w");
     KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
     fpPPL = fopen (pplfile, "w");
-    fprintf (fpPPL, "# Version %s\n", programVersion);
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
-    fprintf (fpPPL, "Chr Marker Position PPL");
-    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      fprintf (fpPPL, " LD-PPL PPLD");
-    }
-    fprintf (fpPPL, "\n");
-    fflush (fpPPL);
-
+    writePPLFileHeader ();
     fpTP = fopen (maxmodelfile, "w");
     KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
 
