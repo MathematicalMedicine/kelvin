@@ -1,0 +1,42 @@
+# 1  disease 1_3_mrk
+Chr Marker Position MOD DPrime Theta(M,F) R2 Alpha DGF MF LC0PV(DD,Dd,dd) 
+# Overall MOD maximizing model:
+1 1_3_mrk 0.9900 0.6065 0.50 (0.5000,0.5000) 0.250 1.00 0.5000 0.5000 (0.999 0.999 0.100)
+# MOD maximizing model for theta=0:
+1 1_3_mrk 0.9900 0.5784 0.50 (0.0000,0.0000) 0.250 1.00 0.5000 0.5000 (0.999 0.999 0.100)
+# MOD maximizing model for dprime=0:
+1 1_3_mrk 0.9900 0.0000 -0.00 (0.5000,0.5000) 0.000 1.00 0.1000 0.5000 (0.100 0.000 0.000)
+# Overall LR maximizing model:
+1 1_3_mrk 0.9900 0.0510 0.50 (0.5000,0.5000)
+# LR maximizing model for theta (0, 0):
+1 1_3_mrk 0.9900 -0.0704 0.50 (0.0000,0.0000)
+# LR maximizing model for dprime=0:
+1 1_3_mrk 0.9900 0.0000 0.00 (0.0000,0.0000)
+# 2  disease 1_4_mrk
+Chr Marker Position MOD DPrime Theta(M,F) R2 Alpha DGF MF LC0PV(DD,Dd,dd) 
+# Overall MOD maximizing model:
+1 1_4_mrk 1.3200 1.3226 1.00 (0.1000,0.1000) 1.000 1.00 0.5000 0.5000 (0.999 0.600 0.300)
+# MOD maximizing model for theta=0:
+1 1_4_mrk 1.3200 1.3157 1.00 (0.0000,0.0000) 1.000 1.00 0.5000 0.5000 (0.999 0.600 0.400)
+# MOD maximizing model for dprime=0:
+1 1_4_mrk 1.3200 0.0000 -0.00 (0.5000,0.5000) 0.000 1.00 0.1000 0.5000 (0.100 0.000 0.000)
+# Overall LR maximizing model:
+1 1_4_mrk 1.3200 0.3006 1.00 (0.3000,0.3000)
+# LR maximizing model for theta (0, 0):
+1 1_4_mrk 1.3200 0.2383 1.00 (0.0000,0.0000)
+# LR maximizing model for dprime=0:
+1 1_4_mrk 1.3200 0.0000 0.00 (0.0000,0.0000)
+# 3  disease 1_5_mrk
+Chr Marker Position MOD DPrime Theta(M,F) R2 Alpha DGF MF LC0PV(DD,Dd,dd) 
+# Overall MOD maximizing model:
+1 1_5_mrk 1.9800 0.5870 1.00 (0.5000,0.5000) 0.111 1.00 0.1000 0.5000 (0.800 0.000 0.000)
+# MOD maximizing model for theta=0:
+1 1_5_mrk 1.9800 0.4984 -0.90 (0.0000,0.0000) 0.347 1.00 0.3000 0.5000 (0.999 0.999 0.500)
+# MOD maximizing model for dprime=0:
+1 1_5_mrk 1.9800 0.0243 -0.00 (0.3000,0.3000) 0.000 1.00 0.5000 0.5000 (0.900 0.000 0.000)
+# Overall LR maximizing model:
+1 1_5_mrk 1.9800 0.0169 -0.30 (0.2000,0.2000)
+# LR maximizing model for theta (0, 0):
+1 1_5_mrk 1.9800 -0.0154 -0.30 (0.0000,0.0000)
+# LR maximizing model for dprime=0:
+1 1_5_mrk 1.9800 0.0021 0.00 (0.0000,0.0000)

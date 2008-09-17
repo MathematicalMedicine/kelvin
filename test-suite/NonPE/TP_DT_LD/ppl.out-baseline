@@ -1,5 +1,5 @@
 # Version V0.36.1
-Chr Marker Position PPL LD-PPL PPLD
-1 1_3_mrk 0.9900 0.014 0.014 0.018 
-1 1_4_mrk 1.3200 0.015 0.018 0.022 
-1 1_5_mrk 1.9800 0.018 0.016 0.016 
+Chr Trait Marker Position PPL LD-PPL PPLD
+1 disease 1_3_mrk 0.9900 0.014 0.014 0.018 
+1 disease 1_4_mrk 1.3200 0.015 0.018 0.022 
+1 disease 1_5_mrk 1.9800 0.018 0.016 0.016 
