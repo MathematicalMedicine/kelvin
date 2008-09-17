@@ -515,8 +515,10 @@ The next line is a header, followed by
 one line of whitespace-delimited values for each marker in the run.
 <ol>
 <li>Chr - chromosome number
-<li>Marker - marker name
-<li>Position - position in centiMorgans
+<li>Trait/Marker1 - trait name for trait-to-marker analysis, first marker name for marker-to-marker analysis.
+<li>Position1 - first marker position in centiMorgans (not present for trait-to-marker analysis)
+<li>Marker/Marker2 - marker name for trait-to-marker analysis, second marker name for marker-to-marker analysis.
+<li>Position/Position2 - marker position in centiMorgans.
 <li>PPL - posterior probability of linkage. Evidence for or against linkage to the disease 
 locus, not allowing for disequilibrium, i.e.
 D' is fixed at 0.  It is rounded to two places if .025 or
