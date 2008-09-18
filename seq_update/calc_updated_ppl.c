@@ -1211,6 +1211,8 @@ int calc_br_sexavg(st_multidim *dprimes, st_multidim *thetas, double **lr)
   double lr_small, lr_big, lr_unlink;
   int lr_small_count, lr_big_count;
 
+  ld_small_theta = ld_big_theta = ld_unlink = 0;
+  le_small_theta = le_big_theta = le_unlink = 0;
   if ((zeros = malloc (sizeof (float) * dprimes->numdims)) == NULL) {
     fprintf (stderr, "malloc failed, %s\n", strerror (errno));
     exit (-1);
