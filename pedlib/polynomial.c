@@ -3390,6 +3390,23 @@ void polyDynamicStatistics (char *title)
   return;
 }
 
+/* 
+   This is weighted to the high-end because although there
+   are more short term lists, they are handled proportionately
+   less often. This shifting approach is significantly faster
+   than inequality comparison or masking when compiled without
+   optimization, and only slightly slower when optimized.
+*/
+int hi16Bit (unsigned short value) {
+  int i;
+  for (i=15; i>0; i--)
+    if (value & 0x8000)
+      break;
+    else
+      value <<= 1;
+  return i;
+}
+
 /*
  This function prints out polynomial statistic information.  It is mainly used for
  performance evaluation and debugging. */
@@ -3398,6 +3415,8 @@ void polyStatistics (char *title)
   long constantSize, variableSize, sumSize, productSize, functionCallSize;
   double grandTotal;
   int sumTerms = 0, productTerms = 0, maxSumTerms = 0, maxProductTerms = 0;
+  int sumTermCounts[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 
+    productTermCounts[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   int constantHashSize = 0, constantHashPeak = 0, variableHashSize = 0, variableHashPeak = 0, sumHashSize = 0, sumHashPeak = 0, productHashSize = 0, productHashPeak = 0, functionCallHashSize = 0, functionCallHashPeak = 0;
   int i;
 
@@ -3420,12 +3439,14 @@ void polyStatistics (char *title)
   variableSize = variableCount * (sizeof (Polynomial) + sizeof (struct variablePoly));
   sumSize = sumCount * (sizeof (Polynomial) + sizeof (struct sumPoly));
   for (i = 0; i < sumCount; i++) {
+    sumTermCounts[hi16Bit(sumList[i]->e.s->num)]++;
     sumTerms += sumList[i]->e.s->num;
     if (sumList[i]->e.s->num > maxSumTerms)
       maxSumTerms = sumList[i]->e.s->num;
   }
   productSize = productCount * (sizeof (Polynomial) + sizeof (struct productPoly));
   for (i = 0; i < productCount; i++) {
+    productTermCounts[hi16Bit(productList[i]->e.p->num)]++;
     productTerms += productList[i]->e.p->num;
     if (productList[i]->e.p->num > maxProductTerms)
       maxProductTerms = productList[i]->e.p->num;
@@ -3434,6 +3455,12 @@ void polyStatistics (char *title)
 
   fprintf (stderr, "Term count(avg): s=%d(%d), p=%d(%d), ", sumTerms, sumTerms / (sumCount ? sumCount : 1), productTerms, productTerms / (productCount ? productCount : 1));
   fprintf (stderr, "sizes (w/terms): c=%ld, s=%ld, p=%ld, f=%ld\n", constantSize, sumSize + (sumTerms * (sizeof (Polynomial *) + sizeof (double))), productSize + (productTerms * (sizeof (Polynomial *) + sizeof (int))), functionCallSize);
+  fprintf (stderr, "Sum term dist <2^n: ");
+  for (i=0; i<16; i++)
+    fprintf (stderr, "%d=%d%s", i, sumTermCounts[i], i<15? "," : "\n");
+  fprintf (stderr, "Product term dist <2^n: ");
+  for (i=0; i<16; i++)
+    fprintf (stderr, "%d=%d%s", i, productTermCounts[i], i<15? "," : "\n");
 
   constantHashSize = CONSTANT_HASH_SIZE * sizeof (struct hashStruct);
   for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
