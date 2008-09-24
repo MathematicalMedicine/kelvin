@@ -114,7 +114,7 @@ while (1) {
 		(($key eq 'BayesRatio') || ($key eq 'PPL')) and next;
 		(($options{relax} == 1) && ($key eq 'Position')) and next;
 		$va = $files[0]{cmpheaders}{$key};
-		($files[0]{flds}[$va] eq $$href{flds}[$va])
+		(same_value ($files[0]{flds}[$va], $$href{flds}[$va]))
 		    or die ("file '$$href{name}', line $$href{lineno}, ".
 			    "expected $files[0]{flds}[$va] in field '$key'\n");
 	    }
@@ -240,8 +240,22 @@ sub get_next_line
 		$$f{cmpheaders}{$headers[$va]} = $keepers;
 		$keepers++;
 
-	    } elsif ($base =~ /(D\d\d|Theta|Position)/i) {
-		# D-Prime, Theta, Position or PPL fields we need to keep.
+	    } elsif ($base =~ /^D\d\d$/) {
+		# D-Prime fields we need to keep.
+		$$f{regex} .= '([\-\d\.]+) ';
+		$$f{fmt} .= '%.2f ';
+		$$f{cmpheaders}{$headers[$va]} = $keepers;
+		$keepers++;
+		
+	    } elsif ($base eq 'Position') {
+		# Position fields we need to keep.
+		$$f{regex} .= '([\-\d\.]+) ';
+		$$f{fmt} .= '%.4f ';
+		$$f{cmpheaders}{$headers[$va]} = $keepers;
+		$keepers++;
+		
+	    } elsif ($base eq 'Theta') {
+		# Theta fields we need to keep.
 		if ($numexts > 0) {
 		    $$f{regex} .= '(\(' . '[\-\d\.]+' . ',[\-\d\.]+' x ($numexts-1) . '\)) ';
 		} else {
@@ -291,6 +305,30 @@ sub get_next_line
 	$$f{linetype} = 'data';
     } else {
 	die ("file '$$f{name}', line $$f{lineno}, can't identify line type\n");
+    }
+    return (1);
+}
+
+
+sub same_value
+{
+    my ($a, $b) = @_;
+    my (@a, @b);
+
+    $a =~ s/[\(\)\s]//g;
+    $b =~ s/[\(\)\s]//g;
+    @a = split (/,/, $a);
+    @b = split (/,/, $b);
+    (scalar (@a) == scalar (@b)) or return (undef);
+    while (($a = shift (@a)) && ($b = shift (@b))) {
+	if ($a =~ /[\-\d\.]+(?:[Ee][\+\-]\d+)?/) {
+	    ($b =~ /[\-\d\.]+(?:[Ee][\+\-]\d+)?/) or return (undef);
+	    ($a == $b) or return (undef);
+	} elsif ($b =~ /[\-\d\.]+(?:[Ee][\+\-]\d+)/) {
+	    return (undef);
+	} else {
+	    ($a eq $b) or return (undef);
+	}
     }
     return (1);
 }

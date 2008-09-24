@@ -186,7 +186,7 @@ if ($version eq 'unknown') {
     }
 }
 
-print ("# Version V$current (converted from V$version)\n");
+print ("# Version V$current (converted from ". (($version eq "unknown") ? "" : "V"). "$version)\n");
 while (1) {
 
     if ($line =~ /^\#/) {
@@ -243,7 +243,7 @@ sub pre_0_35_0 {
 	if ($str =~ /^D\d\d/) {
 	    push (@dprimes, $str);
 	    $mapped{$str}{idx} = [ $va ];
-	    $mapped{$str}{fmt} = '%s ';
+	    $mapped{$str}{fmt} = '%.2f ';
 	    $data_regex .= '([\-\d\.]+) ';
 
 	} elsif ($str eq "DPRIME") {
@@ -251,7 +251,7 @@ sub pre_0_35_0 {
 	    (exists ($mapped{"D11"}))
 		and die ("$0: multiple 'DPrime' columns in header at line $lineno\n");
 	    $mapped{D11}{idx} = [ $va ];
-	    $mapped{D11}{fmt} = '%s ';
+	    $mapped{D11}{fmt} = '%.2f ';
 	    $data_regex .= '([\-\d\.]+) ';
 
 	} elsif ($str eq "THETA(M,F)") {
@@ -264,7 +264,7 @@ sub pre_0_35_0 {
 
 	} elsif ($str =~ /^(AVG_?LR|BR)$/) {
 	    $mapped{"BayesRatio"}{idx} = [ $va ];
-	    $mapped{"BayesRatio"}{fmt} = '%s ';
+	    $mapped{"BayesRatio"}{fmt} = '%e ';
 	    $data_regex .= '([\-\d\.]+(?:[eE][\+\-]\d+)?) ';
 
 	} elsif ($str eq "AVGLR(COUNT)") {
@@ -274,27 +274,27 @@ sub pre_0_35_0 {
 
 	} elsif (($str eq "MAX_HLOD") || ($str eq "MOD")) {
 	    $mapped{"MOD"}{idx} =  [$va ];
-	    $mapped{"MOD"}{fmt} = '%s ';
+	    $mapped{"MOD"}{fmt} = '%.4f ';
 	    $data_regex .= '([\-\d\.]+) ';
 
 	} elsif ($str eq "R2") {
 	    $mapped{"R2"}{idx} = [ $va ];
-	    $mapped{"R2"}{fmt} = '%s ';
+	    $mapped{"R2"}{fmt} = '%.4f ';
 	    $data_regex .= '([\-\d\.]+) ';
 
 	} elsif ($str eq "ALPHA") {
 	    $mapped{"Alpha"}{idx} = [ $va ];
-	    $mapped{"Alpha"}{fmt} = '%s ';
+	    $mapped{"Alpha"}{fmt} = '%.2f ';
 	    $data_regex .= '([\d\.]+) ';
 
 	} elsif ($str eq "DGF") {
 	    $mapped{"DGF"}{idx} = [ $va ];
-	    $mapped{"DGF"}{fmt} = '%s ';
+	    $mapped{"DGF"}{fmt} = '%.4f ';
 	    $data_regex .= '([\d\.]+) ';
 
 	} elsif ($str eq "MF") {
 	    $mapped{"MF"}{idx} = [ $va ];
-	    $mapped{"MF"}{fmt} = '%s ';
+	    $mapped{"MF"}{fmt} = '%.4f ';
 	    $data_regex .= '([\d\.]+) ';
 
 	} elsif (($str eq "PEN_VECTOR") || ($str eq "PEN_DD")) {
@@ -339,7 +339,7 @@ sub pre_0_35_0 {
 	    
 	} elsif ($str =~ /^POS(ITION)?/) {
 	    $mapped{"Position"}{idx} = [ $va ];
-	    $mapped{"Position"}{fmt} = '%s ';
+	    $mapped{"Position"}{fmt} = '%.4f ';
 	    $data_regex .= '([\d\.]+) ';
 	    
 	} elsif ($str eq "PPL") {
@@ -408,18 +408,22 @@ sub pre_0_35_0 {
 }
 
 
+# V0.35.0 -> V0.36.1 : Add a position column to two-point files
 sub ver_0_35_0
 {
     my ($line) = @_;
 
     if ($line =~ /Position/) {
+	#   If there's already a Position column (there will be in multi-point files),
+	#   then we do nothing
 	$append_pos = 0;
 	$header = $line;
 	$data_regex = '(\S.*\S)';
 	$data_fmt = "%s\n";
 	@fld_idxs = (0);
     } else {
-	# This should be redundant with the first-line logic, above
+	#   Otherwise, splice in a Position column just after the Chr column
+	#   This next bit should be redundant with the first-line logic, above
 	$append_pos = 1;
 	($header = $line) =~ s/(Chr)\s+(\S.*)/$1 Position $2/;
 	$data_regex = '(\d+)\s+(\S.*)';

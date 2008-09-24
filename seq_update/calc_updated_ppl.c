@@ -26,6 +26,7 @@
 #define THETA_COL  2
 #define LR_COL     3
 #define POS_COL    4
+#define CHR_COL    5
 
 typedef struct {
   char name1[32],
@@ -44,6 +45,7 @@ typedef struct {
     *thetas;
   double lr,
     pos;
+  int chr;
 } st_data;
 
 typedef struct {
@@ -69,6 +71,7 @@ double cutoff = 0.05;  /* -c theta cutoff */
 
 /* Globally available for error messages */
 int lineno = 0;
+char *current = "0.36.1";
 
 /* global variables to facilitate posterior probability calculations */
 double ld_small_theta, ld_big_theta, ld_unlink;
@@ -87,6 +90,7 @@ double calc_ppld_given_linkage_sexspc (st_multidim *dprimes, st_multidim *thetas
 double calc_ppld_and_linkage_sexavg ();
 
 int parse_command_line (int argc, char **argv);
+int get_version_line (char *str, FILE *fp);
 int get_marker_line (st_marker *marker, FILE *fp);
 int get_header_line (st_marker *marker, st_data *data, FILE *fp);
 int get_data_line (st_marker *marker, st_data *data, FILE *fp);
@@ -104,6 +108,7 @@ int main (int argc, char **argv)
   st_data data;
   st_multidim dprimes, thetas;
   double **lr;
+  char version[32];
 
   argidx = parse_command_line (argc, argv);
   if (argidx >= argc) {
@@ -114,7 +119,18 @@ int main (int argc, char **argv)
     fprintf (stderr, "open '%s' failed, %s\n", argv[argidx], strerror (errno));
     exit (-1);
   }
-  
+  if (get_version_line (version, fp) == -1) {
+    if (strlen (version) == 0) {
+      fprintf (stderr, "no version information in '%s', please convert to at least V%s\n",
+	       argv[argidx], current);
+    } else {
+      fprintf (stderr, "'%s' is version V%s, please convert to at least V%s\n",
+	       argv[argidx], version, current);
+    }
+    exit (-1);
+  }
+  printf ("# Version V%s\n", version);
+
   memset (&marker, 0, sizeof (st_marker));
   memset (&dprimes, 0, sizeof (st_multidim));
   memset (&thetas, 0, sizeof (st_multidim));
@@ -165,12 +181,12 @@ int main (int argc, char **argv)
       exit (-1);
     }
   }
-
+  
   if (! marker.no_ld)
-    printf ("%34s %8s %6s %6s %6s %6s %6s\n", " ", "Position", "PPL","LD-PPL", "PPLD|L",
-	    "PPLD", "PPLD&L");
+    printf ("Chr Seq %15s %8s %6s %6s %6s %6s %6s\n", "Marker", "Position", 
+	    "PPL","LD-PPL", "PPLD|L", "PPLD", "PPLD&L");
   else
-    printf ("%34s %8s %6s\n", " ", "Position", "PPL");
+    printf ("Chr Seq %15s %8s %6s\n", "Marker", "Position", "PPL");
 
   while ((ret = get_marker_line (&marker, fp)) != 0) {
     if ((ret = get_header_line (&marker, &data, fp)) == 0) {
@@ -212,7 +228,7 @@ int main (int argc, char **argv)
 	       datalines, lineno);
       exit (-1);
     }
-    printf ("%2d %15s %15s %8.4f", marker.num, marker.name1, marker.name2, data.pos);
+    printf ("%3d %3d %15s %8.4f", data.chr, marker.num, marker.name2, data.pos);
     printf (" %6.4f", (! sexspecific) ? calc_ppl_sexavg (&dprimes, &thetas, lr) : 
 	    calc_ppl_sexspc (&dprimes, &thetas, lr));
     if (! marker.no_ld) {
@@ -830,6 +846,33 @@ int parse_command_line (int argc, char **argv)
 }
 
 
+int get_version_line (char *str, FILE *fp)
+{
+  char buff[256];
+  int major, minor, patch, fileverno, curverno;
+  
+  if (fgets (buff, 256, fp) == NULL) {
+    if (feof (fp))
+      return (0);
+    fprintf (stderr, "read error at line %d, %s\n", lineno, strerror (errno));
+    exit (-1);
+  }
+  lineno++;
+
+  sscanf (current, "%d.%d.%d", &major, &minor, &patch);
+  curverno = major * 100000 + minor * 1000 + patch;
+
+  str[0] = '\0';
+  if (sscanf (buff, "# Version V%d.%d.%d", &major, &minor, &patch) != 3)
+    return (-1);
+  sprintf (str, "%d.%d.%d", major, minor, patch);
+  fileverno = major * 100000 + minor * 1000 + patch;
+  if (fileverno < curverno)
+    return (-1);
+  return (0);
+}
+
+
 int get_marker_line (st_marker *marker, FILE *fp)
 {
   char buff[256];
@@ -842,10 +885,6 @@ int get_marker_line (st_marker *marker, FILE *fp)
     exit (-1);
   }
   lineno++;
-
-  /* A cheap hack to skip a leading version line */
-  if (strncmp (buff, "# Version", 9) == 0)
-    return (get_marker_line (marker, fp));
 
   if (((pa = strtok_r (buff, " \t\n", &pb)) == NULL) ||
       (strcmp (pa, "#") != 0))
@@ -978,6 +1017,13 @@ int get_header_line (st_marker *marker, st_data *data, FILE *fp)
       printf ("position col\n");
 #endif
       
+    } else if ((strcasecmp (token, "Chr") == 0) || (strcasecmp (token, "Chromosome") == 0)) {
+      /* The chromosome column */
+      marker->datacols[marker->numcols - 1] = CHR_COL;
+#ifdef DEBUG
+      printf ("chromosome col\n");
+#endif
+      
     } else {
       /* Something else */
       marker->datacols[marker->numcols - 1] = 0;
@@ -1009,6 +1055,13 @@ int get_header_line (st_marker *marker, st_data *data, FILE *fp)
     fprintf (stderr, "malloc failed, %s\n", strerror (errno));
     exit (-1);
   }
+
+#ifdef DEBUG
+  for (numlrcols = 0; numlrcols < marker->numcols; numlrcols++) {
+    printf ("col %d is type %d\n", numlrcols, marker->datacols[numlrcols]);
+  }
+#endif
+
   return (1);
 }
 
@@ -1057,6 +1110,8 @@ int get_data_line (st_marker *marker, st_data *data, FILE *fp)
       data->lr = strtod (pa, NULL);
     } else if (marker->datacols[va] == POS_COL) {
       data->pos = strtod (pa, NULL);
+    } else if (marker->datacols[va] == CHR_COL) {
+      data->chr = (int) strtol (pa, NULL, 10);
     }
     if (++va >= marker->numcols)
       break;
@@ -1072,6 +1127,19 @@ int get_data_line (st_marker *marker, st_data *data, FILE *fp)
    */
   if (marker->no_ld) 
     data->dprimes[0] = 0;
+
+#ifdef DEBUG
+  printf ("%5d: chr %2d, pos %6.4f, dprimes", lineno, data->chr, data->pos);
+  for (va = 0; va < dprimecnt; va++) {
+    printf (" %5.2f", data->dprimes[va]);
+  }
+  printf (", thetas");
+  for (va = 0; va < thetacnt; va++) {
+    printf (" %5.2f", data->thetas[va]);
+  }
+  printf (", BR %8.6e\n", data->lr);
+#endif
+
   return (1);
 }
 
