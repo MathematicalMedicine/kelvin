@@ -1,3 +1,5 @@
+#define MIN_USE_SSD 10
+
 /**
 @file polynomial.c
 
@@ -341,6 +343,9 @@ struct polySource
 int polySourceCount = 0;
 int originalChildren[MAXPOLYSOURCES];
 #endif
+
+int importedTerms = 0, exportedDroppedTerms = 0, exportedWrittenTerms = 0, peakInMemoryTerms = 0;
+
 
 
 /**
@@ -461,6 +466,7 @@ double doEvaluateValue (Polynomial * p)
      * Add the values of the terms weighted by their coefficients. */
   case T_SUM:
     result = 0;
+    importTermList(p);
     sP = p->e.s;
     for (i = 0; i < sP->num; i++) {
       if (sP->factor[i] == 1)
@@ -468,6 +474,7 @@ double doEvaluateValue (Polynomial * p)
       else
         result += doEvaluateValue (sP->sum[i]) * sP->factor[i];
     }
+    exportTermList(p, FALSE);
     p->value = result;
     p->valid |= VALID_EVAL_FLAG;
     return result;
@@ -1270,6 +1277,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       break;
     case T_SUM:        // The term is a sum
       // Fold the components of the sum subpolynomial up into this sum polynomial
+      importTermList (p1);
       for (l = 0; l < p1->e.s->num; l++) {
         switch (p1->e.s->sum[l]->eType) {
 	case T_OFFLINE:
@@ -1293,6 +1301,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
           exit (EXIT_FAILURE);
         }
       }
+      exportTermList (p1, FALSE);
       break;
     case T_FREED:      // The term being referenced has been freed!
       fprintf (stderr, "In plusExp, polynomial term %d was freed:\n", i);
@@ -1385,6 +1394,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
         sIndex = sumHash[hIndex].index[i];
         if (counterSum == sumList[sIndex]->e.s->num) {
           // Compare the two sums term-by-term
+	  importTermList (sumList[sIndex]);
           for (k = 0; k < counterSum; k++) {
             // If the terms are identical, compare their factors
             if (pSum[k] == sumList[sIndex]->e.s->sum[k]) {
@@ -1395,6 +1405,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
             } else
               break;
           }
+	  exportTermList (sumList[sIndex], FALSE);
           if (k >= counterSum) {
             sumList[sIndex]->valid |= VALID_REF_FLAG;
             sumHashHits++;
@@ -1455,8 +1466,10 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     }
     // Free the memory of the first polynomial in the parameter list
     sum1stTermsFreedCount++;
+#ifndef MIN_USE_SSD
     free (p0->e.s->sum);
     free (p0->e.s->factor);
+#endif
     free (p0->e.s);
 #ifdef FREEDEBUG
     p0->value = -sumList[i]->eType;
@@ -1568,6 +1581,11 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       fprintf (stderr, "\n");
     }
   }
+  if (sP->num >= MIN_USE_SSD)
+    importedTerms++; // Because the following export is unpaired...
+  if ((importedTerms-(exportedWrittenTerms+exportedDroppedTerms)) > peakInMemoryTerms)
+    peakInMemoryTerms = importedTerms-(exportedWrittenTerms+exportedDroppedTerms);
+  exportTermList (rp, TRUE);
   return polyReturnWrapper (rp);
 };
 
@@ -1741,9 +1759,11 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       continue;
     } else {
       if (p1->eType == T_SUM && p1->e.s->num == 1) {    // A sum with only one item?
-
-        factor *= pow (p1->e.s->factor[0], e1);
-        p1 = p1->e.s->sum[0];
+	Polynomial *q = p1;
+	importTermList (q);
+	factor *= pow (p1->e.s->factor[0], e1);
+	p1 = p1->e.s->sum[0];
+	exportTermList (q, FALSE);
       }
       /* If this operand is a variable, a sum that has more than one items, or a function call, 
        * we directly collect it.  If this operand is a product, we then collect each term of it. */
@@ -1756,7 +1776,9 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         collectProductTerms (&exponent_v2, &p_v2, &counter_v2, &containerLength_v2, e1, p1);
         break;
       case T_SUM:
-        collectProductTerms (&exponent_s2, &p_s2, &counter_s2, &containerLength_s2, e1, p1);
+	importTermList (p1);
+	collectProductTerms (&exponent_s2, &p_s2, &counter_s2, &containerLength_s2, e1, p1);
+	exportTermList (p1, FALSE);
         break;
       case T_FUNCTIONCALL:
         collectProductTerms (&exponent_f2, &p_f2, &counter_f2, &containerLength_f2, e1, p1);
@@ -1773,7 +1795,9 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
             collectProductTerms (&exponent_v2, &p_v2, &counter_v2, &containerLength_v2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
             break;
           case T_SUM:
+	    importTermList (p1->e.p->product[l]);
             collectProductTerms (&exponent_s2, &p_s2, &counter_s2, &containerLength_s2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
+	    exportTermList (p1->e.p->product[l], FALSE);
             break;
           case T_FUNCTIONCALL:
             collectProductTerms (&exponent_f2, &p_f2, &counter_f2, &containerLength_f2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
@@ -2360,12 +2384,14 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     if (p->valid & VALID_EVAL_FLAG)
       break;
 
+    importTermList (p);
     for (i = 0; i < p->e.s->num; i++) {
       if (p->e.s->sum[i]->eType == T_OFFLINE) importPoly (p->e.s->sum[i]);
       if (p->e.s->sum[i]->eType != T_CONSTANT && (!(p->e.s->sum[i]->valid & VALID_EVAL_FLAG))) {
         doPolyListSorting (p->e.s->sum[i], l);
       }
     }
+    exportTermList (p, FALSE);
     polyListAppend (l, p);
     break;
 
@@ -2487,6 +2513,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
       //Sum up all the items in a sum
     case T_SUM:
       pV = 0;
+      importTermList (p);
       sP = p->e.s;
       for (i = 0; i < sP->num; i++) {
         if (sP->factor[i] == 1)
@@ -2494,6 +2521,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
         else
           pV += sP->sum[i]->value * sP->factor[i];
       }
+      exportTermList (p, FALSE);
       p->value = pV;
       break;
 
@@ -3042,9 +3070,11 @@ void doPrintSummaryPoly (Polynomial * p, int currentTier)
   case T_EXTERNAL:
     break;
   case T_SUM:
+    importTermList (p);
     for (i = 0; i < p->e.s->num; i++) {
       doPrintSummaryPoly (p->e.s->sum[i], currentTier + 1);
     }
+    exportTermList (p, FALSE);
     break;
   case T_PRODUCT:
     for (i = 0; i < p->e.p->num; i++) {
@@ -3120,10 +3150,12 @@ void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
     break;
   case T_SUM:
     fprintf (diGraph, "%d [label=\"+\"];\n", p->id);
+    importTermList (p);
     for (i = 0; i < p->e.s->num; i++) {
       doWritePolyDigraph (p->e.s->sum[i], diGraph);
       fprintf (diGraph, "%d -> %d;\n", p->id, p->e.s->sum[i]->id);
     }
+    exportTermList (p, FALSE);
     break;
   case T_PRODUCT:
     fprintf (diGraph, "%d [label=\"*\"];\n", p->id);
@@ -3191,6 +3223,7 @@ void expPrinting (Polynomial * p)
   case T_SUM:
     if (p->e.s->num > 1)
       fprintf (stderr, "(");
+    importTermList (p);
     if (p->e.s->factor[0] != 1)
       fprintf (stderr, "%G*", p->e.s->factor[0]);
     expPrinting (p->e.s->sum[0]);
@@ -3200,6 +3233,7 @@ void expPrinting (Polynomial * p)
         fprintf (stderr, "%G*", p->e.s->factor[i]);
       expPrinting (p->e.s->sum[i]);
     }
+    exportTermList (p, FALSE);
     if (p->e.s->num > 1)
       fprintf (stderr, ")");
     break;
@@ -3267,12 +3301,14 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
     if (p->e.s->factor[0] != 1)
       fprintf (output, "%G*", p->e.s->factor[0]);
     expTermPrinting (output, p->e.s->sum[0], depth - 1);
+    importTermList (p);
     for (i = 1; i < p->e.s->num; i++) {
       fprintf (output, "+");
       if (p->e.s->factor[i] != 1)
         fprintf (output, "%G*", p->e.s->factor[i]);
       expTermPrinting (output, p->e.s->sum[i], depth - 1);
     }
+    exportTermList (p, FALSE);
     fprintf (output, ")");
     break;
   case T_PRODUCT:
@@ -3710,10 +3746,16 @@ void doKeepPoly (Polynomial * p)
   case T_EXTERNAL:
     break;
   case T_SUM:
-  case T_PRODUCT:
-  case T_FUNCTIONCALL:
+    importTermList (p);
     for (i = 0; i < p->e.s->num; i++) {
       doKeepPoly (p->e.s->sum[i]);
+    }
+    exportTermList (p, FALSE);
+    break;
+  case T_PRODUCT:
+  case T_FUNCTIONCALL:
+    for (i = 0; i < p->e.p->num; i++) {
+      doKeepPoly (p->e.p->product[i]);
     }
     break;
   case T_FREED:
@@ -3762,11 +3804,18 @@ void doHoldPoly (Polynomial * p)
     p->count++;
     break;
   case T_SUM:
-  case T_PRODUCT:
-  case T_FUNCTIONCALL:
+    importTermList (p);
     p->count++;
     for (i = 0; i < p->e.s->num; i++) {
       doHoldPoly (p->e.s->sum[i]);
+    }
+    exportTermList (p, FALSE);
+    break;
+  case T_PRODUCT:
+  case T_FUNCTIONCALL:
+    p->count++;
+    for (i = 0; i < p->e.p->num; i++) {
+      doHoldPoly (p->e.p->product[i]);
     }
     break;
   default:
@@ -3778,6 +3827,11 @@ void doHoldPoly (Polynomial * p)
 
 void holdPoly (Polynomial * p)
 {
+#ifdef MIN_USE_SSD
+  fprintf (stderr, "SSD sum terms imported/+written-dropped exported: %d/+%d-%d, peak in-memory: %d\n",
+	   importedTerms, exportedWrittenTerms, exportedDroppedTerms, peakInMemoryTerms);
+#endif
+
   holdPolyCount++;
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Into holdPoly\n");
@@ -3811,11 +3865,18 @@ void doUnHoldPoly (Polynomial * p)
     p->count--;
     break;
   case T_SUM:
+    p->count--;
+    importTermList (p);
+    for (i = 0; i < p->e.s->num; i++) {
+      doUnHoldPoly (p->e.s->sum[i]);
+    }
+    exportTermList (p, FALSE);
+    break;
   case T_PRODUCT:
   case T_FUNCTIONCALL:
     p->count--;
-    for (i = 0; i < p->e.s->num; i++) {
-      doUnHoldPoly (p->e.s->sum[i]);
+    for (i = 0; i < p->e.p->num; i++) {
+      doUnHoldPoly (p->e.p->product[i]);
     }
     break;
   default:
@@ -4003,8 +4064,10 @@ void doFreePolys (unsigned short keepMask)
           k++;
         } else {
           sumFreedCount++;
+#ifndef MIN_USE_SSD
           free (sumList[i]->e.s->sum);
           free (sumList[i]->e.s->factor);
+#endif
           free (sumList[i]->e.s);
 #ifndef FREEDEBUG
           free (sumList[i]);
@@ -4163,6 +4226,54 @@ void freeKeptPolys ()
   return;
 }
 
+void importTermList (Polynomial * p)
+{
+#ifdef MIN_USE_SSD
+  struct sumPoly *sP;
+
+  if (p->eType != T_SUM)
+    return;
+
+  sP = (struct sumPoly *) p->e.s;
+
+  if (sP->num < MIN_USE_SSD)
+    return;
+
+  /* This is how I repaired purposeful damage. */
+  if ((unsigned long) sP->sum & 0x8000000000000000) {
+    sP->sum = (void *) ((unsigned long) sP->sum & ~0x8000000000000000);
+    importedTerms++;
+    if ((importedTerms-(exportedWrittenTerms+exportedDroppedTerms)) > peakInMemoryTerms)
+      peakInMemoryTerms = importedTerms-(exportedWrittenTerms+exportedDroppedTerms);
+  }
+#endif
+}
+
+void exportTermList (Polynomial * p, int writeFlag)
+{
+#ifdef MIN_USE_SSD
+  struct sumPoly *sP;
+
+  if (p->eType != T_SUM)
+    return;
+
+  sP = (struct sumPoly *) p->e.s;
+
+  if (sP->num < MIN_USE_SSD)
+    return;
+
+  /* This how I purposefully damaged the sum pointer to be
+     absolutely sure that I was catching all cases. */
+  if (!((unsigned long) sP->sum & 0x8000000000000000)) {
+    sP->sum = (void *) ((unsigned long) sP->sum | 0x8000000000000000);
+    if (writeFlag)
+      exportedWrittenTerms++;
+    else
+      exportedDroppedTerms++;
+  }
+#endif
+}
+
 /* Serialize and compress a polynomial and all subpolys for transfer
    Addresses can be left as-is since we'll create a translation table when we
    reload, and compression will eliminate any temporary inefficiency of size. */
@@ -4260,7 +4371,8 @@ int loadPolyDL (Polynomial * p)
   int i = 0;
   char polynomialFileName[MAX_PFN_LEN+1];
 
-  sprintf (polynomialFileName, "%s.so", p->e.e->polynomialFunctionName);
+  //  sprintf (polynomialFileName, "%s.so", p->e.e->polynomialFunctionName);
+  sprintf (polynomialFileName, "./%s.so", p->e.e->polynomialFunctionName);
   if ((p->e.e->polynomialFunctionHandle[0] = 
        /* DO NOT USE RTLD_GLOBAL, as it for some reason doesn't actually set the input
 	  variables when they are assigned in the DLs. I need to research this. */
@@ -4407,6 +4519,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
       srcSize += fprintf (srcCalledFile, "\t%s[%d] = ", eTypes[p->eType], sumsUsed);
       sP = p->e.s;
       totalInternalSize += sizeof (struct sumPoly) + sP->num * (sizeof (Polynomial *) + sizeof (double *));
+      importTermList (p);
       for (i = 0; i < sP->num; i++) {
 	if (sP->sum[i]->eType == T_OFFLINE) importPoly (sP->sum[i]);
         if (i != 0)
@@ -4420,6 +4533,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
             srcSize += fprintf (srcCalledFile, "%.*g*%s[%lu]", DBL_DIG, sP->factor[i], eTypes[sP->sum[i]->eType], (unsigned long) sP->sum[i]->value /* actually <whatever>Used */ );
         }
       }
+      exportTermList (p, FALSE);
       p->value = sumsUsed++;
       break;
 
@@ -4517,7 +4631,8 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 #ifdef POLYCOMP_DL
   char command[256];
   pushStatus ("compile poly");
-  sprintf (command, "time gcc -g -I/home/whv001/kelvin/trunk/include -O -fPIC -shared -o %s.so %s* >& %s.out", name, name, name);
+  // sprintf (command, "time gcc -g -I/home/whv001/kelvin/trunk/include -O -fPIC -shared -o %s.so %s* >& %s.out", name, name, name);
+  sprintf (command, "source /home/whv001/kit/bin/compile.sh %s", name);
   int status;
   if ((status = system (command)) != 0) {
     perror ("system()");
