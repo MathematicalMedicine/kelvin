@@ -315,7 +315,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
       #endif
     #endif
   #endif
-	    }
+	    } else
+	      fprintf (stdout, "\nSkipping generation of DL for %s...\n", polynomialFunctionName);
 #endif
 	    // Notice we are normally holding only the external (compiled) poly!
 	    holdPoly (pPedigree->likelihoodPolynomial);
