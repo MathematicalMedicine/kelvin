@@ -330,5 +330,7 @@ Polynomial *restoreExternalPoly (char * name);
 int loadPolyDL (Polynomial * p);
 Polynomial * exportPoly (Polynomial * p);
 Polynomial * importPoly (Polynomial * p);
+void importTermList (Polynomial * p);
+void exportTermList (Polynomial * p, int writeFlag);
 void thrashingCheck ();
 void releaseExternalPoly (Polynomial *);
