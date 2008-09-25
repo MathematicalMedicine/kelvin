@@ -4344,7 +4344,7 @@ void exportTermList (Polynomial * p, int writeFlag)
       // ...and it's in allocated (discontiguous) memory
       double buffer[MAX_SSD_BUFFER];
 
-      if (sP->num > (MAX_SSD_BUFFER / (16 * 2))) {
+      if (sP->num > (MAX_SSD_BUFFER / 2)) {
 	fprintf (stderr, "MAX_SSD_BUFFER of %d is too small for request for %d double pairs\n",
 		 MAX_SSD_BUFFER, sP->num);
 	exit (EXIT_FAILURE);
