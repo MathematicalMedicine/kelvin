@@ -1,4 +1,4 @@
-#define MIN_USE_SSD 10
+#define MIN_USE_SSD 20
 
 /**
 @file polynomial.c
@@ -132,6 +132,10 @@
 
 #ifndef POLYCOMP_DL
 #undef POLYCHECK_DL
+#endif
+
+#ifdef MIN_USE_SSD
+#include "sSDHandler.h"
 #endif
 
 #ifdef _OPENMP
@@ -345,6 +349,11 @@ int originalChildren[MAXPOLYSOURCES];
 #endif
 
 int importedTerms = 0, exportedDroppedTerms = 0, exportedWrittenTerms = 0, peakInMemoryTerms = 0;
+
+struct inMemoryTermList {
+  struct chunkTicket cT;
+  double buffer[8192];
+} iMTL[32];
 
 
 
@@ -1469,6 +1478,8 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
 #ifndef MIN_USE_SSD
     free (p0->e.s->sum);
     free (p0->e.s->factor);
+#else
+    deportTermList (p0);
 #endif
     free (p0->e.s);
 #ifdef FREEDEBUG
@@ -1507,6 +1518,9 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     sP->sum[i]->valid |= VALID_REF_FLAG;
   }
   // Assign values to some attributes of the sum polynomial
+#ifdef MIN_USE_SSD
+  sP->iMTLIndex = -1;
+#endif
   rp->e.s = sP;
   rp->key = key;
   rp->valid = 0;
@@ -2646,6 +2660,12 @@ void polynomialInitialization ()
 
   evaluatePolySW = swCreate ("evaluatePoly");
   evaluateValueSW = swCreate ("evaluateValue");
+
+#ifdef MIN_USE_SSD
+  initSSD ();
+  for (i=0; i<32; i++)
+    iMTL[i].cT.doublePairCount = 0;
+#endif
 
   /* Scale all initial and growth sizes up by the polynomial scale (default 10) */
 
@@ -3827,11 +3847,6 @@ void doHoldPoly (Polynomial * p)
 
 void holdPoly (Polynomial * p)
 {
-#ifdef MIN_USE_SSD
-  fprintf (stderr, "SSD sum terms imported/+written-dropped exported: %d/+%d-%d, peak in-memory: %d\n",
-	   importedTerms, exportedWrittenTerms, exportedDroppedTerms, peakInMemoryTerms);
-#endif
-
   holdPolyCount++;
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Into holdPoly\n");
@@ -4067,6 +4082,8 @@ void doFreePolys (unsigned short keepMask)
 #ifndef MIN_USE_SSD
           free (sumList[i]->e.s->sum);
           free (sumList[i]->e.s->factor);
+#else
+	  deportTermList (sumList[i]);
 #endif
           free (sumList[i]->e.s);
 #ifndef FREEDEBUG
@@ -4208,6 +4225,13 @@ void doFreePolys (unsigned short keepMask)
    of freeing without much to show for it. */
 void freePolys ()
 {
+  /*
+#ifdef MIN_USE_SSD
+  fprintf (stderr, "SSD sum terms imported/+written-dropped exported: %d/+%d-%d, peak in-memory: %d\n",
+	   importedTerms, exportedWrittenTerms, exportedDroppedTerms, peakInMemoryTerms);
+  statSSD ();
+#endif
+  */
   if (sumNotReleaseableCount + productNotReleaseableCount < 1024 * 512) {
     freePolysAttemptCount++;
     return;
@@ -4226,9 +4250,27 @@ void freeKeptPolys ()
   return;
 }
 
+/*
+  We need to track the pieces of the chunkTicket whether the term list is in 
+  or out of memory. The new sumPoly.iMTLIndex will tell us the status of the
+  term list: -1 means dynamically allocated in-memory (inital state), -2 means 
+  not in-memory (exported), anything else means statically allocated in-memory.
+
+  When the term list is out of memory, we need to keep the chunkTicket pieces
+  in order to get it back. Since we're not using the sumPoly sum and factor 
+  list pointers, they'll work for that, so the sum list pointer will be the
+  chunkOffset and the factor list pointer will be the doublePairCount.
+
+  When the term list is in memory, we need to keep the chunkTicket somewhere 
+  else because sum and factor are used. Fortunately, being in-memory and having
+  caching means that we can keep the chunkTicket in the cache entry.
+
+*/  
+
 void importTermList (Polynomial * p)
 {
 #ifdef MIN_USE_SSD
+  int i;
   struct sumPoly *sP;
 
   if (p->eType != T_SUM)
@@ -4239,13 +4281,38 @@ void importTermList (Polynomial * p)
   if (sP->num < MIN_USE_SSD)
     return;
 
-  /* This is how I repaired purposeful damage. */
-  if ((unsigned long) sP->sum & 0x8000000000000000) {
-    sP->sum = (void *) ((unsigned long) sP->sum & ~0x8000000000000000);
-    importedTerms++;
-    if ((importedTerms-(exportedWrittenTerms+exportedDroppedTerms)) > peakInMemoryTerms)
-      peakInMemoryTerms = importedTerms-(exportedWrittenTerms+exportedDroppedTerms);
+  // You can only import what you've exported before
+  if (sP->iMTLIndex != -2)
+    return;
+
+  //  printf ("Import p%d of %d sum %lu and factor %lu\n", 
+  //	  p->id, sP->num, (unsigned long) sP->sum, (unsigned long) sP->factor);
+
+  importedTerms++;
+  if ((importedTerms-(exportedWrittenTerms+exportedDroppedTerms)) > peakInMemoryTerms)
+    peakInMemoryTerms = importedTerms-(exportedWrittenTerms+exportedDroppedTerms);
+
+  /* Actually bring it back in. */
+
+  for (i=0; i<=32; i++)
+    if (iMTL[i].cT.doublePairCount == 0)
+      break;
+
+  if (i >= 32) {
+    fprintf (stderr, "Out of in-memory term lists for sum term lists!\n");
+    exit (EXIT_FAILURE);
   }
+
+  iMTL[i].cT.chunkOffset = (unsigned long) sP->sum;
+  iMTL[i].cT.doublePairCount = (unsigned long) sP->factor;
+  getSSD (&iMTL[i].cT, iMTL[i].buffer);
+  sP->iMTLIndex = i;
+  sP->sum = (Polynomial **) &iMTL[i].buffer[0];
+  sP->factor = (double *) &iMTL[i].buffer[sP->num];
+
+  //  printf ("Imported p%d iMTLIndex %d of %d sum %lu and factor %lu\n",
+  //	  p->id, sP->iMTLIndex, sP->num, (unsigned long) sP->sum, (unsigned long) sP->factor);
+
 #endif
 }
 
@@ -4262,15 +4329,82 @@ void exportTermList (Polynomial * p, int writeFlag)
   if (sP->num < MIN_USE_SSD)
     return;
 
-  /* This how I purposefully damaged the sum pointer to be
-     absolutely sure that I was catching all cases. */
-  if (!((unsigned long) sP->sum & 0x8000000000000000)) {
-    sP->sum = (void *) ((unsigned long) sP->sum | 0x8000000000000000);
-    if (writeFlag)
-      exportedWrittenTerms++;
-    else
-      exportedDroppedTerms++;
+  // Can't export something already exported.
+  if (sP->iMTLIndex == -2)
+    return;
+
+  //  printf ("Export (%d) p%d w/iMTLIndex %d of %d sum %lu and factor %lu\n", 
+  //	  writeFlag, p->id, sP->iMTLIndex, sP->num, (unsigned long) sP->sum, (unsigned long) sP->factor);
+
+  if (writeFlag) {
+    // Actually write it out...
+    struct chunkTicket *cT;
+    if (sP->iMTLIndex == -1) {
+      // ...and it's in allocated (discontiguous) memory
+      double buffer[8192];
+
+      // Avoid this painful mistake by changing sSDHandler's get and putSSD to have two separate pointers
+      memcpy (&buffer[0], sP->sum, 8 * sP->num);
+      memcpy (&buffer[sP->num], sP->factor, 8 * sP->num);
+      free (sP->sum);
+      free (sP->factor);
+      cT = putSSD (buffer, sP->num);
+    } else {
+      // ...and it's in an static buffer, so zap the old ticket
+      int i;
+      i = sP->iMTLIndex;
+      deportTermList (p);
+      cT = putSSD (iMTL[i].buffer, sP->num);
+      iMTL[i].cT.doublePairCount = 0;
+    }
+    sP->sum = (Polynomial **) cT->chunkOffset;
+    sP->factor = (double *) cT->doublePairCount;
+    //    printf ("Exported sum %lu and factor %lu\n", (unsigned long) sP->sum, (unsigned long) sP->factor);
+    exportedWrittenTerms++;
+  } else {
+    sP->sum = (Polynomial **) iMTL[sP->iMTLIndex].cT.chunkOffset;
+    sP->factor = (double *) iMTL[sP->iMTLIndex].cT.doublePairCount;
+    iMTL[sP->iMTLIndex].cT.doublePairCount = 0;
+    exportedDroppedTerms++;
   }
+  sP->iMTLIndex = -2;
+
+#endif
+}
+
+/*
+
+  The other calls (import and export) are optional, i.e. they can choose not
+  to do anything based upon some criteria. deportTermList is not option -- it
+  will be called *instead* of an explicit free for the term lists, so it should
+  always either do the explicit free or ditch the SSD term list.
+
+*/
+
+void deportTermList (Polynomial * p)
+{
+#ifdef MIN_USE_SSD
+  struct sumPoly *sP;
+
+  if (p->eType != T_SUM)
+    return;
+
+  sP = (struct sumPoly *) p->e.s;
+
+  //  printf ("Deport p%d w/iMTLIndex %d of %d sum %lu and factor %lu\n", 
+  //	  p->id, sP->iMTLIndex, sP->num, (unsigned long) sP->sum, (unsigned long) sP->factor);
+
+  if (sP->iMTLIndex != -1) {
+    struct chunkTicket *cT;
+    cT = (struct chunkTicket *) malloc(sizeof(struct chunkTicket));
+    cT->chunkOffset = (unsigned long) sP->sum;
+    cT->doublePairCount = (unsigned long) sP->factor;
+    freeSSD (cT);
+  } else {
+    free (sP->sum);
+    free (sP->factor);
+  }
+
 #endif
 }
 

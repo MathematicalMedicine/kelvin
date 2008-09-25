@@ -101,6 +101,9 @@ struct variablePoly
 struct sumPoly
 {
   int num;			// number of terms - 4 bytes
+#ifdef MIN_USE_SSD
+  int iMTLIndex;                // -1 if not in-memory, otherwise the index to the iMTL.
+#endif
   struct polynomial **sum;	// polynomial terms - 8 bytes
   double *factor;		// factors for polynomial terms - 8 bytes
 }; // 20(24) bytes
@@ -332,5 +335,6 @@ Polynomial * exportPoly (Polynomial * p);
 Polynomial * importPoly (Polynomial * p);
 void importTermList (Polynomial * p);
 void exportTermList (Polynomial * p, int writeFlag);
+void deportTermList (Polynomial * p);
 void thrashingCheck ();
 void releaseExternalPoly (Polynomial *);
