@@ -349,10 +349,11 @@ int originalChildren[MAXPOLYSOURCES];
 #endif
 
 int importedTerms = 0, exportedDroppedTerms = 0, exportedWrittenTerms = 0, peakInMemoryTerms = 0;
+#define MAX_SSD_BUFFER 32768
 
 struct inMemoryTermList {
   struct chunkTicket cT;
-  double buffer[8192];
+  double buffer[MAX_SSD_BUFFER];
 } iMTL[32];
 
 
@@ -4341,7 +4342,13 @@ void exportTermList (Polynomial * p, int writeFlag)
     struct chunkTicket *cT;
     if (sP->iMTLIndex == -1) {
       // ...and it's in allocated (discontiguous) memory
-      double buffer[8192];
+      double buffer[MAX_SSD_BUFFER];
+
+      if (sP->num > (MAX_SSD_BUFFER / (16 * 2))) {
+	fprintf (stderr, "MAX_SSD_BUFFER of %d is too small for request for %d double pairs\n",
+		 MAX_SSD_BUFFER, sP->num);
+	exit (EXIT_FAILURE);
+      }
 
       // Avoid this painful mistake by changing sSDHandler's get and putSSD to have two separate pointers
       memcpy (&buffer[0], sP->sum, 8 * sP->num);
