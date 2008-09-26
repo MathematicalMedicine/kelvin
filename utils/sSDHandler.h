@@ -13,7 +13,7 @@ void statSSD ();
 void termSSD ();
 
 // The smallest chunk to split, trying 257
-#ifdef DIAG
+#ifdef MAIN
 #define MIN_USE_SSD 0
 #else
 #define MIN_USE_SSD 257

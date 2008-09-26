@@ -66,6 +66,14 @@
 
  - 1 write for a freeSSD call where the returned entry gets pushed onto a non-empty list.
 
+ Note:
+
+ For diagnostic purposes, look in the cache file using something like:
+
+ od --address-radix=d --read-bytes=<cO X 16> --format=f8 --output-duplicates --skip-bytes=<dPC X 16> /tmp/ssd/cache.dat 
+
+ ...and compile test standalone version with: gcc -g -o sSDHandler -DMAIN sSDHandler.c
+
 */
 
 #include "sSDHandler.h"
@@ -235,8 +243,8 @@ void garbageCollect () {
     5. Inserting each fully-collapsed chunk into the appropriate freeList.
 
   */
-  int i, j, freeVectorEntryCount = 0;
-  unsigned long totalFreeBefore = 0, totalFreeAfter = 0, startDPC = 0, endDPC = 0;
+  int i, j;
+  unsigned long totalFreeBefore = 0, totalFreeAfter = 0, startDPC = 0, endDPC = 0, freeVectorEntryCount;
   struct freeVectorEntry *freeVector;
 
   fprintf (stderr, "sSDHandler garbage collection started...\n");
@@ -244,6 +252,7 @@ void garbageCollect () {
 
   // Collect all freeList entries regardless of length
 
+  freeVectorEntryCount = 0;
   for (i=0; i<16; i++)
     freeVectorEntryCount += listDepth[i];
 
@@ -254,6 +263,7 @@ void garbageCollect () {
     exit (EXIT_FAILURE);
   }
 
+  freeVectorEntryCount = 0;
   for (i=0; i<16; i++)
     while (listHead[i].doublePairCount != 0) {
       freeVector[freeVectorEntryCount].startDPC = listHead[i].chunkOffset;
@@ -414,7 +424,7 @@ void freeSSD (struct chunkTicket *myTicket) {
 
 #ifdef MAIN
 
-#define TEST_ITERATIONS (1024 * 64)
+#define TEST_ITERATIONS (1024 * 256)
 #define MAX_TICKET_MASK 0xFFFF
 
 int main (int argc, char *argv[]) {
@@ -446,22 +456,6 @@ int main (int argc, char *argv[]) {
       }
       listOTickets[cT] = putSSD (buffer, dPC);
       cTStatus[cT] = 1;
-
-      for (j=0; j<listOTickets[cT]->doublePairCount; j++)
-	buffer[j] = 0;
-
-      getSSD (listOTickets[cT], buffer);
-      for (j=0; j<listOTickets[cT]->doublePairCount; j++) {
-	if ((buffer[j] != (double) cT) || (buffer[listOTickets[cT]->doublePairCount+j] != (double) -cT)) {
-	  fprintf (stderr, "At %dth position, wrote %g/%g at offset %ludps, got %g/%g!\n",
-		  j, (double) cT, (double) -cT, listOTickets[cT]->chunkOffset,
-		  buffer[j], buffer[listOTickets[cT]->doublePairCount+j]);
-	  fclose (sSDFD);
-	  exit (EXIT_FAILURE);
-	}
-      }
-
-
       break;
 
     case 1: // Get it back and verify it...
