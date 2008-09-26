@@ -243,7 +243,8 @@
 
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-                strcpy (partialPolynomialFunctionName, "cL0_P%s");
+		sprintf (partialPolynomialFunctionName, "CL0_P%%s_%s_%s",
+			 pLocus1->sName, pLocus2->sName);
                 if (gfreqInd != 0 || penIdx != 0) {
 		  pushStatus ("evaluating");
                   swStart (combinedComputeSW);
@@ -331,7 +332,8 @@
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
-                    strcpy (partialPolynomialFunctionName, "cL1_P%s");
+		    sprintf (partialPolynomialFunctionName, "CL1_P%%s_%s_%s",
+			     pLocus1->sName, pLocus2->sName);
                     swStart (combinedComputeSW);
                     compute_likelihood (&pedigreeSet);
                     cL[1]++;
