@@ -1,5 +1,3 @@
-#define USE_SSD 1
-
 /**
 @file polynomial.c
 
