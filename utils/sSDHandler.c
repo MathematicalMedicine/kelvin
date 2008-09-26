@@ -266,7 +266,7 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
       newCT->chunkOffset = listHead[freeList].chunkOffset;
       newCT->doublePairCount = myDPC;
       // Handle leftovers...must be bigger than a freeList structure.
-      if ((leftOver = listHead[freeList].doublePairCount - myDPC - 1) > 0) {
+      if ((leftOver = listHead[freeList].doublePairCount - myDPC - 1) >= MIN_USE_SSD) {
 	// Something leftover, put it on a free list...maybe the current one?
 	if ((newFreeList = high16Bit (leftOver)) == freeList) {
 	  // Keep the current list head, just smaller!

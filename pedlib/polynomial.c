@@ -1,5 +1,4 @@
-#define MIN_USE_SSD 20
-
+#define USE_SSD 1
 /**
 @file polynomial.c
 
@@ -134,7 +133,7 @@
 #undef POLYCHECK_DL
 #endif
 
-#ifdef MIN_USE_SSD
+#ifdef USE_SSD
 #include "sSDHandler.h"
 #endif
 
@@ -349,7 +348,7 @@ int originalChildren[MAXPOLYSOURCES];
 #endif
 
 int importedTerms = 0, exportedDroppedTerms = 0, exportedWrittenTerms = 0, peakInMemoryTerms = 0;
-#define MAX_SSD_BUFFER 32768
+#define MAX_SSD_BUFFER 65536
 
 struct inMemoryTermList {
   struct chunkTicket cT;
@@ -1476,7 +1475,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     }
     // Free the memory of the first polynomial in the parameter list
     sum1stTermsFreedCount++;
-#ifndef MIN_USE_SSD
+#ifndef USE_SSD
     free (p0->e.s->sum);
     free (p0->e.s->factor);
 #else
@@ -1519,7 +1518,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     sP->sum[i]->valid |= VALID_REF_FLAG;
   }
   // Assign values to some attributes of the sum polynomial
-#ifdef MIN_USE_SSD
+#ifdef USE_SSD
   sP->iMTLIndex = -1;
 #endif
   rp->e.s = sP;
@@ -2662,7 +2661,7 @@ void polynomialInitialization ()
   evaluatePolySW = swCreate ("evaluatePoly");
   evaluateValueSW = swCreate ("evaluateValue");
 
-#ifdef MIN_USE_SSD
+#ifdef USE_SSD
   initSSD ();
   for (i=0; i<32; i++)
     iMTL[i].cT.doublePairCount = 0;
@@ -4080,7 +4079,7 @@ void doFreePolys (unsigned short keepMask)
           k++;
         } else {
           sumFreedCount++;
-#ifndef MIN_USE_SSD
+#ifndef USE_SSD
           free (sumList[i]->e.s->sum);
           free (sumList[i]->e.s->factor);
 #else
@@ -4227,7 +4226,7 @@ void doFreePolys (unsigned short keepMask)
 void freePolys ()
 {
   /*
-#ifdef MIN_USE_SSD
+#ifdef USE_SSD
   fprintf (stderr, "SSD sum terms imported/+written-dropped exported: %d/+%d-%d, peak in-memory: %d\n",
 	   importedTerms, exportedWrittenTerms, exportedDroppedTerms, peakInMemoryTerms);
   statSSD ();
@@ -4270,7 +4269,7 @@ void freeKeptPolys ()
 
 void importTermList (Polynomial * p)
 {
-#ifdef MIN_USE_SSD
+#ifdef USE_SSD
   int i;
   struct sumPoly *sP;
 
@@ -4319,7 +4318,7 @@ void importTermList (Polynomial * p)
 
 void exportTermList (Polynomial * p, int writeFlag)
 {
-#ifdef MIN_USE_SSD
+#ifdef USE_SSD
   struct sumPoly *sP;
 
   if (p->eType != T_SUM)
@@ -4390,7 +4389,7 @@ void exportTermList (Polynomial * p, int writeFlag)
 
 void deportTermList (Polynomial * p)
 {
-#ifdef MIN_USE_SSD
+#ifdef USE_SSD
   struct sumPoly *sP;
 
   if (p->eType != T_SUM)
