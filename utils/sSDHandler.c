@@ -315,10 +315,56 @@ void garbageCollect () {
   Store a buffer of length doublePairCount and get a chunkTicket
   as your receipt.
 */
-struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
+
+struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned short freeList) {
   struct chunkTicket *newCT;
-  unsigned short freeList, newFreeList;
+  unsigned short newFreeList;
   unsigned long leftOver;
+
+#ifdef DIAG
+  fprintf (stderr, "OK\n");
+#endif
+  // Found a list, generate a chunkTicket...
+  if ((newCT = (struct chunkTicket *) malloc (sizeof (struct chunkTicket *))) == NULL) {
+    perror ("Failed to allocate new chunkTicket");
+    exit (EXIT_FAILURE);
+  }
+  newCT->chunkOffset = listHead[freeList].chunkOffset;
+  newCT->doublePairCount = myDPC;
+  // Handle leftovers...must be bigger than a freeList structure.
+  if ((leftOver = listHead[freeList].doublePairCount - myDPC - 1) >= MIN_USE_SSD) {
+    // Something leftover, put it on a free list...maybe the current one?
+    if ((newFreeList = high16Bit (leftOver)) == freeList) {
+      // Keep the current list head, just smaller!
+      listHead[freeList].chunkOffset += myDPC;
+      listHead[freeList].doublePairCount -= myDPC;
+    } else {
+      // This space from this list head goes to the head of a lesser list
+      insertFreeListHead (listHead[freeList].chunkOffset + myDPC, leftOver + 1);
+      removeFreeListHead (freeList);
+    }
+  } else {
+    // No significant leftovers, give it all away.
+    newCT->doublePairCount = listHead[freeList].doublePairCount;
+    // This list head goes away completely due to no real leftovers
+    removeFreeListHead (freeList);
+  }
+  // Chunk in SSD file is assigned, put the buffer out there...
+  if (fseek (sSDFD, newCT->chunkOffset * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
+    perror ("Failed to seek in SSD cache file");
+    exit (EXIT_FAILURE);
+  }
+  if ((fwrite (buffer, DOUBLE_PAIR_SIZE, newCT->doublePairCount, sSDFD)) != newCT->doublePairCount) {
+    perror ("Failed to write SSD cache file");
+    exit (EXIT_FAILURE);
+  }
+  usedDPCs += newCT->doublePairCount;
+  handledDPCs += newCT->doublePairCount;
+  return newCT;
+}
+
+struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
+  unsigned short freeList;
 
   putCallCount++;
   if ((putCallCount & 0x3FFFF) == 0x3FFFF)
@@ -327,60 +373,34 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
 #ifdef DIAG
   fprintf (stderr, "putSSD for %ludpc...", myDPC);
 #endif
+
   // Use the head of the first available list that's large enough.
   for (freeList = MIN(15, high16Bit (myDPC)+1); freeList<16; freeList++) {
 #ifdef DIAG
     fprintf (stderr, "%d has %ludpc ", freeList, listHead[freeList].doublePairCount);
 #endif
-    if (listHead[freeList].doublePairCount != 0) {
-#ifdef DIAG
-      fprintf (stderr, "OK\n");
-#endif
-      // Found a list, generate a chunkTicket...
-      if ((newCT = (struct chunkTicket *) malloc (sizeof (struct chunkTicket *))) == NULL) {
-	perror ("Failed to allocate new chunkTicket");
-	exit (EXIT_FAILURE);
-      }
-      newCT->chunkOffset = listHead[freeList].chunkOffset;
-      newCT->doublePairCount = myDPC;
-      // Handle leftovers...must be bigger than a freeList structure.
-      if ((leftOver = listHead[freeList].doublePairCount - myDPC - 1) >= MIN_USE_SSD) {
-	// Something leftover, put it on a free list...maybe the current one?
-	if ((newFreeList = high16Bit (leftOver)) == freeList) {
-	  // Keep the current list head, just smaller!
-	  listHead[freeList].chunkOffset += myDPC;
-	  listHead[freeList].doublePairCount -= myDPC;
-	} else {
-	  // This space from this list head goes to the head of a lesser list
-	  insertFreeListHead (listHead[freeList].chunkOffset + myDPC, leftOver + 1);
-	  removeFreeListHead (freeList);
-	}
-      } else {
-	// No significant leftovers, give it all away.
-	newCT->doublePairCount = listHead[freeList].doublePairCount;
-	// This list head goes away completely due to no real leftovers
-	removeFreeListHead (freeList);
-      }
-      // Chunk in SSD file is assigned, put the buffer out there...
-      if (fseek (sSDFD, newCT->chunkOffset * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
-	perror ("Failed to seek in SSD cache file");
-	exit (EXIT_FAILURE);
-      }
-      if ((fwrite (buffer, DOUBLE_PAIR_SIZE, newCT->doublePairCount, sSDFD)) != newCT->doublePairCount) {
-	perror ("Failed to write SSD cache file");
-	exit (EXIT_FAILURE);
-      }
-      usedDPCs += newCT->doublePairCount;
-      handledDPCs += newCT->doublePairCount;
-      return newCT;
-    }
+    if (listHead[freeList].doublePairCount != 0)
+      return (doPutSSD (buffer, myDPC, freeList));
   }
   // Nothing left at all!!
 #ifdef DIAG
-  fprintf (stderr, "OH SHIT!\n");
+  fprintf (stderr, "putSSD may be out of chunkage for a %ludpc request!\n", myDPC);
 #endif
-  fprintf (stderr, "putSSD is completely out of chunkage for a %ludpc request!\n", myDPC);
   garbageCollect ();
+
+  // Try again now...
+  for (freeList = MIN(15, high16Bit (myDPC)+1); freeList<16; freeList++) {
+#ifdef DIAG
+    fprintf (stderr, "%d has %ludpc ", freeList, listHead[freeList].doublePairCount);
+#endif
+    if (listHead[freeList].doublePairCount != 0)
+      return (doPutSSD (buffer, myDPC, freeList));
+  }
+  // Nothing left at all!!
+#ifdef DIAG
+  fprintf (stderr, "putSSD is completely out of chunkage for a %ludpc request!\n", myDPC);
+#endif
+
   termSSD ();
   exit (EXIT_FAILURE);
 }
@@ -424,8 +444,8 @@ void freeSSD (struct chunkTicket *myTicket) {
 
 #ifdef MAIN
 
-#define TEST_ITERATIONS (1024 * 256)
-#define MAX_TICKET_MASK 0xFFFF
+#define TEST_ITERATIONS (1024 * 1024)
+#define MAX_TICKET_MASK 0x1FFFF
 
 int main (int argc, char *argv[]) {
   struct chunkTicket *listOTickets[MAX_TICKET_MASK+1];
