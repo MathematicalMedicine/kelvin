@@ -12,8 +12,12 @@ void initSSD ();
 void statSSD ();
 void termSSD ();
 
-// The smallest chunk to split
+// The smallest chunk to split, trying 257
+#ifdef DIAG
+#define MIN_USE_SSD 0
+#else
 #define MIN_USE_SSD 257
+#endif
 
 struct chunkTicket *putSSD (double *buffer, unsigned long myDPC);
 void getSSD (struct chunkTicket *myTicket, double *buffer);
