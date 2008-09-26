@@ -1,4 +1,5 @@
 #define USE_SSD 1
+
 /**
 @file polynomial.c
 
@@ -350,10 +351,14 @@ int originalChildren[MAXPOLYSOURCES];
 int importedTerms = 0, exportedDroppedTerms = 0, exportedWrittenTerms = 0, peakInMemoryTerms = 0;
 #define MAX_SSD_BUFFER 65536
 
+#ifdef USE_SSD
+#define IMTL_COUNT 32
 struct inMemoryTermList {
+  unsigned int lastNodeId; // This will enable recycling without retrieval
   struct chunkTicket cT;
   double buffer[MAX_SSD_BUFFER];
-} iMTL[32];
+} iMTL[IMTL_COUNT];
+#endif
 
 
 
@@ -1595,10 +1600,12 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       fprintf (stderr, "\n");
     }
   }
+#ifdef USE_SSD
   if (sP->num >= MIN_USE_SSD)
     importedTerms++; // Because the following export is unpaired...
   if ((importedTerms-(exportedWrittenTerms+exportedDroppedTerms)) > peakInMemoryTerms)
     peakInMemoryTerms = importedTerms-(exportedWrittenTerms+exportedDroppedTerms);
+#endif
   exportTermList (rp, TRUE);
   return polyReturnWrapper (rp);
 };
@@ -2663,8 +2670,10 @@ void polynomialInitialization ()
 
 #ifdef USE_SSD
   initSSD ();
-  for (i=0; i<32; i++)
+  for (i=0; i<IMTL_COUNT; i++) {
     iMTL[i].cT.doublePairCount = 0;
+    iMTL[i].lastNodeId = 0;
+  }
 #endif
 
   /* Scale all initial and growth sizes up by the polynomial scale (default 10) */
@@ -4292,19 +4301,34 @@ void importTermList (Polynomial * p)
   if ((importedTerms-(exportedWrittenTerms+exportedDroppedTerms)) > peakInMemoryTerms)
     peakInMemoryTerms = importedTerms-(exportedWrittenTerms+exportedDroppedTerms);
 
-  /* Actually bring it back in. */
+  // Actually bring it back in...
 
-  for (i=0; i<=32; i++)
+  for (i=0; i<=IMTL_COUNT; i++)
+    if (iMTL[i].lastNodeId == p->id) {
+      // Found it still hanging about!
+      iMTL[i].cT.doublePairCount = (unsigned long) sP->factor;
+      sP->iMTLIndex = i;
+      sP->sum = (Polynomial **) &iMTL[i].buffer[0];
+      sP->factor = (double *) &iMTL[i].buffer[sP->num];
+  //  printf ("Import hit cache for p%d iMTLIndex %d of %d sum %lu and factor %lu\n",
+  //	  p->id, sP->iMTLIndex, sP->num, (unsigned long) sP->sum, (unsigned long) sP->factor);
+      return;
+    }
+
+  // Not still hanging about, so let's go get it...
+
+  for (i=0; i<=IMTL_COUNT; i++)
     if (iMTL[i].cT.doublePairCount == 0)
       break;
 
-  if (i >= 32) {
+  if (i >= IMTL_COUNT) {
     fprintf (stderr, "Out of in-memory term lists for sum term lists!\n");
     exit (EXIT_FAILURE);
   }
 
   iMTL[i].cT.chunkOffset = (unsigned long) sP->sum;
   iMTL[i].cT.doublePairCount = (unsigned long) sP->factor;
+  iMTL[i].lastNodeId = p->id;
   getSSD (&iMTL[i].cT, iMTL[i].buffer);
   sP->iMTLIndex = i;
   sP->sum = (Polynomial **) &iMTL[i].buffer[0];
