@@ -81,14 +81,20 @@
 // The SSD path and an arbitrary filename
 char *sSDFileName = "/tmp/ssd/cache.dat";
 // Maximum number of double pairs on the 28Gb SSD is 28*1024*1024*1024/16, about 1792Mdps
-#define MAX_SSD_DPC (28 * 1024 * 1024 / 16 * 1024)
+//#define MAX_SSD_DPC (28 * 1024 * 1024 / 16 * 1024)
+
+#define MAX_SSD_DPC (28 * 1024 * 1024 / 16 * 256)
+
 
 // Maximum size of a chunk of double pairs, 2^15=32K
-#define MAX_DPC_MASK 0x7FFF
+//#define MAX_DPC_MASK 0x7FFF
+#define MAX_DPC_MASK 0x1FFF
 
 #define DOUBLE_PAIR_SIZE (sizeof (double) * 2)
 
 #define MIN(X,Y) ((X) <= (Y) ? (X) : (Y))
+
+char messageBuffer[256];
 
 FILE *sSDFD;
 
@@ -321,9 +327,6 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
   unsigned short newFreeList;
   unsigned long leftOver;
 
-#ifdef DIAG
-  fprintf (stderr, "OK\n");
-#endif
   // Found a list, generate a chunkTicket...
   if ((newCT = (struct chunkTicket *) malloc (sizeof (struct chunkTicket *))) == NULL) {
     perror ("Failed to allocate new chunkTicket");
@@ -331,8 +334,13 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
   }
   newCT->chunkOffset = listHead[freeList].chunkOffset;
   newCT->doublePairCount = myDPC;
+
+#ifdef DIAG
+  fprintf (stderr, " at offset %ludpc OK\n", newCT->chunkOffset);
+#endif
+
   // Handle leftovers...must be bigger than a freeList structure.
-  if ((leftOver = listHead[freeList].doublePairCount - myDPC - 1) >= MIN_USE_SSD) {
+  if ((leftOver = listHead[freeList].doublePairCount - myDPC - 1) > MIN_USE_SSD) {
     // Something leftover, put it on a free list...maybe the current one?
     if ((newFreeList = high16Bit (leftOver)) == freeList) {
       // Keep the current list head, just smaller!
@@ -351,11 +359,15 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
   }
   // Chunk in SSD file is assigned, put the buffer out there...
   if (fseek (sSDFD, newCT->chunkOffset * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
-    perror ("Failed to seek in SSD cache file");
+    sprintf (messageBuffer, "Failed to seek to offset %ludpc in SSD cache file",
+	     newCT->chunkOffset);
+    perror (messageBuffer);
     exit (EXIT_FAILURE);
   }
   if ((fwrite (buffer, DOUBLE_PAIR_SIZE, newCT->doublePairCount, sSDFD)) != newCT->doublePairCount) {
-    perror ("Failed to write SSD cache file");
+    sprintf (messageBuffer, "Failed to write %ludps at offset %ludpc in SSD cache file",
+	     newCT->doublePairCount, newCT->chunkOffset);
+    perror (messageBuffer);
     exit (EXIT_FAILURE);
   }
   usedDPCs += newCT->doublePairCount;
@@ -383,9 +395,7 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
       return (doPutSSD (buffer, myDPC, freeList));
   }
   // Nothing left at all!!
-#ifdef DIAG
   fprintf (stderr, "putSSD may be out of chunkage for a %ludpc request!\n", myDPC);
-#endif
   garbageCollect ();
 
   // Try again now...
@@ -397,12 +407,9 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
       return (doPutSSD (buffer, myDPC, freeList));
   }
   // Nothing left at all!!
-#ifdef DIAG
   fprintf (stderr, "putSSD is completely out of chunkage for a %ludpc request!\n", myDPC);
-#endif
 
-  termSSD ();
-  exit (EXIT_FAILURE);
+  return ((struct chunkTicket *) NULL);
 }
 
 /*
@@ -416,7 +423,8 @@ void getSSD (struct chunkTicket *myTicket, double *buffer) {
 #endif
   // Simply seek and read...
   if (fseek (sSDFD, myTicket->chunkOffset * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
-    perror ("Failed to seek in SSD cache file");
+    sprintf (messageBuffer, "Failed to seek to %ludps in SSD cache file", myTicket->chunkOffset);
+    perror (messageBuffer);
     exit (EXIT_FAILURE);
   }
   if ((fread (buffer, DOUBLE_PAIR_SIZE, myTicket->doublePairCount, sSDFD)) != myTicket->doublePairCount) {
@@ -463,6 +471,9 @@ int main (int argc, char *argv[]) {
     cTStatus[i] = 0;
 
   for (i=0; i<TEST_ITERATIONS; i++) {
+    //    if ((i & 0x1FFFF) == 0x1FFFF)
+    //      garbageCollect ();
+      
     cT = rand() & MAX_TICKET_MASK;
     switch (cTStatus[cT]) {
     case 0: // Put it out there...
@@ -475,7 +486,8 @@ int main (int argc, char *argv[]) {
 	buffer[dPC+j] = -cT;
       }
       listOTickets[cT] = putSSD (buffer, dPC);
-      cTStatus[cT] = 1;
+      if (listOTickets[cT] != NULL)
+	cTStatus[cT] = 1;
       break;
 
     case 1: // Get it back and verify it...
@@ -505,8 +517,6 @@ int main (int argc, char *argv[]) {
       break;
     }
   }
-
-  garbageCollect ();
   termSSD ();
 }
 
