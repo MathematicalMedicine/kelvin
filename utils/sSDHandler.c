@@ -103,8 +103,6 @@ char messageBuffer[256];
 
 #ifdef MAIN
 #define MAX_TICKET_MASK 0xF
-struct chunkTicket *listOTickets[MAX_TICKET_MASK+1];
-int cTStatus[MAX_TICKET_MASK+1];
 #endif
 
 FILE *sSDFD;
@@ -213,7 +211,7 @@ void insertFreeListHead (unsigned long chunkOffset, unsigned long doublePairCoun
     listHead[freeList].doublePairCount = doublePairCount;
     listHead[freeList].nextFree = 0;
   } else {
-    /* BTW - Combining contiguous free entries to defragment dymaically would require
+    /* BTW - Combining contiguous free entries to defragment dynamically would require
        backpointers, which would double our read/write burden. */
     // Not the first one, need to flush the old first one to the SSD cache file
 
@@ -471,16 +469,18 @@ void freeSSD (struct chunkTicket *myTicket) {
 
 int main (int argc, char *argv[]) {
   
+  struct chunkTicket *listOTickets[MAX_TICKET_MASK+2];
+  int cTStatus[MAX_TICKET_MASK+2];
   int i, j, cT;
   unsigned long dPC;
-  double buffer[(MAX_DPC_MASK * 2) + 1];
+  double buffer[(MAX_DPC_MASK + 1) * 4];
 
   initSSD ();
 
   fprintf (stderr, "Field of %d tickets of up to %ddps in size in file of %ddps\n",
 	  MAX_TICKET_MASK, MAX_DPC_MASK, MAX_SSD_DPC);
 
-  srand(time(0));
+  //  srand(time(0));
 
   for (i=0; i<=MAX_TICKET_MASK; i++)
     cTStatus[i] = 70;
@@ -488,30 +488,30 @@ int main (int argc, char *argv[]) {
   for (i=0; i<TEST_ITERATIONS; i++) {
     cT = rand() & MAX_TICKET_MASK;
 
+#ifdef DIAG
+    fprintf (stderr, "%d, Ticket %d(%d):", i, cT, cTStatus[cT]);
+#endif
     switch (cTStatus[cT]) {
 
     case 70: // Put it out there...
       dPC = rand() & MAX_DPC_MASK;
       dPC = MAX(MIN_USE_SSD, dPC);
-#ifdef DIAG
-      fprintf (stderr, "Ticket %d putSSD %ludpc\n", cT, dPC);
-#endif
       buffer[0] = dPC;
       for (j=1; j<dPC; j++) {
 	buffer[j] = cT;
 	buffer[dPC+j] = -cT;
       }
+
       listOTickets[cT] = putSSD (buffer, dPC);
+
       if (listOTickets[cT] != NULL)
 	cTStatus[cT] = 71;
       else
 	exit (EXIT_FAILURE);
+
       break;
 
     case 71: // Get it back and verify it...
-#ifdef DIAG
-      fprintf (stderr, "Ticket %d getSSD %ludpc\n", cT, listOTickets[cT]->doublePairCount);
-#endif
       getSSD (listOTickets[cT], buffer);
       dPC = buffer[0];
       for (j=1; j<dPC; j++) {
@@ -527,11 +527,9 @@ int main (int argc, char *argv[]) {
       break;
 
     case 72: // Release it...
-#ifdef DIAG
-      fprintf (stderr, "Ticket %d freeSSD %ludpc\n", cT, listOTickets[cT]->doublePairCount);
-#endif
       freeSSD (listOTickets[cT]);
       cTStatus[cT] = 70;
+      listOTickets[cT] = 0;
       break;
 
     default:
@@ -539,7 +537,6 @@ int main (int argc, char *argv[]) {
 	       cTStatus[cT], cT);
       exit (EXIT_FAILURE);
     }
-
   }
   termSSD ();
 }
