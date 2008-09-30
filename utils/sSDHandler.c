@@ -272,8 +272,11 @@ void garbageCollect () {
     exit (EXIT_FAILURE);
   }
 
+  fprintf (stderr, "...extracting from list ");
   freeVectorEntryCount = 0;
-  for (i=0; i<16; i++)
+  for (i=0; i<16; i++) {
+    fprintf (stderr, "%d ", i);
+    fflush (stderr);
     while (listHead[i].doublePairCount != 0) {
       freeVector[freeVectorEntryCount].startDPC = listHead[i].chunkOffset;
       freeVector[freeVectorEntryCount].endDPC = listHead[i].chunkOffset + listHead[i].doublePairCount;
@@ -281,11 +284,16 @@ void garbageCollect () {
       totalFreeBefore += listHead[i].doublePairCount;
       removeFreeListHead (i);
     }
+  }
+  fprintf (stderr, "\nSorting %d entries...", freeVectorEntryCount);
+  fflush (stderr);
 
   /* Sort 'em. I'd use qsort, but it wants a vector of structure pointers, and I just allocated the
      whole bleedin' thing at once. */
 
   qsort (freeVector, freeVectorEntryCount, sizeof (struct freeVectorEntry), compareFVE);
+
+  fprintf (stderr, "\nRe-inserting...");
 
   // Reset listHead and listDepth
 
@@ -294,7 +302,14 @@ void garbageCollect () {
 
   // Connect and insert them.
 
+  int scale = (freeVectorEntryCount > 100 ? 100 : 10);
+  int j = MAX(1, (freeVectorEntryCount / 10));
   for (i=0; i<freeVectorEntryCount; i++) {
+    if (i % j == 0) {
+      fprintf (stderr, "\rRe-inserting...%d%% done", i * 100 / freeVectorEntryCount);
+      fflush (stderr);
+    }
+    sleep (2);
     startDPC = freeVector[i].startDPC;
     endDPC = freeVector[i].endDPC;
     while ((i<(freeVectorEntryCount-1)) && (endDPC == freeVector[i+1].startDPC))
@@ -302,6 +317,7 @@ void garbageCollect () {
     totalFreeAfter += endDPC-startDPC;
     insertFreeListHead (startDPC, endDPC-startDPC);
   }
+  fprintf (stderr, "\rRe-inserting...100%% done\n");
 
   // Say how it went.
   fprintf (stderr, "Began with %ludpc free and ended with %ludpc\n",
