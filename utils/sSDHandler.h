@@ -14,9 +14,9 @@ void termSSD ();
 
 // The smallest chunk to split, trying 257
 #ifdef MAIN
-#define MIN_USE_SSD 0
+#define MIN_USE_SSD 2
 #else
-#define MIN_USE_SSD 257
+#define MIN_USE_SSD 256
 #endif
 
 struct chunkTicket *putSSD (double *buffer, unsigned long myDPC);
