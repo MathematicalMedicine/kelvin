@@ -347,7 +347,7 @@ int originalChildren[MAXPOLYSOURCES];
 #endif
 
 int importedTerms = 0, exportedDroppedTerms = 0, exportedWrittenTerms = 0, peakInMemoryTerms = 0;
-#define MAX_SSD_BUFFER 65536
+#define MAX_SSD_BUFFER ((MAX_DPC_MASK+1)*2)
 
 #ifdef USE_SSD
 #define IMTL_COUNT 32
@@ -4304,12 +4304,13 @@ void importTermList (Polynomial * p)
   for (i=0; i<=IMTL_COUNT; i++)
     if (iMTL[i].lastNodeId == p->id) {
       // Found it still hanging about!
+      iMTL[i].cT.chunkOffset = (unsigned long) sP->sum;
       iMTL[i].cT.doublePairCount = (unsigned long) sP->factor;
       sP->iMTLIndex = i;
       sP->sum = (Polynomial **) &iMTL[i].buffer[0];
       sP->factor = (double *) &iMTL[i].buffer[sP->num];
-  //  printf ("Import hit cache for p%d iMTLIndex %d of %d sum %lu and factor %lu\n",
-  //	  p->id, sP->iMTLIndex, sP->num, (unsigned long) sP->sum, (unsigned long) sP->factor);
+      //      printf ("Import hit cache for p%d iMTLIndex %d of %d sum %lu and factor %lu\n",
+      //	      p->id, sP->iMTLIndex, sP->num, (unsigned long) sP->sum, (unsigned long) sP->factor);
       return;
     }
 
@@ -4413,6 +4414,7 @@ void deportTermList (Polynomial * p)
 {
 #ifdef USE_SSD
   struct sumPoly *sP;
+  int i;
 
   if (p->eType != T_SUM)
     return;
@@ -4423,6 +4425,9 @@ void deportTermList (Polynomial * p)
   //	  p->id, sP->iMTLIndex, sP->num, (unsigned long) sP->sum, (unsigned long) sP->factor);
 
   if (sP->iMTLIndex != -1) {
+    for (i=0; i<=IMTL_COUNT; i++)
+      if (iMTL[i].lastNodeId == p->id)
+	iMTL[i].lastNodeId = 0;
     struct chunkTicket *cT;
     cT = (struct chunkTicket *) malloc(sizeof(struct chunkTicket));
     cT->chunkOffset = (unsigned long) sP->sum;

@@ -87,13 +87,6 @@ char *sSDFileName = "/tmp/ssd/cache.dat";
 #define MAX_SSD_DPC (28 * 1024 * 1024 / 16 * 1024)
 #endif
 
-// Maximum size of a chunk of double pairs, 2^15=32K
-#ifdef MAIN
-#define MAX_DPC_MASK 0xF
-#else
-#define MAX_DPC_MASK 0x7FFF
-#endif
-
 #define DOUBLE_PAIR_SIZE (sizeof (double) * 2)
 
 #define MIN(X,Y) (((X) > (Y)) ? (Y) : (X))
