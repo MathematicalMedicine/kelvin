@@ -232,6 +232,10 @@ struct freeVectorEntry {
   unsigned long endDPC;
 };
 
+int compareFVE (const void *left, const void *right) {
+  return (((struct freeVectorEntry *) left)->startDPC - ((struct freeVectorEntry *) right)->startDPC);
+}
+
 void garbageCollect () {
   /*
     This is not defragmentation, as we're not keeping track of chunkTickets we hand out, so we
@@ -248,7 +252,7 @@ void garbageCollect () {
     5. Inserting each fully-collapsed chunk into the appropriate freeList.
 
   */
-  int i, j;
+  int i;
   unsigned long totalFreeBefore = 0, totalFreeAfter = 0, startDPC = 0, endDPC = 0, freeVectorEntryCount;
   struct freeVectorEntry *freeVector;
 
@@ -281,17 +285,7 @@ void garbageCollect () {
   /* Sort 'em. I'd use qsort, but it wants a vector of structure pointers, and I just allocated the
      whole bleedin' thing at once. */
 
-  struct freeVectorEntry swap;
-  for (i=0; i<freeVectorEntryCount; i++)
-    for (j=i; j<freeVectorEntryCount-1; j++)
-      if (freeVector[j].startDPC > freeVector[j+1].startDPC) {
-	swap.startDPC = freeVector[j].startDPC;
-	swap.endDPC = freeVector[j].endDPC;
-	freeVector[j].startDPC = freeVector[j+1].startDPC;
-	freeVector[j].endDPC = freeVector[j+1].endDPC;
-	freeVector[j+1].startDPC = swap.startDPC;
-	freeVector[j+1].endDPC = swap.endDPC;
-      }
+  qsort (freeVector, freeVectorEntryCount, sizeof (struct freeVectorEntry), compareFVE);
 
   // Reset listHead and listDepth
 
