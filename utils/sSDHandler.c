@@ -309,7 +309,6 @@ void garbageCollect () {
       fprintf (stderr, "\rRe-inserting...%d%% done", i * 100 / freeVectorEntryCount);
       fflush (stderr);
     }
-    sleep (2);
     startDPC = freeVector[i].startDPC;
     endDPC = freeVector[i].endDPC;
     while ((i<(freeVectorEntryCount-1)) && (endDPC == freeVector[i+1].startDPC))
