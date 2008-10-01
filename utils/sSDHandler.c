@@ -285,7 +285,7 @@ void garbageCollect () {
       removeFreeListHead (i);
     }
   }
-  fprintf (stderr, "\nSorting %d entries...", freeVectorEntryCount);
+  fprintf (stderr, "\nSorting %lu entries...", freeVectorEntryCount);
   fflush (stderr);
 
   /* Sort 'em. I'd use qsort, but it wants a vector of structure pointers, and I just allocated the
@@ -303,10 +303,10 @@ void garbageCollect () {
   // Connect and insert them.
 
   int scale = (freeVectorEntryCount > 100 ? 100 : 10);
-  int j = MAX(1, (freeVectorEntryCount / 10));
+  int j = MAX(1, (freeVectorEntryCount / scale));
   for (i=0; i<freeVectorEntryCount; i++) {
     if (i % j == 0) {
-      fprintf (stderr, "\rRe-inserting...%d%% done", i * 100 / freeVectorEntryCount);
+      fprintf (stderr, "\rRe-inserting...%lu%% done", i * 100 / freeVectorEntryCount);
       fflush (stderr);
     }
     startDPC = freeVector[i].startDPC;
