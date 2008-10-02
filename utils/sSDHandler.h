@@ -30,4 +30,5 @@ void termSSD ();
 struct chunkTicket *putSSD (double *buffer, unsigned long myDPC);
 void getSSD (struct chunkTicket *myTicket, double *buffer);
 void freeSSD (struct chunkTicket *myTicket);
+void flushSSD (double *buffer, unsigned long chunkOffset, unsigned long doublePairCount);
 

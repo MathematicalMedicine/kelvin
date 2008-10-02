@@ -347,6 +347,7 @@ int originalChildren[MAXPOLYSOURCES];
 #endif
 
 int importedTerms = 0, exportedDroppedTerms = 0, exportedWrittenTerms = 0, peakInMemoryTerms = 0;
+long sSDDebt = 0; // When <= 0, we're OK, if not, must pay-off allocation debt with freeSSD calls
 #define MAX_SSD_BUFFER ((MAX_DPC_MASK+1)*2)
 
 #ifdef USE_SSD
@@ -4361,9 +4362,14 @@ void exportTermList (Polynomial * p, int writeFlag)
 
   if (writeFlag) {
     // Actually write it out...
+
     struct chunkTicket *cT;
     if (sP->iMTLIndex == -1) {
-      // ...and it's in allocated (discontiguous) memory
+      // ...and it's a new term list in allocated (discontiguous) memory
+
+      if (sSDDebt > 0)
+	return; // ...no can do.
+
       double buffer[MAX_SSD_BUFFER];
 
       if (sP->num > (MAX_SSD_BUFFER / 2)) {
@@ -4375,22 +4381,31 @@ void exportTermList (Polynomial * p, int writeFlag)
       // Avoid this painful mistake by changing sSDHandler's get and putSSD to have two separate pointers
       memcpy (&buffer[0], sP->sum, 8 * sP->num);
       memcpy (&buffer[sP->num], sP->factor, 8 * sP->num);
+      if ((cT = putSSD (buffer, sP->num)) == NULL) {
+	// We're out of business, put up the "Closed" sign until we get enough back.
+	sSDDebt = sP->num << 2;
+	fprintf (stderr, "In SSD debt for %ludps, reverting to memory allocation.\n", sSDDebt);
+	return;
+      }
       free (sP->sum);
       free (sP->factor);
-      cT = putSSD (buffer, sP->num);
+      sP->sum = (Polynomial **) cT->chunkOffset;
+      sP->factor = (double *) cT->doublePairCount;
     } else {
-      // ...and it's in an static buffer, so zap the old ticket
-      int i;
-      i = sP->iMTLIndex;
-      deportTermList (p);
-      cT = putSSD (iMTL[i].buffer, sP->num);
-      iMTL[i].cT.doublePairCount = 0;
+      // ...and it's an old term list in a static buffer, so just rewrite it
+      flushSSD (iMTL[sP->iMTLIndex].buffer, iMTL[sP->iMTLIndex].cT.chunkOffset, 
+		iMTL[sP->iMTLIndex].cT.doublePairCount);
+      sP->sum = (Polynomial **) iMTL[sP->iMTLIndex].cT.chunkOffset;
+      sP->factor = (double *) iMTL[sP->iMTLIndex].cT.doublePairCount;
+      iMTL[sP->iMTLIndex].cT.doublePairCount = 0;
     }
-    sP->sum = (Polynomial **) cT->chunkOffset;
-    sP->factor = (double *) cT->doublePairCount;
     //    printf ("Exported sum %lu and factor %lu\n", (unsigned long) sP->sum, (unsigned long) sP->factor);
     exportedWrittenTerms++;
   } else {
+    if (sP->iMTLIndex == -1)
+      // ...and it's a term list in allocated (discontiguous) memory, so this is a no-op
+      return;
+    // ...and it's an old term list in a static buffer, so just rewrite it
     sP->sum = (Polynomial **) iMTL[sP->iMTLIndex].cT.chunkOffset;
     sP->factor = (double *) iMTL[sP->iMTLIndex].cT.doublePairCount;
     iMTL[sP->iMTLIndex].cT.doublePairCount = 0;
@@ -4432,6 +4447,12 @@ void deportTermList (Polynomial * p)
     cT = (struct chunkTicket *) malloc(sizeof(struct chunkTicket));
     cT->chunkOffset = (unsigned long) sP->sum;
     cT->doublePairCount = (unsigned long) sP->factor;
+    // Pay-off some (eventually all?) of our debt
+    if (sSDDebt > 0) {
+      sSDDebt -= cT->doublePairCount;
+      if (sSDDebt <= 0)
+	fprintf (stderr, "Paid off our SSD debt!\n");
+    }
     freeSSD (cT);
   } else {
     free (sP->sum);

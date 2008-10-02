@@ -326,6 +326,27 @@ void garbageCollect () {
 }
 
 /*
+  Actually write the buffer.
+*/
+
+void flushSSD (double *buffer, unsigned long chunkOffset, unsigned long doublePairCount)
+{
+  // Chunk in SSD file is assigned, put the buffer out there...
+  if (fseek (sSDFD, chunkOffset * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
+    sprintf (messageBuffer, "Failed to seek to offset %ludpc in SSD cache file",
+	     chunkOffset);
+    perror (messageBuffer);
+    exit (EXIT_FAILURE);
+  }
+  if ((fwrite (buffer, DOUBLE_PAIR_SIZE, doublePairCount, sSDFD)) != doublePairCount) {
+    sprintf (messageBuffer, "Failed to write %ludps at offset %ludpc in SSD cache file",
+	     doublePairCount, chunkOffset);
+    perror (messageBuffer);
+    exit (EXIT_FAILURE);
+  }
+}
+
+/*
   Store a buffer of length doublePairCount and get a chunkTicket
   as your receipt.
 */
@@ -365,19 +386,7 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
     // This list head goes away completely due to no real leftovers
     removeFreeListHead (freeList);
   }
-  // Chunk in SSD file is assigned, put the buffer out there...
-  if (fseek (sSDFD, newCT->chunkOffset * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
-    sprintf (messageBuffer, "Failed to seek to offset %ludpc in SSD cache file",
-	     newCT->chunkOffset);
-    perror (messageBuffer);
-    exit (EXIT_FAILURE);
-  }
-  if ((fwrite (buffer, DOUBLE_PAIR_SIZE, newCT->doublePairCount, sSDFD)) != newCT->doublePairCount) {
-    sprintf (messageBuffer, "Failed to write %ludps at offset %ludpc in SSD cache file",
-	     newCT->doublePairCount, newCT->chunkOffset);
-    perror (messageBuffer);
-    exit (EXIT_FAILURE);
-  }
+  flushSSD (buffer, newCT->chunkOffset, newCT->doublePairCount);
   usedDPCs += newCT->doublePairCount;
   handledDPCs += newCT->doublePairCount;
   return newCT;
