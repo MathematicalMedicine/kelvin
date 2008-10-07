@@ -236,6 +236,19 @@ int compareFVE (const void *left, const void *right) {
   return (((struct freeVectorEntry *) left)->startDPC - ((struct freeVectorEntry *) right)->startDPC);
 }
 
+int compareSize (const void *left, const void *right) {
+  return (
+	  (
+	   ((struct freeVectorEntry *) right)->endDPC -
+	   ((struct freeVectorEntry *) right)->startDPC
+	  ) -
+	  (
+	   ((struct freeVectorEntry *) left)->endDPC -
+	   ((struct freeVectorEntry *) left)->startDPC
+	  )
+	 );
+}
+
 void garbageCollect () {
   /*
     This is not defragmentation, as we're not keeping track of chunkTickets we hand out, so we
@@ -326,11 +339,77 @@ void garbageCollect () {
 }
 
 /*
+  Reorder by descending size one of the free lists so we can reliably snag largest
+  entries when we're forced to drop below where we intend to operate.
+*/
+
+void reorderFreeList (int freeList) {
+  unsigned long totalFreeBefore = 0, totalFreeAfter = 0, startDPC = 0, endDPC = 0, freeVectorEntryCount;
+  struct freeVectorEntry *freeVector;
+  int i;
+
+  fprintf (stderr, "sSDHandler reordering free list %d...\n", freeList);
+
+  freeVectorEntryCount = listDepth[freeList];
+
+  if ((freeVector = (struct freeVectorEntry *) 
+       malloc (freeVectorEntryCount * sizeof (struct freeVectorEntry))) == NULL) {
+    fprintf (stderr, "Failed to allocate a %lu byte freeVector for garbage collection\n",
+	     freeVectorEntryCount * sizeof (struct freeVectorEntry));
+    exit (EXIT_FAILURE);
+  }
+
+  fprintf (stderr, "...extracting from list ");
+  freeVectorEntryCount = 0;
+  while (listHead[freeList].doublePairCount != 0) {
+    freeVector[freeVectorEntryCount].startDPC = listHead[freeList].chunkOffset;
+    freeVector[freeVectorEntryCount].endDPC = listHead[freeList].chunkOffset + listHead[freeList].doublePairCount;
+    freeVectorEntryCount++;
+    totalFreeBefore += listHead[freeList].doublePairCount;
+    removeFreeListHead (freeList);
+  }
+  fprintf (stderr, "\nSorting %lu entries...", freeVectorEntryCount);
+  fflush (stderr);
+
+  qsort (freeVector, freeVectorEntryCount, sizeof (struct freeVectorEntry), compareSize);
+
+  fprintf (stderr, "\nRe-inserting...");
+
+  // Connect and insert them.
+
+  int scale = (freeVectorEntryCount > 100 ? 100 : 10);
+  int j = MAX(1, (freeVectorEntryCount / scale));
+  for (i=0; i<freeVectorEntryCount; i++) {
+    if (i % j == 0) {
+      fprintf (stderr, "\rRe-inserting...%lu%% done", i * 100 / freeVectorEntryCount);
+      fflush (stderr);
+    }
+    startDPC = freeVector[i].startDPC;
+    endDPC = freeVector[i].endDPC;
+    while ((i<(freeVectorEntryCount-1)) && (endDPC == freeVector[i+1].startDPC))
+      endDPC = freeVector[++i].endDPC;
+    totalFreeAfter += endDPC-startDPC;
+    insertFreeListHead (startDPC, endDPC-startDPC);
+  }
+  fprintf (stderr, "\rRe-inserting...100%% done\n");
+
+  // Say how it went.
+  fprintf (stderr, "Began with %ludpc free and ended with %ludpc\n",
+	  totalFreeBefore, totalFreeAfter);
+  statSSD ();
+  free (freeVector);
+}
+
+/*
   Actually write the buffer.
 */
 
 void flushSSD (double *buffer, unsigned long chunkOffset, unsigned long doublePairCount)
 {
+  putCallCount++;
+  if ((putCallCount & 0x3FFFF) == 0x3FFFF)
+    statSSD ();
+
   // Chunk in SSD file is assigned, put the buffer out there...
   if (fseek (sSDFD, chunkOffset * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
     sprintf (messageBuffer, "Failed to seek to offset %ludpc in SSD cache file",
@@ -369,7 +448,7 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
 #endif
 
   // Handle leftovers...must be bigger than a freeList structure.
-  if ((leftOver = listHead[freeList].doublePairCount - myDPC - 1) > MIN_USE_SSD) {
+  if ((leftOver = listHead[freeList].doublePairCount - myDPC) > (MIN_USE_SSD + 1)) {
     // Something leftover, put it on a free list...maybe the current one?
     if ((newFreeList = high16Bit (leftOver)) == freeList) {
       // Keep the current list head, just smaller!
@@ -377,7 +456,7 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
       listHead[freeList].doublePairCount -= myDPC;
     } else {
       // This space from this list head goes to the head of a lesser list
-      insertFreeListHead (listHead[freeList].chunkOffset + myDPC, leftOver + 1);
+      insertFreeListHead (listHead[freeList].chunkOffset + myDPC, leftOver);
       removeFreeListHead (freeList);
     }
   } else {
@@ -394,38 +473,50 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
 
 struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
   unsigned short freeList;
+  unsigned short bestFreeList;
 
   if ((myDPC < MIN_USE_SSD) || (myDPC > MAX_SSD_DPC)) {
     fprintf (stderr, "putSSD size of %ludpc out-of-bounds\n", myDPC);
     return ((struct chunkTicket *) NULL);
   }
 
-  putCallCount++;
-  if ((putCallCount & 0x3FFFF) == 0x3FFFF)
-    statSSD ();
-
 #ifdef DIAG
   fprintf (stderr, "putSSD for %ludpc...", myDPC);
 #endif
 
   // Use the head of the first available list that's large enough.
-  for (freeList = MIN(15, high16Bit (myDPC) +1); freeList<16; freeList++) {
+  bestFreeList  = MIN(15, high16Bit (myDPC));
+  for (freeList = bestFreeList; freeList<16; freeList++) {
 #ifdef DIAG
     fprintf (stderr, "%d has %ludpc ", freeList, listHead[freeList].doublePairCount);
 #endif
-    if (listHead[freeList].doublePairCount != 0)
+    if (listHead[freeList].doublePairCount >= myDPC)
       return (doPutSSD (buffer, myDPC, freeList));
   }
   // Nothing left at all!!
   fprintf (stderr, "putSSD may be out of chunkage for a %ludpc request!\n", myDPC);
+
+  // Nothing, reorder the best free list and try again...
+
+  reorderFreeList (bestFreeList);
+
+  if (listHead[bestFreeList].doublePairCount >= myDPC) {
+    fprintf (stderr, "Best free list (%d) has %ludpc ", bestFreeList, listHead[bestFreeList].doublePairCount);
+#ifdef DIAG
+#endif
+    return (doPutSSD (buffer, myDPC, bestFreeList));
+  }
+
+  // That's about it...time to shuffle thru the trash.
+
   garbageCollect ();
 
   // Try again now...
-  for (freeList = MIN(15, high16Bit (myDPC) +1); freeList<16; freeList++) {
+  for (freeList = bestFreeList; freeList<16; freeList++) {
 #ifdef DIAG
     fprintf (stderr, "%d has %ludpc ", freeList, listHead[freeList].doublePairCount);
 #endif
-    if (listHead[freeList].doublePairCount != 0)
+    if (listHead[freeList].doublePairCount >= myDPC)
       return (doPutSSD (buffer, myDPC, freeList));
   }
   // Nothing left at all!!
@@ -440,6 +531,9 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
 */
 void getSSD (struct chunkTicket *myTicket, double *buffer) {
   getCallCount++;
+  if ((getCallCount & 0x3FFFF) == 0x3FFFF)
+    statSSD ();
+
 #ifdef DIAG
   fprintf (stderr, "getSSD for %ludps at %ludpc\n", myTicket->doublePairCount, myTicket->chunkOffset);
 #endif
@@ -463,6 +557,9 @@ void getSSD (struct chunkTicket *myTicket, double *buffer) {
 */
 void freeSSD (struct chunkTicket *myTicket) {
   freeCallCount++;
+  if ((freeCallCount & 0x3FFFF) == 0x3FFFF)
+    statSSD ();
+
 #ifdef DIAG
   fprintf (stderr, "freeSSD returning %ludpc at %ludps\n", myTicket->doublePairCount, myTicket->chunkOffset);
 #endif
