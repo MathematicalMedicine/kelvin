@@ -4,13 +4,14 @@
 
 # Invoked by main Kelvin Makefile. You'll get undefined symbols otherwise.
 
-INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h
-OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o
+INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h
+OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o
 
 all : $(KVNLIBDIR)/libutils.a \
       $(KVNINCDIR)/utils.h \
       $(KVNINCDIR)/sw.h \
       $(KVNINCDIR)/sSDHandler.h \
+      $(KVNINCDIR)/dists.h \
       $(KVNINCDIR)/tpl.h \
       $(KVNINCDIR)/hashtab.h \
       $(KVNINCDIR)/lookupa.h \
@@ -28,6 +29,9 @@ $(KVNINCDIR)/sw.h : sw.h
 
 $(KVNINCDIR)/sSDHandler.h : sSDHandler.h
 	cp sSDHandler.h $(KVNINCDIR)
+
+$(KVNINCDIR)/dists.h : dists.h
+	cp dists.h $(KVNINCDIR)
 
 $(KVNINCDIR)/tpl.h : tpl.h
 	cp tpl.h $(KVNINCDIR)
