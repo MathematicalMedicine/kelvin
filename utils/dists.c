@@ -573,6 +573,10 @@ double t_cdf_30 (double x, double degFree) {
   return(interpolate (x, TBL_VALUES, X, Y));
 }
 
+/*
+  Use DCDFLIB's cumulative distribution function for Student's T distribution.
+*/
+
 double t_cdf (double x, double degFree) {
   double P, Q, bound;
   int type = 1, status;
@@ -585,6 +589,10 @@ double t_cdf (double x, double degFree) {
   return (P);
 }
 
+/*
+  Use DCDFLIB's ln(gamma()) function to compute the probability density function for
+  chi square distribution.
+*/
 double chisq_pdf (double x, double degFree) {
 
   if (x <= 0)
@@ -592,6 +600,10 @@ double chisq_pdf (double x, double degFree) {
 
   return(exp(degFree/2*log(.5)+(degFree/2-1)*log(x)-x/2-alngam(&x)));
 }
+
+/*
+  Use DCDFLIB's cumulative distribution function for chi square distribution.
+*/
 
 double chisq_cdf (double x, double degFree) {
   double P, Q, bound;

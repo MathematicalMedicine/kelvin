@@ -28,9 +28,10 @@ char *locusVersion = "$Id$";
 #include <ctype.h>
 #include <math.h>
 
-#include "gsl/gsl_sf_gamma.h"
-#include "gsl/gsl_randist.h"
-#include "gsl/gsl_cdf.h"
+//#include "gsl/gsl_sf_gamma.h"
+//#include "gsl/gsl_randist.h"
+//#include "gsl/gsl_cdf.h"
+#include "dists.h"
 
 #include "pedlib.h"
 #include "utils.h"		/* for logging */
@@ -956,7 +957,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    /* if standard deviation is 1, don't do the division calculation */
 	    //                      if (0.999999 > stddev || stddev > 1.000001)
 	    temp = temp / stddev;
-	    *(double *) pen = gsl_cdf_ugaussian_P (temp);
+	    //	    *(double *) pen = gsl_cdf_ugaussian_P (temp);
+	    *(double *) pen = gaussian_cdf (temp, (double) 0.0, (double) 1.0);
 	  }
 	} else if (pTrait->type == COMBINED &&
 		   (trait >= pTrait->moreCutoffFlag - 0.000001 &&
@@ -991,7 +993,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    /* if standard deviation is 1, don't do the division calculation */
 	    //  if (0.999999 > stddev || stddev > 1.000001)
 	    temp /= stddev;
-	    *(double *) pen = gsl_cdf_ugaussian_Q (temp);
+	    //	    *(double *) pen = gsl_cdf_ugaussian_Q (temp);
+	    *(double *) pen = ((double) 1.0) - gaussian_cdf (temp, (double) 0.0, (double) 1.0);
 	  }
 	} else {		/* point PDF */
 	  if (modelOptions.polynomial == TRUE) {
@@ -1039,13 +1042,16 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	     * use CDF instead of pdf */
 	    if (pTrait->minFlag && trait >= pTrait->min - 0.000001
 		&& trait <= pTrait->min + 0.000001) {
-	      *(double *) pen = gsl_cdf_ugaussian_P (temp);
+	      //	      *(double *) pen = gsl_cdf_ugaussian_P (temp);
+	      *(double *) pen = gaussian_cdf (temp, (double) 0.0, (double) 1.0);
 	    } else
 	      if (pTrait->maxFlag && trait >= pTrait->max - 0.000001
 		  && trait <= pTrait->max + 0.000001) {
-	      *(double *) pen = gsl_cdf_ugaussian_Q (temp);
+		//		*(double *) pen = gsl_cdf_ugaussian_Q (temp);
+		*(double *) pen = ((double) 1.0) - gaussian_cdf (temp, (double) 0.0, (double) 1.0);
 	    } else {
-	      *(double *) pen = gsl_ran_ugaussian_pdf (temp);
+		//	      *(double *) pen = gsl_ran_ugaussian_pdf (temp);
+	      *(double *) pen = gaussian_pdf (temp, (double) 0.0, (double) 1.0);
 	    }
 	  }
 	}
@@ -1112,7 +1118,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	  } else {
 	    temp = pTrait->cutoffValue[liabilityClass - 1] - mean;
 	    temp /= stddev * sqrt ((df - 2) / df);
-	    *(double *) pen = gsl_cdf_tdist_P (temp, df);
+	    //	    *(double *) pen = gsl_cdf_tdist_P (temp, df);
+	    *(double *) pen = t_cdf (temp, df);
 	  }
 	} else if (pTrait->type == COMBINED &&
 		   (trait >= pTrait->moreCutoffFlag - 0.000001 &&
@@ -1177,7 +1184,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	  } else {
 	    temp = pTrait->cutoffValue[liabilityClass - 1] - mean;
 	    temp /= stddev * sqrt ((df - 2) / df);
-	    *(double *) pen = gsl_cdf_tdist_Q (temp, df);
+	    //	    *(double *) pen = gsl_cdf_tdist_Q (temp, df);
+	    *(double *) pen = ((double) 1.0) - t_cdf (temp, df);
 	  }
 
 	} else {		/* point pdf */
@@ -1260,13 +1268,16 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	     * use CDF instead of pdf */
 	    if (pTrait->minFlag && trait >= pTrait->min - 0.000001
 		&& trait <= pTrait->min + 0.000001) {
-	      *(double *) pen = gsl_cdf_tdist_P (temp, df);
+	      //	      *(double *) pen = gsl_cdf_tdist_P (temp, df);
+	      *(double *) pen = t_cdf (temp, df);
 	    } else
 	      if (pTrait->maxFlag && trait >= pTrait->max - 0.000001
 		  && trait <= pTrait->max + 0.000001) {
-	      *(double *) pen = gsl_cdf_tdist_Q (temp, df);
+		//	      *(double *) pen = gsl_cdf_tdist_Q (temp, df);
+		*(double *) pen = ((double) 1.0) - t_cdf (temp, df);
 	    } else {
-	      *(double *) pen = gsl_ran_tdist_pdf (temp, df);
+		//	      *(double *) pen = gsl_ran_tdist_pdf (temp, df);
+	      *(double *) pen = t_pdf_30 (temp, df);
 	    }
 	  }
 	}
@@ -1290,8 +1301,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 					    'D', "mean"));
 	  } else {
 	    /* mean is used to save the degree of freedom */
-	    *(double *) pen =
-	      gsl_cdf_chisq_P (pTrait->cutoffValue[liabilityClass - 1], mean);
+	    //	    *(double *) pen = gsl_cdf_chisq_P (pTrait->cutoffValue[liabilityClass - 1], mean);
+	    *(double *) pen = chisq_cdf (pTrait->cutoffValue[liabilityClass - 1], mean);
 	  }
 	} else if (pTrait->type == COMBINED &&
 		   (trait >= pTrait->moreCutoffFlag - 0.000001 &&
@@ -1311,8 +1322,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 							1], NULL,
 					    'D', "mean"));
 	  } else {
-	    *(double *) pen =
-	      gsl_cdf_chisq_Q (pTrait->cutoffValue[liabilityClass - 1], mean);
+	    //	    *(double *) pen = gsl_cdf_chisq_Q (pTrait->cutoffValue[liabilityClass - 1], mean);
+	    *(double *) pen = ((double) 1.0) - chisq_cdf (pTrait->cutoffValue[liabilityClass - 1], mean);
 	  }
 	} else {		/* point PDF */
 	  if (modelOptions.polynomial == TRUE) {
@@ -1372,7 +1383,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	       else
 	     */
 	    {
-	      *(double *) pen = gsl_ran_chisq_pdf (trait, mean);
+	      //	      *(double *) pen = gsl_ran_chisq_pdf (trait, mean);
+	      *(double *) pen = chisq_pdf (trait, mean);
 	    }
 	  }
 	}

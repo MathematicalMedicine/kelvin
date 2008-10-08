@@ -145,8 +145,9 @@
 #undef timesExp
 
 //#include "gsl/gsl_sf_gamma.h"
-#include "gsl/gsl_randist.h"
-#include "gsl/gsl_cdf.h"
+//#include "gsl/gsl_randist.h"
+//#include "gsl/gsl_cdf.h"
+#include "dists.h"
 
 #include "sw.h"
 #include "../trackProgress.h"
@@ -534,36 +535,45 @@ double doEvaluateValue (Polynomial * p)
     else if (strcmp (fp->name, "gsl_ran_tdist_pdf") == 0) {
       value0 = doEvaluateValue (fp->para[0]);
       value1 = doEvaluateValue (fp->para[1]);
-      result = gsl_ran_tdist_pdf (value0, value1);
+      //      result = gsl_ran_tdist_pdf (value0, value1);
+      result = t_pdf_30 (value0, value1);
     } else if (strcmp (fp->name, "gsl_cdf_tdist_Q") == 0) {
       value0 = doEvaluateValue (fp->para[0]);
       value1 = doEvaluateValue (fp->para[1]);
-      result = gsl_cdf_tdist_Q (value0, value1);
+      //      result = gsl_cdf_tdist_Q (value0, value1);
+      result = ((double) 1.0) - t_cdf (value0, value1);
     } else if (strcmp (fp->name, "gsl_cdf_tdist_P") == 0) {
       value0 = doEvaluateValue (fp->para[0]);
       value1 = doEvaluateValue (fp->para[1]);
-      result = gsl_cdf_tdist_P (value0, value1);
+      //      result = gsl_cdf_tdist_P (value0, value1);
+      result = t_cdf (value0, value1);
     } else if (strcmp (fp->name, "gsl_ran_ugaussian_pdf") == 0) {
       value0 = doEvaluateValue (fp->para[0]);
-      result = gsl_ran_ugaussian_pdf (value0);
+      //      result = gsl_ran_ugaussian_pdf (value0);
+      result = gaussian_pdf (value0, (double) 0.0, (double) 1.0);
     } else if (strcmp (fp->name, "gsl_cdf_ugaussian_Q") == 0) {
       value0 = doEvaluateValue (fp->para[0]);
-      result = gsl_cdf_ugaussian_Q (value0);
+      //      result = gsl_cdf_ugaussian_Q (value0);
+      result = ((double) 1.0) - gaussian_cdf (value0, (double) 0.0, (double) 1.0);
     } else if (strcmp (fp->name, "gsl_cdf_ugaussian_P") == 0) {
       value0 = doEvaluateValue (fp->para[0]);
-      result = gsl_cdf_ugaussian_P (value0);
+      //      result = gsl_cdf_ugaussian_P (value0);
+      result = gaussian_cdf (value0, (double) 0.0, (double) 1.0);
     } else if (strcmp (fp->name, "gsl_cdf_chisq_P") == 0) {
       value0 = doEvaluateValue (fp->para[0]);
       value1 = doEvaluateValue (fp->para[1]);
-      result = gsl_cdf_chisq_P (value0, value1);
+      //      result = gsl_cdf_chisq_P (value0, value1);
+      result = chisq_cdf (value0, value1);
     } else if (strcmp (fp->name, "gsl_cdf_chisq_Q") == 0) {
       value0 = doEvaluateValue (fp->para[0]);
       value1 = doEvaluateValue (fp->para[1]);
-      result = gsl_cdf_chisq_Q (value0, value1);
+      //      result = gsl_cdf_chisq_Q (value0, value1);
+      result = ((double) 1.0) - chisq_cdf (value0, value1);
     } else if (strcmp (fp->name, "gsl_ran_chisq_pdf") == 0) {
       value0 = doEvaluateValue (fp->para[0]);
       value1 = doEvaluateValue (fp->para[1]);
-      result = gsl_ran_chisq_pdf (value0, value1);
+      //      result = gsl_ran_chisq_pdf (value0, value1);
+      result = chisq_pdf (value0, value1);
     }
     // pow, exp, sqrt are standard functions
     else if (strcmp (fp->name, "pow") == 0) {
@@ -2583,24 +2593,49 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
         p->value = tanh (p->e.f->para[0]->value);
       } else if (strcmp (p->e.f->name, "atanh") == 0) {
         p->value = atanh (p->e.f->para[0]->value);
+	/*
       } else if (strcmp (p->e.f->name, "gsl_ran_tdist_pdf") == 0) {
         p->value = gsl_ran_tdist_pdf (p->e.f->para[0]->value, p->e.f->para[1]->value);
       } else if (strcmp (p->e.f->name, "gsl_cdf_tdist_Q") == 0) {
         p->value = gsl_cdf_tdist_Q (p->e.f->para[0]->value, p->e.f->para[1]->value);
       } else if (strcmp (p->e.f->name, "gsl_cdf_tdist_P") == 0) {
         p->value = gsl_cdf_tdist_P (p->e.f->para[0]->value, p->e.f->para[1]->value);
+	*/
+      } else if (strcmp (p->e.f->name, "gsl_ran_tdist_pdf") == 0) {
+        p->value = t_pdf_30 (p->e.f->para[0]->value, p->e.f->para[1]->value);
+      } else if (strcmp (p->e.f->name, "gsl_cdf_tdist_Q") == 0) {
+        p->value = ((double) 1.0) - t_cdf (p->e.f->para[0]->value, p->e.f->para[1]->value);
+      } else if (strcmp (p->e.f->name, "gsl_cdf_tdist_P") == 0) {
+        p->value = t_cdf (p->e.f->para[0]->value, p->e.f->para[1]->value);
+	/*
       } else if (strcmp (p->e.f->name, "gsl_ran_ugaussian_pdf") == 0) {
         p->value = gsl_ran_ugaussian_pdf (p->e.f->para[0]->value);
       } else if (strcmp (p->e.f->name, "gsl_cdf_ugaussian_Q") == 0) {
         p->value = gsl_cdf_ugaussian_Q (p->e.f->para[0]->value);
       } else if (strcmp (p->e.f->name, "gsl_cdf_ugaussian_P") == 0) {
         p->value = gsl_cdf_ugaussian_P (p->e.f->para[0]->value);
+	*/
+      } else if (strcmp (p->e.f->name, "gsl_ran_ugaussian_pdf") == 0) {
+        p->value = gaussian_pdf (p->e.f->para[0]->value, (double) 0.0, (double) 1.0);
+      } else if (strcmp (p->e.f->name, "gsl_cdf_ugaussian_Q") == 0) {
+        p->value = ((double) 1.0) - gaussian_cdf (p->e.f->para[0]->value, (double) 0.0, (double) 1.0);
+      } else if (strcmp (p->e.f->name, "gsl_cdf_ugaussian_P") == 0) {
+        p->value = gaussian_cdf (p->e.f->para[0]->value, (double) 0.0, (double) 1.0);
+	/*
       } else if (strcmp (p->e.f->name, "gsl_cdf_chisq_P") == 0) {
         p->value = gsl_cdf_chisq_P (p->e.f->para[0]->value, p->e.f->para[1]->value);
       } else if (strcmp (p->e.f->name, "gsl_cdf_chisq_Q") == 0) {
         p->value = gsl_cdf_chisq_Q (p->e.f->para[0]->value, p->e.f->para[1]->value);
       } else if (strcmp (p->e.f->name, "gsl_ran_chisq_pdf") == 0) {
         p->value = gsl_ran_chisq_pdf (p->e.f->para[0]->value, p->e.f->para[1]->value);
+	*/
+      } else if (strcmp (p->e.f->name, "gsl_cdf_chisq_P") == 0) {
+        p->value = chisq_cdf (p->e.f->para[0]->value, p->e.f->para[1]->value);
+      } else if (strcmp (p->e.f->name, "gsl_cdf_chisq_Q") == 0) {
+        p->value = ((double) 1.0) - chisq_cdf (p->e.f->para[0]->value, p->e.f->para[1]->value);
+      } else if (strcmp (p->e.f->name, "gsl_ran_chisq_pdf") == 0) {
+        p->value = chisq_pdf (p->e.f->para[0]->value, p->e.f->para[1]->value);
+
       } else if (strcmp (p->e.f->name, "pow") == 0) {
         p->value = pow (p->e.f->para[0]->value, p->e.f->para[1]->value);
 
