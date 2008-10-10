@@ -104,6 +104,7 @@ int main (int argc, char **argv)
 {
   int argidx, ret, datalines, va, vb;
   FILE *fp;
+  long firstmarker;
   st_marker marker;
   st_data data;
   st_multidim dprimes, thetas;
@@ -135,6 +136,7 @@ int main (int argc, char **argv)
   memset (&dprimes, 0, sizeof (st_multidim));
   memset (&thetas, 0, sizeof (st_multidim));
 
+  firstmarker = ftell (fp);
   if ((ret = get_marker_line (&marker, fp)) == 0) {
     fprintf (stderr, "file '%s' is empty\n", argv[argidx]);
     exit (-1);
@@ -165,7 +167,7 @@ int main (int argc, char **argv)
     exit (-1);
   }
 
-  if (fseek (fp, 0, SEEK_SET) == -1) {
+  if (fseek (fp, firstmarker, SEEK_SET) == -1) {
     fprintf (stderr, "fseek failed, %s\n", strerror (errno));
     exit (-1);
   }
