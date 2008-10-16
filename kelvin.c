@@ -100,7 +100,6 @@
 
 */
 #include <pthread.h>
-#include <gsl/gsl_version.h>
 #include "kelvin.h"
 #include "kelvinHandlers.h"
 #include "likelihood.h"

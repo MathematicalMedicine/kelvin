@@ -20,7 +20,7 @@
   swLogMsg (likelihoodVersion);
   swLogMsg (locusVersion);
   swLogMsg (polynomialVersion);
-  sprintf (messageBuffer, "Compiler %s, GSL %s\n", __VERSION__, GSL_VERSION);
+  sprintf (messageBuffer, "Compiler %s\n", __VERSION__);
   swLogMsg (messageBuffer);
 
 #ifdef _OPENMP
