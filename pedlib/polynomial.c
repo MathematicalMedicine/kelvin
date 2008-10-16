@@ -4410,7 +4410,7 @@ void exportTermList (Polynomial * p, int writeFlag)
       if (sP->num > (MAX_SSD_BUFFER / 2)) {
 	fprintf (stderr, "MAX_SSD_BUFFER of %d is too small for request for %d double pairs\n",
 		 MAX_SSD_BUFFER, sP->num);
-	exit (EXIT_FAILURE);
+	return; // ...leave it in memory.
       }
 
       // Avoid this painful mistake by changing sSDHandler's get and putSSD to have two separate pointers
