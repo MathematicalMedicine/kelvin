@@ -3,7 +3,7 @@
 #include <string.h>
 
 struct chunkTicket {
-  unsigned long doublePairCount; // Size in double pairs of this chunk, max of 2^15 = 32K.
+  unsigned long doublePairCount; // Size in double pairs of this chunk
   unsigned long chunkOffset; /* Offset in double pairs from beginning of file, max of 
 				64Gb/16b = 4M, so largest usable SSD is 4M * 32K = 128G. */
 };
@@ -19,11 +19,11 @@ void termSSD ();
 #define MIN_USE_SSD 256
 #endif
 
-// Maximum size of a chunk, in double pairs, 2^15=32K
+// Maximum size of a chunk, in double pairs, 2^15=32K, but we really can go beyond that
 #ifdef MAIN
 #define MAX_DPC_MASK 0xF
 #else
-#define MAX_DPC_MASK 0x7FFF
+#define MAX_DPC_MASK 0x7FFFF
 #endif
 
 

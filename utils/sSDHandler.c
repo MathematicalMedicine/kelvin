@@ -102,7 +102,7 @@ FILE *sSDFD;
 
 struct listEntry {
   unsigned long doublePairCount; /* Size in double pairs of this chunk, largest feasible is 
-				    2^32-1*16 = ~64Gb, but really must be less than 2^16 (MAX_DPC_MASK) so
+				    2^32-1*16 = ~64Gb, but might ought to be less than 2^16 (MAX_DPC_MASK) so
 				    list 16 satisfies any request. 0 if end of list */
   unsigned long chunkOffset; // Offset in double pairs from beginning of file, max of 64Gb/16b = 4M.
   unsigned long nextFree; // Offset in double pairs of next listEntry in free list, 0 if DNE.
@@ -204,6 +204,20 @@ void insertFreeListHead (unsigned long chunkOffset, unsigned long doublePairCoun
     listHead[freeList].doublePairCount = doublePairCount;
     listHead[freeList].nextFree = 0;
   } else {
+    // Not the first one, but adjacent to it?
+    if (chunkOffset+doublePairCount == listHead[freeList].chunkOffset) {
+      // Add to beginning...
+      listHead[freeList].chunkOffset = chunkOffset;
+      listHead[freeList].doublePairCount += doublePairCount;
+      return;
+    }
+    if (listHead[freeList].chunkOffset + listHead[freeList].doublePairCount == chunkOffset) {
+      // Add to end...
+      listHead[freeList].doublePairCount += doublePairCount;
+      return;
+    }
+    // Not adjacent in any sense, just push it onto the free list...
+
     /* BTW - Combining contiguous free entries to defragment dynamically would require
        backpointers, which would double our read/write burden. */
     // Not the first one, need to flush the old first one to the SSD cache file
@@ -239,12 +253,12 @@ int compareFVE (const void *left, const void *right) {
 int compareSize (const void *left, const void *right) {
   return (
 	  (
-	   ((struct freeVectorEntry *) right)->endDPC -
-	   ((struct freeVectorEntry *) right)->startDPC
-	  ) -
-	  (
 	   ((struct freeVectorEntry *) left)->endDPC -
 	   ((struct freeVectorEntry *) left)->startDPC
+	  ) -
+	  (
+	   ((struct freeVectorEntry *) right)->endDPC -
+	   ((struct freeVectorEntry *) right)->startDPC
 	  )
 	 );
 }
@@ -389,6 +403,7 @@ void reorderFreeList (int freeList) {
     while ((i<(freeVectorEntryCount-1)) && (endDPC == freeVector[i+1].startDPC))
       endDPC = freeVector[++i].endDPC;
     totalFreeAfter += endDPC-startDPC;
+    fprintf (stderr, "Entry %d is inserted as %ludps\n", i, endDPC-startDPC);
     insertFreeListHead (startDPC, endDPC-startDPC);
   }
   fprintf (stderr, "\rRe-inserting...100%% done\n");
@@ -449,7 +464,7 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
 
   // Handle leftovers...must be bigger than a freeList structure.
   if ((leftOver = listHead[freeList].doublePairCount - myDPC) > (MIN_USE_SSD + 1)) {
-    // Something leftover, put it on a free list...maybe the current one?
+    // Put it on a free list...maybe the current one?
     if ((newFreeList = high16Bit (leftOver)) == freeList) {
       // Keep the current list head, just smaller!
       listHead[freeList].chunkOffset += myDPC;
@@ -501,7 +516,7 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
   reorderFreeList (bestFreeList);
 
   if (listHead[bestFreeList].doublePairCount >= myDPC) {
-    fprintf (stderr, "Best free list (%d) has %ludpc ", bestFreeList, listHead[bestFreeList].doublePairCount);
+    fprintf (stderr, "Best free list (%d) has %ludps\n", bestFreeList, listHead[bestFreeList].doublePairCount);
 #ifdef DIAG
 #endif
     return (doPutSSD (buffer, myDPC, bestFreeList));
@@ -513,8 +528,8 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
 
   // Try again now...
   for (freeList = bestFreeList; freeList<16; freeList++) {
+    fprintf (stderr, "%d has %ludpc\n", freeList, listHead[freeList].doublePairCount);
 #ifdef DIAG
-    fprintf (stderr, "%d has %ludpc ", freeList, listHead[freeList].doublePairCount);
 #endif
     if (listHead[freeList].doublePairCount >= myDPC)
       return (doPutSSD (buffer, myDPC, freeList));
