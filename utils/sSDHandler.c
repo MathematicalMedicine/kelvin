@@ -164,12 +164,12 @@ void initSSD() {
 }
 
 void removeFreeListHead (unsigned short freeList) {
-  listDepth[freeList]--;
   if (listHead[freeList].nextFree == 0) {
     // Out of list entries
     listHead[freeList].doublePairCount = 0;
   } else {
     // Pull-in the next entry and shlorp-up the listEntry space!
+    listDepth[freeList]--;
     if (fseek (sSDFD, listHead[freeList].nextFree * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
       perror ("Failed to seek in SSD cache file");
       exit (EXIT_FAILURE);
@@ -197,47 +197,64 @@ void insertFreeListHead (unsigned long chunkOffset, unsigned long doublePairCoun
     freeList = high16Bit (doublePairCount - 1);
   else
     freeList = 0;
-  listDepth[freeList]++;
+#ifdef DIAG
+  fprintf (stderr, "Pushing %ludpc of %ludps onto list %d\n",
+	   chunkOffset, doublePairCount, freeList);
+#endif
   if (listHead[freeList].doublePairCount == 0) {
     // First one, an easy insertion
+#ifdef DIAG
+    fprintf (stderr, "First of list!\n");
+#endif
     listHead[freeList].chunkOffset = chunkOffset;
     listHead[freeList].doublePairCount = doublePairCount;
     listHead[freeList].nextFree = 0;
-  } else {
-    // Not the first one, but adjacent to it?
-    if (chunkOffset+doublePairCount == listHead[freeList].chunkOffset) {
-      // Add to beginning...
-      listHead[freeList].chunkOffset = chunkOffset;
-      listHead[freeList].doublePairCount += doublePairCount;
-      return;
-    }
-    if (listHead[freeList].chunkOffset + listHead[freeList].doublePairCount == chunkOffset) {
-      // Add to end...
-      listHead[freeList].doublePairCount += doublePairCount;
-      return;
-    }
-    // Not adjacent in any sense, just push it onto the free list...
-
-    /* BTW - Combining contiguous free entries to defragment dynamically would require
-       backpointers, which would double our read/write burden. */
-    // Not the first one, need to flush the old first one to the SSD cache file
-
-    if (fseek (sSDFD, listHead[freeList].chunkOffset * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
-      sprintf (messageBuffer, "Failed to seek to %ludps in SSD cache file", listHead[freeList].chunkOffset);
-      perror (messageBuffer);
-      exit (EXIT_FAILURE);
-    }
-    listHead[freeList].chunkOffset++;
-    listHead[freeList].doublePairCount--;
-    if ((fwrite (&listHead[freeList], sizeof (struct listEntry), 1, sSDFD)) != 1) {
-      perror ("Failed to write SSD cache file");
-      exit (EXIT_FAILURE);
-    }
-    listHead[freeList].nextFree = listHead[freeList].chunkOffset - 1;
-    listHead[freeList].chunkOffset = chunkOffset;
-    listHead[freeList].doublePairCount = doublePairCount;
-
+    listDepth[freeList] = 1;
+    return;
   }
+
+  // Not the first one, but adjacent to it?
+  if (chunkOffset+doublePairCount == listHead[freeList].chunkOffset) {
+    // Add to beginning...
+#ifdef DIAG
+    fprintf (stderr, "Immediately preceeds first of list!\n");
+#endif
+    listHead[freeList].chunkOffset = chunkOffset;
+    listHead[freeList].doublePairCount += doublePairCount;
+    return;
+  }
+
+  if (listHead[freeList].chunkOffset + listHead[freeList].doublePairCount == chunkOffset) {
+    // Add to end...
+#ifdef DIAG
+    fprintf (stderr, "Immediately follows first of list!\n");
+#endif
+    listHead[freeList].doublePairCount += doublePairCount;
+    return;
+  }
+
+  // Not adjacent in any sense, just push it onto the free list...
+  /* BTW - Combining contiguous free entries to defragment dynamically would require
+     backpointers, which would double our read/write burden. */
+  // Not the first one, need to flush the old first one to the SSD cache file
+  
+  listDepth[freeList]++;
+  
+  if (fseek (sSDFD, listHead[freeList].chunkOffset * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
+    sprintf (messageBuffer, "Failed to seek to %ludps in SSD cache file", listHead[freeList].chunkOffset);
+    perror (messageBuffer);
+    exit (EXIT_FAILURE);
+  }
+  listHead[freeList].chunkOffset++;
+  listHead[freeList].doublePairCount--;
+  if ((fwrite (&listHead[freeList], sizeof (struct listEntry), 1, sSDFD)) != 1) {
+    perror ("Failed to write SSD cache file");
+    exit (EXIT_FAILURE);
+  }
+  listHead[freeList].nextFree = listHead[freeList].chunkOffset - 1;
+  listHead[freeList].chunkOffset = chunkOffset;
+  listHead[freeList].doublePairCount = doublePairCount;
+
   return;
 }
 
@@ -362,7 +379,7 @@ void reorderFreeList (int freeList) {
   struct freeVectorEntry *freeVector;
   int i;
 
-  fprintf (stderr, "sSDHandler reordering free list %d...\n", freeList);
+  fprintf (stderr, "sSDHandler reordering free list %d of %d entries...\n", freeList, listDepth[freeList]);
 
   freeVectorEntryCount = listDepth[freeList];
 
@@ -403,7 +420,6 @@ void reorderFreeList (int freeList) {
     while ((i<(freeVectorEntryCount-1)) && (endDPC == freeVector[i+1].startDPC))
       endDPC = freeVector[++i].endDPC;
     totalFreeAfter += endDPC-startDPC;
-    fprintf (stderr, "Entry %d is inserted as %ludps\n", i, endDPC-startDPC);
     insertFreeListHead (startDPC, endDPC-startDPC);
   }
   fprintf (stderr, "\rRe-inserting...100%% done\n");
@@ -465,7 +481,7 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
   // Handle leftovers...must be bigger than a freeList structure.
   if ((leftOver = listHead[freeList].doublePairCount - myDPC) > (MIN_USE_SSD + 1)) {
     // Put it on a free list...maybe the current one?
-    if ((newFreeList = high16Bit (leftOver)) == freeList) {
+    if ((newFreeList = high16Bit (leftOver - 1)) == freeList) {
       // Keep the current list head, just smaller!
       listHead[freeList].chunkOffset += myDPC;
       listHead[freeList].doublePairCount -= myDPC;
@@ -516,8 +532,8 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
   reorderFreeList (bestFreeList);
 
   if (listHead[bestFreeList].doublePairCount >= myDPC) {
-    fprintf (stderr, "Best free list (%d) has %ludps\n", bestFreeList, listHead[bestFreeList].doublePairCount);
 #ifdef DIAG
+    fprintf (stderr, "Best free list (%d) has %ludps\n", bestFreeList, listHead[bestFreeList].doublePairCount);
 #endif
     return (doPutSSD (buffer, myDPC, bestFreeList));
   }
@@ -528,8 +544,8 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
 
   // Try again now...
   for (freeList = bestFreeList; freeList<16; freeList++) {
-    fprintf (stderr, "%d has %ludpc\n", freeList, listHead[freeList].doublePairCount);
 #ifdef DIAG
+    fprintf (stderr, "%d has %ludpc\n", freeList, listHead[freeList].doublePairCount);
 #endif
     if (listHead[freeList].doublePairCount >= myDPC)
       return (doPutSSD (buffer, myDPC, freeList));
