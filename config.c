@@ -224,7 +224,18 @@ readConfigFile (char *file)
   modelRange.nlambdas = 0;
   modelRange.maxnlambdas = 0;
   modelRange.tlmark = FALSE;
-
+  double integrationLDDPrimeValues[] = {-0.9982431840532, -0.9956010478552, -0.9790222658168,
+					-0.9590960631620, -0.8761473165029, -0.8727421201131,
+					-0.7013933644534, -0.6582769255267, -0.6492284325645,
+					-0.5666666666667, -0.5000000000000, -0.3808991135940,
+					-0.3582614645881, -0.2517129343453, -0.2077777777778,
+					-0.1594544658298, 0.0000000000000, 0.1594544658298,
+					0.2077777777778, 0.2517129343453, 0.3582614645881,
+					0.3808991135940, 0.5000000000000, 0.5666666666667,
+					0.6492284325645, 0.6582769255267, 0.7013933644534,
+					0.8727421201131, 0.8761473165029, 0.9590960631620,
+					0.9790222658168, 0.9956010478552, 0.9982431840532};
+  int integrationLDDPrimeValuesCount = 33;
   /* Allocate storage for pattern spaces. */
   buffer0 = malloc (KMAXLINELEN + 1);
   buffer1 = malloc (KMAXLINELEN + 1);
@@ -325,6 +336,15 @@ readConfigFile (char *file)
       modelOptions.integration = TRUE;  /* dkelvin integration */
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for dkelvin integration\n");
+      continue;
+    }
+    if (strncmp (line, "LD", 2) == 0) {
+      /* LD without D-prime parameters, which will be legal only if using integration */
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for LD under dkelvin integration\n");
+      for (i=0; i< integrationLDDPrimeValuesCount; i++) {
+	addDPrime (&modelRange, integrationLDDPrimeValues[i]);
+      }
       continue;
     }
     if (strncmp (line, "PE", 2) == 0) {
@@ -918,6 +938,12 @@ readConfigFile (char *file)
 	   "Trait loci specification only for multipoint analysis.\n");
   KASSERT ((modelType.type != TP || !modelRange.tlmark),
 	   "On-marker trait locus specification only for multipoint analysis.\n");
+  KASSERT ((modelOptions.integration == FALSE || modelRange.ndprime == integrationLDDPrimeValuesCount || 
+	    modelOptions.equilibrium == LINKAGE_EQUILIBRIUM),
+	   "D-prime values cannot be specified on the LD directive for integration (DK) analysis.\n");
+  KASSERT ((modelOptions.integration == TRUE || modelRange.ndprime != integrationLDDPrimeValuesCount || 
+	    modelOptions.equilibrium == LINKAGE_EQUILIBRIUM),
+	   "D-prime values must be specified on the LD directive for iterative (not-DK) analysis.\n");
 
   /* Copy Dd to dD if needed, i.e. if none were specified, so no imprinting. &&& */
   if (penetcnt[dD-DD] == 0) {
