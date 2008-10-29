@@ -1568,7 +1568,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     sumList[sumCount]->id = nodeId;
     if (nodeId == polynomialLostNodeId) {
       fprintf (stderr, "nodeId %d has valid of %d and count of %d\n", polynomialLostNodeId, rp->valid, rp->count);
-      expTermPrinting (stderr, rp, 16);
+      //      expTermPrinting (stderr, rp, 16);
       fprintf (stderr, "\nIf you're in gdb, continue from here to see more.\n");
       raise (SIGUSR1);
     }
@@ -2093,7 +2093,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       }
       if (nodeId == polynomialLostNodeId) {
         fprintf (stderr, "nodeId %d has valid of %d and count of %d\n", polynomialLostNodeId, rp->valid, rp->count);
-        expTermPrinting (stderr, rp, 16);
+	//        expTermPrinting (stderr, rp, 16);
         fprintf (stderr, "\nIf you're in gdb, continue from here to see more.\n");
         raise (SIGUSR1);
       }
@@ -4599,7 +4599,7 @@ int loadPolyDL (Polynomial * p)
   if ((p->e.e->polynomialFunctionHandle[0] = 
        /* DO NOT USE RTLD_GLOBAL, as it for some reason doesn't actually set the input
 	  variables when they are assigned in the DLs. I need to research this. */
-       dlopen (polynomialFileName, RTLD_LAZY|RTLD_LOCAL)) != NULL) {
+       dlopen (polynomialFileName, RTLD_LAZY|RTLD_GLOBAL)) != NULL) {
 
     // Loaded! Do any supporting 1K clump DLs.
     for (i=0; i<=32; i++) {
@@ -4670,29 +4670,40 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     exit (EXIT_FAILURE);
   }
 
-  fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n\n");
+  fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n#include <stdlib.h>\n\n");
   fprintf (srcFile, "#include \"%s.h\"\n\n", name);
 
 #ifdef POLYCODE_DL
-  fprintf (srcFile, "#include \"polynomial.h\"\n\n");
-  fprintf (srcFile, "struct polynomial **variableList;\n\n");
+  fprintf (srcFile, "#include <dlfcn.h>\n#include \"polynomial.h\"\n\n");
 #endif
   fprintf (srcFile, "double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
 
   /// Make sure all variables are present, since we don't know yet which are used.
+  /*
   for (i = 0; i < variableCount; i++)
     fprintf (srcFile, "double %s;\n", variableList[i]->e.v->vName);
   fprintf (srcFile, "\n");
-
+  */
   fprintf (srcFile, "double %s (int num, ...) {\n", name);
+
+#ifdef POLYCODE_DL
+  fprintf (srcFile, "char *baseFunctionName = \"%s\";\nint dLFunctionCount = DLFUNCTIONCOUNT;\n\n", name);
+  fprintf (srcFile, "struct polynomial **variableList;\n\n");
+#endif
 
   fprintf (srcFile, "\tva_list args;\n\n\tva_start (args, num);\n\n");
 
   fprintf (srcFile, "\tvariableList = va_arg (args, struct polynomial **);\n");
-  for (i = 0; i < variableCount; i++)
-    fprintf (srcFile, "\t\t%s = variableList[%d]->value;\n", variableList[i]->e.v->vName, i);
+  for (i = 0; i < variableCount; i++) {
+    fprintf (srcFile, "\t\tV[%d] = variableList[%d]->value;\n", i, i);
+//    fprintf (srcFile, "\t\tfprintf (stderr, \"vL[%d]->v is %%g\\n\", variableList[%d]->value);\n", i, i);
+//    fprintf (srcFile, "\t\tfprintf (stderr, \"V[%d] is %%g\\n\", V[%d]);\n", i, i);
+  }
   fprintf (srcFile, "\tva_end (args);\n\n");
 
+#ifdef POLYCODE_DL
+  fprintf (srcFile, "#include \"polyDLLoop.c\"\n\n");
+#endif
   for (j = 0; j <= l->listNext - 1; j++) {
 
     if (srcSize >= MAXSRCSIZE) {
@@ -4709,7 +4720,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
         perror ("Cannot open polynomial source called file\n");
         exit (EXIT_FAILURE);
       }
-      fprintf (srcFile, "\t%s_%04d();\n", name, fileCount);
+      //      fprintf (srcFile, "\t%s_%04d();\n", name, fileCount);
 
       srcSize += fprintf (srcCalledFile, "#include <math.h>\n#include <stdio.h>\n\n");
       srcSize += fprintf (srcCalledFile, "\textern double V[], S[], P[], F[];\n\n");
@@ -4733,8 +4744,10 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
       break;
 
     case T_VARIABLE:
+      /*
       totalInternalSize += sizeof (struct variablePoly);
       srcSize += fprintf (srcCalledFile, "\t%s[%d] = %s", eTypes[p->eType], p->index, p->e.v->vName);
+      */
       p->value = p->index;
       break;
 
@@ -4826,10 +4839,14 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   totalSourceSize += srcSize;
   fclose (srcCalledFile);
 
-  if (result->eType == T_CONSTANT)
+  if (result->eType == T_CONSTANT) {
+    //    fprintf (srcFile, "\n\tfprintf (stderr, \"returning constant %.*g\\n\");\n", DBL_DIG, result->value);
     fprintf (srcFile, "\n\treturn %.*g;\n}\n", DBL_DIG, result->value);
-  else
+  } else {
+    //    fprintf (srcFile, "\n\tfprintf (stderr, \"returning %s[%lu] of %%g\\n\", %s[%lu]);\n",
+    //	     eTypes[result->eType], (unsigned long) result->value, eTypes[result->eType], (unsigned long) result->value);
     fprintf (srcFile, "\n\treturn %s[%lu];\n}\n", eTypes[result->eType], (unsigned long) result->value);
+  }
 
   fprintf (srcFile, "#ifdef MAIN\n\n#include <stdio.h>\n#include <stdlib.h>\n\n" "int main(int argc, char *argv[]) {\n\tint i;\n\n");
   fprintf (srcFile, "\tif (argc != %d) {\n\t\tfprintf(stderr, \"%d floating arguments required\\n\");" "\n\t\texit(EXIT_FAILURE);\n\t}\n\tprintf(\"%%g\\n\", %s(1, ", variableCount + 1, variableCount, name);
@@ -4849,13 +4866,16 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   fprintf (includeFile, "#define SUMSUSED %d\n", sumsUsed);
   fprintf (includeFile, "#define PRODUCTSUSED %d\n", productsUsed);
   fprintf (includeFile, "#define FUNCTIONCALLSUSED %d\n", functionCallsUsed);
+#ifdef POLYCODE_DL
+  fprintf (includeFile, "#define DLFUNCTIONCOUNT %d\n", fileCount);
+#endif
   fclose (includeFile);
 
 #ifdef POLYCOMP_DL
   char command[256];
   pushStatus ("compile poly");
   // sprintf (command, "time gcc -g -I/home/whv001/kelvin/trunk/include -O -fPIC -shared -o %s.so %s* >& %s.out", name, name, name);
-  sprintf (command, "source /home/whv001/kit/bin/compile.sh %s", name);
+  sprintf (command, "source /home/whv001/kit/bin/compile_v2.sh %s", name);
   int status;
   if ((status = system (command)) != 0) {
     perror ("system()");
