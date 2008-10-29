@@ -941,7 +941,7 @@ readConfigFile (char *file)
   KASSERT ((modelOptions.integration == FALSE || modelRange.ndprime == integrationLDDPrimeValuesCount || 
 	    modelOptions.equilibrium == LINKAGE_EQUILIBRIUM),
 	   "D-prime values cannot be specified on the LD directive for integration (DK) analysis.\n");
-  KASSERT ((modelOptions.integration == TRUE || modelRange.ndprime != integrationLDDPrimeValuesCount || 
+  KASSERT ((modelOptions.integration == FALSE || modelRange.ndprime != integrationLDDPrimeValuesCount || 
 	    modelOptions.equilibrium == LINKAGE_EQUILIBRIUM),
 	   "D-prime values must be specified on the LD directive for iterative (not-DK) analysis.\n");
 
