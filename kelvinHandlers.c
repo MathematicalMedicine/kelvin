@@ -51,6 +51,12 @@ void intSignalHandler (int ourSignal)
   exit (EXIT_FAILURE);
 }
 
+/// Handler for SIGUSR1
+void usr1SignalHandler (int signal)
+{
+  fprintf (stderr, "This interrupt used to implement self-setting gdb breakpoints\n");
+}
+
 pid_t childPID = 0;     ///< For a child process producing timing (and memory?) statistics.
 /**
 
@@ -69,8 +75,8 @@ void exitKelvin ()
 }
 
 void setupHandlers () {
-  struct sigaction quitAction, intAction;
-  sigset_t quitBlockMask, intBlockMask;
+  struct sigaction quitAction, intAction, usr1Action;
+  sigset_t quitBlockMask, intBlockMask, usr1BlockMask;
 
   /* Add an exit handler to deal with wayward children. */
 
@@ -81,6 +87,13 @@ void setupHandlers () {
 
   /** Setup signal handlers. Be sure to do this before starting
    any threads, or interrupts might not be handled properly. */
+
+
+  sigfillset (&usr1BlockMask);
+  usr1Action.sa_handler = usr1SignalHandler;
+  usr1Action.sa_mask = usr1BlockMask;
+  usr1Action.sa_flags = 0;
+  sigaction (SIGUSR1, &usr1Action, NULL);
 
 #if defined (GPROF) || (GCOV)
   struct sigaction termAction;
