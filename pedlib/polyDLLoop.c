@@ -21,6 +21,6 @@
 		     functionName, libraryName);
 	    exit (EXIT_FAILURE);
 	  }
-	  pFunction();
+	  pFunction(V, S, P, F);
 	}
 	dlclose (libraryHandle);

@@ -4673,18 +4673,21 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n#include <stdlib.h>\n\n");
   fprintf (srcFile, "#include \"%s.h\"\n\n", name);
 
+  /* We need to be *very* considerate of what is global and what is not when dealing with
+     multiple generated dynamic libraries. Nothing should be global that is not
+     uniquely named amid all other currently loaded DLs, otherwise we'll definitely not be
+     thread-safe, and we might not be able to work at all.
+  */
+
+  // Here's the global part...
 #ifdef POLYCODE_DL
   fprintf (srcFile, "#include <dlfcn.h>\n#include \"polynomial.h\"\n\n");
 #endif
-  fprintf (srcFile, "double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
 
-  /// Make sure all variables are present, since we don't know yet which are used.
-  /*
-  for (i = 0; i < variableCount; i++)
-    fprintf (srcFile, "double %s;\n", variableList[i]->e.v->vName);
-  fprintf (srcFile, "\n");
-  */
   fprintf (srcFile, "double %s (int num, ...) {\n", name);
+  // And now we're local...
+
+  fprintf (srcFile, "double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
 
 #ifdef POLYCODE_DL
   fprintf (srcFile, "char *baseFunctionName = \"%s\";\nint dLFunctionCount = DLFUNCTIONCOUNT;\n\n", name);
@@ -4697,7 +4700,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   for (i = 0; i < variableCount; i++) {
     fprintf (srcFile, "\t\tV[%d] = variableList[%d]->value;\n", i, i);
 //    fprintf (srcFile, "\t\tfprintf (stderr, \"vL[%d]->v is %%g\\n\", variableList[%d]->value);\n", i, i);
-//    fprintf (srcFile, "\t\tfprintf (stderr, \"V[%d] is %%g\\n\", V[%d]);\n", i, i);
+//    fprintf (srcFile, "\t\tfprintf (stderr, \"%V[%d] is %%g\\n\", V[%d]);\n", i, i);
   }
   fprintf (srcFile, "\tva_end (args);\n\n");
 
@@ -4720,16 +4723,8 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
         perror ("Cannot open polynomial source called file\n");
         exit (EXIT_FAILURE);
       }
-      //      fprintf (srcFile, "\t%s_%04d();\n", name, fileCount);
-
       srcSize += fprintf (srcCalledFile, "#include <math.h>\n#include <stdio.h>\n\n");
-      srcSize += fprintf (srcCalledFile, "\textern double V[], S[], P[], F[];\n\n");
-      for (i = 0; i < variableCount; i++)
-        srcSize += fprintf (srcCalledFile, "\textern double %s;\n", variableList[i]->e.v->vName);
-      srcSize += fprintf (srcCalledFile, "\n");
-
-      srcSize += fprintf (srcCalledFile, "double %s_%04d () {\n", name, fileCount);
-
+      srcSize += fprintf (srcCalledFile, "double %s_%04d (double V[], double S[], double P[], double F[]) {\n", name, fileCount);
       fileCount++;
     }
 
