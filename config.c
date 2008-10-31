@@ -338,15 +338,6 @@ readConfigFile (char *file)
 	    "Configuring for dkelvin integration\n");
       continue;
     }
-    if (strncmp (line, "LD", 2) == 0) {
-      /* LD without D-prime parameters, which will be legal only if using integration */
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for LD under dkelvin integration\n");
-      for (i=0; i< integrationLDDPrimeValuesCount; i++) {
-	addDPrime (&modelRange, integrationLDDPrimeValues[i]);
-      }
-      continue;
-    }
     if (strncmp (line, "PE", 2) == 0) {
       modelOptions.polynomial = TRUE;	/* Polynomial evaluation */
       if (sscanf (line, "PE %d", &polynomialScale) == 1) {	/* Polynomial scale */
@@ -918,7 +909,17 @@ readConfigFile (char *file)
     modelOptions.equilibrium = LINKAGE_DISEQUILIBRIUM;	/* Linkage disequilibrium */
     KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for linkage disequilibrium\n");
   }
-
+  /* Sadly, this parser has broad categories of parameterized and unparameterized
+     directives, and it checks for unparameterized first, so there is no such thing
+     as a defaulted set of parameters that are not handled as a unique case. */
+  if (modelOptions.integration == TRUE && modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) {
+    /* Override their specified values for dprime. */
+    KLOG (LOGINPUTFILE, LOGWARNING, "Integration LD analysis forces override of user-specified dprime values.\n");
+    modelRange.ndprime = 0;
+    for (i=0; i< integrationLDDPrimeValuesCount; i++) {
+      addDPrime (&modelRange, integrationLDDPrimeValues[i]);
+    }
+  }
   /* Now check the integrity of the parameters you've read. Here is
    * where you check for things like, e.g., no parameters specified
    * for QT/CT, or parameters specified for DT. */
@@ -938,12 +939,6 @@ readConfigFile (char *file)
 	   "Trait loci specification only for multipoint analysis.\n");
   KASSERT ((modelType.type != TP || !modelRange.tlmark),
 	   "On-marker trait locus specification only for multipoint analysis.\n");
-  KASSERT ((modelOptions.integration == FALSE || modelRange.ndprime == integrationLDDPrimeValuesCount || 
-	    modelOptions.equilibrium == LINKAGE_EQUILIBRIUM),
-	   "D-prime values cannot be specified on the LD directive for integration (DK) analysis.\n");
-  KASSERT ((modelOptions.integration == FALSE || modelRange.ndprime != integrationLDDPrimeValuesCount || 
-	    modelOptions.equilibrium == LINKAGE_EQUILIBRIUM),
-	   "D-prime values must be specified on the LD directive for iterative (not-DK) analysis.\n");
 
   /* Copy Dd to dD if needed, i.e. if none were specified, so no imprinting. &&& */
   if (penetcnt[dD-DD] == 0) {
