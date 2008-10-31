@@ -4597,9 +4597,7 @@ int loadPolyDL (Polynomial * p)
   //  sprintf (polynomialFileName, "%s.so", p->e.e->polynomialFunctionName);
   sprintf (polynomialFileName, "./%s.so", p->e.e->polynomialFunctionName);
   if ((p->e.e->polynomialFunctionHandle[0] = 
-       /* DO NOT USE RTLD_GLOBAL, as it for some reason doesn't actually set the input
-	  variables when they are assigned in the DLs. I need to research this. */
-       dlopen (polynomialFileName, RTLD_LAZY|RTLD_GLOBAL)) != NULL) {
+       dlopen (polynomialFileName, RTLD_LAZY|RTLD_LOCAL)) != NULL) {
 
     // Loaded! Do any supporting 1K clump DLs.
     for (i=0; i<=32; i++) {
@@ -4626,7 +4624,7 @@ int loadPolyDL (Polynomial * p)
       return FALSE;
     }
   } else {
-    fprintf (stderr, "dlload() error [%s] for polynomial %s\n", dlerror(),
+    fprintf (stderr, "dlopen() error [%s] for polynomial %s\n", dlerror(),
 	       p->e.e->polynomialFunctionName);
     return FALSE;
   }
