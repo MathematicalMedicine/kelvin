@@ -5,4 +5,4 @@ test :
 	diff -i ppl.out ppl.out-baseline
 
 clean :
-	- rm -f *.out *memory.dat *~
+	- rm -f *.so *.out *memory.dat *~

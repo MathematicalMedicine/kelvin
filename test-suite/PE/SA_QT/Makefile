@@ -4,5 +4,5 @@ test :
 	perl ../../../utils/wordDiff.pl br.out br.out-baseline .000001
 
 clean :
-	- rm -f *.out *memory.dat *~
+	- rm -f *.so *.out *memory.dat *~
 

@@ -4,5 +4,5 @@ test :
 	diff -i br.out br.out-baseline
 
 clean :
-	- rm -f *.out *memory.dat *~
+	- rm -f *.so *.out *memory.dat *~
 

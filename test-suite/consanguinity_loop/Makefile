@@ -9,4 +9,4 @@ test :
 	grep "Not all loops in pedigrees are broken" kelvin.out
 
 clean :
-	- rm -f *.out *memory.dat *~
+	- rm -f *.so *.out *memory.dat *~
