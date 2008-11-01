@@ -4651,7 +4651,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 {
   char srcFileName[128], srcCalledFileName[128], includeFileName[128];
   FILE *srcFile, *srcCalledFile = NULL, *includeFile;
-  int i, j, srcSize = MAXSRCSIZE + 1, fileCount = 0, totalSourceSize = 0, totalInternalSize = 0;
+  int i, j, srcSize = 0, fileCount = 0, totalSourceSize = 0, totalInternalSize = 0;
   int sumsUsed = 0, productsUsed = 0, functionCallsUsed = 0;
   Polynomial *result;
   struct sumPoly *sP;
@@ -4702,17 +4702,17 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   }
   fprintf (srcFile, "\tva_end (args);\n\n");
 
-#ifdef POLYCODE_DL
-  fprintf (srcFile, "#include \"polyDLLoop.c\"\n\n");
-#endif
+  // Start by writing source lines to the first-tier DL
+  srcCalledFile = srcFile;
+
   for (j = 0; j <= l->listNext - 1; j++) {
 
     if (srcSize >= MAXSRCSIZE) {
 
-      if (fileCount != 0) {
-        srcSize += fprintf (srcCalledFile, "}\n");
+      if (fileCount > 0) {
+	srcSize += fprintf (srcCalledFile, "}\n");
 	totalSourceSize += srcSize;
-        fclose (srcCalledFile);
+	fclose (srcCalledFile);
       }
       srcSize = 0;
 
@@ -4828,9 +4828,12 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     srcSize += fprintf (srcCalledFile, ";\n");
   }
 
-  srcSize += fprintf (srcCalledFile, "}\n");
-  totalSourceSize += srcSize;
-  fclose (srcCalledFile);
+  if (fileCount > 0) {
+    fprintf (srcFile, "#include \"polyDLLoop.c\"\n\n");
+    srcSize += fprintf (srcCalledFile, "}\n");
+    totalSourceSize += srcSize;
+    fclose (srcCalledFile);
+  }
 
   if (result->eType == T_CONSTANT) {
     //    fprintf (srcFile, "\n\tfprintf (stderr, \"returning constant %.*g\\n\");\n", DBL_DIG, result->value);
