@@ -79,7 +79,7 @@
 #include "sSDHandler.h"
 
 // The SSD path and an arbitrary filename
-char *sSDFileName = "/tmp/ssd/cache.dat";
+char *sSDFileName = "/ssd/cache.dat";
 // Maximum number of double pairs on the 28Gb SSD is 28*1024*1024*1024/16, about 1792Mdps
 #ifdef MAIN
 #define MAX_SSD_DPC 512
