@@ -242,10 +242,10 @@ int main (int argc, char **argv)
       printf (" %6.4f", (! sexspecific) ? calc_ppld_sexavg (&dprimes, &thetas, lr) : 
 	      calc_ppld_sexspc (&dprimes, &thetas, lr));
       */
-      printf (" %6.4f", calc_ldppl_sexavg()); 
-      printf (" %6.4f", calc_ppld_given_linkage_sexavg()); 
-      printf (" %6.4f", calc_ppld_sexavg()); 
-      printf (" %6.4f", calc_ppld_and_linkage_sexavg()); 
+      printf (" %6.4f", calc_ldppl_sexavg (marker.name2)); 
+      printf (" %6.4f", calc_ppld_given_linkage_sexavg (marker.name2)); 
+      printf (" %6.4f", calc_ppld_sexavg (marker.name2)); 
+      printf (" %6.4f", calc_ppld_and_linkage_sexavg (marker.name2)); 
     }
     printf ("\n");
   }
@@ -1346,7 +1346,7 @@ int calc_br_sexavg(st_multidim *dprimes, st_multidim *thetas, double **lr)
   return 0;
 }
 
-double calc_ldppl_sexavg ()
+double calc_ldppl_sexavg (char *markername)
 {
   double numerator;
   double denomRight;
@@ -1360,13 +1360,13 @@ double calc_ldppl_sexavg ()
 	       );
   denomRight = le_unlink *(1-linkprior);
   ldppl = numerator/(numerator + denomRight);
-  fprintf(stderr, "LDPPL: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
-	  ldppl, numerator, denomRight, numerator + denomRight);
+  fprintf(stderr, "%s LDPPL: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
+	  markername, ldppl, numerator, denomRight, numerator + denomRight);
 
   return(ldppl);
 }
 
-double calc_ppld_sexavg()
+double calc_ppld_sexavg (char *markername)
 {
   double numerator;
   double denomRight;
@@ -1379,13 +1379,13 @@ double calc_ppld_sexavg()
     le_big_theta*linkprior * 0.9989 + 
     le_unlink*(1-linkprior);
   ppld = numerator / (numerator + denomRight); 
-  fprintf(stderr, "PPLD: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
-	  ppld, numerator, denomRight, numerator + denomRight);
+  fprintf(stderr, "%s PPLD: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
+	  markername, ppld, numerator, denomRight, numerator + denomRight);
 
   return ppld;
 }
 
-double calc_ppld_and_linkage_sexavg ()
+double calc_ppld_and_linkage_sexavg (char *markername)
 {
   double numerator;
   double denomRight;
@@ -1400,13 +1400,13 @@ double calc_ppld_and_linkage_sexavg ()
     le_unlink * (1-linkprior);
   ppld_andL = numerator / (numerator + denomRight);
 
-  fprintf(stderr, "PPL&LD: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
-	  ppld_andL, numerator, denomRight, numerator + denomRight);
+  fprintf(stderr, "%s PPL&LD: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
+	  markername, ppld_andL, numerator, denomRight, numerator + denomRight);
   
   return(ppld_andL);
 }
 
-double calc_ppld_given_linkage_sexavg ()
+double calc_ppld_given_linkage_sexavg (char *markername)
 {
   double numerator;
   double denomRight;
@@ -1423,8 +1423,8 @@ double calc_ppld_given_linkage_sexavg ()
   printf("Denominator %f \n", le_small_theta * linkprior * (1-ldprior) + 
 	 le_big_theta *linkprior);
   */
-  fprintf(stderr, "PPLD|L: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
-	  ppld_givenL, numerator, denomRight, numerator + denomRight);
+  fprintf(stderr, "%s PPLD|L: %f Numerator: %e DenominatorRight: %e Denom: %e\n", 
+	  markername, ppld_givenL, numerator, denomRight, numerator + denomRight);
 
   return(ppld_givenL);
 }
