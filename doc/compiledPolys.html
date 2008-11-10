@@ -3,42 +3,57 @@
 In order to understand the value of polynomial compilation, one must first understand how kelvin uses
 polynomials.
 <p>
-When kelvin performs an analysis, it is calculating the likelihood of of every pedigree's structure
+When kelvin performs an analysis, it is calculating the likelihood of every pedigree's structure
 and characteristics for each combination of values in the trait model space, which is normally a range of 
 6 gene frequencies, 275 penetrances, and 20 alpha values, or 33,000 combinations of values. This is repeated for
-each trait position or combination of trait and markers in the analysis.
+each trait position in the analysis.
 <p>
-In (original) non-polynomial mode, the pedigree likelihood is explicitly calculated for each combinations of 
-trait model values via a series of tests, loops and calculations built-into kelvin. 
+In (original) non-polynomial mode, the pedigree likelihood is explicitly calculated for each combination of 
+trait model values via a series of tests, loops and calculations in the compiled code that comprises kelvin.
 Since these tests, loops and calculations are all hard-coded in the program, they cannot be 
-optimized or simplified in any way in response to the nature of underlying pedigree, so the same full path is followed
+optimized or simplified in response to the nature of each pedigree, so the same full path is followed
 for every combination of values. If the first set of values takes a minute to process, we know that the entire
 analysis is going to take tens of thousands or millions of minutes.
 <p>
-In polynomial mode, we go thru this same hard-coded path in kelvin one time building a symbolic representation of the
+In polynomial mode, we go thru this same hard-coded path in kelvin <i>one time only</i> building a 
+symbolic representation of the
 calculation using place-holder variables from the trait model space instead of explicit values. In effect, we
-build a polynomial that encodes the structure and characteristics of the pedigree in terms of the variables from
-the trait model space. This polynomial is then extensively optimized using mathematical and computational
-techniques so that when we substitute-in trait model space values and evaluate it, it performs the calculation 
+build a polynomial that represents the structure and characteristics of the pedigree in terms of the variables from
+the trait model space. This polynomial is then extensively simplified optimized 
+using mathematical and computational techniques so that when we substitute-in trait model space values and 
+evaluate it, it frequently performs the calculation 
 orders of magnitude faster than the original hard-coded path in kelvin.
-
-<h2>
-During a polynomial-mode  analysis, a separate likelihood polynomial is built for each pedigree and combination of
-relative trait/marker positions. For example, a multipoint analysis with
-two pedigrees and three markers where evaluated trait positions occur between every marker pair as well as before
-and after all markers would generate eight polynomials:
-<ul>
-<li>pedigree 1 for trait/marker pattern T-M1-M2-M3
-<li>pedigree 2 for trait/marker pattern T-M1-M2-M3
-<li>pedigree 1 for trait/marker pattern M1-T-M2-M3
-<li>pedigree 2 for trait/marker pattern M1-T-M2-M3
-<li>pedigree 1 for trait/marker pattern M1-M2-T-M3
-<li>pedigree 2 for trait/marker pattern M1-M2-T-M3
-<li>pedigree 1 for trait/marker pattern M1-M2-M3-T
-<li>pedigree 2 for trait/marker pattern M1-M2-M3-T
-</ul>
 <p>
-<h2>How Compilation Works</h2>
+This process of generating polynomials has its own drawbacks. They can take a lot of time and memory to generate
+and optimize, and even when
+optimization is complete, their evaluation is symbolic and therefore slower than the equivalent binary 
+operations. Ideally, we'd like to have both the optimized simplicity of the pedigree/position-specific 
+polynomial <i>and</i> the performance and
+reusability of compiled code. The answer is to generate and compile code representing each polynomial.
+<h2>What Polynomials are Built?</h2>
+During a polynomial-mode  analysis, a separate set of likelihood polynomials is built for each pedigree and combination of
+relative trait/marker positions. For example, a multipoint analysis with
+two pedigrees and three markers where evaluated trait positions occur between every pair of markers as well as before
+and after the markers would generate twelve polynomials:
+<ul>
+<li>trait likelihood for pedigree 1
+<li>trait likelihood for pedigree 2
+<li>marker set likelihood for M1, M2, M3 and pedigree 1
+<li>marker set likelihood for M1, M2, M3 and pedigree 2
+<li>combined likelihood for pedigree 1 and trait/marker pattern T-M1-M2-M3
+<li>combined likelihood for pedigree 2 and trait/marker pattern T-M1-M2-M3
+<li>combined likelihood for pedigree 1 and trait/marker pattern M1-T-M2-M3
+<li>combined likelihood for pedigree 2 and trait/marker pattern M1-T-M2-M3
+<li>combined likelihood for pedigree 1 and trait/marker pattern M1-M2-T-M3
+<li>combined likelihood for pedigree 2 and trait/marker pattern M1-M2-T-M3
+<li>combined likelihood for pedigree 1 and trait/marker pattern M1-M2-M3-T
+<li>combined likelihood for pedigree 2 and trait/marker pattern M1-M2-M3-T
+</ul>
+The trait and marker likelihood polynomials are usually extremely simple compared to the combined
+likelihood polynomials. Marker likelihood polynomials are usually nothing more than a single variable, while
+combined likelihood polynomials usually have tens of thousands, and sometimes even billions of terms.
+<p>
+<h2>What is Polynomial Compilation?</h2>
 Polynomial compilation is a method of post-processing the in-memory polynomials generated by kelvin
 so as to facilitate rapid evaluation and reuse.
 <p>
@@ -49,7 +64,38 @@ loaded on-demand and evaluated up to ten times faster than their in-memory count
 a dynamic library is built for a given polynomial, the relatively slow and memory-intensive process of generating
 that polynomial need not be performed again. 
 
-<h2>Phases in Polynomial Compilation</h2>
+<h2>When to Use Polynomial Compilation</h2>
+Generally, you should use polynomial compilation only when it is feasible in your computational environment and
+the cost and complexity of compiling and linking dynamic libraries is exceeded by the benefits of rapid
+and repeatable evaluation.
+<h3>Indications</h3>
+<ul>
+<li><b>When the ratio of evaluations to trait/marker position changes is high.</b> This is an indication to use
+polynomial evaluation in general, and compilation in particular, as the costs of generation will be outweighed
+by the gains during evaluation.
+<li><b>When the run-time of an evalution is prohibitive.</b> Compilation itself can reduce evaluation time by up to an
+order of magnitude. Futhermore, the compiled component polynomials of an analysis can be distributed easily across
+nodes in a cluster or throughout an entire network using middleware such as the Berkeley Open Infrastructure for
+Network Computing (BOINC). Evaluations that would take years in a serial context can be performed in days when
+widely-distributed.
+<li><b>When the same set of markers will be used with varying sets of pedigrees in multiple analyses.</b> Since named
+polynomials are specific to pedigree and trait/marker position, analyses that consider various subsets of a group
+of pedigrees pay the price of compilation only once for each pedigree and trait/marker position, and then reuse
+them without additional cost.
+<li><b>When a generated polynomial is extremely large.</b> Polynomials that are larger than physical memory can be
+generated successfully, but repeated evaluation becomes very costly as portions outside of physical memory 
+must be swapped-in from disk
+for every iteration. Running at the boundaries of physical memory also tends lead to more frequent crashes, so
+converting the polynomial to source code as soon as it is generated not only greatly reduces memory consumption
+and enhances evaluation performance, but also ensures that the work will not be lost to a crash.
+</ul>
+<h3>Contraindications</h3>
+<ul>
+<li>When pedigrees are very simple.
+<li>When only a single evaluation will be performed.
+</ul>
+
+<h2>Phases in Polynomial Compilation (IN PROGRESS)</h2>
 Polynomial compilation consists of three phases that have very different requirements and optimization
 possibilities:
 <ol>
@@ -82,23 +128,20 @@ able to load and use them instead of generating the polynomials. This step uses 
 threaded evaluation of the separate pedigree polynomials for each position.
 </ol>
 </ol>
-
-<h2>When to Use Polynomial Compilation</h2>
-Generally, you should use polynomial compilation only when it is feasible in your computational environment and
-the cost and complexity of compiling and linking dynamic libraries is exceeded by the benefits of rapid
-and repeatable evaluation.
-<h3>Indications</h3>
+</ol>
+<h2>How Compilation Works</h2>
 <ul>
-<li>When the ratio of evaluations to trait/marker position changes is high. This is an indication to use
-polynomial evaluation in general, and compilation in particular.
-<li>When the run-time of an evalution is prohibitive. Compilation can reduce evaluation time by up to an
-order of magnitude.
-<li>When the same set of markers will be used with varying sets of pedigrees in multiple analyses. Since named
-polynomials are specific to pedigree and trait/marker position, analyses that consider various subsets of a group
-of pedigrees pay the price of compilation only once for each pedigree and trait/marker position, and then reuse
-them without additional cost.
+<li>Polynomial Structure & Optimizations (from Hongling's paper)
+<ul>
+<li>Term collection and reduction
+<li>Subpoly overlap
 </ul>
-<h3>Counterindications</h3>
-<li>When pedigrees are very simple.
-<li>When only a single evaluation will be performed.
+<li>The Polynomial List
+<li>Generating Code
+<ul>
+<li>Loss of overlap
+</ul>
+<li>Limits to Source Size
+<li>Limits to DL Size
+<li>Compiler Optimization Performance
 </ul>
