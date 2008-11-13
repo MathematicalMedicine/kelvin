@@ -33,9 +33,9 @@ LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lm -lpthread
 CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
 LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
-#CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
+CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
-CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
+#CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
 #CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every 2Mp and at milestones
 #CFLAGS += -DDMUSE # For our own static memory management, not beneficial as yet.
 #CFLAGS += -DDMTRACK # For our own memory tracking
@@ -45,7 +45,7 @@ CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file
 #CFLAGS += -DPOLYCODE_DL # Enable generation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCOMP_DL # Enable compilation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCHECK_DL # Keep both built and compiled DL polys and compare results (can be noisy!)
-CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
+#CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
 #CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
 
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
@@ -63,7 +63,8 @@ all : kelvin calc_updated_ppl
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
           $(BINDIR)/seq_update_br.pl \
-          $(BINDIR)/convert_br.pl
+          $(BINDIR)/convert_br.pl \
+	  $(BINDIR)/compileDL.sh
 
 kelvin : libs $(KOBJS) $(OBJS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG) $(LPTMFLAG)
@@ -105,3 +106,5 @@ $(BINDIR)/seq_update_br.pl : seq_update/seq_update_br.pl
 $(BINDIR)/convert_br.pl : seq_update/convert_br.pl
 	install -o root -g root -m 0755 -p seq_update/convert_br.pl $(BINDIR)/convert_br.pl
 
+$(BINDIR)/compileDL.sh : compileDL.sh
+	install -o root -g root -m 0755 -p compileDL.sh $(BINDIR)/compileDL.sh
