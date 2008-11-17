@@ -78,14 +78,10 @@
 
 #include "sSDHandler.h"
 
-// The SSD path and an arbitrary filename
-char *sSDFileName = "/ssd/cache.dat";
-// Maximum number of double pairs on the 28Gb SSD is 28*1024*1024*1024/16, about 1792Mdps
-#ifdef MAIN
-#define MAX_SSD_DPC 512
-#else
-#define MAX_SSD_DPC (28 * 1024 * 1024 / 16 * 1024)
-#endif
+// The default SSD path and size in Gb
+char *defaultSSDFileName = "/ssd/cache.dat";
+int defaultSSDFileSizeInGb = 28;
+unsigned long maxSSDDPC;
 
 #define DOUBLE_PAIR_SIZE (sizeof (double) * 2)
 
@@ -148,7 +144,28 @@ void termSSD () {
 }
 
 void initSSD() {
-  int i;
+  int i, sSDFileSizeInGb;
+  char *envVar;
+  char sSDFileName[256];
+
+  if ((envVar = getenv ("sSDFileName")) != NULL)
+    strcpy (sSDFileName, envVar);
+  else
+    strcpy (sSDFileName, defaultSSDFileName);
+
+  if ((envVar = getenv ("sSDFileSizeInGb")) != NULL)
+    sSDFileSizeInGb = sSDFileSizeInGb;
+  else
+    sSDFileSizeInGb = defaultSSDFileSizeInGb;
+
+// Maximum number of double pairs on the 28Gb SSD is 28*1024*1024*1024/16, about 1792Mdps
+#ifdef MAIN
+  maxSSDDPC = 512;
+#else
+  maxSSDDPC = sSDFileSizeInGb * 1024 * 1024 / 16 * 1024;
+#endif
+  fprintf (stderr, "Using SSD at %s of %dGb, or %ludps\n", 
+	   sSDFileName, sSDFileSizeInGb, maxSSDDPC);
 
   if ((sSDFD = fopen(sSDFileName,"wb+")) == NULL) {
     perror ("Failed to open SSD cache file");
@@ -157,7 +174,7 @@ void initSSD() {
   for (i=0; i<16; i++)
     listHead[i].doublePairCount = listHead[i].chunkOffset = listHead[i].nextFree = listDepth[i] = 0;
 
-  listHead[15].doublePairCount = MAX_SSD_DPC;
+  listHead[15].doublePairCount = maxSSDDPC;
   listDepth[15] = 1;
   getCallCount = putCallCount = freeCallCount = 0;
   return;
@@ -506,7 +523,7 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
   unsigned short freeList;
   unsigned short bestFreeList;
 
-  if ((myDPC < MIN_USE_SSD) || (myDPC > MAX_SSD_DPC)) {
+  if ((myDPC < MIN_USE_SSD) || (myDPC > maxSSDDPC)) {
     fprintf (stderr, "putSSD size of %ludpc out-of-bounds\n", myDPC);
     return ((struct chunkTicket *) NULL);
   }
@@ -617,7 +634,7 @@ int main (int argc, char *argv[]) {
   initSSD ();
 
   fprintf (stderr, "Field of %d tickets of up to %ddps in size in file of %ddps\n",
-	  MAX_TICKET_MASK, MAX_DPC_MASK, MAX_SSD_DPC);
+	  MAX_TICKET_MASK, MAX_DPC_MASK, maxSSDDPC);
 
   //  srand(time(0));
 
