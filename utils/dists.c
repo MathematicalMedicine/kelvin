@@ -3,6 +3,10 @@
 #include <math.h>
 #include "cdflib.h"
 
+#ifdef USE_GSL
+#include <gsl/gsl_randist.h>
+#endif
+
 double interpolate (double xTarget, int tableSize, double *tableX, double *tableY) {
 
   // Handle boundary cases...
@@ -29,6 +33,7 @@ double interpolate (double xTarget, int tableSize, double *tableX, double *table
 
 // Just calculate the probability density function given mean and stdDev
 double gaussian_pdf (double x, double mean, double stdDev) {
+  fprintf (stderr, "gaussian_pdf\n");
   return (1/(stdDev*sqrt(2.0*M_PI)))*exp(-((x-mean)*(x-mean)/(2*stdDev*stdDev)));
 }
 
@@ -117,14 +122,16 @@ double gaussian_cdf (double x, double mean, double stdDev) {
 
   // Not simple, do the lookup and interpolation
 
+  fprintf (stderr, "gaussian_cdf\n");
+
   return(interpolate (x, TBL_VALUES, X, Y));
 }
 
 double t_pdf_30 (double x, double degFree) {
-  int TBL_VALUES = 1001;
+  int TBL_VALUES = 1003;
 #define TBL_DEGFREE 30
-  double X[1001] = {
-    -5,  -4.99,  -4.98,  -4.97,  -4.96,  -4.95,  -4.94,  -4.93,  -4.92,
+  double X[1003] = {
+    -100, -5,  -4.99,  -4.98,  -4.97,  -4.96,  -4.95,  -4.94,  -4.93,  -4.92,
     -4.91,  -4.9,  -4.89,  -4.88,  -4.87,  -4.86,  -4.85,  -4.84,  -4.83,  -4.82,
     -4.81,  -4.8,  -4.79,  -4.78,  -4.77,  -4.76,  -4.75,  -4.74,  -4.73,  -4.72,
     -4.71,  -4.7,  -4.69,  -4.68,  -4.67,  -4.66,  -4.65,  -4.64,  -4.63,  -4.62,
@@ -224,10 +231,10 @@ double t_pdf_30 (double x, double degFree) {
     4.69,  4.7,  4.71,  4.72,  4.73,  4.74,  4.75,  4.76,  4.77,  4.78,
     4.79,  4.8,  4.81,  4.82,  4.83,  4.84,  4.85,  4.86,  4.87,  4.88,
     4.89,  4.9,  4.91,  4.92,  4.93,  4.94,  4.95,  4.96,  4.97,  4.98,
-    4.99,  5};
+    4.99,  5, 100};
 
-  double Y[1001] = {
-    3.28889e-05,  3.38289e-05,  3.47955e-05,  3.57896e-05,  3.68119e-05,  3.78631e-05,  3.89442e-05,  4.00559e-05,  4.11991e-05,
+  double Y[1003] = {
+    9.92306e-40, 3.28889e-05,  3.38289e-05,  3.47955e-05,  3.57896e-05,  3.68119e-05,  3.78631e-05,  3.89442e-05,  4.00559e-05,  4.11991e-05,
     4.23746e-05,  4.35834e-05,  4.48264e-05,  4.61046e-05,  4.74189e-05,  4.87703e-05,  5.01599e-05,  5.15888e-05,  5.30579e-05,  5.45685e-05,
     5.61217e-05,  5.77187e-05,  5.93607e-05,  6.10489e-05,  6.27846e-05,  6.45691e-05,  6.64038e-05,  6.82901e-05,  7.02293e-05,  7.2223e-05,
     7.42727e-05,  7.63798e-05,  7.8546e-05,  8.07729e-05,  8.30622e-05,  8.54155e-05,  8.78347e-05,  9.03215e-05,  9.28778e-05,  9.55055e-05,
@@ -327,7 +334,9 @@ double t_pdf_30 (double x, double degFree) {
     7.8546e-05,  7.63798e-05,  7.42727e-05,  7.2223e-05,  7.02293e-05,  6.82901e-05,  6.64038e-05,  6.45691e-05,  6.27846e-05,  6.10489e-05,
     5.93607e-05,  5.77187e-05,  5.61217e-05,  5.45685e-05,  5.30579e-05,  5.15888e-05,  5.01599e-05,  4.87703e-05,  4.74189e-05,  4.61046e-05,
     4.48264e-05,  4.35834e-05,  4.23746e-05,  4.11991e-05,  4.00559e-05,  3.89442e-05,  3.78631e-05,  3.68119e-05,  3.57896e-05,  3.47955e-05,
-    3.38289e-05,  3.28889e-05};
+    3.38289e-05,  3.28889e-05,  9.92306e-40};
+
+  double result;
 
   // Handle bad data first
   if (degFree != 30) {
@@ -336,14 +345,22 @@ double t_pdf_30 (double x, double degFree) {
   }
 
   // Simple cases...
-  if (x <= -5)
+  if (x <= -100)
     return ((double) 0.0);
-  if (x >= 5)
+  if (x >= 100)
     return ((double) 0.0);
 
   // Not simple, do the lookup and interpolation
 
-  return(interpolate (x, TBL_VALUES, X, Y));
+  result = interpolate (x, TBL_VALUES, X, Y);
+  //  fprintf (stderr, "t_pdf_30 gives %g vs GSL of %g (difference is %g) for x of %g\n", result,
+  //	   gsl_ran_tdist_pdf (x, (double) 30), (result - gsl_ran_tdist_pdf (x, (double) 30)), x);
+
+#ifdef USE_GSL
+  return(gsl_ran_tdist_pdf (x, (double) 30));
+#else
+  return(result);
+#endif
 }
 
 double t_cdf_30 (double x, double degFree) {
@@ -556,6 +573,8 @@ double t_cdf_30 (double x, double degFree) {
     0.999982, 0.999983, 0.999983, 0.999984, 0.999984, 0.999985, 0.999985, 0.999986, 0.999986, 0.999986,
     0.999987, 0.999987, 0.999987, 0.999988, 0.999988};
   
+  double result;
+
   // Handle bad data first
   if (degFree != 30.0) {
     fprintf (stderr, "In tdist_cdf, only 30 degrees of freedom supported\n");
@@ -570,7 +589,15 @@ double t_cdf_30 (double x, double degFree) {
 
   // Not simple, do the lookup and interpolation
 
-  return(interpolate (x, TBL_VALUES, X, Y));
+  result = interpolate (x, TBL_VALUES, X, Y);
+  fprintf (stderr, "t_cdf_30 gives %g for x of %g\n", result, x);
+
+#ifdef USE_GSL
+  return(gsl_cdf_tdist_P (x, (double) 30));
+#else
+  return(result);
+#endif
+
 }
 
 /*
@@ -586,7 +613,15 @@ double t_cdf (double x, double degFree) {
     printf ("In t_cdf, cdft error w/status %d, bound %g\n", status, bound);
     exit (EXIT_FAILURE);
   }
+
+  fprintf (stderr, "t_cdf gives %g for x of %g\n", P, x);
+
+#ifdef USE_GSL
+  return(gsl_cdf_tdist_P (x, degFree));
+#else
   return (P);
+#endif
+
 }
 
 /*
