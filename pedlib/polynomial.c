@@ -2536,6 +2536,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 		   p->e.e->polynomialFunctionName);
 	  exit (EXIT_FAILURE);
 	}
+      fprintf (stderr, "Calling routine at %lx\n", (unsigned long) p->e.e->polynomialFunctionRoutine);
       p->value = p->e.e->polynomialFunctionRoutine (1, variableList);
 #endif
       break;
@@ -4610,6 +4611,8 @@ int loadPolyDL (Polynomial * p)
     if ((p->e.e->polynomialFunctionRoutine = 
 	 dlsym (p->e.e->polynomialFunctionHandle[0], p->e.e->polynomialFunctionName)) != NULL) {
       // Found it!
+      fprintf (stderr, "Entry point for %s is %lx\n", p->e.e->polynomialFunctionName,
+	       (unsigned long) p->e.e->polynomialFunctionRoutine);
       p->e.e->fileOK = TRUE;
       p->e.e->entryOK = TRUE;
       fprintf (stdout, "Using %d DL(s) for %s\n", i+1, p->e.e->polynomialFunctionName);
@@ -4683,9 +4686,9 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 #endif
 
   fprintf (srcFile, "double %s (int num, ...) {\n", name);
-  // And now we're local...
+  // And now we're local... A static here keeps these off the stack, which would otherwise frequently trash it.
 
-  fprintf (srcFile, "double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
+  fprintf (srcFile, "static double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
 
 #ifdef POLYCODE_DL
   fprintf (srcFile, "char *baseFunctionName = \"%s\";\nint dLFunctionCount = DLFUNCTIONCOUNT;\n\n", name);
@@ -4870,8 +4873,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 #ifdef POLYCOMP_DL
   char command[256];
   pushStatus ("compile poly");
-  // sprintf (command, "time gcc -g -I/home/whv001/kelvin/trunk/include -O -fPIC -shared -o %s.so %s* >& %s.out", name, name, name);
-  sprintf (command, "source /home/whv001/kit/bin/compile_v2.sh %s", name);
+  sprintf (command, "compileDL.sh %s", name);
   int status;
   if ((status = system (command)) != 0) {
     perror ("system()");
