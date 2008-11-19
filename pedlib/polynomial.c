@@ -2536,7 +2536,6 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 		   p->e.e->polynomialFunctionName);
 	  exit (EXIT_FAILURE);
 	}
-      fprintf (stderr, "Calling routine at %lx\n", (unsigned long) p->e.e->polynomialFunctionRoutine);
       p->value = p->e.e->polynomialFunctionRoutine (1, variableList);
 #endif
       break;
@@ -4611,8 +4610,6 @@ int loadPolyDL (Polynomial * p)
     if ((p->e.e->polynomialFunctionRoutine = 
 	 dlsym (p->e.e->polynomialFunctionHandle[0], p->e.e->polynomialFunctionName)) != NULL) {
       // Found it!
-      fprintf (stderr, "Entry point for %s is %lx\n", p->e.e->polynomialFunctionName,
-	       (unsigned long) p->e.e->polynomialFunctionRoutine);
       p->e.e->fileOK = TRUE;
       p->e.e->entryOK = TRUE;
       fprintf (stdout, "Using %d DL(s) for %s\n", i+1, p->e.e->polynomialFunctionName);
