@@ -4696,7 +4696,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
   fprintf (srcFile, "\tvariableList = va_arg (args, struct polynomial **);\n");
   for (i = 0; i < variableCount; i++) {
-    fprintf (srcFile, "\t\tV[%d] = variableList[%d]->value;\n", i, i);
+    fprintf (srcFile, "\t\tV[%d] = variableList[%d]->value; // %s\n", i, i, variableList[i]->e.v->vName);
 //    fprintf (srcFile, "\t\tfprintf (stderr, \"vL[%d]->v is %%g\\n\", variableList[%d]->value);\n", i, i);
 //    fprintf (srcFile, "\t\tfprintf (stderr, \"%V[%d] is %%g\\n\", V[%d]);\n", i, i);
   }
@@ -4870,7 +4870,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 #ifdef POLYCOMP_DL
   char command[256];
   pushStatus ("compile poly");
-  sprintf (command, "compileDL.sh %s", name);
+  sprintf (command, "/home/whv001/kelvin/trunk/compileDL.sh %s", name);
   int status;
   if ((status = system (command)) != 0) {
     perror ("system()");
