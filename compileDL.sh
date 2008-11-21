@@ -18,9 +18,9 @@ name=${name%\.*}
 # Level 0 optimization compiles several times faster than level 1, but
 # level 1-compiled DLs execute twice as fast as level 0. Level 2 is an
 # incredibly slow compile that doesn't perform better than level 1.
-optFlag=0
+optFlag=1
 
-echo Processing ${name}
+echo Processing ${name} with optimization level ${optFlag}
 if test ! -e compiled ; then
     mkdir compiled
 fi
