@@ -483,9 +483,9 @@ initialize_tp_result_storage ()
 
   if (tp_result == NULL) {
     tp_result =
-      (SUMMARY_STAT ***) calloc (pLambdaCell->ndprime + 1,
+      (SUMMARY_STAT ***) calloc (modelRange.ndprime + 1,
 				 sizeof (SUMMARY_STAT **));
-    for (i = 0; i < pLambdaCell->ndprime + 1; i++) {
+    for (i = 0; i < modelRange.ndprime + 1; i++) {
       tp_result[i] =
 	(SUMMARY_STAT **) calloc (modelRange.ntheta + 1,
 				  sizeof (SUMMARY_STAT *));
@@ -500,7 +500,7 @@ initialize_tp_result_storage ()
     }
   } else {
     /* reset it */
-    for (i = 0; i < pLambdaCell->ndprime + 1; i++) {
+    for (i = 0; i < modelRange.ndprime + 1; i++) {
       for (j = 0; j < modelRange.ntheta + 1; j++) {
 	num = modelRange.nafreq + 1;
 	memset (tp_result[i][j], 0, sizeof (SUMMARY_STAT) * num);
