@@ -1914,15 +1914,11 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 	  else
 	    newWeight[i] = *((double *) dWeight + i);
 	} else if (pParent[i]->loopBreaker == 0) {	/* founder under LD */
-#ifndef NO_POlYNOMIAL
 	  if (modelOptions.polynomial == TRUE) {
 	    get_haplotype_freq (numLocus - 1, i, &newWeightPolynomial[i]);
 	  } else {
 	    get_haplotype_freq (numLocus - 1, i, &newWeight[i]);
 	  }
-#else
-	  get_haplotype_freq (numLocus - 1, i, &newWeight[i]);
-#endif
 	}			/* end of founder and LD */
       }				/* founder */
     }				/* end of first time on this parent */
