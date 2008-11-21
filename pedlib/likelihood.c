@@ -289,34 +289,31 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	    initialize_multi_locus_genotype (pPedigree);
 	    status = compute_pedigree_likelihood (pPedigree);
 #ifdef POLYCODE_DL
-	    if (pPedigree->likelihoodPolynomial->eType == T_SUM ||
-		pPedigree->likelihoodPolynomial->eType == T_PRODUCT) { // Worth compiling
-	      pPedigree->likelihoodPolyList = buildPolyList ();
-	      polyListSorting (pPedigree->likelihoodPolynomial,
-			       pPedigree->likelihoodPolyList);
-	      codePoly(pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList,
-		       polynomialFunctionName);
+	    // Used to skip compilation of simple polys here, but there are simple ones that are tough builds.
+	    pPedigree->likelihoodPolyList = buildPolyList ();
+	    polyListSorting (pPedigree->likelihoodPolynomial,
+			     pPedigree->likelihoodPolyList);
+	    codePoly(pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList,
+		     polynomialFunctionName);
   #ifdef POLYUSE_DL
-	      // Try to load the DL and ditch the tree polynomial
+	    // Try to load the DL and ditch the tree polynomial
     #ifdef POLYCHECK_DL
-	      // Squirrel-away the tree polynomial for later check
-	      pPedigree->cLikelihoodPolynomial = pPedigree->likelihoodPolynomial;
-	      holdPoly (pPedigree->cLikelihoodPolynomial);
-	      pPedigree->cLikelihoodPolyList = pPedigree->likelihoodPolyList;
+	    // Squirrel-away the tree polynomial for later check
+	    pPedigree->cLikelihoodPolynomial = pPedigree->likelihoodPolynomial;
+	    holdPoly (pPedigree->cLikelihoodPolynomial);
+	    pPedigree->cLikelihoodPolyList = pPedigree->likelihoodPolyList;
     #endif
     #ifdef POLYCOMP_DL
-	      if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
-		fprintf (stderr, "Couldn't load compiled likelihood polynomial we just created!\n");
-		exit (EXIT_FAILURE);
-	      }
+	    if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
+	      fprintf (stderr, "Couldn't load compiled likelihood polynomial we just created!\n");
+	      exit (EXIT_FAILURE);
+	    }
     #else
       #ifdef FAKEEVALUATE
 	      pPedigree->likelihoodPolynomial = constantExp(.05);
       #endif
     #endif
   #endif
-	    } else
-	      fprintf (stdout, "\nSkipping generation of DL for %s...\n", polynomialFunctionName);
 #endif
 	    // Notice we are normally holding only the external (compiled) poly!
 	    holdPoly (pPedigree->likelihoodPolynomial);
