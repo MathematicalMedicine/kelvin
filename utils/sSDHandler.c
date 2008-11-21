@@ -120,7 +120,7 @@ unsigned long handledDPCs;
 */
 unsigned short high16Bit (unsigned long value) {
   unsigned short i;
-  if (value & 0xFFFF8000)
+  if (value >= 0x8000)
     return 15;
   for (i=14; i>0; i--)
     if (value & 0x4000)
@@ -144,7 +144,8 @@ void termSSD () {
 }
 
 void initSSD() {
-  int i, sSDFileSizeInGb;
+  int i;
+  unsigned long sSDFileSizeInGb;
   char *envVar;
   char sSDFileName[256];
 
@@ -154,7 +155,7 @@ void initSSD() {
     strcpy (sSDFileName, defaultSSDFileName);
 
   if ((envVar = getenv ("sSDFileSizeInGb")) != NULL)
-    sSDFileSizeInGb = sSDFileSizeInGb;
+    sSDFileSizeInGb = atol(envVar);
   else
     sSDFileSizeInGb = defaultSSDFileSizeInGb;
 
@@ -162,9 +163,9 @@ void initSSD() {
 #ifdef MAIN
   maxSSDDPC = 512;
 #else
-  maxSSDDPC = sSDFileSizeInGb * 1024 * 1024 / 16 * 1024;
+  maxSSDDPC = sSDFileSizeInGb * 1024UL * 1024UL / 16UL * 1024UL;
 #endif
-  fprintf (stderr, "Using SSD at %s of %dGb, or %ludps\n", 
+  fprintf (stderr, "Using SSD located at %s of %luGb, or %ludps\n", 
 	   sSDFileName, sSDFileSizeInGb, maxSSDDPC);
 
   if ((sSDFD = fopen(sSDFileName,"wb+")) == NULL) {
@@ -694,6 +695,29 @@ int main (int argc, char *argv[]) {
       exit (EXIT_FAILURE);
     }
   }
+  termSSD ();
+}
+
+#endif
+
+#ifdef MAIN2
+
+#define TEST_ITERATIONS (1024 * 1024)
+
+#include <time.h>
+
+int main (int argc, char *argv[]) {
+  
+  struct chunkTicket *ticket;
+  double dPs[1024*1024];
+  int i;
+
+  initSSD ();
+
+  for (i=0; i<=(8192*1024); i++)
+    if ((ticket = putSSD (dPs, 1024UL)) == NULL)
+      exit (EXIT_FAILURE);
+
   termSSD ();
 }
 
