@@ -273,6 +273,10 @@ dadhre_ (dcuhre_state * s)
 								  *
 								  real_result);
     s->epsabs /= (-11.54 * real_result + 54.0 * real_result * real_result);
+
+    if(s->epsabs <0)
+      s->epsabs =0.0;
+
     /* for (i = 0; i < s->nlclass; i++) {
       s->epsabs /= 6.0;		* because of the constraint *
       }*/
@@ -286,11 +290,12 @@ dadhre_ (dcuhre_state * s)
 
     //}
 
+    //if ( s->error > s->epsabs) {    //this is for stopping criterion 
     //if ((s->error > s->epsrel *fabs(s->result)) && (s->error > s->epsabs)) {    
     //if ((s->diff_result[s->sbrgns - 1] > s->epsabs) && (s->error > s->epsabs)) { // before 5/18/2008
-    if ((s->result <0)||((s->diff_result[s->sbrgns - 1] > s->epsabs) && (real_error > s->epsabs))) {
-      //if ( s->error > s->epsabs) {    //this is for stopping criterion 
-
+    //if ((s->result <0)||(s->diff_result[s->sbrgns - 1] > s->epsabs) || real_result <0.25) {
+    //if ((s->result <0)||((s->diff_result[s->sbrgns - 1] > s->epsabs) && (real_error > s->epsabs))) {  // before 11/25/2008
+    if ((s->diff_result[s->sbrgns - 1] >= s->epsabs) && ( (real_result <1.0)|| (real_error > s->epsabs) )){
       /*   If we are allowed to divide further, */
       /*   prepare to apply basic rule over each half of the */
       /*   NDIV subregions with greatest errors. */
