@@ -236,6 +236,7 @@ readConfigFile (char *file)
 					0.8727421201131, 0.8761473165029, 0.9590960631620,
 					0.9790222658168, 0.9956010478552, 0.9982431840532};
   int integrationLDDPrimeValuesCount = 33;
+  int foundASDirective = FALSE;
   /* Allocate storage for pattern spaces. */
   buffer0 = malloc (KMAXLINELEN + 1);
   buffer1 = malloc (KMAXLINELEN + 1);
@@ -366,10 +367,9 @@ readConfigFile (char *file)
 
     if (sscanf (line, "AS %lg %lg %lg",	/* Affection status values */
 		&(modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN]),
-		&(modelOptions.
-		  affectionStatus[AFFECTION_STATUS_UNAFFECTED]),
-		&(modelOptions.
-		  affectionStatus[AFFECTION_STATUS_AFFECTED])) == 3) {
+		&(modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED]),
+		&(modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED])) == 3) {
+      foundASDirective = TRUE;
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Resetting affection status values (%g, %g, %g)\n",
 	    modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN],
@@ -381,14 +381,13 @@ readConfigFile (char *file)
     /* Dichotomous trait directive. */
     if (strncmp (line, "DT", 2) == 0) {
       modelType.trait = DT;	/* Dichotomous trait */
-      /* Establish the default affected, unaffected, and unknown
-       * values for DT. These can be overridden elsewhere. */
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] =
-	AFFECTION_STATUS_UNKNOWN;
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] =
-	AFFECTION_STATUS_UNAFFECTED;
-      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] =
-	AFFECTION_STATUS_AFFECTED;
+      if (!foundASDirective) {
+	/* Establish the default affected, unaffected, and unknown
+	 * values for DT. These can be overridden elsewhere. */
+	modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = AFFECTION_STATUS_UNKNOWN;
+	modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = AFFECTION_STATUS_UNAFFECTED;
+	modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = AFFECTION_STATUS_AFFECTED;
+      }
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for dichotomous traits\n");
       continue;
     }
@@ -399,11 +398,13 @@ readConfigFile (char *file)
 	== 2) {
       modelType.trait = QT;	/* Quantitative trait */
       modelType.distrib = QT_FUNCTION_NORMAL;
-      /* Establish the default affected, unaffected, and unknown
-       * values for QT/CT. These can be overridden elsewhere. */
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
-      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+      if (!foundASDirective) {
+	/* Maybe establish the default affected, unaffected, and unknown
+	 * values for QT/CT. These can be overridden elsewhere. */
+	modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
+	modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
+	modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+      }
       /* The normal distribution has a two distributional
        * parameters, mean (specified as the penetrance) and std
        * dev, specified as the first additional parameter P1. */
@@ -423,12 +424,13 @@ readConfigFile (char *file)
        * appropriate number of constants in modelType. */
       modelType.constants = realloc (modelType.constants, 1 * sizeof (int));
       modelType.constants[0] = a1;
-      /* Establish the default affected, unaffected, and unknown
-       * values for QT/CT. These can be overridden elsewhere. */
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
-      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
-
+      if (!foundASDirective) {
+	/* Establish the default affected, unaffected, and unknown
+	 * values for QT/CT. These can be overridden elsewhere. */
+	modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
+	modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
+	modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+      }
       /* The T distribution, like the normal distribution, also
        * has two distributional parameters, the mean (specified as
        * the penetrance) and the std dev, specified as the first
@@ -442,11 +444,13 @@ readConfigFile (char *file)
 	== 2) {
       modelType.trait = QT;	/* Quantitative trait */
       modelType.distrib = QT_FUNCTION_CHI_SQUARE;
-      /* Establish the default affected, unaffected, and unknown
-       * values for QT/CT. These can be overridden elsewhere. */
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
-      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+      if (!foundASDirective) {
+	/* Establish the default affected, unaffected, and unknown
+	 * values for QT/CT. These can be overridden elsewhere. */
+	modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
+	modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
+	modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+      }
       /* The chi sqaure distribution only has one distributional
        * parameters, df - degree of freedom (specified as the penetrance) 
        */
