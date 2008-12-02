@@ -284,34 +284,18 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	    modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN])
 	  pPerson->ppTraitKnown[i][j] = 1;
       } else if (pTrait->type == QUANTITATIVE || pTrait->type == COMBINED) {
-	numRet =
-	  sscanf (pLine, "%lf %n", &pPerson->ppOrigTraitValue[i][j], &pos);
+	numRet = sscanf (pLine, "%lf %n", &pPerson->ppOrigTraitValue[i][j], &pos);
+	printf ("Got trait value %g from pLine (%s)\n", pPerson->ppOrigTraitValue[i][j], pLine);
 	KASSERT (numRet == 1,
 		 "Line %d in pedfile %s doesn't have enough columns. Is this a post-makeped file? \n",
 		 lineNo, sPedfileName);
 
-	if (pPerson->ppOrigTraitValue[i][j] <=
-	    pTrait->unknownTraitValue - 0.000001
-	    || pPerson->ppOrigTraitValue[i][j] >=
-	    pTrait->unknownTraitValue + 0.000001) {
+	if (pPerson->ppOrigTraitValue[i][j] != pTrait->unknownTraitValue) {
 	  pPerson->ppTraitKnown[i][j] = 1;
-	  if ((pPerson->ppOrigTraitValue[i][j] <=
-	       modelOptions.
-	       affectionStatus[AFFECTION_STATUS_UNAFFECTED] - 0.000001
-	       || pPerson->ppOrigTraitValue[i][j] >=
-	       modelOptions.
-	       affectionStatus[AFFECTION_STATUS_UNAFFECTED] + 0.000001)
-	      && (pPerson->ppOrigTraitValue[i][j] <=
-		  modelOptions.
-		  affectionStatus[AFFECTION_STATUS_AFFECTED] -
-		  0.000001
-		  || pPerson->ppOrigTraitValue[i][j] >=
-		  modelOptions.
-		  affectionStatus[AFFECTION_STATUS_AFFECTED] + 0.000001))
-	    /* calculated the standardized quantitative trait value */
-	    pPerson->ppTraitValue[i][j] =
-	      (pPerson->ppOrigTraitValue[i][j] -
-	       pTrait->sampleMean) / pTrait->sampleSD;
+	  if ((pPerson->ppOrigTraitValue[i][j] != modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED]) &&
+	      (pPerson->ppOrigTraitValue[i][j] != modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED]))
+	    /* Calculated the standardized quantitative trait value */
+	    pPerson->ppTraitValue[i][j] = (pPerson->ppOrigTraitValue[i][j] - pTrait->sampleMean) / pTrait->sampleSD;
 	  else
 	    pPerson->ppTraitValue[i][j] = pPerson->ppOrigTraitValue[i][j];
 	}
