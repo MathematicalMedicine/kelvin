@@ -33,7 +33,7 @@ double interpolate (double xTarget, int tableSize, double *tableX, double *table
 
 // Just calculate the probability density function given mean and stdDev
 double gaussian_pdf (double x, double mean, double stdDev) {
-  fprintf (stderr, "gaussian_pdf\n");
+  //  fprintf (stderr, "gaussian_pdf\n");
   return (1/(stdDev*sqrt(2.0*M_PI)))*exp(-((x-mean)*(x-mean)/(2*stdDev*stdDev)));
 }
 
@@ -122,7 +122,7 @@ double gaussian_cdf (double x, double mean, double stdDev) {
 
   // Not simple, do the lookup and interpolation
 
-  fprintf (stderr, "gaussian_cdf\n");
+  //  fprintf (stderr, "gaussian_cdf\n");
 
   return(interpolate (x, TBL_VALUES, X, Y));
 }
@@ -590,7 +590,7 @@ double t_cdf_30 (double x, double degFree) {
   // Not simple, do the lookup and interpolation
 
   result = interpolate (x, TBL_VALUES, X, Y);
-  fprintf (stderr, "t_cdf_30 gives %g for x of %g\n", result, x);
+  //  fprintf (stderr, "t_cdf_30 gives %g for x of %g\n", result, x);
 
 #ifdef USE_GSL
   return(gsl_cdf_tdist_P (x, (double) 30));
@@ -614,7 +614,7 @@ double t_cdf (double x, double degFree) {
     exit (EXIT_FAILURE);
   }
 
-  fprintf (stderr, "t_cdf gives %g for x of %g\n", P, x);
+  //  fprintf (stderr, "t_cdf gives %g for x of %g\n", P, x);
 
 #ifdef USE_GSL
   return(gsl_cdf_tdist_P (x, degFree));
