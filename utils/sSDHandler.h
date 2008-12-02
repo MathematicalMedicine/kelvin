@@ -12,12 +12,13 @@ void initSSD ();
 void statSSD ();
 void termSSD ();
 
-// The smallest chunk to split, in double pairs trying 256
+// The smallest chunk to split, in double pairs, trying 2^8 or 256 (2^MIN_USE_SSD_BITS)
 #ifdef MAIN
-#define MIN_USE_SSD 2
+#define MIN_USE_SSD_BITS 1
 #else
-#define MIN_USE_SSD 256
+#define MIN_USE_SSD_BITS 8
 #endif
+#define MIN_USE_SSD_DPS (1<<MIN_USE_SSD_BITS)
 
 // Maximum size of a chunk, in double pairs, 2^15=32K, but we really can go beyond that
 #ifdef MAIN

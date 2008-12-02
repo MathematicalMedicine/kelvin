@@ -9,22 +9,48 @@
  reserved.  Permission is hereby given to use this software for
  non-profit educational purposes only.
 
- We're out of memory, but have an SSD to help. Memory mapping a file on the SSD doesn't improve
- our situation because every page actually referenced has to be in physical memory. What we need
- is a "window" of fixed-memory size thru which we can access the full span of SSD space. That's
- normal file I/O. I searched and searched for a tool that would manage the space in the SSD 
- efficiently and came up with nothing, so I wrote this.
+ We're out of memory, but have an SSD to help. Memory mapping a file
+ on the SSD doesn't improve our situation because every page actually
+ referenced has to be in physical memory. What we need is a "window"
+ of fixed-memory size thru which we can access the full span of SSD
+ space. That's normal file I/O. I searched and searched for a tool
+ that would manage the space in the SSD efficiently and came up with
+ nothing, so I wrote this.
 
  Philosophy:
 
- Allocate space in the SSD cache file in double pair chunks, i.e. some count of pairs of doubles.
- Keep 16 lists of free chunks. List n contains only free chunks of size > 2^n double pairs.
- Start with only one chunk in the 16th list that is the entire file. List heads are in memory,
- while subsequent list entries are at the starting offset for that entry (as pointed to by the
- previous entry's next pointer). Always push or pop to/from the head of the list. Don't keep back
- pointers for now as it would double the number of writes, and would just make defragmentation
- easier, and defragmentation may not be necessary. Don't keep track of used memory -- leave that
- to the user.
+ Allocate space in the SSD cache file in double pair chunks, i.e. some
+ count of pairs of doubles.  Keep 16 lists of free chunks. List n
+ contains only free chunks of size > 2^n double pairs.  Start with
+ only one chunk in the 16th list that is the entire file. List heads
+ are in memory, while subsequent list entries are at the starting
+ offset for that entry (as pointed to by the previous entry's next
+ pointer). Always push or pop to/from the head of the list. Don't keep
+ back pointers, as it would double the number of writes, and would
+ just make defragmentation easier, and defragmentation is not a
+ priority. Find the leading high-order bit in the request size and
+ left shift by one to determine the preferred list to use. The first
+ chunk off of the preferred list will always work since they're all
+ larger than the requested size. Use the entire chunk if it's a
+ reasonably close fit, otherwise split it and return to the proper
+ list. This works great for many initial allocations since we're just
+ whittling-down the single large chunk in the 16th list, which is to
+ say we're counting-down it's free space and starting address without
+ ever writing any list information to the SSD. Returned entries and
+ remainders smaller than their original list get pushed onto lesser
+ lists. If the preferred list is empty, go up to the next larger list
+ with entries. If all are empty, check the head of the list that is
+ one smaller than the preferred one, as it may be large enough. If it
+ isn't (but there are entries there), then pop all entries, sort them
+ by descending size and push them back onto the list and try again. If
+ it's still to small, do a garbage collection, and try again. If that
+ fails, we're done.
+
+ Garbage collection consists of popping all entries off of all lists
+ and sorting them by their starting address. We then go thru this
+ super list merging contiguous entries and pushing them back onto the
+ appropriate lists. This eliminates "soap bubble" discontinuities, but
+ not those where space is actually allocated between free entries.
 
  Usage:
 
@@ -40,7 +66,7 @@
  Caching aside (because I leave that to the OS), there is a fixed irreducible cost of 1 write 
  for a putSSD, 1 read for a getSSD. Anything beyond that is overhead. This algorithm's overhead is:
 
- -nothing for putSSD calls utilizing free lists where the remainder of the list head entry still
+ - nothing for putSSD calls utilizing free lists where the remainder of the list head entry still
  belongs on the same list, e.g. 33 bytes taken from a 102 byte head entry on list 6 (2^6 = 64)
  leaving 69 bytes still in head entry of list 6.
 
@@ -120,6 +146,7 @@ unsigned long handledDPCs;
 */
 unsigned short high16Bit (unsigned long value) {
   unsigned short i;
+  value >>= (MIN_USE_SSD_BITS - 1);
   if (value >= 0x8000)
     return 15;
   for (i=14; i>0; i--)
@@ -497,7 +524,7 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
 #endif
 
   // Handle leftovers...must be bigger than a freeList structure.
-  if ((leftOver = listHead[freeList].doublePairCount - myDPC) > (MIN_USE_SSD + 1)) {
+  if ((leftOver = listHead[freeList].doublePairCount - myDPC) > (MIN_USE_SSD_DPS + 1)) {
     // Put it on a free list...maybe the current one?
     if ((newFreeList = high16Bit (leftOver - 1)) == freeList) {
       // Keep the current list head, just smaller!
@@ -524,7 +551,7 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
   unsigned short freeList;
   unsigned short bestFreeList;
 
-  if ((myDPC < MIN_USE_SSD) || (myDPC > maxSSDDPC)) {
+  if ((myDPC < MIN_USE_SSD_DPS) || (myDPC > maxSSDDPC)) {
     fprintf (stderr, "putSSD size of %ludpc out-of-bounds\n", myDPC);
     return ((struct chunkTicket *) NULL);
   }
@@ -543,7 +570,8 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
       return (doPutSSD (buffer, myDPC, freeList));
   }
   // Nothing left at all!!
-  fprintf (stderr, "putSSD may be out of chunkage for a %ludpc request!\n", myDPC);
+  fprintf (stderr, "putSSD may be out of chunkage for a %ludpc request (15 head has %ludpc)!\n",
+	   myDPC, listHead[15].doublePairCount);
 
   // Nothing, reorder the best free list and try again...
 
@@ -652,7 +680,7 @@ int main (int argc, char *argv[]) {
 
     case 70: // Put it out there...
       dPC = rand() & MAX_DPC_MASK;
-      dPC = MAX(MIN_USE_SSD, dPC);
+      dPC = MAX(MIN_USE_SSD_DPS, dPC);
       buffer[0] = dPC;
       for (j=1; j<dPC; j++) {
 	buffer[j] = cT;
