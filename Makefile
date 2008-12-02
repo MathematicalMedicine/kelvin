@@ -25,7 +25,7 @@ CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
 CFLAGS := -Wall # -O3 -Wshadow
 #LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm -lpthread
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lm -lpthread
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lm -lpthread -lgsl -lgslcblas
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
@@ -41,13 +41,15 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 #CFLAGS += -DDMTRACK # For our own memory tracking
 #CFLAGS += -DTREEEVALUATE # Use evaluateValue of tree instead of evaluatePoly of list.
 #CFLAGS += -DFAKEEVALUATE # Don't evaluate at all - use only for exercise/compilation. Results will be wrong!
-#CFLAGS += -ldl -DPOLYUSE_DL # Dynamically load compiled polynomials for in-process use
+#CFLAGS += -DPOLYUSE_DL # Dynamically load compiled polynomials for in-process use
+#ADD_LDFLAGS += -ldl # "
 #CFLAGS += -DPOLYCODE_DL # Enable generation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCOMP_DL # Enable compilation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCHECK_DL # Keep both built and compiled DL polys and compare results (can be noisy!)
 #CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
 #CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
 
+LDFLAGS += ${ADD_LDFLAGS}
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
 
 KOBJS = kelvin.o dcuhre.o
