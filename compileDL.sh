@@ -9,8 +9,14 @@
 # linkage, since we'll want to distribute the compilation as widely as
 # possible.
 #
-# Takes a single parameter, which is the .h file of a polynomial to be
-# compiled and linked into DLs.
+# Takes two parameters:
+#
+# 1: the name of a polynomial to be compiled and linked into DLs. The
+# name will be stripped of any preceeding path and trailing file type,
+# i.e. "./CL7_P9C1M_9_T_10_11.h" will be reduced to CL7_P9C1M_9_T_10_11.
+#
+# 2: the optimization level to use, typically 0 or 1, defaults to 0 if
+# not specified.
 #
 name=${1##*/}
 name=${name%\.*}
@@ -18,9 +24,12 @@ name=${name%\.*}
 # Level 0 optimization compiles several times faster than level 1, but
 # level 1-compiled DLs execute twice as fast as level 0. Level 2 is an
 # incredibly slow compile that doesn't perform better than level 1.
-optFlag=1
+optLevel=${2}
+if test -z "${optLevel}" ; then
+    optLevel=0
+fi
 
-echo Processing ${name} with optimization level ${optFlag}
+echo Processing ${name} with optimization level ${optLevel}
 if test ! -e compiled ; then
     mkdir compiled
 fi
@@ -33,10 +42,10 @@ for src in ${name}{\.,\_[0-9]*}c ; do [ -f $src ] || continue ;
     if test ! -e ${src}.compiling ; then
 	touch ${src}.compiling
 	echo Compiling ${src}
-	gcc -g -c -fPIC -shared -I/home/whv001/kelvin/trunk/include -O${optFlag} -o ${src}.o ${src}.c >& ${src}.out
+	gcc -g -c -fPIC -shared -O${optLevel} -o ${src}.o ${src}.c >& ${src}.out
 	if test ! -e ${src}.o ; then
-	    echo Compile failed for some unknown reason, notifying Bill
-	    mail -s "Compile for ${src} failed on ${HOSTNAME} for some unknown reason" whv001@ccri.net < /dev/null
+	    echo Compile failed for some unknown reason
+	    mail -s "Compile for ${src} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null
 	    exit
 	fi
 	mv ${src}.c ${src}.out compiled
@@ -56,10 +65,10 @@ if test -e ${name}.linking ; then
     exit
 fi
 touch ${name}.linking
-gcc -g -O${optFlag} -fPIC -shared -o ${name}.so ${name}.o >& ${name}-link.out
+gcc -g -O${optLevel} -fPIC -shared -o ${name}.so ${name}.o >& ${name}-link.out
 if test ! -x ${name}.so ; then
-    echo Link of root DL failed for some unknown reason, notifying Bill
-    mail -s "Link for root DL ${name} failed on ${HOSTNAME} for some unknown reason" whv001@ccri.net < /dev/null
+    echo Link of root DL failed for some unknown reason
+    mail -s "Link for root DL ${name} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null
     exit
 fi
 mv ${name}-link.out compiled
@@ -67,10 +76,10 @@ rm ${name}.o
 for dl in ${name}_[0-9]*00.o ; do [ -f $dl ] || continue ;
     dl=${dl##*/}
     dl=${dl%00\.o}
-    gcc -g -O${optFlag} -fPIC -shared -o ${dl}00.so ${dl}[0-9][0-9].o >& ${dl}00-link.out
+    gcc -g -O${optLevel} -fPIC -shared -o ${dl}00.so ${dl}[0-9][0-9].o >& ${dl}00-link.out
     if test ! -x ${name}.so ; then
-	echo Link of branch DL failed for some unknown reason, notifying Bill
-	mail -s "Link for branch DL ${dl} failed on ${HOSTNAME} for some unknown reason" whv001@ccri.net < /dev/null
+	echo Link of branch DL failed for some unknown reason
+	mail -s "Link for branch DL ${dl} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null
 	exit
     fi
     mv ${dl}00-link.out compiled
