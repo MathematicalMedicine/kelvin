@@ -1610,7 +1610,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     }
   }
 #ifdef USE_SSD
-  if (sP->num >= MIN_USE_SSD)
+  if (sP->num >= MIN_USE_SSD_DPS)
     importedTerms++; // Because the following export is unpaired...
   if ((importedTerms-(exportedWrittenTerms+exportedDroppedTerms)) > peakInMemoryTerms)
     peakInMemoryTerms = importedTerms-(exportedWrittenTerms+exportedDroppedTerms);
@@ -4321,7 +4321,7 @@ void importTermList (Polynomial * p)
 
   sP = (struct sumPoly *) p->e.s;
 
-  if (sP->num < MIN_USE_SSD)
+  if (sP->num < MIN_USE_SSD_DPS)
     return;
 
   // You can only import what you've exported before
@@ -4385,7 +4385,7 @@ void exportTermList (Polynomial * p, int writeFlag)
 
   sP = (struct sumPoly *) p->e.s;
 
-  if (sP->num < MIN_USE_SSD)
+  if (sP->num < MIN_USE_SSD_DPS)
     return;
 
   // Can't export something already exported.
@@ -4668,8 +4668,8 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     exit (EXIT_FAILURE);
   }
 
-  fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n#include <stdlib.h>\n\n");
-  fprintf (srcFile, "#include \"%s.h\"\n\n", name);
+  totalSourceSize += fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n#include <stdlib.h>\n\n");
+  totalSourceSize += fprintf (srcFile, "#include \"%s.h\"\n\n", name);
 
   /* We need to be *very* considerate of what is global and what is not when dealing with
      multiple generated dynamic libraries. Nothing should be global that is not
@@ -4679,28 +4679,25 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
   // Here's the global part...
 #ifdef POLYCODE_DL
-  fprintf (srcFile, "#include <dlfcn.h>\n#include \"polynomial.h\"\n\n");
+  totalSourceSize += fprintf (srcFile, "#include <dlfcn.h>\n#include \"polynomial.h\"\n\n");
 #endif
 
-  fprintf (srcFile, "double %s (int num, ...) {\n", name);
+  totalSourceSize += fprintf (srcFile, "double %s (int num, ...) {\n", name);
   // And now we're local... A static here keeps these off the stack, which would otherwise frequently trash it.
 
-  fprintf (srcFile, "static double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
+  totalSourceSize += fprintf (srcFile, "static double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
 
 #ifdef POLYCODE_DL
-  fprintf (srcFile, "char *baseFunctionName = \"%s\";\nint dLFunctionCount = DLFUNCTIONCOUNT;\n\n", name);
-  fprintf (srcFile, "struct polynomial **variableList;\n\n");
+  totalSourceSize += fprintf (srcFile, "char *baseFunctionName = \"%s\";\nint dLFunctionCount = DLFUNCTIONCOUNT;\n\n", name);
+  totalSourceSize += fprintf (srcFile, "struct polynomial **variableList;\n\n");
 #endif
 
-  fprintf (srcFile, "\tva_list args;\n\n\tva_start (args, num);\n\n");
+  totalSourceSize += fprintf (srcFile, "\tva_list args;\n\n\tva_start (args, num);\n\n");
 
-  fprintf (srcFile, "\tvariableList = va_arg (args, struct polynomial **);\n");
-  for (i = 0; i < variableCount; i++) {
-    fprintf (srcFile, "\t\tV[%d] = variableList[%d]->value; // %s\n", i, i, variableList[i]->e.v->vName);
-//    fprintf (srcFile, "\t\tfprintf (stderr, \"vL[%d]->v is %%g\\n\", variableList[%d]->value);\n", i, i);
-//    fprintf (srcFile, "\t\tfprintf (stderr, \"%V[%d] is %%g\\n\", V[%d]);\n", i, i);
-  }
-  fprintf (srcFile, "\tva_end (args);\n\n");
+  totalSourceSize += fprintf (srcFile, "\tvariableList = va_arg (args, struct polynomial **);\n");
+  for (i = 0; i < variableCount; i++)
+    totalSourceSize += fprintf (srcFile, "\t\tV[%d] = variableList[%d]->value; // %s\n", i, i, variableList[i]->e.v->vName);
+  totalSourceSize += fprintf (srcFile, "\tva_end (args);\n\n");
 
   // Start by writing source lines to the first-tier DL
   srcCalledFile = srcFile;
@@ -4711,8 +4708,8 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
       if (fileCount > 0) {
 	srcSize += fprintf (srcCalledFile, "}\n");
-	totalSourceSize += srcSize;
 	fclose (srcCalledFile);
+	totalSourceSize += srcSize;
       }
       srcSize = 0;
 
@@ -4737,10 +4734,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
       break;
 
     case T_VARIABLE:
-      /*
       totalInternalSize += sizeof (struct variablePoly);
-      srcSize += fprintf (srcCalledFile, "\t%s[%d] = %s", eTypes[p->eType], p->index, p->e.v->vName);
-      */
       p->value = p->index;
       break;
 
@@ -4829,56 +4823,52 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   }
 
   if (fileCount > 0) {
-    fprintf (srcFile, "#include \"polyDLLoop.c\"\n\n");
+    totalSourceSize += fprintf (srcFile, "#include \"polyDLLoop.c\"\n\n");
     srcSize += fprintf (srcCalledFile, "}\n");
-    totalSourceSize += srcSize;
     fclose (srcCalledFile);
   }
+  totalSourceSize += srcSize;
 
-  if (result->eType == T_CONSTANT) {
-    //    fprintf (srcFile, "\n\tfprintf (stderr, \"returning constant %.*g\\n\");\n", DBL_DIG, result->value);
-    fprintf (srcFile, "\n\treturn %.*g;\n}\n", DBL_DIG, result->value);
-  } else {
-    //    fprintf (srcFile, "\n\tfprintf (stderr, \"returning %s[%lu] of %%g\\n\", %s[%lu]);\n",
-    //	     eTypes[result->eType], (unsigned long) result->value, eTypes[result->eType], (unsigned long) result->value);
-    fprintf (srcFile, "\n\treturn %s[%lu];\n}\n", eTypes[result->eType], (unsigned long) result->value);
-  }
+  if (result->eType == T_CONSTANT)
+    totalSourceSize += fprintf (srcFile, "\n\treturn %.*g;\n}\n", DBL_DIG, result->value);
+  else
+    totalSourceSize += fprintf (srcFile, "\n\treturn %s[%lu];\n}\n", eTypes[result->eType], (unsigned long) result->value);
 
-  fprintf (srcFile, "#ifdef MAIN\n\n#include <stdio.h>\n#include <stdlib.h>\n\n" "int main(int argc, char *argv[]) {\n\tint i;\n\n");
-  fprintf (srcFile, "\tif (argc != %d) {\n\t\tfprintf(stderr, \"%d floating arguments required\\n\");" "\n\t\texit(EXIT_FAILURE);\n\t}\n\tprintf(\"%%g\\n\", %s(1, ", variableCount + 1, variableCount, name);
+  totalSourceSize += fprintf (srcFile, "#ifdef MAIN\n\n#include <stdio.h>\n#include <stdlib.h>\n\n" "int main(int argc, char *argv[]) {\n\tint i;\n\n");
+  totalSourceSize += fprintf (srcFile, "\tif (argc != %d) {\n\t\tfprintf(stderr, \"%d floating arguments required\\n\");" "\n\t\texit(EXIT_FAILURE);\n\t}\n\tprintf(\"%%g\\n\", %s(1, ", variableCount + 1, variableCount, name);
   for (i = 0; i < variableCount; i++) {
     if (i != 0)
-      fprintf (srcFile, ", ");
-    fprintf (srcFile, "atof(argv[%d])", i + 1);
+      totalSourceSize += fprintf (srcFile, ", ");
+    totalSourceSize += fprintf (srcFile, "atof(argv[%d])", i + 1);
   }
-  fprintf (srcFile, "));\n}\n\n#endif\n");
+  totalSourceSize += fprintf (srcFile, "));\n}\n\n#endif\n");
   fclose (srcFile);
 
   if ((includeFile = fopen (includeFileName, "w")) == NULL) {
     perror ("Cannot open polynomial include file\n");
     exit (EXIT_FAILURE);
   }
-  fprintf (includeFile, "#define VARIABLESUSED %d\n", variableCount);
-  fprintf (includeFile, "#define SUMSUSED %d\n", sumsUsed);
-  fprintf (includeFile, "#define PRODUCTSUSED %d\n", productsUsed);
-  fprintf (includeFile, "#define FUNCTIONCALLSUSED %d\n", functionCallsUsed);
+  totalSourceSize += fprintf (includeFile, "#define VARIABLESUSED %d\n", variableCount);
+  totalSourceSize += fprintf (includeFile, "#define SUMSUSED %d\n", sumsUsed);
+  totalSourceSize += fprintf (includeFile, "#define PRODUCTSUSED %d\n", productsUsed);
+  totalSourceSize += fprintf (includeFile, "#define FUNCTIONCALLSUSED %d\n", functionCallsUsed);
 #ifdef POLYCODE_DL
-  fprintf (includeFile, "#define DLFUNCTIONCOUNT %d\n", fileCount);
+  totalSourceSize += fprintf (includeFile, "#define DLFUNCTIONCOUNT %d\n", fileCount);
 #endif
   fclose (includeFile);
 
 #ifdef POLYCOMP_DL
   char command[256];
   pushStatus ("compile poly");
-  sprintf (command, "/home/whv001/kelvin/trunk/compileDL.sh %s", name);
+  sprintf (command, "compileDL.sh %s", name);
   int status;
   if ((status = system (command)) != 0) {
     perror ("system()");
     exit (EXIT_FAILURE);
   }
   popStatus ();
-  sprintf (command, "echo %s is %d internally, %d as code and `wc -c %s.so` externally.", 
-	   name, totalInternalSize, totalSourceSize, name);
+  sprintf (command, "echo internally %d, as code %d, and externally `wc -c %s.so`.", 
+	   totalInternalSize, totalSourceSize, name);
   if ((status = system (command)) != 0) {
     perror ("system()");
     exit (EXIT_FAILURE);
