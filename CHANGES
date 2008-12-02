@@ -1,4 +1,12 @@
-Verion 0.36.1
+Version 0.37.0
+  Dependencies upon the GNU Scientific Library have been
+  eliminated.  Polynomial compilation is now reliable and 
+  documented. Extremely large polynomials (larger than
+  physical memory) can now be built using a solid-state
+  drive as an extension to physical memory. The AS directive 
+  is no longer order-sensitive. Numerous minor bugfixes.
+
+Version 0.36.1
   Fixed X Chromosome LD bug. dkelvin now lightly merged into
   kelvin -- specify DK directive in configuration file
   to use dkelvin-style numeric integration. Position
