@@ -101,7 +101,7 @@ struct variablePoly
 struct sumPoly
 {
   int num;			// number of terms - 4 bytes
-#ifdef MIN_USE_SSD
+#ifdef MIN_USE_SSD_DPS
   int iMTLIndex;                // -1 if not in-memory, otherwise the index to the iMTL.
 #endif
   struct polynomial **sum;	// polynomial terms - 8 bytes
