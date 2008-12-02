@@ -89,7 +89,7 @@ You can, however, freely change any of the following analysis characteristics an
 of any pre-existing compiled polynomials:
 <ul>
 <li>Pedigrees included/excluded (new ones can be compiled or just built and used without compilation)
-<li>Trait position values
+<li>Trait position values for multipoint analysis (may require additional polynomials)
 <li>Gene frequency values
 <li>Penetrance values
 <li>Alpha values
@@ -155,7 +155,9 @@ by the <tt>CPATH</tt> environment variable.
 <li><tt>compileDL.sh</tt> from the top-level distribution directory copied to somewhere on the command
 path, i.e. in a directory specified in the <tt>PATH</tt> environment variable. This script file is
 executed from within kelvin to build dynamic libraries, and should be protected from unauthorized
-modification, as it would otherwise present a potential security risk.
+modification, as it would otherwise present a potential security risk. Currently this script moves
+source files to a <tt>compiled</tt> subdirectory once a dynamic library is built. You may wish to modify
+it's behavior or change the compilation optimization level.
 </ul>
 This step is only performed if code has been written and synchronous compilation specified. 
 <p>
@@ -185,6 +187,10 @@ is a single trait position for which three significant polynomials are
 generated (P1, P2, and P3), two of which are simple 
 enough to be described by a single
 source file (P1 and P3), and one which requires three source files (P2 F1, F2, and F3).
+<p>
+The kelvin binaries referenced below can be produced by executing <tt>rebuild.sh</tt> in the top-level
+distribution directory. A future release of kelvin will combine them all into a single
+binary whose operation will be controlled by command-line options.
 <ul>
 <li><b>Non-Polynomial Run.</b> This approach uses the <tt>kelvin-normal</tt> binary without the <tt>PE</tt>
 directive in the configuration file. It requires very little physical memory, but has a relatively long
@@ -210,20 +216,27 @@ initial polynomial build (and coding) step is performed all at once by <tt>kelvi
 as the name indicates, does not do a real evaluation of the polynomials as they are only being built in order
 to generate source files. This step is best performed on a single-processor machine with a large amount of memory,
 as it does not benefit significantly from multiple threads. As soon as the source files for the first polynomial have
-been generated, they can start being compiled into object files on other machines. If a polynomial produces multiple
-source files, they can all be compiled separately and simultaneously. In the illustrated example, there are three
+been generated, they can start being compiled into object files.
+Compilation is performed by <tt>compileDL.sh</tt>, which must be executed either
+interactively or in a batch stream for each named polynomial. <tt>compileDL.sh</tt> takes two
+parameters which are the name of the polynomial and the optimization level (0 or 1) to be used. If multiple
+source files were generated, <tt>compileDL.sh</tt> will compile them sequentially and then link them when finished.
+Multiple copies of <tt>compileDL.sh</tt> can be run on a single polynomial, in which case each will compile separate
+source files until all are done. In this situation, a final copy must be run to do the link.
+<p>
+In the illustrated example, there are three
 separate machines being used. In practice, our entire cluster of 64 machines has at times been used to quickly
-compile and link a large number of polynomial dynamic libraries. Once all generated source has been compiled, the
-second <tt>kelvin</tt> binary, <tt>kelvin-POLYUSE_DL</tt> is run. It uses dynamic libraries instead whenever 
+compile and link a large number of polynomials. Once all generated source has been compiled, a
+second <tt>kelvin</tt> binary, <tt>kelvin-POLYUSE_DL</tt> is run. It uses dynamic libraries whenever 
 it finds them instead of building the equivalent polynomials. If no dynamic library is found for a polynomial, the
-polynomial will be built-in memory and evaluated as by <tt>kelvin-normal</tt>. This step is best performed on
+polynomial will be built-in memory. This step is best performed on
 a multi-core machine, and will, in the near future, be able to be distributed by other mechanisms.
 </ul>
 <p>
 
 <h2>How Compilation Works</h2>
 <ul>
-<li>Polynomial Structure & Optimizations (from Hongling's paper)
+<li>Polynomial Structure & Optimizations
 <ul>
 <li>Term collection and reduction
 <li>Subpoly overlap
