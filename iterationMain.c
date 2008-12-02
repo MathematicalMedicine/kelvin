@@ -136,6 +136,26 @@
           /* get the LD parameters */
           pLambdaCell = findLambdas (&modelRange, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
           reallocate_LD_loci (pLDLoci, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
+
+	  // Create these variables ahead of likelihood polynomial build in hopes of preventing in-build creation.
+
+	  if (modelOptions.polynomial == TRUE) {
+	    /*
+	    for (k = 0; k < pAlleleSet1->numAllele; k++) {
+	      for (l = 0; l < pAlleleSet2->numAllele; l++) {
+		allele1 = pAlleleSet1->pAlleles[k];
+		allele2 = pAlleleSet2->pAlleles[l];
+		sprintf (vName, "ppHaploFreq_lA%d_rA%d", allele1 - 1, allele2 - 1);
+		variableExp (&pLDLoci->ppHaploFreq[allele1 - 1][allele2 - 1], NULL, 'D', vName);
+	      }
+	    }
+	    */
+	    variableExp (&pLDLoci->ppHaploFreq[0][0], NULL, 'D', "ppHaploFreq_lA0_rA0");
+	    variableExp (&pLDLoci->ppHaploFreq[0][1], NULL, 'D', "ppHaploFreq_lA0_rA1");
+	    variableExp (&pLDLoci->ppHaploFreq[1][0], NULL, 'D', "ppHaploFreq_lA1_rA0");
+	    variableExp (&pLDLoci->ppHaploFreq[1][1], NULL, 'D', "ppHaploFreq_lA1_rA1");
+	  }
+
           pLDLoci->locus1 = loc1;
           pLDLoci->locus2 = loc2;
           pLDLoci->numAllele1 = pLocus1->numOriginalAllele;
@@ -247,10 +267,10 @@
 			 pLocus1->sName, pLocus2->sName);
                 if (gfreqInd != 0 || penIdx != 0) {
 		  pushStatus ("evaluating");
-                  swStart (combinedComputeSW);
+		  //                  swStart (combinedComputeSW);
                   compute_likelihood (&pedigreeSet);
                   cL[0]++;
-                  swStop (combinedComputeSW);
+		  //                  swStop (combinedComputeSW);
                   if (statusRequestSignal) {
                     statusRequestSignal = FALSE;
                     if (cL[0] > 1) {    // The first time thru we have no basis for estimation
