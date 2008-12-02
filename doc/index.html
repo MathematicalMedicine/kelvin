@@ -1,7 +1,7 @@
 <html>
-<head><title>KELVIN V0.36.1 ReadMe</title></head>
+<head><title>KELVIN V0.37.0 ReadMe</title></head>
 <body>
-<h1>K<font size="+2">ELVIN</font> V0.36.1 ReadMe</h1>
+<h1>K<font size="+2">ELVIN</font> V0.37.0 ReadMe</h1>
 <h2>INTRODUCTION</h2>
 K<font size="-1">ELVIN</font> is a genetic analysis program that supports two-point and multipoint 
 linkage analyses, dichotomous and
@@ -26,15 +26,10 @@ K<font size="-1">ELVIN</font> releases are currently tested on the following pla
 <li>Cygwin under Windows XP i386 with GCC 3.4.4 (cygming special)
 <li>SunOS 5.8 on an Ultra-1 sparc 64-bit with GCC 3.4.6 (no OpenMP)
 </ul>
-We don't know of any reason why K<font size="-1">ELVIN</font> shouldn't run on any platform supported by GNU CC and the GNU Scientific
-Library, so if you encounter incompatabilities, please let us know.
+We don't know of any reason why K<font size="-1">ELVIN</font> shouldn't run on any platform supported by GNU CC,
+so if you encounter incompatabilities, please let us know.
 
 <h4>Libraries</h4>
-K<font size="-1">ELVIN</font> currently only requires the <a href="http://www.gnu.org/software/gsl/">GNU Scientific Library</a>
-(GSL), a free numerical library for C and C++. This is already linked into the binary versions provided,
-but if you want to build your own version, you will need to make a note of the location of the library and include
-files on your system so that you can modify the K<font size="-1">ELVIN</font> Makefile.
-<p>
 When K<font size="-1">ELVIN</font> is run in polynomial mode, it makes very extensive use of memory management, and can, under most
 circumstances, definitely benefit from a drop-in allocator such as <a href="http://www.hoard.org/">hoard</a>
 or <a href="http://www.malloc.de/en/">ptmalloc3</a>. Either of these can easily halve execution time, and will
@@ -51,7 +46,14 @@ Polynomial mode can reduce
 runtime by several orders of magnitude, but can also easily exceed 16Gb of memory for
 complex pedigrees or those with untyped founders. The best approach is to normally use
 polynomial mode, and fall back to non-polynomial mode if memory becomes an issue. Recent releases of K<font size="-1">ELVIN</font>
-monitor CPU and memory utilization and will self-terminate if thrashing memory.
+monitor CPU and memory utilization and will display warnings if thrashing memory.
+<p>
+If you have access to a high-performance solid-state drive (SSD), you may be able to use
+<a href="SSDSupport.html">SSD support</a> to build polynomials that are much larger than physical memory.
+<p>
+If you have a homogenous multi-machine linux/GCC environment such as a Beowulf cluster and are performing
+long-running analyses, you may be able to benefit from using <a href="compiledPolys.html">compiled polynomials</a>,
+which can provide an order of magnitude improvement in evaluation performance, and a degree of reusability.
 <p>
 If you are running on a multi-core platform and your compiler supports 
 OpenMP 2.0, you can build K<font size="-1">ELVIN</font>
@@ -60,6 +62,7 @@ you use a drop-in allocator as described above.
 <h3>Distribution</h3>
 K<font size="-1">ELVIN</font> is developed in unix environments, so standard unix tools are used for build management and
 distribution.
+<p>
 K<font size="-1">ELVIN</font> is currently distributed as a compressed tarball of the directory hierarchy of our
 latest release, e.g. <tt>kelvin-0.36.1.tar.gz</tt>.
 <h4>Directory Structure and Components</h4>
@@ -68,7 +71,7 @@ latest release, e.g. <tt>kelvin-0.36.1.tar.gz</tt>.
 K<font size="-1">ELVIN</font> is the primary linkage analysis program and the focus of this documentation.
 calc_updated_ppl is
 a tool for combining the results of an analysis broken into separate K<font size="-1">ELVIN</font> runs.
-<li><tt>&lt;RELEASE&gt;/bin/</tt> - prebuilt K<font size="-1">ELVIN</font> binaries for different platforms. One of these may work for you.
+<li><tt>&lt;RELEASE&gt;/bin/</tt> - simple prebuilt K<font size="-1">ELVIN</font> binaries for different platforms. One of these may work for you.
 <li><tt>&lt;RELEASE&gt;/doc/</tt> - (very) limited documentation, including these HTML files.
 <li><tt>&lt;RELEASE&gt;include/</tt> - a work directory for builds.
 <li><tt>&lt;RELEASE&gt;/lib/</tt> - a work directory for builds.
@@ -89,8 +92,8 @@ are in the <tt>bin</tt> subdirectory of the distribution.
 Simply copy the version you will be using to a directory on your PATH, and either name it K<font size="-1">ELVIN</font> or create
 a link to it named K<font size="-1">ELVIN</font>.
 <p>
-If you are inclined to build your own version of K<font size="-1">ELVIN</font>, edit 
-the master Makefile to specify the location of the gsl libraries and include files on your system.
+A full set of K<font size="-1">ELVIN</font> variants can be build by executing the <tt>rebuild.sh</tt> script
+in the top-level distribution directory, or you can edit the Makefile and build your own variants individually.
 <p>
 There are a number of compilation conditionals that can be set in the Makefile to affect the behavior of K<font size="-1">ELVIN</font>.
 These are disabled when commented-out with a pound-sign (#) at the start of the line, and enabled otherwise. Some
@@ -131,13 +134,23 @@ the current default directory. Currently the only named polynomials implemented 
 pedigrees, and these polynomials are specific to each marker set and relative trait position in the analysis. 
 Compiled polynomials can be evaluated up to 10 times faster than internal polynomials, take up much less memory,
 and do not need to be rebuilt in subsequent runs. A more detailed discussion of polynomial compilation is currently
-under development. Disabled by default.
+under development. Disabled by default. See the section on <a href="compiledPolys.html">compiled polynomials</a>
+for details.
 <li><tt>POLYCODE_DL</tt> Enables the writing of C source code implementing named polynomials when a previously-built
 dynamic library for that polynomial has not been found. Disabled by default, requires POLYUSE_DL.
+ See the section on <a href="compiledPolys.html">compiled polynomials</a>
+for details.
 <li><tt>POLYCOMP_DL</tt> Enables the in-run compilation of any C source code written and the loading and use of the 
 dynamic library built. Disabled by default, requires POLYCODE_DL.
+ See the section on <a href="compiledPolys.html">compiled polynomials</a>
+for details.
 <li><tt>POLYCHECK_DL</tt> Enables the comparison of evaluation results from any newly-built polynomial dynamic 
 library with those of its source (internal) polynomial. Disabled by default, requires POLYCODE_DL.
+ See the section on <a href="compiledPolys.html">compiled polynomials</a>
+for details.
+<li><tt>USE_SSD</tt> Enables the use of a file on a solid-state drive as an adjunct to physical memory for building
+particularly large likelihood polynomials.  See the section on <a href="SSDSupport.html">SSD support</a>
+for details.
 </ul>
 <p>
 Once you have edited the Makefile to your satisfaction, type <kbd>make clean</kbd> and then <kbd>make</kbd>.
@@ -264,8 +277,8 @@ Trait-to-marker, Two-Point, Dichotomous Trait, Equilibrium.
 </pre>
 The first line is the K<font size="-1">ELVIN</font> major version and build information, and the subsequent lines
 that contain "Id:" are source-managed component version information. Next is the compiler
-and GNU Scientific Library verison numbers. Lines after that
-describe important compilation conditionals as specified in the Makefile and run
+verison number, followed by
+important compilation conditionals as specified in the Makefile and run
 characteristics as influenced by environment variables. In the example given, OpenMP support
 status and the number of threads used (0 selects the platform-specific default number of threads)
 is displayed. Other options and their corresponding messages are covered in the <a href="#building">
