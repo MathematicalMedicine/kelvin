@@ -232,7 +232,72 @@ it finds them instead of building the equivalent polynomials. If no dynamic libr
 polynomial will be built-in memory. This step is best performed on
 a multi-core machine, and will, in the near future, be able to be distributed by other mechanisms.
 </ul>
+<h4>BCMM-specific Instructions for Compiled Single Run</h4>
+While this approach is the easy way out, it's also the least efficient. If you have very large polynomials, you'll
+be waiting a long time for the compiles to complete, and will have to run only on 16Gb nodes.
 <p>
+Modify whatever shell script you use to run kelvin to:
+<ol>
+<li>Ensure that a copy of <tt>compileDL.sh</tt> from <tt>pedlib</tt> is somewhere on your path. You might want
+to modify the script to e-mail you should a compile fail, instead of emailing Bill.
+<li>Ensure that the <tt>CPATH</tt> environment variable includes <tt>/usr/local/src/kelvin-0.37.0/pedlib/:/usr/local/src/kelvin-0.37.0/include/</tt>.
+<li>Instead of running regular <tt>kelvin</tt>, run <tt>/usr/local/src/kelvin-0.37.0/kelvin-POLYCOMP_DL</tt>. This
+binary is built with the POLYUSE_DL, POLYCODE_DL and POLYCOMP_DL compilation flags set.
+</ol>
+If a compile blows-up, you'll need to not only fix the problem, which should be described in the <tt>.out</tt> file
+for the errant polynomial, but you'll also need to delete the <tt>.compiling</tt> file for that polynomial in order
+for a subsequent run to not skip it.
+<p>
+If you need to build a polynomial that's over 16Gb, use the binary <tt>kelvin-POLYCODE_DL-FAKEEVALUATE-SSD</tt> and
+follow <a href="SSDSupport.html">the instructions for using the SSD</a>.
+<p>
+If you need to restart a run, all you need to do to clean-up is get rid of <tt>.compiling</tt> files, and when you're
+using this approach, there should be only one of those. Note that once a dynamic library (<tt>.so</tt> file) is built
+for a polynomial, it needn't be built again. All <tt>kelvin-POLY</tt>-whatever programs are smart enough to simply
+use existing dynamic libraries and not try to recreate them. If you need to recreate them because the analysis
+changed in some fundamental way (see earlier documentation), then you'll need to delete the old <tt>.so</tt> files.
+<p>
+The default optimization level for compiles is "0" (zero), which compiles fairly fast, but produces dynamic
+libraries that run about half as fast as level "1" (one). If you want level "1" (one), you can edit the
+<tt>compileDL.sh</tt> script on your path to make it the default. Beware that compilation time will increase
+by a factor of 5. Note, however, that if you've already gone thru the generation of dynamic libraries with
+optimization level "0", you don't have to regenerate the code to compile at optimization level "1". Just delete
+(or move) the old <tt>.so</tt> files, copy the generated source (<tt>.c</tt> and <tt>.h</tt> files) up from
+the <tt>compiled</tt> subdirectory, and execute your modified <tt>compileDL.sh</tt> on them.
+<p>
+Finally, note that after you've gone thru the painful process of compiling all of the dynamic libraries needed
+for your analysis, you can start running <tt>kelvin-POLYUSE_DL</tt> to redo the analysis and get better performance
+not only because you're not doing compilation anymore, but also because <tt>kelvin-POLYUSE_DL</tt> is built with
+OpenMP support, unlike <tt>kelvin-POLYCOMP_DL</tt>. Remember to set <tt>OMP_NUM_THREADS</tt> to something like the
+number of available cores to get the most you can, and don't be disappointed if you don't see a big improvement --
+our multi-threading is by pedigrees, so if there are only a couple, or they're very unbalanced (one huge one and
+a bunch of small ones), it might as well be single-threaded.
+
+<h4>BCMM-specific Instructions for Compiled Multiple Runs</h4>
+This approach is best for many large pedigrees, and requires a bit of work. If you only have a few simple pedigrees, stick
+with the Compiled Single Run method.
+<p>
+You won't be using kelvin to do the actual compiles this time, so no special setup is needed. All you need to do is
+run <tt>/usr/local/src/kelvin-0.37.0/kelvin-POLYCODE-FAKEEVALUATE</tt> and let it start generating the source
+code for polynomials. Note that while it will produce output files, they're garbage (the "FAKEEVALUATE" bit)
+because the whole point here is to produce source code as quickly as possible.
+<p>
+Now, as soon as <tt>.h</tt> files start being produced, you can start running <tt>compileDL.sh</tt> on them. I do
+this with a combination of a few scripts that find all <tt>.h</tt> files and automagically create batch jobs 
+to execute commands (in this case <tt>compileDL.sh</tt>) on them.
+Look for <tt>compile_1</tt> and <tt>compile_2</tt> in my <tt>.bashrc</tt>. I do this multiple times when there
+are especially large polynomials involved, because each time <tt>compileDL.sh</tt> runs, it starts working on any
+as-yet-uncompiled components of the polynomial, so if there are 20 generated source files for a single polynomial, 
+I could have as many as 20 copies of <tt>compileDL.sh</tt> productively running on it. Note that if you do have
+multiple copies of <tt>compileDL.sh</tt> running on a single polynomial, they'll compile all of the separate 
+source components, but won't do the final link into a dynamic library for fear of missing pieces. Only a
+copy of <tt>compileDL.sh</tt> that doesn't skip any uncompiled pieces will attempt a link. This could be corrected
+by modifying <tt>compileDL.sh</tt> to do another check for any <tt>.compiling</tt> files once it's done, but
+I haven't had a chance to do that yet.
+<p>
+Once all of the polynomials generated have been compiled -- and you can tell when that's the case by looking to
+see if there are any <tt>.h</tt> files left, you can start evaluation. Use <tt>/usr/local/src/kelvin-0.37.0/kelvin-POLYUSE_DL</tt>
+with some largish <tt>OMP_NUM_THREADS</tt> for best performance.
 
 <h2>How Compilation Works</h2>
 <ul>
