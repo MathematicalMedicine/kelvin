@@ -13,7 +13,7 @@
 
   /* Annouce ourselves for performance tracking. */
 
-  pushStatus ("NonSpecific");
+  pushStatus ('k', "NonSpecific");
   sprintf (messageBuffer, "kelvin %s built %s %s", programVersion, __DATE__, __TIME__);
   swLogMsg (messageBuffer);
   swLogMsg (kelvinVersion);

@@ -93,6 +93,51 @@ then #include sw.h in your source code, and link with sw.o.
 
 int currentVMK, maximumVMK = -1;
 
+
+#ifdef linux
+#include <linux/prctl.h>
+int prctl (int, char *); // Strangely this is not included!
+#endif
+
+/**
+
+Show the current state of the process in some obvious manner -- currently
+(on linux) set the process name.
+
+*/
+#define STATUS_LENGTH 13
+#define STATUS_STACK_DEPTH 32
+char statusStack[STATUS_STACK_DEPTH][STATUS_LENGTH+1];
+int statusStackPosition = 0;
+void pushStatus (char program, char *currentStatus)
+{
+  char processName[16+1];
+  if (statusStackPosition == STATUS_STACK_DEPTH) {
+    fprintf (stderr, "Status stack overflow (not serious), status not changed to [%s]\n",
+	     currentStatus);
+    return;
+  }
+  strncpy (statusStack[++statusStackPosition], currentStatus, STATUS_LENGTH);
+  sprintf (processName, "%c(%-.*s)", program, STATUS_LENGTH, currentStatus);
+#ifdef PR_SET_NAME
+  prctl (PR_SET_NAME, processName);
+#endif
+  return;
+}
+void popStatus (char program)
+{
+  char processName[16+1];
+  if (statusStackPosition == 0) {
+    fprintf (stderr, "Status stack underflow (not serious), status not reverted\n");
+    return;
+  }
+  sprintf (processName, "%c(%-.*s)", program, STATUS_LENGTH, statusStack[--statusStackPosition]);
+#ifdef PR_SET_NAME
+  prctl (PR_SET_NAME, processName);
+#endif
+  return;
+}
+
 /* All we do to create a new stopwatch is allocate space for the structure, 
    zero the accumulated information and return a pointer to it. */
 struct swStopwatch *

@@ -18,6 +18,9 @@
 #define MAXSWMSG 220
 #define MAXUDPMSG 230
 
+void pushStatus (char program, char *currentStatus);
+void popStatus (char program);
+
 struct swStopwatch
 {
   char swName[MAXSWNAME + 1];

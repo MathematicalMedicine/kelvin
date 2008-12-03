@@ -266,7 +266,7 @@
 		sprintf (partialPolynomialFunctionName, "CL0_P%%s_%s_%s",
 			 pLocus1->sName, pLocus2->sName);
                 if (gfreqInd != 0 || penIdx != 0) {
-		  pushStatus ("evaluating");
+		  pushStatus ('k', "evaluating");
 		  //                  swStart (combinedComputeSW);
                   compute_likelihood (&pedigreeSet);
                   cL[0]++;
@@ -282,16 +282,16 @@
                       fflush (stdout);
                     }
                   }
-		  popStatus ();
+		  popStatus ('k');
                 } else { // This _is_ the first iteration
-		  pushStatus ("poly build");
+		  pushStatus ('k', "build poly");
 		  swStart (combinedBuildSW);
 		  compute_likelihood (&pedigreeSet);
 		  cL[0]++;
 		  swStop (combinedBuildSW);
 		  fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]));
 		  fflush (stdout);
-		  popStatus ();
+		  popStatus ('k');
 		}
                 if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                   fprintf (stderr, "Theta 0.5 has likelihood 0\n");
@@ -514,7 +514,7 @@
 		     * show progress at 1 minute intervals. Have a care to avoid division by zero. */
                     strcpy (partialPolynomialFunctionName, "cL2_P%s");
 		    if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
-		      pushStatus ("evaluating");
+		      pushStatus ('k', "evaluating");
 		      swStart (combinedComputeSW);
 		      compute_likelihood (&pedigreeSet);
 		      cL[2]++;
@@ -530,16 +530,16 @@
 			  fflush (stdout);
 			}
 		      }
-		      popStatus ();
+		      popStatus ('k');
 		    } else { // This _is_ the first iteration
-		      pushStatus ("build poly");
+		      pushStatus ('k', "build poly");
 		      swStart (combinedBuildSW);
 		      compute_likelihood (&pedigreeSet);
 		      cL[2]++;
 		      swStop (combinedBuildSW);
 		      fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]));
 		      fflush (stdout);
-		      popStatus ();
+		      popStatus ('k');
 		    }
 
                     if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
@@ -1341,7 +1341,7 @@
 	    if (strstr (partialPolynomialFunctionName, "_T") == NULL)
 	      strcat (partialPolynomialFunctionName, "_T");
             if (gfreqInd != 0 || penIdx != 0) {
-	      pushStatus ("evaluating");
+	      pushStatus ('k', "evaluating");
               swStart (combinedComputeSW);
               compute_likelihood (&pedigreeSet);
               cL[7]++;
@@ -1364,9 +1364,9 @@
                   fflush (stdout);
                 }
               }
-	      popStatus ();
+	      popStatus ('k');
             } else {     // This _is_ the first iteration
-	      pushStatus ("build poly");
+	      pushStatus ('k', "build poly");
               swStart (combinedBuildSW);
               compute_likelihood (&pedigreeSet);
               cL[7]++;
@@ -1377,7 +1377,7 @@
               fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]));
 #endif
               fflush (stdout);
-	      popStatus ();
+	      popStatus ('k');
             }
             /* print out some statistics under dry run */
             if (modelOptions.dryRun != 0) {
@@ -1570,7 +1570,7 @@
 		if (strstr (partialPolynomialFunctionName, "_T") == NULL)
 		  strcat (partialPolynomialFunctionName, "_T");
                 if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
-		  pushStatus ("evaluating");
+		  pushStatus ('k', "evaluating");
                   swStart (combinedComputeSW);
                   compute_likelihood (&pedigreeSet);
                   cL[8]++;
@@ -1593,9 +1593,9 @@
                       fflush (stdout);
                     }
                   }
-		  popStatus ();
+		  popStatus ('k');
                 } else {  // This _is_ the first iteration
-		  pushStatus ("build poly");
+		  pushStatus ('k', "build poly");
                   swStart (combinedBuildSW);
                   compute_likelihood (&pedigreeSet);
                   cL[8]++;
@@ -1606,7 +1606,7 @@
                   fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]));
 #endif
                   fflush (stdout);
-		  popStatus ();
+		  popStatus ('k');
                 }
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                 if (isnan (log10_likelihood_alternative))
