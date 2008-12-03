@@ -4657,7 +4657,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   struct sumPoly *sP;
   struct productPoly *pP;
 
-  pushStatus ("encode poly");
+  pushStatus ('k', "encode poly");
   result = p;
   fprintf (stdout, "\nGenerating DL for %s...\n", name);
 
@@ -4668,7 +4668,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     exit (EXIT_FAILURE);
   }
 
-  totalSourceSize += fprintf (srcFile, "#include <math.h>\n#include <stdarg.h>\n#include <stdlib.h>\n\n");
+  totalSourceSize += fprintf (srcFile, "#include <math.h>\n#include <stdlib.h>\n\n");
   totalSourceSize += fprintf (srcFile, "#include \"%s.h\"\n\n", name);
 
   /* We need to be *very* considerate of what is global and what is not when dealing with
@@ -4680,24 +4680,17 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   // Here's the global part...
 #ifdef POLYCODE_DL
   totalSourceSize += fprintf (srcFile, "#include <dlfcn.h>\n#include \"polynomial.h\"\n\n");
+  totalSourceSize += fprintf (srcFile, "char *baseFunctionName = \"%s\";\nint baseFunctionArgs = %d, dLFunctionCount = DLFUNCTIONCOUNT;\n\n", 
+			      name, variableCount);
+  totalSourceSize += fprintf (srcFile, "double %s (int num, struct polynomial **variableList) {\n", name);
 #endif
 
-  totalSourceSize += fprintf (srcFile, "double %s (int num, ...) {\n", name);
   // And now we're local... A static here keeps these off the stack, which would otherwise frequently trash it.
 
   totalSourceSize += fprintf (srcFile, "static double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
 
-#ifdef POLYCODE_DL
-  totalSourceSize += fprintf (srcFile, "char *baseFunctionName = \"%s\";\nint dLFunctionCount = DLFUNCTIONCOUNT;\n\n", name);
-  totalSourceSize += fprintf (srcFile, "struct polynomial **variableList;\n\n");
-#endif
-
-  totalSourceSize += fprintf (srcFile, "\tva_list args;\n\n\tva_start (args, num);\n\n");
-
-  totalSourceSize += fprintf (srcFile, "\tvariableList = va_arg (args, struct polynomial **);\n");
   for (i = 0; i < variableCount; i++)
-    totalSourceSize += fprintf (srcFile, "\t\tV[%d] = variableList[%d]->value; // %s\n", i, i, variableList[i]->e.v->vName);
-  totalSourceSize += fprintf (srcFile, "\tva_end (args);\n\n");
+    totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", i, i, variableList[i]->e.v->vName);
 
   // Start by writing source lines to the first-tier DL
   srcCalledFile = srcFile;
@@ -4834,14 +4827,10 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   else
     totalSourceSize += fprintf (srcFile, "\n\treturn %s[%lu];\n}\n", eTypes[result->eType], (unsigned long) result->value);
 
-  totalSourceSize += fprintf (srcFile, "#ifdef MAIN\n\n#include <stdio.h>\n#include <stdlib.h>\n\n" "int main(int argc, char *argv[]) {\n\tint i;\n\n");
-  totalSourceSize += fprintf (srcFile, "\tif (argc != %d) {\n\t\tfprintf(stderr, \"%d floating arguments required\\n\");" "\n\t\texit(EXIT_FAILURE);\n\t}\n\tprintf(\"%%g\\n\", %s(1, ", variableCount + 1, variableCount, name);
-  for (i = 0; i < variableCount; i++) {
-    if (i != 0)
-      totalSourceSize += fprintf (srcFile, ", ");
-    totalSourceSize += fprintf (srcFile, "atof(argv[%d])", i + 1);
-  }
-  totalSourceSize += fprintf (srcFile, "));\n}\n\n#endif\n");
+#ifdef POLYCODE_DL
+  totalSourceSize += fprintf (srcFile, "#ifdef MAIN\n// Compile with gcc -o %s %s.c -DMAIN -I../include/ (from pedlib)\n"
+			      "double (*baseFunction)() = %s;\n#include \"polyDLMain.c\"\n#endif\n", name, name, name);
+#endif
   fclose (srcFile);
 
   if ((includeFile = fopen (includeFileName, "w")) == NULL) {
@@ -4859,14 +4848,14 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
 #ifdef POLYCOMP_DL
   char command[256];
-  pushStatus ("compile poly");
+  pushStatus ('k', "compile poly");
   sprintf (command, "compileDL.sh %s", name);
   int status;
   if ((status = system (command)) != 0) {
     perror ("system()");
     exit (EXIT_FAILURE);
   }
-  popStatus ();
+  popStatus ('k');
   sprintf (command, "echo internally %d, as code %d, and externally `wc -c %s.so`.", 
 	   totalInternalSize, totalSourceSize, name);
   if ((status = system (command)) != 0) {
@@ -4875,6 +4864,6 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   }
 #endif
 
-  popStatus ();
+  popStatus ('k');
   return;
 }

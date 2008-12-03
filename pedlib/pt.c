@@ -9,7 +9,7 @@
 
   Very primitive, but it gets the job done.
 
-  Build with: gcc -o pt pt.c polynomial.c -L../utils/ -I../include/ -lutils -lm -lgsl -lgslcblas
+  Build with: gcc -o pt pt.c -DPOLYUSE_DL -DPOLYCODE_DL polynomial.c -L../utils/ -I../include/ -lutils -lm -ldl
 
 */
 #include <stdlib.h>
@@ -23,8 +23,6 @@
 int polynomialScale = 1;
 struct swStopwatch *overallSW;
 
-#define TRUE 1==1
-#define FALSE !TRUE
 #define MAXHANDLE 32
 
 struct handleInfo {
@@ -74,6 +72,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
   int eO1, eO2;
   struct polyList *pL;
   char *promptString = "C/V/S/P/F/E/G/L/#/%%/?/Q> ";
+  char polyName[16];
 
   fprintf(outputFile, promptString);
   while (fgets(iB, sizeof(iB), inputFile) != NULL) {
@@ -242,8 +241,9 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       }
       pL = buildPolyList();
       polyListSorting(pHI->pP, pL);
-      compilePoly(pHI->pP, pL, "Huh?");
-      fprintf(outputFile, "Polynomial C function written to P%d.c\n", nodeId - 1);
+      sprintf (polyName, "P%d", nodeId - 1);
+      codePoly(pHI->pP, pL, polyName);
+      fprintf(outputFile, "Polynomial C function written to %s.c\n", polyName);
       break;
     default:
       fprintf(stderr, "One of:\n"
