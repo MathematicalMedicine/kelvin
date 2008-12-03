@@ -1,0 +1,19 @@
+<h1>Solid-State Drive Support</h1>
+<h2>Why use a Solid-State Drive (SSD)?</h2>
+We are currently using
+SSDs as an interim solution to problems with K<font size="-1">ELVIN</font> running out of memory when building
+likelihood polynomials for certain pedigrees. We have added support for storing selected portions of polynomials
+on high-speed disk (typically SSDs) during the build process. This reduces physical memory requirements
+by anywhere from 40-90%, and allows us to limit the impact on performance by be very selective in when and 
+how a storage mechanism slower than 
+physical memory is used. One might ask why we simple didn't replace our swap drive with an SSD to facilitate
+using virtual memory beyond physical memory limitations. The short answer is we did, and it didn't help a 
+bit because of locality issues that could not be simply addressed.
+<p>
+<h2>How to Use SSD Support</h2>
+Currently SSD support is built into custom versions of K<font size="-1">ELVIN</font> that have been built with
+the USE_SSD compilation flag. Since storing portions of the polynomial on an SSD will very adversely affect
+performance regardless of how clever we are in our optimizations, it is recommended that SSD support only be used
+to generate code for polynomials -- not for their evaluation. Both code generation and evaluation traverse all
+components of a polynomial, which require reading all portions stored on the SSD, so if we can do that only once,
+we should.
