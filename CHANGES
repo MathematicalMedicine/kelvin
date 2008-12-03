@@ -4,7 +4,8 @@ Version 0.37.0
   documented. Extremely large polynomials (larger than
   physical memory) can now be built using a solid-state
   drive as an extension to physical memory. The AS directive 
-  is no longer order-sensitive. Numerous minor bugfixes.
+  is no longer order-sensitive. Default D-primes are
+  enforced for integration (dkelvin). Numerous minor bugfixes.
 
 Version 0.36.1
   Fixed X Chromosome LD bug. dkelvin now lightly merged into
