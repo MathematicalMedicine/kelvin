@@ -274,7 +274,7 @@
                   if (statusRequestSignal) {
                     statusRequestSignal = FALSE;
                     if (cL[0] > 1) {    // The first time thru we have no basis for estimation
-                      fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                      fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
                                "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
                                ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
                                 (eCL[0] + eCL[1]) / (cL[0] + cL[1]) -
@@ -289,7 +289,7 @@
 		  compute_likelihood (&pedigreeSet);
 		  cL[0]++;
 		  swStop (combinedBuildSW);
-		  fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]));
+		  fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]));
 		  fflush (stdout);
 		  popStatus ();
 		}
@@ -361,7 +361,7 @@
                     if (statusRequestSignal) {
                       statusRequestSignal = FALSE;
                       if (cL[1] > 1) {  // The first time thru we have no basis for estimation
-                        fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                        fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
                                  "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
                                  ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
                                   (eCL[0] + eCL[1]) / (cL[0] + cL[1]) -
@@ -522,7 +522,7 @@
 		      if (statusRequestSignal) {
 			statusRequestSignal = FALSE;
 			if (cL[2] > 1) {    // The first time thru we have no basis for estimation
-			  fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+			  fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
                                "Calculations", (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]),
                                ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
                                 (eCL[2] + eCL[3]) / (cL[2] + cL[3]) -
@@ -537,7 +537,7 @@
 		      compute_likelihood (&pedigreeSet);
 		      cL[2]++;
 		      swStop (combinedBuildSW);
-		      fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]));
+		      fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]));
 		      fflush (stdout);
 		      popStatus ();
 		    }
@@ -601,7 +601,7 @@
 			if (statusRequestSignal) {
 			  statusRequestSignal = FALSE;
 			  if (cL[3] > 1) {  // The first time thru we have no basis for estimation
-			    fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+			    fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
 				     "Calculations", (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]),
 				     ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
 				      (eCL[2] + eCL[3]) / (cL[2] + cL[3]) -
@@ -840,7 +840,7 @@
           cL[4]++;
 #ifndef SIMPLEPROGRESS
           if (cL[4] % MAX (1, eCL[4] / 5) == 1) {
-            fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[4] * 100 / eCL[4]);
+            fprintf (stdout, "Trait likelihood evaluations %lu%% complete\r", cL[4] * 100 / eCL[4]);
             fflush (stdout);
           }
 #endif
@@ -951,7 +951,7 @@
               cL[5]++;
 #ifndef SIMPLEPROGRESS
               if (cL[5] % MAX (1, eCL[5] / 5) == 1) {
-                fprintf (stdout, "Trait likelihood evaluations %d%% complete\r", cL[5] * 100 / eCL[5]);
+                fprintf (stdout, "Trait likelihood evaluations %lu%% complete\r", cL[5] * 100 / eCL[5]);
                 fflush (stdout);
               }
 #endif
@@ -1140,7 +1140,7 @@
         compute_likelihood (&pedigreeSet);
         cL[6]++;
 #ifndef SIMPLEPROGRESS
-        fprintf (stdout, "Marker set likelihood evaluations %d%% complete...\n",
+        fprintf (stdout, "Marker set likelihood evaluations %lu%% complete...\n",
                  MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
 #endif
 
@@ -1350,12 +1350,12 @@
                 statusRequestSignal = FALSE;
                 if (cL[7] > 1) {        // The first time thru we have no basis for estimation
 #ifndef SIMPLEPROGRESS
-                  fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                  fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
                            "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
                            ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
                             eCL[7] / cL[7] - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
 #else
-                  fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                  fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
                            "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]),
                            ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
                             (eCL[6] + eCL[7]) / (cL[6] + cL[7]) -
@@ -1372,9 +1372,9 @@
               cL[7]++;
               swStop (combinedBuildSW);
 #ifndef SIMPLEPROGRESS
-              fprintf (stdout, "%s %d%% complete\r", "Combined likelihood evaluations", cL[7] * 100 / eCL[7]);
+              fprintf (stdout, "%s %lu%% complete\r", "Combined likelihood evaluations", cL[7] * 100 / eCL[7]);
 #else
-              fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]));
+              fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]));
 #endif
               fflush (stdout);
 	      popStatus ();
@@ -1476,11 +1476,11 @@
         }
 
 #ifndef SIMPLEPROGRESS
-        fprintf (stdout, "%s %d%% complete (~%ld min left)\n",
+        fprintf (stdout, "%s %lu%% complete (~%lu min left)\n",
                  "Combined likelihood evaluations", cL[7] * 100 / eCL[7],
                  (combinedComputeSW->swAccumWallTime * eCL[7] / cL[7] - combinedComputeSW->swAccumWallTime) / 60);
 #else
-        fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+        fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
                  "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]),
                  (combinedComputeSW->swAccumWallTime * (eCL[6] + eCL[7]) / (cL[6] + cL[7]) -
                   combinedComputeSW->swAccumWallTime) / 60);
@@ -1579,12 +1579,12 @@
                     statusRequestSignal = FALSE;
                     if (cL[8] > 1) {    // The first time thru we have no basis for estimation
 #ifndef SIMPLEPROGRESS
-                      fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                      fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
                                "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
                                ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
                                 eCL[8] / cL[8] - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
 #else
-                      fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+                      fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
                                "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]),
                                ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
                                 (eCL[6] + eCL[8]) / (cL[6] + cL[8]) -
@@ -1601,9 +1601,9 @@
                   cL[8]++;
                   swStop (combinedBuildSW);
 #ifndef SIMPLEPROGRESS
-                  fprintf (stdout, "%s %d%% complete at %d\r", "Combined likelihood evaluations", cL[8] * 100 / eCL[8], nodeId);
+                  fprintf (stdout, "%s %lu%% complete at %d\r", "Combined likelihood evaluations", cL[8] * 100 / eCL[8], nodeId);
 #else
-                  fprintf (stdout, "%s %d%% complete\r", "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]));
+                  fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]));
 #endif
                   fflush (stdout);
 		  popStatus ();
@@ -1683,11 +1683,11 @@
         }       /* end of gene freq */
 
 #ifndef SIMPLEPROGRESS
-        fprintf (stdout, "%s %d%% complete (~%ld min left)\n",
+        fprintf (stdout, "%s %lu%% complete (~%lu min left)\n",
                  "Combined likelihood evaluations", cL[8] * 100 / eCL[8],
                  (combinedComputeSW->swAccumWallTime * eCL[8] / cL[8] - combinedComputeSW->swAccumWallTime) / 60);
 #else
-        fprintf (stdout, "%s %d%% complete (~%ld min left)\r",
+        fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
                  "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]),
                  (combinedComputeSW->swAccumWallTime * (eCL[6] + eCL[8]) / (cL[6] + cL[8]) -
                   combinedComputeSW->swAccumWallTime) / 60);

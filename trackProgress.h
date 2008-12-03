@@ -3,7 +3,7 @@
 void *monitorStatus ();
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
 void logPedigreeSetStatistics (PedigreeSet * pSet, int posIdx);
-void dumpTrackingStats(int cl[], int eCl[]);
-char *estimateIterations (int eCl[]);
+void dumpTrackingStats(unsigned long cl[], unsigned long eCl[]);
+char *estimateIterations (unsigned long eCl[]);
 void pushStatus (char *);
 void popStatus ();

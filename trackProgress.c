@@ -194,12 +194,12 @@ char analysisType[MAXSWMSG]; ///< Textual summary of analysis type built by dump
   Derive textual summary of analysis type and build expected compute_likelihood() call counts.
 
 */
-void dumpTrackingStats(int cl[], int eCL[])
+void dumpTrackingStats(unsigned long cl[], unsigned long eCL[])
 {
   int i;
   fprintf (stderr, "compute_pedigree_likelihood counts: ");
   for (i=0; i<9; i++)
-    fprintf (stderr, "%d=%d(%d) ", i, cl[i], eCL[i]);
+    fprintf (stderr, "%d=%lu(%lu) ", i, cl[i], eCL[i]);
   fprintf (stderr, "\n");
   fprintf (stderr, "modelRange. ntloc %d, npenet %d, nlclass %d, ngfreq %d, nafreq %d, "
 	   "nparam %d, ntthresh %d, nalpha %d, ntheta %d, ndprime %d, originalLocusList.numLocus %d, "
@@ -222,9 +222,9 @@ void dumpTrackingStats(int cl[], int eCL[])
     enumerated results.
 
 */
-char *estimateIterations (int eCL[])
+char *estimateIterations (unsigned long eCL[])
 {
-  //  int cL[9];
+  //  unsigned long cL[9];
   //  dumpTrackingStats(cL, eCL);
   if (modelOptions.markerAnalysis != FALSE) {
     /*
