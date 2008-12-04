@@ -30,11 +30,14 @@ double interpolate (double xTarget, int tableSize, double *tableX, double *table
   } while (1);
 }
 
-
 // Just calculate the probability density function given mean and stdDev
 double gaussian_pdf (double x, double mean, double stdDev) {
   //  fprintf (stderr, "gaussian_pdf\n");
   return (1/(stdDev*sqrt(2.0*M_PI)))*exp(-((x-mean)*(x-mean)/(2*stdDev*stdDev)));
+}
+
+double ugaussian_pdf (double x) {
+  return gaussian_pdf (x, (double) 0.0, (double) 1.0);
 }
 
 // The CDF is table driven, translated by mean and scaled by stdDev
@@ -125,6 +128,10 @@ double gaussian_cdf (double x, double mean, double stdDev) {
   //  fprintf (stderr, "gaussian_cdf\n");
 
   return(interpolate (x, TBL_VALUES, X, Y));
+}
+
+double ugaussian_cdf (double x) {
+  return gaussian_cdf (x, (double) 0.0, (double) 1.0);
 }
 
 double t_pdf_30 (double x, double degFree) {
