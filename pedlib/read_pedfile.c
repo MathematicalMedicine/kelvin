@@ -285,7 +285,6 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	  pPerson->ppTraitKnown[i][j] = 1;
       } else if (pTrait->type == QUANTITATIVE || pTrait->type == COMBINED) {
 	numRet = sscanf (pLine, "%lf %n", &pPerson->ppOrigTraitValue[i][j], &pos);
-	printf ("Got trait value %g from pLine (%s)\n", pPerson->ppOrigTraitValue[i][j], pLine);
 	KASSERT (numRet == 1,
 		 "Line %d in pedfile %s doesn't have enough columns. Is this a post-makeped file? \n",
 		 lineNo, sPedfileName);
