@@ -209,6 +209,16 @@ typedef struct modelRange
 }
 ModelRange;
 
+/* The elements of the various LD-related PPL statistics. */
+typedef struct {
+  double ld_small_theta,
+    ld_big_theta,
+    ld_unlinked,
+    le_small_theta,
+    le_big_theta,
+    le_unlinked;
+} LDVals;
+
 /**********************************************************************
  * Function prototypes.
  **********************************************************************/
@@ -266,11 +276,13 @@ double calculate_R_square (double p1, double q1, double d);
 /* using the average at each theta to calculate PPL - posterior probability of linkage */
 double calculate_PPL (SUMMARY_STAT ** result);
 
-/* calculate posterior probability of LD given linakge */
-double calculate_PPLD (SUMMARY_STAT *** result);
-
-/* get the mean of LR among all D primes for each theta */
-int get_average_LD_LR (SUMMARY_STAT *** result);
+/* routines to caclulate the LD statistics */
+int get_LDVals (SUMMARY_STAT ***result, LDVals *ldvals);
+double calc_ldppl (LDVals *ldvals);
+double calc_ppld_given_linkage (LDVals *ldvals);
+double calc_ppld (LDVals *ldvals);
+double calc_ppld_and_linkage (LDVals *ldvals);
+#define KROUND(dbl) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * 1000.0) / 1000.0
 
 /* integrate out marker allele frequencies and get the max MOD */
 int get_average_LR (SUMMARY_STAT *** result);

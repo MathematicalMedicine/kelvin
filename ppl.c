@@ -187,136 +187,159 @@ calculate_PPL (SUMMARY_STAT ** result)
   return PPL;
 }
 
-/* This only applies to two point 
- * Calculate the mean of LR at each theta point for all given D primes including 0
- * Once this function is called, calculate_PPL(tp_result[pLambdaCell->ndprime])
- * could be called to calculate LDPPL
- * 
+
+/* Two-point LD analyses only. Loads the LDVals struct for later calculation
+ * of the various LD-related PPL statistics.
  */
 int
-get_average_LD_LR (SUMMARY_STAT *** result)
+get_LDVals (SUMMARY_STAT ***result, LDVals *ldvals)
 {
-  int i, j;
-  double sumLR;
-  double avgLR;
-  int numDPrime;
-  int k, l;
-  int count;
+  int dprimeIdx, dprime0Idx, numdprimes=0;
+  int thetaIdx;
+  double theta1, theta2;
+  double cutoff, weight;
+  double lr1, lr2, cutlr;
 
-  numDPrime = pLambdaCell->ndprime;
-  for (i = 0; i < modelRange.ntheta; i++) {
-    sumLR = 0;
-    count = 0;
-    for (j = 0; j < numDPrime; j++) {
-      if (isnan (result[j][i][modelRange.nafreq].het_lr_avg)) {
-	fprintf (stderr, "Average LR at theta (%f,%f)(%d) and dprime %d(",
-		 modelRange.theta[0][i], modelRange.theta[1][i], i, j);
-	for (k = 0; k < pLambdaCell->m - 1; k++)
-	  for (l = 0; l < pLambdaCell->n - 1; l++)
-	    fprintf (stderr, "%f ", pLambdaCell->lambda[j][k][l]);
-	fprintf (stderr, ") is NAN.\n");
+  ldvals->ld_small_theta = ldvals->ld_big_theta = ldvals->ld_unlinked = 0;
+  ldvals->le_small_theta = ldvals->le_big_theta = ldvals->le_unlinked = 0;
+  cutoff = modelOptions.thetaCutoff[0];
+  weight = modelOptions.thetaWeight;
+  
+  for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
+    if (! (dprime0Idx =
+	   isDPrime0 (pLambdaCell->lambda[dprimeIdx], pLambdaCell->m, pLambdaCell->n)))
+      numdprimes++;
+    
+    for (thetaIdx = 1; thetaIdx < modelRange.ntheta; thetaIdx++) {
+      theta1 = modelRange.theta[0][thetaIdx-1];
+      theta2 = modelRange.theta[0][thetaIdx];
+      lr1 = result[dprimeIdx][thetaIdx-1][modelRange.nafreq].het_lr_avg;
+      lr2 = result[dprimeIdx][thetaIdx][modelRange.nafreq].het_lr_avg;
+      /* isnan check on both LRs? */
 
-      } else if (isnan (result[j][i][modelRange.nafreq].het_lr_avg - 
-			result[j][i][modelRange.nafreq].het_lr_avg)) {
-	fprintf (stderr, "Average LR at theta (%f,%f)(%d) and dprime %d(",
-		 modelRange.theta[0][i], modelRange.theta[1][i], i, j);
-	for (k = 0; k < pLambdaCell->m - 1; k++)
-	  for (l = 0; l < pLambdaCell->n - 1; l++)
-	    fprintf (stderr, "%f ", pLambdaCell->lambda[j][k][l]);
-	fprintf (stderr, ") is INF.\n");
-
+      if (dprime0Idx) {
+	/* D' == 0 */
+	if (theta1 >= (cutoff - ERROR_MARGIN)) {
+	  ldvals->le_big_theta += (lr1 + lr2) * (theta2 - theta1);
+	} else if (theta2 <= (cutoff + ERROR_MARGIN)) {
+	  ldvals->le_small_theta += (lr1 + lr2) * (theta2 - theta1);
+	} else {
+	  cutlr = lr1 + ((cutoff - theta1) / (theta2 - theta1)) * (lr2 - lr1);
+	  ldvals->le_small_theta += (lr1 + cutlr) * (cutoff - theta1);
+	  ldvals->le_big_theta += (cutlr + lr2) * (theta2 - cutoff);
+	}
+	if (theta2 >= (0.5 - ERROR_MARGIN))
+	  ldvals->le_unlinked += lr2;
       } else {
-	sumLR += result[j][i][modelRange.nafreq].het_lr_avg;
-	count++;
+	/* D' != 0 */
+	if (theta1 >= (cutoff - ERROR_MARGIN)) {
+	  ldvals->ld_big_theta += (lr1 + lr2) * (theta2 - theta1);
+	} else if (theta2 <= (cutoff + ERROR_MARGIN)) {
+	  ldvals->ld_small_theta += (lr1 + lr2) * (theta2 - theta1);
+	} else {
+	  cutlr = lr1 + ((cutoff - theta1) / (theta2 - theta1)) * (lr2 - lr1);
+	  ldvals->ld_small_theta += (lr1 + cutlr) * (cutoff - theta1);
+	  ldvals->ld_big_theta += (cutlr + lr2) * (theta2 - cutoff);
+	}
+	if (theta2 >= (0.5 - ERROR_MARGIN))
+	  ldvals->ld_unlinked += lr2;
       }
     }
-    avgLR = sumLR / count;
-    result[numDPrime][i][modelRange.nafreq].het_lr_avg = avgLR;
   }
-  return 0;
+
+  /* The 0.5 here is factored out of the calculation of area */
+  ldvals->ld_small_theta *= 0.5 * (weight / cutoff);
+  ldvals->le_small_theta *= 0.5 * (weight / cutoff);
+  ldvals->ld_big_theta *= 0.5 * ((1 - weight) / (0.5 - cutoff));
+  ldvals->le_big_theta *= 0.5 * ((1 - weight) / (0.5 - cutoff));
+
+  /* Average LD values over the number of non-zero D's */
+  ldvals->ld_small_theta /= numdprimes;
+  ldvals->ld_big_theta /= numdprimes;
+  ldvals->ld_unlinked /= numdprimes;
+
+  return (0);
 }
 
-/* calculate PPLD (posterior probability of LD ) given linkage 
- * This only applies to two point 
- */
-double
-calculate_PPLD (SUMMARY_STAT *** result)
+
+double calc_ldppl (LDVals *ldvals)
 {
-  int dprimeIdx;
-  int thetaInd;
-  double theta;
-  double ld_lr = 0;
-  double le_lr = 0;
-  double lr;
-  double ld_weight;
-  double ppl;
-  double temp;
-  double num_small_theta;
-  double num_big_theta;
-  int count;
-  double ld_lr_tmp = 0;
+  double numerator;
+  double denomRight;
+  double prior = modelOptions.LDprior;
+  double ldppl;
 
-  num_small_theta = 0;
-  num_big_theta = 0;		/* not including 0.5 */
-  for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
-    theta = modelRange.theta[0][thetaInd];
-    if (theta <= modelOptions.thetaCutoff[0] + ERROR_MARGIN)
-      num_small_theta++;
-    else if (theta < 0.5 - ERROR_MARGIN)
-      num_big_theta++;
-  }
-
-  if (pLambdaCell->ndprime > 1)
-    ld_weight = 1.0 / (pLambdaCell->ndprime - 1);
-  else
-    ld_weight = 0;
-
-  for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
-    theta = modelRange.theta[0][thetaInd];
-    count = 0;
-    ld_lr_tmp = 0;
-    for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-      lr = result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg;
-      if (isnan (result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg))
-	continue;
-      if (isDPrime0
-	  (pLambdaCell->lambda[dprimeIdx], pLambdaCell->m,
-	   pLambdaCell->n) == 0)
-	count++;
-      /* if d prime is not 0 and small theta */
-      if (theta <= modelOptions.thetaCutoff[0] + ERROR_MARGIN
-	  && isDPrime0 (pLambdaCell->lambda[dprimeIdx], pLambdaCell->m,
-			pLambdaCell->n) == 0) {
-	/* under LD and theta less than cutoff - closely linked */
-	ld_lr_tmp += lr;
-      } else
-	/* under linkage, bigger theta and dprime=0 (no LD) */
-	if (theta <= (0.5 - ERROR_MARGIN)
-	    && isDPrime0 (pLambdaCell->lambda[dprimeIdx], pLambdaCell->m,
-			  pLambdaCell->n) != 0) {
-	/* no LD, small theta */
-	if (theta <= modelOptions.thetaCutoff[0] + ERROR_MARGIN) {
-	  le_lr +=
-	    lr * modelOptions.thetaWeight / num_small_theta * (1.0 -
-							       modelOptions.
-							       LDprior);
-	} else {
-	  /* no LD, bigger theta */
-	  le_lr += lr * (1.0 - modelOptions.thetaWeight) / num_big_theta;
-	}
-      }
-    }				/* end of dprime loop */
-    if (count >= 1)
-      ld_weight = 1.0 / count;
-    else
-      ld_weight = 0;
-    ld_lr += ld_lr_tmp * ld_weight;
-  }				/* end of theta loop */
-  temp =
-    modelOptions.LDprior * ld_lr * modelOptions.thetaWeight / num_small_theta;
-  ppl = temp / (temp + le_lr);
-  return ppl;
+  numerator =
+    ldvals->ld_small_theta * prior * 0.021 + 
+    ldvals->ld_big_theta * prior *  0.0011+ 
+    ldvals->le_small_theta * prior * 0.979 + 
+    ldvals->le_big_theta * prior * 0.9989;
+  denomRight =
+    ldvals->le_unlinked * (1 - prior);
+  ldppl = numerator / (numerator + denomRight);
+  
+  return (ldppl);
 }
+
+
+double calc_ppld_given_linkage (LDVals *ldvals)
+{
+  double numerator;
+  double denomRight;
+  double prior = modelOptions.LDprior;
+  double ppld_given_l;
+
+  numerator =
+    ldvals->ld_small_theta * prior * 0.021 + 
+    ldvals->ld_big_theta * prior * 0.0011;
+  denomRight =
+    ldvals->le_small_theta * prior * 0.979 + 
+    ldvals->le_big_theta * prior * 0.9989;
+  ppld_given_l = numerator / (numerator + denomRight);
+
+  return (ppld_given_l);
+}
+
+
+double calc_ppld (LDVals *ldvals)
+{
+  double numerator;
+  double denomRight;
+  double prior = modelOptions.LDprior;
+  double ppld; 
+
+  numerator =
+    ldvals->ld_small_theta * prior * 0.021 +
+    ldvals->ld_big_theta * prior * 0.0011; 
+  denomRight =
+    ldvals->le_small_theta * prior * 0.979 + 
+    ldvals->le_big_theta * prior * 0.9989 + 
+    ldvals->le_unlinked * (1 - prior);
+  ppld = numerator / (numerator + denomRight); 
+
+  return (ppld);
+}
+
+
+double calc_ppld_and_linkage (LDVals *ldvals)
+{
+  double numerator;
+  double denomRight;
+  double prior = modelOptions.LDprior;
+  double ppld_and_l;
+
+  numerator =
+    ldvals->ld_small_theta * prior * 0.021 + 
+    ldvals->ld_big_theta * prior * 0.0011;
+  denomRight =
+    ldvals->le_small_theta * prior * 0.979 + 
+    ldvals->le_big_theta * prior * 0.9989 + 
+    ldvals->le_unlinked * (1 - prior);
+  ppld_and_l = numerator / (numerator + denomRight);
+
+  return (ppld_and_l);
+}
+
 
 /* per (Dprime, Theta) pair, calculate the average and max LR by
  * integrating out trait parameters first, then average over marker allele frequencies
