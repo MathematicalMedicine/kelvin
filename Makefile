@@ -24,8 +24,7 @@ INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
 CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
 CFLAGS := -Wall # -O3 -Wshadow
-#LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lgsl -lgslcblas -lm -lpthread
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lm -lpthread -lgsl -lgslcblas
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lm -lpthread
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 

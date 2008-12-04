@@ -3,12 +3,12 @@ void writePPLFileHeader () {
   if (modelOptions.markerAnalysis != FALSE) {
     fprintf (fpPPL, "Chr Marker1 Position1 Marker2 Position2 PPL");
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      fprintf (fpPPL, " LD-PPL PPLD");
+      fprintf (fpPPL, " LD-PPL PPLD|L PPLD PPLD&L ");
     }
   } else {
     fprintf (fpPPL, "Chr Trait Marker Position PPL");
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      fprintf (fpPPL, " LD-PPL PPLD");
+      fprintf (fpPPL, " LD-PPL PPLD|L PPLD PPLD&L ");
     }
   }
     fprintf (fpPPL, "\n");
@@ -16,37 +16,40 @@ void writePPLFileHeader () {
 }
 
 void writePPLFileDetail () {
+  LDVals ldvals;
+  double ldstat;
 
   /* Chromosome, marker name, position, PPL */
-
   ppl = calculate_PPL (tp_result[dprime0Idx]);
   if (modelOptions.markerAnalysis != FALSE) {
     fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ",
 	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[SEX_AVERAGED],
 	     pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-	     ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.);
+	     ppl >= .025 ? 2 : 3, KROUND (ppl));
   } else {
     fprintf (fpPPL, "%d %s %s %.4f %.*f ",
 	     pLocus2->pMapUnit->chromosome, pLocus1->sName,
 	     pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-	     ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.);
+	     ppl >= .025 ? 2 : 3, KROUND (ppl));
   }
   fflush (fpPPL);
   /* output LD-PPL now if needed */
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-    /* calculate the LD LR average first */
-    get_average_LD_LR (tp_result);
-    /* calculate the LD-PPL - posterior probability of linkage allowing for LD */
-    ldppl = calculate_PPL (tp_result[pLambdaCell->ndprime]);
-    /* now calculate the PPLD - posterior probability of LD given linkage */
-    ppld = calculate_PPLD (tp_result);
-    fprintf (fpPPL, "%.*f %.*f ",
-	     ldppl >= .025 ? 2 : 3, ldppl >= .025 ? rint (ldppl * 100.) / 100. : rint (ldppl * 1000.) / 1000.,
-	     ppld >= .025 ? 2 : 3, ppld >= .025 ? rint (ppld * 100.) / 100. : rint (ppld * 1000.) / 1000.);
+    /* load up ldvals first */
+    get_LDVals (tp_result, &ldvals);
+    ldstat = calc_ldppl (&ldvals);
+    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 3, KROUND (ldstat));
+    ldstat = calc_ppld_given_linkage (&ldvals);
+    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 3, KROUND (ldstat));
+    ldstat = calc_ppld (&ldvals);
+    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 3, KROUND (ldstat));
+    ldstat = calc_ppld_and_linkage (&ldvals);
+    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 3, KROUND (ldstat));
   }
   fprintf (fpPPL, "\n");
   fflush (fpPPL);
 }
+
 
 void write2ptBRFile() {
 
