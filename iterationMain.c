@@ -512,7 +512,9 @@
 
 		    /* If we're not on the first iteration, it's not a polynomial build, so
 		     * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-                    strcpy (partialPolynomialFunctionName, "cL2_P%s");
+
+		    sprintf (partialPolynomialFunctionName, "CL2_P%%s_%s_%s",
+			     pLocus1->sName, pLocus2->sName);
 		    if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
 		      pushStatus ('k', "evaluating");
 		      swStart (combinedComputeSW);
