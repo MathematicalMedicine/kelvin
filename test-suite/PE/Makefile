@@ -5,10 +5,13 @@
 SHELL = bash
 TESTS = $(shell ls -d */ | cut -f1 -d\/)
 
-.PHONY : test clean $(TESTS)
+.PHONY : test test-USE_DL clean $(TESTS)
 
 test : ACTION := test
 test : $(TESTS)
+
+test-USE_DL : ACTION := test-USE_DL
+test-USE_DL : $(TESTS)
 
 clean : ACTION := clean
 clean : $(TESTS)
