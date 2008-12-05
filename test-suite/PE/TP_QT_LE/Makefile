@@ -4,5 +4,7 @@ test :
 	perl ../../../utils/wordDiff.pl br.out br.out-baseline 0
 	diff -i ppl.out ppl.out-baseline
 
+test-USE_DL :
+
 clean :
 	- rm -f *.so *.out *memory.dat *~

@@ -8,5 +8,7 @@ test :
 	- time ../../kelvin kelvin.conf >kelvin.out 2>&1
 	grep "Not all loops in pedigrees are broken" kelvin.out
 
+test-USE_DL :
+
 clean :
 	- rm -f *.so *.out *memory.dat *~

@@ -91,7 +91,9 @@ clean :
 	rm -f $(KOBJS) $(OBJS) kelvin calc_updated_ppl
 	make -C test-suite -f Makefile clean
 
-.PHONY : test
+.PHONY : test test-USE_DL
+test-USE_DL :
+	make -C test-suite -f Makefile test-USE_DL
 test :
 	make -C test-suite -f Makefile test
 
