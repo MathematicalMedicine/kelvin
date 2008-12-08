@@ -17,3 +17,12 @@ performance regardless of how clever we are in our optimizations, it is recommen
 to generate code for polynomials -- not for their evaluation. Both code generation and evaluation traverse all
 components of a polynomial, which require reading all portions stored on the SSD, so if we can do that only once,
 we should.
+<p>
+In this release of K<font size="-1">ELVIN</font>, SSD support is built-into binaries when the <tt>USE_SSD</tt>
+compilation flag is specified. Two are provided by default, <tt>kelvin-POLYCOMP_DL-FAKEEVALUATE-SSD</tt>, which 
+
+<tt>
+export sSDFileName=/ssd/cache.dat
+export sSDFileSizeInGb=28
+</tt>
+<p>
