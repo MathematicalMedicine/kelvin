@@ -38,13 +38,13 @@ void writePPLFileDetail () {
     /* load up ldvals first */
     get_LDVals (tp_result, &ldvals);
     ldstat = calc_ldppl (&ldvals);
-    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 3, KROUND (ldstat));
+    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     ldstat = calc_ppld_given_linkage (&ldvals);
-    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 3, KROUND (ldstat));
+    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     ldstat = calc_ppld (&ldvals);
-    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 3, KROUND (ldstat));
+    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     ldstat = calc_ppld_and_linkage (&ldvals);
-    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 3, KROUND (ldstat));
+    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
   }
   fprintf (fpPPL, "\n");
   fflush (fpPPL);

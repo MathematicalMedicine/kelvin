@@ -282,7 +282,7 @@ double calc_ldppl (LDVals *ldvals);
 double calc_ppld_given_linkage (LDVals *ldvals);
 double calc_ppld (LDVals *ldvals);
 double calc_ppld_and_linkage (LDVals *ldvals);
-#define KROUND(dbl) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * 1000.0) / 1000.0
+#define KROUND(dbl) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * 10000.0) / 10000.0
 
 /* integrate out marker allele frequencies and get the max MOD */
 int get_average_LR (SUMMARY_STAT *** result);
