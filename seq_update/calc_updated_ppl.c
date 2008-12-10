@@ -125,6 +125,7 @@ double calc_ppld (st_ldvals *ldvals);
 double calc_ppld_and_linkage (st_ldvals *ldvals);
 
 int parse_command_line (int argc, char **argv);
+void usage ();
 double validate_double_arg (char *arg, char *optname);
 void open_brfile (st_brfile *brfile);
 int get_marker_line (st_brfile *brfile, st_marker *marker);
@@ -1060,6 +1061,7 @@ double calc_ppld_given_linkage (st_ldvals *ldval)
 #define OPT_METHOD  8
 #define OPT_PARTIN  9
 #define OPT_PARTOUT 10
+#define OPT_HELP    11
 
 int parse_command_line (int argc, char **argv)
 {
@@ -1075,6 +1077,7 @@ int parse_command_line (int argc, char **argv)
 			      { "method", 1, &long_arg, OPT_METHOD },
 			      { "partin", 1, &long_arg, OPT_PARTIN },
 			      { "partout", 1, &long_arg, OPT_PARTOUT },
+			      { "help", 0, &long_arg, OPT_HELP },
 			      { NULL, 0, NULL, 0 } };
   struct stat statbuf;
   
@@ -1122,8 +1125,13 @@ int parse_command_line (int argc, char **argv)
     } else if ((arg == 0) && (long_arg == OPT_PARTOUT)) {
       partoutfile = optarg;
 
+    } else if ((arg == 0) && (long_arg == OPT_HELP)) {
+      usage ();
+      exit (0);
+
     } else {
       /* getopt_long will emit a message describing the bad option/argument */
+      usage ();
       exit (-1);
     }
   }
@@ -1157,6 +1165,21 @@ int parse_command_line (int argc, char **argv)
     }
   }
   return (optind);
+}
+
+
+void usage ()
+{
+  printf ("usage: %s [ options ] brfile [brfile...]\n  valid options:\n", pname);
+  printf ("  -s|--sexspecific : input data contains sex-specific Thetas\n");
+  printf ("  -m|--multipoint : input data is multipoint\n");
+  printf ("  -r|--relax : supress comparing marker names across input files\n");
+  printf ("  -p <num>|--prior <num> : set linkage prior probability to <num>\n");
+  printf ("  -c <num>|--cutoff <num> : set small-Theta cutoff to <num>\n");
+  printf ("  -w <num>|--wieght <num> : set small-Theta weight to <num>\n");
+  printf ("  --partout <file> : write updated Bayes Ratios to <file>\n");
+  printf ("  --help : display this help text\n");
+  return;
 }
 
 
@@ -1712,6 +1735,8 @@ void compare_positions (st_marker *m1, st_marker *m2, st_brfile *brfile)
   }
   return;
 }
+
+
 
 
 int multi_insert (st_multidim *md, double *vals, int num)
