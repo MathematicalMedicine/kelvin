@@ -22,15 +22,13 @@ void writePPLFileDetail () {
   /* Chromosome, marker name, position, PPL */
   ppl = calculate_PPL (tp_result[dprime0Idx]);
   if (modelOptions.markerAnalysis != FALSE) {
-    fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ",
+    fprintf (fpPPL, "%d %s %.4f %s %.4f %.3f ",
 	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[SEX_AVERAGED],
-	     pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-	     ppl >= .025 ? 2 : 3, KROUND (ppl));
+	     pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED], ppl);
   } else {
-    fprintf (fpPPL, "%d %s %s %.4f %.*f ",
+    fprintf (fpPPL, "%d %s %s %.4f %.3f ",
 	     pLocus2->pMapUnit->chromosome, pLocus1->sName,
-	     pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-	     ppl >= .025 ? 2 : 3, KROUND (ppl));
+	     pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED], ppl);
   }
   fflush (fpPPL);
   /* output LD-PPL now if needed */
