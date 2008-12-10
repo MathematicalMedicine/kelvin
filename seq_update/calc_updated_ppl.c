@@ -107,6 +107,7 @@ FILE *partin = NULL;    /* --partin: file from which to read partial ldval-style
 /* Globally available for error messages */
 char *current = "0.36.1";
 char *pname;
+char *partinfile=NULL;
 /* Globbaly available for building partial output files */
 char partheader[BUFFLEN], partpadding[BUFFLEN];
 
@@ -129,6 +130,7 @@ void open_brfile (st_brfile *brfile);
 int get_marker_line (st_brfile *brfile, st_marker *marker);
 int get_header_line (st_brfile *brfile, st_data *data);
 int get_data_line (st_brfile *brfile, st_marker *marker, st_data *data);
+void read_partin (st_marker *markers, st_ldvals *ldvals, int nummarkers);
 void print_partial_old (st_brfile *brfile, st_marker *marker, st_data *data);
 void compare_headers (st_brfile *f1, st_brfile *f2);
 void compare_markers (st_marker *m1, st_marker *m2, st_brfile *brfile);
@@ -476,6 +478,9 @@ void new_method (st_brfile *brfiles, int numbrfiles)
     
     free (brfiles[fileno].datacols);
   }
+
+  if (partin != NULL)
+    read_partin (markers, ldvals, nummarkers);
 
   if (! brfiles[0].no_ld)
     printf ("Chr Seq Marker Position PPL LD-PPL PPLD|L PPLD PPLD&L\n");
@@ -1059,7 +1064,7 @@ double calc_ppld_given_linkage (st_ldvals *ldval)
 int parse_command_line (int argc, char **argv)
 {
   int arg, long_arg, long_idx;
-  char *partoutfile=NULL, *partinfile=NULL;
+  char *partoutfile=NULL;
   struct option cmdline[] = { { "sexspecific", 0, &long_arg, OPT_SEXSPEC },
 			      { "multipoint", 0, &long_arg, OPT_MULTI },
 			      { "relax", 1, &long_arg, OPT_RELAX },
@@ -1537,6 +1542,71 @@ int get_data_line (st_brfile *brfile, st_marker *marker, st_data *data)
 #endif
 
   return (1);
+}
+
+
+void read_partin (st_marker *markers, st_ldvals *ldvals, int nummarkers)
+{
+  int mrkno=0;
+  char buff[BUFFLEN];
+  st_brfile partbr;
+  st_marker marker;
+  st_ldvals ldval;
+
+  if (fgets (buff, BUFFLEN, partin) == NULL) {
+    if (feof (partin))
+      fprintf (stderr, "partin file '%s' is empty\n", partinfile);
+    else
+      fprintf (stderr, "error reading partin file '%s', %s\n", partinfile, strerror (errno));
+    exit (-1);
+  }
+  /* skip detailed version verification for the time being */
+  if (strstr (buff, "Version") == NULL) {
+    fprintf (stderr, "file %s is unversioned\n", partinfile);
+    exit (-1);
+  }
+  
+  if (fgets (buff, BUFFLEN, partin) == NULL) {
+    if (feof (partin))
+      fprintf (stderr, "partin file '%s' is ends unexpectedly at line 1\n", partinfile);
+    else
+      fprintf (stderr, "error reading partin file '%s', %s\n", partinfile, strerror (errno));
+    exit (-1);
+  }
+  if (strstr (buff, "Chr Pos Seq Name1 Name2 LDSmallTheta") == NULL) {
+    fprintf (stderr, "bad header line in '%s' at line 2\n", partinfile);
+    exit (-1);
+  }
+  
+  partbr.name = partinfile;
+  partbr.lineno = 2;
+
+  for (mrkno = 0; mrkno < nummarkers; mrkno++) {
+    if (fgets (buff, BUFFLEN, partin) == NULL) {
+      if (feof (partin))
+	fprintf (stderr, "partin file '%s' is ends unexpectedly at line 1\n", partinfile);
+      else
+	fprintf (stderr, "error reading partin file '%s', %s\n", partinfile, strerror (errno));
+      exit (-1);
+    }
+    partbr.lineno++;
+    if (sscanf (buff, "%d %lf %d %s %s %lf %lf %lf %lf %lf %lf",
+		&marker.chr, &marker.pos, &marker.num, marker.name1, marker.name2,
+		&ldval.ld_small_theta, &ldval.ld_big_theta, &ldval.ld_unlinked,
+		&ldval.le_small_theta, &ldval.le_big_theta, &ldval.le_unlinked) != 11) {
+      fprintf (stderr, "can't parse line %d in '%s'\n", partbr.lineno, partinfile);
+      exit (-1);
+    }
+    compare_markers (&markers[mrkno], &marker, &partbr);
+    ldvals[mrkno].ld_small_theta *= ldval.ld_small_theta;
+    ldvals[mrkno].ld_big_theta *= ldval.ld_big_theta;
+    ldvals[mrkno].ld_unlinked *= ldval.ld_unlinked;
+    ldvals[mrkno].le_small_theta *= ldval.le_small_theta;
+    ldvals[mrkno].le_big_theta *= ldval.le_big_theta;
+    ldvals[mrkno].le_unlinked *= ldval.le_unlinked;
+  }
+  fclose (partin);
+  return;
 }
 
 
