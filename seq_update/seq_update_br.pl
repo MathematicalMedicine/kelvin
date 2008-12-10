@@ -167,8 +167,6 @@ sub get_next_line
     my (@flds);
     my $va;
 
-    my $realregex = '[\-\d\.]+(?:[eE][\+\-]\d+)?';
-
     $buff = $$f{fp}->getline;
     if (! defined ($buff)) {
 	$$f{linetype} = 'end_of_file';
