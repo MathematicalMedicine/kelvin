@@ -327,8 +327,6 @@ KASSERT (readConfigFile (configfile)
 
   if (modelType.type == TP) {
 
-    //    fpTP = fopen (maxmodelfile, "w");
-    //KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
     fpPPL = fopen (pplfile, "w");
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
     writePPLFileHeader ();
