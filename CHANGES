@@ -1,5 +1,4 @@
 Version 0.37.0
-  PPL calculations for LD and their output have changed.
   Dependencies upon the GNU Scientific Library have been
   eliminated.  Polynomial compilation is now reliable and 
   documented. Extremely large polynomials (larger than

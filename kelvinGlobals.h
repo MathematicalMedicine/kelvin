@@ -22,6 +22,11 @@ FILE *fpPPL = NULL;     ///< PPL output file pointer
 FILE *fpTP = NULL;      ///< Ancillary Two-point output, used to go to stderr
 int polynomialScale = 1;        ///< Scale of static allocation and dynamic growth in polynomial.c.
 
+
+char dkelvinfile[KMAXFILENAMELEN + 1] = "dKelvin.out";   // all dKelvin specific info now is printed in this file  12/10/2009
+FILE *fpDK = NULL;     
+
+
 /** Model datastructures. modelOptions is defined in the pedigree library. */
 ModelType modelType;
 ModelRange modelRange;

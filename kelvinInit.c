@@ -327,12 +327,16 @@ KASSERT (readConfigFile (configfile)
 
   if (modelType.type == TP) {
 
-    fpTP = fopen (maxmodelfile, "w");
-    KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
     fpPPL = fopen (pplfile, "w");
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
     writePPLFileHeader ();
     fpTP = fopen (maxmodelfile, "w");
     KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
 
+  }
+
+
+  if (modelOptions.integration) {// all dKelvin specific info now is printed in this file  12/10/2009
+    fpDK= fopen(dkelvinfile, "w");
+    KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", dkelvinfile);
   }
