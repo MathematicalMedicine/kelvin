@@ -74,7 +74,7 @@ kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
 	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 calc_updated_ppl : seq_update/calc_updated_ppl.c
-	$(CC) -o $@ $(CFLAGS) seq_update/calc_updated_ppl.c
+	$(CC) -o $@ $(CFLAGS) seq_update/calc_updated_ppl.c -lm
 
 %.o : %.c $(INCS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
