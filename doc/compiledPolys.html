@@ -1,28 +1,26 @@
 <h1>Polynomial Compilation</h1>
 <h2>How Does K<font size="+2">ELVIN</font> use Polynomials?</h2>
-In order to understand the value of polynomial compilation, one must first understand how K<font size="-1">ELVIN</font> uses
-polynomials.
+In order to understand the value of polynomial compilation, one must first understand what polynomials
+are and how K<font size="-1">ELVIN</font> uses them.
 <p>
-When K<font size="-1">ELVIN</font> performs an analysis, it is calculating the likelihood of every pedigree's structure
-and characteristics for each combination of values in the trait model space, which is normally a range of 
+When K<font size="-1">ELVIN</font> performs an analysis, the majority of the work is calculating the likelihood of every pedigree's structure
+and characteristics for each combination of values in the trait model space, which is typically a range of 
 6 gene frequencies, 275 penetrances, and 20 alpha values, or 33,000 combinations of values. This is repeated for
 each trait position in the analysis.
 <p>
-In (original) non-polynomial mode, the pedigree likelihood is explicitly calculated for each combination of 
-trait model values via a series of tests, loops and calculations in the compiled code that comprises K<font size="-1">ELVIN</font>.
-Since these tests, loops and calculations are all hard-coded in the program, they cannot be 
-optimized or simplified in response to the nature of each pedigree, so the same full path is followed
-for every combination of values. If the first set of values takes a minute to process, and there are
-tens of thousands or millions of sets of values, we know that the entire
-analysis is going to take tens of thousands or millions of minutes.
+In (original) non-polynomial mode, the pedigree likelihood is explicitly calculated
+via a series of tests, loops and arithmetic operations in the compiled code that comprises K<font size="-1">ELVIN</font>.
+Since these tests, loops and operations are all hard-coded in the program, they cannot be 
+optimized or simplified in response to the nature of each pedigree, so the same full series of steps is followed
+for every combination of values.
 <p>
 In polynomial mode, we go thru this same hard-coded path in K<font size="-1">ELVIN</font> <i>one time only</i> building a 
 symbolic representation of the
-calculation using place-holder variables from the trait model space instead of explicit values. In effect, we
+calculation using place-holder variables from the trait model space instead of actual numeric values. In effect, we
 build a polynomial that represents the structure and characteristics of the pedigree in terms of the variables from
-the trait model space. This polynomial is then extensively simplified and optimized 
-using mathematical and computational techniques so that when we substitute-in trait model space values and 
-evaluate it, it can perform the calculation 
+the trait model space. This polynomial representation can then be extensively simplified and optimized 
+using mathematical and computational techniques so that when we assign trait model space values to the place-holder
+variables and evaluate it, it can perform the calculation 
 orders of magnitude faster than the original hard-coded path in K<font size="-1">ELVIN</font>.
 <p>
 This process of generating polynomials has its own drawbacks. They can take a lot of time and memory to generate
@@ -50,8 +48,8 @@ and after the markers would generate twelve polynomials:
 <li>combined likelihood for pedigree 1 and trait/marker pattern M1-M2-M3-T
 <li>combined likelihood for pedigree 2 and trait/marker pattern M1-M2-M3-T
 </ul>
-The trait and marker likelihood polynomials are usually extremely simple compared to the combined
-likelihood polynomials. Marker likelihood polynomials are usually nothing more than a single variable, while
+The trait and marker likelihood polynomials are extremely simple compared to the combined
+likelihood polynomials. Marker likelihood polynomials usually simplify to a constant, while
 combined likelihood polynomials usually have tens of thousands, and sometimes even billions of terms.
 <p>
 <h2>What is Polynomial Compilation?</h2>
