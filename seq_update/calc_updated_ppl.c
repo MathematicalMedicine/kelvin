@@ -1380,6 +1380,11 @@ int parse_command_line (int argc, char **argv)
     exit (-1);
   }
 
+  if ((dkelvin) && (method == METH_NEW)) {
+    fprintf (stderr, "%s: --dkelvin is incompatible with --method=new\n", pname);
+    exit (-1);
+  }
+
   if ((multipoint) && (dkelvin)) {
     fprintf (stderr, "%s: --multipoint is nonsensical with --dkelvin\n", pname);
     exit (-1);
