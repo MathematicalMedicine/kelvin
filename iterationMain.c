@@ -266,7 +266,7 @@
 		sprintf (partialPolynomialFunctionName, "CL0_P%%s_%s_%s",
 			 pLocus1->sName, pLocus2->sName);
                 if (gfreqInd != 0 || penIdx != 0) {
-		  pushStatus ('k', "evaluating");
+		  pushStatus ('k', "evalCL0");
 		  //                  swStart (combinedComputeSW);
                   compute_likelihood (&pedigreeSet);
                   cL[0]++;
@@ -284,7 +284,7 @@
                   }
 		  popStatus ('k');
                 } else { // This _is_ the first iteration
-		  pushStatus ('k', "build poly");
+		  pushStatus ('k', "buildCL0");
 		  swStart (combinedBuildSW);
 		  compute_likelihood (&pedigreeSet);
 		  cL[0]++;
@@ -516,7 +516,7 @@
 		    sprintf (partialPolynomialFunctionName, "CL2_P%%s_%s_%s",
 			     pLocus1->sName, pLocus2->sName);
 		    if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
-		      pushStatus ('k', "evaluating");
+		      pushStatus ('k', "evalCL2");
 		      swStart (combinedComputeSW);
 		      compute_likelihood (&pedigreeSet);
 		      cL[2]++;
@@ -534,7 +534,7 @@
 		      }
 		      popStatus ('k');
 		    } else { // This _is_ the first iteration
-		      pushStatus ('k', "build poly");
+		      pushStatus ('k', "buildCL2");
 		      swStart (combinedBuildSW);
 		      compute_likelihood (&pedigreeSet);
 		      cL[2]++;
@@ -1097,11 +1097,11 @@
           fprintf (stdout, " %d(%.2f)", markerLocusList.pLocusIndex[k], *get_map_position (markerLocusList.pLocusIndex[k]));
         fprintf (stdout, "\n");
 
-        /* Calculate likelihood for the marker set */
-        fprintf (stdout, "Determining marker set likelihood...\n");
+	fprintf (stdout, "Building transmission matrix...\n");
 #endif
 
-        locusList = &markerLocusList;
+	pushStatus ('k', "buildXM");
+	locusList = &markerLocusList;
         xmissionMatrix = markerMatrix;
         if (modelOptions.polynomial == TRUE) {
           pedigreeSetPolynomialClearance (&pedigreeSet);
@@ -1115,6 +1115,12 @@
           freePolys ();
 
         print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);
+	popStatus ('k');
+
+#ifndef SIMPLEPROGRESS
+        /* Calculate likelihood for the marker set */
+        fprintf (stdout, "Determining marker set likelihood...\n");
+#endif
         for (k = 0; k < modelType.numMarkers; k++) {
           markerNameList[k] = (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[k]])->sName;
         }
@@ -1131,6 +1137,7 @@
           }
         }
 	if (markerSetChanged) {
+	  pushStatus ('k', "buildML6");
 	  char markerNo[8];
 	  sprintf (partialPolynomialFunctionName, "ML6_P%%sC%dM",
 		   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
@@ -1138,9 +1145,12 @@
 	    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
 	    strcat (partialPolynomialFunctionName, markerNo);
 	  }
-	}
+	} else
+	  pushStatus ('k', "evalML6");
         compute_likelihood (&pedigreeSet);
         cL[6]++;
+	popStatus ('k');
+
 #ifndef SIMPLEPROGRESS
         fprintf (stdout, "Marker set likelihood evaluations %lu%% complete...\n",
                  MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
@@ -1343,7 +1353,7 @@
 	    if (strstr (partialPolynomialFunctionName, "_T") == NULL)
 	      strcat (partialPolynomialFunctionName, "_T");
             if (gfreqInd != 0 || penIdx != 0) {
-	      pushStatus ('k', "evaluating");
+	      pushStatus ('k', "evalCL7");
               swStart (combinedComputeSW);
               compute_likelihood (&pedigreeSet);
               cL[7]++;
@@ -1368,7 +1378,7 @@
               }
 	      popStatus ('k');
             } else {     // This _is_ the first iteration
-	      pushStatus ('k', "build poly");
+	      pushStatus ('k', "buildCL7");
               swStart (combinedBuildSW);
               compute_likelihood (&pedigreeSet);
               cL[7]++;
@@ -1572,7 +1582,7 @@
 		if (strstr (partialPolynomialFunctionName, "_T") == NULL)
 		  strcat (partialPolynomialFunctionName, "_T");
                 if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
-		  pushStatus ('k', "evaluating");
+		  pushStatus ('k', "evalCL8");
                   swStart (combinedComputeSW);
                   compute_likelihood (&pedigreeSet);
                   cL[8]++;
@@ -1597,7 +1607,7 @@
                   }
 		  popStatus ('k');
                 } else {  // This _is_ the first iteration
-		  pushStatus ('k', "build poly");
+		  pushStatus ('k', "buildCL8");
                   swStart (combinedBuildSW);
                   compute_likelihood (&pedigreeSet);
                   cL[8]++;
