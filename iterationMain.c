@@ -1100,7 +1100,6 @@
 	fprintf (stdout, "Building transmission matrix...\n");
 #endif
 
-	pushStatus ('k', "buildXM");
 	locusList = &markerLocusList;
         xmissionMatrix = markerMatrix;
         if (modelOptions.polynomial == TRUE) {
@@ -1115,7 +1114,6 @@
           freePolys ();
 
         print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);
-	popStatus ('k');
 
 #ifndef SIMPLEPROGRESS
         /* Calculate likelihood for the marker set */

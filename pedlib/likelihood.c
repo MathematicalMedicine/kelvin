@@ -25,6 +25,7 @@ char *likelihoodVersion = "$Id$";
 #include "pedlib.h"
 #include "locus.h"
 #include "utils.h"		/* for logging */
+#include "sw.h"
 #include "tools.h"
 #include "likelihood.h"
 #include "genotype_elimination.h"
@@ -2407,6 +2408,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 {
   int pattern;
 
+  pushStatus ('k', "buildXM");
   Polynomial *newProbPoly[3];
   Polynomial *newProbPoly2[3];
   Polynomial *newHetProbPoly[3];
@@ -3008,6 +3010,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 				  pattern, loc + 1);
     }
   }
+  popStatus ('k');
   return 0;
 }
 
