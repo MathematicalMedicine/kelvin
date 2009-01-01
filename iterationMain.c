@@ -1096,8 +1096,6 @@
         for (k = 0; k < modelType.numMarkers; k++)
           fprintf (stdout, " %d(%.2f)", markerLocusList.pLocusIndex[k], *get_map_position (markerLocusList.pLocusIndex[k]));
         fprintf (stdout, "\n");
-
-	fprintf (stdout, "Building transmission matrix...\n");
 #endif
 
 	locusList = &markerLocusList;

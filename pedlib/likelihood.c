@@ -2400,7 +2400,7 @@ timesExp (2, newProbPolynomial, 1, pChild->pLikelihood[newMultiLocusIndex].lkslo
  */
 
 int
-populate_xmission_matrix (XMission * pMatrix, int totalLoci,
+do_populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 			  void *prob[3], void *prob2[3],
 			  void *hetProb[3],
 			  int cellIndex,
@@ -2408,7 +2408,6 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 {
   int pattern;
 
-  pushStatus ('k', "buildXM");
   Polynomial *newProbPoly[3];
   Polynomial *newProbPoly2[3];
   Polynomial *newHetProbPoly[3];
@@ -2995,14 +2994,14 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
     } else {
       /* move on to next locus */
       if (modelOptions.polynomial == TRUE) {
-	populate_xmission_matrix (pMatrix, totalLoci,
+	do_populate_xmission_matrix (pMatrix, totalLoci,
 				  (void *) newProbPoly,
 				  (void *) newProbPoly2,
 				  (void *) newHetProbPoly,
 				  newCellIndex, newLastHetLoc,
 				  pattern, loc + 1);
       } else
-	populate_xmission_matrix (pMatrix, totalLoci,
+	do_populate_xmission_matrix (pMatrix, totalLoci,
 				  (void *) newProbPtr,
 				  (void *) newProbPtr2,
 				  (void *) newHetProbPtr,
@@ -3010,7 +3009,24 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 				  pattern, loc + 1);
     }
   }
+  return 0;
+}
+
+int
+populate_xmission_matrix (XMission * pMatrix, int totalLoci,
+			  void *prob[3], void *prob2[3],
+			  void *hetProb[3],
+			  int cellIndex,
+			  int lastHetLoc, int prevPattern, int loc)
+{
+#ifndef SIMPLEPROGRESS
+  fprintf (stdout, "Building transmission matrix...\n");
+#endif
+  pushStatus ('k', "buildXM");
+
+  do_populate_xmission_matrix (pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc);
   popStatus ('k');
+
   return 0;
 }
 
