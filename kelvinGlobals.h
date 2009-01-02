@@ -66,10 +66,18 @@ int num_of_map_position;
 SUMMARY_STAT *mp_result;
 int numPositions;
 
+/** Transmission matrices provide the pre-computed probability of
+ inheritance of a a given combination of marker and trait alleles. */
 XMission *nullMatrix;
 XMission *altMatrix;
 XMission *traitMatrix;
 XMission *markerMatrix;
+
+int markerSetChanged; /* Flag for multipoint analysis, did set of markers change? */
+int locusListChanged; /* flag for multipoint analysis, did relative trait position or marker set change? */
+
+int prevFirstMarker;		/* first marker in the set for multipoint analysis */
+int prevLastMarker;		/* last marker in the set for multipoint analysis */
 
 LambdaCell *pLambdaCell = NULL;
 int prevNumDPrime = 0;

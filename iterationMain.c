@@ -1285,7 +1285,6 @@
       if (modelOptions.polynomial != TRUE)
         status =
           populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
-
       /* For alternative */
 #ifndef SIMPLEPROGRESS
       fprintf (stdout, "Determining combined likelihood...\n");

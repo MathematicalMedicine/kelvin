@@ -12,10 +12,6 @@ double localmax_x[17];
 double localmax_value = 0.0;
 int total_dim = 0;
 
-int markerSetChanged;		/* flag for multipoint analysis */
-int locusListChanged;		/* flag for multipoint analysis */
-int prevFirstMarker;		/* first marker in the set for multipoint analysis */
-int prevLastMarker;		/* last marker in the set for multipoint analysis */
 double initialProb2[3];
 void *initialProbAddr2[3];
 void *initialHetProbAddr[3];
