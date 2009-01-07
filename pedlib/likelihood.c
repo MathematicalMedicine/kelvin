@@ -274,7 +274,12 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   if (modelOptions.polynomial == TRUE) {
     /* First build (or restore) all of the pedigrees */
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
+
       pPedigree = pPedigreeList->ppPedigreeSet[i];
+
+      if (pPedigree->pCount == 0)
+	continue; // Skip the entire rest of this iteration of the loop if case control w/no cases
+
       if (pPedigree->load_flag == 0) { // Skip everything, we're using saved results
 	if (pPedigree->likelihoodPolynomial == NULL) { // There's no polynomial, so come up with one
 #ifdef POLYCHECK_DL
@@ -336,6 +341,12 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 #endif
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
+
+      if (pPedigree->pCount == 0) {
+	pPedigree->likelihood = 0;
+	continue; // Skip the entire rest of this iteration of the loop if case control w/no cases
+      }
+
       if (pPedigree->load_flag == 0) {
 #ifdef FAKEEVALUATE
 	pPedigree->likelihood = .05;
@@ -370,8 +381,12 @@ compute_likelihood (PedigreeSet * pPedigreeList)
     pPedigree = pPedigreeList->ppPedigreeSet[i];
     if (pPedigree->load_flag == 0) {
       if (modelOptions.polynomial == FALSE) {
-	initialize_multi_locus_genotype (pPedigree);
-	status = compute_pedigree_likelihood (pPedigree);
+	if (pPedigree->pCount == 0) {
+	  pPedigree->likelihood = 0;
+	} else {
+	  initialize_multi_locus_genotype (pPedigree);
+	  status = compute_pedigree_likelihood (pPedigree);
+	}
       }	
       if (modelOptions.dryRun == 0) {
 	if (pPedigree->likelihood == 0.0) {
