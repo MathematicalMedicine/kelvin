@@ -1291,7 +1291,7 @@ double calc_ldppl (st_ldvals *ldval)
 
   numerator =
     ldval->ld_small_theta * prior * 0.021 + 
-    ldval->ld_big_theta * prior *  0.0011+ 
+    ldval->ld_big_theta * prior * 0.0011+ 
     ldval->le_small_theta * prior * 0.979 + 
     ldval->le_big_theta * prior * 0.9989;
   denomRight =
@@ -1299,6 +1299,24 @@ double calc_ldppl (st_ldvals *ldval)
   ldppl = numerator / (numerator + denomRight);
   
   return (ldppl);
+}
+
+
+double calc_ppld_given_linkage (st_ldvals *ldval)
+{
+  double numerator;
+  double denomRight;
+  double ppld_given_l;
+
+  numerator =
+    ldval->ld_small_theta * prior * 0.021 + 
+    ldval->ld_big_theta * prior * 0.0011;
+  denomRight =
+    ldval->le_small_theta * prior * 0.979 + 
+    ldval->le_big_theta * prior * 0.9989;
+  ppld_given_l = numerator / (numerator + denomRight);
+
+  return (ppld_given_l);
 }
 
 
@@ -1340,24 +1358,6 @@ double calc_ppld_and_linkage (st_ldvals *ldval)
 }
 
 
-double calc_ppld_given_linkage (st_ldvals *ldval)
-{
-  double numerator;
-  double denomRight;
-  double ppld_given_l;
-
-  numerator =
-    ldval->ld_small_theta * prior * 0.021 + 
-    ldval->ld_big_theta * prior * 0.0011;
-  denomRight =
-    ldval->le_small_theta * prior * 0.979 + 
-    ldval->le_big_theta * prior * 0.9989;
-  ppld_given_l = numerator / (numerator + denomRight);
-
-  return (ppld_given_l);
-}
-
-
 double calc_dkelvin_ppl (st_ldvals *ldval)
 {
   double integral, ppl;
@@ -1374,9 +1374,12 @@ double calc_dkelvin_ldppl (st_ldvals *ldval)
   double denomRight;
   double ldppl;
   
-  numerator = 0.019 * (0.021 * ldval->ld_small_theta + 0.979 * ldval->le_small_theta);
-  numerator += 0.001 * (0.011 * ldval->ld_big_theta + 0.9989 * ldval->le_big_theta);
-  denomRight = 0.98 * ldval->le_unlinked;
+  numerator = 
+    ldval->ld_small_theta * prior * weight * 0.021 + 
+    ldval->ld_big_theta * prior * (1 - weight) * 0.0011 + 
+    ldval->le_small_theta * prior * weight * .979 + 
+    ldval->le_big_theta * prior * (1 - weight) * 0.9989;
+  denomRight = ldval->le_unlinked * (1 - prior);
   ldppl = numerator / (numerator + denomRight);;
 
   return (ldppl);
@@ -1389,9 +1392,12 @@ double calc_dkelvin_ppld_given_linkage (st_ldvals *ldval)
   double denomRight;
   double ppld_given_l;
 
-  numerator = 0.019 * 0.021 * ldval->ld_small_theta + 0.001 * 0.011 * ldval->ld_big_theta;  
-  denomRight = 0.019 * 0.979 * ldval->le_small_theta;
-  denomRight += 0.001 * 0.9989 * ldval->le_big_theta;
+  numerator =
+    ldval->ld_small_theta * prior * weight * 0.021 +
+    ldval->ld_big_theta * prior * (1 - weight) * 0.0011;
+  denomRight = 
+    ldval->le_small_theta * prior * weight * 0.979 + 
+    ldval->le_big_theta * prior * (1 - weight) * 0.9989;
   ppld_given_l = numerator / (numerator + denomRight);
   
   return (ppld_given_l);
@@ -1404,10 +1410,14 @@ double calc_dkelvin_ppld (st_ldvals *ldval)
   double denomRight;
   double ppld;
 
-  numerator = 0.019 * 0.021 * ldval->ld_small_theta + 0.001 * 0.011 * ldval->ld_big_theta;
-  denomRight = 0.019 * 0.979 * ldval->le_small_theta;
-  denomRight += 0.001 * 0.9989 * ldval->le_big_theta + 0.98 * ldval->le_unlinked;
-  ppld = numerator/(numerator + denomRight);
+  numerator = 
+    ldval->ld_small_theta * prior * weight * 0.021 +
+    ldval->ld_big_theta * prior * (1 - weight) * 0.0011;
+  denomRight =
+    ldval->le_small_theta * prior * weight * 0.979 +
+    ldval->le_big_theta * prior * (1 - weight) * 0.9989 + 
+    ldval->le_unlinked * (1 - prior);
+  ppld = numerator / (numerator + denomRight);
 
   return (ppld);
 } 
@@ -1419,9 +1429,13 @@ double calc_dkelvin_ppld_and_linkage (st_ldvals *ldval)
   double denomRight;
   double ppld_and_l;
 
-  numerator = 0.019 * 0.021 * ldval->ld_small_theta + 0.001 * 0.011 * ldval->ld_big_theta;
-  denomRight = 0.019 * 0.979 * ldval->le_small_theta;
-  denomRight += 0.001 * 0.9989 * ldval->le_big_theta + 0.98 * ldval->le_unlinked;
+  numerator = 
+    ldval->ld_small_theta * prior * weight * 0.021 +
+    ldval->ld_big_theta * prior * (1 - weight) * 0.011;
+  denomRight =
+    ldval->le_small_theta * prior * weight * 0.979 +
+    ldval->le_big_theta * prior * (1 - weight) * 0.9989 +
+    ldval->le_unlinked * (1 - prior);
   ppld_and_l = numerator / (numerator + denomRight);
 
   return (ppld_and_l);
