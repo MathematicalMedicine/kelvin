@@ -98,6 +98,7 @@ extern char ccfile[KMAXFILENAMELEN + 1];
 extern char avghetfile[KMAXFILENAMELEN + 1];
 extern char avghomofile[KMAXFILENAMELEN + 1];
 extern char pplfile[KMAXFILENAMELEN + 1];
+extern char intermediatefile[KMAXFILENAMELEN + 1];
 
 /**********************************************************************
  * Model structures (ModelType, ModelRange, ModelOptions). These

@@ -547,6 +547,11 @@ readConfigFile (char *file)
 	    pplfile);
       continue;
     }
+    if (sscanf (line, "IR %s", intermediatefile) == 1) {	/* Intermediate results file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure intermediate results file %s\n",
+	    intermediatefile);
+      continue;
+    }
 
     if (sscanf (line, "UP %d", &dir1) == 1) {
       /* Allocate space for the identifier based on how many

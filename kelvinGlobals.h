@@ -16,16 +16,13 @@ char avghetfile[KMAXFILENAMELEN + 1] = "br.out";        ///< Default name (and s
 char condFile[KMAXFILENAMELEN + 1] = "condL.out";      ///< Default name (and storage) for conditional LR when condRun is set 
 FILE *fpCond = NULL; 
 char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";  ///< Default name (and storage) for PPL file
+char intermediatefile[KMAXFILENAMELEN + 1] = "ir.out"; ///< Default name (and storage) for intermediate results
 char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
 FILE *fpHet = NULL;     ///< Average HET LR file (Bayes Ratio file) pointer
 FILE *fpPPL = NULL;     ///< PPL output file pointer
 FILE *fpTP = NULL;      ///< Ancillary Two-point output, used to go to stderr
+FILE *fpIR = NULL;      ///< Intermediate results, used to go to stderr, normally dkelvin-only
 int polynomialScale = 1;        ///< Scale of static allocation and dynamic growth in polynomial.c.
-
-
-char dkelvinfile[KMAXFILENAMELEN + 1] = "dKelvin.out";   // all dKelvin specific info now is printed in this file  12/10/2009
-FILE *fpDK = NULL;     
-
 
 /** Model datastructures. modelOptions is defined in the pedigree library. */
 ModelType modelType;

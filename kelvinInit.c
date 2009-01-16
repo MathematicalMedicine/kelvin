@@ -335,8 +335,7 @@ KASSERT (readConfigFile (configfile)
 
   }
 
-
-  if (modelOptions.integration) {// all dKelvin specific info now is printed in this file  12/10/2009
-    fpDK= fopen(dkelvinfile, "w");
-    KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", dkelvinfile);
+  if (modelOptions.integration) { // All intermediate results are written here.
+    fpIR= fopen(intermediatefile, "w");
+    KASSERT (fpIR != NULL, "Error in opening file %s for write.\n", intermediatefile);
   }

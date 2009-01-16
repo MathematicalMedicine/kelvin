@@ -358,8 +358,8 @@
 
 
             /* Dk specific results*/
-            fprintf(fpDK,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_dprime,fixed_theta, s->total_neval, integral, abserr,log10 (localmax_value));
-  	    fflush (fpDK);     
+            fprintf(fpIR,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_dprime,fixed_theta, s->total_neval, integral, abserr,log10 (localmax_value));
+  	    fflush (fpIR);     
        
             R_square = 0.0;// tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square;
             fprintf (fpHet, "%d %.4f ", pLocus2->pMapUnit->chromosome, pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
@@ -508,16 +508,16 @@
           fprintf (fpPPL, "\n");
           fflush (fpPPL);
 
-	  fprintf (fpDK, "Global max %8.4f %6.4f %6.4f %6.4f %6.4f ",
+	  fprintf (fpIR, "Global max %8.4f %6.4f %6.4f %6.4f %6.4f ",
 		   log10 (maximum_function_value), maxima_x[0],
 		   maxima_x[1], maxima_x[3], maxima_x[2]);
 	  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-	    fprintf (fpDK, "%6.4f %6.4f %6.4f ",
+	    fprintf (fpIR, "%6.4f %6.4f %6.4f ",
 		     maxima_x[liabIdx * 3 + 4],
 		     maxima_x[liabIdx * 3 + 5], maxima_x[liabIdx * 3 + 6]);
 	  }
-	  fprintf (fpDK, "\n");
-	  fflush (fpDK);
+	  fprintf (fpIR, "\n");
+	  fflush (fpIR);
 
 
 	  /* only loop marker allele frequencies when doing LD */
@@ -1034,7 +1034,7 @@
 	   integral, log10 (localmax_value), localmax_x[1], localmax_x[0]);
 
 
-      fprintf (fpDK, "%f  %6.4f %12.8f %12.8f %d  %f\n", traitPos, ppl,
+      fprintf (fpIR, "%f  %6.4f %12.8f %12.8f %d  %f\n", traitPos, ppl,
 	       integral, abserr, num_eval,log10 (localmax_value));
 
 
