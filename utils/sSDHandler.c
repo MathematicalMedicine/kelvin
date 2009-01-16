@@ -188,7 +188,7 @@ void initSSD() {
 
 // Maximum number of double pairs on the 28Gb SSD is 28*1024*1024*1024/16, about 1792Mdps
 #ifdef MAIN
-  maxSSDDPC = 512;
+  maxSSDDPC = 512UL;
 #else
   maxSSDDPC = sSDFileSizeInGb * 1024UL * 1024UL / 16UL * 1024UL;
 #endif
@@ -211,7 +211,7 @@ void initSSD() {
 void removeFreeListHead (unsigned short freeList) {
   if (listHead[freeList].nextFree == 0) {
     // Out of list entries
-    listHead[freeList].doublePairCount = 0;
+    listHead[freeList].doublePairCount = 0UL;
   } else {
     // Pull-in the next entry and shlorp-up the listEntry space!
     listDepth[freeList]--;
@@ -239,14 +239,14 @@ void insertFreeListHead (unsigned long chunkOffset, unsigned long doublePairCoun
   unsigned short freeList;
 
   if (doublePairCount > 0)
-    freeList = high16Bit (doublePairCount - 1);
+    freeList = high16Bit (doublePairCount - 1UL);
   else
     freeList = 0;
 #ifdef DIAG
   fprintf (stderr, "Pushing %ludpc of %ludps onto list %d\n",
 	   chunkOffset, doublePairCount, freeList);
 #endif
-  if (listHead[freeList].doublePairCount == 0) {
+  if (listHead[freeList].doublePairCount == 0UL) {
     // First one, an easy insertion
 #ifdef DIAG
     fprintf (stderr, "First of list!\n");
@@ -524,9 +524,9 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
 #endif
 
   // Handle leftovers...must be bigger than a freeList structure.
-  if ((leftOver = listHead[freeList].doublePairCount - myDPC) > (MIN_USE_SSD_DPS + 1)) {
+  if ((leftOver = listHead[freeList].doublePairCount - myDPC) > (MIN_USE_SSD_DPS + 1UL)) {
     // Put it on a free list...maybe the current one?
-    if ((newFreeList = high16Bit (leftOver - 1)) == freeList) {
+    if ((newFreeList = high16Bit (leftOver - 1UL)) == freeList) {
       // Keep the current list head, just smaller!
       listHead[freeList].chunkOffset += myDPC;
       listHead[freeList].doublePairCount -= myDPC;
