@@ -1429,7 +1429,7 @@ double calc_dkelvin_ppld_and_linkage (st_ldvals *ldval)
 
   numerator = 
     ldval->ld_small_theta * prior * weight * 0.021 +
-    ldval->ld_big_theta * prior * (1 - weight) * 0.011;
+    ldval->ld_big_theta * prior * (1 - weight) * 0.0011;
   denomRight =
     ldval->le_small_theta * prior * weight * 0.979 +
     ldval->le_big_theta * prior * (1 - weight) * 0.9989 +
