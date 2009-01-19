@@ -651,18 +651,16 @@ void new_dkelvin (st_brfile *brfiles, int numbrfiles)
     printf ("%d %d %s %.4f", markers[mrkno].chr, markers[mrkno].num, markers[mrkno].name2,
 	    markers[mrkno].pos);
 
-    /* print PPL - is this right? At least it takes up space... */
-    integral = ldvals[mrkno].le_small_theta + ldvals[mrkno].le_big_theta;
-    printf (" %.3f", (prior * integral) / (prior * integral + (1 - prior)));
+    printf (" %.3f", calc_dkelvin_ppl (&ldvals[mrkno]));
     
     if (dkelvin_ld) {
-      ldstat = calc_ldppl (&ldvals[mrkno]);
+      ldstat = calc_dkelvin_ldppl (&ldvals[mrkno]);
       printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_ppld_given_linkage (&ldvals[mrkno]);
+      ldstat = calc_dkelvin_ppld_given_linkage (&ldvals[mrkno]);
       printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_ppld (&ldvals[mrkno]);
+      ldstat = calc_dkelvin_ppld (&ldvals[mrkno]);
       printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_ppld_and_linkage (&ldvals[mrkno]);
+      ldstat = calc_dkelvin_ppld_and_linkage (&ldvals[mrkno]);
       printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     }
     printf ("\n");
