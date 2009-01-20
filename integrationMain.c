@@ -13,7 +13,7 @@
       total_dim += 3 * modelRange.nlclass;	//SD_DD SD_Dd SD_dd
     }
     if (modelType.trait == CT) {
-      total_dim++;
+      total_dim += modelRange.nlclass;
     }
   }
 
@@ -27,8 +27,12 @@
 	xl[k] = xl[k + 1] = xl[k + 2] = -3;
 	xu[k] = xu[k + 1] = xu[k + 2] = 3;
       } else {
-	xl[k] = xl[k + 1] = xl[k + 2] = 0.1;
-	xu[k] = xu[k + 1] = xu[k + 2] = 30;
+	xl[k] =     0.1;
+        xl[k + 1] = 0.1;
+        xl[k + 2] = 0.1;
+	xu[k] =     30.0;
+        xu[k + 1] = 30.0;
+        xu[k + 2] = 30.0; //10.0; //23.0; //4.0;//30;
       }
       volume_region *= (xu[k] - xl[k]);
       volume_region *= (xu[k + 1] - xl[k + 1]);
@@ -43,8 +47,8 @@
 	k += 3;
       }
       if (modelType.trait == CT) {
-	xl[k] = 10;
-	xu[k] = 30.0;
+	xl[k] = modelRange.tthresh[liabIdx][0];//0.3;
+	xu[k] = modelRange.tthresh[liabIdx][modelRange.ntthresh -1];// 23.0;
 	volume_region *= (xu[k] - xl[k]);
 	k++;
 	//   fprintf(stderr, " in CT\n ");
@@ -316,12 +320,12 @@
 	    }*/
 
 
-	  low_theta_integral = 0.0;
-	  high_theta_integral = 0.0;
-	  low_integral = 0.0;
-	  high_integral = 0.0;
-	  low_ld_integral = 0.0;
-          dprime_integral=0.0;  // This is now for BR at Dprime =0 and theta =0.5 
+	  le_small_theta = 0.0;
+	  le_big_theta = 0.0;
+	  ld_small_theta = 0.0;
+	  ld_big_theta = 0.0;
+	  ld_unlinked = 0.0;
+          le_unlinked=0.0;  // This is now for BR at Dprime =0 and theta =0.5 
 
 	  for (i = 0; i < 141; i++) {//for (i = 0; i < 147; i++) {
 	    fixed_dprime = dcuhre2[i][0];
@@ -446,17 +450,17 @@
 	    fprintf (stderr, "tp result %f %f is %13.10f   \n",  fixed_theta, fixed_dprime, integral);
 
 	    if (i < 5) {
-	      low_theta_integral += integral * dcuhre2[i][2];
+	      le_small_theta += integral * dcuhre2[i][2];
 	    } else if (i < 10) {
-	      high_theta_integral += integral * dcuhre2[i][2];
+	      le_big_theta += integral * dcuhre2[i][2];
 	    } else if (i < 140){
 	      if (fixed_theta < modelOptions.thetaCutoff[0]) {
-		low_integral += integral * dcuhre2[i][2];
+		ld_small_theta += integral * dcuhre2[i][2];
 	      } else {
-		high_integral += integral * dcuhre2[i][2];
+		ld_big_theta += integral * dcuhre2[i][2];
 	      }
 	    } else {
-              dprime_integral += integral * dcuhre2[i][2];
+              le_unlinked += integral * dcuhre2[i][2];
 	    }
 
 
@@ -469,7 +473,7 @@
 
 
 	  /*Calculate ppl, ppld and ldppl */
-	  ppl =  modelOptions.thetaWeight * low_theta_integral + (1 -  modelOptions.thetaWeight) * high_theta_integral;
+	  ppl =  modelOptions.thetaWeight * le_small_theta + (1 -  modelOptions.thetaWeight) * le_big_theta;
 	  ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
           if (modelOptions.markerAnalysis != FALSE) {
             fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ",
@@ -486,19 +490,19 @@
 
           /* output LD-PPL now if needed */
 	  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-	    ldppl =0.019*(0.021*low_integral+ 0.979*low_theta_integral)+ 0.001*(0.011*high_integral+ 0.9989*high_theta_integral);
+	    ldppl =0.019*(0.021*ld_small_theta+ 0.979*le_small_theta)+ 0.001*(0.011*ld_big_theta+ 0.9989*le_big_theta);
 
 	    ldppl =
-                ldppl / (ldppl + 0.98*dprime_integral);
+                ldppl / (ldppl + 0.98*le_unlinked);
 
-	    ppld = 0.019*0.021*low_integral+0.001*0.011*high_integral;
-            ppld = ppld/(ppld+ 0.019*0.979*low_theta_integral +0.001*0.9989*high_theta_integral+ 0.98*dprime_integral);
+	    ppld = 0.019*0.021*ld_small_theta+0.001*0.0011*ld_big_theta;
+            ppld = ppld/(ppld+ 0.019*0.979*le_small_theta +0.001*0.9989*le_big_theta+ 0.98*le_unlinked);
 
-	    ppldGl=0.019*0.021*low_integral+0.001*0.011*high_integral;
-            ppldGl = ppldGl/(ppldGl + 0.019*0.979*low_theta_integral +0.001*0.9989*high_theta_integral);
+	    ppldGl=0.019*0.021*ld_small_theta+0.001*0.0011*ld_big_theta;
+            ppldGl = ppldGl/(ppldGl + 0.019*0.979*le_small_theta +0.001*0.9989*le_big_theta);
 
-	    ppldAl=0.019*0.021*low_integral+0.001*0.011*high_integral;
-	    ppldAl = ppldAl/(ppldAl +  0.019*0.979*low_theta_integral +0.001*0.9989*high_theta_integral+ 0.98*dprime_integral);
+	    ppldAl=0.019*0.021*ld_small_theta+0.001*0.0011*ld_big_theta;
+	    ppldAl = ppldAl/(ppldAl +  0.019*0.979*le_small_theta +0.001*0.9989*le_big_theta+ 0.98*le_unlinked);
 
             fprintf (fpPPL, "%.*f ", ldppl >= .025 ? 2 : 4, KROUND (ldppl));
             fprintf (fpPPL, "%.*f ", ppldGl >= .025 ? 2 : 4, KROUND (ppldGl));
@@ -656,7 +660,7 @@
 	pTrait->means[liabIdx][0][0] = 2.0;
 	pTrait->means[liabIdx][0][1] = 1.0;
 	pTrait->means[liabIdx][1][0] = 1.0;
-	pTrait->means[liabIdx][1][1] = 0.0;
+	pTrait->means[liabIdx][1][1] = 0.3;
 	pTrait->stddev[liabIdx][0][0] = 1.0;
 	pTrait->stddev[liabIdx][0][1] = 1.0;
 	pTrait->stddev[liabIdx][1][0] = 1.0;
@@ -1036,7 +1040,7 @@
 
       fprintf (fpIR, "%f  %6.4f %12.8f %12.8f %d  %f\n", traitPos, ppl,
 	       integral, abserr, num_eval,log10 (localmax_value));
-
+      fflush(fpIR);
 
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
 
