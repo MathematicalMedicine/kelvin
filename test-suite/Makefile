@@ -3,6 +3,9 @@
 # find -maxdepth DNE on Solaris...
 #TESTS = $(shell find * -maxdepth 0 -type d)
 SHELL = bash
+TEST_KELVIN = ~/kelvin/trunk/kelvin
+KELVIN_ROOT = ~/kelvin/trunk/
+export TEST_KELVIN KELVIN_ROOT
 TESTS = $(shell ls -d */ | cut -f1 -d\/)
 
 .PHONY : test clean $(TESTS)

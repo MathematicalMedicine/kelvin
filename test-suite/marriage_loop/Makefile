@@ -5,7 +5,7 @@ test :
     make: [test] Error 255 (ignored)\n\
     grep "Not all loops in pedigrees are broken" kelvin.out\n\
     kelvin.c (653): Not all loops in pedigrees are broken.\n"
-	- time ../../kelvin kelvin.conf >kelvin.out 2>&1
+	- time $(TEST_KELVIN) kelvin.conf >kelvin.out 2>&1
 	grep "Not all loops in pedigrees are broken" kelvin.out
 
 test-USE_DL :
