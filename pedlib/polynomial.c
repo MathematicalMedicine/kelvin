@@ -3672,8 +3672,7 @@ void printAllPolynomials ()
       if (functionCallHash[i].num <= 0)
         continue;
       for (j = 0; j < functionCallHash[i].num; j++) {
-        fprintf (stderr,
-            "(%d %d) index=%d key=%d count=%d valid=%d functionCall: ", i, j, functionCallHash[i].index[j], functionCallHash[i].key[j], functionCallList[functionCallHash[i].index[j]]->count, functionCallList[functionCallHash[i].index[j]]->valid);
+        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d functionCall: ", i, j, functionCallHash[i].index[j], functionCallHash[i].key[j], functionCallList[functionCallHash[i].index[j]]->count, functionCallList[functionCallHash[i].index[j]]->valid);
         expTermPrinting (stderr, functionCallList[functionCallHash[i].index[j]], 1);
         fprintf (stderr, "\n");
       }
@@ -3688,6 +3687,9 @@ void holdAllPolys ()
 {
   int i, j;
 
+  if (polynomialDebugLevel >= 8)
+    fprintf (stderr, "holdAllPolys called for %d constants, %d variables, %d sums, %d products and %d functions\n",
+	     constantCount, variableCount, sumCount, productCount, functionCallCount);
   holdAllPolysCount++;
 
 #ifdef _OPENMP
@@ -3699,7 +3701,6 @@ void holdAllPolys ()
 #pragma omp section
 #endif
     {
-      //      fprintf (stderr, "Holding all current polynomials (via hashes):\n");
       if (constantCount > 0) {
         //      fprintf (stderr, "%d constants\n", constantCount);
         for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
@@ -3822,7 +3823,8 @@ void doKeepPoly (Polynomial * p)
     }
     break;
   case T_FREED:
-    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
+    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n",
+	     (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
     fprintf (stderr, "In doKeepPoly, unknown expression type %d, exiting\n", p->eType);
     raise (SIGUSR1);
@@ -3910,7 +3912,8 @@ void doUnHoldPoly (Polynomial * p)
   p->valid |= VALID_EVAL_FLAG;
 
   if (p->id == polynomialLostNodeId)
-    fprintf (stderr, "UnHoldPoly sees id %d and is decrementing hold count from %d\n", polynomialLostNodeId, p->count);
+    fprintf (stderr, "UnHoldPoly sees id %d and is decrementing hold count from %d\n",
+	     polynomialLostNodeId, p->count);
 
   switch (p->eType) {
   case T_OFFLINE:
@@ -3990,7 +3993,8 @@ void doFreePolys (unsigned short keepMask)
       for (i = 0; i < constantCount; i++) {
 	if (constantList[i]->eType == T_OFFLINE) importPoly (constantList[i]);
         if (constantList[i]->id == polynomialLostNodeId)
-          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, constantList[i]->valid, constantList[i]->count, keepMask);
+          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
+		   polynomialLostNodeId, constantList[i]->valid, constantList[i]->count, keepMask);
         if ((constantList[i]->count > 0)
             || (constantList[i]->valid & keepMask)) {
           newConstantList[k] = constantList[i];
@@ -4010,7 +4014,7 @@ void doFreePolys (unsigned short keepMask)
         }
       }
       if (polynomialDebugLevel >= 5)
-        fprintf (stderr, "Free w/mask of %d preserved %d of %d constant", keepMask, k, constantCount);
+        fprintf (stderr, "%d/%d constant(s) ", k, constantCount);
       constantCount = k;
 
       /* Go thru the hash collapsing entries and freeing the corresponding
@@ -4053,7 +4057,8 @@ void doFreePolys (unsigned short keepMask)
       for (i = 0; i < variableCount; i++) {
 	if (variableList[i]->eType == T_OFFLINE) importPoly (variableList[i]);
         if (variableList[i]->id == polynomialLostNodeId)
-          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, variableList[i]->valid, variableList[i]->count, keepMask);
+          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
+		   polynomialLostNodeId, variableList[i]->valid, variableList[i]->count, keepMask);
         if ((variableList[i]->count > 0)
             || (variableList[i]->valid & keepMask)) {
           newVariableList[k] = variableList[i];
@@ -4073,7 +4078,7 @@ void doFreePolys (unsigned short keepMask)
         }
       }
       if (polynomialDebugLevel >= 5)
-        fprintf (stderr, "Free w/mask of %d preserved %d of %d variable", keepMask, k, variableCount);
+        fprintf (stderr, "%d/%d variable(s) ", k, variableCount);
       variableCount = k;
 
       /* Go thru the hash collapsing entries and freeing the corresponding
@@ -4113,7 +4118,8 @@ void doFreePolys (unsigned short keepMask)
       for (i = 0; i < sumCount; i++) {
 	if (sumList[i]->eType == T_OFFLINE) importPoly (sumList[i]);
         if (sumList[i]->id == polynomialLostNodeId)
-          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, sumList[i]->valid, sumList[i]->count, keepMask);
+          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
+		   polynomialLostNodeId, sumList[i]->valid, sumList[i]->count, keepMask);
         if ((sumList[i]->count > 0) || (sumList[i]->valid & keepMask)) {
           newSumList[k] = sumList[i];
           sumList[i] = newSumList[k];
@@ -4140,7 +4146,7 @@ void doFreePolys (unsigned short keepMask)
         }
       }
       if (polynomialDebugLevel >= 5)
-        fprintf (stderr, "Free w/mask of %d preserved %d of %d sum", keepMask, k, sumCount);
+        fprintf (stderr, "%d/%d sum(s) ", k, sumCount);
       sumCount = k;
 
       /* Go thru the hash collapsing entries and freeing the corresponding
@@ -4188,7 +4194,8 @@ void doFreePolys (unsigned short keepMask)
       for (i = 0; i < productCount; i++) {
 	if (productList[i]->eType == T_OFFLINE) importPoly (productList[i]);
         if (productList[i]->id == polynomialLostNodeId)
-          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n", polynomialLostNodeId, productList[i]->valid, productList[i]->count, keepMask);
+          fprintf (stderr, "doFreePolys sees id %d with valid %d and count %d during pass with mask %d\n",
+		   polynomialLostNodeId, productList[i]->valid, productList[i]->count, keepMask);
         if ((productList[i]->count > 0) || (productList[i]->valid & keepMask)) {
           newProductList[k] = productList[i];
           productList[i] = newProductList[k];
@@ -4211,7 +4218,7 @@ void doFreePolys (unsigned short keepMask)
         }
       }
       if (polynomialDebugLevel >= 5)
-        fprintf (stderr, " and %d of %d product polynomials\n", k, productCount);
+        fprintf (stderr, "%d/%d product(s) ", k, productCount);
       productCount = k;
 
       /* Go thru the hash collapsing entries and freeing the corresponding
@@ -4280,7 +4287,11 @@ void freePolys ()
     return;
   }
   freePolysCount++;
+  if (polynomialDebugLevel >= 5)
+    fprintf (stderr, "Free w/mask of VALID_KEEP_FLAG (%d) preserved...", VALID_KEEP_FLAG);
   doFreePolys (VALID_KEEP_FLAG);
+  if (polynomialDebugLevel >= 5)
+    fprintf (stderr, "\n");
   return;
 }
 
@@ -4289,7 +4300,11 @@ void freeKeptPolys ()
 {
   freeKeptPolysCount++;
   keepPolyCount = 0;
+  if (polynomialDebugLevel >= 5)
+    fprintf (stderr, "Free w/mask of %d preserved...", 0);
   doFreePolys (0);
+  if (polynomialDebugLevel >= 5)
+    fprintf (stderr, "\n");
   return;
 }
 
@@ -4679,7 +4694,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
   // Here's the global part...
 #ifdef POLYCODE_DL
-  totalSourceSize += fprintf (srcFile, "#include <dlfcn.h>\n#include \"polynomial.h\"\n\n");
+  totalSourceSize += fprintf (srcFile, "#include <dlfcn.h>\n#include \"polynomial.h\"\n#include \"dists.h\"\n\n");
   totalSourceSize += fprintf (srcFile, "char *baseFunctionName = \"%s\";\nint baseFunctionArgs = %d, dLFunctionCount = DLFUNCTIONCOUNT;\n\n", 
 			      name, variableCount);
   totalSourceSize += fprintf (srcFile, "double %s (int num, struct polynomial **variableList) {\n", name);
@@ -4793,7 +4808,10 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     case T_FUNCTIONCALL:
       totalInternalSize += sizeof (struct functionPoly) + (p->e.f->num * sizeof (Polynomial *));
 
-      srcSize += fprintf (srcCalledFile, "\tF[%d] = %s(", functionCallsUsed, p->e.f->name);
+      if (strcmp (p->e.f->name, "gsl_ran_ugaussian_pdf") == 0)
+	srcSize += fprintf (srcCalledFile, "\tF[%d] = ugaussian_pdf(", functionCallsUsed);
+      else
+	srcSize += fprintf (srcCalledFile, "\tF[%d] = %s(", functionCallsUsed, p->e.f->name);
       for (i = 0; i < p->e.f->num; i++) {
 	if (p->e.f->para[i]->eType == T_OFFLINE) importPoly (p->e.f->para[i]);
         if (i != 0)

@@ -116,10 +116,6 @@ unsigned long maxSSDDPC;
 
 char messageBuffer[256];
 
-#ifdef MAIN
-#define MAX_TICKET_MASK 0xF
-#endif
-
 FILE *sSDFD;
 
 struct listEntry {
@@ -187,11 +183,8 @@ void initSSD() {
     sSDFileSizeInGb = defaultSSDFileSizeInGb;
 
 // Maximum number of double pairs on the 28Gb SSD is 28*1024*1024*1024/16, about 1792Mdps
-#ifdef MAIN
-  maxSSDDPC = 512UL;
-#else
+
   maxSSDDPC = sSDFileSizeInGb * 1024UL * 1024UL / 16UL * 1024UL;
-#endif
   fprintf (stderr, "Using SSD located at %s of %luGb, or %ludps\n", 
 	   sSDFileName, sSDFileSizeInGb, maxSSDDPC);
 
@@ -648,9 +641,11 @@ void freeSSD (struct chunkTicket *myTicket) {
 
 #ifdef MAIN
 
-#define TEST_ITERATIONS (1024 * 1024)
+#define TEST_ITERATIONS (1024 * 1024 * 1024)
 
 #include <time.h>
+
+#define MAX_TICKET_MASK 0x7FFFF
 
 int main (int argc, char *argv[]) {
   
@@ -665,7 +660,7 @@ int main (int argc, char *argv[]) {
   fprintf (stderr, "Field of %d tickets of up to %ddps in size in file of %ddps\n",
 	  MAX_TICKET_MASK, MAX_DPC_MASK, maxSSDDPC);
 
-  //  srand(time(0));
+  //  srand(time(0)); // Let's go for repeatability
 
   for (i=0; i<=MAX_TICKET_MASK; i++)
     cTStatus[i] = 70;
@@ -712,6 +707,9 @@ int main (int argc, char *argv[]) {
       break;
 
     case 72: // Release it...
+      // Half the time we don't to this...
+      if (rand() & 1)
+	break;
       freeSSD (listOTickets[cT]);
       cTStatus[cT] = 70;
       listOTickets[cT] = 0;
