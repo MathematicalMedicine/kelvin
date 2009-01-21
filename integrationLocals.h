@@ -6,10 +6,10 @@
   // 1: kelvin_dcuhre with grid from the user
   // 2: kelvin_dcuhre with rule 13
   // */
-  double low_theta_integral = 0.0, high_theta_integral = 0.0;
-  double low_integral = 0.0, high_integral = 0.0;
-  double low_ld_integral = 0.0;
-  double dprime_integral =0.0;
+  double le_small_theta = 0.0, le_big_theta = 0.0;
+  double ld_small_theta = 0.0, ld_big_theta = 0.0;
+  double ld_unlinked = 0.0;
+  double le_unlinked =0.0;
   double volume_region = 1.0;
 
   /*Dcuhre rule points and weights for D' and theta or only theta */
