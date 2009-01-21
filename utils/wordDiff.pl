@@ -29,7 +29,7 @@ for ($i = 0; $i < $#chunks_LEFT; $i++) {
     $left = $chunks_LEFT[$i]; $right = $chunks_RIGHT[$i];
     if ($left ne $right) {
 	# Not a textual match
-	if ($left =~ /[-+]?[0-9]+[\.]?[0-9]*([Ee][+-][0-9]*)?/) {
+	if ($left =~ /^[-+]?[0-9]+[\.]?[0-9]*([Ee][+-][0-9]*)?$/) {
 	    # It's numeric, try simple equality to avoid e+/-00 issues.
 	    if ($left != $right) {
 		# Not simply equal, get the deviation and compare to maximum allowable
