@@ -20,9 +20,12 @@
 #include <errno.h>
 #include <getopt.h>
 
+/* Kelvin header files */
+#include "../kelvin.h"
+#include "../integrationLocals.h"
+
 /* TO DO:
  * - sex-specific theta cutoffs
- * - multipoint PPLs
  * - mechanism for detecting missing D'/Theta combinations
  */
 
@@ -36,7 +39,6 @@
 #define METH_NEW   2
 
 #define BUFFLEN 256
-#define KROUND(dbl) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * 10000.0) / 10000.0
 
 typedef struct {
   char *name;
@@ -67,6 +69,8 @@ typedef struct {
     *thetas;
 } st_data;
 
+typedef LDVals st_ldvals;
+/*
 typedef struct {
   double ld_small_theta,
     ld_big_theta,
@@ -75,6 +79,7 @@ typedef struct {
     le_big_theta,
     le_unlinked;
 } st_ldvals;
+*/
 
 typedef struct {
   int arrsize,
@@ -93,7 +98,8 @@ typedef struct {
 
 /* Default values that can be overridden on the command line */
 int sexspecific = 0;    /* -s or --sexspecific: sex-specific thetas */
-int multipoint = 0;     /* -m or --multipoint, not implemented yet */
+int multipoint = 0;     /* -m or --multipoint */
+int dkelvin = 0;        /* -d or --dkelvin */
 int relax = 0;          /* -r or --relax: don't compare marker names between files */
 double prior = 0.02;    /* -p or --prior: prior probability */
 double ldprior = 0.021; /* -l or --ldprior: prior probability of LD */
@@ -113,16 +119,23 @@ char partheader[BUFFLEN], partpadding[BUFFLEN];
 
 void old_method (st_brfile *brfiles, int numbrfiles);
 void old_method_multipoint (st_brfile *brfiles, int numbrfiles);
+void old_dkelvin (st_brfile *brfiles, int numbrfiles);
+void new_dkelvin (st_brfile *brfiles, int numbrfiles);
 void new_method (st_brfile *brfiles, int numbrfiles);
 void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas, st_data *data);
 double calc_ppl_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr);
 double calc_ppl_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr);
-void calc_ldvals_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr, st_ldvals *ldvals);
-void calc_ldvals_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr, st_ldvals *ldvals);
-double calc_ldppl (st_ldvals *ldvals);
-double calc_ppld_given_linkage (st_ldvals *ldvals);
-double calc_ppld (st_ldvals *ldvals);
-double calc_ppld_and_linkage (st_ldvals *ldvals);
+void calc_ldvals_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr, st_ldvals *ldval);
+void calc_ldvals_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr, st_ldvals *ldval);
+double calc_ldppl (st_ldvals *ldval);
+double calc_ppld_given_linkage (st_ldvals *ldval);
+double calc_ppld (st_ldvals *ldval);
+double calc_ppld_and_linkage (st_ldvals *ldval);
+double calc_dkelvin_ppl (st_ldvals *ldval);
+double calc_dkelvin_ldppl (st_ldvals *ldval);
+double calc_dkelvin_ppld_given_linkage (st_ldvals *ldval);
+double calc_dkelvin_ppld (st_ldvals *ldval);
+double calc_dkelvin_ppld_and_linkage (st_ldvals *ldval);
 
 int parse_command_line (int argc, char **argv);
 void usage ();
@@ -136,6 +149,7 @@ void print_partial_old (st_brfile *brfile, st_marker *marker, st_data *data);
 void compare_headers (st_brfile *f1, st_brfile *f2);
 void compare_markers (st_marker *m1, st_marker *m2, st_brfile *brfile);
 void compare_positions (st_marker *m1, st_marker *m2, st_brfile *brfile);
+void compare_samples (st_data *d, int sampleno, st_brfile *brfile);
 int multi_insert (st_multidim *md, double *vals, int num);
 int multi_find (st_multidim *md, double *vals, int num);
 int insert (st_dim *dim, double val);
@@ -172,11 +186,17 @@ int main (int argc, char **argv)
   if (method == METH_OLD) {
     if (multipoint) {
       old_method_multipoint (brfiles, numbrfiles);
+    } else if (dkelvin) {
+      old_dkelvin (brfiles, numbrfiles);
     } else {
       old_method (brfiles, numbrfiles);
     }
   } else {
-    new_method (brfiles, numbrfiles);
+
+    if (dkelvin)
+      new_dkelvin (brfiles, numbrfiles); // added on 12/30/2008
+    else
+      new_method (brfiles, numbrfiles);
   }
   for (va = 0; va < numbrfiles; va++) {
     fclose (brfiles[va].fp);
@@ -270,10 +290,7 @@ void old_method (st_brfile *brfiles, int numbrfiles)
       lr[didx][thidx] = data.lr;
       
       for (fileno = 1; fileno < numbrfiles; fileno++) {
-	if ((ret = get_data_line (&brfiles[fileno], &marker_n, &data)) == -1) {
-	  fprintf (stderr, "can't parse data, line %d in file '%s'\n", brfiles[fileno].lineno,
-		   brfiles[fileno].name);
-	} else if (ret != 1) {
+	if ((ret = get_data_line (&brfiles[fileno], &marker_n, &data)) != 1) {
 	  fprintf (stderr, "data ends unexpectedly at line %d in file '%s'\n",
 		   brfiles[fileno].lineno, brfiles[fileno].name);
 	}
@@ -292,11 +309,6 @@ void old_method (st_brfile *brfiles, int numbrfiles)
       data.lr = lr[didx][thidx];
       if (partout != NULL)
 	print_partial_old (&brfiles[0], &marker_0, &data);
-    }
-    if (ret == -1) {
-      fprintf (stderr, "can't parse data, line %d in file '%s'\n", brfiles[0].lineno,
-	       brfiles[0].name);
-      exit (-1);
     }
 
     printf ("%d %d %s %.4f", marker_0.chr, marker_0.num, marker_0.name2, marker_0.pos);
@@ -324,6 +336,13 @@ void old_method (st_brfile *brfiles, int numbrfiles)
 	     brfiles[0].name);
     exit (-1);
   }
+  for (fileno = 1; fileno < numbrfiles; fileno++) {
+    if (get_marker_line (&brfiles[fileno], &marker_n) != 0) {
+      fprintf (stderr, "file '%s' unexpectedly continues at line %d\n",
+	       brfiles[fileno].name, brfiles[fileno].lineno);
+      exit (-1);
+    }
+  }  
   
   for (didx = 0; didx < dprimes.totalelems; didx++)
     free (lr[didx]);
@@ -347,6 +366,8 @@ void old_method_multipoint (st_brfile *brfiles, int numbrfiles)
   st_data data;
   double lr, ppl;
 
+  memset (&marker_0, 0, sizeof (st_marker));
+  memset (&marker_n, 0, sizeof (st_marker));
   memset (&data, 0, sizeof (st_data));
 
   get_header_line (&brfiles[0], &data);
@@ -371,6 +392,290 @@ void old_method_multipoint (st_brfile *brfiles, int numbrfiles)
       ppl = 0.0;
     printf ("%d %.4f %.2f %.6e\n", marker_0.chr, marker_0.pos, ppl, lr);
   }
+  for (fileno = 1; fileno < numbrfiles; fileno++) {
+    if (get_data_line (&brfiles[fileno], &marker_n, &data) != 0) {
+      fprintf (stderr, "file '%s' unexpectedly continues at line %d\n",
+	       brfiles[fileno].name, brfiles[fileno].lineno);
+      exit (-1);
+    }
+  }  
+  return;
+}
+
+
+/* Sequentially updating dKelvin output is unlike 'regular' Kelvin output.
+ * Instead of a regluar grid of D' and Theta values, there's a list of 141
+ * specific D' and Theta combinations, provided as the static array dcuhre2.
+ * The first 10 elements are significant for LE results, and if there's only
+ * 10 BRs for each marker, then we've got LE only data. The remaining 131
+ * points are for LD. Each point has it's own weight, also provided in the
+ * static array.
+ */
+void old_dkelvin (st_brfile *brfiles, int numbrfiles)
+{
+  int fileno, sampleno, dkelvin_ld=0, ret, firstpass=1;
+  long firstmarker;
+  double ldstat;
+  st_marker marker_0, marker_n;
+  st_data data_0, data_n;
+  st_ldvals ldval;
+
+  memset (&marker_0, 0, sizeof (st_marker));
+  memset (&marker_n, 0, sizeof (st_marker));
+  memset (&data_0, 0, sizeof (st_data));
+  memset (&data_n, 0, sizeof (st_data));
+  
+  if ((firstmarker = ftell (brfiles[0].fp)) == -1) {
+    fprintf (stderr, "ftell on file '%s' failed, %s\n", brfiles[0].name, strerror (errno));
+    exit (-1);
+  }
+  if (get_marker_line (&brfiles[0], &marker_0) == 0) {
+    fprintf (stderr, "file '%s' is empty\n", brfiles[0].name);
+    exit (-1);
+  }
+  get_header_line (&brfiles[0], &data_0);
+
+  sampleno = 0;
+  while ((ret = get_data_line (&brfiles[0], &marker_0, &data_0)) == 1) {
+    compare_samples (&data_0, sampleno, &brfiles[0]);
+    sampleno++;
+  }
+  if (sampleno == 141) 
+    dkelvin_ld = 1;
+  else if (sampleno != 10) {
+    fprintf (stderr, "unexpected number of samples %d in file '%s'\n", sampleno, brfiles[0].name);
+    exit (-1);
+  }
+  
+  if (fseek (brfiles[0].fp, firstmarker, SEEK_SET) == -1) {
+    fprintf (stderr, "fseek on file '%s' failed, %s\n", brfiles[0].name, strerror (errno));
+    exit (-1);
+  }
+  brfiles[0].lineno = 1;
+  
+  if (dkelvin_ld)
+    printf ("Chr Seq Marker Position PPL LD-PPL PPLD|L PPLD PPLD&L\n");
+  else
+    printf ("Chr Seq Marker Position PPL\n");
+
+  while ((ret = get_marker_line (&brfiles[0], &marker_0)) == 1) {
+    get_header_line (&brfiles[0], &data_0);
+    for (fileno = 1; fileno < numbrfiles; fileno++) {
+      if (get_marker_line (&brfiles[fileno], &marker_n) != 1) {
+	fprintf (stderr, "file '%s' ends where marker line expected at line %d\n",
+		 brfiles[fileno].name, brfiles[fileno].lineno);
+	exit (-1);
+      }
+      get_header_line (&brfiles[fileno], &data_n);
+      if (firstpass)
+	compare_headers (&brfiles[0], &brfiles[fileno]);
+      compare_markers (&marker_0, &marker_n, &brfiles[fileno]);
+    }   
+    firstpass = 0;
+    if (partout != NULL) 
+      fprintf (partout, "# %d %s %s\n%s", marker_0.num, marker_0.name1, marker_0.name2, 
+	       partheader);
+    
+    sampleno = 0;
+    memset (&ldval, 0, sizeof (st_ldvals));
+    while (get_data_line (&brfiles[0], &marker_0, &data_0) == 1) {
+      compare_samples (&data_0, sampleno, &brfiles[0]);
+      for (fileno = 1; fileno < numbrfiles; fileno++) {
+	if (get_data_line (&brfiles[fileno], &marker_n, &data_n) != 1) {
+	  fprintf (stderr, "file '%s' ends unexpectedly at line %d\n",
+		   brfiles[fileno].name, brfiles[fileno].lineno);
+	  exit (-1);
+	}
+	compare_samples (&data_n, sampleno, &brfiles[fileno]);
+	data_0.lr *= data_n.lr;
+      }
+      if (partout != NULL)
+	print_partial_old (&brfiles[0], &marker_0, &data_0);
+      
+      if (sampleno < 5) {
+	ldval.le_small_theta += data_0.lr * dcuhre2[sampleno][2];
+      } else if (sampleno < 10) {
+	ldval.le_big_theta += data_0.lr * dcuhre2[sampleno][2];
+      } else if (sampleno < 140){
+	if (dcuhre2[sampleno][1] < cutoff) {
+	  ldval.ld_small_theta += data_0.lr * dcuhre2[sampleno][2]; 
+	} else {
+	  ldval.ld_big_theta += data_0.lr * dcuhre2[sampleno][2];
+	}
+      } else {
+	ldval.le_unlinked += data_0.lr * dcuhre2[sampleno][2];
+      }
+      sampleno++;
+    }
+
+    printf ("%d %d %s %.4f %.3f", marker_0.chr, marker_0.num, marker_0.name2,
+	    marker_0.pos, calc_dkelvin_ppl (&ldval));
+    if (dkelvin_ld) {
+      ldstat = calc_dkelvin_ldppl (&ldval);
+      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      ldstat = calc_dkelvin_ppld_given_linkage (&ldval);
+      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      ldstat = calc_dkelvin_ppld (&ldval);
+      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      ldstat = calc_dkelvin_ppld_and_linkage (&ldval);
+      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+    }
+    printf ("\n");
+
+  }
+  return;
+}
+
+
+void new_dkelvin (st_brfile *brfiles, int numbrfiles)
+{
+  int fileno, sampleno, dkelvin_ld=0, ret,  mrkno, nummarkers=0;
+  long firstmarker;
+  double ldstat;
+  st_marker *markers=NULL, marker;
+  st_data data;
+  st_ldvals *ldvals=NULL, ldval;
+
+  for (fileno = 0; fileno < numbrfiles; fileno++) {
+    memset (&marker, 0, sizeof (st_marker));
+    memset (&data, 0, sizeof (st_data));
+    mrkno = -1;
+    
+    if ((firstmarker = ftell (brfiles[fileno].fp)) == -1) {
+      fprintf (stderr, "ftell on file '%s' failed, %s\n", brfiles[fileno].name, strerror (errno));
+      exit (-1);
+    }
+    if (get_marker_line (&brfiles[fileno], &marker) == 0) {
+      fprintf (stderr, "file '%s' is empty\n", brfiles[0].name);
+      exit (-1);
+    }
+    get_header_line (&brfiles[fileno], &data);
+    
+    sampleno = 0;
+    while ((ret = get_data_line (&brfiles[fileno], &marker, &data)) == 1) {
+      compare_samples (&data, sampleno, &brfiles[fileno]);
+      sampleno++;
+    }
+    if ((sampleno != 141) && (sampleno != 10)) {
+      fprintf (stderr, "unexpected number of samples %d in file '%s'\n", sampleno,
+	       brfiles[0].name);
+      exit (-1);
+    }      
+    if (fileno == 0) {
+      dkelvin_ld = (sampleno == 141) ? 1 : 0;
+    } else {
+      if (((sampleno == 141) && (dkelvin_ld == 0)) || ((sampleno == 10) && (dkelvin_ld == 1))) {
+	fprintf (stderr, "can't mix %s ('%s') and %s ('%s') analyses\n",
+		 (dkelvin_ld) ? "LD" : "non-LD", brfiles[0].name,
+		 (dkelvin_ld) ? "non-LD" : "LD", brfiles[fileno].name);
+	exit (-1);
+      }
+    }
+    
+    if (fseek (brfiles[fileno].fp, firstmarker, SEEK_SET) == -1) {
+      fprintf (stderr, "fseek on file '%s' failed, %s\n", brfiles[fileno].name, strerror (errno));
+      exit (-1);
+    }
+    brfiles[fileno].lineno = 1;
+    
+    while ((ret = get_marker_line (&brfiles[fileno], &marker)) == 1) {
+      if (++mrkno >= nummarkers) {
+	if (fileno == 0) {
+	  if (((markers = realloc (markers, sizeof (st_marker) * ++nummarkers)) == NULL) ||
+	      ((ldvals = realloc (ldvals, sizeof (st_ldvals) * nummarkers)) == NULL)) {
+	    fprintf (stderr, "realloc failed, %s\n", strerror (errno));
+	    exit (-1);
+	  }
+	} else {
+	  fprintf (stderr, "file '%s' contains data for more markers than '%s'\n", 
+		   brfiles[fileno].name, brfiles[0].name);
+	  exit (-1);
+	}
+      }
+      get_header_line (&brfiles[fileno], &data);
+
+      /* Not sure this is appropriate for dkelvin */
+      /* if (fileno != 0)
+       *   compare_headers (&brfiles[0], &brfiles[fileno]);
+       */
+
+      sampleno = 0;
+      memset (&ldval, 0, sizeof (st_ldvals));
+      while ((ret=get_data_line (&brfiles[fileno], &marker, &data)) == 1) {
+        compare_samples (&data, sampleno, &brfiles[fileno]);
+ 
+
+        if (sampleno < 5) {
+	  ldval.le_small_theta += data.lr * dcuhre2[sampleno][2];
+        } else if (sampleno < 10) {
+	  ldval.le_big_theta += data.lr * dcuhre2[sampleno][2];
+        } else if (sampleno < 140){
+	  if (dcuhre2[sampleno][1] < cutoff) {
+	    ldval.ld_small_theta += data.lr * dcuhre2[sampleno][2];
+	  } else {
+	    ldval.ld_big_theta += data.lr * dcuhre2[sampleno][2];
+	  }
+        } else {
+	  ldval.le_unlinked += data.lr * dcuhre2[sampleno][2];
+        }
+        sampleno++;
+      }
+
+      if (fileno == 0) {
+	memcpy (&markers[mrkno], &marker, sizeof (st_marker));
+	memcpy (&ldvals[mrkno], &ldval, sizeof (st_ldvals));
+      } else {
+	compare_markers (&markers[mrkno], &marker, &brfiles[fileno]);
+	ldvals[mrkno].ld_small_theta *= ldval.ld_small_theta;
+	ldvals[mrkno].ld_big_theta *= ldval.ld_big_theta;
+	ldvals[mrkno].ld_unlinked *= ldval.ld_unlinked;
+	ldvals[mrkno].le_small_theta *= ldval.le_small_theta;
+	ldvals[mrkno].le_big_theta *= ldval.le_big_theta;
+	ldvals[mrkno].le_unlinked *= ldval.le_unlinked;
+      }
+    }
+  }
+
+  if (partin != NULL)
+    read_partin (markers, ldvals, nummarkers);
+
+  if (dkelvin_ld)
+    printf ("Chr Seq Marker Position PPL LD-PPL PPLD|L PPLD PPLD&L\n");
+  else
+    printf ("Chr Seq Marker Position PPL\n");
+
+  if (partout != NULL)
+    fprintf (partout, "Chr Pos Seq Name1 Name2 LDSmallTheta LDBigTheta LDUnlinked LESmallTheta LEBigTheta LEUnlinked\n");
+  
+  for (mrkno = 0; mrkno < nummarkers; mrkno++) {
+    printf ("%d %d %s %.4f", markers[mrkno].chr, markers[mrkno].num, markers[mrkno].name2,
+	    markers[mrkno].pos);
+
+    printf (" %.3f", calc_dkelvin_ppl (&ldvals[mrkno]));
+    
+    if (dkelvin_ld) {
+      ldstat = calc_dkelvin_ldppl (&ldvals[mrkno]);
+      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      ldstat = calc_dkelvin_ppld_given_linkage (&ldvals[mrkno]);
+      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      ldstat = calc_dkelvin_ppld (&ldvals[mrkno]);
+      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      ldstat = calc_dkelvin_ppld_and_linkage (&ldvals[mrkno]);
+      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+    }
+    printf ("\n");
+
+    if (partout != NULL)
+      fprintf (partout, "%d %.4f %d %s %s %.6e %.6e %.6e %.6e %.6e %.6e\n", markers[mrkno].chr,
+	       markers[mrkno].pos, markers[mrkno].num, "trait", "M1",
+	       ldvals[mrkno].ld_small_theta, ldvals[mrkno].ld_big_theta,
+	       ldvals[mrkno].ld_unlinked, ldvals[mrkno].le_small_theta,
+	       ldvals[mrkno].le_big_theta, ldvals[mrkno].le_unlinked);
+
+  }
+  free (markers);
+  free (ldvals);
+
   return;
 }
 
@@ -392,7 +697,7 @@ void new_method (st_brfile *brfiles, int numbrfiles)
     mrkno = -1;
     
     do_first_pass (&brfiles[fileno], &dprimes, &thetas, &data);
-
+    
     if ((lr = malloc (sizeof (double *) * dprimes.totalelems)) == NULL) {
       fprintf (stderr, "malloc failed, %s\n", strerror (errno));
       exit (-1);
@@ -984,7 +1289,7 @@ double calc_ldppl (st_ldvals *ldval)
 
   numerator =
     ldval->ld_small_theta * prior * 0.021 + 
-    ldval->ld_big_theta * prior *  0.0011+ 
+    ldval->ld_big_theta * prior * 0.0011+ 
     ldval->le_small_theta * prior * 0.979 + 
     ldval->le_big_theta * prior * 0.9989;
   denomRight =
@@ -992,6 +1297,24 @@ double calc_ldppl (st_ldvals *ldval)
   ldppl = numerator / (numerator + denomRight);
   
   return (ldppl);
+}
+
+
+double calc_ppld_given_linkage (st_ldvals *ldval)
+{
+  double numerator;
+  double denomRight;
+  double ppld_given_l;
+
+  numerator =
+    ldval->ld_small_theta * prior * 0.021 + 
+    ldval->ld_big_theta * prior * 0.0011;
+  denomRight =
+    ldval->le_small_theta * prior * 0.979 + 
+    ldval->le_big_theta * prior * 0.9989;
+  ppld_given_l = numerator / (numerator + denomRight);
+
+  return (ppld_given_l);
 }
 
 
@@ -1033,21 +1356,87 @@ double calc_ppld_and_linkage (st_ldvals *ldval)
 }
 
 
-double calc_ppld_given_linkage (st_ldvals *ldval)
+double calc_dkelvin_ppl (st_ldvals *ldval)
+{
+  double integral, ppl;
+  
+  integral = weight * ldval->le_small_theta + (1-weight) * ldval->le_big_theta;
+  ppl = integral / (integral + (1 - prior) / prior);
+  return (ppl);
+}
+
+
+double calc_dkelvin_ldppl (st_ldvals *ldval)
+{
+  double numerator;
+  double denomRight;
+  double ldppl;
+  
+  numerator = 
+    ldval->ld_small_theta * prior * weight * 0.021 + 
+    ldval->ld_big_theta * prior * (1 - weight) * 0.0011 + 
+    ldval->le_small_theta * prior * weight * .979 + 
+    ldval->le_big_theta * prior * (1 - weight) * 0.9989;
+  denomRight = ldval->le_unlinked * (1 - prior);
+  ldppl = numerator / (numerator + denomRight);;
+
+  return (ldppl);
+}
+
+
+double calc_dkelvin_ppld_given_linkage (st_ldvals *ldval)
 {
   double numerator;
   double denomRight;
   double ppld_given_l;
 
   numerator =
-    ldval->ld_small_theta * prior * 0.021 + 
-    ldval->ld_big_theta * prior * 0.0011;
-  denomRight =
-    ldval->le_small_theta * prior * 0.979 + 
-    ldval->le_big_theta * prior * 0.9989;
+    ldval->ld_small_theta * prior * weight * 0.021 +
+    ldval->ld_big_theta * prior * (1 - weight) * 0.0011;
+  denomRight = 
+    ldval->le_small_theta * prior * weight * 0.979 + 
+    ldval->le_big_theta * prior * (1 - weight) * 0.9989;
   ppld_given_l = numerator / (numerator + denomRight);
-
+  
   return (ppld_given_l);
+}
+
+
+double calc_dkelvin_ppld (st_ldvals *ldval)
+{
+  double numerator;
+  double denomRight;
+  double ppld;
+
+  numerator = 
+    ldval->ld_small_theta * prior * weight * 0.021 +
+    ldval->ld_big_theta * prior * (1 - weight) * 0.0011;
+  denomRight =
+    ldval->le_small_theta * prior * weight * 0.979 +
+    ldval->le_big_theta * prior * (1 - weight) * 0.9989 + 
+    ldval->le_unlinked * (1 - prior);
+  ppld = numerator / (numerator + denomRight);
+
+  return (ppld);
+} 
+
+
+double calc_dkelvin_ppld_and_linkage (st_ldvals *ldval)
+{
+  double numerator;
+  double denomRight;
+  double ppld_and_l;
+
+  numerator = 
+    ldval->ld_small_theta * prior * weight * 0.021 +
+    ldval->ld_big_theta * prior * (1 - weight) * 0.0011;
+  denomRight =
+    ldval->le_small_theta * prior * weight * 0.979 +
+    ldval->le_big_theta * prior * (1 - weight) * 0.9989 +
+    ldval->le_unlinked * (1 - prior);
+  ppld_and_l = numerator / (numerator + denomRight);
+
+  return (ppld_and_l);
 }
 
 
@@ -1062,6 +1451,7 @@ double calc_ppld_given_linkage (st_ldvals *ldval)
 #define OPT_PARTIN  9
 #define OPT_PARTOUT 10
 #define OPT_HELP    11
+#define OPT_DKELVIN 12
 
 int parse_command_line (int argc, char **argv)
 {
@@ -1069,6 +1459,7 @@ int parse_command_line (int argc, char **argv)
   char *partoutfile=NULL;
   struct option cmdline[] = { { "sexspecific", 0, &long_arg, OPT_SEXSPEC },
 			      { "multipoint", 0, &long_arg, OPT_MULTI },
+			      { "dkelvin", 0, &long_arg, OPT_DKELVIN },
 			      { "relax", 1, &long_arg, OPT_RELAX },
 			      { "prior", 1, &long_arg, OPT_PRIOR },
 			      { "ldprior", 1, &long_arg, OPT_LDPRIOR},
@@ -1081,12 +1472,15 @@ int parse_command_line (int argc, char **argv)
 			      { NULL, 0, NULL, 0 } };
   struct stat statbuf;
   
-  while ((arg = getopt_long (argc, argv, "smrp:l:w:c:", cmdline, &long_idx)) != -1) {
+  while ((arg = getopt_long (argc, argv, "smrdp:l:w:c:", cmdline, &long_idx)) != -1) {
     if ((arg == 's') || ((arg == 0) && (long_arg == OPT_SEXSPEC))) {
       sexspecific = 1;
 
     } else if ((arg == 'm') || ((arg == 0) && (long_arg == OPT_MULTI))) {
       multipoint = 1;
+
+    } else if ((arg == 'd') || ((arg == 0) && (long_arg == OPT_DKELVIN))) {
+      dkelvin = 1;
 
     } else if ((arg == 'r') || ((arg == 0) && (long_arg == OPT_RELAX))) {
       relax = 1;
@@ -1137,12 +1531,17 @@ int parse_command_line (int argc, char **argv)
   }
 
   if ((partinfile != NULL) && (method != METH_NEW)) {
-    fprintf (stderr, "%s: don't use --partin without --method=new\n", pname);
+      fprintf (stderr, "%s: don't use --partin without --method=new\n", pname);
+      exit (-1);
+  }
+  
+  if ((multipoint) && (method == METH_NEW)) {
+    fprintf (stderr, "%s: --multipoint is nonsensical with --method=new\n", pname);
     exit (-1);
   }
 
-  if ((multipoint) && (method == METH_NEW)) {
-    fprintf (stderr, "%s: --multipoint is nonsensical with --method=new\n", pname);
+  if ((multipoint) && (dkelvin)) {
+    fprintf (stderr, "%s: --multipoint is nonsensical with --dkelvin\n", pname);
     exit (-1);
   }
 
@@ -1173,6 +1572,7 @@ void usage ()
   printf ("usage: %s [ options ] brfile [brfile...]\n  valid options:\n", pname);
   printf ("  -s|--sexspecific : input data contains sex-specific Thetas\n");
   printf ("  -m|--multipoint : input data is multipoint\n");
+  printf ("  -d|--dkelvin : input data is from dKelvin\n");
   printf ("  -r|--relax : supress comparing marker names across input files\n");
   printf ("  -p <num>|--prior <num> : set linkage prior probability to <num>\n");
   printf ("  -c <num>|--cutoff <num> : set small-Theta cutoff to <num>\n");
@@ -1567,7 +1967,6 @@ int get_data_line (st_brfile *brfile, st_marker *marker, st_data *data)
   return (1);
 }
 
-
 void read_partin (st_marker *markers, st_ldvals *ldvals, int nummarkers)
 {
   int mrkno=0;
@@ -1737,6 +2136,30 @@ void compare_positions (st_marker *m1, st_marker *m2, st_brfile *brfile)
 }
 
 
+void compare_samples (st_data *d, int sampleno, st_brfile *brfile)
+{
+  /* dcuhre2 imported from integrationLocals.h */
+  if (fabs (dcuhre2[sampleno][0] - d->dprimes[0]) > 0.005) {
+    fprintf (stderr, "D' varies from dKelvin at line %d in '%s'; expected %.2f, found %.2f\n",
+	     brfile->lineno, brfile->name, dcuhre2[sampleno][0], d->dprimes[0]);
+    exit (-1);
+  }
+  if (fabs (dcuhre2[sampleno][1] - d->thetas[0]) > 0.00005) {
+    fprintf (stderr, "Theta varies from dKelvin at line %d in '%s'; expected %.4f, found %.4f\n",
+	     brfile->lineno, brfile->name, dcuhre2[sampleno][1], d->thetas[0]);
+    exit (-1);
+  }
+  
+  /* I don't really think dKelvin supports sex-specific thetas... */
+  if (! sexspecific) 
+    return;
+  if (fabs (dcuhre2[sampleno][1] - d->thetas[1]) > 0.00005) {
+    fprintf (stderr, "Theta varies from dKelvin at line %d in '%s'; expected %.4f, found %.4f\n",
+	     brfile->lineno, brfile->name, dcuhre2[sampleno][1], d->thetas[1]);
+    exit (-1);
+  }
+  return;
+}
 
 
 int multi_insert (st_multidim *md, double *vals, int num)

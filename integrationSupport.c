@@ -60,7 +60,8 @@ kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
   }
   s->vol_rate *= vol_region;   /*This is the rate to convert to average function value*/
 
-  fprintf (stderr, "Starting DCUHRE with dim=%d\n", dim);
+  fprintf (stderr,"Starting DCUHRE with dim=%d\n", dim);
+
   return_val = dcuhre_ (s);
   if (return_val > 0 && return_val < 20) {
     fprintf (stderr, "Ending program with error! ifail =%d \n", s->ifail);
@@ -122,9 +123,9 @@ compute_hlod_mp_qt (double x[], double *f)
 
   update_locus (&pedigreeSet, traitLocus);
 
-  //  checkpt ();
+ 
   if (print_point_flag)
-    fprintf (fphlod, "dp=%f th=%f gf=%f ", fixed_dprime, fixed_theta, gfreq);
+    fprintf (fphlod,"dp=%f th=%f gf=%f ", fixed_dprime, fixed_theta, gfreq);
 
 
   j = 1;			// j=0 for gfrequency
@@ -138,8 +139,12 @@ compute_hlod_mp_qt (double x[], double *f)
 							 xl[j + 1]) * (x[j] -
 								       xl[j])
       / (xu[j] - xl[j]) + xl[j + 2];
+
+
     if (print_point_flag)
       fprintf (fphlod, "pe %f %f %f ", mean_DD, mean_Dd, mean_dd);
+
+
     j += 3;
     if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
       SD_DD = x[j];		//      modelRange.param[liabIdx][0][0][paramIdx];
@@ -336,6 +341,9 @@ compute_hlod_mp_qt (double x[], double *f)
 	fprintf (stderr, "HET LR less than 0. Check!!!\n");
       log10HetLR += log10 (alphaV * homoLR + alphaV2);
     }
+
+    log10HetLR *= 1.1;
+
     if (log10HetLR >= DBL_MAX_10_EXP - 1) {
       hetLR = DBL_MAX;
     } else if (log10HetLR <= DBL_MIN_10_EXP + 1) {
@@ -754,6 +762,7 @@ compute_hlod_2p_qt (double x[], double *f)
 	}
       }
 
+
       pTrait->means[liabIdx][0][0] = mean_DD;
       pTrait->means[liabIdx][0][1] = mean_Dd;
       pTrait->means[liabIdx][1][0] = mean_Dd;
@@ -814,11 +823,12 @@ compute_hlod_2p_qt (double x[], double *f)
 
   if (pedigreeSet.likelihood == 0.0
       && pedigreeSet.log10Likelihood == -9999.99) {
-    fprintf (stderr, "Theta 0.5 has likelihood 0\n");
+    fprintf (stderr, "Theta 0.5 has likelihood 0 \n");
     fprintf (stderr, "dgf=%f\n", gfreq);
     for (j = 1; j < s->ndim; j++) {
       fprintf (stderr, " %f", x[j]);
     }
+    //    fprintf(stderr, "mean %15.13f %15.13f %15.13f SD %f %f %f\n",mean_DD, mean_Dd, mean_dd, SD_DD, SD_Dd,SD_dd );
     fprintf (stderr, "\n");
 
     exit (-1);
@@ -884,7 +894,7 @@ compute_hlod_2p_qt (double x[], double *f)
   }
 
   /* caculating the HET */
-  for (j = 1; j < 5; j++) {
+  for (j = 0; j < 5; j++) {
     //for (j = 0; j < 1; j++) {
     alphaV = alpha[j][0];
     alphaV2 = 1 - alphaV;
@@ -897,6 +907,9 @@ compute_hlod_2p_qt (double x[], double *f)
       homoLR = pPedigree->likelihood / pedigreeSet.nullLikelihood[pedIdx];
       log10HetLR += log10 (alphaV * homoLR + alphaV2);
     }
+
+    log10HetLR *= 1.1;
+
     if (log10HetLR >= DBL_MAX_10_EXP - 1) {
       hetLR = DBL_MAX;
     } else if (log10HetLR <= DBL_MIN_10_EXP + 1) {
@@ -1151,7 +1164,7 @@ compute_hlod_2p_dt (double x[], double *f)
     }
   }
   /* caculating the HET */
-  for (j = 0; j < 6; j++) {
+  for (j = 0; j < 5; j++) {
     //for (j = 0; j < 1; j++) {
     alphaV = alpha[j][0];
     alphaV2 = 1 - alphaV;
