@@ -1063,10 +1063,8 @@ double chisq_pdf (double x, double degFree) {
   if (x <= 0)
     return ((double) 0.0);
 
-  double halfX = x/2;
-  result = exp(degFree/2*log(.5)+(degFree/2-1)*log(x)-x/2-alngam(&halfX));
-  //  fprintf (stderr, "chisq_pdf gives %g at %gdf vs GSL of %g (difference is %g) for x of %g (alngam is %g vs gsl_sf_lngamma of %g)\n", result,
-  //	   degFree, gsl_ran_chisq_pdf (x, degFree), (result - gsl_ran_chisq_pdf (x, degFree)), x, alngam(&x), gsl_sf_lngamma(x));
+  double halfDF = degFree/2;
+  result = exp(degFree/2*log(.5)+(degFree/2-1)*log(x)-x/2-alngam(&halfDF));
 
   return(result);
 }
