@@ -34,7 +34,11 @@ double interpolate (double xTarget, int tableSize, double *tableX, double *table
 // Just calculate the probability density function given mean and stdDev
 double gaussian_pdf (double x, double mean, double stdDev) {
   //  fprintf (stderr, "gaussian_pdf\n");
+#ifdef USE_GSL
+  return (gsl_ran_gaussian_pdf (x, stdDev));
+#else
   return (1/(stdDev*sqrt(2.0*M_PI)))*exp(-((x-mean)*(x-mean)/(2*stdDev*stdDev)));
+#endif
 }
 
 double ugaussian_pdf (double x) {
@@ -109,6 +113,10 @@ double gaussian_cdf (double x, double mean, double stdDev) {
     0.999995,  0.999996,  0.999997,  0.999998,  0.999998,  0.999999,  0.999999,  0.999999,  0.999999,  0.999999,
     1,  1};
   
+#ifdef USE_GSL
+  return (gsl_cdf_gaussian_P (x, stdDev));
+#endif
+
   // Handle bad data first
   if (stdDev < 0.0) {
     fprintf (stderr, "In gaussian_cdf, invalid stdDev of %g\n", stdDev);
@@ -554,6 +562,10 @@ double t_pdf_30 (double x, double degFree) {
     exit (EXIT_FAILURE);
   }
 
+#ifdef USE_GSL
+  return(gsl_ran_tdist_pdf (x, (double) 30));
+#endif
+
   // Simple cases...
   if (x <= -100)
     return ((double) 0.0);
@@ -566,14 +578,7 @@ double t_pdf_30 (double x, double degFree) {
   //  fprintf (stderr, "t_pdf_30 gives %g vs GSL of %g (difference is %g) for x of %g\n", result,
   //	   gsl_ran_tdist_pdf (x, (double) 30), (result - gsl_ran_tdist_pdf (x, (double) 30)), x);
 
-#ifdef USE_GSL
-  //  if ((x > 5.0) || (x < -5.0))
-  return(gsl_ran_tdist_pdf (x, (double) 30));
-  //  else
-  //    return(result);
-#else
   return(result);
-#endif
 }
 
 double t_cdf_30 (double x, double degFree) {
@@ -996,6 +1001,10 @@ double t_cdf_30 (double x, double degFree) {
     exit (EXIT_FAILURE);
   }
 
+#ifdef USE_GSL
+  return(gsl_cdf_tdist_P (x, (double) 30));
+#endif
+
   // Simple cases...
   if (x <= -5)
     return ((double) 0.0);
@@ -1011,12 +1020,7 @@ double t_cdf_30 (double x, double degFree) {
   //  fprintf (stderr, "t_cdf_30 gives %g vs GSL of %g (difference is %g) for x of %g\n", result,
   //  	   gsl_cdf_tdist_P (x, (double) 30), (result - gsl_cdf_tdist_P (x, (double) 30)), x);
 
-#ifdef USE_GSL
-  return(gsl_cdf_tdist_P (x, (double) 30));
-#else
   return(result);
-#endif
-
 }
 
 /*
@@ -1026,6 +1030,10 @@ double t_cdf_30 (double x, double degFree) {
 double t_cdf (double x, double degFree) {
   double P, Q, bound;
   int type = 1, status;
+
+#ifdef USE_GSL
+  return(gsl_cdf_tdist_P (x, degFree));
+#endif
 
   cdft(&type, &P, &Q, &x, &degFree, &status, &bound);
   if (status !=0 ) {
@@ -1038,12 +1046,7 @@ double t_cdf (double x, double degFree) {
   //  fprintf (stderr, "t_cdf gives %g at %gdf vs GSL of %g (difference is %g) for x of %g\n", result,
   //  	   degFree, gsl_cdf_tdist_P (x, degFree), (result - gsl_cdf_tdist_P (x, degFree), x);
 
-#ifdef USE_GSL
-  return(gsl_cdf_tdist_P (x, degFree));
-#else
   return (P);
-#endif
-
 }
 
 /*
@@ -1053,18 +1056,17 @@ double t_cdf (double x, double degFree) {
 double chisq_pdf (double x, double degFree) {
   double result;
 
+#ifdef USE_GSL
+  return(gsl_ran_chisq_pdf(x, degFree));
+#endif
+
   if (x <= 0)
     return ((double) 0.0);
 
-  result = exp(degFree/2*log(.5)+(degFree/2-1)*log(x)-x/2-alngam(&x));
-  //  fprintf (stderr, "chisq_pdf gives %g at %gdf vs GSL of %g (difference is %g) for x of %g (alngam is %g vs gsl_sf_lngamma of %g)\n", result,
-  //	   degFree, gsl_ran_chisq_pdf (x, degFree), (result - gsl_ran_chisq_pdf (x, degFree)), x, alngam(&x), gsl_sf_lngamma(x));
+  double halfDF = degFree/2;
+  result = exp(degFree/2*log(.5)+(degFree/2-1)*log(x)-x/2-alngam(&halfDF));
 
-#ifdef USE_GSL
-  return(gsl_ran_chisq_pdf(x, degFree));
-#else
   return(result);
-#endif
 }
 
 /*
@@ -1075,19 +1077,30 @@ double chisq_cdf (double x, double degFree) {
   double P, Q, bound;
   int type = 1, status;
 
+#ifdef USE_GSL
+  return(gsl_cdf_chisq_P(x, degFree));
+#endif
+
   cdfchi(&type, &P, &Q, &x, &degFree, &status, &bound);
   if (status !=0 ) {
     printf ("In t_cdf, cdft error w/status %d, bound %g\n", status, bound);
     exit (EXIT_FAILURE);
   }
-#ifdef USE_GSL
-  return(gsl_cdf_chisq_P(x, degFree));
-#else
+
   return (P);
-#endif
 }
 
 #ifdef MAIN
+
+/*
+  These comparisons can be plotted with gnuplot using a command like:
+
+splot "chisq_pdf.dat" using 1:2:3 with dots, "chisq_pdf.dat" using 1:2:4 with dots
+
+...to see how accurate our results are. It's a small modification to plot
+the difference as well.
+
+*/
 
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
@@ -1103,7 +1116,7 @@ int main (int argc, char *argv[]) {
     exit (EXIT_FAILURE);
   }
   for (stdDev = .1; stdDev < .5; stdDev += .1) {
-    for (x = -1.0; x < 1.0; x += .0001)
+    for (x = -1.0; x < 1.0; x += .01)
       fprintf (out, "%g %g %g %g\n", stdDev, x, 
 	       gaussian_pdf (x, (double)0.0, stdDev), 
 	       gsl_ran_gaussian_pdf (x, stdDev));
@@ -1116,7 +1129,7 @@ int main (int argc, char *argv[]) {
     exit (EXIT_FAILURE);
   }
   for (stdDev = .1; stdDev < .5; stdDev += .1) {
-    for (x = -1.0; x < 1.0; x += .0001)
+    for (x = -1.0; x < 1.0; x += .01)
       fprintf (out, "%g %g %g %g\n", stdDev, x, 
 	       gaussian_cdf (x, (double)0.0, stdDev), 
 	       gsl_cdf_gaussian_P (x, stdDev));
@@ -1129,7 +1142,7 @@ int main (int argc, char *argv[]) {
     exit (EXIT_FAILURE);
   }
   for (degFree = 30; degFree <= 30; degFree += 5 ) {
-    for (x = -5.0; x < 5.0; x += .0001)
+    for (x = -5.0; x < 5.0; x += .01)
       fprintf (out, "%g %g %g %g\n", degFree, x, 
 	       t_pdf_30 (x, degFree), 
 	       gsl_ran_tdist_pdf (x, degFree));
@@ -1142,7 +1155,7 @@ int main (int argc, char *argv[]) {
     exit (EXIT_FAILURE);
   }
   for (degFree = 1; degFree < 6; degFree++ ) {
-    for (x = -5.0; x < 5.0; x += .0001)
+    for (x = -5.0; x < 5.0; x += .01)
       fprintf (out, "%g %g %g %g\n", degFree, x,
 	       t_cdf (x, degFree),
 	       gsl_cdf_tdist_P (x, degFree));
@@ -1168,7 +1181,7 @@ int main (int argc, char *argv[]) {
     exit (EXIT_FAILURE);
   }
   for (degFree = 1; degFree < 6; degFree++ ) {
-    for (x = 0.0; x < 10.0; x += .1)
+    for (x = 0.0; x < 10.0; x += .01)
       fprintf (out, "%g %g %g %g\n", degFree, x, 
 	       chisq_cdf (x, degFree),
 	       gsl_cdf_chisq_P (x, degFree));
