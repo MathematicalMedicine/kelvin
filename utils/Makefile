@@ -7,7 +7,7 @@
 INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h
 OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o
 
-all : $(KVNLIBDIR)/libkutils.so \
+all : $(KVNLIBDIR)/libutils.a \
       $(KVNINCDIR)/utils.h \
       $(KVNINCDIR)/sw.h \
       $(KVNINCDIR)/sSDHandler.h \
@@ -18,8 +18,8 @@ all : $(KVNLIBDIR)/libkutils.so \
       $(KVNINCDIR)/recycle.h \
       $(KVNINCDIR)/standard.h
 
-$(KVNLIBDIR)/libkutils.so : libkutils.so
-	cp libkutils.so $(KVNLIBDIR)
+$(KVNLIBDIR)/libutils.a : libutils.a
+	cp libutils.a $(KVNLIBDIR)
 
 $(KVNINCDIR)/utils.h : utils.h
 	cp utils.h $(KVNINCDIR)
@@ -48,12 +48,12 @@ $(KVNINCDIR)/recycle.h : recycle.h
 $(KVNINCDIR)/standard.h : standard.h
 	cp standard.h $(KVNINCDIR)
 
-libkutils.so : $(OBJS)
-	gcc -fPIC -shared -o libkutils.so $(OBJS)
+libutils.a : $(OBJS)
+	ar -rsc libutils.a $(OBJS)
 
 $(OBJS) : %.o : %.c $(INCS)
-	$(CC) -fPIC -shared -c $(CFLAGS) $(INCFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $(INCFLAGS) $< -o $@
 
 .PHONY : clean
 clean :
-	rm -f $(OBJS) libkutils.so $(KVNLIBDIR)/libkutils.so
+	rm -f $(OBJS) libutils.a $(KVNLIBDIR)/libutils.a

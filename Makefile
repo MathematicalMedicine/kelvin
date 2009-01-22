@@ -12,10 +12,10 @@ BINDIR=/usr/local/bin
 #
 INCDIR=/usr/local/include
 LIBDIR=/usr/local/lib
-KELVIN_ROOT := $(shell pwd)
-TEST_KELVIN = $(KELVIN_ROOT)/kelvin
 KVNLIBDIR := $(shell pwd)/lib
 KVNINCDIR := $(shell pwd)/include
+KELVIN_ROOT := $(shell pwd)
+TEST_KELVIN := $(KELVIN_ROOT)/kelvin
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
 empty:=
@@ -26,12 +26,7 @@ INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
 CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
 CFLAGS := -Wall # -O3 -Wshadow
-
-# We currently do not use GSL, so use this line:
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lkutils -lm -lpthread
-# Alternatively, to use or test with GSL...
-#CFLAGS += -DUSE_GSL
-#LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lkutils -lgsl -lgslcblas -lm -lpthread
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lm -lpthread
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
@@ -56,7 +51,7 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 #CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
 
 LDFLAGS += ${ADD_LDFLAGS}
-export KVNLIBDIR KVNINCDIR KELVIN_ROOT TEST_KELVIN VERSION CC CFLAGS LDFLAGS INCFLAGS
+export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN
 
 KOBJS = kelvin.o dcuhre.o
 OBJS = ppl.o config.o saveResults.o trackProgress.o kelvinHandlers.o
@@ -81,7 +76,7 @@ kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
 	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 calc_updated_ppl : seq_update/calc_updated_ppl.c
-	$(CC) -o $@ $(CFLAGS) $(INCFLAGS) seq_update/calc_updated_ppl.c -lm
+	$(CC) -o $@ $(CFLAGS) seq_update/calc_updated_ppl.c -lm
 
 %.o : %.c $(INCS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
