@@ -70,13 +70,13 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 	  $(BINDIR)/compileDL.sh
 
 kelvin : libs $(KOBJS) $(OBJS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG) $(LPTMFLAG)
+	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $(LPTMFLAG)
 
 kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
 	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 calc_updated_ppl : seq_update/calc_updated_ppl.c
-	$(CC) -o $@ $(CFLAGS) seq_update/calc_updated_ppl.c -lm
+	$(CC) -o $@ $(LDFLAGS) $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) seq_update/calc_updated_ppl.c -lm
 
 %.o : %.c $(INCS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
