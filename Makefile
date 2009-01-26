@@ -14,6 +14,8 @@ INCDIR=/usr/local/include
 LIBDIR=/usr/local/lib
 KVNLIBDIR := $(shell pwd)/lib
 KVNINCDIR := $(shell pwd)/include
+KELVIN_ROOT := $(shell pwd)
+TEST_KELVIN := $(KELVIN_ROOT)/kelvin
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
 empty:=
@@ -49,7 +51,7 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 #CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
 
 LDFLAGS += ${ADD_LDFLAGS}
-export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS
+export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN
 
 KOBJS = kelvin.o dcuhre.o
 OBJS = ppl.o config.o saveResults.o trackProgress.o kelvinHandlers.o
@@ -68,13 +70,13 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 	  $(BINDIR)/compileDL.sh
 
 kelvin : libs $(KOBJS) $(OBJS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG) $(LPTMFLAG)
+	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $(LPTMFLAG)
 
 kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
 	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 calc_updated_ppl : seq_update/calc_updated_ppl.c
-	$(CC) -o $@ $(CFLAGS) seq_update/calc_updated_ppl.c -lm
+	$(CC) -o $@ $(LDFLAGS) $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) seq_update/calc_updated_ppl.c -lm
 
 %.o : %.c $(INCS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
