@@ -1158,9 +1158,13 @@ addPenetrance (ModelRange * range, int type, double val)
     range->penet = malloc (sizeof (double **));
     i = NPENET (range->nalleles);
     range->penet[0] = malloc (i * sizeof (double *));
-    for (j = 0; j < i; j++)
+    range->penetLimits = malloc (i * sizeof (double *)); /* Space for limits */
+    for (j = 0; j < i; j++) {
       range->penet[0][j] = malloc (CHUNKSIZE * sizeof (double));
-
+      range->penetLimits[j] = malloc (2 * sizeof (double)); /* A min and a max for each */
+      range->penetLimits[j][0] = 999999999.00;
+      range->penetLimits[j][1] = -999999999.00;
+    }
     /* Remember, liability class is not a true "independent" index
      * in the sense that we are storing combinations across
      * liability classes; hence we only need NPENET() individual
@@ -1187,6 +1191,13 @@ addPenetrance (ModelRange * range, int type, double val)
   }
   /* Add the element. */
   range->penet[0][type][penetcnt[type]] = val;
+
+  /* See if it's a raw maximum or minimum for this type (allele) */
+  if (range->penetLimits[type][0] > val)
+    range->penetLimits[type][0] = val;
+  if (range->penetLimits[type][1] < val)
+    range->penetLimits[type][1] = val;
+
   penetcnt[type]++;
 }
 
