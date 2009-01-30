@@ -272,7 +272,7 @@ int kelvin_dcuhre_integrate (double *integral, double *abserr, double);
 
 /* allocate two point analysis result space */
 int initialize_tp_result_storage ();
-int free_tp_result_storage (int ndprime);
+int free_tp_result_storage ();
 double calculate_R_square (double p1, double q1, double d);
 
 /* using the average at each theta to calculate PPL - posterior probability of linkage */
