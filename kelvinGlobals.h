@@ -77,7 +77,6 @@ int prevFirstMarker;		/* first marker in the set for multipoint analysis */
 int prevLastMarker;		/* last marker in the set for multipoint analysis */
 
 LambdaCell *pLambdaCell = NULL;
-int prevNumDPrime = 0;
 int loopMarkerFreqFlag = 0;
 int total_count;
 
