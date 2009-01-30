@@ -314,6 +314,7 @@ void freeKeptPolys ();
 void holdAllPolys ();
 
 // Print out all the polynomials for diagnostic purposes
+void printAllVariables ();
 void printAllPolynomials ();
 
 // Print a summary of the polynomial tree components (traversal)
