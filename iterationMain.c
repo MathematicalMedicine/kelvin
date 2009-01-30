@@ -140,20 +140,14 @@
 	  // Create these variables ahead of likelihood polynomial build in hopes of preventing in-build creation.
 
 	  if (modelOptions.polynomial == TRUE) {
-	    /*
-	    for (k = 0; k < pAlleleSet1->numAllele; k++) {
-	      for (l = 0; l < pAlleleSet2->numAllele; l++) {
-		allele1 = pAlleleSet1->pAlleles[k];
-		allele2 = pAlleleSet2->pAlleles[l];
-		sprintf (vName, "ppHaploFreq_lA%d_rA%d", allele1 - 1, allele2 - 1);
-		variableExp (&pLDLoci->ppHaploFreq[allele1 - 1][allele2 - 1], NULL, 'D', vName);
+	    char vName[128];
+	    int a0, a1;
+	    for (a0 = 0; a0 < pLocus1->numOriginalAllele; a0++) {
+	      for (a1 = 0; a1 < pLocus2->numOriginalAllele; a1++) {
+		sprintf (vName, "ppHaploFreq_lA%d_rA%d", a0, a1);
+		variableExp (&pLDLoci->ppHaploFreq[a0][a1], NULL, 'D', vName);
 	      }
 	    }
-	    */
-	    variableExp (&pLDLoci->ppHaploFreq[0][0], NULL, 'D', "ppHaploFreq_lA0_rA0");
-	    variableExp (&pLDLoci->ppHaploFreq[0][1], NULL, 'D', "ppHaploFreq_lA0_rA1");
-	    variableExp (&pLDLoci->ppHaploFreq[1][0], NULL, 'D', "ppHaploFreq_lA1_rA0");
-	    variableExp (&pLDLoci->ppHaploFreq[1][1], NULL, 'D', "ppHaploFreq_lA1_rA1");
 	  }
 
           pLDLoci->locus1 = loc1;
@@ -215,9 +209,8 @@
               if (isDPrime0 (pLambdaCell->lambda[dprimeIdx], pLambdaCell->m, pLambdaCell->n))
                 dprime0Idx = dprimeIdx;
               status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
-              if (status < 0) {
+              if (status < 0)
                 pLambdaCell->impossibleFlag[dprimeIdx] = 1;
-              }
             }
 
             if (modelType.trait == DICHOTOMOUS) {
@@ -568,7 +561,7 @@
                     for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
                       if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
                         copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
-                        if (pLambdaCell->impossibleFlag[dprimeIdx] != 0)
+			if (pLambdaCell->impossibleFlag[dprimeIdx] != 0)
                           continue;
                         copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprimeIdx]);
                         copy_DValue (pLDLoci, pLambdaCell->DValue[dprimeIdx]);
@@ -710,7 +703,6 @@
 	writeMMFileDetail ();
 	writePPLFileDetail ();
 
-        prevNumDPrime = pLambdaCell->ndprime;
         /* need to clear polynomial */
 
         if (modelOptions.polynomial == TRUE && modelType.ccFlag == 0) {
@@ -725,6 +717,8 @@
 #ifndef SIMPLEPROGRESS
         fprintf (stdout, "\n");
 #endif
+	/* free two point result storage */
+	free_tp_result_storage ();
       } /* end of looping second locus - loc2 */
       /* if we are doing trait marker, then we are done */
       /* Used to read: modelOptions.markerToMarker != TRUE which
@@ -735,8 +729,6 @@
       if (modelOptions.markerAnalysis == FALSE)
         loc1 = originalLocusList.numLocus;
     }   /* end of looping first locus - loc1 */
-    /* free two point result storage */
-    free_tp_result_storage (prevNumDPrime);
   } /* end of two point */
   else {        /* multipoint */
 
