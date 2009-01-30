@@ -173,6 +173,7 @@
 
         /* allocate/initialize result storage */
         initialize_tp_result_storage ();
+	//&&&	dumpTrackingStats(cL, eCL);
 
         /* we will force marker allele frequency loop to execute at least once */
         for (mkrFreqIdx = 0; mkrFreqIdx == 0 || mkrFreqIdx < modelRange.nafreq; mkrFreqIdx++) {
@@ -309,11 +310,19 @@
                 }
 
                 log10_likelihood_null = pedigreeSet.log10Likelihood;
+		//&&&		fprintf (stderr, "About to do %d iterations for ndprime at loc1/loc2: %d/%d\n",
+		//			 pLambdaCell->ndprime, loc1, loc2);
                 for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
                   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
                     copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
-                    if (pLambdaCell->impossibleFlag[dprimeIdx] != 0)
+                    if (pLambdaCell->impossibleFlag[dprimeIdx] != 0) {
+		      // If we're going to bail at this point, add the progress count loop factor
+		      cL[1] += modelRange.ntheta;
+		      //&&&		      for (i=0; i<modelRange.ntheta; i++)
+		      //			fprintf (stderr, "loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx,thetaInd:\t%d\t%d\t%d\t%d\t%d\t%d\tskipped\n",
+		      //				 loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx);
                       continue;
+		    }
                     copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprimeIdx]);
                     copy_DValue (pLDLoci, pLambdaCell->DValue[dprimeIdx]);
                     /* calculate R square if the marker is a SNP */
@@ -350,6 +359,8 @@
                     swStart (combinedComputeSW);
                     compute_likelihood (&pedigreeSet);
                     cL[1]++;
+		    //&&&		    fprintf (stderr, "loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx,thetaInd:\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+		    //			     loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx,thetaInd);
                     swStop (combinedComputeSW);
                     if (statusRequestSignal) {
                       statusRequestSignal = FALSE;
@@ -561,8 +572,11 @@
                     for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
                       if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
                         copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
-			if (pLambdaCell->impossibleFlag[dprimeIdx] != 0)
+			if (pLambdaCell->impossibleFlag[dprimeIdx] != 0) {
+			  // If we're going to bail at this point, add the progress count loop factor
+			  cL[3] += modelRange.ntheta;
                           continue;
+			}
                         copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprimeIdx]);
                         copy_DValue (pLDLoci, pLambdaCell->DValue[dprimeIdx]);
                       }
@@ -1736,3 +1750,4 @@
       free (markerNameList);
     }
   }
+//&  dumpTrackingStats(cL, eCL);
