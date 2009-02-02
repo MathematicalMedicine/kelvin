@@ -280,16 +280,19 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	KASSERT (numRet == 1,
 		 "Failed to get affection status on line %d in file %s.\n",
 		 lineNo, sPedfileName);
-	if ((int) pPerson->ppTraitValue[i][j] !=
-	    modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN])
+	if (((int) pPerson->ppTraitValue[i][j] !=
+	     modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN]) &&
+	    (!isnan(pPerson->ppTraitValue[i][j])))
 	  pPerson->ppTraitKnown[i][j] = 1;
+	else
+	  fprintf (stderr, "&&& DT it's unknown as %g\n", pPerson->ppOrigTraitValue[i][j]);
       } else if (pTrait->type == QUANTITATIVE || pTrait->type == COMBINED) {
 	numRet = sscanf (pLine, "%lf %n", &pPerson->ppOrigTraitValue[i][j], &pos);
 	KASSERT (numRet == 1,
 		 "Line %d in pedfile %s doesn't have enough columns. Is this a post-makeped file? \n",
 		 lineNo, sPedfileName);
-
-	if (pPerson->ppOrigTraitValue[i][j] != pTrait->unknownTraitValue) {
+	if ((!isnan(pPerson->ppOrigTraitValue[i][j])) &&
+	    (pPerson->ppOrigTraitValue[i][j] != pTrait->unknownTraitValue)) {
 	  pPerson->ppTraitKnown[i][j] = 1;
 	  if ((pPerson->ppOrigTraitValue[i][j] != modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED]) &&
 	      (pPerson->ppOrigTraitValue[i][j] != modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED]))
