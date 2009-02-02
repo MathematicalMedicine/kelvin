@@ -504,45 +504,31 @@ initialize_tp_result_storage ()
   int i, j, k;
   int num;
 
-  if (tp_result == NULL) {
-    tp_result =
-      (SUMMARY_STAT ***) calloc (modelRange.ndprime + 1,
-				 sizeof (SUMMARY_STAT **));
-    for (i = 0; i < modelRange.ndprime + 1; i++) {
-      tp_result[i] =
-	(SUMMARY_STAT **) calloc (modelRange.ntheta + 1,
-				  sizeof (SUMMARY_STAT *));
-      for (j = 0; j < modelRange.ntheta + 1; j++) {
-	num = modelRange.nafreq + 1;
-	tp_result[i][j] =
-	  (SUMMARY_STAT *) calloc (num, sizeof (SUMMARY_STAT));
-	for (k = 0; k < num; k++) {
-	  tp_result[i][j][k].max_penIdx = -1;
-	}
-      }
-    }
-  } else {
-    /* reset it */
-    for (i = 0; i < modelRange.ndprime + 1; i++) {
-      for (j = 0; j < modelRange.ntheta + 1; j++) {
-	num = modelRange.nafreq + 1;
-	memset (tp_result[i][j], 0, sizeof (SUMMARY_STAT) * num);
-	for (k = 0; k < num; k++) {
-	  tp_result[i][j][k].max_penIdx = -1;
-	}
+  tp_result =
+    (SUMMARY_STAT ***) calloc (pLambdaCell->ndprime + 1,
+			       sizeof (SUMMARY_STAT **));
+  for (i = 0; i < pLambdaCell->ndprime + 1; i++) {
+    tp_result[i] =
+      (SUMMARY_STAT **) calloc (modelRange.ntheta + 1,
+				sizeof (SUMMARY_STAT *));
+    for (j = 0; j < modelRange.ntheta + 1; j++) {
+      num = modelRange.nafreq + 1;
+      tp_result[i][j] =
+	(SUMMARY_STAT *) calloc (num, sizeof (SUMMARY_STAT));
+      for (k = 0; k < num; k++) {
+	tp_result[i][j][k].max_penIdx = -1;
       }
     }
   }
   return 0;
 }
 
-
 int
-free_tp_result_storage (int ndprime)
+free_tp_result_storage ()
 {
   int i, j;
 
-  for (i = 0; i < ndprime + 1; i++) {
+  for (i = 0; i < pLambdaCell->ndprime + 1; i++) {
     for (j = 0; j < modelRange.ntheta + 1; j++) {
       free (tp_result[i][j]);
     }
