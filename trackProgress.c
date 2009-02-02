@@ -250,8 +250,9 @@ char *estimateIterations (unsigned long eCL[])
 	eCL[0] = (originalLocusList.numLocus-1) * modelRange.ngfreq * modelRange.npenet;
 	eCL[1] = eCL[0] * totalLoopsForDPrime * modelRange.ntheta;
       } else { // TP not DT
-	eCL[2] = modelRange.ngfreq * modelRange.npenet * (originalLocusList.numLocus-1) * modelRange.nparam * modelRange.ntthresh;
-	eCL[3] = eCL[0] * totalLoopsForDPrime * modelRange.ntheta;
+	eCL[2] = (originalLocusList.numLocus-1) * modelRange.ngfreq * modelRange.npenet *
+	  modelRange.nparam * modelRange.ntthresh;
+	eCL[3] = eCL[2] * totalLoopsForDPrime * modelRange.ntheta;
 	if (modelType.trait == QT) { //QT
 	  strcat (analysisType, "Quantitative Trait, ");
 	} else { // TP not DT or QT, so CT
