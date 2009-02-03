@@ -234,13 +234,13 @@ char *estimateIterations (unsigned long eCL[])
 	totalLoopsForDPrime = 1;
 
       if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
-	sprintf (analysisType, "*%dTh*%d pair(s) of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)\n"
+	sprintf (analysisType, "%dTh*%d pair(s) of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)\n"
 		 "Trait-to-marker, Two-Point, ",
 		 modelRange.ntheta, (originalLocusList.numLocus-1),
 		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
 		 pedigreeSet.numPedigree);
       else
-	sprintf (analysisType, "%dTh*%d for d' of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)\n"
+	sprintf (analysisType, "%dTh*%dD' cases of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)\n"
 		 "Trait-to-marker, Two-Point, ",
 		 modelRange.ntheta, totalLoopsForDPrime,
 		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
