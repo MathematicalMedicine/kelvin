@@ -173,7 +173,7 @@
 
         /* allocate/initialize result storage */
         initialize_tp_result_storage ();
-	//&&&	dumpTrackingStats(cL, eCL);
+	//	dumpTrackingStats(cL, eCL);
 
         /* we will force marker allele frequency loop to execute at least once */
         for (mkrFreqIdx = 0; mkrFreqIdx == 0 || mkrFreqIdx < modelRange.nafreq; mkrFreqIdx++) {
@@ -521,10 +521,10 @@
 			     pLocus1->sName, pLocus2->sName);
 		    if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
 		      pushStatus ('k', "evalCL2");
-		      swStart (combinedComputeSW);
+		      //		      swStart (combinedComputeSW);
 		      compute_likelihood (&pedigreeSet);
 		      cL[2]++;
-		      swStop (combinedComputeSW);
+		      //		      swStop (combinedComputeSW);
 		      if (statusRequestSignal) {
 			statusRequestSignal = FALSE;
 			if (cL[2] > 1) {    // The first time thru we have no basis for estimation
@@ -1750,4 +1750,4 @@
       free (markerNameList);
     }
   }
-//&  dumpTrackingStats(cL, eCL);
+//  dumpTrackingStats(cL, eCL);
