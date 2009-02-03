@@ -126,12 +126,6 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
 KASSERT (readConfigFile (configfile)
            != ERROR, "Error in configuration file; aborting.\n");
 
-  // &&&
-for (i=0; i< NPENET(modelRange.nalleles); i++)
-  fprintf (stderr, "Disease allele %d has min/max penetrance of %f/%f\n", i,
-	   modelRange.penetLimits[i][0], 
-	   modelRange.penetLimits[i][1]);
-
   /* For now, reject all models we can't deal with. */
   KASSERT (modelRange.nalleles == 2, "Only biallelic traits supported.\n");
 
