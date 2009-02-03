@@ -280,9 +280,9 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	KASSERT (numRet == 1,
 		 "Failed to get affection status on line %d in file %s.\n",
 		 lineNo, sPedfileName);
-	if (((int) pPerson->ppTraitValue[i][j] !=
-	     modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN]) &&
-	    (!isnan(pPerson->ppTraitValue[i][j])))
+	if ((!isnan(pPerson->ppTraitValue[i][j])) &&
+	    ((int) pPerson->ppTraitValue[i][j] !=
+	     modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN]))
 	  pPerson->ppTraitKnown[i][j] = TRUE;
       } else if (pTrait->type == QUANTITATIVE || pTrait->type == COMBINED) {
 	numRet = sscanf (pLine, "%lf %n", &pPerson->ppOrigTraitValue[i][j], &pos);
