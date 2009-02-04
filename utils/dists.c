@@ -3,11 +3,11 @@
 #include <math.h>
 #include "cdflib.h"
 
-//#ifdef USE_GSL
+#ifdef USE_GSL
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_sf_gamma.h>
-//#endif
+#endif
 
 double interpolate (double xTarget, int tableSize, double *tableX, double *tableY) {
   double result;
