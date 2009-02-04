@@ -178,7 +178,7 @@
 
         /* allocate/initialize result storage */
         initialize_tp_result_storage ();
-	dumpTrackingStats(cL, eCL);
+	//	dumpTrackingStats(cL, eCL);
 
         /* we will force marker allele frequency loop to execute at least once */
         for (mkrFreqIdx = 0; mkrFreqIdx == 0 || mkrFreqIdx < modelRange.nafreq; mkrFreqIdx++) {
@@ -1755,4 +1755,4 @@
       free (markerNameList);
     }
   }
-  dumpTrackingStats(cL, eCL);
+//  dumpTrackingStats(cL, eCL);
