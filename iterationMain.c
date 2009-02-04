@@ -127,8 +127,13 @@
         savedLocusList.pLocusIndex[1] = loc2;
 
 #ifndef SIMPLEPROGRESS
-        fprintf (stdout, "Starting w/loci %s and %s (%d of %d pairs)\n", pLocus1->sName, pLocus2->sName,
-                 loc2, originalLocusList.numLocus - 1);
+	if (modelOptions.markerAnalysis == MM)
+	  fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles\n", 
+		   pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele);
+	else
+	  fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)\n",
+		   pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele,
+		   loc2, originalLocusList.numLocus - 1);
 #endif
 
         /* find out number of alleles this marker locus has */
@@ -173,7 +178,7 @@
 
         /* allocate/initialize result storage */
         initialize_tp_result_storage ();
-	//	dumpTrackingStats(cL, eCL);
+	dumpTrackingStats(cL, eCL);
 
         /* we will force marker allele frequency loop to execute at least once */
         for (mkrFreqIdx = 0; mkrFreqIdx == 0 || mkrFreqIdx < modelRange.nafreq; mkrFreqIdx++) {
@@ -1750,4 +1755,4 @@
       free (markerNameList);
     }
   }
-//  dumpTrackingStats(cL, eCL);
+  dumpTrackingStats(cL, eCL);
