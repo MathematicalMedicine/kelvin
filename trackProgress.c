@@ -193,24 +193,21 @@ char *estimateIterations (unsigned long eCL[])
       Theta and D' are still involved
     */
 
-    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      for (loc1 = 0; loc1 < originalLocusList.numLocus - 1; loc1++) {
-	pLocus1 = originalLocusList.ppLocusList[loc1];
-	for (loc2 = loc1 + 1; loc2 < originalLocusList.numLocus; loc2++) {
-	  pLocus2 = originalLocusList.ppLocusList[loc2];
-	  totalLoopsForDPrime += pow (modelRange.ndprime, (pLocus1->numOriginalAllele - 1) * (pLocus2->numOriginalAllele - 1));
-	}
-	// Divide by the iterations which is (n*(n-1))/2, or combinations
-	totalLoopsForDPrime /= ((originalLocusList.numLocus - 1) * (originalLocusList.numLocus - 2)) / 2;
+    for (loc1 = 0; loc1 < originalLocusList.numLocus - 1; loc1++) {
+      pLocus1 = originalLocusList.ppLocusList[loc1];
+      for (loc2 = loc1 + 1; loc2 < originalLocusList.numLocus; loc2++) {
+	pLocus2 = originalLocusList.ppLocusList[loc2];
+	totalLoopsForDPrime += pow (modelRange.ndprime, (pLocus1->numOriginalAllele - 1) * (pLocus2->numOriginalAllele - 1));
       }
-    } else
-      totalLoopsForDPrime = 1;
-
+      // Divide by the iterations which is (n*(n-1))/2, or combinations
+      totalLoopsForDPrime /= ((originalLocusList.numLocus - 1) * (originalLocusList.numLocus - 2)) / 2;
+    }
     eCL[0] = 0;
     eCL[1] = (originalLocusList.numLocus-2) * totalLoopsForDPrime * modelRange.ntheta;
-    sprintf (analysisType, "Marker-to-marker, Linkage ");
-    strcat (analysisType, (modelOptions.equilibrium == 
-			    LINKAGE_EQUILIBRIUM) ? "Equilibrium." : "Disequilibrium.");
+    sprintf (analysisType, "%dD' cases of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)\n"
+	     "Marker-to-marker Two-Point Linkage Disequilibrium.",
+	     totalLoopsForDPrime, modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
+	     pedigreeSet.numPedigree);
   } else { // not AM/MM
     if (modelType.type == TP) {
       /* 
@@ -235,13 +232,13 @@ char *estimateIterations (unsigned long eCL[])
 
       if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
 	sprintf (analysisType, "%dTh*%d pair(s) of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)\n"
-		 "Trait-to-marker, Two-Point, ",
+		 "Trait-to-marker Two-Point, ",
 		 modelRange.ntheta, (originalLocusList.numLocus-1),
 		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
 		 pedigreeSet.numPedigree);
       else
 	sprintf (analysisType, "%dTh*%dD' cases of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)\n"
-		 "Trait-to-marker, Two-Point, ",
+		 "Trait-to-marker Two-Point, ",
 		 modelRange.ntheta, totalLoopsForDPrime,
 		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
 		 pedigreeSet.numPedigree);
