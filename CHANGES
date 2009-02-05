@@ -1,7 +1,10 @@
-Version 0.37.2
-  Numerious bugfixes in LD handling and estimation. Now
+Version 0.37.1
+  Numerious bugfixes in LD handling and estimation in
+  cases with different numbers of marker alleles. Now
   uses proper intervals and quadratic interpolation for
-  distributions. 
+  distributions. AS directive handling of Inf fixed.
+  Marker-to-marker estimation incorporated. Test suite
+  reorganized and expanded.
 
 Version 0.37.0
   Dependencies upon the GNU Scientific Library have been
