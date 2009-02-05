@@ -172,6 +172,7 @@ typedef struct modelRange
   int nlclass;			/* Default is 1 liability class */
   int nalleles;			/* Default is 2 trait alleles D,d */
   int npenet;			/* Number of penetrance records */
+  double **penetLimits;         /* 2D array of raw penetrance limits by allele and min/max */
 
   double ****param;		/* 4D array of extra parameters for QT and CT */
   int npardim;			/* Number of parameters for given distribution */
@@ -271,7 +272,7 @@ int kelvin_dcuhre_integrate (double *integral, double *abserr, double);
 
 /* allocate two point analysis result space */
 int initialize_tp_result_storage ();
-int free_tp_result_storage (int ndprime);
+int free_tp_result_storage ();
 double calculate_R_square (double p1, double q1, double d);
 
 /* using the average at each theta to calculate PPL - posterior probability of linkage */

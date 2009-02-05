@@ -127,8 +127,13 @@
         savedLocusList.pLocusIndex[1] = loc2;
 
 #ifndef SIMPLEPROGRESS
-        fprintf (stdout, "Starting w/loci %s and %s (%d of %d pairs)\n", pLocus1->sName, pLocus2->sName,
-                 loc2, originalLocusList.numLocus - 1);
+	if (modelOptions.markerAnalysis == MM)
+	  fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles\n", 
+		   pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele);
+	else
+	  fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)\n",
+		   pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele,
+		   loc2, originalLocusList.numLocus - 1);
 #endif
 
         /* find out number of alleles this marker locus has */
@@ -140,20 +145,14 @@
 	  // Create these variables ahead of likelihood polynomial build in hopes of preventing in-build creation.
 
 	  if (modelOptions.polynomial == TRUE) {
-	    /*
-	    for (k = 0; k < pAlleleSet1->numAllele; k++) {
-	      for (l = 0; l < pAlleleSet2->numAllele; l++) {
-		allele1 = pAlleleSet1->pAlleles[k];
-		allele2 = pAlleleSet2->pAlleles[l];
-		sprintf (vName, "ppHaploFreq_lA%d_rA%d", allele1 - 1, allele2 - 1);
-		variableExp (&pLDLoci->ppHaploFreq[allele1 - 1][allele2 - 1], NULL, 'D', vName);
+	    char vName[128];
+	    int a0, a1;
+	    for (a0 = 0; a0 < pLocus1->numOriginalAllele; a0++) {
+	      for (a1 = 0; a1 < pLocus2->numOriginalAllele; a1++) {
+		sprintf (vName, "ppHaploFreq_lA%d_rA%d", a0, a1);
+		variableExp (&pLDLoci->ppHaploFreq[a0][a1], NULL, 'D', vName);
 	      }
 	    }
-	    */
-	    variableExp (&pLDLoci->ppHaploFreq[0][0], NULL, 'D', "ppHaploFreq_lA0_rA0");
-	    variableExp (&pLDLoci->ppHaploFreq[0][1], NULL, 'D', "ppHaploFreq_lA0_rA1");
-	    variableExp (&pLDLoci->ppHaploFreq[1][0], NULL, 'D', "ppHaploFreq_lA1_rA0");
-	    variableExp (&pLDLoci->ppHaploFreq[1][1], NULL, 'D', "ppHaploFreq_lA1_rA1");
 	  }
 
           pLDLoci->locus1 = loc1;
@@ -179,6 +178,7 @@
 
         /* allocate/initialize result storage */
         initialize_tp_result_storage ();
+	//	dumpTrackingStats(cL, eCL);
 
         /* we will force marker allele frequency loop to execute at least once */
         for (mkrFreqIdx = 0; mkrFreqIdx == 0 || mkrFreqIdx < modelRange.nafreq; mkrFreqIdx++) {
@@ -215,9 +215,8 @@
               if (isDPrime0 (pLambdaCell->lambda[dprimeIdx], pLambdaCell->m, pLambdaCell->n))
                 dprime0Idx = dprimeIdx;
               status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
-              if (status < 0) {
+              if (status < 0)
                 pLambdaCell->impossibleFlag[dprimeIdx] = 1;
-              }
             }
 
             if (modelType.trait == DICHOTOMOUS) {
@@ -316,11 +315,19 @@
                 }
 
                 log10_likelihood_null = pedigreeSet.log10Likelihood;
+		//&&&		fprintf (stderr, "About to do %d iterations for ndprime at loc1/loc2: %d/%d\n",
+		//			 pLambdaCell->ndprime, loc1, loc2);
                 for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
                   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
                     copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
-                    if (pLambdaCell->impossibleFlag[dprimeIdx] != 0)
+                    if (pLambdaCell->impossibleFlag[dprimeIdx] != 0) {
+		      // If we're going to bail at this point, add the progress count loop factor
+		      cL[1] += modelRange.ntheta;
+		      //&&&		      for (i=0; i<modelRange.ntheta; i++)
+		      //			fprintf (stderr, "loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx,thetaInd:\t%d\t%d\t%d\t%d\t%d\t%d\tskipped\n",
+		      //				 loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx);
                       continue;
+		    }
                     copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprimeIdx]);
                     copy_DValue (pLDLoci, pLambdaCell->DValue[dprimeIdx]);
                     /* calculate R square if the marker is a SNP */
@@ -357,6 +364,8 @@
                     swStart (combinedComputeSW);
                     compute_likelihood (&pedigreeSet);
                     cL[1]++;
+		    //&&&		    fprintf (stderr, "loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx,thetaInd:\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+		    //			     loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx,thetaInd);
                     swStop (combinedComputeSW);
                     if (statusRequestSignal) {
                       statusRequestSignal = FALSE;
@@ -517,10 +526,10 @@
 			     pLocus1->sName, pLocus2->sName);
 		    if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
 		      pushStatus ('k', "evalCL2");
-		      swStart (combinedComputeSW);
+		      //		      swStart (combinedComputeSW);
 		      compute_likelihood (&pedigreeSet);
 		      cL[2]++;
-		      swStop (combinedComputeSW);
+		      //		      swStop (combinedComputeSW);
 		      if (statusRequestSignal) {
 			statusRequestSignal = FALSE;
 			if (cL[2] > 1) {    // The first time thru we have no basis for estimation
@@ -568,8 +577,11 @@
                     for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
                       if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
                         copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
-                        if (pLambdaCell->impossibleFlag[dprimeIdx] != 0)
+			if (pLambdaCell->impossibleFlag[dprimeIdx] != 0) {
+			  // If we're going to bail at this point, add the progress count loop factor
+			  cL[3] += modelRange.ntheta;
                           continue;
+			}
                         copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprimeIdx]);
                         copy_DValue (pLDLoci, pLambdaCell->DValue[dprimeIdx]);
                       }
@@ -710,7 +722,6 @@
 	writeMMFileDetail ();
 	writePPLFileDetail ();
 
-        prevNumDPrime = pLambdaCell->ndprime;
         /* need to clear polynomial */
 
         if (modelOptions.polynomial == TRUE && modelType.ccFlag == 0) {
@@ -725,6 +736,8 @@
 #ifndef SIMPLEPROGRESS
         fprintf (stdout, "\n");
 #endif
+	/* free two point result storage */
+	free_tp_result_storage ();
       } /* end of looping second locus - loc2 */
       /* if we are doing trait marker, then we are done */
       /* Used to read: modelOptions.markerToMarker != TRUE which
@@ -735,8 +748,6 @@
       if (modelOptions.markerAnalysis == FALSE)
         loc1 = originalLocusList.numLocus;
     }   /* end of looping first locus - loc1 */
-    /* free two point result storage */
-    free_tp_result_storage (prevNumDPrime);
   } /* end of two point */
   else {        /* multipoint */
 
@@ -1744,3 +1755,4 @@
       free (markerNameList);
     }
   }
+//  dumpTrackingStats(cL, eCL);

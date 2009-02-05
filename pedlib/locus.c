@@ -924,9 +924,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 
       /* working on the assumption of just 1 QT trait */
       if (pTrait->functionQT == QT_FUNCTION_NORMAL) {
-	if (pTrait->type == COMBINED &&
-	    (trait >= pTrait->lessCutoffFlag - 0.000001 &&
-	     trait <= pTrait->lessCutoffFlag + 0.000001)) {
+	if (pTrait->type == COMBINED && (trait == pTrait->lessCutoffFlag)) {
+
 	  /* the cutoff is number of SD, so it's already been converted to X in N(0,1) */
 
 	  if (modelOptions.polynomial == TRUE) {
@@ -960,9 +959,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    //	    *(double *) pen = gsl_cdf_ugaussian_P (temp);
 	    *(double *) pen = gaussian_cdf (temp, (double) 0.0, (double) 1.0);
 	  }
-	} else if (pTrait->type == COMBINED &&
-		   (trait >= pTrait->moreCutoffFlag - 0.000001 &&
-		    trait <= pTrait->moreCutoffFlag + 0.000001)) {
+	} else if (pTrait->type == COMBINED && (trait == pTrait->moreCutoffFlag)) {
+
 	  /* the cutoff is number of SD, so it's already been converted to X in N(0,1) */
 	  if (modelOptions.polynomial == TRUE) {
 	    tempPoly = plusExp (2, 1.0,
@@ -1057,9 +1055,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	}
       } else if (pTrait->functionQT == QT_FUNCTION_T) {
 	df = pTrait->dfQT;
-	if (pTrait->type == COMBINED &&
-	    (trait >= pTrait->lessCutoffFlag - 0.000001 &&
-	     trait <= pTrait->lessCutoffFlag + 0.000001)) {
+	if (pTrait->type == COMBINED && (trait == pTrait->lessCutoffFlag)) {
 
 	  if (modelOptions.polynomial == TRUE) {
 	    tempPoly = plusExp (2, 1.0,
@@ -1121,9 +1117,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    //	    *(double *) pen = gsl_cdf_tdist_P (temp, df);
 	    *(double *) pen = t_cdf (temp, df);
 	  }
-	} else if (pTrait->type == COMBINED &&
-		   (trait >= pTrait->moreCutoffFlag - 0.000001 &&
-		    trait <= pTrait->moreCutoffFlag + 0.000001)) {
+	} else if (pTrait->type == COMBINED && (trait == pTrait->moreCutoffFlag)) {
 	  if (modelOptions.polynomial == TRUE) {
 
 	    tempPoly = plusExp (2, 1.0, variableExp (&pTrait->
@@ -1283,9 +1277,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	}
       } /* t-dsitribution */
       else if (pTrait->functionQT == QT_FUNCTION_CHI_SQUARE) {
-	if (pTrait->type == COMBINED &&
-	    (trait >= pTrait->lessCutoffFlag - 0.000001 &&
-	     trait <= pTrait->lessCutoffFlag + 0.000001)) {
+	if (pTrait->type == COMBINED && (trait == pTrait->lessCutoffFlag)) {
 	  if (modelOptions.polynomial == TRUE) {
 	    *(Polynomial **) pen =
 	      functionCallExp (3, "gsl_cdf_chisq_P",
@@ -1304,9 +1296,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    //	    *(double *) pen = gsl_cdf_chisq_P (pTrait->cutoffValue[liabilityClass - 1], mean);
 	    *(double *) pen = chisq_cdf (pTrait->cutoffValue[liabilityClass - 1], mean);
 	  }
-	} else if (pTrait->type == COMBINED &&
-		   (trait >= pTrait->moreCutoffFlag - 0.000001 &&
-		    trait <= pTrait->moreCutoffFlag + 0.000001)) {
+	} else if (pTrait->type == COMBINED && (trait == pTrait->moreCutoffFlag)) {
+
 	  /* the cutoff is number of SD, so it's already been converted to X in N(0,1) */
 	  if (modelOptions.polynomial == TRUE) {
 	    *(Polynomial **) pen =

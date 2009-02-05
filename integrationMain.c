@@ -227,9 +227,6 @@
 	  modelRange.afreq[0] = pLocus2->pAlleleFrequency[0];
 	}
 
-	/* allocate/initialize result storage */
-	// initialize_tp_result_storage ();
-
 	/* we will force marker allele frequency loop to execute at least once */
 	for (mkrFreqIdx = 0;  mkrFreqIdx == 0 || mkrFreqIdx < modelRange.nafreq;  mkrFreqIdx++) {
 	  mkrFreq = pLocus2->pAlleleFrequency[0];
@@ -532,7 +529,6 @@
 	    break;
 	}
 	/* end of marker allele frequency looping */
-	prevNumDPrime = pLambdaCell->ndprime;
 	/* need to clear polynomial */
 
 	if (modelOptions.polynomial == TRUE && modelType.ccFlag == 0) {
@@ -553,8 +549,6 @@
       if (modelOptions.markerAnalysis == FALSE)
 	loc1 = originalLocusList.numLocus;
     }				/* end of looping first locus - loc1 */
-    /* free two point result storage */
-    //free_tp_result_storage (prevNumDPrime);
   }
   /* end of two point */
   else {

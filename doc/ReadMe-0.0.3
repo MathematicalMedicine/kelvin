@@ -1,0 +1,76 @@
+This is Kelvin, version 0.0.3
+
+This version of Kelvin opens and parses a configuration file, which is
+its only expected command line argument. The configuration file format
+is specified in the file ReadMe.config, and a sample configuration
+file is given in kelvin.conf.
+
+To make the program, link one of the pedigree libraries to pedlib
+(pedlib-0.1 does not have the polynomial, while pedlib-1.2 corresponds
+to Yunui's latest verion, which does include the polynomial, but
+requires a CDF library -- I have build Kelvin against both, but have
+more success with pedlib-0.1). So:
+
+   ln -s pedlib-0.1 pedlib
+
+followed by:
+
+   make 
+
+should make a kelvin executable. Running:
+
+   kelvin kelvin.conf
+
+opens the configuration file and parses the parameters and constraints
+given there. The output, for now, is simply a dump of the range of the
+analysis requested. So, for the given example, you would see:
+
+   GF=0.001 0.01 0.1 0.3 0.5 0.8 
+   Penet[0]=0.2 0.3 0.3 0.3 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 
+   Penet[1]=0.1 0.1 0.2 0.2 0.1 0.2 0.2 0.3 0.3 0.3 0.4 0.4 0.4 0.4 0.5 0.5 0.5 0.5 0.5 0.6 0.6 0.6 0.6 0.6 0.6 0.7 0.7 0.7 0.7 0.7 0.7 0.7 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 0.8 
+   Penet[2]=  0   0   0 0.1   0   0 0.1   0 0.1 0.2   0 0.1 0.2 0.3   0 0.1 0.2 0.3 0.4   0 0.1 0.2 0.3 0.4 0.5   0 0.1 0.2 0.3 0.4 0.5 0.6   0 0.1 0.2 0.3 0.4 0.5 0.6 0.7   0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 
+   Theta[0]=0.1 0.2 0.2 0.3 0.3 0.3 0.4 0.4 0.4 
+   Theta[1]=0.1 0.1 0.2 0.1 0.2 0.3 0.1 0.2 0.3 
+
+which is the expansion of the kelvin configuration:
+
+   PD pedfile.dat
+   MP mapfile.dat
+   MK markers.dat
+   #LP loopfile.dat
+   TP
+   LE
+   DT
+   DA 2
+   GF 0.001; 0.01; 0.1; 0.3; 0.5; 0.8
+   DD 0.1
+   DD 0.2
+   DD 0.3
+   DD 0.9
+   Dd 0.0 0.8 0.1
+   Dd 0.8 0.95 0.2
+   dd 0.0 0.8 0.1
+   DD > Dd
+   Dd > dd
+   DD != Dd; Dd != dd
+   Tm 0.1 0.4 0.1
+   Tf 0.1
+   Tf 0.2
+   Tf 0.3
+   Tm >= Tf
+
+You will notice a change to the constraint language, which I think is
+now finalized (whew!). The change is that constraints separated by
+semicolons on the same line are OR'd together, while constraints on
+separate lines are AND'd together. This is logically more flexible,
+and we no longer need 3-way constraints. So the constraint:
+
+   DD != Dd; Dd != dd
+
+means that the three values cannot ALL be the same.
+
+Also, for simplicity, I've reduced the number of constraint operators to 3: 
+
+   !=, >, >=
+
+which is enough to specify anything you might want to specify.

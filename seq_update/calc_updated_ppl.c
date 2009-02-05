@@ -109,6 +109,7 @@ int method = METH_OLD;  /* --method: old (update BR per marker/theta/D' first) o
 			   new (integrate out theta/D' then update) */
 FILE *partout = NULL;   /* --partout: file to which to write partial results */
 FILE *partin = NULL;    /* --partin: file from which to read partial ldval-style fields */
+FILE *bfout = NULL;     /* --bayesfactor: file to which bayes factors will be written */
 
 /* Globally available for error messages */
 char *current = "0.36.1";
@@ -204,6 +205,8 @@ int main (int argc, char **argv)
   free (brfiles);
   if (partout != NULL)
     fclose (partout);
+  if (bfout != NULL)
+    fclose (bfout);
   exit (0);
 }
 
@@ -245,7 +248,8 @@ void old_method (st_brfile *brfiles, int numbrfiles)
     printf ("Chr Seq Marker Position PPL LD-PPL PPLD|L PPLD PPLD&L\n");
   else
     printf ("Chr Seq Marker Position PPL\n");
-
+  /*if (bfout != NULL)
+    fprintf (bfout, "Chr Seq Marker Position LD-PPL PPLD|L PPLD PPLD&L\n");*/
 
   while ((ret = get_marker_line (&brfiles[0], &marker_0)) == 1) {
     get_header_line (&brfiles[0], &data);
@@ -312,6 +316,8 @@ void old_method (st_brfile *brfiles, int numbrfiles)
     }
 
     printf ("%d %d %s %.4f", marker_0.chr, marker_0.num, marker_0.name2, marker_0.pos);
+    if (bfout != NULL) 
+      fprintf (bfout, "%d %d %s %.4f", marker_0.chr, marker_0.num, marker_0.name2, marker_0.pos);
     printf (" %.3f", (! sexspecific) ? calc_ppl_sexavg (&dprimes, &thetas, lr) : 
 	    calc_ppl_sexspc (&dprimes, &thetas, lr));
     if (! brfiles[0].no_ld) {
@@ -330,6 +336,8 @@ void old_method (st_brfile *brfiles, int numbrfiles)
       printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     }
     printf ("\n");
+    if (bfout != NULL)
+      fprintf (bfout, "\n");
   }
   if (ret == -1) {
     fprintf (stderr, "can't parse marker, line %d in file '%s'\n", brfiles[0].lineno,
@@ -457,6 +465,8 @@ void old_dkelvin (st_brfile *brfiles, int numbrfiles)
     printf ("Chr Seq Marker Position PPL LD-PPL PPLD|L PPLD PPLD&L\n");
   else
     printf ("Chr Seq Marker Position PPL\n");
+  /*if (bfout != NULL)
+    fprintf (bfout, "Chr Seq Marker Position LD-PPL PPLD|L PPLD PPLD&L\n");*/
 
   while ((ret = get_marker_line (&brfiles[0], &marker_0)) == 1) {
     get_header_line (&brfiles[0], &data_0);
@@ -510,6 +520,8 @@ void old_dkelvin (st_brfile *brfiles, int numbrfiles)
 
     printf ("%d %d %s %.4f %.3f", marker_0.chr, marker_0.num, marker_0.name2,
 	    marker_0.pos, calc_dkelvin_ppl (&ldval));
+    if (bfout != NULL) 
+      fprintf (bfout, "%d %d %s %.4f", marker_0.chr, marker_0.num, marker_0.name2, marker_0.pos);
     if (dkelvin_ld) {
       ldstat = calc_dkelvin_ldppl (&ldval);
       printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
@@ -521,6 +533,8 @@ void old_dkelvin (st_brfile *brfiles, int numbrfiles)
       printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     }
     printf ("\n");
+    if (bfout != NULL)
+      fprintf (bfout, "\n");
 
   }
   return;
@@ -643,6 +657,8 @@ void new_dkelvin (st_brfile *brfiles, int numbrfiles)
     printf ("Chr Seq Marker Position PPL LD-PPL PPLD|L PPLD PPLD&L\n");
   else
     printf ("Chr Seq Marker Position PPL\n");
+  /*if (bfout != NULL)
+    fprintf (bfout, "Chr Seq Marker Position LD-PPL PPLD|L PPLD PPLD&L\n");*/
 
   if (partout != NULL)
     fprintf (partout, "Chr Pos Seq Name1 Name2 LDSmallTheta LDBigTheta LDUnlinked LESmallTheta LEBigTheta LEUnlinked\n");
@@ -650,6 +666,9 @@ void new_dkelvin (st_brfile *brfiles, int numbrfiles)
   for (mrkno = 0; mrkno < nummarkers; mrkno++) {
     printf ("%d %d %s %.4f", markers[mrkno].chr, markers[mrkno].num, markers[mrkno].name2,
 	    markers[mrkno].pos);
+    if (bfout != NULL) 
+      fprintf (bfout, "%d %d %s %.4f", markers[mrkno].chr, markers[mrkno].num,
+	       markers[mrkno].name2, markers[mrkno].pos);
 
     printf (" %.3f", calc_dkelvin_ppl (&ldvals[mrkno]));
     
@@ -664,6 +683,8 @@ void new_dkelvin (st_brfile *brfiles, int numbrfiles)
       printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     }
     printf ("\n");
+    if (bfout != NULL)
+      fprintf (bfout, "\n");
 
     if (partout != NULL)
       fprintf (partout, "%d %.4f %d %s %s %.6e %.6e %.6e %.6e %.6e %.6e\n", markers[mrkno].chr,
@@ -792,6 +813,8 @@ void new_method (st_brfile *brfiles, int numbrfiles)
     printf ("Chr Seq Marker Position PPL LD-PPL PPLD|L PPLD PPLD&L\n");
   else
     printf ("Chr Seq Marker Position PPL\n");
+  /*if (bfout != NULL)
+    fprintf (bfout, "Chr Seq Marker Position LD-PPL PPLD|L PPLD PPLD&L\n");*/
 
   if (partout != NULL)
     fprintf (partout, "Chr Pos Seq Name1 Name2 LDSmallTheta LDBigTheta LDUnlinked LESmallTheta LEBigTheta LEUnlinked\n");
@@ -799,6 +822,9 @@ void new_method (st_brfile *brfiles, int numbrfiles)
   for (mrkno = 0; mrkno < nummarkers; mrkno++) {
     printf ("%d %d %s %.4f", markers[mrkno].chr, markers[mrkno].num, markers[mrkno].name2,
 	    markers[mrkno].pos);
+    if (bfout != NULL) 
+      fprintf (bfout, "%d %d %s %.4f", markers[mrkno].chr, markers[mrkno].num,
+	       markers[mrkno].name2, markers[mrkno].pos);
 
     /* print PPL - is this right? At least it takes up space... */
     integral = ldvals[mrkno].le_small_theta + ldvals[mrkno].le_big_theta;
@@ -815,6 +841,8 @@ void new_method (st_brfile *brfiles, int numbrfiles)
       printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     }
     printf ("\n");
+    if (bfout != NULL)
+      fprintf (bfout, "\n");
 
     if (partout != NULL)
       fprintf (partout, "%d %.4f %d %s %s %.6e %.6e %.6e %.6e %.6e %.6e\n", markers[mrkno].chr,
@@ -1296,6 +1324,8 @@ double calc_ldppl (st_ldvals *ldval)
     ldval->le_unlinked * (1 - prior);
   ldppl = numerator / (numerator + denomRight);
   
+  if (bfout != NULL) 
+    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
   return (ldppl);
 }
 
@@ -1314,6 +1344,8 @@ double calc_ppld_given_linkage (st_ldvals *ldval)
     ldval->le_big_theta * prior * 0.9989;
   ppld_given_l = numerator / (numerator + denomRight);
 
+  if (bfout != NULL) 
+    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
   return (ppld_given_l);
 }
 
@@ -1333,6 +1365,8 @@ double calc_ppld (st_ldvals *ldval)
     ldval->le_unlinked * (1 - prior);
   ppld = numerator / (numerator + denomRight); 
 
+  if (bfout != NULL) 
+    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
   return (ppld);
 }
 
@@ -1352,6 +1386,8 @@ double calc_ppld_and_linkage (st_ldvals *ldval)
     ldval->le_unlinked * (1 - prior);
   ppld_and_l = numerator / (numerator + denomRight);
 
+  if (bfout != NULL) 
+    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
   return (ppld_and_l);
 }
 
@@ -1380,6 +1416,8 @@ double calc_dkelvin_ldppl (st_ldvals *ldval)
   denomRight = ldval->le_unlinked * (1 - prior);
   ldppl = numerator / (numerator + denomRight);;
 
+  if (bfout != NULL) 
+    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
   return (ldppl);
 }
 
@@ -1398,6 +1436,8 @@ double calc_dkelvin_ppld_given_linkage (st_ldvals *ldval)
     ldval->le_big_theta * prior * (1 - weight) * 0.9989;
   ppld_given_l = numerator / (numerator + denomRight);
   
+  if (bfout != NULL) 
+    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
   return (ppld_given_l);
 }
 
@@ -1417,6 +1457,8 @@ double calc_dkelvin_ppld (st_ldvals *ldval)
     ldval->le_unlinked * (1 - prior);
   ppld = numerator / (numerator + denomRight);
 
+  if (bfout != NULL) 
+    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
   return (ppld);
 } 
 
@@ -1436,6 +1478,8 @@ double calc_dkelvin_ppld_and_linkage (st_ldvals *ldval)
     ldval->le_unlinked * (1 - prior);
   ppld_and_l = numerator / (numerator + denomRight);
 
+  if (bfout != NULL) 
+    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
   return (ppld_and_l);
 }
 
@@ -1452,11 +1496,12 @@ double calc_dkelvin_ppld_and_linkage (st_ldvals *ldval)
 #define OPT_PARTOUT 10
 #define OPT_HELP    11
 #define OPT_DKELVIN 12
+#define OPT_BFOUT   13
 
 int parse_command_line (int argc, char **argv)
 {
   int arg, long_arg, long_idx;
-  char *partoutfile=NULL;
+  char *partoutfile=NULL, *bfoutfile=NULL;
   struct option cmdline[] = { { "sexspecific", 0, &long_arg, OPT_SEXSPEC },
 			      { "multipoint", 0, &long_arg, OPT_MULTI },
 			      { "dkelvin", 0, &long_arg, OPT_DKELVIN },
@@ -1468,6 +1513,7 @@ int parse_command_line (int argc, char **argv)
 			      { "method", 1, &long_arg, OPT_METHOD },
 			      { "partin", 1, &long_arg, OPT_PARTIN },
 			      { "partout", 1, &long_arg, OPT_PARTOUT },
+			      { "bfout", 1, &long_arg, OPT_BFOUT },
 			      { "help", 0, &long_arg, OPT_HELP },
 			      { NULL, 0, NULL, 0 } };
   struct stat statbuf;
@@ -1519,6 +1565,9 @@ int parse_command_line (int argc, char **argv)
     } else if ((arg == 0) && (long_arg == OPT_PARTOUT)) {
       partoutfile = optarg;
 
+    } else if ((arg == 0) && (long_arg == OPT_BFOUT)) {
+      bfoutfile = optarg;
+
     } else if ((arg == 0) && (long_arg == OPT_HELP)) {
       usage ();
       exit (0);
@@ -1545,6 +1594,11 @@ int parse_command_line (int argc, char **argv)
     exit (-1);
   }
 
+  if ((multipoint) && (bfoutfile != NULL)) {
+    fprintf (stderr, "%s: --bfout is nonsensical with --multipoint\n", pname);
+    exit (-1);
+  }
+
   if (partinfile != NULL) {
     if ((partin = fopen (partinfile, "r")) == NULL) {
       fprintf (stderr, "%s: open '%s' for reading failed, %s\n", pname, partinfile,
@@ -1552,6 +1606,7 @@ int parse_command_line (int argc, char **argv)
       exit (-1);
     }
   }
+
   if (partoutfile != NULL) {
     if (stat (partoutfile, &statbuf) != -1) {
       fprintf (stderr, "%s: won't open '%s' for writing, file exists\n", pname, partoutfile);
@@ -1563,6 +1618,19 @@ int parse_command_line (int argc, char **argv)
       exit (-1);
     }
   }
+
+  if (bfoutfile != NULL) {
+    /*if (stat (bfoutfile, &statbuf) != -1) {
+      fprintf (stderr, "%s: won't open '%s' for writing, file exists\n", pname, bfoutfile);
+      exit (-1);
+      }*/
+    if ((bfout = fopen (bfoutfile, "a")) == NULL) {
+      fprintf (stderr, "%s: open '%s' for writing failed, %s\n", pname, bfoutfile,
+	       strerror (errno));
+      exit (-1);
+    }
+  }
+
   return (optind);
 }
 

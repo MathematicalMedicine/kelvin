@@ -269,7 +269,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
       (double *) malloc (sizeof (double) * numTrait);
     pPerson->ppTraitValue[i] = (double *) malloc (sizeof (double) * numTrait);
     pPerson->ppTraitKnown[i] = (int *) malloc (sizeof (int) * numTrait);
-    memset (pPerson->ppTraitKnown[i], 0, sizeof (int) * numTrait);
+    memset (pPerson->ppTraitKnown[i], 0, sizeof (int) * numTrait); // Effectively sets to FALSE
     pPerson->ppLiabilityClass[i] = (int *) malloc (sizeof (int) * numTrait);
     j = 0;
     while (j < numTrait) {
@@ -280,17 +280,18 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	KASSERT (numRet == 1,
 		 "Failed to get affection status on line %d in file %s.\n",
 		 lineNo, sPedfileName);
-	if ((int) pPerson->ppTraitValue[i][j] !=
-	    modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN])
-	  pPerson->ppTraitKnown[i][j] = 1;
+	if ((!isnan(pPerson->ppTraitValue[i][j])) &&
+	    ((int) pPerson->ppTraitValue[i][j] !=
+	     modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN]))
+	  pPerson->ppTraitKnown[i][j] = TRUE;
       } else if (pTrait->type == QUANTITATIVE || pTrait->type == COMBINED) {
 	numRet = sscanf (pLine, "%lf %n", &pPerson->ppOrigTraitValue[i][j], &pos);
 	KASSERT (numRet == 1,
 		 "Line %d in pedfile %s doesn't have enough columns. Is this a post-makeped file? \n",
 		 lineNo, sPedfileName);
-
-	if (pPerson->ppOrigTraitValue[i][j] != pTrait->unknownTraitValue) {
-	  pPerson->ppTraitKnown[i][j] = 1;
+	if ((!isnan(pPerson->ppOrigTraitValue[i][j])) &&
+	    (pPerson->ppOrigTraitValue[i][j] != pTrait->unknownTraitValue)) {
+	  pPerson->ppTraitKnown[i][j] = TRUE;
 	  if ((pPerson->ppOrigTraitValue[i][j] != modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED]) &&
 	      (pPerson->ppOrigTraitValue[i][j] != modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED]))
 	    /* Calculated the standardized quantitative trait value */

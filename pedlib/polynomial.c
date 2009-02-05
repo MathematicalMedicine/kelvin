@@ -3606,6 +3606,27 @@ void polyStatistics (char *title)
   return;
 };
 
+void printAllVariables ()
+{
+  int i, j;
+
+  fprintf (stderr, "All variables (from hash):\n");
+
+  if (variableCount > 0) {
+    fprintf (stderr, "All %d variables:\n", variableCount);
+    for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
+      if (variableHash[i].num <= 0)
+        continue;
+      for (j = 0; j < variableHash[i].num; j++) {
+        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d variable: ", i, j, variableHash[i].index[j], variableHash[i].key[j], variableList[variableHash[i].index[j]]->count, variableList[variableHash[i].index[j]]->valid);
+        expTermPrinting (stderr, variableList[variableHash[i].index[j]], 1);
+        fprintf (stderr, "\n");
+      }
+    }
+    fprintf (stderr, "\n");
+  }
+}
+
 void printAllPolynomials ()
 {
   int i, j;
@@ -3626,19 +3647,8 @@ void printAllPolynomials ()
     fprintf (stderr, "\n");
   }
 
-  if (variableCount > 0) {
-    fprintf (stderr, "All %d variables:\n", variableCount);
-    for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
-      if (variableHash[i].num <= 0)
-        continue;
-      for (j = 0; j < variableHash[i].num; j++) {
-        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d variable: ", i, j, variableHash[i].index[j], variableHash[i].key[j], variableList[variableHash[i].index[j]]->count, variableList[variableHash[i].index[j]]->valid);
-        expTermPrinting (stderr, variableList[variableHash[i].index[j]], 1);
-        fprintf (stderr, "\n");
-      }
-    }
-    fprintf (stderr, "\n");
-  }
+  printAllVariables ();
+
   if (sumCount > 0) {
     fprintf (stderr, "All %d sums:\n", sumCount);
     for (i = 0; i < SUM_HASH_SIZE; i++) {

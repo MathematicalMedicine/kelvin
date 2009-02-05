@@ -46,6 +46,10 @@
   sprintf (messageBuffer, "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
   swLogMsg (messageBuffer);
 #endif
+#ifdef USE_GSL
+swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of internal ones!");
+#endif
+  
   swStart (overallSW);
 #ifdef __OPTIMIZE__
   swLogMsg ("GCC optimization enabled");
