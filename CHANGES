@@ -4,7 +4,8 @@ Version 0.37.1
   uses proper intervals and quadratic interpolation for
   distributions. AS directive handling of Inf fixed.
   Marker-to-marker estimation incorporated. Test suite
-  reorganized and expanded.
+  reorganized and expanded. Optimization level 3 (-O3)
+  works again and defaulted with corresponding speed-up.
 
 Version 0.37.0
   Dependencies upon the GNU Scientific Library have been
