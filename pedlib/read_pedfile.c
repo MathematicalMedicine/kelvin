@@ -387,6 +387,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
    * from Per: field */
   numRet = sscanf (pLine, "Ped: %s Per: %s",
 		   pPerson->pPedigree->sOriginalID, pPerson->sOriginalID);
+  // If we don't find them, default to the 1st-column
   if (numRet <= 0) {
     strcpy (pPerson->pPedigree->sOriginalID, pPerson->pPedigree->sPedigreeID);
     strcpy (pPerson->sOriginalID, pPerson->sID);
@@ -1317,23 +1318,27 @@ need_transmission_matrices (PedigreeSet * pPedSet)
 
 }
 
-/* read case control data - counts of different pedigree configurations */
+/** 
+
+  Read count file (CF) - counts of different pedigree inheritance
+  patterns.
+
+  Builds a vector of pointers to existing pedigrees (in pPedigreeSet)
+  for the header columns. For each row of counts by marker, updates
+  each pedigree's pCount[i], where i is the locus index.
+
+  Returns 0.
+
+*/
 int
 read_ccfile (char *ccFileName, PedigreeSet * pPedigreeSet)
 {
   FILE *fpFile = NULL;
-  int lineNo = 0;
+  int lineNo = 0, pos, i, j, numRet, headerSeen = FALSE, numPed = 0, maxNumPed = 0;
   char *pLine;
   char sCurrPedLabel[MAX_PED_LABEL_LEN];
   char sCurrMarkerLabel[MAX_PED_LABEL_LEN];
-  int pos;
-  int i, j;
-  Pedigree **pPedSet = NULL;
-  Pedigree *pPed = NULL;
-  int numRet;
-  int headerFlag = 1;
-  int numPed = 0;
-  int maxNumPed = 0;
+  Pedigree **pPedSet = NULL; // Vector of pedigree pointers from header columns
 
   fpFile = fopen (ccFileName, "r");
   KASSERT (fpFile != NULL,
@@ -1343,39 +1348,36 @@ read_ccfile (char *ccFileName, PedigreeSet * pPedigreeSet)
     lineNo++;
     if (is_line_blank_or_comment (flexBuffer))
       continue;
-    if (headerFlag) {
-      headerFlag = 0;
-      /* the first column should be the marker - ignore it */
+    if (!headerSeen) {
+      headerSeen = TRUE;
+      /* The first header column should be the marker - ignore it */
       numRet = sscanf (flexBuffer, "%s %n", sCurrMarkerLabel, &pos);
       pLine = &flexBuffer[pos];
       while ((numRet = sscanf (pLine, "%s %n", sCurrPedLabel, &pos)) > 0) {
 	pLine = &pLine[pos];
-	pPed = NULL;
+	Pedigree *pPed;
 	pPed = find_original_pedigree (pPedigreeSet, sCurrPedLabel);
 	KASSERT (pPed != NULL,
-		 "Can't find pedigree %s in pedigree file, but we got case ctrl count.\n",
+		 "Can't find pedigree %s in pedigree file, but we got pattern count.\n",
 		 sCurrPedLabel);
-
-	if (pPedSet == NULL || numPed + 1 > maxNumPed) {
+	if (numPed + 1 > maxNumPed) {
 	  maxNumPed += 6;
 	  pPedSet = realloc (pPedSet, sizeof (Pedigree *) * maxNumPed);
 	}
-	pPedSet[numPed] = pPed;
-	numPed++;
+	pPedSet[numPed++] = pPed;
       }
       continue;
     }
 
-    /* read the count information for each snp */
+    /* Read the count information for each SNP */
     numRet = sscanf (flexBuffer, "%s %n", sCurrMarkerLabel, &pos);
     KASSERT (numRet == 1,
-	     "Can't get marker label from line no %d in case ctrl count file %s.\n",
+	     "Can't get marker label from line no %d in count file %s.\n",
 	     lineNo, ccFileName);
     pLine = &flexBuffer[pos];
-    /* find the locus */
+    /* Find the locus */
     j = find_locus (&originalLocusList, sCurrMarkerLabel);
     KASSERT (j >= 0, "Can't get marker %s information.\n", sCurrMarkerLabel);
-    //      i=originalLocusList.numTraitLocus; 
     i = 0;
     while (i < numPed) {
       numRet = sscanf (pLine, "%d %n", &(pPedSet[i]->pCount[j]), &pos);
