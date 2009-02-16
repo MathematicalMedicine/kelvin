@@ -533,8 +533,15 @@ readConfigFile (char *file)
       continue;
     }
 #endif
+    if (sscanf (line, "CC %s", ccfile) == 1) {
+      modelType.ccFlag = TRUE;
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure case-control count file %s\n",
+	    ccfile);
+      continue;
+    }
     if (sscanf (line, "CF %s", ccfile) == 1) {
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure case control count file %s\n",
+      modelType.ccFlag = FALSE;
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure count file %s\n",
 	    ccfile);
       continue;
     }

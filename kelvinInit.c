@@ -213,10 +213,8 @@ KASSERT (readConfigFile (configfile)
   KASSERT (exitDueToLoop == FALSE, "Not all loops in pedigrees are broken.\n");
 
   /* read in case control file if provided */
-  if (strlen (ccfile) > 0) {
+  if (strlen (ccfile) > 0)
     read_ccfile (ccfile, &pedigreeSet);
-    modelType.ccFlag = 1;
-  }
   flexBufferSize = 0;
   free (flexBuffer);
   fflush (stderr);
