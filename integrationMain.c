@@ -531,8 +531,7 @@
 	/* end of marker allele frequency looping */
 	/* need to clear polynomial */
 
-	if (modelOptions.polynomial == TRUE && modelType.ccFlag == 0) {
-	  /* under case ctrl we don't clear up the polynomial */
+	if (modelOptions.polynomial) {
 	  pedigreeSetPolynomialClearance (&pedigreeSet);
 	}
 

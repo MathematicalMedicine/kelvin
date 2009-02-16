@@ -411,7 +411,7 @@
                         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
                         homoLR = pPedigree->likelihood / pedigreeSet.nullLikelihood[pedIdx];
                         tmp = log10 (alphaV * homoLR + (1 - alphaV));
-                        log10HetLR += tmp * pPedigree->pCount[loc2];
+                        log10HetLR += tmp * pPedigree->pCount[loc2]; // Use the pedigree weight from count file (CF)
                       }
                       if (log10HetLR >= DBL_MAX_10_EXP - 1) {
                         hetLR = DBL_MAX;
@@ -724,8 +724,7 @@
 
         /* need to clear polynomial */
 
-        if (modelOptions.polynomial == TRUE && modelType.ccFlag == 0) {
-          /* under case ctrl we don't clear up the polynomial */
+        if (modelOptions.polynomial == TRUE) {
           pedigreeSetPolynomialClearance (&pedigreeSet);
         }
 
