@@ -224,6 +224,28 @@ readConfigFile (char *file)
   modelRange.nlambdas = 0;
   modelRange.maxnlambdas = 0;
   modelRange.tlmark = FALSE;
+
+  /* Set the default unknown person ID */
+  modelOptions.sUnknownPersonID = malloc (sizeof (char) * 2);
+  strcpy (modelOptions.sUnknownPersonID, "0");
+
+  /* Set default values for PPL calculations */
+  /* LRs are weighted heavier for theta less than the cutoff */
+  modelOptions.thetaCutoff[0] = 0.05;
+  modelOptions.thetaCutoff[1] = 0.05;
+  /* Weight ofr theta less than the cutoff */
+  modelOptions.thetaWeight = 0.95;
+  /* Prior probability of linkage */
+  modelOptions.prior = 0.02;
+  /* Prior probability of LD given close linkage */
+  modelOptions.LDprior = 0.02;
+
+  /* set default for QT */
+  modelType.minOriginal = -999999999.00;
+  modelType.maxOriginal = 999999999.00;
+  modelType.minThreshold = -999999999.00;
+  modelType.maxThreshold = 999999999.00;
+
   double integrationLDDPrimeValues[] = {-0.9982431840532, -0.9956010478552, -0.9790222658168,
 					-0.9590960631620, -0.8761473165029, -0.8727421201131,
 					-0.7013933644534, -0.6582769255267, -0.6492284325645,

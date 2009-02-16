@@ -99,29 +99,6 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   /* Check to see if the configuration file name was specified. */
   KASSERT ((strlen (configfile) > 0), "No configuration file specified; aborting.\n");
 
-  // IMHO, ALL OF THE FOLLOWING UP TO OPENING FILES BELONGS IN CONFIG.C
-
-  /* set the default unknown person ID */
-  modelOptions.sUnknownPersonID = malloc (sizeof (char) * 2);
-  strcpy (modelOptions.sUnknownPersonID, "0");
-
-  /* set default values for PPL calculations */
-  /* LRs are weighted heavier for theta less than the cutoff */
-  modelOptions.thetaCutoff[0] = 0.05;
-  modelOptions.thetaCutoff[1] = 0.05;
-  /* weight ofr theta less than the cutoff */
-  modelOptions.thetaWeight = 0.95;
-  /* prior probability of linkage */
-  modelOptions.prior = 0.02;
-  /* prior probability of LD given close linkage */
-  modelOptions.LDprior = 0.02;
-
-  /* set default for QT */
-  modelType.minOriginal = -999999999.00;
-  modelType.maxOriginal = 999999999.00;
-  modelType.minThreshold = -999999999.00;
-  modelType.maxThreshold = 999999999.00;
-
   /* Parse the configuration file. */
 KASSERT (readConfigFile (configfile)
            != ERROR, "Error in configuration file; aborting.\n");
@@ -129,8 +106,8 @@ KASSERT (readConfigFile (configfile)
   /* For now, reject all models we can't deal with. */
   KASSERT (modelRange.nalleles == 2, "Only biallelic traits supported.\n");
 
-  /* the difference between QT and CT is whether we use threshold or not. Under CT -  yes to
-   * threshold, under QT - no threshold */
+  /* The difference between QT and CT is whether we use threshold or not. Under CT there must 
+   * be thresholds, under QT there should not. */
   if (modelRange.ntthresh > 0 && modelType.trait != DT) {
     modelType.trait = CT;
     KASSERT (modelType.minThreshold > -999999998 &&
