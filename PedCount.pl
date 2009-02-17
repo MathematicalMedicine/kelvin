@@ -20,6 +20,7 @@ my $Usage = "Usage \"perl $0 <configuration file, like kelvin.conf>\"\n";
 my @Depths; # Referenced recursively and I'm fuddled
 my @Ancestors; # ditto
 my $ShortestLoop = "";
+my ($UnknownAffection, $Unaffected, $Affected);
 my %Pedigrees; # Pedigrees as loaded
 my %Directives; # Directives as loaded
 my $PairCount = 0; # Last pedigree count of marker pairs
@@ -388,6 +389,34 @@ sub loadConf {
 }
 
 #####################################
+# Open and assess a pedigree file to determine processing required
+
+sub assessPedigree {
+    my $File = shift();
+    die "$File is not a file. $Usage" if (!-f $File);
+    open IN, "<$File" || die "Cannot open file $File\n";
+    while (<IN>) {
+	s/\s*\#.*//g; # Trim comments
+	next if (/^$/); # Drop empty lines
+	my @Columns = split /\s+/;
+	# See if the number of columns makes any kind of sense...
+	# Subtract 2*Loci - 1 (for single trait column) and 5 common columns
+	my $Slack = scalar(@Columns) - ((scalar(@Loci) * 2) - 1) - 5;
+	if ($Slack == 8) {
+	    print "POST\n";
+	} elsif ($Slack == 4) {
+	    print "POST with old tail cut off\n";
+	} elsif ($Slack == 0) {
+	    print "PRE\n";
+	} elsif ($Slack == -2) {
+	    print "No-parent PRE (CC)\n";
+	}
+	close IN;
+	return;
+    }
+}
+
+#####################################
 # Open and read a post-makeped pedigree file producing a two-dimensional hash with
 # the first being the family (pedigree) ID, and the second being the individual ID.
 #
@@ -446,13 +475,43 @@ sub loadCompanion {
     my $File = shift();
     die "$File is not a file. $Usage" if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
+    my $LineNo = 0;
     @Loci = (); %LociAttributes = ();
     while (<IN>) {
+	$LineNo++;
 	s/\s*\#.*//g; # Trim comments
 	next if (/^$/); # Drop empty lines
 	my ($Type, $Name) = split /\s+/;
+	die "Unknown locus type \"$Type\" at line $LineNo in marker description companion file $File\n"
+	    if (($Type ne "T") and ($Type ne "M"));
 	push @Loci, $Name;
 	$LociAttributes{$Name}{Type} = $Type;
+    }
+    close IN;
+}
+
+#####################################
+# Open and read the marker file to flesh-out the %LociAttributes hash
+
+sub loadMarkers {
+    my $File = shift();
+    die "$File is not a file. $Usage" if (!-f $File);
+    open IN, "<$File" || die "Cannot open file $File\n";
+    my $LineNo = 0;
+    my $Name = "";
+    while (<IN>) {
+	$LineNo++;
+	s/\s*\#.*//g; # Trim comments
+	next if (/^$/); # Drop empty lines
+	my @Tokens = split /\s+/;
+	my $RecordType = shift @Tokens;
+	if ($RecordType eq "M") {
+	    $Name = shift @Tokens;
+	} elsif ($RecordType eq "F") {
+	    $LociAttributes{$Name}{Frequencies} = [@Tokens];
+	} else {
+	    die "Unknown record type \"$RecordType\" at line $LineNo in marker file $File\n";
+	}
     }
     close IN;
 }
@@ -605,8 +664,14 @@ sub bucketizePedigrees {
     die "Generation of counts not permitted for a multipoint analysis.\n" 
 	if (defined($Directives{SA}) || defined($Directives{SS}));
 
-    # Verify that all markers are only biallelic...
-    # TBS
+    # Verify that all markers are present and only biallelic...
+    for my $Marker (@Loci) {
+	next if ($LociAttributes{$Marker}{Type} eq "T");
+	die "No allele information found for marker $Marker for count generation.\n"
+	    if (!defined($LociAttributes{$Marker}{Frequencies}));
+	die "Marker $Marker not biallelic, not permitted for count generation.\n"
+	    if (scalar(@{ $LociAttributes{$Marker}{Frequencies} }) != 2);
+    }
 
     my %Buckets = ();
 
@@ -629,8 +694,8 @@ sub bucketizePedigrees {
 
 	my $skip = "";
 	for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
-	    if ((($Pedigrees{$Ped}{$Ind}{Dad} == AttributeMissing) && ($Pedigrees{$Ped}{$Ind}{Aff} != Unaffected)) ||
-		(($Pedigrees{$Ped}{$Ind}{Dad} != AttributeMissing) && ($Pedigrees{$Ped}{$Ind}{Aff} != Affected))) {
+	    if ((($Pedigrees{$Ped}{$Ind}{Dad} == AttributeMissing) && ($Pedigrees{$Ped}{$Ind}{Aff} != $Unaffected)) ||
+		(($Pedigrees{$Ped}{$Ind}{Dad} != AttributeMissing) && ($Pedigrees{$Ped}{$Ind}{Aff} != $Affected))) {
 #		$skip = "Ind $Ind has Dad ".$Pedigrees{$Ped}{$Ind}{Dad}." and affection status ".$Pedigrees{$Ped}{$Ind}{Aff};
 		last;
 	    }
@@ -686,15 +751,20 @@ die "$#ARGV arguments supplied. $Usage" if ($#ARGV < 0);
 my $ConfFile = shift;
 
 loadConf($ConfFile);
-my $pedFile = "pedpost.dat";
-if ($Directives{PD}[0] ne "") { $pedFile = $Directives{PD}[0]; }
-loadPostPedigree($pedFile);
 my $companionFile = "datafile.dat";
 if ($Directives{DF}[0] ne "") { $companionFile = $Directives{DF}[0]; }
 loadCompanion($companionFile);
-bucketizePedigrees();
+my $markersFile = "markers.dat";
+if ($Directives{MK}[0] ne "") { $markersFile = $Directives{MK}[0]; }
+loadMarkers($markersFile);
+my $pedFile = "pedpost.dat";
+if ($Directives{PD}[0] ne "") { $pedFile = $Directives{PD}[0]; }
+assessPedigree($pedFile);
 
-checkRelations();
+#loadPostPedigree($pedFile);
+#bucketizePedigrees();
+
+#checkRelations();
 #perfStats();
 simpleLoop();
 
