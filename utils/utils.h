@@ -140,17 +140,11 @@ void logMsg (unsigned int type, int level, const char *format, ...);
  *   KLOG(type, level, formatString, args...)
  * No space allowed between KLOG and leading argument paren!
  **********************************************************************/
-#ifdef DEBUG
 #define KLOG(TYPE, LEVEL, ...)                                        \
 { \
   logMsg (TYPE, MAX(LOGERROR,LEVEL), "%s (%d): ", (__FILE__),(__LINE__)); \
   logMsg (TYPE, LEVEL, __VA_ARGS__);                                  \
 }
-#else
-#define KLOG(TYPE, LEVEL, ...)                                        \
-{ \
-}
-#endif
 
 /**********************************************************************
  * KCHECK() checks a condition, and, if the condition fails, invokes
