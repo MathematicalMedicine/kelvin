@@ -46,7 +46,7 @@ A simple configuration file might look like this:
 29: #
 30: # Output files (all currently using default names)
 31: #
-32: HE bf.out # Bayes Ratio output file
+32: HE br.out # Bayes Ratio output file
 33: PF ppl.out # PPL output file
 34:
 35: #
@@ -92,32 +92,37 @@ directives that are required for each type of analysis are provided in parenthes
 <ul>
 <li>Trait-to-marker
 <ul>
-<li>Multipoint sex-averaged
+<li>Sex-averaged multipoint
 <ul>
-<li>Dichotomous trait (<a href="#SA">SA</a>, <a href="#DT">DT</a>)
+<li>Dichotomous trait
+<ul>
+<li><a href="#SA">SA</a> for sex-averaged multipoint, indicates how many markers to consider at a time
+<li><a href="#TL">TL</a> for the trait locus positions along the chromosome for which to produce results
+<li><a href="#DT">DT</a> for dichotomous trait
+</ul>
 <li>Quantitative trait
 <ul>
-<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#QT">QT chisq</a>)
-<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#QT">QT T</a>)
+<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#QT">QT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#QT">QT T</a>)
 </ul>
 <li>Quantitative trait with threshold
 <ul>
-<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#CT">CT chisq</a>)
-<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#CT">CT T</a>)
+<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#CT">CT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#CT">CT T</a>)
 </ul>
 </ul>
-<li>Multipoint sex-specific
+<li>Sex-specific multipoint
 <ul>
-<li>Dichotomous trait (<a href="#SS">SS</a>, <a href="#DT">DT</a>)
+<li>Dichotomous trait (<a href="#SS">SS</a>, <a href="#TL">TL</a>, <a href="#DT">DT</a>)
 <li>Quantitative trait
 <ul>
-<li>Chi-square distribution (<a href="#SS">SS</a>, <a href="#QT">QT chisq</a>)
-<li>Truncated Student's t-distribution (<a href="#SS">SS</a>, <a href="#QT">QT T</a>)
+<li>Chi-square distribution (<a href="#SS">SS</a>, <a href="#TL">TL</a>, <a href="#QT">QT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SS">SS</a>, <a href="#TL">TL</a>, <a href="#QT">QT T</a>)
 </ul>
 <li>Quantitative trait with threshold
 <ul>
-<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#CT">CT chisq</a>)
-<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#CT">CT T</a>)
+<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#CT">CT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#CT">CT T</a>)
 </ul>
 </ul>
 <li>Two-point
@@ -226,6 +231,7 @@ specifying multiple D' values or a range.
 <dt><a href="#GF">GF</a></dt><dd>gene frequency, specifying multiple values or a range.</dd>
 <dt><a href="#DA">DA</a></dt><dd>number of disease alleles, currently must be 2, defaults to 2.</dd>
 <dt><a href="#AF">AF</a></dt><dd>allele frequencies for SNPs, specifying multiple values or a range.</dd>
+<dt><a href="#LOG">LOG &lt;facility&gt; &lt;severity&gt;</a></td><dd>change logging level for &lt;facility&gt; to &lt;severity&gt;.
 </dl>
 <h4>Other Directives</h4>
 <dl>
@@ -252,6 +258,7 @@ specifying multiple D' values or a range.
 <a href="#HE">HE</a><br>
 <a href="#LC">LC</a><br>
 <a href="#LD">LD</a><br>
+<a href="#LOG">LOG</a><br>
 <a href="#MAX">MAX</a><br>
 <a href="#MIN">MIN</a><br>
 <a href="#MK">MK</a><br>
@@ -262,7 +269,12 @@ specifying multiple D' values or a range.
 <a href="#PE">PE</a><br>
 <a href="#PF">PF</a><br>
 <a href="#QT">QT</a><br>
-<a href="#SA">SA</a><br>
+<a href="#SA">SA</a><br>Selects a sex-averaged multipoint analysis and indicates the number of markers to consider at
+a time. 
+<p>
+The complexity of the analysis increases exponentially with the number of markers specified. Three is reasonable,
+four can be pushing the limits, and while five, six or seven can be done under certain circumstances, eight and beyond
+are not yet possible even for a nuclear family.
 <a href="#SR">SR</a><br>
 <a href="#SS">SS</a><br>
 <a href="#TL">TL</a><br>
@@ -293,7 +305,32 @@ where the first value is the "unknown" value, the second value is the
 numbers shown reflect the defaults for DT; for multipoint, the
 defaults are NAN, -9999.99, and 9999.99, respectively).
 
+<h3 id="CC">CC</h3>
+Count file with overflow protection
+
 <h3 id="CF">CF</h3>
+Identifies a pedigree count file for a two-point trait-to-marker linkage disequilibrium
+analysis for biallelic loci. There is a column for each pedigree and a row for each marker. A header
+record identifies pedigrees by their original (pre-MAKEPED) pedigree ID if it is present, or the
+pedigree ID if not.
+<p>
+Case-control data in the form of a file with 6 counts of 
+Case-control is a two-point trait-to-marker linkage disequilibrium analysis for biallelic loci in which 
+a population of unrelated individuals is divided into two major categories,
+cases, who have the trait under investigation, and controls, who do not. Cases and controls
+are further divided into the three possible unphased inheritance patterns
+for each separate marker assuming unknown parents. This information is provided to kelvin using a
+pedigree file with six families, typically named case11, case12, case22, control11, control12 and
+control22, and the count file which contains a table of counts of individuals falling into each
+pedigree category.
+The table has seven columns, one naming 
+the biallelic marker for which counts are provided, and six for the three case and three control 
+inheritance patterns involving the biallelic trait and that marker. There is a header row that
+names the families, followed by rows of counts. Only one row is used at a time
+since the same six inheritance pattern buckets are used in each time. If we wanted to do
+multipoint analysis with n biallelic markers, we'd have to have two times three to the n buckets.
+This wouldn't make sense anyhow, since we can only do LD with two-point, and LE tells us nothing
+without parental genotypes.
 
 <h3 id="CT">CT</h3>
 
@@ -389,6 +426,31 @@ specifications.
 
 <h3 id="LD">LD</h3>
 
+<h3 id="LOG">LOG</h3>
+Applicable to all types of analyses.
+<p>
+Changes the logging level for &lt;facility&gt; to &lt;severity&gt;.
+<p>
+By default, only fatal error messages are written to error output. The LOG directive allows
+messages for less severe issues to be displayed on a subsystem-by-subsystem basis.
+<p>
+Facility can be:
+<ul>inputfile
+<li>genoelim
+<li>parentalpair
+<li>peelgraph
+<li>likelihood
+<li>setrecoding
+</ul>
+<p>
+Severity can be:
+<ul>
+<li>fatal
+<li>error
+<li>warning
+<li>advise
+<li>debug
+</ul>
 <h3 id="MAX">MAX</h3>
 
 <h3 id="MIN">MIN</h3>
@@ -460,7 +522,7 @@ Applicable to all types of analyses.
 Specifies the name of the LINKAGE (FASTLINK) post-MAKEPED format pedigree file to be used
 in the analysis. Whitespace-separated columns are:
 <ol>
-<li>Pedigree number
+<li>Pedigree ID
 <li>Individual ID number
 <li>ID of father
 <li>ID of mother
@@ -471,7 +533,7 @@ in the analysis. Whitespace-separated columns are:
 <li>Proband status (1 for proband, other non-zero numbers indicated doubled IDs from loop-breaking.)
 <li>Trait phenotype and marker genotype information columns. Variable in number and described by the file specified
 by the pedigree companion file (<a href="#DF">DF</a> directive).
-<li>
+<li>Original (pre-MAKEPED) pedigree ID and individual ID in "Ped: <ID> Per: <ID>" format.
 </ol>
 <pre>
    PF pedfile.dat
