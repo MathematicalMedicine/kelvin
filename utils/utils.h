@@ -79,6 +79,12 @@
  *
  * Types of messages are defined as one of 32 orthogonal types.
  **********************************************************************/
+/**********************************************************************
+ * logFlag[] has to be global so the facility and severity can be
+ * checked BEFORE invocation of logMsg so that parameters that are
+ * function calls are not evaluated unnecessarily.
+ **********************************************************************/
+extern unsigned int logFlag[];
 void logInit ();
 void logSet (unsigned int type, int level);
 void logMsg (unsigned int type, int level, const char *format, ...);
@@ -145,8 +151,10 @@ void logMsg (unsigned int type, int level, const char *format, ...);
  **********************************************************************/
 #define KLOG(TYPE, LEVEL, ...)                                        \
 { \
-  logMsg (TYPE, MAX(LOGERROR,LEVEL), "%s (%d): ", (__FILE__),(__LINE__)); \
-  logMsg (TYPE, LEVEL, __VA_ARGS__);                                  \
+  if ((LEVEL == 0) || (TYPE & logFlag[LEVEL - 1])) { \
+    logMsg (TYPE, MAX(LOGERROR,LEVEL), "%s (%d): ", (__FILE__),(__LINE__)); \
+    logMsg (TYPE, LEVEL, __VA_ARGS__);                                  \
+  } \
 }
 
 /**********************************************************************
