@@ -611,6 +611,10 @@ readConfigFile (char *file)
 	logType = LOGLIKELIHOOD;
       else if (!strcasecmp (sLogType, "setrecoding"))
 	logType = LOGSETRECODING;
+      else if (!strcasecmp (sLogType, "memory"))
+	logType = LOGMEMORY;
+      else if (!strcasecmp (sLogType, "integration"))
+	logType = LOGINTEGRATION;
       else
 	logType = LOGDEFAULT;
 

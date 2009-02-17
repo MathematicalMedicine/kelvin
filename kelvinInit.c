@@ -58,6 +58,8 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
 #endif
   fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, (int) getpid ());
 
+  // THESE SHOULD BE SOMEWHERE ELSE
+
   memset (&savedLocusList, 0, sizeof (savedLocusList));
   memset (&markerLocusList, 0, sizeof (markerLocusList));
   memset (&traitLocusList, 0, sizeof (traitLocusList));
@@ -100,7 +102,7 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   KASSERT ((strlen (configfile) > 0), "No configuration file specified; aborting.\n");
 
   /* Parse the configuration file. */
-KASSERT (readConfigFile (configfile)
+  KASSERT (readConfigFile (configfile)
            != ERROR, "Error in configuration file; aborting.\n");
 
   /* For now, reject all models we can't deal with. */

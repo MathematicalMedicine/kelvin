@@ -127,6 +127,9 @@ void logMsg (unsigned int type, int level, const char *format, ...);
 /* memory management */
 #define LOGMEMORY	(1 << 8)
 
+/* integration (dcuhre) */
+#define LOGINTEGRATION	(1 << 9)
+
 /**********************************************************************
  * Macros for use in invoking the log function. These macro "wrappers"
  * provide for automatic inclusion of source filename and line number.

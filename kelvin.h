@@ -96,6 +96,7 @@ extern char loopsfile[KMAXFILENAMELEN + 1];
 #endif
 extern char ccfile[KMAXFILENAMELEN + 1];
 extern char avghetfile[KMAXFILENAMELEN + 1];
+extern char condFile[KMAXFILENAMELEN + 1];
 extern char avghomofile[KMAXFILENAMELEN + 1];
 extern char pplfile[KMAXFILENAMELEN + 1];
 extern char intermediatefile[KMAXFILENAMELEN + 1];
