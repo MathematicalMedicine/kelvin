@@ -1,5 +1,11 @@
+Version ??
+  Case control (CC) directive replaces CF
+  directive. Count file (CF) directive added to permit 
+  ASP and trios data to be efficiently represented and 
+  processed. Revitalized KLOG and LOG directive.
+
 Version 0.37.1
-  Numerious bugfixes in LD handling and estimation in
+  Numerous bugfixes in LD handling and estimation in
   cases with different numbers of marker alleles. Now
   uses proper intervals and quadratic interpolation for
   distributions. AS directive handling of Inf fixed.
