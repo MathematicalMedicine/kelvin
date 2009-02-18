@@ -1,31 +1,27 @@
-#!/usr/bin/perl -w
-use List::Util qw(sum);
+#!/usr/bin/perl -ws
 use strict;
+use List::Util qw(sum);
 
 # Usual header comments go here...
 
 $| = 1;    # Force flush of output as printed.
 
-use constant FALSE => 0;
-use constant TRUE => 1;
-
 # Defaults to be overridden by configuration file directives
 use constant AttributeMissing => 0;
-use constant DefaultUnknownAffection => 0;
-use constant DefaultUnaffected   => 1;
-use constant DefaultAffected => 2;
 
 # Sanctioned globals
-my $Usage = "Usage \"perl $0 <configuration file, like kelvin.conf>\"\n";
-my @Depths; # Referenced recursively and I'm fuddled
-my @Ancestors; # ditto
-my $ShortestLoop = "";
-my ($UnknownAffection, $Unaffected, $Affected);
+my $UnknownAffection = 0; my $Unaffected = 1; my $Affected = 2; # Affection indicators
 my %Pedigrees; # Pedigrees as loaded
 my %Directives; # Directives as loaded
 my $PairCount = 0; # Last pedigree count of marker pairs
 my @Loci; # Ordered loci list from companion file
 my %LociAttributes; # Loci attributes from companion and marker files
+
+# Nuisance globals
+my @Depths; # Referenced recursively and I'm fuddled
+my @Ancestors; # ditto
+my $ShortestLoop = ""; # Just batted around too much to monkey with right now.
+
 my %TrioBuckets = 
     ( ' 0 0' => { ' 0 0' => { ' 0 0' => 'T30',  # 30  0 0  0 0  0 0
 			      ' 1 1' => 'T18',  # 18  0 0  0 0  1 1
@@ -367,12 +363,13 @@ sub simpleLoop() {
 #
 sub loadConf {
     my $File = shift();
-    die "$File is not a file. $Usage" if (!-f $File);
+    die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open $File\n";
     %Directives = ();
     while (<IN>) {
 	s/\s*\#.*//g; # Trim comments
 	next if (/^$/); # Drop empty lines
+	s/^\s*//g; # Trim leading whitespace
 	my @Parameters = split;
 	my $Directive = shift @Parameters;
 	$Directives{$Directive} = \@Parameters;
@@ -381,10 +378,6 @@ sub loadConf {
 	$UnknownAffection = $Directives{AS}[0];
 	$Unaffected = $Directives{AS}[1];
 	$Affected = $Directives{AS}[2];
-    } else {
-	$UnknownAffection = DefaultUnknownAffection;
-	$Unaffected = DefaultUnaffected;
-	$Affected = DefaultAffected;
     }
 }
 
@@ -393,26 +386,43 @@ sub loadConf {
 
 sub assessPedigree {
     my $File = shift();
-    die "$File is not a file. $Usage" if (!-f $File);
+    die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
     while (<IN>) {
 	s/\s*\#.*//g; # Trim comments
 	next if (/^$/); # Drop empty lines
+	s/^\s*//g; # Trim leading whitespace
+	close IN;
 	my @Columns = split /\s+/;
 	# See if the number of columns makes any kind of sense...
-	# Subtract 2*Loci - 1 (for single trait column) and 5 common columns
-	my $Slack = scalar(@Columns) - ((scalar(@Loci) * 2) - 1) - 5;
-	if ($Slack == 8) {
-	    print "POST\n";
-	} elsif ($Slack == 4) {
-	    print "POST with old tail cut off\n";
-	} elsif ($Slack == 0) {
-	    print "PRE\n";
-	} elsif ($Slack == -2) {
-	    print "No-parent PRE (CC)\n";
+	$MarkerColumns = scalar(@Loci) * 2;
+	if ($pre) {
+	    if ($MarkerColumns != 0) {
+	    } else {
+	    }
+	} elsif ($post) {
+	    if ($MarkerColumns != 0) {
+	    } else {
+	    }
+	} elsif ($bare) {
+	    if ($MarkerColumns != 0) {
+	    } else {
+	    }
+	} else {
+	    if ($MarkerColumns != 0) {
+		# Subtract 2*Loci - 1 (for single trait column) and 5 common columns
+		my $Slack = scalar(@Columns) - ((scalar(@Loci) * 2) - 1) - 5;
+		$Slack += 2 if ($noparents);
+		return "POST" if (($Slack == 8) || ($Slack == 4)); # With our without old "Ped: x Ind: y"
+		return "PRE" if ($Slack == 0);
+		return "BARE" if ($Slack == -2);
+		return "Unknown w/".scalar(@Columns)." columns";
+
+	    } else {
+		# Assume post-MAKEPED and be surprised if it isn't.
+		return "POST";
+	    }
 	}
-	close IN;
-	return;
     }
 }
 
@@ -424,18 +434,29 @@ sub assessPedigree {
 #
 # ...at the moment, this is global and dynamic.
 
-sub loadPostPedigree {
+sub loadPedigree {
     my $File = shift();
-    die "$File is not a file. $Usage" if (!-f $File);
+    my $Type = shift();
+    die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
     %Pedigrees = ();
-    my $MkC;
+    my $MkC = 0; my $GtC;
+    my ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Markers);
     while (<IN>) {
 	s/\s*\#.*//g; # Trim comments
 	next if (/^$/); # Drop empty lines
-	my ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Markers) = split /\s+/;
+	s/^\s*//g; # Trim leading whitespace
+	if ($Type eq "POST") {
+	    ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Markers) = split /\s+/;
+	} elsif ($Type eq "PRE") {
+	    ($Ped, $Ind, $Dad, $Mom, $Sex, $Aff, @Markers) = split /\s+/;
+	} elsif ($Type eq "RAWCC") {
+	    ($Ped, $Ind, $Sex, $Aff, @Markers) = split /\s+/;
+	} else {
+	    die "Unhandled pedigree type \"$Type\".";
+	}
 	my ($OldFam, $OldInd, $Left);
-	$MkC = 0;
+	$MkC = 0; $GtC = 0;
 	my @Pairs = ();
 	for my $Marker (@Markers) {
 	    if ($Marker eq "Ped:") {
@@ -444,6 +465,7 @@ sub loadPostPedigree {
 		last;
 	    }
 	    $MkC++;
+	    $GtC++ if ($Marker != AttributeMissing);
 	    if ($MkC & 1) {
 		$Left = $Marker;
 	    } else {
@@ -453,12 +475,13 @@ sub loadPostPedigree {
 	$Pedigrees{$Ped}{$Ind}{Dad} = $Dad;
 	$Pedigrees{$Ped}{$Ind}{Mom} = $Mom;
 	$Pedigrees{$Ped}{$Ind}{Kid1} = $Kid1;
-	$Pedigrees{$Ped}{$Ind}{nPs} = $nPs;
-	$Pedigrees{$Ped}{$Ind}{nMs} = $nMs;
-	$Pedigrees{$Ped}{$Ind}{Sex} = $Sex;
-	$Pedigrees{$Ped}{$Ind}{Prb} = $Prb;
-	$Pedigrees{$Ped}{$Ind}{Aff} = $Aff;
-	$Pedigrees{$Ped}{$Ind}{MkC} = $MkC;
+	$Pedigrees{$Ped}{$Ind}{nPs} = $nPs; # Next paternal sibling
+	$Pedigrees{$Ped}{$Ind}{nMs} = $nMs; # Next maternal sibling
+	$Pedigrees{$Ped}{$Ind}{Sex} = $Sex; 
+	$Pedigrees{$Ped}{$Ind}{Prb} = $Prb; # Proband
+	$Pedigrees{$Ped}{$Ind}{Aff} = $Aff; 
+	$Pedigrees{$Ped}{$Ind}{MkC} = $MkC; # Marker count (should always be the same)
+	$Pedigrees{$Ped}{$Ind}{GtC} = $GtC; # Genotype count (how complete is genotyping)
 	$Pedigrees{$Ped}{$Ind}{Mks} = [@Pairs];
 	$Pedigrees{$Ped}{$Ind}{OldFam} = $OldFam;
 	$Pedigrees{$Ped}{$Ind}{OldInd} = $OldInd;
@@ -473,7 +496,7 @@ sub loadPostPedigree {
 
 sub loadCompanion {
     my $File = shift();
-    die "$File is not a file. $Usage" if (!-f $File);
+    die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
     my $LineNo = 0;
     @Loci = (); %LociAttributes = ();
@@ -481,6 +504,7 @@ sub loadCompanion {
 	$LineNo++;
 	s/\s*\#.*//g; # Trim comments
 	next if (/^$/); # Drop empty lines
+	s/^\s*//g; # Trim leading whitespace
 	my ($Type, $Name) = split /\s+/;
 	die "Unknown locus type \"$Type\" at line $LineNo in marker description companion file $File\n"
 	    if (($Type ne "T") and ($Type ne "M"));
@@ -495,7 +519,7 @@ sub loadCompanion {
 
 sub loadMarkers {
     my $File = shift();
-    die "$File is not a file. $Usage" if (!-f $File);
+    die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
     my $LineNo = 0;
     my $Name = "";
@@ -548,21 +572,16 @@ sub checkRelations {
 sub perfStats {
 
     my %CountsLabels = (MsgMkr => "Missing Markers",
-			MsgSib => "Missing Next Sibling(s)",
 			MsgAff => "Missing Affected Status",
 			MsgSex => "Missing Sex",
 			Fdrs => "Founders",
-			NoFdrs => "Non-Founders",
-			FdrsMM => "Founders Without Markers", 
-			MsgPPM => "Individuals Missing Parental Markers");
-
-    my %PedMsg = ();
-    my @PedSiz = ();
-    my @PedNuk = ();
+			NoFdrs => "Non-Founders");
+    my %PedCat = (); # Hash of counts for labelled categories indexed by pedigree
+    my @PedSiz = (); # List of counts of individuals in pedigree
+    my @PedNuk = (); # List of counts of nuclear families in pedigrees
     my $Avg;
     for my $Ped (keys %Pedigrees) {
-	push @PedSiz, keys(%{ $Pedigrees{$Ped} }) + 0;
-	my %Seen = ();
+	my %Seen = (); # Parental pairs seen (i.e. nuclear families seen)
 	for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
 	    my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
             my $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
@@ -570,24 +589,16 @@ sub perfStats {
 		$Seen{ $Mom . "+" . $Dad }++;
 	    }
             if (($Dad == AttributeMissing) && ($Mom == AttributeMissing)) {
-		$PedMsg{$Ped}{Fdrs}++;
-		if ($Pedigrees{$Ped}{$Ind}{MkC} eq FALSE) { $PedMsg{$Ped}{FdrsMM}++; }
+		$PedCat{$Ped}{Fdrs}++;
             } else {
-		$PedMsg{$Ped}{NoFdrs}++;
+		$PedCat{$Ped}{NoFdrs}++;
 	    }
-            if (($Pedigrees{$Ped}{$Dad}{MkC} eq FALSE) && ($Pedigrees{$Ped}{$Mom}{MkC} eq FALSE)) {
-                $PedMsg{$Ped}{MsgPPM}++;
-            }
-            if ($Pedigrees{$Ped}{$Ind}{MkC} eq FALSE) { $PedMsg{$Ped}{MsgMkr}++; }
-            if ($Pedigrees{$Ped}{$Ind}{nPs} == AttributeMissing) { $PedMsg{$Ped}{MsgSib}++; }
-            if ($Pedigrees{$Ped}{$Ind}{nMs} == AttributeMissing) { $PedMsg{$Ped}{MsgSib}++; }
-            if ($Pedigrees{$Ped}{$Ind}{Aff} == AttributeMissing)    { $PedMsg{$Ped}{MsgAff}++; }
-            if ($Pedigrees{$Ped}{$Ind}{Sex} == AttributeMissing) { $PedMsg{$Ped}{MsgSex}++; }
+            if ($Pedigrees{$Ped}{$Ind}{GtC} == 0) { $PedCat{$Ped}{MsgMkr}++; }
+            if ($Pedigrees{$Ped}{$Ind}{Aff} == AttributeMissing)    { $PedCat{$Ped}{MsgAff}++; }
+            if ($Pedigrees{$Ped}{$Ind}{Sex} == AttributeMissing) { $PedCat{$Ped}{MsgSex}++; }
         }
-        push @PedNuk, keys(%Seen) + 0;
-        if ($PedMsg{$Ped}{Fdrs} == $PedMsg{$Ped}{FdrsMM}) {
-	    print "Pedigree $Ped of " . $PedMsg{$Ped}{Fdrs} . " founders and " . $PedMsg{$Ped}{NoFdrs} . " non-founders has no founder markers!\n";
-	}
+	push @PedSiz, scalar(keys(%{ $Pedigrees{$Ped} }));
+        push @PedNuk, scalar(keys(%Seen));
     }
 
     @PedSiz = sort numerically @PedSiz;
@@ -598,19 +609,19 @@ sub perfStats {
     $Avg = sprintf("%.2f", (sum @PedNuk) / @PedNuk);
     print "...Nuclear family counts: min:" . $PedNuk[0] . " max:" . $PedNuk[-1] . " med:" . $PedNuk[ $#PedNuk / 2 ] . " avg: $Avg\n";
 
-    for my $i (0 .. 7) {
+    for my $Label (keys %CountsLabels) {
 	my @Counts = ();
 	for my $Ped (keys %Pedigrees) {
-	    push @Counts, $PedMsg{$Ped}[$i] + 0;
+	    push @Counts, $PedCat{$Ped}{$Label};
 	}
 	@Counts = sort numerically @Counts;
-	print "..." . $CountsLabels{$i} . ": ";
+	print "..." . $CountsLabels{$Label} . ": ";
 	$Avg = sprintf("%.2f", (sum @Counts) / @Counts);
 	print "min:" . $Counts[0] . " max:" . $Counts[-1] . " med:" . $Counts[ $#Counts / 2 ] . " avg: $Avg\n";
     }
 
     # Depth statistics -- the number of direct ancestors
-    for my $Ped (keys %Pedigrees) {
+    for my $Ped (sort numerically keys %Pedigrees) {
 	@Ancestors = ();
 	for my $Ind (keys %{ $Pedigrees{$Ped} }) {
 	    push @Ancestors, &countAncestors($Ped, $Ind, 0);
@@ -741,31 +752,66 @@ sub bucketizePedigrees {
 	}
     }
     foreach my $Bucket (sort keys (%Buckets)) {
-	print "Bucket $Bucket has ".$Buckets{$Bucket}." entries\n";
+#	print "Bucket $Bucket has ".$Buckets{$Bucket}." entries\n";
     }
 }
 
 # Verify command line parameters
-die "$#ARGV arguments supplied. $Usage" if ($#ARGV < 0);
+my $Usage = <<EOF;
 
-my $ConfFile = shift;
+Usage "perl $0 [<flags>...] <input file>"
 
-loadConf($ConfFile);
-my $companionFile = "datafile.dat";
-if ($Directives{DF}[0] ne "") { $companionFile = $Directives{DF}[0]; }
-loadCompanion($companionFile);
-my $markersFile = "markers.dat";
-if ($Directives{MK}[0] ne "") { $markersFile = $Directives{MK}[0]; }
-loadMarkers($markersFile);
-my $pedFile = "pedpost.dat";
-if ($Directives{PD}[0] ne "") { $pedFile = $Directives{PD}[0]; }
-assessPedigree($pedFile);
+where <flags> are any of:
 
-#loadPostPedigree($pedFile);
-#bucketizePedigrees();
+-config		The input file specified is a KELVIN configuration file. Otherwise
+		it is assumed to be a pedigree file.
+-pre		Pedigrees are in pre-MAKEPED format.
+-post		Pedigrees are in post-MAKEPED format.
+-noparents	Pedigrees are in pre-MAKEPED format with no columns for parents.
+-bare		The pedigree file has only affection status and marker allele pairs
+-counts		Generate new pedigree file and counts
 
-#checkRelations();
-#perfStats();
+The input file will be read and analyzed. If it is a configuration file,
+the input files it references will be read and analyzed as well. 
+
+If counts are requested, a new pedigree file (in the same PRE/POST format 
+as the input) will be generated along with a count file. If only a pedigree
+file was provided, dummy configuration, pedigree companion, marker and map 
+files will be generated for a two-point LD run with marker allele frequencies 
+computed from the controls?! If a configuration file was provided, the marker 
+names from the companion and marker files it specifies will be used.
+
+EOF
+
+die "Invalid number of arguments supplied.\n$Usage" if ($#ARGV < 0);
+
+my $config;
+my $counts;
+my $pedFile;
+
+if ($config) {
+    my $ConfFile = shift;
+    print "Processing configuration file $ConfFile\n";
+    $pedFile = "pedpost.dat";
+    loadConf($ConfFile);
+    my $companionFile = "datafile.dat";
+    if ($Directives{DF}[0] ne "") { $companionFile = $Directives{DF}[0]; }
+    loadCompanion($companionFile);
+    my $markersFile = "markers.dat";
+    if ($Directives{MK}[0] ne "") { $markersFile = $Directives{MK}[0]; }
+    loadMarkers($markersFile);
+    if ($Directives{PD}[0] ne "") { $pedFile = $Directives{PD}[0]; }
+} else {
+    $pedFile = shift;
+    print "Processing pedigree file $pedFile\n";
+}
+my $pedFileType = assessPedigree($pedFile);
+loadPedigree($pedFile, $pedFileType);
+if ($counts) {
+    bucketizePedigrees();
+}
+checkRelations();
+perfStats();
 simpleLoop();
 
 exit;
