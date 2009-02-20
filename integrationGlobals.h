@@ -1,10 +1,9 @@
 int dprimeIdx, dprime0Idx;
 int num_out_constraint;
 
-double fixed_theta;
-double fixed_dprime;
-FILE *fpSeok = NULL;		// Not used anymore
-FILE *fpSeok_theta = NULL;	// Not used anymore
+double fixed_theta, fixed_dprime;
+double fixed_thetaM,fixed_thetaF; // Sex-specific analysis
+
 
 double maxima_x[17];
 double maximum_function_value = 0.0;

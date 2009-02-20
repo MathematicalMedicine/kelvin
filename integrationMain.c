@@ -1,8 +1,16 @@
-
+  /* total_dim is the number of all parameters in the 3-layer scheme
+          s->dim in dcuhre.c is the number of parameters in the middle layer alone*/
   total_dim = 2;		// alpha gf
   total_dim += 3 * modelRange.nlclass;	//DD Dd dd
+  if(modelOptions.imprintingFlag)
+    total_dim += modelRange.nlclass;	//dD
+
+
   if (modelType.type == TP) {
     total_dim += 1;		// theta;
+    if(modelOptions.mapFlag == SS)
+      total_dim += 1;		// theta sex-specific case;
+
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
       total_dim += 1;		// dprime
     }
@@ -11,6 +19,9 @@
   if (modelType.trait != DT) {
     if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
       total_dim += 3 * modelRange.nlclass;	//SD_DD SD_Dd SD_dd
+
+      if(modelOptions.imprintingFlag)
+        total_dim += modelRange.nlclass;   // SD_dD
     }
     if (modelType.trait == CT) {
       total_dim += modelRange.nlclass;
@@ -26,24 +37,49 @@
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
 	xl[k] = xl[k + 1] = xl[k + 2] = -3;
 	xu[k] = xu[k + 1] = xu[k + 2] = 3;
+        if(modelOptions.imprintingFlag){
+          xl[k+3]= -3;
+          xu[k+3]= 3;
+	}
       } else {
-	xl[k] =     0.1;
-        xl[k + 1] = 0.1;
-        xl[k + 2] = 0.1;
-	xu[k] =     30.0;
-        xu[k + 1] = 30.0;
-        xu[k + 2] = 30.0; //10.0; //23.0; //4.0;//30;
+	xl[k] =    modelRange.penetLimits[0][0];//0.1;
+        xl[k + 1] =modelRange.penetLimits[1][0];//0.1;
+        xl[k + 2] =modelRange.penetLimits[3][0];//0.1;
+	xu[k] =    modelRange.penetLimits[0][1];//30.0;
+        xu[k + 1] =modelRange.penetLimits[1][1];//30.0;
+        xu[k + 2] =modelRange.penetLimits[3][1];//30.0; //10.0; //23.0; //4.0;//30;
+
+        if(modelOptions.imprintingFlag){
+          xl[k+2]=  modelRange.penetLimits[2][0];
+          xu[k+2]= modelRange.penetLimits[2][1];
+          xl[k+3]=  modelRange.penetLimits[3][0];
+          xu[k+3]= modelRange.penetLimits[3][1];
+	}
+
       }
       volume_region *= (xu[k] - xl[k]);
       volume_region *= (xu[k + 1] - xl[k + 1]);
       volume_region *= (xu[k + 2] - xl[k + 2]);
+      if(modelOptions.imprintingFlag){
+        volume_region *= (xu[k + 3] - xl[k + 3]);
+        k++;
+      }
       k += 3;
+
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
 	xl[k] = xl[k + 1] = xl[k + 2] = 0.3;
 	xu[k] = xu[k + 1] = xu[k + 2] = 1.0;//3.0;
+        if(modelOptions.imprintingFlag){
+          xl[k+3]= 0.3;
+          xu[k+3]= 1.0;
+	}
 	volume_region *= (xu[k] - xl[k]);
 	volume_region *= (xu[k + 1] - xl[k + 1]);
 	volume_region *= (xu[k + 2] - xl[k + 2]);
+        if(modelOptions.imprintingFlag){
+          volume_region *= (xu[k + 3] - xl[k + 3]);
+          k++;
+        }
 	k += 3;
       }
       if (modelType.trait == CT) {
@@ -54,11 +90,9 @@
 	//   fprintf(stderr, " in CT\n ");
 
       }
-    }
+    }  // retangular volume region is calculated and stored in volume_region
 
-    fprintf (stderr,
-	     "The number of dimension for calculation of BR should be %d\n",
-	     k);
+    fprintf (stderr,"The number of dimension for calculation of BR is %d\n",k);
   }
 
   /* only for multipoint - we don't handle LD under multipoint yet */
@@ -84,18 +118,6 @@
     fprintf (stderr, "Quantitative Trait without threshold & ");
   else
     fprintf (stderr, "Quantitative Trait with threshold & ");
-
-  fprintf (stderr, "%s\n",
-	   (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) ? "LE" : "LD");
-  fprintf (stderr, "Total number of markers in data: %d\n",
-	   originalLocusList.numLocus - originalLocusList.numTraitLocus);
-  fprintf (stderr, "Total number of trait locus in data: %d\n",
-	   originalLocusList.numTraitLocus);
-  fprintf (stderr, "Total number of families in pedigree file: %d\n",
-	   pedigreeSet.numPedigree);
-  fprintf (stderr, "Number of loci to use for analysis: %d\n",
-	   modelType.numMarkers + originalLocusList.numTraitLocus);
-
 
   /* assume the trait locus is the first one in the list */
   traitLocus = 0;
@@ -167,7 +189,7 @@
 
       for (loc2 = loc1 + 1; loc2 < originalLocusList.numLocus; loc2++) {
 
-	maximum_function_value = 0.0;
+	maximum_function_value = 0.0;  // global max 
 
 	pLocus2 = originalLocusList.ppLocusList[loc2];
 	if (pLocus2->locusType != LOCUS_TYPE_MARKER)
@@ -175,8 +197,13 @@
 	savedLocusList.pLocusIndex[1] = loc2;
 
 #ifndef SIMPLEPROGRESS
-        fprintf (stdout, "Starting w/loci %s and %s (%d of %d pairs)\n", pLocus1->sName, pLocus2->sName,
-                 loc2, originalLocusList.numLocus - 1);
+	if (modelOptions.markerAnalysis == MM)
+	  fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles\n", 
+		   pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele);
+	else
+	  fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)\n",
+		   pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele,
+		   loc2, originalLocusList.numLocus - 1);
 #endif
 
 	/* find out number of alleles this marker locus has *//* Check if this is okay with DCUHRE  ???????????? */
@@ -189,20 +216,14 @@
 	  // Create these variables ahead of likelihood polynomial build in hopes of preventing in-build creation.
 
 	  if (modelOptions.polynomial == TRUE) {
-	    /*
-	    for (k = 0; k < pAlleleSet1->numAllele; k++) {
-	      for (l = 0; l < pAlleleSet2->numAllele; l++) {
-		allele1 = pAlleleSet1->pAlleles[k];
-		allele2 = pAlleleSet2->pAlleles[l];
-		sprintf (vName, "ppHaploFreq_lA%d_rA%d", allele1 - 1, allele2 - 1);
-		variableExp (&pLDLoci->ppHaploFreq[allele1 - 1][allele2 - 1], NULL, 'D', vName);
+	    char vName[128];
+	    int a0, a1;
+	    for (a0 = 0; a0 < pLocus1->numOriginalAllele; a0++) {
+	      for (a1 = 0; a1 < pLocus2->numOriginalAllele; a1++) {
+		sprintf (vName, "ppHaploFreq_lA%d_rA%d", a0, a1);
+		variableExp (&pLDLoci->ppHaploFreq[a0][a1], NULL, 'D', vName);
 	      }
 	    }
-	    */
-	    variableExp (&pLDLoci->ppHaploFreq[0][0], NULL, 'D', "ppHaploFreq_lA0_rA0");
-	    variableExp (&pLDLoci->ppHaploFreq[0][1], NULL, 'D', "ppHaploFreq_lA0_rA1");
-	    variableExp (&pLDLoci->ppHaploFreq[1][0], NULL, 'D', "ppHaploFreq_lA1_rA0");
-	    variableExp (&pLDLoci->ppHaploFreq[1][1], NULL, 'D', "ppHaploFreq_lA1_rA1");
 	  }
 
 
@@ -241,8 +262,7 @@
 	    else
 	      update_locus (&pedigreeSet, loc2);
 	  }
-	  fprintf (stderr, "mkrFreq =%d  model nafreq= %d \n",
-		   mkrFreqIdx, modelRange.nafreq);
+	  //	  fprintf (stderr, "mkrFreq =%d  model nafreq= %d \n",mkrFreqIdx, modelRange.nafreq);
 
 
 	  if (1 && modelOptions.markerAnalysis == FALSE) {
@@ -293,47 +313,41 @@
           fprintf (fpHet, "\n");
 
 
+          /* analysis specific statistic initialization*/
+          if(modelOptions.mapFlag == SA){
+	    le_small_theta = 0.0;
+	    le_big_theta = 0.0;
+	    ld_small_theta = 0.0;
+	    ld_big_theta = 0.0;
+	    ld_unlinked = 0.0;
+            le_unlinked=0.0;
 
-	  /*	  fprintf (fpHet, "# %-d  %s %s \n", loc2, pLocus1->sName,
-		   pLocus2->sName);
-	  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-	    fprintf (fpHet, "Dprime ");
+            num_BR= num_sample_Dp_theta;  // currently 141
+
+	  }else{      ///  This is for sec-specific analysis in four regions
+            thetaSMSF= 0.0;  // 0< thetaM <0.05  0< thetaF <0.05  
+            thetaBMSF= 0.0;  // 0.05< thetaM <0.5  0< thetaF <0.05  
+            thetaSMBF= 0.0;  // 0< thetaM <0.05  0.05< thetaF <0.5  
+            thetaBMBF= 0.0;  // 0.05< thetaM <0.05  0.05< thetaF <0.5 
+            
+            num_BR = num_sample_SS_theta;  // currenlty 260
 	  }
-	  if (modelType.trait == DICHOTOMOUS) {
-	    fprintf (fpHet, "%6s %6s %8s %8s %8s %6s %6s %5s %5s %5s \n",
-		     "Theta", "COUNT", "BR", "ERR_EST", "MAX_HLOD", "ALPHA",
-		     "DGF", "PEN_DD", "PEN_Dd", "PEN_dd");
-	  } else {
-	    fprintf (fpHet, "%6s %6s %8s %8s %8s %6s %6s %5s %5s %5s ",
-		     "Theta", "COUNT", "BR", "ERR_EST", "MAX_HLOD", "ALPHA",
-		     "DGF", "MEAN_DD", "MEAN_Dd", "MEAN_dd");
-	    if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-	      fprintf (fpHet, " %5s %5s %5s ", "SD_DD", "SD_Dd", "SD_dd");
+
+	  /*The main loop to Calculate BR(theta, dprime) or BR(thetaM, thetaF)*/
+   	  for (i = 0; i < num_BR; i++) {    /* num_BR = 141 for Sex-Average Analysis
+					              = 260 for Sex-Specific Analysis */
+            if(modelOptions.mapFlag == SA){ 
+	      fixed_dprime = dcuhre2[i][0];
+	      fixed_theta = dcuhre2[i][1];
+	    }else{
+              fixed_thetaM = thetaSS[i][0];
+              fixed_thetaF = thetaSS[i][1];
 	    }
-	    if (modelType.trait == CT) {
-	      fprintf (fpHet, "  %5s", "t");
-	    }
-	    fprintf (fpHet, "\n");
-	    }*/
-
-
-	  le_small_theta = 0.0;
-	  le_big_theta = 0.0;
-	  ld_small_theta = 0.0;
-	  ld_big_theta = 0.0;
-	  ld_unlinked = 0.0;
-          le_unlinked=0.0;  // This is now for BR at Dprime =0 and theta =0.5 
-
-	  for (i = 0; i < 141; i++) {//for (i = 0; i < 147; i++) {
-	    fixed_dprime = dcuhre2[i][0];
-	    fixed_theta = dcuhre2[i][1];
-
-	    integral = 0.0;
+   	    integral = 0.0;
 	    abserr = 0.0;
-	    fprintf (stderr, "i=%d Dprime=%f theta=%f \n", i, fixed_dprime, fixed_theta);
-	    // fprintf(fpSeok_theta,"%f %f ",      fixed_dprime, fixed_theta);
-
-	    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+	      //fprintf (stderr, "i=%d Dprime=%f theta=%f \n", i, fixed_dprime, fixed_theta);
+	   
+	    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {  // checking Dprime
 	      for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
 		if (fabs (pLambdaCell->lambda[dprimeIdx][0][0] - fixed_dprime) < 0.0001) {
 		  // fprintf(stderr,"dprimeIdx =%d with %15.13f which is matching wit fixed_dprime\n",dprimeIdx,pLambdaCell->lambda[dprimeIdx][0][0]);
@@ -345,21 +359,20 @@
 		exit (0);
 	      }
 	    }
-
 	    num_out_constraint = 0;
+
+            /* Call DCUHRE  Domain information is stored in global variables,  xl an xu*/
 	    kelvin_dcuhre_integrate (&integral, &abserr, volume_region);
 	    
-	    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-	      integral *= 6;
-	      abserr *= 6;
-	    }
-	    integral /= volume_region;
-	    abserr /= volume_region;
 	    dcuhre2[i][3] = integral;
 
 
             /* Dk specific results*/
-            fprintf(fpIR,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_dprime,fixed_theta, s->total_neval, integral, abserr,log10 (localmax_value));
+            if(modelOptions.imprintingFlag){
+              fprintf(fpIR,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_thetaM,fixed_thetaF, s->total_neval, integral, abserr,log10 (localmax_value));
+	    }else{
+              fprintf(fpIR,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_dprime,fixed_theta, s->total_neval, integral, abserr,log10 (localmax_value));
+	    }
   	    fflush (fpIR);     
        
             R_square = 0.0;// tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square;
@@ -377,21 +390,23 @@
             j=2;
             for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
 
-
-	      if (modelOptions.imprintingFlag)
-	        fprintf (fpHet, " (%.3f,%.3f,%.3f,%.3f", localmax_x[j],localmax_x[j+1],localmax_x[j+1],localmax_x[j+2]);
-	      else
+	      if (modelOptions.imprintingFlag){
+	        fprintf (fpHet, " (%.3f,%.3f,%.3f,%.3f", localmax_x[j],localmax_x[j+1],localmax_x[j+2],localmax_x[j+3]);
+                j += 4;
+	      }else{
 	        fprintf (fpHet, " (%.3f,%.3f,%.3f", localmax_x[j],localmax_x[j+1],localmax_x[j+2]);
+                j += 3;
+	      }
 
-              j += 3;
 	      if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
 
-	        if (modelOptions.imprintingFlag)
-	          fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f", localmax_x[j], localmax_x[j + 1], localmax_x[j + 1],localmax_x[j + 2]);
-	        else
+	        if (modelOptions.imprintingFlag){
+	          fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f", localmax_x[j], localmax_x[j + 1], localmax_x[j + 2],localmax_x[j + 3]);
+		  j +=4;
+	        }else{
 	          fprintf (fpHet, ",%.3f,%.3f,%.3f", localmax_x[j], localmax_x[j + 1], localmax_x[j + 2]);
-                
-                j +=3;
+                  j +=3;
+		}
 	      }
 	      if (modelType.trait != DT) {
 	        fprintf (fpHet, ",%.3f)", localmax_x[j++]);
@@ -400,78 +415,101 @@
             }
             fprintf (fpHet, "\n");
 
+	    if (maximum_function_value < localmax_value) {
+	      maximum_function_value = localmax_value;
 
-	    if (modelType.trait == DICHOTOMOUS) {
-	      if (maximum_function_value < localmax_value) {
-		maximum_function_value = localmax_value;
+	      if (modelOptions.imprintingFlag){
 		maxima_x[0] = fixed_dprime;
 		maxima_x[1] = fixed_theta;
-		maxima_x[2] = localmax_x[0];
-		maxima_x[3] = localmax_x[1];
-		for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-		  maxima_x[liabIdx * 3 + 4] = localmax_x[liabIdx * 3 + 2];
-		  maxima_x[liabIdx * 3 + 5] = localmax_x[liabIdx * 3 + 3];
-		  maxima_x[liabIdx * 3 + 6] = localmax_x[liabIdx * 3 + 4];
-		}
+	      }else{
+		maxima_x[0] = fixed_thetaM;
+		maxima_x[1] = fixed_thetaF;
 	      }
-	    } else {		//QT
+	      maxima_x[2] = localmax_x[0];  //gf
+	      maxima_x[3] = localmax_x[1];  //alpha
+              j=2;
+	      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+		maxima_x[2+j] = localmax_x[  j];
+		maxima_x[3+j] = localmax_x[1+j];
+		maxima_x[4+j] = localmax_x[2+j];
 
-	      fprintf (stderr, " num out constraint=  %d\n", num_out_constraint);
+                if (modelOptions.imprintingFlag){
+		  maxima_x[5+j] = localmax_x[3+j];
+                  j+=4;
+		}else{
+                  j+=3;
+		}
 
-	      if (maximum_function_value < localmax_value) {
-		maximum_function_value = localmax_value;
-		maxima_x[0] = fixed_dprime;
-		maxima_x[1] = fixed_theta;
-		maxima_x[2] = localmax_x[0];	// gf
-		maxima_x[3] = localmax_x[1];	// alpha
-		j = 2;
-		for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-		  maxima_x[j + 2] = localmax_x[j];	//mean_DD
-		  maxima_x[j + 3] = localmax_x[j + 1];	//mean_Dd
-		  maxima_x[j + 4] = localmax_x[j + 2];	//mean_dd
-		  j += 3;
+	        if (modelType.trait != DICHOTOMOUS) {
+                  // fprintf (stderr, " num out constraint=  %d\n", num_out_constraint);
+
 		  if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-		    maxima_x[j + 2] = localmax_x[j];	// SD_DD
-		    maxima_x[j + 3] = localmax_x[j + 1];	// SD_Dd        
-		    maxima_x[j + 4] = localmax_x[j + 2];	// SD_dd
-		    j += 3;
-		  }
-		  if (modelType.trait == CT) {
-		    maxima_x[j + 2] = localmax_x[j];	// t
-		    j++;
+		    maxima_x[2+j] = localmax_x[  j];//SD_DD
+		    maxima_x[3+j] = localmax_x[1+j];//SD_Dd
+		    maxima_x[4+j] = localmax_x[2+j];//SD_dD or SD_dd
+
+                    if (modelOptions.imprintingFlag){
+		      maxima_x[5+j] = localmax_x[3+j];//SD_dd
+                      j+=4;
+		    }else{
+                      j+=3;
+		    }
+	   	    if (modelType.trait == CT) {
+		      maxima_x[2+j] = localmax_x[j];	// t
+		      j++;
+		    }
 		  }
 		}
 	      }
 	    }			/* End of writing max */
 	    fflush (fpHet);
-	    fprintf (stderr, "tp result %f %f is %13.10f   \n",  fixed_theta, fixed_dprime, integral);
+	    //fprintf (stderr, "tp result %f %f is %13.10f   \n",  fixed_theta, fixed_dprime, integral);
 
-	    if (i < 5) {
-	      le_small_theta += integral * dcuhre2[i][2];
-	    } else if (i < 10) {
-	      le_big_theta += integral * dcuhre2[i][2];
-	    } else if (i < 140){
-	      if (fixed_theta < modelOptions.thetaCutoff[0]) {
-		ld_small_theta += integral * dcuhre2[i][2];
+            if(modelOptions.mapFlag == SA){
+            
+	      if (i < 5) {
+	        le_small_theta += integral * dcuhre2[i][2];
+	      } else if (i < 10) {
+	        le_big_theta += integral * dcuhre2[i][2];
+	      } else if (i < 140){
+	        if (fixed_theta < modelOptions.thetaCutoff[0]) {
+		  ld_small_theta += integral * dcuhre2[i][2];
+	        } else {
+		  ld_big_theta += integral * dcuhre2[i][2];
+	        }
 	      } else {
-		ld_big_theta += integral * dcuhre2[i][2];
+                le_unlinked += integral * dcuhre2[i][2];
 	      }
-	    } else {
-              le_unlinked += integral * dcuhre2[i][2];
+	      if ((modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) && (i == 9)) {
+	        //fprintf (stderr,"End of LE case\n");
+	        i = 141;
+	      }
+	    }else{
+              if(i<65){
+                thetaSMSF += integral *thetaSS[i][2];  // 0< thetaM <0.05  0< thetaF <0.05  
+	      }else if(i<130){
+                thetaBMSF += integral *thetaSS[i][2];  // 0.05< thetaM <0.5  0< thetaF <0.05  
+	      }else if(i<195){
+                thetaSMBF += integral *thetaSS[i][2];  // 0< thetaM <0.05  0.05< thetaF <0.5  
+	      }else {
+                thetaBMBF += integral *thetaSS[i][2];  // 0.05< thetaM <0.05  0.05< thetaF <0.5 
+	      }
 	    }
 
-
-	    if ((modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) && (i == 9)) {
-	      fprintf (stderr,"End of LE case\n");
-	      i = 141;
-	    }
-
-	  }			/* end of for to calculate BR(theta, dprime) */
+	  }			/* end of for to calculate BR(theta, dprime) or BR(thetaM, thetaF)*/
 
 
 	  /*Calculate ppl, ppld and ldppl */
-	  ppl =  modelOptions.thetaWeight * le_small_theta + (1 -  modelOptions.thetaWeight) * le_big_theta;
-	  ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
+          if(modelOptions.mapFlag == SA){
+	    ppl =  modelOptions.thetaWeight * le_small_theta + (1 -  modelOptions.thetaWeight) * le_big_theta;
+	    ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
+	  }else{
+            ppl = modelOptions.thetaWeight*modelOptions.thetaWeight* thetaSMSF;
+            ppl += (1-modelOptions.thetaWeight)*modelOptions.thetaWeight* thetaBMSF;
+            ppl += modelOptions.thetaWeight*(1-modelOptions.thetaWeight)* thetaSMBF;
+            ppl += (1-modelOptions.thetaWeight)*(1-modelOptions.thetaWeight)* thetaBMBF;
+	    ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
+	  }
           if (modelOptions.markerAnalysis != FALSE) {
             fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ",
 	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[SEX_AVERAGED],
@@ -494,6 +532,9 @@
 
 	    ppld = 0.019*0.021*ld_small_theta+0.001*0.0011*ld_big_theta;
             ppld = ppld/(ppld+ 0.019*0.979*le_small_theta +0.001*0.9989*le_big_theta+ 0.98*le_unlinked);
+            //ppld= pow(0.02*(ld_small_theta *0.95 +ld_big_theta * 0.05), 0.3);
+            //ppld *=  0.0004/0.020392;
+            //ppld = ppld/(ppld + 1-0.0004/0.020392 * 0.02);
 
 	    ppldGl=0.019*0.021*ld_small_theta+0.001*0.0011*ld_big_theta;
             ppldGl = ppldGl/(ppldGl + 0.019*0.979*le_small_theta +0.001*0.9989*le_big_theta);
@@ -666,7 +707,7 @@
       if (modelOptions.polynomial == TRUE);
       else
 	update_penetrance (&pedigreeSet, traitLocus);
-      KLOG (LOGLIKELIHOOD, LOGDEBUG, "Trait Likelihood\n");
+ 
       compute_likelihood (&pedigreeSet);
 
     }
@@ -685,9 +726,7 @@
 	//fprintf(stderr,"Building traitPoly pedIdx =%d Null likelihood = %20.15f\n",pedIdx, pPedigree->likelihood);
 	//fprintf(stderr,"pedIdx %d eType= %d\n", pedIdx, ((pPedigree->traitLikelihoodPolyList)->pList[0])->eType);
       }
-
     }
-
 
 
     /* get the trait locations we need to evaluate at */
@@ -717,21 +756,6 @@
       fprintf (fpHet, ",%d", k);
     fprintf (fpHet, ")\n");
 
-
-    /*    if (modelType.trait == DICHOTOMOUS) {
-      fprintf (fpHet,
-	       "           pos       PPL         BR       error    num    markerList   maximum   alpha    gf     DD       Dd      dd\n");
-    } else {
-      fprintf (fpHet,
-	       "           pos       PPL         BR       error    num    markerList   maximum   alpha    gf  meanDD  meanDd   meandd");
-      if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-	fprintf (fpHet, " %5s %5s %5s ", "SD_DD", "SD_Dd", "SD_dd");
-      }
-      if (modelType.trait == CT) {
-	fprintf (fpHet, "  %5s", "t");
-      }
-      fprintf (fpHet, "\n");
-      }*/
     fflush (fpHet);
 
 
@@ -739,6 +763,8 @@
     prevLastMarker = -1;
     prevTraitInd = -1;
     leftMarker = -1;
+
+    /* Iterate over all positions in the analysis. */
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
       /* positions listed are sex average positions */
       traitPos = modelRange.tloc[posIdx];
@@ -817,27 +843,13 @@
 	/* calculate likelihood for the marker set */
 	locusList = &markerLocusList;
 	xmissionMatrix = markerMatrix;
-#if 1
 	if (modelOptions.polynomial == TRUE) {
 	  pedigreeSetPolynomialClearance (&pedigreeSet);
 	}
-#endif
 
 	/* save the polynomial flag */
 	polynomialFlag = modelOptions.polynomial;
-#if 0
-	if (polynomialFlag == TRUE) {
-	  for (k = 0; k < 3; k++) {
-	    initialProb[k] = 1.0;
-	    initialProb2[k] = 1.0;
-	    initialProbAddr[k] = &initialProb[k];
-	    initialProbAddr2[k] = &initialProb2[k];
-	    initialHetProbAddr[k] = NULL;
-	  }
-	}
 
-	modelOptions.polynomial = FALSE;
-#endif
 	/* populate the matrix */
 	status = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,	/* probability */
 					   initialProbAddr2,	/* probability */
@@ -852,7 +864,6 @@
 	print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0,
 			       tmpID);
 
-	KLOG (LOGLIKELIHOOD, LOGDEBUG, "Marker Likelihood\n");
 	compute_likelihood (&pedigreeSet);
 	modelOptions.polynomial = polynomialFlag;
 
@@ -866,6 +877,7 @@
 	pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
       }
       /* end of marker set change */
+
       prevFirstMarker = mp_result[posIdx].pMarkers[0];
       prevLastMarker = mp_result[posIdx].pMarkers[modelType.numMarkers - 1];
       if (markerSetChanged || prevTraitInd != mp_result[posIdx].trait)
@@ -971,9 +983,8 @@
 	}
 
       }
-
-
       /*end of SS model */
+
       /* the locus list has been built, go on to the analysis 
        * multipoint DT */
       if (markerSetChanged || locusListChanged) {
@@ -1006,22 +1017,10 @@
       num_out_constraint = 0;
 
       num_eval = kelvin_dcuhre_integrate (&integral, &abserr, volume_region);
-      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-	integral *= 6;
-	abserr *= 6;
-      }
-      integral /= volume_region;
-      abserr /= volume_region;
-
-      fprintf (stderr, "BR is %15.13f  and error is %15.13f \n", integral,
-	       abserr);
-
 
       /* calculate imputed PPL and print the results */
       if (integral > 0.214)
-	ppl =
-	  (integral * integral) / (-5.77 + 54 * integral +
-				   integral * integral);
+	ppl =(integral * integral) / (-5.77 + 54 * integral + integral * integral);
       else
 	ppl = 0;
 
@@ -1038,24 +1037,25 @@
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
 
 	j=2;
-        if (modelOptions.imprintingFlag)
-          fprintf (fpHet, " (%.3f,%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+1],localmax_x[j+2]);
-        else
+        if (modelOptions.imprintingFlag){
+          fprintf (fpHet, " (%.3f,%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+2],localmax_x[j+3]);
+          j +=4;
+        }else{
           fprintf (fpHet, " (%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+2]);
-
-        j +=3;
+          j +=3;
+	}
 
         if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
 
-          if (modelOptions.imprintingFlag)
-	    fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+1],localmax_x[j+2]);
-          else
+          if (modelOptions.imprintingFlag){
+	    fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+2],localmax_x[j+3]);
+            j +=4;
+          }else{
  	    fprintf (fpHet, ",%.3f,%.3f,%.3f", localmax_x[j],localmax_x[j+1],localmax_x[j+2]);
-
-          j +=3;
+            j +=3;
+	  }
         }
-        if (modelType.trait != DT) {
- 
+        if (modelType.trait != DT) { 
           fprintf (fpHet, ",%.3f)", localmax_x[j++]);
         } else
           fprintf (fpHet, ")");

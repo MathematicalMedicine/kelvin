@@ -137,7 +137,7 @@ dcuhre_ (dcuhre_state * s)
     print_rule (s);
   }
   //   checkpt();
-   printf("maxsub is %d  in \n", s->maxsub);
+  //   printf("maxsub is %d  in \n", s->maxsub);
   /* Step 3. free all memory */
   /* free the array of subregions */
   sbrg_free (s->sbrg_heap, s->maxsub);
@@ -259,10 +259,9 @@ dadhre_ (dcuhre_state * s)
 
     real_result = s->result / s->vol_rate; 
     real_error = s->error / s->vol_rate;
-    /*    for (i = 0; i < s->nlclass; i++) {
-      real_result *= 6.0;
-      }*/
-    fprintf(stderr, "s result %f  real result %f\n ", s->result, real_result);
+
+    if (s->verbose > 0) 
+      fprintf(stderr, "s result %f  real result %f\n ", s->result, real_result);
 
     s->epsabs *=
       (-5.77 + 54.0 * real_result + real_result * real_result) * (-5.77 +
@@ -277,14 +276,13 @@ dadhre_ (dcuhre_state * s)
     if(s->epsabs <0)
       s->epsabs =0.0;
 
-    /* for (i = 0; i < s->nlclass; i++) {
-      s->epsabs /= 6.0;		* because of the constraint *
-      }*/
+
     //s->epsrel = s->epsabs / (s->result);
     if (s->sbrgns == 1) {
       s->diff_result[0] = s->epsabs * 2;	/*Dummy number for the main while loop */
     }
-    fprintf (stderr, "Setting absolute error %12.8f  diff =%f  real error = %f real result=%f \n",
+    if (s->verbose > 0) 
+      fprintf (stderr, "Setting absolute error %12.8f  diff =%f  real error = %f real result=%f \n",
 	     s->epsabs, s->diff_result[s->sbrgns - 1], real_error, real_result);
 
 
@@ -406,12 +404,12 @@ dadhre_ (dcuhre_state * s)
       for (i = s->maxsub/2; i < s->maxsub; i++) {
         s->sbrg_heap[i] = NULL;
       }
-      printf("maxsub is doubled to %d \n",s->maxsub );
+      //      printf("maxsub is doubled to %d \n",s->maxsub );
     } 
      
   }
   //  checkpt();
-  printf("maxsub is %d in dadddd\n", s->maxsub);
+  //  printf("maxsub is %d in dadddd\n", s->maxsub);
 
   return 0;
 
@@ -514,7 +512,8 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
 
   }
 
-  fprintf (stderr, "local result =%10.8f  and local error =%10.8f\n", cw_sbrg->local_result,cw_sbrg->local_error);
+  if (s->verbose > 0) 
+    fprintf (stderr, "local result =%10.8f  and local error =%10.8f\n", cw_sbrg->local_result,cw_sbrg->local_error);
   if(isnan(cw_sbrg->local_result)){
     fprintf(stderr,"local result is nan \n");
     exit(1);
