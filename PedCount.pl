@@ -26,7 +26,7 @@ my $UnknownPerson    = "0";                # Default unknown person indicator
 my %Pedigrees;                           # Pedigrees as loaded
 my %Directives;                          # Directives as loaded
 my $PairCount = 0;                       # Last pedigree count of marker pairs
-my @Loci;                                # Ordered loci list from companion file
+my @Loci;                                # Ordered loci name list from companion file
 my %LociAttributes;                      # Loci attributes from companion and marker files
 
 # Nuisances to fix
@@ -36,23 +36,37 @@ my $ShortestLoop = "";                   # Just batted around too much to monkey
 
 my %KnownDirectives = (
     AL => \&NoAction,
+    AM => \&NoAction,
     AS => \&dirAS,
+    CF => \&NoAction,
     DA => \&NoAction,
     DD => \&NoAction,
     DF => \&NoAction,
+    DK => \&NoAction,
     DT => \&NoAction,
     Dd => \&NoAction,
     GF => \&NoAction,
     HE => \&NoAction,
+    LC => \&NoAction,
+    LD => \&NoAction,
     MK => \&NoAction,
+    MM => \&NoAction,
     MP => \&NoAction,
+    MX => \&NoAction,
+    P1 => \&NoAction,
     PD => \&NoAction,
     PE => \&NoAction,
+    PF => \&NoAction,
     QT => \&dirQT,
     SA => \&NoAction,
     SS => \&NoAction,
+    TL => \&NoAction,
+    TM => \&NoAction,
     TP => \&NoAction,
+    TT => \&NoAction,
     Th => \&NoAction,
+    T_MIN => \&NoAction,
+    T_MAX => \&NoAction,
     UP => \&dirUP,
     dD => \&NoAction,
     dd => \&NoAction
@@ -449,9 +463,8 @@ sub loadPedigree {
 
         # Validate everything we've got so far
         die "Pedigree line $LineNo: sex must be 1 or 2, not \"$Sex\"." if ((!defined($bare)) && !($Sex =~ /[12]/));
-        die
-          "Pedigree line $LineNo: affection status must be $UnknownAffection, $Unaffected, or $Affected, not \"$Aff\"."
-          if (($Aff != $UnknownAffection) && ($Aff != $Unaffected) && ($Aff != $Affected));
+        die "Pedigree line $LineNo: affection status must be $UnknownAffection, $Unaffected, or $Affected, not \"$Aff\"."
+	    if ((!defined($Directives{QT})) && (($Aff != $UnknownAffection) && ($Aff != $Unaffected) && ($Aff != $Affected)));
         my ($OldFam, $OldInd, $Left);
         $MkC = 0;
         $GtC = 0;
@@ -489,7 +502,7 @@ sub loadPedigree {
         $Pedigrees{$Ped}{$Ind}{Aff}    = $Aff;
         $Pedigrees{$Ped}{$Ind}{MkC}    = $MkC;          # Marker count (should always be the same)
         $Pedigrees{$Ped}{$Ind}{GtC}    = $GtC;          # Genotype count (how complete is genotyping)
-        $Pedigrees{$Ped}{$Ind}{Mks}    = [@Pairs];
+        $Pedigrees{$Ped}{$Ind}{Mks}    = \@Pairs;
         $Pedigrees{$Ped}{$Ind}{OldFam} = $OldFam;
         $Pedigrees{$Ped}{$Ind}{OldInd} = $OldInd;
     }
@@ -576,7 +589,7 @@ sub loadCompanion {
         s/^\s*//g;       # Trim leading whitespace
         my ($Type, $Name) = split /\s+/;
         die "Unknown locus type \"$Type\" at line $LineNo in marker description companion file $File\n"
-          if (($Type ne "T") and ($Type ne "M"));
+          if (($Type ne "T") and ($Type ne "A") and ($Type ne "M"));
         push @Loci, $Name;
         $LociAttributes{$Name}{Type} = $Type;
     }
@@ -601,7 +614,11 @@ sub loadMarkers {
         if ($RecordType eq "M") {
             $Name = shift @Tokens;
         } elsif ($RecordType eq "F") {
-            $LociAttributes{$Name}{Frequencies} = [@Tokens];
+	    if (defined($LociAttributes{$Name}{Frequencies})) {
+		$LociAttributes{$Name}{Frequencies} = [(@{ $LociAttributes{$Name}{Frequencies} }, @Tokens)];
+	    } else {
+		$LociAttributes{$Name}{Frequencies} = [@Tokens];
+	    }
         } else {
             die "Unknown record type \"$RecordType\" at line $LineNo in marker file $File\n";
         }
@@ -610,23 +627,31 @@ sub loadMarkers {
 }
 
 #####################################
-# Check inter-file integrity, i.e. affectation, markers and Mendel
+# Check inter-file integrity, i.e. affectation and markers
 sub checkIntegrity {
     for my $Ped (sort keys %Pedigrees) {
 	my $UnknownAffectionCount = 0; my $UnaffectedCount = 0;
-	my $AffectedCount = 0;
+	my $AffectedCount = 0; my $MagicCounts = 0;
         for my $Ind (keys %{ $Pedigrees{$Ped} }) {
 	    $UnknownAffectionCount++ if ($Pedigrees{$Ped}{$Ind}{Aff} == $UnknownAffection);
 	    $UnaffectedCount++ if ($Pedigrees{$Ped}{$Ind}{Aff} == $Unaffected);
 	    $AffectedCount++ if ($Pedigrees{$Ped}{$Ind}{Aff} == $Affected);
-	    $MagicCounts++ if ($Pedigrees{$Ped}{$Ind}{Aff} =~ /(88\.88|99\.99|NaN)/i);
+	    $MagicCounts++ if ($Pedigrees{$Ped}{$Ind}{Aff} =~ /(88\.88|99\.99|NaN|Inf)/i);
+	    my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
+	    for my $i (0..$PairCount - 1) {
+		my ($Left, $Right) = split /\s/, @Pairs[$i];
+		die "Pedigree $Ped, individual $Ind Marker $i (".$Loci[$i+1].") allele $Left too large.\n"
+		    if ($Left > scalar(@{ $LociAttributes{$Loci[$i+1]}{Frequencies} }));
+		die "Pedigree $Ped, individual $Ind Marker $i (".$Loci[$i+1].") allele $Right too large.\n"
+		    if ($Right > scalar(@{ $LociAttributes{$Loci[$i+1]}{Frequencies} }));
+	    }
 	}
 	if (defined($Directives{QT})) {
-	    if ((($UnknownAffectionCount == 0) || ($UnaffectedCount == 0) ||
-		 ($AffectedCount == 0)) && ($MagicCounts != 0)) {
-		print "Your QT analysis for pedigree $Ped has Unk/UnA/Aff of ".
-		"$UnknownAffectionCount/$UnaffectedCount/$AffectedCount out of ".
-		scalar(keys %{ $Pedigrees{$Ped} })." individuals and $MagicCounts default values\n"
+	    if ($UnknownAffectionCount + $UnaffectedCount + $AffectedCount < $MagicCounts) {
+		print "Warning! Your QT analysis for pedigree $Ped has Unk/UnA/Aff of ".
+		"$UnknownAffectionCount/$UnaffectedCount/$AffectedCount\nout of ".
+		scalar(keys %{ $Pedigrees{$Ped} })." individuals and ".
+		$MagicCounts." default value(s) (any of 88.88/99.99/NaN/Inf).\n"
 	    }
 	} else {
 	    # Must be DT
@@ -673,6 +698,9 @@ sub checkRelations {
     }
 }
 
+sub numerically { $a <=> $b }
+
+#####################################
 # Start discovering statistics that might affect performance.
 sub perfStats {
 
@@ -711,10 +739,10 @@ sub perfStats {
         push @PedNuk, scalar(keys(%Seen));
     }
 
-    @PedSiz = @PedSiz;
+    @PedSiz = sort numerically @PedSiz;
     print "Number of pedigrees:" . @PedSiz . "\n";
     $Avg = sprintf("%.2f", (sum @PedSiz) / @PedSiz);
-    @PedNuk = @PedNuk;
+    @PedNuk = sort numerically @PedNuk;
     print "...Sizes: min:" . $PedSiz[0] . " max:" . $PedSiz[-1] . " med:" . $PedSiz[ $#PedSiz / 2 ] . " avg: $Avg\n";
     $Avg = sprintf("%.2f", (sum @PedNuk) / @PedNuk);
     print "...Nuclear family counts: min:"
@@ -728,7 +756,7 @@ sub perfStats {
         for my $Ped (keys %Pedigrees) {
             push @Counts, $PedCat{$Ped}{$Label};
         }
-        @Counts = @Counts;
+        @Counts = sort numerically @Counts;
         print "..." . $CountsLabels{$Label} . ": ";
         $Avg = sprintf("%.2f", (sum @Counts) / @Counts);
         print "min:" . $Counts[0] . " max:" . $Counts[-1] . " med:" . $Counts[ $#Counts / 2 ] . " avg: $Avg\n";
@@ -740,7 +768,7 @@ sub perfStats {
         for my $Ind (keys %{ $Pedigrees{$Ped} }) {
             push @Ancestors, &countAncestors($Ped, $Ind, 0);
         }
-        @Ancestors = @Ancestors;
+        @Ancestors = sort numerically @Ancestors;
         $Avg = sprintf("%.2f", (sum @Ancestors) / @Ancestors);
         print "Pedigree $Ped Depth: max:" . $Ancestors[-1] . " med:" . $Ancestors[ $#Ancestors / 2 ] . " avg: $Avg\n";
     }
@@ -880,6 +908,7 @@ sub bucketizePedigrees {
     # Verify that all markers are present and only biallelic...
     for my $Marker (@Loci) {
         next if ($LociAttributes{$Marker}{Type} eq "T");
+        next if ($LociAttributes{$Marker}{Type} eq "A");
         die "No allele information found for marker $Marker for count generation.\n"
           if (!defined($LociAttributes{$Marker}{Frequencies}));
         die "Marker $Marker not biallelic, not permitted for count generation.\n"
@@ -887,6 +916,7 @@ sub bucketizePedigrees {
     }
 
     my %Buckets = ();
+    my $Skippies = 0; # Pedigrees copied on thru without bucketization (affects stats)
 
     # Look at each family...
     for my $Ped (sort keys %Pedigrees) {
@@ -914,6 +944,7 @@ sub bucketizePedigrees {
 	}
 	if ($PAP eq "") {
 	    print "Copy multi-generation pedigree intact.\n";
+	    $Skippies++;
 	    next;
 	}
 
@@ -968,8 +999,8 @@ sub bucketizePedigrees {
 	print "Bucketizing cannot reduce your pedigree count.\n";
     } else {
 	print  sprintf ("Bucketizing can reduce your evaluation count from %d to %d, or by %2d%%\n",
-			scalar(keys %Pedigrees) * $PairCount, scalar(keys %Buckets),
-			100 - (100 * scalar(keys %Buckets) / (scalar(keys %Pedigrees) * $PairCount)));
+			scalar(keys %Pedigrees) * $PairCount, (scalar(keys %Buckets) + ($Skippies * $PairCount)),
+			100 - (100 * (scalar(keys %Buckets) + ($Skippies * $PairCount)) / (scalar(keys %Pedigrees) * $PairCount)));
     }
 
     return if (!defined($write));
