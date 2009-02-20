@@ -2,7 +2,8 @@ Version ??
   Case control (CC) directive replaces CF
   directive. Count file (CF) directive added to permit 
   ASP and trios data to be efficiently represented and 
-  processed. Revitalized KLOG and LOG directive.
+  processed. Revitalized KLOG and LOG directive. Fixed
+  Student's T pdf values for x outside of -10 to 10.
 
 Version 0.37.1
   Numerous bugfixes in LD handling and estimation in
