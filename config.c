@@ -562,7 +562,7 @@ readConfigFile (char *file)
       continue;
     }
     if (sscanf (line, "CF %s", ccfile) == 1) {
-      modelType.ccFlag = FALSE;
+      modelType.ccFlag = TRUE; // TEMPORARY &&& FOR WEEKEND?! RELEASE
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure count file %s\n",
 	    ccfile);
       continue;
