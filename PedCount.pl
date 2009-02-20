@@ -550,8 +550,8 @@ sub deriveLociAndAttributes {
     $Loci[0]                     = "Trait";
     $LociAttributes{Trait}{Type} = "T";
     for my $i (0 .. $PairCount - 1) {
-        $Loci[$i] = sprintf("M%03d", $i);
-        $LociAttributes{ $Loci[$i] }{Type} = "M";
+        $Loci[$i+1] = sprintf("M%04d", $i);
+        $LociAttributes{ $Loci[$i+1] }{Type} = "M";
         my @HaploCounts = (0); # List works because they must be numeric (relative position of frequency in marker file)
         for my $Ped (keys %Pedigrees) {
             for my $Ind (keys %{ $Pedigrees{$Ped} }) {
@@ -567,7 +567,7 @@ sub deriveLociAndAttributes {
         for $i (1 .. scalar(@HaploCounts) - 1) {
             push @Tokens, $HaploCounts[$i] / $PopSize;
         }
-        $LociAttributes{ $Loci[$i] }{Frequencies} = [@Tokens];
+        $LociAttributes{ $Loci[$i+1] }{Frequencies} = [@Tokens];
     }
 }
 
@@ -639,7 +639,7 @@ sub checkIntegrity {
 	    $MagicCounts++ if ($Pedigrees{$Ped}{$Ind}{Aff} =~ /(88\.88|99\.99|NaN|Inf)/i);
 	    my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
 	    for my $i (0..$PairCount - 1) {
-		my ($Left, $Right) = split /\s/, @Pairs[$i];
+		my ($Left, $Right) = split /\s/, $Pairs[$i];
 		die "Pedigree $Ped, individual $Ind Marker $i (".$Loci[$i+1].") allele $Left too large.\n"
 		    if ($Left > scalar(@{ $LociAttributes{$Loci[$i+1]}{Frequencies} }));
 		die "Pedigree $Ped, individual $Ind Marker $i (".$Loci[$i+1].") allele $Right too large.\n"
@@ -901,6 +901,8 @@ sub bucketizePedigrees {
         }
     );
 
+    my $Type = shift(); # Pedigree type for writing
+
     # Verify that this is a 2pt analysis (default, so look for multipoint directives)
     die "Generation of counts not permitted for a multipoint analysis.\n"
       if (defined($Directives{SA}) || defined($Directives{SS}));
@@ -915,8 +917,10 @@ sub bucketizePedigrees {
           if (scalar(@{ $LociAttributes{$Marker}{Frequencies} }) != 2);
     }
 
-    my %Buckets = ();
-    my $Skippies = 0; # Pedigrees copied on thru without bucketization (affects stats)
+    my %Buckets = (); # Fully-funkified bucket names with encoded everything
+    my @Skippies = (); # Pedigrees copied on thru without bucketization (affects stats)
+    my %Templates = (); # Template pedigrees
+    my $PedSeq = 1; # Template pedigree ID to keep them short
 
     # Look at each family...
     for my $Ped (sort keys %Pedigrees) {
@@ -943,8 +947,8 @@ sub bucketizePedigrees {
 	    }
 	}
 	if ($PAP eq "") {
-	    print "Copy multi-generation pedigree intact.\n";
-	    $Skippies++;
+	    print "Will copy multi-generation pedigree $Ped intact.\n";
+	    push @Skippies, $Ped;
 	    next;
 	}
 
@@ -971,47 +975,102 @@ sub bucketizePedigrees {
                     my $TrioBucket = $TrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
                     if ($TrioBucket eq "") {
                         print "Couldn't find a bucket for pedigree $Ped, marker "
-                          . $Loci[$i]
+                          . $Loci[$i+1]
                           . ", M/D/C $MomAlleles/$DadAlleles/$ChildAlleles!\n";
                         exit;
                     }
-#			print "Pedigree $Ped / Marker ".$Loci[$i]." child $Ind (".$MomAlleles."-".$DadAlleles."-".$ChildAlleles.") gets bucket $TrioBucket\n";
+#			print "Pedigree $Ped / Marker ".$Loci[$i+1]." child $Ind (".$MomAlleles."-".$DadAlleles."-".$ChildAlleles.") gets bucket $TrioBucket\n";
 		    # Add a child affection prefix
-                    push @bucketList, $TrioBucket . "+" . $Pedigrees{$Ped}{$Ind}{Aff};
+                    push @bucketList, $TrioBucket . "-" . $Pedigrees{$Ped}{$Ind}{Aff};
                 }
             }
-            my $FullBucket = $PAP . "_" . join("-", sort (@bucketList)) . "_" . $Loci[$i];
-
-#		print "Ped $Ped goes into full bucket $FullBucket for marker ".$Loci[$i]."\n";
-            if (!defined($Buckets{$FullBucket})) {
-
-#                    print "Defining bucket [$FullBucket]\n";
-                $Buckets{$FullBucket} = 1;
-            } else {
-
-#		    print "Bumping bucket [$FullBucket]\n";
-                $Buckets{$FullBucket}++;
-            }
+	    my $PedBucket = $PAP . "/" . join("+", sort (@bucketList));
+	    $Buckets{$Loci[$i+1] . "_" . $PedBucket}++;
+	    if (!defined($Template{$PedBucket})) {
+		$Template{$PedBucket}{Ped} = $Ped;
+		$Template{$PedBucket}{PedSeq} = sprintf("P%04d", $PedSeq++);
+		$Template{$PedBucket}{PairID} = $i;
+	    }
         }
     }
 
     if (scalar(keys %Buckets) == 0) {
 	print "Bucketizing cannot reduce your pedigree count.\n";
+#	return;
     } else {
 	print  sprintf ("Bucketizing can reduce your evaluation count from %d to %d, or by %2d%%\n",
-			scalar(keys %Pedigrees) * $PairCount, (scalar(keys %Buckets) + ($Skippies * $PairCount)),
-			100 - (100 * (scalar(keys %Buckets) + ($Skippies * $PairCount)) / (scalar(keys %Pedigrees) * $PairCount)));
+			scalar(keys %Pedigrees) * $PairCount, (scalar(keys %Buckets) + (scalar(@Skippies) * $PairCount)),
+			100 - (100 * (scalar(keys %Buckets) + (scalar(@Skippies) * $PairCount)) / (scalar(keys %Pedigrees) * $PairCount)));
     }
 
     return if (!defined($write));
 
-    # Now write-out at least the new pedigree and counts
+    # Now write-out at least the pedigree and counts
 
-    for my $Bucket (sort keys(%Buckets)) {
-        print "Bucket $Bucket has " . $Buckets{$Bucket} . " entries\n";
+    open OUT, ">PC_pedigrees.Dat";
+
+    # First the intact pedigrees
+    for my $Ped (@Skippies) {
+	for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
+	    print OUT join(" ",($Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom}))." ";
+	    if ($Type eq "POST") {
+		print OUT join(" ",($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs},
+				    $Pedigrees{$Ped}{$Ind}{nMs}))." ";
+	    }
+	    print OUT $Pedigrees{$Ped}{$Ind}{Sex}." ";
+	    if ($Type eq "POST") {
+		print OUT $Pedigrees{$Ped}{$Ind}{Prb}." ";
+	    }
+	    print OUT $Pedigrees{$Ped}{$Ind}{Aff}." ".join(" ",@{ $Pedigrees{$Ped}{$Ind}{Mks} })."\n";
+	}
     }
+
+    # Now the template pedigrees
+    print "Writing $Type pedigree\n";
+    for my $PB (sort keys %Template) {
+	$Ped = $Template{$PB}{Ped};
+	$PairID = $Template{$PB}{PairID};
+	my $PedSeq = $Template{$PB}{PedSeq};
+	for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
+	    print OUT join(" ",($PedSeq, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom}))." ";
+	    if ($Type eq "POST") {
+		print OUT join(" ",($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs},
+				    $Pedigrees{$Ped}{$Ind}{nMs}))." ";
+	    }
+	    print OUT $Pedigrees{$Ped}{$Ind}{Sex}." ";
+	    if ($Type eq "POST") {
+		print OUT $Pedigrees{$Ped}{$Ind}{Prb}." ";
+	    }
+	    $Pair = " " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
+	    print OUT $Pedigrees{$Ped}{$Ind}{Aff}." ".join(" ", $Pair x $PairCount )." ";
+	    print OUT "Ped: $PB Ind: $Ind\n";
+	}
+    }
+    close OUT;
+
+    open OUT, ">PC_counts.Dat";
+
+    print OUT "\t";
+    for my $PB (sort keys %Template) {
+	print OUT $Template{$PB}{PedSeq}."\t";
+    }
+    print OUT "\n";
+    for my $i (0 .. $PairCount - 1) {
+	print OUT $Loci[$i+1]."\t";
+	for my $PB (sort keys %Template) {
+	    $FB = $Loci[$i+1] . "_" . $PB;
+	    if (!defined($Buckets{$FB})) {
+		print OUT "0\t";
+	    } else {
+		print OUT $Buckets{$FB}."\t";
+	    }
+	}
+	print OUT "\n";
+    }
+    close OUT;
 }
 
+#####################################
 # Verify command line parameters
 my $Usage = <<EOF;
 
@@ -1101,6 +1160,6 @@ if ($loops) {
 }
 
 if ($count || $write) {
-    bucketizePedigrees();
+    bucketizePedigrees($pedFileType);
 }
 exit;
