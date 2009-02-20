@@ -1,0 +1,451 @@
+There are command line options available to perform most actions in graphApp.
+The syntax is to type the following at the command line:
+
+graphApp <command1> <args1> <command2> <args2> etc...
+
+If a command appears multiple times, only the first occurance is used, unless
+the command works on only one chr or one one line set, in which case it can be
+specified multiple times. Other commands that can be used multiple times are
+specified in their description.
+
+Commands are performed in the order that they are specified, except in some
+special cases:
+    -open is always performed first.
+    -save and -export are always performed last.
+
+Command arguments that are column indices start at 1, not 0.
+
+Some command line arguments ask to specify a color. There are three options
+available to specify color:
+    1. Some colors are identified by a single letter. All available colors like
+       this are:
+            'b' - blue, 'g' - green, 'r' - red, 'c' - cyan, 'm' - magenta, 
+            'y' - yellow, 'k' - black, 'w' - white
+    2. You can specify colors by a hex value, for example '#0022ff'
+       (Note the '#' instead of 'x' for a hex value)
+    3. You can specify a name of a color in the X11 color set, for example
+       'Indigo', 'PapayaWhip', or 'Olive'. For a listing of what colors are
+       available, goto http://www.mcfedries.com/books/cightml/x11color.htm. 
+       Note that all colors may not work.
+
+
+-open <type> <filename> 
+    * <type> --> 'text', 'graph', 'grx', what type of file to open
+    * <filename> --> path to file
+
+    * all these commands are used when <type> is 'text'
+    * command are optional unless otherwise specified
+    
+    -pos_col <num>
+        * column index of column with position values
+        * <num> --> integer, the column index
+        * required
+
+    -ppl_col <num>
+        * column index of column with ppl values
+        * <num> --> integer, the column index
+        * required
+    
+    -header_lines <num>
+        * the number of lines at the top of the file that constitute the header.
+        * the header will be ignored when processing the file.
+        * <num> --> integer, the number of lines
+
+    -chr_num <num>
+        * if text file has info about only one chr, tells program what the 
+          chr number of that chr is
+        * <num> --> integer, the number of the chr in the file
+
+    -chr_col <num>
+        * column index of column with chr number
+        * <num> --> integer, the column index
+        * optional, if left out, will assume first set of values is chr1, 
+          then second set of values is chr2, etc.
+
+    -chr_select <num1> <num2> etc.
+        * select only some chr's to be loaded in
+        * <num1> --> integer, the number of the chr that should be loaded
+
+    -chr_prefix <prefix>
+        * changes name of chr to add a prefix string before every chr number
+        * <prefix> --> string
+
+    -chr_postfix <postfix>
+        * changes name of chr to add a postfix string after every chr number
+        * <postfix> --> string
+
+    -extra_data_col <num1> <num2> etc.
+        * designate columns that contain extra data associated with each point
+        * used to specify a marker # for each point, then when moving the
+          cursor, the graph would display what marker # the closest point to
+          the mouse curser is at
+        * <num1> --> integer, the column index
+
+    -chr_same_color <bool>
+        * tells program to either keep all chr's the same color, 
+          or to make each chr a different color
+        * <bool> --> 'on', 'off'
+        * optional, if not present, value is 'on'
+
+    -chr_color_all <color>
+        * set the same color for all chrs
+        * only works if -chr_same_color is 'on'
+        * <color> --> color
+
+    -lineset_name <name>
+        * gives a name to this line set
+        * <name> --> string, the name of the set
+
+-save <filename>
+    * save a graph as a .grx file
+    * <filename> --> path to a file
+    * if .grx is not at end of filename, it is added on automatically
+    * can be specified multiple times
+
+-save_graph <filename>
+    * save a graph as a .graph file
+    * <filename> --> path to a file
+    * if .graph is not at end of filename, it is added on automatically
+    * can be specified multiple times
+
+-export <filename>
+    * export graph to an image
+    * <filename> --> path to a file
+    * file format is determined by file extension in filename. only .eps 
+      and .png files work. if no file extension, or an unrecognized one, 
+      .png will be added to filename
+    * can be specified multiple times
+
+-noshow
+    * does not show the window
+    * closes the program as soon as the other commands are done
+
+-comment <comment>
+    * specify the comments on the side of the graph
+    * <comment> --> a string (be sure to put quotes around the comment)
+
+-hline <num1> <num2> etc.
+    * specify horizontal line(s) in graph
+    * <num1> --> number, the y-value (ppl-value) of the line(s)
+    * can be specified multiple times
+    
+-title <label>
+    * set the title of the graph, will appear above graph
+    * <label> --> string
+
+-xlabel <label>
+    * set the label of the x-axis
+    * <label> --> string
+
+-ylabel <label>
+    * set the label of the y-axis
+    * <label> --> string
+
+-bgcolor <color>
+    * set background color
+    * <color> --> color
+
+-title_text_size <num>
+    * the font size of the graph title
+    * <num> --> integer
+    * default is 14
+
+-axis_text_size <num>
+    * the font size of the x and y-axis text
+    * <num> --> integer
+    * default is 12
+
+-show_legend 
+    * show the legend 
+    * default is to not show legend
+
+-show_legend_frame <bool>
+    * show a frame around the legend
+    * <bool> --> 'on' or 'off'
+    * default is 'on'
+
+-legend_show_linesets <bool>
+    * <bool> --> 'on' or 'off'
+    * if 'on', the legend lists the line sets
+    * if 'off', the legend lists each individual line
+    * default is 'off'
+
+-legend_location <loc>
+    * the location of the legend
+    * <loc> --> 'upper right' , 'upper left', 'upper center', 'lower right',  
+                'lower left', 'lower center', 'center left',  'center right', 
+                'right', 'center'
+    * default is 'upper right'
+
+-ann_ppl_precision <arg1>
+    * specifies the amount of ppl precision to display in annotations
+    * <arg1> --> 'default' or integer
+    * with 'default', ppl is shown with two decimal places (e.g. 7%), except
+      when the ppl is less than .02, in which can it is shown to three 
+      decimal places (e.g. 7.2%)
+
+-ann_pos_precision <num>
+    * specifies how many decimal places to show for the position number
+      in the text of an annotation
+    * <num> --> integer, how many decimal places to show
+    * default is 0
+
+-ann_same_color
+    * specifies that annotations should be the same color as the line it is
+      associated with. only works with annotations specifying peaks and valleys
+    * default is that all annotations are black
+
+-no_duplicate_numbers
+    * when chromosome numbers overlap and they are the same number,
+      do not show the number multiple times in the labels underneath
+      the graph. for example, '1, 1, 1' becomes '1'
+
+-lineset_change_name <oldname> <newname>
+    * change the name of a line set, changes the name in the legend if the
+      legend is set to display line set names 
+    * <oldname> --> the old name of the line set
+    * <newname> --> the new name of the line set
+
+-lineset_color <name> <color>
+    * change the color of all chrs in a line set
+    * <name> --> label, the name of the line set
+    * <color> --> color
+
+-lineset_linestyle <name> <style>
+    * set the line style of all chrs in a line set
+    * <name> --> label, the name of the line set
+    * <style> --> the style of the line
+    * valid styles are: 'solid', 'dashed', 'dotted', 'dash-dot', 
+                        'steps', 'no line'
+    * default is 'solid'
+
+-lineset_thickness <name> <thickness>
+    * change the thickness of all chrs in a line set
+    * <name> --> label, the name of the line set
+    * <thickness> --> integer, how thick the chr lines should be
+    * default is 2
+
+-lineset_symbol <name> <symbol>
+    * change the symbol that represents each data point
+    * <name> --> label, the name of the line set
+    * <symbol> --> symbol
+    * valid symbols are: 'no symbol', 'square', '+', 'o', 'x', 'diamond', 
+                         'thin diamond', '^', 'v', '>', '<', '|', '_', 
+                         'hexagon', 'pentagon', 'tripod 1', 'tripod 2'
+    * default is 'no symbol'
+
+-lineset_symbol_size <name> <size>
+    * change the size of the symbol for all chrs in a line set
+    * <name> --> label, the name of the line set
+    * <size> --> integer, new size of the symbol
+    * default is 6
+
+-chr_name <oldname> <newname>
+    * change the name of a chr, changes what is displayed at the 
+      bottom of the graph
+    * <oldname> --> the old name of the chr, when chr's are first loaded,
+                    their name is simply their chr number, unless a prefix or
+                    postfix was applied
+    * <newname> --> the new name of the chr
+
+-chr_color <name> <color>
+    * change the color of a chr
+    * <name> --> label, the name of the chr
+    * <color> --> color
+
+-chr_linestyle <name> <style>
+    * set the line style of a chr
+    * <name> --> label, the name of the chr
+    * <style> --> the style of the line
+    * valid styles are: 'solid', 'dashed', 'dotted', 'dash-dot', 
+                        'steps', 'no line'
+    * default is 'solid'
+
+-chr_thickness <name> <thickness>
+    * change the thickness of a chr
+    * <name> --> label, the name of the chr
+    * <thickness> --> integer, how thick the chr line should be
+    * default is 2
+
+-chr_symbol <name> <symbol>
+    * change the symbol that represents each data point
+    * <name> --> label, the name of the chr
+    * <symbol> --> symbol
+    * valid symbols are: 'no symbol', 'square', '+', 'o', 'x', 'diamond', 
+                         'thin diamond', '^', 'v', '>', '<', '|', '_', 
+                         'hexagon', 'pentagon', 'tripod 1', 'tripod 2'
+    * default is 'no symbol'
+
+-chr_symbol_size <name> <size>
+    * change the size of the symbol for a chr
+    * <name> --> label, the name of the chr
+    * <size> --> integer, new size of the symbol
+    * default is 6
+
+-view_limits <chr name> <pos> <chr name2> <pos2> <ymin> <ymax>
+    * sets the viewing limit of the graph. the first two arguments specify
+      xmin, the next two specify xmax, and the last two specify the limits
+      for the y-axis
+    * <chr name>, <chr name2> --> label, name of chr's
+    * <pos>, <pos2> --> number, the position along the specified chromosome
+    * <ymin> --> number, the minimum value of the y-axis
+    * <ymax> --> number, the maximum value of the y-axis
+
+-xlimits <chr name> <pos> <chr name> <pos>
+    * set the x limits of the graph view, this takes two sets of chr names
+      and a position along that chr for the limits. the first set specifies
+      xmin, and the second set specifies xmax
+    * <chr name> --> label, the name of a chr
+    * <pos> --> number, a position along that chr
+
+-ylimits <ymin> <ymax>
+    * set the y limits of the graph view
+    * <ymin> --> number, the minimum y-value
+    * <ymax> --> number, the maximum y-value
+
+-zoom_chr <chr name>
+    * set x-limits such that they start and end at a particular chr
+    * <chr name> --> label, the name of the chr to zoom into
+    * Note that this does not affect the y-limits of the graph
+
+-gene_markers <file> <chr col> <pos col> <size> <color> <symbol> <name>
+    * insert gene markers that are specified by a file
+    * <file> --> path to file, the file that the gene marker data is in
+    * <chr col> --> integer, the column index that specifies what chr this 
+      gene marker belongs to
+    * <pos col> --> integer, the column that indicates the position of the gene
+                    marker
+    * <size> --> integer, the size of the markers, default is 4
+    * <color> --> color, the color of the markers, default is 'r' (red)
+    * <symbol> --> symbol, the symbol used for the markers, default is 'o'
+    * <name> --> label, a name given to this set of gene markers
+    * every argument after <pos col> is optional, but needs to be in the
+      correct order and cannot have any missing parameters. for example, you
+      could specify <size> and <color>, but not <size> and <symbol> by itself,
+      you would need to specify <size> <color> <symbol>
+    * valid symbols are: 'no symbol', 'square', '+', 'o', 'x', 'diamond', 
+                         'thin diamond', '^', 'v', '>', '<', '|', '_', 
+                         'hexagon', 'pentagon', 'tripod 1', 'tripod 2'
+    * can be specified multiple times
+
+-gene_markers_size <name> <size>
+    * changes the size of a set of gene markers
+    * <name> --> label, the name of the set of gene markers to change
+    * <size> --> integer, the new size of the gene makers
+    * can be specified multiple times
+
+-gene_markers_color <name> <color>
+    * <name> --> label, the name of the set of gene markers to change
+    * <color> --> color
+    * can be specified multiple times
+
+-gene_markers_symbol <name> <symbol>
+    * <name> --> label, the name of the set of gene markers to change
+    * <symbol> --> symbol, the new symbol of the gene markers
+    * valid symbols are: 'no symbol', 'square', '+', 'o', 'x', 'diamond', 
+                         'thin diamond', '^', 'v', '>', '<', '|', '_', 
+                         'hexagon', 'pentagon', 'tripod 1', 'tripod 2'
+    * can be specified multiple times
+
+-overlap <filename> <pos col> <ppl col> <overlap chr>
+    * reads chromosome information from a file, and overlaps them with
+      other chromosomes in the graph
+    * <filename> --> path to file, the file with the chr data, must be text file
+    * <pos col> --> integer, the column index of column with position values
+    * <ppl col> --> integer, the column index of column with ppl values
+    * <overlap chr> --> label, the name of a current chr in the graph that
+                        the overlap will begin at
+    * <overlap chr> is optional, if not present, the overlap will begin at
+      the first (leftmost) chr
+
+    * all these commands are used to specifiy extra information 
+    * about the file being opened by -overlap. they should appear
+    * right after -overlap to ensure that they are assoicated with
+    * that particular -overlap (just in case there are multiple -overlaps)
+    * can be specified multiple times
+    
+    -overlap_chr_num <num>
+        * if text file has info about only one chr, tells program what the 
+          chr number of that chr is
+        * <num> --> integer, the number of the chr in the file
+
+    -overlap_chr_col <num>
+        * column index of column with chr number
+        * optional, if left out, will assume first set of values is chr1, 
+          then second set of values is chr2, etc.
+
+    -overlap_chr_select <num1> <num2> etc.
+        * select only some chr's to be loaded in
+        * <num1> --> integer, the number of the chr that should be loaded
+
+    -overlap_chr_prefix <prefix>
+        * add a prefix string before every chr number
+        * <prefix> --> string
+
+    -overlap_chr_postfix <postfix>
+        * add a postfix string after every chr number
+        * <postfix> --> string
+
+    -overlap_extra_data_col <num1> <num2> etc.
+        * designate columns that contain extra data associated with each point
+        * used to specify a marker # for each point, then when moving the
+          cursor, the graph would display what marker # the closest point to
+          the mouse curser is at
+        * <num1> --> integer, the column index
+
+    -overlap_chr_same_color <bool>
+        * tells program to either keep all chr's the same color, 
+          or to make each chr a different color
+        * <bool> --> 'on', 'off'
+        * optional, if not present, value is 'on'
+
+    -overlap_chr_color_all <color>
+        * set the same color for all chrs
+        * <color> --> color
+
+    -overlaap_lineset_name <name>
+        * gives a name to this line set
+        * <name> --> string, the name of the set
+
+-ann_threshold <type> <threshold>
+    * create annotations for all peaks or valleys above or below a value
+    * <type> --> 'peak' or 'valley'
+    * <threshold> --> number, the threshold value. if <type> is 'peak',
+      all peaks above threshold are annotated, if <type> is 'valley',
+      all valleys below threshold are annotated
+    * can be specified multiple times
+
+-ann_peak <name1> <pos1> <name2> <pos2>
+    * annotate the highest peak in a given region, the region is defined
+      by a starting point and an ending point along the x-axis
+    * <name1> --> the name of the chr that has the starting point
+    * <pos1> --> number, a position relative to the <name1> chr
+      defines the exact starting point
+    * <name2> --> the name of the chr that has the ending point
+    * <pos2> --> number, a position relative to the <name2> chr
+      defines the exact ending point
+    * can be specified multiple times
+
+-ann_valley <name1> <pos1> <name2> <pos2>
+    * annotate the lowest valley in a given region, the region is defined
+      by a starting point and an ending point along the x-axis
+    * <name1> --> the name of the chr that has the starting point
+    * <pos1> --> number, a position relative to the <name1> chr
+      defines the exact starting point
+    * <name2> --> the name of the chr that has the ending point
+    * <pos2> --> number, a position relative to the <name2> chr
+      defines the exact ending point
+    * can be specified multiple times
+
+-graph2grx <dir/file> <recursive>
+    * converts a .graph to a .grx file. makes a new file with the same name,
+      except the file extension changes from .graph to .grx. does not delete
+      the .graph file.
+    * <dir/file> --> either a filename or a directory. if a filename, will
+      convert the .graph file. if its a directory, then will convert all .graph
+      files in that directory
+    * <recursive> --> 'on' or 'off', if 'on', will perform the conversion
+      recursively in all subdirectories
+    * <recursive> is optional, and is off by default. this will only work
+      when a directory is specified for <dir/file>
+

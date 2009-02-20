@@ -1,0 +1,49 @@
+<html>
+<head><title>Allocators</title></head>
+<body>
+<h3>Why Use a Replacement Allocator?</h3>
+There are two good reasons to use a replacement allocator -- runtime performance improvement and better control of
+memory utilization. In either case, the presumption is that the default allocator provided by your runtime
+environment is suboptimal for your application. We have found this to be the case for kelvin under Redhat 
+Linux, but not so much under Darwin.
+<p>
+For most applications, runtime performance improvement is the primary motivation for using a replacement
+allocator, but with
+polynomial's well-night unquenchable thirst for memory, good memory utilizaiton control is critical. This is especially true when
+running with multiple execution threads, as each thread has its own memory allocation arena, and
+poor management can waste large amounts of memory. Simply put, if it weren't for drop-in allocators,
+we would not use OpenMP with polynomial evaluation in kelvin, because our primary constrait is always memory. Any 
+runtime performance improvement we happen to get is just icing on the cake.
+
+<h3>Using Replacement Allocators</h3>
+There are two ways of incorporating replacement memory allocators -- linking or preloading. Linking is the
+more reliable but cumbersome approach. It eliminates the possibility of accidently running without the
+allocator by incorrectly defining the preload environment variable, but one must edit the
+Makefile and rebuild the kelvin binaries to include or exclude the allocator. Preloading is easy
+to enable and disable, as it does not require rebuilding, but since there is no obvious indication of 
+whether the allocator is preloaded, 
+one can spend a lot of time doing performance testing of an allocator only to discover it wasn't there. Guess
+why I know that.
+
+<h4>Preloading</h4>
+
+Under most un*x OSes, the environment variable LD_PRELOAD must point to the drop-in
+allocator. Under Darwin, the environment variable is DYLD_INSERT_LIBRARIES.
+<p>
+Our experience with hoard has indicated that you only want to have it preloaded when
+you're running kelvin. If you inadvertently leave it loaded with other programs, their behavior can be erratic.
+<p>
+Build ptmalloc3 with <tt>make linux-pthread</tt> for a linkable library, or <tt>make linux-shared</tt>
+for a loadable library.
+
+<h4>Linking</h4>
+We've only tried ptmalloc3 as a linked-in replacement allocator. The vestiges of this are still in the
+<tt>Makefile</tt> for the adventurous to try. We don't distribute kelvin with ptmalloc3 linked-in 
+by default because we cannot anticipate
+what platform will be used, and we don't complicate the build with extra dependencies.
+
+<hr>
+$Date: 2008-06-17 09:05:32 -0400 (Tue, 17 Jun 2008) $
+</body>
+
+</html>

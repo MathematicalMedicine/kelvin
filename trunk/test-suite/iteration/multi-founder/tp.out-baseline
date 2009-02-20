@@ -1,0 +1,14 @@
+# 1  disease l1
+Chr Marker Position MOD DPrime Theta(M,F) R2 Alpha DGF MF LC0PV(DD,Dd,dd) 
+# Overall MOD maximizing model:
+1 l1 72.3000 0.5591 0.00 (0.0500,0.0500) 0.000 1.00 0.0010 0.4000 (0.999 0.999 0.000)
+# MOD maximizing model for theta=0:
+1 l1 72.3000 0.5591 0.00 (0.0500,0.0500) 0.000 1.00 0.0010 0.4000 (0.999 0.999 0.000)
+# MOD maximizing model for dprime=0:
+1 l1 72.3000 0.5591 0.00 (0.0500,0.0500) 0.000 1.00 0.0010 0.4000 (0.999 0.999 0.000)
+# Overall LR maximizing model:
+1 l1 72.3000 0.0622 0.00 (0.0500,0.0500)
+# LR maximizing model for theta (0, 0):
+1 l1 72.3000 nan 0.00 (0.0000,0.0000)
+# LR maximizing model for dprime=0:
+1 l1 72.3000 0.0622 0.00 (0.0000,0.0000)

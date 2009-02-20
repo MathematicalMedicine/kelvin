@@ -1,0 +1,637 @@
+<html>
+<head><title>kelvin Configuration File</title></head>
+<body>
+<h1>kelvin Configuration File</h1>
+
+If you are just getting started with kelvin, or are uncomfortable working directly with the
+configuration file, you can use the <a href="http://hodgkin.ccri.net/software/gKelvin/">graphic
+configuration file editor</a> instead.
+<p>
+The kelvin configuration file is a text file specified on the kelvin command line that 
+contains directives that describe the nature
+of the analysis to be performed. The file can contain blank lines, comments (specified by a '#'-sign in the first
+column), or directives. Directives start in the first column, and may take one or more parameters. Directives
+that take either no parameters or a fixed number of parameters (i.e., not ranges), can end with a comment.
+<p>
+A simple configuration file might look like this:
+<pre>
+ 1: #
+ 2: # Sample kelvin.conf file for a two-point dichotomous trait LD analysis
+ 3: #
+ 4:
+ 5: #
+ 6: # Analysis type
+ 7: #
+ 8: TP # Trait-to-marker two-point analysis (the default)
+ 9: DT # Dichotomous trait (the default)
+10: # Linkage disequilibrium with D' (D-prime) range specified
+11: LD -1 1 0.1
+12:
+13: # Polynomial evaluation with default allocation factor of 1
+14: PE 1
+15: 
+16: #
+17: # Input files (currently using all default names)
+18: #
+19: PD pedpost.dat # Post-MAKEPED pedigree file
+20: DF datafile.dat # Marker types and names
+21: MK markers.dat # Marker frequencies
+22: MP mapfile.dat # Chromosome map (selected marker locations)
+23:
+24: #
+25: # Input data interpretation values
+26: #
+27: AS 0 1 2 # Affection status "Unknown", "Unaffected" and "Affected" values
+28:
+29: #
+30: # Output files (all currently using default names)
+31: #
+32: HE br.out # Bayes Ratio output file
+33: PF ppl.out # PPL output file
+34:
+35: #
+36: # Analysis grid and sample space components
+37: #
+38: # Range of theta values for which to maximize LOD
+39: Th 0 0.5 0.01
+40
+41: # Trait gene frequency values to evaluate in finding maximum LOD
+42: GF 0.001;0.01;0.1;0.3;0.5;0.8
+43:
+44: # Standard penetrances or mean values to evaluate in finding maximum LOD
+45: DD 0.0 0.9 0.1
+46: DD 0.999
+47: Dd 0.0 0.9 0.1
+48: Dd 0.999
+49: dd 0.0 0.9 0.1
+50: dd 0.999
+51: # Standard penetrances or mean value constraints
+52: DD >= Dd
+53: Dd >= dd
+54: DD != Dd; Dd != dd
+55: 
+56: # Alpha values to evaluate in finding maximum LOD
+57: AL 0.05 1 0.05
+</pre>
+Where lines 8, 9 and 10 specify the type of analysis, 19-22 specify input files, 32 and 33
+specify output files, and 35-57 specify a standard analysis grid.
+<p>
+kelvin currently supports wide variety of types analyses,
+so a good starting point for writing a configuration file is to review the
+ <a href="#analysis">outline of analyses</a>, which indicates the directives used to specify each
+of the 22 different types currently available. The <a href="#summary">directive summary</a> gives
+a brief description of directives and organizes them by category. Finally, there is an exhaustive
+<a href="#reference">directive reference</a>.
+
+<hr>
+
+<h2 id="analysis">Types of Analysis</h2>
+While most combinations of analysis type directives are valid, not all
+make sense, so it is helpful to have a list of valid combinations. The specific
+directives that are required for each type of analysis are provided in parenthesis.
+<ul>
+<li>Trait-to-marker
+<ul>
+<li>Sex-averaged multipoint
+<ul>
+<li>Dichotomous trait
+<ul>
+<li><a href="#SA">SA</a> for sex-averaged multipoint, indicates how many markers to consider at a time
+<li><a href="#TL">TL</a> for the trait locus positions along the chromosome for which to produce results
+<li><a href="#DT">DT</a> for dichotomous trait
+</ul>
+<li>Quantitative trait
+<ul>
+<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#QT">QT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#QT">QT T</a>)
+</ul>
+<li>Quantitative trait with threshold
+<ul>
+<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#CT">CT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#CT">CT T</a>)
+</ul>
+</ul>
+<li>Sex-specific multipoint
+<ul>
+<li>Dichotomous trait (<a href="#SS">SS</a>, <a href="#TL">TL</a>, <a href="#DT">DT</a>)
+<li>Quantitative trait
+<ul>
+<li>Chi-square distribution (<a href="#SS">SS</a>, <a href="#TL">TL</a>, <a href="#QT">QT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SS">SS</a>, <a href="#TL">TL</a>, <a href="#QT">QT T</a>)
+</ul>
+<li>Quantitative trait with threshold
+<ul>
+<li>Chi-square distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#CT">CT chisq</a>)
+<li>Truncated Student's t-distribution (<a href="#SA">SA</a>, <a href="#TL">TL</a>, <a href="#CT">CT T</a>)
+</ul>
+</ul>
+<li>Two-point
+<ul>
+<li>Dichotomous trait
+<ul>
+<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#DT">DT</a>) - The default type of analysis if no directives
+are specified. A validated test case is provided.
+<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#DT">DT</a>, <a href="#LD">LD</a>) -  A test case is provided.
+</ul>
+<li>Quantitative trait
+<ul>
+<li>Chi-square distribution
+<ul>
+<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#QT">QT chisq</a>)
+<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#QT">QT chisq</a>, <a href="#LD">LD</a>)
+</ul>
+<li>Truncated Student's t-distribution
+<ul>
+<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#QT">QT T</a>)
+<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#QT">QT T</a>, <a href="#LD">LD</a>)
+</ul>
+</ul>
+<li>Quantitative trait with threshold
+<ul>
+<li>Chi-square distribution
+<ul>
+<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#CT">CT chisq</a>)
+<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#CT">CT chisq</a>, <a href="#LD">LD</a>)
+</ul>
+<li>Truncated Student's t-distribution
+<ul>
+<li>Linkage equilibrium (<a href="#TP">TP</a>, <a href="#CT">CT T</a>)
+<li>Linkage disequilibrium (<a href="#TP">TP</a>, <a href="#CT">CT T</a>, <a href="#LD">LD</a>)
+</ul>
+</ul>
+</ul>
+</ul>
+<li>Marker-to-marker
+<ul>
+<li>Linkage equilibrium (<a href="#MM">MM</a>)
+<li>Linkage disequilibrium (<a href="#MM">MM</a>, <a href="#LD">LD</a>)
+</ul>
+</ul>
+<hr>
+
+<h2 id="summary">Directive Summary</h2>
+
+<h4>Analysis Type</h4>
+<dl>
+<dt><a href="#SS">SS &lt;m&gt;</a></dt><dd>sex-specific multipoint analysis with &lt;m&gt; markers.</dd>
+<dt><a href="#SA">SA &lt;m&gt;</a></dt><dd>sex-averaged multipoint analysis with &lt;m&gt; markers.</dd>
+<dt><a href="#TP">TP</a></dt><dd>two-point analysis.</dd>
+<dt><a href="#DT">DT</a></dt><dd>dichotomous (binary) trait analysis.</dd>
+<dt><a href="#QT">QT</a></dt><dd>quantitative trait analysis, specifying distribution type and values.</dd>
+<dt><a href="#CT">CT</a></dt><dd>quantitative trait analysis with threshold (combined), specifying distribution type and values.</dd>
+<dt><a href="#MM">MM</a></dt><dd>marker-to-marker analysis as opposed to the default trait-to-marker analysis.</dd>
+<dt><a href="#LD">LD</a></dt><dd>linkage disequilibrium analysis as opposed to the default linkage equilibrium,</dd>
+specifying multiple D' values or a range.
+</dl>
+<h4>File Specification</h4>
+<dl>
+<dt><a href="#HE">HE &lt;file name&gt;</a></dt><dd>bayes ratio output file, default bf.out.</dd>
+<dt><a href="#PF">PF &lt;file name&gt;</a></dt><dd>posterior probability of linkage output file, default ppl.out.</dd>
+<dt><a href="#PD">PD &lt;file name&gt;</a></dt><dd>pedigree input file in LINKAGE (FASTLINK) post-MAKEPED format, default pedfile.dat.</dd>
+<dt><a href="#DF">DF &lt;file name&gt;</a></dt><dd>pedigree locus description data input file, default datafile.dat.</dd>
+<dt><a href="#MK">MK &lt;file name&gt;</a></dt><dd>marker input file, default markers.dat.</dd>
+<dt><a href="#MP">MP &lt;file name&gt;</a></dt><dd>map input file, default mapfile.dat.</dd>
+<dt><a href="#CF">CF &lt;file name&gt;</a></dt><dd>case control input file.</dd>
+<dt><a href="#SR">SR &lt;path&gt;</a></dt><dd>saved results input/output path.</dd>
+</dl>
+<h4>Data Values</h4>
+<dl>
+<dt><a href="#UP">UP &lt;n&gt;</a></dt><dd>unknown person ID, default "0".</dd>
+<dt><a href="#AS">AS &lt;n&gt; &lt;m&gt; &lt;l&gt;</a></dt><dd>affection status values "Unknown", "Unaffected" and "Affected"</dd>
+</dl>
+<h4>Multipoint Analysis Only</h4>
+<dl>
+<dt><a href="#TL">TL</a></dt><dd>trait locations, specifying multiple values or a range.</dd>
+<dt><a href="#TM">TM</a></dt><dd>trait loci that map exactly to markers are included in tested trait loci.</dd>
+<dt><a href="#AL">AL</a></dt><dd>alpha parameter values, specifying multiple values or a range.</dd>
+</dl>
+<h4>Two-Point Analysis Only</h4>
+<dl>
+<dt><a href="#Th">Th</a></dt><dd>theta, specifying multiple sex-averaged values or a range.</dd>
+<dt><a href="#Tm">Tm</a></dt><dd>theta, specifying multiple sex-specific male values or a range.</dd>
+<dt><a href="#Tf">Tf</a></dt><dd>theta, specifying multiple sex-specific female values or a range.</dd>
+</dl>
+<h4>Quantitative Trait with Threshold Only</h4>
+<dl>
+<dt><a href="#TT">TT</a></dt><dd></dd>
+<dt><a href="#T_MIN">T_MIN</a></dt><dd></dd>
+<dt><a href="#T_MAX">T_MAX</a></dt><dd></dd>
+</dl>
+<h4>Truncated Student's T-Distribution Only</h4>
+<dl>
+<dt><a href="#MIN">MIN</a></dt><dd></dd>
+<dt><a href="#MAX">MAX</a></dt><dd></dd>
+</dl>
+<h4>All Types of Analyses</h4>
+<dl>
+<dt><a href="#XC">XC</a></dt><dd>analysis of X-chromosome instead of default autosome.</dd>
+<dt><a href="#PE">PE &lt;n&gt;</a></dt><dd>polynomial evaluation with scaling &lt;m&gt; instead of iterative calculation.</dd>
+<dt><a href="#DD, Dd, dd">DD, Dd, dd</a></dt><dd>penetrance, specifying multiple values or a range, and constraints.</dd>
+<dt><a href="#P1">P1</a></dt><dd>used in conjunction with penetrance.</dd>
+<dt><a href="#GF">GF</a></dt><dd>gene frequency, specifying multiple values or a range.</dd>
+<dt><a href="#DA">DA</a></dt><dd>number of disease alleles, currently must be 2, defaults to 2.</dd>
+<dt><a href="#AF">AF</a></dt><dd>allele frequencies for SNPs, specifying multiple values or a range.</dd>
+<dt><a href="#LOG">LOG &lt;facility&gt; &lt;severity&gt;</a></td><dd>change logging level for &lt;facility&gt; to &lt;severity&gt;.
+</dl>
+<h4>Other Directives</h4>
+<dl>
+<dt><a href="#LC">LC &lt;n&gt;</a></dt><dd>use  &lt;n&gt; liability classes.</dd>
+</dl>
+<hr>
+
+<h2 id="reference">Directive Reference</h2>
+<table border="1">
+<tr>
+<td width="10%">
+<a href="#AF">AF</a><br>
+<a href="#AL">AL</a><br>At least one alpha value is required.
+<a href="#MM">AM/MM</a><br>
+<a href="#AS">AS</a><br>
+<a href="#CF">CF</a><br>
+<a href="#CT">CT</a><br>
+<a href="#DA">DA</a><br>
+<a href="#DD, Dd, dd">DD, Dd, dd</a><br>
+<a href="#DF">DF</a><br>
+<td width="10%">
+<a href="#DT">DT</a><br>
+<a href="#GF">GF</a><br>
+<a href="#HE">HE</a><br>
+<a href="#LC">LC</a><br>
+<a href="#LD">LD</a><br>
+<a href="#LOG">LOG</a><br>
+<a href="#MAX">MAX</a><br>
+<a href="#MIN">MIN</a><br>
+<a href="#MK">MK</a><br>
+<a href="#MP">MP</a><br>
+<td width="10%">
+<a href="#P1">P1</a><br>
+<a href="#PD">PD</a><br>
+<a href="#PE">PE</a><br>
+<a href="#PF">PF</a><br>
+<a href="#QT">QT</a><br>
+<a href="#SA">SA</a><br>Selects a sex-averaged multipoint analysis and indicates the number of markers to consider at
+a time. 
+<p>
+The complexity of the analysis increases exponentially with the number of markers specified. Three is reasonable,
+four can be pushing the limits, and while five, six or seven can be done under certain circumstances, eight and beyond
+are not yet possible even for a nuclear family.
+<a href="#SR">SR</a><br>
+<a href="#SS">SS</a><br>
+<a href="#TL">TL</a><br>
+<td width="10%">
+<a href="#TM">TM</a><br>
+<a href="#TP">TP</a><br>
+<a href="#TT">TT</a><br>
+<a href="#T_MAX">T_MAX</a><br>
+<a href="#T_MIN">T_MIN</a><br>
+<a href="#Tf/Tm">Tf/Tm</a><br>
+<a href="#Th">Th</a><br>
+<a href="#UP">UP</a><br>
+<a href="#XC">XC</a><br>
+</tr>
+</table>
+
+<h3 id="AF">AF</h3>
+
+<h3 id="AL">AL</h3>
+
+<h3 id="AS">AS</h3>
+Specifies the values used to represent affection status in the pedigree data file.
+<pre>
+   AS 0 1 2
+</pre>
+where the first value is the "unknown" value, the second value is the
+"unaffected" value, and the third value is the "affection" value (the
+numbers shown reflect the defaults for DT; for multipoint, the
+defaults are NAN, -9999.99, and 9999.99, respectively).
+
+<h3 id="CC">CC</h3>
+Count file with overflow protection
+
+<h3 id="CF">CF</h3>
+Identifies a pedigree count file for a two-point trait-to-marker linkage disequilibrium
+analysis for biallelic loci. There is a column for each pedigree and a row for each marker. A header
+record identifies pedigrees by their original (pre-MAKEPED) pedigree ID if it is present, or the
+pedigree ID if not.
+<p>
+Case-control data in the form of a file with 6 counts of 
+Case-control is a two-point trait-to-marker linkage disequilibrium analysis for biallelic loci in which 
+a population of unrelated individuals is divided into two major categories,
+cases, who have the trait under investigation, and controls, who do not. Cases and controls
+are further divided into the three possible unphased inheritance patterns
+for each separate marker assuming unknown parents. This information is provided to kelvin using a
+pedigree file with six families, typically named case11, case12, case22, control11, control12 and
+control22, and the count file which contains a table of counts of individuals falling into each
+pedigree category.
+The table has seven columns, one naming 
+the biallelic marker for which counts are provided, and six for the three case and three control 
+inheritance patterns involving the biallelic trait and that marker. There is a header row that
+names the families, followed by rows of counts. Only one row is used at a time
+since the same six inheritance pattern buckets are used in each time. If we wanted to do
+multipoint analysis with n biallelic markers, we'd have to have two times three to the n buckets.
+This wouldn't make sense anyhow, since we can only do LD with two-point, and LE tells us nothing
+without parental genotypes.
+
+<h3 id="CT">CT</h3>
+
+<h3 id="DA">DA</h3>
+
+<h3 id="DD, Dd, dd">DD, Dd, dd</h3>
+
+<h3 id="DF">DF</h3>
+Applicable to all types of analyses.
+<p>
+Specifies the name of the pedigree trait and marker description companion file, which identifies and
+enumerates the columns after "Proband status" in the pedigree file. 
+<p>
+The variable number of columns
+after the "Proband status" in the pedigree file correspond to:
+<ol>
+<li>Affection status. A single number for the trait phenotype. 
+For discrete trait analyses, kelvin only supports a biallelic trait, so the
+number must be a '1' or a '2'. For quantitative trait analyses, the number will be floating point value.
+<li>Pairs of numbers representing  marker genotypes, one pair for each marker in the analysis. Numbers
+represent the alleles of the marker, e.g. for SNPs, the numbers will be a '1' or a '2'.
+</ol>
+This file describes these columns with one row for each type. Rows consist of the following space-separated fields:
+<ol>
+<li>Locus type, either "T" for affection status (trait), which will be specified by one column, 
+or "M" for marker, which
+will be specified by two columns (pair of haplotypes). The exception is when multiple <a href="#LC">liability classes</a>, in which case the affection status (trait) includes a second column specifying the liability class number
+membership.
+<li>Name of the locus.
+</ol>
+For example the following describes four loci -- the trait and 3 markers:
+<pre>
+T disease_locus
+M locus_1
+M locus_2
+M locus_3
+</pre>
+Where "disease_locus" is represented by the first column after "Proband status" in the pedigree file,
+"locus_1" is represented by the 2nd and 3rd columns after "Proband status", "locus_2" is represented
+by the 4th and 5th columns, and "locus_3" by the 6th and 7th.
+<h3 id="DT">DT</h3>
+
+<h3 id="GF">GF</h3>
+
+<h3 id="HE">HE</h3>
+
+<h3 id="LC">LC</h3>
+Applicable to all types of analyses.
+<p>
+Liability classes
+allow you to apply different penetrance models to different groups of individuals,
+supporting things like age of onset, or imprinting (if you use
+liability classes to code for M/F parents).
+<pre>
+LC n
+</pre>
+Where <tt>n</tt> is the number of liability classes. When there are multiple
+liability classes, an additional column for liability class number
+membership
+must be added to the pedigree file immediately after the affection status. Liability
+class numbers are 1-<tt>n</tt>.
+
+When you have multiple liability
+classes, the number of penetrance vectors in the analysis will be
+multiplied by the number of liability classes unless you specify 
+inter- or intra-class penetrance constraints.
+For example, if you have two liability classes (1 and 2) in a DT
+model, your configuration file might look like this:
+<pre>
+    # Two liability classes
+    LC 2
+    # Penetrance values for all classes
+    DD 0.0 0.8 0.1; 0.9 0.999 0.099
+    Dd 0.0 0.8 0.1; 0.9 0.999 0.099
+    dd 0.0 0.8 0.1; 0.9 0.999 0.099
+    Dd > dd
+    # An intra-class penetrance constraint
+    DD 1 > Dd 1
+    # An inter-class penetrance constraint
+    DD 1 > DD 2
+</pre>
+Note the extension to the constraint language; keywords without an
+integer class number apply uniformly to all classes, while those with
+integer class numbers provide inter-class constraints or within-class
+constraints applied to only select classes.
+<p>
+This specification says that Dd>dd for both liability classes 1 and 2, but DD>Dd
+only for liability class 1 and not 2, and liability class 1's DD always exceeds 2's DD,
+excluding grid points where this is not the case.
+<p>
+For multiallelic diseases, use single-digit integers instead of Dd
+specifications.
+
+<h3 id="LD">LD</h3>
+
+<h3 id="LOG">LOG</h3>
+Applicable to all types of analyses.
+<p>
+Changes the logging level for &lt;facility&gt; to &lt;severity&gt;.
+<p>
+By default, only fatal error messages are written to error output. The LOG directive allows
+messages for less severe issues to be displayed on a subsystem-by-subsystem basis.
+<p>
+Facility can be:
+<ul>
+<li>pedfile
+<li>inputfile
+<li>genoelim
+<li>parentalpair
+<li>peelgraph
+<li>likelihood
+<li>setrecoding
+<li>memory
+<li>integration
+</ul>
+<p>
+Severity can be:
+<ul>
+<li>fatal
+<li>error
+<li>warning
+<li>advise
+<li>debug
+</ul>
+<h3 id="MAX">MAX</h3>
+
+<h3 id="MIN">MIN</h3>
+
+<h3 id="MK">MK</h3>
+Applicable to all types of analyses.
+<p>
+Specifies the name of the marker allele frequency file, which provides the allele
+frequencies for markers used in the analysis. For each marker there is a header
+line identified by an "M" in the first column, followed by a frequency line for that 
+marker identified by an "F" in the first column. The header line has 
+the marker name as specified in the pedigree companion file (<a href="#DF">DF</a> directive).
+The frequency line has a space-separated list of allele frequencies for the marker.
+There should be one frequency provided for each allele of a marker, and all of the 
+frequencies for a marker should add up to 1.
+<P>
+For example the following provides allele frequency data for 2 SNPs:
+<pre>
+M locus_1
+F .4 .6
+M locus_2
+F .375 .625
+</pre>
+Where the first allele (a '1' in the pedigree file) of the first marker has a frequency of .4, and the
+second allele (a '2' in the pedigree file) has a frequency of .6.
+<h3 id="MM">MM</h3>
+The MM directive indicates marker to marker analysis. By default, it
+will do all possible pairwise analyses between any two markers. In
+contrast, the AM directive specifies that only adjacent markers will
+be analyzed.
+
+<h3 id="MP">MP</h3>
+Applicable to all types of analyses.
+<p>
+Specifies the name of the marker map file, which provides relative chromosome map positions for all markers
+in the analysis. There must be a line of text (typically the column header) before the actual data in this
+file. This line cannot be blank or a comment.
+All markers referenced in the pedigree companion file (<a href="#DF">DF</a> directive)
+must be included. Positions can be on any scale as long as their relative
+position is accurate. Whitespace-separated columns are:
+<ol>
+<li>Chromosome number
+<li>Marker name as specified in the pedigree companion file
+<li>Sex-Averaged map position in centiMorgans
+<li>Male map position in centiMorgans (optional)
+<li>Female map position in centiMorgans (optional)
+</ol>
+<h3 id="P1">P1</h3>
+
+<h3 id="PD">PD</h3>
+
+<h3 id="PE">PE</h3>
+Applicable to all types of analyses.
+<p>
+Indicates that polynomial evaluation should be performed for likelihood
+calculations; overrides the default explicit
+evaluation condition.
+<pre>
+   PE n
+</pre>
+Where n is an optional integer parameter which specifies the polynomial
+allocation scaling factor in the range of 1-10. Default is 1, and best for
+environments with limited memory resources. Higher values will generally
+trade memory for execution time.
+
+<h3 id="PF">PF</h3>
+Applicable to all types of analyses.
+<p>
+Specifies the name of the LINKAGE (FASTLINK) post-MAKEPED format pedigree file to be used
+in the analysis. Whitespace-separated columns are:
+<ol>
+<li>Pedigree ID
+<li>Individual ID number
+<li>ID of father
+<li>ID of mother
+<li>First offspring ID
+<li>Next paternal sibling ID
+<li>Next maternal sibling ID
+<li>Sex (1 for male, 2 for female)
+<li>Proband status (1 for proband, other non-zero numbers indicated doubled IDs from loop-breaking.)
+<li>Trait phenotype and marker genotype information columns. Variable in number and described by the file specified
+by the pedigree companion file (<a href="#DF">DF</a> directive).
+<li>Original (pre-MAKEPED) pedigree ID and individual ID in "Ped: <ID> Per: <ID>" format.
+</ol>
+<pre>
+   PF pedfile.dat
+</pre>
+Shown with default file name. The parameter can include a path which can be absolute or
+relative to the current default directory. A common use of this is
+specifying a single pedigree file to be shared by multiple analyses in separate
+subdirectories as:
+<pre>
+   PF ../pedfile.dat
+</pre>
+<h3 id="QT">QT</h3>
+Quantitative trait analysis requires specification of a trait distribution. Currently
+normal, Student's T, and Chi-squared distributions are supported.
+<p>
+Normal is not
+recommended except with test data.
+<p>
+Student's T-distribution is specified as:
+<tt>
+QT T df mean sd
+</tt>
+where <tt>df</tt> is the number of degrees of freedom, e.g. 30, <tt>mean</tt> is the mean of the
+trait values, and <tt>sd</tt> is their standard deviation.
+<p>
+Chi-squared distribution is specified as:
+<tt>
+QT chisq shift scale
+</tt>
+where <tt>shift</tt> is the offset from zero (normally 0), and <tt>scale</tt> is the scaling factor,
+(normally 1).
+<h3 id="SA">SA</h3>
+
+<h3 id="SR">SR</h3>
+SR - takes an optional parameter that specifies the path in
+which to save/restore intermediate results of a fixed-grid analysis.
+The fixed grid must consist of 6 disease gene frequencies and 275
+penetrance values, e.g.:
+<pre>
+GF 0.001;0.01;0.1;0.3;0.5;0.8
+
+DD 0.0 0.9 0.1
+Dd 0.0 0.9 0.1
+dd 0.0 0.9 0.1
+DD 0.999
+Dd 0.999
+dd 0.999
+DD >= Dd
+Dd >= dd
+DD != Dd; Dd != dd
+</pre>
+Trait, marker, and alternative results are stored in files named:
+<pre>
+&lt;optional path/>trait/ped-&lt;pn>/ped-&lt;pn>_trait.tpl - for 22 allosomes
+&lt;optional path/>trait-23/ped-&lt;pn>/ped-&lt;pn>_trait.tpl - for autosome
+&lt;optional path/>chr-&lt;cn>_ped-&lt;pn>/chr-&lt;cn>_ped-&lt;pn>_&lt;m1>_&lt;m2>_marker.tpl
+&lt;optional path/>chr-&lt;cn>_ped-&lt;pn>/chr-&lt;cn>_ped-&lt;pn>_pos-&lt;po>_alternative.tpl
+</pre>
+where &lt;optional path> is the parameter to the SR directive, if specified,
+<tt>&lt;pn></tt> is pedigree number, <tt>&lt;cn></tt> is chromosome number, <tt>&lt;m1></tt> and <tt>&lt;m2></tt>
+are marker names, and <tt>&lt;po></tt> is position.
+<p>
+Paths are created as needed. If trait, marker or alternative result files
+are found, they are loaded and the corresponding calculations skipped. When
+calculations are performed, trait, marker and alternative results are written.
+To force recalculation, delete the saved results.
+
+<h3 id="SS">SS</h3>
+
+<h3 id="TL">TL</h3>
+
+<h3 id="TP">TP</h3>
+
+<h3 id="TT">TT</h3>
+
+<h3 id="T_MAX">T_MAX</h3>
+
+<h3 id="T_MIN">T_MIN</h3>
+
+<h3 id="Tf">Tf</h3>
+
+<h3 id="Th">Th</h3>
+
+<h3 id="Tm">Tm</h3>
+
+<h3 id="UP">UP</h3>
+
+<h3 id="XC">XC</h3>
+<hr>
+
+<h2 id="ranges">Specifying Ranges</h2>
+</html>
+<hr>
+$Date$
+</body>
+
+</html>

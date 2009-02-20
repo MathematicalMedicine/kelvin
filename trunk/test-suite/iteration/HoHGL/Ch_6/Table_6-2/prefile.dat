@@ -1,0 +1,9 @@
+ex4 father 0 0 1 1 1 1
+ex4 mother 0 0 2 1 1 2
+ex4 son1 father mother 1 1 1 1
+ex4 son2 father mother 1 1 1 1
+ex4 son3 father mother 1 2 2 2
+ex4 dau1 father mother 2 1 1 1
+ex4 son4 father mother 1 2 2 2
+ex4 husband 0 0 1 1 3 3
+ex4 gson husband dau1 1 2 1 1
