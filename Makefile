@@ -50,6 +50,7 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 #CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
 #CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
 #CFLAGS += -DUSE_GSL # Use GNU Scientific Library (GSL) statistical routines instead of internal ones
+#CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13
 #ADD_LDFLAGS += -lgsl -lgslcblas -lm # ditto
 
 LDFLAGS += ${ADD_LDFLAGS}
