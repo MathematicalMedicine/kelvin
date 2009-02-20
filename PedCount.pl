@@ -1043,7 +1043,7 @@ sub bucketizePedigrees {
 	    }
 	    $Pair = " " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
 	    print OUT $Pedigrees{$Ped}{$Ind}{Aff}." ".join(" ", $Pair x $PairCount )." ";
-	    print OUT "Ped: $PB Ind: $Ind\n";
+	    print OUT "Ped: $PedSeq Per: $Ind # Template $PB\n";
 	}
     }
     close OUT;
