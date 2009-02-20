@@ -20,7 +20,7 @@ my $markersFile      = "markers.dat";    # Default input files
 my $UnknownAffection = 0;
 my $Unaffected       = 1;
 my $Affected         = 2;                # Default affection indicators
-my $UnknownPerson    = 0;                # Default unknown person indicator
+my $UnknownPerson    = "0";                # Default unknown person indicator
 
 # Read/calculated results
 my %Pedigrees;                           # Pedigrees as loaded
@@ -37,7 +37,6 @@ my $ShortestLoop = "";                   # Just batted around too much to monkey
 my %KnownDirectives = (
     AL => \&NoAction,
     AS => \&dirAS,
-    CT => \&dirCT,
     DA => \&NoAction,
     DD => \&NoAction,
     DF => \&NoAction,
@@ -64,17 +63,6 @@ sub dirAS {
     $UnknownAffection = $Directives{AS}[0];
     $Unaffected       = $Directives{AS}[1];
     $Affected         = $Directives{AS}[2];
-}
-
-#####################################
-sub dirCT {
-
-    # If it's not already explicitly specified, set QT default for AS
-    if (!defined($Directives{AS})) {
-        $UnknownAffection = -99.99;
-        $Unaffected       = -88.88;
-        $Affected         = 88.88;
-    }
 }
 
 #####################################
@@ -115,7 +103,7 @@ sub followPaths {
     }
 
     # Have we reached our goal this time?
-    if ($Start == $End) {
+    if ($Start eq $End) {
 
         # Woohoo!
         $Seen .= "+" . $Start;
@@ -184,8 +172,8 @@ sub followPaths {
             || (($YourDad ne $UnknownPerson) && ($YourDad eq $MyDad))) {
             if (($YourMom eq $MyMom) && ($YourDad eq $MyDad)) {
                 for my $Child (keys %{ $Pedigrees{$Pedily} }) {
-                    if (   ($Pedigrees{$Pedily}{$Child}{Dad} == $Ind)
-                        || ($Pedigrees{$Pedily}{$Child}{Mom} == $Ind)) {
+                    if (   ($Pedigrees{$Pedily}{$Child}{Dad} eq $Ind)
+                        || ($Pedigrees{$Pedily}{$Child}{Mom} eq $Ind)) {
                         followPaths($Pedily, $Ind, $End, $Seen);
                         last;
                     }
@@ -204,24 +192,24 @@ sub followPaths {
 # Recursively populate @Depths and @Ancestors
 #
 sub listAncestors {
-    my ($Pedily, $Individual, $Depth);
-    $Pedily     = shift();
-    $Individual = shift();
+    my ($Ped, $Ind, $Depth);
+    $Ped     = shift();
+    $Ind = shift();
     $Depth      = shift();
 
     $Depth++;
     my ($Dad, $Mom);
-    $Dad = $Pedigrees{$Pedily}{$Individual}{Dad};
-    $Mom = $Pedigrees{$Pedily}{$Individual}{Mom};
-    if ($Dad != $UnknownPerson) {
+    $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
+    $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
+    if ($Dad ne $UnknownPerson) {
         push @Depths,    $Depth;
         push @Ancestors, $Dad;
-        listAncestors($Pedily, $Dad, $Depth);
+        listAncestors($Ped, $Dad, $Depth);
     }
-    if ($Mom != $UnknownPerson) {
+    if ($Mom ne $UnknownPerson) {
         push @Depths,    $Depth;
         push @Ancestors, $Mom;
-        listAncestors($Pedily, $Mom, $Depth);
+        listAncestors($Ped, $Mom, $Depth);
     }
     return;
 }
@@ -250,24 +238,21 @@ sub countAncestors {
 }
 
 #####################################
-sub numerically { $a <=> $b }
-
-#####################################
 sub consanguinityLoop() {
 
 # One type of loop is two parents of a child, where the parents share common
 # ancestry. Loop span is sum of two distances to common ancestor, so brother
 # and sister parents would have a span of 2, because they both count back 1 to
 # their mother (or father).
-    my @Pairings = ();
     for my $Ped (keys %Pedigrees) {
+	my @Pairings = ();
         my %Seen = ();
         for my $Ind (keys %{ $Pedigrees{$Ped} }) {
             my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
             my $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
-            if (($Mom != $UnknownPerson) && ($Dad != $UnknownPerson)) {
-                push @Pairings, $Mom . "+" . $Dad unless $Seen{ $Mom . "+" . $Dad }++;
-            }
+            if (($Mom ne $UnknownPerson) && ($Dad ne $UnknownPerson)) {
+		push @Pairings, $Mom . "+" . $Dad unless $Seen{ $Mom . "+" . $Dad }++;
+	    }
         }
         for my $Pair (@Pairings) {
             my ($Mom, $Dad) = split /\+/, $Pair;
@@ -307,7 +292,7 @@ sub marriageLoop() {
         for my $Ind (keys %{ $Pedigrees{$Ped} }) {
             my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
             my $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
-            if (($Mom != $UnknownPerson) && ($Dad != $UnknownPerson)) {
+            if (($Mom ne $UnknownPerson) && ($Dad ne $UnknownPerson)) {
                 push @Pairings, $Mom . "+" . $Dad unless $Seen{ $Mom . "+" . $Dad }++;
             }
         }
@@ -317,17 +302,17 @@ sub marriageLoop() {
             # Follow paths from Mom's Dad looking for Dad, having seen Mom
             my $DadsGrandPa = $Pedigrees{$Ped}{$Dad}{Dad};
             my $DadsGrandMa = $Pedigrees{$Ped}{$Dad}{Mom};
-            if (   ($DadsGrandPa != $UnknownPerson)
-                || ($DadsGrandMa != $UnknownPerson)) {
+            if (   ($DadsGrandPa ne $UnknownPerson)
+                || ($DadsGrandMa ne $UnknownPerson)) {
 
                 my $MomsGrandPa = $Pedigrees{$Ped}{$Mom}{Dad};
                 my $MomsGrandMa = $Pedigrees{$Ped}{$Mom}{Mom};
-                if ($MomsGrandPa != $UnknownPerson) {
+                if ($MomsGrandPa ne $UnknownPerson) {
                     followPaths($Ped, $MomsGrandPa, $Dad, $Mom);
                 }
 
                 # Follow paths from Mom's Mom looking for Dad, having seen Mom
-                if ($MomsGrandMa != $UnknownPerson) {
+                if ($MomsGrandMa ne $UnknownPerson) {
                     followPaths($Ped, $MomsGrandMa, $Dad, $Mom);
                 }
                 if ($ShortestLoop ne "") {
@@ -498,7 +483,9 @@ sub loadPedigree {
                 $Pedigrees{$Ped}{$Ind}{Prb}  = $Prb;    # Proband
             }
             $Pedigrees{$Ped}{$Ind}{Sex} = $Sex;
-        }
+        } else {
+	    $Pedigrees{$Ped}{$Ind}{Sex} = 1; # Bare case-control can be all male
+	}
         $Pedigrees{$Ped}{$Ind}{Aff}    = $Aff;
         $Pedigrees{$Ped}{$Ind}{MkC}    = $MkC;          # Marker count (should always be the same)
         $Pedigrees{$Ped}{$Ind}{GtC}    = $GtC;          # Genotype count (how complete is genotyping)
@@ -514,6 +501,7 @@ sub loadPedigree {
 	my $memberCount = scalar(keys %{ $Pedigrees{$Ped} });
 	if ($memberCount == 1) {
 	    for my $Ind (keys %{ $Pedigrees{$Ped} }) { # Yes, there's only one, but what individual ID?
+		print "Adding parents for Pedigree $Ped, Individual $Ind\n";
 		$Pedigrees{$Ped}{$Ind}{Prb} = 1;
 		my $Dad = $Ind . "D";
 		$Pedigrees{$Ped}{$Ind}{Dad} = $Dad;
@@ -622,8 +610,38 @@ sub loadMarkers {
 }
 
 #####################################
-# Check relations and genders (parent, siblings present, not self-parenting, correct genders)
+# Check inter-file integrity, i.e. affectation, markers and Mendel
+sub checkIntegrity {
+    for my $Ped (sort keys %Pedigrees) {
+	my $UnknownAffectionCount = 0; my $UnaffectedCount = 0;
+	my $AffectedCount = 0;
+        for my $Ind (keys %{ $Pedigrees{$Ped} }) {
+	    $UnknownAffectionCount++ if ($Pedigrees{$Ped}{$Ind}{Aff} == $UnknownAffection);
+	    $UnaffectedCount++ if ($Pedigrees{$Ped}{$Ind}{Aff} == $Unaffected);
+	    $AffectedCount++ if ($Pedigrees{$Ped}{$Ind}{Aff} == $Affected);
+	    $MagicCounts++ if ($Pedigrees{$Ped}{$Ind}{Aff} =~ /(88\.88|99\.99|NaN)/i);
+	}
+	if (defined($Directives{QT})) {
+	    if ((($UnknownAffectionCount == 0) || ($UnaffectedCount == 0) ||
+		 ($AffectedCount == 0)) && ($MagicCounts != 0)) {
+		print "Your QT analysis for pedigree $Ped has Unk/UnA/Aff of ".
+		"$UnknownAffectionCount/$UnaffectedCount/$AffectedCount out of ".
+		scalar(keys %{ $Pedigrees{$Ped} })." individuals and $MagicCounts default values\n"
+	    }
+	} else {
+	    # Must be DT
+	    die "Your DT analysis for pedigree $Ped has Unk/UnA/Aff of ".
+		"$UnknownAffectionCount/$UnaffectedCount/$AffectedCount out of ".
+		scalar(keys %{ $Pedigrees{$Ped} })." individuals\n"
+		if ($UnknownAffectionCount + $UnaffectedCount + $AffectedCount != 
+		    scalar(keys %{ $Pedigrees{$Ped} }));
+	}
+    }
 
+}
+
+#####################################
+# Check relations and genders (parent, siblings present, not self-parenting, correct genders)
 sub checkRelations {
 
     my $Type = shift();
@@ -874,22 +892,29 @@ sub bucketizePedigrees {
     for my $Ped (sort keys %Pedigrees) {
 
 	my $memberCount = scalar(keys %{ $Pedigrees{$Ped} });
-        # Qualify the family for inclusion in trio buckets...
-        if (($memberCount != 3) && ($memberCount != 4)) {
-            print "Copy $memberCount-individual pedigree $Ped directly\n";
-            next;
-        }
-
-	# Build a parental affection prefix so we can do more than expected.
+        # Qualify the family for inclusion in trio buckets by
+	# verifying depth of 1 while building a parental 
+        #affectation prefix so we can do more 
+	# than expected (i.e. handle any nuclear families)
 	my $PAP = "";
         for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
-            if ($Pedigrees{$Ped}{$Ind}{Dad} eq $UnknownPerson) {
+	    my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
+            if ($Dad eq $UnknownPerson) {
 		if ($Pedigrees{$Ped}{$Ind}{Sex} == 1) {
-		    $PAP = $Pedigrees{$Ped}{$Ind}{Aff}.$PAP ;
+		    $PAP = $Pedigrees{$Ped}{$Ind}{Aff}.$PAP;
 		} else {
 		    $PAP = $PAP.$Pedigrees{$Ped}{$Ind}{Aff};
 		}
+	    } else {
+		if ($Pedigrees{$Ped}{$Dad}{Dad} ne $UnknownPerson) {
+		    $PAP  = "";
+		    last;
+		}
 	    }
+	}
+	if ($PAP eq "") {
+	    print "Copy multi-generation pedigree intact.\n";
+	    next;
 	}
 
         # Get the family genotype bucket for each marker pair
@@ -938,6 +963,19 @@ sub bucketizePedigrees {
             }
         }
     }
+
+    if (scalar(keys %Buckets) == 0) {
+	print "Bucketizing cannot reduce your pedigree count.\n";
+    } else {
+	print  sprintf ("Bucketizing can reduce your evaluation count from %d to %d, or by %2d%%\n",
+			scalar(keys %Pedigrees) * $PairCount, scalar(keys %Buckets),
+			100 - (100 * scalar(keys %Buckets) / (scalar(keys %Pedigrees) * $PairCount)));
+    }
+
+    return if (!defined($write));
+
+    # Now write-out at least the new pedigree and counts
+
     for my $Bucket (sort keys(%Buckets)) {
         print "Bucket $Bucket has " . $Buckets{$Bucket} . " entries\n";
     }
@@ -956,14 +994,17 @@ where <flags> are any of:
 -post		Pedigrees are in post-MAKEPED format.
 -noparents	Pedigrees are in pre-MAKEPED format with no columns for parents.
 -bare		The pedigree file has only affection status and marker allele pairs
--counts		Generate new pedigree file and counts
+-count		Count genotypically identical pedigrees and print statistics
+-write		Same as count, but write new pedigree and counts and supporting files as needed
+-loops		Check for consanguinity and marriage loops and print them if found
+-stats		Print statistics on the make-up of the pedigree(s)
 
 The input file will be read and analyzed. If it is a configuration file,
 the input files it references will be read and analyzed as well. 
 
 Validates pedigrees and other configuration files, finds loops, expands
 case-control individuals, generates count files for genotypically 
-identical pedigrees.
+identical single-generation pedigrees.
 
 If counts are requested, a new pedigree file (in the same PRE/POST format 
 as the input) will be generated along with a count file. If only a pedigree
@@ -980,7 +1021,10 @@ print "-pre flag seen\n"                            if ($pre);
 print "-post flag seen\n"                           if ($post);
 print "-noparents flag seen\n"                      if ($noparents);
 print "-bare flag seen\n"                           if ($bare);
-print "-counts flag seen\n"                         if ($counts);
+print "-count flag seen\n"                          if ($count);
+print "-write flag seen\n"                          if ($write);
+print "-loops flag seen\n"                          if ($loops);
+print "-stats flag seen\n"                          if ($stats);
 die "-pre -post and -bare are mutually exclusive flags."
   if (defined($pre) + defined($post) + defined($bare) > 1);
 
@@ -1002,7 +1046,7 @@ my $pedFileType = assessPedigree($pedFile);
 print "Processing $pedFileType format pedigree file\n";
 loadPedigree($pedFile, $pedFileType);
 
-print Dumper(\%Pedigrees);
+#print Dumper(\%Pedigrees);
 
 if (!scalar(@Loci)) {
 
@@ -1014,13 +1058,18 @@ if (!scalar(@Loci)) {
 #print Dumper(\%LociAttributes);
 
 checkRelations($pedFileType);
-#    perfStats();
-if (!defined($bare)) {
+checkIntegrity();
+
+if ($stats) {
+    perfStats();
+}
+
+if ($loops) {
     consanguinityLoop();
     marriageLoop();
 }
 
-if ($counts) {
+if ($count || $write) {
     bucketizePedigrees();
 }
 exit;
