@@ -293,7 +293,7 @@ char *estimateIterations (unsigned long eCL[])
 
       */
       sprintf (analysisType, "%dTL of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)\n"
-	       "Trait-to-marker, Sex-%s Multipoint (w/%d markers), ",
+	       "Trait-to-marker, Sex-%s Multipoint (w/%d loci), ",
 	       modelRange.ntloc,
 	       modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
 	       pedigreeSet.numPedigree,
