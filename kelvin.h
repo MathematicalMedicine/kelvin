@@ -281,10 +281,9 @@ double calculate_PPL (SUMMARY_STAT ** result);
 
 /* routines to caclulate the LD statistics */
 int get_LDVals (SUMMARY_STAT ***result, LDVals *ldvals);
-double calc_ldppl (LDVals *ldvals);
-double calc_ppld_given_linkage (LDVals *ldvals);
-double calc_ppld (LDVals *ldvals);
-double calc_ppld_and_linkage (LDVals *ldvals);
+double calc_ppl_allowing_ld (LDVals *ldvals, double prior);
+double calc_ppld_given_linkage (LDVals *ldvals, double prior);
+double calc_ppld_allowing_l (LDVals *ldvals, double prior);
 #define KROUND(dbl) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * 10000.0) / 10000.0
 
 /* integrate out marker allele frequencies and get the max MOD */

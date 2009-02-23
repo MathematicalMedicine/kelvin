@@ -262,11 +262,10 @@ get_LDVals (SUMMARY_STAT ***result, LDVals *ldvals)
 }
 
 
-double calc_ldppl (LDVals *ldvals)
+double calc_ppl_allowing_ld (LDVals *ldvals, double prior)
 {
   double numerator;
   double denomRight;
-  double prior = modelOptions.LDprior;
   double ldppl;
 
   numerator =
@@ -282,11 +281,10 @@ double calc_ldppl (LDVals *ldvals)
 }
 
 
-double calc_ppld_given_linkage (LDVals *ldvals)
+double calc_ppld_given_linkage (LDVals *ldvals, double prior)
 {
   double numerator;
   double denomRight;
-  double prior = modelOptions.LDprior;
   double ppld_given_l;
 
   numerator =
@@ -301,11 +299,10 @@ double calc_ppld_given_linkage (LDVals *ldvals)
 }
 
 
-double calc_ppld (LDVals *ldvals)
+double calc_ppld_allowing_l (LDVals *ldvals, double prior)
 {
   double numerator;
   double denomRight;
-  double prior = modelOptions.LDprior;
   double ppld; 
 
   numerator =
@@ -318,26 +315,6 @@ double calc_ppld (LDVals *ldvals)
   ppld = numerator / (numerator + denomRight); 
 
   return (ppld);
-}
-
-
-double calc_ppld_and_linkage (LDVals *ldvals)
-{
-  double numerator;
-  double denomRight;
-  double prior = modelOptions.LDprior;
-  double ppld_and_l;
-
-  numerator =
-    ldvals->ld_small_theta * prior * 0.021 + 
-    ldvals->ld_big_theta * prior * 0.0011;
-  denomRight =
-    ldvals->le_small_theta * prior * 0.979 + 
-    ldvals->le_big_theta * prior * 0.9989 + 
-    ldvals->le_unlinked * (1 - prior);
-  ppld_and_l = numerator / (numerator + denomRight);
-
-  return (ppld_and_l);
 }
 
 

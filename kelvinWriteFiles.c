@@ -3,12 +3,12 @@ void writePPLFileHeader () {
   if (modelOptions.markerAnalysis != FALSE) {
     fprintf (fpPPL, "Chr Marker1 Position1 Marker2 Position2 PPL");
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      fprintf (fpPPL, " LD-PPL PPLD|L PPLD PPLD&L ");
+      fprintf (fpPPL, " PPL(LD) PPLD|L PPLD(L) ");
     }
   } else {
     fprintf (fpPPL, "Chr Trait Marker Position PPL");
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      fprintf (fpPPL, " LD-PPL PPLD|L PPLD PPLD&L ");
+      fprintf (fpPPL, " PPL(LD) PPLD|L PPLD(L) ");
     }
   }
     fprintf (fpPPL, "\n");
@@ -35,13 +35,11 @@ void writePPLFileDetail () {
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
     /* load up ldvals first */
     get_LDVals (tp_result, &ldvals);
-    ldstat = calc_ldppl (&ldvals);
+    ldstat = calc_ppl_allowing_ld (&ldvals, modelOptions.LDprior);
     fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-    ldstat = calc_ppld_given_linkage (&ldvals);
+    ldstat = calc_ppld_given_linkage (&ldvals, modelOptions.LDprior);
     fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-    ldstat = calc_ppld (&ldvals);
-    fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-    ldstat = calc_ppld_and_linkage (&ldvals);
+    ldstat = calc_ppld_allowing_l (&ldvals, modelOptions.LDprior);
     fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
   }
   fprintf (fpPPL, "\n");
