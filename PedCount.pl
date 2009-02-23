@@ -20,7 +20,8 @@ $| = 1;    # Force flush of output as printed.
 # Sanctioned globals
 
 # Command line option flags
-my ($config, $pre, $post, $noparents, $bare, $count, $write, $loops, $stats);
+my $config = 0;  my $pre = 0; my $post = 0; my $noparents = 0;
+my $bare = 0; my $count = 0; my $write = 0; my $loops = 0; my $stats = 0;
 
 # Permanent defaults
 use constant AttributeMissing => 0;    # For marker alleles and Sex
@@ -475,7 +476,7 @@ sub loadPedigree {
         }
 
         # Validate everything we've got so far
-        die "Pedigree line $LineNo: sex must be 1 or 2, not \"$Sex\"." if ((!defined($bare)) && !($Sex =~ /[12]/));
+        die "Pedigree line $LineNo: sex must be 1 or 2, not \"$Sex\"." if ((!$bare) && !($Sex =~ /[12]/));
         die "Pedigree line $LineNo: affection status must be $UnknownAffection, $Unaffected, or $Affected, not \"$Aff\"."
 	    if ((!defined($Directives{QT})) && (($Aff != $UnknownAffection) && ($Aff != $Unaffected) && ($Aff != $Affected)));
         my ($OldFam, $OldInd, $Left);
@@ -497,12 +498,12 @@ sub loadPedigree {
                 push @Pairs, $Left . " " . $Marker;
             }
         }
-        if (!defined($bare)) {
-            if (!defined($noparents)) {
+        if (!$bare) {
+            if (!$noparents) {
                 $Pedigrees{$Ped}{$Ind}{Dad} = $Dad;
                 $Pedigrees{$Ped}{$Ind}{Mom} = $Mom;
             }
-            if (!defined($pre)) {
+            if (!$pre) {
                 $Pedigrees{$Ped}{$Ind}{Kid1} = $Kid1;
                 $Pedigrees{$Ped}{$Ind}{nPs}  = $nPs;    # Next paternal sibling
                 $Pedigrees{$Ped}{$Ind}{nMs}  = $nMs;    # Next maternal sibling
@@ -1015,7 +1016,7 @@ sub bucketizePedigrees {
 			100 - (100 * (scalar(keys %Buckets) + (scalar(@Skippies) * $PairCount)) / (scalar(keys %Pedigrees) * $PairCount)));
     }
 
-    return if (!defined($write));
+    return if (!$write);
 
     # Now write-out at least the pedigree and counts
 
@@ -1064,7 +1065,7 @@ sub bucketizePedigrees {
     # Finally the counts.
     open OUT, ">PC_counts.Dat";
 
-    print OUT "\t";
+    print OUT "MARKER\t";
     for my $PB (sort keys %Templates) {
 	print OUT $Templates{$PB}{PedSeq}."\t";
     }
@@ -1084,7 +1085,7 @@ sub bucketizePedigrees {
     close OUT;
 
     # If there was no configuration, create all of the supporting files
-    return if (defined($config));
+    return if ($config);
 
     open OUT, ">PC_config.Dat";
     print OUT <<EOF;
@@ -1092,11 +1093,13 @@ TP # Two-point analysis
 Th 0 0.5 0.01
 LD -1 1 0.1
 
-PD PC_pedigrees.Post
+PD PC_pedigrees.Dat
 DF PC_data.Dat
 MK PC_markers.Dat
 MP PC_map.Dat
 CC PC_counts.Dat
+
+PE
 
 HE PC_br.Out
 PF PC_ppl.Out
@@ -1216,7 +1219,7 @@ print "-write flag seen\n"                          if ($write);
 print "-loops flag seen\n"                          if ($loops);
 print "-stats flag seen\n"                          if ($stats);
 die "-pre -post and -bare are mutually exclusive flags."
-  if (defined($pre) + defined($post) + defined($bare) > 1);
+  if ($pre + $post + $bare > 1);
 
 if ($config) {
     my $ConfFile = shift;
