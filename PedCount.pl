@@ -1,14 +1,26 @@
-#!/usr/bin/perl -ws
-# Strict doesn't co-exist with the -s option, so just uncomment as a diagnostic
-#use strict;
+#!/usr/bin/perl -w
+use strict;
+use Getopt::Long;
 use List::Util qw(sum);
 use Data::Dumper;
 
-# Usual header comments go here...
+#####################################
+#
+# $Id$
+#
+# by Bill Valentine-Cooper, portions from work by John Burian
+#  
+# Copyright 2008, Nationwide Children's Research Institute.  All
+# rights reserved.  Permission is hereby given to use this software
+# for non-profit educational purposes only.
+#
 
 $| = 1;    # Force flush of output as printed.
 
 # Sanctioned globals
+
+# Command line option flags
+my ($config, $pre, $post, $noparents, $bare, $count, $write, $loops, $stats);
 
 # Permanent defaults
 use constant AttributeMissing => 0;    # For marker alleles and Sex
@@ -34,6 +46,7 @@ my @Depths;                              # Referenced recursively and I'm fuddle
 my @Ancestors;                           # ditto
 my $ShortestLoop = "";                   # Just batted around too much to monkey with right now.
 
+# Known directives as well as dispatch routine if needed.
 my %KnownDirectives = (
     AL => \&NoAction,
     AM => \&NoAction,
@@ -69,7 +82,7 @@ my %KnownDirectives = (
     T_MAX => \&NoAction,
     UP => \&dirUP,
     dD => \&NoAction,
-    dd => \&NoAction
+    dd => \&NoAction,
 );
 
 #####################################
@@ -550,18 +563,17 @@ sub deriveLociAndAttributes {
     $Loci[0]                     = "Trait";
     $LociAttributes{Trait}{Type} = "T";
     for my $i (0 .. $PairCount - 1) {
-        $Loci[$i+1] = sprintf("M%04d", $i);
+        $Loci[$i+1] = sprintf("M%04d", $i+1);
         $LociAttributes{ $Loci[$i+1] }{Type} = "M";
         my @HaploCounts = (0); # List works because they must be numeric (relative position of frequency in marker file)
         for my $Ped (keys %Pedigrees) {
             for my $Ind (keys %{ $Pedigrees{$Ped} }) {
+		next if ($Pedigrees{$Ped}{$Ind}{Aff} != $Unaffected);
                 my ($Left, $Right) = split /\s+/, $Pedigrees{$Ped}{$Ind}{Mks}[$i];
                 $HaploCounts[$Left]++  if ($Left != AttributeMissing);
                 $HaploCounts[$Right]++ if ($Right != AttributeMissing);
             }
         }
-
-#	print "Looking at pair $i and seeing ".Dumper(\@HaploCounts)."\n";
         my $PopSize = sum @HaploCounts;
         my @Tokens  = ();
         for $i (1 .. scalar(@HaploCounts) - 1) {
@@ -814,91 +826,91 @@ sub bucketizePedigrees {
         '0 0' => {
             '0 0' => {
                 '0 0' => 'T30',    # 30  0 0  0 0  0 0
-                '1 1' => 'T18',    # 18  0 0  0 0  1 1
-                '1 2' => 'T19',    # 19  0 0  0 0  1 2
-                '2 2' => 'T20'     # 20  0 0  0 0  2 2
+                '1 1' => 'T18',    # 18  0 0  0 0  1 1 used for C/C too
+                '1 2' => 'T19',    # 19  0 0  0 0  1 2 "
+                '2 2' => 'T20',    # 20  0 0  0 0  2 2 "
             },
             '1 1' => {
                 '0 0' => 'T24',    # 24  0 0  1 1  0 0
                 '1 1' => 'T25',    #  5  0 0  1 1  1 1
-                '1 2' => 'T06'     #  6  0 0  1 1  1 2
+                '1 2' => 'T06',    #  6  0 0  1 1  1 2
             },
             '1 2' => {
                 '0 0' => 'T27',    # 27  0 0  1 2  0 0
                 '1 1' => 'T12',    # 12  0 0  1 2  1 1
                 '1 2' => 'T13',    # 13  0 0  1 2  1 2
-                '2 2' => 'T14'     # 14  0 0  1 2  2 2
+                '2 2' => 'T14',    # 14  0 0  1 2  2 2
             },
             '2 2' => {
                 '0 0' => 'T29',    # 29  0 0  2 2  0 0
                 '1 2' => 'T16',    # 16  0 0  2 2  1 2
-                '2 2' => 'T17'     # 17  0 0  2 2  2 2
-            }
+                '2 2' => 'T17',    # 17  0 0  2 2  2 2
+            },
         },
         '1 1' => {
             '0 0' => {
                 '0 0' => 'T24',    # 24  1 1  0 0  0 0
                 '1 1' => 'T05',    #  5  1 1  0 0  1 1
-                '1 2' => 'T06'     #  6  1 1  0 0  1 2
+                '1 2' => 'T06',    #  6  1 1  0 0  1 2
             },
             '1 1' => {
                 '0 0' => 'T21',    # 21  1 1  1 1  0 0
-                '1 1' => 'T01'     #  1  1 1  1 1  1 1
+                '1 1' => 'T01',    #  1  1 1  1 1  1 1
             },
             '1 2' => {
                 '0 0' => 'T22',    # 22  1 1  1 2  0 0
                 '1 1' => 'T02',    #  2  1 1  1 2  1 1
-                '1 2' => 'T03'     #  3  1 1  1 2  1 2
+                '1 2' => 'T03',    #  3  1 1  1 2  1 2
             },
             '2 2' => {
                 '0 0' => 'T23',    # 23  1 1  2 2  0 0
-                '1 2' => 'T04'     #  4  1 1  2 2  1 2
-            }
+                '1 2' => 'T04',    #  4  1 1  2 2  1 2
+            },
         },
         '1 2' => {
             '0 0' => {
                 '0 0' => 'T27',    # 27  1 2  0 0  0 0
                 '1 1' => 'T12',    # 12  1 2  0 0  1 1
                 '1 2' => 'T13',    # 13  1 2  0 0  1 2
-                '2 2' => 'T14'     # 14  1 2  0 0  2 2
+                '2 2' => 'T14',    # 14  1 2  0 0  2 2
             },
             '1 1' => {
                 '0 0' => 'T22',    # 22  1 2  1 1  0 0
                 '1 1' => 'T02',    #  2  1 2  1 1  1 1
-                '1 2' => 'T03'     #  3  1 2  1 1  1 2
+                '1 2' => 'T03',    #  3  1 2  1 1  1 2
             },
             '1 2' => {
                 '0 0' => 'T25',    # 25  1 2  1 2  0 0
                 '1 1' => 'T07',    #  7  1 2  1 2  1 1
                 '1 2' => 'T08',    #  8  1 2  1 2  1 2
-                '2 2' => 'T09'     #  9  1 2  1 2  2 2
+                '2 2' => 'T09',    #  9  1 2  1 2  2 2
             },
             '2 2' => {
                 '0 0' => 'T26',    # 26  1 2  2 2  0 0
                 '1 2' => 'T10',    # 10  1 2  2 2  1 2
-                '2 2' => 'T11'     # 11  1 2  2 2  2 2
-            }
+                '2 2' => 'T11',    # 11  1 2  2 2  2 2
+            },
         },
         '2 2' => {
             '0 0' => {
                 '0 0' => 'T29',    # 29  2 2  0 0  0 0
                 '1 2' => 'T16',    # 16  2 2  0 0  1 2
-                '2 2' => 'T17'     # 17  2 2  0 0  2 2
+                '2 2' => 'T17',    # 17  2 2  0 0  2 2
             },
             '1 1' => {
                 '0 0' => 'T23',    # 23  2 2  1 1  0 0
-                '1 2' => 'T04'     #  4  2 2  1 1  1 2
+                '1 2' => 'T04',    #  4  2 2  1 1  1 2
             },
             '1 2' => {
                 '0 0' => 'T26',    # 26  2 2  1 2  0 0
                 '1 2' => 'T10',    # 10  2 2  1 2  1 2
-                '2 2' => 'T11'     # 11  2 2  1 2  2 2
+                '2 2' => 'T11',    # 11  2 2  1 2  2 2
             },
             '2 2' => {
                 '0 0' => 'T28',    # 28  2 2  2 2  0 0
-                '2 2' => 'T15'     # 15  2 2  2 2  2 2
-            }
-        }
+                '2 2' => 'T15',    # 15  2 2  2 2  2 2
+            },
+        },
     );
 
     my $Type = shift(); # Pedigree type for writing
@@ -986,10 +998,10 @@ sub bucketizePedigrees {
             }
 	    my $PedBucket = $PAP . "/" . join("+", sort (@bucketList));
 	    $Buckets{$Loci[$i+1] . "_" . $PedBucket}++;
-	    if (!defined($Template{$PedBucket})) {
-		$Template{$PedBucket}{Ped} = $Ped;
-		$Template{$PedBucket}{PedSeq} = sprintf("P%04d", $PedSeq++);
-		$Template{$PedBucket}{PairID} = $i;
+	    if (!defined($Templates{$PedBucket})) {
+		$Templates{$PedBucket}{Ped} = $Ped;
+		$Templates{$PedBucket}{PedSeq} = sprintf("P%04d", $PedSeq++);
+		$Templates{$PedBucket}{PairID} = $i;
 	    }
         }
     }
@@ -1007,58 +1019,60 @@ sub bucketizePedigrees {
 
     # Now write-out at least the pedigree and counts
 
-    open OUT, ">PC_pedigrees.Dat";
+    if ($Type eq "POST") {
+	open OUT, ">PC_pedigrees.Dat";
+    } else {
+	open OUT, ">PC_pedigrees.Pre";
+    }
 
     # First the intact pedigrees
     for my $Ped (@Skippies) {
 	for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
 	    print OUT join(" ",($Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom}))." ";
-	    if ($Type eq "POST") {
-		print OUT join(" ",($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs},
-				    $Pedigrees{$Ped}{$Ind}{nMs}))." ";
-	    }
+	    print OUT join(" ",($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs},
+				$Pedigrees{$Ped}{$Ind}{nMs}))." " if ($Type eq "POST");
 	    print OUT $Pedigrees{$Ped}{$Ind}{Sex}." ";
-	    if ($Type eq "POST") {
-		print OUT $Pedigrees{$Ped}{$Ind}{Prb}." ";
-	    }
+	    print OUT $Pedigrees{$Ped}{$Ind}{Prb}." " if ($Type eq "POST");
 	    print OUT $Pedigrees{$Ped}{$Ind}{Aff}." ".join(" ",@{ $Pedigrees{$Ped}{$Ind}{Mks} })."\n";
 	}
     }
 
-    # Now the template pedigrees
+    # Next the template pedigrees
     print "Writing $Type pedigree\n";
-    for my $PB (sort keys %Template) {
-	$Ped = $Template{$PB}{Ped};
-	$PairID = $Template{$PB}{PairID};
-	my $PedSeq = $Template{$PB}{PedSeq};
+    for my $PB (sort keys %Templates) {
+	my $Ped = $Templates{$PB}{Ped};
+	my $PairID = $Templates{$PB}{PairID};
+	my $PedSeq = $Templates{$PB}{PedSeq};
 	for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
 	    print OUT join(" ",($PedSeq, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom}))." ";
-	    if ($Type eq "POST") {
-		print OUT join(" ",($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs},
-				    $Pedigrees{$Ped}{$Ind}{nMs}))." ";
-	    }
+	    print OUT join(" ",($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs},
+				$Pedigrees{$Ped}{$Ind}{nMs}))." " if ($Type eq "POST");
 	    print OUT $Pedigrees{$Ped}{$Ind}{Sex}." ";
-	    if ($Type eq "POST") {
-		print OUT $Pedigrees{$Ped}{$Ind}{Prb}." ";
-	    }
-	    $Pair = " " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
+	    print OUT $Pedigrees{$Ped}{$Ind}{Prb}." " if ($Type eq "POST"); 
+	    my $Pair = " " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
 	    print OUT $Pedigrees{$Ped}{$Ind}{Aff}." ".join(" ", $Pair x $PairCount )." ";
-	    print OUT "Ped: $PedSeq Per: $Ind # Template $PB\n";
-	}
+	    print OUT "Ped: $PedSeq Per: $Ind";
+	    print OUT " # Template $PB\n";
+	    }
     }
     close OUT;
 
+    if ($Type ne "POST") {
+	system ("makeped PC_pedigrees.Pre PC_pedigrees.Dat N");
+    }
+
+    # Finally the counts.
     open OUT, ">PC_counts.Dat";
 
     print OUT "\t";
-    for my $PB (sort keys %Template) {
-	print OUT $Template{$PB}{PedSeq}."\t";
+    for my $PB (sort keys %Templates) {
+	print OUT $Templates{$PB}{PedSeq}."\t";
     }
     print OUT "\n";
     for my $i (0 .. $PairCount - 1) {
 	print OUT $Loci[$i+1]."\t";
-	for my $PB (sort keys %Template) {
-	    $FB = $Loci[$i+1] . "_" . $PB;
+	for my $PB (sort keys %Templates) {
+	    my $FB = $Loci[$i+1] . "_" . $PB;
 	    if (!defined($Buckets{$FB})) {
 		print OUT "0\t";
 	    } else {
@@ -1068,6 +1082,70 @@ sub bucketizePedigrees {
 	print OUT "\n";
     }
     close OUT;
+
+    # If there was no configuration, create all of the supporting files
+    return if (defined($config));
+
+    open OUT, ">PC_config.Dat";
+    print OUT <<EOF;
+TP # Two-point analysis
+Th 0 0.5 0.01
+LD -1 1 0.1
+
+PD PC_pedigrees.Post
+DF PC_data.Dat
+MK PC_markers.Dat
+MP PC_map.Dat
+CC PC_counts.Dat
+
+HE PC_br.Out
+PF PC_ppl.Out
+
+# The rest is the standard analysis grid...
+GF 0.001;0.01;0.1;0.3;0.5;0.8
+DD 0.0 0.9 0.1
+Dd 0.0 0.9 0.1
+dd 0.0 0.9 0.1
+DD 0.999
+Dd 0.999
+dd 0.999
+DD >= Dd
+Dd >= dd
+DD != Dd; Dd != dd
+AL 0.05 1 0.05
+
+EOF
+close OUT;
+
+    open OUT, ">PC_data.Dat";
+    for my $Name (@Loci) {
+	print OUT $LociAttributes{$Name}{Type}." ".$Name."\n";
+    }
+    close OUT;
+
+    open OUT, ">PC_markers.Dat";
+    for my $Name (@Loci) {
+	if ($LociAttributes{$Name}{Type} eq "M") {
+	    print OUT $LociAttributes{$Name}{Type}." ".$Name."\n";
+	    print OUT "F";
+	    for my $Freq (@{ $LociAttributes{$Name}{Frequencies} }) {
+		print OUT sprintf(" %.4f", $Freq);
+	    }
+	    print OUT "\n";
+	}
+    }
+    close OUT;
+
+    #
+    open OUT, ">PC_map.Dat";
+    print OUT "CHR MARKER KOSAMBI\n";
+    for my $Name (@Loci) {
+	if ($LociAttributes{$Name}{Type} eq "M") {
+	    print OUT "1 $Name 1\n";
+	}
+    }
+    close OUT;
+
 }
 
 #####################################
@@ -1083,27 +1161,49 @@ where <flags> are any of:
 -pre		Pedigrees are in pre-MAKEPED format.
 -post		Pedigrees are in post-MAKEPED format.
 -noparents	Pedigrees are in pre-MAKEPED format with no columns for parents.
--bare		The pedigree file has only affection status and marker allele pairs
--count		Count genotypically identical pedigrees and print statistics
--write		Same as count, but write new pedigree and counts and supporting files as needed
--loops		Check for consanguinity and marriage loops and print them if found
--stats		Print statistics on the make-up of the pedigree(s)
+-bare		The pedigree file has only individual, affection status and marker
+		allele pairs columns.
+-count		Count genotypically identical pedigrees and print statistics.
+-write		Same as count, but write new pedigree and counts and supporting 
+		files as needed.
+-loops		Check for consanguinity and marriage loops and print them if found.
+-stats		Print statistics on the make-up of the pedigree(s).
 
 The input file will be read and analyzed. If it is a configuration file,
 the input files it references will be read and analyzed as well. 
 
-Validates pedigrees and other configuration files, finds loops, expands
-case-control individuals, generates count files for genotypically 
-identical single-generation pedigrees.
+Validates pedigrees and other configuration files, finds loops, parents orphaned
+case-control individuals, generates count files for genotypically identical 
+single-generation pedigrees.
 
 If counts are requested, a new pedigree file (in the same PRE/POST format 
 as the input) will be generated along with a count file. If only a pedigree
 file was provided, dummy configuration, pedigree companion, marker and map 
 files will be generated for a two-point LD run with marker allele frequencies 
-computed from the controls?! If a configuration file was provided, the marker 
-names from the companion and marker files it specifies will be used.
+computed from the controls. If a configuration file was provided, the marker 
+names from the pedigree companion and marker files it specifies will be used.
+
+Output files are:
+PC_counts.Dat - counts of genotypically identical pedigrees.
+PC_pedigrees.Pre - pedigrees corresponding to counts, and any pass-thrus
+	in pre-makeped format. If makeped is found it will be run to 
+	generate PC_pedigrees.Dat.
+PC_data.Dat - pedigree companion data file indicating column usage.
+PC_markers.Dat - marker data with allele freqs from unaffected individuals.
+PC_map.Dat - minimal dummy map file.
+PC_config.Dat - template kelvin config file.
 
 EOF
+    
+GetOptions ('config' => \$config,
+	    'pre' => \$pre, 
+	    'post' => \$post,
+	    'noparents' => \$noparents,
+	    'bare' => \$bare,
+	    'count' => \$count,
+	    'write' => \$write,
+	    'loops' => \$loops,
+	    'stats' => \$stats);
 
 die "Invalid number of arguments supplied.\n$Usage" if ($#ARGV < 0);
 print "-config flag seen\n"                         if ($config);
