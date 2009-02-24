@@ -223,7 +223,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
   numRet = sscanf (pLine, "%s %s %n",
 		   pPerson->sParentID[DAD], pPerson->sParentID[MOM], &pos);
   KASSERT (numRet == 2,
-	   "Line %d in pedfile %s doesn't have enough columns(parents). Is this a post-makeped file? \n",
+	   "Line %d in pedfile %s doesn't have enough columns (parents). Is this a post-makeped file? \n",
 	   lineNo, sPedfileName);
   /* ignore the next three columns: first child, next paternal sibling,
    * next maternal sibling, as we are going to build those pointers 
@@ -233,7 +233,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 		   pPerson->sFirstChildID,
 		   pPerson->sNextSibID[DAD], pPerson->sNextSibID[MOM], &pos);
   KASSERT (numRet == 3,
-	   "Line %d in pedfile %s doesn't have enough columns(child&siblings). Is this a post-makeped file? \n",
+	   "Line %d in pedfile %s doesn't have enough columns (child & siblings). Is this a post-makeped file? \n",
 	   lineNo, sPedfileName);
   pLine = &pLine[pos];
   numRet = sscanf (pLine, "%d %d %n", &pPerson->sex, &pPerson->proband, &pos);
@@ -287,7 +287,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
       } else if (pTrait->type == QUANTITATIVE || pTrait->type == COMBINED) {
 	numRet = sscanf (pLine, "%lf %n", &pPerson->ppOrigTraitValue[i][j], &pos);
 	KASSERT (numRet == 1,
-		 "Line %d in pedfile %s doesn't have enough columns. Is this a post-makeped file? \n",
+		 "Line %d in pedfile %s doesn't have enough columns (trait). Is this a post-makeped file? \n",
 		 lineNo, sPedfileName);
 	if ((!isnan(pPerson->ppOrigTraitValue[i][j])) &&
 	    (pPerson->ppOrigTraitValue[i][j] != pTrait->unknownTraitValue)) {
@@ -310,7 +310,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	numRet =
 	  sscanf (pLine, "%d %n", &pPerson->ppLiabilityClass[i][j], &pos);
 	KASSERT (numRet == 1,
-		 "Line %d in pedfile %s doesn't have enough columns. Is this a post-makeped file? \n",
+		 "Line %d in pedfile %s doesn't have enough columns (LC). Is this a post-makeped file? \n",
 		 lineNo, sPedfileName);
 	pLine = &pLine[pos];
       }
@@ -336,8 +336,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
       pPerson->pPhasedFlag[numMarker] = 1;
     }
     KASSERT (numRet == 2,
-	     "Line %d in pedfile %s doesn't have enough columns. Is this a post-makeped file? \n",
-	     lineNo, sPedfileName);
+	     "Line %d in pedfile %s doesn't have enough columns (Marker %d). Is this a post-makeped file? \n",
+	     lineNo, sPedfileName, numMarker);
     /* check whether this locus is untyped */
     if (strcmp(a1, "0") == 0 || strcmp(a2, "0") == 0 || strcasecmp(a1, "X") == 0 || strcasecmp(a2, "X") == 0)
       pPerson->pTypedFlag[numMarker] = 0;
@@ -393,7 +393,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     strcpy (pPerson->sOriginalID, pPerson->sID);
   }
   KASSERT (numRet <= 0 || numRet == 2,
-	   "Line %d in pedfile %s doesn't have enough columns. Is this a post-makeped file? \n",
+	   "Line %d in pedfile %s doesn't have enough columns (Old Ped, Per:). Is this a post-makeped file? \n",
 	   lineNo, sPedfileName);
 
   return 0;
