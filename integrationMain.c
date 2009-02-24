@@ -286,8 +286,21 @@
 	  }
 
 	  /* for each D prime and theta, print out average and maximizing model information - MOD */
-          fprintf (fpHet, "# %-d  %s %s \n", loc2, pLocus1->sName, pLocus2->sName);
-          fprintf (fpHet, "Chr Position ");
+          fprintf (fpHet, "# Seq: %d Trait: %s Marker: %s Chr: %d", loc2,
+		   pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->chromosome);
+	  if ((modelOptions.mapFlag == SEX_SPECIFIC) &&
+	      (pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0) &&
+	      (pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0)) {
+	    fprintf (fpHet, " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
+		     pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
+		     pLocus2->pMapUnit->mapPos[MAP_FEMALE], pLocus2->pMapUnit->mapPos[MAP_MALE]);
+	  } else {
+	    fprintf (fpHet, " Position: %.4f", pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
+	  }
+	  if (pLocus2->pMapUnit->basePairLocation >= 0)
+	    fprintf (fpHet, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
+	  fprintf (fpHet, "\n");
+	  
           if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
             for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
               for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
@@ -376,7 +389,7 @@
   	    fflush (fpIR);     
        
             R_square = 0.0;// tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square;
-            fprintf (fpHet, "%d %.4f ", pLocus2->pMapUnit->chromosome, pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
+
             int ii,jj;
             if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
 	      for (ii = 0; ii < pLocus1->numOriginalAllele - 1; ii++)
@@ -539,13 +552,9 @@
 	    ppldGl=0.019*0.021*ld_small_theta+0.001*0.0011*ld_big_theta;
             ppldGl = ppldGl/(ppldGl + 0.019*0.979*le_small_theta +0.001*0.9989*le_big_theta);
 
-	    ppldAl=0.019*0.021*ld_small_theta+0.001*0.0011*ld_big_theta;
-	    ppldAl = ppldAl/(ppldAl +  0.019*0.979*le_small_theta +0.001*0.9989*le_big_theta+ 0.98*le_unlinked);
-
             fprintf (fpPPL, "%.*f ", ldppl >= .025 ? 2 : 4, KROUND (ldppl));
             fprintf (fpPPL, "%.*f ", ppldGl >= .025 ? 2 : 4, KROUND (ppldGl));
             fprintf (fpPPL, "%.*f ", ppld >= .025 ? 2 : 4, KROUND (ppld));
-            fprintf (fpPPL, "%.*f ", ppldAl >= .025 ? 2 : 4, KROUND (ppldAl)); 
 	  }
           fprintf (fpPPL, "\n");
           fflush (fpPPL);

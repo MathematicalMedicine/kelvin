@@ -49,10 +49,30 @@ void writePPLFileDetail () {
 
 void write2ptBRFile() {
 
+  KASSERT (modelOptions.markerAnalysis == FALSE, "Don't call write2ptBRFile for a marker-to-marker analysis\n");
+
+  /* Print the marker line: sequence number, trait name, marker name, and chromosome.
+   * If the map is explicitly sex-specific, and the male and female position fields
+   * contain non-negative values, print the average, female and male cM positions;
+   * otherwise just print the average position. If the base pair field contains a
+   * non-negative value, print it, too
+   */
+  fprintf (fpHet, "# Seq: %d Trait: %s Marker: %s Chr: %d", loc2,
+	   pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->chromosome);
+  if ((modelOptions.mapFlag == SEX_SPECIFIC) && (pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0) &&
+      (pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0)) {
+    fprintf (fpHet, " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
+	     pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE], pLocus2->pMapUnit->mapPos[MAP_FEMALE],
+	     pLocus2->pMapUnit->mapPos[MAP_MALE]);
+  } else {
+    fprintf (fpHet, " Position: %.4f", pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
+  }
+  if (pLocus2->pMapUnit->basePairLocation >= 0)
+    fprintf (fpHet, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
+  fprintf (fpHet, "\n");
+
   /* For each D prime and theta, print out average and maximizing model information - MOD */
 
-  fprintf (fpHet, "# %-d  %s %s \n", loc2, pLocus1->sName, pLocus2->sName);
-  fprintf (fpHet, "Chr Position ");
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
     for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
       for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
@@ -92,7 +112,6 @@ void write2ptBRFile() {
       paramIdx = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_paramIdx;
       thresholdIdx = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_thresholdIdx;
       R_square = tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square;
-      fprintf (fpHet, "%d %.4f ", pLocus2->pMapUnit->chromosome, pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
       if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
 	for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
 	  for (j = 0; j < pLocus2->numOriginalAllele - 1; j++) {
