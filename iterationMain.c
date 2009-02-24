@@ -1727,6 +1727,7 @@
         ppl = 0;
 
       writeMPBRFileDetail ();
+      writeMPMODFileDetail ();
 
     }   /* end of walking down the chromosome */
   }     /* end of multipoint */

@@ -306,6 +306,10 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", avghetfile);
   fprintf (fpHet, "# Version %s\n", programVersion);
 
+  fpMOD = fopen (modfile, "w");
+  KASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modfile);
+  writeMODFileHeader ();
+
   if (modelType.type == TP) {
 
     fpPPL = fopen (pplfile, "w");

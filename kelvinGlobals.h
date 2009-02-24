@@ -16,12 +16,14 @@ char avghetfile[KMAXFILENAMELEN + 1] = "br.out";        ///< Default name (and s
 char condFile[KMAXFILENAMELEN + 1] = "condL.out";      ///< Default name (and storage) for conditional LR file
 char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";  ///< Default name (and storage) for PPL file
 char intermediatefile[KMAXFILENAMELEN + 1] = "ir.out"; ///< Default name (and storage) for intermediate results
+char modfile[KMAXFILENAMELEN + 1] = "mod.out"; ///< Default name (and storage) for MOD and maximizing model info
 char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
 FILE *fpCond = NULL;    ///< Conditional LR for genetic counseling
 FILE *fpHet = NULL;     ///< Average HET LR file (Bayes Ratio file) pointer
 FILE *fpPPL = NULL;     ///< PPL output file pointer
 FILE *fpTP = NULL;      ///< Ancillary Two-point output, used to go to stderr
 FILE *fpIR = NULL;      ///< Intermediate results, used to go to stderr, normally dkelvin-only
+FILE *fpMOD = NULL;     // MOD and maximizing model information
 int polynomialScale = 1;        ///< Scale of static allocation and dynamic growth in polynomial.c.
 
 /** Model datastructures. modelOptions is defined in the pedigree library. */

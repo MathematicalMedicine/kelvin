@@ -47,6 +47,52 @@ void writePPLFileDetail () {
 }
 
 
+void writeMODFileHeader () {
+  fprintf (fpMOD, "# Version %s\n", programVersion);
+
+  if (modelType.type == TP) {
+    /* Two-point */
+    if (modelOptions.markerAnalysis != FALSE) {
+      fprintf (fpMOD, "Chr Marker1 Position1 Marker2 Position2 MOD");
+    } else {
+      fprintf (fpMOD, "Chr Trait Marker Position MOD");
+    }
+    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+      for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
+	for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
+	  fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
+    fprintf (fpMOD, " Theta(M,F) Alpha DGF MF");
+
+  } else {
+    /* multipoint */
+    fprintf (fpMOD, "Chr Position MOD Alpha DGF");
+  }
+
+  /* this bits applies to both types */
+  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+    if (modelType.trait == DT)
+      if (modelOptions.imprintingFlag)
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", liabIdx);
+      else
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", liabIdx);
+    else
+      if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
+	if (modelOptions.imprintingFlag)
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh)",
+		   liabIdx);
+	else
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh)", liabIdx);
+      else
+	if (modelOptions.imprintingFlag)
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF,Thresh)", liabIdx);
+	else
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF,Thresh)", liabIdx);
+  
+  fprintf (fpMOD, "\n");
+  fflush (fpMOD);
+}
+
+
 void write2ptBRFile() {
 
   KASSERT (modelOptions.markerAnalysis == FALSE, "Don't call write2ptBRFile for a marker-to-marker analysis\n");
@@ -153,69 +199,62 @@ void write2ptBRFile() {
   }       /* dprime loop */
 }
 
+
 void writeMPBRFileHeader () {
 
   /* Need to output the results */
-  fprintf (fpHet, "Chr Position PPL BayesRatio MOD Alpha DGF ");
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
-    if (modelType.trait == DT)
-      if (modelOptions.imprintingFlag)
-	fprintf (fpHet, "LC%dPV(DD,Dd,dD, dd) ", liabIdx);
-      else
-	fprintf (fpHet, "LC%dPV(DD,Dd,dd) ", liabIdx);
-    else
-      if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-	if (modelOptions.imprintingFlag)
-	  fprintf (fpHet, "LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh) ", liabIdx);
-	else
-	  fprintf (fpHet, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
-      else
-	if (modelOptions.imprintingFlag)
-	  fprintf (fpHet, "LC%dPV(DDDF,DdDF,dDF,ddDF,Thresh) ", liabIdx);
-	else
-	  fprintf (fpHet, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
-  fprintf (fpHet, "MarkerList(0");
+  fprintf (fpHet, "Chr Position PPL BayesRatio");
+  fprintf (fpHet, " MarkerList(0");
   for (k = 1; k < modelType.numMarkers; k++)
     fprintf (fpHet, ",%d", k);
   fprintf (fpHet, ")\n");
 }
 
-void writeMPBRFileDetail () {
+
+void writeMPMODFileDetail () {
   max = mp_result[posIdx].max_lr;
   gfreq = mp_result[posIdx].max_gfreq;
   alphaV = mp_result[posIdx].max_alpha;
   penIdx = mp_result[posIdx].max_penIdx;
   paramIdx = mp_result[posIdx].max_paramIdx;
   thresholdIdx = mp_result[posIdx].max_thresholdIdx;
-  fprintf (fpHet, "%d %f %.*f %.6e %.6f %f %f",
+
+  fprintf (fpMOD, "%d %f %.6f %f %f",
 	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-	   traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.,
-	   avgLR, log10 (max), alphaV, gfreq);
+	   traitPos, log10 (max), alphaV, gfreq);
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
     pen_DD = modelRange.penet[liabIdx][0][penIdx];
     pen_Dd = modelRange.penet[liabIdx][1][penIdx];
     pen_dD = modelRange.penet[liabIdx][2][penIdx];
     pen_dd = modelRange.penet[liabIdx][3][penIdx];
     if (modelOptions.imprintingFlag)
-      fprintf (fpHet, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
+      fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
     else
-      fprintf (fpHet, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
+      fprintf (fpMOD, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
     if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
       SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
       SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
       SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
       SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
       if (modelOptions.imprintingFlag)
-	fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
+	fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
       else
-	fprintf (fpHet, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
+	fprintf (fpMOD, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
     }
     if (modelType.trait != DT) {
       threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-      fprintf (fpHet, ",%.3f)", threshold);
+      fprintf (fpMOD, ",%.3f)", threshold);
     } else
-      fprintf (fpHet, ")");
+      fprintf (fpMOD, ")");
   }
+}
+
+
+void writeMPBRFileDetail () {
+  fprintf (fpHet, "%d %f %.*f %.6e",
+	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+	   traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.,  avgLR);
+
   /* print out markers used for this position */
   fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
   for (k = 1; k < modelType.numMarkers; k++) {
