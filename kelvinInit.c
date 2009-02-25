@@ -308,7 +308,7 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
 
   fpMOD = fopen (modfile, "w");
   KASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modfile);
-  writeMODFileHeader ();
+  fprintf (fpMOD, "# Version %s\n", programVersion);
 
   if (modelType.type == TP) {
 

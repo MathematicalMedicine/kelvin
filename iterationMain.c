@@ -719,6 +719,7 @@
         get_average_LR (tp_result);
 
 	write2ptBRFile ();
+        write2ptMODFile ();
 	writeMMFileDetail ();
 	writePPLFileDetail ();
 
@@ -1025,6 +1026,7 @@
     mp_result = (SUMMARY_STAT *) calloc (numPositions, sizeof (SUMMARY_STAT));
 
     writeMPBRFileHeader ();
+    writeMPMODFileHeader ();
 
     prevFirstMarker = -1;
     prevLastMarker = -1;

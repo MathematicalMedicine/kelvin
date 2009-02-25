@@ -10,7 +10,7 @@
   double *prevPos, *currPos;    /* for MP */
   double dist;
   double initialProb[3];
-  double ldppl, ppld, ppldGl,ppldAl;
+  double ldppl, ppld, ppldGl;
   double mkrFreq;
   double ppl;
   double relativePos;
