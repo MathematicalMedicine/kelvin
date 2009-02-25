@@ -20,7 +20,7 @@ $| = 1;    # Force flush of output as printed.
 # Sanctioned globals
 
 # Command line option flags
-my $config = 0;  my $pre = 0; my $post = 0; my $noparents = 0;
+my $config = 0;  my $pre = 0; my $post = 0; my $noparents = 0; my $XC = 0;
 my $bare = 0; my $count = 0; my $write = 0; my $loops = 0; my $stats = 0;
 
 # Permanent defaults
@@ -83,6 +83,7 @@ my %KnownDirectives = (
     T_MIN => \&NoAction,
     T_MAX => \&NoAction,
     UP => \&dirUP,
+    XC => \&dirXC,
     dD => \&NoAction,
     dd => \&NoAction,
 );
@@ -114,6 +115,11 @@ sub dirQT {
 #####################################
 sub dirUP {
     $UnknownPerson = $Directives{UP}[0];
+}
+
+#####################################
+sub dirXC {
+    print "meh.\n";
 }
 
 #####################################
@@ -671,6 +677,10 @@ sub checkIntegrity {
 		    if ($Left > scalar(@{ $LociAttributes{$Loci[$i+1]}{Frequencies} }));
 		die "Pedigree $Ped, individual $Ind Marker $i (".$Loci[$i+1].") allele $Right too large.\n"
 		    if ($Right > scalar(@{ $LociAttributes{$Loci[$i+1]}{Frequencies} }));
+		if ((defined($Directives{XC}) || $XC)) {
+		    die "Pedigree $Ped, male $Ind is not homozygous for marker ".$Loci[$i+1]."\n"
+			if (($Pedigrees{$Ped}{$Ind}{Sex} == 1) && ($Left != $Right));
+		}
 	    }
 	}
 	if (defined($Directives{QT})) {
@@ -1011,8 +1021,12 @@ sub bucketizePedigrees {
                         exit;
                     }
 #			print "Pedigree $Ped / Marker ".$Loci[$i+1]." child $Ind (".$MomAlleles."-".$DadAlleles."-".$ChildAlleles.") gets bucket $TrioBucket\n";
-		    # Add a child affection prefix
-                    push @bucketList, $TrioBucket . "-" . $Pedigrees{$Ped}{$Ind}{Aff};
+		    # Add a child affection prefix and maybe a gender for XC analysis
+		    if (defined($Directives{XC}) || $XC) {
+			push @bucketList, $TrioBucket . "-" . $Pedigrees{$Ped}{$Ind}{Sex}.$Pedigrees{$Ped}{$Ind}{Aff};
+		    } else {
+			push @bucketList, $TrioBucket . "-" . $Pedigrees{$Ped}{$Ind}{Aff};
+		    }
                 }
             }
 	    my $PedBucket = $PAP . "/" . join("+", sort (@bucketList));
