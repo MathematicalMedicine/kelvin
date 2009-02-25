@@ -52,7 +52,8 @@ my %KnownDirectives = (
     AL => \&NoAction,
     AM => \&NoAction,
     AS => \&dirAS,
-    CF => \&NoAction,
+    CC => \&dirCF,
+    CF => \&dirCF,
     DA => \&NoAction,
     DD => \&NoAction,
     DF => \&NoAction,
@@ -91,6 +92,12 @@ sub dirAS {
     $UnknownAffection = $Directives{AS}[0];
     $Unaffected       = $Directives{AS}[1];
     $Affected         = $Directives{AS}[2];
+}
+
+#####################################
+sub dirCF {
+    die "Cannot generate counts for configuration that already has them."
+	if ($count || $write);
 }
 
 #####################################
@@ -272,6 +279,11 @@ sub consanguinityLoop() {
 # ancestry. Loop span is sum of two distances to common ancestor, so brother
 # and sister parents would have a span of 2, because they both count back 1 to
 # their mother (or father).
+#
+# Essentially we get all individuals in the ancestry of each pair and if
+# there's commonality, then there's a loop.
+#
+    my $LoopCount = 0;
     for my $Ped (keys %Pedigrees) {
 	my @Pairings = ();
         my %Seen = ();
@@ -284,8 +296,8 @@ sub consanguinityLoop() {
         }
         for my $Pair (@Pairings) {
             my ($Mom, $Dad) = split /\+/, $Pair;
-            my @Depths    = ();
-            my @Ancestors = ();    # This could be better, but I'm cowardly
+            @Depths    = ();
+            @Ancestors = ();    # This could be better, but I'm cowardly
             listAncestors($Ped, $Mom, 0);
             my @MomDepths    = @Depths;
             my @MomAncestors = @Ancestors;
@@ -302,11 +314,13 @@ sub consanguinityLoop() {
                         print "Pedigree $Ped consanguinity loop of size $LoopSize at ancestor "
                           . $MomAncestors[$i]
                           . " for pair $Mom / $Dad\n";
+			$LoopCount++;
                     }
                 }
             }
         }
     }
+    return $LoopCount;
 }
 
 #####################################
@@ -1258,8 +1272,9 @@ if ($stats) {
 }
 
 if ($loops) {
-    consanguinityLoop();
-    marriageLoop();
+    if (!consanguinityLoop()) {
+	marriageLoop();
+    }
 }
 
 if ($count || $write) {
