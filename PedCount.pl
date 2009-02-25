@@ -847,7 +847,10 @@ sub perfStats {
 #
 sub bucketizePedigrees {
 
-    my %TrioBuckets = (
+    # When determining non-XC buckets, alleles count but phase or parent doesn't (i.e.
+    # 11+11=11 != 22+22=22, but 11+12=12 == 11+21=12 and 11+12=12 == 12+11=12).
+
+    my %TrioBuckets = ( # Mom, then Dad, then the child, but it doesn't matter
         '0 0' => {
             '0 0' => {
                 '0 0' => 'T30',    # 30  0 0  0 0  0 0
@@ -938,6 +941,88 @@ sub bucketizePedigrees {
         },
     );
 
+    # When determining XC buckets, alleles and parent counts but phase doesn't (i.e.
+    # 11+22=22 != 22+11=22 and 11+11=11 != 22+22=22, but 12+11=12 == 21+11=12).
+
+    my %XCTrioBuckets = ( # Mom, then Dad, then the child, and it matters!
+        '0 0' => {
+            '0 0' => {
+                '0 0' => 'X01',
+                '1 1' => 'X02',
+                '1 2' => 'X03',    # Female
+                '2 2' => 'X04',
+            },
+            '1 1' => {
+                '0 0' => 'X05',
+                '1 1' => 'X06',
+                '1 2' => 'X07',    # Female
+                '2 2' => 'X08',
+            },
+            '2 2' => {
+                '0 0' => 'X09',
+		'1 1' => 'X10',
+		'1 2' => 'X11',    # Female
+                '2 2' => 'X12',
+            },
+        },
+        '1 1' => {
+            '0 0' => {
+                '0 0' => 'X13',
+                '1 1' => 'X14',
+                '1 2' => 'X15',    # Female
+                '2 2' => 'X16',
+            },
+            '1 1' => {
+                '0 0' => 'X17',
+                '1 1' => 'X18',
+            },
+            '2 2' => {
+                '0 0' => 'X18',
+                '1 1' => 'X20',
+                '1 2' => 'X21',    # Female
+                '2 2' => 'X22',
+            },
+        },
+        '1 2' => {
+            '0 0' => {
+                '0 0' => 'X23',
+                '1 1' => 'X24',
+                '1 2' => 'X25',    # Female
+                '2 2' => 'X26',
+            },
+            '1 1' => {
+                '0 0' => 'X27',
+                '1 1' => 'X28',
+                '1 2' => 'X29',    # Female
+                '2 2' => 'X30',
+            },
+            '2 2' => {
+                '0 0' => 'X31',
+                '1 1' => 'X32',
+                '1 2' => 'X33',    # Female
+                '2 2' => 'X34',
+            },
+        },
+        '2 2' => {
+            '0 0' => {
+                '0 0' => 'X35',
+                '1 1' => 'X36',
+                '1 2' => 'X37',    # Female
+                '2 2' => 'X38',
+            },
+            '1 1' => {
+                '0 0' => 'X39',
+                '1 1' => 'X40',
+                '1 2' => 'X41',    # Female
+                '2 2' => 'X42',
+            },
+            '2 2' => {
+                '0 0' => 'X43',
+                '2 2' => 'X44',
+            },
+        },
+    );
+
     my $Type = shift(); # Pedigree type for writing
 
     # Verify that this is a 2pt analysis (default, so look for multipoint directives)
@@ -1013,11 +1098,16 @@ sub bucketizePedigrees {
                     ($MomAlleles eq '2 1') and $MomAlleles = '1 2';
 
 #                        print "Get trio bucket for $MomAlleles $DadAlleles $ChildAlleles\n";
-                    my $TrioBucket = $TrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
-                    if ($TrioBucket eq "") {
-                        print "Couldn't find a bucket for pedigree $Ped, marker "
+		    my $TrioBucket;
+		    if (defined($Directives{XC}) || $XC) {
+			$TrioBucket = $XCTrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
+		    } else {
+			$TrioBucket = $TrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
+		    }
+                    if (!defined($TrioBucket)) {
+                        print "Couldn't find a bucket for pedigree $Ped, individual $Ind marker "
                           . $Loci[$i+1]
-                          . ", M/D/C $MomAlleles/$DadAlleles/$ChildAlleles!\n";
+                          . ", [M]/[D]/[C] [$MomAlleles]/[$DadAlleles]/[$ChildAlleles], probably a Mendelian error!\n";
                         exit;
                     }
 #			print "Pedigree $Ped / Marker ".$Loci[$i+1]." child $Ind (".$MomAlleles."-".$DadAlleles."-".$ChildAlleles.") gets bucket $TrioBucket\n";
@@ -1150,7 +1240,8 @@ DD != Dd; Dd != dd
 AL 0.05 1 0.05
 
 EOF
-close OUT;
+    print OUT "XC\n" if (defined($Directives{XC}) || $XC);
+    close OUT;
 
     open OUT, ">PC_data.Dat";
     for my $Name (@Loci) {
@@ -1196,6 +1287,7 @@ where <flags> are any of:
 -pre		Pedigrees are in pre-MAKEPED format.
 -post		Pedigrees are in post-MAKEPED format.
 -noparents	Pedigrees are in pre-MAKEPED format with no columns for parents.
+-XC		This is a sex-linked (X-chromosome) analysis
 -bare		The pedigree file has only individual, affection status and marker
 		allele pairs columns.
 -count		Count genotypically identical pedigrees and print statistics.
@@ -1239,6 +1331,7 @@ GetOptions ('config' => \$config,
 	    'pre' => \$pre, 
 	    'post' => \$post,
 	    'noparents' => \$noparents,
+	    'XC' => \$XC,
 	    'bare' => \$bare,
 	    'count' => \$count,
 	    'write' => \$write,
@@ -1250,6 +1343,7 @@ print "-config flag seen\n"                         if ($config);
 print "-pre flag seen\n"                            if ($pre);
 print "-post flag seen\n"                           if ($post);
 print "-noparents flag seen\n"                      if ($noparents);
+print "-XC flag seen\n"                      if ($XC);
 print "-bare flag seen\n"                           if ($bare);
 print "-count flag seen\n"                          if ($count);
 print "-write flag seen\n"                          if ($write);
