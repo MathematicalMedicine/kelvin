@@ -955,19 +955,23 @@ sub bucketizePedigrees {
 	my $memberCount = scalar(keys %{ $Pedigrees{$Ped} });
         # Qualify the family for inclusion in trio buckets by
 	# verifying depth of 1 while building a parental 
-        #affectation prefix so we can do more 
+        # affectation prefix so we can do more 
 	# than expected (i.e. handle any nuclear families)
 	my $PAP = "";
         for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
 	    my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
-            if ($Dad eq $UnknownPerson) {
+	    my $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
+            if (($Dad eq $UnknownPerson) && ($Mom eq $UnknownPerson)) {
 		if ($Pedigrees{$Ped}{$Ind}{Sex} == 1) {
 		    $PAP = $Pedigrees{$Ped}{$Ind}{Aff}.$PAP;
 		} else {
 		    $PAP = $PAP.$Pedigrees{$Ped}{$Ind}{Aff};
 		}
 	    } else {
-		if ($Pedigrees{$Ped}{$Dad}{Dad} ne $UnknownPerson) {
+		if (($Pedigrees{$Ped}{$Dad}{Dad} ne $UnknownPerson) ||
+		    ($Pedigrees{$Ped}{$Dad}{Mom} ne $UnknownPerson) ||
+		    ($Pedigrees{$Ped}{$Mom}{Dad} ne $UnknownPerson) ||
+		    ($Pedigrees{$Ped}{$Mom}{Mom} ne $UnknownPerson)) {
 		    $PAP  = "";
 		    last;
 		}
