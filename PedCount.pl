@@ -20,7 +20,8 @@ $| = 1;    # Force flush of output as printed.
 # Sanctioned globals
 
 # Command line option flags
-my ($config, $pre, $post, $noparents, $XC, $bare, $count, $write, $loops, $stats) = (0 x 10);
+my $config = 0; my $pre = 0; my $post = 0; my $noparents = 0; my $XC = 0; 
+my $bare = 0; my $count = 0; my $write = 0; my $loops = 0; my $stats = 0;
 
 # Permanent defaults
 use constant AttributeMissing => 0;    # For marker alleles and Sex
