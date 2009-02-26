@@ -778,31 +778,34 @@
     numPositions = modelRange.ntloc;
     mp_result = (SUMMARY_STAT *) calloc (numPositions, sizeof (SUMMARY_STAT));
     /* Need to output the results */
-    fprintf (fpHet, "Chr Position PPL BayesRatio MOD Alpha DGF ");
-    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
-      if (modelType.trait == DT)
-        if (modelOptions.imprintingFlag)
-  	  fprintf (fpHet, "LC%dPV(DD,Dd,dD, dd) ", liabIdx);
-        else
-	  fprintf (fpHet, "LC%dPV(DD,Dd,dd) ", liabIdx);
-      else
-        if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
- 	  if (modelOptions.imprintingFlag)
-	    fprintf (fpHet, "LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh) ", liabIdx);
-	  else
-	    fprintf (fpHet, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
-        else
- 	  if (modelOptions.imprintingFlag)
-	    fprintf (fpHet, "LC%dPV(DDDF,DdDF,dDF,ddDF,Thresh) ", liabIdx);
-	  else
-	    fprintf (fpHet, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
-    fprintf (fpHet, "MarkerList(0");
+    fprintf (fpHet, "Chr Position PPL BayesRatio");
+    fprintf (fpHet, " MarkerList(0");
     for (k = 1; k < modelType.numMarkers; k++)
       fprintf (fpHet, ",%d", k);
     fprintf (fpHet, ")\n");
 
-    fflush (fpHet);
+    fprintf (fpMOD, "Chr Position MOD Alpha DGF");
+    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+      if (modelType.trait == DT)
+        if (modelOptions.imprintingFlag)
+  	  fprintf (fpMOD, " LC%dPV(DD,Dd,dD, dd)", liabIdx);
+        else
+	  fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", liabIdx);
+      else
+        if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
+ 	  if (modelOptions.imprintingFlag)
+	    fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh)", liabIdx);
+	  else
+	    fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh)", liabIdx);
+        else
+ 	  if (modelOptions.imprintingFlag)
+	    fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDF,ddDF,Thresh)", liabIdx);
+	  else
+	    fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF,Thresh)", liabIdx);
+    fprintf (fpMOD, "\n");
 
+    fflush (fpHet);
+    fflush (fpMOD);
 
     prevFirstMarker = -1;
     prevLastMarker = -1;
@@ -1069,42 +1072,10 @@
       else
 	ppl = 0;
 
-      fprintf (fpHet, "%d %f %.*f %.6e %.6f %f %f",
+      fprintf (fpHet, "%d %f %.*f %.6e",
 	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
 	   traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.,
-	   integral, log10 (localmax_value), localmax_x[1], localmax_x[0]);
-
-
-      fprintf (fpIR, "%f  %6.4f %12.8f %12.8f %d  %f\n", traitPos, ppl,
-	       integral, abserr, num_eval,log10 (localmax_value));
-      fflush(fpIR);
-
-      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-
-	j=2;
-        if (modelOptions.imprintingFlag){
-          fprintf (fpHet, " (%.3f,%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+2],localmax_x[j+3]);
-          j +=4;
-        }else{
-          fprintf (fpHet, " (%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+2]);
-          j +=3;
-	}
-
-        if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-
-          if (modelOptions.imprintingFlag){
-	    fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+2],localmax_x[j+3]);
-            j +=4;
-          }else{
- 	    fprintf (fpHet, ",%.3f,%.3f,%.3f", localmax_x[j],localmax_x[j+1],localmax_x[j+2]);
-            j +=3;
-	  }
-        }
-        if (modelType.trait != DT) { 
-          fprintf (fpHet, ",%.3f)", localmax_x[j++]);
-        } else
-          fprintf (fpHet, ")");
-      }
+	       integral);
       /* print out markers used for this position */
       fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
       for (k = 1; k < modelType.numMarkers; k++) {
@@ -1113,5 +1084,40 @@
       fprintf (fpHet, ")\n");
       fflush (fpHet);
 
+      fprintf (fpIR, "%f  %6.4f %12.8f %12.8f %d  %f\n", traitPos, ppl,
+	       integral, abserr, num_eval,log10 (localmax_value));
+      fflush(fpIR);
+
+      fprintf (fpMOD, "%d %f %.6f %f %f",
+	       (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+	       traitPos, log10 (localmax_value), localmax_x[1], localmax_x[0]);
+
+      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+	j=2;
+        if (modelOptions.imprintingFlag){
+          fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+2],localmax_x[j+3]);
+          j +=4;
+        }else{
+          fprintf (fpMOD, " (%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+2]);
+          j +=3;
+	}
+
+        if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+
+          if (modelOptions.imprintingFlag){
+	    fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+2],localmax_x[j+3]);
+            j +=4;
+          }else{
+ 	    fprintf (fpMOD, ",%.3f,%.3f,%.3f", localmax_x[j],localmax_x[j+1],localmax_x[j+2]);
+            j +=3;
+	  }
+        }
+        if (modelType.trait != DT) { 
+          fprintf (fpMOD, ",%.3f)", localmax_x[j++]);
+        } else
+          fprintf (fpMOD, ")");
+      }
+      fprintf (fpMOD, "\n");
+      fflush (fpMOD);
     }				/* end of walking down the chromosome */
   }				/* end of multipoint */
