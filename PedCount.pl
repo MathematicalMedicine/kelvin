@@ -9,7 +9,7 @@ use Data::Dumper;
 # $Id$
 #
 # by Bill Valentine-Cooper, portions from work by John Burian
-#  
+#
 # Copyright 2008, Nationwide Children's Research Institute.  All
 # rights reserved.  Permission is hereby given to use this software
 # for non-profit educational purposes only.
@@ -20,8 +20,7 @@ $| = 1;    # Force flush of output as printed.
 # Sanctioned globals
 
 # Command line option flags
-my $config = 0;  my $pre = 0; my $post = 0; my $noparents = 0; my $XC = 0;
-my $bare = 0; my $count = 0; my $write = 0; my $loops = 0; my $stats = 0;
+my ($config, $pre, $post, $noparents, $XC, $bare, $count, $write, $loops, $stats) = (0 x 10);
 
 # Permanent defaults
 use constant AttributeMissing => 0;    # For marker alleles and Sex
@@ -33,7 +32,7 @@ my $markersFile      = "markers.dat";    # Default input files
 my $UnknownAffection = 0;
 my $Unaffected       = 1;
 my $Affected         = 2;                # Default affection indicators
-my $UnknownPerson    = "0";                # Default unknown person indicator
+my $UnknownPerson    = "0";              # Default unknown person indicator
 
 # Read/calculated results
 my %Pedigrees;                           # Pedigrees as loaded
@@ -47,48 +46,50 @@ my @Depths;                              # Referenced recursively and I'm fuddle
 my @Ancestors;                           # ditto
 my $ShortestLoop = "";                   # Just batted around too much to monkey with right now.
 
-# Known directives as well as dispatch routine if needed.
+# Known directives as well as dispatch routine if needed. I could avoid the NoActions, but
+# I prefer to be explicit.
 my %KnownDirectives = (
-    AL => \&NoAction,
-    AM => \&NoAction,
-    AS => \&dirAS,
-    CC => \&dirCF,
-    CF => \&dirCF,
-    DA => \&NoAction,
-    DD => \&NoAction,
-    DF => \&NoAction,
-    DK => \&NoAction,
-    DT => \&NoAction,
-    Dd => \&NoAction,
-    GF => \&NoAction,
-    HE => \&NoAction,
-    LC => \&NoAction,
-    LD => \&NoAction,
-    MK => \&NoAction,
-    MM => \&NoAction,
-    MP => \&NoAction,
-    MX => \&NoAction,
-    P1 => \&NoAction,
-    PD => \&NoAction,
-    PE => \&NoAction,
-    PF => \&NoAction,
-    QT => \&dirQT,
-    SA => \&NoAction,
-    SS => \&NoAction,
-    TL => \&NoAction,
-    TM => \&NoAction,
-    TP => \&NoAction,
-    TT => \&NoAction,
-    Th => \&NoAction,
+    AL    => \&NoAction,
+    AM    => \&NoAction,
+    AS    => \&dirAS,
+    CC    => \&dirCF,
+    CF    => \&dirCF,
+    DA    => \&NoAction,
+    DD    => \&NoAction,
+    DF    => \&NoAction,
+    DK    => \&NoAction,
+    DT    => \&NoAction,
+    Dd    => \&NoAction,
+    GF    => \&NoAction,
+    HE    => \&NoAction,
+    LC    => \&NoAction,
+    LD    => \&NoAction,
+    MK    => \&NoAction,
+    MM    => \&NoAction,
+    MP    => \&NoAction,
+    MX    => \&NoAction,
+    P1    => \&NoAction,
+    PD    => \&NoAction,
+    PE    => \&NoAction,
+    PF    => \&NoAction,
+    QT    => \&dirQT,
+    SA    => \&NoAction,
+    SS    => \&NoAction,
+    TL    => \&NoAction,
+    TM    => \&NoAction,
+    TP    => \&NoAction,
+    TT    => \&NoAction,
+    Th    => \&NoAction,
     T_MIN => \&NoAction,
     T_MAX => \&NoAction,
-    UP => \&dirUP,
-    XC => \&dirXC,
-    dD => \&NoAction,
-    dd => \&NoAction,
+    UP    => \&dirUP,
+    XC    => \&dirXC,
+    dD    => \&NoAction,
+    dd    => \&NoAction,
 );
 
 #####################################
+#
 sub dirAS {
     $UnknownAffection = $Directives{AS}[0];
     $Unaffected       = $Directives{AS}[1];
@@ -96,12 +97,14 @@ sub dirAS {
 }
 
 #####################################
+#
 sub dirCF {
     die "Cannot generate counts for configuration that already has them."
-	if ($count || $write);
+      if ($count || $write);
 }
 
 #####################################
+#
 sub dirQT {
 
     # If it's not already explicitly specified, set QT default for AS
@@ -113,20 +116,23 @@ sub dirQT {
 }
 
 #####################################
+#
 sub dirUP {
     $UnknownPerson = $Directives{UP}[0];
 }
 
 #####################################
-sub dirXC {
+#sub dirXC {
     print "meh.\n";
 }
 
 #####################################
+#
 sub NoAction {
 }
 
 #####################################
+#
 sub followPaths {
     my ($Pedily, $Start, $End, $Seen, $i, $Ind);
     $Pedily = shift();
@@ -234,9 +240,9 @@ sub followPaths {
 #
 sub listAncestors {
     my ($Ped, $Ind, $Depth);
-    $Ped     = shift();
-    $Ind = shift();
-    $Depth      = shift();
+    $Ped   = shift();
+    $Ind   = shift();
+    $Depth = shift();
 
     $Depth++;
     my ($Dad, $Mom);
@@ -256,6 +262,7 @@ sub listAncestors {
 }
 
 #####################################
+#
 sub countAncestors {
     my ($Pedily, $Individual, $Count);
     $Pedily     = shift();
@@ -279,8 +286,6 @@ sub countAncestors {
 }
 
 #####################################
-sub consanguinityLoop() {
-
 # One type of loop is two parents of a child, where the parents share common
 # ancestry. Loop span is sum of two distances to common ancestor, so brother
 # and sister parents would have a span of 2, because they both count back 1 to
@@ -289,16 +294,17 @@ sub consanguinityLoop() {
 # Essentially we get all individuals in the ancestry of each pair and if
 # there's commonality, then there's a loop.
 #
+sub consanguinityLoop() {
     my $LoopCount = 0;
     for my $Ped (keys %Pedigrees) {
-	my @Pairings = ();
-        my %Seen = ();
+        my @Pairings = ();
+        my %Seen     = ();
         for my $Ind (keys %{ $Pedigrees{$Ped} }) {
             my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
             my $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
             if (($Mom ne $UnknownPerson) && ($Dad ne $UnknownPerson)) {
-		push @Pairings, $Mom . "+" . $Dad unless $Seen{ $Mom . "+" . $Dad }++;
-	    }
+                push @Pairings, $Mom . "+" . $Dad unless $Seen{ $Mom . "+" . $Dad }++;
+            }
         }
         for my $Pair (@Pairings) {
             my ($Mom, $Dad) = split /\+/, $Pair;
@@ -320,7 +326,7 @@ sub consanguinityLoop() {
                         print "Pedigree $Ped consanguinity loop of size $LoopSize at ancestor "
                           . $MomAncestors[$i]
                           . " for pair $Mom / $Dad\n";
-			$LoopCount++;
+                        $LoopCount++;
                     }
                 }
             }
@@ -334,6 +340,8 @@ sub marriageLoop() {
 
 # The more extensive loop that cares about more than common ancestry is any path
 # over or up from one parent back down or over to the other without retracing steps.
+# This approach can get a little slow at times.
+#
     for my $Ped (keys %Pedigrees) {
         my %Seen     = ();
         my @Pairings = ();
@@ -397,8 +405,9 @@ sub loadConf {
 }
 
 #####################################
-# Open and assess a pedigree file to determine processing required
-
+# Open and assess a pedigree file to determine processing required. Return a type, one of
+# POST, PRE or BARE.
+#
 sub assessPedigree {
     my $File = shift();
     die "$File is not a file." if (!-f $File);
@@ -460,13 +469,10 @@ sub assessPedigree {
 }
 
 #####################################
-# Open and read a post-makeped pedigree file producing a two-dimensional hash with
-# the first being the family (pedigree) ID, and the second being the individual ID.
+# Open and read a post-makeped pedigree file producing the three-dimensional hash
+# %Pedigrees with the first being the family (pedigree) ID, the second being the
+# individual ID, and the third being attributes of that individual.
 #
-# Pedigrees{$Ped}{$Ind}
-#
-# ...at the moment, this is global and dynamic.
-
 sub loadPedigree {
     my $File = shift();
     my $Type = shift();
@@ -497,8 +503,10 @@ sub loadPedigree {
 
         # Validate everything we've got so far
         die "Pedigree line $LineNo: sex must be 1 or 2, not \"$Sex\"." if ((!$bare) && !($Sex =~ /[12]/));
-        die "Pedigree line $LineNo: affection status must be $UnknownAffection, $Unaffected, or $Affected, not \"$Aff\"."
-	    if ((!defined($Directives{QT})) && (($Aff != $UnknownAffection) && ($Aff != $Unaffected) && ($Aff != $Affected)));
+        die
+          "Pedigree line $LineNo: affection status must be $UnknownAffection, $Unaffected, or $Affected, not \"$Aff\"."
+          if ( (!defined($Directives{QT}))
+            && (($Aff != $UnknownAffection) && ($Aff != $Unaffected) && ($Aff != $Affected)));
         my ($OldFam, $OldInd, $Left);
         $MkC = 0;
         $GtC = 0;
@@ -531,8 +539,8 @@ sub loadPedigree {
             }
             $Pedigrees{$Ped}{$Ind}{Sex} = $Sex;
         } else {
-	    $Pedigrees{$Ped}{$Ind}{Sex} = 1; # Bare case-control can be all male
-	}
+            $Pedigrees{$Ped}{$Ind}{Sex} = 1;            # Bare case-control can be all male
+        }
         $Pedigrees{$Ped}{$Ind}{Aff}    = $Aff;
         $Pedigrees{$Ped}{$Ind}{MkC}    = $MkC;          # Marker count (should always be the same)
         $Pedigrees{$Ped}{$Ind}{GtC}    = $GtC;          # Genotype count (how complete is genotyping)
@@ -545,51 +553,51 @@ sub loadPedigree {
 
     # Adopt single case/control individuals
     for my $Ped (sort keys %Pedigrees) {
-	my $memberCount = scalar(keys %{ $Pedigrees{$Ped} });
-	if ($memberCount == 1) {
-	    for my $Ind (keys %{ $Pedigrees{$Ped} }) { # Yes, there's only one, but what individual ID?
-		print "Adding parents for Pedigree $Ped, Individual $Ind\n";
-		$Pedigrees{$Ped}{$Ind}{Prb} = 1;
-		my $Dad = $Ind . "D";
-		$Pedigrees{$Ped}{$Ind}{Dad} = $Dad;
-		$Pedigrees{$Ped}{$Dad}{Sex} = 1;
-		$Pedigrees{$Ped}{$Dad}{Dad} = $UnknownPerson;
-		$Pedigrees{$Ped}{$Dad}{Mom} = $UnknownPerson;
-		$Pedigrees{$Ped}{$Dad}{Aff} = $UnknownAffection;
-		$Pedigrees{$Ped}{$Dad}{Prb} = 0;
-		$Pedigrees{$Ped}{$Dad}{MkC} = 
-		$Pedigrees{$Ped}{$Dad}{GtC} = 0;
-		$Pedigrees{$Ped}{$Dad}{Mks} = [("0 0") x ($Pedigrees{$Ped}{$Ind}{MkC} /2 )];
-		my $Mom = $Ind . "M";
-		$Pedigrees{$Ped}{$Ind}{Mom} = $Mom;
-		$Pedigrees{$Ped}{$Mom}{Sex} = 2;
-		$Pedigrees{$Ped}{$Mom}{Dad} = $UnknownPerson;
-		$Pedigrees{$Ped}{$Mom}{Mom} = $UnknownPerson;
-		$Pedigrees{$Ped}{$Mom}{Aff} = $UnknownAffection;
-		$Pedigrees{$Ped}{$Mom}{Prb} = 0;
-		$Pedigrees{$Ped}{$Mom}{MkC} = 
-		$Pedigrees{$Ped}{$Mom}{GtC} = 0;
-		$Pedigrees{$Ped}{$Mom}{Mks} = [("0 0") x ($Pedigrees{$Ped}{$Ind}{MkC} / 2)];
-	    }
-	}
+        my $memberCount = scalar(keys %{ $Pedigrees{$Ped} });
+        if ($memberCount == 1) {
+            for my $Ind (keys %{ $Pedigrees{$Ped} }) {    # Yes, there's only one, but what individual ID?
+                print "Adding parents for Pedigree $Ped, Individual $Ind\n";
+                $Pedigrees{$Ped}{$Ind}{Prb} = 1;
+                my $Dad = $Ind . "D";
+                $Pedigrees{$Ped}{$Ind}{Dad} = $Dad;
+                $Pedigrees{$Ped}{$Dad}{Sex} = 1;
+                $Pedigrees{$Ped}{$Dad}{Dad} = $UnknownPerson;
+                $Pedigrees{$Ped}{$Dad}{Mom} = $UnknownPerson;
+                $Pedigrees{$Ped}{$Dad}{Aff} = $UnknownAffection;
+                $Pedigrees{$Ped}{$Dad}{Prb} = 0;
+                $Pedigrees{$Ped}{$Dad}{MkC} = $Pedigrees{$Ped}{$Dad}{GtC} = 0;
+                $Pedigrees{$Ped}{$Dad}{Mks} = [ ("0 0") x ($Pedigrees{$Ped}{$Ind}{MkC} / 2) ];
+                my $Mom = $Ind . "M";
+                $Pedigrees{$Ped}{$Ind}{Mom} = $Mom;
+                $Pedigrees{$Ped}{$Mom}{Sex} = 2;
+                $Pedigrees{$Ped}{$Mom}{Dad} = $UnknownPerson;
+                $Pedigrees{$Ped}{$Mom}{Mom} = $UnknownPerson;
+                $Pedigrees{$Ped}{$Mom}{Aff} = $UnknownAffection;
+                $Pedigrees{$Ped}{$Mom}{Prb} = 0;
+                $Pedigrees{$Ped}{$Mom}{MkC} = $Pedigrees{$Ped}{$Mom}{GtC} = 0;
+                $Pedigrees{$Ped}{$Mom}{Mks} = [ ("0 0") x ($Pedigrees{$Ped}{$Ind}{MkC} / 2) ];
+            }
+        }
     }
 }
 
 #####################################
 # Derive a list of loci and marker alleles and frequencies from the pedigree itself
-
+# and store the names in the global list @Loci and attributes in the global two-
+# dimensional hash %LociAttributes.
+#
 sub deriveLociAndAttributes {
     @Loci                        = ();
     %LociAttributes              = ();
     $Loci[0]                     = "Trait";
     $LociAttributes{Trait}{Type} = "T";
     for my $i (0 .. $PairCount - 1) {
-        $Loci[$i+1] = sprintf("M%04d", $i+1);
-        $LociAttributes{ $Loci[$i+1] }{Type} = "M";
+        $Loci[ $i + 1 ] = sprintf("M%04d", $i + 1);
+        $LociAttributes{ $Loci[ $i + 1 ] }{Type} = "M";
         my @HaploCounts = (0); # List works because they must be numeric (relative position of frequency in marker file)
         for my $Ped (keys %Pedigrees) {
             for my $Ind (keys %{ $Pedigrees{$Ped} }) {
-		next if ($Pedigrees{$Ped}{$Ind}{Aff} != $Unaffected);
+                next if ($Pedigrees{$Ped}{$Ind}{Aff} != $Unaffected);
                 my ($Left, $Right) = split /\s+/, $Pedigrees{$Ped}{$Ind}{Mks}[$i];
                 $HaploCounts[$Left]++  if ($Left != AttributeMissing);
                 $HaploCounts[$Right]++ if ($Right != AttributeMissing);
@@ -600,14 +608,15 @@ sub deriveLociAndAttributes {
         for $i (1 .. scalar(@HaploCounts) - 1) {
             push @Tokens, $HaploCounts[$i] / $PopSize;
         }
-        $LociAttributes{ $Loci[$i+1] }{Frequencies} = [@Tokens];
+        $LociAttributes{ $Loci[ $i + 1 ] }{Frequencies} = [@Tokens];
     }
 }
 
 #####################################
 # Open and read the marker description companion file producing an ordered list of
-# loci names and a hash for named loci attributes.
-
+# loci names (@Loci) and a hash for named loci attributes (%LociAttributes).
+# Probably should fold names into the hash to get rid of @Loci.
+#
 sub loadCompanion {
     my $File = shift();
     die "$File is not a file." if (!-f $File);
@@ -631,7 +640,7 @@ sub loadCompanion {
 
 #####################################
 # Open and read the marker file to flesh-out the %LociAttributes hash
-
+#
 sub loadMarkers {
     my $File = shift();
     die "$File is not a file." if (!-f $File);
@@ -647,11 +656,11 @@ sub loadMarkers {
         if ($RecordType eq "M") {
             $Name = shift @Tokens;
         } elsif ($RecordType eq "F") {
-	    if (defined($LociAttributes{$Name}{Frequencies})) {
-		$LociAttributes{$Name}{Frequencies} = [(@{ $LociAttributes{$Name}{Frequencies} }, @Tokens)];
-	    } else {
-		$LociAttributes{$Name}{Frequencies} = [@Tokens];
-	    }
+            if (defined($LociAttributes{$Name}{Frequencies})) {
+                $LociAttributes{$Name}{Frequencies} = [ (@{ $LociAttributes{$Name}{Frequencies} }, @Tokens) ];
+            } else {
+                $LociAttributes{$Name}{Frequencies} = [@Tokens];
+            }
         } else {
             die "Unknown record type \"$RecordType\" at line $LineNo in marker file $File\n";
         }
@@ -661,49 +670,56 @@ sub loadMarkers {
 
 #####################################
 # Check inter-file integrity, i.e. affectation and markers
+#
 sub checkIntegrity {
     for my $Ped (sort keys %Pedigrees) {
-	my $UnknownAffectionCount = 0; my $UnaffectedCount = 0;
-	my $AffectedCount = 0; my $MagicCounts = 0;
+        my $UnknownAffectionCount = 0;
+        my $UnaffectedCount       = 0;
+        my $AffectedCount         = 0;
+        my $MagicCounts           = 0;
         for my $Ind (keys %{ $Pedigrees{$Ped} }) {
-	    $UnknownAffectionCount++ if ($Pedigrees{$Ped}{$Ind}{Aff} == $UnknownAffection);
-	    $UnaffectedCount++ if ($Pedigrees{$Ped}{$Ind}{Aff} == $Unaffected);
-	    $AffectedCount++ if ($Pedigrees{$Ped}{$Ind}{Aff} == $Affected);
-	    $MagicCounts++ if ($Pedigrees{$Ped}{$Ind}{Aff} =~ /(88\.88|99\.99|NaN|Inf)/i);
-	    my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
-	    for my $i (0..$PairCount - 1) {
-		my ($Left, $Right) = split /\s/, $Pairs[$i];
-		die "Pedigree $Ped, individual $Ind Marker $i (".$Loci[$i+1].") allele $Left too large.\n"
-		    if ($Left > scalar(@{ $LociAttributes{$Loci[$i+1]}{Frequencies} }));
-		die "Pedigree $Ped, individual $Ind Marker $i (".$Loci[$i+1].") allele $Right too large.\n"
-		    if ($Right > scalar(@{ $LociAttributes{$Loci[$i+1]}{Frequencies} }));
-		if ((defined($Directives{XC}) || $XC)) {
-		    die "Pedigree $Ped, male $Ind is not homozygous for marker ".$Loci[$i+1]."\n"
-			if (($Pedigrees{$Ped}{$Ind}{Sex} == 1) && ($Left != $Right));
-		}
-	    }
-	}
-	if (defined($Directives{QT})) {
-	    if ($UnknownAffectionCount + $UnaffectedCount + $AffectedCount < $MagicCounts) {
-		print "Warning! Your QT analysis for pedigree $Ped has Unk/UnA/Aff of ".
-		"$UnknownAffectionCount/$UnaffectedCount/$AffectedCount\nout of ".
-		scalar(keys %{ $Pedigrees{$Ped} })." individuals and ".
-		$MagicCounts." default value(s) (any of 88.88/99.99/NaN/Inf).\n"
-	    }
-	} else {
-	    # Must be DT
-	    die "Your DT analysis for pedigree $Ped has Unk/UnA/Aff of ".
-		"$UnknownAffectionCount/$UnaffectedCount/$AffectedCount out of ".
-		scalar(keys %{ $Pedigrees{$Ped} })." individuals\n"
-		if ($UnknownAffectionCount + $UnaffectedCount + $AffectedCount != 
-		    scalar(keys %{ $Pedigrees{$Ped} }));
-	}
+            $UnknownAffectionCount++ if ($Pedigrees{$Ped}{$Ind}{Aff} == $UnknownAffection);
+            $UnaffectedCount++       if ($Pedigrees{$Ped}{$Ind}{Aff} == $Unaffected);
+            $AffectedCount++         if ($Pedigrees{$Ped}{$Ind}{Aff} == $Affected);
+            $MagicCounts++           if ($Pedigrees{$Ped}{$Ind}{Aff} =~ /(88\.88|99\.99|NaN|Inf)/i);
+            my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
+            for my $i (0 .. $PairCount - 1) {
+                my ($Left, $Right) = split /\s/, $Pairs[$i];
+                die "Pedigree $Ped, individual $Ind Marker $i (" . $Loci[ $i + 1 ] . ") allele $Left too large.\n"
+                  if ($Left > scalar(@{ $LociAttributes{ $Loci[ $i + 1 ] }{Frequencies} }));
+                die "Pedigree $Ped, individual $Ind Marker $i (" . $Loci[ $i + 1 ] . ") allele $Right too large.\n"
+                  if ($Right > scalar(@{ $LociAttributes{ $Loci[ $i + 1 ] }{Frequencies} }));
+                if ((defined($Directives{XC}) || $XC)) {
+                    die "Pedigree $Ped, male $Ind is not homozygous for marker " . $Loci[ $i + 1 ] . "\n"
+                      if (($Pedigrees{$Ped}{$Ind}{Sex} == 1) && ($Left != $Right));
+                }
+            }
+        }
+        if (defined($Directives{QT})) {
+            if ($UnknownAffectionCount + $UnaffectedCount + $AffectedCount < $MagicCounts) {
+                print "Warning! Your QT analysis for pedigree $Ped has Unk/UnA/Aff of "
+                  . "$UnknownAffectionCount/$UnaffectedCount/$AffectedCount\nout of "
+                  . scalar(keys %{ $Pedigrees{$Ped} })
+                  . " individuals and "
+                  . $MagicCounts
+                  . " default value(s) (any of 88.88/99.99/NaN/Inf).\n";
+            }
+        } else {
+
+            # Must be DT
+            die "Your DT analysis for pedigree $Ped has Unk/UnA/Aff of "
+              . "$UnknownAffectionCount/$UnaffectedCount/$AffectedCount out of "
+              . scalar(keys %{ $Pedigrees{$Ped} })
+              . " individuals\n"
+              if ($UnknownAffectionCount + $UnaffectedCount + $AffectedCount != scalar(keys %{ $Pedigrees{$Ped} }));
+        }
     }
 
 }
 
 #####################################
 # Check relations and genders (parent, siblings present, not self-parenting, correct genders)
+#
 sub checkRelations {
 
     my $Type = shift();
@@ -723,14 +739,14 @@ sub checkRelations {
                   if (!defined($Pedigrees{$Ped}{$Mom}));
                 die "In pedigree $Ped, Mother $Mom is not female!\n" if ($Pedigrees{$Ped}{$Mom}{Sex} != 2);
             }
-	    if ($Type eq "POST") {
-		my $Kid1 = $Pedigrees{$Ped}{$Ind}{Kid1};
-		if ($Kid1 ne $UnknownPerson) {
-		    die "In pedigree $Ped, $Ind is own sibling!\n" if ($Kid1 eq $Ind);
-		    die "In pedigree $Ped, first child $Kid1 missing for individual $Ind!\n"
-			if (!defined($Pedigrees{$Ped}{$Kid1}));
-		}
-	    }
+            if ($Type eq "POST") {
+                my $Kid1 = $Pedigrees{$Ped}{$Ind}{Kid1};
+                if ($Kid1 ne $UnknownPerson) {
+                    die "In pedigree $Ped, $Ind is own sibling!\n" if ($Kid1 eq $Ind);
+                    die "In pedigree $Ped, first child $Kid1 missing for individual $Ind!\n"
+                      if (!defined($Pedigrees{$Ped}{$Kid1}));
+                }
+            }
         }
     }
 }
@@ -739,6 +755,7 @@ sub numerically { $a <=> $b }
 
 #####################################
 # Start discovering statistics that might affect performance.
+#
 sub perfStats {
 
     my %CountsLabels = (
@@ -850,7 +867,7 @@ sub bucketizePedigrees {
     # When determining non-XC buckets, alleles count but phase or parent doesn't (i.e.
     # 11+11=11 != 22+22=22, but 11+12=12 == 11+21=12 and 11+12=12 == 12+11=12).
 
-    my %TrioBuckets = ( # Mom, then Dad, then the child, but it doesn't matter
+    my %TrioBuckets = (    # Mom, then Dad, then the child, but it doesn't matter
         '0 0' => {
             '0 0' => {
                 '0 0' => 'T30',    # 30  0 0  0 0  0 0
@@ -944,7 +961,7 @@ sub bucketizePedigrees {
     # When determining XC buckets, alleles and parent counts but phase doesn't (i.e.
     # 11+22=22 != 22+11=22 and 11+11=11 != 22+22=22, but 12+11=12 == 21+11=12).
 
-    my %XCTrioBuckets = ( # Mom, then Dad, then the child, and it matters!
+    my %XCTrioBuckets = (          # Mom, then Dad, then the child, and it matters!
         '0 0' => {
             '0 0' => {
                 '0 0' => 'X01',
@@ -960,8 +977,8 @@ sub bucketizePedigrees {
             },
             '2 2' => {
                 '0 0' => 'X09',
-		'1 1' => 'X10',
-		'1 2' => 'X11',    # Female
+                '1 1' => 'X10',
+                '1 2' => 'X11',    # Female
                 '2 2' => 'X12',
             },
         },
@@ -1023,7 +1040,7 @@ sub bucketizePedigrees {
         },
     );
 
-    my $Type = shift(); # Pedigree type for writing
+    my $Type = shift();            # Pedigree type for writing
 
     # Verify that this is a 2pt analysis (default, so look for multipoint directives)
     die "Generation of counts not permitted for a multipoint analysis.\n"
@@ -1039,44 +1056,45 @@ sub bucketizePedigrees {
           if (scalar(@{ $LociAttributes{$Marker}{Frequencies} }) != 2);
     }
 
-    my %Buckets = (); # Fully-funkified bucket names with encoded everything
-    my @Skippies = (); # Pedigrees copied on thru without bucketization (affects stats)
-    my %Templates = (); # Template pedigrees
-    my $PedSeq = 1; # Template pedigree ID to keep them short
+    my %Buckets   = ();    # Fully-funkified bucket names with encoded everything
+    my @Skippies  = ();    # Pedigrees copied on thru without bucketization (affects stats)
+    my %Templates = ();    # Template pedigrees
+    my $PedSeq    = 1;     # Template pedigree ID to keep them short
 
     # Look at each family...
     for my $Ped (sort keys %Pedigrees) {
 
-	my $memberCount = scalar(keys %{ $Pedigrees{$Ped} });
+        my $memberCount = scalar(keys %{ $Pedigrees{$Ped} });
+
         # Qualify the family for inclusion in trio buckets by
-	# verifying depth of 1 while building a parental 
-        # affectation prefix so we can do more 
-	# than expected (i.e. handle any nuclear families)
-	my $PAP = "";
+        # verifying depth of 1 while building a parental
+        # affectation prefix so we can do more
+        # than expected (i.e. handle any nuclear families)
+        my $PAP = "";
         for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
-	    my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
-	    my $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
+            my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
+            my $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
             if (($Dad eq $UnknownPerson) && ($Mom eq $UnknownPerson)) {
-		if ($Pedigrees{$Ped}{$Ind}{Sex} == 1) {
-		    $PAP = $Pedigrees{$Ped}{$Ind}{Aff}.$PAP;
-		} else {
-		    $PAP = $PAP.$Pedigrees{$Ped}{$Ind}{Aff};
-		}
-	    } else {
-		if (($Pedigrees{$Ped}{$Dad}{Dad} ne $UnknownPerson) ||
-		    ($Pedigrees{$Ped}{$Dad}{Mom} ne $UnknownPerson) ||
-		    ($Pedigrees{$Ped}{$Mom}{Dad} ne $UnknownPerson) ||
-		    ($Pedigrees{$Ped}{$Mom}{Mom} ne $UnknownPerson)) {
-		    $PAP  = "";
-		    last;
-		}
-	    }
-	}
-	if ($PAP eq "") {
-	    print "Will copy multi-generation pedigree $Ped intact.\n";
-	    push @Skippies, $Ped;
-	    next;
-	}
+                if ($Pedigrees{$Ped}{$Ind}{Sex} == 1) {
+                    $PAP = $Pedigrees{$Ped}{$Ind}{Aff} . $PAP;
+                } else {
+                    $PAP = $PAP . $Pedigrees{$Ped}{$Ind}{Aff};
+                }
+            } else {
+                if (   ($Pedigrees{$Ped}{$Dad}{Dad} ne $UnknownPerson)
+                    || ($Pedigrees{$Ped}{$Dad}{Mom} ne $UnknownPerson)
+                    || ($Pedigrees{$Ped}{$Mom}{Dad} ne $UnknownPerson)
+                    || ($Pedigrees{$Ped}{$Mom}{Mom} ne $UnknownPerson)) {
+                    $PAP = "";
+                    last;
+                }
+            }
+        }
+        if ($PAP eq "") {
+            print "Will copy multi-generation pedigree $Ped intact.\n";
+            push @Skippies, $Ped;
+            next;
+        }
 
         # Get the family genotype bucket for each marker pair
         for my $i (0 .. $PairCount - 1) {
@@ -1098,44 +1116,53 @@ sub bucketizePedigrees {
                     ($MomAlleles eq '2 1') and $MomAlleles = '1 2';
 
 #                        print "Get trio bucket for $MomAlleles $DadAlleles $ChildAlleles\n";
-		    my $TrioBucket;
-		    if (defined($Directives{XC}) || $XC) {
-			$TrioBucket = $XCTrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
-		    } else {
-			$TrioBucket = $TrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
-		    }
+                    my $TrioBucket;
+                    if (defined($Directives{XC}) || $XC) {
+                        $TrioBucket = $XCTrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
+                    } else {
+                        $TrioBucket = $TrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
+                    }
                     if (!defined($TrioBucket)) {
                         print "Couldn't find a bucket for pedigree $Ped, individual $Ind marker "
-                          . $Loci[$i+1]
+                          . $Loci[ $i + 1 ]
                           . ", [M]/[D]/[C] [$MomAlleles]/[$DadAlleles]/[$ChildAlleles], probably a Mendelian error!\n";
                         exit;
                     }
+
 #			print "Pedigree $Ped / Marker ".$Loci[$i+1]." child $Ind (".$MomAlleles."-".$DadAlleles."-".$ChildAlleles.") gets bucket $TrioBucket\n";
-		    # Add a child affection prefix and maybe a gender for XC analysis
-		    if (defined($Directives{XC}) || $XC) {
-			push @bucketList, $TrioBucket . "-" . $Pedigrees{$Ped}{$Ind}{Sex}.$Pedigrees{$Ped}{$Ind}{Aff};
-		    } else {
-			push @bucketList, $TrioBucket . "-" . $Pedigrees{$Ped}{$Ind}{Aff};
-		    }
+                    # Add a child affection prefix and maybe a gender for XC analysis
+                    if (defined($Directives{XC}) || $XC) {
+                        push @bucketList, $TrioBucket . "-" . $Pedigrees{$Ped}{$Ind}{Sex} . $Pedigrees{$Ped}{$Ind}{Aff};
+                    } else {
+                        push @bucketList, $TrioBucket . "-" . $Pedigrees{$Ped}{$Ind}{Aff};
+                    }
                 }
             }
-	    my $PedBucket = $PAP . "/" . join("+", sort (@bucketList));
-	    $Buckets{$Loci[$i+1] . "_" . $PedBucket}++;
-	    if (!defined($Templates{$PedBucket})) {
-		$Templates{$PedBucket}{Ped} = $Ped;
-		$Templates{$PedBucket}{PedSeq} = sprintf("P%04d", $PedSeq++);
-		$Templates{$PedBucket}{PairID} = $i;
-	    }
+            my $PedBucket = $PAP . "/" . join("+", sort (@bucketList));
+            $Buckets{ $Loci[ $i + 1 ] . "_" . $PedBucket }++;
+            if (!defined($Templates{$PedBucket})) {
+                $Templates{$PedBucket}{Ped}    = $Ped;
+                $Templates{$PedBucket}{PedSeq} = sprintf("P%04d", $PedSeq++);
+                $Templates{$PedBucket}{PairID} = $i;
+            }
         }
     }
 
     if (scalar(keys %Buckets) == 0) {
-	print "Bucketizing cannot reduce your pedigree count.\n";
+        print "Bucketizing cannot reduce your pedigree count.\n";
+
 #	return;
     } else {
-	print  sprintf ("Bucketizing can reduce your evaluation count from %d to %d, or by %2d%%\n",
-			scalar(keys %Pedigrees) * $PairCount, (scalar(keys %Buckets) + (scalar(@Skippies) * $PairCount)),
-			100 - (100 * (scalar(keys %Buckets) + (scalar(@Skippies) * $PairCount)) / (scalar(keys %Pedigrees) * $PairCount)));
+        print sprintf(
+            "Bucketizing can reduce your evaluation count from %d to %d, or by %2d%%\n",
+            scalar(keys %Pedigrees) * $PairCount,
+            (scalar(keys %Buckets) + (scalar(@Skippies) * $PairCount)),
+            100 - (
+                100 *
+                  (scalar(keys %Buckets) + (scalar(@Skippies) * $PairCount)) /
+                  (scalar(keys %Pedigrees) * $PairCount)
+            )
+        );
     }
 
     return if (!$write);
@@ -1143,45 +1170,47 @@ sub bucketizePedigrees {
     # Now write-out at least the pedigree and counts
 
     if ($Type eq "POST") {
-	open OUT, ">PC_pedigrees.Dat";
+        open OUT, ">PC_pedigrees.Dat";
     } else {
-	open OUT, ">PC_pedigrees.Pre";
+        open OUT, ">PC_pedigrees.Pre";
     }
 
     # First the intact pedigrees
     for my $Ped (@Skippies) {
-	for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
-	    print OUT join(" ",($Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom}))." ";
-	    print OUT join(" ",($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs},
-				$Pedigrees{$Ped}{$Ind}{nMs}))." " if ($Type eq "POST");
-	    print OUT $Pedigrees{$Ped}{$Ind}{Sex}." ";
-	    print OUT $Pedigrees{$Ped}{$Ind}{Prb}." " if ($Type eq "POST");
-	    print OUT $Pedigrees{$Ped}{$Ind}{Aff}." ".join(" ",@{ $Pedigrees{$Ped}{$Ind}{Mks} })."\n";
-	}
+        for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
+            print OUT join(" ", ($Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom})) . " ";
+            print OUT
+              join(" ", ($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs}, $Pedigrees{$Ped}{$Ind}{nMs})) . " "
+              if ($Type eq "POST");
+            print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
+            print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
+            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", @{ $Pedigrees{$Ped}{$Ind}{Mks} }) . "\n";
+        }
     }
 
     # Next the template pedigrees
     print "Writing $Type pedigree\n";
     for my $PB (sort keys %Templates) {
-	my $Ped = $Templates{$PB}{Ped};
-	my $PairID = $Templates{$PB}{PairID};
-	my $PedSeq = $Templates{$PB}{PedSeq};
-	for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
-	    print OUT join(" ",($PedSeq, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom}))." ";
-	    print OUT join(" ",($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs},
-				$Pedigrees{$Ped}{$Ind}{nMs}))." " if ($Type eq "POST");
-	    print OUT $Pedigrees{$Ped}{$Ind}{Sex}." ";
-	    print OUT $Pedigrees{$Ped}{$Ind}{Prb}." " if ($Type eq "POST"); 
-	    my $Pair = " " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
-	    print OUT $Pedigrees{$Ped}{$Ind}{Aff}." ".join(" ", $Pair x $PairCount )." ";
-	    print OUT "Ped: $PedSeq Per: $Ind";
-	    print OUT " # Template $PB\n";
-	    }
+        my $Ped    = $Templates{$PB}{Ped};
+        my $PairID = $Templates{$PB}{PairID};
+        my $PedSeq = $Templates{$PB}{PedSeq};
+        for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
+            print OUT join(" ", ($PedSeq, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom})) . " ";
+            print OUT
+              join(" ", ($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs}, $Pedigrees{$Ped}{$Ind}{nMs})) . " "
+              if ($Type eq "POST");
+            print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
+            print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
+            my $Pair = " " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
+            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", $Pair x $PairCount) . " ";
+            print OUT "Ped: $PedSeq Per: $Ind";
+            print OUT " # Template $PB\n";
+        }
     }
     close OUT;
 
     if ($Type ne "POST") {
-	system ("makeped PC_pedigrees.Pre PC_pedigrees.Dat N");
+        system("makeped PC_pedigrees.Pre PC_pedigrees.Dat N");
     }
 
     # Finally the counts.
@@ -1189,20 +1218,20 @@ sub bucketizePedigrees {
 
     print OUT "MARKER\t";
     for my $PB (sort keys %Templates) {
-	print OUT $Templates{$PB}{PedSeq}."\t";
+        print OUT $Templates{$PB}{PedSeq} . "\t";
     }
     print OUT "\n";
     for my $i (0 .. $PairCount - 1) {
-	print OUT $Loci[$i+1]."\t";
-	for my $PB (sort keys %Templates) {
-	    my $FB = $Loci[$i+1] . "_" . $PB;
-	    if (!defined($Buckets{$FB})) {
-		print OUT "0\t";
-	    } else {
-		print OUT $Buckets{$FB}."\t";
-	    }
-	}
-	print OUT "\n";
+        print OUT $Loci[ $i + 1 ] . "\t";
+        for my $PB (sort keys %Templates) {
+            my $FB = $Loci[ $i + 1 ] . "_" . $PB;
+            if (!defined($Buckets{$FB})) {
+                print OUT "0\t";
+            } else {
+                print OUT $Buckets{$FB} . "\t";
+            }
+        }
+        print OUT "\n";
     }
     close OUT;
 
@@ -1245,20 +1274,20 @@ EOF
 
     open OUT, ">PC_data.Dat";
     for my $Name (@Loci) {
-	print OUT $LociAttributes{$Name}{Type}." ".$Name."\n";
+        print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
     }
     close OUT;
 
     open OUT, ">PC_markers.Dat";
     for my $Name (@Loci) {
-	if ($LociAttributes{$Name}{Type} eq "M") {
-	    print OUT $LociAttributes{$Name}{Type}." ".$Name."\n";
-	    print OUT "F";
-	    for my $Freq (@{ $LociAttributes{$Name}{Frequencies} }) {
-		print OUT sprintf(" %.4f", $Freq);
-	    }
-	    print OUT "\n";
-	}
+        if ($LociAttributes{$Name}{Type} eq "M") {
+            print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
+            print OUT "F";
+            for my $Freq (@{ $LociAttributes{$Name}{Frequencies} }) {
+                print OUT sprintf(" %.4f", $Freq);
+            }
+            print OUT "\n";
+        }
     }
     close OUT;
 
@@ -1266,16 +1295,17 @@ EOF
     open OUT, ">PC_map.Dat";
     print OUT "CHR MARKER KOSAMBI\n";
     for my $Name (@Loci) {
-	if ($LociAttributes{$Name}{Type} eq "M") {
-	    print OUT "1 $Name 1\n";
-	}
+        if ($LociAttributes{$Name}{Type} eq "M") {
+            print OUT "1 $Name 1\n";
+        }
     }
     close OUT;
 
 }
 
 #####################################
-# Verify command line parameters
+# Verify command line parameters, check flags and do what the user asks.
+#
 my $Usage = <<EOF;
 
 Usage "perl $0 [<flags>...] <input file>"
@@ -1326,24 +1356,26 @@ PC_map.Dat - minimal dummy map file.
 PC_config.Dat - template kelvin config file.
 
 EOF
-    
-GetOptions ('config' => \$config,
-	    'pre' => \$pre, 
-	    'post' => \$post,
-	    'noparents' => \$noparents,
-	    'XC' => \$XC,
-	    'bare' => \$bare,
-	    'count' => \$count,
-	    'write' => \$write,
-	    'loops' => \$loops,
-	    'stats' => \$stats);
+
+GetOptions(
+    'config'    => \$config,
+    'pre'       => \$pre,
+    'post'      => \$post,
+    'noparents' => \$noparents,
+    'XC'        => \$XC,
+    'bare'      => \$bare,
+    'count'     => \$count,
+    'write'     => \$write,
+    'loops'     => \$loops,
+    'stats'     => \$stats
+);
 
 die "Invalid number of arguments supplied.\n$Usage" if ($#ARGV < 0);
 print "-config flag seen\n"                         if ($config);
 print "-pre flag seen\n"                            if ($pre);
 print "-post flag seen\n"                           if ($post);
 print "-noparents flag seen\n"                      if ($noparents);
-print "-XC flag seen\n"                      if ($XC);
+print "-XC flag seen\n"                             if ($XC);
 print "-bare flag seen\n"                           if ($bare);
 print "-count flag seen\n"                          if ($count);
 print "-write flag seen\n"                          if ($write);
@@ -1390,7 +1422,7 @@ if ($stats) {
 
 if ($loops) {
     if (!consanguinityLoop()) {
-	marriageLoop();
+        marriageLoop();
     }
 }
 
