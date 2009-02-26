@@ -59,7 +59,7 @@ void write2ptBRFile() {
    */
   fprintf (fpHet, "# Seq: %d Trait: %s Marker: %s Chr: %d", loc2,
 	   pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->chromosome);
-  if ((modelOptions.mapFlag == SEX_SPECIFIC) && (pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0) &&
+  if ((modelOptions.mapFlag == SEX_SPECIFIC) && (pLocus2->pMapUnit->mapPos[MAP_FEMALE] >= 0) &&
       (pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0)) {
     fprintf (fpHet, " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
 	     pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE], pLocus2->pMapUnit->mapPos[MAP_FEMALE],
