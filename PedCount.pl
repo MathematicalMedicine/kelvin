@@ -24,7 +24,7 @@ my $config = 0; my $pre = 0; my $post = 0; my $noparents = 0; my $XC = 0;
 my $bare = 0; my $count = 0; my $write = 0; my $loops = 0; my $stats = 0;
 
 # Permanent defaults
-use constant AttributeMissing => 0;    # For marker alleles and Sex
+use constant AttributeMissing => "0";    # For marker alleles and Sex
 
 # Defaults to be overridden by configuration file directives
 my $pedFile          = "pedpost.dat";
@@ -482,9 +482,9 @@ sub loadPedigree {
     open IN, "<$File" || die "Cannot open file $File\n";
     my $LineNo = 0;
     %Pedigrees = ();
-    my $MkC = 0;
-    my $GtC;
-    my ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Markers);
+    my $AlC = 0; # Number of alleles
+    my $GtC = 0; # Number of genotyped alleles
+    my ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Alleles);
 
     while (<IN>) {
         $LineNo++;
@@ -492,12 +492,12 @@ sub loadPedigree {
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
         if ($Type eq "POST") {
-            ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Markers) = split /\s+/;
+            ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Alleles) = split /\s+/;
             die "Pedigree line $LineNo: proband must be numeric, not \"$Prb\"." if (!($Prb =~ /[0-9]/));
         } elsif ($Type eq "PRE") {
-            ($Ped, $Ind, $Dad, $Mom, $Sex, $Aff, @Markers) = split /\s+/;
+            ($Ped, $Ind, $Dad, $Mom, $Sex, $Aff, @Alleles) = split /\s+/;
         } elsif ($Type eq "BARE") {
-            ($Ind, $Aff, @Markers) = split /\s+/;
+            ($Ind, $Aff, @Alleles) = split /\s+/;
             $Ped = $Ind;
         } else {
             die "Unhandled pedigree type \"$Type\".";
@@ -509,25 +509,45 @@ sub loadPedigree {
           "Pedigree line $LineNo: affection status must be $UnknownAffection, $Unaffected, or $Affected, not \"$Aff\"."
           if ( (!defined($Directives{QT}))
             && (($Aff != $UnknownAffection) && ($Aff != $Unaffected) && ($Aff != $Affected)));
+
+	# Handle marker pairs
         my ($OldFam, $OldInd, $Left);
-        $MkC = 0;
+        $AlC = 0;
         $GtC = 0;
         my @Pairs = ();
-        for my $Marker (@Markers) {
-
-            if ($Marker eq "Ped:") {
-                $OldFam = $Markers[ $MkC + 1 ];
-                $OldInd = $Markers[ $MkC + 3 ];
+        for my $Allele (@Alleles) {
+            if ($Allele eq "Ped:") {
+                $OldFam = $Alleles[ $AlC + 1 ];
+                $OldInd = $Alleles[ $AlC + 3 ];
                 last;
             }
-            $MkC++;
-            $GtC++ if ($Marker != AttributeMissing);
-            if ($MkC & 1) {
-                $Left = $Marker;
+            $AlC++;
+	    if ($Allele ne AttributeMissing) {
+		$GtC++; # Keep track of how much genotypic information we have for this individual
+		my $Name = "";
+		if (!$config) {
+		    # We need to fake-up @Loci and %LociAttributes so we can still translate from 
+		    # named to sequenced alleles. After all, alleles could be "2" and "foo".
+		    $Name = int(($AlC + 1.5) / 2); # Offset == Name
+		    if (!defined($LociAttributes{$Name}{Alleles}{$Allele})) {
+			# If this allele is not already know, it's the next one sequentially
+			$LociAttributes{$Name}{Alleles}{$Allele} = scalar(keys %{ $LociAttributes{$Name}{Alleles} }) + 1;
+		    }
+		} else {
+		    $Name = $Loci[int(($AlC + 1.5) / 2)]; # Integer division, thank you
+		}
+		# Translate the allele to a sequence number
+		$Allele = $LociAttributes{$Name}{Alleles}{$Allele};
+	    }
+
+	    # Pair-up the alleles
+            if ($AlC & 1) {
+                $Left = $Allele;
             } else {
-                push @Pairs, $Left . " " . $Marker;
+                push @Pairs, $Left . " " . $Allele;
             }
         }
+
         if (!$bare) {
             if (!$noparents) {
                 $Pedigrees{$Ped}{$Ind}{Dad} = $Dad;
@@ -544,13 +564,13 @@ sub loadPedigree {
             $Pedigrees{$Ped}{$Ind}{Sex} = 1;            # Bare case-control can be all male
         }
         $Pedigrees{$Ped}{$Ind}{Aff}    = $Aff;
-        $Pedigrees{$Ped}{$Ind}{MkC}    = $MkC;          # Marker count (should always be the same)
+        $Pedigrees{$Ped}{$Ind}{AlC}    = $AlC;          # Allele count (should always be the same)
         $Pedigrees{$Ped}{$Ind}{GtC}    = $GtC;          # Genotype count (how complete is genotyping)
         $Pedigrees{$Ped}{$Ind}{Mks}    = \@Pairs;
         $Pedigrees{$Ped}{$Ind}{OldFam} = $OldFam;
         $Pedigrees{$Ped}{$Ind}{OldInd} = $OldInd;
     }
-    $PairCount = $MkC / 2;
+    $PairCount = $AlC / 2;
     close IN;
 
     # Adopt single case/control individuals
@@ -567,8 +587,8 @@ sub loadPedigree {
                 $Pedigrees{$Ped}{$Dad}{Mom} = $UnknownPerson;
                 $Pedigrees{$Ped}{$Dad}{Aff} = $UnknownAffection;
                 $Pedigrees{$Ped}{$Dad}{Prb} = 0;
-                $Pedigrees{$Ped}{$Dad}{MkC} = $Pedigrees{$Ped}{$Dad}{GtC} = 0;
-                $Pedigrees{$Ped}{$Dad}{Mks} = [ ("0 0") x ($Pedigrees{$Ped}{$Ind}{MkC} / 2) ];
+                $Pedigrees{$Ped}{$Dad}{AlC} = $Pedigrees{$Ped}{$Dad}{GtC} = 0;
+                $Pedigrees{$Ped}{$Dad}{Mks} = [ ("0 0") x ($Pedigrees{$Ped}{$Ind}{AlC} / 2) ];
                 my $Mom = $Ind . "M";
                 $Pedigrees{$Ped}{$Ind}{Mom} = $Mom;
                 $Pedigrees{$Ped}{$Mom}{Sex} = 2;
@@ -576,8 +596,8 @@ sub loadPedigree {
                 $Pedigrees{$Ped}{$Mom}{Mom} = $UnknownPerson;
                 $Pedigrees{$Ped}{$Mom}{Aff} = $UnknownAffection;
                 $Pedigrees{$Ped}{$Mom}{Prb} = 0;
-                $Pedigrees{$Ped}{$Mom}{MkC} = $Pedigrees{$Ped}{$Mom}{GtC} = 0;
-                $Pedigrees{$Ped}{$Mom}{Mks} = [ ("0 0") x ($Pedigrees{$Ped}{$Ind}{MkC} / 2) ];
+                $Pedigrees{$Ped}{$Mom}{AlC} = $Pedigrees{$Ped}{$Mom}{GtC} = 0;
+                $Pedigrees{$Ped}{$Mom}{Mks} = [ ("0 0") x ($Pedigrees{$Ped}{$Ind}{AlC} / 2) ];
             }
         }
     }
@@ -601,8 +621,8 @@ sub deriveLociAndAttributes {
             for my $Ind (keys %{ $Pedigrees{$Ped} }) {
                 next if ($Pedigrees{$Ped}{$Ind}{Aff} != $Unaffected);
                 my ($Left, $Right) = split /\s+/, $Pedigrees{$Ped}{$Ind}{Mks}[$i];
-                $HaploCounts[$Left]++  if ($Left != AttributeMissing);
-                $HaploCounts[$Right]++ if ($Right != AttributeMissing);
+                $HaploCounts[$Left]++  if ($Left ne AttributeMissing);
+                $HaploCounts[$Right]++ if ($Right ne AttributeMissing);
             }
         }
         my $PopSize = sum @HaploCounts;
@@ -641,7 +661,8 @@ sub loadCompanion {
 }
 
 #####################################
-# Open and read the marker file to flesh-out the %LociAttributes hash
+# Open and read the marker file to flesh-out the %LociAttributes hash. Named
+# alleles get mapped to numbers so we can use our allele patterns when bucketizing.
 #
 sub loadMarkers {
     my $File = shift();
@@ -649,6 +670,7 @@ sub loadMarkers {
     open IN, "<$File" || die "Cannot open file $File\n";
     my $LineNo = 0;
     my $Name   = "";
+    my $AlleleCount = 0;
     while (<IN>) {
         $LineNo++;
         s/\s*\#.*//g;    # Trim comments
@@ -657,13 +679,22 @@ sub loadMarkers {
         my $RecordType = shift @Tokens;
         if ($RecordType eq "M") {
             $Name = shift @Tokens;
-        } elsif ($RecordType eq "F") {
+	    $AlleleCount = 0;
+        } elsif ($RecordType eq "F") { # List of unnamed allele frequencies
             if (defined($LociAttributes{$Name}{Frequencies})) {
                 $LociAttributes{$Name}{Frequencies} = [ (@{ $LociAttributes{$Name}{Frequencies} }, @Tokens) ];
             } else {
                 $LociAttributes{$Name}{Frequencies} = [@Tokens];
             }
-        } else {
+	    # Dummy-up names so we know we'll always have them
+	    for (1..scalar(@Tokens)) {
+		$AlleleCount++;
+		$LociAttributes{$Name}{Alleles}{$AlleleCount} = $AlleleCount;
+	    }
+        } elsif ($RecordType eq "A") { # Named allele and frequency
+	    push @{ $LociAttributes{$Name}{Frequencies} }, $Tokens[1];
+	    $LociAttributes{$Name}{Alleles}{$Tokens[0]} = ++$AlleleCount;
+	} else {
             die "Unknown record type \"$RecordType\" at line $LineNo in marker file $File\n";
         }
     }
@@ -789,7 +820,7 @@ sub perfStats {
             }
             if ($Pedigrees{$Ped}{$Ind}{GtC} == 0)                 { $PedCat{$Ped}{MsgMkr}++; }
             if ($Pedigrees{$Ped}{$Ind}{Aff} == $UnknownAffection) { $PedCat{$Ped}{MsgAff}++; }
-            if ($Pedigrees{$Ped}{$Ind}{Sex} == AttributeMissing)  { $PedCat{$Ped}{MsgSex}++; }
+            if ($Pedigrees{$Ped}{$Ind}{Sex} ne AttributeMissing)  { $PedCat{$Ped}{MsgSex}++; }
         }
         push @PedSiz, scalar(keys(%{ $Pedigrees{$Ped} }));
         push @PedNuk, scalar(keys(%Seen));
@@ -1422,8 +1453,8 @@ if (!scalar(@Loci)) {
     deriveLociAndAttributes();
 }
 
-#print Dumper(\@Loci);
-#print Dumper(\%LociAttributes);
+print Dumper(\@Loci);
+print Dumper(\%LociAttributes);
 
 checkRelations($pedFileType);
 checkIntegrity();
