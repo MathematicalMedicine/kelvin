@@ -21,8 +21,11 @@
 #include <getopt.h>
 
 /* Kelvin header files */
-#include "../kelvin.h"
-#include "../integrationLocals.h"
+#include <kelvin.h>
+#include <integrationLocals.h>
+#include <multidim.h>
+#include <ippl.h>
+#include <map.h>
 
 /* TO DO:
  * - sex-specific theta cutoffs
@@ -34,11 +37,24 @@
 #define LR_COL     3
 #define POS_COL    4
 #define CHR_COL    5
+#define PPL_COL    6
 
 #define METH_OLD   1
 #define METH_NEW   2
 
 #define BUFFLEN 256
+/* Default prior for LD statistic calculations */
+#define DEFAULT_LDPRIOR 0.02
+/* the multipoint PPL for a BR of 0.214 */
+#define MIN_PRIOR 7.8528124097619317e-03
+
+typedef struct {
+  char name1[MAX_MAP_NAME_LEN],
+    name2[MAX_MAP_NAME_LEN],
+    chr[MAX_MAP_CHR_LEN];
+  double pos;
+  int num;
+} st_brmarker;
 
 typedef struct {
   char *name;
@@ -50,27 +66,23 @@ typedef struct {
     no_ld,
     holey_grid,
     two_point,
+    eof,
+    datacolsize,
     *datacols;
+  st_brmarker curmarker;
 } st_brfile;
 
 typedef struct {
-  char name1[32],
-    name2[32];
-  double pos;
-  int chr,
-    num;
-} st_marker;
-
-typedef struct {
-  int numdprimes,
-    numthetas;
+  int dprimesize,
+    thetasize;
   double lr,
     *dprimes,
     *thetas;
 } st_data;
 
 typedef LDVals st_ldvals;
-/*
+/* LDVals looks like this :
+ *
 typedef struct {
   double ld_small_theta,
     ld_big_theta,
@@ -81,82 +93,69 @@ typedef struct {
 } st_ldvals;
 */
 
-typedef struct {
-  int arrsize,
-    numelems,
-    lastidx,
-    dimsize;
-  double *arr;
-} st_dim;
 
-typedef struct {
-  short numdims;
-  int totalelems;
-  st_dim *dims;
-} st_multidim;
-
-
-/* Default values that can be overridden on the command line */
+/* Defaults for varaiables that define the nature of the data */
 int sexspecific = 0;    /* -s or --sexspecific: sex-specific thetas */
 int multipoint = 0;     /* -m or --multipoint */
-int dkelvin = 0;        /* -d or --dkelvin */
+int okelvin = 0;        /* -o or --okelvin : expect original (fixed-grid) kelvin BR data */
 int relax = 0;          /* -r or --relax: don't compare marker names between files */
+int allstats = 0;       /* -a or --allstats: print all LD and iPPL stats */
+int quiet = 0;          /* -q or --quiet : supress non-fatal warnings */
+
+/* Defaults for variables used in calculation of the statistics */
 double prior = 0.02;    /* -p or --prior: prior probability */
-double ldprior = 0.021; /* -l or --ldprior: prior probability of LD */
 double weight = 0.95;   /* -w or --weight: weighting factor */
 double cutoff = 0.05;   /* -c or --cutoff: theta cutoff */
-int method = METH_OLD;  /* --method: old (update BR per marker/theta/D' first) or 
-			   new (integrate out theta/D' then update) */
+
+/* For optional output files, the filehandles are global */
 FILE *partout = NULL;   /* --partout: file to which to write partial results */
-FILE *partin = NULL;    /* --partin: file from which to read partial ldval-style fields */
-FILE *bfout = NULL;     /* --bayesfactor: file to which bayes factors will be written */
+FILE *bfout = NULL;     /* --bfout: file to which bayes factors will be written */
+FILE *sixout = NULL;    /* --sixout: file to which six-region (ldval) values will be written */
+
+/* For option input files, the filenames are global */
+char *pplinfile=NULL;   /* --pplin: file from which to read PPLs for use as position-
+	  		            specific priors */
+char *mapinfile=NULL;   /* --mapin: mapfile, to allow updating across files containing sets of
+ 			            markers that only partially overlap */
+
 
 /* Globally available for error messages */
 char *current = "0.36.1";
 char *pname;
-char *partinfile=NULL;
-/* Globbaly available for building partial output files */
-char partheader[BUFFLEN], partpadding[BUFFLEN];
+int verbose = 0;
 
-void old_method (st_brfile *brfiles, int numbrfiles);
-void old_method_multipoint (st_brfile *brfiles, int numbrfiles);
-void old_dkelvin (st_brfile *brfiles, int numbrfiles);
-void new_dkelvin (st_brfile *brfiles, int numbrfiles);
-void new_method (st_brfile *brfiles, int numbrfiles);
+void kelvin_twopoint (st_brfile *brfiles, int numbrfiles);
+void kelvin_multipoint (st_brfile *brfiles, int numbrfiles);
+void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles);
+void print_twopoint_headers (int no_ld);
+void print_twopoint_stats (int no_ld, st_brmarker *marker, st_ldvals *ldval);
 void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas, st_data *data);
+void do_dkelvin_first_pass (st_brfile *brfile, st_data *data);
+/*
 double calc_ppl_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr);
 double calc_ppl_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr);
+*/
 void calc_ldvals_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr, st_ldvals *ldval);
 void calc_ldvals_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr, st_ldvals *ldval);
-double calc_ldppl (st_ldvals *ldval);
-double calc_ppld_given_linkage (st_ldvals *ldval);
-double calc_ppld (st_ldvals *ldval);
-double calc_ppld_and_linkage (st_ldvals *ldval);
-double calc_dkelvin_ppl (st_ldvals *ldval);
-double calc_dkelvin_ldppl (st_ldvals *ldval);
-double calc_dkelvin_ppld_given_linkage (st_ldvals *ldval);
-double calc_dkelvin_ppld (st_ldvals *ldval);
-double calc_dkelvin_ppld_and_linkage (st_ldvals *ldval);
+double calc_upd_ppl (st_ldvals *ldval);
+double calc_upd_ppl_allowing_ld (st_ldvals *ldval, double ldprior);
+double calc_upd_ppld_given_linkage (st_ldvals *ldval, double ldprior);
+double calc_upd_ppld_allowing_l (st_ldvals *ldval, double ldprior);
 
 int parse_command_line (int argc, char **argv);
 void usage ();
 double validate_double_arg (char *arg, char *optname);
 void open_brfile (st_brfile *brfile);
-int get_marker_line (st_brfile *brfile, st_marker *marker);
-int get_header_line (st_brfile *brfile, st_data *data);
-int get_data_line (st_brfile *brfile, st_marker *marker, st_data *data);
-void read_partin (st_marker *markers, st_ldvals *ldvals, int nummarkers);
-void print_partial_old (st_brfile *brfile, st_marker *marker, st_data *data);
+void get_next_marker (st_brfile *brfile, st_data *data);
+int get_marker_line (st_brfile *brfile);
+int get_header_line (st_brfile *brfile);
+int get_data_line (st_brfile *brfile, st_data *data);
+void print_partial_header (st_brfile *brfile);
+void print_partial_data (st_brfile *brfile, st_data *data);
+int compare_markers (st_brmarker *m1, st_brmarker *m2);
 void compare_headers (st_brfile *f1, st_brfile *f2);
-void compare_markers (st_marker *m1, st_marker *m2, st_brfile *brfile);
-void compare_positions (st_marker *m1, st_marker *m2, st_brfile *brfile);
+int compare_positions (st_brmarker *m1, st_brmarker *m2);
 void compare_samples (st_data *d, int sampleno, st_brfile *brfile);
-int multi_insert (st_multidim *md, double *vals, int num);
-int multi_find (st_multidim *md, double *vals, int num);
-int insert (st_dim *dim, double val);
-int find (st_dim *dim, double val, int *found);
-void multi_free (st_multidim *md);
-void multi_dump (st_multidim *md);
 
 
 int main (int argc, char **argv)
@@ -165,8 +164,13 @@ int main (int argc, char **argv)
   st_brfile *brfiles;
 
   pname = argv[0];
-  partheader[0] = partpadding[0] = '\0';
   argidx = parse_command_line (argc, argv);
+
+  if (pplinfile != NULL)
+    read_ppls (pplinfile);
+  if (mapinfile != NULL)
+    read_map (mapinfile);
+
   if (argidx >= argc) {
     fprintf (stderr, "missing file name\n");
     exit (-1);
@@ -183,26 +187,23 @@ int main (int argc, char **argv)
   printf ("# Version V%s\n", current);
   if (partout != NULL)
     fprintf (partout, "# Version V%s\n", current);
-
-  if (method == METH_OLD) {
-    if (multipoint) {
-      old_method_multipoint (brfiles, numbrfiles);
-    } else if (dkelvin) {
-      old_dkelvin (brfiles, numbrfiles);
-    } else {
-      old_method (brfiles, numbrfiles);
-    }
+  
+  if (multipoint) {
+    kelvin_multipoint (brfiles, numbrfiles);
+  } else if (okelvin) {
+    kelvin_twopoint (brfiles, numbrfiles);
   } else {
-
-    if (dkelvin)
-      new_dkelvin (brfiles, numbrfiles); // added on 12/30/2008
-    else
-      new_method (brfiles, numbrfiles);
+    dkelvin_twopoint (brfiles, numbrfiles);
   }
+  
   for (va = 0; va < numbrfiles; va++) {
     fclose (brfiles[va].fp);
   }
   free (brfiles);
+  if (pplinfile != NULL)
+    free_ppls ();
+  if (mapinfile != NULL)
+    free_map ();
   if (partout != NULL)
     fclose (partout);
   if (bfout != NULL)
@@ -211,674 +212,480 @@ int main (int argc, char **argv)
 }
 
 
-void old_method (st_brfile *brfiles, int numbrfiles)
+void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 {
-  int ret, fileno, didx, thidx, firstpass = 1;
-  double **lr, ldstat;
-  st_marker marker_0, marker_n;
+  int fileno, alldone=0, didx, thidx, numcurrent, dsize=0, thsize=0, ret;
+  double **lr=NULL, ldprior, ldstat;
+  st_brmarker next_marker;
+  st_mapmarker *mapptr;
   st_data data;
   st_multidim dprimes, thetas;
+  st_brfile **current;
   st_ldvals ldval;
 
-  memset (&marker_0, 0, sizeof (st_marker));
-  memset (&marker_n, 0, sizeof (st_marker));
+  memset (&next_marker, 0, sizeof (st_brmarker));
   memset (&data, 0, sizeof (st_data));
   memset (&dprimes, 0, sizeof (st_multidim));
   memset (&thetas, 0, sizeof (st_multidim));
-
-  /* First thing to do is read through the set of data lines for the first
-   * marker in the first file. We can use the D' and thetas that we read to 
-   * populate our data structures. Since this is the old method, every file
-   * has to have the same D' and thetas for every marker.
-   */
-  do_first_pass (&brfiles[0], &dprimes, &thetas, &data);
-
-  if ((lr = malloc (sizeof (double *) * dprimes.totalelems)) == NULL) {
-    fprintf (stderr, "malloc failed, %s\n", strerror (errno));
+  memset (&ldval, 0, sizeof (st_ldvals));
+  if ((current = malloc (sizeof (st_brfile *) * numbrfiles)) == NULL) {
+    fprintf (stderr, "malloc current failed, %s\n", strerror (errno));
     exit (-1);
   }
-  for (didx = 0; didx < dprimes.totalelems; didx++) {
-    if ((lr[didx] = malloc (sizeof (double) * thetas.totalelems)) == NULL) {
-      fprintf (stderr, "malloc failed, %s\n", strerror (errno));
-      exit (-1);
-    }
+
+  for (fileno = 0; fileno < numbrfiles; fileno++) {
+    get_next_marker (&brfiles[fileno], &data);
+    if (verbose >= 2)
+      printf ("first marker in %s is %s\n", brfiles[fileno].name, brfiles[fileno].curmarker.name2);
   }
+  print_twopoint_headers (brfiles[0].no_ld);
 
-  if (! brfiles[0].no_ld)
-    printf ("Chr Seq Marker Position PPL LD-PPL PPLD|L PPLD PPLD&L\n");
-  else
-    printf ("Chr Seq Marker Position PPL\n");
-  /*if (bfout != NULL)
-    fprintf (bfout, "Chr Seq Marker Position LD-PPL PPLD|L PPLD PPLD&L\n");*/
-
-  while ((ret = get_marker_line (&brfiles[0], &marker_0)) == 1) {
-    get_header_line (&brfiles[0], &data);
-    for (fileno = 1; fileno < numbrfiles; fileno++) {
-      if (get_marker_line (&brfiles[fileno], &marker_n) != 1) {
-	fprintf (stderr, "file '%s' ends where marker line expected at line %d\n",
-		 brfiles[fileno].name, brfiles[fileno].lineno);
+  while (1) {
+    if (mapinfile != NULL) {
+      if ((mapptr = next_mapmarker (NULL)) != NULL) {
+	strcpy (next_marker.chr, mapptr->chr);
+	strcpy (next_marker.name2, mapptr->name);
+      } else {
+	break;
+      }
+    } else {
+      memcpy (&next_marker, &brfiles[0].curmarker, sizeof (st_brmarker));
+    }
+    
+    numcurrent = 0;
+    alldone = 1;
+    for (fileno = 0; fileno < numbrfiles; fileno++) {
+      if (! brfiles[fileno].eof)
+	alldone = 0;
+      if (compare_markers (&next_marker, &brfiles[fileno].curmarker) == -1) {
+	if (mapinfile != NULL)
+	  continue;
+	fprintf (stderr, "marker mismatch at line %d in '%s', expecting %s, found %s\n",
+		 brfiles[fileno].lineno, brfiles[fileno].name, next_marker.name2,
+		 brfiles[fileno].curmarker.name2);
 	exit (-1);
       }
-      get_header_line (&brfiles[fileno], &data);
-      if (firstpass)
-	compare_headers (&brfiles[0], &brfiles[fileno]);
-      compare_markers (&marker_0, &marker_n, &brfiles[fileno]);
-    }   
-    firstpass = 0;
-    if (partout != NULL) 
-      fprintf (partout, "# %d %s %s\n%s", marker_0.num, marker_0.name1, marker_0.name2, 
-	       partheader);
+      current[numcurrent++] = &brfiles[fileno];
+      compare_headers (current[0], &brfiles[fileno]);
+    }
+    if (alldone)
+      break;
+    if (numcurrent == 0) {
+      if (! quiet)
+	fprintf (stderr, "warning: marker %s from %s doesn't appear in any BR files, skipping\n",
+		 next_marker.name2, mapinfile);
+      continue;
+    }
+    if (verbose >= 1) {
+      printf ("current marker is '%s', using BR file%s %s", next_marker.name2,
+	      (numcurrent > 1) ? "s" : "", current[0]->name);
+      for (fileno = 1; fileno < numcurrent; fileno++) 
+	printf (", %s", current[fileno]->name);
+      printf ("\n");
+    }
+    
+    if (partout != NULL)
+      print_partial_header (current[0]);
+    
+    do_first_pass (current[0], &dprimes, &thetas, &data);
+    if (dsize < dprimes.totalelems) {
+      if ((lr = realloc (lr, sizeof (double *) * dprimes.totalelems)) == NULL) {
+	fprintf (stderr, "malloc failed, %s\n", strerror (errno));
+	exit (-1);	
+      }
+      for ( ; dsize < dprimes.totalelems; dsize++)
+	lr[dsize] = NULL;
+    }
+    for (didx = 0; didx < dsize; didx++) {
+      if ((thsize < thetas.totalelems) || (lr[didx] == NULL)) {
+	if ((lr[didx] = realloc (lr[didx], sizeof (double) * thetas.totalelems)) == NULL) {
+	  fprintf (stderr, "malloc failed, %s\n", strerror (errno));
+	  exit (-1);
+	}
+      }
+    }
+    if (thsize < thetas.totalelems)
+      thsize = thetas.totalelems;
     
     for (didx = 0; didx < dprimes.totalelems; didx++) {
       for (thidx = 0; thidx < thetas.totalelems; thidx++) {
 	lr[didx][thidx] = DBL_MAX;
       }
     }
-
-    while ((ret = get_data_line (&brfiles[0], &marker_0, &data)) == 1) {
-      if ((didx = multi_find (&dprimes, data.dprimes, brfiles[0].numdprimes)) == -1) {
-	fprintf (stderr, "unexpected dprimes in '%s' at line %d\n", brfiles[0].name,
-		 brfiles[0].lineno);
+    
+    while (get_data_line (current[0], &data) == 1) {
+      if ((didx = multi_find (&dprimes, data.dprimes, current[0]->numdprimes)) == -1) {
+	fprintf (stderr, "unexpected dprime(s) in '%s' at line %d\n", current[0]->name,
+		 current[0]->lineno);
 	exit (-1);
       }
-      if ((thidx = multi_find (&thetas, data.thetas, brfiles[0].numthetas)) == -1) {
-	fprintf (stderr, "unexpected thetas in '%s' at line %d\n", brfiles[0].name,
-		 brfiles[0].lineno);
+      if ((thidx = multi_find (&thetas, data.thetas, current[0]->numthetas)) == -1) {
+	fprintf (stderr, "unexpected thetas in '%s' at line %d\n", current[0]->name,
+		 current[0]->lineno);
 	exit (-1);
       }
       if (lr[didx][thidx] != DBL_MAX) {
-	fprintf (stderr, "duplicate dprime/theta combination in '%s' at line %d\n",
-		 brfiles[0].name, brfiles[0].lineno);
+	fprintf (stderr, "duplicate dprime/theta combination at line %d in '%s'\n",
+		 current[0]->lineno, current[0]->name);
 	exit (-1);
       }
       lr[didx][thidx] = data.lr;
       
-      for (fileno = 1; fileno < numbrfiles; fileno++) {
-	if ((ret = get_data_line (&brfiles[fileno], &marker_n, &data)) != 1) {
-	  fprintf (stderr, "data ends unexpectedly at line %d in file '%s'\n",
-		   brfiles[fileno].lineno, brfiles[fileno].name);
-	}
-	if (multi_find (&dprimes, data.dprimes, brfiles[fileno].numdprimes) != didx) {
-	  fprintf (stderr, "unexpected dprimes in '%s' at line %d\n", brfiles[fileno].name,
-		   brfiles[fileno].lineno);
+      for (fileno = 1; fileno < numcurrent; fileno++) {
+	if ((ret = get_data_line (current[fileno], &data)) != 1) {
+	  fprintf (stderr, "expected data in '%s' at line %d, found %s\n",
+		   current[fileno]->name, current[fileno]->lineno,
+		   (ret == 0) ? "end-of-file" : "marker line");
 	  exit (-1);
 	}
-	if (multi_find (&thetas, data.thetas, brfiles[fileno].numthetas) != thidx) {
-	  fprintf (stderr, "unexpected thetas in '%s' at line %d\n", brfiles[fileno].name,
-		   brfiles[fileno].lineno);
+	if ((ret = multi_find (&dprimes, data.dprimes, current[fileno]->numdprimes)) != didx) {
+	  fprintf (stderr, "%s dprime(s) in '%s' at line %d\n", (ret == -1) ? "unexpected" :
+		   "misordered", current[fileno]->name, current[fileno]->lineno);
+	  exit (-1);
+	}
+	if ((ret = multi_find (&thetas, data.thetas, current[fileno]->numthetas)) != thidx) {
+	  fprintf (stderr, "unexpected thetas in '%s' at line %d\n", (ret == -1) ? "unexpected" :
+		   "misordered", current[fileno]->name, current[fileno]->lineno);
+	  exit (-1);
+	}
+	if (lr[didx][thidx] == DBL_MAX) {
+	  fprintf (stderr, "dprime/theta combination at line %d in '%s' does not appear in '%s' \n",
+		   current[fileno]->lineno, current[fileno]->name, current[0]->name);
 	  exit (-1);
 	}
 	lr[didx][thidx] *= data.lr;
       }
-      data.lr = lr[didx][thidx];
-      if (partout != NULL)
-	print_partial_old (&brfiles[0], &marker_0, &data);
+      if (partout != NULL) {
+	data.lr = lr[didx][thidx];
+	print_partial_data (current[0], &data);
+      }
     }
 
-    printf ("%d %d %s %.4f", marker_0.chr, marker_0.num, marker_0.name2, marker_0.pos);
-    if (bfout != NULL) 
-      fprintf (bfout, "%d %d %s %.4f", marker_0.chr, marker_0.num, marker_0.name2, marker_0.pos);
-    printf (" %.3f", (! sexspecific) ? calc_ppl_sexavg (&dprimes, &thetas, lr) : 
-	    calc_ppl_sexspc (&dprimes, &thetas, lr));
-    if (! brfiles[0].no_ld) {
-      if (! sexspecific)
-	calc_ldvals_sexavg (&dprimes, &thetas, lr, &ldval);
-      else 
-	calc_ldvals_sexspc (&dprimes, &thetas, lr, &ldval);
-      
-      ldstat = calc_ldppl (&ldval);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_ppld_given_linkage (&ldval);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_ppld (&ldval);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_ppld_and_linkage (&ldval);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-    }
-    printf ("\n");
-    if (bfout != NULL)
-      fprintf (bfout, "\n");
-  }
-  if (ret == -1) {
-    fprintf (stderr, "can't parse marker, line %d in file '%s'\n", brfiles[0].lineno,
-	     brfiles[0].name);
-    exit (-1);
-  }
-  for (fileno = 1; fileno < numbrfiles; fileno++) {
-    if (get_marker_line (&brfiles[fileno], &marker_n) != 0) {
-      fprintf (stderr, "file '%s' unexpectedly continues at line %d\n",
-	       brfiles[fileno].name, brfiles[fileno].lineno);
-      exit (-1);
-    }
-  }  
-  
-  for (didx = 0; didx < dprimes.totalelems; didx++)
-    free (lr[didx]);
-  free (lr);
+    if (! sexspecific)
+      calc_ldvals_sexavg (&dprimes, &thetas, lr, &ldval);
+    else 
+      calc_ldvals_sexspc (&dprimes, &thetas, lr, &ldval);
 
+    print_twopoint_stats (current[0]->no_ld, &(current[0]->curmarker), &ldval);
+    for (fileno = 0; fileno < numcurrent; fileno++) {
+      get_next_marker (current[fileno], &data);
+    }
+  }
+
+  for (didx = 0; didx < dsize; didx++) {
+    if (lr[didx] != NULL)
+      free (lr[didx]);
+  }
+  if (lr != NULL)
+    free (lr);
   multi_free (&dprimes);
   multi_free (&thetas);
-  
-  free (data.dprimes);
-  free (data.thetas);
-  for (fileno = 0; fileno < numbrfiles; fileno++)
-    free (brfiles[fileno].datacols);
+  free (current);
+  if (data.dprimesize > 0)
+    free (data.dprimes);
+  if (data.thetasize > 0)
+    free (data.thetas);
+  for (fileno = 0; fileno < numbrfiles; fileno++) {
+    if (brfiles[fileno].datacolsize > 0)
+      free (brfiles[fileno].datacols);
+  }
   return;
 }
 
 
-void old_method_multipoint (st_brfile *brfiles, int numbrfiles)
+void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 {
-  int fileno;
-  st_marker marker_0, marker_n;
+  int fileno, ret, alldone, curno;
+  st_brmarker *marker;
   st_data data;
-  double lr, ppl;
+  double lr, *lrs, ppl;
 
-  memset (&marker_0, 0, sizeof (st_marker));
-  memset (&marker_n, 0, sizeof (st_marker));
   memset (&data, 0, sizeof (st_data));
-
-  get_header_line (&brfiles[0], &data);
+  if ((lrs = malloc (sizeof (double) * numbrfiles)) == NULL) {
+    fprintf (stderr, "malloc failed, %s\n", strerror (errno));
+    exit (-1);
+  }
+  
+  get_header_line (&brfiles[0]);
+  if ((ret = get_data_line (&brfiles[0], &data)) != 1) {
+    fprintf (stderr, "expected data in '%s' at line %d, found %s\n", brfiles[0].name,
+	     brfiles[0].lineno, (ret == 0) ? "end-of-file" : "marker line");
+    exit (-1);
+  }
+  lrs[0] = data.lr;
   for (fileno = 1; fileno < numbrfiles; fileno++) {
-    get_header_line (&brfiles[fileno], &data);
+    get_header_line (&brfiles[fileno]);
     compare_headers (&brfiles[0], &brfiles[fileno]);
+    if ((ret = get_data_line (&brfiles[fileno], &data)) != 1) {
+      fprintf (stderr, "expected data in '%s' at line %d, found %s\n", brfiles[fileno].name,
+	       brfiles[fileno].lineno, (ret == 0) ? "end-of-file" : "marker line");
+      exit (-1);
+    }
+    lrs[fileno] = data.lr;
   }
   printf ("Chr Position PPL BayesRatio\n");
 
-  while (get_data_line (&brfiles[0], &marker_0, &data) == 1) {
-    lr = data.lr;
-    for (fileno = 1; fileno < numbrfiles; fileno++) {
-      if (get_data_line (&brfiles[fileno], &marker_n, &data) != 1) {
-	fprintf (stderr, "file '%s' ends unexpectedly at line %d\n",
-		 brfiles[fileno].name, brfiles[fileno].lineno);
-	exit (-1);
-      }
-       compare_positions (&marker_0, &marker_n, &brfiles[fileno]);
-      lr *= data.lr;
+  while (1) {
+    alldone = 1;
+    curno = -1;
+    lr = 1;
+    for (fileno = 0; fileno < numbrfiles; fileno++) {
+      if (brfiles[fileno].eof)
+	continue;
+      alldone = 0;
+      if (curno == -1)
+	curno = fileno;
+      else if (compare_positions (&brfiles[fileno].curmarker, &brfiles[curno].curmarker) < 0)
+	curno = fileno;
     }
+    if (alldone)
+      break;
+    for (fileno = 0; fileno < numbrfiles; fileno++) {
+      if (brfiles[fileno].eof)
+	continue;
+      if (compare_positions (&brfiles[fileno].curmarker, &brfiles[curno].curmarker) != 0)
+	continue;
+      lr *= lrs[fileno];
+      if (fileno != curno) {
+	if (get_data_line (&brfiles[fileno], &data) == 1)
+	  lrs[fileno] = data.lr;
+      }
+    }
+
+    marker = &brfiles[curno].curmarker;
     if ((lr < 0.214) || ((ppl = (lr * lr) / (-5.77 + (54 * lr) + (lr * lr))) < 0.0))
       ppl = 0.0;
-    printf ("%d %.4f %.2f %.6e\n", marker_0.chr, marker_0.pos, ppl, lr);
+    printf ("%s %.4f %.3f %.6e\n", marker->chr, marker->pos, ppl, lr);
+    
+    if (get_data_line (&brfiles[curno], &data) == 1)
+      lrs[curno] = data.lr;
   }
-  for (fileno = 1; fileno < numbrfiles; fileno++) {
-    if (get_data_line (&brfiles[fileno], &marker_n, &data) != 0) {
-      fprintf (stderr, "file '%s' unexpectedly continues at line %d\n",
-	       brfiles[fileno].name, brfiles[fileno].lineno);
-      exit (-1);
-    }
-  }  
+  free (lrs);
   return;
 }
 
 
-/* Sequentially updating dKelvin output is unlike 'regular' Kelvin output.
- * Instead of a regluar grid of D' and Theta values, there's a list of 141
- * specific D' and Theta combinations, provided as the static array dcuhre2.
- * The first 10 elements are significant for LE results, and if there's only
- * 10 BRs for each marker, then we've got LE only data. The remaining 131
- * points are for LD. Each point has it's own weight, also provided in the
- * static array.
- */
-void old_dkelvin (st_brfile *brfiles, int numbrfiles)
+void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 {
-  int fileno, sampleno, dkelvin_ld=0, ret, firstpass=1;
-  long firstmarker;
-  double ldstat;
-  st_marker marker_0, marker_n;
+  int fileno, numcurrent, sampleno, alldone, ret;
+  double ldprior, ldstat;
+  st_brmarker next_marker, *marker;
+  st_mapmarker *mapptr;
   st_data data_0, data_n;
   st_ldvals ldval;
+  st_brfile **current;
 
-  memset (&marker_0, 0, sizeof (st_marker));
-  memset (&marker_n, 0, sizeof (st_marker));
+  memset (&next_marker, 0, sizeof (st_brmarker));
   memset (&data_0, 0, sizeof (st_data));
   memset (&data_n, 0, sizeof (st_data));
-  
-  if ((firstmarker = ftell (brfiles[0].fp)) == -1) {
-    fprintf (stderr, "ftell on file '%s' failed, %s\n", brfiles[0].name, strerror (errno));
+  if ((current = malloc (sizeof (st_brfile *) * numbrfiles)) == NULL) {
+    fprintf (stderr, "malloc current failed, %s\n", strerror (errno));
     exit (-1);
   }
-  if (get_marker_line (&brfiles[0], &marker_0) == 0) {
-    fprintf (stderr, "file '%s' is empty\n", brfiles[0].name);
-    exit (-1);
-  }
-  get_header_line (&brfiles[0], &data_0);
 
-  sampleno = 0;
-  while ((ret = get_data_line (&brfiles[0], &marker_0, &data_0)) == 1) {
-    compare_samples (&data_0, sampleno, &brfiles[0]);
-    sampleno++;
+  for (fileno = 0; fileno < numbrfiles; fileno++) {
+    if (fileno == 0) {
+      get_next_marker (&brfiles[fileno], &data_0);
+      do_dkelvin_first_pass (&brfiles[fileno], &data_0);
+    } else {
+      get_next_marker (&brfiles[fileno], &data_n);
+      do_dkelvin_first_pass (&brfiles[fileno], &data_n);
+    }
+    if (verbose >= 2)
+      printf ("first marker in %s is %s\n", brfiles[fileno].name, brfiles[fileno].curmarker.name2);
   }
-  if (sampleno == 141) 
-    dkelvin_ld = 1;
-  else if (sampleno != 10) {
-    fprintf (stderr, "unexpected number of samples %d in file '%s'\n", sampleno, brfiles[0].name);
-    exit (-1);
-  }
-  
-  if (fseek (brfiles[0].fp, firstmarker, SEEK_SET) == -1) {
-    fprintf (stderr, "fseek on file '%s' failed, %s\n", brfiles[0].name, strerror (errno));
-    exit (-1);
-  }
-  brfiles[0].lineno = 1;
-  
-  if (dkelvin_ld)
-    printf ("Chr Seq Marker Position PPL LD-PPL PPLD|L PPLD PPLD&L\n");
-  else
-    printf ("Chr Seq Marker Position PPL\n");
-  /*if (bfout != NULL)
-    fprintf (bfout, "Chr Seq Marker Position LD-PPL PPLD|L PPLD PPLD&L\n");*/
+  print_twopoint_headers (brfiles[0].no_ld);
 
-  while ((ret = get_marker_line (&brfiles[0], &marker_0)) == 1) {
-    get_header_line (&brfiles[0], &data_0);
-    for (fileno = 1; fileno < numbrfiles; fileno++) {
-      if (get_marker_line (&brfiles[fileno], &marker_n) != 1) {
-	fprintf (stderr, "file '%s' ends where marker line expected at line %d\n",
-		 brfiles[fileno].name, brfiles[fileno].lineno);
+  while (1) {
+    if (mapinfile != NULL) {
+      if ((mapptr = next_mapmarker (NULL)) != NULL) {
+	strcpy (next_marker.chr, mapptr->chr);
+	strcpy (next_marker.name2, mapptr->name);
+      } else {
+	break;
+      }
+    } else {
+      memcpy (&next_marker, &brfiles[0].curmarker, sizeof (st_brmarker));
+    }
+    
+    numcurrent = 0;
+    alldone = 1;
+    for (fileno = 0; fileno < numbrfiles; fileno++) {
+      if (! brfiles[fileno].eof)
+	alldone = 0;
+      if (compare_markers (&next_marker, &brfiles[fileno].curmarker) == -1) {
+	if (mapinfile != NULL)
+	  continue;
+	fprintf (stderr, "marker mismatch at line %d in '%s', expecting %s, found %s\n",
+		 brfiles[fileno].lineno, brfiles[fileno].name, next_marker.name2,
+		 brfiles[fileno].curmarker.name2);
 	exit (-1);
       }
-      get_header_line (&brfiles[fileno], &data_n);
-      if (firstpass)
-	compare_headers (&brfiles[0], &brfiles[fileno]);
-      compare_markers (&marker_0, &marker_n, &brfiles[fileno]);
-    }   
-    firstpass = 0;
-    if (partout != NULL) 
-      fprintf (partout, "# %d %s %s\n%s", marker_0.num, marker_0.name1, marker_0.name2, 
-	       partheader);
+      current[numcurrent++] = &brfiles[fileno];
+      compare_headers (current[0], &brfiles[fileno]);
+    }
+    if (alldone)
+      break;
+    if (numcurrent == 0) {
+      fprintf (stderr, "warning: marker %s from %s doesn't appear in any BR files, skipping\n",
+	       next_marker.name2, mapinfile);
+      continue;
+    }
+    if (verbose >= 1) {
+      printf ("current marker is '%s', using BR file%s %s", next_marker.name2,
+	      (numcurrent > 1) ? "s" : "", current[0]->name);
+      for (fileno = 1; fileno < numcurrent; fileno++) 
+	printf (", %s", current[fileno]->name);
+      printf ("\n");
+    }
     
+    if (partout != NULL)
+      print_partial_header (current[0]);
+
     sampleno = 0;
     memset (&ldval, 0, sizeof (st_ldvals));
-    while (get_data_line (&brfiles[0], &marker_0, &data_0) == 1) {
-      compare_samples (&data_0, sampleno, &brfiles[0]);
-      for (fileno = 1; fileno < numbrfiles; fileno++) {
-	if (get_data_line (&brfiles[fileno], &marker_n, &data_n) != 1) {
-	  fprintf (stderr, "file '%s' ends unexpectedly at line %d\n",
-		   brfiles[fileno].name, brfiles[fileno].lineno);
+    while (get_data_line (current[0], &data_0) == 1) {
+      compare_samples (&data_0, sampleno, current[0]);
+      for (fileno = 1; fileno < numcurrent; fileno++) {
+	if ((ret = get_data_line (current[fileno], &data_n)) != 1) {
+	  fprintf (stderr, "expected data in '%s' at line %d, found %s\n",
+		   current[fileno]->name, current[fileno]->lineno,
+		   (ret == 0) ? "end-of-file" : "marker line");
 	  exit (-1);
 	}
-	compare_samples (&data_n, sampleno, &brfiles[fileno]);
+	compare_samples (&data_n, sampleno, current[fileno]);
 	data_0.lr *= data_n.lr;
       }
       if (partout != NULL)
-	print_partial_old (&brfiles[0], &marker_0, &data_0);
+	print_partial_data (current[0], &data_0);
       
       if (sampleno < 5) {
-	ldval.le_small_theta += data_0.lr * dcuhre2[sampleno][2];
+        ldval.le_small_theta += data_0.lr * dcuhre2[sampleno][2];
       } else if (sampleno < 10) {
-	ldval.le_big_theta += data_0.lr * dcuhre2[sampleno][2];
+        ldval.le_big_theta += data_0.lr * dcuhre2[sampleno][2];
       } else if (sampleno < 140){
-	if (dcuhre2[sampleno][1] < cutoff) {
-	  ldval.ld_small_theta += data_0.lr * dcuhre2[sampleno][2]; 
-	} else {
-	  ldval.ld_big_theta += data_0.lr * dcuhre2[sampleno][2];
-	}
-      } else {
-	ldval.le_unlinked += data_0.lr * dcuhre2[sampleno][2];
-      }
-      sampleno++;
-    }
-
-    printf ("%d %d %s %.4f %.3f", marker_0.chr, marker_0.num, marker_0.name2,
-	    marker_0.pos, calc_dkelvin_ppl (&ldval));
-    if (bfout != NULL) 
-      fprintf (bfout, "%d %d %s %.4f", marker_0.chr, marker_0.num, marker_0.name2, marker_0.pos);
-    if (dkelvin_ld) {
-      ldstat = calc_dkelvin_ldppl (&ldval);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_dkelvin_ppld_given_linkage (&ldval);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_dkelvin_ppld (&ldval);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_dkelvin_ppld_and_linkage (&ldval);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-    }
-    printf ("\n");
-    if (bfout != NULL)
-      fprintf (bfout, "\n");
-
-  }
-  return;
-}
-
-
-void new_dkelvin (st_brfile *brfiles, int numbrfiles)
-{
-  int fileno, sampleno, dkelvin_ld=0, ret,  mrkno, nummarkers=0;
-  long firstmarker;
-  double ldstat;
-  st_marker *markers=NULL, marker;
-  st_data data;
-  st_ldvals *ldvals=NULL, ldval;
-
-  for (fileno = 0; fileno < numbrfiles; fileno++) {
-    memset (&marker, 0, sizeof (st_marker));
-    memset (&data, 0, sizeof (st_data));
-    mrkno = -1;
-    
-    if ((firstmarker = ftell (brfiles[fileno].fp)) == -1) {
-      fprintf (stderr, "ftell on file '%s' failed, %s\n", brfiles[fileno].name, strerror (errno));
-      exit (-1);
-    }
-    if (get_marker_line (&brfiles[fileno], &marker) == 0) {
-      fprintf (stderr, "file '%s' is empty\n", brfiles[0].name);
-      exit (-1);
-    }
-    get_header_line (&brfiles[fileno], &data);
-    
-    sampleno = 0;
-    while ((ret = get_data_line (&brfiles[fileno], &marker, &data)) == 1) {
-      compare_samples (&data, sampleno, &brfiles[fileno]);
-      sampleno++;
-    }
-    if ((sampleno != 141) && (sampleno != 10)) {
-      fprintf (stderr, "unexpected number of samples %d in file '%s'\n", sampleno,
-	       brfiles[0].name);
-      exit (-1);
-    }      
-    if (fileno == 0) {
-      dkelvin_ld = (sampleno == 141) ? 1 : 0;
-    } else {
-      if (((sampleno == 141) && (dkelvin_ld == 0)) || ((sampleno == 10) && (dkelvin_ld == 1))) {
-	fprintf (stderr, "can't mix %s ('%s') and %s ('%s') analyses\n",
-		 (dkelvin_ld) ? "LD" : "non-LD", brfiles[0].name,
-		 (dkelvin_ld) ? "non-LD" : "LD", brfiles[fileno].name);
-	exit (-1);
-      }
-    }
-    
-    if (fseek (brfiles[fileno].fp, firstmarker, SEEK_SET) == -1) {
-      fprintf (stderr, "fseek on file '%s' failed, %s\n", brfiles[fileno].name, strerror (errno));
-      exit (-1);
-    }
-    brfiles[fileno].lineno = 1;
-    
-    while ((ret = get_marker_line (&brfiles[fileno], &marker)) == 1) {
-      if (++mrkno >= nummarkers) {
-	if (fileno == 0) {
-	  if (((markers = realloc (markers, sizeof (st_marker) * ++nummarkers)) == NULL) ||
-	      ((ldvals = realloc (ldvals, sizeof (st_ldvals) * nummarkers)) == NULL)) {
-	    fprintf (stderr, "realloc failed, %s\n", strerror (errno));
-	    exit (-1);
-	  }
-	} else {
-	  fprintf (stderr, "file '%s' contains data for more markers than '%s'\n", 
-		   brfiles[fileno].name, brfiles[0].name);
-	  exit (-1);
-	}
-      }
-      get_header_line (&brfiles[fileno], &data);
-
-      /* Not sure this is appropriate for dkelvin */
-      /* if (fileno != 0)
-       *   compare_headers (&brfiles[0], &brfiles[fileno]);
-       */
-
-      sampleno = 0;
-      memset (&ldval, 0, sizeof (st_ldvals));
-      while ((ret=get_data_line (&brfiles[fileno], &marker, &data)) == 1) {
-        compare_samples (&data, sampleno, &brfiles[fileno]);
- 
-
-        if (sampleno < 5) {
-	  ldval.le_small_theta += data.lr * dcuhre2[sampleno][2];
-        } else if (sampleno < 10) {
-	  ldval.le_big_theta += data.lr * dcuhre2[sampleno][2];
-        } else if (sampleno < 140){
-	  if (dcuhre2[sampleno][1] < cutoff) {
-	    ldval.ld_small_theta += data.lr * dcuhre2[sampleno][2];
-	  } else {
-	    ldval.ld_big_theta += data.lr * dcuhre2[sampleno][2];
-	  }
+        if (dcuhre2[sampleno][1] < cutoff) {
+          ldval.ld_small_theta += data_0.lr * dcuhre2[sampleno][2];
         } else {
-	  ldval.le_unlinked += data.lr * dcuhre2[sampleno][2];
+          ldval.ld_big_theta += data_0.lr * dcuhre2[sampleno][2];
         }
-        sampleno++;
-      }
-
-      if (fileno == 0) {
-	memcpy (&markers[mrkno], &marker, sizeof (st_marker));
-	memcpy (&ldvals[mrkno], &ldval, sizeof (st_ldvals));
       } else {
-	compare_markers (&markers[mrkno], &marker, &brfiles[fileno]);
-	ldvals[mrkno].ld_small_theta *= ldval.ld_small_theta;
-	ldvals[mrkno].ld_big_theta *= ldval.ld_big_theta;
-	ldvals[mrkno].ld_unlinked *= ldval.ld_unlinked;
-	ldvals[mrkno].le_small_theta *= ldval.le_small_theta;
-	ldvals[mrkno].le_big_theta *= ldval.le_big_theta;
-	ldvals[mrkno].le_unlinked *= ldval.le_unlinked;
+        ldval.le_unlinked += data_0.lr * dcuhre2[sampleno][2];
+      }
+      sampleno++;
+    }
+    ldval.le_small_theta *= weight;
+    ldval.ld_small_theta *= weight;
+    ldval.le_big_theta *= (1 - weight);
+    ldval.ld_big_theta *= (1 - weight);
+    print_twopoint_stats (current[0]->no_ld, &(current[0]->curmarker), &ldval);
+
+    for (fileno = 0; fileno < numcurrent; fileno++) {
+      if (&brfiles[0] == current[fileno]) {
+	get_next_marker (current[fileno], &data_0);
+      } else {
+	get_next_marker (current[fileno], &data_n);
       }
     }
   }
 
-  if (partin != NULL)
-    read_partin (markers, ldvals, nummarkers);
-
-  if (dkelvin_ld)
-    printf ("Chr Seq Marker Position PPL LD-PPL PPLD|L PPLD PPLD&L\n");
-  else
-    printf ("Chr Seq Marker Position PPL\n");
-  /*if (bfout != NULL)
-    fprintf (bfout, "Chr Seq Marker Position LD-PPL PPLD|L PPLD PPLD&L\n");*/
-
-  if (partout != NULL)
-    fprintf (partout, "Chr Pos Seq Name1 Name2 LDSmallTheta LDBigTheta LDUnlinked LESmallTheta LEBigTheta LEUnlinked\n");
-  
-  for (mrkno = 0; mrkno < nummarkers; mrkno++) {
-    printf ("%d %d %s %.4f", markers[mrkno].chr, markers[mrkno].num, markers[mrkno].name2,
-	    markers[mrkno].pos);
-    if (bfout != NULL) 
-      fprintf (bfout, "%d %d %s %.4f", markers[mrkno].chr, markers[mrkno].num,
-	       markers[mrkno].name2, markers[mrkno].pos);
-
-    printf (" %.3f", calc_dkelvin_ppl (&ldvals[mrkno]));
-    
-    if (dkelvin_ld) {
-      ldstat = calc_dkelvin_ldppl (&ldvals[mrkno]);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_dkelvin_ppld_given_linkage (&ldvals[mrkno]);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_dkelvin_ppld (&ldvals[mrkno]);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_dkelvin_ppld_and_linkage (&ldvals[mrkno]);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-    }
-    printf ("\n");
-    if (bfout != NULL)
-      fprintf (bfout, "\n");
-
-    if (partout != NULL)
-      fprintf (partout, "%d %.4f %d %s %s %.6e %.6e %.6e %.6e %.6e %.6e\n", markers[mrkno].chr,
-	       markers[mrkno].pos, markers[mrkno].num, "trait", "M1",
-	       ldvals[mrkno].ld_small_theta, ldvals[mrkno].ld_big_theta,
-	       ldvals[mrkno].ld_unlinked, ldvals[mrkno].le_small_theta,
-	       ldvals[mrkno].le_big_theta, ldvals[mrkno].le_unlinked);
-
+  free (current);
+  if (data_0.dprimesize > 0)
+    free (data_0.dprimes);
+  if (data_0.thetasize > 0)
+    free (data_0.thetas);
+  if (data_n.dprimesize > 0)
+    free (data_n.dprimes);
+  if (data_n.thetasize > 0)
+    free (data_n.thetas);
+  for (fileno = 0; fileno < numbrfiles; fileno++) {
+    if (brfiles[fileno].datacolsize > 0)
+      free (brfiles[fileno].datacols);
   }
-  free (markers);
-  free (ldvals);
-
   return;
 }
 
 
-void new_method (st_brfile *brfiles, int numbrfiles)
+void print_twopoint_headers (int no_ld)
 {
-  int ret, fileno, mrkno, nummarkers=0, didx, thidx;
-  double **lr, integral, ldstat;
-  st_marker *markers=NULL, marker;
-  st_ldvals *ldvals=NULL, ldval;
-  st_multidim dprimes, thetas;
-  st_data data;
-
-  memset (&data, 0, sizeof (st_data));
-  for (fileno = 0; fileno < numbrfiles; fileno++) {
-    memset (&marker, 0, sizeof (st_marker));
-    memset (&dprimes, 0, sizeof (st_multidim));
-    memset (&thetas, 0, sizeof (st_multidim));
-    mrkno = -1;
-    
-    do_first_pass (&brfiles[fileno], &dprimes, &thetas, &data);
-    
-    if ((lr = malloc (sizeof (double *) * dprimes.totalelems)) == NULL) {
-      fprintf (stderr, "malloc failed, %s\n", strerror (errno));
-      exit (-1);
+  if (no_ld) {
+    printf ("Chr Trait Marker Position PPL\n");
+  } else {
+    if (pplinfile == NULL) {
+      printf ("Chr Trait Marker Position PPL PPL(LD) PPLD|L PPLD(L)\n");
+      if (bfout != NULL)
+	fprintf (bfout, "Chr Trait Marker Position PPL(LD) PPLD|L PPLD(L)\n");
+    } else if (! allstats) {
+      printf ("Chr Trait Marker Position PPLD(L) iPPL iPPLD(L)\n");
+      if (bfout != NULL)
+	fprintf (bfout, "Chr Trait Marker Position PPLD(L) iPPLD(L)\n");
+    } else {
+      printf ("Chr Trait Marker Position PPL PPL(LD) PPLD|L PPLD(L) iPPL iPPLD(L)\n");
+      if (bfout != NULL)
+	fprintf (bfout, "Chr Trait Marker Position PPL(LD) PPLD|L PPLD(L) iPPLD(L)\n");
     }
-    for (didx = 0; didx < dprimes.totalelems; didx++) {
-      if ((lr[didx] = malloc (sizeof (double) * thetas.totalelems)) == NULL) {
-	fprintf (stderr, "malloc failed, %s\n", strerror (errno));
-	exit (-1);
-      }
-    }
-
-    while ((ret = get_marker_line (&brfiles[fileno], &marker)) == 1) {
-      if (++mrkno >= nummarkers) {
-	if (fileno == 0) {
-	  if (((markers = realloc (markers, sizeof (st_marker) * ++nummarkers)) == NULL) ||
-	      ((ldvals = realloc (ldvals, sizeof (st_ldvals) * nummarkers)) == NULL)) {
-	    fprintf (stderr, "realloc failed, %s\n", strerror (errno));
-	    exit (-1);
-	  }
-	} else {
-	  fprintf (stderr, "file '%s' contains data for more markers than '%s'\n", 
-		   brfiles[fileno].name, brfiles[0].name);
-	  exit (-1);
-	}
-      }
-      get_header_line (&brfiles[fileno], &data);
-      if ((fileno != 0) && (brfiles[0].no_ld != brfiles[fileno].no_ld)) {
-	fprintf (stderr, "can't mix %s ('%s') and %s ('%s') analyses\n",
-		 (brfiles[0].no_ld) ? "non-LD" : "LD", brfiles[0].name,
-		 (brfiles[fileno].no_ld) ? "non-LD" : "LD", brfiles[fileno].name);
-	exit (-1);
-      }
-      
-      for (didx = 0; didx < dprimes.totalelems; didx++) {
-	for (thidx = 0; thidx < thetas.totalelems; thidx++) {
-	  lr[didx][thidx] = DBL_MAX;
-	}
-      }
-      
-      while ((ret = get_data_line (&brfiles[fileno], &marker, &data)) == 1) {
-	if ((didx = multi_find (&dprimes, data.dprimes, brfiles[fileno].numdprimes)) == -1) {
-	  fprintf (stderr, "unexpected dprimes in '%s' at line %d\n", brfiles[fileno].name,
-		   brfiles[fileno].lineno);
-	  exit (-1);
-	}
-	if ((thidx = multi_find (&thetas, data.thetas, brfiles[fileno].numthetas)) == -1) {
-	  fprintf (stderr, "unexpected thetas in '%s' at line %d\n", brfiles[fileno].name,
-		   brfiles[fileno].lineno);
-	  exit (-1);
-	}
-	if (lr[didx][thidx] != DBL_MAX) {
-	  fprintf (stderr, "duplicate dprime/theta combination in '%s' at line %d\n",
-		   brfiles[fileno].name, brfiles[fileno].lineno);
-	  exit (-1);
-	}
-	lr[didx][thidx] = data.lr;
-      }
-      if (! sexspecific)
-	calc_ldvals_sexavg (&dprimes, &thetas, lr, &ldval);
-      else 
-	calc_ldvals_sexspc (&dprimes, &thetas, lr, &ldval);
-      
-      if (fileno == 0) {
-	memcpy (&markers[mrkno], &marker, sizeof (st_marker));
-	memcpy (&ldvals[mrkno], &ldval, sizeof (st_ldvals));
-      } else {
-	compare_markers (&markers[mrkno], &marker, &brfiles[fileno]);
-	ldvals[mrkno].ld_small_theta *= ldval.ld_small_theta;
-	ldvals[mrkno].ld_big_theta *= ldval.ld_big_theta;
-	ldvals[mrkno].ld_unlinked *= ldval.ld_unlinked;
-	ldvals[mrkno].le_small_theta *= ldval.le_small_theta;
-	ldvals[mrkno].le_big_theta *= ldval.le_big_theta;
-	ldvals[mrkno].le_unlinked *= ldval.le_unlinked;
-      }
-    }
-    
-    for (didx = 0; didx < dprimes.totalelems; didx++) {
-      free (lr[didx]);
-    }
-    free (lr);
-    
-    multi_free (&dprimes);
-    multi_free (&thetas);
-    
-    free (brfiles[fileno].datacols);
   }
+  if (sixout != NULL)
+    fprintf (sixout, "Chr Trait Marker Position LDSmallTheta LDBigTheta LDUnlinked LESmallTheta LEBigTheta LEUnlinked\n");
+  return;
+}
 
-  if (partin != NULL)
-    read_partin (markers, ldvals, nummarkers);
 
-  if (! brfiles[0].no_ld)
-    printf ("Chr Seq Marker Position PPL LD-PPL PPLD|L PPLD PPLD&L\n");
-  else
-    printf ("Chr Seq Marker Position PPL\n");
-  /*if (bfout != NULL)
-    fprintf (bfout, "Chr Seq Marker Position LD-PPL PPLD|L PPLD PPLD&L\n");*/
+void print_twopoint_stats (int no_ld, st_brmarker *marker, st_ldvals *ldval)
+{
+  double ldprior, ldstat;
 
-  if (partout != NULL)
-    fprintf (partout, "Chr Pos Seq Name1 Name2 LDSmallTheta LDBigTheta LDUnlinked LESmallTheta LEBigTheta LEUnlinked\n");
-  
-  for (mrkno = 0; mrkno < nummarkers; mrkno++) {
-    printf ("%d %d %s %.4f", markers[mrkno].chr, markers[mrkno].num, markers[mrkno].name2,
-	    markers[mrkno].pos);
-    if (bfout != NULL) 
-      fprintf (bfout, "%d %d %s %.4f", markers[mrkno].chr, markers[mrkno].num,
-	       markers[mrkno].name2, markers[mrkno].pos);
+  printf ("%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->pos);
 
-    /* print PPL - is this right? At least it takes up space... */
-    integral = ldvals[mrkno].le_small_theta + ldvals[mrkno].le_big_theta;
-    printf (" %.3f", (prior * integral) / (prior * integral + (1 - prior)));
+  if (no_ld) {
+    printf (" %.3f", calc_upd_ppl (ldval));
+  } else {
+    if (bfout != NULL)
+      fprintf (bfout, "%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->pos);
     
-    if (! brfiles[0].no_ld) {
-      ldstat = calc_ldppl (&ldvals[mrkno]);
+    if ((pplinfile == NULL) || (allstats)) {
+      printf (" %.3f", calc_upd_ppl (ldval));
+      ldstat = calc_upd_ppl_allowing_ld (ldval, DEFAULT_LDPRIOR);
       printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_ppld_given_linkage (&ldvals[mrkno]);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_ppld (&ldvals[mrkno]);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
-      ldstat = calc_ppld_and_linkage (&ldvals[mrkno]);
+      ldstat = calc_upd_ppld_given_linkage (ldval, DEFAULT_LDPRIOR);
       printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     }
-    printf ("\n");
+    ldstat = calc_upd_ppld_allowing_l (ldval, DEFAULT_LDPRIOR);
+    printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+    if (pplinfile != NULL) {
+      if ((ldprior = get_ippl (marker->chr, marker->pos)) < MIN_PRIOR)
+	ldprior = MIN_PRIOR;
+      if (verbose >= 2)
+	printf ("ippl is %.6e\n", ldprior);
+      ldstat = calc_upd_ppld_allowing_l (ldval, ldprior);
+      printf (" %.4f %.*f", ldprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+    }
+    
     if (bfout != NULL)
       fprintf (bfout, "\n");
-
-    if (partout != NULL)
-      fprintf (partout, "%d %.4f %d %s %s %.6e %.6e %.6e %.6e %.6e %.6e\n", markers[mrkno].chr,
-	       markers[mrkno].pos, markers[mrkno].num, markers[mrkno].name1, markers[mrkno].name2,
-	       ldvals[mrkno].ld_small_theta, ldvals[mrkno].ld_big_theta,
-	       ldvals[mrkno].ld_unlinked, ldvals[mrkno].le_small_theta,
-	       ldvals[mrkno].le_big_theta, ldvals[mrkno].le_unlinked);
-
   }
-  free (data.dprimes);
-  free (data.thetas);
-  free (markers);
-  free (ldvals);
+  printf ("\n");
+  if (sixout != NULL)
+    fprintf (sixout, "%s %d %s %.4f %.6e %.6e %.6e %.6e %.6e %.6e\n",  marker->chr,
+	     marker->num, marker->name2, marker->pos, ldval->ld_small_theta,
+	     ldval->ld_big_theta, ldval->ld_unlinked, ldval->le_small_theta,
+	     ldval->le_big_theta, ldval->le_unlinked);
   return;
 }
 
 
 void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas, st_data *data)
 {
-  int ret;
-  long firstmarker;
-  st_marker marker;
+  int ret, lineno;
+  long startofdata;
 
-  memset (&marker, 0, sizeof (st_marker));
-
-  if ((firstmarker = ftell (brfile->fp)) == -1) {
+  lineno = brfile->lineno;
+  if ((startofdata = ftell (brfile->fp)) == -1) {
     fprintf (stderr, "ftell on file '%s' failed, %s\n", brfile->name, strerror (errno));
     exit (-1);
   }
-  if (get_marker_line (brfile, &marker) == 0) {
-    fprintf (stderr, "file '%s' is empty\n", brfile->name);
-    exit (-1);
-  }
-  get_header_line (brfile, data);
 
-  while ((ret = get_data_line (brfile, &marker, data)) == 1) {
+  while ((ret = get_data_line (brfile, data)) == 1) {
     if (multi_insert (dprimes, data->dprimes, brfile->numdprimes) == -1) {
       fprintf (stderr, "insert into dprimes failed, %s\n", strerror (errno));
       exit (-1);
@@ -893,169 +700,48 @@ void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas
     exit (-1);
   }
   
-  if (fseek (brfile->fp, firstmarker, SEEK_SET) == -1) {
+  if (fseek (brfile->fp, startofdata, SEEK_SET) == -1) {
     fprintf (stderr, "fseek on file '%s' failed, %s\n", brfile->name, strerror (errno));
     exit (-1);
   }
-  brfile->lineno = 1;
+  brfile->lineno = lineno;
   return;
 }
 
 
-/* For sex-averaged thetas, we calculate the area under a two-dimensional
- * curve defined by theta (X axis) vs. LR (Y axis), where D' (all D' if
- * more than one) is 0. The area is calculated by computing the areas of
- * polygons bounded by adjascent thetas and associated LRs.
- */
-double calc_ppl_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr)
-{
-  int zero_didx, thidx, va;
-  double lr1, lr2, mtheta1, mtheta2, cutlr, pre_int=0, post_int=0, integral, ppl, *zeros;
-  st_dim *mthetas;
-  
-  /* Remember for PPL, we only consider LRs where D' == 0, so look up that index
-   * into the D' dimension of the lr array.
-   */
-  if ((zeros = malloc (sizeof (double) * dprimes->numdims)) == NULL) {
-    fprintf (stderr, "malloc failed, %s\n", strerror (errno));
-    exit (-1);
-  }
-  for (va = 0; va < dprimes->numdims; va++)
-    zeros[va] = 0.0;
-  if ((zero_didx = multi_find (dprimes, zeros, dprimes->numdims)) == -1) {
-    fprintf (stderr, "can't calculate PPL, no dprime == 0\n");
-    exit (-1);
-  }
-  free (zeros);
+ void do_dkelvin_first_pass (st_brfile *brfile, st_data *data)
+ {
+   int firstdata, lineno, sampleno, ret;
 
-  /* if any of the LRs where D' == 0 is DBL_MAX (that is, undefined), then there
-   * shouldn't be any defined LR where D' == 0, regardless of theta, and
-   * we can't calculate a PPL.
-   */
-  if (lr[zero_didx][0] == DBL_MAX)
-    return (-1);
+   if ((firstdata = ftell (brfile->fp)) == -1) {
+     fprintf (stderr, "ftell on file '%s' failed, %s\n", brfile->name, strerror (errno));
+     exit (-1);
+   }
+   lineno = brfile->lineno;
+   
+   sampleno = 0;
+   while ((ret = get_data_line (brfile, data)) == 1) {
+     compare_samples (data, sampleno, brfile);
+     sampleno++;
+   }
+   
+   if (sampleno == 141) 
+     brfile->no_ld = 0;
+   else if (sampleno != 10) {
+     fprintf (stderr, "unexpected number of samples %d in file '%s'\n", sampleno, brfile->name);
+     exit (-1);
+   } else {
+     brfile->no_ld = 1;
+   }
+   
+   if (fseek (brfile->fp, firstdata, SEEK_SET) == -1) {
+     fprintf (stderr, "fseek on file '%s' failed, %s\n", brfile->name, strerror (errno));
+     exit (-1);
+   }
+   brfile->lineno = lineno;
+   return;
+ }
 
-  mthetas = &thetas->dims[0];
-  for (thidx = 1; thidx < mthetas->numelems; thidx++) {
-    mtheta1 = mthetas->arr[thidx-1];
-    mtheta2 = mthetas->arr[thidx];
-    lr1 = lr[zero_didx][thidx-1];
-    lr2 = lr[zero_didx][thidx];
-
-    if (mtheta1 >= cutoff) {
-      /* entire region outside the cutoff */
-      post_int += (lr1 + lr2) * (mtheta2 - mtheta1);
-      
-    } else if (mtheta2 <= cutoff) {
-      /* entire region inside the cutoff */
-      pre_int += (lr1 + lr2) * (mtheta2 - mtheta1);
-      
-    } else {
-      /* region straddles the cutoff */
-      cutlr = lr1 + ((cutoff - mtheta1) / (mtheta2 - mtheta1)) * (lr2 - lr1);
-      pre_int += (lr1 + cutlr) * (cutoff - mtheta1);
-      post_int += (cutlr + lr2) * (mtheta2 - cutoff);
-    }
-  }
-
-  /* The 0.5 here is factored out of the calculation of area. */
-  pre_int *= (weight / cutoff) * 0.5;
-  post_int *= ((1 - weight) / (0.5 - cutoff)) * 0.5;
-  integral = pre_int + post_int;
-  ppl = (prior * integral) / (prior * integral + (1 - prior));
-  return (ppl);
-}
-
-
-/* For sex-specific thetas, we calculate the volume under a three-dimensional
- * curve defined by male theta (X axis) vs. female theta (Y axis) vs. LR (Z
- * axis), where D' (all D', if more than one) is 0. The volume is calculated
- * by computing the volumes of polyhedrons bounded by adjascent males thetas,
- * adjascent female thetas, and the four LRs associated with the intersections
- * of the male and female thetas. Looking at the two-dimensional X-Y plane,
- * LR1 would be in the lower left, LR2 in the lower right, LR3 in the upper
- * left, and LR4 in the upper right.
- */
-double calc_ppl_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr)
-{
-  int zero_didx, mthidx, fthidx, va;
-  double lr1, lr2, lr3, lr4, mtheta1, mtheta2, ftheta1, ftheta2, cutlr2, cutlr3, cutlr4, *zeros;
-  double pre_int=0, post_int=0, cutvol, integral, ppl;
-  st_dim *mthetas, *fthetas;
-  
-  if ((zeros = malloc (sizeof (double) * dprimes->numdims)) == NULL) {
-    fprintf (stderr, "malloc failed, %s\n", strerror (errno));
-    exit (-1);
-  }
-  for (va = 0; va < dprimes->numdims; va++)
-    zeros[va] = 0.0;
-  if ((zero_didx = multi_find (dprimes, zeros, dprimes->numdims)) == -1) {
-    fprintf (stderr, "can't calculate PPL, no dprime == 0\n");
-    exit (-1);
-  }
-  free (zeros);
-
-  /* See comment in calc_ppl_sexavg() */
-  if (lr[zero_didx][0] == DBL_MAX)
-    return (-1);
-  
-  /* Does it really matter which one is male or female? */
-  mthetas = &thetas->dims[0];
-  fthetas = &thetas->dims[1];
-  for (mthidx = 1 ; mthidx < mthetas->numelems; mthidx++) {
-    mtheta1 = mthetas->arr[mthidx - 1];
-    mtheta2 = mthetas->arr[mthidx];
-    for (fthidx = 1 ; fthidx < fthetas->numelems; fthidx++) {
-      ftheta1 = fthetas->arr[fthidx - 1];
-      ftheta2 = fthetas->arr[fthidx];
-      lr1 = lr[zero_didx][(mthidx - 1) * mthetas->numelems + fthidx - 1];
-      lr2 = lr[zero_didx][mthidx * mthetas->numelems + fthidx - 1];
-      lr3 = lr[zero_didx][(mthidx - 1) * mthetas->numelems + fthidx];
-      lr4 = lr[zero_didx][mthidx * mthetas->numelems + fthidx];
-      
-      if ((mtheta1 >= cutoff) || (ftheta1 >= cutoff)) {
-	/* entire region is outside cutoff area */
-	post_int += (mtheta2 - mtheta1) * (ftheta2 - ftheta1) * (lr1 + lr2 + lr3 + lr4);
-	
-      } else if ((mtheta2 <= cutoff) && (ftheta2 <= cutoff)) {
-	/* entire region inside cutoff area */
-	pre_int += (mtheta2 - mtheta1) * (ftheta2 - ftheta1) * (lr1 + lr2 + lr3 + lr4);
-	
-      } else if ((ftheta2 <= cutoff) && ((mtheta1 <= cutoff) && (cutoff <= mtheta2))) {
-	/* region straddles cutoff on male axis */
-	cutlr2 = lr1 + ((cutoff - mtheta1) / (mtheta2 - mtheta1)) * (lr2 - lr1);
-	cutlr4 = lr3 + ((cutoff - mtheta1) / (mtheta2 - mtheta1)) * (lr4 - lr3);
-	pre_int += (cutoff - mtheta1) * (ftheta2 - ftheta1) * (lr1 + cutlr2 + lr3 + cutlr4);
-	post_int += (mtheta2 - cutoff) * (ftheta2 - ftheta1) * (cutlr2 + lr2 + cutlr4 + lr4);
-	
-      } else if ((mtheta2 <= cutoff) && ((ftheta1 <= cutoff) && (cutoff <= ftheta2))) {
-	/* region straddles cutoff on female axis */
-	cutlr3 = lr1 + ((cutoff - ftheta1) / (ftheta2 - ftheta1)) * (lr3 - lr1);
-	cutlr4 = lr2 + ((cutoff - ftheta1) / (ftheta2 - ftheta1)) * (lr4 - lr2);
-	pre_int += (cutoff - ftheta1) * (mtheta2 - mtheta1) * (lr1 + lr2 + cutlr3 + cutlr4);
-	post_int += (ftheta2 - cutoff) * (mtheta2 - mtheta1) * (cutlr3 + cutlr4 + lr3 + lr4);
-	
-      } else {
-	/* region straddles cutoff on both axes */
-	post_int += (mtheta2 - mtheta1) * (ftheta2 - ftheta1) * (lr1 + lr2 + lr3 + lr4);
-	cutlr2 = lr1 + ((cutoff - mtheta1) / (mtheta2 - mtheta1)) * (lr2 - lr1);
-	cutlr4 = lr3 + ((cutoff - mtheta1) / (mtheta2 - mtheta1)) * (lr4 - lr3);
-	cutlr4 = cutlr2 + ((cutoff - ftheta1) / (ftheta2 - ftheta1)) * (cutlr4 - cutlr2);
-	cutlr3 = lr1 + ((cutoff - ftheta1) / (ftheta2 - ftheta1)) * (lr3 - lr1);
-	cutvol = (cutoff - mtheta1) * (cutoff - ftheta1) * (lr1 + cutlr2 + cutlr3 + cutlr4);
-	post_int -= cutvol;
-	pre_int += cutvol;
-      }
-    }
-  }
-
-  /* The 0.25 here is factored out of the caclculation of volume */
-  pre_int *= (weight / (cutoff * cutoff)) * 0.25;
-  post_int *= ((1 - weight) / (0.25 - (cutoff * cutoff))) * 0.25;
-  integral = pre_int + post_int;
-  ppl = (prior * integral) / (prior * integral + (1 - prior));
-  return (ppl);
-}
 
 
 void calc_ldvals_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr, st_ldvals *ldval)
@@ -1091,8 +777,8 @@ void calc_ldvals_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr,
       for (thidx = 1; thidx < mthetas->numelems; thidx++) {
 	mtheta1 = mthetas->arr[thidx - 1];
 	mtheta2 = mthetas->arr[thidx];
-	lr1 = lr[didx][thidx-1];
-	lr2 = lr[didx][thidx];
+        lr1 = lr[didx][thidx-1];
+        lr2 = lr[didx][thidx];
 	
 	if (mtheta1 >= cutoff) {
 	  ldval->le_big_theta += (lr1 + lr2) * (mtheta2 - mtheta1);
@@ -1112,8 +798,8 @@ void calc_ldvals_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr,
       for (thidx = 1; thidx < mthetas->numelems; thidx++) {	
 	mtheta1 = mthetas->arr[thidx - 1];
 	mtheta2 = mthetas->arr[thidx];
-	lr1 = lr[didx][thidx-1];
-	lr2 = lr[didx][thidx];
+        lr1 = lr[didx][thidx-1];
+        lr2 = lr[didx][thidx];
 	
 	if (mtheta1 >= cutoff) {
 	  ldval->ld_big_theta += (lr1 + lr2) * (mtheta2 - mtheta1);
@@ -1309,19 +995,33 @@ void calc_ldvals_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr,
 }
 
 
-double calc_ldppl (st_ldvals *ldval)
+ double calc_upd_ppl (st_ldvals *ldval)
+ {
+   double numerator;
+   double denomRight;
+   double ppl;
+
+   numerator = 
+     ldval->le_small_theta * prior +
+     ldval->le_big_theta * prior;
+   denomRight = 1 - prior;
+   ppl = numerator / (numerator + denomRight);
+ }
+
+
+double calc_upd_ppl_allowing_ld (st_ldvals *ldval, double ldprior)
 {
   double numerator;
   double denomRight;
   double ldppl;
 
   numerator =
-    ldval->ld_small_theta * prior * 0.021 + 
-    ldval->ld_big_theta * prior * 0.0011+ 
-    ldval->le_small_theta * prior * 0.979 + 
-    ldval->le_big_theta * prior * 0.9989;
+    ldval->ld_small_theta * ldprior * 0.021 + 
+    ldval->ld_big_theta * ldprior * 0.0011+ 
+    ldval->le_small_theta * ldprior * 0.979 + 
+    ldval->le_big_theta * ldprior * 0.9989;
   denomRight =
-    ldval->le_unlinked * (1 - prior);
+    ldval->le_unlinked * (1 - ldprior);
   ldppl = numerator / (numerator + denomRight);
   
   if (bfout != NULL) 
@@ -1330,18 +1030,18 @@ double calc_ldppl (st_ldvals *ldval)
 }
 
 
-double calc_ppld_given_linkage (st_ldvals *ldval)
+double calc_upd_ppld_given_linkage (st_ldvals *ldval, double ldprior)
 {
   double numerator;
   double denomRight;
   double ppld_given_l;
 
   numerator =
-    ldval->ld_small_theta * prior * 0.021 + 
-    ldval->ld_big_theta * prior * 0.0011;
+    ldval->ld_small_theta * ldprior * 0.021 + 
+    ldval->ld_big_theta * ldprior * 0.0011;
   denomRight =
-    ldval->le_small_theta * prior * 0.979 + 
-    ldval->le_big_theta * prior * 0.9989;
+    ldval->le_small_theta * ldprior * 0.979 + 
+    ldval->le_big_theta * ldprior * 0.9989;
   ppld_given_l = numerator / (numerator + denomRight);
 
   if (bfout != NULL) 
@@ -1350,19 +1050,19 @@ double calc_ppld_given_linkage (st_ldvals *ldval)
 }
 
 
-double calc_ppld (st_ldvals *ldval)
+double calc_upd_ppld_allowing_l (st_ldvals *ldval, double ldprior)
 {
   double numerator;
   double denomRight;
   double ppld; 
 
   numerator =
-    ldval->ld_small_theta * prior * 0.021 +
-    ldval->ld_big_theta * prior * 0.0011; 
+    ldval->ld_small_theta * ldprior * 0.021 +
+    ldval->ld_big_theta * ldprior * 0.0011; 
   denomRight =
-    ldval->le_small_theta * prior * 0.979 + 
-    ldval->le_big_theta * prior * 0.9989 + 
-    ldval->le_unlinked * (1 - prior);
+    ldval->le_small_theta * ldprior * 0.979 + 
+    ldval->le_big_theta * ldprior * 0.9989 + 
+    ldval->le_unlinked * (1 - ldprior);
   ppld = numerator / (numerator + denomRight); 
 
   if (bfout != NULL) 
@@ -1371,175 +1071,67 @@ double calc_ppld (st_ldvals *ldval)
 }
 
 
-double calc_ppld_and_linkage (st_ldvals *ldval)
-{
-  double numerator;
-  double denomRight;
-  double ppld_and_l;
-
-  numerator =
-    ldval->ld_small_theta * prior * 0.021 + 
-    ldval->ld_big_theta * prior * 0.0011;
-  denomRight =
-    ldval->le_small_theta * prior * 0.979 + 
-    ldval->le_big_theta * prior * 0.9989 + 
-    ldval->le_unlinked * (1 - prior);
-  ppld_and_l = numerator / (numerator + denomRight);
-
-  if (bfout != NULL) 
-    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
-  return (ppld_and_l);
-}
-
-
-double calc_dkelvin_ppl (st_ldvals *ldval)
-{
-  double integral, ppl;
-  
-  integral = weight * ldval->le_small_theta + (1-weight) * ldval->le_big_theta;
-  ppl = integral / (integral + (1 - prior) / prior);
-  return (ppl);
-}
-
-
-double calc_dkelvin_ldppl (st_ldvals *ldval)
-{
-  double numerator;
-  double denomRight;
-  double ldppl;
-  
-  numerator = 
-    ldval->ld_small_theta * prior * weight * 0.021 + 
-    ldval->ld_big_theta * prior * (1 - weight) * 0.0011 + 
-    ldval->le_small_theta * prior * weight * .979 + 
-    ldval->le_big_theta * prior * (1 - weight) * 0.9989;
-  denomRight = ldval->le_unlinked * (1 - prior);
-  ldppl = numerator / (numerator + denomRight);;
-
-  if (bfout != NULL) 
-    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
-  return (ldppl);
-}
-
-
-double calc_dkelvin_ppld_given_linkage (st_ldvals *ldval)
-{
-  double numerator;
-  double denomRight;
-  double ppld_given_l;
-
-  numerator =
-    ldval->ld_small_theta * prior * weight * 0.021 +
-    ldval->ld_big_theta * prior * (1 - weight) * 0.0011;
-  denomRight = 
-    ldval->le_small_theta * prior * weight * 0.979 + 
-    ldval->le_big_theta * prior * (1 - weight) * 0.9989;
-  ppld_given_l = numerator / (numerator + denomRight);
-  
-  if (bfout != NULL) 
-    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
-  return (ppld_given_l);
-}
-
-
-double calc_dkelvin_ppld (st_ldvals *ldval)
-{
-  double numerator;
-  double denomRight;
-  double ppld;
-
-  numerator = 
-    ldval->ld_small_theta * prior * weight * 0.021 +
-    ldval->ld_big_theta * prior * (1 - weight) * 0.0011;
-  denomRight =
-    ldval->le_small_theta * prior * weight * 0.979 +
-    ldval->le_big_theta * prior * (1 - weight) * 0.9989 + 
-    ldval->le_unlinked * (1 - prior);
-  ppld = numerator / (numerator + denomRight);
-
-  if (bfout != NULL) 
-    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
-  return (ppld);
-} 
-
-
-double calc_dkelvin_ppld_and_linkage (st_ldvals *ldval)
-{
-  double numerator;
-  double denomRight;
-  double ppld_and_l;
-
-  numerator = 
-    ldval->ld_small_theta * prior * weight * 0.021 +
-    ldval->ld_big_theta * prior * (1 - weight) * 0.0011;
-  denomRight =
-    ldval->le_small_theta * prior * weight * 0.979 +
-    ldval->le_big_theta * prior * (1 - weight) * 0.9989 +
-    ldval->le_unlinked * (1 - prior);
-  ppld_and_l = numerator / (numerator + denomRight);
-
-  if (bfout != NULL) 
-    fprintf (bfout, " %.6e", log10 (numerator / denomRight));
-  return (ppld_and_l);
-}
-
-
-#define OPT_SEXSPEC 1
-#define OPT_MULTI   2
-#define OPT_RELAX   3
-#define OPT_PRIOR   4
-#define OPT_LDPRIOR 5
-#define OPT_WEIGHT  6
-#define OPT_CUTOFF  7
-#define OPT_METHOD  8
-#define OPT_PARTIN  9
-#define OPT_PARTOUT 10
-#define OPT_HELP    11
-#define OPT_DKELVIN 12
-#define OPT_BFOUT   13
+#define OPT_SEXSPEC   1
+#define OPT_MULTI     2
+#define OPT_RELAX     3
+#define OPT_ALLSTATS  4
+#define OPT_OKELVIN   5
+#define OPT_VERBOSE   6
+#define OPT_PRIOR     7
+#define OPT_WEIGHT    8
+#define OPT_CUTOFF    9
+#define OPT_MAPIN    10
+#define OPT_PPLIN    11
+#define OPT_PARTOUT  12
+#define OPT_BFOUT    13
+#define OPT_SIXOUT   14
+#define OPT_HELP     15
 
 int parse_command_line (int argc, char **argv)
 {
   int arg, long_arg, long_idx;
-  char *partoutfile=NULL, *bfoutfile=NULL;
+  char *partoutfile=NULL, *bfoutfile=NULL, *sixoutfile=NULL;
   struct option cmdline[] = { { "sexspecific", 0, &long_arg, OPT_SEXSPEC },
 			      { "multipoint", 0, &long_arg, OPT_MULTI },
-			      { "dkelvin", 0, &long_arg, OPT_DKELVIN },
 			      { "relax", 1, &long_arg, OPT_RELAX },
+			      { "allstats", 1, &long_arg, OPT_ALLSTATS },
+			      { "okelvin", 0, &long_arg, OPT_OKELVIN },
+			      { "verbose", 1, &long_arg, OPT_VERBOSE },
 			      { "prior", 1, &long_arg, OPT_PRIOR },
-			      { "ldprior", 1, &long_arg, OPT_LDPRIOR},
 			      { "weight", 1, &long_arg, OPT_WEIGHT },
 			      { "cutoff", 1, &long_arg, OPT_CUTOFF },
-			      { "method", 1, &long_arg, OPT_METHOD },
-			      { "partin", 1, &long_arg, OPT_PARTIN },
+			      { "pplin", 1, &long_arg, OPT_PPLIN },
+			      { "mapin", 1, &long_arg, OPT_MAPIN },
 			      { "partout", 1, &long_arg, OPT_PARTOUT },
 			      { "bfout", 1, &long_arg, OPT_BFOUT },
+			      { "sixout", 1, &long_arg, OPT_SIXOUT },
 			      { "help", 0, &long_arg, OPT_HELP },
 			      { NULL, 0, NULL, 0 } };
   struct stat statbuf;
   
-  while ((arg = getopt_long (argc, argv, "smrdp:l:w:c:", cmdline, &long_idx)) != -1) {
+  while ((arg = getopt_long (argc, argv, "smraovp:w:c:", cmdline, &long_idx)) != -1) {
     if ((arg == 's') || ((arg == 0) && (long_arg == OPT_SEXSPEC))) {
       sexspecific = 1;
 
     } else if ((arg == 'm') || ((arg == 0) && (long_arg == OPT_MULTI))) {
       multipoint = 1;
 
-    } else if ((arg == 'd') || ((arg == 0) && (long_arg == OPT_DKELVIN))) {
-      dkelvin = 1;
-
     } else if ((arg == 'r') || ((arg == 0) && (long_arg == OPT_RELAX))) {
       relax = 1;
+
+    } else if ((arg == 'a') || ((arg == 0) && (long_arg == OPT_ALLSTATS))) {
+      allstats = 1;
+
+    } else if ((arg == 'o') || ((arg == 0) && (long_arg == OPT_OKELVIN))) {
+      okelvin = 1;
+
+    } else if ((arg == 'v') || ((arg == 0) && (long_arg == OPT_VERBOSE))) {
+      verbose++;
 
     } else if (arg == 'p') {
       prior = validate_double_arg (optarg, "-p");
     } else if ((arg == 0) && (long_arg == OPT_PRIOR)) {
       prior = validate_double_arg (optarg, "--prior");
-
-    } else if (arg == 'l') {
-      ldprior = validate_double_arg (optarg, "-l");
-    } else if ((arg == 0) && (long_arg == OPT_LDPRIOR)) {
-      ldprior = validate_double_arg (optarg, "--ldprior");
 
     } else if (arg == 'w') {
       weight = validate_double_arg (optarg, "-w");
@@ -1551,22 +1143,20 @@ int parse_command_line (int argc, char **argv)
     } else if ((arg == 0) && (long_arg == OPT_CUTOFF)) {
       cutoff = validate_double_arg (optarg, "--cutoff");
 
-    } else if ((arg == 0) && (long_arg == OPT_METHOD)) {
-      if (strcasecmp (optarg, "new") == 0) {
-	method = METH_NEW;
-      } else if (strcasecmp (optarg, "old") != 0) {
-	fprintf (stderr, "%s: argument '%s' to option '--method' is illegal\n", pname, optarg);
-	exit (-1);
-      }
+    } else if ((arg == 0) && (long_arg == OPT_MAPIN)) {
+      mapinfile = optarg;
 
-    } else if ((arg == 0) && (long_arg == OPT_PARTIN)) {
-      partinfile = optarg;
+    } else if ((arg == 0) && (long_arg == OPT_PPLIN)) {
+      pplinfile = optarg;
 
     } else if ((arg == 0) && (long_arg == OPT_PARTOUT)) {
       partoutfile = optarg;
 
     } else if ((arg == 0) && (long_arg == OPT_BFOUT)) {
       bfoutfile = optarg;
+
+    } else if ((arg == 0) && (long_arg == OPT_SIXOUT)) {
+      sixoutfile = optarg;
 
     } else if ((arg == 0) && (long_arg == OPT_HELP)) {
       usage ();
@@ -1579,19 +1169,9 @@ int parse_command_line (int argc, char **argv)
     }
   }
 
-  if ((partinfile != NULL) && (method != METH_NEW)) {
-      fprintf (stderr, "%s: don't use --partin without --method=new\n", pname);
-      exit (-1);
-  }
-  
-  if ((multipoint) && (method == METH_NEW)) {
-    fprintf (stderr, "%s: --multipoint is nonsensical with --method=new\n", pname);
-    exit (-1);
-  }
-
-  if ((multipoint) && (dkelvin)) {
-    fprintf (stderr, "%s: --multipoint is nonsensical with --dkelvin\n", pname);
-    exit (-1);
+  if (prior < MIN_PRIOR) {
+    fprintf (stderr, "warning: specified prior too small, fixing prior at %.4e\n", MIN_PRIOR);
+    prior = MIN_PRIOR;
   }
 
   if ((multipoint) && (bfoutfile != NULL)) {
@@ -1599,12 +1179,24 @@ int parse_command_line (int argc, char **argv)
     exit (-1);
   }
 
-  if (partinfile != NULL) {
-    if ((partin = fopen (partinfile, "r")) == NULL) {
-      fprintf (stderr, "%s: open '%s' for reading failed, %s\n", pname, partinfile,
-	       strerror (errno));
-      exit (-1);
-    }
+  if ((multipoint) && (partoutfile != NULL)) {
+    fprintf (stderr, "%s: --partout is nonsensical with --multipoint\n", pname);
+    exit (-1);
+  }
+
+  if ((multipoint) && (pplinfile != NULL)) {
+    fprintf (stderr, "%s: --pplin is nonsensical with --multipoint\n", pname);
+    exit (-1);
+  }
+
+  if ((multipoint) && (allstats)) {
+    fprintf (stderr, "%s: --allstats is nonsensical with --multipoint\n", pname);
+    exit (-1);
+  }
+
+  if ((mapinfile != NULL) && (relax)) {
+    fprintf (stderr, "%s: --relax cannot be combined with --mapin\n", pname);
+    exit (-1);
   }
 
   if (partoutfile != NULL) {
@@ -1631,6 +1223,18 @@ int parse_command_line (int argc, char **argv)
     }
   }
 
+  if (sixoutfile != NULL) {
+    if (stat (sixoutfile, &statbuf) != -1) {
+      fprintf (stderr, "%s: won't open '%s' for writing, file exists\n", pname, sixoutfile);
+      exit (-1);
+    }
+    if ((sixout = fopen (sixoutfile, "w")) == NULL) {
+      fprintf (stderr, "%s: open '%s' for writing failed, %s\n", pname, sixoutfile,
+	       strerror (errno));
+      exit (-1);
+    }
+  }
+  
   return (optind);
 }
 
@@ -1640,12 +1244,13 @@ void usage ()
   printf ("usage: %s [ options ] brfile [brfile...]\n  valid options:\n", pname);
   printf ("  -s|--sexspecific : input data contains sex-specific Thetas\n");
   printf ("  -m|--multipoint : input data is multipoint\n");
-  printf ("  -d|--dkelvin : input data is from dKelvin\n");
+  printf ("  -o|--okelvin : input data is from original (fixed-grid) kelvin\n");
   printf ("  -r|--relax : supress comparing marker names across input files\n");
   printf ("  -p <num>|--prior <num> : set linkage prior probability to <num>\n");
   printf ("  -c <num>|--cutoff <num> : set small-Theta cutoff to <num>\n");
   printf ("  -w <num>|--wieght <num> : set small-Theta weight to <num>\n");
-  printf ("  --partout <file> : write updated Bayes Ratios to <file>\n");
+  printf ("  --mapin <mapfile> : use mapfile to order markers\n");
+  printf ("  --partout <partfile> : write updated Bayes Ratios to partfile\n");
   printf ("  --help : display this help text\n");
   return;
 }
@@ -1674,7 +1279,7 @@ void open_brfile (st_brfile *brfile)
     exit (-1);
   }
   if (fgets (buff, BUFFLEN, brfile->fp) == NULL) {
-    if (feof (brfile->fp))
+    if (brfile->eof = feof (brfile->fp))
       fprintf (stderr, "error reading %s at line 0, %s\n", brfile->name, strerror (errno));
     else 
       fprintf (stderr, "file %s is empty\n", brfile->name);
@@ -1699,52 +1304,88 @@ void open_brfile (st_brfile *brfile)
 }
 
 
-int get_marker_line (st_brfile *brfile, st_marker *marker)
+void get_next_marker (st_brfile *brfile, st_data *data)
+{
+  int ret, lineno;
+  long start_of_data;
+
+  if (get_marker_line (brfile) == 0) {
+    memset (&brfile->curmarker, 0, sizeof (st_brmarker));
+    return;
+  }
+  get_header_line (brfile);
+  
+  if (data->dprimesize < brfile->numdprimes) {
+    data->dprimesize = brfile->numdprimes;
+    if ((data->dprimes = realloc (data->dprimes, sizeof (double) * data->dprimesize)) == NULL) {
+      fprintf (stderr, "realloc failed, %s\n", strerror (errno));
+      exit (-1);
+    }
+  }
+  if (data->thetasize < brfile->numthetas) {
+    data->thetasize = brfile->numthetas;
+    if ((data->thetas = realloc (data->thetas, sizeof (double) * data->thetasize)) == NULL) {
+      fprintf (stderr, "realloc failed, %s\n", strerror (errno));
+      exit (-1);
+    }
+  }
+  if ((start_of_data = ftell (brfile->fp)) == -1) {
+    fprintf (stderr, "ftell failed for '%s', %s\n", brfile->name, strerror (errno));
+    exit (-1);
+  }
+  lineno = brfile->lineno;
+  if ((ret = get_data_line (brfile, data)) == 0) {
+    fprintf (stderr, "file '%s' ends unexpectedly at line %d\n", brfile->name, brfile->lineno);
+    exit (-1);
+  } else if (ret == 2) {
+    fprintf (stderr, "expected data, found marker at line %d in '%s'\n", brfile->lineno
+	     , brfile->name);
+    exit (-1);
+  }
+  if (fseek (brfile->fp, start_of_data, SEEK_SET) == -1) {
+    fprintf (stderr, "fseek failed for '%s', %s\n", brfile->name, strerror (errno));
+    exit (-1);
+  }
+  brfile->lineno = lineno;
+  return;
+}
+
+
+int get_marker_line (st_brfile *brfile)
 {
   char buff[BUFFLEN];
-  char *pa, *pb;
+  st_brmarker *marker;
+
+  marker = &brfile->curmarker;
   
   if (fgets (buff, BUFFLEN, brfile->fp) == NULL) {
     /* An end-of-file looking for a marker is not necessarily fatal, so let the caller decide */
-    if (feof (brfile->fp))
+    if (brfile->eof = feof (brfile->fp))
       return (0);
     fprintf (stderr, "error reading '%s' at line %d, %s\n", brfile->name, brfile->lineno,
 	     strerror (errno));
     exit (-1);
   }
   brfile->lineno++;
-
-  if (((pa = strtok_r (buff, " \t\n", &pb)) == NULL) ||
-      (strcmp (pa, "#") != 0)) {
-    fprintf (stderr, "can't parse marker, line %d in file '%s'\n", brfile->lineno,  brfile->name);
+  
+  if (sscanf (buff, "# %d %s %s", &marker->num, marker->name1, marker->name2) != 3) {
+    if (strncasecmp (buff, "Chr", 3) == 0) {
+      fprintf (stderr, "expected marker line, line %d in '%s', found possible header line\n",
+	       brfile->lineno, brfile->name);
+      fprintf (stderr, "maybe %s contains multipoint data?\n", brfile->name);
+    } else {
+      fprintf (stderr, "can't parse marker, line %d in file '%s'\n", brfile->lineno, brfile->name);
+    }
     exit (-1);
   }
-  if ((pa = strtok_r (NULL, " \t\n", &pb)) == NULL) {
-    fprintf (stderr, "can't parse marker, line %d in file '%s'\n", brfile->lineno,  brfile->name);
-    exit (-1);
-  }
-  if (((marker->num = (int) strtol (pa, NULL, 10)) == 0) && (errno != 0)) {
-    fprintf (stderr, "can't parse marker, line %d in file '%s'\n", brfile->lineno,  brfile->name);
-    exit (-1);
-  }
-  if ((pa = strtok_r (NULL, " \t\n", &pb)) == NULL) {
-    fprintf (stderr, "can't parse marker, line %d in file '%s'\n", brfile->lineno,  brfile->name);
-    exit (-1);
-  }
-  strcpy (marker->name1, pa);
-  if ((pa = strtok_r (NULL, " \t\n", &pb)) == NULL) {
-    fprintf (stderr, "can't parse marker, line %d in file '%s'\n", brfile->lineno,  brfile->name);
-    exit (-1);
-  }
-  strcpy (marker->name2, pa);
   
   return (1);
 }
 
 
-int get_header_line (st_brfile *brfile, st_data *data)
+int get_header_line (st_brfile *brfile)
 { 
-  char buff[BUFFLEN], token[32], tmppadding[BUFFLEN];
+  char buff[BUFFLEN], token[32];
   char *pa, *pb, *pc=NULL;
   int actualcols, numlrcols=0, va;
 
@@ -1758,23 +1399,11 @@ int get_header_line (st_brfile *brfile, st_data *data)
     exit (-1);
   }
   brfile->lineno++;
+  brfile->numcols = brfile->numdprimes = brfile->numthetas = brfile->no_ld = 
+    brfile->holey_grid = brfile->two_point = 0;
 
-  /* If datacols is non-NULL (that is, memory has been allocated) then we've parsed
-   * a header for this file before. Since we require files to be internally consistent,
-   * we can just return.
-   */
-  if (brfile->datacols != NULL)
-    return (1);
-  if ((method == METH_OLD) && (partout != NULL) && (strlen (partheader) == 0)) {
-    strcpy (partheader, buff);
-    tmppadding[0] = '\0';
-  }
-      
   pa = strtok_r (buff, " \t\n", &pb);
   while (pa != NULL) {
-#ifdef DEBUG
-    printf ("initial token '%s'\n", pa);
-#endif
     strcpy (token, pa);
     while ((strchr (token, '(') != NULL) && (strrchr (token, ')') == NULL)) {
       if ((pa = strtok_r (NULL, " \t\n", &pb)) == NULL) {
@@ -1782,20 +1411,14 @@ int get_header_line (st_brfile *brfile, st_data *data)
 		 brfile->name);
 	exit (-1);
       }
-#ifdef DEBUG
-      printf ("  tacking on '%s'\n", pa);
-#endif
       strcat (token, pa);
     }
-#ifdef DEBUG
-    printf ("final token '%s'\n", token);
-#endif
     
     if (token[0] == '(') {
-      fprintf (stderr, "i don't know why this conditional is here\n");
+      fprintf (stderr, "header '%s' has no identifying string before '('\n", token);
       exit (-1);
     }
-
+    
     if ((pa = strchr (token, '(')) == NULL) {
       actualcols = 1;
     } else {
@@ -1808,17 +1431,14 @@ int get_header_line (st_brfile *brfile, st_data *data)
 	pa = strtok_r (NULL, ",", &pc);
       }
     }
-#ifdef DEBUG
-    printf ("token is '%s', actualcols %d\n", token, actualcols);
-#endif
 
     brfile->numcols += actualcols;
-#ifdef DEBUG
-    printf ("reallocating datacols to %d\n", brfile->numcols);
-#endif
-    if ((brfile->datacols = realloc (brfile->datacols, sizeof (int) * brfile->numcols)) == NULL) {
-      fprintf (stderr, "realloc failed, %s\n", strerror (errno));
-      exit (-1);
+    if (brfile->numcols > brfile->datacolsize) {
+      brfile->datacolsize = brfile->numcols;
+      if ((brfile->datacols = realloc (brfile->datacols, sizeof (int) * brfile->datacolsize)) == NULL) {
+	fprintf (stderr, "realloc failed, %s\n", strerror (errno));
+	exit (-1);
+      }
     }
     
     if (((token[0] == 'D') && ((token[1] >= '0') && (token[1] <= '9')) &&
@@ -1881,16 +1501,6 @@ int get_header_line (st_brfile *brfile, st_data *data)
 
     } else {
       /* Something else */
-      if ((method == METH_OLD) && (partout != NULL) && (strlen (partpadding) == 0)) {
-	if (actualcols == 1) {
-	  strcat (tmppadding, " 0");
-	} else {
-	  strcat (tmppadding, " (0");
-	  for (va = actualcols-1; va > 0; va--) 
-	    strcat (tmppadding, ",0");
-	  strcat (tmppadding, ")");
-	}
-      }
       for (; actualcols > 0; actualcols--) 
         brfile->datacols[brfile->numcols - actualcols] = 0;
     }
@@ -1900,9 +1510,6 @@ int get_header_line (st_brfile *brfile, st_data *data)
 #endif
     pa = strtok_r (NULL, " \t\n", &pb);
   }
-
-  if ((method == METH_OLD) && (partout != NULL) && (strlen (partpadding) == 0))
-    strcpy (partpadding, tmppadding);
 
   if (numlrcols != 1) {
     fprintf (stderr, "header at line %d in '%s' has no BR column\n", brfile->lineno,
@@ -1924,19 +1531,6 @@ int get_header_line (st_brfile *brfile, st_data *data)
     brfile->holey_grid = 1;
   }
   
-  if ((data->numdprimes < brfile->numdprimes) && 
-      ((data->dprimes = realloc (data->dprimes, sizeof (double) * brfile->numdprimes)) == NULL)) {
-    fprintf (stderr, "realloc failed, %s\n", strerror (errno));
-    exit (-1);
-  }
-  data->numdprimes = brfile->numdprimes;
-  if ((data->numthetas < brfile->numthetas) && 
-      ((data->thetas = realloc (data->thetas, sizeof (double) * brfile->numthetas)) == NULL)) {
-    fprintf (stderr, "realloc failed, %s\n", strerror (errno));
-    exit (-1);
-  }
-  data->numthetas = brfile->numthetas;
-
   #ifdef DEBUG
   for (numlrcols = 0; numlrcols < brfile->numcols; numlrcols++) {
     printf ("col %d is type %d\n", numlrcols, brfile->datacols[numlrcols]);
@@ -1947,28 +1541,29 @@ int get_header_line (st_brfile *brfile, st_data *data)
 }
 
 
-int get_data_line (st_brfile *brfile, st_marker *marker, st_data *data)
+int get_data_line (st_brfile *brfile, st_data *data)
 {
   char buff[BUFFLEN], *endptr=NULL;
   char *pa=NULL, *pb=NULL;
   long previous;
   int va = 0, dprimecnt=0, thetacnt=0;
+  st_brmarker *marker;
 
+  marker = &brfile->curmarker;
   if ((previous = ftell (brfile->fp)) == -1) {
     fprintf (stderr, "ftell failed, %s\n", strerror (errno));
     exit (-1);
   }
   if (fgets (buff, BUFFLEN, brfile->fp) == NULL) {
-    if (feof (brfile->fp))
+    if (brfile->eof = feof (brfile->fp))
       return (0);
     fprintf (stderr, "error reading '%s' at line %d, %s\n", brfile->name, brfile->lineno,
 	     strerror (errno));
     exit (-1);
   }
-  brfile->lineno++;
   
   if ((pa = strtok_r (buff, " (),\t\n", &pb)) == NULL) {
-    fprintf (stderr, "unexpectedly short line %d in '%s'\n", brfile->lineno, brfile->name);
+    fprintf (stderr, "unexpectedly short line %d in '%s'\n", brfile->lineno+1, brfile->name);
     exit (-1);
   }
 
@@ -1982,6 +1577,7 @@ int get_data_line (st_brfile *brfile, st_marker *marker, st_data *data)
     }
     return (2);
   }
+  brfile->lineno++;
 
   while (1) {
     switch (brfile->datacols[va]) {
@@ -1998,7 +1594,7 @@ int get_data_line (st_brfile *brfile, st_marker *marker, st_data *data)
       marker->pos = strtod (pa, &endptr);
       break;
     case CHR_COL:
-      marker->chr = (int) strtol (pa, &endptr, 10);
+      endptr = strcpy (marker->chr, pa);
       break;
     }
     if (pa == endptr) {
@@ -2021,7 +1617,7 @@ int get_data_line (st_brfile *brfile, st_marker *marker, st_data *data)
     data->dprimes[0] = 0;
 
 #ifdef DEBUG
-  printf ("%5d: chr %2d, pos %6.4f, dprimes", brfile->lineno, marker->chr, marker->pos);
+  printf ("%5d: chr %s, pos %6.4f, dprimes", brfile->lineno, marker->chr, marker->pos);
   for (va = 0; va < dprimecnt; va++) {
     printf (" %5.2f", data->dprimes[va]);
   }
@@ -2035,79 +1631,55 @@ int get_data_line (st_brfile *brfile, st_marker *marker, st_data *data)
   return (1);
 }
 
-void read_partin (st_marker *markers, st_ldvals *ldvals, int nummarkers)
-{
-  int mrkno=0;
-  char buff[BUFFLEN];
-  st_brfile partbr;
-  st_marker marker;
-  st_ldvals ldval;
 
-  if (fgets (buff, BUFFLEN, partin) == NULL) {
-    if (feof (partin))
-      fprintf (stderr, "partin file '%s' is empty\n", partinfile);
-    else
-      fprintf (stderr, "error reading partin file '%s', %s\n", partinfile, strerror (errno));
-    exit (-1);
-  }
-  /* skip detailed version verification for the time being */
-  if (strstr (buff, "Version") == NULL) {
-    fprintf (stderr, "file %s is unversioned\n", partinfile);
-    exit (-1);
-  }
-  
-  if (fgets (buff, BUFFLEN, partin) == NULL) {
-    if (feof (partin))
-      fprintf (stderr, "partin file '%s' is ends unexpectedly at line 1\n", partinfile);
-    else
-      fprintf (stderr, "error reading partin file '%s', %s\n", partinfile, strerror (errno));
-    exit (-1);
-  }
-  if (strstr (buff, "Chr Pos Seq Name1 Name2 LDSmallTheta") == NULL) {
-    fprintf (stderr, "bad header line in '%s' at line 2\n", partinfile);
-    exit (-1);
-  }
-  
-  partbr.name = partinfile;
-  partbr.lineno = 2;
-
-  for (mrkno = 0; mrkno < nummarkers; mrkno++) {
-    if (fgets (buff, BUFFLEN, partin) == NULL) {
-      if (feof (partin))
-	fprintf (stderr, "partin file '%s' is ends unexpectedly at line 1\n", partinfile);
-      else
-	fprintf (stderr, "error reading partin file '%s', %s\n", partinfile, strerror (errno));
-      exit (-1);
-    }
-    partbr.lineno++;
-    if (sscanf (buff, "%d %lf %d %s %s %lf %lf %lf %lf %lf %lf",
-		&marker.chr, &marker.pos, &marker.num, marker.name1, marker.name2,
-		&ldval.ld_small_theta, &ldval.ld_big_theta, &ldval.ld_unlinked,
-		&ldval.le_small_theta, &ldval.le_big_theta, &ldval.le_unlinked) != 11) {
-      fprintf (stderr, "can't parse line %d in '%s'\n", partbr.lineno, partinfile);
-      exit (-1);
-    }
-    compare_markers (&markers[mrkno], &marker, &partbr);
-    ldvals[mrkno].ld_small_theta *= ldval.ld_small_theta;
-    ldvals[mrkno].ld_big_theta *= ldval.ld_big_theta;
-    ldvals[mrkno].ld_unlinked *= ldval.ld_unlinked;
-    ldvals[mrkno].le_small_theta *= ldval.le_small_theta;
-    ldvals[mrkno].le_big_theta *= ldval.le_big_theta;
-    ldvals[mrkno].le_unlinked *= ldval.le_unlinked;
-  }
-  fclose (partin);
-  return;
-}
-
-
-void print_partial_old (st_brfile *brfile, st_marker *marker, st_data *data)
+void print_partial_header (st_brfile *brfile)
 {
   int colno=0, dprimecnt=0;
+  st_brmarker *marker;
 
+  marker = &brfile->curmarker;
+  fprintf (partout, "# %d %s %s\n", marker->num, marker->name1, marker->name2);
   while (colno < brfile->numcols) {
     switch (brfile->datacols[colno]) {
     case CHR_COL:
-      fprintf (partout, "%d", marker->chr);
+      /* It's assumed here that the chromosome column will be first (no leading space) */
+      fprintf (partout, "Chr");
+      colno++;
+      break;
+    case POS_COL:
+      fprintf (partout, " Position");
+      colno++;
+      break;
+    case DPRIME_COL:
+      fprintf (partout, " D1%d", ++dprimecnt);
+      colno++;
+      break;
+    case THETA_COL:
+      fprintf (partout, " Theta(M,F)");
+      colno += (sexspecific) ? 2 : 1;
+      break;
+    case LR_COL:
+      fprintf (partout, " BayesRatio");
+      colno++;
+      break;
+    default:
+      colno++;
+    }
+  }
+  fprintf (partout, "\n");
+}
+
+
+void print_partial_data (st_brfile *brfile, st_data *data)
+{
+  int colno=0, dprimecnt=0;
+  st_brmarker *marker;
+
+  marker = &brfile->curmarker;
+  while (colno < brfile->numcols) {
+    switch (brfile->datacols[colno]) {
+    case CHR_COL:
+      fprintf (partout, "%s", marker->chr);
       colno++;
       break;
     case POS_COL:
@@ -2136,7 +1708,7 @@ void print_partial_old (st_brfile *brfile, st_marker *marker, st_data *data)
     }
     
   }
-  fprintf (partout, "%s\n", partpadding);
+  fprintf (partout, "\n");
 }
 
 
@@ -2163,44 +1735,41 @@ void compare_headers (st_brfile *f1, st_brfile *f2)
 }
 
 
-void compare_markers (st_marker *m1, st_marker *m2, st_brfile *brfile)
+/* compare_markers returns success or failure, instead of complaining and exiting like
+ * the other comparison routines, because if a mapinfile has been provided, a marker
+ * mismatch is not necessarily fatal.
+ */
+int compare_markers (st_brmarker *m1, st_brmarker *m2)
 {
   if (! relax) {
-    if (m1->num != m2->num) {
-      fprintf (stderr, "marker number mismatch at line %d in '%s'; expected %d, found %d\n",
-	       brfile->lineno, brfile->name, m1->num, m2->num);
-      exit (-1);
-    }
-    if (strcmp (m1->name1, m2->name1) != 0) {
-      fprintf (stderr, "marker name mismatch at line %d in '%s'; expected %s, found %s\n",
-	       brfile->lineno, brfile->name, m1->name1, m2->name1);
-      exit (-1);
-    }
-    if (strcmp (m1->name2, m2->name2) != 0) {
-      fprintf (stderr, "marker name mismatch at line %d in '%s'; expected %s, found %s\n",
-	       brfile->lineno, brfile->name, m1->name2, m2->name2);
-      exit (-1);
-    }
+    if (strcmp (m1->chr, m2->chr) != 0)
+      return (-1);
+    if ((strlen (m1->name1) != 0) && (strlen (m2->name1) != 0) &&
+	(strcmp (m1->name1, m2->name1) != 0))
+      return (-1);
+    if ((strlen (m1->name2) != 0) && (strlen (m2->name2) != 0) &&
+	(strcmp (m1->name2, m2->name2) != 0))
+      return (-1);
   }
-  return;
+  return (0);
 }
 
 
-void compare_positions (st_marker *m1, st_marker *m2, st_brfile *brfile)
+/* This behaves more like a 'strcmp' sort of affair, where it returns less than 0, 0,
+ * or greater than 0 by comparing chromosome names and cM positions
+ */
+int compare_positions (st_brmarker *m1, st_brmarker *m2)
 {
-  if (! relax) {
-    if (m1->chr != m2->chr) {
-      fprintf (stderr, "chromosome number mismatch at line %d in '%s'; expected %d, found %d\n",
-	       brfile->lineno, brfile->name, m1->chr, m2->chr);
-      exit (-1);
-    }
-    if (m1->pos != m2->pos) {
-      fprintf (stderr, "position mismatch at line %d in '%s'; expected %f, found %f\n",
-	       brfile->lineno, brfile->name, m1->pos, m2->pos);
-      exit (-1);
-    }
-  }
-  return;
+  int ret;
+  double diff;
+
+  if ((ret = strcmp (m1->chr, m2->chr)) != 0)
+    return (ret);
+  if ((diff = m1->pos - m2->pos) < 0)
+    return (-1);
+  else if (diff > 0)
+    return (1);
+  return (0);
 }
 
 
@@ -2230,137 +1799,160 @@ void compare_samples (st_data *d, int sampleno, st_brfile *brfile)
 }
 
 
-int multi_insert (st_multidim *md, double *vals, int num)
+#if 0
+/* For sex-averaged thetas, we calculate the area under a two-dimensional
+ * curve defined by theta (X axis) vs. LR (Y axis), where D' (all D' if
+ * more than one) is 0. The area is calculated by computing the areas of
+ * polygons bounded by adjascent thetas and associated LRs.
+ */
+double calc_ppl_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr)
 {
-  int va, idx, offset=0;
-  st_dim *tmp;
-
-  if (md->numdims != num) {
-    if ((tmp = realloc (md->dims, sizeof (st_dim) * num)) == NULL)
-      return (-1);
-    md->dims = tmp;
-    for (va = md->numdims; va < num; va++)
-      memset (&(md->dims[va]), 0, sizeof (st_dim));
-    md->numdims = num;
-  }
+  int zero_didx, thidx, va;
+  double lr1, lr2, mtheta1, mtheta2, cutlr, pre_int=0, post_int=0, integral, ppl, *zeros;
+  st_dim *mthetas;
   
-  for (va = md->numdims - 1; va >= 0; va--) {
-    if ((idx = insert (&(md->dims[va]), vals[va])) == -1)
-      return (-1);
-    if (va == md->numdims - 1)
-      md->dims[va].dimsize = 1;
-    else
-      md->dims[va].dimsize = md->dims[va+1].numelems * md->dims[va+1].dimsize;
-    offset += md->dims[va].dimsize * idx;
+  /* Remember for PPL, we only consider LRs where D' == 0, so look up that index
+   * into the D' dimension of the lr array.
+   */
+  if ((zeros = malloc (sizeof (double) * dprimes->numdims)) == NULL) {
+    fprintf (stderr, "malloc failed, %s\n", strerror (errno));
+    exit (-1);
   }
-  md->totalelems = md->dims[0].dimsize * md->dims[0].numelems;
-  return (offset);
-}
+  for (va = 0; va < dprimes->numdims; va++)
+    zeros[va] = 0.0;
+  if ((zero_didx = multi_find (dprimes, zeros, dprimes->numdims)) == -1) {
+    fprintf (stderr, "can't calculate PPL, no dprime == 0\n");
+    exit (-1);
+  }
+  free (zeros);
 
-
-int multi_find (st_multidim *md, double *vals, int num)
-{
-  int va, idx, found, offset=0;
-
-  if (md->numdims != num)
+  /* if any of the LRs where D' == 0 is DBL_MAX (that is, undefined), then there
+   * shouldn't be any defined LR where D' == 0, regardless of theta, and
+   * we can't calculate a PPL.
+   */
+  if (lr[zero_didx][0] == DBL_MAX)
     return (-1);
-  for (va = md->numdims - 1; va >= 0; va--) {
-    idx = find (&(md->dims[va]), vals[va], &found);
-    if (! found)
-      return (-1);
-    offset += idx * md->dims[va].dimsize;
-  }
-  return (offset);
-}
 
+  mthetas = &thetas->dims[0];
+  for (thidx = 1; thidx < mthetas->numelems; thidx++) {
+    mtheta1 = mthetas->arr[thidx-1];
+    mtheta2 = mthetas->arr[thidx];
+    lr1 = lr[zero_didx][thidx-1];
+    lr2 = lr[zero_didx][thidx];
 
-int insert (st_dim *dim, double val)
-{
-  double *tmp;
-  int idx, found;
-
-  idx = find (dim, val, &found);
-  if (found)
-    return (idx);
-
-  if (dim->arrsize < dim->numelems + 1) {
-    if ((tmp = realloc (dim->arr, sizeof (double) * (dim->arrsize + 10))) == NULL)
-      return (-1);
-    dim->arr = tmp;
-    dim->arrsize += 10;
-  }
-  if (idx < dim->numelems)
-    memmove (dim->arr+idx+1, dim->arr+idx, sizeof (double) * (dim->numelems - idx));
-  dim->arr[idx] = val;
-  dim->numelems++;
-  return (idx);
-}
-
-
-int find (st_dim *dim, double val, int *found)
-{
-  int va;
-
-  *found = 0;
-  if (dim->numelems == 0)
-    return (dim->lastidx = 0);
-  if (val == dim->arr[dim->lastidx]) {
-    *found = 1;
-    return (dim->lastidx);
-  }
-
-  if (val > dim->arr[dim->lastidx]) {
-    for (va = dim->lastidx + 1; va < dim->numelems; va++) {
-      if (val < dim->arr[va]) {
-	return (dim->lastidx = va);
-      } else if (val == dim->arr[va]) {
-	*found = 1;
-	return (dim->lastidx = va);
-      }
-    }
-    return (dim->lastidx = dim->numelems);
-    
-  } else {   /*  val < dim->arr[dim->lastidx]  */
-    for (va = 0; va <= dim->lastidx; va++) {
-      if (val < dim->arr[va]) {
-	return (dim->lastidx = va);
-      } else if (val == dim->arr[va]) {
-	*found = 1;
-	return (dim->lastidx = va);
-      }
+    if (mtheta1 >= cutoff) {
+      /* entire region outside the cutoff */
+      post_int += (lr1 + lr2) * (mtheta2 - mtheta1);
+      
+    } else if (mtheta2 <= cutoff) {
+      /* entire region inside the cutoff */
+      pre_int += (lr1 + lr2) * (mtheta2 - mtheta1);
+      
+    } else {
+      /* region straddles the cutoff */
+      cutlr = lr1 + ((cutoff - mtheta1) / (mtheta2 - mtheta1)) * (lr2 - lr1);
+      pre_int += (lr1 + cutlr) * (cutoff - mtheta1);
+      post_int += (cutlr + lr2) * (mtheta2 - cutoff);
     }
   }
-  /* Should be impossible to reach this point */
-  return (-1);
+
+  /* The 0.5 here is factored out of the calculation of area. */
+  pre_int *= (weight / cutoff) * 0.5;
+  post_int *= ((1 - weight) / (0.5 - cutoff)) * 0.5;
+  integral = pre_int + post_int;
+  ppl = (prior * integral) / (prior * integral + (1 - prior));
+  return (ppl);
 }
 
 
-void multi_free (st_multidim *md)
+/* For sex-specific thetas, we calculate the volume under a three-dimensional
+ * curve defined by male theta (X axis) vs. female theta (Y axis) vs. LR (Z
+ * axis), where D' (all D', if more than one) is 0. The volume is calculated
+ * by computing the volumes of polyhedrons bounded by adjascent males thetas,
+ * adjascent female thetas, and the four LRs associated with the intersections
+ * of the male and female thetas. Looking at the two-dimensional X-Y plane,
+ * LR1 would be in the lower left, LR2 in the lower right, LR3 in the upper
+ * left, and LR4 in the upper right.
+ */
+double calc_ppl_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr)
 {
-  int va;
+  int zero_didx, mthidx, fthidx, va;
+  double lr1, lr2, lr3, lr4, mtheta1, mtheta2, ftheta1, ftheta2, cutlr2, cutlr3, cutlr4, *zeros;
+  double pre_int=0, post_int=0, cutvol, integral, ppl;
+  st_dim *mthetas, *fthetas;
+  
+  if ((zeros = malloc (sizeof (double) * dprimes->numdims)) == NULL) {
+    fprintf (stderr, "malloc failed, %s\n", strerror (errno));
+    exit (-1);
+  }
+  for (va = 0; va < dprimes->numdims; va++)
+    zeros[va] = 0.0;
+  if ((zero_didx = multi_find (dprimes, zeros, dprimes->numdims)) == -1) {
+    fprintf (stderr, "can't calculate PPL, no dprime == 0\n");
+    exit (-1);
+  }
+  free (zeros);
 
-  for (va = 0; va < md->numdims; va++)
-    free (md->dims[va].arr);
-  free (md->dims);
-  return;
-}
-
-
-void multi_dump (st_multidim *md)
-{
-  int va, vb;
-
-  for (va = 0; va < md->numdims; va++) {
-    printf ("dim %d:", va);
-    for (vb = 0; vb < md->dims[va].arrsize; vb++) {
-      if (vb < md->dims[va].numelems) {
-	printf (" %5.2f", md->dims[va].arr[vb]);
+  /* See comment in calc_ppl_sexavg() */
+  if (lr[zero_didx][0] == DBL_MAX)
+    return (-1);
+  
+  /* Does it really matter which one is male or female? */
+  mthetas = &thetas->dims[0];
+  fthetas = &thetas->dims[1];
+  for (mthidx = 1 ; mthidx < mthetas->numelems; mthidx++) {
+    mtheta1 = mthetas->arr[mthidx - 1];
+    mtheta2 = mthetas->arr[mthidx];
+    for (fthidx = 1 ; fthidx < fthetas->numelems; fthidx++) {
+      ftheta1 = fthetas->arr[fthidx - 1];
+      ftheta2 = fthetas->arr[fthidx];
+      lr1 = lr[zero_didx][(mthidx - 1) * mthetas->numelems + fthidx - 1];
+      lr2 = lr[zero_didx][mthidx * mthetas->numelems + fthidx - 1];
+      lr3 = lr[zero_didx][(mthidx - 1) * mthetas->numelems + fthidx];
+      lr4 = lr[zero_didx][mthidx * mthetas->numelems + fthidx];
+      
+      if ((mtheta1 >= cutoff) || (ftheta1 >= cutoff)) {
+	/* entire region is outside cutoff area */
+	post_int += (mtheta2 - mtheta1) * (ftheta2 - ftheta1) * (lr1 + lr2 + lr3 + lr4);
+	
+      } else if ((mtheta2 <= cutoff) && (ftheta2 <= cutoff)) {
+	/* entire region inside cutoff area */
+	pre_int += (mtheta2 - mtheta1) * (ftheta2 - ftheta1) * (lr1 + lr2 + lr3 + lr4);
+	
+      } else if ((ftheta2 <= cutoff) && ((mtheta1 <= cutoff) && (cutoff <= mtheta2))) {
+	/* region straddles cutoff on male axis */
+	cutlr2 = lr1 + ((cutoff - mtheta1) / (mtheta2 - mtheta1)) * (lr2 - lr1);
+	cutlr4 = lr3 + ((cutoff - mtheta1) / (mtheta2 - mtheta1)) * (lr4 - lr3);
+	pre_int += (cutoff - mtheta1) * (ftheta2 - ftheta1) * (lr1 + cutlr2 + lr3 + cutlr4);
+	post_int += (mtheta2 - cutoff) * (ftheta2 - ftheta1) * (cutlr2 + lr2 + cutlr4 + lr4);
+	
+      } else if ((mtheta2 <= cutoff) && ((ftheta1 <= cutoff) && (cutoff <= ftheta2))) {
+	/* region straddles cutoff on female axis */
+	cutlr3 = lr1 + ((cutoff - ftheta1) / (ftheta2 - ftheta1)) * (lr3 - lr1);
+	cutlr4 = lr2 + ((cutoff - ftheta1) / (ftheta2 - ftheta1)) * (lr4 - lr2);
+	pre_int += (cutoff - ftheta1) * (mtheta2 - mtheta1) * (lr1 + lr2 + cutlr3 + cutlr4);
+	post_int += (ftheta2 - cutoff) * (mtheta2 - mtheta1) * (cutlr3 + cutlr4 + lr3 + lr4);
+	
       } else {
-	printf (" .....");
+	/* region straddles cutoff on both axes */
+	post_int += (mtheta2 - mtheta1) * (ftheta2 - ftheta1) * (lr1 + lr2 + lr3 + lr4);
+	cutlr2 = lr1 + ((cutoff - mtheta1) / (mtheta2 - mtheta1)) * (lr2 - lr1);
+	cutlr4 = lr3 + ((cutoff - mtheta1) / (mtheta2 - mtheta1)) * (lr4 - lr3);
+	cutlr4 = cutlr2 + ((cutoff - ftheta1) / (ftheta2 - ftheta1)) * (cutlr4 - cutlr2);
+	cutlr3 = lr1 + ((cutoff - ftheta1) / (ftheta2 - ftheta1)) * (lr3 - lr1);
+	cutvol = (cutoff - mtheta1) * (cutoff - ftheta1) * (lr1 + cutlr2 + cutlr3 + cutlr4);
+	post_int -= cutvol;
+	pre_int += cutvol;
       }
     }
-    printf (" (lastidx %d, dimsize %d)\n", md->dims[va].lastidx, md->dims[va].dimsize);
   }
-  printf ("totalelems %d\n", md->totalelems);
-  return;
+
+  /* The 0.25 here is factored out of the caclculation of volume */
+  pre_int *= (weight / (cutoff * cutoff)) * 0.25;
+  post_int *= ((1 - weight) / (0.25 - (cutoff * cutoff))) * 0.25;
+  integral = pre_int + post_int;
+  ppl = (prior * integral) / (prior * integral + (1 - prior));
+  return (ppl);
 }
+#endif
+
