@@ -16,6 +16,7 @@ KVNLIBDIR := $(shell pwd)/lib
 KVNINCDIR := $(shell pwd)/include
 KELVIN_ROOT := $(shell pwd)
 TEST_KELVIN := $(KELVIN_ROOT)/kelvin
+TEST_UPDATE := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
 empty:=
@@ -64,7 +65,7 @@ INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
 	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c kelvinWriteFiles.c
 
 # Binary releases include kelvin_$(PLATFORM)
-all : kelvin calc_updated_ppl 
+all : kelvin seq_update/calc_updated_ppl 
 
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
@@ -78,8 +79,8 @@ kelvin : libs $(KOBJS) $(OBJS)
 kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
 	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
-calc_updated_ppl : seq_update/calc_updated_ppl.c
-	$(CC) -o $@ $(LDFLAGS) $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) seq_update/calc_updated_ppl.c -lm
+seq_update/calc_updated_ppl :
+	make -C seq_update calc_updated_ppl
 
 %.o : %.c $(INCS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
@@ -105,11 +106,8 @@ test :
 $(BINDIR)/kelvin-$(VERSION) : kelvin
 	install -o root -g root -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
 
-$(BINDIR)/calc_updated_ppl : calc_updated_ppl
-	install -o root -g root -m 0755 -p calc_updated_ppl $(BINDIR)/calc_updated_ppl
-
-$(BINDIR)/seq_update_br.pl : seq_update/seq_update_br.pl
-	install -o root -g root -m 0755 -p seq_update/seq_update_br.pl $(BINDIR)/seq_update_br.pl
+$(BINDIR)/calc_updated_ppl : seq_update/calc_updated_ppl
+	install -o root -g root -m 0755 -p seq_update/calc_updated_ppl $(BINDIR)/calc_updated_ppl
 
 $(BINDIR)/convert_br.pl : seq_update/convert_br.pl
 	install -o root -g root -m 0755 -p seq_update/convert_br.pl $(BINDIR)/convert_br.pl
