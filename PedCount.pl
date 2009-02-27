@@ -835,34 +835,41 @@ sub perfStats {
 # Adapted from a trios-only version by John Burian.
 #
 # Leverages pedigree inheritance patterns to reduce computational
-# complexity. Multiple pedigrees that fit a single inheritance pattern
-# are converted to a single pedigree and a weight for the likelihood poly.
+# complexity. Multiple pedigrees that conform to a single inheritance pattern
+# are converted to a single pedigree and a weight (count) for each marker.
 # Currently works only for two-point analysis because it would be a real
 # trick for there to be many pedigrees where multiple markers all fit the
-# same inheritance pattern.
+# same inheritance pattern. 
 #
-# Reads a map and pedigree file including affected sibling pair (ASP), trio
-# (nuclear) and generates a new pedigree file and count file with redundant
-# pedigrees counted by marker. Unique pedigrees are retained with a count of 1.
+# The traditional analyses for which this was designed are:
+# 1. Case/Control, where unrelated genotyped and phenotyped individuals are 
+# divided into cases and controls and fall into one of 6 inheritance pattern
+# buckets normally, 10 for X chromosome analysis.
+# 2. Trios are 3-member pedigrees with one affected child both parents treated
+# as if unaffected. They fall into one of 30 inheritance pattern buckets
+# normally, and 44 for X chromosome analysis.
+# 3. ASPs (Affected Sibling Pairs) are essentially expanded trios, i.e. 4-member 
+# pedigrees with two affected children and both parents in 
+# any affectation category, which will fall first into one of the 3-member 
+# trio buckets for the first child, and then a second 3-member bucket
+# with the same parentage for the second child, e.g. T30 and then T18. This 
+# is used to identify a unique 4-person bucket by ordering the 3-member
+# numbers, e.g. T18-T30, because a family falling into T30 and then T18 is the
+# same as one falling into T18 and then T30. This extends to any number
+# of children of a single-generation family.
 #
-# Trios, i.e. 3-member families with an affected child and parents treated
-# as if unaffected, fall into one of 30 categories.
-#
-# ASPs are expanded trios, i.e. 4-member pedigrees with two affected children
-# and both parents in any affectation category, which will fall first into
-# one of the 3-member trio categories for the first child, and then a second
-# 3-member category with the same parentage for the second child, e.g. 30 and
-# then 18. This is used to identify a unique category by ordering the 3-member
-# numbers, e.g. 18-30, because a family falling into 30 and then 18 is the
-# same as one falling into 18 and then 30. While this extends to any number
-# of children of a single-generation family, we don't have such a thing as
-# "quads" or "affected sibling triples" just yet. Generalizing this to deal with
-# any single-generation family inheritance pattern would require incorporating
-# affection status for all individuals. Do-able, but probably not worth the
-# effort.
-#
-# Case/control is different because the parents are assumed to be unknown, and
-# are generated if not present.
+# Affectation status is handled by concatenating it to either the parental or 
+# child portion of the bucket name. Gender is handled for XC
+# analysis by the same approach, i.e. concatenating it to either the parental
+# or child portion of the bucket name. Ultimately we end-up with bucket names
+# generated from the genotypic, phenotypic (and maybe even gender) attributes
+# of the entire nuclear family. While enumerating every possible bucket for all
+# possible nuclear family combinations would be exhaustive, we use Perl hashes
+# to produce only the buckets needed. When we create a bucket, we keep track of
+# the last pedigree that fit into it so we can use that pedigree's genotypic and
+# phenotypic information to create the template pedigree for the bucket. We could
+# decode the bucket name and achieve the same goal, but this is easier and more
+# reliable.
 #
 sub bucketizePedigrees {
 
@@ -873,9 +880,9 @@ sub bucketizePedigrees {
         '0 0' => {
             '0 0' => {
                 '0 0' => 'T30',    # 30  0 0  0 0  0 0
-                '1 1' => 'T18',    # 18  0 0  0 0  1 1 used for C/C too
-                '1 2' => 'T19',    # 19  0 0  0 0  1 2 "
-                '2 2' => 'T20',    # 20  0 0  0 0  2 2 "
+                '1 1' => 'T18',    # 18  0 0  0 0  1 1 (case11, control11)
+                '1 2' => 'T19',    # 19  0 0  0 0  1 2 (case12, control12)
+                '2 2' => 'T20',    # 20  0 0  0 0  2 2 (case22, control22)
             },
             '1 1' => {
                 '0 0' => 'T24',    # 24  0 0  1 1  0 0
@@ -960,6 +967,9 @@ sub bucketizePedigrees {
         },
     );
 
+    # This bucket hash is a bit misleading because it uses the full-genotype 
+    # notation even though the individual might be male and therefore have 
+    # only one allele for the X chromosome.
     # When determining XC buckets, alleles and parent counts but phase doesn't (i.e.
     # 11+22=22 != 22+11=22 and 11+11=11 != 22+22=22, but 12+11=12 == 21+11=12).
 
@@ -967,9 +977,9 @@ sub bucketizePedigrees {
         '0 0' => {
             '0 0' => {
                 '0 0' => 'X01',
-                '1 1' => 'X02',
-                '1 2' => 'X03',    # Female
-                '2 2' => 'X04',
+                '1 1' => 'X02',    # XC case/control male or female (case11, control11, case1, control1)
+                '1 2' => 'X03',    # XC case/control female-only (case12, control12)
+                '2 2' => 'X04',    # XC case/control male or female (case22, control22, case2, control2)
             },
             '1 1' => {
                 '0 0' => 'X05',
