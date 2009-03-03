@@ -21,7 +21,7 @@ $| = 1;    # Force flush of output as printed.
 
 # Command line option flags
 my $config = 0; my $pre = 0; my $post = 0; my $noparents = 0; my $XC = 0; 
-my $bare = 0; my $count = 0; my $write = 0; my $loops = 0; my $stats = 0;
+my $bare = 0; my $count = 0; my $write = "unspecified"; my $loops = 0; my $stats = 0;
 my $split = 0; my $nokelvin = 0; my @include = (); my @exclude = ();
 my $writePrefix = "PC";
 
@@ -103,7 +103,7 @@ sub dirAS {
 #
 sub dirCF {
     die "Cannot generate counts for configuration that already has them."
-      if ($count || $write);
+      if ($count);
 }
 
 #####################################
@@ -794,6 +794,14 @@ sub checkRelations {
 
 sub numerically { $a <=> $b }
 
+sub numericIsh {
+    if (($a . $b) =~ /^\d+$/) {
+	$a <=> $b;
+    } else {
+	$a cmp $b;
+    }
+}
+
 #####################################
 # Start discovering statistics that might affect performance.
 #
@@ -1100,7 +1108,6 @@ sub bucketizePedigrees {
     # Verify that all markers are present and only biallelic...
     for my $Name (@Loci) {
 	next if (!$LociAttributes{$Name}{Included});
-	print "Working on [$Name]\n";
         next if ($LociAttributes{$Name}{Type} eq "T");
         next if ($LociAttributes{$Name}{Type} eq "A");
         die "No allele information found for marker $Name for count generation.\n"
@@ -1115,7 +1122,7 @@ sub bucketizePedigrees {
     my $PedSeq    = 1;     # Template pedigree ID to keep them short
 
     # Look at each family...
-    for my $Ped (sort keys %Pedigrees) {
+    for my $Ped (sort numericIsh keys %Pedigrees) {
 
         my $memberCount = scalar(keys %{ $Pedigrees{$Ped} });
 
@@ -1124,7 +1131,7 @@ sub bucketizePedigrees {
         # affectation prefix so we can do more
         # than expected (i.e. handle any nuclear families)
         my $PAP = "";
-        for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
+        for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
             my $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
             if (($Dad eq $UnknownPerson) && ($Mom eq $UnknownPerson)) {
@@ -1154,7 +1161,7 @@ sub bucketizePedigrees {
             my @bucketList = ();
 
             # Get a trio bucket for each child in the family
-            for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
+            for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
 
                 # Skip parents
                 my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
@@ -1228,7 +1235,7 @@ sub bucketizePedigrees {
 
     # First the intact pedigrees
     for my $Ped (@Skippies) {
-        for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
+        for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             print OUT join(" ", ($Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom})) . " ";
             print OUT
               join(" ", ($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs}, $Pedigrees{$Ped}{$Ind}{nMs})) . " "
@@ -1242,11 +1249,11 @@ sub bucketizePedigrees {
 
     # Next the template pedigrees
     print "Writing $Type pedigree\n";
-    for my $PB (sort keys %Templates) {
+    for my $PB (sort numericIsh keys %Templates) {
         my $Ped    = $Templates{$PB}{Ped};
         my $PairID = $Templates{$PB}{PairID};
         my $PedSeq = $Templates{$PB}{PedSeq};
-        for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
+        for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             print OUT join(" ", ($PedSeq, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom})) . " ";
             print OUT
               join(" ", ($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs}, $Pedigrees{$Ped}{$Ind}{nMs})) . " "
@@ -1270,14 +1277,14 @@ sub bucketizePedigrees {
     open OUT, ">PC_counts.Dat";
 
     print OUT "MARKER\t";
-    for my $PB (sort keys %Templates) {
+    for my $PB (sort numericIsh keys %Templates) {
         print OUT $Templates{$PB}{PedSeq} . "\t";
     }
     print OUT "\n";
     for my $i (0 .. $PairCount - 1) {
 	next if (!$LociAttributes{$Loci[ $i + 1 ]}{Included});
         print OUT $Loci[ $i + 1 ] . "\t";
-        for my $PB (sort keys %Templates) {
+        for my $PB (sort numericIsh keys %Templates) {
             my $FB = $Loci[ $i + 1 ] . "_" . $PB;
             if (!defined($Buckets{$FB})) {
                 print OUT "0\t";
@@ -1362,6 +1369,7 @@ EOF
     close OUT;
 }
 
+
 #####################################
 #
 sub writeExpanded {
@@ -1376,22 +1384,21 @@ sub writeExpanded {
         open OUT, ">PC_pedigrees.Pre";
     }
 
-    for my $Ped (keys %Pedigrees ) {
-        for my $Ind (sort keys %{ $Pedigrees{$Ped} }) {
-            print OUT join(" ", ($Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom})) . " ";
-            print OUT
-              join(" ", ($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs}, $Pedigrees{$Ped}{$Ind}{nMs})) . " "
-              if ($Type eq "POST");
+    for my $Ped (sort numericIsh keys %Pedigrees ) {
+        for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
+            print OUT sprintf("%4s %3s %3s %3s ", $Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
+            print OUT sprintf("%3s %3s %3s ", $Pedigrees{$Ped}{$Ind}{Kid1}, 
+			      $Pedigrees{$Ped}{$Ind}{nPs}, $Pedigrees{$Ped}{$Ind}{nMs})
+		if ($Type eq "POST");
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
-	    print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " ";
+	    print OUT $Pedigrees{$Ped}{$Ind}{Aff} . "  ";
             my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
 	    for my $i (0 .. $PairCount - 1) {
-		my $Name = ;
 		next if (!$LociAttributes{$Loci[$i + 1]}{Included});
 		next if ($LociAttributes{$Loci[$i + 1]}{Type} eq "T");
 		next if ($LociAttributes{$Loci[$i + 1]}{Type} eq "A");
-		print OUT $Pairs[$i] . " "
+		print OUT $Pairs[$i] . "  "
 	    }
             print OUT "\n";
         }
@@ -1543,9 +1550,11 @@ GetOptions(
 	   'split=i'   => \$split,
 	   'write:s'   => \$write,
 	   ) or die "Invalid command line parameters.";
-if ($write != 0) {
-    $writePrefix = $write;
+if ($write ne "unspecified") {
+    $writePrefix = $write if ($write ne "");
     $write = 1;
+} else {
+    $write = 0;
 }
 @include = split(/,/,join(',',@include));
 @exclude = split(/,/,join(',',@exclude));
@@ -1595,7 +1604,7 @@ if (!scalar(@Loci)) {
 }
 
 #print Dumper(\@Loci);
-print Dumper(\%LociAttributes);
+#print Dumper(\%LociAttributes);
 
 checkRelations($pedFileType);
 checkIntegrity();
@@ -1616,12 +1625,14 @@ if ($nokelvin) {
 
 # Flag all of the markers for inclusion/exclusion
 if (scalar(@include)) {
+    print "Including\n";
     # First turn them all off
     for my $Name (@Loci) {
 	$LociAttributes{$Name}{Included} = 0;
     }
     # Then turn on what is requested
-    for $Name (@include) {
+    for my $Name (@include) {
+	$Name = sprintf("M%04d", $Name) if (!$config);
 	if (defined($LociAttributes{$Name}{Included})) {
 	    $LociAttributes{$Name}{Included} = 1;
 	} else {
@@ -1630,8 +1641,10 @@ if (scalar(@include)) {
     }
 }
 if (scalar(@exclude)) {
+    print "Excluding\n";
     # Turn off what is requested
-    for $Name (@exclude) {
+    for my $Name (@exclude) {
+	$Name = sprintf("M%04d", $Name) if (!$config);
 	if (defined($LociAttributes{$Name}{Included})) {
 	    $LociAttributes{$Name}{Included} = 0;
 	} else {
@@ -1640,11 +1653,10 @@ if (scalar(@exclude)) {
     }
 }
 
+#print Dumper(\%LociAttributes);
+
 if ($count) {
     bucketizePedigrees($pedFileType);
-    if ($write) {
-	writeBucketized($pedFileType);
-    }
 } elsif ($write) {
     writeExpanded($pedFileType);
 }
