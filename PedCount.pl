@@ -67,6 +67,7 @@ my %KnownDirectives = (
     HE    => \&NoAction,
     LC    => \&NoAction,
     LD    => \&NoAction,
+    LOG   => \&NoAction,
     MK    => \&NoAction,
     MM    => \&NoAction,
     MP    => \&NoAction,
@@ -803,6 +804,20 @@ sub numericIsh {
 }
 
 #####################################
+# Shamelessly stolen from an example on the Internet at http://snippets.dzone.com/posts/show/99
+sub expand {                                                              
+    my $Range = shift;            
+    my @Result; 
+    $Range =~ s/[^\d\-\,]//gs; #remove extraneous characters
+    my @Items = split(/,/,$Range);    
+    foreach (@Items){                 
+	m/^\d+$/ and push(@Result,$_) and next;
+	my ($Start, $Finish) = split /-/;
+	push(@Result,($Start .. $Finish)) if $Start < $Finish;    }                                 
+    return @Result;                        
+}
+
+#####################################
 # Start discovering statistics that might affect performance.
 #
 sub perfStats {
@@ -1409,12 +1424,6 @@ sub writeExpanded {
         system("makeped PC_pedigrees.Pre PC_pedigrees.Dat N");
     }
 
-    # If there was no configuration, create all of the supporting files
-    if ($config) {
-	print "Remember to modify your configuration file to specify the new files.\n";
-	return;
-    }
-
     open OUT, ">PC_data.Dat";
     for my $Name (@Loci) {
 	next if (!$LociAttributes{$Name}{Included});
@@ -1486,7 +1495,8 @@ where <flags> are any of:
 -stats		Print statistics on the make-up of the pedigree(s).
 -counts		Count genotypically identical pedigrees and print statistics.
 -include=<list>	Process only the markers named in the list. For pedigree file-only
-		runs, marker names are sequence numbers, e.g. 1,2,3,4. Can be specified
+		runs, marker names are sequence numbers, e.g. 2,3,4,7 (no spaces) 
+		and ranges like 2-4 can be specified as well. Can be specified
 		multiple times and all will apply.
 -exclude=<list> Process all markers except those named in the list. Can be specified
 		multiple times and all will apply. If both -include and -exclude are
@@ -1556,8 +1566,8 @@ if ($write ne "unspecified") {
 } else {
     $write = 0;
 }
-@include = split(/,/,join(',',@include));
-@exclude = split(/,/,join(',',@exclude));
+@include = expand(/,/,join(',',@include));
+@exclude = expand(/,/,join(',',@exclude));
 
 die "Invalid number of arguments supplied.\n$Usage" if ($#ARGV < 0);
 print "-config flag seen\n"                         if ($config);
@@ -1573,7 +1583,7 @@ print "-count flag seen\n"                          if ($count);
 print "-include list of ".Dumper(\@include)." seen\n" if (@include);
 print "-exclude list of ".Dumper(\@exclude)." seen\n" if (@exclude);
 print "-split of $split seen\n"                     if ($split);
-print "-write seen with \"$writePrefix\"prefix\n"   if ($write);
+print "-write seen, using \"$writePrefix\" prefix\n"   if ($write);
 die "-pre -post and -bare are mutually exclusive flags."
   if ($pre + $post + $bare > 1);
 
@@ -1625,7 +1635,6 @@ if ($nokelvin) {
 
 # Flag all of the markers for inclusion/exclusion
 if (scalar(@include)) {
-    print "Including\n";
     # First turn them all off
     for my $Name (@Loci) {
 	$LociAttributes{$Name}{Included} = 0;
@@ -1641,7 +1650,6 @@ if (scalar(@include)) {
     }
 }
 if (scalar(@exclude)) {
-    print "Excluding\n";
     # Turn off what is requested
     for my $Name (@exclude) {
 	$Name = sprintf("M%04d", $Name) if (!$config);
