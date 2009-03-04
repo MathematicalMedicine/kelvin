@@ -1725,9 +1725,9 @@ if (defined($Directives{SA}) || defined($Directives{SS})) {
 	    }
 	    # Do the work
 	    if ($count) {
-		bucketizePedigrees($pedFileType,  $WritePrefix . $SplitSet . "_");
+		bucketizePedigrees($pedFileType,  $WritePrefix . $SplitSet);
 	    } elsif ($write) {
-		writeExpanded($pedFileType, $WritePrefix . $SplitSet . "_");
+		writeExpanded($pedFileType, $WritePrefix . $SplitSet);
 	    }
 	    # Redo the inclusion
 	    doMarkerInclusion();
@@ -1737,9 +1737,9 @@ if (defined($Directives{SA}) || defined($Directives{SS})) {
     if ($IncludedMarkers != 0) {
 	# Do the rest
 	if ($count) {
-	    bucketizePedigrees($pedFileType,  $WritePrefix . $SplitSet . "_");
+	    bucketizePedigrees($pedFileType,  $WritePrefix . $SplitSet);
 	} elsif ($write) {
-	    writeExpanded($pedFileType, $WritePrefix . $SplitSet . "_");
+	    writeExpanded($pedFileType, $WritePrefix . $SplitSet);
 	}
     }
 }
