@@ -23,7 +23,7 @@ $| = 1;    # Force flush of output as printed.
 my $config = 0; my $pre = 0; my $post = 0; my $noparents = 0; my $XC = 0; 
 my $bare = 0; my $count = 0; my $write = "unspecified"; my $loops = 0; my $stats = 0;
 my $split = 0; my $nokelvin = 0; my @include = (); my @exclude = ();
-my $writePrefix = "PC";
+my $WritePrefix = "PC";
 
 # Permanent defaults
 use constant AttributeMissing => "0";    # For marker alleles and Sex
@@ -494,7 +494,7 @@ sub loadPedigree {
 
     while (<IN>) {
         $LineNo++;
-	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1024);
+	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
@@ -657,7 +657,7 @@ sub loadCompanion {
     %LociAttributes = ();
     while (<IN>) {
         $LineNo++;
-	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1024);
+	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
@@ -684,7 +684,7 @@ sub loadMarkers {
     my $AlleleCount = 0;
     while (<IN>) {
         $LineNo++;
-	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1024);
+	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         my @Tokens     = split /\s+/;
@@ -724,7 +724,7 @@ sub loadMap {
     my $LineNo = 0;
     while (<IN>) {
         $LineNo++;
-	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1024);
+	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
 	last if (/^\s*chr/i); # Reached the header for map data
@@ -1144,6 +1144,7 @@ sub bucketizePedigrees {
     );
 
     my $Type = shift();            # Pedigree type for writing
+    my $Prefix = shift(); # Uniqifying (what a word!) prefix for files
 
     # Verify that this is a 2pt analysis (default, so look for multipoint directives)
     die "Generation of counts not permitted for a multipoint analysis.\n"
@@ -1272,9 +1273,9 @@ sub bucketizePedigrees {
     # Now write-out at least the pedigree and counts
 
     if ($Type eq "POST") {
-        open OUT, ">PC_pedigrees.Dat";
+        open OUT, ">".$Prefix."_pedigrees.Dat";
     } else {
-        open OUT, ">PC_pedigrees.Pre";
+        open OUT, ">".$Prefix."_pedigrees.Pre";
     }
 
     # First the intact pedigrees
@@ -1314,11 +1315,11 @@ sub bucketizePedigrees {
     close OUT;
 
     if ($Type ne "POST") {
-        system("makeped PC_pedigrees.Pre PC_pedigrees.Dat N");
+        system("makeped ".$Prefix."_pedigrees.Pre ".$Prefix."_pedigrees.Dat N");
     }
 
     # Finally the counts.
-    open OUT, ">PC_counts.Dat";
+    open OUT, ">".$Prefix."_counts.Dat";
 
     print OUT "MARKER\t";
     for my $PB (sort numericIsh keys %Templates) {
@@ -1346,22 +1347,20 @@ sub bucketizePedigrees {
 	return;
     }
 
-    open OUT, ">PC_config.Dat";
+    open OUT, ">".$Prefix."_config.Dat";
+    print OUT "PD ".$Prefix."_pedigrees.Dat\n";
+    print OUT "DF ".$Prefix."_data.Dat\n";
+    print OUT "MK ".$Prefix."_markers.Dat\n";
+    print OUT "MP ".$Prefix."_map.Dat\n";
+    print OUT "CC ".$Prefix."_counts.Dat\n";
+    print OUT "HE ".$Prefix."_br.Out\n";
+    print OUT "PF ".$Prefix."_ppl.Out\n";
+
     print OUT <<EOF;
+PE
 TP # Two-point analysis
 Th 0 0.5 0.01
 LD -1 1 0.1
-
-PD PC_pedigrees.Dat
-DF PC_data.Dat
-MK PC_markers.Dat
-MP PC_map.Dat
-CC PC_counts.Dat
-
-PE
-
-HE PC_br.Out
-PF PC_ppl.Out
 
 # The rest is the standard analysis grid...
 GF 0.001;0.01;0.1;0.3;0.5;0.8
@@ -1380,14 +1379,14 @@ EOF
     print OUT "XC\n" if (defined($Directives{XC}) || $XC);
     close OUT;
 
-    open OUT, ">PC_data.Dat";
+    open OUT, ">".$Prefix."_data.Dat";
     for my $Name (@Loci) {
 	next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
     }
     close OUT;
 
-    open OUT, ">PC_markers.Dat";
+    open OUT, ">".$Prefix."_markers.Dat";
     for my $Name (@Loci) {
 	next if (!$LociAttributes{$Name}{Included});
         if ($LociAttributes{$Name}{Type} eq "M") {
@@ -1402,7 +1401,7 @@ EOF
     close OUT;
 
     #
-    open OUT, ">PC_map.Dat";
+    open OUT, ">".$Prefix."_map.Dat";
     print OUT "CHR MARKER KOSAMBI\n";
     for my $Name (@Loci) {
 	next if (!$LociAttributes{$Name}{Included});
@@ -1419,13 +1418,14 @@ EOF
 sub writeExpanded {
 
     my $Type = shift();            # Pedigree type for writing
+    my $Prefix = shift(); # Uniqifying (what a word!) prefix for files
 
     # Now write-out at least the pedigree and counts
 
     if ($Type eq "POST") {
-        open OUT, ">PC_pedigrees.Dat";
+        open OUT, ">".$Prefix."_pedigrees.Dat";
     } else {
-        open OUT, ">PC_pedigrees.Pre";
+        open OUT, ">".$Prefix."_pedigrees.Pre";
     }
 
     for my $Ped (sort numericIsh keys %Pedigrees ) {
@@ -1450,17 +1450,17 @@ sub writeExpanded {
     close OUT;
 
     if ($Type ne "POST") {
-        system("makeped PC_pedigrees.Pre PC_pedigrees.Dat N");
+        system("makeped ".$Prefix."_pedigrees.Pre ".$Prefix."_pedigrees.Dat N");
     }
 
-    open OUT, ">PC_data.Dat";
+    open OUT, ">".$Prefix."_data.Dat";
     for my $Name (@Loci) {
 	next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
     }
     close OUT;
 
-    open OUT, ">PC_markers.Dat";
+    open OUT, ">".$Prefix."_markers.Dat";
     for my $Name (@Loci) {
 	next if (!$LociAttributes{$Name}{Included});
         if ($LociAttributes{$Name}{Type} eq "M") {
@@ -1475,7 +1475,7 @@ sub writeExpanded {
     close OUT;
 
     #
-    open OUT, ">PC_map.Dat";
+    open OUT, ">".$Prefix."_map.Dat";
     print OUT "CHR MARKER KOSAMBI\n";
     for my $Name (@Loci) {
 	next if (!$LociAttributes{$Name}{Included});
@@ -1492,6 +1492,10 @@ sub writeExpanded {
 #
 sub doMarkerInclusion {
 
+    # Not starting with a guarenteed clean slate, so make sure they're all on
+    for my $Name (@Loci) {
+	$LociAttributes{$Name}{Included} = 1;
+    }
     if (scalar(@include)) {
 	# If we're doing inclusion, then turn them all off
 	for my $Name (@Loci) {
@@ -1505,11 +1509,6 @@ sub doMarkerInclusion {
 	    } else {
 		print "Marker \"$Name\" specified in -include list not found!\n";
 	    }
-	}
-    } else {
-	# Not doing inclusion, so make sure they're all on
-	for my $Name (@Loci) {
-	    $LociAttributes{$Name}{Included} = 1;
 	}
     }
     if (scalar(@exclude)) {
@@ -1631,7 +1630,7 @@ GetOptions(
 	   'write:s'   => \$write,
 	   ) or die "Invalid command line parameters.";
 if ($write ne "unspecified") {
-    $writePrefix = $write if ($write ne "");
+    $WritePrefix = $write if ($write ne "");
     $write = 1;
 } else {
     $write = 0;
@@ -1653,7 +1652,7 @@ print "-count flag seen\n"                          if ($count);
 print "-include list of ".Dumper(\@include)." seen\n" if (@include);
 print "-exclude list of ".Dumper(\@exclude)." seen\n" if (@exclude);
 print "-split of $split seen\n"                     if ($split);
-print "-write seen, using \"$writePrefix\" prefix\n"   if ($write);
+print "-write seen, using \"$WritePrefix\" prefix\n"   if ($write);
 die "-pre -post and -bare are mutually exclusive flags."
   if ($pre + $post + $bare > 1);
 
@@ -1720,12 +1719,28 @@ if (defined($Directives{SA}) || defined($Directives{SS})) {
     for my $i (1..$PairCount) {
 	if (($LociAttributes{$Loci[$i]}{Included}) && (++$IncludedMarkers >= $split)) {
 	    # Hit our limit, exclude all the rest
+	    $SplitSet++;
+	    for my $j (($i + 1)..$PairCount) {
+		$LociAttributes{$Loci[$j]}{Included} = 0;
+	    }
+	    # Do the work
+	    if ($count) {
+		bucketizePedigrees($pedFileType,  $WritePrefix . $SplitSet . "_");
+	    } elsif ($write) {
+		writeExpanded($pedFileType, $WritePrefix . $SplitSet . "_");
+	    }
+	    # Redo the inclusion
+	    doMarkerInclusion();
+	    $IncludedMarkers = 0;
 	}
     }
-    if ($count) {
-	bucketizePedigrees($pedFileType);
-    } elsif ($write) {
-	writeExpanded($pedFileType);
+    if ($IncludedMarkers != 0) {
+	# Do the rest
+	if ($count) {
+	    bucketizePedigrees($pedFileType,  $WritePrefix . $SplitSet . "_");
+	} elsif ($write) {
+	    writeExpanded($pedFileType, $WritePrefix . $SplitSet . "_");
+	}
     }
 }
 exit;
