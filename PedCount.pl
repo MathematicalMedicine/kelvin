@@ -1328,13 +1328,13 @@ sub bucketizePedigrees {
     print OUT "\n";
     for my $i (0 .. $PairCount - 1) {
 	next if (!$LociAttributes{$Loci[ $i + 1 ]}{Included});
-        print OUT $Loci[ $i + 1 ] . "\t";
+        print OUT $Loci[ $i + 1 ] . " ";
         for my $PB (sort numericIsh keys %Templates) {
             my $FB = $Loci[ $i + 1 ] . "_" . $PB;
             if (!defined($Buckets{$FB})) {
-                print OUT "0\t";
+                print OUT "  0 ";
             } else {
-                print OUT $Buckets{$FB} . "\t";
+                print OUT sprintf("%3d ", $Buckets{$FB});
             }
         }
         print OUT "\n";
@@ -1513,7 +1513,7 @@ sub doMarkerInclusion {
     }
     if (scalar(@exclude)) {
 	# Turn off what is requested
-	for my $Name (@exclude) {
+	for my $Name (my @copy = @exclude) {
 	    $Name = sprintf("M%04d", $Name) if (!$config);
 	    if (defined($LociAttributes{$Name}{Included})) {
 		$LociAttributes{$Name}{Included} = 0;
@@ -1635,8 +1635,13 @@ if ($write ne "unspecified") {
 } else {
     $write = 0;
 }
-@include = expand(/,/,join(',',@include)) if (@include);
-@exclude = expand(/,/,join(',',@exclude)) if (@exclude);
+
+#@include = split(',',join(',',@include)); # No support for ranges
+#@exclude = split(',',join(',',@exclude));
+@include = expand(join(',',@include)) if (scalar(@include)); # Support for ranges
+@exclude = expand(join(',',@exclude)) if (scalar(@exclude));
+
+$Data::Dumper::Sortkeys = 1;
 
 die "Invalid number of arguments supplied.\n$Usage" if ($#ARGV < 0);
 print "-config flag seen\n"                         if ($config);
@@ -1715,7 +1720,8 @@ if (defined($Directives{SA}) || defined($Directives{SS})) {
     # on the command line so we can "split" the analysis into one piece
     # and not have redundant code.
     $split = $PairCount if (!$split);
-    my $IncludedMarkers = 0; my $SplitSet = 0;
+    my $IncludedMarkers = 0; # Number of markers included thus-far
+    my $SplitSet = 0; # Sequence number of set of markers
     for my $i (1..$PairCount) {
 	if (($LociAttributes{$Loci[$i]}{Included}) && (++$IncludedMarkers >= $split)) {
 	    # Hit our limit, exclude all the rest
@@ -1729,13 +1735,18 @@ if (defined($Directives{SA}) || defined($Directives{SS})) {
 	    } elsif ($write) {
 		writeExpanded($pedFileType, $WritePrefix . $SplitSet);
 	    }
-	    # Redo the inclusion
+	    # Redo the inclusion...
 	    doMarkerInclusion();
+	    # ...and exclusion up to current
+	    for my $j (0..$i) {
+		$LociAttributes{$Loci[$j]}{Included} = 0;
+	    }
 	    $IncludedMarkers = 0;
 	}
     }
     if ($IncludedMarkers != 0) {
 	# Do the rest
+	$SplitSet++;
 	if ($count) {
 	    bucketizePedigrees($pedFileType,  $WritePrefix . $SplitSet);
 	} elsif ($write) {
