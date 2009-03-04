@@ -385,8 +385,9 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
 	  break;
 	}
       }
-      KASSERT (found == TRUE, "Couldn't find marker %s in locus list.\n",
-	       sLocusName);
+      // This is not really a problem, because we could have a very large marker list
+      //      KASSERT (found == TRUE, "Couldn't find marker %s in locus list.\n",
+      //	       sLocusName);
     } else if (sscanf (line, "F %lf %n", &freq, &pos) == 1) {
       /* add the allele */
       sprintf (sAlleleName, "%d", allele);
