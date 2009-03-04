@@ -1267,7 +1267,7 @@ sub bucketizePedigrees {
         );
     }
 
-    return if ($write);
+    return if (!$write);
 
     # Now write-out at least the pedigree and counts
 
