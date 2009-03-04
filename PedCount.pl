@@ -30,12 +30,14 @@ use constant AttributeMissing => "0";    # For marker alleles and Sex
 
 # Defaults to be overridden by configuration file directives
 my $pedFile          = "pedpost.dat";
+my $mapFile          = "mapfile.dat";
 my $companionFile    = "datafile.dat";
 my $markersFile      = "markers.dat";    # Default input files
 my $UnknownAffection = 0;
 my $Unaffected       = 1;
 my $Affected         = 2;                # Default affection indicators
 my $UnknownPerson    = "0";              # Default unknown person indicator
+my $MapFunction = "Kosambi, bless his heart!";
 
 # Read/calculated results
 my %Pedigrees;                           # Pedigrees as loaded
@@ -43,6 +45,7 @@ my %Directives;                          # Directives as loaded
 my $PairCount = 0;                       # Last pedigree count of marker pairs
 my @Loci;                                # Ordered loci name list from companion file
 my %LociAttributes;                      # Loci attributes from companion and marker files
+my %Map; # Loci on the map and other map attributes
 
 # Nuisances to fix
 my @Depths;                              # Referenced recursively and I'm fuddled
@@ -688,6 +691,7 @@ sub loadMarkers {
         my $RecordType = shift @Tokens;
         if ($RecordType eq "M") {
             $Name = shift @Tokens;
+	    die "Marker $Name at line $LineNo of $File not found in map file.\n" if (!defined($Map{$Name}{Pos}));
 	    $AlleleCount = 0;
         } elsif ($RecordType eq "F") { # List of unnamed allele frequencies
             if (defined($LociAttributes{$Name}{Frequencies})) {
@@ -709,6 +713,31 @@ sub loadMarkers {
     }
     close IN;
 }
+
+#####################################
+# Open and read the map file for completeness' sake.
+#
+sub loadMap {
+    my $File = shift();
+    die "$File is not a file." if (!-f $File);
+    open IN, "<$File" || die "Cannot open file $File\n";
+    my $LineNo = 0;
+    while (<IN>) {
+        $LineNo++;
+	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1024);
+        s/\s*\#.*//g;    # Trim comments
+        next if (/^$/);  # Drop empty lines
+	last if (/^\s*chr/i); # Reached the header for map data
+	($MapFunction) = /^\s*mapfunction\s*=\s*(.*)$/i;
+    }
+    while (<IN>) {
+	my ($Chr, $Marker, $Pos) = split /\s+/;
+	$Map{$Marker}{Chr} = $Chr;
+	$Map{$Marker}{Pos} = $Pos;
+    }
+    close IN;
+}
+
 
 #####################################
 # Check inter-file integrity, i.e. affectation and markers
@@ -1458,6 +1487,45 @@ sub writeExpanded {
 }
 
 #####################################
+# Process -include and -exclude options to indicate which markers are
+# important.
+#
+sub doMarkerInclusion {
+
+    if (scalar(@include)) {
+	# If we're doing inclusion, then turn them all off
+	for my $Name (@Loci) {
+	    $LociAttributes{$Name}{Included} = 0;
+	}
+	# Then turn on what is requested
+	for my $Name (@include) {
+	    $Name = sprintf("M%04d", $Name) if (!$config);
+	    if (defined($LociAttributes{$Name}{Included})) {
+		$LociAttributes{$Name}{Included} = 1;
+	    } else {
+		print "Marker \"$Name\" specified in -include list not found!\n";
+	    }
+	}
+    } else {
+	# Not doing inclusion, so make sure they're all on
+	for my $Name (@Loci) {
+	    $LociAttributes{$Name}{Included} = 1;
+	}
+    }
+    if (scalar(@exclude)) {
+	# Turn off what is requested
+	for my $Name (@exclude) {
+	    $Name = sprintf("M%04d", $Name) if (!$config);
+	    if (defined($LociAttributes{$Name}{Included})) {
+		$LociAttributes{$Name}{Included} = 0;
+	    } else {
+		print "Marker \"$Name\" specified in -exclude list not found!\n";
+	    }
+	}
+    }
+}
+
+#####################################
 # Check for kelvin constraints. This is just a convenient front-end for
 # kelvin as it should still check for absolute constraints, i.e. those
 # that no-one should be violating. This first tier of checking is more
@@ -1490,7 +1558,7 @@ where <flags> are any of:
 -XC		This is a sex-linked (X-chromosome) analysis
 -bare		The pedigree file has only individual, affection status and marker
 		allele pairs columns.
--nokelvin	Skip verification that kelvin can handle analysis.
+-nokelvin	Skip verification that kelvin can handle the analysis.
 -loops		Check for consanguinity and marriage loops and print them if found.
 -stats		Print statistics on the make-up of the pedigree(s).
 -counts		Count genotypically identical pedigrees and print statistics.
@@ -1502,7 +1570,9 @@ where <flags> are any of:
 		multiple times and all will apply. If both -include and -exclude are
 		specified, the processing order will be includes then excludes.
 -split=<n>	Split a two-point multiple-marker analysis into subsets of
-		<n> markers each.
+		<n> markers each. For multipoint analysis, subsets are by marker
+		groups, i.e. all requested trait loci that use the same set of markers,
+		and <n> is the number of marker groups per analysis.
 -write=[<prefix>] Write new files, optionally with prefix <prefix> instead of "PC".
 		If -count was specified, genotypically identical pedigrees will be
 		reduced to a single representative and a count file will be produced. 
@@ -1566,8 +1636,8 @@ if ($write ne "unspecified") {
 } else {
     $write = 0;
 }
-@include = expand(/,/,join(',',@include));
-@exclude = expand(/,/,join(',',@exclude));
+@include = expand(/,/,join(',',@include)) if (@include);
+@exclude = expand(/,/,join(',',@exclude)) if (@exclude);
 
 die "Invalid number of arguments supplied.\n$Usage" if ($#ARGV < 0);
 print "-config flag seen\n"                         if ($config);
@@ -1589,20 +1659,19 @@ die "-pre -post and -bare are mutually exclusive flags."
 
 if ($config) {
     my $ConfFile = shift;
-    print "Processing configuration file $ConfFile\n";
     loadConf($ConfFile);
     if (defined($Directives{DF}[0])) { $companionFile = $Directives{DF}[0]; }
     loadCompanion($companionFile);
+    if (defined($Directives{MP}[0])) { $mapFile = $Directives{MP}[0]; }
+    loadMap($mapFile);
     if (defined($Directives{MK}[0])) { $markersFile = $Directives{MK}[0]; }
     loadMarkers($markersFile);
     if (defined($Directives{PD}[0])) { $pedFile = $Directives{PD}[0]; }
 } else {
     $pedFile = shift;
-    print "Processing pedigree file $pedFile\n";
 }
 
 my $pedFileType = assessPedigree($pedFile);
-print "Processing $pedFileType format pedigree file\n";
 loadPedigree($pedFile, $pedFileType);
 
 #print Dumper(\%Pedigrees);
@@ -1633,40 +1702,30 @@ if ($nokelvin) {
     kelvinConstraints();
 }
 
-# Flag all of the markers for inclusion/exclusion
-if (scalar(@include)) {
-    # First turn them all off
-    for my $Name (@Loci) {
-	$LociAttributes{$Name}{Included} = 0;
+doMarkerInclusion();
+
+if (defined($Directives{SA}) || defined($Directives{SS})) {
+    if ($split) {
+	die "The -split option is not yet implemented for multipoint.\n";
+    } else {
+	die "Generation of counts not permitted for a multipoint analysis.\n" if ($count);
+	writeExpanded($pedFileType) if ($write);
     }
-    # Then turn on what is requested
-    for my $Name (@include) {
-	$Name = sprintf("M%04d", $Name) if (!$config);
-	if (defined($LociAttributes{$Name}{Included})) {
-	    $LociAttributes{$Name}{Included} = 1;
-	} else {
-	    print "Marker \"$Name\" specified in -include list not found!\n";
+} else {
+    # Set split to the count of marker loci if it's not specified
+    # on the command line so we can "split" the analysis into one piece
+    # and not have redundant code.
+    $split = $PairCount if (!$split);
+    my $IncludedMarkers = 0; my $SplitSet = 0;
+    for my $i (1..$PairCount) {
+	if (($LociAttributes{$Loci[$i]}{Included}) && (++$IncludedMarkers >= $split)) {
+	    # Hit our limit, exclude all the rest
 	}
     }
-}
-if (scalar(@exclude)) {
-    # Turn off what is requested
-    for my $Name (@exclude) {
-	$Name = sprintf("M%04d", $Name) if (!$config);
-	if (defined($LociAttributes{$Name}{Included})) {
-	    $LociAttributes{$Name}{Included} = 0;
-	} else {
-	    print "Marker \"$Name\" specified in -exclude list not found!\n";
-	}
+    if ($count) {
+	bucketizePedigrees($pedFileType);
+    } elsif ($write) {
+	writeExpanded($pedFileType);
     }
 }
-
-#print Dumper(\%LociAttributes);
-
-if ($count) {
-    bucketizePedigrees($pedFileType);
-} elsif ($write) {
-    writeExpanded($pedFileType);
-}
-
 exit;
