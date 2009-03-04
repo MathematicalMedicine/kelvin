@@ -20,9 +20,20 @@ $| = 1;    # Force flush of output as printed.
 # Sanctioned globals
 
 # Command line option flags
-my $config = 0; my $pre = 0; my $post = 0; my $noparents = 0; my $XC = 0; 
-my $bare = 0; my $count = 0; my $write = "unspecified"; my $loops = 0; my $stats = 0;
-my $split = 0; my $nokelvin = 0; my @include = (); my @exclude = ();
+my $config      = 0;
+my $pre         = 0;
+my $post        = 0;
+my $noparents   = 0;
+my $XC          = 0;
+my $bare        = 0;
+my $count       = 0;
+my $write       = "unspecified";
+my $loops       = 0;
+my $stats       = 0;
+my $split       = 0;
+my $nokelvin    = 0;
+my @include     = ();
+my @exclude     = ();
 my $WritePrefix = "PC";
 
 # Permanent defaults
@@ -32,25 +43,25 @@ use constant AttributeMissing => "0";    # For marker alleles and Sex
 my $pedFile          = "pedpost.dat";
 my $mapFile          = "mapfile.dat";
 my $companionFile    = "datafile.dat";
-my $markersFile      = "markers.dat";    # Default input files
+my $markersFile      = "markers.dat";                 # Default input files
 my $UnknownAffection = 0;
 my $Unaffected       = 1;
-my $Affected         = 2;                # Default affection indicators
-my $UnknownPerson    = "0";              # Default unknown person indicator
-my $MapFunction = "Kosambi, bless his heart!";
+my $Affected         = 2;                             # Default affection indicators
+my $UnknownPerson    = "0";                           # Default unknown person indicator
+my $MapFunction      = "Kosambi, bless his heart!";
 
 # Read/calculated results
-my %Pedigrees;                           # Pedigrees as loaded
-my %Directives;                          # Directives as loaded
-my $PairCount = 0;                       # Last pedigree count of marker pairs
-my @Loci;                                # Ordered loci name list from companion file
-my %LociAttributes;                      # Loci attributes from companion and marker files
-my %Map; # Loci on the map and other map attributes
+my %Pedigrees;                                        # Pedigrees as loaded
+my %Directives;                                       # Directives as loaded
+my $PairCount = 0;                                    # Last pedigree count of marker pairs
+my @Loci;                                             # Ordered loci name list from companion file
+my %LociAttributes;                                   # Loci attributes from companion and marker files
+my %Map;                                              # Loci on the map and other map attributes
 
 # Nuisances to fix
-my @Depths;                              # Referenced recursively and I'm fuddled
-my @Ancestors;                           # ditto
-my $ShortestLoop = "";                   # Just batted around too much to monkey with right now.
+my @Depths;                                           # Referenced recursively and I'm fuddled
+my @Ancestors;                                        # ditto
+my $ShortestLoop = "";                                # Just batted around too much to monkey with right now.
 
 # Known directives as well as dispatch routine if needed. I could avoid the NoActions, but
 # I prefer to be explicit.
@@ -445,7 +456,7 @@ sub assessPedigree {
             die "Invalid number of columns in post-MAKEPED pedigree file $File."
               if (($TotalColumns < 12) || ($TotalColumns & 1));
             die
-              "Inconsistent column counts between companion datafile $companionFile and post-MAKEPED pedigree file $pedFile."
+              "Inconsistent column counts ($MarkerColumns of $TotalColumns are markers) between companion datafile $companionFile and post-MAKEPED pedigree file $pedFile."
               if ($config && (($TotalColumns - $MarkerColumns) != 10));
             return "POST";
         } elsif ($bare) {
@@ -488,13 +499,13 @@ sub loadPedigree {
     open IN, "<$File" || die "Cannot open file $File\n";
     my $LineNo = 0;
     %Pedigrees = ();
-    my $AlC = 0; # Number of alleles
-    my $GtC = 0; # Number of genotyped alleles
+    my $AlC = 0;    # Number of alleles
+    my $GtC = 0;    # Number of genotyped alleles
     my ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Alleles);
 
     while (<IN>) {
         $LineNo++;
-	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
+        print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
@@ -517,7 +528,7 @@ sub loadPedigree {
           if ( (!defined($Directives{QT}))
             && (($Aff != $UnknownAffection) && ($Aff != $Unaffected) && ($Aff != $Affected)));
 
-	# Handle marker pairs
+        # Handle marker pairs
         my ($OldFam, $OldInd, $Left);
         $AlC = 0;
         $GtC = 0;
@@ -529,25 +540,29 @@ sub loadPedigree {
                 last;
             }
             $AlC++;
-	    if ($Allele ne AttributeMissing) {
-		$GtC++; # Keep track of how much genotypic information we have for this individual
-		my $Name = "";
-		if (!$config) {
-		    # We need to fake-up @Loci and %LociAttributes so we can still translate from 
-		    # named to sequenced alleles. After all, alleles could be "2" and "foo".
-		    $Name = int(($AlC + 1.5) / 2); # Offset == Name
-		    if (!defined($LociAttributes{$Name}{Alleles}{$Allele})) {
-			# If this allele is not already know, it's the next one sequentially
-			$LociAttributes{$Name}{Alleles}{$Allele} = scalar(keys %{ $LociAttributes{$Name}{Alleles} }) + 1;
-		    }
-		} else {
-		    $Name = $Loci[int(($AlC + 1.5) / 2)]; # Integer division, thank you
-		}
-		# Translate the allele to a sequence number
-		$Allele = $LociAttributes{$Name}{Alleles}{$Allele};
-	    }
+            if ($Allele ne AttributeMissing) {
+                $GtC++;    # Keep track of how much genotypic information we have for this individual
+                my $Name = "";
+                if (!$config) {
 
-	    # Pair-up the alleles
+                    # We need to fake-up @Loci and %LociAttributes so we can still translate from
+                    # named to sequenced alleles. After all, alleles could be "2" and "foo".
+                    $Name = int(($AlC + 1.5) / 2);    # Offset == Name
+                    if (!defined($LociAttributes{$Name}{Alleles}{$Allele})) {
+
+                        # If this allele is not already know, it's the next one sequentially
+                        $LociAttributes{$Name}{Alleles}{$Allele} =
+                          scalar(keys %{ $LociAttributes{$Name}{Alleles} }) + 1;
+                    }
+                } else {
+                    $Name = $Loci[ int(($AlC + 1.5) / 2) ];    # Integer division, thank you
+                }
+
+                # Translate the allele to a sequence number
+                $Allele = $LociAttributes{$Name}{Alleles}{$Allele};
+            }
+
+            # Pair-up the alleles
             if ($AlC & 1) {
                 $Left = $Allele;
             } else {
@@ -616,21 +631,21 @@ sub loadPedigree {
 # dimensional hash %LociAttributes.
 #
 sub deriveLociAndAttributes {
-    @Loci                        = ();
-    %LociAttributes              = ();
-    $Loci[0]                     = "Trait";
-    $LociAttributes{Trait}{Type} = "T";
+    @Loci                            = ();
+    %LociAttributes                  = ();
+    $Loci[0]                         = "Trait";
+    $LociAttributes{Trait}{Type}     = "T";
     $LociAttributes{Trait}{Included} = 0;
     for my $i (0 .. $PairCount - 1) {
         $Loci[ $i + 1 ] = sprintf("M%04d", $i + 1);
-        $LociAttributes{ $Loci[ $i + 1 ] }{Type} = "M";
+        $LociAttributes{ $Loci[ $i + 1 ] }{Type}     = "M";
         $LociAttributes{ $Loci[ $i + 1 ] }{Included} = 1;
         my @HaploCounts = (0); # List works because they must be numeric (relative position of frequency in marker file)
         for my $Ped (keys %Pedigrees) {
             for my $Ind (keys %{ $Pedigrees{$Ped} }) {
                 next if ($Pedigrees{$Ped}{$Ind}{Aff} != $Unaffected);
                 my ($Left, $Right) = split /\s+/, $Pedigrees{$Ped}{$Ind}{Mks}[$i];
-                $HaploCounts[$Left]++  if ($Left ne AttributeMissing);
+                $HaploCounts[$Left]++  if ($Left  ne AttributeMissing);
                 $HaploCounts[$Right]++ if ($Right ne AttributeMissing);
             }
         }
@@ -652,12 +667,13 @@ sub loadCompanion {
     my $File = shift();
     die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
-    my $LineNo = 0; my $Order = 0;
+    my $LineNo = 0;
+    my $Order  = 0;
     @Loci           = ();
     %LociAttributes = ();
     while (<IN>) {
         $LineNo++;
-	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
+        print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
@@ -665,7 +681,7 @@ sub loadCompanion {
         die "Unknown locus type \"$Type\" at line $LineNo in marker description companion file $File\n"
           if (($Type ne "T") and ($Type ne "A") and ($Type ne "M"));
         push @Loci, $Name;
-        $LociAttributes{$Name}{Type} = $Type;
+        $LociAttributes{$Name}{Type}     = $Type;
         $LociAttributes{$Name}{Included} = 1;
     }
     close IN;
@@ -679,35 +695,36 @@ sub loadMarkers {
     my $File = shift();
     die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
-    my $LineNo = 0;
-    my $Name   = "";
+    my $LineNo      = 0;
+    my $Name        = "";
     my $AlleleCount = 0;
     while (<IN>) {
         $LineNo++;
-	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
+        print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         my @Tokens     = split /\s+/;
         my $RecordType = shift @Tokens;
         if ($RecordType eq "M") {
             $Name = shift @Tokens;
-	    die "Marker $Name at line $LineNo of $File not found in map file.\n" if (!defined($Map{$Name}{Pos}));
-	    $AlleleCount = 0;
-        } elsif ($RecordType eq "F") { # List of unnamed allele frequencies
+            die "Marker $Name at line $LineNo of $File not found in map file.\n" if (!defined($Map{$Name}{Pos}));
+            $AlleleCount = 0;
+        } elsif ($RecordType eq "F") {    # List of unnamed allele frequencies
             if (defined($LociAttributes{$Name}{Frequencies})) {
                 $LociAttributes{$Name}{Frequencies} = [ (@{ $LociAttributes{$Name}{Frequencies} }, @Tokens) ];
             } else {
                 $LociAttributes{$Name}{Frequencies} = [@Tokens];
             }
-	    # Dummy-up names so we know we'll always have them
-	    for (1..scalar(@Tokens)) {
-		$AlleleCount++;
-		$LociAttributes{$Name}{Alleles}{$AlleleCount} = $AlleleCount;
-	    }
-        } elsif ($RecordType eq "A") { # Named allele and frequency
-	    push @{ $LociAttributes{$Name}{Frequencies} }, $Tokens[1];
-	    $LociAttributes{$Name}{Alleles}{$Tokens[0]} = ++$AlleleCount;
-	} else {
+
+            # Dummy-up names so we know we'll always have them
+            for (1 .. scalar(@Tokens)) {
+                $AlleleCount++;
+                $LociAttributes{$Name}{Alleles}{$AlleleCount} = $AlleleCount;
+            }
+        } elsif ($RecordType eq "A") {    # Named allele and frequency
+            push @{ $LociAttributes{$Name}{Frequencies} }, $Tokens[1];
+            $LociAttributes{$Name}{Alleles}{ $Tokens[0] } = ++$AlleleCount;
+        } else {
             die "Unknown record type \"$RecordType\" at line $LineNo in marker file $File\n";
         }
     }
@@ -724,20 +741,19 @@ sub loadMap {
     my $LineNo = 0;
     while (<IN>) {
         $LineNo++;
-	print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
+        print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
         s/\s*\#.*//g;    # Trim comments
-        next if (/^$/);  # Drop empty lines
-	last if (/^\s*chr/i); # Reached the header for map data
-	($MapFunction) = /^\s*mapfunction\s*=\s*(.*)$/i;
+        next if (/^$/);          # Drop empty lines
+        last if (/^\s*chr/i);    # Reached the header for map data
+        ($MapFunction) = /^\s*mapfunction\s*=\s*(.*)$/i;
     }
     while (<IN>) {
-	my ($Chr, $Marker, $Pos) = split /\s+/;
-	$Map{$Marker}{Chr} = $Chr;
-	$Map{$Marker}{Pos} = $Pos;
+        my ($Chr, $Marker, $Pos) = split /\s+/;
+        $Map{$Marker}{Chr} = $Chr;
+        $Map{$Marker}{Pos} = $Pos;
     }
     close IN;
 }
-
 
 #####################################
 # Check inter-file integrity, i.e. affectation and markers
@@ -826,24 +842,25 @@ sub numerically { $a <=> $b }
 
 sub numericIsh {
     if (($a . $b) =~ /^\d+$/) {
-	$a <=> $b;
+        $a <=> $b;
     } else {
-	$a cmp $b;
+        $a cmp $b;
     }
 }
 
 #####################################
 # Shamelessly stolen from an example on the Internet at http://snippets.dzone.com/posts/show/99
-sub expand {                                                              
-    my $Range = shift;            
-    my @Result; 
-    $Range =~ s/[^\d\-\,]//gs; #remove extraneous characters
-    my @Items = split(/,/,$Range);    
-    foreach (@Items){                 
-	m/^\d+$/ and push(@Result,$_) and next;
-	my ($Start, $Finish) = split /-/;
-	push(@Result,($Start .. $Finish)) if $Start < $Finish;    }                                 
-    return @Result;                        
+sub expand {
+    my $Range = shift;
+    my @Result;
+    $Range =~ s/[^\d\-\,]//gs;    #remove extraneous characters
+    my @Items = split(/,/, $Range);
+    foreach (@Items) {
+        m/^\d+$/ and push(@Result, $_) and next;
+        my ($Start, $Finish) = split /-/;
+        push(@Result, ($Start .. $Finish)) if $Start < $Finish;
+    }
+    return @Result;
 }
 
 #####################################
@@ -878,9 +895,9 @@ sub perfStats {
             } else {
                 $PedCat{$Ped}{NoFdrs}++;
             }
-            if ($Pedigrees{$Ped}{$Ind}{GtC} == 0)                 { $PedCat{$Ped}{MsgMkr}++; }
+            if ($Pedigrees{$Ped}{$Ind}{GtC} == 0) { $PedCat{$Ped}{MsgMkr}++; }
             if ($Pedigrees{$Ped}{$Ind}{Aff} == $UnknownAffection) { $PedCat{$Ped}{MsgAff}++; }
-            if ($Pedigrees{$Ped}{$Ind}{Sex} ne AttributeMissing)  { $PedCat{$Ped}{MsgSex}++; }
+            if ($Pedigrees{$Ped}{$Ind}{Sex} ne AttributeMissing) { $PedCat{$Ped}{MsgSex}++; }
         }
         push @PedSiz, scalar(keys(%{ $Pedigrees{$Ped} }));
         push @PedNuk, scalar(keys(%Seen));
@@ -930,26 +947,26 @@ sub perfStats {
 # are converted to a single pedigree and a weight (count) for each marker.
 # Currently works only for two-point analysis because it would be a real
 # trick for there to be many pedigrees where multiple markers all fit the
-# same inheritance pattern. 
+# same inheritance pattern.
 #
 # The traditional analyses for which this was designed are:
-# 1. Case/Control, where unrelated genotyped and phenotyped individuals are 
+# 1. Case/Control, where unrelated genotyped and phenotyped individuals are
 # divided into cases and controls and fall into one of 6 inheritance pattern
 # buckets normally, 10 for X chromosome analysis.
 # 2. Trios are 3-member pedigrees with one affected child both parents treated
 # as if unaffected. They fall into one of 30 inheritance pattern buckets
 # normally, and 44 for X chromosome analysis.
-# 3. ASPs (Affected Sibling Pairs) are essentially expanded trios, i.e. 4-member 
-# pedigrees with two affected children and both parents in 
-# any affectation category, which will fall first into one of the 3-member 
+# 3. ASPs (Affected Sibling Pairs) are essentially expanded trios, i.e. 4-member
+# pedigrees with two affected children and both parents in
+# any affectation category, which will fall first into one of the 3-member
 # trio buckets for the first child, and then a second 3-member bucket
-# with the same parentage for the second child, e.g. T30 and then T18. This 
+# with the same parentage for the second child, e.g. T30 and then T18. This
 # is used to identify a unique 4-person bucket by ordering the 3-member
 # numbers, e.g. T18-T30, because a family falling into T30 and then T18 is the
 # same as one falling into T18 and then T30. This extends to any number
 # of children of a single-generation family.
 #
-# Affectation status is handled by concatenating it to either the parental or 
+# Affectation status is handled by concatenating it to either the parental or
 # child portion of the bucket name. Gender is handled for XC
 # analysis by the same approach, i.e. concatenating it to either the parental
 # or child portion of the bucket name. Ultimately we end-up with bucket names
@@ -1058,8 +1075,8 @@ sub bucketizePedigrees {
         },
     );
 
-    # This bucket hash is a bit misleading because it uses the full-genotype 
-    # notation even though the individual might be male and therefore have 
+    # This bucket hash is a bit misleading because it uses the full-genotype
+    # notation even though the individual might be male and therefore have
     # only one allele for the X chromosome.
     # When determining XC buckets, alleles and parent counts but phase doesn't (i.e.
     # 11+22=22 != 22+11=22 and 11+11=11 != 22+22=22, but 12+11=12 == 21+11=12).
@@ -1143,8 +1160,8 @@ sub bucketizePedigrees {
         },
     );
 
-    my $Type = shift();            # Pedigree type for writing
-    my $Prefix = shift(); # Uniqifying (what a word!) prefix for files
+    my $Type   = shift();          # Pedigree type for writing
+    my $Prefix = shift();          # Uniqifying (what a word!) prefix for files
 
     # Verify that this is a 2pt analysis (default, so look for multipoint directives)
     die "Generation of counts not permitted for a multipoint analysis.\n"
@@ -1152,7 +1169,7 @@ sub bucketizePedigrees {
 
     # Verify that all markers are present and only biallelic...
     for my $Name (@Loci) {
-	next if (!$LociAttributes{$Name}{Included});
+        next if (!$LociAttributes{$Name}{Included});
         next if ($LociAttributes{$Name}{Type} eq "T");
         next if ($LociAttributes{$Name}{Type} eq "A");
         die "No allele information found for marker $Name for count generation.\n"
@@ -1220,7 +1237,6 @@ sub bucketizePedigrees {
                     my $MomAlleles = $Pedigrees{$Ped}{$Mom}{Mks}[$i];
                     ($MomAlleles eq '2 1') and $MomAlleles = '1 2';
 
-#                        print "Get trio bucket for $MomAlleles $DadAlleles $ChildAlleles\n";
                     my $TrioBucket;
                     if (defined($Directives{XC}) || $XC) {
                         $TrioBucket = $XCTrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
@@ -1234,7 +1250,6 @@ sub bucketizePedigrees {
                         exit;
                     }
 
-#			print "Pedigree $Ped / Marker ".$Loci[$i+1]." child $Ind (".$MomAlleles."-".$DadAlleles."-".$ChildAlleles.") gets bucket $TrioBucket\n";
                     # Add a child affection prefix and maybe a gender for XC analysis
                     if (defined($Directives{XC}) || $XC) {
                         push @bucketList, $TrioBucket . "-" . $Pedigrees{$Ped}{$Ind}{Sex} . $Pedigrees{$Ped}{$Ind}{Aff};
@@ -1257,7 +1272,7 @@ sub bucketizePedigrees {
         print "Bucketizing cannot reduce your pedigree count.\n";
     } else {
         print sprintf(
-            "Bucketizing can reduce your evaluation count from %d to %d, or by %2d%%\n",
+            "Bucketizing reduces evaluation count from %d to %d, or by %2d%%\n",
             scalar(keys %Pedigrees) * $PairCount,
             (scalar(keys %Buckets) + (scalar(@Skippies) * $PairCount)),
             100 - (
@@ -1273,12 +1288,12 @@ sub bucketizePedigrees {
     # Now write-out at least the pedigree and counts
 
     if ($Type eq "POST") {
-        open OUT, ">".$Prefix."_pedigrees.Dat";
+        open OUT, ">" . $Prefix . "_pedigrees.Dat";
     } else {
-        open OUT, ">".$Prefix."_pedigrees.Pre";
+        open OUT, ">" . $Prefix . "_pedigrees.Pre";
     }
 
-    # First the intact pedigrees
+    # First the intact (skipped) pedigrees
     for my $Ped (@Skippies) {
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             print OUT join(" ", ($Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom})) . " ";
@@ -1287,13 +1302,13 @@ sub bucketizePedigrees {
               if ($Type eq "POST");
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
+
 # &&& TBS CHANGE THIS TO LOOP OVER Loci &&&
             print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", @{ $Pedigrees{$Ped}{$Ind}{Mks} }) . "\n";
         }
     }
 
     # Next the template pedigrees
-    print "Writing $Type pedigree\n";
     for my $PB (sort numericIsh keys %Templates) {
         my $Ped    = $Templates{$PB}{Ped};
         my $PairID = $Templates{$PB}{PairID};
@@ -1306,6 +1321,7 @@ sub bucketizePedigrees {
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
             my $Pair = " " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
+
 # &&& TBS CHANGE THIS TO USE REDUCED COUNT &&&
             print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", $Pair x $PairCount) . " ";
             print OUT "Ped: $PedSeq Per: $Ind";
@@ -1315,11 +1331,11 @@ sub bucketizePedigrees {
     close OUT;
 
     if ($Type ne "POST") {
-        system("makeped ".$Prefix."_pedigrees.Pre ".$Prefix."_pedigrees.Dat N");
+        system("makeped " . $Prefix . "_pedigrees.Pre " . $Prefix . "_pedigrees.Dat N");
     }
 
     # Finally the counts.
-    open OUT, ">".$Prefix."_counts.Dat";
+    open OUT, ">" . $Prefix . "_counts.Dat";
 
     print OUT "MARKER\t";
     for my $PB (sort numericIsh keys %Templates) {
@@ -1327,7 +1343,7 @@ sub bucketizePedigrees {
     }
     print OUT "\n";
     for my $i (0 .. $PairCount - 1) {
-	next if (!$LociAttributes{$Loci[ $i + 1 ]}{Included});
+        next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
         print OUT $Loci[ $i + 1 ] . " ";
         for my $PB (sort numericIsh keys %Templates) {
             my $FB = $Loci[ $i + 1 ] . "_" . $PB;
@@ -1343,18 +1359,18 @@ sub bucketizePedigrees {
 
     # If there was no configuration, create all of the supporting files
     if ($config) {
-	print "Remember to modify your configuration file to specify the new pedigree and count files.\n";
-	return;
+        print "Remember to modify your configuration file to specify the new pedigree and count files.\n";
+        return;
     }
 
-    open OUT, ">".$Prefix."_config.Dat";
-    print OUT "PD ".$Prefix."_pedigrees.Dat\n";
-    print OUT "DF ".$Prefix."_data.Dat\n";
-    print OUT "MK ".$Prefix."_markers.Dat\n";
-    print OUT "MP ".$Prefix."_map.Dat\n";
-    print OUT "CC ".$Prefix."_counts.Dat\n";
-    print OUT "HE ".$Prefix."_br.Out\n";
-    print OUT "PF ".$Prefix."_ppl.Out\n";
+    open OUT, ">" . $Prefix . "_config.Dat";
+    print OUT "PD " . $Prefix . "_pedigrees.Dat\n";
+    print OUT "DF " . $Prefix . "_data.Dat\n";
+    print OUT "MK " . $Prefix . "_markers.Dat\n";
+    print OUT "MP " . $Prefix . "_map.Dat\n";
+    print OUT "CC " . $Prefix . "_counts.Dat\n";
+    print OUT "HE " . $Prefix . "_br.Out\n";
+    print OUT "PF " . $Prefix . "_ppl.Out\n";
 
     print OUT <<EOF;
 PE
@@ -1379,16 +1395,16 @@ EOF
     print OUT "XC\n" if (defined($Directives{XC}) || $XC);
     close OUT;
 
-    open OUT, ">".$Prefix."_data.Dat";
+    open OUT, ">" . $Prefix . "_data.Dat";
     for my $Name (@Loci) {
-	next if (!$LociAttributes{$Name}{Included});
+        next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
     }
     close OUT;
 
-    open OUT, ">".$Prefix."_markers.Dat";
+    open OUT, ">" . $Prefix . "_markers.Dat";
     for my $Name (@Loci) {
-	next if (!$LociAttributes{$Name}{Included});
+        next if (!$LociAttributes{$Name}{Included});
         if ($LociAttributes{$Name}{Type} eq "M") {
             print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
             print OUT "F";
@@ -1401,10 +1417,10 @@ EOF
     close OUT;
 
     #
-    open OUT, ">".$Prefix."_map.Dat";
+    open OUT, ">" . $Prefix . "_map.Dat";
     print OUT "CHR MARKER KOSAMBI\n";
     for my $Name (@Loci) {
-	next if (!$LociAttributes{$Name}{Included});
+        next if (!$LociAttributes{$Name}{Included});
         if ($LociAttributes{$Name}{Type} eq "M") {
             print OUT "1 $Name 1\n";
         }
@@ -1412,57 +1428,58 @@ EOF
     close OUT;
 }
 
-
 #####################################
 #
 sub writeExpanded {
 
-    my $Type = shift();            # Pedigree type for writing
-    my $Prefix = shift(); # Uniqifying (what a word!) prefix for files
+    my $Type   = shift();    # Pedigree type for writing
+    my $Prefix = shift();    # Uniqifying (what a word!) prefix for files
 
     # Now write-out at least the pedigree and counts
 
     if ($Type eq "POST") {
-        open OUT, ">".$Prefix."_pedigrees.Dat";
+        open OUT, ">" . $Prefix . "_pedigrees.Dat";
     } else {
-        open OUT, ">".$Prefix."_pedigrees.Pre";
+        open OUT, ">" . $Prefix . "_pedigrees.Pre";
     }
 
-    for my $Ped (sort numericIsh keys %Pedigrees ) {
+    for my $Ped (sort numericIsh keys %Pedigrees) {
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             print OUT sprintf("%4s %3s %3s %3s ", $Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
-            print OUT sprintf("%3s %3s %3s ", $Pedigrees{$Ped}{$Ind}{Kid1}, 
-			      $Pedigrees{$Ped}{$Ind}{nPs}, $Pedigrees{$Ped}{$Ind}{nMs})
-		if ($Type eq "POST");
+            print OUT sprintf("%3s %3s %3s ",
+                $Pedigrees{$Ped}{$Ind}{Kid1},
+                $Pedigrees{$Ped}{$Ind}{nPs},
+                $Pedigrees{$Ped}{$Ind}{nMs})
+              if ($Type eq "POST");
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
-	    print OUT $Pedigrees{$Ped}{$Ind}{Aff} . "  ";
+            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . "  ";
             my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
-	    for my $i (0 .. $PairCount - 1) {
-		next if (!$LociAttributes{$Loci[$i + 1]}{Included});
-		next if ($LociAttributes{$Loci[$i + 1]}{Type} eq "T");
-		next if ($LociAttributes{$Loci[$i + 1]}{Type} eq "A");
-		print OUT $Pairs[$i] . "  "
-	    }
+            for my $i (0 .. $PairCount - 1) {
+                next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
+                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "T");
+                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "A");
+                print OUT $Pairs[$i] . "  ";
+            }
             print OUT "\n";
         }
     }
     close OUT;
 
     if ($Type ne "POST") {
-        system("makeped ".$Prefix."_pedigrees.Pre ".$Prefix."_pedigrees.Dat N");
+        system("makeped " . $Prefix . "_pedigrees.Pre " . $Prefix . "_pedigrees.Dat N");
     }
 
-    open OUT, ">".$Prefix."_data.Dat";
+    open OUT, ">" . $Prefix . "_data.Dat";
     for my $Name (@Loci) {
-	next if (!$LociAttributes{$Name}{Included});
+        next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
     }
     close OUT;
 
-    open OUT, ">".$Prefix."_markers.Dat";
+    open OUT, ">" . $Prefix . "_markers.Dat";
     for my $Name (@Loci) {
-	next if (!$LociAttributes{$Name}{Included});
+        next if (!$LociAttributes{$Name}{Included});
         if ($LociAttributes{$Name}{Type} eq "M") {
             print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
             print OUT "F";
@@ -1474,11 +1491,10 @@ sub writeExpanded {
     }
     close OUT;
 
-    #
-    open OUT, ">".$Prefix."_map.Dat";
+    open OUT, ">" . $Prefix . "_map.Dat";
     print OUT "CHR MARKER KOSAMBI\n";
     for my $Name (@Loci) {
-	next if (!$LociAttributes{$Name}{Included});
+        next if (!$LociAttributes{$Name}{Included});
         if ($LociAttributes{$Name}{Type} eq "M") {
             print OUT "1 $Name 1\n";
         }
@@ -1494,33 +1510,36 @@ sub doMarkerInclusion {
 
     # Not starting with a guarenteed clean slate, so make sure they're all on
     for my $Name (@Loci) {
-	$LociAttributes{$Name}{Included} = 1;
+        $LociAttributes{$Name}{Included} = 1;
     }
     if (scalar(@include)) {
-	# If we're doing inclusion, then turn them all off
-	for my $Name (@Loci) {
-	    $LociAttributes{$Name}{Included} = 0;
-	}
-	# Then turn on what is requested
-	for my $Name (@include) {
-	    $Name = sprintf("M%04d", $Name) if (!$config);
-	    if (defined($LociAttributes{$Name}{Included})) {
-		$LociAttributes{$Name}{Included} = 1;
-	    } else {
-		print "Marker \"$Name\" specified in -include list not found!\n";
-	    }
-	}
+
+        # If we're doing inclusion, then turn them all off
+        for my $Name (@Loci) {
+            $LociAttributes{$Name}{Included} = 0;
+        }
+
+        # Then turn on what is requested
+        for my $Name (@include) {
+            $Name = sprintf("M%04d", $Name) if (!$config);
+            if (defined($LociAttributes{$Name}{Included})) {
+                $LociAttributes{$Name}{Included} = 1;
+            } else {
+                print "Marker \"$Name\" specified in -include list not found!\n";
+            }
+        }
     }
     if (scalar(@exclude)) {
-	# Turn off what is requested
-	for my $Name (my @copy = @exclude) {
-	    $Name = sprintf("M%04d", $Name) if (!$config);
-	    if (defined($LociAttributes{$Name}{Included})) {
-		$LociAttributes{$Name}{Included} = 0;
-	    } else {
-		print "Marker \"$Name\" specified in -exclude list not found!\n";
-	    }
-	}
+
+        # Turn off what is requested
+        for my $Name (my @copy = @exclude) {
+            $Name = sprintf("M%04d", $Name) if (!$config);
+            if (defined($LociAttributes{$Name}{Included})) {
+                $LociAttributes{$Name}{Included} = 0;
+            } else {
+                print "Marker \"$Name\" specified in -exclude list not found!\n";
+            }
+        }
     }
 }
 
@@ -1532,11 +1551,14 @@ sub doMarkerInclusion {
 # misleading results or take millenia to complete.
 #
 sub kelvinConstraints {
+
     # General limitations
     if (defined($Directives{DK})) {
-	# Integration (DK) analysis limitations
+
+        # Integration (DK) analysis limitations
     } else {
-	# Iterative (classic Kelvin) analysis limitations
+
+        # Iterative (classic Kelvin) analysis limitations
     }
 }
 
@@ -1614,21 +1636,21 @@ PC_config.Dat - template kelvin config file.
 EOF
 
 GetOptions(
-	   'config'    => \$config,
-	   'pre'       => \$pre,
-	   'post'      => \$post,
-	   'noparents' => \$noparents,
-	   'XC'        => \$XC,
-	   'bare'      => \$bare,
-	   'nokelvin'  => \$nokelvin,
-	   'loops'     => \$loops,
-	   'stats'     => \$stats,
-	   'count'     => \$count,
-	   'include=s' => \@include,
-	   'exclude=s' => \@exclude,
-	   'split=i'   => \$split,
-	   'write:s'   => \$write,
-	   ) or die "Invalid command line parameters.";
+    'config'    => \$config,
+    'pre'       => \$pre,
+    'post'      => \$post,
+    'noparents' => \$noparents,
+    'XC'        => \$XC,
+    'bare'      => \$bare,
+    'nokelvin'  => \$nokelvin,
+    'loops'     => \$loops,
+    'stats'     => \$stats,
+    'count'     => \$count,
+    'include=s' => \@include,
+    'exclude=s' => \@exclude,
+    'split=i'   => \$split,
+    'write:s'   => \$write,
+) or die "Invalid command line parameters.";
 if ($write ne "unspecified") {
     $WritePrefix = $write if ($write ne "");
     $write = 1;
@@ -1638,26 +1660,26 @@ if ($write ne "unspecified") {
 
 #@include = split(',',join(',',@include)); # No support for ranges
 #@exclude = split(',',join(',',@exclude));
-@include = expand(join(',',@include)) if (scalar(@include)); # Support for ranges
-@exclude = expand(join(',',@exclude)) if (scalar(@exclude));
+@include = expand(join(',', @include)) if (scalar(@include));    # Support for ranges
+@exclude = expand(join(',', @exclude)) if (scalar(@exclude));
 
 $Data::Dumper::Sortkeys = 1;
 
-die "Invalid number of arguments supplied.\n$Usage" if ($#ARGV < 0);
-print "-config flag seen\n"                         if ($config);
-print "-pre flag seen\n"                            if ($pre);
-print "-post flag seen\n"                           if ($post);
-print "-noparents flag seen\n"                      if ($noparents);
-print "-XC flag seen\n"                             if ($XC);
-print "-bare flag seen\n"                           if ($bare);
-print "-nokelvin flag seen\n"                       if ($nokelvin);
-print "-loops flag seen\n"                          if ($loops);
-print "-stats flag seen\n"                          if ($stats);
-print "-count flag seen\n"                          if ($count);
-print "-include list of ".Dumper(\@include)." seen\n" if (@include);
-print "-exclude list of ".Dumper(\@exclude)." seen\n" if (@exclude);
-print "-split of $split seen\n"                     if ($split);
-print "-write seen, using \"$WritePrefix\" prefix\n"   if ($write);
+die "Invalid number of arguments supplied.\n$Usage"       if ($#ARGV < 0);
+print "-config flag seen\n"                               if ($config);
+print "-pre flag seen\n"                                  if ($pre);
+print "-post flag seen\n"                                 if ($post);
+print "-noparents flag seen\n"                            if ($noparents);
+print "-XC flag seen\n"                                   if ($XC);
+print "-bare flag seen\n"                                 if ($bare);
+print "-nokelvin flag seen\n"                             if ($nokelvin);
+print "-loops flag seen\n"                                if ($loops);
+print "-stats flag seen\n"                                if ($stats);
+print "-count flag seen\n"                                if ($count);
+print "-include list of " . Dumper(\@include) . " seen\n" if (@include);
+print "-exclude list of " . Dumper(\@exclude) . " seen\n" if (@exclude);
+print "-split of $split seen\n"                           if ($split);
+print "-write seen, using \"$WritePrefix\" prefix\n"      if ($write);
 die "-pre -post and -bare are mutually exclusive flags."
   if ($pre + $post + $bare > 1);
 
@@ -1710,48 +1732,56 @@ doMarkerInclusion();
 
 if (defined($Directives{SA}) || defined($Directives{SS})) {
     if ($split) {
-	die "The -split option is not yet implemented for multipoint.\n";
+        die "The -split option is not yet implemented for multipoint.\n";
     } else {
-	die "Generation of counts not permitted for a multipoint analysis.\n" if ($count);
-	writeExpanded($pedFileType) if ($write);
+        die "Generation of counts not permitted for a multipoint analysis.\n" if ($count);
+        writeExpanded($pedFileType) if ($write);
     }
 } else {
+
     # Set split to the count of marker loci if it's not specified
     # on the command line so we can "split" the analysis into one piece
     # and not have redundant code.
     $split = $PairCount if (!$split);
-    my $IncludedMarkers = 0; # Number of markers included thus-far
-    my $SplitSet = 0; # Sequence number of set of markers
-    for my $i (1..$PairCount) {
-	if (($LociAttributes{$Loci[$i]}{Included}) && (++$IncludedMarkers >= $split)) {
-	    # Hit our limit, exclude all the rest
-	    $SplitSet++;
-	    for my $j (($i + 1)..$PairCount) {
-		$LociAttributes{$Loci[$j]}{Included} = 0;
-	    }
-	    # Do the work
-	    if ($count) {
-		bucketizePedigrees($pedFileType,  $WritePrefix . $SplitSet);
-	    } elsif ($write) {
-		writeExpanded($pedFileType, $WritePrefix . $SplitSet);
-	    }
-	    # Redo the inclusion...
-	    doMarkerInclusion();
-	    # ...and exclusion up to current
-	    for my $j (0..$i) {
-		$LociAttributes{$Loci[$j]}{Included} = 0;
-	    }
-	    $IncludedMarkers = 0;
-	}
+    my $IncludedMarkers = 0;    # Number of markers included thus-far
+    my $SplitSet        = 0;    # Sequence number of set of markers
+    for my $i (1 .. $PairCount) {
+        if (($LociAttributes{ $Loci[$i] }{Included}) && (++$IncludedMarkers >= $split)) {
+
+            # Hit our limit, exclude all the rest
+            for my $j (($i + 1) .. $PairCount) {
+                $LociAttributes{ $Loci[$j] }{Included} = 0;
+            }
+
+            # Do the work
+            if ($count) {
+		print "Counting marker set " . (++$SplitSet) . "\n";
+                bucketizePedigrees($pedFileType, $WritePrefix . $SplitSet);
+            } elsif ($write) {
+		print "Writing marker set " . (++$SplitSet) . "\n";
+                writeExpanded($pedFileType, $WritePrefix . $SplitSet);
+            }
+
+            # Redo the inclusion...
+            doMarkerInclusion();
+
+            # ...and exclusion up to current
+            for my $j (0 .. $i) {
+                $LociAttributes{ $Loci[$j] }{Included} = 0;
+            }
+            $IncludedMarkers = 0;
+        }
     }
     if ($IncludedMarkers != 0) {
-	# Do the rest
-	$SplitSet++;
-	if ($count) {
-	    bucketizePedigrees($pedFileType,  $WritePrefix . $SplitSet);
-	} elsif ($write) {
-	    writeExpanded($pedFileType, $WritePrefix . $SplitSet);
-	}
+
+        # Do the rest
+        if ($count) {
+	    print "Counting marker set " . (++$SplitSet) . "\n";
+            bucketizePedigrees($pedFileType, $WritePrefix . $SplitSet);
+        } elsif ($write) {
+	    print "Writing marker set " . (++$SplitSet) . "\n";
+            writeExpanded($pedFileType, $WritePrefix . $SplitSet);
+        }
     }
 }
 exit;
