@@ -252,11 +252,18 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
       memcpy (&next_marker, &brfiles[0].curmarker, sizeof (st_brmarker));
     }
     
+    if (verbose >= 2)
+      printf ("first marker to update is %s\n", next_marker.name2);
+    
     numcurrent = 0;
     alldone = 1;
     for (fileno = 0; fileno < numbrfiles; fileno++) {
-      if (! brfiles[fileno].eof)
-	alldone = 0;
+      if (brfiles[fileno].eof) {
+	if (verbose >= 3)
+	  printf ("%s is at EOF\n", brfiles[fileno].name);
+	continue;
+      }
+      alldone = 0;
       if (compare_markers (&next_marker, &brfiles[fileno].curmarker) == -1) {
 	if (mapinfile != NULL)
 	  continue;
@@ -507,12 +514,16 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     } else {
       memcpy (&next_marker, &brfiles[0].curmarker, sizeof (st_brmarker));
     }
-    
+
     numcurrent = 0;
     alldone = 1;
     for (fileno = 0; fileno < numbrfiles; fileno++) {
-      if (! brfiles[fileno].eof)
-	alldone = 0;
+      if (brfiles[fileno].eof) {
+	if (verbose >= 3)
+	  printf ("%s is at EOF\n", brfiles[fileno].name);
+	continue;
+      }
+      alldone = 0;
       if (compare_markers (&next_marker, &brfiles[fileno].curmarker) == -1) {
 	if (mapinfile != NULL)
 	  continue;
@@ -704,6 +715,8 @@ void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas
     fprintf (stderr, "fseek on file '%s' failed, %s\n", brfile->name, strerror (errno));
     exit (-1);
   }
+  if (brfile->eof)
+    brfile->eof = 0;
   brfile->lineno = lineno;
   return;
 }
@@ -738,6 +751,8 @@ void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas
      fprintf (stderr, "fseek on file '%s' failed, %s\n", brfile->name, strerror (errno));
      exit (-1);
    }
+   if (brfile->eof)
+     brfile->eof = 0;
    brfile->lineno = lineno;
    return;
  }
@@ -1094,7 +1109,7 @@ int parse_command_line (int argc, char **argv)
   struct option cmdline[] = { { "sexspecific", 0, &long_arg, OPT_SEXSPEC },
 			      { "multipoint", 0, &long_arg, OPT_MULTI },
 			      { "relax", 1, &long_arg, OPT_RELAX },
-			      { "allstats", 1, &long_arg, OPT_ALLSTATS },
+			      { "allstats", 0, &long_arg, OPT_ALLSTATS },
 			      { "okelvin", 0, &long_arg, OPT_OKELVIN },
 			      { "verbose", 1, &long_arg, OPT_VERBOSE },
 			      { "prior", 1, &long_arg, OPT_PRIOR },
