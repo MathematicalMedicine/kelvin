@@ -385,10 +385,15 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
 	  break;
 	}
       }
-      // This is not really a problem, because we could have a very large marker list
-      //      KASSERT (found == TRUE, "Couldn't find marker %s in locus list.\n",
-      //	       sLocusName);
+      /*
+	This is not really a problem, because we could have a very large marker list.
+	We just need to skip storage of unused marker alleles.
+	
+	KASSERT (found == TRUE, "Couldn't find marker %s in locus list.\n",
+	sLocusName);
+      */
     } else if (sscanf (line, "F %lf %n", &freq, &pos) == 1) {
+      if (!found) continue; // Don't bother with unused marker alleles
       /* add the allele */
       sprintf (sAlleleName, "%d", allele);
       add_allele (pLocus, sAlleleName, freq);
@@ -403,6 +408,7 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
 	pLine = pLine + pos;
       }
     } else if (sscanf (line, "A %s %lf", sAlleleName, &freq) == 2) {
+      if (!found) continue; // Don't bother with unused marker alleles
       add_allele (pLocus, sAlleleName, freq);
     }
   }				/* continue reading input */
