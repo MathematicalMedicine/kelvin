@@ -1293,9 +1293,11 @@ sub bucketizePedigrees {
     print Dumper(\%LociAttributes);
     for my $Ped (@Skippies) {
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
-            print OUT join(" ", ($Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom})) . " ";
-            print OUT
-              join(" ", ($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs}, $Pedigrees{$Ped}{$Ind}{nMs})) . " "
+            print OUT sprintf("%4s %3s %3s %3s ", $Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
+            print OUT sprintf("%3s %3s %3s ",
+                $Pedigrees{$Ped}{$Ind}{Kid1},
+                $Pedigrees{$Ped}{$Ind}{nPs},
+                $Pedigrees{$Ped}{$Ind}{nMs})
               if ($Type eq "POST");
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
@@ -1318,7 +1320,7 @@ sub bucketizePedigrees {
 		    print OUT AttributeMissing."  ";
 		}
             }
-            print OUT "\n";
+            print OUT "Ped: $Ped Per: $Ind\n";
         }
     }
 
@@ -1328,9 +1330,11 @@ sub bucketizePedigrees {
         my $PairID = $Templates{$PB}{PairID};
         my $PedSeq = $Templates{$PB}{PedSeq};
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
-            print OUT join(" ", ($PB, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom})) . " ";
-            print OUT
-              join(" ", ($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs}, $Pedigrees{$Ped}{$Ind}{nMs})) . " "
+            print OUT sprintf("%4s %3s %3s %3s ", $PB, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
+            print OUT sprintf("%3s %3s %3s ",
+                $Pedigrees{$Ped}{$Ind}{Kid1},
+                $Pedigrees{$Ped}{$Ind}{nPs},
+                $Pedigrees{$Ped}{$Ind}{nMs})
               if ($Type eq "POST");
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
@@ -1472,10 +1476,18 @@ sub writeExpanded {
                 next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "A");
 #                print OUT $Pairs[$i] . "  ";
 		my ($Left, $Right) = split(/ /, $Pairs[$i]);
-		print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left}." ".
-		    $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right}."  ";
+		if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
+		    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left}." ";
+		} else {
+		    print OUT AttributeMissing." ";
+		}
+		if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
+		    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right}."  ";
+		} else {
+		    print OUT AttributeMissing."  ";
+		}
             }
-            print OUT "\n";
+            print OUT "Ped: $Ped Per: $Ind\n";
         }
     }
     close OUT;
