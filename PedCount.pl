@@ -54,8 +54,8 @@ my $MapFunction      = "Kosambi, bless his heart!";
 my %Pedigrees;                                        # Pedigrees as loaded
 my %Directives;                                       # Directives as loaded
 my $PairCount = 0;                                    # Last pedigree count of marker pairs
-my @Loci;                                             # Ordered loci name list from companion file
-my %LociAttributes;                                   # Loci attributes from companion and marker files
+my @Loci = ('Trait');                                 # Ordered loci name list from companion file
+my %LociAttributes = ('Trait' => { 'Type' => 'T' } );  # Loci attributes from companion and marker files
 my %Map;                                              # Loci on the map and other map attributes
 
 # Nuisances to fix
@@ -533,7 +533,7 @@ sub loadPedigree {
         $AlC = 0;
         $GtC = 0;
         my @Pairs = ();
-        for my $Allele (@Alleles) {
+        for my $Allele (my @copy = @Alleles) {
             if ($Allele eq "Ped:") {
                 $OldFam = $Alleles[ $AlC + 1 ];
                 $OldInd = $Alleles[ $AlC + 3 ];
@@ -547,9 +547,9 @@ sub loadPedigree {
 
                     # We need to fake-up @Loci and %LociAttributes so we can still translate from
                     # named to sequenced alleles. After all, alleles could be "2" and "foo".
-                    $Name = int(($AlC + 1.5) / 2);    # Offset == Name
+                    $Name = sprintf("M%04d", int(($AlC + 1.5) / 2));    # Offset == Name
+		    push @Loci, "$Name" if (scalar(@Loci) <= int(($AlC + 1.5) / 2));
                     if (!defined($LociAttributes{$Name}{Alleles}{$Allele})) {
-
                         # If this allele is not already know, it's the next one sequentially
                         $LociAttributes{$Name}{Alleles}{$Allele} =
                           scalar(keys %{ $LociAttributes{$Name}{Alleles} }) + 1;
@@ -626,20 +626,13 @@ sub loadPedigree {
 }
 
 #####################################
-# Derive a list of loci and marker alleles and frequencies from the pedigree itself
-# and store the names in the global list @Loci and attributes in the global two-
-# dimensional hash %LociAttributes.
+# Derive a allele frequencies from pedigree data.
 #
-sub deriveLociAndAttributes {
-    @Loci                            = ();
-    %LociAttributes                  = ();
-    $Loci[0]                         = "Trait";
-    $LociAttributes{Trait}{Type}     = "T";
-    $LociAttributes{Trait}{Included} = 0;
+sub deriveAlleleFrequencies {
     for my $i (0 .. $PairCount - 1) {
-        $Loci[ $i + 1 ] = sprintf("M%04d", $i + 1);
         $LociAttributes{ $Loci[ $i + 1 ] }{Type}     = "M";
         $LociAttributes{ $Loci[ $i + 1 ] }{Included} = 1;
+	$LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{"0"} = 0;
         my @HaploCounts = (0); # List works because they must be numeric (relative position of frequency in marker file)
         for my $Ped (keys %Pedigrees) {
             for my $Ind (keys %{ $Pedigrees{$Ped} }) {
@@ -1244,10 +1237,9 @@ sub bucketizePedigrees {
                         $TrioBucket = $TrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
                     }
                     if (!defined($TrioBucket)) {
-                        print "Couldn't find a bucket for pedigree $Ped, individual $Ind marker "
+                        die "Couldn't find a bucket for pedigree $Ped, individual $Ind marker "
                           . $Loci[ $i + 1 ]
                           . ", [M]/[D]/[C] [$MomAlleles]/[$DadAlleles]/[$ChildAlleles], probably a Mendelian error!\n";
-                        exit;
                     }
 
                     # Add a child affection prefix and maybe a gender for XC analysis
@@ -1302,9 +1294,18 @@ sub bucketizePedigrees {
               if ($Type eq "POST");
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
-
-# &&& TBS CHANGE THIS TO LOOP OVER Loci &&&
-            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", @{ $Pedigrees{$Ped}{$Ind}{Mks} }) . "\n";
+            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . "  ";
+            my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
+            for my $i (0 .. $PairCount - 1) {
+                next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
+                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "T");
+                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "A");
+#                print OUT $Pairs[$i] . "  ";
+		my ($Left, $Right) = split(/ /, $Pairs[$i]);
+		print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left}." ".
+		    $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right}."  ";
+            }
+            print OUT "\n";
         }
     }
 
@@ -1321,9 +1322,7 @@ sub bucketizePedigrees {
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
             my $Pair = " " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
-
-# &&& TBS CHANGE THIS TO USE REDUCED COUNT &&&
-            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", $Pair x $PairCount) . " ";
+            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", $Pair x $split) . " ";
             print OUT "Ped: $PedSeq Per: $Ind";
             print OUT " # Template $PB\n";
         }
@@ -1459,7 +1458,10 @@ sub writeExpanded {
                 next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
                 next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "T");
                 next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "A");
-                print OUT $Pairs[$i] . "  ";
+#                print OUT $Pairs[$i] . "  ";
+		my ($Left, $Right) = split(/ /, $Pairs[$i]);
+		print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left}." ".
+		    $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right}."  ";
             }
             print OUT "\n";
         }
@@ -1520,7 +1522,7 @@ sub doMarkerInclusion {
         }
 
         # Then turn on what is requested
-        for my $Name (@include) {
+        for my $Name (my @copy = @include) {
             $Name = sprintf("M%04d", $Name) if (!$config);
             if (defined($LociAttributes{$Name}{Included})) {
                 $LociAttributes{$Name}{Included} = 1;
@@ -1702,14 +1704,14 @@ loadPedigree($pedFile, $pedFileType);
 
 #print Dumper(\%Pedigrees);
 
-if (!scalar(@Loci)) {
+if (!$config) {
 
     # Make-up @Loci and %LociAttributes if we have to...
-    deriveLociAndAttributes();
+    deriveAlleleFrequencies();
 }
 
-#print Dumper(\@Loci);
-#print Dumper(\%LociAttributes);
+print Dumper(\@Loci);
+print Dumper(\%LociAttributes);
 
 checkRelations($pedFileType);
 checkIntegrity();
