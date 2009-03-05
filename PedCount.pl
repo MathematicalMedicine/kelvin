@@ -540,24 +540,24 @@ sub loadPedigree {
                 last;
             }
             $AlC++;
+	    my $Name;
+	    if (!$config) {
+		$Name = sprintf("M%04d", int(($AlC + 1) / 2));    # Offset == Name
+		push @Loci, "$Name" if (scalar(@Loci) <= int(($AlC + 1) / 2));
+	    } else {
+		$Name = $Loci[int(($AlC + 1.5) / 2)]; # Integer division, thank you
+	    }
             if ($Allele ne AttributeMissing) {
                 $GtC++;    # Keep track of how much genotypic information we have for this individual
-                my $Name = "";
                 if (!$config) {
-
                     # We need to fake-up @Loci and %LociAttributes so we can still translate from
                     # named to sequenced alleles. After all, alleles could be "2" and "foo".
-                    $Name = sprintf("M%04d", int(($AlC + 1.5) / 2));    # Offset == Name
-		    push @Loci, "$Name" if (scalar(@Loci) <= int(($AlC + 1.5) / 2));
                     if (!defined($LociAttributes{$Name}{Alleles}{$Allele})) {
                         # If this allele is not already know, it's the next one sequentially
                         $LociAttributes{$Name}{Alleles}{$Allele} =
                           scalar(keys %{ $LociAttributes{$Name}{Alleles} }) + 1;
                     }
-                } else {
-                    $Name = $Loci[ int(($AlC + 1.5) / 2) ];    # Integer division, thank you
                 }
-
                 # Translate the allele to a sequence number
                 $Allele = $LociAttributes{$Name}{Alleles}{$Allele};
             }
@@ -1168,7 +1168,7 @@ sub bucketizePedigrees {
         die "No allele information found for marker $Name for count generation.\n"
           if (!defined($LociAttributes{$Name}{Frequencies}));
         die "Marker $Name not biallelic, not permitted for count generation.\n"
-          if (scalar(@{ $LociAttributes{$Name}{Frequencies} }) != 2);
+          if (scalar(@{ $LociAttributes{$Name}{Frequencies} }) > 2);
     }
 
     my %Buckets   = ();    # Fully-funkified bucket names with encoded everything
@@ -1710,8 +1710,8 @@ if (!$config) {
     deriveAlleleFrequencies();
 }
 
-print Dumper(\@Loci);
-print Dumper(\%LociAttributes);
+#print Dumper(\@Loci);
+#print Dumper(\%LociAttributes);
 
 checkRelations($pedFileType);
 checkIntegrity();
