@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Getopt::Long;
-use List::Util qw(sum);
+use List::Util qw(sum min);
 use Data::Dumper;
 
 #####################################
@@ -497,7 +497,7 @@ sub loadPedigree {
     my $Type = shift();
     die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
-    my $LineNo = 0;
+    my $LineNo = 0; my $ColumnCount = 0;
     %Pedigrees = ();
     my $AlC = 0;    # Number of alleles
     my $GtC = 0;    # Number of genotyped alleles
@@ -509,13 +509,17 @@ sub loadPedigree {
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
+	my @Columns = split /\s+/;
+	$ColumnCount = scalar(@Columns) if (!$ColumnCount);
+	die "Inconsistent number of columns in $File at line $LineNo, was $ColumnCount, is ".scalar(@Columns)."\n"
+	    if ($ColumnCount != scalar(@Columns));
         if ($Type eq "POST") {
-            ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Alleles) = split /\s+/;
+            ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Alleles) = @Columns;
             die "Pedigree line $LineNo: proband must be numeric, not \"$Prb\"." if (!($Prb =~ /[0-9]/));
         } elsif ($Type eq "PRE") {
-            ($Ped, $Ind, $Dad, $Mom, $Sex, $Aff, @Alleles) = split /\s+/;
+            ($Ped, $Ind, $Dad, $Mom, $Sex, $Aff, @Alleles) = @Columns;
         } elsif ($Type eq "BARE") {
-            ($Ind, $Aff, @Alleles) = split /\s+/;
+            ($Ind, $Aff, @Alleles) = @Columns;
             $Ped = $Ind;
         } else {
             die "Unhandled pedigree type \"$Type\".";
@@ -1250,7 +1254,7 @@ sub bucketizePedigrees {
                     }
                 }
             }
-            my $PedBucket = $PAP . "/" . join("+", sort (@bucketList));
+            my $PedBucket = $PAP . "_" . join("+", sort (@bucketList));
             $Buckets{ $Loci[ $i + 1 ] . "_" . $PedBucket }++;
             if (!defined($Templates{$PedBucket})) {
                 $Templates{$PedBucket}{Ped}    = $Ped;
@@ -1286,6 +1290,7 @@ sub bucketizePedigrees {
     }
 
     # First the intact (skipped) pedigrees
+    print Dumper(\%LociAttributes);
     for my $Ped (@Skippies) {
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             print OUT join(" ", ($Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom})) . " ";
@@ -1302,8 +1307,16 @@ sub bucketizePedigrees {
                 next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "A");
 #                print OUT $Pairs[$i] . "  ";
 		my ($Left, $Right) = split(/ /, $Pairs[$i]);
-		print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left}." ".
-		    $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right}."  ";
+		if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
+		    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left}." ";
+		} else {
+		    print OUT AttributeMissing." ";
+		}
+		if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
+		    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right}."  ";
+		} else {
+		    print OUT AttributeMissing."  ";
+		}
             }
             print OUT "\n";
         }
@@ -1315,16 +1328,15 @@ sub bucketizePedigrees {
         my $PairID = $Templates{$PB}{PairID};
         my $PedSeq = $Templates{$PB}{PedSeq};
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
-            print OUT join(" ", ($PedSeq, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom})) . " ";
+            print OUT join(" ", ($PB, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom})) . " ";
             print OUT
               join(" ", ($Pedigrees{$Ped}{$Ind}{Kid1}, $Pedigrees{$Ped}{$Ind}{nPs}, $Pedigrees{$Ped}{$Ind}{nMs})) . " "
               if ($Type eq "POST");
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
-            my $Pair = " " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
-            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", $Pair x $split) . " ";
-            print OUT "Ped: $PedSeq Per: $Ind";
-            print OUT " # Template $PB\n";
+            my $Pair = "  " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
+            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", $Pair x min($split, $PairCount)) . "   ";
+            print OUT "Ped: $PB Per: $Ind\n";
         }
     }
     close OUT;
@@ -1336,9 +1348,9 @@ sub bucketizePedigrees {
     # Finally the counts.
     open OUT, ">" . $Prefix . "_counts.Dat";
 
-    print OUT "MARKER\t";
+    print OUT "MARKER ";
     for my $PB (sort numericIsh keys %Templates) {
-        print OUT $Templates{$PB}{PedSeq} . "\t";
+        print OUT $PB . " ";
     }
     print OUT "\n";
     for my $i (0 .. $PairCount - 1) {
@@ -1634,6 +1646,10 @@ PC_data.Dat - pedigree companion data file indicating loci column usage.
 PC_markers.Dat - marker data with allele freqs from unaffected (control) individuals.
 PC_map.Dat - minimal dummy map file.
 PC_config.Dat - template kelvin config file.
+
+NOTE - If you intend to hand-combine the results of different counted runs, then 
+you must provide a marker file in order to ensure that the same allele name 
+mappings are made every time.
 
 EOF
 
