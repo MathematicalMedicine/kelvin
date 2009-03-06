@@ -505,7 +505,7 @@ sub loadPedigree {
 
     while (<IN>) {
         $LineNo++;
-        print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
+        print "Read $LineNo lines of $File\n" if (($LineNo % 1001) == 1000);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
@@ -670,7 +670,7 @@ sub loadCompanion {
     %LociAttributes = ();
     while (<IN>) {
         $LineNo++;
-        print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
+        print "Read $LineNo lines of $File\n" if (($LineNo % 1001) == 1000);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
@@ -697,7 +697,7 @@ sub loadMarkers {
     my $AlleleCount = 0;
     while (<IN>) {
         $LineNo++;
-        print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
+        print "Read $LineNo lines of $File\n" if (($LineNo % 1001) == 1000);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         my @Tokens     = split /\s+/;
@@ -738,7 +738,7 @@ sub loadMap {
     my $LineNo = 0;
     while (<IN>) {
         $LineNo++;
-        print "At line $LineNo of $File\n" if (($LineNo % 1024) == 1023);
+        print "Read $LineNo lines of $File\n" if (($LineNo % 1001) == 1000);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);          # Drop empty lines
         last if (/^\s*chr/i);    # Reached the header for map data
@@ -1534,22 +1534,24 @@ sub writeExpanded {
 #
 sub doMarkerInclusion {
 
+    print "About to do inclusion!\n";
+
     # Not starting with a guarenteed clean slate, so make sure they're all on
     for my $Name (@Loci) {
-        $LociAttributes{$Name}{Included} = 1;
+        $LociAttributes{$Name}{Included} = 1 if ($LociAttributes{$Name}{Type} eq "M");
     }
     if (scalar(@include)) {
 
         # If we're doing inclusion, then turn them all off
         for my $Name (@Loci) {
-            $LociAttributes{$Name}{Included} = 0;
+            $LociAttributes{$Name}{Included} = 0 if ($LociAttributes{$Name}{Type} eq "M");
         }
 
         # Then turn on what is requested
         for my $Name (my @copy = @include) {
             $Name = sprintf("M%04d", $Name) if (!$config);
             if (defined($LociAttributes{$Name}{Included})) {
-                $LociAttributes{$Name}{Included} = 1;
+                $LociAttributes{$Name}{Included} = 1 if ($LociAttributes{$Name}{Type} eq "M");
             } else {
                 print "Marker \"$Name\" specified in -include list not found!\n";
             }
@@ -1561,7 +1563,7 @@ sub doMarkerInclusion {
         for my $Name (my @copy = @exclude) {
             $Name = sprintf("M%04d", $Name) if (!$config);
             if (defined($LociAttributes{$Name}{Included})) {
-                $LociAttributes{$Name}{Included} = 0;
+                $LociAttributes{$Name}{Included} = 0 if ($LociAttributes{$Name}{Type} eq "M");
             } else {
                 print "Marker \"$Name\" specified in -exclude list not found!\n";
             }
@@ -1576,9 +1578,12 @@ sub doMarkerInclusion {
 # to ensure that regular users don't try exotic analyses that might give
 # misleading results or take millenia to complete.
 #
-sub kelvinConstraints {
+sub kelvinLimits {
 
     # General limitations
+    warn "Warning -- kelvin currently only supports biallelic disease models!\n"
+	if (defined($Directives{DA}) && ($Directives{DA}[0] != 2));
+
     if (defined($Directives{DK})) {
 
         # Integration (DK) analysis limitations
@@ -1688,11 +1693,6 @@ if ($write ne "unspecified") {
     $write = 0;
 }
 
-#@include = split(',',join(',',@include)); # No support for ranges
-#@exclude = split(',',join(',',@exclude));
-@include = expand(join(',', @include)) if (scalar(@include));    # Support for ranges
-@exclude = expand(join(',', @exclude)) if (scalar(@exclude));
-
 $Data::Dumper::Sortkeys = 1;
 
 die "Invalid number of arguments supplied.\n$Usage"       if ($#ARGV < 0);
@@ -1744,6 +1744,10 @@ if (!$config) {
 checkRelations($pedFileType);
 checkIntegrity();
 
+if (!$nokelvin) {
+    kelvinLimits();
+}
+
 if ($stats) {
     perfStats();
 }
@@ -1754,9 +1758,10 @@ if ($loops) {
     }
 }
 
-if ($nokelvin) {
-    kelvinConstraints();
-}
+@include = split(',',join(',',@include)); # No support for ranges
+@exclude = split(',',join(',',@exclude));
+#@include = expand(join(',', @include)) if (scalar(@include));    # Support for ranges
+#@exclude = expand(join(',', @exclude)) if (scalar(@exclude));
 
 doMarkerInclusion();
 
@@ -1796,7 +1801,7 @@ if (defined($Directives{SA}) || defined($Directives{SS})) {
             doMarkerInclusion();
 
             # ...and exclusion up to current
-            for my $j (0 .. $i) {
+            for my $j (1 .. $i) {
                 $LociAttributes{ $Loci[$j] }{Included} = 0;
             }
             $IncludedMarkers = 0;
