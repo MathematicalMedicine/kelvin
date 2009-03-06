@@ -55,7 +55,7 @@ my %Pedigrees;                                        # Pedigrees as loaded
 my %Directives;                                       # Directives as loaded
 my $PairCount = 0;                                    # Last pedigree count of marker pairs
 my @Loci = ('Trait');                                 # Ordered loci name list from companion file
-my %LociAttributes = ('Trait' => { 'Type' => 'T' } );  # Loci attributes from companion and marker files
+my %LociAttributes = ('Trait' => { 'Type' => 'T', 'Included' => 1 } );  # Loci attributes from companion and marker files
 my %Map;                                              # Loci on the map and other map attributes
 
 # Nuisances to fix
@@ -1496,6 +1496,8 @@ sub writeExpanded {
         system("makeped " . $Prefix . "_pedigrees.Pre " . $Prefix . "_pedigrees.Dat N");
     }
 
+    print "Loci is ".Dumper(\@Loci)."\n";
+    print "LociAttributes is ".Dumper(\%LociAttributes)."\n";
     open OUT, ">" . $Prefix . "_data.Dat";
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
