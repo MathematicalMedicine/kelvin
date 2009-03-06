@@ -5,25 +5,33 @@ struct swStopwatch *overallSW;
 char messageBuffer[MAXSWMSG];
 
 /* Some default global values. */
+
+/* Storage and default names for files that are always opened (depending on analysis options) */
+char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";  /// Marker (frequency) file
+char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";     /// Map file
+char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";     /// Pedigree file
+char datafile[KMAXFILENAMELEN + 1] = "datafile.dat";   /// Data (pedigree description) file
+char avghetfile[KMAXFILENAMELEN + 1] = "br.out";       /// Bayes Ratio file
+char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";         /// PPL file
+char modfile[KMAXFILENAMELEN + 1] = "mod.out";         /// MOD and maximizing model file
+char condFile[KMAXFILENAMELEN + 1] = "condL.out";      /// Conditional LR file
+char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";     /// This appears to be unused
+
+/* Storage for files that are only opened based on explicit directives */
+char ccfile[KMAXFILENAMELEN + 1] = "";                 /// Case control count file
+char maxmodelfile[KMAXFILENAMELEN + 1] = "";           /// verbose Maximizing Model file
+char intermediatefile[KMAXFILENAMELEN + 1] = "";       /// Intermediate Result file
+char dkelvinoutfile[KMAXFILENAMELEN + 1] = "";         /// DCHURE detail file
 char resultsprefix[KMAXFILENAMELEN + 1] = "./"; ///< Path for SR directive result storage
-char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";   ///< Default name (and storage) for marker file
-char maxmodelfile[KMAXFILENAMELEN + 1] = "tp.out";   ///< Default name (and storage) for maximizing model file
-char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";      ///< Default name (and storage) for map file
-char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";      ///< Default name (and storage) for pedigree file
-char datafile[KMAXFILENAMELEN + 1] = "datafile.dat";    ///< Default name (and storage) for marker data file
-char ccfile[KMAXFILENAMELEN + 1] = "";  ///< Case control count file
-char avghetfile[KMAXFILENAMELEN + 1] = "br.out";        ///< Default name (and storage) for Bayes Ratio file
-char condFile[KMAXFILENAMELEN + 1] = "condL.out";      ///< Default name (and storage) for conditional LR file
-char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";  ///< Default name (and storage) for PPL file
-char intermediatefile[KMAXFILENAMELEN + 1] = "ir.out"; ///< Default name (and storage) for intermediate results
-char modfile[KMAXFILENAMELEN + 1] = "mod.out"; ///< Default name (and storage) for MOD and maximizing model info
-char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
-FILE *fpCond = NULL;    ///< Conditional LR for genetic counseling
+
 FILE *fpHet = NULL;     ///< Average HET LR file (Bayes Ratio file) pointer
 FILE *fpPPL = NULL;     ///< PPL output file pointer
+FILE *fpMOD = NULL;     // MOD and maximizing model information
+FILE *fpCond = NULL;    ///< Conditional LR for genetic counseling
 FILE *fpTP = NULL;      ///< Ancillary Two-point output, used to go to stderr
 FILE *fpIR = NULL;      ///< Intermediate results, used to go to stderr, normally dkelvin-only
-FILE *fpMOD = NULL;     // MOD and maximizing model information
+FILE *fpDK = NULL;      // DCHURE detail file
+
 int polynomialScale = 1;        ///< Scale of static allocation and dynamic growth in polynomial.c.
 
 /** Model datastructures. modelOptions is defined in the pedigree library. */

@@ -514,35 +514,12 @@ readConfigFile (char *file)
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure pedigree file %s\n", pedfile);
       continue;
     }
-    if (sscanf (line, "DF %s", datafile) == 1) {	/* Data file - a list of loci */
+    if (sscanf (line, "DF %s", datafile) == 1) { /* Data file - a list of loci */
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure data file %s\n", datafile);
       continue;
     }
-    if (sscanf (line, "MK %s", markerfile) == 1) {	/* Marker file - marker allele frequencies */
+    if (sscanf (line, "MK %s", markerfile) == 1) { /* Marker file - marker allele frequencies */
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure marker file %s\n", markerfile);
-      continue;
-    }
-    if (sscanf (line, "MX %s", maxmodelfile) == 1) {	/* Maximizing model output file for 2pt */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure maximizing model file %s\n", maxmodelfile);
-      continue;
-    }
-    if (strncmp (line, "SR", 2) == 0) {
-      modelOptions.saveResults = TRUE;
-      if (sscanf (line, "SR %s", resultsprefix) == 1) {	/* Results file prefix */
-	if ((i = strlen(resultsprefix)) != 0)
-	  if (resultsprefix[i-1] != '/') {
-	    resultsprefix[i] = '/';
-	    resultsprefix[i+1] = 0;
-	  }
-	KLOG (LOGINPUTFILE, LOGDEBUG,
-	      "Configure for saving results w/file prefix %s\n",
-	      resultsprefix);
-      } else {
-	KLOG (LOGINPUTFILE, LOGDEBUG,
-	      "Configure for saving results w/o file prefix %s\n",
-	      resultsprefix);
-	*resultsprefix = '\0';
-      }
       continue;
     }
     if (sscanf (line, "MP %s", mapfile) == 1) {	/* Map file */
@@ -567,6 +544,25 @@ readConfigFile (char *file)
 	    ccfile);
       continue;
     }
+    if (strncmp (line, "SR", 2) == 0) {
+      modelOptions.saveResults = TRUE;
+      if (sscanf (line, "SR %s", resultsprefix) == 1) {	/* Results file prefix */
+	if ((i = strlen(resultsprefix)) != 0)
+	  if (resultsprefix[i-1] != '/') {
+	    resultsprefix[i] = '/';
+	    resultsprefix[i+1] = 0;
+	  }
+	KLOG (LOGINPUTFILE, LOGDEBUG,
+	      "Configure for saving results w/file prefix %s\n",
+	      resultsprefix);
+      } else {
+	KLOG (LOGINPUTFILE, LOGDEBUG,
+	      "Configure for saving results w/o file prefix %s\n",
+	      resultsprefix);
+	*resultsprefix = '\0';
+      }
+      continue;
+    }
     if (sscanf (line, "HE %s", avghetfile) == 1) {	/* Average hetergeneity LR file */
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure output file %s\n", avghetfile);
       continue;
@@ -576,7 +572,20 @@ readConfigFile (char *file)
 	    pplfile);
       continue;
     }
-    if (sscanf (line, "IR %s", intermediatefile) == 1) {	/* Intermediate results file */
+    if (sscanf (line, "MD %s", modfile) == 1) {	/* brief maximizing model file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure maximizing model file %s\n", maxmodelfile);
+      continue;
+    }
+    if (sscanf (line, "MX %s", maxmodelfile) == 1) { /* verbose Maximizing model file for 2pt */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure maximizing model file %s\n", maxmodelfile);
+      continue;
+    }
+    if (sscanf (line, "IR %s", intermediatefile) == 1) { /* Intermediate results file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure intermediate results file %s\n",
+	    intermediatefile);
+      continue;
+    }
+    if (sscanf (line, "DIR %s", dkelvinoutfile) == 1) {	/* DCHURE detail file */
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure intermediate results file %s\n",
 	    intermediatefile);
       continue;

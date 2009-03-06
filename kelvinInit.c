@@ -302,25 +302,35 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
     KASSERT (fpCond != NULL, "Error in opening file %s for write.\n", condFile); 
     //  fprintf( fpCond, "# Version %s\n", programVersion);
    }
-  fpHet = fopen (avghetfile, "w");
-  KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", avghetfile);
-  fprintf (fpHet, "# Version %s\n", programVersion);
+
+  if (modelOptions.markerAnalysis == FALSE) {
+    fpHet = fopen (avghetfile, "w");
+    KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", avghetfile);
+    fprintf (fpHet, "# Version %s\n", programVersion);
+  }
 
   fpMOD = fopen (modfile, "w");
   KASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modfile);
   fprintf (fpMOD, "# Version %s\n", programVersion);
 
   if (modelType.type == TP) {
-
     fpPPL = fopen (pplfile, "w");
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
     writePPLFileHeader ();
-    fpTP = fopen (maxmodelfile, "w");
-    KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
 
+    if (strlen (maxmodelfile) > 0) {
+      fpTP = fopen (maxmodelfile, "w");
+      KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
+    }
   }
 
-  if (modelOptions.integration) { // All intermediate results are written here.
-    fpIR= fopen(intermediatefile, "w");
+  if (strlen (intermediatefile) > 0) {
+    fpIR = fopen (intermediatefile, "w");
     KASSERT (fpIR != NULL, "Error in opening file %s for write.\n", intermediatefile);
+  }
+
+ // DKelvin intermediate results are written here.
+  if ((modelOptions.integration) && (strlen (dkelvinoutfile) > 0)) {
+    fpDK= fopen(dkelvinoutfile, "w");
+    KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", dkelvinoutfile);
   }

@@ -718,7 +718,8 @@
         /* calculate the average BR */
         get_average_LR (tp_result);
 
-	write2ptBRFile ();
+	if (modelOptions.markerAnalysis == FALSE)
+	  write2ptBRFile ();
         write2ptMODFile ();
 	writeMMFileDetail ();
 	writePPLFileDetail ();

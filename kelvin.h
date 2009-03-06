@@ -100,6 +100,8 @@ extern char condFile[KMAXFILENAMELEN + 1];
 extern char avghomofile[KMAXFILENAMELEN + 1];
 extern char pplfile[KMAXFILENAMELEN + 1];
 extern char intermediatefile[KMAXFILENAMELEN + 1];
+extern char modfile[KMAXFILENAMELEN + 1];
+extern char dkelvinoutfile[KMAXFILENAMELEN + 1];
 
 /**********************************************************************
  * Model structures (ModelType, ModelRange, ModelOptions). These

@@ -286,34 +286,37 @@
 	  }
 
 	  /* for each D prime and theta, print out average and maximizing model information - MOD */
-          fprintf (fpHet, "# Seq: %d Trait: %s Marker: %s Chr: %d", loc2,
-		   pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->chromosome);
-	  if ((modelOptions.mapFlag == SEX_SPECIFIC) &&
-	      (pLocus2->pMapUnit->mapPos[MAP_FEMALE] >= 0) &&
-	      (pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0)) {
-	    fprintf (fpHet, " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
-		     pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
-		     pLocus2->pMapUnit->mapPos[MAP_FEMALE], pLocus2->pMapUnit->mapPos[MAP_MALE]);
-	  } else {
-	    fprintf (fpHet, " Position: %.4f", pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
-	  }
-	  if (pLocus2->pMapUnit->basePairLocation >= 0)
-	    fprintf (fpHet, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
-	  fprintf (fpHet, "\n");
-	  
-	  if (modelOptions.markerAnalysis != FALSE) {
-	    fprintf (fpMOD, "Chr Marker1 Position1 Marker2 Position2 MOD");
-	  } else {
+	  if (modelOptions.markerAnalysis == FALSE) {
+	    fprintf (fpHet, "# Seq: %d Trait: %s Marker: %s Chr: %d", loc2,
+		     pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->chromosome);
+	    if ((modelOptions.mapFlag == SEX_SPECIFIC) &&
+		(pLocus2->pMapUnit->mapPos[MAP_FEMALE] >= 0) &&
+		(pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0)) {
+	      fprintf (fpHet, " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
+		       pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
+		       pLocus2->pMapUnit->mapPos[MAP_FEMALE], pLocus2->pMapUnit->mapPos[MAP_MALE]);
+	    } else {
+	      fprintf (fpHet, " Position: %.4f", pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
+	    }
+	    if (pLocus2->pMapUnit->basePairLocation >= 0)
+	      fprintf (fpHet, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
+	    fprintf (fpHet, "\n");
+	    
 	    fprintf (fpMOD, "Chr Trait Marker Position MOD");
+
+	  } else {
+	    fprintf (fpMOD, "Chr Marker1 Position1 Marker2 Position2 MOD");
 	  }
 	  
           if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
             for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
               for (j = 0; j < pLocus2->numOriginalAllele - 1; j++) {
-	        fprintf (fpHet, " D%1d%1d", i + 1, j + 1);
+		if (modelOptions.markerAnalysis == FALSE)
+		  fprintf (fpHet, " D%1d%1d", i + 1, j + 1);
 	        fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
 	      }
-          fprintf (fpHet, " Theta(M,F) BayesRatio\n");
+	  if (modelOptions.markerAnalysis == FALSE)
+	    fprintf (fpHet, " Theta(M,F) BayesRatio\n");
 	  fprintf (fpMOD, " Theta(M,F) Alpha DGF MF");
           for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
             if (modelType.trait == DT)
@@ -389,27 +392,31 @@
 
 
             /* Dk specific results*/
-            if(modelOptions.imprintingFlag){
-              fprintf(fpIR,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_thetaM,fixed_thetaF, s->total_neval, integral, abserr,log10 (localmax_value));
-	    }else{
-              fprintf(fpIR,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_dprime,fixed_theta, s->total_neval, integral, abserr,log10 (localmax_value));
+	    if (fpDK != NULL) {
+	      if(modelOptions.imprintingFlag){
+		fprintf(fpDK,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_thetaM,fixed_thetaF, s->total_neval, integral, abserr,log10 (localmax_value));
+	      }else{
+		fprintf(fpDK,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_dprime,fixed_theta, s->total_neval, integral, abserr,log10 (localmax_value));
+	      }
+	      fflush (fpDK);
 	    }
-  	    fflush (fpIR);     
        
             R_square = 0.0;// tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square;
 
-            int ii,jj;
-            if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-	      for (ii = 0; ii < pLocus1->numOriginalAllele - 1; ii++)
-	        for (jj = 0; jj < pLocus2->numOriginalAllele - 1; jj++) {
-	          fprintf (fpHet, "%.2f ", pLambdaCell->lambda[dprimeIdx][ii][jj]);
-	        }
-            }
-
-	    if (modelOptions.mapFlag == SA)
-	      fprintf (fpHet, "(%.4f,%.4f) %.6e\n", fixed_theta, fixed_theta, integral);
-	    else
-	      fprintf (fpHet, "(%.4f,%.4f) %.6e\n", fixed_thetaM, fixed_thetaF, integral);
+	    if (modelOptions.markerAnalysis == FALSE) {
+	      int ii,jj;
+	      if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+		for (ii = 0; ii < pLocus1->numOriginalAllele - 1; ii++)
+		  for (jj = 0; jj < pLocus2->numOriginalAllele - 1; jj++) {
+		    fprintf (fpHet, "%.2f ", pLambdaCell->lambda[dprimeIdx][ii][jj]);
+		  }
+	      }
+	      
+	      if (modelOptions.mapFlag == SA)
+		fprintf (fpHet, "(%.4f,%.4f) %.6e\n", fixed_theta, fixed_theta, integral);
+	      else
+		fprintf (fpHet, "(%.4f,%.4f) %.6e\n", fixed_thetaM, fixed_thetaF, integral);
+	    }
 
 	    if (maximum_function_value < localmax_value) {
 	      maximum_function_value = localmax_value;
@@ -460,7 +467,10 @@
 		}
 	      }
 	    }			/* End of writing max */
-	    fflush (fpHet);
+
+	    if (modelOptions.markerAnalysis == FALSE)
+	      fflush (fpHet);
+
 	    //fprintf (stderr, "tp result %f %f is %13.10f   \n",  fixed_theta, fixed_dprime, integral);
 
             if(modelOptions.mapFlag == SA){
@@ -595,17 +605,18 @@
           fprintf (fpPPL, "\n");
           fflush (fpPPL);
 
-	  fprintf (fpIR, "Global max %8.4f %6.4f %6.4f %6.4f %6.4f ",
-		   log10 (maximum_function_value), maxima_x[0],
-		   maxima_x[1], maxima_x[3], maxima_x[2]);
-	  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-	    fprintf (fpIR, "%6.4f %6.4f %6.4f ",
-		     maxima_x[liabIdx * 3 + 4],
-		     maxima_x[liabIdx * 3 + 5], maxima_x[liabIdx * 3 + 6]);
+	  if (fpDK != NULL) {
+	    fprintf (fpDK, "Global max %8.4f %6.4f %6.4f %6.4f %6.4f ",
+		     log10 (maximum_function_value), maxima_x[0],
+		     maxima_x[1], maxima_x[3], maxima_x[2]);
+	    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+	      fprintf (fpDK, "%6.4f %6.4f %6.4f ",
+		       maxima_x[liabIdx * 3 + 4],
+		       maxima_x[liabIdx * 3 + 5], maxima_x[liabIdx * 3 + 6]);
+	    }
+	    fprintf (fpDK, "\n");
+	    fflush (fpDK);
 	  }
-	  fprintf (fpIR, "\n");
-	  fflush (fpIR);
-
 
 	  /* only loop marker allele frequencies when doing LD */
 	  if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
@@ -1084,9 +1095,11 @@
       fprintf (fpHet, ")\n");
       fflush (fpHet);
 
-      fprintf (fpIR, "%f  %6.4f %12.8f %12.8f %d  %f\n", traitPos, ppl,
-	       integral, abserr, num_eval,log10 (localmax_value));
-      fflush(fpIR);
+      if (fpDK != NULL) {
+	fprintf (fpDK, "%f  %6.4f %12.8f %12.8f %d  %f\n", traitPos, ppl,
+		 integral, abserr, num_eval,log10 (localmax_value));
+	fflush(fpDK);
+      }
 
       fprintf (fpMOD, "%d %f %.6f %f %f",
 	       (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
