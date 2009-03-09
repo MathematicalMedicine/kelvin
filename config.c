@@ -312,6 +312,13 @@ readConfigFile (char *file)
     /* TODO: flushing lines containing only whitespace characters
      * will make everything slightly more efficient. */
 
+    /* Explicit imprinting flag. */
+    if (strncmp (line, "IM", 2) == 0) {
+      modelOptions.imprintingFlag = TRUE;
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for imprinting\n");
+      continue;
+    }
+
     /* Type of analysis; 2 point or multipoint. */
     if (strncmp (line, "TP", 2) == 0) {
       modelType.type = TP;	/* 2 point (default) */
@@ -330,6 +337,20 @@ readConfigFile (char *file)
       modelOptions.mapFlag = SA;
       KLOG (LOGINPUTFILE, LOGDEBUG,
 	    "Configuring for sex-averaged multipoint analysis\n");
+      continue;
+    }
+    if (strncmp (line, "SS", 2) == 0) {
+      modelType.type = TP;	/* SS with no parameter means 2 point */
+      modelOptions.mapFlag = SS;
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for sex-specific 2 point analysis\n");
+      continue;
+    }
+    if (strncmp (line, "SA", 2) == 0) {
+      modelType.type = TP;	/* SA with no parameter means 2 point */
+      modelOptions.mapFlag = SA;
+      KLOG (LOGINPUTFILE, LOGDEBUG,
+	    "Configuring for sex-averaged 2 point analysis\n");
       continue;
     }
     if (strncmp (line, "XC", 2) == 0) {
@@ -998,9 +1019,14 @@ readConfigFile (char *file)
     for (i=0; i<penetcnt[Dd-DD]; i++) 
       modelRange.penet[0][dD-DD][i] = modelRange.penet[0][Dd-DD][i];
     addConstraint (SIMPLE, dD, 0, 0, EQ, Dd, 0, 0, FALSE);
-    modelOptions.imprintingFlag = FALSE;
-  } else
+    if (!modelOptions.integration) {
+      modelOptions.imprintingFlag = FALSE;
+      KLOG (LOGINPUTFILE, LOGDEBUG, "No imprinting found in non-integration run, disabling\n");
+    }
+  } else {
     modelOptions.imprintingFlag = TRUE;
+    KLOG (LOGINPUTFILE, LOGDEBUG, "Imprinting found, enabling\n");
+  }
 
   /* Sort the values in the final model. Sorted values better support
    * the application of constraints. */
