@@ -17,6 +17,9 @@ use Data::Dumper;
 
 $| = 1;    # Force flush of output as printed.
 
+# Heavy-duty diagnostics
+my $DiagSolos = 0; # Writes out a separate file for each marker with actual copies of template pedigrees
+
 # Sanctioned globals
 
 # Command line option flags
@@ -554,12 +557,9 @@ sub loadPedigree {
             if ($Allele ne AttributeMissing) {
                 $GtC++;    # Keep track of how much genotypic information we have for this individual
                 if (!$config) {
-                    # We need to fake-up @Loci and %LociAttributes so we can still translate from
-                    # named to sequenced alleles. After all, alleles could be "2" and "foo".
+		    # Assume they're using 1 & 2 as their allele "names"
                     if (!defined($LociAttributes{$Name}{Alleles}{$Allele})) {
-                        # If this allele is not already know, it's the next one sequentially
-                        $LociAttributes{$Name}{Alleles}{$Allele} =
-                          scalar(keys %{ $LociAttributes{$Name}{Alleles} }) + 1;
+                        $LociAttributes{$Name}{Alleles}{$Allele} = "$Allele";
                     }
                 }
                 # Translate the allele to a sequence number
@@ -1256,6 +1256,7 @@ sub bucketizePedigrees {
             }
             my $PedBucket = $PAP . "_" . join("+", sort (@bucketList));
             $Buckets{ $Loci[ $i + 1 ] . "_" . $PedBucket }++;
+#	    print "For marker ".$Loci [ $i + 1 ]." pedigree $Ped goes into bucket ".$PedBucket."\n";
             if (!defined($Templates{$PedBucket})) {
                 $Templates{$PedBucket}{Ped}    = $Ped;
                 $Templates{$PedBucket}{PedSeq} = sprintf("P%04d", $PedSeq++);
@@ -1290,7 +1291,6 @@ sub bucketizePedigrees {
     }
 
     # First the intact (skipped) pedigrees
-    print Dumper(\%LociAttributes);
     for my $Ped (@Skippies) {
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             print OUT sprintf("%4s %3s %3s %3s ", $Ped, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
@@ -1344,6 +1344,46 @@ sub bucketizePedigrees {
         }
     }
     close OUT;
+
+    # Diagnostic multiple template pedigrees!
+    if ($DiagSolos) {
+	for my $i (0 .. $PairCount - 1) {
+	    next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
+
+	    if ($Type eq "POST") {
+		open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "_pedigrees.Dat";
+	    } else {
+		open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "_pedigrees.Pre";
+	    }
+	    for my $PB (sort numericIsh keys %Templates) {
+		my $FB = $Loci[ $i + 1 ] . "_" . $PB;
+		if (!defined($Buckets{$FB})) {
+		    next;
+		} else {
+		    my $Ped    = $Templates{$PB}{Ped};
+		    my $PairID = $Templates{$PB}{PairID};
+		    my $PedSeq = $Templates{$PB}{PedSeq};
+		    print "Writing ".$Buckets{$FB}." copies of ".$PedSeq." for marker ".$Loci[ $i + 1 ]."\n";
+		    for my $j (1..$Buckets{$FB}) {
+			for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
+			    print OUT sprintf("%4s %3s %3s %3s ", $PB."_".$j, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
+			    print OUT sprintf("%3s %3s %3s ",
+					      $Pedigrees{$Ped}{$Ind}{Kid1},
+					      $Pedigrees{$Ped}{$Ind}{nPs},
+					      $Pedigrees{$Ped}{$Ind}{nMs})
+				if ($Type eq "POST");
+			    print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
+			    print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
+			    my $Pair = "  " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
+			    print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", $Pair x min($split, $PairCount)) . "   ";
+			    print OUT "Ped: ".$PB."_".$j." Per: $Ind\n";
+			}
+		    }
+		}
+	    }
+	    close OUT;
+	}
+    }
 
     if ($Type ne "POST") {
         system("makeped " . $Prefix . "_pedigrees.Pre " . $Prefix . "_pedigrees.Dat N");
@@ -1496,8 +1536,6 @@ sub writeExpanded {
         system("makeped " . $Prefix . "_pedigrees.Pre " . $Prefix . "_pedigrees.Dat N");
     }
 
-    print "Loci is ".Dumper(\@Loci)."\n";
-    print "LociAttributes is ".Dumper(\%LociAttributes)."\n";
     open OUT, ">" . $Prefix . "_data.Dat";
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
@@ -1535,8 +1573,6 @@ sub writeExpanded {
 # important.
 #
 sub doMarkerInclusion {
-
-    print "About to do inclusion!\n";
 
     # Not starting with a guarenteed clean slate, so make sure they're all on
     for my $Name (@Loci) {
