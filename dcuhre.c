@@ -1407,8 +1407,12 @@ dchhre_ (dcuhre_state * s)
 
   /*   Check on MAXPTS < 3*NUM. */
   if (s->maxcls < s->num * 3) {
-    s->ifail = 8;
-    return 0;
+      fprintf(stderr,"Increase maxcls =%d to ", s->maxcls);
+    s->maxcls += s->num * 3; 
+    //    fprintf(stderr,"ifail =8   with maxcls =%d  num =%d \n",s->maxcls, s->num );
+      fprintf(stderr,"New maxcls =%d\n", s->maxcls);
+      //    s->ifail = 8;
+      //    return 0;
   }
 
   /*   Check on MAXPTS >= MINPTS. */
