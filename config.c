@@ -7,6 +7,7 @@
  **********************************************************************/
 
 #include "kelvin.h"
+#include "tools.h"
 #include <sys/types.h>		/* C regexps */
 #include <regex.h>		/* C regexps */
 
@@ -306,7 +307,7 @@ readConfigFile (char *file)
 
     /* Flush lines starting with a comment character or consisting
      * of only a newline. */
-    if ((strlen (line) == 1) || (strncmp (line, "#", 1) == 0))
+    if (is_line_blank_or_comment (line))
       continue;
 
     /* TODO: flushing lines containing only whitespace characters
