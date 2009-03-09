@@ -57,8 +57,8 @@ void write2ptBRFile() {
    * otherwise just print the average position. If the base pair field contains a
    * non-negative value, print it, too
    */
-  fprintf (fpHet, "# Seq: %d Trait: %s Marker: %s Chr: %d", loc2,
-	   pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->chromosome);
+  fprintf (fpHet, "# Seq: %d Chr: %d Trait: %s Marker: %s", loc2,
+	   pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
   if ((modelOptions.mapFlag == SEX_SPECIFIC) && (pLocus2->pMapUnit->mapPos[MAP_FEMALE] >= 0) &&
       (pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0)) {
     fprintf (fpHet, " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
@@ -192,7 +192,7 @@ void writeMPMODFileDetail () {
 
 
 void write2ptMODFile () {
-  double max_lr = DBL_MIN;
+  double max_lr = -DBL_MAX;
 
   if (modelOptions.markerAnalysis != FALSE) {
     fprintf (fpMOD, "Chr Marker1 Position1 Marker2 Position2 MOD");
@@ -289,7 +289,7 @@ void write2ptMODFile () {
 
 void writeMaximizingModel(char *modelDescription, double myMOD, int myDPrimeIdx, int myThetaIdx) {
 
-  fprintf (fpTP, "# %s:\n", modelDescription);
+  /*fprintf (fpTP, "# %s:\n", modelDescription);*/
   theta[0] = modelRange.theta[0][myThetaIdx];
   theta[1] = modelRange.theta[1][myThetaIdx];
   gfreq = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_gfreq;
@@ -299,12 +299,16 @@ void writeMaximizingModel(char *modelDescription, double myMOD, int myDPrimeIdx,
   R_square = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].R_square;
   paramIdx = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_paramIdx;
   thresholdIdx = tp_result[myDPrimeIdx][myThetaIdx][modelRange.nafreq].max_thresholdIdx;
-  fprintf (fpTP,
-	   "%d %s %.4f %.4f %.2f (%.4f,%.4f) %.3f %.2f %.4f %.4f",
-	   pLocus2->pMapUnit->chromosome, pLocus2->sName,
-	   pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (myMOD),
-	   pLambdaCell->lambda[myDPrimeIdx][0][0], 
-	   theta[0], theta[1], R_square, alphaV, gfreq, mkrFreq);
+  fprintf (fpTP, "%s %.4f", modelDescription, log10 (myMOD));
+  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+    for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
+      for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
+	fprintf (fpTP, " %.2f", pLambdaCell->lambda[myDPrimeIdx][i][j]);
+  fprintf (fpTP, " (%.4f,%.4f)", theta[0], theta[1]);
+  if (modelOptions.markerAnalysis != FALSE)
+    fprintf (fpTP, " %.3f", R_square);
+  fprintf (fpTP, " %.2f %.4f %.4f", alphaV, gfreq, mkrFreq);
+  
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
     pen_DD = modelRange.penet[liabIdx][0][penIdx];
     pen_Dd = modelRange.penet[liabIdx][1][penIdx];
@@ -336,7 +340,18 @@ void writeMaximizingModel(char *modelDescription, double myMOD, int myDPrimeIdx,
 
 void writeMMFileDetail() {
 
-  fprintf (fpTP, "# %-d  %s %s\n", loc2, pLocus1->sName, pLocus2->sName);
+  if (fpTP == NULL)
+    return;
+
+  if (modelOptions.markerAnalysis == FALSE) {
+    fprintf (fpTP, "# Seq: %d Chr: %d Trait: %s Marker: %s Position: %.4f\n", loc2,
+	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName); 
+  } else {
+    fprintf (fpTP, "# Seq: %d Chr %d: Marker1: %s Position1: %.4f Marker2: %s Position2: %.4f\n",
+	     loc2, pLocus2->pMapUnit->chromosome,
+	      pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_SEX_AVERAGE],
+	      pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]); 
+  }
   initialFlag = 1;
   max = -99999;
   max_at_theta0 = -99999;
@@ -353,8 +368,8 @@ void writeMMFileDetail() {
 	maxDPrimeIdx = dprimeIdx;
 	maxThetaIdx = thetaInd;
       }
-      if (initialFlag || (-ERROR_MARGIN <= theta[0] && theta[0] <= ERROR_MARGIN && -ERROR_MARGIN <= theta[1]
-			  && theta[1] <= ERROR_MARGIN)) {
+      if (initialFlag || (-ERROR_MARGIN <= theta[0] && theta[0] <= ERROR_MARGIN &&
+			  -ERROR_MARGIN <= theta[1] && theta[1] <= ERROR_MARGIN)) {
 	/* find the max for models with theta equal to 0 */
 	theta0Idx = thetaInd;
 	if (lr > max_at_theta0) {
@@ -372,92 +387,43 @@ void writeMMFileDetail() {
     }
     initialFlag = 0;
   }
-  if (modelOptions.imprintingFlag)
-    fprintf (fpTP, "Chr Marker Position MOD DPrime Theta(M,F) R2 Alpha DGF MF ");
+
+  fprintf (fpTP, "Case MOD");
+  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+    for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
+      for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
+	fprintf (fpTP, " D%1d%1d", i + 1, j + 1);
+  if (modelOptions.markerAnalysis != FALSE)
+    fprintf (fpTP, " Theta(M,F) R2 Alpha DGF MF");
   else
-    fprintf (fpTP, "Chr Marker Position MOD DPrime Theta(M,F) R2 Alpha DGF MF ");
+    fprintf (fpTP, " Theta(M,F) Alpha DGF MF");
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
     if (modelType.trait == DT)
       if (modelOptions.imprintingFlag)
-	fprintf (fpTP, "LC%dPV(DD,Dd,dD,dd) ", liabIdx);
+	fprintf (fpTP, " LC%dPV(DD,Dd,dD,dd)", liabIdx);
       else
-	fprintf (fpTP, "LC%dPV(DD,Dd,dd) ", liabIdx);
+	fprintf (fpTP, " LC%dPV(DD,Dd,dd)", liabIdx);
     else
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
 	if (modelOptions.imprintingFlag)
-	  fprintf (fpTP, "LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh) ", liabIdx);
+	  fprintf (fpTP, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh)", liabIdx);
 	else
-	  fprintf (fpTP, "LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) ", liabIdx);
+	  fprintf (fpTP, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh)", liabIdx);
       else
 	if (modelOptions.imprintingFlag)
-	  fprintf (fpTP, "LC%dPV(DDDF,DdDF,dDDF,ddDF,Thresh) ", liabIdx);
+	  fprintf (fpTP, " LC%dPV(DDDF,DdDF,dDDF,ddDF,Thresh)", liabIdx);
 	else
-	  fprintf (fpTP, "LC%dPV(DDDF,DdDF,ddDF,Thresh) ", liabIdx);
+	  fprintf (fpTP, " LC%dPV(DDDF,DdDF,ddDF,Thresh)", liabIdx);
   fprintf (fpTP, "\n");
   
   /* Overall maximizing model - MOD */
-  writeMaximizingModel ("Overall MOD maximizing model", max, maxDPrimeIdx, maxThetaIdx);
+  writeMaximizingModel ("MOD(Overall)", max, maxDPrimeIdx, maxThetaIdx);
   
   /* Maximizing model at theta equal to 0 - MOD */
-  writeMaximizingModel ("MOD maximizing model for theta=0", max_at_theta0, 
-			    maxDPrimeIdx_at_theta0, theta0Idx);
+  writeMaximizingModel ("MOD(Theta==0)", max_at_theta0, maxDPrimeIdx_at_theta0, theta0Idx);
   
   /* Maximizing model at d prime equal to 0 - MOD */
-  writeMaximizingModel ("MOD maximizing model for dprime=0", max_at_dprime0, 
-			    dprime0Idx, maxTheta_at_dprime0);
-  
-  /* find the overall maximizing theta and dprime - LR
-   * with the other parameter integrated out */
-  max = -9999.99;
-  max_at_dprime0 = -9999.99;
-  max_at_theta0 = -9999.99;
-  for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-    for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
-      theta[0] = modelRange.theta[0][thetaInd];
-      theta[1] = modelRange.theta[1][thetaInd];
-      lr = tp_result[dprimeIdx][thetaInd][0].het_lr_avg;
-      if (lr > max) {
-	max = lr;
-	maxThetaIdx = thetaInd;
-	maxDPrimeIdx = dprimeIdx;
-      }
-      if (-ERROR_MARGIN <= theta[0] && theta[0] <= ERROR_MARGIN &&
-	  -ERROR_MARGIN <= theta[1] && theta[1] <= ERROR_MARGIN) {
-	if (lr > max_at_theta0) {
-	  max_at_theta0 = lr;
-	  maxDPrimeIdx_at_theta0 = dprimeIdx;
-	}
-      }
-      if (dprime0Idx == dprimeIdx) {
-	if (lr > max_at_dprime0) {
-	  max_at_dprime0 = lr;
-	  maxTheta_at_dprime0 = thetaInd;
-	}
-      }
-    }
-  }
-  /* Overall maximizing model - LR */
-  fprintf (fpTP, "# Overall LR maximizing model:\n");
-  theta[0] = modelRange.theta[0][maxThetaIdx];
-  theta[1] = modelRange.theta[1][maxThetaIdx];
-  fprintf (fpTP,
-	   "%d %s %.4f %.4f %.2f (%.4f,%.4f)\n",
-	   pLocus2->pMapUnit->chromosome, pLocus2->sName,
-	   pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max),
-	   pLambdaCell->lambda[maxDPrimeIdx][0][0], theta[0], theta[1]);
-  
-  /* Maximizing model at theta equal to 0 - LR */
-  fprintf (fpTP, "# LR maximizing model for theta (0, 0):\n");
-  fprintf (fpTP,
-	   "%d %s %.4f %.4f %.2f (%.4f,%.4f)\n",
-	   pLocus2->pMapUnit->chromosome, pLocus2->sName,
-	   pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
-	   log10 (max_at_theta0), pLambdaCell->lambda[maxDPrimeIdx_at_theta0][0][0], 0.0, 0.0);
-  
-  /* Maximizing model at d prime equal to 0 - LR */
-  fprintf (fpTP, "# LR maximizing model for dprime=0:\n");
-  fprintf (fpTP,
-	   "%d %s %.4f %.4f %.2f (%.4f,%.4f)\n",
-	   pLocus2->pMapUnit->chromosome, pLocus2->sName,
-	   pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max_at_dprime0), 0.0, 0.0, 0.0);
+  writeMaximizingModel ("MOD(D'==0)", max_at_dprime0, dprime0Idx, maxTheta_at_dprime0);
+
+  return;
 }
