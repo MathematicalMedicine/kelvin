@@ -48,7 +48,7 @@ extern unsigned long initialHashSize;
 
 /* If CPU utilization % is below this in a check interval, we're thrashing
    and should take some kind of action (currently exit) */
-#define THRASH_CPU 2
+#define THRASH_CPU 5
 
 /* Maximum size of a polynomial function name */
 #define MAX_PFN_LEN 128

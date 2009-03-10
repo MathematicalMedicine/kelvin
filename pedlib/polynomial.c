@@ -3429,7 +3429,7 @@ void thrashingCheck ()
     if ((deltaAccumUserTime != 0) && (100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < THRASH_CPU)) {
       sprintf (messageBuffer, "Thrashing detected (utilization under %d%%), consider exiting!", THRASH_CPU);
       swLogMsg (messageBuffer);
-      //      exit (EXIT_FAILURE);
+      exit (EXIT_FAILURE);
     }
   }
   swStart (overallSW);
