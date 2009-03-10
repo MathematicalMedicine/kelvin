@@ -1,5 +1,5 @@
 # Version V0.37.1
-# Seq: 1 Trait: disease Marker: locus2 Chr: 1 Position: 72.3000
+# Seq: 1 Chr: 1 Trait: disease Marker: locus2 Position: 72.3000
 Theta(M,F) BayesRatio
 (0.0000,0.0000) 4.719155e-11
 (0.1000,0.1000) 2.554697e-01
