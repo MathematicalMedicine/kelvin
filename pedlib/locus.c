@@ -337,7 +337,7 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
   Locus *pLocus;
   int i;
   char sLocusName[MAX_LINE_LEN];
-  int found;
+  int found = FALSE;
   Locus *pTempLocus;
   int markerCount = 0;
   int allele = 1;
