@@ -5,9 +5,9 @@ double fixed_theta, fixed_dprime;
 double fixed_thetaM,fixed_thetaF; // Sex-specific analysis
 
 
-double maxima_x[17];
+double maxima_x[20];
 double maximum_function_value = 0.0;
-double localmax_x[17];
+double localmax_x[20];
 double localmax_value = 0.0;
 int total_dim = 0;
 
@@ -29,8 +29,8 @@ SubLocusList markerLocusList;
 int polynomialFlag;
 
 dcuhre_state *s,init_state;
-double xl[15] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-double xu[15] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+double xl[17] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0 };
+double xu[17] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1 };
 
 int print_point_flag = 0;
 FILE *fphlod = NULL;

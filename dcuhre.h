@@ -78,7 +78,7 @@ typedef double (*D_fp)(), (*E_fp)();
 #endif
 
 
-#define maxdim 15
+#define maxdim 17
 
 enum model_Type {TP_DT=0, TP_QT=1, MP_DT=2, MP_QT=3};
 

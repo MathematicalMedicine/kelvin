@@ -75,6 +75,11 @@ kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
       s->mType = MP_DT;
     }
   }
+  if(dim>10){
+    s->maxcls = 20* (int)pow(2.0,dim);
+    //fprintf(stdout,"New maxcls is %d \n", s->maxcls);
+  }
+
   s->verbose = 0;
   s->nlclass = modelRange.nlclass;
 

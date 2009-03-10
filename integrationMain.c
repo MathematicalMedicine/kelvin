@@ -570,10 +570,10 @@
 	    ppl =  modelOptions.thetaWeight * le_small_theta + (1 -  modelOptions.thetaWeight) * le_big_theta;
 	    ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
 	  }else{
-            ppl = modelOptions.thetaWeight*modelOptions.thetaWeight* thetaSMSF;
-            ppl += (1-modelOptions.thetaWeight)*modelOptions.thetaWeight* thetaBMSF;
-            ppl += modelOptions.thetaWeight*(1-modelOptions.thetaWeight)* thetaSMBF;
-            ppl += (1-modelOptions.thetaWeight)*(1-modelOptions.thetaWeight)* thetaBMBF;
+            ppl = modelOptions.thetaWeight* thetaSMSF;
+            ppl += (1-modelOptions.thetaWeight)* 0.09/0.99 * thetaBMSF;
+            ppl += (1-modelOptions.thetaWeight)* 0.09/0.99 * thetaSMBF;
+            ppl += (1-modelOptions.thetaWeight)* 0.81/0.99 * thetaBMBF;
 	    ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
 	  }
           if (modelOptions.markerAnalysis != FALSE) {
