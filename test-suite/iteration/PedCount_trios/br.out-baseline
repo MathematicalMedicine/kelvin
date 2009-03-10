@@ -1,5 +1,5 @@
 # Version V0.37.1
-# Seq: 1 Trait: Trait Marker: rs3131972 Chr: 1 Position: 2.1000
+# Seq: 1 Chr: 1 Trait: Trait Marker: rs3131972 Position: 2.1000
 D11 Theta(M,F) BayesRatio
 -1.00 (0.0000,0.0000) 6.938884e-01
 -1.00 (0.1000,0.1000) 7.280096e-01
@@ -127,7 +127,7 @@ D11 Theta(M,F) BayesRatio
 1.00 (0.3000,0.3000) 8.301533e-01
 1.00 (0.4000,0.4000) 8.496283e-01
 1.00 (0.5000,0.5000) 8.189132e-01
-# Seq: 2 Trait: Trait Marker: rs3115860 Chr: 1 Position: 2.1000
+# Seq: 2 Chr: 1 Trait: Trait Marker: rs3115860 Position: 2.1000
 D11 Theta(M,F) BayesRatio
 -1.00 (0.0000,0.0000) 5.457435e-01
 -1.00 (0.1000,0.1000) 5.794369e-01
@@ -255,7 +255,7 @@ D11 Theta(M,F) BayesRatio
 1.00 (0.3000,0.3000) 9.336477e-01
 1.00 (0.4000,0.4000) 9.019061e-01
 1.00 (0.5000,0.5000) 8.510291e-01
-# Seq: 3 Trait: Trait Marker: rs3131969 Chr: 1 Position: 2.1000
+# Seq: 3 Chr: 1 Trait: Trait Marker: rs3131969 Position: 2.1000
 D11 Theta(M,F) BayesRatio
 -1.00 (0.0000,0.0000) 1.114097e+00
 -1.00 (0.1000,0.1000) 1.099045e+00
@@ -383,7 +383,7 @@ D11 Theta(M,F) BayesRatio
 1.00 (0.3000,0.3000) 5.669164e-01
 1.00 (0.4000,0.4000) 6.167512e-01
 1.00 (0.5000,0.5000) 6.767202e-01
-# Seq: 4 Trait: Trait Marker: rs12562034 Chr: 1 Position: 2.1400
+# Seq: 4 Chr: 1 Trait: Trait Marker: rs12562034 Position: 2.1400
 D11 Theta(M,F) BayesRatio
 -1.00 (0.0000,0.0000) 8.223948e-01
 -1.00 (0.1000,0.1000) 8.422714e-01
@@ -511,7 +511,7 @@ D11 Theta(M,F) BayesRatio
 1.00 (0.3000,0.3000) 6.414446e-01
 1.00 (0.4000,0.4000) 6.496211e-01
 1.00 (0.5000,0.5000) 6.489447e-01
-# Seq: 5 Trait: Trait Marker: rs12124819 Chr: 1 Position: 2.1600
+# Seq: 5 Chr: 1 Trait: Trait Marker: rs12124819 Position: 2.1600
 D11 Theta(M,F) BayesRatio
 -1.00 (0.0000,0.0000) 7.614209e-01
 -1.00 (0.1000,0.1000) 7.936067e-01
