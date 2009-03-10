@@ -1,5 +1,5 @@
 # Version V0.37.1
-# Seq: 1 Trait: disease Marker: 1_3_mrk Chr: 1 Position: 0.9900
+# Seq: 1 Chr: 1 Trait: disease Marker: 1_3_mrk Position: 0.9900
 D11 Theta(M,F) BayesRatio
 -1.00 (0.0000,0.0000) 7.673685e-01
 -1.00 (0.0100,0.0100) 7.664139e-01
@@ -1072,7 +1072,7 @@ D11 Theta(M,F) BayesRatio
 1.00 (0.4800,0.4800) 1.025138e+00
 1.00 (0.4900,0.4900) 1.028865e+00
 1.00 (0.5000,0.5000) 1.032558e+00
-# Seq: 2 Trait: disease Marker: 1_4_mrk Chr: 1 Position: 1.3200
+# Seq: 2 Chr: 1 Trait: disease Marker: 1_4_mrk Position: 1.3200
 D11 Theta(M,F) BayesRatio
 -1.00 (0.0000,0.0000) 2.847190e+01
 -1.00 (0.0100,0.0100) 2.841503e+01
@@ -2145,7 +2145,7 @@ D11 Theta(M,F) BayesRatio
 1.00 (0.4800,0.4800) 4.831500e-01
 1.00 (0.4900,0.4900) 4.828183e-01
 1.00 (0.5000,0.5000) 4.824938e-01
-# Seq: 3 Trait: disease Marker: 1_5_mrk Chr: 1 Position: 1.9800
+# Seq: 3 Chr: 1 Trait: disease Marker: 1_5_mrk Position: 1.9800
 D11 Theta(M,F) BayesRatio
 -1.00 (0.0000,0.0000) 6.334664e-01
 -1.00 (0.0100,0.0100) 6.342885e-01
