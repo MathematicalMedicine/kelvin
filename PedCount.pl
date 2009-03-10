@@ -1157,6 +1157,27 @@ sub bucketizePedigrees {
         },
     );
 
+    # These are translations for bucket names generated from the preceeding
+    # hashes, so if you change one, change both.
+
+    my %NiceNames = (
+		     '00_T18-1' => 'ctrl11',
+		     '00_T18-2' => 'case11',
+		     '00_T19-1' => 'ctrl12',
+		     '00_T19-2' => 'case12',
+		     '00_T20-1' => 'ctrl22',
+		     '00_T20-2' => 'case22',
+		     '00_X02-12' => 'XC-case1',
+		     '00_X02-21' => 'XC-ctrl11',
+		     '00_X02-22' => 'XC-case11',
+		     '00_X03-21' => 'XC-ctrl12',
+		     '00_X03-22' => 'XC-case12',
+		     '00_X04-11' => 'XC-ctrl2',
+		     '00_X04-12' => 'XC-case2',
+		     '00_X04-21' => 'XC-ctrl22',
+		     '00_X04-22' => 'XC-case22',
+		     );
+
     my $Type   = shift();          # Pedigree type for writing
     my $Prefix = shift();          # Uniqifying (what a word!) prefix for files
 
@@ -1329,8 +1350,10 @@ sub bucketizePedigrees {
         my $Ped    = $Templates{$PB}{Ped};
         my $PairID = $Templates{$PB}{PairID};
         my $PedSeq = $Templates{$PB}{PedSeq};
+	my $NiceName = defined($NiceNames{$PB}) ? $NiceNames{$PB} : $PB;
+
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
-            print OUT sprintf("%4s %3s %3s %3s ", $PB, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
+            print OUT sprintf("%4s %3s %3s %3s ", $NiceName, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
             print OUT sprintf("%3s %3s %3s ",
                 $Pedigrees{$Ped}{$Ind}{Kid1},
                 $Pedigrees{$Ped}{$Ind}{nPs},
@@ -1340,7 +1363,7 @@ sub bucketizePedigrees {
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
             my $Pair = "  " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
             print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", $Pair x min($split, $PairCount)) . "   ";
-            print OUT "Ped: $PB Per: $Ind\n";
+            print OUT "Ped: $NiceName Per: $Ind\n";
         }
     }
     close OUT;
@@ -1394,7 +1417,8 @@ sub bucketizePedigrees {
 
     print OUT "MARKER ";
     for my $PB (sort numericIsh keys %Templates) {
-        print OUT $PB . " ";
+	my $NiceName =  defined($NiceNames{$PB}) ? $NiceNames{$PB} : $PB;
+        print OUT $NiceName . " ";
     }
     print OUT "\n";
     for my $i (0 .. $PairCount - 1) {
