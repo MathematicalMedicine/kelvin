@@ -66,6 +66,9 @@
 /* Close file pointers */
 if (modelType.type == TP) {
   fclose (fpPPL);
-  fclose (fpTP);
+  if (fpTP != NULL)
+    fclose (fpTP);
 }
+if (fpMOD != NULL)
+  fclose (fpMOD);
 fclose (fpHet);

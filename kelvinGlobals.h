@@ -13,12 +13,12 @@ char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";     /// Pedigree file
 char datafile[KMAXFILENAMELEN + 1] = "datafile.dat";   /// Data (pedigree description) file
 char avghetfile[KMAXFILENAMELEN + 1] = "br.out";       /// Bayes Ratio file
 char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";         /// PPL file
-char modfile[KMAXFILENAMELEN + 1] = "mod.out";         /// MOD and maximizing model file
 char condFile[KMAXFILENAMELEN + 1] = "condL.out";      /// Conditional LR file
 char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";     /// This appears to be unused
 
 /* Storage for files that are only opened based on explicit directives */
 char ccfile[KMAXFILENAMELEN + 1] = "";                 /// Case control count file
+char modfile[KMAXFILENAMELEN + 1] = "";                /// MOD and maximizing model file
 char maxmodelfile[KMAXFILENAMELEN + 1] = "";           /// verbose Maximizing Model file
 char intermediatefile[KMAXFILENAMELEN + 1] = "";       /// Intermediate Result file
 char dkelvinoutfile[KMAXFILENAMELEN + 1] = "";         /// DCHURE detail file
@@ -26,8 +26,8 @@ char resultsprefix[KMAXFILENAMELEN + 1] = "./"; ///< Path for SR directive resul
 
 FILE *fpHet = NULL;     ///< Average HET LR file (Bayes Ratio file) pointer
 FILE *fpPPL = NULL;     ///< PPL output file pointer
-FILE *fpMOD = NULL;     // MOD and maximizing model information
 FILE *fpCond = NULL;    ///< Conditional LR for genetic counseling
+FILE *fpMOD = NULL;     // MOD and maximizing model information
 FILE *fpTP = NULL;      ///< Ancillary Two-point output, used to go to stderr
 FILE *fpIR = NULL;      ///< Intermediate results, used to go to stderr, normally dkelvin-only
 FILE *fpDK = NULL;      // DCHURE detail file

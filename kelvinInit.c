@@ -309,10 +309,6 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
     fprintf (fpHet, "# Version %s\n", programVersion);
   }
 
-  fpMOD = fopen (modfile, "w");
-  KASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modfile);
-  fprintf (fpMOD, "# Version %s\n", programVersion);
-
   if (modelType.type == TP) {
     fpPPL = fopen (pplfile, "w");
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
@@ -322,6 +318,12 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
       fpTP = fopen (maxmodelfile, "w");
       KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
     }
+  }
+
+  if (strlen (modfile) > 0) {
+    fpMOD = fopen (modfile, "w");
+    KASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modfile);
+    fprintf (fpMOD, "# Version %s\n", programVersion);
   }
 
   if (strlen (intermediatefile) > 0) {

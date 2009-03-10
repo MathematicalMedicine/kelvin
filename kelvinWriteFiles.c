@@ -125,6 +125,9 @@ void writeMPBRFileDetail () {
 
 
 void writeMPMODFileHeader () {
+  if (fpMOD == NULL)
+    return;
+
   fprintf (fpMOD, "Chr Position MOD Alpha DGF");
 
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
@@ -148,10 +151,14 @@ void writeMPMODFileHeader () {
   
   fprintf (fpMOD, "\n");
   fflush (fpMOD);
+  return;
 }
 
 
 void writeMPMODFileDetail () {
+  if (fpMOD == NULL)
+    return;
+
   max = mp_result[posIdx].max_lr;
   gfreq = mp_result[posIdx].max_gfreq;
   alphaV = mp_result[posIdx].max_alpha;
@@ -188,11 +195,15 @@ void writeMPMODFileDetail () {
       fprintf (fpMOD, ")");
   }
   fprintf (fpMOD, "\n");
+  return;
 }
 
 
 void write2ptMODFile () {
   double max_lr = -DBL_MAX;
+
+  if (fpMOD == NULL)
+    return;
 
   if (modelOptions.markerAnalysis != FALSE) {
     fprintf (fpMOD, "Chr Marker1 Position1 Marker2 Position2 MOD");
@@ -285,6 +296,7 @@ void write2ptMODFile () {
       fprintf (fpMOD, ")");
   }
   fprintf (fpMOD, "\n");
+  return;
 }
 
 void writeMaximizingModel(char *modelDescription, double myMOD, int myDPrimeIdx, int myThetaIdx) {
@@ -345,7 +357,8 @@ void writeMMFileDetail() {
 
   if (modelOptions.markerAnalysis == FALSE) {
     fprintf (fpTP, "# Seq: %d Chr: %d Trait: %s Marker: %s Position: %.4f\n", loc2,
-	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName); 
+	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName,
+	     pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]); 
   } else {
     fprintf (fpTP, "# Seq: %d Chr %d: Marker1: %s Position1: %.4f Marker2: %s Position2: %.4f\n",
 	     loc2, pLocus2->pMapUnit->chromosome,
