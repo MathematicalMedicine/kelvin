@@ -638,13 +638,13 @@ sub deriveAlleleFrequencies {
         $LociAttributes{ $Loci[ $i + 1 ] }{Type}     = "M";
         $LociAttributes{ $Loci[ $i + 1 ] }{Included} = 1;
 	$LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{"0"} = 0;
-        my @HaploCounts = (0); # List works because they must be numeric (relative position of frequency in marker file)
+        my @HaploCounts = (0, 0, 0); # List works because they must be numeric (relative position of frequency in marker file)
         for my $Ped (keys %Pedigrees) {
             for my $Ind (keys %{ $Pedigrees{$Ped} }) {
                 next if ($Pedigrees{$Ped}{$Ind}{Aff} != $Unaffected);
                 my ($Left, $Right) = split /\s+/, $Pedigrees{$Ped}{$Ind}{Mks}[$i];
-                $HaploCounts[$Left]++  if ($Left  ne AttributeMissing);
-                $HaploCounts[$Right]++ if ($Right ne AttributeMissing);
+		$HaploCounts[$Left]++ if ($Left  ne AttributeMissing);
+		$HaploCounts[$Right]++ if ($Right ne AttributeMissing);
             }
         }
         my $PopSize = sum @HaploCounts;
