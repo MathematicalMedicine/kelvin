@@ -34,6 +34,7 @@ my $write       = "unspecified";
 my $loops       = 0;
 my $stats       = 0;
 my $split       = 0;
+my $subdirectories = 0;
 my $nokelvin    = 0;
 my @include     = ();
 my @exclude     = ();
@@ -1167,6 +1168,7 @@ sub bucketizePedigrees {
 		     '00_T19-2' => 'case12',
 		     '00_T20-1' => 'ctrl22',
 		     '00_T20-2' => 'case22',
+		     '00_X02-11' => 'XC-ctrl1',
 		     '00_X02-12' => 'XC-case1',
 		     '00_X02-21' => 'XC-ctrl11',
 		     '00_X02-22' => 'XC-case11',
@@ -1306,9 +1308,9 @@ sub bucketizePedigrees {
     # Now write-out at least the pedigree and counts
 
     if ($Type eq "POST") {
-        open OUT, ">" . $Prefix . "_pedigrees.Dat";
+        open OUT, ">" . $Prefix . "Pedigrees.Dat";
     } else {
-        open OUT, ">" . $Prefix . "_pedigrees.Pre";
+        open OUT, ">" . $Prefix . "Pedigrees.Pre";
     }
 
     # First the intact (skipped) pedigrees
@@ -1374,9 +1376,9 @@ sub bucketizePedigrees {
 	    next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
 
 	    if ($Type eq "POST") {
-		open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "_pedigrees.Dat";
+		open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "Pedigrees.Dat";
 	    } else {
-		open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "_pedigrees.Pre";
+		open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "Pedigrees.Pre";
 	    }
 	    for my $PB (sort numericIsh keys %Templates) {
 		my $FB = $Loci[ $i + 1 ] . "_" . $PB;
@@ -1413,7 +1415,7 @@ sub bucketizePedigrees {
     }
 
     # Finally the counts.
-    open OUT, ">" . $Prefix . "_counts.Dat";
+    open OUT, ">" . $Prefix . "Counts.Dat";
 
     print OUT "MARKER ";
     for my $PB (sort numericIsh keys %Templates) {
@@ -1442,14 +1444,16 @@ sub bucketizePedigrees {
         return;
     }
 
-    open OUT, ">" . $Prefix . "_config.Dat";
-    print OUT "PD " . $Prefix . "_pedigrees.Dat\n";
-    print OUT "DF " . $Prefix . "_data.Dat\n";
-    print OUT "MK " . $Prefix . "_markers.Dat\n";
-    print OUT "MP " . $Prefix . "_map.Dat\n";
-    print OUT "CC " . $Prefix . "_counts.Dat\n";
-    print OUT "HE " . $Prefix . "_br.Out\n";
-    print OUT "PF " . $Prefix . "_ppl.Out\n";
+    open OUT, ">" . $Prefix . "Config.Dat";
+    my $configPrefix = $Prefix;
+    $configPrefix =~ s/.*\///;
+    print OUT "PD " . $configPrefix . "Pedigrees.Dat\n";
+    print OUT "DF " . $configPrefix . "Data.Dat\n";
+    print OUT "MK " . $configPrefix . "Markers.Dat\n";
+    print OUT "MP " . $configPrefix . "Map.Dat\n";
+    print OUT "CC " . $configPrefix . "Counts.Dat\n";
+    print OUT "HE " . $configPrefix . "BR.Out\n";
+    print OUT "PF " . $configPrefix . "PPL.Out\n";
 
     print OUT <<EOF;
 PE
@@ -1474,14 +1478,14 @@ EOF
     print OUT "XC\n" if (defined($Directives{XC}) || $XC);
     close OUT;
 
-    open OUT, ">" . $Prefix . "_data.Dat";
+    open OUT, ">" . $Prefix . "Data.Dat";
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
     }
     close OUT;
 
-    open OUT, ">" . $Prefix . "_markers.Dat";
+    open OUT, ">" . $Prefix . "Markers.Dat";
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         if ($LociAttributes{$Name}{Type} eq "M") {
@@ -1496,7 +1500,7 @@ EOF
     close OUT;
 
     #
-    open OUT, ">" . $Prefix . "_map.Dat";
+    open OUT, ">" . $Prefix . "Map.Dat";
     print OUT "CHR MARKER KOSAMBI\n";
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
@@ -1514,12 +1518,12 @@ sub writeExpanded {
     my $Type   = shift();    # Pedigree type for writing
     my $Prefix = shift();    # Uniqifying (what a word!) prefix for files
 
-    # Now write-out at least the pedigree and counts
+    # Write-out the pedigree and counts
 
     if ($Type eq "POST") {
-        open OUT, ">" . $Prefix . "_pedigrees.Dat";
+        open OUT, ">" . $Prefix . "Pedigrees.Dat";
     } else {
-        open OUT, ">" . $Prefix . "_pedigrees.Pre";
+        open OUT, ">" . $Prefix . "Pedigrees.Pre";
     }
 
     for my $Ped (sort numericIsh keys %Pedigrees) {
@@ -1560,14 +1564,14 @@ sub writeExpanded {
         system("makeped " . $Prefix . "_pedigrees.Pre " . $Prefix . "_pedigrees.Dat N");
     }
 
-    open OUT, ">" . $Prefix . "_data.Dat";
+    open OUT, ">" . $Prefix . "Data.Dat";
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
     }
     close OUT;
 
-    open OUT, ">" . $Prefix . "_markers.Dat";
+    open OUT, ">" . $Prefix . "Markers.Dat";
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         if ($LociAttributes{$Name}{Type} eq "M") {
@@ -1581,7 +1585,7 @@ sub writeExpanded {
     }
     close OUT;
 
-    open OUT, ">" . $Prefix . "_map.Dat";
+    open OUT, ">" . $Prefix . "Map.Dat";
     print OUT "CHR MARKER KOSAMBI\n";
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
@@ -1692,6 +1696,7 @@ where <flags> are any of:
 		reduced to a single representative and a count file will be produced. 
 		If -split was specified, separate sequenced sets of files will be 
 		produced.
+-subdirectories	New files produced are written to sequenced subdirectories.
 
 The input file will be read and analyzed. If it is a configuration file,
 the input files specified in directives will be read and analyzed as well. 
@@ -1746,6 +1751,7 @@ GetOptions(
     'include=s' => \@include,
     'exclude=s' => \@exclude,
     'split=i'   => \$split,
+    'subdirectories' => \$subdirectories,
     'write:s'   => \$write,
 ) or die "Invalid command line parameters.";
 if ($write ne "unspecified") {
@@ -1771,6 +1777,7 @@ print "-count flag seen\n"                                if ($count);
 print "-include list of " . Dumper(\@include) . " seen\n" if (@include);
 print "-exclude list of " . Dumper(\@exclude) . " seen\n" if (@exclude);
 print "-split of $split seen\n"                           if ($split);
+print "-subdirectories flag seen\n"                       if ($subdirectories);
 print "-write seen, using \"$WritePrefix\" prefix\n"      if ($write);
 die "-pre -post and -bare are mutually exclusive flags."
   if ($pre + $post + $bare > 1);
@@ -1851,12 +1858,12 @@ if (defined($Directives{SA}) || defined($Directives{SS})) {
             }
 
             # Do the work
+	    print "Marker set " . (++$SplitSet) . "\n";
+	    mkdir $WritePrefix . $SplitSet if ($write && $subdirectories);
             if ($count) {
-		print "Counting marker set " . (++$SplitSet) . "\n";
-                bucketizePedigrees($pedFileType, $WritePrefix . $SplitSet);
+                bucketizePedigrees($pedFileType, $WritePrefix . $SplitSet . (($write && $subdirectories) ? "/" : "_"));
             } elsif ($write) {
-		print "Writing marker set " . (++$SplitSet) . "\n";
-                writeExpanded($pedFileType, $WritePrefix . $SplitSet);
+                writeExpanded($pedFileType, $WritePrefix . $SplitSet . (($write && $subdirectories) ? "/" : "_"));
             }
 
             # Redo the inclusion...
@@ -1872,12 +1879,12 @@ if (defined($Directives{SA}) || defined($Directives{SS})) {
     if ($IncludedMarkers != 0) {
 
         # Do the rest
+	mkdir $WritePrefix . $SplitSet if ($write && $subdirectories);
+	print "Marker set " . (++$SplitSet) . "\n";
         if ($count) {
-	    print "Counting marker set " . (++$SplitSet) . "\n";
-            bucketizePedigrees($pedFileType, $WritePrefix . $SplitSet);
+            bucketizePedigrees($pedFileType, $WritePrefix . $SplitSet . (($write && $subdirectories) ? "/" : "_"));
         } elsif ($write) {
-	    print "Writing marker set " . (++$SplitSet) . "\n";
-            writeExpanded($pedFileType, $WritePrefix . $SplitSet);
+            writeExpanded($pedFileType, $WritePrefix . $SplitSet . (($write && $subdirectories) ? "/" : "_"));
         }
     }
 }
