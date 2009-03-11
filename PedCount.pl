@@ -1066,6 +1066,7 @@ sub bucketizePedigrees {
 
         # Qualify the family for inclusion in trio buckets by
         # verifying depth of 1
+	my $SkipFlag = 0;
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
             my $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
@@ -1075,9 +1076,11 @@ sub bucketizePedigrees {
 					     ($Pedigrees{$Ped}{$Mom}{Mom} ne $UnknownPerson))) {
 		push @Skippies, $Ped;
 		print "Will copy multi-generation pedigree $Ped intact.\n";
+		$SkipFlag = 1;
 		last;
 	    }
         }
+	next if ($SkipFlag);
 
         # Generate the family bucket for each marker pair
         for my $i (0 .. $PairCount - 1) {
