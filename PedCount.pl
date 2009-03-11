@@ -938,7 +938,7 @@ sub perfStats {
 
 #####################################
 #
-# Adapted from a trios-only version by John Burian.
+# Evolved from a trios-only version by John Burian.
 #
 # Leverages pedigree inheritance patterns to reduce computational
 # complexity. Multiple pedigrees that conform to a single inheritance pattern
@@ -958,18 +958,20 @@ sub perfStats {
 # pedigrees with two affected children and both parents in
 # any affectation category, which will fall first into one of the 3-member
 # trio buckets for the first child, and then a second 3-member bucket
-# with the same parentage for the second child, e.g. T30 and then T18. This
-# is used to identify a unique 4-person bucket by ordering the 3-member
-# numbers, e.g. T18-T30, because a family falling into T30 and then T18 is the
-# same as one falling into T18 and then T30. This extends to any number
-# of children of a single-generation family.
+# with the same parentage for the second child.
 #
-# Affectation status is handled by concatenating it to either the parental or
-# child portion of the bucket name. Gender is handled for XC
-# analysis by the same approach, i.e. concatenating it to either the parental
-# or child portion of the bucket name. Ultimately we end-up with bucket names
-# generated from the genotypic, phenotypic (and maybe even gender) attributes
-# of the entire nuclear family. While enumerating every possible bucket for all
+# All cases are handled by building a "bucket key" for each family by:
+#
+# 1. Build parent components by concatenating ordered marker genotype w/affectation
+#    status.
+# 2. For each child concatenate ordered marker genotype w/affectation status and
+#    push onto list of children.
+# 3. Order list of children and append to ordered parental components.
+#
+# X-chromosome analysis requires only that gender be included in the parental and
+# child components.
+#
+# This handles all nuclear families. While enumerating every possible bucket for all
 # possible nuclear family combinations would be exhaustive, we use Perl hashes
 # to produce only the buckets needed. When we create a bucket, we keep track of
 # the last pedigree that fit into it so we can use that pedigree's genotypic and
@@ -979,205 +981,28 @@ sub perfStats {
 #
 sub bucketizePedigrees {
 
-    # When determining non-XC buckets, alleles count but phase and parent doesn't (i.e.
-    # 11+11=11 != 22+22=22, but 11+12=12 == 11+21=12 and 11+12=12 == 12+11=12).
-
-    my %TrioBuckets = (    # Mom, then Dad, then the child, but it doesn't matter
-        '0 0' => {
-            '0 0' => {
-                '0 0' => 'T30',    # 30  0 0  0 0  0 0
-                '1 1' => 'T18',    # 18  0 0  0 0  1 1 (case11, control11)
-                '1 2' => 'T19',    # 19  0 0  0 0  1 2 (case12, control12)
-                '2 2' => 'T20',    # 20  0 0  0 0  2 2 (case22, control22)
-            },
-            '1 1' => {
-                '0 0' => 'T24',    # 24  0 0  1 1  0 0
-                '1 1' => 'T05',    #  5  0 0  1 1  1 1
-                '1 2' => 'T06',    #  6  0 0  1 1  1 2
-            },
-            '1 2' => {
-                '0 0' => 'T27',    # 27  0 0  1 2  0 0
-                '1 1' => 'T12',    # 12  0 0  1 2  1 1
-                '1 2' => 'T13',    # 13  0 0  1 2  1 2
-                '2 2' => 'T14',    # 14  0 0  1 2  2 2
-            },
-            '2 2' => {
-                '0 0' => 'T29',    # 29  0 0  2 2  0 0
-                '1 2' => 'T16',    # 16  0 0  2 2  1 2
-                '2 2' => 'T17',    # 17  0 0  2 2  2 2
-            },
-        },
-        '1 1' => {
-            '0 0' => {
-                '0 0' => 'T24',    # 24  1 1  0 0  0 0
-                '1 1' => 'T05',    #  5  1 1  0 0  1 1
-                '1 2' => 'T06',    #  6  1 1  0 0  1 2
-            },
-            '1 1' => {
-                '0 0' => 'T21',    # 21  1 1  1 1  0 0
-                '1 1' => 'T01',    #  1  1 1  1 1  1 1
-            },
-            '1 2' => {
-                '0 0' => 'T22',    # 22  1 1  1 2  0 0
-                '1 1' => 'T02',    #  2  1 1  1 2  1 1
-                '1 2' => 'T03',    #  3  1 1  1 2  1 2
-            },
-            '2 2' => {
-                '0 0' => 'T23',    # 23  1 1  2 2  0 0
-                '1 2' => 'T04',    #  4  1 1  2 2  1 2
-            },
-        },
-        '1 2' => {
-            '0 0' => {
-                '0 0' => 'T27',    # 27  1 2  0 0  0 0
-                '1 1' => 'T12',    # 12  1 2  0 0  1 1
-                '1 2' => 'T13',    # 13  1 2  0 0  1 2
-                '2 2' => 'T14',    # 14  1 2  0 0  2 2
-            },
-            '1 1' => {
-                '0 0' => 'T22',    # 22  1 2  1 1  0 0
-                '1 1' => 'T02',    #  2  1 2  1 1  1 1
-                '1 2' => 'T03',    #  3  1 2  1 1  1 2
-            },
-            '1 2' => {
-                '0 0' => 'T25',    # 25  1 2  1 2  0 0
-                '1 1' => 'T07',    #  7  1 2  1 2  1 1
-                '1 2' => 'T08',    #  8  1 2  1 2  1 2
-                '2 2' => 'T09',    #  9  1 2  1 2  2 2
-            },
-            '2 2' => {
-                '0 0' => 'T26',    # 26  1 2  2 2  0 0
-                '1 2' => 'T10',    # 10  1 2  2 2  1 2
-                '2 2' => 'T11',    # 11  1 2  2 2  2 2
-            },
-        },
-        '2 2' => {
-            '0 0' => {
-                '0 0' => 'T29',    # 29  2 2  0 0  0 0
-                '1 2' => 'T16',    # 16  2 2  0 0  1 2
-                '2 2' => 'T17',    # 17  2 2  0 0  2 2
-            },
-            '1 1' => {
-                '0 0' => 'T23',    # 23  2 2  1 1  0 0
-                '1 2' => 'T04',    #  4  2 2  1 1  1 2
-            },
-            '1 2' => {
-                '0 0' => 'T26',    # 26  2 2  1 2  0 0
-                '1 2' => 'T10',    # 10  2 2  1 2  1 2
-                '2 2' => 'T11',    # 11  2 2  1 2  2 2
-            },
-            '2 2' => {
-                '0 0' => 'T28',    # 28  2 2  2 2  0 0
-                '2 2' => 'T15',    # 15  2 2  2 2  2 2
-            },
-        },
-    );
-
-    # This bucket hash is a bit misleading because it uses the full-genotype
-    # notation even though the individual might be male and therefore have
-    # only one allele for the X chromosome.
-    # When determining XC buckets, alleles and parent counts but phase doesn't (i.e.
-    # 11+22=22 != 22+11=22 and 11+11=11 != 22+22=22, but 12+11=12 == 21+11=12).
-
-    my %XCTrioBuckets = (          # Mom, then Dad, then the child, and it matters!
-        '0 0' => {
-            '0 0' => {
-                '0 0' => 'X01',
-                '1 1' => 'X02',    # XC case/control male or female (case11, control11, case1, control1)
-                '1 2' => 'X03',    # XC case/control female-only (case12, control12)
-                '2 2' => 'X04',    # XC case/control male or female (case22, control22, case2, control2)
-            },
-            '1 1' => {
-                '0 0' => 'X05',
-                '1 1' => 'X06',
-                '1 2' => 'X07',    # Female
-                '2 2' => 'X08',
-            },
-            '2 2' => {
-                '0 0' => 'X09',
-                '1 1' => 'X10',
-                '1 2' => 'X11',    # Female
-                '2 2' => 'X12',
-            },
-        },
-        '1 1' => {
-            '0 0' => {
-                '0 0' => 'X13',
-                '1 1' => 'X14',
-                '1 2' => 'X15',    # Female
-                '2 2' => 'X16',
-            },
-            '1 1' => {
-                '0 0' => 'X17',
-                '1 1' => 'X18',
-            },
-            '2 2' => {
-                '0 0' => 'X18',
-                '1 1' => 'X20',
-                '1 2' => 'X21',    # Female
-                '2 2' => 'X22',
-            },
-        },
-        '1 2' => {
-            '0 0' => {
-                '0 0' => 'X23',
-                '1 1' => 'X24',
-                '1 2' => 'X25',    # Female
-                '2 2' => 'X26',
-            },
-            '1 1' => {
-                '0 0' => 'X27',
-                '1 1' => 'X28',
-                '1 2' => 'X29',    # Female
-                '2 2' => 'X30',
-            },
-            '2 2' => {
-                '0 0' => 'X31',
-                '1 1' => 'X32',
-                '1 2' => 'X33',    # Female
-                '2 2' => 'X34',
-            },
-        },
-        '2 2' => {
-            '0 0' => {
-                '0 0' => 'X35',
-                '1 1' => 'X36',
-                '1 2' => 'X37',    # Female
-                '2 2' => 'X38',
-            },
-            '1 1' => {
-                '0 0' => 'X39',
-                '1 1' => 'X40',
-                '1 2' => 'X41',    # Female
-                '2 2' => 'X42',
-            },
-            '2 2' => {
-                '0 0' => 'X43',
-                '2 2' => 'X44',
-            },
-        },
-    );
-
-    # These are translations for bucket names generated from the preceeding
-    # hashes, so if you change one, change both.
+    # These are translations for bucket names generated from the algorithm
+    # so if you change one, change both.
 
     my %NiceNames = (
-		     '00_T18-1' => 'ctrl11',
-		     '00_T18-2' => 'case11',
-		     '00_T19-1' => 'ctrl12',
-		     '00_T19-2' => 'case12',
-		     '00_T20-1' => 'ctrl22',
-		     '00_T20-2' => 'case22',
-		     '00_X02-11' => 'XC-ctrl1',
-		     '00_X02-12' => 'XC-case1',
-		     '00_X02-21' => 'XC-ctrl11',
-		     '00_X02-22' => 'XC-case11',
-		     '00_X03-21' => 'XC-ctrl12',
-		     '00_X03-22' => 'XC-case12',
-		     '00_X04-11' => 'XC-ctrl2',
-		     '00_X04-12' => 'XC-case2',
-		     '00_X04-21' => 'XC-ctrl22',
-		     '00_X04-22' => 'XC-case22',
+		     # It's alleles+affectation
+		     '000000111' => 'ctrl11',
+		     '000000112' => 'case11',
+		     '000000121' => 'ctrl12',
+		     '000000122' => 'case12',
+		     '000000221' => 'ctrl22',
+		     '000000222' => 'case22',
+		     # It's alleles+affectation+sex
+		     '000100021111' => 'ctrl1',
+		     '000100021121' => 'case1',
+		     '000100021112' => 'ctrl11',
+		     '000100021122' => 'case11',
+		     '000100021212' => 'ctrl12',
+		     '000100021222' => 'case12',
+		     '000100022211' => 'ctrl2',
+		     '000100022221' => 'case2',
+		     '000100022212' => 'ctrl22',
+		     '000100022222' => 'case22',
 		     );
 
     my $Type   = shift();          # Pedigree type for writing
@@ -1209,77 +1034,56 @@ sub bucketizePedigrees {
         my $memberCount = scalar(keys %{ $Pedigrees{$Ped} });
 
         # Qualify the family for inclusion in trio buckets by
-        # verifying depth of 1 while building a parental
-        # affectation prefix so we can do more
-        # than expected (i.e. handle any nuclear families)
-        my $PAP = "";
+        # verifying depth of 1
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
             my $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
-            if (($Dad eq $UnknownPerson) && ($Mom eq $UnknownPerson)) {
-                if ($Pedigrees{$Ped}{$Ind}{Sex} == 1) {
-                    $PAP = $Pedigrees{$Ped}{$Ind}{Aff} . $PAP;
-                } else {
-                    $PAP = $PAP . $Pedigrees{$Ped}{$Ind}{Aff};
-                }
-            } else {
-                if (   ($Pedigrees{$Ped}{$Dad}{Dad} ne $UnknownPerson)
-                    || ($Pedigrees{$Ped}{$Dad}{Mom} ne $UnknownPerson)
-                    || ($Pedigrees{$Ped}{$Mom}{Dad} ne $UnknownPerson)
-                    || ($Pedigrees{$Ped}{$Mom}{Mom} ne $UnknownPerson)) {
-                    $PAP = "";
-                    last;
-                }
-            }
-        }
-        if ($PAP eq "") {
-            print "Will copy multi-generation pedigree $Ped intact.\n";
-            push @Skippies, $Ped;
-            next;
+	    if ((($Dad ne $UnknownPerson) && (($Pedigrees{$Ped}{$Dad}{Dad} ne $UnknownPerson) ||
+					     ($Pedigrees{$Ped}{$Dad}{Mom} ne $UnknownPerson))) ||
+		($Mom ne $UnknownPerson) && (($Pedigrees{$Ped}{$Mom}{Dad} ne $UnknownPerson) ||
+					     ($Pedigrees{$Ped}{$Mom}{Mom} ne $UnknownPerson))) {
+		push @Skippies, $Ped;
+		print "Will copy multi-generation pedigree $Ped intact.\n";
+		last;
+	    }
         }
 
-        # Get the family genotype bucket for each marker pair
+        # Generate the family bucket for each marker pair
         for my $i (0 .. $PairCount - 1) {
             my @bucketList = ();
 
-            # Get a trio bucket for each child in the family
+            # Get a bucket for each child in the family
             for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
 
                 # Skip parents
                 my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
                 if ($Dad ne $UnknownPerson) {
-                    my $DadAlleles = $Pedigrees{$Ped}{$Dad}{Mks}[$i];
-                    ($DadAlleles eq '2 1') and $DadAlleles = '1 2';
-                    my $ChildAlleles = $Pedigrees{$Ped}{$Ind}{Mks}[$i];
-                    ($ChildAlleles eq '2 1') and $ChildAlleles = '1 2';
-
+                    my $DadKey = $Pedigrees{$Ped}{$Dad}{Mks}[$i];
+                    ($DadKey eq '2 1') and $DadKey = '1 2';
+		    $DadKey .= $Pedigrees{$Ped}{$Dad}{Aff};
                     my $Mom        = $Pedigrees{$Ped}{$Ind}{Mom};
-                    my $MomAlleles = $Pedigrees{$Ped}{$Mom}{Mks}[$i];
-                    ($MomAlleles eq '2 1') and $MomAlleles = '1 2';
+                    my $MomKey = $Pedigrees{$Ped}{$Mom}{Mks}[$i];
+                    ($MomKey eq '2 1') and $MomKey = '1 2';
+		    $MomKey .= $Pedigrees{$Ped}{$Mom}{Aff};
+                    my $ChildKey = $Pedigrees{$Ped}{$Ind}{Mks}[$i];
+                    ($ChildKey eq '2 1') and $ChildKey = '1 2';
+		    $ChildKey .= $Pedigrees{$Ped}{$Ind}{Aff};
 
-                    my $TrioBucket;
-                    if (defined($Directives{XC}) || $XC) {
-                        $TrioBucket = $XCTrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
-                    } else {
-                        $TrioBucket = $TrioBuckets{$MomAlleles}{$DadAlleles}{$ChildAlleles};
-                    }
-                    if (!defined($TrioBucket)) {
-                        die "Couldn't find a bucket for pedigree $Ped, individual $Ind marker "
-                          . $Loci[ $i + 1 ]
-                          . ", [M]/[D]/[C] [$MomAlleles]/[$DadAlleles]/[$ChildAlleles], probably a Mendelian error!\n";
-                    }
+		    if ((defined($Directives{XC}) || $XC)) {
+			$DadKey .= $Pedigrees{$Ped}{$Dad}{Sex};
+			$MomKey .= $Pedigrees{$Ped}{$Mom}{Sex};
+			$ChildKey .= $Pedigrees{$Ped}{$Ind}{Sex};
+		    }
+		    my $ParentKey = ($MomKey gt $DadKey) ? $DadKey.$MomKey : $MomKey.$DadKey;
 
-                    # Add a child affection prefix and maybe a gender for XC analysis
-                    if (defined($Directives{XC}) || $XC) {
-                        push @bucketList, $TrioBucket . "-" . $Pedigrees{$Ped}{$Ind}{Sex} . $Pedigrees{$Ped}{$Ind}{Aff};
-                    } else {
-                        push @bucketList, $TrioBucket . "-" . $Pedigrees{$Ped}{$Ind}{Aff};
-                    }
+		    my $BucketName = $ParentKey.$ChildKey;
+		    $BucketName =~ s/ //g;
+		    push @bucketList, $BucketName;
                 }
             }
-            my $PedBucket = $PAP . "_" . join("+", sort (@bucketList));
+            my $PedBucket = join("+", sort (@bucketList));
             $Buckets{ $Loci[ $i + 1 ] . "_" . $PedBucket }++;
-#	    print "For marker ".$Loci [ $i + 1 ]." pedigree $Ped goes into bucket ".$PedBucket."\n";
+	    print "For marker ".$Loci [ $i + 1 ]." bucket ".$PedBucket." gets pedigree ".sprintf("%003d\n", $Ped);
             if (!defined($Templates{$PedBucket})) {
                 $Templates{$PedBucket}{Ped}    = $Ped;
                 $Templates{$PedBucket}{PedSeq} = sprintf("P%04d", $PedSeq++);
