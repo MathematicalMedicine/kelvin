@@ -1117,7 +1117,7 @@ sub bucketizePedigrees {
             }
             my $PedBucket = join("+", sort (@bucketList));
             $Buckets{ $Loci[ $i + 1 ] . "_" . $PedBucket }++;
-	    print "For marker ".$Loci [ $i + 1 ]." bucket ".$PedBucket." gets pedigree ".sprintf("%003d\n", $Ped);
+#	    print "For marker ".$Loci [ $i + 1 ]." bucket ".$PedBucket." gets pedigree ".sprintf("%003d\n", $Ped);
             if (!defined($Templates{$PedBucket})) {
                 $Templates{$PedBucket}{Ped}    = $Ped;
                 $Templates{$PedBucket}{PedSeq} = sprintf("P%04d", $PedSeq++);
@@ -1208,7 +1208,7 @@ sub bucketizePedigrees {
     }
     close OUT;
 
-    # Diagnostic multiple template pedigrees!
+    # Diagnostic multiple template pedigrees! (Out-of-date)
     if ($DiagSolos) {
 	for my $i (0 .. $PairCount - 1) {
 	    next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
