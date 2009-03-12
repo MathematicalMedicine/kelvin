@@ -1,9 +1,17 @@
-Version ??
+Version 0.38.0
+  Output completely revised and reduced in volume.
   Case control (CC) directive replaces CF
   directive. Count file (CF) directive added to permit 
-  ASP and trios data to be efficiently represented and 
+  any pedigree counting data to be represented and 
   processed. Revitalized KLOG and LOG directive. Fixed
   Student's T pdf values for x outside of -10 to 10.
+  Unreferenced marker alleles are no longer stored so
+  the marker allele frequency file (MK directive) does
+  not need to be edited down to match the pedigree
+  marker data file (DF directive). New PedCount data
+  preprocessing script to generate count files for 
+  collections of pedigrees and a whole lot more. 
+  Numerous minor bugfixes.
 
 Version 0.37.1
   Numerous bugfixes in LD handling and estimation in
