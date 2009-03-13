@@ -1,5 +1,6 @@
-// gcc -o testConfig testConfig.c config.c -I pedlib -I utils -L lib -lped -lutils -lm
+// gcc -o testConfig testConfig.c config.c -I ../include -L ../lib -lped -lutils -lm
 
+#include "config.h"
 #include "pedlib.h"
 ModelOptions modelOptions;
 ModelRange modelRange;

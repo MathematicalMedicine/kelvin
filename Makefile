@@ -27,7 +27,7 @@ INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
 CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
 CFLAGS := -Wall -O3 # -Wshadow
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lm -lpthread
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lconfig -lutils -lm -lpthread
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
@@ -58,7 +58,7 @@ LDFLAGS += ${ADD_LDFLAGS}
 export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN
 
 KOBJS = kelvin.o dcuhre.o
-OBJS = ppl.o config.o saveResults.o trackProgress.o kelvinHandlers.o
+OBJS = ppl.o saveResults.o trackProgress.o kelvinHandlers.o
 INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
 	kelvinGlobals.h iterationGlobals.h integrationGlobals.h \
 	kelvinLocals.h iterationLocals.h integrationLocals.h \
@@ -89,11 +89,13 @@ seq_update/calc_updated_ppl :
 .PHONY : libs
 libs :
 	make -C utils -f Makefile all
+	make -C config -f Makefile all
 	make -C pedlib -f Makefile all
 
 .PHONY : clean
 clean :
 	make -C pedlib -f Makefile clean
+	make -C config -f Makefile clean
 	make -C utils -f Makefile clean
 	rm -f $(KOBJS) $(OBJS) kelvin calc_updated_ppl
 	make -C test-suite -f Makefile clean

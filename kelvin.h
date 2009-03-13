@@ -18,11 +18,9 @@
 #include <float.h>
 
 #include "utils.h"		/* Kelvin utilities. */
+#include "config.h"
 #include "pedlib.h"		/* Pedigree library. */
 #include "trackProgress.h"
-#ifdef RADSMM
-#include "RADSMM.h"		/* RADSMM library. */
-#endif
 
 #include "sw.h"
 #ifdef DMTRACK
@@ -54,7 +52,6 @@ typedef struct {
 /**********************************************************************
  * Function prototypes.
  **********************************************************************/
-int readConfigFile (char *file);
 void addTraitLocus (ModelRange * range, double val);
 LambdaCell *findLambdas (ModelRange * range, int m, int n);
 void addAlleleFreq (ModelRange * range, double val);
