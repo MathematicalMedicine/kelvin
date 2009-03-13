@@ -391,15 +391,15 @@ readConfigFile (char *file)
     }
     if (strncmp (line, "PE", 2) == 0) {
       modelOptions.polynomial = TRUE;	/* Polynomial evaluation */
-      if (sscanf (line, "PE %d", &polynomialScale) == 1) {	/* Polynomial scale */
+      if (sscanf (line, "PE %d", &modelOptions.polynomialScale) == 1) {	/* Polynomial scale */
 	KLOG (LOGINPUTFILE, LOGDEBUG,
 	      "Configure for polynomial evaluation w/polynomialScale %d\n",
-	      polynomialScale);
+	      modelOptions.polynomialScale);
       } else {
 	polynomialScale = 1;
 	KLOG (LOGINPUTFILE, LOGDEBUG,
 	      "Configure for polynomial evaluation w/default polynomialScale %d\n",
-	      polynomialScale);
+	      modelOptions.polynomialScale);
       }
       continue;
     }

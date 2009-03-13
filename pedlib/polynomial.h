@@ -246,7 +246,7 @@ struct hashStruct
 /* Prototypes */
 
 // Initialization before polynomials care created and evaluated.
-void polynomialInitialization ();
+void polynomialInitialization (int polynomialScale);
 
 // Constructor for a constant polynomial
 struct polynomial *constantExp (double con);

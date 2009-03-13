@@ -152,7 +152,7 @@
 #include "sw.h"
 #include "../trackProgress.h"
 
-extern int polynomialScale;     ///< Scaling factor for hash and other storage set in config.c
+int polynomialScale;     ///< Scaling factor for hash and other storage set in config.c
 extern struct swStopwatch *overallSW;   ///< Total run statistics stopwatch defined in kelvin.c
 
 /** This is a global variable used for giving each polynomial an unique ID
@@ -2675,7 +2675,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 //This is the first function to call before we use polynomials.  It allocates some memory
 //and initiates important variables variables
 /////////////////////////////////////////////////////////////////////////////////////////////
-void polynomialInitialization ()
+void polynomialInitialization (int polynomialScale)
 {
   int i;
   char *envVar;

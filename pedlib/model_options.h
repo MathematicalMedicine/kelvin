@@ -14,6 +14,7 @@ typedef struct ModelOptions
   int equilibrium;
 
   int polynomial;		/* TRUE if using polynomial to represent likelihood */
+  int polynomialScale;		/* Optional argument to PE directive to set initial memory size */
 
   int integration;              /* TRUE if using dkelvin integration method */
 
