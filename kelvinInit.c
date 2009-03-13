@@ -123,7 +123,7 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
 #ifdef POLYUSE_DL
     swLogMsg ("Dynamic libraries for polynomial evaluation will be used if found");
 #endif
-    polynomialInitialization ();
+    polynomialInitialization (modelOptions.polynomialScale);
   } else {
     swLogMsg ("Computation is done in non-polynomial (direct evaluation) mode");
   }
