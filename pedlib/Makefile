@@ -4,13 +4,14 @@
 
 # Invoked by main Kelvin Makefile. You'll get undefined symbols otherwise.
 
-INCS = pedigree.h locus.h model_options.h genotype_elimination.h \
+INCS = pedigree.h locus.h model_options.h model_type.h model_range.h lambda_cell.h genotype_elimination.h \
        likelihood.h polynomial.h pedlib.h allele_set_recoding.h tools.h
 
 OBJS = read_pedfile.o locus.o tools.o allele_set_recoding.o \
        genotype_elimination.o parental_pair.o likelihood.o polynomial.o
 
 all : $(KVNLIBDIR)/libped.a $(KVNINCDIR)/pedigree.h $(KVNINCDIR)/locus.h \
+      $(KVNINCDIR)/lambda_cell.h $(KVNINCDIR)/model_range.h $(KVNINCDIR)/model_type.h \
       $(KVNINCDIR)/model_options.h $(KVNINCDIR)/genotype_elimination.h \
       $(KVNINCDIR)/likelihood.h $(KVNINCDIR)/polynomial.h $(KVNINCDIR)/pedlib.h \
       $(KVNINCDIR)/allele_set_recoding.h $(KVNINCDIR)/tools.h
@@ -23,6 +24,15 @@ $(KVNINCDIR)/pedigree.h : pedigree.h
 
 $(KVNINCDIR)/locus.h : locus.h
 	 cp locus.h $(KVNINCDIR)
+
+$(KVNINCDIR)/lambda_cell.h : lambda_cell.h
+	 cp lambda_cell.h $(KVNINCDIR)
+
+$(KVNINCDIR)/model_range.h : model_range.h
+	 cp model_range.h $(KVNINCDIR)
+
+$(KVNINCDIR)/model_type.h : model_type.h
+	 cp model_type.h $(KVNINCDIR)
 
 $(KVNINCDIR)/model_options.h : model_options.h
 	 cp model_options.h $(KVNINCDIR)

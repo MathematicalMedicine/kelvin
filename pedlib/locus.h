@@ -9,6 +9,7 @@
 #ifndef __LOCUS_H__
 #define __LOCUS_H__
 
+#include "lambda_cell.h"
 #include "polynomial.h"
 
 #define ERROR_MARGIN            1.0E-9
@@ -386,19 +387,6 @@ typedef struct Map
   /* internal counter for memory allocation of the ppMapUnitList */
   int maxUnit;
 } Map;
-
-/* LD cell type (used in modelRange below). */
-typedef struct lambdaCell
-{
-  int m;			/* Trait/disease. */
-  int n;			/* Marker. */
-  int ndprime;			/* number of D prime combinations */
-  double ***lambda;		/* Lambda array. */
-  int *impossibleFlag;		/* whether combinatoin of D's is possible */
-  double ***haploFreq;		/* haplotype frequency */
-  double ***DValue;		/* D value */
-}
-LambdaCell;
 
 /* structure to keep the LD haplotype frequencies between two loci */
 typedef struct LDLoci

@@ -1,4 +1,3 @@
-
 /**********************************************************************
  * Copyright 2008, Nationwide Children's Research Institute.  
  * All rights reserved.
@@ -8,6 +7,8 @@
 
 #ifndef __TOOLS_H__
 #define __TOOLS_H__
+
+#include <stdio.h>
 
 /* number of bits in an integer */
 #define INT_BITS		(sizeof(int)*8)

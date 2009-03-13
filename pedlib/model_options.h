@@ -5,8 +5,8 @@
  * for non-profit educational purposes only.
  **********************************************************************/
 
-#ifndef __PROGRAM_OPTION_H__
-#define __PROGRAM_OPTION_H__
+#ifndef __MODEL_OPTIONS_H__
+#define __MODEL_OPTIONS_H__
 
 typedef struct ModelOptions
 {
@@ -66,6 +66,4 @@ typedef struct ModelOptions
   char loopBreaker[16];         /* loop breaker's individual ID */
 } ModelOptions;
 
-extern ModelOptions modelOptions;
-
-#endif /* __PROGRAM_OPTION_H__ */
+#endif

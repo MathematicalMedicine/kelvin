@@ -7,6 +7,12 @@
  **********************************************************************/
 
 #include "kelvin.h"
+#include "model_range.h"
+extern ModelRange modelRange;
+#include "model_options.h"
+extern ModelOptions modelOptions;
+#include "model_type.h"
+extern ModelType modelType;
 #include "tools.h"
 #include <sys/types.h>		/* C regexps */
 #include <regex.h>		/* C regexps */

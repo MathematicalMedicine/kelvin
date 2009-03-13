@@ -6,7 +6,6 @@
  * for non-profit educational purposes only.
  **********************************************************************/
 
-
 #ifndef __PEDLIB_H__
 #define __PEDLIB_H__
 
@@ -62,6 +61,11 @@ typedef enum
 #include "pedigree.h"
 #include "locus.h"
 #include "model_options.h"
+extern struct ModelOptions modelOptions;
+#include "model_type.h"
+extern struct ModelType modelType;
+#include "model_range.h"
+extern struct ModelRange modelRange;
 
 /* pedigree related function prototypes */
 int read_pedfile (char *sPedfileName, PedigreeSet * pedigreeSet);
@@ -83,7 +87,5 @@ void *REALLOC (char *description, void *ptr, size_t size);
 
 extern char *flexBuffer;
 extern int flexBufferSize;
-
-
 
 #endif
