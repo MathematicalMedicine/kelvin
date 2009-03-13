@@ -132,6 +132,8 @@ extern Polynomial *constant1Poly;
   configuration file.
 
 */
+
+
 int main (int argc, char *argv[])
 {
 
@@ -140,6 +142,7 @@ int main (int argc, char *argv[])
   #include "kelvinLocals.h"
 
   #include "kelvinWriteFiles.c"
+  #include "dkelvinWriteFiles.c"
 
   #include "kelvinInit.c"
 

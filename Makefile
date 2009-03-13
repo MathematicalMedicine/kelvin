@@ -62,7 +62,8 @@ OBJS = ppl.o config.o saveResults.o trackProgress.o kelvinHandlers.o
 INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
 	kelvinGlobals.h iterationGlobals.h integrationGlobals.h \
 	kelvinLocals.h iterationLocals.h integrationLocals.h \
-	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c kelvinWriteFiles.c
+	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c kelvinWriteFiles.c \
+	dkelvinWriteFiles.c
 
 # Binary releases include kelvin_$(PLATFORM)
 all : kelvin seq_update/calc_updated_ppl 
@@ -80,7 +81,7 @@ kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
 	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 seq_update/calc_updated_ppl :
-	make -C seq_update calc_updated_ppl
+	make -C seq_update -f Makefile calc_updated_ppl
 
 %.o : %.c $(INCS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@

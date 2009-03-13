@@ -3,12 +3,12 @@ void writePPLFileHeader () {
   if (modelOptions.markerAnalysis != FALSE) {
     fprintf (fpPPL, "Chr Marker1 Position1 Marker2 Position2 PPL");
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      fprintf (fpPPL, " PPL(LD) PPLD|L PPLD(L) ");
+      fprintf (fpPPL, " PPL(LD) PPLD|L PPLD(L)");
     }
   } else {
     fprintf (fpPPL, "Chr Trait Marker Position PPL");
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      fprintf (fpPPL, " PPL(LD) PPLD|L PPLD(L) ");
+      fprintf (fpPPL, " PPL(LD) PPLD|L PPLD(L)");
     }
   }
     fprintf (fpPPL, "\n");
@@ -136,18 +136,22 @@ void writeMPMODFileHeader () {
 	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", liabIdx);
       else
 	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", liabIdx);
-    else
+    else {
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
 	if (modelOptions.imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh)",
-		   liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD", liabIdx);
 	else
-	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh)", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD", liabIdx);
       else
 	if (modelOptions.imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF,Thresh)", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF", liabIdx);
 	else
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF,Thresh)", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
+      if (modelType.trait == CT)
+	fprintf (fpMOD, ",Thresh)");
+      else 
+	fprintf (fpMOD, ")");
+    }
   
   fprintf (fpMOD, "\n");
   fflush (fpMOD);
@@ -188,7 +192,7 @@ void writeMPMODFileDetail () {
       else
 	fprintf (fpMOD, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
     }
-    if (modelType.trait != DT) {
+    if (modelType.trait == CT) {
       threshold = modelRange.tthresh[liabIdx][thresholdIdx];
       fprintf (fpMOD, ",%.3f)", threshold);
     } else
@@ -222,18 +226,22 @@ void write2ptMODFile () {
 	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", liabIdx);
       else
 	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", liabIdx);
-    else
+    else {
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
 	if (modelOptions.imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh)",
-		   liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD", liabIdx);
 	else
-	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh)", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD", liabIdx);
       else
 	if (modelOptions.imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF,Thresh)", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF", liabIdx);
 	else
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF,Thresh)", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
+      if (modelType.trait == CT)
+	fprintf (fpMOD, ",Thresh)");
+      else 
+	fprintf (fpMOD, ")");
+    }
   fprintf (fpMOD, "\n");
 
   if (modelOptions.markerAnalysis != FALSE) {
@@ -289,7 +297,7 @@ void write2ptMODFile () {
       else
 	fprintf (fpMOD, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
     }
-    if (modelType.trait != DT) {
+    if (modelType.trait == CT) {
       threshold = modelRange.tthresh[liabIdx][thresholdIdx];
       fprintf (fpMOD, ",%.3f)", threshold);
     } else
@@ -340,7 +348,7 @@ void writeMaximizingModel(char *modelDescription, double myMOD, int myDPrimeIdx,
       else
 	fprintf (fpTP, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
     }
-    if (modelType.trait != DT) {
+    if (modelType.trait == CT) {
       threshold = modelRange.tthresh[liabIdx][thresholdIdx];
       fprintf (fpTP, ",%.3f)", threshold);
     } else
@@ -416,17 +424,22 @@ void writeMMFileDetail() {
 	fprintf (fpTP, " LC%dPV(DD,Dd,dD,dd)", liabIdx);
       else
 	fprintf (fpTP, " LC%dPV(DD,Dd,dd)", liabIdx);
-    else
+    else {
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
 	if (modelOptions.imprintingFlag)
-	  fprintf (fpTP, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD,Thresh)", liabIdx);
+	  fprintf (fpTP, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD", liabIdx);
 	else
-	  fprintf (fpTP, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh)", liabIdx);
+	  fprintf (fpTP, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD", liabIdx);
       else
 	if (modelOptions.imprintingFlag)
-	  fprintf (fpTP, " LC%dPV(DDDF,DdDF,dDDF,ddDF,Thresh)", liabIdx);
+	  fprintf (fpTP, " LC%dPV(DDDF,DdDF,dDDF,ddDF", liabIdx);
 	else
-	  fprintf (fpTP, " LC%dPV(DDDF,DdDF,ddDF,Thresh)", liabIdx);
+	  fprintf (fpTP, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
+      if (modelType.trait == CT)
+	fprintf (fpTP, ",Thresh)");
+      else 
+	fprintf (fpTP, ")");
+    }
   fprintf (fpTP, "\n");
   
   /* Overall maximizing model - MOD */
@@ -436,7 +449,8 @@ void writeMMFileDetail() {
   writeMaximizingModel ("MOD(Theta==0)", max_at_theta0, maxDPrimeIdx_at_theta0, theta0Idx);
   
   /* Maximizing model at d prime equal to 0 - MOD */
-  writeMaximizingModel ("MOD(D'==0)", max_at_dprime0, dprime0Idx, maxTheta_at_dprime0);
+  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) 
+    writeMaximizingModel ("MOD(D'==0)", max_at_dprime0, dprime0Idx, maxTheta_at_dprime0);
 
   return;
 }

@@ -7,6 +7,8 @@ double fixed_thetaM,fixed_thetaF; // Sex-specific analysis
 
 double maxima_x[20];
 double maximum_function_value = 0.0;
+double maximum_dprime0_value;
+double maximum_theta0_value;
 double localmax_x[20];
 double localmax_value = 0.0;
 int total_dim = 0;
@@ -35,3 +37,27 @@ double xu[17] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1 };
 int print_point_flag = 0;
 FILE *fphlod = NULL;
 
+
+typedef struct {
+  double DD,
+    Dd,
+    dD,
+    dd,
+    DDSD,
+    DdSD,
+    dDSD,
+    ddSD,
+    threshold;
+} st_DKMaxModelPenVector;
+
+typedef struct {
+  double *dprime,
+    theta[2],
+    alpha,
+    dgf,
+    mf,
+    r2;
+  st_DKMaxModelPenVector *pen;
+} st_DKMaxModel;
+
+st_DKMaxModel dk_globalmax, dk_dprime0max, dk_theta0max;
