@@ -1,4 +1,4 @@
-// Need modelType, modelOptions and modelRange
+// gcc -o testConfig testConfig.c config.c -I pedlib -I utils -L lib -lped -lutils -lm
 
 #include "pedlib.h"
 ModelOptions modelOptions;
