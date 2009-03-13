@@ -16,12 +16,7 @@
 #include <limits.h>		/* USHRT_MAX */
 #include <math.h>		/* for calculating logs */
 #include <float.h>
-//#include <bits/nan.h>         /* NAN (not included by math.h?) */ 
-#if FALSE
-#include "niceaux.h"		/* NICE utilities. */
-#include "nicecom.h"
-#include "niceapi.h"
-#endif
+
 #include "utils.h"		/* Kelvin utilities. */
 #include "pedlib.h"		/* Pedigree library. */
 #include "trackProgress.h"
@@ -39,90 +34,12 @@
 #endif
 
 /**********************************************************************
- * Some internal defines.
- **********************************************************************/
-
-/* Maximum number of characters in an KELVIN filename. */
-#define KMAXFILENAMELEN 64
-
-/* Maximum number of characters in a KELVIN input line. */
-#define KMAXLINELEN 1024
-
-/**********************************************************************
- * Nagging parameters.
- **********************************************************************/
-
-/* Sleep interval when your master tells you to back off. */
-#define NAGSLEEP	60	/* In seconds. */
-
-/* Nagging messages. */
-#define NQIDIDLE    	1	/* I need a problem to work on. */
-#define NQIDSOLN	2	/* I have some solution values. */
-#define NQIDABORT	3	/* Master wants me to abort. */
-
-/**********************************************************************
- * Checkpointing parameters.
- **********************************************************************/
-#ifdef DEBUG
-#define CKPTINT    	600	/* In seconds. */
-#else
-#define CKPTINT		3600	/* In seconds. */
-#endif
-
-/**********************************************************************
  * Progress meters.
  **********************************************************************/
 extern unsigned long int nLodsTotal;
 extern unsigned long int nLodsSlave;
 extern unsigned long int nLodsRoot;
 extern struct swStopwatch *overallSW;
-
-/* Performance knobs. */
-extern int polynomialScale;
-
-/**********************************************************************
- * Input files. These are not saved in the model structure because
- * they are really only ever needed by the root process.
- ***********************************************************************/
-extern char mapfile[KMAXFILENAMELEN + 1];
-extern char markerfile[KMAXFILENAMELEN + 1];
-extern char maxmodelfile[KMAXFILENAMELEN + 1];
-extern char resultsprefix[KMAXFILENAMELEN + 1];
-extern char pedfile[KMAXFILENAMELEN + 1];
-extern char datafile[KMAXFILENAMELEN + 1];
-
-#if FALSE
-extern char loopsfile[KMAXFILENAMELEN + 1];
-#endif
-extern char ccfile[KMAXFILENAMELEN + 1];
-extern char avghetfile[KMAXFILENAMELEN + 1];
-extern char condFile[KMAXFILENAMELEN + 1];
-extern char avghomofile[KMAXFILENAMELEN + 1];
-extern char pplfile[KMAXFILENAMELEN + 1];
-extern char intermediatefile[KMAXFILENAMELEN + 1];
-extern char modfile[KMAXFILENAMELEN + 1];
-extern char dkelvinoutfile[KMAXFILENAMELEN + 1];
-
-/**********************************************************************
- * Model structures (ModelType, ModelRange, ModelOptions). These
- * defines are tied to the pedlib defines wherever applicable. Note:
- * the ModelOptions structure is part of the pedigree library, while
- * the other two are defined here.
- ***********************************************************************/
-#define TP TWOPOINT		/* 2 point */
-#define MP MULTIPOINT		/* multipoint */
-//#define LE LINKAGE_EQUILIBRIUM  /* linkage equilibrium */
-//#define LD LINKAGE_DISEQUILIBRIUM       /* linkage disequilibrium */
-#define SA SEX_AVERAGED
-#define SS SEX_SPECIFIC
-#define DT DICHOTOMOUS		/* dichotomous trait */
-#define QT QUANTITATIVE		/* quantitative trait */
-#define CT COMBINED		/* combined dichotomous/quantitative trait */
-#define MM MARKERTOMARKER	/* marker to marker analysis type */
-#define AM ADJACENTMARKER
-#define ND NORMAL_DISTRIBUTION	/* normal distribution */
-#define TD T_DISTRIBUTION	/* t distribution */
-#define NPENET(x) ((x)*(x))
 
 /* The elements of the various LD-related PPL statistics. */
 typedef struct {

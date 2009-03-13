@@ -8,6 +8,21 @@
 #ifndef __MODEL_OPTIONS_H__
 #define __MODEL_OPTIONS_H__
 
+#include <stdio.h>
+
+/* Maximum number of characters in an KELVIN filename. */
+#define KMAXFILENAMELEN 64
+
+#define DEFAULTMARKERFILENAME "markers.dat"
+#define DEFAULTMAPFILENAME "mapfile.dat"
+#define DEFAULTPEDFILENAME "pedfile.dat"
+#define DEFAULTDATAFILENAME "datafile.dat"
+#define DEFAULTAVGHETFILENAME "br.out"
+#define DEFAULTPPLFILENAME "ppl.out"
+#define DEFAULTCONDFILENAME "condL.out"
+#define DEFAULTLDPPLFILENAME "ldppl.out"
+#define DEFAULTRESULTSPREFIX "./"
+
 typedef struct ModelOptions
 {
   /* analysis type - Linkage Equalibrium (LE) or Linkage Disequalibrium (LD) */
@@ -36,11 +51,6 @@ typedef struct ModelOptions
    * are {NAN, -INFINITY, INFINITY}. values are cast to double in both
    * cases. */
   double affectionStatus[3];
-#if FALSE
-  /* Replaced with affectionStatus[]: 1/3/07 ams */
-  /* unknown trait value */
-  double unknownTraitValue;
-#endif
 
   /* unknown person ID */
   char *sUnknownPersonID;
@@ -65,6 +75,26 @@ typedef struct ModelOptions
   int conditionalRun;           /* 1 - print out proband's conditional LR */
   int loopCondRun;              /* 1 - print out loop breaker's conditional LR */
   char loopBreaker[16];         /* loop breaker's individual ID */
+
+  /* Storage and default names for files that are always opened (depending on analysis options) */
+  char markerfile[KMAXFILENAMELEN + 1];  /// Marker (frequency) file
+  char mapfile[KMAXFILENAMELEN + 1];     /// Map file
+  char pedfile[KMAXFILENAMELEN + 1];     /// Pedigree file
+  char datafile[KMAXFILENAMELEN + 1];   /// Data (pedigree description) file
+  char avghetfile[KMAXFILENAMELEN + 1];       /// Bayes Ratio file
+  char pplfile[KMAXFILENAMELEN + 1];         /// PPL file
+  char condFile[KMAXFILENAMELEN + 1];      /// Conditional LR file
+  char ldPPLfile[KMAXFILENAMELEN + 1];     /// This appears to be unused
+
+  /* Storage for files that are only opened based on explicit directives */
+  char ccfile[KMAXFILENAMELEN + 1];                 /// Case control count file
+  char modfile[KMAXFILENAMELEN + 1];                /// MOD and maximizing model file
+  char maxmodelfile[KMAXFILENAMELEN + 1];           /// verbose Maximizing Model file
+  char intermediatefile[KMAXFILENAMELEN + 1];       /// Intermediate Result file
+  char dkelvinoutfile[KMAXFILENAMELEN + 1];         /// DCHURE detail file
+  char resultsprefix[KMAXFILENAMELEN + 1]; ///< Path for SR directive result storage
+  
 } ModelOptions;
 
 #endif
+

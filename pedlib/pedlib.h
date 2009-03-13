@@ -10,7 +10,7 @@
 #define __PEDLIB_H__
 
 /********************************************************************
- * Include file for Kelvin
+ * Include file for Kelvin pedigree components.
  * This library reads in pedigree file and build pedigree structure
  * reads in marker map file and build the initial marker map
  * does genotype elimination, allele set recoding
@@ -49,14 +49,21 @@ typedef enum
 typedef enum
 { MALE = 1, FEMALE = 2 } SEX;
 
-/* conditional penetrance given genotype function 
- * under t-distribution, we also need the degree of freedom in addition
- * to the means and variances. */
-//#define NORMAL_DISTRIBUTION   0
-//#define T_DISTRIBUTION                1
-
 /* maximum length for pedigree label, individual IDs */
 #define MAX_PED_LABEL_LEN       128
+
+#define TP TWOPOINT		/* 2 point */
+#define MP MULTIPOINT		/* multipoint */
+#define SA SEX_AVERAGED
+#define SS SEX_SPECIFIC
+#define DT DICHOTOMOUS		/* dichotomous trait */
+#define QT QUANTITATIVE		/* quantitative trait */
+#define CT COMBINED		/* combined dichotomous/quantitative trait */
+#define MM MARKERTOMARKER	/* marker to marker analysis type */
+#define AM ADJACENTMARKER
+#define ND NORMAL_DISTRIBUTION	/* normal distribution */
+#define TD T_DISTRIBUTION	/* t distribution */
+#define NPENET(x) ((x)*(x))
 
 #include "pedigree.h"
 #include "locus.h"

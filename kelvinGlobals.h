@@ -6,35 +6,7 @@ char messageBuffer[MAXSWMSG];
 
 /* Some default global values. */
 
-/* Storage and default names for files that are always opened (depending on analysis options) */
-char markerfile[KMAXFILENAMELEN + 1] = "markers.dat";  /// Marker (frequency) file
-char mapfile[KMAXFILENAMELEN + 1] = "mapfile.dat";     /// Map file
-char pedfile[KMAXFILENAMELEN + 1] = "pedfile.dat";     /// Pedigree file
-char datafile[KMAXFILENAMELEN + 1] = "datafile.dat";   /// Data (pedigree description) file
-char avghetfile[KMAXFILENAMELEN + 1] = "br.out";       /// Bayes Ratio file
-char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";         /// PPL file
-char condFile[KMAXFILENAMELEN + 1] = "condL.out";      /// Conditional LR file
-char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";     /// This appears to be unused
-
-/* Storage for files that are only opened based on explicit directives */
-char ccfile[KMAXFILENAMELEN + 1] = "";                 /// Case control count file
-char modfile[KMAXFILENAMELEN + 1] = "";                /// MOD and maximizing model file
-char maxmodelfile[KMAXFILENAMELEN + 1] = "";           /// verbose Maximizing Model file
-char intermediatefile[KMAXFILENAMELEN + 1] = "";       /// Intermediate Result file
-char dkelvinoutfile[KMAXFILENAMELEN + 1] = "";         /// DCHURE detail file
-char resultsprefix[KMAXFILENAMELEN + 1] = "./"; ///< Path for SR directive result storage
-
-FILE *fpHet = NULL;     ///< Average HET LR file (Bayes Ratio file) pointer
-FILE *fpPPL = NULL;     ///< PPL output file pointer
-FILE *fpCond = NULL;    ///< Conditional LR for genetic counseling
-FILE *fpMOD = NULL;     // MOD and maximizing model information
-FILE *fpTP = NULL;      ///< Ancillary Two-point output, used to go to stderr
-FILE *fpIR = NULL;      ///< Intermediate results, used to go to stderr, normally dkelvin-only
-FILE *fpDK = NULL;      // DCHURE detail file
-
-int polynomialScale = 1;        ///< Scale of static allocation and dynamic growth in polynomial.c.
-
-/** Model datastructures. modelOptions is defined in the pedigree library. */
+/** Model datastructures. */
 ModelType modelType;
 ModelRange modelRange;
 ModelOptions modelOptions;
@@ -112,3 +84,5 @@ LDLoci *pLDLoci = NULL;
 
 int R_square_flag = FALSE;
 double R_square = 0;
+
+FILE *fpCond = NULL;    ///< Conditional LR for genetic counseling, global due to likelihood.c write!

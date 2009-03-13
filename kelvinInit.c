@@ -134,12 +134,12 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   }
 
   /* Read in the map file. */
-  read_mapfile (mapfile);
+  read_mapfile (modelOptions.mapfile);
 
   /* Initialize the locus list and read in the marker file. */
   memset (&originalLocusList, 0, sizeof (originalLocusList));
   /* read in what loci are in the pedigree file */
-  read_datafile (datafile);
+  read_datafile (modelOptions.datafile);
 
   /* The configuration has all the information about the disease trait if any */
   if (originalLocusList.numTraitLocus > 0) {
@@ -174,7 +174,7 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   }
 
   /* read in marker allele frequencies */
-  read_markerfile (markerfile, modelType.numMarkers);
+  read_markerfile (modelOptions.markerfile, modelType.numMarkers);
 
   /* build allele set information */
   for (locus = 0; locus < originalLocusList.numLocus; locus++) {
@@ -183,7 +183,7 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
 
   /* Initialize the pedigree set datastructure and read in the pedigrees. */
   memset (&pedigreeSet, 0, sizeof (PedigreeSet));
-  read_pedfile (pedfile, &pedigreeSet);
+  read_pedfile (modelOptions.pedfile, &pedigreeSet);
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
     pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
     if (pPedigree->currentLoopFlag)
@@ -192,8 +192,8 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   KASSERT (exitDueToLoop == FALSE, "Not all loops in pedigrees are broken.\n");
 
   /* read in case control file if provided */
-  if (strlen (ccfile) > 0)
-    read_ccfile (ccfile, &pedigreeSet);
+  if (strlen (modelOptions.ccfile) > 0)
+    read_ccfile (modelOptions.ccfile, &pedigreeSet);
   flexBufferSize = 0;
   free (flexBuffer);
   fflush (stderr);
@@ -298,41 +298,41 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   /* Open output files that get written across loops. */
 
   if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
-    fpCond = fopen (condFile, "w");
-    KASSERT (fpCond != NULL, "Error in opening file %s for write.\n", condFile); 
+    fpCond = fopen (modelOptions.condFile, "w");
+    KASSERT (fpCond != NULL, "Error in opening file %s for write.\n", modelOptions.condFile); 
     //  fprintf( fpCond, "# Version %s\n", programVersion);
    }
 
   if (modelOptions.markerAnalysis == FALSE) {
-    fpHet = fopen (avghetfile, "w");
-    KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", avghetfile);
+    fpHet = fopen (modelOptions.avghetfile, "w");
+    KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", modelOptions.avghetfile);
     fprintf (fpHet, "# Version %s\n", programVersion);
   }
 
   if (modelType.type == TP) {
-    fpPPL = fopen (pplfile, "w");
-    KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", pplfile);
+    fpPPL = fopen (modelOptions.pplfile, "w");
+    KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", modelOptions.pplfile);
     writePPLFileHeader ();
 
-    if (strlen (maxmodelfile) > 0) {
-      fpTP = fopen (maxmodelfile, "w");
-      KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", maxmodelfile);
+    if (strlen (modelOptions.maxmodelfile) > 0) {
+      fpTP = fopen (modelOptions.maxmodelfile, "w");
+      KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", modelOptions.maxmodelfile);
     }
   }
 
-  if (strlen (modfile) > 0) {
-    fpMOD = fopen (modfile, "w");
-    KASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modfile);
+  if (strlen (modelOptions.modfile) > 0) {
+    fpMOD = fopen (modelOptions.modfile, "w");
+    KASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modelOptions.modfile);
     fprintf (fpMOD, "# Version %s\n", programVersion);
   }
 
-  if (strlen (intermediatefile) > 0) {
-    fpIR = fopen (intermediatefile, "w");
-    KASSERT (fpIR != NULL, "Error in opening file %s for write.\n", intermediatefile);
+  if (strlen (modelOptions.intermediatefile) > 0) {
+    fpIR = fopen (modelOptions.intermediatefile, "w");
+    KASSERT (fpIR != NULL, "Error in opening file %s for write.\n", modelOptions.intermediatefile);
   }
 
  // DKelvin intermediate results are written here.
-  if ((modelOptions.integration) && (strlen (dkelvinoutfile) > 0)) {
-    fpDK= fopen(dkelvinoutfile, "w");
-    KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", dkelvinoutfile);
+  if ((modelOptions.integration) && (strlen (modelOptions.dkelvinoutfile) > 0)) {
+    fpDK= fopen(modelOptions.dkelvinoutfile, "w");
+    KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", modelOptions.dkelvinoutfile);
   }

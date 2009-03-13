@@ -6,16 +6,23 @@
  * for non-profit educational purposes only.
  **********************************************************************/
 
-#include "kelvin.h"
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <sys/types.h>		/* C regexps */
+#include <regex.h>		/* C regexps */
+
+//#include "kelvin.h"
 #include "model_range.h"
 extern ModelRange modelRange;
 #include "model_options.h"
 extern ModelOptions modelOptions;
 #include "model_type.h"
 extern ModelType modelType;
+
 #include "tools.h"
-#include <sys/types.h>		/* C regexps */
-#include <regex.h>		/* C regexps */
+#include "utils.h"
+#include "pedlib.h"
 
 /**********************************************************************
  * Process configuration file and set up model datastructures
@@ -30,6 +37,9 @@ extern ModelType modelType;
  * TODO: liability class should be the slowest moving index so that we
  *       can censor at run-time if ped has no such LC?
  **********************************************************************/
+
+/* Maximum number of characters in a KELVIN input line. */
+#define KMAXLINELEN 1024
 
 /**********************************************************************
  * Regular expressions used to parse configuration file
@@ -161,7 +171,7 @@ void addPenetrance (ModelRange * range, int type, double val);
 void addGeneFreq (ModelRange * range, double val);
 void addAlpha (ModelRange * range, double val);
 
-/* void addTraitLocus (ModelRange *range, double val); */
+void addTraitLocus (ModelRange *range, double val);
 void addTraitThreshold (ModelRange * range, double val);
 void addDPrime (ModelRange * range, double val);
 void addAlleleFreq (ModelRange * range, double val);
@@ -218,6 +228,18 @@ readConfigFile (char *file)
   regmatch_t match[8];		/* Store extracted values. */
 
   /* Set up the default model values. */
+
+  strcpy (modelOptions.markerfile, DEFAULTMARKERFILENAME);
+  strcpy (modelOptions.mapfile, DEFAULTMAPFILENAME);
+  strcpy (modelOptions.pedfile, DEFAULTPEDFILENAME);
+  strcpy (modelOptions.datafile, DEFAULTDATAFILENAME);
+  strcpy (modelOptions.avghetfile, DEFAULTAVGHETFILENAME);
+  strcpy (modelOptions.pplfile, DEFAULTPPLFILENAME);
+  strcpy (modelOptions.condFile, DEFAULTCONDFILENAME);
+  strcpy (modelOptions.ldPPLfile, DEFAULTLDPPLFILENAME);
+
+  strcpy (modelOptions.resultsprefix, DEFAULTRESULTSPREFIX);
+
   modelType.type = TP;
   modelType.trait = DT;
   modelOptions.equilibrium = LINKAGE_EQUILIBRIUM;
@@ -396,7 +418,7 @@ readConfigFile (char *file)
 	      "Configure for polynomial evaluation w/polynomialScale %d\n",
 	      modelOptions.polynomialScale);
       } else {
-	polynomialScale = 1;
+	modelOptions.polynomialScale = 1;
 	KLOG (LOGINPUTFILE, LOGDEBUG,
 	      "Configure for polynomial evaluation w/default polynomialScale %d\n",
 	      modelOptions.polynomialScale);
@@ -538,84 +560,78 @@ readConfigFile (char *file)
     }
 
     /* Directives that take a single string argument. */
-    if (sscanf (line, "PD %s", pedfile) == 1) {	/* Pedigree file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure pedigree file %s\n", pedfile);
+    if (sscanf (line, "PD %s", modelOptions.pedfile) == 1) {	/* Pedigree file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure pedigree file %s\n", modelOptions.pedfile);
       continue;
     }
-    if (sscanf (line, "DF %s", datafile) == 1) { /* Data file - a list of loci */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure data file %s\n", datafile);
+    if (sscanf (line, "DF %s", modelOptions.datafile) == 1) { /* Data file - a list of loci */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure data file %s\n", modelOptions.datafile);
       continue;
     }
-    if (sscanf (line, "MK %s", markerfile) == 1) { /* Marker file - marker allele frequencies */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure marker file %s\n", markerfile);
+    if (sscanf (line, "MK %s", modelOptions.markerfile) == 1) { /* Marker file - marker allele frequencies */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure marker file %s\n", modelOptions.markerfile);
       continue;
     }
-    if (sscanf (line, "MP %s", mapfile) == 1) {	/* Map file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure map file %s\n", mapfile);
+    if (sscanf (line, "MP %s", modelOptions.mapfile) == 1) {	/* Map file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure map file %s\n", modelOptions.mapfile);
       continue;
     }
-#if FALSE
-    if (sscanf (line, "LP %s", loopfile) == 1) {
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure loop file %s\n", loopfile);
-      continue;
-    }
-#endif
-    if (sscanf (line, "CC %s", ccfile) == 1) {
+    if (sscanf (line, "CC %s", modelOptions.ccfile) == 1) {
       modelType.ccFlag = TRUE;
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure case-control count file %s\n",
-	    ccfile);
+	    modelOptions.ccfile);
       continue;
     }
-    if (sscanf (line, "CF %s", ccfile) == 1) {
+    if (sscanf (line, "CF %s", modelOptions.ccfile) == 1) {
       modelType.ccFlag = TRUE; // TEMPORARY &&& FOR WEEKEND?! RELEASE
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure count file %s\n",
-	    ccfile);
+	    modelOptions.ccfile);
       continue;
     }
     if (strncmp (line, "SR", 2) == 0) {
       modelOptions.saveResults = TRUE;
-      if (sscanf (line, "SR %s", resultsprefix) == 1) {	/* Results file prefix */
-	if ((i = strlen(resultsprefix)) != 0)
-	  if (resultsprefix[i-1] != '/') {
-	    resultsprefix[i] = '/';
-	    resultsprefix[i+1] = 0;
+      if (sscanf (line, "SR %s", modelOptions.resultsprefix) == 1) {	/* Results file prefix */
+	if ((i = strlen(modelOptions.resultsprefix)) != 0)
+	  if (modelOptions.resultsprefix[i-1] != '/') {
+	    modelOptions.resultsprefix[i] = '/';
+	    modelOptions.resultsprefix[i+1] = 0;
 	  }
 	KLOG (LOGINPUTFILE, LOGDEBUG,
 	      "Configure for saving results w/file prefix %s\n",
-	      resultsprefix);
+	      modelOptions.resultsprefix);
       } else {
 	KLOG (LOGINPUTFILE, LOGDEBUG,
 	      "Configure for saving results w/o file prefix %s\n",
-	      resultsprefix);
-	*resultsprefix = '\0';
+	      modelOptions.resultsprefix);
+	*modelOptions.resultsprefix = '\0';
       }
       continue;
     }
-    if (sscanf (line, "HE %s", avghetfile) == 1) {	/* Average hetergeneity LR file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure output file %s\n", avghetfile);
+    if (sscanf (line, "HE %s", modelOptions.avghetfile) == 1) {	/* Average hetergeneity LR file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure output file %s\n", modelOptions.avghetfile);
       continue;
     }
-    if (sscanf (line, "PF %s", pplfile) == 1) {	/* PPL output file */
+    if (sscanf (line, "PF %s", modelOptions.pplfile) == 1) {	/* PPL output file */
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure PPL output file %s\n",
-	    pplfile);
+	    modelOptions.pplfile);
       continue;
     }
-    if (sscanf (line, "MD %s", modfile) == 1) {	/* brief maximizing model file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure maximizing model file %s\n", maxmodelfile);
+    if (sscanf (line, "MD %s", modelOptions.modfile) == 1) {	/* brief maximizing model file */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure maximizing model file %s\n", modelOptions.modfile);
       continue;
     }
-    if (sscanf (line, "MX %s", maxmodelfile) == 1) { /* verbose Maximizing model file for 2pt */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure maximizing model file %s\n", maxmodelfile);
+    if (sscanf (line, "MX %s", modelOptions.maxmodelfile) == 1) { /* verbose Maximizing model file for 2pt */
+      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure maximizing model file %s\n", modelOptions.maxmodelfile);
       continue;
     }
-    if (sscanf (line, "IR %s", intermediatefile) == 1) { /* Intermediate results file */
+    if (sscanf (line, "IR %s", modelOptions.intermediatefile) == 1) { /* Intermediate results file */
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure intermediate results file %s\n",
-	    intermediatefile);
+	    modelOptions.intermediatefile);
       continue;
     }
-    if (sscanf (line, "DIR %s", dkelvinoutfile) == 1) {	/* DCHURE detail file */
+    if (sscanf (line, "DIR %s", modelOptions.dkelvinoutfile) == 1) {	/* DCHURE detail file */
       KLOG (LOGINPUTFILE, LOGDEBUG, "Configure intermediate results file %s\n",
-	    intermediatefile);
+	    modelOptions.dkelvinoutfile);
       continue;
     }
 
