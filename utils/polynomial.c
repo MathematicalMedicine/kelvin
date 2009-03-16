@@ -150,7 +150,6 @@
 #include "dists.h"
 
 #include "sw.h"
-#include "../trackProgress.h"
 
 int polynomialScale;     ///< Scaling factor for hash and other storage set in config.c
 extern struct swStopwatch *overallSW;   ///< Total run statistics stopwatch defined in kelvin.c
