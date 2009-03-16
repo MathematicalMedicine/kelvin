@@ -236,10 +236,13 @@ be waiting a long time for the compiles to complete, and will have to run only o
 <p>
 Modify whatever shell script you use to run kelvin to:
 <ol>
-<li>Ensure that a copy of <tt>compileDL.sh</tt> from <tt>pedlib</tt> is somewhere on your path. You might want
-to modify the script to e-mail you should a compile fail, instead of emailing Bill.
-<li>Ensure that the <tt>CPATH</tt> environment variable includes <tt>/usr/local/src/kelvin-0.37.0/pedlib/:/usr/local/src/kelvin-0.37.0/include/</tt>.
-<li>Instead of running regular <tt>kelvin</tt>, run <tt>/usr/local/src/kelvin-0.37.0/kelvin-POLYCOMP_DL</tt>. This
+<li>Ensure that a copy of <tt>compileDL.sh</tt> is somewhere on your path. You might want
+to modify the script to e-mail you should a compile fail, instead of emailing Bill. This will look
+something like: <tt>export PATH=/usr/local/src/kelvin-0.37.2/:$PATH</tt>
+<li>Ensure that the <tt>CPATH</tt> environment variable includes 
+<tt>/usr/local/src/kelvin-0.37.2/pedlib/:/usr/local/src/kelvin-0.37.2/include/</tt>. This will look
+something like: <tt>export CPATH=/usr/local/src/kelvin-0.37.2/pedlib/:/usr/local/src/kelvin-0.37.2/include/</tt>
+<li>Instead of running regular <tt>kelvin</tt>, run <tt>/usr/local/src/kelvin-0.37.2/kelvin-POLYCOMP_DL</tt>. This
 binary is built with the POLYUSE_DL, POLYCODE_DL and POLYCOMP_DL compilation flags set.
 </ol>
 If a compile blows-up, you'll need to not only fix the problem, which should be described in the <tt>.out</tt> file
@@ -276,7 +279,7 @@ This approach is best for many large pedigrees, and requires a bit of work. If y
 with the Compiled Single Run method.
 <p>
 You won't be using kelvin to do the actual compiles this time, so no special setup is needed. All you need to do is
-run <tt>/usr/local/src/kelvin-0.37.0/kelvin-POLYCODE-FAKEEVALUATE</tt> and let it start generating the source
+run <tt>/usr/local/src/kelvin-0.37.2/kelvin-POLYCODE-FAKEEVALUATE</tt> and let it start generating the source
 code for polynomials. Note that while it will produce output files, they're garbage (the "FAKEEVALUATE" bit)
 because the whole point here is to produce source code as quickly as possible.
 <p>
@@ -294,7 +297,7 @@ by modifying <tt>compileDL.sh</tt> to do another check for any <tt>.compiling</t
 I haven't had a chance to do that yet.
 <p>
 Once all of the polynomials generated have been compiled -- and you can tell when that's the case by looking to
-see if there are any <tt>.h</tt> files left, you can start evaluation. Use <tt>/usr/local/src/kelvin-0.37.0/kelvin-POLYUSE_DL</tt>
+see if there are any <tt>.h</tt> files left, you can start evaluation. Use <tt>/usr/local/src/kelvin-0.37.2/kelvin-POLYUSE_DL</tt>
 with some largish <tt>OMP_NUM_THREADS</tt> for best performance.
 
 <h2>How Compilation Works</h2>
