@@ -380,10 +380,12 @@
 	    if (maximum_function_value < localmax_value) {
 	      maximum_function_value = localmax_value;
 	      if (modelOptions.mapFlag == SA) {
-		maxima_x[0] = dk_globalmax.dprime[0] = fixed_dprime;
+		if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+		    maxima_x[0] = dk_globalmax.dprime[0] = fixed_dprime;
 		maxima_x[1] = dk_globalmax.theta[0] = dk_globalmax.theta[1] = fixed_theta;
 	      } else {
-		dk_globalmax.dprime[0] = 0.0;
+		if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+		  dk_globalmax.dprime[0] = 0.0;
 		maxima_x[0] = dk_globalmax.theta[0] = fixed_thetaM;
 		maxima_x[1] = dk_globalmax.theta[1] = fixed_thetaF;
               }
@@ -402,13 +404,15 @@
 	    if (maximum_theta0_value < localmax_value) {
 	      if ((modelOptions.mapFlag == SA) && (fabs (fixed_theta) < 1e-9)) {
 		maximum_theta0_value = localmax_value;
- 		dk_theta0max.dprime[0] = fixed_dprime;
+		if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+		  dk_theta0max.dprime[0] = fixed_dprime;
 		dk_theta0max.theta[0] = dk_theta0max.theta[1] = fixed_theta;
 		dk_copyMaxModel (localmax_x, &dk_theta0max);
 	      } else if ((modelOptions.mapFlag == SS) && (fabs (fixed_thetaM) < 1e-9) &&
 			 (fabs (fixed_thetaF) < 1e-9)) {
 		maximum_theta0_value = localmax_value;
-		dk_theta0max.dprime[0] = 0.0;
+		if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+		  dk_theta0max.dprime[0] = 0.0;
 		dk_theta0max.theta[0] = fixed_thetaM;
 		dk_theta0max.theta[1] = fixed_thetaF;
 		dk_copyMaxModel (localmax_x, &dk_theta0max);
