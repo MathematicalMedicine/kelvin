@@ -9,7 +9,7 @@
 #include "kelvin.h"
 extern PedigreeSet pedigreeSet;
 #include "kelvinHandlers.h"
-#include "polynomial.h"
+#include "utils/polynomial.h"
 #include "trackProgress.h"
 
 /** 

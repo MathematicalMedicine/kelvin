@@ -17,9 +17,9 @@
 #include "pedlib.h"
 #include "pedigree.h"
 #include "locus.h"
-#include "utils.h"		/* for logging */
-#include "tools.h"
-#include "polynomial.h"
+#include "../utils/utils.h"		/* for logging */
+#include "../utils/tools.h"
+#include "../utils/polynomial.h"
 
 int initialize_transmitted_alleles (int locus, Pedigree * pPedigree);
 int identify_transmitted_alleles (int locus, Pedigree * pPedigree);

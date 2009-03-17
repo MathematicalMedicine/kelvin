@@ -31,12 +31,12 @@ char *locusVersion = "$Id$";
 //#include "gsl/gsl_sf_gamma.h"
 //#include "gsl/gsl_randist.h"
 //#include "gsl/gsl_cdf.h"
-#include "dists.h"
 
+#include "../utils/dists.h"
 #include "pedlib.h"
-#include "utils.h"		/* for logging */
-#include "tools.h"
-#include "polynomial.h"
+#include "../utils/utils.h"		/* for logging */
+#include "../utils/tools.h"
+#include "../utils/polynomial.h"
 
 /* global variables */
 Map map;

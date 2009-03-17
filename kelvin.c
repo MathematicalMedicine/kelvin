@@ -102,7 +102,7 @@
 #include <pthread.h>
 #include "kelvin.h"
 #include "kelvinHandlers.h"
-#include "likelihood.h"
+#include "pedlib/likelihood.h"
 #include "saveResults.h"
 
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;

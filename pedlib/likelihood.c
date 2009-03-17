@@ -24,9 +24,9 @@ char *likelihoodVersion = "$Id$";
 
 #include "pedlib.h"
 #include "locus.h"
-#include "utils.h"		/* for logging */
-#include "sw.h"
-#include "tools.h"
+#include "../utils/utils.h"		/* for logging */
+#include "../utils/sw.h"
+#include "../utils/tools.h"
 #include "likelihood.h"
 #include "genotype_elimination.h"
 #ifdef _OPENMP

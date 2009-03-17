@@ -8,31 +8,13 @@ INCS = config.h model_options.h model_type.h model_range.h lambda_cell.h
 
 OBJS = config.o read_pedfile.o
 
-all : $(KVNLIBDIR)/libconfig.a $(KVNINCDIR)/config.h \
-      $(KVNINCDIR)/lambda_cell.h $(KVNINCDIR)/model_range.h $(KVNINCDIR)/model_type.h \
-      $(KVNINCDIR)/model_options.h
+all : ../lib/libconfig.a
 
 clean :
-	rm -f $(OBJS) libconfig.a $(KVNLIBDIR)/libconfig.a
+	rm -f $(OBJS) libconfig.a ../lib/libconfig.a
 
-
-$(KVNINCDIR)/config.h : config.h
-	 cp config.h $(KVNINCDIR)
-
-$(KVNINCDIR)/lambda_cell.h : lambda_cell.h
-	 cp lambda_cell.h $(KVNINCDIR)
-
-$(KVNINCDIR)/model_range.h : model_range.h
-	 cp model_range.h $(KVNINCDIR)
-
-$(KVNINCDIR)/model_type.h : model_type.h
-	 cp model_type.h $(KVNINCDIR)
-
-$(KVNINCDIR)/model_options.h : model_options.h
-	 cp model_options.h $(KVNINCDIR)
-
-$(KVNLIBDIR)/libconfig.a : libconfig.a
-	cp libconfig.a $(KVNLIBDIR)
+../lib/libconfig.a : libconfig.a
+	cp libconfig.a ../lib
 
 libconfig.a : $(OBJS)
 	ar -rsc libconfig.a $(OBJS)

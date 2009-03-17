@@ -67,11 +67,11 @@ typedef enum
 
 #include "pedigree.h"
 #include "locus.h"
-#include "model_options.h"
+#include "../config/model_options.h"
 extern struct ModelOptions modelOptions;
-#include "model_type.h"
+#include "../config/model_type.h"
 extern struct ModelType modelType;
-#include "model_range.h"
+#include "../config/model_range.h"
 extern struct ModelRange modelRange;
 
 /* pedigree related function prototypes */

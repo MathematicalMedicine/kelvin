@@ -13,7 +13,6 @@ BINDIR=/usr/local/bin
 INCDIR=/usr/local/include
 LIBDIR=/usr/local/lib
 KVNLIBDIR := $(shell pwd)/lib
-KVNINCDIR := $(shell pwd)/include
 KELVIN_ROOT := $(shell pwd)
 TEST_KELVIN := $(KELVIN_ROOT)/kelvin
 TEST_UPDATE := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
@@ -22,7 +21,7 @@ PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
 empty:=
 space:= $(empty) $(empty)
 PLATFORM = $(subst $(space),-,$(PLATFORM_NAME))
-INCFLAGS := -I$(INCDIR) -I$(KVNINCDIR)
+INCFLAGS := -I$(INCDIR)
 
 CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
@@ -31,7 +30,7 @@ LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lconfig -lutils -lm -lpthread
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
-CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
+#CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
 #CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
 LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
@@ -48,14 +47,14 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 #CFLAGS += -DPOLYCODE_DL # Enable generation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCOMP_DL # Enable compilation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCHECK_DL # Keep both built and compiled DL polys and compare results (can be noisy!)
-#CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
+CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
 #CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
 #CFLAGS += -DUSE_GSL # Use GNU Scientific Library (GSL) statistical routines instead of internal ones
 #CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13
 #ADD_LDFLAGS += -lgsl -lgslcblas -lm # ditto
 
 LDFLAGS += ${ADD_LDFLAGS}
-export KVNLIBDIR KVNINCDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN
+export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN
 
 KOBJS = kelvin.o dcuhre.o
 OBJS = ppl.o saveResults.o trackProgress.o kelvinHandlers.o

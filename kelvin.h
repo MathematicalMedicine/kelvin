@@ -17,12 +17,12 @@
 #include <math.h>		/* for calculating logs */
 #include <float.h>
 
-#include "utils.h"		/* Kelvin utilities. */
-#include "config.h"
-#include "pedlib.h"		/* Pedigree library. */
+#include "utils/utils.h"		/* Kelvin utilities. */
+#include "config/config.h"
+#include "pedlib/pedlib.h"		/* Pedigree library. */
 #include "trackProgress.h"
 
-#include "sw.h"
+#include "utils/sw.h"
 #ifdef DMTRACK
 #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
 #define malloc(X) swMalloc((X), __FILE__, __LINE__)

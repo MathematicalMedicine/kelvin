@@ -20,9 +20,9 @@ extern ModelOptions modelOptions;
 #include "model_type.h"
 extern ModelType modelType;
 
-#include "tools.h"
-#include "utils.h"
-#include "pedlib.h"
+#include "../utils/tools.h"
+#include "../utils/utils.h"
+#include "../pedlib/pedlib.h"
 
 /**********************************************************************
  * Process configuration file and set up model datastructures

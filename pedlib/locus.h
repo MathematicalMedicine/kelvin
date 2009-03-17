@@ -9,8 +9,8 @@
 #ifndef __LOCUS_H__
 #define __LOCUS_H__
 
-#include "lambda_cell.h"
-#include "polynomial.h"
+#include "../config/lambda_cell.h"
+#include "../utils/polynomial.h"
 
 #define ERROR_MARGIN            1.0E-9
 

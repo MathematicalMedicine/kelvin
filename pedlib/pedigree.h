@@ -10,7 +10,7 @@
 #ifndef __PEDIGREE_H__
 #define __PEDIGREE_H__
 
-#include "polynomial.h"
+#include "../utils/polynomial.h"
 
 /* Most of the structures defined in this file were taken from the original
  * vitesse codeset v_prog.h and trimed down to the bare neccessities
