@@ -11,7 +11,8 @@ Version 0.38.0
   marker data file (DF directive). New PedCount data
   preprocessing script to generate count files for 
   collections of pedigrees and a whole lot more. 
-  Numerous minor bugfixes.
+  Numerous minor bugfixes. Continued major structural
+  changes.
 
 Version 0.37.1
   Numerous bugfixes in LD handling and estimation in
