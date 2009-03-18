@@ -364,9 +364,20 @@ void writeMMFileDetail() {
     return;
 
   if (modelOptions.markerAnalysis == FALSE) {
-    fprintf (fpTP, "# Seq: %d Chr: %d Trait: %s Marker: %s Position: %.4f\n", loc2,
-	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName,
-	     pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]); 
+    fprintf (fpTP, "# Seq: %d Chr: %d Trait: %s Marker: %s", loc2,
+	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
+    
+    if ((modelOptions.mapFlag == SEX_SPECIFIC) &&
+	(pLocus2->pMapUnit->mapPos[MAP_FEMALE] >= 0) &&
+	(pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0)) {
+      fprintf (fpTP, " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
+	       pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
+	       pLocus2->pMapUnit->mapPos[MAP_FEMALE], pLocus2->pMapUnit->mapPos[MAP_MALE]);
+      
+    } else {
+      fprintf (fpTP, " Position: %.4f", pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
+    }
+    
   } else {
     fprintf (fpTP, "# Seq: %d Chr %d: Marker1: %s Position1: %.4f Marker2: %s Position2: %.4f\n",
 	     loc2, pLocus2->pMapUnit->chromosome,
