@@ -28,6 +28,7 @@ my $pre         = 0;
 my $post        = 0;
 my $noparents   = 0;
 my $XC          = 0;
+my $imprinting  = 0;
 my $bare        = 0;
 my $count       = 0;
 my $write       = "unspecified";
@@ -83,6 +84,7 @@ my %KnownDirectives = (
     Dd    => \&NoAction,
     GF    => \&NoAction,
     HE    => \&NoAction,
+    IMP   => \&dirIMP,
     LC    => \&NoAction,
     LD    => \&NoAction,
     LOG   => \&NoAction,
@@ -127,6 +129,12 @@ sub dirCF {
 
 #####################################
 #
+sub dirIMP {
+    $imprinting = 1;
+}
+
+#####################################
+#
 sub dirQT {
 
     # If it's not already explicitly specified, set QT default for AS
@@ -146,7 +154,7 @@ sub dirUP {
 #####################################
 #
 sub dirXC {
-    print "meh.\n";
+    $XC = 1;
 }
 
 #####################################
@@ -1103,7 +1111,7 @@ sub bucketizePedigrees {
                     ($ChildKey eq '2 1') and $ChildKey = '1 2';
 		    $ChildKey .= $Pedigrees{$Ped}{$Ind}{Aff};
 
-		    if ((defined($Directives{XC}) || $XC)) {
+		    if (defined($Directives{XC}) || $XC || defined($Directives{IMP}) || $imprinting) {
 			$DadKey .= $Pedigrees{$Ped}{$Dad}{Sex};
 			$MomKey .= $Pedigrees{$Ped}{$Mom}{Sex};
 			$ChildKey .= $Pedigrees{$Ped}{$Ind}{Sex};
@@ -1511,7 +1519,9 @@ where <flags> are any of:
 -pre		Pedigrees are in pre-MAKEPED format.
 -post		Pedigrees are in post-MAKEPED format.
 -noparents	Pedigrees are in pre-MAKEPED format with no columns for parents.
--XC		This is a sex-linked (X-chromosome) analysis
+-XC		This is a sex-linked (X-chromosome) analysis (also XC in configuration 
+		file)
+-imprinting	This in an imprinting analysis (also IMP in configuration file)
 -bare		The pedigree file has only individual, affection status and marker
 		allele pairs columns.
 -nokelvin	Skip verification that kelvin can handle the analysis.
@@ -1582,6 +1592,7 @@ GetOptions(
     'post'      => \$post,
     'noparents' => \$noparents,
     'XC'        => \$XC,
+    'imprinting' => \$imprinting,
     'bare'      => \$bare,
     'nokelvin'  => \$nokelvin,
     'loops'     => \$loops,
@@ -1608,6 +1619,7 @@ print "-pre flag seen\n"                                  if ($pre);
 print "-post flag seen\n"                                 if ($post);
 print "-noparents flag seen\n"                            if ($noparents);
 print "-XC flag seen\n"                                   if ($XC);
+print "-imprinting flag seen\n"                           if ($imprinting);
 print "-bare flag seen\n"                                 if ($bare);
 print "-nokelvin flag seen\n"                             if ($nokelvin);
 print "-loops flag seen\n"                                if ($loops);
