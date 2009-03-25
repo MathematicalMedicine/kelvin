@@ -721,6 +721,10 @@ compute_hlod_2p_qt (double x[], double *f)
 
   }
 
+  status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
+  if(status<0)
+    KASSERT (1,"Haplotype frequency combination impossible. Exiting!\n");
+
   /* this should be MEAN + SD */
   j = 1;
   if (modelOptions.markerAnalysis == FALSE) {
@@ -795,6 +799,11 @@ compute_hlod_2p_qt (double x[], double *f)
 
   /* get the likelihood at 0.5 first and LD=0 */
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+
+    status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprime0Idx);
+    if(status<0)
+      KASSERT (1,"Haplotype frequency combination impossible. Exiting!\n");
+
     set_null_dprime (pLDLoci);
     copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprime0Idx]);
     copy_DValue (pLDLoci, pLambdaCell->DValue[dprime0Idx]);
@@ -904,6 +913,11 @@ compute_hlod_2p_qt (double x[], double *f)
       pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
       homoLR = pPedigree->likelihood / pedigreeSet.nullLikelihood[pedIdx];
       log10HetLR += log10 (alphaV * homoLR + alphaV2);
+
+      if(isnan(homoLR)){
+        printf("pedIdx =%d  homeLR=%e log10HLR=%e\n",pedIdx, homoLR, log10HetLR );
+        exit(0);
+      }
     }
 
     //log10HetLR *= 1.1;
@@ -982,6 +996,7 @@ compute_hlod_2p_qt (double x[], double *f)
     exit (EXIT_FAILURE);
   }
 
+
   *f = avg_hetLR;
 }
 
@@ -1039,6 +1054,11 @@ compute_hlod_2p_dt (double x[], double *f)
 
   }
 
+
+  status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
+  if(status<0)
+    KASSERT (1,"Haplotype frequency combination impossible. Exiting!\n");
+
   if (modelOptions.markerAnalysis == FALSE
       && pLocus1->locusType == LOCUS_TYPE_TRAIT) {
     for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
@@ -1052,6 +1072,8 @@ compute_hlod_2p_dt (double x[], double *f)
         pen_dd = x[pen_size * liabIdx + 3] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2];
         pen_dD= pen_Dd;
       }
+
+
       pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
       pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
       pTrait->penetrance[2][liabIdx][1][0] = pen_dD;
@@ -1068,6 +1090,10 @@ compute_hlod_2p_dt (double x[], double *f)
 
   /* get the likelihood at 0.5 first and LD=0 */
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+    status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprime0Idx);
+    if(status<0)
+      KASSERT (1,"Haplotype frequency combination impossible. Exiting!\n");
+
     set_null_dprime (pLDLoci);
     copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprime0Idx]);
     copy_DValue (pLDLoci, pLambdaCell->DValue[dprime0Idx]);
@@ -1108,6 +1134,7 @@ compute_hlod_2p_dt (double x[], double *f)
   }
 
   log10_likelihood_null = pedigreeSet.log10Likelihood;
+
 
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
     copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
@@ -1151,6 +1178,8 @@ compute_hlod_2p_dt (double x[], double *f)
   compute_likelihood (&pedigreeSet);
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
+
+
 
   //printf("likelihood =%15.13f with theta %f  %d pedigree\n", pedigreeSet.likelihood,fixed_theta, pedigreeSet.numPedigree);                                  
   if (pedigreeSet.likelihood == 0.0

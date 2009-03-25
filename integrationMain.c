@@ -297,11 +297,10 @@
 	  for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
 	    if (isDPrime0(pLambdaCell->lambda[dprimeIdx], pLambdaCell->m, pLambdaCell->n))
 	      dprime0Idx = dprimeIdx;
-	    status =
-	      setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
+	    /* status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
 	    if (status < 0) {
 	      pLambdaCell->impossibleFlag[dprimeIdx] = 1;
-	    }
+	      }      moved to each HLR calculation function */
 	  }
 
 	  /* for each D prime and theta, print out average and maximizing model information - MOD */
@@ -334,13 +333,15 @@
             if(modelOptions.mapFlag == SA){ 
 	      fixed_dprime = dcuhre2[i][0];
 	      fixed_theta = dcuhre2[i][1];
+              //fprintf (stderr, "i=%d Dprime=%f theta=%f \n", i, fixed_dprime, fixed_theta);
 	    }else{
               fixed_thetaM = thetaSS[i][0];
               fixed_thetaF = thetaSS[i][1];
+              //fprintf (stderr, "i=%d Dprime=%f theta=%f   loc1=%d  loc2=%d\n", i, fixed_thetaM, fixed_thetaF,loc1,loc2);
 	    }
    	    integral = 0.0;
 	    abserr = 0.0;
-	      //fprintf (stderr, "i=%d Dprime=%f theta=%f \n", i, fixed_dprime, fixed_theta);
+	      
 	   
 	    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {  // checking Dprime
 	      for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
@@ -358,9 +359,12 @@
 
             /* Call DCUHRE  Domain information is stored in global variables,  xl an xu*/
 	    kelvin_dcuhre_integrate (&integral, &abserr, volume_region);
-	    
-	    dcuhre2[i][3] = integral;
 
+            if(modelOptions.mapFlag == SA){ 	    
+	      dcuhre2[i][3] = integral;
+	    }else{
+              thetaSS[i][3] = integral;
+	    }
 
             /* Dk specific results*/
 	    if (fpDK != NULL) {
@@ -453,24 +457,24 @@
 	    }
 
 	  }			/* end of for to calculate BR(theta, dprime) or BR(thetaM, thetaF)*/
+
 	  dk_write2ptMODFile (maximum_function_value, &dk_globalmax);
-	  dk_writeMAXHeader ();
-	  dk_writeMAXData ("MOD(Overall)", maximum_function_value, &dk_globalmax);
-	  dk_writeMAXData ("MOD(Theta==0)", maximum_theta0_value, &dk_theta0max);
+
+	  //	  dk_writeMAXHeader ();
+	  //	  dk_writeMAXData ("MOD(Overall)", maximum_function_value, &dk_globalmax);
+	  // dk_writeMAXData ("MOD(Theta==0)", maximum_theta0_value, &dk_theta0max);
 	  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
 	    dk_writeMAXData ("MOD(D'==0)", maximum_dprime0_value, &dk_dprime0max);
 
 	  /*Calculate ppl, ppld and ldppl */
-          if(modelOptions.mapFlag == SA){
-	    ppl =  modelOptions.thetaWeight * le_small_theta + (1 -  modelOptions.thetaWeight) * le_big_theta;
-	    ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
-	  }else{
-            ppl = modelOptions.thetaWeight* thetaSMSF;
-            ppl += (1-modelOptions.thetaWeight)* 0.09/0.99 * thetaBMSF;
-            ppl += (1-modelOptions.thetaWeight)* 0.09/0.99 * thetaSMBF;
-            ppl += (1-modelOptions.thetaWeight)* 0.81/0.99 * thetaBMBF;
-	    ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
+          if(modelOptions.mapFlag == SS){ 
+            le_small_theta = thetaSMSF;
+            le_big_theta = (0.09* thetaBMSF +0.09* thetaSMBF+0.81 * thetaBMBF)/0.99;
 	  }
+	  ppl =  modelOptions.thetaWeight * le_small_theta + (1 -  modelOptions.thetaWeight) * le_big_theta;
+	  ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
+
+
           if (modelOptions.markerAnalysis != FALSE) {
             fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ",
 	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[SEX_AVERAGED],
@@ -488,8 +492,7 @@
 	  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
 	    ldppl =0.019*(0.021*ld_small_theta+ 0.979*le_small_theta)+ 0.001*(0.011*ld_big_theta+ 0.9989*le_big_theta);
 
-	    ldppl =
-                ldppl / (ldppl + 0.98*le_unlinked);
+	    ldppl =ldppl / (ldppl + 0.98*le_unlinked);
 
 	    ppld = 0.019*0.021*ld_small_theta+0.001*0.0011*ld_big_theta;
             ppld = ppld/(ppld+ 0.019*0.979*le_small_theta +0.001*0.9989*le_big_theta+ 0.98*le_unlinked);
@@ -507,7 +510,7 @@
           fprintf (fpPPL, "\n");
           fflush (fpPPL);
 
-	  if (fpDK != NULL) {
+	  if (fpDK != NULL) {   ////////   This part should be changed to show imprinting output
 	    fprintf (fpDK, "Global max %8.4f %6.4f %6.4f %6.4f %6.4f ",
 		     log10 (maximum_function_value), maxima_x[0],
 		     maxima_x[1], maxima_x[3], maxima_x[2]);
@@ -529,7 +532,6 @@
 	}
 	/* end of marker allele frequency looping */
 	/* need to clear polynomial */
-
 	if (modelOptions.polynomial) {
 	  pedigreeSetPolynomialClearance (&pedigreeSet);
 	}
