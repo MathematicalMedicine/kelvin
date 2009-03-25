@@ -1,5 +1,5 @@
 if [ $# -lt 2 ]; then
-  echo "Usage: <outputf> <# of markers> [sexlinked] "
+  echo "Usage: <outputf> <# of markers> [#LC, sexlinked] "
   exit -1
 fi
 #output file name
@@ -7,9 +7,18 @@ fname=$1
 # number of markers
 nmarker=$2
 sexlinked=0
+nLC=1
 if [ $# -gt 2 ]; then
   if [ $3 -gt 0 ]; then
-    sexlinked=1
+    nLC=$3
+  else
+    nLC=1
+  fi
+
+  if [ $# -gt 3 ]; then
+    if [ $4 -gt 0 ]; then
+      sexlinked=1
+    fi
   fi
 fi
 
@@ -24,109 +33,117 @@ function add_marker ()
 
 echo -n "" > $fname
 
-#pid iid f m c p_sib m_sib sex proband aff
-echo -n "case11 1 0 0 3 0 0 1 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "case11 2 0 0 3 0 0 2 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "case11 3 1 2 0 0 0 2 1 2 " >> $fname
-add_marker "1 1 " 
-echo "" >> $fname
-
-
-echo -n "case12 1 0 0 3 0 0 1 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "case12 2 0 0 3 0 0 2 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "case12 3 1 2 0 0 0 2 1 2 " >> $fname
-add_marker "1 2 " 
-echo "" >> $fname
-
-echo -n "case22 1 0 0 3 0 0 1 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "case22 2 0 0 3 0 0 2 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "case22 3 1 2 0 0 0 2 1 2 " >> $fname
-add_marker "2 2 " 
-echo "" >> $fname
-
-echo -n "ctrl11 1 0 0 3 0 0 1 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "ctrl11 2 0 0 3 0 0 2 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "ctrl11 3 1 2 0 0 0 2 1 1 " >> $fname
-add_marker "1 1 " 
-echo "" >> $fname
-
-
-echo -n "ctrl12 1 0 0 3 0 0 1 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "ctrl12 2 0 0 3 0 0 2 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "ctrl12 3 1 2 0 0 0 2 1 1 " >> $fname
-add_marker "1 2 " 
-echo "" >> $fname
-
-echo -n "ctrl22 1 0 0 3 0 0 1 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "ctrl22 2 0 0 3 0 0 2 0 0 " >> $fname
-add_marker "0 0 " 
-echo "" >> $fname
-echo -n "ctrl22 3 1 2 0 0 0 2 1 1 " >> $fname
-add_marker "2 2 " 
-echo "" >> $fname
-
-if [ $sexlinked -eq 1 ]; then
-  echo -n "case1 1 0 0 3 0 0 1 0 0 " >> $fname
+for lc in `seq 1 $nLC`; do
+  if [ $nLC -gt 1 ]; then
+   lctag=".$lc"
+   class="$lc "
+  else
+   lctag=
+   class=
+  fi
+  echo -n "case11$lctag 1 0 0 3 0 0 1 0 0 $class" >> $fname
   add_marker "0 0 " 
   echo "" >> $fname
-  echo -n "case1 2 0 0 3 0 0 2 0 0 " >> $fname
+  echo -n "case11$lctag 2 0 0 3 0 0 2 0 0 $class" >> $fname
   add_marker "0 0 " 
   echo "" >> $fname
-  echo -n "case1 3 1 2 0 0 0 1 1 2 " >> $fname
-  add_marker "1 1 " 
-  echo "" >> $fname
-
-  echo -n "case2 1 0 0 3 0 0 1 0 0 " >> $fname
-  add_marker "0 0 " 
-  echo "" >> $fname
-  echo -n "case2 2 0 0 3 0 0 2 0 0 " >> $fname
-  add_marker "0 0 " 
-  echo "" >> $fname
-  echo -n "case2 3 1 2 0 0 0 1 1 2 " >> $fname
-  add_marker "2 2 " 
-  echo "" >> $fname
-
-  echo -n "ctrl1 1 0 0 3 0 0 1 0 0 " >> $fname
-  add_marker "0 0 " 
-  echo "" >> $fname
-  echo -n "ctrl1 2 0 0 3 0 0 2 0 0 " >> $fname
-  add_marker "0 0 " 
-  echo "" >> $fname
-  echo -n "ctrl1 3 1 2 0 0 0 1 1 1 " >> $fname
+  echo -n "case11$lctag 3 1 2 0 0 0 2 1 2 $class" >> $fname
   add_marker "1 1 " 
   echo "" >> $fname
 
 
-  echo -n "ctrl2 1 0 0 3 0 0 1 0 0 " >> $fname
+  echo -n "case12$lctag 1 0 0 3 0 0 1 0 0 $class" >> $fname
   add_marker "0 0 " 
   echo "" >> $fname
-  echo -n "ctrl2 2 0 0 3 0 0 2 0 0 " >> $fname
+  echo -n "case12$lctag 2 0 0 3 0 0 2 0 0 $class" >> $fname
   add_marker "0 0 " 
   echo "" >> $fname
-  echo -n "ctrl2 3 1 2 0 0 0 1 1 1 " >> $fname
+  echo -n "case12$lctag 3 1 2 0 0 0 2 1 2 $class" >> $fname
+  add_marker "1 2 " 
+  echo "" >> $fname
+
+  echo -n "case22$lctag 1 0 0 3 0 0 1 0 0 $class" >> $fname
+  add_marker "0 0 " 
+  echo "" >> $fname
+  echo -n "case22$lctag 2 0 0 3 0 0 2 0 0 $class" >> $fname
+  add_marker "0 0 " 
+  echo "" >> $fname
+  echo -n "case22$lctag 3 1 2 0 0 0 2 1 2 $class" >> $fname
   add_marker "2 2 " 
   echo "" >> $fname
 
-fi
+  echo -n "ctrl11$lctag 1 0 0 3 0 0 1 0 0 $class" >> $fname
+  add_marker "0 0 " 
+  echo "" >> $fname
+  echo -n "ctrl11$lctag 2 0 0 3 0 0 2 0 0 $class" >> $fname
+  add_marker "0 0 " 
+  echo "" >> $fname
+  echo -n "ctrl11$lctag 3 1 2 0 0 0 2 1 1 $class" >> $fname
+  add_marker "1 1 " 
+  echo "" >> $fname
+
+
+  echo -n "ctrl12$lctag 1 0 0 3 0 0 1 0 0 $class" >> $fname
+  add_marker "0 0 " 
+  echo "" >> $fname
+  echo -n "ctrl12$lctag 2 0 0 3 0 0 2 0 0 $class" >> $fname
+  add_marker "0 0 " 
+  echo "" >> $fname
+  echo -n "ctrl12$lctag 3 1 2 0 0 0 2 1 1 $class" >> $fname
+  add_marker "1 2 " 
+  echo "" >> $fname
+
+  echo -n "ctrl22$lctag 1 0 0 3 0 0 1 0 0 $class" >> $fname
+  add_marker "0 0 " 
+  echo "" >> $fname
+  echo -n "ctrl22$lctag 2 0 0 3 0 0 2 0 0 $class" >> $fname
+  add_marker "0 0 " 
+  echo "" >> $fname
+  echo -n "ctrl22$lctag 3 1 2 0 0 0 2 1 1 $class" >> $fname
+  add_marker "2 2 " 
+  echo "" >> $fname
+
+  if [ $sexlinked -eq 1 ]; then
+    echo -n "case1$lctag 1 0 0 3 0 0 1 0 0 $class" >> $fname
+    add_marker "0 0 " 
+    echo "" >> $fname
+    echo -n "case1$lctag 2 0 0 3 0 0 2 0 0 $class" >> $fname
+    add_marker "0 0 " 
+    echo "" >> $fname
+    echo -n "case1$lctag 3 1 2 0 0 0 1 1 2 $class" >> $fname
+    add_marker "1 1 " 
+    echo "" >> $fname
+
+    echo -n "case2$lctag 1 0 0 3 0 0 1 0 0 $class" >> $fname
+    add_marker "0 0 " 
+    echo "" >> $fname
+    echo -n "case2$lctag 2 0 0 3 0 0 2 0 0 $class" >> $fname
+    add_marker "0 0 " 
+    echo "" >> $fname
+    echo -n "case2$lctag 3 1 2 0 0 0 1 1 2 $class" >> $fname
+    add_marker "2 2 " 
+    echo "" >> $fname
+
+    echo -n "ctrl1$lctag 1 0 0 3 0 0 1 0 0 $class" >> $fname
+    add_marker "0 0 " 
+    echo "" >> $fname
+    echo -n "ctrl1$lctag 2 0 0 3 0 0 2 0 0 $class" >> $fname
+    add_marker "0 0 " 
+    echo "" >> $fname
+    echo -n "ctrl1$lctag 3 1 2 0 0 0 1 1 1 $class" >> $fname
+    add_marker "1 1 " 
+    echo "" >> $fname
+
+
+    echo -n "ctrl2$lctag 1 0 0 3 0 0 1 0 0 $class" >> $fname
+    add_marker "0 0 " 
+    echo "" >> $fname
+    echo -n "ctrl2$lctag 2 0 0 3 0 0 2 0 0 $class" >> $fname
+    add_marker "0 0 " 
+    echo "" >> $fname
+    echo -n "ctrl2$lctag 3 1 2 0 0 0 1 1 1 $class" >> $fname
+    add_marker "2 2 " 
+    echo "" >> $fname
+  fi
+
+done
