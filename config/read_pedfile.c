@@ -187,6 +187,14 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
       strcpy (sPrevPedLabel, sCurrPedLabel);
     }
 
+    // Make sure we haven't seen this person before
+    for (i = 0; i < pCurrPedigree->numPerson; i++) {
+      if (strcmp (sCurrPersonLabel, pCurrPedigree->ppPersonList[i]->sID) == 0) {
+	KLOG (LOGPEDFILE, LOGFATAL, "Person %s appears more than once in pedigree %s, please correct and re-run.\n",
+	      sCurrPersonLabel, sCurrPedLabel);
+      }
+    }
+
     /* each line should be a new person for this pedigree */
     pCurrPerson = create_person (pCurrPedigree, sCurrPersonLabel);
 
