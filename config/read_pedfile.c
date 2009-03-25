@@ -98,7 +98,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
   char *pLine = NULL;		/* current pointer to a string for strtok()  */
   Pedigree *pCurrPedigree = NULL;
   Person *pCurrPerson = NULL;
-  int lastFlag = 0;
+  int lastFlag = 0, i;
 
   /* Initialize pedigree set 
    * no longer doing initialization here, pPedigreeSet should have 
@@ -136,7 +136,16 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
     /* if this is not the first pedigree and it has a different pedigree
      * * Label than the previous one, it indicates a new pedigree starts now
      * * */
-    if (lastFlag == 1 || strcmp (sPrevPedLabel, sCurrPedLabel) != 0) {
+    if (strcmp (sPrevPedLabel, sCurrPedLabel) != 0) {
+      // Make sure we haven't seen this pedigree before
+      for (i = 0; i < pPedigreeSet->numPedigree; i++) {
+	if (strcmp (sCurrPedLabel, pPedigreeSet->ppPedigreeSet[i]->sPedigreeID) == 0) {
+	  KLOG (LOGPEDFILE, LOGFATAL, "Pedigree %s appears in separate places in the pedigree file, please correct and re-run.\n",
+		sCurrPedLabel);
+	}
+      }
+    }
+    if (lastFlag == 1 ||strcmp (sPrevPedLabel, sCurrPedLabel) != 0) {
       /* a different ped Label indicates that we have got a new pedigree 
        * before we move onto the new pedigree, we need to set up 
        * * pointers for the current pedigree
@@ -149,7 +158,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	      "WARNING: No proband was given for this pedigree %s and proband is set to person %s.\n",
 	      pCurrPedigree->sPedigreeID,
 	      pCurrPedigree->pPeelingProband->sID);
-
+	
       }
       if (pCurrPedigree) {
 	pPedigreeSet->pDonePerson =
@@ -157,7 +166,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 			   sizeof (int) * pPedigreeSet->maxNumPerson);
 	memset (pPedigreeSet->pDonePerson, 0,
 		sizeof (int) * pPedigreeSet->maxNumPerson);
-
+	
 	/* set up pointers in the pedigree such as first child, 
 	 * * * next paternal sibling, next maternal sibling */
 	setup_pedigree_ptrs (pCurrPedigree);
@@ -195,8 +204,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
       pCurrPedigree->pPeelingProband = pCurrPerson;
     }
   }
-
-  /* Finished reading pedigree file successively */
+  /* Finished reading pedigree file successfully */
   return 0;
 }
 
