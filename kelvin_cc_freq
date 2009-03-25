@@ -8,4 +8,19 @@ fi
 infname=$1
 outfname=$2
 
-awk 'BEGIN{ctrl1=-1; ctrl2=-1}; ($1=="MARKER") {for(i=2; i<=NF;i++){ if($i=="ctrl11"){ctrl11=i}; if($i=="ctrl12"){ctrl12=i}; if($i=="ctrl22"){ctrl22=i}; if($i=="ctrl1"){ctrl1=i}; if($i=="ctrl2"){ctrl2=i} }}; ($1!="MARKER" && substr($1,0,1) != "#") { a1=($ctrl11)*2+$ctrl12; count=($ctrl11+$ctrl12+$ctrl22)*2; if(ctrl1!=-1){a1+=$ctrl1; count+=$ctrl1}; if(ctrl2!=-1){count+=$ctrl2}; if(1 || count!=0){ af1=a1/count; if(a1==0){af1=0.0001}; if(a1==count){af1=0.9999}; print "M", $1; printf( "F %6.4f %6.4f\n", af1, 1-af1)}}' $infname > $outfname 
+awk 'BEGIN{ctrl1=0; ctrl2=0}; \
+     ($1=="MARKER") {for(i=2; i<=NF;i++){ header[i]=$i}}; \
+     ($1!="MARKER" && substr($1,0,1) != "#") { \
+       for(i=2; i<=NF; i++){ \
+         if(substr(header[i], 1, 6)=="ctrl11"){ ctrl1+=$i*2}; \
+         if(substr(header[i], 1, 6)=="ctrl12"){ ctrl1+=$i; ctrl2+=$i}; \
+         if(substr(header[i], 1, 6)=="ctrl22"){ ctrl2+=$i*2}; \
+         if(header[i]=="ctrl1" || substr(header[i],1,5)=="ctrl1."){ctrl1+=$i};\
+         if(header[i]=="ctrl2" || substr(header[i],1,5)=="ctrl2."){ctrl2+=$i};\
+       }; \
+       if(ctrl1==0) { a1=0.0001} else {
+         if(ctrl2==0) {a1=0.9999} else {a1=ctrl1/(ctrl1+ctrl2)}}; \
+       print "M", $1; 
+       printf("F %6.4f %6.4f\n", a1, 1-a1); ctrl1=0; ctrl2=0;
+     }' $infname > $outfname
+
