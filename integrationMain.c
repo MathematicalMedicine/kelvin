@@ -278,11 +278,10 @@
 	  for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
 	    if (isDPrime0(pLambdaCell->lambda[dprimeIdx], pLambdaCell->m, pLambdaCell->n))
 	      dprime0Idx = dprimeIdx;
-	    status =
-	      setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
+	    /*   status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
 	    if (status < 0) {
 	      pLambdaCell->impossibleFlag[dprimeIdx] = 1;
-	    }
+	      }   moved to each HLR calculation function */
 	  }
 
 	  /* for each D prime and theta, print out average and maximizing model information - MOD */
@@ -325,6 +324,9 @@
             num_BR= num_sample_Dp_theta;  // currently 141
 
 	  }else{      ///  This is for sec-specific analysis in four regions
+	    le_small_theta = 0.0;
+	    le_big_theta = 0.0;
+
             thetaSMSF= 0.0;  // 0< thetaM <0.05  0< thetaF <0.05  
             thetaBMSF= 0.0;  // 0.05< thetaM <0.5  0< thetaF <0.05  
             thetaSMBF= 0.0;  // 0< thetaM <0.05  0.05< thetaF <0.5  
@@ -363,9 +365,12 @@
 
             /* Call DCUHRE  Domain information is stored in global variables,  xl an xu*/
 	    kelvin_dcuhre_integrate (&integral, &abserr, volume_region);
-	    
-	    dcuhre2[i][3] = integral;
 
+            if(modelOptions.mapFlag == SA){ 	    
+	      dcuhre2[i][3] = integral;
+            }else{
+               thetaSS[i][3] = integral;
+	    }
 
             /* Dk specific results*/
             if(modelOptions.imprintingFlag){
@@ -499,17 +504,15 @@
 	  }			/* end of for to calculate BR(theta, dprime) or BR(thetaM, thetaF)*/
 
 
-	  /*Calculate ppl, ppld and ldppl */
-          if(modelOptions.mapFlag == SA){
-	    ppl =  modelOptions.thetaWeight * le_small_theta + (1 -  modelOptions.thetaWeight) * le_big_theta;
-	    ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
-	  }else{
-            ppl = modelOptions.thetaWeight* thetaSMSF;
-            ppl += (1-modelOptions.thetaWeight)* 0.09/0.99* thetaBMSF;
-            ppl += (1-modelOptions.thetaWeight)* 0.09/0.99* thetaSMBF;
-            ppl += (1-modelOptions.thetaWeight)* 0.81/0.99* thetaBMBF;
-	    ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
+          if(modelOptions.mapFlag == SS){ 
+             le_small_theta = thetaSMSF;
+             le_big_theta = (0.09* thetaBMSF +0.09* thetaSMBF+0.81 * thetaBMBF)/0.99;
 	  }
+
+	  /*Calculate ppl, ppld and ldppl */
+	  ppl =  modelOptions.thetaWeight * le_small_theta + (1 -  modelOptions.thetaWeight) * le_big_theta;
+	  ppl = ppl / (ppl + (1 - modelOptions.prior) / modelOptions.prior);
+
           if (modelOptions.markerAnalysis != FALSE) {
             fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ",
 	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[SEX_AVERAGED],
