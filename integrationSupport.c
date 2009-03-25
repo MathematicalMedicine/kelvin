@@ -721,9 +721,12 @@ compute_hlod_2p_qt (double x[], double *f)
 
   }
 
-  status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
-  if(status<0)
-    KASSERT (1,"Haplotype frequency combination impossible. Exiting!\n");
+  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+    status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
+    if(status<0)
+      KASSERT (1,"Haplotype frequency combination impossible. Exiting!\n");
+  }
+
 
   /* this should be MEAN + SD */
   j = 1;
@@ -1033,7 +1036,7 @@ compute_hlod_2p_dt (double x[], double *f)
     pen_size=4;
 
   gfreq = x[0];
-
+ 
 
   if(modelOptions.mapFlag == SS){
     thetaM = fixed_thetaM;
@@ -1042,7 +1045,7 @@ compute_hlod_2p_dt (double x[], double *f)
     thetaM = fixed_theta;
     thetaF = fixed_theta;
   }
-		//x[5];  
+
   //printf("Calculating hetLR with gf=%f DD=%f Dd=%f dd=%f theta=%f\n", gfreq, pen_DD,pen_Dd, pen_dd, fixed_theta);
   if (1 && modelOptions.markerAnalysis == FALSE) {
     pLocus->pAlleleFrequency[0] = gfreq;
@@ -1054,10 +1057,11 @@ compute_hlod_2p_dt (double x[], double *f)
 
   }
 
-
-  status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
-  if(status<0)
-    KASSERT (1,"Haplotype frequency combination impossible. Exiting!\n");
+  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+    status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
+    if(status<0)
+      KASSERT (1,"Haplotype frequency combination impossible. Exiting!\n");
+  }
 
   if (modelOptions.markerAnalysis == FALSE
       && pLocus1->locusType == LOCUS_TYPE_TRAIT) {
@@ -1072,7 +1076,6 @@ compute_hlod_2p_dt (double x[], double *f)
         pen_dd = x[pen_size * liabIdx + 3] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2];
         pen_dD= pen_Dd;
       }
-
 
       pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
       pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
