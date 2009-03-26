@@ -51,10 +51,11 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
 #endif
   
   swStart (overallSW);
-#ifdef __OPTIMIZE__
-  swLogMsg ("GCC optimization enabled");
+#ifdef GCCOPT
+  sprintf (messageBuffer, "GCC optimization level %d enabled", GCCOPT);
+  swLogMsg (messageBuffer);
 #else
-  swLogMsg ("GCC optimization disabled");
+  swLogMsg ("GCC optimization disabled (or GCCOPT not defined)");
 #endif
   fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, (int) getpid ());
 
