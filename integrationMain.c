@@ -373,10 +373,10 @@
 	    }
 
             /* Dk specific results*/
-            if(modelOptions.imprintingFlag){
-              fprintf(fpIR,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_thetaM,fixed_thetaF, s->total_neval, integral, abserr,log10 (localmax_value));
-	    }else{
+            if(modelOptions.mapFlag == SA){
               fprintf(fpIR,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_dprime,fixed_theta, s->total_neval, integral, abserr,log10 (localmax_value));
+	    }else{
+              fprintf(fpIR,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_thetaM,fixed_thetaF, s->total_neval, integral, abserr,log10 (localmax_value));
 	    }
   	    fflush (fpIR);     
        
@@ -423,7 +423,7 @@
 	    if (maximum_function_value < localmax_value) {
 	      maximum_function_value = localmax_value;
 
-	      if (modelOptions.imprintingFlag){
+	      if (modelOptions.mapFlag == SA){
 		maxima_x[0] = fixed_dprime;
 		maxima_x[1] = fixed_theta;
 	      }else{
