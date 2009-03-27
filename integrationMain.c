@@ -368,10 +368,10 @@
 
             /* Dk specific results*/
 	    if (fpDK != NULL) {
-	      if(modelOptions.imprintingFlag){
-		fprintf(fpDK,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_thetaM,fixed_thetaF, s->total_neval, integral, abserr,log10 (localmax_value));
-	      }else{
+	      if(modelOptions.mapFlag == SA){
 		fprintf(fpDK,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_dprime,fixed_theta, s->total_neval, integral, abserr,log10 (localmax_value));
+	      }else{
+		fprintf(fpDK,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_thetaM,fixed_thetaF, s->total_neval, integral, abserr,log10 (localmax_value));
 	      }
 	      fflush (fpDK);
 	    }
@@ -459,10 +459,10 @@
 	  }			/* end of for to calculate BR(theta, dprime) or BR(thetaM, thetaF)*/
 
 	  dk_write2ptMODFile (maximum_function_value, &dk_globalmax);
-
-	  //	  dk_writeMAXHeader ();
-	  //	  dk_writeMAXData ("MOD(Overall)", maximum_function_value, &dk_globalmax);
-	  // dk_writeMAXData ("MOD(Theta==0)", maximum_theta0_value, &dk_theta0max);
+	
+  	  dk_writeMAXHeader ();
+  	  dk_writeMAXData ("MOD(Overall)", maximum_function_value, &dk_globalmax);
+	  dk_writeMAXData ("MOD(Theta==0)", maximum_theta0_value, &dk_theta0max);
 	  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
 	    dk_writeMAXData ("MOD(D'==0)", maximum_dprime0_value, &dk_dprime0max);
 
