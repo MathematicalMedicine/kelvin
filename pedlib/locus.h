@@ -22,9 +22,6 @@
 #define AFFECTION_STATUS_UNAFFECTED     1
 #define AFFECTION_STATUS_AFFECTED       2
 
-#define SEX_AVERAGED	MAP_SEX_AVERAGE
-#define SEX_SPECIFIC	(MAP_SEX_AVERAGE+1)
-
 /* these affect and limit the size of pentrance matrix */
 
 /* When we do categorial traits, there are potentially more than 3 possible values */

@@ -23,6 +23,22 @@
 #define DEFAULTLDPPLFILENAME "ldppl.out"
 #define DEFAULTRESULTSPREFIX "./"
 
+/* Analysis mode (LE or LD) */
+#define LINKAGE_EQUILIBRIUM       0
+#define LINKAGE_DISEQUILIBRIUM    1
+
+/* Marker to marker analysis types. FALSE means no analysis. */
+#define MARKERTOMARKER            1   /* marker to marker analysis */
+#define MM MARKERTOMARKER
+#define ADJACENTMARKER            2   /* marker to adjacent marker only analysis */
+#define AM ADJACENTMARKER
+
+/* Specifiy how the map should be used */
+#define SEX_AVERAGED              0   /* analysis uses sex-averaged map positions */
+#define SA SEX_AVERAGED
+#define SEX_SPECIFIC              1   /* analysis uses sex-specific map positions */
+#define SS SEX_SPECIFIC
+
 typedef struct ModelOptions
 {
   /* analysis type - Linkage Equalibrium (LE) or Linkage Disequalibrium (LD) */
@@ -74,6 +90,7 @@ typedef struct ModelOptions
   int dryRun;                   /* 1 - dry run to get statistics for complexity */
   int conditionalRun;           /* 1 - print out proband's conditional LR */
   int loopCondRun;              /* 1 - print out loop breaker's conditional LR */
+  int extraMODs;                /* 1 - put Theta==0 and D'==0 max models in MOD file */
   char loopBreaker[16];         /* loop breaker's individual ID */
 
   /* Storage and default names for files that are always opened (depending on analysis options) */
@@ -89,7 +106,7 @@ typedef struct ModelOptions
   /* Storage for files that are only opened based on explicit directives */
   char ccfile[KMAXFILENAMELEN + 1];                 /// Case control count file
   char modfile[KMAXFILENAMELEN + 1];                /// MOD and maximizing model file
-  char maxmodelfile[KMAXFILENAMELEN + 1];           /// verbose Maximizing Model file
+  char maxmodelfile[KMAXFILENAMELEN + 1];           /// verbose Max Model file, obsolete?
   char intermediatefile[KMAXFILENAMELEN + 1];       /// Intermediate Result file
   char dkelvinoutfile[KMAXFILENAMELEN + 1];         /// DCHURE detail file
   char resultsprefix[KMAXFILENAMELEN + 1]; ///< Path for SR directive result storage

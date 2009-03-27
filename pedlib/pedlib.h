@@ -17,32 +17,6 @@
  * provides functionality and API for likelihood calculation
  *******************************************************************/
 
-/* Analysis mode (LE or LD) */
-#define LINKAGE_EQUILIBRIUM		0
-#define LINKAGE_DISEQUILIBRIUM	1
-
-/* Analysis type in a different perspective: 2point or multipoint */
-#define TWOPOINT	0
-#define MULTIPOINT	1
-
-/* Trait value type */
-#define DICHOTOMOUS	0
-
-/* The main difference between DT and QT are in the way how conditional
- * penetrances are determined. For DT, penetrances are given, while for
- * QT, they are calculated using means and variances. */
-#define QUANTITATIVE	1
-
-/* Combination of dichotomous and quantitative trait 
- * some individuals in the pedigree has known quantitative trait values
- * individuals with unknown trait values are handled in a way similar to 
- * under dichotomouse trait (using some cutoff values to calculate conditional
- * penetrance given genotypes with CDF) */
-#define COMBINED	2
-
-/* Marker to marker analysis types. FALSE means no analysis. */
-#define MARKERTOMARKER 1
-#define ADJACENTMARKER 2
 
 typedef enum
 { DAD = 0, MOM = 1 } PARENTS;
@@ -52,15 +26,8 @@ typedef enum
 /* maximum length for pedigree label, individual IDs */
 #define MAX_PED_LABEL_LEN       128
 
-#define TP TWOPOINT		/* 2 point */
-#define MP MULTIPOINT		/* multipoint */
 #define SA SEX_AVERAGED
 #define SS SEX_SPECIFIC
-#define DT DICHOTOMOUS		/* dichotomous trait */
-#define QT QUANTITATIVE		/* quantitative trait */
-#define CT COMBINED		/* combined dichotomous/quantitative trait */
-#define MM MARKERTOMARKER	/* marker to marker analysis type */
-#define AM ADJACENTMARKER
 #define ND NORMAL_DISTRIBUTION	/* normal distribution */
 #define TD T_DISTRIBUTION	/* t distribution */
 #define NPENET(x) ((x)*(x))
