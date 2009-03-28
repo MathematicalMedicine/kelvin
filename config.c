@@ -954,12 +954,20 @@ readConfigFile (char *file)
   /* Sadly, this parser has broad categories of parameterized and unparameterized
      directives, and it checks for unparameterized first, so there is no such thing
      as a defaulted set of parameters that are not handled as a unique case. */
-  if (modelOptions.integration == TRUE && modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) {
-    /* Override their specified values for dprime. */
-    KLOG (LOGINPUTFILE, LOGWARNING, "Integration LD analysis forces override of user-specified dprime values.\n");
-    modelRange.ndprime = 0;
-    for (i=0; i< integrationLDDPrimeValuesCount; i++) {
-      addDPrime (&modelRange, integrationLDDPrimeValues[i]);
+  if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) {
+    if (modelOptions.integration == TRUE) {
+      /* Override their specified values for dprime. */
+      KLOG (LOGINPUTFILE, LOGWARNING, "Integration LD analysis forces override of user-specified dprime values.\n");
+      modelRange.ndprime = 0;
+      for (i=0; i< integrationLDDPrimeValuesCount; i++) {
+	addDPrime (&modelRange, integrationLDDPrimeValues[i]);
+      }
+    } else {
+      // Make sure zero was included...
+      for (i=0; i<modelRange.ndprime; i++)
+	if (fabs(modelRange.dprime[i]) <= ERROR_MARGIN) break;
+      if (i == modelRange.ndprime)
+	addDPrime (&modelRange, (double) 0.0);
     }
   }
   /* Now check the integrity of the parameters you've read. Here is
