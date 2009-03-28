@@ -218,7 +218,8 @@
               if (status < 0)
                 pLambdaCell->impossibleFlag[dprimeIdx] = 1;
             }
-
+	    KASSERT ((modelOptions.equilibrium != LINKAGE_DISEQUILIBRIUM) ||
+		     (dprime0Idx != 0), "A D' of zero was not found!\n");
             if (modelType.trait == DICHOTOMOUS) {
 
               for (penIdx = 0; penIdx < modelRange.npenet; penIdx++) {
