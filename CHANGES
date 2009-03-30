@@ -12,7 +12,7 @@ Version 0.38.0
   preprocessing script to generate count files for 
   collections of pedigrees and a whole lot more. 
   Numerous minor bugfixes. Continued major structural
-  changes.
+  changes. D' of zero always included on LD analyses.
 
 Version 0.37.1
   Numerous bugfixes in LD handling and estimation in
