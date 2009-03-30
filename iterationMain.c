@@ -211,6 +211,7 @@
             /* clear Dprime combination impossible flag */
             memset (pLambdaCell->impossibleFlag, 0, sizeof (int) * pLambdaCell->ndprime);
             /* set up haplotype frequencies */
+	    dprime0Idx = -1;
             for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
               if (isDPrime0 (pLambdaCell->lambda[dprimeIdx], pLambdaCell->m, pLambdaCell->n))
                 dprime0Idx = dprimeIdx;
@@ -218,6 +219,8 @@
               if (status < 0)
                 pLambdaCell->impossibleFlag[dprimeIdx] = 1;
             }
+	    KASSERT ((modelOptions.equilibrium != LINKAGE_DISEQUILIBRIUM) ||
+		     (dprime0Idx != -1), "The requisite zero D' was not found, aborting!\n");
 
             if (modelType.trait == DICHOTOMOUS) {
 
