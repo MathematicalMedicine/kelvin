@@ -40,6 +40,8 @@ typedef struct ModelRange
 
   double *tloc;			/* Array of trait locations (multipoint only) */
   int ntloc;			/* Number of trait locations */
+  int tlocRangeStart;           /* Starting position i for ranges specified as 'i-end:j' */
+  int tlocRangeIncr;            /* Increment j for ranges specified as 'i-end:j' */
   int tlmark;			/* Include on-marker trait loci automatically. */
 
   double **tthresh;		/* Array of trait thresholds (combined traits only) */
@@ -57,5 +59,8 @@ typedef struct ModelRange
   int nlambdas;			/* Number of cached arrays. */
   int maxnlambdas;		/* Maximum number of cached arrays. */
 } ModelRange;
+
+void addTraitLocus (ModelRange * range, double val);
+void addGeneFreq (ModelRange * range, double val);
 
 #endif

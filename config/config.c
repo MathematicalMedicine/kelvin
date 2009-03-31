@@ -1301,32 +1301,6 @@ addPenetrance (ModelRange * range, int type, double val)
 }
 
 /**********************************************************************
- * Add one more element to gene frequency vector.  May need to
- * allocate or reallocate memory in order to allow additional room for
- * more values.
- **********************************************************************/
-void
-addGeneFreq (ModelRange * range, double val)
-{
-  /* Validate value. */
-  KASSERT ((val >= 0
-	    && val <= 1.0), "Bad gene frequency value %g; aborting.\n", val);
-
-  /* Initialize the structure if first access. */
-  if (!range->gfreq)
-    range->ngfreq = maxgfreq = 0;
-  /* Enlarge array if necessary. */
-  if (range->ngfreq == maxgfreq) {
-    range->gfreq = realloc (range->gfreq,
-			    (maxgfreq + CHUNKSIZE) * sizeof (double));
-    maxgfreq = maxgfreq + CHUNKSIZE;
-  }
-  /* Add the element. */
-  range->gfreq[range->ngfreq] = val;
-  range->ngfreq++;
-}
-
-/**********************************************************************
  * Add one more element to alpha vector.  May need to allocate or
  * reallocate memory in order to allow additional room for more
  * values.
@@ -1349,52 +1323,6 @@ addAlpha (ModelRange * range, double val)
   /* Add the element. */
   range->alpha[range->nalpha] = val;
   range->nalpha++;
-}
-
-/**********************************************************************
- * Add one more element to trait loci vector.  May need to allocate or
- * reallocate memory in order to allow additional room for more
- * values.
- *
- * The only ugly thing here is that since the TM directive requires
- * calling addTraitLocus() again and again (once for each eventual
- * marker location) we should maintain this array sorted and unique as
- * we go.
- **********************************************************************/
-void
-addTraitLocus (ModelRange * range, double val)
-{
-  int i = 0, j;
-
-  /* Validate value. But trait loci may be negative! So no reasonable
-   * validation is really possible. */
-  /* KASSERT ((val >=0), "Bad trait locus %g; aborting.\n", val); */
-
-  /* Initialize the structure if first access. */
-  if (!range->tloc)
-    range->ntloc = maxtloc = 0;
-  /* Enlarge array if necessary. */
-  if (range->ntloc == maxtloc) {
-    range->tloc = realloc (range->tloc,
-			   (maxtloc + CHUNKSIZE) * sizeof (double));
-    maxtloc = maxtloc + CHUNKSIZE;
-  }
-
-  /* Add the element. First, cue up to where the new element belongs. */
-  while (i < range->ntloc && range->tloc[i] < val)
-    i++;
-
-  /* Second, if the element is already there, just quit. */
-  if (i < range->ntloc && range->tloc[i] == val)
-    return;
-
-  /* Third, make room for the new element. */
-  for (j = range->ntloc; j > i; j--)
-    range->tloc[j] = range->tloc[j - 1];
-
-  /* Fourth, add the element. */
-  range->tloc[i] = val;
-  range->ntloc++;
 }
 
 /**********************************************************************
