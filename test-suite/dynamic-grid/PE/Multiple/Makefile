@@ -1,5 +1,5 @@
 test :
-	- rm -f PC* BR.Out-PCs ppl.out kelvin.out*
+	- rm -rf PC* BR.Out-PCs ppl.out kelvin.out*
 	$(TEST_KELVIN) kelvin.conf >kelvin.out 2>&1
 	$(KELVIN_ROOT)/PedCount.pl -config kelvin.conf -split=1 -subdir -write
 	$(TEST_KELVIN) kelvin.conf-PC1 >kelvin.out-PC1 2>&1
