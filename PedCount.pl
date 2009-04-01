@@ -18,28 +18,29 @@ use Data::Dumper;
 $| = 1;    # Force flush of output as printed.
 
 # Heavy-duty diagnostics
-my $DiagSolos = 0; # Writes out a separate file for each marker with actual copies of template pedigrees
+my $DiagSolos = 0;    # Writes out a separate file for each marker with actual copies of template pedigrees
 
 # Sanctioned globals
 
 # Command line option flags
-my $config      = 0;
-my $pre         = 0;
-my $post        = 0;
-my $noparents   = 0;
-my $XC          = 0;
-my $imprinting  = 0;
-my $bare        = 0;
-my $count       = 0;
-my $write       = "unspecified";
-my $loops       = 0;
-my $stats       = 0;
-my $split       = 0;
+my $config         = 0;
+my $pre            = 0;
+my $post           = 0;
+my $noparents      = 0;
+my $XC             = 0;
+my $imprinting     = 0;
+my $liability      = 0;
+my $bare           = 0;
+my $count          = 0;
+my $write          = "unspecified";
+my $loops          = 0;
+my $stats          = 0;
+my $split          = 0;
 my $subdirectories = 0;
-my $nokelvin    = 0;
-my @include     = ();
-my @exclude     = ();
-my $WritePrefix = "PC";
+my $nokelvin       = 0;
+my @include        = ();
+my @exclude        = ();
+my $WritePrefix    = "PC";
 
 # Permanent defaults
 use constant AttributeMissing => "0";    # For marker alleles and Sex
@@ -53,20 +54,21 @@ my $UnknownAffection = 0;
 my $Unaffected       = 1;
 my $Affected         = 2;                             # Default affection indicators
 my $UnknownPerson    = "0";                           # Default unknown person indicator
+my $LiabilityClasses = 1;
 my $MapFunction      = "Kosambi, bless his heart!";
 
 # Read/calculated results
 my %Pedigrees;                                        # Pedigrees as loaded
 my %Directives;                                       # Directives as loaded
-my $PairCount = 0;                                    # Last pedigree count of marker pairs
-my @Loci = ('Trait');                                 # Ordered loci name list from companion file
-my %LociAttributes = ('Trait' => { 'Type' => 'T', 'Included' => 1 } );  # Loci attributes from companion and marker files
-my %Map;                                              # Loci on the map and other map attributes
+my $PairCount      = 0;                                                # Last pedigree count of marker pairs
+my @Loci           = ('Trait');                                        # Ordered loci name list from companion file
+my %LociAttributes = ('Trait' => { 'Type' => 'T', 'Included' => 1 });  # Loci attributes from companion and marker files
+my %Map;                                                               # Loci on the map and other map attributes
 
 # Nuisances to fix
-my @Depths;                                           # Referenced recursively and I'm fuddled
-my @Ancestors;                                        # ditto
-my $ShortestLoop = "";                                # Just batted around too much to monkey with right now.
+my @Depths;                                                            # Referenced recursively and I'm fuddled
+my @Ancestors;                                                         # ditto
+my $ShortestLoop = "";    # Just batted around too much to monkey with right now.
 
 # Known directives as well as dispatch routine if needed. I could avoid the NoActions, but
 # I prefer to be explicit.
@@ -85,7 +87,7 @@ my %KnownDirectives = (
     GF    => \&NoAction,
     HE    => \&NoAction,
     IMP   => \&dirIMP,
-    LC    => \&NoAction,
+    LC    => \&dirLC,
     LD    => \&NoAction,
     LOG   => \&NoAction,
     MK    => \&NoAction,
@@ -131,6 +133,13 @@ sub dirCF {
 #
 sub dirIMP {
     $imprinting = 1;
+}
+
+#####################################
+#
+sub dirLC {
+    $liability        = 1;
+    $LiabilityClasses = $Directives{LC}[0];
 }
 
 #####################################
@@ -452,18 +461,21 @@ sub assessPedigree {
         my $TotalColumns = scalar(@Columns);
 
         # See if the number of columns makes any kind of sense...
-        my $MarkerColumns = scalar(@Loci) * 2;
+        my $MarkerColumns = (scalar(@Loci) - 1) * 2;
         if ($pre) {
             $TotalColumns += 2 if ($noparents);    # Make up for no parents here
+            $TotalColumns -= 1 if ($liability);    # Make up for extra liability class column
                   # pre-MAKEPED is Ped Ind Dad Mom Sex Aff Pairs, i.e. some even number > 6
             die "Invalid number of columns in pre-MAKEPED pedigree file $File."
               if (($TotalColumns < 8) || ($TotalColumns & 1));
             die
-              "Inconsistent column counts between companion datafile $companionFile and pre-MAKEPED pedigree file $pedFile."
+              "Inconsistent column counts between companion datafile $companionFile ($MarkerColumns markers) and pre-MAKEPED pedigree file $pedFile ("
+              . ($TotalColumns - 6) . ")."
               if ($config && (($TotalColumns - $MarkerColumns) != 6));
             return "PRE";
         } elsif ($post) {
             $TotalColumns += 2 if ($noparents);    # Make up for no parents here
+            $TotalColumns -= 1 if ($liability);    # Make up for extra liability class column
                   # post-MAKEPED is Ped Ind Dad Mom Kid1 nPs nMs Sex Prb Aff Pairs, i.e. some even number > 10
             die "Invalid number of columns in post-MAKEPED pedigree file $File."
               if (($TotalColumns < 12) || ($TotalColumns & 1));
@@ -509,11 +521,12 @@ sub loadPedigree {
     my $Type = shift();
     die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
-    my $LineNo = 0; my $ColumnCount = 0;
+    my $LineNo      = 0;
+    my $ColumnCount = 0;
     %Pedigrees = ();
     my $AlC = 0;    # Number of alleles
     my $GtC = 0;    # Number of genotyped alleles
-    my ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Alleles);
+    my ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, $LC, @Alleles);
 
     while (<IN>) {
         $LineNo++;
@@ -521,15 +534,24 @@ sub loadPedigree {
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
-	my @Columns = split /\s+/;
-	$ColumnCount = scalar(@Columns) if (!$ColumnCount);
-	die "Inconsistent number of columns in $File at line $LineNo, was $ColumnCount, is ".scalar(@Columns)."\n"
-	    if ($ColumnCount != scalar(@Columns));
+        my @Columns = split /\s+/;
+        $ColumnCount = scalar(@Columns) if (!$ColumnCount);
+        die "Inconsistent number of columns in $File at line $LineNo, was $ColumnCount, is " . scalar(@Columns) . "\n"
+          if ($ColumnCount != scalar(@Columns));
+
         if ($Type eq "POST") {
-            ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Alleles) = @Columns;
+            if ($noparents) {
+                ($Ped, $Ind, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Alleles) = @Columns;
+            } else {
+                ($Ped, $Ind, $Dad, $Mom, $Kid1, $nPs, $nMs, $Sex, $Prb, $Aff, @Alleles) = @Columns;
+            }
             die "Pedigree line $LineNo: proband must be numeric, not \"$Prb\"." if (!($Prb =~ /[0-9]/));
         } elsif ($Type eq "PRE") {
-            ($Ped, $Ind, $Dad, $Mom, $Sex, $Aff, @Alleles) = @Columns;
+            if ($noparents) {
+                ($Ped, $Ind, $Sex, $Aff, @Alleles) = @Columns;
+            } else {
+                ($Ped, $Ind, $Dad, $Mom, $Sex, $Aff, @Alleles) = @Columns;
+            }
         } elsif ($Type eq "BARE") {
             ($Ind, $Aff, @Alleles) = @Columns;
             $Ped = $Ind;
@@ -544,6 +566,10 @@ sub loadPedigree {
           if ( (!defined($Directives{QT}))
             && (($Aff != $UnknownAffection) && ($Aff != $Unaffected) && ($Aff != $Affected)));
 
+        if ($liability) {
+            $LC = shift @Alleles;
+        }
+
         # Handle marker pairs
         my ($OldFam, $OldInd, $Left);
         $AlC = 0;
@@ -556,21 +582,23 @@ sub loadPedigree {
                 last;
             }
             $AlC++;
-	    my $Name;
-	    if (!$config) {
-		$Name = sprintf("M%04d", int(($AlC + 1) / 2));    # Offset == Name
-		push @Loci, "$Name" if (scalar(@Loci) <= int(($AlC + 1) / 2));
-	    } else {
-		$Name = $Loci[int(($AlC + 1.5) / 2)]; # Integer division, thank you
-	    }
+            my $Name;
+            if (!$config) {
+                $Name = sprintf("M%04d", int(($AlC + 1) / 2));    # Offset == Name
+                push @Loci, "$Name" if (scalar(@Loci) <= int(($AlC + 1) / 2));
+            } else {
+                $Name = $Loci[ int(($AlC + 1.5) / 2) ];           # Integer division, thank you
+            }
             if ($Allele ne AttributeMissing) {
                 $GtC++;    # Keep track of how much genotypic information we have for this individual
                 if (!$config) {
-		    # Assume they're using 1 & 2 as their allele "names"
+
+                    # Assume they're using 1 & 2 as their allele "names"
                     if (!defined($LociAttributes{$Name}{Alleles}{$Allele})) {
                         $LociAttributes{$Name}{Alleles}{$Allele} = "$Allele";
                     }
                 }
+
                 # Translate the allele to a sequence number
                 $Allele = $LociAttributes{$Name}{Alleles}{$Allele};
             }
@@ -623,6 +651,7 @@ sub loadPedigree {
                 $Pedigrees{$Ped}{$Dad}{Aff} = $UnknownAffection;
                 $Pedigrees{$Ped}{$Dad}{Prb} = 0;
                 $Pedigrees{$Ped}{$Dad}{AlC} = $Pedigrees{$Ped}{$Dad}{GtC} = 0;
+                $Pedigrees{$Ped}{$Dad}{LC}  = 1;
                 $Pedigrees{$Ped}{$Dad}{Mks} = [ ("0 0") x ($Pedigrees{$Ped}{$Ind}{AlC} / 2) ];
                 my $Mom = $Ind . "M";
                 $Pedigrees{$Ped}{$Ind}{Mom} = $Mom;
@@ -632,6 +661,7 @@ sub loadPedigree {
                 $Pedigrees{$Ped}{$Mom}{Aff} = $UnknownAffection;
                 $Pedigrees{$Ped}{$Mom}{Prb} = 0;
                 $Pedigrees{$Ped}{$Mom}{AlC} = $Pedigrees{$Ped}{$Mom}{GtC} = 0;
+                $Pedigrees{$Ped}{$Mom}{LC}  = 1;
                 $Pedigrees{$Ped}{$Mom}{Mks} = [ ("0 0") x ($Pedigrees{$Ped}{$Ind}{AlC} / 2) ];
             }
         }
@@ -643,22 +673,27 @@ sub loadPedigree {
 #
 sub deriveAlleleFrequencies {
     for my $i (0 .. $PairCount - 1) {
-        $LociAttributes{ $Loci[ $i + 1 ] }{Type}     = "M";
-        $LociAttributes{ $Loci[ $i + 1 ] }{Included} = 1;
-	$LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{"0"} = 0;
-        my @HaploCounts = (0, 0, 0); # List works because they must be numeric (relative position of frequency in marker file)
+        $LociAttributes{ $Loci[ $i + 1 ] }{Type}         = "M";
+        $LociAttributes{ $Loci[ $i + 1 ] }{Included}     = 1;
+        $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{"0"} = 0;
+        my @HaploCounts =
+          (0, 0, 0);    # List works because they must be numeric (relative position of frequency in marker file)
         for my $Ped (keys %Pedigrees) {
             for my $Ind (keys %{ $Pedigrees{$Ped} }) {
                 next if ($Pedigrees{$Ped}{$Ind}{Aff} != $Unaffected);
                 my ($Left, $Right) = split /\s+/, $Pedigrees{$Ped}{$Ind}{Mks}[$i];
-		$HaploCounts[$Left]++ if ($Left  ne AttributeMissing);
-		$HaploCounts[$Right]++ if ($Right ne AttributeMissing);
+                $HaploCounts[$Left]++  if ($Left  ne AttributeMissing);
+                $HaploCounts[$Right]++ if ($Right ne AttributeMissing);
             }
         }
         my $PopSize = sum @HaploCounts;
         my @Tokens  = ();
         for $i (1 .. scalar(@HaploCounts) - 1) {
-            push @Tokens, $HaploCounts[$i] / $PopSize;
+            if ($PopSize != 0) {
+                push @Tokens, $HaploCounts[$i] / $PopSize;
+            } else {
+                push @Tokens, 0;
+            }
         }
         $LociAttributes{ $Loci[ $i + 1 ] }{Frequencies} = [@Tokens];
     }
@@ -993,59 +1028,62 @@ sub bucketizePedigrees {
     # so if you change one, change both.
 
     my %NiceNames = (
-		     # It's alleles+affectation for CC
-		     '000000111' => 'ctrl11',
-		     '000000112' => 'case11',
-		     '000000121' => 'ctrl12',
-		     '000000122' => 'case12',
-		     '000000221' => 'ctrl22',
-		     '000000222' => 'case22',
-		     # It's alleles+affectation+sex XC CC
-		     '000100021111' => 'ctrl1',
-		     '000100021121' => 'case1',
-		     '000100021112' => 'ctrl11',
-		     '000100021122' => 'case11',
-		     '000100021212' => 'ctrl12',
-		     '000100021222' => 'case12',
-		     '000100022211' => 'ctrl2',
-		     '000100022221' => 'case2',
-		     '000100022212' => 'ctrl22',
-		     '000100022222' => 'case22',
-		     # It's John's encoding for trios
-		     '001001002' => 'T30',
-		     '001001112' => 'T18',
-		     '001001122' => 'T19',
-		     '001001222' => 'T20',
-		     '001111002' => 'T24',
-		     '001111112' => 'T05',
-		     '001111122' => 'T06',
-		     '001121002' => 'T27',
-		     '001121112' => 'T12',
-		     '001121122' => 'T13',
-		     '001121222' => 'T14',
-		     '001221002' => 'T29',
-		     '001221122' => 'T16',
-		     '001221222' => 'T17',
-		     '111111002' => 'T21',
-		     '111111112' => 'T01',
-		     '111121002' => 'T22',
-		     '111121112' => 'T02',
-		     '111121122' => 'T03',
-		     '111221002' => 'T23',
-		     '111221122' => 'T04',
-		     '121121002' => 'T25',
-		     '121121112' => 'T07',
-		     '121121122' => 'T08',
-		     '121121222' => 'T09',
-		     '121221002' => 'T26',
-		     '121221122' => 'T10',
-		     '121221222' => 'T11',
-		     '221221002' => 'T28',
-		     '221221222' => 'T15',
-		     );
 
-    my $Type   = shift();          # Pedigree type for writing
-    my $Prefix = shift();          # Uniqifying (what a word!) prefix for files
+        # It's alleles+affectation for CC
+        '000000111' => 'ctrl11',
+        '000000112' => 'case11',
+        '000000121' => 'ctrl12',
+        '000000122' => 'case12',
+        '000000221' => 'ctrl22',
+        '000000222' => 'case22',
+
+        # It's alleles+affectation+sex XC CC
+        '000100021111' => 'ctrl1',
+        '000100021121' => 'case1',
+        '000100021112' => 'ctrl11',
+        '000100021122' => 'case11',
+        '000100021212' => 'ctrl12',
+        '000100021222' => 'case12',
+        '000100022211' => 'ctrl2',
+        '000100022221' => 'case2',
+        '000100022212' => 'ctrl22',
+        '000100022222' => 'case22',
+
+        # It's John's encoding for trios
+        '001001002' => 'T30',
+        '001001112' => 'T18',
+        '001001122' => 'T19',
+        '001001222' => 'T20',
+        '001111002' => 'T24',
+        '001111112' => 'T05',
+        '001111122' => 'T06',
+        '001121002' => 'T27',
+        '001121112' => 'T12',
+        '001121122' => 'T13',
+        '001121222' => 'T14',
+        '001221002' => 'T29',
+        '001221122' => 'T16',
+        '001221222' => 'T17',
+        '111111002' => 'T21',
+        '111111112' => 'T01',
+        '111121002' => 'T22',
+        '111121112' => 'T02',
+        '111121122' => 'T03',
+        '111221002' => 'T23',
+        '111221122' => 'T04',
+        '121121002' => 'T25',
+        '121121112' => 'T07',
+        '121121122' => 'T08',
+        '121121222' => 'T09',
+        '121221002' => 'T26',
+        '121221122' => 'T10',
+        '121221222' => 'T11',
+        '221221002' => 'T28',
+        '221221222' => 'T15',
+    );
+
+    my $Type   = shift();    # Pedigree type for writing
+    my $Prefix = shift();    # Uniqifying (what a word!) prefix for files
 
     # Verify that this is a 2pt analysis (default, so look for multipoint directives)
     die "Generation of counts not permitted for a multipoint analysis.\n"
@@ -1074,21 +1112,25 @@ sub bucketizePedigrees {
 
         # Qualify the family for inclusion in trio buckets by
         # verifying depth of 1
-	my $SkipFlag = 0;
+        my $SkipFlag = 0;
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
             my $Mom = $Pedigrees{$Ped}{$Ind}{Mom};
-	    if ((($Dad ne $UnknownPerson) && (($Pedigrees{$Ped}{$Dad}{Dad} ne $UnknownPerson) ||
-					     ($Pedigrees{$Ped}{$Dad}{Mom} ne $UnknownPerson))) ||
-		($Mom ne $UnknownPerson) && (($Pedigrees{$Ped}{$Mom}{Dad} ne $UnknownPerson) ||
-					     ($Pedigrees{$Ped}{$Mom}{Mom} ne $UnknownPerson))) {
-		push @Skippies, $Ped;
-		print "Will copy multi-generation pedigree $Ped intact.\n";
-		$SkipFlag = 1;
-		last;
-	    }
+            if (
+                (
+                    ($Dad ne $UnknownPerson) && (($Pedigrees{$Ped}{$Dad}{Dad} ne $UnknownPerson)
+                        || ($Pedigrees{$Ped}{$Dad}{Mom} ne $UnknownPerson))
+                )
+                || ($Mom ne $UnknownPerson) && (($Pedigrees{$Ped}{$Mom}{Dad} ne $UnknownPerson)
+                    || ($Pedigrees{$Ped}{$Mom}{Mom} ne $UnknownPerson))
+              ) {
+                push @Skippies, $Ped;
+                print "Will copy multi-generation pedigree $Ped intact.\n";
+                $SkipFlag = 1;
+                last;
+            }
         }
-	next if ($SkipFlag);
+        next if ($SkipFlag);
 
         # Generate the family bucket for each marker pair
         for my $i (0 .. $PairCount - 1) {
@@ -1102,29 +1144,30 @@ sub bucketizePedigrees {
                 if ($Dad ne $UnknownPerson) {
                     my $DadKey = $Pedigrees{$Ped}{$Dad}{Mks}[$i];
                     ($DadKey eq '2 1') and $DadKey = '1 2';
-		    $DadKey .= $Pedigrees{$Ped}{$Dad}{Aff};
-                    my $Mom        = $Pedigrees{$Ped}{$Ind}{Mom};
+                    $DadKey .= $Pedigrees{$Ped}{$Dad}{Aff};
+                    my $Mom    = $Pedigrees{$Ped}{$Ind}{Mom};
                     my $MomKey = $Pedigrees{$Ped}{$Mom}{Mks}[$i];
                     ($MomKey eq '2 1') and $MomKey = '1 2';
-		    $MomKey .= $Pedigrees{$Ped}{$Mom}{Aff};
+                    $MomKey .= $Pedigrees{$Ped}{$Mom}{Aff};
                     my $ChildKey = $Pedigrees{$Ped}{$Ind}{Mks}[$i];
                     ($ChildKey eq '2 1') and $ChildKey = '1 2';
-		    $ChildKey .= $Pedigrees{$Ped}{$Ind}{Aff};
+                    $ChildKey .= $Pedigrees{$Ped}{$Ind}{Aff};
 
-		    if (defined($Directives{XC}) || $XC || defined($Directives{IMP}) || $imprinting) {
-			$DadKey .= $Pedigrees{$Ped}{$Dad}{Sex};
-			$MomKey .= $Pedigrees{$Ped}{$Mom}{Sex};
-			$ChildKey .= $Pedigrees{$Ped}{$Ind}{Sex};
-		    }
-		    my $ParentKey = ($MomKey gt $DadKey) ? $DadKey.$MomKey : $MomKey.$DadKey;
+                    if (defined($Directives{XC}) || $XC || defined($Directives{IMP}) || $imprinting) {
+                        $DadKey   .= $Pedigrees{$Ped}{$Dad}{Sex};
+                        $MomKey   .= $Pedigrees{$Ped}{$Mom}{Sex};
+                        $ChildKey .= $Pedigrees{$Ped}{$Ind}{Sex};
+                    }
+                    my $ParentKey = ($MomKey gt $DadKey) ? $DadKey . $MomKey : $MomKey . $DadKey;
 
-		    my $BucketName = $ParentKey.$ChildKey;
-		    $BucketName =~ s/ //g;
-		    push @bucketList, $BucketName;
+                    my $BucketName = $ParentKey . $ChildKey;
+                    $BucketName =~ s/ //g;
+                    push @bucketList, $BucketName;
                 }
             }
             my $PedBucket = join("+", sort (@bucketList));
             $Buckets{ $Loci[ $i + 1 ] . "_" . $PedBucket }++;
+
 #	    print "For marker ".$Loci [ $i + 1 ]." bucket ".$PedBucket." gets pedigree ".sprintf("%003d\n", $Ped);
             if (!defined($Templates{$PedBucket})) {
                 $Templates{$PedBucket}{Ped}    = $Ped;
@@ -1171,23 +1214,27 @@ sub bucketizePedigrees {
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
             print OUT $Pedigrees{$Ped}{$Ind}{Aff} . "  ";
+            if ($liability) {
+                print OUT $Pedigrees{$Ped}{$Ind}{LC} . "  ";
+            }
             my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
             for my $i (0 .. $PairCount - 1) {
                 next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
                 next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "T");
                 next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "A");
+
 #                print OUT $Pairs[$i] . "  ";
-		my ($Left, $Right) = split(/ /, $Pairs[$i]);
-		if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
-		    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left}." ";
-		} else {
-		    print OUT AttributeMissing." ";
-		}
-		if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
-		    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right}."  ";
-		} else {
-		    print OUT AttributeMissing."  ";
-		}
+                my ($Left, $Right) = split(/ /, $Pairs[$i]);
+                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
+                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left} . " ";
+                } else {
+                    print OUT AttributeMissing . " ";
+                }
+                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
+                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right} . "  ";
+                } else {
+                    print OUT AttributeMissing . "  ";
+                }
             }
             print OUT "Ped: $Ped Per: $Ind\n";
         }
@@ -1195,13 +1242,14 @@ sub bucketizePedigrees {
 
     # Next the template pedigrees
     for my $PB (sort numericIsh keys %Templates) {
-        my $Ped    = $Templates{$PB}{Ped};
-        my $PairID = $Templates{$PB}{PairID};
-        my $PedSeq = $Templates{$PB}{PedSeq};
-	my $NiceName = defined($NiceNames{$PB}) ? $NiceNames{$PB} : $PB;
+        my $Ped      = $Templates{$PB}{Ped};
+        my $PairID   = $Templates{$PB}{PairID};
+        my $PedSeq   = $Templates{$PB}{PedSeq};
+        my $NiceName = defined($NiceNames{$PB}) ? $NiceNames{$PB} : $PB;
 
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
-            print OUT sprintf("%4s %3s %3s %3s ", $NiceName, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
+            print OUT
+              sprintf("%4s %3s %3s %3s ", $NiceName, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
             print OUT sprintf("%3s %3s %3s ",
                 $Pedigrees{$Ped}{$Ind}{Kid1},
                 $Pedigrees{$Ped}{$Ind}{nPs},
@@ -1210,7 +1258,11 @@ sub bucketizePedigrees {
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
             my $Pair = "  " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
-            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", $Pair x min($split, $PairCount)) . "   ";
+            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " ";
+            if ($liability) {
+                print OUT $Pedigrees{$Ped}{$Ind}{LC} . " ";
+            }
+            print OUT join(" ", $Pair x min($split, $PairCount)) . "   ";
             print OUT "Ped: $NiceName Per: $Ind\n";
         }
     }
@@ -1218,46 +1270,58 @@ sub bucketizePedigrees {
 
     # Diagnostic multiple template pedigrees! (Out-of-date)
     if ($DiagSolos) {
-	for my $i (0 .. $PairCount - 1) {
-	    next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
+        for my $i (0 .. $PairCount - 1) {
+            next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
 
-	    if ($Type eq "POST") {
-		open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "Pedigrees.Dat";
-	    } else {
-		open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "Pedigrees.Pre";
-	    }
-	    for my $PB (sort numericIsh keys %Templates) {
-		my $FB = $Loci[ $i + 1 ] . "_" . $PB;
-		if (!defined($Buckets{$FB})) {
-		    next;
-		} else {
-		    my $Ped    = $Templates{$PB}{Ped};
-		    my $PairID = $Templates{$PB}{PairID};
-		    my $PedSeq = $Templates{$PB}{PedSeq};
-		    print "Writing ".$Buckets{$FB}." copies of ".$PedSeq." for marker ".$Loci[ $i + 1 ]."\n";
-		    for my $j (1..$Buckets{$FB}) {
-			for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
-			    print OUT sprintf("%4s %3s %3s %3s ", $PB."_".$j, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
-			    print OUT sprintf("%3s %3s %3s ",
-					      $Pedigrees{$Ped}{$Ind}{Kid1},
-					      $Pedigrees{$Ped}{$Ind}{nPs},
-					      $Pedigrees{$Ped}{$Ind}{nMs})
-				if ($Type eq "POST");
-			    print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
-			    print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
-			    my $Pair = "  " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
-			    print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " " . join(" ", $Pair x min($split, $PairCount)) . "   ";
-			    print OUT "Ped: ".$PB."_".$j." Per: $Ind\n";
-			}
-		    }
-		}
-	    }
-	    close OUT;
-	}
+            if ($Type eq "POST") {
+                open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "Pedigrees.Dat";
+            } else {
+                open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "Pedigrees.Pre";
+            }
+            for my $PB (sort numericIsh keys %Templates) {
+                my $FB = $Loci[ $i + 1 ] . "_" . $PB;
+                if (!defined($Buckets{$FB})) {
+                    next;
+                } else {
+                    my $Ped    = $Templates{$PB}{Ped};
+                    my $PairID = $Templates{$PB}{PairID};
+                    my $PedSeq = $Templates{$PB}{PedSeq};
+                    print "Writing "
+                      . $Buckets{$FB}
+                      . " copies of "
+                      . $PedSeq
+                      . " for marker "
+                      . $Loci[ $i + 1 ] . "\n";
+                    for my $j (1 .. $Buckets{$FB}) {
+                        for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
+                            print OUT sprintf(
+                                "%4s %3s %3s %3s ",
+                                $PB . "_" . $j,
+                                $Ind,
+                                $Pedigrees{$Ped}{$Ind}{Dad},
+                                $Pedigrees{$Ped}{$Ind}{Mom}
+                            );
+                            print OUT sprintf("%3s %3s %3s ",
+                                $Pedigrees{$Ped}{$Ind}{Kid1},
+                                $Pedigrees{$Ped}{$Ind}{nPs},
+                                $Pedigrees{$Ped}{$Ind}{nMs})
+                              if ($Type eq "POST");
+                            print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
+                            print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
+                            my $Pair = "  " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
+                            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " "
+                              . join(" ", $Pair x min($split, $PairCount)) . "   ";
+                            print OUT "Ped: " . $PB . "_" . $j . " Per: $Ind\n";
+                        }
+                    }
+                }
+            }
+            close OUT;
+        }
     }
 
     if ($Type ne "POST") {
-        system("makeped " . $Prefix . "_pedigrees.Pre " . $Prefix . "_pedigrees.Dat N");
+        system("makeped " . $Prefix . "Pedigrees.Pre " . $Prefix . "Pedigrees.Dat N");
     }
 
     # Finally the counts.
@@ -1265,7 +1329,7 @@ sub bucketizePedigrees {
 
     print OUT "MARKER ";
     for my $PB (sort numericIsh keys %Templates) {
-	my $NiceName =  defined($NiceNames{$PB}) ? $NiceNames{$PB} : $PB;
+        my $NiceName = defined($NiceNames{$PB}) ? $NiceNames{$PB} : $PB;
         print OUT $NiceName . " ";
     }
     print OUT "\n";
@@ -1284,9 +1348,16 @@ sub bucketizePedigrees {
     }
     close OUT;
 
+    open OUT, ">" . $Prefix . "Data.Dat";
+    for my $Name (@Loci) {
+        next if (!$LociAttributes{$Name}{Included});
+        print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
+    }
+    close OUT;
+
     # If there was no configuration, create all of the supporting files
     if ($config) {
-        print "Remember to modify your configuration file to specify the new pedigree and count files.\n";
+        print "Remember to modify your configuration file to specify the new pedigree, companion and count files.\n";
         return;
     }
 
@@ -1322,13 +1393,6 @@ AL 0.05 1 0.05
 
 EOF
     print OUT "XC\n" if (defined($Directives{XC}) || $XC);
-    close OUT;
-
-    open OUT, ">" . $Prefix . "Data.Dat";
-    for my $Name (@Loci) {
-        next if (!$LociAttributes{$Name}{Included});
-        print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
-    }
     close OUT;
 
     open OUT, ">" . $Prefix . "Markers.Dat";
@@ -1383,23 +1447,27 @@ sub writeExpanded {
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
             print OUT $Pedigrees{$Ped}{$Ind}{Aff} . "  ";
+            if ($liability) {
+                print OUT $Pedigrees{$Ped}{$Ind}{LC} . "  ";
+            }
             my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
             for my $i (0 .. $PairCount - 1) {
                 next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
                 next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "T");
                 next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "A");
+
 #                print OUT $Pairs[$i] . "  ";
-		my ($Left, $Right) = split(/ /, $Pairs[$i]);
-		if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
-		    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left}." ";
-		} else {
-		    print OUT AttributeMissing." ";
-		}
-		if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
-		    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right}."  ";
-		} else {
-		    print OUT AttributeMissing."  ";
-		}
+                my ($Left, $Right) = split(/ /, $Pairs[$i]);
+                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
+                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left} . " ";
+                } else {
+                    print OUT AttributeMissing . " ";
+                }
+                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
+                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right} . "  ";
+                } else {
+                    print OUT AttributeMissing . "  ";
+                }
             }
             print OUT "Ped: $Ped Per: $Ind\n";
         }
@@ -1416,6 +1484,11 @@ sub writeExpanded {
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
     }
     close OUT;
+
+    if ($config) {
+        print "Remember to modify your configuration file to specify the new pedigree and companion files.\n";
+        return;
+    }
 
     open OUT, ">" . $Prefix . "Markers.Dat";
     for my $Name (@Loci) {
@@ -1494,7 +1567,7 @@ sub kelvinLimits {
 
     # General limitations
     warn "Warning -- kelvin currently only supports biallelic disease models!\n"
-	if (defined($Directives{DA}) && ($Directives{DA}[0] != 2));
+      if (defined($Directives{DA}) && ($Directives{DA}[0] != 2));
 
     if (defined($Directives{DK})) {
 
@@ -1522,6 +1595,8 @@ where <flags> are any of:
 -XC		This is a sex-linked (X-chromosome) analysis (also XC in configuration 
 		file)
 -imprinting	This in an imprinting analysis (also IMP in configuration file)
+-liability	The pedigree file has a column after affection status for liability 
+		class. Currently not considered in counts.
 -bare		The pedigree file has only individual, affection status and marker
 		allele pairs columns.
 -nokelvin	Skip verification that kelvin can handle the analysis.
@@ -1587,22 +1662,23 @@ mappings are made every time.
 EOF
 
 GetOptions(
-    'config'    => \$config,
-    'pre'       => \$pre,
-    'post'      => \$post,
-    'noparents' => \$noparents,
-    'XC'        => \$XC,
-    'imprinting' => \$imprinting,
-    'bare'      => \$bare,
-    'nokelvin'  => \$nokelvin,
-    'loops'     => \$loops,
-    'stats'     => \$stats,
-    'count'     => \$count,
-    'include=s' => \@include,
-    'exclude=s' => \@exclude,
-    'split=i'   => \$split,
+    'config'         => \$config,
+    'pre'            => \$pre,
+    'post'           => \$post,
+    'noparents'      => \$noparents,
+    'XC'             => \$XC,
+    'imprinting'     => \$imprinting,
+    'liability'      => \$liability,
+    'bare'           => \$bare,
+    'nokelvin'       => \$nokelvin,
+    'loops'          => \$loops,
+    'stats'          => \$stats,
+    'count'          => \$count,
+    'include=s'      => \@include,
+    'exclude=s'      => \@exclude,
+    'split=i'        => \$split,
     'subdirectories' => \$subdirectories,
-    'write:s'   => \$write,
+    'write:s'        => \$write,
 ) or die "Invalid command line parameters.";
 if ($write ne "unspecified") {
     $WritePrefix = $write if ($write ne "");
@@ -1620,6 +1696,7 @@ print "-post flag seen\n"                                 if ($post);
 print "-noparents flag seen\n"                            if ($noparents);
 print "-XC flag seen\n"                                   if ($XC);
 print "-imprinting flag seen\n"                           if ($imprinting);
+print "-liability flag seen\n"                            if ($liability);
 print "-bare flag seen\n"                                 if ($bare);
 print "-nokelvin flag seen\n"                             if ($nokelvin);
 print "-loops flag seen\n"                                if ($loops);
@@ -1678,8 +1755,9 @@ if ($loops) {
     }
 }
 
-@include = split(',',join(',',@include)); # No support for ranges
-@exclude = split(',',join(',',@exclude));
+@include = split(',', join(',', @include));    # No support for ranges
+@exclude = split(',', join(',', @exclude));
+
 #@include = expand(join(',', @include)) if (scalar(@include));    # Support for ranges
 #@exclude = expand(join(',', @exclude)) if (scalar(@exclude));
 
@@ -1709,8 +1787,8 @@ if (defined($Directives{SA}) || defined($Directives{SS})) {
             }
 
             # Do the work
-	    print "Marker set " . (++$SplitSet) . "\n";
-	    mkdir $WritePrefix . $SplitSet if ($write && $subdirectories);
+            print "Marker set " . (++$SplitSet) . "\n";
+            mkdir $WritePrefix . $SplitSet if ($write && $subdirectories);
             if ($count) {
                 bucketizePedigrees($pedFileType, $WritePrefix . $SplitSet . (($write && $subdirectories) ? "/" : "_"));
             } elsif ($write) {
@@ -1730,8 +1808,8 @@ if (defined($Directives{SA}) || defined($Directives{SS})) {
     if ($IncludedMarkers != 0) {
 
         # Do the rest
-	mkdir $WritePrefix . $SplitSet if ($write && $subdirectories);
-	print "Marker set " . (++$SplitSet) . "\n";
+        mkdir $WritePrefix . $SplitSet if ($write && $subdirectories);
+        print "Marker set " . (++$SplitSet) . "\n";
         if ($count) {
             bucketizePedigrees($pedFileType, $WritePrefix . $SplitSet . (($write && $subdirectories) ? "/" : "_"));
         } elsif ($write) {
