@@ -107,6 +107,9 @@ double prior = 0.02;    /* -p or --prior: prior probability */
 double weight = 0.95;   /* -w or --weight: weighting factor */
 double cutoff = 0.05;   /* -c or --cutoff: theta cutoff */
 
+/* For input BRs with fake Chr/cM info, force the output to use Chr/cM from the optional map */
+int forcemap = 0;
+
 /* For optional output files, the filehandles are global */
 FILE *partout = NULL;   /* --partout: file to which to write partial results */
 FILE *bfout = NULL;     /* --bfout: file to which bayes factors will be written */
@@ -373,6 +376,10 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     else 
       calc_ldvals_sexspc (&dprimes, &thetas, lr, &ldval);
 
+    if (forcemap) {
+      strcpy (current[0]->curmarker.chr, mapptr->chr);
+      current[0]->curmarker.pos = mapptr->avgpos;
+    }
     print_twopoint_stats (current[0]->no_ld, &(current[0]->curmarker), &ldval);
     for (fileno = 0; fileno < numcurrent; fileno++) {
       get_next_marker (current[fileno], &data);
@@ -589,6 +596,10 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     ldval.ld_small_theta *= weight;
     ldval.le_big_theta *= (1 - weight);
     ldval.ld_big_theta *= (1 - weight);
+    if (forcemap) {
+      strcpy (current[0]->curmarker.chr, mapptr->chr);
+      current[0]->curmarker.pos = mapptr->avgpos;
+    }
     print_twopoint_stats (current[0]->no_ld, &(current[0]->curmarker), &ldval);
 
     for (fileno = 0; fileno < numcurrent; fileno++) {
@@ -1100,7 +1111,8 @@ double calc_upd_ppld_allowing_l (st_ldvals *ldval, double ldprior)
 #define OPT_PARTOUT  12
 #define OPT_BFOUT    13
 #define OPT_SIXOUT   14
-#define OPT_HELP     15
+#define OPT_FORCEMAP 15
+#define OPT_HELP     16
 
 int parse_command_line (int argc, char **argv)
 {
@@ -1120,6 +1132,7 @@ int parse_command_line (int argc, char **argv)
 			      { "partout", 1, &long_arg, OPT_PARTOUT },
 			      { "bfout", 1, &long_arg, OPT_BFOUT },
 			      { "sixout", 1, &long_arg, OPT_SIXOUT },
+			      { "forcemap", 0, &long_arg, OPT_FORCEMAP },
 			      { "help", 0, &long_arg, OPT_HELP },
 			      { NULL, 0, NULL, 0 } };
   struct stat statbuf;
@@ -1173,6 +1186,9 @@ int parse_command_line (int argc, char **argv)
     } else if ((arg == 0) && (long_arg == OPT_SIXOUT)) {
       sixoutfile = optarg;
 
+    } else if ((arg == 0) && (long_arg == OPT_FORCEMAP)) {
+      forcemap = 1;
+
     } else if ((arg == 0) && (long_arg == OPT_HELP)) {
       usage ();
       exit (0);
@@ -1211,6 +1227,11 @@ int parse_command_line (int argc, char **argv)
 
   if ((mapinfile != NULL) && (relax)) {
     fprintf (stderr, "%s: --relax cannot be combined with --mapin\n", pname);
+    exit (-1);
+  }
+
+  if ((forcemap) && (mapinfile == NULL)) {
+    fprintf (stderr, "%s: --forcemap requires --mapin\n", pname);
     exit (-1);
   }
 
