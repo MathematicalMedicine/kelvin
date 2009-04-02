@@ -243,10 +243,10 @@ char *estimateIterations (unsigned long eCL[])
 		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
 		 pedigreeSet.numPedigree);
       else
-	sprintf (analysisType, "%dTh*%dD' cases of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)\n"
+	sprintf (analysisType, "%dTh*%dD' cases of %dAL*%dGF*%dp1*%dpv(%dLC)' space for %d pedigree(s)\n"
 		 "Trait-to-marker Two-Point, ",
 		 modelRange.ntheta, totalLoopsForDPrime,
-		 modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
+		 modelRange.nalpha, modelRange.ngfreq, modelRange.nparam, modelRange.npenet, modelRange.nlclass,
 		 pedigreeSet.numPedigree);
       if (modelType.trait == DT) {
 	strcat (analysisType, "Dichotomous Trait, ");
