@@ -50,7 +50,6 @@
 #include "../pedlib/pedlib.h"
 #include "../pedlib/likelihood.h"
 #include "../utils/utils.h"
-#include "../utils/tools.h"
 
 // Functions listed below should not be called outside this library:
 Pedigree *create_pedigree (PedigreeSet * pPedigreeSet, char *sPedLabel);
