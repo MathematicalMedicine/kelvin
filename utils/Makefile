@@ -4,8 +4,8 @@
 
 # Invoked by main Kelvin Makefile. You'll get undefined symbols otherwise.
 
-INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h polynomial.h tools.h
-OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o polynomial.o tools.o
+INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h polynomial.h
+OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o polynomial.o
 
 all : ../lib/libutils.a
 

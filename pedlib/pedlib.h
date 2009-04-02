@@ -55,9 +55,6 @@ int pedigree_genotype_elimination (int locus, Pedigree * pPedigree);
 int compute_likelihood (PedigreeSet * pPedigreeList);
 void pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList);
 int compute_pedigree_likelihood (Pedigree * pPedigree);
-void *MALLOC (char *description, size_t size);
-void FREE (char *description, void *ptr);
-void *REALLOC (char *description, void *ptr, size_t size);
 
 extern char *flexBuffer;
 extern int flexBufferSize;

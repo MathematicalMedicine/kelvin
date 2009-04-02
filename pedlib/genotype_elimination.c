@@ -24,7 +24,6 @@
 #include "pedigree.h"
 #include "locus.h"
 #include "../utils/utils.h"		/* for logging */
-#include "../utils/tools.h"
 #include "genotype_elimination.h"
 #include "likelihood.h"
 

@@ -1,4 +1,3 @@
-
 /**********************************************************************
  * Kelvin utilities.
  * Alberto Maria Segre
@@ -7,6 +6,11 @@
  * Permission is hereby given to use and reproduce this software
  * for non-profit educational purposes only.
  **********************************************************************/
+
+#ifndef __UTILS_H__
+#define __UTILS_H__
+
+#include <stdio.h>
 
 /**********************************************************************
  * Some convenient and commonly used defines.
@@ -71,6 +75,10 @@
 #define RANDDBL(n) (drand48() * (n))
 #define RANDSGN() ((RANDINT(2)==0)?(-1):(1))
 
+/* number of bits in an integer */
+#define INT_BITS		(sizeof(int)*8)
+
+
 /**********************************************************************
  * Kelvin log facility. 
  *
@@ -79,6 +87,7 @@
  *
  * Types of messages are defined as one of 32 orthogonal types.
  **********************************************************************/
+
 /**********************************************************************
  * logFlag[] has to be global so the facility and severity can be
  * checked BEFORE invocation of logMsg so that parameters that are
@@ -108,33 +117,15 @@ void logMsg (unsigned int type, int level, const char *format, ...);
  * logFlag[].
  **********************************************************************/
 #define LOGDEFAULT      1
-
-/* processing pedigree file */
-#define LOGPEDFILE	(1 << 1)
-
-/* allele set recoding */
-#define LOGSETRECODING	(1 << 2)
-
-/* genotype elimination */
-#define LOGGENOELIM	(1 << 3)
-
-/* parental pair construction */
-#define LOGPARENTALPAIR (1 << 4)
-
-/* peel graph algorithm */
-#define LOGPEELGRAPH    (1 << 5)
-
-/* likelihood caluclation */
-#define LOGLIKELIHOOD   (1 << 6)
-
-/* input configuration file */
-#define LOGINPUTFILE    (1 << 7)
-
-/* memory management */
-#define LOGMEMORY	(1 << 8)
-
-/* integration (dcuhre) */
-#define LOGINTEGRATION	(1 << 9)
+#define LOGPEDFILE	(1 << 1)  /* processing pedigree file */
+#define LOGSETRECODING	(1 << 2)  /* allele set recoding */
+#define LOGGENOELIM	(1 << 3)  /* genotype elimination */
+#define LOGPARENTALPAIR (1 << 4)  /* parental pair construction */
+#define LOGPEELGRAPH    (1 << 5)  /* peel graph algorithm */
+#define LOGLIKELIHOOD   (1 << 6)  /* likelihood caluclation */
+#define LOGINPUTFILE    (1 << 7)  /* input configuration file */
+#define LOGMEMORY	(1 << 8)  /* memory management */
+#define LOGINTEGRATION	(1 << 9)  /* integration (dcuhre) */
 
 /**********************************************************************
  * Macros for use in invoking the log function. These macro "wrappers"
@@ -150,11 +141,11 @@ void logMsg (unsigned int type, int level, const char *format, ...);
  * No space allowed between KLOG and leading argument paren!
  **********************************************************************/
 #define KLOG(TYPE, LEVEL, ...)                                        \
-{ \
+{                                                                     \
   if ((LEVEL == 0) || (TYPE & logFlag[LEVEL - 1])) { \
     logMsg (TYPE, MAX(LOGERROR,LEVEL), "%s (%d): ", (__FILE__),(__LINE__)); \
-    logMsg (TYPE, LEVEL, __VA_ARGS__);                                  \
-  } \
+    logMsg (TYPE, LEVEL, __VA_ARGS__);                                \
+  }                                                                   \
 }
 
 /**********************************************************************
@@ -191,3 +182,24 @@ void logMsg (unsigned int type, int level, const char *format, ...);
       logMsg (LOGDEFAULT, LOGFATAL, __VA_ARGS__);                     \
     }							              \
 }
+
+
+/* Wrappers for malloc() and friends, with built in error checking
+ * and logging.
+ */
+void *MALLOC (char *description, size_t size);
+void FREE (char *description, void *ptr);
+void *REALLOC (char *description, void *ptr, size_t size);
+
+
+/* Routines for checking/manipulating lines of file input */
+
+int is_line_blank_or_comment (char *line);
+int is_line_blank (char *line);
+int is_line_comment (char *line);
+char *get_nonblank_line (char *pLine, int maxLen, FILE * fp, int *pLineNo);
+char *fgetlongs (char **buff, int *bufflen, FILE * fp);
+int permuteLine (char *line, int maxlength);
+
+
+#endif /* __UTILS_H__ */

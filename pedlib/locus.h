@@ -17,11 +17,6 @@
 #define LOCUS_TYPE_MARKER	0
 #define LOCUS_TYPE_TRAIT	1
 
-/* Affection status for a dichotomous trait for a person */
-#define AFFECTION_STATUS_UNKNOWN        0
-#define AFFECTION_STATUS_UNAFFECTED     1
-#define AFFECTION_STATUS_AFFECTED       2
-
 /* these affect and limit the size of pentrance matrix */
 
 /* When we do categorial traits, there are potentially more than 3 possible values */

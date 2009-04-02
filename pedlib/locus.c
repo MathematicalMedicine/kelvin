@@ -35,7 +35,6 @@ char *locusVersion = "$Id$";
 #include "../utils/dists.h"
 #include "pedlib.h"
 #include "../utils/utils.h"		/* for logging */
-#include "../utils/tools.h"
 #include "../utils/polynomial.h"
 
 /* global variables */

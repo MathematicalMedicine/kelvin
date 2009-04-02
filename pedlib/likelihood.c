@@ -26,7 +26,6 @@ char *likelihoodVersion = "$Id$";
 #include "locus.h"
 #include "../utils/utils.h"		/* for logging */
 #include "../utils/sw.h"
-#include "../utils/tools.h"
 #include "likelihood.h"
 #include "genotype_elimination.h"
 #ifdef _OPENMP
