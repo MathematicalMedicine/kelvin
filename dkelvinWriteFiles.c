@@ -98,7 +98,8 @@ void dk_write2ptMODFile (double value, st_DKMaxModel *model)
       for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
 	fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
   
-  fprintf (fpMOD, " Theta(M,F) Alpha DGF MF");
+  //  fprintf (fpMOD, " Theta(M,F) Alpha DGF MF");
+  fprintf (fpMOD, " Theta(M,F) Alpha DGF");
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
     if (modelType.trait == DT)
       if (modelOptions.imprintingFlag)
@@ -142,17 +143,21 @@ void dk_write2ptMODFile (double value, st_DKMaxModel *model)
     // for (ii = 0; ii < pLocus1->numOriginalAllele - 1; ii++)
     //   for (jj = 0; jj < pLocus2->numOriginalAllele - 1; jj++)
     //     fprintf (fpMOD, " %.2f", pLambdaCell->lambda[dprimeIdx][ii][jj]);
-    fprintf (fpMOD, " %.2f", model->dprime[0]);
+    //    fprintf (fpMOD, " %.2f", model->dprime[0]);
+    fprintf (fpMOD, " %.8f", model->dprime[0]);
   }
 
   /* Theta Alpha DGF MF */
-  fprintf (fpMOD, " (%.4f,%.4f) %.2f %.4f %.4f", model->theta[0], model->theta[1],
-	   model->alpha, model->dgf, model->mf);
+  //  fprintf (fpMOD, " (%.4f,%.4f) %.2f %.4f %.4f", model->theta[0], model->theta[1],
+  //	   model->alpha, model->dgf, model->mf);
+  fprintf (fpMOD, " (%.8f,%.8f) %.8f %.8f", model->theta[0], model->theta[1],
+	   model->alpha, model->dgf);
 	    
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
     if (! modelOptions.imprintingFlag)
       /* DD Dd dd or DDMean DdMean ddMean */
-      fprintf (fpMOD, " (%.3f,%.3f,%.3f", model->pen[liabIdx].DD, model->pen[liabIdx].Dd,
+      //      fprintf (fpMOD, " (%.3f,%.3f,%.3f", model->pen[liabIdx].DD, model->pen[liabIdx].Dd,
+      fprintf (fpMOD, " (%.8f,%.8f,%.8f", model->pen[liabIdx].DD, model->pen[liabIdx].Dd,
 	       model->pen[liabIdx].dd);
     else 
       /* DD Dd dD dd or DDMean DdMean dDMean ddMean */

@@ -218,7 +218,8 @@ void write2ptMODFile () {
     for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
       for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
 	fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
-  fprintf (fpMOD, " Theta(M,F) Alpha DGF MF");
+  //  fprintf (fpMOD, " Theta(M,F) Alpha DGF MF");
+  fprintf (fpMOD, " Theta(M,F) Alpha DGF");
 
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
     if (modelType.trait == DT)
@@ -245,7 +246,8 @@ void write2ptMODFile () {
   fprintf (fpMOD, "\n");
 
   if (modelOptions.markerAnalysis != FALSE) {
-    fprintf (fpMOD, "%d %s %.4f %s %.4f", pLocus2->pMapUnit->chromosome, pLocus1->sName,
+    //    fprintf (fpMOD, "%d %s %.4f %s %.4f", pLocus2->pMapUnit->chromosome, pLocus1->sName,
+    fprintf (fpMOD, "%d %s %.8f %s %.8f", pLocus2->pMapUnit->chromosome, pLocus1->sName,
 	     pLocus1->pMapUnit->mapPos[SEX_AVERAGED], pLocus2->sName,
 	     pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
   } else {
@@ -273,10 +275,12 @@ void write2ptMODFile () {
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
     for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
       for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
-	fprintf (fpMOD, " %.2f", pLambdaCell->lambda[maxDPrimeIdx][i][j]);
+	//	fprintf (fpMOD, " %.2f", pLambdaCell->lambda[maxDPrimeIdx][i][j]);
+	fprintf (fpMOD, " %.8f", pLambdaCell->lambda[maxDPrimeIdx][i][j]);
   
-  fprintf (fpMOD, " (%.4f,%.4f) %.2f %.4f %.4f", theta[0], theta[1], alphaV, gfreq,
-	   tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_mf);
+  //  fprintf (fpMOD, " (%.4f,%.4f) %.2f %.4f %.4f", theta[0], theta[1], alphaV, gfreq,
+  //	   tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_mf);
+  fprintf (fpMOD, " (%.8f,%.8f) %.8f %.8f", theta[0], theta[1], alphaV, gfreq);
   
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
     pen_DD = modelRange.penet[liabIdx][0][penIdx];
@@ -286,7 +290,8 @@ void write2ptMODFile () {
     if (modelOptions.imprintingFlag)
       fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
     else
-      fprintf (fpMOD, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
+      //      fprintf (fpMOD, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
+      fprintf (fpMOD, " (%.8f,%.8f,%.8f", pen_DD, pen_Dd, pen_dd);
     if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
       SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
       SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
