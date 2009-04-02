@@ -20,7 +20,6 @@ extern ModelOptions modelOptions;
 #include "model_type.h"
 extern ModelType modelType;
 
-#include "../utils/tools.h"
 #include "../utils/utils.h"
 #include "../pedlib/pedlib.h"
 
@@ -98,11 +97,6 @@ extern ModelType modelType;
 #define GT 2
 #define GE 3
 
-/* Used in parsing configuration file constraints. */
-#define SEXML 0
-#define SEXFM 1
-#define SEXAV 0
-
 /**********************************************************************
  * Structure used for linked lists of constraints. A constraint can be
  * of several different forms:
@@ -166,14 +160,9 @@ int getOperator (char *line);
 int getInteger (char *line);
 void addRange (ModelRange * range, int type, double lo, double hi,
 	       double incr);
-void addTheta (ModelRange * range, int type, double val);
 void addPenetrance (ModelRange * range, int type, double val);
-void addGeneFreq (ModelRange * range, double val);
-void addAlpha (ModelRange * range, double val);
 
-void addTraitLocus (ModelRange *range, double val);
 void addTraitThreshold (ModelRange * range, double val);
-void addDPrime (ModelRange * range, double val);
 void addAlleleFreq (ModelRange * range, double val);
 void addConstraint (int type, int a1, int c1, int p1,
 		    int op, int a2, int c2, int p2, int disjunct);
@@ -1167,62 +1156,6 @@ getInteger (char *line)
   return ((int) strtol (line, NULL, 10));
 }
 
-/**********************************************************************
- * Add one more element to theta vector.  May need to allocate or
- * reallocate memory in order to allow additional room for more
- * values. Maintains values in sorted order for ease of interpretation
- * during debugging.
- **********************************************************************/
-void
-addTheta (ModelRange * range, int type, double val)
-{
-
-  /* Validate value. */
-  KASSERT ((val >= 0 && val <= 0.5), "Bad theta value %g; aborting.\n", val);
-
-  /* Initialize the structure if first access. */
-  if (!range->theta) {
-    range->ngender = 2;
-    range->theta = malloc (range->ngender * sizeof (double *));
-    range->theta[SEXML] = malloc (CHUNKSIZE * sizeof (double));
-    range->theta[SEXFM] = malloc (CHUNKSIZE * sizeof (double));
-    range->thetacnt = malloc (range->ngender * sizeof (int *));
-    thetamax = malloc (range->ngender * sizeof (int *));
-    range->thetacnt[SEXML] = thetamax[SEXML] = 0;
-    range->thetacnt[SEXFM] = thetamax[SEXFM] = 0;
-    if (type != Th) {
-      modelOptions.mapFlag = SS;
-    }
-  }
-
-  /* Finally, add the thetas as specified. */
-  /* Sex-specific thetas. Update one or both arrays separately. */
-  if (type == Th || type == Tf) {
-    /* Enlarge array if necessary. */
-    if (range->thetacnt[SEXFM] == thetamax[SEXFM]) {
-      range->theta[SEXFM] = realloc (range->theta[SEXFM],
-				     (thetamax[SEXFM] +
-				      CHUNKSIZE) * sizeof (double));
-      thetamax[SEXFM] = thetamax[SEXFM] + CHUNKSIZE;
-    }
-    /* Add the element. */
-    range->theta[SEXFM][range->thetacnt[SEXFM]] = val;
-    range->thetacnt[SEXFM]++;
-  }
-  /* Next, update the other array. */
-  if (type == Th || type == Tm) {
-    /* Enlarge array if necessary. */
-    if (range->thetacnt[SEXML] == thetamax[SEXML]) {
-      range->theta[SEXML] = realloc (range->theta[SEXML],
-				     (thetamax[SEXML] +
-				      CHUNKSIZE) * sizeof (double));
-      thetamax[SEXML] = thetamax[SEXML] + CHUNKSIZE;
-    }
-    /* Add the element. */
-    range->theta[SEXML][range->thetacnt[SEXML]] = val;
-    range->thetacnt[SEXML]++;
-  }
-}
 
 /**********************************************************************
  * Add one more element to appropriate penetrance vector.  May need to
@@ -1301,31 +1234,6 @@ addPenetrance (ModelRange * range, int type, double val)
 }
 
 /**********************************************************************
- * Add one more element to alpha vector.  May need to allocate or
- * reallocate memory in order to allow additional room for more
- * values.
- **********************************************************************/
-void
-addAlpha (ModelRange * range, double val)
-{
-  /* Validate value. */
-  KASSERT ((val >= 0 && val <= 1.0), "Bad alpha value %g; aborting.\n", val);
-
-  /* Initialize the structure if first access. */
-  if (!range->alpha)
-    range->nalpha = maxalpha = 0;
-  /* Enlarge array if necessary. */
-  if (range->nalpha == maxalpha) {
-    range->alpha = realloc (range->alpha,
-			    (maxalpha + CHUNKSIZE) * sizeof (double));
-    maxalpha = maxalpha + CHUNKSIZE;
-  }
-  /* Add the element. */
-  range->alpha[range->nalpha] = val;
-  range->nalpha++;
-}
-
-/**********************************************************************
  * Add one more element to trait threshold vector.  May need to
  * allocate or reallocate memory in order to allow additional room for
  * more values. Note that these are "raw" values; we'll have to expand
@@ -1367,34 +1275,6 @@ addTraitThreshold (ModelRange * range, double val)
   /* Add the element. */
   range->tthresh[0][range->ntthresh] = val;
   range->ntthresh++;
-}
-
-/**********************************************************************
- * Add one more element to dprime vector.  May need to allocate or
- * reallocate memory in order to allow additional room for more
- * values. 
- *
- * Recall that dprime values must be between -1 and 1, where 0
- * corresponds to LE.
- **********************************************************************/
-void
-addDPrime (ModelRange * range, double val)
-{
-  /* Validate value. DPrime values must be between -1 and 1. */
-  KASSERT ((val >= -1 && val <= 1), "Bad D prime value %g; aborting.\n", val);
-
-  /* Initialize the structure if first access. */
-  if (!range->dprime)
-    range->ndprime = maxdprime = 0;
-  /* Enlarge array if necessary. */
-  if (range->ndprime == maxdprime) {
-    range->dprime = realloc (range->dprime,
-			     (maxdprime + CHUNKSIZE) * sizeof (double));
-    maxdprime = maxdprime + CHUNKSIZE;
-  }
-  /* Add the element. */
-  range->dprime[range->ndprime] = val;
-  range->ndprime++;
 }
 
 /**********************************************************************

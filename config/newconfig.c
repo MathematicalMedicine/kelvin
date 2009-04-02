@@ -68,12 +68,18 @@ int set_optionfile (char **toks, int numtoks, void *filename);
 int set_flag (char **toks, int numtoks, void *flag);
 int clear_flag (char **toks, int numtoks, void *flag);
 int set_int (char **toks, int numtoks, void *field);
+
+int set_traitLoci (char **toks, int numtoks, void *unused);
+int set_geneFreq (char **toks, int numtoks, void *unused);
+int set_dprime (char **toks, int numtoks, void *unused);
+int set_theta (char **toks, int numtoks, void *unused);
+int set_alpha (char **toks, int numtoks, void *unused);
+int set_constraint (char **toks, int numtoks, void *unused);
+int set_multipoint (char **toks, int numtoks, void *unused);
 int set_markerAnalysis (char **toks, int numtoks, void *unused);
 int set_mapFlag (char **toks, int numtoks, void *unused);
 int set_disequilibrium (char **toks, int numtoks, void *unused);
 int set_affectionStatus (char **toks, int numtoks, void *unused);
-int set_traitLoci (char **toks, int numtoks, void *unused);
-int set_geneFreq (char **toks, int numtoks, void *unused);
 int set_resultsprefix (char **toks, int numtoks, void *unused);
 int set_logLevel (char **toks, int numtoks, void *unused);
 
@@ -99,13 +105,20 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &modelOptions.
 				{"LiabilityClasses", set_int, &modelRange.nlclass},
 				{"DiseaseAlleles", set_int, &modelRange.nalleles},
 
+				{"TraitLoci", set_traitLoci, NULL},
+				{"DiseaseGeneFrequency", set_geneFreq, NULL},
+				{"DPrime", set_dprime, NULL},
+				{"Theta", set_theta, NULL},
+				{"MaleTheta", set_theta, NULL},
+				{"FemaleTheta", set_theta, NULL},
+				{"Alpha", set_alpha, NULL},
+				{"Constraint", set_constraint, NULL},
+				{"Multipoint", set_multipoint, NULL},
 				{"MarkerToMarker", set_markerAnalysis, NULL},
 				{"SexSpecific", set_mapFlag, NULL},
 				{"LD", set_disequilibrium, NULL},
 				{"PhenoCodes", set_affectionStatus, NULL},
 				{"SurfacesPath", set_resultsprefix, NULL},
-				{"TraitLoci", set_traitLoci, NULL},
-				{"DiseaseGeneFrequency", set_geneFreq, NULL},
 				/*{"condfile", set_condrun, &modelOptions.condFile},*/
 				{"Log", set_logLevel, NULL}
 };
@@ -123,6 +136,7 @@ main (int argc, char *argv[])
     exactTokenCount = 0;
     my_parseCommandLine (argc-2, &argv[2]);
   }
+  dumpModelOptions (&modelOptions);
 }
 
 
@@ -156,6 +170,9 @@ void initializeDefaults ()
   modelOptions.dryRun = FALSE;
   modelOptions.polynomialScale = 1;
   modelOptions.extraMODs = FALSE;
+  modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = AFFECTION_STATUS_UNKNOWN;
+  modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = AFFECTION_STATUS_UNAFFECTED;
+  modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = AFFECTION_STATUS_AFFECTED;
 
   /* Set default values for PPL calculations */
   modelOptions.thetaCutoff[0] = 0.05;   /* LRs when theta < cutoff are weighted heavier */
@@ -213,7 +230,7 @@ void my_readConfigFile (char *config)
     }
     printf ("\n");
   }
-  dumpModelOptions (&modelOptions);
+  return;
 }
 
 
@@ -226,7 +243,7 @@ void my_parseCommandLine (int argc, char *argv[])
     va == -1;
     /* FIXME: Do we want to force leading dashes? */
     if ((strncmp (argv[curidx], "--", 2) != 0) || 
-	(memmove (argv[curidx], argv[curidx]+2, strlen (argv[curidx]) - 2) == NULL) ||
+	(memmove (argv[curidx], argv[curidx]+2, strlen (argv[curidx]) - 1) == NULL) ||
 	((va = lookupDispatch (argv[curidx], dispatchTable)) < 0)) {
       if (va == -1)
 	logMsg (LOGDEFAULT, LOGFATAL, 
@@ -298,7 +315,7 @@ int set_markerAnalysis (char **toks, int numtoks, void *unused)
   else if (strncasecmp (toks[1], "Adjacent", strlen (toks[1])) == 0)
     modelOptions.markerAnalysis = AM;
   else
-    logMsg (LOGDEFAULT, LOGFATAL, "set_markerAnalysis called with bad token '%s'\n", toks[1]);
+    logMsg (LOGDEFAULT, LOGFATAL, "set_markerAnalysis called with bad argument '%s'\n", toks[1]);
   return (1);
 }
 
@@ -308,6 +325,25 @@ int set_mapFlag (char **toks, int numtoks, void *unused)
   if ((numtoks > 1) && (exactTokenCount))
     logMsg (LOGDEFAULT, LOGFATAL, "extra arguments to directive '%s'\n", toks[0]);
   modelOptions.mapFlag = SS;
+  return (1);
+}
+
+
+int set_multipoint (char **toks, int numtoks, void *unused)
+{
+  int value;
+  char *ptr = NULL;
+
+  if (numtoks < 2)
+    logMsg (LOGDEFAULT, LOGFATAL, "missing integer argument to directive '%s'\n", toks[0]);
+  if ((numtoks > 2) && (exactTokenCount))
+    logMsg (LOGDEFAULT, LOGFATAL, "extra arguments to directive '%s'\n", toks[0]);
+  modelType.type = MP;
+  value = (int) strtol (toks[1], &ptr, 10);
+  if (toks[0] == ptr)
+    logMsg (LOGDEFAULT, LOGFATAL, "argument '%s' to directive '%s' is not an integer\n",
+	    toks[1], toks[0]);
+  modelType.numMarkers = value;
   return (1);
 }
 
@@ -355,11 +391,11 @@ int set_traitLoci (char **toks, int numtoks, void *unused)
     logMsg (LOGDEFAULT, LOGFATAL, "illegal or missing argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++) {
     if (vlist[va].type == VL_VALUE) {
-      addTratiLoci (&modelRange, vlist[va].vun.val);
+      addTraitLocus (&modelRange, vlist[va].vun.val);
     } else if (vlist[va].type == VL_RANGE) {
       while ((val = vlist[va].vun.range.start + (va++ * vlist[va].vun.range.incr)) <=
 	     vlist[va].vun.range.end)
-	addTratiLoci (&modelRange, val);
+	addTraitLocus (&modelRange, val);
     } else if (vlist[va].type == VL_RANGE_SYMBEND) {
       modelRange.tlocRangeStart = vlist[va].vun.range.start;
       modelRange.tlocRangeIncr = vlist[va].vun.range.incr;
@@ -381,13 +417,87 @@ int set_geneFreq (char **toks, int numtoks, void *unused)
     logMsg (LOGDEFAULT, LOGFATAL, "missing list argument to directive '%s'\n", toks[0]);
   if ((numtoks > 2) && (exactTokenCount))
     logMsg (LOGDEFAULT, LOGFATAL, "extra arguments to directive '%s'\n", toks[0]);
-  if ((numvals = expand_vals (toks[1], NULL, &vlist)) <= 0)
+  if ((numvals = expand_vals (toks[1], &vals, NULL)) <= 0)
     logMsg (LOGDEFAULT, LOGFATAL, "illegal or missing argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
-    addGeneFreq (&modelRange, val);
+    addGeneFreq (&modelRange, vals[va]);
   free (vals);
 
   return (2);
+}
+
+
+int set_dprime (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0;
+  double *vals;
+
+  if (numtoks < 2)
+    logMsg (LOGDEFAULT, LOGFATAL, "missing list argument to directive '%s'\n", toks[0]);
+  if ((numtoks > 2) && (exactTokenCount))
+    logMsg (LOGDEFAULT, LOGFATAL, "extra arguments to directive '%s'\n", toks[0]);
+  if ((numvals = expand_vals (toks[1], &vals, NULL)) <= 0)
+    logMsg (LOGDEFAULT, LOGFATAL, "illegal or missing argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addDPrime (&modelRange, vals[va]);
+  free (vals);
+
+  return (2);
+}
+
+
+int set_theta (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0, type;
+  double *vals;
+
+  if (numtoks < 2)
+    logMsg (LOGDEFAULT, LOGFATAL, "missing list argument to directive '%s'\n", toks[0]);
+  if ((numtoks > 2) && (exactTokenCount))
+    logMsg (LOGDEFAULT, LOGFATAL, "extra arguments to directive '%s'\n", toks[0]);
+  if ((numvals = expand_vals (toks[1], &vals, NULL)) <= 0)
+    logMsg (LOGDEFAULT, LOGFATAL, "illegal or missing argument to directive '%s'\n", toks[0]);
+  /* This is evil; I shouldn't presume to know what the legal values for toks[0] are */
+  if (strcasecmp (toks[0], "Theta") == 0)
+    type = THETA_AVG;
+  else if (strcasecmp (toks[0], "MaleTheta") == 0)
+    type = THETA_MALE;
+  else if (strcasecmp (toks[0], "MaleTheta") == 0)
+    type = THETA_FEMALE;
+  else
+    logMsg (LOGDEFAULT, LOGFATAL, "set_theta called with unexpected directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addTheta (&modelRange, type, vals[va]);
+  free (vals);
+
+  return (2);
+}
+
+
+int set_alpha (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0;
+  double *vals;
+
+  if (numtoks < 2)
+    logMsg (LOGDEFAULT, LOGFATAL, "missing list argument to directive '%s'\n", toks[0]);
+  if ((numtoks > 2) && (exactTokenCount))
+    logMsg (LOGDEFAULT, LOGFATAL, "extra arguments to directive '%s'\n", toks[0]);
+  if ((numvals = expand_vals (toks[1], &vals, NULL)) <= 0)
+    logMsg (LOGDEFAULT, LOGFATAL, "illegal or missing argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addAlpha (&modelRange, vals[va]);
+  free (vals);
+
+  return (2);
+}
+
+
+int set_constraint (char **toks, int numtoks, void *unused)
+{
+  int va, used=1;
+
+  
 }
 
 
@@ -696,25 +806,34 @@ int getNextTokgroup (FILE *fp, char ***tokgroup_h, int *tokgroupsize)
 #define INSTRING     1
 #define INWHITESPACE 2
 #define INSEPARATOR  3
+#define INCOMPARATOR 4
 
 /* Permutes a line of input. Leading and trailing whitespace is deleted;
- * whitespace that brackets 'separator' characters (comma, hyphen, semicolon or
- * colon) is deleted; all other whitespace is reduced to a single space;
- * comment characters (pound sign) and all subsequent characters up to end of
- * line are deleted, unless the pound sign is 'escacped' with a backslash.
+ * whitespace that brackets 'separator' characters (',', '-', ';', ':') is
+ * deleted; whitespace between 'comparator' characters ('!', '>'. '=') is deleted,
+ * all other whitespace is reduced to a single space; groups of comparator
+ * characters are forcibly bracketed by single spaces; comment characters
+ * (pound sign) and all subsequent characters up to end of line are deleted.
+ * 
  */
 void permuteLine (char *line)
 {
-  int state, va, vb;
+  int state, compcount=0, va, vb;
 
   va = vb = 0;
   state = STARTOFLINE;
 
+  /* First loop: strip whitespace around separators AND comparators; reduce whitespace 
+   * around strings to a single space. At the same time, count up how many spaces we'll
+   * need to put around groups of comparators in the second loop.
+   */
   while (1) {
     //printf ("va %d is '%c', vb %d is '%c' state is %d -> ", va, line[va], vb, line[vb], state);
     if (index (" \t", line[vb]) != NULL) {
-      if (state == INSTRING)
+      if (state == INSTRING) 
 	line[va++] = ' ';
+      else if (state == INCOMPARATOR)
+	compcount++;
       vb++;
       if (state != STARTOFLINE)
 	state = INWHITESPACE;
@@ -724,17 +843,15 @@ void permuteLine (char *line)
 	line[va-1] = line[vb++];
       else 
 	line[va++] = line[vb++];
+      if (state == INCOMPARATOR)
+	compcount++;
       state = INSEPARATOR;
 
     } else if (line[vb] == '#') {
-      if ((vb == 0) || (line[vb-1] != '\\')) {
-	if (state == INWHITESPACE)
-	  va--;
-	line[va] = '\0';
-	break;
-      }
-      line[va++] = line[vb++];
-      state = INSTRING;
+      if (state == INWHITESPACE)
+	va--;
+      line[va] = '\0';
+      break;
 
     } else if ((index ("\n\r", line[vb]) != NULL) || (line[vb] == '\0')) {
       if (state == INWHITESPACE)
@@ -742,13 +859,56 @@ void permuteLine (char *line)
       line[va] = '\0';
       break;
 
+    } else if (index ("=>!", line[vb]) != NULL) {
+      if (state == INWHITESPACE)
+	line[va-1] = line[vb++];
+      else 
+	line[va++] = line[vb++];
+      if (state != INCOMPARATOR)
+	compcount++;
+      state = INCOMPARATOR;
+      
     } else {
       line[va++] = line[vb++];
+      if (state == INCOMPARATOR)
+	compcount++;
       state = INSTRING;
     }
-    //printf ("va %d is '%c', vb %d is '%c' state is %d\n", va, line[va], vb, line[vb], state);
+    //printf ("va %d is '%c', vb %d is '%c' state is %d, \n", va, line[va], vb, line[vb], state);
   }
-  //printf ("all done: va %d, vb %d, line = '%s'\n", va, vb, line);
+  //printf ("all done: va %d, vb %d, compcount %d, line '%s'\n", va, vb, compcount, line);
+
+  if (compcount == 0)
+    return;
+    
+  /* Second loop: insert spaces around groups of comparators. We simplify the states;
+   * now strings are "everything that's not a comparator".
+   */
+  va = strlen (line);
+  vb = va + compcount;
+  line[va--] = ' ';
+  line[vb--] = '\0';
+  state = INSTRING;
+
+  while (va != vb) {
+  printf ("va %2d, vb %2d, state %d, line '%s' -> ", va, vb, state, line);
+    if (index ("=>!", line[va]) != NULL) {
+      if (state == INSTRING)
+	line[vb--] = ' ';
+      else 
+	line[vb--] = line[va--];
+      state = INCOMPARATOR;
+
+    } else {
+      if (state == INCOMPARATOR)
+	line[vb--] = ' ';
+      else
+	line[vb--] = line[va--];
+      state = INSTRING;
+    }
+    printf ("'%s'\n", line);
+  }  
+
   return;
 }
 

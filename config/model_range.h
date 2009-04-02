@@ -60,7 +60,22 @@ typedef struct ModelRange
   int maxnlambdas;		/* Maximum number of cached arrays. */
 } ModelRange;
 
+/* Until the old config parser is dead, these defines have to line up with the
+ * Th, Tf, and Tm symbols in config.c, so addTheta doesn't get confused.
+ */
+#define THETA_AVG    1   /* same as Th */
+#define THETA_MALE   2   /* same as Tm */
+#define THETA_FEMALE 3   /* same as Tf */
+
+/* Used in parsing configuration file constraints. */
+#define SEXAV 0
+#define SEXML 0
+#define SEXFM 1
+
 void addTraitLocus (ModelRange * range, double val);
 void addGeneFreq (ModelRange * range, double val);
+void addAlpha (ModelRange * range, double val);
+void addDPrime (ModelRange * range, double val);
+void addTheta (ModelRange * range, int type, double val);
 
 #endif

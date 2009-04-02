@@ -9,6 +9,3 @@ extern ModelType modelType;
 int readConfigFile (char *file);
 void my_readConfigFile (char *config);
 void my_parseCommandLine (int argc, char *argv[]);
-
-/* This really belongs in tools or utils */
-void permuteLine (char *line);

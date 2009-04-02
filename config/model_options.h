@@ -39,6 +39,11 @@
 #define SEX_SPECIFIC              1   /* analysis uses sex-specific map positions */
 #define SS SEX_SPECIFIC
 
+/* Affection status for a dichotomous trait for a person */
+#define AFFECTION_STATUS_UNKNOWN        0
+#define AFFECTION_STATUS_UNAFFECTED     1
+#define AFFECTION_STATUS_AFFECTED       2
+
 typedef struct ModelOptions
 {
   /* analysis type - Linkage Equalibrium (LE) or Linkage Disequalibrium (LD) */
