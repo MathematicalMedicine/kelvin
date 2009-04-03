@@ -35,7 +35,7 @@ void *monitorStatus () {
 #ifdef MEMGRAPH
     FILE *graphFile;
     char graphFileName[64];
-    sprintf (graphFileName, "kelvin_%d_memory.dat", getpid ());
+    sprintf (graphFileName, "kelvin_%d_memory.dat", (int) getpid ());
     if ((graphFile = fopen (graphFileName, "w")) == NULL) {
       perror ("Cannot open memory graph file!");
       exit (EXIT_FAILURE);
