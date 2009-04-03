@@ -1,14 +1,14 @@
 test :
-	- rm -f br.out ppl.out kelvin.out
+	- rm -rf *.out
 	@echo -e "\n\
     **** THE FOLLOWING TEXT SHOULD APPEAR AND IS NOT AN ERROR ****\n\
     make: [test] Error 255 (ignored)\n\
     grep "Not all loops in pedigrees are broken" kelvin.out\n\
     kelvin.c (653): Not all loops in pedigrees are broken.\n"
-	- time $(TEST_KELVIN) kelvin.conf >kelvin.out 2>&1
+	- $(TEST_KELVIN) kelvin.conf >kelvin.out 2>&1
 	grep "Not all loops in pedigrees are broken" kelvin.out
 
 test-USE_DL :
 
 clean :
-	- rm -f *.so *.out *memory.dat *~
+	- rm -rf *.out *.so *memory.dat compiled

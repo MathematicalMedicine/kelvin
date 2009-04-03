@@ -1,9 +1,9 @@
 TEST_UPDATE=../../../seq_update/calc_updated_ppl
 
 test :
-	- rm -f br.updated
+	- rm -rf br.updated
 	$(TEST_UPDATE) --multipoint br1.out br2.out br3.out > br.updated
 	diff -i br.updated br.updated-baseline
 
 clean :
-	- rm -f br.updated
+	- rm -rf br.updated
