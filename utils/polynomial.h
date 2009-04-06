@@ -12,6 +12,14 @@
 #include <stdio.h>
 #include "utils.h"		/* Kelvin utilities. */
 
+// This is primarily for Cygwin
+#ifndef RTLD_LOCAL
+#define RTLD_LOCAL 0
+#endif
+#ifndef RTLD_GLOBAL
+#define RTLD_GLOBAL RTLD_LOCAL
+#endif
+
 #if defined (DMTRACK) || defined (DMUSE)
 #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
 #define malloc(X) swMalloc((X), __FILE__, __LINE__)
