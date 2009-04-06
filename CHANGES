@@ -13,6 +13,7 @@ Version 0.38.0
   collections of pedigrees and a whole lot more. 
   Numerous minor bugfixes. Continued major structural
   changes. D' of zero always included on LD analyses.
+  Polynomial compilation works on all platforms.
 
 Version 0.37.1
   Numerous bugfixes in LD handling and estimation in
