@@ -30,7 +30,6 @@ typedef enum
 #define SS SEX_SPECIFIC
 #define ND NORMAL_DISTRIBUTION	/* normal distribution */
 #define TD T_DISTRIBUTION	/* t distribution */
-#define NPENET(x) ((x)*(x))
 
 #include "pedigree.h"
 #include "locus.h"

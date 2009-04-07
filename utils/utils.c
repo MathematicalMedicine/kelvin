@@ -281,7 +281,7 @@ int permuteLine (char *line, int maxlength)
       if (state != STARTOFLINE)
 	state = INWHITESPACE;
       
-    } else if (index ("-:;,", line[vb]) != NULL) {
+    } else if (index ("-:;", line[vb]) != NULL) {   /* this used to include ',' */
       if (state == INWHITESPACE)
 	line[va-1] = line[vb++];
       else 
@@ -302,7 +302,7 @@ int permuteLine (char *line, int maxlength)
       line[va] = '\0';
       break;
 
-    } else if (index ("=>!", line[vb]) != NULL) {
+    } else if (index ("=>!,", line[vb]) != NULL) {  /* ',' has been added here */
       if (state == INWHITESPACE)
 	line[va-1] = line[vb++];
       else 
@@ -336,8 +336,8 @@ int permuteLine (char *line, int maxlength)
   state = INSTRING;
 
   while (va != vb) {
-  printf ("va %2d, vb %2d, state %d, line '%s' -> ", va, vb, state, line);
-    if (index ("=>!", line[va]) != NULL) {
+    //printf ("va %2d, vb %2d, state %d, line '%s' -> ", va, vb, state, line);
+    if (index ("=>!,", line[va]) != NULL) {
       if (state == INSTRING)
 	line[vb--] = ' ';
       else 
@@ -351,7 +351,7 @@ int permuteLine (char *line, int maxlength)
 	line[vb--] = line[va--];
       state = INSTRING;
     }
-    printf ("'%s'\n", line);
+    //printf ("'%s'\n", line);
   }  
 
   return (0);

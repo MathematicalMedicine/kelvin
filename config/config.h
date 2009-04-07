@@ -8,4 +8,5 @@ extern ModelType modelType;
 
 int readConfigFile (char *file);
 void my_readConfigFile (char *config);
-void my_parseCommandLine (int argc, char *argv[]);
+void parseCommandLine (int argc, char *argv[]);
+void validateConfig ();

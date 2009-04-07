@@ -67,8 +67,28 @@ extern ModelType modelType;
 /* Match a constraint of the form, e.g., Px DD 1 < Px Dd 2 */
 #define PCLASSCONSTRAINT2 "[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([[:digit:]])[[:space:]]*([>]|[>][=]|[=][=]|[!][=])[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([[:digit:]])[[:space:]]*[;]?"
 
+
+/* Legal values for Constraint.type */
+#define SIMPLE 0
+#define CLASSC 1
+#define PARAMC 2
+#define PARAMCLASSC 3
+
+/* Strings used to parse configuration file lines (see getOperator). */
+#define OPERATORS "==!=> >="
+
+/* Legal values for Constraint.op; these need to correspond to OPERATORS. */
+#define EQ 0
+#define NE 1
+#define GT 2
+#define GE 3
+
 /* Strings used to parse configuration file lines (see getType). */
 #define DIRECTIVES "GFThTmTfALTLTTLDAFDDDddDdd"
+
+/* Symbols for evaluating penetrance and constraint configuration.
+ * These need to correspond to DIRECTIVES.
+ */
 #define GF 0			/* gene frequency */
 #define Th 1			/* theta */
 #define Tm 2			/* male theta */
@@ -78,75 +98,21 @@ extern ModelType modelType;
 #define TT 6			/* trait threshold */
 #define LD 7			/* d prime */
 #define AF 8
-#define DD 9			/* Must be last for numeric directives to work */
+#define DD 9
 #define Dd 10
 #define dD 11
 #define dd 12
 
-/* Strings used to parse configuration file constraints (see
- * getOperator). Matches:
- *   ==, !=, >, >=
- *
- * TODO: Should probably allow a single = as an alias for == to allow
- * for non-programmers?
- *
- * TODO: Add <, <= ?? */
-#define OPERATORS "==!=> >="
-#define EQ 0
-#define NE 1
-#define GT 2
-#define GE 3
-
-/**********************************************************************
- * Structure used for linked lists of constraints. A constraint can be
- * of several different forms:
- *   a1 op a2 			DD > Dd			SIMPLE
- *   a1 c1 op a2 c2		Dd 1 != dd 2		CLASSC
- *   p1 a1 op p2 a2    		P2 DD > P1 DD		PARAMC
- *   p1 a1 c1 op p2 a2 c2       P1 dd 1 >= P2 dd 2	PARAMCLASSC
- * but they are all stored in a uniform constraint structure.
- * where arg is, e.g., Tm or DD and op is one of the operators defined
- * below. If more than one constraint appears on a line, then we take
- * that to be an implicit OR, and all but the last constraint on such
- * a line will be marked alt=TRUE.
- ***********************************************************************/
-#define SIMPLE 0
-#define CLASSC 1
-#define PARAMC 2
-#define PARAMCLASSC 3
-typedef struct constraint
-{
-  int type;			/* SIMPLE, CLASSC, PARAMC, PARAMCLASSC */
-  int a1;
-  int c1;
-  int p1;
-  int a2;
-  int c2;
-  int p2;
-  int op;
-  int alt;			/* Is this one of a disjunctive set? */
-}
-Constraint;
 
 /**********************************************************************
  * Some global variables used only within config.c -- avoids having to
  * carry these around in the model structure, since they are only
  * useful while setting up the penetrances, etc.
  **********************************************************************/
-int maxgfreq;			/* Max number of gfreqs in model (for dynamic alloc) */
-int maxalpha;			/* Max number of alphas in model (for dynamic alloc) */
-int maxtloc;			/* Max number of trait loci in model (for dynamic alloc) */
 int maxtthresh;			/* Max number of trait thresholds in model (for dynamic alloc) */
 int maxafreq;			/* Max number of afreqs in model (for dynamic alloc) */
-int maxdprime;			/* Max number of dprimes in model (for dynamic alloc) */
-int *penetcnt;			/* Array of number of penetrances */
-int *penetmax;			/* Array of max penetrances */
 int *paramcnt;			/* Number of QT/CT parameters */
 int *parammax;			/* Max QT/CT parameters */
-int *thetamax;			/* Array of max thetas */
-Constraint *constraints[4];	/* Array of constraints by type */
-int constmax[4] = { 0, 0, 0, 0 };	/* Max constraints in array (for dynamic alloc) */
-int constcnt[4] = { 0, 0, 0, 0 };	/* Current number of constraints in array */
 
 /* Chunk size used in reallocating arrays of gene frequencies,
  * penetrances, thetas, and constraints. */
@@ -160,12 +126,9 @@ int getOperator (char *line);
 int getInteger (char *line);
 void addRange (ModelRange * range, int type, double lo, double hi,
 	       double incr);
-void addPenetrance (ModelRange * range, int type, double val);
 
 void addTraitThreshold (ModelRange * range, double val);
 void addAlleleFreq (ModelRange * range, double val);
-void addConstraint (int type, int a1, int c1, int p1,
-		    int op, int a2, int c2, int p2, int disjunct);
 void addParameter (ModelRange * range, int dim, double val);
 int checkThetas (ModelRange * range, int i);
 int checkPenets (ModelRange * range, int i);
@@ -1156,83 +1119,6 @@ getInteger (char *line)
   return ((int) strtol (line, NULL, 10));
 }
 
-
-/**********************************************************************
- * Add one more element to appropriate penetrance vector.  May need to
- * allocate or reallocate memory in order to allow additional room for
- * more values. 
- *
- * Recall that penetrances are initially specified as if there are no
- * liability classes. Later, if liability classes are in use, we
- * "expand" the penetrance array to its full three dimensions. So
- * addPenetrance() is only ever used in "preexpansion" mode, where the
- * first dimension of the array (corresponds to liability class) is
- * always 1.
- *
- * The penetrance array: range->penet[nlclass][nallele][nparam]
- **********************************************************************/
-void
-addPenetrance (ModelRange * range, int type, double val)
-{
-  int i, j;
-
-  /* Validate value. This is problematic because for DT we know values
-   * should be between 0 and 1, but for QT/CT values given here
-   * represent the mean of a distribution, and could be just about
-   * anything. */
-  /* KASSERT ((val >= 0 && val <= 1.0), "Bad penetrance value %g; aborting.\n", val); */
-
-  /* Initialize the structure if first access. */
-  if (!range->penet) {
-    /* Initialize: remember, if you are a pre-expansion penet[][][]
-     * array, the first dimension (liability class) will always have
-     * a dimension of size 1. */
-    range->penet = malloc (sizeof (double **));
-    i = NPENET (range->nalleles);
-    range->penet[0] = malloc (i * sizeof (double *));
-    range->penetLimits = malloc (i * sizeof (double *)); /* Space for limits */
-    for (j = 0; j < i; j++) {
-      range->penet[0][j] = malloc (CHUNKSIZE * sizeof (double));
-      range->penetLimits[j] = malloc (2 * sizeof (double)); /* A min and a max for each */
-      range->penetLimits[j][0] = 999999999.00;
-      range->penetLimits[j][1] = -999999999.00;
-    }
-    /* Remember, liability class is not a true "independent" index
-     * in the sense that we are storing combinations across
-     * liability classes; hence we only need NPENET() individual
-     * values for the counters (indeed, we only need one of each,
-     * but that would complicate things too much I suspect). */
-    penetcnt = malloc (i * sizeof (int));
-    penetmax = malloc (i * sizeof (int));
-    for (j = 0; j < i; j++) {
-      penetcnt[j] = 0;
-      penetmax[j] = CHUNKSIZE;
-    }
-  }
-
-  /* Next, add the penetrance to the appropriate location in the
-   * penet[][][] array, which may entail allocating more space. Recall
-   * type is an integer, where DD=00=0; Dd=01=1; dD=10=2; and dd=11=3. We
-   * get the type by subtracting DD, the "base type" from the
-   * integer count at invocation. */
-  if (penetcnt[type] == penetmax[type]) {
-    range->penet[0][type] = realloc (range->penet[0][type],
-				     (penetmax[type] +
-				      CHUNKSIZE) * sizeof (double));
-    penetmax[type] = penetmax[type] + CHUNKSIZE;
-  }
-  /* Add the element. */
-  range->penet[0][type][penetcnt[type]] = val;
-
-  /* See if it's a raw maximum or minimum for this type (allele) */
-  if (range->penetLimits[type][0] > val)
-    range->penetLimits[type][0] = val;
-  if (range->penetLimits[type][1] < val)
-    range->penetLimits[type][1] = val;
-
-  penetcnt[type]++;
-}
-
 /**********************************************************************
  * Add one more element to trait threshold vector.  May need to
  * allocate or reallocate memory in order to allow additional room for
@@ -1424,57 +1310,6 @@ addRange (ModelRange * range, int type, double lo, double hi, double incr)
   }
 }
 
-/**********************************************************************
- * Add a constraint on penetrances or thetas. We're just going to keep
- * these in an array, which we scan when checking penetrance or theta
- * values. Clunky, but OK since it will only be done at setup. A
- * better way would perhaps be to keep theta and penetrance
- * constraints separately.
- **********************************************************************/
-void
-addConstraint (int type, int a1, int c1, int p1,
-	       int op, int a2, int c2, int p2, int disjunct)
-{
-  char types[27] = DIRECTIVES;
-
-  /* Check for meaningless constraints. TODO: do more of this! */
-  KASSERT ((((a1 == Tm && a2 == Tf) || (a1 == Tf && a2 == Tm))
-	    || (a1 == TT && a2 == TT) || (a1 >= DD && a2 >= DD && a1 <= dd
-					  && a2 <= dd)),
-	   "Meaningless constraint %c%c %s %c%c %s; aborting.\n",
-	   types[a1 * 2], types[a1 * 2 + 1],
-	   ((op == NE) ? "!=" : (op == GE) ? ">=" : ">"), types[a2 * 2],
-	   types[a2 * 2 + 1], (disjunct == TRUE) ? "*" : "");
-
-  /* Allocate more space if necessary. */
-  if (constmax[type] == constcnt[type]) {
-    constraints[type] = (Constraint *) realloc (constraints[type],
-						(constmax[type] +
-						 CHUNKSIZE) *
-						sizeof (Constraint));
-    constmax[type] = constmax[type] + CHUNKSIZE;
-  }
-
-  /* Mark previous constraint as having a disjunct, if applicable. */
-  if (disjunct && constcnt[type] > 0)
-    constraints[type][constcnt[type] - 1].alt = TRUE;
-  /* Set up current constraint. */
-  constraints[type][constcnt[type]].a1 = a1;
-  constraints[type][constcnt[type]].op = op;
-  constraints[type][constcnt[type]].a2 = a2;
-  constraints[type][constcnt[type]].alt = FALSE;
-
-  if (type == CLASSC || type == PARAMCLASSC) {
-    constraints[type][constcnt[type]].c1 = c1;
-    constraints[type][constcnt[type]].c2 = c2;
-  }
-  if (type == PARAMC || type == PARAMCLASSC) {
-    constraints[type][constcnt[type]].p1 = p1;
-    constraints[type][constcnt[type]].p2 = p2;
-  }
-  /* Increment constraint count. */
-  constcnt[type]++;
-}
 
 /**********************************************************************
  * Return TRUE if the ith thetas satisfy all theta constraints, else
@@ -2122,7 +1957,6 @@ expandRange (ModelRange * range, ModelType * type)
     }
     /* Free old copy of range->theta. */
     free (tmp2);
-    free (thetamax);
   }
 
   /* Next, we expand the penetrances. The goal here is just to get the

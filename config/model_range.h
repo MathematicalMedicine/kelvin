@@ -60,22 +60,75 @@ typedef struct ModelRange
   int maxnlambdas;		/* Maximum number of cached arrays. */
 } ModelRange;
 
+
 /* Until the old config parser is dead, these defines have to line up with the
- * Th, Tf, and Tm symbols in config.c, so addTheta doesn't get confused.
+ * corresponding symbols from the old config.c. Various routines depend on the
+ * order and relationship of these symbols (that PEN_DD is one less then PEN_Dd,
+ * for example) to calculate array indices when filling data structures.
  */
-#define THETA_AVG    1   /* same as Th */
-#define THETA_MALE   2   /* same as Tm */
-#define THETA_FEMALE 3   /* same as Tf */
+#define THETA_AVG     1   /* same as Th */
+#define THETA_MALE    2   /* same as Tm */
+#define THETA_FEMALE  3   /* same as Tf */
+#define THRESHOLD     6   /* same as TT */
+#define PEN_DD        9   /* same as DD */
+#define PEN_Dd       10   /* same as Dd */
+#define PEN_dD       11   /* same as dD */
+#define PEN_dd       12   /* same as dd */
+
+/**********************************************************************
+ * Structure used for lists of constraints. A constraint can be
+ * of several different forms:
+ *   a1 op a2 			DD > Dd			SIMPLE
+ *   a1 c1 op a2 c2		Dd 1 != dd 2		CLASSC
+ *   p1 a1 op p2 a2    		P2 DD > P1 DD		PARAMC
+ *   p1 a1 c1 op p2 a2 c2       P1 dd 1 >= P2 dd 2	PARAMCLASSC
+ * but they are all stored in a uniform constraint structure.
+ * If more than one constraint appears on a line, then we take
+ * that to be an implicit OR, and all but the last constraint on such
+ * a line will be marked alt=TRUE.
+ ***********************************************************************/
+/* This needs to be moved to model_range.c when the old parser dies */
+typedef struct constraint
+{
+  int type;        /* one of SIMPLE, CLASSC, PARAMC, PARAMCLASSC */
+  int a1;          /* one of DD, Dd, etc. */
+  int c1;          /* liability class number */
+  int p1;          /* QT parameter numer */
+  int a2;          /* one of DD, Dd, etc. */
+  int c2;          /* liability class number */
+  int p2;          /* QT parameter numer */
+  int op;          /* comparator */
+  int alt;         /* Is this one of a disjunctive set? */
+}
+Constraint;
+
+/* Transitional until the old parser is dead */
+extern Constraint *constraints[];
+extern int constmax[];
+extern int constcnt[];
+extern int *penetcnt;
+extern int *penetmax;
+
+
+#define NPENET(x) ((x)*(x))
 
 /* Used in parsing configuration file constraints. */
 #define SEXAV 0
 #define SEXML 0
 #define SEXFM 1
 
+extern char *op_strs[];
+extern char *mp_strs[];
+
 void addTraitLocus (ModelRange * range, double val);
 void addGeneFreq (ModelRange * range, double val);
 void addAlpha (ModelRange * range, double val);
 void addDPrime (ModelRange * range, double val);
 void addTheta (ModelRange * range, int type, double val);
+void addPenetrance (ModelRange * range, int type, double val);
+void addConstraint (int type, int a1, int c1, int p1, int op,
+		    int a2, int c2, int p2, int disjunct);
 
+int lookup_comparator (char *str);
+int lookup_modelparam (char *str);
 #endif
