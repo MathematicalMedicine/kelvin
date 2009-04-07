@@ -704,6 +704,9 @@ sub deriveAlleleFrequencies {
 # loci names (@Loci) and a hash for named loci attributes (%LociAttributes).
 # Probably should fold names into the hash to get rid of @Loci.
 #
+# Note that Merlin treats 'A' as affectation status (binary), and 'M' as a
+# quantitative trait. Since kelvin treats them the same, so do we.
+#
 sub loadCompanion {
     my $File = shift();
     die "$File is not a file." if (!-f $File);
