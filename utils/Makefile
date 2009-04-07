@@ -7,7 +7,11 @@
 INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h polynomial.h
 OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o polynomial.o
 
-all : ../lib/libutils.a
+all : ../lib/libutils.a listener
+
+listener : listener.c sw.h
+	gcc listener.c -o listener -lmysqlclient -I/usr/local/mysql/include -L/usr/local/mysql/lib \
+	-I/usr/include/mysql -L/usr/lib64/mysql
 
 ../lib/libutils.a : libutils.a
 	cp libutils.a ../lib
