@@ -524,16 +524,21 @@ trade memory for execution time.
 Applicable to all types of analyses.
 <p>
 Specifies the name of the LINKAGE (FASTLINK) post-MAKEPED format pedigree file to be used
-in the analysis. Whitespace-separated columns are:
+in the analysis. Column definitions are taken from "Handbook of Human Genetic Linkage" by
+Terwilliger and Ott. Please note that kelvin does not check the integrity of the pedigree
+file in all of the ways that MAKEPED does, so if you are making edits to pedigree files, you
+should do them to the pre-MAKEPED file and run MAKEPED to generate the post-MAKEPED file for
+use with kelvin. Making edits to the post-MAKEPED file can lead to undetected errors or
+mis-interpretations that can cause erroneous results. Whitespace-separated columns are:
 <ol>
-<li>Pedigree ID
-<li>Individual ID number
-<li>ID of father
-<li>ID of mother
-<li>First offspring ID
-<li>Next paternal sibling ID
-<li>Next maternal sibling ID
-<li>Sex (1 for male, 2 for female)
+<li>Pedigree ID, can be a string or a number.
+<li>Individual ID, can be a string or a number.
+<li>ID of father, must refer to an individual ID.
+<li>ID of mother, must refer to an individual ID.
+<li>First offspring ID, must refer to an individual ID.
+<li>Next paternal sibling ID, must refer to an individual ID.
+<li>Next maternal sibling ID, must refer to an individual ID.
+<li>Sex, 1 for male, 2 for female.
 <li>Proband status (1 for proband, other non-zero numbers indicated doubled IDs from loop-breaking.)
 <li>Trait phenotype and marker genotype information columns. Variable in number and described by the file specified
 by the pedigree companion file (<a href="#DF">DF</a> directive).
