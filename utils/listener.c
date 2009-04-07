@@ -34,7 +34,7 @@ Biology, Nationwide Children's Hospital Research Institute.
 #include "sw.h"
 #include "mysql.h"
 
-char logEntry[MAXUDPMSG], fromNode[32];
+char logEntry[MAXUDPMSG], fromNode[128];
 unsigned long logEntryLength, fromNodeLength;
 char dbHostName[64], dbName[64], dbUsername[64], dbPassword[64];
 int listenerSocket;
@@ -49,7 +49,7 @@ int doMySQLStuff() {
 
   /* Connect. */
   if (!mysql_real_connect(&mysql, dbHostName, dbUsername, dbPassword, NULL, 0, NULL, 0)) {
-    fprintf(stderr, " Cannot connect to MySQL (%s)\n", mysql_error(&mysql));
+    fprintf(stderr, " Cannot connect to MySQL host [%s] (%s)\n", dbHostName, mysql_error(&mysql));
     return FALSE;
   }
   /* Change database. */
