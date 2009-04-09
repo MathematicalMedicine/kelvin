@@ -1141,14 +1141,15 @@ int swGetCurrentVMK(pid_t pid) {
 
   if ((maximumVMK == 0) || (haveVMChildRunning))
     return 0;
-
   haveVMChildRunning = TRUE;
+  /*
   sprintf(commandString, "pmap %d 2>/dev/null | grep 'total' | cut -c 8-23", (int) pid);
   if ((gCFP = popen(commandString, "r")) != NULL) {
     fscanf(gCFP, "%d", &currentVMK);
     pclose(gCFP);
     haveVMChildRunning = FALSE;
   }
+  */
   return currentVMK;
 }
 
@@ -1163,13 +1164,14 @@ int swGetMaximumVMK(void) {
 
   if (haveVMChildRunning)
     return 0;
-
   haveVMChildRunning = TRUE;
+  /*
   if ((gCFP = popen(commandString, "r")) != NULL) {
     fscanf(gCFP, "%d", &maximumVMK);
     pclose(gCFP);
     haveVMChildRunning = FALSE;
   }
+  */
   if (swGetCurrentVMK(getpid()) <= 0)
     maximumVMK = 0;
   return (maximumVMK);
