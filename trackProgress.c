@@ -26,12 +26,12 @@ statistitics.
 */
 void *monitorStatus () {
 
-  int currentVMK, maximumVMK;
+  int currentVMK, maximumPMK;
   time_t startTime;
 
   startTime = time (NULL);
 
-  if ((maximumVMK = swGetMaximumVMK ()) != 0) {
+  if ((maximumPMK = swGetMaximumPMK ()) != 0) {
 #ifdef MEMGRAPH
     FILE *graphFile;
     char graphFileName[64];
@@ -48,7 +48,7 @@ void *monitorStatus () {
       if (!(wakeCount % 2)) {
 	thrashingCheck ();
 	statusRequestSignal = TRUE;
-      //	kill (getpid (), SIGQUIT);   // Send a status-updating signal
+	kill (getpid (), SIGQUIT);   // Send a status-updating signal
       }
       currentVMK = swGetCurrentVMK (getpid ());
 #ifdef MEMGRAPH
@@ -57,7 +57,7 @@ void *monitorStatus () {
 #endif
 #ifdef MEMSTATUS
       fprintf (stdout, "%lus, %dKb (%.1f%% of %.1fGb) at %d\n", time (NULL) - startTime, currentVMK,
-	       currentVMK / (maximumVMK / 100.0), maximumVMK / (1024.0 * 1024.0), nodeId);
+	       currentVMK / (maximumPMK / 100.0), maximumPMK / (1024.0 * 1024.0), nodeId);
 #endif
     }
   }
