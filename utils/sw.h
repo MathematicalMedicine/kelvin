@@ -55,7 +55,7 @@ size_t swDelChunk (void *, int, char *, int);
 void swDumpSources ();
 void swDumpCrossModuleChunks ();
 void swLogPeaks (char *);
-int swGetMaximumVMK ();
+int swGetMaximumPMK ();
 int swGetCurrentVMK (pid_t);
 
 #ifdef DMUSE

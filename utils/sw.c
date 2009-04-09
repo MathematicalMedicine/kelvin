@@ -82,6 +82,7 @@ then #include sw.h in your source code, and link with sw.o.
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #ifdef TELLRITA
 #include <netdb.h>
@@ -91,7 +92,7 @@ then #include sw.h in your source code, and link with sw.o.
 #include "hashtab.h"
 #include "lookupa.h"
 
-int currentVMK, maximumVMK = -1;
+long currentVMK, maximumPMK = -1;
 
 
 #ifdef linux
@@ -118,7 +119,7 @@ void pushStatus (char program, char *currentStatus)
     return;
   }
   strncpy (statusStack[++statusStackPosition], currentStatus, STATUS_LENGTH);
-  sprintf (processName, "%c(%-.*s)", program, STATUS_LENGTH, currentStatus);
+  sprintf (processName, "%c-%-.*s", program, STATUS_LENGTH, currentStatus);
 #ifdef PR_SET_NAME
   prctl (PR_SET_NAME, processName);
 #endif
@@ -131,7 +132,7 @@ void popStatus (char program)
     fprintf (stderr, "Status stack underflow (not serious), status not reverted\n");
     return;
   }
-  sprintf (processName, "%c(%-.*s)", program, STATUS_LENGTH, statusStack[--statusStackPosition]);
+  sprintf (processName, "%c-%-.*s", program, STATUS_LENGTH, statusStack[--statusStackPosition]);
 #ifdef PR_SET_NAME
   prctl (PR_SET_NAME, processName);
 #endif
@@ -290,15 +291,15 @@ swDumpM (struct swStopwatch *theStopwatch)
 {
   char memoryBuffer[MAXUDPMSG];
 
-  if (maximumVMK == -1) {
-    maximumVMK = swGetMaximumVMK ();
+  if (maximumPMK == -1) {
+    maximumPMK = swGetMaximumPMK ();
     memoryBuffer[0] = 0;
   }
-  if (maximumVMK != 0) {
+  if (maximumPMK != 0) {
     currentVMK = swGetCurrentVMK (getpid ());
     sprintf (memoryBuffer, ", vmG:%2.1f/%2.1f",
 	     currentVMK / (1024.0 * 1024.0),
-	     maximumVMK / (1024.0 * 1024.0));
+	     maximumPMK / (1024.0 * 1024.0));
   }
 
   if (theStopwatch->swRunning) {
@@ -1131,50 +1132,41 @@ swLogMsg (char *message)
   return;
 }
 
-int haveVMChildRunning = FALSE;
+int procSMapWorks = TRUE;
 int swGetCurrentVMK(pid_t pid) {
-  char commandString[128];
-  FILE *gCFP;
+  char procSMap[128], buffer[128];
+  FILE *fpProcSMap;
+  long segmentSize = 0;
 
-  /* I've tried mallinfo and malloc_info (don't work), and mstats (DNE for Linux,
-     On Crack for Mac). Help. */
-
-  if ((maximumVMK == 0) || (haveVMChildRunning))
-    return 0;
-  haveVMChildRunning = TRUE;
-  /*
-  sprintf(commandString, "pmap %d 2>/dev/null | grep 'total' | cut -c 8-23", (int) pid);
-  if ((gCFP = popen(commandString, "r")) != NULL) {
-    fscanf(gCFP, "%d", &currentVMK);
-    pclose(gCFP);
-    haveVMChildRunning = FALSE;
+  currentVMK = 0;
+  if (!procSMapWorks) {
+    return currentVMK;
   }
-  */
+
+  sprintf (procSMap, "/proc/%d/smaps", (int) pid);
+  if ((fpProcSMap = fopen(procSMap, "r")) == NULL) {
+    procSMapWorks = FALSE;
+    return currentVMK;
+  }  
+  while (fgets(buffer, sizeof(buffer), fpProcSMap) != NULL)
+    if (sscanf(buffer, "Size: %ld kB", &segmentSize) != 0)
+      currentVMK += segmentSize;
+  fclose(fpProcSMap);
   return currentVMK;
 }
 
-int swGetMaximumVMK(void) {
-  char commandString[] = "cat /proc/meminfo 2>/dev/null | grep 'MemTotal' | cut -c 11-22";
-  /* For Mac  char commandString[] = "sysctl hw.memsize | cut -f 2 -d ' '";
-     ...so now all we need is a reliable way to get current usage. */
-  FILE *gCFP;
-  
-  if (maximumVMK != -1)
-    return maximumVMK;
+int swGetMaximumPMK(void) {
+  char buffer[128];
+  FILE *fpProcMemInfo;
 
-  if (haveVMChildRunning)
-    return 0;
-  haveVMChildRunning = TRUE;
-  /*
-  if ((gCFP = popen(commandString, "r")) != NULL) {
-    fscanf(gCFP, "%d", &maximumVMK);
-    pclose(gCFP);
-    haveVMChildRunning = FALSE;
-  }
-  */
-  if (swGetCurrentVMK(getpid()) <= 0)
-    maximumVMK = 0;
-  return (maximumVMK);
+  maximumPMK = 0;
+  if ((fpProcMemInfo = fopen("/proc/meminfo", "r")) != NULL)
+    while (fgets(buffer, sizeof(buffer), fpProcMemInfo) != NULL)
+      if (sscanf(buffer, "MemTotal: %ld kB", &maximumPMK) != 0) {
+	fclose(fpProcMemInfo);
+	break;
+      }
+  return maximumPMK; 
 }
 
 #ifdef MAIN
@@ -1192,8 +1184,8 @@ volatile sig_atomic_t signalSeen = 0;
 void
 usr1SignalHandler (int signal)
 {
-  // signalSeen = 1;
-  swLogPeaks ("Ding!");
+  signalSeen = 1;
+  //  swLogPeaks ("Ding!");
 }
 
 void
@@ -1201,7 +1193,7 @@ quitSignalHandler (int signal)
 {
   char messageBuffer[MAXSWMSG];
 
-  swDump (overallSW);
+  swDumpM (overallSW);
 #ifdef DMTRACK
   sprintf (messageBuffer,
 	   "Count malloc: %d, free: %d, realloc OK: %d, realloc move: %d, realloc free: %d, max depth: %d, max recycles: %d",
@@ -1233,7 +1225,7 @@ fibonacci (int i)
   /* See if we should dump our overall timer. We are considerate
      of both the executing code and the request for information. */
   if (signalSeen) {
-    swDump (overallSW);
+    swDumpM (overallSW);
     signalSeen = 0;
   }
 
@@ -1287,10 +1279,13 @@ main (int argc, char *argv[])
 
   childPID = fork ();
   if (childPID == 0) {
+    pid_t parentPID;
+    parentPID = getppid ();
     while (1) {
       sleep (10);
+      if (getppid () != parentPID) exit;
       kill (getppid (), SIGUSR1);
-    }				/* Does not return */
+    }
   }
 
   /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
@@ -1336,7 +1331,7 @@ main (int argc, char *argv[])
        only modifying a volatile flag in the service routine, and then
        testing for that at our leisure in the executing code. */
     if (signalSeen) {
-      swDump (overallSW);
+      swDumpM (overallSW);
       signalSeen = 0;
     }
 
@@ -1365,21 +1360,25 @@ main (int argc, char *argv[])
      will be the sum of sleepSW and napSW. */
 
   printf
-    ("Sleeping 21 seconds while marking memory in 2M and 1K chunks, ignoring SIGUSR1-set flag...\n");
+    ("Sleeping 21 seconds while marking memory in 200M and 1K chunks, ignoring SIGUSR1-set flag...\n");
   swStart (restSW);
   char *p[7], *q[7];
 
   for (i = 0; i < 7; i++) {
     swStart (sleepSW);
     sleep (2);
-    p[i] = (char *) swMalloc (2 * 1024 * 1024, __FILE__, __LINE__);
-    memset (p[i], 'z', 2 * 1024 * 1024);
+    p[i] = (char *) swMalloc (256 * 1024 * 1024, __FILE__, __LINE__);
+    memset (p[i], 'z', 256 * 1024 * 1024);
     swStop (sleepSW);
     swStart (napSW);
     sleep (1);
     q[i] = (char *) malloc (4 * 1024);
     memset (q[i], 'Z', 4 * 1024);
     swStop (napSW);
+    if (signalSeen) {
+      swDumpM (overallSW);
+      signalSeen = 0;
+    }
   }
   for (i = 0; i < 7; i++) {
     swFree (p[i], __FILE__, __LINE__);
@@ -1398,19 +1397,19 @@ main (int argc, char *argv[])
   swStop (overallSW);
 
   printf ("prime will be the sum of sqrt + iterate + unknown loop cost\n");
-  swDump (sqrtSW);
-  swDump (iterateSW);
-  swDump (primeSW);
+  swDumpM (sqrtSW);
+  swDumpM (iterateSW);
+  swDumpM (primeSW);
 
-  swDump (fibSW);
+  swDumpM (fibSW);
 
   printf ("rest will be almost exactly the sum of sleep and nap\n");
-  swDump (sleepSW);
-  swDump (napSW);
-  swDump (restSW);
+  swDumpM (sleepSW);
+  swDumpM (napSW);
+  swDumpM (restSW);
 
   printf ("overall will be the sum of everything + unaccounted-for code\n");
-  swDump (overallSW);
+  swDumpM (overallSW);
 
 #ifdef DMTRACK
   swDumpSources ();
