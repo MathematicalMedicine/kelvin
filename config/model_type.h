@@ -52,8 +52,12 @@ typedef struct ModelType
   double max;			/* QT - max after standardization */
   int minFlag;			/* flag for the existence of lower bound */
   int maxFlag;			/* flag for the existence of upper bound */
+  /* remove threshold adjustment code 
+     YH 04/14/2009 */
+#if 0
   double minThreshold;		/* minimum threshold value - in standardized unit */
   double maxThreshold;		/* maximum threshold value - in standardized unit */
+#endif 
   int *constants;		/* Array of distribution constants (certain QT/CT distributions only) */
   int ccFlag;			/* Case Ctrl flag */
 } ModelType;
