@@ -224,8 +224,11 @@ readConfigFile (char *file)
   /* set default for QT */
   modelType.minOriginal = -999999999.00;
   modelType.maxOriginal = 999999999.00;
+  /* remove threshold adjustment code 
+     YH 04/14/2009
   modelType.minThreshold = -999999999.00;
   modelType.maxThreshold = 999999999.00;
+  */
 
   double integrationLDDPrimeValues[] = {-0.9982431840532, -0.9956010478552, -0.9790222658168,
 					-0.9590960631620, -0.8761473165029, -0.8727421201131,
@@ -500,6 +503,8 @@ readConfigFile (char *file)
       continue;
     }
 
+    /* remove threshold adjustment code 
+       YH 04/14/2009
     if (sscanf (line, "T_MIN %lf", &modelType.minThreshold) == 1) {
       KLOG (LOGINPUTFILE, LOGDEBUG, "Lower bound for QT threshold is at %f\n",
 	    modelType.minThreshold);
@@ -510,6 +515,7 @@ readConfigFile (char *file)
 	    modelType.maxThreshold);
       continue;
     }
+    */
 
     /* Directives that take a single string argument. */
     if (sscanf (line, "PD %s", modelOptions.pedfile) == 1) {	/* Pedigree file */

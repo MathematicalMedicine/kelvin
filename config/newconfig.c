@@ -195,8 +195,11 @@ void initializeDefaults ()
   /* set default for QT */
   modelType.minOriginal = -999999999.00;
   modelType.maxOriginal = 999999999.00;
+  /* remove threshold adjustment code 
+     YH 04/14/2009
   modelType.minThreshold = -999999999.00;
   modelType.maxThreshold = 999999999.00;
+  */
 
   return;
 }

@@ -113,10 +113,14 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
    * be thresholds, under QT there should not. */
   if (modelRange.ntthresh > 0 && modelType.trait != DT) {
     modelType.trait = CT;
+    /* remove the check and T_MIN and T_MAX keywords as we no longer weighting the threshhold
+       base on intervals, instead we just average them like how we do with other parameters 
+       YH 04/14/2009
     KASSERT (modelType.minThreshold > -999999998 &&
              modelType.maxThreshold < 999999998,
              "Under QT threshold model, MIN and MAX of the QT threshold values need to be "
 	     "provided through keywords T_MIN and T_MAX.\n");
+    */
   }
 
   if (modelOptions.polynomial == TRUE) {

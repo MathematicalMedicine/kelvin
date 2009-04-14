@@ -667,6 +667,8 @@
                           } else {
                             adjustedHetLR = hetLR = pow (10, log10HetLR);
                             /* for threshold parameter, we need to make sure the weighting is even */
+			    /* remove threshold adjustment code 
+			       YH 04/14/2009
                             if (1 || modelType.distrib == QT_FUNCTION_CHI_SQUARE) {
                               if (modelRange.ntthresh == 1) {
                                 adjustedHetLR *= 2 * (modelType.maxThreshold - modelType.minThreshold);
@@ -681,6 +683,7 @@
                                   (modelRange.tthresh[0][thresholdIdx + 1] - modelRange.tthresh[0][thresholdIdx - 1]);
                               }
                             }
+			    */
                             tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total += adjustedHetLR;
                           }
                           if (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_penIdx < 0
@@ -1679,6 +1682,8 @@
                   } else {
                     adjustedHetLR = hetLR = pow (10, log10HetLR);
                     /* for threshold parameter, we need to make sure the weighting is even */
+		    /* remove threshold adjustment code 
+		       YH 04/14/2009
                     if (1 || modelType.distrib == QT_FUNCTION_CHI_SQUARE) {
                       if (modelRange.ntthresh == 1) {
                         adjustedHetLR *= 2 * (modelType.maxThreshold - modelType.minThreshold);
@@ -1689,6 +1694,7 @@
                       } else
                         adjustedHetLR *= modelRange.tthresh[0][thresholdIdx + 1] - modelRange.tthresh[0][thresholdIdx - 1];
                     }
+		    */
                     mp_result[posIdx].het_lr_total += adjustedHetLR;
                   }
                   if (mp_result[posIdx].max_penIdx < 0 || hetLR > mp_result[posIdx].max_lr) {
@@ -1723,10 +1729,13 @@
         avgLR = mp_result[posIdx].het_lr_total / (modelRange.nalpha * mp_result[posIdx].lr_count);
       else
         /* under QT CHISQ, threshold parameter has been evenly weighted */
+	/* remove threshold adjustment code 
+	   YH 04/14/2009
         avgLR =
           mp_result[posIdx].het_lr_total / (modelRange.nalpha * (mp_result[posIdx].lr_count / modelRange.ntthresh) * 2 *
                                             (modelType.maxThreshold - modelType.minThreshold));
-
+	*/
+	avgLR = mp_result[posIdx].het_lr_total / (modelRange.nalpha * mp_result[posIdx].lr_count);
       if (avgLR > 0.214)
         ppl = (avgLR * avgLR) / (-5.77 + 54 * avgLR + avgLR * avgLR);
       else

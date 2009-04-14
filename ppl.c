@@ -376,17 +376,25 @@ get_average_LR (SUMMARY_STAT *** result)
 	}
 	if (modelType.trait == DT) {
 	  if (modelType.ccFlag)
+	    /* when ccFlag is on, the het_lr_total has already been adjusted to average */
 	    lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total;
 	  else
 	    lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
 	      (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count *
 	       modelRange.nalpha);
 	} else
+	  /* remove threshold adjustment code
+	     YH 04/14/2009 
 	  lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
 	    (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count /
 	     modelRange.ntthresh * 2 * (modelType.maxThreshold -
 					modelType.minThreshold) *
 	     modelRange.nalpha);
+	  */
+	    lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
+	      (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count *
+	       modelRange.nalpha);
+
 
 	tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_avg = lr;
 	/* add up BR for each marker allele frequency */
