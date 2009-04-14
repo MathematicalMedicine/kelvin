@@ -136,12 +136,12 @@ dcuhre_ (dcuhre_state * s)
   if (s->verbose > 1) {
     print_rule (s);
   }
-  //   checkpt();
+  //  checkpt();
   //   printf("maxsub is %d  in \n", s->maxsub);
   /* Step 3. free all memory */
   /* free the array of subregions */
   sbrg_free (s->sbrg_heap, s->maxsub);
-  //    checkpt();
+  //   checkpt();
   free (s->sbrg_heap);
   //    checkpt(); 
   /* free global variables */
@@ -156,14 +156,13 @@ dcuhre_ (dcuhre_state * s)
     free (s->norms[i]);
   }
 
-  free (s->g);
+  free (s->g); 
   free (s->w);
   free (s->rulpts);
   free (s->scales);
   free (s->norms);
   free (s->errcof);
   free (s->diff_result);
-
 
   return num_eval;
 }
@@ -222,7 +221,6 @@ dadhre_ (dcuhre_state * s)
     print_sbrg (cw_sbrg, s->ndim);
   }
 
-
   /*Step2.3   Apply DRLHRE over the whole region. */
   if (s->verbose > 0) {
     fprintf (stderr, "Apply DRLHRE over the whole region\n");
@@ -248,7 +246,11 @@ dadhre_ (dcuhre_state * s)
 
 
   /* ***End initialisation. */
-
+  if(s->sampling_mode){  /* Only one subregion for sampling */
+    if(s->sampling_mode==2)
+      s->next_dir = cw_sbrg->dir;
+    return 0;
+  }
 
   /*Step3 Loop for main integration */
   while (s->sbrgns < s->maxsub) {
@@ -439,7 +441,13 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
     }
   }
 
-  (s->funsub) ( x, &(cw_sbrg->local_error));
+  if(s->sampling_mode>0)
+    (s->funsub) ( x, &(cw_sbrg->local_error),s);
+  else
+    (s->funsub) ( x, &(cw_sbrg->local_error));
+  if(s->sampling_mode==1)
+    s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][0];
+
   //fprintf (stderr, "1 local result =%10.8f  and local error =%10.8f\n", cw_sbrg->local_result,cw_sbrg->local_error);
   //fprintf(stderr," sw00 is %G   %p %p\n", s->w[0][0], s->w, s->w[0]);
 
@@ -447,6 +455,7 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
     fprintf(stderr,"sw00 is nan \n");
     exit(1);
   }
+
   cw_sbrg->local_result = s->w[0][0] * cw_sbrg->local_error;	//rgnerr[j];
   for (k = 0; k < 4; ++k) {
     null[k] = s->w[k + 1][0] * cw_sbrg->local_error;	//  rgnerr[j];
@@ -457,16 +466,38 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   ratio = d__1 * d__1;
   for (i = 0; i < s->ndim; i++) {
     x[i] = cw_sbrg->center[i] - cw_sbrg->hwidth[i] * s->g[0][1];
-    (s->funsub) ( x, &null[4]);
+
+    if(s->sampling_mode>0)
+      (s->funsub) ( x, &null[4],s);
+    else
+      (s->funsub) ( x, &null[4]);
+    if(s->sampling_mode==1)
+      s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][1];
 
     x[i] = cw_sbrg->center[i] + cw_sbrg->hwidth[i] * s->g[0][1];
-    (s->funsub) ( x, &null[5]);
+
+    if(s->sampling_mode>0)
+      (s->funsub) ( x, &null[5],s);
+    else
+      (s->funsub) ( x, &null[5]);
+    if(s->sampling_mode==1)
+      s->sample_pts[s->cur_sample*(s->ndim+1)] =  s->w[0][1];
 
     x[i] = cw_sbrg->center[i] - cw_sbrg->hwidth[i] * s->g[0][2];
-    (s->funsub) ( x, &null[6]);
+    if(s->sampling_mode>0)
+      (s->funsub) ( x, &null[6],s);
+    else
+      (s->funsub) ( x, &null[6]);
+    if(s->sampling_mode==1)
+      s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][2];
 
     x[i] = cw_sbrg->center[i] + cw_sbrg->hwidth[i] * s->g[0][2];
-    (s->funsub) (x, &null[7]);
+    if(s->sampling_mode>0)
+      (s->funsub) (x, &null[7],s);
+    else
+      (s->funsub) (x, &null[7]);
+    if(s->sampling_mode==1)
+      s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][2];
 
     x[i] = cw_sbrg->center[i];
     difsum = 0.;
@@ -503,6 +534,9 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
     //fprintf (stderr, "i=%d calling dfshre\n",i);
     //fprintf (stderr, "g is %f %f %f %f %f\n",s->g[0][g_work_col],s->g[1][g_work_col],s->g[2][g_work_col],s->g[3][g_work_col],s->g[4][g_work_col]);
 
+    if(s->sampling_mode==1){
+      s->cur_weight = s->w[0][i];
+    }
     dfshre_ (s, cw_sbrg, x, g_work_col, &(cw_sbrg->local_error), &null[4]);
 
     cw_sbrg->local_result += s->w[0][i] * cw_sbrg->local_error;
@@ -580,7 +614,13 @@ L20:
   }
 
 L40:
-  (s->funsub) ( x, funvls);
+  if(s->sampling_mode>0)  
+    (s->funsub) ( x, funvls,s);
+  else
+    (s->funsub) ( x, funvls);
+
+  if(s->sampling_mode==1)
+    s->sample_pts[s->cur_sample*(s->ndim+1)] = s->cur_weight;
 
   *fulsms += *funvls;
 

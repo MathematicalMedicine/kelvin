@@ -178,7 +178,20 @@ typedef struct{
   double vol_rate ;    /* Use this to convert results to average function value*/
   enum model_Type mType;
   
-  //FILE *fp=NULL;
+  /* 2-dim arrays for dynamic sampling     3/3/2009 */
+  int sampling_mode;       /* turn this on when we apply to Merlin. Default is 0 assigned in initialization fucntion
+                           0 : normal dcuhre for Kelvin                             
+                           1: sampling mode for one subset
+                           2: calculating the BR for only one subset 
+                               The main difference is s->maxsub is fixed at one
+ */
+  double *sample_pts;
+  double cur_weight;       /* This holds the weigt for the currently working group of samples */
+  int cur_sample;       /* The index of the current sample points*/
+  int next_dir;         /* Use this for the next direction to split*/
+  /*int sample_dim;         This is always the same as s->ndim   : dimension of dynamic sampling*/
+  /*int sample_num;         This is always the same as s->num    : number of sample points*/
+  
   
 } dcuhre_state;
 
