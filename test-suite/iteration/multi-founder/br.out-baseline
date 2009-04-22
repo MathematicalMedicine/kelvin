@@ -1,4 +1,4 @@
-# Version V0.37.3
+# Version V0.37.4
 # 1  disease l1 
 Chr Position Theta(M,F) BayesRatio MOD R2 Alpha DGF MF LC0PV(DD,Dd,dd) 
 1 72.3000 (0.0500,0.0500) 1.154024e+00 0.5591 0.0000 1.00 0.0010 0.4000 (0.999,0.999,0.000)

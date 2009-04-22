@@ -1,4 +1,4 @@
-# Version V0.37.3
+# Version V0.37.4
 # 1  disease 1_3_mrk 
 Chr Position D11 Theta(M,F) BayesRatio MOD R2 Alpha DGF MF LC0PV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD,Thresh) 
 1 0.9900 -1.00 (0.0000,0.0000) 1.000253e+00 0.9809 0.0000 0.60 0.7000 0.5000 (1.000,-1.000,-3.000,0.707,0.707,0.707,0.000)

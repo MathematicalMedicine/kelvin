@@ -42,6 +42,9 @@ logInit ()
 
   for (i = 0; i < MAXLOGLEVELS; i++)
     logFlag[i] = LOGDEFAULT;
+
+  logFlag[LOGERROR] = -1; // Give errors for everything by default
+  logFlag[LOGWARNING] = -1; // Give warnings for everything by default
 }
 
 /* Set a particular type of output to a given level severity or
