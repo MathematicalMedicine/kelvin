@@ -203,6 +203,10 @@
       pLocus1 = originalLocusList.ppLocusList[loc1];
       if (modelOptions.markerAnalysis != FALSE && pLocus1->locusType != LOCUS_TYPE_MARKER)
 	continue;
+      if (pLocus1->numAllele == 2 && ((pLocus1->pAlleleFrequency[0] <= ERROR_MARGIN) || (pLocus1->pAlleleFrequency[1] <= ERROR_MARGIN))) {
+	KLOG (LOGINPUTFILE, LOGWARNING, "Biallelic marker %s has a minor allele frequency less than %g, skipping!\n", pLocus1->sName, ERROR_MARGIN);
+	continue;
+      }
 
       for (loc2 = loc1 + 1; loc2 < originalLocusList.numLocus; loc2++) {
 
@@ -213,6 +217,10 @@
 	pLocus2 = originalLocusList.ppLocusList[loc2];
 	if (pLocus2->locusType != LOCUS_TYPE_MARKER)
 	  continue;
+	if (pLocus2->numAllele == 2 && ((pLocus2->pAlleleFrequency[0] <= ERROR_MARGIN) || (pLocus2->pAlleleFrequency[1] <= ERROR_MARGIN))) {
+	  KLOG (LOGINPUTFILE, LOGWARNING, "Biallelic marker %s has a minor allele frequency less than %g, skipping!\n", pLocus2->sName, ERROR_MARGIN);
+	  continue;
+	}
 	savedLocusList.pLocusIndex[1] = loc2;
 
 #ifndef SIMPLEPROGRESS
