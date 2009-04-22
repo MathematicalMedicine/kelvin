@@ -1605,7 +1605,7 @@ where <flags> are any of:
 -nokelvin	Skip verification that kelvin can handle the analysis.
 -loops		Check for consanguinity and marriage loops and print them if found.
 -stats		Print statistics on the make-up of the pedigree(s).
--counts		Count genotypically identical pedigrees and print statistics.
+-count		Count genotypically identical pedigrees and print statistics.
 -include=<list>	Process only the markers named in the list. For pedigree file-only
 		runs, marker names are sequence numbers, e.g. 2,3,4,7 (no spaces) 
 		and ranges like 2-4 can be specified as well. Can be specified
