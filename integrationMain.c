@@ -1045,9 +1045,9 @@
 	       integral, abserr, num_eval,log10 (localmax_value));
       fflush(fpIR);
 
+      j=2;
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
 
-	j=2;
         if (modelOptions.imprintingFlag){
           fprintf (fpHet, " (%.3f,%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+2],localmax_x[j+3]);
           j +=4;
@@ -1066,7 +1066,7 @@
             j +=3;
 	  }
         }
-        if (modelType.trait != DT) { 
+        if (modelType.trait == CT) { 
           fprintf (fpHet, ",%.3f)", localmax_x[j++]);
         } else
           fprintf (fpHet, ")");
