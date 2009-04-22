@@ -1,1 +1,0 @@
-gcc: .c: linker input file unused because linking not done
