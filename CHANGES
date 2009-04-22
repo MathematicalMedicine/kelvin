@@ -1,9 +1,12 @@
-Version ??
-  Case control (CC) directive replaces CF
-  directive. Count file (CF) directive added to permit 
-  ASP and trios data to be efficiently represented and 
-  processed. Revitalized KLOG and LOG directive. Fixed
+Version 0.37.4
+  Revitalized KLOG and LOG directive. Fixed
   Student's T pdf values for x outside of -10 to 10.
+  Several integration fixes including duplicate results
+  for liability classes and deviations for multiple markers.
+  Skips biallelic markers with minor allele frequncy
+  approaching zero for TP analyses. Errors and warnings
+  are displayed by default (suppress with LOG directive).
+  Process name uses dash ('-') instead of parenthesis.
 
 Version 0.37.1
   Numerous bugfixes in LD handling and estimation in
