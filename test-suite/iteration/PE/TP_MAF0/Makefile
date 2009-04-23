@@ -4,5 +4,8 @@ test :
 	diff -i br.out br.out-baseline
 	diff -i ppl.out ppl.out-baseline
 
+test-USE_DL :
+	echo Compilation not appropriate for this test.
+
 clean :
 	- rm -rf *.so *.out *memory.dat *~ compiled
