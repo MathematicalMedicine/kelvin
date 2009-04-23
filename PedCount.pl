@@ -1205,6 +1205,8 @@ sub bucketizePedigrees {
         open OUT, ">" . $Prefix . "Pedigrees.Pre";
     }
 
+    print OUT '# $Id$'; print OUT "\n";
+
     # First the intact (skipped) pedigrees
     for my $Ped (@Skippies) {
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
@@ -1281,6 +1283,9 @@ sub bucketizePedigrees {
             } else {
                 open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "Pedigrees.Pre";
             }
+
+            print OUT '# $Id$'; print OUT "\n";
+
             for my $PB (sort numericIsh keys %Templates) {
                 my $FB = $Loci[ $i + 1 ] . "_" . $PB;
                 if (!defined($Buckets{$FB})) {
@@ -1330,6 +1335,8 @@ sub bucketizePedigrees {
     # Finally the counts.
     open OUT, ">" . $Prefix . "Counts.Dat";
 
+    print OUT '# $Id$'; print OUT "\n";
+
     print OUT "MARKER ";
     for my $PB (sort numericIsh keys %Templates) {
         my $NiceName = defined($NiceNames{$PB}) ? $NiceNames{$PB} : $PB;
@@ -1365,6 +1372,9 @@ sub bucketizePedigrees {
     }
 
     open OUT, ">" . $Prefix . "Config.Dat";
+
+    print OUT '# $Id$'; print OUT "\n";
+
     my $configPrefix = $Prefix;
     $configPrefix =~ s/.*\///;
     print OUT "PD " . $configPrefix . "Pedigrees.Dat\n";
@@ -1399,6 +1409,9 @@ EOF
     close OUT;
 
     open OUT, ">" . $Prefix . "Markers.Dat";
+
+    print OUT '# $Id$'; print OUT "\n";
+
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         if ($LociAttributes{$Name}{Type} eq "M") {
@@ -1414,6 +1427,9 @@ EOF
 
     #
     open OUT, ">" . $Prefix . "Map.Dat";
+
+    print OUT '# $Id$'; print OUT "\n";
+
     print OUT "CHR MARKER KOSAMBI\n";
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
@@ -1438,6 +1454,8 @@ sub writeExpanded {
     } else {
         open OUT, ">" . $Prefix . "Pedigrees.Pre";
     }
+
+    print OUT '# $Id$'; print OUT "\n";
 
     for my $Ped (sort numericIsh keys %Pedigrees) {
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
@@ -1482,6 +1500,9 @@ sub writeExpanded {
     }
 
     open OUT, ">" . $Prefix . "Data.Dat";
+
+    print OUT '# $Id$'; print OUT "\n";
+
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
@@ -1494,6 +1515,9 @@ sub writeExpanded {
     }
 
     open OUT, ">" . $Prefix . "Markers.Dat";
+
+    print OUT '# $Id$'; print OUT "\n";
+
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         if ($LociAttributes{$Name}{Type} eq "M") {
@@ -1508,6 +1532,9 @@ sub writeExpanded {
     close OUT;
 
     open OUT, ">" . $Prefix . "Map.Dat";
+
+    print OUT '# $Id$'; print OUT "\n";
+
     print OUT "CHR MARKER KOSAMBI\n";
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
@@ -1584,6 +1611,7 @@ sub kelvinLimits {
 #####################################
 # Verify command line parameters, check flags and do what the user asks.
 #
+print '$Id$'; print "\n";
 my $Usage = <<EOF;
 
 Usage "perl $0 [<flags>...] <input file>"
