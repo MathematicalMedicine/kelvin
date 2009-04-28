@@ -80,6 +80,19 @@
   the stopwatch has to be turned on and off with each evaluation, and
   there can be millions of evaluations.
 
+  - DEPENDENCYFLAGGING - define this to enable pre-evaluatePoly dumps
+  of the percentage of polynomial nodes that reference each of the
+  variables (up to 64) used. This was the starting point for an idea
+  that didn't pan-out for pedigree likelihood polynomials, but might
+  for other applications. The remaining code is as yet unimplemented.
+  The idea is to build a flag for each polynomial node that indicates
+  which variables affect its value. This could be used to avoid re-
+  evaluation of portions of the tree that are unaffected by changes in
+  specific variables. Unfortunately the larger the likelihood polynomial,
+  the more of the tree covered by the variables. It was anywhere from
+  85 to 99%, so they payoff just wasn't there. Try turning this on if
+  you have a different application and see if it is worth finishing.
+
   - DMTRACK
 
   ENVIRONMENT VARIABLES:
@@ -2464,6 +2477,9 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
 void polyListSorting (Polynomial * p, struct polyList *l)
 {
   polyListSortingCount++;
+#ifdef DEPENDENCYFLAGGING
+  dependencyFlagging (p);
+#endif
   //  writePolyDigraph(p);
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
@@ -2545,10 +2561,25 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
       importTermList (p);
       sP = p->e.s;
       for (i = 0; i < sP->num; i++) {
+	double term;
+	int pVPower, termPower;
         if (sP->factor[i] == 1)
-          pV += sP->sum[i]->value;
+          term = sP->sum[i]->value;
         else
-          pV += sP->sum[i]->value * sP->factor[i];
+          term = sP->sum[i]->value * sP->factor[i];
+	
+	frexp(pV, &pVPower);
+	frexp(term, &termPower);
+	/* I think that this is a big deal in a signal processing context.
+	if ((pV != 0) && (term != 0) && (abs(pVPower - termPower) > 52)) {
+	  fprintf (stderr, "Total precision loss (abs(%d-%d) = %d of 52 bits) in addition %d of %g and %g from  %d terms:\n", 
+		   abs(pVPower), abs(termPower), abs(pVPower - termPower), i, pV, term, sP->num);
+	  for (j = 0; j < sP->num; j++)
+	    fprintf (stderr, "%c %g*%g ",  j > 0 ? '+' : ' ', sP->factor[j], sP->sum[j]->value);
+	  fprintf (stderr, "\n");
+	}
+	*/
+	pV += term;
       }
       exportTermList (p, FALSE);
       p->value = pV;
@@ -4526,7 +4557,7 @@ void deportTermList (Polynomial * p)
    reload, and compression will eliminate any temporary inefficiency of size. */
 Polynomial *exportPoly (Polynomial * p)
 {
-  p->oldEType = p->eType;
+  //  p->oldEType = p->eType;
   return (p);
 }
 
@@ -4534,7 +4565,7 @@ Polynomial *exportPoly (Polynomial * p)
    translation table to maintain internal consistency. */
 Polynomial *importPoly (Polynomial * p)
 {
-  p->eType = p->oldEType;
+  //  p->eType = p->oldEType;
   return (p);
 }
 
@@ -4894,3 +4925,92 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   popStatus ('k');
   return;
 }
+
+unsigned long totalNodes = 0;
+
+#ifdef DEPENDENCYFLAGGING
+void doDependencyFlagging (Polynomial * p)
+{
+  int i;
+
+  if (p->valid & VALID_EVAL_FLAG)
+    return;
+  p->valid |= VALID_EVAL_FLAG;
+
+  switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
+  case T_CONSTANT:
+    p->dependencyFlag = 0;
+    break;
+  case T_VARIABLE:
+    p->dependencyFlag = (1UL << p->index);
+    break;
+  case T_EXTERNAL:
+    fprintf (stderr, "Don't know how to flag dependencies for EXTERNAL\n");
+    exit (EXIT_FAILURE);
+    break;
+  case T_SUM:
+    totalNodes++;
+    importTermList (p);
+    for (i = 0; i < p->e.s->num; i++) {
+      doDependencyFlagging (p->e.s->sum[i]);
+      p->dependencyFlag |= p->e.s->sum[i]->dependencyFlag;
+    }
+    exportTermList (p, FALSE);
+  for (i = 0; i < variableCount; i++)
+    if (p->dependencyFlag & (1UL << i))
+      variableList[i]->e.v->dependentNodes++;
+    break;
+  case T_PRODUCT:
+    totalNodes++;
+    for (i = 0; i < p->e.p->num; i++) {
+      doDependencyFlagging (p->e.p->product[i]);
+      p->dependencyFlag |= p->e.p->product[i]->dependencyFlag;
+    }
+  for (i = 0; i < variableCount; i++)
+    if (p->dependencyFlag & (1UL << i))
+      variableList[i]->e.v->dependentNodes++;
+    break;
+  case T_FUNCTIONCALL:
+    totalNodes++;
+    for (i = 0; i < p->e.f->num; i++) {
+      p->dependencyFlag |= p->e.f->para[i]->dependencyFlag;
+      doDependencyFlagging (p->e.f->para[i]);
+    }
+  for (i = 0; i < variableCount; i++)
+    if (p->dependencyFlag & (1UL << i))
+      variableList[i]->e.v->dependentNodes++;
+    break;
+  case T_FREED:
+    fprintf (stderr, "In doDependencyFlagging, evil caller is trying to use a polynomial that was freed:\n");
+    expTermPrinting (stderr, p, 1);
+    exit (EXIT_FAILURE);
+    break;
+  default:
+    fprintf (stderr, "In doDependencyFlagging, unknown expression type: [%d], exiting!\n", p->eType);
+    exit (EXIT_FAILURE);
+  }
+}
+
+void dependencyFlagging (Polynomial * p)
+{
+  int i;
+
+  fprintf (stderr, "Resetting all variable dependency flags\n");
+  totalNodes = 0;
+  for (i=0; i<variableCount; i++)
+    variableList[i]->e.v->dependentNodes = 0;
+
+  clearValidEvalFlag ();
+  doDependencyFlagging (p);
+
+  fprintf (stderr, "There are %lu nodes\n", totalNodes);
+  for (i=0; i<variableCount; i++)
+    if (totalNodes != 0)
+      fprintf (stderr, "Variable %s referenced by %4.1d%% nodes\n", variableList[i]->e.v->vName,
+	       (int) (variableList[i]->e.v->dependentNodes * 100.0 / totalNodes));
+}
+#endif

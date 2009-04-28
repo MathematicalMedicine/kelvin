@@ -101,6 +101,9 @@ struct variablePoly
     int *vAddrI;		// address for an integer variable
   } vAddr;
   char vName[100];		// variable name
+#ifdef DEPENDENCYFLAGGING
+  unsigned long dependentNodes;
+#endif
 };
 
 /* This structure represents the elements of a sum. A sum is composed of a list
@@ -177,7 +180,10 @@ typedef struct polynomial
     struct functionPoly *f;	// function
     struct externalPoly *e;     // external
   } e;				// unused by constants - 8 bytes
-  unsigned char oldEType;
+#ifdef DEPENDENCYFLAGGING
+  unsigned long dependencyFlag; // Flags up to 64 variable dependencies
+#endif
+  //  unsigned char oldEType;
 } Polynomial; // 4 + 4 + 4 + 2 + 1 + 1 (+ 1) + 8 + 8 = 32 (33->40) bytes
 
 /* Bit masks for the polynomial valid flag. */
@@ -347,3 +353,6 @@ void exportTermList (Polynomial * p, int writeFlag);
 void deportTermList (Polynomial * p);
 void thrashingCheck ();
 void releaseExternalPoly (Polynomial *);
+#ifdef DEPENDENCYFLAGGING
+void dependencyFlagging (Polynomial * p);
+#endif
