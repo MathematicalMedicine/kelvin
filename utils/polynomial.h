@@ -10,6 +10,9 @@
 #define __POLYNOMIAL_H__
 
 #include <stdio.h>
+#ifdef USE_GMP
+#include <gmp.h>                /* GNU Multi-Precision library. */
+#endif
 #include "utils.h"		/* Kelvin utilities. */
 
 // This is primarily for Cygwin
@@ -172,6 +175,9 @@ typedef struct polynomial
   unsigned char source;		// index of entry in polySources
 #endif
   double value;			// the value of the polynomial - 8 bytes
+#ifdef USE_GMP
+  mpf_t mpfValue;               // the Multi-Precision Float value of the polynomial - lotsa bytes
+#endif
   union
   {
     struct variablePoly *v;	// variable

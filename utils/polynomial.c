@@ -93,6 +93,22 @@
   85 to 99%, so they payoff just wasn't there. Try turning this on if
   you have a different application and see if it is worth finishing.
 
+  - USE_GMP - define this to enable validation of polynomial double
+  arithmetic. 192-bit mantissa arithmetic will be performed in parallel
+  with normal double arithmetic to validate results for evaluation of 
+  non-compiled polynomials only (using evaluatePoly, NOT evaluateValue).
+  Note that any operations performed outside of the polynomial as well as
+  constant definitions and function evaluations do not use GMP, and so
+  could still lead to degredation of precision. We implemented this when 
+  we discovered that a lot of pedigree likelihood evaluation steps were 
+  additions of numbers with exponents differing by more than 18 (mantissa 
+  precision for a 64-bit double), which causes the smaller addend to be 
+  effectively zero. We needed to be sure that we weren't dropping weak 
+  linkage signals when this happened, so entire analyses were run this 
+  way. All runs indicated that there was no effect -- consistent 
+  precision was maintained out to 15 places, so we have turned off this 
+  code until such time as precision questions arise again.
+
   - DMTRACK
 
   ENVIRONMENT VARIABLES:
@@ -863,6 +879,9 @@ Polynomial *constantExp (double con)
   }
   p->eType = T_CONSTANT;
   p->value = con;
+#ifdef USE_GMP
+  mpf_init_set_d (p->mpfValue, p->value);
+#endif
 
   // Check if the constant polynomial list is full.
   if (constantCount >= constantListLength) {
@@ -1005,6 +1024,9 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   p->key = key;
   p->valid = 0;
   p->count = 0;
+#ifdef USE_GMP
+  mpf_init (p->mpfValue);
+#endif
 
   // Insert the variable polynomial in the variable polynomial list
   variableList[variableCount] = p;
@@ -1551,6 +1573,9 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   rp->key = key;
   rp->valid = 0;
   rp->count = 0;
+#ifdef USE_GMP
+  mpf_init (rp->mpfValue);
+#endif
 #ifdef SOURCEDIGRAPH
   rp->source = findOrAddSource (fileName, lineNo, T_SUM);
 #endif
@@ -2069,6 +2094,9 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     rp->key = key;
     rp->valid = 0;
     rp->count = 0;
+#ifdef USE_GMP
+  mpf_init (rp->mpfValue);
+#endif
 #ifdef SOURCEDIGRAPH
     rp->source = findOrAddSource (fileName, lineNo, T_PRODUCT);
 #endif
@@ -2304,6 +2332,9 @@ Polynomial *functionCallExp (int num, ...)
   rp->key = key;
   rp->valid = 0;
   rp->count = 0;
+#ifdef USE_GMP
+  mpf_init (rp->mpfValue);
+#endif
 
   //Insert the new built polynomial in function call list
   if (functionCallCount >= functionCallListLength) {
@@ -2498,7 +2529,12 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
   struct sumPoly *sP;
   struct productPoly *pP;
   register int i, j;
-  double pV;
+  double v, term;
+#ifdef USE_GMP
+  mpf_t mpfV, mpfTerm;
+  mpf_init (mpfV);
+  mpf_init (mpfTerm);
+#endif
 
   evaluatePolyCount++;
 #ifdef EVALUATESW
@@ -2530,17 +2566,23 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
       // Notice that there's no break here...
 
     case T_CONSTANT:
+#ifdef USE_GMP
+      mpf_set_d (p->mpfValue, p->value);
+#endif
       break;
       //Read the value of the variable
     case T_VARIABLE:
       if (p->e.v->vType == 'D')
         p->value = *(p->e.v->vAddr.vAddrD);
       else if (p->e.v->vType == 'I')
-        p->value = *(p->e.v->vAddr.vAddrI);
+	p->value = *(p->e.v->vAddr.vAddrI);
       else {
-        fprintf (stderr, "Wrong variable type, exit!\n");
-        exit (EXIT_FAILURE);
+	fprintf (stderr, "Wrong variable type, exit!\n");
+	exit (EXIT_FAILURE);
       }
+#ifdef USE_GMP
+      mpf_set_d (p->mpfValue, p->value);
+#endif
       break;
 
     case T_EXTERNAL:
@@ -2557,58 +2599,83 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 
       //Sum up all the items in a sum
     case T_SUM:
-      pV = 0;
+      v = 0;
+#ifdef USE_GMP
+      mpf_set_ui (mpfV, 0UL);
+#endif
       importTermList (p);
       sP = p->e.s;
       for (i = 0; i < sP->num; i++) {
-	double term;
-	int pVPower, termPower;
         if (sP->factor[i] == 1)
           term = sP->sum[i]->value;
         else
           term = sP->sum[i]->value * sP->factor[i];
+#ifdef USE_GMP
+        if (sP->factor[i] == 1)
+          mpf_set (mpfTerm, sP->sum[i]->mpfValue);
+        else {
+	  mpf_set_d (mpfTerm, sP->factor[i]);
+          mpf_mul (mpfTerm, sP->sum[i]->mpfValue, mpfTerm);
+	}
+#endif
 	
-	frexp(pV, &pVPower);
-	frexp(term, &termPower);
 	/* I think that this is a big deal in a signal processing context.
-	if ((pV != 0) && (term != 0) && (abs(pVPower - termPower) > 52)) {
+	int vPower, termPower;
+
+	frexp(v, &vPower);
+	frexp(term, &termPower);
+	if ((v != 0) && (term != 0) && (abs(vPower - termPower) > 52)) {
 	  fprintf (stderr, "Total precision loss (abs(%d-%d) = %d of 52 bits) in addition %d of %g and %g from  %d terms:\n", 
-		   abs(pVPower), abs(termPower), abs(pVPower - termPower), i, pV, term, sP->num);
+		   abs(vPower), abs(termPower), abs(vPower - termPower), i, v, term, sP->num);
 	  for (j = 0; j < sP->num; j++)
 	    fprintf (stderr, "%c %g*%g ",  j > 0 ? '+' : ' ', sP->factor[j], sP->sum[j]->value);
 	  fprintf (stderr, "\n");
 	}
 	*/
-	pV += term;
+	v += term;
+#ifdef USE_GMP
+	mpf_add (mpfV, mpfV, mpfTerm);
+#endif
       }
       exportTermList (p, FALSE);
-      p->value = pV;
+      p->value = v;
+#ifdef USE_GMP
+      mpf_set (p->mpfValue, mpfV);
+#endif
       break;
 
       //Multiply all the items
     case T_PRODUCT:
       pP = p->e.p;
-      pV = 1;
+      v = 1;
       for (i = 0; i < pP->num; i++) {
         switch (pP->exponent[i]) {
         case 1:
-          pV *= pP->product[i]->value;
+          v *= pP->product[i]->value;
           break;
         case 2:
-          pV *= pP->product[i]->value * pP->product[i]->value;
+          v *= pP->product[i]->value * pP->product[i]->value;
           break;
         case 3:
-          pV *= pP->product[i]->value * pP->product[i]->value * pP->product[i]->value;
+          v *= pP->product[i]->value * pP->product[i]->value * pP->product[i]->value;
           break;
         case 4:
-          pV *= pP->product[i]->value * pP->product[i]->value * pP->product[i]->value * pP->product[i]->value;
+          v *= pP->product[i]->value * pP->product[i]->value * pP->product[i]->value * pP->product[i]->value;
           break;
         default:
-          pV *= pow (pP->product[i]->value, pP->exponent[i]);
+          v *= pow (pP->product[i]->value, pP->exponent[i]);
           break;
         }
       }
-      p->value = pV;
+      p->value = v;
+#ifdef USE_GMP
+      mpf_set_ui (mpfV, 1UL);
+      for (i = 0; i < pP->num; i++) {
+	mpf_pow_ui (mpfTerm, pP->product[i]->mpfValue, pP->exponent[i]);
+	mpf_mul (mpfV, mpfV, mpfTerm);
+      }
+      mpf_set (p->mpfValue, mpfV);
+#endif
       break;
 
       //Function calls are evaluated by calling the referred functions.
@@ -2677,6 +2744,9 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
         fprintf (stderr, "unknown function name %s in polynomials\n", p->e.f->name);
         exit (EXIT_FAILURE);
       }
+#ifdef USE_GMP
+      mpf_set_d (p->mpfValue, p->value);
+#endif
       break;
 
     default:
@@ -2691,6 +2761,13 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
     }
     //    expTermPrinting (stderr, p, 1);
     //    fprintf (stderr, "\n%s[%d] = %g\n", eTypes[p->eType], p->id, p->value);
+
+#ifdef USE_GMP
+    //    fprintf (stderr, "...%s[%d] is %.18g, or ", eTypes[p->eType], p->id, p->value);
+    //    mpf_out_str (stderr, 10, 50, p->mpfValue);
+    //    fprintf (stderr, " aka %.18g\n", mpf_get_d (p->mpfValue));
+#endif
+
   }
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "...finished evaluatePoly with %G\n", pp->value);
@@ -2698,6 +2775,19 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 #ifdef EVALUATESW
   swStop (evaluatePolySW);
 #endif
+
+#ifdef USE_GMP
+  mpf_clear (mpfV);
+  mpf_clear (mpfTerm);
+  fprintf (stderr, "Evaluated %s[%d] to %.18g, or ", eTypes[pp->eType], pp->id, pp->value);
+  mpf_out_str (stderr, 10, 50, pp->mpfValue);
+  fprintf (stderr, " aka %.18g\n", mpf_get_d (pp->mpfValue));
+  if ((fabs(mpf_get_d (pp->mpfValue) - pp->value) * 100.0 / pp->value) > .000001) {
+    fprintf (stderr, "Error greater than 8 places, aborting!\n");
+    exit (EXIT_FAILURE);
+  }
+#endif
+
   return;
 }
 
@@ -2738,6 +2828,10 @@ void polynomialInitialization (int polynomialScale)
     iMTL[i].cT.doublePairCount = 0;
     iMTL[i].lastNodeId = 0;
   }
+#endif
+
+#ifdef USE_GMP
+  mpf_set_default_prec (192);
 #endif
 
   /* Scale all initial and growth sizes up by the polynomial scale (default 10) */
@@ -4109,6 +4203,9 @@ void doFreePolys (unsigned short keepMask)
         } else {
 #ifndef FREEDEBUG
           free (variableList[i]);
+#ifdef GMP
+	  mpf_clear (variableList[i]->mpfValue);
+#endif
 #else
           // These are for debugging mis-freed pointers
           variableList[i]->value = variableList[i]->eType;
@@ -4176,6 +4273,9 @@ void doFreePolys (unsigned short keepMask)
 #endif
           free (sumList[i]->e.s);
 #ifndef FREEDEBUG
+#ifdef GMP
+	  mpf_clear (sumList[i]->mpfValue);
+#endif
           free (sumList[i]);
 #else
           // These are for debugging mis-freed pointers
@@ -4248,6 +4348,9 @@ void doFreePolys (unsigned short keepMask)
           free (productList[i]->e.p->exponent);
           free (productList[i]->e.p);
 #ifndef FREEDEBUG
+#ifdef GMP
+	  mpf_clear (productList[i]->mpfValue);
+#endif
           free (productList[i]);
 #else
           // These are for debugging mis-freed pointers
@@ -4926,9 +5029,9 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   return;
 }
 
+#ifdef DEPENDENCYFLAGGING
 unsigned long totalNodes = 0;
 
-#ifdef DEPENDENCYFLAGGING
 void doDependencyFlagging (Polynomial * p)
 {
   int i;
