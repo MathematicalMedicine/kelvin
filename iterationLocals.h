@@ -30,4 +30,4 @@
   int breakFlag = FALSE;
   double alphaV, alphaV2;
   double gfreq; /* disease gene frequency */
-
+  int ret;
