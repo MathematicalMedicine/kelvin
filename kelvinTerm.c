@@ -71,4 +71,5 @@ if (modelType.type == TP) {
 }
 if (fpMOD != NULL)
   fclose (fpMOD);
-fclose (fpHet);
+if (modelOptions.markerAnalysis == FALSE)
+  fclose (fpHet);
