@@ -1702,7 +1702,6 @@
 						 pPedigree->markerLikelihood);
 		      log10HetLR += log10 (alphaV * homoLR + alphaV2);
 		    }
-		    fprintf(stderr, "log10HetLR: %f\n", log10HetLR);
 		    if (log10HetLR >= DBL_MAX_10_EXP - 1) {
 		      hetLR = DBL_MAX;
 		      mp_result[posIdx].het_lr_total = DBL_MAX;
