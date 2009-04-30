@@ -302,7 +302,7 @@
 		  fflush (stdout);
 		  popStatus ('k');
 		}
-                if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+                if (ret == -1) {
                   fprintf (stderr, "Theta 0.5 has likelihood 0\n");
                   fprintf (stderr, "dgf=%f\n", gfreq);
                   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
@@ -394,7 +394,7 @@
 		      fprintf(stderr, "Negative likelihood! Exiting...\n");
 		      exit(EXIT_FAILURE);
 		    }
-                    if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+                    if (ret==-1) {
                       log10_likelihood_ratio = 0;
                     } else {
                       log10_likelihood_ratio = log10_likelihood_alternative - log10_likelihood_null;
@@ -567,7 +567,7 @@
 		      popStatus ('k');
 		    }
 
-                    if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+                    if (ret==-1) {
                       fprintf (stderr, "Theta 0.5 has likelihood 0\n");
                       fprintf (stderr, "dgf=%f\n", gfreq);
                       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
@@ -644,7 +644,7 @@
 			}
 
                         log10_likelihood_alternative = pedigreeSet.log10Likelihood;
-                        if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+                        if (ret==-1) {
                           log10_likelihood_ratio = 0;
                         } else {
                           log10_likelihood_ratio = log10_likelihood_alternative - log10_likelihood_null;
@@ -708,13 +708,13 @@
                             tp_result[dprimeIdx][thetaInd][mkrFreqIdx].R_square = R_square;
                             tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_mf = mkrFreq;
                           }
-                        }
-                      } /* end of theta */
-                    }   /* end of D prime */
                         } /* end of alpha */
-                    if (modelOptions.markerAnalysis != FALSE)
+			}
                         tp_result[dprimeIdx][thetaInd]
                           [mkrFreqIdx].lr_count++;
+                      } /* end of theta */
+                    }   /* end of D prime */
+                    if (modelOptions.markerAnalysis != FALSE)
                       break;
                   }     /* end of threshold loop */
                   if (modelOptions.markerAnalysis != FALSE)
@@ -879,7 +879,7 @@
           if (modelOptions.dryRun != 0)
             continue;
 
-          if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+          if (ret==-1) {
             fprintf (stderr, "Trait has likelihood 0\n");
             fprintf (stderr, "dgf=%f\n", gfreq);
             for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
@@ -987,7 +987,7 @@
                 fflush (stdout);
               }
 #endif
-              if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+              if (ret==-1) {
                 fprintf (stderr, "Trait has likelihood 0\n");
                 fprintf (stderr, "dgf=%f\n", gfreq);
                 for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
@@ -1428,7 +1428,7 @@
 	      }
 
               log10_likelihood_alternative = pedigreeSet.log10Likelihood;
-              if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99)
+              if (ret==-1)
                 log10_likelihood_ratio = 0;
               else {
                 log10_likelihood_ratio =
@@ -1499,7 +1499,7 @@
                   mp_result[posIdx].max_penIdx = penIdx;
                 }
               } /* end of calculating HET LR */
-            }
+	      }
               mp_result[posIdx].lr_count++;
             }
           }     /* end of genFreq loop */
@@ -1660,7 +1660,7 @@
 		  exit(EXIT_FAILURE);
 		}
 
-                if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+                if (ret==-1) {
                   log10_likelihood_ratio = 0;
                 } else {
                   log10_likelihood_ratio = log10_likelihood_alternative - likelihoodQT[pedigreeSet.numPedigree][gfreqInd]
@@ -1723,13 +1723,13 @@
                     mp_result[posIdx].max_paramIdx = paramIdx;
                     mp_result[posIdx].max_thresholdIdx = thresholdIdx;
                   }
-                }
-              } /* end of threshold loop */
-            }   /* end of penetrance loop */
-		  } /* end of alpha */
-          }     /* end of parameter loop */
+                } /* end of alpha */
+		} 
                 /* add the result to the right placeholder */
                 mp_result[posIdx].lr_count++;
+	      }   /* end of threshold loop */
+	    } /* end of penetrance loop */
+          }     /* end of parameter loop */
         }       /* end of gene freq */
 
 #ifndef SIMPLEPROGRESS
