@@ -262,7 +262,7 @@ char *estimateIterations (unsigned long eCL[])
 	  strcat (analysisType, "Quantitative Trait w/Threshold, ");
 	}
 	if (modelType.distrib == QT_FUNCTION_T) {
-	  strcat (analysisType, "Truncated Student's T-Distribution, Linkage ");
+	  strcat (analysisType, "Student's T-Distribution, Linkage ");
 	} else { // not T-Dist
 	  if (modelType.distrib == QT_FUNCTION_CHI_SQUARE) {
 	    strcat (analysisType, "Chi-Square Distribution, Linkage ");
@@ -315,7 +315,7 @@ char *estimateIterations (unsigned long eCL[])
 	  strcat (analysisType, "Quantitative Trait w/Threshold, ");
 	}
 	if (modelType.distrib == QT_FUNCTION_T) {
-	  strcat (analysisType, "Truncated Student's T-Distribution.");
+	  strcat (analysisType, "Student's T-Distribution.");
 	} else { // not T-Dist
 	  if (modelType.distrib == QT_FUNCTION_CHI_SQUARE) {
 	    strcat (analysisType, "Chi-Square Distribution.");
