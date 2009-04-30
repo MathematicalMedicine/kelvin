@@ -149,6 +149,7 @@ int main (int argc, char *argv[])
   if (modelOptions.integration) {
     #include "integrationMain.c"
   } else {
+    int danglingWire; // Do not remove upon pain of a broken gdb.
     #include "iterationMain.c"
   }
 
