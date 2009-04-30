@@ -83,8 +83,8 @@
 	k += 3;
       }
       if (modelType.trait == CT) {
-	xl[k] = modelRange.tthresh[liabIdx][0];//0.3;
-	xu[k] = modelRange.tthresh[liabIdx][modelRange.ntthresh -1];// 23.0;
+	xl[k] = 0.0; // modelRange.tthresh[liabIdx][0];//0.3;
+	xu[k] = 3.0; //modelRange.tthresh[liabIdx][modelRange.ntthresh -1];// 23.0;
 	volume_region *= (xu[k] - xl[k]);
 	k++;
 	//   fprintf(stderr, " in CT\n ");
