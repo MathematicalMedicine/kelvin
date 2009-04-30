@@ -321,12 +321,11 @@ compute_hlod_mp_qt (double x[], double *f)
   if (pedigreeSet.likelihood == 0.0
       && pedigreeSet.log10Likelihood == -9999.99) {
     log10_likelihood_ratio = 0;
-    avg_hetLR=0.0;
   } else {
     log10_likelihood_ratio =
       log10_likelihood_alternative - log10_likelihood_null -
       pedigreeSet.log10MarkerLikelihood;
-    // }
+  }
   /* check for overflow problem !!! */
   if (log10_likelihood_ratio >= DBL_MAX_10_EXP - 1) {
     likelihood_ratio = DBL_MAX;
@@ -431,7 +430,7 @@ compute_hlod_mp_qt (double x[], double *f)
     fprintf (stderr, "k=%d  while dim for BR is %d\n", k, s->ndim);
     exit (EXIT_FAILURE);
   }
-  }
+
   f[0] = avg_hetLR;
 
 }
@@ -442,7 +441,7 @@ compute_hlod_mp_dt (double x[], double *f)
 {
 
   int j;
-  int pedIdx, liabIdx, status,pen_size=3, ret;
+  int pedIdx, liabIdx, status,pen_size=3;
 
   double pen_DD, pen_Dd,pen_dD, pen_dd, gfreq, alphaV;
   double log10_likelihood_null, log10_likelihood_alternative,
@@ -545,7 +544,6 @@ compute_hlod_mp_dt (double x[], double *f)
 	    pPedigree->sPedigreeID);
       fprintf (stderr, "Pedigree %s has likelihood of 0 or too small.\n",
 	       pPedigree->sPedigreeID);
-      ret=-1;
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
       break;
@@ -555,7 +553,6 @@ compute_hlod_mp_dt (double x[], double *f)
 	       pPedigree->sPedigreeID);
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
-      ret=-2;
       break;
     } else {
       if (pPedigree->pCount[origLocus] == 1) {
@@ -585,23 +582,16 @@ compute_hlod_mp_dt (double x[], double *f)
   /* This is for alternative likelihood */
   locusList = &savedLocusList;
   xmissionMatrix = altMatrix;
-  ret=compute_likelihood (&pedigreeSet);
-  if(ret==-2){
-    /* negative likelihood */
-     fprintf(stderr, "Negative likelihood! Exiting!!\n");
-     exit(EXIT_FAILURE);
-  }
-
+  compute_likelihood (&pedigreeSet);
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
   if (pedigreeSet.likelihood == 0.0
       && pedigreeSet.log10Likelihood == -9999.99) {
     log10_likelihood_ratio = 0;
-    avg_hetLR=0.0;
   } else {
     log10_likelihood_ratio =
       log10_likelihood_alternative - log10_likelihood_null;
-    // }
+  }
   /* check for overflow problem !!! */
   if (log10_likelihood_ratio >= DBL_MAX_10_EXP - 1) {
     likelihood_ratio = DBL_MAX;
@@ -683,7 +673,7 @@ compute_hlod_mp_dt (double x[], double *f)
     else
       avg_hetLR *= x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2];
   }
-  }
+
   *f = avg_hetLR;
 }
 
@@ -691,7 +681,7 @@ void
 compute_hlod_2p_qt (double x[], double *f)
 {
 
-  int k, j, ret;
+  int k, j;
   int pedIdx, liabIdx = 0, status, pen_size=3;
   double constraint = 0.0;
   double mean_DD=0.0, mean_Dd=0.0, mean_dD=0.0, mean_dd=0.0;
@@ -840,7 +830,7 @@ compute_hlod_2p_qt (double x[], double *f)
 				       0);	/* current locus - start with 0 */
 
 
-  ret=compute_likelihood (&pedigreeSet);
+  compute_likelihood (&pedigreeSet);
 
   if (pedigreeSet.likelihood == 0.0
       && pedigreeSet.log10Likelihood == -9999.99) {
@@ -890,22 +880,16 @@ compute_hlod_2p_qt (double x[], double *f)
 				       -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
 				       0);	/* current locus - start with 0 */
 
-  ret=compute_likelihood (&pedigreeSet);
-  if(ret==-2){
-    /* negative likelihood */
-    fprintf(stderr, "Negative likelihood! Exiting!\n");
-    exit(EXIT_FAILURE);
-  }
+  compute_likelihood (&pedigreeSet);
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
   if (pedigreeSet.likelihood == 0.0
       && pedigreeSet.log10Likelihood == -9999.99) {
     log10_likelihood_ratio = 0;
-    avg_hetLR=0.0;
   } else {
     log10_likelihood_ratio =
       log10_likelihood_alternative - log10_likelihood_null;
-    //  }
+  }
 
   /* check for overflow problem !!! */
   if (log10_likelihood_ratio >= DBL_MAX_10_EXP - 1) {
@@ -1015,7 +999,7 @@ compute_hlod_2p_qt (double x[], double *f)
     exit (EXIT_FAILURE);
   }
 
-  }
+
   *f = avg_hetLR;
 }
 
@@ -1038,7 +1022,7 @@ compute_hlod_2p_dt (double x[], double *f)
 */
 
   int k, j;
-  int pedIdx, liabIdx = 0, status, pen_size=3,ret;
+  int pedIdx, liabIdx = 0, status, pen_size=3;
 
   double pen_DD, pen_Dd, pen_dD,pen_dd, gfreq, alphaV, thetaM, thetaF;
   double log10_likelihood_null, log10_likelihood_alternative,
@@ -1134,7 +1118,7 @@ compute_hlod_2p_dt (double x[], double *f)
 
 
   //  KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
-  ret=compute_likelihood (&pedigreeSet);
+  compute_likelihood (&pedigreeSet);
 
   //printf("likelihood =%15.13f with theta 0.5 with %d pedigrees\n", pedigreeSet.likelihood, pedigreeSet.numPedigree);
 
@@ -1194,23 +1178,20 @@ compute_hlod_2p_dt (double x[], double *f)
 				       0);	/* current locus - start with 0 */
 
   //  KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
-  ret=compute_likelihood (&pedigreeSet);
-  if (ret==-2){
-    fprintf(stderr, "Negative likelihood! Exiting...\n");
-    exit(EXIT_FAILURE);
-  }
+  compute_likelihood (&pedigreeSet);
+
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
+
 
 
   //printf("likelihood =%15.13f with theta %f  %d pedigree\n", pedigreeSet.likelihood,fixed_theta, pedigreeSet.numPedigree);                                  
   if (pedigreeSet.likelihood == 0.0
       && pedigreeSet.log10Likelihood == -9999.99) {
     log10_likelihood_ratio = 0;
-    avg_hetLR=0.0;
   } else {
     log10_likelihood_ratio =
       log10_likelihood_alternative - log10_likelihood_null;
-    //}
+  }
 
 
   /* check for overflow problem !!! */
@@ -1288,7 +1269,7 @@ compute_hlod_2p_dt (double x[], double *f)
       avg_hetLR *= x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2];
   }
 
-  }
+
   f[0] = avg_hetLR;
 
 }

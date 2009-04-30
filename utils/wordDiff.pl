@@ -33,12 +33,7 @@ for ($i = 0; $i < $#chunks_LEFT; $i++) {
 	    # It's numeric, try simple equality to avoid e+/-00 issues.
 	    if ($left != $right) {
 		# Not simply equal, get the deviation and compare to maximum allowable
-		if ($left != 0) {
-		    $offByFactor = ($left-$right)/$left;
-		} else {
-		    print "Zero value prevents proper comparison\n";
-		    exit (1);
-		}
+		$offByFactor = ($left-$right)/$left;
 #		print "Off by $offByFactor vs limit of $maxOffByFactor\n";
 		if (abs($offByFactor) > $maxOffByFactor) {
 		    print "Difference of factor of $offByFactor between $left and $right ".

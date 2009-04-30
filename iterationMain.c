@@ -277,7 +277,7 @@
                 if (gfreqInd != 0 || penIdx != 0) {
 		  pushStatus ('k', "evalCL0");
 		  //                  swStart (combinedComputeSW);
-                  ret=compute_likelihood (&pedigreeSet);
+                  compute_likelihood (&pedigreeSet);
                   cL[0]++;
 		  //                  swStop (combinedComputeSW);
                   if (statusRequestSignal) {
@@ -295,7 +295,7 @@
                 } else { // This _is_ the first iteration
 		  pushStatus ('k', "buildCL0");
 		  swStart (combinedBuildSW);
-		  ret=compute_likelihood (&pedigreeSet);
+		  compute_likelihood (&pedigreeSet);
 		  cL[0]++;
 		  swStop (combinedBuildSW);
 		  fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]));
@@ -372,7 +372,7 @@
 		    sprintf (partialPolynomialFunctionName, "CL1_P%%s_%s_%s",
 			     pLocus1->sName, pLocus2->sName);
                     swStart (combinedComputeSW);
-                    ret=compute_likelihood (&pedigreeSet);
+                    compute_likelihood (&pedigreeSet);
                     cL[1]++;
 		    //&&&		    fprintf (stderr, "loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx,thetaInd:\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
 		    //			     loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx,thetaInd);
@@ -390,14 +390,11 @@
                     }
 
                     log10_likelihood_alternative = pedigreeSet.log10Likelihood;
-		    if (ret==-2){
-		      fprintf(stderr, "Negative likelihood! Exiting...\n");
-		      exit(EXIT_FAILURE);
-		    }
                     if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                       log10_likelihood_ratio = 0;
                     } else {
                       log10_likelihood_ratio = log10_likelihood_alternative - log10_likelihood_null;
+                    }
                     /* check for overflow problem !!! */
                     if (log10_likelihood_ratio >= DBL_MAX_10_EXP - 1) {
                       likelihood_ratio = DBL_MAX;
@@ -410,6 +407,8 @@
                       likelihood_ratio = pow (10.0, log10_likelihood_ratio);
                       tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_total += likelihood_ratio;
                     }
+                    tp_result[dprimeIdx][thetaInd]
+                      [mkrFreqIdx].lr_count++;
 
                     /* caculating the HET */
                     for (j = 0; j < modelRange.nalpha; j++) {
@@ -448,9 +447,6 @@
                         tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_mf = mkrFreq;
                       }
                     }   /* end of calculating HET LR */
-		    } 
-		    tp_result[dprimeIdx][thetaInd]
-                      [mkrFreqIdx].lr_count++;
                   }     /* end of theta loop */
                 }       /* end of D prime loop */
                 if (modelOptions.markerAnalysis != FALSE) {
@@ -541,7 +537,7 @@
 		    if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
 		      pushStatus ('k', "evalCL2");
 		      //		      swStart (combinedComputeSW);
-		      ret=compute_likelihood (&pedigreeSet);
+		      compute_likelihood (&pedigreeSet);
 		      cL[2]++;
 		      //		      swStop (combinedComputeSW);
 		      if (statusRequestSignal) {
@@ -559,7 +555,7 @@
 		    } else { // This _is_ the first iteration
 		      pushStatus ('k', "buildCL2");
 		      swStart (combinedBuildSW);
-		      ret=compute_likelihood (&pedigreeSet);
+		      compute_likelihood (&pedigreeSet);
 		      cL[2]++;
 		      swStop (combinedBuildSW);
 		      fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]));
@@ -623,7 +619,7 @@
 
                         strcpy (partialPolynomialFunctionName, "cL3_P%s");
 			swStart (combinedComputeSW);
-                        ret=compute_likelihood (&pedigreeSet);
+                        compute_likelihood (&pedigreeSet);
                         cL[3]++;
 			swStop (combinedComputeSW);
 			if (statusRequestSignal) {
@@ -637,18 +633,13 @@
 			    fflush (stdout);
 			  }
 			}
-			if(ret==-2){
-			  /* negative likelihood */
-			  fprintf(stderr, "Negative likelihood! Exiting!\n");
-			  exit(EXIT_FAILURE);
-			}
 
                         log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                         if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                           log10_likelihood_ratio = 0;
                         } else {
                           log10_likelihood_ratio = log10_likelihood_alternative - log10_likelihood_null;
-                        
+                        }
                         /* check for overflow problem !!! */
                         if (log10_likelihood_ratio >= DBL_MAX_10_EXP - 1) {
                           likelihood_ratio = DBL_MAX;
@@ -661,6 +652,8 @@
                           likelihood_ratio = pow (10.0, log10_likelihood_ratio);
                           tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_total += likelihood_ratio;
                         }
+                        tp_result[dprimeIdx][thetaInd]
+                          [mkrFreqIdx].lr_count++;
                         /* caculating the HET */
                         for (j = 0; j < modelRange.nalpha; j++) {
                           alphaV = modelRange.alpha[j];
@@ -711,10 +704,7 @@
                         }
                       } /* end of theta */
                     }   /* end of D prime */
-                        } /* end of alpha */
                     if (modelOptions.markerAnalysis != FALSE)
-                        tp_result[dprimeIdx][thetaInd]
-                          [mkrFreqIdx].lr_count++;
                       break;
                   }     /* end of threshold loop */
                   if (modelOptions.markerAnalysis != FALSE)
@@ -868,7 +858,7 @@
 
           /* Compute the likelihood for the trait */
           sprintf (partialPolynomialFunctionName, "TL4_P%%sSL%d", modelOptions.sexLinked);
-          ret=compute_likelihood (&pedigreeSet);
+          compute_likelihood (&pedigreeSet);
           cL[4]++;
 #ifndef SIMPLEPROGRESS
           if (cL[4] % MAX (1, eCL[4] / 5) == 1) {
@@ -979,7 +969,7 @@
               else
                 update_penetrance (&pedigreeSet, traitLocus);
               sprintf (partialPolynomialFunctionName, "TL5_P%%sSL%d", modelOptions.sexLinked);
-              ret=compute_likelihood (&pedigreeSet);
+              compute_likelihood (&pedigreeSet);
               cL[5]++;
 #ifndef SIMPLEPROGRESS
               if (cL[5] % MAX (1, eCL[5] / 5) == 1) {
@@ -1173,7 +1163,7 @@
 	  }
 	} else
 	  pushStatus ('k', "evalML6");
-        ret=compute_likelihood (&pedigreeSet);
+        compute_likelihood (&pedigreeSet);
         cL[6]++;
 	popStatus ('k');
 
@@ -1380,7 +1370,7 @@
             if (gfreqInd != 0 || penIdx != 0) {
 	      pushStatus ('k', "evalCL7");
               swStart (combinedComputeSW);
-              ret=compute_likelihood (&pedigreeSet);
+              compute_likelihood (&pedigreeSet);
               cL[7]++;
               swStop (combinedComputeSW);
               if (statusRequestSignal) {
@@ -1405,7 +1395,7 @@
             } else {     // This _is_ the first iteration
 	      pushStatus ('k', "buildCL7");
               swStart (combinedBuildSW);
-              ret=compute_likelihood (&pedigreeSet);
+              compute_likelihood (&pedigreeSet);
               cL[7]++;
               swStop (combinedBuildSW);
 #ifndef SIMPLEPROGRESS
@@ -1421,16 +1411,10 @@
               print_dryrun_stat (&pedigreeSet, traitPos);
             } else {
 
-	      if(ret==-2){
-		/* negative likelihood */
-		fprintf(stderr, "Negative likelihood! Exiting!!\n");
-		exit(EXIT_FAILURE);
-	      }
-
               log10_likelihood_alternative = pedigreeSet.log10Likelihood;
               if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99)
                 log10_likelihood_ratio = 0;
-              else {
+              else
                 log10_likelihood_ratio =
                   log10_likelihood_alternative - likelihoodDT[gfreqInd][penIdx] - pedigreeSet.log10MarkerLikelihood;
               /* check for overflow problem !!! */
@@ -1446,6 +1430,7 @@
                 mp_result[posIdx].lr_total += likelihood_ratio;
               }
               /* add the result to the right placeholder */
+              mp_result[posIdx].lr_count++;
               for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
                 pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
                 if (pPedigree->load_flag == 0) {
@@ -1499,8 +1484,6 @@
                   mp_result[posIdx].max_penIdx = penIdx;
                 }
               } /* end of calculating HET LR */
-            }
-              mp_result[posIdx].lr_count++;
             }
           }     /* end of genFreq loop */
         }
@@ -1616,7 +1599,7 @@
                 if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
 		  pushStatus ('k', "evalCL8");
                   swStart (combinedComputeSW);
-                  ret=compute_likelihood (&pedigreeSet);
+                  compute_likelihood (&pedigreeSet);
                   cL[8]++;
                   swStop (combinedComputeSW);
                   if (statusRequestSignal) {
@@ -1641,7 +1624,7 @@
                 } else {  // This _is_ the first iteration
 		  pushStatus ('k', "buildCL8");
                   swStart (combinedBuildSW);
-                  ret=compute_likelihood (&pedigreeSet);
+                  compute_likelihood (&pedigreeSet);
                   cL[8]++;
                   swStop (combinedBuildSW);
 #ifndef SIMPLEPROGRESS
@@ -1655,17 +1638,12 @@
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                 if (isnan (log10_likelihood_alternative))
                   fprintf (stderr, "ALT likelihood is NAN.\n");
-		if(ret==-2) {
-		  fprintf(stderr, "Negative likelihood! Exiting!!\n");
-		  exit(EXIT_FAILURE);
-		}
-
                 if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
                   log10_likelihood_ratio = 0;
                 } else {
                   log10_likelihood_ratio = log10_likelihood_alternative - likelihoodQT[pedigreeSet.numPedigree][gfreqInd]
                     [penIdx][paramIdx][thresholdIdx] - pedigreeSet.log10MarkerLikelihood;
-                
+                }
                 /* check for overflow problem !!! */
                 if (log10_likelihood_ratio >= DBL_MAX_10_EXP - 1) {
                   likelihood_ratio = DBL_MAX;
@@ -1678,6 +1656,8 @@
                   likelihood_ratio = pow (10.0, log10_likelihood_ratio);
                   mp_result[posIdx].lr_total += likelihood_ratio;
                 }
+                /* add the result to the right placeholder */
+                mp_result[posIdx].lr_count++;
 
                 if (isnan (likelihood_ratio))
                   fprintf (stderr, "LR for the pedigree set is NAN.\n");
@@ -1726,10 +1706,7 @@
                 }
               } /* end of threshold loop */
             }   /* end of penetrance loop */
-		  } /* end of alpha */
           }     /* end of parameter loop */
-                /* add the result to the right placeholder */
-                mp_result[posIdx].lr_count++;
         }       /* end of gene freq */
 
 #ifndef SIMPLEPROGRESS
