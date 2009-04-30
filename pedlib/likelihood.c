@@ -24,9 +24,8 @@ char *likelihoodVersion = "$Id$";
 
 #include "pedlib.h"
 #include "locus.h"
-#include "utils.h"		/* for logging */
-#include "sw.h"
-#include "tools.h"
+#include "../utils/utils.h"		/* for logging */
+#include "../utils/sw.h"
 #include "likelihood.h"
 #include "genotype_elimination.h"
 #ifdef _OPENMP
@@ -261,6 +260,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   int origLocus = 0;		/* locus index in the original locus list
 				 * this is used to find out the pedigree
 				 * counts mainly for case control analyses */
+  int ret=0; 
+
   if (locusList->numLocus > 1)
     origLocus = locusList->pLocusIndex[1];
   numLocus = locusList->numLocus;
@@ -380,17 +381,19 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 		"Pedigree %s has likelihood %G that's too small.\n",
 		pPedigree->sPedigreeID, pPedigree->likelihood);
 	  fprintf (stderr,
-		   "Pedigree %s has likelihood %G that's too small.\n",
+		   "Pedigree %s has likelihood %e that's too small.\n",
 		   pPedigree->sPedigreeID, pPedigree->likelihood);
+	  ret = -1;
 	  product_likelihood = 0.0;
 	  sum_log_likelihood = -9999.99;
-	  break;
+	  //break;
 	} else if (pPedigree->likelihood < 0.0) {
 	  KASSERT (pPedigree->likelihood >= 0.0,
 		   "Pedigree %s with NEGATIVE likelihood - This is CRAZY!!!.\n",
 		   pPedigree->sPedigreeID);
 	  product_likelihood = 0.0;
 	  sum_log_likelihood = -9999.99;
+	  ret = -2;
 	  break;
 	} else {
 	  if (pPedigree->pCount[origLocus] == 1) {
@@ -413,12 +416,20 @@ compute_likelihood (PedigreeSet * pPedigreeList)
     }
   }
 
-  pPedigreeList->likelihood = product_likelihood;
-  pPedigreeList->log10Likelihood = sum_log_likelihood;
+  if(ret<0){
+    product_likelihood = 0.0;
+    sum_log_likelihood = -9999.99;
+    pPedigreeList->likelihood = product_likelihood;
+    pPedigreeList->log10Likelihood = sum_log_likelihood;
+  }
+  else{
+    pPedigreeList->likelihood = product_likelihood;
+    pPedigreeList->log10Likelihood = sum_log_likelihood;
+  }
   KLOG (LOGLIKELIHOOD, LOGDEBUG, "Sum of log Likelihood is: %e\n",
 	sum_log_likelihood);
 
-  return 0;
+  return ret;
 }
 
 /* release polynomial for all pedigrees */
