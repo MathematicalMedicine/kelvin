@@ -211,9 +211,13 @@ char *estimateIterations (unsigned long eCL[])
     eCL[0] = 0;
     eCL[1] = totalLoopsForDPrime * modelRange.ntheta;
     sprintf (analysisType, "%dD' cases of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)\n"
-	     "Marker-to-marker Two-Point Linkage Disequilibrium.",
+	     "Marker-to-marker Two-Point ",
 	     totalLoopsForDPrime, modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
 	     pedigreeSet.numPedigree);
+    if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
+      strcat (analysisType, "Equilibrium.");
+    else
+      strcat (analysisType, "Disequilibrium.");
   } else { // not AM/MM
     if (modelType.type == TP) {
       /* 
