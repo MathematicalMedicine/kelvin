@@ -1,4 +1,7 @@
-Version 0.37.4
+Version 0.37.5
+  Fixed bug in handling likelihood of 0 under alternative.
+  Fixed description of run type. Marker progress is always
+  output now. D' of zero always included in LD analyses.
   Revitalized KLOG and LOG directive. Fixed
   Student's T pdf values for x outside of -10 to 10.
   Several integration fixes including duplicate results
