@@ -1,25 +1,19 @@
 **************
 Current Issues:
-1. performance problem
-2. memory runs out for >4 markers w/polynomial (snps)
-3. walking chromosome works but gets slower on each position
+1. Memory demand under polynomial mode
+2. Multiple D' for dKelvin
 
 *********************
 Near future Additions:
-Write out lods.out file
-sex specific LD for TP
-Allele frequency estimation - MLE
-loops
-Allow imprinting
-Lander green algorithm
+1. Write out lods.out file
+2. Allele frequency estimation - MLE
+3. Lander green algorithm
 
-*******************
-Associated Programs:
-seq_update needs to be updated to reflect the new output file
 
 ************************
 Long shots (low priority):
-covariates
-allow >2 alleles for disease locus
-allow >1 disease loci
+1. covariates
+2. allow >2 alleles for disease locus
+3. allow >1 disease loci
+4. sex specific LD for TP
 
