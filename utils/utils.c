@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include "utils.h"
 
 /**********************************************************************
@@ -254,12 +255,16 @@ fgetlongs (char **buff, int *bufflen, FILE * fp)
 #define INSEPARATOR  3
 #define INCOMPARATOR 4
 
-/* Permutes a line of input. Leading and trailing whitespace is deleted;
- * whitespace that brackets 'separator' characters (',', '-', ';', ':') is
- * deleted; whitespace between 'comparator' characters ('!', '>'. '=') is deleted,
- * all other whitespace is reduced to a single space; groups of comparator
- * characters are forcibly bracketed by single spaces; comment characters
- * (pound sign) and all subsequent characters up to end of line are deleted.
+/* Permutes a line of input:
+ * - Leading and trailing whitespace is deleted
+ * - Whitespace that brackets 'separator' characters ('-', ';', ':') is
+ *   deleted, with the exeception of a '-' that is preceeded by a non-number
+ *   and whitepace, and followed by a number
+ * - Whitespace between 'comparator' characters (',', '!', '>'. '=') is deleted,
+ *   and groups of comparator characters are forcibly bracketed by a single space
+ * - All other whitespace is reduced to a single space
+ * - Comment characters (pound sign) and all subsequent characters up to end
+ *   of line are deleted.
  * 
  */
 int permuteLine (char *line, int maxlength)
@@ -274,7 +279,10 @@ int permuteLine (char *line, int maxlength)
    * need to put around groups of comparators in the second loop.
    */
   while (1) {
-    //printf ("va %d is '%c', vb %d is '%c' state is %d -> ", va, line[va], vb, line[vb], state);
+    printf ("%*sv (va %d)\n", va+1, " ", va);
+    printf (" %s", line);
+    printf ("%*s^ (vb %d, state %d, compcount %d)\n", vb+1, " ", vb, state, compcount);
+
     if (index (" \t", line[vb]) != NULL) {
       if (state == INSTRING) 
 	line[va++] = ' ';
@@ -284,7 +292,16 @@ int permuteLine (char *line, int maxlength)
       if (state != STARTOFLINE)
 	state = INWHITESPACE;
       
-    } else if (index ("-:;", line[vb]) != NULL) {   /* this used to include ',' */
+    } else if (line[vb] == '-') {  /* have to handle '-' separately */
+      if ((state == INWHITESPACE) && (va > 1) && isdigit (line[va-2])) {
+	line[va-1] = line[vb++];
+      } else 
+	line[va++] = line[vb++];
+      if (state == INCOMPARATOR)
+	compcount++;
+      state = INSEPARATOR;
+
+    } else if (index (":;", line[vb]) != NULL) {   /* this used to include ',' */
       if (state == INWHITESPACE)
 	line[va-1] = line[vb++];
       else 
@@ -320,9 +337,12 @@ int permuteLine (char *line, int maxlength)
 	compcount++;
       state = INSTRING;
     }
-    //printf ("va %d is '%c', vb %d is '%c' state is %d, \n", va, line[va], vb, line[vb], state);
+    printf ("----\n");
   }
-  //printf ("all done: va %d, vb %d, compcount %d, line '%s'\n", va, vb, compcount, line);
+  printf ("%*sv (va %d)\n", va+1, " ", va);
+  printf (" %s\n", line);
+  printf ("%*s^ (vb %d, state %d, compcount %d, final)\n", vb+1, " ", vb, state, compcount);
+  printf ("+++++\n");
 
   if (compcount == 0)
     return (0);
@@ -330,7 +350,7 @@ int permuteLine (char *line, int maxlength)
     return (-1);
     
   /* Second loop: insert spaces around groups of comparators. We simplify the states;
-   * now strings are "everything that's not a comparator".
+   * now "string" means "everything that's not a comparator".
    */
   va = strlen (line);
   vb = va + compcount;
