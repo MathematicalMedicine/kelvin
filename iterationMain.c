@@ -498,11 +498,11 @@
                         }
                         pTrait->means[liabIdx][0][0] = mean_DD;
                         pTrait->means[liabIdx][0][1] = mean_Dd;
-                        pTrait->means[liabIdx][1][0] = mean_Dd;
+                        pTrait->means[liabIdx][1][0] = mean_dD;
                         pTrait->means[liabIdx][1][1] = mean_dd;
                         pTrait->stddev[liabIdx][0][0] = SD_DD;
                         pTrait->stddev[liabIdx][0][1] = SD_Dd;
-                        pTrait->stddev[liabIdx][1][0] = SD_Dd;
+                        pTrait->stddev[liabIdx][1][0] = SD_dD;
                         pTrait->stddev[liabIdx][1][1] = SD_dd;
 
                         /* threshold for QT */
@@ -968,11 +968,11 @@
                 }
                 pTrait->means[liabIdx][0][0] = mean_DD;
                 pTrait->means[liabIdx][0][1] = mean_Dd;
-                pTrait->means[liabIdx][1][0] = mean_Dd;
+                pTrait->means[liabIdx][1][0] = mean_dD;
                 pTrait->means[liabIdx][1][1] = mean_dd;
                 pTrait->stddev[liabIdx][0][0] = SD_DD;
                 pTrait->stddev[liabIdx][0][1] = SD_Dd;
-                pTrait->stddev[liabIdx][1][0] = SD_Dd;
+                pTrait->stddev[liabIdx][1][0] = SD_dD;
                 pTrait->stddev[liabIdx][1][1] = SD_dd;
 
                 /* threshold for QT */
@@ -1581,11 +1581,11 @@
                   }
                   pTrait->means[liabIdx][0][0] = mean_DD;
                   pTrait->means[liabIdx][0][1] = mean_Dd;
-                  pTrait->means[liabIdx][1][0] = mean_Dd;
+                  pTrait->means[liabIdx][1][0] = mean_dD;
                   pTrait->means[liabIdx][1][1] = mean_dd;
                   pTrait->stddev[liabIdx][0][0] = SD_DD;
                   pTrait->stddev[liabIdx][0][1] = SD_Dd;
-                  pTrait->stddev[liabIdx][1][0] = SD_Dd;
+                  pTrait->stddev[liabIdx][1][0] = SD_dD;
                   pTrait->stddev[liabIdx][1][1] = SD_dd;
 
                   /* threshold for QT */

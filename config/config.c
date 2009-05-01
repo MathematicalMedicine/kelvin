@@ -1017,6 +1017,10 @@ readConfigFile (char *file)
     KLOG (LOGINPUTFILE, LOGDEBUG, "Imprinting found, enabling\n");
   }
 
+  if (modelOptions.imprintingFlag !=TRUE) {
+    addConstraint (PARAMC, dD, 0, 1, EQ, Dd, 0, 1, FALSE);
+  }
+
   /* Sort the values in the final model. Sorted values better support
    * the application of constraints. */
   sortRange (&modelRange);
