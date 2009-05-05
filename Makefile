@@ -4,6 +4,8 @@
 
 # Compiled executables and scripts will be installed in $BINDIR
 BINDIR=/usr/local/bin
+OWNER=root
+GROUP=root
 
 # $INCDIR and $LIBDIR should point to where headers and libraries for
 # GSL (GNU Scientific Library) can be found. Remember you can specify these
@@ -30,7 +32,7 @@ LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lutils -lm -lpthread
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
-#CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
+CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
 CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
 LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
@@ -103,16 +105,16 @@ test :
 	make -C test-suite -f Makefile test
 
 $(BINDIR)/kelvin-$(VERSION) : kelvin
-	install -o root -g root -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
 
 $(BINDIR)/calc_updated_ppl : calc_updated_ppl
-	install -o root -g root -m 0755 -p calc_updated_ppl $(BINDIR)/calc_updated_ppl
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p calc_updated_ppl $(BINDIR)/calc_updated_ppl
 
 $(BINDIR)/seq_update_br.pl : seq_update/seq_update_br.pl
-	install -o root -g root -m 0755 -p seq_update/seq_update_br.pl $(BINDIR)/seq_update_br.pl
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/seq_update_br.pl $(BINDIR)/seq_update_br.pl
 
 $(BINDIR)/convert_br.pl : seq_update/convert_br.pl
-	install -o root -g root -m 0755 -p seq_update/convert_br.pl $(BINDIR)/convert_br.pl
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/convert_br.pl $(BINDIR)/convert_br.pl
 
 $(BINDIR)/compileDL.sh : compileDL.sh
-	install -o root -g root -m 0755 -p compileDL.sh $(BINDIR)/compileDL.sh
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p compileDL.sh $(BINDIR)/compileDL.sh
