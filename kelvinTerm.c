@@ -64,12 +64,10 @@
   swLogMsg ("Finished run");
 
 /* Close file pointers */
-if (modelType.type == TP) {
+if (modelType.type == TP)
   fclose (fpPPL);
-  if (fpTP != NULL)
-    fclose (fpTP);
-}
+
 if (fpMOD != NULL)
   fclose (fpMOD);
-if (modelOptions.markerAnalysis == FALSE)
+if (fpHet != NULL)
   fclose (fpHet);

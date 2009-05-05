@@ -48,7 +48,7 @@ void *monitorStatus () {
       if (!(wakeCount % 2)) {
 	thrashingCheck ();
 	statusRequestSignal = TRUE;
-	//	kill (getpid (), SIGQUIT);   // Send a status-updating signal
+//	kill (getpid (), SIGQUIT);   // Send a status-updating signal
       }
       currentVMK = swGetCurrentVMK (getpid ());
 #ifdef MEMGRAPH
