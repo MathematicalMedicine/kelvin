@@ -745,7 +745,6 @@
 	if (modelOptions.markerAnalysis == FALSE)
 	  write2ptBRFile ();
         write2ptMODFile ();
-	writeMMFileDetail ();
 	writePPLFileDetail ();
 
         /* need to clear polynomial */

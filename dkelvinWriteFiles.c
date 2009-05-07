@@ -81,111 +81,6 @@ void dk_writeMPBRData (double ppl, double br)
 }
 
 
-void dk_write2ptMODFile (double value, st_DKMaxModel *model)
-{
-  int i, j;
-
-  if (fpMOD == NULL)
-    return;
-  
-  if (modelOptions.markerAnalysis == FALSE)
-    fprintf (fpMOD, "Chr Trait Marker Position MOD");
-  else
-    fprintf (fpMOD, "Chr Marker1 Position1 Marker2 Position2 MOD");
-  
-  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
-    for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
-      for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
-	fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
-  
-  //  fprintf (fpMOD, " Theta(M,F) Alpha DGF MF");
-  fprintf (fpMOD, " Theta(M,F) Alpha DGF");
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
-    if (modelType.trait == DT)
-      if (modelOptions.imprintingFlag)
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)\n", liabIdx);
-      else
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)\n", liabIdx);
-    else {
-      if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-	if (modelOptions.imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD", liabIdx);
-	else
-	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD", liabIdx);
-      else
-	if (modelOptions.imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF", liabIdx);
-	else
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
-      if (modelType.trait == CT)
-	fprintf (fpMOD, ",Thresh)\n");
-      else
-	fprintf (fpMOD, ")\n");
-    }
-
-  if (modelOptions.markerAnalysis == FALSE)
-    /* Chr Trait Marker Position */
-    fprintf (fpMOD, "%d %s %s %.4f", pLocus2->pMapUnit->chromosome, pLocus1->sName,
-	     pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
-  else
-    /* Seq Marker1 Position1 Marker2 Position2 */
-    fprintf (fpMOD, "%d %s %.4f %s %.4f", pLocus2->pMapUnit->chromosome,
-	     pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_SEX_AVERAGE],
-	     pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
-  
-  /* MOD */
-  fprintf (fpMOD, " %.4f", log10 (value));
-  
-  /* D' */
-  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {	
-    /* This bit is almost certainly wrong, given dkelvin's single D' limitation. */
-    // int ii,jj;
-    // for (ii = 0; ii < pLocus1->numOriginalAllele - 1; ii++)
-    //   for (jj = 0; jj < pLocus2->numOriginalAllele - 1; jj++)
-    //     fprintf (fpMOD, " %.2f", pLambdaCell->lambda[dprimeIdx][ii][jj]);
-    //    fprintf (fpMOD, " %.2f", model->dprime[0]);
-    fprintf (fpMOD, " %.8f", model->dprime[0]);
-  }
-
-  /* Theta Alpha DGF MF */
-  //  fprintf (fpMOD, " (%.4f,%.4f) %.2f %.4f %.4f", model->theta[0], model->theta[1],
-  //	   model->alpha, model->dgf, model->mf);
-  fprintf (fpMOD, " (%.8f,%.8f) %.8f %.8f", model->theta[0], model->theta[1],
-	   model->alpha, model->dgf);
-	    
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-    if (! modelOptions.imprintingFlag)
-      /* DD Dd dd or DDMean DdMean ddMean */
-      //      fprintf (fpMOD, " (%.3f,%.3f,%.3f", model->pen[liabIdx].DD, model->pen[liabIdx].Dd,
-      fprintf (fpMOD, " (%.8f,%.8f,%.8f", model->pen[liabIdx].DD, model->pen[liabIdx].Dd,
-	       model->pen[liabIdx].dd);
-    else 
-      /* DD Dd dD dd or DDMean DdMean dDMean ddMean */
-      fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", model->pen[liabIdx].DD,
-	       model->pen[liabIdx].Dd, model->pen[liabIdx].dD, model->pen[liabIdx].dd);
-    
-    if (modelType.trait != DICHOTOMOUS) {
-      if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-	if (! modelOptions.imprintingFlag)
-	  /* DDSD DdSD ddSD */
-	  fprintf (fpMOD, ",%.3f,%.3f,%.3f", model->pen[liabIdx].DDSD,
-		   model->pen[liabIdx].DdSD, model->pen[liabIdx].ddSD);
-	else 
-	  /* DDSD DdSD dDSD ddSD */
-	  fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", model->pen[liabIdx].DDSD,
-		   model->pen[liabIdx].DdSD, model->pen[liabIdx].dDSD, model->pen[liabIdx].ddSD);
-      }
-      if (modelType.trait == CT)
-	/* Theshold */
-	fprintf (fpMOD, ",%.3f", model->pen[liabIdx].threshold);
-    }
-    fprintf (fpMOD, ")\n");
-  }
-  
-  return;
-}
-
-
 void dk_writeMPMODHeader ()
 {
   if (fpMOD == NULL)
@@ -258,83 +153,88 @@ void dk_writeMPMODData (double value, st_DKMaxModel *model)
 }
 
 
-void dk_writeMAXHeader ()
+
+void dk_write2ptMODHeader ()
 {
   int i, j, liabIdx;
 
-  if (fpTP == NULL)
+  if (fpMOD == NULL)
     return;
 
   if (modelOptions.markerAnalysis == FALSE) {
-    fprintf (fpTP, "# Seq: %d Chr: %d Trait: %s Marker: %s", loc2,
+    fprintf (fpMOD, "# Seq: %d Chr: %d Trait: %s Marker: %s", loc2,
 	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
     
     if ((modelOptions.mapFlag == SEX_SPECIFIC) &&
 	(pLocus2->pMapUnit->mapPos[MAP_FEMALE] >= 0) &&
 	(pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0)) {
-      fprintf (fpTP, " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
+      fprintf (fpMOD, " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
 	       pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
 	       pLocus2->pMapUnit->mapPos[MAP_FEMALE], pLocus2->pMapUnit->mapPos[MAP_MALE]);
       
     } else {
-      fprintf (fpTP, " Position: %.4f", pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
+      fprintf (fpMOD, " Position: %.4f", pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
     }
     
   } else {
-    fprintf (fpTP, "# Seq: %d Chr %d: Marker1: %s Position1: %.4f Marker2: %s Position2: %.4f\n",
+    fprintf (fpMOD, "# Seq: %d Chr %d: Marker1: %s Position1: %.4f Marker2: %s Position2: %.4f",
 	     loc2, pLocus2->pMapUnit->chromosome,
 	      pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_SEX_AVERAGE],
 	      pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]); 
   }
   
   if (pLocus2->pMapUnit->basePairLocation >= 0)
-    fprintf (fpTP, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
-  fprintf (fpTP, "\n");
+    fprintf (fpMOD, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
+  fprintf (fpMOD, "\n");
 
-  fprintf (fpTP, "Case MOD");
+  if (modelOptions.extraMODs)
+    fprintf (fpMOD, "Case ");
+  fprintf (fpMOD, "MOD");
   
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
     for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
       for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
-	fprintf (fpTP, " D%1d%1d", i + 1, j + 1);
+	fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
 
   if (modelOptions.markerAnalysis != FALSE)
-    fprintf (fpTP, " Theta(M,F) R2 Alpha DGF MF");
+    fprintf (fpMOD, " Theta(M,F) R2 Alpha DGF MF");
   else
-    fprintf (fpTP, " Theta(M,F) Alpha DGF MF");
+    fprintf (fpMOD, " Theta(M,F) Alpha DGF MF");
   
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
     if (modelType.trait == DT)
       if (modelOptions.imprintingFlag)
-	fprintf (fpTP, " LC%dPV(DD,Dd,dD,dd)\n", liabIdx);
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)\n", liabIdx);
       else
-	fprintf (fpTP, " LC%dPV(DD,Dd,dd)\n", liabIdx);
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)\n", liabIdx);
     else {
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
 	if (modelOptions.imprintingFlag)
-	  fprintf (fpTP, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD", liabIdx);
 	else
-	  fprintf (fpTP, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD", liabIdx);
       else
 	if (modelOptions.imprintingFlag)
-	  fprintf (fpTP, " LC%dPV(DDDF,DdDF,dDDF,ddDF", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF", liabIdx);
 	else
-	  fprintf (fpTP, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
       if (modelType.trait == CT)
-	fprintf (fpTP, ",Thresh)\n");
+	fprintf (fpMOD, ",Thresh)\n");
       else
-	fprintf (fpTP, ")\n");
+	fprintf (fpMOD, ")\n");
     }
 }
 
 
-void dk_writeMAXData (char *description, double value, st_DKMaxModel *model)
+void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
 {
-  if (fpTP == NULL)
+  if (fpMOD == NULL)
     return;
 
   /* MOD */
-  fprintf (fpTP, "%s %.4f", description, log10 (value));
+  if (modelOptions.extraMODs)
+    fprintf (fpMOD, "%s ", description);
+  fprintf (fpMOD, "%.4f", log10 (value));
   
   /* D' */
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {	
@@ -342,45 +242,45 @@ void dk_writeMAXData (char *description, double value, st_DKMaxModel *model)
     // int ii,jj;
     // for (ii = 0; ii < pLocus1->numOriginalAllele - 1; ii++)
     //   for (jj = 0; jj < pLocus2->numOriginalAllele - 1; jj++)
-    //     fprintf (fpTP, " %.2f", pLambdaCell->lambda[dprimeIdx][ii][jj]);
-    fprintf (fpTP, " %.2f", model->dprime[0]);
+    //     fprintf (fpMOD, " %.2f", pLambdaCell->lambda[dprimeIdx][ii][jj]);
+    fprintf (fpMOD, " %.2f", model->dprime[0]);
   }
 
   if (modelOptions.markerAnalysis == FALSE)
     /* Theta Alpha DGF MF */
-    fprintf (fpTP, " (%.4f,%.4f) %.2f %.4f %.4f", model->theta[0], model->theta[1],
+    fprintf (fpMOD, " (%.4f,%.4f) %.2f %.4f %.4f", model->theta[0], model->theta[1],
 	     model->alpha, model->dgf, model->mf);
   else
     /* Theta R2 Alpha DGF MF */
-    fprintf (fpTP, " (%.4f,%.4f) %.3f %.2f %.4f %.4f", model->theta[0], model->theta[1],
+    fprintf (fpMOD, " (%.4f,%.4f) %.3f %.2f %.4f %.4f", model->theta[0], model->theta[1],
 	     model->r2, model->alpha, model->dgf, model->mf);
 	    
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
     if (! modelOptions.imprintingFlag)
       /* DD Dd dd or DDMean DdMean ddMean */
-      fprintf (fpTP, " (%.3f,%.3f,%.3f", model->pen[liabIdx].DD, model->pen[liabIdx].Dd,
+      fprintf (fpMOD, " (%.3f,%.3f,%.3f", model->pen[liabIdx].DD, model->pen[liabIdx].Dd,
 	       model->pen[liabIdx].dd);
     else 
       /* DD Dd dD dd or DDMean DdMean dDMean ddMean */
-      fprintf (fpTP, " (%.3f,%.3f,%.3f,%.3f", model->pen[liabIdx].DD,
+      fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", model->pen[liabIdx].DD,
 	       model->pen[liabIdx].Dd, model->pen[liabIdx].dD, model->pen[liabIdx].dd);
     
     if (modelType.trait != DICHOTOMOUS) {
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
 	if (! modelOptions.imprintingFlag)
 	  /* DDSD DdSD ddSD */
-	  fprintf (fpTP, ",%.3f,%.3f,%.3f", model->pen[liabIdx].DDSD,
+	  fprintf (fpMOD, ",%.3f,%.3f,%.3f", model->pen[liabIdx].DDSD,
 		   model->pen[liabIdx].DdSD, model->pen[liabIdx].ddSD);
 	else 
 	  /* DDSD DdSD dDSD ddSD */
-	  fprintf (fpTP, ",%.3f,%.3f,%.3f,%.3f", model->pen[liabIdx].DDSD,
+	  fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", model->pen[liabIdx].DDSD,
 		   model->pen[liabIdx].DdSD, model->pen[liabIdx].dDSD, model->pen[liabIdx].ddSD);
       }
       if (modelType.trait == CT)
 	/* Theshold */
-	fprintf (fpTP, ",%.3f", model->pen[liabIdx].threshold);
+	fprintf (fpMOD, ",%.3f", model->pen[liabIdx].threshold);
     }
-    fprintf (fpTP, ")\n");
+    fprintf (fpMOD, ")\n");
   }
   
   return;

@@ -213,6 +213,14 @@
 	maximum_function_value = 0.0;  // global max 
         maximum_dprime0_value = 0.0;   // max when D' == 0
         maximum_theta0_value = 0.0;    // max when Theta == 0
+	/* Since dynamic sampling is unlikely to ever sample at Theta == 0,
+	 * we'll need to narrow down the Theta that's closest. Start by setting
+	 * the thetas for theta0max to a "large" value.
+	 */
+	dk_theta0max.theta[0] = dk_theta0max.theta[1] = 0.5;
+	/* Same thing for dprime0max as for theta0max, above */
+	if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+	  dk_dprime0max.dprime[0] = 1;
 
 	pLocus2 = originalLocusList.ppLocusList[loc2];
 	if (pLocus2->locusType != LOCUS_TYPE_MARKER)
@@ -393,7 +401,7 @@
 	      maximum_function_value = localmax_value;
 	      if (modelOptions.mapFlag == SA) {
 		if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
-		    maxima_x[0] = dk_globalmax.dprime[0] = fixed_dprime;
+		  maxima_x[0] = dk_globalmax.dprime[0] = fixed_dprime;
 		maxima_x[1] = dk_globalmax.theta[0] = dk_globalmax.theta[1] = fixed_theta;
 	      } else {
 		if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
@@ -405,23 +413,42 @@
 	      memcpy (&(maxima_x[2]), localmax_x, sizeof (double) * 18);
 	    }
 
-	    if ((modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) &&
-		(maximum_dprime0_value < localmax_value) && (fabs (fixed_dprime) < 1e-9)) {
-	      maximum_dprime0_value = localmax_value;
-	      dk_dprime0max.dprime[0] = fixed_dprime;
-	      dk_dprime0max.theta[0] = dk_dprime0max.theta[1] = fixed_theta;
-	      dk_copyMaxModel (localmax_x, &dk_dprime0max);
+	    /* If LD, and (D' less then stored D', or BR larger than stored BR */
+	    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+	      double delta_dprime = dk_dprime0max.dprime[0] - fixed_dprime;
+	      if ((fabs (fixed_dprime) < fabs (dk_dprime0max.dprime[0]) - 1e-9) ||
+		  ((fabs (delta_dprime) <= 1e-9) && (maximum_dprime0_value < localmax_value))) {
+		maximum_dprime0_value = localmax_value;
+		dk_dprime0max.dprime[0] = fixed_dprime;
+		dk_dprime0max.theta[0] = dk_dprime0max.theta[1] = fixed_theta;
+		dk_copyMaxModel (localmax_x, &dk_dprime0max);
+	      }
 	    }
 	    
-	    if (maximum_theta0_value < localmax_value) {
-	      if ((modelOptions.mapFlag == SA) && (fabs (fixed_theta) < 1e-9)) {
+	    if (modelOptions.mapFlag == SA) {
+	      double delta_theta = dk_theta0max.theta[0] - fixed_theta;
+	      printf ("thetamax %.8f, fixedtheta %.8f, delta %.8f, maxvalue %.8f, localmax %.8f\n", dk_theta0max.theta[0], fixed_theta, delta_theta, maximum_theta0_value, localmax_value);
+	      /* If fixed_theta is closer to 0 than the current minimum theta,
+	       * or if fixed_theta is more or less the same and the new BR
+	       * is greater than the max BR */
+	      if ((fixed_theta < dk_theta0max.theta[0] - 1e-9) ||
+		  ((fabs (delta_theta) <= 1e-9) && (maximum_theta0_value < localmax_value))) {
 		maximum_theta0_value = localmax_value;
 		if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
 		  dk_theta0max.dprime[0] = fixed_dprime;
 		dk_theta0max.theta[0] = dk_theta0max.theta[1] = fixed_theta;
 		dk_copyMaxModel (localmax_x, &dk_theta0max);
-	      } else if ((modelOptions.mapFlag == SS) && (fabs (fixed_thetaM) < 1e-9) &&
-			 (fabs (fixed_thetaF) < 1e-9)) {
+	      }
+	      
+	    } else if (modelOptions.mapFlag == SS) {
+	      double delta_thetaM = dk_theta0max.theta[0] - fixed_thetaM,
+		delta_thetaF = dk_theta0max.theta[1] - fixed_thetaF;
+	      if ((fixed_thetaM < dk_theta0max.theta[0] - 1e-9 && fabs (delta_thetaF) <= 1e-9) ||
+		  (fixed_thetaF < dk_theta0max.theta[1] - 1e-9 && fabs (delta_thetaM) <= 1e-9) ||
+		  (fixed_thetaM < dk_theta0max.theta[0] - 1e-9 && 
+		   fixed_thetaF < dk_theta0max.theta[1] - 1e-9) ||
+		  (fabs (delta_thetaM) <= 1e-9 && fabs (delta_thetaF) <= 1e-9 &&
+		   maximum_theta0_value < localmax_value)) {
 		maximum_theta0_value = localmax_value;
 		if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
 		  dk_theta0max.dprime[0] = 0.0;
@@ -430,6 +457,7 @@
 		dk_copyMaxModel (localmax_x, &dk_theta0max);
 	      }
 	    }
+	    
 
 	    //fprintf (stderr, "tp result %f %f is %13.10f   \n",  fixed_theta, fixed_dprime, integral);
 
@@ -466,13 +494,11 @@
 
 	  }			/* end of for to calculate BR(theta, dprime) or BR(thetaM, thetaF)*/
 
-	  dk_write2ptMODFile (maximum_function_value, &dk_globalmax);
-	
-  	  dk_writeMAXHeader ();
-  	  dk_writeMAXData ("MOD(Overall)", maximum_function_value, &dk_globalmax);
-	  dk_writeMAXData ("MOD(Theta==0)", maximum_theta0_value, &dk_theta0max);
+  	  dk_write2ptMODHeader ();
+  	  dk_write2ptMODData ("MOD(Overall)", maximum_function_value, &dk_globalmax);
+	  dk_write2ptMODData("MOD(Theta==0)", maximum_theta0_value, &dk_theta0max);
 	  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
-	    dk_writeMAXData ("MOD(D'==0)", maximum_dprime0_value, &dk_dprime0max);
+	    dk_write2ptMODData ("MOD(D'==0)", maximum_dprime0_value, &dk_dprime0max);
 
 	  /*Calculate ppl, ppld and ldppl */
           if(modelOptions.mapFlag == SS){ 
