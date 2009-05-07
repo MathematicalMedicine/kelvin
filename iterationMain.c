@@ -134,7 +134,7 @@
 	}
         savedLocusList.pLocusIndex[1] = loc2;
 
-#ifndef SIMPLEPROGRESS
+	// #ifndef SIMPLEPROGRESS
 	if (modelOptions.markerAnalysis == MM)
 	  fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles\n", 
 		   pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele);
@@ -142,7 +142,7 @@
 	  fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)\n",
 		   pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele,
 		   loc2, originalLocusList.numLocus - 1);
-#endif
+	// #endif
 
         /* find out number of alleles this marker locus has */
         if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) {
