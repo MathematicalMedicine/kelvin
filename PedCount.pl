@@ -21,6 +21,7 @@ $| = 1;    # Force flush of output as printed.
 my $DiagSolos = 0;    # Writes out a separate file for each marker with actual copies of template pedigrees
 
 # Sanctioned globals
+my $maf0           = 0; # True if we found missing minor allele frequencies
 
 # Command line option flags
 my $config         = 0;
@@ -776,6 +777,25 @@ sub loadMarkers {
 }
 
 #####################################
+# Add any implied biallelic marker alleles. This is pretty shakey as it only works with
+# unnamed alleles.
+#
+sub addMissingAlleles {
+    for my $Name (@Loci) {
+        next if ($LociAttributes{$Name}{Type} eq "T");
+        if (scalar(@{ $LociAttributes{$Name}{Frequencies} }) == 1) {
+	    $maf0 = 1;
+	    if (defined($LociAttributes{$Name}{Alleles}{1})) {
+		$LociAttributes{$Name}{Alleles}{2} = 2;
+	    } else {
+		$LociAttributes{$Name}{Alleles}{1} = 1;
+	    }
+	    push @{ $LociAttributes{$Name}{Frequencies} }, 0;
+	}
+    }
+}
+
+#####################################
 # Open and read the map file for completeness' sake.
 #
 sub loadMap {
@@ -1367,6 +1387,27 @@ sub bucketizePedigrees {
 
     # If there was no configuration, create all of the supporting files
     if ($config) {
+        if ($maf0) {
+            print "Encountered missing biallelic marker alleles, writing full marker data file.\n";
+
+            open OUT, ">" . $Prefix . "Markers.Dat";
+
+            print OUT '# $Id$'; print OUT "\n";
+
+            for my $Name (@Loci) {
+                next if (!$LociAttributes{$Name}{Included});
+                if ($LociAttributes{$Name}{Type} eq "M") {
+                    print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
+                    print OUT "F";
+                    for my $Freq (@{ $LociAttributes{$Name}{Frequencies} }) {
+                        print OUT sprintf(" %.8f", $Freq);
+                    }
+                    print OUT "\n";
+		}
+	    }
+        }
+        close OUT;
+
         print "Remember to modify your configuration file to specify the new pedigree, companion and count files.\n";
         return;
     }
@@ -1418,10 +1459,10 @@ EOF
             print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
             print OUT "F";
             for my $Freq (@{ $LociAttributes{$Name}{Frequencies} }) {
-                print OUT sprintf(" %.4f", $Freq);
+                print OUT sprintf(" %.8f", $Freq);
             }
             print OUT "\n";
-        }
+        }	
     }
     close OUT;
 
@@ -1524,7 +1565,7 @@ sub writeExpanded {
             print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
             print OUT "F";
             for my $Freq (@{ $LociAttributes{$Name}{Frequencies} }) {
-                print OUT sprintf(" %.4f", $Freq);
+                print OUT sprintf(" %.8f", $Freq);
             }
             print OUT "\n";
         }
@@ -1754,6 +1795,7 @@ if ($config) {
 } else {
     $pedFile = shift;
 }
+addMissingAlleles();
 
 my $pedFileType = assessPedigree($pedFile);
 loadPedigree($pedFile, $pedFileType);
