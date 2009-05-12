@@ -378,11 +378,18 @@ compute_likelihood (PedigreeSet * pPedigreeList)
       if (modelOptions.dryRun == 0) {
 	if (pPedigree->likelihood == 0.0) {
 	  KLOG (LOGLIKELIHOOD, LOGWARNING,
-		"Pedigree %s has likelihood %G that's too small.\n",
+		"Pedigree %s has likelihood %G thats too small.\n",
 		pPedigree->sPedigreeID, pPedigree->likelihood);
 	  fprintf (stderr,
-		   "Pedigree %s has likelihood %e that's too small.\n",
+		   "Pedigree %s has likelihood %e thats too small.\n",
 		   pPedigree->sPedigreeID, pPedigree->likelihood);
+	  if (modelOptions.polynomial) {
+	    fprintf (stderr, "Polynomial terms (depth of 1):\n");
+	    expTermPrinting (stderr, pPedigree->likelihoodPolynomial, 1);
+	    fprintf (stderr, "\n");
+	    printAllPolynomials();
+	    fprintf (stderr, "\n");
+	  }
 	  ret = -1;
 	  product_likelihood = 0.0;
 	  sum_log_likelihood = -9999.99;
@@ -407,7 +414,7 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	  }
 	  /*
 	     if(log10Likelihood <= __DBL_MIN_10_EXP__ + 1)
-	     fprintf(stderr, "Pedigree %s has likelihood %G that's too small.\n",
+	     fprintf(stderr, "Pedigree %s has likelihood %G thats too small.\n",
 	     pPedigree->sPedigreeID, pPedigree->likelihood);
 	   */
 	  sum_log_likelihood += log10Likelihood;
