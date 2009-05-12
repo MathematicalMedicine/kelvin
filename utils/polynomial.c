@@ -2554,7 +2554,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 #ifdef EVALUATESW
     swStop (evaluatePolySW);
 #endif
-    fprintf (stderr, "%u gives %.16g\n", evaluatePolyCount, pp->value);
+    fprintf (stderr, "Evaluation %u of polynomial gives %.16g\n", evaluatePolyCount, pp->value);
     return;
   }
 
@@ -3742,7 +3742,7 @@ void printAllVariables ()
       if (variableHash[i].num <= 0)
         continue;
       for (j = 0; j < variableHash[i].num; j++) {
-        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d variable: ", i, j, variableHash[i].index[j], variableHash[i].key[j], variableList[variableHash[i].index[j]]->count, variableList[variableHash[i].index[j]]->valid);
+        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d value=%.18g variable: ", i, j, variableHash[i].index[j], variableHash[i].key[j], variableList[variableHash[i].index[j]]->count, variableList[variableHash[i].index[j]]->valid, variableList[variableHash[i].index[j]]->value);
         expTermPrinting (stderr, variableList[variableHash[i].index[j]], 1);
         fprintf (stderr, "\n");
       }
@@ -3779,7 +3779,7 @@ void printAllPolynomials ()
       if (sumHash[i].num <= 0)
         continue;
       for (j = 0; j < sumHash[i].num; j++) {
-        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d sum: ", i, j, sumHash[i].index[j], sumHash[i].key[j], sumList[sumHash[i].index[j]]->count, sumList[sumHash[i].index[j]]->valid);
+        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d value=%.18g sum: ", i, j, sumHash[i].index[j], sumHash[i].key[j], sumList[sumHash[i].index[j]]->count, sumList[sumHash[i].index[j]]->valid, sumList[sumHash[i].index[j]]->value);
         expTermPrinting (stderr, sumList[sumHash[i].index[j]], 1);
         fprintf (stderr, "\n");
       }
@@ -3792,7 +3792,7 @@ void printAllPolynomials ()
       if (productHash[i].num <= 0)
         continue;
       for (j = 0; j < productHash[i].num; j++) {
-        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d product: ", i, j, productHash[i].index[j], productHash[i].key[j], productList[productHash[i].index[j]]->count, productList[productHash[i].index[j]]->valid);
+        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d value=%.18g product: ", i, j, productHash[i].index[j], productHash[i].key[j], productList[productHash[i].index[j]]->count, productList[productHash[i].index[j]]->valid, productList[productHash[i].index[j]]->value);
         expTermPrinting (stderr, productList[productHash[i].index[j]], 1);
         fprintf (stderr, "\n");
       }
@@ -3806,7 +3806,7 @@ void printAllPolynomials ()
       if (functionCallHash[i].num <= 0)
         continue;
       for (j = 0; j < functionCallHash[i].num; j++) {
-        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d functionCall: ", i, j, functionCallHash[i].index[j], functionCallHash[i].key[j], functionCallList[functionCallHash[i].index[j]]->count, functionCallList[functionCallHash[i].index[j]]->valid);
+        fprintf (stderr, "(%d %d) index=%d key=%d count=%d valid=%d value=%.18g functionCall: ", i, j, functionCallHash[i].index[j], functionCallHash[i].key[j], functionCallList[functionCallHash[i].index[j]]->count, functionCallList[functionCallHash[i].index[j]]->valid, functionCallList[functionCallHash[i].index[j]]->value);
         expTermPrinting (stderr, functionCallList[functionCallHash[i].index[j]], 1);
         fprintf (stderr, "\n");
       }
