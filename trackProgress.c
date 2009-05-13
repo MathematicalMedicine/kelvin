@@ -7,6 +7,7 @@
 
 */
 #include "kelvin.h"
+#include "kelvinGlobalsNew.h"
 extern PedigreeSet pedigreeSet;
 #include "kelvinHandlers.h"
 #include "utils/polynomial.h"
@@ -46,7 +47,7 @@ void *monitorStatus () {
       sleep (30);
       wakeCount++;
       if (!(wakeCount % 2)) {
-	thrashingCheck ();
+	/*	thrashingCheck ();*/
 	statusRequestSignal = TRUE;
 //	kill (getpid (), SIGQUIT);   // Send a status-updating signal
       }

@@ -1,3 +1,29 @@
+int liabIdx;
+int mkrFreqIdx;
+double mkrFreq;
+int status;
+int R_square_flag = FALSE;
+double R_square = 0;
+double ppl, ldppl, ppld, ppldGl;
+LDLoci *pLDLoci = NULL;
+int prevFirstMarker;		/* first marker in the set for multipoint analysis */
+int prevLastMarker;		/* last marker in the set for multipoint analysis */
+int prevTraitInd;
+int leftMarker = -1;
+int posIdx;
+double traitPos;      /* trait position for multipoint analysis */
+int j; 
+int markerSetChanged; /* Flag for multipoint analysis, did set of markers change? */
+int locusListChanged; /* flag for multipoint analysis, did relative trait position or marker set change? */
+double *prevPos, *currPos;    /* for MP */
+double *marker1Pos, *marker2Pos;
+double dist;
+int traitIndex = 0;
+double relativePos;
+
+
+
+
   /* Variables for DCUHRE   added 1/2008 */
   double integral = 0.0, abserr = 0;
   int num_eval = 0;

@@ -19,14 +19,6 @@ int num_of_d_prime;
 double *d_prime;
 int num_of_theta;
 
-/** Three dimensional array for the two point summary results.
-  - first dimension is the D prime, for LE, D prime=0 with just one element
-    in this dimension
-  - second dimension is theta values 
-  - third dimension is marker allele frequency, for LE, only one element in 
-    this dimension */
-SUMMARY_STAT ***tp_result;
-
 /** Two dimensional array per (dprime, theta).
   This will be used to calculate PPL. */
 
@@ -36,14 +28,8 @@ double markerSetLikelihood;
 /** For multipoint, we use genetic map positions on a chromosome. */
 double *map_position;
 int num_of_map_position;
+  int numPositions;
 
-/** One dimensional array, indexing by map position.  For multipoint,
- we don't know how to incorporate LD yet.  This map could be sex
- specific map or sex averaged map. For two point, we don't have to
- distinguish sex specific/avearge as we use theta relative to marker
- during analysis and after analysis (result) */
-SUMMARY_STAT *mp_result;
-int numPositions;
 
 /** Transmission matrices provide the pre-computed probability of
  inheritance of a a given combination of marker and trait alleles. */
@@ -64,10 +50,6 @@ int total_count;
 
 char *flexBuffer = NULL;
 int flexBufferSize = 0;
-
-double *****likelihoodQT = NULL;
-double **likelihoodDT = NULL;   ///< This is now for homeLR
-
 
 /* Variables became global from local */
 PedigreeSet pedigreeSet;	/* Pedigrees. */

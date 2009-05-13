@@ -16,7 +16,9 @@
  * does genotype elimination, allele set recoding
  * provides functionality and API for likelihood calculation
  *******************************************************************/
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 typedef enum
 { DAD = 0, MOM = 1 } PARENTS;

@@ -62,4 +62,6 @@ typedef struct ModelType
   int ccFlag;			/* Case Ctrl flag */
 } ModelType;
 
+extern ModelType modelType;
+
 #endif

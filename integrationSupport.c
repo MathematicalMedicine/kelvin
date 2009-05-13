@@ -1,3 +1,7 @@
+#include "integrationSupport.h"
+extern LDLoci *pLDLoci;
+extern int R_square_flag;
+extern double R_square;
 
 int
 kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)

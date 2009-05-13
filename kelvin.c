@@ -104,6 +104,7 @@
 #include "kelvinHandlers.h"
 #include "pedlib/likelihood.h"
 #include "saveResults.h"
+#include "ppl.h"
 
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 extern Polynomial *constant1Poly;
@@ -114,9 +115,10 @@ extern Polynomial *constant1Poly;
 
 */
 #include "dcuhre.h"
-#include "iterationGlobals.h"
 #include "integrationGlobals.h"
-#include "kelvinGlobals.h"
+//#include "kelvinGlobals.h"
+#include "kelvinGlobalsNew.h"
+#include "kelvinLocals.h"
 
 /**
 
@@ -132,16 +134,17 @@ extern Polynomial *constant1Poly;
   configuration file.
 
 */
+char *programVersion = "V0.38.0";       ///< Overall kelvin version set upon release.
+char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
 
 
 int main (int argc, char *argv[])
 {
 
-  #include "iterationLocals.h"
-  #include "integrationLocals.h"
-  #include "kelvinLocals.h"
+  //  #include "iterationLocalsNew.h"
+  //  #include "integrationLocals.h"
 
-  #include "kelvinWriteFiles.c"
+  //#include "kelvinWriteFiles.c"
   #include "dkelvinWriteFiles.c"
 
   #include "kelvinInit.c"
@@ -149,7 +152,9 @@ int main (int argc, char *argv[])
   if (modelOptions.integration) {
     #include "integrationMain.c"
   } else {
-    #include "iterationMain.c"
+    int danglingWire=0;
+    //#include "iterationMain.c"
+    iterateMain();
   }
 
   #include "kelvinTerm.c"

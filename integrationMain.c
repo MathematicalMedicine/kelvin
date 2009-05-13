@@ -1,3 +1,8 @@
+//#include "dkelvinWriteFiles.h"
+#include "integrationLocals.h"
+#include "integrationSupport.h"
+int numPositions;
+
   /* total_dim is the number of all parameters in the 3-layer scheme
           s->dim in dcuhre.c is the number of parameters in the middle layer alone*/
   total_dim = 2;		// alpha gf
@@ -321,7 +326,7 @@
 
 	  /* for each D prime and theta, print out average and maximizing model information - MOD */
 	  if (modelOptions.markerAnalysis == FALSE)
-	    dk_write2ptBRHeader ();
+	    dk_write2ptBRHeader (loc1, loc2);
 
           /* analysis specific statistic initialization*/
           if(modelOptions.mapFlag == SA){
@@ -996,9 +1001,9 @@
       else
 	ppl = 0;
 
-      dk_writeMPBRData (ppl, integral);
+      dk_writeMPBRData (posIdx, traitPos, ppl, integral);
       dk_copyMaxModel (localmax_x, &dk_globalmax);
-      dk_writeMPMODData (localmax_value, &dk_globalmax);
+      dk_writeMPMODData (posIdx, traitPos, localmax_value, &dk_globalmax);
 
       if (fpDK != NULL) {
 	fprintf (fpDK, "%f  %6.4f %12.8f %12.8f %d  %f\n", traitPos, ppl,
@@ -1017,3 +1022,4 @@
   free (dk_globalmax.pen);
   free (dk_dprime0max.pen);
   free (dk_theta0max.pen);
+

@@ -1,3 +1,5 @@
+int posIdx;
+extern LDLoci *pLDLoci;
 
   set_removeGenotypeFlag (TRUE);
 
@@ -11,7 +13,7 @@
     }
   } else {
     /* multipoint */
-    for (posIdx = 0; posIdx < numPositions; posIdx++) {
+    for (posIdx = 0; posIdx < modelRange.ntloc; posIdx++) {
       free (mp_result[posIdx].pMarkers);
     }
     free (mp_result);

@@ -1,3 +1,26 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include "pedlib/pedlib.h"
+#include "pedlib/likelihood.h"
+#include "kelvinGlobalsNew.h"
+#include "iterationMain.h"
+#include "summary_result.h"
+#include "iterationLocalsNew.h"
+#include "kelvin.h"
+#include "kelvinHandlers.h"
+#include "ppl.h"
+#include "kelvinWriteFiles.h"
+#include "saveResults.h"
+
+
+
+void iterateMain() {
+  ParamStruct paramSet;
+  int pedIdx;
+  int numPositions;
+  double log10AvgLR;
+
   /* only for multipoint - we don't handle LD under multipoint yet */
   if (modelType.type == MP) {
     /* allocate space to save temporary results */
@@ -133,6 +156,7 @@
 	  continue;
 	}
         savedLocusList.pLocusIndex[1] = loc2;
+	initialize_max_scale();
 
 	// #ifndef SIMPLEPROGRESS
 	if (modelOptions.markerAnalysis == MM)
@@ -207,6 +231,8 @@
            * disk. */
           for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
             gfreq = modelRange.gfreq[gfreqInd];
+	    paramSet.gfreqIdx = gfreqInd;
+	    paramSet.gfreq = gfreq;
             // WHAT ON EARTH IS THIS ALL ABOUT? &&&
             if (1 && modelOptions.markerAnalysis == FALSE) {
               pLocus->pAlleleFrequency[0] = gfreq;
@@ -233,6 +259,7 @@
             if (modelType.trait == DICHOTOMOUS) {
 
               for (penIdx = 0; penIdx < modelRange.npenet; penIdx++) {
+		paramSet.penIdx = penIdx;
                 if (modelOptions.markerAnalysis == FALSE && pLocus1->locusType == LOCUS_TYPE_TRAIT) {
                   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
                     pen_DD = modelRange.penet[liabIdx][0][penIdx];
@@ -303,7 +330,12 @@
 		  fflush (stdout);
 		  popStatus ('k');
 		}
-                if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+		if(ret==-2){
+		  fprintf(stderr, "Negative likelihood for theta 0.5. Exiting!\n");
+		  exit(EXIT_FAILURE);
+		}
+		 
+                if (ret==-1) {
                   fprintf (stderr, "Theta 0.5 has likelihood 0\n");
                   fprintf (stderr, "dgf=%f\n", gfreq);
                   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
@@ -348,9 +380,11 @@
                                             pAlleleFrequency[0], pLocus2->pAlleleFrequency[0], pLDLoci->ppDValue[0][0]);
                     else
                       R_square = -1;
+		    paramSet.R_square = R_square;
                   }
-
+		  paramSet.dprimeIdx = dprimeIdx;
                   for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
+		    paramSet.thetaIdx = thetaInd;
                     if (modelOptions.mapFlag == SA) {
                       theta[0] = modelRange.theta[0][thetaInd];
                       theta[1] = modelRange.theta[1][thetaInd];
@@ -389,69 +423,7 @@
                         fflush (stdout);
                       }
                     }
-
-                    log10_likelihood_alternative = pedigreeSet.log10Likelihood;
-		    if (ret==-2){
-		      fprintf(stderr, "Negative likelihood! Exiting...\n");
-		      exit(EXIT_FAILURE);
-		    }
-                    if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
-                      log10_likelihood_ratio = 0;
-                    } else {
-                      log10_likelihood_ratio = log10_likelihood_alternative - log10_likelihood_null;
-		      /* check for overflow problem !!! */
-                    if (log10_likelihood_ratio >= DBL_MAX_10_EXP - 1) {
-                      likelihood_ratio = DBL_MAX;
-                      tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_total = DBL_MAX;
-                    } else
-                      /* check for underflow problem too !!! */
-                    if (log10_likelihood_ratio <= DBL_MIN_10_EXP + 1) {
-                      likelihood_ratio = 0;
-                    } else {
-                      likelihood_ratio = pow (10.0, log10_likelihood_ratio);
-                      tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_total += likelihood_ratio;
-                    }
-
-                    /* caculating the HET */
-                    for (j = 0; j < modelRange.nalpha; j++) {
-                      alphaV = modelRange.alpha[j];
-                      alphaV2 = 1 - alphaV;
-                      if (alphaV2 < 0)
-                        alphaV2 = 0;
-                      log10HetLR = 0;
-                      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-                        pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-                        homoLR = pPedigree->likelihood / pedigreeSet.nullLikelihood[pedIdx];
-                        tmp = log10 (alphaV * homoLR + (1 - alphaV));
-                        log10HetLR += tmp * pPedigree->pCount[loc2]; // Use the pedigree weight from count file (CF)
-                      }
-                      if (log10HetLR >= DBL_MAX_10_EXP - 1) {
-                        hetLR = DBL_MAX;
-                        tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total = DBL_MAX;
-                      } else if (log10HetLR <= DBL_MIN_10_EXP + 1) {
-                        hetLR = 0;
-                      } else {
-                        hetLR = pow (10, log10HetLR);
-                        if (modelType.ccFlag)
-                          /* scale it to prevent overflow */
-                          tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total += hetLR / total_count;
-                        else
-                          tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total += hetLR;
-                      }
-                      if (tp_result[dprimeIdx][thetaInd]
-                          [mkrFreqIdx].max_penIdx < 0 || hetLR > tp_result[dprimeIdx][thetaInd]
-                          [mkrFreqIdx].max_lr) {
-                        tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_lr = hetLR;
-                        tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_alpha = alphaV;
-                        tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_gfreq = gfreq;
-                        tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_penIdx = penIdx;
-                        tp_result[dprimeIdx][thetaInd][mkrFreqIdx].R_square = R_square;
-                        tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_mf = mkrFreq;
-                      }
-                    }   /* end of calculating HET LR */
-		    } 
-		    tp_result[dprimeIdx][thetaInd]
-                      [mkrFreqIdx].lr_count++;
+		    record_tp_result(ret, &pedigreeSet, &paramSet, loc2);
                   }     /* end of theta loop */
                 }       /* end of D prime loop */
                 if (modelOptions.markerAnalysis != FALSE) {
@@ -464,16 +436,19 @@
                   break;
                 }
               } /* end of penetrance loop */
-            } /* end of TP */
+            } /* end of DT */
             else
               /* should be QT or COMBINED - twopoint */
             {
               /* this should be MEAN + SD */
               for (paramIdx = 0; (paramIdx == 0 && modelType.distrib == QT_FUNCTION_CHI_SQUARE)
                    || (modelType.distrib != QT_FUNCTION_CHI_SQUARE && paramIdx < modelRange.nparam); paramIdx++) {
+		paramSet.paramIdx = paramIdx;
                 for (penIdx = 0; penIdx < modelRange.npenet; penIdx++) {
+		  paramSet.penIdx = penIdx;
                   breakFlag = FALSE;
                   for (thresholdIdx = 0; thresholdIdx < modelRange.ntthresh; thresholdIdx++) {
+		    paramSet.thresholdIdx = thresholdIdx;
                     if (modelOptions.markerAnalysis == FALSE) {
                       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
                         mean_DD = modelRange.penet[liabIdx][0][penIdx];
@@ -567,8 +542,12 @@
 		      fflush (stdout);
 		      popStatus ('k');
 		    }
-
-                    if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+		    if(ret==-2){
+		      fprintf(stderr, "Theta 0.5 has negative likelihood. Exiting!\n");
+		      exit(EXIT_FAILURE);
+		    }
+		      
+                    if (ret==-1) {
                       fprintf (stderr, "Theta 0.5 has likelihood 0\n");
                       fprintf (stderr, "dgf=%f\n", gfreq);
                       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
@@ -590,6 +569,7 @@
                     }
                     log10_likelihood_null = pedigreeSet.log10Likelihood;
                     for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
+		      paramSet.dprimeIdx = dprimeIdx;
                       if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
                         copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
 			if (pLambdaCell->impossibleFlag[dprimeIdx] != 0) {
@@ -638,84 +618,7 @@
 			    fflush (stdout);
 			  }
 			}
-			if(ret==-2){
-			  /* negative likelihood */
-			  fprintf(stderr, "Negative likelihood! Exiting!\n");
-			  exit(EXIT_FAILURE);
-			}
-			  
-                        log10_likelihood_alternative = pedigreeSet.log10Likelihood;
-                        if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
-                          log10_likelihood_ratio = 0;
-                        } else {
-                          log10_likelihood_ratio = log10_likelihood_alternative - log10_likelihood_null;
-                        
-                        /* check for overflow problem !!! */
-                        if (log10_likelihood_ratio >= DBL_MAX_10_EXP - 1) {
-                          likelihood_ratio = DBL_MAX;
-                          tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_total = DBL_MAX;
-                        } else
-                          /* check for underflow problem too !!! */
-                        if (log10_likelihood_ratio <= DBL_MIN_10_EXP + 1) {
-                          likelihood_ratio = 0;
-                        } else {
-                          likelihood_ratio = pow (10.0, log10_likelihood_ratio);
-                          tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_total += likelihood_ratio;
-                        }
-                        /* caculating the HET */
-                        for (j = 0; j < modelRange.nalpha; j++) {
-                          alphaV = modelRange.alpha[j];
-                          alphaV2 = 1 - alphaV;
-                          if (alphaV2 < 0)
-                            alphaV2 = 0;
-                          log10HetLR = 0;
-                          for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-                            pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-                            homoLR = pPedigree->likelihood / pedigreeSet.nullLikelihood[pedIdx];
-                            log10HetLR += log10 (alphaV * homoLR + alphaV2);
-                          }
-                          if (log10HetLR >= DBL_MAX_10_EXP - 1) {
-                            hetLR = DBL_MAX;
-                            tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total = DBL_MAX;
-                          } else if (log10HetLR <= DBL_MIN_10_EXP + 1) {
-                            hetLR = 0;
-                          } else {
-                            adjustedHetLR = hetLR = pow (10, log10HetLR);
-                            /* for threshold parameter, we need to make sure the weighting is even */
-			    /* remove threshold adjustment code 
-			       YH 04/14/2009
-                            if (1 || modelType.distrib == QT_FUNCTION_CHI_SQUARE) {
-                              if (modelRange.ntthresh == 1) {
-                                adjustedHetLR *= 2 * (modelType.maxThreshold - modelType.minThreshold);
-                              } else if (thresholdIdx == modelRange.ntthresh - 1) {
-                                adjustedHetLR *=
-                                  (2 * modelType.maxThreshold - threshold - modelRange.tthresh[0][thresholdIdx - 1]);
-                              } else if (thresholdIdx == 0) {
-                                adjustedHetLR *=
-                                  (threshold + modelRange.tthresh[0][thresholdIdx + 1] - 2 * modelType.minThreshold);
-                              } else {
-                                adjustedHetLR *=
-                                  (modelRange.tthresh[0][thresholdIdx + 1] - modelRange.tthresh[0][thresholdIdx - 1]);
-                              }
-                            }
-			    */
-                            tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total += adjustedHetLR;
-                          }
-                          if (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_penIdx < 0
-                              || hetLR > tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_lr) {
-                            tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_lr = hetLR;
-                            tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_alpha = alphaV;
-                            tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_gfreq = gfreq;
-                            tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_penIdx = penIdx;
-                            tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_paramIdx = paramIdx;
-                            tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_thresholdIdx = thresholdIdx;
-                            tp_result[dprimeIdx][thetaInd][mkrFreqIdx].R_square = R_square;
-                            tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_mf = mkrFreq;
-                          }
-                        } /* end of alpha */
-			}
-                        tp_result[dprimeIdx][thetaInd]
-                          [mkrFreqIdx].lr_count++;
+			record_tp_result(ret, &pedigreeSet, &paramSet, loc2);
                       } /* end of theta */
                     }   /* end of D prime */
                     if (modelOptions.markerAnalysis != FALSE)
@@ -739,13 +642,17 @@
             break;
         }       /* end of marker allele frequency looping */
 
-        /* calculate the average BR */
+        /* calculate the average BR per (D', theta) pair */
         get_average_LR (tp_result);
+	rescale_tp_result_dprime0(dprime0Idx);
+	/* rescale across (D', theta) pairs */
+	rescale_tp_result(-1);
 
-	if (modelOptions.markerAnalysis == FALSE)
-	  write2ptBRFile ();
-        write2ptMODFile ();
-	writePPLFileDetail ();
+	//if (modelOptions.markerAnalysis == FALSE)
+	write2ptBRFile ();
+	write2ptMODFile (loc1, loc2);
+	//writeMMFileDetail ();
+	writePPLFileDetail (dprime0Idx);
 
         /* need to clear polynomial */
 
@@ -883,8 +790,12 @@
 #endif
           if (modelOptions.dryRun != 0)
             continue;
-
-          if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+	  
+	  if(ret==-2) {
+	    fprintf(stderr, "Trait has negative likelihood. Exiting!\n");
+	    exit(EXIT_FAILURE);
+	  }
+          if (ret==-1){
             fprintf (stderr, "Trait has likelihood 0\n");
             fprintf (stderr, "dgf=%f\n", gfreq);
             for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
@@ -992,7 +903,11 @@
                 fflush (stdout);
               }
 #endif
-              if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+	      if(ret==-2) {
+		fprintf(stderr, "Trait has negative likelihood. Exiting!\n");
+		exit(EXIT_FAILURE);
+	      }
+              if (ret==-1) {
                 fprintf (stderr, "Trait has likelihood 0\n");
                 fprintf (stderr, "dgf=%f\n", gfreq);
                 for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
@@ -1059,6 +974,7 @@
 
     /* Iterate over all positions in the analysis. */
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
+      mp_result[posIdx].max_penIdx = -1;
       /* positions listed are sex average positions */
       traitPos = modelRange.tloc[posIdx];
       /* Set the sex-averaged position first. The sex-specific positions will be updated 
@@ -1340,6 +1256,7 @@
         }
 
         for (penIdx = 0; (penIdx == 0) || (modelOptions.dryRun == 0 && penIdx < modelRange.npenet); penIdx++) {
+	  paramSet.penIdx = penIdx;
           for (liabIdx = 0; (liabIdx == 0) || (modelOptions.dryRun == 0 && liabIdx < modelRange.nlclass); liabIdx++) {
             pen_DD = modelRange.penet[liabIdx][0][penIdx];
             pen_Dd = modelRange.penet[liabIdx][1][penIdx];
@@ -1360,7 +1277,8 @@
 
           /* Iterate over gene frequencies -- just one loop for dry-runs. */
           for (gfreqInd = 0; (gfreqInd == 0) || (modelOptions.dryRun == 0 && gfreqInd < modelRange.ngfreq); gfreqInd++) {
-
+	    paramSet.gfreqIdx = gfreqInd;
+	    paramSet.gfreq = gfreq;
             /* Updated trait locus allele frequencies */
             gfreq = modelRange.gfreq[gfreqInd];
             pLocus->pAlleleFrequency[0] = gfreq;
@@ -1425,7 +1343,8 @@
             /* print out some statistics under dry run */
             if (modelOptions.dryRun != 0) {
               print_dryrun_stat (&pedigreeSet, traitPos);
-            } else {
+            } 
+	    else {
 
 	      if(ret==-2){
 		/* negative likelihood */
@@ -1434,23 +1353,7 @@
 	      }
 
               log10_likelihood_alternative = pedigreeSet.log10Likelihood;
-              if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99)
-                log10_likelihood_ratio = 0;
-              else {
-                log10_likelihood_ratio =
-                  log10_likelihood_alternative - likelihoodDT[gfreqInd][penIdx] - pedigreeSet.log10MarkerLikelihood;
-              /* check for overflow problem !!! */
-              if (log10_likelihood_ratio >= DBL_MAX_10_EXP - 1) {
-                likelihood_ratio = DBL_MAX;
-                mp_result[posIdx].lr_total += DBL_MAX;
-              } else
-                /* check for underflow problem too !!! */
-              if (log10_likelihood_ratio <= DBL_MIN_10_EXP + 1) {
-                likelihood_ratio = 0;
-              } else {
-                likelihood_ratio = pow (10.0, log10_likelihood_ratio);
-                mp_result[posIdx].lr_total += likelihood_ratio;
-              }
+	      
               /* add the result to the right placeholder */
               for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
                 pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
@@ -1459,57 +1362,10 @@
                     [penIdx] = pPedigree->likelihood;
                 }
               }
-              /* caculating the Het */
-              for (j = 0; j < modelRange.nalpha; j++) {
-                alphaV = modelRange.alpha[j];
-                alphaV2 = 1 - alphaV;
-                if (alphaV2 < 0)
-                  alphaV2 = 0;
-                log10HetLR = 0;
-                for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-                  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-                  homoLR = pPedigree->alternativeLikelihoodDT[gfreqInd]
-                    [penIdx] / (pPedigree->traitLikelihoodDT[gfreqInd][penIdx] * pPedigree->markerLikelihood);
-                  /*              if (homoLR > 1.0e40 || homoLR < 1.0e-40) {
-                   * fprintf(stderr, "homoLR %G, alt %G, trait %G, mrk %G\n",
-                   * homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
-                   * pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
-                   * pPedigree->markerLikelihood);
-                   * } */
-                  if (alphaV * homoLR + alphaV2 < 0)
-                    fprintf (stderr, "HET LR less than 0. Check!!!\n");
-                  log10HetLR += log10 (alphaV * homoLR + alphaV2);
-                  // if (log10HetLR > 10 || log10HetLR < -40) {
-                  /*if(gfreqInd ==0 && j==0){
-                   * fprintf(stderr, "gf=%d pen=%d log10HetLR %G, homoLR %G, alt %G, trait %G, mrk %G\n",
-                   * gfreqInd, penIdx,log10HetLR,
-                   * homoLR, pPedigree->alternativeLikelihoodDT[gfreqInd][penIdx],
-                   * pPedigree->traitLikelihoodDT[gfreqInd][penIdx],
-                   * pPedigree->markerLikelihood);
-                   * //  exit(0);
-                   * } */
-                }
-                if (log10HetLR >= DBL_MAX_10_EXP - 1) {
-                  hetLR = DBL_MAX;
-                  mp_result[posIdx].het_lr_total = DBL_MAX;
-                } else if (log10HetLR <= DBL_MIN_10_EXP + 1) {
-                  hetLR = 0;
-                } else {
-                  hetLR = pow (10, log10HetLR);
-                  mp_result[posIdx].het_lr_total += hetLR;
-                }
-                if (mp_result[posIdx].max_penIdx < 0 || hetLR > mp_result[posIdx].max_lr) {
-                  mp_result[posIdx].max_lr = hetLR;
-                  mp_result[posIdx].max_alpha = alphaV;
-                  mp_result[posIdx].max_gfreq = gfreq;
-                  mp_result[posIdx].max_penIdx = penIdx;
-                }
-              } /* end of calculating HET LR */
-	      }
-              mp_result[posIdx].lr_count++;
-            }
+	      record_mp_result(ret, &pedigreeSet, &paramSet, posIdx);
+            } /* end of not dryRun */
           }     /* end of genFreq loop */
-        }
+        } /* end of penIdx loop */
 
 
         /* end of penetrance loop */
@@ -1544,13 +1400,18 @@
           gfreq = modelRange.gfreq[gfreqInd];
           pLocus->pAlleleFrequency[0] = gfreq;
           pLocus->pAlleleFrequency[1] = 1 - gfreq;
+	  paramSet.gfreqIdx = gfreqInd;
+	  paramSet.gfreq = gfreq;
 
           update_locus (&pedigreeSet, traitLocus);
           /* this should be MEAN + SD */
           for (paramIdx = 0; paramIdx < modelRange.nparam; paramIdx++) {
+	    paramSet.paramIdx = paramIdx;
             for (penIdx = 0; penIdx < modelRange.npenet; penIdx++) {
+	      paramSet.penIdx = penIdx;
               breakFlag = FALSE;
               for (thresholdIdx = 0; thresholdIdx < modelRange.ntthresh; thresholdIdx++) {
+		paramSet.thresholdIdx = thresholdIdx;
                 for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
                   mean_DD = modelRange.penet[liabIdx][0][penIdx];
                   mean_Dd = modelRange.penet[liabIdx][1][penIdx];
@@ -1659,83 +1520,7 @@
 		  popStatus ('k');
                 }
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
-                if (isnan (log10_likelihood_alternative))
-                  fprintf (stderr, "ALT likelihood is NAN.\n");
-		if(ret==-2) {
-		  fprintf(stderr, "Negative likelihood! Exiting!!\n");
-		  exit(EXIT_FAILURE);
-		}
-
-                if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
-                  log10_likelihood_ratio = 0;
-                } else {
-                  log10_likelihood_ratio = log10_likelihood_alternative - likelihoodQT[pedigreeSet.numPedigree][gfreqInd]
-                    [penIdx][paramIdx][thresholdIdx] - pedigreeSet.log10MarkerLikelihood;
-                
-		  /* check for overflow problem !!! */
-		  if (log10_likelihood_ratio >= DBL_MAX_10_EXP - 1) {
-		    likelihood_ratio = DBL_MAX;
-		    mp_result[posIdx].lr_total += DBL_MAX;
-		  } else
-		    /* check for underflow problem too !!! */
-		    if (log10_likelihood_ratio <= DBL_MIN_10_EXP + 1) {
-		      likelihood_ratio = 0;
-		    } else {
-		      likelihood_ratio = pow (10.0, log10_likelihood_ratio);
-		      mp_result[posIdx].lr_total += likelihood_ratio;
-		    }
-
-		  if (isnan (likelihood_ratio))
-		    fprintf (stderr, "LR for the pedigree set is NAN.\n");
-		  /* caculating the HET */
-		  for (j = 0; j < modelRange.nalpha; j++) {
-		    alphaV = modelRange.alpha[j];
-		    alphaV2 = 1 - alphaV;
-		    if (alphaV2 < 0)
-		      alphaV2 = 0;
-		    log10HetLR = 0;
-		    for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-		      pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-		      homoLR =
-			pPedigree->likelihood / (likelihoodQT[pedIdx][gfreqInd][penIdx][paramIdx][thresholdIdx] *
-						 pPedigree->markerLikelihood);
-		      log10HetLR += log10 (alphaV * homoLR + alphaV2);
-		    }
-		    if (log10HetLR >= DBL_MAX_10_EXP - 1) {
-		      hetLR = DBL_MAX;
-		      mp_result[posIdx].het_lr_total = DBL_MAX;
-		    } else if (log10HetLR <= DBL_MIN_10_EXP + 1) {
-		      hetLR = 0;
-		    } else {
-		      adjustedHetLR = hetLR = pow (10, log10HetLR);
-		      /* for threshold parameter, we need to make sure the weighting is even */
-		      /* remove threshold adjustment code 
-			 YH 04/14/2009
-			 if (1 || modelType.distrib == QT_FUNCTION_CHI_SQUARE) {
-			 if (modelRange.ntthresh == 1) {
-			 adjustedHetLR *= 2 * (modelType.maxThreshold - modelType.minThreshold);
-			 } else if (thresholdIdx == modelRange.ntthresh - 1) {
-			 adjustedHetLR *= (2 * modelType.maxThreshold - threshold - modelRange.tthresh[0][thresholdIdx - 1]);
-			 } else if (thresholdIdx == 0) {
-			 adjustedHetLR *= (threshold + modelRange.tthresh[0][thresholdIdx + 1] - 2 * modelType.minThreshold);
-			 } else
-			 adjustedHetLR *= modelRange.tthresh[0][thresholdIdx + 1] - modelRange.tthresh[0][thresholdIdx - 1];
-			 }
-		      */
-		      mp_result[posIdx].het_lr_total += adjustedHetLR;
-		    }
-		    if (mp_result[posIdx].max_penIdx < 0 || hetLR > mp_result[posIdx].max_lr) {
-		      mp_result[posIdx].max_lr = hetLR;
-		      mp_result[posIdx].max_alpha = alphaV;
-		      mp_result[posIdx].max_gfreq = gfreq;
-		      mp_result[posIdx].max_penIdx = penIdx;
-		      mp_result[posIdx].max_paramIdx = paramIdx;
-		      mp_result[posIdx].max_thresholdIdx = thresholdIdx;
-		    }
-		  } /* end of alpha */
-		}
-                /* add the result to the right placeholder */
-                mp_result[posIdx].lr_count++;
+		record_mp_result(ret, &pedigreeSet, &paramSet, posIdx);
               } /* end of threshold loop */
             }   /* end of penetrance loop */
           }     /* end of parameter loop */
@@ -1755,24 +1540,19 @@
       } /* end of QT */
 
       /* Print out average and log10(max) and maximizing parameters */
-      if (modelType.trait == DT)
-        avgLR = mp_result[posIdx].het_lr_total / (modelRange.nalpha * mp_result[posIdx].lr_count);
-      else
-        /* under QT CHISQ, threshold parameter has been evenly weighted */
-	/* remove threshold adjustment code 
-	   YH 04/14/2009
-        avgLR =
-          mp_result[posIdx].het_lr_total / (modelRange.nalpha * (mp_result[posIdx].lr_count / modelRange.ntthresh) * 2 *
-                                            (modelType.maxThreshold - modelType.minThreshold));
-	*/
-	avgLR = mp_result[posIdx].het_lr_total / (modelRange.nalpha * mp_result[posIdx].lr_count);
-      if (avgLR > 0.214)
-        ppl = (avgLR * avgLR) / (-5.77 + 54 * avgLR + avgLR * avgLR);
+      avgLR = mp_result[posIdx].het_lr_total / (modelRange.nalpha * mp_result[posIdx].lr_count);
+      log10AvgLR = log10(avgLR) + mp_result[posIdx].scale; 
+      if (avgLR > 0.214) {
+        if(log10AvgLR > 8)
+          ppl = 1.00;
+        else
+          ppl = (avgLR * avgLR) / (-5.77 + 54 * avgLR + avgLR * avgLR);
+      }
       else
         ppl = 0;
 
-      writeMPBRFileDetail ();
-      writeMPMODFileDetail ();
+      writeMPBRFileDetail (posIdx, traitPos, ppl, avgLR);
+      writeMPMODFileDetail (posIdx, traitPos);
 
     }   /* end of walking down the chromosome */
   }     /* end of multipoint */
@@ -1801,3 +1581,6 @@
     }
   }
 //  dumpTrackingStats(cL, eCL);
+
+}
+

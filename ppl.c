@@ -6,7 +6,10 @@
  * for non-profit educational purposes only.
  **********************************************************************/
 
-#include "kelvin.h"
+#include "kelvinGlobalsNew.h"
+#include "summary_result.h"
+#include "ppl.h"
+extern LambdaCell *pLambdaCell;
 
 /* Calculate PPL - only for two point
  * Input:
@@ -46,8 +49,8 @@ calculate_PPL (SUMMARY_STAT ** result)
       /* sex averaged theta */
       theta1 = modelRange.theta[0][i];
       theta2 = modelRange.theta[0][i + 1];
-      avgLR1 = result[i][modelRange.nafreq].het_lr_avg;
-      avgLR2 = result[i + 1][modelRange.nafreq].het_lr_avg;
+      avgLR1 = result[i][modelRange.nafreq].het_lr_avg_orig2;
+      avgLR2 = result[i + 1][modelRange.nafreq].het_lr_avg_orig2;
 
       if (theta2 <= modelOptions.thetaCutoff[0]) {
 	integral += 0.5 * w1 * (theta2 - theta1) * (avgLR1 + avgLR2);
@@ -97,12 +100,12 @@ calculate_PPL (SUMMARY_STAT ** result)
 	 */
 	B = mdiff * fdiff;
 
-	avgLR1 = result[i * num_thetam + j][modelRange.nafreq].het_lr_avg;
-	avgLR2 = result[i * num_thetam + j + 1][modelRange.nafreq].het_lr_avg;
+	avgLR1 = result[i * num_thetam + j][modelRange.nafreq].het_lr_avg_orig2;
+	avgLR2 = result[i * num_thetam + j + 1][modelRange.nafreq].het_lr_avg_orig2;
 	avgLR3 =
-	  result[(i + 1) * num_thetam + j][modelRange.nafreq].het_lr_avg;
+	  result[(i + 1) * num_thetam + j][modelRange.nafreq].het_lr_avg_orig2;
 	avgLR4 =
-	  result[(i + 1) * num_thetam + j + 1][modelRange.nafreq].het_lr_avg;
+	  result[(i + 1) * num_thetam + j + 1][modelRange.nafreq].het_lr_avg_orig2;
 
 	/* divided into 10 cases */
 	if (thetam2 < rm && thetaf2 < rf) {
@@ -318,211 +321,6 @@ double calc_ppld_allowing_l (LDVals *ldvals, double prior)
 }
 
 
-/* per (Dprime, Theta) pair, calculate the average and max LR by
- * integrating out trait parameters first, then average over marker allele frequencies
- */
-int
-get_average_LR (SUMMARY_STAT *** result)
-{
-  int dprimeIdx;
-  int thetaInd;
-  int mkrFreqIdx;
-
-  //  int maxFreqIdx;
-  double total_lr;
-  double max_lr_dprime_theta = -9999.99;
-  double max_max_lr_dprime_theta = -9999.99;
-  int count;
-  int max_mf = -1;
-  int max_max_mf = -1;
-  double max_lr_dprime = -9999.99;
-  double max_max_lr_dprime = -9999.99;
-  double max_lr = -9999.99;
-  double max_max_lr = -9999.999;
-  double dprime;
-  double theta;
-  double lr;
-  int max_theta = -1;
-  int max_max_theta = -1;
-  int max_dprime = -1;
-  int max_max_dprime = -1;
-  double maxLR;
-
-  for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-    dprime = pLambdaCell->lambda[dprimeIdx][0][0];
-    for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
-      /* sex averaged theta */
-      theta = modelRange.theta[0][thetaInd];
-      total_lr = 0;
-      count = 0;
-      for (mkrFreqIdx = 0; mkrFreqIdx < modelRange.nafreq; mkrFreqIdx++) {
-	/* het_lr_total has trait parameters already integrated out - get the average */
-	//              if(modelType.trait == DT || modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-	if (isnan (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total)) {
-	  fprintf (stderr,
-		   "het_lr_total is NAN at theta (%f,%f)(%d) and dprime %f(%d).\n",
-		   modelRange.theta[0][thetaInd],
-		   modelRange.theta[1][thetaInd], thetaInd, dprime,
-		   dprimeIdx);
-	} else
-	  if (isnan (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total -
- 		     tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total))
-	{
-	  fprintf (stderr,
-		   "het_lr_total is INF at theta (%f,%f)(%d) and dprime %f(%d).\n",
-		   modelRange.theta[0][thetaInd],
-		   modelRange.theta[1][thetaInd], thetaInd, dprime,
-		   dprimeIdx);
-	}
-	if (modelType.trait == DT) {
-	  if (modelType.ccFlag)
-	    /* when ccFlag is on, the het_lr_total has already been adjusted to average */
-	    lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total;
-	  else
-	    lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
-	      (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count *
-	       modelRange.nalpha);
-	} else
-	  /* remove threshold adjustment code
-	     YH 04/14/2009 
-	  lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
-	    (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count /
-	     modelRange.ntthresh * 2 * (modelType.maxThreshold -
-					modelType.minThreshold) *
-	     modelRange.nalpha);
-	  */
-	    lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
-	      (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count *
-	       modelRange.nalpha);
-
-
-	tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_avg = lr;
-	/* add up BR for each marker allele frequency */
-	total_lr += lr;
-	count++;
-	/* keep track of the MOD for each marker allele frequency */
-	maxLR = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_lr;
-	/* find max BR per (dprime, theta) pair */
-	if (mkrFreqIdx == 0 || (lr > max_lr_dprime_theta)) {
-	  max_lr_dprime_theta = lr;
-	  max_mf = mkrFreqIdx;
-	}
-	/* find the max MOD per (dprime, theta) pair */
-	if (mkrFreqIdx == 0 || (maxLR > max_max_lr_dprime_theta)) {
-	  max_max_lr_dprime_theta = maxLR;
-	  max_max_mf = mkrFreqIdx;
-	}
-	/* find max BR per dprime */
-	if ((thetaInd == 0 && mkrFreqIdx == 0) || (lr > max_lr_dprime)) {
-	  max_lr_dprime = lr;
-	  max_theta = thetaInd;
-	}
-	/* find max MOD per dprime */
-	if ((thetaInd == 0 && mkrFreqIdx == 0)
-	    || (maxLR > max_max_lr_dprime)) {
-	  max_max_lr_dprime = maxLR;
-	  max_max_theta = thetaInd;
-	}
-
-	/* find overal max BR  */
-	if ((thetaInd == 0 && mkrFreqIdx == 0 && dprimeIdx == 0) ||
-	    (lr > max_lr)) {
-	  max_lr = lr;
-	  /* max theta would be in tp_result[max_dprime][#theta][#mf] */
-	  max_dprime = dprimeIdx;
-	}
-	/* find overal max MOD  */
-	if ((thetaInd == 0 && mkrFreqIdx == 0 && dprimeIdx == 0) ||
-	    (maxLR > max_max_lr)) {
-	  max_max_lr = maxLR;
-	  /* max theta would be in tp_result[max_dprime][#theta][#mf] */
-	  max_max_dprime = dprimeIdx;
-	}
-
-      }				/* end of looping marker allele frequencies */
-      /* recording the average and max */
-      memcpy (&tp_result[dprimeIdx][thetaInd][modelRange.nafreq],
-	      &tp_result[dprimeIdx][thetaInd][max_max_mf],
-	      sizeof (SUMMARY_STAT));
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_lr =
-	max_max_lr_dprime_theta;
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_mf =
-	modelRange.afreq[max_max_mf];
-      /* this is the BR after integrating out marker allele frequencies */
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg =
-	total_lr / count;
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_br_lr =
-	max_lr_dprime_theta;
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_br_mf =
-	modelRange.afreq[max_mf];
-    }				/* end of theta loop */
-    /* recording the max per dprime */
-    memcpy (&tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq],
-	    &tp_result[dprimeIdx][max_max_theta][max_max_mf],
-	    sizeof (SUMMARY_STAT));
-    tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_lr =
-      max_lr_dprime;
-    tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_mf =
-      tp_result[dprimeIdx][max_theta][modelRange.nafreq].max_mf;
-    tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].
-      max_br_theta = modelRange.theta[0][thetaInd];
-  }				/* end of d prime loop */
-
-  /* record the max overal */
-  memcpy (&tp_result[modelRange.ndprime][modelRange.ntheta]
-	  [modelRange.nafreq],
-	  &tp_result[max_max_dprime][max_max_theta][max_max_mf],
-	  sizeof (SUMMARY_STAT));
-  tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_lr =
-    max_lr;
-  tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_dprime =
-    dprimeIdx;
-
-  return 0;
-}
-
-/* allocate one extra D prime to store average LR for all D primes 
- * allocate one extra marker allele frequency to store average LR per (Dprime, Theta) pair */
-int
-initialize_tp_result_storage ()
-{
-  int i, j, k;
-  int num;
-
-  tp_result =
-    (SUMMARY_STAT ***) calloc (pLambdaCell->ndprime + 1,
-			       sizeof (SUMMARY_STAT **));
-  for (i = 0; i < pLambdaCell->ndprime + 1; i++) {
-    tp_result[i] =
-      (SUMMARY_STAT **) calloc (modelRange.ntheta + 1,
-				sizeof (SUMMARY_STAT *));
-    for (j = 0; j < modelRange.ntheta + 1; j++) {
-      num = modelRange.nafreq + 1;
-      tp_result[i][j] =
-	(SUMMARY_STAT *) calloc (num, sizeof (SUMMARY_STAT));
-      for (k = 0; k < num; k++) {
-	tp_result[i][j][k].max_penIdx = -1;
-      }
-    }
-  }
-  return 0;
-}
-
-int
-free_tp_result_storage ()
-{
-  int i, j;
-
-  for (i = 0; i < pLambdaCell->ndprime + 1; i++) {
-    for (j = 0; j < modelRange.ntheta + 1; j++) {
-      free (tp_result[i][j]);
-    }
-    free (tp_result[i]);
-  }
-  free (tp_result);
-  tp_result = NULL;
-  return 0;
-}
 
 double
 calculate_R_square (double p1, double q1, double d)

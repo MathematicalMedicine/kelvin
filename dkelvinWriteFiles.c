@@ -1,6 +1,5 @@
 /* dkelvinWriteFiles.c */
-
-void dk_write2ptBRHeader ()
+void dk_write2ptBRHeader (int loc1, int loc2)
 {
   int i, j;
 
@@ -64,7 +63,7 @@ void dk_writeMPBRHeader ()
 }
 
 
-void dk_writeMPBRData (double ppl, double br)
+void dk_writeMPBRData (int posIdx, float traitPos, double ppl, double br)
 {
   int i;
 
@@ -83,6 +82,8 @@ void dk_writeMPBRData (double ppl, double br)
 
 void dk_writeMPMODHeader ()
 {
+  int liabIdx;
+
   if (fpMOD == NULL)
     return;
 
@@ -113,8 +114,10 @@ void dk_writeMPMODHeader ()
 }
 
 
-void dk_writeMPMODData (double value, st_DKMaxModel *model)
+void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel *model)
 {
+  int liabIdx;
+
   if (fpMOD == NULL)
     return;
 
@@ -228,6 +231,8 @@ void dk_write2ptMODHeader ()
 
 void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
 {
+  int liabIdx;
+
   if (fpMOD == NULL)
     return;
 

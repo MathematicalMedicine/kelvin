@@ -14,11 +14,8 @@
 
 //#include "kelvin.h"
 #include "model_range.h"
-extern ModelRange modelRange;
 #include "model_options.h"
-extern ModelOptions modelOptions;
 #include "model_type.h"
-extern ModelType modelType;
 
 #include "../utils/utils.h"
 #include "../pedlib/pedlib.h"
@@ -117,6 +114,10 @@ int *parammax;			/* Max QT/CT parameters */
 /* Chunk size used in reallocating arrays of gene frequencies,
  * penetrances, thetas, and constraints. */
 #define CHUNKSIZE 64
+
+//ModelType modelType;
+//ModelRange modelrange;
+//ModelOptions modelOptions;
 
 /**********************************************************************
  * Some internal prototypes.

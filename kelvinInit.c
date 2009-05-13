@@ -1,3 +1,9 @@
+#include "kelvinWriteFiles.h"
+pthread_t statusThread;
+int exitDueToLoop = FALSE; /* exit due to unbroken loop */
+int k;
+char messageBuffer[MAXSWMSG];
+
   overallSW = swCreate ("overall");
   combinedComputeSW = swCreate ("combinedComputeSW");
   combinedBuildSW = swCreate ("combinedBuildSW");
@@ -7,7 +13,6 @@
 
   /* Start a thread with a timer to do the memory checks. It can afford
      to hang, while the main process cannot. */
-  pthread_t statusThread;
   if (pthread_create ( &statusThread, NULL, monitorStatus, NULL))
     perror ("Failed to create status monitoring thread, no progress status will be displayed or written");
 
@@ -308,7 +313,7 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
     //  fprintf( fpCond, "# Version %s\n", programVersion);
    }
 
-  if (modelOptions.markerAnalysis == FALSE) {
+  if (1 || modelOptions.markerAnalysis == FALSE) {
     fpHet = fopen (modelOptions.avghetfile, "w");
     KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", modelOptions.avghetfile);
     fprintf (fpHet, "# Version %s\n", programVersion);
@@ -319,10 +324,12 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
     KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", modelOptions.pplfile);
     writePPLFileHeader ();
 
+    /*
     if (strlen (modelOptions.maxmodelfile) > 0) {
       fpTP = fopen (modelOptions.maxmodelfile, "w");
       KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", modelOptions.maxmodelfile);
     }
+    */
   }
 
   if (strlen (modelOptions.modfile) > 0) {
@@ -341,3 +348,4 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
     fpDK= fopen(modelOptions.dkelvinoutfile, "w");
     KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", modelOptions.dkelvinoutfile);
   }
+

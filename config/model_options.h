@@ -118,5 +118,7 @@ typedef struct ModelOptions
   
 } ModelOptions;
 
+extern ModelOptions modelOptions;
+
 #endif
 

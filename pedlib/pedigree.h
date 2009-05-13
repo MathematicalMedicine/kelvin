@@ -29,8 +29,8 @@
 #define DEF_PED_MALLOC_INCREMENT 10
 
 /* A person's sex */
-#define MALE 		1
-#define FEMALE		2
+//#define MALE 		1
+//#define FEMALE		2
 
 /* direction of the peeling */
 #define PEDIGREE_UP			0

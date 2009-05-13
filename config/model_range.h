@@ -131,4 +131,7 @@ void addConstraint (int type, int a1, int c1, int p1, int op,
 
 int lookup_comparator (char *str);
 int lookup_modelparam (char *str);
+
+extern ModelRange modelRange;
+
 #endif
