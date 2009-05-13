@@ -4,8 +4,6 @@
 
 # Compiled executables and scripts will be installed in $BINDIR
 BINDIR=/usr/local/bin
-OWNER=root
-GROUP=root
 
 # $INCDIR and $LIBDIR should point to where headers and libraries for
 # GSL (GNU Scientific Library) can be found. Remember you can specify these
@@ -28,13 +26,13 @@ INCFLAGS := -I$(INCDIR)
 CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
 GCCOPT := 3 # GCC optimization level, 0=none, 1=default, 2=some, 3=all
-CFLAGS := -Wall -O$(GCCOPT) -DGCCOPT=$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
+CFLAGS := -Wall  -DGCCOPT=$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lconfig -lutils -lm -lpthread
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
-#CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
-CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
+CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
+#CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
 LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
 CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
@@ -55,14 +53,14 @@ CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
 #CFLAGS += -DUSE_GSL # Use GNU Scientific Library (GSL) statistical routines instead of internal ones
 #CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13
 #ADD_LDFLAGS += -lgsl -lgslcblas -lm # ditto
-#CFLAGS += -DUSE_GMP # Experimental use of GNU Multi-Precision library for finding precision/scaling issues
-#ADD_LDFLAGS += -lgmp # ditto
 
 LDFLAGS += ${ADD_LDFLAGS}
 export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN
 
 KOBJS = kelvin.o dcuhre.o
-OBJS = ppl.o saveResults.o trackProgress.o kelvinHandlers.o
+OBJS = ppl.o saveResults.o trackProgress.o kelvinHandlers.o \
+	kelvinWriteFiles.o \
+	summary_result.o iterationMain.o 
 INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
 	kelvinGlobals.h iterationGlobals.h integrationGlobals.h \
 	kelvinLocals.h iterationLocals.h integrationLocals.h \
@@ -111,13 +109,13 @@ test :
 	make -C test-suite -f Makefile test
 
 $(BINDIR)/kelvin-$(VERSION) : kelvin
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
+	install -o root -g root -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
 
 $(BINDIR)/calc_updated_ppl : seq_update/calc_updated_ppl
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/calc_updated_ppl $(BINDIR)/calc_updated_ppl
+	install -o root -g root -m 0755 -p seq_update/calc_updated_ppl $(BINDIR)/calc_updated_ppl
 
 $(BINDIR)/convert_br.pl : seq_update/convert_br.pl
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/convert_br.pl $(BINDIR)/convert_br.pl
+	install -o root -g root -m 0755 -p seq_update/convert_br.pl $(BINDIR)/convert_br.pl
 
 $(BINDIR)/compileDL.sh : compileDL.sh
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p compileDL.sh $(BINDIR)/compileDL.sh
+	install -o root -g root -m 0755 -p compileDL.sh $(BINDIR)/compileDL.sh
