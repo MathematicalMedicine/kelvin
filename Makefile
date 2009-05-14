@@ -4,6 +4,8 @@
 
 # Compiled executables and scripts will be installed in $BINDIR
 BINDIR=/usr/local/bin
+OWNER=root
+GROUP=root
 
 # $INCDIR and $LIBDIR should point to where headers and libraries for
 # GSL (GNU Scientific Library) can be found. Remember you can specify these
@@ -72,7 +74,6 @@ all : kelvin seq_update/calc_updated_ppl
 
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
-          $(BINDIR)/seq_update_br.pl \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh
 
@@ -111,13 +112,13 @@ test :
 	make -C test-suite -f Makefile test
 
 $(BINDIR)/kelvin-$(VERSION) : kelvin
-	install -o root -g root -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
 
 $(BINDIR)/calc_updated_ppl : seq_update/calc_updated_ppl
-	install -o root -g root -m 0755 -p seq_update/calc_updated_ppl $(BINDIR)/calc_updated_ppl
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/calc_updated_ppl $(BINDIR)/calc_updated_ppl
 
 $(BINDIR)/convert_br.pl : seq_update/convert_br.pl
-	install -o root -g root -m 0755 -p seq_update/convert_br.pl $(BINDIR)/convert_br.pl
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/convert_br.pl $(BINDIR)/convert_br.pl
 
 $(BINDIR)/compileDL.sh : compileDL.sh
-	install -o root -g root -m 0755 -p compileDL.sh $(BINDIR)/compileDL.sh
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p compileDL.sh $(BINDIR)/compileDL.sh
