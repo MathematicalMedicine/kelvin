@@ -82,6 +82,7 @@ kelvin : libs $(KOBJS) $(OBJS)
 kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
 	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
+.PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
 	make -C seq_update -f Makefile calc_updated_ppl
 
@@ -99,7 +100,8 @@ clean :
 	make -C pedlib -f Makefile clean
 	make -C config -f Makefile clean
 	make -C utils -f Makefile clean
-	rm -f $(KOBJS) $(OBJS) kelvin calc_updated_ppl
+	make -C seq_update -f Makefile clean
+	rm -f $(KOBJS) $(OBJS) kelvin seq_update/calc_updated_ppl
 	make -C test-suite -f Makefile clean
 
 .PHONY : test test-USE_DL
