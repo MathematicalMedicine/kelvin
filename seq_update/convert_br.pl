@@ -15,7 +15,7 @@ use strict;
 my $line;
 my $lineno = 1;
 my $version;
-my $current = "0.36.1";
+my $current = "0.38.0";
 my ($maj, $min, $patch);
 my $br_file = undef;
 my @flds;
@@ -28,7 +28,6 @@ my $force_chr = '';
 my $map_file = '';
 my $map_fmt = undef;
 my ($mrk_idx, $pos_idx);
-my $pos_value;
 my %marker_pos = ();
 
 # How many markers in a multipoint file
@@ -43,19 +42,25 @@ my $liability_classes = 1;
 my $markerlist_col = -1;
 my $penvector_col = -1;
 
-# These will be filled in by the appropriate header parsing routine
-my $header = '';
-my $data_regex = '';
-my $data_fmt = '';
-my @fld_idxs = ();
-# Controls whether the value for the position column should be appended
-# to the array of fields after a data line is parsed.
-my $append_pos = 0;
+
+# This will be filled in by the appropriate marker info parsing routine
+my %marker_flds;
+# This will be filled in by the appropriate header parsing routine
+my %header_info;
+
+my $twopoint = 0;
 
 my %header_parsers = ( "unknown" => \&pre_0_35_0,
 		       "0.35.0" => \&ver_0_35_0,
 		       "0.36.0" => \&ver_0_35_0,
-		       "0.36.1" => \&ver_0_36_1 );
+		       "0.36.1" => \&ver_0_36_1,
+		       "0.37.0" => \&ver_0_36_1,
+		       "0.37.1" => \&ver_0_36_1,
+		       "0.37.2" => \&ver_0_36_1,
+		       "0.37.3" => \&ver_0_36_1,
+		       "0.37.4" => \&ver_0_36_1,
+		       "0.37.5" => \&ver_0_36_1,
+		       "0.38.0" => \&ver_0_38_0 );
 
 my $usage = "usage: $0 [-c <chr_num>] [-m <map_file>] <filename>\n";
 
@@ -126,63 +131,75 @@ if (($version) = ($line =~ /\#\s+Version\s+(\S+)/)) {
     and die ("input file is already in most recent format ($current)\n");
 exists ($header_parsers{$version})
     or die ("$0: don't know how to parse headers for version '$version'\n");
-(($version eq 'unknown') && (length ($force_chr) <= 0))
-    and die ("$0: -c <chr_num> is required for this file\n");
 
 if ($version eq 'unknown') {
+    # Unversioned files, two-point and multipoint both, 
+    (length ($force_chr) <= 0) and die ("$0: -c <chr_num> is required for this file\n");
+    
     # We have to build a general $data_regex and try to match one data line,
     # then count fields in PenetranceVector and MarkerList to figure out the
     # penetrance vector type, number of liability classes and how the converted
     # header line should look like.
 
-    # If a 2-point marker info line, skip it
+    # A 2-point marker info line. Unversioned 2-pt files require a map
     if ($line =~ /^\#/) {
+	($map_file) or die ("$0: can't convert without a map file (use -m <map_file>)\n");
+	$lineno++;
+	$twopoint = 1;
 	(defined ($line = <FH>))
 	    or die ("$0: input file ends unexpectedly at line $lineno\n");
-	$lineno++;
     }
-    &{$header_parsers{$version}} ($line);
+    &{$header_parsers{$version}} ($line, \%header_info);
 
     (defined ($line = <FH>))
 	or die ("$0: input file ends unexpectedly at line $lineno\n");
     $lineno++;
     $line =~ s/\s+/ /g;
     $line =~ s/, +/,/g;
-    (@flds) = ($line =~ /^\s*$data_regex\s*$/)
+
+    (@flds) = ($line =~ /^\s*$header_info{data_regex}\s*$/)
 	or die ("$0: badly formed data line at line $lineno\n");
     ($markerlist_col != -1)
 	and $markerlist_len = scalar (@arr = split (/,/, $flds[$markerlist_col]));
     $va = scalar (@arr = split (/ /, $flds[$penvector_col]));
+
+    # Imprinting wasn't supported before 0.36, so we don't need to consider how
+    # that changes the penetrance vector length. Also note that for all
+    # unversioned files, QT penetrance vectors included a Threshold column, 
+    # even if the run was straight QT and not CT (this is true even in some
+    # versioned files, but at least those are labeled).
+
     if (($va == 3) || ($va == 6) || ($va == 9)) {
+	# Dichotomous trait: three elements (DD Dd dd) per liability class
 	$penvector_type = "DT";
 	$liability_classes = $va / 3;
     } elsif (($va == 4) || ($va == 8)) {
+	# Chi-Squared: Three degrees-of-freedom (DD Dd dd) and a threshold 
+	# per liability class
 	$penvector_type = "QT_Chi";
 	$liability_classes = $va / 4;
     } elsif (($va == 7) || ($va == 14)) {
+	# Normal or T: Three means (DD Dd dd) and three standard deviations (DD Dd dd)
+	# and a threshold per liability class.
 	$penvector_type = "QT_T";
 	$liability_classes = $va / 7;
     } else {
 	die ("$0: can't determine penetrance vector type at line $lineno\n");
     }
 
-    # Reset $header to an empty string, which will force the first header line
-    # to be re-parsed, informed by $penvector_type, etc.
-    $header = '';
-    # And rewind the file to the beginning. We ignore the possibility of a 
+    # Rewind the file to the beginning. We ignore the possibility of a 
     # version line, because we wouldn't be here if there had been one.
     seek (FH, 0, 0);
     $line = <FH>;
     $lineno = 1;
 
 } elsif (versionnum ($version) < versionnum ("0.36.1")) {
-    # Versioned 2-point BR files less than V0.36.1 have no position column.
-    # If we find a marker information line (which only appears in 2-point
-    # files), then set $append_pos.
+    # Versioned 2-point files less than V0.36.1 have no position column, so
+    # we require a map. 
 
     if ($line =~ /^\#/) {
 	($map_file) or die ("$0: can't convert without a map file (use -m <map_file>)\n");
-	$append_pos = 1;
+	$twopoint = 1;
     }
 }
 
@@ -191,26 +208,41 @@ while (1) {
 
     if ($line =~ /^\#/) {
 	# 2-Point marker info line
-	($append_pos) and $pos_value = lookup_pos ($line);
-	print ($line);
+	$twopoint = 1;
+	%marker_flds = ();
+	if (($version eq 'unknown') || (versionnum ($version) < versionnum ("0.38.0"))) {
+	    pre_0_38_0_marker ($line, \%marker_flds);
+	} else {
+	    ver_0_38_0_marker ($line, \%marker_flds);
+	}
 
     } elsif ($line !~ /^[\-\+\d\.\s\(\,\)e]+$/) {
 	# Column header line
-	(length ($header) <= 0)
-	    and &{$header_parsers{$version}} ($line);
-	print ($header);
+	&{$header_parsers{$version}} ($line, \%header_info);
 
     } else {
 	# By elimination, a data line
-	(length ($data_regex) > 0)
+	(length ($header_info{data_regex}) > 0)
 	    or die ("$0: data line found before any header lines at line $lineno\n");
 	$line =~ s/\s+/ /g;
 	$line =~ s/, +/,/g;
-
-	(@flds) = ($line =~ /^\s*$data_regex\s*$/)
+	(@flds) = ($line =~ /^\s*$header_info{data_regex}\s*$/)
 	    or die ("$0: badly formed data line at line $lineno\n");
-	($append_pos) and push (@flds, $pos_value);
-	printf ($data_fmt, @flds[@fld_idxs]);
+
+	(exists ($header_info{chr_col}) && ! exists ($marker_flds{Chr}))
+	    and $marker_flds{Chr} = $flds[$header_info{chr_col}];
+	(exists ($header_info{pos_col}) && !
+	 (exists ($marker_flds{Position}) || exists ($marker_flds{Position1}) ||
+	  exists ($marker_flds{AvgPosition})))
+	    and $marker_flds{Position} = $flds[$header_info{pos_col}];
+
+	if (length ($header_info{header}) > 0) {
+	    # Guard against Perl thinking 'build_marker' is a file handle
+	    ($twopoint) and print ("". build_marker (\%marker_flds));
+	    print ($header_info{header});
+	    $header_info{header} = '';
+	}
+	printf ($header_info{data_fmt}, @flds[@{$header_info{fld_idxs}}]);
     }
     
     (defined ($line = <FH>)) or last;
@@ -218,19 +250,110 @@ while (1) {
 }
 
 
-sub pre_0_35_0 {
-    my ($line) = @_;
+sub pre_0_38_0_marker
+{
+    my ($line, $href) = @_;
+    my ($seq, $name1, $name2);
+
+    (($seq, $name1, $name2) = ($line =~ /\#\s+(\d+)\s+(\S+)\s+(\S+)/))
+	or die ("$0: badly formatted marker info at line $lineno\n");
+    $$href{Seq} = $seq;
+    if (! $map_file) {
+	$$href{Trait} = $name1;
+	$$href{Marker} = $name2;
+
+    } elsif ($map_file eq 'nomap') {
+	$$href{Trait} = $name1;
+	$$href{Marker} = $name2;
+	$$href{Position} = $seq;
+
+    } elsif (! exists ($marker_pos{$name1})) {
+	$$href{Trait} = $name1;
+	(exists ($marker_pos{$name2}))
+	    or die ("$0: can't find position based on marker info at line $lineno\n");
+	$$href{Marker} = $name2;
+	$$href{Position} = $marker_pos{$name2};
+
+    } elsif (exists ($marker_pos{$name2}))  {
+	$$href{Marker1} = $name1;
+	$$href{Position1} = $marker_pos{$name1};
+	$$href{Marker2} = $name2;
+	$$href{Position2} = $marker_pos{$name2};
+    } else {
+	die ("$0: can't find position based on marker info at line $lineno\n");
+    }
+    ($force_chr) and $$href{Chr} = $force_chr;
+
+    return (1);
+}
+
+
+# This should never be called, but we implement it now while the details are
+# fresh in mind, in case we need it later.
+sub ver_0_38_0_marker
+{
+    my ($line, $href) = @_;
+    my ($fld, $val);
+    my %legal = (Seq => '', Chr => '', Trait => '', Marker => '', Position => '',
+		 AvgPosition => '', MalePosition => '', FemalePosition => '',
+		 Marker1 => '', Position1 => '', Marker2 => '', Position2 => '',
+		 Physical => '');
+
+    $line =~ s/^\#\s*//;
+    while ($line !~ /^\s*$/) {
+	($fld, $val, $line) = split (/\s+/, $line, 3);
+	(($fld =~ s/:$//) && exists ($legal{$fld}))
+	    or die ("$0: unknown field '$fld' in marker info at line $lineno\n");
+	$$href{$fld} = $val;
+    }
+    return (1);
+}
+
+
+sub build_marker
+{
+    my ($href) = @_;
+    my $line = "#";
+
+    map { $line .= " $_: $$href{$_}" } qw(Seq Chr);
+    if (exists $$href{Position}) {
+	map { $line .= " $_: $$href{$_}" } qw(Trait Marker Position);
+    } elsif (exists ($$href{AvgPosition})) {
+	map {
+	    $line .= " $_: $$href{$_}";
+	} qw(Trait Marker AvgPosition MalePosition FemalePosition);
+    } elsif (exists ($$href{Position1})) {
+	map { $line .= " $_: $$href{$_}" } qw(Marker1 Position1 Marker2 Position2);
+    }
+    (exists ($$href{Physical})) and $line .= " Physical: $$href{Physical}";
+    $line .= "\n";
+
+    return ($line);
+}
+
+
+sub pre_0_35_0
+{
+    my ($line, $href) = @_;
     my @names;
     my @dprimes = ();
     my %mapped = ();
     my $str;
     my $va = 0;
     my $lc;
+    my $header = '';
+    my $data_regex = '';
+    my $data_fmt = '';
+    my $fld_idxs = [];
 
-    $header = 'Chr ';
-    $data_fmt = "$force_chr ";
+    %$href = ();
+    if ($twopoint) {
+	$header = $data_fmt = '';
+    } else {
+	$header = 'Chr ';
+	$data_fmt = "$force_chr ";
+    }
     $data_regex = '';
-    @fld_idxs = ();
     # Trim leading and trailing whitespace
     $line =~ s/^\s*(\S|\S.*\S)\s*$/$1/;
     # Remove spaces following commas
@@ -361,16 +484,9 @@ sub pre_0_35_0 {
 	$va++;
     }
 
-    if (! exists ($mapped{Position})) {
-	($map_file) or die ("$0: can't convert without a map file (use -m <map_file>)\n");
-	$header .= "Position ";
-	push (@fld_idxs, $va);
-	$data_fmt .= "%s ";
-	$append_pos = 1;
-    }
     foreach $str (@dprimes) {
 	$header .= "$str ";
-	push (@fld_idxs, @{$mapped{$str}{idx}});
+	push (@$fld_idxs, @{$mapped{$str}{idx}});
 	$data_fmt .= $mapped{$str}{fmt};
     }
     foreach $str ('Theta(M,F)', qw/Position PPL BayesRatio MOD R2 Alpha
@@ -397,45 +513,77 @@ sub pre_0_35_0 {
 	} else {
 	    $header .= "$str ";
 	}
-	push (@fld_idxs, @{$mapped{$str}{idx}});
+	push (@$fld_idxs, @{$mapped{$str}{idx}});
 	$data_fmt .= $mapped{$str}{fmt};
     }
     
     chop ($data_regex, $data_fmt, $header);
     $header .= "\n";
     $data_fmt .= "\n";
+
+    $$href{header} = $header;
+    $$href{data_regex} = $data_regex;
+    $$href{data_fmt} = $data_fmt;
+    $$href{fld_idxs} = $fld_idxs;
     return;
 }
 
 
-# V0.35.0 -> V0.36.1 : Add a position column to two-point files
+# V0.35.0 through V0.36.0 : Remove the Chr column from two-point files
 sub ver_0_35_0
 {
-    my ($line) = @_;
+    my ($line, $href) = @_;
 
-    if ($line =~ /Position/) {
-	#   If there's already a Position column (there will be in multi-point files),
-	#   then we do nothing
-	$append_pos = 0;
-	$header = $line;
-	$data_regex = '(\S.*\S)';
-	$data_fmt = "%s\n";
-	@fld_idxs = (0);
+    %$href = ();
+    if (! $twopoint) {
+	# Multipoint. No changes needed, really.
+	$$href{header} = $line;
+	$$href{data_regex} = '(\S.*\S)';
+	$$href{data_fmt} = "%s\n";
+	$$href{fld_idxs} = [0];
     } else {
-	#   Otherwise, splice in a Position column just after the Chr column
-	#   This next bit should be redundant with the first-line logic, above
-	$append_pos = 1;
-	($header = $line) =~ s/(Chr)\s+(\S.*)/$1 Position $2/;
-	$data_regex = '(\d+)\s+(\S.*)';
-	$data_fmt = "%s %s %s\n";
-	@fld_idxs = (0, 2, 1);
+	# Otherwise, twopoint. We need to strip the Chr column from the data lines,
+	# but still capture the Chr value in the regex so we can insert the Chr value
+	# in the marker info line.
+	($$href{header} = $line) =~ s/Chr\s+(\S.*)/$1/;
+	$$href{data_regex} = '(\d+)\s+(\S.*)';
+	$$href{data_fmt} = "%s\n";
+	$$href{fld_idxs} = [1];
+	$$href{chr_col} = 0;
+    }
+    return;
+}
+
+
+# V0.36.1 and V0.37.x: Remove the Chr and Position columns from two-point files
+sub ver_0_36_1
+{
+    my ($line, $href) = @_;
+
+    %$href = ();
+    if (! $twopoint) {
+	# Multipoint. No changes needed, really.
+	$$href{header} = $line;
+	$$href{data_regex} = '(\S.*\S)';
+	$$href{data_fmt} = "%s\n";
+	$$href{fld_idxs} = [0];
+    } else {
+	# Otherwise, twopoint. We need to strip the Chr and Position columns
+	# from the data lines, but still capture those values in the regex so
+	# we can insert them in the marker info line.
+	($$href{header} = $line) =~ s/Chr\s+Position\s+(\S.*)/$1/;
+	$$href{data_regex} = '(\d+)\s+([\d\.]+)\s+(\S.*)';
+	$$href{data_fmt} = "%s\n";
+	$$href{fld_idxs} = [2];
+	$$href{chr_col} = 0;
+	$$href{pos_col} = 1;
     }
     return;
 }
 
 
 # A stub that should never be called
-sub ver_0_36_1
+sub ver_0_38_0
 {
     ;
 }
