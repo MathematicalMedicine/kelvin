@@ -15,6 +15,10 @@ Version 0.38.0
   changes. D' of zero always included on LD analyses.
   Polynomial compilation works on all platforms.
 
+  BR overflow due to sample size is handled in this release
+  by rescaling. BR overflow for individual pedigree, which is
+  much less likely, is not handled yet.
+
 Version 0.37.1
   Numerous bugfixes in LD handling and estimation in
   cases with different numbers of marker alleles. Now
