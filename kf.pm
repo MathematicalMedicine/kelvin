@@ -45,7 +45,7 @@ our %Directives;                                       # Directives as loaded
 our $PairCount      = 0;                                                # Last pedigree count of marker pairs
 our @Loci           = ('Trait');                                        # Ordered loci name list from companion file
 our %LociAttributes = ('Trait' => { 'Type' => 'T', 'Included' => 1 });  # Loci attributes from companion and marker files
-my %Map;                                                               # Loci on the map and other map attributes
+our %Map;                                                               # Loci on the map and other map attributes
 
 # Nuisances to fix
 my @Depths;                                                            # Referenced recursively and I'm fuddled
@@ -98,7 +98,7 @@ our %KnownDirectives = (
 
 
 our @EXPORT = qw(
-		 @Loci %LociAttributes %Pedigrees %Directives %KnownDirectives 
+		 %Map @Loci %LociAttributes %Pedigrees %Directives %KnownDirectives 
 		 AttributeMissing $UnknownAffection $UnknownPerson $Affected $Unaffected
 		 addMissingAlleles assessPedigree deriveAlleleFrequencies checkRelations 
 		 checkIntegrity loadPedigree loadConf loadCompanion loadMarkers loadMap
@@ -421,7 +421,7 @@ sub assessPedigree {
               if (($TotalColumns < 12) || ($TotalColumns & 1));
             die
               "Inconsistent column counts ($MarkerColumns of $TotalColumns are markers) between companion datafile and post-MAKEPED pedigree file $File."
-              if ($HaveConfig && (($TotalColumns - $MarkerColumns) != 10));
+              if ($HaveConfig && (($TotalColumns - $MarkerColumns) != 10) && (($TotalColumns - $MarkerColumns) != 14));
             return "POST";
         } elsif ($Type eq "BARE") {
 
