@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w -I /Users/whv001/kelvin/trunk
+#!/usr/bin/perl -w -I /home/whv001/kelvin/trunk
 use strict;
 use Getopt::Long;
 use List::Util qw(sum min);
