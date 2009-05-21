@@ -183,7 +183,7 @@ print OUT "set trait 1 freqs <d> <D>\n";
 print OUT "input seed file './trait_and_marker.seed'\n";
 print OUT "output overwrite seed file './trait_and_marker.seed'\n";
 print OUT "input pedigree file './".$WritePrefix."_Pedigree.Dat'\n";
-print OUT "output pedigree file './".$WritePrefix."_Pedigree.Out'\n";
+print OUT "output overwrite pedigree file './".$WritePrefix."_Pedigree.Out'\n";
 
 my $MarkerSeq = 0;
 for my $Locus (@Loci) {

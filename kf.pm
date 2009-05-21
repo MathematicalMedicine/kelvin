@@ -69,6 +69,7 @@ our %KnownDirectives = (
     GF    => \&NoAction,
     HE    => \&NoAction,
     IMP   => \&NoAction,
+    IR    => \&NoAction,
     LC    => \&NoAction,
     LD    => \&NoAction,
     LOG   => \&NoAction,
