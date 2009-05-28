@@ -50,7 +50,7 @@ void iterateMain() {
 
       /* first dimension is pedigree */
       //likelihoodQT = (double *****) calloc (sizeof (double ****), pedigreeSet.numPedigree + 1);
-      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree + 1; pedIdx++) {
+      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         /* second dimension is gene freq */
         pPedigree->traitLikelihoodQT = (double ****) calloc (sizeof (double ***), modelRange.ngfreq);
