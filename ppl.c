@@ -339,6 +339,8 @@ free_likelihood_storage (PedigreeSet * pedSet)
   int penIdx;
   int paramIdx;
 
+  return; 
+#if 0
   if (likelihoodDT == NULL && likelihoodQT == NULL)
     return;
 
@@ -378,4 +380,5 @@ free_likelihood_storage (PedigreeSet * pedSet)
     }
     free (likelihoodQT);
   }
+#endif
 }

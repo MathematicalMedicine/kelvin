@@ -27,12 +27,14 @@ void iterateMain() {
     markerNameList = (char **) calloc (sizeof (char *), modelType.numMarkers);
     if (modelType.trait == DT) {
 
+#if 0
       /* likelihoodDT is for homoLR */
       likelihoodDT = (double **) calloc (sizeof (double *), modelRange.ngfreq);
       for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
         /* second dimension is penetrance */
         likelihoodDT[gfreqInd] = (double *) calloc (sizeof (double), modelRange.npenet);
       }
+#endif
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         /* first dimension is gene freq */
@@ -47,24 +49,30 @@ void iterateMain() {
     } else {    /* QT */
 
       /* first dimension is pedigree */
-      likelihoodQT = (double *****) calloc (sizeof (double ****), pedigreeSet.numPedigree + 1);
+      //likelihoodQT = (double *****) calloc (sizeof (double ****), pedigreeSet.numPedigree + 1);
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree + 1; pedIdx++) {
+        pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         /* second dimension is gene freq */
-        likelihoodQT[pedIdx] = (double ****) calloc (sizeof (double ***), modelRange.ngfreq);
+        pPedigree->traitLikelihoodQT = (double ****) calloc (sizeof (double ***), modelRange.ngfreq);
+        pPedigree->alternativeLikelihoodQT = (double ****) calloc (sizeof (double ***), modelRange.ngfreq);
         for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
 
           /* third dimension is mean */
-          likelihoodQT[pedIdx][gfreqInd] = (double ***) calloc (sizeof (double **), modelRange.npenet);
+          pPedigree->traitLikelihoodQT[gfreqInd] = (double ***) calloc (sizeof (double **), modelRange.npenet);
+          pPedigree->alternativeLikelihoodQT[gfreqInd] = (double ***) calloc (sizeof (double **), modelRange.npenet);
           for (penIdx = 0; penIdx < modelRange.npenet; penIdx++) {
             /* fourth dimension is SD */
-            likelihoodQT[pedIdx][gfreqInd][penIdx] = (double **) calloc (sizeof (double *), modelRange.nparam);
+            pPedigree->traitLikelihoodQT[gfreqInd][penIdx] = (double **) calloc (sizeof (double *), modelRange.nparam);
+            pPedigree->alternativeLikelihoodQT[gfreqInd][penIdx] = (double **) calloc (sizeof (double *), modelRange.nparam);
             for (paramIdx = 0; paramIdx < modelRange.nparam; paramIdx++) {
               /* 5th dimension is threshold */
-              likelihoodQT[pedIdx][gfreqInd][penIdx][paramIdx] = (double *) calloc (sizeof (double), modelRange.ntthresh);
-            }
-          }
-        }
-      }
+              pPedigree->traitLikelihoodQT[gfreqInd][penIdx][paramIdx] = (double *) calloc (sizeof (double), modelRange.ntthresh);
+              pPedigree->alternativeLikelihoodQT[gfreqInd][penIdx][paramIdx] = (double *) calloc (sizeof (double), modelRange.ntthresh);
+            } /* paramIdx */
+          } /* penIdx */
+        } /* gfreqInd */
+      } /* pedIdx */
+
     }
   }
 
@@ -821,7 +829,9 @@ void iterateMain() {
           }
 
           log10_likelihood_null = pedigreeSet.log10Likelihood;
+#if 0
           likelihoodDT[gfreqInd][penIdx] = log10_likelihood_null;
+#endif
         }       /* gfreq */
       } /* pen */
 
@@ -927,15 +937,13 @@ void iterateMain() {
                 /* save the likelihood at null */
                 pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
                 pedigreeSet.nullLikelihood[pedIdx] = pPedigree->likelihood;
-                likelihoodQT[pedIdx][gfreqInd][penIdx]
+                pPedigree->traitLikelihoodQT[gfreqInd][penIdx]
                   [paramIdx][thresholdIdx] = pPedigree->likelihood;
               }
 
               log10_likelihood_null = pedigreeSet.log10Likelihood;
               if (isnan (log10_likelihood_null))
                 fprintf (stderr, "Trait likelihood is NAN.\n");
-              likelihoodQT[pedigreeSet.numPedigree][gfreqInd][penIdx]
-                [paramIdx][thresholdIdx] = log10_likelihood_null;
             }   /* thresholdIdx */
           }     /* penIdx */
         }       /* paramIdx */
@@ -1520,6 +1528,12 @@ void iterateMain() {
 		  popStatus ('k');
                 }
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
+		/* add the result to the right placeholder */
+		for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+		  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+		  pPedigree->alternativeLikelihoodQT[gfreqInd]
+		      [penIdx][paramIdx][thresholdIdx] = pPedigree->likelihood;
+		}
 		record_mp_result(ret, &pedigreeSet, &paramSet, posIdx);
               } /* end of threshold loop */
             }   /* end of penetrance loop */
@@ -1562,11 +1576,12 @@ void iterateMain() {
   if (modelType.type == MP) {
     /* allocate space to save temporary results */
     if (modelType.trait == DT) {
-
+#if 0
       for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
         free (likelihoodDT[gfreqInd]);
       }
       free (likelihoodDT);
+#endif
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 

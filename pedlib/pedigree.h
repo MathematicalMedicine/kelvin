@@ -165,8 +165,9 @@ typedef struct Pedigree
   double likelihood;
   double markerLikelihood;
   double **traitLikelihoodDT;
-  double ***traitLikelihoodQT;
+  double ****traitLikelihoodQT;
   double **alternativeLikelihoodDT;
+  double ****alternativeLikelihoodQT;
 
   struct polynomial *likelihoodPolynomial;
   struct polyList *likelihoodPolyList;

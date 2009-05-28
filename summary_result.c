@@ -24,8 +24,8 @@ SUMMARY_STAT ***tp_result;
 SUMMARY_STAT *mp_result;
 
 /* storage for the NULL likelihood for the multipoint calculation under polynomial */
-double *****likelihoodQT = NULL;
-double **likelihoodDT = NULL;
+//double *****likelihoodQT = NULL;
+//double **likelihoodDT = NULL;
 
 /* allocate one extra D prime to store average LR for all D primes 
  * allocate one extra marker allele frequency to store average LR per (Dprime, Theta) pair */
@@ -259,7 +259,7 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
   double oldsum_log10;
   double newsum_log10;
   double homoLR, hetLR, log10HetLR;
-  int gfreqIdx, penIdx, paramIdx;
+  int gfreqIdx, penIdx, paramIdx, thresholdIdx;
   int j;
   double alphaV, alphaV2;
   int pedIdx;
@@ -269,6 +269,7 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
   gfreqIdx = param->gfreqIdx;
   penIdx = param->penIdx;
   paramIdx = param->paramIdx;
+  thresholdIdx = param->thresholdIdx;
   
   if(callStatus == -2) {
     fprintf(stderr, "Negative likelihood! Exiting...\n");
@@ -290,9 +291,16 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
       log10HetLR = 0;
       for (pedIdx = 0; pedIdx < pedigreeSet->numPedigree; pedIdx++) {
 	pPedigree = pedigreeSet->ppPedigreeSet[pedIdx];
-	homoLR = pPedigree->alternativeLikelihoodDT[gfreqIdx][penIdx] /
-	  (pPedigree->traitLikelihoodDT[gfreqIdx][penIdx] *
-	   pedigreeSet->markerLikelihood);
+	if(modelType.trait == DT) {
+	  homoLR = pPedigree->alternativeLikelihoodDT[gfreqIdx][penIdx] /
+	    (pPedigree->traitLikelihoodDT[gfreqIdx][penIdx] *
+	     pedigreeSet->markerLikelihood);
+	}
+	else {
+	  homoLR = pPedigree->alternativeLikelihoodQT[gfreqIdx][penIdx][paramIdx][thresholdIdx] /
+	    (pPedigree->traitLikelihoodQT[gfreqIdx][penIdx][paramIdx][thresholdIdx] *
+	     pedigreeSet->markerLikelihood);
+	}
 	tmp = log10 (alphaV * homoLR + (1 - alphaV));
 	log10HetLR += tmp * pPedigree->pCount[loc2]; // Use the pedigree weight from count file (CF)
       }
