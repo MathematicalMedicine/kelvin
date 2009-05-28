@@ -53,11 +53,6 @@
 #define DIRECTION_LEFT                  0
 #define DIRECTION_RIGHT                 1
 
-/* QT underlying distribution function */
-#define QT_FUNCTION_NORMAL		0
-#define QT_FUNCTION_T			1
-#define QT_FUNCTION_CHI_SQUARE          2
-
 /* PI */
 #ifndef PI
 #define PI				3.1415926535898e0
@@ -496,5 +491,7 @@ extern SubLocusList savedLocusList;
 
 /* for MP null hypothesis */
 extern SubLocusList nullLocusList;
+
+extern LDLoci *pLDLoci;
 
 #endif /* __LOCUS_H__ */

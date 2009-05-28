@@ -1,45 +1,50 @@
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "model_range.h"
 #include "../utils/utils.h"
 
 #define CHUNKSIZE 64
 
-/* Legal values for Constraint.type */
-#define SIMPLE 0
-#define CLASSC 1
-#define PARAMC 2
-#define PARAMCLASSC 3
+/* String representations of the legal values for Constraint.type. Only
+ * for prettifying logging output.
+ */
+char *contype_strs[] = { "Simple", "Liability Class", "Trait Parameter", "Class/Parameter" };
 
-/* Legal values for Constraint.op; these need correspond to the elements in op_strs */
-#define EQ 0
-#define NE 1
-#define GT 2
-#define GE 3
-
-/* used by lookup_comparator(); these need to correspond to the EQ, NE, etc. symbols */
+/* String representations of the legal values for Constraint.op. Used by
+ * lookup_comparator()
+ */
 char *op_strs[] = { "==", "!=", ">", ">=", NULL };
 
-/* used by lookup_modelparam(); these need to correspond to the PEN_DD, etc. symbols
- * defined in model_range.h
+/* String representations of the legal values for Constraint.a1 and a2. Used by
+ * used by lookup_modelparam()
  */
 char *mp_strs[] = { "", "", "", "", "", "", "", "", "", "DD", "Dd", "dD", "dd", NULL };
-
 
 /* Global variables for tracking actual size of the various dynamically allocated
  * lists inside ModelRange. Only interesting during configuration parsing, so no
  * point cluttering up the ModelRange structure.
  */
 static int maxgfreq=0;
+static int maxafreq=0;
 static int maxtloc=0;
 static int maxalpha=0;
 static int maxdprime=0;
 static int maxtheta[2]={0,0};       /* increase dimension if there's more than 2 genders (!) */
-int *penetcnt;                      /* Array of number of penetrances */
-int *penetmax;                      /* Array of max penetrances */
+static int maxtthresh=0;
+static int *penetcnt=NULL;          /* Array of number of penetrances */
+static int *penetmax=NULL;          /* Array of max penetrances */
+static int *paramcnt=NULL;          /* Number of QT/CT parameters */
+static int *parammax=NULL;          /* Max QT/CT parameters */
+
 Constraint *constraints[4];         /* Array of constraints by type */
-int constmax[4] = { 0, 0, 0, 0 };   /* Max constraints in array (for dynamic alloc) */
-int constcnt[4] = { 0, 0, 0, 0 };   /* Current number of constraints in array */
+static int constmax[4] = { 0, 0, 0, 0 };   /* Max constraints in array (for dynamic alloc) */
+static int constcnt[4] = { 0, 0, 0, 0 };   /* Current number of constraints in array */
+
+/* Protoypes for private routines */
+inline void swap (double *array, int i, int j);
+void quicksort (double *array, int lo, int hi);
+inline int uniquify (double *array, int len);
 
 
 /* We make an effort here to keep the list of trait loci sorted as we
@@ -100,6 +105,26 @@ void addGeneFreq (ModelRange * range, double val)
 }
 
 
+void addAlleleFreq (ModelRange * range, double val)
+{
+  /* Validate value. */
+  KASSERT ((val >= 0 && val <= 1.0), "Bad allele frequency value %g; aborting.\n", val);
+
+  /* Initialize the structure if first access. */
+  if (!range->afreq)
+    range->nafreq = maxafreq = 0;
+  /* Enlarge array if necessary. */
+  if (range->nafreq == maxafreq) {
+    range->afreq = realloc (range->afreq,
+			    (maxafreq + CHUNKSIZE) * sizeof (double));
+    maxafreq = maxafreq + CHUNKSIZE;
+  }
+  /* Add the element. */
+  range->afreq[range->nafreq] = val;
+  range->nafreq++;
+}
+
+
 void addAlpha (ModelRange * range, double val)
 {
   /* Validate value. */
@@ -149,28 +174,13 @@ void addTheta (ModelRange * range, int type, double val)
   if (!range->theta) {
     range->ngender = 2;
     range->theta = malloc (range->ngender * sizeof (double *));
-    range->theta[SEXML] = malloc (CHUNKSIZE * sizeof (double));
-    range->theta[SEXFM] = malloc (CHUNKSIZE * sizeof (double));
+    range->theta[SEXML] = range->theta[SEXFM] = NULL;
     range->thetacnt = malloc (range->ngender * sizeof (int *));
     range->thetacnt[SEXML] = maxtheta[SEXML] = 0;
     range->thetacnt[SEXFM] = maxtheta[SEXFM] = 0;
   }
 
-  /* Finally, add the thetas as specified. */
-  /* Sex-specific thetas. Update one or both arrays separately. */
-  if (type == THETA_AVG || type == THETA_FEMALE) {
-    /* Enlarge array if necessary. */
-    if (range->thetacnt[SEXFM] == maxtheta[SEXFM]) {
-      range->theta[SEXFM] = realloc (range->theta[SEXFM],
-				     (maxtheta[SEXFM] +
-				      CHUNKSIZE) * sizeof (double));
-      maxtheta[SEXFM] = maxtheta[SEXFM] + CHUNKSIZE;
-    }
-    /* Add the element. */
-    range->theta[SEXFM][range->thetacnt[SEXFM]] = val;
-    range->thetacnt[SEXFM]++;
-  }
-  /* Next, update the other array. */
+  /* Put sex-average thetas and male thetas in the same place */
   if (type == THETA_AVG || type == THETA_MALE) {
     /* Enlarge array if necessary. */
     if (range->thetacnt[SEXML] == maxtheta[SEXML]) {
@@ -182,6 +192,20 @@ void addTheta (ModelRange * range, int type, double val)
     /* Add the element. */
     range->theta[SEXML][range->thetacnt[SEXML]] = val;
     range->thetacnt[SEXML]++;
+  }
+
+  /* Female thetas go someplace else */
+  if (type == THETA_FEMALE) {
+    /* Enlarge array if necessary. */
+    if (range->thetacnt[SEXFM] == maxtheta[SEXFM]) {
+      range->theta[SEXFM] = realloc (range->theta[SEXFM],
+				     (maxtheta[SEXFM] +
+				      CHUNKSIZE) * sizeof (double));
+      maxtheta[SEXFM] = maxtheta[SEXFM] + CHUNKSIZE;
+    }
+    /* Add the element. */
+    range->theta[SEXFM][range->thetacnt[SEXFM]] = val;
+    range->thetacnt[SEXFM]++;
   }
 }
 
@@ -308,6 +332,1108 @@ void addConstraint (int type, int a1, int c1, int p1,
 }
 
 
+/**********************************************************************
+ * Add one more element to appropriate parameter vector.  May need to
+ * allocate or reallocate memory in order to allow additional room for
+ * more values.
+ *
+ * Recall that parameters are only specified in the case of QT or CT
+ * traits, and that the number of parameters (npardim) is determined
+ * by the distribution type. Moreover, parameters are specified only
+ * once and applied uniformly to all allele combinations as if there
+ * are no liability classes. Later, if liability classes are in use,
+ * we "expand" the parameter array to its full three dimensions. So
+ * addParameter() is only ever used in "preexpansion" mode, where the
+ * first dimension of the array (corresponds to liability class) is
+ * always 0, and the alleles are always 0, too.
+ *
+ * The parameter array: range->param[nlclass][nallele][pardim][nparam] 
+ *
+ * Note that paramcnt and parammax are just simple arrays since as we
+ * read the config file, parameter values are shared across all allele
+ * combinations, and we don't handle liability classes until later:
+ * hence only the parameter dimension will be variable.
+ **********************************************************************/
+void addParameter (ModelRange * range, int dim, double val)
+{
+  int i;
+
+  /* First, if this is the first access to the structure, you must
+   * initialize it. */
+  if (!range->param) {
+    /* Initialize: remember, if you are a pre-expansion
+     * param[][][][] array, the first dimension (liability class)
+     * will always have a dimension of size 1, and the second
+     * dimension (allele) will also always have a dimension of size
+     * 1, since we "share" values, at least before applying
+     * constraints, across all allele combinations. */
+    range->param = malloc (sizeof (double ***));
+    range->param[0] = malloc (sizeof (double **));
+    range->param[0][0] = malloc (range->npardim * sizeof (double *));
+    for (i = 0; i < range->npardim; i++)
+      range->param[0][0][i] = malloc (CHUNKSIZE * sizeof (double));
+
+    /* The only "real" dimension of param[][][][] reflected in
+     * paramcnt and parammax is the dim dimension, since that's the
+     * only one that will vary at input time. Recall that all
+     * parameters are shared across all alleles and liability
+     * classes.  */
+    paramcnt = malloc (range->npardim * sizeof (int));
+    parammax = malloc (range->npardim * sizeof (int));
+    for (i = 0; i < range->npardim; i++) {
+      paramcnt[i] = 0;
+      parammax[i] = CHUNKSIZE;
+    }
+  }
+
+  /* Next, add the parameter to the appropriate location in the
+   * param[][][][] array, which may entail allocating more space. */
+  if (paramcnt[dim] == parammax[dim]) {
+    range->param[0][0][dim] = realloc (range->param[0][0][dim],
+				       (parammax[dim] +
+					CHUNKSIZE) * sizeof (double));
+    parammax[dim] = parammax[dim] + CHUNKSIZE;
+  }
+  /* Add the element. */
+  range->param[0][0][dim][paramcnt[dim]] = val;
+  paramcnt[dim]++;
+}
+
+
+/**********************************************************************
+ * Add one more element to trait threshold vector.  May need to
+ * allocate or reallocate memory in order to allow additional room for
+ * more values. Note that these are "raw" values; we'll have to expand
+ * them by liability and check for any threshold constraints later.
+ *
+ * Recall that trait thresholds are initially specified as if there
+ * are no liability classes. Later, if liability classes are in use,
+ * we "expand" the threshold array to its full two dimensions. So
+ * addTraitThreshold() is only ever used in "preexpansion" mode, where
+ * the first dimension of the array (corresponds to liability class)
+ * is always 1.
+ **********************************************************************/
+void addTraitThreshold (ModelRange * range, double val)
+{
+  /* Validate value. The trait threshold should be between the lowest
+   * and highest means. But since trait thresholds are subject to
+   * liability classes, we won't be able to impose this constraint
+   * until later. */
+  /* KASSERT ((val >=0), "Bad trait threshold %g; aborting.\n", val); */
+
+  /* Initialize the structure if first access. */
+  if (!range->tthresh) {
+    /* Initialize: remember, if you are a pre-expansion tthresh[][]
+     * array, the first dimension (liability class) will always have
+     * a dimension of size 1. */
+    range->tthresh = malloc (sizeof (double *));
+    range->tthresh[0] = NULL;
+    range->ntthresh = 0;
+  }
+
+  /* Enlarge array if necessary. */
+  if (range->ntthresh == maxtthresh) {
+    range->tthresh[0] = realloc (range->tthresh[0],
+				 (maxtthresh + CHUNKSIZE) * sizeof (double));
+    maxtthresh = maxtthresh + CHUNKSIZE;
+  }
+  /* Add the element. */
+  range->tthresh[0][range->ntthresh] = val;
+  range->ntthresh++;
+}
+
+
+/* We check on penetrance values for PEN_dD here, to avoid having to export
+ * penetcnt, and instead force configuration parsing to call out to this
+ * routine. Virtuous? Meh.
+ */
+int checkImprintingPenets (ModelRange *range, int imprinting)
+{
+  int i;
+
+  if (imprinting) {
+    /* If Imprinting is on, penetrance values for PEN_dD better have been specified */
+    if (penetcnt[PEN_dD-PEN_DD] == 0)
+      return (-1);
+    return (0);
+
+  } else {
+    /* If imprinting is off, penetrance values for PEN_dD should not have been specified */
+    if (penetcnt[PEN_dD-PEN_DD] != 0)
+      return (-1);
+
+    /* Otherwise, copy penetrances for PEN_Dd to PEN_dD */
+    range->penet[0][PEN_dD-PEN_DD] = malloc ((penetmax[PEN_Dd-PEN_DD]) * sizeof (double));
+    penetcnt[PEN_dD-PEN_DD] = penetcnt[PEN_Dd-PEN_DD];
+    for (i=0; i<penetcnt[PEN_Dd-PEN_DD]; i++) 
+      range->penet[0][PEN_dD-PEN_DD][i] = range->penet[0][PEN_Dd-PEN_DD][i];
+    addConstraint (SIMPLE, PEN_dD, 0, 0, EQ, PEN_Dd, 0, 0, FALSE);
+    return (0);
+  }
+}
+
+
+/**********************************************************************
+ * Return TRUE if the ith thetas satisfy all theta constraints, else
+ * FALSE. The general idea is to scan through each constraint, exiting
+ * whenever you encounter an unsatisfied one (that does not have a
+ * disjunct). If there is a disjunct, then step through those until
+ * you find one that satisfies the constraint; if you get to the end
+ * of the line without satisfying the disjunct, you fail.
+ **********************************************************************/
+int checkThetas (ModelRange * range, int i)
+{
+  int j = 0;
+  Constraint *conptr = constraints[SIMPLE];
+
+  /* Scan through each constraint. */
+  while (j < constcnt[SIMPLE]) {
+    /* Relies on THETA_MALE being the lowest numbered penetrance. */
+    if ((conptr[j].a1 == THETA_MALE && conptr[j].a2 == THETA_FEMALE) ||
+	(conptr[j].a1 == THETA_FEMALE && conptr[j].a2 == THETA_MALE)) {
+      if ((conptr[j].op == EQ &&
+	   range->theta[conptr[j].a1 - THETA_MALE][i] ==
+	   range->theta[conptr[j].a2 - THETA_MALE][i]) ||
+	  (conptr[j].op == NE &&
+	   range->theta[conptr[j].a1 - THETA_MALE][i] !=
+	   range->theta[conptr[j].a2 - THETA_MALE][i]) ||
+	  (conptr[j].op == GT &&
+	   range->theta[conptr[j].a1 - THETA_MALE][i] >
+	   range->theta[conptr[j].a2 - THETA_MALE][i]) ||
+	  (conptr[j].op == GE &&
+	   range->theta[conptr[j].a1 - THETA_MALE][i] >=
+	   range->theta[conptr[j].a2 - THETA_MALE][i])) {
+	/* Satisfied; skip other disjuncts. */
+	while (conptr[j].alt == TRUE)
+	  j++;
+      } else if (conptr[j].alt == FALSE) {
+	return (FALSE);
+      }
+    }
+    j++;
+  }
+  return (TRUE);
+}
+
+
+/**********************************************************************
+ * Return TRUE if the ith penetrances satisfy all penetrance
+ * constraints, else FALSE. The general idea is to scan through each
+ * constraint, exiting whenever you encounter an unsatisfied one (that
+ * does not have a disjunct). If there is a disjunct, then step
+ * through those until you find one that satisfies the constraint; if
+ * you get to the end of the line without satisfying the disjunct, you
+ * fail.
+ **********************************************************************/
+int checkPenets (ModelRange * range, int i)
+{
+  int j = 0;
+  Constraint *conptr = constraints[SIMPLE];
+
+  /* Scan through each constraint. */
+  while (j < constcnt[SIMPLE]) {
+    if ((conptr[j].a1 < PEN_DD) || (conptr[j].a1 > PEN_dd) ||
+	(conptr[j].a2 < PEN_DD) || (conptr[j].a2 > PEN_dd)) {
+      /* Skip non-penetrance constraints */
+      j++;
+      continue;
+    } 
+    /* Relies on PEN_DD being the lowest numbered penetrance. */
+    if ((conptr[j].op == EQ &&
+	 range->penet[0][conptr[j].a1 - PEN_DD][i] ==
+	 range->penet[0][conptr[j].a2 - PEN_DD][i]) ||
+	(conptr[j].op == NE &&
+	 range->penet[0][conptr[j].a1 - PEN_DD][i] !=
+	 range->penet[0][conptr[j].a2 - PEN_DD][i]) ||
+	(conptr[j].op == GT &&
+	 range->penet[0][conptr[j].a1 - PEN_DD][i] >
+	 range->penet[0][conptr[j].a2 - PEN_DD][i]) ||
+	(conptr[j].op == GE &&
+	 range->penet[0][conptr[j].a1 - PEN_DD][i] >=
+	 range->penet[0][conptr[j].a2 - PEN_DD][i])) {
+      /* Satisfied; skip other disjuncts. */
+      while (conptr[j].alt == TRUE)
+	j++;
+    } else if (conptr[j].alt == FALSE) {
+      return (FALSE);
+    }
+    j++;
+  }
+  return (TRUE);
+}
+
+
+/**********************************************************************
+ * Return TRUE if the ith penetrances satisfy all inter-liability
+ * class penetrance constraints, else FALSE. The general idea is to
+ * scan through each constraint, exiting whenever you encounter an
+ * unsatisfied one (that does not have a disjunct). If there is a
+ * disjunct, then step through those until you find one that satisfies
+ * the constraint; if you get to the end of the line without
+ * satisfying the disjunct, you fail.
+ *
+ * This is somewhat ugly: while it does reduce the number of overall
+ * legal combinations, some extra LODs will still be written to disk
+ * in the case that a pedigree does not contain an individual from
+ * each liability class. This case will have to be detected and dealt
+ * with dynamically?
+ **********************************************************************/
+int checkClassPenets (ModelRange * range, int i)
+{
+  int j = 0;
+  Constraint *conptr = constraints[CLASSC];
+
+  /* Scan through each constraint: inter-class constraints are on
+   * penetrances or trait thresholds, not, e.g., gene frequencies or
+   * thetas. */
+  while (j < constcnt[CLASSC]) {
+    if ((conptr[j].a1 < PEN_DD) || (conptr[j].a1 > PEN_dd) ||
+	(conptr[j].a2 < PEN_DD) || (conptr[j].a2 > PEN_dd)) {
+      /* Skip non-penetrace constraints */
+      j++;
+      continue;
+    } 
+    if ((conptr[j].op == EQ &&
+	 range->penet[conptr[j].c1-1][conptr[j].a1 - PEN_DD][i] ==
+	 range->penet[conptr[j].c2-1][conptr[j].a2 - PEN_DD][i]) ||
+	(conptr[j].op == NE &&
+	 range->penet[conptr[j].c1-1][conptr[j].a1 - PEN_DD][i] !=
+	 range->penet[conptr[j].c2-1][conptr[j].a2 - PEN_DD][i]) ||
+	(conptr[j].op == GT &&
+	 range->penet[conptr[j].c1-1][conptr[j].a1 - PEN_DD][i] >
+	 range->penet[conptr[j].c2-1][conptr[j].a2 - PEN_DD][i]) ||
+	(conptr[j].op == GE &&
+	 range->penet[conptr[j].c1-1][conptr[j].a1 - PEN_DD][i] >=
+	 range->penet[conptr[j].c2-1][conptr[j].a2 - PEN_DD][i])) {
+      /* Satisfied; skip other disjuncts. */
+      while (conptr[j].alt == TRUE)
+	j++;
+    } else if (conptr[j].alt == FALSE) {
+      return (FALSE);
+    }
+    j++;
+  }
+  return (TRUE);
+}
+
+
+/**********************************************************************
+ * Return TRUE if the ith parameters satisfy all parameter
+ * constraints, else FALSE. The general idea is to scan through each
+ * constraint, exiting whenever you encounter an unsatisfied one (that
+ * does not have a disjunct). If there is a disjunct, then step
+ * through those until you find one that satisfies the constraint; if
+ * you get to the end of the line without satisfying the disjunct, you
+ * fail.
+ **********************************************************************/
+int checkParams (ModelRange * range, int i)
+{
+  int j = 0;
+  Constraint *conptr = constraints[PARAMC];
+
+  /* Scan through each constraint. */
+  while (j < constcnt[PARAMC]) {
+    if ((conptr[j].a1 < PEN_DD) || (conptr[j].a1 > PEN_dd) ||
+	(conptr[j].a2 < PEN_DD) || (conptr[j].a2 > PEN_dd)) {
+      /* Skip non-penetrace constraints */
+      j++;
+      continue;
+    } 
+    if ((conptr[j].op == EQ &&
+	 range->param[0][conptr[j].a1 - PEN_DD][conptr[j].p1 - 1][i] ==
+	 range->param[0][conptr[j].a2 - PEN_DD][conptr[j].p2 - 1][i]) ||
+	(conptr[j].op == NE &&
+	 range->param[0][conptr[j].a1 - PEN_DD][conptr[j].p1 - 1][i] !=
+	 range->param[0][conptr[j].a2 - PEN_DD][conptr[j].p2 - 1][i]) ||
+	(conptr[j].op == GT && 
+	 range->param[0][conptr[j].a1 - PEN_DD][conptr[j].p1 - 1][i] >
+	 range->param[0][conptr[j].a2 - PEN_DD][conptr[j].p2 - 1][i]) ||
+	(conptr[j].op == GE &&
+	 range->param[0][conptr[j].a1 - PEN_DD][conptr[j].p1 - 1][i] >=
+	 range->param[0][conptr[j].a2 - PEN_DD][conptr[j].p2 - 1][i])) {
+      /* Satisfied; skip other disjuncts. */
+      while (conptr[j].alt == TRUE)
+	j++;
+    } else if (conptr[j].alt == FALSE) {
+      return (FALSE);
+    }
+    j++;
+  }
+  return (TRUE);
+}
+
+
+/**********************************************************************
+ * Return TRUE if the ith parameters satisfy all inter-liability class
+ * parameter constraints, else FALSE. The general idea is to scan
+ * through each constraint, exiting whenever you encounter an
+ * unsatisfied one (that does not have a disjunct). If there is a
+ * disjunct, then step through those until you find one that satisfies
+ * the constraint; if you get to the end of the line without
+ * satisfying the disjunct, you fail.
+ *
+ * This is somewhat ugly: while it does reduce the number of overall
+ * legal combinations, some extra LODs will still be written to disk
+ * in the case that a pedigree does not contain an individual from
+ * each liability class. This case will have to be detected and dealt
+ * with dynamically?
+ **********************************************************************/
+int checkClassParams (ModelRange * range, int i)
+{
+  int j = 0;
+  Constraint *conptr = constraints[PARAMCLASSC];
+
+  /* Scan through each constraint. */
+  while (j < constcnt[PARAMCLASSC]) {
+    if ((conptr[j].a1 < PEN_DD) || (conptr[j].a1 > PEN_dd) ||
+	(conptr[j].a2 < PEN_DD) || (conptr[j].a2 > PEN_dd)) {
+      /* Skip non-penetrace constraints */
+      j++;
+      continue;
+    } 
+    
+    /* Relies on DD being the lowest numbered penetrance. */
+    if ((conptr[j].op == EQ &&
+	 range->param[conptr[j].c1 - 1][conptr[j].a1 - PEN_DD][conptr[j].p1 - 1][i] ==
+	 range->param[conptr[j].c2 - 1][conptr[j].a2 - PEN_DD][conptr[j].p2 - 1][i]) ||
+	(conptr[j].op == NE &&
+	 range->param[conptr[j].c1 - 1][conptr[j].a1 - PEN_DD][conptr[j].p1 - 1][i] !=
+	 range->param[conptr[j].c2 - 1][conptr[j].a2 - PEN_DD][conptr[j].p2 - 1][i]) || 
+	(conptr[j].op == GT &&
+	 range->param[conptr[j].c1 - 1][conptr[j].a1 - PEN_DD][conptr[j].p1 - 1][i] >
+	 range->param[conptr[j].c2 - 1][conptr[j].a2 - PEN_DD][conptr[j].p2 - 1][i]) ||
+	(conptr[j].op == GE &&
+	 range->param[conptr[j].c1 - 1][conptr[j].a1 - PEN_DD][conptr[j].p1 - 1][i] >=
+	 range->param[conptr[j].c2 - 1][conptr[j].a2 - PEN_DD][conptr[j].p2 - 1][i])) {
+      /* Satisfied; skip other disjuncts. */
+      while (conptr[j].alt == TRUE)
+	j++;
+    } else if (conptr[j].alt == FALSE) {
+      return (FALSE);
+    }
+    j++;
+  }
+  return (TRUE);
+}
+
+
+/**********************************************************************
+ * Return TRUE if the ith threshold satisfy all inter-liability class
+ * threshold constraints, else FALSE. The general idea is to scan
+ * through each constraint, exiting whenever you encounter an
+ * unsatisfied one (that does not have a disjunct). If there is a
+ * disjunct, then step through those until you find one that satisfies
+ * the constraint; if you get to the end of the line without
+ * satisfying the disjunct, you fail.
+ *
+ * This is somewhat ugly: while it does reduce the number of overall
+ * legal combinations, some extra LODs will still be written to disk
+ * in the case that a pedigree does not contain an individual from
+ * each liability class. This case will have to be detected and dealt
+ * with dynamically?
+ *
+ * Note: there is no corresponding checkThreshold () function, because
+ * the only possible constraints you can impose on trait thresholds
+ * are inter liability class constraints.
+ *
+ * Note: We should also be performing "external" (that is, implicit
+ * constraints) validation here, since we want these thresholds to be
+ * within the min and max values of the mean for a given class.
+ **********************************************************************/
+int checkClassThreshold (ModelRange * range, int i)
+{
+  int j = 0;
+
+  /* Scan through each constraint: inter-class constraints are on
+   * penetrances or trait thresholds, not, e.g., gene frequencies or
+   * thetas. */
+  while (j < constcnt[CLASSC]) {
+    if (constraints[CLASSC][j].a1 != THRESHOLD || constraints[CLASSC][j].a2 != THRESHOLD) {
+      /* Skip non threshold constraints. */
+      j++;
+      continue;
+    } else if ((constraints[CLASSC][j].op == EQ &&
+		range->tthresh[constraints[CLASSC][j].c1 - 1][i] ==
+		range->tthresh[constraints[CLASSC][j].c2 - 1][i]) ||
+	       (constraints[CLASSC][j].op == NE &&
+		range->tthresh[constraints[CLASSC][j].c1 - 1][i] !=
+		range->tthresh[constraints[CLASSC][j].c2 - 1][i]) ||
+	       (constraints[CLASSC][j].op == GT &&
+		range->tthresh[constraints[CLASSC][j].c1 - 1][i] >
+		range->tthresh[constraints[CLASSC][j].c2 - 1][i]) ||
+	       (constraints[CLASSC][j].op == GE &&
+		range->tthresh[constraints[CLASSC][j].c1 - 1][i] >=
+		range->tthresh[constraints[CLASSC][j].c2 - 1][i])) {
+      /* Satisfied; skip other disjuncts. */
+      while (constraints[CLASSC][j].alt == TRUE)
+	j++;
+    } else if (constraints[CLASSC][j].alt == FALSE) {
+      return (FALSE);
+    }
+    j++;
+  }
+  return (TRUE);
+}
+
+
+/**********************************************************************
+ * Fully expand the penetrance (by DD, Dd, dd) and theta values (by
+ * Tm, Tf) in the model while honoring all constraints. Using the
+ * fully expanded version allows us to accurately determine the size
+ * of the space a priori, rather than using the constraints to censor
+ * values as we go. The expansion helps us avoid allocating excess
+ * space on disk.
+ *
+ * If you are doing QT or CT, you'll need to expand the parameters as
+ * well. Expanded parameters will also increase the size of the
+ * penetrance arrays.
+ *
+ * Note that liability class constraints are handled later.  So you
+ * won't need to expand trait threshold values for CT, since these
+ * only "factor" by liability class.
+ **********************************************************************/
+void expandRange (ModelRange *range)
+{
+  int i, j, k, l, m;
+  double ****tmp4;
+  double ***tmp3;
+  double **tmp2;
+
+  /* Start with thetas, but only if DT. QT/CT use trait loci, which
+   * also may need expansion, but we'll need to wait until later (when
+   * the markers are all read in) to do so.
+   *
+   * Since thetas are not subject to liability class constraints, we
+   * can finalize the thetas here by fully "factoring" male and female
+   * thetas, if available, recording the number of combinations in
+   * range->ntheta, and freeing thetacnt and thetamax.
+   *
+   * Keep the current theta array values, and create a new theta
+   * array. We'll allocate enough space for all combinations, even
+   * though, in the end, constraint application may reduce this
+   * number. The actualy number of combinations will be stored in
+   * range->nthetas. */
+  if ((tmp2 = range->theta)) {
+    range->theta = malloc (range->ngender * sizeof (double *));
+    if (range->thetacnt[SEXFM] == 0) {
+      /* Easy case is that you have only one gender anyway. Since
+       * there is only one dimension, there can be no constraints
+       * worth enforcing. Since addTheta() doesn't fill in the female
+       * theta list when sex-averaged thetas are added, we duplicate 
+       * the sex-averaged/male theta list real fast. */
+      
+      range->theta[SEXML] = tmp2[SEXML];
+      range->theta[SEXFM] = malloc (range->thetacnt[SEXML] * sizeof (double));
+      for (i = 0; i < range->thetacnt[SEXML]; i++)
+	range->theta[SEXFM][i] = range->theta[SEXML][i];
+      range->thetacnt[SEXFM] = range->thetacnt[SEXML];
+      range->ntheta = range->thetacnt[SEXML];
+
+    } else {
+      /* sex specific */
+      /* If you have 2 genders, you need to factor their respective
+       * values while checking constraints. */
+      for (i = 0; i < range->ngender; i++)
+	range->theta[i] =
+	  malloc ((range->thetacnt[SEXML] * range->thetacnt[SEXFM]) *
+		  sizeof (double));
+      range->ntheta = 0;
+      for (i = 0; i < range->thetacnt[SEXML]; i++)
+	for (j = 0; j < range->thetacnt[SEXFM]; j++) {
+	  range->theta[SEXML][range->ntheta] = tmp2[SEXML][i];
+	  range->theta[SEXFM][range->ntheta] = tmp2[SEXFM][j];
+
+	  if (checkThetas (range, range->ntheta))
+	    range->ntheta++;
+	}
+      /* Free old copies of range->theta[i]. */
+      for (i = 0; i < range->ngender; i++)
+	free (tmp2[i]);
+    }
+    /* Free old copy of range->theta. */
+    free (tmp2);
+  }
+
+  /* Next, we expand the penetrances. The goal here is just to get the
+   * combinations right, while ignoring the liability classes. It's a
+   * stickier problem than the thetas, mostly because these values
+   * will have to be expanded yet again when dealing with liability
+   * classes, but also because the code must work for multiallelic
+   * diseases (where there are more than 3 allele combinations, and,
+   * therefore, more than 3 rows in the penetrance array).
+   *
+   * Stash pointers to penet, penet[0], and penetcnt away
+   * temporarily. We'll need these to free things appropriately. */
+  if ((tmp3 = range->penet) != NULL) {
+    tmp2 = range->penet[0];
+
+    /* Set up the penetrance array, ignoring the first dimension for
+     * now. We know there will be PROD_i(penetcnt[i])^#allcombo values
+     * in the expanded array, unless the constraints rule some out. 
+     *
+     * We'll keep track of the resulting number of combinations in
+     * range->npenet. */
+    range->npenet = 0;
+    i = 1;
+    for (j = 0; j < NPENET (range->nalleles); j++)
+      i = i * penetcnt[j];
+    range->penet = malloc (sizeof (double **));
+    range->penet[0] = malloc (NPENET (range->nalleles) * sizeof (double *));
+    for (j = 0; j < NPENET (range->nalleles); j++)
+      range->penet[0][j] = malloc (i * sizeof (double));
+    
+    /* OK, now populate the array. */
+    for (k = 0; k < i; k++) {
+      l = 1;
+      for (m = 0; m < NPENET (range->nalleles); m++) {
+	range->penet[0][m][range->npenet] =
+	  tmp2[m][((int) (k / l)) % penetcnt[m]];
+	l = l * penetcnt[m];
+      }
+      /* Check the constraints. */
+      if (checkPenets (range, range->npenet))
+	range->npenet++;
+    }
+    
+    /* OK, we're done with penetcnt and penetmax, since we're using
+     * range->npenet to keep track of the number of combinations. We
+     * can also ditch the stashed values for penet[][][]. */
+    for (i = 0; i < NPENET (range->nalleles); i++)
+      free (tmp2[i]);
+    free (tmp2);
+    free (tmp3);
+  }
+
+  /* Finally, expand the parameters for QT or CT. Recall param[][][][]
+   * at this point only has 2 real indexes: dimension and the number
+   * of values. The goal here is to factor these into 3 real indexes,
+   * including allele combinations, while respecting the
+   * constraints. We'll worry about liability classes later.
+   *
+   * Note that the resulting param[0][][][] array will be of uniform
+   * dimension, that being ((#value)^#dim)^#allcombos). */
+  if (range->param) {
+    /* Stash the original values somewhere, to be freed
+     * appropriately. */
+    tmp4 = range->param;
+    tmp3 = range->param[0];
+    tmp2 = range->param[0][0];
+
+    /* Since the resulting parameter array will be uniform, we can
+     * allocate, in advance, the appropriate amount of memory. This
+     * will be large! Hopefully, the constraints will limit how many
+     * elements are actually in use, which will be stored in
+     * range->nparam. */
+
+    /* Let i be the max number of entries you might see for each
+     * dimension, then raise it to the power of the dimensions. */
+    i = pow (paramcnt[0], NPENET (range->nalleles));
+    i = pow (i, range->npardim);
+
+    /* Since the parameter vector is to be replicated across all of
+     * the dimensions, they will all initially have the same number
+     * of parameter values, although this will surely change as the
+     * constraints are applied. Go ahead and allocate what you might
+     * need. */
+    range->param = malloc (sizeof (double ***));
+    range->param[0] = malloc (NPENET (range->nalleles) * sizeof (double **));
+    for (j = 0; j < NPENET (range->nalleles); j++) {
+      range->param[0][j] = malloc (range->npardim * sizeof (double *));
+      /* Corrected by Yungui: used to read:
+       *  for (k = 0; k < paramcnt[0]; k++) */
+      for (k = 0; k < range->npardim; k++)
+	range->param[0][j][k] = malloc (i * sizeof (double));
+    }
+
+    /* Time to populate the range->param array. Recall the first
+     * index will always be 0 since we're not yet dealing with
+     * liability classes. We'll use range->nparam to store the
+     * number of valid combinations. */
+    range->nparam = 0;
+    for (j = 0; j < i; j++) {
+      for (k = 0; k < NPENET (range->nalleles); k++)
+	for (l = 0; l < range->npardim; l++)
+	  range->param[0][k][l][range->nparam] =
+	    tmp2[l][((int) (j / (pow (paramcnt[l], (l + k * range->npardim))))) % paramcnt[l]];
+      /* Check the constraints. */
+      if (checkParams (range, range->nparam))
+	range->nparam++;
+    }
+
+    /* Done. Free copies of original parameters you'd stashed away,
+     * including the paramcnt and parammax arrays; you won't be
+     * needing them again, since the (uniform) number of entries
+     * stored is given by range->nparam. */
+    free (tmp2);
+    free (tmp3);
+    free (tmp4);
+  }
+}
+
+
+/**********************************************************************
+ * Fully expand the threshold, penetrance and parameter values by
+ * liability class while honoring any inter-class constraints. This
+ * only gets called if we are using liability classes (i.e.,
+ * modelRange.nlclass is greater than 1).
+ **********************************************************************/
+void expandClass (ModelRange * range)
+{
+  int i, j, k, l, m, n, o;
+  double *tmp1;
+  double **tmp2;
+  double ***tmp3;
+  double ****tmp4;
+
+  /* Threshold expansion by liability class. */
+  if (range->tthresh) {
+    /* Stash pointers so you can free properly. Recall
+     * range->tthresh[0] is the only dimension originally allocated;
+     * we'll use the values stored there during expansion, producing
+     * a new multidimensional range->tthresh array. */
+    tmp2 = range->tthresh;
+    tmp1 = range->tthresh[0];
+    i = range->ntthresh;
+
+    /* Barring constraints, how many values might you have? */
+    j = pow (i, range->nlclass);
+
+    /* Allocate a new tthresh array structure. */
+    range->tthresh = malloc (range->nlclass * sizeof (double *));
+    for (k = 0; k < range->nlclass; k++)
+      range->tthresh[k] = malloc (j * sizeof (double));
+
+    /* OK, now populate the array. */
+    range->ntthresh = 0;
+    for (k = 0; k < j; k++) {
+      l = 1;
+      for (m = 0; m < range->nlclass; m++) {
+	range->tthresh[m][range->ntthresh] = tmp1[((int) (k / l)) % i];
+	l = l * i;
+      }
+      /* Check the class constraints. */
+      if (checkClassThreshold (range, range->ntthresh))
+	range->ntthresh++;
+    }
+    /* Done. Free up the old copy of the array. */
+    free (tmp1);
+    free (tmp2);
+  }
+
+  /* Penetrance expansion by liability class. Here, we want to factor
+   * the existing penetrances over multiple liability classes.
+   *
+   * Stash pointers to the current penet array and its size. Recall
+   * range->penet[0] is the only dimension originally allocated; we'll
+   * use the values stored there during expansion, producing a new
+   * multidimensional range->penet array. Be sure to free everything
+   * properly when done. */
+  if ((tmp3 = range->penet) != NULL) {
+    tmp2 = range->penet[0];
+    i = range->npenet;
+    
+    /* Barring constraints, how many values might you have? */
+    j = pow (range->npenet, range->nlclass);
+    
+    /* Allocate a new penet array structure. */
+    range->penet = malloc (range->nlclass * sizeof (double **));
+    for (k = 0; k < range->nlclass; k++) {
+      range->penet[k] = malloc (NPENET (range->nalleles) * sizeof (double *));
+      for (l = 0; l < NPENET (range->nalleles); l++)
+	range->penet[k][l] = malloc (j * sizeof (double));
+    }
+    
+    /* OK, now populate the array. */
+    range->npenet = 0;
+    for (k = 0; k < j; k++) {
+      l = 1;
+      for (m = 0; m < range->nlclass; m++) {
+	for (n = 0; n < NPENET (range->nalleles); n++)
+	  range->penet[m][n][range->npenet] = tmp2[n][(((int) (k / l)) % i)];
+	l = l * i;
+      }
+      /* Check the class constraints. */
+      if (checkClassPenets (range, range->npenet))
+	range->npenet++;
+    }
+    /* Done. Free up the old copy of the range->penet array. */
+    for (i = 0; i < NPENET (range->nalleles); i++)
+      free (tmp2[i]);
+    free (tmp2);
+    free (tmp3);
+  }
+
+  /* Ready to work on the param array, if necessary.
+   *
+   * Again, stash a copy of the current param array and its size. */
+  if (range->param) {
+    tmp4 = range->param;
+    tmp3 = range->param[0];
+    i = range->nparam;
+
+    /* Barring constraints, how many values might you have? */
+    j = pow (range->nparam, range->nlclass);
+
+    /* Allocate a new param array structure. */
+    range->param = malloc (range->nlclass * sizeof (double ***));
+    for (k = 0; k < range->nlclass; k++) {
+      range->param[k] =
+	malloc (NPENET (range->nalleles) * sizeof (double **));
+      for (l = 0; l < NPENET (range->nalleles); l++) {
+	range->param[k][l] = malloc (range->npardim * sizeof (double *));
+	for (m = 0; m < range->npardim; m++)
+	  range->param[k][l][m] = malloc (j * sizeof (double));
+      }
+    }
+
+    /* OK, now populate the array. */
+    range->nparam = 0;
+    for (k = 0; k < j; k++) {
+      l = 1;
+      for (m = 0; m < range->nlclass; m++) {
+	for (n = 0; n < NPENET (range->nalleles); n++)
+	  for (o = 0; o < range->npardim; o++)
+	    range->param[m][n][o][range->nparam] =
+	      tmp3[n][o][((int) (k / l)) % i];
+	l = l * i;
+      }
+
+      /* Check the class constraints. */
+      if (checkClassParams (range, range->nparam))
+	range->nparam++;
+    }
+
+    /* Done. Free up the old copy of the array. */
+    for (i = 0; i < NPENET (range->nalleles); i++) {
+      for (j = 0; j < range->npardim; j++)
+	free (tmp3[i][j]);
+      free (tmp3[i]);
+    }
+    free (tmp4);
+
+  }
+}
+
+
+/**********************************************************************
+ * Expand the dprime array into the appropriate lambda array. Unlike
+ * the other range expansion functions, this function is not called
+ * upfront, but rather as needed when operating under linkage
+ * disequilibrium. The two extra parameters are the number of alleles
+ * for the two loci under consideration. 
+ *
+ * Since n and m may be repeated over the course of an analysis, we
+ * cache the lambda arrays produced from the dprime values for each
+ * value of n and m in modelRange lambdas, an array of structures of
+ * type lambdaCell. That way, we can retrieve the appropriate array if
+ * its already been generated, otherwise, we build the array from the
+ * dprimes, cache it, and return a pointer to it.
+ *
+ * TODO: since the array is symmetric regardless of n and m, we could
+ * save some storage by reconfiguring the existing array if the mxn
+ * version (but not the nxm version) already exists. This shouldn't
+ * happen that often, as long as we assume that the first variable
+ * corresponds to the disease or trait and the second corresponds to
+ * the marker; in this situation, since we are usually not dealing
+ * with multiallelic diseases, m=2 and n>=2.
+ **********************************************************************/
+LambdaCell *
+findLambdas (ModelRange * range, int m, int n)
+{
+  int i = 0, j, k, l = pow (range->ndprime, ((m - 1) * (n - 1)));
+
+  /* First, see if the array of lambdas already exists. */
+  while (i < range->nlambdas) {
+    if (range->lambdas[i].m == m && range->lambdas[i].n == n)
+      /* return (range->lambdas[i].lambda); */
+      return (&range->lambdas[i]);
+    i++;
+  }
+
+  /* OK, no matching cached array found. Check to make sure there's
+   * room for a new one. */
+  if (range->nlambdas == range->maxnlambdas) {
+    range->lambdas =
+      realloc (range->lambdas, (range->maxnlambdas + CHUNKSIZE) * sizeof (LambdaCell));
+    range->maxnlambdas = range->maxnlambdas + CHUNKSIZE;
+  }
+  /* Create the new entry. */
+  range->lambdas[range->nlambdas].m = m;
+  range->lambdas[range->nlambdas].n = n;
+  range->lambdas[range->nlambdas].ndprime = l;
+  range->lambdas[range->nlambdas].lambda =
+    (double ***) malloc (l * sizeof (double **));
+  range->lambdas[range->nlambdas].impossibleFlag =
+    (int *) malloc (l * sizeof (int));
+  memset (range->lambdas[range->nlambdas].impossibleFlag, 0,
+	  l * sizeof (int));
+  range->lambdas[range->nlambdas].haploFreq =
+    (double ***) malloc (l * sizeof (double **));
+  range->lambdas[range->nlambdas].DValue =
+    (double ***) malloc (l * sizeof (double **));
+  for (i = 0; i < l; i++) {
+    range->lambdas[range->nlambdas].lambda[i] =
+      (double **) malloc ((m - 1) * sizeof (double *));
+    for (j = 0; j < (m - 1); j++)
+      range->lambdas[range->nlambdas].lambda[i][j] =
+	(double *) malloc ((n - 1) * sizeof (double));
+
+    range->lambdas[range->nlambdas].haploFreq[i] =
+      (double **) malloc (m * sizeof (double *));
+    range->lambdas[range->nlambdas].DValue[i] =
+      (double **) malloc (m * sizeof (double *));
+    for (j = 0; j < m; j++) {
+      range->lambdas[range->nlambdas].haploFreq[i][j] =
+	(double *) malloc (n * sizeof (double));
+      range->lambdas[range->nlambdas].DValue[i][j] =
+	(double *) malloc (n * sizeof (double));
+    }
+
+  }
+  range->nlambdas++;
+
+  /* Now populate the values in the appropriate array. */
+  for (i = 0; i < l; i++)
+    for (j = 0; j < (m - 1); j++)
+      for (k = 0; k < (n - 1); k++)
+	range->lambdas[range->nlambdas - 1].lambda[i][j][k] =
+	  range->dprime[((int) (i / pow (range->ndprime, k))) %
+			range->ndprime];
+
+  /* Return a pointer to the appropriate 3 dimensional lambda array. */
+  /* return (range->lambdas[range->nlambdas-1].lambda); */
+  return (&range->lambdas[range->nlambdas - 1]);
+}
+
+
+/**********************************************************************
+ * Sort the model values so that we can apply constraints more
+ * easily. Note: sortRange() is only applied prior to class expansion,
+ * so we needn't worry, ever, about non-zero liability classes in
+ * penet[][][]. Similarly, we needn't worry about liability classes or
+ * allele counts in param[][][].
+ *
+ * Note that range->tloc is handled differently, because it may be
+ * called back (in the event of a TM parameter) and so sorting and
+ * uniquifying must be done on the fly for this array only.
+ **********************************************************************/
+void sortRange (ModelRange * range)
+{
+  int i;
+
+  if (range->gfreq)
+    quicksort (range->gfreq, 0, range->ngfreq);
+  if ((range->penet) && (range->penet[0]))
+    for (i = 0; i < NPENET (range->nalleles); i++)
+      quicksort (range->penet[0][i], 0, penetcnt[i]);
+  if (range->param)
+    for (i = 0; i < range->npardim; i++)
+      quicksort (range->param[0][0][i], 0, paramcnt[i]);
+  if (range->theta)
+    for (i = 0; i < range->ngender; i++)
+      quicksort (range->theta[i], 0, range->thetacnt[i]);
+  if (range->tthresh)
+    quicksort (range->tthresh[0], 0, range->ntthresh);
+  if (range->alpha)
+    quicksort (range->alpha, 0, range->nalpha);
+  if (range->afreq)
+    quicksort (range->afreq, 0, range->nafreq);
+  if (range->dprime)
+    quicksort (range->dprime, 0, range->ndprime);
+}
+
+
+/* Uniquify the model's arrays. This is only done prior to expanding
+ * the ranges, so we needn't worry, ever, about non-zero liability
+ * classes in penet[][][]. Similarly, we needn't worry about liability
+ * classes or allele counts in param[][][]. 
+ *
+ * Note that range->tloc is handled differently, because it may be
+ * called back (in the event of a TM parameter) and so sorting and
+ * uniquifying must be done on the fly for this array only. */
+void uniqRange (ModelRange * range)
+{
+  int i;
+
+  if (range->gfreq)
+    range->ngfreq = uniquify (range->gfreq, range->ngfreq);
+  if (range->penet)
+    for (i = 0; i < NPENET (range->nalleles); i++)
+      penetcnt[i] = uniquify (range->penet[0][i], penetcnt[i]);
+  if (range->param)
+    for (i = 0; i < range->npardim; i++)
+      paramcnt[i] = uniquify (range->param[0][0][i], paramcnt[i]);
+  if (range->theta)
+    for (i = 0; i < range->ngender; i++)
+      range->thetacnt[i] = uniquify (range->theta[i], range->thetacnt[i]);
+  if (range->tthresh)
+    range->ntthresh = uniquify (range->tthresh[0], range->ntthresh);
+  if (range->alpha)
+    range->nalpha = uniquify (range->alpha, range->nalpha);
+}
+
+
+/**********************************************************************
+ * Dump the model and constraints for debugging purposes.  The level
+ * argument indicates if we are pre-expansion (level = 0),
+ * post-expansion (level = 1), or post-class-expansion (level =
+ * 2). This is ugly, but is only used for debugging so it needn't be
+ * excessively pretty!
+ **********************************************************************/
+void showRange (ModelRange * range, ModelType * type, int level)
+{
+  int i, j, k, l;
+
+  printf
+    ("======================================================================\n");
+  printf ("LEVEL %d MODEL\n", level);
+  printf
+    ("======================================================================\n");
+  printf ("%d GF=", range->ngfreq);
+  for (i = 0; i < range->ngfreq; i++)
+    printf ("%3.2g ", range->gfreq[i]);
+
+  if (type->trait == DT) {
+    if (level > 0)
+      printf ("\n%d Thetas", range->ntheta);
+    for (i = 0; i < range->ngender; i++) {
+      if (level == 0)
+	printf ("\n%d Theta[%d]=", (level == 0 ? range->thetacnt[i] : range->ntheta), i);
+      else
+	printf ("\n  Theta[%d]=", i);
+      for (j = 0; j < (level == 0 ? range->thetacnt[i] : range->ntheta); j++)
+	printf ("%3.2g ", range->theta[i][j]);
+    }
+  } else {
+    if (range->tloc) {
+      printf ("\n%d Trait Loci", range->ntloc);
+      printf ("\n  Trait Loci=");
+      for (i = 0; i < range->ntloc; i++)
+	printf ("%3.2g ", range->tloc[i]);
+    }
+    if (range->tthresh) {
+      printf ("\n%d Trait Thresholds", range->ntthresh);
+      for (i = 0; i < (level == 2 ? range->nlclass : 1); i++) {
+	printf ("\n  Trait Threshold[%d]=", i);
+	for (j = 0; j < range->ntthresh; j++)
+	  printf ("%3.2g ", range->tthresh[i][j]);
+      }
+    }
+  }
+  
+  printf ("\n%d Penetrances", (level == 0 ? penetcnt[0] : range->npenet));
+  for (i = 0; i < (level == 2 ? range->nlclass : 1); i++)
+    for (j = 0; j < NPENET (range->nalleles); j++) {
+      printf ("\n  Penet[%d][%d]=", i, j);
+      for (k = 0; k < (level == 0 ? penetcnt[j] : range->npenet); k++)
+	printf ("%3.2g ", range->penet[i][j][k]);
+    }
+  
+  if (range->param) {
+    printf ("\n%d Parameters", ((level == 2 ? range->nlclass : 1) *
+				(level == 0 ? paramcnt[0] : range->nparam)));
+    /* for (i = 0; i < (level==2?range->nlclass:1); i++) */
+    for (i = 0; i < (level == 2 ? range->nlclass : 1); i++)
+      for (j = 0; j < (level == 0 ? 1 : NPENET (range->nalleles)); j++)
+	for (k = 0; k < (level > 0 ? range->npardim : 1); k++) {
+	  printf ("\n  Param[%d][%d][%d]=", i, j, k);
+	  for (l = 0; l < (level == 0 ? paramcnt[k] : range->nparam); l++)
+	    printf ("%3.2g ", range->param[i][j][k][l]);
+	}
+  }
+  
+  if (range->afreq) {
+    printf ("\n%d AF=", range->nafreq);
+    for (i = 0; i < range->nafreq; i++)
+      printf ("%3.2g ", range->afreq[i]);
+  }
+  
+  if (range->dprime) {
+    printf ("\n%d DPrime", range->ndprime);
+    printf ("\n  DPrime=");
+    for (i = 0; i < range->ndprime; i++)
+      printf ("%3.2g ", range->dprime[i]);
+#if FALSE
+    /* Just for kicks, show a few off. Recall findLambdas() is
+     * called on the fly, so usually these would not be precomputed
+     * at all. */
+    findLambdas (range, 2, 4);
+    findLambdas (range, 2, 3);
+    findLambdas (range, 2, 4);
+#endif
+  }
+  if (range->alpha) {
+    printf ("\n%d Alphas", range->nalpha);
+    printf ("\n  Alpha=");
+    for (i = 0; i < range->nalpha; i++)
+      printf ("%3.2g ", range->alpha[i]);
+  }
+  printf ("\n");
+}
+
+
+void showConstraints ()
+{
+  int i, j;
+
+  printf 
+    ("======================================================================\n");
+  printf ("CONSTRAINTS:\n");
+  printf
+    ("======================================================================\n");
+
+  for (i = 0; i < 4; i++) {
+    if (constcnt[i] == 0)
+      continue;
+    printf ("%s constraints:\n", contype_strs[i]);
+    for (j = 0; j < constcnt[i]; j++) {
+      if (i == SIMPLE)
+	printf (" %s %s %s %s\n", mp_strs[constraints[i][j].a1],
+		op_strs[constraints[i][j].op], mp_strs[constraints[i][j].a2],
+		(constraints[i][j].alt == TRUE) ? "|" : "");
+      
+      else if (i == CLASSC)
+	printf (" %s %d %s %s %d %s\n", mp_strs[constraints[i][j].a1],
+		constraints[i][j].c1, op_strs[constraints[i][j].op],
+		mp_strs[constraints[i][j].a2], constraints[i][j].c2,
+		(constraints[i][j].alt == TRUE) ? "|" : "");
+      
+      else if (i == PARAMC)
+	printf (" P%d %s %s P%d %s %s\n", constraints[i][j].p1,
+		mp_strs[constraints[i][j].a1], op_strs[constraints[i][j].op],
+		constraints[i][j].p2, mp_strs[constraints[i][j].a2],
+		(constraints[i][j].alt == TRUE) ? "|" : "");
+      
+      else if (i == PARAMCLASSC)
+	printf (" P%d %s %d %s P%d %s %d %s\n", constraints[i][j].p1,
+		mp_strs[constraints[i][j].a1], constraints[i][j].c1,
+		op_strs[constraints[i][j].op], constraints[i][j].p2,
+		mp_strs[constraints[i][j].a2], constraints[i][j].c2,
+		(constraints[i][j].alt == TRUE) ? "|" : "");
+    }
+  }
+}
+
+
+/* Free any transient dynamic memory allocated during configuration */
+void cleanupRange ()
+{
+  int i;
+
+  if (penetmax)
+    free (penetmax);
+  if (penetcnt)
+    free (penetcnt);
+  if (paramcnt)
+    free (paramcnt);
+  if (parammax)
+    free (parammax);
+  for (i = 0; i < 4; i++)
+    if (constraints[i])
+      free (constraints[i]);
+}
+
+
 /* Search the (short) list of legal comparators for the given string, return the
  * index if found, -1 otherwise. */
 int lookup_comparator (char *str)
@@ -340,4 +1466,66 @@ int lookup_modelparam (char *str)
     va++;
   }
   return (-1);
+}
+
+
+/**********************************************************************
+ * Quicksort routines, used to sort values (both doubles and floats)
+ * in the model specification.
+ **********************************************************************/
+#define RANDINT(n) (random() % (n))
+
+/* Swap two doubles in array[] */
+inline void swap (double *array, int i, int j)
+{
+  double temp = array[i];
+
+  array[i] = array[j];
+  array[j] = temp;
+}
+
+/* Recursive quicksort for array of doubles. */
+void quicksort (double *array, int lo, int hi)
+{
+  int mid, i;
+  double pivot;
+
+  if (lo >= hi - 1)
+    return;
+
+  i = RANDINT ((hi - lo)) + lo;
+  swap (array, lo, i);
+  pivot = array[lo];
+
+  mid = lo;
+  for (i = lo + 1; i < hi; i++)
+    if (array[i] < pivot) {
+      mid++;
+      swap (array, mid, i);
+    }
+  swap (array, lo, mid);
+
+  quicksort (array, lo, mid);
+  quicksort (array, mid + 1, hi);
+}
+
+/**********************************************************************
+ * Remove duplicate values from the model for efficiency's sake.  Both
+ * double and float versions are given.
+ **********************************************************************/
+
+/* Remove exact duplicates in an array. */
+inline int uniquify (double *array, int len)
+{
+  int i = 0, j;
+
+  while (i < len - 1) {
+    if (array[i] == array[i + 1]) {
+      for (j = i + 1; j < len - 1; j++)
+	array[j] = array[j + 1];
+      len--;
+    } else
+      i++;
+  }
+  return (len);
 }

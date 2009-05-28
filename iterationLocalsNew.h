@@ -40,7 +40,6 @@ int prevLastMarker;		/* last marker in the set for multipoint analysis */
 
 /* Variables became global from local */
 PedigreeSet pedigreeSet;	/* Pedigrees. */
-LDLoci *pLDLoci = NULL;
 
 int R_square_flag = FALSE;
 double R_square = 0;

@@ -23,6 +23,3 @@ FILE *fpCond = NULL;    ///< Conditional LR for genetic counseling, global due t
   FILE *fpDK = NULL;      // DCHURE detail file
 
 LambdaCell *pLambdaCell;
-ModelType modelType;
-ModelOptions modelOptions;
-ModelRange modelRange;

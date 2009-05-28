@@ -35,12 +35,7 @@ typedef enum
 
 #include "pedigree.h"
 #include "locus.h"
-#include "../config/model_options.h"
-extern struct ModelOptions modelOptions;
-#include "../config/model_type.h"
-extern struct ModelType modelType;
-#include "../config/model_range.h"
-extern struct ModelRange modelRange;
+#include "../config/config.h"
 
 /* pedigree related function prototypes */
 int read_pedfile (char *sPedfileName, PedigreeSet * pedigreeSet);

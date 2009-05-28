@@ -1,15 +1,15 @@
-#
-# Example 5 part 2 from Handbook of Human Genetic Linkage by Terwilliger and Ott, 1994.
-#
-# Compare resultant MOD in br.out to Lod Scores on Table 12-3
-#
-TP
-DT
-Th 0.0 0.5 0.1
-#Th .076 .080 .0001
-AS 0 1 2
-GF 0.00001
-DD 0.70
-Dd 0.0
-dd 0.0
-AL 1
+# Twopoint is the default
+NonPolynomial
+
+# Dichotomous Trait is the default
+PhenoCodes 0, 1, 2
+
+FixedModels
+Theta 0.0-0.5:0.1
+DiseaseGeneFrequency 0.00001
+Alpha 1
+Penetrance DD 0.70
+Penetrance Dd 0.0
+Penetrance dd 0.0
+
+

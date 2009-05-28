@@ -279,18 +279,17 @@ int permuteLine (char *line, int maxlength)
    * need to put around groups of comparators in the second loop.
    */
   while (1) {
-    printf ("%*sv (va %d)\n", va+1, " ", va);
-    printf (" %s", line);
-    printf ("%*s^ (vb %d, state %d, compcount %d)\n", vb+1, " ", vb, state, compcount);
+    //printf ("%*sv (va %d)\n", va+1, " ", va);
+    //printf (" %s", line);
+    //printf ("%*s^ (vb %d, state %d, compcount %d)\n", vb+1, " ", vb, state, compcount);
 
     if (index (" \t", line[vb]) != NULL) {
-      if (state == INSTRING) 
+      if (state == INSTRING) {
 	line[va++] = ' ';
-      else if (state == INCOMPARATOR)
-	compcount++;
+	if (state != STARTOFLINE)
+	  state = INWHITESPACE;
+      }
       vb++;
-      if (state != STARTOFLINE)
-	state = INWHITESPACE;
       
     } else if (line[vb] == '-') {  /* have to handle '-' separately */
       if ((state == INWHITESPACE) && (va > 1) && isdigit (line[va-2])) {
@@ -337,12 +336,12 @@ int permuteLine (char *line, int maxlength)
 	compcount++;
       state = INSTRING;
     }
-    printf ("----\n");
+    //printf ("----\n");
   }
-  printf ("%*sv (va %d)\n", va+1, " ", va);
-  printf (" %s\n", line);
-  printf ("%*s^ (vb %d, state %d, compcount %d, final)\n", vb+1, " ", vb, state, compcount);
-  printf ("+++++\n");
+  //printf ("%*sv (va %d)\n", va+1, " ", va);
+  //printf (" %s\n", line);
+  //printf ("%*s^ (vb %d, state %d, compcount %d, final)\n", vb+1, " ", vb, state, compcount);
+  //printf ("+++++\n");
 
   if (compcount == 0)
     return (0);

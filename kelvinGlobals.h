@@ -6,11 +6,6 @@ char messageBuffer[MAXSWMSG];
 
 /* Some default global values. */
 
-/** Model datastructures. */
-ModelType modelType;
-ModelRange modelRange;
-ModelOptions modelOptions;
-
 /** Number of D primes. If there are more than 2 alleles in the
   marker/trait, number of D primes and D prime ranges are assumed to
   be the same to reduce complexity for initial phase of this

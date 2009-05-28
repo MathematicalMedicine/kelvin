@@ -15,11 +15,6 @@ extern struct swStopwatch *overallSW;
 
 /* Some default global values. */
 
-/** Model datastructures. */
-extern ModelType modelType;
-extern ModelRange modelRange;
-extern ModelOptions modelOptions;
-
 
 extern LambdaCell *pLambdaCell;
 

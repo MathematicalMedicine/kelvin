@@ -1,7 +1,8 @@
 CC=cc
-INC=-I. -I../ -I$(KVNINCDIR)
+INC=-I. -I../
 CFLAGS=-g
-LDFLAGS=-g -lm
+LDFLAGS=-lm
+#LDFLAGS=-g -lm  # If you want to run in a debugger
 
 calc_updated_ppl : calc_updated_ppl.o map.o ippl.o multidim.o
 	$(CC) -o $@ $(LDFLAGS) calc_updated_ppl.o map.o ippl.o multidim.o 

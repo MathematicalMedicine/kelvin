@@ -75,58 +75,45 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   // Initialize the logging system.
   logInit ();
 
-  /* Start by parsing command line arguments. Most essential: figure
-   * out where the configuration file lives. */
-  for (i = 1; i < argc; i++) {
-    if (argv[i][0] == '-')
-      switch (argv[i][1]) {
-      case '?':
-        /* Help */
-        fprintf (stdout, "Usage:\n");
-        fprintf (stdout, "  %s [-?] <configuration file>\nwhere:\n", argv[0]);
-        fprintf (stdout, "      -? : this output;\n");
-        fprintf (stdout, "      <configuration file> : file containing run parameters.\n");
-        exit (EXIT_FAILURE);
-        break;
-    } else if (strlen (configfile) != 0) {
-      /* Unexpected argument; we already have a configuration file! Punt. */
-      KLOG (LOGDEFAULT, LOGFATAL, "Unexpected command line argument '%s'; aborting.\n", argv[i]);
-    } else if (strlen (argv[i]) >= KMAXFILENAMELEN) {
-      /* Configuration file name too long! Punt. */
-      KLOG (LOGDEFAULT, LOGFATAL, "Config file name '%s' too long (>=%d); aborting.\n", argv[i], KMAXFILENAMELEN);
-    } else {
-      /* Got a configuration file name. Copy it. */
-      strncpy (configfile, argv[i], KMAXFILENAMELEN);
-      char currentWorkingDirectory[MAXSWMSG - 32];
-      getcwd (currentWorkingDirectory, sizeof (currentWorkingDirectory));
-      sprintf (messageBuffer, "In %s w/%s", currentWorkingDirectory, configfile);
-      swLogMsg (messageBuffer);
-    }
-    i++;
+  /* Tolerate a request for help as the first argument; ignore the rest of the command 
+   * line if help is requested. Otherwise, argv[1] better be the name of the configuration
+   * file; the rest of the command line will be treated as override directives.
+   */
+  if (argc > 1) {
+    if (! (strcmp (argv[1], "--help") && strcmp (argv[1], "-?"))) {
+      fprintf (stderr, "usage: %s <conffile> [--directive arg1 arg2... [--directive...]]\n",
+	       argv[0]);
+      exit (0);
+    } else
+      strcpy (configfile, argv[1]);
+  } else {
+    fprintf (stderr, "usage: %s <conffile> [--directive arg1 arg2... [--directive...]]\n",
+	     argv[0]);
+    exit (-1);
   }
-  /* Check to see if the configuration file name was specified. */
-  KASSERT ((strlen (configfile) > 0), "No configuration file specified; aborting.\n");
+
+  /* Set modelRange, modelOptions and modelType to default values */
+  initializeDefaults ();
 
   /* Parse the configuration file. */
-  KASSERT (readConfigFile (configfile)
-           != ERROR, "Error in configuration file; aborting.\n");
+  readConfigFile (argv[1]);
+
+  /* If there's anything on the command line after the configuration file name, 
+   * it must be override directives.
+   */
+  if (argc > 2) {
+    parseCommandLine (argc-2, &argv[2]);
+  }
+
+  /* Make sure the config as read from the configuration file, and possibly modified on 
+   * the command line, is legal. Then clean up the bits of memory allocated during
+   * config parsing.
+   */
+  validateConfig ();
+  finishConfig ();
 
   /* For now, reject all models we can't deal with. */
   KASSERT (modelRange.nalleles == 2, "Only biallelic traits supported.\n");
-
-  /* The difference between QT and CT is whether we use threshold or not. Under CT there must 
-   * be thresholds, under QT there should not. */
-  if (modelRange.ntthresh > 0 && modelType.trait != DT) {
-    modelType.trait = CT;
-    /* remove the check and T_MIN and T_MAX keywords as we no longer weighting the threshhold
-       base on intervals, instead we just average them like how we do with other parameters 
-       YH 04/14/2009
-    KASSERT (modelType.minThreshold > -999999998 &&
-             modelType.maxThreshold < 999999998,
-             "Under QT threshold model, MIN and MAX of the QT threshold values need to be "
-	     "provided through keywords T_MIN and T_MAX.\n");
-    */
-  }
 
   if (modelOptions.polynomial == TRUE) {
     swLogMsg ("Computation is done in polynomial mode");
@@ -240,6 +227,16 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   } else {
     /* we are doing multipoint analysis */
     totalLoci = modelType.numMarkers + originalLocusList.numTraitLocus;
+    if (modelRange.tlocRangeStart >= 0) {
+      double endofmap, tloc;
+      endofmap = map.ppMapUnitList[map.count-1]->mapPos[SEX_AVERAGED] +
+	modelRange.tlocRangeIncr;
+      i = 0;
+      while ((tloc = modelRange.tlocRangeStart + (i * modelRange.tlocRangeIncr)) <= endofmap) {
+	addTraitLocus (&modelRange, tloc);
+	i++;
+      }
+    }
     if (modelRange.tlmark == TRUE) {
       /* add marker positions to the list of positions we want to conduct analysis */
       for (i = 0; i < originalLocusList.numLocus; i++) {

@@ -432,7 +432,6 @@ int numPositions;
 	    
 	    if (modelOptions.mapFlag == SA) {
 	      double delta_theta = dk_theta0max.theta[0] - fixed_theta;
-	      printf ("thetamax %.8f, fixedtheta %.8f, delta %.8f, maxvalue %.8f, localmax %.8f\n", dk_theta0max.theta[0], fixed_theta, delta_theta, maximum_theta0_value, localmax_value);
 	      /* If fixed_theta is closer to 0 than the current minimum theta,
 	       * or if fixed_theta is more or less the same and the new BR
 	       * is greater than the max BR */

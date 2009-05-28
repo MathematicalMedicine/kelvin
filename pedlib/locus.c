@@ -42,6 +42,13 @@ Map map;
 LocusList originalLocusList;
 SubLocusList *locusList;
 
+/* Formerly declared in kelvinGlobals, then localized into
+ * {integration,interation}Locals, then moved here (and effectively
+ * re-globalized) because of not all the global dependencies had
+ * been resolved.
+ */
+LDLoci *pLDLoci = NULL;
+
 extern Polynomial *constant0Poly;
 extern Polynomial *constant1Poly;
 

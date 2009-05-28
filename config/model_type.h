@@ -33,6 +33,10 @@
 #define COMBINED        2   /* combined dichotomous/quantitative trait */
 #define CT COMBINED
 
+/* QT underlying distribution function */
+#define QT_FUNCTION_NORMAL		0
+#define QT_FUNCTION_T			1
+#define QT_FUNCTION_CHI_SQUARE          2
 
 /* Information about the type of analysis. The array of constants is
  * only used for some types of QT/CT models (for example, the degrees
@@ -61,7 +65,5 @@ typedef struct ModelType
   int *constants;		/* Array of distribution constants (certain QT/CT distributions only) */
   int ccFlag;			/* Case Ctrl flag */
 } ModelType;
-
-extern ModelType modelType;
 
 #endif

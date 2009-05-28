@@ -1,1026 +1,476 @@
-
-/**********************************************************************
- * Copyright 2008, Nationwide Children's Research Institute.  
- * All rights reserved.
- * Permission is hereby given to use this software 
- * for non-profit educational purposes only.
- **********************************************************************/
-
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <math.h>
-#include <sys/types.h>		/* C regexps */
-#include <regex.h>		/* C regexps */
-
-//#include "kelvin.h"
-#include "model_range.h"
-#include "model_options.h"
-#include "model_type.h"
-
+#include <float.h>
+#include "config.h"
 #include "../utils/utils.h"
 #include "../pedlib/pedlib.h"
 
-/**********************************************************************
- * Process configuration file and set up model datastructures
- * (modelType, range, modelOptions) describing the experimental
- * trial.
- *
- * TODO: check regexps to extract more, rather than just recognize, input
- * TODO: need to validate inputs: e.g., negative numbers allowed for DD when QT
- * TODO: handling of multiallelic diseases; parsing e.g., 00, 21, 11 etc
- * TODO: handling of LC for AF, and extend AF to more than 2 marker alleles (non SNP)
- * TODO: check distribs with nparam>1 (not sure it works)
- * TODO: liability class should be the slowest moving index so that we
- *       can censor at run-time if ped has no such LC?
- **********************************************************************/
+#define BUFFSIZE 256
 
-/* Maximum number of characters in a KELVIN input line. */
-#define KMAXLINELEN 1024
-
-/**********************************************************************
- * Regular expressions used to parse configuration file
- * lines. 
- **********************************************************************/
-
-/* DIRECTIVE matches: GF, DD, Dd, dd, Th, Tm, Tf, 00..99, AF, AL, MM, AM, TL, TM, TT, LD */
-#define DIRECTIVE "^[[:space:]]*[[:digit:]AdDLMGT][[:digit:]dDfFhLMmT]"
-
-/* PARAMETER matches: P[0-9] (note implicit 1 digit limit on distrib params index) */
-#define PARAMETER "^[[:space:]]*P([[:digit:]])"
-
-/* Match 1 or 3 floating point numbers with optional trailing semicolon. */
-#define DOUBLE1 "[[:space:]]*([-]?[[:digit:]]*.?[[:digit:]]+)[[:space:]]*[;]?"
-#define DOUBLE3 "[[:space:]]*([-]?[[:digit:]]*.?[[:digit:]]+)[[:space:]]+([-]?[[:digit:]]*.?[[:digit:]]+)[[:space:]]+([-]?[[:digit:]]*.?[[:digit:]]+)[[:space:]]*[;]?"
-
-/* Match a constraint of the form, e.g., DD < Dd */
-#define CONSTRAINT2 "[[:space:]]*([[:digit:]dDT][[:digit:]dDfmT])[[:space:]]*([>]|[>][=]|[=][=]|[!][=])[[:space:]]*([[:digit:]dDT][[:digit:]dDfmT])[[:space:]]*[;]?"
-
-/* Match a constraint with liability classes, e.g., DD 1 < DD 2 */
-#define CLASSCONSTRAINT2 "[[:space:]]*([[:digit:]dDT][[:digit:]dDfmT])[[:space:]]*([[:digit:]])[[:space:]]*([>]|[>][=]|[=][=]|[!][=])[[:space:]]*([[:digit:]dDT][[:digit:]dDfmT])[[:space:]]*([[:digit:]])[[:space:]]*[;]?"
-
-/* Match a constraint of the form, e.g., Px DD < Px Dd */
-#define PCONSTRAINT2 "[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([>]|[>][=]|[=][=]|[!][=])[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*[;]?"
-
-/* Match a constraint of the form, e.g., Px DD 1 < Px Dd 2 */
-#define PCLASSCONSTRAINT2 "[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([[:digit:]])[[:space:]]*([>]|[>][=]|[=][=]|[!][=])[[:space:]]*P([[:digit:]])[[:space:]]+([[:digit:]dDT][[:digit:]dDfm])[[:space:]]*([[:digit:]])[[:space:]]*[;]?"
-
-
-/* Legal values for Constraint.type */
-#define SIMPLE 0
-#define CLASSC 1
-#define PARAMC 2
-#define PARAMCLASSC 3
-
-/* Strings used to parse configuration file lines (see getOperator). */
-#define OPERATORS "==!=> >="
-
-/* Legal values for Constraint.op; these need to correspond to OPERATORS. */
-#define EQ 0
-#define NE 1
-#define GT 2
-#define GE 3
-
-/* Strings used to parse configuration file lines (see getType). */
-#define DIRECTIVES "GFThTmTfALTLTTLDAFDDDddDdd"
-
-/* Symbols for evaluating penetrance and constraint configuration.
- * These need to correspond to DIRECTIVES.
+/* Structure for the configuration parser dispatch table.
+ * 'key' is the configuration directive
+ * 'parse' is an int-returning function that takes (char**, int, void*)
+ * 'hint' is a pointer that will be passed as the last argument to 'parse'
  */
-#define GF 0			/* gene frequency */
-#define Th 1			/* theta */
-#define Tm 2			/* male theta */
-#define Tf 3			/* female theta */
-#define AL 4			/* alpha */
-#define TL 5			/* trait loci */
-#define TT 6			/* trait threshold */
-#define LD 7			/* d prime */
-#define AF 8
-#define DD 9
-#define Dd 10
-#define dD 11
-#define dd 12
+typedef struct {
+  char *key;
+  int (*parse) (char **, int, void *);
+  void *hint;
+} st_dispatch;
+
+/* There are some directives that we use not only as keys in the
+ * dispatch table, but we also compare against inside the parsing
+ * routines, either to facilitate consolidating largely-identical
+ * routines, or because they are also valid arguments to the 
+ * 'Constrain' directive. To prevent the literal strings used in 
+ * the comparisons being changed in one place, but not in other
+ * places, we defined symbols to respresnt those strings here.
+ */
+#define QT_STR            "QT"
+#define QTT_STR           "QTT"
+#define THETA_STR         "Theta"
+#define MALETHETA_STR     "MaleTheta"
+#define FEMALETHETA_STR   "FemaleTheta"
+#define PENETRANCE_STR    "Penetrance"
+#define MEAN_STR          "Mean"
+#define STANDARDDEV_STR   "StandardDev"
+#define DEGOFFREEDOM_STR  "DegreesOfFreedom"
+#define THRESHOLD_STR     "Threshold"
+
+/* Structure for returning results from expand_vals() in terms of the
+ * contents of each comma separated substring, instead of a list of doubles.
+ */
+typedef struct {
+  int type;
+  union {
+    double val;
+    struct {
+      double start, end, incr;
+    } range;
+    int symbol;
+  } vun;
+} st_valuelist;
+
+/* Legal values for the 'type' field of st_valuelist. */
+#define VL_VALUE          0
+#define VL_RANGE          1
+#define VL_RANGE_SYMBEND  2
+#define VL_SYMBOL         4
+
+/* Legal values for the vun.symbol field of st_valuelist, if type is VL_SYMBOL */
+#define VL_SYM_MARKER      0
+
+typedef struct {
+  int sexSpecificThetas,
+    traitLoci,
+    constraints,
+    penetrance,
+    mean,
+    standarddev,
+    degfreedom;
+} st_observed;
+
+ModelOptions modelOptions;
+ModelRange modelRange;
+ModelType modelType;
 
 
-/**********************************************************************
- * Some global variables used only within config.c -- avoids having to
- * carry these around in the model structure, since they are only
- * useful while setting up the penetrances, etc.
- **********************************************************************/
-int maxtthresh;			/* Max number of trait thresholds in model (for dynamic alloc) */
-int maxafreq;			/* Max number of afreqs in model (for dynamic alloc) */
-int *paramcnt;			/* Number of QT/CT parameters */
-int *parammax;			/* Max QT/CT parameters */
+/* Globals */
+char buff[BUFFSIZE] = "";   /* These two are global to provide context to getNextTokgroup */
+char *buffptr = NULL;
+st_observed observed;       /* track non-obvious directives */
+char *conffilename=NULL;
+int lineno = 0;             /* so failure messages are more useful to users */
 
-/* Chunk size used in reallocating arrays of gene frequencies,
- * penetrances, thetas, and constraints. */
-#define CHUNKSIZE 64
+/* prototypes for non-public routines */
+void initializeDefaults ();
+int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_h);
+int lookupDispatch (char *key, st_dispatch *table);
+int compareDispatch (const void *a, const void *b);
+int getNextTokgroup (FILE *fp, char ***tokgroup_h, int *tokgroupsize);
+int tokenizeLine (char *line, char ***tokgroup_h, int *tokgroupsize);
+int singleDigit (char *str);
+void dumpModelOptions (ModelOptions *mo);
+void bail (char *fmt, char *arg);
 
-//ModelType modelType;
-//ModelRange modelrange;
-//ModelOptions modelOptions;
+/* functions for use in the dispatch table */
+int set_optionfile (char **toks, int numtoks, void *filename);
+int set_flag (char **toks, int numtoks, void *flag);
+int clear_flag (char **toks, int numtoks, void *flag);
+int set_int (char **toks, int numtoks, void *field);
 
-/**********************************************************************
- * Some internal prototypes.
- **********************************************************************/
-int getType (char *line);
-int getOperator (char *line);
-int getInteger (char *line);
-void addRange (ModelRange * range, int type, double lo, double hi,
-	       double incr);
+int set_traitLoci (char **toks, int numtoks, void *unused);
+int set_geneFreq (char **toks, int numtoks, void *unused);
+int set_dprime (char **toks, int numtoks, void *unused);
+int set_theta (char **toks, int numtoks, void *unused);
+int set_alpha (char **toks, int numtoks, void *unused);
+int set_penetrance (char **toks, int numtoks, void *unused);
+int set_constraint (char **toks, int numtoks, void *unused);
+int set_multipoint (char **toks, int numtoks, void *unused);
+int set_markerAnalysis (char **toks, int numtoks, void *unused);
+int set_mapFlag (char **toks, int numtoks, void *unused);
+int set_disequilibrium (char **toks, int numtoks, void *unused);
+int set_quantitative (char **toks, int numtoks, void *unused);
+int set_qt_mean (char **toks, int numtoks, void *unused);
+int set_qt_standarddev (char **toks, int numtoks, void *unused);
+int set_qt_degfreedom (char **toks, int numtoks, void *unused);
+int set_qt_threshold (char **toks, int numtoks, void *unused);
+int set_qt_truncation (char **toks, int numtoks, void *unused);
+int set_affectionStatus (char **toks, int numtoks, void *unused);
+int set_resultsprefix (char **toks, int numtoks, void *unused);
+int set_logLevel (char **toks, int numtoks, void *unused);
 
-void addTraitThreshold (ModelRange * range, double val);
-void addAlleleFreq (ModelRange * range, double val);
-void addParameter (ModelRange * range, int dim, double val);
-int checkThetas (ModelRange * range, int i);
-int checkPenets (ModelRange * range, int i);
-int checkClassPenets (ModelRange * range, int i);
-int checkParams (ModelRange * range, int i);
-int checkClassParams (ModelRange * range, int i);
-int checkClassThreshold (ModelRange * range, int i);
-void sortRange (ModelRange * range);
-inline void swap (double *array, int i, int j);
-void quicksort (double *array, int lo, int hi);
-void uniqRange (ModelRange * range);
-inline int uniquify (double *array, int len);
-void expandRange (ModelRange * range, ModelType * type);
-void expandClass (ModelRange * range, ModelType * type);
-LambdaCell *findLambdas (ModelRange * range, int m, int n);
-void showRange (ModelRange * range, ModelType * type, int level);
-void showConstraints ();
 
-/**********************************************************************
- * Read configuration file. Returns ERROR if there is a problem
- * opening the file.
- *
- * Parsing of the configuration file is done mostly with scanf's, but
- * we do use C regular expressions to parse the arguments where
- * necessary. This gives us the flexibility we need to read in
- * arbitrary patterns of arguments from a single line where necessary.
- **********************************************************************/
-int
-readConfigFile (char *file)
+st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &modelOptions.markerfile},
+				{"MapFile", set_optionfile, &modelOptions.mapfile},
+				{"PedigreeFile", set_optionfile, &modelOptions.pedfile},
+				{"LocusFile", set_optionfile, &modelOptions.datafile},
+				{"BayesRatioFile", set_optionfile, &modelOptions.avghetfile},
+				{"PPLFile", set_optionfile, &modelOptions.pplfile},
+				{"CountFile", set_optionfile, &modelOptions.ccfile},
+				{"MODFile", set_optionfile, &modelOptions.modfile},
+				{"NIDetailFile", set_optionfile, &modelOptions.dkelvinoutfile},
+
+				{"NonPolynomial", clear_flag, &modelOptions.polynomial},
+				{"Imprinting", set_flag, &modelOptions.imprintingFlag},
+				{"SexLinked", set_flag, &modelOptions.sexLinked},
+				{"FixedModels", clear_flag, &modelOptions.integration},
+				{"DryRun", set_flag, &modelOptions.dryRun},
+				{"ExtraMODs", set_flag, &modelOptions.extraMODs},
+
+				{"PolynomialScale", set_int, &modelOptions.polynomialScale},
+				{"LiabilityClasses", set_int, &modelRange.nlclass},
+				{"DiseaseAlleles", set_int, &modelRange.nalleles},
+
+				{"TraitLoci", set_traitLoci, NULL},
+				{"DiseaseGeneFrequency", set_geneFreq, NULL},
+				{"DPrime", set_dprime, NULL},
+				{THETA_STR, set_theta, NULL},
+				{MALETHETA_STR, set_theta, NULL},
+				{FEMALETHETA_STR, set_theta, NULL},
+				{"Alpha", set_alpha, NULL},
+				{PENETRANCE_STR, set_penetrance, NULL},
+				{"Constraint", set_constraint, NULL},
+				{"Multipoint", set_multipoint, NULL},
+				{"MarkerToMarker", set_markerAnalysis, NULL},
+				{"SexSpecific", set_mapFlag, NULL},
+				{"LD", set_disequilibrium, NULL},
+				{QT_STR, set_quantitative, NULL},
+				{QTT_STR, set_quantitative, NULL},
+				{MEAN_STR, set_qt_mean, NULL},
+				{STANDARDDEV_STR, set_qt_standarddev, NULL},
+				{DEGOFFREEDOM_STR, set_qt_degfreedom, NULL},
+				{THRESHOLD_STR, set_qt_threshold, NULL},
+				{"Truncate", set_qt_truncation, NULL},
+				{"PhenoCodes", set_affectionStatus, NULL},
+				{"SurfacesPath", set_resultsprefix, NULL},
+				/*{"condfile", set_condrun, &modelOptions.condFile},*/
+				{"Log", set_logLevel, NULL}
+};
+
+
+#if 0
+main (int argc, char *argv[])
 {
-  FILE *fp;			/* Filepointer. */
-  int i = 0;			/* Number of lines read. */
-  char *start;
-  char line[KMAXLINELEN + 1];	/* Current line. */
-  int dir1, dir2, op;		/* For parsing constraints. */
-  int a1, a2, c1, c2, p1;
-  char sLogLevel[KMAXLINELEN + 1];	/* log level */
-  char sLogType[KMAXLINELEN + 1];	/* log type */
-  int logLevel, logType;
+  logInit ();
 
-  regex_t *buffer0;
-  regex_t *buffer1;
-  regex_t *buffer2;
-  regex_t *buffer3;
-  regex_t *buffer4;
-  regex_t *buffer5;
-  regex_t *buffer6;
-  regex_t *buffer7;
-  regmatch_t match[8];		/* Store extracted values. */
+  if (argc == 1)
+    logMsg (LOGDEFAULT, LOGFATAL, "%s: no configuration file specified\n", argv[0]);
+  initializeDefaults ();
+  my_readConfigFile (argv[1]);
+  if (argc > 2) {
+    parseCommandLine (argc-2, &argv[2]);
+  }
+  dumpModelOptions (&modelOptions);
+  validateConfig ();
+  finishConfig ();
+}
+#endif 
 
-  /* Set up the default model values. */
+
+void initializeDefaults ()
+{
+  /* Initialize the the global configuration structures to default values */
+  memset (&modelOptions, 0, sizeof (ModelOptions));
+  memset (&modelRange, 0, sizeof (ModelRange));
+  memset (&modelType, 0, sizeof (ModelType));
 
   strcpy (modelOptions.markerfile, DEFAULTMARKERFILENAME);
   strcpy (modelOptions.mapfile, DEFAULTMAPFILENAME);
   strcpy (modelOptions.pedfile, DEFAULTPEDFILENAME);
   strcpy (modelOptions.datafile, DEFAULTDATAFILENAME);
   strcpy (modelOptions.avghetfile, DEFAULTAVGHETFILENAME);
-  strcpy (modelOptions.pplfile, DEFAULTPPLFILENAME);
   strcpy (modelOptions.condFile, DEFAULTCONDFILENAME);
-  strcpy (modelOptions.ldPPLfile, DEFAULTLDPPLFILENAME);
-
   strcpy (modelOptions.resultsprefix, DEFAULTRESULTSPREFIX);
 
-  modelType.type = TP;
-  modelType.trait = DT;
+  modelOptions.sUnknownPersonID = malloc (sizeof (char) * 2);
+  strcpy (modelOptions.sUnknownPersonID, "0");
+
   modelOptions.equilibrium = LINKAGE_EQUILIBRIUM;
   modelOptions.markerAnalysis = FALSE;
   modelOptions.saveResults = FALSE;
-  modelOptions.polynomial = FALSE;
-  modelOptions.integration = FALSE;
+  modelOptions.polynomial = TRUE;
+  modelOptions.integration = TRUE;
+  modelOptions.imprintingFlag = FALSE;
+  modelOptions.mapFlag = SA;
+  modelOptions.sexLinked = FALSE;
+  modelOptions.dryRun = FALSE;
+  modelOptions.polynomialScale = 0;
+  modelOptions.extraMODs = FALSE;
+  modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -DBL_MAX;
+  modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -DBL_MAX;
+  modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = -DBL_MAX;
+
+  /* Set default values for PPL calculations */
+  modelOptions.thetaCutoff[0] = 0.05;   /* LRs when theta < cutoff are weighted heavier */
+  modelOptions.thetaCutoff[1] = 0.05;
+  modelOptions.thetaWeight = 0.95;      /* Weight for LRs when theta < cutoff */
+  modelOptions.prior = 0.02;            /* Prior probability of linkage */
+  modelOptions.LDprior = 0.02;          /* Prior probability of LD given close linkage */
+  
   modelRange.nalleles = 2;
   modelRange.nlclass = 1;
   modelRange.npardim = 0;
   modelRange.nlambdas = 0;
   modelRange.maxnlambdas = 0;
+  modelRange.tlocRangeStart = -1;
+  modelRange.tlocRangeIncr = -1;
   modelRange.tlmark = FALSE;
 
-  /* Set the default unknown person ID */
-  modelOptions.sUnknownPersonID = malloc (sizeof (char) * 2);
-  strcpy (modelOptions.sUnknownPersonID, "0");
-
-  /* Set default values for PPL calculations */
-  /* LRs are weighted heavier for theta less than the cutoff */
-  modelOptions.thetaCutoff[0] = 0.05;
-  modelOptions.thetaCutoff[1] = 0.05;
-  /* Weight ofr theta less than the cutoff */
-  modelOptions.thetaWeight = 0.95;
-  /* Prior probability of linkage */
-  modelOptions.prior = 0.02;
-  /* Prior probability of LD given close linkage */
-  modelOptions.LDprior = 0.02;
-
+  modelType.type = TP;
+  modelType.trait = DT;
+  modelType.distrib = -1;
   /* set default for QT */
   modelType.minOriginal = -999999999.00;
   modelType.maxOriginal = 999999999.00;
-  /* remove threshold adjustment code 
-     YH 04/14/2009
-  modelType.minThreshold = -999999999.00;
-  modelType.maxThreshold = 999999999.00;
-  */
 
-  double integrationLDDPrimeValues[] = {-0.9982431840532, -0.9956010478552, -0.9790222658168,
-					-0.9590960631620, -0.8761473165029, -0.8727421201131,
-					-0.7013933644534, -0.6582769255267, -0.6492284325645,
-					-0.5666666666667, -0.5000000000000, -0.3808991135940,
-					-0.3582614645881, -0.2517129343453, -0.2077777777778,
-					-0.1594544658298, 0.0000000000000, 0.1594544658298,
-					0.2077777777778, 0.2517129343453, 0.3582614645881,
-					0.3808991135940, 0.5000000000000, 0.5666666666667,
-					0.6492284325645, 0.6582769255267, 0.7013933644534,
-					0.8727421201131, 0.8761473165029, 0.9590960631620,
-					0.9790222658168, 0.9956010478552, 0.9982431840532};
-  int integrationLDDPrimeValuesCount = 33;
-  int foundASDirective = FALSE;
-  /* Allocate storage for pattern spaces. */
-  buffer0 = malloc (KMAXLINELEN + 1);
-  buffer1 = malloc (KMAXLINELEN + 1);
-  buffer2 = malloc (KMAXLINELEN + 1);
-  buffer3 = malloc (KMAXLINELEN + 1);
-  buffer4 = malloc (KMAXLINELEN + 1);
-  buffer5 = malloc (KMAXLINELEN + 1);
-  buffer6 = malloc (KMAXLINELEN + 1);
-  buffer7 = malloc (KMAXLINELEN + 1);
+  /* Sort the dispatch table so the binary search works */
+  qsort (dispatchTable, sizeof (dispatchTable) / sizeof (st_dispatch), sizeof (st_dispatch),
+	 compareDispatch);
+  memset (&observed, 0, sizeof (st_observed));
+  return;
+}
 
-  /* Open the configuration file for reading and punt if you can't. */
-  KASSERT ((fp = fopen (file, "r")),
-	   "Can't open configuration file %s; aborting.\n", file);
 
-  /* Set up the regular expression pattern buffer we'll use to parse
-   * the lines in the file. The flags REG_EXTENDED and REG_ICASE mean
-   * we'll use Posix extended regular expressions and we'll ignore
-   * case. */
-  KASSERT ((regcomp (buffer0, DIRECTIVE, (REG_EXTENDED | REG_NEWLINE)) == 0),
-	   "Internal error in regular expression; aborting.\n");
-  KASSERT ((regcomp (buffer1, DOUBLE1, (REG_EXTENDED | REG_NEWLINE)) == 0),
-	   "Internal error in regular expression; aborting.\n");
-  KASSERT ((regcomp (buffer2, DOUBLE3, (REG_EXTENDED | REG_NEWLINE)) == 0),
-	   "Internal error in regular expression; aborting.\n");
-  KASSERT ((regcomp (buffer3, CONSTRAINT2, (REG_EXTENDED | REG_NEWLINE)) ==
-	    0), "Internal error in regular expression; aborting.\n");
-  KASSERT ((regcomp (buffer4, CLASSCONSTRAINT2, (REG_EXTENDED | REG_NEWLINE))
-	    == 0), "Internal error in regular expression; aborting.\n");
-  KASSERT ((regcomp (buffer5, PARAMETER, (REG_EXTENDED | REG_NEWLINE)) == 0),
-	   "Internal error in regular expression; aborting.\n");
-  KASSERT ((regcomp (buffer6, PCONSTRAINT2, (REG_EXTENDED | REG_NEWLINE)) ==
-	    0), "Internal error in regular expression; aborting.\n");
-  KASSERT ((regcomp (buffer7, PCLASSCONSTRAINT2, (REG_EXTENDED | REG_NEWLINE))
-	    == 0), "Internal error in regular expression; aborting.\n");
+void readConfigFile (char *config)
+{
+  int numtoks, tokgroupsize=0, va;
+  char **toks = NULL;
+  FILE *conffp;
 
-  /* Start scanning each line of configuration file input. We'll parse
-   * each line by looking for the easy cases first, then using C
-   * regexps to parse the harder configuration directives. */
-  while (fgets (line, KMAXLINELEN, fp)) {
-    /* Before we try to parse it, check to see if the line may be
-     * too long, and give up if it is. */
-    KASSERT ((strlen (line) < KMAXLINELEN),
-	     "Line %d in configuration file %s exceeds %d characters; aborting.\n",
-	     i, file, KMAXLINELEN);
+  conffilename = config;
+  if ((conffp = fopen (config, "r")) == NULL)
+    logMsg (LOGDEFAULT, LOGFATAL, "open '%s' failed, %s\n", config, strerror (errno));
 
-    /* Flush lines starting with a comment character or consisting
-     * of only a newline. */
-    if (is_line_blank_or_comment (line))
-      continue;
-
-    /* TODO: flushing lines containing only whitespace characters
-     * will make everything slightly more efficient. */
-
-    /* Explicit imprinting flag. */
-    if (strncmp (line, "IM", 2) == 0) {
-      modelOptions.imprintingFlag = TRUE;
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for imprinting\n");
-      continue;
+  while ((numtoks = getNextTokgroup (conffp, &toks, &tokgroupsize)) > 0) {
+    for (va = 0; va < numtoks; va++) {
+      printf ("tok %d: %s\n", va, toks[va]);
     }
-
-    /* Type of analysis; 2 point or multipoint. */
-    if (strncmp (line, "TP", 2) == 0) {
-      modelType.type = TP;	/* 2 point (default) */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for 2 point analysis\n");
-      continue;
-    }
-    if (sscanf (line, "SS %d", &(modelType.numMarkers)) == 1) {
-      modelType.type = MP;	/* Multipoint */
-      modelOptions.mapFlag = SS;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for sex-specific multipoint analysis\n");
-      continue;
-    }
-    if (sscanf (line, "SA %d", &(modelType.numMarkers)) == 1) {
-      modelType.type = MP;	/* Multipoint */
-      modelOptions.mapFlag = SA;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for sex-averaged multipoint analysis\n");
-      continue;
-    }
-    if (strncmp (line, "SS", 2) == 0) {
-      modelType.type = TP;	/* SS with no parameter means 2 point */
-      modelOptions.mapFlag = SS;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for sex-specific 2 point analysis\n");
-      continue;
-    }
-    if (strncmp (line, "SA", 2) == 0) {
-      modelType.type = TP;	/* SA with no parameter means 2 point */
-      modelOptions.mapFlag = SA;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for sex-averaged 2 point analysis\n");
-      continue;
-    }
-    if (strncmp (line, "XC", 2) == 0) {
-      modelOptions.sexLinked = 1;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for X Chromosome analysis\n");
-      continue;
-    }
-    if (strncmp (line, "TM", 2) == 0) {
-      modelRange.tlmark = TRUE;
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for on-marker trait loci\n");
-      continue;
-    }
-    if (strncmp (line, "MM", 2) == 0) {
-      modelOptions.markerAnalysis = MM;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for marker to marker analysis\n");
-      continue;
-    }
-    if (strncmp (line, "AM", 2) == 0) {
-      modelOptions.markerAnalysis = AM;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for adjacent marker analysis\n");
-      continue;
-    }
-    if (strncmp (line, "DK", 2) == 0) {
-      modelOptions.integration = TRUE;  /* dkelvin integration */
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for dkelvin integration\n");
-      continue;
-    }
-    if (strncmp (line, "PE", 2) == 0) {
-      modelOptions.polynomial = TRUE;	/* Polynomial evaluation */
-      if (sscanf (line, "PE %d", &modelOptions.polynomialScale) == 1) {	/* Polynomial scale */
-	KLOG (LOGINPUTFILE, LOGDEBUG,
-	      "Configure for polynomial evaluation w/polynomialScale %d\n",
-	      modelOptions.polynomialScale);
-      } else {
-	modelOptions.polynomialScale = 1;
-	KLOG (LOGINPUTFILE, LOGDEBUG,
-	      "Configure for polynomial evaluation w/default polynomialScale %d\n",
-	      modelOptions.polynomialScale);
-      }
-      continue;
-    }
-    if (sscanf (line, "LC %d", &modelRange.nlclass) == 1) {
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for %d liability classes\n", modelRange.nlclass);
-      continue;
-    }
-
-    if (sscanf (line, "DA %d", &modelRange.nalleles) == 1) {	/* Disease alleles */
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for %d disease alleles\n", modelRange.nalleles);
-      continue;
-    }
-
-    if (sscanf (line, "AS %lg %lg %lg",	/* Affection status values */
-		&(modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN]),
-		&(modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED]),
-		&(modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED])) == 3) {
-      foundASDirective = TRUE;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Resetting affection status values (%g, %g, %g)\n",
-	    modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN],
-	    modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED],
-	    modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED]);
-      continue;
-    }
-
-    /* Dichotomous trait directive. */
-    if (strncmp (line, "DT", 2) == 0) {
-      modelType.trait = DT;	/* Dichotomous trait */
-      if (!foundASDirective) {
-	/* Establish the default affected, unaffected, and unknown
-	 * values for DT. These can be overridden elsewhere. */
-	modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = AFFECTION_STATUS_UNKNOWN;
-	modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = AFFECTION_STATUS_UNAFFECTED;
-	modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = AFFECTION_STATUS_AFFECTED;
-      }
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for dichotomous traits\n");
-      continue;
-    }
-
-    /* Quantitative trait directives; each different distribution
-     * may require a different pattern of parameters. */
-    if (sscanf (line, "QT normal %lf %lf", &modelType.mean, &modelType.sd)
-	== 2) {
-      modelType.trait = QT;	/* Quantitative trait */
-      modelType.distrib = QT_FUNCTION_NORMAL;
-      if (!foundASDirective) {
-	/* Maybe establish the default affected, unaffected, and unknown
-	 * values for QT/CT. These can be overridden elsewhere. */
-	modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-	modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
-	modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
-      }
-      /* The normal distribution has a two distributional
-       * parameters, mean (specified as the penetrance) and std
-       * dev, specified as the first additional parameter P1. */
-      modelRange.npardim = 1;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for quantitative traits (normal distribution)\n");
-      continue;
-    }
-    if (sscanf
-	(line, "QT T %d %lf %lf", &a1, &modelType.mean,
-	 &modelType.sd) == 3) {
-      modelType.trait = QT;	/* Quantitative trait */
-      modelType.distrib = QT_FUNCTION_T;
-      /* The T distribution has single distribution constant, the
-       * degrees of freedom, which is fixed at definition. We'll
-       * use integer a1 temporarily so as to set up the
-       * appropriate number of constants in modelType. */
-      modelType.constants = realloc (modelType.constants, 1 * sizeof (int));
-      modelType.constants[0] = a1;
-      if (!foundASDirective) {
-	/* Establish the default affected, unaffected, and unknown
-	 * values for QT/CT. These can be overridden elsewhere. */
-	modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-	modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
-	modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
-      }
-      /* The T distribution, like the normal distribution, also
-       * has two distributional parameters, the mean (specified as
-       * the penetrance) and the std dev, specified as the first
-       * additional parameter P1. */
-      modelRange.npardim = 1;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for quantitative traits (T distribution)\n");
-      continue;
-    }
-    if (sscanf (line, "QT chisq %lf %lf", &modelType.mean, &modelType.sd)
-	== 2) {
-      modelType.trait = QT;	/* Quantitative trait */
-      modelType.distrib = QT_FUNCTION_CHI_SQUARE;
-      if (!foundASDirective) {
-	/* Establish the default affected, unaffected, and unknown
-	 * values for QT/CT. These can be overridden elsewhere. */
-	modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-	modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
-	modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
-      }
-      /* The chi sqaure distribution only has one distributional
-       * parameters, df - degree of freedom (specified as the penetrance) 
-       */
-      modelRange.npardim = 1;
-      /* add a fake parameter to facilitate loop */
-      addParameter (&modelRange, 0, 1.0);
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Configuring for quantitative traits (chi square distribution)\n");
-      continue;
-    }
-
-    /* these only apply to QT/CT analyses */
-    if (sscanf (line, "MIN %lf", &modelType.minOriginal) == 1) {
-      modelType.minFlag = 1;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Lower bound for QT distribution is at %f\n", modelType.min);
-      continue;
-    }
-    if (sscanf (line, "MAX %lf", &modelType.maxOriginal) == 1) {
-      modelType.maxFlag = 1;
-      KLOG (LOGINPUTFILE, LOGDEBUG,
-	    "Upper bound for QT distribution is at %f\n", modelType.max);
-      continue;
-    }
-
-    /* remove threshold adjustment code 
-       YH 04/14/2009
-    if (sscanf (line, "T_MIN %lf", &modelType.minThreshold) == 1) {
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Lower bound for QT threshold is at %f\n",
-	    modelType.minThreshold);
-      continue;
-    }
-    if (sscanf (line, "T_MAX %lf", &modelType.maxThreshold) == 1) {
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Upper bound for QT threshold is at %f\n",
-	    modelType.maxThreshold);
-      continue;
-    }
-    */
-
-    /* Directives that take a single string argument. */
-    if (sscanf (line, "PD %s", modelOptions.pedfile) == 1) {	/* Pedigree file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure pedigree file %s\n", modelOptions.pedfile);
-      continue;
-    }
-    if (sscanf (line, "DF %s", modelOptions.datafile) == 1) { /* Data file - a list of loci */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure data file %s\n", modelOptions.datafile);
-      continue;
-    }
-    if (sscanf (line, "MK %s", modelOptions.markerfile) == 1) { /* Marker file - marker allele frequencies */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure marker file %s\n", modelOptions.markerfile);
-      continue;
-    }
-    if (sscanf (line, "MP %s", modelOptions.mapfile) == 1) {	/* Map file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure map file %s\n", modelOptions.mapfile);
-      continue;
-    }
-    if (sscanf (line, "CC %s", modelOptions.ccfile) == 1) {
-      modelType.ccFlag = TRUE;
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure case-control count file %s\n",
-	    modelOptions.ccfile);
-      continue;
-    }
-    if (sscanf (line, "CF %s", modelOptions.ccfile) == 1) {
-      modelType.ccFlag = TRUE; // TEMPORARY &&& FOR WEEKEND?! RELEASE
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure count file %s\n",
-	    modelOptions.ccfile);
-      continue;
-    }
-    if (strncmp (line, "SR", 2) == 0) {
-      modelOptions.saveResults = TRUE;
-      if (sscanf (line, "SR %s", modelOptions.resultsprefix) == 1) {	/* Results file prefix */
-	if ((i = strlen(modelOptions.resultsprefix)) != 0)
-	  if (modelOptions.resultsprefix[i-1] != '/') {
-	    modelOptions.resultsprefix[i] = '/';
-	    modelOptions.resultsprefix[i+1] = 0;
-	  }
-	KLOG (LOGINPUTFILE, LOGDEBUG,
-	      "Configure for saving results w/file prefix %s\n",
-	      modelOptions.resultsprefix);
-      } else {
-	KLOG (LOGINPUTFILE, LOGDEBUG,
-	      "Configure for saving results w/o file prefix %s\n",
-	      modelOptions.resultsprefix);
-	*modelOptions.resultsprefix = '\0';
-      }
-      continue;
-    }
-    if (sscanf (line, "HE %s", modelOptions.avghetfile) == 1) {	/* Average hetergeneity LR file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure output file %s\n", modelOptions.avghetfile);
-      continue;
-    }
-    if (sscanf (line, "PF %s", modelOptions.pplfile) == 1) {	/* PPL output file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure PPL output file %s\n",
-	    modelOptions.pplfile);
-      continue;
-    }
-    if (sscanf (line, "MD %s", modelOptions.modfile) == 1) {	/* brief maximizing model file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure maximizing model file %s\n", modelOptions.modfile);
-      continue;
-    }
-    if (sscanf (line, "MX %s", modelOptions.maxmodelfile) == 1) { /* verbose Maximizing model file for 2pt */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure maximizing model file %s\n", modelOptions.maxmodelfile);
-      continue;
-    }
-    if (sscanf (line, "IR %s", modelOptions.intermediatefile) == 1) { /* Intermediate results file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure intermediate results file %s\n",
-	    modelOptions.intermediatefile);
-      continue;
-    }
-    if (sscanf (line, "DIR %s", modelOptions.dkelvinoutfile) == 1) {	/* DCHURE detail file */
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configure intermediate results file %s\n",
-	    modelOptions.dkelvinoutfile);
-      continue;
-    }
-
-    if (sscanf (line, "UP %d", &dir1) == 1) {
-      /* Allocate space for the identifier based on how many
-       * digits in the scanned integer. Remember to leave a space
-       * for the terminator. */
-      modelOptions.sUnknownPersonID =
-	realloc (modelOptions.sUnknownPersonID,
-		 (dir1 / 10) + 2 * sizeof (char));
-      snprintf (modelOptions.sUnknownPersonID, (dir1 / 10) + 2, "%d", dir1);
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Unknown person identifier is %s\n",
-	    modelOptions.sUnknownPersonID);
-      continue;
-    }
-
-    /* setting debug levels */
-    if (sscanf (line, "LOG %s %s", sLogType, sLogLevel) == 2) {
-      if (!strcasecmp (sLogType, "pedfile"))
-	logType = LOGPEDFILE;
-      else if (!strcasecmp (sLogType, "inputfile"))
-	logType = LOGINPUTFILE;
-      else if (!strcasecmp (sLogType, "genoelim"))
-	logType = LOGGENOELIM;
-      else if (!strcasecmp (sLogType, "parentalpair"))
-	logType = LOGPARENTALPAIR;
-      else if (!strcasecmp (sLogType, "peelgraph"))
-	logType = LOGPEELGRAPH;
-      else if (!strcasecmp (sLogType, "likelihood"))
-	logType = LOGLIKELIHOOD;
-      else if (!strcasecmp (sLogType, "setrecoding"))
-	logType = LOGSETRECODING;
-      else if (!strcasecmp (sLogType, "memory"))
-	logType = LOGMEMORY;
-      else if (!strcasecmp (sLogType, "integration"))
-	logType = LOGINTEGRATION;
-      else
-	logType = LOGDEFAULT;
-
-      if (!strcasecmp (sLogLevel, "fatal"))
-	logLevel = LOGFATAL;
-      else if (!strcasecmp (sLogLevel, "error"))
-	logLevel = LOGERROR;
-      else if (!strcasecmp (sLogLevel, "warning"))
-	logLevel = LOGWARNING;
-      else if (!strcasecmp (sLogLevel, "advise"))
-	logLevel = LOGADVISE;
-      else if (!strcasecmp (sLogLevel, "debug"))
-	logLevel = LOGDEBUG;
-      else
-	logLevel = LOGFATAL;
-
-      logSet (logType, logLevel);
-      continue;
-    }
-
-    if (strncasecmp (line, "DRY", 3) == 0) {
-      modelOptions.dryRun = 1;
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for a dry run.\n");
-      continue;
-    }
-
-    if (strncasecmp (line, "condRun", 7) == 0) {
-      modelOptions.conditionalRun = 1;
-      modelOptions.loopCondRun = 0;
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring to print out (nonloop) proband's conditional LR.\n");
-      continue;
-    }
-
-    if(sscanf(line, "condLoop %s", modelOptions.loopBreaker) == 1){
-      modelOptions.loopCondRun = 1;
-      modelOptions.conditionalRun = 0;
-      KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring to print out loop breaker's conditional LR.\n");
-      continue;
-    }
-      
-
-    /* Complex directives that require regular expression matching
-     * to handle the arguments. Most of these take at least one
-     * floating point argument, and sometimes two or three.
-     *
-     * We'll handle each type of directive separately. But, first,
-     * "chomp" the newline to remove the newline and ensure null
-     * termination. */
-    line[strlen (line) - 1] = '\0';
-
-    /* First, look for simple constraints on thetas, gene
-     * frequencies, or penetrances. */
-    if (regexec (buffer3, line, 4, &match[0], 0) != REG_NOMATCH) {
-      /* Matching constraint line (CONSTRAINT2):
-       *   DD < Dd 
-       * Find out what type of constraint it is by looking it up
-       * in DIRECTIVES. */
-      KASSERT (((dir1 = getType (line)) != ERROR),
-	       "Bad constraint directive '%s'; aborting.\n", line);
-      KASSERT (((op = getOperator (line + match[2].rm_so)) != ERROR),
-	       "Bad constraint operator '%s'; aborting.\n", line);
-      KASSERT (((dir2 = getType (line + match[3].rm_so)) != ERROR),
-	       "Bad constraint directive '%s'; aborting.\n", line);
-      /* Constraints not supported for AL or TL */
-      KASSERT (((dir1 != AL) && (dir2 != AL)),
-	       "Bad constraint directive '%s'; aborting.\n", line);
-      KASSERT (((dir1 != TL) && (dir2 != TL)),
-	       "Bad constraint directive '%s'; aborting.\n", line);
-
-      /* Add the constraint. */
-      addConstraint (SIMPLE, dir1, 0, 0, op, dir2, 0, 0, FALSE);
-
-      /* Next, loop through any semicolon-separated disjuncts. */
-      start = line;
-      while ((start = start + match[0].rm_eo) < line + strlen (line)) {
-	/* Add the disjunction to the first constraint. */
-	if (regexec (buffer3, start, 4, &match[0], REG_NOTBOL) != REG_NOMATCH) {
-	  KASSERT (((dir1 =
-		     getType (start + match[1].rm_so)) != ERROR),
-		   "Bad constraint directive '%s'; aborting.\n", start);
-	  KASSERT (((op =
-		     getOperator (start + match[2].rm_so)) != ERROR),
-		   "Bad constraint directive '%s'; aborting.\n", start);
-	  KASSERT (((dir2 =
-		     getType (start + match[3].rm_so)) != ERROR),
-		   "Bad constraint directive '%s'; aborting.\n", start);
-	  addConstraint (SIMPLE, dir1, 0, 0, op, dir2, 0, 0, TRUE);
-	} else
-	  break;
-      }
-      continue;
-    } else if (regexec (buffer4, line, 6, &match[0], 0) != REG_NOMATCH) {
-      /* Next, look for class constraints on penetrances, gene
-       * frequencies, thetas, or thresholds (CLASSCONSTRAINT2):
-       *   Px DD 1 < Px Dd 2 
-       * Find out what type of constraint it is by looking it up
-       * in DIRECTIVES. */
-      KASSERT (((dir1 = getType (line)) != ERROR),
-	       "Bad constraint directive '%s'; aborting.\n", line);
-      KASSERT (((op = getOperator (line + match[3].rm_so)) != ERROR),
-	       "Bad constraint operator '%s'; aborting.\n", line);
-      KASSERT (((dir2 = getType (line + match[4].rm_so)) != ERROR),
-	       "Bad constraint directive '%s'; aborting.\n", line);
-      /* Constraints not supported for AL or TL */
-      KASSERT (((dir1 != AL) && (dir2 != AL)),
-	       "Bad constraint directive '%s'; aborting.\n", line);
-      KASSERT (((dir1 != TL) && (dir2 != TL)),
-	       "Bad constraint directive '%s'; aborting.\n", line);
-
-      /* Add the constraint. */
-      addConstraint (CLASSC,
-		     dir1, getInteger (line + match[2].rm_so), 0,
-		     op, dir2, getInteger (line + match[5].rm_so), 0, FALSE);
-
-      /* Next, loop through any semicolon-separated disjuncts. */
-      start = line;
-      while ((start = start + match[0].rm_eo) < line + strlen (line)) {
-	/* Add the disjunction to the first constraint. */
-	if (regexec (buffer4, start, 6, &match[0], REG_NOTBOL) != REG_NOMATCH) {
-	  KASSERT (((dir1 =
-		     getType (start + match[1].rm_so)) != ERROR),
-		   "Bad constraint directive '%s'; aborting.\n", start);
-	  KASSERT (((op =
-		     getOperator (start + match[3].rm_so)) != ERROR),
-		   "Bad constraint directive '%s'; aborting.\n", start);
-	  KASSERT (((dir2 =
-		     getType (start + match[4].rm_so)) != ERROR),
-		   "Bad constraint directive '%s'; aborting.\n", start);
-	  addConstraint (CLASSC, dir1,
-			 getInteger (start + match[2].rm_so), -1, op,
-			 dir2, getInteger (start + match[5].rm_so), -1, TRUE);
-	} else
-	  break;
-      }
-      continue;
-    } else if (regexec (buffer6, line, 6, &match[0], 0) != REG_NOMATCH) {
-      /* Now look for constraints on parameters (PCONSTRAINT2):
-       *   Px DD < Px Dd */
-      dir1 = getInteger (line + match[1].rm_so);
-      a1 = getType (line + match[2].rm_so);
-      op = getOperator (line + match[3].rm_so);
-      dir2 = getInteger (line + match[4].rm_so);
-      a2 = getType (line + match[5].rm_so);
-
-      /* SHOULD CHECK CONSTRAINT FORMAT! */
-
-      /* Add the constraint */
-      addConstraint (PARAMC, a1, 0, dir1, op, a2, 0, dir2, FALSE);
-
-      /* Next, loop through any semicolon-separated disjuncts. */
-      start = line;
-      while ((start = start + match[0].rm_eo) < line + strlen (line)) {
-	/* Add the disjunction to the first constraint. */
-	if (regexec (buffer6, start, 6, &match[0], REG_NOTBOL) != REG_NOMATCH) {
-	  /* Matching parameter constraint line. */
-	  dir1 = getInteger (start + match[1].rm_so);
-	  a1 = getType (start + match[2].rm_so);
-	  op = getOperator (start + match[3].rm_so);
-	  dir2 = getInteger (start + match[4].rm_so);
-	  a2 = getType (start + match[5].rm_so);
-
-	  /* Add the constraint */
-	  addConstraint (PARAMC, a1, 0, dir1, op, a2, 0, dir2, TRUE);
-	} else
-	  break;
-      }
-      continue;
-    } else if (regexec (buffer7, line, 8, &match[0], 0) != REG_NOMATCH) {
-      /* Finally, look for cross-class constraints on
-       * parameters: (PCLASSCONSTRAINT2):
-       *   Px DD 1 < Px Dd 2 */
-      dir1 = getInteger (line + match[1].rm_so);
-      a1 = getType (line + match[2].rm_so);
-      c1 = getInteger (line + match[3].rm_so);
-      op = getOperator (line + match[4].rm_so);
-      dir2 = getInteger (line + match[5].rm_so);
-      a2 = getType (line + match[6].rm_so);
-      c2 = getInteger (line + match[7].rm_so);
-
-      /* SHOULD CHECK CONSTRAINT FORMAT! */
-
-      /* Add the constraint */
-      addConstraint (PARAMCLASSC, a1, c1, dir1, op, a2, c2, dir2, FALSE);
-
-      /* Next, loop through any semicolon-separated disjuncts. */
-      start = line;
-      while ((start = start + match[0].rm_eo) < line + strlen (line)) {
-	/* Add the disjunction to the first constraint. */
-	if (regexec (buffer6, start, 6, &match[0], REG_NOTBOL) != REG_NOMATCH) {
-	  /* Matching parameter constraint line. */
-	  dir1 = getInteger (start + match[1].rm_so);
-	  a1 = getType (start + match[2].rm_so);
-	  c1 = getInteger (start + match[3].rm_so);
-	  op = getOperator (start + match[4].rm_so);
-	  dir2 = getInteger (start + match[5].rm_so);
-	  a2 = getType (start + match[6].rm_so);
-	  c2 = getInteger (start + match[7].rm_so);
-
-	  /* Add the constraint */
-	  addConstraint (PARAMCLASSC, dir1, a1, c1, op, dir2, a2, c2, TRUE);
-	} else
-	  break;
-      }
-      continue;
-    } else if (regexec (buffer0, line, 1, &match[0], 0) != REG_NOMATCH) {
-      /* Look for value specifications (DIRECTIVE). 
-       *   xx <number or numbers>
-       * Find out what type of directive it is by looking it up in
-       * DIRECTIVES. */
-      dir1 = getType (line);
-
-      /* Next, loop through the semicolon-separated arguments. */
-      start = line + match[0].rm_eo;
-      while (TRUE) {
-	if (regexec (buffer2, start, 4, &(match[1]), REG_NOTBOL) !=
-	    REG_NOMATCH) {
-	  /* Matches three numbers. */
-	  addRange (&modelRange, dir1,
-		    strtod (start + match[2].rm_so, NULL),
-		    strtod (start + match[3].rm_so, NULL),
-		    strtod (start + match[4].rm_so, NULL));
-	} else if (regexec (buffer1, start, 2, &(match[1]), REG_NOTBOL) !=
-		   REG_NOMATCH) {
-	  /* Matches one number. */
-	  if (dir1 == Th || dir1 == Tm || dir1 == Tf)
-	    addTheta (&modelRange, dir1,
-		      strtod (start + match[2].rm_so, NULL));
-	  else if (dir1 == GF)
-	    addGeneFreq (&modelRange, strtod (start + match[2].rm_so, NULL));
-	  else if (dir1 == AL)
-	    addAlpha (&modelRange, strtod (start + match[2].rm_so, NULL));
-	  else if (dir1 == TL)
-	    addTraitLocus (&modelRange, strtod (start + match[2].rm_so, NULL));
-	  else if (dir1 == TT)
-	    addTraitThreshold (&modelRange,
-			       strtod (start + match[2].rm_so, NULL));
-	  else if (dir1 == LD)
-	    addDPrime (&modelRange, strtod (start + match[2].rm_so, NULL));
-	  else if (dir1 == AF)
-	    addAlleleFreq (&modelRange, strtod (start + match[2].rm_so, NULL));
-	  else {
-	    /* All parsing is done only in pre-expansion mode,
-	     * hence class is always moot. Also, subtract base
-	     * value of DD from dir1 to get 0-offset value.*/
-	    addPenetrance (&modelRange, dir1 - DD,
-			   strtod (start + match[2].rm_so, NULL));
-	  }
-	} else {
-	  /* Doesn't match anything. This is a badly formatted
-	   * line which should be flagged. */
-	  KASSERT (FALSE,
-		   "Ill-formed line in configuration file: '%s'\n", line);
-	}
-
-	/* Update the start pointer and check for termination. */
-	start = start + match[1].rm_eo;
-	if (start >= line + strlen (line))
-	  break;
-      }
-      continue;
-    } else if (regexec (buffer5, line, 1, &match[0], 0) != REG_NOMATCH) {
-      /* Matching a parameter specification.
-       *   P[0-9] <number or numbers>
-       * Find out which parameter it is by parsing the parameter
-       * directive (the +1 ensures we skip over the leading P in,
-       * e.g., P1).  Remember, the parameter number read in will
-       * be 1-indexed, and you need to make it 0-indexed first. */
-      p1 = strtod (line + match[0].rm_so + 1, NULL) - 1;
-      /* Make sure that the parameter number is within the
-       * expected number of parameters for this distribution. */
-      KASSERT ((p1 < modelRange.npardim), "Illegal parameter P%d.\n",
-	       p1 + 1);
-
-      /* Next, loop through the semicolon-separated arguments. */
-      start = line + match[0].rm_eo;
-      while (TRUE) {
-	if (regexec (buffer2, start, 4, &(match[1]), REG_NOTBOL) !=
-	    REG_NOMATCH) {
-	  /* Matches three numbers. We'll fake out addRange by
-	   * giving it a negative type to distinguish it from
-	   * the other types of values we handle. So, for
-	   * example, parameter 2 would be -3. */
-	  addRange (&modelRange, -(p1 + 1),
-		    strtod (start + match[2].rm_so, NULL),
-		    strtod (start + match[3].rm_so, NULL),
-		    strtod (start + match[4].rm_so, NULL));
-	} else if (regexec (buffer1, start, 2, &(match[1]), REG_NOTBOL) !=
-		   REG_NOMATCH) {
-	  /* Matches one number. */
-	  addParameter (&modelRange, p1,
-			strtod (start + match[2].rm_so, NULL));
-	} else {
-	  /* Doesn't match anything. This is a badly formatted
-	   * line which should be flagged. */
-	  KASSERT (FALSE,
-		   "Ill-formed line in configuration file: '%s'\n", line);
-	}
-
-	/* Update the start pointer and check for termination. */
-	start = start + match[1].rm_eo;
-	if (start >= line + strlen (line))
-	  break;
-      }
-      continue;
-    } else
-      KASSERT (FALSE, "Ill-formed line in configuration file: '%s'\n", line);
-  }
-
-  /* Done. Release the pattern spaces and free the buffers. */
-  regfree (buffer0);
-  regfree (buffer1);
-  regfree (buffer2);
-  regfree (buffer3);
-  regfree (buffer4);
-  regfree (buffer5);
-  regfree (buffer6);
-  regfree (buffer7);
-  free (buffer0);
-  free (buffer1);
-  free (buffer2);
-  free (buffer3);
-  free (buffer4);
-  free (buffer5);
-  free (buffer6);
-  free (buffer7);
-
-  /* Clean up after yourself. Here, we set/reset whatever model
-   * options are implict by the configuration parameters given. The
-   * only example that comes to mind is linkage disequilibrium, but
-   * there may later be others. */
-  if (modelRange.dprime && modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) {
-    /* If dprime exists, we must have set it explicitly, and we must
-     * be doing LD. */
-    modelOptions.equilibrium = LINKAGE_DISEQUILIBRIUM;	/* Linkage disequilibrium */
-    KLOG (LOGINPUTFILE, LOGDEBUG, "Configuring for linkage disequilibrium\n");
-  }
-  /* Sadly, this parser has broad categories of parameterized and unparameterized
-     directives, and it checks for unparameterized first, so there is no such thing
-     as a defaulted set of parameters that are not handled as a unique case. */
-  if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) {
-    if (modelOptions.integration == TRUE) {
-      /* Override their specified values for dprime. */
-      KLOG (LOGINPUTFILE, LOGWARNING, "Integration LD analysis forces override of user-specified dprime values.\n");
-      modelRange.ndprime = 0;
-      for (i=0; i< integrationLDDPrimeValuesCount; i++) {
-	addDPrime (&modelRange, integrationLDDPrimeValues[i]);
-      }
+    if ((va = lookupDispatch (toks[0], dispatchTable)) >= 0) {
+      printf ("directive '%s' matches at index %d\n", toks[0], va);
+      (*dispatchTable[va].parse) (toks, numtoks, dispatchTable[va].hint);
     } else {
-      // Make sure zero was included...
-      for (i=0; i<modelRange.ndprime; i++)
-	if (fabs(modelRange.dprime[i]) <= ERROR_MARGIN) break;
-      if (i == modelRange.ndprime)
-	addDPrime (&modelRange, (double) 0.0);
+      logMsg (LOGDEFAULT, LOGFATAL, "directive '%s' on line %d is %s\n", toks[0],
+	      lineno, (va == -1) ? "unknown" : "not unique");
     }
+    //printf ("\n");
   }
-  /* Now check the integrity of the parameters you've read. Here is
-   * where you check for things like, e.g., no parameters specified
-   * for QT/CT, or parameters specified for DT. */
-  KASSERT ((modelType.trait != QT || modelRange.param),
-	   "Failure to provide distribution parameters for quantitative trait.\n");
-  KASSERT ((modelType.trait != CT || modelRange.param),
-	   "Failure to provide distribution parameters for combined trait.\n");
-  KASSERT ((modelType.trait != DT || !modelRange.param),
-	   "Attempt to provide distribution parameters for dichotomous trait.\n");
-  KASSERT ((modelType.type == TP || !modelRange.dprime),
-	   "Linkage disequilibrium only supported for two point analysis.\n");
-  KASSERT ((modelType.type == TP || !modelRange.theta),
-	   "Theta specification only for two point analysis.\n");
-  KASSERT ((modelType.type == TP || !modelRange.afreq),
-	   "Marker allele frequencies only supported for two point analysis.\n");
-  KASSERT ((modelType.type != TP || !modelRange.tloc),
-	   "Trait loci specification only for multipoint analysis.\n");
-  KASSERT ((modelType.type != TP || !modelRange.tlmark),
-	   "On-marker trait locus specification only for multipoint analysis.\n");
 
-  /* Copy Dd to dD if needed, i.e. if none were specified, so no imprinting. &&& */
-  if (penetcnt[dD-DD] == 0) {
-    modelRange.penet[0][dD-DD] = malloc ((penetmax[Dd-DD] + CHUNKSIZE) * sizeof (double));
-    penetcnt[dD-DD] = penetcnt[Dd-DD];
-    for (i=0; i<penetcnt[Dd-DD]; i++) 
-      modelRange.penet[0][dD-DD][i] = modelRange.penet[0][Dd-DD][i];
-    addConstraint (SIMPLE, dD, 0, 0, EQ, Dd, 0, 0, FALSE);
-    if (!modelOptions.integration) {
-      modelOptions.imprintingFlag = FALSE;
-      KLOG (LOGINPUTFILE, LOGDEBUG, "No imprinting found in non-integration run, disabling\n");
+  if (tokgroupsize > 0)
+    free (toks);
+  return;
+}
+
+
+/* Here we have to marshall command line arguments into a format that looks like
+ * we read them out of a file. Directives on the command line must be prefixed
+ * with '--'; for each directive, we concatenate the directive and all the arguments
+ * up to the next directive into a single buffer, and run that buffer through 
+ * permuteLine() and tokenizeLine(), and get back the same kind of list of tokens
+ * that getNextTokGroup() returns.
+ */
+void parseCommandLine (int argc, char *argv[])
+{
+  int curidx, bufflen=0, numtoks, tokgroupsize=0, va;
+  char buff[BUFFSIZE], **toks=NULL;
+  
+  if (argc == 0)
+    return;
+
+  if (strncmp (argv[0], "--", 2) != 0)
+    logMsg (LOGDEFAULT, LOGFATAL, "expected directive on command line, found '%s'\n", argv[0]);
+  bufflen = strlen (argv[0] - 2);
+  strcpy (buff, argv[0]+2);
+  
+  curidx = 1;
+  while (curidx < argc) {
+    if (strncmp (argv[curidx], "--", 2) == 0) {
+      permuteLine (buff, BUFFSIZE);
+      numtoks = tokenizeLine (buff, &toks, &tokgroupsize);
+      if ((va = lookupDispatch (toks[0], dispatchTable)) >= 0) {
+	//printf ("directive '%s' matches at index %d\n", toks[0], va);
+	(*dispatchTable[va].parse) (toks, numtoks, dispatchTable[va].hint);
+      } else
+	logMsg (LOGDEFAULT, LOGFATAL, "directive '%s' on command line is %s\n", toks[0],
+		(va == -1) ? "unknown" : "not unique");
+      bufflen = strlen (argv[0] - 2);
+      strcpy (buff, argv[0]+2);
+
+    } else {
+      buff[bufflen++] = ' ';
+      buff[bufflen++] = '\0';
+      bufflen += strlen (argv[curidx]);
+      strcat (buff, argv[curidx]);
+    }
+    curidx++;
+  }
+    
+  permuteLine (buff, BUFFSIZE);
+  numtoks = tokenizeLine (buff, &toks, &tokgroupsize);
+  if ((va = lookupDispatch (toks[0], dispatchTable)) >= 0) {
+    //printf ("directive '%s' matches at index %d\n", toks[0], va);
+    (*dispatchTable[va].parse) (toks, numtoks, dispatchTable[va].hint);
+  } else
+    logMsg (LOGDEFAULT, LOGFATAL, "directive '%s' on command line is %s\n", toks[0],
+	    (va == -1) ? "unknown" : "not unique");
+  
+  if (tokgroupsize > 0)
+    free (toks);
+  return;
+}
+
+
+void validateConfig ()
+{
+  /* Check what was explicitly specified against what was implied. Implying model options
+   * by setting parameters (ex. implying a sex specific map by configuring male theta
+   * values) is no longer acceptable. The user must specify what they want, we won't guess.
+   */
+
+  /* Theta-related checks */
+  if (modelRange.theta && modelOptions.integration)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Theta values without FixedModels\n");
+  if (modelRange.theta && modelType.type == MP)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Theta values for Multipoint analyses\n");
+  if (observed.sexSpecificThetas && modelOptions.mapFlag != SS)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify sex-specific Thetas without SexSpecific\n");
+
+  /* DPrime-related checks */
+  if (modelRange.dprime && modelOptions.integration)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify DPrime values without FixedModels\n");
+  if (modelRange.dprime && modelType.type == MP)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify DPrime values for Multipoint analyses\n");
+  if (modelRange.dprime && modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify DPrime values without LD\n");
+
+  /* Other fixed-model-related checks */
+  if (modelRange.alpha && modelOptions.integration)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Alpha values without FixedModels\n");
+  if (modelRange.gfreq && modelOptions.integration)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify DiseaseGeneFrequency values without FixedModels\n");
+  if (observed.constraints && modelOptions.integration)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Constraints values without FixedModels\n");
+
+  /* FIXME: Should prolly make sure only two values (hi and lo limits) are specified here */
+  if ((modelRange.penet && modelOptions.integration) &&
+      !(modelType.distrib == QT_FUNCTION_CHI_SQUARE && observed.degfreedom))
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Penetrance values without FixedModels\n");
+  if (modelRange.tthresh && modelOptions.integration && modelType.trait != CT)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Threshold values without FixedModels\n");
+  /* FIXME: And make sure that two threshold values are specified for dkelvin+QTT */
+
+  /* Things that don't work with Multipoint */
+  if (modelOptions.markerAnalysis && modelType.type == MP)
+    logMsg (LOGDEFAULT, LOGFATAL, "MarkerToMarker incompatible with Multipoint\n");
+  if ((modelOptions.pplfile[0] != '\0') && (modelType.type == MP))
+    logMsg (LOGDEFAULT, LOGFATAL, "PPLFile is incompatible with Multipoint\n");
+  if (modelOptions.extraMODs && (modelType.type == MP))
+    logMsg (LOGDEFAULT, LOGFATAL, "ExtraMods is incompatible with Multipoint\n");
+  if (modelType.type == MP && modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
+    logMsg (LOGDEFAULT, LOGFATAL, "LD is incompatible with Multipoint\n");
+
+  /* Miscellaneous */
+  if (observed.traitLoci && modelType.type != MP)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify TraitLoci without Multipoint\n");
+  if (modelOptions.polynomialScale && ! modelOptions.polynomial)
+    logMsg (LOGDEFAULT, LOGFATAL, "PolynomialScale is incompatible with NonPolynomial\n");
+  if ((modelOptions.dkelvinoutfile[0] != '\0') && ! modelOptions.integration)
+    logMsg (LOGDEFAULT, LOGFATAL, "NIDetailFile is incompatible with FixedModels\n");
+  if ((! modelOptions.integration) &&
+      (checkImprintingPenets (&modelRange, modelOptions.imprintingFlag) < 0)) {
+    if (modelOptions.imprintingFlag) 
+      logMsg (LOGDEFAULT, LOGFATAL, "Imprinting requires Penetrance values for the dD trait genotype\n");
+    else 
+      logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Penetrance values for the dD trait genotype without Imprinting\n");
+  }
+  return;
+}
+
+
+void finishConfig ()
+{
+  int i;
+  double integrationLDDPrimeValues[33] =
+    {-0.9982431840532, -0.9956010478552, -0.9790222658168, -0.9590960631620, -0.8761473165029,
+     -0.8727421201131, -0.7013933644534, -0.6582769255267, -0.6492284325645, -0.5666666666667,
+     -0.5000000000000, -0.3808991135940, -0.3582614645881, -0.2517129343453, -0.2077777777778,
+     -0.1594544658298, 0.0000000000000, 0.1594544658298, 0.2077777777778, 0.2517129343453,
+     0.3582614645881, 0.3808991135940, 0.5000000000000, 0.5666666666667, 0.6492284325645,
+     0.6582769255267, 0.7013933644534, 0.8727421201131, 0.8761473165029, 0.9590960631620,
+     0.9790222658168, 0.9956010478552, 0.9982431840532};
+  
+  /* Fill in default values for fields that could have been configured, if they weren't */
+
+  if (modelType.trait == DT) {
+    if (modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] == -DBL_MAX) {
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = AFFECTION_STATUS_UNKNOWN;
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = AFFECTION_STATUS_UNAFFECTED;
+      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = AFFECTION_STATUS_AFFECTED;
     }
   } else {
-    modelOptions.imprintingFlag = TRUE;
-    KLOG (LOGINPUTFILE, LOGDEBUG, "Imprinting found, enabling\n");
+    /* QT or CT */
+    if (modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] == -DBL_MAX)
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
+    if (modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] == -DBL_MAX) {
+      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
+      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+    }
   }
 
-  if (modelOptions.imprintingFlag !=TRUE) {
-    addConstraint (PARAMC, dD, 0, 1, EQ, Dd, 0, 1, FALSE);
+  if (modelOptions.polynomial && ! modelOptions.polynomialScale)
+    modelOptions.polynomialScale = 1;
+  if ((modelType.type == TP) && (modelOptions.pplfile[0] == '\0'))
+    strcpy (modelOptions.pplfile, DEFAULTPPLFILENAME);
+
+  /* Fix up the DPrimes if LD is turned on*/
+  if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) {
+    /* FIXME: this bit is just for testing */
+    strcpy (modelOptions.maxmodelfile, "max.out");
+    if (modelOptions.integration == TRUE) {
+      /* If integration (that is, dynamic grid) is turned on, then there shouldn't
+       * be any DPrimes at all, and we need to insert some. These are MAGIC DPrimes,
+       * statically declared at the top of this function.
+       */
+      for (i = 0; i < 33; i++)
+	addDPrime (&modelRange, integrationLDDPrimeValues[i]);
+
+    } else {
+      /* If not integration (that is, fixed models) make sure the user
+       * didn't omit 0 from the range of DPrimes. Silently add one if needed.
+       */
+      for (i=0; i<modelRange.ndprime; i++)
+        if (fabs(modelRange.dprime[i]) <= ERROR_MARGIN) break;
+      if (i == modelRange.ndprime)
+        addDPrime (&modelRange, (double) 0.0);
+    }
   }
+
+  /* Sync param values for hetrozygous genotypes in non-imprinting runs */
+  if ((modelType.trait != DT) && (modelOptions.imprintingFlag != TRUE))
+    addConstraint (PARAMC, PEN_dD, 0, 1, EQ, PEN_Dd, 0, 1, FALSE);
 
   /* Sort the values in the final model. Sorted values better support
    * the application of constraints. */
@@ -1042,7 +492,7 @@ readConfigFile (char *file)
 #endif
 
   /* Expand the model, honoring constraints. */
-  expandRange (&modelRange, &modelType);
+  expandRange (&modelRange);
 #if FALSE
   /* Show the partially expanded model. At level 1, following
    * expandRange(), we will have refined the model specification while
@@ -1054,8 +504,8 @@ readConfigFile (char *file)
   /* Expand the liability classes, but only if necessary and always
    * honoring inter-class constraints. */
   if (modelRange.nlclass > 1)
-    expandClass (&modelRange, &modelType);
-
+    expandClass (&modelRange);
+  
   //#if FALSE
   /* At level 2, all constraints (including those between classes) are
    * honored, but penet[][][], param[][][][] are not yet fully
@@ -1063,1513 +513,873 @@ readConfigFile (char *file)
   //showRange (modelRange, modelType, 2);
   //#endif
 
-  /* Done. Free the constraints; you're done with them. */
-  for (i = 0; i < 4; i++)
-    if (constraints[i])
-      free (constraints[i]);
-
-  /* TODO: fix return expression to yield number of LODS; also for QT
-   * and CT models. */
-  /* fprintf (stderr, "%d * %d * %d\n", model->ngfreq, model->npenet, model->ntheta); */
-  return (TRUE);
+  /* Tidy up */
+  cleanupRange ();
+  return;
 }
 
-/**********************************************************************
- * Find the index corresponding to the two-letter code of the type of
- * record we are adding by searching through DIRECTIVES. Returns an
- * integer corresponding to the entry in DIRECTIVES or ERROR if no match
- * is found.
- **********************************************************************/
-int
-getType (char *line)
-{
-  char types[27] = DIRECTIVES;
-  char *ptr = types;
 
-  while (ptr < types + strlen (types)) {
-    if (strncmp (ptr, line, 2) == 0)
-      break;
-    ptr += 2;
+int set_optionfile (char **toks, int numtoks, void *filename)
+{
+  if (numtoks < 2)
+    bail ("missing filename argument to directive '%s'\n", toks[0]);
+  if (numtoks > 2)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  strcpy ((char *) filename, toks[1]);
+  return (0);
+}
+
+
+int set_flag (char **toks, int numtoks, void *flag)
+{
+  if (numtoks > 1)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  *((int *) flag) = TRUE;
+  return (0);
+}
+
+
+int clear_flag (char **toks, int numtoks, void *flag)
+{
+  if (numtoks > 1)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  *((int *) flag) = FALSE;
+  return (0);
+}
+
+
+int set_int (char **toks, int numtoks, void *field)
+{
+  int value;
+  char *ptr = NULL;
+
+  if (numtoks < 2)
+    bail ("missing integer argument to directive '%s'\n", toks[0]);
+  if (numtoks > 2)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  value = (int) strtol (toks[1], &ptr, 10);
+  if ((toks[1] == ptr) || (*ptr != '\0'))
+    bail ("directive '%s' requires an integer argument\n", toks[0]);
+  *((int *) field) = value;
+  return (0);
+}
+
+
+int set_traitLoci (char **toks, int numtoks, void *unused)
+{
+  int numvals, va, vb;
+  st_valuelist *vlist;
+  double val;
+
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[1], numtoks-1, NULL, &vlist)) <= 0)
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++) {
+    if (vlist[va].type == VL_VALUE) {
+      addTraitLocus (&modelRange, vlist[va].vun.val);
+    } else if (vlist[va].type == VL_RANGE) {
+      vb = 0;
+      while ((val = vlist[va].vun.range.start + (vb++ * vlist[va].vun.range.incr)) <=
+	     vlist[va].vun.range.end)
+	addTraitLocus (&modelRange, val);
+    } else if (vlist[va].type == VL_RANGE_SYMBEND) {
+      modelRange.tlocRangeStart = vlist[va].vun.range.start;
+      modelRange.tlocRangeIncr = vlist[va].vun.range.incr;
+    } else if ((vlist[va].type == VL_SYMBOL) && (vlist[va].vun.symbol == VL_SYM_MARKER))
+      modelRange.tlmark = TRUE;
   }
-  /* If no match is found, return ERROR. */
-  if (ptr - types >= strlen (types))
-    return (ERROR);
+  free (vlist);
+  observed.traitLoci = 1;
+  return (0);
+}
+
+
+int set_geneFreq (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0;
+  double *vals;
+
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addGeneFreq (&modelRange, vals[va]);
+  free (vals);
+  return (0);
+}
+
+
+int set_dprime (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0;
+  double *vals;
+
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addDPrime (&modelRange, vals[va]);
+  free (vals);
+  return (0);
+}
+
+
+int set_theta (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0, type=0;
+  double *vals;
+
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  if (strncasecmp (toks[0], THETA_STR, strlen (toks[0])) == 0)
+    type = THETA_AVG;
+  else if (strncasecmp (toks[0], MALETHETA_STR, strlen (toks[0])) == 0) {
+    type = THETA_MALE;
+    observed.sexSpecificThetas = 1;
+  } else if (strncasecmp (toks[0], FEMALETHETA_STR, strlen (toks[0])) == 0) {
+    type = THETA_FEMALE;
+    observed.sexSpecificThetas = 1;
+  } else
+    KLOG (LOGDEFAULT, LOGFATAL, "set_theta called with unexpected directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addTheta (&modelRange, type, vals[va]);
+  free (vals);
+  return (0);
+}
+
+
+int set_alpha (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0;
+  double *vals;
+
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addAlpha (&modelRange, vals[va]);
+  free (vals);
+  return (0);
+}
+
+
+int set_penetrance (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0, geno;
+  double *vals;
+
+  if (numtoks < 3)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if ((geno = lookup_modelparam (toks[1])) == -1)
+    bail ("illegal model parameter argument to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addPenetrance (&modelRange, geno-PEN_DD, vals[va]);
+  observed.penetrance = 1;
+  free (vals);
+  return (0);
+}
+
+
+int set_constraint (char **toks, int numtoks, void *unused)
+{
+  int len, first=2, type=-1;
+  int oper, geno1=0, geno2=0, class1, class2, disjunct=0;
+
+  printf ("set_constraint:");
+  for (oper = 1; oper < numtoks; oper++)
+    printf (" %s", toks[oper]);
+  printf (", first %d, numtoks %d\n", first, numtoks);
+  
+  /* We'll just preemptively set this here, since we either return success or die */
+  observed.constraints = 1;
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  len = strlen (toks[first]);
+  if ((strncasecmp (toks[1], PENETRANCE_STR, len) == 0) || 
+      (strncasecmp (toks[1], MEAN_STR, len) == 0) ||
+      (strncasecmp (toks[1], DEGOFFREEDOM_STR, len) == 0)) {
+    while (1) {
+      class1 = class2 = 0;
+      if ((numtoks >= first + 3) &&
+	  ((geno1 = lookup_modelparam (toks[first])) != -1) &&
+	  ((oper = lookup_comparator (toks[first+1])) != -1) &&
+	  ((geno2 = lookup_modelparam (toks[first+2])) != -1)) {
+	if ((type != -1) && (type != SIMPLE))
+	  bail ("illegal combination of %s and Simple constraints\n", contype_strs[type]);
+	type = SIMPLE;
+	first += 3;
+	printf ("  SIMPLE: %s %s %s, first %d\n", mp_strs[geno1], op_strs[oper], mp_strs[geno2],
+		first);
+	
+      } else if ((numtoks >= first + 5) &&
+		 ((geno1 = lookup_modelparam (toks[first])) != -1) &&
+		 ((class1 = singleDigit (toks[first+1])) > 0) &&
+		 ((oper = lookup_comparator (toks[first+2])) != -1) &&
+		 ((geno2 = lookup_modelparam (toks[first+3])) != -1) &&
+		 ((class2 = singleDigit (toks[first+4])) > 0)) {
+	
+	if ((type != -1) && (type != CLASSC))
+	  bail ("illegal combination of %s and Liability Class constraints\n", contype_strs[type]);
+	type = CLASSC;
+	first += 5;
+	printf ("  CLASSC: %s %d %s %s %d, first %d\n", mp_strs[geno1], class1, op_strs[oper],
+		mp_strs[geno2], class2, first);
+      } else 
+	bail ("illegal argument to directive '%s'\n", toks[0]);
+
+      addConstraint (type, geno1, class1, 0, oper, geno2, class2, 0, disjunct);
+      disjunct = 1;
+      if (numtoks <= first)
+	return (0);
+      if (strcmp (toks[first++], ",") != 0)
+	bail ("illegal argument to directive '%s'\n", toks[0]);
+    }
+
+  } else if (strncasecmp (toks[1], STANDARDDEV_STR, len) == 0) {
+    while (1) {
+      class1 = class2 = 0;
+      if ((numtoks >= first + 3) &&
+	  ((geno1 = lookup_modelparam (toks[first])) != -1) &&
+	  ((oper = lookup_comparator (toks[first+1])) != -1) &&
+	  ((geno2 = lookup_modelparam (toks[first+2])) != -1)) {
+	if ((type != -1) && (type != PARAMC))
+	  bail ("illegal combination of %s and Parameter constraints\n", contype_strs[type]);
+	type = PARAMC;
+	first += 3;
+	printf ("  PARAMC: %s %s %s, first %d\n", mp_strs[geno1], op_strs[oper], mp_strs[geno2],
+		first);
+	
+      } else if ((numtoks >= first + 5) &&
+		 ((geno1 = lookup_modelparam (toks[first])) != -1) &&
+		 ((class1 = singleDigit (toks[first+1])) > 0) &&
+		 ((oper = lookup_comparator (toks[first+2])) != -1) &&
+		 ((geno2 = lookup_modelparam (toks[first+3])) != -1) &&
+		 ((class2 = singleDigit (toks[first+4])) > 0)) {
+	
+	if ((type != -1) && (type != PARAMCLASSC))
+	  bail ("illegal combination of %s and Liability Class constraints\n", contype_strs[type]);
+	type = PARAMCLASSC;
+	first += 5;
+	printf ("  PARAMCLASSC: %s %d %s %s %d, first %d\n", mp_strs[geno1], class1, op_strs[oper],
+		mp_strs[geno2], class2, first);
+      } else 
+	bail ("illegal argument to directive '%s'\n", toks[0]);
+
+      addConstraint (type, geno1, class1, 1, oper, geno2, class2, 1, disjunct);
+      disjunct = 1;
+      if (numtoks <= first)
+	return (0);
+      if (strcmp (toks[first++], ",") != 0)
+	bail ("illegal argument to directive '%s'\n", toks[0]);
+    }
+
+  } else if (strncasecmp (toks[1], THRESHOLD_STR, len) == 0) {
+    class1 = class2 = 0;
+    while (1) {
+      if (! ((numtoks >= first + 3) &&
+	     ((class1 = singleDigit (toks[first])) > 0) &&
+	     ((oper = lookup_comparator (toks[first+1])) != -1) &&
+	     ((class2 = singleDigit (toks[first+2])) > 0)))
+	bail ("illegal arguments to directive '%s'\n", toks[0]);
+      addConstraint (SIMPLE, THRESHOLD, class1, 0, oper, THRESHOLD, class2, 0, disjunct);
+      disjunct = 1;
+      first += 3;
+      if (numtoks <= first) {
+	observed.constraints = 1;
+	return (0);
+      }
+      if (strcmp (toks[first++], ",") != 0)
+	bail ("illegal argument to directive '%s'\n", toks[0]);
+    }
+  } else 
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  
+  /* we'll never get this far, but just to shut GCC up... */
+  return (0);
+}
+
+
+int set_multipoint (char **toks, int numtoks, void *unused)
+{
+  int value;
+  char *ptr = NULL;
+
+  if (numtoks < 2)
+    bail ("missing integer argument to directive '%s'\n", toks[0]);
+  if (numtoks > 2)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  modelType.type = MP;
+  value = (int) strtol (toks[1], &ptr, 10);
+  if ((toks[1] == ptr) || (*ptr != '\0'))
+    bail ("directive '%s' requires an integer argument\n", toks[0]);
+  modelType.numMarkers = value;
+  return (0);
+}
+
+
+int set_markerAnalysis (char **toks, int numtoks, void *unused)
+{
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if (numtoks > 2)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  if (strncasecmp (toks[1], "All", strlen (toks[1])) == 0)
+    modelOptions.markerAnalysis = MM;
+  else if (strncasecmp (toks[1], "Adjacent", strlen (toks[1])) == 0)
+    modelOptions.markerAnalysis = AM;
   else
-    return ((ptr - types) / 2);
-}
-
-/**********************************************************************
- * Find the index corresponding to the two-letter relation by
- * searching through OPERATORS. Returns an integer corresponding to
- * the entry in OPERATORS or ERROR if no match is found.
- **********************************************************************/
-int
-getOperator (char *line)
-{
-  char types[13] = OPERATORS;
-  char *ptr = types;
-
-  while (ptr < types + strlen (types)) {
-    if (strncmp (ptr, line, 2) == 0)
-      break;
-    ptr += 2;
-  }
-  /* If no match is found, return ERROR. */
-  if (ptr - types >= strlen (types))
-    return (ERROR);
-  else
-    return ((ptr - types) / 2);
-}
-
-/**********************************************************************
- * Return the integer found at the beginning of line.
- **********************************************************************/
-int
-getInteger (char *line)
-{
-  return ((int) strtol (line, NULL, 10));
-}
-
-/**********************************************************************
- * Add one more element to trait threshold vector.  May need to
- * allocate or reallocate memory in order to allow additional room for
- * more values. Note that these are "raw" values; we'll have to expand
- * them by liability and check for any threshold constraints later.
- *
- * Recall that trait thresholds are initially specified as if there
- * are no liability classes. Later, if liability classes are in use,
- * we "expand" the threshold array to its full two dimensions. So
- * addTraitThreshold() is only ever used in "preexpansion" mode, where
- * the first dimension of the array (corresponds to liability class)
- * is always 1.
- **********************************************************************/
-void
-addTraitThreshold (ModelRange * range, double val)
-{
-  /* Validate value. The trait threshold should be between the lowest
-   * and highest means. But since trait thresholds are subject to
-   * liability classes, we won't be able to impose this constraint
-   * until later. */
-  /* KASSERT ((val >=0), "Bad trait threshold %g; aborting.\n", val); */
-
-  /* Initialize the structure if first access. */
-  if (!range->tthresh) {
-    /* Initialize: remember, if you are a pre-expansion tthresh[][]
-     * array, the first dimension (liability class) will always have
-     * a dimension of size 1. */
-    range->tthresh = malloc (sizeof (double *));
-    range->tthresh[0] = malloc (CHUNKSIZE * sizeof (double));
-    maxtthresh = CHUNKSIZE;
-    range->ntthresh = 0;
-  }
-
-  /* Enlarge array if necessary. */
-  if (range->ntthresh == maxtthresh) {
-    range->tthresh[0] = realloc (range->tthresh[0],
-				 (maxtthresh + CHUNKSIZE) * sizeof (double));
-    maxtthresh = maxtthresh + CHUNKSIZE;
-  }
-  /* Add the element. */
-  range->tthresh[0][range->ntthresh] = val;
-  range->ntthresh++;
-}
-
-/**********************************************************************
- * Add one more element to allele frequency vector.  May need to
- * allocate or reallocate memory in order to allow additional room for
- * more values.
- **********************************************************************/
-void
-addAlleleFreq (ModelRange * range, double val)
-{
-  /* Validate value. */
-  KASSERT ((val >= 0
-	    && val <= 1.0), "Bad allele frequency value %g; aborting.\n",
-	   val);
-
-  /* Initialize the structure if first access. */
-  if (!range->afreq)
-    range->nafreq = maxafreq = 0;
-  /* Enlarge array if necessary. */
-  if (range->nafreq == maxafreq) {
-    range->afreq = realloc (range->afreq,
-			    (maxafreq + CHUNKSIZE) * sizeof (double));
-    maxafreq = maxafreq + CHUNKSIZE;
-  }
-  /* Add the element. */
-  range->afreq[range->nafreq] = val;
-  range->nafreq++;
-}
-
-/**********************************************************************
- * Add one more element to appropriate parameter vector.  May need to
- * allocate or reallocate memory in order to allow additional room for
- * more values.
- *
- * Recall that parameters are only specified in the case of QT or CT
- * traits, and that the number of parameters (npardim) is determined
- * by the distribution type. Moreover, parameters are specified only
- * once and applied uniformly to all allele combinations as if there
- * are no liability classes. Later, if liability classes are in use,
- * we "expand" the parameter array to its full three dimensions. So
- * addParameter() is only ever used in "preexpansion" mode, where the
- * first dimension of the array (corresponds to liability class) is
- * always 0, and the alleles are always 0, too.
- *
- * The parameter array: range->param[nlclass][nallele][pardim][nparam] 
- *
- * Note that paramcnt and parammax are just simple arrays since as we
- * read the config file, parameter values are shared across all allele
- * combinations, and we don't handle liability classes until later:
- * hence only the parameter dimension will be variable.
- **********************************************************************/
-void
-addParameter (ModelRange * range, int dim, double val)
-{
-  int i;
-
-  /* First, if this is the first access to the structure, you must
-   * initialize it. */
-  if (!range->param) {
-    /* Initialize: remember, if you are a pre-expansion
-     * param[][][][] array, the first dimension (liability class)
-     * will always have a dimension of size 1, and the second
-     * dimension (allele) will also always have a dimension of size
-     * 1, since we "share" values, at least before applying
-     * constraints, across all allele combinations. */
-    range->param = malloc (sizeof (double ***));
-    range->param[0] = malloc (sizeof (double **));
-    range->param[0][0] = malloc (range->npardim * sizeof (double *));
-    for (i = 0; i < range->npardim; i++)
-      range->param[0][0][i] = malloc (CHUNKSIZE * sizeof (double));
-
-    /* The only "real" dimension of param[][][][] reflected in
-     * paramcnt and parammax is the dim dimension, since that's the
-     * only one that will vary at input time. Recall that all
-     * parameters are shared across all alleles and liability
-     * classes.  */
-    paramcnt = malloc (range->npardim * sizeof (int));
-    parammax = malloc (range->npardim * sizeof (int));
-    for (i = 0; i < range->npardim; i++) {
-      paramcnt[i] = 0;
-      parammax[i] = CHUNKSIZE;
-    }
-  }
-
-  /* Next, add the parameter to the appropriate location in the
-   * param[][][][] array, which may entail allocating more space. */
-  if (paramcnt[dim] == parammax[dim]) {
-    range->param[0][0][dim] = realloc (range->param[0][0][dim],
-				       (parammax[dim] +
-					CHUNKSIZE) * sizeof (double));
-    parammax[dim] = parammax[dim] + CHUNKSIZE;
-  }
-  /* Add the element. */
-  range->param[0][0][dim][paramcnt[dim]] = val;
-  paramcnt[dim]++;
-}
-
-/**************q********************************************************
- * Add one more range to genefrequencies, penetrances, parameter,
- * theta, allelefrequencies, or LD. Parameters are handled by passing
- * a negative type; so -3 correponds to the third parameter.
- **********************************************************************/
-void
-addRange (ModelRange * range, int type, double lo, double hi, double incr)
-{
-  double val = lo;
-
-  /* First check to make sure increment moves in the right direction. */
-  KASSERT (((hi >= lo && incr > 0) || (hi <= lo && incr < 0)),
-	   "Bad range specification from %g to %g by %g; aborting.\n", lo, hi,
-	   incr);
-
-  /* Now step through the increment and add individual values as
-   * needed. Note that we need to be careful about roundoff issues,
-   * like 0, 4, 1 stopping because you get to 4.00001; we'll use
-   * ERROR_MARGIN from locus.h as our safety margin, and clean up
-   * values that go astray before adding them. */
-  while (val <= hi + ERROR_MARGIN) {
-    /* Clean things up before adding the value. */
-    val = MIN (hi, val);
-
-    /* Add value as needed. */
-    if (type == Th || type == Tm || type == Tf)
-      addTheta (range, type, val);
-    else if (type == GF)
-      addGeneFreq (range, val);
-    else if (type < 0)
-      addParameter (range, -type - 1, val);
-    else if (type == AL)
-      addAlpha (range, val);
-    else if (type == TL)
-      addTraitLocus (range, val);
-    else if (type == TT)
-      addTraitThreshold (range, val);
-    else if (type == LD)
-      addDPrime (range, val);
-    else if (type == AF)
-      addAlleleFreq (range, val);
-    else
-      /* addRange() is only used in pre-expansion mode, hence class
-       * is always ERROR. Also, subtract base value of DD from type
-       * to get 0-offset value.*/
-      addPenetrance (range, type - DD, val);
-
-    /* Go on to next value. */
-    val = val + incr;
-  }
+    bail ("unknown argument to directive '%s'\n", toks[1]);
+  return (0);
 }
 
 
-/**********************************************************************
- * Return TRUE if the ith thetas satisfy all theta constraints, else
- * FALSE. The general idea is to scan through each constraint, exiting
- * whenever you encounter an unsatisfied one (that does not have a
- * disjunct). If there is a disjunct, then step through those until
- * you find one that satisfies the constraint; if you get to the end
- * of the line without satisfying the disjunct, you fail.
- **********************************************************************/
-int
-checkThetas (ModelRange * range, int i)
+int set_mapFlag (char **toks, int numtoks, void *unused)
 {
-  int j = 0;
-
-#if FALSE
-  char types[27] = DIRECTIVES;
-#endif
-
-  /* Scan through each constraint. */
-  while (j < constcnt[SIMPLE]) {
-    /* Relies on Tm being the lowest numbered penetrance. */
-    if ((constraints[SIMPLE][j].a1 == Tm && constraints[SIMPLE][j].a2 == Tf)
-	|| (constraints[SIMPLE][j].a1 == Tf
-	    && constraints[SIMPLE][j].a2 == Tm)) {
-      if ((constraints[SIMPLE][j].op == EQ &&
-	   range->theta[constraints[SIMPLE][j].a1 - Tm][i] ==
-	   range->theta[constraints[SIMPLE][j].a2 - Tm][i]) ||
-	  (constraints[SIMPLE][j].op == NE &&
-	   range->theta[constraints[SIMPLE][j].a1 - Tm][i] !=
-	   range->theta[constraints[SIMPLE][j].a2 - Tm][i]) ||
-	  (constraints[SIMPLE][j].op == GT &&
-	   range->theta[constraints[SIMPLE][j].a1 - Tm][i] >
-	   range->theta[constraints[SIMPLE][j].a2 - Tm][i]) ||
-	  (constraints[SIMPLE][j].op == GE &&
-	   range->theta[constraints[SIMPLE][j].a1 - Tm][i] >=
-	   range->theta[constraints[SIMPLE][j].a2 - Tm][i])) {
-	/* Satisfied; skip other disjuncts. */
-	while (constraints[SIMPLE][j].alt == TRUE)
-	  j++;
-      } else if (constraints[SIMPLE][j].alt == FALSE) {
-#if FALSE
-	fprintf (stderr, "%c%c %s %c%c %s => %g %g %g\n",
-		 types[(constraints[SIMPLE][j].a1) * 2],
-		 types[(constraints[SIMPLE][j].a1) * 2 + 1],
-		 ((constraints[SIMPLE][j].op ==
-		   EQ) ? "==" : (constraints[SIMPLE][j].op ==
-				 NE) ? "!=" : (constraints[SIMPLE][j].
-					       op == GE) ? ">=" : ">"),
-		 types[(constraints[SIMPLE][j].a2) * 2],
-		 types[(constraints[SIMPLE][j].a2) * 2 + 1],
-		 (constraints[SIMPLE][j].alt == TRUE) ? "*" : "",
-		 range->penet[0][i], range->penet[1][i], range->penet[2][i]);
-#endif
-	return (FALSE);
-      }
-    }
-    j++;
-  }
-  return (TRUE);
+  if (numtoks > 1)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  modelOptions.mapFlag = SS;
+  return (0);
 }
 
-/**********************************************************************
- * Return TRUE if the ith penetrances satisfy all penetrance
- * constraints, else FALSE. The general idea is to scan through each
- * constraint, exiting whenever you encounter an unsatisfied one (that
- * does not have a disjunct). If there is a disjunct, then step
- * through those until you find one that satisfies the constraint; if
- * you get to the end of the line without satisfying the disjunct, you
- * fail.
- **********************************************************************/
-int
-checkPenets (ModelRange * range, int i)
+
+int set_disequilibrium (char **toks, int numtoks, void *unused)
 {
-  int j = 0;
-
-#if FALSE
-  char types[27] = DIRECTIVES;
-#endif
-
-  /* Scan through each constraint. */
-  while (j < constcnt[SIMPLE]) {
-    if (constraints[SIMPLE][j].a1 == TT || constraints[SIMPLE][j].a2 == TT) {
-      /* Skip threshold constraints; they are irrelevant for penetrances. */
-      j++;
-      continue;
-    } else if (constraints[SIMPLE][j].a1 >= DD
-	       && constraints[SIMPLE][j].a2 >= DD) {
-      /* Relies on DD being the lowest numbered penetrance. */
-      if ((constraints[SIMPLE][j].op == EQ &&
-	   range->penet[0][constraints[SIMPLE][j].a1 - DD][i] ==
-	   range->penet[0][constraints[SIMPLE][j].a2 - DD][i]) ||
-	  (constraints[SIMPLE][j].op == NE &&
-	   range->penet[0][constraints[SIMPLE][j].a1 - DD][i] !=
-	   range->penet[0][constraints[SIMPLE][j].a2 - DD][i]) ||
-	  (constraints[SIMPLE][j].op == GT &&
-	   range->penet[0][constraints[SIMPLE][j].a1 - DD][i] >
-	   range->penet[0][constraints[SIMPLE][j].a2 - DD][i]) ||
-	  (constraints[SIMPLE][j].op == GE &&
-	   range->penet[0][constraints[SIMPLE][j].a1 - DD][i] >=
-	   range->penet[0][constraints[SIMPLE][j].a2 - DD][i])) {
-	/* Satisfied; skip other disjuncts. */
-	while (constraints[SIMPLE][j].alt == TRUE)
-	  j++;
-      } else if (constraints[SIMPLE][j].alt == FALSE) {
-#if FALSE
-	fprintf (stderr, "%c%c %s %c%c %s => %g %g %g\n",
-		 types[(constraints[SIMPLE][j].a1) * 2],
-		 types[(constraints[SIMPLE][j].a1) * 2 + 1],
-		 ((constraints[SIMPLE][j].op ==
-		   EQ) ? "==" : (constraints[SIMPLE][j].op ==
-				 NE) ? "!=" : (constraints[SIMPLE][j].
-					       op == GE) ? ">=" : ">"),
-		 types[(constraints[SIMPLE][j].a2) * 2],
-		 types[(constraints[SIMPLE][j].a2) * 2 + 1],
-		 (constraints[SIMPLE][j].alt == TRUE) ? "*" : "",
-		 range->penet[0][0][i], range->penet[0][1][i],
-		 range->penet[0][2][i]);
-#endif
-	return (FALSE);
-      }
-    }
-    j++;
-  }
-  return (TRUE);
+  if (numtoks > 1)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  modelOptions.equilibrium = LINKAGE_DISEQUILIBRIUM;
+  return (0);
 }
 
-/**********************************************************************
- * Return TRUE if the ith penetrances satisfy all inter-liability
- * class penetrance constraints, else FALSE. The general idea is to
- * scan through each constraint, exiting whenever you encounter an
- * unsatisfied one (that does not have a disjunct). If there is a
- * disjunct, then step through those until you find one that satisfies
- * the constraint; if you get to the end of the line without
- * satisfying the disjunct, you fail.
- *
- * This is somewhat ugly: while it does reduce the number of overall
- * legal combinations, some extra LODs will still be written to disk
- * in the case that a pedigree does not contain an individual from
- * each liability class. This case will have to be detected and dealt
- * with dynamically?
- **********************************************************************/
-int
-checkClassPenets (ModelRange * range, int i)
+
+int set_quantitative (char **toks, int numtoks, void *unused)
 {
-  int j = 0;
-
-#if FALSE
-  char types[27] = DIRECTIVES;
-#endif
-
-  /* Scan through each constraint: inter-class constraints are on
-   * penetrances or trait thresholds, not, e.g., gene frequencies or
-   * thetas. */
-  while (j < constcnt[CLASSC]) {
-    if (constraints[CLASSC][j].a1 == TT || constraints[CLASSC][j].a2 == TT) {
-      /* Skip threshold constraints; they are irrelevant for penetrances. */
-      j++;
-      continue;
-    } else if ((constraints[CLASSC][j].op == EQ &&
-		range->penet[constraints[CLASSC][j].c1 -
-			     1][constraints[CLASSC][j].a1 - DD][i] ==
-		range->penet[constraints[CLASSC][j].c2 -
-			     1][constraints[CLASSC][j].a2 - DD][i])
-	       || (constraints[CLASSC][j].op == NE
-		   && range->penet[constraints[CLASSC][j].c1 -
-				   1][constraints[CLASSC][j].a1 - DD][i] !=
-		   range->penet[constraints[CLASSC][j].c2 -
-				1][constraints[CLASSC][j].a2 - DD][i])
-	       || (constraints[CLASSC][j].op == GT
-		   && range->penet[constraints[CLASSC][j].c1 -
-				   1][constraints[CLASSC][j].a1 - DD][i] >
-		   range->penet[constraints[CLASSC][j].c2 -
-				1][constraints[CLASSC][j].a2 - DD][i])
-	       || (constraints[CLASSC][j].op == GE
-		   && range->penet[constraints[CLASSC][j].c1 -
-				   1][constraints[CLASSC][j].a1 - DD][i] >=
-		   range->penet[constraints[CLASSC][j].c2 -
-				1][constraints[CLASSC][j].a2 - DD][i])) {
-      /* Satisfied; skip other disjuncts. */
-      while (constraints[CLASSC][j].alt == TRUE)
-	j++;
-    } else if (constraints[CLASSC][j].alt == FALSE) {
-#if FALSE
-      fprintf (stderr, "!%c%c %d %s %c%c %d %s => %g %s %g\n",
-	       types[(constraints[CLASSC][j].a1) * 2],
-	       types[(constraints[CLASSC][j].a1) * 2 + 1],
-	       constraints[CLASSC][i].c1,
-	       ((constraints[CLASSC][j].op ==
-		 EQ) ? "==" : (constraints[CLASSC][j].op ==
-			       NE) ? "!=" : (constraints[CLASSC][j].op ==
-					     GE) ? ">=" : ">"),
-	       types[(constraints[CLASSC][j].a2) * 2],
-	       types[(constraints[CLASSC][j].a2) * 2 + 1],
-	       constraints[CLASSC][i].c2,
-	       (constraints[CLASSC][j].alt == TRUE) ? "*" : "",
-	       (range->
-		penet[constraints[CLASSC][j].c1 -
-		      1][constraints[CLASSC][j].a1 - DD][i]),
-	       ((constraints[CLASSC][j].op ==
-		 EQ) ? "==" : (constraints[CLASSC][j].op ==
-			       NE) ? "!=" : (constraints[CLASSC][j].op ==
-					     GE) ? ">=" : ">"),
-	       (range->
-		penet[constraints[CLASSC][j].c2 -
-		      1][constraints[CLASSC][j].a2 - DD][i]));
-#endif
-      return (FALSE);
-    }
-    j++;
-  }
-  return (TRUE);
-}
-
-/**********************************************************************
- * Return TRUE if the ith parameters satisfy all parameter
- * constraints, else FALSE. The general idea is to scan through each
- * constraint, exiting whenever you encounter an unsatisfied one (that
- * does not have a disjunct). If there is a disjunct, then step
- * through those until you find one that satisfies the constraint; if
- * you get to the end of the line without satisfying the disjunct, you
- * fail.
- **********************************************************************/
-int
-checkParams (ModelRange * range, int i)
-{
-  int j = 0;
-
-#if FALSE
-  char types[27] = DIRECTIVES;
-#endif
-
-  /* Scan through each constraint. */
-  while (j < constcnt[PARAMC]) {
-#if FALSE
-    fprintf (stderr, "%d: P%d %c%c %s P%d %c%c %s => ", i,
-	     constraints[PARAMC][j].a1,
-	     types[(constraints[PARAMC][j].a1) * 2],
-	     types[(constraints[PARAMC][j].a1) * 2 + 1],
-	     ((constraints[PARAMC][j].op ==
-	       EQ) ? "==" : (constraints[PARAMC][j].op ==
-			     NE) ? "!=" : (constraints[PARAMC][j].op ==
-					   GE) ? ">=" : ">"),
-	     constraints[PARAMC][j].a2,
-	     types[(constraints[PARAMC][j].a2) * 2],
-	     types[(constraints[PARAMC][j].a2) * 2 + 1],
-	     (constraints[PARAMC][j].alt == TRUE) ? "*" : "");
-#endif
-    /* Relies on DD being the lowest numbered penetrance. */
-    if (constraints[PARAMC][j].a1 >= DD && constraints[PARAMC][j].a2 >= DD) {
-      if ((constraints[PARAMC][j].op == EQ &&
-	   range->param[0][constraints[PARAMC][j].a1 -
-			   DD][constraints[PARAMC][j].p1 - 1][i] ==
-	   range->param[0][constraints[PARAMC][j].a2 -
-			   DD][constraints[PARAMC][j].p2 - 1][i])
-	  || (constraints[PARAMC][j].op == NE
-	      && range->param[0][constraints[PARAMC][j].a1 -
-				 DD][constraints[PARAMC][j].p1 - 1][i] !=
-	      range->param[0][constraints[PARAMC][j].a2 -
-			      DD][constraints[PARAMC][j].p2 - 1][i])
-	  || (constraints[PARAMC][j].op == GT
-	      && range->param[0][constraints[PARAMC][j].a1 -
-				 DD][constraints[PARAMC][j].p1 - 1][i] >
-	      range->param[0][constraints[PARAMC][j].a2 -
-			      DD][constraints[PARAMC][j].p2 - 1][i])
-	  || (constraints[PARAMC][j].op == GE
-	      && range->param[0][constraints[PARAMC][j].a1 -
-				 DD][constraints[PARAMC][j].p1 - 1][i] >=
-	      range->param[0][constraints[PARAMC][j].a2 -
-			      DD][constraints[PARAMC][j].p2 - 1][i])) {
-	/* Satisfied; skip other disjuncts. */
-#if FALSE
-	fprintf (stderr, "satisfied\n");
-#endif
-	while (constraints[PARAMC][j].alt == TRUE)
-	  j++;
-      } else if (constraints[PARAMC][j].alt == FALSE) {
-#if FALSE
-	fprintf (stderr, "fail\n");
-#endif
-	return (FALSE);
-      }
-    }
-    j++;
-  }
-  return (TRUE);
-}
-
-/**********************************************************************
- * Return TRUE if the ith parameters satisfy all inter-liability class
- * parameter constraints, else FALSE. The general idea is to scan
- * through each constraint, exiting whenever you encounter an
- * unsatisfied one (that does not have a disjunct). If there is a
- * disjunct, then step through those until you find one that satisfies
- * the constraint; if you get to the end of the line without
- * satisfying the disjunct, you fail.
- *
- * This is somewhat ugly: while it does reduce the number of overall
- * legal combinations, some extra LODs will still be written to disk
- * in the case that a pedigree does not contain an individual from
- * each liability class. This case will have to be detected and dealt
- * with dynamically?
- **********************************************************************/
-int
-checkClassParams (ModelRange * range, int i)
-{
-  int j = 0;
-
-  /* Scan through each constraint. */
-  while (j < constcnt[PARAMCLASSC]) {
-    /* Relies on DD being the lowest numbered penetrance. */
-    if (constraints[PARAMCLASSC][j].a1 >= DD
-	&& constraints[PARAMCLASSC][j].a2 >= DD) {
-      if ((constraints[PARAMCLASSC][j].op == EQ &&
-	   range->param[constraints[PARAMCLASSC][j].c1 -
-			1][constraints[PARAMCLASSC][j].a1 -
-			   DD][constraints[PARAMCLASSC][j].p1 - 1][i] ==
-	   range->param[constraints[PARAMCLASSC][j].c2 -
-			1][constraints[PARAMCLASSC][j].a2 -
-			   DD][constraints[PARAMCLASSC][j].p2 - 1][i])
-	  || (constraints[PARAMCLASSC][j].op == NE
-	      && range->param[constraints[PARAMCLASSC][j].c1 -
-			      1][constraints[PARAMCLASSC][j].a1 -
-				 DD][constraints[PARAMCLASSC][j].p1 -
-				     1][i] !=
-	      range->param[constraints[PARAMCLASSC][j].c2 -
-			   1][constraints[PARAMCLASSC][j].a2 -
-			      DD][constraints[PARAMCLASSC][j].p2 - 1][i])
-	  || (constraints[PARAMCLASSC][j].op == GT
-	      && range->param[constraints[PARAMCLASSC][j].c1 -
-			      1][constraints[PARAMCLASSC][j].a1 -
-				 DD][constraints[PARAMCLASSC][j].p1 -
-				     1][i] >
-	      range->param[constraints[PARAMCLASSC][j].c2 -
-			   1][constraints[PARAMCLASSC][j].a2 -
-			      DD][constraints[PARAMCLASSC][j].p2 - 1][i])
-	  || (constraints[PARAMCLASSC][j].op == GE
-	      && range->param[constraints[PARAMCLASSC][j].c1 -
-			      1][constraints[PARAMCLASSC][j].a1 -
-				 DD][constraints[PARAMCLASSC][j].p1 -
-				     1][i] >=
-	      range->param[constraints[PARAMCLASSC][j].c2 -
-			   1][constraints[PARAMCLASSC][j].a2 -
-			      DD][constraints[PARAMCLASSC][j].p2 - 1][i])) {
-	/* Satisfied; skip other disjuncts. */
-#if FALSE
-	fprintf (stderr, "satisfied\n");
-#endif
-	while (constraints[PARAMCLASSC][j].alt == TRUE)
-	  j++;
-      } else if (constraints[PARAMCLASSC][j].alt == FALSE) {
-#if FALSE
-	fprintf (stderr, "fail\n");
-#endif
-	return (FALSE);
-      }
-    }
-    j++;
-  }
-  return (TRUE);
-}
-
-/**********************************************************************
- * Return TRUE if the ith threshold satisfy all inter-liability class
- * threshold constraints, else FALSE. The general idea is to scan
- * through each constraint, exiting whenever you encounter an
- * unsatisfied one (that does not have a disjunct). If there is a
- * disjunct, then step through those until you find one that satisfies
- * the constraint; if you get to the end of the line without
- * satisfying the disjunct, you fail.
- *
- * This is somewhat ugly: while it does reduce the number of overall
- * legal combinations, some extra LODs will still be written to disk
- * in the case that a pedigree does not contain an individual from
- * each liability class. This case will have to be detected and dealt
- * with dynamically?
- *
- * Note: there is no corresponding checkThreshold () function, because
- * the only possible constraints you can impose on trait thresholds
- * are inter liability class constraints.
- *
- * Note: We should also be performing "external" (that is, implicit
- * constraints) validation here, since we want these thresholds to be
- * within the min and max values of the mean for a given class.
- **********************************************************************/
-int
-checkClassThreshold (ModelRange * range, int i)
-{
-  int j = 0;
-
-#if FALSE
-  char types[27] = DIRECTIVES;
-#endif
-
-  /* Scan through each constraint: inter-class constraints are on
-   * penetrances or trait thresholds, not, e.g., gene frequencies or
-   * thetas. */
-  while (j < constcnt[CLASSC]) {
-    if (constraints[CLASSC][j].a1 != TT || constraints[CLASSC][j].a2 != TT) {
-      /* Skip non threshold constraints. */
-      j++;
-      continue;
-    } else if ((constraints[CLASSC][j].op == EQ &&
-		range->tthresh[constraints[CLASSC][j].c1 - 1][i] ==
-		range->tthresh[constraints[CLASSC][j].c2 - 1][i]) ||
-	       (constraints[CLASSC][j].op == NE &&
-		range->tthresh[constraints[CLASSC][j].c1 - 1][i] !=
-		range->tthresh[constraints[CLASSC][j].c2 - 1][i]) ||
-	       (constraints[CLASSC][j].op == GT &&
-		range->tthresh[constraints[CLASSC][j].c1 - 1][i] >
-		range->tthresh[constraints[CLASSC][j].c2 - 1][i]) ||
-	       (constraints[CLASSC][j].op == GE &&
-		range->tthresh[constraints[CLASSC][j].c1 - 1][i] >=
-		range->tthresh[constraints[CLASSC][j].c2 - 1][i])) {
-      /* Satisfied; skip other disjuncts. */
-      while (constraints[CLASSC][j].alt == TRUE)
-	j++;
-    } else if (constraints[CLASSC][j].alt == FALSE) {
-#if FALSE
-      fprintf (stderr, "!%c%c %d %s %c%c %d %s => %g %s %g\n",
-	       types[(constraints[CLASSC][j].a1) * 2],
-	       types[(constraints[CLASSC][j].a1) * 2 + 1],
-	       constraints[CLASSC][i].c1,
-	       ((constraints[CLASSC][j].op ==
-		 EQ) ? "==" : (constraints[CLASSC][j].op ==
-			       NE) ? "!=" : (constraints[CLASSC][j].op ==
-					     GE) ? ">=" : ">"),
-	       types[(constraints[CLASSC][j].a2) * 2],
-	       types[(constraints[CLASSC][j].a2) * 2 + 1],
-	       constraints[CLASSC][i].c2,
-	       (constraints[CLASSC][j].alt == TRUE) ? "*" : "",
-	       ((constraints[CLASSC][j].type !=
-		 TT) ? (range->penet[constraints[CLASSC][j].c1 -
-				     1][constraints[CLASSC][j].a1 -
-					DD][i]) : (range->
-						   tthresh[constraints
-							   [CLASSC][j].
-							   a1][i])) ((constraints[CLASSC][j].op == EQ) ? "==" : (constraints[CLASSC][j].op == NE) ? "!=" : (constraints[CLASSC][j].op == GE) ? ">=" : ">"), ((constraints[CLASSC][j].type != TT) ? (range->penet[constraints[CLASSC][j].c2 - 1][constraints[CLASSC][j].a2 - DD][i]) : (range->tthresh[constraints[CLASSC][j].a2][i])));
-#endif
-      return (FALSE);
-    }
-    j++;
-  }
-  return (TRUE);
-}
-
-/**********************************************************************
- * Sort the model values so that we can apply constraints more
- * easily. Note: sortRange() is only applied prior to class expansion,
- * so we needn't worry, ever, about non-zero liability classes in
- * penet[][][]. Similarly, we needn't worry about liability classes or
- * allele counts in param[][][].
- *
- * Note that range->tloc is handled differently, because it may be
- * called back (in the event of a TM parameter) and so sorting and
- * uniquifying must be done on the fly for this array only.
- **********************************************************************/
-void
-sortRange (ModelRange * range)
-{
-  int i;
-
-  quicksort (range->gfreq, 0, range->ngfreq);
-  if (range->penet[0])
-    for (i = 0; i < NPENET (range->nalleles); i++)
-      quicksort (range->penet[0][i], 0, penetcnt[i]);
-  if (range->param)
-    for (i = 0; i < range->npardim; i++)
-      quicksort (range->param[0][0][i], 0, paramcnt[i]);
-  if (range->theta)
-    for (i = 0; i < range->ngender; i++)
-      quicksort (range->theta[i], 0, range->thetacnt[i]);
-  /* if (range->tloc)
-     quicksort (range->tloc, 0, range->ntloc); */
-  if (range->tthresh)
-    quicksort (range->tthresh[0], 0, range->ntthresh);
-  if (range->alpha)
-    quicksort (range->alpha, 0, range->nalpha);
-  if (range->afreq)
-    quicksort (range->afreq, 0, range->nafreq);
-  if (range->dprime)
-    quicksort (range->dprime, 0, range->ndprime);
-}
-
-/**********************************************************************
- * Quicksort routines, used to sort values (both doubles and floats)
- * in the model specification.
- **********************************************************************/
-#define RANDINT(n) (random() % (n))
-
-/* Swap two doubles in array[] */
-inline void
-swap (double *array, int i, int j)
-{
-  double temp = array[i];
-
-  array[i] = array[j];
-  array[j] = temp;
-}
-
-/* Recursive quicksort for array of doubles. */
-void
-quicksort (double *array, int lo, int hi)
-{
-  int mid, i;
-  double pivot;
-
-  if (lo >= hi - 1)
-    return;
-
-  i = RANDINT ((hi - lo)) + lo;
-  swap (array, lo, i);
-  pivot = array[lo];
-
-  mid = lo;
-  for (i = lo + 1; i < hi; i++)
-    if (array[i] < pivot) {
-      mid++;
-      swap (array, mid, i);
-    }
-  swap (array, lo, mid);
-
-  quicksort (array, lo, mid);
-  quicksort (array, mid + 1, hi);
-}
-
-/**********************************************************************
- * Remove duplicate values from the model for efficiency's sake.  Both
- * double and float versions are given.
- **********************************************************************/
-
-/* Remove exact duplicates in an array. */
-inline int
-uniquify (double *array, int len)
-{
-  int i = 0, j;
-
-  while (i < len - 1) {
-    if (array[i] == array[i + 1]) {
-      for (j = i + 1; j < len - 1; j++)
-	array[j] = array[j + 1];
-      len--;
-    } else
-      i++;
-  }
-  return (len);
-}
-
-/* Uniquify the model's arrays. This is only done prior to expanding
- * the ranges, so we needn't worry, ever, about non-zero liability
- * classes in penet[][][]. Similarly, we needn't worry about liability
- * classes or allele counts in param[][][]. 
- *
- * Note that range->tloc is handled differently, because it may be
- * called back (in the event of a TM parameter) and so sorting and
- * uniquifying must be done on the fly for this array only. */
-void
-uniqRange (ModelRange * range)
-{
-  int i;
-
-  range->ngfreq = uniquify (range->gfreq, range->ngfreq);
-  for (i = 0; i < NPENET (range->nalleles); i++)
-    penetcnt[i] = uniquify (range->penet[0][i], penetcnt[i]);
-  if (range->param)
-    for (i = 0; i < range->npardim; i++)
-      paramcnt[i] = uniquify (range->param[0][0][i], paramcnt[i]);
-  if (range->theta)
-    for (i = 0; i < range->ngender; i++)
-      range->thetacnt[i] = uniquify (range->theta[i], range->thetacnt[i]);
-  /* if (range->tloc)
-     range->ntloc = uniquify (range->tloc, range->ntloc); */
-  if (range->tthresh)
-    range->ntthresh = uniquify (range->tthresh[0], range->ntthresh);
-  if (range->alpha)
-    range->nalpha = uniquify (range->alpha, range->nalpha);
-}
-
-/**********************************************************************
- * Fully expand the penetrance (by DD, Dd, dd) and theta values (by
- * Tm, Tf) in the model while honoring all constraints. Using the
- * fully expanded version allows us to accurately determine the size
- * of the space a priori, rather than using the constraints to censor
- * values as we go. The expansion helps us avoid allocating excess
- * space on disk.
- *
- * If you are doing QT or CT, you'll need to expand the parameters as
- * well. Expanded parameters will also increase the size of the
- * penetrance arrays.
- *
- * Note that liability class constraints are handled later.  So you
- * won't need to expand trait threshold values for CT, since these
- * only "factor" by liability class.
- **********************************************************************/
-void
-expandRange (ModelRange * range, ModelType * type)
-{
-  int i, j, k, l, m;
-  double ****tmp4;
-  double ***tmp3;
-  double **tmp2;
-
-  /* Start with thetas, but only if DT. QT/CT use trait loci, which
-   * also may need expansion, but we'll need to wait until later (when
-   * the markers are all read in) to do so.
-   *
-   * Since thetas are not subject to liability class constraints, we
-   * can finalize the thetas here by fully "factoring" male and female
-   * thetas, if available, recording the number of combinations in
-   * range->ntheta, and freeing thetacnt and thetamax.
-   *
-   * Keep the current theta array values, and create a new theta
-   * array. We'll allocate enough space for all combinations, even
-   * though, in the end, constraint application may reduce this
-   * number. The actualy number of combinations will be stored in
-   * range->nthetas. */
-  if ((tmp2 = range->theta)) {
-    range->theta = malloc (range->ngender * sizeof (double *));
-    if (modelOptions.mapFlag == SA) {
-      /* Easy case is that you have only one gender anyway. Since
-       * there is only one dimension, there can be no constraints
-       * worth enforcing. */
-      range->theta[0] = tmp2[0];
-      range->theta[1] = tmp2[1];
-      range->ntheta = range->thetacnt[SEXAV];
-    } else {
-      /* sex specific */
-      /* If you have 2 genders, you need to factor their respective
-       * values while checking constraints. */
-      for (i = 0; i < range->ngender; i++)
-	range->theta[i] =
-	  malloc ((range->thetacnt[SEXML] * range->thetacnt[SEXFM]) *
-		  sizeof (double));
-      range->ntheta = 0;
-      for (i = 0; i < range->thetacnt[SEXML]; i++)
-	for (j = 0; j < range->thetacnt[SEXFM]; j++) {
-	  range->theta[SEXML][range->ntheta] = tmp2[SEXML][i];
-	  range->theta[SEXFM][range->ntheta] = tmp2[SEXFM][j];
-
-	  if (checkThetas (range, range->ntheta))
-	    range->ntheta++;
-	}
-      /* Free old copies of range->theta[i]. */
-      for (i = 0; i < range->ngender; i++)
-	free (tmp2[i]);
-    }
-    /* Free old copy of range->theta. */
-    free (tmp2);
-  }
-
-  /* Next, we expand the penetrances. The goal here is just to get the
-   * combinations right, while ignoring the liability classes. It's a
-   * stickier problem than the thetas, mostly because these values
-   * will have to be expanded yet again when dealing with liability
-   * classes, but also because the code must work for multiallelic
-   * diseases (where there are more than 3 allele combinations, and,
-   * therefore, more than 3 rows in the penetrance array).
-   *
-   * Stash pointers to penet, penet[0], and penetcnt away
-   * temporarily. We'll need these to free things appropriately. */
-  tmp3 = range->penet;
-  tmp2 = range->penet[0];
-
-  /* Set up the penetrance array, ignoring the first dimension for
-   * now. We know there will be PROD_i(penetcnt[i])^#allcombo values
-   * in the expanded array, unless the constraints rule some out. 
-   *
-   * We'll keep track of the resulting number of combinations in
-   * range->npenet. */
-  range->npenet = 0;
-  i = 1;
-  for (j = 0; j < NPENET (range->nalleles); j++)
-    i = i * penetcnt[j];
-  range->penet = malloc (sizeof (double **));
-  range->penet[0] = malloc (NPENET (range->nalleles) * sizeof (double *));
-  for (j = 0; j < NPENET (range->nalleles); j++)
-    range->penet[0][j] = malloc (i * sizeof (double));
-
-  /* OK, now populate the array. */
-  for (k = 0; k < i; k++) {
-    l = 1;
-    for (m = 0; m < NPENET (range->nalleles); m++) {
-      range->penet[0][m][range->npenet] =
-	tmp2[m][((int) (k / l)) % penetcnt[m]];
-      l = l * penetcnt[m];
-    }
-    /* Check the constraints. */
-    if (checkPenets (range, range->npenet))
-      range->npenet++;
-  }
-
-  /* OK, we're done with penetcnt and penetmax, since we're using
-   * range->npenet to keep track of the number of combinations. We
-   * can also ditch the stashed values for penet[][][]. */
-  for (i = 0; i < NPENET (range->nalleles); i++)
-    free (tmp2[i]);
-  free (tmp2);
-  free (tmp3);
-  free (penetmax);
-  free (penetcnt);
-
-  /* Finally, expand the parameters for QT or CT. Recall param[][][][]
-   * at this point only has 2 real indexes: dimension and the number
-   * of values. The goal here is to factor these into 3 real indexes,
-   * including allele combinations, while respecting the
-   * constraints. We'll worry about liability classes later.
-   *
-   * Note that the resulting param[0][][][] array will be of uniform
-   * dimension, that being ((#value)^#dim)^#allcombos). */
-  if (range->param) {
-    /* Stash the original values somewhere, to be freed
-     * appropriately. */
-    tmp4 = range->param;
-    tmp3 = range->param[0];
-    tmp2 = range->param[0][0];
-
-    /* Since the resulting parameter array will be uniform, we can
-     * allocate, in advance, the appropriate amount of memory. This
-     * will be large! Hopefully, the constraints will limit how many
-     * elements are actually in use, which will be stored in
-     * range->nparam. */
-
-    /* Let i be the max number of entries you might see for each
-     * dimension, then raise it to the power of the dimensions. */
-    i = pow (paramcnt[0], NPENET (range->nalleles));
-    i = pow (i, range->npardim);
-
-    /* Since the parameter vector is to be replicated across all of
-     * the dimensions, they will all initially have the same number
-     * of parameter values, although this will surely change as the
-     * constraints are applied. Go ahead and allocate what you might
-     * need. */
-    range->param = malloc (sizeof (double ***));
-    range->param[0] = malloc (NPENET (range->nalleles) * sizeof (double **));
-    for (j = 0; j < NPENET (range->nalleles); j++) {
-      range->param[0][j] = malloc (range->npardim * sizeof (double *));
-      /* Corrected by Yungui: used to read:
-       *  for (k = 0; k < paramcnt[0]; k++) */
-      for (k = 0; k < range->npardim; k++)
-	range->param[0][j][k] = malloc (i * sizeof (double));
-    }
-
-    /* Time to populate the range->param array. Recall the first
-     * index will always be 0 since we're not yet dealing with
-     * liability classes. We'll use range->nparam to store the
-     * number of valid combinations. */
-    range->nparam = 0;
-    for (j = 0; j < i; j++) {
-      for (k = 0; k < NPENET (range->nalleles); k++)
-	for (l = 0; l < range->npardim; l++)
-	  range->param[0][k][l][range->nparam] = tmp2[l][((int)
-							  (j /
-							   (pow
-							    (paramcnt[l],
-							     (l +
-							      k *
-							      range->
-							      npardim))))) %
-							 paramcnt[l]];
-      /* Check the constraints. */
-      if (checkParams (range, range->nparam))
-	range->nparam++;
-    }
-
-    /* Done. Free copies of original parameters you'd stashed away,
-     * including the paramcnt and parammax arrays; you won't be
-     * needing them again, since the (uniform) number of entries
-     * stored is given by range->nparam. */
-    free (tmp2);
-    free (tmp3);
-    free (tmp4);
-    free (paramcnt);
-    free (parammax);
-  }
-}
-
-/**********************************************************************
- * Fully expand the threshold, penetrance and parameter values by
- * liability class while honoring any inter-class constraints. This
- * only gets called if we are using liability classes (i.e.,
- * modelRange.nlclass is greater than 1).
- **********************************************************************/
-void
-expandClass (ModelRange * range, ModelType * type)
-{
-  int i, j, k, l, m, n, o;
-  double *tmp1;
-  double **tmp2;
-  double ***tmp3;
-  double ****tmp4;
-
-  /* Threshold expansion by liability class. */
-  if (range->tthresh) {
-    /* Stash pointers so you can free properly. Recall
-     * range->tthresh[0] is the only dimension originally allocated;
-     * we'll use the values stored there during expansion, producing
-     * a new multidimensional range->tthresh array. */
-    tmp2 = range->tthresh;
-    tmp1 = range->tthresh[0];
-    i = range->ntthresh;
-
-    /* Barring constraints, how many values might you have? */
-    j = pow (i, range->nlclass);
-
-    /* Allocate a new tthresh array structure. */
-    range->tthresh = malloc (range->nlclass * sizeof (double *));
-    for (k = 0; k < range->nlclass; k++)
-      range->tthresh[k] = malloc (j * sizeof (double));
-
-    /* OK, now populate the array. */
-    range->ntthresh = 0;
-    for (k = 0; k < j; k++) {
-      l = 1;
-      for (m = 0; m < range->nlclass; m++) {
-	range->tthresh[m][range->ntthresh] = tmp1[((int) (k / l)) % i];
-	l = l * i;
-      }
-      /* Check the class constraints. */
-      if (checkClassThreshold (range, range->ntthresh))
-	range->ntthresh++;
-    }
-    /* Done. Free up the old copy of the array. */
-    free (tmp1);
-    free (tmp2);
-  }
-
-  /* Penetrance expansion by liability class. Here, we want to factor
-   * the existing penetrances over multiple liability classes.
-   *
-   * Stash pointers to the current penet array and its size. Recall
-   * range->penet[0] is the only dimension originally allocated; we'll
-   * use the values stored there during expansion, producing a new
-   * multidimensional range->penet array. Be sure to free everything
-   * properly when done. */
-  tmp3 = range->penet;
-  tmp2 = range->penet[0];
-  i = range->npenet;
-
-  /* Barring constraints, how many values might you have? */
-  j = pow (range->npenet, range->nlclass);
-
-  /* Allocate a new penet array structure. */
-  range->penet = malloc (range->nlclass * sizeof (double **));
-  for (k = 0; k < range->nlclass; k++) {
-    range->penet[k] = malloc (NPENET (range->nalleles) * sizeof (double *));
-    for (l = 0; l < NPENET (range->nalleles); l++)
-      range->penet[k][l] = malloc (j * sizeof (double));
-  }
-
-  /* OK, now populate the array. */
-  range->npenet = 0;
-  for (k = 0; k < j; k++) {
-    l = 1;
-    for (m = 0; m < range->nlclass; m++) {
-      for (n = 0; n < NPENET (range->nalleles); n++)
-	range->penet[m][n][range->npenet] = tmp2[n][(((int) (k / l)) % i)];
-      l = l * i;
-    }
-    /* Check the class constraints. */
-    if (checkClassPenets (range, range->npenet))
-      range->npenet++;
-  }
-  /* Done. Free up the old copy of the range->penet array. */
-  for (i = 0; i < NPENET (range->nalleles); i++)
-    free (tmp2[i]);
-  free (tmp2);
-  free (tmp3);
-
-  /* Ready to work on the param array, if necessary.
-   *
-   * Again, stash a copy of the current param array and its size. */
-  if (range->param) {
-    tmp4 = range->param;
-    tmp3 = range->param[0];
-    i = range->nparam;
-
-    /* Barring constraints, how many values might you have? */
-    j = pow (range->nparam, range->nlclass);
-
-    /* Allocate a new param array structure. */
-    range->param = malloc (range->nlclass * sizeof (double ***));
-    for (k = 0; k < range->nlclass; k++) {
-      range->param[k] =
-	malloc (NPENET (range->nalleles) * sizeof (double **));
-      for (l = 0; l < NPENET (range->nalleles); l++) {
-	range->param[k][l] = malloc (range->npardim * sizeof (double *));
-	for (m = 0; m < range->npardim; m++)
-	  range->param[k][l][m] = malloc (j * sizeof (double));
-      }
-    }
-
-    /* OK, now populate the array. */
-    range->nparam = 0;
-    for (k = 0; k < j; k++) {
-      l = 1;
-      for (m = 0; m < range->nlclass; m++) {
-	for (n = 0; n < NPENET (range->nalleles); n++)
-	  for (o = 0; o < range->npardim; o++)
-	    range->param[m][n][o][range->nparam] =
-	      tmp3[n][o][((int) (k / l)) % i];
-	l = l * i;
-      }
-
-      /* Check the class constraints. */
-      if (checkClassParams (range, range->nparam))
-	range->nparam++;
-    }
-
-    /* Done. Free up the old copy of the array. */
-    for (i = 0; i < NPENET (range->nalleles); i++) {
-      for (j = 0; j < range->npardim; j++)
-	free (tmp3[i][j]);
-      free (tmp3[i]);
-    }
-    free (tmp4);
-
-#if FALSE
-    /* This block "factors" the QT parameters (stdev) with the
-     * penetrance array (mean). There is little reason to do this,
-     * because there are no constraints imposed at this factoring
-     * step, so you may as well just go ahead and loop over the
-     * parameters and penetrances together. Also, this code won't
-     * work for QT model distributions that have more than one
-     * parameter. Probably should just delete it.
-     *
-     * If you do want it, though, you'll also need to uncomment
-     * variable tmp3 defined above.
-     *
-     * OK, you're almost done. Just need to factor the parameter and
-     * penetrance arrays together. Since there can be no constraints
-     * enforced here, these just factor together brute force. 
-     *
-     * There will be range->npenet * range->nparam combinations. */
-    tmp2 = range->penet;
-    tmp3 = range->param;
-    i = range->npenet;
-
-    /* Barring constraints, how many values might you have? */
-    j = range->npenet * range->nparam;
-
-    /* Allocate new penet and param array structures. */
-    range->penet = malloc (range->nlclass * sizeof (double **));
-    for (k = 0; k < range->nlclass; k++) {
-      range->penet[k] = malloc (NPENET (range->nalleles) * sizeof (double *));
-      for (l = 0; l < NPENET (range->nalleles); l++)
-	range->penet[k][l] = malloc (j * sizeof (double));
-    }
-    range->param = malloc (range->nlclass * sizeof (double ***));
-    for (k = 0; k < range->nlclass; k++) {
-      range->param[k] =
-	malloc (NPENET (range->nalleles) * sizeof (double **));
-      for (l = 0; l < NPENET (range->nalleles); l++) {
-	range->param[k][l] = malloc (range->npardim * sizeof (double *));
-	for (m = 0; m < range->npardim; m++)
-	  range->param[k][l][m] = malloc (j * sizeof (double));
-      }
-    }
-
-    /* Populate the arrays. */
-    range->npenet = 0;
-    for (k = 0; k < j; k++) {
-      l = 1;
-      for (m = 0; m < range->nlclass; m++)
-	for (n = 0; n < NPENET (range->nalleles); n++) {
-	  range->penet[m][n][range->npenet] =
-	    tmp2[m][n][(((int) (k / l)) % i)];
-	  for (o = 0; o < range->npardim; o++)
-	    range->param[m][n][o][range->npenet] =
-	      tmp3[m][n][o][(((int) (k / l)) % i)];
-	}
-      range->npenet++;
-    }
-    /* Make sure nparam returns the same number. */
-    range->nparam = range->npenet;
-#if FALSE
-    /* Free up the old copies. */
-    for (i = 0; i < nlclass; i++) {
-      for (j = 0; j < NPENET (range->nalleles); j++) {
-	free (tmp2[i][j]);
-	for (k = 0; k < range->npardim; k++)
-	  free (tmp3[i][j][k]);
-	free (tmp3[i][j]);
-      }
-      free (tmp2[i]);
-      free (tmp3[i]);
-    }
-    free (tmp2);
-    free (tmp3);
-#endif
-#endif
-  }
-}
-
-/**********************************************************************
- * Expand the dprime array into the appropriate lambda array. Unlike
- * the other range expansion functions, this function is not called
- * upfront, but rather as needed when operating under linkage
- * disequilibrium. The two extra parameters are the number of alleles
- * for the two loci under consideration. 
- *
- * Since n and m may be repeated over the course of an analysis, we
- * cache the lambda arrays produced from the dprime values for each
- * value of n and m in modelRange lambdas, an array of structures of
- * type lambdaCell. That way, we can retrieve the appropriate array if
- * its already been generated, otherwise, we build the array from the
- * dprimes, cache it, and return a pointer to it.
- *
- * TODO: since the array is symmetric regardless of n and m, we could
- * save some storage by reconfiguring the existing array if the mxn
- * version (but not the nxm version) already exists. This shouldn't
- * happen that often, as long as we assume that the first variable
- * corresponds to the disease or trait and the second corresponds to
- * the marker; in this situation, since we are usually not dealing
- * with multiallelic diseases, m=2 and n>=2.
- **********************************************************************/
-LambdaCell *
-findLambdas (ModelRange * range, int m, int n)
-{
-  int i = 0, j, k, l = pow (range->ndprime, ((m - 1) * (n - 1)));
-
-  /* First, see if the array of lambdas already exists. */
-  while (i < range->nlambdas) {
-    if (range->lambdas[i].m == m && range->lambdas[i].n == n)
-      /* return (range->lambdas[i].lambda); */
-      return (&range->lambdas[i]);
-    i++;
-  }
-
-  /* OK, no matching cached array found. Check to make sure there's
-   * room for a new one. */
-  if (range->nlambdas == range->maxnlambdas) {
-    range->lambdas =
-      realloc (range->lambdas,
-	       (range->maxnlambdas + CHUNKSIZE) * sizeof (LambdaCell));
-    range->maxnlambdas = range->maxnlambdas + CHUNKSIZE;
-  }
-  /* Create the new entry. */
-  range->lambdas[range->nlambdas].m = m;
-  range->lambdas[range->nlambdas].n = n;
-  range->lambdas[range->nlambdas].ndprime = l;
-  range->lambdas[range->nlambdas].lambda =
-    (double ***) malloc (l * sizeof (double **));
-  range->lambdas[range->nlambdas].impossibleFlag =
-    (int *) malloc (l * sizeof (int));
-  memset (range->lambdas[range->nlambdas].impossibleFlag, 0,
-	  l * sizeof (int));
-  range->lambdas[range->nlambdas].haploFreq =
-    (double ***) malloc (l * sizeof (double **));
-  range->lambdas[range->nlambdas].DValue =
-    (double ***) malloc (l * sizeof (double **));
-  for (i = 0; i < l; i++) {
-    range->lambdas[range->nlambdas].lambda[i] =
-      (double **) malloc ((m - 1) * sizeof (double *));
-    for (j = 0; j < (m - 1); j++)
-      range->lambdas[range->nlambdas].lambda[i][j] =
-	(double *) malloc ((n - 1) * sizeof (double));
-
-    range->lambdas[range->nlambdas].haploFreq[i] =
-      (double **) malloc (m * sizeof (double *));
-    range->lambdas[range->nlambdas].DValue[i] =
-      (double **) malloc (m * sizeof (double *));
-    for (j = 0; j < m; j++) {
-      range->lambdas[range->nlambdas].haploFreq[i][j] =
-	(double *) malloc (n * sizeof (double));
-      range->lambdas[range->nlambdas].DValue[i][j] =
-	(double *) malloc (n * sizeof (double));
-    }
-
-  }
-  range->nlambdas++;
-
-  /* Now populate the values in the appropriate array. */
-  for (i = 0; i < l; i++)
-    for (j = 0; j < (m - 1); j++)
-      for (k = 0; k < (n - 1); k++)
-	range->lambdas[range->nlambdas - 1].lambda[i][j][k] =
-	  range->dprime[((int) (i / pow (range->ndprime, k))) %
-			range->ndprime];
-
-  /* Return a pointer to the appropriate 3 dimensional lambda array. */
-  /* return (range->lambdas[range->nlambdas-1].lambda); */
-  return (&range->lambdas[range->nlambdas - 1]);
-}
-
-/**********************************************************************
- * Dump the model and constraints for debugging purposes.  The level
- * argument indicates if we are pre-expansion (level = 0),
- * post-expansion (level = 1), or post-class-expansion (level =
- * 2). This is ugly, but is only used for debugging so it needn't be
- * excessively pretty!
- **********************************************************************/
-void
-showRange (ModelRange * range, ModelType * type, int level)
-{
-  int i, j, k, l;
-
-  printf
-    ("======================================================================\n");
-  printf ("LEVEL %d MODEL\n", level);
-  printf
-    ("======================================================================\n");
-  printf ("%d GF=", range->ngfreq);
-  for (i = 0; i < range->ngfreq; i++)
-    printf ("%3.2g ", range->gfreq[i]);
-
-  if (type->trait == DT) {
-    if (level > 0)
-      printf ("\n%d Thetas", range->ntheta);
-    for (i = 0; i < range->ngender; i++) {
-      if (level == 0)
-	printf ("\n%d Theta[%d]=",
-		(level == 0 ? range->thetacnt[i] : range->ntheta), i);
-      else
-	printf ("\n  Theta[%d]=", i);
-      for (j = 0; j < (level == 0 ? range->thetacnt[i] : range->ntheta); j++)
-	printf ("%3.2g ", range->theta[i][j]);
-    }
+  int numvals;
+  double *vals=NULL;
+  
+  if (numtoks < 2)
+    bail ("missing arguments to directive '%s'\n", toks[0]);
+
+  if (strcasecmp (toks[0], QT_STR) == 0) {
+    modelType.trait = QT;
+  } else if (strcasecmp (toks[0], QTT_STR) == 0) {
+    modelType.trait = CT;
   } else {
-    if (range->tloc) {
-      printf ("\n%d Trait Loci", range->ntloc);
-      printf ("\n  Trait Loci=");
-      for (i = 0; i < range->ntloc; i++)
-	printf ("%3.2g ", range->tloc[i]);
-    }
-    if (range->tthresh) {
-      printf ("\n%d Trait Thresholds", range->ntthresh);
-      for (i = 0; i < (level == 2 ? range->nlclass : 1); i++) {
-	printf ("\n  Trait Threshold[%d]=", i);
-	for (j = 0; j < range->ntthresh; j++)
-	  printf ("%3.2g ", range->tthresh[i][j]);
-      }
-    }
+    bail ("set_quantitative called with bad directive '%s'\n", toks[0]);
   }
 
-  printf ("\n%d Penetrances", (level == 0 ? penetcnt[0] : range->npenet));
-  for (i = 0; i < (level == 2 ? range->nlclass : 1); i++)
-    for (j = 0; j < NPENET (range->nalleles); j++) {
-      printf ("\n  Penet[%d][%d]=", i, j);
-      for (k = 0; k < (level == 0 ? penetcnt[j] : range->npenet); k++)
-	printf ("%3.2g ", range->penet[i][j][k]);
-    }
-
-  if (range->param) {
-    printf ("\n%d Parameters", ((level == 2 ? range->nlclass : 1) *
-				(level == 0 ? paramcnt[0] : range->nparam)));
-    /* for (i = 0; i < (level==2?range->nlclass:1); i++) */
-    for (i = 0; i < (level == 2 ? range->nlclass : 1); i++)
-      for (j = 0; j < (level == 0 ? 1 : NPENET (range->nalleles)); j++)
-	for (k = 0; k < (level > 0 ? range->npardim : 1); k++) {
-	  printf ("\n  Param[%d][%d][%d]=", i, j, k);
-	  for (l = 0; l < (level == 0 ? paramcnt[k] : range->nparam); l++)
-	    printf ("%3.2g ", range->param[i][j][k][l]);
-	}
-  }
-
-  if (range->afreq) {
-    printf ("\n%d AF=", range->nafreq);
-    for (i = 0; i < range->nafreq; i++)
-      printf ("%3.2g ", range->afreq[i]);
-  }
-
-  if (range->dprime) {
-    printf ("\n%d DPrime", range->ndprime);
-    printf ("\n  DPrime=");
-    for (i = 0; i < range->ndprime; i++)
-      printf ("%3.2g ", range->dprime[i]);
-#if FALSE
-    /* Just for kicks, show a few off. Recall findLambdas() is
-     * called on the fly, so usually these would not be precomputed
-     * at all. */
-    findLambdas (range, 2, 4);
-    findLambdas (range, 2, 3);
-    findLambdas (range, 2, 4);
-#endif
-  }
-  if (range->alpha) {
-    printf ("\n%d Alphas", range->nalpha);
-    printf ("\n  Alpha=");
-    for (i = 0; i < range->nalpha; i++)
-      printf ("%3.2g ", range->alpha[i]);
-  }
-  printf ("\n");
+  if (strcasecmp (toks[1], "normal") == 0) {
+    if ((numtoks < 3) || ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) != 2))
+      bail ("illegal arguments to directive '%s'\n", toks[0]);
+    modelType.distrib = QT_FUNCTION_T;
+    /* I think this is degrees of freedom; anyway, YH sez: fix it at 30 */
+    modelType.constants = realloc (modelType.constants, 1 * sizeof (int));
+    modelType.constants[0] = 30;
+    modelType.mean = vals[0];
+    modelType.sd = vals[1];
+    modelRange.npardim = 1;
+    free (vals);
+  } else if (strcasecmp (toks[1], "chisq") == 0) {
+    if (numtoks > 2) 
+      bail ("illegal arguments to directive '%s'\n", toks[0]);
+    modelType.distrib = QT_FUNCTION_CHI_SQUARE;
+    modelType.mean = 0;
+    modelType.sd = 1;
+    /* A non-empty range for this parameter triggers a loop elsewhere */
+    modelRange.npardim = 1;
+    addParameter (&modelRange, 0, 1.0);
+  } else
+    bail ("illegal arguments to directive '%s'\n", toks[0]);
+  return (0);
 }
 
-void
-showConstraints ()
+
+int set_qt_mean (char **toks, int numtoks, void *unused)
 {
-  int i, j;
-  char types[27] = DIRECTIVES;
+  int numvals, va=0, geno;
+  double *vals;
 
-  printf
-    ("======================================================================\n");
-  printf ("CONSTRAINTS:\n");
-  printf
-    ("======================================================================\n");
+  if (numtoks < 3)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if ((geno = lookup_modelparam (toks[1])) == -1)
+    bail ("illegal model parameter argument to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addPenetrance (&modelRange, geno-PEN_DD, vals[va]);
+  observed.mean = 1;
+  free (vals);
+  return (0);
+}
 
-  for (i = 0; i < 4; i++) {
-    if (constcnt[i] == 0)
-      continue;
-    printf ("%s constraints:\n",
-	    ((i == 3) ? "PCC" : ((i == 2) ? "PC" : ((i == 1) ? "CC" : "C"))));
-    for (j = 0; j < constcnt[i]; j++) {
-      if (i == SIMPLE)
-	printf (" %c%c %s %c%c %s\n",
-		types[constraints[i][j].a1 * 2],
-		types[constraints[i][j].a1 * 2 + 1],
-		((constraints[i][j].op ==
-		  EQ) ? "==" : (constraints[i][j].op ==
-				NE) ? "!=" : (constraints[i][j].op ==
-					      GE) ? ">=" : ">"),
-		types[constraints[i][j].a2 * 2],
-		types[constraints[i][j].a2 * 2 + 1],
-		(constraints[i][j].alt == TRUE) ? "|" : "");
-      else if (i == CLASSC)
-	printf (" %c%c %d %s %c%c %d %s\n",
-		types[constraints[i][j].a1 * 2],
-		types[constraints[i][j].a1 * 2 + 1],
-		constraints[i][j].c1,
-		((constraints[i][j].op ==
-		  EQ) ? "==" : (constraints[i][j].op ==
-				NE) ? "!=" : (constraints[i][j].op ==
-					      GE) ? ">=" : ">"),
-		types[constraints[i][j].a2 * 2],
-		types[constraints[i][j].a2 * 2 + 1], constraints[i][j].c2,
-		(constraints[i][j].alt == TRUE) ? "|" : "");
-      else if (i == PARAMC)
-	printf (" P%d %c%c %s P%d %c%c %s\n",
-		constraints[i][j].p1,
-		types[constraints[i][j].a1 * 2],
-		types[constraints[i][j].a1 * 2 + 1],
-		((constraints[i][j].op ==
-		  EQ) ? "==" : (constraints[i][j].op ==
-				NE) ? "!=" : (constraints[i][j].op ==
-					      GE) ? ">=" : ">"),
-		constraints[i][j].p2, types[constraints[i][j].a2 * 2],
-		types[constraints[i][j].a2 * 2 + 1],
-		(constraints[i][j].alt == TRUE) ? "|" : "");
-      else if (i == PARAMCLASSC)
-	printf (" P%d %c%c %d %s P%d %c%c %d %s\n",
-		constraints[i][j].p1,
-		types[constraints[i][j].a1 * 2],
-		types[constraints[i][j].a1 * 2 + 1],
-		constraints[i][j].c1,
-		((constraints[i][j].op ==
-		  EQ) ? "==" : (constraints[i][j].op ==
-				NE) ? "!=" : (constraints[i][j].op ==
-					      GE) ? ">=" : ">"),
-		constraints[i][j].p2, types[constraints[i][j].a2 * 2],
-		types[constraints[i][j].a2 * 2 + 1], constraints[i][j].c2,
-		(constraints[i][j].alt == TRUE) ? "|" : "");
+
+int set_qt_standarddev (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0;
+  double *vals;
+
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addParameter (&modelRange, 0, vals[va]);
+  observed.standarddev = 1;
+  free (vals);
+  return (0);
+}
+
+
+int set_qt_degfreedom (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0, geno;
+  double *vals;
+
+  if (numtoks < 3)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if ((geno = lookup_modelparam (toks[1])) == -1)
+    bail ("illegal model parameter argument to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addPenetrance (&modelRange, geno-PEN_DD, vals[va]);
+  observed.degfreedom = 1;
+  free (vals);
+  return (0);
+}
+
+
+int set_qt_threshold (char **toks, int numtoks, void *unused)
+{
+  int numvals, va;
+  double *vals=NULL;
+
+  if (numtoks < 2)
+    bail ("missing arguments to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addTraitThreshold (&modelRange, vals[va]);
+  free (vals);
+  return (0);
+}
+
+
+int set_qt_truncation (char **toks, int numtoks, void *unused)
+{
+  int va=1;
+  double val;
+  char *ca;
+
+  if (numtoks < 2)
+    bail ("missing arguments to directive '%s'\n", toks[0]);
+  while (1) {
+    if (va + 2 > numtoks)
+      bail ("illegal arguments to directive '%s'\n", toks[0]);
+    val = strtod (toks[va+1], &ca);
+    if ((ca == NULL) || (*ca != '\0'))
+      bail ("illegal arguments to directive '%s'\n", toks[0]);
+    if (strcasecmp (toks[va], "left") == 0) {
+      modelType.minOriginal = val;
+    } else if (strcasecmp (toks[va], "right") == 0) {
+      modelType.maxOriginal = val;
+    } else {
+      bail ("illegal arguments to directive '%s'\n", toks[0]);
     }
+    if ((va += 2) >= numtoks)
+      break;
+    if (strcmp (toks[va++], ",") != 0)
+      bail ("illegal arguments to directive '%s'\n", toks[0]);
+  }
+  return (0);
+}
+
+
+int set_affectionStatus (char **toks, int numtoks, void *unused)
+{
+  int numvals;
+  double *vals=NULL;
+
+  if (numtoks < 2)
+    bail ("missing arguments to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) == 1) {
+    /* This is legal for QT analyses, just to set the 'undefined' pheno code */
+    modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = vals[0];
+  } else if (numvals == 3) {
+    /* Everything else (DT, CT) requires three pheno codes */
+    modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = vals[0];
+    modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = vals[1];
+    modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = vals[2];
+  } else
+    bail ("illegal arguments to directive '%s'\n", toks[0]);
+  
+  free (vals);
+  return (0);
+}
+
+
+int set_resultsprefix (char **toks, int numtoks, void *unused)
+{
+  int len;
+
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if (numtoks > 2)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  if ((len = strlen (toks[1])) > KMAXFILENAMELEN - 2)
+    bail ("argument to directive '%s' is too long\n", toks[0]);
+  strcpy (modelOptions.resultsprefix, toks[1]);
+  if (modelOptions.resultsprefix[len-1] != '/')
+    strcat (modelOptions.resultsprefix, "/");
+  return (0);
+}
+
+
+int set_logLevel (char **toks, int numtoks, void *filename)
+{
+  int logType=0, logLevel=0;
+
+  if (numtoks < 3)
+    bail ("missing argument(s) to directive '%s'\n", toks[0]);
+  if (numtoks > 3)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+
+  if (!strcasecmp (toks[1], "pedfile"))
+    logType = LOGPEDFILE;
+  else if (!strcasecmp (toks[1], "inputfile"))
+    logType = LOGINPUTFILE;
+  else if (!strcasecmp (toks[1], "genoelim"))
+    logType = LOGGENOELIM;
+  else if (!strcasecmp (toks[1], "parentalpair"))
+    logType = LOGPARENTALPAIR;
+  else if (!strcasecmp (toks[1], "peelgraph"))
+    logType = LOGPEELGRAPH;
+  else if (!strcasecmp (toks[1], "likelihood"))
+    logType = LOGLIKELIHOOD;
+  else if (!strcasecmp (toks[1], "setrecoding"))
+    logType = LOGSETRECODING;
+  else if (!strcasecmp (toks[1], "memory"))
+    logType = LOGMEMORY;
+  else if (!strcasecmp (toks[1], "integration"))
+    logType = LOGINTEGRATION;
+  else if (!strcasecmp (toks[1], "default"))
+    logType = LOGDEFAULT;
+  else
+    bail ("unknown log facility '%s'", toks[1]);
+  
+  if (!strcasecmp (toks[2], "fatal"))
+    logLevel = LOGFATAL;
+  else if (!strcasecmp (toks[2], "error"))
+    logLevel = LOGERROR;
+  else if (!strcasecmp (toks[2], "warning"))
+    logLevel = LOGWARNING;
+  else if (!strcasecmp (toks[2], "advise"))
+    logLevel = LOGADVISE;
+  else if (!strcasecmp (toks[2], "debug"))
+    logLevel = LOGDEBUG;
+  else
+    bail ("unknown log severity '%s'", toks[2]);
+
+  logSet (logType, logLevel);
+  return (0);
+}
+
+
+int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_h)
+{
+  int numvals=0, listsize=10, tokidx=0, va;
+  char *ca, *cb;
+  double start, end=-1, incr, val, *vals=NULL;
+  st_valuelist *vlist=NULL;
+
+  /* Sanity check */
+  if (numtoks == 0)
+    return (0);
+
+  /* Exactly one return value pointer must be non-NULL */
+  if (((vlist_h == NULL) && (vals_h == NULL)) || ((vlist_h != NULL) && (vals_h != NULL)))
+    return (-1);
+  
+  if (vlist_h != NULL) {
+    if ((vlist = malloc (sizeof (st_valuelist) * listsize)) == NULL)
+      logMsg (LOGDEFAULT, LOGFATAL, "malloc failed\n");
+  } else {
+    if ((vals = malloc (sizeof (double) * listsize)) == NULL)
+      logMsg (LOGDEFAULT, LOGFATAL, "malloc failed\n");
+  }
+
+  // printf ("starting\n");
+  while (1) {
+    if (numvals >= listsize) {
+      if (((vlist != NULL) &&
+	   ((vlist = realloc (vlist, sizeof (st_valuelist) * (listsize += 10))) == NULL)) || 
+	  ((vals = realloc (vals, sizeof (double) * (listsize += 10))) == NULL))
+	logMsg (LOGDEFAULT, LOGFATAL, "malloc failed\n");
+    }
+    
+    /* Skip the first character of the token to avoid the leading '-' of a negative number */
+    if ((cb = index (toks[tokidx]+1, '-')) == NULL) {
+      /* This should be a single value or symbol */
+      if (vlist != NULL) {
+	/* returning a list of st_valuelist */
+	if (strcasecmp (toks[tokidx], "Marker") == 0) {
+	  vlist[numvals].type = VL_SYMBOL;
+	  vlist[numvals++].vun.symbol = VL_SYM_MARKER;
+	} else {
+	  vlist[numvals].type = VL_VALUE;
+	  vlist[numvals++].vun.val = strtod (toks[tokidx], &cb);
+	  if ((cb == toks[tokidx]) || (*cb != '\0'))
+	    break;
+	}
+      } else {
+	/* returning a list of doubles */
+	vals[numvals++] = strtod (toks[tokidx], &cb);
+	if ((cb == toks[tokidx]) || (*cb != '\0'))
+	  break;
+      }
+
+    } else {
+      /* This should be a range, either 'i-j:k' or 'i-end:k' */
+      *cb = '\0';
+      // printf ("  range format: first substring '%s', remainder, '%s'\n", toks[tokidx], cb+1);
+      start = strtod (toks[tokidx], &cb);
+      if ((cb == toks[tokidx]) || (*cb != '\0'))
+	break;
+      // printf ("  start value: %f\n", start);
+      ca = cb + 1;
+      if ((*ca == '\0') || ((cb = index (ca, ':')) == NULL))
+	break;
+      // printf ("                next substring '%s', remainder, '%s'\n", ca, cb+1);
+      *cb = '\0';
+      if (vlist != NULL) {
+	if (strcasecmp (ca, "End") == 0) {
+	  vlist[numvals].type = VL_RANGE_SYMBEND;
+	} else {
+	  vlist[numvals].type = VL_RANGE;
+	  end = strtod (ca, &cb);
+	  if ((cb == ca) || (*cb != '\0'))
+	    break;
+	}
+      } else {
+	end = strtod (ca, &cb);
+	if ((cb == ca) || (*cb != '\0'))
+	  break;
+	// printf ("  end value: %f\n", end);
+      }
+      ca = cb + 1;
+      if (*ca == '\0')
+	break;
+      // printf ("                last substring '%s'\n", ca);
+      incr = strtod (ca, &cb);
+      if (*cb != '\0')
+	break;
+      // printf ("  incr value: %f\n", incr);
+      
+      if (vlist != NULL) {
+	if (vlist[numvals].type == VL_RANGE) {
+	  if (start > end)
+	    break;
+	  vlist[numvals].vun.range.end = end;
+	}
+	if (incr <= 0)
+	  break;
+	vlist[numvals].vun.range.start = start;
+	vlist[numvals++].vun.range.incr = incr;
+      } else {
+	if ((start > end) || (incr <= 0))
+	  break;
+	va = 0;
+	while ((val = start + (va++ * incr)) <= end) {
+	  if ((numvals >= listsize) && 
+	      ((vals = realloc (vals, sizeof (double) * (listsize += 10))) == NULL))
+	    logMsg (LOGDEFAULT, LOGFATAL, "realloc failed\n");
+	  vals[numvals++] = val;
+	}
+      }
+    }
+    if (++tokidx >= numtoks) {
+      if (vlist_h != NULL)
+	*vlist_h = vlist;
+      else 
+	*vals_h = vals;
+      return (numvals);
+    }
+    if (strcmp (toks[tokidx++], ",") != 0)
+      break;
+  }
+
+  if (vlist != NULL)
+    free (vlist);
+  else 
+    free (vals);
+  return (-1);
+}
+
+
+/* A binary search, so the dispatch table must be sorted. Given a search key of
+ * length n, a table entry is a match if the search key and the table key are
+ * identical for the first n characters, and no other table keys are also identical
+ * for the first n characters; or, if the table key is also length n, and the search
+ * key is identical to the table key.
+ */
+int lookupDispatch (char *key, st_dispatch *table)
+{
+  int tablen, keylen, hi, lo, mid, res;
+
+  tablen = sizeof (dispatchTable) / sizeof (st_dispatch);
+  keylen = strlen (key);
+
+  lo = 0;
+  hi = tablen - 1;
+  mid = (hi + lo) / 2;
+  
+  while (hi >= lo) {
+    if ((res = strncasecmp (key, table[mid].key, keylen)) == 0)
+      break;
+    else if (res < 0)
+      hi = mid - 1;
+    else
+      lo = mid + 1;
+    mid = (hi + lo) / 2;
+  }
+  if (res != 0)
+    return (-1);
+
+  lo = hi = mid;
+  while ((lo > 0) && (strncasecmp (key, table[lo-1].key, keylen) == 0))
+    lo--;
+  while ((hi < tablen -1) && (strncasecmp (key, table[hi+1].key, keylen) == 0))
+    hi++;
+  if (lo == hi)
+    return (mid);
+  for (mid = lo; mid <= hi; mid++)
+    if (strlen (table[mid].key) == keylen)
+      return (mid);
+  return (-2);
+}
+
+
+/* We use this two ways: when we initially qsort the dispatch table, and when we
+ * use bsearch to find an entry in the table. 
+ */
+int compareDispatch (const void *a, const void *b)
+{
+  int len;
+
+  len = strlen (((st_dispatch *)a)->key);
+  return (strncasecmp (((st_dispatch *)a)->key, ((st_dispatch *)b)->key, len));
+}
+
+
+/* Reads input from fp, using permuteLine to collapse blank and comment
+ * lines, and splits input into substrings at newlines or semicolons.
+ * The substrings are tokenized and returned as a list of tokens. Maintains
+ * context in between calls, so the tokens from multiple semicolon-
+ * separated substrings will be returned on successive calls. 
+ */
+int getNextTokgroup (FILE *fp, char ***tokgroup_h, int *tokgroupsize)
+{
+  int numtoks;
+  char *semicolon;
+  
+  while ((buffptr == NULL) || (strlen (buffptr) == 0)) {
+    if (fgets (buff, BUFFSIZE, fp) == 0) {
+      lineno = -1;
+      return (0);
+    }
+    lineno++;
+    permuteLine (buffptr = buff, BUFFSIZE);
+  }
+  if ((semicolon = index (buffptr, ';')) != NULL)
+    *(semicolon++) = '\0';
+
+  numtoks = tokenizeLine (buffptr, tokgroup_h, tokgroupsize);
+  buffptr = semicolon;
+  return (numtoks);
+}
+
+
+/* Splits a character string into a list of tokens. The line should already
+ * have been passed through permuteLine(), so extra whitespace has already been
+ * trimmed.
+ */
+int tokenizeLine (char *line, char ***tokgroup_h, int *tokgroupsize)
+{
+  int numtoks=0;
+  char **tokgroup, *ca, *cb;
+  
+  if ((tokgroup = *tokgroup_h) == NULL) {
+    *tokgroupsize = 10;
+    if ((tokgroup = malloc (sizeof (char *) * *tokgroupsize)) == NULL) {
+      logMsg (LOGDEFAULT, LOGFATAL, "malloc failed\n");
+      exit (-1);
+    }
+  }
+  
+  ca = strtok_r (line, " ", &cb);
+  while (ca != NULL) {
+    if (numtoks + 1 >= *tokgroupsize) {
+      *tokgroupsize += 10;
+      if ((tokgroup = realloc (tokgroup, sizeof (char *) * *tokgroupsize)) == NULL)
+	logMsg (LOGDEFAULT, LOGFATAL, "malloc failed\n");
+    }
+    tokgroup[numtoks++] = ca;
+    ca = strtok_r (NULL, " ", &cb);
+  }
+
+  *tokgroup_h = tokgroup;
+  return (numtoks);
+}
+
+
+int singleDigit (char *str)
+{
+  int digit;
+  char *ca;
+
+  if ((*str != '\0') && ((digit = (int) strtol (str, &ca, 10)) >= 1) &&
+      (*ca == '\0') && (digit <= 9))
+    return (digit);
+  return (-1);
+}
+
+/* Dumps a subset of the fields in modelOptions.
+ */
+void dumpModelOptions (ModelOptions *mo)
+{
+  printf ("%18s : %s\n", "markerfile", mo->markerfile);
+  printf ("%18s : %s\n", "mapfile", mo->mapfile);
+  printf ("%18s : %s\n", "pedfile", mo->pedfile);
+  printf ("%18s : %s\n", "datafile", mo->datafile);
+  printf ("%18s : %s\n", "avghetfile", mo->avghetfile);
+  printf ("%18s : %s\n", "pplfile", mo->pplfile);
+  printf ("%18s : %s\n", "condFile", mo->condFile);
+  printf ("%18s : %s\n", "ccfile", mo->ccfile);
+  printf ("%18s : %s\n", "modfile", mo->modfile);
+  printf ("%18s : %s\n", "maxmodelfile", mo->maxmodelfile);
+  printf ("%18s : %s\n", "intermediatefile", mo->intermediatefile);
+  printf ("%18s : %s\n", "dkelvinoutfile", mo->dkelvinoutfile);
+}
+
+
+void bail (char *fmt, char *arg)
+{
+  char newfmt[BUFFSIZE];
+
+  if (lineno > 0) {
+    strcpy (newfmt, "'%s' line %d: ");
+    strcat (newfmt, fmt);
+    logMsg (LOGDEFAULT, LOGFATAL, newfmt, conffilename, lineno, arg);
+  } else {
+    strcpy (newfmt, "on command line: ");
+    strcat (newfmt, fmt);
+    logMsg (LOGDEFAULT, LOGFATAL, newfmt, arg);
   }
 }

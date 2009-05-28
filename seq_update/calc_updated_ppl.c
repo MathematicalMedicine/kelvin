@@ -52,7 +52,10 @@ typedef struct {
   char name1[MAX_MAP_NAME_LEN],
     name2[MAX_MAP_NAME_LEN],
     chr[MAX_MAP_CHR_LEN];
-  double pos;
+  double avgpos,
+    malepos,
+    femalepos;
+  long basepair;
   int num;
 } st_brmarker;
 
@@ -123,7 +126,8 @@ char *mapinfile=NULL;   /* --mapin: mapfile, to allow updating across files cont
 
 
 /* Globally available for error messages */
-char *current = "0.36.1";
+char *curversion = "0.38.0";
+char *minversion = "0.36.1";
 char *pname;
 int verbose = 0;
 
@@ -187,9 +191,9 @@ int main (int argc, char **argv)
     brfiles[va].name = argv[argidx + va];
     open_brfile (&brfiles[va]);
   }
-  printf ("# Version V%s\n", current);
+  printf ("# Version V%s\n", curversion);
   if (partout != NULL)
-    fprintf (partout, "# Version V%s\n", current);
+    fprintf (partout, "# Version V%s\n", curversion);
   
   if (multipoint) {
     kelvin_multipoint (brfiles, numbrfiles);
@@ -378,7 +382,10 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 
     if (forcemap) {
       strcpy (current[0]->curmarker.chr, mapptr->chr);
-      current[0]->curmarker.pos = mapptr->avgpos;
+      current[0]->curmarker.avgpos = mapptr->avgpos;
+      current[0]->curmarker.malepos = mapptr->malepos;
+      current[0]->curmarker.femalepos = mapptr->femalepos;
+      current[0]->curmarker.basepair = mapptr->basepair;
     }
     print_twopoint_stats (current[0]->no_ld, &(current[0]->curmarker), &ldval);
     for (fileno = 0; fileno < numcurrent; fileno++) {
@@ -469,7 +476,7 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
     marker = &brfiles[curno].curmarker;
     if ((lr < 0.214) || ((ppl = (lr * lr) / (-5.77 + (54 * lr) + (lr * lr))) < 0.0))
       ppl = 0.0;
-    printf ("%s %.4f %.3f %.6e\n", marker->chr, marker->pos, ppl, lr);
+    printf ("%s %.4f %.3f %.6e\n", marker->chr, marker->avgpos, ppl, lr);
     
     if (get_data_line (&brfiles[curno], &data) == 1)
       lrs[curno] = data.lr;
@@ -598,7 +605,10 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     ldval.ld_big_theta *= (1 - weight);
     if (forcemap) {
       strcpy (current[0]->curmarker.chr, mapptr->chr);
-      current[0]->curmarker.pos = mapptr->avgpos;
+      current[0]->curmarker.avgpos = mapptr->avgpos;
+      current[0]->curmarker.malepos = mapptr->malepos;
+      current[0]->curmarker.femalepos = mapptr->femalepos;
+      current[0]->curmarker.basepair = mapptr->basepair;
     }
     print_twopoint_stats (current[0]->no_ld, &(current[0]->curmarker), &ldval);
 
@@ -657,13 +667,13 @@ void print_twopoint_stats (int no_ld, st_brmarker *marker, st_ldvals *ldval)
 {
   double ldprior, ldstat;
 
-  printf ("%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->pos);
+  printf ("%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->avgpos);
 
   if (no_ld) {
     printf (" %.3f", calc_upd_ppl (ldval));
   } else {
     if (bfout != NULL)
-      fprintf (bfout, "%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->pos);
+      fprintf (bfout, "%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->avgpos);
     
     if ((pplinfile == NULL) || (allstats)) {
       printf (" %.3f", calc_upd_ppl (ldval));
@@ -675,7 +685,7 @@ void print_twopoint_stats (int no_ld, st_brmarker *marker, st_ldvals *ldval)
     ldstat = calc_upd_ppld_allowing_l (ldval, DEFAULT_LDPRIOR);
     printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     if (pplinfile != NULL) {
-      if ((ldprior = get_ippl (marker->chr, marker->pos)) < MIN_PRIOR)
+      if ((ldprior = get_ippl (marker->chr, marker->avgpos)) < MIN_PRIOR)
 	ldprior = MIN_PRIOR;
       if (verbose >= 2)
 	printf ("ippl is %.6e\n", ldprior);
@@ -689,7 +699,7 @@ void print_twopoint_stats (int no_ld, st_brmarker *marker, st_ldvals *ldval)
   printf ("\n");
   if (sixout != NULL)
     fprintf (sixout, "%s %d %s %.4f %.6e %.6e %.6e %.6e %.6e %.6e\n",  marker->chr,
-	     marker->num, marker->name2, marker->pos, ldval->ld_small_theta,
+	     marker->num, marker->name2, marker->avgpos, ldval->ld_small_theta,
 	     ldval->ld_big_theta, ldval->ld_unlinked, ldval->le_small_theta,
 	     ldval->le_big_theta, ldval->le_unlinked);
   return;
@@ -1308,7 +1318,7 @@ double validate_double_arg (char *arg, char *optname)
 void open_brfile (st_brfile *brfile)
 {
   char buff[BUFFLEN];
-  int major, minor, patch, fileverno, curverno;
+  int major, minor, patch, fileverno, minverno;
   
   if ((brfile->fp = fopen (brfile->name, "r")) == NULL) {
     fprintf (stderr, "open '%s' failed, %s\n", brfile->name, strerror (errno));
@@ -1321,18 +1331,18 @@ void open_brfile (st_brfile *brfile)
       fprintf (stderr, "file %s is empty\n", brfile->name);
     exit (-1);
   }
-  sscanf (current, "%d.%d.%d", &major, &minor, &patch);
-  curverno = major * 100000 + minor * 1000 + patch;
+  sscanf (minversion, "%d.%d.%d", &major, &minor, &patch);
+  minverno = major * 100000 + minor * 1000 + patch;
 
   if (sscanf (buff, "# Version V%d.%d.%d", &major, &minor, &patch) != 3) {
     fprintf (stderr, "file %s is unversioned, please convert to at least V%s\n",
-	     brfile->name, current);
+	     brfile->name, minversion);
     exit (-1);
   }
   fileverno = major * 100000 + minor * 1000 + patch;
-  if (fileverno < curverno) {
+  if (fileverno < minverno) {
     fprintf (stderr, "file %s is version V%d.%d.%d, please convert to at least V%s\n",
-	     brfile->name, major, minor, patch, current);
+	     brfile->name, major, minor, patch, minversion);
     exit (-1);
   }
   brfile->lineno = 1;
@@ -1365,34 +1375,17 @@ void get_next_marker (st_brfile *brfile, st_data *data)
       exit (-1);
     }
   }
-  if ((start_of_data = ftell (brfile->fp)) == -1) {
-    fprintf (stderr, "ftell failed for '%s', %s\n", brfile->name, strerror (errno));
-    exit (-1);
-  }
-  lineno = brfile->lineno;
-  if ((ret = get_data_line (brfile, data)) == 0) {
-    fprintf (stderr, "file '%s' ends unexpectedly at line %d\n", brfile->name, brfile->lineno);
-    exit (-1);
-  } else if (ret == 2) {
-    fprintf (stderr, "expected data, found marker at line %d in '%s'\n", brfile->lineno
-	     , brfile->name);
-    exit (-1);
-  }
-  if (fseek (brfile->fp, start_of_data, SEEK_SET) == -1) {
-    fprintf (stderr, "fseek failed for '%s', %s\n", brfile->name, strerror (errno));
-    exit (-1);
-  }
-  brfile->lineno = lineno;
   return;
 }
 
 
 int get_marker_line (st_brfile *brfile)
 {
-  char buff[BUFFLEN];
+  char buff[BUFFLEN], *pa, *pb, *pc;
   st_brmarker *marker;
 
   marker = &brfile->curmarker;
+  marker->basepair = (long) (marker->malepos = marker->femalepos = -1);
   
   if (fgets (buff, BUFFLEN, brfile->fp) == NULL) {
     /* An end-of-file looking for a marker is not necessarily fatal, so let the caller decide */
@@ -1403,9 +1396,13 @@ int get_marker_line (st_brfile *brfile)
     exit (-1);
   }
   brfile->lineno++;
-  
-  if (sscanf (buff, "# %d %s %s", &marker->num, marker->name1, marker->name2) != 3) {
-    if (strncasecmp (buff, "Chr", 3) == 0) {
+  if ((pa = strtok_r (buff, " \t\n", &pc)) == NULL)  {
+    fprintf (stderr, "missing expected marker info in '%s', at line %d\n",  brfile->name,
+	    brfile->lineno);
+    exit (-1);
+  }
+  if (strcmp (pa, "#") != 0) {
+    if (strncasecmp (pa, "Chr", 3) == 0) {
       fprintf (stderr, "expected marker line, line %d in '%s', found possible header line\n",
 	       brfile->lineno, brfile->name);
       fprintf (stderr, "maybe %s contains multipoint data?\n", brfile->name);
@@ -1413,6 +1410,65 @@ int get_marker_line (st_brfile *brfile)
       fprintf (stderr, "can't parse marker, line %d in file '%s'\n", brfile->lineno, brfile->name);
     }
     exit (-1);
+  }
+
+  pa = strtok_r (NULL, " \t\n", &pc);
+  while (pa != NULL) {
+    if ((pb = strtok_r (NULL, " \t\n", &pc)) == NULL) {
+      fprintf (stderr, "marker info ends unexpectedly in '%s', at line %d\n", brfile->name,
+	    brfile->lineno);
+      exit (-1);
+    }
+    if (strcasecmp (pa, "Seq:") == 0) {
+      if (sscanf (pb, "%d", &marker->num) == 0) {
+	fprintf (stderr, "bad Seq in '%s', at line %d\n", brfile->name, brfile->lineno);
+	exit (-1);
+      }
+
+    } else if (strcasecmp (pa, "Chr:") == 0) {
+      strcpy (marker->chr, pb);
+
+    } else if (strcasecmp (pa, "Trait:") == 0) {
+      strcpy (marker->name1, pb);
+
+    } else if (strcasecmp (pa, "Marker:") == 0) {
+      strcpy (marker->name2, pb);
+
+    } else if ((strcasecmp (pa, "Position:") == 0) || (strcasecmp (pa, "AvgPosition:") == 0)) {
+      if (sscanf (pb, "%lf", &marker->avgpos) == 0) {
+	fprintf (stderr, "bad Position in '%s', at line %d\n", brfile->name, brfile->lineno);
+	exit (-1);
+      }
+
+    } else if (strcasecmp (pa, "MalePosition:") == 0) {
+      if (sscanf (pb, "%lf", &marker->malepos) == 0) {
+	fprintf (stderr, "bad MalePosition in '%s', at line %d\n", brfile->name, brfile->lineno);
+	exit (-1);
+      }
+
+    } else if (strcasecmp (pa, "FemalePosition:") == 0) {
+      if (sscanf (pb, "%lf", &marker->femalepos) == 0) {
+	fprintf (stderr, "bad FemalePosition in '%s', at line %d\n", brfile->name, brfile->lineno);
+	exit (-1);
+      }
+
+    } else if (strcasecmp (pa, "Physical:") == 0) {
+      if (sscanf (pb, "%ld", &marker->basepair) == 0) {
+	fprintf (stderr, "bad Physical in '%s', at line %d\n", brfile->name, brfile->lineno);
+	exit (-1);
+      }
+
+    } else if ((strcasecmp (pa, "Marker1:") == 0) || (strcasecmp (pa, "Position1:") == 0) ||
+	       (strcasecmp (pa, "Marker2:") == 0) || (strcasecmp (pa, "Position2:") == 0)) {
+      fprintf (stderr, "'%s' contains marker-to-marker data\n", brfile->name);
+      exit (-1);
+
+    } else {
+      fprintf (stderr, "unknown marker field '%s' in '%s', at line %d\n",  pa, brfile->name,
+	       brfile->lineno);
+      exit (-1);
+    }
+    pa = strtok_r (NULL, " \t\n", &pc);
   }
   
   return (1);
@@ -1627,7 +1683,7 @@ int get_data_line (st_brfile *brfile, st_data *data)
       data->lr = strtod (pa, &endptr);
       break;
     case POS_COL:
-      marker->pos = strtod (pa, &endptr);
+      marker->avgpos = strtod (pa, &endptr);
       break;
     case CHR_COL:
       endptr = strcpy (marker->chr, pa);
@@ -1653,7 +1709,7 @@ int get_data_line (st_brfile *brfile, st_data *data)
     data->dprimes[0] = 0;
 
 #ifdef DEBUG
-  printf ("%5d: chr %s, pos %6.4f, dprimes", brfile->lineno, marker->chr, marker->pos);
+  printf ("%5d: chr %s, pos %6.4f, dprimes", brfile->lineno, marker->chr, marker->avgpos);
   for (va = 0; va < dprimecnt; va++) {
     printf (" %5.2f", data->dprimes[va]);
   }
@@ -1672,35 +1728,46 @@ void print_partial_header (st_brfile *brfile)
 {
   int colno=0, dprimecnt=0;
   st_brmarker *marker;
+  char sep[2] = "\0\0";
 
   marker = &brfile->curmarker;
-  fprintf (partout, "# %d %s %s\n", marker->num, marker->name1, marker->name2);
+  fprintf (partout, "# Seq: %d Chr: %s Trait: %s Marker: %s", marker->num,
+	   marker->chr, marker->name1, marker->name2);
+  if ((marker->malepos == -1) || (marker->femalepos == -1))
+    fprintf (partout, " Position: %.4f", marker->avgpos);
+  else 
+    fprintf (partout, " AvgPosition: %.4f MalePosition: %.4f FemalePosition: %.4f",
+	     marker->avgpos, marker->malepos, marker->femalepos);
+  if (marker->basepair != -1)
+    fprintf (partout, " Physical: %ld", marker->basepair);
+  fprintf (partout, "\n");
+
   while (colno < brfile->numcols) {
     switch (brfile->datacols[colno]) {
     case CHR_COL:
-      /* It's assumed here that the chromosome column will be first (no leading space) */
-      fprintf (partout, "Chr");
+      fprintf (partout, "%sChr", sep);
       colno++;
       break;
     case POS_COL:
-      fprintf (partout, " Position");
+      fprintf (partout, "%sPosition", sep);
       colno++;
       break;
     case DPRIME_COL:
-      fprintf (partout, " D1%d", ++dprimecnt);
+      fprintf (partout, "%sD1%d", sep, ++dprimecnt);
       colno++;
       break;
     case THETA_COL:
-      fprintf (partout, " Theta(M,F)");
+      fprintf (partout, "%sTheta(M,F)", sep);
       colno += (sexspecific) ? 2 : 1;
       break;
     case LR_COL:
-      fprintf (partout, " BayesRatio");
+      fprintf (partout, "%sBayesRatio", sep);
       colno++;
       break;
     default:
       colno++;
     }
+    sep[0] = ' ';
   }
   fprintf (partout, "\n");
 }
@@ -1710,39 +1777,40 @@ void print_partial_data (st_brfile *brfile, st_data *data)
 {
   int colno=0, dprimecnt=0;
   st_brmarker *marker;
+  char sep[2] = "\0\0";
 
   marker = &brfile->curmarker;
   while (colno < brfile->numcols) {
     switch (brfile->datacols[colno]) {
     case CHR_COL:
-      fprintf (partout, "%s", marker->chr);
+      fprintf (partout, "%s%s", sep, marker->chr);
       colno++;
       break;
     case POS_COL:
-      fprintf (partout, " %.4f", marker->pos);
+      fprintf (partout, "%s%.4f", sep, marker->avgpos);
       colno++;
       break;
     case DPRIME_COL:
-      fprintf (partout, " %.2f", data->dprimes[dprimecnt++]);
+      fprintf (partout, "%s%.2f", sep, data->dprimes[dprimecnt++]);
       colno++;
       break;
     case THETA_COL:
       if (! sexspecific) {
-	fprintf (partout, " (%.4f,%.4f)", data->thetas[0], data->thetas[0]);
+	fprintf (partout, "%s(%.4f,%.4f)", sep, data->thetas[0], data->thetas[0]);
 	colno++;
       } else {
-	fprintf (partout, " (%.4f,%.4f)", data->thetas[0], data->thetas[1]);
+	fprintf (partout, "%s(%.4f,%.4f)", sep, data->thetas[0], data->thetas[1]);
 	colno += 2;
       }
       break;
     case LR_COL:
-      fprintf (partout, " %.6e", data->lr);
+      fprintf (partout, "%s%.6e", sep, data->lr);
       colno++;
       break;
     default:
       colno++;
     }
-    
+    sep[0] = ' ';
   }
   fprintf (partout, "\n");
 }
@@ -1801,7 +1869,7 @@ int compare_positions (st_brmarker *m1, st_brmarker *m2)
 
   if ((ret = strcmp (m1->chr, m2->chr)) != 0)
     return (ret);
-  if ((diff = m1->pos - m2->pos) < 0)
+  if ((diff = m1->avgpos - m2->avgpos) < 0)
     return (-1);
   else if (diff > 0)
     return (1);

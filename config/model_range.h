@@ -9,6 +9,7 @@
 #define __MODEL_RANGE_H__
 
 #include "lambda_cell.h"
+#include "model_type.h"
 
 /* Information about the analysis parameters. */
 typedef struct ModelRange
@@ -40,8 +41,8 @@ typedef struct ModelRange
 
   double *tloc;			/* Array of trait locations (multipoint only) */
   int ntloc;			/* Number of trait locations */
-  int tlocRangeStart;           /* Starting position i for ranges specified as 'i-end:j' */
-  int tlocRangeIncr;            /* Increment j for ranges specified as 'i-end:j' */
+  double tlocRangeStart;        /* Starting position i for ranges specified as 'i-end:j' */
+  double tlocRangeIncr;         /* Increment j for ranges specified as 'i-end:j' */
   int tlmark;			/* Include on-marker trait loci automatically. */
 
   double **tthresh;		/* Array of trait thresholds (combined traits only) */
@@ -102,13 +103,17 @@ typedef struct constraint
 }
 Constraint;
 
-/* Transitional until the old parser is dead */
-extern Constraint *constraints[];
-extern int constmax[];
-extern int constcnt[];
-extern int *penetcnt;
-extern int *penetmax;
+/* Legal values for Constraint.type */
+#define SIMPLE 0
+#define CLASSC 1
+#define PARAMC 2
+#define PARAMCLASSC 3
 
+/* Legal values for Constraint.op; these need correspond to the elements in op_strs */
+#define EQ 0
+#define NE 1
+#define GT 2
+#define GE 3
 
 #define NPENET(x) ((x)*(x))
 
@@ -119,19 +124,36 @@ extern int *penetmax;
 
 extern char *op_strs[];
 extern char *mp_strs[];
+extern char *contype_strs[];
 
 void addTraitLocus (ModelRange * range, double val);
 void addGeneFreq (ModelRange * range, double val);
+void addAlleleFreq (ModelRange * range, double val);
 void addAlpha (ModelRange * range, double val);
 void addDPrime (ModelRange * range, double val);
 void addTheta (ModelRange * range, int type, double val);
 void addPenetrance (ModelRange * range, int type, double val);
 void addConstraint (int type, int a1, int c1, int p1, int op,
 		    int a2, int c2, int p2, int disjunct);
+void addParameter (ModelRange * range, int dim, double val);
+void addTraitThreshold (ModelRange * range, double val);
+int checkImprintingPenets (ModelRange *range, int imprinting);
+int checkThetas (ModelRange * range, int i);
+int checkPenets (ModelRange * range, int i);
+int checkClassPenets (ModelRange * range, int i);
+int checkParams (ModelRange * range, int i);
+int checkClassParams (ModelRange * range, int i);
+int checkClassThreshold (ModelRange * range, int i);
+void expandRange (ModelRange *range);
+void expandClass (ModelRange * range);
+LambdaCell *findLambdas (ModelRange * range, int m, int n);
+void sortRange (ModelRange * range);
+void uniqRange (ModelRange * range);
+void showRange (ModelRange * range, ModelType * type, int level);
+void showConstraints ();
+void cleanupRange ();
 
 int lookup_comparator (char *str);
 int lookup_modelparam (char *str);
-
-extern ModelRange modelRange;
 
 #endif
