@@ -21,7 +21,7 @@
 #include <getopt.h>
 
 /* Kelvin header files */
-#include <kelvin.h>
+#include <ppl.h>
 #include <integrationLocals.h>
 #include <multidim.h>
 #include <ippl.h>
@@ -47,6 +47,8 @@
 #define DEFAULT_LDPRIOR 0.02
 /* the multipoint PPL for a BR of 0.214 */
 #define MIN_PRIOR 7.8528124097619317e-03
+
+#define KROUND(dbl) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * 10000.0) / 10000.0
 
 typedef struct {
   char name1[MAX_MAP_NAME_LEN],
