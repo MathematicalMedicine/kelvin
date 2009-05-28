@@ -294,12 +294,12 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
 	if(modelType.trait == DT) {
 	  homoLR = pPedigree->alternativeLikelihoodDT[gfreqIdx][penIdx] /
 	    (pPedigree->traitLikelihoodDT[gfreqIdx][penIdx] *
-	     pedigreeSet->markerLikelihood);
+	     pPedigree->markerLikelihood);
 	}
 	else {
 	  homoLR = pPedigree->alternativeLikelihoodQT[gfreqIdx][penIdx][paramIdx][thresholdIdx] /
 	    (pPedigree->traitLikelihoodQT[gfreqIdx][penIdx][paramIdx][thresholdIdx] *
-	     pedigreeSet->markerLikelihood);
+	     pPedigree->markerLikelihood);
 	}
 	tmp = log10 (alphaV * homoLR + (1 - alphaV));
 	log10HetLR += tmp * pPedigree->pCount[loc2]; // Use the pedigree weight from count file (CF)

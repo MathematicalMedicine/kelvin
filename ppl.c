@@ -334,13 +334,14 @@ calculate_R_square (double p1, double q1, double d)
 void
 free_likelihood_storage (PedigreeSet * pedSet)
 {
+  return; 
+
+#if 0
   int pedIdx;
   int gfreqInd;
   int penIdx;
   int paramIdx;
 
-  return; 
-#if 0
   if (likelihoodDT == NULL && likelihoodQT == NULL)
     return;
 
