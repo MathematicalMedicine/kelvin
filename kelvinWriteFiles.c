@@ -141,11 +141,11 @@ write2ptBRFile (int loc1, int loc2)
 	    exponent=floor(log10LR);
 	    scale=tp_result[dprimeIdx][thetaInd][modelRange.nafreq].scale_orig;
 	    base=pow(10, (log10LR-exponent));
-	    fprintf (fpHet, "(%.4f,%.4f) %.6fe%+d\n", theta[0], theta[1],
+	    fprintf (fpHet, "(%.4f,%.4f) %.6fe%+.2d\n", theta[0], theta[1],
 		     base, exponent+scale);
 	  }
 	  else {
-	    fprintf (fpHet, "(%.4f,%.4f) %.6fe%+d\n", theta[0], theta[1],
+	    fprintf (fpHet, "(%.4f,%.4f) %.6fe%+.2d\n", theta[0], theta[1],
 		     0.0, 0);
 	  }
 	}			/* theta loop */

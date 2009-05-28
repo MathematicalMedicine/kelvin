@@ -657,7 +657,7 @@ void iterateMain() {
 	rescale_tp_result(-1);
 
 	//if (modelOptions.markerAnalysis == FALSE)
-	write2ptBRFile ();
+	write2ptBRFile (loc1, loc2);
 	write2ptMODFile (loc1, loc2);
 	//writeMMFileDetail ();
 	writePPLFileDetail (dprime0Idx);
