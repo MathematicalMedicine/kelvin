@@ -338,7 +338,7 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
 	fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD,
 		 pen_dd);
       else
-	fprintf (fpMOD, " (%.3f %.3f %.3f", pen_DD, pen_Dd, pen_dd);
+	fprintf (fpMOD, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
       if (modelType.trait != DT
 	  && modelType.distrib != QT_FUNCTION_CHI_SQUARE)
 	{
@@ -366,7 +366,7 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
 
 
 void
-write2ptMODFile (int loc1, int loc2)
+write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 {
   double log10_lr;
   int initialFlag;
@@ -377,7 +377,7 @@ write2ptMODFile (int loc1, int loc2)
   int maxTheta_at_dprime0;
   int i, j, liabIdx;
   float theta[2];
-  int theta0Idx, dprime0Idx;
+  int theta0Idx;
   
   if (fpMOD == NULL)
     return;
