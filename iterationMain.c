@@ -590,6 +590,7 @@ void iterateMain() {
                       }
                       for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
 
+			paramSet.thetaIdx = thetaInd;
                         if (modelOptions.mapFlag == SA) {
                           theta[0] = modelRange.theta[0][thetaInd];
                           theta[1] = modelRange.theta[1][thetaInd];
@@ -658,7 +659,7 @@ void iterateMain() {
 
 	//if (modelOptions.markerAnalysis == FALSE)
 	write2ptBRFile (loc1, loc2);
-	write2ptMODFile (loc1, loc2);
+	write2ptMODFile (loc1, loc2, dprime0Idx);
 	//writeMMFileDetail ();
 	writePPLFileDetail (dprime0Idx);
 
