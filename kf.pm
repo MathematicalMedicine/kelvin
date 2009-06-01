@@ -55,54 +55,57 @@ my $ShortestLoop = "";    # Just batted around too much to monkey with right now
 # Known directives as well as dispatch routine if needed. I could avoid the NoActions, but
 # I prefer to be explicit.
 our %KnownDirectives = (
-    AL    => \&NoAction,
-    AM    => \&NoAction,
-    AS    => \&NoAction,
-    CC    => \&NoAction,
-    CF    => \&NoAction,
-    DA    => \&NoAction,
-    DD    => \&NoAction,
-    DF    => \&NoAction,
-    DK    => \&NoAction,
-    DT    => \&NoAction,
-    Dd    => \&NoAction,
-    GF    => \&NoAction,
-    HE    => \&NoAction,
-    IMP   => \&NoAction,
-    IR    => \&NoAction,
-    LC    => \&NoAction,
-    LD    => \&NoAction,
-    LOG   => \&NoAction,
-    MK    => \&NoAction,
-    MM    => \&NoAction,
-    MP    => \&NoAction,
-    MX    => \&NoAction,
-    P1    => \&NoAction,
-    PD    => \&NoAction,
-    PE    => \&NoAction,
-    PF    => \&NoAction,
-    QT    => \&NoAction,
-    SA    => \&NoAction,
-    SS    => \&NoAction,
-    TL    => \&NoAction,
-    TM    => \&NoAction,
-    TP    => \&NoAction,
-    TT    => \&NoAction,
-    Th    => \&NoAction,
-    T_MIN => \&NoAction,
-    T_MAX => \&NoAction,
-    UP    => \&NoAction,
-    XC    => \&NoAction,
-    dD    => \&NoAction,
-    dd    => \&NoAction,
-);
+			"FrequencyFile" => \&NoAction,
+			"MapFile" => \&NoAction,
+			"PedigreeFile" => \&NoAction,
+			"LocusFile" => \&NoAction,
+			"BayesRatioFile" => \&NoAction,
+			"PPLFile" => \&NoAction,
+			"CountFile" => \&NoAction,
+			"MODFile" => \&NoAction,
+			"NIDetailFile" => \&NoAction,
 
+			"NonPolynomial" => \&NoAction,
+			"Imprinting" => \&NoAction,
+			"SexLinked" => \&NoAction,
+			"FixedModels" => \&NoAction,
+			"DryRun" => \&NoAction,
+			"ExtraMODs" => \&NoAction,
+
+			"PolynomialScale" => \&NoAction,
+			"LiabilityClasses" => \&NoAction,
+			"DiseaseAlleles" => \&NoAction,
+
+			"TraitLoci" => \&NoAction,
+			"DiseaseGeneFrequency" => \&NoAction,
+			"DPrime" => \&NoAction,
+			"Theta" => \&NoAction,
+			"MaleTheta" => \&NoAction,
+			"FemaleTheta" => \&NoAction,
+			"Alpha" => \&NoAction,
+			"Penetrance" => \&NoAction,
+			"Constrain" => \&NoAction,
+			"Multipoint" => \&NoAction,
+			"MarkerToMarker" => \&NoAction,
+			"SexSpecific" => \&NoAction,
+			"LD" => \&NoAction,
+			"QT" => \&NoAction,
+			"QTT" => \&NoAction,
+			"Mean" => \&NoAction,
+			"StandardDev" => \&NoAction,
+			"DegOfFreedom" => \&NoAction,
+			"Threshold" => \&NoAction,
+			"Truncate" => \&NoAction,
+			"PhenoCodes" => \&NoAction,
+			"SurfacesPath" => \&NoAction,
+			"Log" => \&NoAction,
+			);
 
 our @EXPORT = qw(
 		 %Map @Loci %LociAttributes %Pedigrees %Directives %KnownDirectives 
 		 AttributeMissing $UnknownAffection $UnknownPerson $Affected $Unaffected
 		 addMissingAlleles assessPedigree deriveAlleleFrequencies checkRelations 
-		 checkIntegrity loadPedigree loadConf loadCompanion loadMarkers loadMap
+		 checkIntegrity loadPedigree loadConf loadCompanion loadFrequencies loadMap
 		 );
 
 #####################################
@@ -677,7 +680,7 @@ sub loadCompanion {
 # Open and read the marker file to flesh-out the %LociAttributes hash. Named
 # alleles get mapped to numbers so we can use our allele patterns when bucketizing.
 #
-sub loadMarkers {
+sub loadFrequencies {
     my $File = shift();
     die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";

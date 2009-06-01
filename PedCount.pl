@@ -24,8 +24,8 @@ my $LiabilityClasses = 1;
 my $maf0           = 0; # True if we found missing minor allele frequencies
 my $pedFile          = "pedpost.dat";
 my $mapFile          = "mapfile.dat";
-my $companionFile    = "datafile.dat";
-my $markersFile      = "markers.dat";                 # Default input files
+my $locusFile    = "datafile.dat";
+my $frequencyFile      = "markers.dat";                 # Default input files
 
 # Heavy-duty diagnostics
 my $DiagSolos = 0;    # Writes out a separate file for each marker with actual copies of template pedigrees
@@ -63,38 +63,38 @@ sub numericIsh {
 
 #####################################
 #
-sub dirAS {
-    $UnknownAffection = $Directives{AS}[0];
-    $Unaffected       = $Directives{AS}[1];
-    $Affected         = $Directives{AS}[2];
+sub dirPhenoCodes {
+    $UnknownAffection = $Directives{PhenoCodes}[0];
+    $Unaffected       = $Directives{PhenoCodes}[1];
+    $Affected         = $Directives{PhenoCodes}[2];
 }
 
 #####################################
 #
-sub dirCF {
+sub dirCountFile {
     die "Cannot generate counts for configuration that already has them."
       if ($count);
 }
 
 #####################################
 #
-sub dirIMP {
+sub dirImprinting {
     $imprinting = 1;
 }
 
 #####################################
 #
-sub dirLC {
+sub dirLiabilityClasses {
     $liability        = 1;
-    $LiabilityClasses = $Directives{LC}[0];
+    $LiabilityClasses = $Directives{LiabilityClasses}[0];
 }
 
 #####################################
 #
 sub dirQT {
 
-    # If it's not already explicitly specified, set QT default for AS
-    if (!defined($Directives{AS})) {
+    # If it's not already explicitly specified, set QT default for PhenoCodes
+    if (!defined($Directives{PhenoCodes})) {
         $UnknownAffection = -99.99;
         $Unaffected       = -88.88;
         $Affected         = 88.88;
@@ -103,13 +103,7 @@ sub dirQT {
 
 #####################################
 #
-sub dirUP {
-    $UnknownPerson = $Directives{UP}[0];
-}
-
-#####################################
-#
-sub dirXC {
+sub dirSexLinked {
     $XC = 1;
 }
 
@@ -221,7 +215,7 @@ sub bucketizePedigrees {
 
     # Verify that this is a 2pt analysis (default, so look for multipoint directives)
     die "Generation of counts not permitted for a multipoint analysis.\n"
-      if (defined($Directives{SA}) || defined($Directives{SS}));
+      if (defined($Directives{MultiPoint}));
 
     # Verify that all markers are present and only biallelic...
     for my $Name (@Loci) {
@@ -288,7 +282,7 @@ sub bucketizePedigrees {
                     ($ChildKey eq '2 1') and $ChildKey = '1 2';
                     $ChildKey .= $Pedigrees{$Ped}{$Ind}{Aff};
 
-                    if (defined($Directives{XC}) || $XC || defined($Directives{IMP}) || $imprinting) {
+                    if (defined($Directives{SexLinked}) || $XC || defined($Directives{Imprinting}) || $imprinting) {
                         $DadKey   .= $Pedigrees{$Ped}{$Dad}{Sex};
                         $MomKey   .= $Pedigrees{$Ped}{$Mom}{Sex};
                         $ChildKey .= $Pedigrees{$Ped}{$Ind}{Sex};
@@ -530,35 +524,31 @@ sub bucketizePedigrees {
 
     my $configPrefix = $Prefix;
     $configPrefix =~ s/.*\///;
-    print OUT "PD " . $configPrefix . "Pedigrees.Dat\n";
-    print OUT "DF " . $configPrefix . "Data.Dat\n";
-    print OUT "MK " . $configPrefix . "Markers.Dat\n";
-    print OUT "MP " . $configPrefix . "Map.Dat\n";
-    print OUT "CC " . $configPrefix . "Counts.Dat\n";
-    print OUT "HE " . $configPrefix . "BR.Out\n";
-    print OUT "PF " . $configPrefix . "PPL.Out\n";
+    print OUT "PedigreeFile " . $configPrefix . "Pedigrees.Dat\n";
+    print OUT "LocusFile " . $configPrefix . "Data.Dat\n";
+    print OUT "FrequencyFile " . $configPrefix . "Markers.Dat\n";
+    print OUT "MapFile " . $configPrefix . "Map.Dat\n";
+    print OUT "CountFile " . $configPrefix . "Counts.Dat\n";
+    print OUT "BayesRatioFile " . $configPrefix . "BR.Out\n";
+    print OUT "PPLFile " . $configPrefix . "PPL.Out\n";
 
     print OUT <<EOF;
-PE
-TP # Two-point analysis
-Th 0 0.5 0.01
-LD -1 1 0.1
 
 # The rest is the standard analysis grid...
-GF 0.001;0.01;0.1;0.3;0.5;0.8
-DD 0.0 0.9 0.1
-Dd 0.0 0.9 0.1
-dd 0.0 0.9 0.1
-DD 0.999
-Dd 0.999
-dd 0.999
-DD >= Dd
-Dd >= dd
-DD != Dd; Dd != dd
-AL 0.05 1 0.05
+FixedModels
+Theta 0-0.5:0.05
+DPrime -1-1:0.1
+DiseaseGeneFrequency 0.001, 0.999, 0.1-0.9:.1
+Alpha 0.05-1.0:0.1
+Penetrance DD 0.0-0.9:0.1, 0.999
+Penetrance Dd 0.0-0.9:0.1, 0.999
+Penetrance dd 0.0-0.9:0.1, 0.999
+Constrain Penetrance DD >= Dd
+Constrain Penetrance Dd >= dd
+Constrain Penetrance DD != Dd, Dd != dd
 
 EOF
-    print OUT "XC\n" if (defined($Directives{XC}) || $XC);
+    print OUT "XC\n" if (defined($Directives{SexLinked}) || $XC);
     close OUT;
 
     open OUT, ">" . $Prefix . "Markers.Dat";
@@ -750,15 +740,7 @@ sub kelvinLimits {
 
     # General limitations
     warn "Warning -- kelvin currently only supports biallelic disease models!\n"
-      if (defined($Directives{DA}) && ($Directives{DA}[0] != 2));
-
-    if (defined($Directives{DK})) {
-
-        # Integration (DK) analysis limitations
-    } else {
-
-        # Iterative (classic Kelvin) analysis limitations
-    }
+      if (defined($Directives{DiseaseAlleles}) && ($Directives{DiseaseAlleles}[0] != 2));
 }
 
 #####################################
@@ -776,7 +758,7 @@ where <flags> are any of:
 -pre		Pedigrees are in pre-MAKEPED format.
 -post		Pedigrees are in post-MAKEPED format.
 -noparents	Pedigrees are in pre-MAKEPED format with no columns for parents.
--XC		This is a sex-linked (X-chromosome) analysis (also XC in configuration 
+-XC		This is a sex-linked (X-chromosome) analysis (also "SexLinked" in configuration 
 		file)
 -imprinting	This in an imprinting analysis (also IMP in configuration file)
 -liability	The pedigree file has a column after affection status for liability 
@@ -895,25 +877,23 @@ die "-pre -post and -bare are mutually exclusive flags."
   if ($pre + $post + $bare > 1);
 
 # Setup the dispatch table for parsing configuration
-$KnownDirectives{AS} = \&dirAS;
-$KnownDirectives{CC} = \&dirCF;
-$KnownDirectives{CF} = \&dirCF;
-$KnownDirectives{IMP}= \&dirIMP;
-$KnownDirectives{LC} = \&dirLC;
+$KnownDirectives{PhenoCodes} = \&dirPhenoCodes;
+$KnownDirectives{CountFile} = \&dirCountFile;
+$KnownDirectives{Imprinting}= \&dirImprinting;
+$KnownDirectives{LiabilityClasses} = \&dirLiabilityClasses;
 $KnownDirectives{QT} = \&dirQT;
-$KnownDirectives{UP} = \&dirUP;
-$KnownDirectives{XC} = \&dirXC;
+$KnownDirectives{SexLinked} = \&dirSexLinked;
 
 if ($config) {
     my $ConfFile = shift;
     loadConf($ConfFile);
-    if (defined($Directives{DF}[0])) { $companionFile = $Directives{DF}[0]; }
-    loadCompanion($companionFile);
-    if (defined($Directives{MP}[0])) { $mapFile = $Directives{MP}[0]; }
+    if (defined($Directives{LocusFile}[0])) { $locusFile = $Directives{LocusFile}[0]; }
+    loadCompanion($locusFile);
+    if (defined($Directives{MapFile}[0])) { $mapFile = $Directives{MapFile}[0]; }
     loadMap($mapFile);
-    if (defined($Directives{MK}[0])) { $markersFile = $Directives{MK}[0]; }
-    loadMarkers($markersFile);
-    if (defined($Directives{PD}[0])) { $pedFile = $Directives{PD}[0]; }
+    if (defined($Directives{FrequencyFile}[0])) { $frequencyFile = $Directives{FrequencyFile}[0]; }
+    loadFrequencies($frequencyFile);
+    if (defined($Directives{PedigreeFile}[0])) { $pedFile = $Directives{PedigreeFile}[0]; }
 } else {
     $pedFile = shift;
 }
@@ -960,7 +940,7 @@ if ($loops) {
 
 doMarkerInclusion();
 
-if (defined($Directives{SA}) || defined($Directives{SS})) {
+if (defined($Directives{Multipoint})) {
     if ($split) {
         die "The -split option is not yet implemented for multipoint.\n";
     } else {
