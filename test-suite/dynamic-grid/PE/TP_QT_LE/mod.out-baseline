@@ -1,0 +1,13 @@
+# Version V0.38.0
+# Seq: 1 Chr: 40 Trait: disease Marker: Loci_12 Position: 0.3100
+Case MOD Theta(M,F) Alpha DGF MF LC0PV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD)
+MOD(Overall) 2.2692 (0.0023,0.0023) 0.95 0.9780 0.0000 (2.868,-0.066,-0.131,0.650,0.650,0.650)
+MOD(Theta==0) 2.2692 (0.0023,0.0023) 0.95 0.9780 0.0000 (2.868,-0.066,-0.131,0.650,0.650,0.650)
+# Seq: 2 Chr: 40 Trait: disease Marker: Loci_13 Position: 0.6500
+Case MOD Theta(M,F) Alpha DGF MF LC0PV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD)
+MOD(Overall) 0.5031 (0.1538,0.1538) 0.95 0.8430 0.0000 (-0.471,-2.603,-2.665,0.410,0.890,0.890)
+MOD(Theta==0) 0.4817 (0.0023,0.0023) 0.77 0.9780 0.0000 (2.934,-0.033,-0.098,0.650,0.650,0.650)
+# Seq: 3 Chr: 40 Trait: disease Marker: Loci_14 Position: 0.9600
+Case MOD Theta(M,F) Alpha DGF MF LC0PV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD)
+MOD(Overall) 0.5617 (0.0023,0.0023) 0.95 0.8430 0.0000 (2.058,1.264,0.595,0.410,0.410,0.890)
+MOD(Theta==0) 0.5617 (0.0023,0.0023) 0.95 0.8430 0.0000 (2.058,1.264,0.595,0.410,0.410,0.890)
