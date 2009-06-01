@@ -374,16 +374,18 @@ sub loadConf {
     my $LineNo = 0;
     %Directives = ();
     while (<IN>) {
-        $LineNo++;
-        s/\s*\#.*//g;    # Trim comments
-        next if (/^$/);  # Drop empty lines
-        s/^\s*//g;       # Trim leading whitespace
-        my @Parameters = split;
-        my $Directive  = shift @Parameters;
-        die "Configuration line $LineNo: \"$Directive\" is not a known configuration directive."
-          if (!defined($KnownDirectives{$Directive}));
-        $Directives{$Directive} = \@Parameters;
-        &{ $KnownDirectives{$Directive} };
+	$LineNo++;
+	s/\s*\#.*//g;    # Trim comments before looking for semis.
+	for (split /;/) {    # Semi is a directive delimiter -- not as good as a newline
+	    s/^\s*//g;       # Trim leading whitespace
+	    next if (/^$/);  # Drop empty lines
+	    my @Parameters = split /[,\s]+/;
+	    my $Directive  = shift @Parameters;
+	    die "Configuration line $LineNo: \"$Directive\" is not a known configuration directive."
+		if (!defined($KnownDirectives{$Directive}));
+	    $Directives{$Directive} = \@Parameters;
+	    &{ $KnownDirectives{$Directive} };
+	}
     }
 }
 
