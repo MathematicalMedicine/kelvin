@@ -147,7 +147,6 @@ int record_tp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
       if (newLog10HetLR <= DBL_MIN_10_EXP + 1) {
 	hetLR = 0;
       } else {
-	/* add the new hetLR, record the new scale */
 	hetLR = pow(10, newLog10HetLR);
       }
       /* keep track of the maximum scale we have used so far 
@@ -317,32 +316,42 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
 	log10HetLR += tmp * pPedigree->pCount[loc2]; // Use the pedigree weight from count file (CF)
       }
 
+      oldsum=mp_result[posIdx].het_lr_total;
+      oldscale=mp_result[posIdx].scale;
+      newscale=0;
       if (log10HetLR >= DBL_MAX_10_EXP - 1) {
 	/* find the new scale, adjust the current sum */
 	newscale=log10HetLR - (DBL_MAX_10_EXP - SCALE_RESERVE);
-	newLog10HetLR = log10HetLR - newscale; 
-	oldsum=mp_result[posIdx].het_lr_total;
-	oldscale=mp_result[posIdx].scale;
+      }
+      if(newscale > oldscale) {
+	/* need to use the newscale and adjust the old sum */
 	if(oldsum>0) {
 	  oldsum_log10=log10(oldsum);
 	  newsum_log10=oldsum_log10+oldscale-newscale;
 	  if(newsum_log10<= DBL_MIN_10_EXP+1) {
 	    mp_result[posIdx].het_lr_total=0;
 	  }
+	  else {
+	    mp_result[posIdx].het_lr_total=pow(10, newsum_log10); 
+	  }
 	}
-	/* add the new hetLR, record the new scale */
-	hetLR = pow(10, newLog10HetLR);
 	mp_result[posIdx].scale=newscale;
-	/* keep track of the maximum scale we have used so far 
-	 * we will need to rescale everything once we are done with 
-	 * populating tp_result */
-	if(maxscale < newscale) {
-	  maxscale = newscale;
-	}
-      } else if (log10HetLR <= DBL_MIN_10_EXP + 1) {
+	oldscale = newscale;
+      }
+      else {
+	newscale = oldscale;
+      }
+      newLog10HetLR = log10HetLR - newscale; 
+      if (newLog10HetLR <= DBL_MIN_10_EXP + 1) {
 	hetLR = 0;
       } else {
-	hetLR = pow (10, log10HetLR);
+	hetLR = pow (10, newLog10HetLR);
+      }
+      /* keep track of the maximum scale we have used so far 
+       * we will need to rescale everything once we are done with 
+       * populating tp_result */
+      if(maxscale < newscale) {
+	maxscale = newscale;
       }
       mp_result[posIdx].het_lr_total += hetLR;
       if (mp_result[posIdx].max_penIdx < 0 || 
