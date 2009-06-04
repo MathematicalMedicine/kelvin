@@ -310,7 +310,7 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
     //  fprintf( fpCond, "# Version %s\n", programVersion);
    }
 
-  if (1 || modelOptions.markerAnalysis == FALSE) {
+  if (modelOptions.markerAnalysis == FALSE) {
     fpHet = fopen (modelOptions.avghetfile, "w");
     KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", modelOptions.avghetfile);
     fprintf (fpHet, "# Version %s\n", programVersion);
