@@ -267,16 +267,15 @@ void readConfigFile (char *config)
 
   while ((numtoks = getNextTokgroup (conffp, &toks, &tokgroupsize)) > 0) {
     for (va = 0; va < numtoks; va++) {
-      printf ("tok %d: %s\n", va, toks[va]);
+      logMsg (LOGINPUTFILE, LOGDEBUG, "token %d: %s\n", va, toks[va]);
     }
     if ((va = lookupDispatch (toks[0], dispatchTable)) >= 0) {
-      printf ("directive '%s' matches at index %d\n", toks[0], va);
+      logMsg (LOGINPUTFILE, LOGDEBUG, "directive '%s' matches at index %d\n", toks[0], va);
       (*dispatchTable[va].parse) (toks, numtoks, dispatchTable[va].hint);
     } else {
       logMsg (LOGDEFAULT, LOGFATAL, "directive '%s' on line %d is %s\n", toks[0],
 	      lineno, (va == -1) ? "unknown" : "not unique");
     }
-    //printf ("\n");
   }
 
   if (tokgroupsize > 0)
@@ -311,7 +310,7 @@ void parseCommandLine (int argc, char *argv[])
       permuteLine (buff, BUFFSIZE);
       numtoks = tokenizeLine (buff, &toks, &tokgroupsize);
       if ((va = lookupDispatch (toks[0], dispatchTable)) >= 0) {
-	//printf ("directive '%s' matches at index %d\n", toks[0], va);
+	logMsg (LOGINPUTFILE, LOGDEBUG, "directive '%s' matches at index %d\n", toks[0], va);
 	(*dispatchTable[va].parse) (toks, numtoks, dispatchTable[va].hint);
       } else
 	logMsg (LOGDEFAULT, LOGFATAL, "directive '%s' on command line is %s\n", toks[0],
@@ -331,7 +330,7 @@ void parseCommandLine (int argc, char *argv[])
   permuteLine (buff, BUFFSIZE);
   numtoks = tokenizeLine (buff, &toks, &tokgroupsize);
   if ((va = lookupDispatch (toks[0], dispatchTable)) >= 0) {
-    //printf ("directive '%s' matches at index %d\n", toks[0], va);
+    logMsg (LOGINPUTFILE, LOGDEBUG, "directive '%s' matches at index %d\n", toks[0], va);
     (*dispatchTable[va].parse) (toks, numtoks, dispatchTable[va].hint);
   } else
     logMsg (LOGDEFAULT, LOGFATAL, "directive '%s' on command line is %s\n", toks[0],
@@ -693,10 +692,10 @@ int set_constraint (char **toks, int numtoks, void *unused)
   int len, first=2, type=-1;
   int oper, geno1=0, geno2=0, class1, class2, disjunct=0;
 
-  printf ("set_constraint:");
-  for (oper = 1; oper < numtoks; oper++)
-    printf (" %s", toks[oper]);
-  printf (", first %d, numtoks %d\n", first, numtoks);
+  //printf ("set_constraint:");
+  //for (oper = 1; oper < numtoks; oper++)
+  //  printf (" %s", toks[oper]);
+  //printf (", first %d, numtoks %d\n", first, numtoks);
   
   /* We'll just preemptively set this here, since we either return success or die */
   observed.constraints = 1;
@@ -716,8 +715,8 @@ int set_constraint (char **toks, int numtoks, void *unused)
 	  bail ("illegal combination of %s and Simple constraints\n", contype_strs[type]);
 	type = SIMPLE;
 	first += 3;
-	printf ("  SIMPLE: %s %s %s, first %d\n", mp_strs[geno1], op_strs[oper], mp_strs[geno2],
-		first);
+	//printf ("  SIMPLE: %s %s %s, first %d\n", mp_strs[geno1], op_strs[oper], mp_strs[geno2],
+	//first);
 	
       } else if ((numtoks >= first + 5) &&
 		 ((geno1 = lookup_modelparam (toks[first])) != -1) &&
@@ -730,8 +729,8 @@ int set_constraint (char **toks, int numtoks, void *unused)
 	  bail ("illegal combination of %s and Liability Class constraints\n", contype_strs[type]);
 	type = CLASSC;
 	first += 5;
-	printf ("  CLASSC: %s %d %s %s %d, first %d\n", mp_strs[geno1], class1, op_strs[oper],
-		mp_strs[geno2], class2, first);
+	//printf ("  CLASSC: %s %d %s %s %d, first %d\n", mp_strs[geno1], class1, op_strs[oper],
+	//mp_strs[geno2], class2, first);
       } else 
 	bail ("illegal argument to directive '%s'\n", toks[0]);
 
@@ -754,8 +753,8 @@ int set_constraint (char **toks, int numtoks, void *unused)
 	  bail ("illegal combination of %s and Parameter constraints\n", contype_strs[type]);
 	type = PARAMC;
 	first += 3;
-	printf ("  PARAMC: %s %s %s, first %d\n", mp_strs[geno1], op_strs[oper], mp_strs[geno2],
-		first);
+	//printf ("  PARAMC: %s %s %s, first %d\n", mp_strs[geno1], op_strs[oper], mp_strs[geno2],
+	//first);
 	
       } else if ((numtoks >= first + 5) &&
 		 ((geno1 = lookup_modelparam (toks[first])) != -1) &&
@@ -768,8 +767,8 @@ int set_constraint (char **toks, int numtoks, void *unused)
 	  bail ("illegal combination of %s and Liability Class constraints\n", contype_strs[type]);
 	type = PARAMCLASSC;
 	first += 5;
-	printf ("  PARAMCLASSC: %s %d %s %s %d, first %d\n", mp_strs[geno1], class1, op_strs[oper],
-		mp_strs[geno2], class2, first);
+	//printf ("  PARAMCLASSC: %s %d %s %s %d, first %d\n", mp_strs[geno1], class1,
+	//op_strs[oper], mp_strs[geno2], class2, first);
       } else 
 	bail ("illegal argument to directive '%s'\n", toks[0]);
 
