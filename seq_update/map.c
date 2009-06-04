@@ -70,7 +70,8 @@ void read_map (char *filename)
       /* sex-specific position for gents */
       datacols[numcols - 1] = MAP_MALEPOS_COL;
 
-    } else if ((strncmp (token, "basepair", 8) == 0) || (strstr (token, "phys") != NULL)) {
+    } else if ((strncmp (token, "basepair", 8) == 0) || (strstr (token, "bp") != NULL) ||
+	       (strstr (token, "phys") != NULL)) {
       /* physical or basepair position */
       datacols[numcols - 1] = MAP_BASEPAIR_COL;
       
