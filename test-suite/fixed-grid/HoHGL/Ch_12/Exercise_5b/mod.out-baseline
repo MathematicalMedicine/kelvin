@@ -1,0 +1,5 @@
+# Version V0.38.0
+# Seq: 1 Chr: 1 Trait: disease Marker: locus2 Position: 72.3000
+Case MOD Theta(M,F) Alpha DGF LC0PV(DD,Dd,dd)
+MOD(Overall) 0.0479 (0.4000,0.4000) 1.00 0.0000 (0.700,0.000,0.000)
+MOD(Theta==0) -10.3261 (0.0000,0.0000) 1.00 0.0000 (0.700,0.000,0.000)
