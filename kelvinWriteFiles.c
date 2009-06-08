@@ -78,6 +78,9 @@ write2ptBRFile (int loc1, int loc2)
   double base;
   double lr, log10LR;
 
+  if (fpHet == NULL)
+    return;
+
   /*
   KASSERT (modelOptions.markerAnalysis == FALSE,
 	   "Don't call write2ptBRFile for a marker-to-marker analysis\n");
@@ -158,6 +161,9 @@ writeMPBRFileHeader ()
 {
   int k;
 
+  if (fpHet == NULL)
+    return;
+
   /* Need to output the results */
   fprintf (fpHet, "Chr Position PPL BayesRatio");
   fprintf (fpHet, " MarkerList(0");
@@ -171,6 +177,9 @@ void
 writeMPBRFileDetail (int posIdx, float traitPos, float ppl, double avgLR)
 {
   int k;
+
+  if (fpHet == NULL)
+    return;
 
   fprintf (fpHet, "%d %f %.*f %.6e",
 	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->

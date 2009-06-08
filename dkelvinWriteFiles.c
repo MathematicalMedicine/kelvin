@@ -3,6 +3,9 @@ void dk_write2ptBRHeader (int loc1, int loc2)
 {
   int i, j;
 
+  if (fpHet == NULL)
+    return;
+
   fprintf (fpHet, "# Seq: %d Chr: %d Trait: %s Marker: %s", loc2,
 	   pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
   
@@ -33,6 +36,9 @@ void dk_write2ptBRHeader (int loc1, int loc2)
 
 void dk_write2ptBRData (double integral)
 {
+  if (fpHet == NULL)
+    return;
+
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
     /* This bit is almost certainly wrong, given dkelvin's single D' limitation. */
     // int ii,jj;
@@ -54,6 +60,9 @@ void dk_writeMPBRHeader ()
 {
   int i;
 
+  if (fpHet == NULL)
+    return;
+
   fprintf (fpHet, "Chr Position PPL BayesRatio");
   fprintf (fpHet, " MarkerList(0");
   for (i = 1; i < modelType.numMarkers; i++)
@@ -66,6 +75,9 @@ void dk_writeMPBRHeader ()
 void dk_writeMPBRData (int posIdx, float traitPos, double ppl, double br)
 {
   int i;
+
+  if (fpHet == NULL)
+    return;
 
   fprintf (fpHet, "%d %f %.*f %.6e",
 	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,

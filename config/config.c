@@ -349,6 +349,14 @@ void validateConfig ()
    * values) is no longer acceptable. The user must specify what they want, we won't guess.
    */
 
+  if (modelOptions.polynomialScale && ! modelOptions.polynomial)
+    logMsg (LOGDEFAULT, LOGFATAL, "PolynomialScale is incompatibale with NonPolynomial\n");
+
+  if (modelOptions.extraMODs && modelType.type == MP)
+    logMsg (LOGDEFAULT, LOGFATAL, "ExtraMODs is incompatibale with Multipoint\n");
+
+
+
   /* Theta-related checks */
   if (modelRange.theta && modelOptions.integration)
     logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Theta values without FixedModels\n");
