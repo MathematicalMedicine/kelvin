@@ -3637,7 +3637,7 @@ void polyStatistics (char *title)
 {
   long constantSize, variableSize, sumSize, productSize, functionCallSize;
   double grandTotal;
-  int sumTerms = 0, productTerms = 0, maxSumTerms = 0, maxProductTerms = 0;
+  long sumTerms = 0, productTerms = 0, maxSumTerms = 0, maxProductTerms = 0;
   int sumTermCounts[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 
     productTermCounts[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   int constantHashSize = 0, constantHashPeak = 0, variableHashSize = 0, variableHashPeak = 0, sumHashSize = 0, sumHashPeak = 0, productHashSize = 0, productHashPeak = 0, functionCallHashSize = 0, functionCallHashPeak = 0;
@@ -3676,7 +3676,7 @@ void polyStatistics (char *title)
   }
   functionCallSize = functionCallCount * sizeof (Polynomial);
 
-  fprintf (stderr, "Term count(avg): s=%d(%d), p=%d(%d), ", sumTerms, sumTerms / (sumCount ? sumCount : 1), productTerms, productTerms / (productCount ? productCount : 1));
+  fprintf (stderr, "Term count(avg): s=%ld(%ld), p=%ld(%ld), ", sumTerms, sumTerms / (sumCount ? sumCount : 1), productTerms, productTerms / (productCount ? productCount : 1));
   fprintf (stderr, "sizes (w/terms): c=%ld, s=%ld, p=%ld, f=%ld\n", constantSize, sumSize + (sumTerms * (sizeof (Polynomial *) + sizeof (double))), productSize + (productTerms * (sizeof (Polynomial *) + sizeof (int))), functionCallSize);
   fprintf (stderr, "Sum term dist <2^n: ");
   for (i=0; i<16; i++)
