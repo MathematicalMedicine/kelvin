@@ -1,0 +1,88 @@
+digraph kelvin_conf {
+	label = "kelvin Test Paths" ;
+	size = "8.5,14" ;
+
+	chromosome -> "markers" [label="autosomal (AUC)"] ;
+	chromosome -> "markers" [label="allosomal (XC)"] ;
+	"markers" -> loci [label="SNPs (SNP)"] ;
+	"markers" -> loci [label="MSATs (MSAT)"] ;
+	"markers" -> loci [label="mixed (MXM)"] ;
+	loci -> pedigrees [label="trait-to-marker (T2M)"] ;
+	pedigrees -> phase [label="nuclear (NUCP)"] ;
+	pedigrees -> phase [label="case control (CC)"] ;
+	pedigrees -> phase [label="trios (TRIO)"] ;
+	pedigrees -> phase [label="affected sibling pairs (ASP)"] ;
+	pedigrees -> marriages [label="general (GENP)"] ;
+	marriages -> founders [label="single (SNGLM)"] ;
+	marriages -> founders [label="multiple (MLTM)"] ;
+	founders -> loops [label="single (SNGLF)"] ;
+	founders -> loops [label="multiple (MLTF)"] ;
+	loops -> phase [label="none (NOLP)"] ;
+	loops -> phase [label="single\nkinship (SKLP)"] ;
+	loops -> phase [label="single\nmarriage (SMLP)"] ;
+	loops -> phase [label="multiple\nkinship (MKLP)"] ;
+	loops -> phase [label="multiple\nmarriage (MMLP)"] ;
+	loops -> phase [label="multiple\nmixed (MXLP)"] ;
+	phase -> classes [label="imprinting (IMPR)"] ;
+	phase -> classes [label="ignore\nphase (NOIMPR)"] ;
+
+	classes -> trait [label="one (LC1)"] ;
+	classes -> trait [label="two (LC2)"] ;
+	classes -> trait [label="three (LC3)"] ;
+	classes -> trait [label="four-or-more (LC+)"] ;
+
+#	classes -> heterogeneity [label="single"] ;
+#	classes -> heterogeneity [label="multiple"] ;
+#	heterogeneity -> missingness [label="none"] ;
+#	heterogeneity -> missingness [label="some"] ;
+#	missingness -> trait [label="phenotypes"] ;
+#	missingness -> trait [label="genotypes"] ;
+#	missingness -> trait [label="both"] ;
+#	missingness -> trait [label="none"] ;
+
+	loci -> "pairings" [label="marker-to-marker (M2M)"] ;
+	"pairings" -> linkage [label="adjacent (ADJM)"] ;
+	"pairings" -> linkage [label="all (ALLM)"] ;
+
+	QT_analysis [label="analysis"] ;
+	DT_analysis [label="analysis"] ;
+
+	trait -> DT_analysis [label="dichotomous (DT)"] ;
+	trait -> distribution [label="quantitative (QT)"] ;
+	trait -> distribution [label="quant w/threshold (QTT)"] ;
+
+	distribution -> truncation [label="chisq (CHI2)"] ;
+	distribution -> truncation [label="students-T (TDIST)"];
+
+	truncation -> statlib [label="truncated (TRK)"] ;
+	truncation -> statlib [label="none (NOTRK)"] ;
+
+	statlib -> QT_analysis [label="GSL (GSL)"] ;
+	statlib -> QT_analysis [label="dcdflib (DCDF)"] ;
+
+	QT_analysis -> gender [label="multipoint (MLTPT)"] ;
+	QT_analysis -> linkage [label="2-pt (2PT)"] ;
+	DT_analysis -> gender [label="multipoint (MLTPT)"] ;
+	DT_analysis -> binning [label="2-pt(2PT)"] ;
+
+	binning -> linkage [label="counts (BIN)"] ;
+	binning -> linkage [label="none (NOBIN)"] ;
+	binning -> linkage [label="mixed (MXBIN)"] ;
+
+	gender -> map [label="sex ave (SA)"] ;
+	gender -> map [label="sex-specific (SS)"] ;
+
+	map -> grid [label="Haldane (HMAP)"] ;
+	map -> grid [label="Kosambi (KMAP)"] ;
+
+	linkage -> grid [label="disequilibrium (LD)"] ;
+	linkage -> grid [label="equilibrium (LE)"] ;
+
+	grid -> method [label="standard\nfixed (SFG)"] ;
+	grid -> method [label="non-standard\nfixed (NSFG)"] ;
+	grid -> method [label="dynamic (DYG)"] ;
+
+	method -> end [label="polynomial (PE)"] ;
+	method -> end [label="non-\npolynomial (NPE)"] ;
+
+}
