@@ -29,8 +29,8 @@ kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
     boost_rate *= 1.3;
   }
 
-  if(modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) 
-    boost_rate =1.0;
+  //  if(modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) 
+  //    boost_rate =1.0;
   //extern /* Subroutine */ int ftest_();  
 
   localmax_value = 0.0;
@@ -117,8 +117,8 @@ kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
 
   /* BR boosting is done here */
   //fprintf(stderr, "Before boosting %e\n", s->result);
-  //  if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM && modelType.trait == DT) {
-  if (modelType.trait == DT) {
+  if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM && modelType.trait == DT) {
+  //  if (modelType.trait == DT) {
     s->result = pow(10.0, (log10(s->result) * boost_rate));
     //fprintf(stderr, "After boosting %e\n", s->result);
   }
