@@ -29,8 +29,8 @@ SubLocusList markerLocusList;
 int polynomialFlag;
 
 dcuhre_state *s,init_state;
-double xl[17] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0 };
-double xu[17] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1 };
+double xl[20] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0,0,0,0 };
+double xu[20] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1,1,1 };
 
 int print_point_flag = 0;
 FILE *fphlod = NULL;

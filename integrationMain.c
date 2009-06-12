@@ -18,17 +18,20 @@
 
   if (modelType.trait != DT) {
     if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-      total_dim += 3 * modelRange.nlclass;	//SD_DD SD_Dd SD_dd
+      /* total_dim += 3 * modelRange.nlclass;	//SD_DD SD_Dd SD_dd
 
       if(modelOptions.imprintingFlag)
-        total_dim += modelRange.nlclass;   // SD_dD
+      total_dim += modelRange.nlclass;   // SD_dD
+      */
+      total_dim += modelRange.nlclass;
     }
     if (modelType.trait == CT) {
-      total_dim += modelRange.nlclass;
+      total_dim ++; //modelRange.nlclass;
     }
   }
 
   fprintf (stderr, "total dim =%d\n", total_dim);
+
 
   if (modelType.trait != DT) {
     /* Setting ranges for each variables. Default is [0,1] */
@@ -48,6 +51,8 @@
 	xu[k] =    modelRange.penetLimits[0][1];//30.0;
         xu[k + 1] =modelRange.penetLimits[1][1];//30.0;
         xu[k + 2] =modelRange.penetLimits[3][1];//30.0; //10.0; //23.0; //4.0;//30;
+	fprintf(stderr,"Range %f %f %f %f %f %f\n",modelRange.penetLimits[0][0],modelRange.penetLimits[1][0] ,modelRange.penetLimits[3][0],modelRange.penetLimits[0][1],modelRange.penetLimits[1][1],modelRange.penetLimits[3][1]);
+
 
         if(modelOptions.imprintingFlag){
           xl[k+2]=  modelRange.penetLimits[2][0];
@@ -67,7 +72,7 @@
       k += 3;
 
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-	xl[k] = xl[k + 1] = xl[k + 2] = 0.3;
+	/*xl[k] = xl[k + 1] = xl[k + 2] = 0.7; //0.3;
 	xu[k] = xu[k + 1] = xu[k + 2] = 1.0;//3.0;
         if(modelOptions.imprintingFlag){
           xl[k+3]= 0.3;
@@ -81,16 +86,27 @@
           k++;
         }
 	k += 3;
+	*/
+        xl[k]= 0.7;
+        xu[k]= 1.0;
+	volume_region *= (xu[k] - xl[k]);
+	k++;
       }
-      if (modelType.trait == CT) {
+      /*if (modelType.trait == CT) {
 	xl[k] = 0.0; // modelRange.tthresh[liabIdx][0];//0.3;
 	xu[k] = 3.0; //modelRange.tthresh[liabIdx][modelRange.ntthresh -1];// 23.0;
 	volume_region *= (xu[k] - xl[k]);
 	k++;
 	//   fprintf(stderr, " in CT\n ");
 
-      }
+	}*/
     }  // retangular volume region is calculated and stored in volume_region
+    if (modelType.trait == CT) {
+      xl[k] = 0.0; // modelRange.tthresh[liabIdx][0];//0.3;
+      xu[k] = 3.0; 
+      volume_region *= (xu[k] - xl[k]);
+      k++;
+    }    
 
     fprintf (stderr,"The number of dimension for calculation of BR is %d\n",k);
   }
@@ -408,24 +424,29 @@
                 j += 4;
 	      }else{
 	        fprintf (fpHet, " (%.3f,%.3f,%.3f", localmax_x[j],localmax_x[j+1],localmax_x[j+2]);
+		//	        fprintf (fpHet, " (%.3f,%.3f,%.3f", localmax_x[j],localmax_x[j+1],localmax_x[j+2]);
                 j += 3;
 	      }
 
 	      if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-
-	        if (modelOptions.imprintingFlag){
-	          fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f", localmax_x[j], localmax_x[j + 1], localmax_x[j + 2],localmax_x[j + 3]);
-		  j +=4;
+                //fprintf (fpHet, ",%.3f", localmax_x[j]);
+		if (modelOptions.imprintingFlag){
+	          fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f", localmax_x[j], localmax_x[j], localmax_x[j],localmax_x[j]);
+		  j ++;
 	        }else{
-	          fprintf (fpHet, ",%.3f,%.3f,%.3f", localmax_x[j], localmax_x[j + 1], localmax_x[j + 2]);
-                  j +=3;
+	          fprintf (fpHet, ",%.3f,%.3f,%.3f", localmax_x[j], localmax_x[j], localmax_x[j]);
+		  //	          fprintf (fpHet, ",%.3f,%.3f,%.3f", localmax_x[j], localmax_x[j], localmax_x[j]);
+                  j ++;
 		}
 	      }
-	      if (modelType.trait != DT) {
+	      /*if (modelType.trait != DT) {
 	        fprintf (fpHet, ",%.3f)", localmax_x[j++]);
 	      } else
-	        fprintf (fpHet, ")");
+	      fprintf (fpHet, ")");*/
             }
+            if (modelType.trait == CT) 
+	        fprintf (fpHet, ",%.3f)", localmax_x[j++]);
+
             fprintf (fpHet, "\n");
 
 	    if (maximum_function_value < localmax_value) {
@@ -458,7 +479,8 @@
 
 		  if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
 		    maxima_x[2+j] = localmax_x[  j];//SD_DD
-		    maxima_x[3+j] = localmax_x[1+j];//SD_Dd
+                    j++;
+		    /* maxima_x[3+j] = localmax_x[1+j];//SD_Dd
 		    maxima_x[4+j] = localmax_x[2+j];//SD_dD or SD_dd
 
                     if (modelOptions.imprintingFlag){
@@ -466,13 +488,17 @@
                       j+=4;
 		    }else{
                       j+=3;
-		    }
-	   	    if (modelType.trait == CT) {
+		      }*/
+	   	    /*if (modelType.trait == CT) {
 		      maxima_x[2+j] = localmax_x[j];	// t
 		      j++;
-		    }
+		      }*/
 		  }
 		}
+	      }
+              if(modelType.trait == CT) {
+		maxima_x[2+j] = localmax_x[j];	// t
+		j++;
 	      }
 	    }			/* End of writing max */
 	    fflush (fpHet);
@@ -1059,18 +1085,24 @@
         if (modelType.trait != DT && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
 
           if (modelOptions.imprintingFlag){
-	    fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j+1],localmax_x[j+2],localmax_x[j+3]);
-            j +=4;
+	    fprintf (fpHet, ",%.3f,%.3f,%.3f,%.3f",localmax_x[j],localmax_x[j],localmax_x[j],localmax_x[j]);
+            j ++;
           }else{
- 	    fprintf (fpHet, ",%.3f,%.3f,%.3f", localmax_x[j],localmax_x[j+1],localmax_x[j+2]);
-            j +=3;
+ 	    fprintf (fpHet, ",%.3f,%.3f,%.3f", localmax_x[j],localmax_x[j],localmax_x[j]);
+            j ++;
 	  }
         }
-        if (modelType.trait == CT) { 
+	/* if (modelType.trait == CT) { 
           fprintf (fpHet, ",%.3f)", localmax_x[j++]);
         } else
-          fprintf (fpHet, ")");
+	fprintf (fpHet, ")");*/
       }
+      if (modelType.trait == CT) { 
+        fprintf (fpHet, ",%.3f)", localmax_x[j++]);
+      } else{
+        fprintf (fpHet, ")");
+      }
+
       /* print out markers used for this position */
       fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
       for (k = 1; k < modelType.numMarkers; k++) {

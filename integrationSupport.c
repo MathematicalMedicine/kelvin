@@ -23,7 +23,11 @@ kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
 
   /* Local variables */
   int dim, return_val,i;
-  double boost_rate=1.1;
+  double boost_rate=1.0;
+
+  for(i=0;i<modelRange.nlclass;i++){
+    boost_rate =* 1.3;
+  }
 
   if(modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) 
     boost_rate =1.0;
@@ -65,7 +69,7 @@ kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
     s = &init_state;
     initialize_state (s, xl, xu, dim);
 
-    s->maxcls = 20000;
+    s->maxcls = 50000;
    
     if (modelType.type == TP) {
       s->funsub = (U_fp) compute_hlod_2p_qt;
@@ -113,7 +117,8 @@ kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
 
   /* BR boosting is done here */
   //fprintf(stderr, "Before boosting %e\n", s->result);
-  if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) {
+  //  if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM && modelType.trait == DT) {
+  if (modelType.trait == DT) {
     s->result = pow(10.0, (log10(s->result) * boost_rate));
     //fprintf(stderr, "After boosting %e\n", s->result);
   }
@@ -169,6 +174,9 @@ compute_hlod_mp_qt (double x[], double *f)
 
 
   j = 1;			// j=0 for gfrequency
+  if (modelType.trait == CT) {
+    threshold= x[s->ndim -1];
+  }
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
     mean_DD = x[j];
     mean_Dd = (x[j+1]-xl[j+1])*(x[j]-xl[j])/(xu[j]-xl[j])+xl[j+1];
@@ -183,7 +191,7 @@ compute_hlod_mp_qt (double x[], double *f)
     j += pen_size;
 
     if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-      SD_DD = x[j];		
+      /*SD_DD = x[j];		
       SD_Dd = x[j + 1];	
       if(modelOptions.imprintingFlag){
 	SD_dD = x[j+2];
@@ -192,13 +200,14 @@ compute_hlod_mp_qt (double x[], double *f)
 	SD_dd = x[j+2];	
         SD_dD= SD_Dd;
       }
-      j += pen_size;
+      j += pen_size;*/
+      SD_DD= SD_Dd=SD_dD= SD_dd = x[j++];
     }
-    /* threshold for QT */
+    /* threshold for QT *
     if (modelType.trait == CT) {
       threshold = x[j];	// modelRange.tthresh[liabIdx][thresholdIdx];
       j++;
-    }
+      }*/
 
     /* check against the hard coded constraint */
     if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
@@ -234,11 +243,11 @@ compute_hlod_mp_qt (double x[], double *f)
     /* only need to update trait locus */
     update_penetrance (&pedigreeSet, traitLocus);
 
-  /*This is a temporary checking. */
+  /*This is a temporary checking. *
   if (j != s->ndim) {
     fprintf (stderr, "j=%d  while dim for BR is %d\n", j, s->ndim);
     exit (EXIT_FAILURE);
-  }
+    }*/
 
   /* for trait likelihood */
   locusList = &traitLocusList;
@@ -273,7 +282,10 @@ compute_hlod_mp_qt (double x[], double *f)
 	       pPedigree->sPedigreeID);
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
-      break;
+
+      f[0]=1.0;
+      return ;
+      //      break;
     } else if (pPedigree->likelihood < 0.0) {
       KASSERT (pPedigree->likelihood >= 0.0,
 	       "Pedigree %s with NEGATIVE likelihood - This is CRAZY!!!.\n",
@@ -388,18 +400,24 @@ compute_hlod_mp_qt (double x[], double *f)
 	}
 	k += pen_size;
 	if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-	  localmax_x[k] = x[k - 1];
+	  /*localmax_x[k] = x[k - 1];
 	  localmax_x[k + 1] = x[k];
 	  localmax_x[k + 2] = x[k + 1];
           if(modelOptions.imprintingFlag)
 	    localmax_x[k + 3] = x[k + 2];
-	  k += pen_size;
+	    k += pen_size;*/
+          localmax_x[k] = x[k - 1];
+          k++;
 	}
-	/* threshold for QT */
+	/* threshold for QT *
 	if (modelType.trait == CT) {
 	  localmax_x[k] = x[k - 1];
 	  k++;
-	}
+	  }*/
+      }
+      if (modelType.trait == CT) {
+	localmax_x[k] = x[k - 1];
+	k++;
       }
     }
   }
@@ -420,17 +438,17 @@ compute_hlod_mp_qt (double x[], double *f)
 
     k += pen_size;
     if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-      k += pen_size;
+      k ++; // pen_size;
     }
-    if (modelType.trait == CT) {
+    /*    if (modelType.trait == CT) {
       k++;
-    }
+      }*/
   }
-  /*This is a temporary checking. */
+  /*This is a temporary checking. *
   if (k != s->ndim) {
     fprintf (stderr, "k=%d  while dim for BR is %d\n", k, s->ndim);
     exit (EXIT_FAILURE);
-  }
+    }*/
   }
   f[0] = avg_hetLR;
 
@@ -740,6 +758,9 @@ compute_hlod_2p_qt (double x[], double *f)
 
   /* this should be MEAN + SD */
   j = 1;
+  if (modelType.trait == CT) {
+    threshold= x[s->ndim -1];
+  }
   if (modelOptions.markerAnalysis == FALSE) {
     for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
       mean_DD = x[j];
@@ -755,7 +776,7 @@ compute_hlod_2p_qt (double x[], double *f)
       j += pen_size;
 
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-	SD_DD = x[j];		
+	/*	SD_DD = x[j];		
 	SD_Dd = x[j + 1];	
         if(modelOptions.imprintingFlag){
 	  SD_dD = x[j+2];
@@ -764,13 +785,14 @@ compute_hlod_2p_qt (double x[], double *f)
 	  SD_dd = x[j+2];	
           SD_dD= SD_Dd;
 	}
-	j += pen_size;
+	j += pen_size;*/
+        SD_DD= SD_Dd=SD_dD= SD_dd = x[j++];
       }
-      /* threshold for QT */
+      /* threshold for QT *
       if (modelType.trait == CT) {
 	threshold = x[j];	// modelRange.tthresh[liabIdx][thresholdIdx];
 	j++;
-      }
+	}*/
 
       /* check against the hard coded constraint */
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
@@ -804,11 +826,11 @@ compute_hlod_2p_qt (double x[], double *f)
 
   }				/* marker to marker analysis */
 
-  /*This is a temporary checking. */
-  if (j != s->ndim) {
+  /*This is a temporary checking. *
+  if ((j+1) != s->ndim) {
     fprintf (stderr, "j=%d  while dim for BR is %d\n", j, s->ndim);
     exit (0);
-  }
+    }*/
 
   /* get the likelihood at 0.5 first and LD=0 */
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
@@ -841,18 +863,20 @@ compute_hlod_2p_qt (double x[], double *f)
 
 
   ret=compute_likelihood (&pedigreeSet);
-
+  //  fprintf(stderr, "null= %f gf=%f mean %f %f %f %f SD %f %f %f %f\n",pedigreeSet.log10Likelihood,gfreq,mean_DD, mean_Dd,mean_dD, mean_dd, SD_DD, SD_Dd, SD_dD,SD_dd );
   if (pedigreeSet.likelihood == 0.0
       && pedigreeSet.log10Likelihood == -9999.99) {
     fprintf (stderr, "Theta 0.5 has likelihood 0 \n");
-    fprintf (stderr, "dgf=%f\n", gfreq);
+    fprintf (stderr, "theta =%f dgf=%f\n",thetaM, gfreq);
     for (j = 1; j < s->ndim; j++) {
       fprintf (stderr, " %f", x[j]);
     }
     fprintf(stderr, "mean %f %f %f %f SD %f %f %f %f\n",mean_DD, mean_Dd,mean_dD, mean_dd, SD_DD, SD_Dd, SD_dD,SD_dd );
     fprintf (stderr, "\n");
 
-    exit (EXIT_FAILURE);
+    // exit (EXIT_FAILURE);
+    *f = 1.0;
+    return ;
   }
 
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -902,6 +926,15 @@ compute_hlod_2p_qt (double x[], double *f)
       && pedigreeSet.log10Likelihood == -9999.99) {
     log10_likelihood_ratio = 0;
     avg_hetLR=0.0;
+
+    fprintf (stderr, "Theta %f has likelihood 0 \n", thetaM);
+    fprintf (stderr, "dgf=%f\n", gfreq);
+    for (j = 1; j < s->ndim; j++) {
+      fprintf (stderr, " %f", x[j]);
+    }
+    fprintf(stderr, "mean %f %f %f %f SD %f %f %f %f\n",mean_DD, mean_Dd,mean_dD, mean_dd, SD_DD, SD_Dd, SD_dD,SD_dd );
+    fprintf (stderr, "\n");
+
   } else {
     log10_likelihood_ratio =
       log10_likelihood_alternative - log10_likelihood_null;
@@ -947,7 +980,7 @@ compute_hlod_2p_qt (double x[], double *f)
     } else {
       hetLR = pow (10, log10HetLR);
     }
-    
+    //fprintf(stderr, "Hlod= %f gf=%f mean %f %f %f SD %f %f %f\n",log10HetLR,gfreq,mean_DD, mean_Dd, mean_dd, SD_DD, SD_Dd,SD_dd );    
     alpha_integral += hetLR * alpha[j][1];
     
     if (print_point_flag)
@@ -971,19 +1004,30 @@ compute_hlod_2p_qt (double x[], double *f)
 	}
 	k += pen_size;
 	if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-	  localmax_x[k] = x[k - 1];
+	  /*	  localmax_x[k] = x[k - 1];
 	  localmax_x[k + 1] = x[k];
 	  localmax_x[k + 2] = x[k + 1];
           if(modelOptions.imprintingFlag)
 	    localmax_x[k + 3] = x[k + 2];
-	  k += pen_size;
+	    k += pen_size;*/
+          localmax_x[k] = x[k - 1];
+          k++;
 	}
-	/* threshold for QT */
+	/* threshold for QT *
 	if (modelType.trait == CT) {
 	  localmax_x[k] = x[k - 1];
 	  k++;
-	}
+	  }*/
       }
+      if (modelType.trait == CT) {
+	localmax_x[k] = x[k - 1];
+	k++;
+      }
+      /*if ((k+1) != s->ndim) {
+        printf ("k=%d  while dim for BR is %d\n", k, s->ndim);
+        exit (EXIT_FAILURE);
+	}*/
+
     }
   }
 
@@ -1003,17 +1047,17 @@ compute_hlod_2p_qt (double x[], double *f)
 
     k += pen_size;
     if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-      k += pen_size;
+      k ++; //+= pen_size;
     }
-    if (modelType.trait == CT) {
+    /*    if (modelType.trait == CT) {
       k++;
-    }
+      }*/
   }
-  /*This is a temporary checking. */
+  /*This is a temporary checking. *
   if (k != s->ndim) {
     printf ("k=%d  while dim for BR is %d\n", k, s->ndim);
     exit (EXIT_FAILURE);
-  }
+    }*/
 
   }
   *f = avg_hetLR;
@@ -1142,7 +1186,9 @@ compute_hlod_2p_dt (double x[], double *f)
       && pedigreeSet.log10Likelihood == -9999.99) {
     fprintf (stderr, "Theta 0.5 has likelihood 0\n");
     fprintf (stderr, "dgf=%f\n", gfreq);
-    exit (EXIT_FAILURE);
+    //    exit (EXIT_FAILURE);
+    f[0] = 1.0;
+    return ;
   }
 
   /* save the results for NULL */
