@@ -26,7 +26,7 @@ kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
   double boost_rate=1.0;
 
   for(i=0;i<modelRange.nlclass;i++){
-    boost_rate =* 1.3;
+    boost_rate *= 1.3;
   }
 
   if(modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) 
