@@ -23,14 +23,14 @@ kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
 
   /* Local variables */
   int dim, return_val,i;
-  double boost_rate=1.0;
+  double boost_rate=1.1;
 
-  for(i=0;i<modelRange.nlclass;i++){
+  /*  for(i=0;i<modelRange.nlclass;i++){
     boost_rate *= 1.3;
-  }
+    }*/
 
-  //  if(modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) 
-  //    boost_rate =1.0;
+  if(modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) 
+    boost_rate =1.0;
   //extern /* Subroutine */ int ftest_();  
 
   localmax_value = 0.0;
