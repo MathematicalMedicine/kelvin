@@ -414,7 +414,7 @@ sub assessPedigree {
                   # pre-MAKEPED is Ped Ind Dad Mom Sex Aff Pairs, i.e. some even number > 6
             die "Invalid number of columns in pre-MAKEPED pedigree file $File."
               if (($TotalColumns < 8) || ($TotalColumns & 1));
-            die
+            warn
               "Inconsistent column counts between companion datafile ($MarkerColumns markers) and pre-MAKEPED pedigree file $File ("
               . ($TotalColumns - 6) . ")."
               if ($HaveConfig && (($TotalColumns - $MarkerColumns) != 6));
@@ -425,8 +425,8 @@ sub assessPedigree {
                   # post-MAKEPED is Ped Ind Dad Mom Kid1 nPs nMs Sex Prb Aff Pairs, i.e. some even number > 10
             die "Invalid number of columns in post-MAKEPED pedigree file $File."
               if (($TotalColumns < 12) || ($TotalColumns & 1));
-            die
-              "Inconsistent column counts ($MarkerColumns of $TotalColumns are markers) between companion datafile and post-MAKEPED pedigree file $File."
+            warn
+              "Inconsistent column counts ($MarkerColumns of $TotalColumns total columns should be markers) between companion datafile and post-MAKEPED pedigree file $File."
               if ($HaveConfig && (($TotalColumns - $MarkerColumns) != 10) && (($TotalColumns - $MarkerColumns) != 14));
             return "POST";
         } elsif ($Type eq "BARE") {
@@ -698,7 +698,7 @@ sub loadFrequencies {
         my $RecordType = shift @Tokens;
         if ($RecordType eq "M") {
             $Name = shift @Tokens;
-            die "Marker $Name at line $LineNo of $File not found in map file.\n" if (!defined($Map{$Name}{Pos}));
+            die "Marker $Name at line $LineNo of $File not found in map file.\n" if (!defined($Map{$Name}{SAPos}));
             $AlleleCount = 0;
         } elsif ($RecordType eq "F") {    # List of unnamed allele frequencies
             if (defined($LociAttributes{$Name}{Frequencies})) {
@@ -760,9 +760,12 @@ sub loadMap {
         ($MapFunction) = /^\s*mapfunction\s*=\s*(.*)$/i;
     }
     while (<IN>) {
-        my ($Chr, $Marker, $Pos) = split /\s+/;
+        my ($Chr, $Marker, $SAPos, $MalePos, $FemalePos, $BPPos) = split /\s+/;
         $Map{$Marker}{Chr} = $Chr;
-        $Map{$Marker}{Pos} = $Pos;
+        $Map{$Marker}{SAPos} = $SAPos;
+        $Map{$Marker}{MalePos} = $SAPos;
+        $Map{$Marker}{FemalePos} = $SAPos;
+        $Map{$Marker}{BPPos} = $SAPos;
     }
     close IN;
 }

@@ -49,16 +49,10 @@ sub numericIsh {
 
 #####################################
 #
-sub dirAS {
-    $UnknownAffection = $Directives{AS}[0];
-    $Unaffected       = $Directives{AS}[1];
-    $Affected         = $Directives{AS}[2];
-}
-
-#####################################
-#
-sub dirUP {
-    $UnknownPerson = $Directives{UP}[0];
+sub dirPhenoCodes {
+    $UnknownAffection = $Directives{PhenoCodes}[0];
+    $Unaffected       = $Directives{PhenoCodes}[1];
+    $Affected         = $Directives{PhenoCodes}[2];
 }
 
 #####################################
@@ -107,13 +101,13 @@ print "-write seen, using \"$WritePrefix\" prefix\n"      if ($write);
 
 my $ConfFile = shift;
 loadConf($ConfFile);
-if (defined($Directives{DF}[0])) { $companionFile = $Directives{DF}[0]; }
+if (defined($Directives{LocusFile}[0])) { $companionFile = $Directives{LocusFile}[0]; }
 loadCompanion($companionFile);
-if (defined($Directives{MP}[0])) { $mapFile = $Directives{MP}[0]; }
+if (defined($Directives{MapFile}[0])) { $mapFile = $Directives{MapFile}[0]; }
 loadMap($mapFile);
-if (defined($Directives{MK}[0])) { $markersFile = $Directives{MK}[0]; }
-loadMarkers($markersFile);
-if (defined($Directives{PD}[0])) { $pedFile = $Directives{PD}[0]; }
+if (defined($Directives{FrequencyFile}[0])) { $markersFile = $Directives{FrequencyFile}[0]; }
+loadFrequencies($markersFile);
+if (defined($Directives{PedigreeFile}[0])) { $pedFile = $Directives{PedigreeFile}[0]; }
 
 $maf0 = addMissingAlleles();
 
@@ -168,12 +162,12 @@ close OUT;
 open OUT, ">" . $WritePrefix . "_Parameter.Dat";
 print OUT '# $Id$'; print OUT "\n";
 
-print OUT "simulate markers $PairCount using trait\n";
+print OUT "simulate markers ".(scalar(@Loci)-1)." using trait\n";
 print OUT "map marker Kosambi positions ";
 
 for my $Locus (@Loci) {
     next if ($LociAttributes{$Locus}{Type} eq "T");
-    print OUT $Map{$Locus}{Pos}." ";
+    print OUT $Map{$Locus}{SAPos}." ";
 }
 print OUT "\n";
 
@@ -197,7 +191,7 @@ for my $Locus (@Loci) {
 
 print OUT "\nset markers $MarkerSeq data\n";
 
-my $PedSeq = "a";
+$PedSeq = "a";
 for my $Ped (sort numericIsh keys %Pedigrees) {
     for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
         print OUT $PedSeq.$Ind;
