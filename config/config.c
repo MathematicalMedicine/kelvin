@@ -1371,20 +1371,23 @@ int getNextTokgroup (FILE *fp, char ***tokgroup_h, int *tokgroupsize)
   int numtoks;
   char *semicolon;
   
-  while ((buffptr == NULL) || (strlen (buffptr) == 0)) {
-    if (fgets (buff, BUFFSIZE, fp) == 0) {
-      lineno = -1;
-      return (0);
+  while (1) {
+    if (buffptr == NULL || strlen (buffptr) == 0) {
+      if (fgets (buff, BUFFSIZE, fp) == 0) {
+	lineno = -1;
+	return (0);
+      }
+      lineno++;
+      permuteLine (buffptr = buff, BUFFSIZE);
     }
-    lineno++;
-    permuteLine (buffptr = buff, BUFFSIZE);
+    if ((semicolon = index (buffptr, ';')) != NULL)
+      *(semicolon++) = '\0';
+    numtoks = tokenizeLine (buffptr, tokgroup_h, tokgroupsize);
+    buffptr = semicolon;
+    if (numtoks == 0)
+      continue;
+    return (numtoks);
   }
-  if ((semicolon = index (buffptr, ';')) != NULL)
-    *(semicolon++) = '\0';
-
-  numtoks = tokenizeLine (buffptr, tokgroup_h, tokgroupsize);
-  buffptr = semicolon;
-  return (numtoks);
 }
 
 
