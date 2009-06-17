@@ -274,13 +274,16 @@ sub bucketizePedigrees {
                     my $DadKey = $Pedigrees{$Ped}{$Dad}{Mks}[$i];
                     ($DadKey eq '2 1') and $DadKey = '1 2';
                     $DadKey .= $Pedigrees{$Ped}{$Dad}{Aff};
+		    $DadKey .= $Pedigrees{$Ped}{$Dad}{LC} if ($liability);
                     my $Mom    = $Pedigrees{$Ped}{$Ind}{Mom};
                     my $MomKey = $Pedigrees{$Ped}{$Mom}{Mks}[$i];
                     ($MomKey eq '2 1') and $MomKey = '1 2';
                     $MomKey .= $Pedigrees{$Ped}{$Mom}{Aff};
+		    $MomKey .= $Pedigrees{$Ped}{$Mom}{LC} if ($liability);
                     my $ChildKey = $Pedigrees{$Ped}{$Ind}{Mks}[$i];
                     ($ChildKey eq '2 1') and $ChildKey = '1 2';
                     $ChildKey .= $Pedigrees{$Ped}{$Ind}{Aff};
+		    $ChildKey .= $Pedigrees{$Ped}{$Ind}{LC} if ($liability);
 
                     if (defined($Directives{SexLinked}) || $XC || defined($Directives{Imprinting}) || $imprinting) {
                         $DadKey   .= $Pedigrees{$Ped}{$Dad}{Sex};
@@ -902,7 +905,7 @@ $maf0 = addMissingAlleles();
 my $Type = "";
 if ($pre) { $Type = "PRE"; } elsif ($post) { $Type = "POST"; } elsif ($bare) { $Type = "BARE"; }
 my $pedFileType = assessPedigree($pedFile, $Type);
-$PairCount = loadPedigree($pedFile, $pedFileType);
+$PairCount = loadPedigree($pedFile, $pedFileType, $liability);
 
 #print Dumper(\%Pedigrees);
 

@@ -423,8 +423,8 @@ sub assessPedigree {
             $TotalColumns += 2 if ($noparents);    # Make up for no parents here
             $TotalColumns -= 1 if ($liability);    # Make up for extra liability class column
                   # post-MAKEPED is Ped Ind Dad Mom Kid1 nPs nMs Sex Prb Aff Pairs, i.e. some even number > 10
-            die "Invalid number of columns in post-MAKEPED pedigree file $File."
-              if (($TotalColumns < 12) || ($TotalColumns & 1));
+            die "Invalid number of columns ($TotalColumns) in post-MAKEPED pedigree file $File."
+              if (($TotalColumns < 12)); # || ($TotalColumns & 1));
             warn
               "Inconsistent column counts ($MarkerColumns of $TotalColumns total columns should be markers) between companion datafile and post-MAKEPED pedigree file $File."
               if ($HaveConfig && (($TotalColumns - $MarkerColumns) != 10) && (($TotalColumns - $MarkerColumns) != 14));
@@ -465,6 +465,7 @@ sub assessPedigree {
 sub loadPedigree {
     my $File = shift();
     my $Type = shift();
+    my $liability = shift();
     die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
     my $LineNo      = 0;
@@ -514,6 +515,7 @@ sub loadPedigree {
 
         if ($liability) {
             $LC = shift @Alleles;
+	    $Pedigrees{$Ped}{$Ind}{LC} = $LC;
         }
 
         # Handle marker pairs
