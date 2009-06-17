@@ -281,9 +281,20 @@ int permuteLine (char *line, int maxlength)
   while (1) {
     //printf ("%*sv (va %d)\n", va+1, " ", va);
     //printf (" %s", line);
-    //printf ("%*s^ (vb %d, state %d, compcount %d)\n", vb+1, " ", vb, state, compcount);
+    //printf ("%*s^ (vb %d, char %d, state %d, compcount %d)\n", vb+1, " ", vb, line[vb],
+    //        state, compcount);
 
-    if (index (" \t", line[vb]) != NULL) {
+    /* It's important that we check first for a NULL character. index() will 
+     * return success when searching any string for a NULL character, so we have
+     * to check that case to have any confidence in index() later on.
+     */
+    if ((line[vb] == '\0') || (index ("\n\r", line[vb]) != NULL)) {
+      if (state == INWHITESPACE)
+	va--;
+      line[va] = '\0';
+      break;
+      
+    } else if (index (" \t", line[vb]) != NULL) {
       if (state == INSTRING) {
 	line[va++] = ' ';
 	if (state != STARTOFLINE)
@@ -310,12 +321,6 @@ int permuteLine (char *line, int maxlength)
       state = INSEPARATOR;
 
     } else if (line[vb] == '#') {
-      if (state == INWHITESPACE)
-	va--;
-      line[va] = '\0';
-      break;
-
-    } else if ((index ("\n\r", line[vb]) != NULL) || (line[vb] == '\0')) {
       if (state == INWHITESPACE)
 	va--;
       line[va] = '\0';

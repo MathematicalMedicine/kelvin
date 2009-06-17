@@ -65,12 +65,13 @@ typedef struct {
 
 typedef struct {
   int sexSpecificThetas,
+    sexAveragedThetas,
     traitLoci,
     constraints,
     penetrance,
     mean,
-    standarddev,
-    degfreedom;
+    standardDev,
+    degFreedom;
 } st_observed;
 
 ModelOptions modelOptions;
@@ -132,6 +133,7 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &modelOptions.
 				{"PPLFile", set_optionfile, &modelOptions.pplfile},
 				{"CountFile", set_optionfile, &modelOptions.ccfile},
 				{"MODFile", set_optionfile, &modelOptions.modfile},
+				{"SurfaceFile", set_optionfile, &modelOptions.intermediatefile},
 				{"NIDetailFile", set_optionfile, &modelOptions.dkelvinoutfile},
 
 				{"NonPolynomial", clear_flag, &modelOptions.polynomial},
@@ -344,50 +346,122 @@ void parseCommandLine (int argc, char *argv[])
 
 void validateConfig ()
 {
-  /* Check what was explicitly specified against what was implied. Implying model options
-   * by setting parameters (ex. implying a sex specific map by configuring male theta
-   * values) is no longer acceptable. The user must specify what they want, we won't guess.
+  /* Check that the configuration directives are both compatible and sufficient. We may
+   * check the same combinations from multiple directions. For the most part, we don't
+   * imply anything anymore (ex. implying a sex specific map by configuring male theta
+   * values). The user must specify what they want, we won't guess. One major exception
+   * is MarkerToMarker, which silently turns on FixedModels, if it's not on already.
    */
 
-  if (modelOptions.polynomialScale && ! modelOptions.polynomial)
-    logMsg (LOGDEFAULT, LOGFATAL, "PolynomialScale is incompatibale with NonPolynomial\n");
+  /* Penetrance, Mean and DegreesOfFreedom all fill the same data structures. Make
+   * sure that more than one was not specified.
+   */
+  if (observed.penetrance) {
+    if (observed.mean)
+      logMsg (LOGDEFAULT, LOGFATAL, "Don't specify %s and %s\n", PENETRANCE_STR, MEAN_STR);
+    if (observed.degFreedom)
+      logMsg (LOGDEFAULT, LOGFATAL, "Don't specify %s and %s\n", PENETRANCE_STR, DEGOFFREEDOM_STR);
+  } else if (observed.mean && observed.degFreedom)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify %s and %s\n", MEAN_STR, DEGOFFREEDOM_STR);
+  
+  /* Sex-averaged thetas are mutualy exclusive with sex-specific thetas. */
+  if (observed.sexAveragedThetas && observed.sexSpecificThetas)
+    KLOG (LOGDEFAULT, LOGFATAL, "Don't specify %s with %s or %s\n", THETA_STR, MALETHETA_STR,
+	    FEMALETHETA_STR);
 
-  if (modelOptions.extraMODs && modelType.type == MP)
-    logMsg (LOGDEFAULT, LOGFATAL, "ExtraMODs is incompatibale with Multipoint\n");
+  /* Make sure the various penetrance/param options are compatible with trait/distribution */
+  if (observed.mean && (modelType.trait == DT || modelType.distrib != QT_FUNCTION_T))
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Mean values without %s Normal or %s Normal\n",
+	    QT_STR, QTT_STR);
+  if (observed.standardDev && (modelType.trait == DT || modelType.distrib != QT_FUNCTION_T))
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Mean values without %s Normal or %s Normal\n",
+	    QT_STR, QTT_STR);
+  if (observed.degFreedom &&
+      (modelType.trait == DT || modelType.distrib != QT_FUNCTION_CHI_SQUARE))
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Mean values without %s ChiSq or %s ChiSq\n",
+	    QT_STR, QTT_STR);
+  if (modelRange.tthresh && modelType.trait != CT)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Threshold values without %s\n", QTT_STR);
+  if (observed.penetrance && modelType.trait != DT)
+    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Penetrance values with %s or %s\n", 
+	    QT_STR, QTT_STR);
+  
+  if (! modelOptions.integration) {
+    /* If FixedModel, make sure all the necessary model direcitves are present */
+    if (! modelRange.gfreq)
+      logMsg (LOGDEFAULT, LOGFATAL, "FixedModels requires DiseaseGeneFrequency values\n");
+    if (! modelRange.alpha)
+      logMsg (LOGDEFAULT, LOGFATAL, "FixedModels requires Alpha values\n");
+    
+    if (modelType.type == TP && ! modelRange.theta) 
+      logMsg (LOGDEFAULT, LOGFATAL, "Theta values are required without Multipoint\n");
+    if (modelType.type == MP && modelRange.theta)
+      logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Theta values with Multipoint\n");
+    if (observed.sexSpecificThetas && modelOptions.mapFlag != SS)
+      logMsg (LOGDEFAULT, LOGFATAL, "Don't specify %s or %s without SexSpecific\n",
+	      MALETHETA_STR, FEMALETHETA_STR);
+    if (modelOptions.mapFlag == SS && ! observed.sexSpecificThetas)
+      logMsg (LOGDEFAULT, LOGFATAL, "SexSpecific requires %s ad %s\n", MALETHETA_STR,
+	      FEMALETHETA_STR);
 
+    if (modelType.type == MP && modelRange.dprime)
+      logMsg (LOGDEFAULT, LOGFATAL, "Don't specify DPrime values with Multipoint\n");
+    if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM && modelRange.dprime)
+      logMsg (LOGDEFAULT, LOGFATAL, "Don't specify DPrime values without LD\n");
+    if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && ! modelRange.dprime)
+      logMsg (LOGDEFAULT, LOGFATAL, "DPrime values are required with LD\n");
 
+    if (modelType.trait == DT) {
+      if (! observed.penetrance)
+	logMsg (LOGDEFAULT, LOGFATAL, "Dichotomous trait requires Penetrance values\n");
+    } else if (modelType.trait == QT) {
+      if (modelType.distrib == QT_FUNCTION_T && ! observed.mean) 
+	logMsg (LOGDEFAULT, LOGFATAL, "%s Normal requires Mean values\n", QT_STR);
+      if (modelType.distrib == QT_FUNCTION_T && ! observed.standardDev) 
+	logMsg (LOGDEFAULT, LOGFATAL, "%s Normal requires StandardDev values\n", QT_STR);
+      if (modelType.distrib == QT_FUNCTION_CHI_SQUARE && ! observed.degFreedom)
+	logMsg (LOGDEFAULT, LOGFATAL, "%s ChiSq requires DegreesOfFreedom values\n", QT_STR);
+    } else if (modelType.trait == CT) {
+      if (modelType.distrib == QT_FUNCTION_T && ! observed.mean) 
+	logMsg (LOGDEFAULT, LOGFATAL, "%s Normal requires Mean values\n", QTT_STR);
+      if (modelType.distrib == QT_FUNCTION_T && ! observed.standardDev) 
+	logMsg (LOGDEFAULT, LOGFATAL, "%s Normal requires StandardDev values\n", QTT_STR);
+      if (modelType.distrib == QT_FUNCTION_CHI_SQUARE && ! observed.degFreedom)
+	logMsg (LOGDEFAULT, LOGFATAL, "%s ChiSq requires DegreesOfFreedom values\n", QTT_STR);
+      if (modelRange.tthresh)
+	logMsg (LOGDEFAULT, LOGFATAL, "%s requires Threshold values\n", QTT_STR);
+    }
+    
+  } else {
+    /* Dynamic sampling, make sure (almost) no model directives are present */
+    if (modelRange.gfreq)
+      logMsg (LOGDEFAULT, LOGFATAL,
+	      "Don't specify DiseaseGeneFrequency values without FixedModels\n");
+    if (modelRange.alpha)
+      logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Alpha values without FixedModels\n");
+    if (modelRange.theta)
+      logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Theta values without FixedModels\n");
 
-  /* Theta-related checks */
-  if (modelRange.theta && modelOptions.integration)
-    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Theta values without FixedModels\n");
-  if (modelRange.theta && modelType.type == MP)
-    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Theta values for Multipoint analyses\n");
-  if (observed.sexSpecificThetas && modelOptions.mapFlag != SS)
-    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify sex-specific Thetas without SexSpecific\n");
+    if (modelRange.dprime)
+      logMsg (LOGDEFAULT, LOGFATAL, "Don't specify DPrime values without FixedModels\n");
+    if (observed.constraints)
+      logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Constraints without FixedModels\n");
 
-  /* DPrime-related checks */
-  if (modelRange.dprime && modelOptions.integration)
-    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify DPrime values without FixedModels\n");
-  if (modelRange.dprime && modelType.type == MP)
-    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify DPrime values for Multipoint analyses\n");
-  if (modelRange.dprime && modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
-    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify DPrime values without LD\n");
+    if (modelRange.penet) {
+      if (modelType.distrib == QT_FUNCTION_CHI_SQUARE && observed.degFreedom) {
+	/* FIXME: need to check somehow how many penetrance values were specified.
+	 * Two is okay (min and max), any other number is incorrect. */
+	; 
+      } else {
+	logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Penetrance values without FixedModels\n");
+      }
+    }
 
-  /* Other fixed-model-related checks */
-  if (modelRange.alpha && modelOptions.integration)
-    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Alpha values without FixedModels\n");
-  if (modelRange.gfreq && modelOptions.integration)
-    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify DiseaseGeneFrequency values without FixedModels\n");
-  if (observed.constraints && modelOptions.integration)
-    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Constraints values without FixedModels\n");
+    /* FIXME: And make sure that two threshold values are specified for dkelvin+QTT */
+    //if (modelType.trait == CT) /* and not exactly two threshold values... */
+    //  logMsg (LOGDEFAULT, LOGFATAL, "Specify only the minimum and maximum Threshold values\n");
 
-  /* FIXME: Should prolly make sure only two values (hi and lo limits) are specified here */
-  if ((modelRange.penet && modelOptions.integration) &&
-      !(modelType.distrib == QT_FUNCTION_CHI_SQUARE && observed.degfreedom))
-    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Penetrance values without FixedModels\n");
-  if (modelRange.tthresh && modelOptions.integration && modelType.trait != CT)
-    logMsg (LOGDEFAULT, LOGFATAL, "Don't specify Threshold values without FixedModels\n");
-  /* FIXME: And make sure that two threshold values are specified for dkelvin+QTT */
+  }
 
   /* Things that don't work with Multipoint */
   if (modelOptions.markerAnalysis && modelType.type == MP)
@@ -643,9 +717,10 @@ int set_theta (char **toks, int numtoks, void *unused)
     bail ("missing argument to directive '%s'\n", toks[0]);
   if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
     bail ("illegal argument to directive '%s'\n", toks[0]);
-  if (strncasecmp (toks[0], THETA_STR, strlen (toks[0])) == 0)
+  if (strncasecmp (toks[0], THETA_STR, strlen (toks[0])) == 0) {
     type = THETA_AVG;
-  else if (strncasecmp (toks[0], MALETHETA_STR, strlen (toks[0])) == 0) {
+    observed.sexAveragedThetas = 1;
+  } else if (strncasecmp (toks[0], MALETHETA_STR, strlen (toks[0])) == 0) {
     type = THETA_MALE;
     observed.sexSpecificThetas = 1;
   } else if (strncasecmp (toks[0], FEMALETHETA_STR, strlen (toks[0])) == 0) {
@@ -938,7 +1013,7 @@ int set_qt_standarddev (char **toks, int numtoks, void *unused)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
     addParameter (&modelRange, 0, vals[va]);
-  observed.standarddev = 1;
+  observed.standardDev = 1;
   free (vals);
   return (0);
 }
@@ -957,7 +1032,7 @@ int set_qt_degfreedom (char **toks, int numtoks, void *unused)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
     addPenetrance (&modelRange, geno-PEN_DD, vals[va]);
-  observed.degfreedom = 1;
+  observed.degFreedom = 1;
   free (vals);
   return (0);
 }
