@@ -447,7 +447,7 @@
             if (modelType.trait == CT) 
 	        fprintf (fpHet, ",%.3f)", localmax_x[j++]);
 
-            fprintf (fpHet, "\n");
+            fprintf (fpHet, ")\n");
 
 	    if (maximum_function_value < localmax_value) {
 	      maximum_function_value = localmax_value;
