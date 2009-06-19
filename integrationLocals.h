@@ -1,3 +1,4 @@
+
 int liabIdx;
 int mkrFreqIdx;
 double mkrFreq;
@@ -20,8 +21,9 @@ double dist;
 int traitIndex = 0;
 double relativePos;
 
-
-
+int *BRscale;    /*scale per BR    added 6/17/2009*/
+int max_scale; /*overall max scale*/
+double newLog10BR;
 
   /* Variables for DCUHRE   added 1/2008 */
   double integral = 0.0, abserr = 0;
