@@ -1,7 +1,8 @@
 /**
 @file tp_result_hash.c
 
- Maintain a hash of tp_results for dynamic grid.
+ Maintain a hash of tp_result structures primarily for dynamic grid, but used by
+ fixed grid as well to enable use of uniform output routines.
 
  Written by Bill Valentine-Cooper.
 
@@ -9,12 +10,9 @@
  reserved.  Permission is hereby given to use this software for
  non-profit educational purposes only.
 
-  Uses the hashtab routines in util, just like sw.c. Currently only
-  provides next entries in the order in which they were created.
+ See the include file tp_result_hash.h for documentation.
 
-  Currently not thread-safe.
-
-  Includes a test driver. Build with:
+ Includes a test driver. Build with:
 
   gcc -DMAIN -g -o tp_result_hash tp_result_hash.c -I utils/ -lutils
 
@@ -26,7 +24,7 @@
 #include <math.h>
 #include "hashtab.h"
 
-#include "summary_result.h"
+#include "tp_result_hash.h"
 
 // Hash table to find them individually
 htab *tp_result_hash = NULL;
@@ -41,7 +39,7 @@ struct tp_result_hash_entry {
 };
 
 // List of tp_result structures so we can qsort them and provide them sequentially
-struct SUMMARY_STAT **tp_result_list = NULL;
+SUMMARY_STAT **tp_result_list = NULL;
 int tp_result_list_count = 0; // How many there actually are
 int tp_result_list_limit = 0; // Amount of space allocated
 
@@ -119,6 +117,7 @@ compareTPRsByIndices (const void *left, const void *right)
     return leftTPR->dprimeIdx < rightTPR->dprimeIdx ? -1 : 1;
 }	
 
+void
 sort_tp_result_by_indices ()
 {
   qsort (tp_result_list, tp_result_list_count,
