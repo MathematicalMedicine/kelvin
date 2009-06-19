@@ -1,6 +1,6 @@
 #include "kelvin.h"
 #include "kelvinHandlers.h"
-#include "kelvinGlobalsNew.h"
+#include "kelvinGlobals.h"
 
 volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update requested via signal
 
