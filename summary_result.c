@@ -5,7 +5,7 @@
 #include <string.h> /* memcpy */
 
 #include "summary_result.h" /* SUMMARY_STAT etc. */
-#include "kelvinGlobalsNew.h"
+#include "kelvinGlobals.h"
 #include "pedlib/pedlib.h" /* for PedigreeSet, Pedigree - hetLR calculations */
 #include "iterationMain.h" /* for ParamStruct */
 
@@ -82,7 +82,7 @@ int record_tp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
   double newsum_log10;
   double homoLR, hetLR, log10HetLR;
   int dprimeIdx, thetaInd, mkrFreqIdx;
-  int j;
+  int j,liabIdx;
   double alphaV, alphaV2;
   int pedIdx;
   Pedigree *pPedigree;
@@ -115,6 +115,35 @@ int record_tp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
 	homoLR = pPedigree->likelihood / pedigreeSet->nullLikelihood[pedIdx];
 	tmp = log10 (alphaV * homoLR + (1 - alphaV));
 	log10HetLR += tmp * pPedigree->pCount[loc2]; // Use the pedigree weight from count file (CF)
+      }
+
+      if(fpIR !=NULL){
+        dk_curModel.alpha = alphaV;
+        fprintf(fpIR,"%6.3f", log10HetLR);
+        if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+          fprintf(fpIR," %4.3f", dk_curModel.dprime[0]);
+        }
+        if(modelOptions.mapFlag == SA){
+          fprintf(fpIR," %4.3f", dk_curModel.theta[0]);
+        } else{
+          fprintf(fpIR," %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[0] );
+        }
+        fprintf(fpIR," %4.3f %4.3f",dk_curModel.dgf,dk_curModel.alpha);
+        for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+          fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
+          if(modelOptions.imprintingFlag){
+            fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
+          }else{
+            fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].dd); 
+          }
+          if (modelType.trait != DICHOTOMOUS && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+            fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].DDSD); 
+	  }
+        }
+        if (modelType.trait == CT){
+          fprintf(fpIR," %4.3f",dk_curModel.pen[0].threshold);  /* If each LC uses different threshold, this does not work*/
+        }
+        fprintf(fpIR,"\n");
       }
 
       oldsum=tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total;
@@ -271,7 +300,7 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
   double newsum_log10;
   double homoLR, hetLR, log10HetLR;
   int gfreqIdx, penIdx, paramIdx, thresholdIdx;
-  int j;
+  int j,liabIdx;
   double alphaV, alphaV2;
   int pedIdx;
   Pedigree *pPedigree;
@@ -315,6 +344,29 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
 	tmp = log10 (alphaV * homoLR + (1 - alphaV));
 	log10HetLR += tmp * pPedigree->pCount[loc2]; // Use the pedigree weight from count file (CF)
       }
+
+      if(fpIR !=NULL){
+        dk_curModel.alpha = alphaV;
+        fprintf(fpIR,"%6.3f", log10HetLR);
+
+        fprintf(fpIR," %4.3f %4.3f",dk_curModel.dgf,dk_curModel.alpha);
+        for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+          fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
+          if(modelOptions.imprintingFlag){
+            fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
+          }else{
+            fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].dd); 
+          }
+          if (modelType.trait != DICHOTOMOUS && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+            fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].DDSD); 
+	  }
+        }
+        if (modelType.trait == CT){
+          fprintf(fpIR," %4.3f",dk_curModel.pen[0].threshold);  /* If each LC uses different threshold, this does not work*/
+        }
+        fprintf(fpIR,"\n");
+      }
+
 
       oldsum=mp_result[posIdx].het_lr_total;
       oldscale=mp_result[posIdx].scale;
