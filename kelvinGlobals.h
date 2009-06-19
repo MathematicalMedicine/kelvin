@@ -1,30 +1,40 @@
-char *programVersion = "V0.38.0";       ///< Overall kelvin version set upon release.
-char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
+#ifndef __kelvinGlobals_h__
+#define __kelvinGlobals_h__
 
-struct swStopwatch *overallSW;
-char messageBuffer[MAXSWMSG];
+#include "config/model_type.h"
+#include "config/model_range.h"
+#include "config/model_options.h"
+#include "pedlib/pedlib.h"
+#include "pedlib/likelihood.h"
+
+extern char *programVersion;
+extern char *kelvinVersion;
+
+extern struct swStopwatch *overallSW;
+//char *messageBuffer;
 
 /* Some default global values. */
 
-/** Number of D primes. If there are more than 2 alleles in the
-  marker/trait, number of D primes and D prime ranges are assumed to
-  be the same to reduce complexity for initial phase of this
-  project. */
-int num_of_d_prime;
-double *d_prime;
-int num_of_theta;
 
-/** Two dimensional array per (dprime, theta).
-  This will be used to calculate PPL. */
+extern LambdaCell *pLambdaCell;
 
-/** Storage for the NULL likelihood for the multipoint calculation under polynomial. */
-double markerSetLikelihood;
+int loopMarkerFreqFlag ;
+int total_count;
 
-/** For multipoint, we use genetic map positions on a chromosome. */
-double *map_position;
-int num_of_map_position;
-  int numPositions;
+char *flexBuffer;
+int flexBufferSize;
 
+PedigreeSet pedigreeSet;	/* Pedigrees. */
+Pedigree *pPedigree;
+int pedIdx;
+//int totalLoci;
+int i;
+TraitLocus *pTraitLocus;
+int locus;
+Polynomial *initialProbPoly2[3];
+double initialProb[3];
+Polynomial *initialProbPoly[3];
+//void *initialProbAddr[3];
 
 /** Transmission matrices provide the pre-computed probability of
  inheritance of a a given combination of marker and trait alleles. */
@@ -33,33 +43,56 @@ XMission *altMatrix;
 XMission *traitMatrix;
 XMission *markerMatrix;
 
-int markerSetChanged; /* Flag for multipoint analysis, did set of markers change? */
-int locusListChanged; /* flag for multipoint analysis, did relative trait position or marker set change? */
-
-int prevFirstMarker;		/* first marker in the set for multipoint analysis */
-int prevLastMarker;		/* last marker in the set for multipoint analysis */
-
-LambdaCell *pLambdaCell = NULL;
-int loopMarkerFreqFlag = 0;
-int total_count;
-
-char *flexBuffer = NULL;
-int flexBufferSize = 0;
-
-/* Variables became global from local */
-PedigreeSet pedigreeSet;	/* Pedigrees. */
 int loc1, loc2;
-Locus *pLocus;
 Locus *pLocus1;
 Locus *pLocus2;
+Locus *pLocus;
 Trait *pTrait;
 int traitLocus;
 int totalLoci;
 void *initialProbAddr[3];
 char *tmpID;
-LDLoci *pLDLoci = NULL;
 
-int R_square_flag = FALSE;
-double R_square = 0;
+extern FILE *fpCond;    ///< Conditional LR for genetic counseling, global due to likelihood.c write!
+extern FILE *fpHet;     ///< Average HET LR file (Bayes Ratio file) pointer
+extern FILE *fpPPL;     ///< PPL output file pointer
+extern FILE *fpMOD;     // MOD and maximizing model information
+/* no longer needed, since MOD and MAX information goes to the same file now */
+  //FILE *fpTP = NULL;      ///< Ancillary Two-point output, used to go to stderr
+extern FILE *fpIR;      ///< Intermediate results, used to go to stderr, normally dkelvin-only
+extern FILE *fpDK;      // DCHURE detail file
 
-FILE *fpCond = NULL;    ///< Conditional LR for genetic counseling, global due to likelihood.c write!
+/* Moved here from integrationGlobals.h 6/18/2009 
+   Use dk_curModel for printing surface points in fpIR*/
+typedef struct {
+  double DD,
+    Dd,
+    dD,
+    dd,
+    DDSD,
+    DdSD,
+    dDSD,
+    ddSD,
+    threshold;
+} st_DKMaxModelPenVector;
+
+typedef struct {
+  double *dprime,
+    theta[2],
+    alpha,
+    dgf,
+    mf,
+    r2;
+  st_DKMaxModelPenVector *pen;
+} st_DKMaxModel;
+
+st_DKMaxModel dk_globalmax, dk_dprime0max, dk_theta0max, dk_curModel;
+
+
+/**********************************************************************
+ * Progress meters.
+ **********************************************************************/
+extern struct swStopwatch *overallSW;
+
+
+#endif
