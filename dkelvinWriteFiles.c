@@ -34,8 +34,15 @@ void dk_write2ptBRHeader (int loc1, int loc2)
 }
 
 
-void dk_write2ptBRData (double integral)
+void dk_write2ptBRData (double dprimevalue, double theta1, double theta2,double br, int max_scale)
 {
+  int exponent;
+  double base, log10BR;
+
+  log10BR=log10(br);
+  exponent=floor(log10BR);
+  base=pow(10, (log10BR-exponent));
+
   if (fpHet == NULL)
     return;
 
@@ -45,13 +52,11 @@ void dk_write2ptBRData (double integral)
     // for (ii = 0; ii < pLocus1->numOriginalAllele - 1; ii++)
     //   for (jj = 0; jj < pLocus2->numOriginalAllele - 1; jj++)
     //     fprintf (fpHet, "%.2f ", pLambdaCell->lambda[dprimeIdx][ii][jj]);
-    fprintf (fpHet, "%.2f ", fixed_dprime);
+    fprintf (fpHet, "%.2f ", dprimevalue);
   }
-	      
-  if (modelOptions.mapFlag == SA)
-    fprintf (fpHet, "(%.4f,%.4f) %.6e\n", fixed_theta, fixed_theta, integral);
-  else
-    fprintf (fpHet, "(%.4f,%.4f) %.6e\n", fixed_thetaM, fixed_thetaF, integral);
+
+  fprintf (fpHet, "(%.4f,%.4f) %.6fe%+.2d\n", theta1, theta2, base, exponent+max_scale);
+
   fflush (fpHet);
 }
 
@@ -72,16 +77,22 @@ void dk_writeMPBRHeader ()
 }
 
 
-void dk_writeMPBRData (int posIdx, float traitPos, double ppl, double br)
+void dk_writeMPBRData (int posIdx, float traitPos, double ppl, double br, int max_scale)
 {
   int i;
+  int exponent;
+  double base, log10BR;
+
+  log10BR=log10(br);
+  exponent=floor(log10BR);
+  base=pow(10, (log10BR-exponent));
 
   if (fpHet == NULL)
     return;
 
-  fprintf (fpHet, "%d %f %.*f %.6e",
+  fprintf (fpHet, "%d %f %.*f %.6fe%+.2d",
 	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-	   traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000., br);
+	   traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000., base, exponent+max_scale);
   /* print out markers used for this position */
   fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
   for (i = 1; i < modelType.numMarkers; i++) {
@@ -135,7 +146,7 @@ void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel 
 
   fprintf (fpMOD, "%d %f %.6f %f %f",
 	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-	   traitPos, log10 (value), model->alpha, model->dgf);
+	   traitPos, value, model->alpha, model->dgf);
   
   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
     if (! modelOptions.imprintingFlag)
@@ -163,6 +174,7 @@ void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel 
 	fprintf (fpMOD, ",%.3f", model->pen[liabIdx].threshold);
     }
   }
+
   fprintf (fpMOD, ")\n");
   fflush (fpMOD);
 }
@@ -251,7 +263,7 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
   /* MOD */
   if (modelOptions.extraMODs)
     fprintf (fpMOD, "%s ", description);
-  fprintf (fpMOD, "%.4f", log10 (value));
+  fprintf (fpMOD, "%.4f", value); ////log10 (value)); 6/4/2009
   
   /* D' */
   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {	
@@ -304,7 +316,7 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
 }
 
 
-void dk_copyMaxModel (double *arr, st_DKMaxModel *max)
+void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
 {
   int j, idx;
 
@@ -323,17 +335,19 @@ void dk_copyMaxModel (double *arr, st_DKMaxModel *max)
     }
     if (modelType.trait != DICHOTOMOUS) {
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-	max->pen[idx].DDSD = arr[j++];
-	max->pen[idx].DdSD = arr[j++];
+	max->pen[idx].DDSD = arr[j];//arr[j++];
+	max->pen[idx].DdSD = arr[j];//arr[j++];
 	if (! modelOptions.imprintingFlag) {
-	  max->pen[idx].ddSD = arr[j++];
+	  max->pen[idx].ddSD = arr[j];//arr[j++];
 	} else {
-	  max->pen[idx].dDSD = arr[j++];
-	  max->pen[idx].ddSD = arr[j++];
+	  max->pen[idx].dDSD = arr[j];//arr[j++];
+	  max->pen[idx].ddSD = arr[j];//arr[j++];
 	}
       }
       if (modelType.trait == CT) 
-	max->pen[idx].threshold = arr[j++];
+	max->pen[idx].threshold = arr[num-1];  //arr[j++];
     }
   }
+  /*if (modelType.trait == CT) 
+    max->pen[idx].threshold = arr[j++];*/
 }
