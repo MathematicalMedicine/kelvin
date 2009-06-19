@@ -1,16 +1,33 @@
 //#include "dkelvinWriteFiles.h"
 #include "integrationLocals.h"
 #include "integrationSupport.h"
-int numPositions;
+  int numPositions;
+  int size_BR;
+
 
   /* total_dim is the number of all parameters in the 3-layer scheme
-          s->dim in dcuhre.c is the number of parameters in the middle layer alone*/
+          s->dim in dcuhre.c is the number of parameters in the middle layer alone */
+
   total_dim = 2;		// alpha gf
   total_dim += 3 * modelRange.nlclass;	//DD Dd dd
   if(modelOptions.imprintingFlag)
     total_dim += modelRange.nlclass;	//dD
 
+  if (modelType.trait != DT) {
+    if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+      /*total_dim += 3 * modelRange.nlclass;	//SD_DD SD_Dd SD_dd
 
+      if(modelOptions.imprintingFlag)
+        total_dim += modelRange.nlclass;   // SD_dD
+      */
+      total_dim += modelRange.nlclass;
+    }
+    if (modelType.trait == CT) {
+      total_dim ++;//  One threshold for all LCs    //   = modelRange.nlclass;
+    }
+  }
+
+  size_BR= total_dim;
   if (modelType.type == TP) {
     total_dim += 1;		// theta;
     if(modelOptions.mapFlag == SS)
@@ -21,16 +38,11 @@ int numPositions;
     }
   }
 
-  if (modelType.trait != DT) {
-    if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-      total_dim += 3 * modelRange.nlclass;	//SD_DD SD_Dd SD_dd
-
-      if(modelOptions.imprintingFlag)
-        total_dim += modelRange.nlclass;   // SD_dD
-    }
-    if (modelType.trait == CT) {
-      total_dim += modelRange.nlclass;
-    }
+  xl=(double *)malloc(size_BR*sizeof(double));
+  xu=(double *)malloc(size_BR*sizeof(double));
+  for(i=0;i<size_BR;i++){
+    xl[i]=0;
+    xu[i]=1;
   }
 
   memset (&dk_globalmax, 0, sizeof (st_DKMaxModel));
@@ -50,7 +62,21 @@ int numPositions;
   KASSERT ((dk_globalmax.pen != NULL) && (dk_dprime0max.pen != NULL) &&
 	   (dk_theta0max.pen != NULL), "malloc failed");
 
-  fprintf (stderr, "total dim =%d\n", total_dim);
+  if(fpIR !=NULL){
+    memset (&dk_curModel, 0, sizeof (st_DKMaxModel));        
+    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+    /* Assumes that dkelvin can only handle a single D' */
+      dk_curModel.dprime = (double *) calloc (1, sizeof (double));
+      KASSERT ((dk_curModel.dprime != NULL), "malloc failed");
+    }
+    dk_curModel.pen = calloc (modelRange.nlclass, sizeof (st_DKMaxModelPenVector));
+    KASSERT ((dk_curModel.pen != NULL), "malloc failed");
+
+    fprintf(fpIR, "#HLOD (dprime) theta(M,F) gfreq alpha Pene\n");
+  }
+
+
+  fprintf (stderr, "Total dim =%d and BR dim=%d \n", total_dim, size_BR);
 
   if (modelType.trait != DT) {
     /* Setting ranges for each variables. Default is [0,1] */
@@ -89,10 +115,10 @@ int numPositions;
       k += 3;
 
       if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
-	xl[k] = xl[k + 1] = xl[k + 2] = 0.3;
+	/*xl[k] = xl[k + 1] = xl[k + 2] = 0.7;
 	xu[k] = xu[k + 1] = xu[k + 2] = 1.0;//3.0;
         if(modelOptions.imprintingFlag){
-          xl[k+3]= 0.3;
+          xl[k+3]= 0.7;
           xu[k+3]= 1.0;
 	}
 	volume_region *= (xu[k] - xl[k]);
@@ -103,19 +129,40 @@ int numPositions;
           k++;
         }
 	k += 3;
+	*/
+        xl[k]= 0.7;
+        xu[k]= 1.0;
+	volume_region *= (xu[k] - xl[k]);
+	k++;
       }
-      if (modelType.trait == CT) {
+      /*if (modelType.trait == CT) {
 	xl[k] = modelRange.tthresh[liabIdx][0];//0.3;
 	xu[k] = modelRange.tthresh[liabIdx][modelRange.ntthresh -1];// 23.0;
 	volume_region *= (xu[k] - xl[k]);
 	k++;
 	//   fprintf(stderr, " in CT\n ");
 
-      }
+	}*/
     }  // retangular volume region is calculated and stored in volume_region
-
-    fprintf (stderr,"The number of dimension for calculation of BR is %d\n",k);
+    if (modelType.trait == CT) {
+      xl[k] = 0.0; // modelRange.tthresh[liabIdx][0];//0.3;
+      xu[k] = 3.0; 
+      volume_region *= (xu[k] - xl[k]);
+      k++;
+    } 
+    // fprintf (stderr,"The number of dimension for calculation of BR is %d\n",k);
   }
+
+  /*fpDK header*/
+  if (fpDK != NULL) {
+    if(modelType.type == TP) {
+      fprintf(fpDK,"num D1 Theta(M,F) numLR BR error scale MOD\n");
+    }else{
+      fprintf(fpDK, "traitPos ppl BR error numLR scale MOD\n");
+    }
+    fflush (fpDK);
+  }
+
 
   /* only for multipoint - we don't handle LD under multipoint yet */
   /* DCUHRE do now use likelihoodDT or likelihoodQT to store null likelihoods */
@@ -215,9 +262,9 @@ int numPositions;
 
       for (loc2 = loc1 + 1; loc2 < originalLocusList.numLocus; loc2++) {
 
-	maximum_function_value = 0.0;  // global max 
-        maximum_dprime0_value = 0.0;   // max when D' == 0
-        maximum_theta0_value = 0.0;    // max when Theta == 0
+	overallMOD = DBL_MIN_10_EXP +1;  //0.0;  // global max 
+        dprime0_MOD = 0.0;   // max when D' == 0
+        theta0_MOD = 0.0;    // max when Theta == 0
 	/* Since dynamic sampling is unlikely to ever sample at Theta == 0,
 	 * we'll need to narrow down the Theta that's closest. Start by setting
 	 * the thetas for theta0max to a "large" value.
@@ -327,43 +374,43 @@ int numPositions;
 	  /* for each D prime and theta, print out average and maximizing model information - MOD */
 	  if (modelOptions.markerAnalysis == FALSE)
 	    dk_write2ptBRHeader (loc1, loc2);
-
+       
           /* analysis specific statistic initialization*/
           if(modelOptions.mapFlag == SA){
-	    le_small_theta = 0.0;
-	    le_big_theta = 0.0;
-	    ld_small_theta = 0.0;
-	    ld_big_theta = 0.0;
-	    ld_unlinked = 0.0;
-            le_unlinked=0.0;
-
             num_BR= num_sample_Dp_theta;  // currently 141
-
 	  }else{      ///  This is for sec-specific analysis in four regions
-            thetaSMSF= 0.0;  // 0< thetaM <0.05  0< thetaF <0.05  
-            thetaBMSF= 0.0;  // 0.05< thetaM <0.5  0< thetaF <0.05  
-            thetaSMBF= 0.0;  // 0< thetaM <0.05  0.05< thetaF <0.5  
-            thetaBMBF= 0.0;  // 0.05< thetaM <0.05  0.05< thetaF <0.5 
-            
             num_BR = num_sample_SS_theta;  // currenlty 260
 	  }
-
+          max_scale=0;
+          BRscale = (int *) calloc( num_BR, sizeof(int));
 	  /*The main loop to Calculate BR(theta, dprime) or BR(thetaM, thetaF)*/
    	  for (i = 0; i < num_BR; i++) {    /* num_BR = 141 for Sex-Average Analysis
 					       = 260 for Sex-Specific Analysis */
+
             if(modelOptions.mapFlag == SA){ 
 	      fixed_dprime = dcuhre2[i][0];
 	      fixed_theta = dcuhre2[i][1];
-              //fprintf (stderr, "i=%d Dprime=%f theta=%f \n", i, fixed_dprime, fixed_theta);
+
+              if(fpIR != NULL){
+                if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) 
+	          dk_curModel.dprime[0] = fixed_dprime;
+                dk_curModel.theta[0] = dk_curModel.theta[1] = fixed_theta;
+	      }
 	    }else{
               fixed_thetaM = thetaSS[i][0];
               fixed_thetaF = thetaSS[i][1];
+
+              if(fpIR != NULL){
+                dk_curModel.dprime[0] = 0.0;
+                dk_curModel.theta[0] = fixed_thetaM;
+                dk_curModel.theta[1] = fixed_thetaF;
+	      }
               //fprintf (stderr, "i=%d Dprime=%f theta=%f   loc1=%d  loc2=%d\n", i, fixed_thetaM, fixed_thetaF,loc1,loc2);
 	    }
+
    	    integral = 0.0;
 	    abserr = 0.0;
-	      
-	   
+	      	   
 	    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {  // checking Dprime
 	      for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
 		if (fabs (pLambdaCell->lambda[dprimeIdx][0][0] - fixed_dprime) < 0.0001) {
@@ -379,31 +426,32 @@ int numPositions;
 	    num_out_constraint = 0;
 
             /* Call DCUHRE  Domain information is stored in global variables,  xl an xu*/
-	    kelvin_dcuhre_integrate (&integral, &abserr, volume_region);
+	    kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &(BRscale[i]));
 
             if(modelOptions.mapFlag == SA){ 	    
 	      dcuhre2[i][3] = integral;
 	    }else{
               thetaSS[i][3] = integral;
 	    }
+            if(BRscale[i]>max_scale){
+              max_scale=BRscale[i];
+	    }
 
             /* Dk specific results*/
 	    if (fpDK != NULL) {
 	      if(modelOptions.mapFlag == SA){
-		fprintf(fpDK,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_dprime,fixed_theta, s->total_neval, integral, abserr,log10 (localmax_value));
+		fprintf(fpDK,"%d %6.4f %6.4f %6d %8.4f %8.4f %5d %8.4f\n",i, fixed_dprime,fixed_theta, s->total_neval, integral, abserr,BRscale[i],localMOD);
 	      }else{
-		fprintf(fpDK,"%d %6.4f %6.4f %6d %8.4f %8.4f %8.4f\n",i, fixed_thetaM,fixed_thetaF, s->total_neval, integral, abserr,log10 (localmax_value));
+		fprintf(fpDK,"%d %6.4f %6.4f %6d %8.4f %8.4f %5d %8.4f\n",i, fixed_thetaM,fixed_thetaF, s->total_neval, integral, abserr,BRscale[i],localMOD);
 	      }
 	      fflush (fpDK);
 	    }
        
             R_square = 0.0;// tp_result[dprimeIdx][thetaInd][modelRange.nafreq].R_square;
 
-	    if (modelOptions.markerAnalysis == FALSE)
-	      dk_write2ptBRData (integral);
 
-	    if (maximum_function_value < localmax_value) {
-	      maximum_function_value = localmax_value;
+	    if (overallMOD < localMOD) {
+	      overallMOD = localMOD;
 	      if (modelOptions.mapFlag == SA) {
 		if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
 		  maxima_x[0] = dk_globalmax.dprime[0] = fixed_dprime;
@@ -414,7 +462,7 @@ int numPositions;
 		maxima_x[0] = dk_globalmax.theta[0] = fixed_thetaM;
 		maxima_x[1] = dk_globalmax.theta[1] = fixed_thetaF;
               }
-	      dk_copyMaxModel (localmax_x, &dk_globalmax);
+	      dk_copyMaxModel (localmax_x, &dk_globalmax,size_BR);
 	      memcpy (&(maxima_x[2]), localmax_x, sizeof (double) * 18);
 	    }
 
@@ -422,11 +470,11 @@ int numPositions;
 	    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
 	      double delta_dprime = dk_dprime0max.dprime[0] - fixed_dprime;
 	      if ((fabs (fixed_dprime) < fabs (dk_dprime0max.dprime[0]) - 1e-9) ||
-		  ((fabs (delta_dprime) <= 1e-9) && (maximum_dprime0_value < localmax_value))) {
-		maximum_dprime0_value = localmax_value;
+		  ((fabs (delta_dprime) <= 1e-9) && (dprime0_MOD < localMOD))) {
+		dprime0_MOD = localMOD;
 		dk_dprime0max.dprime[0] = fixed_dprime;
 		dk_dprime0max.theta[0] = dk_dprime0max.theta[1] = fixed_theta;
-		dk_copyMaxModel (localmax_x, &dk_dprime0max);
+		dk_copyMaxModel (localmax_x, &dk_dprime0max,size_BR);
 	      }
 	    }
 	    
@@ -436,12 +484,12 @@ int numPositions;
 	       * or if fixed_theta is more or less the same and the new BR
 	       * is greater than the max BR */
 	      if ((fixed_theta < dk_theta0max.theta[0] - 1e-9) ||
-		  ((fabs (delta_theta) <= 1e-9) && (maximum_theta0_value < localmax_value))) {
-		maximum_theta0_value = localmax_value;
+		  ((fabs (delta_theta) <= 1e-9) && (theta0_MOD < localMOD))) {
+		theta0_MOD = localMOD;
 		if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
 		  dk_theta0max.dprime[0] = fixed_dprime;
 		dk_theta0max.theta[0] = dk_theta0max.theta[1] = fixed_theta;
-		dk_copyMaxModel (localmax_x, &dk_theta0max);
+		dk_copyMaxModel (localmax_x, &dk_theta0max,size_BR);
 	      }
 	      
 	    } else if (modelOptions.mapFlag == SS) {
@@ -452,57 +500,102 @@ int numPositions;
 		  (fixed_thetaM < dk_theta0max.theta[0] - 1e-9 && 
 		   fixed_thetaF < dk_theta0max.theta[1] - 1e-9) ||
 		  (fabs (delta_thetaM) <= 1e-9 && fabs (delta_thetaF) <= 1e-9 &&
-		   maximum_theta0_value < localmax_value)) {
-		maximum_theta0_value = localmax_value;
+		   theta0_MOD < localMOD)) {
+		theta0_MOD = localMOD;
 		if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
 		  dk_theta0max.dprime[0] = 0.0;
 		dk_theta0max.theta[0] = fixed_thetaM;
 		dk_theta0max.theta[1] = fixed_thetaF;
-		dk_copyMaxModel (localmax_x, &dk_theta0max);
+		dk_copyMaxModel (localmax_x, &dk_theta0max,size_BR);
 	      }
 	    }
-	    
+	    if ((modelOptions.mapFlag == SA) &&(modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) && (i == 9)) {
+	        //fprintf (stderr,"End of LE case\n");
+	      i = 141;
+	    }
+	  }			/* end of for to calculate BR(theta, dprime) or BR(thetaM, thetaF)*/
 
-	    //fprintf (stderr, "tp result %f %f is %13.10f   \n",  fixed_theta, fixed_dprime, integral);
+          /* analysis specific statistic initialization*/
+          if(modelOptions.mapFlag == SA){
+	    le_small_theta = 0.0;
+	    le_big_theta = 0.0;
+	    ld_small_theta = 0.0;
+	    ld_big_theta = 0.0;
+	    ld_unlinked = 0.0;
+            le_unlinked=0.0;
 
+	  }else{      ///  This is for sec-specific analysis in four regions
+            thetaSMSF= 0.0;  // 0< thetaM <0.05  0< thetaF <0.05  
+            thetaBMSF= 0.0;  // 0.05< thetaM <0.5  0< thetaF <0.05  
+            thetaSMBF= 0.0;  // 0< thetaM <0.05  0.05< thetaF <0.5  
+            thetaBMBF= 0.0;  // 0.05< thetaM <0.05  0.05< thetaF <0.5 
+	  }
+   	  for (i = 0; i < num_BR; i++) {    /* num_BR = 141 for Sex-Average Analysis
+					       = 260 for Sex-Specific Analysis */
             if(modelOptions.mapFlag == SA){
-            
+              /* Use unifor scaling with max_scale */
+              if((BRscale[i] > max_scale)&& (dcuhre2[i][3]>0)){
+		newLog10BR = log10(dcuhre2[i][3]) + BRscale[i] - max_scale;
+                if (newLog10BR < DBL_MIN_10_EXP+1) {
+                  dcuhre2[i][3] = 0;
+                } else {
+                  dcuhre2[i][3] = pow(10, newLog10BR);
+                }
+	      }
+
 	      if (i < 5) {
-	        le_small_theta += integral * dcuhre2[i][2];
+	        le_small_theta += dcuhre2[i][3] * dcuhre2[i][2];
 	      } else if (i < 10) {
-	        le_big_theta += integral * dcuhre2[i][2];
+	        le_big_theta +=  dcuhre2[i][3]* dcuhre2[i][2];
 	      } else if (i < 140){
 	        if (fixed_theta < modelOptions.thetaCutoff[0]) {
-		  ld_small_theta += integral * dcuhre2[i][2];
+		  ld_small_theta += dcuhre2[i][3] * dcuhre2[i][2];
 	        } else {
-		  ld_big_theta += integral * dcuhre2[i][2];
+		  ld_big_theta += dcuhre2[i][3] * dcuhre2[i][2];
 	        }
 	      } else {
-                le_unlinked += integral * dcuhre2[i][2];
+                le_unlinked += dcuhre2[i][3] * dcuhre2[i][2];
 	      }
+	      if (modelOptions.markerAnalysis == FALSE)
+	        dk_write2ptBRData (dcuhre2[i][0] ,dcuhre2[i][1] ,dcuhre2[i][1], dcuhre2[i][3] , max_scale);
+
 	      if ((modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) && (i == 9)) {
 	        //fprintf (stderr,"End of LE case\n");
 	        i = 141;
 	      }
 	    }else{
-              if(i<65){
-                thetaSMSF += integral *thetaSS[i][2];  // 0< thetaM <0.05  0< thetaF <0.05  
-	      }else if(i<130){
-                thetaBMSF += integral *thetaSS[i][2];  // 0.05< thetaM <0.5  0< thetaF <0.05  
-	      }else if(i<195){
-                thetaSMBF += integral *thetaSS[i][2];  // 0< thetaM <0.05  0.05< thetaF <0.5  
-	      }else {
-                thetaBMBF += integral *thetaSS[i][2];  // 0.05< thetaM <0.05  0.05< thetaF <0.5 
+              /* Use unifor scaling with max_scale */
+              if((BRscale[i] > max_scale)&& (thetaSS[i][3]>0)){
+		newLog10BR = log10(dcuhre2[i][3]) + BRscale[i] - max_scale;
+                if (newLog10BR < DBL_MIN_10_EXP+1) {
+                  thetaSS[i][3]= 0;
+                } else {
+                  thetaSS[i][3] = pow(10, newLog10BR);
+                }
 	      }
+              if(i<65){
+                thetaSMSF += thetaSS[i][3] *thetaSS[i][2];  // 0< thetaM <0.05  0< thetaF <0.05  
+	      }else if(i<130){
+                thetaBMSF +=  thetaSS[i][3]*thetaSS[i][2];  // 0.05< thetaM <0.5  0< thetaF <0.05  
+	      }else if(i<195){
+                thetaSMBF += thetaSS[i][3] *thetaSS[i][2];  // 0< thetaM <0.05  0.05< thetaF <0.5  
+	      }else {
+                thetaBMBF += thetaSS[i][3] *thetaSS[i][2];  // 0.05< thetaM <0.05  0.05< thetaF <0.5 
+	      }
+	      if (modelOptions.markerAnalysis == FALSE)
+	        dk_write2ptBRData (0,thetaSS[i][0] ,thetaSS[i][1] ,thetaSS[i][3] , max_scale);
 	    }
-
 	  }			/* end of for to calculate BR(theta, dprime) or BR(thetaM, thetaF)*/
+	  free(BRscale);
 
   	  dk_write2ptMODHeader ();
-  	  dk_write2ptMODData ("MOD(Overall)", maximum_function_value, &dk_globalmax);
-	  dk_write2ptMODData("MOD(Theta==0)", maximum_theta0_value, &dk_theta0max);
-	  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
-	    dk_write2ptMODData ("MOD(D'==0)", maximum_dprime0_value, &dk_dprime0max);
+  	  dk_write2ptMODData ("MOD(Overall)", overallMOD, &dk_globalmax);
+
+          if (modelOptions.extraMODs) {
+            dk_write2ptMODData("MOD(Theta==0)", theta0_MOD, &dk_theta0max);
+            if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+              dk_write2ptMODData ("MOD(D'==0)", dprime0_MOD, &dk_dprime0max);
+          }
 
 	  /*Calculate ppl, ppld and ldppl */
           if(modelOptions.mapFlag == SS){ 
@@ -547,19 +640,6 @@ int numPositions;
 	  }
           fprintf (fpPPL, "\n");
           fflush (fpPPL);
-
-	  if (fpDK != NULL) {   ////////   This part should be changed to show imprinting output
-	    fprintf (fpDK, "Global max %8.4f %6.4f %6.4f %6.4f %6.4f ",
-		     log10 (maximum_function_value), maxima_x[0],
-		     maxima_x[1], maxima_x[3], maxima_x[2]);
-	    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-	      fprintf (fpDK, "%6.4f %6.4f %6.4f ",
-		       maxima_x[liabIdx * 3 + 4],
-		       maxima_x[liabIdx * 3 + 5], maxima_x[liabIdx * 3 + 6]);
-	    }
-	    fprintf (fpDK, "\n");
-	    fflush (fpDK);
-	  }
 
 	  /* only loop marker allele frequencies when doing LD */
 	  if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
@@ -991,22 +1071,24 @@ int numPositions;
       integral = 0.0;
       abserr = 0.0;
       num_out_constraint = 0;
-
-      num_eval = kelvin_dcuhre_integrate (&integral, &abserr, volume_region);
+      num_eval = kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &max_scale);
 
       /* calculate imputed PPL and print the results */
-      if (integral > 0.214)
-	ppl =(integral * integral) / (-5.77 + 54 * integral + integral * integral);
-      else
+      if (integral > 0.214){
+        if((log10(integral) + max_scale) > 8)
+          ppl=1.0;
+	else
+	  ppl =(integral * integral) / (-5.77 + 54 * integral + integral * integral);
+      }else
 	ppl = 0;
 
-      dk_writeMPBRData (posIdx, traitPos, ppl, integral);
-      dk_copyMaxModel (localmax_x, &dk_globalmax);
-      dk_writeMPMODData (posIdx, traitPos, localmax_value, &dk_globalmax);
+      dk_writeMPBRData (posIdx, traitPos, ppl, integral,max_scale);
+      dk_copyMaxModel (localmax_x, &dk_globalmax,size_BR);
+      dk_writeMPMODData (posIdx, traitPos, localMOD, &dk_globalmax);
 
       if (fpDK != NULL) {
-	fprintf (fpDK, "%f  %6.4f %12.8f %12.8f %d  %f\n", traitPos, ppl,
-		 integral, abserr, num_eval,log10 (localmax_value));
+	fprintf (fpDK, "%f  %6.4f %12.8f %12.8f %d %d %f\n", traitPos, ppl,
+		 integral, abserr, num_eval,max_scale,localMOD);
 	fflush(fpDK);
       }
 
@@ -1017,8 +1099,16 @@ int numPositions;
     free (dk_globalmax.dprime);
     free (dk_dprime0max.dprime);
     free (dk_theta0max.dprime);
+    if(fpIR !=NULL)
+      free (dk_curModel.dprime);
   }
   free (dk_globalmax.pen);
   free (dk_dprime0max.pen);
   free (dk_theta0max.pen);
+  if(fpIR !=NULL)
+    free (dk_curModel.pen);
+
+  free (xu);
+  free (xl);
+
 
