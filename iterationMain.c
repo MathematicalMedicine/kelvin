@@ -3,7 +3,7 @@
 #include <memory.h>
 #include "pedlib/pedlib.h"
 #include "pedlib/likelihood.h"
-#include "kelvinGlobalsNew.h"
+#include "kelvinGlobals.h"
 #include "iterationMain.h"
 #include "summary_result.h"
 #include "iterationLocalsNew.h"
@@ -75,6 +75,21 @@ void iterateMain() {
 
     }
   }
+
+
+  if(fpIR !=NULL){
+    memset (&dk_curModel, 0, sizeof (st_DKMaxModel));        
+    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+    /* Assumes that dkelvin can only handle a single D' */
+      dk_curModel.dprime = (double *) calloc (modelRange.nlclass, sizeof (double));
+      KASSERT ((dk_curModel.dprime != NULL), "malloc failed");
+    }
+    dk_curModel.pen = calloc (modelRange.nlclass, sizeof (st_DKMaxModelPenVector));
+    KASSERT ((dk_curModel.pen != NULL), "malloc failed");
+
+    fprintf(fpIR, "#HLOD (dprime) theta(M,F) gfreq alpha Pene\n");
+  }
+
 
   /* find out the max we need to allocate */
   /* after genotype lists have been built, we want to pre-allocate parental pair work space
@@ -241,6 +256,9 @@ void iterateMain() {
             gfreq = modelRange.gfreq[gfreqInd];
 	    paramSet.gfreqIdx = gfreqInd;
 	    paramSet.gfreq = gfreq;
+
+            if(fpIR !=NULL)
+              dk_curModel.dgf = gfreq;
             // WHAT ON EARTH IS THIS ALL ABOUT? &&&
             if (1 && modelOptions.markerAnalysis == FALSE) {
               pLocus->pAlleleFrequency[0] = gfreq;
@@ -282,6 +300,13 @@ void iterateMain() {
                     pTrait->penetrance[1][liabIdx][0][1] = 1 - pen_Dd;
                     pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_dD;
                     pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
+
+                    if(fpIR !=NULL){
+                      dk_curModel.pen[liabIdx].DD = pen_DD;
+                      dk_curModel.pen[liabIdx].Dd = pen_Dd;
+                      dk_curModel.pen[liabIdx].dD = pen_dD;
+                      dk_curModel.pen[liabIdx].dd = pen_dd;
+                    }
                   }
                   if (modelOptions.polynomial == TRUE);
                   else
@@ -370,6 +395,10 @@ void iterateMain() {
 		//			 pLambdaCell->ndprime, loc1, loc2);
                 for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
                   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+
+                    if(fpIR != NULL)
+ 	              dk_curModel.dprime[0] = pLambdaCell->lambda[dprimeIdx][0][0];
+
                     copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
                     if (pLambdaCell->impossibleFlag[dprimeIdx] != 0) {
 		      // If we're going to bail at this point, add the progress count loop factor
@@ -406,6 +435,10 @@ void iterateMain() {
                       locusList->pNextLocusDistance[MAP_FEMALE][0] =
                         locusList->pPrevLocusDistance[MAP_FEMALE][1] = modelRange.theta[1][thetaInd];
                     }
+                    if(fpIR != NULL){
+                      dk_curModel.theta[0] = modelRange.theta[0][thetaInd];
+                      dk_curModel.theta[1] = modelRange.theta[1][thetaInd];
+	            }
 
                     if (modelOptions.polynomial == TRUE);
                     else
@@ -469,6 +502,18 @@ void iterateMain() {
                         SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
                         /* threshold for QT */
                         threshold = modelRange.tthresh[liabIdx][thresholdIdx];
+
+                        if(fpIR !=NULL){
+                          dk_curModel.pen[liabIdx].DD = mean_DD;
+                          dk_curModel.pen[liabIdx].Dd = mean_Dd;
+                          dk_curModel.pen[liabIdx].dD = mean_dD;
+                          dk_curModel.pen[liabIdx].dd = mean_dd;
+                          dk_curModel.pen[liabIdx].DDSD = SD_DD;
+                          dk_curModel.pen[liabIdx].DdSD = SD_Dd;
+                          dk_curModel.pen[liabIdx].dDSD = SD_dD;
+                          dk_curModel.pen[liabIdx].ddSD = SD_dd;
+                          dk_curModel.pen[liabIdx].threshold= threshold;
+                        }
                         /* check against the hard coded constraint */
                         if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
                           constraint =
@@ -579,6 +624,10 @@ void iterateMain() {
                     for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
 		      paramSet.dprimeIdx = dprimeIdx;
                       if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+
+                        if(fpIR != NULL)
+ 	                  dk_curModel.dprime[0] = pLambdaCell->lambda[dprimeIdx][0][0];
+
                         copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
 			if (pLambdaCell->impossibleFlag[dprimeIdx] != 0) {
 			  // If we're going to bail at this point, add the progress count loop factor
@@ -589,6 +638,10 @@ void iterateMain() {
                         copy_DValue (pLDLoci, pLambdaCell->DValue[dprimeIdx]);
                       }
                       for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
+                        if(fpIR != NULL){
+                          dk_curModel.theta[0] = modelRange.theta[0][thetaInd];
+                          dk_curModel.theta[1] = modelRange.theta[1][thetaInd];
+    	                }
 
 			paramSet.thetaIdx = thetaInd;
                         if (modelOptions.mapFlag == SA) {
@@ -1279,6 +1332,13 @@ void iterateMain() {
             pTrait->penetrance[1][liabIdx][0][1] = 1 - pen_Dd;
             pTrait->penetrance[1][liabIdx][1][0] = 1 - pen_dD;
             pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
+
+            if(fpIR !=NULL){
+              dk_curModel.pen[liabIdx].DD = pen_DD;
+              dk_curModel.pen[liabIdx].Dd = pen_Dd;
+              dk_curModel.pen[liabIdx].dD = pen_dD;
+              dk_curModel.pen[liabIdx].dd = pen_dd;
+            }
           }
 
           if (modelOptions.polynomial != TRUE)
@@ -1288,6 +1348,10 @@ void iterateMain() {
           for (gfreqInd = 0; (gfreqInd == 0) || (modelOptions.dryRun == 0 && gfreqInd < modelRange.ngfreq); gfreqInd++) {
 	    paramSet.gfreqIdx = gfreqInd;
 	    paramSet.gfreq = gfreq;
+
+            if(fpIR !=NULL)
+              dk_curModel.dgf = gfreq;
+
             /* Updated trait locus allele frequencies */
             gfreq = modelRange.gfreq[gfreqInd];
             pLocus->pAlleleFrequency[0] = gfreq;
@@ -1412,6 +1476,9 @@ void iterateMain() {
 	  paramSet.gfreqIdx = gfreqInd;
 	  paramSet.gfreq = gfreq;
 
+          if(fpIR !=NULL)
+            dk_curModel.dgf = gfreq;
+
           update_locus (&pedigreeSet, traitLocus);
           /* this should be MEAN + SD */
           for (paramIdx = 0; paramIdx < modelRange.nparam; paramIdx++) {
@@ -1431,6 +1498,18 @@ void iterateMain() {
                   SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
                   SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
                   threshold = modelRange.tthresh[liabIdx][thresholdIdx];
+
+                  if(fpIR !=NULL){
+                    dk_curModel.pen[liabIdx].DD = mean_DD;
+                    dk_curModel.pen[liabIdx].Dd = mean_Dd;
+                    dk_curModel.pen[liabIdx].dD = mean_dD;
+                    dk_curModel.pen[liabIdx].dd = mean_dd;
+                    dk_curModel.pen[liabIdx].DDSD = SD_DD;
+                    dk_curModel.pen[liabIdx].DdSD = SD_Dd;
+                    dk_curModel.pen[liabIdx].dDSD = SD_dD;
+                    dk_curModel.pen[liabIdx].ddSD = SD_dd;
+                    dk_curModel.pen[liabIdx].threshold= threshold;
+                  }
 
                   if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
                     /* check against the hard coded constraint */
@@ -1598,5 +1677,10 @@ void iterateMain() {
   }
 //  dumpTrackingStats(cL, eCL);
 
+  if(fpIR !=NULL){
+    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) 
+      free (dk_curModel.dprime);
+    free (dk_curModel.pen); 
+  }
 }
 
