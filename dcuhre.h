@@ -42,6 +42,7 @@
 #ifndef   __DCUHRE_H__
 #define   __DCUHRE_H__
 
+
 /* header files */
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,7 +79,7 @@ typedef double (*D_fp)(), (*E_fp)();
 #endif
 
 
-#define maxdim 17
+#define maxdim 30 // 17
 
 enum model_Type {TP_DT=0, TP_QT=1, MP_DT=2, MP_QT=3};
 
@@ -95,13 +96,17 @@ typedef struct{
   double *local_xl, *local_xu; /* local boundary, which is not used currently*/
   double *center, *hwidth;     /*arrays of centers and widths*/
 
-  double local_error;       /* local error estimation */
-  double local_result;      /* local integraion */
+
+  double local_result;       /* local integraion */
+  double local_error;      /* local error estimation */
+
 
 
   /*control variables*/
   int    dir;               /* the directions for further subdivision.*/
 
+  /*Scaling 6/16/2009*/
+  int cur_scale;
 
 } sub_region;
 
@@ -123,9 +128,11 @@ typedef struct{
 
   /*Output variables */
   double result;            /* final estimation of the integral*/
+
   double error;             /* final estimation of the error */
   int total_neval;          /* number of total function evaluation. */
   int ifail;                /* indicator of success or reason of fail*/
+
 
   /*Control variables*/
   int keyf;                 /* key to selected integration rule. */
@@ -192,6 +199,8 @@ typedef struct{
   /*int sample_dim;         This is always the same as s->ndim   : dimension of dynamic sampling*/
   /*int sample_num;         This is always the same as s->num    : number of sample points*/
   
+  /*Scaling 6/16/2009*/
+  int scale;
   
 } dcuhre_state;
 

@@ -213,6 +213,7 @@ dadhre_ (dcuhre_state * s)
   cw_sbrg->region_level = 0;
   cw_sbrg->center = (double *) malloc (sizeof (double) * s->ndim);
   cw_sbrg->hwidth = (double *) malloc (sizeof (double) * s->ndim);
+  cw_sbrg->cur_scale = s->scale;
   for (i = 0; i < s->ndim; i++) {
     cw_sbrg->center[i] = (s->xl[i] + s->xu[i]) / 2;
     cw_sbrg->hwidth[i] = fabs ((s->xu[i] - s->xl[i]) / 2);
@@ -227,6 +228,9 @@ dadhre_ (dcuhre_state * s)
   }
   drlhre_ (s, cw_sbrg);
   //fprintf (stderr, "end fo first\n");
+  if( cw_sbrg->cur_scale > s->scale){
+    s->scale=cw_sbrg->cur_scale;
+  }
   s->total_neval += s->num;
   s->result += cw_sbrg->local_result;
   s->error += cw_sbrg->local_error;
@@ -307,6 +311,7 @@ dadhre_ (dcuhre_state * s)
       }
       /*Step 3.1   Adjust RESULT and ABSERR. and prepare for adding children */
       parent_sbrg = s->sbrg_heap[s->next_sbrg];	/* parent_sbrg is the sbrg to be split */
+
       s->result -= parent_sbrg->local_result;
       s->error -= parent_sbrg->local_error;
 
@@ -320,6 +325,7 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->region_level = parent_sbrg->region_level + 1;
       cw_sbrg->center = (double *) malloc (sizeof (double) * s->ndim);
       cw_sbrg->hwidth = (double *) malloc (sizeof (double) * s->ndim);
+      cw_sbrg->cur_scale = s->scale;
       for (i = 0; i < s->ndim; i++) {
 	cw_sbrg->center[i] = parent_sbrg->center[i];
 	cw_sbrg->hwidth[i] = parent_sbrg->hwidth[i];
@@ -333,7 +339,11 @@ dadhre_ (dcuhre_state * s)
 	print_sbrg (cw_sbrg, s->ndim);
       }
       drlhre_ (s, cw_sbrg);
+      if( cw_sbrg->cur_scale > s->scale){
+        s->scale=cw_sbrg->cur_scale;
+      }
       s->total_neval += s->num;
+
       s->result += cw_sbrg->local_result;
       s->error += cw_sbrg->local_error;
       if (s->verbose > 1) {
@@ -352,6 +362,7 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->region_level = parent_sbrg->region_level + 1;
       cw_sbrg->center = (double *) malloc (sizeof (double) * s->ndim);
       cw_sbrg->hwidth = (double *) malloc (sizeof (double) * s->ndim);
+      cw_sbrg->cur_scale = s->scale;
       for (i = 0; i < s->ndim; i++) {
 	cw_sbrg->center[i] = parent_sbrg->center[i];
 	cw_sbrg->hwidth[i] = parent_sbrg->hwidth[i];
@@ -360,11 +371,16 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->hwidth[direct] = parent_sbrg->hwidth[direct] / 2;
       cw_sbrg->center[direct] -= cw_sbrg->hwidth[direct];
       cw_sbrg->lchild_id = 0;
+
       if (s->verbose > 1) {
 	print_sbrg (cw_sbrg, s->ndim);
       }
       drlhre_ (s, cw_sbrg);
+      if( cw_sbrg->cur_scale > s->scale){
+        s->scale=cw_sbrg->cur_scale;
+      }
       s->total_neval += s->num;
+
       s->result += cw_sbrg->local_result;
       s->error += cw_sbrg->local_error;
       real_result = s->result / s->vol_rate;
@@ -443,8 +459,9 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
 
   if(s->sampling_mode>0)
     (s->funsub) ( x, &(cw_sbrg->local_error),s);
-  else
-    (s->funsub) ( x, &(cw_sbrg->local_error));
+  else{
+    (s->funsub) ( x, &(cw_sbrg->local_error), &(cw_sbrg->cur_scale));
+  }
   if(s->sampling_mode==1)
     s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][0];
 
@@ -457,6 +474,7 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   }
 
   cw_sbrg->local_result = s->w[0][0] * cw_sbrg->local_error;	//rgnerr[j];
+
   for (k = 0; k < 4; ++k) {
     null[k] = s->w[k + 1][0] * cw_sbrg->local_error;	//  rgnerr[j];
   }
@@ -469,8 +487,9 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
 
     if(s->sampling_mode>0)
       (s->funsub) ( x, &null[4],s);
-    else
-      (s->funsub) ( x, &null[4]);
+    else{
+      (s->funsub) ( x, &null[4], &(cw_sbrg->cur_scale));
+    }
     if(s->sampling_mode==1)
       s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][1];
 
@@ -478,24 +497,27 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
 
     if(s->sampling_mode>0)
       (s->funsub) ( x, &null[5],s);
-    else
-      (s->funsub) ( x, &null[5]);
+    else{
+      (s->funsub) ( x, &null[5], &(cw_sbrg->cur_scale));
+    }
     if(s->sampling_mode==1)
       s->sample_pts[s->cur_sample*(s->ndim+1)] =  s->w[0][1];
 
     x[i] = cw_sbrg->center[i] - cw_sbrg->hwidth[i] * s->g[0][2];
     if(s->sampling_mode>0)
       (s->funsub) ( x, &null[6],s);
-    else
-      (s->funsub) ( x, &null[6]);
+    else{
+      (s->funsub) ( x, &null[6], &(cw_sbrg->cur_scale));
+    }
     if(s->sampling_mode==1)
       s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][2];
 
     x[i] = cw_sbrg->center[i] + cw_sbrg->hwidth[i] * s->g[0][2];
     if(s->sampling_mode>0)
       (s->funsub) (x, &null[7],s);
-    else
-      (s->funsub) (x, &null[7]);
+    else{
+      (s->funsub) ( x, &null[7], &(cw_sbrg->cur_scale));
+    }
     if(s->sampling_mode==1)
       s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][2];
 
@@ -515,6 +537,7 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
       null[k] += s->w[k + 1][1] * (null[4] + null[5])
 	+ s->w[k + 1][2] * (null[6] + null[7]);
     }
+
     cw_sbrg->local_result +=
       s->w[0][1] * (null[4] + null[5]) + s->w[0][2] * (null[6] + null[7]);
 
@@ -537,22 +560,25 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
     if(s->sampling_mode==1){
       s->cur_weight = s->w[0][i];
     }
-    dfshre_ (s, cw_sbrg, x, g_work_col, &(cw_sbrg->local_error), &null[4]);
 
+
+    dfshre_ (s, cw_sbrg, x, g_work_col, &(cw_sbrg->local_error), &null[4]);
     cw_sbrg->local_result += s->w[0][i] * cw_sbrg->local_error;
+
     for (k = 0; k < 4; k++) {
       null[k] += s->w[k + 1][i] * cw_sbrg->local_error;
     }
 
   }
 
-  if (s->verbose > 0) 
+  if (s->verbose > 0) {
+
     fprintf (stderr, "local result =%10.8f  and local error =%10.8f\n", cw_sbrg->local_result,cw_sbrg->local_error);
+  }
   if(isnan(cw_sbrg->local_result)){
     fprintf(stderr,"local result is nan \n");
     exit(1);
   }
-
 
   /*    Compute errors. */
   /*    We search for the null rule, in the linear space spanned by two */
@@ -582,7 +608,6 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   cw_sbrg->local_error *= rgnvol;
   cw_sbrg->local_result *= rgnvol;
 
-
   //fprintf (stderr, "local result =%10.8f  and local error =%10.8f\n", cw_sbrg->local_result,cw_sbrg->local_error);
 
   free (x);
@@ -592,10 +617,7 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
 }
 
 
-
-int
-dfshre_ (dcuhre_state * s, sub_region * cw_sbrg, double *x, int g_work_col,
-	 double *fulsms, double *funvls)
+int dfshre_ (dcuhre_state * s, sub_region * cw_sbrg, double *x, int g_work_col,double *fulsms, double *funvls)
 {
 
   /* Local variables */
@@ -617,7 +639,7 @@ L40:
   if(s->sampling_mode>0)  
     (s->funsub) ( x, funvls,s);
   else
-    (s->funsub) ( x, funvls);
+    (s->funsub) ( x, funvls, &(cw_sbrg->cur_scale));
 
   if(s->sampling_mode==1)
     s->sample_pts[s->cur_sample*(s->ndim+1)] = s->cur_weight;
@@ -1524,6 +1546,8 @@ initialize_state (dcuhre_state * s, double *a, double *b, int dim)
 
   s->vol_rate =1.0;
 
+  s->scale=0;
+
   return 0;
 }
 
@@ -1550,22 +1574,11 @@ sbrg_free (sub_region ** sbrg_heap, int maxsub)
   int i = 0;
   sub_region *cw_sbrg;
 
-  //  checkpt();
-  //  printf("maxsub is %d\n", maxsub);
-  
   while (sbrg_heap[i] != NULL && i < maxsub) {
-    //    checkpt();
-    //    printf("i=%d\n",i);
-    //       printf("i=%d when max =%d \n", i, maxsub);
-
     cw_sbrg = sbrg_heap[i];
-    //     checkpt();
     free (cw_sbrg->center);
-    //     checkpt();
     free (cw_sbrg->hwidth);
-    //       checkpt();
     free (sbrg_heap[i++]);
-    //    checkpt();
   }
 
   return 0;
@@ -1639,8 +1652,8 @@ print_sbrg (sub_region * cw_sbrg, int dim)
   fprintf (stderr, "                left child = %d right child =%d\n",
 	   cw_sbrg->lchild_id, cw_sbrg->rchild_id);
   fprintf (stderr, "               local error = %f\n", cw_sbrg->local_error);
-  fprintf (stderr, "              local result = %f\n",
-	   cw_sbrg->local_result);
+  fprintf (stderr, "              local result = %f\n",cw_sbrg->local_result);
+  fprintf (stderr, "                     scale = %f\n",cw_sbrg->cur_scale);
   fprintf (stderr, "on the sub region center   hwidth\n");
   for (i = 0; i < dim; i++) {
     fprintf (stderr, "                 %f, %f\n", cw_sbrg->center[i],
