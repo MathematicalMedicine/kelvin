@@ -80,6 +80,8 @@ SUMMARY_STAT *get_tp_result (int dprimeIdx, int thetaIdx, int mkrFreqIdx)
 
   sprintf (targetTPRhe.keyString, "%d,%d,%d", dprimeIdx, thetaIdx, mkrFreqIdx);
   if (hfind (tp_result_hash, targetTPRhe.keyString, strlen(targetTPRhe.keyString)) == FALSE) {
+    fprintf (stderr, "Warning - non-existant tp_result referenced with indices (%d, %d and %d), returning NULL\n",
+	     dprimeIdx, thetaIdx, mkrFreqIdx);
     return NULL;
   } else {
     oldTPRhe = (struct tp_result_hash_entry *) hstuff (tp_result_hash);
@@ -88,6 +90,8 @@ SUMMARY_STAT *get_tp_result (int dprimeIdx, int thetaIdx, int mkrFreqIdx)
       if (oldTPRhe->next != NULL) {
 	oldTPRhe = oldTPRhe->next;
       } else {
+	fprintf (stderr, "Warning - non-existant tp_result referenced with indices (%d, %d and %d), returning NULL\n",
+	    dprimeIdx, thetaIdx, mkrFreqIdx);
 	return NULL;
       }
     }
@@ -160,7 +164,7 @@ SUMMARY_STAT *new_tp_result (int dprimeIdx, int thetaIdx, int mkrFreqIdx)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  newTPRhe->tp_result = (SUMMARY_STAT *) malloc (sizeof (SUMMARY_STAT));
+  newTPRhe->tp_result = (SUMMARY_STAT *) calloc (sizeof (SUMMARY_STAT), 1);
   if (newTPRhe->tp_result == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
@@ -193,6 +197,18 @@ SUMMARY_STAT *new_tp_result (int dprimeIdx, int thetaIdx, int mkrFreqIdx)
   // Add worked!
   tp_result_list[tp_result_list_count++] = newTPRhe->tp_result;
   return newTPRhe->tp_result;
+}
+
+// The whole point to this routine is to make life simpler for "fkelvin" static allocation replacement.
+// Since we can't assume this was called before new_tp_result, we have to use new_tp_result to do the work.
+void
+new_bulk_tp_result (int dprimeDim, int thetaDim, int mkrFreqDim)
+{
+  int i, j, k;
+  for (i=0; i<dprimeDim; i++)
+    for (j=0; j<thetaDim; j++)
+      for (k=0; k<mkrFreqDim; k++)
+	new_tp_result (i, j, k);
 }
 
 #ifdef MAIN
@@ -250,11 +266,27 @@ int main (int argc, char *argv[]) {
   } else
     printf ("2, 2, 77 has %g\n", my_tp_result->ppl);
 
+  /* The following approach allows easy conversion from an indexed structure, but is less
+     efficient if the pointer returned can be reused. Probably doesn't matter with tp_result
+     since it's only updated when we have results that took a long time to produce! */
+
+  printf ("Before assignment, ppl is %g\n", (get_tp_result(2, 2, 6))->ppl);
+  (get_tp_result(2, 2, 6))->ppl = 18.5;
+  printf ("Trying again, ppl is %g\n", (get_tp_result(2, 2, 6))->ppl);
+
   sort_tp_result_by_indices();
 
   int offset = 0;
   while ((my_tp_result = get_next_tp_result (&offset)) != NULL) {
     printf ("%d, %d, %d -> %g\n", my_tp_result->dprimeIdx, my_tp_result->thetaIdx, my_tp_result->mkrFreqIdx, my_tp_result->ppl);
   }
+
+  new_bulk_tp_result (10, 20, 30);
+
+  (get_tp_result(1, 19, 29))->ppl = 273.6;
+  printf ("Just set bulk item to %g\n", (get_tp_result(1, 19, 29))->ppl);
+
+  (get_tp_result(1, 19, 33))->ppl = 1972.83;
+
 }
 #endif
