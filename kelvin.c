@@ -105,6 +105,9 @@
 #include "pedlib/likelihood.h"
 #include "saveResults.h"
 #include "ppl.h"
+#ifdef USE_MPF
+#include <gmp.h>                /* GNU Multi-Precision library. */
+#endif
 
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 extern Polynomial *constant1Poly;
@@ -116,8 +119,7 @@ extern Polynomial *constant1Poly;
 */
 #include "dcuhre.h"
 #include "integrationGlobals.h"
-//#include "kelvinGlobals.h"
-#include "kelvinGlobalsNew.h"
+#include "kelvinGlobals.h"
 #include "kelvinLocals.h"
 
 /**
