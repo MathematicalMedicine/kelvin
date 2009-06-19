@@ -7,7 +7,7 @@
 
 */
 #include "kelvin.h"
-#include "kelvinGlobalsNew.h"
+#include "kelvinGlobals.h"
 extern PedigreeSet pedigreeSet;
 #include "kelvinHandlers.h"
 #include "utils/polynomial.h"
