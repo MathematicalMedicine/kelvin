@@ -43,6 +43,9 @@ typedef struct SUMMARY_STAT
   int *pMarkers;
   double ppl;			/* imputed MP ppl based on average likelihood ratio */
   int trait;			/* trait locus index in the locus list for MP */
+  int dprimeIdx;                // Identifying indices
+  int thetaIdx;                 // "
+  int mkrFreqIdx;               // "
 } SUMMARY_STAT;
 
 /* three dimensional array for the two point summary results *
