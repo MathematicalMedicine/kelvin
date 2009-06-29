@@ -44,6 +44,7 @@ logInit ()
   for (i = 0; i < MAXLOGLEVELS; i++)
     logFlag[i] = LOGDEFAULT;
 
+  logFlag[LOGFATAL] = -1; // Give errors for everything by default
   logFlag[LOGERROR] = -1; // Give errors for everything by default
   logFlag[LOGWARNING] = -1; // Give warnings for everything by default
 }
@@ -73,13 +74,12 @@ logMsg (unsigned int type, int level, const char *format, ...)
 
   /* Initialize the variable arguments list. */
   va_start (argp, format);
-  /* Check to see if the criteria for making the message appear are
-   * met. Level 0 errors are always produced. */
-  if ((level == 0) || (type & logFlag[level - 1]))
+  /* Check to see if the criteria for making the message appear are met. */
+  if (type & logFlag[level])
     vfprintf (stderr, format, argp);
   /* Close the variable arguments list. */
   va_end (argp);
-
+  
   /* If this was a fatal error, dump. Level 0 errors are always checked
    * and are always fatal. */
   if (level == LOGFATAL)

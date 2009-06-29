@@ -100,11 +100,9 @@ void logMsg (unsigned int type, int level, const char *format, ...);
 
 /**********************************************************************
  * Levels of output verbosity: smaller is more severe. LOGFATAL errors
- * cause program termination, and are always produced on output. Note
- * that MAXLOGLEVELS corresponds to the max integer value assigned (0
- * doesn't count).
+ * cause program termination, and are always produced on output.
  **********************************************************************/
-#define MAXLOGLEVELS 4
+#define MAXLOGLEVELS 5
 #define LOGFATAL 0
 #define LOGERROR 1
 #define LOGWARNING 2

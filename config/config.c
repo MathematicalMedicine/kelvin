@@ -514,7 +514,7 @@ void validateConfig ()
 
   if (observed.sexAveragedThetas && observed.sexSpecificThetas)
     fault ("%s is incompatible with %s or %s\n", THETA_STR, MALETHETA_STR, FEMALETHETA_STR);
-  if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM || observed.sexSpecificThetas)
+  if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && observed.sexSpecificThetas)
     fault ("%s and %s are not supported with LD\n", MALETHETA_STR, FEMALETHETA_STR);
   if (modelOptions.mapFlag == SS) {
     if (observed.sexSpecificThetas && observed.sexSpecificThetas != 0x03)
@@ -605,8 +605,8 @@ void validateConfig ()
       if (modelType.trait == CT)
 	fault ("DegreesOfFreedom values for the dD trait genotype require Imprinting\n");
   }
-  if (modelRange.nlclass > observed.maxclass)
-    logMsg (LOGINPUTFILE, LOGWARNING, "A Constraint references a liability class %d that is not specified with LiabilityClass\n", observed.maxclass);
+  if (observed.maxclass != 0 && modelRange.nlclass < observed.maxclass)
+    fault ("A Constraint references a liability class %d that is not specified with LiabilityClass\n", observed.maxclass);
   
   if (fault)
     logMsg (LOGINPUTFILE, LOGFATAL, "Configuration errors detected, exiting\n");
