@@ -51,6 +51,7 @@ int pedigree_genotype_elimination (int locus, Pedigree * pPedigree);
 int compute_likelihood (PedigreeSet * pPedigreeList);
 void pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList);
 int compute_pedigree_likelihood (Pedigree * pPedigree);
+void getPedigreeTraitRange (PedigreeSet *pPedigreeSet, double *min, double *max);
 
 extern char *flexBuffer;
 extern int flexBufferSize;

@@ -138,9 +138,13 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   /* read in what loci are in the pedigree file */
   read_datafile (modelOptions.datafile);
 
-  /* The configuration has all the information about the disease trait if any */
-  if (originalLocusList.numTraitLocus > 0) {
-    /* we are not doing marker to marker analysis
+  /* We should depend on the config file, rather than the presence of a trait
+   * in the data file, to decide if we're doing a marker-to-marker analysis.
+   */
+  /*if (originalLocusList.numTraitLocus > 0) { */
+  if (! modelOptions.markerAnalysis) {
+    /* We are not doing marker to marker analysis; the configuration
+     * has all the information about the disease trait if any.
      * Need to add the alleles into trait locus 
      * Assume the traitLoucs is 0 for now  - Need to fix this later */
     traitLocus = 0;
@@ -188,6 +192,28 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   }
   KASSERT (exitDueToLoop == FALSE, "Not all loops in pedigrees are broken.\n");
 
+  /* QT/CT ChiSq with dynamic sampling requires min and max Degrees Of Freedom,
+   * which are stored as penetrance values. If none have been provided in the
+   * config, sample the min and max trait values in the pedigree data. NOTE
+   * WELL this carries on the assumption of a single trait column in the pedigree. 
+   */
+  if (modelType.trait != DT && modelType.distrib == QT_FUNCTION_CHI_SQUARE &&
+      modelOptions.integration && ! modelRange.penetLimits) {
+    int va, vb;
+    double min, max;
+    
+    modelRange.penetLimits = malloc ((vb = NPENET (modelRange.nalleles)) * sizeof (double *));
+    for (va = 0; va < vb; va++)
+      modelRange.penetLimits[va] = malloc (2 * sizeof (double));
+    getPedigreeTraitRange (&pedigreeSet, &min, &max);
+    if (min < 0 || max > 30)
+      logMsg (LOGDEFAULT, LOGFATAL, "Can't intuit Chi-squared DegreesOfFreedom from input data, please configure explicitly\n");
+    for (va = 0; va < vb; va++) {
+      modelRange.penetLimits[va][0] = min;
+      modelRange.penetLimits[va][1] = max;
+    }
+  }
+
   /* read in case control file if provided */
   if (strlen (modelOptions.ccfile) > 0)
     read_ccfile (modelOptions.ccfile, &pedigreeSet);
@@ -196,6 +222,7 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   fflush (stderr);
   fflush (stdout);
 
+  /* FIXME: shouldn't this bit come BEFORE the !markerAnalysis block, above? */
   if (modelType.trait == QT) {
     /* threshold value will not be used in any meaningful way, but we will use it for 
        the loop */

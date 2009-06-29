@@ -465,11 +465,41 @@ int checkImprintingPenets (ModelRange *range, int imprinting)
     /* Otherwise, copy penetrances for PEN_Dd to PEN_dD */
     range->penet[0][PEN_dD-PEN_DD] = malloc ((penetmax[PEN_Dd-PEN_DD]) * sizeof (double));
     penetcnt[PEN_dD-PEN_DD] = penetcnt[PEN_Dd-PEN_DD];
+    range->penetLimits[PEN_dD-PEN_DD][0] = range->penetLimits[PEN_Dd-PEN_DD][0];
+    range->penetLimits[PEN_dD-PEN_DD][1] = range->penetLimits[PEN_Dd-PEN_DD][1];
     for (i=0; i<penetcnt[PEN_Dd-PEN_DD]; i++) 
       range->penet[0][PEN_dD-PEN_DD][i] = range->penet[0][PEN_Dd-PEN_DD][i];
     addConstraint (SIMPLE, PEN_dD, 0, 0, EQ, PEN_Dd, 0, 0, FALSE);
     return (0);
   }
+}
+
+
+/* Following on the blockbuster success of checkImprintingPenets(), here
+ * we validate that there are exactly two DegreesOfFreedom (stored in
+ * penetrance data structures) for each trait genotype, or none at all.
+ * QT/QTT ChiSq analyses under dynamic sampling are allowed to specify
+ * min and max DegreeOfFreedom values.
+ */
+int checkDegOfFreedom (ModelRange *range, int imprinting)
+{
+  if (! penetcnt)
+    return (0);
+
+  if (imprinting) {
+    if ((penetcnt[PEN_DD-PEN_DD] == 0 && penetcnt[PEN_Dd-PEN_DD] == 0 &&
+	 penetcnt[PEN_dD-PEN_DD] == 0 && penetcnt[PEN_dd-PEN_DD] == 0) ||
+	(penetcnt[PEN_DD-PEN_DD] == 2 && penetcnt[PEN_Dd-PEN_DD] == 2 &&
+	 penetcnt[PEN_dD-PEN_DD] == 2 && penetcnt[PEN_dd-PEN_DD] == 2))
+      return (0);
+  } else {
+    if ((penetcnt[PEN_DD-PEN_DD] == 0 && penetcnt[PEN_Dd-PEN_DD] == 0 &&
+	 penetcnt[PEN_dd-PEN_DD] == 0) ||
+	(penetcnt[PEN_DD-PEN_DD] == 2 && penetcnt[PEN_Dd-PEN_DD] == 2 &&
+	 penetcnt[PEN_dd-PEN_DD] == 2))
+      return (0);
+  }
+  return (-1);
 }
 
 

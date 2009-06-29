@@ -1630,3 +1630,24 @@ check_for_loop (Pedigree *pPed) {
     printf("\n");
   }
 }
+
+
+void getPedigreeTraitRange (PedigreeSet *pPedigreeSet, double *min , double *max)
+{
+  int va, vb;
+  struct Person *person;
+
+  *min = 999999999.00;
+  *max = -999999999.00;
+  for (va = 0; va < pPedigreeSet->numPedigree; va++)
+    for (vb = 0 ; vb < pPedigreeSet->ppPedigreeSet[va]->numPerson; vb++) {
+      person = pPedigreeSet->ppPedigreeSet[va]->ppPersonList[vb];
+      if (person->ppOrigTraitValue[0][0] == modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN])
+	continue;
+      if (*min > person->ppOrigTraitValue[0][0])
+	*min = person->ppOrigTraitValue[0][0];
+      if (*max < person->ppOrigTraitValue[0][0])
+	*max = person->ppOrigTraitValue[0][0];
+    }
+  return;
+}
