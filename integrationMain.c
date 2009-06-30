@@ -548,7 +548,7 @@
 	      } else if (i < 10) {
 	        le_big_theta +=  dcuhre2[i][3]* dcuhre2[i][2];
 	      } else if (i < 140){
-	        if (fixed_theta < modelOptions.thetaCutoff[0]) {
+	        if (dcuhre2[i][1] < modelOptions.thetaCutoff[0]) {
 		  ld_small_theta += dcuhre2[i][3] * dcuhre2[i][2];
 	        } else {
 		  ld_big_theta += dcuhre2[i][3] * dcuhre2[i][2];
@@ -618,7 +618,7 @@
 	     ppl >= .025 ? 2 : 3, KROUND (ppl));
           }
 
-
+	  //printf("%f %f %f %f %f %f\n",le_small_theta,le_big_theta,ld_small_theta,ld_big_theta,le_unlinked ,modelOptions.thetaCutoff[0]);
           /* output LD-PPL now if needed */
 	  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
 	    ldppl =0.019*(0.021*ld_small_theta+ 0.979*le_small_theta)+ 0.001*(0.011*ld_big_theta+ 0.9989*le_big_theta);
