@@ -223,9 +223,9 @@ sub bucketizePedigrees {
         next if ($LociAttributes{$Name}{Type} eq "T");
         next if ($LociAttributes{$Name}{Type} eq "A");
         die "No allele information found for marker $Name for count generation.\n"
-          if (!defined($LociAttributes{$Name}{Frequencies}));
+          if (!defined($LociAttributes{$Name}{Alleles}));
         die "Marker $Name not biallelic, not permitted for count generation.\n"
-          if (scalar(@{ $LociAttributes{$Name}{Frequencies} }) > 2);
+          if (scalar(@{ $LociAttributes{$Name}{Alleles}{OrderedList} }) > 2);
     }
 
     my %Buckets   = ();    # Fully-funkified bucket names with encoded everything
@@ -354,10 +354,7 @@ sub bucketizePedigrees {
             my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
             for my $i (0 .. $PairCount - 1) {
                 next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
-                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "T");
-                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "A");
-
-#                print OUT $Pairs[$i] . "  ";
+                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} =~ /^[AT]$/);
                 my ($Left, $Right) = split(/ /, $Pairs[$i]);
                 if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
                     print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left} . " ";
@@ -391,13 +388,27 @@ sub bucketizePedigrees {
               if ($Type eq "POST");
             print OUT $Pedigrees{$Ped}{$Ind}{Sex} . " ";
             print OUT $Pedigrees{$Ped}{$Ind}{Prb} . " " if ($Type eq "POST");
-            my $Pair = "  " . $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
-            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . " ";
+            print OUT $Pedigrees{$Ped}{$Ind}{Aff} . "   ";
             if ($liability) {
-                print OUT $Pedigrees{$Ped}{$Ind}{LC} . " ";
+                print OUT $Pedigrees{$Ped}{$Ind}{LC} . "   ";
             }
-            print OUT join(" ", $Pair x min($split, $PairCount)) . "   ";
-            print OUT "Ped: $NiceName Per: $Ind\n";
+            my $Pair = $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
+            my ($Left, $Right) = split(/ /, $Pair);
+            for my $i (0 .. $PairCount - 1) {
+                next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
+                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} =~ /^[AT]$/);
+                if ($Left != 0) {
+                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Left - 1] . " ";
+                } else {
+                    print OUT AttributeMissing . " ";
+                }
+                if ($Right != 0) {
+                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Right - 1] . "  ";
+                } else {
+                    print OUT AttributeMissing . "  ";
+                }
+            }
+            print OUT " Ped: $NiceName Per: $Ind\n";
         }
     }
     close OUT;
@@ -617,24 +628,27 @@ sub writeExpanded {
             if ($liability) {
                 print OUT $Pedigrees{$Ped}{$Ind}{LC} . "  ";
             }
-            my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
+            my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} }; # Pairs are of allele ordinals, not names
             for my $i (0 .. $PairCount - 1) {
                 next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
-                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "T");
-                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} eq "A");
-
+                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} =~ /^[AT]$/);
 #                print OUT $Pairs[$i] . "  ";
+
                 my ($Left, $Right) = split(/ /, $Pairs[$i]);
-                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
-                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left} . " ";
-                } else {
-                    print OUT AttributeMissing . " ";
-                }
-                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
-                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right} . "  ";
-                } else {
-                    print OUT AttributeMissing . "  ";
-                }
+                print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Left]." ";
+                print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Right]."  ";
+
+#                my ($Left, $Right) = split(/ /, $Pairs[$i]);
+#                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
+#                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left} . " ";
+#                } else {
+#                    print OUT AttributeMissing . " ";
+#                }
+#                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
+#                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right} . "  ";
+#                } else {
+#                    print OUT AttributeMissing . "  ";
+#                }
             }
             print OUT "Ped: $Ped Per: $Ind\n";
         }
@@ -900,7 +914,6 @@ if ($config) {
 } else {
     $pedFile = shift;
 }
-$maf0 = addMissingAlleles();
 
 my $Type = "";
 if ($pre) { $Type = "PRE"; } elsif ($post) { $Type = "POST"; } elsif ($bare) { $Type = "BARE"; }
@@ -913,6 +926,7 @@ if (!$config) {
 
     # Make-up @Loci and %LociAttributes if we have to...
     deriveAlleleFrequencies();
+    $maf0 = addMissingAlleles();
 }
 
 #print Dumper(\@Loci);

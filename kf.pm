@@ -543,12 +543,13 @@ sub loadPedigree {
 
                     # Assume they're using 1 & 2 as their allele "names"
                     if (!defined($LociAttributes{$Name}{Alleles}{$Allele})) {
-                        $LociAttributes{$Name}{Alleles}{$Allele} = "$Allele";
+                        $LociAttributes{$Name}{Alleles}{$Allele}{Order} = "$Allele";
+                        push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, $Allele;
                     }
                 }
 
-                # Translate the allele to a sequence number
-                $Allele = $LociAttributes{$Name}{Alleles}{$Allele};
+                # Translate the allele to a sequence number, this is required for bucket pattern matching
+                $Allele = $LociAttributes{$Name}{Alleles}{$Allele}{Order};
             }
 
             # Pair-up the alleles
@@ -618,33 +619,33 @@ sub loadPedigree {
 }
 
 #####################################
-# Derive a allele frequencies from pedigree data.
+# Derive allele frequencies from pedigree data.
 #
 sub deriveAlleleFrequencies {
     for my $i (0 .. $PairCount - 1) {
         $LociAttributes{ $Loci[ $i + 1 ] }{Type}         = "M";
         $LociAttributes{ $Loci[ $i + 1 ] }{Included}     = 1;
-        $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{"0"} = 0;
-        my @HaploCounts =
-          (0, 0, 0);    # List works because they must be numeric (relative position of frequency in marker file)
+        my %HaploCounts = ();
         for my $Ped (keys %Pedigrees) {
             for my $Ind (keys %{ $Pedigrees{$Ped} }) {
                 next if ($Pedigrees{$Ped}{$Ind}{Aff} != $Unaffected);
                 my ($Left, $Right) = split /\s+/, $Pedigrees{$Ped}{$Ind}{Mks}[$i];
-                $HaploCounts[$Left]++  if ($Left  ne AttributeMissing);
-                $HaploCounts[$Right]++ if ($Right ne AttributeMissing);
+                $HaploCounts{$Left}++  if ($Left  ne AttributeMissing);
+                $HaploCounts{$Right}++ if ($Right ne AttributeMissing);
             }
         }
-        my $PopSize = sum @HaploCounts;
-        my @Tokens  = ();
-        for $i (1 .. scalar(@HaploCounts) - 1) {
-            if ($PopSize != 0) {
-                push @Tokens, $HaploCounts[$i] / $PopSize;
-            } else {
-                push @Tokens, 0;
-            }
-        }
-        $LociAttributes{ $Loci[ $i + 1 ] }{Frequencies} = [@Tokens];
+#	print "HaploCounts are: ".Dumper(\%HaploCounts)."\n";
+        my $PopSize = 0;
+	for my $Allele (keys %HaploCounts) {
+	    $PopSize += $HaploCounts{$Allele};
+	}
+	for my $Allele (keys %HaploCounts) {
+	    if ($PopSize != 0) {
+		$LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Allele}{Frequency} = $HaploCounts{$Allele} / $PopSize;
+	    } else {
+		$LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Allele}{Frequency} = 0;
+	    }
+	}
     }
 }
 
@@ -703,20 +704,17 @@ sub loadFrequencies {
             die "Marker $Name at line $LineNo of $File not found in map file.\n" if (!defined($Map{$Name}{SAPos}));
             $AlleleCount = 0;
         } elsif ($RecordType eq "F") {    # List of unnamed allele frequencies
-            if (defined($LociAttributes{$Name}{Frequencies})) {
-                $LociAttributes{$Name}{Frequencies} = [ (@{ $LociAttributes{$Name}{Frequencies} }, @Tokens) ];
-            } else {
-                $LociAttributes{$Name}{Frequencies} = [@Tokens];
-            }
-
             # Dummy-up names so we know we'll always have them
             for (1 .. scalar(@Tokens)) {
                 $AlleleCount++;
-                $LociAttributes{$Name}{Alleles}{$AlleleCount} = $AlleleCount;
+                $LociAttributes{$Name}{Alleles}{$AlleleCount}{Order} = $AlleleCount;
+		push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, $AlleleCount;
+                $LociAttributes{$Name}{Alleles}{$AlleleCount}{Frequency} = shift(@Tokens);
             }
         } elsif ($RecordType eq "A") {    # Named allele and frequency
-            push @{ $LociAttributes{$Name}{Frequencies} }, $Tokens[1];
-            $LociAttributes{$Name}{Alleles}{ $Tokens[0] } = ++$AlleleCount;
+            $LociAttributes{$Name}{Alleles}{ $Tokens[0] }{Order} = ++$AlleleCount;
+            push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, $Tokens[0];
+            $LociAttributes{$Name}{Alleles}{ $Tokens[0] }{Frequency} = $Tokens[1]
         } else {
             die "Unknown record type \"$RecordType\" at line $LineNo in marker file $File\n";
         }
@@ -731,15 +729,18 @@ sub loadFrequencies {
 sub addMissingAlleles {
     my $maf0 = 0; # True if we found missing minor allele frequencies
     for my $Name (@Loci) {
-        next if ($LociAttributes{$Name}{Type} eq "T");
-        if (scalar(@{ $LociAttributes{$Name}{Frequencies} }) == 1) {
+        next if ($LociAttributes{$Name}{Type}  =~ /^[AT]$/);
+	if (!defined($LociAttributes{$Name}{Alleles}{1})) {
 	    $maf0 = 1;
-	    if (defined($LociAttributes{$Name}{Alleles}{1})) {
-		$LociAttributes{$Name}{Alleles}{2} = 2;
-	    } else {
-		$LociAttributes{$Name}{Alleles}{1} = 1;
-	    }
-	    push @{ $LociAttributes{$Name}{Frequencies} }, 0;
+	    $LociAttributes{$Name}{Alleles}{1}{Order} = 1;
+	    push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, 1;
+	    $LociAttributes{$Name}{Alleles}{1}{Frequency} = 0;
+	}
+	if (!defined($LociAttributes{$Name}{Alleles}{2})) {
+	    $maf0 = 1;
+	    $LociAttributes{$Name}{Alleles}{2}{Order} = 2;
+	    push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, 2;
+	    $LociAttributes{$Name}{Alleles}{2}{Frequency} = 0;
 	}
     }
     return $maf0;
@@ -790,9 +791,9 @@ sub checkIntegrity {
             for my $i (0 .. $PairCount - 1) {
                 my ($Left, $Right) = split /\s/, $Pairs[$i];
                 die "Pedigree $Ped, individual $Ind Marker $i (" . $Loci[ $i + 1 ] . ") allele $Left too large.\n"
-                  if ($Left > scalar(@{ $LociAttributes{ $Loci[ $i + 1 ] }{Frequencies} }));
+                  if ($Left > scalar( @{ $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList} }));
                 die "Pedigree $Ped, individual $Ind Marker $i (" . $Loci[ $i + 1 ] . ") allele $Right too large.\n"
-                  if ($Right > scalar(@{ $LociAttributes{ $Loci[ $i + 1 ] }{Frequencies} }));
+                  if ($Right > scalar( @{ $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList} }));
                 if ((defined($Directives{XC}) || $XC)) {
                     die "Pedigree $Ped, male $Ind is not homozygous for marker " . $Loci[ $i + 1 ] . "\n"
                       if (($Pedigrees{$Ped}{$Ind}{Sex} == 1) && ($Left != $Right));
