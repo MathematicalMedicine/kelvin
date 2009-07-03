@@ -269,15 +269,19 @@ dadhre_ (dcuhre_state * s)
     if (s->verbose > 0) 
       fprintf(stderr, "s result %f  real result %f\n ", s->result, real_result);
 
-    s->epsabs *=
-      (-5.77 + 54.0 * real_result + real_result * real_result) * (-5.77 +
+    if(real_result>1.0){
+      s->epsabs *=
+        (-5.77 + 54.0 * real_result + real_result * real_result) * (-5.77 +
 								  54.0 *
 								  real_result
 								  +
 								  real_result
 								  *
 								  real_result);
-    s->epsabs /= (-11.54 * real_result + 54.0 * real_result * real_result);
+      s->epsabs /= (-11.54 * real_result + 54.0 * real_result * real_result);
+    }else{
+      s->epsabs = real_result *.5 ;
+    }
 
     if(s->epsabs <0)
       s->epsabs =0.0;
