@@ -210,7 +210,7 @@ char *estimateIterations (unsigned long eCL[])
       }
     }
     eCL[0] = 0;
-    eCL[1] = totalLoopsForDPrime * modelRange.ntheta;
+    eCL[1] = totalLoopsForDPrime;
     sprintf (analysisType, "%dD' cases of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)\n"
 	     "Marker-to-marker Two-Point ",
 	     totalLoopsForDPrime, modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass,
