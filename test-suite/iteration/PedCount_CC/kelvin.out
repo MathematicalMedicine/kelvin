@@ -1,0 +1,470 @@
+PID: 31035, kelvin V0.38.0 built Jun 18 2009 14:01:42
+PID: 31035, $Id: kelvin.c 1859 2009-05-13 19:11:25Z huangy $
+PID: 31035, $Id: likelihood.c 1854 2009-05-12 13:14:48Z whv001 $
+PID: 31035, $Id: locus.c 1872 2009-05-28 14:54:05Z burianj $
+PID: 31035, $Id: polynomial.c 1898 2009-06-09 14:59:33Z whv001 $
+PID: 31035, Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
+
+PID: 31035, GCC optimization level 3 enabled
+To check status (at some risk), type CTRL-\ or type "kill -3 31035".
+PID: 31035, Computation is done in polynomial mode
+PID: 31035, polynomialScale is 1 (1-10, 1 is default)
+PID: 31035, Integration is done with iteration (original kelvin)
+PID: 31035, 6Th*21D' cases of 20AL*6GF*0p1*275pv(1LC)' space for 6 pedigree(s)
+Trait-to-marker Two-Point, Dichotomous Trait, Disequilibrium.
+Building transmission matrix...
+Starting w/loci Trait(2 alleles) and M0001(2 alleles) (1 of 10 pairs)
+Building polynomial w/pedigree: ctrl11 (1/6)Building polynomial w/pedigree: case11 (2/6)Building polynomial w/pedigree: ctrl12 (3/6)Building polynomial w/pedigree: case12 (4/6)Building polynomial w/pedigree: ctrl22 (5/6)Building polynomial w/pedigree: case22 (6/6)Dynamic polynomial statistics (Post-build):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=115/0(0.0:1), p=279/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 1128 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=5 eP=0 eV=0 hAP=1 kP=0 hP=54 uHP=0 fP=6(0) fKP=6
+
+PID: 31035, stopwatch overall(1) e:1s u:0s s:0s, vx:0, ivx:56, sf:13332, hf:0
+Calculations 0% complete65536 polynomial evaluations performed
+131072 polynomial evaluations performed
+196608 polynomial evaluations performed
+262144 polynomial evaluations performed
+327680 polynomial evaluations performed
+393216 polynomial evaluations performed
+458752 polynomial evaluations performed
+524288 polynomial evaluations performed
+589824 polynomial evaluations performed
+655360 polynomial evaluations performed
+720896 polynomial evaluations performed
+786432 polynomial evaluations performed
+851968 polynomial evaluations performed
+917504 polynomial evaluations performed
+983040 polynomial evaluations performed
+1048576 polynomial evaluations performed
+1114112 polynomial evaluations performed
+1179648 polynomial evaluations performed
+1245184 polynomial evaluations performed
+Dynamic polynomial statistics (Post-pedigree free):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 1128 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=6 eP=1257300 eV=0 hAP=1 kP=0 hP=54 uHP=6 fP=6(0) fKP=7
+Calculated polynomial statistics (Post-pedigree free):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+PID: 31035, stopwatch overall(2) e:43s u:40s s:1s, vx:1, ivx:1838, sf:13368, hf:0
+
+Starting w/loci Trait(2 alleles) and M0002(2 alleles) (2 of 10 pairs)
+Building polynomial w/pedigree: ctrl11 (1/6)Building polynomial w/pedigree: case11 (2/6)Building polynomial w/pedigree: ctrl12 (3/6)Building polynomial w/pedigree: case12 (4/6)Building polynomial w/pedigree: ctrl22 (5/6)Building polynomial w/pedigree: case22 (6/6)Dynamic polynomial statistics (Post-build):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=115/0(0.0:1), p=279/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 2194 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=11 eP=1257300 eV=0 hAP=1 kP=0 hP=60 uHP=6 fP=12(0) fKP=13
+
+PID: 31035, stopwatch overall(3) e:43s u:41s s:1s, vx:1, ivx:1842, sf:13387, hf:0
+Calculations 10% complete1310720 polynomial evaluations performed
+1376256 polynomial evaluations performed
+1441792 polynomial evaluations performed
+1507328 polynomial evaluations performed
+Calculations 12% complete (~3 min left)1572864 polynomial evaluations performed
+1638400 polynomial evaluations performed
+1703936 polynomial evaluations performed
+1769472 polynomial evaluations performed
+1835008 polynomial evaluations performed
+1900544 polynomial evaluations performed
+1966080 polynomial evaluations performed
+2031616 polynomial evaluations performed
+2097152 polynomial evaluations performed
+2162688 polynomial evaluations performed
+2228224 polynomial evaluations performed
+2293760 polynomial evaluations performed
+2359296 polynomial evaluations performed
+2424832 polynomial evaluations performed
+2490368 polynomial evaluations performed
+Dynamic polynomial statistics (Post-pedigree free):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 2194 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=12 eP=2514600 eV=0 hAP=1 kP=0 hP=60 uHP=12 fP=12(0) fKP=14
+Calculated polynomial statistics (Post-pedigree free):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+PID: 31035, stopwatch overall(4) e:98s u:94s s:3s, vx:3, ivx:4153, sf:13390, hf:0
+
+Starting w/loci Trait(2 alleles) and M0003(2 alleles) (3 of 10 pairs)
+Building polynomial w/pedigree: ctrl11 (1/6)Building polynomial w/pedigree: case11 (2/6)Building polynomial w/pedigree: ctrl12 (3/6)Building polynomial w/pedigree: case12 (4/6)Building polynomial w/pedigree: ctrl22 (5/6)Building polynomial w/pedigree: case22 (6/6)Dynamic polynomial statistics (Post-build):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=115/0(0.0:1), p=279/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 3260 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=17 eP=2514600 eV=0 hAP=1 kP=0 hP=66 uHP=12 fP=18(0) fKP=20
+
+PID: 31035, stopwatch overall(5) e:98s u:94s s:3s, vx:3, ivx:4154, sf:13401, hf:0
+Calculations 20% complete2555904 polynomial evaluations performed
+2621440 polynomial evaluations performed
+2686976 polynomial evaluations performed
+2752512 polynomial evaluations performed
+2818048 polynomial evaluations performed
+Calculations 22% complete (~2 min left)2883584 polynomial evaluations performed
+2949120 polynomial evaluations performed
+3014656 polynomial evaluations performed
+3080192 polynomial evaluations performed
+3145728 polynomial evaluations performed
+3211264 polynomial evaluations performed
+3276800 polynomial evaluations performed
+3342336 polynomial evaluations performed
+3407872 polynomial evaluations performed
+3473408 polynomial evaluations performed
+3538944 polynomial evaluations performed
+3604480 polynomial evaluations performed
+3670016 polynomial evaluations performed
+3735552 polynomial evaluations performed
+Dynamic polynomial statistics (Post-pedigree free):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 3260 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=18 eP=3771900 eV=0 hAP=1 kP=0 hP=66 uHP=18 fP=18(0) fKP=21
+Calculated polynomial statistics (Post-pedigree free):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+PID: 31035, stopwatch overall(6) e:164s u:158s s:4s, vx:5, ivx:6410, sf:13405, hf:0
+
+Starting w/loci Trait(2 alleles) and M0004(2 alleles) (4 of 10 pairs)
+Building polynomial w/pedigree: ctrl11 (1/6)Building polynomial w/pedigree: case11 (2/6)Building polynomial w/pedigree: ctrl12 (3/6)Building polynomial w/pedigree: case12 (4/6)Building polynomial w/pedigree: ctrl22 (5/6)Building polynomial w/pedigree: case22 (6/6)Dynamic polynomial statistics (Post-build):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=115/0(0.0:1), p=279/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 4326 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=23 eP=3771900 eV=0 hAP=1 kP=0 hP=72 uHP=18 fP=24(0) fKP=27
+
+PID: 31035, stopwatch overall(7) e:164s u:159s s:4s, vx:5, ivx:6414, sf:13413, hf:0
+Calculations 30% complete3801088 polynomial evaluations performed
+3866624 polynomial evaluations performed
+3932160 polynomial evaluations performed
+3997696 polynomial evaluations performed
+Calculations 32% complete (~2 min left)4063232 polynomial evaluations performed
+4128768 polynomial evaluations performed
+4194304 polynomial evaluations performed
+4259840 polynomial evaluations performed
+4325376 polynomial evaluations performed
+4390912 polynomial evaluations performed
+4456448 polynomial evaluations performed
+4521984 polynomial evaluations performed
+4587520 polynomial evaluations performed
+4653056 polynomial evaluations performed
+4718592 polynomial evaluations performed
+4784128 polynomial evaluations performed
+4849664 polynomial evaluations performed
+4915200 polynomial evaluations performed
+4980736 polynomial evaluations performed
+Dynamic polynomial statistics (Post-pedigree free):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 4326 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=24 eP=5029200 eV=0 hAP=1 kP=0 hP=72 uHP=24 fP=24(0) fKP=28
+Calculated polynomial statistics (Post-pedigree free):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+PID: 31035, stopwatch overall(8) e:223s u:216s s:5s, vx:7, ivx:14257, sf:13416, hf:0
+
+Starting w/loci Trait(2 alleles) and M0005(2 alleles) (5 of 10 pairs)
+Building polynomial w/pedigree: ctrl11 (1/6)Building polynomial w/pedigree: case11 (2/6)Building polynomial w/pedigree: ctrl12 (3/6)Building polynomial w/pedigree: case12 (4/6)Building polynomial w/pedigree: ctrl22 (5/6)Building polynomial w/pedigree: case22 (6/6)Dynamic polynomial statistics (Post-build):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=115/0(0.0:1), p=279/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 5392 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=29 eP=5029200 eV=0 hAP=1 kP=0 hP=78 uHP=24 fP=30(0) fKP=34
+
+PID: 31035, stopwatch overall(9) e:223s u:216s s:5s, vx:7, ivx:14277, sf:13424, hf:0
+Calculations 40% complete5046272 polynomial evaluations performed
+5111808 polynomial evaluations performed
+5177344 polynomial evaluations performed
+5242880 polynomial evaluations performed
+5308416 polynomial evaluations performed
+5373952 polynomial evaluations performed
+Calculations 43% complete (~2 min left)5439488 polynomial evaluations performed
+5505024 polynomial evaluations performed
+5570560 polynomial evaluations performed
+5636096 polynomial evaluations performed
+5701632 polynomial evaluations performed
+5767168 polynomial evaluations performed
+5832704 polynomial evaluations performed
+5898240 polynomial evaluations performed
+5963776 polynomial evaluations performed
+6029312 polynomial evaluations performed
+6094848 polynomial evaluations performed
+6160384 polynomial evaluations performed
+6225920 polynomial evaluations performed
+Dynamic polynomial statistics (Post-pedigree free):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 5392 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=30 eP=6286500 eV=0 hAP=1 kP=0 hP=78 uHP=30 fP=30(0) fKP=35
+Calculated polynomial statistics (Post-pedigree free):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+PID: 31035, stopwatch overall(10) e:269s u:260s s:7s, vx:8, ivx:20773, sf:13426, hf:0
+
+Starting w/loci Trait(2 alleles) and M0006(2 alleles) (6 of 10 pairs)
+Building polynomial w/pedigree: ctrl11 (1/6)Building polynomial w/pedigree: case11 (2/6)Building polynomial w/pedigree: ctrl12 (3/6)Building polynomial w/pedigree: case12 (4/6)Building polynomial w/pedigree: ctrl22 (5/6)Building polynomial w/pedigree: case22 (6/6)Dynamic polynomial statistics (Post-build):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=115/0(0.0:1), p=279/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 6458 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=35 eP=6286500 eV=0 hAP=1 kP=0 hP=84 uHP=30 fP=36(0) fKP=41
+
+PID: 31035, stopwatch overall(11) e:269s u:260s s:7s, vx:8, ivx:20790, sf:13434, hf:0
+Calculations 50% complete6291456 polynomial evaluations performed
+6356992 polynomial evaluations performed
+6422528 polynomial evaluations performed
+6488064 polynomial evaluations performed
+6553600 polynomial evaluations performed
+6619136 polynomial evaluations performed
+6684672 polynomial evaluations performed
+6750208 polynomial evaluations performed
+6815744 polynomial evaluations performed
+6881280 polynomial evaluations performed
+Calculations 54% complete (~1 min left)6946816 polynomial evaluations performed
+7012352 polynomial evaluations performed
+7077888 polynomial evaluations performed
+7143424 polynomial evaluations performed
+7208960 polynomial evaluations performed
+7274496 polynomial evaluations performed
+7340032 polynomial evaluations performed
+7405568 polynomial evaluations performed
+7471104 polynomial evaluations performed
+7536640 polynomial evaluations performed
+Dynamic polynomial statistics (Post-pedigree free):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 6458 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=36 eP=7543800 eV=0 hAP=1 kP=0 hP=84 uHP=36 fP=36(0) fKP=42
+Calculated polynomial statistics (Post-pedigree free):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+PID: 31035, stopwatch overall(12) e:325s u:315s s:8s, vx:10, ivx:27509, sf:13436, hf:0
+
+Starting w/loci Trait(2 alleles) and M0007(2 alleles) (7 of 10 pairs)
+Building polynomial w/pedigree: ctrl11 (1/6)Building polynomial w/pedigree: case11 (2/6)Building polynomial w/pedigree: ctrl12 (3/6)Building polynomial w/pedigree: case12 (4/6)Building polynomial w/pedigree: ctrl22 (5/6)Building polynomial w/pedigree: case22 (6/6)Dynamic polynomial statistics (Post-build):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=115/0(0.0:1), p=279/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 7524 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=41 eP=7543800 eV=0 hAP=1 kP=0 hP=90 uHP=36 fP=42(0) fKP=48
+
+PID: 31035, stopwatch overall(13) e:325s u:315s s:8s, vx:10, ivx:27522, sf:13441, hf:0
+Calculations 60% complete7602176 polynomial evaluations performed
+7667712 polynomial evaluations performed
+7733248 polynomial evaluations performed
+7798784 polynomial evaluations performed
+7864320 polynomial evaluations performed
+7929856 polynomial evaluations performed
+7995392 polynomial evaluations performed
+8060928 polynomial evaluations performed
+8126464 polynomial evaluations performed
+8192000 polynomial evaluations performed
+Calculations 65% complete (~1 min left)8257536 polynomial evaluations performed
+8323072 polynomial evaluations performed
+8388608 polynomial evaluations performed
+8454144 polynomial evaluations performed
+8519680 polynomial evaluations performed
+8585216 polynomial evaluations performed
+8650752 polynomial evaluations performed
+8716288 polynomial evaluations performed
+8781824 polynomial evaluations performed
+Dynamic polynomial statistics (Post-pedigree free):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 7524 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=42 eP=8801100 eV=0 hAP=1 kP=0 hP=90 uHP=42 fP=42(0) fKP=49
+Calculated polynomial statistics (Post-pedigree free):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+PID: 31035, stopwatch overall(14) e:386s u:375s s:10s, vx:12, ivx:33306, sf:13444, hf:0
+
+Starting w/loci Trait(2 alleles) and M0008(2 alleles) (8 of 10 pairs)
+Building polynomial w/pedigree: ctrl11 (1/6)Building polynomial w/pedigree: case11 (2/6)Building polynomial w/pedigree: ctrl12 (3/6)Building polynomial w/pedigree: case12 (4/6)Building polynomial w/pedigree: ctrl22 (5/6)Building polynomial w/pedigree: case22 (6/6)Dynamic polynomial statistics (Post-build):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=115/0(0.0:1), p=279/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 8590 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=47 eP=8801100 eV=0 hAP=1 kP=0 hP=96 uHP=42 fP=48(0) fKP=55
+
+PID: 31035, stopwatch overall(15) e:386s u:375s s:10s, vx:12, ivx:33308, sf:13448, hf:0
+Calculations 70% complete8847360 polynomial evaluations performed
+8912896 polynomial evaluations performed
+8978432 polynomial evaluations performed
+9043968 polynomial evaluations performed
+9109504 polynomial evaluations performed
+9175040 polynomial evaluations performed
+9240576 polynomial evaluations performed
+9306112 polynomial evaluations performed
+9371648 polynomial evaluations performed
+9437184 polynomial evaluations performed
+9502720 polynomial evaluations performed
+9568256 polynomial evaluations performed
+Calculations 76% complete (~0 min left)9633792 polynomial evaluations performed
+9699328 polynomial evaluations performed
+9764864 polynomial evaluations performed
+9830400 polynomial evaluations performed
+9895936 polynomial evaluations performed
+9961472 polynomial evaluations performed
+10027008 polynomial evaluations performed
+Dynamic polynomial statistics (Post-pedigree free):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 8590 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=48 eP=10058400 eV=0 hAP=1 kP=0 hP=96 uHP=48 fP=48(0) fKP=56
+Calculated polynomial statistics (Post-pedigree free):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+PID: 31035, stopwatch overall(16) e:436s u:423s s:11s, vx:14, ivx:35250, sf:13450, hf:0
+
+Starting w/loci Trait(2 alleles) and M0009(2 alleles) (9 of 10 pairs)
+Building polynomial w/pedigree: ctrl11 (1/6)Building polynomial w/pedigree: case11 (2/6)Building polynomial w/pedigree: ctrl12 (3/6)Building polynomial w/pedigree: case12 (4/6)Building polynomial w/pedigree: ctrl22 (5/6)Building polynomial w/pedigree: case22 (6/6)Dynamic polynomial statistics (Post-build):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=115/0(0.0:1), p=279/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 9656 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=53 eP=10058400 eV=0 hAP=1 kP=0 hP=102 uHP=48 fP=54(0) fKP=62
+
+PID: 31035, stopwatch overall(17) e:436s u:423s s:11s, vx:14, ivx:35251, sf:13453, hf:0
+Calculations 80% complete10092544 polynomial evaluations performed
+10158080 polynomial evaluations performed
+10223616 polynomial evaluations performed
+10289152 polynomial evaluations performed
+10354688 polynomial evaluations performed
+10420224 polynomial evaluations performed
+10485760 polynomial evaluations performed
+10551296 polynomial evaluations performed
+10616832 polynomial evaluations performed
+10682368 polynomial evaluations performed
+10747904 polynomial evaluations performed
+10813440 polynomial evaluations performed
+10878976 polynomial evaluations performed
+10944512 polynomial evaluations performed
+11010048 polynomial evaluations performed
+11075584 polynomial evaluations performed
+11141120 polynomial evaluations performed
+Calculations 88% complete (~0 min left)11206656 polynomial evaluations performed
+11272192 polynomial evaluations performed
+Dynamic polynomial statistics (Post-pedigree free):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 9656 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=54 eP=11315700 eV=0 hAP=1 kP=0 hP=102 uHP=54 fP=54(0) fKP=63
+Calculated polynomial statistics (Post-pedigree free):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+PID: 31035, stopwatch overall(18) e:485s u:471s s:12s, vx:16, ivx:37046, sf:13455, hf:0
+
+Starting w/loci Trait(2 alleles) and M0010(2 alleles) (10 of 10 pairs)
+Building polynomial w/pedigree: ctrl11 (1/6)Building polynomial w/pedigree: case11 (2/6)Building polynomial w/pedigree: ctrl12 (3/6)Building polynomial w/pedigree: case12 (4/6)Building polynomial w/pedigree: ctrl22 (5/6)Building polynomial w/pedigree: case22 (6/6)Dynamic polynomial statistics (Post-build):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=115/0(0.0:1), p=279/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 10722 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=59 eP=11315700 eV=0 hAP=1 kP=0 hP=108 uHP=54 fP=60(0) fKP=69
+
+PID: 31035, stopwatch overall(19) e:485s u:471s s:12s, vx:16, ivx:37047, sf:13460, hf:0
+Calculations 90% complete11337728 polynomial evaluations performed
+11403264 polynomial evaluations performed
+11468800 polynomial evaluations performed
+11534336 polynomial evaluations performed
+11599872 polynomial evaluations performed
+11665408 polynomial evaluations performed
+11730944 polynomial evaluations performed
+11796480 polynomial evaluations performed
+11862016 polynomial evaluations performed
+11927552 polynomial evaluations performed
+11993088 polynomial evaluations performed
+12058624 polynomial evaluations performed
+12124160 polynomial evaluations performed
+12189696 polynomial evaluations performed
+12255232 polynomial evaluations performed
+12320768 polynomial evaluations performed
+12386304 polynomial evaluations performed
+12451840 polynomial evaluations performed
+12517376 polynomial evaluations performed
+Dynamic polynomial statistics (Post-pedigree free):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 10722 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=60 eP=12573000 eV=0 hAP=1 kP=0 hP=108 uHP=60 fP=60(0) fKP=70
+Calculated polynomial statistics (Post-pedigree free):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+Dynamic polynomial statistics (Post-pedigree free):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 10722 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=60 eP=12573000 eV=0 hAP=1 kP=0 hP=108 uHP=60 fP=60(0) fKP=71
+Calculated polynomial statistics (Post-pedigree free):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+Dynamic polynomial statistics (End of run):
+Counts/Hits: c=43/0(0.0:1), v=10/0, s=6/0(0.0:1), p=3/0(0.0:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=0(@10000), p=0(@10000), f=0(@10), tcc=0(@16)
+...sizes: c=800000, v=80, s=800000, p=800000, f=800
+NodeId: 10722 Hash: max len=2, init size=24402680, SPL: eff=0%, avg len=0
+Calls: pLS=60 eP=12573000 eV=0 hAP=1 kP=0 hP=108 uHP=60 fP=60(0) fKP=71
+Calculated polynomial statistics (End of run):
+Term count(avg): s=11(1), p=4(1), sizes (w/terms): c=1376, s=512, p=216, f=0
+Sum term dist <2^n: 0=1,1=5,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Product term dist <2^n: 0=2,1=1,2=0,3=0,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=7999720(1), v=3880(2), s=7999720(1), p=7999720(1), f=399640(0)
+---Total data storage estimate: 26179Kb---
+PID: 31035, stopwatch overall(20) e:531s u:515s s:14s, vx:17, ivx:38882, sf:13461, hf:0
+
+
+PID: 31035, stopwatch overall(21) e:531s u:515s s:14s, vx:17, ivx:38883, sf:13461, hf:0
+PID: 31035, stopwatch overall(22) e:531s u:515s s:14s, vx:17, ivx:38884, sf:13462, hf:0
+PID: 31035, stopwatch overall(22) e:531s u:515s s:14s, vx:17, ivx:38884, sf:13462, hf:0
+PID: 31035, Finished run
+PID: 31035, Exiting
+
+real	8m50.959s
+user	8m35.974s
+sys	0m14.315s
