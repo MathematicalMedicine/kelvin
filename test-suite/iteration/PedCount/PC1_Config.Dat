@@ -1,0 +1,26 @@
+# $Id: PedCount.pl 1870 2009-05-21 18:09:57Z whv001 $
+PD PC1_Pedigrees.Dat
+DF PC1_Data.Dat
+MK PC1_Markers.Dat
+MP PC1_Map.Dat
+CC PC1_Counts.Dat
+HE PC1_BR.Out
+PF PC1_PPL.Out
+PE
+TP # Two-point analysis
+Th 0 0.5 0.01
+LD -1 1 0.1
+
+# The rest is the standard analysis grid...
+GF 0.001;0.01;0.1;0.3;0.5;0.8
+DD 0.0 0.9 0.1
+Dd 0.0 0.9 0.1
+dd 0.0 0.9 0.1
+DD 0.999
+Dd 0.999
+dd 0.999
+DD >= Dd
+Dd >= dd
+DD != Dd; Dd != dd
+AL 0.05 1 0.05
+
