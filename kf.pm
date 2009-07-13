@@ -372,7 +372,7 @@ sub loadConf {
     while (<IN>) {
 	$LineNo++;
 	s/\s*\#.*//g;    # Trim comments before looking for semis.
-	for (split /;/) {    # Semi is a directive delimiter -- not as good as a newline
+#	for (split /;/) {    # Semi is a directive delimiter -- not as good as a newline
 	    s/^\s*//g;       # Trim leading whitespace
 	    next if (/^$/);  # Drop empty lines
 	    my @Parameters = split /[,\s]+/;
@@ -381,7 +381,7 @@ sub loadConf {
 		if (!defined($KnownDirectives{$Directive}));
 	    $Directives{$Directive} = \@Parameters;
 	    &{ $KnownDirectives{$Directive} };
-	}
+#	}
     }
 }
 
