@@ -215,7 +215,7 @@ sub bucketizePedigrees {
 
     # Verify that this is a 2pt analysis (default, so look for multipoint directives)
     die "Generation of counts not permitted for a multipoint analysis.\n"
-      if (defined($Directives{MultiPoint}));
+      if (defined($Directives{SA}) || defined($Directives{SS}));
 
     # Verify that all markers are present and only biallelic...
     for my $Name (@Loci) {
@@ -285,7 +285,7 @@ sub bucketizePedigrees {
                     $ChildKey .= $Pedigrees{$Ped}{$Ind}{Aff};
 		    $ChildKey .= $Pedigrees{$Ped}{$Ind}{LC} if ($liability);
 
-                    if (defined($Directives{SexLinked}) || $XC || defined($Directives{Imprinting}) || $imprinting) {
+                    if (defined($Directives{XC}) || $XC || defined($Directives{IMP}) || $imprinting) {
                         $DadKey   .= $Pedigrees{$Ped}{$Dad}{Sex};
                         $MomKey   .= $Pedigrees{$Ped}{$Mom}{Sex};
                         $ChildKey .= $Pedigrees{$Ped}{$Ind}{Sex};
@@ -562,7 +562,7 @@ Constrain Penetrance Dd >= dd
 Constrain Penetrance DD != Dd, Dd != dd
 
 EOF
-    print OUT "XC\n" if (defined($Directives{SexLinked}) || $XC);
+    print OUT "XC\n" if (defined($Directives{XC}) || $XC);
     close OUT;
 
     open OUT, ">" . $Prefix . "Markers.Dat";
@@ -757,7 +757,7 @@ sub kelvinLimits {
 
     # General limitations
     warn "Warning -- kelvin currently only supports biallelic disease models!\n"
-      if (defined($Directives{DiseaseAlleles}) && ($Directives{DiseaseAlleles}[0] != 2));
+      if (defined($Directives{DA}) && ($Directives{DA}[0] != 2));
 }
 
 #####################################
@@ -894,23 +894,24 @@ die "-pre -post and -bare are mutually exclusive flags."
   if ($pre + $post + $bare > 1);
 
 # Setup the dispatch table for parsing configuration
-$KnownDirectives{PhenoCodes} = \&dirPhenoCodes;
-$KnownDirectives{CountFile} = \&dirCountFile;
-$KnownDirectives{Imprinting}= \&dirImprinting;
-$KnownDirectives{LiabilityClasses} = \&dirLiabilityClasses;
+$KnownDirectives{AS} = \&dirAS;
+$KnownDirectives{CF} = \&dirCF;
+$KnownDirectives{CC} = \&dirCF;
+$KnownDirectives{IMP}= \&dirIMP;
+$KnownDirectives{LC} = \&dirLC;
 $KnownDirectives{QT} = \&dirQT;
-$KnownDirectives{SexLinked} = \&dirSexLinked;
+$KnownDirectives{XC} = \&dirXC;
 
 if ($config) {
     my $ConfFile = shift;
     loadConf($ConfFile);
-    if (defined($Directives{LocusFile}[0])) { $locusFile = $Directives{LocusFile}[0]; }
+    if (defined($Directives{DF}[0])) { $locusFile = $Directives{DF}[0]; }
     loadCompanion($locusFile);
-    if (defined($Directives{MapFile}[0])) { $mapFile = $Directives{MapFile}[0]; }
+    if (defined($Directives{MP}[0])) { $mapFile = $Directives{MP}[0]; }
     loadMap($mapFile);
-    if (defined($Directives{FrequencyFile}[0])) { $frequencyFile = $Directives{FrequencyFile}[0]; }
+    if (defined($Directives{MK}[0])) { $frequencyFile = $Directives{MK}[0]; }
     loadFrequencies($frequencyFile);
-    if (defined($Directives{PedigreeFile}[0])) { $pedFile = $Directives{PedigreeFile}[0]; }
+    if (defined($Directives{PD}[0])) { $pedFile = $Directives{PD}[0]; }
 } else {
     $pedFile = shift;
 }
@@ -957,7 +958,7 @@ if ($loops) {
 
 doMarkerInclusion();
 
-if (defined($Directives{Multipoint})) {
+if (defined($Directives{SA}) || defined($Directives{SS})) {
     if ($split) {
         die "The -split option is not yet implemented for multipoint.\n";
     } else {
