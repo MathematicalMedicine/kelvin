@@ -730,17 +730,18 @@ sub addMissingAlleles {
     my $maf0 = 0; # True if we found missing minor allele frequencies
     for my $Name (@Loci) {
         next if ($LociAttributes{$Name}{Type}  =~ /^[AT]$/);
-	if (!defined($LociAttributes{$Name}{Alleles}{1})) {
+	if (defined($LociAttributes{$Name}{Alleles}{2}) && !defined($LociAttributes{$Name}{Alleles}{1})) {
 	    $maf0 = 1;
 	    $LociAttributes{$Name}{Alleles}{1}{Order} = 1;
-	    push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, 1;
-	    $LociAttributes{$Name}{Alleles}{1}{Frequency} = 0;
+	    unshift @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, '1';
+	    $LociAttributes{$Name}{Alleles}{2}{Order} = 2;
+	    $LociAttributes{$Name}{Alleles}{1}{Frequency} = '0';
 	}
-	if (!defined($LociAttributes{$Name}{Alleles}{2})) {
+	if (defined($LociAttributes{$Name}{Alleles}{1}) && !defined($LociAttributes{$Name}{Alleles}{2})) {
 	    $maf0 = 1;
 	    $LociAttributes{$Name}{Alleles}{2}{Order} = 2;
-	    push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, 2;
-	    $LociAttributes{$Name}{Alleles}{2}{Frequency} = 0;
+	    push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, '2';
+	    $LociAttributes{$Name}{Alleles}{2}{Frequency} = '0';
 	}
     }
     return $maf0;
