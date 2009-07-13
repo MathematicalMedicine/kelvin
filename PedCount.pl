@@ -912,6 +912,7 @@ if ($config) {
     if (defined($Directives{MK}[0])) { $frequencyFile = $Directives{MK}[0]; }
     loadFrequencies($frequencyFile);
     if (defined($Directives{PD}[0])) { $pedFile = $Directives{PD}[0]; }
+    $maf0 = addMissingAlleles();
 } else {
     $pedFile = shift;
 }
@@ -924,7 +925,6 @@ $PairCount = loadPedigree($pedFile, $pedFileType, $liability);
 #print Dumper(\%Pedigrees);
 
 if (!$config) {
-
     # Make-up @Loci and %LociAttributes if we have to...
     deriveAlleleFrequencies();
     $maf0 = addMissingAlleles();
