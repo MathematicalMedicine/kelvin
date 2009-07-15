@@ -43,7 +43,7 @@
  **********************************************************************/
 
 /* Maximum number of characters in an KELVIN filename. */
-#define KMAXFILENAMELEN 64
+#define KMAXFILENAMELEN 256
 
 /* Maximum number of characters in a KELVIN input line. */
 #define KMAXLINELEN 1024
