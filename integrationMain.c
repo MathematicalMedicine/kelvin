@@ -788,6 +788,7 @@
       else
 	update_penetrance (&pedigreeSet, traitLocus);
  
+      sprintf (partialPolynomialFunctionName, "MQT_P%%sSL%d", modelOptions.sexLinked);
       cL[1]++;
       compute_likelihood (&pedigreeSet);
 

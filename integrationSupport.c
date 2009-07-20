@@ -358,6 +358,7 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
 				       -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
 				       0);	/* current locus - start with 0 */
 
+  fprintf (stderr, "CL3 in inteeeeeegration!\n");
   cL[3]++;
   compute_likelihood (&pedigreeSet);
 
@@ -1091,6 +1092,7 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
 				       0);	/* current locus - start with 0 */
 
   // No new name for a polynomial here because we're reusing the existing one
+  fprintf (stderr, "CL6 in inteeeeeegration!\n");
   cL[6]++;
   ret=compute_likelihood (&pedigreeSet);
   if(ret==-2){
