@@ -1141,8 +1141,7 @@ void iterateMain() {
 	if (markerSetChanged) {
 	  pushStatus ('k', "buildMM");
 	  char markerNo[8];
-	  sprintf (partialPolynomialFunctionName, "MM_P%%sC%dM",
-		   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+	  strcpy (partialPolynomialFunctionName, "MM_P%sM");
 	  for (k = 0; k < modelType.numMarkers; k++) {
 	    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
 	    strcat (partialPolynomialFunctionName, markerNo);
@@ -1355,8 +1354,7 @@ void iterateMain() {
             /* If we're not on the first iteration, it's not a polynomial build, so
              * show progress at 1 minute intervals. Have a care to avoid division by zero. */
 	    char markerNo[8];
-	    sprintf (partialPolynomialFunctionName, "MDA_P%%sC%dM",
-		     (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+	    strcpy (partialPolynomialFunctionName, "MDA_P%sM");
 	    for (k = 0; k < modelType.numMarkers; k++) {
 	      if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
 		  (strstr (partialPolynomialFunctionName, "_T") == NULL))
@@ -1549,8 +1547,7 @@ void iterateMain() {
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
 		char markerNo[8];
-		sprintf (partialPolynomialFunctionName, "MQA_P%%sC%dM",
-			 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+		strcpy (partialPolynomialFunctionName, "MQA_P%sM");
 		for (k = 0; k < modelType.numMarkers; k++) {
 		  if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
 		      (strstr (partialPolynomialFunctionName, "_T") == NULL))

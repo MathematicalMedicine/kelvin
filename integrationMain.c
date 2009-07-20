@@ -924,8 +924,7 @@
 			       tmpID);
 
 	char markerNo[8];
-	sprintf (partialPolynomialFunctionName, "MM_P%%sC%dM",
-		 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+	strcpy (partialPolynomialFunctionName, "MM_P%sM");
 	for (k = 0; k < modelType.numMarkers; k++) {
 	  sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
 	  strcat (partialPolynomialFunctionName, markerNo);
