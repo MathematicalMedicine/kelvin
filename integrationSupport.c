@@ -358,6 +358,7 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
 				       -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
 				       0);	/* current locus - start with 0 */
 
+  cL[3]++;
   compute_likelihood (&pedigreeSet);
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
@@ -701,6 +702,19 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
   /* This is for alternative likelihood */
   locusList = &savedLocusList;
   xmissionMatrix = altMatrix;
+  int k;
+  char markerNo[8];
+  sprintf (partialPolynomialFunctionName, "CL7_P%%sC%dM", pLocus2->pMapUnit->chromosome);
+  for (k = 0; k < modelType.numMarkers; k++) {
+    if (*get_map_position (traitLocus) <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
+	(strstr (partialPolynomialFunctionName, "_T") == NULL))
+      strcat (partialPolynomialFunctionName, "_T");
+    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
+    strcat (partialPolynomialFunctionName, markerNo);
+  }
+  if (strstr (partialPolynomialFunctionName, "_T") == NULL)
+    strcat (partialPolynomialFunctionName, "_T");
+  cL[4]++;
   ret=compute_likelihood (&pedigreeSet);
   if(ret==-2){
     /* negative likelihood */
@@ -1021,6 +1035,9 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
 				       0);	/* current locus - start with 0 */
 
 
+  sprintf (partialPolynomialFunctionName, "CL2_P%%s_%s_%s",
+	   pLocus1->sName, pLocus2->sName);
+  cL[5]++;
   ret=compute_likelihood (&pedigreeSet);
 
   if (pedigreeSet.likelihood == 0.0
@@ -1073,6 +1090,8 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
 				       -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
 				       0);	/* current locus - start with 0 */
 
+  strcpy (partialPolynomialFunctionName, "cL3_P%s");
+  cL[6]++;
   ret=compute_likelihood (&pedigreeSet);
   if(ret==-2){
     /* negative likelihood */
@@ -1398,6 +1417,9 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
 
 
   //  KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
+  sprintf (partialPolynomialFunctionName, "CL0_P%%s_%s_%s",
+	   pLocus1->sName, pLocus2->sName);
+  cL[7]++;
   ret=compute_likelihood (&pedigreeSet);
 
   //printf("likelihood =%15.13f with theta 0.5 with %d pedigrees\n", pedigreeSet.likelihood, pedigreeSet.numPedigree);
@@ -1460,6 +1482,9 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
 				       0);	/* current locus - start with 0 */
 
   //  KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
+  sprintf (partialPolynomialFunctionName, "CL1_P%%s_%s_%s",
+	   pLocus1->sName, pLocus2->sName);
+  cL[8]++;
   ret=compute_likelihood (&pedigreeSet);
   if (ret==-2){
     fprintf(stderr, "Negative likelihood! Exiting...\n");
