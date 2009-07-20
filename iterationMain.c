@@ -333,10 +333,10 @@ void iterateMain() {
 
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-		sprintf (partialPolynomialFunctionName, "CL0_P%%s_%s_%s",
+		sprintf (partialPolynomialFunctionName, "TD_P%%s_%s_%s",
 			 pLocus1->sName, pLocus2->sName);
                 if (gfreqInd != 0 || penIdx != 0) {
-		  pushStatus ('k', "evalCL0");
+		  pushStatus ('k', "evalTD");
 		  //                  swStart (combinedComputeSW);
                   ret=compute_likelihood (&pedigreeSet);
                   cL[0]++;
@@ -354,7 +354,7 @@ void iterateMain() {
                   }
 		  popStatus ('k');
                 } else { // This _is_ the first iteration
-		  pushStatus ('k', "buildCL0");
+		  pushStatus ('k', "buildTD");
 		  swStart (combinedBuildSW);
 		  ret=compute_likelihood (&pedigreeSet);
 		  cL[0]++;
@@ -391,8 +391,6 @@ void iterateMain() {
                 }
 
                 log10_likelihood_null = pedigreeSet.log10Likelihood;
-		//&&&		fprintf (stderr, "About to do %d iterations for ndprime at loc1/loc2: %d/%d\n",
-		//			 pLambdaCell->ndprime, loc1, loc2);
                 for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
                   if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
 
@@ -403,9 +401,6 @@ void iterateMain() {
                     if (pLambdaCell->impossibleFlag[dprimeIdx] != 0) {
 		      // If we're going to bail at this point, add the progress count loop factor
 		      cL[1] += modelRange.ntheta;
-		      //&&&		      for (i=0; i<modelRange.ntheta; i++)
-		      //			fprintf (stderr, "loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx,thetaInd:\t%d\t%d\t%d\t%d\t%d\t%d\tskipped\n",
-		      //				 loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx);
                       continue;
 		    }
                     copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprimeIdx]);
@@ -445,13 +440,10 @@ void iterateMain() {
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
-		    sprintf (partialPolynomialFunctionName, "CL1_P%%s_%s_%s",
-			     pLocus1->sName, pLocus2->sName);
                     swStart (combinedComputeSW);
+		    // No new name for a polynomial here because we're reusing the existing one
                     ret=compute_likelihood (&pedigreeSet);
                     cL[1]++;
-		    //&&&		    fprintf (stderr, "loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx,thetaInd:\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
-		    //			     loc1,loc2,mkrFreqIdx,gfreqInd,penIdx,dprimeIdx,thetaInd);
                     swStop (combinedComputeSW);
                     if (statusRequestSignal) {
                       statusRequestSignal = FALSE;
@@ -565,10 +557,10 @@ void iterateMain() {
 		    /* If we're not on the first iteration, it's not a polynomial build, so
 		     * show progress at 1 minute intervals. Have a care to avoid division by zero. */
 
-		    sprintf (partialPolynomialFunctionName, "CL2_P%%s_%s_%s",
+		    sprintf (partialPolynomialFunctionName, "TQ_P%%s_%s_%s",
 			     pLocus1->sName, pLocus2->sName);
 		    if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
-		      pushStatus ('k', "evalCL2");
+		      pushStatus ('k', "evalTQ");
 		      //		      swStart (combinedComputeSW);
 		      ret=compute_likelihood (&pedigreeSet);
 		      cL[2]++;
@@ -586,7 +578,7 @@ void iterateMain() {
 		      }
 		      popStatus ('k');
 		    } else { // This _is_ the first iteration
-		      pushStatus ('k', "buildCL2");
+		      pushStatus ('k', "buildTQ");
 		      swStart (combinedBuildSW);
 		      ret=compute_likelihood (&pedigreeSet);
 		      cL[2]++;
@@ -664,8 +656,8 @@ void iterateMain() {
                             populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2,
                                                       initialHetProbAddr, 0, -1, -1, 0);
 
-                        strcpy (partialPolynomialFunctionName, "cL3_P%s");
 			swStart (combinedComputeSW);
+			// No new name for a polynomial here because we're reusing the existing one
                         ret=compute_likelihood (&pedigreeSet);
                         cL[3]++;
 			swStop (combinedComputeSW);
@@ -841,7 +833,7 @@ void iterateMain() {
             update_locus (&pedigreeSet, traitLocus);
 
           /* Compute the likelihood for the trait */
-          sprintf (partialPolynomialFunctionName, "TL4_P%%sSL%d", modelOptions.sexLinked);
+          sprintf (partialPolynomialFunctionName, "MDT_P%%sSL%d", modelOptions.sexLinked);
           ret=compute_likelihood (&pedigreeSet);
           cL[4]++;
 #ifndef SIMPLEPROGRESS
@@ -958,7 +950,7 @@ void iterateMain() {
               if (modelOptions.polynomial == TRUE);
               else
                 update_penetrance (&pedigreeSet, traitLocus);
-              sprintf (partialPolynomialFunctionName, "TL5_P%%sSL%d", modelOptions.sexLinked);
+              sprintf (partialPolynomialFunctionName, "MQT_P%%sSL%d", modelOptions.sexLinked);
               ret=compute_likelihood (&pedigreeSet);
               cL[5]++;
 #ifndef SIMPLEPROGRESS
@@ -1147,16 +1139,16 @@ void iterateMain() {
           }
         }
 	if (markerSetChanged) {
-	  pushStatus ('k', "buildML6");
+	  pushStatus ('k', "buildMM");
 	  char markerNo[8];
-	  sprintf (partialPolynomialFunctionName, "ML6_P%%sC%dM",
+	  sprintf (partialPolynomialFunctionName, "MM_P%%sC%dM",
 		   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
 	  for (k = 0; k < modelType.numMarkers; k++) {
 	    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
 	    strcat (partialPolynomialFunctionName, markerNo);
 	  }
 	} else
-	  pushStatus ('k', "evalML6");
+	  pushStatus ('k', "evalMM");
         ret=compute_likelihood (&pedigreeSet);
         cL[6]++;
 	popStatus ('k');
@@ -1363,7 +1355,7 @@ void iterateMain() {
             /* If we're not on the first iteration, it's not a polynomial build, so
              * show progress at 1 minute intervals. Have a care to avoid division by zero. */
 	    char markerNo[8];
-	    sprintf (partialPolynomialFunctionName, "CL7_P%%sC%dM",
+	    sprintf (partialPolynomialFunctionName, "MDA_P%%sC%dM",
 		     (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
 	    for (k = 0; k < modelType.numMarkers; k++) {
 	      if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
@@ -1375,7 +1367,7 @@ void iterateMain() {
 	    if (strstr (partialPolynomialFunctionName, "_T") == NULL)
 	      strcat (partialPolynomialFunctionName, "_T");
             if (gfreqInd != 0 || penIdx != 0) {
-	      pushStatus ('k', "evalCL7");
+	      pushStatus ('k', "evalMDA");
               swStart (combinedComputeSW);
               ret=compute_likelihood (&pedigreeSet);
               cL[7]++;
@@ -1400,7 +1392,7 @@ void iterateMain() {
               }
 	      popStatus ('k');
             } else {     // This _is_ the first iteration
-	      pushStatus ('k', "buildCL7");
+	      pushStatus ('k', "buildMDA");
               swStart (combinedBuildSW);
               ret=compute_likelihood (&pedigreeSet);
               cL[7]++;
@@ -1557,7 +1549,7 @@ void iterateMain() {
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
 		char markerNo[8];
-		sprintf (partialPolynomialFunctionName, "CL8_P%%sC%dM",
+		sprintf (partialPolynomialFunctionName, "MQA_P%%sC%dM",
 			 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
 		for (k = 0; k < modelType.numMarkers; k++) {
 		  if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
@@ -1569,7 +1561,7 @@ void iterateMain() {
 		if (strstr (partialPolynomialFunctionName, "_T") == NULL)
 		  strcat (partialPolynomialFunctionName, "_T");
                 if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
-		  pushStatus ('k', "evalCL8");
+		  pushStatus ('k', "evalMQA");
                   swStart (combinedComputeSW);
                   ret=compute_likelihood (&pedigreeSet);
                   cL[8]++;
@@ -1594,7 +1586,7 @@ void iterateMain() {
                   }
 		  popStatus ('k');
                 } else {  // This _is_ the first iteration
-		  pushStatus ('k', "buildCL8");
+		  pushStatus ('k', "buildMQA");
                   swStart (combinedBuildSW);
                   ret=compute_likelihood (&pedigreeSet);
                   cL[8]++;
@@ -1675,7 +1667,7 @@ void iterateMain() {
       free (markerNameList);
     }
   }
-//  dumpTrackingStats(cL, eCL);
+  dumpTrackingStats(cL, eCL);
 
   if(fpIR !=NULL){
     if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) 
