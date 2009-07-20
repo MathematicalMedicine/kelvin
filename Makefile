@@ -66,7 +66,7 @@ OBJS = ppl.o saveResults.o trackProgress.o kelvinHandlers.o \
 INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
 	kelvinGlobals.h iterationGlobals.h integrationGlobals.h \
 	kelvinLocals.h iterationLocals.h integrationLocals.h \
-	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c integrationSupport.ckelvinWriteFiles.c \
+	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c integrationSupport.c kelvinWriteFiles.c \
 	dkelvinWriteFiles.c
 
 # Binary releases include kelvin_$(PLATFORM)
@@ -77,7 +77,7 @@ install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh
 
-kelvin : libs $(KOBJS) $(OBJS)
+kelvin : libs $(KOBJS) $(OBJS) $(INCS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $(LPTMFLAG)
 
 kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
