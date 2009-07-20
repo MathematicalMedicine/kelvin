@@ -704,7 +704,7 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
   xmissionMatrix = altMatrix;
   int k;
   char markerNo[8];
-  sprintf (partialPolynomialFunctionName, "CL7_P%%sC%dM", pLocus2->pMapUnit->chromosome);
+  sprintf (partialPolynomialFunctionName, "MDA_P%%sC%dM", pLocus2->pMapUnit->chromosome);
   for (k = 0; k < modelType.numMarkers; k++) {
     if (*get_map_position (traitLocus) <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
 	(strstr (partialPolynomialFunctionName, "_T") == NULL))
@@ -1035,7 +1035,7 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
 				       0);	/* current locus - start with 0 */
 
 
-  sprintf (partialPolynomialFunctionName, "CL2_P%%s_%s_%s",
+  sprintf (partialPolynomialFunctionName, "TQ_P%%s_%s_%s",
 	   pLocus1->sName, pLocus2->sName);
   cL[5]++;
   ret=compute_likelihood (&pedigreeSet);
@@ -1417,7 +1417,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
 
 
   //  KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
-  sprintf (partialPolynomialFunctionName, "CL0_P%%s_%s_%s",
+  sprintf (partialPolynomialFunctionName, "TD_P%%s_%s_%s",
 	   pLocus1->sName, pLocus2->sName);
   cL[7]++;
   ret=compute_likelihood (&pedigreeSet);

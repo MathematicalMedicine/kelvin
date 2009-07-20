@@ -760,7 +760,7 @@
 	update_locus (&pedigreeSet, traitLocus);
       /* get the likelihood for the trait */
       KLOG (LOGLIKELIHOOD, LOGDEBUG, "Trait Likelihood\n");
-      sprintf (partialPolynomialFunctionName, "TL4_P%%sSL%d", modelOptions.sexLinked);
+      sprintf (partialPolynomialFunctionName, "MDT_P%%sSL%d", modelOptions.sexLinked);
       cL[0]++;
       compute_likelihood (&pedigreeSet);	/* This builds polynomials with dummy numbers */
 
@@ -924,7 +924,7 @@
 			       tmpID);
 
 	char markerNo[8];
-	sprintf (partialPolynomialFunctionName, "ML6_P%%sC%dM",
+	sprintf (partialPolynomialFunctionName, "MM_P%%sC%dM",
 		 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
 	for (k = 0; k < modelType.numMarkers; k++) {
 	  sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
