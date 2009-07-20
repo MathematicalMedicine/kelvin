@@ -66,7 +66,7 @@ OBJS = ppl.o saveResults.o trackProgress.o kelvinHandlers.o \
 INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
 	kelvinGlobals.h iterationGlobals.h integrationGlobals.h \
 	kelvinLocals.h iterationLocals.h integrationLocals.h \
-	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c kelvinWriteFiles.c \
+	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c integrationSupport.ckelvinWriteFiles.c \
 	dkelvinWriteFiles.c
 
 # Binary releases include kelvin_$(PLATFORM)
