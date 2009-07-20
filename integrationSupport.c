@@ -358,9 +358,10 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
 				       -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
 				       0);	/* current locus - start with 0 */
 
-  fprintf (stderr, "CL3 in inteeeeeegration!\n");
-  cL[3]++;
+
+  strcpy (partialPolynomialFunctionName, "MQA_P%sM");
   compute_likelihood (&pedigreeSet);
+  cL[3]++;
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
   if (isnan (log10_likelihood_alternative))
