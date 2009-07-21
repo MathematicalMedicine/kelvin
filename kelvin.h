@@ -235,7 +235,7 @@ typedef struct SUMMARY_STAT
 {
   /* for calculating average */
   double lr_total;		/* sum of log(LR) */
-  int lr_count;			/* number of models for the (ld, theta) pair */
+  long long lr_count;			/* number of models for the (ld, theta) pair */
   double het_lr_avg;		/* average of HET log(LR) */
   double het_lr_total;		/* with heterogeneity - alpha, parameter */
 

@@ -78,7 +78,7 @@ int prevLastMarker;		/* last marker in the set for multipoint analysis */
 
 LambdaCell *pLambdaCell = NULL;
 int loopMarkerFreqFlag = 0;
-int total_count;
+long long total_count;
 
 char *flexBuffer = NULL;
 int flexBufferSize = 0;

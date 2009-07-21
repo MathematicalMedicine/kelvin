@@ -355,7 +355,7 @@ get_average_LR (SUMMARY_STAT *** result)
   double total_lr;
   double max_lr_dprime_theta = -9999.99;
   double max_max_lr_dprime_theta = -9999.99;
-  int count;
+  long long count;
   int max_mf = -1;
   int max_max_mf = -1;
   double max_lr_dprime = -9999.99;
@@ -370,6 +370,8 @@ get_average_LR (SUMMARY_STAT *** result)
   int max_dprime = -1;
   int max_max_dprime = -1;
   double maxLR;
+
+  fprintf(stderr, "YGH %e\n", tp_result[0][0][1].het_lr_avg);
 
   for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
     dprime = pLambdaCell->lambda[dprimeIdx][0][0];
@@ -412,6 +414,10 @@ get_average_LR (SUMMARY_STAT *** result)
 	     modelRange.nalpha);
 
 	tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_avg = lr;
+	if(lr < 0) {
+	  fprintf(stderr, "het_lr_avg negative %e! mkrFreqIdx: %d\n", lr, mkrFreqIdx);
+	  exit(-1);
+	}
 	/* add up BR for each marker allele frequency */
 	total_lr += lr;
 	count++;
@@ -455,10 +461,15 @@ get_average_LR (SUMMARY_STAT *** result)
 	}
 
       }				/* end of looping marker allele frequencies */
+
+      fprintf(stderr, "YGH %e\n", tp_result[0][0][1].het_lr_avg);
+
       /* recording the average and max */
       memcpy (&tp_result[dprimeIdx][thetaInd][modelRange.nafreq],
 	      &tp_result[dprimeIdx][thetaInd][max_max_mf],
 	      sizeof (SUMMARY_STAT));
+      fprintf(stderr, "YGH %e\n", tp_result[0][0][1].het_lr_avg);
+
       tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_lr =
 	max_max_lr_dprime_theta;
       tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_mf =
