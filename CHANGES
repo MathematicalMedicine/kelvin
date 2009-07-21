@@ -1,3 +1,7 @@
+Version 0.37.7
+  07/21/2009 Change to maximum config file name length from 64 to 256. 
+  Change count representation from int to long long to avoid count 
+  become negative when we have huge number of models for the trait
 Version 0.37.6
   6/12/2009 Sang: The same SD values are assigned to each SD
   parameters for t-distribution. One threshold is used for all 
