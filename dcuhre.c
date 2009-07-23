@@ -1657,7 +1657,7 @@ print_sbrg (sub_region * cw_sbrg, int dim)
 	   cw_sbrg->lchild_id, cw_sbrg->rchild_id);
   fprintf (stderr, "               local error = %f\n", cw_sbrg->local_error);
   fprintf (stderr, "              local result = %f\n",cw_sbrg->local_result);
-  fprintf (stderr, "                     scale = %f\n",cw_sbrg->cur_scale);
+  fprintf (stderr, "                     scale = %d\n",cw_sbrg->cur_scale);
   fprintf (stderr, "on the sub region center   hwidth\n");
   for (i = 0; i < dim; i++) {
     fprintf (stderr, "                 %f, %f\n", cw_sbrg->center[i],
