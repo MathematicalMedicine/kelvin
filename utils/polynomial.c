@@ -186,7 +186,7 @@ extern struct swStopwatch *overallSW;   ///< Total run statistics stopwatch defi
 /** This is a global variable used for giving each polynomial an unique ID
    so that we can know if two polynomials are the same just from their IDs */
 
-int nodeId;
+long nodeId;
 
 /**
 
@@ -2127,7 +2127,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       productList[productCount]->index = productCount;
       productList[productCount]->id = nodeId;
       if (polynomialDebugLevel >= 40) {
-        fprintf (stderr, "Polynomial %d, (product %d) added: ", nodeId, productCount);
+        fprintf (stderr, "Polynomial %ld, (product %d) added: ", nodeId, productCount);
         expTermPrinting (stderr, rp, 1);
         fprintf (stderr, "\n");
       }
@@ -2349,7 +2349,7 @@ Polynomial *functionCallExp (int num, ...)
   functionCallList[functionCallCount] = rp;
   functionCallCount++;
   if (polynomialDebugLevel >= 40)
-    fprintf (stderr, "Polynomial %d, (function %d) added\n", nodeId, functionCallCount);
+    fprintf (stderr, "Polynomial %ld, (function %d) added\n", nodeId, functionCallCount);
   nodeId++;
 #ifdef POLYSTATISTICS
   if ((nodeId & 0x1FFFFF) == 0)
@@ -3288,7 +3288,7 @@ void printSummaryPoly (Polynomial * p)
 {
   int i, j;
 
-  fprintf (stderr, "Summary of Remains of %d Polynomials (from tree, unique terms only):\n", nodeId);
+  fprintf (stderr, "Summary of Remains of %ld Polynomials (from tree, unique terms only):\n", nodeId);
 
   clearValidEvalFlag ();
   memset (polyTiers, 0, sizeof (polyTiers));
@@ -3594,7 +3594,7 @@ void polyDynamicStatistics (char *title)
       (unsigned long) sizeof (void *) * variableListLength, (unsigned long) sizeof (void *) * sumListLength, (unsigned long) sizeof (void *) * productListLength, (unsigned long) sizeof (void *) * functionCallListLength);
 
   fprintf (stderr,
-      "NodeId: %d Hash: max len=%d, init size=%lu, SPL: eff=%lu%%, avg len=%lu\n", nodeId, maxHashLength, initialHashSize, 100 * (lowSPLCount + highSPLCount) / (totalSPLCalls ? totalSPLCalls : 1), totalSPLLengths / (totalSPLCalls ? totalSPLCalls : 1));
+      "NodeId: %ld Hash: max len=%d, init size=%lu, SPL: eff=%lu%%, avg len=%lu\n", nodeId, maxHashLength, initialHashSize, 100 * (lowSPLCount + highSPLCount) / (totalSPLCalls ? totalSPLCalls : 1), totalSPLLengths / (totalSPLCalls ? totalSPLCalls : 1));
 
   fprintf (stderr,
       "Calls: pLS=%d eP=%d eV=%d hAP=%d kP=%d hP=%d uHP=%d fP=%d(%d) fKP=%d\n",
@@ -4687,7 +4687,7 @@ void releaseExternalPoly (Polynomial *rp)
     else
       break;
 #endif
-  //  fprintf (stderr, "Released polynomial DL %s\n", rp->e.e->polynomialFunctionName);
+  fprintf (stderr, "Released polynomial DL %s\n", rp->e.e->polynomialFunctionName);
   rp->e.e->fileOK = FALSE;
   rp->e.e->entryOK = FALSE;
   return;

@@ -53,7 +53,7 @@ void *monitorStatus () {
       }
       currentVMK = swGetCurrentVMK (getpid ());
 #ifdef MEMGRAPH
-      fprintf (graphFile, "%lu, %d, %d\n", time (NULL) - startTime, currentVMK, nodeId);
+      fprintf (graphFile, "%lu, %d, %ld\n", time (NULL) - startTime, currentVMK, nodeId);
       fflush (graphFile);
 #endif
 #ifdef MEMSTATUS
@@ -141,7 +141,7 @@ void logPedigreeSetStatistics (PedigreeSet *pSet, ///< Pointer to pedigree set t
       sg += pNucFam->totalNumSimilarPairs;
     }
   }
-  sprintf (messageBuffer, "For %d pedigrees: unique groups:%d, similar groups:%d, polynomial terms:%d",
+  sprintf (messageBuffer, "For %d pedigrees: unique groups:%d, similar groups:%d, polynomial terms:%ld",
 	   pSet->numPedigree, pg, sg, nodeId);
   swLogMsg (messageBuffer);
 }

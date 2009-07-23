@@ -48,7 +48,8 @@ extern int productReleaseableCount, productNotReleaseableCount,
 extern int constantPLExpansions, variablePLExpansions, sumPCollectExpansions,
   sumPTermMergeExpansions, sumPListExpansions, productPCollectExpansions,
   productPTermMergeExpansions, productPListExpansions;
-extern int nodeId, constantCount, variableCount, sumCount, productCount,
+extern long nodeId;
+extern int constantCount, variableCount, sumCount, productCount,
   functionCallCount;
 extern int polyListSortingCount, evaluatePolyCount, evaluateValueCount, 
   keepPolyCount, freePolysCount, holdPolyCount, holdAllPolysCount, 
