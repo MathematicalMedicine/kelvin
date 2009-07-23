@@ -1,8 +1,10 @@
-#!/usr/bin/perl -w -I /home/whv001/kelvin/release/kelvin-0.37
+#!/usr/bin/perl -w
 use strict;
 use Getopt::Long;
 use List::Util qw(sum min);
 use Data::Dumper;
+use File::Basename;
+use lib dirname($0);
 use kf;
 
 #####################################
