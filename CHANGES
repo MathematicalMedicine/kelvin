@@ -1,4 +1,16 @@
 Version 0.38.0
+  Zero (or near-zero) frequency alleles are ignored 
+  and a warning displayed. Script to count
+  genotypically identical pedigrees now included.
+  See PedCount.pl for further details on usage.
+  Compiled polynomials now available for dynamic grid,
+  names homogenized.
+  Configuration file directives completely changed,
+  use convertconfig.pl to update earlier config files.
+  Dynamic grid now default method.
+  kelvin now actively constrains analysis parameters
+  to values that permit known good results in reasonable
+  timeframes.
   Output completely revised and reduced in volume.
   Case control (CC) directive replaces CF
   directive. Count file (CF) directive added to permit 
