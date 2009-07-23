@@ -1589,7 +1589,7 @@ void iterateMain() {
                   cL[8]++;
                   swStop (combinedBuildSW);
 #ifndef SIMPLEPROGRESS
-                  fprintf (stdout, "%s %lu%% complete at %d\r", "Combined likelihood evaluations", cL[8] * 100 / eCL[8], nodeId);
+                  fprintf (stdout, "%s %lu%% complete at %ld\r", "Combined likelihood evaluations", cL[8] * 100 / eCL[8], nodeId);
 #else
                   fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]));
 #endif
