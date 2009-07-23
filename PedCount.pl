@@ -931,7 +931,7 @@ if (!$config) {
 }
 
 #print Dumper(\@Loci);
-print Dumper(\%LociAttributes);
+#print Dumper(\%LociAttributes);
 
 checkRelations($pedFileType);
 checkIntegrity();
