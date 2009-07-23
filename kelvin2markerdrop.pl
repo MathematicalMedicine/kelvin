@@ -1,8 +1,10 @@
-#!/usr/bin/perl -w -I /home/whv001/kelvin/trunk
+#!/usr/bin/perl -w
 use strict;
 use Getopt::Long;
 use List::Util qw(sum min);
 use Data::Dumper;
+use File::Basename;
+use lib dirname($0);
 use kf;
 
 #####################################
@@ -183,8 +185,9 @@ my $MarkerSeq = 0;
 for my $Locus (@Loci) {
     next if ($LociAttributes{$Locus}{Type} eq "T");
     print OUT "set markers ".++$MarkerSeq." freqs ";
-    for my $Freq (sort @{ $LociAttributes{ $Locus }{Frequencies} }) {
-        print OUT "$Freq ";
+    for my $Allele (@{$LociAttributes{ $Locus }{Alleles}{OrderedList}}) {
+        print "Marker $Locus allele $Allele\n"; # has frequency ".$LociAttributes{ $Locus }{Alleles}{$Allele}{Frequency}."\n";
+        print OUT $LociAttributes{ $Locus }{Alleles}{$Allele}{Frequency}." ";
     }
     print OUT "\n";
 }
