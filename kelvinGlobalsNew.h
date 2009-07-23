@@ -19,7 +19,7 @@ extern struct swStopwatch *overallSW;
 extern LambdaCell *pLambdaCell;
 
 int loopMarkerFreqFlag ;
-int total_count;
+long long total_count;
 
 char *flexBuffer;
 int flexBufferSize;

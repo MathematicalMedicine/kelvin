@@ -434,7 +434,7 @@ int get_average_LR (SUMMARY_STAT *** result)
   double total_lr;
   double max_lr_dprime_theta = -9999.99;
   double max_max_lr_dprime_theta = -9999.99;
-  int count;
+  long long count;
   int max_mf = -1;
   int max_max_mf = -1;
   double max_lr_dprime = -9999.99;
