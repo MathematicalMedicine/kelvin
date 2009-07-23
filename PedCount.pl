@@ -635,8 +635,9 @@ sub writeExpanded {
 #                print OUT $Pairs[$i] . "  ";
 
                 my ($Left, $Right) = split(/ /, $Pairs[$i]);
-                print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Left]." ";
-                print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Right]."  ";
+
+                print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Left - 1]." ";
+                print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Right - 1]."  ";
 
 #                my ($Left, $Right) = split(/ /, $Pairs[$i]);
 #                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
@@ -930,7 +931,7 @@ if (!$config) {
 }
 
 #print Dumper(\@Loci);
-#print Dumper(\%LociAttributes);
+print Dumper(\%LociAttributes);
 
 checkRelations($pedFileType);
 checkIntegrity();
