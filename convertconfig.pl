@@ -20,6 +20,7 @@ my @malethetas = ();
 my @femalethetas = ();
 my @dprimes = ();
 my @genefreqs = ();
+my @allelefreqs = ();
 my @alphas = ();
 my @params = ();
 my @thresholds = ();
@@ -142,6 +143,9 @@ while ($line = <>) {
     } elsif ($line =~ /^GF (\S.*)$/) {
 	push (@genefreqs, parserange ($1));
 
+    } elsif ($line =~ /^AF (\S.*)$/) {
+	push (@allelefreqs, parserange ($1));
+
     } elsif ($line =~ /^AL (\S.*)$/) {
 	push (@alphas, parserange ($1));
 
@@ -256,6 +260,8 @@ if ($state{grid} eq 'fixed') {
     (scalar (@genefreqs))
 	and push (@modelparam, "DiseaseGeneFrequency ". join (", ", @genefreqs). "\n");
     (scalar (@alphas)) and push (@modelparam, "Alpha ". join (", ", @alphas). "\n");
+    (scalar (@allelefreqs))
+        and push (@modelparam, "MarkerAlleleFrequency ". join (", ", @allelefreqs). "\n");
 
     if ($state{trait} eq 'DT') {
 	foreach (qw(DD Dd dD dd)) {

@@ -107,6 +107,7 @@ int clear_flag (char **toks, int numtoks, void *flag);
 int set_int (char **toks, int numtoks, void *field);
 
 int set_traitLoci (char **toks, int numtoks, void *unused);
+int set_alleleFreq (char **toks, int numtoks, void *unused);
 int set_geneFreq (char **toks, int numtoks, void *unused);
 int set_dprime (char **toks, int numtoks, void *unused);
 int set_theta (char **toks, int numtoks, void *unused);
@@ -151,6 +152,7 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &modelOptions.
 				{"DiseaseAlleles", set_int, &modelRange.nalleles},
 
 				{"TraitLoci", set_traitLoci, NULL},
+				{"MarkerAlleleFrequency", set_alleleFreq, NULL},
 				{"DiseaseGeneFrequency", set_geneFreq, NULL},
 				{"DPrime", set_dprime, NULL},
 				{THETA_STR, set_theta, NULL},
@@ -390,6 +392,8 @@ void validateConfig ()
       fault ("SexSpecific is incompatible with MarkerToMarker\n");
     if (observed.sexSpecificThetas)
       fault ("%s and %s are incompatible with MarkerToMarker\n", MALETHETA_STR, FEMALETHETA_STR);
+    if (modelRange.nafreq > 0)
+      fault ("MarkerAlleleFrequency is incompatible with MarkerToMarker\n");
     if (modelRange.ngfreq > 0)
       fault ("Trait directives (DiseaseGeneFrequency) are incompatible with MarkerToMarker\n");
     if (modelRange.nalpha > 0)
@@ -448,6 +452,8 @@ void validateConfig ()
       fault ("LD is incompatible with Multipoint\n");
     if (modelOptions.extraMODs)
       fault ("ExtraMODs is incompatible with Multipoint\n");
+    if (modelRange.nafreq > 0)
+      fault ("MarkerAlleleFrquency is incompatible with Multipoint\n");
     if (modelOptions.pplfile[0] != '\0')
       logMsg (LOGINPUTFILE, LOGWARNING, "Multipoint will write no output to PPLFile\n");
   } else {
@@ -654,7 +660,7 @@ void finishConfig ()
    * Theta and DPrime values, if needed.
    */
   if (modelOptions.markerAnalysis) {
-    modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM;
+    modelOptions.equilibrium = LINKAGE_DISEQUILIBRIUM;
     modelOptions.integration = FALSE;
     if (modelRange.ndprime == 0) 
       /* Default range of DPrimes is -1 to 1 in steps of 0.02 */
@@ -810,6 +816,22 @@ int set_traitLoci (char **toks, int numtoks, void *unused)
   }
   free (vlist);
   observed.traitLoci = 1;
+  return (0);
+}
+
+
+int set_alleleFreq (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0;
+  double *vals;
+
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+    bail ("illegal argument to directive '%s'\n", toks[0]);
+  for (va = 0; va < numvals; va++)
+    addAlleleFreq (&modelRange, vals[va]);
+  free (vals);
   return (0);
 }
 
