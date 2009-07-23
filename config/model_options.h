@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 /* Maximum number of characters in an KELVIN filename. */
-#define KMAXFILENAMELEN 64
+#define KMAXFILENAMELEN 256 
 
 #define DEFAULTMARKERFILENAME "markers.dat"
 #define DEFAULTMAPFILENAME "mapfile.dat"
