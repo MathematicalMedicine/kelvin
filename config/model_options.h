@@ -53,6 +53,7 @@ typedef struct ModelOptions
   int polynomialScale;		/* Optional argument to PE directive to set initial memory size */
 
   int integration;              /* TRUE if using dkelvin integration method */
+  int maxIterations;            /* limit the number of per-BR dKelvin iterations */
 
   /* whether the chromosome is X chromosome
    * For some segments mainly at the telomeres, they can cross over with Y chromosome

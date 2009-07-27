@@ -82,14 +82,16 @@ int kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region
       s->mType = MP_DT;
     }
   }
-  if(dim <10){
+  if (modelOptions.maxIterations > -1) {
+    s->maxcls = modelOptions.maxIterations;
+  } else if (dim <10) {
     s->maxcls = 50000;
-  }else{
+  } else {
     s->maxcls = 20* (int)pow(2.0,dim);
     //fprintf(stdout,"New maxcls is %d \n", s->maxcls);
   }
 
-  s->verbose = 1;
+  s->verbose = 0;
   s->nlclass = modelRange.nlclass;
 
   for(i=0; i<s->nlclass; i++){

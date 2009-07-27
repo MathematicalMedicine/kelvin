@@ -150,6 +150,7 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &modelOptions.
 				{"PolynomialScale", set_int, &modelOptions.polynomialScale},
 				{"LiabilityClasses", set_int, &modelRange.nlclass},
 				{"DiseaseAlleles", set_int, &modelRange.nalleles},
+				{"MaxIterations", set_int, &modelOptions.maxIterations},
 
 				{"TraitLoci", set_traitLoci, NULL},
 				{"MarkerAlleleFrequency", set_alleleFreq, NULL},
@@ -221,6 +222,7 @@ void initializeDefaults ()
   modelOptions.saveResults = FALSE;
   modelOptions.polynomial = TRUE;
   modelOptions.integration = TRUE;
+  modelOptions.maxIterations = -1;
   modelOptions.imprintingFlag = FALSE;
   modelOptions.mapFlag = SA;
   modelOptions.sexLinked = FALSE;
@@ -502,6 +504,8 @@ void validateConfig ()
       fault ("DPrime requires FixedModels\n");
     if (modelRange.ngfreq > 0)
       fault ("DiseaseGeneFrequency requires FixedModels\n");
+    if (modelRange.nafreq > 0)
+      fault ("MarkerAlleleFrequency requires FixedModels\n");
     if (modelRange.nalpha > 0)
       fault ("Alpha requires FixedModels\n");
 
