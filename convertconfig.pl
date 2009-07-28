@@ -137,7 +137,7 @@ while ($line = <>) {
     } elsif ($line =~ /^TL (\S.*)$/) {
 	push (@traitloci, parserange ($1));
 
-    } elsif ($line =~ /^TM (\S.*)$/) {
+    } elsif ($line =~ /^TM$/) {
 	push (@traitloci, "Marker");
 
     } elsif ($line =~ /^GF (\S.*)$/) {
