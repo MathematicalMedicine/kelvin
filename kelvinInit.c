@@ -142,7 +142,7 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
    * in the data file, to decide if we're doing a marker-to-marker analysis.
    */
   /*if (originalLocusList.numTraitLocus > 0) { */
-  if (! modelOptions.markerAnalysis) {
+if (! modelOptions.markerAnalysis || (originalLocusList.ppLocusList[0]->locusType == LOCUS_TYPE_TRAIT)) {
     /* We are not doing marker to marker analysis; the configuration
      * has all the information about the disease trait if any.
      * Need to add the alleles into trait locus 
