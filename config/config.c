@@ -384,7 +384,7 @@ void validateConfig ()
       fault ("Trait directives (%s) are incompatible with MarkerToMarker\n", QTT_STR);
     if (modelRange.ntthresh > 0)
       fault ("Trait directives (%s) are incompatible with MarkerToMarker\n", THRESHOLD_STR);
-    if (modelType.minOriginal != -999999999.00 || modelType.maxOriginal != -999999999.00)
+    if (modelType.minOriginal != -999999999.00 || modelType.maxOriginal != 999999999.00)
       fault ("Trait directives (Truncate) are incompatible with MarkerToMarker\n");
     if (modelType.type == MP)
       fault ("Multipoint is incompatible with MarkerToMarker\n");
