@@ -312,12 +312,13 @@ void parseCommandLine (int argc, char *argv[])
 
   if (strncmp (argv[0], "--", 2) != 0)
     logMsg (LOGDEFAULT, LOGFATAL, "expected directive on command line, found '%s'\n", argv[0]);
-  bufflen = strlen (argv[0] - 2);
-  strcpy (buff, argv[0]+2);
+  bufflen = strlen (argv[0]) - 2;
+  strncpy (buff, argv[0]+2, bufflen);
   
   curidx = 1;
   while (curidx < argc) {
     if (strncmp (argv[curidx], "--", 2) == 0) {
+      logMsg (LOGINPUTFILE, LOGDEBUG, "buffer is '%s'\n", buff);
       permuteLine (buff, BUFFSIZE);
       numtoks = tokenizeLine (buff, &toks, &tokgroupsize);
       if ((va = lookupDispatch (toks[0], dispatchTable)) >= 0) {
@@ -338,6 +339,7 @@ void parseCommandLine (int argc, char *argv[])
     curidx++;
   }
     
+  logMsg (LOGINPUTFILE, LOGDEBUG, "buffer is '%s'\n", buff);
   permuteLine (buff, BUFFSIZE);
   numtoks = tokenizeLine (buff, &toks, &tokgroupsize);
   if ((va = lookupDispatch (toks[0], dispatchTable)) >= 0) {
