@@ -60,7 +60,7 @@ logSet (unsigned int type, int level)
 {
   int i;
 
-  for (i = 0; i < level; i++)
+  for (i = 0; i <= level; i++)
     logFlag[i] |= type;
 }
 
