@@ -87,7 +87,32 @@ void iterateMain() {
     dk_curModel.pen = calloc (modelRange.nlclass, sizeof (st_DKMaxModelPenVector));
     KASSERT ((dk_curModel.pen != NULL), "malloc failed");
 
-    fprintf(fpIR, "#HLOD (dprime) theta(M,F) gfreq alpha Pene\n");
+    /*SurfaceFile header*/
+    fprintf(fpIR, "#HLOD"); 
+    if (modelType.type == TP) {
+      if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) 
+        fprintf(fpIR, " Dprime");
+      if(modelOptions.mapFlag == SA)
+        fprintf(fpIR, " Theta");
+      else
+        fprintf(fpIR, " Theta(M,F)");
+    }
+    fprintf(fpIR, " Alpha DGF");
+    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+      if(modelOptions.imprintingFlag){
+        fprintf(fpIR," LC%dPV(DD,Dd,dD,dd)\n", liabIdx);
+      }else{
+        fprintf(fpIR," LC%dPV(DD,Dd,dd)\n", liabIdx);
+      }
+      if (modelType.trait != DICHOTOMOUS && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+        fprintf(fpIR," SD"); 
+      }
+    }
+    if (modelType.trait == CT){
+      fprintf(fpIR," Thresh");  /* If each LC uses different threshold, this does not work*/
+    }
+    fprintf(fpIR,"\n");    
+
   }
 
 
@@ -1589,7 +1614,7 @@ void iterateMain() {
                   cL[8]++;
                   swStop (combinedBuildSW);
 #ifndef SIMPLEPROGRESS
-                  fprintf (stdout, "%s %lu%% complete at %ld\r", "Combined likelihood evaluations", cL[8] * 100 / eCL[8], nodeId);
+                  fprintf (stdout, "%s %lu%% complete at %d\r", "Combined likelihood evaluations", cL[8] * 100 / eCL[8], nodeId);
 #else
                   fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]));
 #endif

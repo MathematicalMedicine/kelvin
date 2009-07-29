@@ -72,7 +72,31 @@
     dk_curModel.pen = calloc (modelRange.nlclass, sizeof (st_DKMaxModelPenVector));
     KASSERT ((dk_curModel.pen != NULL), "malloc failed");
 
-    fprintf(fpIR, "#HLOD (dprime) theta(M,F) gfreq alpha Pene\n");
+    /*SurfaceFile header*/
+    fprintf(fpIR, "#HLOD"); 
+    if (modelType.type == TP) {
+      if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) 
+        fprintf(fpIR, " Dprime");
+      if(modelOptions.mapFlag == SA)
+        fprintf(fpIR, " Theta");
+      else
+        fprintf(fpIR, " Theta(M,F)");
+    }
+    fprintf(fpIR, " Alpha DGF");
+    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+      if(modelOptions.imprintingFlag){
+        fprintf(fpIR," LC%dPV(DD,Dd,dD,dd)\n", liabIdx);
+      }else{
+        fprintf(fpIR," LC%dPV(DD,Dd,dd)\n", liabIdx);
+      }
+      if (modelType.trait != DICHOTOMOUS && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+        fprintf(fpIR," SD"); 
+      }
+    }
+    if (modelType.trait == CT){
+      fprintf(fpIR," Thresh");  /* If each LC uses different threshold, this does not work*/
+    }
+    fprintf(fpIR,"\n");   
   }
 
 
@@ -426,8 +450,9 @@
 	    num_out_constraint = 0;
 
             /* Call DCUHRE  Domain information is stored in global variables,  xl an xu*/
-	    kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &(BRscale[i]));
-
+  	    kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &(BRscale[i]));
+            KASSERT((s->ifail==0),"Dynamic integration failed. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c");
+ 
             if(modelOptions.mapFlag == SA){ 	    
 	      dcuhre2[i][3] = integral;
 	    }else{
@@ -1082,7 +1107,10 @@
       integral = 0.0;
       abserr = 0.0;
       num_out_constraint = 0;
-      num_eval = kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &max_scale);
+      kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &max_scale);
+      KASSERT((s->ifail==0),"Dynamic integration failed. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c");
+
+      num_eval = s->total_neval;
 
       /* calculate imputed PPL and print the results */
       if (integral > 0.214){
