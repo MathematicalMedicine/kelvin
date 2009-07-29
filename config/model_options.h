@@ -94,6 +94,7 @@ typedef struct ModelOptions
 				 *  is within thetaCutoff */
 
   int dryRun;                   /* 1 - dry run to get statistics for complexity */
+  int forceAvghetFile;          /* 1 - open a BR file, regardless of other directives */
   int conditionalRun;           /* 1 - print out proband's conditional LR */
   int loopCondRun;              /* 1 - print out loop breaker's conditional LR */
   int extraMODs;                /* 1 - put Theta==0 and D'==0 max models in MOD file */

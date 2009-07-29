@@ -146,6 +146,7 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &modelOptions.
 				{"FixedModels", clear_flag, &modelOptions.integration},
 				{"DryRun", set_flag, &modelOptions.dryRun},
 				{"ExtraMODs", set_flag, &modelOptions.extraMODs},
+				{"ForceBRFile", set_flag, &modelOptions.forceAvghetFile},
 
 				{"PolynomialScale", set_int, &modelOptions.polynomialScale},
 				{"LiabilityClasses", set_int, &modelRange.nlclass},
@@ -227,6 +228,7 @@ void initializeDefaults ()
   modelOptions.mapFlag = SA;
   modelOptions.sexLinked = FALSE;
   modelOptions.dryRun = FALSE;
+  modelOptions.forceAvghetFile = FALSE;
   modelOptions.polynomialScale = 0;
   modelOptions.extraMODs = FALSE;
   modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -DBL_MAX;

@@ -337,7 +337,7 @@ if (! modelOptions.markerAnalysis || (originalLocusList.ppLocusList[0]->locusTyp
     //  fprintf( fpCond, "# Version %s\n", programVersion);
    }
 
-  if (modelOptions.markerAnalysis == FALSE) {
+  if (modelOptions.markerAnalysis == FALSE || modelOptions.forceAvghetFile == TRUE) {
     fpHet = fopen (modelOptions.avghetfile, "w");
     KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", modelOptions.avghetfile);
     fprintf (fpHet, "# Version %s\n", programVersion);
