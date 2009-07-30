@@ -313,7 +313,7 @@ void parseCommandLine (int argc, char *argv[])
   if (strncmp (argv[0], "--", 2) != 0)
     logMsg (LOGDEFAULT, LOGFATAL, "expected directive on command line, found '%s'\n", argv[0]);
   bufflen = strlen (argv[0]) - 2;
-  strncpy (buff, argv[0]+2, bufflen);
+  strcpy (buff, argv[0]+2);
   
   curidx = 1;
   while (curidx < argc) {
@@ -327,12 +327,12 @@ void parseCommandLine (int argc, char *argv[])
       } else
 	logMsg (LOGDEFAULT, LOGFATAL, "directive '%s' on command line is %s\n", toks[0],
 		(va == -1) ? "unknown" : "not unique");
-      bufflen = strlen (argv[0] - 2);
-      strcpy (buff, argv[0]+2);
+      bufflen = strlen (argv[curidx]) - 2;
+      strcpy (buff, argv[curidx]+2);
 
     } else {
       buff[bufflen++] = ' ';
-      buff[bufflen++] = '\0';
+      buff[bufflen] = '\0';
       bufflen += strlen (argv[curidx]);
       strcat (buff, argv[curidx]);
     }
