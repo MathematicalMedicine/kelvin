@@ -100,9 +100,9 @@ void iterateMain() {
     fprintf(fpIR, " Alpha DGF");
     for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
       if(modelOptions.imprintingFlag){
-        fprintf(fpIR," LC%dPV(DD,Dd,dD,dd)\n", liabIdx);
+        fprintf(fpIR," LC%dPV(DD,Dd,dD,dd)", liabIdx);
       }else{
-        fprintf(fpIR," LC%dPV(DD,Dd,dd)\n", liabIdx);
+        fprintf(fpIR," LC%dPV(DD,Dd,dd)", liabIdx);
       }
       if (modelType.trait != DICHOTOMOUS && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
         fprintf(fpIR," SD"); 
@@ -363,8 +363,8 @@ void iterateMain() {
 
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-		sprintf (partialPolynomialFunctionName, "TD_P%%s_%s_%s",
-			 pLocus1->sName, pLocus2->sName);
+		sprintf (partialPolynomialFunctionName, "TD_C%s_P%%s_%s_%s",
+			 "CHROMOSOME", pLocus1->sName, pLocus2->sName);
                 if (gfreqInd != 0 || penIdx != 0) {
 		  pushStatus ('k', "evalTD");
 		  //                  swStart (combinedComputeSW);
@@ -587,8 +587,8 @@ void iterateMain() {
 		    /* If we're not on the first iteration, it's not a polynomial build, so
 		     * show progress at 1 minute intervals. Have a care to avoid division by zero. */
 
-		    sprintf (partialPolynomialFunctionName, "TQ_P%%s_%s_%s",
-			     pLocus1->sName, pLocus2->sName);
+		    sprintf (partialPolynomialFunctionName, "TQ_C%s_P%%s_%s_%s",
+			     "CHROMOSOME", pLocus1->sName, pLocus2->sName);
 		    if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
 		      pushStatus ('k', "evalTQ");
 		      //		      swStart (combinedComputeSW);
@@ -863,7 +863,8 @@ void iterateMain() {
             update_locus (&pedigreeSet, traitLocus);
 
           /* Compute the likelihood for the trait */
-          sprintf (partialPolynomialFunctionName, "MDT_P%%sSL%d", modelOptions.sexLinked);
+          sprintf (partialPolynomialFunctionName, "MDT_C%s_P%%sSL%d", 
+		   "CHROMOSOME", modelOptions.sexLinked);
           ret=compute_likelihood (&pedigreeSet);
           cL[4]++;
 #ifndef SIMPLEPROGRESS
@@ -980,7 +981,8 @@ void iterateMain() {
               if (modelOptions.polynomial == TRUE);
               else
                 update_penetrance (&pedigreeSet, traitLocus);
-              sprintf (partialPolynomialFunctionName, "MQT_P%%sSL%d", modelOptions.sexLinked);
+              sprintf (partialPolynomialFunctionName, "MQT_C%s_P%%sSL%d", 
+		       "CHROMOSOME", modelOptions.sexLinked);
               ret=compute_likelihood (&pedigreeSet);
               cL[5]++;
 #ifndef SIMPLEPROGRESS
@@ -1171,7 +1173,7 @@ void iterateMain() {
 	if (markerSetChanged) {
 	  pushStatus ('k', "buildMM");
 	  char markerNo[8];
-	  strcpy (partialPolynomialFunctionName, "MM_P%sM");
+	  sprintf (partialPolynomialFunctionName, "MM_C%s_P%%sM", "CHROMOSOME");
 	  for (k = 0; k < modelType.numMarkers; k++) {
 	    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
 	    strcat (partialPolynomialFunctionName, markerNo);
@@ -1384,7 +1386,7 @@ void iterateMain() {
             /* If we're not on the first iteration, it's not a polynomial build, so
              * show progress at 1 minute intervals. Have a care to avoid division by zero. */
 	    char markerNo[8];
-	    strcpy (partialPolynomialFunctionName, "MDA_P%sM");
+	    sprintf (partialPolynomialFunctionName, "MDA_C%s_P%%sM", "CHROMOSOME");
 	    for (k = 0; k < modelType.numMarkers; k++) {
 	      if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
 		  (strstr (partialPolynomialFunctionName, "_T") == NULL))
@@ -1577,7 +1579,7 @@ void iterateMain() {
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
 		char markerNo[8];
-		strcpy (partialPolynomialFunctionName, "MQA_P%sM");
+		sprintf (partialPolynomialFunctionName, "MQA_C%s P%%sM", "CHROMOSOME");
 		for (k = 0; k < modelType.numMarkers; k++) {
 		  if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
 		      (strstr (partialPolynomialFunctionName, "_T") == NULL))
