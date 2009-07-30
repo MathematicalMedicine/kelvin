@@ -1,13 +1,12 @@
 #!/usr/bin/perl -w
 use strict;
-use Getopt::Long;
 use Data::Dumper;
 
 #####################################
 #
 # $Id$
 #
-# by Bill Valentine-Cooper, portions from work by John Burian
+# by Bill Valentine-Cooper
 #
 # Copyright 2008, Nationwide Children's Research Institute.  All
 # rights reserved.  Permission is hereby given to use this software
