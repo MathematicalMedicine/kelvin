@@ -175,7 +175,12 @@ void iterateMain() {
       holdAllPolys ();
     }
 
-    total_count = modelRange.npenet * modelRange.ngfreq * modelRange.nalpha;
+    if(modelOptions.markerAnalysis == FALSE) {
+      total_count = modelRange.npenet * modelRange.ngfreq * modelRange.nalpha * modelRange.nafreq;
+    }
+    else {
+      total_count = modelRange.nafreq;
+    }
 
     if (modelOptions.markerAnalysis == FALSE) {
       savedLocusList.traitLocusIndex = 0;
@@ -277,15 +282,15 @@ void iterateMain() {
           /* Loop over the penetrances, genefrequencies, thetas and call
            * the likelihood calculation, storing each value obtained to
            * disk. */
-          for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
-            gfreq = modelRange.gfreq[gfreqInd];
+          for (gfreqInd = 0; (gfreqInd==0 && modelOptions.markerAnalysis!=FALSE) || gfreqInd < modelRange.ngfreq; gfreqInd++) {
 	    paramSet.gfreqIdx = gfreqInd;
 	    paramSet.gfreq = gfreq;
+	    if(modelOptions.markerAnalysis == FALSE){
+	      gfreq = modelRange.gfreq[gfreqInd];
 
-            if(fpIR !=NULL)
-              dk_curModel.dgf = gfreq;
-            // WHAT ON EARTH IS THIS ALL ABOUT? &&&
-            if (1 && modelOptions.markerAnalysis == FALSE) {
+	      if(fpIR !=NULL)
+		dk_curModel.dgf = gfreq;
+
               pLocus->pAlleleFrequency[0] = gfreq;
               pLocus->pAlleleFrequency[1] = 1 - gfreq;
               if (modelOptions.polynomial == TRUE);
@@ -309,7 +314,7 @@ void iterateMain() {
 
             if (modelType.trait == DICHOTOMOUS) {
 
-              for (penIdx = 0; penIdx < modelRange.npenet; penIdx++) {
+              for (penIdx = 0; (penIdx==0 && modelOptions.markerAnalysis!=FALSE) || penIdx < modelRange.npenet; penIdx++) {
 		paramSet.penIdx = penIdx;
                 if (modelOptions.markerAnalysis == FALSE && pLocus1->locusType == LOCUS_TYPE_TRAIT) {
                   for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {

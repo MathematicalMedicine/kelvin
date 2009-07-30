@@ -104,8 +104,11 @@ int record_tp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
   }
   else {
     /* caculating the HET */
-    for (j = 0; j < modelRange.nalpha; j++) {
-      alphaV = modelRange.alpha[j];
+    for (j = 0; (j==0 && modelOptions.markerAnalysis!=FALSE) || j < modelRange.nalpha; j++) {
+      if(modelOptions.markerAnalysis != FALSE)
+	alphaV = 1;
+      else
+	alphaV = modelRange.alpha[j];
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
 	alphaV2 = 0;
@@ -502,9 +505,13 @@ int get_average_LR (SUMMARY_STAT *** result)
 		   modelRange.theta[1][thetaInd], thetaInd, dprime,
 		   dprimeIdx);
 	}
-	lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
-	  (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count *
-	   modelRange.nalpha);
+	if(modelOptions.markerAnalysis == FALSE)
+	  lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
+	    (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count *
+	     modelRange.nalpha);
+	else
+	  lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
+	    tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count;
 
 	tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_avg = lr;
 	tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_avg_orig = lr;
