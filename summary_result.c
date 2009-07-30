@@ -131,7 +131,7 @@ int record_tp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
         } else{
           fprintf(fpIR," %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[0] );
         }
-        fprintf(fpIR," %4.3f %4.3f",dk_curModel.dgf,dk_curModel.alpha);
+        fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
         for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
           fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
           if(modelOptions.imprintingFlag){
@@ -352,7 +352,7 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
         dk_curModel.alpha = alphaV;
         fprintf(fpIR,"%6.3f", log10HetLR);
 
-        fprintf(fpIR," %4.3f %4.3f",dk_curModel.dgf,dk_curModel.alpha);
+        fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
         for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
           fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
           if(modelOptions.imprintingFlag){
