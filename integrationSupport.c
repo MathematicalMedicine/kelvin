@@ -87,7 +87,7 @@ int kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region
   } else if (dim <10) {
     s->maxcls = 50000;
   } else {
-    s->maxcls = 20* (int)pow(2.0,dim);
+    s->maxcls = 80* (int)pow(2.0,dim);
     //fprintf(stdout,"New maxcls is %d \n", s->maxcls);
   }
 
@@ -106,6 +106,9 @@ int kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region
     fprintf (stderr,"Starting DCUHRE with dim=%d\n", dim);
 
   return_val = dcuhre_ (s);
+  if(return_val >0){
+    return return_val;
+  }
 
   s->result /= s->vol_rate;  
   s->error /= s->vol_rate;
@@ -414,7 +417,7 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
       dk_curModel.alpha = alphaV;
       fprintf(fpIR,"%6.3f", log10HetLR);
 
-      fprintf(fpIR," %4.3f %4.3f",dk_curModel.dgf,dk_curModel.alpha);
+      fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
         fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
         if(modelOptions.imprintingFlag){
@@ -773,7 +776,7 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
       dk_curModel.alpha = alphaV;
       fprintf(fpIR,"%6.3f", log10HetLR);
 
-      fprintf(fpIR," %4.3f %4.3f",dk_curModel.dgf,dk_curModel.alpha);
+      fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
         fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
         if(modelOptions.imprintingFlag){
@@ -1165,7 +1168,7 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
       } else{
         fprintf(fpIR," %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[0] );
       }
-      fprintf(fpIR," %4.3f %4.3f",dk_curModel.dgf,dk_curModel.alpha);
+      fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
         fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
         if(modelOptions.imprintingFlag){
@@ -1548,7 +1551,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
       } else{
         fprintf(fpIR," %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[0] );
       }
-      fprintf(fpIR," %4.3f %4.3f",dk_curModel.dgf,dk_curModel.alpha);
+      fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
       for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
         fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
         if(modelOptions.imprintingFlag){
