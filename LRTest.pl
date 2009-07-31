@@ -68,8 +68,8 @@ sub parse_header {
 }
 
 # Run kelvin on the config file with SurfaceFile directive
-#(system('$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dat >&LRTest.Out') == 0)
-#    or die "Couldn't run kelvin (\$TEST_KELVIN)\n";
+(system('$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dat >&LRTest.Out') == 0)
+    or die "Couldn't run kelvin (\$TEST_KELVIN)\n";
 
 # First pass thru file, pull-out min and max rows...
 open IN,"LRTest.Dat";
@@ -158,6 +158,11 @@ while (<IN>) {
     }
 }
 close IN;
+
+# Clean-out any earlier results
+(system('rm LRTest-*') == 0) or die "Couldn't clean-up old LRTest fixed results\n";
+
+# Generate all of the kelvin configuration variations and run them
 for my $i (0..($offset - 1)) {
     my $commandLine = '$TEST_KELVIN kelvin.conf --FixedModels';
 #    print "Test from line ".$PsLine[$i]." has HLOD ".
@@ -166,6 +171,15 @@ for my $i (0..($offset - 1)) {
 #	print "|".$nameDirectives{$headerNames[$j]}." ".$PsTSV[$i][$j]."\n";
 	$commandLine .= " --".$nameDirectives{$headerNames[$j]}." ".$PsTSV[$i][$j];
     }
-#    print "Execute [$commandLine]\n";
+    $commandLine .= " --SurfaceFile LRTest-$i.Dat >& LRTest-$i.Out";
+    print "Execute [$commandLine]\n";
     (system($commandLine) == 0) or die "Couldn't run \'$commandLine\'\n";
 }
+
+# Now concatenate, uniq-ify and compare all of the output, then let our driver do
+# the differences and react accordingly.
+(system('cat LRTest-*.Dat | sort | uniq > LRTest.Fix') == 0) or
+    die "Cannot concatenate, sort or uniq all fixed-grid results\n";
+(system('grep -f LRTest.Fix LRTest.Dyn | sort | uniq >LRTest.Fix-found') == 0) or
+    die "Cannot grep, sort or uniq fixed- with dynamic-grid results\n";
+# Now the Makefile should "diff LRTest.Fix LRTest.Fix-found".
