@@ -12,6 +12,10 @@ test-USE_DL :
 	(time $(KELVIN_ROOT)/kelvin-POLYUSE_DL kelvin.conf) >kelvin-USE_DL.out 2>&1
 	diff -i br.out br.out-baseline
 
+test-FIXED :
+	-rm -f LRTest*
+	perl $(KELVIN_ROOT)/LRTest.pl
+
 clean :
-	- rm -rf *.out *.so *memory.dat compiled
+	- rm -rf *.out *.so *memory.dat compiled LRTest*
 
