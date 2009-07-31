@@ -333,43 +333,45 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
       for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
 	fprintf (fpMOD, " %.2f", pLambdaCell->lambda[myDPrimeIdx][i][j]);
   fprintf (fpMOD, " (%.4f,%.4f)", theta[0], theta[1]);
-  if (modelOptions.markerAnalysis != FALSE)
-    fprintf (fpMOD, " %.3f", R_square);
-  fprintf (fpMOD, " %.2f %.4f", alphaV, gfreq);
-
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
-    {
-      pen_DD = modelRange.penet[liabIdx][0][penIdx];
-      pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-      pen_dD = modelRange.penet[liabIdx][2][penIdx];
-      pen_dd = modelRange.penet[liabIdx][3][penIdx];
-      if (modelOptions.imprintingFlag)
-	fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD,
-		 pen_dd);
-      else
-	fprintf (fpMOD, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
-      if (modelType.trait != DT
-	  && modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-	{
-	  SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
-	  SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-	  SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
-	  SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
-	  if (modelOptions.imprintingFlag)
-	    fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD,
-		     SD_dd);
-	  else
-	    fprintf (fpMOD, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
-	}
-      if (modelType.trait == CT)
-	{
-	  threshold = modelRange.tthresh[liabIdx][thresholdIdx];
-	  fprintf (fpMOD, ",%.3f)", threshold);
-	}
-      else
-	fprintf (fpMOD, ")");
-    }
-  fprintf (fpMOD, "\n");
+  if (modelOptions.markerAnalysis != FALSE) { 
+    fprintf (fpMOD, " %.3f\n", R_square);
+  } else { 
+    fprintf (fpMOD, " %.2f %.4f", alphaV, gfreq);
+    
+    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+      {
+	pen_DD = modelRange.penet[liabIdx][0][penIdx];
+	pen_Dd = modelRange.penet[liabIdx][1][penIdx];
+	pen_dD = modelRange.penet[liabIdx][2][penIdx];
+	pen_dd = modelRange.penet[liabIdx][3][penIdx];
+	if (modelOptions.imprintingFlag)
+	  fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD,
+		   pen_dd);
+	else
+	  fprintf (fpMOD, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
+	if (modelType.trait != DT
+	    && modelType.distrib != QT_FUNCTION_CHI_SQUARE)
+	  {
+	    SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
+	    SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
+	    SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
+	    SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
+	    if (modelOptions.imprintingFlag)
+	      fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD,
+		       SD_dd);
+	    else
+	      fprintf (fpMOD, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
+	  }
+	if (modelType.trait == CT)
+	  {
+	    threshold = modelRange.tthresh[liabIdx][thresholdIdx];
+	    fprintf (fpMOD, ",%.3f)", threshold);
+	  }
+	else
+	  fprintf (fpMOD, ")");
+      }
+    fprintf (fpMOD, "\n");
+  }
   fflush (fpMOD);
 }
 
@@ -436,36 +438,38 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
       for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
 	fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
   fprintf (fpMOD, " Theta(M,F)");
-  if (modelOptions.markerAnalysis != FALSE)
-    fprintf (fpMOD, " R2");
-  fprintf (fpMOD, " Alpha DGF");
-
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
-    if (modelType.trait == DT)
-      if (modelOptions.imprintingFlag)
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", liabIdx);
+  if (modelOptions.markerAnalysis != FALSE) {
+    fprintf (fpMOD, " R2\n");
+  } else { 
+    fprintf (fpMOD, " Alpha DGF");
+    
+    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+      if (modelType.trait == DT)
+	if (modelOptions.imprintingFlag)
+	  fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", liabIdx);
+	else
+	  fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", liabIdx);
       else
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", liabIdx);
-    else
-      {
-	if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-	  if (modelOptions.imprintingFlag)
-	    fprintf (fpMOD,
-		     " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD",
-		     liabIdx);
+	{
+	  if (modelType.distrib != QT_FUNCTION_CHI_SQUARE)
+	    if (modelOptions.imprintingFlag)
+	      fprintf (fpMOD,
+		       " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD",
+		       liabIdx);
+	    else
+	      fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD",
+		       liabIdx);
+	  else if (modelOptions.imprintingFlag)
+	    fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF", liabIdx);
 	  else
-	    fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD",
-		     liabIdx);
-	else if (modelOptions.imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF", liabIdx);
-	else
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
-	if (modelType.trait == CT)
-	  fprintf (fpMOD, ",Thresh)");
-	else
-	  fprintf (fpMOD, ")");
-      }
-  fprintf (fpMOD, "\n");
+	    fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
+	  if (modelType.trait == CT)
+	    fprintf (fpMOD, ",Thresh)");
+	  else
+	    fprintf (fpMOD, ")");
+	}
+    fprintf (fpMOD, "\n");
+  }
 
   initialFlag = 1;
   max = -99999;
