@@ -190,6 +190,18 @@ for my $i (0..($offset - 1)) {
 # the differences and react accordingly.
 (system('cat LRTest-*.Dat | sort | uniq > LRTest.Fix') == 0) or
     die "Cannot concatenate, sort or uniq all fixed-grid results\n";
-(system('grep -f LRTest.Fix LRTest.Dyn | sort | uniq >LRTest.Fix-found') == 0) or
+# Produce a file of fixed HLODs that can have a rounding error and still match
+open IN,"LRTest.Fix";
+open OUT,">LRTest.Find";
+while (<IN>) {
+    if ($_ =~ /^([ -][09]\.[0-9]{3})/) {
+	my $Replacement = sprintf("[% 5.3f|% 5.3f|% 5.3f]", $1-0.001, $1, $1+0.001);
+#	print "HLOD is [$1], using $Replacement\n";
+	s/$1/$Replacement/;
+    }
+    print OUT $_;
+}
+	
+(system('grep -f LRTest.Find LRTest.Dyn | sort | uniq >LRTest.Fix-found') == 0) or
     die "Cannot grep, sort or uniq fixed- with dynamic-grid results\n";
 # Now the Makefile should "diff LRTest.Fix LRTest.Fix-found".
