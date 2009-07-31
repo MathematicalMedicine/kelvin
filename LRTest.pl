@@ -70,6 +70,7 @@ sub parse_header {
 }
 
 # Run kelvin on the config file with SurfaceFile directive
+print "Generating dynamic-grid baseline.\n";
 (system('$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dyn >&LRTest.Out') == 0)
     or die "Couldn't run kelvin (\$TEST_KELVIN)\n";
 
@@ -137,8 +138,6 @@ while ($choices < $EXTRACHOICES) {
     if (!defined($avoidLines{$choice})) {
 	push @randLines, $choice;
 	$choices++;
-    } else {
-	print "Collision, retrying!\n";
     }
 }
 @randLines = sort numerically @randLines;
@@ -181,7 +180,7 @@ for my $i (0..($offset - 1)) {
 # This kind of spoils my clever data independence...
     $commandLine =~ s/Penetrance/Mean/g if ($commandLine =~ /--StandardDev/);
 
-    print "Fixed-grid comparison test $i\n";
+    print "Generating fixed-grid trait space test point $i.\n";
 #    print "Execute [$commandLine]\n";
     (system($commandLine) == 0) or die "Couldn't run \'$commandLine\'\n";
 }
@@ -190,18 +189,17 @@ for my $i (0..($offset - 1)) {
 # the differences and react accordingly.
 (system('cat LRTest-*.Dat | sort | uniq > LRTest.Fix') == 0) or
     die "Cannot concatenate, sort or uniq all fixed-grid results\n";
-# Produce a file of fixed HLODs that can have a rounding error and still match
+# Find each fixed line in the dynamic output (using a possibly rounded HLOD)
+print "Finding fixed results in dynamic results";
 open IN,"LRTest.Fix";
-open OUT,">LRTest.Find";
 while (<IN>) {
+    print ".";
     if ($_ =~ /^([ -][09]\.[0-9]{3})/) {
 	my $Replacement = sprintf("[% 5.3f|% 5.3f|% 5.3f]", $1-0.001, $1, $1+0.001);
 #	print "HLOD is [$1], using $Replacement\n";
 	s/$1/$Replacement/;
     }
-    print OUT $_;
+    (system("grep \'".$_."\' LRTest.Dyn >&/dev/null") == 0) or die "Couldn't find line \'$_\' in LRTest.Dyn\n";
 }
-	
-(system('grep -f LRTest.Find LRTest.Dyn | sort | uniq >LRTest.Fix-found') == 0) or
-    die "Cannot grep, sort or uniq fixed- with dynamic-grid results\n";
-# Now the Makefile should "diff LRTest.Fix LRTest.Fix-found".
+close IN;
+print "done!\n";
