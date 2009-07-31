@@ -46,6 +46,8 @@ my %nameDirectives = (
 		      'LC0PV-DD' => 'Penetrance DD',
 		      'LC0PV-Dd' => 'Penetrance Dd',
 		      'LC0PV-dd' => 'Penetrance dd',
+		      'Dprime' => 'DPrime',
+		      'SD' => 'StandardDev',
 		      );
 
 my  @headerNames = ();
@@ -172,6 +174,13 @@ for my $i (0..($offset - 1)) {
 	$commandLine .= " --".$nameDirectives{$headerNames[$j]}." ".$PsTSV[$i][$j];
     }
     $commandLine .= " --SurfaceFile LRTest-$i.Dat >& LRTest-$i.Out";
+
+# Except for with QT, no knowledge of the directives was required. Unfortunately 
+# the penetrance vector portion of the header of the surface file for QT is the same as 
+# for DT, but the directive needs to be "Mean DD" instead of "Penetrance DD", ect.
+# This kind of spoils my clever data independence...
+    $commandLine =~ s/Penetrance/Mean/g if ($commandLine =~ /--StandardDev/);
+
     print "Fixed-grid comparison test $i\n";
 #    print "Execute [$commandLine]\n";
     (system($commandLine) == 0) or die "Couldn't run \'$commandLine\'\n";
