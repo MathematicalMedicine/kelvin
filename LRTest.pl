@@ -68,11 +68,11 @@ sub parse_header {
 }
 
 # Run kelvin on the config file with SurfaceFile directive
-(system('$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dat >&LRTest.Out') == 0)
+(system('$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dyn >&LRTest.Out') == 0)
     or die "Couldn't run kelvin (\$TEST_KELVIN)\n";
 
 # First pass thru file, pull-out min and max rows...
-open IN,"LRTest.Dat";
+open IN,"LRTest.Dyn";
 
 while (<IN>) {
     s/^\s*//g;       # Trim leading whitespace
@@ -141,7 +141,7 @@ while ($choices < $EXTRACHOICES) {
 }
 @randLines = sort numerically @randLines;
 #print "...and grab these lines too: ".Dumper(\@randLines)."\n";
-open IN,"LRTest.Dat";
+open IN,"LRTest.Dyn";
 $line = 0;
 my $nextLine = shift(@randLines);
 my $offset = $paramCnt * 2;
@@ -159,8 +159,8 @@ while (<IN>) {
 }
 close IN;
 
-# Clean-out any earlier results
-(system('rm LRTest-*') == 0) or die "Couldn't clean-up old LRTest fixed results\n";
+# Clean-out any earlier results. Allow this to fail.
+system('rm LRTest-* >&/dev/null');
 
 # Generate all of the kelvin configuration variations and run them
 for my $i (0..($offset - 1)) {
@@ -172,7 +172,8 @@ for my $i (0..($offset - 1)) {
 	$commandLine .= " --".$nameDirectives{$headerNames[$j]}." ".$PsTSV[$i][$j];
     }
     $commandLine .= " --SurfaceFile LRTest-$i.Dat >& LRTest-$i.Out";
-    print "Execute [$commandLine]\n";
+    print "Fixed-grid comparison test $i\n";
+#    print "Execute [$commandLine]\n";
     (system($commandLine) == 0) or die "Couldn't run \'$commandLine\'\n";
 }
 
