@@ -420,8 +420,10 @@ void validateConfig ()
       logMsg (LOGINPUTFILE, LOGWARNING, "MarkerToMarker will write no output to NIDetailFile\n");
 
     if (! modelOptions.integration) {
-      if (modelRange.ndprime == 0)
-	fault ("MarkerToMarker and FixedModels require DPrime\n");
+      if (modelRange.ndprime == 0 && modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
+	fault ("FixedModels and LD require DPrime\n");
+      if (modelRange.ndprime > 0 && modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
+	fault ("FixedModels and DPrime requires LD\n");
       if (! observed.sexAveragedThetas)
 	fault ("MarkerToMarker and FixedModels require %s\n", THETA_STR);
     } else {
@@ -668,9 +670,8 @@ void finishConfig ()
    * Theta and DPrime values, if needed.
    */
   if (modelOptions.markerAnalysis) {
-    modelOptions.equilibrium = LINKAGE_DISEQUILIBRIUM;
     modelOptions.integration = FALSE;
-    if (modelRange.ndprime == 0) 
+    if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && modelRange.ndprime == 0)
       /* Default range of DPrimes is -1 to 1 in steps of 0.02 */
       for (i = -50; i <= 50; i++)
 	addDPrime (&modelRange, 0.02 * i);
