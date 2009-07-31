@@ -8,7 +8,6 @@ test :
 test-FIXED :
 	-rm -f LRTest*
 	perl $(KELVIN_ROOT)/LRTest.pl
-	diff LRTest.Fix LRTest.Fix-found
 
 clean :
 	- rm -rf *.out *.so *memory.dat compiled LRTest*
