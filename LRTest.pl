@@ -197,12 +197,13 @@ print "Finding fixed results in dynamic results";
 open IN,"LRTest.Fix";
 while (<IN>) {
     print ".";
-    if ($_ =~ /^([ -][09]\.[0-9]{3})/) {
+    if ($_ =~ /^([ \-][0-9]\.[0-9]{3})/) {
 	my $Replacement = sprintf("[% 5.3f|% 5.3f|% 5.3f]", $1-0.001, $1, $1+0.001);
 #	print "HLOD is [$1], using $Replacement\n";
 	s/$1/$Replacement/;
     }
-    (system("grep \'".$_."\' LRTest.Dyn >&/dev/null") == 0) or die "Couldn't find line \'$_\' in LRTest.Dyn\n";
+    (system("grep \'".$_."\' LRTest.Dyn >&LRTest.grep") == 0) or
+	die "Couldn't find line \'$_\' in LRTest.Dyn\n";
 }
 close IN;
 print "done!\n";
