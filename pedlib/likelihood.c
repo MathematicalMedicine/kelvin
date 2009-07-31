@@ -630,7 +630,8 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 	      }
 	      pCondSet[idx].pPedigreeID = pPedigree->sPedigreeID; 
 	      pCondSet[idx].pProbandID = pMyProband->sID;
-	      pCondSet[idx].trait = pMyProband->ppTraitValue[0][0];
+	      if(modelOptions.markerAnalysis == FALSE)
+		pCondSet[idx].trait = pMyProband->ppTraitValue[0][0];
 	      pCondSet[idx].pAllele1 = pLocus->ppAlleleNames[allele1-1]; 
 	      pCondSet[idx].pAllele2 = pLocus->ppAlleleNames[allele2-1]; 
 	      pCondSet[idx].allele1 = allele1; 

@@ -129,11 +129,14 @@ void iterateMain() {
   /* conditional likelihood storage space for each individual */
   allocate_likelihood_space (&pedigreeSet, modelType.numMarkers + 1);
 
+  if(modelOptions.markerAnalysis == FALSE || originalLocusList.ppLocusList[0]->locusType!=LOCUS_TYPE_MARKER) {
   /* Assume the trait locus is the first one in the list */
   traitLocus = 0;
   pLocus = originalLocusList.ppLocusList[traitLocus];
   pTraitLocus = originalLocusList.ppLocusList[traitLocus]->pTraitLocus;
   pTrait = pTraitLocus->pTraits[traitLocus];
+  }
+
   if (modelType.type == TP) {
     /* Two point. */
     if (originalLocusList.pLDLoci == NULL) {
