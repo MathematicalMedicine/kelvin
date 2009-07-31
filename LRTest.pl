@@ -12,7 +12,10 @@ use Data::Dumper;
 # rights reserved.  Permission is hereby given to use this software
 # for non-profit educational purposes only.
 #
-# Perform LR comparison tests on a kelvin dynamic grid configuration.
+# Perform LR comparison tests on a kelvin dynamic grid configuration. Makes 
+# extensive use of GNU baseutils, i.e. grep, sort, uniq. Expects TEST_KELVIN
+# environment variable to point to version of kelvin to run. Requires kelvin
+# V0.38 or later to support new directives and command-line directives.
 #
 # 1. Run kelvin with the kelvin.conf in the current directory, with the addition
 # of the SurfaceFile directive.
@@ -70,7 +73,7 @@ sub parse_header {
 }
 
 # Run kelvin on the config file with SurfaceFile directive
-print "Generating dynamic-grid baseline.\n";
+print "Generating dynamic-grid trait space baseline.\n";
 (system('$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dyn >&LRTest.Out') == 0)
     or die "Couldn't run kelvin (\$TEST_KELVIN)\n";
 
