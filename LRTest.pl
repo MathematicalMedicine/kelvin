@@ -198,9 +198,11 @@ open IN,"LRTest.Fix";
 while (<IN>) {
     print ".";
     if ($_ =~ /^([ \-][0-9]\.[0-9]{3})/) {
-	my $Replacement = sprintf("[% 5.3f|% 5.3f|% 5.3f]", $1-0.001, $1, $1+0.001);
-#	print "HLOD is [$1], using $Replacement\n";
-	s/$1/$Replacement/;
+	my $old = $1;
+	my $new = sprintf("[% 5.3f|% 5.3f|% 5.3f]", $1-0.001, $1, $1+0.001);
+	$new =~ s/[ \-]0.000/ 0.000|-0.000/g;
+#	print "HLOD is [$old], using $new\n";
+	s/$old/$new/;
     }
     (system("grep \'".$_."\' LRTest.Dyn >&LRTest.grep") == 0) or
 	die "Couldn't find line \'$_\' in LRTest.Dyn\n";
