@@ -5,6 +5,11 @@ test :
 	(time $(TEST_KELVIN) kelvin.conf) >kelvin.out 2>&1
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001
 
+test-FIXED :
+	-rm -f LRTest*
+	perl $(KELVIN_ROOT)/LRTest.pl
+	diff LRTest.Fix LRTest.Fix-found
+
 clean :
-	- rm -rf *.out *.so *memory.dat compiled
+	- rm -rf *.out *.so *memory.dat compiled LRTest*
 
