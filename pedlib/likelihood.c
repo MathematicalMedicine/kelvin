@@ -2121,7 +2121,7 @@ get_haplotype_freq (int locus, int myParent, void *freqPtr)
     }
 
     /* for xchr and father, there is only one haplotype */
-    if(modelOptions.sexLinked && myParent==DAD) {
+    if((modelOptions.sexLinked!=0) && myParent==DAD) {
       
 	if (modelOptions.polynomial == TRUE) {
 	  freqPolynomial[i+1] = constant1Poly;
@@ -2194,7 +2194,7 @@ loop_child_multi_locus_genotype (int locus, int multiLocusIndex,
 
       /* get the transmission probability from the matrix */
       if (modelOptions.polynomial == TRUE) {
-	if(modelOptions.sexLinked && pChild->sex+1 == MALE) {
+	if((modelOptions.sexLinked !=0) && pChild->sex+1 == MALE) {
 	  newProbPolynomial =  xmissionMatrix[newXmissionIndex[MOM]].slot.probPoly[2]; 
 	}
 	else {
@@ -2214,7 +2214,7 @@ loop_child_multi_locus_genotype (int locus, int multiLocusIndex,
 			     slot.probPoly[2]));
 #endif
       } else {
-	if(modelOptions.sexLinked && pChild->sex+1 == MALE) {
+	if((modelOptions.sexLinked!=0) && pChild->sex+1 == MALE) {
 	  newProb =  xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2]; 
 	  KLOG (LOGLIKELIHOOD, LOGDEBUG,
 		"\t xmission prob: %f = %f\n", newProb,
