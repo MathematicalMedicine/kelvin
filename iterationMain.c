@@ -20,6 +20,7 @@ void iterateMain() {
   int pedIdx;
   int numPositions;
   double log10AvgLR;
+  char xmissionPattern[10];
 
   /* only for multipoint - we don't handle LD under multipoint yet */
   if (modelType.type == MP) {
@@ -368,6 +369,7 @@ void iterateMain() {
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
 		sprintf (partialPolynomialFunctionName, "TD_C%s_P%%s_%s_%s",
 			 "CHROMOSOME", pLocus1->sName, pLocus2->sName);
+		//print_xmission_matrix(xmissionMatrix, totalLoci, 0, 0, xmissionPattern);
                 if (gfreqInd != 0 || penIdx != 0) {
 		  pushStatus ('k', "evalTD");
 		  //                  swStart (combinedComputeSW);

@@ -643,7 +643,7 @@ is_parent_child_genotype_compatible (int locus, int parent, int childSex,
 
   compatible[DAD] = 1;
   compatible[MOM] = 2;
-  if (modelOptions.sexLinked && parent == DAD && childSex + 1 == MALE) {
+  if ( (modelOptions.sexLinked!=0) && parent == DAD && (childSex + 1 == MALE)) {
     /* male child doesn't inherit X chromosome from dad, so no need to check */
     pChildGeno->inheritance[parent] = compatible[DAD] + compatible[MOM];
     return TRUE;

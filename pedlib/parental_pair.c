@@ -197,8 +197,9 @@ fill_parental_pair (int locus, int *numPair, NuclearFamily * pNucFam,
 	  pChildGeno->inheritance[MOM] ^ 3;
 
 
-      KLOG (LOGPARENTALPAIR, LOGDEBUG, "  (%d, %d)\n",
-	    pChildGeno->allele[DAD], pChildGeno->allele[MOM]);
+      KLOG (LOGPARENTALPAIR, LOGDEBUG, "  (%d, %d) inheritance (%d, %d) \n",
+	    pChildGeno->allele[DAD], pChildGeno->allele[MOM], 
+	    pPair->ppChildInheritance[DAD][i][j], pPair->ppChildInheritance[MOM][i][j]);
       pChildGeno = pChildGeno->pShadowNext;
     }
   }
