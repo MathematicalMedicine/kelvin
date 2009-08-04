@@ -690,15 +690,30 @@ void finishConfig ()
        */
       for (i = 0; i < 33; i++)
 	addDPrime (&modelRange, integrationLDDPrimeValues[i]);
-
+      
     } else {
       /* If not integration (that is, fixed models) make sure the user
        * didn't omit 0 from the range of DPrimes. Silently add one if needed.
        */
       for (i=0; i<modelRange.ndprime; i++)
-        if (fabs(modelRange.dprime[i]) <= ERROR_MARGIN) break;
+	if (fabs(modelRange.dprime[i]) <= ERROR_MARGIN) break;
       if (i == modelRange.ndprime)
-        addDPrime (&modelRange, (double) 0.0);
+	addDPrime (&modelRange, (double) 0.0);
+    }
+  }
+  /* For 2-point and fixed models, make sure there's a Theta of 0.5 */
+  if (modelType.type == TP && modelOptions.integration != TRUE) {
+    /* First, check male/sex-averaged thetas */
+    for (i = 0; i < modelRange.thetacnt[SEXML]; i++)
+      if (fabs (0.05 - modelRange.theta[SEXML][i]) <= ERROR_MARGIN) break;
+    if (i == modelRange.thetacnt[SEXML])
+      addTheta (&modelRange, THETA_AVG, 0.5);
+    /* If female thetas are present, do the same again */
+    if (modelRange.thetacnt[SEXFM] > 0) {
+      for (i = 0; i < modelRange.thetacnt[SEXFM]; i++)
+	if (fabs (0.05 - modelRange.theta[SEXFM][i]) <= ERROR_MARGIN) break;
+      if (i == modelRange.thetacnt[SEXFM])
+	addTheta (&modelRange, THETA_FEMALE, 0.5);
     }
   }
 
