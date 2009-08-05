@@ -660,8 +660,8 @@ create_baseline_marker_genotypes (int locus, Pedigree * pPedigree)
 	for (allele1 = 1; allele1 <= pLocus->numAllele; allele1++) {
 	  for (allele2 = allele1; allele2 <= pLocus->numAllele; allele2++) {
 	    /* for X chromosome, only add homozygous genotypes for MALE */
-	    if ((modelOptions.sexLinked!=0) && pPerson->sex + 1 == MALE
-		&& allele1 != allele2)
+	    if ((modelOptions.sexLinked!=0) && (pPerson->sex + 1 == MALE)
+		&& (allele1 != allele2))
 	      continue;
 	    pGenotype =
 	      add_genotype (&pPerson->ppGenotypeList[locus],
@@ -685,8 +685,8 @@ create_baseline_marker_genotypes (int locus, Pedigree * pPedigree)
 	  allele1 = pPerson->pPhenotypeList[1][locus];
 	for (allele2 = 1; allele2 <= pLocus->numAllele; allele2++) {
 	  /* for X chromosome, only add homozygous genotypes for MALE */
-	  if ((modelOptions.sexLinked !=0)&& pPerson->sex + 1 == MALE &&
-	      allele1 != allele2)
+	  if ((modelOptions.sexLinked !=0)&& (pPerson->sex + 1 == MALE) &&
+	      (allele1 != allele2))
 	    continue;
 	  pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
 				    &pPerson->pNumGenotype[locus],
@@ -739,8 +739,8 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
     for (allele1 = 1; allele1 <= pLocus->numAllele; allele1++) {
       for (allele2 = allele1; allele2 <= pLocus->numAllele; allele2++) {
 	/* for X chromosome, only add homozygous genotypes for MALE */
-	if ((modelOptions.sexLinked !=0)&& pPerson->sex + 1 == MALE &&
-	    allele1 != allele2)
+	if ((modelOptions.sexLinked !=0)&& (pPerson->sex + 1 == MALE) &&
+	    (allele1 != allele2))
 	  continue;
 
 	if (modelOptions.polynomial == TRUE) {
@@ -1613,7 +1613,7 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	    pLocus->ppAlleleSetList[pGenotype->allele[MOM] - 1]->sumFreq;
       }
       if (modelOptions.polynomial == TRUE) {
-	if ((modelOptions.sexLinked!=0) && pPerson->sex + 1 == MALE) {
+	if ((modelOptions.sexLinked!=0) && (pPerson->sex + 1 == MALE)) {
 	  pGenotype->wtslot.weightPolynomial = alleleFreqPolynomial[DAD];
 	} else
 	  /* build the polynomial sum */
@@ -1621,7 +1621,7 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	    timesExp (2, alleleFreqPolynomial[DAD], 1,
 		      alleleFreqPolynomial[MOM], 1, 0);
       } else {
-	if ((modelOptions.sexLinked !=0)&& pPerson->sex + 1 == MALE) {
+	if ((modelOptions.sexLinked !=0)&& (pPerson->sex + 1 == MALE)) {
 	  pGenotype->wtslot.weight = alleleFreq[DAD];
 	} else
 	  pGenotype->wtslot.weight = alleleFreq[DAD] * alleleFreq[MOM];
