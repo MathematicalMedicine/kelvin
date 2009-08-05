@@ -89,7 +89,7 @@ dcuhre_ (dcuhre_state * s)
 
   if (s->ifail != 0) {
     fprintf (stderr, "ifail =%d \n", s->ifail);
-    return 1;
+    return s->ifail;
   } else {
     if (s->verbose > 0) {
       fprintf (stderr, "Checking variables is done successfully\n");
@@ -164,7 +164,7 @@ dcuhre_ (dcuhre_state * s)
   free (s->errcof);
   free (s->diff_result);
 
-  return num_eval;
+  return s->ifail;
 }
 
 
@@ -303,7 +303,8 @@ dadhre_ (dcuhre_state * s)
     //if ((s->diff_result[s->sbrgns - 1] > s->epsabs) && (s->error > s->epsabs)) { // before 5/18/2008
     //if ((s->result <0)||(s->diff_result[s->sbrgns - 1] > s->epsabs) || real_result <0.25) {
     //if ((s->result <0)||((s->diff_result[s->sbrgns - 1] > s->epsabs) && (real_error > s->epsabs))) {  // before 11/25/2008
-    if (((s->result <0)|| (s->diff_result[s->sbrgns - 1] >= s->epsabs)) && ( (real_result <0.9)|| (real_error > s->epsabs) )){// adding s->result <0) on 3/23/2009
+      if (((s->result <0)|| (s->diff_result[s->sbrgns - 1] >= s->epsabs)) && ( (real_result <0.9)|| (real_error > s->epsabs) )){// adding s->result <0) on 3/23/2009
+    //    if ( (real_result <0.0)|| (real_error > s->epsabs) ){// adding s->result <0) //for longer run
       /*   If we are allowed to divide further, */
       /*   prepare to apply basic rule over each half of the */
       /*   NDIV subregions with greatest errors. */
