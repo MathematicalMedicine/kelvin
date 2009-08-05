@@ -432,7 +432,7 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
       if (modelType.trait == CT){
         fprintf(fpIR," %4.3f",dk_curModel.pen[0].threshold); 
       }
-      fprintf(fpIR,"\n");
+      fprintf(fpIR," %d\n",dk_curModel.posIdx);
     }
 
     oldsum=alpha_integral;
@@ -785,7 +785,7 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
           fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].dd); 
         }
       }
-      fprintf(fpIR,"\n");
+      fprintf(fpIR," %d\n",dk_curModel.posIdx);
     }
 
     oldsum=alpha_integral;
@@ -1183,7 +1183,7 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
       if (modelType.trait == CT){
         fprintf(fpIR," %4.3f",dk_curModel.pen[0].threshold); 
       }
-      fprintf(fpIR,"\n");
+      fprintf(fpIR," %d\n",dk_curModel.posIdx);
     }
 
     oldsum=alpha_integral;
@@ -1560,7 +1560,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
           fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].dd); 
         }
       }
-      fprintf(fpIR,"\n");
+      fprintf(fpIR," %d\n",dk_curModel.posIdx);
     }
 
 

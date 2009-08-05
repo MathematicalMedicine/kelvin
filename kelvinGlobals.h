@@ -77,6 +77,7 @@ typedef struct {
 } st_DKMaxModelPenVector;
 
 typedef struct {
+  int posIdx;  // which stores loc2 for 2pt and posIdx for mp
   double *dprime,
     theta[2],
     alpha,

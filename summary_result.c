@@ -146,7 +146,7 @@ int record_tp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
         if (modelType.trait == CT){
           fprintf(fpIR," %4.3f",dk_curModel.pen[0].threshold);  /* If each LC uses different threshold, this does not work*/
         }
-        fprintf(fpIR,"\n");
+        fprintf(fpIR," %d\n",dk_curModel.posIdx );
       }
 
       oldsum=tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total;
@@ -367,7 +367,7 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
         if (modelType.trait == CT){
           fprintf(fpIR," %4.3f",dk_curModel.pen[0].threshold);  /* If each LC uses different threshold, this does not work*/
         }
-        fprintf(fpIR,"\n");
+        fprintf(fpIR," %d\n",dk_curModel.posIdx);
       }
 
 

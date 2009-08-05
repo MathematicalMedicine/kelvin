@@ -285,7 +285,9 @@
       }
 
       for (loc2 = loc1 + 1; loc2 < originalLocusList.numLocus; loc2++) {
-
+        if(fpIR !=NULL){
+          dk_curModel.posIdx= loc2;
+	}
 	overallMOD = DBL_MIN_10_EXP +1;  //0.0;  // global max 
         dprime0_MOD = 0.0;   // max when D' == 0
         theta0_MOD = 0.0;    // max when Theta == 0
@@ -851,6 +853,9 @@
 
     /* Iterate over all positions in the analysis. */
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
+      if(fpIR !=NULL){
+        dk_curModel.posIdx= loc2;
+      }
       /* positions listed are sex average positions */
       traitPos = modelRange.tloc[posIdx];
       /* set the sex average position first 

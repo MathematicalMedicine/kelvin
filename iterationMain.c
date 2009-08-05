@@ -205,6 +205,9 @@ void iterateMain() {
       }
 
       for (loc2 = loc1 + 1; loc2 < originalLocusList.numLocus; loc2++) {
+        if(fpIR !=NULL){
+          dk_curModel.posIdx= loc2;
+	}
         pLocus2 = originalLocusList.ppLocusList[loc2];
         if (pLocus2->locusType != LOCUS_TYPE_MARKER)
           continue;
@@ -1065,6 +1068,10 @@ void iterateMain() {
 
     /* Iterate over all positions in the analysis. */
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
+      if(fpIR !=NULL){
+        dk_curModel.posIdx = posIdx;
+      }
+
       mp_result[posIdx].max_penIdx = -1;
       /* positions listed are sex average positions */
       traitPos = modelRange.tloc[posIdx];
