@@ -101,14 +101,20 @@ void iterateMain() {
     fprintf(fpIR, " Alpha DGF");
     for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
       if(modelOptions.imprintingFlag){
-        if(modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-          fprintf(fpIR," LC%dPV(DD,Dd,dD,dd)", liabIdx);
-        else
+        if(modelType.distrib != QT_FUNCTION_CHI_SQUARE){
+          if(modelType.trait == DT)
+            fprintf(fpIR," LC%dPV(DD,Dd,dD,dd)", liabIdx);
+          else
+            fprintf(fpIR," LC%dMV(DD,Dd,dD,dd)", liabIdx);
+        }else
           fprintf(fpIR," LC%dDoFV(DD,Dd,dD,dd)", liabIdx); 
       }else{
-        if(modelType.distrib != QT_FUNCTION_CHI_SQUARE)
-          fprintf(fpIR," LC%dPV(DD,Dd,dd)", liabIdx);
-        else
+        if(modelType.distrib != QT_FUNCTION_CHI_SQUARE){
+          if(modelType.trait == DT)
+            fprintf(fpIR," LC%dPV(DD,Dd,dd)", liabIdx);
+          else
+            fprintf(fpIR," LC%dMV(DD,Dd,dd)", liabIdx);
+        }else
           fprintf(fpIR," LC%dDoFV(DD,Dd,dd)", liabIdx); 
       }
       if (modelType.trait != DICHOTOMOUS && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
