@@ -5,5 +5,8 @@ test :
 	# Compare dynamic and fixed for each marker
 	perl -n mod2singles.pl <mod.out
 
+test-FIXED :
+	echo Fixed-grid comparison not available
+
 clean :
 	- rm -rf single-* dynamic-* fixed-* *.out
