@@ -48,12 +48,21 @@ my %nameDirectives = (
 		      'DGF' => 'DiseaseGeneFrequency', 
 		      'LC0PV-DD' => 'Penetrance DD',
 		      'LC0PV-Dd' => 'Penetrance Dd',
+		      'LC0PV-dD' => 'Penetrance dD',
 		      'LC0PV-dd' => 'Penetrance dd',
+		      'LC0DoFV-DD' => 'DegreesOfFreedom DD',
+		      'LC0DoFV-Dd' => 'DegreesOfFreedom Dd',
+		      'LC0DoFV-dD' => 'DegreesOfFreedom dD',
+		      'LC0DoFV-dd' => 'DegreesOfFreedom dd',
+		      'LC0MV-DD' => 'Mean DD',
+		      'LC0MV-Dd' => 'Mean Dd',
+		      'LC0MV-dD' => 'Mean dD',
+		      'LC0MV-dd' => 'Mean dd',
 		      'Dprime' => 'DPrime',
 		      'SD' => 'StandardDev',
 		      'Thresh' => 'Threshold',
-		      'MkIdx' => 'Dummy',
-		      'PosIdx' => 'Dummy',
+		      'MkIdx' => 'Dummy', # Dummy directive (no action)
+		      'PosIdx' => 'Dummy', # "
 		      );
 
 my  @headerNames = ();
@@ -180,15 +189,7 @@ for my $i (0..($offset - 1)) {
 	$commandLine .= " --".$nameDirectives{$headerNames[$j]}." ".$PsTSV[$i][$j];
     }
     $commandLine .= " --SurfaceFile LRTest-$i.Dat >& LRTest-$i.Out";
-
-# Except for with QT, no knowledge of the directives was required. Unfortunately 
-# the penetrance vector portion of the header of the surface file for QT is the same as 
-# for DT, but the directive needs to be "Mean DD" instead of "Penetrance DD", ect.
-# This kind of spoils my clever data independence...
-    $commandLine =~ s/Penetrance/Mean/g if ($commandLine =~ /StandardDev/);
-    $commandLine =~ s/Penetrance/DegreesOfFreedom/g if ($commandLine =~ /Threshold/);
-    $commandLine =~ s/--Dummy\s+[0-9]+/ /g if ($commandLine =~ /Dummy/);
-
+    $commandLine =~ s/--Dummy\s+[0-9]+/ /g if ($commandLine =~ /Dummy/); # Lose our dummy directives
     print "Generating fixed-grid trait space test point $i from dynamic grid output line ".$PsLine[$i].".\n";
 #    print "Execute [$commandLine]\n";
     (system($commandLine) == 0) or die "Couldn't run \'$commandLine\'\n";
@@ -213,8 +214,8 @@ while (<IN>) {
     if ($_ =~ /^([ \-][0-9]\.[0-9]{3})/) {
 	my $old = $1;
 # Heavy on the rounding slop. Go ahead and ask Sang for more surface precision!
-	my $new = sprintf("[%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f ]",
-			  $1-0.004, $1-0.003, $1-0.002, $1-0.001, $1, $1+0.001, $1+0.002, $1+0.003, $1+0.004);
+	my $new = sprintf("[%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f ]",
+			  $1-0.005, $1-0.004, $1-0.003, $1-0.002, $1-0.001, $1, $1+0.001, $1+0.002, $1+0.003, $1+0.004, $1+0.005);
 # Deal with +/- zero
 	$new =~ s/[ \-]0.000/ 0.000|-0.000/g;
 #	print "HLOD is [$old], using $new\n";
