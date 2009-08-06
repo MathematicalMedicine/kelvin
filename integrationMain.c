@@ -96,7 +96,11 @@
     if (modelType.trait == CT){
       fprintf(fpIR," Thresh");  /* If each LC uses different threshold, this does not work*/
     }
-    fprintf(fpIR,"\n");   
+    if (modelType.type == TP) {
+      fprintf(fpIR," MkIdx\n"); 
+    }else{
+      fprintf(fpIR," PosIdx\n"); 
+    }
   }
 
 
