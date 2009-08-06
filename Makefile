@@ -108,6 +108,10 @@ clean :
 .PHONY : test test-USE_DL
 test-USE_DL :
 	make -C test-suite -f Makefile test-USE_DL
+
+.PHONY : test test-FIXED
+test-FIXED :
+	make -C test-suite -f Makefile test-FIXED
 test :
 	make -C test-suite -f Makefile test
 
