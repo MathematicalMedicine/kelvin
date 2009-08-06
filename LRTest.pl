@@ -51,6 +51,9 @@ my %nameDirectives = (
 		      'LC0PV-dd' => 'Penetrance dd',
 		      'Dprime' => 'DPrime',
 		      'SD' => 'StandardDev',
+		      'Thresh' => 'Threshold',
+		      'MkIdx' => 'Dummy',
+		      'PosIdx' => 'Dummy',
 		      );
 
 my  @headerNames = ();
@@ -167,6 +170,7 @@ close IN;
 system('rm LRTest-* >&/dev/null');
 
 # Generate all of the kelvin configuration variations and run them
+my $searchFormat = " " . ("%5.3f " x $paramCnt) . "%d";
 for my $i (0..($offset - 1)) {
     my $commandLine = '$TEST_KELVIN kelvin.conf --FixedModels';
 #    print "Test from line ".$PsLine[$i]." has HLOD ".
@@ -181,25 +185,37 @@ for my $i (0..($offset - 1)) {
 # the penetrance vector portion of the header of the surface file for QT is the same as 
 # for DT, but the directive needs to be "Mean DD" instead of "Penetrance DD", ect.
 # This kind of spoils my clever data independence...
-    $commandLine =~ s/Penetrance/Mean/g if ($commandLine =~ /--StandardDev/);
+    $commandLine =~ s/Penetrance/Mean/g if ($commandLine =~ /StandardDev/);
+    $commandLine =~ s/Penetrance/DegreesOfFreedom/g if ($commandLine =~ /Threshold/);
+    $commandLine =~ s/--Dummy\s+[0-9]+/ /g if ($commandLine =~ /Dummy/);
 
-    print "Generating fixed-grid trait space test point $i.\n";
+    print "Generating fixed-grid trait space test point $i from dynamic grid output line ".$PsLine[$i].".\n";
 #    print "Execute [$commandLine]\n";
+    (system($commandLine) == 0) or die "Couldn't run \'$commandLine\'\n";
+# Filter-out unrequested results, e.g. same parameters different marker, 0.5 Theta, etc.
+    my $searchLine = sprintf($searchFormat, @{ $PsTSV[$i] }, $PsTSV[$i][$paramCnt]);
+#    print "Limit by [$searchLine]\n";
+    $commandLine = "grep \'$searchLine\' LRTest-$i.Dat >LRTest-$i.Fix";
     (system($commandLine) == 0) or die "Couldn't run \'$commandLine\'\n";
 }
 
 # Now concatenate, uniq-ify and compare all of the output, then let our driver do
 # the differences and react accordingly.
-(system('cat LRTest-*.Dat | sort | uniq > LRTest.Fix') == 0) or
+(system('cat LRTest-*.Fix | sort | uniq > LRTest.Fix') == 0) or
     die "Cannot concatenate, sort or uniq all fixed-grid results\n";
-# Find each fixed line in the dynamic output (using a possibly rounded HLOD)
+
+# Find each fixed line in the dynamic output (using a possibly rounded HLOD).
 print "Finding fixed results in dynamic results";
 open IN,"LRTest.Fix";
 while (<IN>) {
+    chomp;
     print ".";
     if ($_ =~ /^([ \-][0-9]\.[0-9]{3})/) {
 	my $old = $1;
-	my $new = sprintf("[% 5.3f|% 5.3f|% 5.3f]", $1-0.001, $1, $1+0.001);
+# Heavy on the rounding slop. Go ahead and ask Sang for more surface precision!
+	my $new = sprintf("[%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f ]",
+			  $1-0.004, $1-0.003, $1-0.002, $1-0.001, $1, $1+0.001, $1+0.002, $1+0.003, $1+0.004);
+# Deal with +/- zero
 	$new =~ s/[ \-]0.000/ 0.000|-0.000/g;
 #	print "HLOD is [$old], using $new\n";
 	s/$old/$new/;
