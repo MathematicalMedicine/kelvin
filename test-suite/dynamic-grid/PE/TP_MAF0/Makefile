@@ -4,6 +4,9 @@ test :
 	diff -i br.out br.out-baseline
 	diff -i ppl.out ppl.out-baseline
 
+test-FIXED :
+	echo Fixed-grid comparison not available
+
 test-USE_DL :
 	echo Compilation not appropriate for this test.
 
