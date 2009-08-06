@@ -9,4 +9,4 @@ test-FIXED :
 	perl $(KELVIN_ROOT)/LRTest.pl
 
 clean :
-	- rm -rf *.out *.so *memory.dat compiled
+	- rm -rf *.out *.so *memory.dat compiled LRTest*
