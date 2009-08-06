@@ -4,6 +4,10 @@ test :
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001
 #	diff -i ppl.out ppl.out-baseline
 
+test-FIXED :
+	-rm -f LRTest*
+	perl $(KELVIN_ROOT)/LRTest.pl
+
 test-USE_DL :
 	echo Compilation not available for QT runs yet
 #	- rm -rf br.out ppl.out kelvin-*_DL.out *.so compiled
@@ -15,4 +19,4 @@ test-USE_DL :
 #	diff -i ppl.out ppl.out-baseline
 
 clean :
-	- rm -rf *.so *.out *memory.dat *~ compiled
+	- rm -rf *.so *.out *memory.dat *~ compiled LRTest*
