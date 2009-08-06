@@ -12,5 +12,8 @@ test :
 	grep -v Version PC3/BR.Out >>BR.Out-PCs
 	diff -i BR.Out-PCs br.out
 
+test-FIXED :
+	echo Fixed-grid comparison not available
+
 clean :
-	- rm -rf PC* BR.Out-PCs ppl.out kelvin.out*
+	- rm -rf PC* BR.Out-PCs ppl.out kelvin.out* LRTest*
