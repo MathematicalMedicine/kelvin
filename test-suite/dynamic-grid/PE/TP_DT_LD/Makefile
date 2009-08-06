@@ -13,5 +13,9 @@ test-USE_DL :
 	diff -i br.out br.out-baseline
 	diff -i ppl.out ppl.out-baseline
 
+test-FIXED :
+	-rm -f LRTest*
+	perl $(KELVIN_ROOT)/LRTest.pl
+
 clean :
-	- rm -rf *.out *.so *memory.dat compiled
+	- rm -rf *.out *.so *memory.dat compiled LRTest*
