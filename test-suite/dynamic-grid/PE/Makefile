@@ -13,6 +13,9 @@ test : $(TESTS)
 test-USE_DL : ACTION := test-USE_DL
 test-USE_DL : $(TESTS)
 
+test-FIXED : ACTION := test-FIXED
+test-FIXED : $(TESTS)
+
 clean : ACTION := clean
 clean : $(TESTS)
 
