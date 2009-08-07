@@ -803,7 +803,9 @@
 	update_locus (&pedigreeSet, traitLocus);
       /* get the likelihood for the trait */
       KLOG (LOGLIKELIHOOD, LOGDEBUG, "Trait Likelihood\n");
-      sprintf (partialPolynomialFunctionName, "MDT_C%s_P%%sSL%d", "CHROMOSOME", modelOptions.sexLinked);
+      sprintf (partialPolynomialFunctionName, "MDT_C%d_P%%sSL%d",
+	       (originalLocusList.ppLocusList[1])->pMapUnit->chromosome,
+	       modelOptions.sexLinked);
       cL[0]++;
       compute_likelihood (&pedigreeSet);	/* This builds polynomials with dummy numbers */
 
@@ -831,7 +833,9 @@
       else
 	update_penetrance (&pedigreeSet, traitLocus);
  
-      sprintf (partialPolynomialFunctionName, "MQT_C%s_P%%sSL%d", "CHROMOSOME", modelOptions.sexLinked);
+      sprintf (partialPolynomialFunctionName, "MQT_C%d_P%%sSL%d",
+	       (originalLocusList.ppLocusList[1])->pMapUnit->chromosome,
+	       modelOptions.sexLinked);
       cL[1]++;
       compute_likelihood (&pedigreeSet);
 
@@ -971,7 +975,8 @@
 			       tmpID);
 
 	char markerNo[8];
-	sprintf (partialPolynomialFunctionName, "MM_C%s_P%%sM", "CHROMOSOME");
+	sprintf (partialPolynomialFunctionName, "MM_C%d_P%%sM",
+		 (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
 	for (k = 0; k < modelType.numMarkers; k++) {
 	  sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
 	  strcat (partialPolynomialFunctionName, markerNo);
