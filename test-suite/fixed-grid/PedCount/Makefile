@@ -4,5 +4,7 @@ test :
 	diff -i PC1_Counts.Dat acid_test.counts-baseline
 	diff -i PC1_Pedigrees.Dat acid_test.post-baseline
 
+test-USE_DL :
+
 clean :
 	- rm -rf PC1_* kelvin.out
