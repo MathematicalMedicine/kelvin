@@ -1128,7 +1128,7 @@ swLogMsg (char *message)
   if (udpSend ("levi-montalcini.ccri.net", 4950, messageBuffer) ==
       EXIT_FAILURE) messageBuffer[0] = 'p'; /* Yeah, it's embarassing */
 #endif
-  fprintf (stdout, messageBuffer);
+  fprintf (stdout, "%s", messageBuffer);
   return;
 }
 
