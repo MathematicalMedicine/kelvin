@@ -4,7 +4,7 @@ Version 0.38.0
   genotypically identical pedigrees now included.
   See PedCount.pl for further details on usage.
   Compiled polynomials now available for dynamic grid,
-  names homogenized.
+  names are homogenized, and include chromosome number.
   Configuration file directives completely changed,
   use convertconfig.pl to update earlier config files.
   Dynamic grid now default method.
