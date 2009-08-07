@@ -31,6 +31,10 @@ Version 0.38.0
   by rescaling. BR overflow for individual pedigree, which is
   much less likely, is not handled yet.
 
+  Tests include verification of dynamic grid underpinnings
+  against those of fixed grid, as well as polynomial
+  compilation where possible.
+
 Version 0.37.1
   Numerous bugfixes in LD handling and estimation in
   cases with different numbers of marker alleles. Now
