@@ -889,7 +889,7 @@ void iterateMain() {
 
           /* Compute the likelihood for the trait */
           sprintf (partialPolynomialFunctionName, "MDT_C%d_P%%sSL%d", 
-		   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+		   (originalLocusList.ppLocusList[1])->pMapUnit->chromosome,
 		   modelOptions.sexLinked);
           ret=compute_likelihood (&pedigreeSet);
           cL[4]++;
