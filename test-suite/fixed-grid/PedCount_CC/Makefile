@@ -5,5 +5,7 @@ test :
 	diff -i br.out br.out-baseline
 	diff -i ppl.out ppl.out-baseline
 
+test-USE_DL :
+
 clean :
 	- rm -rf PC* *.out
