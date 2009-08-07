@@ -21,8 +21,9 @@
   - Hongling Wang - Polynomial features
   - Alberto Maria Segre - config and error logging modules
   - Nathan Burnette - Regex code
-  - Bill Valentine-Cooper - clean-up, performance and tracking
-
+  - Sang-Cheol Seok - Dynamic grid
+  - John Burian - configuration parser
+  - Bill Valentine-Cooper - polynomial compilation, SSD, performance and tracking
 
 @file kelvin.c
 
