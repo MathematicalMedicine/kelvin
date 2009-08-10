@@ -377,7 +377,10 @@ void iterateMain() {
                   locusList->pPrevLocusDistance[k][1] = 0.5;
                 }
 
-                if (modelOptions.polynomial == TRUE);
+                if (modelOptions.polynomial == TRUE)
+		  sprintf (partialPolynomialFunctionName, "TD_C%d_P%%s_%s_%s",
+			   pLocus2->pMapUnit->chromosome,
+			   pLocus1->sName, pLocus2->sName);
                 else
                   status =
                     populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2,
@@ -385,9 +388,6 @@ void iterateMain() {
 
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-		sprintf (partialPolynomialFunctionName, "TD_C%d_P%%s_%s_%s",
-			 pLocus2->pMapUnit->chromosome,
-			 pLocus1->sName, pLocus2->sName);
 		//print_xmission_matrix(xmissionMatrix, totalLoci, 0, 0, xmissionPattern);
                 if (gfreqInd != 0 || penIdx != 0) {
 		  pushStatus ('k', "evalTD");
@@ -603,17 +603,16 @@ void iterateMain() {
                       locusList->pNextLocusDistance[k][0] = 0.5;
                       locusList->pPrevLocusDistance[k][1] = 0.5;
                     }
-                    if (modelOptions.polynomial == TRUE);
+                    if (modelOptions.polynomial == TRUE)
+		      sprintf (partialPolynomialFunctionName, "TQ_C%d_P%%s_%s_%s",
+			       pLocus2->pMapUnit->chromosome,
+			       pLocus1->sName, pLocus2->sName);
                     else
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
 		    /* If we're not on the first iteration, it's not a polynomial build, so
 		     * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-
-		    sprintf (partialPolynomialFunctionName, "TQ_C%d_P%%s_%s_%s",
-			     pLocus2->pMapUnit->chromosome,
-			     pLocus1->sName, pLocus2->sName);
 		    if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
 		      pushStatus ('k', "evalTQ");
 		      //		      swStart (combinedComputeSW);
@@ -883,14 +882,14 @@ void iterateMain() {
           pLocus->pAlleleFrequency[0] = gfreq;
           pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
-          if (modelOptions.polynomial == TRUE);
+          if (modelOptions.polynomial == TRUE)
+	    sprintf (partialPolynomialFunctionName, "MDT_C%d_P%%sSL%d", 
+		     (originalLocusList.ppLocusList[1])->pMapUnit->chromosome,
+		     modelOptions.sexLinked);
           else
             update_locus (&pedigreeSet, traitLocus);
 
           /* Compute the likelihood for the trait */
-          sprintf (partialPolynomialFunctionName, "MDT_C%d_P%%sSL%d", 
-		   (originalLocusList.ppLocusList[1])->pMapUnit->chromosome,
-		   modelOptions.sexLinked);
           ret=compute_likelihood (&pedigreeSet);
           cL[4]++;
 #ifndef SIMPLEPROGRESS
@@ -1004,12 +1003,12 @@ void iterateMain() {
               } /* liability class Index */
               if (breakFlag == TRUE)
                 continue;
-              if (modelOptions.polynomial == TRUE);
+              if (modelOptions.polynomial == TRUE)
+		sprintf (partialPolynomialFunctionName, "MQT_C%d_P%%sSL%d", 
+			 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+			 modelOptions.sexLinked);
               else
                 update_penetrance (&pedigreeSet, traitLocus);
-              sprintf (partialPolynomialFunctionName, "MQT_C%d_P%%sSL%d", 
-		       (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-		       modelOptions.sexLinked);
               ret=compute_likelihood (&pedigreeSet);
               cL[5]++;
 #ifndef SIMPLEPROGRESS
@@ -1203,11 +1202,15 @@ void iterateMain() {
         }
 	if (markerSetChanged) {
 	  pushStatus ('k', "buildMM");
+	  /** Build a polynomial name including all involved marker ordinal numbers */
 	  char markerNo[8];
-	  sprintf (partialPolynomialFunctionName, "MM_C%d_P%%sM", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
-	  for (k = 0; k < modelType.numMarkers; k++) {
-	    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
-	    strcat (partialPolynomialFunctionName, markerNo);
+	  if (modelOptions.polynomial == TRUE) {
+	    sprintf (partialPolynomialFunctionName, "MM_C%d_P%%sM", 
+		     (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
+	    for (k = 0; k < modelType.numMarkers; k++) {
+	      sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
+	      strcat (partialPolynomialFunctionName, markerNo);
+	    }
 	  }
 	} else
 	  pushStatus ('k', "evalMM");
@@ -1416,6 +1419,7 @@ void iterateMain() {
 
             /* If we're not on the first iteration, it's not a polynomial build, so
              * show progress at 1 minute intervals. Have a care to avoid division by zero. */
+
 	    char markerNo[8];
 	    sprintf (partialPolynomialFunctionName, "MDA_C%d_P%%sM",
 		     (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
