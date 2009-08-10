@@ -604,6 +604,11 @@ void validateConfig ()
 	fault ("%s requires %s\n", THRESHOLD_STR, QTT_STR);
     }
   }
+  /* Look for faults before we call checkImprintingPenets(), which doesn't do well
+   * if the user hasn't specified any penetrance values at all.
+   */
+  if (fault)
+    logMsg (LOGINPUTFILE, LOGFATAL, "Configuration errors detected, exiting\n");
   
   if ((checkImprintingPenets (&modelRange, modelOptions.imprintingFlag) < 0)) {
     if (modelOptions.imprintingFlag) {
