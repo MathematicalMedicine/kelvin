@@ -1005,7 +1005,7 @@ void iterateMain() {
                 continue;
               if (modelOptions.polynomial == TRUE)
 		sprintf (partialPolynomialFunctionName, "MQT_C%d_P%%sSL%d", 
-			 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+			 (originalLocusList.ppLocusList[1])->pMapUnit->chromosome,
 			 modelOptions.sexLinked);
               else
                 update_penetrance (&pedigreeSet, traitLocus);

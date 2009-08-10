@@ -2225,21 +2225,21 @@ inline int keyFunctionCallPolynomial (char *fName, Polynomial ** p, int num)
   -# a group of parameters to the called function
 
 */
-///// &&& THIS FAR IN COMMENTS
 Polynomial *functionCallExp (int num, ...)
 {
-  int i, k, hIndex, fIndex;     //hIndex: index in hash table, fIndex: index in polynomiall list
-  char *fName;  //function name
-  int key;      //key of the newly built function call polynomial
-  Polynomial **p;       //parameters of the newly built function call polynomial
-  int first, last, location;    //first and last polynomial in a hash bucket for comparison
+  int i, k;
+  va_list args; ///< Variable list of parameters
+  Polynomial *rp;       ///< New product polynomial
+  struct functionPoly *fP;  ///< Function call structure for the new polynomial
+  Polynomial **p;       ///< Parameters of the newly-built function call polynomial
+  int fIndex, hIndex;   ///< Index in the polynomial list, index in the hash table
+  char *fName;  ///< Function name
+  int key = 0;      ///< Key of the new polynomial
+  int first,    ///< First term for comparison
+    last,       ///< Last term for comparison
+    location;   ///< Position of the new polynomial in a hash bucket
 
-  //location of the newly built variable polynomial in the hash bucket
-  va_list args; //arguments
-  Polynomial *rp;       //newly built function call polynomial
-  struct functionPoly *fP;      //function-call structure of the newly built function call polynomial
-
-  //get the number of parameters for functionCallExp
+  // Get the number of parameters for this function call
   va_start (args, num);
   fName = va_arg (args, char *);
 
@@ -2248,7 +2248,8 @@ Polynomial *functionCallExp (int num, ...)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  //num is equal to 1 plus the number of parameters for the called function
+
+  // num is equal to 1 plus the number of parameters for the called function
   for (i = 0; i < num - 1; i++) {
     p[i] = va_arg (args, Polynomial *);
     if (p[i]->eType == T_OFFLINE) importPoly (p[i]);
@@ -2260,54 +2261,48 @@ Polynomial *functionCallExp (int num, ...)
   }
   va_end (args);
 
-  //compute a key for this polynomial
+  // Compute a key for this polynomial
   key = keyFunctionCallPolynomial (fName, p, num);
 
-  //compute the index in hash table according to the key
+  // Compute the index in the hash table according to the key
 
   hIndex = key % FUNCTIONCALL_HASH_SIZE;
   if (hIndex < 0)
     hIndex += FUNCTIONCALL_HASH_SIZE;
 
-  //compare the key of this polynomial with the keys of polynomials in the
-  //function list
+  /* Compare the key of this polynomial with the keys of other polynomials 
+     already in the function list. */
   if (functionCallHash[hIndex].num > 0) {
-    //if the key of this function call is equal to the keys of some polynomials in the
-    //function call list, compare if the value of the new function call is equal to
-    //the value of an existing function call
+    /* If the key of this function call is equal to the keys of polynomials in the
+       function call list, see if the value of the new function call is equal to
+       the value of an existing function call. */
     if (searchHashTable (&functionCallHash[hIndex], &first, &last, key)) {
-      //compare the new function call polynomials with a set of possible matching polynomials
+      // Compare the new function call polynomials with a set of possible matching polynomials
       for (i = first; i <= last; i++) {
         fIndex = functionCallHash[hIndex].index[i];
-        //If the names of the called functions are identical and the numbers of parameters are identical,
-        //we compare their parameters
+        /* If the names of the called functions are identical and the numbers of parameters are 
+	   identical, we compare their parameters. */
         if (strcmp (fName, functionCallList[fIndex]->e.f->name) == 0 && num - 1 == functionCallList[fIndex]->e.f->num) {
-          //compare the two function calls item by item
+          // Compare the two function calls item by item
           for (k = 0; k < num - 1; k++)
             if (p[k] != functionCallList[fIndex]->e.f->para[k])
               break;
-          //if the two function calls are the same,
-          //return the function call in the function call list
+          // The two function calls are the same, return the existing one
           if (k >= num - 1) {
             free (p);
             functionHashHits++;
             return polyReturnWrapper (functionCallList[fIndex]);
           }
-        }       //end of if(num-1==functionCallList[fIndex]->e.f->num)
-      } //end of for(i=binaryStart;i<=binaryEnd;i++)
+        }
+      }
       location = last;
-    }   //end of if(binaryStart>=0 && binarySt
-    else {
+    } else
       location = last;
-    }
-  }     //end of if(functionCallHash[hIndex].num>0)
-  else {
+  } else
     location = 0;
-  }
 
-
-  //If the function call is not found in the list, insert it in the list
-  //Build a new polynomial
+  // The function call ws not found in the list, insert it in the list.
+  // Build a new polynomial
   rp = (Polynomial *) malloc (sizeof (Polynomial));
   fP = (struct functionPoly *) malloc (sizeof (struct functionPoly));
   if (rp == NULL || fP == NULL) {
@@ -2336,7 +2331,7 @@ Polynomial *functionCallExp (int num, ...)
   mpf_init (rp->mpfValue);
 #endif
 
-  //Insert the new built polynomial in function call list
+  // Insert the newly-built polynomial in function call list
   if (functionCallCount >= functionCallListLength) {
     functionCallListLength += FUNCTIONCALL_LIST_INCREASE;
     functionCallPListExpansions++;
@@ -2355,7 +2350,7 @@ Polynomial *functionCallExp (int num, ...)
   if ((nodeId & 0x1FFFFF) == 0)
     polyStatistics ("At 2M poly multiple");
 #endif
-  //insert the polynomial in the hash table of the function call polynomials
+  // Insert the polynomial in the hash table of function call polynomials
   insertHashTable (&functionCallHash[hIndex], location, key, functionCallCount - 1);
 
   free (p);
@@ -2364,10 +2359,12 @@ Polynomial *functionCallExp (int num, ...)
 
 };
 
-///////////////////////////////////////////////////////////////////////////////////////
-//This function initialize a structure for creating a polynomial list which is used
-//for polynomial evaluation
-///////////////////////////////////////////////////////////////////////////////////////
+/**
+
+   This function initialize a structure for creating a polynomial list which is used
+   for polynomial evaluation.
+
+*/
 struct polyList *buildPolyList ()
 {
   struct polyList *l;
@@ -2389,12 +2386,14 @@ struct polyList *buildPolyList ()
   return l;
 };
 
-//////////////////////////////////////////////////////////////////////////////////////
-//This function appends a polynomial onto a polynomial list
-//////////////////////////////////////////////////////////////////////////////////////
+/**
+
+  This function appends a polynomial onto a polynomial list.
+
+*/
 void polyListAppend (struct polyList *l, Polynomial * p)
 {
-  //valid is a mark showing that this polynomial appears on a sorting list
+  // Valid is a flag indicating that this polynomial appears on a sorting list.
   p->valid |= VALID_EVAL_FLAG;
 
   if (l->listNext >= l->listSize) {
@@ -2409,14 +2408,16 @@ void polyListAppend (struct polyList *l, Polynomial * p)
   l->listNext++;
 };
 
-/////////////////////////////////////////////////////////////////////////////////////
-// Sort the polynomial list to prepare for polynomial evaluation.  Polynomials are
-//evaluated in order.  This function is to determine a order for evaluation.  Also,
-//shared terms are evaluated only once.  Together with polyListAppend(), this function
-//construct a evaluation list for evaluation of the polynomial.  For linkage computation,
-//it allows shared polynomials within each likelihood polynomial and across likelihood
-//polynomials of a set of pedigrees fully reused
-/////////////////////////////////////////////////////////////////////////////////////
+/**
+
+  Sort the polynomial list to prepare for polynomial evaluation.  Polynomials are
+  evaluated in dependency order.  This function determines the order for evaluation.
+  Shared terms are evaluated only once.  Together with polyListAppend(), this function
+  constructs an evaluation list for evaluation of the polynomial.  For linkage computation,
+  it allows shared polynomials within each likelihood polynomial and across likelihood
+  polynomials of a set of pedigrees fully reused
+
+*/
 void doPolyListSorting (Polynomial * p, struct polyList *l)
 {
   int i;
@@ -2426,19 +2427,19 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     importPoly(p);
     // Notice that there's no break here...
 
-    //If the polynomial is a constant, put it in the evaluation list
+    // If the polynomial is a constant, put it in the evaluation list
   case T_CONSTANT:
     polyListAppend (l, p);
     break;
 
-    //If the polynomial is a variable, put it in the evaluation list
+    // If the polynomial is a variable, put it in the evaluation list
   case T_VARIABLE:
     if (!(p->valid & VALID_EVAL_FLAG)) {
       polyListAppend (l, p);
     }
     break;
 
-    //If the polynomial is an external, put it in the evaluation list after all variables
+    // If the polynomial is an external, put it in the evaluation list after all variables
   case T_EXTERNAL:
     if (p->valid & VALID_EVAL_FLAG)
       break;
@@ -2450,7 +2451,7 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     polyListAppend (l, p);
     break;
 
-    //If the polynomial is a sum, put all the terms of the sum in the evaluation list
+    // If the polynomial is a sum, put all the terms of the sum in the evaluation list
     //except constants and then put the sum in the evaluation list
   case T_SUM:
 
@@ -2468,8 +2469,9 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     polyListAppend (l, p);
     break;
 
-    //If the polynomial is a product, put all the terms of the product in the
-    //evaluation list except constants and then put the product in the evaluation list
+    /* If the polynomial is a product, put all the terms of the product in the
+       evaluation list except constants and then put the product in the 
+       evaluation list. */
   case T_PRODUCT:
 
     if (p->valid & VALID_EVAL_FLAG)
@@ -2484,8 +2486,8 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
     polyListAppend (l, p);
     break;
 
-    //If the polynomial is a functionCall, put the parameters in the evaluation list and then
-    //put the functionCall in the evaluation list
+    /* If the polynomial is a functionCall, put the parameters in the evaluation list 
+       and then put the functionCall in the evaluation list. */
   case T_FUNCTIONCALL:
 
     if (p->valid & VALID_EVAL_FLAG)
@@ -2505,6 +2507,7 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
   }
 }
 
+///// &&& THIS FAR IN COMMENTS
 void polyListSorting (Polynomial * p, struct polyList *l)
 {
   polyListSortingCount++;
