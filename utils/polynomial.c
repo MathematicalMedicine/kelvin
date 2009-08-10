@@ -2507,7 +2507,12 @@ void doPolyListSorting (Polynomial * p, struct polyList *l)
   }
 }
 
-///// &&& THIS FAR IN COMMENTS
+/**
+
+  Wrapper for doPolyListSorting to avoid recursing initialization and
+  such.
+
+*/
 void polyListSorting (Polynomial * p, struct polyList *l)
 {
   polyListSortingCount++;
@@ -2520,12 +2525,16 @@ void polyListSorting (Polynomial * p, struct polyList *l)
   doPolyListSorting (p, l);
 }
 
-///////////////////////////////////////////////////////////////////
-//This function compute the value of a polynomial.  It evaluate
-//all the polynomials in the evaluation list for this polynomial.
-//After the polynomials are completed, this is the only function
-//to be executed for evaluation.  This function is not recursive
-///////////////////////////////////////////////////////////////////
+/**
+
+  This function compute the value of a polynomial.  It evaluate
+  all the polynomials in the evaluation list for this polynomial.
+  After the polynomials are completed, this is the only function
+  to be executed for evaluation.  This function is not recursive,
+  and is typically not used unless only a single evaluation is to
+  be performed.
+
+*/
 void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 {
   Polynomial *p;
@@ -2794,10 +2803,12 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
   return;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-//This is the first function to call before we use polynomials.  It allocates some memory
-//and initiates important variables variables
-/////////////////////////////////////////////////////////////////////////////////////////////
+/**
+
+  This is the first function to call before using polynomials.  It allocates some memory
+  and initializes important variables.
+
+*/
 void polynomialInitialization (int polynomialScale)
 {
   int i;
@@ -2867,8 +2878,8 @@ void polynomialInitialization (int polynomialScale)
 
   nodeId = 0;
 
-  // Allocate memory for polynomial list of each type of polynomials, set the counter of each
-  //type of polynomials to be 0
+  /* Allocate memory for polynomial list of each type of polynomials, set the counter of each
+     type of polynomials to be 0. */
   constantListLength = CONSTANT_LIST_INITIAL;
   constantCount = 0;
   constantList = (Polynomial **) malloc (constantListLength * sizeof (Polynomial *));
@@ -2926,7 +2937,7 @@ void polynomialInitialization (int polynomialScale)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  //Initialize the constant hash table, pre-allocate memory for recording polynomials
+  // Initialize the constant hash table, pre-allocate memory for recording polynomials
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -2941,7 +2952,7 @@ void polynomialInitialization (int polynomialScale)
     }
   }
 
-  //Initialize the variable hash table, pre-allocate memory for recording polynomials
+  // Initialize the variable hash table, pre-allocate memory for recording polynomials
   for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
     variableHash[i].num = 0;
     variableHash[i].length = HASH_TABLE_INCREASE;
@@ -2953,7 +2964,7 @@ void polynomialInitialization (int polynomialScale)
     }
   }
 
-  //Initialize the sum hash table, pre-allocate memory for recording polynomials
+  // Initialize the sum hash table, pre-allocate memory for recording polynomials
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -2969,7 +2980,7 @@ void polynomialInitialization (int polynomialScale)
 
   }
 
-  //Initialize the product hash table, pre-allocate memory for recording polynomials
+  // Initialize the product hash table, pre-allocate memory for recording polynomials
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -2984,7 +2995,7 @@ void polynomialInitialization (int polynomialScale)
     }
   }
 
-  //Initialize the function call hash table, pre-allocate memory for recording polynomials
+  // Initialize the function call hash table, pre-allocate memory for recording polynomials
   for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++) {
     functionCallHash[i].num = 0;
     functionCallHash[i].length = HASH_TABLE_INCREASE;
@@ -2999,9 +3010,9 @@ void polynomialInitialization (int polynomialScale)
 
   initialHashSize = (sizeof (struct hashStruct) + (2 * HASH_TABLE_INCREASE * sizeof (int))) * (CONSTANT_HASH_SIZE + VARIABLE_HASH_SIZE + SUM_HASH_SIZE + PRODUCT_HASH_SIZE + FUNCTIONCALL_HASH_SIZE);
 
-  //Apply memory for containers to hold terms for a sum polynomial
+  // Acquire memory for containers for the terms of a sum polynomial
 
-  //For variable polynomials
+  // For variable polynomials
   containerLength_v1 = 100;
   factor_v1 = (double *) malloc (containerLength_v1 * sizeof (double));
   p_v1 = (Polynomial **) malloc (containerLength_v1 * sizeof (Polynomial *));
@@ -3009,7 +3020,7 @@ void polynomialInitialization (int polynomialScale)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  //For product polynomials
+  // For product polynomials
   containerLength_p1 = 100;
   factor_p1 = (double *) malloc (containerLength_p1 * sizeof (double));
   p_p1 = (Polynomial **) malloc (containerLength_p1 * sizeof (Polynomial *));
@@ -3017,7 +3028,7 @@ void polynomialInitialization (int polynomialScale)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  //For function call polynomials
+  // For function call polynomials
   containerLength_f1 = 100;
   factor_f1 = (double *) malloc (containerLength_f1 * sizeof (double));
   p_f1 = (Polynomial **) malloc (containerLength_f1 * sizeof (Polynomial *));
@@ -3025,7 +3036,7 @@ void polynomialInitialization (int polynomialScale)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  //Containers for organizing a sum polynomial
+  // Containers for organizing a sum polynomial
   lengthSum = 300;
   factorSum = (double *) malloc (lengthSum * sizeof (double));
   pSum = (Polynomial **) malloc (lengthSum * sizeof (Polynomial *));
@@ -3033,9 +3044,10 @@ void polynomialInitialization (int polynomialScale)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  //apply memory for container to hold terms for a product polynomial
 
-  //For variable polynomials
+  // Acquire memory for containers for the terms of a product polynomial
+
+  // For variable polynomials
   containerLength_v2 = 100;
   exponent_v2 = (int *) malloc (containerLength_v2 * sizeof (int));
   p_v2 = (Polynomial **) malloc (containerLength_v2 * sizeof (Polynomial *));
@@ -3043,7 +3055,7 @@ void polynomialInitialization (int polynomialScale)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  //For sum polynmials
+  // For sum polynmials
   containerLength_s2 = 100;
   exponent_s2 = (int *) malloc (containerLength_s2 * sizeof (int));
   p_s2 = (Polynomial **) malloc (containerLength_s2 * sizeof (Polynomial *));
@@ -3051,7 +3063,7 @@ void polynomialInitialization (int polynomialScale)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  //For function call polynomials
+  // For function call polynomials
   containerLength_f2 = 100;
   exponent_f2 = (int *) malloc (containerLength_f2 * sizeof (double));
   p_f2 = (Polynomial **) malloc (containerLength_f2 * sizeof (Polynomial *));
@@ -3059,7 +3071,7 @@ void polynomialInitialization (int polynomialScale)
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
     exit (EXIT_FAILURE);
   }
-  //Containers for organizing a product polynomial
+  // Containers for organizing a product polynomial
   lengthProd = 300;
   exponentProd = (int *) malloc (lengthProd * sizeof (int));
   pProd = (Polynomial **) malloc (lengthProd * sizeof (Polynomial *));
@@ -3070,10 +3082,14 @@ void polynomialInitialization (int polynomialScale)
 
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//Release all the memory occupied by the polynomials, polynomial lists, hash
-//tables
-///////////////////////////////////////////////////////////////////////////////
+/**
+
+  Release all the memory occupied by the polynomials, polynomial lists, hash
+  tables, etc. This has not been used for a while and so may not be entirely 
+  up-to-date. I acknowledge that it should be resurrected for a variety of
+  reasons, but it's so far from the top of the queue...
+
+*/
 void polynomialClearance ()
 {
   int j;
@@ -3082,17 +3098,17 @@ void polynomialClearance ()
   return;
 
   nodeId = 0;
-  //clear constant polynomials
+  // Clear constant polynomials
   for (j = 0; j < constantCount; j++)
     free (constantList[j]);
   constantCount = 0;
-  //clear variable polynomials
+  // Clear variable polynomials
   for (j = 0; j < variableCount; j++) {
     free (variableList[j]->e.v);
     free (variableList[j]);
   }
   variableCount = 0;
-  //clear sum polynomials
+  // Clear sum polynomials
   for (j = 0; j < sumCount; j++) {
     free (sumList[j]->e.s->sum);
     free (sumList[j]->e.s->factor);
@@ -3100,7 +3116,7 @@ void polynomialClearance ()
     free (sumList[j]);
   }
   sumCount = 0;
-  //clear product polynomials
+  // Clear product polynomials
   for (j = 0; j < productCount; j++) {
     free (productList[j]->e.p->product);
     free (productList[j]->e.p->exponent);
@@ -3108,7 +3124,7 @@ void polynomialClearance ()
     free (productList[j]);
   }
   productCount = 0;
-  //clear function call polynomials
+  // Clear function call polynomials
   for (j = 0; j < functionCallCount; j++) {
     free (functionCallList[j]->e.f->name);
     free (functionCallList[j]->e.f->para);
@@ -3116,7 +3132,7 @@ void polynomialClearance ()
     free (functionCallList[j]);
   }
   functionCallCount = 0;
-  //release memory occupied by constant hash table
+  // Release memory occupied by constant hash table
   for (j = 0; j < CONSTANT_HASH_SIZE; j++) {
     if (constantHash[j].length > 0) {
       free (constantHash[j].index);
@@ -3124,7 +3140,7 @@ void polynomialClearance ()
     }
   }
 
-  //release memory occupied by variable hash table
+  // Release memory occupied by variable hash table
   for (j = 0; j < VARIABLE_HASH_SIZE; j++) {
     if (variableHash[j].length > 0) {
       free (variableHash[j].index);
@@ -3132,7 +3148,7 @@ void polynomialClearance ()
     }
   }
 
-  //release memory occupied by sum hash table
+  // Release memory occupied by sum hash table
   for (j = 0; j < SUM_HASH_SIZE; j++) {
     if (sumHash[j].length > 0) {
       free (sumHash[j].index);
@@ -3140,7 +3156,7 @@ void polynomialClearance ()
     }
   }
 
-  //release memory occupied by product hash table
+  // Release memory occupied by product hash table
   for (j = 0; j < PRODUCT_HASH_SIZE; j++) {
     if (productHash[j].length > 0) {
       free (productHash[j].index);
@@ -3148,7 +3164,7 @@ void polynomialClearance ()
     }
   }
 
-  //release memory occupied by function call hash table
+  // Release memory occupied by function call hash table
   for (j = 0; j < FUNCTIONCALL_HASH_SIZE; j++) {
     if (functionCallHash[j].length > 0) {
       free (functionCallHash[j].index);
@@ -3156,21 +3172,21 @@ void polynomialClearance ()
     }
   }
 
-  //release memory occupied by polynomial lists
+  // Release memory occupied by polynomial lists
   free (constantList);
   free (variableList);
   free (sumList);
   free (productList);
   free (functionCallList);
 
-  //release memory occupied by hash table
+  // Release memory occupied by hash table
   free (constantHash);
   free (variableHash);
   free (sumHash);
   free (productHash);
   free (functionCallHash);
 
-  //release memory used for construction of sum polynomials
+  // Release memory used for construction of sum polynomials
   free (factor_v1);
   free (p_v1);
   free (factor_p1);
@@ -3180,7 +3196,7 @@ void polynomialClearance ()
   free (factorSum);
   free (pSum);
 
-  //release memory used for construction of product polynomials
+  // Release memory used for construction of product polynomials
   free (exponent_v2);
   free (p_v2);
   free (exponent_s2);
@@ -3192,50 +3208,17 @@ void polynomialClearance ()
 
 }
 
-#ifdef SOURCEDIGRAPH
-void dumpSourceParenting ()
-{
-  int i, j;
-  qsort (polySources, polySourceCount, sizeof (struct polySource), compareSourcesByEntryNo);
-  FILE *diGraph;
-
-  if ((diGraph = fopen ("pSP.dot", "w")) == NULL) {
-    perror ("Cannot open polynomial source parenting digraph file\n");
-    exit (EXIT_FAILURE);
-  }
-  fprintf (diGraph, "digraph G {\n");
-  for (i = 0; i < MAXPOLYSOURCES; i++)
-    if (polySources[i].lineNo != 0)
-      fprintf (diGraph, "%d [label=\"%s(%d)\"];\n", i, polySources[i].moduleName, polySources[i].lineNo);
-  for (i = 0; i < MAXPOLYSOURCES; i++) {
-    if (polySources[i].lineNo != 0) {
-      for (j = 0; j < MAXPOLYSOURCES; j++) {
-        if (i != j) {
-          if (polySources[i].originalChildren[j] != 0)
-            fprintf (diGraph, "%d -> %d [label=\"%d\"];\n", i, j, polySources[i].originalChildren[j]);
-        }
-      }
-    }
-  }
-  fprintf (diGraph, "}\n");
-  fclose (diGraph);
-}
-
-void dumpPolySources ()
-{
-  int i;
-  for (i = 0; i < polySourceCount; i++) {
-    fprintf (stderr, "From %s line %d, %d type %d polynomials\n", polySources[i].moduleName, polySources[i].lineNo, polySources[i].totalCalls, polySources[i].eType);
-  }
-}
-#endif
-
 /// Maximum expected number of tree tiers to track in summary of polynomial.
 #define MAXPOLYTIERS 16
-int polyTiers[MAXPOLYTIERS][5];
-int peakPolyTiers;
-char *polyTypes[] = { "constant", "variable", "sum", "product", "function" };
+int polyTiers[MAXPOLYTIERS][5]; ///< Array for holding polynomial type counts by tier
+int peakPolyTiers; ///< Maximum number of polynomial tiers expected (handled)
+char *polyTypes[] = { "constant", "variable", "sum", "product", "function" }; ///< Polynomial type strings
+/**
 
+  Display a summarization of the specified polynomial as a number 
+  of tiers with counts of each polynomial type at each tier.
+
+*/
 void doPrintSummaryPoly (Polynomial * p, int currentTier)
 {
   int i;
@@ -3287,6 +3270,12 @@ void doPrintSummaryPoly (Polynomial * p, int currentTier)
   }
 }
 
+/**
+
+  Wrapper for doPrintSummaryPoly to avoid recursing initialization and
+  termination.
+
+*/
 void printSummaryPoly (Polynomial * p)
 {
   int i, j;
@@ -3316,6 +3305,63 @@ void printSummaryPoly (Polynomial * p)
   fprintf (stderr, "---\n");
 }
 
+#ifdef SOURCEDIGRAPH
+/**
+
+  This function produces a DOT-format (graphviz) data files named
+  pSP.dot that illustrates term source parenting for the current
+  set of polynomials. The data is collected for all polynomial build 
+  calls.
+
+*/
+void dumpSourceParenting ()
+{
+  int i, j;
+  qsort (polySources, polySourceCount, sizeof (struct polySource), compareSourcesByEntryNo);
+  FILE *diGraph;
+
+  if ((diGraph = fopen ("pSP.dot", "w")) == NULL) {
+    perror ("Cannot open polynomial source parenting digraph file\n");
+    exit (EXIT_FAILURE);
+  }
+  fprintf (diGraph, "digraph G {\n");
+  for (i = 0; i < MAXPOLYSOURCES; i++)
+    if (polySources[i].lineNo != 0)
+      fprintf (diGraph, "%d [label=\"%s(%d)\"];\n", i, polySources[i].moduleName, polySources[i].lineNo);
+  for (i = 0; i < MAXPOLYSOURCES; i++) {
+    if (polySources[i].lineNo != 0) {
+      for (j = 0; j < MAXPOLYSOURCES; j++) {
+        if (i != j) {
+          if (polySources[i].originalChildren[j] != 0)
+            fprintf (diGraph, "%d -> %d [label=\"%d\"];\n", i, j, polySources[i].originalChildren[j]);
+        }
+      }
+    }
+  }
+  fprintf (diGraph, "}\n");
+  fclose (diGraph);
+}
+
+/**
+
+  Full dump of all polynomial term-generating source locations along with the
+  number of calls. Nice tuning diagnostic.
+
+*/
+void dumpPolySources ()
+{
+  int i;
+  for (i = 0; i < polySourceCount; i++) {
+    fprintf (stderr, "From %s line %d, %d type %d polynomials\n", polySources[i].moduleName, polySources[i].lineNo, polySources[i].totalCalls, polySources[i].eType);
+  }
+}
+#endif
+
+/**
+
+  Produce a digraph for the specified polynomial itself.
+
+*/
 void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
 {
   int i;
@@ -3372,6 +3418,13 @@ void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
   }
 }
 
+/**
+
+  Wrapper for doWritePolyDigraph to avoid recursing initialization and
+  termination. Producesf files named pD_n.dot, where n is the polynomial
+  root nodeId.
+
+*/
 void writePolyDigraph (Polynomial * p)
 {
   FILE *diGraph;
@@ -3392,6 +3445,12 @@ void writePolyDigraph (Polynomial * p)
   fclose (diGraph);
 }
 
+/**
+
+  Dump the specified polynomial in terms of constants, variables and operations.
+  This produces a crazy amount of output if you're not careful.
+
+*/
 void expPrinting (Polynomial * p)
 {
   int i;
@@ -3459,11 +3518,14 @@ void expPrinting (Polynomial * p)
   }
 }
 
-/* Print the provided polynomial with sum and product terms in
-   parentheses and preceeded by their type ('s' or 'p') and index
-   down to depth indicated. At that level, simply refer to
-   polynomial ids. */
+/**
+  Print the provided polynomial with sum and product terms in
+  parentheses and preceeded by their type ('s' or 'p') and index
+  down to depth indicated. At that level, simply refer to
+  polynomial ids. This can produce useful output without excessive
+  volume when used carefully.
 
+*/
 void expTermPrinting (FILE * output, Polynomial * p, int depth)
 {
   int i;
