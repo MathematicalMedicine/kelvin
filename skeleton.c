@@ -36,12 +36,16 @@ int moduleGlobalVariable,       ///< Comment on global
   Detailed multiline function description thru to the end
   of the comment. Emacs can fill indented paragraphs fine.
 
-  @author Bill Valentine-Cooper.
+  @author Bill Valentine-Cooper - overall content.
+  @author J. Random Coder - tons of corrections.
+  @par Reviewer K. Random Reviewer on 2009-08-12
 
   @par Inputs (global and explicit)
 
   Here we would discuss the globals that are referenced by this function as well
   as the explicit parameters.
+
+  Multiple paragraphs are fine.
 
   @par Outputs (global and explicit)
 
