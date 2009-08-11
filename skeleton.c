@@ -49,8 +49,8 @@ void aFunction (int firstArg, int &secondArg)
      use "Code Comment" up there as the paragraph name.
      I just chose that to make it stand-out from the
      rest of the documentation which came from the 
-     header. Otherwise, it might seem confusingly out-
-     of context.
+     header. Otherwise, it might seem confusingly 
+     out-of-context.
 
   */
   *secondArg = firstArg;
