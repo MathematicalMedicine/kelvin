@@ -1,11 +1,19 @@
+#ifndef SKELETON_H
+#define SKELETON_H
+
 /**
-@file skeleton.c
+@file skeleton.h
 
   Brief module description ending with a period.
 
-  Internal-use-only module description thru to the end of the comment.
+  Detailed multiline module description thru to the end of the comment.
   This will be treated like HTML, so embed any format tags you might
   need.  The exception is paragraph breaks, which are not needed.
+
+  Note that the detailed overall module description as well as the 
+  documentation for global functions and variables is in the module header,
+  because if we were writing a library that we distributed in binary
+  form, we would provide no source, but only headers.
 
   Copyright 2009, Nationwide Children's Research Institute.  All
   rights reserved.  Permission is hereby given to use this software
@@ -17,25 +25,9 @@
   from svn.
 
 */
-#include "skeleton.h"
+#include <standard header.h>
 
-int moduleGlobalVariable,       ///< Comment on global
-  anotherGlobal,        ///< Another comment
-  lastOne;      ///< Comment on last global
-
-void aFunction (int firstArg, int &secondArg)
-{
-  /** This is not really intended to be an example
-      of how to write code. */
-  if (firstArg < 0)
-    return -1;
-  else
-    if (firstArg == 0)
-      return 0;
-  *secondArg = firstArg;
-  return secondArg;
-}
-
+int externallyDefinedVariable;   ///< Comment on extern (follows definition)
 
 /**
 
@@ -63,10 +55,15 @@ void aFunction (int firstArg, int &secondArg)
 
   Here we would discuss any globals that are modified by this function.
 
-  @return nothing
+  @return the new value of secondArg.
+  @retval -1 firstArg was less than zero
+  @retval 0 firstArg was zero
+
+  @sa relatedCode.c relatedHeader.h
 
 */
-void
-bFunction () {
-  return;
-}
+void aFunction (int firstArg,    ///< Some integer to be copied to the second argument.
+               int &secondArg,   ///< The address of an integer to receive the first argument.
+	       );
+
+#endif
