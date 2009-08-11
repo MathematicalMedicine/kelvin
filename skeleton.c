@@ -14,6 +14,8 @@
   rights reserved.  Permission is hereby given to use this software
   for non-profit educational purposes only.
 
+@version $Id$
+
 */
 #include <standard header.h>
 #include "local header.h"
@@ -32,7 +34,6 @@ int moduleGlobalVariable,       ///< Comment on global
   of the comment. Emacs can fill indented paragraphs fine.
 
 @author Bill Valentine-Cooper.
-@version $Id$
 
 @param[in] firstArg - some integer to be copied to the second argument.
 @param[out] secondArg - the address of an integer to receive the first argument.
