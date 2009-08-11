@@ -21,10 +21,10 @@
 
   @version $Id$
 
-  @Note The version information is for the whole file since it's 
+  @note The version information is for the whole file since it's 
   from svn.
 
-  @Note There is no prototype for bFunction because it is only
+  @note There is no prototype for bFunction because it is only
   used within the module.
 
 */
