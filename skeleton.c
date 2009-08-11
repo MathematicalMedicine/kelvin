@@ -30,13 +30,22 @@ int moduleGlobalVariable,       ///< Comment on global
 */
 void aFunction (int firstArg, int &secondArg)
 {
-  /** This is not really intended to be an example
-      of how to write code. */
+  /*
+    This is not really intended to be an example
+    of how to write code. This comment will not
+    show up in the documentation.
+  */
   if (firstArg < 0)
     return -1;
-  else
+  else  // Neither will this comment.
     if (firstArg == 0)
       return 0;
+
+  /**
+     @note This is a section discussing the algorithm used
+     way down in the code somewhere. Let's see where it ends
+     up in the documentation.
+  */
   *secondArg = firstArg;
   return secondArg;
 }
