@@ -52,7 +52,7 @@ int externallyDefinedVariable;   ///< Comment on extern (follows definition)
   because they're picked-out by doxygen itself from the function
   definition.
 
-  Note that multiple paragraphs in a section like this are fine.
+  Notice that multiple paragraphs in a section like this are fine.
 
   @par Global Outputs
 
@@ -63,6 +63,10 @@ int externallyDefinedVariable;   ///< Comment on extern (follows definition)
   @retval 0 firstArg was zero
 
   @sa relatedCode.c relatedHeader.h
+
+  @node This documentation is from the header, but will show up associated
+  with the function whether it is being viewed here in the header or in the
+  source module in which it is defined! Nice, eh?
 
 */
 void aFunction (int firstArg,    ///< Some integer to be copied to the second argument.
