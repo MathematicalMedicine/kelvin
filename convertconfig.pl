@@ -66,9 +66,11 @@ while ($line = <>) {
 
     } elsif ($line =~ /^MM$/) {
 	push (@type, "MarkerToMarker all\n");
+	$state{marker2marker} = 1;
 
     } elsif ($line =~ /^AM$/) {
 	push (@type, "MarkerToMarker adjacent\n");
+	$state{marker2marker} = 1;
 
     } elsif ($line =~ /^LC (\d+)$/) {
 	if ($1 > 1) {
@@ -222,6 +224,10 @@ while ($line = <>) {
     }
 }
 
+if (scalar (@{$pens{dD}}) && ! $state{imprinting}) {
+    $state{imprinting} = 1;
+    push (@type, "Imprinting\n");
+}
 
 @type = sort (@type);
 @trait = sort (@trait);
@@ -234,7 +240,6 @@ while ($line = <>) {
 ($state{librium} eq '') and $state{librium} = 'equi';
 ($state{poly} eq '') and $state{poly} = 'off';
 
-($state{imprinting}) or delete ($pens{dD});
 
 (($state{points} eq 'multi') && (scalar (@traitloci)))
     and push (@type, "TraitLoci ". join (", ", @traitloci). "\n");
@@ -257,65 +262,69 @@ if ($state{grid} eq 'fixed') {
 	(($state{librium} eq 'disequi') && (scalar (@dprimes)))
 	    and push (@modelparam, "DPrime ". join (", ", @dprimes). "\n");
     }
-    (scalar (@genefreqs))
-	and push (@modelparam, "DiseaseGeneFrequency ". join (", ", @genefreqs). "\n");
-    (scalar (@alphas)) and push (@modelparam, "Alpha ". join (", ", @alphas). "\n");
-    (scalar (@allelefreqs))
-        and push (@modelparam, "MarkerAlleleFrequency ". join (", ", @allelefreqs). "\n");
+    if (! $state{marker2marker}) {
 
-    if ($state{trait} eq 'DT') {
-	foreach (qw(DD Dd dD dd)) {
-	    (exists ($pens{$_}) && scalar (@{$pens{$_}})) or next;
-	    push (@modelparam, "Penetrance $_ ". join (", ", @{$pens{$_}}). "\n");
-	}
-	if (scalar (@{$constraints{pensimple}})) {
-	    map { push (@modelparam, "Constrain Penetrance $_\n") } @{$constraints{pensimple}};
-	}
-	if (($state{classes} > 1) && (scalar (@{$constraints{penclass}}))) {
-	    map { push (@modelparam, "Constrain Penetrance $_\n") } @{$constraints{penclass}};
-	}
-
-    } elsif ($state{trait} eq 'QT') {
-	(scalar (@thresholds)) and $state{trait} = 'QTT';
-	push (@trait, "$state{trait} $state{distrib}\n");
-	(scalar (@thresholds)) and push (@trait, "Threshold ". join (", ", @thresholds). "\n");
-	if ($state{distrib} =~ /normal/i) {
+	(scalar (@genefreqs))
+	    and push (@modelparam, "DiseaseGeneFrequency ". join (", ", @genefreqs). "\n");
+	(scalar (@alphas)) and push (@modelparam, "Alpha ". join (", ", @alphas). "\n");
+	
+	if ($state{trait} eq 'DT') {
 	    foreach (qw(DD Dd dD dd)) {
 		(exists ($pens{$_}) && scalar (@{$pens{$_}})) or next;
-		push (@modelparam, "Mean $_ ". join (", ", @{$pens{$_}}). "\n");
+		push (@modelparam, "Penetrance $_ ". join (", ", @{$pens{$_}}). "\n");
 	    }
-	    (scalar (@params))
-		and push (@modelparam, "StandardDev ". join (", ", @params). "\n");
 	    if (scalar (@{$constraints{pensimple}})) {
-		map { push (@modelparam, "Constrain Mean $_\n") } @{$constraints{pensimple}};
+		map { push (@modelparam, "Constrain Penetrance $_\n") } @{$constraints{pensimple}};
 	    }
 	    if (($state{classes} > 1) && (scalar (@{$constraints{penclass}}))) {
-		map { push (@modelparam, "Constrain Mean $_\n") } @{$constraints{penclass}};
-	    }
-	    if (scalar (@{$constraints{paramsimple}})) {
-		map { push (@modelparam, "Constrain StandardDev $_\n")
-		      } @{$constraints{paramsimple}};
-	    }
-	    if (($state{classes} > 1) && (scalar (@{$constraints{paramclass}}))) {
-		map { push (@modelparam, "Constrain StandardDev $_\n")
-		      } @{$constraints{paramclass}};
+		map { push (@modelparam, "Constrain Penetrance $_\n") } @{$constraints{penclass}};
 	    }
 	    
-	} elsif ($state{distrib} =~ /chisq/) {
-	    foreach (qw(DD Dd dD dd)) {
-		(exists ($pens{$_}) && scalar (@{$pens{$_}})) or next;
-		push (@modelparam, "DegreesOfFreedom $_ ". join (", ", @{$pens{$_}}). "\n");
-	    }
-	    if (scalar (@{$constraints{pensimple}})) {
-		map { push (@modelparam, "Constrain DegreesOfFreedom $_\n")
-		      } @{$constraints{pensimple}};
-	    }
-	    if (($state{classes} > 1) && (scalar (@{$constraints{penclass}}))) {
-		map { push (@modelparam, "Constrain DegreesOfFreedom $_\n")
-		      } @{$constraints{penclass}};
+	} elsif ($state{trait} eq 'QT') {
+	    (scalar (@thresholds)) and $state{trait} = 'QTT';
+	    push (@trait, "$state{trait} $state{distrib}\n");
+	    (scalar (@thresholds)) and push (@trait, "Threshold ". join (", ", @thresholds). "\n");
+	    if ($state{distrib} =~ /normal/i) {
+		foreach (qw(DD Dd dD dd)) {
+		    (exists ($pens{$_}) && scalar (@{$pens{$_}})) or next;
+		    push (@modelparam, "Mean $_ ". join (", ", @{$pens{$_}}). "\n");
+		}
+		(scalar (@params))
+		    and push (@modelparam, "StandardDev ". join (", ", @params). "\n");
+		if (scalar (@{$constraints{pensimple}})) {
+		    map { push (@modelparam, "Constrain Mean $_\n") } @{$constraints{pensimple}};
+		}
+		if (($state{classes} > 1) && (scalar (@{$constraints{penclass}}))) {
+		    map { push (@modelparam, "Constrain Mean $_\n") } @{$constraints{penclass}};
+		}
+		if (scalar (@{$constraints{paramsimple}})) {
+		    map { push (@modelparam, "Constrain StandardDev $_\n")
+			  } @{$constraints{paramsimple}};
+		}
+		if (($state{classes} > 1) && (scalar (@{$constraints{paramclass}}))) {
+		    map { push (@modelparam, "Constrain StandardDev $_\n")
+			  } @{$constraints{paramclass}};
+		}
+		
+	    } elsif ($state{distrib} =~ /chisq/) {
+		foreach (qw(DD Dd dD dd)) {
+		    (exists ($pens{$_}) && scalar (@{$pens{$_}})) or next;
+		    push (@modelparam, "DegreesOfFreedom $_ ". join (", ", @{$pens{$_}}). "\n");
+		}
+		if (scalar (@{$constraints{pensimple}})) {
+		    map { push (@modelparam, "Constrain DegreesOfFreedom $_\n")
+			  } @{$constraints{pensimple}};
+		}
+		if (($state{classes} > 1) && (scalar (@{$constraints{penclass}}))) {
+		    map { push (@modelparam, "Constrain DegreesOfFreedom $_\n")
+			  } @{$constraints{penclass}};
+		}
 	    }
 	}
     }
+    (scalar (@allelefreqs))
+        and push (@modelparam, "MarkerAlleleFrequency ". join (", ", @allelefreqs). "\n");
+
 
 } else {
     if ($state{trait} eq 'QT') {
@@ -337,7 +346,7 @@ if ($state{grid} eq 'fixed') {
 
 }
 
-if (scalar (@phenocodes)) {
+if (scalar (@phenocodes) && ! $state{marker2marker}) {
     if ($state{trait} ne 'QT') {
 	push (@trait, "PhenoCodes ". join (", ", @phenocodes). "\n");
     } else {
@@ -348,8 +357,18 @@ if (scalar (@phenocodes)) {
 
 (($state{points} eq 'two') && defined ($pplfile))
     and push (@files, "PPLFile $pplfile\n");
-(defined ($brfile) && ! ($state{marker2marker}))
+(defined ($brfile) && ! $state{marker2marker})
     and push (@files, "BayesRatioFile $brfile\n");
+
+# push (@files, "MODFile mod.out\n");
+# ($state{points} eq 'two')
+#     and push (@files, "ExtraMODs\n");
+
+
+unshift (@type, "# Type\n");
+unshift (@trait, "# Trait\n");
+unshift (@modelparam, "# Modelparam\n");
+unshift (@files, "# Files\n");
 
 print (@type, "\n");
 print (@trait, "\n");
