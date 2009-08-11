@@ -21,8 +21,11 @@
 
   @version $Id$
 
-  Note that the version information is for the whole file since it's 
+  @Note The version information is for the whole file since it's 
   from svn.
+
+  @Note There is no prototype for bFunction because it is only
+  used within the module.
 
 */
 #include <stdio.h>
@@ -55,7 +58,7 @@ int externallyDefinedVariable;   ///< Comment on extern (follows definition)
 
   Here we would discuss any globals that are modified by this function.
 
-  @return the new value of secondArg.
+  @return the new value of secondArg, unless firstArg wasn't positive.
   @retval -1 firstArg was less than zero
   @retval 0 firstArg was zero
 
