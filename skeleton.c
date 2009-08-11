@@ -1,9 +1,9 @@
 /**
 @file skeleton.c
 
-  Brief module description ending with a period.
+  Brief internal-use-only module description ending with a period.
 
-  Internal-use-only module description thru to the end of the comment.
+  Detailed internal-use-only module description.
   This will be treated like HTML, so embed any format tags you might
   need.  The exception is paragraph breaks, which are not needed.
 
@@ -23,6 +23,11 @@ int moduleGlobalVariable,       ///< Comment on global
   anotherGlobal,        ///< Another comment
   lastOne;      ///< Comment on last global
 
+/*
+
+  Documented in header.
+
+*/
 void aFunction (int firstArg, int &secondArg)
 {
   /** This is not really intended to be an example
@@ -47,8 +52,7 @@ void aFunction (int firstArg, int &secondArg)
   @author Bill Valentine-Cooper - overall content.
   @author J. Random Coder - tons of corrections.
   @par Reviewer
-     K. Random Reviewer on 2009-08-11
-     The Whole Group on 2009-08-12
+     K. Random Reviewer on 2009-08-11.
 
   @par Global Inputs
 

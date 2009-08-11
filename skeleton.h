@@ -4,10 +4,10 @@
 /**
 @file skeleton.h
 
-  Brief module description ending with a period.
+  Brief public module description ending with a period.
 
-  Detailed multiline module description thru to the end of the comment.
-  This will be treated like HTML, so embed any format tags you might
+  Detailed public module description. This will be treated like HTML, 
+  so embed any format tags you might
   need.  The exception is paragraph breaks, which are not needed.
 
   Note that the detailed overall module description as well as the 
@@ -25,13 +25,13 @@
   from svn.
 
 */
-#include <standard header.h>
+#include <stdio.h>
 
 int externallyDefinedVariable;   ///< Comment on extern (follows definition)
 
 /**
 
-  Brief function description ending with a period.
+  Brief description of public function ending with a period.
 
   Detailed multiline function description thru to the end
   of the comment. Emacs can fill indented paragraphs fine.
@@ -39,8 +39,8 @@ int externallyDefinedVariable;   ///< Comment on extern (follows definition)
   @author Bill Valentine-Cooper - overall content.
   @author J. Random Coder - tons of corrections.
   @par Reviewer
-     K. Random Reviewer on 2009-08-11
-     The Whole Group on 2009-08-12
+     K. Random Reviewer on 2009-08-11.
+     The Whole Group on 2009-08-12.
 
   @par Global Inputs
 
