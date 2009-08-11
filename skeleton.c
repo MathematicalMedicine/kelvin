@@ -38,9 +38,9 @@ int moduleGlobalVariable,       ///< Comment on global
 
   @author Bill Valentine-Cooper.
 
-  INPUTS (global and explicit)
+  @par INPUTS (global and explicit)
 
-  OUTPUTS (global and explicit)
+  @par OUTPUTS (global and explicit)
 
   @return the new value of secondArg.
   @retval -1 firstArg was less than zero
