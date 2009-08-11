@@ -10,6 +10,10 @@
   Be sure to include the actual module (or include) filename up at the
   top of the block.
 
+  Copyright 2009, Nationwide Children's Research Institute.  All
+  rights reserved.  Permission is hereby given to use this software
+  for non-profit educational purposes only.
+
 */
 #include <standard header.h>
 #include "local header.h"
@@ -27,10 +31,18 @@ int moduleGlobalVariable,       ///< Comment on global
   Detailed multiline function description thru to the end
   of the comment. Emacs can fill indented paragraphs fine.
 
+@author Bill Valentine-Cooper.
+@version $Id$
+
+@param[in] firstArg - some integer to be copied to the second argument.
+@param[out] secondArg - the address of an integer to receive the first argument.
+@return nothing.
+
 */
 void function (int firstArg,    ///< Description of argument
-               int secondArg,   ///< Description of next argument
-  )
+               int &secondArg,   ///< Description of next argument
+	       )
 {
+  *secondArg = firstArg;
   return;
 }
