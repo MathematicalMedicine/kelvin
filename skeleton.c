@@ -36,17 +36,28 @@ int moduleGlobalVariable,       ///< Comment on global
   Detailed multiline function description thru to the end
   of the comment. Emacs can fill indented paragraphs fine.
 
-@author Bill Valentine-Cooper.
+  @author Bill Valentine-Cooper.
 
-@param[in] firstArg - some integer to be copied to the second argument.
-@param[out] secondArg - the address of an integer to receive the first argument.
-@return nothing.
+  INPUTS (global and explicit)
+
+  OUTPUTS (global and explicit)
+
+  @return the new value of secondArg.
+  @retval -1 firstArg was less than zero
+  @retval 0 firstArg was zero
+
+  @sa common.h
 
 */
-void function (int firstArg,    ///< Description of argument
-               int &secondArg,   ///< Description of next argument
+void function (int firstArg,    ///< Some integer to be copied to the second argument.
+               int &secondArg,   ///< The address of an integer to receive the first argument.
 	       )
 {
+  if (firstArg < 0)
+    return -1;
+  else
+    if (firstArg == 0)
+      return 0;
   *secondArg = firstArg;
-  return;
+  return secondArg;
 }
