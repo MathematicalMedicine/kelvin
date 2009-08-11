@@ -60,6 +60,7 @@ my %header_parsers = ( "unknown" => \&pre_0_35_0,
 		       "0.37.3" => \&ver_0_36_1,
 		       "0.37.4" => \&ver_0_36_1,
 		       "0.37.5" => \&ver_0_36_1,
+		       "0.37.6" => \&ver_0_36_1,
 		       "0.38.0" => \&ver_0_38_0 );
 
 my $usage = "usage: $0 [-c <chr_num>] [-m <map_file>] <filename>\n";
