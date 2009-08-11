@@ -38,15 +38,21 @@ int moduleGlobalVariable,       ///< Comment on global
 
   @author Bill Valentine-Cooper.
 
-  @par INPUTS (global and explicit)
+  @par Inputs (global and explicit)
 
-  @par OUTPUTS (global and explicit)
+  Here we would discuss the globals that are referenced by this function as well
+  as the explicit parameters.
+
+  @par Outputs (global and explicit)
+
+  Here we would discuss any globals that are modified by this function, as well
+  as any explicit parameters modified (output parameters).
 
   @return the new value of secondArg.
   @retval -1 firstArg was less than zero
   @retval 0 firstArg was zero
 
-  @sa common.h
+  @sa relatedCode.c relatedHeader.h
 
 */
 void function (int firstArg,    ///< Some integer to be copied to the second argument.
