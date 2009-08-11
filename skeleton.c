@@ -42,9 +42,16 @@ void aFunction (int firstArg, int &secondArg)
       return 0;
 
   /**
-     @note This is a section discussing the algorithm used
-     way down in the code somewhere. Let's see where it ends
-     up in the documentation.
+     @par Code Comment.
+
+     This is a section discussing the algorithm used
+     way down in the code somewhere. You don't have to
+     use "Code Comment" up there as the paragraph name.
+     I just chose that to make it stand-out from the
+     rest of the documentation which came from the 
+     header. Otherwise, it might seem confusingly out-
+     of context.
+
   */
   *secondArg = firstArg;
   return secondArg;
