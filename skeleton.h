@@ -64,7 +64,7 @@ int externallyDefinedVariable;   ///< Comment on extern (follows definition)
 
   @sa relatedCode.c relatedHeader.h
 
-  @node This documentation is from the header, but will show up associated
+  @note This documentation is from the header, but will show up associated
   with the function whether it is being viewed here in the header or in the
   source module in which it is defined! Nice, eh?
 
