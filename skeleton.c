@@ -14,7 +14,10 @@
   rights reserved.  Permission is hereby given to use this software
   for non-profit educational purposes only.
 
-@version $Id$
+  @version $Id$
+
+  Note that the version information is for the whole file since it's 
+  from svn.
 
 */
 #include <standard header.h>
