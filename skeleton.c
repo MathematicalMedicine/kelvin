@@ -74,7 +74,9 @@ void aFunction (
   if (firstArg < 0)
     return -1;
   else  // Neither will this comment.
+    /// @bug This is a bug
     if (firstArg == 0)
+      /// This is not a bug
       return 0;
 
   /**

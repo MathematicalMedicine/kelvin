@@ -30,7 +30,7 @@
 */
 #include <stdio.h>
 
-int externallyDefinedVariable;   ///< Comment on extern (follows definition)
+int externallyDefinedVariable;  ///< Comment on extern (follows definition)
 
 void aFunction (int firstArg,    ///< Some integer to be copied to the second argument in header.
                int &secondArg,   ///< The address of an integer to receive the first argument in header.
