@@ -3,11 +3,14 @@
 
   Brief internal-use-only module description ending with a period.
 
-  Detailed internal-use-only module description.
+  Detailed module description. We figure that since we're normally
+  editing the .c source and not the corresponding header, we should
+  put all information public and private in here so we don't forget.
+
   This will be treated like HTML, so embed any format tags you might
   need.  The exception is paragraph breaks, which are not needed.
 
-  Copyright 2009, Nationwide Children's Research Institute.  All
+  Copyright &copy; 2009, Nationwide Children's Research Institute.  All
   rights reserved.  Permission is hereby given to use this software
   for non-profit educational purposes only.
 
