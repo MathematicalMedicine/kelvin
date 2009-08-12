@@ -34,7 +34,7 @@ int moduleGlobalVariable,       ///< Comment on global, angle bracket means it f
   @author Bill Valentine-Cooper - overall content.
   @author J. Random Coder - tons of corrections.
   @par Reviewer
-     K. Random Reviewer on 2009-08-11.
+     K. Random Reviewer on 2009-08-11.<br>
      The Whole Group on 2009-08-12.
 
   @par Global Inputs
