@@ -63,7 +63,7 @@ int moduleGlobalVariable,       ///< Comment on global
 */
 void aFunction (
 		int firstArg,     ///< Some integer to be copied to the second argument in code.
-		int &secondArg   ///< The address of an integer to receive the first argument in code.
+		int &secondArg
 )
 {
   /*

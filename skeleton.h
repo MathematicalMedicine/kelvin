@@ -33,7 +33,7 @@
 int externallyDefinedVariable;  ///< Comment on extern (follows definition)
 
 void aFunction (int firstArg,    ///< This comment will be overridden by equivalent in function source.
-               int &secondArg,   ///< This comment has no equivalent in function source.
+               int &secondArg   ///< The address of an integer to receive the first argument in code.
 	       );
 
 #endif
