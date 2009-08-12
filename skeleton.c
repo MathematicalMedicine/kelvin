@@ -23,12 +23,48 @@ int moduleGlobalVariable,       ///< Comment on global
   anotherGlobal,        ///< Another comment
   lastOne;      ///< Comment on last global
 
-/*
 
-  Documented in header.
+/**
+
+  Brief description of public function ending with a period.
+
+  Detailed multiline function description thru to the end
+  of the comment. Emacs can fill indented paragraphs fine.
+
+  @author Bill Valentine-Cooper - overall content.
+  @author J. Random Coder - tons of corrections.
+  @par Reviewer
+     K. Random Reviewer on 2009-08-11.
+     The Whole Group on 2009-08-12.
+
+  @par Global Inputs
+
+  Here we would discuss the globals that are referenced without
+  modification by this function. We don't mention explicit parameters
+  because they're picked-out by doxygen itself from the function
+  definition.
+
+  Notice that multiple paragraphs in a section like this are fine.
+
+  @par Global Outputs
+
+  Here we would discuss any globals that are modified by this function.
+
+  @return the new value of secondArg, unless firstArg wasn't positive.
+  @retval -1 firstArg was less than zero
+  @retval 0 firstArg was zero
+
+  @sa relatedCode.c relatedHeader.h
+
+  @note This documentation is from the header, but will show up associated
+  with the function whether it is being viewed here in the header or in the
+  source module in which it is defined! Nice, eh?
 
 */
-void aFunction (int firstArg, int &secondArg)
+void aFunction (
+		int firstArg,     ///< Some integer to be copied to the second argument in code.
+		int &secondArg   ///< The address of an integer to receive the first argument in code.
+)
 {
   /*
     This is not really intended to be an example
