@@ -36,7 +36,7 @@ int moduleGlobalVariable,       ///< Comment on global, angle bracket means it f
 
   @author Bill Valentine-Cooper - overall content.
   @author J. Random Coder - tons of corrections.
-  @par Reviewer
+  @par Reviewers:
      K. Random Reviewer on 2009-08-11.<br>
      The Whole Group on 2009-08-12.
 
@@ -45,7 +45,8 @@ int moduleGlobalVariable,       ///< Comment on global, angle bracket means it f
   Here we would discuss the globals that are referenced without
   modification by this function. We don't mention explicit parameters
   because they're picked-out by doxygen itself from the function
-  definition.
+  definition. Include descriptions of environment variables and
+  input files as well.
 
   Notice that multiple paragraphs in a section like this are fine.
 
@@ -59,7 +60,7 @@ int moduleGlobalVariable,       ///< Comment on global, angle bracket means it f
 
   @sa relatedCode.c relatedHeader.h
 
-  @note This documentation is from the header, but will show up associated
+  Note This documentation is from the header, but will show up associated
   with the function whether it is being viewed here in the header or in the
   source module in which it is defined! Nice, eh?
 
@@ -106,25 +107,20 @@ void aFunction (
   Brief function description ending with a period.
 
   Detailed multiline function description thru to the end
-  of the comment. Emacs can fill indented paragraphs fine.
+  of the comment.
 
   @author Bill Valentine-Cooper - overall content.
   @author J. Random Coder - tons of corrections.
-  @par Reviewer
+  @par Reviewers:
      K. Random Reviewer on 2009-08-11.
 
   @par Global Inputs
 
-  Here we would discuss the globals that are referenced without
-  modification by this function. We don't mention explicit parameters
-  because they're picked-out by doxygen itself from the function
-  definition.
-
-  Note that multiple paragraphs in a section like this are fine.
+  None.
 
   @par Global Outputs
 
-  Here we would discuss any globals that are modified by this function.
+  None.
 
   @return nothing
 
