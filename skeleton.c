@@ -71,12 +71,13 @@ void aFunction (
     of how to write code. This comment will not
     show up in the documentation.
   */
+  /// @todo Make this example a bit more illustrative.
   if (firstArg < 0)
     return -1;
   else  // Neither will this comment.
     /// @todo Make this portion of the code make sense!
     if (firstArg == 0)
-      /// This is not a bug, but just a regular unflagged comment that will show-up in the documentation without a section.
+      /// A regular unflagged comment that will show-up in the documentation without a section. Not very helpful.
       return 0;
 
   /**
