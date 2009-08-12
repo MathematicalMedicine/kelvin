@@ -19,7 +19,7 @@
 */
 #include "skeleton.h"
 
-int moduleGlobalVariable,       ///< Comment on global
+int moduleGlobalVariable,       ///< Comment on global, angle bracket means it follows target
   anotherGlobal,        ///< Another comment
   lastOne;      ///< Comment on last global
 
@@ -74,7 +74,7 @@ void aFunction (
   if (firstArg < 0)
     return -1;
   else  // Neither will this comment.
-    /// @bug This is a bug!
+    /// @todo Make this portion of the code make sense!
     if (firstArg == 0)
       /// This is not a bug, but just a regular unflagged comment that will show-up in the documentation without a section.
       return 0;

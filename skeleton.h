@@ -30,7 +30,8 @@
 */
 #include <stdio.h>
 
-int externallyDefinedVariable;  ///< Comment on extern (follows definition)
+/// Comment on extern (preceeds target)
+int externallyDefinedVariable;
 
 void aFunction (int firstArg,    ///< This comment will be overridden by equivalent in function source.
                int &secondArg   ///< The address of an integer to receive the first argument in code.
