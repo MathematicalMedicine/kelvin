@@ -58,11 +58,7 @@ int moduleGlobalVariable,       ///< Comment on global, angle bracket means it f
   @retval -1 firstArg was less than zero
   @retval 0 firstArg was zero
 
-  @sa relatedCode.c relatedHeader.h
-
-  Note This documentation is from the header, but will show up associated
-  with the function whether it is being viewed here in the header or in the
-  source module in which it is defined! Nice, eh?
+  @see relatedCode.c relatedHeader.h
 
 */
 void aFunction (
