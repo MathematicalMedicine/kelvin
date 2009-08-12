@@ -32,8 +32,8 @@
 
 int externallyDefinedVariable;  ///< Comment on extern (follows definition)
 
-void aFunction (int firstArg,    ///< Some integer to be copied to the second argument in header.
-               int &secondArg,   ///< The address of an integer to receive the first argument in header.
+void aFunction (int firstArg,    ///< This comment will be overridden by equivalent in function source.
+               int &secondArg,   ///< This comment has no equivalent in function source.
 	       );
 
 #endif

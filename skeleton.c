@@ -74,9 +74,9 @@ void aFunction (
   if (firstArg < 0)
     return -1;
   else  // Neither will this comment.
-    /// @bug This is a bug at __LINE__
+    /// @bug This is a bug!
     if (firstArg == 0)
-      /// This is not a bug
+      /// This is not a bug, but just a regular unflagged comment that will show-up in the documentation without a section.
       return 0;
 
   /**
@@ -92,6 +92,7 @@ void aFunction (
 
   */
   *secondArg = firstArg;
+  /// @warning This is a warning that something might be of concern hereabouts.
   return secondArg;
 }
 
