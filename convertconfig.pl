@@ -357,8 +357,16 @@ if (scalar (@phenocodes) && ! $state{marker2marker}) {
 
 (($state{points} eq 'two') && defined ($pplfile))
     and push (@files, "PPLFile $pplfile\n");
-(defined ($brfile) && ! $state{marker2marker})
+
+# This is how we really should behave WRT marker-to-marker and BR files
+#(defined ($brfile) && ! $state{marker2marker})
+#    and push (@files, "BayesRatioFile $brfile\n");
+
+# This is how we're going to behave for now, to make LaVonne's life easier
+(defined ($brfile))
     and push (@files, "BayesRatioFile $brfile\n");
+($state{marker2marker})
+    and push (@files, "ForceBRFile\n");
 
 # push (@files, "MODFile mod.out\n");
 # ($state{points} eq 'two')
