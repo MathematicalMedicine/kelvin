@@ -12,7 +12,7 @@
   - Multipoint analysis invokes compute_likelihood in three places:
     - trait likelihood (once for the entire run)
     - marker set likelihood (once for each distinct set of loci)
-    - combined alternative and null likelihood (once for each position)
+    - combined alternative and null likelihood (once for each position).
   We need to show progrees in the marker set loop as well as the combined
   one because marker set evaluation is our first real indication of 
   complexity, and sometimes it takes a long time.
@@ -42,10 +42,15 @@
 
   Fixed Grid Multipoint:
   
-
   - 
   - Maintain stopwatches for overall time, polynomial build time, and evaluation time.
   - 
+
+  Copyright &copy; 2009, Nationwide Children's Research Institute.  All
+  rights reserved.  Permission is hereby given to use this software
+  for non-profit educational purposes only.
+
+  @version $Id$
 
 */
 #include "kelvin.h"
