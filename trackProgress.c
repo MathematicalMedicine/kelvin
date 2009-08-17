@@ -3,7 +3,49 @@
 
   kelvin support routines for estimating and tracking progress thru analyses.
 
-  In-progress.
+  Tracking kelvin progress is a lot more complicated that you might expect.
+  Here are the problems:
+
+  - There are multiple looping paths through the code, i.e. each different 
+  type of analysis uses a different set of calls to compute_likelihood, and 
+  each needs to be instrumented differently.
+  - Multipoint analysis invokes compute_likelihood in three places:
+    - trait likelihood (once for the entire run)
+    - marker set likelihood (once for each distinct set of loci)
+    - combined alternative and null likelihood (once for each position)
+  We need to show progrees in the marker set loop as well as the combined
+  one because marker set evaluation is our first real indication of 
+  complexity, and sometimes it takes a long time.
+  - Polynomial construction takes an arbitrarily large amount of time. While
+  evaluation is iterative and therefore predictable, construction is a big
+  unknown, even between positions in the same analysis, so when polynomial
+  evaluation is requested, a progress graph can look extremely lumpy.
+  - Integration approach (now the default) iterations are unpredictable
+  because it re-partitions the trait space as much as needed to reduce error
+  to tolerable amounts. We might know the upper-limit of iterations, but
+  that can be wildly different from the actual number of iterations, and we
+  don't want to scare people off by using that upper limit.
+  - Position counting or loci pair counting can be used for progress tracking
+  only so long as there are a reasonably large number of position or pairs
+  being evaluated in a single run. No-one likes to see progress go from 0 to
+  100% in one step at the end of the run, which is what would happen if a single
+  position or pair is being evaluated.
+  - Finally, progress tracking for users must be simplistic and understandable,
+  while internal users want the nitty-gritty details on what is going on at
+  each step.
+
+  The strategy for detailed tracking progess is:
+
+  Fixed Grid 2pt: calculate iteration counts per compute_likelihood step based upon 
+  trait space parameters. Show progress based solely upon percentage completion 
+  of these counts. Lump polynomial build in with evaluation.
+
+  Fixed Grid Multipoint:
+  
+
+  - 
+  - Maintain stopwatches for overall time, polynomial build time, and evaluation time.
+  - 
 
 */
 #include "kelvin.h"
