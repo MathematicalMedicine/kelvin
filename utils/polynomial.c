@@ -370,7 +370,9 @@ struct polySource
   unsigned char eType;
   int totalCalls;
   int originalChildren[MAXPOLYSOURCES];
-} polySources[MAXPOLYSOURCES];
+};
+
+struct polySource  polySources[MAXPOLYSOURCES];
 int polySourceCount = 0;
 int originalChildren[MAXPOLYSOURCES];
 #endif
@@ -385,7 +387,8 @@ struct inMemoryTermList {
   unsigned int lastNodeId; // This will enable recycling without retrieval
   struct chunkTicket cT;
   double buffer[MAX_SSD_BUFFER];
-} iMTL[IMTL_COUNT];
+};
+struct inMemoryTermList  iMTL[IMTL_COUNT];
 #endif
 
 
