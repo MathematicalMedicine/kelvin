@@ -64,12 +64,34 @@ extern PedigreeSet pedigreeSet;
 
 Make sure this thread is started AFTER signal handling has been setup.
 
-Loop sleeping for 30 seconds and then:
+Loop sleeping for MONSTATDELAYSEC seconds and then:
 
-- signal with SIGUSR1 to do allow a synchronous dump of statically-collected
-statistitics.
-- optionally write performance statistics to a file for graphing with gnuplot.
-- optionally display dynamic statistics.
+- Optionally write performance statistics to a file for graphing with gnuplot.
+- Optionally display dynamic statistics.
+- Used to do thrashing checks and "program apoptosis", but that's commented out.
+Thrashing was checked after some multiple of the MONSTATDELAYSEC periods.
+
+  @author Bill Valentine-Cooper - overall content.
+  @par Reviewers: None.
+  @par Global Inputs
+
+  - MEMGRAPH macro conditional. If defined, graph-friendly memory 
+  utilization statistics are written to a file every MONSTATDELAYSEC seconds.
+
+  - MEMSTATUS macro conditional. If defined, memory utilization statistics
+  are written to stdout every MONSTATDELAYSEC seconds.
+
+  @par Global Outputs
+
+  - kelvin_pid_memory.dat if MEMGRAPH defined. This file has the current
+  elapsed seconds, memory used in Kbytes, and polynomial nodeId appended
+  to it every MONSTATDELAYSEC seconds. Can be plotted w/gnuplot as simply aa:
+
+  <lit>gnuplot> plot "kelvin_pid_memory.dat" using 1:2 with lines;
+
+  - memory status to stdout if MEMSTATUS defined.
+
+  @return void
 
 */
 void *monitorStatus () {
@@ -82,7 +104,7 @@ void *monitorStatus () {
   if ((maximumPMK = swGetMaximumPMK ()) != 0) {
 #ifdef MEMGRAPH
     FILE *graphFile;
-    char graphFileName[64];
+    char graphFileName[64]; // I define the file name, so this is long enough
     sprintf (graphFileName, "kelvin_%d_memory.dat", (int) getpid ());
     if ((graphFile = fopen (graphFileName, "w")) == NULL) {
       perror ("Cannot open memory graph file!");
@@ -91,7 +113,7 @@ void *monitorStatus () {
 #endif
     int wakeCount = 0;
     while (1) {
-      sleep (30);
+      sleep (MONSTATDELAYSEC);
       wakeCount++;
       if (!(wakeCount % 2)) {
 	/*	thrashingCheck ();*/
