@@ -350,8 +350,9 @@ struct free24
 {
   unsigned char slot[24];
   struct free24 *next;
-} free24s[MAXFREE24S];
-struct free24 *nextFree24 = &free24s[0];
+};
+struct free24  free24s[MAXFREE24S];
+struct free24 *nextFree24 = free24s;
 int used24s = 0, missed24s = 0;
 
 /* Here's 156Mb of statically allocated 48-byte chunks (actually 52-bytes) */
@@ -360,8 +361,9 @@ struct free48
 {
   unsigned char slot[48];
   struct free48 *next;
-} free48s[MAXFREE48S];
-struct free48 *nextFree48 = &free48s[0];
+};
+struct free48 free48s[MAXFREE48S];
+struct free48 *nextFree48 = free48s;
 int used48s = 0, missed48s = 0;
 
 /* Here's 252Mb of statically allocated 80-byte chunks (actually 84-bytes) */
@@ -370,8 +372,9 @@ struct free100
 {
   unsigned char slot[100];
   struct free100 *next;
-} free100s[MAXFREE100S];
-struct free100 *nextFree100 = &free100s[0];
+};
+struct free100 free100s[MAXFREE100S];
+struct free100 *nextFree100 = free100s;
 int used100s = 0, missed100s = 0;
 #endif
 
@@ -396,7 +399,8 @@ struct memChunkSource
   int totalCalls;
   size_t totalBytes;
   size_t remainingBytes;
-} memChunkSources[MAXMEMCHUNKSOURCECOUNT];
+};
+struct memChunkSource  memChunkSources[MAXMEMCHUNKSOURCECOUNT];
 int memChunkSourceCount = 0;
 
 struct memChunk
