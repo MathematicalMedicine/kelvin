@@ -414,7 +414,7 @@ void validateConfig ()
       fault ("Trait directives (%s) are incompatible with MarkerToMarker\n", DEGOFFREEDOM_STR);
     if (observed.constraints)
       fault ("Trait directives (Constraint) are incompatible with MarkerToMarker\n");
-    if (modelOptions.avghetfile[0] != '\0')
+    if (modelOptions.avghetfile[0] != '\0' && ! modelOptions.forceAvghetFile)
       logMsg (LOGINPUTFILE, LOGWARNING, "MarkerToMarker will write no output to BayesRatioFile\n");
     if (modelOptions.dkelvinoutfile[0] != '\0')
       logMsg (LOGINPUTFILE, LOGWARNING, "MarkerToMarker will write no output to NIDetailFile\n");
@@ -429,7 +429,7 @@ void validateConfig ()
     } else {
       if (modelRange.ndprime > 0)
 	fault ("MarkerToMarker and DPrime require FixedModels\n");
-      if (! observed.sexAveragedThetas)
+      if (observed.sexAveragedThetas)
 	fault ("MarkerToMarker and %s require FixedModels\n", THETA_STR);
     }
     if (fault)
@@ -680,7 +680,7 @@ void finishConfig ()
       /* Default range of DPrimes is -1 to 1 in steps of 0.02 */
       for (i = -50; i <= 50; i++)
 	addDPrime (&modelRange, 0.02 * i);
-    if (modelRange.thetacnt[SEXAV] == 0)
+    if (modelRange.thetacnt == NULL || modelRange.thetacnt[SEXAV] == 0)
       /* Default range of Thetas if 0 to 0.5 in steps of 0.01 */
       for (i = 0; i < 50; i++)
 	addTheta (&modelRange, THETA_AVG, 0.01 * i);
