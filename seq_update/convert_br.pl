@@ -66,11 +66,11 @@ my %header_parsers = ( "unknown" => \&pre_0_35_0,
 my $usage = "usage: $0 [-c <chr_num>] [-m <map_file>] <filename>\n";
 
 while (scalar (@ARGV)) {
-    if ($ARGV[0] =~ /-c(\d+)?/) {
+    if ($ARGV[0] =~ /^-c(\d+)?/) {
         shift (@ARGV);
 	$force_chr = (defined ($1)) ? $1 : shift (@ARGV);
         (defined ($force_chr) && ($force_chr =~ /^\d+$/)) or die ($usage);
-    } elsif ($ARGV[0] =~ /-m(\S+)?/) {
+    } elsif ($ARGV[0] =~ /^-m(\S+)?/) {
         shift (@ARGV);
 	$map_file = (defined ($1)) ? $1 : shift (@ARGV);
         (defined ($map_file)) or die ($usage);
