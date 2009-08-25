@@ -57,7 +57,7 @@ into the modules to be affected:
 #ifdef DMTRACK
 #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
 #endif
-#if defined (DMTRACK) || defined (DMUSE)
+#if defined (DMTRACK)
 #define malloc(X) swMalloc((X), __FILE__, __LINE__)
 #define calloc(X,Y) swCalloc((X),(Y), __FILE__, __LINE__)
 #define realloc(X,Y) swRealloc((X),(Y), __FILE__, __LINE__)
@@ -293,14 +293,14 @@ swDumpM (struct swStopwatch *theStopwatch)
 
   if (maximumPMK == -1) {
     maximumPMK = swGetMaximumPMK ();
-    memoryBuffer[0] = 0;
   }
   if (maximumPMK != 0) {
     currentVMK = swGetCurrentVMK (getpid ());
     sprintf (memoryBuffer, ", vmG:%2.1f/%2.1f",
 	     currentVMK / (1024.0 * 1024.0),
 	     maximumPMK / (1024.0 * 1024.0));
-  }
+  } else
+    memoryBuffer[0] = '\0';
 
   if (theStopwatch->swRunning) {
     swStop (theStopwatch);
@@ -336,47 +336,6 @@ swReset (struct swStopwatch *theStopwatch)
   strncpy (theStopwatch->swName, swName, MAXSWNAME);
   return;
 }
-
-/* Normally I wouldn't #ifdef-out anything but the essential calls, but
-   these things (static allocation and memory tracking take up a lot of
-   memory for their operation, and that's a waste if they're not in use. */
-
-/* Static allocation alternative. */
-
-/* Here's 84Mb of statically allocated 24-byte chunks (actually 28-bytes). */
-#ifdef DMUSE
-#define MAXFREE24S 7500000
-struct free24
-{
-  unsigned char slot[24];
-  struct free24 *next;
-};
-struct free24  free24s[MAXFREE24S];
-struct free24 *nextFree24 = free24s;
-int used24s = 0, missed24s = 0;
-
-/* Here's 156Mb of statically allocated 48-byte chunks (actually 52-bytes) */
-#define MAXFREE48S 3000000
-struct free48
-{
-  unsigned char slot[48];
-  struct free48 *next;
-};
-struct free48 free48s[MAXFREE48S];
-struct free48 *nextFree48 = free48s;
-int used48s = 0, missed48s = 0;
-
-/* Here's 252Mb of statically allocated 80-byte chunks (actually 84-bytes) */
-#define MAXFREE100S 9000000
-struct free100
-{
-  unsigned char slot[100];
-  struct free100 *next;
-};
-struct free100 free100s[MAXFREE100S];
-struct free100 *nextFree100 = free100s;
-int used100s = 0, missed100s = 0;
-#endif
 
 /* Dynamic memory debugging. */
 
@@ -447,21 +406,6 @@ swFirstDM ()
 
 #ifdef DMTRACK
   chunkHash = hcreate (DMHASHSIZE);
-#endif
-
-  /* Experiment in memory self-management */
-#ifdef DMUSE
-  int i;
-
-  for (i = 0; i < MAXFREE24S - 1; i++)
-    free24s[i].next = &free24s[i + 1];
-  free24s[MAXFREE24S - 1].next = NULL;
-  for (i = 0; i < MAXFREE48S - 1; i++)
-    free48s[i].next = &free48s[i + 1];
-  free48s[MAXFREE48S - 1].next = NULL;
-  for (i = 0; i < MAXFREE100S - 1; i++)
-    free100s[i].next = &free100s[i + 1];
-  free100s[MAXFREE100S - 1].next = NULL;
 #endif
 
   return;
@@ -864,47 +808,6 @@ swMalloc (size_t size, char *fileName, int lineNo)
   if (firstMallocCall) {
     swFirstDM ();
   }
-#ifdef DMUSE
-  struct free24 *your24;
-
-  if (size <= 24) {
-    used24s++;
-    if (nextFree24 != NULL) {
-      your24 = nextFree24;
-      nextFree24 = your24->next;
-      return (your24);
-    } else {
-      missed24s++;
-      return (malloc (size));
-    }
-  }
-  struct free48 *your48;
-
-  if (size <= 48) {
-    used48s++;
-    if (nextFree48 != NULL) {
-      your48 = nextFree48;
-      nextFree48 = your48->next;
-      return (your48);
-    } else {
-      missed48s++;
-      return (malloc (size));
-    }
-  }
-  struct free100 *your100;
-
-  if (size <= 100) {
-    used100s++;
-    if (nextFree100 != NULL) {
-      your100 = nextFree100;
-      nextFree100 = your100->next;
-      return (your100);
-    } else {
-      missed100s++;
-      return malloc (size);
-    }
-  }
-#endif
 
 #ifdef DMTRACK
   countMalloc += 1;
@@ -949,45 +852,6 @@ swRealloc (void *pBlock, size_t newSize, char *fileName, int lineNo)
   if (firstMallocCall) {
     swFirstDM ();
   }
-#ifdef DMUSE
-  struct free24 *your24, *start24, *end24;
-
-  start24 = &free24s[0];
-  end24 = &free24s[MAXFREE24S - 1];
-  if ((pBlock >= (void *) start24) && (pBlock <= (void *) end24)) {
-    if (newSize <= 24)
-      return (pBlock);
-    your24 = (struct free24 *) pBlock;
-    your24->next = nextFree24;
-    nextFree24 = your24;
-    return (swMalloc (newSize, fileName, lineNo));
-  }
-  struct free48 *your48, *start48, *end48;
-
-  start48 = &free48s[0];
-  end48 = &free48s[MAXFREE48S - 1];
-  if ((pBlock >= (void *) start48) && (pBlock <= (void *) end48)) {
-    if (newSize <= 48)
-      return (pBlock);
-    your48 = (struct free48 *) pBlock;
-    your48->next = nextFree48;
-    nextFree48 = your48;
-    return (swMalloc (newSize, fileName, lineNo));
-  }
-  struct free100 *your100, *start100, *end100;
-
-  start100 = &free100s[0];
-  end100 = &free100s[MAXFREE100S - 1];
-  if ((pBlock >= (void *) start100) && (pBlock <= (void *) end100)) {
-    if (newSize <= 100)
-      return (pBlock);
-
-    your100 = (struct free100 *) pBlock;
-    your100->next = nextFree100;
-    nextFree100 = your100;
-    return (swMalloc (newSize, fileName, lineNo));
-  }
-#endif
 
 #ifdef DMTRACK
   oldSize = swDelChunk (pBlock, cTReFree, fileName, lineNo);
@@ -1036,39 +900,6 @@ swFree (void *pBlock, char *fileName, int lineNo)
 {
 #ifdef DMTRACK
   size_t oldSize;
-#endif
-
-#ifdef DMUSE
-  struct free24 *your24, *start24, *end24;
-
-  start24 = &free24s[0];
-  end24 = &free24s[MAXFREE24S - 1];
-  if ((pBlock >= (void *) start24) && (pBlock <= (void *) end24)) {
-    your24 = (struct free24 *) pBlock;
-    your24->next = nextFree24;
-    nextFree24 = your24;
-    return;
-  }
-  struct free48 *your48, *start48, *end48;
-
-  start48 = &free48s[0];
-  end48 = &free48s[MAXFREE48S - 1];
-  if ((pBlock >= (void *) start48) && (pBlock <= (void *) end48)) {
-    your48 = (struct free48 *) pBlock;
-    your48->next = nextFree48;
-    nextFree48 = your48;
-    return;
-  }
-  struct free100 *your100, *start100, *end100;
-
-  start100 = &free100s[0];
-  end100 = &free100s[MAXFREE100S - 1];
-  if ((pBlock >= (void *) start100) && (pBlock <= (void *) end100)) {
-    your100 = (struct free100 *) pBlock;
-    your100->next = nextFree100;
-    nextFree100 = your100;
-    return;
-  }
 #endif
 
 #ifdef DMTRACK
