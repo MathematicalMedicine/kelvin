@@ -102,6 +102,10 @@
 
 */
 
+#include <sys/param.h>
+#include <sys/mount.h>
+#include <libgen.h>
+
 #include "sSDHandler.h"
 
 // The default SSD path and size in Gb
@@ -171,6 +175,7 @@ void initSSD() {
   unsigned long sSDFileSizeInGb;
   char *envVar;
   char sSDFileName[256];
+  struct statfs sSDStats;
 
   if ((envVar = getenv ("sSDFileName")) != NULL)
     strcpy (sSDFileName, envVar);
@@ -179,8 +184,13 @@ void initSSD() {
 
   if ((envVar = getenv ("sSDFileSizeInGb")) != NULL)
     sSDFileSizeInGb = atol(envVar);
-  else
-    sSDFileSizeInGb = defaultSSDFileSizeInGb;
+  else {
+    if (statfs(dirname(sSDFileName), &sSDStats) != 0) {
+      perror("statfs call failed on SSD path, using default");
+      sSDFileSizeInGb = defaultSSDFileSizeInGb;
+    } else
+      sSDFileSizeInGb = sSDStats.f_blocks / (1024 * 1024);
+  }
 
 // Maximum number of double pairs on the 28Gb SSD is 28*1024*1024*1024/16, about 1792Mdps
 
