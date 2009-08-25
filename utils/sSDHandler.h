@@ -22,7 +22,7 @@ void termSSD ();
 
 // Maximum size of a chunk, in double pairs, 2^15=32K, but we really can go beyond that
 #ifdef MAIN
-#define MAX_DPC_MASK 0x7FFFF
+#define MAX_DPC_MASK 0xFFFF
 #else
 #define MAX_DPC_MASK 0x7FFFF
 #endif
