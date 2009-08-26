@@ -179,6 +179,9 @@ typedef struct{
   enum model_Type mType;
   
   //FILE *fp=NULL;
+   /*Consecutive runs with diff(BR) < error_tol  */
+   int cur_diff_suc;
+   int aim_diff_suc;  // Aiming number of success, which is set in integrationSupport.c
   
 } dcuhre_state;
 

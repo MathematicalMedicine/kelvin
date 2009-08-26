@@ -286,8 +286,11 @@ dadhre_ (dcuhre_state * s)
       fprintf (stderr, "Setting absolute error %12.8f  diff =%f  real error = %f real result=%f \n",
 	     s->epsabs, s->diff_result[s->sbrgns - 1], real_error, real_result);
 
-
-    //}
+    if( s->diff_result[s->sbrgns - 1] < s->epsabs){
+      s->cur_diff_suc ++;
+    }else{
+      s->cur_diff_suc=0;
+    }
 
     //if ( s->error > s->epsabs) {    //this is for stopping criterion 
     //if ((s->error > s->epsrel *fabs(s->result)) && (s->error > s->epsabs)) {    
@@ -295,8 +298,8 @@ dadhre_ (dcuhre_state * s)
     //if ((s->result <0)||(s->diff_result[s->sbrgns - 1] > s->epsabs) || real_result <0.25) {
     //if ((s->result <0)||((s->diff_result[s->sbrgns - 1] > s->epsabs) && (real_error > s->epsabs))) {  // before 11/25/2008
     //   if ((s->diff_result[s->sbrgns - 1] >= s->epsabs) && ( (real_result <0.9)|| (real_error > s->epsabs) )){
-    if (((s->result <0)|| (s->diff_result[s->sbrgns - 1] >= (s->epsabs))) && ( (real_result <0.9)|| (real_error > s->epsabs) ))
-{// adding s->result <0) on 3/23/2009
+    //if (((s->result <0)|| (s->diff_result[s->sbrgns - 1] >= (s->epsabs))) && ( (real_result <0.9)|| (real_error > s->epsabs) )){// adding s->result <0) on 3/23/2009
+    if ( (real_result <0.0)||((real_error > s->epsabs)&&(s->cur_diff_suc< s->aim_diff_suc)&&(real_result >=0.214)) ){//short and consecutive 3*nlclass of diff(BR)< error_tol
 
       /*   If we are allowed to divide further, */
       /*   prepare to apply basic rule over each half of the */

@@ -23,11 +23,7 @@ kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
 
   /* Local variables */
   int dim, return_val,i;
-  double boost_rate=1.1;
-
-  /*  for(i=0;i<modelRange.nlclass;i++){
-    boost_rate *= 1.3;
-    }*/
+  double boost_rate=1.3;
 
   if(modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) 
     boost_rate =1.0;
@@ -79,13 +75,18 @@ kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region)
       s->mType = MP_DT;
     }
   }
-  if(dim>10){
-    s->maxcls = 20* (int)pow(2.0,dim);
+
+  if (dim <10) {
+    s->maxcls = 10000000; //50000;
+  } else {
+    s->maxcls = 100000* (int)pow(2.0,dim);
     //fprintf(stdout,"New maxcls is %d \n", s->maxcls);
   }
 
+
   s->verbose = 0;
   s->nlclass = modelRange.nlclass;
+  s->aim_diff_suc = 3* s->nlclass;
 
   for(i=0; i<s->nlclass; i++){
     if(modelOptions.imprintingFlag)
