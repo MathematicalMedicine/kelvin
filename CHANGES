@@ -1,4 +1,9 @@
 Version 0.38.0
+  08/26/2009 Kelvin Fixed grid has two changes
+  1. Boosting ratio from 1.1 to 1.3.
+  2. Stopping criterion changed with bigger maximum calls and stricter criterion,
+     which allows a longer run and also leads to more run before ending.  
+
   Zero (or near-zero) frequency alleles are ignored 
   and a warning displayed. Script to count
   genotypically identical pedigrees now included.

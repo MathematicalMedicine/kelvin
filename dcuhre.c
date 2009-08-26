@@ -81,7 +81,7 @@ dcuhre_ (dcuhre_state * s)
 
 
   /* Step1.1 Checking inputs  and setting up control variables */
-  if (s->verbose > 0) {
+  if (s->verbose > 1) {
     fprintf (stderr, "Checking variables\n");
   }
   dchhre_ (s);
@@ -91,7 +91,7 @@ dcuhre_ (dcuhre_state * s)
     fprintf (stderr, "ifail =%d \n", s->ifail);
     return s->ifail;
   } else {
-    if (s->verbose > 0) {
+    if (s->verbose > 1) {
       fprintf (stderr, "Checking variables is done successfully\n");
     }
   }
@@ -126,7 +126,7 @@ dcuhre_ (dcuhre_state * s)
 
 
   /* Step2. The adaptive integration routine which calls DTRHRE, DINHRE and DRLHRE */
-  if (s->verbose > 0) {
+  if (s->verbose > 1) {
     fprintf (stderr, "Calling dadhre\n");
   }
   s->key = s->keyf;
@@ -190,7 +190,7 @@ dadhre_ (dcuhre_state * s)
   /* Step2.1 first integraion on the original region
      Call DINHRE to compute the weights and abscissas of */
   /*       the function evaluation points. */
-  if (s->verbose > 0) {
+  if (s->verbose > 1) {
     fprintf (stderr, "Initializing generators, weights...\n");
   }
   dinhre_ (s);
@@ -223,7 +223,7 @@ dadhre_ (dcuhre_state * s)
   }
 
   /*Step2.3   Apply DRLHRE over the whole region. */
-  if (s->verbose > 0) {
+  if (s->verbose > 1) {
     fprintf (stderr, "Apply DRLHRE over the whole region\n");
   }
   drlhre_ (s, cw_sbrg);
@@ -237,8 +237,8 @@ dadhre_ (dcuhre_state * s)
   tmp_result = s->result /s->vol_rate;
 
 
-  if (s->verbose > 0) {
-    fprintf (stderr, "After %d sub regions result=%20.18f error=%20.18f\n",
+  if (s->verbose > 1) {
+    fprintf (stderr, "After first sub regions result=%20.18f error=%20.18f\n",
 	     s->sbrgns, s->result, s->error);
   }
 
@@ -266,7 +266,7 @@ dadhre_ (dcuhre_state * s)
     real_result = s->result / s->vol_rate; 
     real_error = s->error / s->vol_rate;
 
-    if (s->verbose > 0) 
+    if (s->verbose > 1) 
       fprintf(stderr, "s result %f  real result %f\n ", s->result, real_result);
 
     if(real_result>1.0){
@@ -292,24 +292,27 @@ dadhre_ (dcuhre_state * s)
       s->diff_result[0] = s->epsabs * 2;	/*Dummy number for the main while loop */
     }
     if (s->verbose > 0) 
-      fprintf (stderr, "Setting absolute error %12.8f  diff =%f  real error = %f real result=%f \n",
-	     s->epsabs, s->diff_result[s->sbrgns - 1], real_error, real_result);
+      fprintf (stderr, "%d regions Setting absolute error %12.8f  diff = %f  real error = %f real result= %f dir= %d \n",
+	     s->sbrgns,s->epsabs, s->diff_result[s->sbrgns - 1], real_error, real_result, s->sbrg_heap[s->next_sbrg]->dir);
 
-
-    //}
-
+    if( s->diff_result[s->sbrgns - 1] < s->epsabs){
+      s->cur_diff_suc ++;
+    }else{
+      s->cur_diff_suc=0;
+    }
     //if ( s->error > s->epsabs) {    //this is for stopping criterion 
     //if ((s->error > s->epsrel *fabs(s->result)) && (s->error > s->epsabs)) {    
     //if ((s->diff_result[s->sbrgns - 1] > s->epsabs) && (s->error > s->epsabs)) { // before 5/18/2008
     //if ((s->result <0)||(s->diff_result[s->sbrgns - 1] > s->epsabs) || real_result <0.25) {
     //if ((s->result <0)||((s->diff_result[s->sbrgns - 1] > s->epsabs) && (real_error > s->epsabs))) {  // before 11/25/2008
-      if (((s->result <0)|| (s->diff_result[s->sbrgns - 1] >= s->epsabs)) && ( (real_result <0.9)|| (real_error > s->epsabs) )){// adding s->result <0) on 3/23/2009
-    //    if ( (real_result <0.0)|| (real_error > s->epsabs) ){// adding s->result <0) //for longer run
+    //  if (((s->result <0)|| (s->diff_result[s->sbrgns - 1] >= s->epsabs)) && ( (real_result <0.9)|| (real_error > s->epsabs) )){// adding s->result <0) on 3/23/2009
+    // if ( (real_result <0.0)||((real_error > s->epsabs)&&(real_result >=0.214)) ){//for long run (error_est < error_tol)
+    if ( (real_result <0.0)||((real_error > s->epsabs)&&(s->cur_diff_suc< s->aim_diff_suc)&&(real_result >=0.214)) ){//short and consecutive 2*nlclass of diff(BR)< error_tol
       /*   If we are allowed to divide further, */
       /*   prepare to apply basic rule over each half of the */
       /*   NDIV subregions with greatest errors. */
       /*   If MAXSUB is great enough, NDIV = MDIV */
-      if (s->verbose > 0) {
+      if (s->verbose > 1) {
 	fprintf (stderr,
 		 "Select %d subregion with %f error and direction = %d\n",
 		 s->next_sbrg, s->greate, s->sbrg_heap[s->next_sbrg]->dir);
