@@ -102,8 +102,13 @@
 
 */
 
+#ifdef Macintosh
 #include <sys/param.h>
 #include <sys/mount.h>
+#else
+#include <sys/vfs.h>
+#endif
+
 #include <libgen.h>
 
 #include "sSDHandler.h"
@@ -174,7 +179,7 @@ void initSSD() {
   int i;
   unsigned long sSDFileSizeInGb;
   char *envVar;
-  char sSDFileName[256];
+  char sSDFileName[256], *dirnameIsDamaged;
   struct statfs sSDStats;
 
   if ((envVar = getenv ("sSDFileName")) != NULL)
@@ -185,11 +190,12 @@ void initSSD() {
   if ((envVar = getenv ("sSDFileSizeInGb")) != NULL)
     sSDFileSizeInGb = atol(envVar);
   else {
-    if (statfs(dirname(sSDFileName), &sSDStats) != 0) {
+    dirnameIsDamaged = strdup (sSDFileName);
+    if (statfs(dirname(dirnameIsDamaged), &sSDStats) != 0) {
       perror("statfs call failed on SSD path, using default");
       sSDFileSizeInGb = defaultSSDFileSizeInGb;
     } else
-      sSDFileSizeInGb = sSDStats.f_blocks / (1024 * 1024);
+      sSDFileSizeInGb = (sSDStats.f_blocks * (sSDStats.f_bsize / 1024)) / (1024 * 1024);
   }
 
 // Maximum number of double pairs on the 28Gb SSD is 28*1024*1024*1024/16, about 1792Mdps
@@ -202,18 +208,28 @@ void initSSD() {
     perror ("Failed to open SSD cache file");
     exit (EXIT_FAILURE);
   }
-  for (i=0; i<16; i++)
-    listHead[i].doublePairCount = listHead[i].chunkOffset = listHead[i].nextFree = listDepth[i] = 0;
-
+  for (i=0; i<16; i++) {
+    listHead[i].doublePairCount = listHead[i].nextFree = listDepth[i] = 0;
+    listHead[i].chunkOffset = 1;
+  }
   listHead[15].doublePairCount = maxSSDDPC;
   listDepth[15] = 1;
   getCallCount = putCallCount = freeCallCount = 0;
   return;
 }
 
+/**
+
+   Simply replace the current list head with it's successor.
+
+*/
 void removeFreeListHead (unsigned short freeList) {
   if (listHead[freeList].nextFree == 0) {
     // Out of list entries
+#ifdef DIAG
+    fprintf (stderr, "End of L%d, zeroing head dpc (was %ludpc)\n", freeList,
+	     listHead[freeList].doublePairCount);
+#endif
     listHead[freeList].doublePairCount = 0UL;
   } else {
     // Pull-in the next entry and shlorp-up the listEntry space!
@@ -229,7 +245,7 @@ void removeFreeListHead (unsigned short freeList) {
     listHead[freeList].chunkOffset--;
     listHead[freeList].doublePairCount++;
 #ifdef DIAG
-    fprintf (stderr, "Popped new head of list %d at %ludpc of %ludps, next at %ludpc\n", freeList,
+    fprintf (stderr, "Popped new head of L%d at co%lu of %ludps, next at co%lu\n", freeList,
 	    listHead[freeList].chunkOffset,
 	    listHead[freeList].doublePairCount,
 	    listHead[freeList].nextFree);
@@ -246,7 +262,7 @@ void insertFreeListHead (unsigned long chunkOffset, unsigned long doublePairCoun
   else
     freeList = 0;
 #ifdef DIAG
-  fprintf (stderr, "Pushing %ludpc of %ludps onto list %d\n",
+  fprintf (stderr, "Pushing co%lu of %ludps onto L%d\n",
 	   chunkOffset, doublePairCount, freeList);
 #endif
   if (listHead[freeList].doublePairCount == 0UL) {
@@ -389,8 +405,10 @@ void garbageCollect () {
 
   // Reset listHead and listDepth
 
-  for (i=0; i<16; i++)
-    listHead[i].doublePairCount = listHead[i].chunkOffset = listHead[i].nextFree = listDepth[i] = 0;
+  for (i=0; i<16; i++) {
+    listHead[i].doublePairCount = listHead[i].nextFree = listDepth[i] = 0;
+    listHead[i].chunkOffset = 1;
+  }
 
   // Connect and insert them.
 
@@ -403,15 +421,25 @@ void garbageCollect () {
     }
     startDPC = freeVector[i].startDPC;
     endDPC = freeVector[i].endDPC;
-    while ((i<(freeVectorEntryCount-1)) && (endDPC == freeVector[i+1].startDPC))
-      endDPC = freeVector[++i].endDPC;
+    while (i<(freeVectorEntryCount-1)) {
+      if (endDPC == freeVector[i+1].startDPC) {
+	endDPC = freeVector[++i].endDPC;
+      }
+       else {
+#ifdef DIAG
+	 fprintf (stderr, "Unfree hole from %lu to %lu\n",
+		  endDPC, freeVector[i+1].startDPC);
+#endif
+	 break;
+       }      
+    }
     totalFreeAfter += endDPC-startDPC;
     insertFreeListHead (startDPC, endDPC-startDPC);
   }
   fprintf (stderr, "\rRe-inserting...100%% done\n");
 
   // Say how it went.
-  fprintf (stderr, "Began with %ludpc free and ended with %ludpc\n",
+  fprintf (stderr, "Began with %ludps free and ended with %ludps\n",
 	  totalFreeBefore, totalFreeAfter);
   statSSD ();
   free (freeVector);
@@ -473,7 +501,7 @@ void reorderFreeList (int freeList) {
   fprintf (stderr, "\rRe-inserting...100%% done\n");
 
   // Say how it went.
-  fprintf (stderr, "Began with %ludpc free and ended with %ludpc\n",
+  fprintf (stderr, "Began with %ludps free and ended with %ludps\n",
 	  totalFreeBefore, totalFreeAfter);
   statSSD ();
   free (freeVector);
@@ -491,13 +519,13 @@ void flushSSD (double *buffer, unsigned long chunkOffset, unsigned long doublePa
 
   // Chunk in SSD file is assigned, put the buffer out there...
   if (fseek (sSDFD, chunkOffset * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
-    sprintf (messageBuffer, "Failed to seek to offset %ludpc in SSD cache file",
+    sprintf (messageBuffer, "Failed to seek to offset co%lu in SSD cache file",
 	     chunkOffset);
     perror (messageBuffer);
     exit (EXIT_FAILURE);
   }
   if ((fwrite (buffer, DOUBLE_PAIR_SIZE, doublePairCount, sSDFD)) != doublePairCount) {
-    sprintf (messageBuffer, "Failed to write %ludps at offset %ludpc in SSD cache file",
+    sprintf (messageBuffer, "Failed to write %ludps at offset co%lu in SSD cache file",
 	     doublePairCount, chunkOffset);
     perror (messageBuffer);
     exit (EXIT_FAILURE);
@@ -523,7 +551,7 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
   newCT->doublePairCount = myDPC;
 
 #ifdef DIAG
-  fprintf (stderr, " at offset %ludpc OK\n", newCT->chunkOffset);
+  fprintf (stderr, " at offset co%lu OK\n", newCT->chunkOffset);
 #endif
 
   // Handle leftovers...must be bigger than a freeList structure.
@@ -555,7 +583,7 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
   unsigned short bestFreeList;
 
   if ((myDPC < MIN_USE_SSD_DPS) || (myDPC > maxSSDDPC)) {
-    fprintf (stderr, "putSSD size of %ludpc out-of-bounds\n", myDPC);
+    fprintf (stderr, "putSSD size of %ludps out-of-bounds\n", myDPC);
     return ((struct chunkTicket *) NULL);
   }
 
@@ -567,13 +595,13 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
   bestFreeList  = MIN(15, high16Bit (myDPC));
   for (freeList = bestFreeList; freeList<16; freeList++) {
 #ifdef DIAG
-    fprintf (stderr, "%d has %ludpc ", freeList, listHead[freeList].doublePairCount);
+    fprintf (stderr, "L%d has %ludpc ", freeList, listHead[freeList].doublePairCount);
 #endif
     if (listHead[freeList].doublePairCount >= myDPC)
       return (doPutSSD (buffer, myDPC, freeList));
   }
   // Nothing left at all!!
-  fprintf (stderr, "putSSD may be out of chunkage for a %ludpc request (15 head has %ludpc)!\n",
+  fprintf (stderr, "putSSD may be out of chunkage for a %ludps request (15 head has %ludps)!\n",
 	   myDPC, listHead[15].doublePairCount);
 
   // Nothing, reorder the best free list and try again...
@@ -615,7 +643,7 @@ void getSSD (struct chunkTicket *myTicket, double *buffer) {
     statSSD ();
 
 #ifdef DIAG
-  fprintf (stderr, "getSSD for %ludps at %ludpc\n", myTicket->doublePairCount, myTicket->chunkOffset);
+  fprintf (stderr, "getSSD for %ludps at co%lu\n", myTicket->doublePairCount, myTicket->chunkOffset);
 #endif
   // Simply seek and read...
   if (fseek (sSDFD, myTicket->chunkOffset * DOUBLE_PAIR_SIZE, SEEK_SET) != 0) {
@@ -641,7 +669,7 @@ void freeSSD (struct chunkTicket *myTicket) {
     statSSD ();
 
 #ifdef DIAG
-  fprintf (stderr, "freeSSD returning %ludpc at %ludps\n", myTicket->doublePairCount, myTicket->chunkOffset);
+  fprintf (stderr, "freeSSD returning %ludps at co%lu\n", myTicket->doublePairCount, myTicket->chunkOffset);
 #endif
   insertFreeListHead (myTicket->chunkOffset, myTicket->doublePairCount);
   usedDPCs -= myTicket->doublePairCount;
@@ -651,11 +679,11 @@ void freeSSD (struct chunkTicket *myTicket) {
 
 #ifdef MAIN
 
-#define TEST_ITERATIONS (1024 * 1024 * 1024)
+#define TEST_ITERATIONS (8 * 1024)
 
 #include <time.h>
 
-#define MAX_TICKET_MASK 0x7FFFF
+#define MAX_TICKET_MASK 0x7FF
 
 int main (int argc, char *argv[]) {
   
@@ -667,7 +695,7 @@ int main (int argc, char *argv[]) {
 
   initSSD ();
 
-  fprintf (stderr, "Field of %d tickets of up to %ddps in size in file of %ddps\n",
+  fprintf (stderr, "Field of %d tickets of up to %ddps in size in file of %lddps\n",
 	  MAX_TICKET_MASK, MAX_DPC_MASK, maxSSDDPC);
 
   //  srand(time(0)); // Let's go for repeatability
@@ -718,8 +746,12 @@ int main (int argc, char *argv[]) {
 
     case 72: // Release it...
       // Half the time we don't to this...
-      if (rand() & 1)
+      if (rand() & 1) {
+#ifdef DIAG
+	fprintf (stderr, "Skip free\n");
+#endif
 	break;
+      }
       freeSSD (listOTickets[cT]);
       cTStatus[cT] = 70;
       listOTickets[cT] = 0;
@@ -731,6 +763,24 @@ int main (int argc, char *argv[]) {
       exit (EXIT_FAILURE);
     }
   }
+
+  // Garbage collect to reduce to ticket count (hopefully)
+  garbageCollect ();
+
+  fprintf (stderr, "Freeing the rest...\n");
+  for (i=0; i<=MAX_TICKET_MASK; i++) {
+    if (cTStatus[i] != 70) {
+#ifdef DIAG
+      fprintf (stderr, "%d, Ticket %d(%d):", i, cT, cTStatus[cT]);
+#endif
+      freeSSD (listOTickets[i]);
+      cTStatus[i] = 70;
+      listOTickets[i] = 0;
+    }
+  }
+
+  // Now garbage collect, because it should be incredibly efficient!
+  garbageCollect ();
   termSSD ();
 }
 
