@@ -4,10 +4,22 @@
 
 # Invoked by main Kelvin Makefile. You'll get undefined symbols otherwise.
 
-INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h polynomial.h
-OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o polynomial.o
+INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h
+OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o
 
-all : ../lib/libutils.a # listener
+all : ../lib/libutils.a pt sw sSDHandler
+
+polynomial.o : polynomial.c polynomial.h
+	gcc -DPOLYUSE_DL -DPOLYCODE_DL polynomial.c -c -o polynomial.o
+
+pt : pt.c polynomial.o sw.o
+	gcc pt.c -o pt polynomial.o -L../lib -lutils -lm -ldl
+
+sw : sw.c sw.h
+	gcc -DMAIN sw.c -o sw -lm
+
+sSDHandler : sSDHandler.c sSDHandler.h
+	gcc -DMAIN sSDHandler.c -o sSDHandler
 
 listener : listener.c sw.h
 	gcc listener.c -o listener -lmysqlclient -I/usr/local/mysql/include -L/usr/local/mysql/lib \
@@ -16,12 +28,12 @@ listener : listener.c sw.h
 ../lib/libutils.a : libutils.a
 	cp libutils.a ../lib
 
-libutils.a : $(OBJS)
-	ar -rsc libutils.a $(OBJS)
+libutils.a : $(OBJS) polynomial.o
+	ar -rsc libutils.a $(OBJS) polynomial.o
 
 $(OBJS) : %.o : %.c $(INCS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $< -o $@
 
 .PHONY : clean
 clean :
-	rm -f $(OBJS) libutils.a ../lib/libutils.a
+	rm -f pt $(OBJS) polynomial.o libutils.a ../lib/libutils.a
