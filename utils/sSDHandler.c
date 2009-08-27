@@ -104,7 +104,7 @@
 
 #include <limits.h>
 
-#ifdef Macintosh
+#ifdef __BSD__
 #include <sys/param.h>
 #include <sys/mount.h>
 #else
@@ -121,9 +121,6 @@ int defaultSSDFileSizeInGb = 28;
 unsigned long maxSSDDPC;
 
 #define DOUBLE_PAIR_SIZE (sizeof (double) * 2)
-
-#define MIN(X,Y) (((X) > (Y)) ? (Y) : (X))
-#define MAX(X,Y) (((X) > (Y)) ? (X) : (Y))
 
 char messageBuffer[256];
 
