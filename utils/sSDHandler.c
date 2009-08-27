@@ -439,7 +439,7 @@ void garbageCollect () {
   for (i=0; i<16; i++)
     freeVectorEntryCount += listDepth[i];
 
-  fprintf (stderr, "There are %d total free list entries\n",  freeVectorEntryCount);
+  fprintf (stderr, "There are %lu total free list entries\n",  freeVectorEntryCount);
   if ((freeVector = (struct freeVectorEntry *) 
        malloc (freeVectorEntryCount * sizeof (struct freeVectorEntry))) == NULL) {
     fprintf (stderr, "Failed to allocate a %lu byte freeVector for garbage collection\n",
