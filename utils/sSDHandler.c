@@ -104,7 +104,7 @@
 
 #include <limits.h>
 
-#ifdef __BSD__
+#ifdef __APPLE__
 #include <sys/param.h>
 #include <sys/mount.h>
 #else
