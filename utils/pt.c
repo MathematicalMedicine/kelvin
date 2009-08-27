@@ -1,4 +1,7 @@
-/*
+/**
+#file pt.c
+
+  polynomial code exerciser.
 
   Exercise the polynomial code by manually adding constants, variables, and
   two-operand sums and products. Print and evaluate the polynomials.
@@ -10,6 +13,10 @@
   Very primitive, but it gets the job done.
 
   Build with: gcc -o pt pt.c -DPOLYUSE_DL -DPOLYCODE_DL polynomial.c -L../utils/ -I../include/ -lutils -lm -ldl
+
+  Copyright &copy; 2009, Nationwide Children's Research Institute.  All
+  rights reserved.  Permission is hereby given to use this software
+  for non-profit educational purposes only.
 
 */
 #include <stdlib.h>
@@ -71,7 +78,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
   double fO1, fO2;
   int eO1, eO2;
   struct polyList *pL;
-  char *promptString = "C/V/S/P/F/E/G/L/#/%%/?/Q> ";
+  char *promptString = "C/V/S/P/F/E/G/L/#/%%/?/Q/help> ";
   char polyName[16];
 
   fprintf(outputFile, promptString);
@@ -247,11 +254,12 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       break;
     default:
       fprintf(stderr, "One of:\n"
-	      "C/V/S/P - create a Constant/Variable/Sum/Product poly\n"
+	      "C/V/S/P/F - create a Constant/Variable/Sum/Product/Function poly\n"
 	      "E - evaluate a poly\n"
 	      "G - generate a digraph of a poly\n"
 	      "L - generate poly list and separate C function\n"
 	      "%% - display poly statistics\n"
+	      "# - comment (in file)\n"
 	      "? - print all polys\n"
 	      "Q or <EOF> - quit\n");
       break;
@@ -267,7 +275,7 @@ int main(int argc, char *argv[]) {
 
   overallSW = swCreate("overall");
   swStart(overallSW);
-  polynomialInitialization();
+  polynomialInitialization(polynomialScale);
 
   if (argc > 1) {
     if ((initFile = fopen(argv[1],"r")) != NULL) {
