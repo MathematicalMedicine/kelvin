@@ -152,13 +152,27 @@
 #include <dlfcn.h>
 
 #ifndef POLYUSE_DL
-#undef POLYCODE_DL
-#undef POLYCOMP_DL
-#undef POLYCHECK_DL
+  #if defined (POLYCODE_DL)| defined (POLYCOMP_DL) | defined (POLYCHECK_DL)
+    #warning "Cannot use POLYCODE_DL, POLYCOMP_DL or POLYCHECK_DL without POLYUSE_DL"
+  #endif
+  #undef POLYCODE_DL
+  #undef POLYCOMP_DL
+  #undef POLYCHECK_DL
+#endif
+
+#ifndef POLYCODE_DL
+  #if defined (POLYCOMP_DL) | defined (POLYCHECK_DL)
+    #warning "Cannot use POLYCOMP_DL or POLYCHECK_DL without POLYCODE_DL"
+  #endif
+  #undef POLYCOMP_DL
+  #undef POLYCHECK_DL
 #endif
 
 #ifndef POLYCOMP_DL
-#undef POLYCHECK_DL
+  #ifdef POLYCHECK_DL
+    #warning "Cannot use POLYCHECK_DL without POLYCOMP_DL"
+  #endif
+  #undef POLYCHECK_DL
 #endif
 
 #ifdef USE_SSD
@@ -4904,6 +4918,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   */
 
   // Here's the global part...
+
 #ifdef POLYCODE_DL
   totalSourceSize += fprintf (srcFile, "#include <dlfcn.h>\n#include \"polynomial.h\"\n#include \"dists.h\"\n\n");
   totalSourceSize += fprintf (srcFile, "char *baseFunctionName = \"%s\";\nint baseFunctionArgs = %d, dLFunctionCount = DLFUNCTIONCOUNT;\n\n", 
