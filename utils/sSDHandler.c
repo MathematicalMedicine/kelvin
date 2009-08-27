@@ -558,9 +558,14 @@ void reorderFreeList (int freeList) {
   fprintf (stderr, "\nSorting %lu entries...", freeVectorEntryCount);
   fflush (stderr);
 
-  qsort (freeVector, freeVectorEntryCount, sizeof (struct freeVectorEntry), compareSize);
+  qqsort (freeVector, freeVectorEntryCount, sizeof (struct freeVectorEntry), compareSize);
 
   fprintf (stderr, "\nRe-inserting...");
+
+  // Reset listHead and listDepth
+
+  listHead[freeList].doublePairCount = listHead[freeList].chunkOffset = listDepth[freeList] = 0;
+  listHead[freeList].nextFree = ULONG_MAX;
 
   // Connect and insert them.
 
