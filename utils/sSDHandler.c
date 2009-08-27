@@ -102,6 +102,8 @@
 
 */
 
+#include <limits.h>
+
 #ifdef Macintosh
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -195,7 +197,7 @@ void initSSD() {
       perror("statfs call failed on SSD path, using default");
       sSDFileSizeInGb = defaultSSDFileSizeInGb;
     } else
-      sSDFileSizeInGb = (sSDStats.f_blocks * (sSDStats.f_bsize / 1024)) / (1024 * 1024);
+      sSDFileSizeInGb = (sSDStats.f_blocks * (sSDStats.f_bsize / 1024)) / (1024 * 1024) - 1;
   }
 
 // Maximum number of double pairs on the 28Gb SSD is 28*1024*1024*1024/16, about 1792Mdps
@@ -209,8 +211,8 @@ void initSSD() {
     exit (EXIT_FAILURE);
   }
   for (i=0; i<16; i++) {
-    listHead[i].doublePairCount = listHead[i].nextFree = listDepth[i] = 0;
-    listHead[i].chunkOffset = 1;
+    listHead[i].doublePairCount = listHead[i].chunkOffset = listDepth[i] = 0;
+    listHead[i].nextFree = ULONG_MAX;
   }
   listHead[15].doublePairCount = maxSSDDPC;
   listDepth[15] = 1;
@@ -224,13 +226,30 @@ void initSSD() {
 
 */
 void removeFreeListHead (unsigned short freeList) {
-  if (listHead[freeList].nextFree == 0) {
-    // Out of list entries
+
+  // Handle failures first
+  if (listHead[freeList].doublePairCount == 0) {
 #ifdef DIAG
-    fprintf (stderr, "End of L%d, zeroing head dpc (was %ludpc)\n", freeList,
-	     listHead[freeList].doublePairCount);
+    fprintf (stderr, "Attempt to remove head of empty L%d (Zero dpc, listDepth %d)!\n",
+	     freeList, listDepth[freeList]);
 #endif
-    listHead[freeList].doublePairCount = 0UL;
+    exit (EXIT_FAILURE);
+  }
+  if (listDepth[freeList] == 0) {
+#ifdef DIAG
+    fprintf (stderr, "Attempt to remove head of empty L%d (Zero listDepth, %ludpc)!\n",
+	     freeList, listHead[freeList].doublePairCount);
+#endif
+    exit (EXIT_FAILURE);
+  }
+
+  // Now handle last entries
+  if (listHead[freeList].nextFree == ULONG_MAX) {
+    listDepth[freeList] = 0;
+    listHead[freeList].doublePairCount = 0;
+#ifdef DIAG
+    fprintf (stderr, "Removed last head from L%d (according to nextFree)\n", freeList);
+#endif
   } else {
     // Pull-in the next entry and shlorp-up the listEntry space!
     listDepth[freeList]--;
@@ -245,10 +264,12 @@ void removeFreeListHead (unsigned short freeList) {
     listHead[freeList].chunkOffset--;
     listHead[freeList].doublePairCount++;
 #ifdef DIAG
-    fprintf (stderr, "Popped new head of L%d at co%lu of %ludps, next at co%lu\n", freeList,
-	    listHead[freeList].chunkOffset,
-	    listHead[freeList].doublePairCount,
-	    listHead[freeList].nextFree);
+    fprintf (stderr, "Popped new head of L%d at co%lu of %ludps", freeList,
+	     listHead[freeList].chunkOffset, listHead[freeList].doublePairCount);
+    if (listHead[freeList].nextFree == ULONG_MAX)
+      fprintf (stderr, ", next to end of list (one more, listDepth is %d!)\n", listDepth[freeList]);
+    else
+      fprintf (stderr, ", next at co%lu\n", listHead[freeList].nextFree);
 #endif
   }
   return;
@@ -272,7 +293,7 @@ void insertFreeListHead (unsigned long chunkOffset, unsigned long doublePairCoun
 #endif
     listHead[freeList].chunkOffset = chunkOffset;
     listHead[freeList].doublePairCount = doublePairCount;
-    listHead[freeList].nextFree = 0;
+    listHead[freeList].nextFree = ULONG_MAX;
     listDepth[freeList] = 1;
     return;
   }
@@ -315,7 +336,7 @@ void insertFreeListHead (unsigned long chunkOffset, unsigned long doublePairCoun
     perror ("Failed to write SSD cache file");
     exit (EXIT_FAILURE);
   }
-  listHead[freeList].nextFree = listHead[freeList].chunkOffset - 1;
+  listHead[freeList].nextFree = listHead[freeList].chunkOffset - 1UL;
   listHead[freeList].chunkOffset = chunkOffset;
   listHead[freeList].doublePairCount = doublePairCount;
 
@@ -323,23 +344,68 @@ void insertFreeListHead (unsigned long chunkOffset, unsigned long doublePairCoun
 }
 
 struct freeVectorEntry {
-  unsigned long startDPC;
-  unsigned long endDPC;
+  unsigned long coStart;
+  unsigned long coEnd;
 };
 
+static void swap_internal(char *a, char *b, size_t size)
+{
+  if (a != b)
+    {
+      char t;
+      while (size--)
+	{
+	  t = *a;
+	  *a++ = *b;
+	  *b++ = t;
+	}
+    }
+}
+
+static void qsort_internal(char *begin, char *end, size_t size, int(*compar)(const void *, const void *))
+{
+  if (end > begin)
+    {
+      char *pivot = begin;
+      char *l = begin + size, *r = end;
+
+      while (l < r)
+	{
+	  if (compar(l, pivot) <= 0)
+	    {
+	      l += size;
+	    }
+	  else
+	    {
+	      r -= size;
+	      swap_internal(l, r, size);
+	    }
+	}
+      l -= size;
+      swap_internal(begin, l, size);
+      qsort_internal(begin, l, size, compar);
+      qsort_internal(r, end, size, compar);
+    }
+}
+
+void qqsort(void *base, size_t nmemb, size_t size, int(*compar)(const void *, const void *))
+{
+  qsort_internal((char *)base, (char *)base+nmemb*size, size, compar);
+}
+
 int compareFVE (const void *left, const void *right) {
-  return (((struct freeVectorEntry *) left)->startDPC - ((struct freeVectorEntry *) right)->startDPC);
+  return (((struct freeVectorEntry *) left)->coStart - ((struct freeVectorEntry *) right)->coStart);
 }
 
 int compareSize (const void *left, const void *right) {
   return (
 	  (
-	   ((struct freeVectorEntry *) left)->endDPC -
-	   ((struct freeVectorEntry *) left)->startDPC
+	   ((struct freeVectorEntry *) left)->coEnd -
+	   ((struct freeVectorEntry *) left)->coStart
 	  ) -
 	  (
-	   ((struct freeVectorEntry *) right)->endDPC -
-	   ((struct freeVectorEntry *) right)->startDPC
+	   ((struct freeVectorEntry *) right)->coEnd -
+	   ((struct freeVectorEntry *) right)->coStart
 	  )
 	 );
 }
@@ -361,7 +427,7 @@ void garbageCollect () {
 
   */
   int i;
-  unsigned long totalFreeBefore = 0, totalFreeAfter = 0, startDPC = 0, endDPC = 0, freeVectorEntryCount;
+  unsigned long totalFreeBefore = 0, totalFreeAfter = 0, coStart = 0, coEnd = 0, freeVectorEntryCount;
   struct freeVectorEntry *freeVector;
 
   fprintf (stderr, "sSDHandler garbage collection started...\n");
@@ -373,6 +439,7 @@ void garbageCollect () {
   for (i=0; i<16; i++)
     freeVectorEntryCount += listDepth[i];
 
+  fprintf (stderr, "There are %d total free list entries\n",  freeVectorEntryCount);
   if ((freeVector = (struct freeVectorEntry *) 
        malloc (freeVectorEntryCount * sizeof (struct freeVectorEntry))) == NULL) {
     fprintf (stderr, "Failed to allocate a %lu byte freeVector for garbage collection\n",
@@ -386,8 +453,8 @@ void garbageCollect () {
     fprintf (stderr, "%d ", i);
     fflush (stderr);
     while (listHead[i].doublePairCount != 0) {
-      freeVector[freeVectorEntryCount].startDPC = listHead[i].chunkOffset;
-      freeVector[freeVectorEntryCount].endDPC = listHead[i].chunkOffset + listHead[i].doublePairCount;
+      freeVector[freeVectorEntryCount].coStart = listHead[i].chunkOffset;
+      freeVector[freeVectorEntryCount].coEnd = listHead[i].chunkOffset + listHead[i].doublePairCount;
       freeVectorEntryCount++;
       totalFreeBefore += listHead[i].doublePairCount;
       removeFreeListHead (i);
@@ -396,18 +463,32 @@ void garbageCollect () {
   fprintf (stderr, "\nSorting %lu entries...", freeVectorEntryCount);
   fflush (stderr);
 
-  /* Sort 'em. I'd use qsort, but it wants a vector of structure pointers, and I just allocated the
-     whole bleedin' thing at once. */
+#ifdef DIAG
+  fprintf (stderr, "Pre-sort:\n");
+  for (i=0; i<freeVectorEntryCount; i++)
+    fprintf (stderr, "#%d: co%lu-co%lu\n", i, freeVector[i].coStart, freeVector[i].coEnd);
+#endif
 
-  qsort (freeVector, freeVectorEntryCount, sizeof (struct freeVectorEntry), compareFVE);
+  qqsort (freeVector, freeVectorEntryCount, sizeof (struct freeVectorEntry), compareFVE);
+
+#ifdef DIAG
+  fprintf (stderr, "Post-sort:\n");
+  for (i=0; i<freeVectorEntryCount; i++) {
+    fprintf (stderr, "#%d: co%lu-co%lu\n", i, freeVector[i].coStart, freeVector[i].coEnd);
+    if ((i > 0) && (freeVector[i].coStart < freeVector[i-1].coEnd)) {
+      fprintf (stderr, "Last two free chunks overlap!\n");
+      exit (EXIT_FAILURE);
+    }
+  }
+#endif
 
   fprintf (stderr, "\nRe-inserting...");
 
   // Reset listHead and listDepth
 
   for (i=0; i<16; i++) {
-    listHead[i].doublePairCount = listHead[i].nextFree = listDepth[i] = 0;
-    listHead[i].chunkOffset = 1;
+    listHead[i].doublePairCount = listHead[i].chunkOffset = listDepth[i] = 0;
+    listHead[i].nextFree = ULONG_MAX;
   }
 
   // Connect and insert them.
@@ -419,22 +500,21 @@ void garbageCollect () {
       fprintf (stderr, "\rRe-inserting...%lu%% done", i * 100 / freeVectorEntryCount);
       fflush (stderr);
     }
-    startDPC = freeVector[i].startDPC;
-    endDPC = freeVector[i].endDPC;
+    coStart = freeVector[i].coStart;
+    coEnd = freeVector[i].coEnd;
     while (i<(freeVectorEntryCount-1)) {
-      if (endDPC == freeVector[i+1].startDPC) {
-	endDPC = freeVector[++i].endDPC;
-      }
-       else {
+      if (coEnd == freeVector[i+1].coStart) {
+	coEnd = freeVector[++i].coEnd;
+      } else {
 #ifdef DIAG
-	 fprintf (stderr, "Unfree hole from %lu to %lu\n",
-		  endDPC, freeVector[i+1].startDPC);
+	fprintf (stderr, "Unfree hole from co%lu to co%lu of %ludps\n",
+		 coEnd, freeVector[i+1].coStart, (freeVector[i+1].coStart - coEnd));
 #endif
-	 break;
-       }      
+	break;
+      }      
     }
-    totalFreeAfter += endDPC-startDPC;
-    insertFreeListHead (startDPC, endDPC-startDPC);
+    totalFreeAfter += coEnd-coStart;
+    insertFreeListHead (coStart, coEnd-coStart);
   }
   fprintf (stderr, "\rRe-inserting...100%% done\n");
 
@@ -451,7 +531,7 @@ void garbageCollect () {
 */
 
 void reorderFreeList (int freeList) {
-  unsigned long totalFreeBefore = 0, totalFreeAfter = 0, startDPC = 0, endDPC = 0, freeVectorEntryCount;
+  unsigned long totalFreeBefore = 0, totalFreeAfter = 0, coStart = 0, coEnd = 0, freeVectorEntryCount;
   struct freeVectorEntry *freeVector;
   int i;
 
@@ -469,8 +549,8 @@ void reorderFreeList (int freeList) {
   fprintf (stderr, "...extracting from list ");
   freeVectorEntryCount = 0;
   while (listHead[freeList].doublePairCount != 0) {
-    freeVector[freeVectorEntryCount].startDPC = listHead[freeList].chunkOffset;
-    freeVector[freeVectorEntryCount].endDPC = listHead[freeList].chunkOffset + listHead[freeList].doublePairCount;
+    freeVector[freeVectorEntryCount].coStart = listHead[freeList].chunkOffset;
+    freeVector[freeVectorEntryCount].coEnd = listHead[freeList].chunkOffset + listHead[freeList].doublePairCount;
     freeVectorEntryCount++;
     totalFreeBefore += listHead[freeList].doublePairCount;
     removeFreeListHead (freeList);
@@ -491,12 +571,21 @@ void reorderFreeList (int freeList) {
       fprintf (stderr, "\rRe-inserting...%lu%% done", i * 100 / freeVectorEntryCount);
       fflush (stderr);
     }
-    startDPC = freeVector[i].startDPC;
-    endDPC = freeVector[i].endDPC;
-    while ((i<(freeVectorEntryCount-1)) && (endDPC == freeVector[i+1].startDPC))
-      endDPC = freeVector[++i].endDPC;
-    totalFreeAfter += endDPC-startDPC;
-    insertFreeListHead (startDPC, endDPC-startDPC);
+    coStart = freeVector[i].coStart;
+    coEnd = freeVector[i].coEnd;
+    while (i<(freeVectorEntryCount-1)) {
+      if (coEnd == freeVector[i+1].coStart) {
+	coEnd = freeVector[++i].coEnd;
+      } else {
+#ifdef DIAG
+	fprintf (stderr, "Unfree hole from co%lu to co%lu of %ludps\n",
+		 coEnd, freeVector[i+1].coStart, (freeVector[i+1].coStart - coEnd));
+#endif
+	break;
+      }      
+    }
+    totalFreeAfter += coEnd-coStart;
+    insertFreeListHead (coStart, coEnd-coStart);
   }
   fprintf (stderr, "\rRe-inserting...100%% done\n");
 
@@ -679,11 +768,12 @@ void freeSSD (struct chunkTicket *myTicket) {
 
 #ifdef MAIN
 
-#define TEST_ITERATIONS (8 * 1024)
+// 536 is clean, 538 is not
+#define TEST_ITERATIONS (1024 * 1024)
 
 #include <time.h>
 
-#define MAX_TICKET_MASK 0x7FF
+#define MAX_TICKET_MASK 0x7F
 
 int main (int argc, char *argv[]) {
   
