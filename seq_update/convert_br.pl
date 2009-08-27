@@ -128,8 +128,12 @@ if (($version) = ($line =~ /\#\s+Version\s+(\S+)/)) {
 } else {
     $version = 'unknown';
 }
-(versionnum ($version) >= versionnum ($current)) 
-    and die ("input file is already in most recent format ($current)\n");
+if (versionnum ($version) >= versionnum ($current)) {
+    # and die ("input file is already in most recent format ($current)\n");
+    # A cheap hack: don't die, just copy out files that are already current
+    print ("# Version V$version\n", $line, <FH>);
+    exit (0);
+}
 exists ($header_parsers{$version})
     or die ("$0: don't know how to parse headers for version '$version'\n");
 
