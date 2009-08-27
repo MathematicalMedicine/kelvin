@@ -113,6 +113,7 @@
 
 #include <libgen.h>
 
+#include "utils.h"
 #include "sSDHandler.h"
 
 // The default SSD path and size in Gb
