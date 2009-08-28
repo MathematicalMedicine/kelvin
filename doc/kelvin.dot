@@ -1,0 +1,100 @@
+digraph kelvin {
+	label="kelvin workflow\n$Date: 2008-09-09 10:19:34 -0400 (Tue, 09 Sep 2008) $"
+	nodesep=.25 ; ranksep=.25 ;
+
+	TPvsMP [shape=diamond, height=.1, width=.1, label=""] ;
+
+	CI [label="Common Initialization"] ;
+
+	CI -> TPvsMP ;
+
+	ITPR [label="Initialize TP results"] ;
+	IMPR [label="Initialize MP results"] ;
+
+	TPvsMP -> ITPR [label="2PT"];
+	TPvsMP -> IMPR [label="MP"];
+
+	TPloop [shape=rectangle, height=.5, label="Locus pairs\niterator head"] ;
+	TPloopEnd [shape=rectangle, height=.5, label="Locus pairs\niterator tail"] ;
+	MPloop [shape=rectangle, height=.5, label="Position\niterator head"] ;
+	MPloopEnd [shape=rectangle, height=.5, label="Position\niterator tail"] ;
+
+	ITPR -> TPloop ;
+	IMPR -> MPloop ;
+
+	CTPBR [label="Compute TP Bayes Ratios"] ;
+	CTPPPL [label="Compute TP PPL"] ;
+	WTPPPLR [label="Write TP PPL results"] ;
+	WTPBRR [label="Write TP BR results"] ;
+
+	CMPBR [label="Compute MP Bayes Ratios"] ;
+	CMPPPL [label="Compute MP PPL"] ;
+	WMPR [label="Write MP results"] ;
+
+	TPTSLoop [shape=rectangle, height=.5, label="Trait space\niterator head"] ;
+	TPTSLoopEnd [shape=rectangle, height=.5, label="Trait space\niterator tail"] ;
+
+	ThLoop [shape=rectangle, height=.5, label="Theta\niterator head"] ;
+	ThLoopEnd [shape=rectangle, height=.5, label="Theta\niterator tail"] ;
+
+	TPloop -> TPTSLoop ;
+	TPTSLoop -> ThLoop ;
+	ThLoop -> CTPBR ;
+	CTPBR -> WTPBRR ;
+	WTPBRR -> ThLoopEnd ;
+	ThLoopEnd -> ThLoop [label="next"];
+	ThLoopEnd -> TPTSLoopEnd ;
+	TPTSLoopEnd -> CTPPPL ;
+	TPTSLoopEnd -> TPTSLoop [label="next"];
+	CTPPPL -> WTPPPLR ;
+	WTPPPLR -> TPloopEnd ;
+	TPloopEnd -> TPloop [label="next"];
+
+	MPTSLoop [shape=rectangle, height=.5, label="Trait space\niterator head"] ;
+	MPTSLoopEnd [shape=rectangle, height=.5, label="Trait space\niterator tail"] ;
+
+	MPloop -> MPTSLoop ;
+	MPTSLoop -> CMPBR ;
+	CMPBR -> CMPPPL ;
+	CMPPPL -> WMPR ;
+	WMPR -> MPTSLoopEnd ;
+	MPTSLoopEnd -> MPTSLoop [label="next"];
+	MPTSLoopEnd -> MPloopEnd ;
+	MPloopEnd -> MPloop [label="next"];
+
+	CT [label="Common Termination"] ;
+
+	TPloopEnd -> CT;
+	MPloopEnd -> CT;
+
+	CID [label="Common Initialization\nDetail"] ;
+
+	CLP [label="Command line parsing"] ;
+	KBD [label="KELVIN banner display"] ;
+	IL [label="Initialize logging"] ;
+	CFP [label="Configuration file parsing"] ;
+	DFP [label="Datafiles parsing\n(populate most globals)"] ;
+	ACD [label="Analysis complexity display"] ;
+	ALC [label="Analysis limits check"] ;
+	IS [label="Initialize signalling"] ;
+
+	CID -> CLP ;
+	CLP -> KBD ;
+	KBD -> IL ;
+	IL -> CFP ;
+	CFP -> DFP ;
+	DFP -> ACD ;
+	ACD -> ALC ;
+	ALC -> IS ;
+
+	CTD [label="Common Termination\nDetail"] ;
+
+	TS [label="Terminate signalling"] ;
+	PSD [label="Performance statistics display"] ;
+	TL [label="Terminate logging"] ;
+
+	CTD -> TS ;
+	TS -> PSD ;
+	PSD -> TL ;
+
+}
