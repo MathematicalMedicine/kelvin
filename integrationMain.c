@@ -443,7 +443,8 @@
               fixed_thetaF = thetaSS[i][1];
 
               if(fpIR != NULL){
-                dk_curModel.dprime[0] = 0.0;
+                if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) 
+                  dk_curModel.dprime[0] = 0.0;
                 dk_curModel.theta[0] = fixed_thetaM;
                 dk_curModel.theta[1] = fixed_thetaF;
 	      }
