@@ -1,6 +1,7 @@
 //#include "dkelvinWriteFiles.h"
 #include "integrationLocals.h"
 #include "integrationSupport.h"
+
   int numPositions;
   int size_BR;
 
@@ -652,13 +653,13 @@
 
           if (modelOptions.markerAnalysis != FALSE) {
             fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ",
-	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_SEX_AVERAGED],
-	     pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGED],
+	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_SEX_AVERAGE],
+	     pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
 	     ppl >= .025 ? 2 : 3, KROUND (ppl));
           } else {
             fprintf (fpPPL, "%d %s %s %.4f %.*f ",
 	     pLocus2->pMapUnit->chromosome, pLocus1->sName,
-	     pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGED],
+	     pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
 	     ppl >= .025 ? 2 : 3, KROUND (ppl));
           }
 
