@@ -28,8 +28,6 @@ typedef enum
 /* maximum length for pedigree label, individual IDs */
 #define MAX_PED_LABEL_LEN       128
 
-#define SA SEX_AVERAGED
-#define SS SEX_SPECIFIC
 #define ND NORMAL_DISTRIBUTION	/* normal distribution */
 #define TD T_DISTRIBUTION	/* t distribution */
 
