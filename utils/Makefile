@@ -15,6 +15,7 @@ polynomial.o : polynomial.c polynomial.h
 pt : pt.c polynomial.o sw.o
 	gcc polynomial.c -c -o polynomial.o -DPOLYUSE_DL -DPOLYCODE_DL
 	gcc pt.c -o pt polynomial.o -L../lib -lutils -lm -ldl
+	rm polynomial.o
 
 sw : sw.c sw.h
 	gcc -DMAIN sw.c -o sw -lm
