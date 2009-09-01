@@ -7,10 +7,10 @@
   model_options structure definition - contains all analysis
   options parsed from the kelvin configuration file.
 
-  Currently only one instance of model_options is created; a global
-  called modelOptions. This is the sole repository of configuration
-  information, not just trait model or any other type of model. 
-  Includes definition of default values for directives.
+  Currently only one instance of model_options is created; a
+  sanctioned global called modelOptions. This is the sole repository
+  of configuration information, not just trait model or any other type
+  of model.  Includes definition of default values for directives.
 
   Copyright &copy; 2009, Nationwide Children's Research Institute.  All
   rights reserved.  Permission is hereby given to use this software
@@ -52,12 +52,12 @@
 #define ADJACENTMARKER            2
 #define AM ADJACENTMARKER
 
-/// model_options.mapFlag value indicating analysis uses sex-averaged map positions.
-#define SEX_AVERAGED              0
-#define SA SEX_AVERAGED
-/// model_options.mapFlag value indicating analysis uses sex-specific map positions.
-#define SEX_SPECIFIC              1
-#define SS SEX_SPECIFIC
+enum MapFlag {
+  SEX_AVERAGED = 0, //< model_options.mapFlag value indicating analysis uses sex-averaged map positions.
+  SA = 0, //< Synonym for SEX_AVERAGED
+  SEX_SPECIFIC = 1, //< model_options.mapFlag value indicating analysis uses sex-specific map positions.
+  SS = 1 //< Synonym for SEX_SPECIFIC
+};
 
 /// Phenotype code (affection status) unknown for a dichotomous trait.
 #define AFFECTION_STATUS_UNKNOWN        0
@@ -84,7 +84,7 @@ typedef struct ModelOptions
 
   /* whether to use sex-averaged or sex-specific map: only for
    * QT/CT. */
-  int mapFlag;
+  enum MapFlag mapFlag;
 
   int imprintingFlag;		/* 1 - imprinting pen(1|2) may not be the same as pen(2|1) */
 
