@@ -212,7 +212,6 @@ void initializeDefaults ()
   strcpy (modelOptions.pedfile, DEFAULTPEDFILENAME);
   strcpy (modelOptions.datafile, DEFAULTDATAFILENAME);
   strcpy (modelOptions.avghetfile, DEFAULTAVGHETFILENAME);
-  strcpy (modelOptions.condFile, DEFAULTCONDFILENAME);
   strcpy (modelOptions.resultsprefix, DEFAULTRESULTSPREFIX);
 
   modelOptions.sUnknownPersonID = malloc (sizeof (char) * 2);

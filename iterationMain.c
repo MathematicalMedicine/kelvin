@@ -479,10 +479,10 @@ void iterateMain() {
                         locusList->pPrevLocusDistance[k][1] = theta[0];
                       }
                     } else {
-                      locusList->pNextLocusDistance[MAP_MALE][0] =
-                        locusList->pPrevLocusDistance[MAP_MALE][1] = modelRange.theta[0][thetaInd];
-                      locusList->pNextLocusDistance[MAP_FEMALE][0] =
-                        locusList->pPrevLocusDistance[MAP_FEMALE][1] = modelRange.theta[1][thetaInd];
+                      locusList->pNextLocusDistance[MAP_POS_MALE][0] =
+                        locusList->pPrevLocusDistance[MAP_POS_MALE][1] = modelRange.theta[0][thetaInd];
+                      locusList->pNextLocusDistance[MAP_POS_FEMALE][0] =
+                        locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = modelRange.theta[1][thetaInd];
                     }
                     if(fpIR != NULL){
                       dk_curModel.theta[0] = modelRange.theta[0][thetaInd];
@@ -698,10 +698,10 @@ void iterateMain() {
                             locusList->pPrevLocusDistance[k][1] = theta[0];
                           }
                         } else {
-                          locusList->pNextLocusDistance[MAP_MALE][0] =
-                            locusList->pPrevLocusDistance[MAP_MALE][1] = modelRange.theta[0][thetaInd];
-                          locusList->pNextLocusDistance[MAP_FEMALE][0] =
-                            locusList->pPrevLocusDistance[MAP_FEMALE][1] = modelRange.theta[1][thetaInd];
+                          locusList->pNextLocusDistance[MAP_POS_MALE][0] =
+                            locusList->pPrevLocusDistance[MAP_POS_MALE][1] = modelRange.theta[0][thetaInd];
+                          locusList->pNextLocusDistance[MAP_POS_FEMALE][0] =
+                            locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = modelRange.theta[1][thetaInd];
                         }
 
                         if (modelOptions.polynomial == TRUE);
@@ -1274,12 +1274,12 @@ void iterateMain() {
           /* trait is the first one in the list */
           if (traitPos < ERROR_MARGIN && traitPos > -ERROR_MARGIN) {
             /* trait is at 0 */
-            pTraitLocus->mapPosition[MAP_MALE] = pTraitLocus->mapPosition[MAP_FEMALE] = 0;
+            pTraitLocus->mapPosition[MAP_POS_MALE] = pTraitLocus->mapPosition[MAP_POS_FEMALE] = 0;
           } else {
             /* get the relative position on the sex average map */
             relativePos = traitPos / marker1Pos[0];
-            pTraitLocus->mapPosition[MAP_MALE] = relativePos * marker1Pos[MAP_MALE];
-            pTraitLocus->mapPosition[MAP_FEMALE] = relativePos * marker1Pos[MAP_FEMALE];
+            pTraitLocus->mapPosition[MAP_POS_MALE] = relativePos * marker1Pos[MAP_POS_MALE];
+            pTraitLocus->mapPosition[MAP_POS_FEMALE] = relativePos * marker1Pos[MAP_POS_FEMALE];
           }
           /* update the inter locus distance - sex averaged already done before */
           for (k = 1; k < 3; k++) {
@@ -1295,13 +1295,13 @@ void iterateMain() {
           dist = marker2Pos[0] - marker1Pos[0];
           if (dist > ERROR_MARGIN) {
             relativePos = (traitPos - marker2Pos[0]) / dist;
-            pTraitLocus->mapPosition[MAP_MALE] =
-              relativePos * (marker2Pos[MAP_MALE] - marker1Pos[MAP_MALE]) + marker2Pos[MAP_MALE];
-            pTraitLocus->mapPosition[MAP_FEMALE] =
-              relativePos * (marker2Pos[MAP_FEMALE] - marker1Pos[MAP_FEMALE]) + marker2Pos[MAP_FEMALE];
+            pTraitLocus->mapPosition[MAP_POS_MALE] =
+              relativePos * (marker2Pos[MAP_POS_MALE] - marker1Pos[MAP_POS_MALE]) + marker2Pos[MAP_POS_MALE];
+            pTraitLocus->mapPosition[MAP_POS_FEMALE] =
+              relativePos * (marker2Pos[MAP_POS_FEMALE] - marker1Pos[MAP_POS_FEMALE]) + marker2Pos[MAP_POS_FEMALE];
           } else {
-            pTraitLocus->mapPosition[MAP_MALE] = traitPos - marker2Pos[0] + marker2Pos[MAP_MALE];
-            pTraitLocus->mapPosition[MAP_FEMALE] = traitPos - marker2Pos[0] + marker2Pos[MAP_FEMALE];
+            pTraitLocus->mapPosition[MAP_POS_MALE] = traitPos - marker2Pos[0] + marker2Pos[MAP_POS_MALE];
+            pTraitLocus->mapPosition[MAP_POS_FEMALE] = traitPos - marker2Pos[0] + marker2Pos[MAP_POS_FEMALE];
           }
 
           /* update the inter locus distance - sex averaged already done before */
@@ -1319,13 +1319,13 @@ void iterateMain() {
           dist = marker2Pos[0] - marker1Pos[0];
           if (dist > ERROR_MARGIN) {
             relativePos = (traitPos - marker1Pos[0]) / dist;
-            pTraitLocus->mapPosition[MAP_MALE] =
-              relativePos * (marker2Pos[MAP_MALE] - marker1Pos[MAP_MALE]) + marker1Pos[MAP_MALE];
-            pTraitLocus->mapPosition[MAP_FEMALE] =
-              relativePos * (marker2Pos[MAP_FEMALE] - marker1Pos[MAP_FEMALE]) + marker1Pos[MAP_FEMALE];
+            pTraitLocus->mapPosition[MAP_POS_MALE] =
+              relativePos * (marker2Pos[MAP_POS_MALE] - marker1Pos[MAP_POS_MALE]) + marker1Pos[MAP_POS_MALE];
+            pTraitLocus->mapPosition[MAP_POS_FEMALE] =
+              relativePos * (marker2Pos[MAP_POS_FEMALE] - marker1Pos[MAP_POS_FEMALE]) + marker1Pos[MAP_POS_FEMALE];
           } else {
-            pTraitLocus->mapPosition[MAP_MALE] = marker1Pos[MAP_MALE];
-            pTraitLocus->mapPosition[MAP_FEMALE] = marker1Pos[MAP_FEMALE];
+            pTraitLocus->mapPosition[MAP_POS_MALE] = marker1Pos[MAP_POS_MALE];
+            pTraitLocus->mapPosition[MAP_POS_FEMALE] = marker1Pos[MAP_POS_FEMALE];
           }
           /* update the inter locus distance - sex averaged already done before */
           for (k = 1; k < 3; k++) {

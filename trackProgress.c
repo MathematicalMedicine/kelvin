@@ -3,40 +3,200 @@
 
   kelvin support routines for estimating and tracking progress thru analyses.
 
-  Tracking kelvin progress is a lot more complicated that you might expect.
-  Here are the problems:
+  Estimating kelvin progress-to-completion is a lot more complicated that 
+  you might expect.  Here are the problems:
 
   - There are multiple looping paths through the code, i.e. each different 
   type of analysis uses a different set of calls to compute_likelihood, and 
   each needs to be instrumented differently.
+
   - Multipoint analysis invokes compute_likelihood in three places:
     - trait likelihood (once for the entire run)
     - marker set likelihood (once for each distinct set of loci)
     - combined alternative and null likelihood (once for each position).
+
   We need to show progrees in the marker set loop as well as the combined
   one because marker set evaluation is our first real indication of 
   complexity, and sometimes it takes a long time.
+
   - Polynomial construction takes an arbitrarily large amount of time. While
   evaluation is iterative and therefore predictable, construction is a big
   unknown, even between positions in the same analysis, so when polynomial
-  evaluation is requested, a progress graph can look extremely lumpy.
+  evaluation is requested, a progress graph can look extremely lumpy. There
+  is currently no solution for this problem.
+
   - Integration approach (now the default) iterations are unpredictable
   because it re-partitions the trait space as much as needed to reduce error
   to tolerable amounts. We might know the upper-limit of iterations, but
   that can be wildly different from the actual number of iterations, and we
-  don't want to scare people off by using that upper limit.
+  don't want to scare people off by using that upper limit. There is currently
+  no solution for this problem.
+
   - Position counting or loci pair counting can be used for progress tracking
   only so long as there are a reasonably large number of position or pairs
   being evaluated in a single run. No-one likes to see progress go from 0 to
   100% in one step at the end of the run, which is what would happen if a single
   position or pair is being evaluated.
+
+  - Too little output during a slow run leaves the user in the dark about progress,
+  while too much output during a complicated run overwhelms the user with details.
+  The best approach would be to show the latest progress (assuming it has changed)
+  at some interval that varies based upon how long the analysis has been running,
+  or whenever the user requests status.
+
   - Finally, progress tracking for users must be simplistic and understandable,
   while internal users want the nitty-gritty details on what is going on at
   each step.
 
-  The strategy for detailed tracking progess is:
+  I suggest that we no longer have a simple progress option, but
+  rather display progress in a manner that gives as much detail as
+  could be desired without either starving or glutting the user (or
+  the log file). We can instrument the code to record internally as
+  much detail as we can manage on latest step completed as it
+  happens, but only display that information when the user requests,
+  or at the run duration-related intervals that they specify. This makes
+  output driven by the user's interest and the duration of the run
+  instead of the complexity of the run or the duration of the
+  individual steps.
 
-  Fixed Grid 2pt: calculate iteration counts per compute_likelihood step based upon 
+  For example, assume we're doing a fixed grid multipoint run with
+  polynomials for a large number of trait positions and a few simple
+  pedigrees, so steps are performed quickly. The maximum level of 
+  progress detail we normally provide would look like this:
+
+    Building polynomial for trait likelihood, <minutes elapsed/estimated>
+    Evaluating trait likelihood, <minutes elapsed/estimated>
+    Building polynomial for new 3-marker set at trait position 1 of 140 (1.0cM), <minutes elapsed/estimated>
+    Evaluating new 3-marker set likelihood at trait position 1 of 140 (1.0cM), <minutes elapsed/estimated>
+    Building polynomial for combined likelihood at trait position 1 of 140 (1.0cM), <minutes elapsed/estimated>
+    Evaluating combined likelihood at trait position 1 of 140 (1.0cM), <minutes elapsed/estimated>
+    Evaluating combined likelihood at trait position 2 of 140 (2.0cM), <minutes elapsed/estimated>
+    Evaluating combined likelihood at trait position 3 of 140 (3.0cM), <minutes elapsed/estimated>
+    Evaluating combined likelihood at trait position 4 of 140 (4.0cM), <minutes elapsed/estimated>
+    Building polynomial for new 3-marker set at trait position 5 of 140 (5.0cM), <minutes elapsed/estimated>
+    Evaluating new 3-marker set likelihood at trait position 5 of 140 (5.0cM), <minutes elapsed/estimated>
+    Building polynomial for combined likelihood at trait position 5 of 140 (5.0cM), <minutes elapsed/estimated>
+    Evaluating combined likelihood at trait position 5 of 140 (5.0cM), <minutes elapsed/estimated>
+
+    ...and so on for another thousand lines.
+
+    ...and since it's fixed grid,  sprinkled throughout this at 2 minute intervals:
+    "Total evaluations N% complete, <minutes elapsed/estimated>"
+
+  This is just overwhelming for anyone, and worse, it can hide warning and
+  error messages due to its sheer volume.
+
+  But if we allow the user's needs to drive the output, it's much simpler.
+  Say the user specifies (or accepts as default) progress displays at 1 
+  minute intervals for the first 5 minutes, 5 minute intervals for the 
+  next 30 minutes, and 30 minute intervals from then on. Here's what might
+  be displayed for the same run if it takes 12 minutes:
+
+    Total 1m elapsed, estimated 9m remaining, currently 17s into:
+    Building polynomial for combined likelihood at trait position 14 of 140 (14.0cM).
+    Total 2m elapsed, estimated 8m remaining, currently 8s into:
+    Evaluating combined likelihood at trait position 30 of 140 (30.0cM).
+    Total 3m elapsed, estimated 8m remaining, currently 12s into:
+    Building polynomial for combined likelihood at trait position 42 of 140 (42.0cM).
+    Total 4m elapsed, estimated 7m remaining, currently 6s into:
+    Evaluating combined likelihood at trait position 56 of 140 (56.0cM).
+    Total 5m elapsed, estimated 6m remaining, currently 1s into:
+    Evaluating new 3-markers set likelihood at trait position 71 of 140 (71.0cM).
+    Total 10m elapsed, estimated 1m remaining, currently 21s into:
+    Building polynomial for combined likelihood at trait position 130 of 140 (130.0cM).
+
+  If the run took less than a minute, none of this would be displayed, which
+  is nice, because no-one would care about it.
+  
+  This approach is even more beneficial when we consider dynamic grid.
+  Every significant step that the dynamic grid analysis takes, such as
+  splitting a region, could be made available for reporting, but it
+  wouldn't be overwhelming like it currently is even though its volume
+  remains largely unpredicatable. Regardless of how an analysis was being 
+  done, you would always get the same frequency of updates, and warning and
+  error messages would still be obvious.
+
+  For diagnostic purposes, we could configure the status display frequency
+  to be 0 minutes to ensure that every step is displayed as it occurs.
+
+  If we want an even simpler display, we could have a configuration parameter
+  to eliminate the display of the current step while keeping the estimation
+  output intervals.
+
+
+  So here's what we can provide:
+
+  For everything (mentioning "total" as opposed to stepwise):
+
+  <minutes elapsed/estimated> as shown in the following examples will be either:
+  "X total minutes elapsed, cannot estimate remaining time." (when no steps complete)
+  "X total minutes elapsed, estimated Y remaining overall."
+
+  For Simple Progress:
+
+    Fixed or Dynamic Grid:
+
+      Two-Point:
+
+        Progress thru the N marker pairs will be displayed:
+
+	"Building polynomial for marker pair N of M (Name1 and Name2), <minutes elapsed/estimated>"
+	"Evaluating marker pair N of M (Name1 and Name2), <minutes elapsed/estimated>"
+
+      Multi-Point:
+
+        Progress thru the N positions will be displayed:
+
+	"Building polynomial for trait likelihood, <minutes elapsed/estimated>"
+	"Evaluating trait likelihood, <minutes elapsed/estimated>"
+	"Building polynomial for new N-marker set at trait position N of M (Position), <minutes elapsed/estimated>"
+	"Evaluating new N-marker set likelihood at trait position N of M (Position), <minutes elapsed/estimated>"
+	"Building polynomial for combined likelihood at trait position N of M (Position), <minutes elapsed/estimated>"
+	"Evaluating combined likelihood at trait position N of M (Position), <minutes elapsed/estimated>"
+
+  For Detailed Progress:
+
+    Fixed Grid:
+
+      Two-Point:
+
+        Progress thru the N marker pairs and evaluations every 2 minutes will be displayed:
+
+	"Building polynomial for marker pair N of M (Name1 and Name2), <minutes elapsed/estimated>"
+	"Evaluating marker pair N of M (Name1 and Name2), <minutes elapsed/estimated>"
+
+	...and at 2 minute intervals:
+
+	"<minutes elapsed/estimated>" (when no evaluations complete)
+	"Total evaluations N% complete, <minutes elapsed/estimated>"
+
+      Multi-Point:
+
+        Progress thru trait, new marker sets, and the N positions will be displayed:
+
+	"Building polynomial for trait likelihood, <minutes elapsed/estimated>"
+	"Evaluating trait likelihood, <minutes elapsed/estimated>"
+	"Building polynomial for new N-marker set at trait position N of M (Position), <minutes elapsed/estimated>"
+	"Evaluating new N-marker set likelihood at trait position N of M (Position), <minutes elapsed/estimated>"
+	"Building polynomial for combined likelihood at trait position N of M (Position), <minutes elapsed/estimated>"
+	"Evaluating combined likelihood at trait position N of M (Position), <minutes elapsed/estimated>"
+	...and at 2 minute intervals:
+	"<minutes elapsed/estimated>" (when no evaluations complete)
+	"Total evaluations N% complete, <minutes elapsed/estimated>"
+
+
+
+
+
+	
+
+  Fixed Grid in general:
+
+  - Calculate iteration counts per compute_likelihood step based upon 
+  trait space parameters and number of positions or loci pairs.
+
+  Detailed Fixed Grid 2pt: calculate iteration counts per compute_likelihood step 
+  based upon 
   trait space parameters. Show progress based solely upon percentage completion 
   of these counts. Lump polynomial build in with evaluation.
 
@@ -186,7 +346,7 @@ void print_dryrun_stat (PedigreeSet *pSet, ///< Pointer to set of pedigrees in a
 
   Log position and pedigree complexity statistics as produced by dry-run.
 
-  At each position, after the determination of family pair groupingss, summarize and
+  At each position, after the determination of family pair groupings, summarize and
   log the complexity data.
 
 */

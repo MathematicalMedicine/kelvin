@@ -46,9 +46,12 @@
 #define MAP_FUNCTION_KOSAMBI		0
 #define MAP_FUNCTION_HALDANE 		1
 
-#define MAP_SEX_AVERAGE                 0
-#define MAP_MALE                        1
-#define MAP_FEMALE                      2
+enum MapPosIndex {
+  MAP_POS_SEX_AVERAGE,
+  MAP_POS_MALE,
+  MAP_POS_FEMALE,
+  SIZE_MAP_POS
+};
 
 #define DIRECTION_LEFT                  0
 #define DIRECTION_RIGHT                 1
@@ -276,7 +279,7 @@ typedef struct Locus
 typedef struct TraitLocus
 {
   /* map position in terms of cM - applies to trait only in multipoint analysis */
-  double mapPosition[3];
+  double mapPosition[SIZE_MAP_POS];
   /* number of trait variables for this trait locus 
    * i.e. all the traits are assumed to associated with single 
    * disease gene (locus) */

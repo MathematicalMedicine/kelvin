@@ -653,13 +653,13 @@
 
           if (modelOptions.markerAnalysis != FALSE) {
             fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ",
-	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_SEX_AVERAGE],
-	     pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
+	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE],
+	     pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE],
 	     ppl >= .025 ? 2 : 3, KROUND (ppl));
           } else {
             fprintf (fpPPL, "%d %s %s %.4f %.*f ",
 	     pLocus2->pMapUnit->chromosome, pLocus1->sName,
-	     pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
+	     pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE],
 	     ppl >= .025 ? 2 : 3, KROUND (ppl));
           }
 
@@ -1015,15 +1015,15 @@
 	  /* trait is the first one in the list */
 	  if (traitPos < ERROR_MARGIN && traitPos > -ERROR_MARGIN) {
 	    /* trait is at 0 */
-	    pTraitLocus->mapPosition[MAP_MALE] =
-	      pTraitLocus->mapPosition[MAP_FEMALE] = 0;
+	    pTraitLocus->mapPosition[MAP_POS_MALE] =
+	      pTraitLocus->mapPosition[MAP_POS_FEMALE] = 0;
 	  } else {
 	    /* get the relative position on the sex average map */
 	    relativePos = traitPos / marker1Pos[0];
-	    pTraitLocus->mapPosition[MAP_MALE] =
-	      relativePos * marker1Pos[MAP_MALE];
-	    pTraitLocus->mapPosition[MAP_FEMALE] =
-	      relativePos * marker1Pos[MAP_FEMALE];
+	    pTraitLocus->mapPosition[MAP_POS_MALE] =
+	      relativePos * marker1Pos[MAP_POS_MALE];
+	    pTraitLocus->mapPosition[MAP_POS_FEMALE] =
+	      relativePos * marker1Pos[MAP_POS_FEMALE];
 	  }
 	  /* update the inter locus distance - sex averaged already done before */
 	  for (k = 1; k < 3; k++) {
@@ -1045,17 +1045,17 @@
 	  dist = marker2Pos[0] - marker1Pos[0];
 	  if (dist > ERROR_MARGIN) {
 	    relativePos = (traitPos - marker2Pos[0]) / dist;
-	    pTraitLocus->mapPosition[MAP_MALE] =
-	      relativePos * (marker2Pos[MAP_MALE] -
-			     marker1Pos[MAP_MALE]) + marker2Pos[MAP_MALE];
-	    pTraitLocus->mapPosition[MAP_FEMALE] =
-	      relativePos * (marker2Pos[MAP_FEMALE] -
-			     marker1Pos[MAP_FEMALE]) + marker2Pos[MAP_FEMALE];
+	    pTraitLocus->mapPosition[MAP_POS_MALE] =
+	      relativePos * (marker2Pos[MAP_POS_MALE] -
+			     marker1Pos[MAP_POS_MALE]) + marker2Pos[MAP_POS_MALE];
+	    pTraitLocus->mapPosition[MAP_POS_FEMALE] =
+	      relativePos * (marker2Pos[MAP_POS_FEMALE] -
+			     marker1Pos[MAP_POS_FEMALE]) + marker2Pos[MAP_POS_FEMALE];
 	  } else {
-	    pTraitLocus->mapPosition[MAP_MALE] =
-	      traitPos - marker2Pos[0] + marker2Pos[MAP_MALE];
-	    pTraitLocus->mapPosition[MAP_FEMALE] =
-	      traitPos - marker2Pos[0] + marker2Pos[MAP_FEMALE];
+	    pTraitLocus->mapPosition[MAP_POS_MALE] =
+	      traitPos - marker2Pos[0] + marker2Pos[MAP_POS_MALE];
+	    pTraitLocus->mapPosition[MAP_POS_FEMALE] =
+	      traitPos - marker2Pos[0] + marker2Pos[MAP_POS_FEMALE];
 	  }
 
 	  /* update the inter locus distance - sex averaged already done before */
@@ -1076,15 +1076,15 @@
 	  dist = marker2Pos[0] - marker1Pos[0];
 	  if (dist > ERROR_MARGIN) {
 	    relativePos = (traitPos - marker1Pos[0]) / dist;
-	    pTraitLocus->mapPosition[MAP_MALE] =
-	      relativePos * (marker2Pos[MAP_MALE] -
-			     marker1Pos[MAP_MALE]) + marker1Pos[MAP_MALE];
-	    pTraitLocus->mapPosition[MAP_FEMALE] =
-	      relativePos * (marker2Pos[MAP_FEMALE] -
-			     marker1Pos[MAP_FEMALE]) + marker1Pos[MAP_FEMALE];
+	    pTraitLocus->mapPosition[MAP_POS_MALE] =
+	      relativePos * (marker2Pos[MAP_POS_MALE] -
+			     marker1Pos[MAP_POS_MALE]) + marker1Pos[MAP_POS_MALE];
+	    pTraitLocus->mapPosition[MAP_POS_FEMALE] =
+	      relativePos * (marker2Pos[MAP_POS_FEMALE] -
+			     marker1Pos[MAP_POS_FEMALE]) + marker1Pos[MAP_POS_FEMALE];
 	  } else {
-	    pTraitLocus->mapPosition[MAP_MALE] = marker1Pos[MAP_MALE];
-	    pTraitLocus->mapPosition[MAP_FEMALE] = marker1Pos[MAP_FEMALE];
+	    pTraitLocus->mapPosition[MAP_POS_MALE] = marker1Pos[MAP_POS_MALE];
+	    pTraitLocus->mapPosition[MAP_POS_FEMALE] = marker1Pos[MAP_POS_FEMALE];
 	  }
 	  /* update the inter locus distance - sex averaged already done before */
 	  for (k = 1; k < 3; k++) {

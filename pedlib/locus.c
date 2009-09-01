@@ -154,14 +154,14 @@ read_mapfile (char *sMapfileName)
     pMarker = add_map_unit (&map);
     pMarker->chromosome = chr;
     strcpy (pMarker->sName, sName);
-    pMarker->mapPos[MAP_SEX_AVERAGE] = sexAvgPos;
-    pMarker->mapPos[MAP_FEMALE] = malePos;
-    pMarker->mapPos[MAP_MALE] = femalePos;
+    pMarker->mapPos[MAP_POS_SEX_AVERAGE] = sexAvgPos;
+    pMarker->mapPos[MAP_POS_FEMALE] = malePos;
+    pMarker->mapPos[MAP_POS_MALE] = femalePos;
     pMarker->basePairLocation = basePairLoc;
     /* make sure marker is specified based on map order */
     if (pPrevMarker != NULL
-	&& (pPrevMarker->mapPos[MAP_SEX_AVERAGE] >
-	    pMarker->mapPos[MAP_SEX_AVERAGE])) {
+	&& (pPrevMarker->mapPos[MAP_POS_SEX_AVERAGE] >
+	    pMarker->mapPos[MAP_POS_SEX_AVERAGE])) {
       /* this will kick the program out */
       KASSERT (1 == 0,
 	       "Marker map given by %s is out of order between %s and %s.\n",
@@ -2429,12 +2429,12 @@ add_analysis_locus (SubLocusList * pLocusList, int locus, int directionFlag,
   firstPos = get_map_position (first);
   if ((originalLocusList.ppLocusList[first]->locusType == LOCUS_TYPE_MARKER &&
        originalLocusList.ppLocusList[locus]->locusType == LOCUS_TYPE_MARKER &&
-       locus < first) || thisPos[MAP_SEX_AVERAGE] < firstPos[MAP_SEX_AVERAGE]
+       locus < first) || thisPos[MAP_POS_SEX_AVERAGE] < firstPos[MAP_POS_SEX_AVERAGE]
       || (directionFlag == DIRECTION_LEFT
-	  && (thisPos[MAP_SEX_AVERAGE] >
-	      firstPos[MAP_SEX_AVERAGE] - ERROR_MARGIN)
-	  && (thisPos[MAP_SEX_AVERAGE] <
-	      firstPos[MAP_SEX_AVERAGE] + ERROR_MARGIN)))
+	  && (thisPos[MAP_POS_SEX_AVERAGE] >
+	      firstPos[MAP_POS_SEX_AVERAGE] - ERROR_MARGIN)
+	  && (thisPos[MAP_POS_SEX_AVERAGE] <
+	      firstPos[MAP_POS_SEX_AVERAGE] + ERROR_MARGIN)))
   {
     /* add this locus to the beginning of the list, shift the rest */
     for (i = numLocus - 1; i >= 0; i--) {
@@ -2481,12 +2481,12 @@ add_analysis_locus (SubLocusList * pLocusList, int locus, int directionFlag,
   lastPos = get_map_position (last);
   if ((originalLocusList.ppLocusList[last]->locusType == LOCUS_TYPE_MARKER &&
        originalLocusList.ppLocusList[locus]->locusType == LOCUS_TYPE_MARKER &&
-       locus > last) || thisPos[MAP_SEX_AVERAGE] > lastPos[MAP_SEX_AVERAGE]
+       locus > last) || thisPos[MAP_POS_SEX_AVERAGE] > lastPos[MAP_POS_SEX_AVERAGE]
       || (directionFlag == DIRECTION_RIGHT
-	  && (thisPos[MAP_SEX_AVERAGE] >
-	      lastPos[MAP_SEX_AVERAGE] - ERROR_MARGIN)
-	  && (thisPos[MAP_SEX_AVERAGE] <
-	      lastPos[MAP_SEX_AVERAGE] + ERROR_MARGIN)))
+	  && (thisPos[MAP_POS_SEX_AVERAGE] >
+	      lastPos[MAP_POS_SEX_AVERAGE] - ERROR_MARGIN)
+	  && (thisPos[MAP_POS_SEX_AVERAGE] <
+	      lastPos[MAP_POS_SEX_AVERAGE] + ERROR_MARGIN)))
   {
     /* add this locus to the end of the list */
     pLocusList->numLocus++;
@@ -2530,12 +2530,12 @@ add_analysis_locus (SubLocusList * pLocusList, int locus, int directionFlag,
     if ((originalLocusList.ppLocusList[curr]->locusType == LOCUS_TYPE_MARKER
 	 && originalLocusList.ppLocusList[locus]->locusType ==
 	 LOCUS_TYPE_MARKER && locus < curr)
-	|| thisPos[MAP_SEX_AVERAGE] < currPos[MAP_SEX_AVERAGE]
+	|| thisPos[MAP_POS_SEX_AVERAGE] < currPos[MAP_POS_SEX_AVERAGE]
 	|| (directionFlag == DIRECTION_LEFT
-	    && (thisPos[MAP_SEX_AVERAGE] >
-		currPos[MAP_SEX_AVERAGE] - ERROR_MARGIN)
-	    && (thisPos[MAP_SEX_AVERAGE] <
-		currPos[MAP_SEX_AVERAGE] + ERROR_MARGIN))) {
+	    && (thisPos[MAP_POS_SEX_AVERAGE] >
+		currPos[MAP_POS_SEX_AVERAGE] - ERROR_MARGIN)
+	    && (thisPos[MAP_POS_SEX_AVERAGE] <
+		currPos[MAP_POS_SEX_AVERAGE] + ERROR_MARGIN))) {
       /* put it to the left the curr locus, shift the rest */
       for (j = numLocus - 1; j >= i; j--) {
 	pLocusList->pLocusIndex[j + 1] = pLocusList->pLocusIndex[j];

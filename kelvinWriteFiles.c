@@ -95,19 +95,19 @@ write2ptBRFile (int loc1, int loc2)
   fprintf (fpHet, "# Seq: %d Chr: %d Trait: %s Marker: %s", loc2,
 	   pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
   if ((modelOptions.mapFlag == SEX_SPECIFIC)
-      && (pLocus2->pMapUnit->mapPos[MAP_FEMALE] >= 0)
-      && (pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0))
+      && (pLocus2->pMapUnit->mapPos[MAP_POS_FEMALE] >= 0)
+      && (pLocus2->pMapUnit->mapPos[MAP_POS_MALE] >= 0))
     {
       fprintf (fpHet,
 	       " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
-	       pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
-	       pLocus2->pMapUnit->mapPos[MAP_FEMALE],
-	       pLocus2->pMapUnit->mapPos[MAP_MALE]);
+	       pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE],
+	       pLocus2->pMapUnit->mapPos[MAP_POS_FEMALE],
+	       pLocus2->pMapUnit->mapPos[MAP_POS_MALE]);
     }
   else
     {
       fprintf (fpHet, " Position: %.4f",
-	       pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
+	       pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]);
     }
   if (pLocus2->pMapUnit->basePairLocation >= 0)
     fprintf (fpHet, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
@@ -399,20 +399,20 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 	       pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
 
       if ((modelOptions.mapFlag == SEX_SPECIFIC) &&
-	  (pLocus2->pMapUnit->mapPos[MAP_FEMALE] >= 0) &&
-	  (pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0))
+	  (pLocus2->pMapUnit->mapPos[MAP_POS_FEMALE] >= 0) &&
+	  (pLocus2->pMapUnit->mapPos[MAP_POS_MALE] >= 0))
 	{
 	  fprintf (fpMOD,
 		   " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
-		   pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
-		   pLocus2->pMapUnit->mapPos[MAP_FEMALE],
-		   pLocus2->pMapUnit->mapPos[MAP_MALE]);
+		   pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE],
+		   pLocus2->pMapUnit->mapPos[MAP_POS_FEMALE],
+		   pLocus2->pMapUnit->mapPos[MAP_POS_MALE]);
 
 	}
       else
 	{
 	  fprintf (fpMOD, " Position: %.4f",
-		   pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
+		   pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]);
 	}
 
     }
@@ -421,8 +421,8 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
       fprintf (fpMOD,
 	       "# Seq: %d Chr %d: Marker1: %s Position1: %.4f Marker2: %s Position2: %.4f",
 	       loc2, pLocus2->pMapUnit->chromosome, pLocus1->sName,
-	       pLocus1->pMapUnit->mapPos[MAP_SEX_AVERAGE], pLocus2->sName,
-	       pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
+	       pLocus1->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], pLocus2->sName,
+	       pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]);
     }
 
   if (pLocus2->pMapUnit->basePairLocation >= 0)

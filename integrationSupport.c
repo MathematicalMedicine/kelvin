@@ -1080,10 +1080,10 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
       locusList->pPrevLocusDistance[k][1] = thetaF;
     }
   } else {
-    locusList->pNextLocusDistance[MAP_MALE][0] =
-    locusList->pPrevLocusDistance[MAP_MALE][1] = thetaM;
-    locusList->pNextLocusDistance[MAP_FEMALE][0] =
-    locusList->pPrevLocusDistance[MAP_FEMALE][1] = thetaF;
+    locusList->pNextLocusDistance[MAP_POS_MALE][0] =
+    locusList->pPrevLocusDistance[MAP_POS_MALE][1] = thetaM;
+    locusList->pNextLocusDistance[MAP_POS_FEMALE][0] =
+    locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = thetaF;
   }
 
   if (modelOptions.polynomial == TRUE);
@@ -1472,10 +1472,10 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
       locusList->pPrevLocusDistance[k][1] = thetaF;
     }
   } else {
-    locusList->pNextLocusDistance[MAP_MALE][0] =
-      locusList->pPrevLocusDistance[MAP_MALE][1] =   thetaM;
-    locusList->pNextLocusDistance[MAP_FEMALE][0] =
-      locusList->pPrevLocusDistance[MAP_FEMALE][1] = thetaF;
+    locusList->pNextLocusDistance[MAP_POS_MALE][0] =
+      locusList->pPrevLocusDistance[MAP_POS_MALE][1] =   thetaM;
+    locusList->pNextLocusDistance[MAP_POS_FEMALE][0] =
+      locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = thetaF;
   }
 
   if (modelOptions.polynomial == TRUE);

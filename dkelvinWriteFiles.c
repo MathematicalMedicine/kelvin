@@ -10,14 +10,14 @@ void dk_write2ptBRHeader (int loc1, int loc2)
 	   pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
   
   if ((modelOptions.mapFlag == SEX_SPECIFIC) &&
-      (pLocus2->pMapUnit->mapPos[MAP_FEMALE] >= 0) &&
-      (pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0)) {
+      (pLocus2->pMapUnit->mapPos[MAP_POS_FEMALE] >= 0) &&
+      (pLocus2->pMapUnit->mapPos[MAP_POS_MALE] >= 0)) {
     fprintf (fpHet, " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
-	     pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
-	     pLocus2->pMapUnit->mapPos[MAP_FEMALE], pLocus2->pMapUnit->mapPos[MAP_MALE]);
+	     pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE],
+	     pLocus2->pMapUnit->mapPos[MAP_POS_FEMALE], pLocus2->pMapUnit->mapPos[MAP_POS_MALE]);
     
   } else {
-    fprintf (fpHet, " Position: %.4f", pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
+    fprintf (fpHet, " Position: %.4f", pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]);
   }
   
   if (pLocus2->pMapUnit->basePairLocation >= 0)
@@ -193,21 +193,21 @@ void dk_write2ptMODHeader ()
 	     pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
     
     if ((modelOptions.mapFlag == SEX_SPECIFIC) &&
-	(pLocus2->pMapUnit->mapPos[MAP_FEMALE] >= 0) &&
-	(pLocus2->pMapUnit->mapPos[MAP_MALE] >= 0)) {
+	(pLocus2->pMapUnit->mapPos[MAP_POS_FEMALE] >= 0) &&
+	(pLocus2->pMapUnit->mapPos[MAP_POS_MALE] >= 0)) {
       fprintf (fpMOD, " AvgPosition: %.4f FemalePosition: %.4f MalePosition: %.4f",
-	       pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE],
-	       pLocus2->pMapUnit->mapPos[MAP_FEMALE], pLocus2->pMapUnit->mapPos[MAP_MALE]);
+	       pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE],
+	       pLocus2->pMapUnit->mapPos[MAP_POS_FEMALE], pLocus2->pMapUnit->mapPos[MAP_POS_MALE]);
       
     } else {
-      fprintf (fpMOD, " Position: %.4f", pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]);
+      fprintf (fpMOD, " Position: %.4f", pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]);
     }
     
   } else {
     fprintf (fpMOD, "# Seq: %d Chr %d: Marker1: %s Position1: %.4f Marker2: %s Position2: %.4f",
 	     loc2, pLocus2->pMapUnit->chromosome,
-	      pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_SEX_AVERAGE],
-	      pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_SEX_AVERAGE]); 
+	      pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE],
+	      pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]); 
   }
   
   if (pLocus2->pMapUnit->basePairLocation >= 0)

@@ -256,7 +256,7 @@ if (! modelOptions.markerAnalysis || (originalLocusList.ppLocusList[0]->locusTyp
     totalLoci = modelType.numMarkers + originalLocusList.numTraitLocus;
     if (modelRange.tlocRangeStart >= 0) {
       double endofmap, tloc;
-      endofmap = map.ppMapUnitList[map.count-1]->mapPos[SEX_AVERAGED] +
+      endofmap = map.ppMapUnitList[map.count-1]->mapPos[MAP_POS_SEX_AVERAGE] +
 	modelRange.tlocRangeIncr;
       i = 0;
       while ((tloc = modelRange.tlocRangeStart + (i * modelRange.tlocRangeIncr)) <= endofmap) {
@@ -270,7 +270,7 @@ if (! modelOptions.markerAnalysis || (originalLocusList.ppLocusList[0]->locusTyp
         pLocus = originalLocusList.ppLocusList[i];
         if (pLocus->locusType == LOCUS_TYPE_TRAIT)
           continue;
-        addTraitLocus (&modelRange, pLocus->pMapUnit->mapPos[SEX_AVERAGED]);
+        addTraitLocus (&modelRange, pLocus->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]);
       }
     }
   }
