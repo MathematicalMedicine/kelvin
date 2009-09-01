@@ -155,7 +155,7 @@ int main (int argc, char *argv[])
   if (modelOptions.integration) {
     #include "integrationMain.c"
   } else {
-    int danglingWire=0;
+    //    int danglingWire=0;
     //#include "iterationMain.c"
     iterateMain();
   }
