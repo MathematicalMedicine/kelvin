@@ -309,6 +309,11 @@ unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount = 0, highSPLCo
 unsigned long initialHashSize = 0;      ///< Total initial size of hash table and collision lists
 /*@}*/
 
+/// Maximum amount of physical memory available in Kbytes so we can handle depletion
+extern maximumPMK;
+/// Flag set whenever we calculate our total data storage estimate
+static int memoryLow = FALSE;
+
 /// The svn version of this module displayed by kelvin.
 char *polynomialVersion = "$Id$";
 
@@ -2830,6 +2835,10 @@ void polynomialInitialization (int polynomialScale)
   int i;
   char *envVar;
   char messageBuffer[MAXSWMSG];
+  int maximumPMK;
+
+  // Get our maximum so we can react to depletion.
+  maximumPMK = swGetMaximumPMK ();
 
 #ifdef FREEDEBUG
 #warning "freePoly protection is turned on, so memory will purposefully leak!"
@@ -3812,6 +3821,22 @@ void polyStatistics (char *title)
       productSize + (productTerms * (sizeof (Polynomial *) + sizeof (int))) + functionCallSize + ((constantListLength + variableListLength + sumListLength + productListLength + functionCallListLength) * sizeof (void *));
 
   fprintf (stderr, "---Total data storage estimate: %.0fKb---\n", grandTotal / 1024);
+
+  // Set a flag so we can take action as needed
+  if ((grandTotal / 1024) > (maximumPMK / 2)) {
+    memoryLow = TRUE;
+#ifdef USE_SSD
+    fprintf (stderr, "Maximum of %dKb of physical memory is %.0f%% used, switching to SSD.\n", 
+	     maximumPMK, (grandTotal / 1024) / maximumPMK * 100);
+#endif
+  } else {
+    memoryLow = FALSE;
+#ifdef USE_SSD
+    fprintf (stderr, "Maximum of %dKb physical memory is at %.0f%% used.\n", 
+	     maximumPMK, (grandTotal / 1024) / maximumPMK * 100);
+#endif
+  }
+
 #ifdef DMTRACK
   swDumpHeldTotals ();
 #endif
@@ -4621,16 +4646,27 @@ void importTermList (Polynomial * p)
 #endif
 }
 
+/**
+
+  Write a list of sum terms out to SSD storage for later import.
+
+*/
 void exportTermList (Polynomial * p, int writeFlag)
 {
 #ifdef USE_SSD
   struct sumPoly *sP;
 
+  // Only do exports when we're below some available physical memory threshold.
+  if (memoryLow != TRUE)
+    return;
+
+  // Only handle sum polynomials
   if (p->eType != T_SUM)
     return;
 
   sP = (struct sumPoly *) p->e.s;
 
+  // Only handle largish sum polynomials
   if (sP->num < MIN_USE_SSD_DPS)
     return;
 
