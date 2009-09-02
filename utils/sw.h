@@ -58,9 +58,6 @@ void swLogPeaks (char *);
 int swGetMaximumPMK ();
 int swGetCurrentVMK (pid_t);
 
-#ifdef DMUSE
-extern int used24s, used48s, used100s, missed24s, missed48s, missed100s;
-#endif
 #ifdef DMTRACK
 extern double totalMalloc, totalFree, totalReallocOK, totalReallocMove,
   totalReallocFree, currentAlloc, peakAlloc;
