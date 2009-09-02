@@ -55,8 +55,8 @@ size_t swDelChunk (void *, int, char *, int);
 void swDumpSources ();
 void swDumpCrossModuleChunks ();
 void swLogPeaks (char *);
-int swGetMaximumPMK ();
-int swGetCurrentVMK (pid_t);
+long swGetMaximumPMK ();
+long swGetCurrentVMK (pid_t);
 
 #ifdef DMTRACK
 extern double totalMalloc, totalFree, totalReallocOK, totalReallocMove,

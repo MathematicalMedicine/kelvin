@@ -256,7 +256,7 @@ Thrashing was checked after some multiple of the MONSTATDELAYSEC periods.
 */
 void *monitorStatus () {
 
-  int currentVMK, maximumPMK;
+  long currentVMK, maximumPMK;
   time_t startTime;
 
   startTime = time (NULL);

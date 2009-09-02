@@ -968,7 +968,7 @@ swLogMsg (char *message)
 }
 
 int procSMapWorks = TRUE;
-int swGetCurrentVMK(pid_t pid) {
+long swGetCurrentVMK(pid_t pid) {
   char procSMap[128], buffer[128];
   FILE *fpProcSMap;
   long segmentSize = 0;
@@ -990,7 +990,7 @@ int swGetCurrentVMK(pid_t pid) {
   return currentVMK;
 }
 
-int swGetMaximumPMK(void) {
+long swGetMaximumPMK(void) {
   char buffer[128];
   FILE *fpProcMemInfo;
 
