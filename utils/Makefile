@@ -10,7 +10,7 @@ OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o d
 all : ../lib/libutils.a pt sw sSDHandler
 
 polynomial.o : polynomial.c polynomial.h
-	gcc polynomial.c -c -o polynomial.o
+	gcc polynomial.c -c $(CFLAGS) $(INCFLAGS) -o polynomial.o
 
 pt : pt.c polynomial.o sw.o
 	gcc polynomial.c -c -o polynomial.o -DPOLYUSE_DL -DPOLYCODE_DL
