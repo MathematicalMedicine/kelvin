@@ -310,7 +310,7 @@ unsigned long initialHashSize = 0;      ///< Total initial size of hash table an
 /*@}*/
 
 /// Maximum amount of physical memory available in Kbytes so we can handle depletion
-extern maximumPMK;
+extern long maximumPMK;
 /// Flag set whenever we calculate our total data storage estimate
 static int memoryLow = FALSE;
 
@@ -3823,10 +3823,10 @@ void polyStatistics (char *title)
   fprintf (stderr, "---Total data storage estimate: %.0fKb---\n", grandTotal / 1024);
 
   // Set a flag so we can take action as needed
-  if ((grandTotal / 1024) > (maximumPMK / 2)) {
+  if ((grandTotal / 1024) > (maximumPMK / 4)) {
     memoryLow = TRUE;
 #ifdef USE_SSD
-    fprintf (stderr, "Maximum of %dKb of physical memory is %.0f%% used, switching to SSD.\n", 
+    fprintf (stderr, "Maximum of %dKb of physical memory is %.0f%% used, utilizing SSD.\n", 
 	     maximumPMK, (grandTotal / 1024) / maximumPMK * 100);
 #endif
   } else {
@@ -4656,10 +4656,6 @@ void exportTermList (Polynomial * p, int writeFlag)
 #ifdef USE_SSD
   struct sumPoly *sP;
 
-  // Only do exports when we're below some available physical memory threshold.
-  if (memoryLow != TRUE)
-    return;
-
   // Only handle sum polynomials
   if (p->eType != T_SUM)
     return;
@@ -4683,6 +4679,10 @@ void exportTermList (Polynomial * p, int writeFlag)
     struct chunkTicket *cT;
     if (sP->iMTLIndex == -1) {
       // ...and it's a new term list in allocated (discontiguous) memory
+
+      // Only do exports when we're below some available physical memory threshold.
+      if (memoryLow != TRUE)
+	return;
 
       if (sSDDebt > 0)
 	return; // ...no can do.
