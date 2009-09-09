@@ -12,28 +12,27 @@
 #define FAULT_NAME SIGSEGV
 #endif
 
+static struct sigaction segv_action;
+
 #if defined (__linux__) && (defined (__powerpc__) || defined (__i386__))
 
   /* For a PowerPC or i386 box running Linux. */
 
-  #if defined (__powerpc__)
-    #define EXTRA_ARGS , struct sigcontext_struct *sigc
-    #define FAULT_ADDRESS ((void *)sigc->regs->dar)
-    #define SIGNAL_OK 					\
+#if defined (__powerpc__)
+#define EXTRA_ARGS , struct sigcontext_struct *sigc
+#define FAULT_ADDRESS ((void *)sigc->regs->dar)
+#define SIGNAL_OK 					\
       (sigc->signal == FAULT_NAME 				\
        && sigc->regs->trap == 0x00300			\
        && (sigc->regs->dsisr & 0x02000000) != 0)
-  #endif
-  #if defined (__i386__)
-    #define EXTRA_ARGS , struct sigcontext sigc
-    #define FAULT_ADDRESS ((void*)(sigc.cr2))
-    #define SIGNAL_OK (sigc.trapno == 14)
-  #endif
+#endif
+#if defined (__i386__)
+#define EXTRA_ARGS , struct sigcontext sigc
+#define FAULT_ADDRESS ((void*)(sigc.cr2))
+#define SIGNAL_OK (sigc.trapno == 14)
+#endif
 
-  static struct sigaction segv_action;
-  #define CONTINUE sigaction (FAULT_NAME, &segv_action, NULL); return
-
-  #define SETUP_HANDLER(handler)						\
+#define SETUP_HANDLER(handler)						\
     do {									\
       sigaction (FAULT_NAME, NULL, &segv_action);				\
       segv_action.sa_handler = (sig_t)(handler);				\
@@ -50,14 +49,11 @@
 
   /* For everything but a PowerPC or i386 box running Linux. */
 
-  #define EXTRA_ARGS , siginfo_t *sigi, void *unused
-  #define SIGNAL_OK (sigi->si_signo == FAULT_NAME && sigi->si_code == SEGV_ACCERR)
-  #define FAULT_ADDRESS (sigi->si_addr)
+#define EXTRA_ARGS , siginfo_t *sigi, void *unused
+#define SIGNAL_OK (sigi->si_signo == FAULT_NAME && sigi->si_code == SEGV_ACCERR)
+#define FAULT_ADDRESS (sigi->si_addr)
 
-  static struct sigaction segv_action;
-  #define CONTINUE sigaction (FAULT_NAME, &segv_action, NULL); return
-
-  #define SETUP_HANDLER(handler)						\
+#define SETUP_HANDLER(handler)						\
     do {									\
       sigaction (FAULT_NAME, NULL, &segv_action);				\
       segv_action.sa_sigaction = (handler);				\
@@ -78,22 +74,19 @@ void *allocatePages (int objectSizeInBytes)
   void *pageStart;
   int pageSize, pageCount;
 
-  pageSize = getpagesize();
+  pageSize = getpagesize ();
   pageCount = objectSizeInBytes / pageSize + 1;
 
-  printf ("There are %d pages from %d bytes and %d bytes/page\n", pageCount,
-	  objectSizeInBytes, pageSize);
+  printf ("There are %d pages from %d bytes and %d bytes/page\n", pageCount, objectSizeInBytes, pageSize);
 
   /* Allocate discrete pages of accessable memory for this structure. */
-  if (NULL == (pageStart =
-	       mmap(0 /* Hinted start */,
-		    (pageCount * pageSize) /* Size in bytes */, 
-		    PROT_READ|PROT_WRITE /* Protection */, 
-		    MAP_ANON|MAP_PRIVATE /* Flags */,
-		    -1 /* FD, ignored given MAP_ANON */,
-		    0 /* Offset, ignored given MAP_ANON */))) {
-    fprintf (stderr, "Memory page allocation for %d-byte structure failed!\n",
-	     objectSizeInBytes);
+  if (NULL == (pageStart = mmap (0 /* Hinted start */ ,
+              (pageCount * pageSize) /* Size in bytes */ ,
+              PROT_READ | PROT_WRITE /* Protection */ ,
+              MAP_ANON | MAP_PRIVATE /* Flags */ ,
+              -1 /* FD, ignored given MAP_ANON */ ,
+              0 /* Offset, ignored given MAP_ANON */ ))) {
+    fprintf (stderr, "Memory page allocation for %d-byte structure failed!\n", objectSizeInBytes);
     exit (EXIT_FAILURE);
   }
   return pageStart;
@@ -103,59 +96,55 @@ void allowReadOnly (void *pageStart, int objectSizeInBytes)
 {
   int pageSize, pageCount;
 
-  pageSize = getpagesize();
+  pageSize = getpagesize ();
   pageCount = objectSizeInBytes / pageSize + 1;
 
-  if (mprotect(pageStart, pageCount, PROT_READ) == -1)
-    perror("mprotect");
+  if (mprotect (pageStart, pageCount, PROT_READ) == -1)
+    perror ("mprotect");
 }
 
 void allowReadWrite (void *pageStart, int objectSizeInBytes)
 {
   int pageSize, pageCount;
 
-  pageSize = getpagesize();
+  pageSize = getpagesize ();
   pageCount = objectSizeInBytes / pageSize + 1;
 
-  if (mprotect(pageStart, pageCount, PROT_READ|PROT_WRITE) == -1)
-    perror("mprotect");
+  if (mprotect (pageStart, pageCount, PROT_READ | PROT_WRITE) == -1)
+    perror ("mprotect");
 }
 
 #ifdef MAIN
 
 //#include "utils/pageManagement.h"
 
-static void
-segvHandler (int signum EXTRA_ARGS)
+static void segvHandler (int signum EXTRA_ARGS)
 {
   fprintf (stderr, "Woot!\n");
-  //  if (! SIGNAL_OK
-  //      || ! maybe_mark_address (FAULT_ADDRESS))
-  //    {
-      /* For ease of debugging.  */
-      static volatile void *fa;
-      fa = FAULT_ADDRESS;
-      fprintf (stderr, "Fault address is %lx\n", fa);
-      abort ();
-      //    }
-  CONTINUE;
+  if (SIGNAL_OK) {
+    static volatile void *fa;
+    fa = FAULT_ADDRESS;
+    fprintf (stderr, "Fault address is %lx\n", fa);
+    abort ();
+  }
 }
 
-static void
-setup_segvHandler (void)
+static void setup_segvHandler (void)
 {
   //  page_size_g = (size_t) sysconf (_SC_PAGESIZE);
   //  lock = 0;
   SETUP_HANDLER (segvHandler);
 }
 
-int main (int argc, char * argv[])
+int main (int argc, char *argv[])
 {
-  struct little_one {
+  struct little_one
+  {
     int beginning;
     int ending;
   };
-  struct big_one {
+  struct big_one
+  {
     int beginning;
     void *middle[1024];
     int ending;
