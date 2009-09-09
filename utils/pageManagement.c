@@ -19,9 +19,9 @@ void *allocatePages (int objectSizeInBytes)
 	       mmap(0 /* Hinted start */,
 		    (pageCount * pageSize) /* Size in bytes */, 
 		    PROT_READ|PROT_WRITE /* Protection */, 
-		    MAP_ANONYMOUS|MAP_PRIVATE /* Flags */,
-		    -1 /* FD, ignored given MAP_ANONYMOUS */,
-		    0 /* Offset, ignored given MAP_ANONYMOUS */))) {
+		    MAP_ANON|MAP_PRIVATE /* Flags */,
+		    -1 /* FD, ignored given MAP_ANON */,
+		    0 /* Offset, ignored given MAP_ANON */))) {
     fprintf (stderr, "Memory page allocation for %d-byte structure failed!\n",
 	     objectSizeInBytes);
     exit (EXIT_FAILURE);
