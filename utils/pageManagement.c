@@ -6,6 +6,10 @@
 
 
 /* Now for the grotty machine-dependent stuff.  */
+#ifdef __APPLE__
+#define SIGSEGV SIGBUS
+#endif
+
 #if defined (__linux__) && (defined (__powerpc__) || defined (__i386__))
 
   /* For a PowerPC or i386 box running Linux. */
