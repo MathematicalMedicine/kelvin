@@ -7,7 +7,9 @@
 
 /* Now for the grotty machine-dependent stuff.  */
 #ifdef __APPLE__
-#define SIGSEGV SIGBUS
+#define FAULT_NAME SIGBUS
+#else
+#define FAULT_NAME SIGSEGV
 #endif
 
 #if defined (__linux__) && (defined (__powerpc__) || defined (__i386__))
@@ -18,7 +20,7 @@
     #define EXTRA_ARGS , struct sigcontext_struct *sigc
     #define FAULT_ADDRESS ((void *)sigc->regs->dar)
     #define SIGNAL_OK 					\
-      (sigc->signal == SIGSEGV 				\
+      (sigc->signal == FAULT_NAME 				\
        && sigc->regs->trap == 0x00300			\
        && (sigc->regs->dsisr & 0x02000000) != 0)
   #endif
@@ -29,11 +31,11 @@
   #endif
 
   static struct sigaction segv_action;
-  #define CONTINUE sigaction (SIGSEGV, &segv_action, NULL); return
+  #define CONTINUE sigaction (FAULT_NAME, &segv_action, NULL); return
 
   #define SETUP_HANDLER(handler)						\
     do {									\
-      sigaction (SIGSEGV, NULL, &segv_action);				\
+      sigaction (FAULT_NAME, NULL, &segv_action);				\
       segv_action.sa_handler = (sig_t)(handler);				\
       /* We want:								\
          system calls to resume if interrupted;				\
@@ -41,7 +43,7 @@
            technique (that is, a core dump).  */				\
       segv_action.sa_flags =						\
          SA_RESTART | SA_NODEFER | SA_RESETHAND;				\
-      sigaction (SIGSEGV, &segv_action, NULL);				\
+      sigaction (FAULT_NAME, &segv_action, NULL);				\
     } while (0)
 
 #else
@@ -49,15 +51,15 @@
   /* For everything but a PowerPC or i386 box running Linux. */
 
   #define EXTRA_ARGS , siginfo_t *sigi, void *unused
-  #define SIGNAL_OK (sigi->si_signo == SIGSEGV && sigi->si_code == SEGV_ACCERR)
+  #define SIGNAL_OK (sigi->si_signo == FAULT_NAME && sigi->si_code == SEGV_ACCERR)
   #define FAULT_ADDRESS (sigi->si_addr)
 
   static struct sigaction segv_action;
-  #define CONTINUE sigaction (SIGSEGV, &segv_action, NULL); return
+  #define CONTINUE sigaction (FAULT_NAME, &segv_action, NULL); return
 
   #define SETUP_HANDLER(handler)						\
     do {									\
-      sigaction (SIGSEGV, NULL, &segv_action);				\
+      sigaction (FAULT_NAME, NULL, &segv_action);				\
       segv_action.sa_sigaction = (handler);				\
       /* We want:								\
          system calls to resume if interrupted;				\
@@ -66,7 +68,7 @@
            technique (that is, a core dump).  */				\
       segv_action.sa_flags =						\
          SA_RESTART | SA_SIGINFO | SA_NODEFER | SA_RESETHAND;		\
-      sigaction (SIGSEGV, &segv_action, NULL);				\
+      sigaction (FAULT_NAME, &segv_action, NULL);				\
     } while (0)
 
 #endif
