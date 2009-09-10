@@ -4,6 +4,9 @@
 /**
 @file model_options.h
 
+@defgroup VettedGlobals Vetted globals that will stay globals
+@ingroup VettedGlobals
+
   model_options structure definition - contains all analysis
   options parsed from the kelvin configuration file.
 
