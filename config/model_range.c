@@ -6,10 +6,6 @@
 
 #define CHUNKSIZE 64
 
-/**
-@ingroup VettedGlobals
-*/
-
 /* String representations of the legal values for Constraint.type. Only
  * for prettifying logging output.
  */

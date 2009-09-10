@@ -76,9 +76,9 @@ typedef struct {
     degOfFreedom;
 } st_observed;
 
-ModelOptions modelOptions;
-ModelRange modelRange;
-ModelType modelType;
+ModelOptions modelOptions; //< @ingroup VettedGlobals
+ModelRange modelRange; //< @ingroup VettedGlobals
+ModelType modelType; //< @ingroup VettedGlobals
 
 
 /* Globals */
