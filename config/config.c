@@ -77,11 +77,11 @@ typedef struct {
 } st_observed;
 
 /**
-@defgroup VettedGlobals Vetted globals that will stay globals
+@defgroup vettedGlobals Vetted globals that will stay globals
 */
-ModelOptions modelOptions; //< @ingroup VettedGlobals
-ModelRange modelRange; //< @ingroup VettedGlobals
-ModelType modelType; //< @ingroup VettedGlobals
+ModelOptions modelOptions; ///< @ingroup vettedGlobals
+ModelRange modelRange; ///< @ingroup vettedGlobals
+ModelType modelType; ///< @ingroup vettedGlobals
 
 
 /* Globals */
