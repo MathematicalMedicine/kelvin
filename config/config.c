@@ -76,6 +76,9 @@ typedef struct {
     degOfFreedom;
 } st_observed;
 
+/**
+@defgroup VettedGlobals Vetted globals that will stay globals
+*/
 ModelOptions modelOptions; //< @ingroup VettedGlobals
 ModelRange modelRange; //< @ingroup VettedGlobals
 ModelType modelType; //< @ingroup VettedGlobals
