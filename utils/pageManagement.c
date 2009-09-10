@@ -19,9 +19,9 @@ static void segvHandler (int signum, siginfo_t *sigi, void *unused)
   }
 }
 
-static void setupSegvHandler (void)
+void setupSegvHandler (void)
 {
-  static struct sigaction segvAction;
+  struct sigaction segvAction;
   segvAction.sa_handler = (void *) segvHandler;
   segvAction.sa_flags = SA_RESTART | SA_SIGINFO | SA_NODEFER | SA_RESETHAND;
   if (sigaction (FAULT_NAME, &segvAction, NULL)) {
