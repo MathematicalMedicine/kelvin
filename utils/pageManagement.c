@@ -4,79 +4,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-/* Now for the grotty machine-dependent stuff.  */
-
 #ifdef __APPLE__
   #define FAULT_NAME SIGBUS
 #else
   #define FAULT_NAME SIGSEGV
 #endif
 
-static struct sigaction segv_action;
-
-#if defined (__linux__) && (defined (__powerpc__) || defined (__i386__))
-
-  /* For a PowerPC or i386 box running Linux. */
-
-  #if defined (__powerpc__)
-    #define EXTRA_ARGS , struct sigcontext_struct *sigc
-    #define FAULT_ADDRESS ((void *)sigc->regs->dar)
-    #define SIGNAL_OK 					\
-      (sigc->signal == FAULT_NAME 				\
-       && sigc->regs->trap == 0x00300			\
-       && (sigc->regs->dsisr & 0x02000000) != 0)
-  #endif
-  #if defined (__i386__)
-    #define EXTRA_ARGS , struct sigcontext sigc
-    #define FAULT_ADDRESS ((void*)(sigc.cr2))
-    #define SIGNAL_OK (sigc.trapno == 14)
-  #endif
-
-  #define SETUP_HANDLER(handler)						\
-    do {									\
-      sigaction (FAULT_NAME, NULL, &segv_action);				\
-      segv_action.sa_handler = (sig_t)(handler);				\
-      /* We want:								\
-         system calls to resume if interrupted;				\
-         segfaults inside the handler to be trapped, by the default	\
-           technique (that is, a core dump).  */				\
-      segv_action.sa_flags =						\
-         SA_RESTART | SA_NODEFER | SA_RESETHAND;				\
-      sigaction (FAULT_NAME, &segv_action, NULL);				\
-    } while (0)
-
-#else
-
-  /* For everything but a PowerPC or i386 box running Linux. */
-
-  #define EXTRA_ARGS , siginfo_t *sigi, void *unused
-  #define SIGNAL_OK (sigi->si_signo == FAULT_NAME && sigi->si_code == SEGV_ACCERR)
-  #define FAULT_ADDRESS (sigi->si_addr)
-
-  #define SETUP_HANDLER(handler)						\
-    do {									\
-      sigaction (FAULT_NAME, NULL, &segv_action);			\
-      segv_action.sa_sigaction = (handler);				\
-      /* We want:							\
-	 system calls to resume if interrupted;				\
-	 to use the three-argument version of the signal handler; and	\
-	 segfaults inside the handler to be trapped, by the default	\
-	 technique (that is, a core dump).  */				\
-      segv_action.sa_flags =						\
-	SA_RESTART | SA_SIGINFO | SA_NODEFER | SA_RESETHAND;		\
-      sigaction (FAULT_NAME, &segv_action, NULL);			\
-    } while (0)
-
-#endif
-
-static void segvHandler (int signum EXTRA_ARGS)
+static void segvHandler (int signum, siginfo_t *sigi, void *unused)
 {
-  if (SIGNAL_OK) {
-    static volatile void *fa;
-    fa = FAULT_ADDRESS;
-    fprintf (stderr, "Protection error referencing stucture at address %lx\n", fa);
+  if (sigi->si_signo == FAULT_NAME && sigi->si_code == SEGV_ACCERR) {
+    fprintf (stderr, "Protection error referencing stucture at address %lx\n",
+	     sigi->si_addr);
     abort ();
+  }
+}
+
+static void setupSegvHandler (void)
+{
+  static struct sigaction segvAction;
+  segvAction.sa_handler = (void *) segvHandler;
+  segvAction.sa_flags = SA_RESTART | SA_SIGINFO | SA_NODEFER | SA_RESETHAND;
+  if (sigaction (FAULT_NAME, &segvAction, NULL)) {
+    perror ("sigaction");
+    exit (EXIT_FAILURE);
   }
 }
 
@@ -87,10 +37,6 @@ void *allocatePages (int objectSizeInBytes)
 
   pageSize = getpagesize ();
   pageCount = objectSizeInBytes / pageSize + 1;
-
-#ifdef DEBUG
-  fprintf (stderr, "There are %d pages from %d bytes and %d bytes/page\n", pageCount, objectSizeInBytes, pageSize);
-#endif
 
   /* Allocate discrete pages of accessable memory for this structure. */
   if (NULL == (pageStart = mmap (0 /* Hinted start */ ,
@@ -131,13 +77,6 @@ void allowReadWrite (void *pageStart, int objectSizeInBytes)
 
 //#include "utils/pageManagement.h"
 
-static void setup_segvHandler (void)
-{
-  //  page_size_g = (size_t) sysconf (_SC_PAGESIZE);
-  //  lock = 0;
-  SETUP_HANDLER (segvHandler);
-}
-
 int main (int argc, char *argv[])
 {
   struct little_one
@@ -154,7 +93,7 @@ int main (int argc, char *argv[])
   struct little_one *littleOne;
   struct big_one *bigOne;
 
-  setup_segvHandler ();
+  setupSegvHandler ();
 
   littleOne = (struct little_one *) allocatePages (sizeof (struct little_one));
   fprintf (stderr, "littleOne starts at %lx\n", littleOne);
