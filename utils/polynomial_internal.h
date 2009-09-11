@@ -31,27 +31,14 @@
 #define free(X) swFree((X), __FILE__, __LINE__)
 #endif
 
-/* If CPU utilization % is below this in a check interval, we're thrashing
-   and should take some kind of action (currently exit) */
-#define THRASH_CPU 5
-
 /* Maximum size of a polynomial function name */
 #define MAX_PFN_LEN 128
 /* Maximum number of DLs supporting a single polynomial (up to 32K modules!) */
 #define MAX_POLY_DL 32
 
-/* These are the types of polynomials */
-enum expressionType
-{
-  T_CONSTANT = 0,		// a constant value for example, 0, 1, 1.5 ...
-  T_VARIABLE = 1,		// a variable such as x, y, z, ...
-  T_SUM = 2,			// a sum such as 2x+3y+5.6z+...
-  T_PRODUCT = 3,		// a product such as x^2y^10z^100
-  T_FUNCTIONCALL = 4,		// a function call such as log10(x)
-  T_EXTERNAL = 5,               // an external reference, e.g. compiled DL
-  T_FREED = 6,			// freed, but the structure kept for diagnostics
-  T_OFFLINE = 7			// not in memory currently, must be restored
-};
+/* If CPU utilization % is below this in a check interval, we're thrashing
+   and should take some kind of action (currently exit) */
+#define THRASH_CPU 5
 
 /* Constants are represented as polynomials, but have no subcomponent - just a value.
    Why do we use constant polynomials instead of just storing the constants directly?

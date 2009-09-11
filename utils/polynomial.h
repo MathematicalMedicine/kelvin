@@ -37,13 +37,43 @@ extern int containerExpansions;
 extern unsigned long totalSPLLengths, totalSPLCalls, lowSPLCount, highSPLCount;
 extern unsigned long initialHashSize;
 
+/* These are the types of polynomials */
+enum expressionType
+{
+  T_CONSTANT = 0,		// a constant value for example, 0, 1, 1.5 ...
+  T_VARIABLE = 1,		// a variable such as x, y, z, ...
+  T_SUM = 2,			// a sum such as 2x+3y+5.6z+...
+  T_PRODUCT = 3,		// a product such as x^2y^10z^100
+  T_FUNCTIONCALL = 4,		// a function call such as log10(x)
+  T_EXTERNAL = 5,               // an external reference, e.g. compiled DL
+  T_FREED = 6,			// freed, but the structure kept for diagnostics
+  T_OFFLINE = 7			// not in memory currently, must be restored
+};
+
 #ifndef __POLYNOMIAL_INTERNAL_H__
+
+/* Maximum size of a polynomial function name */
+#define MAX_PFN_LEN 128
+/* Maximum number of DLs supporting a single polynomial (up to 32K modules!) */
+#define MAX_POLY_DL 32
 
 typedef struct polynomial
 {
   unsigned char eType;		// polynomial type
   double value;			// the value of the polynomial
 } Polynomial;
+
+/* Optimized list for polynomial evaluation.  When we evaluate a polynomial multiple
+   times, it is more efficient to do a single traversal of the the polynomial tree
+   to build a list of unique terms in dependency order, and then drive evaluation
+   from the list. */
+
+typedef struct polyList
+{
+  int listSize;			// size of the preallocated pList
+  int listNext;			// next free position
+  struct polynomial **pList;	// list of polynomials for evaluation
+} polynomialList;
 
 #endif
 
