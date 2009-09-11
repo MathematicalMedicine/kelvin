@@ -1,4 +1,3 @@
-
 /**********************************************************************
  * Copyright 2008, Nationwide Children's Research Institute.  
  * All rights reserved.
@@ -57,6 +56,9 @@ void swDumpCrossModuleChunks ();
 void swLogPeaks (char *);
 long swGetMaximumPMK ();
 long swGetCurrentVMK (pid_t);
+
+/// Maximum amount of physical memory available in Kbytes
+extern long maximumPMK;
 
 #ifdef DMTRACK
 extern double totalMalloc, totalFree, totalReallocOK, totalReallocMove,

@@ -201,7 +201,7 @@ extern struct swStopwatch *overallSW;   ///< Total run statistics stopwatch defi
 /** This is a global variable used for giving each polynomial an unique ID
    so that we can know if two polynomials are the same just from their IDs */
 
-long nodeId;
+long nodeId; ///< @ingroup vettedGlobals
 
 /**
 
@@ -224,27 +224,27 @@ long nodeId;
 
 */
 static struct polynomial **constantList;
-int constantCount;      ///< The number of constants in constantList
+int constantCount;      ///< The number of constants in constantList @ingroup vettedGlobals
 static int constantListLength; ///< The total space available for constants in constantList
 
 static struct polynomial **variableList;       ///< The list of all variables
-int variableCount;      ///< The number of variables in variableList
+int variableCount;      ///< The number of variables in variableList @ingroup vettedGlobals
 static int variableListLength; ///< The total space available for variables in variableList
 
 struct polynomial **externalList;       ///< The list of all external functions
-int externalCount;      ///< The number of externals in externalList
+int externalCount;      ///< The number of externals in externalList @ingroup vettedGlobals
 int externalListLength; ///< The total space available for externals in externalList
 
 static struct polynomial **sumList;    ///< The list of all sums
-int sumCount;   ///< The number of sums in sumList
+int sumCount;   ///< The number of sums in sumList @ingroup vettedGlobals
 static int sumListLength;      ///< The total space available for sums in sumList
 
 static struct polynomial **productList;
-int productCount;
+int productCount; ///< The number of products in productList @ingroup vettedGlobals
 static int productListLength;
 
 static struct polynomial **functionCallList;
-int functionCallCount;
+int functionCallCount; ///< The number of functions in functionCallList @ingroup vettedGlobals
 static int functionCallListLength;
 
 static char *eTypes[8] = { "C", "V", "S", "P", "F", "E", "U", "O" }; ///< Useful prefixes for polynomial types
@@ -311,12 +311,10 @@ unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount = 0, highSPLCo
 unsigned long initialHashSize = 0;      ///< Total initial size of hash table and collision lists
 /*@}*/
 
-/// Maximum amount of physical memory available in Kbytes so we can handle depletion
-extern long maximumPMK;
 /// Flag set whenever we calculate our total data storage estimate
 static int memoryLow = FALSE;
 
-/// The svn version of this module displayed by kelvin.
+/// The svn version of this module displayed by kelvin @ingroup vettedGlobals
 char *polynomialVersion = "$Id$";
 
 /** Both of the following are set by initialization to value of environment variable of same name.
