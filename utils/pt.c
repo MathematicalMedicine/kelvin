@@ -24,6 +24,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "polynomial_internal.h"
 #include "polynomial.h"
 #include "sw.h"
 
@@ -35,7 +36,7 @@ struct swStopwatch *overallSW;
 struct handleInfo {
   char handle[MAXHANDLE];
   double *pValue;
-  struct polynomial *pP;
+  Polynomial *pP;
 } hIList[1024];
 int hI = 0;
 

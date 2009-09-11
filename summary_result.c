@@ -4,6 +4,7 @@
 #include <math.h> /* log10, pow */
 #include <string.h> /* memcpy */
 
+#include "utils/utils.h"
 #include "summary_result.h" /* SUMMARY_STAT etc. */
 #include "kelvinGlobals.h"
 #include "pedlib/pedlib.h" /* for PedigreeSet, Pedigree - hetLR calculations */

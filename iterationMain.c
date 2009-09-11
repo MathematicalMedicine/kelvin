@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include "utils/utils.h"
 #include "pedlib/pedlib.h"
 #include "pedlib/likelihood.h"
 #include "kelvinGlobals.h"

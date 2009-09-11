@@ -182,7 +182,9 @@
 #include <omp.h>
 #endif
 
+#include "polynomial_internal.h"
 #include "polynomial.h"
+
 #undef plusExp
 #undef timesExp
 
@@ -221,31 +223,31 @@ long nodeId;
   trait position.
 
 */
-struct polynomial **constantList;
+static struct polynomial **constantList;
 int constantCount;      ///< The number of constants in constantList
-int constantListLength; ///< The total space available for constants in constantList
+static int constantListLength; ///< The total space available for constants in constantList
 
-struct polynomial **variableList;       ///< The list of all variables
+static struct polynomial **variableList;       ///< The list of all variables
 int variableCount;      ///< The number of variables in variableList
-int variableListLength; ///< The total space available for variables in variableList
+static int variableListLength; ///< The total space available for variables in variableList
 
 struct polynomial **externalList;       ///< The list of all external functions
 int externalCount;      ///< The number of externals in externalList
 int externalListLength; ///< The total space available for externals in externalList
 
-struct polynomial **sumList;    ///< The list of all sums
+static struct polynomial **sumList;    ///< The list of all sums
 int sumCount;   ///< The number of sums in sumList
-int sumListLength;      ///< The total space available for sums in sumList
+static int sumListLength;      ///< The total space available for sums in sumList
 
-struct polynomial **productList;
+static struct polynomial **productList;
 int productCount;
-int productListLength;
+static int productListLength;
 
-struct polynomial **functionCallList;
+static struct polynomial **functionCallList;
 int functionCallCount;
-int functionCallListLength;
+static int functionCallListLength;
 
-char *eTypes[8] = { "C", "V", "S", "P", "F", "E", "U", "O" }; ///< Useful prefixes for polynomial types
+static char *eTypes[8] = { "C", "V", "S", "P", "F", "E", "U", "O" }; ///< Useful prefixes for polynomial types
 
 /** @defgroup PolyCons Polynomial Scaling Constants
     @{
@@ -253,7 +255,7 @@ char *eTypes[8] = { "C", "V", "S", "P", "F", "E", "U", "O" }; ///< Useful prefix
   These used to be constants, hence their case. Now they're scaled, but I kept the
   case because they act like constants. */
 
-int CONSTANT_HASH_SIZE, VARIABLE_HASH_SIZE, SUM_HASH_SIZE, PRODUCT_HASH_SIZE,
+static int CONSTANT_HASH_SIZE, VARIABLE_HASH_SIZE, SUM_HASH_SIZE, PRODUCT_HASH_SIZE,
   FUNCTIONCALL_HASH_SIZE, HASH_TABLE_INCREASE,
   CONSTANT_LIST_INITIAL, CONSTANT_LIST_INCREASE,
   VARIABLE_LIST_INITIAL, VARIABLE_LIST_INCREASE, 
@@ -321,63 +323,63 @@ char *polynomialVersion = "$Id$";
   They control diagnostic action in a manner not permitted by other approaches since they can
   be changed without rebuilding. */
 
-int polynomialDebugLevel = 0;   ///< Corresponds roughly to diagnostic output volume
-int polynomialLostNodeId = -1;  ///< For tracking down mis-freed polynomials
+static int polynomialDebugLevel = 0;   ///< Corresponds roughly to diagnostic output volume
+static int polynomialLostNodeId = -1;  ///< For tracking down mis-freed polynomials
 
-struct swStopwatch *evaluatePolySW,     ///< Conditional stopwatch for evaluatePoly stats.
+static struct swStopwatch *evaluatePolySW,     ///< Conditional stopwatch for evaluatePoly stats.
  *evaluateValueSW;      ///< Conditional stopwatch for evaluateValue stats.
 
-unsigned long lastPDSAccumWallTime = 0, ///< last polyDynamicStatistics walltime for thrashing check.
+static unsigned long lastPDSAccumWallTime = 0, ///< last polyDynamicStatistics walltime for thrashing check.
     lastPDSAccumUserTime = 0;   ///< ...same but CPU time.
 
 // The following are used for building sum polynomials...
 /// Collecting variable terms...
-double *factor_v1;
-struct polynomial **p_v1;
-int containerLength_v1;
-int counter_v1;
+static double *factor_v1;
+static struct polynomial **p_v1;
+static int containerLength_v1;
+static int counter_v1;
 // Collecting product terms...
-double *factor_p1;
-struct polynomial **p_p1;
-int containerLength_p1;
-int counter_p1;
+static double *factor_p1;
+static struct polynomial **p_p1;
+static int containerLength_p1;
+static int counter_p1;
 // Collecting function call terms...
-double *factor_f1;
-struct polynomial **p_f1;
-int containerLength_f1;
-int counter_f1;
+static double *factor_f1;
+static struct polynomial **p_f1;
+static int containerLength_f1;
+static int counter_f1;
 // Collecting all terms...
-double *factorSum;
-struct polynomial **pSum;
-int lengthSum;
+static double *factorSum;
+static struct polynomial **pSum;
+static int lengthSum;
 
 // Used for building product polynomials...
 // Collecting variable terms
-int *exponent_v2;
-struct polynomial **p_v2;
-int containerLength_v2;
-int counter_v2;
+static int *exponent_v2;
+static struct polynomial **p_v2;
+static int containerLength_v2;
+static int counter_v2;
 // Collecting sum terms...
-int *exponent_s2;
-struct polynomial **p_s2;
-int containerLength_s2;
-int counter_s2;
+static int *exponent_s2;
+static struct polynomial **p_s2;
+static int containerLength_s2;
+static int counter_s2;
 // Collecting function call terms...
-int *exponent_f2;
-struct polynomial **p_f2;
-int containerLength_f2;
-int counter_f2;
+static int *exponent_f2;
+static struct polynomial **p_f2;
+static int containerLength_f2;
+static int counter_f2;
 // Collecting all terms...
-int *exponentProd;
-struct polynomial **pProd;
-int lengthProd;
+static int *exponentProd;
+static struct polynomial **pProd;
+static int lengthProd;
 
 // Hash tables
-struct hashStruct *constantHash;        //... for constant polynomials
-struct hashStruct *variableHash;        //... for variable polynomials
-struct hashStruct *sumHash;     //...for sum polynomials
-struct hashStruct *productHash; //...for the product polynomials
-struct hashStruct *functionCallHash;    //...for the functionCall polynomials
+static struct hashStruct *constantHash;        //... for constant polynomials
+static struct hashStruct *variableHash;        //... for variable polynomials
+static struct hashStruct *sumHash;     //...for sum polynomials
+static struct hashStruct *productHash; //...for the product polynomials
+static struct hashStruct *functionCallHash;    //...for the functionCall polynomials
 
 #ifdef SOURCEDIGRAPH
 struct polySource
@@ -390,23 +392,23 @@ struct polySource
   int originalChildren[MAXPOLYSOURCES];
 };
 
-struct polySource  polySources[MAXPOLYSOURCES];
-int polySourceCount = 0;
-int originalChildren[MAXPOLYSOURCES];
+static struct polySource  polySources[MAXPOLYSOURCES];
+static int polySourceCount = 0;
+static int originalChildren[MAXPOLYSOURCES];
 #endif
 
-int importedTerms = 0, exportedDroppedTerms = 0, exportedWrittenTerms = 0, peakInMemoryTerms = 0;
-long sSDDebt = 0; // When <= 0, we're OK, if not, must pay-off allocation debt with freeSSD calls
+#ifdef USE_SSD
+static int importedTerms = 0, exportedDroppedTerms = 0, exportedWrittenTerms = 0, peakInMemoryTerms = 0;
+static long sSDDebt = 0; // When <= 0, we're OK, if not, must pay-off allocation debt with freeSSD calls
 #define MAX_SSD_BUFFER ((MAX_DPC_MASK+1)*2)
 
-#ifdef USE_SSD
 #define IMTL_COUNT 32
 struct inMemoryTermList {
   unsigned int lastNodeId; // This will enable recycling without retrieval
   struct chunkTicket cT;
   double buffer[MAX_SSD_BUFFER];
 };
-struct inMemoryTermList  iMTL[IMTL_COUNT];
+static struct inMemoryTermList  iMTL[IMTL_COUNT];
 #endif
 
 
@@ -1247,6 +1249,165 @@ short findOrAddSource (char *fileName, int lineNo, unsigned char eType)
   return (result->entryNo);
 }
 #endif
+
+
+/**
+
+  Dump the specified polynomial in terms of constants, variables and operations.
+  This produces a crazy amount of output if you're not careful.
+
+*/
+void expPrinting (Polynomial * p)
+{
+  int i;
+
+  switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
+  case T_CONSTANT:
+    fprintf (stderr, "%G", p->value);
+    break;
+  case T_VARIABLE:
+    fprintf (stderr, "%s", p->e.v->vName);
+    break;
+  case T_EXTERNAL:
+    fprintf (stderr, "%s()", p->e.e->polynomialFunctionName);
+    break;
+  case T_SUM:
+    if (p->e.s->num > 1)
+      fprintf (stderr, "(");
+    importTermList (p);
+    if (p->e.s->factor[0] != 1)
+      fprintf (stderr, "%G*", p->e.s->factor[0]);
+    expPrinting (p->e.s->sum[0]);
+    for (i = 1; i < p->e.s->num; i++) {
+      fprintf (stderr, "+");
+      if (p->e.s->factor[i] != 1)
+        fprintf (stderr, "%G*", p->e.s->factor[i]);
+      expPrinting (p->e.s->sum[i]);
+    }
+    exportTermList (p, FALSE);
+    if (p->e.s->num > 1)
+      fprintf (stderr, ")");
+    break;
+  case T_PRODUCT:
+    if (p->e.p->num > 1)
+      fprintf (stderr, "(");
+    expPrinting (p->e.p->product[0]);
+    if (p->e.p->exponent[0] != 1)
+      fprintf (stderr, "^%d", p->e.p->exponent[0]);
+    for (i = 1; i < p->e.s->num; i++) {
+      fprintf (stderr, "*");
+      expPrinting (p->e.p->product[i]);
+      if (p->e.p->exponent[i] != 1)
+        fprintf (stderr, "^%d", p->e.p->exponent[i]);
+    }
+    if (p->e.p->num > 1)
+      fprintf (stderr, ")");
+    break;
+  case T_FUNCTIONCALL:
+    fprintf (stderr, "%s(", p->e.f->name);
+    for (i = 0; i < p->e.f->num - 1; i++) {
+      expPrinting (p->e.f->para[i]);
+      fprintf (stderr, ", ");
+    }
+    expPrinting (p->e.f->para[p->e.f->num - 1]);
+    fprintf (stderr, ")");
+    break;
+  case T_FREED:
+    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
+  default:
+    fprintf (stderr, "In expPrinting, unknown expression type %d, exiting\n", p->eType);
+    exit (EXIT_FAILURE);
+  }
+}
+
+/**
+  Print the provided polynomial with sum and product terms in
+  parentheses and preceeded by their type ('s' or 'p') and index
+  down to depth indicated. At that level, simply refer to
+  polynomial ids. This can produce useful output without excessive
+  volume when used carefully.
+
+*/
+void expTermPrinting (FILE * output, Polynomial * p, int depth)
+{
+  int i;
+
+  switch (p->eType) {
+  case T_OFFLINE:
+    importPoly(p);
+    // Notice that there's no break here...
+
+  case T_CONSTANT:
+    fprintf (output, "%G", p->value);
+    break;
+  case T_VARIABLE:
+    fprintf (output, "%s", p->e.v->vName);
+    break;
+  case T_EXTERNAL:
+    fprintf (output, "%s()", p->e.e->polynomialFunctionName);
+    break;
+  case T_SUM:
+    if (depth <= 0) {
+      fprintf (output, "s%d", p->index);
+      return;
+    }
+    fprintf (output, "(s%d:", p->index);
+    if (p->e.s->factor[0] != 1)
+      fprintf (output, "%G*", p->e.s->factor[0]);
+    expTermPrinting (output, p->e.s->sum[0], depth - 1);
+    importTermList (p);
+    for (i = 1; i < p->e.s->num; i++) {
+      fprintf (output, "+");
+      if (p->e.s->factor[i] != 1)
+        fprintf (output, "%G*", p->e.s->factor[i]);
+      expTermPrinting (output, p->e.s->sum[i], depth - 1);
+    }
+    exportTermList (p, FALSE);
+    fprintf (output, ")");
+    break;
+  case T_PRODUCT:
+    if (depth <= 0) {
+      fprintf (output, "p%d", p->index);
+      return;
+    }
+    fprintf (output, "(p%d:", p->index);
+    expTermPrinting (output, p->e.p->product[0], depth - 1);
+    if (p->e.p->exponent[0] != 1)
+      fprintf (output, "^%d", p->e.p->exponent[0]);
+    for (i = 1; i < p->e.s->num; i++) {
+      fprintf (output, "*");
+      expTermPrinting (output, p->e.p->product[i], depth - 1);
+      if (p->e.p->exponent[i] != 1)
+        fprintf (output, "^%d", p->e.p->exponent[i]);
+    }
+    fprintf (output, ")");
+    break;
+  case T_FUNCTIONCALL:
+    if (depth <= 0) {
+      fprintf (output, "f%d", p->index);
+      return;
+    }
+    fprintf (output, "%s(", p->e.f->name);
+    for (i = 0; i < p->e.f->num - 1; i++) {
+      expTermPrinting (output, p->e.f->para[i], depth - 1);
+      fprintf (output, ", ");
+    }
+    expTermPrinting (output, p->e.f->para[p->e.f->num - 1], depth - 1);
+    fprintf (output, ")");
+    break;
+  case T_FREED:
+    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
+  default:
+    fprintf (stderr, "In expTermPrinting, unknown expression type %d, exiting\n", p->eType);
+    raise (SIGUSR1);
+    exit (EXIT_FAILURE);
+  }
+}
+
 
 /**
 
@@ -3475,163 +3636,6 @@ void writePolyDigraph (Polynomial * p)
 
   fprintf (diGraph, "}\n");
   fclose (diGraph);
-}
-
-/**
-
-  Dump the specified polynomial in terms of constants, variables and operations.
-  This produces a crazy amount of output if you're not careful.
-
-*/
-void expPrinting (Polynomial * p)
-{
-  int i;
-
-  switch (p->eType) {
-  case T_OFFLINE:
-    importPoly(p);
-    // Notice that there's no break here...
-
-  case T_CONSTANT:
-    fprintf (stderr, "%G", p->value);
-    break;
-  case T_VARIABLE:
-    fprintf (stderr, "%s", p->e.v->vName);
-    break;
-  case T_EXTERNAL:
-    fprintf (stderr, "%s()", p->e.e->polynomialFunctionName);
-    break;
-  case T_SUM:
-    if (p->e.s->num > 1)
-      fprintf (stderr, "(");
-    importTermList (p);
-    if (p->e.s->factor[0] != 1)
-      fprintf (stderr, "%G*", p->e.s->factor[0]);
-    expPrinting (p->e.s->sum[0]);
-    for (i = 1; i < p->e.s->num; i++) {
-      fprintf (stderr, "+");
-      if (p->e.s->factor[i] != 1)
-        fprintf (stderr, "%G*", p->e.s->factor[i]);
-      expPrinting (p->e.s->sum[i]);
-    }
-    exportTermList (p, FALSE);
-    if (p->e.s->num > 1)
-      fprintf (stderr, ")");
-    break;
-  case T_PRODUCT:
-    if (p->e.p->num > 1)
-      fprintf (stderr, "(");
-    expPrinting (p->e.p->product[0]);
-    if (p->e.p->exponent[0] != 1)
-      fprintf (stderr, "^%d", p->e.p->exponent[0]);
-    for (i = 1; i < p->e.s->num; i++) {
-      fprintf (stderr, "*");
-      expPrinting (p->e.p->product[i]);
-      if (p->e.p->exponent[i] != 1)
-        fprintf (stderr, "^%d", p->e.p->exponent[i]);
-    }
-    if (p->e.p->num > 1)
-      fprintf (stderr, ")");
-    break;
-  case T_FUNCTIONCALL:
-    fprintf (stderr, "%s(", p->e.f->name);
-    for (i = 0; i < p->e.f->num - 1; i++) {
-      expPrinting (p->e.f->para[i]);
-      fprintf (stderr, ", ");
-    }
-    expPrinting (p->e.f->para[p->e.f->num - 1]);
-    fprintf (stderr, ")");
-    break;
-  case T_FREED:
-    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
-  default:
-    fprintf (stderr, "In expPrinting, unknown expression type %d, exiting\n", p->eType);
-    exit (EXIT_FAILURE);
-  }
-}
-
-/**
-  Print the provided polynomial with sum and product terms in
-  parentheses and preceeded by their type ('s' or 'p') and index
-  down to depth indicated. At that level, simply refer to
-  polynomial ids. This can produce useful output without excessive
-  volume when used carefully.
-
-*/
-void expTermPrinting (FILE * output, Polynomial * p, int depth)
-{
-  int i;
-
-  switch (p->eType) {
-  case T_OFFLINE:
-    importPoly(p);
-    // Notice that there's no break here...
-
-  case T_CONSTANT:
-    fprintf (output, "%G", p->value);
-    break;
-  case T_VARIABLE:
-    fprintf (output, "%s", p->e.v->vName);
-    break;
-  case T_EXTERNAL:
-    fprintf (output, "%s()", p->e.e->polynomialFunctionName);
-    break;
-  case T_SUM:
-    if (depth <= 0) {
-      fprintf (output, "s%d", p->index);
-      return;
-    }
-    fprintf (output, "(s%d:", p->index);
-    if (p->e.s->factor[0] != 1)
-      fprintf (output, "%G*", p->e.s->factor[0]);
-    expTermPrinting (output, p->e.s->sum[0], depth - 1);
-    importTermList (p);
-    for (i = 1; i < p->e.s->num; i++) {
-      fprintf (output, "+");
-      if (p->e.s->factor[i] != 1)
-        fprintf (output, "%G*", p->e.s->factor[i]);
-      expTermPrinting (output, p->e.s->sum[i], depth - 1);
-    }
-    exportTermList (p, FALSE);
-    fprintf (output, ")");
-    break;
-  case T_PRODUCT:
-    if (depth <= 0) {
-      fprintf (output, "p%d", p->index);
-      return;
-    }
-    fprintf (output, "(p%d:", p->index);
-    expTermPrinting (output, p->e.p->product[0], depth - 1);
-    if (p->e.p->exponent[0] != 1)
-      fprintf (output, "^%d", p->e.p->exponent[0]);
-    for (i = 1; i < p->e.s->num; i++) {
-      fprintf (output, "*");
-      expTermPrinting (output, p->e.p->product[i], depth - 1);
-      if (p->e.p->exponent[i] != 1)
-        fprintf (output, "^%d", p->e.p->exponent[i]);
-    }
-    fprintf (output, ")");
-    break;
-  case T_FUNCTIONCALL:
-    if (depth <= 0) {
-      fprintf (output, "f%d", p->index);
-      return;
-    }
-    fprintf (output, "%s(", p->e.f->name);
-    for (i = 0; i < p->e.f->num - 1; i++) {
-      expTermPrinting (output, p->e.f->para[i], depth - 1);
-      fprintf (output, ", ");
-    }
-    expTermPrinting (output, p->e.f->para[p->e.f->num - 1], depth - 1);
-    fprintf (output, ")");
-    break;
-  case T_FREED:
-    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
-  default:
-    fprintf (stderr, "In expTermPrinting, unknown expression type %d, exiting\n", p->eType);
-    raise (SIGUSR1);
-    exit (EXIT_FAILURE);
-  }
 }
 
 void thrashingCheck ()

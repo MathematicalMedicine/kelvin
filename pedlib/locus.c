@@ -549,7 +549,7 @@ add_allele (Locus * pLocus, char *sAlleleName, double freq)
     pLocus->pAlleleFrequencyPolynomial =
       (Polynomial *) REALLOC ("pLocus->pAlleleFrequencyPolynomial",
 			      pLocus->pAlleleFrequencyPolynomial,
-			      numAllele * sizeof (Polynomial));
+			      numAllele * sizeof (Polynomial *));
   }
   /* actual count of the alleles in the pedigree */
   pLocus->pAlleleCount = (short *) REALLOC ("pLocus->pAlleleCount",
