@@ -1005,7 +1005,7 @@ void expandRange (ModelRange *range)
  * Fully expand the threshold, penetrance and parameter values by
  * liability class while honoring any inter-class constraints. This
  * only gets called if we are using liability classes (i.e.,
- * modelRange.nlclass is greater than 1).
+ * modelRange->nlclass is greater than 1).
  **********************************************************************/
 void expandClass (ModelRange * range)
 {

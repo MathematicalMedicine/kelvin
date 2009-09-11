@@ -297,7 +297,7 @@ identify_child_transmitted_alleles (Person * pFounder,
       pChildChild = identify_child_transmitted_alleles (pChild,
 							pChildChild, locus);
     }
-    if (!(modelOptions.sexLinked == TRUE &&
+    if (!(modelOptions->sexLinked == TRUE &&
 	  pFounder->sex + 1 == MALE && pChild->sex + 1 == MALE)) {
       /* we are done with this child and this child's descendents, 
        * now update parent's */
@@ -670,7 +670,7 @@ construct_original_allele_set_list (int locus)
 
     pAlleleSet->maxFreq = pLocus->pAlleleFrequency[i];
 
-    if (modelOptions.polynomial == TRUE) {
+    if (modelOptions->polynomial == TRUE) {
       char vName[100];
 
       sprintf (vName, "freq_l%d_i%d", locus, i);
@@ -724,7 +724,7 @@ add_allele_set (int locus, unsigned int *pAlleleBits)
   memset (pAlleleSet, 0, sizeof (AlleleSet));
 
 
-  if (modelOptions.polynomial == TRUE) {
+  if (modelOptions->polynomial == TRUE) {
     pAlleleSet->sumFreqPolynomial = constantExp (0);
   }
 
@@ -764,7 +764,7 @@ add_allele_set (int locus, unsigned int *pAlleleBits)
 	if (pAlleleSet->maxFreq < freq)
 	  pAlleleSet->maxFreq = freq;
 
-	if (modelOptions.polynomial == TRUE) {
+	if (modelOptions->polynomial == TRUE) {
 	  char vName[100];
 
 	  sprintf (vName, "f[%d][%d]", locus, allele - 1);

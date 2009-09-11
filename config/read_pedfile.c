@@ -297,7 +297,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 		 lineNo, sPedfileName);
 	if ((!isnan(pPerson->ppTraitValue[i][j])) &&
 	    ((int) pPerson->ppTraitValue[i][j] !=
-	     modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN]))
+	     modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN]))
 	  pPerson->ppTraitKnown[i][j] = TRUE;
       } else if (pTrait->type == QUANTITATIVE || pTrait->type == COMBINED) {
 	numRet = sscanf (pLine, "%lf %n", &pPerson->ppOrigTraitValue[i][j], &pos);
@@ -307,8 +307,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	if ((!isnan(pPerson->ppOrigTraitValue[i][j])) &&
 	    (pPerson->ppOrigTraitValue[i][j] != pTrait->unknownTraitValue)) {
 	  pPerson->ppTraitKnown[i][j] = TRUE;
-	  if ((pPerson->ppOrigTraitValue[i][j] != modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED]) &&
-	      (pPerson->ppOrigTraitValue[i][j] != modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED]))
+	  if ((pPerson->ppOrigTraitValue[i][j] != modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED]) &&
+	      (pPerson->ppOrigTraitValue[i][j] != modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED]))
 	    /* Calculated the standardized quantitative trait value */
 	    pPerson->ppTraitValue[i][j] = (pPerson->ppOrigTraitValue[i][j] - pTrait->sampleMean) / pTrait->sampleSD;
 	  else
@@ -381,7 +381,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 
     /* if this is X chromosome and this person is a male, then the genotype needs to be 
      * homozygous */
-    if (modelOptions.sexLinked && pPerson->sex == 0
+    if (modelOptions->sexLinked && pPerson->sex == 0
 	&& pPerson->pPhenotypeList[0][numMarker] !=
 	pPerson->pPhenotypeList[1][numMarker]) {
       KASSERT (0 == 1,
@@ -680,7 +680,7 @@ setup_pedigree_ptrs (Pedigree * pPed)
     pPerson = pPed->ppPersonList[i];
     /* set up parents links first */
     //if (strcmp (pPerson->sDadID, pPed->pPedigreeSet->sUnknownID) != 0) {
-    if (strcmp (pPerson->sParentID[DAD], modelOptions.sUnknownPersonID) != 0) {
+    if (strcmp (pPerson->sParentID[DAD], modelOptions->sUnknownPersonID) != 0) {
       /* dad is known */
       pPerson->pParents[DAD] = find_person (pPed, pPerson->sParentID[DAD]);
       /* mom is known */
@@ -696,18 +696,18 @@ setup_pedigree_ptrs (Pedigree * pPed)
     }
 
     /* set up first child link */
-    if (strcmp (pPerson->sFirstChildID, modelOptions.sUnknownPersonID) != 0) {
+    if (strcmp (pPerson->sFirstChildID, modelOptions->sUnknownPersonID) != 0) {
       /* first child is known */
       pPerson->pFirstChild = find_person (pPed, pPerson->sFirstChildID);
     }
     /* set up next paternal sibling link */
-    if (strcmp (pPerson->sNextSibID[DAD], modelOptions.sUnknownPersonID) != 0) {
+    if (strcmp (pPerson->sNextSibID[DAD], modelOptions->sUnknownPersonID) != 0) {
       pPerson->pNextSib[DAD] = find_person (pPed, pPerson->sNextSibID[DAD]);
     } else
       pPerson->pNextSib[DAD] = NULL;
 
     /* set up next maternal sibling link */
-    if (strcmp (pPerson->sNextSibID[MOM], modelOptions.sUnknownPersonID) != 0) {
+    if (strcmp (pPerson->sNextSibID[MOM], modelOptions->sUnknownPersonID) != 0) {
       pPerson->pNextSib[MOM] = find_person (pPed, pPerson->sNextSibID[MOM]);
     } else
       pPerson->pNextSib[MOM] = NULL;
@@ -1642,7 +1642,7 @@ void getPedigreeTraitRange (PedigreeSet *pPedigreeSet, double *min , double *max
   for (va = 0; va < pPedigreeSet->numPedigree; va++)
     for (vb = 0 ; vb < pPedigreeSet->ppPedigreeSet[va]->numPerson; vb++) {
       person = pPedigreeSet->ppPedigreeSet[va]->ppPersonList[vb];
-      if (person->ppOrigTraitValue[0][0] == modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN])
+      if (person->ppOrigTraitValue[0][0] == modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN])
 	continue;
       if (*min > person->ppOrigTraitValue[0][0])
 	*min = person->ppOrigTraitValue[0][0];

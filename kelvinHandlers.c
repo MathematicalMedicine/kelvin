@@ -17,7 +17,7 @@ void quitSignalHandler (int ourSignal)
 {
   statusRequestSignal = TRUE;
 #ifdef POLYSTATISTICS
-  if (modelOptions.polynomial == TRUE)
+  if (modelOptions->polynomial == TRUE)
     polyDynamicStatistics ("Signal received");
   else
 #endif

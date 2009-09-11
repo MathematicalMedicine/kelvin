@@ -471,7 +471,7 @@ free_locus_list (LocusList * pLocusList)
 
   for (i = 0; i < pLocusList->numLocus; i++) {
     pLocus = pLocusList->ppLocusList[i];
-    if (modelOptions.polynomial == TRUE) {
+    if (modelOptions->polynomial == TRUE) {
       free (pLocus->pAlleleFrequencyPolynomial);
     }
     if (pLocus->locusType == LOCUS_TYPE_TRAIT) {
@@ -545,7 +545,7 @@ add_allele (Locus * pLocus, char *sAlleleName, double freq)
     originalLocusList.alleleSetLen = pLocus->alleleSetLen;
 
   /* allocate space for frequency and count */
-  if (modelOptions.polynomial == TRUE) {
+  if (modelOptions->polynomial == TRUE) {
     pLocus->pAlleleFrequencyPolynomial =
       (Polynomial *) REALLOC ("pLocus->pAlleleFrequencyPolynomial",
 			      pLocus->pAlleleFrequencyPolynomial,
@@ -660,7 +660,7 @@ create_baseline_marker_genotypes (int locus, Pedigree * pPedigree)
 	for (allele1 = 1; allele1 <= pLocus->numAllele; allele1++) {
 	  for (allele2 = allele1; allele2 <= pLocus->numAllele; allele2++) {
 	    /* for X chromosome, only add homozygous genotypes for MALE */
-	    if ((modelOptions.sexLinked!=0) && (pPerson->sex + 1 == MALE)
+	    if ((modelOptions->sexLinked!=0) && (pPerson->sex + 1 == MALE)
 		&& (allele1 != allele2))
 	      continue;
 	    pGenotype =
@@ -685,7 +685,7 @@ create_baseline_marker_genotypes (int locus, Pedigree * pPedigree)
 	  allele1 = pPerson->pPhenotypeList[1][locus];
 	for (allele2 = 1; allele2 <= pLocus->numAllele; allele2++) {
 	  /* for X chromosome, only add homozygous genotypes for MALE */
-	  if ((modelOptions.sexLinked !=0)&& (pPerson->sex + 1 == MALE) &&
+	  if ((modelOptions->sexLinked !=0)&& (pPerson->sex + 1 == MALE) &&
 	      (allele1 != allele2))
 	    continue;
 	  pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
@@ -739,11 +739,11 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
     for (allele1 = 1; allele1 <= pLocus->numAllele; allele1++) {
       for (allele2 = allele1; allele2 <= pLocus->numAllele; allele2++) {
 	/* for X chromosome, only add homozygous genotypes for MALE */
-	if ((modelOptions.sexLinked !=0)&& (pPerson->sex + 1 == MALE) &&
+	if ((modelOptions->sexLinked !=0)&& (pPerson->sex + 1 == MALE) &&
 	    (allele1 != allele2))
 	  continue;
 
-	if (modelOptions.polynomial == TRUE) {
+	if (modelOptions->polynomial == TRUE) {
 	  compute_penetrance (pPerson, locus, allele1, allele2,
 			      &penPolynomial);
 	}
@@ -753,7 +753,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 	 * under polynomial, penetrance is a variable (parameter), we
 	 * can't check against one single value, so we include all
 	 * trait genotypes */
-	if (modelOptions.polynomial == TRUE) {
+	if (modelOptions->polynomial == TRUE) {
 	  pGenotype = add_genotype (&pPerson->ppGenotypeList[locus],
 				    &pPerson->pNumGenotype[locus],
 				    locus, allele1, allele2);
@@ -765,7 +765,7 @@ create_baseline_trait_genotypes (int locus, Pedigree * pPedigree)
 			    allele2, allele1);
 	    pGenotype->pDualGenotype = pGenotype2;
 	    pGenotype2->pDualGenotype = pGenotype;
-	    if(modelOptions.imprintingFlag == TRUE)
+	    if(modelOptions->imprintingFlag == TRUE)
 	      {
 		compute_penetrance (pPerson, locus, allele2, allele1,
 				    &penPolynomial);
@@ -846,7 +846,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
       if (pPerson->ppTraitKnown[locus][i] == TRUE) {
 	affectionStatus = (int) pPerson->ppTraitValue[locus][i];
 
-	if (modelOptions.polynomial == TRUE) {
+	if (modelOptions->polynomial == TRUE) {
 	  if (affectionStatus == AFFECTION_STATUS_AFFECTED) {
 	    /* build the penetrance polynomial - single variable */
 	    char vName[100];
@@ -893,7 +893,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	affectionStatus = AFFECTION_STATUS_UNKNOWN;
 	/* when the affection status is unknown, the penetrance is set to 1 */
 
-	if (modelOptions.polynomial == TRUE) {
+	if (modelOptions->polynomial == TRUE) {
 	  *(Polynomial **) pen = constant1Poly;
 	} else
 	  *(double *) pen = 1;
@@ -906,7 +906,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	/* if the quantitative trait value is not known for any trait, then
 	 * we can't calculate "exact" penetrance, just return 1 */
 	if (pPerson->ppTraitKnown[locus][j] == FALSE) {
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 	    *(Polynomial **) pen = constant1Poly;
 	  } else
 	    *(double *) pen = 1;
@@ -941,7 +941,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 
 	  /* the cutoff is number of SD, so it's already been converted to X in N(0,1) */
 
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 	    tempPoly = plusExp (2, 1.0,
 				variableExp (&pTrait->
 					     cutoffValue
@@ -975,7 +975,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	} else if (pTrait->type == COMBINED && (trait == pTrait->moreCutoffFlag)) {
 
 	  /* the cutoff is number of SD, so it's already been converted to X in N(0,1) */
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 	    tempPoly = plusExp (2, 1.0,
 				variableExp (&pTrait->
 					     cutoffValue
@@ -1008,7 +1008,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    *(double *) pen = ((double) 1.0) - gaussian_cdf (temp, (double) 0.0, (double) 1.0);
 	  }
 	} else {		/* point PDF */
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 	    tempPoly =
 	      timesExp (2,
 			plusExp (2, 1.0,
@@ -1070,7 +1070,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	df = pTrait->dfQT;
 	if (pTrait->type == COMBINED && (trait == pTrait->lessCutoffFlag)) {
 
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 	    tempPoly = plusExp (2, 1.0,
 				variableExp (&pTrait->
 					     cutoffValue
@@ -1131,7 +1131,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    *(double *) pen = t_cdf (temp, df);
 	  }
 	} else if (pTrait->type == COMBINED && (trait == pTrait->moreCutoffFlag)) {
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 
 	    tempPoly = plusExp (2, 1.0, variableExp (&pTrait->
 						     cutoffValue
@@ -1196,7 +1196,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	  }
 
 	} else {		/* point pdf */
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 	    tempPoly = plusExp (2, 1.0,
 				variableExp (&pPerson->ppTraitValue[locus]
 					     [i], NULL, 'D',
@@ -1291,7 +1291,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
       } /* t-dsitribution */
       else if (pTrait->functionQT == QT_FUNCTION_CHI_SQUARE) {
 	if (pTrait->type == COMBINED && (trait == pTrait->lessCutoffFlag)) {
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 	    *(Polynomial **) pen =
 	      functionCallExp (3, "gsl_cdf_chisq_P",
 			       variableExp (&pTrait->
@@ -1312,7 +1312,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	} else if (pTrait->type == COMBINED && (trait == pTrait->moreCutoffFlag)) {
 
 	  /* the cutoff is number of SD, so it's already been converted to X in N(0,1) */
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 	    *(Polynomial **) pen =
 	      functionCallExp (3, "gsl_cdf_chisq_Q",
 			       variableExp (&pTrait->
@@ -1330,7 +1330,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    *(double *) pen = ((double) 1.0) - chisq_cdf (pTrait->cutoffValue[liabilityClass - 1], mean);
 	  }
 	} else {		/* point PDF */
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 	    if (pTrait->minFlag && trait >= pTrait->min - 0.000001
 		&& trait <= pTrait->min + 0.000001) {
 	      *(Polynomial **) pen =
@@ -1416,7 +1416,7 @@ add_genotype (Genotype ** ppList, int *pCount, int locusIndex,
   /* add this to the top of the genotype list */
   pGenotype->pNext = *ppList;
   *ppList = pGenotype;
-  if (modelOptions.polynomial == TRUE) {
+  if (modelOptions->polynomial == TRUE) {
     pGenotype->penslot.penetrancePolynomial = constant1Poly;
   }
 
@@ -1428,7 +1428,7 @@ add_genotype (Genotype ** ppList, int *pCount, int locusIndex,
   pGenotype->allele[MOM] = allele2;
 
   /* if we are required to do allele set recoding */
-  //if(modelOptions.alleleSetRecodingFlag == TRUE) {
+  //if(modelOptions->alleleSetRecodingFlag == TRUE) {
   /* allocate space for the allele bits - as potentially there are more
    * than 32 -1 possible alleles */
   numInts = originalLocusList.alleleSetLen;
@@ -1561,7 +1561,7 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	    sizeof (int) * originalLocusList.numLocus);
     pGenotype = pPerson->ppGenotypeList[locus];
     while (pGenotype) {
-      if (modelOptions.polynomial == TRUE) {
+      if (modelOptions->polynomial == TRUE) {
 	if (pGenotype->allele[DAD] <= pLocus->numAllele) {
 	  char vName[100];
 
@@ -1612,8 +1612,8 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	  alleleFreq[MOM] =
 	    pLocus->ppAlleleSetList[pGenotype->allele[MOM] - 1]->sumFreq;
       }
-      if (modelOptions.polynomial == TRUE) {
-	if ((modelOptions.sexLinked!=0) && (pPerson->sex + 1 == MALE)) {
+      if (modelOptions->polynomial == TRUE) {
+	if ((modelOptions->sexLinked!=0) && (pPerson->sex + 1 == MALE)) {
 	  pGenotype->wtslot.weightPolynomial = alleleFreqPolynomial[DAD];
 	} else
 	  /* build the polynomial sum */
@@ -1621,7 +1621,7 @@ set_genotype_weight (Pedigree * pPedigree, int locus)
 	    timesExp (2, alleleFreqPolynomial[DAD], 1,
 		      alleleFreqPolynomial[MOM], 1, 0);
       } else {
-	if ((modelOptions.sexLinked !=0)&& (pPerson->sex + 1 == MALE)) {
+	if ((modelOptions->sexLinked !=0)&& (pPerson->sex + 1 == MALE)) {
 	  pGenotype->wtslot.weight = alleleFreq[DAD];
 	} else
 	  pGenotype->wtslot.weight = alleleFreq[DAD] * alleleFreq[MOM];
@@ -1785,7 +1785,7 @@ initialize_multi_locus_genotype (Pedigree * pPedigree)
       pConditional = &pPerson->pLikelihood[j];
       pConditional->touchedFlag = 0;
       pConditional->tmpTouched = 0;
-      if (modelOptions.polynomial == TRUE) {
+      if (modelOptions->polynomial == TRUE) {
 	pConditional->lkslot.likelihoodPolynomial =
 	  pConditional->tmpslot.tmpLikelihoodPolynomial = constant0Poly;
 	pConditional->wtslot.weightPolynomial = constant1Poly;
@@ -1927,7 +1927,7 @@ initialize_loci (PedigreeSet * pPedigreeSet)
   int ret;
 
   set_removeGenotypeFlag (TRUE);
-  if (modelOptions.polynomial == TRUE) {
+  if (modelOptions->polynomial == TRUE) {
     constant1Poly = constantExp (1);
     constant0Poly = constantExp (0);
   }
@@ -2004,7 +2004,7 @@ initialize_loci (PedigreeSet * pPedigreeSet)
            k=0;
            while(g)
            {
-               if (modelOptions.polynomial == TRUE )
+               if (modelOptions->polynomial == TRUE )
                {
                expPrinting(g->penslot.penetrancePolynomial);
                fprintf(stderr," Person %d locus %d genotype %d of %d (%d  %d)\n",
@@ -2088,7 +2088,7 @@ update_penetrance (PedigreeSet * pPedigreeSet, int locus)
 	continue;
       pGenotype = pPerson->ppSavedGenotypeList[locus];
       while (pGenotype) {
-	if (modelOptions.polynomial == TRUE) {
+	if (modelOptions->polynomial == TRUE) {
 	  compute_penetrance (pPerson, locus,
 			      pGenotype->allele[0],
 			      pGenotype->allele[1], &penPolynomial);
@@ -2458,7 +2458,7 @@ add_analysis_locus (SubLocusList * pLocusList, int locus, int directionFlag,
       pLocusList->pPrevLocusDistance[0][1] =
       cm_to_recombination_fraction (firstPos[0] - thisPos[0],
 				    map.mapFunction);
-    if (modelOptions.mapFlag == SEX_AVERAGED) {
+    if (modelOptions->mapFlag == SEX_AVERAGED) {
       pLocusList->pNextLocusDistance[1][0] =
 	pLocusList->pPrevLocusDistance[1][1] =
 	pLocusList->pNextLocusDistance[0][0];
@@ -2499,7 +2499,7 @@ add_analysis_locus (SubLocusList * pLocusList, int locus, int directionFlag,
     pLocusList->pPrevLocusDistance[0][numLocus] =
       pLocusList->pNextLocusDistance[0][numLocus - 1] =
       cm_to_recombination_fraction (thisPos[0] - lastPos[0], map.mapFunction);
-    if (modelOptions.mapFlag == SEX_AVERAGED) {
+    if (modelOptions->mapFlag == SEX_AVERAGED) {
       pLocusList->pPrevLocusDistance[1][numLocus] =
 	pLocusList->pNextLocusDistance[1][numLocus - 1] =
 	pLocusList->pPrevLocusDistance[0][numLocus];
@@ -2555,7 +2555,7 @@ add_analysis_locus (SubLocusList * pLocusList, int locus, int directionFlag,
 	pLocusList->pPrevLocusDistance[0][i + 1] =
 	cm_to_recombination_fraction (currPos[0] - thisPos[0],
 				      map.mapFunction);
-      if (modelOptions.mapFlag == SEX_SPECIFIC) {
+      if (modelOptions->mapFlag == SEX_SPECIFIC) {
 	for (k = 1; k <= 2; k++) {
 	  pLocusList->pPrevLocusDistance[k][i] =
 	    pLocusList->pNextLocusDistance[k][i - 1] =

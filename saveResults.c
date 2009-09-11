@@ -76,15 +76,15 @@ int saveTrait (int chr23Flag,   ///< Flag is 1 if doing chromosome 23, 0 otherwi
 {
   tpl_node *tn;
 
-  mkdir (modelOptions.resultsprefix, S_IRWXU | S_IRWXG | S_IROTH);
+  mkdir (modelOptions->resultsprefix, S_IRWXU | S_IRWXG | S_IROTH);
   if (chr23Flag) {
-    sprintf (pathName, "%strait-23/", modelOptions.resultsprefix);
+    sprintf (pathName, "%strait-23/", modelOptions->resultsprefix);
     mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
-    sprintf (pathName, "%strait-23/ped-%s/", modelOptions.resultsprefix, pedigree);
+    sprintf (pathName, "%strait-23/ped-%s/", modelOptions->resultsprefix, pedigree);
   } else {
-    sprintf (pathName, "%strait/", modelOptions.resultsprefix);
+    sprintf (pathName, "%strait/", modelOptions->resultsprefix);
     mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
-    sprintf (pathName, "%strait/ped-%s/", modelOptions.resultsprefix, pedigree);
+    sprintf (pathName, "%strait/ped-%s/", modelOptions->resultsprefix, pedigree);
   }
   mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
   sprintf (fileName, traitFileFormat, pathName, pedigree);
@@ -112,9 +112,9 @@ int restoreTrait (int chr23Flag, char *pedigree, double **lDT)
   char *checkPedigree;
 
   if (chr23Flag)
-    sprintf (pathName, "%strait-23/ped-%s/", modelOptions.resultsprefix, pedigree);
+    sprintf (pathName, "%strait-23/ped-%s/", modelOptions->resultsprefix, pedigree);
   else
-    sprintf (pathName, "%strait/ped-%s/", modelOptions.resultsprefix, pedigree);
+    sprintf (pathName, "%strait/ped-%s/", modelOptions->resultsprefix, pedigree);
   sprintf (fileName, traitFileFormat, pathName, pedigree);
   tn = tpl_map (traitTPLFormat, &checkPedigree, lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275, lDT[5], 275);
   if ((file = fopen (fileName, "r"))) {
@@ -168,10 +168,10 @@ int saveMarker (char *pedigree, ///< Name of pedigree to use in path and filenam
   int i;
   char *markerName;
 
-  mkdir (modelOptions.resultsprefix, S_IRWXU | S_IRWXG | S_IROTH);
-  sprintf (pathName, "%schr-%d/", modelOptions.resultsprefix, chromosome);
+  mkdir (modelOptions->resultsprefix, S_IRWXU | S_IRWXG | S_IROTH);
+  sprintf (pathName, "%schr-%d/", modelOptions->resultsprefix, chromosome);
   mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
-  sprintf (pathName, "%schr-%d/ped-%s/", modelOptions.resultsprefix, chromosome, pedigree);
+  sprintf (pathName, "%schr-%d/ped-%s/", modelOptions->resultsprefix, chromosome, pedigree);
   mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
   sprintf (fileName, markerFileFormat, pathName, chromosome, pedigree);
   for (i = 0; i < markerCount; i++) {
@@ -212,7 +212,7 @@ int restoreMarker (char *pedigree, int chromosome, int markerCount, char **marke
   char *checkPedigree;
   char *markerName;
 
-  sprintf (pathName, "%schr-%d/ped-%s/", modelOptions.resultsprefix, chromosome, pedigree);
+  sprintf (pathName, "%schr-%d/ped-%s/", modelOptions->resultsprefix, chromosome, pedigree);
   sprintf (fileName, markerFileFormat, pathName, chromosome, pedigree);
   for (i = 0; i < markerCount; i++) {
     strcat (fileName, markerNames[i]);
@@ -274,10 +274,10 @@ int saveAlternative (char *pedigree,    ///< Name of pedigree to use in path and
 {
   tpl_node *tn;
 
-  mkdir (modelOptions.resultsprefix, S_IRWXU | S_IRWXG | S_IROTH);
-  sprintf (pathName, "%schr-%d/", modelOptions.resultsprefix, chromosome);
+  mkdir (modelOptions->resultsprefix, S_IRWXU | S_IRWXG | S_IROTH);
+  sprintf (pathName, "%schr-%d/", modelOptions->resultsprefix, chromosome);
   mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
-  sprintf (pathName, "%schr-%d/ped-%s/", modelOptions.resultsprefix, chromosome, pedigree);
+  sprintf (pathName, "%schr-%d/ped-%s/", modelOptions->resultsprefix, chromosome, pedigree);
   mkdir (pathName, S_IRWXU | S_IRWXG | S_IROTH);
   sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree, traitPosition);
   tn = tpl_map (alternativeTPLFormat, &pedigree, &chromosome, &traitPosition,
@@ -307,7 +307,7 @@ int restoreAlternative (char *pedigree, int chromosome, double traitPosition, do
   int checkChromosome;
   double checkTraitPosition;
 
-  sprintf (pathName, "%schr-%d/ped-%s/", modelOptions.resultsprefix, chromosome, pedigree);
+  sprintf (pathName, "%schr-%d/ped-%s/", modelOptions->resultsprefix, chromosome, pedigree);
   sprintf (fileName, alternativeFileFormat, pathName, chromosome, pedigree, traitPosition);
   tn = tpl_map (alternativeTPLFormat, &checkPedigree, &checkChromosome,
                 &checkTraitPosition, lDT[0], 275, lDT[1], 275, lDT[2], 275, lDT[3], 275, lDT[4], 275, lDT[5], 275);

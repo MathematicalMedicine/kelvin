@@ -2,9 +2,9 @@
 #include "model_options.h"
 #include "model_type.h"
 
-extern ModelRange modelRange;
-extern ModelOptions modelOptions;
-extern ModelType modelType;
+extern ModelRange *modelRange;
+extern ModelOptions *modelOptions;
+extern ModelType *modelType;
 
 void initializeDefaults ();
 void readConfigFile (char *config);

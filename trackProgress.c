@@ -379,10 +379,10 @@ void dumpTrackingStats (unsigned long cl[], unsigned long eCL[])
   for (i = 0; i < 9; i++)
     fprintf (stderr, "%d=%lu(%lu) ", i, cl[i], eCL[i]);
   fprintf (stderr, "\n");
-  fprintf (stderr, "modelRange. ntloc %d, npenet %d, nlclass %d, ngfreq %d, nafreq %d, "
+  fprintf (stderr, "modelRange-> ntloc %d, npenet %d, nlclass %d, ngfreq %d, nafreq %d, "
       "nparam %d, ntthresh %d, nalpha %d, ntheta %d, ndprime %d, originalLocusList.numLocus %d, "
-      "modelType.numMarkers %d\n",
-      modelRange.ntloc, modelRange.npenet, modelRange.nlclass, modelRange.ngfreq, modelRange.nafreq, modelRange.nparam, modelRange.ntthresh, modelRange.nalpha, modelRange.ntheta, modelRange.ndprime, originalLocusList.numLocus, modelType.numMarkers);
+      "modelType->numMarkers %d\n",
+      modelRange->ntloc, modelRange->npenet, modelRange->nlclass, modelRange->ngfreq, modelRange->nafreq, modelRange->nparam, modelRange->ntthresh, modelRange->nalpha, modelRange->ntheta, modelRange->ndprime, originalLocusList.numLocus, modelType->numMarkers);
 }
 
 /** 
@@ -405,7 +405,7 @@ char *estimateIterations (unsigned long eCL[])
   int totalLoopsForDPrime = 0, loc1, loc2;
   Locus *pLocus1, *pLocus2;
 
-  if (modelOptions.markerAnalysis != FALSE) {
+  if (modelOptions->markerAnalysis != FALSE) {
     /*
      * Marker pair (not # in analysis, but locus list)
      * Marker allele frequencies and penetrances stay at 1
@@ -422,69 +422,69 @@ char *estimateIterations (unsigned long eCL[])
         //               loc1, pLocus1->numOriginalAllele, loc2, pLocus2->numOriginalAllele);
         if (pLocus2->locusType != LOCUS_TYPE_MARKER)
           continue;
-        totalLoopsForDPrime += pow (modelRange.ndprime, (pLocus1->numOriginalAllele - 1) * (pLocus2->numOriginalAllele - 1));
-        if (modelOptions.markerAnalysis == ADJACENTMARKER)
+        totalLoopsForDPrime += pow (modelRange->ndprime, (pLocus1->numOriginalAllele - 1) * (pLocus2->numOriginalAllele - 1));
+        if (modelOptions->markerAnalysis == ADJACENTMARKER)
           loc1 = loc2;
       }
     }
     eCL[0] = 0;
     eCL[1] = totalLoopsForDPrime;
-    sprintf (analysisType, "%dD' cases of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)\n" "Marker-to-marker Two-Point ", totalLoopsForDPrime, modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass, pedigreeSet.numPedigree);
-    if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
+    sprintf (analysisType, "%dD' cases of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)\n" "Marker-to-marker Two-Point ", totalLoopsForDPrime, modelRange->nalpha, modelRange->ngfreq, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
+    if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM)
       strcat (analysisType, "Equilibrium.");
     else
       strcat (analysisType, "Disequilibrium.");
   } else {      // not AM/MM
-    if (modelType.type == TP) {
+    if (modelType->type == TP) {
       /* 
        * 
-       * TP DT NULL hypothesis is cL[0], looped for marker pair, marker allele frequency (not really), modelRange. ngfreq, npenet
+       * TP DT NULL hypothesis is cL[0], looped for marker pair, marker allele frequency (not really), modelRange-> ngfreq, npenet
        * TP DT alternative hypothesis is cL[1], looped for all of cL[0] and allele pairs, ndprime, ntheta
-       * TP QT NULL hypothesis is cL[2], looped for marker pair, marker allele frequency (not really),  modelRange. ngfreq, nparam, npenet, ntthresh
+       * TP QT NULL hypothesis is cL[2], looped for marker pair, marker allele frequency (not really),  modelRange-> ngfreq, nparam, npenet, ntthresh
        * TP QT alternative hypothesis is cL[3], looped for all of cL[2] and allele pairs, ndprime, ntheta
        * 
        */
 
-      if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+      if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
         pLocus1 = originalLocusList.ppLocusList[0];
         for (loc2 = 1; loc2 < originalLocusList.numLocus; loc2++) {
           pLocus2 = originalLocusList.ppLocusList[loc2];
-          totalLoopsForDPrime += pow (modelRange.ndprime, (pLocus1->numOriginalAllele - 1) * (pLocus2->numOriginalAllele - 1));
+          totalLoopsForDPrime += pow (modelRange->ndprime, (pLocus1->numOriginalAllele - 1) * (pLocus2->numOriginalAllele - 1));
         }
         // Divide by the iterations
         totalLoopsForDPrime /= (originalLocusList.numLocus - 1);
       } else
         totalLoopsForDPrime = 1;
 
-      if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
+      if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM)
         sprintf (analysisType, "%dTh*%d pair(s) of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)\n"
-            "Trait-to-marker Two-Point, ", modelRange.ntheta, (originalLocusList.numLocus - 1), modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass, pedigreeSet.numPedigree);
+            "Trait-to-marker Two-Point, ", modelRange->ntheta, (originalLocusList.numLocus - 1), modelRange->nalpha, modelRange->ngfreq, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
       else
         sprintf (analysisType, "%dTh*%dD' cases of %dAL*%dGF*%dp1*%dpv(%dLC)' space for %d pedigree(s)\n"
-            "Trait-to-marker Two-Point, ", modelRange.ntheta, totalLoopsForDPrime, modelRange.nalpha, modelRange.ngfreq, modelRange.nparam, modelRange.npenet, modelRange.nlclass, pedigreeSet.numPedigree);
-      if (modelType.trait == DT) {
+            "Trait-to-marker Two-Point, ", modelRange->ntheta, totalLoopsForDPrime, modelRange->nalpha, modelRange->ngfreq, modelRange->nparam, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
+      if (modelType->trait == DT) {
         strcat (analysisType, "Dichotomous Trait, ");
-        eCL[0] = (originalLocusList.numLocus - 1) * modelRange.ngfreq * modelRange.npenet;
-        eCL[1] = eCL[0] * totalLoopsForDPrime * modelRange.ntheta;
+        eCL[0] = (originalLocusList.numLocus - 1) * modelRange->ngfreq * modelRange->npenet;
+        eCL[1] = eCL[0] * totalLoopsForDPrime * modelRange->ntheta;
       } else {  // TP not DT
-        eCL[2] = (originalLocusList.numLocus - 1) * modelRange.ngfreq * modelRange.npenet * modelRange.nparam * modelRange.ntthresh;
-        eCL[3] = eCL[2] * totalLoopsForDPrime * modelRange.ntheta;
-        if (modelType.trait == QT) {    //QT
+        eCL[2] = (originalLocusList.numLocus - 1) * modelRange->ngfreq * modelRange->npenet * modelRange->nparam * modelRange->ntthresh;
+        eCL[3] = eCL[2] * totalLoopsForDPrime * modelRange->ntheta;
+        if (modelType->trait == QT) {    //QT
           strcat (analysisType, "Quantitative Trait, ");
         } else {        // TP not DT or QT, so CT
           strcat (analysisType, "Quantitative Trait w/Threshold, ");
         }
-        if (modelType.distrib == QT_FUNCTION_T) {
+        if (modelType->distrib == QT_FUNCTION_T) {
           strcat (analysisType, "Student's T-Distribution, Linkage ");
         } else {        // not T-Dist
-          if (modelType.distrib == QT_FUNCTION_CHI_SQUARE) {
+          if (modelType->distrib == QT_FUNCTION_CHI_SQUARE) {
             strcat (analysisType, "Chi-Square Distribution, Linkage ");
           } else {      // not T-Dist or Chi-Sq Dist, so Normal Dist
             strcat (analysisType, "Normal Distribution, Linkage ");
           }
         }
       }
-      if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
+      if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM)
         strcat (analysisType, "Equilibrium.");
       else
         strcat (analysisType, "Disequilibrium.");
@@ -492,39 +492,39 @@ char *estimateIterations (unsigned long eCL[])
 
       /* Pedigree likelihood calculation looping for MP is for trait, marker, then alternative hypothesis.
        * 
-       * modelRange.ntloc is all evaluation locations on the chromosome since we're past adding for TM.
+       * modelRange->ntloc is all evaluation locations on the chromosome since we're past adding for TM.
        * 
-       * MP DT trait is cl[4], looped for 3(SA/SS)?, modelRange. npenet, nlclass, ngfreq
-       * MP QT/CT trait is cl[5], looped for 3(SA/SS)?, modelRange. ngfreq, nparam (QT dist), npenet, ntthresh
-       * MP marker is cl[6], looped for <= modelRange.ntloc
-       * MP DT alt is cl[7], looped for modelRange.ntloc, locusList->numLocus, modelRange. npenet, ngfreq
-       * MP QT/CT alt is cl[8], looped for modelRange.ntloc,  locusList->numLocus, 
-       * modelRange. ngfreq, nparam, npenet, ntthresh
-       * ...but locusList->numLocus is calculated, use modelRange.ntloc
+       * MP DT trait is cl[4], looped for 3(SA/SS)?, modelRange-> npenet, nlclass, ngfreq
+       * MP QT/CT trait is cl[5], looped for 3(SA/SS)?, modelRange-> ngfreq, nparam (QT dist), npenet, ntthresh
+       * MP marker is cl[6], looped for <= modelRange->ntloc
+       * MP DT alt is cl[7], looped for modelRange->ntloc, locusList->numLocus, modelRange-> npenet, ngfreq
+       * MP QT/CT alt is cl[8], looped for modelRange->ntloc,  locusList->numLocus, 
+       * modelRange-> ngfreq, nparam, npenet, ntthresh
+       * ...but locusList->numLocus is calculated, use modelRange->ntloc
        * 
        * polynomials for each pedigree incorporate alpha?, # MP markers used in analysis.
        * 
        */
       sprintf (analysisType, "%dTL of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)\n"
           "Trait-to-marker, Sex-%s Multipoint (w/%d loci), ",
-          modelRange.ntloc, modelRange.nalpha, modelRange.ngfreq, modelRange.npenet, modelRange.nlclass, pedigreeSet.numPedigree, modelOptions.mapFlag == SS ? "Specific" : "Averaged", modelType.numMarkers + originalLocusList.numTraitLocus);
-      eCL[6] = modelRange.ntloc;
-      if (modelType.trait == DT) {
+          modelRange->ntloc, modelRange->nalpha, modelRange->ngfreq, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree, modelOptions->mapFlag == SS ? "Specific" : "Averaged", modelType->numMarkers + originalLocusList.numTraitLocus);
+      eCL[6] = modelRange->ntloc;
+      if (modelType->trait == DT) {
         strcat (analysisType, "Dichotomous Trait.");
-        eCL[4] = modelRange.npenet * modelRange.nlclass * modelRange.ngfreq;
-        eCL[7] = modelRange.ntloc * modelRange.npenet * modelRange.ngfreq;
+        eCL[4] = modelRange->npenet * modelRange->nlclass * modelRange->ngfreq;
+        eCL[7] = modelRange->ntloc * modelRange->npenet * modelRange->ngfreq;
       } else {  // SA/SS multipoint, but not DT
-        eCL[5] = modelRange.npenet * modelRange.ntthresh * modelRange.ngfreq * modelRange.nparam;
-        eCL[8] = modelRange.ntloc * modelRange.npenet * modelRange.ngfreq * modelRange.ntthresh * modelRange.nparam;
-        if (modelType.trait == QT) {
+        eCL[5] = modelRange->npenet * modelRange->ntthresh * modelRange->ngfreq * modelRange->nparam;
+        eCL[8] = modelRange->ntloc * modelRange->npenet * modelRange->ngfreq * modelRange->ntthresh * modelRange->nparam;
+        if (modelType->trait == QT) {
           strcat (analysisType, "Quantitative Trait, ");
         } else {        // SA/SS multipoint but not DT or QT, so CT
           strcat (analysisType, "Quantitative Trait w/Threshold, ");
         }
-        if (modelType.distrib == QT_FUNCTION_T) {
+        if (modelType->distrib == QT_FUNCTION_T) {
           strcat (analysisType, "Student's T-Distribution.");
         } else {        // not T-Dist
-          if (modelType.distrib == QT_FUNCTION_CHI_SQUARE) {
+          if (modelType->distrib == QT_FUNCTION_CHI_SQUARE) {
             strcat (analysisType, "Chi-Square Distribution.");
           } else {      // not T-Dist or Chi-Sq dist, so Normal Dist
             strcat (analysisType, "Normal Distribution.");

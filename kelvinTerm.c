@@ -3,7 +3,7 @@ extern LDLoci *pLDLoci;
 
   set_removeGenotypeFlag (TRUE);
 
-  if (modelType.type == TP) {
+  if (modelType->type == TP) {
     if (tp_result != NULL) {
       /* two point */
       for (i = 0; i < pLambdaCell->ndprime; i++) {
@@ -13,23 +13,23 @@ extern LDLoci *pLDLoci;
     }
   } else {
     /* multipoint */
-    for (posIdx = 0; posIdx < modelRange.ntloc; posIdx++) {
+    for (posIdx = 0; posIdx < modelRange->ntloc; posIdx++) {
       free (mp_result[posIdx].pMarkers);
     }
     free (mp_result);
   }
 
   /* free parental pair work space */
-  free_parental_pair_workspace (&parentalPairSpace, modelType.numMarkers + 1);
+  free_parental_pair_workspace (&parentalPairSpace, modelType->numMarkers + 1);
 
   /* free transmission probability matrix */
   free (altMatrix);
   free (nullMatrix);
 
-  if (modelType.type == TP)
+  if (modelType->type == TP)
     free_LD_loci (pLDLoci);
 
-  if (modelOptions.polynomial == TRUE) {
+  if (modelOptions->polynomial == TRUE) {
     pedigreeSetPolynomialClearance (&pedigreeSet);
   }
   free_likelihood_storage (&pedigreeSet);
@@ -38,11 +38,11 @@ extern LDLoci *pLDLoci;
   free_sub_locus_list (&traitLocusList);
   free_sub_locus_list (&markerLocusList);
   free_sub_locus_list (&savedLocusList);
-  free (modelOptions.sUnknownPersonID);
+  free (modelOptions->sUnknownPersonID);
   final_cleanup ();
 
 #ifdef SOURCEDIGRAPH
-  if (modelOptions.polynomial == TRUE)
+  if (modelOptions->polynomial == TRUE)
     dumpSourceParenting ();
 #endif
 
@@ -50,7 +50,7 @@ extern LDLoci *pLDLoci;
   swStop (overallSW);
   swDump (overallSW);
 #ifdef POLYSTATISTICS
-  if (modelOptions.polynomial == TRUE)
+  if (modelOptions->polynomial == TRUE)
     polyStatistics ("End of run");
 #endif
 #ifdef DMUSE
@@ -66,7 +66,7 @@ extern LDLoci *pLDLoci;
   swLogMsg ("Finished run");
 
 /* Close file pointers */
-if (modelType.type == TP)
+if (modelType->type == TP)
   fclose (fpPPL);
 
 if (fpMOD != NULL)

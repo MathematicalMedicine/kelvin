@@ -40,10 +40,10 @@ int initialize_tp_result_storage ()
 			       sizeof (SUMMARY_STAT **));
   for (i = 0; i < pLambdaCell->ndprime + 1; i++) {
     tp_result[i] =
-      (SUMMARY_STAT **) calloc (modelRange.ntheta + 1,
+      (SUMMARY_STAT **) calloc (modelRange->ntheta + 1,
 				sizeof (SUMMARY_STAT *));
-    for (j = 0; j < modelRange.ntheta + 1; j++) {
-      num = modelRange.nafreq + 1;
+    for (j = 0; j < modelRange->ntheta + 1; j++) {
+      num = modelRange->nafreq + 1;
       tp_result[i][j] =
 	(SUMMARY_STAT *) calloc (num, sizeof (SUMMARY_STAT));
       for (k = 0; k < num; k++) {
@@ -60,7 +60,7 @@ int free_tp_result_storage ()
   int i, j;
 
   for (i = 0; i < pLambdaCell->ndprime + 1; i++) {
-    for (j = 0; j < modelRange.ntheta + 1; j++) {
+    for (j = 0; j < modelRange->ntheta + 1; j++) {
       free (tp_result[i][j]);
     }
     free (tp_result[i]);
@@ -105,11 +105,11 @@ int record_tp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
   }
   else {
     /* caculating the HET */
-    for (j = 0; (j==0 && modelOptions.markerAnalysis!=FALSE) || j < modelRange.nalpha; j++) {
-      if(modelOptions.markerAnalysis != FALSE)
+    for (j = 0; (j==0 && modelOptions->markerAnalysis!=FALSE) || j < modelRange->nalpha; j++) {
+      if(modelOptions->markerAnalysis != FALSE)
 	alphaV = 1;
       else
-	alphaV = modelRange.alpha[j];
+	alphaV = modelRange->alpha[j];
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
 	alphaV2 = 0;
@@ -124,27 +124,27 @@ int record_tp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
       if(fpIR !=NULL){
         dk_curModel.alpha = alphaV;
         fprintf(fpIR,"%6.3f", log10HetLR);
-        if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+        if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
           fprintf(fpIR," %4.3f", dk_curModel.dprime[0]);
         }
-        if(modelOptions.mapFlag == SA){
+        if(modelOptions->mapFlag == SA){
           fprintf(fpIR," %4.3f", dk_curModel.theta[0]);
         } else{
           fprintf(fpIR," %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[0] );
         }
         fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
-        for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+        for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
           fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
-          if(modelOptions.imprintingFlag){
+          if(modelOptions->imprintingFlag){
             fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
           }else{
             fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].dd); 
           }
-          if (modelType.trait != DICHOTOMOUS && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+          if (modelType->trait != DICHOTOMOUS && modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
             fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].DDSD); 
 	  }
         }
-        if (modelType.trait == CT){
+        if (modelType->trait == CT){
           fprintf(fpIR," %4.3f",dk_curModel.pen[0].threshold);  /* If each LC uses different threshold, this does not work*/
         }
         fprintf(fpIR," %d\n",dk_curModel.posIdx );
@@ -219,10 +219,10 @@ void rescale_tp_result(int maxScale)
   if(maxScale==-1)
     maxScale=maxscale;
   for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-    for (thetaIdx = 0; thetaIdx < modelRange.ntheta; thetaIdx++) {
-      oldscale = tp_result[dprimeIdx][thetaIdx][modelRange.nafreq].scale;
-      hetLR = tp_result[dprimeIdx][thetaIdx][modelRange.nafreq].het_lr_total;
-      avgLR = tp_result[dprimeIdx][thetaIdx][modelRange.nafreq].het_lr_avg;
+    for (thetaIdx = 0; thetaIdx < modelRange->ntheta; thetaIdx++) {
+      oldscale = tp_result[dprimeIdx][thetaIdx][modelRange->nafreq].scale;
+      hetLR = tp_result[dprimeIdx][thetaIdx][modelRange->nafreq].het_lr_total;
+      avgLR = tp_result[dprimeIdx][thetaIdx][modelRange->nafreq].het_lr_avg;
       if(oldscale != maxScale && hetLR > 0) {
 	log10HetLR = log10(hetLR);
 	newLog10HetLR = log10HetLR + oldscale - maxScale;
@@ -232,8 +232,8 @@ void rescale_tp_result(int maxScale)
 	else {
 	  newHetLR = pow(10, newLog10HetLR);
 	}
-	tp_result[dprimeIdx][thetaIdx][modelRange.nafreq].scale=maxScale;
-	tp_result[dprimeIdx][thetaIdx][modelRange.nafreq].het_lr_total=newHetLR;
+	tp_result[dprimeIdx][thetaIdx][modelRange->nafreq].scale=maxScale;
+	tp_result[dprimeIdx][thetaIdx][modelRange->nafreq].het_lr_total=newHetLR;
       } /* end of change needed */
       if(oldscale != maxScale && avgLR > 0) {
 	log10AvgLR = log10(avgLR);
@@ -244,8 +244,8 @@ void rescale_tp_result(int maxScale)
 	else {
 	  newAvgLR = pow(10, newLog10AvgLR);
 	}
-	tp_result[dprimeIdx][thetaIdx][modelRange.nafreq].het_lr_avg=newAvgLR;
-	tp_result[dprimeIdx][thetaIdx][modelRange.nafreq].scale=maxScale;
+	tp_result[dprimeIdx][thetaIdx][modelRange->nafreq].het_lr_avg=newAvgLR;
+	tp_result[dprimeIdx][thetaIdx][modelRange->nafreq].scale=maxScale;
       } /* end of change needed */
     } /* end of theta loop */
   } /* end of D' loop */
@@ -261,24 +261,24 @@ void rescale_tp_result_dprime0(int dprime0Idx)
 
   /* find the max scale across thetas */
   maxScale = 0;
-  for (thetaIdx = 0; thetaIdx < modelRange.ntheta; thetaIdx++) {
-    oldscale = tp_result[dprime0Idx][thetaIdx][modelRange.nafreq].scale_orig;
+  for (thetaIdx = 0; thetaIdx < modelRange->ntheta; thetaIdx++) {
+    oldscale = tp_result[dprime0Idx][thetaIdx][modelRange->nafreq].scale_orig;
     if(oldscale > maxScale) {
       maxScale = oldscale;
       if(changeFlag ==0 && thetaIdx > 0)
 	changeFlag = 1;
     }
-    tp_result[dprime0Idx][thetaIdx][modelRange.nafreq].scale_orig2 = oldscale;
-    tp_result[dprime0Idx][thetaIdx][modelRange.nafreq].het_lr_avg_orig2 =
-      tp_result[dprime0Idx][thetaIdx][modelRange.nafreq].het_lr_avg_orig;
+    tp_result[dprime0Idx][thetaIdx][modelRange->nafreq].scale_orig2 = oldscale;
+    tp_result[dprime0Idx][thetaIdx][modelRange->nafreq].het_lr_avg_orig2 =
+      tp_result[dprime0Idx][thetaIdx][modelRange->nafreq].het_lr_avg_orig;
   }
 
   
   if(changeFlag > 0) {
-    for (thetaIdx = 0; thetaIdx < modelRange.ntheta; thetaIdx++) {
+    for (thetaIdx = 0; thetaIdx < modelRange->ntheta; thetaIdx++) {
       if(oldscale != maxScale) {
-	oldscale = tp_result[dprime0Idx][thetaIdx][modelRange.nafreq].scale_orig;
-	avgLR = tp_result[dprime0Idx][thetaIdx][modelRange.nafreq].het_lr_avg_orig;
+	oldscale = tp_result[dprime0Idx][thetaIdx][modelRange->nafreq].scale_orig;
+	avgLR = tp_result[dprime0Idx][thetaIdx][modelRange->nafreq].het_lr_avg_orig;
 	log10AvgLR = log10(avgLR);
 	newLog10AvgLR = log10AvgLR + oldscale - maxScale;
 	if(newLog10AvgLR < DBL_MIN_10_EXP+1) {
@@ -287,8 +287,8 @@ void rescale_tp_result_dprime0(int dprime0Idx)
 	else {
 	  newAvgLR = pow(10, newLog10AvgLR);
 	}
-	tp_result[dprime0Idx][thetaIdx][modelRange.nafreq].het_lr_avg_orig2 = newAvgLR ;
-	tp_result[dprime0Idx][thetaIdx][modelRange.nafreq].scale_orig2 = maxScale;
+	tp_result[dprime0Idx][thetaIdx][modelRange->nafreq].het_lr_avg_orig2 = newAvgLR ;
+	tp_result[dprime0Idx][thetaIdx][modelRange->nafreq].scale_orig2 = maxScale;
       }
     }
   }
@@ -327,15 +327,15 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
   }
   else {
     /* caculating the HET */
-    for (j = 0; j < modelRange.nalpha; j++) {
-      alphaV = modelRange.alpha[j];
+    for (j = 0; j < modelRange->nalpha; j++) {
+      alphaV = modelRange->alpha[j];
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
 	alphaV2 = 0;
       log10HetLR = 0;
       for (pedIdx = 0; pedIdx < pedigreeSet->numPedigree; pedIdx++) {
 	pPedigree = pedigreeSet->ppPedigreeSet[pedIdx];
-	if(modelType.trait == DT) {
+	if(modelType->trait == DT) {
 	  homoLR = pPedigree->alternativeLikelihoodDT[gfreqIdx][penIdx] /
 	    (pPedigree->traitLikelihoodDT[gfreqIdx][penIdx] *
 	     pPedigree->markerLikelihood);
@@ -354,18 +354,18 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
         fprintf(fpIR,"%6.3f", log10HetLR);
 
         fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
-        for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+        for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
           fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
-          if(modelOptions.imprintingFlag){
+          if(modelOptions->imprintingFlag){
             fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
           }else{
             fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].dd); 
           }
-          if (modelType.trait != DICHOTOMOUS && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+          if (modelType->trait != DICHOTOMOUS && modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
             fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].DDSD); 
 	  }
         }
-        if (modelType.trait == CT){
+        if (modelType->trait == CT){
           fprintf(fpIR," %4.3f",dk_curModel.pen[0].threshold);  /* If each LC uses different threshold, this does not work*/
         }
         fprintf(fpIR," %d\n",dk_curModel.posIdx);
@@ -458,20 +458,20 @@ int get_average_LR (SUMMARY_STAT *** result)
 
   for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
     dprime = pLambdaCell->lambda[dprimeIdx][0][0];
-    for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
+    for (thetaInd = 0; thetaInd < modelRange->ntheta; thetaInd++) {
       /* sex averaged theta */
-      theta = modelRange.theta[0][thetaInd];
+      theta = modelRange->theta[0][thetaInd];
       total_lr = 0;
       count = 0;
-      if(modelRange.nafreq > 1) {
+      if(modelRange->nafreq > 1) {
 	/* find out the max scale for (D', theta) pair */
 	maxScale = 0;
-	for (mkrFreqIdx = 0; mkrFreqIdx < modelRange.nafreq; mkrFreqIdx++) {
+	for (mkrFreqIdx = 0; mkrFreqIdx < modelRange->nafreq; mkrFreqIdx++) {
 	  scale = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].scale;
 	  if(scale > maxScale)
 	    maxScale = scale; 
 	}
-	for (mkrFreqIdx = 0; mkrFreqIdx < modelRange.nafreq; mkrFreqIdx++) {
+	for (mkrFreqIdx = 0; mkrFreqIdx < modelRange->nafreq; mkrFreqIdx++) {
 	  scale = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].scale;
 	  lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total;
 	  if(scale != maxScale && lr > 0) {
@@ -487,14 +487,14 @@ int get_average_LR (SUMMARY_STAT *** result)
 	  }
 	}
       }
-      for (mkrFreqIdx = 0; mkrFreqIdx < modelRange.nafreq; mkrFreqIdx++) {
+      for (mkrFreqIdx = 0; mkrFreqIdx < modelRange->nafreq; mkrFreqIdx++) {
 	/* het_lr_total has trait parameters already integrated out - get the average */
-	//              if(modelType.trait == DT || modelType.distrib != QT_FUNCTION_CHI_SQUARE)
+	//              if(modelType->trait == DT || modelType->distrib != QT_FUNCTION_CHI_SQUARE)
 	if (isnan (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total)) {
 	  fprintf (stderr,
 		   "het_lr_total is NAN at theta (%f,%f)(%d) and dprime %f(%d).\n",
-		   modelRange.theta[0][thetaInd],
-		   modelRange.theta[1][thetaInd], thetaInd, dprime,
+		   modelRange->theta[0][thetaInd],
+		   modelRange->theta[1][thetaInd], thetaInd, dprime,
 		   dprimeIdx);
 	} else
 	  if (isnan (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total -
@@ -502,14 +502,14 @@ int get_average_LR (SUMMARY_STAT *** result)
 	{
 	  fprintf (stderr,
 		   "het_lr_total is INF at theta (%f,%f)(%d) and dprime %f(%d).\n",
-		   modelRange.theta[0][thetaInd],
-		   modelRange.theta[1][thetaInd], thetaInd, dprime,
+		   modelRange->theta[0][thetaInd],
+		   modelRange->theta[1][thetaInd], thetaInd, dprime,
 		   dprimeIdx);
 	}
-	if(modelOptions.markerAnalysis == FALSE)
+	if(modelOptions->markerAnalysis == FALSE)
 	  lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
 	    (tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count *
-	     modelRange.nalpha);
+	     modelRange->nalpha);
 	else
 	  lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
 	    tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count;
@@ -562,47 +562,47 @@ int get_average_LR (SUMMARY_STAT *** result)
 
       }				/* end of looping marker allele frequencies */
       /* recording the average and max */
-      memcpy (&tp_result[dprimeIdx][thetaInd][modelRange.nafreq],
+      memcpy (&tp_result[dprimeIdx][thetaInd][modelRange->nafreq],
 	      &tp_result[dprimeIdx][thetaInd][max_max_mf],
 	      sizeof (SUMMARY_STAT));
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_log10_lr =
+      tp_result[dprimeIdx][thetaInd][modelRange->nafreq].max_log10_lr =
 	max_max_lr_dprime_theta;
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_mf =
-	modelRange.afreq[max_max_mf];
+      tp_result[dprimeIdx][thetaInd][modelRange->nafreq].max_mf =
+	modelRange->afreq[max_max_mf];
       /* this is the BR after integrating out marker allele frequencies */
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg =
+      tp_result[dprimeIdx][thetaInd][modelRange->nafreq].het_lr_avg =
 	total_lr / count;
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_br_lr =
+      tp_result[dprimeIdx][thetaInd][modelRange->nafreq].max_br_lr =
 	max_lr_dprime_theta;
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_br_mf =
-	modelRange.afreq[max_mf];
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg_orig =
+      tp_result[dprimeIdx][thetaInd][modelRange->nafreq].max_br_mf =
+	modelRange->afreq[max_mf];
+      tp_result[dprimeIdx][thetaInd][modelRange->nafreq].het_lr_avg_orig =
 	total_lr/count; 
-      tp_result[dprimeIdx][thetaInd][modelRange.nafreq].scale_orig =
-	tp_result[dprimeIdx][thetaInd][modelRange.nafreq].scale;
+      tp_result[dprimeIdx][thetaInd][modelRange->nafreq].scale_orig =
+	tp_result[dprimeIdx][thetaInd][modelRange->nafreq].scale;
 
 
     }				/* end of theta loop */
     /* recording the max per dprime */
-    memcpy (&tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq],
+    memcpy (&tp_result[dprimeIdx][modelRange->ntheta][modelRange->nafreq],
 	    &tp_result[dprimeIdx][max_max_theta][max_max_mf],
 	    sizeof (SUMMARY_STAT));
-    tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_lr =
+    tp_result[dprimeIdx][modelRange->ntheta][modelRange->nafreq].max_br_lr =
       max_lr_dprime;
-    tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_mf =
-      tp_result[dprimeIdx][max_theta][modelRange.nafreq].max_mf;
-    tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].
-      max_br_theta = modelRange.theta[0][thetaInd];
+    tp_result[dprimeIdx][modelRange->ntheta][modelRange->nafreq].max_br_mf =
+      tp_result[dprimeIdx][max_theta][modelRange->nafreq].max_mf;
+    tp_result[dprimeIdx][modelRange->ntheta][modelRange->nafreq].
+      max_br_theta = modelRange->theta[0][thetaInd];
   }				/* end of d prime loop */
 
   /* record the max overal */
-  memcpy (&tp_result[modelRange.ndprime][modelRange.ntheta]
-	  [modelRange.nafreq],
+  memcpy (&tp_result[modelRange->ndprime][modelRange->ntheta]
+	  [modelRange->nafreq],
 	  &tp_result[max_max_dprime][max_max_theta][max_max_mf],
 	  sizeof (SUMMARY_STAT));
-  tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_lr =
+  tp_result[dprimeIdx][modelRange->ntheta][modelRange->nafreq].max_br_lr =
     max_lr;
-  tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_dprime =
+  tp_result[dprimeIdx][modelRange->ntheta][modelRange->nafreq].max_br_dprime =
     dprimeIdx;
 
   return 0;

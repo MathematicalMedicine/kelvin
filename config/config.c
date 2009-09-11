@@ -84,12 +84,16 @@ typedef struct {
   tab in doxygen will be useful again, and this group can go away. Right
   now it's just too cluttered. */
 
-ModelOptions modelOptions; ///< All configuration options for the working model
-ModelRange modelRange; ///< All expanded parameter ranges for the working model
-ModelType modelType; ///< All typing information for the working model
+ModelOptions *modelOptions; ///< All configuration options for the working model
+ModelRange *modelRange; ///< All expanded parameter ranges for the working model
+ModelType *modelType; ///< All typing information for the working model
 /*@}*/
 
 /* Module globals */
+
+static ModelOptions staticModelOptions; // Statically-allocated version for John's dispatch table
+static ModelRange staticModelRange; // Statically-allocated version for John's dispatch table
+static ModelType staticModelType; // Statically-allocated version for John's dispatch table
 static char buff[BUFFSIZE] = "";   /* These two are global to provide context to getNextTokgroup */
 static char *buffptr = NULL;
 static st_observed observed;       /* track non-obvious directives */
@@ -105,7 +109,7 @@ int compareDispatch (const void *a, const void *b);
 int getNextTokgroup (FILE *fp, char ***tokgroup_h, int *tokgroupsize);
 int tokenizeLine (char *line, char ***tokgroup_h, int *tokgroupsize);
 int singleDigit (char *str);
-void dumpModelOptions (ModelOptions *mo);
+void dummodelOptions (ModelOptions *mo);
 void bail (char *fmt, char *arg);
 
 /* functions for use in the dispatch table */
@@ -137,29 +141,29 @@ int set_resultsprefix (char **toks, int numtoks, void *unused);
 int set_logLevel (char **toks, int numtoks, void *unused);
 
 
-st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &modelOptions.markerfile},
-				{"MapFile", set_optionfile, &modelOptions.mapfile},
-				{"PedigreeFile", set_optionfile, &modelOptions.pedfile},
-				{"LocusFile", set_optionfile, &modelOptions.datafile},
-				{"BayesRatioFile", set_optionfile, &modelOptions.avghetfile},
-				{"PPLFile", set_optionfile, &modelOptions.pplfile},
-				{"CountFile", set_optionfile, &modelOptions.ccfile},
-				{"MODFile", set_optionfile, &modelOptions.modfile},
-				{"SurfaceFile", set_optionfile, &modelOptions.intermediatefile},
-				{"NIDetailFile", set_optionfile, &modelOptions.dkelvinoutfile},
+st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOptions.markerfile},
+				{"MapFile", set_optionfile, &staticModelOptions.mapfile},
+				{"PedigreeFile", set_optionfile, &staticModelOptions.pedfile},
+				{"LocusFile", set_optionfile, &staticModelOptions.datafile},
+				{"BayesRatioFile", set_optionfile, &staticModelOptions.avghetfile},
+				{"PPLFile", set_optionfile, &staticModelOptions.pplfile},
+				{"CountFile", set_optionfile, &staticModelOptions.ccfile},
+				{"MODFile", set_optionfile, &staticModelOptions.modfile},
+				{"SurfaceFile", set_optionfile, &staticModelOptions.intermediatefile},
+				{"NIDetailFile", set_optionfile, &staticModelOptions.dkelvinoutfile},
 
-				{"NonPolynomial", clear_flag, &modelOptions.polynomial},
-				{"Imprinting", set_flag, &modelOptions.imprintingFlag},
-				{"SexLinked", set_flag, &modelOptions.sexLinked},
-				{"FixedModels", clear_flag, &modelOptions.integration},
-				{"DryRun", set_flag, &modelOptions.dryRun},
-				{"ExtraMODs", set_flag, &modelOptions.extraMODs},
-				{"ForceBRFile", set_flag, &modelOptions.forceAvghetFile},
+				{"NonPolynomial", clear_flag, &staticModelOptions.polynomial},
+				{"Imprinting", set_flag, &staticModelOptions.imprintingFlag},
+				{"SexLinked", set_flag, &staticModelOptions.sexLinked},
+				{"FixedModels", clear_flag, &staticModelOptions.integration},
+				{"DryRun", set_flag, &staticModelOptions.dryRun},
+				{"ExtraMODs", set_flag, &staticModelOptions.extraMODs},
+				{"ForceBRFile", set_flag, &staticModelOptions.forceAvghetFile},
 
-				{"PolynomialScale", set_int, &modelOptions.polynomialScale},
-				{"LiabilityClasses", set_int, &modelRange.nlclass},
-				{"DiseaseAlleles", set_int, &modelRange.nalleles},
-				{"MaxIterations", set_int, &modelOptions.maxIterations},
+				{"PolynomialScale", set_int, &staticModelOptions.polynomialScale},
+				{"LiabilityClasses", set_int, &staticModelRange.nlclass},
+				{"DiseaseAlleles", set_int, &staticModelRange.nalleles},
+				{"MaxIterations", set_int, &staticModelOptions.maxIterations},
 
 				{"TraitLoci", set_traitLoci, NULL},
 				{"MarkerAlleleFrequency", set_alleleFreq, NULL},
@@ -184,7 +188,7 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &modelOptions.
 				{"Truncate", set_qt_truncation, NULL},
 				{"PhenoCodes", set_affectionStatus, NULL},
 				{"SurfacesPath", set_resultsprefix, NULL},
-				/*{"condfile", set_condrun, &modelOptions.condFile},*/
+				/*{"condfile", set_condrun, &staticModelOptions.condFile},*/
 				{"Log", set_logLevel, NULL}
 };
 
@@ -201,7 +205,7 @@ main (int argc, char *argv[])
   if (argc > 2) {
     parseCommandLine (argc-2, &argv[2]);
   }
-  dumpModelOptions (&modelOptions);
+  dummodelOptions (&staticModelOptions);
   validateConfig ();
   finishConfig ();
 }
@@ -211,59 +215,59 @@ main (int argc, char *argv[])
 void initializeDefaults ()
 {
   /* Initialize the the global configuration structures to default values */
-  memset (&modelOptions, 0, sizeof (ModelOptions));
-  memset (&modelRange, 0, sizeof (ModelRange));
-  memset (&modelType, 0, sizeof (ModelType));
+  memset (&staticModelOptions, 0, sizeof (ModelOptions));
+  memset (&staticModelRange, 0, sizeof (ModelRange));
+  memset (&staticModelType, 0, sizeof (ModelType));
 
-  strcpy (modelOptions.markerfile, DEFAULTMARKERFILENAME);
-  strcpy (modelOptions.mapfile, DEFAULTMAPFILENAME);
-  strcpy (modelOptions.pedfile, DEFAULTPEDFILENAME);
-  strcpy (modelOptions.datafile, DEFAULTDATAFILENAME);
-  strcpy (modelOptions.avghetfile, DEFAULTAVGHETFILENAME);
-  strcpy (modelOptions.resultsprefix, DEFAULTRESULTSPREFIX);
+  strcpy (staticModelOptions.markerfile, DEFAULTMARKERFILENAME);
+  strcpy (staticModelOptions.mapfile, DEFAULTMAPFILENAME);
+  strcpy (staticModelOptions.pedfile, DEFAULTPEDFILENAME);
+  strcpy (staticModelOptions.datafile, DEFAULTDATAFILENAME);
+  strcpy (staticModelOptions.avghetfile, DEFAULTAVGHETFILENAME);
+  strcpy (staticModelOptions.resultsprefix, DEFAULTRESULTSPREFIX);
 
-  modelOptions.sUnknownPersonID = malloc (sizeof (char) * 2);
-  strcpy (modelOptions.sUnknownPersonID, "0");
+  staticModelOptions.sUnknownPersonID = malloc (sizeof (char) * 2);
+  strcpy (staticModelOptions.sUnknownPersonID, "0");
 
-  modelOptions.equilibrium = LINKAGE_EQUILIBRIUM;
-  modelOptions.markerAnalysis = FALSE;
-  modelOptions.saveResults = FALSE;
-  modelOptions.polynomial = TRUE;
-  modelOptions.integration = TRUE;
-  modelOptions.maxIterations = -1;
-  modelOptions.imprintingFlag = FALSE;
-  modelOptions.mapFlag = SA;
-  modelOptions.sexLinked = FALSE;
-  modelOptions.dryRun = FALSE;
-  modelOptions.forceAvghetFile = FALSE;
-  modelOptions.polynomialScale = 0;
-  modelOptions.extraMODs = FALSE;
-  modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -DBL_MAX;
-  modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -DBL_MAX;
-  modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = -DBL_MAX;
+  staticModelOptions.equilibrium = LINKAGE_EQUILIBRIUM;
+  staticModelOptions.markerAnalysis = FALSE;
+  staticModelOptions.saveResults = FALSE;
+  staticModelOptions.polynomial = TRUE;
+  staticModelOptions.integration = TRUE;
+  staticModelOptions.maxIterations = -1;
+  staticModelOptions.imprintingFlag = FALSE;
+  staticModelOptions.mapFlag = SA;
+  staticModelOptions.sexLinked = FALSE;
+  staticModelOptions.dryRun = FALSE;
+  staticModelOptions.forceAvghetFile = FALSE;
+  staticModelOptions.polynomialScale = 0;
+  staticModelOptions.extraMODs = FALSE;
+  staticModelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -DBL_MAX;
+  staticModelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -DBL_MAX;
+  staticModelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = -DBL_MAX;
 
   /* Set default values for PPL calculations */
-  modelOptions.thetaCutoff[0] = 0.05;   /* LRs when theta < cutoff are weighted heavier */
-  modelOptions.thetaCutoff[1] = 0.05;
-  modelOptions.thetaWeight = 0.95;      /* Weight for LRs when theta < cutoff */
-  modelOptions.prior = 0.02;            /* Prior probability of linkage */
-  modelOptions.LDprior = 0.02;          /* Prior probability of LD given close linkage */
+  staticModelOptions.thetaCutoff[0] = 0.05;   /* LRs when theta < cutoff are weighted heavier */
+  staticModelOptions.thetaCutoff[1] = 0.05;
+  staticModelOptions.thetaWeight = 0.95;      /* Weight for LRs when theta < cutoff */
+  staticModelOptions.prior = 0.02;            /* Prior probability of linkage */
+  staticModelOptions.LDprior = 0.02;          /* Prior probability of LD given close linkage */
   
-  modelRange.nalleles = 2;
-  modelRange.nlclass = 1;
-  modelRange.npardim = 0;
-  modelRange.nlambdas = 0;
-  modelRange.maxnlambdas = 0;
-  modelRange.tlocRangeStart = -1;
-  modelRange.tlocRangeIncr = -1;
-  modelRange.tlmark = FALSE;
+  staticModelRange.nalleles = 2;
+  staticModelRange.nlclass = 1;
+  staticModelRange.npardim = 0;
+  staticModelRange.nlambdas = 0;
+  staticModelRange.maxnlambdas = 0;
+  staticModelRange.tlocRangeStart = -1;
+  staticModelRange.tlocRangeIncr = -1;
+  staticModelRange.tlmark = FALSE;
 
-  modelType.type = TP;
-  modelType.trait = DT;
-  modelType.distrib = -1;
+  staticModelType.type = TP;
+  staticModelType.trait = DT;
+  staticModelType.distrib = -1;
   /* set default for QT */
-  modelType.minOriginal = -999999999.00;
-  modelType.maxOriginal = 999999999.00;
+  staticModelType.minOriginal = -999999999.00;
+  staticModelType.maxOriginal = 999999999.00;
 
   /* Sort the dispatch table so the binary search works */
   qsort (dispatchTable, sizeof (dispatchTable) / sizeof (st_dispatch), sizeof (st_dispatch),
@@ -371,45 +375,45 @@ void validateConfig ()
    * is MarkerToMarker, which silently turns on FixedModels, if it's not on already.
    */
 
-  if (modelOptions.polynomialScale && ! modelOptions.polynomial)
+  if (staticModelOptions.polynomialScale && ! staticModelOptions.polynomial)
     fault ("PolynomialScale is incompatible with NonPolynomial\n");
     
-  if (modelOptions.markerAnalysis) {
+  if (staticModelOptions.markerAnalysis) {
     /* MarkerToMarker is a special case. It only supports TP, LD, fixed grid thetas
      * and D-primes. Since only markers are considered, we disallow any directives
      * related to the trait. LD implies no sex-specific, and TP means no Multipoint,
      * so those directives are out, too. Once we're done, we return immediately, so
      * we don't have to worry about MarkerToMarker vs. trait-to-marker later on.
      */
-    if (modelOptions.imprintingFlag)
+    if (staticModelOptions.imprintingFlag)
       fault ("Trait directives (Imprinting) are incompatible with MarkerToMarker\n");
-    if (modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] != -DBL_MAX)
+    if (staticModelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] != -DBL_MAX)
       fault ("Trait directives (PhenoCodes) are incompatible with MarkerToMarker\n");
-    if (modelRange.nalleles != 2)    
+    if (staticModelRange.nalleles != 2)    
       fault ("Trait directives (DiseaseAlleles) are incompatible with MarkerToMarker\n");
-    if (modelRange.nlclass != 1)    
+    if (staticModelRange.nlclass != 1)    
       fault ("Trait directives (LiabilityClasses) are incompatible with MarkerToMarker\n");
-    if (modelType.trait == QT) 
+    if (staticModelType.trait == QT) 
       fault ("Trait directives (%s) are incompatible with MarkerToMarker\n", QT_STR);
-    if (modelType.trait == CT) 
+    if (staticModelType.trait == CT) 
       fault ("Trait directives (%s) are incompatible with MarkerToMarker\n", QTT_STR);
-    if (modelRange.ntthresh > 0)
+    if (staticModelRange.ntthresh > 0)
       fault ("Trait directives (%s) are incompatible with MarkerToMarker\n", THRESHOLD_STR);
-    if (modelType.minOriginal != -999999999.00 || modelType.maxOriginal != 999999999.00)
+    if (staticModelType.minOriginal != -999999999.00 || staticModelType.maxOriginal != 999999999.00)
       fault ("Trait directives (Truncate) are incompatible with MarkerToMarker\n");
-    if (modelType.type == MP)
+    if (staticModelType.type == MP)
       fault ("Multipoint is incompatible with MarkerToMarker\n");
     if (observed.traitLoci)
       fault ("Multipoint directives (TraitLoci) are incompatible with MarkerToMarker\n");
-    if (modelOptions.mapFlag == SS)
+    if (staticModelOptions.mapFlag == SS)
       fault ("SexSpecific is incompatible with MarkerToMarker\n");
     if (observed.sexSpecificThetas)
       fault ("%s and %s are incompatible with MarkerToMarker\n", MALETHETA_STR, FEMALETHETA_STR);
-    if (modelRange.nafreq > 0)
+    if (staticModelRange.nafreq > 0)
       fault ("MarkerAlleleFrequency is incompatible with MarkerToMarker\n");
-    if (modelRange.ngfreq > 0)
+    if (staticModelRange.ngfreq > 0)
       fault ("Trait directives (DiseaseGeneFrequency) are incompatible with MarkerToMarker\n");
-    if (modelRange.nalpha > 0)
+    if (staticModelRange.nalpha > 0)
       fault ("Trait directives (Alpha) are incompatible with MarkerToMarker\n");
     if (observed.penetrance)
       fault ("Trait directives (%s) are incompatible with MarkerToMarker\n", PENETRANCE_STR);
@@ -421,20 +425,20 @@ void validateConfig ()
       fault ("Trait directives (%s) are incompatible with MarkerToMarker\n", DEGOFFREEDOM_STR);
     if (observed.constraints)
       fault ("Trait directives (Constraint) are incompatible with MarkerToMarker\n");
-    if (modelOptions.avghetfile[0] != '\0' && ! modelOptions.forceAvghetFile)
+    if (staticModelOptions.avghetfile[0] != '\0' && ! staticModelOptions.forceAvghetFile)
       logMsg (LOGINPUTFILE, LOGWARNING, "MarkerToMarker will write no output to BayesRatioFile\n");
-    if (modelOptions.dkelvinoutfile[0] != '\0')
+    if (staticModelOptions.dkelvinoutfile[0] != '\0')
       logMsg (LOGINPUTFILE, LOGWARNING, "MarkerToMarker will write no output to NIDetailFile\n");
 
-    if (! modelOptions.integration) {
-      if (modelRange.ndprime == 0 && modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
+    if (! staticModelOptions.integration) {
+      if (staticModelRange.ndprime == 0 && staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
 	fault ("FixedModels and LD require DPrime\n");
-      if (modelRange.ndprime > 0 && modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
+      if (staticModelRange.ndprime > 0 && staticModelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
 	fault ("FixedModels and DPrime requires LD\n");
       if (! observed.sexAveragedThetas)
 	fault ("MarkerToMarker and FixedModels require %s\n", THETA_STR);
     } else {
-      if (modelRange.ndprime > 0)
+      if (staticModelRange.ndprime > 0)
 	fault ("MarkerToMarker and DPrime require FixedModels\n");
       if (observed.sexAveragedThetas)
 	fault ("MarkerToMarker and %s require FixedModels\n", THETA_STR);
@@ -447,29 +451,29 @@ void validateConfig ()
   /* First, try to rule out the simplest invalid combinations of options */
 
   /* We only handle bi-allelic traits for now */
-  if (modelRange.nalleles != 2)
+  if (staticModelRange.nalleles != 2)
     fault ("DiseaseAlleles must be set to 2; polyallelic traits are not supported\n");
   
   /* set_affectionStatus() guarantees that 0, 1 or all of these will be set */
-  if (modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] != -DBL_MAX) {
-    if (modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] != -DBL_MAX) {
-      if (modelType.trait == QT)
+  if (staticModelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] != -DBL_MAX) {
+    if (staticModelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] != -DBL_MAX) {
+      if (staticModelType.trait == QT)
 	fault ("PhenoCodes with 3 arguments is incompatible with QT\n");
     } else {
-      if (modelType.trait != QT)
+      if (staticModelType.trait != QT)
 	fault ("PhenoCodes with 1 argument is requires QT\n");
     }
   }
   
-  if (modelType.type == MP) {
+  if (staticModelType.type == MP) {
     /* Multipoint */
-    if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
+    if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
       fault ("LD is incompatible with Multipoint\n");
-    if (modelOptions.extraMODs)
+    if (staticModelOptions.extraMODs)
       fault ("ExtraMODs is incompatible with Multipoint\n");
-    if (modelRange.nafreq > 0)
+    if (staticModelRange.nafreq > 0)
       fault ("MarkerAlleleFrquency is incompatible with Multipoint\n");
-    if (modelOptions.pplfile[0] != '\0')
+    if (staticModelOptions.pplfile[0] != '\0')
       logMsg (LOGINPUTFILE, LOGWARNING, "Multipoint will write no output to PPLFile\n");
   } else {
     /* Two point */
@@ -477,10 +481,10 @@ void validateConfig ()
       fault ("TraitLoci requires Multipoint\n");
   }
   
-  if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && modelOptions.mapFlag == SS) 
+  if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && staticModelOptions.mapFlag == SS) 
     fault ("SexSpecific is not supported with LD\n");
 
-  if (modelOptions.integration) {
+  if (staticModelOptions.integration) {
     /* Dynamic sampling, so disallow all fixed model directives */
     if (observed.penetrance)
       fault ("%s requires FixedModels\n", PENETRANCE_STR);
@@ -489,21 +493,21 @@ void validateConfig ()
     if (observed.standardDev)
       fault ("%s requires FixedModels\n", STANDARDDEV_STR);
     if (observed.degOfFreedom) {
-      if (modelType.trait != DT && modelType.distrib == QT_FUNCTION_CHI_SQUARE) {
+      if (staticModelType.trait != DT && staticModelType.distrib == QT_FUNCTION_CHI_SQUARE) {
 	/* For QT and QTT ChiSq, min and max DegreesOfFreedom for each trait genotype
 	 * are valid. First, checkImprintingPenets() has the side effect of filling
 	 * dD penetrance values, if Imprinting is turned on.
 	 */
-	if ((checkImprintingPenets (&modelRange, modelOptions.imprintingFlag) < 0)) {
-	  if (modelOptions.imprintingFlag)
+	if ((checkImprintingPenets (&staticModelRange, staticModelOptions.imprintingFlag) < 0)) {
+	  if (staticModelOptions.imprintingFlag)
 	    fault ("Imprinting requires DegreesOfFreedom values for the dD trait genotype\n")
 	  else 
 	    fault ("DegreesOfFreedom values for the dD trait genotype requires Imprinting\n");
 	}
 	/* Now, make sure that each trait genotype has exactly 2 penetrance values. */
-	if (checkDegOfFreedom (&modelRange, modelOptions.imprintingFlag) != 0)
+	if (checkDegOfFreedom (&staticModelRange, staticModelOptions.imprintingFlag) != 0)
 	  fault ("%s ChiSq requires exactly two %s values (min and max) for each trait genotype\n",
-		 (modelType.trait == QT) ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
+		 (staticModelType.trait == QT) ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
       } else 
 	fault ("%s requires FixedModels\n", DEGOFFREEDOM_STR);
     }
@@ -513,16 +517,16 @@ void validateConfig ()
       fault ("%s requires FixedModels\n", THETA_STR);
     if (observed.sexSpecificThetas)
       fault ("%s and %s require FixedModels\n", MALETHETA_STR, FEMALETHETA_STR);
-    if (modelRange.ndprime > 0)
+    if (staticModelRange.ndprime > 0)
       fault ("DPrime requires FixedModels\n");
-    if (modelRange.ngfreq > 0)
+    if (staticModelRange.ngfreq > 0)
       fault ("DiseaseGeneFrequency requires FixedModels\n");
-    if (modelRange.nafreq > 0)
+    if (staticModelRange.nafreq > 0)
       fault ("MarkerAlleleFrequency requires FixedModels\n");
-    if (modelRange.nalpha > 0)
+    if (staticModelRange.nalpha > 0)
       fault ("Alpha requires FixedModels\n");
 
-    if (modelType.trait == CT && modelRange.ntthresh != 2)
+    if (staticModelType.trait == CT && staticModelRange.ntthresh != 2)
       fault ("QTT requires exactly two Threshold values (min and max)\n");
 
     if (fault)
@@ -532,38 +536,38 @@ void validateConfig ()
   
   /* So much for the low-hanging fruit... */
   
-  if (modelOptions.dkelvinoutfile[0] != '\0')
+  if (staticModelOptions.dkelvinoutfile[0] != '\0')
     logMsg (LOGINPUTFILE, LOGWARNING, "FixedModels will write no output to NIDetailFile\n");
 
   if (observed.sexAveragedThetas && observed.sexSpecificThetas)
     fault ("%s is incompatible with %s or %s\n", THETA_STR, MALETHETA_STR, FEMALETHETA_STR);
-  if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && observed.sexSpecificThetas)
+  if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && observed.sexSpecificThetas)
     fault ("%s and %s are not supported with LD\n", MALETHETA_STR, FEMALETHETA_STR);
-  if (modelOptions.mapFlag == SS) {
+  if (staticModelOptions.mapFlag == SS) {
     if (observed.sexSpecificThetas && observed.sexSpecificThetas != 0x03)
       fault ("%s and %s require each other\n", MALETHETA_STR, FEMALETHETA_STR);
-    if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
+    if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
       fault ("SexSpecific is not supported with LD\n");
   } else {
     if (observed.sexSpecificThetas)
       fault ("%s and %s require SexSpecific\n", MALETHETA_STR, FEMALETHETA_STR);
   }
 
-  if (modelType.type == MP) {
+  if (staticModelType.type == MP) {
     /* Multipoint */
     if (observed.sexAveragedThetas)
       fault ("%s is incompatible with Multipoint\n", THETA_STR);
     if (observed.sexSpecificThetas)
       fault ("%s and %s are incompatible with Multipoint\n", MALETHETA_STR, FEMALETHETA_STR);
-    if (modelRange.ndprime > 0)
+    if (staticModelRange.ndprime > 0)
       fault ("DPrime is incompatible with Multipoint\n");
   } else {
     /* Two point */
-    if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && modelRange.ndprime == 0)
+    if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && staticModelRange.ndprime == 0)
       fault ("FixedModels with LD requires DPrime\n");
-    if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM && modelRange.ndprime > 0)
+    if (staticModelOptions.equilibrium == LINKAGE_EQUILIBRIUM && staticModelRange.ndprime > 0)
       fault ("FixedModels with DPrime requires LD\n");
-    if (modelOptions.mapFlag != SS) {
+    if (staticModelOptions.mapFlag != SS) {
       if (! observed.sexAveragedThetas)
 	fault ("FixedModels without Multipoint requires %s\n", THETA_STR);
     } else {
@@ -572,12 +576,12 @@ void validateConfig ()
     }
   }
 
-  if (modelRange.ngfreq == 0)
+  if (staticModelRange.ngfreq == 0)
     fault ("FixedModels requires DiseaseGeneFrequency\n");
-  if (! modelRange.alpha)
+  if (! staticModelRange.alpha)
     fault ("FixedModels requires Alpha\n");
 
-  if (modelType.trait == DT) {
+  if (staticModelType.trait == DT) {
     if (! observed.penetrance)
       fault ("Dichotomous trait requires %s\n", PENETRANCE_STR);
     if (observed.mean)
@@ -586,28 +590,28 @@ void validateConfig ()
       fault ("%s requires %s Normal or %s Normal\n", STANDARDDEV_STR, QT_STR, QTT_STR);
     if (observed.degOfFreedom)
       fault ("%s requires %s ChiSq or %s ChiSq\n", DEGOFFREEDOM_STR, QT_STR, QTT_STR);
-    if (modelRange.ntthresh > 0)
+    if (staticModelRange.ntthresh > 0)
       fault ("%s requires %s\n", THRESHOLD_STR, QTT_STR);
   } else {
     if (observed.penetrance)
-      fault ("%s is incompatible with %s\n", PENETRANCE_STR, modelType.trait == QT ? QT_STR : QTT_STR);
-    if (modelType.distrib == QT_FUNCTION_T && ! observed.mean) 
-      fault ("%s Normal requires %s\n", modelType.trait == QT ? QT_STR : QTT_STR, MEAN_STR);
-    if (modelType.distrib == QT_FUNCTION_T && ! observed.standardDev) 
-      fault ("%s Normal requires %s\n", modelType.trait == QT ? QT_STR : QTT_STR, STANDARDDEV_STR);
-    if (modelType.distrib == QT_FUNCTION_T && observed.degOfFreedom)
+      fault ("%s is incompatible with %s\n", PENETRANCE_STR, staticModelType.trait == QT ? QT_STR : QTT_STR);
+    if (staticModelType.distrib == QT_FUNCTION_T && ! observed.mean) 
+      fault ("%s Normal requires %s\n", staticModelType.trait == QT ? QT_STR : QTT_STR, MEAN_STR);
+    if (staticModelType.distrib == QT_FUNCTION_T && ! observed.standardDev) 
+      fault ("%s Normal requires %s\n", staticModelType.trait == QT ? QT_STR : QTT_STR, STANDARDDEV_STR);
+    if (staticModelType.distrib == QT_FUNCTION_T && observed.degOfFreedom)
       fault ("%s requires %s ChiSq or %s ChiSq\n", DEGOFFREEDOM_STR, QT_STR, QTT_STR);
-    if (modelType.distrib == QT_FUNCTION_CHI_SQUARE && observed.mean) 
+    if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE && observed.mean) 
       fault ("%s requires %s Normal or %s Normal\n", MEAN_STR, QT_STR, QTT_STR);
-    if (modelType.distrib == QT_FUNCTION_CHI_SQUARE && observed.standardDev) 
+    if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE && observed.standardDev) 
       fault ("%s requires %s Normal or %s Normal\n", STANDARDDEV_STR, QT_STR, QTT_STR);
-    if (modelType.distrib == QT_FUNCTION_CHI_SQUARE && ! observed.degOfFreedom)
-      fault ("%s ChiSq requires %s\n", modelType.trait == QT ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
-    if (modelType.trait == CT) {
-      if (modelRange.ntthresh == 0)
+    if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE && ! observed.degOfFreedom)
+      fault ("%s ChiSq requires %s\n", staticModelType.trait == QT ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
+    if (staticModelType.trait == CT) {
+      if (staticModelRange.ntthresh == 0)
 	fault ("%s requires %s\n", QTT_STR, THRESHOLD_STR);
     } else {
-      if (modelRange.ntthresh > 0)
+      if (staticModelRange.ntthresh > 0)
 	fault ("%s requires %s\n", THRESHOLD_STR, QTT_STR);
     }
   }
@@ -617,23 +621,23 @@ void validateConfig ()
   if (fault)
     logMsg (LOGINPUTFILE, LOGFATAL, "Configuration errors detected, exiting\n");
   
-  if ((checkImprintingPenets (&modelRange, modelOptions.imprintingFlag) < 0)) {
-    if (modelOptions.imprintingFlag) {
-      if (modelType.trait == DT)
+  if ((checkImprintingPenets (&staticModelRange, staticModelOptions.imprintingFlag) < 0)) {
+    if (staticModelOptions.imprintingFlag) {
+      if (staticModelType.trait == DT)
 	fault ("Imprinting requires Penetrance values for the dD trait genotype\n");
-      if (modelType.trait == QT)
+      if (staticModelType.trait == QT)
 	fault ("Imprinting requires Mean values for the dD trait genotype\n");
-      if (modelType.trait == CT)
+      if (staticModelType.trait == CT)
 	fault ("Imprinting requires DegreesOfFreedom values for the dD trait genotype\n");
     } else 
-      if (modelType.trait == DT)
+      if (staticModelType.trait == DT)
 	fault ("Penetrance values for the dD trait genotype require Imprinting\n");
-      if (modelType.trait == QT)
+      if (staticModelType.trait == QT)
 	fault ("Mean values for the dD trait genotype require Imprinting\n");
-      if (modelType.trait == CT)
+      if (staticModelType.trait == CT)
 	fault ("DegreesOfFreedom values for the dD trait genotype require Imprinting\n");
   }
-  if (observed.maxclass != 0 && modelRange.nlclass < observed.maxclass)
+  if (observed.maxclass != 0 && staticModelRange.nlclass < observed.maxclass)
     fault ("A Constraint references a liability class %d that is not specified with LiabilityClass\n", observed.maxclass);
   
   if (fault)
@@ -656,89 +660,89 @@ void finishConfig ()
   
   /* Fill in default values for fields that could have been configured, if they weren't */
 
-  if (modelType.trait == DT) {
-    if (modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] == -DBL_MAX) {
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = AFFECTION_STATUS_UNKNOWN;
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = AFFECTION_STATUS_UNAFFECTED;
-      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = AFFECTION_STATUS_AFFECTED;
+  if (staticModelType.trait == DT) {
+    if (staticModelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] == -DBL_MAX) {
+      staticModelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = AFFECTION_STATUS_UNKNOWN;
+      staticModelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = AFFECTION_STATUS_UNAFFECTED;
+      staticModelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = AFFECTION_STATUS_AFFECTED;
     }
   } else {
     /* QT or CT */
-    if (modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] == -DBL_MAX)
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
-    if (modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] == -DBL_MAX) {
-      modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
-      modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
+    if (staticModelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] == -DBL_MAX)
+      staticModelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -99.99;
+    if (staticModelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] == -DBL_MAX) {
+      staticModelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -88.88;
+      staticModelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = 88.88;
     }
   }
 
-  if (modelOptions.polynomial && ! modelOptions.polynomialScale)
-    modelOptions.polynomialScale = 1;
-  if ((modelType.type == TP) && (modelOptions.pplfile[0] == '\0'))
-    strcpy (modelOptions.pplfile, DEFAULTPPLFILENAME);
+  if (staticModelOptions.polynomial && ! staticModelOptions.polynomialScale)
+    staticModelOptions.polynomialScale = 1;
+  if ((staticModelType.type == TP) && (staticModelOptions.pplfile[0] == '\0'))
+    strcpy (staticModelOptions.pplfile, DEFAULTPPLFILENAME);
 
   /* MarkerToMaker: validateConfig should have already weeded out patently
    * incompatible options. Here, force LD, FixedModels and fill in default
    * Theta and DPrime values, if needed.
    */
-  if (modelOptions.markerAnalysis) {
-    modelOptions.integration = FALSE;
-    if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && modelRange.ndprime == 0)
+  if (staticModelOptions.markerAnalysis) {
+    staticModelOptions.integration = FALSE;
+    if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && staticModelRange.ndprime == 0)
       /* Default range of DPrimes is -1 to 1 in steps of 0.02 */
       for (i = -50; i <= 50; i++)
-	addDPrime (&modelRange, 0.02 * i);
-    if (modelRange.thetacnt == NULL || modelRange.thetacnt[SEXAV] == 0)
+	addDPrime (&staticModelRange, 0.02 * i);
+    if (staticModelRange.thetacnt == NULL || staticModelRange.thetacnt[SEXAV] == 0)
       /* Default range of Thetas if 0 to 0.5 in steps of 0.01 */
       for (i = 0; i < 50; i++)
-	addTheta (&modelRange, THETA_AVG, 0.01 * i);
+	addTheta (&staticModelRange, THETA_AVG, 0.01 * i);
   }
 
   /* Fix up the DPrimes if LD is turned on*/
-  if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) {
-    if (modelOptions.integration == TRUE) {
+  if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) {
+    if (staticModelOptions.integration == TRUE) {
       /* If integration (that is, dynamic grid) is turned on, then there shouldn't
        * be any DPrimes at all, and we need to insert some. These are MAGIC DPrimes,
        * statically declared at the top of this function.
        */
       for (i = 0; i < 33; i++)
-	addDPrime (&modelRange, integrationLDDPrimeValues[i]);
+	addDPrime (&staticModelRange, integrationLDDPrimeValues[i]);
       
     } else {
       /* If not integration (that is, fixed models) make sure the user
        * didn't omit 0 from the range of DPrimes. Silently add one if needed.
        */
-      for (i=0; i<modelRange.ndprime; i++)
-	if (fabs(modelRange.dprime[i]) <= ERROR_MARGIN) break;
-      if (i == modelRange.ndprime)
-	addDPrime (&modelRange, (double) 0.0);
+      for (i=0; i<staticModelRange.ndprime; i++)
+	if (fabs(staticModelRange.dprime[i]) <= ERROR_MARGIN) break;
+      if (i == staticModelRange.ndprime)
+	addDPrime (&staticModelRange, (double) 0.0);
     }
   }
   /* For 2-point and fixed models, make sure there's a Theta of 0.5 */
-  if (modelType.type == TP && modelOptions.integration != TRUE) {
+  if (staticModelType.type == TP && staticModelOptions.integration != TRUE) {
     /* First, check male/sex-averaged thetas */
-    for (i = 0; i < modelRange.thetacnt[SEXML]; i++)
-      if (fabs (0.05 - modelRange.theta[SEXML][i]) <= ERROR_MARGIN) break;
-    if (i == modelRange.thetacnt[SEXML])
-      addTheta (&modelRange, THETA_AVG, 0.5);
+    for (i = 0; i < staticModelRange.thetacnt[SEXML]; i++)
+      if (fabs (0.05 - staticModelRange.theta[SEXML][i]) <= ERROR_MARGIN) break;
+    if (i == staticModelRange.thetacnt[SEXML])
+      addTheta (&staticModelRange, THETA_AVG, 0.5);
     /* If female thetas are present, do the same again */
-    if (modelRange.thetacnt[SEXFM] > 0) {
-      for (i = 0; i < modelRange.thetacnt[SEXFM]; i++)
-	if (fabs (0.05 - modelRange.theta[SEXFM][i]) <= ERROR_MARGIN) break;
-      if (i == modelRange.thetacnt[SEXFM])
-	addTheta (&modelRange, THETA_FEMALE, 0.5);
+    if (staticModelRange.thetacnt[SEXFM] > 0) {
+      for (i = 0; i < staticModelRange.thetacnt[SEXFM]; i++)
+	if (fabs (0.05 - staticModelRange.theta[SEXFM][i]) <= ERROR_MARGIN) break;
+      if (i == staticModelRange.thetacnt[SEXFM])
+	addTheta (&staticModelRange, THETA_FEMALE, 0.5);
     }
   }
 
   /* Sync param values for hetrozygous genotypes in non-imprinting runs */
-  if ((modelType.trait != DT) && (modelOptions.imprintingFlag != TRUE))
+  if ((staticModelType.trait != DT) && (staticModelOptions.imprintingFlag != TRUE))
     addConstraint (PARAMC, PEN_dD, 0, 1, EQ, PEN_Dd, 0, 1, FALSE);
 
   /* Sort the values in the final model. Sorted values better support
    * the application of constraints. */
-  sortRange (&modelRange);
+  sortRange (&staticModelRange);
 
   /* Once sorted, removing duplicates is easy. */
-  uniqRange (&modelRange);
+  uniqRange (&staticModelRange);
 
 #if FALSE
   /* Show the unexpanded model. At level 0, all elements are sorted
@@ -747,35 +751,46 @@ void finishConfig ()
    *  thetas: nonuniform lengths of male/female values
    *  penet: nonuniform lengths of values by allele, lclass=0
    *  param: nonuniform lengths of values by dimension, lclass=0, allele=0 */
-  showRange (modelRange, modelType, 0);
+  showRange (staticModelRange, staticModelType, 0);
   /* Show the constraints. */
   showConstraints ();
 #endif
 
   /* Expand the model, honoring constraints. */
-  expandRange (&modelRange);
+  expandRange (&staticModelRange);
 #if FALSE
   /* Show the partially expanded model. At level 1, following
    * expandRange(), we will have refined the model specification while
    * enforcing all specified constraints that do not involve liability
    * classes. */
-  showRange (&modelRange, &modelType, 1);
+  showRange (&staticModelRange, &staticModelType, 1);
 #endif
 
   /* Expand the liability classes, but only if necessary and always
    * honoring inter-class constraints. */
-  if (modelRange.nlclass > 1)
-    expandClass (&modelRange);
+  if (staticModelRange.nlclass > 1)
+    expandClass (&staticModelRange);
   
   //#if FALSE
   /* At level 2, all constraints (including those between classes) are
    * honored, but penet[][][], param[][][][] are not yet fully
    * "factored". */
-  //showRange (modelRange, modelType, 2);
+  //showRange (staticModelRange, staticModelType, 2);
   //#endif
 
   /* Tidy up */
   cleanupRange ();
+
+  /* Copy our statically-allocated structures over to their global
+     counterparts and protect them. */
+
+  modelOptions = (ModelOptions *) malloc (sizeof (ModelOptions));
+  memcpy(modelOptions, &staticModelOptions, sizeof(ModelOptions));
+  modelRange = (ModelRange *) malloc (sizeof (ModelRange));
+  memcpy(modelRange, &staticModelRange, sizeof(ModelRange));
+  modelType = (ModelType *) malloc (sizeof (ModelType));
+  memcpy(modelType, &staticModelType, sizeof(ModelType));
+
   return;
 }
 
@@ -838,17 +853,17 @@ int set_traitLoci (char **toks, int numtoks, void *unused)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++) {
     if (vlist[va].type == VL_VALUE) {
-      addTraitLocus (&modelRange, vlist[va].vun.val);
+      addTraitLocus (&staticModelRange, vlist[va].vun.val);
     } else if (vlist[va].type == VL_RANGE) {
       vb = 0;
       while ((val = vlist[va].vun.range.start + (vb++ * vlist[va].vun.range.incr)) <=
 	     vlist[va].vun.range.end)
-	addTraitLocus (&modelRange, val);
+	addTraitLocus (&staticModelRange, val);
     } else if (vlist[va].type == VL_RANGE_SYMBEND) {
-      modelRange.tlocRangeStart = vlist[va].vun.range.start;
-      modelRange.tlocRangeIncr = vlist[va].vun.range.incr;
+      staticModelRange.tlocRangeStart = vlist[va].vun.range.start;
+      staticModelRange.tlocRangeIncr = vlist[va].vun.range.incr;
     } else if ((vlist[va].type == VL_SYMBOL) && (vlist[va].vun.symbol == VL_SYM_MARKER))
-      modelRange.tlmark = TRUE;
+      staticModelRange.tlmark = TRUE;
   }
   free (vlist);
   observed.traitLoci = 1;
@@ -866,7 +881,7 @@ int set_alleleFreq (char **toks, int numtoks, void *unused)
   if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
-    addAlleleFreq (&modelRange, vals[va]);
+    addAlleleFreq (&staticModelRange, vals[va]);
   free (vals);
   return (0);
 }
@@ -882,7 +897,7 @@ int set_geneFreq (char **toks, int numtoks, void *unused)
   if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
-    addGeneFreq (&modelRange, vals[va]);
+    addGeneFreq (&staticModelRange, vals[va]);
   free (vals);
   return (0);
 }
@@ -898,7 +913,7 @@ int set_dprime (char **toks, int numtoks, void *unused)
   if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
-    addDPrime (&modelRange, vals[va]);
+    addDPrime (&staticModelRange, vals[va]);
   free (vals);
   return (0);
 }
@@ -925,7 +940,7 @@ int set_theta (char **toks, int numtoks, void *unused)
   } else
     KLOG (LOGDEFAULT, LOGFATAL, "set_theta called with unexpected directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
-    addTheta (&modelRange, type, vals[va]);
+    addTheta (&staticModelRange, type, vals[va]);
   free (vals);
   return (0);
 }
@@ -941,7 +956,7 @@ int set_alpha (char **toks, int numtoks, void *unused)
   if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
-    addAlpha (&modelRange, vals[va]);
+    addAlpha (&staticModelRange, vals[va]);
   free (vals);
   return (0);
 }
@@ -959,7 +974,7 @@ int set_penetrance (char **toks, int numtoks, void *unused)
   if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
-    addPenetrance (&modelRange, geno-PEN_DD, vals[va]);
+    addPenetrance (&staticModelRange, geno-PEN_DD, vals[va]);
   observed.penetrance = 1;
   free (vals);
   return (0);
@@ -1100,11 +1115,11 @@ int set_multipoint (char **toks, int numtoks, void *unused)
     bail ("missing integer argument to directive '%s'\n", toks[0]);
   if (numtoks > 2)
     bail ("extra arguments to directive '%s'\n", toks[0]);
-  modelType.type = MP;
+  staticModelType.type = MP;
   value = (int) strtol (toks[1], &ptr, 10);
   if ((toks[1] == ptr) || (*ptr != '\0'))
     bail ("directive '%s' requires an integer argument\n", toks[0]);
-  modelType.numMarkers = value;
+  staticModelType.numMarkers = value;
   return (0);
 }
 
@@ -1116,9 +1131,9 @@ int set_markerAnalysis (char **toks, int numtoks, void *unused)
   if (numtoks > 2)
     bail ("extra arguments to directive '%s'\n", toks[0]);
   if (strncasecmp (toks[1], "All", strlen (toks[1])) == 0)
-    modelOptions.markerAnalysis = MM;
+    staticModelOptions.markerAnalysis = MM;
   else if (strncasecmp (toks[1], "Adjacent", strlen (toks[1])) == 0)
-    modelOptions.markerAnalysis = AM;
+    staticModelOptions.markerAnalysis = AM;
   else
     bail ("unknown argument to directive '%s'\n", toks[1]);
   return (0);
@@ -1129,7 +1144,7 @@ int set_mapFlag (char **toks, int numtoks, void *unused)
 {
   if (numtoks > 1)
     bail ("extra arguments to directive '%s'\n", toks[0]);
-  modelOptions.mapFlag = SS;
+  staticModelOptions.mapFlag = SS;
   return (0);
 }
 
@@ -1138,7 +1153,7 @@ int set_disequilibrium (char **toks, int numtoks, void *unused)
 {
   if (numtoks > 1)
     bail ("extra arguments to directive '%s'\n", toks[0]);
-  modelOptions.equilibrium = LINKAGE_DISEQUILIBRIUM;
+  staticModelOptions.equilibrium = LINKAGE_DISEQUILIBRIUM;
   return (0);
 }
 
@@ -1152,9 +1167,9 @@ int set_quantitative (char **toks, int numtoks, void *unused)
     bail ("missing arguments to directive '%s'\n", toks[0]);
 
   if (strcasecmp (toks[0], QT_STR) == 0) {
-    modelType.trait = QT;
+    staticModelType.trait = QT;
   } else if (strcasecmp (toks[0], QTT_STR) == 0) {
-    modelType.trait = CT;
+    staticModelType.trait = CT;
   } else {
     bail ("set_quantitative called with bad directive '%s'\n", toks[0]);
   }
@@ -1162,23 +1177,23 @@ int set_quantitative (char **toks, int numtoks, void *unused)
   if (strcasecmp (toks[1], "normal") == 0) {
     if ((numtoks < 3) || ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) != 2))
       bail ("illegal arguments to directive '%s'\n", toks[0]);
-    modelType.distrib = QT_FUNCTION_T;
+    staticModelType.distrib = QT_FUNCTION_T;
     /* I think this is degrees of freedom; anyway, YH sez: fix it at 30 */
-    modelType.constants = realloc (modelType.constants, 1 * sizeof (int));
-    modelType.constants[0] = 30;
-    modelType.mean = vals[0];
-    modelType.sd = vals[1];
-    modelRange.npardim = 1;
+    staticModelType.constants = realloc (staticModelType.constants, 1 * sizeof (int));
+    staticModelType.constants[0] = 30;
+    staticModelType.mean = vals[0];
+    staticModelType.sd = vals[1];
+    staticModelRange.npardim = 1;
     free (vals);
   } else if (strcasecmp (toks[1], "chisq") == 0) {
     if (numtoks > 2) 
       bail ("illegal arguments to directive '%s'\n", toks[0]);
-    modelType.distrib = QT_FUNCTION_CHI_SQUARE;
-    modelType.mean = 0;
-    modelType.sd = 1;
+    staticModelType.distrib = QT_FUNCTION_CHI_SQUARE;
+    staticModelType.mean = 0;
+    staticModelType.sd = 1;
     /* A non-empty range for this parameter triggers a loop elsewhere */
-    modelRange.npardim = 1;
-    addParameter (&modelRange, 0, 1.0);
+    staticModelRange.npardim = 1;
+    addParameter (&staticModelRange, 0, 1.0);
   } else
     bail ("illegal arguments to directive '%s'\n", toks[0]);
   return (0);
@@ -1197,7 +1212,7 @@ int set_qt_mean (char **toks, int numtoks, void *unused)
   if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
-    addPenetrance (&modelRange, geno-PEN_DD, vals[va]);
+    addPenetrance (&staticModelRange, geno-PEN_DD, vals[va]);
   observed.mean = 1;
   free (vals);
   return (0);
@@ -1214,7 +1229,7 @@ int set_qt_standarddev (char **toks, int numtoks, void *unused)
   if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
-    addParameter (&modelRange, 0, vals[va]);
+    addParameter (&staticModelRange, 0, vals[va]);
   observed.standardDev = 1;
   free (vals);
   return (0);
@@ -1233,7 +1248,7 @@ int set_qt_degfreedom (char **toks, int numtoks, void *unused)
   if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
-    addPenetrance (&modelRange, geno-PEN_DD, vals[va]);
+    addPenetrance (&staticModelRange, geno-PEN_DD, vals[va]);
   observed.degOfFreedom = 1;
   free (vals);
   return (0);
@@ -1250,7 +1265,7 @@ int set_qt_threshold (char **toks, int numtoks, void *unused)
   if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
-    addTraitThreshold (&modelRange, vals[va]);
+    addTraitThreshold (&staticModelRange, vals[va]);
   free (vals);
   return (0);
 }
@@ -1271,9 +1286,9 @@ int set_qt_truncation (char **toks, int numtoks, void *unused)
     if ((ca == NULL) || (*ca != '\0'))
       bail ("illegal arguments to directive '%s'\n", toks[0]);
     if (strcasecmp (toks[va], "left") == 0) {
-      modelType.minOriginal = val;
+      staticModelType.minOriginal = val;
     } else if (strcasecmp (toks[va], "right") == 0) {
-      modelType.maxOriginal = val;
+      staticModelType.maxOriginal = val;
     } else {
       bail ("illegal arguments to directive '%s'\n", toks[0]);
     }
@@ -1295,12 +1310,12 @@ int set_affectionStatus (char **toks, int numtoks, void *unused)
     bail ("missing arguments to directive '%s'\n", toks[0]);
   if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) == 1) {
     /* This is legal for QT analyses, just to set the 'undefined' pheno code */
-    modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = vals[0];
+    staticModelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = vals[0];
   } else if (numvals == 3) {
     /* Everything else (DT, CT) requires three pheno codes */
-    modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = vals[0];
-    modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = vals[1];
-    modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = vals[2];
+    staticModelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = vals[0];
+    staticModelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = vals[1];
+    staticModelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = vals[2];
   } else
     bail ("illegal arguments to directive '%s'\n", toks[0]);
   
@@ -1319,9 +1334,9 @@ int set_resultsprefix (char **toks, int numtoks, void *unused)
     bail ("extra arguments to directive '%s'\n", toks[0]);
   if ((len = strlen (toks[1])) > KMAXFILENAMELEN - 2)
     bail ("argument to directive '%s' is too long\n", toks[0]);
-  strcpy (modelOptions.resultsprefix, toks[1]);
-  if (modelOptions.resultsprefix[len-1] != '/')
-    strcat (modelOptions.resultsprefix, "/");
+  strcpy (staticModelOptions.resultsprefix, toks[1]);
+  if (staticModelOptions.resultsprefix[len-1] != '/')
+    strcat (staticModelOptions.resultsprefix, "/");
   return (0);
 }
 
@@ -1637,9 +1652,9 @@ int singleDigit (char *str)
   return (-1);
 }
 
-/* Dumps a subset of the fields in modelOptions.
+/* Dumps a subset of the fields in staticModelOptions.
  */
-void dumpModelOptions (ModelOptions *mo)
+void dummodelOptions (ModelOptions *mo)
 {
   printf ("%18s : %s\n", "markerfile", mo->markerfile);
   printf ("%18s : %s\n", "mapfile", mo->mapfile);

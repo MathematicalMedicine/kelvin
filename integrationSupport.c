@@ -30,22 +30,22 @@ int kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region
   double boost_rate=1.3; //1.1;
 
 
-  if(modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) 
+  if(modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM) 
     boost_rate =1.0;
   //extern /* Subroutine */ int ftest_();  
 
   localMOD = DBL_MIN_10_EXP ;
 
-  if (modelType.trait == DICHOTOMOUS) {
+  if (modelType->trait == DICHOTOMOUS) {
 
-    dim = 1 + 3 * modelRange.nlclass;
-    if(modelOptions.imprintingFlag)
-      dim += modelRange.nlclass;	//dD
+    dim = 1 + 3 * modelRange->nlclass;
+    if(modelOptions->imprintingFlag)
+      dim += modelRange->nlclass;	//dD
 
     s = &init_state;
     initialize_state (s, xl, xu, dim);
 
-    if (modelType.type == TP) {
+    if (modelType->type == TP) {
       s->funsub = (U_fp) compute_hlod_2p_dt;
       s->mType = TP_DT;
     } else {
@@ -55,11 +55,11 @@ int kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region
   } else {			/*  QT or combined */
 
     dim = total_dim - 1;	// alpha
-    if (modelType.type == TP) {
-      if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+    if (modelType->type == TP) {
+      if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
 	dim -= 2;		// theta and dprime
       } else {
-        if(modelOptions.mapFlag == SA)
+        if(modelOptions->mapFlag == SA)
 	  dim -= 1;		//theta
         else
           dim -= 2;
@@ -69,7 +69,7 @@ int kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region
     s = &init_state;
     initialize_state (s, xl, xu, dim);
    
-    if (modelType.type == TP) {
+    if (modelType->type == TP) {
       s->funsub = (U_fp) compute_hlod_2p_qt;
       s->mType = TP_DT;
     } else {
@@ -77,8 +77,8 @@ int kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region
       s->mType = MP_DT;
     }
   }
-  if (modelOptions.maxIterations > -1) {
-    s->maxcls = modelOptions.maxIterations;
+  if (modelOptions->maxIterations > -1) {
+    s->maxcls = modelOptions->maxIterations;
   } else if (dim <10) {
     s->maxcls = 10000000; //50000;
   } else {
@@ -86,11 +86,11 @@ int kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region
     //fprintf(stdout,"New maxcls is %d \n", s->maxcls);
   }
   s->verbose = 0;
-  s->nlclass = modelRange.nlclass;
+  s->nlclass = modelRange->nlclass;
   s->aim_diff_suc = 3* s->nlclass;
 
   for(i=0; i<s->nlclass; i++){
-    if(modelOptions.imprintingFlag)
+    if(modelOptions->imprintingFlag)
       s->vol_rate /= 16.0;
     else
       s->vol_rate /= 6.0; 
@@ -121,9 +121,9 @@ int kelvin_dcuhre_integrate (double *integral, double *abserr, double vol_region
 
   /* BR boosting is done here */
   //fprintf(stderr, "Before boosting %e\n", s->result);
-  if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM && modelType.trait == DT) {
-  //  if (modelType.trait == DT) {  // boosting 
-    //    for (i = 0; i < modelRange.nlclass; i++) 
+  if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM && modelType->trait == DT) {
+  //  if (modelType->trait == DT) {  // boosting 
+    //    for (i = 0; i < modelRange->nlclass; i++) 
       s->result = pow(10.0, (log10(s->result) * boost_rate));
     //fprintf(stderr, "After boosting %e\n", s->result);
   }
@@ -167,7 +167,7 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
   double newsum_log10;
 
 
-  if(modelOptions.imprintingFlag)
+  if(modelOptions->imprintingFlag)
     pen_size=4;
 
   int origLocus = locusList->pLocusIndex[0];
@@ -186,14 +186,14 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
 
 
   j = 1;			// j=0 for gfrequency
-  if (modelType.trait == CT) {
+  if (modelType->trait == CT) {
     threshold= x[s->ndim -1];
   }
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+  for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
     mean_DD = x[j];
     mean_Dd = (x[j+1]-xl[j+1])*(x[j]-xl[j])/(xu[j]-xl[j])+xl[j+1];
 
-    if(modelOptions.imprintingFlag){
+    if(modelOptions->imprintingFlag){
       mean_dD =(x[j+2]-xl[j+2])*(x[j]-xl[j])/(xu[j]-xl[j])+xl[j+2];
       mean_dd =(x[j+3]-xl[j+3])*(x[j+2]-xl[j+2])/(xu[j+2]- xl[j+2])*(x[j+1]-xl[j+1])/(xu[j+1]- xl[j+1])*(x[j]-xl[j])/(xu[j]-xl[j])+xl[j+3];
     }else{
@@ -210,10 +210,10 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
     }
 
 
-    if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+    if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
       /*SD_DD = x[j];		
       SD_Dd = x[j + 1];	
-      if(modelOptions.imprintingFlag){
+      if(modelOptions->imprintingFlag){
 	SD_dD = x[j+2];
         SD_dd = x[j+3];
       }else{
@@ -232,18 +232,18 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
 
     }
     if(fpIR !=NULL){
-      if (modelType.trait == CT)
+      if (modelType->trait == CT)
           dk_curModel.pen[liabIdx].threshold= threshold;
     }
 
     /* threshold for QT *
-    if (modelType.trait == CT) {
-      threshold = x[j];	// modelRange.tthresh[liabIdx][thresholdIdx];
+    if (modelType->trait == CT) {
+      threshold = x[j];	// modelRange->tthresh[liabIdx][thresholdIdx];
       j++;
       }*/
 
     /* check against the hard coded constraint */
-    if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+    if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
       constraint =
 	(1.0 - gfreq) * (1.0 - gfreq) * mean_dd * SD_dd + 2 * gfreq * (1.0 -
 								       gfreq)
@@ -271,7 +271,7 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
 
   }				/* liability class Index */
 
-  if (modelOptions.polynomial == TRUE);
+  if (modelOptions->polynomial == TRUE);
   else
     /* only need to update trait locus */
     update_penetrance (&pedigreeSet, traitLocus);
@@ -295,7 +295,7 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
     /* save the likelihood at null */
     pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 
-    if (modelOptions.polynomial == TRUE) {
+    if (modelOptions->polynomial == TRUE) {
       KASSERT (pPedigree->traitLikelihoodPolynomial != NULL, "Error in  \n");
       /* evaluate likelihood */
       evaluatePoly (pPedigree->traitLikelihoodPolynomial,
@@ -350,7 +350,7 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
   /* This is for alternative likelihood */
   locusList = &savedLocusList;
   xmissionMatrix = altMatrix;
-  if (modelOptions.polynomial == TRUE);
+  if (modelOptions->polynomial == TRUE);
   else
     status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,	/* probability */
 				       initialProbAddr2,	/* probability */
@@ -414,18 +414,18 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
       fprintf(fpIR,"%6.3f", log10HetLR);
 
       fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
-      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
         fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
-        if(modelOptions.imprintingFlag){
+        if(modelOptions->imprintingFlag){
           fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
         }else{
           fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].dd); 
         }
-        if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+        if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
           fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].DDSD); 
         }
       }
-      if (modelType.trait == CT){
+      if (modelType->trait == CT){
         fprintf(fpIR," %4.3f",dk_curModel.pen[0].threshold); 
       }
       fprintf(fpIR," %d\n",dk_curModel.posIdx);
@@ -474,34 +474,34 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
       localmax_x[0] = gfreq;
       localmax_x[1] = alphaV;
       k = 2;
-      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
 	localmax_x[k] = x[k - 1];
 	localmax_x[k + 1] =(x[k]-xl[k])*(x[k-1]-xl[k-1])/(xu[k-1]-xl[k-1])+xl[k];
 
-        if(modelOptions.imprintingFlag){
+        if(modelOptions->imprintingFlag){
 	  localmax_x[k+2]=(x[k+1]-xl[k+1])*(x[k-1]-xl[k-1])/(xu[k-1]-xl[k-1])+xl[k+1];
           localmax_x[k+3]=(x[k+2]-xl[k+2])*(x[k+1]-xl[k+1])/(xu[k+1]-xl[k+1])*(x[k]-xl[k])/(xu[k]-xl[k])*(x[k-1]-xl[k-1])/(xu[k-1]-xl[k-1])+xl[k+2];
 	}else{
 	  localmax_x[k+2]=(x[k+1]-xl[k+1])*(x[k]-xl[k])/(xu[k]-xl[k])*(x[k-1]-xl[k-1])/(xu[k-1]-xl[k-1])+xl[k+1];
 	}
 	k += pen_size;
-	if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+	if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
 	  /*localmax_x[k] = x[k - 1];
 	  localmax_x[k + 1] = x[k];
 	  localmax_x[k + 2] = x[k + 1];
-          if(modelOptions.imprintingFlag)
+          if(modelOptions->imprintingFlag)
 	    localmax_x[k + 3] = x[k + 2];
 	    k += pen_size;*/
           localmax_x[k] = x[k - 1];
           k++;
 	}
 	/* threshold for QT *
-	if (modelType.trait == CT) {
+	if (modelType->trait == CT) {
 	  localmax_x[k] = x[k - 1];
 	  k++;
 	  }*/
       }
-      if (modelType.trait == CT) {
+      if (modelType->trait == CT) {
 	localmax_x[k] = x[k - 1];
 	k++;
       }
@@ -512,21 +512,21 @@ compute_hlod_mp_qt (double x[], double *f, int *scale)
 
   /* Jacobian */
   k = 1;
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+  for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
     avg_hetLR *=(x[k]-xl[k])/(xu[k]-xl[k]);
     avg_hetLR *=(x[k]-xl[k])/(xu[k]-xl[k]);
     avg_hetLR *= (x[k+1]-xl[k+1])/(xu[k+1]-xl[k+1]);
 
-    if(modelOptions.imprintingFlag){
+    if(modelOptions->imprintingFlag){
       avg_hetLR *=(x[k]-xl[k])/(xu[k]-xl[k]);
       avg_hetLR *= (x[k+2]-xl[k+2])/(xu[k+2]-xl[k+2]);
     }
 
     k += pen_size;
-    if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+    if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
       k ++; //+= pen_size;
     }
-    /*if (modelType.trait == CT) {
+    /*if (modelType->trait == CT) {
       k++;
       }*/
   }
@@ -571,7 +571,7 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
 
   int origLocus = locusList->pLocusIndex[0];
 
-  if(modelOptions.imprintingFlag)
+  if(modelOptions->imprintingFlag)
     pen_size=4;
 
   if (locusList->numLocus > 1)
@@ -582,11 +582,11 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
   if(fpIR !=NULL)
     dk_curModel.dgf = gfreq;
 
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+  for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
     pen_DD = x[pen_size * liabIdx + 1];
     pen_Dd = x[pen_size * liabIdx + 2] * x[pen_size * liabIdx + 1];
 
-    if(modelOptions.imprintingFlag){
+    if(modelOptions->imprintingFlag){
       pen_dD = x[pen_size * liabIdx + 3] * x[pen_size * liabIdx + 1];
       pen_dd = x[pen_size * liabIdx + 4] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2] *x[pen_size * liabIdx + 3];
     }else{
@@ -611,7 +611,7 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
 
   }
 
-  if (modelOptions.polynomial == TRUE);
+  if (modelOptions->polynomial == TRUE);
   else
     /* only need to update trait locus */
     update_penetrance (&pedigreeSet, traitLocus);
@@ -620,7 +620,7 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
   pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
 
-  if (modelOptions.polynomial != TRUE)
+  if (modelOptions->polynomial != TRUE)
     update_locus (&pedigreeSet, traitLocus);
 
   /* for trait likelihood */
@@ -640,7 +640,7 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
     pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 
 
-    if (modelOptions.polynomial == TRUE) {
+    if (modelOptions->polynomial == TRUE) {
       KASSERT (pPedigree->traitLikelihoodPolynomial != NULL, "Error in  \n");
       /* evaluate likelihood */
       evaluatePoly (pPedigree->traitLikelihoodPolynomial,
@@ -709,7 +709,7 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
   char markerNo[8];
   sprintf (partialPolynomialFunctionName, "MDA_C%d_P%%sM",
 	   (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
-  for (k = 0; k < modelType.numMarkers; k++) {
+  for (k = 0; k < modelType->numMarkers; k++) {
     if (*get_map_position (traitLocus) <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
 	(strstr (partialPolynomialFunctionName, "_T") == NULL))
       strcat (partialPolynomialFunctionName, "_T");
@@ -774,9 +774,9 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
       fprintf(fpIR,"%6.3f", log10HetLR);
 
       fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
-      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
         fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
-        if(modelOptions.imprintingFlag){
+        if(modelOptions->imprintingFlag){
           fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
         }else{
           fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].dd); 
@@ -826,12 +826,12 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
       localmax_x[0] = gfreq;
       localmax_x[1] = alphaV;
 
-      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
 	localmax_x[pen_size * liabIdx + 2] = x[pen_size * liabIdx + 1];
 	localmax_x[pen_size * liabIdx + 3] = x[pen_size * liabIdx + 2] * x[pen_size * liabIdx + 1];
 	localmax_x[pen_size * liabIdx + 4] = x[pen_size * liabIdx + 3] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2];
 
-        if(modelOptions.imprintingFlag){
+        if(modelOptions->imprintingFlag){
    	  localmax_x[pen_size * liabIdx + 4] = x[pen_size * liabIdx + 3] * x[pen_size * liabIdx + 1];
 	  localmax_x[pen_size * liabIdx + 5] =
 	    x[pen_size * liabIdx + 4] * x[pen_size * liabIdx + 3] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2];
@@ -844,8 +844,8 @@ compute_hlod_mp_dt (double x[], double *f, int *scale)
   avg_hetLR = alpha_integral;
 
   //Jacobian
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-    if(modelOptions.imprintingFlag)
+  for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+    if(modelOptions->imprintingFlag)
       avg_hetLR *= x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 1]* x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2]* x[pen_size * liabIdx + 3];
     else
       avg_hetLR *= x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2];
@@ -880,14 +880,14 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
   double oldsum_log10;
   double newsum_log10;
 
-  if(modelOptions.imprintingFlag)
+  if(modelOptions->imprintingFlag)
     pen_size=4;
 
   gfreq = x[0];
   if(fpIR !=NULL)
     dk_curModel.dgf = gfreq;
 
-  if(modelOptions.mapFlag == SS){
+  if(modelOptions->mapFlag == SS){
     thetaM = fixed_thetaM;
     thetaF = fixed_thetaF;
   }else{
@@ -895,17 +895,17 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
     thetaF = fixed_theta;
   }
 
-  if (1 && modelOptions.markerAnalysis == FALSE) {
+  if (1 && modelOptions->markerAnalysis == FALSE) {
     pLocus->pAlleleFrequency[0] = gfreq;
     pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
-    if (modelOptions.polynomial == TRUE);
+    if (modelOptions->polynomial == TRUE);
     else
       update_locus (&pedigreeSet, loc1);
 
   }
 
-  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+  if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
     if(status<0)
       KASSERT (1,"Haplotype frequency combination impossible. Exiting!\n");
@@ -914,15 +914,15 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
 
   /* this should be MEAN + SD */
   j = 1;
-  if (modelType.trait == CT) {
+  if (modelType->trait == CT) {
     threshold= x[s->ndim -1];
   }
-  if (modelOptions.markerAnalysis == FALSE) {
-    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+  if (modelOptions->markerAnalysis == FALSE) {
+    for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
       mean_DD = x[j];
       mean_Dd = (x[j+1]-xl[j+1])*(x[j]-xl[j])/(xu[j]-xl[j])+xl[j+1];
 
-      if(modelOptions.imprintingFlag){
+      if(modelOptions->imprintingFlag){
         mean_dD =(x[j+2]-xl[j+2])*(x[j]-xl[j])/(xu[j]-xl[j])+xl[j+2];
         mean_dd =(x[j+3]-xl[j+3])*(x[j+2]-xl[j+2])/(xu[j+2]- xl[j+2])*(x[j+1]-xl[j+1])/(xu[j+1]- xl[j+1])*(x[j]-xl[j])/(xu[j]-xl[j])+xl[j+3];
       }else{
@@ -938,10 +938,10 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
         dk_curModel.pen[liabIdx].dd = mean_dd;
       }
 
-      if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+      if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
 	/*SD_DD = x[j];		
 	SD_Dd = x[j + 1];	
-        if(modelOptions.imprintingFlag){
+        if(modelOptions->imprintingFlag){
 	  SD_dD = x[j+2];
           SD_dd = x[j+3];
 	}else{
@@ -960,19 +960,19 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
 
       }
       if(fpIR !=NULL){
-        if (modelType.trait == CT)
+        if (modelType->trait == CT)
           dk_curModel.pen[liabIdx].threshold= threshold;
       }
 
       /* threshold for QT *
-      if (modelType.trait == CT) {
-	threshold = x[j];	// modelRange.tthresh[liabIdx][thresholdIdx];
+      if (modelType->trait == CT) {
+	threshold = x[j];	// modelRange->tthresh[liabIdx][thresholdIdx];
 	j++;
 	}*/
 
 
       /* check against the hard coded constraint */
-      if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+      if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
 	constraint =(1.0-gfreq)*(1.0-gfreq)*mean_dd*SD_dd+2*gfreq*(1-gfreq)*mean_Dd*SD_Dd+gfreq*gfreq*mean_DD*SD_DD;
 	/* fprintf(stderr, "constraint: %f gfreq:%f DD (%f,%f) Dd(%f,%f) dd(%f,%f)\n",
 	   constraint, gfreq, mean_DD, SD_DD, mean_Dd, SD_DD, mean_dd, SD_dd);
@@ -997,7 +997,7 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
 
     }				/* liability class Index */
 
-    if (modelOptions.polynomial == TRUE);
+    if (modelOptions->polynomial == TRUE);
     else
       update_penetrance (&pedigreeSet, traitLocus);
 
@@ -1010,7 +1010,7 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
     }*/
 
   /* get the likelihood at 0.5 first and LD=0 */
-  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+  if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
 
     status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprime0Idx);
     if(status<0)
@@ -1029,7 +1029,7 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
     locusList->pPrevLocusDistance[k][1] = 0.5;
   }
 
-  if (modelOptions.polynomial == TRUE);
+  if (modelOptions->polynomial == TRUE);
   else
     /* populate the matrix */
     status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,	/* probability */
@@ -1068,13 +1068,13 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
 
   log10_likelihood_null = pedigreeSet.log10Likelihood;
 
-  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+  if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
     copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprimeIdx]);
     copy_DValue (pLDLoci, pLambdaCell->DValue[dprimeIdx]);
   }
 
-  if (modelOptions.mapFlag == SA) {
+  if (modelOptions->mapFlag == SA) {
     for (k = 0; k < 3; k++) {
       locusList->pNextLocusDistance[k][0] = thetaM;
       locusList->pPrevLocusDistance[k][1] = thetaF;
@@ -1086,7 +1086,7 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
     locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = thetaF;
   }
 
-  if (modelOptions.polynomial == TRUE);
+  if (modelOptions->polynomial == TRUE);
   else
     /* populate the matrix */
     status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,	/* probability */
@@ -1158,27 +1158,27 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
     if(fpIR !=NULL){
       dk_curModel.alpha = alphaV;
       fprintf(fpIR,"%6.3f", log10HetLR);
-      if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+      if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
         fprintf(fpIR," %4.3f", dk_curModel.dprime[0]);
       }
-      if(modelOptions.mapFlag == SA){
+      if(modelOptions->mapFlag == SA){
         fprintf(fpIR," %4.3f", dk_curModel.theta[0]);
       } else{
         fprintf(fpIR," %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[0] );
       }
       fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
-      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
         fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
-        if(modelOptions.imprintingFlag){
+        if(modelOptions->imprintingFlag){
           fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
         }else{
           fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].dd); 
         }
-        if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+        if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
           fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].DDSD); 
 	}
       }
-      if (modelType.trait == CT){
+      if (modelType->trait == CT){
         fprintf(fpIR," %4.3f",dk_curModel.pen[0].threshold); 
       }
       fprintf(fpIR," %d\n",dk_curModel.posIdx);
@@ -1227,35 +1227,35 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
       localmax_x[0] = gfreq;
       localmax_x[1] = alphaV;
       k = 2;
-      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
 
 	localmax_x[k] = x[k - 1];
 	localmax_x[k + 1] =(x[k]-xl[k])*(x[k-1]-xl[k-1])/(xu[k-1]-xl[k-1])+xl[k];
 
-        if(modelOptions.imprintingFlag){
+        if(modelOptions->imprintingFlag){
 	  localmax_x[k+2]=(x[k+1]-xl[k+1])*(x[k-1]-xl[k-1])/(xu[k-1]-xl[k-1])+xl[k+1];
           localmax_x[k+3]=(x[k+2]-xl[k+2])*(x[k+1]-xl[k+1])/(xu[k+1]-xl[k+1])*(x[k]-xl[k])/(xu[k]-xl[k])*(x[k-1]-xl[k-1])/(xu[k-1]-xl[k-1])+xl[k+2];
 	}else{
 	  localmax_x[k+2]=(x[k+1]-xl[k+1])*(x[k]-xl[k])/(xu[k]-xl[k])*(x[k-1]-xl[k-1])/(xu[k-1]-xl[k-1])+xl[k+1];
 	}
 	k += pen_size;
-	if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+	if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
 	  /*localmax_x[k] = x[k - 1];
 	  localmax_x[k + 1] = x[k];
 	  localmax_x[k + 2] = x[k + 1];
-          if(modelOptions.imprintingFlag)
+          if(modelOptions->imprintingFlag)
 	    localmax_x[k + 3] = x[k + 2];
 	    k += pen_size;*/
           localmax_x[k] = x[k - 1];
           k++;
 	}
 	/* threshold for QT *
-	if (modelType.trait == CT) {
+	if (modelType->trait == CT) {
 	  localmax_x[k] = x[k - 1];
 	  k++;
 	  }*/
       }
-      if (modelType.trait == CT) {
+      if (modelType->trait == CT) {
 	localmax_x[k] = x[k - 1];
 	k++;
       }
@@ -1266,21 +1266,21 @@ compute_hlod_2p_qt (double x[], double *f, int *scale)
 
   /* Jacobian */
   k = 1;
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+  for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
     avg_hetLR *=(x[k]-xl[k])/(xu[k]-xl[k]);
     avg_hetLR *=(x[k]-xl[k])/(xu[k]-xl[k]);
     avg_hetLR *= (x[k+1]-xl[k+1])/(xu[k+1]-xl[k+1]);
 
-    if(modelOptions.imprintingFlag){
+    if(modelOptions->imprintingFlag){
       avg_hetLR *=(x[k]-xl[k])/(xu[k]-xl[k]);
       avg_hetLR *= (x[k+2]-xl[k+2])/(xu[k+2]-xl[k+2]);
     }
 
     k += pen_size;
-    if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+    if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
       k ++; //= pen_size;
     }
-    /*if (modelType.trait == CT) {
+    /*if (modelType->trait == CT) {
       k++;
       }*/
   }
@@ -1300,13 +1300,13 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
 
 /*  Limit of this function
 
-   modelOptions.type := TP  (Two points)
-   modelOptions.trait := DT (DICHOTOMOUS);
-   modelOptions.equilibrium :=LINKAGE_EQUILIBRIUM
-   modelOptions.polynomial := TRUE
+   modelOptions->type := TP  (Two points)
+   modelOptions->trait := DT (DICHOTOMOUS);
+   modelOptions->equilibrium :=LINKAGE_EQUILIBRIUM
+   modelOptions->polynomial := TRUE
    modelOptions->markerAnalysis := FALSE;
-   modelOptions.mapFlag := SA 
-   modelRange.nafreq :=1
+   modelOptions->mapFlag := SA 
+   modelRange->nafreq :=1
    
 */
 
@@ -1327,7 +1327,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
   double newsum_log10;
 
   
-  if(modelOptions.imprintingFlag)
+  if(modelOptions->imprintingFlag)
     pen_size=4;
 
   gfreq = x[0];
@@ -1335,7 +1335,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
   if(fpIR !=NULL)
     dk_curModel.dgf = gfreq;
 
-  if(modelOptions.mapFlag == SS){
+  if(modelOptions->mapFlag == SS){
     thetaM = fixed_thetaM;
     thetaF = fixed_thetaF;
   }else{
@@ -1345,29 +1345,29 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
 
 
 
-  if (1 && modelOptions.markerAnalysis == FALSE) {
+  if (1 && modelOptions->markerAnalysis == FALSE) {
     pLocus->pAlleleFrequency[0] = gfreq;
     pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
-    if (modelOptions.polynomial == TRUE);
+    if (modelOptions->polynomial == TRUE);
     else
       update_locus (&pedigreeSet, loc1);
 
   }
 
-  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+  if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
     if(status<0)
       KASSERT (1,"Haplotype frequency combination impossible. Exiting!\n");
   }
 
-  if (modelOptions.markerAnalysis == FALSE
+  if (modelOptions->markerAnalysis == FALSE
       && pLocus1->locusType == LOCUS_TYPE_TRAIT) {
-    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+    for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
       pen_DD = x[pen_size * liabIdx + 1];
       pen_Dd = x[pen_size * liabIdx + 2] * x[pen_size * liabIdx + 1];
 
-      if(modelOptions.imprintingFlag){
+      if(modelOptions->imprintingFlag){
         pen_dD = x[pen_size * liabIdx + 3] * x[pen_size * liabIdx + 1];
         pen_dd = x[pen_size * liabIdx + 4] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2] *x[pen_size * liabIdx + 3];
       }else{
@@ -1391,12 +1391,12 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
       pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
     }
   }
-  if (modelOptions.polynomial == TRUE);
+  if (modelOptions->polynomial == TRUE);
   else
     update_penetrance (&pedigreeSet, traitLocus);
 
   /* get the likelihood at 0.5 first and LD=0 */
-  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+  if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprime0Idx);
     if(status<0)
       KASSERT (1,"Haplotype frequency combination impossible. Exiting!\n");
@@ -1411,7 +1411,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
     locusList->pNextLocusDistance[k][0] = 0.5;
     locusList->pPrevLocusDistance[k][1] = 0.5;
   }
-  if (modelOptions.polynomial == TRUE);
+  if (modelOptions->polynomial == TRUE);
   else
     /* populate the matrix */
     status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,	/* probability */
@@ -1449,7 +1449,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
   log10_likelihood_null = pedigreeSet.log10Likelihood;
 
 
-  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+  if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
 
     copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprimeIdx]);
@@ -1466,7 +1466,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
   }
 
 
-  if (modelOptions.mapFlag == SA) {
+  if (modelOptions->mapFlag == SA) {
     for (k = 0; k < 3; k++) {
       locusList->pNextLocusDistance[k][0] = thetaM;
       locusList->pPrevLocusDistance[k][1] = thetaF;
@@ -1478,7 +1478,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
       locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = thetaF;
   }
 
-  if (modelOptions.polynomial == TRUE);
+  if (modelOptions->polynomial == TRUE);
   else
     /* populate the matrix */
     status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,	/* probability */
@@ -1542,18 +1542,18 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
     if(fpIR !=NULL){
       dk_curModel.alpha = alphaV;
       fprintf(fpIR,"%6.3f", log10HetLR);
-      if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+      if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
         fprintf(fpIR," %4.3f", dk_curModel.dprime[0]);
       }
-      if(modelOptions.mapFlag == SA){
+      if(modelOptions->mapFlag == SA){
         fprintf(fpIR," %4.3f", dk_curModel.theta[0]);
       } else{
         fprintf(fpIR," %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[0] );
       }
       fprintf(fpIR," %4.3f %4.3f",dk_curModel.alpha,dk_curModel.dgf);
-      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
         fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
-        if(modelOptions.imprintingFlag){
+        if(modelOptions->imprintingFlag){
           fprintf(fpIR," %4.3f %4.3f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
         }else{
           fprintf(fpIR," %4.3f",dk_curModel.pen[liabIdx].dd); 
@@ -1606,13 +1606,13 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
       localmax_x[0] = gfreq;
       localmax_x[1] = alphaV;
 
-      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
+      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
 	localmax_x[pen_size * liabIdx + 2] = x[pen_size * liabIdx + 1];
 	localmax_x[pen_size * liabIdx + 3] = x[pen_size * liabIdx + 2] * x[pen_size * liabIdx + 1];
 	localmax_x[pen_size * liabIdx + 4] =
 	  x[pen_size * liabIdx + 3] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2];
 
-        if(modelOptions.imprintingFlag){
+        if(modelOptions->imprintingFlag){
    	  localmax_x[pen_size * liabIdx + 4] = x[pen_size * liabIdx + 3] * x[pen_size * liabIdx + 1];
 	  localmax_x[pen_size * liabIdx + 5] =
 	    x[pen_size * liabIdx + 4] * x[pen_size * liabIdx + 3] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2];
@@ -1628,8 +1628,8 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale) {
   //printf("avg hetLR =%15.10f with gf=%f DD=%f Dd=%f dd=%f theta=%f\n", avg_hetLR, gfreq, pen_DD,pen_Dd, pen_dd, fixed_theta);
 
   // Jacobian
-  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-    if(modelOptions.imprintingFlag)
+  for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+    if(modelOptions->imprintingFlag)
       avg_hetLR *= x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 1]* x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2]* x[pen_size * liabIdx + 3];
     else
       avg_hetLR *= x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 1] * x[pen_size * liabIdx + 2];

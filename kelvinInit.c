@@ -70,7 +70,7 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   memset (&markerLocusList, 0, sizeof (markerLocusList));
   memset (&traitLocusList, 0, sizeof (traitLocusList));
 
-  memset (&modelType, 0, sizeof (modelType));
+//  memset (modelType, 0, sizeof (ModelType));
 
   // Initialize the logging system.
   logInit ();
@@ -113,36 +113,36 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
   finishConfig ();
 
   /* For now, reject all models we can't deal with. */
-  KASSERT (modelRange.nalleles == 2, "Only biallelic traits supported.\n");
+  KASSERT (modelRange->nalleles == 2, "Only biallelic traits supported.\n");
 
-  if (modelOptions.polynomial == TRUE) {
+  if (modelOptions->polynomial == TRUE) {
     swLogMsg ("Computation is done in polynomial mode");
 #ifdef POLYUSE_DL
     swLogMsg ("Dynamic libraries for polynomial evaluation will be used if found");
 #endif
-    polynomialInitialization (modelOptions.polynomialScale);
+    polynomialInitialization (modelOptions->polynomialScale);
   } else {
     swLogMsg ("Computation is done in non-polynomial (direct evaluation) mode");
   }
-  if (modelOptions.integration == TRUE) {
+  if (modelOptions->integration == TRUE) {
     swLogMsg ("Integration is done numerically (dkelvin)");
   } else {
     swLogMsg ("Integration is done with iteration (original kelvin)");
   }
 
   /* Read in the map file. */
-  read_mapfile (modelOptions.mapfile);
+  read_mapfile (modelOptions->mapfile);
 
   /* Initialize the locus list and read in the marker file. */
   memset (&originalLocusList, 0, sizeof (originalLocusList));
   /* read in what loci are in the pedigree file */
-  read_datafile (modelOptions.datafile);
+  read_datafile (modelOptions->datafile);
 
   /* We should depend on the config file, rather than the presence of a trait
    * in the data file, to decide if we're doing a marker-to-marker analysis.
    */
   /*if (originalLocusList.numTraitLocus > 0) { */
-if (! modelOptions.markerAnalysis || (originalLocusList.ppLocusList[0]->locusType == LOCUS_TYPE_TRAIT)) {
+if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusType == LOCUS_TYPE_TRAIT)) {
     /* We are not doing marker to marker analysis; the configuration
      * has all the information about the disease trait if any.
      * Need to add the alleles into trait locus 
@@ -154,28 +154,28 @@ if (! modelOptions.markerAnalysis || (originalLocusList.ppLocusList[0]->locusTyp
     add_allele (pLocus, "d", 0.5);
     /* fix number of trait variables at 1 for now */
     pTraitLocus->numTrait = 1;
-    pTrait = add_trait (0, pTraitLocus, modelType.trait);
-    pTrait->numLiabilityClass = modelRange.nlclass;
-    if (modelType.trait == QT || modelType.trait == CT) {
-      modelType.min = (modelType.minOriginal - modelType.mean) / modelType.sd;
-      modelType.max = (modelType.maxOriginal - modelType.mean) / modelType.sd;
-      pTrait->minFlag = modelType.minFlag;
-      pTrait->maxFlag = modelType.maxFlag;
-      pTrait->min = modelType.min;
-      pTrait->max = modelType.max;
-      pTrait->functionQT = modelType.distrib;
-      if (modelType.distrib == QT_FUNCTION_T)
-        pTrait->dfQT = modelType.constants[0];
-      pTrait->sampleMean = modelType.mean;
-      pTrait->sampleSD = modelType.sd;
-      pTrait->unknownTraitValue = modelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN];
-      pTrait->lessCutoffFlag = modelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED];
-      pTrait->moreCutoffFlag = modelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED];
+    pTrait = add_trait (0, pTraitLocus, modelType->trait);
+    pTrait->numLiabilityClass = modelRange->nlclass;
+    if (modelType->trait == QT || modelType->trait == CT) {
+      modelType->min = (modelType->minOriginal - modelType->mean) / modelType->sd;
+      modelType->max = (modelType->maxOriginal - modelType->mean) / modelType->sd;
+      pTrait->minFlag = modelType->minFlag;
+      pTrait->maxFlag = modelType->maxFlag;
+      pTrait->min = modelType->min;
+      pTrait->max = modelType->max;
+      pTrait->functionQT = modelType->distrib;
+      if (modelType->distrib == QT_FUNCTION_T)
+        pTrait->dfQT = modelType->constants[0];
+      pTrait->sampleMean = modelType->mean;
+      pTrait->sampleSD = modelType->sd;
+      pTrait->unknownTraitValue = modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN];
+      pTrait->lessCutoffFlag = modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED];
+      pTrait->moreCutoffFlag = modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED];
     }
   }
 
   /* read in marker allele frequencies */
-  read_markerfile (modelOptions.markerfile, modelType.numMarkers);
+  read_markerfile (modelOptions->markerfile, modelType->numMarkers);
 
   /* build allele set information */
   for (locus = 0; locus < originalLocusList.numLocus; locus++) {
@@ -184,7 +184,7 @@ if (! modelOptions.markerAnalysis || (originalLocusList.ppLocusList[0]->locusTyp
 
   /* Initialize the pedigree set datastructure and read in the pedigrees. */
   memset (&pedigreeSet, 0, sizeof (PedigreeSet));
-  read_pedfile (modelOptions.pedfile, &pedigreeSet);
+  read_pedfile (modelOptions->pedfile, &pedigreeSet);
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
     pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
     if (pPedigree->currentLoopFlag)
@@ -197,80 +197,80 @@ if (! modelOptions.markerAnalysis || (originalLocusList.ppLocusList[0]->locusTyp
    * config, sample the min and max trait values in the pedigree data. NOTE
    * WELL this carries on the assumption of a single trait column in the pedigree. 
    */
-  if (modelType.trait != DT && modelType.distrib == QT_FUNCTION_CHI_SQUARE &&
-      modelOptions.integration && ! modelRange.penetLimits) {
+  if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_CHI_SQUARE &&
+      modelOptions->integration && ! modelRange->penetLimits) {
     int va, vb;
     double min, max;
     
-    modelRange.penetLimits = malloc ((vb = NPENET (modelRange.nalleles)) * sizeof (double *));
+    modelRange->penetLimits = malloc ((vb = NPENET (modelRange->nalleles)) * sizeof (double *));
     for (va = 0; va < vb; va++)
-      modelRange.penetLimits[va] = malloc (2 * sizeof (double));
+      modelRange->penetLimits[va] = malloc (2 * sizeof (double));
     getPedigreeTraitRange (&pedigreeSet, &min, &max);
     if (min < 0 || max > 30)
       logMsg (LOGDEFAULT, LOGFATAL, "Can't intuit Chi-squared DegreesOfFreedom from input data, please configure explicitly\n");
     for (va = 0; va < vb; va++) {
-      modelRange.penetLimits[va][0] = min;
-      modelRange.penetLimits[va][1] = max;
+      modelRange->penetLimits[va][0] = min;
+      modelRange->penetLimits[va][1] = max;
     }
   }
 
   /* read in case control file if provided */
-  if (strlen (modelOptions.ccfile) > 0)
-    read_ccfile (modelOptions.ccfile, &pedigreeSet);
+  if (strlen (modelOptions->ccfile) > 0)
+    read_ccfile (modelOptions->ccfile, &pedigreeSet);
   flexBufferSize = 0;
   free (flexBuffer);
   fflush (stderr);
   fflush (stdout);
 
   /* FIXME: shouldn't this bit come BEFORE the !markerAnalysis block, above? */
-  if (modelType.trait == QT) {
+  if (modelType->trait == QT) {
     /* threshold value will not be used in any meaningful way, but we will use it for 
        the loop */
-    modelRange.ntthresh = 1;
-    modelType.minOriginal = 0;
-    modelType.maxOriginal = 1;
-    if (modelRange.tthresh == NULL) {
-      modelRange.tthresh = (double **) malloc (sizeof (double *));
-      for (i = 0; i < modelRange.nlclass; i++) {
-	modelRange.tthresh[i] = malloc (sizeof (double));
+    modelRange->ntthresh = 1;
+    modelType->minOriginal = 0;
+    modelType->maxOriginal = 1;
+    if (modelRange->tthresh == NULL) {
+      modelRange->tthresh = (double **) malloc (sizeof (double *));
+      for (i = 0; i < modelRange->nlclass; i++) {
+	modelRange->tthresh[i] = malloc (sizeof (double));
       }
     }
   }
 
   /* allocate space for results */
-  if (modelType.type == TP) {
-    modelType.numMarkers = 1;
+  if (modelType->type == TP) {
+    modelType->numMarkers = 1;
     totalLoci = 2;
     /* two point analysis */
-    if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) {
+    if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM) {
       /* in order to simplify looping, even for LE, we add a fake LD parameter dprime=0, which
        * is LE */
-      modelRange.ndprime = 1;
-      modelRange.dprime = (double *) calloc (1, sizeof (double));
-      modelRange.dprime[0] = 0;
-      pLambdaCell = findLambdas (&modelRange, 2, 2);
+      modelRange->ndprime = 1;
+      modelRange->dprime = (double *) calloc (1, sizeof (double));
+      modelRange->dprime[0] = 0;
+      pLambdaCell = findLambdas (modelRange, 2, 2);
       dprime0Idx = 0;
     }
   } else {
     /* we are doing multipoint analysis */
-    totalLoci = modelType.numMarkers + originalLocusList.numTraitLocus;
-    if (modelRange.tlocRangeStart >= 0) {
+    totalLoci = modelType->numMarkers + originalLocusList.numTraitLocus;
+    if (modelRange->tlocRangeStart >= 0) {
       double endofmap, tloc;
       endofmap = map.ppMapUnitList[map.count-1]->mapPos[MAP_POS_SEX_AVERAGE] +
-	modelRange.tlocRangeIncr;
+	modelRange->tlocRangeIncr;
       i = 0;
-      while ((tloc = modelRange.tlocRangeStart + (i * modelRange.tlocRangeIncr)) <= endofmap) {
-	addTraitLocus (&modelRange, tloc);
+      while ((tloc = modelRange->tlocRangeStart + (i * modelRange->tlocRangeIncr)) <= endofmap) {
+	addTraitLocus (modelRange, tloc);
 	i++;
       }
     }
-    if (modelRange.tlmark == TRUE) {
+    if (modelRange->tlmark == TRUE) {
       /* add marker positions to the list of positions we want to conduct analysis */
       for (i = 0; i < originalLocusList.numLocus; i++) {
         pLocus = originalLocusList.ppLocusList[i];
         if (pLocus->locusType == LOCUS_TYPE_TRAIT)
           continue;
-        addTraitLocus (&modelRange, pLocus->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]);
+        addTraitLocus (modelRange, pLocus->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]);
       }
     }
   }
@@ -296,7 +296,7 @@ if (! modelOptions.markerAnalysis || (originalLocusList.ppLocusList[0]->locusTyp
   /* initialize loci by doing genotype elimination, set recoding */
   initialize_loci (&pedigreeSet);
 
-  if (modelOptions.dryRun != 0) {
+  if (modelOptions->dryRun != 0) {
     for (loc1 = 0; loc1 < originalLocusList.numLocus; loc1++) {
       fprintf (stderr, "Locus %d:\n", loc1);
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -305,7 +305,7 @@ if (! modelOptions.markerAnalysis || (originalLocusList.ppLocusList[0]->locusTyp
       }
     }
   }
-  if (modelOptions.polynomial == TRUE) {
+  if (modelOptions->polynomial == TRUE) {
     for (k = 0; k < 3; k++) {
       initialProbPoly[k] = constant1Poly;
       initialProbPoly2[k] = constant1Poly;
@@ -331,45 +331,45 @@ if (! modelOptions.markerAnalysis || (originalLocusList.ppLocusList[0]->locusTyp
 
   /* Open output files that get written across loops. */
 
-  if(modelOptions.conditionalRun == 1 || modelOptions.loopCondRun == 1) {
-    fpCond = fopen (modelOptions.condFile, "w");
-    KASSERT (fpCond != NULL, "Error in opening file %s for write.\n", modelOptions.condFile); 
+  if(modelOptions->conditionalRun == 1 || modelOptions->loopCondRun == 1) {
+    fpCond = fopen (modelOptions->condFile, "w");
+    KASSERT (fpCond != NULL, "Error in opening file %s for write.\n", modelOptions->condFile); 
     //  fprintf( fpCond, "# Version %s\n", programVersion);
    }
 
-  if (modelOptions.markerAnalysis == FALSE || modelOptions.forceAvghetFile == TRUE) {
-    fpHet = fopen (modelOptions.avghetfile, "w");
-    KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", modelOptions.avghetfile);
+  if (modelOptions->markerAnalysis == FALSE || modelOptions->forceAvghetFile == TRUE) {
+    fpHet = fopen (modelOptions->avghetfile, "w");
+    KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", modelOptions->avghetfile);
     fprintf (fpHet, "# Version %s\n", programVersion);
   }
 
-  if (modelType.type == TP) {
-    fpPPL = fopen (modelOptions.pplfile, "w");
-    KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", modelOptions.pplfile);
+  if (modelType->type == TP) {
+    fpPPL = fopen (modelOptions->pplfile, "w");
+    KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", modelOptions->pplfile);
     writePPLFileHeader ();
 
     /*
-    if (strlen (modelOptions.maxmodelfile) > 0) {
-      fpTP = fopen (modelOptions.maxmodelfile, "w");
-      KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", modelOptions.maxmodelfile);
+    if (strlen (modelOptions->maxmodelfile) > 0) {
+      fpTP = fopen (modelOptions->maxmodelfile, "w");
+      KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", modelOptions->maxmodelfile);
     }
     */
   }
 
-  if (strlen (modelOptions.modfile) > 0) {
-    fpMOD = fopen (modelOptions.modfile, "w");
-    KASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modelOptions.modfile);
+  if (strlen (modelOptions->modfile) > 0) {
+    fpMOD = fopen (modelOptions->modfile, "w");
+    KASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modelOptions->modfile);
     fprintf (fpMOD, "# Version %s\n", programVersion);
   }
 
-  if (strlen (modelOptions.intermediatefile) > 0) {
-    fpIR = fopen (modelOptions.intermediatefile, "w");
-    KASSERT (fpIR != NULL, "Error in opening file %s for write.\n", modelOptions.intermediatefile);
+  if (strlen (modelOptions->intermediatefile) > 0) {
+    fpIR = fopen (modelOptions->intermediatefile, "w");
+    KASSERT (fpIR != NULL, "Error in opening file %s for write.\n", modelOptions->intermediatefile);
   }
 
  // DKelvin intermediate results are written here.
-  if ((modelOptions.integration) && (strlen (modelOptions.dkelvinoutfile) > 0)) {
-    fpDK= fopen(modelOptions.dkelvinoutfile, "w");
-    KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", modelOptions.dkelvinoutfile);
+  if ((modelOptions->integration) && (strlen (modelOptions->dkelvinoutfile) > 0)) {
+    fpDK= fopen(modelOptions->dkelvinoutfile, "w");
+    KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", modelOptions->dkelvinoutfile);
   }
 

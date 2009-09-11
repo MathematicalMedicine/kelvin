@@ -152,7 +152,7 @@ int main (int argc, char *argv[])
 
   #include "kelvinInit.c"
 
-  if (modelOptions.integration) {
+  if (modelOptions->integration) {
     #include "integrationMain.c"
   } else {
     //    int danglingWire=0;

@@ -697,7 +697,7 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
 	   myDPC, listHead[15].doublePairCount);
 
   // Nothing, reorder the best free list and try again...
-
+  /*
   reorderFreeList (bestFreeList);
 
   if (listHead[bestFreeList].doublePairCount >= myDPC) {
@@ -706,7 +706,7 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
 #endif
     return (doPutSSD (buffer, myDPC, bestFreeList));
   }
-
+  */
   // That's about it...time to shuffle thru the trash.
 
   garbageCollect ();

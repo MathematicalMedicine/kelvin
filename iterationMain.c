@@ -24,28 +24,28 @@ void iterateMain() {
   char xmissionPattern[10];
 
   /* only for multipoint - we don't handle LD under multipoint yet */
-  if (modelType.type == MP) {
+  if (modelType->type == MP) {
     /* allocate space to save temporary results */
-    markerNameList = (char **) calloc (sizeof (char *), modelType.numMarkers);
-    if (modelType.trait == DT) {
+    markerNameList = (char **) calloc (sizeof (char *), modelType->numMarkers);
+    if (modelType->trait == DT) {
 
 #if 0
       /* likelihoodDT is for homoLR */
-      likelihoodDT = (double **) calloc (sizeof (double *), modelRange.ngfreq);
-      for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
+      likelihoodDT = (double **) calloc (sizeof (double *), modelRange->ngfreq);
+      for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
         /* second dimension is penetrance */
-        likelihoodDT[gfreqInd] = (double *) calloc (sizeof (double), modelRange.npenet);
+        likelihoodDT[gfreqInd] = (double *) calloc (sizeof (double), modelRange->npenet);
       }
 #endif
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         /* first dimension is gene freq */
-        pPedigree->traitLikelihoodDT = (double **) calloc (sizeof (double *), modelRange.ngfreq);
-        pPedigree->alternativeLikelihoodDT = (double **) calloc (sizeof (double *), modelRange.ngfreq);
-        for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
+        pPedigree->traitLikelihoodDT = (double **) calloc (sizeof (double *), modelRange->ngfreq);
+        pPedigree->alternativeLikelihoodDT = (double **) calloc (sizeof (double *), modelRange->ngfreq);
+        for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
           /* second dimension is penetrance */
-          pPedigree->traitLikelihoodDT[gfreqInd] = (double *) calloc (sizeof (double), modelRange.npenet);
-          pPedigree->alternativeLikelihoodDT[gfreqInd] = (double *) calloc (sizeof (double), modelRange.npenet);
+          pPedigree->traitLikelihoodDT[gfreqInd] = (double *) calloc (sizeof (double), modelRange->npenet);
+          pPedigree->alternativeLikelihoodDT[gfreqInd] = (double *) calloc (sizeof (double), modelRange->npenet);
         }
       }
     } else {    /* QT */
@@ -55,21 +55,21 @@ void iterateMain() {
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         /* second dimension is gene freq */
-        pPedigree->traitLikelihoodQT = (double ****) calloc (sizeof (double ***), modelRange.ngfreq);
-        pPedigree->alternativeLikelihoodQT = (double ****) calloc (sizeof (double ***), modelRange.ngfreq);
-        for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
+        pPedigree->traitLikelihoodQT = (double ****) calloc (sizeof (double ***), modelRange->ngfreq);
+        pPedigree->alternativeLikelihoodQT = (double ****) calloc (sizeof (double ***), modelRange->ngfreq);
+        for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
 
           /* third dimension is mean */
-          pPedigree->traitLikelihoodQT[gfreqInd] = (double ***) calloc (sizeof (double **), modelRange.npenet);
-          pPedigree->alternativeLikelihoodQT[gfreqInd] = (double ***) calloc (sizeof (double **), modelRange.npenet);
-          for (penIdx = 0; penIdx < modelRange.npenet; penIdx++) {
+          pPedigree->traitLikelihoodQT[gfreqInd] = (double ***) calloc (sizeof (double **), modelRange->npenet);
+          pPedigree->alternativeLikelihoodQT[gfreqInd] = (double ***) calloc (sizeof (double **), modelRange->npenet);
+          for (penIdx = 0; penIdx < modelRange->npenet; penIdx++) {
             /* fourth dimension is SD */
-            pPedigree->traitLikelihoodQT[gfreqInd][penIdx] = (double **) calloc (sizeof (double *), modelRange.nparam);
-            pPedigree->alternativeLikelihoodQT[gfreqInd][penIdx] = (double **) calloc (sizeof (double *), modelRange.nparam);
-            for (paramIdx = 0; paramIdx < modelRange.nparam; paramIdx++) {
+            pPedigree->traitLikelihoodQT[gfreqInd][penIdx] = (double **) calloc (sizeof (double *), modelRange->nparam);
+            pPedigree->alternativeLikelihoodQT[gfreqInd][penIdx] = (double **) calloc (sizeof (double *), modelRange->nparam);
+            for (paramIdx = 0; paramIdx < modelRange->nparam; paramIdx++) {
               /* 5th dimension is threshold */
-              pPedigree->traitLikelihoodQT[gfreqInd][penIdx][paramIdx] = (double *) calloc (sizeof (double), modelRange.ntthresh);
-              pPedigree->alternativeLikelihoodQT[gfreqInd][penIdx][paramIdx] = (double *) calloc (sizeof (double), modelRange.ntthresh);
+              pPedigree->traitLikelihoodQT[gfreqInd][penIdx][paramIdx] = (double *) calloc (sizeof (double), modelRange->ntthresh);
+              pPedigree->alternativeLikelihoodQT[gfreqInd][penIdx][paramIdx] = (double *) calloc (sizeof (double), modelRange->ntthresh);
             } /* paramIdx */
           } /* penIdx */
         } /* gfreqInd */
@@ -81,51 +81,51 @@ void iterateMain() {
 
   if(fpIR !=NULL){
     memset (&dk_curModel, 0, sizeof (st_DKMaxModel));        
-    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     /* Assumes that dkelvin can only handle a single D' */
-      dk_curModel.dprime = (double *) calloc (modelRange.nlclass, sizeof (double));
+      dk_curModel.dprime = (double *) calloc (modelRange->nlclass, sizeof (double));
       KASSERT ((dk_curModel.dprime != NULL), "malloc failed");
     }
-    dk_curModel.pen = calloc (modelRange.nlclass, sizeof (st_DKMaxModelPenVector));
+    dk_curModel.pen = calloc (modelRange->nlclass, sizeof (st_DKMaxModelPenVector));
     KASSERT ((dk_curModel.pen != NULL), "malloc failed");
 
     /*SurfaceFile header*/
     fprintf(fpIR, "#HLOD"); 
-    if (modelType.type == TP) {
-      if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) 
+    if (modelType->type == TP) {
+      if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) 
         fprintf(fpIR, " Dprime");
-      if(modelOptions.mapFlag == SA)
+      if(modelOptions->mapFlag == SA)
         fprintf(fpIR, " Theta");
       else
         fprintf(fpIR, " Theta(M,F)");
     }
     fprintf(fpIR, " Alpha DGF");
-    for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-      if(modelOptions.imprintingFlag){
-        if(modelType.distrib != QT_FUNCTION_CHI_SQUARE){
-          if(modelType.trait == DT)
+    for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+      if(modelOptions->imprintingFlag){
+        if(modelType->distrib != QT_FUNCTION_CHI_SQUARE){
+          if(modelType->trait == DT)
             fprintf(fpIR," LC%dPV(DD,Dd,dD,dd)", liabIdx);
           else
             fprintf(fpIR," LC%dMV(DD,Dd,dD,dd)", liabIdx);
         }else
           fprintf(fpIR," LC%dDoFV(DD,Dd,dD,dd)", liabIdx); 
       }else{
-        if(modelType.distrib != QT_FUNCTION_CHI_SQUARE){
-          if(modelType.trait == DT)
+        if(modelType->distrib != QT_FUNCTION_CHI_SQUARE){
+          if(modelType->trait == DT)
             fprintf(fpIR," LC%dPV(DD,Dd,dd)", liabIdx);
           else
             fprintf(fpIR," LC%dMV(DD,Dd,dd)", liabIdx);
         }else
           fprintf(fpIR," LC%dDoFV(DD,Dd,dd)", liabIdx); 
       }
-      if (modelType.trait != DICHOTOMOUS && modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+      if (modelType->trait != DICHOTOMOUS && modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
         fprintf(fpIR," SD"); 
       }
     }
-    if (modelType.trait == CT){
+    if (modelType->trait == CT){
       fprintf(fpIR," Thresh");  /* If each LC uses different threshold, this does not work*/
     }
-    if (modelType.type == TP) {
+    if (modelType->type == TP) {
       fprintf(fpIR," MkIdx\n"); 
     }else{
       fprintf(fpIR," PosIdx\n"); 
@@ -141,12 +141,12 @@ void iterateMain() {
 
   /* after genotype elimination and tracking the max work space needed 
    * for constructing parental pair */
-  allocate_parental_pair_workspace (&parentalPairSpace, modelType.numMarkers + 1);
+  allocate_parental_pair_workspace (&parentalPairSpace, modelType->numMarkers + 1);
 
   /* conditional likelihood storage space for each individual */
-  allocate_likelihood_space (&pedigreeSet, modelType.numMarkers + 1);
+  allocate_likelihood_space (&pedigreeSet, modelType->numMarkers + 1);
 
-  if(modelOptions.markerAnalysis == FALSE || originalLocusList.ppLocusList[0]->locusType!=LOCUS_TYPE_MARKER) {
+  if(modelOptions->markerAnalysis == FALSE || originalLocusList.ppLocusList[0]->locusType!=LOCUS_TYPE_MARKER) {
   /* Assume the trait locus is the first one in the list */
   traitLocus = 0;
   pLocus = originalLocusList.ppLocusList[traitLocus];
@@ -154,7 +154,7 @@ void iterateMain() {
   pTrait = pTraitLocus->pTraits[traitLocus];
   }
 
-  if (modelType.type == TP) {
+  if (modelType->type == TP) {
     /* Two point. */
     if (originalLocusList.pLDLoci == NULL) {
       originalLocusList.pLDLoci = (LDLoci *) malloc (sizeof (LDLoci));
@@ -163,7 +163,7 @@ void iterateMain() {
     pLDLoci = &originalLocusList.pLDLoci[0];
     originalLocusList.numLDLoci = 1;
 
-    if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM) {
+    if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM) {
       /* fake some LD information to simplify looping */
       pLDLoci->numAllele1 = 2;
       pLDLoci->ppDPrime = (double **) malloc (sizeof (double *));
@@ -188,21 +188,21 @@ void iterateMain() {
       savedLocusList.pNextLocusDistance[i][1] = -1;
     }
 
-    if (modelOptions.polynomial == TRUE) {
+    if (modelOptions->polynomial == TRUE) {
       status =
         populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0,
                                   -1, -1, 0);
       holdAllPolys ();
     }
 
-    if(modelOptions.markerAnalysis == FALSE) {
-      total_count = modelRange.npenet * modelRange.ngfreq * modelRange.nalpha * modelRange.nafreq;
+    if(modelOptions->markerAnalysis == FALSE) {
+      total_count = modelRange->npenet * modelRange->ngfreq * modelRange->nalpha * modelRange->nafreq;
     }
     else {
-      total_count = modelRange.nafreq;
+      total_count = modelRange->nafreq;
     }
 
-    if (modelOptions.markerAnalysis == FALSE) {
+    if (modelOptions->markerAnalysis == FALSE) {
       savedLocusList.traitLocusIndex = 0;
       savedLocusList.traitOrigLocus = 0;
     } else {
@@ -213,7 +213,7 @@ void iterateMain() {
     for (loc1 = 0; loc1 < originalLocusList.numLocus - 1; loc1++) {
       savedLocusList.pLocusIndex[0] = loc1;
       pLocus1 = originalLocusList.ppLocusList[loc1];
-      if (modelOptions.markerAnalysis != FALSE && pLocus1->locusType != LOCUS_TYPE_MARKER)
+      if (modelOptions->markerAnalysis != FALSE && pLocus1->locusType != LOCUS_TYPE_MARKER)
         continue;
       if ((pLocus1->numAllele <= 1) || ((pLocus1->numAllele == 2) && ((pLocus1->pAlleleFrequency[0] <= ERROR_MARGIN) || (pLocus1->pAlleleFrequency[1] <= ERROR_MARGIN)))) {
 	KLOG (LOGINPUTFILE, LOGWARNING, "Biallelic marker %s has a minor allele frequency less than %g, skipping!\n", pLocus1->sName, ERROR_MARGIN);
@@ -235,7 +235,7 @@ void iterateMain() {
 	initialize_max_scale();
 
 	// #ifndef SIMPLEPROGRESS
-	if (modelOptions.markerAnalysis == MM)
+	if (modelOptions->markerAnalysis == MM)
 	  fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles\n", 
 		   pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele);
 	else
@@ -245,14 +245,14 @@ void iterateMain() {
 	// #endif
 
         /* find out number of alleles this marker locus has */
-        if (modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM) {
+        if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM) {
           /* get the LD parameters */
-          pLambdaCell = findLambdas (&modelRange, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
+          pLambdaCell = findLambdas (modelRange, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
           reallocate_LD_loci (pLDLoci, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
 
 	  // Create these variables ahead of likelihood polynomial build in hopes of preventing in-build creation.
 
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 	    char vName[128];
 	    int a0, a1;
 	    for (a0 = 0; a0 < pLocus1->numOriginalAllele; a0++) {
@@ -274,14 +274,14 @@ void iterateMain() {
         }
 
         loopMarkerFreqFlag = 0;
-        if (modelRange.nafreq >= 2 && modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && pLocus2->numOriginalAllele == 2) {
+        if (modelRange->nafreq >= 2 && modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM && pLocus2->numOriginalAllele == 2) {
           loopMarkerFreqFlag = 1;
-        } else if (modelRange.nafreq == 0) {
+        } else if (modelRange->nafreq == 0) {
           /* add a fake one to facilitate loops and other handlings */
-          addAlleleFreq (&modelRange, pLocus2->pAlleleFrequency[0]);
+          addAlleleFreq (modelRange, pLocus2->pAlleleFrequency[0]);
         } else {
-          modelRange.nafreq = 1;
-          modelRange.afreq[0] = pLocus2->pAlleleFrequency[0];
+          modelRange->nafreq = 1;
+          modelRange->afreq[0] = pLocus2->pAlleleFrequency[0];
         }
 
         /* allocate/initialize result storage */
@@ -289,34 +289,35 @@ void iterateMain() {
 	//	dumpTrackingStats(cL, eCL);
 
         /* we will force marker allele frequency loop to execute at least once */
-        for (mkrFreqIdx = 0; mkrFreqIdx == 0 || mkrFreqIdx < modelRange.nafreq; mkrFreqIdx++) {
+        for (mkrFreqIdx = 0; mkrFreqIdx == 0 || mkrFreqIdx < modelRange->nafreq; mkrFreqIdx++) {
+ fprintf (stderr, "IT IS ZERO\n");
           mkrFreq = pLocus2->pAlleleFrequency[0];
           /* we should only loop over marker allele frequency under twopoint
            * and when markers are SNPs (only have two alleles) */
           if (loopMarkerFreqFlag) {
-            mkrFreq = modelRange.afreq[mkrFreqIdx];
+            mkrFreq = modelRange->afreq[mkrFreqIdx];
             /* update the locus */
             pLocus2->pAlleleFrequency[0] = mkrFreq;
             pLocus2->pAlleleFrequency[1] = 1 - mkrFreq;
-            if (modelOptions.polynomial == TRUE);
+            if (modelOptions->polynomial == TRUE);
             else
               update_locus (&pedigreeSet, loc2);
           }
           /* Loop over the penetrances, genefrequencies, thetas and call
            * the likelihood calculation, storing each value obtained to
            * disk. */
-          for (gfreqInd = 0; (gfreqInd==0 && modelOptions.markerAnalysis!=FALSE) || gfreqInd < modelRange.ngfreq; gfreqInd++) {
+          for (gfreqInd = 0; (gfreqInd==0 && modelOptions->markerAnalysis!=FALSE) || gfreqInd < modelRange->ngfreq; gfreqInd++) {
 	    paramSet.gfreqIdx = gfreqInd;
 	    paramSet.gfreq = gfreq;
-	    if(modelOptions.markerAnalysis == FALSE){
-	      gfreq = modelRange.gfreq[gfreqInd];
+	    if(modelOptions->markerAnalysis == FALSE){
+	      gfreq = modelRange->gfreq[gfreqInd];
 
 	      if(fpIR !=NULL)
 		dk_curModel.dgf = gfreq;
 
               pLocus->pAlleleFrequency[0] = gfreq;
               pLocus->pAlleleFrequency[1] = 1 - gfreq;
-              if (modelOptions.polynomial == TRUE);
+              if (modelOptions->polynomial == TRUE);
               else
                 update_locus (&pedigreeSet, loc1);
             }
@@ -332,19 +333,19 @@ void iterateMain() {
               if (status < 0)
                 pLambdaCell->impossibleFlag[dprimeIdx] = 1;
             }
-	    KASSERT ((modelOptions.equilibrium != LINKAGE_DISEQUILIBRIUM) ||
+	    KASSERT ((modelOptions->equilibrium != LINKAGE_DISEQUILIBRIUM) ||
 		     (dprime0Idx != -1), "The requisite zero D' was not found, aborting!\n");
 
-            if (modelType.trait == DICHOTOMOUS) {
+            if (modelType->trait == DICHOTOMOUS) {
 
-              for (penIdx = 0; (penIdx==0 && modelOptions.markerAnalysis!=FALSE) || penIdx < modelRange.npenet; penIdx++) {
+              for (penIdx = 0; (penIdx==0 && modelOptions->markerAnalysis!=FALSE) || penIdx < modelRange->npenet; penIdx++) {
 		paramSet.penIdx = penIdx;
-                if (modelOptions.markerAnalysis == FALSE && pLocus1->locusType == LOCUS_TYPE_TRAIT) {
-                  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-                    pen_DD = modelRange.penet[liabIdx][0][penIdx];
-                    pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-                    pen_dD = modelRange.penet[liabIdx][2][penIdx];
-                    pen_dd = modelRange.penet[liabIdx][3][penIdx];
+                if (modelOptions->markerAnalysis == FALSE && pLocus1->locusType == LOCUS_TYPE_TRAIT) {
+                  for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+                    pen_DD = modelRange->penet[liabIdx][0][penIdx];
+                    pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+                    pen_dD = modelRange->penet[liabIdx][2][penIdx];
+                    pen_dd = modelRange->penet[liabIdx][3][penIdx];
                     pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
                     pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
                     pTrait->penetrance[2][liabIdx][1][0] = pen_dD;
@@ -361,12 +362,12 @@ void iterateMain() {
                       dk_curModel.pen[liabIdx].dd = pen_dd;
                     }
                   }
-                  if (modelOptions.polynomial == TRUE);
+                  if (modelOptions->polynomial == TRUE);
                   else
                     update_penetrance (&pedigreeSet, traitLocus);
                 }
                 /* get the likelihood at 0.5 first and LD=0 */
-                if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+                if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
                   set_null_dprime (pLDLoci);
                   copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprime0Idx]);
                   copy_DValue (pLDLoci, pLambdaCell->DValue[dprime0Idx]);
@@ -378,7 +379,7 @@ void iterateMain() {
                   locusList->pPrevLocusDistance[k][1] = 0.5;
                 }
 
-                if (modelOptions.polynomial == TRUE)
+                if (modelOptions->polynomial == TRUE)
 		  sprintf (partialPolynomialFunctionName, "TD_C%d_P%%s_%s_%s",
 			   pLocus2->pMapUnit->chromosome,
 			   pLocus1->sName, pLocus2->sName);
@@ -426,12 +427,12 @@ void iterateMain() {
                 if (ret==-1) {
                   fprintf (stderr, "Theta 0.5 has likelihood 0\n");
                   fprintf (stderr, "dgf=%f\n", gfreq);
-                  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-                    pen_DD = modelRange.penet[liabIdx][0][penIdx];
-                    pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-                    pen_dD = modelRange.penet[liabIdx][2][penIdx];
-                    pen_dd = modelRange.penet[liabIdx][3][penIdx];
-		    if (modelOptions.imprintingFlag)
+                  for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+                    pen_DD = modelRange->penet[liabIdx][0][penIdx];
+                    pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+                    pen_dD = modelRange->penet[liabIdx][2][penIdx];
+                    pen_dd = modelRange->penet[liabIdx][3][penIdx];
+		    if (modelOptions->imprintingFlag)
 		      fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
 		    else
 		      fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
@@ -447,7 +448,7 @@ void iterateMain() {
 
                 log10_likelihood_null = pedigreeSet.log10Likelihood;
                 for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-                  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+                  if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
 
                     if(fpIR != NULL)
  	              dk_curModel.dprime[0] = pLambdaCell->lambda[dprimeIdx][0][0];
@@ -455,7 +456,7 @@ void iterateMain() {
                     copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
                     if (pLambdaCell->impossibleFlag[dprimeIdx] != 0) {
 		      // If we're going to bail at this point, add the progress count loop factor
-		      cL[1] += modelRange.ntheta;
+		      cL[1] += modelRange->ntheta;
                       continue;
 		    }
                     copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprimeIdx]);
@@ -470,27 +471,27 @@ void iterateMain() {
 		    paramSet.R_square = R_square;
                   }
 		  paramSet.dprimeIdx = dprimeIdx;
-                  for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
+                  for (thetaInd = 0; thetaInd < modelRange->ntheta; thetaInd++) {
 		    paramSet.thetaIdx = thetaInd;
-                    if (modelOptions.mapFlag == SA) {
-                      theta[0] = modelRange.theta[0][thetaInd];
-                      theta[1] = modelRange.theta[1][thetaInd];
+                    if (modelOptions->mapFlag == SA) {
+                      theta[0] = modelRange->theta[0][thetaInd];
+                      theta[1] = modelRange->theta[1][thetaInd];
                       for (k = 0; k < 3; k++) {
                         locusList->pNextLocusDistance[k][0] = theta[0];
                         locusList->pPrevLocusDistance[k][1] = theta[0];
                       }
                     } else {
                       locusList->pNextLocusDistance[MAP_POS_MALE][0] =
-                        locusList->pPrevLocusDistance[MAP_POS_MALE][1] = modelRange.theta[0][thetaInd];
+                        locusList->pPrevLocusDistance[MAP_POS_MALE][1] = modelRange->theta[0][thetaInd];
                       locusList->pNextLocusDistance[MAP_POS_FEMALE][0] =
-                        locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = modelRange.theta[1][thetaInd];
+                        locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = modelRange->theta[1][thetaInd];
                     }
                     if(fpIR != NULL){
-                      dk_curModel.theta[0] = modelRange.theta[0][thetaInd];
-                      dk_curModel.theta[1] = modelRange.theta[1][thetaInd];
+                      dk_curModel.theta[0] = modelRange->theta[0][thetaInd];
+                      dk_curModel.theta[1] = modelRange->theta[1][thetaInd];
 	            }
 
-                    if (modelOptions.polynomial == TRUE);
+                    if (modelOptions->polynomial == TRUE);
                     else
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,
                                                          initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
@@ -514,12 +515,12 @@ void iterateMain() {
 		    record_tp_result(ret, &pedigreeSet, &paramSet, loc2);
                   }     /* end of theta loop */
                 }       /* end of D prime loop */
-                if (modelOptions.markerAnalysis != FALSE) {
+                if (modelOptions->markerAnalysis != FALSE) {
                   /* marker to marker analysis, marker allele frequency is fixed */
-                  gfreqInd = modelRange.ngfreq;
+                  gfreqInd = modelRange->ngfreq;
                   break;
                 }
-                if (modelOptions.markerAnalysis != FALSE) {
+                if (modelOptions->markerAnalysis != FALSE) {
                   /* marker to marker analysis, penetrance stays at 1 */
                   break;
                 }
@@ -529,26 +530,26 @@ void iterateMain() {
               /* should be QT or COMBINED - twopoint */
             {
               /* this should be MEAN + SD */
-              for (paramIdx = 0; (paramIdx == 0 && modelType.distrib == QT_FUNCTION_CHI_SQUARE)
-                   || (modelType.distrib != QT_FUNCTION_CHI_SQUARE && paramIdx < modelRange.nparam); paramIdx++) {
+              for (paramIdx = 0; (paramIdx == 0 && modelType->distrib == QT_FUNCTION_CHI_SQUARE)
+                   || (modelType->distrib != QT_FUNCTION_CHI_SQUARE && paramIdx < modelRange->nparam); paramIdx++) {
 		paramSet.paramIdx = paramIdx;
-                for (penIdx = 0; penIdx < modelRange.npenet; penIdx++) {
+                for (penIdx = 0; penIdx < modelRange->npenet; penIdx++) {
 		  paramSet.penIdx = penIdx;
                   breakFlag = FALSE;
-                  for (thresholdIdx = 0; thresholdIdx < modelRange.ntthresh; thresholdIdx++) {
+                  for (thresholdIdx = 0; thresholdIdx < modelRange->ntthresh; thresholdIdx++) {
 		    paramSet.thresholdIdx = thresholdIdx;
-                    if (modelOptions.markerAnalysis == FALSE) {
-                      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-                        mean_DD = modelRange.penet[liabIdx][0][penIdx];
-                        mean_Dd = modelRange.penet[liabIdx][1][penIdx];
-                        mean_dD = modelRange.penet[liabIdx][2][penIdx];
-                        mean_dd = modelRange.penet[liabIdx][3][penIdx];
-                        SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
-                        SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-                        SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
-                        SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
+                    if (modelOptions->markerAnalysis == FALSE) {
+                      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+                        mean_DD = modelRange->penet[liabIdx][0][penIdx];
+                        mean_Dd = modelRange->penet[liabIdx][1][penIdx];
+                        mean_dD = modelRange->penet[liabIdx][2][penIdx];
+                        mean_dd = modelRange->penet[liabIdx][3][penIdx];
+                        SD_DD = modelRange->param[liabIdx][0][0][paramIdx];
+                        SD_Dd = modelRange->param[liabIdx][1][0][paramIdx];
+                        SD_dD = modelRange->param[liabIdx][2][0][paramIdx];
+                        SD_dd = modelRange->param[liabIdx][3][0][paramIdx];
                         /* threshold for QT */
-                        threshold = modelRange.tthresh[liabIdx][thresholdIdx];
+                        threshold = modelRange->tthresh[liabIdx][thresholdIdx];
 
                         if(fpIR !=NULL){
                           dk_curModel.pen[liabIdx].DD = mean_DD;
@@ -562,7 +563,7 @@ void iterateMain() {
                           dk_curModel.pen[liabIdx].threshold= threshold;
                         }
                         /* check against the hard coded constraint */
-                        if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+                        if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
                           constraint =
                             (1 - gfreq) * (1 - gfreq) * mean_dd * SD_dd + 2 * gfreq * (1 - gfreq) * mean_Dd * SD_Dd +
                             gfreq * gfreq * mean_DD * SD_DD;
@@ -586,13 +587,13 @@ void iterateMain() {
                       } /* liability class Index */
                       if (breakFlag == TRUE)
                         continue;
-                      if (modelOptions.polynomial == TRUE);
+                      if (modelOptions->polynomial == TRUE);
                       else
                         update_penetrance (&pedigreeSet, traitLocus);
                     }
                     /* marker to marker analysis */
                     /* get the likelihood at 0.5 first and LD=0 */
-                    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+                    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
                       set_null_dprime (pLDLoci);
                       copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprime0Idx]);
                       copy_DValue (pLDLoci, pLambdaCell->DValue[dprime0Idx]);
@@ -604,7 +605,7 @@ void iterateMain() {
                       locusList->pNextLocusDistance[k][0] = 0.5;
                       locusList->pPrevLocusDistance[k][1] = 0.5;
                     }
-                    if (modelOptions.polynomial == TRUE)
+                    if (modelOptions->polynomial == TRUE)
 		      sprintf (partialPolynomialFunctionName, "TQ_C%d_P%%s_%s_%s",
 			       pLocus2->pMapUnit->chromosome,
 			       pLocus1->sName, pLocus2->sName);
@@ -650,12 +651,12 @@ void iterateMain() {
                     if (ret==-1) {
                       fprintf (stderr, "Theta 0.5 has likelihood 0\n");
                       fprintf (stderr, "dgf=%f\n", gfreq);
-                      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-                        pen_DD = modelRange.penet[liabIdx][0][penIdx];
-                        pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-                        pen_dD = modelRange.penet[liabIdx][2][penIdx];
-                        pen_dd = modelRange.penet[liabIdx][3][penIdx];
-			if (modelOptions.imprintingFlag)
+                      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+                        pen_DD = modelRange->penet[liabIdx][0][penIdx];
+                        pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+                        pen_dD = modelRange->penet[liabIdx][2][penIdx];
+                        pen_dd = modelRange->penet[liabIdx][3][penIdx];
+			if (modelOptions->imprintingFlag)
 			  fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
 			else
 			  fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
@@ -670,7 +671,7 @@ void iterateMain() {
                     log10_likelihood_null = pedigreeSet.log10Likelihood;
                     for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
 		      paramSet.dprimeIdx = dprimeIdx;
-                      if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+                      if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
 
                         if(fpIR != NULL)
  	                  dk_curModel.dprime[0] = pLambdaCell->lambda[dprimeIdx][0][0];
@@ -678,34 +679,34 @@ void iterateMain() {
                         copy_dprime (pLDLoci, pLambdaCell->lambda[dprimeIdx]);
 			if (pLambdaCell->impossibleFlag[dprimeIdx] != 0) {
 			  // If we're going to bail at this point, add the progress count loop factor
-			  cL[3] += modelRange.ntheta;
+			  cL[3] += modelRange->ntheta;
                           continue;
 			}
                         copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprimeIdx]);
                         copy_DValue (pLDLoci, pLambdaCell->DValue[dprimeIdx]);
                       }
-                      for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++) {
+                      for (thetaInd = 0; thetaInd < modelRange->ntheta; thetaInd++) {
                         if(fpIR != NULL){
-                          dk_curModel.theta[0] = modelRange.theta[0][thetaInd];
-                          dk_curModel.theta[1] = modelRange.theta[1][thetaInd];
+                          dk_curModel.theta[0] = modelRange->theta[0][thetaInd];
+                          dk_curModel.theta[1] = modelRange->theta[1][thetaInd];
     	                }
 
 			paramSet.thetaIdx = thetaInd;
-                        if (modelOptions.mapFlag == SA) {
-                          theta[0] = modelRange.theta[0][thetaInd];
-                          theta[1] = modelRange.theta[1][thetaInd];
+                        if (modelOptions->mapFlag == SA) {
+                          theta[0] = modelRange->theta[0][thetaInd];
+                          theta[1] = modelRange->theta[1][thetaInd];
                           for (k = 0; k < 3; k++) {
                             locusList->pNextLocusDistance[k][0] = theta[0];
                             locusList->pPrevLocusDistance[k][1] = theta[0];
                           }
                         } else {
                           locusList->pNextLocusDistance[MAP_POS_MALE][0] =
-                            locusList->pPrevLocusDistance[MAP_POS_MALE][1] = modelRange.theta[0][thetaInd];
+                            locusList->pPrevLocusDistance[MAP_POS_MALE][1] = modelRange->theta[0][thetaInd];
                           locusList->pNextLocusDistance[MAP_POS_FEMALE][0] =
-                            locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = modelRange.theta[1][thetaInd];
+                            locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = modelRange->theta[1][thetaInd];
                         }
 
-                        if (modelOptions.polynomial == TRUE);
+                        if (modelOptions->polynomial == TRUE);
                         else
                           status =
                             populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2,
@@ -730,21 +731,21 @@ void iterateMain() {
 			record_tp_result(ret, &pedigreeSet, &paramSet, loc2);
                       } /* end of theta */
                     }   /* end of D prime */
-                    if (modelOptions.markerAnalysis != FALSE)
+                    if (modelOptions->markerAnalysis != FALSE)
                       break;
                   }     /* end of threshold loop */
-                  if (modelOptions.markerAnalysis != FALSE)
+                  if (modelOptions->markerAnalysis != FALSE)
                     break;
                 }       /* end of penetrance loop */
-                if (modelOptions.markerAnalysis != FALSE)
+                if (modelOptions->markerAnalysis != FALSE)
                   break;
               } /* end of parameter loop */
-              if (modelOptions.markerAnalysis != FALSE)
+              if (modelOptions->markerAnalysis != FALSE)
                 break;
             }   /* end of QT */
           }     /* end of gene freq */
           /* only loop marker allele frequencies when doing LD */
-          if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
+          if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM)
             break;
           /* we can only do SNPs when looping over marker allele frequency */
           if (pLocus2->numOriginalAllele > 2)
@@ -757,7 +758,7 @@ void iterateMain() {
 	/* rescale across (D', theta) pairs */
 	rescale_tp_result(-1);
 
-	//if (modelOptions.markerAnalysis == FALSE)
+	//if (modelOptions->markerAnalysis == FALSE)
 	write2ptBRFile (loc1, loc2);
 	write2ptMODFile (loc1, loc2, dprime0Idx);
 	//writeMMFileDetail ();
@@ -765,12 +766,12 @@ void iterateMain() {
 
         /* need to clear polynomial */
 
-        if (modelOptions.polynomial == TRUE) {
+        if (modelOptions->polynomial == TRUE) {
           pedigreeSetPolynomialClearance (&pedigreeSet);
         }
 
 
-        if (modelOptions.markerAnalysis == ADJACENTMARKER)
+        if (modelOptions->markerAnalysis == ADJACENTMARKER)
           loc2 = originalLocusList.numLocus;
 
 #ifndef SIMPLEPROGRESS
@@ -780,20 +781,20 @@ void iterateMain() {
 	free_tp_result_storage ();
       } /* end of looping second locus - loc2 */
       /* if we are doing trait marker, then we are done */
-      /* Used to read: modelOptions.markerToMarker != TRUE which
+      /* Used to read: modelOptions->markerToMarker != TRUE which
        * is the same as markerAnalysis == FALSE as long as the old
        * markerToMarker and adjacentMarker flags were truly
        * orthogonal. Otherwise, it should be markerAnalysis !=
        * ADJACENTMARKER. */
-      if (modelOptions.markerAnalysis == FALSE)
+      if (modelOptions->markerAnalysis == FALSE)
         loc1 = originalLocusList.numLocus;
     }   /* end of looping first locus - loc1 */
   } /* end of two point */
   else {        /* multipoint */
 
     /* marker set locus list for each position */
-    markerLocusList.maxNumLocus = modelType.numMarkers;
-    markerLocusList.numLocus = modelType.numMarkers;
+    markerLocusList.maxNumLocus = modelType->numMarkers;
+    markerLocusList.numLocus = modelType->numMarkers;
     markerLocusList.traitOrigLocus = -1;
     markerLocusList.traitLocusIndex = -1;
     markerLocusList.pLocusIndex = (int *) calloc (markerLocusList.maxNumLocus, sizeof (int));
@@ -805,8 +806,8 @@ void iterateMain() {
     /* assuming we always have trait in the analysis - this may not be true 
      * need to add code to process marker to marker analysis under multipoin
      */
-    savedLocusList.numLocus = modelType.numMarkers + 1;
-    savedLocusList.maxNumLocus = modelType.numMarkers + 1;
+    savedLocusList.numLocus = modelType->numMarkers + 1;
+    savedLocusList.maxNumLocus = modelType->numMarkers + 1;
     savedLocusList.pLocusIndex = (int *) calloc (savedLocusList.maxNumLocus, sizeof (int));
     for (k = 0; k < 3; k++) {
       savedLocusList.pPrevLocusDistance[k] = (double *) calloc (savedLocusList.maxNumLocus, sizeof (double));
@@ -831,7 +832,7 @@ void iterateMain() {
     locusList = &traitLocusList;
     xmissionMatrix = traitMatrix;
     status = populate_xmission_matrix (traitMatrix, 1, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
-    if (modelOptions.polynomial == TRUE)
+    if (modelOptions->polynomial == TRUE)
       holdAllPolys ();
 
     /* For trait likelihood */
@@ -848,18 +849,18 @@ void iterateMain() {
       /* load all saved trait likelihood */
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-        if (modelOptions.saveResults == TRUE) {
-          pPedigree->load_flag = restoreTrait (modelOptions.sexLinked, pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
+        if (modelOptions->saveResults == TRUE) {
+          pPedigree->load_flag = restoreTrait (modelOptions->sexLinked, pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
         } else
           pPedigree->load_flag = 0;
       }
 
-      for (penIdx = 0; (penIdx == 0) || (modelOptions.dryRun == 0 && penIdx < modelRange.npenet); penIdx++) {
-        for (liabIdx = 0; (liabIdx == 0) || (modelOptions.dryRun == 0 && liabIdx < modelRange.nlclass); liabIdx++) {
-          pen_DD = modelRange.penet[liabIdx][0][penIdx];
-          pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-          pen_dD = modelRange.penet[liabIdx][2][penIdx];
-          pen_dd = modelRange.penet[liabIdx][3][penIdx];
+      for (penIdx = 0; (penIdx == 0) || (modelOptions->dryRun == 0 && penIdx < modelRange->npenet); penIdx++) {
+        for (liabIdx = 0; (liabIdx == 0) || (modelOptions->dryRun == 0 && liabIdx < modelRange->nlclass); liabIdx++) {
+          pen_DD = modelRange->penet[liabIdx][0][penIdx];
+          pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+          pen_dD = modelRange->penet[liabIdx][2][penIdx];
+          pen_dd = modelRange->penet[liabIdx][3][penIdx];
           pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
           pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
           pTrait->penetrance[2][liabIdx][1][0] = pen_dD;
@@ -870,23 +871,23 @@ void iterateMain() {
           pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
         }
 
-        if (modelOptions.polynomial == TRUE);
+        if (modelOptions->polynomial == TRUE);
         else
           /* only need to update trait locus */
           update_penetrance (&pedigreeSet, traitLocus);
 
         /* Iterate over gene frequencies, but only one time thru if doing a dry-run. */
-        for (gfreqInd = 0; (gfreqInd == 0) || (modelOptions.dryRun == 0 && gfreqInd < modelRange.ngfreq); gfreqInd++) {
+        for (gfreqInd = 0; (gfreqInd == 0) || (modelOptions->dryRun == 0 && gfreqInd < modelRange->ngfreq); gfreqInd++) {
 
           /* updated trait locus allele frequencies */
-          gfreq = modelRange.gfreq[gfreqInd];
+          gfreq = modelRange->gfreq[gfreqInd];
           pLocus->pAlleleFrequency[0] = gfreq;
           pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
-          if (modelOptions.polynomial == TRUE)
+          if (modelOptions->polynomial == TRUE)
 	    sprintf (partialPolynomialFunctionName, "MDT_C%d_P%%sSL%d", 
 		     (originalLocusList.ppLocusList[1])->pMapUnit->chromosome,
-		     modelOptions.sexLinked);
+		     modelOptions->sexLinked);
           else
             update_locus (&pedigreeSet, traitLocus);
 
@@ -899,7 +900,7 @@ void iterateMain() {
             fflush (stdout);
           }
 #endif
-          if (modelOptions.dryRun != 0)
+          if (modelOptions->dryRun != 0)
             continue;
 	  
 	  if(ret==-2) {
@@ -909,12 +910,12 @@ void iterateMain() {
           if (ret==-1){
             fprintf (stderr, "Trait has likelihood 0\n");
             fprintf (stderr, "dgf=%f\n", gfreq);
-            for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-              pen_DD = modelRange.penet[liabIdx][0][penIdx];
-              pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-              pen_dD = modelRange.penet[liabIdx][2][penIdx];
-              pen_dd = modelRange.penet[liabIdx][3][penIdx];
-	    if (modelOptions.imprintingFlag)
+            for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+              pen_DD = modelRange->penet[liabIdx][0][penIdx];
+              pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+              pen_dD = modelRange->penet[liabIdx][2][penIdx];
+              pen_dd = modelRange->penet[liabIdx][3][penIdx];
+	    if (modelOptions->imprintingFlag)
               fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
 	    else
               fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
@@ -942,8 +943,8 @@ void iterateMain() {
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         /* save the likelihood at null */
         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-        if ((modelOptions.saveResults == TRUE) && (pPedigree->load_flag == 0)) {        /*save only for the pedigrees which were add for this run */
-          pPedigree->load_flag = saveTrait (modelOptions.sexLinked, pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
+        if ((modelOptions->saveResults == TRUE) && (pPedigree->load_flag == 0)) {        /*save only for the pedigrees which were add for this run */
+          pPedigree->load_flag = saveTrait (modelOptions->sexLinked, pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
         } else {
           pPedigree->load_flag = 0;
         }
@@ -951,30 +952,30 @@ void iterateMain() {
     } else
       /* multipoint QT or COMBINED */
     {
-      for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
-        gfreq = modelRange.gfreq[gfreqInd];
+      for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
+        gfreq = modelRange->gfreq[gfreqInd];
         pLocus->pAlleleFrequency[0] = gfreq;
         pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
         update_locus (&pedigreeSet, traitLocus);
         /* this should be MEAN + SD */
-        for (paramIdx = 0; paramIdx < modelRange.nparam; paramIdx++) {
-          for (penIdx = 0; penIdx < modelRange.npenet; penIdx++) {
+        for (paramIdx = 0; paramIdx < modelRange->nparam; paramIdx++) {
+          for (penIdx = 0; penIdx < modelRange->npenet; penIdx++) {
             breakFlag = FALSE;
-            for (thresholdIdx = 0; thresholdIdx < modelRange.ntthresh; thresholdIdx++) {
-              for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-                mean_DD = modelRange.penet[liabIdx][0][penIdx];
-                mean_Dd = modelRange.penet[liabIdx][1][penIdx];
-                mean_dD = modelRange.penet[liabIdx][2][penIdx];
-                mean_dd = modelRange.penet[liabIdx][3][penIdx];
-                SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
-                SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-                SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
-                SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
-                threshold = modelRange.tthresh[liabIdx][thresholdIdx];
+            for (thresholdIdx = 0; thresholdIdx < modelRange->ntthresh; thresholdIdx++) {
+              for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+                mean_DD = modelRange->penet[liabIdx][0][penIdx];
+                mean_Dd = modelRange->penet[liabIdx][1][penIdx];
+                mean_dD = modelRange->penet[liabIdx][2][penIdx];
+                mean_dd = modelRange->penet[liabIdx][3][penIdx];
+                SD_DD = modelRange->param[liabIdx][0][0][paramIdx];
+                SD_Dd = modelRange->param[liabIdx][1][0][paramIdx];
+                SD_dD = modelRange->param[liabIdx][2][0][paramIdx];
+                SD_dd = modelRange->param[liabIdx][3][0][paramIdx];
+                threshold = modelRange->tthresh[liabIdx][thresholdIdx];
 
                 /* check against the hard coded constraint */
-                if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+                if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
                   constraint =
                     (1 - gfreq) * (1 -
                                    gfreq) * mean_dd *
@@ -1004,10 +1005,10 @@ void iterateMain() {
               } /* liability class Index */
               if (breakFlag == TRUE)
                 continue;
-              if (modelOptions.polynomial == TRUE)
+              if (modelOptions->polynomial == TRUE)
 		sprintf (partialPolynomialFunctionName, "MQT_C%d_P%%sSL%d", 
 			 (originalLocusList.ppLocusList[1])->pMapUnit->chromosome,
-			 modelOptions.sexLinked);
+			 modelOptions->sexLinked);
               else
                 update_penetrance (&pedigreeSet, traitLocus);
               ret=compute_likelihood (&pedigreeSet);
@@ -1025,12 +1026,12 @@ void iterateMain() {
               if (ret==-1) {
                 fprintf (stderr, "Trait has likelihood 0\n");
                 fprintf (stderr, "dgf=%f\n", gfreq);
-                for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-                  pen_DD = modelRange.penet[liabIdx][0][penIdx];
-                  pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-                  pen_dD = modelRange.penet[liabIdx][2][penIdx];
-                  pen_dd = modelRange.penet[liabIdx][3][penIdx];
-		  if (modelOptions.imprintingFlag)
+                for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+                  pen_DD = modelRange->penet[liabIdx][0][penIdx];
+                  pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+                  pen_dD = modelRange->penet[liabIdx][2][penIdx];
+                  pen_dd = modelRange->penet[liabIdx][3][penIdx];
+		  if (modelOptions->imprintingFlag)
 		    fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
 		  else
 		    fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
@@ -1059,7 +1060,7 @@ void iterateMain() {
     fprintf (stdout, "Trait likelihood evaluations 100%% complete\n");
 #endif
 
-    if (modelOptions.polynomial == TRUE) {
+    if (modelOptions->polynomial == TRUE) {
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         /* save the likelihood at trait */
         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
@@ -1069,12 +1070,12 @@ void iterateMain() {
     }
 
     /* print out some statistics under dry run */
-    if (modelOptions.dryRun != 0) {
+    if (modelOptions->dryRun != 0) {
       print_dryrun_stat (&pedigreeSet, -1);
     }
 
     /* get the trait locations we need to evaluate at */
-    numPositions = modelRange.ntloc;
+    numPositions = modelRange->ntloc;
     mp_result = (SUMMARY_STAT *) calloc (numPositions, sizeof (SUMMARY_STAT));
 
     writeMPBRFileHeader ();
@@ -1093,7 +1094,7 @@ void iterateMain() {
 
       mp_result[posIdx].max_penIdx = -1;
       /* positions listed are sex average positions */
-      traitPos = modelRange.tloc[posIdx];
+      traitPos = modelRange->tloc[posIdx];
       /* Set the sex-averaged position first. The sex-specific positions will be updated 
        * once markers are selected since interpolation might be needed. */
       pTraitLocus->mapPosition[0] = traitPos;
@@ -1113,9 +1114,9 @@ void iterateMain() {
         locusList->pNextLocusDistance[k][0] = -1;
       }
       /* select markers to be used for the multipoint analysis */
-      add_markers_to_locuslist (locusList, modelType.numMarkers, &leftMarker, 0, originalLocusList.numLocus - 1, traitPos, 0);
+      add_markers_to_locuslist (locusList, modelType->numMarkers, &leftMarker, 0, originalLocusList.numLocus - 1, traitPos, 0);
       /* store the markers used */
-      mp_result[posIdx].pMarkers = (int *) calloc (modelType.numMarkers, sizeof (int));
+      mp_result[posIdx].pMarkers = (int *) calloc (modelType->numMarkers, sizeof (int));
       k = 0;    /* marker index */
       for (i = 0; i < locusList->numLocus; i++) {
         j = locusList->pLocusIndex[i];
@@ -1137,13 +1138,13 @@ void iterateMain() {
 
       markerSetChanged = FALSE;
       if (prevFirstMarker != mp_result[posIdx].pMarkers[0] ||
-          prevLastMarker != mp_result[posIdx].pMarkers[modelType.numMarkers - 1]) {
+          prevLastMarker != mp_result[posIdx].pMarkers[modelType->numMarkers - 1]) {
         /* marker set has changed */
         markerSetChanged = TRUE;
         markerLocusList.pLocusIndex[0] = mp_result[posIdx].pMarkers[0];
         prevPos = get_map_position (markerLocusList.pLocusIndex[0]);
         /* set up marker set locus list */
-        for (k = 1; k < modelType.numMarkers; k++) {
+        for (k = 1; k < modelType->numMarkers; k++) {
           markerLocusList.pLocusIndex[k] = mp_result[posIdx].pMarkers[k];
           currPos = get_map_position (markerLocusList.pLocusIndex[k]);
           for (j = 0; j < 3; j++) {
@@ -1151,7 +1152,7 @@ void iterateMain() {
               markerLocusList.pNextLocusDistance[j][k - 1] =
               cm_to_recombination_fraction (currPos[j] - prevPos[j], map.mapFunction);
           }
-          if (modelOptions.mapFlag == SA) {
+          if (modelOptions->mapFlag == SA) {
             for (j = 1; j <= 2; j++) {
               markerLocusList.pPrevLocusDistance[j][k] =
                 markerLocusList.pNextLocusDistance[j][k - 1] = markerLocusList.pPrevLocusDistance[0][k];
@@ -1162,22 +1163,22 @@ void iterateMain() {
 
 #ifndef SIMPLEPROGRESS
         fprintf (stdout, " new markers");
-        for (k = 0; k < modelType.numMarkers; k++)
+        for (k = 0; k < modelType->numMarkers; k++)
           fprintf (stdout, " %d(%.2f)", markerLocusList.pLocusIndex[k], *get_map_position (markerLocusList.pLocusIndex[k]));
         fprintf (stdout, "\n");
 #endif
 
 	locusList = &markerLocusList;
         xmissionMatrix = markerMatrix;
-        if (modelOptions.polynomial == TRUE) {
+        if (modelOptions->polynomial == TRUE) {
           pedigreeSetPolynomialClearance (&pedigreeSet);
         }
 
         /* save the polynomial flag */
-        polynomialFlag = modelOptions.polynomial;
+        polynomialFlag = modelOptions->polynomial;
         status = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr, initialProbAddr2,
                                            initialHetProbAddr, 0, -1, -1, 0);
-        if (modelOptions.polynomial == TRUE)
+        if (modelOptions->polynomial == TRUE)
           freePolys ();
 
         print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);
@@ -1186,17 +1187,17 @@ void iterateMain() {
         /* Calculate likelihood for the marker set */
         fprintf (stdout, "Determining marker set likelihood...\n");
 #endif
-        for (k = 0; k < modelType.numMarkers; k++) {
+        for (k = 0; k < modelType->numMarkers; k++) {
           markerNameList[k] = (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[k]])->sName;
         }
         for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
           /* save the marker likelihood   */
           pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-          if (modelOptions.saveResults == TRUE) {
+          if (modelOptions->saveResults == TRUE) {
             pPedigree->load_flag =
               restoreMarker (pPedigree->sPedigreeID,
                              (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-                             modelType.numMarkers, markerNameList, &(pPedigree->markerLikelihood));
+                             modelType->numMarkers, markerNameList, &(pPedigree->markerLikelihood));
           } else {
             pPedigree->load_flag = 0;
           }
@@ -1205,10 +1206,10 @@ void iterateMain() {
 	  pushStatus ('k', "buildMM");
 	  /** Build a polynomial name including all involved marker ordinal numbers */
 	  char markerNo[8];
-	  if (modelOptions.polynomial == TRUE) {
+	  if (modelOptions->polynomial == TRUE) {
 	    sprintf (partialPolynomialFunctionName, "MM_C%d_P%%sM", 
 		     (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
-	    for (k = 0; k < modelType.numMarkers; k++) {
+	    for (k = 0; k < modelType->numMarkers; k++) {
 	      sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
 	      strcat (partialPolynomialFunctionName, markerNo);
 	    }
@@ -1224,10 +1225,10 @@ void iterateMain() {
                  MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
 #endif
 
-        modelOptions.polynomial = polynomialFlag;
+        modelOptions->polynomial = polynomialFlag;
 
         /* print out some statistics under dry run */
-        if (modelOptions.dryRun != 0) {
+        if (modelOptions->dryRun != 0) {
           print_dryrun_stat (&pedigreeSet, -1);
         } else {
           /* save the results for marker likelihood */
@@ -1236,13 +1237,13 @@ void iterateMain() {
             pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 
             //      fprintf(stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx, pPedigree->likelihood);
-            if (modelOptions.saveResults == TRUE) {
+            if (modelOptions->saveResults == TRUE) {
               if (pPedigree->load_flag == 0) {  /*save only for the pedigrees which were add for this run */
                 pPedigree->markerLikelihood = pPedigree->likelihood;
                 pPedigree->load_flag =
                   saveMarker (pPedigree->sPedigreeID,
                               (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-                              modelType.numMarkers, markerNameList, &(pPedigree->markerLikelihood));
+                              modelType->numMarkers, markerNameList, &(pPedigree->markerLikelihood));
               }
             } else {
               pPedigree->markerLikelihood = pPedigree->likelihood;
@@ -1259,7 +1260,7 @@ void iterateMain() {
         ;
 #endif
       prevFirstMarker = mp_result[posIdx].pMarkers[0];
-      prevLastMarker = mp_result[posIdx].pMarkers[modelType.numMarkers - 1];
+      prevLastMarker = mp_result[posIdx].pMarkers[modelType->numMarkers - 1];
       if (markerSetChanged || prevTraitInd != mp_result[posIdx].trait)
         locusListChanged = TRUE;
       else
@@ -1269,7 +1270,7 @@ void iterateMain() {
       locusList = &savedLocusList;
       xmissionMatrix = altMatrix;
       /* interpolate trait postion for sex specific analysis */
-      if (modelOptions.mapFlag == SS) {
+      if (modelOptions->mapFlag == SS) {
         if (traitIndex == 0) {
           marker1Pos = get_map_position (locusList->pLocusIndex[1]);
           /* trait is the first one in the list */
@@ -1288,10 +1289,10 @@ void iterateMain() {
               locusList->pPrevLocusDistance[k][1] =
               cm_to_recombination_fraction (marker1Pos[k] - pTraitLocus->mapPosition[k], map.mapFunction);
           }
-        } else if (traitIndex == modelType.numMarkers) {
+        } else if (traitIndex == modelType->numMarkers) {
           /* trait is the last one in the list */
-          marker1Pos = get_map_position (locusList->pLocusIndex[modelType.numMarkers - 2]);
-          marker2Pos = get_map_position (locusList->pLocusIndex[modelType.numMarkers - 1]);
+          marker1Pos = get_map_position (locusList->pLocusIndex[modelType->numMarkers - 2]);
+          marker2Pos = get_map_position (locusList->pLocusIndex[modelType->numMarkers - 1]);
           /* get the relative position on the sex average map */
           dist = marker2Pos[0] - marker1Pos[0];
           if (dist > ERROR_MARGIN) {
@@ -1343,18 +1344,18 @@ void iterateMain() {
       /* the locus list has been built, go on to the analysis 
        * multipoint DT */
       if (markerSetChanged || locusListChanged) {
-        if (modelOptions.polynomial == TRUE) {
+        if (modelOptions->polynomial == TRUE) {
           pedigreeSetPolynomialClearance (&pedigreeSet);
           status =
             populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr,
                                       0, -1, -1, 0);
           print_xmission_matrix (altMatrix, savedLocusList.numLocus, 0, 0, tmpID);
-          if (modelOptions.polynomial == TRUE)
+          if (modelOptions->polynomial == TRUE)
             freePolys ();
         }
       }
 
-      if (modelOptions.polynomial != TRUE)
+      if (modelOptions->polynomial != TRUE)
         status =
           populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
       /* For alternative */
@@ -1366,7 +1367,7 @@ void iterateMain() {
         for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
           pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
           /* load stored alternative likelihood if they were already stored */
-          if (modelOptions.saveResults == TRUE)
+          if (modelOptions->saveResults == TRUE)
             pPedigree->load_flag =
               restoreAlternative (pPedigree->sPedigreeID,
                                   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
@@ -1375,13 +1376,13 @@ void iterateMain() {
             pPedigree->load_flag = 0;
         }
 
-        for (penIdx = 0; (penIdx == 0) || (modelOptions.dryRun == 0 && penIdx < modelRange.npenet); penIdx++) {
+        for (penIdx = 0; (penIdx == 0) || (modelOptions->dryRun == 0 && penIdx < modelRange->npenet); penIdx++) {
 	  paramSet.penIdx = penIdx;
-          for (liabIdx = 0; (liabIdx == 0) || (modelOptions.dryRun == 0 && liabIdx < modelRange.nlclass); liabIdx++) {
-            pen_DD = modelRange.penet[liabIdx][0][penIdx];
-            pen_Dd = modelRange.penet[liabIdx][1][penIdx];
-            pen_dD = modelRange.penet[liabIdx][2][penIdx];
-            pen_dd = modelRange.penet[liabIdx][3][penIdx];
+          for (liabIdx = 0; (liabIdx == 0) || (modelOptions->dryRun == 0 && liabIdx < modelRange->nlclass); liabIdx++) {
+            pen_DD = modelRange->penet[liabIdx][0][penIdx];
+            pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+            pen_dD = modelRange->penet[liabIdx][2][penIdx];
+            pen_dd = modelRange->penet[liabIdx][3][penIdx];
             pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
             pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
             pTrait->penetrance[2][liabIdx][1][0] = pen_dD;
@@ -1399,11 +1400,11 @@ void iterateMain() {
             }
           }
 
-          if (modelOptions.polynomial != TRUE)
+          if (modelOptions->polynomial != TRUE)
             update_penetrance (&pedigreeSet, traitLocus);       // Only need to update trait locus
 
           /* Iterate over gene frequencies -- just one loop for dry-runs. */
-          for (gfreqInd = 0; (gfreqInd == 0) || (modelOptions.dryRun == 0 && gfreqInd < modelRange.ngfreq); gfreqInd++) {
+          for (gfreqInd = 0; (gfreqInd == 0) || (modelOptions->dryRun == 0 && gfreqInd < modelRange->ngfreq); gfreqInd++) {
 	    paramSet.gfreqIdx = gfreqInd;
 	    paramSet.gfreq = gfreq;
 
@@ -1411,11 +1412,11 @@ void iterateMain() {
               dk_curModel.dgf = gfreq;
 
             /* Updated trait locus allele frequencies */
-            gfreq = modelRange.gfreq[gfreqInd];
+            gfreq = modelRange->gfreq[gfreqInd];
             pLocus->pAlleleFrequency[0] = gfreq;
             pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
-            if (modelOptions.polynomial != TRUE)
+            if (modelOptions->polynomial != TRUE)
               update_locus (&pedigreeSet, traitLocus);
 
             /* If we're not on the first iteration, it's not a polynomial build, so
@@ -1424,7 +1425,7 @@ void iterateMain() {
 	    char markerNo[8];
 	    sprintf (partialPolynomialFunctionName, "MDA_C%d_P%%sM",
 		     (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
-	    for (k = 0; k < modelType.numMarkers; k++) {
+	    for (k = 0; k < modelType->numMarkers; k++) {
 	      if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
 		  (strstr (partialPolynomialFunctionName, "_T") == NULL))
 		strcat (partialPolynomialFunctionName, "_T");
@@ -1473,7 +1474,7 @@ void iterateMain() {
 	      popStatus ('k');
             }
             /* print out some statistics under dry run */
-            if (modelOptions.dryRun != 0) {
+            if (modelOptions->dryRun != 0) {
               print_dryrun_stat (&pedigreeSet, traitPos);
             } 
 	    else {
@@ -1504,7 +1505,7 @@ void iterateMain() {
         /* save the alternative likelihood */
         for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
           pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
-          if ((modelOptions.saveResults == TRUE) && (pPedigree->load_flag == 0)) {      /*save only for the pedigrees which were add for this run */
+          if ((modelOptions->saveResults == TRUE) && (pPedigree->load_flag == 0)) {      /*save only for the pedigrees which were add for this run */
             pPedigree->load_flag =
               saveAlternative (pPedigree->sPedigreeID,
                                (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome, traitPos,
@@ -1528,8 +1529,8 @@ void iterateMain() {
       else
         /* multipoint QT or COMBINED */
       {
-        for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
-          gfreq = modelRange.gfreq[gfreqInd];
+        for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
+          gfreq = modelRange->gfreq[gfreqInd];
           pLocus->pAlleleFrequency[0] = gfreq;
           pLocus->pAlleleFrequency[1] = 1 - gfreq;
 	  paramSet.gfreqIdx = gfreqInd;
@@ -1540,23 +1541,23 @@ void iterateMain() {
 
           update_locus (&pedigreeSet, traitLocus);
           /* this should be MEAN + SD */
-          for (paramIdx = 0; paramIdx < modelRange.nparam; paramIdx++) {
+          for (paramIdx = 0; paramIdx < modelRange->nparam; paramIdx++) {
 	    paramSet.paramIdx = paramIdx;
-            for (penIdx = 0; penIdx < modelRange.npenet; penIdx++) {
+            for (penIdx = 0; penIdx < modelRange->npenet; penIdx++) {
 	      paramSet.penIdx = penIdx;
               breakFlag = FALSE;
-              for (thresholdIdx = 0; thresholdIdx < modelRange.ntthresh; thresholdIdx++) {
+              for (thresholdIdx = 0; thresholdIdx < modelRange->ntthresh; thresholdIdx++) {
 		paramSet.thresholdIdx = thresholdIdx;
-                for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
-                  mean_DD = modelRange.penet[liabIdx][0][penIdx];
-                  mean_Dd = modelRange.penet[liabIdx][1][penIdx];
-                  mean_dD = modelRange.penet[liabIdx][2][penIdx];
-                  mean_dd = modelRange.penet[liabIdx][3][penIdx];
-                  SD_DD = modelRange.param[liabIdx][0][0][paramIdx];
-                  SD_Dd = modelRange.param[liabIdx][1][0][paramIdx];
-                  SD_dD = modelRange.param[liabIdx][2][0][paramIdx];
-                  SD_dd = modelRange.param[liabIdx][3][0][paramIdx];
-                  threshold = modelRange.tthresh[liabIdx][thresholdIdx];
+                for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+                  mean_DD = modelRange->penet[liabIdx][0][penIdx];
+                  mean_Dd = modelRange->penet[liabIdx][1][penIdx];
+                  mean_dD = modelRange->penet[liabIdx][2][penIdx];
+                  mean_dd = modelRange->penet[liabIdx][3][penIdx];
+                  SD_DD = modelRange->param[liabIdx][0][0][paramIdx];
+                  SD_Dd = modelRange->param[liabIdx][1][0][paramIdx];
+                  SD_dD = modelRange->param[liabIdx][2][0][paramIdx];
+                  SD_dd = modelRange->param[liabIdx][3][0][paramIdx];
+                  threshold = modelRange->tthresh[liabIdx][thresholdIdx];
 
                   if(fpIR !=NULL){
                     dk_curModel.pen[liabIdx].DD = mean_DD;
@@ -1570,7 +1571,7 @@ void iterateMain() {
                     dk_curModel.pen[liabIdx].threshold= threshold;
                   }
 
-                  if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
+                  if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
                     /* check against the hard coded constraint */
                     constraint =
                       (1 - gfreq) * (1 -
@@ -1601,13 +1602,13 @@ void iterateMain() {
                 }       /* liability class Index */
                 if (breakFlag == TRUE)
                   continue;
-                if (modelOptions.polynomial == TRUE);
+                if (modelOptions->polynomial == TRUE);
                 else
                   update_penetrance (&pedigreeSet, traitLocus);
                 /* ready for the alternative hypothesis */
                 locusList = &savedLocusList;
                 xmissionMatrix = altMatrix;
-                if (modelOptions.polynomial == TRUE);
+                if (modelOptions->polynomial == TRUE);
                 else
                   status =
                     populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2,
@@ -1618,7 +1619,7 @@ void iterateMain() {
 		char markerNo[8];
 		sprintf (partialPolynomialFunctionName, "MQA_C%d P%%sM",
 			 (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
-		for (k = 0; k < modelType.numMarkers; k++) {
+		for (k = 0; k < modelType->numMarkers; k++) {
 		  if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) &&
 		      (strstr (partialPolynomialFunctionName, "_T") == NULL))
 		    strcat (partialPolynomialFunctionName, "_T");
@@ -1693,7 +1694,7 @@ void iterateMain() {
       } /* end of QT */
 
       /* Print out average and log10(max) and maximizing parameters */
-      avgLR = mp_result[posIdx].het_lr_total / (modelRange.nalpha * mp_result[posIdx].lr_count);
+      avgLR = mp_result[posIdx].het_lr_total / (modelRange->nalpha * mp_result[posIdx].lr_count);
       log10AvgLR = log10(avgLR) + mp_result[posIdx].scale; 
       if (avgLR > 0.214) {
         if(log10AvgLR > 8)
@@ -1712,11 +1713,11 @@ void iterateMain() {
   fprintf (stdout, "\n");
 
   /* only for multipoint - deallocate memory  */
-  if (modelType.type == MP) {
+  if (modelType->type == MP) {
     /* allocate space to save temporary results */
-    if (modelType.trait == DT) {
+    if (modelType->trait == DT) {
 #if 0
-      for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
+      for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
         free (likelihoodDT[gfreqInd]);
       }
       free (likelihoodDT);
@@ -1724,7 +1725,7 @@ void iterateMain() {
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 
-        for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++) {
+        for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
           free (pPedigree->traitLikelihoodDT[gfreqInd]);
           free (pPedigree->alternativeLikelihoodDT[gfreqInd]);
         }
@@ -1737,7 +1738,7 @@ void iterateMain() {
   dumpTrackingStats(cL, eCL);
 
   if(fpIR !=NULL){
-    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) 
+    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) 
       free (dk_curModel.dprime);
     free (dk_curModel.pen); 
   }
