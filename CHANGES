@@ -1,18 +1,16 @@
-Version 0.37.8
+Version 0.37.7
   08/26/2009 Kelvin Fixed grid has two changes
   1. Boosting ratio from 1.1 to 1.3.
   2. Stopping criterion changed with bigger maximum calls and stricter criterion,
      which allows a longer run and also leads to more run before ending.
 
-Version 0.37.7
   07/21/2009 Change to maximum config file name length from 64 to 256. 
   Change count representation from int to long long to avoid count 
   become negative when we have huge number of models for the trait
 Version 0.37.6
   6/12/2009 Sang: The same SD values are assigned to each SD
   parameters for t-distribution. One threshold is used for all 
-  LCs. Boosting rate is changed to 1.3 from 1.1. For multiple LCs,
-  the rate is increasing as many times as the number of LCs.
+  LCs.
   BR gets 0 when BR is negative at the end of calculation.  
 
 Version 0.37.5
