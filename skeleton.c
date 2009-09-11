@@ -22,10 +22,15 @@
 */
 #include "skeleton.h"
 
-int moduleGlobalVariable,       ///< Comment on global, angle bracket means it follows target
+// Application globals - globals that transcend the current file (module)
+
+int applicationGlobalVariable,       ///< Comment on global, angle bracket means it follows target
   anotherGlobal,        ///< Another comment
   lastOne;      ///< Comment on last global
 
+// Module-wide (file) globals
+
+static int moduleGlobalVariable;  ///< Comment on global
 
 /**
 

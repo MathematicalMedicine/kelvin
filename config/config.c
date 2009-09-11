@@ -76,21 +76,26 @@ typedef struct {
     degOfFreedom;
 } st_observed;
 
-/**
-@defgroup vettedGlobals Vetted globals that will stay globals
-*/
-ModelOptions modelOptions; ///< @ingroup vettedGlobals
-ModelRange modelRange; ///< @ingroup vettedGlobals
-ModelType modelType; ///< @ingroup vettedGlobals
+/** @defgroup vettedGlobals Vetted globals that will stay globals
+    @{
+  Globals that have been reviewed and found to be appropriately
+  global. They're gathered here in order to consolidate documentation.
+  Eventually, when we've eliminated all unnecessary globals, the "Globals"
+  tab in doxygen will be useful again, and this group can go away. Right
+  now it's just too cluttered. */
 
+ModelOptions modelOptions; ///< All configuration options for the working model
+ModelRange modelRange; ///< All expanded parameter ranges for the working model
+ModelType modelType; ///< All typing information for the working model
+/*@}*/
 
-/* Globals */
-char buff[BUFFSIZE] = "";   /* These two are global to provide context to getNextTokgroup */
-char *buffptr = NULL;
-st_observed observed;       /* track non-obvious directives */
-char *conffilename=NULL;
-int lineno = 0;             /* so failure messages are more useful to users */
-int fault = 0;              /* For tracking number of configuration faults */
+/* Module globals */
+static char buff[BUFFSIZE] = "";   /* These two are global to provide context to getNextTokgroup */
+static char *buffptr = NULL;
+static st_observed observed;       /* track non-obvious directives */
+static char *conffilename=NULL;
+static int lineno = 0;             /* so failure messages are more useful to users */
+static int fault = 0;              /* For tracking number of configuration faults */
 
 /* prototypes for non-public routines */
 void initializeDefaults ();
