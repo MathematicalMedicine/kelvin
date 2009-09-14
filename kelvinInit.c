@@ -1,4 +1,6 @@
 #include "kelvinWriteFiles.h"
+#include "utils/pageManagement.h"
+
 pthread_t statusThread;
 int exitDueToLoop = FALSE; /* exit due to unbroken loop */
 int k;
@@ -111,6 +113,11 @@ swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of i
    */
   validateConfig ();
   finishConfig ();
+
+  /* Enable handling of segmentation faults/bus errors due to configuration monkeying */
+
+  setupSegvHandler ();
+  allowReadOnly (modelOptions, sizeof (ModelOptions));
 
   /* For now, reject all models we can't deal with. */
   KASSERT (modelRange->nalleles == 2, "Only biallelic traits supported.\n");
@@ -274,6 +281,9 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
       }
     }
   }
+
+//  allowReadOnly (modelRange, sizeof (ModelRange));
+  allowReadOnly (modelType, sizeof (ModelType));
 
   /* Estimate number of calls to each (appropriate) instance of compute_likelihood for
    * use in progress reporting, and display model information at this point since markers have

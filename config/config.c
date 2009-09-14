@@ -782,13 +782,15 @@ void finishConfig ()
   cleanupRange ();
 
   /* Copy our statically-allocated structures over to their global
-     counterparts and protect them. */
+     counterparts in order to protect them from monkeying. */
 
-  modelOptions = (ModelOptions *) malloc (sizeof (ModelOptions));
+  modelOptions = (ModelOptions *) allocatePages (sizeof (ModelOptions));
   memcpy(modelOptions, &staticModelOptions, sizeof(ModelOptions));
-  modelRange = (ModelRange *) malloc (sizeof (ModelRange));
+
+  modelRange = (ModelRange *) allocatePages (sizeof (ModelRange));
   memcpy(modelRange, &staticModelRange, sizeof(ModelRange));
-  modelType = (ModelType *) malloc (sizeof (ModelType));
+
+  modelType = (ModelType *) allocatePages (sizeof (ModelType));
   memcpy(modelType, &staticModelType, sizeof(ModelType));
 
   return;
