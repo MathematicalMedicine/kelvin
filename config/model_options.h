@@ -40,23 +40,24 @@
 /// Path name used for locating saved results if none specified in the configuration file.
 #define DEFAULTRESULTSPREFIX "./"
 
-/// model_options.equilibrium value indicating linkage equilibrium analysis mode
+/// model_options.equilibrium value indicating linkage equilibrium analysis mode.
 #define LINKAGE_EQUILIBRIUM       0
-/// model_options.equilibrium value indicating linkage disequilibrium analysis mode
+/// model_options.equilibrium value indicating linkage disequilibrium analysis mode.
 #define LINKAGE_DISEQUILIBRIUM    1
 
-/// model_options.markerAnalysis value indicating 2pt marker-to-marker for all possible pairs of markers
-#define MARKERTOMARKER            1
-#define MM MARKERTOMARKER
-/// model_options.markerAnalysis value indicating 2pt marker-to-marker for adjacent markers only
-#define ADJACENTMARKER            2
-#define AM ADJACENTMARKER
+enum MarkerAnalysis {
+  TRAITTOMARKER = 0, ///< 2pt analysis is trait-to-marker. Should stay zero so tests for FALSE will work.
+  MARKERTOMARKER = 1, ///< 2pt analysis is marker-to-marker for all possible pairings of markers.
+  MM = 1, ///< Synonym for MARKERTOMARKER.
+  ADJACENTMARKER = 2, ///< 2pt analysis is marker-to-marker for adjacent markers  only.
+  AM = 2 ///< Synonym for ADJACENTMARKER.
+};
 
 enum MapFlag {
-  SEX_AVERAGED = 0, //< model_options.mapFlag value indicating analysis uses sex-averaged map positions.
-  SA = 0, //< Synonym for SEX_AVERAGED
-  SEX_SPECIFIC = 1, //< model_options.mapFlag value indicating analysis uses sex-specific map positions.
-  SS = 1 //< Synonym for SEX_SPECIFIC
+  SEX_AVERAGED = 0, ///< model_options.mapFlag value indicating analysis uses sex-averaged map positions.
+  SA = 0, //< Synonym for SEX_AVERAGED.
+  SEX_SPECIFIC = 1, ///< model_options.mapFlag value indicating analysis uses sex-specific map positions.
+  SS = 1 //< Synonym for SEX_SPECIFIC.
 };
 
 /// Phenotype code (affection status) unknown for a dichotomous trait.
@@ -68,43 +69,35 @@ enum MapFlag {
 
 typedef struct ModelOptions
 {
-  int equilibrium;  //< Analysis type - LINKAGE_EQUALIBRIUM or LINKAGE_DISEQUILIBRIUM
-  int polynomial;  //< Flag to indicate if polynomial representation is being used.
-  int polynomialScale;	//< Optional scaling factor for polynomial construction storage
-  int integration;      //< Flag to indicate if dynamic grid (integration) is being performed.
-  int maxIterations;    //< Optional upper limit the number of per-BR dynamic grid iterations
-  int sexLinked;   //< Flag to indicate if trait is sex-linked
-
-  /* &&& whether the chromosome is X chromosome
-   * For some segments mainly at the telomeres, they can cross over with Y chromosome
-   * so they behave like an autosomal segment, we call it pseudo autosomal regions
-   * For X chromosome, male (XY) 's X chromosome will be doubled as 
-   * homozygotes, so to handle both males and females the same way 
-   */
-
-  /* whether to use sex-averaged or sex-specific map: only for
-   * QT/CT. */
-  enum MapFlag mapFlag;
-
-  int imprintingFlag;		/* 1 - imprinting pen(1|2) may not be the same as pen(2|1) */
-
-  /* affection status: DT defaults are {0,1,2} while QT/CT defaults
-   * are {NAN, -INFINITY, INFINITY}. values are cast to double in both
-   * cases. */
-  double affectionStatus[3];
-
-  /* unknown person ID */
-  char *sUnknownPersonID;
-
-  /* set recoding (super alleles) or not - we always use set recoding to speed up */
-  /* int alleleSetRecodingFlag; *//* Unused */
-
-  /* save results flag; either TRUE or FALSE */
-  int saveResults;
-
-  /* marker analysis flag; either MARKERTOMARKER or ADJACENTMARKER */
-  int markerAnalysis;
-
+  int equilibrium;  ///< Analysis type - LINKAGE_EQUILIBRIUM or LINKAGE_DISEQUILIBRIUM
+  int polynomial;  ///< Flag to indicate if polynomial representation is being used.
+  int polynomialScale;	///< Optional scaling factor for polynomial construction storage
+  int integration;      ///< Flag to indicate if dynamic grid (integration) is being performed.
+  int maxIterations;    ///< Optional upper limit the number of per-BR dynamic grid iterations
+  int sexLinked;   /**< Flag to indicate that analysis focuses on non-pseudoautosomal region of
+		      the X chromosome. Should not be specified for X chromosome analyses that
+		   focus on the pseudoautosomal regions because they behave like autosomes. */
+  enum MapFlag mapFlag; ///< Flag to indicate whether to use the sex-averaged or sex-specific map
+  int imprintingFlag;	/**< Flag to indicate if imprinting is to be considered. Requires additional
+			   penetrance values (a set for each phase, e.g. dD and Dd) in the 
+			   configuration file. */
+  double affectionStatus[3]; /**< The three special values in the affection status column of the
+				pedigree file that will indicate unknown, unaffected and affected
+				individuals. There are different defaults for dichotomous and 
+				quantitative trait models. For dichotomous traits, there can be
+				some confusion because the symbols used for the	values 
+				(AFFECTION_STATUS_UNKNOWN, etc) do double-duty as the indices
+				of this vector, i.e. affectionStatus[AFFECTION_STATUS_UNKNOWN] =
+				AFFECTION_STATUS_UNKNOWN. For quantitative traits, the default
+				values for unknown, unaffected and affected are -99.99, -88.88
+				and 88.88. It is unfortunate that these are "magic" values, but
+				changing this is non-trivial. */
+  char *sUnknownPersonID; ///< Unknown person ID, defaults to zero.
+  int saveResults; /**< Flag to indicate whether or not we should save the results of likelihood
+		      calculations in a file for reuse in subsequent runs, in lieu of 
+		      recalculation. */
+  enum MarkerAnalysis markerAnalysis; ///< Flag to indicate which loci are involved in a 2pt analysis
+  // &&&
   /* for calculating PPLs */
   double thetaCutoff[2];	/* using step function for the weight of each point */
   double thetaWeight;		/* weight for theta less than the thetaCutoff */
@@ -120,21 +113,21 @@ typedef struct ModelOptions
   char loopBreaker[16];         /* loop breaker's individual ID */
 
   /* Storage and default names for files that are always opened (depending on analysis options) */
-  char markerfile[KMAXFILENAMELEN + 1];  /// Marker (frequency) file
-  char mapfile[KMAXFILENAMELEN + 1];     /// Map file
-  char pedfile[KMAXFILENAMELEN + 1];     /// Pedigree file
-  char datafile[KMAXFILENAMELEN + 1];   /// Data (pedigree description) file
-  char avghetfile[KMAXFILENAMELEN + 1];       /// Bayes Ratio file
-  char pplfile[KMAXFILENAMELEN + 1];         /// PPL file
-  char condFile[KMAXFILENAMELEN + 1];      /// Conditional LR file
-  char ldPPLfile[KMAXFILENAMELEN + 1];     /// This appears to be unused
+  char markerfile[KMAXFILENAMELEN + 1];  ///< Marker (frequency) file
+  char mapfile[KMAXFILENAMELEN + 1];     ///< Map file
+  char pedfile[KMAXFILENAMELEN + 1];     ///< Pedigree file
+  char datafile[KMAXFILENAMELEN + 1];   ///< Data (pedigree description) file
+  char avghetfile[KMAXFILENAMELEN + 1];       ///< Bayes Ratio file
+  char pplfile[KMAXFILENAMELEN + 1];         ///< PPL file
+  char condFile[KMAXFILENAMELEN + 1];      ///< Conditional LR file
+  char ldPPLfile[KMAXFILENAMELEN + 1];     ///< This appears to be unused
 
   /* Storage for files that are only opened based on explicit directives */
-  char ccfile[KMAXFILENAMELEN + 1];                 /// Case control count file
-  char modfile[KMAXFILENAMELEN + 1];                /// MOD and maximizing model file
-  char maxmodelfile[KMAXFILENAMELEN + 1];           /// verbose Max Model file, obsolete?
-  char intermediatefile[KMAXFILENAMELEN + 1];       /// Intermediate Result file
-  char dkelvinoutfile[KMAXFILENAMELEN + 1];         /// DCHURE detail file
+  char ccfile[KMAXFILENAMELEN + 1];                 ///< Case control count file
+  char modfile[KMAXFILENAMELEN + 1];                ///< MOD and maximizing model file
+  char maxmodelfile[KMAXFILENAMELEN + 1];           ///< verbose Max Model file, obsolete?
+  char intermediatefile[KMAXFILENAMELEN + 1];       ///< Intermediate Result file
+  char dkelvinoutfile[KMAXFILENAMELEN + 1];         ///< DCHURE detail file
   char resultsprefix[KMAXFILENAMELEN + 1]; ///< Path for SR directive result storage
   
 } ModelOptions;
