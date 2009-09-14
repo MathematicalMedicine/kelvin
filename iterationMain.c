@@ -290,7 +290,6 @@ void iterateMain() {
 
         /* we will force marker allele frequency loop to execute at least once */
         for (mkrFreqIdx = 0; mkrFreqIdx == 0 || mkrFreqIdx < modelRange->nafreq; mkrFreqIdx++) {
- fprintf (stderr, "IT IS ZERO\n");
           mkrFreq = pLocus2->pAlleleFrequency[0];
           /* we should only loop over marker allele frequency under twopoint
            * and when markers are SNPs (only have two alleles) */
