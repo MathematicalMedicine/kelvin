@@ -4,11 +4,8 @@
 /**
 @file skeleton.h
 
-  Brief public module description ending with a period.
-
-  Detailed public module description is located in the corresponding
-  source file, skeleton.c.
-
+  @see skeleton.c
+  
   Copyright &copy; 2009, Nationwide Children's Research Institute.  All
   rights reserved.  Permission is hereby given to use this software
   for non-profit educational purposes only.
