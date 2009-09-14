@@ -14,7 +14,7 @@ static void segvHandler (int signum, siginfo_t *sigi, void *unused)
 {
   if (sigi->si_signo == FAULT_NAME && sigi->si_code == SEGV_ACCERR) {
     fprintf (stderr, "Protection error referencing stucture at address %lx\n",
-	     sigi->si_addr);
+	     (unsigned long) sigi->si_addr);
     abort ();
   }
 }

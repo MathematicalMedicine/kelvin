@@ -31,3 +31,51 @@
   double alphaV, alphaV2;
   double gfreq; /* disease gene frequency */
   int ret;
+
+int markerSetChanged; /* Flag for multipoint analysis, did set of markers change? */
+int locusListChanged; /* flag for multipoint analysis, did relative trait position or marker set change? */
+
+int prevFirstMarker;		/* first marker in the set for multipoint analysis */
+int prevLastMarker;		/* last marker in the set for multipoint analysis */
+
+/* Variables became global from local */
+PedigreeSet pedigreeSet;	/* Pedigrees. */
+
+int R_square_flag = FALSE;
+double R_square = 0;
+
+/** Storage for the NULL likelihood for the multipoint calculation under polynomial. */
+double markerSetLikelihood;
+
+/** For multipoint, we use genetic map positions on a chromosome. */
+double *map_position;
+int num_of_map_position;
+
+int status;
+
+void *initialProbAddr2[3];
+void *initialHetProbAddr[3];
+
+Pedigree *pPedigree;
+TraitLocus *pTraitLocus;
+double *marker1Pos, *marker2Pos;
+double *prevPos, *currPos;    /* for MP */
+double dist;
+double ldppl, ppld, ppldGl;
+double mkrFreq;
+double ppl;
+double relativePos;
+double traitPos;      /* trait position for multipoint analysis */
+int i, j, k;
+int leftMarker = -1;
+int liabIdx;
+int locus;
+int mkrFreqIdx;
+int pedIdx;
+int posIdx;
+int prevTraitInd;
+int traitIndex = 0;
+int dprimeIdx, dprime0Idx;
+SubLocusList markerLocusList;
+SubLocusList traitLocusList;
+

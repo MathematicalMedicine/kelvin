@@ -7,7 +7,7 @@
 #include "kelvinGlobals.h"
 #include "iterationMain.h"
 #include "summary_result.h"
-#include "iterationLocalsNew.h"
+#include "iterationLocals.h"
 #include "kelvin.h"
 #include "kelvinHandlers.h"
 #include "ppl.h"
@@ -1173,8 +1173,6 @@ void iterateMain() {
           pedigreeSetPolynomialClearance (&pedigreeSet);
         }
 
-        /* save the polynomial flag */
-        polynomialFlag = modelOptions->polynomial;
         status = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr, initialProbAddr2,
                                            initialHetProbAddr, 0, -1, -1, 0);
         if (modelOptions->polynomial == TRUE)
@@ -1223,8 +1221,6 @@ void iterateMain() {
         fprintf (stdout, "Marker set likelihood evaluations %lu%% complete...\n",
                  MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
 #endif
-
-        modelOptions->polynomial = polynomialFlag;
 
         /* print out some statistics under dry run */
         if (modelOptions->dryRun != 0) {

@@ -31,7 +31,6 @@ double alpha[5][2] = { //{0.8, 1.0},  //This is for LOD not for HLOD
 SubLocusList savedLocusList;
 SubLocusList traitLocusList;
 SubLocusList markerLocusList;
-int polynomialFlag;
 
 dcuhre_state *s,init_state;
 double *xl;   //xl[17] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0 };

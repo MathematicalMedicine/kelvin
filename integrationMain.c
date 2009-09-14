@@ -960,9 +960,6 @@
 	  pedigreeSetPolynomialClearance (&pedigreeSet);
 	}
 
-	/* save the polynomial flag */
-	polynomialFlag = modelOptions->polynomial;
-
 	/* populate the matrix */
 	status = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,	/* probability */
 					   initialProbAddr2,	/* probability */
@@ -986,7 +983,6 @@
 	}
 	cL[2]++;
 	compute_likelihood (&pedigreeSet);
-	modelOptions->polynomial = polynomialFlag;
 
 	/* save the results for marker likelihood */
 	for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
