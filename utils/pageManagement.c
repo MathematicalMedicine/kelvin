@@ -138,7 +138,7 @@ void *allocatePages (
 void allowReadOnly (
 		    void *pageStart, ///< Starting address of pages to be protected
 		    int objectSizeInBytes ///< Size of region to protect in bytes, will convert to pages
-)
+		    )
 {
   int pageSize, pageCount;
 
@@ -171,6 +171,7 @@ void allowReadOnly (
 void allowReadWrite (
 		    void *pageStart, ///< Starting address of pages to be protected
 		    int objectSizeInBytes ///< Size of region to protect in bytes, will convert to pages
+		    )
 {
   int pageSize, pageCount;
 
