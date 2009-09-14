@@ -6,6 +6,7 @@
 #include <float.h>
 #include "config.h"
 #include "../utils/utils.h"
+#include "../utils/pageManagement.h"
 #include "../pedlib/pedlib.h"
 
 #define BUFFSIZE 256
@@ -785,6 +786,7 @@ void finishConfig ()
      counterparts in order to protect them from monkeying. */
 
   modelOptions = (ModelOptions *) allocatePages (sizeof (ModelOptions));
+  memcpy(modelOptions, "Random string", 14);
   memcpy(modelOptions, &staticModelOptions, sizeof(ModelOptions));
 
   modelRange = (ModelRange *) allocatePages (sizeof (ModelRange));
