@@ -786,7 +786,6 @@ void finishConfig ()
      counterparts in order to protect them from monkeying. */
 
   modelOptions = (ModelOptions *) allocatePages (sizeof (ModelOptions));
-  memcpy(modelOptions, "Random string", 14);
   memcpy(modelOptions, &staticModelOptions, sizeof(ModelOptions));
 
   modelRange = (ModelRange *) allocatePages (sizeof (ModelRange));
