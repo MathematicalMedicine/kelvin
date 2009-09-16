@@ -247,7 +247,8 @@ void initializeDefaults ()
   staticModelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -DBL_MAX;
   staticModelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = -DBL_MAX;
 
-  /* Set default values for PPL calculations */
+  /* Set default values for PPL calculations. Maybe should be configuration parameters, esp. if
+   we want to call them defaults, which implies the possibility of non-default settings. */
   staticModelOptions.thetaCutoff[0] = 0.05;   /* LRs when theta < cutoff are weighted heavier */
   staticModelOptions.thetaCutoff[1] = 0.05;
   staticModelOptions.thetaWeight = 0.95;      /* Weight for LRs when theta < cutoff */
