@@ -1,0 +1,3 @@
+The fast-test subdirectory should NOT be released to customers, but
+since it is specific to kelvin releases, is being maintained in the
+kelvin svn hierarchy.
