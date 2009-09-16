@@ -5,7 +5,8 @@
 @file model_options.h
 
   model_options structure definition - contains all analysis
-  options parsed from the kelvin configuration file.
+  options parsed from the kelvin configuration file, and a few
+  that maybe should be in the configuration file but aren't yet.
 
   Currently only one instance of model_options is created; a
   sanctioned global called modelOptions. This is the sole repository
@@ -97,20 +98,19 @@ typedef struct ModelOptions
 		      calculations in a file for reuse in subsequent runs, in lieu of 
 		      recalculation. */
   enum MarkerAnalysis markerAnalysis; ///< Flag to indicate which loci are involved in a 2pt analysis
-  // &&&
-  /* for calculating PPLs */
-  double thetaCutoff[2];	/* using step function for the weight of each point */
-  double thetaWeight;		/* weight for theta less than the thetaCutoff */
-  double prior;			/* prior probability of linkage */
-  double LDprior;		/* prior probability of LD (D' not 0) given linkage and theta
-				 *  is within thetaCutoff */
 
-  int dryRun;                   /* 1 - dry run to get statistics for complexity */
-  int forceAvghetFile;          /* 1 - open a BR file, regardless of other directives */
-  int conditionalRun;           /* 1 - print out proband's conditional LR */
-  int loopCondRun;              /* 1 - print out loop breaker's conditional LR */
-  int extraMODs;                /* 1 - put Theta==0 and D'==0 max models in MOD file */
-  char loopBreaker[16];         /* loop breaker's individual ID */
+  /* For calculating PPLs. Not in the configuration file yet. */
+  double thetaCutoff[2];	///< Theta weighting cutoffs for sex-average or male [0] and sex-specific female [1].
+  double thetaWeight;		///< Weight for theta when it's less than the appropriate thetaCutoff.
+  double prior;			///< Prior probability of linkage.
+  double LDprior;		///< Prior probability of LD (D' not 0) given linkage and theta within thetaCutoff.
+
+  int dryRun;                   ///< Flag indicating dry run to get statistics for complexity.
+  int forceAvghetFile;          ///< Flag to force open a BR file, regardless of other directives.
+  int conditionalRun;           ///< Flag indicating to print out proband's conditional LR.
+  int loopCondRun;              ///< Flag indicating to print out loop breaker's conditional LR.
+  char loopBreaker[16];         ///< When loopCondRun set, use this ID to identify the loop breaker */
+  int extraMODs;                ///< Flag indicating to put Theta==0 and D'==0 max models in MOD file.
 
   /* Storage and default names for files that are always opened (depending on analysis options) */
   char markerfile[KMAXFILENAMELEN + 1];  ///< Marker (frequency) file
@@ -120,7 +120,6 @@ typedef struct ModelOptions
   char avghetfile[KMAXFILENAMELEN + 1];       ///< Bayes Ratio file
   char pplfile[KMAXFILENAMELEN + 1];         ///< PPL file
   char condFile[KMAXFILENAMELEN + 1];      ///< Conditional LR file
-  char ldPPLfile[KMAXFILENAMELEN + 1];     ///< This appears to be unused
 
   /* Storage for files that are only opened based on explicit directives */
   char ccfile[KMAXFILENAMELEN + 1];                 ///< Case control count file
