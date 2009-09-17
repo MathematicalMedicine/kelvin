@@ -782,7 +782,7 @@ where <flags> are any of:
 		file)
 -imprinting	This in an imprinting analysis (also IMP in configuration file)
 -liability	The pedigree file has a column after affection status for liability 
-		class. Currently not considered in counts.
+		class.
 -bare		The pedigree file has only individual, affection status and marker
 		allele pairs columns.
 -nokelvin	Skip verification that kelvin can handle the analysis.
