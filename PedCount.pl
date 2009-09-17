@@ -921,8 +921,8 @@ if ($config) {
 
 my $Type = "";
 if ($pre) { $Type = "PRE"; } elsif ($post) { $Type = "POST"; } elsif ($bare) { $Type = "BARE"; }
-my $pedFileType = assessPedigree($pedFile, $Type);
-$PairCount = loadPedigree($pedFile, $pedFileType, $liability);
+my $pedFileType = assessPedigree($pedFile, $Type, $liability, $noparents);
+$PairCount = loadPedigree($pedFile, $pedFileType, $liability, $noparents);
 
 #print Dumper(\%Pedigrees);
 

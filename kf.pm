@@ -27,9 +27,6 @@ use constant AttributeMissing => "0";    # For marker alleles and Sex
 # Sanctioned globals
 
 my $HaveConfig         = 0;
-
-my $noparents      = 0;
-my $liability      = 0;
 my $XC             = 0;
 
 # Defaults to be overridden by configuration file directives
@@ -396,6 +393,9 @@ sub loadConf {
 sub assessPedigree {
     my $File = shift();
     my $Type = shift();
+    my $liability = shift();
+    my $noparents = shift();
+	
     die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
     while (<IN>) {
@@ -414,7 +414,7 @@ sub assessPedigree {
                   # pre-MAKEPED is Ped Ind Dad Mom Sex Aff Pairs, i.e. some even number > 6
             die "Invalid number of columns in pre-MAKEPED pedigree file $File."
               if (($TotalColumns < 8) || ($TotalColumns & 1));
-            warn
+            die
               "Inconsistent column counts between companion datafile ($MarkerColumns markers) and pre-MAKEPED pedigree file $File ("
               . ($TotalColumns - 6) . ")."
               if ($HaveConfig && (($TotalColumns - $MarkerColumns) != 6));
@@ -425,7 +425,7 @@ sub assessPedigree {
                   # post-MAKEPED is Ped Ind Dad Mom Kid1 nPs nMs Sex Prb Aff Pairs, i.e. some even number > 10
             die "Invalid number of columns ($TotalColumns) in post-MAKEPED pedigree file $File."
               if (($TotalColumns < 12)); # || ($TotalColumns & 1));
-            warn
+            die
               "Inconsistent column counts ($MarkerColumns of $TotalColumns total columns should be markers) between companion datafile and post-MAKEPED pedigree file $File."
               if ($HaveConfig && (($TotalColumns - $MarkerColumns) != 10) && (($TotalColumns - $MarkerColumns) != 14));
             return "POST";
@@ -466,6 +466,7 @@ sub loadPedigree {
     my $File = shift();
     my $Type = shift();
     my $liability = shift();
+    my $noparents = shift();
     die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
     my $LineNo      = 0;
