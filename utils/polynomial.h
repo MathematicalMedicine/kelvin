@@ -9,6 +9,7 @@
 #ifndef __POLYNOMIAL_H__
 #define __POLYNOMIAL_H__
 
+#include <stdio.h>
 
 /* The following dynamically-maintained variables are for debugging. See
    their definition in polynomial.c for descriptions. */
@@ -118,7 +119,7 @@ void evaluatePoly (Polynomial *pp, struct polyList *l, double *pd);
 void expPrinting (Polynomial *p);
 
 // Recursively print a polynomial to specified depth and with annotation as needed.
-void expTermPrinting (FILE * outputFile, Polynomial *p, int depth);
+void expTermPrinting (FILE *outputFile, Polynomial *p, int depth);
 
 // Dump dynamically collected statistics (no performance impact)
 void polyDynamicStatistics (char *);
