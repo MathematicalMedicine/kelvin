@@ -229,8 +229,6 @@ struct hashStruct
 // Initialization before polynomials care created and evaluated.
 void polynomialInitialization (int polynomialScale);
 
-void codePoly (Polynomial * p, struct polyList * l, char * name);
-Polynomial *restoreExternalPoly (char * name);
 int loadPolyDL (Polynomial * p);
 Polynomial * exportPoly (Polynomial * p);
 Polynomial * importPoly (Polynomial * p);

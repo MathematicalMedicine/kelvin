@@ -156,6 +156,10 @@ void releaseExternalPoly (Polynomial *);
 // Print a summary of the polynomial tree components (traversal)
 void printSummaryPoly (Polynomial *p);
 
+
+Polynomial *restoreExternalPoly (char * name);
+void codePoly (Polynomial * p, struct polyList * l, char * name);
+
 #ifdef SOURCEDIGRAPH
 // Dump data for a Dot digraph of polynomial construction-to-use source lines
 void dumpSourceParenting ();
