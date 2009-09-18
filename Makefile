@@ -28,7 +28,7 @@ INCFLAGS := -I$(INCDIR)
 CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
 GCCOPT := 3 # GCC optimization level, 0=none, 1=default, 2=some, 3=all
-CFLAGS := -Wall -DGCCOPT=$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
+CFLAGS := -Wall -DGCCOPT=$(GCCOPT) -O$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lconfig -lutils -lm -lpthread
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
