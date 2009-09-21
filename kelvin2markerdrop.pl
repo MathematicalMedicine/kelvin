@@ -113,8 +113,8 @@ if (defined($Directives{PedigreeFile}[0])) { $pedFile = $Directives{PedigreeFile
 
 $maf0 = addMissingAlleles();
 
-my $pedFileType = assessPedigree($pedFile, "POST");
-$PairCount = loadPedigree($pedFile, $pedFileType);
+my $pedFileType = assessPedigree($pedFile, "POST", 0, 0);
+$PairCount = loadPedigree($pedFile, $pedFileType, 0, 0);
 
 #print Dumper(\%Pedigrees);
 #print Dumper(\@Loci);
