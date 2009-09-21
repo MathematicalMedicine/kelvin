@@ -62,6 +62,7 @@ typedef struct polynomial
 {
   unsigned char eType;		// polynomial type
   double value;			// the value of the polynomial
+  unsigned int id;		// unique id - 4 bytes
 } Polynomial;
 
 /* Optimized list for polynomial evaluation.  When we evaluate a polynomial multiple
