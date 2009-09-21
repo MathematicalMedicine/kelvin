@@ -283,11 +283,11 @@ void *monitorStatus ()
       }
       currentVMK = swGetCurrentVMK (getpid ());
 #ifdef MEMGRAPH
-      fprintf (graphFile, "%lu, %d, %ld\n", time (NULL) - startTime, currentVMK, nodeId);
+      fprintf (graphFile, "%lu, %ld, %ld\n", time (NULL) - startTime, currentVMK, nodeId);
       fflush (graphFile);
 #endif
 #ifdef MEMSTATUS
-      fprintf (stdout, "%lus, %dKb (%.1f%% of %.1fGb) at %d\n", time (NULL) - startTime, currentVMK, currentVMK / (maximumPMK / 100.0), maximumPMK / (1024.0 * 1024.0), nodeId);
+      fprintf (stdout, "%lus, %ldKb (%.1f%% of %.1fGb) at %ld\n", time (NULL) - startTime, currentVMK, currentVMK / (maximumPMK / 100.0), maximumPMK / (1024.0 * 1024.0), nodeId);
 #endif
     }
   }
