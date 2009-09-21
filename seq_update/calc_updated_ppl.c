@@ -418,11 +418,13 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 
 void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 {
-  int fileno, ret, alldone, curno;
+  int fileno, ret, alldone, curno, howmany, warning=0;
+  char warnbuff[1024];
   st_brmarker *marker;
   st_data data;
   double lr, *lrs, ppl;
 
+  warnbuff[0] = '\0';
   memset (&data, 0, sizeof (st_data));
   if ((lrs = malloc (sizeof (double) * numbrfiles)) == NULL) {
     fprintf (stderr, "malloc failed, %s\n", strerror (errno));
@@ -451,6 +453,7 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
   while (1) {
     alldone = 1;
     curno = -1;
+    howmany = 0;
     lr = 1;
     for (fileno = 0; fileno < numbrfiles; fileno++) {
       if (brfiles[fileno].eof)
@@ -468,6 +471,7 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 	continue;
       if (compare_positions (&brfiles[fileno].curmarker, &brfiles[curno].curmarker) != 0)
 	continue;
+      howmany++;
       lr *= lrs[fileno];
       if (fileno != curno) {
 	if (get_data_line (&brfiles[fileno], &data) == 1)
@@ -476,12 +480,24 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
     }
 
     marker = &brfiles[curno].curmarker;
+    if (howmany != numbrfiles) {
+      warning++;
+      if (strlen (warnbuff) <= 1014)
+	sprintf (warnbuff+strlen (warnbuff), " %.4f", marker->avgpos);
+    }
     if ((lr < 0.214) || ((ppl = (lr * lr) / (-5.77 + (54 * lr) + (lr * lr))) < 0.0))
       ppl = 0.0;
     printf ("%s %.4f %.3f %.6e\n", marker->chr, marker->avgpos, ppl, lr);
     
     if (get_data_line (&brfiles[curno], &data) == 1)
       lrs[curno] = data.lr;
+  }
+  if (warning) {
+    fprintf (stderr, "warning: %d position%s missing from one or more input files:%s",
+	     warning, (warning == 1) ? "" : "s", warnbuff);
+    if (strlen (warnbuff) > 1014)
+      fprintf (stderr, " and others");
+    fprintf (stderr, "\n");
   }
   free (lrs);
   return;
@@ -1044,6 +1060,7 @@ void calc_ldvals_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr,
      ldval->le_big_theta * prior;
    denomRight = 1 - prior;
    ppl = numerator / (numerator + denomRight);
+   return (ppl);
  }
 
 
