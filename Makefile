@@ -28,12 +28,12 @@ INCFLAGS := -I$(INCDIR)
 CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
 GCCOPT := 3 # GCC optimization level, 0=none, 1=default, 2=some, 3=all
-CFLAGS := -Wall -DGCCOPT=$(GCCOPT) -O$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
+CFLAGS := -Wall -Werror -DGCCOPT=$(GCCOPT) -O$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lconfig -lutils -lm -lpthread
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
-CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
+#CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
 #CFLAGS += -fopenmp # Uncomment if you have an OpenMP-capable compiler and want to use multiple threads for evaluations.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
 #LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
