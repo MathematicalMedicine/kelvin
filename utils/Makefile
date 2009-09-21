@@ -7,10 +7,10 @@
 INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h pageManagement.h
 OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o pageManagement.o
 
-all : ../lib/libutils.a pt sw sSDHandler
+all : ../lib/libutils.a ../lib/libkutils.so pt sw sSDHandler
 
 polynomial.o : polynomial.c polynomial.h
-	gcc polynomial.c -c $(CFLAGS) $(INCFLAGS) -o polynomial.o
+	gcc polynomial.c -c -fPIC $(CFLAGS) $(INCFLAGS) -o polynomial.o
 
 pt : pt.c polynomial.o sw.o
 	gcc polynomial.c -c -o polynomial.o -DPOLYUSE_DL -DPOLYCODE_DL
@@ -18,7 +18,7 @@ pt : pt.c polynomial.o sw.o
 	rm polynomial.o
 
 sw : sw.c sw.h
-	gcc -DMAIN sw.c -o sw -lm
+	gcc -DMAIN sw.c -o -fPIC sw -lm
 
 sSDHandler : sSDHandler.c sSDHandler.h
 	gcc -DMAIN sSDHandler.c -o sSDHandler
@@ -30,11 +30,17 @@ listener : listener.c sw.h
 ../lib/libutils.a : libutils.a
 	cp libutils.a ../lib
 
+../lib/libkutils.so : libkutils.so
+	cp libkutils.so ../lib
+
 libutils.a : $(OBJS) polynomial.o
 	ar -rsc libutils.a $(OBJS) polynomial.o
 
+libkutils.so : $(OBJS) polynomial.o
+	gcc -fPIC -shared -o libkutils.so $(OBJS) polynomial.o
+
 $(OBJS) : %.o : %.c $(INCS)
-	$(CC) -c $(CFLAGS) $(INCFLAGS) $< -o $@
+	$(CC) -c -fPIC $(CFLAGS) $(INCFLAGS) $< -o $@
 
 .PHONY : clean
 clean :
