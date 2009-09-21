@@ -21,7 +21,7 @@ void iterateMain() {
   int pedIdx;
   int numPositions;
   double log10AvgLR;
-  char xmissionPattern[10];
+  //  char xmissionPattern[10];
 
   /* only for multipoint - we don't handle LD under multipoint yet */
   if (modelType->type == MP) {
@@ -291,6 +291,7 @@ void iterateMain() {
         /* we will force marker allele frequency loop to execute at least once */
         for (mkrFreqIdx = 0; mkrFreqIdx == 0 || mkrFreqIdx < modelRange->nafreq; mkrFreqIdx++) {
           mkrFreq = pLocus2->pAlleleFrequency[0];
+	  paramSet.mkrFreqIdx = mkrFreq;
           /* we should only loop over marker allele frequency under twopoint
            * and when markers are SNPs (only have two alleles) */
           if (loopMarkerFreqFlag) {

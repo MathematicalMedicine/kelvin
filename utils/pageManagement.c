@@ -71,6 +71,7 @@ void setupSegvHandler (void)
   struct sigaction segvAction;
   segvAction.sa_handler = (void *) segvHandler;
   segvAction.sa_flags = SA_RESTART | SA_SIGINFO | SA_NODEFER | SA_RESETHAND;
+  sigemptyset (&segvAction.sa_mask);
   if (sigaction (FAULT_NAME, &segvAction, NULL)) {
     perror ("sigaction");
     exit (EXIT_FAILURE);

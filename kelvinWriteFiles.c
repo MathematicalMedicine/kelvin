@@ -382,13 +382,13 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
   double log10_lr;
   int initialFlag;
   float max, max_at_theta0, max_at_dprime0;
-  int maxDPrimeIdx, maxThetaIdx;
-  int dprimeIdx, thetaInd;
-  int maxDPrimeIdx_at_theta0;
-  int maxTheta_at_dprime0;
+  int maxDPrimeIdx=0, maxThetaIdx=0;
+  int dprimeIdx=0, thetaInd=0;
+  int maxDPrimeIdx_at_theta0=0;
+  int maxTheta_at_dprime0=0;
   int i, j, liabIdx;
   float theta[2];
-  int theta0Idx;
+  int theta0Idx=0;
   
   if (fpMOD == NULL)
     return;
