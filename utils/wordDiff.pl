@@ -18,15 +18,18 @@ $file_LEFT = shift;
 $file_RIGHT = shift;
 $maxOffByFactor = shift;
 open LEFT, $file_LEFT; open RIGHT, $file_RIGHT;
-$whole_LEFT = do { local $/; <LEFT> }; # Briefly change newline to NULL
-$whole_RIGHT = do { local $/; <RIGHT> }; # Briefly change newline to NULL
+$whole_LEFT = do { local $/; <LEFT> }; # Briefly make the special variable for line delimiter undefined...
+$whole_RIGHT = do { local $/; <RIGHT> }; # ...so we can slurp-in the whole file at once.
 close LEFT; close RIGHT;
+$whole_LEFT =~ s/\$Id.* \$//g; # Ignore comparisons of SVN or CVS version Ids
+$whole_RIGHT =~ s/\$Id.* \$//g; # Ignore comparisons of SVN or CVS version Ids
 # Split the files into lists delimited by whitespace commas, newlines and parens, and keep delimiters
 @chunks_LEFT = split (/([\s,\n\(\)])/, $whole_LEFT);
 @chunks_RIGHT = split (/([\s,\n\(\)])/, $whole_RIGHT);
 # Compare all of the tokens and delimiters
 for ($i = 0; $i < $#chunks_LEFT; $i++) {
     $left = $chunks_LEFT[$i]; $right = $chunks_RIGHT[$i];
+    next if (($left =~ /V\S+/) and ($right =~ /V\S+/)); # Ignore comparisons of version numbers (e.g. V2.3)
     if ($left ne $right) {
 	# Not a textual match
 	if ($left =~ /^[-+]?[0-9]+[\.]?[0-9]*([Ee][+-][0-9]*)?$/) {
