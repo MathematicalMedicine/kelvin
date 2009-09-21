@@ -238,7 +238,7 @@ dadhre_ (dcuhre_state * s)
 
 
   if (s->verbose > 1) {
-    fprintf (stderr, "After first sub regions result=%20.18f error=%20.18f\n",
+    fprintf (stderr, "After first %d sub regions result=%20.18f error=%20.18f\n",
 	     s->sbrgns, s->result, s->error);
   }
 
