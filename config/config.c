@@ -988,7 +988,7 @@ int set_penetrance (char **toks, int numtoks, void *unused)
 int set_constraint (char **toks, int numtoks, void *unused)
 {
   int len, first=2, type=-1;
-  int oper, geno1=0, geno2=0, class1, class2, disjunct=0, maxclass;
+  int oper=0, geno1=0, geno2=0, class1, class2, disjunct=0, maxclass;
 
   //printf ("set_constraint:");
   //for (oper = 1; oper < numtoks; oper++)
