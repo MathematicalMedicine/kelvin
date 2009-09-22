@@ -32,12 +32,14 @@ listener : listener.c sw.h
 
 ../lib/libkutils.so : libkutils.so
 	cp libkutils.so ../lib
+	cp libkutils.so ../lib/libkutils.dll # For cygwin
 
 libutils.a : $(OBJS) polynomial.o
 	ar -rsc libutils.a $(OBJS) polynomial.o
 
 libkutils.so : $(OBJS) polynomial.o
 	gcc -fPIC -shared -o libkutils.so $(OBJS) polynomial.o
+#	gcc -fPIC -shared -o libkutils.so $(OBJS) polynomial.o -Wl,-single_module # For Darwin due to polynomial globals
 
 $(OBJS) : %.o : %.c $(INCS)
 	$(CC) -c -fPIC $(CFLAGS) $(INCFLAGS) $< -o $@
