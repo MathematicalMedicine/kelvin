@@ -2994,7 +2994,7 @@ void polynomialInitialization (int polynomialScale)
   int i;
   char *envVar;
   char messageBuffer[MAXSWMSG];
-  int maximumPMK;
+  long maximumPMK;
 
   // Get our maximum so we can react to depletion.
   maximumPMK = swGetMaximumPMK ();
@@ -3828,13 +3828,13 @@ void polyStatistics (char *title)
   if ((grandTotal / 1024) > (maximumPMK / 4)) {
     memoryLow = TRUE;
 #ifdef USE_SSD
-    fprintf (stderr, "Maximum of %dKb of physical memory is %.0f%% used, utilizing SSD.\n", 
+    fprintf (stderr, "Maximum of %ldKb of physical memory is %.0f%% used, utilizing SSD.\n", 
 	     maximumPMK, (grandTotal / 1024) / maximumPMK * 100);
 #endif
   } else {
     memoryLow = FALSE;
 #ifdef USE_SSD
-    fprintf (stderr, "Maximum of %dKb physical memory is at %.0f%% used.\n", 
+    fprintf (stderr, "Maximum of %ldKb physical memory is at %.0f%% used.\n", 
 	     maximumPMK, (grandTotal / 1024) / maximumPMK * 100);
 #endif
   }
