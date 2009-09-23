@@ -18,6 +18,14 @@
 # 2: the optimization level to use, typically 0 or 1, defaults to 0 if
 # not specified.
 #
+# Presumes the existance of a KELVIN_ROOT environment variable which
+# contains the path to the kelvin source hierarchy.
+#
+# Since the dynamic libraries are created in the default directory,
+# DYLD_LIBRARY_PATH should be set as:
+#
+# export DYLD_LIBRARY_PATH=.:$KELVIN_ROOT/lib/
+#
 name=${1##*/}
 name=${name%\.*}
 
@@ -42,7 +50,7 @@ for src in ${name}{\.,\_[0-9]*}c ; do [ -f $src ] || continue ;
     if test ! -e ${src}.compiling ; then
 	touch ${src}.compiling
 	echo Compiling ${src}
-	gcc -g -c -fPIC -shared -O${optLevel} -o ${src}.o ${src}.c >& ${src}.out
+	gcc -g -c -L$KELVIN_ROOT/lib/ -I$KELVIN_ROOT/utils/ -dynamiclib -fPIC -shared -O${optLevel} -o ${src}.o ${src}.c >& ${src}.out
 	if test ! -e ${src}.o ; then
 	    echo Compile failed for some unknown reason
 	    mail -s "Compile for ${src} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null
@@ -65,7 +73,7 @@ if test -e ${name}.linking ; then
     exit
 fi
 touch ${name}.linking
-gcc -g -O${optLevel} -fPIC -shared -o ${name}.so ${name}.o -lkutils -lm >& ${name}-link.out
+gcc -g -O${optLevel} -L$KELVIN_ROOT/utils/ -I$KELVIN_ROOT/utils/ -dynamiclib -fPIC -shared -o ${name}.so ${name}.o -lkutils -lm >& ${name}-link.out
 if test ! -x ${name}.so ; then
     echo Link of root DL failed for some unknown reason
     mail -s "Link for root DL ${name} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null
@@ -76,7 +84,7 @@ rm ${name}.o
 for dl in ${name}_[0-9]*00.o ; do [ -f $dl ] || continue ;
     dl=${dl##*/}
     dl=${dl%00\.o}
-    gcc -g -O${optLevel} -fPIC -shared -o ${dl}00.so ${dl}[0-9][0-9].o -lkutils -lm >& ${dl}00-link.out
+    gcc -g -O${optLevel} -L$KELVIN_ROOT/lib/ -I$KELVIN_ROOT/utils/ -dynamiclib -fPIC -shared -o ${dl}00.so ${dl}[0-9][0-9].o -lkutils -lm >& ${dl}00-link.out
     if test ! -x ${name}.so ; then
 	echo Link of branch DL failed for some unknown reason
 	mail -s "Link for branch DL ${dl} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null

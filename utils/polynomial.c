@@ -5153,7 +5153,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 #ifdef POLYCOMP_DL
   char command[256];
   pushStatus ('k', "compile poly");
-  sprintf (command, "compileDL.sh %s", name);
+  sprintf (command, "$KELVIN_ROOT/compileDL.sh %s", name);
   int status;
   if ((status = system (command)) != 0) {
     perror ("system()");
