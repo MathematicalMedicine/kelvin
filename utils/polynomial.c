@@ -196,7 +196,10 @@
 #include "sw.h"
 
 int polynomialScale;     ///< Scaling factor for hash and other storage set in config.c
+
+#ifdef THRASH_CHECK
 extern struct swStopwatch *overallSW;   ///< Total run statistics stopwatch defined in kelvin.c
+#endif
 
 /** This is a global variable used for giving each polynomial an unique ID
    so that we can know if two polynomials are the same just from their IDs */
@@ -327,8 +330,10 @@ static int polynomialLostNodeId = -1;  ///< For tracking down mis-freed polynomi
 static struct swStopwatch *evaluatePolySW,     ///< Conditional stopwatch for evaluatePoly stats.
  *evaluateValueSW;      ///< Conditional stopwatch for evaluateValue stats.
 
+#ifdef THRASH_CHECK
 static unsigned long lastPDSAccumWallTime = 0, ///< last polyDynamicStatistics walltime for thrashing check.
     lastPDSAccumUserTime = 0;   ///< ...same but CPU time.
+#endif
 
 // The following are used for building sum polynomials...
 /// Collecting variable terms...
@@ -3638,6 +3643,7 @@ void writePolyDigraph (Polynomial * p)
 
 void thrashingCheck ()
 {
+#ifdef THRASH_CHECK
   unsigned long deltaAccumWallTime, deltaAccumUserTime;
   char messageBuffer[MAXSWMSG];
 
@@ -3658,7 +3664,7 @@ void thrashingCheck ()
   swStart (overallSW);
   lastPDSAccumWallTime = overallSW->swAccumWallTime;
   lastPDSAccumUserTime = overallSW->swAccumRUSelf.ru_utime.tv_sec + overallSW->swAccumRUChildren.ru_utime.tv_sec;
-
+#endif
   return;
 }
 
@@ -3667,7 +3673,6 @@ void polyDynamicStatistics (char *title)
 
   fprintf (stderr, "Dynamic polynomial statistics (%s):\n", title);
 
-  swDump (overallSW);
 #ifdef EVALUATESW
   if (evaluatePolyCount)
     swDump (evaluatePolySW);

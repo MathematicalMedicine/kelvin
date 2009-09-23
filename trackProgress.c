@@ -277,7 +277,9 @@ void *monitorStatus ()
       sleep (MONSTATDELAYSEC);
       wakeCount++;
       if (!(wakeCount % 2)) {
-        /*      thrashingCheck (); */
+#ifdef THRASH_CHECK
+	thrashingCheck ();
+#endif
         statusRequestSignal = TRUE;
 //      kill (getpid (), SIGQUIT);   // Send a status-updating signal
       }
