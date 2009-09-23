@@ -4883,14 +4883,13 @@ int loadPolyDL (Polynomial * p)
   int i = 0;
   char polynomialFileName[MAX_PFN_LEN+1];
 
-  //  sprintf (polynomialFileName, "%s.so", p->e.e->polynomialFunctionName);
   sprintf (polynomialFileName, "./%s.so", p->e.e->polynomialFunctionName);
   if ((p->e.e->polynomialFunctionHandle[0] = 
        dlopen (polynomialFileName, RTLD_LAZY|RTLD_LOCAL)) != NULL) {
 
     // Loaded! Do any supporting 1K clump DLs.
     for (i=0; i<=32; i++) {
-      sprintf (polynomialFileName, "%s_%dK.so", p->e.e->polynomialFunctionName, i);
+      sprintf (polynomialFileName, "./%s_%dK.so", p->e.e->polynomialFunctionName, i);
       if ((p->e.e->polynomialFunctionHandle[i+1] = dlopen (polynomialFileName, RTLD_LAZY|RTLD_LOCAL)) == NULL)
 	break;
     }
