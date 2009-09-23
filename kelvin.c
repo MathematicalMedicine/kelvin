@@ -140,15 +140,13 @@ extern Polynomial *constant1Poly;
 char *programVersion = "V0.38.0";       ///< Overall kelvin version set upon release.
 char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
 
+#include "dkelvinWriteFiles.c"
 
 int main (int argc, char *argv[])
 {
 
   //  #include "iterationLocalsNew.h"
   //  #include "integrationLocals.h"
-
-  //#include "kelvinWriteFiles.c"
-  #include "dkelvinWriteFiles.c"
 
   #include "kelvinInit.c"
 
