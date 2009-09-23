@@ -387,8 +387,8 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	    fprintf (stderr, "Polynomial terms (depth of 1):\n");
 	    expTermPrinting (stderr, pPedigree->likelihoodPolynomial, 1);
 	    fprintf (stderr, "\n");
-	    printAllPolynomials();
-	    fprintf (stderr, "\n");
+	    //	    printAllPolynomials();
+	    //	    fprintf (stderr, "\n");
 	  }
 	  ret = -1;
 	  product_likelihood = 0.0;
