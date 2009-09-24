@@ -18,7 +18,7 @@ pt : pt.c polynomial.o sw.o
 	rm polynomial.o
 
 sw : sw.c sw.h
-	gcc -DMAIN sw.c -o sw -fPIC -lm
+	gcc -DMAIN sw.c -o sw $(CFLAGS) -lm
 
 sSDHandler : sSDHandler.c sSDHandler.h
 	gcc -DMAIN sSDHandler.c -o sSDHandler
