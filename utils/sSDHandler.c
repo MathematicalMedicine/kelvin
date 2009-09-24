@@ -108,8 +108,8 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #else
-#include <sys/statfs.h>
 #include <sys/vfs.h>
+#include <sys/statfs.h>
 #endif
 
 #include <libgen.h>
