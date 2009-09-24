@@ -1398,7 +1398,7 @@ int set_logLevel (char **toks, int numtoks, void *filename)
 int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_h)
 {
   int numvals=0, listsize=10, tokidx=0, va;
-  char *ca, *cb;
+  char *ca = NULL, *cb = NULL;
   double start, end=-1, incr, val, *vals=NULL;
   st_valuelist *vlist=NULL;
 
