@@ -108,6 +108,7 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #else
+#include <sys/statfs.h>
 #include <sys/vfs.h>
 #endif
 
@@ -191,7 +192,13 @@ void initSSD() {
     sSDFileSizeInGb = atol(envVar);
   else {
     dirnameIsDamaged = strdup (sSDFileName);
-    if (statfs(dirname(dirnameIsDamaged), &sSDStats) != 0) {
+    if (
+#ifdef __sun__
+	statfs(dirname(dirnameIsDamaged), &sSDStats, 0, 0)
+#else
+	statfs(dirname(dirnameIsDamaged), &sSDStats)
+#endif
+	!= 0) {
       perror("statfs call failed on SSD path, using default");
       sSDFileSizeInGb = defaultSSDFileSizeInGb;
     } else
