@@ -7,14 +7,14 @@
 INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h pageManagement.h
 OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o pageManagement.o
 
-all : ../lib/libutils.a ../lib/libkutils.so pt sw sSDHandler
+all : ../lib/libutils.a ../lib/libkutils.so # pt sw sSDHandler
 
 polynomial.o : polynomial.c polynomial.h
 	gcc polynomial.c -c -fPIC $(CFLAGS) $(INCFLAGS) -o polynomial.o
 
 pt : pt.c polynomial.o sw.o
-	gcc polynomial.c -c -o polynomial.o -DPOLYUSE_DL -DPOLYCODE_DL
-	gcc pt.c -o pt polynomial.o -L../lib -lutils -lm -ldl
+	gcc polynomial.c -c -o polynomial.o $(CFLAGS) -DPOLYUSE_DL -DPOLYCODE_DL
+	gcc pt.c -o pt polynomial.o $(CFLAGS) -L../lib -lutils -lm -ldl
 	rm polynomial.o
 
 sw : sw.c sw.h
@@ -38,8 +38,7 @@ libutils.a : $(OBJS) polynomial.o
 	ar -rsc libutils.a $(OBJS) polynomial.o
 
 libkutils.so : $(OBJS) polynomial.o
-	gcc -dynamiclib -fPIC -shared -o libkutils.so $(OBJS) polynomial.o
-#	gcc -fPIC -shared -o libkutils.so $(OBJS) polynomial.o -Wl,-single_module # For Darwin due to polynomial globals
+	gcc -dynamiclib -fPIC -shared -o libkutils.so $(CFLAGS) $(OBJS) polynomial.o
 
 $(OBJS) : %.o : %.c $(INCS)
 	$(CC) -c -fPIC $(CFLAGS) $(INCFLAGS) $< -o $@
