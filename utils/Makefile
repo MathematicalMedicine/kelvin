@@ -38,7 +38,7 @@ libutils.a : $(OBJS) polynomial.o
 	ar -rsc libutils.a $(OBJS) polynomial.o
 
 libkutils.so : $(OBJS) polynomial.o
-	gcc -fPIC -shared -o libkutils.so $(OBJS) polynomial.o
+	gcc -dynamiclib -fPIC -shared -o libkutils.so $(OBJS) polynomial.o
 #	gcc -fPIC -shared -o libkutils.so $(OBJS) polynomial.o -Wl,-single_module # For Darwin due to polynomial globals
 
 $(OBJS) : %.o : %.c $(INCS)
