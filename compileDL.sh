@@ -22,9 +22,9 @@
 # contains the path to the kelvin source hierarchy.
 #
 # Since the dynamic libraries are created in the default directory,
-# DYLD_LIBRARY_PATH should be set as:
+# LD_LIBRARY_PATH (and DYLD_LIBRARY_PATH under Darwin) should be set as:
 #
-# export DYLD_LIBRARY_PATH=.:$KELVIN_ROOT/lib/
+# export LD_LIBRARY_PATH=.:$KELVIN_ROOT/lib/
 #
 name=${1##*/}
 name=${name%\.*}
