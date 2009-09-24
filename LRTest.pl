@@ -86,8 +86,9 @@ sub parse_header {
 
 # Run kelvin on the config file with SurfaceFile directive
 print "Generating dynamic-grid trait space baseline.\n";
-(system('$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dyn >&LRTest.Out') == 0)
-    or die "Couldn't run kelvin (\$TEST_KELVIN)\n";
+my $commandLine='$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dyn >&LRTest.Out';
+(system($commandLine) == 0)
+    or die "Couldn't run kelvin ($commandLine)\n";
 
 # First pass thru file, pull-out min and max rows...
 open IN,"LRTest.Dyn";
