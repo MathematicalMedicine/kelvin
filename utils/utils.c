@@ -8,7 +8,7 @@
  **********************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <strings.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include "utils.h"
@@ -303,7 +303,7 @@ int permuteLine (char *line, int maxlength)
       vb++;
       
     } else if (line[vb] == '-') {  /* have to handle '-' separately */
-      if ((state == INWHITESPACE) && (va > 1) && isdigit (line[va-2])) {
+      if ((state == INWHITESPACE) && (va > 1) && isdigit ((int) line[va-2])) {
 	line[va-1] = line[vb++];
       } else 
 	line[va++] = line[vb++];
