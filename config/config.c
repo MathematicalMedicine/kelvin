@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h> // For index on some platforms
 #include <errno.h>
 #include <math.h>
 #include <float.h>
