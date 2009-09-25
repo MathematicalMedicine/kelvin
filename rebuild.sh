@@ -1,10 +1,17 @@
+case $HOSTNAME in
+    testbed* )
+    OPENMP= ;;
+    * )
+    OPENMP=-fopenmp ;;
+esac
+
 make clean
-make CFLAGS="$* -Wall -Werror -DGCCOPT=3 -O3 -fopenmp -DMEMGRAPH" ADD_LDFLAGS="-ldl" kelvin
+make CFLAGS="$* -Wall -Werror -DGCCOPT=3 -O3 $OPENMP -DMEMGRAPH" ADD_LDFLAGS="-ldl" kelvin
 mv kelvin kelvin-normal
 
 # Set OMP_NUM_THREADS=<something big> for best performance after compiliation of DLs.
 make clean
-make CFLAGS="$* -Wall -Werror -DGCCOPT=3 -O3 -fopenmp -DMEMGRAPH -DPOLYUSE_DL" ADD_LDFLAGS="-ldl" kelvin
+make CFLAGS="$* -Wall -Werror -DGCCOPT=3 -O3 $OPENMP -DMEMGRAPH -DPOLYUSE_DL" ADD_LDFLAGS="-ldl" kelvin
 mv kelvin kelvin-POLYUSE_DL
 
 # Best reliable method for preparing code for DLs. Need to compile separately and then evaluate.
