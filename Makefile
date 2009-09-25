@@ -29,7 +29,7 @@ CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
 GCCOPT := 3 # GCC optimization level, 0=none, 1=default, 2=some, 3=all
 CFLAGS := -Wall -Werror -DGCCOPT=$(GCCOPT) -O$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -lped -lconfig -lutils -lm -lpthread
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -D_REENTRANT # Last bit for Solaris when using pthread
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
@@ -50,7 +50,8 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 #CFLAGS += -DPOLYCODE_DL # Enable generation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCOMP_DL # Enable compilation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCHECK_DL # Keep both built and compiled DL polys and compare results (can be noisy!)
-CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
+#CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
+#ADD_LDFLAGS += -lsocket -lnsl # ditto for under Solaris
 #CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
 #CFLAGS += -DUSE_GSL # Use GNU Scientific Library (GSL) statistical routines instead of internal ones
 #CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13
@@ -78,7 +79,7 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 	  $(BINDIR)/compileDL.sh
 
 kelvin : libs $(KOBJS) $(OBJS) $(INCS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $(LPTMFLAG)
+	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) -lped -lconfig -lutils -lm -lpthread $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $(LPTMFLAG)
 
 kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
 	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
