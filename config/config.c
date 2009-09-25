@@ -110,7 +110,7 @@ int compareDispatch (const void *a, const void *b);
 int getNextTokgroup (FILE *fp, char ***tokgroup_h, int *tokgroupsize);
 int tokenizeLine (char *line, char ***tokgroup_h, int *tokgroupsize);
 int singleDigit (char *str);
-void dummodelOptions (ModelOptions *mo);
+void dumpmodelOptions (ModelOptions *mo);
 void bail (char *fmt, char *arg);
 
 /* functions for use in the dispatch table */
@@ -206,7 +206,7 @@ main (int argc, char *argv[])
   if (argc > 2) {
     parseCommandLine (argc-2, &argv[2]);
   }
-  dummodelOptions (&staticModelOptions);
+  dumpmodelOptions (&staticModelOptions);
   validateConfig ();
   finishConfig ();
 }
@@ -1499,7 +1499,7 @@ int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_
 	if ((start > end) || (incr <= 0))
 	  break;
 	va = 0;
-	while ((val = start + (va++ * incr)) <= end) {
+	while ((val = start + (va++ * incr)) <= (end + ERROR_MARGIN)) {
 	  if ((numvals >= listsize) && 
 	      ((vals = realloc (vals, sizeof (double) * (listsize += 10))) == NULL))
 	    logMsg (LOGDEFAULT, LOGFATAL, "realloc failed\n");
@@ -1658,7 +1658,7 @@ int singleDigit (char *str)
 
 /* Dumps a subset of the fields in staticModelOptions.
  */
-void dummodelOptions (ModelOptions *mo)
+void dumpmodelOptions (ModelOptions *mo)
 {
   printf ("%18s : %s\n", "markerfile", mo->markerfile);
   printf ("%18s : %s\n", "mapfile", mo->mapfile);
