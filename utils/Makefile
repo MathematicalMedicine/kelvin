@@ -7,7 +7,7 @@
 INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h pageManagement.h
 OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o pageManagement.o
 
-all : ../lib/libutils.a ../lib/libkutils.so # pt sw sSDHandler
+all : ../lib/libutils.a ../lib/libklvnutls.so # pt sw sSDHandler
 
 polynomial.o : polynomial.c polynomial.h
 	gcc polynomial.c -c -fPIC $(CFLAGS) $(INCFLAGS) -o polynomial.o
@@ -30,15 +30,15 @@ listener : listener.c sw.h
 ../lib/libutils.a : libutils.a
 	cp libutils.a ../lib
 
-../lib/libkutils.so : libkutils.so
-	cp libkutils.so ../lib
-	cp libkutils.so ../lib/libkutils.dll # For cygwin
+../lib/libklvnutls.so : libklvnutls.so
+	cp libklvnutls.so ../lib
+	cp libklvnutls.so ../lib/libklvnutls.dll # For cygwin
 
 libutils.a : $(OBJS) polynomial.o
 	ar -rsc libutils.a $(OBJS) polynomial.o
 
-libkutils.so : $(OBJS) polynomial.o
-	gcc -dynamiclib -fPIC -shared -o libkutils.so $(CFLAGS) $(OBJS) polynomial.o
+libklvnutls.so : $(OBJS) polynomial.o
+	gcc -dynamiclib -fPIC -shared -o libklvnutls.so $(CFLAGS) $(OBJS) polynomial.o
 
 $(OBJS) : %.o : %.c $(INCS)
 	$(CC) -c -fPIC $(CFLAGS) $(INCFLAGS) $< -o $@
