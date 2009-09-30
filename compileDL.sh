@@ -53,7 +53,7 @@ for src in ${name}{\.,\_[0-9]*}c ; do [ -f $src ] || continue ;
 	gcc -g -c -L$KELVIN_ROOT/lib/ -I$KELVIN_ROOT/utils/ -fPIC -shared -O${optLevel} -o ${src}.o ${src}.c >& ${src}.out
 	if test ! -e ${src}.o ; then
 	    echo Compile failed for some unknown reason
-	    mail -s "Compile for ${src} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null
+	    mail -s "Compile for ${src} failed on ${HOSTNAME} for some unknown reason" whv001@ccri.net < /dev/null
 	    exit
 	fi
 	mv ${src}.c ${src}.out compiled
@@ -76,7 +76,7 @@ touch ${name}.linking
 gcc -g -O${optLevel} -L$KELVIN_ROOT/lib/ -I$KELVIN_ROOT/utils/ -fPIC -shared -o ${name}.so ${name}.o -lklvnutls -lm >& ${name}-link.out
 if test ! -x ${name}.so ; then
     echo Link of root DL failed for some unknown reason
-    mail -s "Link for root DL ${name} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null
+    mail -s "Link for root DL ${name} failed on ${HOSTNAME} for some unknown reason" whv001@ccri.net < /dev/null
     exit
 fi
 mv ${name}-link.out compiled
@@ -87,7 +87,7 @@ for dl in ${name}_[0-9]*00.o ; do [ -f $dl ] || continue ;
     gcc -g -O${optLevel} -L$KELVIN_ROOT/lib/ -I$KELVIN_ROOT/utils/ -dynamiclib -fPIC -shared -o ${dl}00.so ${dl}[0-9][0-9].o -lklvnutls -lm >& ${dl}00-link.out
     if test ! -x ${name}.so ; then
 	echo Link of branch DL failed for some unknown reason
-	mail -s "Link for branch DL ${dl} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null
+	mail -s "Link for branch DL ${dl} failed on ${HOSTNAME} for some unknown reason" whv001@ccri.net < /dev/null
 	exit
     fi
     mv ${dl}00-link.out compiled
