@@ -73,7 +73,7 @@ if test -e ${name}.linking ; then
     exit
 fi
 touch ${name}.linking
-gcc -g -O${optLevel} -L$KELVIN_ROOT/utils/ -I$KELVIN_ROOT/utils/ -dynamiclib -fPIC -shared -o ${name}.so ${name}.o -lklvnutls -lm >& ${name}-link.out
+gcc -g -O${optLevel} -L$KELVIN_ROOT/lib/ -I$KELVIN_ROOT/utils/ -dynamiclib -fPIC -shared -o ${name}.so ${name}.o -lklvnutls -lm >& ${name}-link.out
 if test ! -x ${name}.so ; then
     echo Link of root DL failed for some unknown reason
     mail -s "Link for root DL ${name} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null
