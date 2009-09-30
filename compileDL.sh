@@ -50,7 +50,7 @@ for src in ${name}{\.,\_[0-9]*}c ; do [ -f $src ] || continue ;
     if test ! -e ${src}.compiling ; then
 	touch ${src}.compiling
 	echo Compiling ${src}
-	gcc -g -c -L$KELVIN_ROOT/lib/ -I$KELVIN_ROOT/utils/ -dynamiclib -fPIC -shared -O${optLevel} -o ${src}.o ${src}.c >& ${src}.out
+	gcc -g -c -L$KELVIN_ROOT/lib/ -I$KELVIN_ROOT/utils/ -fPIC -shared -O${optLevel} -o ${src}.o ${src}.c >& ${src}.out
 	if test ! -e ${src}.o ; then
 	    echo Compile failed for some unknown reason
 	    mail -s "Compile for ${src} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null
@@ -73,7 +73,7 @@ if test -e ${name}.linking ; then
     exit
 fi
 touch ${name}.linking
-gcc -g -O${optLevel} -L$KELVIN_ROOT/lib/ -I$KELVIN_ROOT/utils/ -dynamiclib -fPIC -shared -o ${name}.so ${name}.o -lklvnutls -lm >& ${name}-link.out
+gcc -g -O${optLevel} -L$KELVIN_ROOT/lib/ -I$KELVIN_ROOT/utils/ -fPIC -shared -o ${name}.so ${name}.o -lklvnutls -lm >& ${name}-link.out
 if test ! -x ${name}.so ; then
     echo Link of root DL failed for some unknown reason
     mail -s "Link for root DL ${name} failed on ${HOSTNAME} for some unknown reason" kelvin@ccri.net < /dev/null
