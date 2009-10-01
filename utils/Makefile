@@ -4,18 +4,13 @@
 
 # Invoked by main Kelvin Makefile. You'll get undefined symbols otherwise.
 
-INCS = utils.h sw.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h pageManagement.h
-OBJS = utils.o sw.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o pageManagement.o
+INCS = utils.h sw.h polynomial.h polynomial_internal.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h pageManagement.h
+OBJS = utils.o sw.o polynomial.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o pageManagement.o
 
 all : ../lib/libutils.a ../lib/libklvnutls.so # pt sw sSDHandler
 
-polynomial.o : polynomial.c polynomial.h
-	gcc polynomial.c -c -fPIC $(CFLAGS) $(INCFLAGS) -o polynomial.o
-
-pt : pt.c polynomial.o sw.o
-	gcc polynomial.c -c -o polynomial.o $(CFLAGS) -DPOLYUSE_DL -DPOLYCODE_DL
-	gcc pt.c -o pt polynomial.o $(CFLAGS) -L../lib -lutils -lm -ldl
-	rm polynomial.o
+pt : pt.c polynomial.c polynomial.h polynomial_internal.h  ../lib/libutils.a
+	gcc pt.c -o pt polynomial.c $(CFLAGS) -DPOLYUSE_DL -DPOLYCODE_DL -L../lib -lutils -lm -ldl
 
 sw : sw.c sw.h
 	gcc -DMAIN sw.c -o sw $(CFLAGS) -lm
@@ -32,17 +27,17 @@ listener : listener.c sw.h
 
 ../lib/libklvnutls.so : libklvnutls.so
 	cp libklvnutls.so ../lib
-	cp libklvnutls.so ../lib/libklvnutls.dll # For cygwin
 
-libutils.a : $(OBJS) polynomial.o
-	ar -rsc libutils.a $(OBJS) polynomial.o
+libutils.a : $(OBJS)
+	ar -rsc libutils.a $(OBJS)
 
-libklvnutls.so : $(OBJS) polynomial.o
-	gcc -dynamiclib -fPIC -shared -o libklvnutls.so $(CFLAGS) $(OBJS) polynomial.o
+libklvnutls.so : $(OBJS)
+	gcc -shared -o libklvnutls.so $(CFLAGS) $(OBJS)
 
 $(OBJS) : %.o : %.c $(INCS)
-	$(CC) -c -fPIC $(CFLAGS) $(INCFLAGS) $< -o $@
+	# The -fno-common bit is just for the old PowerMac
+	$(CC) -c -fno-common -fPIC $(CFLAGS) $(INCFLAGS) $< -o $@
 
 .PHONY : clean
 clean :
-	rm -f pt $(OBJS) polynomial.o libutils.a ../lib/libutils.a
+	rm -f pt $(OBJS) libutils.a ../lib/libutils.a libklvnutls.so ../lib/libklvnutls.so
