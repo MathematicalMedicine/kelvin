@@ -20,4 +20,4 @@ libconfig.a : $(OBJS)
 	ar -rsc libconfig.a $(OBJS)
 
 $(OBJS) : %.o : %.c $(INCS)
-	$(CC) -c $(CFLAGS) $(LDFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
+	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
