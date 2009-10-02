@@ -34,7 +34,7 @@ LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -D_REENTRANT # Last bit for Solaris when u
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
 #CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
-#CFLAGS += -fopenmp # Uncomment if using an compatable compiler (GCC 4.2+) and want multi-threaded evaluations.
+CFLAGS += -fopenmp # Uncomment for multi-threading if using GCC 4.2+. MUST USE GSL TOO.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
 #LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
 CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
@@ -53,9 +53,9 @@ CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage 
 #CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
 #ADD_LDFLAGS += -lsocket -lnsl # ditto for under Solaris
 #CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
-#CFLAGS += -DUSE_GSL # Use GNU Scientific Library (GSL) statistical routines instead of internal ones
-#CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13
-#ADD_LDFLAGS += -lgsl -lgslcblas -lm # ditto
+CFLAGS += -DUSE_GSL # Use GNU Scientific Library (GSL) statistical routines instead of internal ones
+ADD_LDFLAGS += -lgsl -lgslcblas -lm # ditto
+#CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13, no OpenMP
 
 LDFLAGS += ${ADD_LDFLAGS}
 export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN
@@ -79,7 +79,7 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 	  $(BINDIR)/compileDL.sh
 
 kelvin : libs $(KOBJS) $(OBJS) $(INCS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) -lped -lconfig -lutils -lm -lpthread $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $(LPTMFLAG)
+	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lutils -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
 	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)

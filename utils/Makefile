@@ -32,7 +32,7 @@ libutils.a : $(OBJS)
 	ar -rsc libutils.a $(OBJS)
 
 libklvnutls.so : $(OBJS)
-	gcc -shared -o libklvnutls.so $(CFLAGS) $(OBJS)
+	gcc -shared -o libklvnutls.so $(CFLAGS) $(LDFLAGS) $(OBJS)
 
 $(OBJS) : %.o : %.c $(INCS)
 	# The -fno-common bit is just for the old PowerMac

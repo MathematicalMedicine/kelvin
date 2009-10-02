@@ -30,10 +30,6 @@ char messageBuffer[MAXSWMSG];
   sprintf (messageBuffer, "Compiler %s\n", __VERSION__);
   swLogMsg (messageBuffer);
 
-#ifdef _OPENMP
-  sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", omp_get_num_threads());
-  swLogMsg (messageBuffer);
-#endif
 #ifdef FAKEEVALUATE
   swLogMsg ("Polynomial evaluation is being SKIPPED FOR TESTING, results will be wrong!");
 #endif
@@ -51,8 +47,30 @@ char messageBuffer[MAXSWMSG];
   sprintf (messageBuffer, "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
   swLogMsg (messageBuffer);
 #endif
+
 #ifdef USE_GSL
-swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of internal ones!");
+  swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of internal ones");
+  #ifdef VERIFY_GSL
+    #ifdef _OPENMP
+    #undef _OPENMP
+    #warning "Cannot use OpenMP when using internal statistical functions.");
+  sprintf (messageBuffer, "OpenMP is DISABLED when using internal statistical functions.");
+  swLogMsg (messageBuffer);
+    #endif
+  #else
+    #ifdef _OPENMP
+  sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", omp_get_num_threads());
+  swLogMsg (messageBuffer);
+    #endif
+  #endif
+#else
+  swLogMsg ("Using internal statistical functions instead of GNU Scientific Library (GSL)");
+  #ifdef _OPENMP
+    #undef _OPENMP
+    #warning "Cannot use OpenMP when using internal statistical functions.");
+  sprintf (messageBuffer, "OpenMP is DISABLED when using internal statistical functions.");
+  swLogMsg (messageBuffer);
+  #endif
 #endif
   
   swStart (overallSW);
