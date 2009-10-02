@@ -408,8 +408,6 @@ void validateConfig ()
       fault ("Multipoint is incompatible with MarkerToMarker\n");
     if (observed.traitLoci)
       fault ("Multipoint directives (TraitLoci) are incompatible with MarkerToMarker\n");
-    if (staticModelOptions.mapFlag == SS)
-      fault ("SexSpecific is incompatible with MarkerToMarker\n");
     if (observed.sexSpecificThetas)
       fault ("%s and %s are incompatible with MarkerToMarker\n", MALETHETA_STR, FEMALETHETA_STR);
     if (staticModelRange.nafreq > 0)
