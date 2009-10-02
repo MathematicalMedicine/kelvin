@@ -78,7 +78,6 @@ void iterateMain() {
     }
   }
 
-
   if(fpIR !=NULL){
     memset (&dk_curModel, 0, sizeof (st_DKMaxModel));        
     if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
@@ -1404,13 +1403,14 @@ void iterateMain() {
 	    paramSet.gfreqIdx = gfreqInd;
 	    paramSet.gfreq = gfreq;
 
-            if(fpIR !=NULL)
-              dk_curModel.dgf = gfreq;
-
             /* Updated trait locus allele frequencies */
             gfreq = modelRange->gfreq[gfreqInd];
             pLocus->pAlleleFrequency[0] = gfreq;
             pLocus->pAlleleFrequency[1] = 1 - gfreq;
+
+            if(fpIR !=NULL)
+              dk_curModel.dgf = gfreq;
+
 
             if (modelOptions->polynomial != TRUE)
               update_locus (&pedigreeSet, traitLocus);
@@ -1534,6 +1534,8 @@ void iterateMain() {
 
           if(fpIR !=NULL)
             dk_curModel.dgf = gfreq;
+
+	  printf("current dgf = %f \n", dk_curModel.dgf);
 
           update_locus (&pedigreeSet, traitLocus);
           /* this should be MEAN + SD */
