@@ -390,7 +390,7 @@ sub pre_0_35_0
 	} elsif ($str eq "COUNT") {
 	    $data_regex .= '(\d+) ';
 
-	} elsif ($str =~ /^(AVG_?LR|BR)$/) {
+	} elsif ($str =~ /^(AVG_?LR|BR|BAYESRATIO)$/) {
 	    $mapped{"BayesRatio"}{idx} = [ $va ];
 	    $mapped{"BayesRatio"}{fmt} = '%e ';
 	    $data_regex .= '([\-\d\.]+(?:[eE][\+\-]\d+)?) ';

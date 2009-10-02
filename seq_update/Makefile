@@ -1,4 +1,4 @@
-CC=cc
+CC=gcc
 INC=-I. -I../
 CFLAGS=-g
 LDFLAGS=-lm

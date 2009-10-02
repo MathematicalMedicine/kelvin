@@ -18,7 +18,15 @@
 #include <math.h>
 #include <float.h>
 #include <errno.h>
+
+/* I include ctype.h not becuase I need it, but because it exists on all
+ * POSIX platforms, and specifically on GNU-ey platforms, it will define
+ * a macro I can use to identify GNUishness.
+ */
+#include <ctype.h>
+#ifdef __GNU_LIBRARY__
 #include <getopt.h>
+#endif
 
 /* Kelvin header files */
 #include <ppl.h>
@@ -1147,9 +1155,12 @@ int parse_command_line (int argc, char **argv)
 {
   int arg, long_arg, long_idx;
   char *partoutfile=NULL, *bfoutfile=NULL, *sixoutfile=NULL;
+  struct stat statbuf;
+
+#ifdef __GNU_LIBRARY__
   struct option cmdline[] = { { "sexspecific", 0, &long_arg, OPT_SEXSPEC },
 			      { "multipoint", 0, &long_arg, OPT_MULTI },
-			      { "relax", 1, &long_arg, OPT_RELAX },
+			      { "relax", 0, &long_arg, OPT_RELAX },
 			      { "allstats", 0, &long_arg, OPT_ALLSTATS },
 			      { "okelvin", 0, &long_arg, OPT_OKELVIN },
 			      { "verbose", 1, &long_arg, OPT_VERBOSE },
@@ -1164,63 +1175,77 @@ int parse_command_line (int argc, char **argv)
 			      { "forcemap", 0, &long_arg, OPT_FORCEMAP },
 			      { "help", 0, &long_arg, OPT_HELP },
 			      { NULL, 0, NULL, 0 } };
-  struct stat statbuf;
   
-  while ((arg = getopt_long (argc, argv, "smraovp:w:c:", cmdline, &long_idx)) != -1) {
-    if ((arg == 's') || ((arg == 0) && (long_arg == OPT_SEXSPEC))) {
+  while ((arg = getopt_long (argc, argv, "smraovp:w:c:P:M:O:f?", cmdline, &long_idx)) != -1) {
+#else
+  while ((arg = getopt (argc, argv, "smraovp:w:c:P:M:O:f?")) != EOF) {
+#endif
+
+    if (arg == 's') {
       sexspecific = 1;
-
-    } else if ((arg == 'm') || ((arg == 0) && (long_arg == OPT_MULTI))) {
+    } else if (arg == 'm') {
       multipoint = 1;
-
-    } else if ((arg == 'r') || ((arg == 0) && (long_arg == OPT_RELAX))) {
+    } else if (arg == 'r') {
       relax = 1;
-
-    } else if ((arg == 'a') || ((arg == 0) && (long_arg == OPT_ALLSTATS))) {
+    } else if (arg == 'a') {
       allstats = 1;
-
-    } else if ((arg == 'o') || ((arg == 0) && (long_arg == OPT_OKELVIN))) {
+    } else if (arg == 'o') {
       okelvin = 1;
-
-    } else if ((arg == 'v') || ((arg == 0) && (long_arg == OPT_VERBOSE))) {
+    } else if (arg == 'v') {
       verbose++;
-
     } else if (arg == 'p') {
       prior = validate_double_arg (optarg, "-p");
-    } else if ((arg == 0) && (long_arg == OPT_PRIOR)) {
-      prior = validate_double_arg (optarg, "--prior");
-
     } else if (arg == 'w') {
       weight = validate_double_arg (optarg, "-w");
-    } else if ((arg == 0) && (long_arg == OPT_WEIGHT)) {
-      weight = validate_double_arg (optarg, "--weight");
-
     } else if (arg == 'c') {
       cutoff = validate_double_arg (optarg, "-c");
-    } else if ((arg == 0) && (long_arg == OPT_CUTOFF)) {
-      cutoff = validate_double_arg (optarg, "--cutoff");
-
-    } else if ((arg == 0) && (long_arg == OPT_MAPIN)) {
-      mapinfile = optarg;
-
-    } else if ((arg == 0) && (long_arg == OPT_PPLIN)) {
+    } else if (arg == 'P') {
       pplinfile = optarg;
-
-    } else if ((arg == 0) && (long_arg == OPT_PARTOUT)) {
+    } else if (arg == 'M') {
+      mapinfile = optarg;
+    } else if (arg == 'O') {
       partoutfile = optarg;
-
-    } else if ((arg == 0) && (long_arg == OPT_BFOUT)) {
-      bfoutfile = optarg;
-
-    } else if ((arg == 0) && (long_arg == OPT_SIXOUT)) {
-      sixoutfile = optarg;
-
-    } else if ((arg == 0) && (long_arg == OPT_FORCEMAP)) {
+    } else if (arg == 'f') {
       forcemap = 1;
-
-    } else if ((arg == 0) && (long_arg == OPT_HELP)) {
+    } else if (arg == '?') {
       usage ();
       exit (0);
+
+#ifdef __GNU_LIBRARY__
+    } else if (arg == 0 && long_arg == OPT_SEXSPEC) {
+      sexspecific = 1;
+    } else if (arg == 0 && long_arg == OPT_MULTI) {
+      multipoint = 1;
+    } else if (arg == 0 && long_arg == OPT_RELAX) {
+      relax = 1;
+    } else if (arg == 0 && long_arg == OPT_ALLSTATS) {
+      allstats = 1;
+    } else if (arg == 0 && long_arg == OPT_OKELVIN) {
+      okelvin = 1;
+    } else if (arg == 0 && long_arg == OPT_VERBOSE) {
+      verbose++;
+    } else if (arg == 0 && long_arg == OPT_PRIOR) {
+      prior = validate_double_arg (optarg, "--prior");
+    } else if (arg == 0 && long_arg == OPT_WEIGHT) {
+      weight = validate_double_arg (optarg, "--weight");
+    } else if (arg == 0 && long_arg == OPT_CUTOFF) {
+      cutoff = validate_double_arg (optarg, "--cutoff");
+    } else if (arg == 0 && long_arg == OPT_PPLIN) {
+      pplinfile = optarg;
+    } else if (arg == 0 && long_arg == OPT_MAPIN) {
+      mapinfile = optarg;
+    } else if (arg == 0 && long_arg == OPT_PARTOUT) {
+      partoutfile = optarg;
+    } else if (arg == 0 && long_arg == OPT_BFOUT) {
+      bfoutfile = optarg;
+    } else if (arg == 0 && long_arg == OPT_SIXOUT) {
+      sixoutfile = optarg;
+    } else if (arg == 0 && long_arg == OPT_FORCEMAP) {
+      forcemap = 1;
+    } else if (arg == 0 && long_arg == OPT_HELP) {
+      usage ();
+      exit (0);
+#endif
 
     } else {
       /* getopt_long will emit a message describing the bad option/argument */
@@ -1307,6 +1332,7 @@ int parse_command_line (int argc, char **argv)
 void usage ()
 {
   printf ("usage: %s [ options ] brfile [brfile...]\n  valid options:\n", pname);
+#ifdef __GNU_LIBRARY__
   printf ("  -s|--sexspecific : input data contains sex-specific Thetas\n");
   printf ("  -m|--multipoint : input data is multipoint\n");
   printf ("  -o|--okelvin : input data is from original (fixed-grid) kelvin\n");
@@ -1314,9 +1340,23 @@ void usage ()
   printf ("  -p <num>|--prior <num> : set linkage prior probability to <num>\n");
   printf ("  -c <num>|--cutoff <num> : set small-Theta cutoff to <num>\n");
   printf ("  -w <num>|--wieght <num> : set small-Theta weight to <num>\n");
-  printf ("  --mapin <mapfile> : use mapfile to order markers\n");
-  printf ("  --partout <partfile> : write updated Bayes Ratios to partfile\n");
-  printf ("  --help : display this help text\n");
+  printf ("  -M <mapfile>|--mapin <mapfile> : use mapfile to order markers\n");
+  printf ("  -O <partfile>|--partout <partfile> : write updated Bayes Ratios to partfile\n");
+  printf ("  -v|--verbose : verbose output\n");
+  printf ("  -?|--help : display this help text\n");
+#else
+  printf ("  -s : input data contains sex-specific Thetas\n");
+  printf ("  -m : input data is multipoint\n");
+  printf ("  -o : input data is from original (fixed-grid) kelvin\n");
+  printf ("  -r : supress comparing marker names across input files\n");
+  printf ("  -p <num> : set linkage prior probability to <num>\n");
+  printf ("  -c <num> : set small-Theta cutoff to <num>\n");
+  printf ("  -w <num> : set small-Theta weight to <num>\n");
+  printf ("  -M <mapfile> : use mapfile to order markers\n");
+  printf ("  -O <partfile> : write updated Bayes Ratios to partfile\n");
+  printf ("  -v : verbose output\n");
+  printf ("  -? : display this help text\n");
+#endif
   return;
 }
 
@@ -1415,7 +1455,8 @@ int get_marker_line (st_brfile *brfile)
     exit (-1);
   }
   brfile->lineno++;
-  if ((pa = strtok_r (buff, " \t\n", &pc)) == NULL)  {
+  /* We'll cast the return from all calls to strtok_r() because of Solaris' stupid string.h */
+  if ((pa = (char *) strtok_r (buff, " \t\n", &pc)) == NULL)  {
     fprintf (stderr, "missing expected marker info in '%s', at line %d\n",  brfile->name,
 	    brfile->lineno);
     exit (-1);
@@ -1431,9 +1472,9 @@ int get_marker_line (st_brfile *brfile)
     exit (-1);
   }
 
-  pa = strtok_r (NULL, " \t\n", &pc);
+  pa = (char *) strtok_r (NULL, " \t\n", &pc);
   while (pa != NULL) {
-    if ((pb = strtok_r (NULL, " \t\n", &pc)) == NULL) {
+    if ((pb = (char *) strtok_r (NULL, " \t\n", &pc)) == NULL) {
       fprintf (stderr, "marker info ends unexpectedly in '%s', at line %d\n", brfile->name,
 	    brfile->lineno);
       exit (-1);
@@ -1487,7 +1528,7 @@ int get_marker_line (st_brfile *brfile)
 	       brfile->lineno);
       exit (-1);
     }
-    pa = strtok_r (NULL, " \t\n", &pc);
+    pa = (char *) strtok_r (NULL, " \t\n", &pc);
   }
   
   return (1);
@@ -1513,11 +1554,11 @@ int get_header_line (st_brfile *brfile)
   brfile->numcols = brfile->numdprimes = brfile->numthetas = brfile->no_ld = 
     brfile->holey_grid = brfile->two_point = 0;
 
-  pa = strtok_r (buff, " \t\n", &pb);
+  pa = (char *) strtok_r (buff, " \t\n", &pb);
   while (pa != NULL) {
     strcpy (token, pa);
     while ((strchr (token, '(') != NULL) && (strrchr (token, ')') == NULL)) {
-      if ((pa = strtok_r (NULL, " \t\n", &pb)) == NULL) {
+      if ((pa = (char *) strtok_r (NULL, " \t\n", &pb)) == NULL) {
 	fprintf (stderr, "can't parse header, line %d in file '%s'\n", brfile->lineno,
 		 brfile->name);
 	exit (-1);
@@ -1536,10 +1577,10 @@ int get_header_line (st_brfile *brfile)
       /* Some parenthesized expression */
       actualcols = 0;
       *pa = '\0';
-      pa = strtok_r (++pa, ",", &pc);
+      pa = (char *) strtok_r (++pa, ",", &pc);
       while (pa != NULL) {
 	actualcols++;
-	pa = strtok_r (NULL, ",", &pc);
+	pa = (char *) strtok_r (NULL, ",", &pc);
       }
     }
 
@@ -1619,7 +1660,7 @@ int get_header_line (st_brfile *brfile)
 #ifdef DEBUG
     printf ("\n");
 #endif
-    pa = strtok_r (NULL, " \t\n", &pb);
+    pa = (char *) strtok_r (NULL, " \t\n", &pb);
   }
 
   if (numlrcols != 1) {
@@ -1673,7 +1714,7 @@ int get_data_line (st_brfile *brfile, st_data *data)
     exit (-1);
   }
   
-  if ((pa = strtok_r (buff, " (),\t\n", &pb)) == NULL) {
+  if ((pa = (char *) strtok_r (buff, " (),\t\n", &pb)) == NULL) {
     fprintf (stderr, "unexpectedly short line %d in '%s'\n", brfile->lineno+1, brfile->name);
     exit (-1);
   }
@@ -1714,7 +1755,7 @@ int get_data_line (st_brfile *brfile, st_data *data)
     }
     if (++va >= brfile->numcols)
       break;
-    if ((pa = strtok_r (NULL, " (),\t\n", &pb)) == NULL) {
+    if ((pa = (char *) strtok_r (NULL, " (),\t\n", &pb)) == NULL) {
       fprintf (stderr, "unexpectedly short line %d in '%s'\n", brfile->lineno, brfile->name);
       exit (-1);
     }
