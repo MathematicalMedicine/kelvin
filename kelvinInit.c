@@ -31,9 +31,7 @@ char messageBuffer[MAXSWMSG];
   swLogMsg (messageBuffer);
 
 #ifdef _OPENMP
-  if ((envVar = getenv ("OMP_NUM_THREADS")) != NULL)
-    threadCount = atoi (envVar);
-  sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", threadCount);
+  sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", omp_get_num_threads());
   swLogMsg (messageBuffer);
 #endif
 #ifdef FAKEEVALUATE

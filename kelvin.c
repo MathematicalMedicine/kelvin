@@ -101,6 +101,7 @@
 
 */
 #include <pthread.h>
+#include <omp.h>
 #include "kelvin.h"
 #include "kelvinHandlers.h"
 #include "pedlib/likelihood.h"
