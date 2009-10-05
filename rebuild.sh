@@ -48,3 +48,5 @@ mv kelvin kelvin-POLYCOMP_DL
 make clean
 make CFLAGS="$* -Wall $WERROR -DGCCOPT=3 -O3 -DMEMGRAPH -DUSE_GSL -DPOLYUSE_DL -DPOLYSTATISTICS -DPOLYCODE_DL -DPOLYCOMP_DL -DFAKEEVALUATE" ADD_LDFLAGS="-ldl -lgsl -lgslcblas -lm" kelvin
 mv kelvin kelvin-POLYCOMP_DL-FAKEEVALUATE
+
+make seq_update/calc_updated_ppl
