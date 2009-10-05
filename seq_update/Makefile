@@ -1,6 +1,7 @@
 CC=gcc
 INC=-I. -I../
-CFLAGS=-g
+# The D_REENTRANT bit is for getopt_r with pthreads under Solaris
+CFLAGS=-g -D_REENTRANT
 LDFLAGS=-lm
 #LDFLAGS=-g -lm  # If you want to run in a debugger
 
