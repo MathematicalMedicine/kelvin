@@ -1,3 +1,6 @@
+#!/bin/bash -xe
+set -xe # Because it isn't enough for Darwin's cron for us to have it on the shebang
+
 case $HOSTNAME in
     testbed*|ygg* )
         OPENMP=
