@@ -1,5 +1,5 @@
 case $HOSTNAME in
-    testbed* )
+    testbed*|ygg* )
         OPENMP=
         WERROR=-Werror ;;
     RESD7X* )
