@@ -29,7 +29,8 @@ CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
 GCCOPT := 3 # GCC optimization level, 0=none, 1=default, 2=some, 3=all
 CFLAGS := -Wall -Werror -DGCCOPT=$(GCCOPT) -O$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR) -D_REENTRANT # Last bit for Solaris when using pthread
+CFLAGS += -D_REENTRANT # Thead-safe (different prototype) version of strtok_r under Solaris when using pthread
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR)
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
