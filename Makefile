@@ -87,16 +87,16 @@ kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
 
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
-	make -C seq_update -f Makefile calc_updated_ppl
+	+make -C seq_update -f Makefile calc_updated_ppl
 
 %.o : %.c $(INCS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
 
 .PHONY : libs
 libs :
-	make -C utils -f Makefile all
-	make -C config -f Makefile all
-	make -C pedlib -f Makefile all
+	+make -C utils -f Makefile all
+	+make -C config -f Makefile all
+	+make -C pedlib -f Makefile all
 
 .PHONY : clean
 clean :
@@ -109,13 +109,13 @@ clean :
 
 .PHONY : test test-USE_DL
 test-USE_DL :
-	make -C test-suite -f Makefile test-USE_DL
+	+make -C test-suite -f Makefile test-USE_DL
 
 .PHONY : test test-FIXED
 test-FIXED :
-	make -C test-suite -f Makefile test-FIXED
+	+make -C test-suite -f Makefile test-FIXED
 test :
-	make -C test-suite -f Makefile test
+	+make -C test-suite -f Makefile test
 
 $(BINDIR)/kelvin-$(VERSION) : kelvin
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
