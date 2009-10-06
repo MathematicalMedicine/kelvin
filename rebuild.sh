@@ -6,7 +6,7 @@ case $HOSTNAME in
         OPENMP=
         WERROR=-Werror ;;
     RESD7X* )
-        OPENMP=-fopenmp
+        OPENMP=
         WERROR= ;;
     * )
         OPENMP=-fopenmp
