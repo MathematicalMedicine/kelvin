@@ -86,7 +86,7 @@ sub parse_header {
 
 # Run kelvin on the config file with SurfaceFile directive
 print "Generating dynamic-grid trait space baseline.\n";
-my $commandLine='$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dyn >&LRTest.Out';
+my $commandLine='$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dyn >LRTest.Out 2>&1';
 (system($commandLine) == 0)
     or die "Couldn't run kelvin ($commandLine)\n";
 
@@ -177,7 +177,7 @@ while (<IN>) {
 close IN;
 
 # Clean-out any earlier results. Allow this to fail.
-system('rm LRTest-* >&/dev/null');
+system('rm LRTest-* > /dev/null 2>&1');
 
 # Generate all of the kelvin configuration variations and run them
 my $searchFormat = " " . ("%5.3f " x $paramCnt) . "%d";
@@ -189,7 +189,7 @@ for my $i (0..($offset - 1)) {
 #	print "|".$nameDirectives{$headerNames[$j]}." ".$PsTSV[$i][$j]."\n";
 	$commandLine .= " --".$nameDirectives{$headerNames[$j]}." ".$PsTSV[$i][$j];
     }
-    $commandLine .= " --SurfaceFile LRTest-$i.Dat >& LRTest-$i.Out";
+    $commandLine .= " --SurfaceFile LRTest-$i.Dat > LRTest-$i.Out 2>&1";
     $commandLine =~ s/--Dummy\s+[0-9]+/ /g if ($commandLine =~ /Dummy/); # Lose our dummy directives
     print "Generating fixed-grid trait space test point $i from dynamic grid output line ".$PsLine[$i].".\n";
 #    print "Execute [$commandLine]\n";
@@ -222,7 +222,7 @@ while (<IN>) {
 #	print "HLOD is [$old], using $new\n";
 	s/$old/$new/;
     }
-    (system("grep \'".$_."\' LRTest.Dyn >&LRTest.grep") == 0) or
+    (system("grep \'".$_."\' LRTest.Dyn > LRTest.grep 2>&1") == 0) or
 	die "Couldn't find line \'$_\' in LRTest.Dyn\n";
 }
 close IN;
