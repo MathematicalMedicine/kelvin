@@ -15,7 +15,7 @@ test-USE_DL :
 
 test-FIXED :
 	-rm -f LRTest*
-	perl $(KELVIN_ROOT)/LRTest.pl
+	(perl $(KELVIN_ROOT)/LRTest.pl) >kelvin-FIXED.out 2>&1
 
 clean :
 	- rm -rf *.out *.so *memory.dat compiled LRTest*
