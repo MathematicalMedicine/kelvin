@@ -188,9 +188,6 @@
 #undef plusExp
 #undef timesExp
 
-//#include "gsl/gsl_sf_gamma.h"
-//#include "gsl/gsl_randist.h"
-//#include "gsl/gsl_cdf.h"
 #include "dists.h"
 
 #include "sw.h"
@@ -2994,12 +2991,11 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
   and initializes important variables.
 
 */
-void polynomialInitialization (int polynomialScale)
+void polynomialInitialization (int newPolynomialScale)
 {
   int i;
   char *envVar;
   char messageBuffer[MAXSWMSG];
-  long maximumPMK;
 
   // Get our maximum so we can react to depletion.
   maximumPMK = swGetMaximumPMK ();
@@ -3022,10 +3018,12 @@ void polynomialInitialization (int polynomialScale)
   under a gigabyte of memory.  Obviously small-memory environments benefit from 
   setting it to a lower value. */
 
-  if (polynomialScale <= 0)
+  if (newPolynomialScale <= 0)
     polynomialScale = 1;
-  if (polynomialScale > 10)
+  else if (newPolynomialScale > 10)
     polynomialScale = 10;
+  else
+    polynomialScale = newPolynomialScale;
   sprintf (messageBuffer, "polynomialScale is %d (1-10, 1 is default)", polynomialScale);
   swLogMsg (messageBuffer);
 

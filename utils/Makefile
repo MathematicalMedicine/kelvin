@@ -9,8 +9,8 @@ OBJS = utils.o sw.o polynomial.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.
 
 all : ../lib/libutils.a ../lib/libklvnutls.so # pt sw sSDHandler
 
-pt : pt.c polynomial.c polynomial.h polynomial_internal.h  ../lib/libutils.a
-	gcc pt.c -o pt polynomial.c $(CFLAGS) -DPOLYUSE_DL -DPOLYCODE_DL -L../lib -lutils -lm -ldl
+pt : pt.c polynomial.c polynomial.h polynomial_internal.h
+	gcc pt.c -o pt polynomial.c sw.c dists.c $(CFLAGS) -DUSE_GSL -DPOLYUSE_DL -DPOLYCODE_DL -ldl -lgsl -lgslcblas -lm
 
 sw : sw.c sw.h
 	gcc -DMAIN sw.c -o sw $(CFLAGS) -lm
@@ -35,7 +35,7 @@ libklvnutls.so : $(OBJS)
 	gcc -shared -o libklvnutls.so $(OBJS) $(CFLAGS) $(LDFLAGS)
 
 $(OBJS) : %.o : %.c $(INCS)
-	# The -fno-common bit is just for the old PowerMac
+	# The -fno-common bit is just the old PowerMac way of saying PIC
 	$(CC) -c -fno-common -fPIC $(CFLAGS) $(INCFLAGS) $< -o $@
 
 .PHONY : clean
