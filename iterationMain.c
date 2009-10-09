@@ -307,9 +307,13 @@ void iterateMain() {
            * disk. */
           for (gfreqInd = 0; (gfreqInd==0 && modelOptions->markerAnalysis!=FALSE) || gfreqInd < modelRange->ngfreq; gfreqInd++) {
 	    paramSet.gfreqIdx = gfreqInd;
-	    paramSet.gfreq = gfreq;
+	    /* Here's a little bomb that should highlight if paramSet.gfreq is used
+	     * without being properly set.
+	     */
+	    paramSet.gfreq = -1;
 	    if(modelOptions->markerAnalysis == FALSE){
 	      gfreq = modelRange->gfreq[gfreqInd];
+	      paramSet.gfreq = gfreq;
 
 	      if(fpIR !=NULL)
 		dk_curModel.dgf = gfreq;
@@ -1400,13 +1404,13 @@ void iterateMain() {
 
           /* Iterate over gene frequencies -- just one loop for dry-runs. */
           for (gfreqInd = 0; (gfreqInd == 0) || (modelOptions->dryRun == 0 && gfreqInd < modelRange->ngfreq); gfreqInd++) {
-	    paramSet.gfreqIdx = gfreqInd;
-	    paramSet.gfreq = gfreq;
 
             /* Updated trait locus allele frequencies */
             gfreq = modelRange->gfreq[gfreqInd];
             pLocus->pAlleleFrequency[0] = gfreq;
             pLocus->pAlleleFrequency[1] = 1 - gfreq;
+	    paramSet.gfreqIdx = gfreqInd;
+	    paramSet.gfreq = gfreq;
 
             if(fpIR !=NULL)
               dk_curModel.dgf = gfreq;
