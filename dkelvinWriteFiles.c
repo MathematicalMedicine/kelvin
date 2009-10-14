@@ -224,16 +224,16 @@ void dk_write2ptMODHeader ()
 	fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
 
   if (modelOptions->markerAnalysis != FALSE)
-    fprintf (fpMOD, " Theta(M,F) R2 Alpha DGF MF");
+    fprintf (fpMOD, " Theta(M,F) R2 Alpha DGF");
   else
-    fprintf (fpMOD, " Theta(M,F) Alpha DGF MF");
+    fprintf (fpMOD, " Theta(M,F) Alpha DGF");
   
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     if (modelType->trait == DT)
       if (modelOptions->imprintingFlag)
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)\n", liabIdx);
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", liabIdx);
       else
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)\n", liabIdx);
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", liabIdx);
     else {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE)
 	if (modelOptions->imprintingFlag)
@@ -246,10 +246,11 @@ void dk_write2ptMODHeader ()
 	else
 	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
       if (modelType->trait == CT)
-	fprintf (fpMOD, ",Thresh)\n");
+	fprintf (fpMOD, ",Thresh)");
       else
-	fprintf (fpMOD, ")\n");
+	fprintf (fpMOD, ")");
     }
+  fprintf (fpMOD, "\n");
 }
 
 
@@ -276,13 +277,13 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
   }
 
   if (modelOptions->markerAnalysis == FALSE)
-    /* Theta Alpha DGF MF */
-    fprintf (fpMOD, " (%.4f,%.4f) %.2f %.4f %.4f", model->theta[0], model->theta[1],
-	     model->alpha, model->dgf, model->mf);
+    /* Theta Alpha DGF */
+    fprintf (fpMOD, " (%.4f,%.4f) %.2f %.4f", model->theta[0], model->theta[1],
+	     model->alpha, model->dgf);
   else
-    /* Theta R2 Alpha DGF MF */
-    fprintf (fpMOD, " (%.4f,%.4f) %.3f %.2f %.4f %.4f", model->theta[0], model->theta[1],
-	     model->r2, model->alpha, model->dgf, model->mf);
+    /* Theta R2 Alpha DGF */
+    fprintf (fpMOD, " (%.4f,%.4f) %.3f %.2f %.4f", model->theta[0], model->theta[1],
+	     model->r2, model->alpha, model->dgf);
 	    
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
     if (! modelOptions->imprintingFlag)
@@ -309,9 +310,9 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
 	/* Theshold */
 	fprintf (fpMOD, ",%.3f", model->pen[liabIdx].threshold);
     }
-    fprintf (fpMOD, ")\n");
+    fprintf (fpMOD, ")");
   }
-  
+  fprintf (fpMOD, "\n");
   return;
 }
 
