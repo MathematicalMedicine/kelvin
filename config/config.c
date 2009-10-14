@@ -269,6 +269,8 @@ void initializeDefaults ()
   staticModelType.trait = DT;
   staticModelType.distrib = -1;
   /* set default for QT */
+  staticModelType.mean = -DBL_MAX;
+  staticModelType.sd = -DBL_MAX;
   staticModelType.minOriginal = -999999999.00;
   staticModelType.maxOriginal = 999999999.00;
 
@@ -408,8 +410,6 @@ void validateConfig ()
       fault ("Multipoint is incompatible with MarkerToMarker\n");
     if (observed.traitLoci)
       fault ("Multipoint directives (TraitLoci) are incompatible with MarkerToMarker\n");
-    if (observed.sexSpecificThetas)
-      fault ("%s and %s are incompatible with MarkerToMarker\n", MALETHETA_STR, FEMALETHETA_STR);
     if (staticModelRange.nafreq > 0)
       fault ("MarkerAlleleFrequency is incompatible with MarkerToMarker\n");
     if (staticModelRange.ngfreq > 0)
@@ -462,7 +462,7 @@ void validateConfig ()
 	fault ("PhenoCodes with 3 arguments is incompatible with QT\n");
     } else {
       if (staticModelType.trait != QT)
-	fault ("PhenoCodes with 1 argument is requires QT\n");
+	fault ("PhenoCodes with 1 argument requires QT\n");
     }
   }
   
@@ -526,9 +526,11 @@ void validateConfig ()
       fault ("MarkerAlleleFrequency requires FixedModels\n");
     if (staticModelRange.nalpha > 0)
       fault ("Alpha requires FixedModels\n");
-
-    if (staticModelType.trait == CT && staticModelRange.ntthresh != 2)
-      fault ("QTT requires exactly two Threshold values (min and max)\n");
+    
+    if (staticModelType.trait == CT && staticModelRange.ntthresh > 0) {
+      if (staticModelRange.ntthresh != 2)
+	fault ("QTT allows exactly two Threshold values (min and max)\n");
+    }
 
     if (fault)
       logMsg (LOGINPUTFILE, LOGFATAL, "Configuration errors detected, exiting\n");
@@ -769,8 +771,10 @@ void finishConfig ()
 
   /* Expand the liability classes, but only if necessary and always
    * honoring inter-class constraints. */
-  if (staticModelRange.nlclass > 1)
-    expandClass (&staticModelRange);
+  if (staticModelRange.nlclass > 1) {
+    expandClassThreshold (&staticModelRange);
+    expandClassPenet (&staticModelRange);
+  }
   
   //#if FALSE
   /* At level 2, all constraints (including those between classes) are
@@ -1178,15 +1182,17 @@ int set_quantitative (char **toks, int numtoks, void *unused)
   }
 
   if (strcasecmp (toks[1], "normal") == 0) {
-    if ((numtoks < 3) || ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) != 2))
-      bail ("illegal arguments to directive '%s'\n", toks[0]);
     staticModelType.distrib = QT_FUNCTION_T;
     /* I think this is degrees of freedom; anyway, YH sez: fix it at 30 */
     staticModelType.constants = realloc (staticModelType.constants, 1 * sizeof (int));
     staticModelType.constants[0] = 30;
+    staticModelRange.npardim = 1;
+    if (numtoks == 2)
+      return (0);
+    if ((numtoks != 3) && ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) != 2))
+      bail ("illegal arguments to directive '%s'\n", toks[0]);
     staticModelType.mean = vals[0];
     staticModelType.sd = vals[1];
-    staticModelRange.npardim = 1;
     free (vals);
   } else if (strcasecmp (toks[1], "chisq") == 0) {
     if (numtoks > 2) 

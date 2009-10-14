@@ -88,8 +88,7 @@ void addTraitLocus (ModelRange * range, double val)
 void addGeneFreq (ModelRange * range, double val)
 {
   /* Validate value. */
-  KASSERT ((val >= 0
-	    && val <= 1.0), "Bad gene frequency value %g; aborting.\n", val);
+  KASSERT ((val > 0 && val < 1.0), "Bad gene frequency value %g; aborting.\n", val);
 
   /* Initialize the structure if first access. */
   if (!range->gfreq)
@@ -1002,18 +1001,15 @@ void expandRange (ModelRange *range)
 
 
 /**********************************************************************
- * Fully expand the threshold, penetrance and parameter values by
- * liability class while honoring any inter-class constraints. This
- * only gets called if we are using liability classes (i.e.,
- * modelRange->nlclass is greater than 1).
+ * Fully expand the threshold values by liability class while honoring
+ * any inter-class constraints. This only gets called if we are using
+ * liability classes (i.e., modelRange->nlclass is greater than 1).
  **********************************************************************/
-void expandClass (ModelRange * range)
+void expandClassThreshold (ModelRange * range)
 {
-  int i, j, k, l, m, n, o;
+  int i, j, k, l, m;
   double *tmp1;
   double **tmp2;
-  double ***tmp3;
-  double ****tmp4;
 
   /* Threshold expansion by liability class. */
   if (range->tthresh) {
@@ -1049,6 +1045,21 @@ void expandClass (ModelRange * range)
     free (tmp1);
     free (tmp2);
   }
+}
+
+
+/**********************************************************************
+ * Fully expand the penetrance and parameter values by liability class
+ * while honoring any inter-class constraints. This only gets called
+ * if we are using liability classes (i.e., modelRange->nlclass is
+ * greater than 1).
+ **********************************************************************/
+void expandClassPenet (ModelRange * range)
+{
+  int i, j, k, l, m, n, o;
+  double **tmp2;
+  double ***tmp3;
+  double ****tmp4;
 
   /* Penetrance expansion by liability class. Here, we want to factor
    * the existing penetrances over multiple liability classes.

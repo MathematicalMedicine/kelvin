@@ -285,34 +285,15 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     while (j < numTrait) {
       pTrait = pTraitLocus->pTraits[j];
       /* read trait value first - affection status or quantitative trait value */
-      if (pTrait->type == DICHOTOMOUS) {
-	numRet = sscanf (pLine, "%lf %n", &pPerson->ppTraitValue[i][j], &pos);
-	KASSERT (numRet == 1,
-		 "Failed to get affection status on line %d in file %s.\n",
-		 lineNo, sPedfileName);
-	if ((!isnan(pPerson->ppTraitValue[i][j])) &&
-	    ((int) pPerson->ppTraitValue[i][j] !=
-	     modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN]))
-	  pPerson->ppTraitKnown[i][j] = TRUE;
-      } else if (pTrait->type == QUANTITATIVE || pTrait->type == COMBINED) {
-	numRet = sscanf (pLine, "%lf %n", &pPerson->ppOrigTraitValue[i][j], &pos);
-	KASSERT (numRet == 1,
-		 "Line %d in pedfile %s doesn't have enough columns (trait). Is this a post-makeped file? \n",
-		 lineNo, sPedfileName);
-	if ((!isnan(pPerson->ppOrigTraitValue[i][j])) &&
-	    (pPerson->ppOrigTraitValue[i][j] != pTrait->unknownTraitValue)) {
-	  pPerson->ppTraitKnown[i][j] = TRUE;
-	  if ((pPerson->ppOrigTraitValue[i][j] != modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED]) &&
-	      (pPerson->ppOrigTraitValue[i][j] != modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED]))
-	    /* Calculated the standardized quantitative trait value */
-	    pPerson->ppTraitValue[i][j] = (pPerson->ppOrigTraitValue[i][j] - pTrait->sampleMean) / pTrait->sampleSD;
-	  else
-	    pPerson->ppTraitValue[i][j] = pPerson->ppOrigTraitValue[i][j];
-	}
-      } else {
-	KASSERT (FALSE, "Unknown trait locus value type %d.\n", pTrait->type);
-      }
-
+      numRet = sscanf (pLine, "%lf %n", &pPerson->ppOrigTraitValue[i][j], &pos);
+      KASSERT (numRet == 1, "Failed to get affection status on line %d in file %s.\n",
+	       lineNo, sPedfileName);
+      /* If trait is quantitative, we'll adjust it later on. For now, just copy over */
+      pPerson->ppTraitValue[i][j] = pPerson->ppOrigTraitValue[i][j];
+      if ((!isnan(pPerson->ppTraitValue[i][j])) &&
+	  (pPerson->ppTraitValue[i][j] != modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN]))
+	pPerson->ppTraitKnown[i][j] = TRUE;
+      
       pLine = &pLine[pos];
       /* If the locus is defined as having liability class
        * we have to read the liability class data */
@@ -1592,6 +1573,37 @@ check_for_loop (Pedigree *pPed) {
 }
 
 
+void adjustQuantitativeTraits (PedigreeSet *pPedigreeSet)
+{
+  int va, vb, vc, vd;
+  double unaffected, affected;
+  Person *pPerson;
+  TraitLocus *pTraitLocus;
+  Trait *pTrait;
+
+  unaffected = modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED];
+  affected = modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED];
+
+  for (va = 0; va < pPedigreeSet->numPedigree; va++)
+    for (vb = 0 ; vb < pPedigreeSet->ppPedigreeSet[va]->numPerson; vb++) {
+      pPerson = pPedigreeSet->ppPedigreeSet[va]->ppPersonList[vb];
+      for (vc = 0; vc < originalLocusList.numTraitLocus; vc++) {
+	pTraitLocus = originalLocusList.ppLocusList[vc]->pTraitLocus;
+	for (vd = 0; vd < pTraitLocus->numTrait; vd++) {
+	  pTrait = pTraitLocus->pTraits[vd];
+	  if (pTrait->type == DICHOTOMOUS)
+	    continue;
+	  if (pPerson->ppTraitKnown[vc][vd] != TRUE ||
+	      pPerson->ppOrigTraitValue[vc][vd] == unaffected ||
+	      pPerson->ppOrigTraitValue[vc][vd] == affected)
+	    continue;
+	  pPerson->ppTraitValue[vc][vd] = (pPerson->ppOrigTraitValue[vc][vd] - pTrait->sampleMean) / pTrait->sampleSD;
+	}
+      }
+    }
+}
+
+
 void getPedigreeTraitRange (PedigreeSet *pPedigreeSet, double *min , double *max)
 {
   int va, vb;
@@ -1602,7 +1614,12 @@ void getPedigreeTraitRange (PedigreeSet *pPedigreeSet, double *min , double *max
   for (va = 0; va < pPedigreeSet->numPedigree; va++)
     for (vb = 0 ; vb < pPedigreeSet->ppPedigreeSet[va]->numPerson; vb++) {
       person = pPedigreeSet->ppPedigreeSet[va]->ppPersonList[vb];
-      if (person->ppOrigTraitValue[0][0] == modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN])
+      if (person->ppOrigTraitValue[0][0] == 
+	  modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] ||
+	  person->ppOrigTraitValue[0][0] ==
+	  modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] ||
+	  person->ppOrigTraitValue[0][0] ==
+	  modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED])
 	continue;
       if (*min > person->ppOrigTraitValue[0][0])
 	*min = person->ppOrigTraitValue[0][0];
@@ -1611,3 +1628,44 @@ void getPedigreeTraitRange (PedigreeSet *pPedigreeSet, double *min , double *max
     }
   return;
 }
+
+
+void getPedigreeSampleStdev (PedigreeSet *pPedigreeSet, double *mean, double *stdev)
+{
+  int va, vb, count=0;
+  double delta;
+  struct Person *person;
+
+  *mean = *stdev = 0;
+  for (va = 0; va < pPedigreeSet->numPedigree; va++)
+    for (vb = 0 ; vb < pPedigreeSet->ppPedigreeSet[va]->numPerson; vb++) {
+      person = pPedigreeSet->ppPedigreeSet[va]->ppPersonList[vb];
+      if (person->ppOrigTraitValue[0][0] == 
+	  modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] ||
+	  person->ppOrigTraitValue[0][0] ==
+	  modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] ||
+	  person->ppOrigTraitValue[0][0] ==
+	  modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED])
+	continue;
+      *mean += person->ppOrigTraitValue[0][0];
+      count++;
+    }
+  *mean /= (double) count;
+
+  for (va = 0; va < pPedigreeSet->numPedigree; va++)
+    for (vb = 0 ; vb < pPedigreeSet->ppPedigreeSet[va]->numPerson; vb++) {
+      person = pPedigreeSet->ppPedigreeSet[va]->ppPersonList[vb];
+      if (person->ppOrigTraitValue[0][0] == 
+	  modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] ||
+	  person->ppOrigTraitValue[0][0] ==
+	  modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED] ||
+	  person->ppOrigTraitValue[0][0] ==
+	  modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED])
+	continue;
+      delta = *mean - person->ppOrigTraitValue[0][0];
+      *stdev += (delta * delta);
+    }
+  *stdev = sqrt (*stdev / count);
+  return;
+}
+
