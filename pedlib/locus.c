@@ -1676,13 +1676,13 @@ allocate_multi_locus_genotype_storage (Pedigree * pPedigree, int numLocus)
   int numGeno;
 
   /* sorted from max to min */
-  sortedList = malloc (originalLocusList.numLocus * sizeof (int));
+  MALCHOKE(sortedList, originalLocusList.numLocus * sizeof (int), void *);
   memset (sortedList, 0, originalLocusList.numLocus * sizeof (int));
 
   for (i = 0; i < pPedigree->numPerson; i++) {
     pPerson = pPedigree->ppPersonList[i];
-    pPerson->multiLocusAdjust = (int *) malloc (numLocus * sizeof (int));
-    pPerson->numSavedGenotype2 = (int *) malloc (numLocus * sizeof (int));
+    MALCHOKE(pPerson->multiLocusAdjust, numLocus * sizeof (int), int *);
+    MALCHOKE(pPerson->numSavedGenotype2, numLocus * sizeof (int), int *);
     for (locus = 0; locus < originalLocusList.numLocus; locus++) {
       numGeno = pPerson->pSavedNumGenotype[locus];
       for (j = 0; j < locus; j++) {
@@ -1707,15 +1707,14 @@ allocate_multi_locus_genotype_storage (Pedigree * pPedigree, int numLocus)
 					size);
     //memset (pPerson->pLikelihood, 0, sizeof (ConditionalLikelihood) * size);
     pPerson->maxNumConditionals = size;
-    pPerson->pTmpLikelihoodIndex = (int *) malloc (sizeof (int) * size);
+    MALCHOKE(pPerson->pTmpLikelihoodIndex, sizeof (int) * size, int *);
 
     /* allocate loop breaker work space */
     if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] != NULL) {
       pPerson->loopBreakerStruct =
 	(LoopBreaker *) calloc (1, sizeof (LoopBreaker));
       pPerson->loopBreakerStruct->maxNumGenotype = size;
-      pPerson->loopBreakerStruct->genotype =
-	(Genotype ***) malloc (sizeof (Genotype **) * size);
+      MALCHOKE(pPerson->loopBreakerStruct->genotype, sizeof (Genotype **) * size, Genotype ***);
       for (j = 0; j < size; j++) {
 	pPerson->loopBreakerStruct->genotype[j] =
 	  (Genotype **) calloc (numLocus, sizeof (Genotype *));

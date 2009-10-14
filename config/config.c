@@ -228,7 +228,7 @@ void initializeDefaults ()
   strcpy (staticModelOptions.avghetfile, DEFAULTAVGHETFILENAME);
   strcpy (staticModelOptions.resultsprefix, DEFAULTRESULTSPREFIX);
 
-  staticModelOptions.sUnknownPersonID = malloc (sizeof (char) * 2);
+  MALCHOKE(staticModelOptions.sUnknownPersonID, sizeof (char) * 2,void *);
   strcpy (staticModelOptions.sUnknownPersonID, "0");
 
   staticModelOptions.equilibrium = LINKAGE_EQUILIBRIUM;

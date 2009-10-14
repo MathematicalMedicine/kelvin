@@ -267,25 +267,20 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
    * if we ever got a disease locus 
    * i.e. disease locus information is expected to be listed 
    * before any marker locus */
-  pPerson->ppOrigTraitValue =
-    (double **) malloc (sizeof (double *) * originalLocusList.numTraitLocus);
-  pPerson->ppTraitValue =
-    (double **) malloc (sizeof (double *) * originalLocusList.numTraitLocus);
-  pPerson->ppTraitKnown =
-    (int **) malloc (sizeof (int *) * originalLocusList.numTraitLocus);
-  pPerson->ppLiabilityClass =
-    (int **) malloc (sizeof (int *) * originalLocusList.numTraitLocus);
+  MALCHOKE(pPerson->ppOrigTraitValue, sizeof (double *) * originalLocusList.numTraitLocus, double **);
+  MALCHOKE(pPerson->ppTraitValue, sizeof (double *) * originalLocusList.numTraitLocus, double **);
+  MALCHOKE(pPerson->ppTraitKnown, sizeof (int *) * originalLocusList.numTraitLocus, int **);
+  MALCHOKE(pPerson->ppLiabilityClass, sizeof (int *) * originalLocusList.numTraitLocus, int **);
 
   i = 0;
   while (i < originalLocusList.numTraitLocus) {
     pTraitLocus = originalLocusList.ppLocusList[i]->pTraitLocus;
     numTrait = pTraitLocus->numTrait;
-    pPerson->ppOrigTraitValue[i] =
-      (double *) malloc (sizeof (double) * numTrait);
-    pPerson->ppTraitValue[i] = (double *) malloc (sizeof (double) * numTrait);
-    pPerson->ppTraitKnown[i] = (int *) malloc (sizeof (int) * numTrait);
+    MALCHOKE(pPerson->ppOrigTraitValue[i], sizeof (double) * numTrait, double *);
+    MALCHOKE(pPerson->ppTraitValue[i], sizeof (double) * numTrait, double *);
+    MALCHOKE(pPerson->ppTraitKnown[i], sizeof (int) * numTrait, int *);
     memset (pPerson->ppTraitKnown[i], 0, sizeof (int) * numTrait); // Effectively sets to FALSE
-    pPerson->ppLiabilityClass[i] = (int *) malloc (sizeof (int) * numTrait);
+    MALCHOKE(pPerson->ppLiabilityClass[i], sizeof (int) * numTrait, int *);
     j = 0;
     while (j < numTrait) {
       pTrait = pTraitLocus->pTraits[j];
@@ -437,7 +432,7 @@ create_pedigree (PedigreeSet * pPedigreeSet, char *sPedLabel)
   pPedigreeSet->numPedigree++;
 
   /* create new pedigree */
-  ped = (Pedigree *) malloc (sizeof (Pedigree));
+  MALCHOKE(ped, sizeof (Pedigree), Pedigree *);
   memset (ped, 0, sizeof (Pedigree));
 
   pPedigreeSet->ppPedigreeSet[oldNum] = ped;
@@ -447,7 +442,7 @@ create_pedigree (PedigreeSet * pPedigreeSet, char *sPedLabel)
   strcpy (ped->sPedigreeID, sPedLabel);
 
   /* for casectrl */
-  ped->pCount = (int *) malloc (originalLocusList.numLocus * sizeof (int));
+  MALCHOKE(ped->pCount, originalLocusList.numLocus * sizeof (int), int *);
   for (i = 0; i < originalLocusList.numLocus; i++) {
     ped->pCount[i] = 1;
   }
@@ -461,7 +456,7 @@ create_person (Pedigree * pPed, char *sID)
   int num;
   Person *pPerson;
   int oldNum;
-  int size;
+  unsigned long size;
 
   oldNum = pPed->numPerson;
   if (pPed->maxNumPerson <= pPed->numPerson) {
@@ -476,7 +471,7 @@ create_person (Pedigree * pPed, char *sID)
     pPed->pPedigreeSet->maxNumPerson = pPed->numPerson;
 
   /* allocate space for this person */
-  pPerson = (Person *) malloc (sizeof (Person));
+  MALCHOKE(pPerson, sizeof (Person), Person *);
   memset (pPerson, 0, sizeof (Person));
 
   pPed->ppPersonList[oldNum] = pPerson;
@@ -485,57 +480,45 @@ create_person (Pedigree * pPed, char *sID)
 
   /* allocate space for phenotype list for each locus */
   size = originalLocusList.numLocus * sizeof (int);
-  pPerson->pPhenotypeList[0] = (int *) malloc (size);
+  MALCHOKE(pPerson->pPhenotypeList[0], size, int *);
   memset (pPerson->pPhenotypeList[0], 0, size);
-  pPerson->pPhenotypeList[1] = (int *) malloc (size);
+  MALCHOKE(pPerson->pPhenotypeList[1], size, int *);
   memset (pPerson->pPhenotypeList[1], 0, size);
-  pPerson->pPhasedFlag = (int *) malloc (size);
+  MALCHOKE(pPerson->pPhasedFlag, size, int *);
   memset (pPerson->pPhasedFlag, 0, size);
-  pPerson->pTypedFlag = (int *) malloc (size);
+  MALCHOKE(pPerson->pTypedFlag, size, int *);
   memset (pPerson->pTypedFlag, 0, size);
 
   /* allocate space for set recoding */
   size = originalLocusList.alleleSetLen;
-  pPerson->pTransmittedAlleles[MOM] =
-    (unsigned int *) malloc (sizeof (unsigned int) * size);
-  pPerson->pTransmittedAlleles[DAD] =
-    (unsigned int *) malloc (sizeof (unsigned int) * size);
-  pPerson->pNonTransmittedAlleles[MOM] =
-    (unsigned int *) malloc (sizeof (unsigned int) * size);
-  pPerson->pNonTransmittedAlleles[DAD] =
-    (unsigned int *) malloc (sizeof (unsigned int) * size);
+  MALCHOKE(pPerson->pTransmittedAlleles[MOM], sizeof (unsigned int) * size, unsigned int *);
+  MALCHOKE(pPerson->pTransmittedAlleles[DAD], sizeof (unsigned int) * size, unsigned int *);
+  MALCHOKE(pPerson->pNonTransmittedAlleles[MOM], sizeof (unsigned int) * size, unsigned int *);
+  MALCHOKE(pPerson->pNonTransmittedAlleles[DAD], sizeof (unsigned int) * size, unsigned int *);
 
   /* need to allocate some space for genotypes */
-  pPerson->ppGenotypeList = (Genotype **) malloc (sizeof (Genotype *) *
-						  originalLocusList.numLocus);
+  MALCHOKE(pPerson->ppGenotypeList, sizeof (Genotype *) *originalLocusList.numLocus, Genotype **);
   memset (pPerson->ppGenotypeList, 0,
 	  sizeof (Genotype *) * originalLocusList.numLocus);
-  pPerson->pNumGenotype =
-    (int *) malloc (sizeof (int) * originalLocusList.numLocus);
+  MALCHOKE(pPerson->pNumGenotype, sizeof (int) * originalLocusList.numLocus, int *);
   memset (pPerson->pNumGenotype, 0,
 	  sizeof (int) * originalLocusList.numLocus);
-  pPerson->ppSavedGenotypeList =
-    (Genotype **) malloc (sizeof (Genotype *) * originalLocusList.numLocus);
+  MALCHOKE(pPerson->ppSavedGenotypeList, sizeof (Genotype *) * originalLocusList.numLocus, Genotype **);
   memset (pPerson->ppSavedGenotypeList, 0,
 	  sizeof (Genotype *) * originalLocusList.numLocus);
-  pPerson->pSavedNumGenotype =
-    (int *) malloc (sizeof (int) * originalLocusList.numLocus);
+  MALCHOKE(pPerson->pSavedNumGenotype, sizeof (int) * originalLocusList.numLocus, int *);
   memset (pPerson->pSavedNumGenotype, 0,
 	  sizeof (int) * originalLocusList.numLocus);
-  pPerson->ppProbandGenotypeList =
-    (Genotype **) malloc (sizeof (Genotype *) * originalLocusList.numLocus);
+  MALCHOKE(pPerson->ppProbandGenotypeList, sizeof (Genotype *) * originalLocusList.numLocus, Genotype **);
   memset (pPerson->ppProbandGenotypeList, 0,
 	  sizeof (Genotype *) * originalLocusList.numLocus);
-  pPerson->pProbandNumGenotype =
-    (int *) malloc (sizeof (int) * originalLocusList.numLocus);
+  MALCHOKE(pPerson->pProbandNumGenotype, sizeof (int) * originalLocusList.numLocus, int *);
   memset (pPerson->pProbandNumGenotype, 0,
 	  sizeof (int) * originalLocusList.numLocus);
-  pPerson->ppShadowGenotypeList =
-    (Genotype **) malloc (sizeof (Genotype *) * originalLocusList.numLocus);
+  MALCHOKE(pPerson->ppShadowGenotypeList, sizeof (Genotype *) * originalLocusList.numLocus, Genotype **);
   memset (pPerson->ppShadowGenotypeList, 0,
 	  sizeof (Genotype *) * originalLocusList.numLocus);
-  pPerson->pShadowGenotypeListLen =
-    (int *) malloc (sizeof (int) * originalLocusList.numLocus);
+  MALCHOKE(pPerson->pShadowGenotypeListLen, sizeof (int) * originalLocusList.numLocus, int *);
   memset (pPerson->pShadowGenotypeListLen, 0,
 	  sizeof (int) * originalLocusList.numLocus);
 
@@ -790,7 +773,6 @@ setup_nuclear_families (Pedigree * pPed)
   /* allocate some working space 
    * This is to mark whether we are done with this child 
    * it really only applies if this person is a child */
-  //  pDoneList = (int *) MALLOC ("pDoneList", sizeof (int) * pPed->numPerson);
   pDoneList = pPed->pPedigreeSet->pDonePerson;
   memset (pDoneList, 0, sizeof (int) * pPed->numPerson);
 
@@ -1018,16 +1000,6 @@ add_nuclear_family_child (NuclearFamily * pNucFam, Person * pChild)
   if (pNucFam->numChildren >= pNucFam->maxNumChildren) {
     /* need to allocate new space */
     pNucFam->maxNumChildren += DEF_PED_MALLOC_INCREMENT;
-#if 0
-    ppNew = (Person **) malloc (sizeof (Person *) * pNucFam->maxNumChildren);
-    /* copy old stuff over */
-    for (i = 0; i < pNucFam->numChildren; i++)
-      ppNew[i] = pNucFam->ppChildrenList[i];
-    /* free the old space */
-    free (pNucFam->ppChildrenList);
-    /* take the new space */
-    pNucFam->ppChildrenList = ppNew;
-#endif
     pNucFam->ppChildrenList = (Person **) realloc (pNucFam->ppChildrenList,
 						   sizeof (Person *) *
 						   pNucFam->maxNumChildren);
@@ -1080,8 +1052,7 @@ create_nuclear_family_connector (Person * pPerson,	/* connected person */
   NuclearFamilyConnector *pNucFamConnector;
 
   /* allocate space */
-  pNucFamConnector =
-    (NuclearFamilyConnector *) malloc (sizeof (NuclearFamilyConnector));
+  MALCHOKE(pNucFamConnector, sizeof (NuclearFamilyConnector), NuclearFamilyConnector *);
 
   if (direction == PEDIGREE_DOWN) {
     /* set up the down connector */
@@ -1124,18 +1095,8 @@ create_nuclear_family (Pedigree * pPed)
   }
 
   /* allocate space for the actual nuclear family */
-  pNew = (NuclearFamily *) malloc (sizeof (NuclearFamily));
+  MALCHOKE(pNew, sizeof (NuclearFamily), NuclearFamily *);
   memset (pNew, 0, sizeof (NuclearFamily));
-#if 0
-  pNew->ppParentalPair = (ParentalPair **) malloc (sizeof (ParentalPair *) *
-						   originalLocusList.
-						   numLocus);
-  memset (pNew->ppParentalPair, 0,
-	  sizeof (ParentalPair *) * originalLocusList.numLocus);
-  pNew->pNumParentalPair =
-    (int *) malloc (sizeof (int) * originalLocusList.numLocus);
-#endif
-
   pPed->ppNuclearFamilyList[oldNumNucFam] = pNew;
   /* link this back to pedigree structure */
   pNew->pPedigree = pPed;
@@ -1212,8 +1173,7 @@ add_founder_nuclear_family (NuclearFamily * pNucFam)
   if (pPed->numFounderNuclearFamily >= pPed->maxNumFounderNuclearFamily) {
     /* need to reallocate space for the list */
     pPed->maxNumFounderNuclearFamily += DEF_PED_MALLOC_INCREMENT;
-    ppNew = (NuclearFamily **) malloc (sizeof (NuclearFamily *) *
-				       pPed->maxNumFounderNuclearFamily);
+    MALCHOKE(ppNew, sizeof (NuclearFamily *) *pPed->maxNumFounderNuclearFamily, NuclearFamily **);
     /* copy over the old list */
     for (i = 0; i < pPed->numFounderNuclearFamily; i++)
       ppNew[i] = pPed->ppFounderNuclearFamilyList[i];

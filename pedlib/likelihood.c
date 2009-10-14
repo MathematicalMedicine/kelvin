@@ -166,7 +166,7 @@ allocate_likelihood_space (PedigreeSet * pPedigreeList, int numLocus1)
 
   numLocus = numLocus1;
   /* this is for loop breaker multilocus genotypes */
-  pTempGenoVector = (Genotype **) malloc (sizeof (Genotype *) * numLocus);
+  MALCHOKE(pTempGenoVector, sizeof (Genotype *) * numLocus, Genotype **);
 
   for (i = 0; i < pPedigreeList->numPedigree; i++) {
     pPedigree = pPedigreeList->ppPedigreeSet[i];
@@ -192,7 +192,7 @@ allocate_likelihood_space (PedigreeSet * pPedigreeList, int numLocus1)
   }
   if (bitMask != NULL)
     free (bitMask);
-  bitMask = malloc (sizeof (int) * (numLocus + 1));
+  MALCHOKE(bitMask, sizeof (int) * (numLocus + 1), void *);
   for (i = 0; i <= numLocus; i++) {
     bitMask[i] = pow (2, i) - 1;
   }
@@ -209,7 +209,7 @@ allocate_likelihood_space (PedigreeSet * pPedigreeList, int numLocus1)
   likelihoodChildCount = (int *) calloc (sizeof (int), maxChildren);
 
   if(pCondSet == NULL) {
-    pCondSet = (probandCondL *) malloc(sizeof(probandCondL) * 4); 
+    MALCHOKE(pCondSet, sizeof(probandCondL) * 4, probandCondL *);
     numCond = 4; 
   }
 
@@ -853,9 +853,7 @@ peel_graph (NuclearFamily * pNucFam1, Person * pProband1,
      * allocate space for storing proband's haplotype if not
      * already done
      */
-    pProband->ppHaplotype = MALLOC ("pProband->ppHaplotype",
-				    sizeof (Genotype *) * sizeof (int) *
-				    ppairMatrixNumLocus);
+    MALCHOKE(pProband->ppHaplotype, sizeof (Genotype *) * sizeof (int) * ppairMatrixNumLocus, void *);
   }
   if (pProband->touchedFlag == TRUE)
     initialize_proband_tmpLikelihood (pProband);

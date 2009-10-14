@@ -895,11 +895,7 @@ Polynomial *constantExp (double con)
   // Next, insert it into the constant list
 
   // Generate a constant polynomial
-  p = (Polynomial *) malloc (sizeof (Polynomial));
-  if (p == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(p, sizeof (Polynomial), Polynomial *);
   p->eType = T_CONSTANT;
   p->value = con;
 #ifdef USE_GMP
@@ -1012,12 +1008,10 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
     location = 0;
 
   // This variable polynomial doesn't exist, so we'll create it.
-  p = (Polynomial *) malloc (sizeof (Polynomial));
-  vPoly = (struct variablePoly *) malloc (sizeof (struct variablePoly));
-  if (p == NULL || vPoly == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(p, sizeof (Polynomial), Polynomial *);
+
+  MALCHOKE(p, sizeof (Polynomial), Polynomial *);
+  MALCHOKE(vPoly, sizeof (struct variablePoly), struct variablePoly *);
   p->eType = T_VARIABLE;
   // Make sure we always have a name, either provided or based upon arrival order.
   if (strlen (name) == 0)
@@ -1724,24 +1718,12 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   }
 
   // Since the sum was not found in the sum list, a new polynomial is built
-  rp = (Polynomial *) malloc (sizeof (Polynomial));
-  if (rp == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(rp, sizeof (Polynomial), Polynomial *);
   rp->eType = T_SUM;
-  sP = (struct sumPoly *) malloc (sizeof (struct sumPoly));
-  if (sP == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(sP, sizeof (struct sumPoly), struct sumPoly *);
   sP->num = counterSum;
-  sP->factor = (double *) malloc (counterSum * sizeof (double));
-  sP->sum = (Polynomial **) malloc (counterSum * sizeof (Polynomial *));
-  if (sP->sum == NULL || sP->factor == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(sP->factor, counterSum * sizeof (double),double *);
+  MALCHOKE(sP->sum, counterSum * sizeof (Polynomial *),Polynomial **);
   for (i = 0; i < sP->num; i++) {
     sP->factor[i] = factorSum[i];
     sP->sum[i] = pSum[i];
@@ -2246,24 +2228,12 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     }
 
     // Construct a new product polynomial from the terms saved in the container
-    rp = (Polynomial *) malloc (sizeof (Polynomial));
-    if (rp == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    MALCHOKE(rp, sizeof (Polynomial), Polynomial *);
     rp->eType = T_PRODUCT;
-    pP = (struct productPoly *) malloc (sizeof (struct productPoly));
-    if (pP == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    MALCHOKE(pP, sizeof (struct productPoly), struct productPoly *);
     pP->num = counterProd;
-    pP->product = (Polynomial **) malloc (counterProd * sizeof (Polynomial *));
-    pP->exponent = (int *) malloc (counterProd * sizeof (int));
-    if (pP->product == NULL || pP->exponent == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    MALCHOKE(pP->product, counterProd * sizeof (Polynomial *),Polynomial **);
+    MALCHOKE(pP->exponent, counterProd * sizeof (int),int *);
     // Copy the collected terms and exponents into the product polynomial structure
     for (i = 0; i < counterProd; i++) {
       pP->product[i] = pProd[i];
@@ -2425,11 +2395,7 @@ Polynomial *functionCallExp (int num, ...)
   va_start (args, num);
   fName = va_arg (args, char *);
 
-  p = (Polynomial **) malloc ((num - 1) * sizeof (Polynomial *));
-  if (p == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(p, (num - 1) * sizeof (Polynomial *),Polynomial **);
 
   // num is equal to 1 plus the number of parameters for the called function
   for (i = 0; i < num - 1; i++) {
@@ -2485,20 +2451,12 @@ Polynomial *functionCallExp (int num, ...)
 
   // The function call ws not found in the list, insert it in the list.
   // Build a new polynomial
-  rp = (Polynomial *) malloc (sizeof (Polynomial));
-  fP = (struct functionPoly *) malloc (sizeof (struct functionPoly));
-  if (rp == NULL || fP == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(rp, sizeof (Polynomial), Polynomial *);
+  MALCHOKE(fP, sizeof (struct functionPoly), struct functionPoly *);
   rp->eType = T_FUNCTIONCALL;
   fP->num = num - 1;
-  fP->para = (Polynomial **) malloc ((num - 1) * sizeof (Polynomial *));
-  fP->name = (char *) malloc (strlen (fName) + 1);
-  if (fP->para == NULL || fP->name == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(fP->para, (num - 1) * sizeof (Polynomial *), Polynomial **);
+  MALCHOKE(fP->name, strlen (fName) + 1, char *);
   strcpy (fP->name, fName);
   for (i = 0; i < fP->num; i++) {
     fP->para[i] = p[i];
@@ -2551,19 +2509,10 @@ struct polyList *buildPolyList ()
 {
   struct polyList *l;
 
-  l = (struct polyList *) malloc (sizeof (struct polyList));
-  if (l == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
-
+  MALCHOKE(l, sizeof (struct polyList), struct polyList *);
   l->listSize = 1000;
   l->listNext = 0;
-  l->pList = (Polynomial **) malloc (sizeof (Polynomial *) * l->listSize);
-  if (l->pList == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(l->pList, sizeof (Polynomial *) * l->listSize, Polynomial **);
 
   return l;
 };
@@ -3076,61 +3025,35 @@ void polynomialInitialization (int newPolynomialScale)
      type of polynomials to be 0. */
   constantListLength = CONSTANT_LIST_INITIAL;
   constantCount = 0;
-  constantList = (Polynomial **) malloc (constantListLength * sizeof (Polynomial *));
-  if (constantList == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(constantList, constantListLength * sizeof (Polynomial *), Polynomial **);
 
   variableListLength = VARIABLE_LIST_INITIAL;
   variableCount = 0;
-  variableList = (Polynomial **) malloc (variableListLength * sizeof (Polynomial *));
-  if (variableList == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(variableList, variableListLength * sizeof (Polynomial *), Polynomial **);
 
   externalListLength = EXTERNAL_LIST_INITIAL;
   externalCount = 0;
-  externalList = (Polynomial **) malloc (externalListLength * sizeof (Polynomial *));
-  if (externalList == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(externalList, externalListLength * sizeof (Polynomial *), Polynomial **);
 
   sumListLength = SUM_LIST_INITIAL;
   sumCount = 0;
-  sumList = (Polynomial **) malloc (sumListLength * sizeof (Polynomial *));
-  if (sumList == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(sumList, sumListLength * sizeof (Polynomial *), Polynomial **);
 
   productListLength = PRODUCT_LIST_INITIAL;
   productCount = 0;
-  productList = (Polynomial **) malloc (productListLength * sizeof (Polynomial *));
-  if (productList == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(productList, productListLength * sizeof (Polynomial *), Polynomial **);
 
   functionCallListLength = FUNCTIONCALL_LIST_INITIAL;
   functionCallCount = 0;
-  functionCallList = (Polynomial **) malloc (functionCallListLength * sizeof (Polynomial *));
-  if (functionCallList == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(functionCallList, functionCallListLength * sizeof (Polynomial *), Polynomial **);
+
   // Allocate memory for hash tables, each type of polynomials has its own hash table
-  constantHash = (struct hashStruct *) malloc (CONSTANT_HASH_SIZE * sizeof (struct hashStruct));
-  variableHash = (struct hashStruct *) malloc (VARIABLE_HASH_SIZE * sizeof (struct hashStruct));
-  sumHash = (struct hashStruct *) malloc (SUM_HASH_SIZE * sizeof (struct hashStruct));
-  productHash = (struct hashStruct *) malloc (PRODUCT_HASH_SIZE * sizeof (struct hashStruct));
-  functionCallHash = (struct hashStruct *) malloc (FUNCTIONCALL_HASH_SIZE * sizeof (struct hashStruct));
-  if (constantHash == NULL || variableHash == NULL || sumHash == NULL || productHash == NULL || functionCallHash == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(constantHash, CONSTANT_HASH_SIZE * sizeof (struct hashStruct), struct hashStruct *);
+  MALCHOKE(variableHash, VARIABLE_HASH_SIZE * sizeof (struct hashStruct), struct hashStruct *);
+  MALCHOKE(sumHash, SUM_HASH_SIZE * sizeof (struct hashStruct), struct hashStruct *);
+  MALCHOKE(productHash, PRODUCT_HASH_SIZE * sizeof (struct hashStruct), struct hashStruct *);
+  MALCHOKE(functionCallHash, FUNCTIONCALL_HASH_SIZE * sizeof (struct hashStruct), struct hashStruct *);
+
   // Initialize the constant hash table, pre-allocate memory for recording polynomials
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -3138,24 +3061,16 @@ void polynomialInitialization (int newPolynomialScale)
   for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
     constantHash[i].num = 0;
     constantHash[i].length = HASH_TABLE_INCREASE;
-    constantHash[i].index = (int *) malloc (constantHash[i].length * sizeof (int));
-    constantHash[i].key = (int *) malloc (constantHash[i].length * sizeof (int));
-    if (constantHash[i].index == NULL || constantHash[i].key == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    MALCHOKE(constantHash[i].index, constantHash[i].length * sizeof (int),int *);
+    MALCHOKE(constantHash[i].key, constantHash[i].length * sizeof (int),int *);
   }
 
   // Initialize the variable hash table, pre-allocate memory for recording polynomials
   for (i = 0; i < VARIABLE_HASH_SIZE; i++) {
     variableHash[i].num = 0;
     variableHash[i].length = HASH_TABLE_INCREASE;
-    variableHash[i].index = (int *) malloc (variableHash[i].length * sizeof (int));
-    variableHash[i].key = (int *) malloc (variableHash[i].length * sizeof (int));
-    if (variableHash[i].index == NULL || variableHash[i].key == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    MALCHOKE(variableHash[i].index, variableHash[i].length * sizeof (int),int *);
+    MALCHOKE(variableHash[i].key, variableHash[i].length * sizeof (int),int *);
   }
 
   // Initialize the sum hash table, pre-allocate memory for recording polynomials
@@ -3165,13 +3080,8 @@ void polynomialInitialization (int newPolynomialScale)
   for (i = 0; i < SUM_HASH_SIZE; i++) {
     sumHash[i].num = 0;
     sumHash[i].length = HASH_TABLE_INCREASE;
-    sumHash[i].index = (int *) malloc (sumHash[i].length * sizeof (int));
-    sumHash[i].key = (int *) malloc (sumHash[i].length * sizeof (int));
-    if (sumHash[i].index == NULL || sumHash[i].key == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
-
+    MALCHOKE(sumHash[i].index, sumHash[i].length * sizeof (int),int *);
+    MALCHOKE(sumHash[i].key, sumHash[i].length * sizeof (int),int *);
   }
 
   // Initialize the product hash table, pre-allocate memory for recording polynomials
@@ -3181,25 +3091,16 @@ void polynomialInitialization (int newPolynomialScale)
   for (i = 0; i < PRODUCT_HASH_SIZE; i++) {
     productHash[i].num = 0;
     productHash[i].length = HASH_TABLE_INCREASE;
-    productHash[i].index = (int *) malloc (productHash[i].length * sizeof (int));
-    productHash[i].key = (int *) malloc (productHash[i].length * sizeof (int));
-    if (productHash[i].index == NULL || productHash[i].key == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    MALCHOKE(productHash[i].index, productHash[i].length * sizeof (int),int *);
+    MALCHOKE(productHash[i].key, productHash[i].length * sizeof (int),int *);
   }
 
   // Initialize the function call hash table, pre-allocate memory for recording polynomials
   for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++) {
     functionCallHash[i].num = 0;
     functionCallHash[i].length = HASH_TABLE_INCREASE;
-    functionCallHash[i].index = (int *) malloc (functionCallHash[i].length * sizeof (int));
-    functionCallHash[i].key = (int *) malloc (functionCallHash[i].length * sizeof (int));
-    if (functionCallHash[i].index == NULL || functionCallHash[i].key == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
-
+    MALCHOKE(functionCallHash[i].index, functionCallHash[i].length * sizeof (int),int *);
+    MALCHOKE(functionCallHash[i].key, functionCallHash[i].length * sizeof (int),int *);
   }
 
   initialHashSize = (sizeof (struct hashStruct) + (2 * HASH_TABLE_INCREASE * sizeof (int))) * (CONSTANT_HASH_SIZE + VARIABLE_HASH_SIZE + SUM_HASH_SIZE + PRODUCT_HASH_SIZE + FUNCTIONCALL_HASH_SIZE);
@@ -3208,71 +3109,45 @@ void polynomialInitialization (int newPolynomialScale)
 
   // For variable polynomials
   containerLength_v1 = 100;
-  factor_v1 = (double *) malloc (containerLength_v1 * sizeof (double));
-  p_v1 = (Polynomial **) malloc (containerLength_v1 * sizeof (Polynomial *));
-  if (factor_v1 == NULL || p_v1 == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(factor_v1, containerLength_v1 * sizeof (double),double *);
+  MALCHOKE(p_v1, containerLength_v1 * sizeof (Polynomial *),Polynomial **);
+
   // For product polynomials
   containerLength_p1 = 100;
-  factor_p1 = (double *) malloc (containerLength_p1 * sizeof (double));
-  p_p1 = (Polynomial **) malloc (containerLength_p1 * sizeof (Polynomial *));
-  if (factor_p1 == NULL || p_p1 == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(factor_p1, containerLength_p1 * sizeof (double),double *);
+  MALCHOKE(p_p1, containerLength_p1 * sizeof (Polynomial *),Polynomial **);
+
   // For function call polynomials
   containerLength_f1 = 100;
-  factor_f1 = (double *) malloc (containerLength_f1 * sizeof (double));
-  p_f1 = (Polynomial **) malloc (containerLength_f1 * sizeof (Polynomial *));
-  if (factor_f1 == NULL || p_f1 == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(factor_f1, containerLength_f1 * sizeof (double),double *);
+  MALCHOKE(p_f1, containerLength_f1 * sizeof (Polynomial *),Polynomial **);
+
   // Containers for organizing a sum polynomial
   lengthSum = 300;
-  factorSum = (double *) malloc (lengthSum * sizeof (double));
-  pSum = (Polynomial **) malloc (lengthSum * sizeof (Polynomial *));
-  if (factorSum == NULL || pSum == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(factorSum, lengthSum * sizeof (double),double *);
+  MALCHOKE(pSum, lengthSum * sizeof (Polynomial *),Polynomial **);
 
   // Acquire memory for containers for the terms of a product polynomial
 
   // For variable polynomials
   containerLength_v2 = 100;
-  exponent_v2 = (int *) malloc (containerLength_v2 * sizeof (int));
-  p_v2 = (Polynomial **) malloc (containerLength_v2 * sizeof (Polynomial *));
-  if (exponent_v2 == NULL || p_v2 == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(exponent_v2, containerLength_v2 * sizeof (int),int *);
+  MALCHOKE(p_v2, containerLength_v2 * sizeof (Polynomial *),Polynomial **);
+
   // For sum polynmials
   containerLength_s2 = 100;
-  exponent_s2 = (int *) malloc (containerLength_s2 * sizeof (int));
-  p_s2 = (Polynomial **) malloc (containerLength_s2 * sizeof (Polynomial *));
-  if (exponent_s2 == NULL || p_s2 == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(exponent_s2, containerLength_s2 * sizeof (int),int *);
+  MALCHOKE(p_s2, containerLength_s2 * sizeof (Polynomial *),Polynomial **);
+
   // For function call polynomials
   containerLength_f2 = 100;
-  exponent_f2 = (int *) malloc (containerLength_f2 * sizeof (double));
-  p_f2 = (Polynomial **) malloc (containerLength_f2 * sizeof (Polynomial *));
-  if (exponent_f2 == NULL || p_f2 == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(exponent_f2, containerLength_f2 * sizeof (double),int *);
+  MALCHOKE(p_f2, containerLength_f2 * sizeof (Polynomial *),Polynomial **);
+
   // Containers for organizing a product polynomial
   lengthProd = 300;
-  exponentProd = (int *) malloc (lengthProd * sizeof (int));
-  pProd = (Polynomial **) malloc (lengthProd * sizeof (Polynomial *));
-  if (exponentProd == NULL || pProd == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(exponentProd, lengthProd * sizeof (int),int *);
+  MALCHOKE(pProd, lengthProd * sizeof (Polynomial *),Polynomial **);
 
 }
 
@@ -4236,11 +4111,7 @@ void doFreePolys (unsigned short keepMask)
        * entries we're not keeping and replacing pointers with new indexes
        * for the ones we are keeping. */
 
-      newConstantList = (Polynomial **) malloc (sizeof (Polynomial *) * (constantListLength));
-      if (newConstantList == NULL) {
-        fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (EXIT_FAILURE);
-      }
+      MALCHOKE(newConstantList, sizeof (Polynomial *) * (constantListLength),Polynomial **);
       k = 0;
       for (i = 0; i < constantCount; i++) {
 	if (constantList[i]->eType == T_OFFLINE) importPoly (constantList[i]);
@@ -4300,11 +4171,7 @@ void doFreePolys (unsigned short keepMask)
 #pragma omp section
 #endif
     {
-      newVariableList = (Polynomial **) malloc (sizeof (Polynomial *) * (variableListLength));
-      if (newVariableList == NULL) {
-        fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (EXIT_FAILURE);
-      }
+      MALCHOKE(newVariableList, sizeof (Polynomial *) * (variableListLength),Polynomial **);
       k = 0;
       for (i = 0; i < variableCount; i++) {
 	if (variableList[i]->eType == T_OFFLINE) importPoly (variableList[i]);
@@ -4364,11 +4231,7 @@ void doFreePolys (unsigned short keepMask)
 #pragma omp section
 #endif
     {
-      newSumList = (Polynomial **) malloc (sizeof (Polynomial *) * (sumListLength));
-      if (newSumList == NULL) {
-        fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (EXIT_FAILURE);
-      }
+      MALCHOKE(newSumList, sizeof (Polynomial *) * (sumListLength),Polynomial **);
       k = 0;
       for (i = 0; i < sumCount; i++) {
 	if (sumList[i]->eType == T_OFFLINE) importPoly (sumList[i]);
@@ -4443,11 +4306,7 @@ void doFreePolys (unsigned short keepMask)
 #pragma omp section
 #endif
     {
-      newProductList = (Polynomial **) malloc (sizeof (Polynomial *) * (productListLength));
-      if (newProductList == NULL) {
-        fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (EXIT_FAILURE);
-      }
+      MALCHOKE(newProductList, sizeof (Polynomial *) * (productListLength),Polynomial **);
       k = 0;
       for (i = 0; i < productCount; i++) {
 	if (productList[i]->eType == T_OFFLINE) importPoly (productList[i]);
@@ -4766,7 +4625,7 @@ void deportTermList (Polynomial * p)
       if (iMTL[i].lastNodeId == p->id)
 	iMTL[i].lastNodeId = 0;
     struct chunkTicket *cT;
-    cT = (struct chunkTicket *) malloc(sizeof(struct chunkTicket));
+    MALCHOKE(cT, sizeof(struct chunkTicket),struct chunkTicket *);
     cT->chunkOffset = (unsigned long) sP->sum;
     cT->doublePairCount = (unsigned long) sP->factor;
     // Pay-off some (eventually all?) of our debt
@@ -4835,16 +4694,8 @@ Polynomial *restoreExternalPoly (char *functionName)
 
   // New polynomial to create!
 
-  rp = (Polynomial *) malloc (sizeof (Polynomial));
-  if (rp == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
-  eP = (struct externalPoly *) malloc (sizeof (struct externalPoly));
-  if (eP == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(rp, sizeof (Polynomial),Polynomial *);
+  MALCHOKE(eP, sizeof (struct externalPoly),struct externalPoly *);
   rp->e.e = eP;
   strcpy (eP->polynomialFunctionName, functionName);
 #ifdef POLYUSE_DL

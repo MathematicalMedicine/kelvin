@@ -16,6 +16,13 @@
  * Some convenient and commonly used defines.
  **********************************************************************/
 
+#define MALCHOKE(pChunk,chunkSize,chunkCast)				\
+  if ((pChunk = (chunkCast) malloc(chunkSize)) == 0) {			\
+    fprintf (stderr, "malloc of %lu bytes failed at %s:%d!\n",		\
+	     chunkSize, (__FILE__),(__LINE__));				\
+    exit (EXIT_FAILURE);						\
+  }
+
 /**********************************************************************
  * NULL/FALSE/TRUE are probably already defined.
  **********************************************************************/
