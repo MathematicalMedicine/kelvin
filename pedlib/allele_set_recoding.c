@@ -648,23 +648,18 @@ construct_original_allele_set_list (int locus)
      1) * DEF_LOCUS_MALLOC_INCREMENT;
   pLocus->maxNumAlleleSet = maxNumAlleleSet;
   /* allocate the space for the array of pointers to actual allele set */
-  pLocus->ppAlleleSetList =
-    (AlleleSet **) MALLOC ("pLocus->ppAlleleSetList",
-			   sizeof (AlleleSet *) * maxNumAlleleSet);
+  MALCHOKE(pLocus->ppAlleleSetList, sizeof (AlleleSet *) * maxNumAlleleSet, AlleleSet **);
   memset (pLocus->ppAlleleSetList, 0, sizeof (AlleleSet *) * maxNumAlleleSet);
   for (i = 0; i < numAlleleSet; i++) {
     /* allocate space for the actual allele set */
-    pAlleleSet = (AlleleSet *) MALLOC ("pAlleleSet", sizeof (AlleleSet));
+    MALCHOKE(pAlleleSet, sizeof (AlleleSet), AlleleSet *);
     pLocus->ppAlleleSetList[i] = pAlleleSet;
     memset (pLocus->ppAlleleSetList[i], 0, sizeof (AlleleSet));
     pAlleleSet->alleleID = i + 1;
     pAlleleSet->numAllele = 1;
-    pAlleleSet->pAlleles =
-      (int *) MALLOC ("pAlleleSet->pAlleles", sizeof (int));
+    MALCHOKE(pAlleleSet->pAlleles, sizeof (int), int *);
     pAlleleSet->pAlleles[0] = pAlleleSet->alleleID;
-    pAlleleSet->pAlleleBits =
-      (unsigned int *) MALLOC ("pAlleleSet->pAlleleBits",
-			       sizeof (unsigned int) * alleleSetLen);
+    MALCHOKE(pAlleleSet->pAlleleBits, sizeof (unsigned int) * alleleSetLen, unsigned int *);
     memset (pAlleleSet->pAlleleBits, 0, sizeof (int) * alleleSetLen);
     set_allele_bit (pAlleleSet->alleleID, pAlleleSet->pAlleleBits);
 
@@ -711,15 +706,12 @@ add_allele_set (int locus, unsigned int *pAlleleBits)
   if (numAlleleSet >= maxNumAlleleSet) {
     maxNumAlleleSet += DEF_LOCUS_MALLOC_INCREMENT;
 
-    pLocus->ppAlleleSetList =
-      (AlleleSet **) REALLOC ("pLocus->ppAlleleSetList",
-			      pLocus->ppAlleleSetList,
-			      sizeof (AlleleSet *) * maxNumAlleleSet);
+    REALCHOKE(pLocus->ppAlleleSetList, sizeof (AlleleSet *) * maxNumAlleleSet, AlleleSet **);
     pLocus->maxNumAlleleSet = maxNumAlleleSet;
 
   }
   /* allocate space for the actual allele set */
-  pAlleleSet = (AlleleSet *) MALLOC ("pAlleleSet", sizeof (AlleleSet));
+  MALCHOKE(pAlleleSet, sizeof (AlleleSet), AlleleSet *);
   pLocus->ppAlleleSetList[numAlleleSet] = pAlleleSet;
   memset (pAlleleSet, 0, sizeof (AlleleSet));
 
@@ -729,15 +721,11 @@ add_allele_set (int locus, unsigned int *pAlleleBits)
   }
 
   pAlleleSet->alleleID = numAlleleSet + 1;
-  pAlleleSet->pAlleleBits =
-    (unsigned int *) MALLOC ("pAlleleSet->pAlleleBits",
-			     sizeof (unsigned int) * alleleSetLen);
+  MALCHOKE(pAlleleSet->pAlleleBits, sizeof (unsigned int) * alleleSetLen, unsigned int *);
   memset (pAlleleSet->pAlleleBits, 0, sizeof (unsigned int) * alleleSetLen);
 
   pAlleleSet->numAllele = count_alleles (pAlleleBits, alleleSetLen);
-  pAlleleSet->pAlleles = (int *) MALLOC ("pAlleleSet->pAlleles",
-					 sizeof (int) *
-					 pAlleleSet->numAllele);
+  MALCHOKE(pAlleleSet->pAlleles, sizeof (int) * pAlleleSet->numAllele, int *);
   i = 0;
   /* go through each allele in the set */
   for (k = 0; k < alleleSetLen; k++) {
