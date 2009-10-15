@@ -185,10 +185,7 @@ add_map_unit (Map * pMap)
   if (pMap->maxUnit <= pMap->count) {
     /* need to allocate a chunk of memories now */
     pMap->maxUnit += DEF_LOCUS_MALLOC_INCREMENT;
-    pMap->ppMapUnitList = (MapUnit **) REALLOC ("pMap->ppMapUnitList",
-						pMap->ppMapUnitList,
-						sizeof (MapUnit *) *
-						pMap->maxUnit);
+    REALCHOKE(pMap->ppMapUnitList, sizeof (MapUnit *) * pMap->maxUnit, MapUnit **);
   }
 
   pMapUnit = (MapUnit *) MALLOC ("pMapUnit", sizeof (MapUnit));
@@ -435,10 +432,7 @@ add_locus (LocusList * pLocusList, char *sName, int locusType)
   if (pLocusList->maxNumLocus <= pLocusList->numLocus) {
     /* need to reallocate list */
     pLocusList->maxNumLocus += DEF_LOCUS_MALLOC_INCREMENT;
-    pLocusList->ppLocusList = (Locus **) REALLOC ("pLocusList->ppLocusList",
-						  pLocusList->ppLocusList,
-						  sizeof (Locus *) *
-						  pLocusList->maxNumLocus);
+    REALCHOKE(pLocusList->ppLocusList, sizeof (Locus *) * pLocusList->maxNumLocus, Locus **);
   }
   /* allocate space for the locus */
   pLocus = (Locus *) MALLOC ("pLocus", sizeof (Locus));
@@ -533,9 +527,7 @@ add_allele (Locus * pLocus, char *sAlleleName, double freq)
   numAllele = pLocus->numAllele + 1;
 
   /* reallocate alelel frequency space */
-  pLocus->pAlleleFrequency = (double *) REALLOC ("pLocus->pAlleleFrequency",
-						 pLocus->pAlleleFrequency,
-						 numAllele * sizeof (double));
+  REALCHOKE(pLocus->pAlleleFrequency, numAllele * sizeof (double), double *);
 
   /* if we are doing set recoding, we need to calculate the length of 
    * the allele set - how many integers we need to represent a allele in
@@ -545,21 +537,12 @@ add_allele (Locus * pLocus, char *sAlleleName, double freq)
     originalLocusList.alleleSetLen = pLocus->alleleSetLen;
 
   /* allocate space for frequency and count */
-  if (modelOptions->polynomial == TRUE) {
-    pLocus->pAlleleFrequencyPolynomial =
-      (Polynomial *) REALLOC ("pLocus->pAlleleFrequencyPolynomial",
-			      pLocus->pAlleleFrequencyPolynomial,
-			      numAllele * sizeof (Polynomial *));
-  }
+  if (modelOptions->polynomial == TRUE)
+    REALCHOKE(pLocus->pAlleleFrequencyPolynomial, numAllele * sizeof (Polynomial *), Polynomial *);
   /* actual count of the alleles in the pedigree */
-  pLocus->pAlleleCount = (short *) REALLOC ("pLocus->pAlleleCount",
-					    pLocus->pAlleleCount,
-					    numAllele * sizeof (short));
-
+  REALCHOKE(pLocus->pAlleleCount, numAllele * sizeof (short), short *);
   /* original allele names */
-  pLocus->ppAlleleNames = (char **) REALLOC ("pLocus->ppAlleleNames",
-					     pLocus->ppAlleleNames,
-					     numAllele * sizeof (char *));
+  REALCHOKE(pLocus->ppAlleleNames, numAllele * sizeof (char *), char **);
   /* add the name and frequency in */
   pLocus->ppAlleleNames[numAllele - 1] =
     (char *) MALLOC ("pLocus->ppAlleleNames[*]",
@@ -2390,25 +2373,6 @@ add_analysis_locus (SubLocusList * pLocusList, int locus, int directionFlag,
   numLocus = pLocusList->numLocus;
   if (numLocus + 1 > pLocusList->maxNumLocus) {
     return -1;
-#if 0
-    /* need to allocate/reallocate space */
-    pLocusList->maxNumLocus += DEF_LOCUS_MALLOC_INCREMENT;
-    pLocusList->pLocusIndex = (int *) REALLOC ("pLocusList->pLocusIndex",
-					       pLocusList->pLocusIndex,
-					       sizeof (int) *
-					       locusList->maxNumLocus);
-    /* 0 - sex averaged, 1 - male, 2 - female */
-    for (i = 0; i < 3; i++) {
-      pLocusList->pPrevLocusDistance[i] =
-	(double *) REALLOC ("pLocusList->pPrevLocusDistance",
-			    pLocusList->pPrevLocusDistance[i],
-			    sizeof (double) * locusList->maxNumLocus);
-      pLocusList->pNextLocusDistance[i] =
-	(double *) REALLOC ("pLocusList->pNextLocusDistance",
-			    pLocusList->pNextLocusDistance[i],
-			    sizeof (double) * locusList->maxNumLocus);
-    }
-#endif
   }
 
   if (numLocus == 0) {

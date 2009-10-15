@@ -602,7 +602,7 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 	      allele2 = alleleSet2->pAlleles[j];
 	      freq2 = pLocus->pAlleleFrequency[allele2-1]; 
 	      if(condIdx >= numCond) {
-		pCondSet = (probandCondL *) realloc(pCondSet, sizeof(probandCondL) * (numCond+4));
+		REALCHOKE(pCondSet, sizeof(probandCondL) * (numCond+4), probandCondL *);
 		numCond += 4;
 	      }
 	      condL2 = condL * (freq1/sumFreq1) * (freq2 /sumFreq2); 
@@ -2239,10 +2239,7 @@ loop_child_multi_locus_genotype (int locus, int multiLocusIndex,
       if (calcFlag == 1 && multCount >= maxChildElements) {
 	/* resizing likelihoodchildElements array */
 	maxChildElements += 1024;
-	likelihoodChildElements =
-	  (ChildElement *) realloc (likelihoodChildElements,
-				    sizeof (ChildElement) * maxChildElements);
-
+	REALCHOKE(likelihoodChildElements, sizeof (ChildElement) * maxChildElements, ChildElement *);
       }
       if (modelOptions->polynomial == TRUE) {
 	if (pChild != pProband) {
