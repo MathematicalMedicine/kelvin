@@ -434,7 +434,7 @@ create_person (Pedigree * pPed, char *sID)
   int num;
   Person *pPerson;
   int oldNum;
-  unsigned long size;
+  size_t size;
 
   oldNum = pPed->numPerson;
   if (pPed->maxNumPerson <= pPed->numPerson) {
