@@ -1710,7 +1710,7 @@ free_multi_locus_genotype_storage (Pedigree * pPedigree)
     free (pPerson->pTmpLikelihoodIndex);
     if (pPerson->pLikelihood != NULL) {
       /* free space */
-      FREE ("pPerson->pLikelihood", pPerson->pLikelihood);
+      free (pPerson->pLikelihood);
       pPerson->pLikelihood = NULL;
     }
   }

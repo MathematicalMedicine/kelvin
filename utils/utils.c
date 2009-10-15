@@ -88,57 +88,6 @@ logMsg (unsigned int type, int level, const char *format, ...)
 }
 
 
-/* Wrappers for malloc() and friends, with built in error checking
- * and logging.
- */
-void *
-MALLOC (char *description, size_t size)
-{
-  void *ptr = NULL;
-  ptr = malloc (size);
-  if (ptr == NULL)
-    {
-      fprintf (stderr, "Memory allocation failed.\n");
-    }
-  KASSERT (ptr != NULL, "Can't allocate memory for %s of size %d.\n",
-	   description, size);
-  KLOG (LOGMEMORY, LOGDEBUG, "Allocate %p of size %d - %s \n",
-	ptr, size, description);
-  return ptr;
-}
-
-void
-FREE (char *description, void *ptr)
-{
-  KLOG (LOGMEMORY, LOGDEBUG, "Free %p - %s \n", ptr, description);
-  free (ptr);
-}
-
-void *
-REALLOC (char *description, void *ptr, size_t size)
-{
-  void *oldPtr;
-  void *newPtr = NULL;
-
-  oldPtr = ptr;
-  newPtr = realloc (ptr, size);
-  if (newPtr == NULL)
-    {
-      fprintf (stderr, "Memory reallocation failed.\n");
-    }
-  if (ptr == NULL)
-    {
-      memset (newPtr, 0, size);
-    }
-
-  KASSERT (newPtr != NULL, "Can't re-allocate memory for %s of size %d.\n",
-	   description, size);
-  KLOG (LOGMEMORY, LOGDEBUG, "Reallocate %p(from %p) of size %d - %s \n",
-	newPtr, oldPtr, size, description);
-  return newPtr;
-}
-
-
 /* Input handling/checking routines, used when reading configuration
  * and data files.
  */

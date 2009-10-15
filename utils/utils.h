@@ -212,14 +212,6 @@ void logMsg (unsigned int type, int level, const char *format, ...);
 }
 
 
-/* Wrappers for malloc() and friends, with built in error checking
- * and logging.
- */
-void *MALLOC (char *description, size_t size);
-void FREE (char *description, void *ptr);
-void *REALLOC (char *description, void *ptr, size_t size);
-
-
 /* Routines for checking/manipulating lines of file input */
 
 int is_line_blank_or_comment (char *line);
