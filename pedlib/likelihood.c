@@ -186,9 +186,9 @@ allocate_likelihood_space (PedigreeSet * pPedigreeList, int numLocus1)
   size = pow (2, numLocus);
   ppairMatrixNumLocus = numLocus;
   ppairMatrixRowSize = size * sizeof (PPairElement);
-  ppairMatrix = (PPairElement **) calloc (size, sizeof (PPairElement *));
+  CALCHOKE(ppairMatrix, size, sizeof (PPairElement *), PPairElement **);
   for (i = 0; i < size; i++) {
-    ppairMatrix[i] = (PPairElement *) calloc (size, sizeof (PPairElement));
+    CALCHOKE(ppairMatrix[i], size, sizeof (PPairElement), PPairElement *);
   }
   if (bitMask != NULL)
     free (bitMask);
@@ -202,11 +202,10 @@ allocate_likelihood_space (PedigreeSet * pPedigreeList, int numLocus1)
 
   /* pre allocate child likelihood elements */
   maxChildElements = 1024;
-  likelihoodChildElements =
-    (ChildElement *) calloc (sizeof (ChildElement), maxChildElements);
+  CALCHOKE(likelihoodChildElements, sizeof (ChildElement), maxChildElements, ChildElement *);
 
   maxChildren = 20;
-  likelihoodChildCount = (int *) calloc (sizeof (int), maxChildren);
+  CALCHOKE(likelihoodChildCount, sizeof (int), maxChildren, int *);
 
   if(pCondSet == NULL) {
     MALCHOKE(pCondSet, sizeof(probandCondL) * 4, probandCondL *);
@@ -3056,7 +3055,7 @@ build_xmission_matrix (XMission ** ppMatrix, int totalLoci)
   /* minimal two loci */
   //if (size < 9)
   //size = 9;
-  *ppMatrix = (XMission *) calloc (size, sizeof (XMission));
+  CALCHOKE(*ppMatrix, size, sizeof (XMission), XMission *);
   if (*ppMatrix == NULL)
     /* memory allocation failed */
     return -1;
@@ -3121,13 +3120,13 @@ allocate_nucfam_het (PedigreeSet * pPedigreeList, int myNumLocus)
     for (fam = 0; fam < pPedigree->numNuclearFamily; fam++) {
       pMyNucFam = pPedigree->ppNuclearFamilyList[fam];
       if (pMyNucFam->hetFlag[DAD] == NULL) {
-	pMyNucFam->hetFlag[DAD] = (int *) calloc (sizeof (int), myNumLocus);
-	pMyNucFam->hetFlag[MOM] = (int *) calloc (sizeof (int), myNumLocus);
-	pMyNucFam->tmpNumHet[DAD] = (int *) calloc (sizeof (int), myNumLocus);
-	pMyNucFam->tmpNumHet[MOM] = (int *) calloc (sizeof (int), myNumLocus);
-	pMyNucFam->relatedPPairStart = (int *) calloc (sizeof (int), myNumLocus);
-	pMyNucFam->numRelatedPPair = (int *) calloc (sizeof (int), myNumLocus);
-	pMyNucFam->totalRelatedPPair = (int *) calloc ((size_t) sizeof (int), myNumLocus);
+	CALCHOKE(pMyNucFam->hetFlag[DAD], sizeof (int), myNumLocus, int *);
+	CALCHOKE(pMyNucFam->hetFlag[MOM], sizeof (int), myNumLocus, int *);
+	CALCHOKE(pMyNucFam->tmpNumHet[DAD], sizeof (int), myNumLocus, int *);
+	CALCHOKE(pMyNucFam->tmpNumHet[MOM], sizeof (int), myNumLocus, int *);
+	CALCHOKE(pMyNucFam->relatedPPairStart, sizeof (int), myNumLocus, int *);
+	CALCHOKE(pMyNucFam->numRelatedPPair, sizeof (int), myNumLocus, int *);
+	CALCHOKE(pMyNucFam->totalRelatedPPair, sizeof (int), myNumLocus, int *);
       }
     }
   }
