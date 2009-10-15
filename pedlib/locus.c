@@ -188,8 +188,7 @@ add_map_unit (Map * pMap)
     REALCHOKE(pMap->ppMapUnitList, sizeof (MapUnit *) * pMap->maxUnit, MapUnit **);
   }
 
-  pMapUnit = (MapUnit *) MALLOC ("pMapUnit", sizeof (MapUnit));
-  /* make sure the memory chunk is initialized */
+  MALCHOKE(pMapUnit, sizeof (MapUnit), MapUnit *);
   memset (pMapUnit, 0, sizeof (MapUnit));
   /* initialize the base pair location to negative - unknown */
   pMapUnit->basePairLocation = -1;
@@ -435,7 +434,7 @@ add_locus (LocusList * pLocusList, char *sName, int locusType)
     REALCHOKE(pLocusList->ppLocusList, sizeof (Locus *) * pLocusList->maxNumLocus, Locus **);
   }
   /* allocate space for the locus */
-  pLocus = (Locus *) MALLOC ("pLocus", sizeof (Locus));
+  MALCHOKE(pLocus, sizeof (Locus), Locus *);
   memset (pLocus, 0, sizeof (Locus));
 
   /* add this locus to the list */
@@ -448,8 +447,7 @@ add_locus (LocusList * pLocusList, char *sName, int locusType)
   /* if this is a trait locus, need to allocate more space */
   pLocus->locusType = locusType;
   if (locusType == LOCUS_TYPE_TRAIT) {
-    pLocus->pTraitLocus = (TraitLocus *) MALLOC ("pLocus->pTraitLocus",
-						 sizeof (TraitLocus));
+    MALCHOKE(pLocus->pTraitLocus, sizeof (TraitLocus), TraitLocus *);
     memset (pLocus->pTraitLocus, 0, sizeof (TraitLocus));
     pLocusList->numTraitLocus++;
   }
@@ -544,9 +542,7 @@ add_allele (Locus * pLocus, char *sAlleleName, double freq)
   /* original allele names */
   REALCHOKE(pLocus->ppAlleleNames, numAllele * sizeof (char *), char **);
   /* add the name and frequency in */
-  pLocus->ppAlleleNames[numAllele - 1] =
-    (char *) MALLOC ("pLocus->ppAlleleNames[*]",
-		     (strlen (sAlleleName) + 1) * sizeof (char));
+  MALCHOKE(pLocus->ppAlleleNames[numAllele - 1], (strlen (sAlleleName) + 1) * sizeof (char), char *);
   strcpy (pLocus->ppAlleleNames[numAllele - 1], sAlleleName);
   pLocus->pAlleleFrequency[numAllele - 1] = freq;
   pLocus->pAlleleCount[numAllele - 1] = 0;
@@ -563,7 +559,7 @@ add_trait (int trait, TraitLocus * pTraitLocus, int traitType)
   Trait *pTrait;
 
   /* allocate space */
-  pTrait = (Trait *) MALLOC ("pTrait", sizeof (Trait));
+  MALCHOKE(pTrait, sizeof (Trait), Trait *);
   memset (pTrait, 0, sizeof (Trait));
 
   /* type can be either affection status or quantitative trait */
@@ -1392,7 +1388,7 @@ add_genotype (Genotype ** ppList, int *pCount, int locusIndex,
   int numInts;
 
   /* allocate space for the genotype */
-  pGenotype = (Genotype *) MALLOC ("pGenotype", sizeof (Genotype));
+  MALCHOKE(pGenotype, sizeof (Genotype), Genotype *);
   memset (pGenotype, 0, sizeof (Genotype));
   pGenotype->penslot.penetrance = 1;
 
@@ -1415,12 +1411,8 @@ add_genotype (Genotype ** ppList, int *pCount, int locusIndex,
   /* allocate space for the allele bits - as potentially there are more
    * than 32 -1 possible alleles */
   numInts = originalLocusList.alleleSetLen;
-  pGenotype->pAlleleBits[DAD] =
-    (unsigned int *) MALLOC ("pGenotype->pAlleleBits[DAD]",
-			     sizeof (unsigned int) * numInts);
-  pGenotype->pAlleleBits[MOM] =
-    (unsigned int *) MALLOC ("pGenotype->pAlleleBits[MOM]",
-			     sizeof (unsigned int) * numInts);
+  MALCHOKE(pGenotype->pAlleleBits[DAD], sizeof (unsigned int) * numInts, unsigned int *);
+  MALCHOKE(pGenotype->pAlleleBits[MOM], sizeof (unsigned int) * numInts, unsigned int *);
   memset (pGenotype->pAlleleBits[DAD], 0, sizeof (unsigned int) * numInts);
   memset (pGenotype->pAlleleBits[MOM], 0, sizeof (unsigned int) * numInts);
   /* set the bits */
@@ -1684,23 +1676,18 @@ allocate_multi_locus_genotype_storage (Pedigree * pPedigree, int numLocus)
     }
 
     /* allocate space */
-    pPerson->pLikelihood =
-      (ConditionalLikelihood *) MALLOC ("pPerson->pLikelihood ",
-					sizeof (ConditionalLikelihood) *
-					size);
-    //memset (pPerson->pLikelihood, 0, sizeof (ConditionalLikelihood) * size);
+    MALCHOKE(pPerson->pLikelihood, sizeof (ConditionalLikelihood) * size, ConditionalLikelihood *);
+    memset (pPerson->pLikelihood, 0, sizeof (ConditionalLikelihood) * size);
     pPerson->maxNumConditionals = size;
     MALCHOKE(pPerson->pTmpLikelihoodIndex, sizeof (int) * size, int *);
 
     /* allocate loop breaker work space */
     if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] != NULL) {
-      pPerson->loopBreakerStruct =
-	(LoopBreaker *) calloc (1, sizeof (LoopBreaker));
+      CALCHOKE(pPerson->loopBreakerStruct, 1, sizeof (LoopBreaker), LoopBreaker *);
       pPerson->loopBreakerStruct->maxNumGenotype = size;
       MALCHOKE(pPerson->loopBreakerStruct->genotype, sizeof (Genotype **) * size, Genotype ***);
       for (j = 0; j < size; j++) {
-	pPerson->loopBreakerStruct->genotype[j] =
-	  (Genotype **) calloc (numLocus, sizeof (Genotype *));
+	CALCHOKE(pPerson->loopBreakerStruct->genotype[j], numLocus, sizeof (Genotype *), Genotype **);
       }
     }
   }
@@ -2763,15 +2750,15 @@ reallocate_LD_loci (LDLoci * pLocus, int m, int n)
   pLocus->numAllele1 = m;
   pLocus->numAllele2 = n;
 
-  pLocus->ppDPrime = (double **) calloc (m - 1, sizeof (double *));
-  pLocus->ppDValue = (double **) calloc (m - 1, sizeof (double *));
-  pLocus->ppHaploFreq = (double **) calloc (m, sizeof (double *));
+  CALCHOKE(pLocus->ppDPrime, m - 1, sizeof (double *), double **);
+  CALCHOKE(pLocus->ppDValue, m - 1, sizeof (double *), double **);
+  CALCHOKE(pLocus->ppHaploFreq,  m, sizeof (double *), double **);
   for (i = 0; i < m - 1; i++) {
-    pLocus->ppDPrime[i] = (double *) calloc (n - 1, sizeof (double));
-    pLocus->ppDValue[i] = (double *) calloc (n - 1, sizeof (double));
-    pLocus->ppHaploFreq[i] = (double *) calloc (n, sizeof (double));
+    CALCHOKE(pLocus->ppDPrime[i], n - 1, sizeof (double), double *);
+    CALCHOKE(pLocus->ppDValue[i], n - 1, sizeof (double), double *);
+    CALCHOKE(pLocus->ppHaploFreq[i], n, sizeof (double), double *);
   }
-  pLocus->ppHaploFreq[m - 1] = (double *) calloc (n, sizeof (double));
+  CALCHOKE(pLocus->ppHaploFreq[m - 1], n, sizeof (double), double *);
 
   return 0;
 }
