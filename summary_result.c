@@ -35,17 +35,12 @@ int initialize_tp_result_storage ()
   int i, j, k;
   int num;
 
-  tp_result =
-    (SUMMARY_STAT ***) calloc (pLambdaCell->ndprime + 1,
-			       sizeof (SUMMARY_STAT **));
+  CALCHOKE(tp_result, (size_t) pLambdaCell->ndprime + 1, sizeof (SUMMARY_STAT **), SUMMARY_STAT ***);
   for (i = 0; i < pLambdaCell->ndprime + 1; i++) {
-    tp_result[i] =
-      (SUMMARY_STAT **) calloc (modelRange->ntheta + 1,
-				sizeof (SUMMARY_STAT *));
+    CALCHOKE(tp_result[i], (size_t) modelRange->ntheta + 1, sizeof (SUMMARY_STAT *), SUMMARY_STAT **);
     for (j = 0; j < modelRange->ntheta + 1; j++) {
       num = modelRange->nafreq + 1;
-      tp_result[i][j] =
-	(SUMMARY_STAT *) calloc (num, sizeof (SUMMARY_STAT));
+      CALCHOKE(tp_result[i][j], (size_t) num, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
       for (k = 0; k < num; k++) {
 	tp_result[i][j][k].max_penIdx = -1;
 	tp_result[i][j][k].scale=0;

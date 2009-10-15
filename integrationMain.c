@@ -52,27 +52,21 @@
   memset (&dk_theta0max, 0, sizeof (st_DKMaxModel));
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     /* Assumes that dkelvin can only handle a single D' */
-    dk_globalmax.dprime = (double *) calloc (1, sizeof (double));
-    dk_dprime0max.dprime = (double *) calloc (1, sizeof (double));
-    dk_theta0max.dprime = (double *) calloc (1, sizeof (double));
-    KASSERT ((dk_globalmax.dprime != NULL) && (dk_dprime0max.dprime != NULL) &&
-	     (dk_theta0max.dprime != NULL), "calloc failed");
+    CALCHOKE(dk_globalmax.dprime, (size_t) 1, sizeof (double), double *);
+    CALCHOKE(dk_dprime0max.dprime, (size_t) 1, sizeof (double), double *);
+    CALCHOKE(dk_theta0max.dprime, (size_t) 1, sizeof (double), double *);
   }
-  dk_globalmax.pen = calloc (modelRange->nlclass, sizeof (st_DKMaxModelPenVector));
-  dk_dprime0max.pen = calloc (modelRange->nlclass, sizeof (st_DKMaxModelPenVector));
-  dk_theta0max.pen = calloc (modelRange->nlclass, sizeof (st_DKMaxModelPenVector));
-  KASSERT ((dk_globalmax.pen != NULL) && (dk_dprime0max.pen != NULL) &&
-	   (dk_theta0max.pen != NULL), "calloc failed");
+  CALCHOKE(dk_globalmax.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
+  CALCHOKE(dk_dprime0max.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
+  CALCHOKE(dk_theta0max.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
 
   if(fpIR !=NULL){
     memset (&dk_curModel, 0, sizeof (st_DKMaxModel));        
     if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     /* Assumes that dkelvin can only handle a single D' */
-      dk_curModel.dprime = (double *) calloc (1, sizeof (double));
-      KASSERT ((dk_curModel.dprime != NULL), "calloc failed");
+      CALCHOKE(dk_curModel.dprime, (size_t) 1, sizeof (double), double *);
     }
-    dk_curModel.pen = calloc (modelRange->nlclass, sizeof (st_DKMaxModelPenVector));
-    KASSERT ((dk_curModel.pen != NULL), "calloc failed");
+    CALCHOKE(dk_curModel.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
 
     /*SurfaceFile header*/
     fprintf(fpIR, "#HLOD"); 
@@ -426,7 +420,7 @@
             num_BR = num_sample_SS_theta;  // currenlty 260
 	  }
           max_scale=0;
-          BRscale = (int *) calloc( num_BR, sizeof(int));
+          CALCHOKE(BRscale, (size_t)  num_BR, sizeof(int), int *);
 	  /*The main loop to Calculate BR(theta, dprime) or BR(thetaM, thetaF)*/
    	  for (i = 0; i < num_BR; i++) {    /* num_BR = 141 for Sex-Average Analysis
 					       = 260 for Sex-Specific Analysis */
@@ -722,13 +716,10 @@
     markerLocusList.numLocus = modelType->numMarkers;
     markerLocusList.traitOrigLocus = -1;
     markerLocusList.traitLocusIndex = -1;
-    markerLocusList.pLocusIndex =
-      (int *) calloc (markerLocusList.maxNumLocus, sizeof (int));
+    CALCHOKE(markerLocusList.pLocusIndex, (size_t) markerLocusList.maxNumLocus, sizeof (int), int *);
     for (k = 0; k < 3; k++) {
-      markerLocusList.pPrevLocusDistance[k] =
-	(double *) calloc (markerLocusList.maxNumLocus, sizeof (double));
-      markerLocusList.pNextLocusDistance[k] =
-	(double *) calloc (markerLocusList.maxNumLocus, sizeof (double));
+      CALCHOKE(markerLocusList.pPrevLocusDistance[k], (size_t) markerLocusList.maxNumLocus, sizeof (double), double *);
+      CALCHOKE(markerLocusList.pNextLocusDistance[k], (size_t) markerLocusList.maxNumLocus, sizeof (double), double *);
     }
 
     /* assuming we always have trait in the analysis - this may not be true 
@@ -736,13 +727,10 @@
      */
     savedLocusList.numLocus = modelType->numMarkers + 1;
     savedLocusList.maxNumLocus = modelType->numMarkers + 1;
-    savedLocusList.pLocusIndex =
-      (int *) calloc (savedLocusList.maxNumLocus, sizeof (int));
+    CALCHOKE(savedLocusList.pLocusIndex, (size_t) savedLocusList.maxNumLocus, sizeof (int), int *);
     for (k = 0; k < 3; k++) {
-      savedLocusList.pPrevLocusDistance[k] =
-	(double *) calloc (savedLocusList.maxNumLocus, sizeof (double));
-      savedLocusList.pNextLocusDistance[k] =
-	(double *) calloc (savedLocusList.maxNumLocus, sizeof (double));
+      CALCHOKE(savedLocusList.pPrevLocusDistance[k], (size_t) savedLocusList.maxNumLocus, sizeof (double), double *);
+      CALCHOKE(savedLocusList.pNextLocusDistance[k], (size_t) savedLocusList.maxNumLocus, sizeof (double), double *);
     }
 
     /* calculate the trait likelihood independent of the trait position */
@@ -750,14 +738,11 @@
     traitLocusList.maxNumLocus = 1;
     traitLocusList.traitLocusIndex = 0;
     traitLocusList.traitOrigLocus = traitLocus;
-    traitLocusList.pLocusIndex =
-      (int *) calloc (traitLocusList.maxNumLocus, sizeof (int));
+    CALCHOKE(traitLocusList.pLocusIndex, (size_t) traitLocusList.maxNumLocus, sizeof (int), int *);
     traitLocusList.pLocusIndex[0] = 0;
     for (k = 0; k < 3; k++) {
-      traitLocusList.pPrevLocusDistance[k] =
-	(double *) calloc (savedLocusList.maxNumLocus, sizeof (double));
-      traitLocusList.pNextLocusDistance[k] =
-	(double *) calloc (savedLocusList.maxNumLocus, sizeof (double));
+      CALCHOKE(traitLocusList.pPrevLocusDistance[k], (size_t) savedLocusList.maxNumLocus, sizeof (double), double *);
+      CALCHOKE(traitLocusList.pNextLocusDistance[k], (size_t) savedLocusList.maxNumLocus, sizeof (double), double *);
 
       traitLocusList.pPrevLocusDistance[k][0] = -1;
       traitLocusList.pNextLocusDistance[k][0] = -1;
@@ -863,7 +848,7 @@
 
     /* get the trait locations we need to evaluate at */
     numPositions = modelRange->ntloc;
-    mp_result = (SUMMARY_STAT *) calloc (numPositions, sizeof (SUMMARY_STAT));
+    CALCHOKE(mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
 
     /* Need to output the results */
     dk_writeMPBRHeader ();
@@ -910,8 +895,7 @@
 				originalLocusList.numLocus - 1, traitPos, 0);
 
       /* store the markers used */
-      mp_result[posIdx].pMarkers =
-	(int *) calloc (modelType->numMarkers, sizeof (int));
+      CALCHOKE(mp_result[posIdx].pMarkers, (size_t) modelType->numMarkers, sizeof (int), int *);
       k = 0;			/* marker index */
       for (i = 0; i < locusList->numLocus; i++) {
 	j = locusList->pLocusIndex[i];

@@ -1683,11 +1683,11 @@ allocate_multi_locus_genotype_storage (Pedigree * pPedigree, int numLocus)
 
     /* allocate loop breaker work space */
     if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] != NULL) {
-      CALCHOKE(pPerson->loopBreakerStruct, 1, sizeof (LoopBreaker), LoopBreaker *);
+      CALCHOKE(pPerson->loopBreakerStruct, (size_t) 1, sizeof (LoopBreaker), LoopBreaker *);
       pPerson->loopBreakerStruct->maxNumGenotype = size;
       MALCHOKE(pPerson->loopBreakerStruct->genotype, sizeof (Genotype **) * size, Genotype ***);
       for (j = 0; j < size; j++) {
-	CALCHOKE(pPerson->loopBreakerStruct->genotype[j], numLocus, sizeof (Genotype *), Genotype **);
+	CALCHOKE(pPerson->loopBreakerStruct->genotype[j], (size_t) numLocus, sizeof (Genotype *), Genotype **);
       }
     }
   }
@@ -2750,15 +2750,15 @@ reallocate_LD_loci (LDLoci * pLocus, int m, int n)
   pLocus->numAllele1 = m;
   pLocus->numAllele2 = n;
 
-  CALCHOKE(pLocus->ppDPrime, m - 1, sizeof (double *), double **);
-  CALCHOKE(pLocus->ppDValue, m - 1, sizeof (double *), double **);
-  CALCHOKE(pLocus->ppHaploFreq,  m, sizeof (double *), double **);
+  CALCHOKE(pLocus->ppDPrime, (size_t) m - 1, sizeof (double *), double **);
+  CALCHOKE(pLocus->ppDValue, (size_t) m - 1, sizeof (double *), double **);
+  CALCHOKE(pLocus->ppHaploFreq,  (size_t) m, sizeof (double *), double **);
   for (i = 0; i < m - 1; i++) {
-    CALCHOKE(pLocus->ppDPrime[i], n - 1, sizeof (double), double *);
-    CALCHOKE(pLocus->ppDValue[i], n - 1, sizeof (double), double *);
-    CALCHOKE(pLocus->ppHaploFreq[i], n, sizeof (double), double *);
+    CALCHOKE(pLocus->ppDPrime[i], (size_t) n - 1, sizeof (double), double *);
+    CALCHOKE(pLocus->ppDValue[i], (size_t) n - 1, sizeof (double), double *);
+    CALCHOKE(pLocus->ppHaploFreq[i], (size_t) n, sizeof (double), double *);
   }
-  CALCHOKE(pLocus->ppHaploFreq[m - 1], n, sizeof (double), double *);
+  CALCHOKE(pLocus->ppHaploFreq[m - 1], (size_t) n, sizeof (double), double *);
 
   return 0;
 }

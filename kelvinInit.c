@@ -304,7 +304,7 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
       /* in order to simplify looping, even for LE, we add a fake LD parameter dprime=0, which
        * is LE */
       modelRange->ndprime = 1;
-      modelRange->dprime = (double *) calloc (1, sizeof (double));
+      CALCHOKE(modelRange->dprime, (size_t) 1, sizeof (double), double *);
       modelRange->dprime[0] = 0;
       pLambdaCell = findLambdas (modelRange, 2, 2);
       dprime0Idx = 0;
@@ -352,7 +352,7 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
   build_xmission_matrix (&traitMatrix, 1);
   build_xmission_matrix (&markerMatrix, totalLoci - 1);
   xmissionMatrix = nullMatrix;
-  tmpID = (char *) calloc (totalLoci, sizeof (char));
+  CALCHOKE(tmpID, (size_t) totalLoci, sizeof (char), char *);
 
   /* initialize loci by doing genotype elimination, set recoding */
   initialize_loci (&pedigreeSet);
