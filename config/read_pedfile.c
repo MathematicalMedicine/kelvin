@@ -160,9 +160,9 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	
       }
       if (pCurrPedigree) {
-	pPedigreeSet->pDonePerson =
-	  (int *) realloc (pPedigreeSet->pDonePerson,
-			   sizeof (int) * pPedigreeSet->maxNumPerson);
+	REALCHOKE(pPedigreeSet->pDonePerson, sizeof (int) * pPedigreeSet->maxNumPerson, int *);
+	/** @warning Note that the realloc/memset is not a good idea since the existing data might
+	    be copied (unnecessarily) before being zeroed. */
 	memset (pPedigreeSet->pDonePerson, 0,
 		sizeof (int) * pPedigreeSet->maxNumPerson);
 	
@@ -402,12 +402,9 @@ create_pedigree (PedigreeSet * pPedigreeSet, char *sPedLabel)
   if (pPedigreeSet->maxNumPedigree <= pPedigreeSet->numPedigree) {
     /* allocate more space */
     num = (pPedigreeSet->numPedigree + DEF_PED_MALLOC_INCREMENT);
-    pPedigreeSet->ppPedigreeSet =
-      (Pedigree **) realloc (pPedigreeSet->ppPedigreeSet,
-			     num * sizeof (Pedigree *));
+    REALCHOKE(pPedigreeSet->ppPedigreeSet, num * sizeof (Pedigree *), Pedigree **);
     pPedigreeSet->maxNumPedigree = num;
-    pPedigreeSet->nullLikelihood = (double *)
-      realloc (pPedigreeSet->nullLikelihood, num * sizeof (double));
+    REALCHOKE(pPedigreeSet->nullLikelihood, num * sizeof (double), double *);
   }
   /* increment number of pedigrees for the dataset */
   pPedigreeSet->numPedigree++;
@@ -443,8 +440,7 @@ create_person (Pedigree * pPed, char *sID)
   if (pPed->maxNumPerson <= pPed->numPerson) {
     /* allocate more space */
     num = (pPed->numPerson + DEF_PED_MALLOC_INCREMENT);
-    pPed->ppPersonList = (Person **) realloc (pPed->ppPersonList,
-					      num * sizeof (Person *));
+    REALCHOKE(pPed->ppPersonList, num * sizeof (Person *), Person **);
     pPed->maxNumPerson = num;
   }
   pPed->numPerson++;
@@ -722,9 +718,7 @@ add_founder (Pedigree * pPed, Person * pPerson)
   if (pPed->numFounder <= pPed->maxNumFounder) {
     /* need to reallocate memory for the founder list */
     pPed->maxNumFounder += DEF_PED_MALLOC_INCREMENT;
-    pPed->ppFounderList = (Person **) realloc (pPed->ppFounderList,
-					       sizeof (Person *) *
-					       pPed->maxNumFounder);
+    REALCHOKE(pPed->ppFounderList, sizeof (Person *) * pPed->maxNumFounder, Person **);
   }
   /* Add the person to the founder list */
   pPed->ppFounderList[pPed->numFounder] = pPerson;
@@ -836,10 +830,7 @@ add_spouse (Person * pPerson, Person * pSpouse)
   if (oldNum >= pPerson->maxNumSpouse) {
     pPerson->maxNumSpouse += 1;
     /* need to reallocate (or allocate for the first time) */
-    pPerson->ppSpouseList = (Person **) realloc (pPerson->ppSpouseList,
-						 pPerson->maxNumSpouse *
-						 sizeof (Person *));
-
+    REALCHOKE(pPerson->ppSpouseList, pPerson->maxNumSpouse * sizeof (Person *), Person **);
   }
   /* add the spouse in */
   pPerson->ppSpouseList[oldNum] = pSpouse;
@@ -860,11 +851,7 @@ add_person_nuclear_family (Person * pPerson, NuclearFamily * pNucFam)
   if (oldNum >= pPerson->maxNumNuclearFamily) {
     /* need to reallocate (or allocate for the first time) */
     pPerson->maxNumNuclearFamily += DEF_PED_MALLOC_INCREMENT;
-    pPerson->ppNuclearFamilyList =
-      (NuclearFamily **) realloc (pPerson->ppNuclearFamilyList,
-				  pPerson->maxNumNuclearFamily *
-				  sizeof (NuclearFamily *));
-
+    REALCHOKE(pPerson->ppNuclearFamilyList, pPerson->maxNumNuclearFamily * sizeof (NuclearFamily *), NuclearFamily **);
   }
   /* add the nuclear family in the list */
   pPerson->ppNuclearFamilyList[oldNum] = pNucFam;
@@ -981,9 +968,7 @@ add_nuclear_family_child (NuclearFamily * pNucFam, Person * pChild)
   if (pNucFam->numChildren >= pNucFam->maxNumChildren) {
     /* need to allocate new space */
     pNucFam->maxNumChildren += DEF_PED_MALLOC_INCREMENT;
-    pNucFam->ppChildrenList = (Person **) realloc (pNucFam->ppChildrenList,
-						   sizeof (Person *) *
-						   pNucFam->maxNumChildren);
+    REALCHOKE(pNucFam->ppChildrenList, sizeof (Person *) * pNucFam->maxNumChildren, Person **);
   }
 
   /* add the child */
@@ -1069,10 +1054,7 @@ create_nuclear_family (Pedigree * pPed)
      * Ok, we have used up all the space, need to reallocate a bigger
      * array and move old stuff over and free the old space */
     pPed->maxNuclearFamily += DEF_PED_MALLOC_INCREMENT;
-    pPed->ppNuclearFamilyList =
-      (NuclearFamily **) realloc (pPed->ppNuclearFamilyList,
-				  sizeof (NuclearFamily *) *
-				  pPed->maxNuclearFamily);
+    REALCHOKE(pPed->ppNuclearFamilyList, sizeof (NuclearFamily *) * pPed->maxNuclearFamily, NuclearFamily **);
   }
 
   /* allocate space for the actual nuclear family */
@@ -1153,6 +1135,7 @@ add_founder_nuclear_family (NuclearFamily * pNucFam)
 
   if (pPed->numFounderNuclearFamily >= pPed->maxNumFounderNuclearFamily) {
     /* need to reallocate space for the list */
+    /// @warning The preceeding comment implies that we might be losing memory here.
     pPed->maxNumFounderNuclearFamily += DEF_PED_MALLOC_INCREMENT;
     MALCHOKE(ppNew, sizeof (NuclearFamily *) *pPed->maxNumFounderNuclearFamily, NuclearFamily **);
     /* copy over the old list */
@@ -1318,7 +1301,7 @@ read_ccfile (char *ccFileName, PedigreeSet * pPedigreeSet)
 		 sCurrPedLabel);
 	if (numPed + 1 > maxNumPed) {
 	  maxNumPed += 6;
-	  pPedSet = realloc (pPedSet, sizeof (Pedigree *) * maxNumPed);
+	  REALCHOKE(pPedSet, sizeof (Pedigree *) * maxNumPed, void *);
 	}
 	pPedSet[numPed++] = pPed;
       }
@@ -1364,8 +1347,7 @@ add_loopbreaker (Pedigree * pPed, Person * pPerson)
       return;
     i++;
   }
-  pPed->loopBreakerList = (Person **) realloc (pPed->loopBreakerList,
-					       (num + 1) * sizeof (Person *));
+  REALCHOKE(pPed->loopBreakerList, (num + 1) * sizeof (Person *), Person **);
   pPed->loopBreakerList[num] = pPerson;
   pPed->numLoopBreaker++;
 }

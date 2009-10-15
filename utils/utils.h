@@ -16,10 +16,33 @@
  * Some convenient and commonly used defines.
  **********************************************************************/
 
+/**
+
+  Macros for malloc and friends allows us to report module and line
+  number for failures.
+
+  Casts aren't really necessary, but they can help clarify and constrain.
+
+*/
+
 #define MALCHOKE(pChunk,chunkSize,chunkCast)				\
   if ((pChunk = (chunkCast) malloc(chunkSize)) == 0) {			\
-    fprintf (stderr, "malloc of %lu bytes failed at %s:%d!\n",		\
-	     chunkSize, (__FILE__),(__LINE__));				\
+    fprintf (stderr,"malloc of %lu bytes for variable %s cast as (%s) failed at %s:%d!\n", \
+	     chunkSize,#pChunk,#chunkCast,(__FILE__),(__LINE__));	\
+    exit (EXIT_FAILURE);						\
+  }
+
+#define REALCHOKE(pChunk,chunkSize,chunkCast)				\
+  if ((pChunk = (chunkCast) realloc(pChunk, chunkSize)) == 0) {		\
+    fprintf (stderr,"realloc to %lu bytes of variable %s cast as (%s) failed at %s:%d!\n", \
+	     chunkSize,#pChunk,#chunkCast,(__FILE__),(__LINE__));	\
+    exit (EXIT_FAILURE);						\
+  }
+
+#define CALCHOKE(pChunk,chunkSize,chunkCount,chunkCast)			\
+  if ((pChunk = (chunkCast) calloc(chunkSize, chunkCount)) == 0) {	\
+    fprintf (stderr,"calloc of %lu * %lu zeroed bytes of variable %s cast as (%s) failed at %s:%d!\n", \
+	     chunkSize,chunkCount,#pChunk,#chunkCast,(__FILE__),(__LINE__)); \
     exit (EXIT_FAILURE);						\
   }
 

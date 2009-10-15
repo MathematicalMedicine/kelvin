@@ -63,7 +63,7 @@ void addTraitLocus (ModelRange * range, double val)
     range->ntloc = maxtloc = 0;
   /* Enlarge array if necessary. */
   if (range->ntloc == maxtloc) {
-    range->tloc = realloc (range->tloc, (maxtloc + CHUNKSIZE) * sizeof (double));
+    REALCHOKE(range->tloc, (maxtloc + CHUNKSIZE) * sizeof (double), void *);
     maxtloc = maxtloc + CHUNKSIZE;
   }
 
@@ -95,7 +95,7 @@ void addGeneFreq (ModelRange * range, double val)
     range->ngfreq = maxgfreq = 0;
   /* Enlarge array if necessary. */
   if (range->ngfreq == maxgfreq) {
-    range->gfreq = realloc (range->gfreq, (maxgfreq + CHUNKSIZE) * sizeof (double));
+    REALCHOKE(range->gfreq, (maxgfreq + CHUNKSIZE) * sizeof (double), void *);
     maxgfreq = maxgfreq + CHUNKSIZE;
   }
   /* Add the element. */
@@ -114,8 +114,7 @@ void addAlleleFreq (ModelRange * range, double val)
     range->nafreq = maxafreq = 0;
   /* Enlarge array if necessary. */
   if (range->nafreq == maxafreq) {
-    range->afreq = realloc (range->afreq,
-			    (maxafreq + CHUNKSIZE) * sizeof (double));
+    REALCHOKE(range->afreq, (maxafreq + CHUNKSIZE) * sizeof (double), void *);
     maxafreq = maxafreq + CHUNKSIZE;
   }
   /* Add the element. */
@@ -134,8 +133,7 @@ void addAlpha (ModelRange * range, double val)
     range->nalpha = maxalpha = 0;
   /* Enlarge array if necessary. */
   if (range->nalpha == maxalpha) {
-    range->alpha = realloc (range->alpha,
-			    (maxalpha + CHUNKSIZE) * sizeof (double));
+    REALCHOKE(range->alpha, (maxalpha + CHUNKSIZE) * sizeof (double), void *);
     maxalpha = maxalpha + CHUNKSIZE;
   }
   /* Add the element. */
@@ -154,8 +152,7 @@ void addDPrime (ModelRange * range, double val)
     range->ndprime = maxdprime = 0;
   /* Enlarge array if necessary. */
   if (range->ndprime == maxdprime) {
-    range->dprime = realloc (range->dprime,
-			     (maxdprime + CHUNKSIZE) * sizeof (double));
+    REALCHOKE(range->dprime, (maxdprime + CHUNKSIZE) * sizeof (double), void *);
     maxdprime = maxdprime + CHUNKSIZE;
   }
   /* Add the element. */
@@ -183,9 +180,7 @@ void addTheta (ModelRange * range, int type, double val)
   if (type == THETA_AVG || type == THETA_MALE) {
     /* Enlarge array if necessary. */
     if (range->thetacnt[SEXML] == maxtheta[SEXML]) {
-      range->theta[SEXML] = realloc (range->theta[SEXML],
-				     (maxtheta[SEXML] +
-				      CHUNKSIZE) * sizeof (double));
+      REALCHOKE(range->theta[SEXML], (maxtheta[SEXML] + CHUNKSIZE) * sizeof (double), void *);
       maxtheta[SEXML] = maxtheta[SEXML] + CHUNKSIZE;
     }
     /* Add the element. */
@@ -197,9 +192,7 @@ void addTheta (ModelRange * range, int type, double val)
   if (type == THETA_FEMALE) {
     /* Enlarge array if necessary. */
     if (range->thetacnt[SEXFM] == maxtheta[SEXFM]) {
-      range->theta[SEXFM] = realloc (range->theta[SEXFM],
-				     (maxtheta[SEXFM] +
-				      CHUNKSIZE) * sizeof (double));
+      REALCHOKE(range->theta[SEXFM], (maxtheta[SEXFM] + CHUNKSIZE) * sizeof (double), void *);
       maxtheta[SEXFM] = maxtheta[SEXFM] + CHUNKSIZE;
     }
     /* Add the element. */
@@ -263,9 +256,7 @@ void addPenetrance (ModelRange * range, int type, double val)
    * get the type by subtracting DD, the "base type" from the
    * integer count at invocation. */
   if (penetcnt[type] == penetmax[type]) {
-    range->penet[0][type] = realloc (range->penet[0][type],
-				     (penetmax[type] +
-				      CHUNKSIZE) * sizeof (double));
+    REALCHOKE(range->penet[0][type], (penetmax[type] + CHUNKSIZE) * sizeof (double), void *);
     penetmax[type] = penetmax[type] + CHUNKSIZE;
   }
   /* Add the element. */
@@ -302,10 +293,7 @@ void addConstraint (int type, int a1, int c1, int p1,
 
   /* Allocate more space if necessary. */
   if (constmax[type] == constcnt[type]) {
-    constraints[type] = (Constraint *) realloc (constraints[type],
-						(constmax[type] +
-						 CHUNKSIZE) *
-						sizeof (Constraint));
+    REALCHOKE(constraints[type], (constmax[type] + CHUNKSIZE) * sizeof (Constraint), Constraint *);
     constmax[type] = constmax[type] + CHUNKSIZE;
   }
 
@@ -388,9 +376,7 @@ void addParameter (ModelRange * range, int dim, double val)
   /* Next, add the parameter to the appropriate location in the
    * param[][][][] array, which may entail allocating more space. */
   if (paramcnt[dim] == parammax[dim]) {
-    range->param[0][0][dim] = realloc (range->param[0][0][dim],
-				       (parammax[dim] +
-					CHUNKSIZE) * sizeof (double));
+    REALCHOKE(range->param[0][0][dim], (parammax[dim] + CHUNKSIZE) * sizeof (double), void *);
     parammax[dim] = parammax[dim] + CHUNKSIZE;
   }
   /* Add the element. */
@@ -432,8 +418,7 @@ void addTraitThreshold (ModelRange * range, double val)
 
   /* Enlarge array if necessary. */
   if (range->ntthresh == maxtthresh) {
-    range->tthresh[0] = realloc (range->tthresh[0],
-				 (maxtthresh + CHUNKSIZE) * sizeof (double));
+    REALCHOKE(range->tthresh[0], (maxtthresh + CHUNKSIZE) * sizeof (double), void *);
     maxtthresh = maxtthresh + CHUNKSIZE;
   }
   /* Add the element. */
@@ -1200,8 +1185,7 @@ findLambdas (ModelRange * range, int m, int n)
   /* OK, no matching m X n array found. Check to make sure there's
    * room for a new one. */
   if (range->nlambdas == range->maxnlambdas) {
-    range->lambdas =
-      realloc (range->lambdas, (range->maxnlambdas + CHUNKSIZE) * sizeof (LambdaCell));
+    REALCHOKE(range->lambdas, (range->maxnlambdas + CHUNKSIZE) * sizeof (LambdaCell), void *);
     range->maxnlambdas = range->maxnlambdas + CHUNKSIZE;
   }
   /* Create the new entry. */

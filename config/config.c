@@ -1184,7 +1184,7 @@ int set_quantitative (char **toks, int numtoks, void *unused)
   if (strcasecmp (toks[1], "normal") == 0) {
     staticModelType.distrib = QT_FUNCTION_T;
     /* I think this is degrees of freedom; anyway, YH sez: fix it at 30 */
-    staticModelType.constants = realloc (staticModelType.constants, 1 * sizeof (int));
+    REALCHOKE(staticModelType.constants, 1 * sizeof (int), void *);
     staticModelType.constants[0] = 30;
     staticModelRange.npardim = 1;
     if (numtoks == 2)
@@ -1429,7 +1429,7 @@ int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_
       if (((vlist != NULL) &&
 	   ((vlist = realloc (vlist, sizeof (st_valuelist) * (listsize += 10))) == NULL)) || 
 	  ((vals = realloc (vals, sizeof (double) * (listsize += 10))) == NULL))
-	logMsg (LOGDEFAULT, LOGFATAL, "malloc failed\n");
+	logMsg (LOGDEFAULT, LOGFATAL, "realloc failed\n");
     }
     
     /* Skip the first character of the token to avoid the leading '-' of a negative number */
@@ -1639,7 +1639,7 @@ int tokenizeLine (char *line, char ***tokgroup_h, int *tokgroupsize)
     if (numtoks + 1 >= *tokgroupsize) {
       *tokgroupsize += 10;
       if ((tokgroup = realloc (tokgroup, sizeof (char *) * *tokgroupsize)) == NULL)
-	logMsg (LOGDEFAULT, LOGFATAL, "malloc failed\n");
+	logMsg (LOGDEFAULT, LOGFATAL, "ralloc failed\n");
     }
     tokgroup[numtoks++] = ca;
     ca = strtok_r (NULL, " ", &cb);
