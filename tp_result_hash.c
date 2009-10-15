@@ -158,11 +158,7 @@ SUMMARY_STAT *new_tp_result (int dprimeIdx, int thetaIdx, int mkrFreqIdx)
     }
   }
 
-  newTPRhe = (struct tp_result_hash_entry *)  malloc (sizeof (struct tp_result_hash_entry));
-  if (newTPRhe == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  MALCHOKE(newTPRhe, sizeof (struct tp_result_hash_entry), struct tp_result_hash_entry *);
   newTPRhe->tp_result = (SUMMARY_STAT *) calloc (sizeof (SUMMARY_STAT), 1);
   if (newTPRhe->tp_result == NULL) {
     fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);

@@ -209,9 +209,9 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
     int va, vb;
     double min, max;
     
-    modelRange->penetLimits = malloc ((vb = NPENET (modelRange->nalleles)) * sizeof (double *));
+    MALCHOKE(modelRange->penetLimits, (vb = NPENET (modelRange->nalleles)) * sizeof (double *),void *);
     for (va = 0; va < vb; va++)
-      modelRange->penetLimits[va] = malloc (2 * sizeof (double));
+      MALCHOKE(modelRange->penetLimits[va], 2 * sizeof (double),void *);
     getPedigreeTraitRange (&pedigreeSet, &min, &max);
     if (min < 0 || max > 30)
       logMsg (LOGDEFAULT, LOGFATAL, "Can't intuit Chi-squared DegreesOfFreedom from input data, please configure explicitly\n");
@@ -288,9 +288,9 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
     modelType->minOriginal = 0;
     modelType->maxOriginal = 1;
     if (modelRange->tthresh == NULL) {
-      modelRange->tthresh = (double **) malloc (sizeof (double *));
+      MALCHOKE(modelRange->tthresh, sizeof (double *), double **);
       for (i = 0; i < modelRange->nlclass; i++) {
-	modelRange->tthresh[i] = malloc (sizeof (double));
+	MALCHOKE(modelRange->tthresh[i], sizeof (double), void *);
       }
     }
   }

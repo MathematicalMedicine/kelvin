@@ -172,9 +172,9 @@ void addTheta (ModelRange * range, int type, double val)
   /* Initialize the structure if first access. */
   if (!range->theta) {
     range->ngender = 2;
-    range->theta = malloc (range->ngender * sizeof (double *));
+    MALCHOKE(range->theta, range->ngender * sizeof (double *), void *);
     range->theta[SEXML] = range->theta[SEXFM] = NULL;
-    range->thetacnt = malloc (range->ngender * sizeof (int *));
+    MALCHOKE(range->thetacnt, range->ngender * sizeof (int *), void *);
     range->thetacnt[SEXML] = maxtheta[SEXML] = 0;
     range->thetacnt[SEXFM] = maxtheta[SEXFM] = 0;
   }
@@ -234,13 +234,13 @@ void addPenetrance (ModelRange * range, int type, double val)
     /* Initialize: remember, if you are a pre-expansion penet[][][]
      * array, the first dimension (liability class) will always have
      * a dimension of size 1. */
-    range->penet = malloc (sizeof (double **));
+    MALCHOKE(range->penet, sizeof (double **), void *);
     i = NPENET (range->nalleles);
-    range->penet[0] = malloc (i * sizeof (double *));
-    range->penetLimits = malloc (i * sizeof (double *)); /* Space for limits */
+    MALCHOKE(range->penet[0], i * sizeof (double *), void *);
+    MALCHOKE(range->penetLimits, i * sizeof (double *), void *);
     for (j = 0; j < i; j++) {
-      range->penet[0][j] = malloc (CHUNKSIZE * sizeof (double));
-      range->penetLimits[j] = malloc (2 * sizeof (double)); /* A min and a max for each */
+      MALCHOKE(range->penet[0][j], CHUNKSIZE * sizeof (double), void *);
+      MALCHOKE(range->penetLimits[j], 2 * sizeof (double), void *);
       range->penetLimits[j][0] = 999999999.00;
       range->penetLimits[j][1] = -999999999.00;
     }
@@ -249,8 +249,8 @@ void addPenetrance (ModelRange * range, int type, double val)
      * liability classes; hence we only need NPENET() individual
      * values for the counters (indeed, we only need one of each,
      * but that would complicate things too much I suspect). */
-    penetcnt = malloc (i * sizeof (int));
-    penetmax = malloc (i * sizeof (int));
+    MALCHOKE(penetcnt, i * sizeof (int), void *);
+    MALCHOKE(penetmax, i * sizeof (int), void *);
     for (j = 0; j < i; j++) {
       penetcnt[j] = 0;
       penetmax[j] = CHUNKSIZE;
@@ -366,19 +366,19 @@ void addParameter (ModelRange * range, int dim, double val)
      * dimension (allele) will also always have a dimension of size
      * 1, since we "share" values, at least before applying
      * constraints, across all allele combinations. */
-    range->param = malloc (sizeof (double ***));
-    range->param[0] = malloc (sizeof (double **));
-    range->param[0][0] = malloc (range->npardim * sizeof (double *));
+    MALCHOKE(range->param, sizeof (double ***), void *);
+    MALCHOKE(range->param[0], sizeof (double **), void *);
+    MALCHOKE(range->param[0][0], range->npardim * sizeof (double *), void *);
     for (i = 0; i < range->npardim; i++)
-      range->param[0][0][i] = malloc (CHUNKSIZE * sizeof (double));
+      MALCHOKE(range->param[0][0][i], CHUNKSIZE * sizeof (double), void *);
 
     /* The only "real" dimension of param[][][][] reflected in
      * paramcnt and parammax is the dim dimension, since that's the
      * only one that will vary at input time. Recall that all
      * parameters are shared across all alleles and liability
      * classes.  */
-    paramcnt = malloc (range->npardim * sizeof (int));
-    parammax = malloc (range->npardim * sizeof (int));
+    MALCHOKE(paramcnt, range->npardim * sizeof (int), void *);
+    MALCHOKE(parammax, range->npardim * sizeof (int), void *);
     for (i = 0; i < range->npardim; i++) {
       paramcnt[i] = 0;
       parammax[i] = CHUNKSIZE;
@@ -425,7 +425,7 @@ void addTraitThreshold (ModelRange * range, double val)
     /* Initialize: remember, if you are a pre-expansion tthresh[][]
      * array, the first dimension (liability class) will always have
      * a dimension of size 1. */
-    range->tthresh = malloc (sizeof (double *));
+    MALCHOKE(range->tthresh, sizeof (double *), void *);
     range->tthresh[0] = NULL;
     range->ntthresh = 0;
   }
@@ -462,7 +462,7 @@ int checkImprintingPenets (ModelRange *range, int imprinting)
       return (-1);
 
     /* Otherwise, copy penetrances for PEN_Dd to PEN_dD */
-    range->penet[0][PEN_dD-PEN_DD] = malloc ((penetmax[PEN_Dd-PEN_DD]) * sizeof (double));
+    MALCHOKE(range->penet[0][PEN_dD-PEN_DD], (penetmax[PEN_Dd-PEN_DD]) * sizeof (double), void *);
     penetcnt[PEN_dD-PEN_DD] = penetcnt[PEN_Dd-PEN_DD];
     range->penetLimits[PEN_dD-PEN_DD][0] = range->penetLimits[PEN_Dd-PEN_DD][0];
     range->penetLimits[PEN_dD-PEN_DD][1] = range->penetLimits[PEN_Dd-PEN_DD][1];
@@ -843,7 +843,7 @@ void expandRange (ModelRange *range)
    * number. The actualy number of combinations will be stored in
    * range->nthetas. */
   if ((tmp2 = range->theta)) {
-    range->theta = malloc (range->ngender * sizeof (double *));
+    MALCHOKE(range->theta, range->ngender * sizeof (double *), void *);
     if (range->thetacnt[SEXFM] == 0) {
       /* Easy case is that you have only one gender anyway. Since
        * there is only one dimension, there can be no constraints
@@ -852,7 +852,7 @@ void expandRange (ModelRange *range)
        * the sex-averaged/male theta list real fast. */
       
       range->theta[SEXML] = tmp2[SEXML];
-      range->theta[SEXFM] = malloc (range->thetacnt[SEXML] * sizeof (double));
+      MALCHOKE(range->theta[SEXFM], range->thetacnt[SEXML] * sizeof (double), void *);
       for (i = 0; i < range->thetacnt[SEXML]; i++)
 	range->theta[SEXFM][i] = range->theta[SEXML][i];
       range->thetacnt[SEXFM] = range->thetacnt[SEXML];
@@ -863,9 +863,7 @@ void expandRange (ModelRange *range)
       /* If you have 2 genders, you need to factor their respective
        * values while checking constraints. */
       for (i = 0; i < range->ngender; i++)
-	range->theta[i] =
-	  malloc ((range->thetacnt[SEXML] * range->thetacnt[SEXFM]) *
-		  sizeof (double));
+	MALCHOKE(range->theta[i], (range->thetacnt[SEXML] * range->thetacnt[SEXFM]) * sizeof (double), void *);
       range->ntheta = 0;
       for (i = 0; i < range->thetacnt[SEXML]; i++)
 	for (j = 0; j < range->thetacnt[SEXFM]; j++) {
@@ -906,10 +904,10 @@ void expandRange (ModelRange *range)
     i = 1;
     for (j = 0; j < NPENET (range->nalleles); j++)
       i = i * penetcnt[j];
-    range->penet = malloc (sizeof (double **));
-    range->penet[0] = malloc (NPENET (range->nalleles) * sizeof (double *));
+    MALCHOKE(range->penet, sizeof (double **), void *);
+    MALCHOKE(range->penet[0], NPENET (range->nalleles) * sizeof (double *), void *);
     for (j = 0; j < NPENET (range->nalleles); j++)
-      range->penet[0][j] = malloc (i * sizeof (double));
+      MALCHOKE(range->penet[0][j], i * sizeof (double), void *);
     
     /* OK, now populate the array. */
     for (k = 0; k < i; k++) {
@@ -964,14 +962,14 @@ void expandRange (ModelRange *range)
      * of parameter values, although this will surely change as the
      * constraints are applied. Go ahead and allocate what you might
      * need. */
-    range->param = malloc (sizeof (double ***));
-    range->param[0] = malloc (NPENET (range->nalleles) * sizeof (double **));
+    MALCHOKE(range->param, sizeof (double ***), void *);
+    MALCHOKE(range->param[0], NPENET (range->nalleles) * sizeof (double **), void *);
     for (j = 0; j < NPENET (range->nalleles); j++) {
-      range->param[0][j] = malloc (range->npardim * sizeof (double *));
+      MALCHOKE(range->param[0][j], range->npardim * sizeof (double *), void *);
       /* Corrected by Yungui: used to read:
        *  for (k = 0; k < paramcnt[0]; k++) */
       for (k = 0; k < range->npardim; k++)
-	range->param[0][j][k] = malloc (i * sizeof (double));
+	MALCHOKE(range->param[0][j][k], i * sizeof (double), void *);
     }
 
     /* Time to populate the range->param array. Recall the first
@@ -1025,9 +1023,9 @@ void expandClassThreshold (ModelRange * range)
     j = pow (i, range->nlclass);
 
     /* Allocate a new tthresh array structure. */
-    range->tthresh = malloc (range->nlclass * sizeof (double *));
+    MALCHOKE(range->tthresh, range->nlclass * sizeof (double *), void *);
     for (k = 0; k < range->nlclass; k++)
-      range->tthresh[k] = malloc (j * sizeof (double));
+      MALCHOKE(range->tthresh[k], j * sizeof (double), void *);
 
     /* OK, now populate the array. */
     range->ntthresh = 0;
@@ -1077,11 +1075,11 @@ void expandClassPenet (ModelRange * range)
     j = pow (range->npenet, range->nlclass);
     
     /* Allocate a new penet array structure. */
-    range->penet = malloc (range->nlclass * sizeof (double **));
+    MALCHOKE(range->penet, range->nlclass * sizeof (double **), void *);
     for (k = 0; k < range->nlclass; k++) {
-      range->penet[k] = malloc (NPENET (range->nalleles) * sizeof (double *));
+      MALCHOKE(range->penet[k], NPENET (range->nalleles) * sizeof (double *), void *);
       for (l = 0; l < NPENET (range->nalleles); l++)
-	range->penet[k][l] = malloc (j * sizeof (double));
+	MALCHOKE(range->penet[k][l], j * sizeof (double), void *);
     }
     
     /* OK, now populate the array. */
@@ -1116,14 +1114,14 @@ void expandClassPenet (ModelRange * range)
     j = pow (range->nparam, range->nlclass);
 
     /* Allocate a new param array structure. */
-    range->param = malloc (range->nlclass * sizeof (double ***));
+    MALCHOKE(range->param, range->nlclass * sizeof (double ***), void *);
     for (k = 0; k < range->nlclass; k++) {
       range->param[k] =
 	malloc (NPENET (range->nalleles) * sizeof (double **));
       for (l = 0; l < NPENET (range->nalleles); l++) {
-	range->param[k][l] = malloc (range->npardim * sizeof (double *));
+	MALCHOKE(range->param[k][l], range->npardim * sizeof (double *), void *);
 	for (m = 0; m < range->npardim; m++)
-	  range->param[k][l][m] = malloc (j * sizeof (double));
+	  MALCHOKE(range->param[k][l][m], j * sizeof (double), void *);
       }
     }
 
@@ -1156,20 +1154,27 @@ void expandClassPenet (ModelRange * range)
 }
 
 
-/**********************************************************************
- * Expand the dprime array into the appropriate lambda array. Unlike
- * the other range expansion functions, this function is not called
- * upfront, but rather as needed when operating under linkage
- * disequilibrium. The two extra parameters are the number of alleles
- * for the two loci under consideration. 
- *
- * Since n and m may be repeated over the course of an analysis, we
- * cache the lambda arrays produced from the dprime values for each
- * value of n and m in modelRange lambdas, an array of structures of
- * type lambdaCell. That way, we can retrieve the appropriate array if
- * its already been generated, otherwise, we build the array from the
- * dprimes, cache it, and return a pointer to it.
- *
+/**
+
+  Either find or build and return a lambda array for the specified
+  disease/marker allele count m and marker allele count n.
+
+  Expand the provided dprime array into an appropriate generic lambda
+  array. Unlike the other range expansion functions, this function is
+  not called upfront, but rather as needed when operating under
+  linkage disequilibrium. The parameters m and n are the number of
+  alleles for the two loci under consideration.
+
+  Since the lambda array is independent of actual allele frequencies,
+  and only depends upon the number of alleles for each locus, it can
+  frequently be reused, so we &&&
+  preserve the lambda arrays produced from the dprime values for each
+  value of n and m for reuse in modelRange->lambdas, a vector of
+  modelRange->nlambdas structures of type lambdaCell distinguished by
+  the values of m and n. That way, we can retrieve the appropriate
+  array if its already been generated, otherwise, we build the array
+  from the dprimes, cache it, and return a pointer to it.
+ 
  * TODO: since the array is symmetric regardless of n and m, we could
  * save some storage by reconfiguring the existing array if the mxn
  * version (but not the nxm version) already exists. This shouldn't
@@ -1183,15 +1188,16 @@ findLambdas (ModelRange * range, int m, int n)
 {
   int i = 0, j, k, l = pow (range->ndprime, ((m - 1) * (n - 1)));
 
-  /* First, see if the array of lambdas already exists. */
+  /* First, see if an m X n array of lambdas already exists. */
   while (i < range->nlambdas) {
-    if (range->lambdas[i].m == m && range->lambdas[i].n == n)
+    if (range->lambdas[i].m == m && range->lambdas[i].n == n) {
       /* return (range->lambdas[i].lambda); */
       return (&range->lambdas[i]);
+    }
     i++;
   }
 
-  /* OK, no matching cached array found. Check to make sure there's
+  /* OK, no matching m X n array found. Check to make sure there's
    * room for a new one. */
   if (range->nlambdas == range->maxnlambdas) {
     range->lambdas =
@@ -1202,32 +1208,24 @@ findLambdas (ModelRange * range, int m, int n)
   range->lambdas[range->nlambdas].m = m;
   range->lambdas[range->nlambdas].n = n;
   range->lambdas[range->nlambdas].ndprime = l;
-  range->lambdas[range->nlambdas].lambda =
-    (double ***) malloc (l * sizeof (double **));
-  range->lambdas[range->nlambdas].impossibleFlag =
-    (int *) malloc (l * sizeof (int));
-  memset (range->lambdas[range->nlambdas].impossibleFlag, 0,
-	  l * sizeof (int));
-  range->lambdas[range->nlambdas].haploFreq =
-    (double ***) malloc (l * sizeof (double **));
-  range->lambdas[range->nlambdas].DValue =
-    (double ***) malloc (l * sizeof (double **));
-  for (i = 0; i < l; i++) {
-    range->lambdas[range->nlambdas].lambda[i] =
-      (double **) malloc ((m - 1) * sizeof (double *));
-    for (j = 0; j < (m - 1); j++)
-      range->lambdas[range->nlambdas].lambda[i][j] =
-	(double *) malloc ((n - 1) * sizeof (double));
+  MALCHOKE(range->lambdas[range->nlambdas].lambda, l * sizeof (double **), double ***);
+  MALCHOKE(range->lambdas[range->nlambdas].impossibleFlag, l * sizeof (int), int *);
+  memset (range->lambdas[range->nlambdas].impossibleFlag, 0, l * sizeof (int));
+  MALCHOKE(range->lambdas[range->nlambdas].haploFreq, l * sizeof (double **), double ***);
+  MALCHOKE(range->lambdas[range->nlambdas].DValue, l * sizeof (double **), double ***);
 
-    range->lambdas[range->nlambdas].haploFreq[i] =
-      (double **) malloc (m * sizeof (double *));
-    range->lambdas[range->nlambdas].DValue[i] =
-      (double **) malloc (m * sizeof (double *));
+  for (i = 0; i < l; i++) {
+    MALCHOKE(range->lambdas[range->nlambdas].lambda[i], (m - 1) * sizeof (double *), double **);
+
+    for (j = 0; j < (m - 1); j++)
+      MALCHOKE(range->lambdas[range->nlambdas].lambda[i][j], (n - 1) * sizeof (double), double *);
+
+    MALCHOKE(range->lambdas[range->nlambdas].haploFreq[i], m * sizeof (double *),double **);
+    MALCHOKE(range->lambdas[range->nlambdas].DValue[i], m * sizeof (double *),double **);
+
     for (j = 0; j < m; j++) {
-      range->lambdas[range->nlambdas].haploFreq[i][j] =
-	(double *) malloc (n * sizeof (double));
-      range->lambdas[range->nlambdas].DValue[i][j] =
-	(double *) malloc (n * sizeof (double));
+      MALCHOKE(range->lambdas[range->nlambdas].haploFreq[i][j], n * sizeof (double), double *);
+      MALCHOKE(range->lambdas[range->nlambdas].DValue[i][j], n * sizeof (double), double *);
     }
 
   }
@@ -1236,11 +1234,13 @@ findLambdas (ModelRange * range, int m, int n)
   /* Now populate the values in the appropriate array. */
   for (i = 0; i < l; i++)
     for (j = 0; j < (m - 1); j++)
-      for (k = 0; k < (n - 1); k++)
+      for (k = 0; k < (n - 1); k++) {
 	range->lambdas[range->nlambdas - 1].lambda[i][j][k] =
 	  range->dprime[((int) (i / pow (range->ndprime, k))) %
 			range->ndprime];
-
+	//	fprintf (stderr, "lambda[i=%d][j=%d][k=%d] is %g\n", i, j, k,
+	//		 range->lambdas[range->nlambdas - 1].lambda[i][j][k]);
+      }
   /* Return a pointer to the appropriate 3 dimensional lambda array. */
   /* return (range->lambdas[range->nlambdas-1].lambda); */
   return (&range->lambdas[range->nlambdas - 1]);

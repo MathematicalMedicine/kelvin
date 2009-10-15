@@ -40,8 +40,8 @@
     }
   }
 
-  xl=(double *)malloc(size_BR*sizeof(double));
-  xu=(double *)malloc(size_BR*sizeof(double));
+  MALCHOKE(xl, size_BR*sizeof(double), double *);
+  MALCHOKE(xu, size_BR*sizeof(double), double *);
   for(i=0;i<size_BR;i++){
     xl[i]=0;
     xu[i]=1;
@@ -56,23 +56,23 @@
     dk_dprime0max.dprime = (double *) calloc (1, sizeof (double));
     dk_theta0max.dprime = (double *) calloc (1, sizeof (double));
     KASSERT ((dk_globalmax.dprime != NULL) && (dk_dprime0max.dprime != NULL) &&
-	     (dk_theta0max.dprime != NULL), "malloc failed");
+	     (dk_theta0max.dprime != NULL), "calloc failed");
   }
   dk_globalmax.pen = calloc (modelRange->nlclass, sizeof (st_DKMaxModelPenVector));
   dk_dprime0max.pen = calloc (modelRange->nlclass, sizeof (st_DKMaxModelPenVector));
   dk_theta0max.pen = calloc (modelRange->nlclass, sizeof (st_DKMaxModelPenVector));
   KASSERT ((dk_globalmax.pen != NULL) && (dk_dprime0max.pen != NULL) &&
-	   (dk_theta0max.pen != NULL), "malloc failed");
+	   (dk_theta0max.pen != NULL), "calloc failed");
 
   if(fpIR !=NULL){
     memset (&dk_curModel, 0, sizeof (st_DKMaxModel));        
     if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     /* Assumes that dkelvin can only handle a single D' */
       dk_curModel.dprime = (double *) calloc (1, sizeof (double));
-      KASSERT ((dk_curModel.dprime != NULL), "malloc failed");
+      KASSERT ((dk_curModel.dprime != NULL), "calloc failed");
     }
     dk_curModel.pen = calloc (modelRange->nlclass, sizeof (st_DKMaxModelPenVector));
-    KASSERT ((dk_curModel.pen != NULL), "malloc failed");
+    KASSERT ((dk_curModel.pen != NULL), "calloc failed");
 
     /*SurfaceFile header*/
     fprintf(fpIR, "#HLOD"); 
@@ -238,7 +238,7 @@
   if (modelType->type == TP) {
     /* Two point. */
     if (originalLocusList.pLDLoci == NULL) {
-      originalLocusList.pLDLoci = (LDLoci *) malloc (sizeof (LDLoci));
+      MALCHOKE(originalLocusList.pLDLoci, sizeof (LDLoci),LDLoci *);
       memset (originalLocusList.pLDLoci, 0, sizeof (LDLoci));
     }
     pLDLoci = &originalLocusList.pLDLoci[0];
@@ -247,13 +247,13 @@
     if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM) {
       /* fake some LD information to simplify looping */
       pLDLoci->numAllele1 = 2;
-      pLDLoci->ppDPrime = (double **) malloc (sizeof (double *));
-      pLDLoci->ppDPrime[0] = (double *) malloc (sizeof (double));
-      pLDLoci->ppDValue = (double **) malloc (sizeof (double *));
-      pLDLoci->ppDValue[0] = (double *) malloc (sizeof (double));
-      pLDLoci->ppHaploFreq = (double **) malloc (sizeof (double *) * 2);
-      pLDLoci->ppHaploFreq[0] = (double *) malloc (sizeof (double) * 2);
-      pLDLoci->ppHaploFreq[1] = (double *) malloc (sizeof (double) * 2);
+      MALCHOKE(pLDLoci->ppDPrime, sizeof (double *), double **);
+      MALCHOKE(pLDLoci->ppDPrime[0], sizeof (double), double *);
+      MALCHOKE(pLDLoci->ppDValue, sizeof (double *), double **);
+      MALCHOKE(pLDLoci->ppDValue[0], sizeof (double), double *);
+      MALCHOKE(pLDLoci->ppHaploFreq, sizeof (double *) * 2, double **);
+      MALCHOKE(pLDLoci->ppHaploFreq[0], sizeof (double) * 2, double *);
+      MALCHOKE(pLDLoci->ppHaploFreq[1], sizeof (double) * 2, double *);
 
       /* initialize it */
       pLDLoci->ppDPrime[0][0] = 0;
@@ -261,11 +261,11 @@
 
     locusList = &savedLocusList;
     savedLocusList.numLocus = 2;
-    savedLocusList.pLocusIndex =(int *) malloc (sizeof (int) * savedLocusList.numLocus);
+    MALCHOKE(savedLocusList.pLocusIndex, sizeof (int) * savedLocusList.numLocus, int *);
 
     for (i = 0; i < 3; i++) {
-      savedLocusList.pPrevLocusDistance[i] =(double *) malloc (sizeof (double) * savedLocusList.numLocus);
-      savedLocusList.pNextLocusDistance[i] =(double *) malloc (sizeof (double) * savedLocusList.numLocus);
+      MALCHOKE(savedLocusList.pPrevLocusDistance[i], sizeof (double) * savedLocusList.numLocus, double *);
+      MALCHOKE(savedLocusList.pNextLocusDistance[i], sizeof (double) * savedLocusList.numLocus, double *);
       savedLocusList.pPrevLocusDistance[i][0] = -1;
       savedLocusList.pNextLocusDistance[i][1] = -1;
     }

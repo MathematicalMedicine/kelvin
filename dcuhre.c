@@ -64,7 +64,7 @@
 
 
 #include "dcuhre.h"
-
+#include "utils/utils.h"
 
 
 #define checkpt() fprintf (stderr, "Checkpoint at line %d of file \"%s\"\n",__LINE__,__FILE__)
@@ -97,29 +97,29 @@ dcuhre_ (dcuhre_state * s)
   }
 
   /* Step1.2 Setting up global variables controling the list of subregions */
-  s->g = (double **) malloc (sizeof (double *) * s->ndim);
-  s->w = (double **) malloc (sizeof (double *) * 5);
-  s->rulpts = (int *) malloc (sizeof (int) * s->wtleng);
-  s->scales = (double **) malloc (sizeof (double *) * 3);
-  s->norms = (double **) malloc (sizeof (double *) * 3);
-  s->errcof = (double *) malloc (sizeof (double) * 6);
-  s->diff_result = (double *) malloc (sizeof (double) * s->maxsub);	/* This is created for another stopping criterion */
+  MALCHOKE(s->g, sizeof (double *) * s->ndim, double **);
+  MALCHOKE(s->w, sizeof (double *) * 5, double **);
+  MALCHOKE(s->rulpts, sizeof (int) * s->wtleng, int *);
+  MALCHOKE(s->scales, sizeof (double *) * 3, double **);
+  MALCHOKE(s->norms, sizeof (double *) * 3, double **);
+  MALCHOKE(s->errcof, sizeof (double) * 6, double *);
+  MALCHOKE(s->diff_result, sizeof (double) * s->maxsub, double *); /* This is created for another stopping criterion */
 
   for (i = 0; i < s->ndim; i++) {
-    s->g[i] = (double *) malloc (sizeof (double) * s->wtleng);
+    MALCHOKE(s->g[i], sizeof (double) * s->wtleng, double *);
   }
   for (i = 0; i < 5; i++) {
-    s->w[i] = (double *) malloc (sizeof (double) * s->wtleng);
+    MALCHOKE(s->w[i], sizeof (double) * s->wtleng, double *);
   }
   for (i = 0; i < 3; i++) {
-    s->scales[i] = (double *) malloc (sizeof (double) * s->wtleng);
-    s->norms[i] = (double *) malloc (sizeof (double) * s->wtleng);
+    MALCHOKE(s->scales[i], sizeof (double) * s->wtleng, double *);
+    MALCHOKE(s->norms[i], sizeof (double) * s->wtleng, double *);
   }
 
 
 
   /* Step1.2 Creating Pointers for subregions */
-  s->sbrg_heap = (sub_region **) malloc (sizeof (sub_region *) * s->maxsub);
+  MALCHOKE(s->sbrg_heap, sizeof (sub_region *) * s->maxsub, sub_region **);
   for (i = 0; i < s->maxsub; i++) {
     s->sbrg_heap[i] = NULL;
   }
@@ -206,13 +206,13 @@ dadhre_ (dcuhre_state * s)
 
 
   /*Step2.2 initialize the first subregion */
-  s->sbrg_heap[0] = (sub_region *) malloc (sizeof (sub_region));
+  MALCHOKE(s->sbrg_heap[0], sizeof (sub_region), sub_region *);
   cw_sbrg = s->sbrg_heap[0];
 
   cw_sbrg->region_id = 0;
   cw_sbrg->region_level = 0;
-  cw_sbrg->center = (double *) malloc (sizeof (double) * s->ndim);
-  cw_sbrg->hwidth = (double *) malloc (sizeof (double) * s->ndim);
+  MALCHOKE(cw_sbrg->center, sizeof (double) * s->ndim, double *);
+  MALCHOKE(cw_sbrg->hwidth, sizeof (double) * s->ndim, double *);
   cw_sbrg->cur_scale = s->scale;
   for (i = 0; i < s->ndim; i++) {
     cw_sbrg->center[i] = (s->xl[i] + s->xu[i]) / 2;
@@ -324,15 +324,15 @@ dadhre_ (dcuhre_state * s)
       s->error -= parent_sbrg->local_error;
 
       /*Step 3.2   Compute first half region (left child) */
-      s->sbrg_heap[s->sbrgns] = (sub_region *) malloc (sizeof (sub_region));
+      MALCHOKE(s->sbrg_heap[s->sbrgns], sizeof (sub_region), sub_region *);
       cw_sbrg = s->sbrg_heap[s->sbrgns];
 
       cw_sbrg->parent_id = parent_sbrg->region_id;
       cw_sbrg->region_id = s->sbrgns;
       parent_sbrg->lchild_id = cw_sbrg->region_id;
       cw_sbrg->region_level = parent_sbrg->region_level + 1;
-      cw_sbrg->center = (double *) malloc (sizeof (double) * s->ndim);
-      cw_sbrg->hwidth = (double *) malloc (sizeof (double) * s->ndim);
+      MALCHOKE(cw_sbrg->center, sizeof (double) * s->ndim, double *);
+      MALCHOKE(cw_sbrg->hwidth, sizeof (double) * s->ndim, double *);
       cw_sbrg->cur_scale = s->scale;
       for (i = 0; i < s->ndim; i++) {
 	cw_sbrg->center[i] = parent_sbrg->center[i];
@@ -361,15 +361,15 @@ dadhre_ (dcuhre_state * s)
       s->sbrgns++;
 
       /*Step 3.3 Compute second half region.(right child) */
-      s->sbrg_heap[s->sbrgns] = (sub_region *) malloc (sizeof (sub_region));
+      MALCHOKE(s->sbrg_heap[s->sbrgns], sizeof (sub_region), sub_region *);
       cw_sbrg = s->sbrg_heap[s->sbrgns];
 
       cw_sbrg->parent_id = parent_sbrg->region_id;
       cw_sbrg->region_id = s->sbrgns;
       parent_sbrg->rchild_id = cw_sbrg->region_id;
       cw_sbrg->region_level = parent_sbrg->region_level + 1;
-      cw_sbrg->center = (double *) malloc (sizeof (double) * s->ndim);
-      cw_sbrg->hwidth = (double *) malloc (sizeof (double) * s->ndim);
+      MALCHOKE(cw_sbrg->center, sizeof (double) * s->ndim, double *);
+      MALCHOKE(cw_sbrg->hwidth, sizeof (double) * s->ndim, double *);
       cw_sbrg->cur_scale = s->scale;
       for (i = 0; i < s->ndim; i++) {
 	cw_sbrg->center[i] = parent_sbrg->center[i];
@@ -455,8 +455,8 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   rgnvol = 1.0;
   divaxn = 0;
 
-  x = (double *) malloc (sizeof (double) * s->ndim);
-  null = (double *) malloc (sizeof (double) * 8);
+  MALCHOKE(x, sizeof (double) * s->ndim, double *);
+  MALCHOKE(null, sizeof (double) * 8, double *);
   for (i = 0; i < s->ndim; i++) {
     rgnvol *= cw_sbrg->hwidth[i];
     x[i] = cw_sbrg->center[i];
