@@ -456,8 +456,6 @@ recode_genotype (int locus, Pedigree * pPedigree)
   unsigned int *pAlleleBits;
   int allele;
 
-  //  memset (pDonePerson, 0, numPerson * sizeof (int));
-
   /* get the locus structure */
   pLocus = originalLocusList.ppLocusList[locus];
 
@@ -648,19 +646,16 @@ construct_original_allele_set_list (int locus)
      1) * DEF_LOCUS_MALLOC_INCREMENT;
   pLocus->maxNumAlleleSet = maxNumAlleleSet;
   /* allocate the space for the array of pointers to actual allele set */
-  MALCHOKE(pLocus->ppAlleleSetList, sizeof (AlleleSet *) * maxNumAlleleSet, AlleleSet **);
-  memset (pLocus->ppAlleleSetList, 0, sizeof (AlleleSet *) * maxNumAlleleSet);
+  CALCHOKE(pLocus->ppAlleleSetList, (size_t) 1, sizeof (AlleleSet *) * maxNumAlleleSet, AlleleSet **);
   for (i = 0; i < numAlleleSet; i++) {
     /* allocate space for the actual allele set */
-    MALCHOKE(pAlleleSet, sizeof (AlleleSet), AlleleSet *);
+    CALCHOKE(pAlleleSet, (size_t) 1, sizeof (AlleleSet), AlleleSet *);
     pLocus->ppAlleleSetList[i] = pAlleleSet;
-    memset (pLocus->ppAlleleSetList[i], 0, sizeof (AlleleSet));
     pAlleleSet->alleleID = i + 1;
     pAlleleSet->numAllele = 1;
     MALCHOKE(pAlleleSet->pAlleles, sizeof (int), int *);
     pAlleleSet->pAlleles[0] = pAlleleSet->alleleID;
-    MALCHOKE(pAlleleSet->pAlleleBits, sizeof (unsigned int) * alleleSetLen, unsigned int *);
-    memset (pAlleleSet->pAlleleBits, 0, sizeof (int) * alleleSetLen);
+    CALCHOKE(pAlleleSet->pAlleleBits, (size_t) 1, sizeof (unsigned int) * alleleSetLen, unsigned int *);
     set_allele_bit (pAlleleSet->alleleID, pAlleleSet->pAlleleBits);
 
     pAlleleSet->maxFreq = pLocus->pAlleleFrequency[i];
@@ -711,9 +706,8 @@ add_allele_set (int locus, unsigned int *pAlleleBits)
 
   }
   /* allocate space for the actual allele set */
-  MALCHOKE(pAlleleSet, sizeof (AlleleSet), AlleleSet *);
+  CALCHOKE(pAlleleSet, (size_t) 1,  sizeof (AlleleSet), AlleleSet *);
   pLocus->ppAlleleSetList[numAlleleSet] = pAlleleSet;
-  memset (pAlleleSet, 0, sizeof (AlleleSet));
 
 
   if (modelOptions->polynomial == TRUE) {
@@ -721,8 +715,7 @@ add_allele_set (int locus, unsigned int *pAlleleBits)
   }
 
   pAlleleSet->alleleID = numAlleleSet + 1;
-  MALCHOKE(pAlleleSet->pAlleleBits, sizeof (unsigned int) * alleleSetLen, unsigned int *);
-  memset (pAlleleSet->pAlleleBits, 0, sizeof (unsigned int) * alleleSetLen);
+  CALCHOKE(pAlleleSet->pAlleleBits, (size_t) 1, sizeof (unsigned int) * alleleSetLen, unsigned int *);
 
   pAlleleSet->numAllele = count_alleles (pAlleleBits, alleleSetLen);
   MALCHOKE(pAlleleSet->pAlleles, sizeof (int) * pAlleleSet->numAllele, int *);

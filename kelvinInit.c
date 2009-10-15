@@ -88,8 +88,6 @@ char messageBuffer[MAXSWMSG];
   memset (&markerLocusList, 0, sizeof (markerLocusList));
   memset (&traitLocusList, 0, sizeof (traitLocusList));
 
-//  memset (modelType, 0, sizeof (ModelType));
-
   // Initialize the logging system.
   logInit ();
 

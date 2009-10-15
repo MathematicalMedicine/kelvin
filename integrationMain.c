@@ -231,10 +231,8 @@
   pTrait = pTraitLocus->pTraits[traitLocus];
   if (modelType->type == TP) {
     /* Two point. */
-    if (originalLocusList.pLDLoci == NULL) {
-      MALCHOKE(originalLocusList.pLDLoci, sizeof (LDLoci),LDLoci *);
-      memset (originalLocusList.pLDLoci, 0, sizeof (LDLoci));
-    }
+    if (originalLocusList.pLDLoci == NULL)
+      CALCHOKE(originalLocusList.pLDLoci, (size_t) 1, sizeof (LDLoci),LDLoci *);
     pLDLoci = &originalLocusList.pLDLoci[0];
     originalLocusList.numLDLoci = 1;
 

@@ -1193,8 +1193,7 @@ findLambdas (ModelRange * range, int m, int n)
   range->lambdas[range->nlambdas].n = n;
   range->lambdas[range->nlambdas].ndprime = l;
   MALCHOKE(range->lambdas[range->nlambdas].lambda, l * sizeof (double **), double ***);
-  MALCHOKE(range->lambdas[range->nlambdas].impossibleFlag, l * sizeof (int), int *);
-  memset (range->lambdas[range->nlambdas].impossibleFlag, 0, l * sizeof (int));
+  CALCHOKE(range->lambdas[range->nlambdas].impossibleFlag, (size_t) 1, l * sizeof (int), int *);
   MALCHOKE(range->lambdas[range->nlambdas].haploFreq, l * sizeof (double **), double ***);
   MALCHOKE(range->lambdas[range->nlambdas].DValue, l * sizeof (double **), double ***);
 

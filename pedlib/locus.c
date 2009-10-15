@@ -188,8 +188,8 @@ add_map_unit (Map * pMap)
     REALCHOKE(pMap->ppMapUnitList, sizeof (MapUnit *) * pMap->maxUnit, MapUnit **);
   }
 
-  MALCHOKE(pMapUnit, sizeof (MapUnit), MapUnit *);
-  memset (pMapUnit, 0, sizeof (MapUnit));
+  CALCHOKE(pMapUnit, (size_t) 1, sizeof (MapUnit), MapUnit *);
+
   /* initialize the base pair location to negative - unknown */
   pMapUnit->basePairLocation = -1;
   pMap->ppMapUnitList[pMap->count] = pMapUnit;
@@ -434,8 +434,7 @@ add_locus (LocusList * pLocusList, char *sName, int locusType)
     REALCHOKE(pLocusList->ppLocusList, sizeof (Locus *) * pLocusList->maxNumLocus, Locus **);
   }
   /* allocate space for the locus */
-  MALCHOKE(pLocus, sizeof (Locus), Locus *);
-  memset (pLocus, 0, sizeof (Locus));
+  CALCHOKE(pLocus, (size_t) 1, sizeof (Locus), Locus *);
 
   /* add this locus to the list */
   pLocusList->ppLocusList[pLocusList->numLocus] = pLocus;
@@ -447,8 +446,7 @@ add_locus (LocusList * pLocusList, char *sName, int locusType)
   /* if this is a trait locus, need to allocate more space */
   pLocus->locusType = locusType;
   if (locusType == LOCUS_TYPE_TRAIT) {
-    MALCHOKE(pLocus->pTraitLocus, sizeof (TraitLocus), TraitLocus *);
-    memset (pLocus->pTraitLocus, 0, sizeof (TraitLocus));
+    CALCHOKE(pLocus->pTraitLocus, (size_t) 1, sizeof (TraitLocus), TraitLocus *);
     pLocusList->numTraitLocus++;
   }
 
@@ -559,8 +557,7 @@ add_trait (int trait, TraitLocus * pTraitLocus, int traitType)
   Trait *pTrait;
 
   /* allocate space */
-  MALCHOKE(pTrait, sizeof (Trait), Trait *);
-  memset (pTrait, 0, sizeof (Trait));
+  CALCHOKE(pTrait, (size_t) 1, sizeof (Trait), Trait *);
 
   /* type can be either affection status or quantitative trait */
   pTrait->type = traitType;
@@ -1388,8 +1385,7 @@ add_genotype (Genotype ** ppList, int *pCount, int locusIndex,
   int numInts;
 
   /* allocate space for the genotype */
-  MALCHOKE(pGenotype, sizeof (Genotype), Genotype *);
-  memset (pGenotype, 0, sizeof (Genotype));
+  CALCHOKE(pGenotype, (size_t) 1, sizeof (Genotype), Genotype *);
   pGenotype->penslot.penetrance = 1;
 
   /* add this to the top of the genotype list */
@@ -1411,10 +1407,8 @@ add_genotype (Genotype ** ppList, int *pCount, int locusIndex,
   /* allocate space for the allele bits - as potentially there are more
    * than 32 -1 possible alleles */
   numInts = originalLocusList.alleleSetLen;
-  MALCHOKE(pGenotype->pAlleleBits[DAD], sizeof (unsigned int) * numInts, unsigned int *);
-  MALCHOKE(pGenotype->pAlleleBits[MOM], sizeof (unsigned int) * numInts, unsigned int *);
-  memset (pGenotype->pAlleleBits[DAD], 0, sizeof (unsigned int) * numInts);
-  memset (pGenotype->pAlleleBits[MOM], 0, sizeof (unsigned int) * numInts);
+  CALCHOKE(pGenotype->pAlleleBits[DAD], (size_t) 1, sizeof (unsigned int) * numInts, unsigned int *);
+  CALCHOKE(pGenotype->pAlleleBits[MOM], (size_t) 1, sizeof (unsigned int) * numInts, unsigned int *);
   /* set the bits */
   set_allele_bit (allele1, pGenotype->pAlleleBits[DAD]);
   set_allele_bit (allele2, pGenotype->pAlleleBits[MOM]);
@@ -1651,8 +1645,7 @@ allocate_multi_locus_genotype_storage (Pedigree * pPedigree, int numLocus)
   int numGeno;
 
   /* sorted from max to min */
-  MALCHOKE(sortedList, originalLocusList.numLocus * sizeof (int), void *);
-  memset (sortedList, 0, originalLocusList.numLocus * sizeof (int));
+  CALCHOKE(sortedList, (size_t) 1, originalLocusList.numLocus * sizeof (int), void *);
 
   for (i = 0; i < pPedigree->numPerson; i++) {
     pPerson = pPedigree->ppPersonList[i];
@@ -1676,8 +1669,7 @@ allocate_multi_locus_genotype_storage (Pedigree * pPedigree, int numLocus)
     }
 
     /* allocate space */
-    MALCHOKE(pPerson->pLikelihood, sizeof (ConditionalLikelihood) * size, ConditionalLikelihood *);
-    memset (pPerson->pLikelihood, 0, sizeof (ConditionalLikelihood) * size);
+    CALCHOKE(pPerson->pLikelihood, (size_t) 1, sizeof (ConditionalLikelihood) * size, ConditionalLikelihood *);
     pPerson->maxNumConditionals = size;
     MALCHOKE(pPerson->pTmpLikelihoodIndex, sizeof (int) * size, int *);
 
@@ -1747,9 +1739,6 @@ initialize_multi_locus_genotype (Pedigree * pPedigree)
     }
     pPerson->numConditionals = size;
 
-    /*      memset (pPerson->pLikelihood, 0,
-       sizeof (ConditionalLikelihood) * pPerson->maxNumConditionals);
-     */
     for (j = 0; j < size; j++) {
       pConditional = &pPerson->pLikelihood[j];
       pConditional->touchedFlag = 0;

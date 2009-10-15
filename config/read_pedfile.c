@@ -99,11 +99,6 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
   Person *pCurrPerson = NULL;
   int lastFlag = 0, i;
 
-  /* Initialize pedigree set 
-   * no longer doing initialization here, pPedigreeSet should have 
-   * been created and initialized before this and pTrait field set */
-  //memset(pPedigreeSet, 0, sizeof(PedigreeSet));
-
   /* open pedigree file */
   fpPedfile = fopen (sPedfileName, "r");
   KASSERT (fpPedfile != NULL,
@@ -278,8 +273,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     numTrait = pTraitLocus->numTrait;
     MALCHOKE(pPerson->ppOrigTraitValue[i], sizeof (double) * numTrait, double *);
     MALCHOKE(pPerson->ppTraitValue[i], sizeof (double) * numTrait, double *);
-    MALCHOKE(pPerson->ppTraitKnown[i], sizeof (int) * numTrait, int *);
-    memset (pPerson->ppTraitKnown[i], 0, sizeof (int) * numTrait); // Effectively sets to FALSE
+    CALCHOKE(pPerson->ppTraitKnown[i], (size_t) 1, sizeof (int) * numTrait, int *);
     MALCHOKE(pPerson->ppLiabilityClass[i], sizeof (int) * numTrait, int *);
     j = 0;
     while (j < numTrait) {
@@ -410,8 +404,7 @@ create_pedigree (PedigreeSet * pPedigreeSet, char *sPedLabel)
   pPedigreeSet->numPedigree++;
 
   /* create new pedigree */
-  MALCHOKE(ped, sizeof (Pedigree), Pedigree *);
-  memset (ped, 0, sizeof (Pedigree));
+  CALCHOKE(ped, (size_t) 1, sizeof (Pedigree), Pedigree *);
 
   pPedigreeSet->ppPedigreeSet[oldNum] = ped;
   ped->pPedigreeSet = pPedigreeSet;
@@ -448,8 +441,7 @@ create_person (Pedigree * pPed, char *sID)
     pPed->pPedigreeSet->maxNumPerson = pPed->numPerson;
 
   /* allocate space for this person */
-  MALCHOKE(pPerson, sizeof (Person), Person *);
-  memset (pPerson, 0, sizeof (Person));
+  CALCHOKE(pPerson, (size_t) 1, sizeof (Person), Person *);
 
   pPed->ppPersonList[oldNum] = pPerson;
   pPerson->pPedigree = pPed;
@@ -457,14 +449,10 @@ create_person (Pedigree * pPed, char *sID)
 
   /* allocate space for phenotype list for each locus */
   size = originalLocusList.numLocus * sizeof (int);
-  MALCHOKE(pPerson->pPhenotypeList[0], size, int *);
-  memset (pPerson->pPhenotypeList[0], 0, size);
-  MALCHOKE(pPerson->pPhenotypeList[1], size, int *);
-  memset (pPerson->pPhenotypeList[1], 0, size);
-  MALCHOKE(pPerson->pPhasedFlag, size, int *);
-  memset (pPerson->pPhasedFlag, 0, size);
-  MALCHOKE(pPerson->pTypedFlag, size, int *);
-  memset (pPerson->pTypedFlag, 0, size);
+  CALCHOKE(pPerson->pPhenotypeList[0], (size_t) 1, (size_t) size, int *);
+  CALCHOKE(pPerson->pPhenotypeList[1], (size_t) 1, (size_t) size, int *);
+  CALCHOKE(pPerson->pPhasedFlag, (size_t) 1, (size_t) size, int *);
+  CALCHOKE(pPerson->pTypedFlag, (size_t) 1, (size_t) size, int *);
 
   /* allocate space for set recoding */
   size = originalLocusList.alleleSetLen;
@@ -474,30 +462,14 @@ create_person (Pedigree * pPed, char *sID)
   MALCHOKE(pPerson->pNonTransmittedAlleles[DAD], sizeof (unsigned int) * size, unsigned int *);
 
   /* need to allocate some space for genotypes */
-  MALCHOKE(pPerson->ppGenotypeList, sizeof (Genotype *) *originalLocusList.numLocus, Genotype **);
-  memset (pPerson->ppGenotypeList, 0,
-	  sizeof (Genotype *) * originalLocusList.numLocus);
-  MALCHOKE(pPerson->pNumGenotype, sizeof (int) * originalLocusList.numLocus, int *);
-  memset (pPerson->pNumGenotype, 0,
-	  sizeof (int) * originalLocusList.numLocus);
-  MALCHOKE(pPerson->ppSavedGenotypeList, sizeof (Genotype *) * originalLocusList.numLocus, Genotype **);
-  memset (pPerson->ppSavedGenotypeList, 0,
-	  sizeof (Genotype *) * originalLocusList.numLocus);
-  MALCHOKE(pPerson->pSavedNumGenotype, sizeof (int) * originalLocusList.numLocus, int *);
-  memset (pPerson->pSavedNumGenotype, 0,
-	  sizeof (int) * originalLocusList.numLocus);
-  MALCHOKE(pPerson->ppProbandGenotypeList, sizeof (Genotype *) * originalLocusList.numLocus, Genotype **);
-  memset (pPerson->ppProbandGenotypeList, 0,
-	  sizeof (Genotype *) * originalLocusList.numLocus);
-  MALCHOKE(pPerson->pProbandNumGenotype, sizeof (int) * originalLocusList.numLocus, int *);
-  memset (pPerson->pProbandNumGenotype, 0,
-	  sizeof (int) * originalLocusList.numLocus);
-  MALCHOKE(pPerson->ppShadowGenotypeList, sizeof (Genotype *) * originalLocusList.numLocus, Genotype **);
-  memset (pPerson->ppShadowGenotypeList, 0,
-	  sizeof (Genotype *) * originalLocusList.numLocus);
-  MALCHOKE(pPerson->pShadowGenotypeListLen, sizeof (int) * originalLocusList.numLocus, int *);
-  memset (pPerson->pShadowGenotypeListLen, 0,
-	  sizeof (int) * originalLocusList.numLocus);
+  CALCHOKE(pPerson->ppGenotypeList, (size_t) 1, sizeof (Genotype *) *originalLocusList.numLocus, Genotype **);
+  CALCHOKE(pPerson->pNumGenotype, (size_t) 1, sizeof (int) * originalLocusList.numLocus, int *);
+  CALCHOKE(pPerson->ppSavedGenotypeList, (size_t) 1, sizeof (Genotype *) * originalLocusList.numLocus, Genotype **);
+  CALCHOKE(pPerson->pSavedNumGenotype, (size_t) 1, sizeof (int) * originalLocusList.numLocus, int *);
+  CALCHOKE(pPerson->ppProbandGenotypeList, (size_t) 1, sizeof (Genotype *) * originalLocusList.numLocus, Genotype **);
+  CALCHOKE(pPerson->pProbandNumGenotype, (size_t) 1, sizeof (int) * originalLocusList.numLocus, int *);
+  CALCHOKE(pPerson->ppShadowGenotypeList, (size_t) 1, sizeof (Genotype *) * originalLocusList.numLocus, Genotype **);
+  CALCHOKE(pPerson->pShadowGenotypeListLen, (size_t) 1, sizeof (int) * originalLocusList.numLocus, int *);
 
   /* we have only read this person's ID so far */
   strcpy (pPerson->sID, sID);
@@ -1058,8 +1030,7 @@ create_nuclear_family (Pedigree * pPed)
   }
 
   /* allocate space for the actual nuclear family */
-  MALCHOKE(pNew, sizeof (NuclearFamily), NuclearFamily *);
-  memset (pNew, 0, sizeof (NuclearFamily));
+  CALCHOKE(pNew, (size_t) 1, sizeof (NuclearFamily), NuclearFamily *);
   pPed->ppNuclearFamilyList[oldNumNucFam] = pNew;
   /* link this back to pedigree structure */
   pNew->pPedigree = pPed;
