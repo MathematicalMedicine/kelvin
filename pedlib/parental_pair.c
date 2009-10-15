@@ -312,13 +312,12 @@ stat_parental_pair_workspace (PedigreeSet * pPedigreeList)
 int
 initialize_parental_pair_workspace (ParentalPairSpace * pSpace, int numLocus)
 {
-  pSpace->pNumParentalPair = (int *) calloc (sizeof (int), numLocus);
-  pSpace->pParentalPairInd = (int *) calloc (sizeof (int), numLocus);
-  pSpace->pChildGenoInd = (int *) calloc (sizeof (int), numLocus);
-  pSpace->phase[DAD] = (short *) calloc (sizeof (short), numLocus);
-  pSpace->phase[MOM] = (short *) calloc (sizeof (short), numLocus);
-  pSpace->ppParentalPair =
-    (ParentalPair **) calloc (sizeof (ParentalPair *), numLocus);
+  CALCHOKE(pSpace->pNumParentalPair, sizeof (int), numLocus, int *);
+  CALCHOKE(pSpace->pParentalPairInd, sizeof (int), numLocus, int *);
+  CALCHOKE(pSpace->pChildGenoInd, sizeof (int), numLocus, int *);
+  CALCHOKE(pSpace->phase[DAD], sizeof (short), numLocus, short *);
+  CALCHOKE(pSpace->phase[MOM], sizeof (short), numLocus, short *);
+  CALCHOKE(pSpace->ppParentalPair, sizeof (ParentalPair *), numLocus, ParentalPair **);
   pSpace->maxNumParentalPair = 0;
   pSpace->maxNumChildren = 0;
   pSpace->maxNumChildGenotype = 0;
@@ -339,30 +338,20 @@ allocate_parental_pair_workspace (ParentalPairSpace * pSpace, int numLocus)
 
   for (locus = 0; locus < numLocus; locus++) {
     /* allocate parental pair space first */
-    pSpace->ppParentalPair[locus] =
-      (ParentalPair *) calloc (sizeof (ParentalPair),
-			       pSpace->maxNumParentalPair);
+    CALCHOKE(pSpace->ppParentalPair[locus], sizeof (ParentalPair), pSpace->maxNumParentalPair, ParentalPair *);
     /* allocate space for children genotype list */
     for (i = 0; i < pSpace->maxNumParentalPair; i++) {
-      pSpace->ppParentalPair[locus][i].pChildGenoLen =
-	(int *) calloc (sizeof (int), pSpace->maxNumChildren);
+      CALCHOKE(pSpace->ppParentalPair[locus][i].pChildGenoLen, sizeof (int), pSpace->maxNumChildren, int *);
       /* first dimension is the index of children */
-      pSpace->ppParentalPair[locus][i].pppChildGenoList =
-	(Genotype ***) calloc (sizeof (Genotype **), pSpace->maxNumChildren);
-      pSpace->ppParentalPair[locus][i].ppChildInheritance[DAD] =
-	(int **) calloc (sizeof (int *), pSpace->maxNumChildren);
-      pSpace->ppParentalPair[locus][i].ppChildInheritance[MOM] =
-	(int **) calloc (sizeof (int *), pSpace->maxNumChildren);
+      CALCHOKE(pSpace->ppParentalPair[locus][i].pppChildGenoList, sizeof (Genotype **), pSpace->maxNumChildren, Genotype ***);
+      CALCHOKE(pSpace->ppParentalPair[locus][i].ppChildInheritance[DAD], sizeof (int *), pSpace->maxNumChildren, int **);
+      CALCHOKE(pSpace->ppParentalPair[locus][i].ppChildInheritance[MOM], sizeof (int *), pSpace->maxNumChildren, int **);
       /* for each child allocate enough space for genotypes */
       for (j = 0; j < pSpace->maxNumChildren; j++) {
 	/* next dimension is the index of the different genotypes */
-	pSpace->ppParentalPair[locus][i].pppChildGenoList[j] =
-	  (Genotype **) calloc (sizeof (Genotype *),
-				pSpace->maxNumChildGenotype);
-	pSpace->ppParentalPair[locus][i].ppChildInheritance[DAD][j] =
-	  (int *) calloc (sizeof (int), pSpace->maxNumChildGenotype);
-	pSpace->ppParentalPair[locus][i].ppChildInheritance[MOM][j] =
-	  (int *) calloc (sizeof (int), pSpace->maxNumChildGenotype);
+	CALCHOKE(pSpace->ppParentalPair[locus][i].pppChildGenoList[j], sizeof (Genotype *), pSpace->maxNumChildGenotype, Genotype **);
+	CALCHOKE(pSpace->ppParentalPair[locus][i].ppChildInheritance[DAD][j], sizeof (int), pSpace->maxNumChildGenotype, int *);
+	CALCHOKE(pSpace->ppParentalPair[locus][i].ppChildInheritance[MOM][j], sizeof (int), pSpace->maxNumChildGenotype, int *);
       }
     }
   }
