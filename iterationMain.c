@@ -26,50 +26,49 @@ void iterateMain() {
   /* only for multipoint - we don't handle LD under multipoint yet */
   if (modelType->type == MP) {
     /* allocate space to save temporary results */
-    markerNameList = (char **) calloc (sizeof (char *), modelType->numMarkers);
+    CALCHOKE(markerNameList, sizeof (char *), (size_t) modelType->numMarkers, char **);
     if (modelType->trait == DT) {
 
 #if 0
       /* likelihoodDT is for homoLR */
-      likelihoodDT = (double **) calloc (sizeof (double *), modelRange->ngfreq);
+      CALCHOKE(likelihoodDT, sizeof (double *), (size_t) modelRange->ngfreq, double **);
       for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
         /* second dimension is penetrance */
-        likelihoodDT[gfreqInd] = (double *) calloc (sizeof (double), modelRange->npenet);
+        CALCHOKE(likelihoodDT[gfreqInd], sizeof (double), (size_t) modelRange->npenet, double *);
       }
 #endif
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         /* first dimension is gene freq */
-        pPedigree->traitLikelihoodDT = (double **) calloc (sizeof (double *), modelRange->ngfreq);
-        pPedigree->alternativeLikelihoodDT = (double **) calloc (sizeof (double *), modelRange->ngfreq);
+        CALCHOKE(pPedigree->traitLikelihoodDT, sizeof (double *), (size_t) modelRange->ngfreq, double **);
+        CALCHOKE(pPedigree->alternativeLikelihoodDT, sizeof (double *), (size_t) modelRange->ngfreq, double **);
         for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
           /* second dimension is penetrance */
-          pPedigree->traitLikelihoodDT[gfreqInd] = (double *) calloc (sizeof (double), modelRange->npenet);
-          pPedigree->alternativeLikelihoodDT[gfreqInd] = (double *) calloc (sizeof (double), modelRange->npenet);
+          CALCHOKE(pPedigree->traitLikelihoodDT[gfreqInd], sizeof (double), (size_t) modelRange->npenet, double *);
+          CALCHOKE(pPedigree->alternativeLikelihoodDT[gfreqInd], sizeof (double), (size_t) modelRange->npenet, double *);
         }
       }
     } else {    /* QT */
 
       /* first dimension is pedigree */
-      //likelihoodQT = (double *****) calloc (sizeof (double ****), pedigreeSet.numPedigree + 1);
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         /* second dimension is gene freq */
-        pPedigree->traitLikelihoodQT = (double ****) calloc (sizeof (double ***), modelRange->ngfreq);
-        pPedigree->alternativeLikelihoodQT = (double ****) calloc (sizeof (double ***), modelRange->ngfreq);
+        CALCHOKE(pPedigree->traitLikelihoodQT, sizeof (double ***), (size_t) modelRange->ngfreq, double ****);
+        CALCHOKE(pPedigree->alternativeLikelihoodQT, sizeof (double ***), (size_t) modelRange->ngfreq, double ****);
         for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
 
           /* third dimension is mean */
-          pPedigree->traitLikelihoodQT[gfreqInd] = (double ***) calloc (sizeof (double **), modelRange->npenet);
-          pPedigree->alternativeLikelihoodQT[gfreqInd] = (double ***) calloc (sizeof (double **), modelRange->npenet);
+          CALCHOKE(pPedigree->traitLikelihoodQT[gfreqInd], sizeof (double **), (size_t) modelRange->npenet, double ***);
+          CALCHOKE(pPedigree->alternativeLikelihoodQT[gfreqInd], sizeof (double **), (size_t) modelRange->npenet, double ***);
           for (penIdx = 0; penIdx < modelRange->npenet; penIdx++) {
             /* fourth dimension is SD */
-            pPedigree->traitLikelihoodQT[gfreqInd][penIdx] = (double **) calloc (sizeof (double *), modelRange->nparam);
-            pPedigree->alternativeLikelihoodQT[gfreqInd][penIdx] = (double **) calloc (sizeof (double *), modelRange->nparam);
+            CALCHOKE(pPedigree->traitLikelihoodQT[gfreqInd][penIdx], sizeof (double *), (size_t) modelRange->nparam, double **);
+            CALCHOKE(pPedigree->alternativeLikelihoodQT[gfreqInd][penIdx], sizeof (double *), (size_t) modelRange->nparam, double **);
             for (paramIdx = 0; paramIdx < modelRange->nparam; paramIdx++) {
               /* 5th dimension is threshold */
-              pPedigree->traitLikelihoodQT[gfreqInd][penIdx][paramIdx] = (double *) calloc (sizeof (double), modelRange->ntthresh);
-              pPedigree->alternativeLikelihoodQT[gfreqInd][penIdx][paramIdx] = (double *) calloc (sizeof (double), modelRange->ntthresh);
+              CALCHOKE(pPedigree->traitLikelihoodQT[gfreqInd][penIdx][paramIdx], sizeof (double), (size_t) modelRange->ntthresh, double *);
+              CALCHOKE(pPedigree->alternativeLikelihoodQT[gfreqInd][penIdx][paramIdx], sizeof (double), (size_t) modelRange->ntthresh, double *);
             } /* paramIdx */
           } /* penIdx */
         } /* gfreqInd */
@@ -82,11 +81,9 @@ void iterateMain() {
     memset (&dk_curModel, 0, sizeof (st_DKMaxModel));        
     if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     /* Assumes that dkelvin can only handle a single D' */
-      dk_curModel.dprime = (double *) calloc (modelRange->nlclass, sizeof (double));
-      KASSERT ((dk_curModel.dprime != NULL), "calloc failed");
+      CALCHOKE(dk_curModel.dprime, (size_t) modelRange->nlclass, sizeof (double), double *);
     }
-    dk_curModel.pen = calloc (modelRange->nlclass, sizeof (st_DKMaxModelPenVector));
-    KASSERT ((dk_curModel.pen != NULL), "calloc failed");
+    CALCHOKE(dk_curModel.pen, (size_t) modelRange->nlclass,  sizeof (st_DKMaxModelPenVector), void *);
 
     /*SurfaceFile header*/
     fprintf(fpIR, "#HLOD"); 
@@ -800,10 +797,10 @@ void iterateMain() {
     markerLocusList.numLocus = modelType->numMarkers;
     markerLocusList.traitOrigLocus = -1;
     markerLocusList.traitLocusIndex = -1;
-    markerLocusList.pLocusIndex = (int *) calloc (markerLocusList.maxNumLocus, sizeof (int));
+    CALCHOKE(markerLocusList.pLocusIndex, (size_t) markerLocusList.maxNumLocus, sizeof (int), int *);
     for (k = 0; k < 3; k++) {
-      markerLocusList.pPrevLocusDistance[k] = (double *) calloc (markerLocusList.maxNumLocus, sizeof (double));
-      markerLocusList.pNextLocusDistance[k] = (double *) calloc (markerLocusList.maxNumLocus, sizeof (double));
+      CALCHOKE(markerLocusList.pPrevLocusDistance[k], (size_t) markerLocusList.maxNumLocus, sizeof (double), double *);
+      CALCHOKE(markerLocusList.pNextLocusDistance[k], (size_t) markerLocusList.maxNumLocus, sizeof (double), double *);
     }
 
     /* assuming we always have trait in the analysis - this may not be true 
@@ -811,10 +808,10 @@ void iterateMain() {
      */
     savedLocusList.numLocus = modelType->numMarkers + 1;
     savedLocusList.maxNumLocus = modelType->numMarkers + 1;
-    savedLocusList.pLocusIndex = (int *) calloc (savedLocusList.maxNumLocus, sizeof (int));
+    CALCHOKE(savedLocusList.pLocusIndex, (size_t) savedLocusList.maxNumLocus, sizeof (int), int *);
     for (k = 0; k < 3; k++) {
-      savedLocusList.pPrevLocusDistance[k] = (double *) calloc (savedLocusList.maxNumLocus, sizeof (double));
-      savedLocusList.pNextLocusDistance[k] = (double *) calloc (savedLocusList.maxNumLocus, sizeof (double));
+      CALCHOKE(savedLocusList.pPrevLocusDistance[k], (size_t) savedLocusList.maxNumLocus, sizeof (double), double *);
+      CALCHOKE(savedLocusList.pNextLocusDistance[k], (size_t) savedLocusList.maxNumLocus, sizeof (double), double *);
     }
 
     /* Allocate storage to calculate the trait likelihood independent of the trait position */
@@ -822,11 +819,11 @@ void iterateMain() {
     traitLocusList.maxNumLocus = 1;
     traitLocusList.traitLocusIndex = 0;
     traitLocusList.traitOrigLocus = traitLocus;
-    traitLocusList.pLocusIndex = (int *) calloc (traitLocusList.maxNumLocus, sizeof (int));
+    CALCHOKE(traitLocusList.pLocusIndex, (size_t) traitLocusList.maxNumLocus, sizeof (int), int *);
     traitLocusList.pLocusIndex[0] = 0;
     for (k = 0; k < 3; k++) {
-      traitLocusList.pPrevLocusDistance[k] = (double *) calloc (savedLocusList.maxNumLocus, sizeof (double));
-      traitLocusList.pNextLocusDistance[k] = (double *) calloc (savedLocusList.maxNumLocus, sizeof (double));
+      CALCHOKE(traitLocusList.pPrevLocusDistance[k], (size_t) savedLocusList.maxNumLocus, sizeof (double), double *);
+      CALCHOKE(traitLocusList.pNextLocusDistance[k], (size_t) savedLocusList.maxNumLocus, sizeof (double), double *);
 
       traitLocusList.pPrevLocusDistance[k][0] = -1;
       traitLocusList.pNextLocusDistance[k][0] = -1;
@@ -1079,7 +1076,7 @@ void iterateMain() {
 
     /* get the trait locations we need to evaluate at */
     numPositions = modelRange->ntloc;
-    mp_result = (SUMMARY_STAT *) calloc (numPositions, sizeof (SUMMARY_STAT));
+    CALCHOKE(mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
 
     writeMPBRFileHeader ();
     writeMPMODFileHeader ();
@@ -1119,7 +1116,7 @@ void iterateMain() {
       /* select markers to be used for the multipoint analysis */
       add_markers_to_locuslist (locusList, modelType->numMarkers, &leftMarker, 0, originalLocusList.numLocus - 1, traitPos, 0);
       /* store the markers used */
-      mp_result[posIdx].pMarkers = (int *) calloc (modelType->numMarkers, sizeof (int));
+      CALCHOKE(mp_result[posIdx].pMarkers, (size_t) modelType->numMarkers, sizeof (int), int *);
       k = 0;    /* marker index */
       for (i = 0; i < locusList->numLocus; i++) {
         j = locusList->pLocusIndex[i];
