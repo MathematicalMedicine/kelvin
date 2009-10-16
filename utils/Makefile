@@ -1,15 +1,20 @@
-# Kelvin
-# Copyright 2008, The Research Institute At Nationwide Children's Hospital
+# Kelvin utils
+# Copyright 2009, The Research Institute At Nationwide Children's Hospital
 # Permission granted to distribute and use for non-profit educational purposes only.
 
 # Invoked by main Kelvin Makefile. You'll get undefined symbols otherwise.
 
-INCS = utils.h sw.h polynomial.h polynomial_internal.h tpl.h hashtab.h lookupa.h recycle.h standard.h sSDHandler.h dists.h pageManagement.h
-OBJS = utils.o sw.o polynomial.o tpl.o hashtab.o lookupa.o recycle.o sSDHandler.o dcdflib.o dists.o ipmpar.o pageManagement.o
+HASH_INCS = hashtab.h lookupa.h recycle.h standard.h
+HASH_OBJS = hashtab.o lookupa.o recycle.o
+NOGSL_INCS = dists.h cdflib.h
+NOGSL_OBJS = dcdflib.o dists.o ipmpar.o
 
-all : ../lib/libutils.a ../lib/libklvnutls.so # pt sw sSDHandler
+INCS = utils.h sw.h polynomial.h polynomial_internal.h tpl.h sSDHandler.h pageManagement.h $(HASH_INCS) $(NOGSL_INCS)
+OBJS = utils.o sw.o polynomial.o tpl.o sSDHandler.o pageManagement.o $(HASH_OBJS) $(NOGSL_OBJS)
 
-pt : pt.c polynomial.c polynomial.h polynomial_internal.h
+all : ../lib/libklvnutls.a ../lib/libklvnutls.so # pt sw sSDHandler
+
+pt : pt.c polynomial.c polynomial.h polynomial_internal.h sw.c dists.c
 	gcc pt.c -o pt polynomial.c sw.c dists.c $(CFLAGS) -DUSE_GSL -DPOLYUSE_DL -DPOLYCODE_DL -ldl -lgsl -lgslcblas -lm
 
 sw : sw.c sw.h
@@ -22,22 +27,22 @@ listener : listener.c sw.h
 	gcc listener.c -o listener -lmysqlclient -I/usr/local/mysql/include -L/usr/local/mysql/lib \
 	-I/usr/include/mysql -L/usr/lib64/mysql
 
-../lib/libutils.a : libutils.a
-	cp libutils.a ../lib
+../lib/libklvnutls.a : libklvnutls.a
+	cp libklvnutls.a ../lib
 
 ../lib/libklvnutls.so : libklvnutls.so
 	cp libklvnutls.so ../lib
 
-libutils.a : $(OBJS)
-	ar -rsc libutils.a $(OBJS)
+libklvnutls.a : $(OBJS)
+	ar -rsc libklvnutls.a $(OBJS)
 
 libklvnutls.so : $(OBJS)
 	gcc -shared -o libklvnutls.so $(OBJS) $(CFLAGS) $(LDFLAGS)
 
+# The -fno-common bit is just the old PowerMac way of saying PIC
 $(OBJS) : %.o : %.c $(INCS)
-	# The -fno-common bit is just the old PowerMac way of saying PIC
 	$(CC) -c -fno-common -fPIC $(CFLAGS) $(INCFLAGS) $< -o $@
 
 .PHONY : clean
 clean :
-	rm -f pt $(OBJS) libutils.a ../lib/libutils.a libklvnutls.so ../lib/libklvnutls.so
+	rm -f pt sw listener sSDHandler $(OBJS) libklvnutls.a ../lib/libklvnutls.a libklvnutls.so ../lib/libklvnutls.so

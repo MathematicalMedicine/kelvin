@@ -1,5 +1,5 @@
 # Kelvin
-# Copyright 2008, The Research Institute At Nationwide Children's Hospital
+# Copyright 2009, The Research Institute At Nationwide Children's Hospital
 # Permission granted to distribute and use for non-profit educational purposes only.
 
 # Compiled executables and scripts will be installed in $BINDIR
@@ -62,14 +62,18 @@ LDFLAGS += ${ADD_LDFLAGS}
 export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN
 
 KOBJS = kelvin.o dcuhre.o
-OBJS = ppl.o saveResults.o trackProgress.o kelvinHandlers.o \
-	kelvinWriteFiles.o \
-	summary_result.o iterationMain.o 
-INCS = kelvin.h dcuhre.h saveResults.h trackProgress.h kelvinHandlers.h \
-	kelvinGlobals.h iterationGlobals.h integrationGlobals.h \
-	kelvinLocals.h iterationLocals.h integrationLocals.h \
-	kelvinInit.c kelvinTerm.c iterationMain.c integrationMain.c integrationSupport.c kelvinWriteFiles.c \
-	dkelvinWriteFiles.c
+OBJS = iterationMain.o kelvinHandlers.o kelvinWriteFiles.o \
+	ppl.o saveResults.o trackProgress.o \
+	summary_result.o tp_result_hash.o
+
+PARTS = kelvinInit.c kelvinTerm.c integrationMain.c \
+	integrationSupport.c dkelvinWriteFiles.c
+
+INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
+	iterationLocals.h iterationMain.h \
+	integrationGlobals.h integrationLocals.h integrationSupport.h \
+	kelvinWritefiles.h dkelvinWritefiles.h \
+	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
 # Binary releases include kelvin_$(PLATFORM)
 all : kelvin seq_update/calc_updated_ppl 
@@ -79,17 +83,17 @@ install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh
 
-kelvin : libs $(KOBJS) $(OBJS) $(INCS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lutils -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
+kelvin : libs $(KOBJS) $(OBJS) $(INCS) $(PARTS)
+	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
-kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
+kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS) $(PARTS)
 	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
 	+make -C seq_update -f Makefile calc_updated_ppl
 
-%.o : %.c $(INCS)
+%.o : %.c $(INCS) $(PARTS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
 
 .PHONY : libs

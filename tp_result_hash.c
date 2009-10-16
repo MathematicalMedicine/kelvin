@@ -22,7 +22,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <math.h>
-#include "hashtab.h"
+#include "utils/hashtab.h"
+#include "utils/utils.h"
 
 #include "tp_result_hash.h"
 
@@ -136,10 +137,7 @@ SUMMARY_STAT *get_next_tp_result (int *offset)
 // Create a new tp_result structure for the given indices and return a pointer to it.
 SUMMARY_STAT *new_tp_result (int dprimeIdx, int thetaIdx, int mkrFreqIdx)
 {
-  ub1 *tp_result_hash_key_bytes;
-
   struct tp_result_hash_entry *newTPRhe, *oldTPRhe;
-  int i;
 
   if (tp_result_hash == NULL)
     tp_result_hash = hcreate (TPRHASHSIZE);
