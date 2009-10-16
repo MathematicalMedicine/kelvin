@@ -29,4 +29,5 @@ void getSSD (struct chunkTicket *myTicket, double *buffer);
 void freeSSD (struct chunkTicket *myTicket);
 void statSSD ();
 void termSSD ();
+void flushSSD (double *buffer, unsigned long chunkOffset, unsigned long doublePairCount);
 
