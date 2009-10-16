@@ -3,17 +3,12 @@
 
  sSDHandler - manage storage on a Solid State Drive for polynomial term lists.
 
- Written by Bill Valentine-Cooper.
-
- Copyright 2008, Nationwide Children's Research Institute.  All rights
- reserved.  Permission is hereby given to use this software for
- non-profit educational purposes only.
-
  We're out of memory, but have an SSD to help. Memory mapping a file
  on the SSD doesn't improve our situation because every page actually
  referenced has to be in physical memory. What we need is a "window"
  of fixed-memory size thru which we can access the full span of SSD
- space. That's normal file I/O. I searched and searched for a tool
+ space. That's normal file I/O, albeit with arbitrarily-sized chunks of
+ data and an eye on efficient reuse. I searched and searched for a tool
  that would manage the space in the SSD efficiently and came up with
  nothing, so I wrote this.
 
@@ -54,9 +49,10 @@
 
  Usage:
 
- First call initSDD(), then call putSSD to store a chunk of double pairs and get a ticket. Call
- getSSD with the ticket to retrieve the chunk. Call freeSSD with the ticket to give-up the chunk.
- Call termSSD() when finished to display statistics.
+ First call initSDD(), then call putSSD() to store a chunk of double pairs and get a ticket. Call
+ getSSD() with the ticket to retrieve the chunk. Call freeSSD with the ticket to give-up the chunk.
+ Call termSSD() when finished to display statistics. See the sample test driver at the end of
+ the module.
 
  Performance:
 
@@ -99,6 +95,14 @@
  od --address-radix=d --read-bytes=<cO X 16> --format=f8 --output-duplicates --skip-bytes=<dPC X 16> /tmp/ssd/cache.dat 
 
  ...and compile test standalone version with: gcc -g -o sSDHandler -DMAIN sSDHandler.c
+
+  @version $Id$
+
+  @author Bill Valentine-Cooper.
+
+ Copyright &copy; 2009, Nationwide Children's Research Institute.  All rights
+ reserved.  Permission is hereby given to use this software for non-profit 
+ educational purposes only.
 
 */
 
@@ -163,6 +167,11 @@ unsigned short high16Bit (unsigned long value) {
   return i;
 }
 
+/**
+
+   Dump statistics on the use of the SSD to stderr.
+
+*/
 void statSSD () {
   int i;
   fprintf (stderr, "SSD list use: ");
@@ -172,10 +181,49 @@ void statSSD () {
 	   putCallCount, getCallCount, freeCallCount, usedDPCs, handledDPCs);
 }
 
+/**
+
+   Finish using the SSD.
+
+   Nothing fancy here. Just close the open file on the SSD.
+
+  @par Global Inputs
+
+  sSDFD - File descriptor for the open file on the SSD.
+
+  @par Global Outputs
+
+  @return void.
+
+*/  
 void termSSD () {
   fclose (sSDFD);
 }
 
+/**
+
+   Prepare for using the SSD.
+
+   Use environment variables to identify the name and size of the SSD file
+   to open. Open the file and initialize free list pointers.
+
+  @par Global Inputs
+
+  sSDFileName - environment variable containing the full path and name of the 
+  file to use on the solid state drive. If the environment variable is not
+  defined, a default is used.
+
+  sSDFileSizeInGb - environment variable containing a number which is the amount
+  of space on the solid state drive to use. If the environment variable is not
+  defined, the entire drive is used.
+
+  @par Global Outputs
+
+  The open file handle sSDFD.
+
+  @return void.
+
+*/
 void initSSD() {
   int i;
   unsigned long sSDFileSizeInGb;
@@ -677,7 +725,32 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
   return newCT;
 }
 
-struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
+/**
+
+   Store a chunk of information on the SSD and get a ticket for
+   it's retrieval.
+
+   Accepts a pointer to a contiguous chunk of double-aligned memory
+   up to maxSSDDPC*16 bytes long for storage on the SSD. Returns a
+   pointer to a chunkTicket that can be passed to getSSD to retrieve
+   that chunk of memory.
+
+   @par Global Inputs
+
+   none.
+
+   @par Global Outputs
+
+   none.
+
+  @return A pointer to a chunkTicket structure redeemable for the
+  chunk of data stored. Null if request cannot be fulfilled.
+
+*/
+struct chunkTicket *putSSD (
+			    double *buffer, ///< Pointer to double-aligned buffer of data to be stored
+			    unsigned long myDPC ///< Count of double pairs to be stored (X 16 = bytes)
+			    ) {
   unsigned short freeList;
   unsigned short bestFreeList;
 
@@ -732,11 +805,30 @@ struct chunkTicket *putSSD (double *buffer, unsigned long myDPC) {
   return ((struct chunkTicket *) NULL);
 }
 
-/*
-  Retrieve a buffer previously stored with putSSD by
-  presenting your chunkTicket. chunkTicket is still valid.
+/**
+
+  Present your chunkTicket to retrieve a copy of a chunk of data previously stored by putSSD.
+
+  Accepts a pointer to a chunkTicket issued by putSSD and a pointer to a buffer.
+  Copies the chunk of data associated with the chunkTicket into the provided buffer.
+  The chunkTicket is still valid and can be used again to retrieve the same chunk of
+  data as often as needed.
+
+   @par Global Inputs
+
+   none.
+
+   @par Global Outputs
+
+   none.
+
+  @return void.
+
 */
-void getSSD (struct chunkTicket *myTicket, double *buffer) {
+void getSSD (
+	     struct chunkTicket *myTicket, ///< A pointer to a chunk ticket issued by putSSD
+	     double *buffer ///< The buffer into which the chunk data will be copied
+	     ) {
   getCallCount++;
   if ((getCallCount & 0x3FFFF) == 0x3FFFF)
     statSSD ();
@@ -758,11 +850,27 @@ void getSSD (struct chunkTicket *myTicket, double *buffer) {
   return;
 }
 
-/*
-  Release the resources identified by the chunkTicket,
-  which will no longer be valid.
+/**
+
+  Release the resources associated with the chunkTicket, make it invalid.
+
+  Accepts a pointer to a chunkTicket issued by putSSD. Identifies and releases all
+  of the resources associated with that ticket for reuse, including the ticket itself.
+
+   @par Global Inputs
+
+   none.
+
+   @par Global Outputs
+
+   none.
+
+  @return void.
+
 */
-void freeSSD (struct chunkTicket *myTicket) {
+void freeSSD (
+	      struct chunkTicket *myTicket ///< A pointer to a chunkTicket issued by putSSD.
+) {
   freeCallCount++;
   if ((freeCallCount & 0x3FFFF) == 0x3FFFF)
     statSSD ();

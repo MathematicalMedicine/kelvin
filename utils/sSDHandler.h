@@ -8,10 +8,6 @@ struct chunkTicket {
 				64Gb/16b = 4M, so largest usable SSD is 4M * 32K = 128G. */
 };
 
-void initSSD ();
-void statSSD ();
-void termSSD ();
-
 // The smallest chunk to split, in double pairs, trying 2^8 or 256 (2^MIN_USE_SSD_BITS)
 #ifdef MAIN
 #define MIN_USE_SSD_BITS 8
@@ -27,9 +23,10 @@ void termSSD ();
 #define MAX_DPC_MASK 0x7FFFF
 #endif
 
-
+void initSSD ();
 struct chunkTicket *putSSD (double *buffer, unsigned long myDPC);
 void getSSD (struct chunkTicket *myTicket, double *buffer);
 void freeSSD (struct chunkTicket *myTicket);
-void flushSSD (double *buffer, unsigned long chunkOffset, unsigned long doublePairCount);
+void statSSD ();
+void termSSD ();
 
