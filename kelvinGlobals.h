@@ -89,11 +89,4 @@ typedef struct {
 
 st_DKMaxModel dk_globalmax, dk_dprime0max, dk_theta0max, dk_curModel;
 
-
-/**********************************************************************
- * Progress meters.
- **********************************************************************/
-extern struct swStopwatch *overallSW;
-
-
 #endif
