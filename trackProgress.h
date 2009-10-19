@@ -17,7 +17,6 @@
 
 extern unsigned long cL[9], ///< Actual compute_likelihood call counts
   eCL[9]; ///< Estimated compute_likelihood call counts
-extern struct swStopwatch *combinedComputeSW, *combinedBuildSW, stopwatch;
 
 /// Number of seconds to delay between updates of memory status
 #define MONSTATDELAYSEC 30

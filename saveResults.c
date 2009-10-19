@@ -23,6 +23,7 @@
 #include "kelvin.h"
 #include "saveResults.h"
 #include "utils/tpl.h"
+#include "config/config.h"
 
 char pathName[256];     ///< Where the path to saved results will be built. Should malloc.
 char fileName[256];     ///< Filename for saved results files. Should malloc.

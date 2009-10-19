@@ -2,6 +2,7 @@
 //#include "dkelvinWriteFiles.h"
 #include "integrationLocals.h"
 #include "integrationSupport.h"
+#include "trackProgress.h"
 
   int numPositions;
   int size_BR;

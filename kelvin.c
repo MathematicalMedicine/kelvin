@@ -102,18 +102,16 @@
 */
 #include "kelvin.h"
 #include "kelvinHandlers.h"
-#include "pedlib/likelihood.h"
 #include "saveResults.h"
 #include "ppl.h"
-#ifdef USE_MPF
-#include <gmp.h>                /* GNU Multi-Precision library. */
-#endif
+#include "pedlib/likelihood.h"
 
 /**
 
   Global variables
 
 */
+#include "config/config.h"
 #include "dcuhre.h"
 #include "integrationGlobals.h"
 #include "kelvinGlobals.h"

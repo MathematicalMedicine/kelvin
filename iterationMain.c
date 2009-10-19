@@ -13,8 +13,11 @@
 #include "ppl.h"
 #include "kelvinWriteFiles.h"
 #include "saveResults.h"
+#include "trackProgress.h"
 
-
+struct swStopwatch *combinedComputeSW,        ///< Combined likelihood compute stopwatch
+  *combinedBuildSW,    ///< Combined likelihood polynomial build stopwatch
+  *overallSW; ///< Overall stopwatch for the entire run.
 
 void iterateMain() {
   ParamStruct paramSet;
