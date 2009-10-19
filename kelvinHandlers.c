@@ -1,6 +1,8 @@
 #include "kelvin.h"
 #include "kelvinHandlers.h"
-#include "kelvinGlobals.h"
+#include "utils/sw.h"
+
+extern struct swStopwatch *overallSW;
 
 volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update requested via signal
 
