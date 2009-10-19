@@ -1,9 +1,3 @@
-  struct swStopwatch *combinedComputeSW,        ///< Combined likelihood compute stopwatch
-    *combinedBuildSW,    ///< Combined likelihood polynomial build stopwatch
-*overallSW; 
-
-  char configfile[PATH_MAX] = "";
-
   unsigned long cL[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 },    ///< Actual # calls to each instance of compute_likelihood
     eCL[9] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0};   ///< Est. final # calls to each instance of compute_likelihood

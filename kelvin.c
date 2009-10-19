@@ -100,10 +100,6 @@
   - SOURCEDIGRAPH
 
 */
-#include <pthread.h>
-#ifdef _OPENMP
-  #include <omp.h>
-#endif
 #include "kelvin.h"
 #include "kelvinHandlers.h"
 #include "pedlib/likelihood.h"
@@ -112,9 +108,6 @@
 #ifdef USE_MPF
 #include <gmp.h>                /* GNU Multi-Precision library. */
 #endif
-
-extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
-extern Polynomial *constant1Poly;
 
 /**
 
@@ -125,6 +118,7 @@ extern Polynomial *constant1Poly;
 #include "integrationGlobals.h"
 #include "kelvinGlobals.h"
 #include "kelvinLocals.h"
+#include "kelvinInit.h"
 
 /**
 
@@ -147,17 +141,11 @@ char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
 
 int main (int argc, char *argv[])
 {
-
-  //  #include "iterationLocalsNew.h"
-  //  #include "integrationLocals.h"
-
-  #include "kelvinInit.c"
+  kelvinInit(argc, argv);
 
   if (modelOptions->integration) {
     #include "integrationMain.c"
   } else {
-    //    int danglingWire=0;
-    //#include "iterationMain.c"
     iterateMain();
   }
 

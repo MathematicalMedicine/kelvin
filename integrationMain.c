@@ -5,7 +5,7 @@
 
   int numPositions;
   int size_BR;
-
+  int k;
 
   /* total_dim is the number of all parameters in the 3-layer scheme
           s->dim in dcuhre.c is the number of parameters in the middle layer alone */

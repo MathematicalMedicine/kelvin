@@ -89,4 +89,14 @@ typedef struct {
 
 st_DKMaxModel dk_globalmax, dk_dprime0max, dk_theta0max, dk_curModel;
 
+SubLocusList traitLocusList;
+SubLocusList markerLocusList;
+SubLocusList savedLocusList;
+
+double initialProb2[3];
+void *initialProbAddr2[3];
+void *initialHetProbAddr[3];
+
+extern int dprime0Idx;
+
 #endif

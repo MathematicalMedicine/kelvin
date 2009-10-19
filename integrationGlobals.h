@@ -1,4 +1,4 @@
-int dprimeIdx, dprime0Idx;
+int dprimeIdx;
 int num_out_constraint;
 
 double fixed_theta, fixed_dprime;
@@ -16,10 +16,6 @@ double localMOD; // replacing name :localmax_value = 0.0; 6/4/2009
 
 int total_dim = 0;
 
-double initialProb2[3];
-void *initialProbAddr2[3];
-void *initialHetProbAddr[3];
-
 double alpha[5][2] = { //{0.8, 1.0},  //This is for LOD not for HLOD
 {0.04691, 0.118463443},
 {0.230765, 0.239314335},
@@ -27,10 +23,6 @@ double alpha[5][2] = { //{0.8, 1.0},  //This is for LOD not for HLOD
 {0.769235, 0.239314335},
 {0.95309, 0.118463443}
 };
-
-SubLocusList savedLocusList;
-SubLocusList traitLocusList;
-SubLocusList markerLocusList;
 
 dcuhre_state *s,init_state;
 double *xl;   //xl[17] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0 };

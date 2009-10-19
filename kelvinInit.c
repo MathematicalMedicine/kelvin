@@ -1,10 +1,37 @@
+#include <limits.h> // For things like PATH_MAX.
+#include <float.h> // Limits for floating point
+
+#include <pthread.h> // For memory checks
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
+
+#include "utils/utils.h"
+#include "utils/sw.h"
+#include "kelvinGlobals.h"
+#include "kelvinHandlers.h"
+#include "trackProgress.h"
 #include "kelvinWriteFiles.h"
 #include "utils/pageManagement.h"
 
-pthread_t statusThread;
-int exitDueToLoop = FALSE; /* exit due to unbroken loop */
-int k;
-char messageBuffer[MAXSWMSG];
+struct swStopwatch *combinedComputeSW,        ///< Combined likelihood compute stopwatch
+  *combinedBuildSW,    ///< Combined likelihood polynomial build stopwatch
+  *overallSW; ///< Overall stopwatch for the entire run.
+
+char configfile[PATH_MAX]; ///< Configuration file read to populate all of this
+
+int dprime0Idx = 0;
+
+extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
+extern Polynomial *constant1Poly;
+
+void kelvinInit(int argc, char *argv[])
+{
+
+  pthread_t statusThread;
+  int exitDueToLoop = FALSE; /* exit due to unbroken loop */
+  int k;
+  char messageBuffer[MAXSWMSG];
 
   overallSW = swCreate ("overall");
   combinedComputeSW = swCreate ("combinedComputeSW");
@@ -82,12 +109,6 @@ char messageBuffer[MAXSWMSG];
 #endif
   fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, (int) getpid ());
 
-  // THESE SHOULD BE SOMEWHERE ELSE
-
-  memset (&savedLocusList, 0, sizeof (savedLocusList));
-  memset (&markerLocusList, 0, sizeof (markerLocusList));
-  memset (&traitLocusList, 0, sizeof (traitLocusList));
-
   // Initialize the logging system.
   logInit ();
 
@@ -155,6 +176,9 @@ char messageBuffer[MAXSWMSG];
   read_mapfile (modelOptions->mapfile);
 
   /* Initialize the locus list and read in the marker file. */
+  memset (&savedLocusList, 0, sizeof (savedLocusList));
+  memset (&markerLocusList, 0, sizeof (markerLocusList));
+  memset (&traitLocusList, 0, sizeof (traitLocusList));
   memset (&originalLocusList, 0, sizeof (originalLocusList));
   /* read in what loci are in the pedigree file */
   read_datafile (modelOptions->datafile);
@@ -305,7 +329,6 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
       CALCHOKE(modelRange->dprime, (size_t) 1, sizeof (double), double *);
       modelRange->dprime[0] = 0;
       pLambdaCell = findLambdas (modelRange, 2, 2);
-      dprime0Idx = 0;
     }
   } else {
     /* we are doing multipoint analysis */
@@ -432,3 +455,4 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
     KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", modelOptions->dkelvinoutfile);
   }
 
+}

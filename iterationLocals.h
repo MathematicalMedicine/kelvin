@@ -53,9 +53,6 @@ int num_of_map_position;
 
 int status;
 
-void *initialProbAddr2[3];
-void *initialHetProbAddr[3];
-
 Pedigree *pPedigree;
 TraitLocus *pTraitLocus;
 double *marker1Pos, *marker2Pos;
@@ -75,7 +72,5 @@ int pedIdx;
 int posIdx;
 int prevTraitInd;
 int traitIndex = 0;
-int dprimeIdx, dprime0Idx;
-SubLocusList markerLocusList;
-SubLocusList traitLocusList;
+int dprimeIdx;
 
