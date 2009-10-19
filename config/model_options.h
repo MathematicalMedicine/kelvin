@@ -22,9 +22,7 @@
 */
 
 #include <stdio.h>
-
-/// Maximum number of characters in an KELVIN file name.
-#define KMAXFILENAMELEN 256 
+#include <limits.h>
 
 /// File name used for marker data if none specified in the configuration file.
 #define DEFAULTMARKERFILENAME "markers.dat"
@@ -113,21 +111,22 @@ typedef struct ModelOptions
   int extraMODs;                ///< Flag indicating to put Theta==0 and D'==0 max models in MOD file.
 
   /* Storage and default names for files that are always opened (depending on analysis options) */
-  char markerfile[KMAXFILENAMELEN + 1];  ///< Marker (frequency) file
-  char mapfile[KMAXFILENAMELEN + 1];     ///< Map file
-  char pedfile[KMAXFILENAMELEN + 1];     ///< Pedigree file
-  char datafile[KMAXFILENAMELEN + 1];   ///< Data (pedigree description) file
-  char avghetfile[KMAXFILENAMELEN + 1];       ///< Bayes Ratio file
-  char pplfile[KMAXFILENAMELEN + 1];         ///< PPL file
-  char condFile[KMAXFILENAMELEN + 1];      ///< Conditional LR file
+  char markerfile[PATH_MAX];  ///< Marker (frequency) file
+  char mapfile[PATH_MAX];     ///< Map file
+  char pedfile[PATH_MAX];     ///< Pedigree file
+  char datafile[PATH_MAX];   ///< Data (pedigree description) file
+  char avghetfile[PATH_MAX];       ///< Bayes Ratio file
+  char pplfile[PATH_MAX];         ///< PPL file
+  char condFile[PATH_MAX];      ///< Conditional LR file
+
 
   /* Storage for files that are only opened based on explicit directives */
-  char ccfile[KMAXFILENAMELEN + 1];                 ///< Case control count file
-  char modfile[KMAXFILENAMELEN + 1];                ///< MOD and maximizing model file
-  char maxmodelfile[KMAXFILENAMELEN + 1];           ///< verbose Max Model file, obsolete?
-  char intermediatefile[KMAXFILENAMELEN + 1];       ///< Intermediate Result file
-  char dkelvinoutfile[KMAXFILENAMELEN + 1];         ///< DCHURE detail file
-  char resultsprefix[KMAXFILENAMELEN + 1]; ///< Path for SR directive result storage
+  char ccfile[PATH_MAX];                 ///< Case control count file
+  char modfile[PATH_MAX];                ///< MOD and maximizing model file
+  char maxmodelfile[PATH_MAX];           ///< verbose Max Model file, obsolete?
+  char intermediatefile[PATH_MAX];       ///< Intermediate Result file
+  char dkelvinoutfile[PATH_MAX];         ///< DCHURE detail file
+  char resultsprefix[PATH_MAX]; ///< Path for SR directive result storage
   
 } ModelOptions;
 

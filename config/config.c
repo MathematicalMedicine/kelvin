@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <math.h>
 #include <float.h>
+#include <limits.h>
 #include "config.h"
 #include "../utils/utils.h"
 #include "../utils/pageManagement.h"
@@ -1341,7 +1342,7 @@ int set_resultsprefix (char **toks, int numtoks, void *unused)
     bail ("missing argument to directive '%s'\n", toks[0]);
   if (numtoks > 2)
     bail ("extra arguments to directive '%s'\n", toks[0]);
-  if ((len = strlen (toks[1])) > KMAXFILENAMELEN - 2)
+  if ((len = strlen (toks[1])) > PATH_MAX - 1)
     bail ("argument to directive '%s' is too long\n", toks[0]);
   strcpy (staticModelOptions.resultsprefix, toks[1]);
   if (staticModelOptions.resultsprefix[len-1] != '/')
