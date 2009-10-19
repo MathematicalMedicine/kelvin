@@ -2,7 +2,7 @@
     *combinedBuildSW,    ///< Combined likelihood polynomial build stopwatch
 *overallSW; 
 
-  char configfile[KMAXFILENAMELEN] = "";
+  char configfile[PATH_MAX] = "";
 
   unsigned long cL[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 },    ///< Actual # calls to each instance of compute_likelihood
     eCL[9] = {
