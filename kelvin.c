@@ -117,6 +117,7 @@
 #include "kelvinGlobals.h"
 #include "kelvinLocals.h"
 #include "kelvinInit.h"
+#include "kelvinTerm.h"
 
 /**
 
@@ -147,7 +148,7 @@ int main (int argc, char *argv[])
     iterateMain();
   }
 
-  #include "kelvinTerm.c"
+  kelvinTerm();
 
   return EXIT_SUCCESS;
 }
