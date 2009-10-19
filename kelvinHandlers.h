@@ -1,3 +1,5 @@
+#include <signal.h>
+
 void quitSignalHandler (int ourSignal);
 void usr1SignalHandler (int ourSignal);
 void termSignalHandler (int ourSignal);
