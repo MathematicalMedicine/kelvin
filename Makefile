@@ -72,7 +72,7 @@ PARTS = kelvinInit.c kelvinTerm.c integrationMain.c \
 INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	iterationLocals.h iterationMain.h \
 	integrationGlobals.h integrationLocals.h integrationSupport.h \
-	kelvinWritefiles.h dkelvinWritefiles.h \
+	kelvinWriteFiles.h dkelvinWriteFiles.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
 # Binary releases include kelvin_$(PLATFORM)
