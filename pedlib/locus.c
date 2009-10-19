@@ -2800,6 +2800,13 @@ copy_DValue (LDLoci * pLocus, double **pSrc)
   return 0;
 }
 
+/*
+
+  Returns zero if a near-zero dprime value is found anywhere
+  in the two-dimensional ppDPrime array. Returns one if there
+  is no near-zero dprime  value.
+
+*/
 int
 isDPrime0 (double **ppDPrime, int m, int n)
 {
