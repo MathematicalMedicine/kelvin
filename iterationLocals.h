@@ -41,9 +41,6 @@ int prevLastMarker;		/* last marker in the set for multipoint analysis */
 /* Variables became global from local */
 PedigreeSet pedigreeSet;	/* Pedigrees. */
 
-int R_square_flag = FALSE;
-double R_square = 0;
-
 /** Storage for the NULL likelihood for the multipoint calculation under polynomial. */
 double markerSetLikelihood;
 
@@ -64,13 +61,11 @@ double ppl;
 double relativePos;
 double traitPos;      /* trait position for multipoint analysis */
 int i, j, k;
-int leftMarker = -1;
 int liabIdx;
 int locus;
 int mkrFreqIdx;
 int pedIdx;
 int posIdx;
 int prevTraitInd;
-int traitIndex = 0;
 int dprimeIdx;
 

@@ -99,4 +99,9 @@ void *initialHetProbAddr[3];
 
 extern int dprime0Idx;
 
+int R_square_flag;
+double R_square;
+int leftMarker;
+int traitIndex;
+
 #endif

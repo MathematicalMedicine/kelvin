@@ -114,12 +114,11 @@
 */
 #include "config/config.h"
 #include "dcuhre.h"
-#include "integrationGlobals.h"
 #include "kelvinGlobals.h"
 #include "kelvinLocals.h"
 #include "kelvinInit.h"
 #include "kelvinTerm.h"
-#include "dkelvinWriteFiles.h"
+#include "integrationMain.h"
 
 /**
 
@@ -134,7 +133,7 @@ int main (int argc, char *argv[])
   kelvinInit(argc, argv);
 
   if (modelOptions->integration) {
-    #include "integrationMain.c"
+    integrateMain();
   } else {
     iterateMain();
   }
@@ -144,4 +143,3 @@ int main (int argc, char *argv[])
   return EXIT_SUCCESS;
 }
 
-#include "integrationSupport.c"

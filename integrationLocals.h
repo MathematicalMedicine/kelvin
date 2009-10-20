@@ -4,8 +4,6 @@ int liabIdx;
 int mkrFreqIdx;
 double mkrFreq;
 int status;
-int R_square_flag = FALSE;
-double R_square = 0;
 double ppl, ldppl, ppld, ppldGl;
 int prevFirstMarker;		/* first marker in the set for multipoint analysis */
 int prevLastMarker;		/* last marker in the set for multipoint analysis */

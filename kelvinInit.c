@@ -455,4 +455,9 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
     KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", modelOptions->dkelvinoutfile);
   }
 
+R_square_flag = 0;
+R_square = FALSE;
+leftMarker = -1;
+traitIndex = 0;
+
 }

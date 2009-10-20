@@ -1,13 +1,22 @@
+#include "kelvin.h"
+#include "kelvinGlobals.h"
+#include "config/config.h"
 #include "utils/utils.h"
-//#include "dkelvinWriteFiles.h"
+#include "summary_result.h"
+#include "dkelvinWriteFiles.h"
+#include "dcuhre.h"
+#include "integrationGlobals.h"
 #include "integrationLocals.h"
 #include "integrationSupport.h"
 #include "trackProgress.h"
 #include <float.h>
+#include <math.h>
+
+void integrateMain() {
 
   int numPositions;
   int size_BR;
-  int k;
+  int i, k;
 
   /* total_dim is the number of all parameters in the 3-layer scheme
           s->dim in dcuhre.c is the number of parameters in the middle layer alone */
@@ -1162,3 +1171,4 @@
   free (xl);
 
 
+}
