@@ -1,9 +1,9 @@
-#include <limits.h> // For things like PATH_MAX.
-#include <float.h> // Limits for floating point
+#include <limits.h>     // For things like PATH_MAX.
+#include <float.h>      // Limits for floating point
 
-#include <pthread.h> // For memory checks
+#include <pthread.h>    // For memory checks
 #ifdef _OPENMP
-  #include <omp.h>
+#include <omp.h>
 #endif
 
 #include "utils/utils.h"
@@ -14,22 +14,22 @@
 #include "kelvinWriteFiles.h"
 #include "utils/pageManagement.h"
 
-struct swStopwatch *combinedComputeSW,        ///< Combined likelihood compute stopwatch
-  *combinedBuildSW,    ///< Combined likelihood polynomial build stopwatch
-  *overallSW; ///< Overall stopwatch for the entire run.
+struct swStopwatch *combinedComputeSW,  ///< Combined likelihood compute stopwatch
+ *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch
+ *overallSW;    ///< Overall stopwatch for the entire run.
 
-char configfile[PATH_MAX]; ///< Configuration file read to populate all of this
+char configfile[PATH_MAX];      ///< Configuration file read to populate all of this
 
 int dprime0Idx = 0;
 
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
 extern Polynomial *constant1Poly;
 
-void kelvinInit(int argc, char *argv[])
+void kelvinInit (int argc, char *argv[])
 {
 
   pthread_t statusThread;
-  int exitDueToLoop = FALSE; /* exit due to unbroken loop */
+  int exitDueToLoop = FALSE;    /* exit due to unbroken loop */
   int k;
   char messageBuffer[MAXSWMSG];
 
@@ -41,8 +41,8 @@ void kelvinInit(int argc, char *argv[])
   setupHandlers ();
 
   /* Start a thread with a timer to do the memory checks. It can afford
-     to hang, while the main process cannot. */
-  if (pthread_create ( &statusThread, NULL, monitorStatus, NULL))
+   * to hang, while the main process cannot. */
+  if (pthread_create (&statusThread, NULL, monitorStatus, NULL))
     perror ("Failed to create status monitoring thread, no progress status will be displayed or written");
 
   /* Annouce ourselves for performance tracking. */
@@ -77,29 +77,29 @@ void kelvinInit(int argc, char *argv[])
 
 #ifdef USE_GSL
   swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of internal ones");
-  #ifdef VERIFY_GSL
-    #ifdef _OPENMP
-    #undef _OPENMP
-    #warning "Cannot use OpenMP when using internal statistical functions.");
+#ifdef VERIFY_GSL
+#ifdef _OPENMP
+#undef _OPENMP
+#warning "Cannot use OpenMP when using internal statistical functions.");
   sprintf (messageBuffer, "OpenMP is DISABLED when using internal statistical functions.");
   swLogMsg (messageBuffer);
-    #endif
-  #else
-    #ifdef _OPENMP
-  sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", omp_get_num_threads());
+#endif
+#else
+#ifdef _OPENMP
+  sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", omp_get_num_threads ());
   swLogMsg (messageBuffer);
-    #endif
-  #endif
+#endif
+#endif
 #else
   swLogMsg ("Using internal statistical functions instead of GNU Scientific Library (GSL)");
-  #ifdef _OPENMP
-    #undef _OPENMP
-    #warning "Cannot use OpenMP when using internal statistical functions.");
+#ifdef _OPENMP
+#undef _OPENMP
+#warning "Cannot use OpenMP when using internal statistical functions.");
   sprintf (messageBuffer, "OpenMP is DISABLED when using internal statistical functions.");
   swLogMsg (messageBuffer);
-  #endif
 #endif
-  
+#endif
+
   swStart (overallSW);
 #ifdef GCCOPT
   sprintf (messageBuffer, "GCC optimization level %d enabled", GCCOPT);
@@ -117,15 +117,13 @@ void kelvinInit(int argc, char *argv[])
    * file; the rest of the command line will be treated as override directives.
    */
   if (argc > 1) {
-    if (! (strcmp (argv[1], "--help") && strcmp (argv[1], "-?"))) {
-      fprintf (stderr, "usage: %s <conffile> [--directive arg1 arg2... [--directive...]]\n",
-	       argv[0]);
+    if (!(strcmp (argv[1], "--help") && strcmp (argv[1], "-?"))) {
+      fprintf (stderr, "usage: %s <conffile> [--directive arg1 arg2... [--directive...]]\n", argv[0]);
       exit (0);
     } else
       strcpy (configfile, argv[1]);
   } else {
-    fprintf (stderr, "usage: %s <conffile> [--directive arg1 arg2... [--directive...]]\n",
-	     argv[0]);
+    fprintf (stderr, "usage: %s <conffile> [--directive arg1 arg2... [--directive...]]\n", argv[0]);
     exit (-1);
   }
 
@@ -139,7 +137,7 @@ void kelvinInit(int argc, char *argv[])
    * it must be override directives.
    */
   if (argc > 2) {
-    parseCommandLine (argc-2, &argv[2]);
+    parseCommandLine (argc - 2, &argv[2]);
   }
 
   /* Make sure the config as read from the configuration file, and possibly modified on 
@@ -187,7 +185,7 @@ void kelvinInit(int argc, char *argv[])
    * in the data file, to decide if we're doing a marker-to-marker analysis.
    */
   /*if (originalLocusList.numTraitLocus > 0) { */
-if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusType == LOCUS_TYPE_TRAIT)) {
+  if (!modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusType == LOCUS_TYPE_TRAIT)) {
     /* We are not doing marker to marker analysis; the configuration
      * has all the information about the disease trait if any.
      * Need to add the alleles into trait locus 
@@ -226,14 +224,13 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
    * config, sample the min and max trait values in the pedigree data. NOTE
    * WELL this carries on the assumption of a single trait column in the pedigree. 
    */
-  if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_CHI_SQUARE &&
-      modelOptions->integration && ! modelRange->penetLimits) {
+  if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_CHI_SQUARE && modelOptions->integration && !modelRange->penetLimits) {
     int va, vb;
     double min, max;
-    
-    MALCHOKE(modelRange->penetLimits, (vb = NPENET (modelRange->nalleles)) * sizeof (double *),void *);
+
+    MALCHOKE (modelRange->penetLimits, (vb = NPENET (modelRange->nalleles)) * sizeof (double *), void *);
     for (va = 0; va < vb; va++)
-      MALCHOKE(modelRange->penetLimits[va], 2 * sizeof (double),void *);
+      MALCHOKE (modelRange->penetLimits[va], 2 * sizeof (double), void *);
     getPedigreeTraitRange (&pedigreeSet, &min, &max);
     if (min < 0 || max > 30)
       logMsg (LOGDEFAULT, LOGFATAL, "Can't intuit Chi-squared DegreesOfFreedom from input data, please configure explicitly\n");
@@ -249,10 +246,9 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
    * and std dev from the trait values in the pedigree data. Again, assumes a
    * single trait column in the pedigree.
    */
-  if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_T &&
-      (modelType->mean == -DBL_MAX || modelType->sd == -DBL_MAX)) {
+  if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_T && (modelType->mean == -DBL_MAX || modelType->sd == -DBL_MAX)) {
     double mean, stdev;
-    
+
     getPedigreeSampleStdev (&pedigreeSet, &mean, &stdev);
     modelType->mean = mean;
     modelType->sd = stdev;
@@ -265,7 +261,7 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
    */
   if (modelType->trait == CT && modelOptions->integration && modelRange->ntthresh == 0) {
     double min, max;
-    
+
     getPedigreeTraitRange (&pedigreeSet, &min, &max);
     if (min < 0 || max > 30)
       logMsg (LOGDEFAULT, LOGFATAL, "Can't intuit QTT Threshold from input data, please configure explicitly\n");
@@ -305,14 +301,14 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
   /* FIXME: shouldn't this bit come BEFORE the !markerAnalysis block, above? */
   if (modelType->trait == QT) {
     /* threshold value will not be used in any meaningful way, but we will use it for 
-       the loop */
+     * the loop */
     modelRange->ntthresh = 1;
     modelType->minOriginal = 0;
     modelType->maxOriginal = 1;
     if (modelRange->tthresh == NULL) {
-      MALCHOKE(modelRange->tthresh, sizeof (double *), double **);
+      MALCHOKE (modelRange->tthresh, sizeof (double *), double **);
       for (i = 0; i < modelRange->nlclass; i++) {
-	MALCHOKE(modelRange->tthresh[i], sizeof (double), void *);
+        MALCHOKE (modelRange->tthresh[i], sizeof (double), void *);
       }
     }
   }
@@ -326,7 +322,7 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
       /* in order to simplify looping, even for LE, we add a fake LD parameter dprime=0, which
        * is LE */
       modelRange->ndprime = 1;
-      CALCHOKE(modelRange->dprime, (size_t) 1, sizeof (double), double *);
+      CALCHOKE (modelRange->dprime, (size_t) 1, sizeof (double), double *);
       modelRange->dprime[0] = 0;
       pLambdaCell = findLambdas (modelRange, 2, 2);
     }
@@ -335,12 +331,11 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
     totalLoci = modelType->numMarkers + originalLocusList.numTraitLocus;
     if (modelRange->tlocRangeStart >= 0) {
       double endofmap, tloc;
-      endofmap = map.ppMapUnitList[map.count-1]->mapPos[MAP_POS_SEX_AVERAGE] +
-	modelRange->tlocRangeIncr;
+      endofmap = map.ppMapUnitList[map.count - 1]->mapPos[MAP_POS_SEX_AVERAGE] + modelRange->tlocRangeIncr;
       i = 0;
       while ((tloc = modelRange->tlocRangeStart + (i * modelRange->tlocRangeIncr)) <= endofmap) {
-	addTraitLocus (modelRange, tloc);
-	i++;
+        addTraitLocus (modelRange, tloc);
+        i++;
       }
     }
     if (modelRange->tlmark == TRUE) {
@@ -373,7 +368,7 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
   build_xmission_matrix (&traitMatrix, 1);
   build_xmission_matrix (&markerMatrix, totalLoci - 1);
   xmissionMatrix = nullMatrix;
-  CALCHOKE(tmpID, (size_t) totalLoci, sizeof (char), char *);
+  CALCHOKE (tmpID, (size_t) totalLoci, sizeof (char), char *);
 
   /* initialize loci by doing genotype elimination, set recoding */
   initialize_loci (&pedigreeSet);
@@ -413,11 +408,11 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
 
   /* Open output files that get written across loops. */
 
-  if(modelOptions->conditionalRun == 1 || modelOptions->loopCondRun == 1) {
+  if (modelOptions->conditionalRun == 1 || modelOptions->loopCondRun == 1) {
     fpCond = fopen (modelOptions->condFile, "w");
-    KASSERT (fpCond != NULL, "Error in opening file %s for write.\n", modelOptions->condFile); 
+    KASSERT (fpCond != NULL, "Error in opening file %s for write.\n", modelOptions->condFile);
     //  fprintf( fpCond, "# Version %s\n", programVersion);
-   }
+  }
 
   if (modelOptions->markerAnalysis == FALSE || modelOptions->forceAvghetFile == TRUE) {
     fpHet = fopen (modelOptions->avghetfile, "w");
@@ -431,11 +426,11 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
     writePPLFileHeader ();
 
     /*
-    if (strlen (modelOptions->maxmodelfile) > 0) {
-      fpTP = fopen (modelOptions->maxmodelfile, "w");
-      KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", modelOptions->maxmodelfile);
-    }
-    */
+     * if (strlen (modelOptions->maxmodelfile) > 0) {
+     * fpTP = fopen (modelOptions->maxmodelfile, "w");
+     * KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", modelOptions->maxmodelfile);
+     * }
+     */
   }
 
   if (strlen (modelOptions->modfile) > 0) {
@@ -448,16 +443,15 @@ if (! modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusTy
     fpIR = fopen (modelOptions->intermediatefile, "w");
     KASSERT (fpIR != NULL, "Error in opening file %s for write.\n", modelOptions->intermediatefile);
   }
-
- // DKelvin intermediate results are written here.
+  // DKelvin intermediate results are written here.
   if ((modelOptions->integration) && (strlen (modelOptions->dkelvinoutfile) > 0)) {
-    fpDK= fopen(modelOptions->dkelvinoutfile, "w");
+    fpDK = fopen (modelOptions->dkelvinoutfile, "w");
     KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", modelOptions->dkelvinoutfile);
   }
 
-R_square_flag = 0;
-R_square = FALSE;
-leftMarker = -1;
-traitIndex = 0;
+  R_square_flag = 0;
+  R_square = FALSE;
+  leftMarker = -1;
+  traitIndex = 0;
 
 }

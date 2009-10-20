@@ -7,41 +7,42 @@
   analysis. Currently supports two-point and multipoint analyses,
   dichotomous and quantitative traits, linkage equilibrium and
   disequilibrium, case control, and many other options.
-  
-  Copyright 2008, Nationwide Children's Research Institute.  All
+
+  Copyright &copy; 2009, Nationwide Children's Research Institute.  All
   rights reserved.  Permission is hereby given to use this software
   for non-profit educational purposes only.
 
-  See http://hodgkin.ccri.net/software/kelvin/index.html for full
+  @see http://hodgkin.ccri.net/software/kelvin/index.html for full
   documentation.
 
-  AUTHORS
-
-  - Yungui Huang - principle author
-  - Hongling Wang - Polynomial features
-  - Alberto Maria Segre - config and error logging modules
-  - Nathan Burnette - Regex code (now removed)
-  - Sang-Cheol Seok - Dynamic grid
-  - John Burian - configuration parser, sequential update
-  - Bill Valentine-Cooper - additional polynomial features,
-  compilation, SSD, refactoring, performance and tracking
+  @author Yungui Huang - principle author.
+  @author Hongling Wang - Polynomial features.
+  @author Alberto Maria Segre - config and error logging modules.
+  @author Nathan Burnette - Regex code (now removed).
+  @author Sang-Cheol Seok - Dynamic grid.
+  @author John Burian - configuration parser, sequential update.
+  @author Bill Valentine-Cooper - additional polynomial features,
+  compilation, SSD, refactoring, performance and tracking.
 
 @file kelvin.c
 
-  Main driver and way too many loops.
+  Genetic linkage analysis with PPL that integrates over entire trait space.
 
   USAGE:
   <pre>
-  kelvin <kelvin.conf>
+  kelvin <config file> [--directive arg1 arg2... [--directive...]]
 
-  where <kelvin.conf> is a text file containing directives
+  where <config file> is a text file containing directives
   describing the locations of supporting files and specifying the
   nature of the analysis to be performed. See the provided documentation
-  for details.
+  for details. Any directives specified on the command line override
+  those specified in the configuration file.
   </pre>
   LIMITATIONS
 
   Currently only handles biallelic traits.
+
+  @version $Id$
 
   COMPILE-TIME CONDITIONALS
 
@@ -100,25 +101,25 @@
 
   - SOURCEDIGRAPH
 
-*/
 #include "kelvin.h"
 #include "kelvinHandlers.h"
 #include "saveResults.h"
 #include "ppl.h"
 #include "pedlib/likelihood.h"
+*/
 
 /**
 
   Global variables
 
-*/
 #include "config/config.h"
 #include "dcuhre.h"
+*/
 #include "kelvinGlobals.h"
 #include "kelvinLocals.h"
 #include "kelvinInit.h"
 #include "kelvinTerm.h"
-#include "integrationMain.h"
+#include "integrationSupport.h"
 #include "iterationSupport.h"
 
 /**

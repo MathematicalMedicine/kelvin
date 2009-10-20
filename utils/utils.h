@@ -211,6 +211,7 @@ void logMsg (unsigned int type, int level, const char *format, ...);
     }							              \
 }
 
+#define KROUND(dbl) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * 10000.0) / 10000.0
 
 /* Routines for checking/manipulating lines of file input */
 
