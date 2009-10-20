@@ -57,7 +57,7 @@ void intSignalHandler (int ourSignal)
 }
 
 /// Handler for SIGUSR1
-void usr1SignalHandler (int signal)
+void usr1SignalHandler (int ourSignal)
 {
   fprintf (stderr, "This interrupt used to implement self-setting gdb breakpoints\n");
 }

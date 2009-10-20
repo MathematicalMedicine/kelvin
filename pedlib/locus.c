@@ -1759,7 +1759,7 @@ initialize_multi_locus_genotype (Pedigree * pPedigree)
 }
 
 int
-setup_LD_haplotype_freq (LDLoci * pLDLoci, LambdaCell * pCell, int dprimeIdx)
+setup_LD_haplotype_freq (LDLoci * pLDLociParam, LambdaCell * pCell, int dprimeIdx)
 {
   Locus *pLocus1, *pLocus2;
   int numAllele1, numAllele2;
@@ -1777,8 +1777,8 @@ setup_LD_haplotype_freq (LDLoci * pLDLoci, LambdaCell * pCell, int dprimeIdx)
   pBuf2 = &buf2[0];
   buf1[0] = '\0';
   buf2[0] = '\0';
-  pLocus1 = originalLocusList.ppLocusList[pLDLoci->locus1];
-  pLocus2 = originalLocusList.ppLocusList[pLDLoci->locus2];
+  pLocus1 = originalLocusList.ppLocusList[pLDLociParam->locus1];
+  pLocus2 = originalLocusList.ppLocusList[pLDLociParam->locus2];
   numAllele1 = pLocus1->numOriginalAllele;
   numAllele2 = pLocus2->numOriginalAllele;
   for (i = 0; i < numAllele1 - 1; i++) {
@@ -1799,7 +1799,6 @@ setup_LD_haplotype_freq (LDLoci * pLDLoci, LambdaCell * pCell, int dprimeIdx)
       else
 	maxD = p2 * q1 - LD_E;
 
-      //      DPrime = pLDLoci->ppDPrime[i][j];
       DPrime = pCell->lambda[dprimeIdx][i][j];
       sprintf (pBuf1, "%s %4.2f", pBuf2, DPrime);
       /* switch pBuf1 and pBuf2 */
@@ -1824,7 +1823,6 @@ setup_LD_haplotype_freq (LDLoci * pLDLoci, LambdaCell * pCell, int dprimeIdx)
       pCell->haploFreq[dprimeIdx][i][j] = LD_E;
     else
       pCell->haploFreq[dprimeIdx][i][j] = p1 - sum;
-    //      pLDLoci->ppHaploFreq[i][j] = p1 - sum;
     if ((p1 - sum) < 0) {
       KLOG (LOGINPUTFILE, LOGWARNING,
 	    "Haplotype frequency is NEGATIVE - %s.\n", pBuf1);
@@ -1837,7 +1835,6 @@ setup_LD_haplotype_freq (LDLoci * pLDLoci, LambdaCell * pCell, int dprimeIdx)
     q1 = pLocus2->pAlleleFrequency[j];
     sum = 0;
     for (i = 0; i < numAllele1 - 1; i++) {
-      //      sum += pLDLoci->ppHaploFreq[i][j];
       sum += pCell->haploFreq[dprimeIdx][i][j];
     }
 
@@ -1861,13 +1858,13 @@ LDLoci *
 find_LD_loci (int locus1, int locus2)
 {
   int i;
-  LDLoci *pLDLoci;
+  LDLoci *pLDLociLocal;
 
   for (i = 0; i < originalLocusList.numLDLoci; i++) {
-    pLDLoci = &originalLocusList.pLDLoci[i];
-    if ((pLDLoci->locus1 == locus1 && pLDLoci->locus2 == locus2) ||
-	(pLDLoci->locus1 == locus2 && pLDLoci->locus2 == locus1))
-      return pLDLoci;
+    pLDLociLocal = &originalLocusList.pLDLoci[i];
+    if ((pLDLociLocal->locus1 == locus1 && pLDLoci->locus2 == locus2) ||
+	(pLDLociLocal->locus1 == locus2 && pLDLoci->locus2 == locus1))
+      return pLDLociLocal;
   }
 
   return NULL;

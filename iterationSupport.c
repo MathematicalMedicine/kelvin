@@ -11,7 +11,6 @@
 #include "ppl.h"
 
 #include "iterationSupport.h"
-#include "iterationLocals.h"
 
 struct swStopwatch *combinedComputeSW,  ///< Combined likelihood compute stopwatch
  *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch
@@ -20,9 +19,51 @@ struct swStopwatch *combinedComputeSW,  ///< Combined likelihood compute stopwat
 void iterateMain ()
 {
   ParamStruct paramSet;
-  int pedIdx;
   int numPositions;
   double log10AvgLR;
+
+  char **markerNameList = NULL;
+
+  int thresholdIdx = -1;
+  double threshold = 0;
+  double avgLR;
+  double constraint;
+  double log10_likelihood_null, log10_likelihood_alternative;
+  int paramIdx = -1;
+  int penIdx, gfreqInd, thetaInd;
+  double pen_DD, pen_Dd, pen_dD, pen_dd;
+  double mean_DD, mean_Dd, mean_dD, mean_dd;
+  double SD_DD, SD_Dd, SD_dD, SD_dd;
+  double theta[2];      /* theta */
+  int breakFlag = FALSE;
+  double gfreq = 0; /* disease gene frequency */
+  int ret;
+
+int markerSetChanged; /* Flag for multipoint analysis, did set of markers change? */
+int locusListChanged; /* flag for multipoint analysis, did relative trait position or marker set change? */
+
+int prevFirstMarker;		/* first marker in the set for multipoint analysis */
+int prevLastMarker;		/* last marker in the set for multipoint analysis */
+
+
+int status;
+
+double *marker1Pos, *marker2Pos;
+double *prevPos, *currPos;    /* for MP */
+double dist;
+double mkrFreq;
+double ppl;
+double relativePos;
+double traitPos;      /* trait position for multipoint analysis */
+int i, j, k;
+int liabIdx;
+int mkrFreqIdx;
+int posIdx;
+int prevTraitInd;
+int dprimeIdx;
+
+
+
   //  char xmissionPattern[10];
 
   /* only for multipoint - we don't handle LD under multipoint yet */

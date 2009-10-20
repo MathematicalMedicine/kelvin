@@ -30,7 +30,7 @@ void kelvinInit (int argc, char *argv[])
 
   pthread_t statusThread;
   int exitDueToLoop = FALSE;    /* exit due to unbroken loop */
-  int k;
+  int i, k;
   char messageBuffer[MAXSWMSG];
 
   overallSW = swCreate ("overall");

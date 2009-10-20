@@ -2058,7 +2058,7 @@ get_haplotype_freq (int locus, int myParent, void *freqPtr)
   Locus *pLocus1;		/* first locus */
   Locus *pLocus2;		/* the other locus */
   int i, k, l;
-  LDLoci *pLDLoci;		/* structure contains LD parameter values */
+  LDLoci *pLDLociLocal;		/* structure contains LD parameter values */
   int alleleID1, alleleID2;	/* allele IDs */
   AlleleSet *pAlleleSet1, *pAlleleSet2;	/* allele sets */
   int allele1, allele2;		/* */
@@ -2077,8 +2077,8 @@ get_haplotype_freq (int locus, int myParent, void *freqPtr)
   pLocus1 = originalLocusList.ppLocusList[origLocus1];
   pLocus2 = originalLocusList.ppLocusList[origLocus2];
   /* find the parameter values for these two loci */
-  pLDLoci = find_LD_loci (origLocus1, origLocus2);
-  KASSERT (pLDLoci != NULL,
+  pLDLociLocal = find_LD_loci (origLocus1, origLocus2);
+  KASSERT (pLDLociLocal != NULL,
 	   "Can't find LD parameter between loci %d,%d.\n",
 	   origLocus1, origLocus2);
   /*
@@ -2108,12 +2108,12 @@ get_haplotype_freq (int locus, int myParent, void *freqPtr)
 	  sprintf (vName, "ppHaploFreq_lA%d_rA%d", allele1 - 1, allele2 - 1);
 	  freqPolynomial[i] =
 	    plusExp (2, 1.0, freqPolynomial[i], 1.0,
-		     variableExp (&pLDLoci->
+		     variableExp (&pLDLociLocal->
 				  ppHaploFreq[allele1 - 1][allele2 -
 							   1], NULL,
 				  'D', vName), 1);
 	} else
-	  freq[i] += pLDLoci->ppHaploFreq[allele1 - 1][allele2 - 1];
+	  freq[i] += pLDLociLocal->ppHaploFreq[allele1 - 1][allele2 - 1];
       }
     }
 

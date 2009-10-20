@@ -9,6 +9,8 @@ extern LDLoci *pLDLoci;
 
 void kelvinTerm () {
 
+  int i;
+
   set_removeGenotypeFlag (TRUE);
 
   if (modelType->type == TP) {
