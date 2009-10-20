@@ -101,19 +101,12 @@
 
   - SOURCEDIGRAPH
 
-#include "kelvin.h"
-#include "kelvinHandlers.h"
-#include "saveResults.h"
-#include "ppl.h"
-#include "pedlib/likelihood.h"
 */
 
 /**
 
   Global variables
 
-#include "config/config.h"
-#include "dcuhre.h"
 */
 #include "kelvinGlobals.h"
 #include "kelvinLocals.h"

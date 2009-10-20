@@ -1,6 +1,20 @@
 #ifndef __kelvinGlobals_h__
 #define __kelvinGlobals_h__
 
+/**
+@file kelvinGlobals.h
+
+  Global variables and structures used by all dependent components of
+  kelvin.
+
+  Copyright &copy; 2009, Nationwide Children's Research Institute.  All
+  rights reserved.  Permission is hereby given to use this software
+  for non-profit educational purposes only.
+
+  @version $Id$
+
+*/
+
 #include "config/model_type.h"
 #include "config/model_range.h"
 #include "config/model_options.h"
@@ -13,21 +27,17 @@ extern char *kelvinVersion;
 extern struct swStopwatch *overallSW;
 //char *messageBuffer;
 
-/* Some default global values. */
-
-
 extern LambdaCell *pLambdaCell;
 
-int loopMarkerFreqFlag ;
+int loopMarkerFreqFlag;
 int total_count;
 
 char *flexBuffer;
 int flexBufferSize;
 
-PedigreeSet pedigreeSet;	/* Pedigrees. */
+PedigreeSet pedigreeSet;        /* Pedigrees. */
 Pedigree *pPedigree;
 int pedIdx;
-//int totalLoci;
 int i;
 TraitLocus *pTraitLocus;
 int locus;
@@ -57,33 +67,20 @@ extern FILE *fpCond;    ///< Conditional LR for genetic counseling, global due t
 extern FILE *fpHet;     ///< Average HET LR file (Bayes Ratio file) pointer
 extern FILE *fpPPL;     ///< PPL output file pointer
 extern FILE *fpMOD;     // MOD and maximizing model information
-/* no longer needed, since MOD and MAX information goes to the same file now */
-  //FILE *fpTP = NULL;      ///< Ancillary Two-point output, used to go to stderr
 extern FILE *fpIR;      ///< Intermediate results, used to go to stderr, normally dkelvin-only
 extern FILE *fpDK;      // DCHURE detail file
 
 /* Moved here from integrationGlobals.h 6/18/2009 
    Use dk_curModel for printing surface points in fpIR*/
-typedef struct {
-  double DD,
-    Dd,
-    dD,
-    dd,
-    DDSD,
-    DdSD,
-    dDSD,
-    ddSD,
-    threshold;
+typedef struct
+{
+  double DD, Dd, dD, dd, DDSD, DdSD, dDSD, ddSD, threshold;
 } st_DKMaxModelPenVector;
 
-typedef struct {
-  int posIdx;  // which stores loc2 for 2pt and posIdx for mp
-  double *dprime,
-    theta[2],
-    alpha,
-    dgf,
-    mf,
-    r2;
+typedef struct
+{
+  int posIdx;   // which stores loc2 for 2pt and posIdx for mp
+  double *dprime, theta[2], alpha, dgf, mf, r2;
   st_DKMaxModelPenVector *pen;
 } st_DKMaxModel;
 
@@ -104,19 +101,20 @@ double R_square;
 int leftMarker;
 int traitIndex;
 
-typedef struct ParamStruct {
+typedef struct ParamStruct
+{
   int gfreqIdx;
   int mkrFreqIdx;
-  int dprimeIdx; /* could be multiple D' */
+  int dprimeIdx;        /* could be multiple D' */
   int thetaIdx; /* could be multiple theta */
   int penIdx;   /* penetrance vector */
   int paramIdx; /* QT stdev index */
-  int thresholdIdx; /* QT threshold index */
+  int thresholdIdx;     /* QT threshold index */
 
   float gfreq;
   float R_square;
   float mkrFreq;
-  
+
 } ParamStruct;
 
 #endif
