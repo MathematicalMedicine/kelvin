@@ -1,6 +1,8 @@
 #include "kelvin.h"
 #include "kelvinHandlers.h"
 #include "utils/sw.h"
+#include "config/model_options.h" // For the polynomial flag
+#include "utils/polynomial.h" // To respond to the polynomial flag
 
 extern struct swStopwatch *overallSW;
 
