@@ -67,8 +67,6 @@ OBJS = kelvinInit.o kelvinTerm.o iterationMain.o integrationSupport.o \
 	ppl.o saveResults.o trackProgress.o \
 	summary_result.o tp_result_hash.o
 
-PARTS = 
-
 INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinInit.h kelvinTerm.h \
 	iterationLocals.h iterationMain.h \
@@ -84,17 +82,17 @@ install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh
 
-kelvin : libs $(KOBJS) $(OBJS) $(INCS) $(PARTS)
+kelvin : libs $(KOBJS) $(OBJS) $(INCS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
-kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS) $(PARTS)
+kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
 	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
 	+make -C seq_update -f Makefile calc_updated_ppl
 
-%.o : %.c $(INCS) $(PARTS)
+%.o : %.c $(INCS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
 
 .PHONY : libs
