@@ -1,20 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <memory.h>
-#include "utils/utils.h"
-#include "pedlib/pedlib.h"
-#include "pedlib/likelihood.h"
-#include "kelvinGlobals.h"
-#include "iterationSupport.h"
-#include "summary_result.h"
-#include "iterationLocals.h"
+#include <math.h>
+
 #include "kelvin.h"
-#include "kelvinHandlers.h"
-#include "ppl.h"
+#include "kelvinGlobals.h"
+#include "kelvinHandlers.h" // For status request signal detection
+#include "summary_result.h"
 #include "kelvinWriteFiles.h"
 #include "saveResults.h"
 #include "trackProgress.h"
-#include <math.h>
+#include "ppl.h"
+
+#include "iterationSupport.h"
+#include "iterationLocals.h"
 
 struct swStopwatch *combinedComputeSW,  ///< Combined likelihood compute stopwatch
  *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch

@@ -1,17 +1,18 @@
+#include <float.h>
+#include <math.h>
+
 #include "kelvin.h"
 #include "kelvinGlobals.h"
 #include "config/config.h"
-#include "utils/utils.h"
 #include "summary_result.h"
 #include "dkelvinWriteFiles.h"
+#include "trackProgress.h"
+#include "ppl.h"
+
 #include "dcuhre.h"
 #include "integrationGlobals.h"
 #include "integrationLocals.h"
 #include "integrationSupport.h"
-#include "trackProgress.h"
-#include <float.h>
-#include <math.h>
-#include "ppl.h"
 
 extern LDLoci *pLDLoci;
 
@@ -1607,11 +1608,6 @@ void integrateMain ()
 
   if (modelType->trait != DT) {
     if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-      /*total_dim += 3 * modelRange->nlclass;   //SD_DD SD_Dd SD_dd
-       * 
-       * if(modelOptions->imprintingFlag)
-       * total_dim += modelRange->nlclass;   // SD_dD
-       */
       total_dim += modelRange->nlclass;
     }
     if (modelType->trait == CT) {
