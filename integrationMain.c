@@ -3,6 +3,7 @@
 #include "integrationLocals.h"
 #include "integrationSupport.h"
 #include "trackProgress.h"
+#include <float.h>
 
   int numPositions;
   int size_BR;

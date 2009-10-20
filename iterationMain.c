@@ -14,6 +14,7 @@
 #include "kelvinWriteFiles.h"
 #include "saveResults.h"
 #include "trackProgress.h"
+#include <math.h>
 
 struct swStopwatch *combinedComputeSW,        ///< Combined likelihood compute stopwatch
   *combinedBuildSW,    ///< Combined likelihood polynomial build stopwatch

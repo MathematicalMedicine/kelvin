@@ -7,14 +7,6 @@
 
 #include <stdio.h>		/* Needed for printf */
 #include <stdlib.h>		/* EXIT_SUCCESS, EXIT_ERROR */
-#include <unistd.h>		/* Needed for getpid */
-#include <string.h>
-#include <time.h>		/* Needed for sclock */
-#include <signal.h>		/* Needed for signal */
-#include <fcntl.h>		/* Needed for open */
-#include <limits.h>		/* USHRT_MAX */
-#include <math.h>		/* for calculating logs */
-#include <float.h>
 
 #include "utils/utils.h"		/* Kelvin utilities. */
 #include "utils/sw.h"

@@ -213,6 +213,8 @@
   @version $Id$
 
 */
+#include <math.h>
+
 #include "kelvin.h"
 #include "kelvinGlobals.h"
 extern PedigreeSet pedigreeSet;
