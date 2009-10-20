@@ -62,11 +62,12 @@ LDFLAGS += ${ADD_LDFLAGS}
 export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN
 
 KOBJS = kelvin.o dcuhre.o
-OBJS = kelvinInit.o kelvinTerm.o iterationMain.o kelvinHandlers.o kelvinWriteFiles.o \
+OBJS = kelvinInit.o kelvinTerm.o iterationMain.o kelvinHandlers.o \
+	kelvinWriteFiles.o dkelvinWriteFiles.o \
 	ppl.o saveResults.o trackProgress.o \
 	summary_result.o tp_result_hash.o
 
-PARTS = integrationMain.c integrationSupport.c dkelvinWriteFiles.c
+PARTS = integrationMain.c integrationSupport.c
 
 INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinInit.h kelvinTerm.h \

@@ -1,3 +1,8 @@
+#include "kelvin.h"
+#include "kelvinGlobals.h"
+#include "summary_result.h"
+#include <math.h>
+
 /* dkelvinWriteFiles.c */
 void dk_write2ptBRHeader (int loc1, int loc2)
 {

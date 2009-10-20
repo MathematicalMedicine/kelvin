@@ -20,10 +20,11 @@
   - Yungui Huang - principle author
   - Hongling Wang - Polynomial features
   - Alberto Maria Segre - config and error logging modules
-  - Nathan Burnette - Regex code
+  - Nathan Burnette - Regex code (now removed)
   - Sang-Cheol Seok - Dynamic grid
-  - John Burian - configuration parser
-  - Bill Valentine-Cooper - polynomial compilation, SSD, performance and tracking
+  - John Burian - configuration parser, sequential update
+  - Bill Valentine-Cooper - additional polynomial features,
+  compilation, SSD, refactoring, performance and tracking
 
 @file kelvin.c
 
@@ -118,25 +119,15 @@
 #include "kelvinLocals.h"
 #include "kelvinInit.h"
 #include "kelvinTerm.h"
+#include "dkelvinWriteFiles.h"
 
 /**
 
   Driver for all types of analyses.
 
-  <pre>
-  Usage:
-     kelvin kelvin.conf
-  </pre>
-  The kelvin.conf file gives information about the specific linkage
-  analysis run. All information about, e.g., which markers to use,
-  what outputs to calculate, and so on, are stored in this
-  configuration file.
-
 */
 char *programVersion = "V0.38.0";       ///< Overall kelvin version set upon release.
 char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
-
-#include "dkelvinWriteFiles.c"
 
 int main (int argc, char *argv[])
 {
