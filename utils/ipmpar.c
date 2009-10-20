@@ -1,3 +1,4 @@
+#pragma GCC diagnostic ignored "-Wshadow"
 int ipmpar(int*);
 /*
 -----------------------------------------------------------------------

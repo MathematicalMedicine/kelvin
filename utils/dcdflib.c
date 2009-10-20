@@ -1,3 +1,4 @@
+#pragma GCC diagnostic ignored "-Wshadow"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
