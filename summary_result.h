@@ -1,8 +1,8 @@
 #ifndef __summary_result__
 #define __summary_result__
 
+#include "kelvinGlobals.h"
 #include "pedlib/pedlib.h"
-#include "iterationMain.h" 
 
 #define SCALE_RESERVE 50
 

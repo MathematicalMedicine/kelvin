@@ -1,6 +1,7 @@
 #ifndef __ppl_h__
 #define __ppl_h__
 
+#include "kelvinGlobals.h"
 #include "summary_result.h"
 
 /* The elements of the various LD-related PPL statistics. */

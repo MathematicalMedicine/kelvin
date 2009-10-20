@@ -5,7 +5,7 @@
 #include "pedlib/pedlib.h"
 #include "pedlib/likelihood.h"
 #include "kelvinGlobals.h"
-#include "iterationMain.h"
+#include "iterationSupport.h"
 #include "summary_result.h"
 #include "iterationLocals.h"
 #include "kelvin.h"

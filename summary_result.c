@@ -8,7 +8,6 @@
 #include "summary_result.h" /* SUMMARY_STAT etc. */
 #include "kelvinGlobals.h"
 #include "pedlib/pedlib.h" /* for PedigreeSet, Pedigree - hetLR calculations */
-#include "iterationMain.h" /* for ParamStruct */
 
 int maxscale = 0; /* scale in terms of log10, scale of 0 means 1, scale of 1 means 10 */
 /* three dimensional array for the two point summary results *
