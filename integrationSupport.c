@@ -3,7 +3,6 @@
 
 #include "kelvin.h"
 #include "kelvinGlobals.h"
-#include "config/config.h"
 #include "summary_result.h"
 #include "dkelvinWriteFiles.h"
 #include "trackProgress.h"
@@ -11,8 +10,8 @@
 
 #include "dcuhre.h"
 #include "integrationGlobals.h"
-#include "integrationLocals.h"
 #include "integrationSupport.h"
+#include "integrationLocals.h"
 
 extern LDLoci *pLDLoci;
 

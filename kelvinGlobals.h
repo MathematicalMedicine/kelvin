@@ -19,7 +19,7 @@
 #include "config/model_range.h"
 #include "config/model_options.h"
 #include "pedlib/pedlib.h"
-#include "pedlib/likelihood.h"
+#include "pedlib/likelihood.h" // For XMission matrix
 
 extern char *programVersion;
 extern char *kelvinVersion;
