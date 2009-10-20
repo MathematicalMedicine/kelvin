@@ -322,7 +322,7 @@ void readConfigFile (char *config)
 void parseCommandLine (int argc, char *argv[])
 {
   int curidx, bufflen=0, numtoks, tokgroupsize=0, va;
-  char buff[BUFFSIZE], **toks=NULL;
+  char **toks=NULL;
   
   if (argc == 0)
     return;
