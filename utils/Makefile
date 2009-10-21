@@ -12,7 +12,7 @@ NOGSL_OBJS = dcdflib.o dists.o ipmpar.o
 INCS = utils.h sw.h polynomial.h polynomial_internal.h tpl.h sSDHandler.h pageManagement.h $(HASH_INCS) $(NOGSL_INCS)
 OBJS = utils.o sw.o polynomial.o tpl.o sSDHandler.o pageManagement.o $(HASH_OBJS) $(NOGSL_OBJS)
 
-all : ../lib/libklvnutls.a ../lib/libklvnutls.so # pt sw sSDHandler
+all : ../lib/libklvnutls.a # ../lib/libklvnutls.so # pt sw sSDHandler
 
 pt : pt.c polynomial.c polynomial.h polynomial_internal.h sw.c dists.c
 	gcc pt.c -o pt polynomial.c sw.c dists.c $(CFLAGS) -DUSE_GSL -DPOLYUSE_DL -DPOLYCODE_DL -ldl -lgsl -lgslcblas -lm
