@@ -70,7 +70,7 @@ typedef struct {
 typedef struct {
   int sexSpecificThetas,
     sexAveragedThetas,
-    traitLoci,
+    traitPositions,
     constraints,
     maxclass,
     penetrance,
@@ -121,7 +121,7 @@ int set_flag (char **toks, int numtoks, void *flag);
 int clear_flag (char **toks, int numtoks, void *flag);
 int set_int (char **toks, int numtoks, void *field);
 
-int set_traitLoci (char **toks, int numtoks, void *unused);
+int set_traitPositions (char **toks, int numtoks, void *unused);
 int set_alleleFreq (char **toks, int numtoks, void *unused);
 int set_geneFreq (char **toks, int numtoks, void *unused);
 int set_dprime (char **toks, int numtoks, void *unused);
@@ -168,7 +168,7 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"DiseaseAlleles", set_int, &staticModelRange.nalleles},
 				{"MaxIterations", set_int, &staticModelOptions.maxIterations},
 
-				{"TraitLoci", set_traitLoci, NULL},
+				{"TraitPositions", set_traitPositions, NULL},
 				{"MarkerAlleleFrequency", set_alleleFreq, NULL},
 				{"DiseaseGeneFrequency", set_geneFreq, NULL},
 				{"DPrime", set_dprime, NULL},
@@ -409,8 +409,8 @@ void validateConfig ()
       fault ("Trait directives (Truncate) are incompatible with MarkerToMarker\n");
     if (staticModelType.type == MP)
       fault ("Multipoint is incompatible with MarkerToMarker\n");
-    if (observed.traitLoci)
-      fault ("Multipoint directives (TraitLoci) are incompatible with MarkerToMarker\n");
+    if (observed.traitPositions)
+      fault ("Multipoint directives (TraitPositions) are incompatible with MarkerToMarker\n");
     if (staticModelRange.nafreq > 0)
       fault ("MarkerAlleleFrequency is incompatible with MarkerToMarker\n");
     if (staticModelRange.ngfreq > 0)
@@ -479,8 +479,8 @@ void validateConfig ()
       logMsg (LOGINPUTFILE, LOGWARNING, "Multipoint will write no output to PPLFile\n");
   } else {
     /* Two point */
-    if (observed.traitLoci) 
-      fault ("TraitLoci requires Multipoint\n");
+    if (observed.traitPositions) 
+      fault ("TraitPositions requires Multipoint\n");
   }
   
   if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && staticModelOptions.mapFlag == SS) 
@@ -849,7 +849,7 @@ int set_int (char **toks, int numtoks, void *field)
 }
 
 
-int set_traitLoci (char **toks, int numtoks, void *unused)
+int set_traitPositions (char **toks, int numtoks, void *unused)
 {
   int numvals, va, vb;
   st_valuelist *vlist;
@@ -874,7 +874,7 @@ int set_traitLoci (char **toks, int numtoks, void *unused)
       staticModelRange.tlmark = TRUE;
   }
   free (vlist);
-  observed.traitLoci = 1;
+  observed.traitPositions = 1;
   return (0);
 }
 

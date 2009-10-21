@@ -14,7 +14,7 @@ my %state = (points => '',
 	     marker2marker => 0
 	     );
 my @phenocodes = ();
-my @traitloci = ();
+my @traitpositions = ();
 my @thetas = ();
 my @malethetas = ();
 my @femalethetas = ();
@@ -137,10 +137,10 @@ while ($line = <>) {
 	$state{sexspecific} = 1;
 
     } elsif ($line =~ /^TL (\S.*)$/) {
-	push (@traitloci, parserange ($1));
+	push (@traitpositions, parserange ($1));
 
     } elsif ($line =~ /^TM$/) {
-	push (@traitloci, "Marker");
+	push (@traitpositions, "Marker");
 
     } elsif ($line =~ /^GF (\S.*)$/) {
 	push (@genefreqs, parserange ($1));
@@ -241,8 +241,8 @@ if (scalar (@{$pens{dD}}) && ! $state{imprinting}) {
 ($state{poly} eq '') and $state{poly} = 'off';
 
 
-(($state{points} eq 'multi') && (scalar (@traitloci)))
-    and push (@type, "TraitLoci ". join (", ", @traitloci). "\n");
+(($state{points} eq 'multi') && (scalar (@traitpositions)))
+    and push (@type, "TraitPositions ". join (", ", @traitpositions). "\n");
 ($state{librium} eq 'disequi')
     and push (@type, "LD\n");
 ($state{poly} eq 'off') and push (@type, "NonPolynomial\n");

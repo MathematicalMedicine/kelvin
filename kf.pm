@@ -73,7 +73,7 @@ our %KnownDirectives = (
 			"LiabilityClasses" => \&NoAction,
 			"DiseaseAlleles" => \&NoAction,
 
-			"TraitLoci" => \&NoAction,
+			"TraitPositions" => \&NoAction,
 			"DiseaseGeneFrequency" => \&NoAction,
 			"DPrime" => \&NoAction,
 			"Theta" => \&NoAction,
