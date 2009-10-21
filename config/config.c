@@ -477,6 +477,8 @@ void validateConfig ()
       fault ("MarkerAlleleFrquency is incompatible with Multipoint\n");
     if (staticModelOptions.pplfile[0] != '\0')
       logMsg (LOGINPUTFILE, LOGWARNING, "Multipoint will write no output to PPLFile\n");
+    if (! observed.traitPositions) 
+      fault ("Multipoint requires TraitPositions\n");
   } else {
     /* Two point */
     if (observed.traitPositions) 
