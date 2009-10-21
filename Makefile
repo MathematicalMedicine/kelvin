@@ -107,7 +107,7 @@ clean :
 	make -C config -f Makefile clean
 	make -C utils -f Makefile clean
 	make -C seq_update -f Makefile clean
-	rm -f $(KOBJS) $(OBJS) kelvin seq_update/calc_updated_ppl
+	rm -f $(KOBJS) $(OBJS) kelvin seq_update/calc_updated_ppl lib/*
 	make -C test-suite -f Makefile clean
 
 .PHONY : test test-USE_DL
