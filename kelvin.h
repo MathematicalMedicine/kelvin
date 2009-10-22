@@ -1,5 +1,3 @@
-#pragma GCC once
-
 #ifndef __KELVIN_H__
 #define __KELVIN_H__
 
