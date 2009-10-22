@@ -4817,6 +4817,9 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   }
 
   totalSourceSize += fprintf (srcFile, "#include <math.h>\n#include <stdlib.h>\n\n");
+#ifdef USE_GSL
+  totalSourceSize += fprintf (srcFile, "#include <gsl/gsl_randist.h>\n\n");
+#endif
   totalSourceSize += fprintf (srcFile, "#include \"%s.h\"\n\n", name);
 
   /* We need to be *very* considerate of what is global and what is not when dealing with

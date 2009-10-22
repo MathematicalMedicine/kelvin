@@ -1478,8 +1478,6 @@ int dprimeIdx;
           if (fpIR != NULL)
             dk_curModel.dgf = gfreq;
 
-          printf ("current dgf = %f \n", dk_curModel.dgf);
-
           update_locus (&pedigreeSet, traitLocus);
           /* this should be MEAN + SD */
           for (paramIdx = 0; paramIdx < modelRange->nparam; paramIdx++) {
