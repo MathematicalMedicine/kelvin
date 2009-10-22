@@ -6,8 +6,7 @@
 #include <omp.h>
 #endif
 
-#include "utils/utils.h"
-#include "utils/sw.h"
+#include "kelvin.h"
 #include "kelvinGlobals.h"
 #include "kelvinHandlers.h"
 #include "trackProgress.h"
@@ -192,7 +191,7 @@ void kelvinInit (int argc, char *argv[])
      * Assume the traitLoucs is 0 for now  - Need to fix this later */
     traitLocus = 0;
     pLocus = originalLocusList.ppLocusList[traitLocus];
-    pTraitLocus = pLocus->pTraitLocus;
+    TraitLocus *pTraitLocus = pLocus->pTraitLocus;
     add_allele (pLocus, "D", 0.5);
     add_allele (pLocus, "d", 0.5);
     /* fix number of trait variables at 1 for now */
@@ -212,6 +211,7 @@ void kelvinInit (int argc, char *argv[])
   /* Initialize the pedigree set datastructure and read in the pedigrees. */
   memset (&pedigreeSet, 0, sizeof (PedigreeSet));
   read_pedfile (modelOptions->pedfile, &pedigreeSet);
+  int pedIdx;
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
     pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
     if (pPedigree->currentLoopFlag)

@@ -151,7 +151,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 {
 
   int k, j;
-  int pedIdxLocal, liabIdxLocal = 0, statusLocal, pen_size = 3;
+  int pedIdx, liabIdxLocal = 0, statusLocal, pen_size = 3;
   double constraint = 0.0;
   double mean_DD = 0.0, mean_Dd = 0.0, mean_dD = 0.0, mean_dd = 0.0;
   double SD_DD = 0.0, SD_Dd = 0.0, SD_dD = 0.0, SD_dd = 0.0;
@@ -297,10 +297,10 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = 1;
   pedigreeSet.log10Likelihood = 0;
 
-  for (pedIdxLocal = 0; pedIdxLocal < pedigreeSet.numPedigree; pedIdxLocal++) {
+  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 
     /* save the likelihood at null */
-    pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdxLocal];
+    pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
 
     if (modelOptions->polynomial == TRUE) {
       KASSERT (pPedigreeLocal->traitLikelihoodPolynomial != NULL, "Error in  \n");
@@ -336,7 +336,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       }
       sum_log_likelihood += log10Likelihood;
     }
-    pedigreeSet.nullLikelihood[pedIdxLocal] = pPedigreeLocal->likelihood;
+    pedigreeSet.nullLikelihood[pedIdx] = pPedigreeLocal->likelihood;
   }
 
   pedigreeSet.likelihood = product_likelihood;
@@ -392,9 +392,9 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
         alphaV2 = 0;
 
       log10HetLR = 0;
-      for (pedIdxLocal = 0; pedIdxLocal < pedigreeSet.numPedigree; pedIdxLocal++) {
-        pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdxLocal];
-        homoLR = pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[pedIdxLocal] * pPedigreeLocal->markerLikelihood);
+      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+        pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
+        homoLR = pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood);
         if (alphaV * homoLR + alphaV2 < 0)
           fprintf (stderr, "HET LR less than 0. Check!!!\n");
         log10HetLR += log10 (alphaV * homoLR + alphaV2);
@@ -535,7 +535,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 {
 
   int j;
-  int pedIdxLocal, liabIdxLocal, statusLocal, pen_size = 3, ret;
+  int pedIdx, liabIdxLocal, statusLocal, pen_size = 3, ret;
 
   double pen_DD, pen_Dd, pen_dD, pen_dd, gfreq, alphaV;
   double log10_likelihood_null, log10_likelihood_alternative, log10_likelihood_ratio, likelihood_ratio;
@@ -622,10 +622,10 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   pedigreeSet.log10Likelihood = 0;
 
 
-  for (pedIdxLocal = 0; pedIdxLocal < pedigreeSet.numPedigree; pedIdxLocal++) {
+  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 
     /* save the likelihood at null */
-    pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdxLocal];
+    pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
 
 
     if (modelOptions->polynomial == TRUE) {
@@ -668,8 +668,8 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
       }
       sum_log_likelihood += log10Likelihood;
     }
-    pedigreeSet.nullLikelihood[pedIdxLocal] = pPedigreeLocal->likelihood;
-    //fprintf(stderr,"null likelihood pedIdx=%d is done %20.18f with product =%20.16f\n",pedIdxLocal,pPedigreeLocal->likelihood,product_likelihood );
+    pedigreeSet.nullLikelihood[pedIdx] = pPedigreeLocal->likelihood;
+    //fprintf(stderr,"null likelihood pedIdx=%d is done %20.18f with product =%20.16f\n",pedIdx,pPedigreeLocal->likelihood,product_likelihood );
   }
 
 
@@ -732,10 +732,10 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
         alphaV2 = 0;
 
       log10HetLR = 0;
-      for (pedIdxLocal = 0; pedIdxLocal < pedigreeSet.numPedigree; pedIdxLocal++) {
-        pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdxLocal];
-        homoLR = pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[pedIdxLocal] * pPedigreeLocal->markerLikelihood);
-        //fprintf(stderr,"j=%d pedIdx=%d  %20.18f %20.16f %20.16f %20.16f \n",j, pedIdxLocal,pPedigreeLocal->likelihood,pedigreeSet.nullLikelihood[pedIdxLocal] * pPedigreeLocal->markerLikelihood, homoLR ,log10HetLR);
+      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+        pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
+        homoLR = pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood);
+        //fprintf(stderr,"j=%d pedIdx=%d  %20.18f %20.16f %20.16f %20.16f \n",j, pedIdx,pPedigreeLocal->likelihood,pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood, homoLR ,log10HetLR);
         if (alphaV * homoLR + alphaV2 < 0)
           fprintf (stderr, "HET LR less than 0. Check!!!\n");
         log10HetLR += log10 (alphaV * homoLR + alphaV2);
@@ -828,7 +828,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
 {
 
   int k, j, ret;
-  int pedIdxLocal, liabIdxLocal = 0, statusLocal, pen_size = 3;
+  int pedIdx, liabIdxLocal = 0, statusLocal, pen_size = 3;
   double constraint = 0.0;
   double mean_DD = 0.0, mean_Dd = 0.0, mean_dD = 0.0, mean_dd = 0.0;
   double SD_DD = 0.0, SD_Dd = 0.0, SD_dD = 0.0, SD_dd = 0.0;
@@ -1026,10 +1026,10 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
     return;
   }
 
-  for (pedIdxLocal = 0; pedIdxLocal < pedigreeSet.numPedigree; pedIdxLocal++) {
+  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
     /* save the likelihood at null */
-    pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdxLocal];
-    pedigreeSet.nullLikelihood[pedIdxLocal] = pPedigreeLocal->likelihood;
+    pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
+    pedigreeSet.nullLikelihood[pedIdx] = pPedigreeLocal->likelihood;
   }
 
   log10_likelihood_null = pedigreeSet.log10Likelihood;
@@ -1106,13 +1106,13 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         alphaV2 = 0;
 
       log10HetLR = 0;
-      for (pedIdxLocal = 0; pedIdxLocal < pedigreeSet.numPedigree; pedIdxLocal++) {
-        pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdxLocal];
-        homoLR = pPedigreeLocal->likelihood / pedigreeSet.nullLikelihood[pedIdxLocal];
+      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+        pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
+        homoLR = pPedigreeLocal->likelihood / pedigreeSet.nullLikelihood[pedIdx];
         log10HetLR += log10 (alphaV * homoLR + alphaV2);
 
         if (isnan (homoLR)) {
-          printf ("pedIdx =%d  homeLR=%e log10HLR=%e\n", pedIdxLocal, homoLR, log10HetLR);
+          printf ("pedIdx =%d  homeLR=%e log10HLR=%e\n", pedIdx, homoLR, log10HetLR);
           exit (0);
         }
       }
@@ -1273,7 +1273,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
 */
 
   int k, j;
-  int pedIdxLocal, liabIdxLocal = 0, statusLocal, pen_size = 3, ret;
+  int pedIdx, liabIdxLocal = 0, statusLocal, pen_size = 3, ret;
 
   double pen_DD, pen_Dd, pen_dD, pen_dd, gfreq, alphaV, thetaM, thetaF;
   double log10_likelihood_null, log10_likelihood_alternative, log10_likelihood_ratio, likelihood_ratio;
@@ -1396,10 +1396,10 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
   }
 
   /* save the results for NULL */
-  for (pedIdxLocal = 0; pedIdxLocal < pedigreeSet.numPedigree; pedIdxLocal++) {
+  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
     /* save the likelihood at null */
-    pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdxLocal];
-    pedigreeSet.nullLikelihood[pedIdxLocal] = pPedigreeLocal->likelihood;
+    pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
+    pedigreeSet.nullLikelihood[pedIdx] = pPedigreeLocal->likelihood;
   }
 
   log10_likelihood_null = pedigreeSet.log10Likelihood;
@@ -1479,9 +1479,9 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
 
       log10HetLR = 0;
 
-      for (pedIdxLocal = 0; pedIdxLocal < pedigreeSet.numPedigree; pedIdxLocal++) {
-        pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdxLocal];
-        homoLR = pPedigreeLocal->likelihood / pedigreeSet.nullLikelihood[pedIdxLocal];
+      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+        pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
+        homoLR = pPedigreeLocal->likelihood / pedigreeSet.nullLikelihood[pedIdx];
         tmp = log10 (alphaV * homoLR + (1 - alphaV));
         log10HetLR += tmp * pPedigreeLocal->pCount[loc2];
         // fprintf(stderr, "tmp=%15.10f cout=%d   log10= 15.10f \n",tmp, pPedigreeLocal->pCount[loc2], log10HetLR);
@@ -1596,7 +1596,7 @@ void integrateMain ()
   int numPositions;
   int size_BR;
   int i, j, k;
-  int liabIdxLocal, pedIdxLocal, statusLocal;
+  int liabIdxLocal, pedIdx, statusLocal;
   Pedigree *pPedigreeLocal;
 
   /* total_dim is the number of all parameters in the 3-layer scheme
@@ -1813,7 +1813,7 @@ void integrateMain ()
   /* assume the trait locus is the first one in the list */
   traitLocus = 0;
   pLocus = originalLocusList.ppLocusList[traitLocus];
-  pTraitLocus = originalLocusList.ppLocusList[traitLocus]->pTraitLocus;
+  TraitLocus *pTraitLocus = originalLocusList.ppLocusList[traitLocus]->pTraitLocus;
   pTrait = pTraitLocus->pTraits[traitLocus];
   if (modelType->type == TP) {
     /* Two point. */
@@ -2396,16 +2396,16 @@ void integrateMain ()
 
     /* Copy the polynomials built from above to traitLikelihoodPolynomials */
     if (modelOptions->polynomial == TRUE) {
-      for (pedIdxLocal = 0; pedIdxLocal < pedigreeSet.numPedigree; pedIdxLocal++) {
+      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         /* save the likelihood at trait */
-        pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdxLocal];
+        pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
         pPedigreeLocal->traitLikelihoodPolynomial = pPedigreeLocal->likelihoodPolynomial;
         pPedigreeLocal->traitLikelihoodPolyList = pPedigreeLocal->likelihoodPolyList;
         pPedigreeLocal->likelihoodPolyList = NULL;
         pPedigreeLocal->likelihoodPolynomial = NULL;
 
-        //fprintf(stderr,"Building traitPoly pedIdx =%d Null likelihood = %20.15f\n",pedIdxLocal, pPedigreeLocal->likelihood);
-        //fprintf(stderr,"pedIdx %d eType= %d\n", pedIdxLocal, ((pPedigreeLocal->traitLikelihoodPolyList)->pList[0])->eType);
+        //fprintf(stderr,"Building traitPoly pedIdx =%d Null likelihood = %20.15f\n",pedIdx, pPedigreeLocal->likelihood);
+        //fprintf(stderr,"pedIdx %d eType= %d\n", pedIdx, ((pPedigreeLocal->traitLikelihoodPolyList)->pList[0])->eType);
       }
     }
 
@@ -2520,9 +2520,9 @@ void integrateMain ()
         compute_likelihood (&pedigreeSet);
 
         /* save the results for marker likelihood */
-        for (pedIdxLocal = 0; pedIdxLocal < pedigreeSet.numPedigree; pedIdxLocal++) {
+        for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
           /* save the likelihood at null */
-          pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdxLocal];
+          pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
           pPedigreeLocal->markerLikelihood = pPedigreeLocal->likelihood;
         }
         pedigreeSet.markerLikelihood = pedigreeSet.likelihood;

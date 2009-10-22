@@ -58,13 +58,10 @@ double traitPos;      /* trait position for multipoint analysis */
 int i, j, k;
 int liabIdx;
 int mkrFreqIdx;
-int posIdx;
+int posIdx, pedIdx;
+TraitLocus *pTraitLocus = NULL;
 int prevTraitInd;
 int dprimeIdx;
-
-
-
-  //  char xmissionPattern[10];
 
   /* only for multipoint - we don't handle LD under multipoint yet */
   if (modelType->type == MP) {
