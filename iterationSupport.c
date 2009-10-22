@@ -1553,7 +1553,7 @@ int dprimeIdx;
                 /* If we're not on the first iteration, it's not a polynomial build, so
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
                 char markerNo[8];
-                sprintf (partialPolynomialFunctionName, "MQA_C%d P%%sM", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+                sprintf (partialPolynomialFunctionName, "MQA_C%d_P%%sM", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
                 for (k = 0; k < modelType->numMarkers; k++) {
                   if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
                     strcat (partialPolynomialFunctionName, "_T");
