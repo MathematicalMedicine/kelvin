@@ -1,11 +1,18 @@
-/**********************************************************************
- * Kelvin utilities.
- * Alberto Maria Segre, et al.
- *
- * Copyright 2005, The University of Iowa.  All rights reserved.
- * Permission is hereby given to use and reproduce this software 
- * for non-profit educational purposes only.
- **********************************************************************/
+/**
+@file utils.c
+
+  Utility stuff included by everything.
+
+  Kelvin logging facility, string utilities, and otherwise useful macros.
+  Most of it was originally written by Alberto Maria Segre.
+
+  Copyright &copy; 2009, Nationwide Children's Research Institute.  All
+  rights reserved.  Permission is hereby given to use this software
+  for non-profit educational purposes only.
+
+  @version $Id$
+
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,29 +21,35 @@
 #include <ctype.h>
 #include "utils.h"
 
-/**********************************************************************
- * Kelvin log facility. Keep an array of bitvectors, where each
- * bitvector corresponds to a level of output verbosity and each bit
- * corresponds to an independent "type" or stream of output.
- *
- * Levels are defined from 0 (most serious, inevitably fatal, and
- * always produced) to MAXLOGLEVELS (least serious). Commonly used
- * names for the levels are defined in log.h.
- *
- * Since level 0 errors are always produced, level k error bits are
- * actually set in logFlag[k-1] (in other words, we don't need flag
- * bits for level 0, so level 1 flag bits reside in logFlag[0]
- * instead).
- *
- * Types of output are also defined in log.h and are specific to
- * Kelvin. Note that with 32 bit ints you are limited to 32 different
- * output types; if you need more, you'll have to redefine logFlag as
- * something longer than 32 bits.
- **********************************************************************/
-unsigned int logFlag[MAXLOGLEVELS];
+/**
 
-/* Initialize the log facility. LOGDEFAULT errors are on by
- * default. */
+ Kelvin log facility. Keep an array of bitvectors, where each
+ bitvector corresponds to a level of output verbosity and each bit
+ corresponds to an independent "type" or stream of output.
+ 
+ Levels are defined from 0 (most serious, inevitably fatal, and
+ always produced) to MAXLOGLEVELS (least serious). Commonly used
+ names for the levels are defined in log.h.
+ 
+ Since level 0 errors are always produced, level k error bits are
+ actually set in logFlag[k-1] (in other words, we don't need flag
+ bits for level 0, so level 1 flag bits reside in logFlag[0]
+ instead).
+ 
+ Types of output are also defined in log.h and are specific to
+ Kelvin. Note that with 32 bit ints you are limited to 32 different
+ output types; if you need more, you'll have to redefine logFlag as
+ something longer than 32 bits.
+
+  @author Alberto Maria Segre - overall content.
+
+  @par Reviewers:
+     Bill Valentine-Cooper, 10/21/09
+
+*/
+unsigned int logFlag[MAXLOGLEVELS]; ///< 32 bits of logging flags for each of MAXLOGLEVELS levels
+
+// Initialize the log facility. LOGDEFAULT errors are on by default.
 void
 logInit ()
 {
@@ -196,7 +209,7 @@ fgetlongs (char **buff, int *bufflen, FILE * fp)
   return (*buff);
 }
 
-/* Symbols that are only useful to permuteLine(), so no need to polute the
+/* Symbols that are only useful to permuteLine(), so no need to pollute the
  * namespace by putting them in the header file.
  */
 #define STARTOFLINE  0

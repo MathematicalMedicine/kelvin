@@ -1,11 +1,18 @@
-/**********************************************************************
- * Kelvin utilities.
- * Alberto Maria Segre
- *
- * Copyright 2005, The University of Iowa.  All rights reserved.
- * Permission is hereby given to use and reproduce this software
- * for non-profit educational purposes only.
- **********************************************************************/
+/**
+@file utils.h
+
+  @see utils.c
+  
+  Copyright &copy; 2009, Nationwide Children's Research Institute.  All
+  rights reserved.  Permission is hereby given to use this software
+  for non-profit educational purposes only.
+
+  @version $Id$
+
+  @author Alberto Maria Segre
+  @author Bill Valentine-Cooper
+
+*/
 
 #ifndef __UTILS_H__
 #define __UTILS_H__
@@ -13,13 +20,14 @@
 #include <stdio.h>
 
 /**********************************************************************
- * Some convenient and commonly used defines.
+ * Some convenient and commonly-used defines.
  **********************************************************************/
 
 /**
 
-  Macros for malloc and friends allows us to report module and line
-  number for failures.
+  Macros for malloc and friends allows us to report module, line
+  number, pointer name and cast for failures. Makes it very easy to
+  diagnose problems without re-runs or excessive questioning.
 
   Casts aren't really necessary, but they can help clarify and constrain.
 
