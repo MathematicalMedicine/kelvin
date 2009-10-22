@@ -36,7 +36,6 @@ char *flexBuffer;
 int flexBufferSize;
 
 PedigreeSet pedigreeSet;        /* Pedigrees. */
-Pedigree *pPedigree; // Probably an evil global, i.e. recycled local
 int locus; // Probably an evil global, i.e. recycled local
 Polynomial *initialProbPoly2[3];
 double initialProb[3];

@@ -70,7 +70,7 @@ int dprimeIdx;
     if (modelType->trait == DT) {
 
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-        pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+        Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         /* first dimension is gene freq */
         CALCHOKE (pPedigree->traitLikelihoodDT, sizeof (double *), (size_t) modelRange->ngfreq, double **);
         CALCHOKE (pPedigree->alternativeLikelihoodDT, sizeof (double *), (size_t) modelRange->ngfreq, double **);
@@ -84,7 +84,7 @@ int dprimeIdx;
 
       /* first dimension is pedigree */
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-        pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+        Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         /* second dimension is gene freq */
         CALCHOKE (pPedigree->traitLikelihoodQT, sizeof (double ***), (size_t) modelRange->ngfreq, double ****);
         CALCHOKE (pPedigree->alternativeLikelihoodQT, sizeof (double ***), (size_t) modelRange->ngfreq, double ****);
@@ -458,7 +458,7 @@ int dprimeIdx;
                 /* save the results for NULL */
                 for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
                   /* save the likelihood at null */
-                  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+                  Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
                   pedigreeSet.nullLikelihood[pedIdx] = pPedigree->likelihood;
                 }
 
@@ -666,7 +666,7 @@ int dprimeIdx;
                     }
                     for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
                       /* save the likelihood at null */
-                      pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+                      Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
                       pedigreeSet.nullLikelihood[pedIdx] = pPedigree->likelihood;
                     }
                     log10_likelihood_null = pedigreeSet.log10Likelihood;
@@ -843,7 +843,7 @@ int dprimeIdx;
     if (pTrait->type == DICHOTOMOUS) {
       /* load all saved trait likelihood */
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-        pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+        Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         if (modelOptions->saveResults == TRUE) {
           pPedigree->load_flag = restoreTrait (modelOptions->sexLinked, pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
         } else
@@ -918,7 +918,7 @@ int dprimeIdx;
           /* save the results for NULL */
           for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
             /* save the likelihood at null */
-            pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+            Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
             if (pPedigree->load_flag == 0) {    /*update only for the pedigrees which were add for this run */
               pedigreeSet.nullLikelihood[pedIdx] = pPedigree->likelihood;
               pPedigree->traitLikelihoodDT[gfreqInd][penIdx] = pPedigree->likelihood;
@@ -935,7 +935,7 @@ int dprimeIdx;
       /* save all  trait likelihood which were created in this run */
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         /* save the likelihood at null */
-        pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+        Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         if ((modelOptions->saveResults == TRUE) && (pPedigree->load_flag == 0)) {       /*save only for the pedigrees which were add for this run */
           pPedigree->load_flag = saveTrait (modelOptions->sexLinked, pPedigree->sPedigreeID, pPedigree->traitLikelihoodDT);
         } else {
@@ -1029,7 +1029,7 @@ int dprimeIdx;
 
               for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
                 /* save the likelihood at null */
-                pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+                Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
                 pedigreeSet.nullLikelihood[pedIdx] = pPedigree->likelihood;
                 pPedigree->traitLikelihoodQT[gfreqInd][penIdx]
                     [paramIdx][thresholdIdx] = pPedigree->likelihood;
@@ -1051,7 +1051,7 @@ int dprimeIdx;
     if (modelOptions->polynomial == TRUE) {
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         /* save the likelihood at trait */
-        pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+        Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         pPedigree->traitLikelihoodPolynomial = pPedigree->likelihoodPolynomial;
         pPedigree->traitLikelihoodPolyList = pPedigree->likelihoodPolyList;
       }
@@ -1173,7 +1173,7 @@ int dprimeIdx;
         }
         for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
           /* save the marker likelihood   */
-          pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+          Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
           if (modelOptions->saveResults == TRUE) {
             pPedigree->load_flag = restoreMarker (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome, modelType->numMarkers, markerNameList, &(pPedigree->markerLikelihood));
           } else {
@@ -1208,7 +1208,7 @@ int dprimeIdx;
           /* save the results for marker likelihood */
           for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
             /* save the likelihood at null */
-            pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+            Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 
             //      fprintf(stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx, pPedigree->likelihood);
             if (modelOptions->saveResults == TRUE) {
@@ -1321,7 +1321,7 @@ int dprimeIdx;
 
       if (pTrait->type == DICHOTOMOUS) {
         for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-          pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+          Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
           /* load stored alternative likelihood if they were already stored */
           if (modelOptions->saveResults == TRUE)
             pPedigree->load_flag = restoreAlternative (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome, traitPos, pPedigree->alternativeLikelihoodDT);
@@ -1436,7 +1436,7 @@ int dprimeIdx;
 
               /* add the result to the right placeholder */
               for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-                pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+                Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
                 if (pPedigree->load_flag == 0) {
                   pPedigree->alternativeLikelihoodDT[gfreqInd]
                       [penIdx] = pPedigree->likelihood;
@@ -1451,7 +1451,7 @@ int dprimeIdx;
         /* end of penetrance loop */
         /* save the alternative likelihood */
         for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-          pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+          Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
           if ((modelOptions->saveResults == TRUE) && (pPedigree->load_flag == 0)) {     /*save only for the pedigrees which were add for this run */
             pPedigree->load_flag = saveAlternative (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome, traitPos, pPedigree->alternativeLikelihoodDT);
           }
@@ -1600,7 +1600,7 @@ int dprimeIdx;
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                 /* add the result to the right placeholder */
                 for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-                  pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+                  Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
                   pPedigree->alternativeLikelihoodQT[gfreqInd]
                       [penIdx][paramIdx][thresholdIdx] = pPedigree->likelihood;
                 }
@@ -1647,7 +1647,7 @@ int dprimeIdx;
       free (likelihoodDT);
 #endif
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-        pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+        Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 
         for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
           free (pPedigree->traitLikelihoodDT[gfreqInd]);

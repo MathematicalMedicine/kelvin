@@ -213,7 +213,7 @@ void kelvinInit (int argc, char *argv[])
   read_pedfile (modelOptions->pedfile, &pedigreeSet);
   int pedIdx;
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+    Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
     if (pPedigree->currentLoopFlag)
       exitDueToLoop = TRUE;
   }
@@ -377,7 +377,7 @@ void kelvinInit (int argc, char *argv[])
     for (loc1 = 0; loc1 < originalLocusList.numLocus; loc1++) {
       fprintf (stderr, "Locus %d:\n", loc1);
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-        pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+        Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
         print_pedigree_locus_genotype_count (pPedigree, loc1);
       }
     }
@@ -401,7 +401,7 @@ void kelvinInit (int argc, char *argv[])
   }
 
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-    pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+    Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
     pPedigree->load_flag = 0;   /* Initially 0 and changes to 1 when marker or 
                                  * alternative likelihood values are retrieved */
   }
