@@ -26,6 +26,10 @@
 #
 # export LD_LIBRARY_PATH=.:$KELVIN_ROOT/lib/
 #
+# If GSL is required and not installed in a normal location, create
+# environment variables INCDIR and LIBDIR as paths to the include
+# and library locations.
+#
 name=${1##*/}
 name=${name%\.*}
 
@@ -50,7 +54,7 @@ for src in ${name}{\.,\_[0-9]*}c ; do [ -f $src ] || continue ;
     if test ! -e ${src}.compiling ; then
 	touch ${src}.compiling
 	echo Compiling ${src}
-	gcc -g -c -I${KELVIN_ROOT}/utils/ -fPIC -O${optLevel} -o ${src}.o ${src}.c >& ${src}.out
+	gcc -g -c -I${KELVIN_ROOT}/utils/ -I${INCDIR} -fPIC -O${optLevel} -o ${src}.o ${src}.c >& ${src}.out
 	if test ! -e ${src}.o ; then
 	    echo Compile failed for some unknown reason
 	    mail -s "Compile for ${src} failed on ${HOSTNAME} for some unknown reason" whv001@ccri.net < /dev/null
@@ -73,7 +77,7 @@ if test -e ${name}.linking ; then
     exit
 fi
 touch ${name}.linking
-gcc -g -O${optLevel} -L${KELVIN_ROOT}/lib/ -shared -lgsl -lgslcblas -o ${name}.so ${name}.o >& ${name}-link.out
+gcc -g -O${optLevel} -L${KELVIN_ROOT}/lib/ -shared -L${LIBDIR} -lgsl -lgslcblas -o ${name}.so ${name}.o >& ${name}-link.out
 if test ! -x ${name}.so ; then
     echo Link of root DL failed for some unknown reason
     mail -s "Link for root DL ${name} failed on ${HOSTNAME} for some unknown reason" whv001@ccri.net < /dev/null
@@ -84,7 +88,7 @@ rm ${name}.o
 for dl in ${name}_[0-9]*00.o ; do [ -f $dl ] || continue ;
     dl=${dl##*/}
     dl=${dl%00\.o}
-    gcc -g -O${optLevel} -L${KELVIN_ROOT}/lib/ -shared -lgsl -lgslcblas -o ${dl}00.so ${dl}[0-9][0-9].o >& ${dl}00-link.out
+    gcc -g -O${optLevel} -L${KELVIN_ROOT}/lib/ -shared -L${LIBDIR} -lgsl -lgslcblas -o ${dl}00.so ${dl}[0-9][0-9].o >& ${dl}00-link.out
     if test ! -x ${name}.so ; then
 	echo Link of branch DL failed for some unknown reason
 	mail -s "Link for branch DL ${dl} failed on ${HOSTNAME} for some unknown reason" whv001@ccri.net < /dev/null
