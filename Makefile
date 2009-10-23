@@ -12,8 +12,6 @@ GROUP=root
 # as command-line macros, e.g. at OSC:
 # $ make INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib
 #
-INCDIR=/usr/local/include
-LIBDIR=/usr/local/lib
 KVNLIBDIR := $(shell pwd)/lib
 KELVIN_ROOT := $(shell pwd)
 TEST_KELVIN := $(KELVIN_ROOT)/kelvin
