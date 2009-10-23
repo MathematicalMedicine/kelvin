@@ -211,6 +211,35 @@ void kelvinInit (int argc, char *argv[])
   /* Initialize the pedigree set datastructure and read in the pedigrees. */
   memset (&pedigreeSet, 0, sizeof (PedigreeSet));
   read_pedfile (modelOptions->pedfile, &pedigreeSet);
+
+  if (modelRange->nlclass > 1) {
+    int va=0, vb=0;
+
+    for (va = 0; va < modelRange->nlclass; va++) {
+      if (pedigreeSet.liabilityClassCnt[va] == 0)
+	vb++;
+    }
+    if (vb > 0)
+      logMsg (LOGDEFAULT, LOGWARNING, "%d liability class%s empty. Eliminating empty classes will greatly improve performance\n", vb, (vb == 1) ? " is" : "s are");
+#if 0
+    /* Save this idea for later; right now, too much initialization has
+     * already been done based on the number of LCs to reduce it here.
+     * We eventually need to move pedfile reading to before finish_config().
+     */ 
+    va = 0;
+    while (vb < modelRange->nlclass) {
+      if (pedigreeSet.liabilityClassCnt[va] == 0) {
+	printf ("renumber class %d to class %d\n", vb, va);
+	pedigreeSet.liabilityClassCnt[va] = pedigreeSet.liabilityClassCnt[vb];
+      } else {
+	va++;
+      }
+      vb++;
+    }
+    modelRange->nlclass = va;
+#endif
+  }
+
   int pedIdx;
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
     Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];

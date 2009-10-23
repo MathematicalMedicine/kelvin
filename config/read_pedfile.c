@@ -99,6 +99,10 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
   Person *pCurrPerson = NULL;
   int lastFlag = 0, i;
 
+  /* Prepare to count the number of indiviuals in each liability class */
+  if (modelRange->nlclass > 1)
+    CALCHOKE (pPedigreeSet->liabilityClassCnt, modelRange->nlclass, sizeof (int), int *);
+
   /* open pedigree file */
   fpPedfile = fopen (sPedfileName, "r");
   KASSERT (fpPedfile != NULL,
@@ -194,6 +198,14 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 
     /* read in this person's information from current line */
     read_person (sPedfileName, lineNo, pLine, pCurrPerson);
+
+    /* Counting up how many individuals in each liability class */
+    /* Note: This assumess a single trait column/single LC column in the pedfile */
+    if (modelRange->nlclass > 1) {
+      if (pCurrPerson->ppLiabilityClass[0][0] > modelRange->nlclass)
+	logMsg (LOGDEFAULT, LOGFATAL, "Pedigree %s, person %s has liability class %d, only %d classes configured\n", pCurrPedigree->sPedigreeID, pCurrPerson->sID, pCurrPerson->ppLiabilityClass[0][0], modelRange->nlclass);
+      pPedigreeSet->liabilityClassCnt[pCurrPerson->ppLiabilityClass[0][0]-1] += 1;
+    }
 
     /* mark this pedigree as having a loop if so */
     if (pCurrPerson->proband > 1) {
@@ -297,6 +309,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 	KASSERT (numRet == 1,
 		 "Line %d in pedfile %s doesn't have enough columns (LC). Is this a post-makeped file? \n",
 		 lineNo, sPedfileName);
+	if (pPerson->ppLiabilityClass[i][j] < 1)
+	  logMsg (LOGDEFAULT, LOGFATAL, "Line %d in pedfile %s has illegal liability class identifier %d\n", lineNo, sPedfileName, pPerson->ppLiabilityClass[i][j]);
 	pLine = &pLine[pos];
       }
 

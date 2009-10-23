@@ -86,6 +86,8 @@ typedef struct PedigreeSet
    * This is the number of pedigrees we have allocated space for the list */
   int maxNumPedigree;
 
+  /* For counting how many individuals are in each liability class */
+  int *liabilityClassCnt;
 } PedigreeSet;
 
 /* Pedigree structure. Each pedigree is represented by this structure
