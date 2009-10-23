@@ -150,6 +150,12 @@
 
 #include <dlfcn.h>
 
+#ifdef USE_GSL
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_cdf.h>
+#include <gsl/gsl_sf_gamma.h>
+#endif
+
 #ifndef POLYUSE_DL
   #if defined (POLYCODE_DL)| defined (POLYCOMP_DL) | defined (POLYCHECK_DL)
     #warning "Cannot use POLYCODE_DL, POLYCOMP_DL or POLYCHECK_DL without POLYUSE_DL"
@@ -4818,7 +4824,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
   totalSourceSize += fprintf (srcFile, "#include <math.h>\n#include <stdlib.h>\n\n");
 #ifdef USE_GSL
-  totalSourceSize += fprintf (srcFile, "#include <gsl/gsl_randist.h>\n\n");
+  totalSourceSize += fprintf (srcFile, "#include <gsl/gsl_randist.h>\n\n#include <gsl/gsl_cdf.h>\n\n#include <gsl/gsl_sf_gamma.h>\n\n");
 #endif
   totalSourceSize += fprintf (srcFile, "#include \"%s.h\"\n\n", name);
 
@@ -4945,9 +4951,10 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     case T_FUNCTIONCALL:
       totalInternalSize += sizeof (struct functionPoly) + (p->e.f->num * sizeof (Polynomial *));
 
-      if (strcmp (p->e.f->name, "gsl_ran_ugaussian_pdf") == 0)
-	srcSize += fprintf (srcCalledFile, "\tF[%d] = ugaussian_pdf(", functionCallsUsed);
-      else
+      /// @todo Not sure what this was about...
+      //      if (strcmp (p->e.f->name, "gsl_ran_ugaussian_pdf") == 0)
+      //	srcSize += fprintf (srcCalledFile, "\tF[%d] = ugaussian_pdf(", functionCallsUsed);
+      //      else
 	srcSize += fprintf (srcCalledFile, "\tF[%d] = %s(", functionCallsUsed, p->e.f->name);
       for (i = 0; i < p->e.f->num; i++) {
 	if (p->e.f->para[i]->eType == T_OFFLINE) importPoly (p->e.f->para[i]);
