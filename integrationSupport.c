@@ -356,8 +356,19 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
         0);     /* current locus - start with 0 */
 
 
+  char markerNo[8];
   sprintf (partialPolynomialFunctionName, "MQA_C%d_P%%sM", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
+  for (k = 0; k < modelType->numMarkers; k++) {
+    if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
+      strcat (partialPolynomialFunctionName, "_T");
+    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
+    strcat (partialPolynomialFunctionName, markerNo);
+  }
+  if (strstr (partialPolynomialFunctionName, "_T") == NULL)
+    strcat (partialPolynomialFunctionName, "_T");
   compute_likelihood (&pedigreeSet);
+
+  fprintf (stderr, "%s CL3 returned %g\n", partialPolynomialFunctionName, pedigreeSet.likelihood);
   cL[3]++;
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
