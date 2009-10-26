@@ -434,7 +434,6 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   }
   KLOG (LOGLIKELIHOOD, LOGDEBUG, "Sum of log Likelihood is: %e\n",
 	sum_log_likelihood);
-
   return ret;
 }
 
@@ -3033,7 +3032,7 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 			  int lastHetLoc, int prevPattern, int loc)
 {
 #ifndef SIMPLEPROGRESS
-  fprintf (stdout, "Building transmission matrix...\n");
+  fprintf (stderr, "Building transmission matrix...\n");
 #endif
   pushStatus ('k', "buildXM");
 
