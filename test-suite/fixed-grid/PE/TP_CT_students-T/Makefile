@@ -4,7 +4,11 @@ test :
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .00001
 
 test-USE_DL :
-	echo Compilation not available for QT runs yet
+	- rm -rf *.out *.so compiled
+	(time $(KELVIN_ROOT)/kelvin-POLYCOMP_DL kelvin.conf) >kelvin-COMP_DL.out 2>&1
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001
+	(time $(KELVIN_ROOT)/kelvin-POLYUSE_DL kelvin.conf) >kelvin-USE_DL.out 2>&1
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001
 
 clean :
 	- rm -rf *.out *.so *memory.dat compiled
