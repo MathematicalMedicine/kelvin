@@ -367,8 +367,6 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   if (strstr (partialPolynomialFunctionName, "_T") == NULL)
     strcat (partialPolynomialFunctionName, "_T");
   compute_likelihood (&pedigreeSet);
-
-  fprintf (stderr, "%s CL3 returned %g\n", partialPolynomialFunctionName, pedigreeSet.likelihood);
   cL[3]++;
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
