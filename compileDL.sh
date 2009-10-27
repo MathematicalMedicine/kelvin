@@ -1,4 +1,5 @@
 #!/bin/bash
+set -v
 #
 # Copyright 2008, Nationwide Children's Research Institute.  All
 # rights reserved.  Permission is hereby given to use this software
@@ -30,6 +31,11 @@
 # environment variables INCDIR and LIBDIR as paths to the include
 # and library locations.
 #
+if test -z "${INCDIR}" ; then
+    INCDIR=/usr/local/include
+    LIBDIR=/usr/local/lib
+fi
+
 name=${1##*/}
 name=${name%\.*}
 
