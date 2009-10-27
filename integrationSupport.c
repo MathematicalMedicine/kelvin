@@ -2393,14 +2393,12 @@ void integrateMain ()
         pTrait->cutoffValue[liabIdxLocal] = 0.5;
 
       } /* liability class Index */
-      if (modelOptions->polynomial == TRUE);
+      if (modelOptions->polynomial == TRUE)
+        sprintf (partialPolynomialFunctionName, "MQT_C%d_P%%sSL%d", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
       else
         update_penetrance (&pedigreeSet, traitLocus);
-
-      sprintf (partialPolynomialFunctionName, "MQT_C%d_P%%sSL%d", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
-      cL[1]++;
       compute_likelihood (&pedigreeSet);
-
+      cL[1]++;
     }
 
     /* Copy the polynomials built from above to traitLikelihoodPolynomials */
