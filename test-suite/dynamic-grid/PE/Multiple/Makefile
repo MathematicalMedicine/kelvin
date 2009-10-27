@@ -12,6 +12,9 @@ test :
 	grep -v Version PC3/BR.Out >>BR.Out-PCs
 	diff -i BR.Out-PCs br.out
 
+test-USE_DL :
+	echo Compilation not appropriate for this test.
+
 test-FIXED :
 	echo Fixed-grid comparison not available
 

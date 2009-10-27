@@ -8,5 +8,8 @@ test :
 test-FIXED :
 	echo Fixed-grid comparison not available
 
+test-USE_DL :
+	echo Compilation not appropriate for this test
+
 clean :
 	- rm -rf single-* dynamic-* fixed-* *.out
