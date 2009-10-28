@@ -31,7 +31,7 @@ INCFLAGS := -I$(INCDIR)
 
 CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
-GCCOPT := 3 # GCC optimization level, 0=none, 1=default, 2=some, 3=all
+GCCOPT := 2 # GCC optimization level, 0=none, 1=default, 2=some (OSC's recommendation), 3=all
 CFLAGS := -Wall -Werror -DGCCOPT=$(GCCOPT) -O$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
 CFLAGS += -D_REENTRANT # Thead-safe (different prototype) version of strtok_r under Solaris when using pthread
 LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR)
