@@ -47,14 +47,14 @@ void *swMalloc (size_t, char *, int);
 void *swCalloc (size_t, int, char *, int);
 void *swRealloc (void *, size_t, char *, int);
 void swFree (void *, char *, int);
-void swDumpHeldTotals ();
-void swDumpBlockUse ();
+void swDumpHeldTotals (void);
+void swDumpBlockUse (void);
 void swAddChunk (void *, size_t, int, char *, int);
 size_t swDelChunk (void *, int, char *, int);
-void swDumpSources ();
-void swDumpCrossModuleChunks ();
+void swDumpSources (void);
+void swDumpCrossModuleChunks (void);
 void swLogPeaks (char *);
-long swGetMaximumPMK ();
+long swGetMaximumPMK (void);
 long swGetCurrentVMK (pid_t);
 
 /// Maximum amount of physical memory available in Kbytes

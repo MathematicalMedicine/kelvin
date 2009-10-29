@@ -132,7 +132,7 @@
  * function calls are not evaluated unnecessarily.
  **********************************************************************/
 extern unsigned int logFlag[];
-void logInit ();
+void logInit (void);
 void logSet (unsigned int type, int level);
 void logMsg (unsigned int type, int level, const char *format, ...);
 
