@@ -75,7 +75,7 @@ typedef struct htab htab;
      the new table
  */
 
-htab *hcreate ( /*_ word logsize _*/ );
+htab *hcreate ( word logsize );
 
 
 /* hdestroy - destroy a hash table
@@ -87,7 +87,7 @@ htab *hcreate ( /*_ word logsize _*/ );
      nothing
  */
 
-void hdestroy ( /*_ htab *t _*/ );
+void hdestroy ( htab *t );
 
 
 /* hcount, hkey, hkeyl, hstuff
@@ -121,7 +121,7 @@ void hdestroy ( /*_ htab *t _*/ );
      If the item exists, moves the current position to that item.
  */
 
-word hfind ( /*_ htab *t, ub1 *key, ub4 keyl _*/ );
+word hfind ( htab *t, ub1 *key, ub4 keyl );
 
 
 /* hadd - add a new item to the hash table
@@ -135,7 +135,7 @@ word hfind ( /*_ htab *t, ub1 *key, ub4 keyl _*/ );
      FALSE if the operation fails (because that key is already there).
  */
 
-word hadd ( /*_ htab *t, ub1 *key, ub4 keyl, void *stuff _*/ );
+word hadd ( htab *t, ub1 *key, ub4 keyl, void *stuff );
 
 
 /* hdel - delete the item at the current position
@@ -154,7 +154,7 @@ word hadd ( /*_ htab *t, ub1 *key, ub4 keyl, void *stuff _*/ );
         hdel(tab);
       }
  */
-word hdel ( /* htab *t */ );
+word hdel ( htab *t );
 
 
 /* hfirst - move position to the first item in the table
@@ -165,7 +165,7 @@ word hdel ( /* htab *t */ );
   NOTE:
  */
 
-word hfirst ( /*_ htab *t _*/ );
+word hfirst ( htab *t );
 
 
 /* hnext - move position to the next item in the table
@@ -197,7 +197,7 @@ word hfirst ( /*_ htab *t _*/ );
     This is private to hashtab; do not use it externally.
  */
 
-word hnbucket ( /*_ htab *t _*/ );
+word hnbucket ( htab *t );
 
 
 /* hstat - print statistics about the hash table
@@ -217,6 +217,6 @@ word hnbucket ( /*_ htab *t _*/ );
     Also expect "existing" to be about 2.
  */
 
-void hstat ( /*_ htab *t _*/ );
+void hstat ( htab *t );
 
 #endif /* HASHTAB */
