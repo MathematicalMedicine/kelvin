@@ -118,7 +118,7 @@ void pushStatus (char program, char *currentStatus)
 	     currentStatus);
     return;
   }
-  strncpy (statusStack[++statusStackPosition], currentStatus, STATUS_LENGTH);
+  strncpy (statusStack[++statusStackPosition], currentStatus, (size_t) STATUS_LENGTH);
   sprintf (processName, "%c-%-.*s", program, STATUS_LENGTH, currentStatus);
 #ifdef PR_SET_NAME
   prctl (PR_SET_NAME, processName);
@@ -154,7 +154,7 @@ swCreate (char *swName)
     exit (EXIT_FAILURE);
   } else {
     memset (newStopwatch, 0, sizeof (struct swStopwatch));
-    strncpy (newStopwatch->swName, swName, MAXSWNAME);
+    strncpy (newStopwatch->swName, swName, (size_t) MAXSWNAME);
   }
   return newStopwatch;
 }
@@ -317,10 +317,10 @@ swDump (struct swStopwatch *theStopwatch)
 {
   if (theStopwatch->swRunning) {
     swStop (theStopwatch);
-    swDumpOutput (theStopwatch, "");
+    swDumpOutput (theStopwatch, NULL);
     swStart (theStopwatch);
   } else {
-    swDumpOutput (theStopwatch, "");
+    swDumpOutput (theStopwatch, NULL);
   }
   return;
 }
@@ -331,9 +331,9 @@ swReset (struct swStopwatch *theStopwatch)
 {
   char swName[MAXSWNAME + 1];
 
-  strncpy (swName, theStopwatch->swName, MAXSWNAME);
+  strncpy (swName, theStopwatch->swName, (size_t) MAXSWNAME);
   memset (theStopwatch, 0, sizeof (struct swStopwatch));
-  strncpy (theStopwatch->swName, swName, MAXSWNAME);
+  strncpy (theStopwatch->swName, swName, (size_t) MAXSWNAME);
   return;
 }
 
@@ -346,7 +346,9 @@ struct swStopwatch *internalDMSW;
    binary search should suffice. */
 enum callTypes
   { cTMalloc, ctCalloc, cTReAlloc, cTReFree, cTFree };
-char *callTypeNames[] = { "malloc", "calloc", "realloc", "realloc", "free" };
+#ifdef DMTRACK
+static char *callTypeNames[] = { "malloc", "calloc", "realloc", "realloc", "free" };
+#endif
 
 #define MAXMEMCHUNKSOURCECOUNT 2048
 struct memChunkSource
