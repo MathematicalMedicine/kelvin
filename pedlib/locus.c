@@ -285,6 +285,7 @@ read_datafile (char *sDatafileName)
   MapUnit *pMapUnit;
   Locus *pLocus;
   TraitLocus *pTraitLocus = NULL;
+  Trait *pTrait;
   int locusType;		/* temporary place holder */
   char sLocusName[MAX_LINE_LEN];
   char sLocusType[MAX_LINE_LEN];
@@ -316,6 +317,12 @@ read_datafile (char *sDatafileName)
       KASSERT (pMapUnit != NULL,
 	       "Can't find marker %s in map.\n", pLocus->sName);
       pLocus->pMapUnit = pMapUnit;
+    } else if (!strcasecmp (sLocusType, "C")) {
+      if (pTraitLocus == NULL)
+	logMsg (LOGDEFAULT, LOGFATAL, "Liability class '%s' in %s must follow a trait\n",
+		sLocusName, sDatafileName);
+      pTrait = pTraitLocus->pTraits[0];
+      pTrait->numLiabilityClass = modelRange->nlclass;
     } else {
       locusType = LOCUS_TYPE_TRAIT;
       pLocus = add_locus (&originalLocusList, sLocusName, locusType);
@@ -427,6 +434,8 @@ Locus *
 add_locus (LocusList * pLocusList, char *sName, int locusType)
 {
   Locus *pLocus;
+  TraitLocus *pTraitLocus;
+  Trait *pTrait;
 
   if (pLocusList->maxNumLocus <= pLocusList->numLocus) {
     /* need to reallocate list */
@@ -446,7 +455,20 @@ add_locus (LocusList * pLocusList, char *sName, int locusType)
   /* if this is a trait locus, need to allocate more space */
   pLocus->locusType = locusType;
   if (locusType == LOCUS_TYPE_TRAIT) {
+    /* Assign alleles to trait locus */
+    add_allele (pLocus, "D", 0.5);
+    add_allele (pLocus, "d", 0.5);
+    /* Allocate memory for extra trait info. We're going to assume that any
+     * trait locus only has one column of trait information. This may change later.
+     */
     CALCHOKE(pLocus->pTraitLocus, (size_t) 1, sizeof (TraitLocus), TraitLocus *);
+    pTraitLocus = pLocus->pTraitLocus;
+    pTraitLocus->numTrait = 1;    
+    pTrait = add_trait (0, pTraitLocus, modelType->trait);
+    /* Assume one liability class for now; we'll update this later if it turns
+     * out we're running a liability class anlysis.
+     */
+    pTrait->numLiabilityClass = 1;
     pLocusList->numTraitLocus++;
   }
 

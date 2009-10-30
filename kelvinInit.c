@@ -180,25 +180,9 @@ void kelvinInit (int argc, char *argv[])
   /* read in what loci are in the pedigree file */
   read_datafile (modelOptions->datafile);
 
-  /* We should depend on the config file, rather than the presence of a trait
-   * in the data file, to decide if we're doing a marker-to-marker analysis.
-   */
-  /*if (originalLocusList.numTraitLocus > 0) { */
-  if (!modelOptions->markerAnalysis || (originalLocusList.ppLocusList[0]->locusType == LOCUS_TYPE_TRAIT)) {
-    /* We are not doing marker to marker analysis; the configuration
-     * has all the information about the disease trait if any.
-     * Need to add the alleles into trait locus 
-     * Assume the traitLoucs is 0 for now  - Need to fix this later */
-    traitLocus = 0;
-    pLocus = originalLocusList.ppLocusList[traitLocus];
-    TraitLocus *pTraitLocus = pLocus->pTraitLocus;
-    add_allele (pLocus, "D", 0.5);
-    add_allele (pLocus, "d", 0.5);
-    /* fix number of trait variables at 1 for now */
-    pTraitLocus->numTrait = 1;
-    pTrait = add_trait (0, pTraitLocus, modelType->trait);
-    pTrait->numLiabilityClass = modelRange->nlclass;
-  }
+  if (originalLocusList.numTraitLocus == 0 && !modelOptions->markerAnalysis)
+    logMsg (LOGDEFAULT, LOGFATAL, "No trait information in %s, can't run trait analysis\n", 
+	    modelOptions->datafile);
 
   /* read in marker allele frequencies */
   read_markerfile (modelOptions->markerfile, modelType->numMarkers);
@@ -211,6 +195,16 @@ void kelvinInit (int argc, char *argv[])
   /* Initialize the pedigree set datastructure and read in the pedigrees. */
   memset (&pedigreeSet, 0, sizeof (PedigreeSet));
   read_pedfile (modelOptions->pedfile, &pedigreeSet);
+
+  if (!modelOptions->markerAnalysis) {
+    /* We are not doing marker to marker analysis; the configuration
+     * has all the information about the disease trait if any.
+     * Assume the traitLoucs is 0 for now  - Need to fix this later */
+    traitLocus = 0;
+    pLocus = originalLocusList.ppLocusList[traitLocus];
+    /* Set the global pTrait */
+    pTrait = pLocus->pTraitLocus->pTraits[0];
+  }
 
   if (modelRange->nlclass > 1) {
     int va=0, vb=0;
