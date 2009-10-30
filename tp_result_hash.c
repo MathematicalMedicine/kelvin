@@ -78,7 +78,7 @@ SUMMARY_STAT *get_tp_result (int dprimeIdx, int thetaIdx, int mkrFreqIdx)
     tp_result_hash = hcreate (TPRHASHSIZE);
 
   sprintf (targetTPRhe.keyString, "%d,%d,%d", dprimeIdx, thetaIdx, mkrFreqIdx);
-  if (hfind (tp_result_hash, targetTPRhe.keyString, strlen(targetTPRhe.keyString)) == FALSE) {
+  if (hfind (tp_result_hash, (ub1 *)targetTPRhe.keyString, strlen(targetTPRhe.keyString)) == FALSE) {
     fprintf (stderr, "Warning - non-existant tp_result referenced with indices (%d, %d and %d), returning NULL\n",
 	     dprimeIdx, thetaIdx, mkrFreqIdx);
     return NULL;
@@ -170,7 +170,7 @@ SUMMARY_STAT *new_tp_result (int dprimeIdx, int thetaIdx, int mkrFreqIdx)
 
   /* See if we can add the new tp_result entry */
   sprintf (newTPRhe->keyString, "%d,%d,%d", dprimeIdx, thetaIdx, mkrFreqIdx);
-  if (hadd (tp_result_hash, newTPRhe->keyString, strlen(newTPRhe->keyString), newTPRhe) == FALSE) {
+  if (hadd (tp_result_hash, (ub1 *) newTPRhe->keyString, strlen(newTPRhe->keyString), newTPRhe) == FALSE) {
     // Thump! Collision, go for next!
     oldTPRhe = (struct tp_result_hash_entry *) hstuff (tp_result_hash);
     while (strcmp (oldTPRhe->keyString, newTPRhe->keyString)) {
