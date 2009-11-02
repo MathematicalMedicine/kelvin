@@ -908,7 +908,7 @@ if ($config) {
     my $ConfFile = shift;
     loadConf($ConfFile);
     if (defined($Directives{LocusFile}[0])) { $locusFile = $Directives{LocusFile}[0]; }
-    loadCompanion($locusFile);
+    $liability = loadCompanion($locusFile);
     if (defined($Directives{MapFile}[0])) { $mapFile = $Directives{MapFile}[0]; }
     loadMap($mapFile);
     if (defined($Directives{FrequencyFile}[0])) { $frequencyFile = $Directives{FrequencyFile}[0]; }

@@ -18,6 +18,8 @@ our @ISA = qw(Exporter);
 # rights reserved.  Permission is hereby given to use this software
 # for non-profit educational purposes only.
 #
+# @todo - Deal with actual column ordering in so-called "locus" file.
+#
 
 $| = 1;    # Force flush of output as printed.
 
@@ -658,7 +660,10 @@ sub deriveAlleleFrequencies {
 # Note that Merlin treats 'A' as affectation status (binary), and 'M' as a
 # quantitative trait. Since kelvin treats them the same, so do we.
 #
+# Added 'C' as liability class column. Return true if encountered.
+#
 sub loadCompanion {
+    my $liability = 0;
     my $File = shift();
     die "$File is not a file." if (!-f $File);
     open IN, "<$File" || die "Cannot open file $File\n";
@@ -666,6 +671,7 @@ sub loadCompanion {
     my $Order  = 0;
     @Loci           = ();
     %LociAttributes = ();
+    my @PedColUse = ();
     while (<IN>) {
         $LineNo++;
         print "Read $LineNo lines of $File\n" if (($LineNo % 1001) == 1000);
@@ -673,13 +679,19 @@ sub loadCompanion {
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
         my ($Type, $Name) = split /\s+/;
-        die "Unknown locus type \"$Type\" at line $LineNo in marker description companion file $File\n"
-          if (($Type ne "T") and ($Type ne "A") and ($Type ne "M"));
-        push @Loci, $Name;
-        $LociAttributes{$Name}{Type}     = $Type;
-        $LociAttributes{$Name}{Included} = 1;
+	push @PedColUse, $Type;
+	if ($Type eq "C") {
+	    $liability = 1;
+	} elsif (($Type ne "T") and ($Type ne "A") and ($Type ne "M")) {
+	    die "Unknown locus type \"$Type\" at line $LineNo in marker description companion file $File\n";
+	} else {
+	    push @Loci, $Name;
+	    $LociAttributes{$Name}{Type}     = $Type;
+	    $LociAttributes{$Name}{Included} = 1;
+	}
     }
     close IN;
+    return $liability;
 }
 
 #####################################
