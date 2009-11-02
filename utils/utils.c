@@ -18,6 +18,7 @@
 #include <string.h>
 #include <strings.h> // For index on some platforms
 #include <stdarg.h>
+#include <limits.h>
 #include <ctype.h>
 #include "utils.h"
 
@@ -58,9 +59,9 @@ logInit ()
   for (i = 0; i < MAXLOGLEVELS; i++)
     logFlag[i] = LOGDEFAULT;
 
-  logFlag[LOGFATAL] = -1; // Give errors for everything by default
-  logFlag[LOGERROR] = -1; // Give errors for everything by default
-  logFlag[LOGWARNING] = -1; // Give warnings for everything by default
+  logFlag[LOGFATAL] = UINT_MAX; // Give errors for everything by default
+  logFlag[LOGERROR] = UINT_MAX; // Give errors for everything by default
+  logFlag[LOGWARNING] = UINT_MAX; // Give warnings for everything by default
 }
 
 /* Set a particular type of output to a given level severity or
@@ -107,7 +108,7 @@ logMsg (unsigned int type, int level, const char *format, ...)
 int
 is_line_blank (char *line)
 {
-  int pos = 0;			/* current position in the line */
+  unsigned int pos = 0;			/* current position in the line */
 
   while (line[pos] != '\0' &&
 	 (line[pos] == ' ' || line[pos] == '\t' || line[pos] == '\n'))
@@ -123,7 +124,7 @@ is_line_blank (char *line)
 int
 is_line_comment (char *line)
 {
-  int pos = 0;			/* current position in the line */
+  unsigned int pos = 0;			/* current position in the line */
 
   while (line[pos] != '\0' &&
 	 (line[pos] == ' ' || line[pos] == '\t' || line[pos] == '\n'))
@@ -142,7 +143,7 @@ is_line_comment (char *line)
 int
 is_line_blank_or_comment (char *line)
 {
-  int pos = 0;			/* current position in the line */
+  unsigned int pos = 0;			/* current position in the line */
 
   while (line[pos] != '\0' &&
 	 (line[pos] == ' ' || line[pos] == '\t' || line[pos] == '\n'))
@@ -174,7 +175,7 @@ get_nonblank_line (char *pLine, int maxLen, FILE * fp, int *pLineNo)
   return NULL;
 }
 
-#define BUFF_INCR 512
+#define BUFF_INCR 512UL
 
 char *
 fgetlongs (char **buff, int *bufflen, FILE * fp)
@@ -313,7 +314,7 @@ int permuteLine (char *line, int maxlength)
 
   if (compcount == 0)
     return (0);
-  if (strlen (line) + compcount + 1 > maxlength)
+  if (((int) strlen (line)) + compcount + 1 > maxlength)
     return (-1);
     
   /* Second loop: insert spaces around groups of comparators. We simplify the states;
