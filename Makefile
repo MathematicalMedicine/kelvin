@@ -79,7 +79,7 @@ INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
 # Binary releases include kelvin_$(PLATFORM)
-all : kelvin seq_update/calc_updated_ppl 
+all : kelvin seq_update/calc_updated_ppl kelvin_$(PLATFORM)
 
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
@@ -89,8 +89,8 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 kelvin : libs $(KOBJS) $(OBJS) $(INCS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
-kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS)
-	$(CC) -static $(LPTMFLAG) -o $@ $(KOBJS) $(OBJS) $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
+kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS) $(INCS)
+	$(CC) -static  -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
