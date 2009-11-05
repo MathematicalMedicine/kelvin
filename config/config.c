@@ -76,7 +76,8 @@ typedef struct {
     penetrance,
     mean,
     standardDev,
-    degOfFreedom;
+    degOfFreedom,
+    degOfFreedomGeno;
 } st_observed;
 
 /** @defgroup vettedGlobals Vetted globals that will stay globals
@@ -497,23 +498,14 @@ void validateConfig ()
     if (observed.standardDev)
       fault ("%s requires FixedModels\n", STANDARDDEV_STR);
     if (observed.degOfFreedom) {
-      if (staticModelType.trait != DT && staticModelType.distrib == QT_FUNCTION_CHI_SQUARE) {
-	/* For QT and QTT ChiSq, min and max DegreesOfFreedom for each trait genotype
-	 * are valid. First, checkImprintingPenets() has the side effect of filling
-	 * dD penetrance values, if Imprinting is turned on.
-	 */
-	if ((checkImprintingPenets (&staticModelRange, staticModelOptions.imprintingFlag) < 0)) {
-	  if (staticModelOptions.imprintingFlag)
-	    fault ("Imprinting requires DegreesOfFreedom values for the dD trait genotype\n")
-	  else 
-	    fault ("DegreesOfFreedom values for the dD trait genotype requires Imprinting\n");
-	}
-	/* Now, make sure that each trait genotype has exactly 2 penetrance values. */
-	if (checkDegOfFreedom (&staticModelRange, staticModelOptions.imprintingFlag) != 0)
-	  fault ("%s ChiSq requires exactly two %s values (min and max) for each trait genotype\n",
-		 (staticModelType.trait == QT) ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
-      } else 
-	fault ("%s requires FixedModels\n", DEGOFFREEDOM_STR);
+      if (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_CHI_SQUARE)
+	fault ("%s requires %s ChiSq or %s ChiSq\n", DEGOFFREEDOM_STR, QT_STR, QTT_STR);
+      if (observed.degOfFreedomGeno) {
+	fault ("%s with genotypes requires FixedModels\n", DEGOFFREEDOM_STR);
+      } else if (checkDegOfFreedom (&staticModelRange, staticModelOptions.imprintingFlag) != 0) {
+	fault ("%s ChiSq requires exactly two %s values (min and max)\n",
+	       (staticModelType.trait == QT) ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
+      }
     }
     if (observed.constraints)
       fault ("Constraint requires FixedModels\n");
@@ -652,7 +644,7 @@ void validateConfig ()
 }
 
 
-void finishConfig ()
+void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, ModelType *modelType)
 {
   int i;
   double integrationLDDPrimeValues[33] =
@@ -743,12 +735,24 @@ void finishConfig ()
   if ((staticModelType.trait != DT) && (staticModelOptions.imprintingFlag != TRUE))
     addConstraint (PARAMC, PEN_dD, 0, 1, EQ, PEN_Dd, 0, 1, FALSE);
 
+  /* Copy our statically-allocated structures over to their global page-allocated
+   * counterparts so we can protect them from monkeying.
+   */
+  memcpy(modelOptions, &staticModelOptions, sizeof(ModelOptions));
+  memcpy(modelRange, &staticModelRange, sizeof(ModelRange));
+  memcpy(modelType, &staticModelType, sizeof(ModelType));
+  return;
+}
+
+
+void finishConfig (ModelRange *modelRange, ModelType *modelType)
+{
   /* Sort the values in the final model. Sorted values better support
    * the application of constraints. */
-  sortRange (&staticModelRange);
+  sortRange (modelRange);
 
   /* Once sorted, removing duplicates is easy. */
-  uniqRange (&staticModelRange);
+  uniqRange (modelRange);
 
 #if FALSE
   /* Show the unexpanded model. At level 0, all elements are sorted
@@ -757,49 +761,37 @@ void finishConfig ()
    *  thetas: nonuniform lengths of male/female values
    *  penet: nonuniform lengths of values by allele, lclass=0
    *  param: nonuniform lengths of values by dimension, lclass=0, allele=0 */
-  showRange (staticModelRange, staticModelType, 0);
+  showRange (modelRange, modelType, 0);
   /* Show the constraints. */
   showConstraints ();
 #endif
 
   /* Expand the model, honoring constraints. */
-  expandRange (&staticModelRange);
+  expandRange (modelRange);
 #if FALSE
   /* Show the partially expanded model. At level 1, following
    * expandRange(), we will have refined the model specification while
    * enforcing all specified constraints that do not involve liability
    * classes. */
-  showRange (&staticModelRange, &staticModelType, 1);
+  showRange (modelRange, modelType, 1);
 #endif
 
   /* Expand the liability classes, but only if necessary and always
    * honoring inter-class constraints. */
   if (staticModelRange.nlclass > 1) {
-    expandClassThreshold (&staticModelRange);
-    expandClassPenet (&staticModelRange);
+    expandClassThreshold (modelRange);
+    expandClassPenet (modelRange);
   }
   
   //#if FALSE
   /* At level 2, all constraints (including those between classes) are
    * honored, but penet[][][], param[][][][] are not yet fully
    * "factored". */
-  //showRange (staticModelRange, staticModelType, 2);
+  //showRange (modelRange, modelType, 2);
   //#endif
 
   /* Tidy up */
   cleanupRange ();
-
-  /* Copy our statically-allocated structures over to their global
-     counterparts in order to protect them from monkeying. */
-
-  modelOptions = (ModelOptions *) allocatePages (sizeof (ModelOptions));
-  memcpy(modelOptions, &staticModelOptions, sizeof(ModelOptions));
-
-  modelRange = (ModelRange *) allocatePages (sizeof (ModelRange));
-  memcpy(modelRange, &staticModelRange, sizeof(ModelRange));
-
-  modelType = (ModelType *) allocatePages (sizeof (ModelType));
-  memcpy(modelType, &staticModelType, sizeof(ModelType));
 
   return;
 }
@@ -1255,12 +1247,25 @@ int set_qt_degfreedom (char **toks, int numtoks, void *unused)
 
   if (numtoks < 3)
     bail ("missing argument to directive '%s'\n", toks[0]);
-  if ((geno = lookup_modelparam (toks[1])) == -1)
-    bail ("illegal model parameter argument to directive '%s'\n", toks[0]);
-  if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
-    bail ("illegal argument to directive '%s'\n", toks[0]);
-  for (va = 0; va < numvals; va++)
-    addPenetrance (&staticModelRange, geno-PEN_DD, vals[va]);
+  if ((geno = lookup_modelparam (toks[1])) == -1) {
+    /* If the first arg isn't a genotype (DD, Dd, dD, dd), we'll still accept 
+     * exactly two values, since a single min and max will suffice for all 
+     * genotypes under dynamic sampling.
+     */
+    if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) == 0)
+      bail ("illegal model parameter argument to directive '%s'\n", toks[0]);
+    if (numvals != 2)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    addPenetrance (&staticModelRange, 0, vals[0]);
+    addPenetrance (&staticModelRange, 0, vals[1]);
+
+  } else {
+    if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    for (va = 0; va < numvals; va++)
+      addPenetrance (&staticModelRange, geno-PEN_DD, vals[va]);
+    observed.degOfFreedomGeno = 1;
+  }
   observed.degOfFreedom = 1;
   free (vals);
   return (0);

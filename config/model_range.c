@@ -447,13 +447,19 @@ int checkImprintingPenets (ModelRange *range, int imprinting)
       return (-1);
 
     /* Otherwise, copy penetrances for PEN_Dd to PEN_dD */
+    for (i=0; i<penetcnt[PEN_Dd-PEN_DD]; i++) 
+      addPenetrance (range, PEN_dD-PEN_DD, range->penet[0][PEN_Dd-PEN_DD][i]);
+    addConstraint (SIMPLE, PEN_dD, 0, 0, EQ, PEN_Dd, 0, 0, FALSE);
+    
+    /*
     MALCHOKE(range->penet[0][PEN_dD-PEN_DD], (penetmax[PEN_Dd-PEN_DD]) * sizeof (double), void *);
     penetcnt[PEN_dD-PEN_DD] = penetcnt[PEN_Dd-PEN_DD];
     range->penetLimits[PEN_dD-PEN_DD][0] = range->penetLimits[PEN_Dd-PEN_DD][0];
     range->penetLimits[PEN_dD-PEN_DD][1] = range->penetLimits[PEN_Dd-PEN_DD][1];
     for (i=0; i<penetcnt[PEN_Dd-PEN_DD]; i++) 
       range->penet[0][PEN_dD-PEN_DD][i] = range->penet[0][PEN_Dd-PEN_DD][i];
-    addConstraint (SIMPLE, PEN_dD, 0, 0, EQ, PEN_Dd, 0, 0, FALSE);
+    */
+
     return (0);
   }
 }
@@ -461,29 +467,29 @@ int checkImprintingPenets (ModelRange *range, int imprinting)
 
 /* Following on the blockbuster success of checkImprintingPenets(), here
  * we validate that there are exactly two DegreesOfFreedom (stored in
- * penetrance data structures) for each trait genotype, or none at all.
+ * penetrance data structures) for the DD trait genotype, or none at all.
  * QT/QTT ChiSq analyses under dynamic sampling are allowed to specify
- * min and max DegreeOfFreedom values.
+ * min and max DegreeOfFreedom values that applies to all trait genotypes;
+ * those are stored under the DD genotype initially. We'll copy them to
+ * Dd and dd (and dD if imprinting is turned on).
  */
 int checkDegOfFreedom (ModelRange *range, int imprinting)
 {
-  if (! penetcnt)
+  if (penetcnt == NULL)
     return (0);
+  if (penetcnt[PEN_DD-PEN_DD] != 2 || penetcnt[PEN_Dd-PEN_DD] != 0 ||
+      penetcnt[PEN_dD-PEN_DD] != 0 || penetcnt[PEN_dd-PEN_DD] != 0)
+    return (-1);
 
+  addPenetrance (range, PEN_Dd-PEN_DD, range->penet[0][PEN_DD-PEN_DD][0]);
+  addPenetrance (range, PEN_Dd-PEN_DD, range->penet[0][PEN_DD-PEN_DD][1]);
   if (imprinting) {
-    if ((penetcnt[PEN_DD-PEN_DD] == 0 && penetcnt[PEN_Dd-PEN_DD] == 0 &&
-	 penetcnt[PEN_dD-PEN_DD] == 0 && penetcnt[PEN_dd-PEN_DD] == 0) ||
-	(penetcnt[PEN_DD-PEN_DD] == 2 && penetcnt[PEN_Dd-PEN_DD] == 2 &&
-	 penetcnt[PEN_dD-PEN_DD] == 2 && penetcnt[PEN_dd-PEN_DD] == 2))
-      return (0);
-  } else {
-    if ((penetcnt[PEN_DD-PEN_DD] == 0 && penetcnt[PEN_Dd-PEN_DD] == 0 &&
-	 penetcnt[PEN_dd-PEN_DD] == 0) ||
-	(penetcnt[PEN_DD-PEN_DD] == 2 && penetcnt[PEN_Dd-PEN_DD] == 2 &&
-	 penetcnt[PEN_dd-PEN_DD] == 2))
-      return (0);
+    addPenetrance (range, PEN_dD-PEN_DD, range->penet[0][PEN_DD-PEN_DD][0]);
+    addPenetrance (range, PEN_dD-PEN_DD, range->penet[0][PEN_DD-PEN_DD][1]);
   }
-  return (-1);
+  addPenetrance (range, PEN_dd-PEN_DD, range->penet[0][PEN_DD-PEN_DD][0]);
+  addPenetrance (range, PEN_dd-PEN_DD, range->penet[0][PEN_DD-PEN_DD][1]);
+  return (0);
 }
 
 

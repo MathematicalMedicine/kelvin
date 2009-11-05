@@ -144,30 +144,16 @@ void kelvinInit (int argc, char *argv[])
    * config parsing.
    */
   validateConfig ();
-  finishConfig ();
 
-  /* Enable handling of segmentation faults/bus errors due to configuration monkeying */
-
-  setupSegvHandler ();
-  allowReadOnly (modelOptions, sizeof (ModelOptions));
-
-  /* For now, reject all models we can't deal with. */
-  KASSERT (modelRange->nalleles == 2, "Only biallelic traits supported.\n");
-
-  if (modelOptions->polynomial == TRUE) {
-    swLogMsg ("Computation is done in polynomial mode");
-#ifdef POLYUSE_DL
-    swLogMsg ("Dynamic libraries for polynomial evaluation will be used if found");
-#endif
-    polynomialInitialization (modelOptions->polynomialScale);
-  } else {
-    swLogMsg ("Computation is done in non-polynomial (direct evaluation) mode");
-  }
-  if (modelOptions->integration == TRUE) {
-    swLogMsg ("Integration is done numerically (dkelvin)");
-  } else {
-    swLogMsg ("Integration is done with iteration (original kelvin)");
-  }
+  /* This fills in defaults for fields that are optional, and also copies the contents
+   * of the static Model{Range,Options,Type} structures to their global page-allocated
+   * counterparts so we can protect them from monkeying.
+   */
+  /* TODO: Protect all the dynamically allocated memory referenced through these structures too */
+  modelOptions = (ModelOptions *) allocatePages (sizeof (ModelOptions));
+  modelRange = (ModelRange *) allocatePages (sizeof (ModelRange));
+  modelType = (ModelType *) allocatePages (sizeof (ModelType));
+  fillConfigDefaults (modelRange, modelOptions, modelType);
 
   /* Read in the map file. */
   read_mapfile (modelOptions->mapfile);
@@ -186,6 +172,21 @@ void kelvinInit (int argc, char *argv[])
 
   /* read in marker allele frequencies */
   read_markerfile (modelOptions->markerfile, modelType->numMarkers);
+
+  if (modelOptions->polynomial == TRUE) {
+    swLogMsg ("Computation is done in polynomial mode");
+#ifdef POLYUSE_DL
+    swLogMsg ("Dynamic libraries for polynomial evaluation will be used if found");
+#endif
+    polynomialInitialization (modelOptions->polynomialScale);
+  } else {
+    swLogMsg ("Computation is done in non-polynomial (direct evaluation) mode");
+  }
+  if (modelOptions->integration == TRUE) {
+    swLogMsg ("Integration is done numerically (dkelvin)");
+  } else {
+    swLogMsg ("Integration is done with iteration (original kelvin)");
+  }
 
   /* build allele set information */
   for (locus = 0; locus < originalLocusList.numLocus; locus++) {
@@ -242,6 +243,9 @@ void kelvinInit (int argc, char *argv[])
   }
   KASSERT (exitDueToLoop == FALSE, "Not all loops in pedigrees are broken.\n");
 
+  /* sort, uniquify and expand the trait model dimensions, subject to constraints */
+  finishConfig (modelRange, modelType);
+
   /* QT/CT ChiSq with dynamic sampling requires min and max Degrees Of Freedom,
    * which are stored as penetrance values. If none have been provided in the
    * config, sample the min and max trait values in the pedigree data. NOTE
@@ -255,8 +259,10 @@ void kelvinInit (int argc, char *argv[])
     for (va = 0; va < vb; va++)
       MALCHOKE (modelRange->penetLimits[va], 2 * sizeof (double), void *);
     getPedigreeTraitRange (&pedigreeSet, &min, &max);
-    if (min < 0 || max > 30)
-      logMsg (LOGDEFAULT, LOGFATAL, "Can't intuit Chi-squared DegreesOfFreedom from input data, please configure explicitly\n");
+    if (min < 0)
+      logMsg (LOGDEFAULT, LOGFATAL, "Trait values must be no less than 0 to use as default minimum Chi-squared DegreesOfFreedom, please configure explicitly\n");
+    if (max > 30)
+      logMsg (LOGDEFAULT, LOGFATAL, "Trait values must be no more than 30 to use as default maximum Chi-squared DegreesOfFreedom, please configure explicitly\n");
     for (va = 0; va < vb; va++) {
       modelRange->penetLimits[va][0] = min;
       modelRange->penetLimits[va][1] = max;
@@ -286,8 +292,10 @@ void kelvinInit (int argc, char *argv[])
     double min, max;
 
     getPedigreeTraitRange (&pedigreeSet, &min, &max);
-    if (min < 0 || max > 30)
-      logMsg (LOGDEFAULT, LOGFATAL, "Can't intuit QTT Threshold from input data, please configure explicitly\n");
+    if (min < 0)
+      logMsg (LOGDEFAULT, LOGFATAL, "Trait values must be no less than 0 to use as default minimum QTT Threshold, please configure explicitly\n");
+    if (max > 30)
+      logMsg (LOGDEFAULT, LOGFATAL, "Trait values must be no more than 30 to use as default maximum QTT Threshold, please configure explicitly\n");
     addTraitThreshold (modelRange, min);
     addTraitThreshold (modelRange, max);
     if (modelRange->nlclass > 1)
@@ -372,6 +380,9 @@ void kelvinInit (int argc, char *argv[])
     }
   }
 
+  /* Enable handling of segmentation faults/bus errors due to configuration monkeying */
+  setupSegvHandler ();
+  allowReadOnly (modelOptions, sizeof (ModelOptions));
 //  allowReadOnly (modelRange, sizeof (ModelRange));
   allowReadOnly (modelType, sizeof (ModelType));
 

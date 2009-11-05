@@ -301,17 +301,15 @@ to directives.
 
     <div class='hang' id='degreesoffreedom'>
       <b>DegreesOfFreedom</b><br>
-      <tt>DegreesOfFreedom [ DD | Dd | dD | dd ] <i>min</i>, <i>max</i></tt><br>
+      <tt>DegreesOfFreedom <i>min</i>, <i>max</i></tt><br>
       Specifies the minimum and maximum degrees of freedom when using the Chi-squared
       distribution for quantitative trait analysis, if needed. The default is for the
-      degrees of freedom to be derived from the trait data in the pedigree file. If the
-      degrees of freedom must be explicitly specified, then one set of <tt><i>min</i></tt>
-      and <tt><i>max</i></tt> <a href='#arguments'>values</a> should be specified for
-      each trait genotype (<tt>DD</tt>, <tt>Dd</tt>, <tt>dD</tt> or <tt>dd</tt>). This
+      minimum and maximum degrees of freedom to be set using the smallest and largest
+      values from the trait data in the pedigree file. If those values are less then 0
+      or greater than 30, then this directive must be specified. The <tt><i>min</i></tt>
+      and <tt><i>max</i></tt> should be specified as <a href='#arguments'>values</a>. This
       directive is only legal if one of the <a href='qt'>QT</a> or <a href='qtt'>QTT</a>
-      directives is specified with the Chi-squared distribution. The <tt>dD</tt> trait
-      genotype is only legal if the <a href='imprinting'>Imprinting</a> directive is also
-      specified.
+      directives is specified with the Chi-squared distribution.
     </div><p>
 
     <div class='hang' id='diseasealleles'>
@@ -494,10 +492,13 @@ to directives.
       <tt><i>mean</i></tt> and <tt><i>standarddeviation</i></tt> <a href='#arguments'>values</a>
       may be provided. Otherwise, a sample mean and standard deviation will be
       calculated using the trait values in the pedigree file. If <tt>ChiSq</tt> is specified,
-      the <a href='#degreesoffreedom'>DegreesOfFreedom</a> directive may be specified
-      once for each trait genotype. Otherwise, the minimum and maximum degrees of 
-      freedom will be derived using the trait data in the pedigree file. This directive
-      is incompatible with the <a href='#markertomarker'>MarkerToMarker</a> directive.
+      the <a href='#degreesoffreedom'>DegreesOfFreedom</a> directive may be specified.
+      Otherwise, the minimum and maximum degrees of freedom will be set using the
+      smallest and largest values from trait data in the pedigree file. If those values
+      are less than 0 or gerater than 30, then the minimum and maximum degrees of freedom
+      must be set with the <a href='#degreesoffreedom'>DegreesOfFreedom</a> directive.
+      This directive is incompatible with the <a href='#markertomarker'>MarkerToMarker</a>
+      directive.
     </div><p>
 
     <div class='hang' id='qtt'>
@@ -505,8 +506,12 @@ to directives.
       <tt>QTT Normal { <i>mean</i>, <i>standarddeviation</i> }</tt><br>
       <tt>QTT ChiSq</tt><br>
       Like the <a href='#qt'>QT</a> directive, but in addition considers a threshold beyond
-      which an individual as simply assumed to be affected. The threshold is specified with
-      the <a href='#threshold'>Threshold</a> directive. This directive in incompatible with 
+      which an individual as simply assumed to be affected. The minimum and maximum
+      threshold may specified with the <a href='#threshold'>Threshold</a> directive. 
+      Otherwise, the minimum and maximum threshold will be set using the smallest and
+      largest values from the trait data in the pedigree file. If those values are less than
+      0 or greater than 30, then the minimum and maximum threshold must be set with the 
+      <a href='#threshold'>Threshold</a> directive. This directive in incompatible with 
       the <a href='#markertomarker'>MarkerToMarker</a> directive.
     </div><p>
 
@@ -531,10 +536,11 @@ to directives.
       <tt>Threshold <i>min</i>, <i>max</i></tt><br>
       Specifies the minimum and maximum <a href='#arguments'>values</a> for the threshold
       for use with the  <a href='#qtt'>QTT</a> directive, if needed. The default is for
-      the threshold values to be derived from the trait data in the pedigree file. If
-      the threshold values need to be explicitly specified, then <tt><i>min</i></tt> and
-      <tt><i>max</i></tt> should be provieded as integers or real numbers. This
-      directive requires the <a href='#qtt'>QTT</a> directive.
+      the minimum and maximum threshold values to be set using the smallest and largest
+      values from the trait data in the pedigree file. If those values are less than 0 
+      or greater than 30, then this directive must be specified. The <tt><i>min</i></tt>
+      and <tt><i>max</i></tt> should be <a href='arguments'>values</a>. This directive
+      requires the <a href='#qtt'>QTT</a> directive.
     </div><p>
 
     <div class='hang' id='traitpositions'>
