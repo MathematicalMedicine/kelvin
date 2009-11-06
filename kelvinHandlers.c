@@ -1,3 +1,5 @@
+#include <execinfo.h> // For stack dump on demand
+#include <ctype.h> // For isalnum()
 #include "kelvin.h"
 #include "kelvinHandlers.h"
 #include "utils/sw.h"
@@ -7,6 +9,35 @@
 extern struct swStopwatch *overallSW;
 
 volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update requested via signal
+
+void dumpStack (void) {
+  const size_t MAXSTACKDEPTH = 20;
+  size_t stack_depth;
+  void *stack_addrs[MAXSTACKDEPTH];
+  char **stack_strings;
+
+  stack_depth = backtrace(stack_addrs, MAXSTACKDEPTH);
+  stack_strings = backtrace_symbols(stack_addrs, stack_depth);
+
+  fprintf (stderr, "\nCall stack: ");
+  size_t i;
+  for (i = 2; i < stack_depth; i++) {
+    char *wordBoundary;
+    if ((wordBoundary = strchr( stack_strings[i], '+')) != '\0') {
+      while ((isalnum(*wordBoundary) == 0) && (*wordBoundary != '_'))
+	*(wordBoundary--) = '\0';
+      while (isalnum(*wordBoundary) || (*wordBoundary == '_'))
+	wordBoundary--;
+      wordBoundary++;
+      fprintf(stderr, "%s<-", wordBoundary);
+      if (strcmp(wordBoundary, "main") == 0)
+	break;
+    }
+  }
+  fprintf (stderr, "\n");
+  free(stack_strings); // malloc()ed by backtrace_symbols                                                             
+  fflush(stderr);
+}
 
 /**
 
@@ -19,6 +50,7 @@ volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update reque
 */
 void quitSignalHandler (int ourSignal)
 {
+  dumpStack ();
   statusRequestSignal = TRUE;
 #ifdef POLYSTATISTICS
   if (modelOptions->polynomial == TRUE)
