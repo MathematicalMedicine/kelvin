@@ -36,8 +36,6 @@ typedef struct {
 #define QT_STR            "QT"
 #define QTT_STR           "QTT"
 #define THETA_STR         "Theta"
-#define MALETHETA_STR     "MaleTheta"
-#define FEMALETHETA_STR   "FemaleTheta"
 #define PENETRANCE_STR    "Penetrance"
 #define MEAN_STR          "Mean"
 #define STANDARDDEV_STR   "StandardDev"
@@ -68,9 +66,7 @@ typedef struct {
 #define VL_SYM_MARKER      0
 
 typedef struct {
-  int sexSpecificThetas,
-    sexAveragedThetas,
-    traitPositions,
+  int traitPositions,
     constraints,
     maxclass,
     penetrance,
@@ -174,8 +170,6 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"DiseaseGeneFrequency", set_geneFreq, NULL},
 				{"DPrime", set_dprime, NULL},
 				{THETA_STR, set_theta, NULL},
-				{MALETHETA_STR, set_theta, NULL},
-				{FEMALETHETA_STR, set_theta, NULL},
 				{"Alpha", set_alpha, NULL},
 				{PENETRANCE_STR, set_penetrance, NULL},
 				{"Constraint", set_constraint, NULL},
@@ -438,12 +432,12 @@ void validateConfig ()
 	fault ("FixedModels and LD require DPrime\n");
       if (staticModelRange.ndprime > 0 && staticModelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
 	fault ("FixedModels and DPrime requires LD\n");
-      if (! observed.sexAveragedThetas)
+      if (staticModelRange.thetacnt == NULL)
 	fault ("MarkerToMarker and FixedModels require %s\n", THETA_STR);
     } else {
       if (staticModelRange.ndprime > 0)
 	fault ("MarkerToMarker and DPrime require FixedModels\n");
-      if (observed.sexAveragedThetas)
+      if (staticModelRange.thetacnt != NULL)
 	fault ("MarkerToMarker and %s require FixedModels\n", THETA_STR);
     }
     if (fault)
@@ -509,10 +503,8 @@ void validateConfig ()
     }
     if (observed.constraints)
       fault ("Constraint requires FixedModels\n");
-    if (observed.sexAveragedThetas)
+    if (staticModelRange.thetacnt != NULL)
       fault ("%s requires FixedModels\n", THETA_STR);
-    if (observed.sexSpecificThetas)
-      fault ("%s and %s require FixedModels\n", MALETHETA_STR, FEMALETHETA_STR);
     if (staticModelRange.ndprime > 0)
       fault ("DPrime requires FixedModels\n");
     if (staticModelRange.ngfreq > 0)
@@ -537,26 +529,15 @@ void validateConfig ()
   if (staticModelOptions.dkelvinoutfile[0] != '\0')
     logMsg (LOGINPUTFILE, LOGWARNING, "FixedModels will write no output to NIDetailFile\n");
 
-  if (observed.sexAveragedThetas && observed.sexSpecificThetas)
-    fault ("%s is incompatible with %s or %s\n", THETA_STR, MALETHETA_STR, FEMALETHETA_STR);
-  if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && observed.sexSpecificThetas)
-    fault ("%s and %s are not supported with LD\n", MALETHETA_STR, FEMALETHETA_STR);
   if (staticModelOptions.mapFlag == SS) {
-    if (observed.sexSpecificThetas && observed.sexSpecificThetas != 0x03)
-      fault ("%s and %s require each other\n", MALETHETA_STR, FEMALETHETA_STR);
     if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
       fault ("SexSpecific is not supported with LD\n");
-  } else {
-    if (observed.sexSpecificThetas)
-      fault ("%s and %s require SexSpecific\n", MALETHETA_STR, FEMALETHETA_STR);
   }
 
   if (staticModelType.type == MP) {
     /* Multipoint */
-    if (observed.sexAveragedThetas)
+    if (staticModelRange.thetacnt != NULL)
       fault ("%s is incompatible with Multipoint\n", THETA_STR);
-    if (observed.sexSpecificThetas)
-      fault ("%s and %s are incompatible with Multipoint\n", MALETHETA_STR, FEMALETHETA_STR);
     if (staticModelRange.ndprime > 0)
       fault ("DPrime is incompatible with Multipoint\n");
   } else {
@@ -565,13 +546,8 @@ void validateConfig ()
       fault ("FixedModels with LD requires DPrime\n");
     if (staticModelOptions.equilibrium == LINKAGE_EQUILIBRIUM && staticModelRange.ndprime > 0)
       fault ("FixedModels with DPrime requires LD\n");
-    if (staticModelOptions.mapFlag != SS) {
-      if (! observed.sexAveragedThetas)
-	fault ("FixedModels without Multipoint requires %s\n", THETA_STR);
-    } else {
-      if (! observed.sexSpecificThetas)
-	fault ("FixedModels with SexSpecific requires %s and %s\n", MALETHETA_STR,FEMALETHETA_STR);
-    }
+    if (staticModelRange.thetacnt == NULL)
+      fault ("FixedModels without Multipoint requires %s\n", THETA_STR);
   }
 
   if (staticModelRange.ngfreq == 0)
@@ -717,17 +693,15 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
   }
   /* For 2-point and fixed models, make sure there's a Theta of 0.5 */
   if (staticModelType.type == TP && staticModelOptions.integration != TRUE) {
-    /* First, check male/sex-averaged thetas */
-    for (i = 0; i < staticModelRange.thetacnt[SEXML]; i++)
-      if (fabs (0.05 - staticModelRange.theta[SEXML][i]) <= ERROR_MARGIN) break;
-    if (i == staticModelRange.thetacnt[SEXML])
+    for (i = 0; i < staticModelRange.thetacnt[SEXAV]; i++)
+      if (fabs (0.05 - staticModelRange.theta[SEXAV][i]) <= ERROR_MARGIN) break;
+    if (i == staticModelRange.thetacnt[SEXAV])
       addTheta (&staticModelRange, THETA_AVG, 0.5);
-    /* If female thetas are present, do the same again */
-    if (staticModelRange.thetacnt[SEXFM] > 0) {
-      for (i = 0; i < staticModelRange.thetacnt[SEXFM]; i++)
-	if (fabs (0.05 - staticModelRange.theta[SEXFM][i]) <= ERROR_MARGIN) break;
-      if (i == staticModelRange.thetacnt[SEXFM])
-	addTheta (&staticModelRange, THETA_FEMALE, 0.5);
+
+    /* If SexSpecific is on, copy the sex-average (male) thetas for females */
+    if (staticModelOptions.mapFlag == SS) {
+      for (i = 0; i < staticModelRange.thetacnt[SEXAV]; i++)
+	addTheta (&staticModelRange, THETA_FEMALE, staticModelRange.theta[SEXAV][i]);
     }
   }
 
@@ -930,17 +904,7 @@ int set_theta (char **toks, int numtoks, void *unused)
     bail ("missing argument to directive '%s'\n", toks[0]);
   if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
     bail ("illegal argument to directive '%s'\n", toks[0]);
-  if (strncasecmp (toks[0], THETA_STR, strlen (toks[0])) == 0) {
-    type = THETA_AVG;
-    observed.sexAveragedThetas = 1;
-  } else if (strncasecmp (toks[0], MALETHETA_STR, strlen (toks[0])) == 0) {
-    type = THETA_MALE;
-    observed.sexSpecificThetas |= 0x01;
-  } else if (strncasecmp (toks[0], FEMALETHETA_STR, strlen (toks[0])) == 0) {
-    type = THETA_FEMALE;
-    observed.sexSpecificThetas |= 0x02;
-  } else
-    KLOG (LOGDEFAULT, LOGFATAL, "set_theta called with unexpected directive '%s'\n", toks[0]);
+  type = THETA_AVG;
   for (va = 0; va < numvals; va++)
     addTheta (&staticModelRange, type, vals[va]);
   free (vals);
