@@ -34,11 +34,11 @@ CC := gcc
 GCCOPT := 2 # GCC optimization level, 0=none, 1=default, 2=some (OSC's recommendation), 3=all
 CFLAGS := -Wall -Werror -DGCCOPT=$(GCCOPT) -O$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
 CFLAGS += -D_REENTRANT # Thead-safe (different prototype) version of strtok_r under Solaris when using pthread
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR)
+LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
 
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
-#CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
+CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
 CFLAGS += -fopenmp # Uncomment for multi-threading if using GCC 4.2+. MUST USE GSL TOO.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
 #LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
