@@ -101,7 +101,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 
   /* Prepare to count the number of indiviuals in each liability class */
   if (modelRange->nlclass > 1)
-    CALCHOKE (pPedigreeSet->liabilityClassCnt, modelRange->nlclass, sizeof (int), int *);
+    CALCHOKE (pPedigreeSet->liabilityClassCnt, modelRange->nlclass+1, sizeof (int), int *);
 
   /* open pedigree file */
   fpPedfile = fopen (sPedfileName, "r");
@@ -204,7 +204,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
     if (modelRange->nlclass > 1) {
       if (pCurrPerson->ppLiabilityClass[0][0] > modelRange->nlclass)
 	logMsg (LOGDEFAULT, LOGFATAL, "Pedigree %s, person %s has liability class %d, only %d classes configured\n", pCurrPedigree->sPedigreeID, pCurrPerson->sID, pCurrPerson->ppLiabilityClass[0][0], modelRange->nlclass);
-      pPedigreeSet->liabilityClassCnt[pCurrPerson->ppLiabilityClass[0][0]-1] += 1;
+      pPedigreeSet->liabilityClassCnt[pCurrPerson->ppLiabilityClass[0][0]] += 1;
     }
 
     /* mark this pedigree as having a loop if so */
@@ -1636,3 +1636,16 @@ void getPedigreeSampleStdev (PedigreeSet *pPedigreeSet, double *mean, double *st
   return;
 }
 
+
+void renumberLiabilityClasses (PedigreeSet *pPedigreeSet)
+{
+  int va, vb, lc;
+  struct Person *person;
+  
+  for (va = 0; va < pPedigreeSet->numPedigree; va++)
+    for (vb = 0 ; vb < pPedigreeSet->ppPedigreeSet[va]->numPerson; vb++) {
+      person = pPedigreeSet->ppPedigreeSet[va]->ppPersonList[vb];
+      lc = person->ppLiabilityClass[0][0];
+      person->ppLiabilityClass[0][0] = pPedigreeSet->liabilityClassCnt[lc];
+    }
+}

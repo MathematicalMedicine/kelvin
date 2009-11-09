@@ -208,31 +208,27 @@ void kelvinInit (int argc, char *argv[])
   }
 
   if (modelRange->nlclass > 1) {
-    int va=0, vb=0;
-
-    for (va = 0; va < modelRange->nlclass; va++) {
-      if (pedigreeSet.liabilityClassCnt[va] == 0)
-	vb++;
+    int va, vb=0;
+    
+    for (va = 1; va <= modelRange->nlclass; va++) {
+      if (pedigreeSet.liabilityClassCnt[va] != 0)
+	 pedigreeSet.liabilityClassCnt[va] = ++vb;
     }
-    if (vb > 0)
-      logMsg (LOGDEFAULT, LOGWARNING, "%d liability class%s empty. Eliminating empty classes will greatly improve performance\n", vb, (vb == 1) ? " is" : "s are");
-#if 0
-    /* Save this idea for later; right now, too much initialization has
-     * already been done based on the number of LCs to reduce it here.
-     * We eventually need to move pedfile reading to before finish_config().
-     */ 
-    va = 0;
-    while (vb < modelRange->nlclass) {
-      if (pedigreeSet.liabilityClassCnt[va] == 0) {
-	printf ("renumber class %d to class %d\n", vb, va);
-	pedigreeSet.liabilityClassCnt[va] = pedigreeSet.liabilityClassCnt[vb];
-      } else {
-	va++;
+    if (vb != modelRange->nlclass) {
+      va = modelRange->nlclass - vb;
+      logMsg (LOGDEFAULT, LOGWARNING, "%d liability class%s empty. Dropping empty classes to improve performance\n", va, (va == 1) ? " is" : "s are");
+      
+      for (va = 1; va <= modelRange->nlclass; va++) {
+	if (pedigreeSet.liabilityClassCnt[va] == 0) 
+	  logMsg (LOGDEFAULT, LOGWARNING, "Dropping empty class %d\n", va);
+	else if (pedigreeSet.liabilityClassCnt[va] != va) 
+	  logMsg (LOGDEFAULT, LOGWARNING, "Renumbering class %d to %d\n", va,
+		  pedigreeSet.liabilityClassCnt[va]);
       }
-      vb++;
+      if (pedigreeSet.liabilityClassCnt[vb] != vb)
+	renumberLiabilityClasses (&pedigreeSet);
+      modelRange->nlclass = vb;
     }
-    modelRange->nlclass = va;
-#endif
   }
 
   int pedIdx;

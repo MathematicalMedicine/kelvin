@@ -52,6 +52,7 @@ int compute_pedigree_likelihood (Pedigree * pPedigree);
 void adjustQuantitativeTraits (PedigreeSet *pPedigreeSet);
 void getPedigreeTraitRange (PedigreeSet *pPedigreeSet, double *min, double *max);
 void getPedigreeSampleStdev (PedigreeSet *pPedigreeSet, double *mean, double *stdev);
+void renumberLiabilityClasses (PedigreeSet *pPedigreeSet);
 
 extern char *flexBuffer;
 extern int flexBufferSize;
