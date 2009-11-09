@@ -19,7 +19,7 @@ char *op_strs[] = { "==", "!=", ">", ">=", NULL };
 /* String representations of the legal values for Constraint.a1 and a2. Used by
  * used by lookup_modelparam()
  */
-char *mp_strs[] = { "", "", "", "", "", "", "", "", "", "DD", "Dd", "dD", "dd", NULL };
+char *mp_strs[] = { "", "Theta", "", "", "Threshold", "DD", "Dd", "dD", "dd", NULL };
 
 /* Global variables for tracking actual size of the various dynamically allocated
  * lists inside ModelRange. Only interesting during configuration parsing, so no

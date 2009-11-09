@@ -62,20 +62,6 @@ typedef struct ModelRange
 } ModelRange;
 
 
-/* Until the old config parser is dead, these defines have to line up with the
- * corresponding symbols from the old config.c. Various routines depend on the
- * order and relationship of these symbols (that PEN_DD is one less then PEN_Dd,
- * for example) to calculate array indices when filling data structures.
- */
-#define THETA_AVG     1   /* same as Th */
-#define THETA_MALE    2   /* same as Tm */
-#define THETA_FEMALE  3   /* same as Tf */
-#define THRESHOLD     6   /* same as TT */
-#define PEN_DD        9   /* same as DD */
-#define PEN_Dd       10   /* same as Dd */
-#define PEN_dD       11   /* same as dD */
-#define PEN_dd       12   /* same as dd */
-
 /**********************************************************************
  * Structure used for lists of constraints. A constraint can be
  * of several different forms:
@@ -88,7 +74,6 @@ typedef struct ModelRange
  * that to be an implicit OR, and all but the last constraint on such
  * a line will be marked alt=TRUE.
  ***********************************************************************/
-/* This needs to be moved to model_range.c when the old parser dies */
 typedef struct constraint
 {
   int type;        /* one of SIMPLE, CLASSC, PARAMC, PARAMCLASSC */
@@ -103,13 +88,29 @@ typedef struct constraint
 }
 Constraint;
 
-/* Legal values for Constraint.type */
+/* Legal values for Contraint.a1 and Constraint.a2. These have to
+ * line up with the strings in mp_strs[] (defined in model_range.c)
+ */
+#define THETA_AVG     1   /* same as Th */
+#define THETA_MALE    2   /* same as Tm */
+#define THETA_FEMALE  3   /* same as Tf */
+#define THRESHOLD     4   /* same as TT */
+#define PEN_DD        5   /* same as DD */
+#define PEN_Dd        6   /* same as Dd */
+#define PEN_dD        7   /* same as dD */
+#define PEN_dd        8   /* same as dd */
+
+/* Legal values for Constraint.type. These have to line up with the
+ * strings in contype_strs[] (defined in model_range.c)
+*/
 #define SIMPLE 0
 #define CLASSC 1
 #define PARAMC 2
 #define PARAMCLASSC 3
 
-/* Legal values for Constraint.op; these need correspond to the elements in op_strs */
+/* Legal values for Constraint.op; these have to line up with the
+ * strings in op_strs[] (defined in model_range.c)
+ */
 #define EQ 0
 #define NE 1
 #define GT 2
@@ -117,7 +118,9 @@ Constraint;
 
 #define NPENET(x) ((x)*(x))
 
-/* Used in parsing configuration file constraints. */
+/* Indices into the thetacnt and theta members of ModelRange. NOTE
+ * explicitly NOT interchangeable with THETA_AVG, etc.
+ */
 #define SEXAV 0
 #define SEXML 0
 #define SEXFM 1
