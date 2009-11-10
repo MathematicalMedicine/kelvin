@@ -756,8 +756,18 @@ sub addMissingAlleles {
 	    push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, '2';
 	    $LociAttributes{$Name}{Alleles}{2}{Frequency} = '0';
 	}
+	if (!defined($LociAttributes{$Name}{Alleles}{1}) && !defined($LociAttributes{$Name}{Alleles}{2})) {
+	    $maf0 = 1;
+	    $LociAttributes{$Name}{Alleles}{1}{Order} = 1;
+	    $LociAttributes{$Name}{Alleles}{2}{Order} = 2;
+	    $LociAttributes{$Name}{Alleles}{OrderedList} = ('1', '2');
+	    $LociAttributes{$Name}{Alleles}{1}{Frequency} = '0';
+	    $LociAttributes{$Name}{Alleles}{2}{Frequency} = '0';
+	}	    
 	@{ $LociAttributes{$Name}{Alleles}{OrderedList} } = sort @{ $LociAttributes{$Name}{Alleles}{OrderedList} };
     }
+#    print Dumper(\%LociAttributes)."\n";
+    exit;
     return $maf0;
 }
 
