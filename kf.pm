@@ -760,7 +760,8 @@ sub addMissingAlleles {
 	    $maf0 = 1;
 	    $LociAttributes{$Name}{Alleles}{1}{Order} = 1;
 	    $LociAttributes{$Name}{Alleles}{2}{Order} = 2;
-	    $LociAttributes{$Name}{Alleles}{OrderedList} = ('1', '2');
+	    push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, '1';
+	    push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, '2';
 	    $LociAttributes{$Name}{Alleles}{1}{Frequency} = '0';
 	    $LociAttributes{$Name}{Alleles}{2}{Frequency} = '0';
 	}	    
