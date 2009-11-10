@@ -20,13 +20,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-typedef enum
-{ DAD = 0, MOM = 1 } PARENTS;
-typedef enum
-{ MALE = 1, FEMALE = 2 } SEX;
-
-/* maximum length for pedigree label, individual IDs */
-#define MAX_PED_LABEL_LEN       128
 
 #define ND NORMAL_DISTRIBUTION	/* normal distribution */
 #define TD T_DISTRIBUTION	/* t distribution */
@@ -46,15 +39,11 @@ int read_datafile (char *sMarkerfileName);
 
 int allele_set_recoding (int locus, Pedigree * pPedigree);
 int pedigree_genotype_elimination (int locus, Pedigree * pPedigree);
-int compute_likelihood (PedigreeSet * pPedigreeList);
 void pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList);
 int compute_pedigree_likelihood (Pedigree * pPedigree);
 void adjustQuantitativeTraits (PedigreeSet *pPedigreeSet);
 void getPedigreeTraitRange (PedigreeSet *pPedigreeSet, double *min, double *max);
 void getPedigreeSampleStdev (PedigreeSet *pPedigreeSet, double *mean, double *stdev);
 void renumberLiabilityClasses (PedigreeSet *pPedigreeSet);
-
-extern char *flexBuffer;
-extern int flexBufferSize;
 
 #endif

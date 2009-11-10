@@ -47,9 +47,14 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "../pedlib/pedlib.h"
-#include "../pedlib/likelihood.h"
-#include "../utils/utils.h"
+#include "../utils/utils.h" // General support
+#include "model_options.h" // For options that affect pedigree file interpretation
+#include "model_range.h" // For counting individuals in each liability class
+#include "../pedlib/pedigree.h" // For pedigree structures to populate
+#include "../pedlib/locus.h" // For marker genotypes in the pedigree file
+
+extern ModelOptions *modelOptions;
+extern ModelRange *modelRange;
 
 // Functions listed below should not be called outside this library:
 Pedigree *create_pedigree (PedigreeSet * pPedigreeSet, char *sPedLabel);
@@ -92,6 +97,8 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
   char sPrevPedLabel[MAX_PED_LABEL_LEN];
   char sCurrPedLabel[MAX_PED_LABEL_LEN];
   char sCurrPersonLabel[MAX_PED_LABEL_LEN];
+  char *flexBuffer; // Allocated elsehwere (fgetlongs, actually)
+  int flexBufferSize = 0;
   int pos;
   int numRet;
   char *pLine = NULL;		/* current pointer to a string for strtok()  */
@@ -1260,6 +1267,8 @@ read_ccfile (char *ccFileName, PedigreeSet * pPedigreeSet)
   FILE *fpFile = NULL;
   int lineNo = 0, pos, i, j, numRet, headerSeen = FALSE, numPed = 0, maxNumPed = 0;
   char *pLine;
+  char *flexBuffer; // Allocated elsehwere (fgetlongs, actually)
+  int flexBufferSize = 0;
   char sCurrPedLabel[MAX_PED_LABEL_LEN];
   char sCurrMarkerLabel[MAX_PED_LABEL_LEN];
   Pedigree **pPedSet = NULL; // Vector of pedigree pointers from header columns

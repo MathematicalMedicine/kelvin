@@ -9,6 +9,7 @@
 #ifndef __PARENTALPAIR_H__
 #define __PARENTALPAIR_H__
 
+
 /* each nuclear family can have many ParentalPair depends on the 
  * possible genotypes of the father and mother 
  * these parental pairs are phased single locus . */
@@ -40,21 +41,6 @@ typedef struct ParentalPair
   /* link to next parental pair for this nuclear family on this locus */
   struct ParentalPair *pNext;
 } ParentalPair;
-
-#if 0
-
-/* multi-locus parental pair */
-typedef struct HaplotypePair
-{
-  /* parental pairs for each locus */
-  struct ParentalPair **ppParentalPairs;
-  /* likelihood of the nuclear family conditional on this haplotype pair */
-  double likelihood;
-
-  Polynomial *likelihoodPolynomial;
-
-} HaplotypePair;
-#endif
 
 typedef struct ParentalPairSpace
 {
@@ -90,6 +76,8 @@ extern XMission *xmissionMatrix;
 extern double *half_pow;
 extern char partialPolynomialFunctionName[];
 
+
+int compute_likelihood (PedigreeSet * pPedigreeList);
 int construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
 			     int locus);
 int stat_parental_pair_workspace (PedigreeSet *);

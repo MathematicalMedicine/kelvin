@@ -1,49 +1,52 @@
-
-/**********************************************************************
- * Copyright 2008, Nationwide Children's Research Institute.  
- * All rights reserved.
- * Permission is hereby given to use this software 
- * for non-profit educational purposes only.
- **********************************************************************/
-
-/* avoid structures re-define because of multiple inclusion of the files */
 #ifndef __PEDIGREE_H__
 #define __PEDIGREE_H__
 
-#include "../utils/polynomial.h"
+/**
+@file pedigree.h
 
-/* Most of the structures defined in this file were taken from the original
- * vitesse codeset v_prog.h and trimed down to the bare neccessities
- * */
+  Most of the structures defined in this file were taken from the original
+  vitesse codeset v_prog.h and trimed down to the bare neccessities.
 
-/* maximum line length in pedigree file */
+  Constants for parsing a pedigree file and structures for storing the 
+  results. Currently includes pedigree-related data for the Elston-Stewart
+  likelihood calculation which should be split-out at some point.
+
+  Copyright &copy; 2009, Nationwide Children's Research Institute.  All
+  rights reserved.  Permission is hereby given to use this software
+  for non-profit educational purposes only.
+
+  @version $Id$
+
+*/
+
+#include "../utils/polynomial.h" // For storing pedigree likelhood polynomials
+
+/// Maximum line length in pedigree file.
 #define MAX_LINE_LEN            4096
 
-/* maximum length for pedigree label, individual IDs */
+/// Maximum length for pedigree label, individual IDs.
 #define MAX_PED_LABEL_LEN       128
 
-/* delimiter to separate fields in the pedfile */
+typedef enum
+{ DAD = 0, MOM = 1 } PARENTS;
+typedef enum
+{ MALE = 1, FEMALE = 2 } SEX;
+
+/// Delimiters to separate fields in the pedfile
 #define PED_DELIM               " \t\n"
 
-/* default pedigree malloc increment */
+/// Default pedigree malloc increment.
 #define DEF_PED_MALLOC_INCREMENT 10
-
-/* A person's sex */
-//#define MALE 		1
-//#define FEMALE		2
-
-/* direction of the peeling */
-#define PEDIGREE_UP			0
-#define PEDIGREE_DOWN			1
-
-/* parents */
-//typedef enum { DAD=0, MOM=1} PARENTS;
 
 #define DADID	"DAD"
 #define MOMID	"MOM"
 
 #define PATERNAL 	DAD
 #define MATERNAL 	MOM
+
+/// Direction of the peeling. Shouldn't be here, but E-S is entangled with reading
+#define PEDIGREE_UP			0
+#define PEDIGREE_DOWN			1
 
 /* pedigree list data structure 
  * This structure groups all the pedigrees together by arrays of pointers 

@@ -302,8 +302,6 @@ void kelvinInit (int argc, char *argv[])
   /* read in case control file if provided */
   if (strlen (modelOptions->ccfile) > 0)
     read_ccfile (modelOptions->ccfile, &pedigreeSet);
-  flexBufferSize = 0;
-  free (flexBuffer);
   fflush (stderr);
   fflush (stdout);
 

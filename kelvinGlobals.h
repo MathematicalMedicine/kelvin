@@ -32,9 +32,6 @@ extern LambdaCell *pLambdaCell;
 int loopMarkerFreqFlag;
 int total_count;
 
-char *flexBuffer;
-int flexBufferSize;
-
 PedigreeSet pedigreeSet;        /* Pedigrees. */
 int locus; // Probably an evil global, i.e. recycled local
 Polynomial *initialProbPoly2[3];
