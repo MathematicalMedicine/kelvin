@@ -134,6 +134,14 @@
   the older disused diagnostic routines used in other parts of
   kelvin.
 
+  COMMENTS ON PHILOSOPHY:
+
+  - The hash tables are maintained for one reason only: polynomial reuse. If
+  they start to adversely affect performance without providing a significant
+  reduction in the number of unique polynomials, then we need to clean them
+  up or use them less. That's the case with constant polys for sure, almost
+  enough so to lead us to not treat constants as polynomials.
+
 */
 #include <stdlib.h>
 #include <stdio.h>
