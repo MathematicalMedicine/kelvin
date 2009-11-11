@@ -668,11 +668,10 @@ sub loadCompanion {
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
         my ($Type, $Name) = split /\s+/;
-	if ($Type eq "C") {
-	    $liability = 1;
-	} elsif (($Type ne "T") and ($Type ne "A") and ($Type ne "M")) {
+	if (($Type ne "T") and ($Type ne "A") and ($Type ne "M") and ($Type ne "C")) {
 	    die "Unknown locus type \"$Type\" at line $LineNo in marker description companion file $File\n";
 	} else {
+	    $liability = 1 if ($Type eq "C");
 	    push @Loci, $Name;
 	    $LociAttributes{$Name}{Type}     = $Type;
 	    $LociAttributes{$Name}{Included} = 1;
