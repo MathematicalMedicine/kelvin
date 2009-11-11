@@ -521,8 +521,8 @@ sub bucketizePedigrees {
                 if ($LociAttributes{$Name}{Type} eq "M") {
                     print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
                     print OUT "F";
-                    for my $Freq (@{ $LociAttributes{$Name}{Frequencies} }) {
-                        print OUT sprintf(" %.8f", $Freq);
+		    for my $Allele (@{ $LociAttributes{$Name}{Alleles}{OrderedList} }) {
+			print OUT sprintf(" %.8f", $LociAttributes{$Name}{Alleles}{$Allele}{Frequency});
                     }
                     print OUT "\n";
 		}
@@ -576,8 +576,8 @@ EOF
         if ($LociAttributes{$Name}{Type} eq "M") {
             print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
             print OUT "F";
-            for my $Freq (@{ $LociAttributes{$Name}{Frequencies} }) {
-                print OUT sprintf(" %.8f", $Freq);
+	    for my $Allele (@{ $LociAttributes{$Name}{Alleles}{OrderedList} }) {
+		print OUT sprintf(" %.8f", $LociAttributes{$Name}{Alleles}{$Allele}{Frequency});
             }
             print OUT "\n";
         }	
@@ -685,8 +685,8 @@ sub writeExpanded {
         if ($LociAttributes{$Name}{Type} eq "M") {
             print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
             print OUT "F";
-            for my $Freq (@{ $LociAttributes{$Name}{Frequencies} }) {
-                print OUT sprintf(" %.8f", $Freq);
+	    for my $Allele (@{ $LociAttributes{$Name}{Alleles}{OrderedList} }) {
+		print OUT sprintf(" %.8f", $LociAttributes{$Name}{Alleles}{$Allele}{Frequency});
             }
             print OUT "\n";
         }
