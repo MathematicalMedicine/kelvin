@@ -274,13 +274,13 @@ swDumpOutput (struct swStopwatch *theStopwatch, char *appendText)
     (buffer,
      "stopwatch %s(%d) e:%lus u:%lus s:%lus, vx:%lu, ivx:%lu, sf:%lu, hf:%lu%s",
      theStopwatch->swName, theStopwatch->swStartedCount,
-     theStopwatch->swAccumWallTime,
-     theStopwatch->swAccumRUSelf.ru_utime.tv_sec + theStopwatch->swAccumRUChildren.ru_utime.tv_sec,
-     theStopwatch->swAccumRUSelf.ru_stime.tv_sec + theStopwatch->swAccumRUChildren.ru_stime.tv_sec,
-     theStopwatch->swAccumRUSelf.ru_nvcsw + theStopwatch->swAccumRUChildren.ru_nvcsw,
-     theStopwatch->swAccumRUSelf.ru_nivcsw + theStopwatch->swAccumRUChildren.ru_nivcsw,
-     theStopwatch->swAccumRUSelf.ru_minflt + theStopwatch->swAccumRUChildren.ru_minflt,
-     theStopwatch->swAccumRUSelf.ru_majflt + theStopwatch->swAccumRUChildren.ru_majflt,
+     (unsigned long) theStopwatch->swAccumWallTime,
+     (unsigned long) theStopwatch->swAccumRUSelf.ru_utime.tv_sec + theStopwatch->swAccumRUChildren.ru_utime.tv_sec,
+     (unsigned long) theStopwatch->swAccumRUSelf.ru_stime.tv_sec + theStopwatch->swAccumRUChildren.ru_stime.tv_sec,
+     (unsigned long) theStopwatch->swAccumRUSelf.ru_nvcsw + theStopwatch->swAccumRUChildren.ru_nvcsw,
+     (unsigned long) theStopwatch->swAccumRUSelf.ru_nivcsw + theStopwatch->swAccumRUChildren.ru_nivcsw,
+     (unsigned long) theStopwatch->swAccumRUSelf.ru_minflt + theStopwatch->swAccumRUChildren.ru_minflt,
+     (unsigned long) theStopwatch->swAccumRUSelf.ru_majflt + theStopwatch->swAccumRUChildren.ru_majflt,
      appendText);
   swLogMsg (buffer);
   return;
@@ -400,7 +400,7 @@ int countMalloc = 0, countReallocOK = 0, countReallocMove = 0,
 int firstMallocCall = 1;
 
 void
-swFirstDM ()
+swFirstDM (void)
 {
   internalDMSW = swCreate ("internalDMSW");
   swStart (internalDMSW);
