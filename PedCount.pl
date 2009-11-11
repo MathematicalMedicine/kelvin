@@ -332,11 +332,10 @@ sub bucketizePedigrees {
 
     if ($Type eq "POST") {
         open OUT, ">" . $Prefix . "Pedigrees.Dat";
+	print OUT '# $Id$'; print OUT "\n";
     } else {
         open OUT, ">" . $Prefix . "Pedigrees.Pre";
     }
-
-    print OUT '# $Id$'; print OUT "\n";
 
     # First the intact (skipped) pedigrees
     for my $Ped (@Skippies) {
