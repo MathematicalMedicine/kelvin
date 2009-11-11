@@ -768,7 +768,6 @@ sub addMissingAlleles {
 	@{ $LociAttributes{$Name}{Alleles}{OrderedList} } = sort @{ $LociAttributes{$Name}{Alleles}{OrderedList} };
     }
 #    print Dumper(\%LociAttributes)."\n";
-    exit;
     return $maf0;
 }
 
