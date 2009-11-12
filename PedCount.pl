@@ -9,7 +9,7 @@ use kf;
 
 #####################################
 #
-# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $
+# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $
 #
 # by Bill Valentine-Cooper, portions from work by John Burian
 #
@@ -65,7 +65,7 @@ sub numericIsh {
 
 #####################################
 #
-sub dirAS {
+sub dirPhenoCodes {
     $UnknownAffection = $Directives{AS}[0];
     $Unaffected       = $Directives{AS}[1];
     $Affected         = $Directives{AS}[2];
@@ -301,9 +301,9 @@ sub bucketizePedigrees {
                 }
             }
             my $PedBucket = join("+", sort (@bucketList));
-            $Buckets{ $Loci[ $i + 1 ] . "_" . $PedBucket }++;
+            $Buckets{ $Loci[ $i ] . "_" . $PedBucket }++;
 
-#	    print "For marker ".$Loci [ $i + 1 ]." bucket ".$PedBucket." gets pedigree ".sprintf("%003d\n", $Ped);
+#	    print "For marker ".$Loci [ $i ]." bucket ".$PedBucket." gets pedigree ".sprintf("%003d\n", $Ped);
             if (!defined($Templates{$PedBucket})) {
                 $Templates{$PedBucket}{Ped}    = $Ped;
                 $Templates{$PedBucket}{PedSeq} = sprintf("P%04d", $PedSeq++);
@@ -333,11 +333,10 @@ sub bucketizePedigrees {
 
     if ($Type eq "POST") {
         open OUT, ">" . $Prefix . "Pedigrees.Dat";
+	print OUT '# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print OUT "\n";
     } else {
         open OUT, ">" . $Prefix . "Pedigrees.Pre";
     }
-
-    print OUT '# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print OUT "\n";
 
     # First the intact (skipped) pedigrees
     for my $Ped (@Skippies) {
@@ -356,16 +355,16 @@ sub bucketizePedigrees {
             }
             my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
             for my $i (0 .. $PairCount - 1) {
-                next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
-                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} =~ /^[AT]$/);
+                next if (!$LociAttributes{ $Loci[ $i ] }{Included});
+                next if ($LociAttributes{ $Loci[ $i ] }{Type} =~ /^[AT]$/);
                 my ($Left, $Right) = split(/ /, $Pairs[$i]);
-                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
-                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left} . " ";
+                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Left})) {
+                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Left} . " ";
                 } else {
                     print OUT AttributeMissing . " ";
                 }
-                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
-                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right} . "  ";
+                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Right})) {
+                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Right} . "  ";
                 } else {
                     print OUT AttributeMissing . "  ";
                 }
@@ -398,15 +397,15 @@ sub bucketizePedigrees {
             my $Pair = $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
             my ($Left, $Right) = split(/ /, $Pair);
             for my $i (0 .. $PairCount - 1) {
-                next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
-                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} =~ /^[AT]$/);
+                next if (!$LociAttributes{ $Loci[ $i ] }{Included});
+                next if ($LociAttributes{ $Loci[ $i ] }{Type} =~ /^[AT]$/);
                 if ($Left != 0) {
-                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Left - 1] . " ";
+                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList}[$Left - 1] . " ";
                 } else {
                     print OUT AttributeMissing . " ";
                 }
                 if ($Right != 0) {
-                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Right - 1] . "  ";
+                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList}[$Right - 1] . "  ";
                 } else {
                     print OUT AttributeMissing . "  ";
                 }
@@ -419,18 +418,18 @@ sub bucketizePedigrees {
     # Diagnostic multiple template pedigrees! (Out-of-date)
     if ($DiagSolos) {
         for my $i (0 .. $PairCount - 1) {
-            next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
+            next if (!$LociAttributes{ $Loci[ $i ] }{Included});
 
             if ($Type eq "POST") {
-                open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "Pedigrees.Dat";
+                open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i ] . "Pedigrees.Dat";
             } else {
-                open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "Pedigrees.Pre";
+                open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i ] . "Pedigrees.Pre";
             }
 
-            print OUT '# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print OUT "\n";
+            print OUT '# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print OUT "\n";
 
             for my $PB (sort numericIsh keys %Templates) {
-                my $FB = $Loci[ $i + 1 ] . "_" . $PB;
+                my $FB = $Loci[ $i ] . "_" . $PB;
                 if (!defined($Buckets{$FB})) {
                     next;
                 } else {
@@ -442,7 +441,7 @@ sub bucketizePedigrees {
                       . " copies of "
                       . $PedSeq
                       . " for marker "
-                      . $Loci[ $i + 1 ] . "\n";
+                      . $Loci[ $i ] . "\n";
                     for my $j (1 .. $Buckets{$FB}) {
                         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
                             print OUT sprintf(
@@ -478,7 +477,7 @@ sub bucketizePedigrees {
     # Finally the counts.
     open OUT, ">" . $Prefix . "Counts.Dat";
 
-    print OUT '# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print OUT "\n";
+    print OUT '# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print OUT "\n";
 
     print OUT "MARKER ";
     for my $PB (sort numericIsh keys %Templates) {
@@ -487,10 +486,10 @@ sub bucketizePedigrees {
     }
     print OUT "\n";
     for my $i (0 .. $PairCount - 1) {
-        next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
-        print OUT $Loci[ $i + 1 ] . " ";
+        next if (!$LociAttributes{ $Loci[ $i ] }{Included});
+        print OUT $Loci[ $i ] . " ";
         for my $PB (sort numericIsh keys %Templates) {
-            my $FB = $Loci[ $i + 1 ] . "_" . $PB;
+            my $FB = $Loci[ $i ] . "_" . $PB;
             if (!defined($Buckets{$FB})) {
                 print OUT "  0 ";
             } else {
@@ -502,6 +501,8 @@ sub bucketizePedigrees {
     close OUT;
 
     open OUT, ">" . $Prefix . "Data.Dat";
+    print OUT "T Trait\n";
+    print OUT "C liabilityClass\n" if ($liability);
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
@@ -515,7 +516,7 @@ sub bucketizePedigrees {
 
             open OUT, ">" . $Prefix . "Markers.Dat";
 
-            print OUT '# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print OUT "\n";
+            print OUT '# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print OUT "\n";
 
             for my $Name (@Loci) {
                 next if (!$LociAttributes{$Name}{Included});
@@ -537,32 +538,34 @@ sub bucketizePedigrees {
 
     open OUT, ">" . $Prefix . "Config.Dat";
 
-    print OUT '# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print OUT "\n";
+    print OUT '# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print OUT "\n";
 
     my $configPrefix = $Prefix;
     $configPrefix =~ s/.*\///;
-    print OUT "PedigreeFile " . $configPrefix . "Pedigrees.Dat\n";
-    print OUT "LocusFile " . $configPrefix . "Data.Dat\n";
-    print OUT "FrequencyFile " . $configPrefix . "Markers.Dat\n";
-    print OUT "MapFile " . $configPrefix . "Map.Dat\n";
-    print OUT "CountFile " . $configPrefix . "Counts.Dat\n";
-    print OUT "BayesRatioFile " . $configPrefix . "BR.Out\n";
-    print OUT "PPLFile " . $configPrefix . "PPL.Out\n";
+    print OUT "PD " . $configPrefix . "Pedigrees.Dat\n";
+    print OUT "DF " . $configPrefix . "Data.Dat\n";
+    print OUT "MK " . $configPrefix . "Markers.Dat\n";
+    print OUT "MP " . $configPrefix . "Map.Dat\n";
+    print OUT "CF " . $configPrefix . "Counts.Dat\n";
+    print OUT "HE " . $configPrefix . "BR.Out\n";
+    print OUT "PF " . $configPrefix . "PPL.Out\n";
 
     print OUT <<EOF;
 
 # The rest is the standard analysis grid...
-FixedModels
-Theta 0-0.5:0.05
-DPrime -1-1:0.1
-DiseaseGeneFrequency 0.001, 0.999, 0.1-0.9:.1
-Alpha 0.05-1.0:0.1
-Penetrance DD 0.0-0.9:0.1, 0.999
-Penetrance Dd 0.0-0.9:0.1, 0.999
-Penetrance dd 0.0-0.9:0.1, 0.999
-Constrain Penetrance DD >= Dd
-Constrain Penetrance Dd >= dd
-Constrain Penetrance DD != Dd, Dd != dd
+Th 0 0.5 0.05
+LD -1 1 0.1
+GF 0.001, 0.999, 0.1-0.9:.1
+AL 0.05 1.0 0.1
+DD 0.0 0.9 0.1
+DD 0.999
+Dd 0.0 0.9 0.1
+Dd 0.999
+dd 0.0 0.9 0.1
+dd 0.999
+DD >= Dd
+Dd >= dd
+DD != Dd; Dd != dd
 
 EOF
     print OUT "XC\n" if (defined($Directives{XC}) || $XC);
@@ -570,7 +573,7 @@ EOF
 
     open OUT, ">" . $Prefix . "Markers.Dat";
 
-    print OUT '# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print OUT "\n";
+    print OUT '# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print OUT "\n";
 
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
@@ -579,7 +582,7 @@ EOF
             print OUT "F";
 	    for my $Allele (@{ $LociAttributes{$Name}{Alleles}{OrderedList} }) {
 		print OUT sprintf(" %.8f", $LociAttributes{$Name}{Alleles}{$Allele}{Frequency});
-            }
+	    }
             print OUT "\n";
         }	
     }
@@ -588,7 +591,7 @@ EOF
     #
     open OUT, ">" . $Prefix . "Map.Dat";
 
-    print OUT '# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print OUT "\n";
+    print OUT '# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print OUT "\n";
 
     print OUT "CHR MARKER KOSAMBI\n";
     for my $Name (@Loci) {
@@ -615,7 +618,7 @@ sub writeExpanded {
         open OUT, ">" . $Prefix . "Pedigrees.Pre";
     }
 
-    print OUT '# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print OUT "\n";
+    print OUT '# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print OUT "\n";
 
     for my $Ped (sort numericIsh keys %Pedigrees) {
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
@@ -633,22 +636,23 @@ sub writeExpanded {
             }
             my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} }; # Pairs are of allele ordinals, not names
             for my $i (0 .. $PairCount - 1) {
-                next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
-                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} =~ /^[AT]$/);
+                next if (!$LociAttributes{ $Loci[ $i ] }{Included});
+                next if ($LociAttributes{ $Loci[ $i ] }{Type} =~ /^[AT]$/);
 #                print OUT $Pairs[$i] . "  ";
 
                 my ($Left, $Right) = split(/ /, $Pairs[$i]);
-                print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Left - 1]." ";
-                print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Right - 1]."  ";
+
+                print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList}[$Left - 1]." ";
+                print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList}[$Right - 1]."  ";
 
 #                my ($Left, $Right) = split(/ /, $Pairs[$i]);
-#                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
-#                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left} . " ";
+#                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Left})) {
+#                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Left} . " ";
 #                } else {
 #                    print OUT AttributeMissing . " ";
 #                }
-#                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
-#                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right} . "  ";
+#                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Right})) {
+#                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Right} . "  ";
 #                } else {
 #                    print OUT AttributeMissing . "  ";
 #                }
@@ -664,8 +668,10 @@ sub writeExpanded {
 
     open OUT, ">" . $Prefix . "Data.Dat";
 
-    print OUT '# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print OUT "\n";
+    print OUT '# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print OUT "\n";
 
+    print OUT "T Trait\n";
+    print OUT "C liabilityClass\n" if ($liability);
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
@@ -679,7 +685,7 @@ sub writeExpanded {
 
     open OUT, ">" . $Prefix . "Markers.Dat";
 
-    print OUT '# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print OUT "\n";
+    print OUT '# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print OUT "\n";
 
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
@@ -696,7 +702,7 @@ sub writeExpanded {
 
     open OUT, ">" . $Prefix . "Map.Dat";
 
-    print OUT '# $Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print OUT "\n";
+    print OUT '# $Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print OUT "\n";
 
     print OUT "CHR MARKER KOSAMBI\n";
     for my $Name (@Loci) {
@@ -760,13 +766,13 @@ sub kelvinLimits {
 
     # General limitations
     warn "Warning -- kelvin currently only supports biallelic disease models!\n"
-      if (defined($Directives{DA}) && ($Directives{DA}[0] != 2));
+      if (defined($Directives{DiseaseAlleles}) && ($Directives{DiseaseAlleles}[0] != 2));
 }
 
 #####################################
 # Verify command line parameters, check flags and do what the user asks.
 #
-print '$Id: PedCount.pl 1938 2009-07-01 17:32:04Z whv001 $'; print "\n";
+print '$Id: PedCount.pl 2399 2009-11-12 16:52:32Z whv001 $'; print "\n";
 my $Usage = <<EOF;
 
 Usage "perl $0 [<flags>...] <input file>"
@@ -782,7 +788,7 @@ where <flags> are any of:
 		file)
 -imprinting	This in an imprinting analysis (also IMP in configuration file)
 -liability	The pedigree file has a column after affection status for liability 
-		class. Currently not considered in counts.
+		class.
 -bare		The pedigree file has only individual, affection status and marker
 		allele pairs columns.
 -nokelvin	Skip verification that kelvin can handle the analysis.
@@ -909,7 +915,7 @@ if ($config) {
     my $ConfFile = shift;
     loadConf($ConfFile);
     if (defined($Directives{DF}[0])) { $locusFile = $Directives{DF}[0]; }
-    loadCompanion($locusFile);
+    $liability = loadCompanion($locusFile);
     if (defined($Directives{MP}[0])) { $mapFile = $Directives{MP}[0]; }
     loadMap($mapFile);
     if (defined($Directives{MK}[0])) { $frequencyFile = $Directives{MK}[0]; }
@@ -919,12 +925,13 @@ if ($config) {
 } else {
     $pedFile = shift;
 }
+#print Dumper(\@Loci);
+#print Dumper(\%LociAttributes);
 
 my $Type = "";
 if ($pre) { $Type = "PRE"; } elsif ($post) { $Type = "POST"; } elsif ($bare) { $Type = "BARE"; }
-my $pedFileType = assessPedigree($pedFile, $Type);
-$PairCount = loadPedigree($pedFile, $pedFileType, $liability);
-
+my $pedFileType = assessPedigree($pedFile, $Type, $liability, $noparents);
+$PairCount = loadPedigree($pedFile, $pedFileType, $liability, $noparents);
 #print Dumper(\%Pedigrees);
 
 if (!$config) {
@@ -932,9 +939,6 @@ if (!$config) {
     deriveAlleleFrequencies();
     $maf0 = addMissingAlleles();
 }
-
-#print Dumper(\@Loci);
-#print Dumper(\%LociAttributes);
 
 checkRelations($pedFileType);
 checkIntegrity();
@@ -976,14 +980,14 @@ if (defined($Directives{SA}) || defined($Directives{SS})) {
     $split = $PairCount if (!$split);
     my $IncludedMarkers = 0;    # Number of markers included thus-far
     my $SplitSet        = 0;    # Sequence number of set of markers
-    for my $i (1 .. $PairCount) {
+    for my $i (0 .. $PairCount - 1) {
+
         if (($LociAttributes{ $Loci[$i] }{Included}) && (++$IncludedMarkers >= $split)) {
 
             # Hit our limit, exclude all the rest
-            for my $j (($i + 1) .. $PairCount) {
+            for my $j (($i + 1) .. $PairCount - 1) {
                 $LociAttributes{ $Loci[$j] }{Included} = 0;
             }
-
             # Do the work
             print "Marker set " . (++$SplitSet) . "\n";
             mkdir $WritePrefix . $SplitSet if ($write && $subdirectories);
