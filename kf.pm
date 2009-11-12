@@ -42,8 +42,8 @@ our $MapFunction      = "Kosambi, bless his heart!";
 our %Pedigrees;                                        # Pedigrees as loaded
 our %Directives;                                       # Directives as loaded
 our $PairCount      = 0;                                                # Last pedigree count of marker pairs
-our @Loci           = ('Trait');                                        # Ordered loci name list from companion file
-our %LociAttributes = ('Trait' => { 'Type' => 'T', 'Included' => 1 });  # Loci attributes from companion and marker files
+our @Loci;                                        # Ordered loci name list from companion file
+our %LociAttributes;  # Loci attributes from companion and marker files
 our %Map;                                                               # Loci on the map and other map attributes
 
 # Nuisances to fix
@@ -533,13 +533,15 @@ sub loadPedigree {
                 last;
             }
             $AlC++;
+	    print "Handling pedigree $Ped allele $AlC\n";
             my $Name;
             if (!$HaveConfig) {
-                $Name = sprintf("M%04d", int(($AlC + 1) / 2));    # Offset == Name
-                push @Loci, "$Name" if (scalar(@Loci) <= int(($AlC + 1) / 2));
+                $Name = sprintf("M%04d", int(($AlC + 0.6) / 2 - 1));    # Offset == Name
+                push @Loci, "$Name" if (scalar(@Loci) <= int(($AlC + 0.6) / 2 - 1));
             } else {
-                $Name = $Loci[ int(($AlC + 1.5) / 2) ];           # Integer division, thank you
+                $Name = $Loci[ int(($AlC + 0.6) / 2 - 1) ];           # Integer division, thank you
             }
+	    print "Name is $Name from offset ".int(($AlC + 0.6) / 2 - 1)."\n";
             if ($Allele ne AttributeMissing) {
                 $GtC++;    # Keep track of how much genotypic information we have for this individual
                 if (!$HaveConfig) {
@@ -626,8 +628,8 @@ sub loadPedigree {
 #
 sub deriveAlleleFrequencies {
     for my $i (0 .. $PairCount - 1) {
-        $LociAttributes{ $Loci[ $i + 1 ] }{Type}         = "M";
-        $LociAttributes{ $Loci[ $i + 1 ] }{Included}     = 1;
+        $LociAttributes{ $Loci[ $i ] }{Type}         = "M";
+        $LociAttributes{ $Loci[ $i ] }{Included}     = 1;
         my %HaploCounts = ();
         for my $Ped (keys %Pedigrees) {
             for my $Ind (keys %{ $Pedigrees{$Ped} }) {
@@ -644,9 +646,9 @@ sub deriveAlleleFrequencies {
 	}
 	for my $Allele (keys %HaploCounts) {
 	    if ($PopSize != 0) {
-		$LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Allele}{Frequency} = $HaploCounts{$Allele} / $PopSize;
+		$LociAttributes{ $Loci[ $i ] }{Alleles}{$Allele}{Frequency} = $HaploCounts{$Allele} / $PopSize;
 	    } else {
-		$LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Allele}{Frequency} = 0;
+		$LociAttributes{ $Loci[ $i ] }{Alleles}{$Allele}{Frequency} = 0;
 	    }
 	}
     }
@@ -680,10 +682,10 @@ sub loadCompanion {
         s/^\s*//g;       # Trim leading whitespace
         my ($Type, $Name) = split /\s+/;
 	push @PedColUse, $Type;
-	if (($Type ne "T") and ($Type ne "A") and ($Type ne "M") and ($Type ne "C")) {
-	    die "Unknown locus type \"$Type\" at line $LineNo in marker description companion file $File\n";
-	} else {
-	    $liability = 1 if ($Type eq "C");
+	die "Unknown locus type \"$Type\" at line $LineNo in marker description companion file $File\n"
+	    if ($Type !~ /[MCAT]/);
+	$liability = 1 if ($Type eq "C");
+	if ($Type =~ /[M]/) {
 	    push @Loci, $Name;
 	    $LociAttributes{$Name}{Type}     = $Type;
 	    $LociAttributes{$Name}{Included} = 1;
@@ -732,6 +734,7 @@ sub loadFrequencies {
         }
     }
     close IN;
+    return;
 }
 
 #####################################
@@ -814,12 +817,12 @@ sub checkIntegrity {
             my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
             for my $i (0 .. $PairCount - 1) {
                 my ($Left, $Right) = split /\s/, $Pairs[$i];
-                die "Pedigree $Ped, individual $Ind Marker $i (" . $Loci[ $i + 1 ] . ") allele $Left too large.\n"
-                  if ($Left > scalar( @{ $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList} }));
-                die "Pedigree $Ped, individual $Ind Marker $i (" . $Loci[ $i + 1 ] . ") allele $Right too large.\n"
-                  if ($Right > scalar( @{ $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList} }));
+                die "Pedigree $Ped, individual $Ind Marker $i (" . $Loci[ $i ] . ") allele $Left too large.\n"
+                  if ($Left > scalar( @{ $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList} }));
+                die "Pedigree $Ped, individual $Ind Marker $i (" . $Loci[ $i ] . ") allele $Right too large.\n"
+                  if ($Right > scalar( @{ $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList} }));
                 if ((defined($Directives{XC}) || $XC)) {
-                    die "Pedigree $Ped, male $Ind is not homozygous for marker " . $Loci[ $i + 1 ] . "\n"
+                    die "Pedigree $Ped, male $Ind is not homozygous for marker " . $Loci[ $i ] . "\n"
                       if (($Pedigrees{$Ped}{$Ind}{Sex} == 1) && ($Left != $Right));
                 }
             }

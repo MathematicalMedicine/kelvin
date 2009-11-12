@@ -301,9 +301,9 @@ sub bucketizePedigrees {
                 }
             }
             my $PedBucket = join("+", sort (@bucketList));
-            $Buckets{ $Loci[ $i + 1 ] . "_" . $PedBucket }++;
+            $Buckets{ $Loci[ $i ] . "_" . $PedBucket }++;
 
-#	    print "For marker ".$Loci [ $i + 1 ]." bucket ".$PedBucket." gets pedigree ".sprintf("%003d\n", $Ped);
+#	    print "For marker ".$Loci [ $i ]." bucket ".$PedBucket." gets pedigree ".sprintf("%003d\n", $Ped);
             if (!defined($Templates{$PedBucket})) {
                 $Templates{$PedBucket}{Ped}    = $Ped;
                 $Templates{$PedBucket}{PedSeq} = sprintf("P%04d", $PedSeq++);
@@ -355,16 +355,16 @@ sub bucketizePedigrees {
             }
             my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
             for my $i (0 .. $PairCount - 1) {
-                next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
-                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} =~ /^[AT]$/);
+                next if (!$LociAttributes{ $Loci[ $i ] }{Included});
+                next if ($LociAttributes{ $Loci[ $i ] }{Type} =~ /^[AT]$/);
                 my ($Left, $Right) = split(/ /, $Pairs[$i]);
-                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
-                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left} . " ";
+                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Left})) {
+                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Left} . " ";
                 } else {
                     print OUT AttributeMissing . " ";
                 }
-                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
-                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right} . "  ";
+                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Right})) {
+                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Right} . "  ";
                 } else {
                     print OUT AttributeMissing . "  ";
                 }
@@ -397,15 +397,15 @@ sub bucketizePedigrees {
             my $Pair = $Pedigrees{$Ped}{$Ind}{Mks}[$PairID];
             my ($Left, $Right) = split(/ /, $Pair);
             for my $i (0 .. $PairCount - 1) {
-                next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
-                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} =~ /^[AT]$/);
+                next if (!$LociAttributes{ $Loci[ $i ] }{Included});
+                next if ($LociAttributes{ $Loci[ $i ] }{Type} =~ /^[AT]$/);
                 if ($Left != 0) {
-                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Left - 1] . " ";
+                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList}[$Left - 1] . " ";
                 } else {
                     print OUT AttributeMissing . " ";
                 }
                 if ($Right != 0) {
-                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Right - 1] . "  ";
+                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList}[$Right - 1] . "  ";
                 } else {
                     print OUT AttributeMissing . "  ";
                 }
@@ -418,18 +418,18 @@ sub bucketizePedigrees {
     # Diagnostic multiple template pedigrees! (Out-of-date)
     if ($DiagSolos) {
         for my $i (0 .. $PairCount - 1) {
-            next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
+            next if (!$LociAttributes{ $Loci[ $i ] }{Included});
 
             if ($Type eq "POST") {
-                open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "Pedigrees.Dat";
+                open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i ] . "Pedigrees.Dat";
             } else {
-                open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i + 1 ] . "Pedigrees.Pre";
+                open OUT, ">" . $Prefix . "_solo_" . $Loci[ $i ] . "Pedigrees.Pre";
             }
 
             print OUT '# $Id$'; print OUT "\n";
 
             for my $PB (sort numericIsh keys %Templates) {
-                my $FB = $Loci[ $i + 1 ] . "_" . $PB;
+                my $FB = $Loci[ $i ] . "_" . $PB;
                 if (!defined($Buckets{$FB})) {
                     next;
                 } else {
@@ -441,7 +441,7 @@ sub bucketizePedigrees {
                       . " copies of "
                       . $PedSeq
                       . " for marker "
-                      . $Loci[ $i + 1 ] . "\n";
+                      . $Loci[ $i ] . "\n";
                     for my $j (1 .. $Buckets{$FB}) {
                         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
                             print OUT sprintf(
@@ -486,10 +486,10 @@ sub bucketizePedigrees {
     }
     print OUT "\n";
     for my $i (0 .. $PairCount - 1) {
-        next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
-        print OUT $Loci[ $i + 1 ] . " ";
+        next if (!$LociAttributes{ $Loci[ $i ] }{Included});
+        print OUT $Loci[ $i ] . " ";
         for my $PB (sort numericIsh keys %Templates) {
-            my $FB = $Loci[ $i + 1 ] . "_" . $PB;
+            my $FB = $Loci[ $i ] . "_" . $PB;
             if (!defined($Buckets{$FB})) {
                 print OUT "  0 ";
             } else {
@@ -501,6 +501,8 @@ sub bucketizePedigrees {
     close OUT;
 
     open OUT, ">" . $Prefix . "Data.Dat";
+    print OUT "T Trait\n";
+    print OUT "C liabilityClass\n" if ($liability);
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
@@ -632,23 +634,23 @@ sub writeExpanded {
             }
             my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} }; # Pairs are of allele ordinals, not names
             for my $i (0 .. $PairCount - 1) {
-                next if (!$LociAttributes{ $Loci[ $i + 1 ] }{Included});
-                next if ($LociAttributes{ $Loci[ $i + 1 ] }{Type} =~ /^[AT]$/);
+                next if (!$LociAttributes{ $Loci[ $i ] }{Included});
+                next if ($LociAttributes{ $Loci[ $i ] }{Type} =~ /^[AT]$/);
 #                print OUT $Pairs[$i] . "  ";
 
                 my ($Left, $Right) = split(/ /, $Pairs[$i]);
 
-                print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Left - 1]." ";
-                print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{OrderedList}[$Right - 1]."  ";
+                print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList}[$Left - 1]." ";
+                print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList}[$Right - 1]."  ";
 
 #                my ($Left, $Right) = split(/ /, $Pairs[$i]);
-#                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left})) {
-#                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Left} . " ";
+#                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Left})) {
+#                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Left} . " ";
 #                } else {
 #                    print OUT AttributeMissing . " ";
 #                }
-#                if (defined($LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right})) {
-#                    print OUT $LociAttributes{ $Loci[ $i + 1 ] }{Alleles}{$Right} . "  ";
+#                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Right})) {
+#                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Right} . "  ";
 #                } else {
 #                    print OUT AttributeMissing . "  ";
 #                }
@@ -666,6 +668,8 @@ sub writeExpanded {
 
     print OUT '# $Id$'; print OUT "\n";
 
+    print OUT "T Trait\n";
+    print OUT "C liabilityClass\n" if ($liability);
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
@@ -918,12 +922,13 @@ if ($config) {
 } else {
     $pedFile = shift;
 }
+#print Dumper(\@Loci);
+#print Dumper(\%LociAttributes);
 
 my $Type = "";
 if ($pre) { $Type = "PRE"; } elsif ($post) { $Type = "POST"; } elsif ($bare) { $Type = "BARE"; }
 my $pedFileType = assessPedigree($pedFile, $Type, $liability, $noparents);
 $PairCount = loadPedigree($pedFile, $pedFileType, $liability, $noparents);
-
 #print Dumper(\%Pedigrees);
 
 if (!$config) {
@@ -931,9 +936,6 @@ if (!$config) {
     deriveAlleleFrequencies();
     $maf0 = addMissingAlleles();
 }
-
-#print Dumper(\@Loci);
-#print Dumper(\%LociAttributes);
 
 checkRelations($pedFileType);
 checkIntegrity();
@@ -975,14 +977,14 @@ if (defined($Directives{Multipoint})) {
     $split = $PairCount if (!$split);
     my $IncludedMarkers = 0;    # Number of markers included thus-far
     my $SplitSet        = 0;    # Sequence number of set of markers
-    for my $i (1 .. $PairCount) {
+    for my $i (0 .. $PairCount - 1) {
+
         if (($LociAttributes{ $Loci[$i] }{Included}) && (++$IncludedMarkers >= $split)) {
 
             # Hit our limit, exclude all the rest
-            for my $j (($i + 1) .. $PairCount) {
+            for my $j (($i + 1) .. $PairCount - 1) {
                 $LociAttributes{ $Loci[$j] }{Included} = 0;
             }
-
             # Do the work
             print "Marker set " . (++$SplitSet) . "\n";
             mkdir $WritePrefix . $SplitSet if ($write && $subdirectories);
