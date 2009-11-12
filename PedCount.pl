@@ -222,8 +222,9 @@ sub bucketizePedigrees {
     # Verify that all markers are present and only biallelic...
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
-        next if ($LociAttributes{$Name}{Type} eq "T");
+        next if ($LociAttributes{$Name}{Type} eq "C");
         next if ($LociAttributes{$Name}{Type} eq "A");
+        next if ($LociAttributes{$Name}{Type} eq "T");
         die "No allele information found for marker $Name for count generation.\n"
           if (!defined($LociAttributes{$Name}{Alleles}));
         die "Marker $Name not biallelic, not permitted for count generation.\n"
