@@ -622,7 +622,7 @@ sub loadPedigree {
 }
 
 #####################################
-# Derive allele frequencies from pedigree data.
+# Derive allele frequencies from pedigree data when we don't have a config file.
 #
 sub deriveAlleleFrequencies {
     for my $i (0 .. $PairCount - 1) {
@@ -637,17 +637,20 @@ sub deriveAlleleFrequencies {
                 $HaploCounts{$Right}++ if ($Right ne AttributeMissing);
             }
         }
-#	print "HaploCounts are: ".Dumper(\%HaploCounts)."\n";
+#	print "HaploCounts for ".$Loci[ $i ]." are: ".Dumper(\%HaploCounts)."\n";
         my $PopSize = 0;
 	for my $Allele (keys %HaploCounts) {
 	    $PopSize += $HaploCounts{$Allele};
 	}
+	# Compute the ones for which we have occurrances
 	for my $Allele (keys %HaploCounts) {
-	    if ($PopSize != 0) {
-		$LociAttributes{ $Loci[ $i ] }{Alleles}{$Allele}{Frequency} = $HaploCounts{$Allele} / $PopSize;
-	    } else {
-		$LociAttributes{ $Loci[ $i ] }{Alleles}{$Allele}{Frequency} = 0;
-	    }
+	    $LociAttributes{ $Loci[ $i ] }{Alleles}{$Allele}{Frequency} = $HaploCounts{$Allele} / $PopSize
+		if ($PopSize != 0);
+	}
+	# Fill-in the rest with zero
+	for my $Allele (@{ $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList} }) {
+	    $LociAttributes{ $Loci[ $i ] }{Alleles}{$Allele}{Frequency} = '0'
+		if (!defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Allele}{Frequency}));
 	}
     }
 }
@@ -767,7 +770,6 @@ sub addMissingAlleles {
 	}	    
 	@{ $LociAttributes{$Name}{Alleles}{OrderedList} } = sort @{ $LociAttributes{$Name}{Alleles}{OrderedList} };
     }
-#    print Dumper(\%LociAttributes)."\n";
     return $maf0;
 }
 
