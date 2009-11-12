@@ -998,7 +998,7 @@ if (defined($Directives{Multipoint})) {
             doMarkerInclusion();
 
             # ...and exclusion up to current
-            for my $j (1 .. $i) {
+            for my $j (0 .. $i) {
                 $LociAttributes{ $Loci[$j] }{Included} = 0;
             }
             $IncludedMarkers = 0;
