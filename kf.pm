@@ -533,7 +533,6 @@ sub loadPedigree {
                 last;
             }
             $AlC++;
-	    print "Handling pedigree $Ped allele $AlC\n";
             my $Name;
             if (!$HaveConfig) {
                 $Name = sprintf("M%04d", int(($AlC + 0.6) / 2 - 1));    # Offset == Name
@@ -541,7 +540,6 @@ sub loadPedigree {
             } else {
                 $Name = $Loci[ int(($AlC + 0.6) / 2 - 1) ];           # Integer division, thank you
             }
-	    print "Name is $Name from offset ".int(($AlC + 0.6) / 2 - 1)."\n";
             if ($Allele ne AttributeMissing) {
                 $GtC++;    # Keep track of how much genotypic information we have for this individual
                 if (!$HaveConfig) {
