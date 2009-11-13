@@ -268,46 +268,55 @@ sub bucketizePedigrees {
         for my $i (0 .. $PairCount - 1) {
             my @bucketList = ();
 
-            # Get a bucket for each child in the family
+	    # A bucket name encoding is:
+	    #
+	    #    <Dad key> := <sorted Dad alleles>.<Dad aff>[.<Dad LC>][.<Dad Sex>]
+	    #    <Mom key> := <sorted Mom alleles>.<Mom aff>[.<Mom LC>][.<Mom Sex>]
+	    #    <Child key> := <sorted Child alleles>.<Child aff>[.<Child LC>][.<Child Sex>]
+	    #    <bucket> := <lower parent key>.<higher parent key>.<Child 1 key>[.<Child 2 key>...]
+	    #
+	    my $BucketName = "";
             for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
 
-                # Skip parents
                 my $Dad = $Pedigrees{$Ped}{$Ind}{Dad};
+                # Skip the parents by checking for individual's Dad.
                 if ($Dad ne $UnknownPerson) {
-                    my $DadKey = $Pedigrees{$Ped}{$Dad}{Mks}[$i];
-                    ($DadKey eq '2 1') and $DadKey = '1 2';
-                    $DadKey .= $Pedigrees{$Ped}{$Dad}{Aff};
-		    $DadKey .= $Pedigrees{$Ped}{$Dad}{LC} if ($liability);
-                    my $Mom    = $Pedigrees{$Ped}{$Ind}{Mom};
-                    my $MomKey = $Pedigrees{$Ped}{$Mom}{Mks}[$i];
-                    ($MomKey eq '2 1') and $MomKey = '1 2';
-                    $MomKey .= $Pedigrees{$Ped}{$Mom}{Aff};
-		    $MomKey .= $Pedigrees{$Ped}{$Mom}{LC} if ($liability);
+		    if ($BucketName eq "") {
+			# Build the common parental portion from the first child's parent information
+			my $DadKey = $Pedigrees{$Ped}{$Dad}{Mks}[$i];
+			($DadKey eq '2 1') and $DadKey = '1 2';
+			$DadKey .= $Pedigrees{$Ped}{$Dad}{Aff};
+			$DadKey .= $Pedigrees{$Ped}{$Dad}{LC} if ($liability);
+			$DadKey .= $Pedigrees{$Ped}{$Dad}{Sex} if
+			    (defined($Directives{SexLinked}) || $XC || defined($Directives{Imprinting}) || $imprinting);
+			my $Mom    = $Pedigrees{$Ped}{$Ind}{Mom};
+			my $MomKey = $Pedigrees{$Ped}{$Mom}{Mks}[$i];
+			($MomKey eq '2 1') and $MomKey = '1 2';
+			$MomKey .= $Pedigrees{$Ped}{$Mom}{Aff};
+			$MomKey .= $Pedigrees{$Ped}{$Mom}{LC} if ($liability);
+			$MomKey .= $Pedigrees{$Ped}{$Mom}{Sex} if
+			    (defined($Directives{SexLinked}) || $XC || defined($Directives{Imprinting}) || $imprinting);
+			$BucketName = ($MomKey gt $DadKey) ? $DadKey . $MomKey : $MomKey . $DadKey;
+		    }
+		    # Build and add the non-parent individual (Child) key to what we have for the bucket name already
                     my $ChildKey = $Pedigrees{$Ped}{$Ind}{Mks}[$i];
                     ($ChildKey eq '2 1') and $ChildKey = '1 2';
                     $ChildKey .= $Pedigrees{$Ped}{$Ind}{Aff};
 		    $ChildKey .= $Pedigrees{$Ped}{$Ind}{LC} if ($liability);
+		    $ChildKey .= $Pedigrees{$Ped}{$Ind}{Sex} if
+			(defined($Directives{SexLinked}) || $XC || defined($Directives{Imprinting}) || $imprinting);
 
-                    if (defined($Directives{SexLinked}) || $XC || defined($Directives{Imprinting}) || $imprinting) {
-                        $DadKey   .= $Pedigrees{$Ped}{$Dad}{Sex};
-                        $MomKey   .= $Pedigrees{$Ped}{$Mom}{Sex};
-                        $ChildKey .= $Pedigrees{$Ped}{$Ind}{Sex};
-                    }
-                    my $ParentKey = ($MomKey gt $DadKey) ? $DadKey . $MomKey : $MomKey . $DadKey;
-
-                    my $BucketName = $ParentKey . $ChildKey;
-                    $BucketName =~ s/ //g;
-                    push @bucketList, $BucketName;
+                    $BucketName .= $ChildKey;
                 }
             }
-            my $PedBucket = join("+", sort (@bucketList));
-            $Buckets{ $Loci[ $i ] . "_" . $PedBucket }++;
+	    $BucketName =~ s/ //g;
+            $Buckets{ $Loci[ $i ] . "_" . $BucketName }++;
 
-#	    print "For marker ".$Loci [ $i ]." bucket ".$PedBucket." gets pedigree ".sprintf("%003d\n", $Ped);
-            if (!defined($Templates{$PedBucket})) {
-                $Templates{$PedBucket}{Ped}    = $Ped;
-                $Templates{$PedBucket}{PedSeq} = sprintf("P%04d", $PedSeq++);
-                $Templates{$PedBucket}{PairID} = $i;
+#	    print "For marker ".$Loci [ $i ]." bucket ".$BucketName." gets pedigree ".sprintf("%003d\n", $Ped);
+            if (!defined($Templates{$BucketName})) {
+                $Templates{$BucketName}{Ped}    = $Ped;
+                $Templates{$BucketName}{PedSeq} = sprintf("P%04d", $PedSeq++);
+                $Templates{$BucketName}{PairID} = $i;
             }
         }
     }
