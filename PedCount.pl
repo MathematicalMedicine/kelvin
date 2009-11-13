@@ -115,9 +115,9 @@ sub dirSexLinked {
 #
 # Leverages pedigree inheritance patterns to reduce computational
 # complexity. Multiple pedigrees that conform to a single inheritance pattern
-# are converted to a single pedigree and a weight (count) for each marker.
-# Currently works only for two-point analysis because it would be a real
-# trick for there to be many pedigrees where multiple markers all fit the
+# are converted to a single representative pedigree and a weight (count) for 
+# each marker. Currently works only for two-point analysis because it would be 
+# a real trick for there to be many pedigrees where multiple markers all fit the
 # same inheritance pattern.
 #
 # The traditional analyses for which this was designed are:
@@ -566,7 +566,7 @@ Constrain Penetrance Dd >= dd
 Constrain Penetrance DD != Dd, Dd != dd
 
 EOF
-    print OUT "XC\n" if (defined($Directives{SexLinked}) || $XC);
+    print OUT "SexLinked\n" if (defined($Directives{SexLinked}) || $XC);
     close OUT;
 
     open OUT, ">" . $Prefix . "Markers.Dat";
