@@ -529,13 +529,15 @@ sub loadPedigree {
                 last;
             }
             $AlC++;
+	    my $Offset = (($AlC & 1) ? $AlC+1 : $AlC) / 2 - 1;
             my $Name;
             if (!$HaveConfig) {
-                $Name = sprintf("M%04d", int(($AlC + 0.6) / 2 - 1));    # Offset == Name
-                push @Loci, "$Name" if (scalar(@Loci) <= int(($AlC + 0.6) / 2 - 1));
+                $Name = sprintf("M%04d", $Offset);    # Offset == Name
+                push @Loci, "$Name" if (scalar(@Loci) <= $Offset);
             } else {
-                $Name = $Loci[ int(($AlC + 0.6) / 2 - 1) ];           # Integer division, thank you
+                $Name = $Loci[ $Offset ];
             }
+#	    print "Allele name $Name is from AlC $AlC offset $Offset";
             if ($Allele ne AttributeMissing) {
                 $GtC++;    # Keep track of how much genotypic information we have for this individual
                 if (!$HaveConfig) {
@@ -550,6 +552,7 @@ sub loadPedigree {
                 # Translate the allele to a sequence number, this is required for bucket pattern matching
                 $Allele = $LociAttributes{$Name}{Alleles}{$Allele}{Order};
             }
+#	    print "...becomes Allele $Allele\n";
 
             # Pair-up the alleles
             if ($AlC & 1) {
@@ -818,9 +821,11 @@ sub checkIntegrity {
                 die "Pedigree $Ped, individual $Ind Marker $i (" . $Loci[ $i ] . ") allele $Right too large.\n"
                   if ($Right > scalar( @{ $LociAttributes{ $Loci[ $i ] }{Alleles}{OrderedList} }));
                 if ((defined($Directives{XC}) || $XC)) {
-                    die "Pedigree $Ped, male $Ind is not homozygous for marker " . $Loci[ $i ] . "\n"
-                      if (($Pedigrees{$Ped}{$Ind}{Sex} == 1) && ($Left != $Right));
-                }
+		    if (($Pedigrees{$Ped}{$Ind}{Sex} == 1) && ($Left != $Right)) {
+#			print Dumper(\%{ $Pedigrees{$Ped}});
+			die "Pedigree $Ped, male $Ind is not homozygous for marker " . $Loci[ $i ] . "\n";
+		    }
+		}
             }
         }
         if (defined($Directives{QT})) {
