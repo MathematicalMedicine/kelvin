@@ -532,7 +532,7 @@ sub loadPedigree {
 	    my $Offset = (($AlC & 1) ? $AlC+1 : $AlC) / 2 - 1;
             my $Name;
             if (!$HaveConfig) {
-                $Name = sprintf("M%04d", $Offset);    # Offset == Name
+                $Name = sprintf("M%04d", $Offset + 1);    # Offset == Name
                 push @Loci, "$Name" if (scalar(@Loci) <= $Offset);
             } else {
                 $Name = $Loci[ $Offset ];
