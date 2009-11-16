@@ -701,6 +701,9 @@ sub loadCompanion {
 # Open and read the marker file to flesh-out the %LociAttributes hash. Named
 # alleles get mapped to numbers so we can use our allele patterns when bucketizing.
 #
+# BEWARE using unnamed alleles in multiple runs, as changes to allele order will
+# make results incompatible.
+#
 sub loadFrequencies {
     my $File = shift();
     die "$File is not a file." if (!-f $File);
