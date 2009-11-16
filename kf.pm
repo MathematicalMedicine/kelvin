@@ -731,8 +731,15 @@ sub loadFrequencies {
                 $LociAttributes{$Name}{Alleles}{$AlleleCount}{Frequency} = shift(@Tokens);
             }
         } elsif ($RecordType eq "A") {    # Named allele and frequency
-            $LociAttributes{$Name}{Alleles}{ $Tokens[0] }{Order} = ++$AlleleCount;
-            push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, $Tokens[0];
+	    push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, $Tokens[0];
+	    print "TOKEN IS [".$Tokens[0]."]\n";
+	    if ($Tokens[0] =~ /^\d$/) {
+		$LociAttributes{$Name}{Alleles}{ $Tokens[0] }{Order} = $Tokens[0];
+		$AlleleCount++;
+		@{ $LociAttributes{$Name}{Alleles}{OrderedList} } = sort @{ $LociAttributes{$Name}{Alleles}{OrderedList} };
+	    } else {
+		$LociAttributes{$Name}{Alleles}{ $Tokens[0] }{Order} = ++$AlleleCount;
+	    }
             $LociAttributes{$Name}{Alleles}{ $Tokens[0] }{Frequency} = $Tokens[1]
         } else {
             die "Unknown record type \"$RecordType\" at line $LineNo in marker file $File\n";
