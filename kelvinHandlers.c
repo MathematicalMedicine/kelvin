@@ -1,4 +1,7 @@
+#ifndef __POWERPC__
+// I shouldn't cue off of __POWERPC__, but it works in our environment and I don't have an alternative.
 #include <execinfo.h> // For stack dump on demand
+#endif
 #include <ctype.h> // For isalnum()
 #include "kelvin.h"
 #include "kelvinHandlers.h"
@@ -11,6 +14,7 @@ extern struct swStopwatch *overallSW;
 volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update requested via signal
 
 void dumpStack (void) {
+#ifndef __POWERPC__
   const size_t MAXSTACKDEPTH = 20;
   size_t stack_depth;
   void *stack_addrs[MAXSTACKDEPTH];
@@ -36,6 +40,7 @@ void dumpStack (void) {
   }
   fprintf (stderr, "\n");
   free(stack_strings); // malloc()ed by backtrace_symbols                                                             
+#endif
   fflush(stderr);
 }
 
