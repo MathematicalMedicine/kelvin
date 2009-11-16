@@ -533,12 +533,13 @@ sub loadPedigree {
                 last;
             }
             $AlC++;
+	    my $Offset = (($AlC & 1) ? $AlC+1 : $AlC) / 2 - 1;
             my $Name;
             if (!$HaveConfig) {
-                $Name = sprintf("M%04d", int(($AlC + 0.6) / 2 - 1) + 1);    # Offset == Name
-                push @Loci, "$Name" if (scalar(@Loci) <= int(($AlC + 0.6) / 2 - 1));
+                $Name = sprintf("M%04d", $Offset + 1);    # Offset == Name
+                push @Loci, "$Name" if (scalar(@Loci) <= $Offset);
             } else {
-                $Name = $Loci[ int(($AlC + 0.6) / 2 - 1) ];           # Integer division, thank you
+                $Name = $Loci[ $Offset ];           # Integer division, thank you
             }
             if ($Allele ne AttributeMissing) {
                 $GtC++;    # Keep track of how much genotypic information we have for this individual
