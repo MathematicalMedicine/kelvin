@@ -535,7 +535,7 @@ sub loadPedigree {
             $AlC++;
             my $Name;
             if (!$HaveConfig) {
-                $Name = sprintf("M%04d", int(($AlC + 0.6) / 2 - 1));    # Offset == Name
+                $Name = sprintf("M%04d", int(($AlC + 0.6) / 2 - 1) + 1);    # Offset == Name
                 push @Loci, "$Name" if (scalar(@Loci) <= int(($AlC + 0.6) / 2 - 1));
             } else {
                 $Name = $Loci[ int(($AlC + 0.6) / 2 - 1) ];           # Integer division, thank you
