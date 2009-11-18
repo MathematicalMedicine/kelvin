@@ -1,5 +1,4 @@
-#ifndef __POWERPC__
-// I shouldn't cue off of __POWERPC__, but it works in our environment and I don't have an alternative.
+#ifdef BACKTRACE
 #include <execinfo.h> // For stack dump on demand
 #endif
 #include <ctype.h> // For isalnum()
@@ -14,7 +13,7 @@ extern struct swStopwatch *overallSW;
 volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update requested via signal
 
 void dumpStack (void) {
-#ifndef __POWERPC__
+#ifdef BACKTRACE
   const size_t MAXSTACKDEPTH = 20;
   size_t stack_depth;
   void *stack_addrs[MAXSTACKDEPTH];

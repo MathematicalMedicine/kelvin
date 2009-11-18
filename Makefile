@@ -39,6 +39,9 @@ LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
 # For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
 
 CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
+ifneq (,$(wildcard /usr/include/execinfo.h))
+CFLAGS += -DBACKTRACE # Add backtrace where supported
+endif
 CFLAGS += -fopenmp # Uncomment for multi-threading if using GCC 4.2+. MUST USE GSL TOO.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
 #LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
