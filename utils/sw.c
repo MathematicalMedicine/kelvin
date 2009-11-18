@@ -317,10 +317,10 @@ swDump (struct swStopwatch *theStopwatch)
 {
   if (theStopwatch->swRunning) {
     swStop (theStopwatch);
-    swDumpOutput (theStopwatch, NULL);
+    swDumpOutput (theStopwatch, "");
     swStart (theStopwatch);
   } else {
-    swDumpOutput (theStopwatch, NULL);
+    swDumpOutput (theStopwatch, "");
   }
   return;
 }
