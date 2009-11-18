@@ -79,7 +79,7 @@ INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
 # Binary releases include kelvin_$(PLATFORM)
-all : kelvin seq_update/calc_updated_ppl kelvin_$(PLATFORM)
+all : kelvin seq_update/calc_updated_ppl # kelvin_$(PLATFORM)
 
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
