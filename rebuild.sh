@@ -2,15 +2,18 @@
 set -xe # Because it isn't enough for Darwin's cron for us to have it on the shebang
 
 case $HOSTNAME in
-    testbed*|ygg* )
+    testbed*|ygg*|RESW843507NQW2* )
         OPENMP=
-        WERROR=-Werror ;;
+        WERROR=-Werror
+	;;
     RESD7X* )
         OPENMP=
-        WERROR= ;;
+        WERROR=
+	;;
     * )
         OPENMP=-fopenmp
-        WERROR=-Werror ;;
+        WERROR=-Werror
+	;;
 esac
 
 make clean
