@@ -1489,15 +1489,9 @@ loop_parental_pair (int locus, int multiLocusIndex[2], void *dWeight[2])
 		if (modelOptions->polynomial == TRUE) {
 		  pConditional->tmpslot.
 		    tmpLikelihoodPolynomial =
-		    plusExp (2, 1.0,
-			     pConditional->tmpslot.
-			     tmpLikelihoodPolynomial, 1.0,
-			     timesExp (2,
-				       pElement->slot.
-				       likelihoodPolynomial,
-				       1,
-				       constantExp (pElement->
-						    count), 1, 1), 1);
+		    plusExp (2, 1.0, pConditional->tmpslot.tmpLikelihoodPolynomial, 1.0,
+			     timesExp (2, pElement->slot.likelihoodPolynomial, 1,
+				       constantExp (pElement->count), 1, 0), 1);
 		} else
 		  pConditional->tmpslot.tmpLikelihood +=
 		    pElement->slot.likelihood * pElement->count;
