@@ -1828,11 +1828,11 @@ recalculate_child_likelihood (int flipMask[2], void *childProduct)
 	  plusExp (2,
 		   1.0, childSumPoly,
 		   1.0, timesExp (3,
-				  xmissionMatrix[xmissionIndex[DAD]].slot.
-				  probPoly[1], 1,
-				  xmissionMatrix[xmissionIndex[MOM]].slot.
-				  probPoly[2], 1,
-				  pElement->fslot.factorPolynomial, 1, 0), 1);
+				  xmissionMatrix[xmissionIndex[DAD]].slot.probPoly[1], 1, 
+				  xmissionMatrix[xmissionIndex[MOM]].slot.probPoly[2], 1,
+				  pElement->fslot.factorPolynomial, 1,
+				  0),
+		   1);
       } else {
 	myChildSum += xmissionMatrix[xmissionIndex[DAD]].slot.prob[1] *
 	  xmissionMatrix[xmissionIndex[MOM]].slot.prob[2] *
@@ -1864,8 +1864,8 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
   int genoIndex;
   double sum;
 
-  Polynomial *newWeightPolynomial[2];
-  Polynomial *penetrancePolynomial[2];
+  Polynomial *newWeightPolynomial[2] = {NULL, NULL};
+  Polynomial *penetrancePolynomial[2] = {NULL, NULL};
   Polynomial *childProductPolynomial = NULL;
   Polynomial *sumPolynomial = NULL;
   ConditionalLikelihood *pConditional;
@@ -1887,9 +1887,11 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
   }
 
   for (i = DAD; i <= MOM; i++) {
-    if (modelOptions->polynomial == TRUE)
+    if (modelOptions->polynomial == TRUE) {
+      if (newWeightPolynomial[i] != NULL)
+	discardPoly (newWeightPolynomial[i]);
       newWeightPolynomial[i] = constant1Poly;
-    else
+    } else
       newWeight[i] = 1.0;
     pConditional = &pParent[i]->pLikelihood[multiLocusIndex[i]];
     if (pParent[i]->touchedFlag == TRUE) {
@@ -1955,9 +1957,11 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 	  pHaplo->ppParentalPair[traitLocus][genoIndex].
 	  pGenotype[i]->penslot.penetrance;
     } else {
-      if (modelOptions->polynomial == TRUE)
+      if (modelOptions->polynomial == TRUE) {
+	if (penetrancePolynomial[i] != NULL)
+	  discardPoly (penetrancePolynomial[i]);
 	penetrancePolynomial[i] = constant1Poly;
-      else
+      } else
 	penetrance[i] = 1.0;
 
     }
@@ -1968,8 +1972,11 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
     /* now work on the children conditional on this parental pair */
     childProduct = 1;
     multCount = 0;
-    if (modelOptions->polynomial == TRUE)
+    if (modelOptions->polynomial == TRUE) {
+      if (childProductPolynomial != NULL)
+	discardPoly (childProductPolynomial);
       childProductPolynomial = constant1Poly;
+    }
     for (child = 0; child < pNucFam->numChildren; child++) {
       pChild = pNucFam->ppChildrenList[child];
 
@@ -1981,7 +1988,7 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 	loop_child_multi_locus_genotype (0, 0, xmissionIndex);
 	childProductPolynomial =
 	  timesExp (2, childProductPolynomial, 1,
-		    (Polynomial *) sumPolynomial, 1, 0);
+		    (Polynomial *) sumPolynomial, 1, 1);
       } else {
 	sum = 0;
 	loop_child_multi_locus_genotype (0, 0, xmissionIndex);
@@ -2002,7 +2009,7 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 		newWeightPolynomial[proband], 1,
 		newWeightPolynomial[spouse], 1,
 		penetrancePolynomial[proband], 1,
-		penetrancePolynomial[spouse], 1, 1);
+		penetrancePolynomial[spouse], 1, 0);
 #if 0
     KLOG (LOGLIKELIHOOD, LOGDEBUG, "\t\t likelihood (%d) = %e\n",
 	  ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
@@ -2011,6 +2018,11 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 			 [multiLocusPhase[spouse]].slot.
 			 likelihoodPolynomial));
 #endif
+    discardPoly (childProductPolynomial);
+    //    discardPoly (newWeightPolynomial[proband]);
+    //    discardPoly (newWeightPolynomial[spouse]);
+    discardPoly (penetrancePolynomial[proband]);
+    discardPoly (penetrancePolynomial[spouse]);
   } else {
     /* save it */
     ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
@@ -2114,6 +2126,8 @@ get_haplotype_freq (int locus, int myParent, void *freqPtr)
     if((modelOptions->sexLinked!=0) && myParent==DAD) {
       
 	if (modelOptions->polynomial == TRUE) {
+	  if (freqPolynomial[i+1] != NULL)
+	    discardPoly (freqPolynomial[i+1]);
 	  freqPolynomial[i+1] = constant1Poly;
 	} else{
 	  freq[i+1] = 1.0;
