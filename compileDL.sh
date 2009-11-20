@@ -83,7 +83,7 @@ if test -e ${name}.linking ; then
     exit
 fi
 touch ${name}.linking
-gcc -g -shared -O${optLevel} -L${KELVIN_ROOT}/lib/ -L${LIBDIR} -lgsl -lgslcblas -o ${name}.so ${name}.o >& ${name}-link.out
+gcc -g -shared -O${optLevel} -L${KELVIN_ROOT}/lib/ -L${LIBDIR} -o ${name}.so ${name}.o -lgsl -lgslcblas >& ${name}-link.out
 if test ! -x ${name}.so ; then
     echo Link of root DL failed for some unknown reason
     mail -s "Link for root DL ${name} failed on ${HOSTNAME} for some unknown reason" whv001@ccri.net < /dev/null
@@ -94,7 +94,7 @@ rm ${name}.o
 for dl in ${name}_[0-9]*00.o ; do [ -f $dl ] || continue ;
     dl=${dl##*/}
     dl=${dl%00\.o}
-    gcc -g -O${optLevel} -L${KELVIN_ROOT}/lib/ -shared -L${LIBDIR} -lgsl -lgslcblas -o ${dl}00.so ${dl}[0-9][0-9].o >& ${dl}00-link.out
+    gcc -g -O${optLevel} -L${KELVIN_ROOT}/lib/ -shared -L${LIBDIR} -o ${dl}00.so ${dl}[0-9][0-9].o -lgsl -lgslcblas >& ${dl}00-link.out
     if test ! -x ${name}.so ; then
 	echo Link of branch DL failed for some unknown reason
 	mail -s "Link for branch DL ${dl} failed on ${HOSTNAME} for some unknown reason" whv001@ccri.net < /dev/null
