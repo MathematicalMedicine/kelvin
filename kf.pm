@@ -732,7 +732,6 @@ sub loadFrequencies {
             }
         } elsif ($RecordType eq "A") {    # Named allele and frequency
 	    push @{ $LociAttributes{$Name}{Alleles}{OrderedList} }, $Tokens[0];
-	    print "TOKEN IS [".$Tokens[0]."]\n";
 	    if ($Tokens[0] =~ /^\d$/) {
 		$LociAttributes{$Name}{Alleles}{ $Tokens[0] }{Order} = $Tokens[0];
 		$AlleleCount++;
