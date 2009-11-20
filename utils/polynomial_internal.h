@@ -128,9 +128,9 @@ typedef struct polynomial
 {
   unsigned char eType;		// polynomial type:  - 1 byte
   double value;			// the value of the polynomial - 8 bytes
-  unsigned int id;		// unique id - 4 bytes
+  unsigned int id;		// unique id (from nodeId) - 4 bytes
   int index;			// index in a polynomial list - 4 bytes
-  int key;			// key of the polynomial - 4 bytes
+  int key;			// hash key of the polynomial - 4 bytes
   unsigned short count;		// hold reference count - 2 bytes
   unsigned char valid;		// preservation flag(s) - 1 byte
 #ifdef SOURCEDIGRAPH
@@ -151,13 +151,14 @@ typedef struct polynomial
   unsigned long dependencyFlag; // Flags up to 64 variable dependencies
 #endif
   //  unsigned char oldEType;
-} Polynomial; // 4 + 4 + 4 + 2 + 1 + 1 (+ 1) + 8 + 8 = 32 (33->40) bytes
+} Polynomial; // 1 + 8 + 4 + 4 + 4 + 2 + 1 (+ 1) + 8 = 32 (33) bytes
 
 /* Bit masks for the polynomial valid flag. */
 #define VALID_EVAL_FLAG 1	// Used by tree traversal routines to limit to unique terms
 #define VALID_KEEP_FLAG 2	// Kept. Weaker than HOLD, only kept until a freeKeptPolys() call
 #define VALID_REF_FLAG 4	// Multiply-referenced
 #define VALID_TOP_FLAG 8        // Explicitly kept or held (top polynomial in call)
+#define VALID_NOTDISC_FLAG 16 // Not explicitly user-discarded (first-term discards)
 
 /* Track the full source code module name and line number of calls to create
    polynomials so that we only have to store an index (unsigned char) with 
@@ -239,5 +240,7 @@ void thrashingCheck ();
 #ifdef DEPENDENCYFLAGGING
 void dependencyFlagging (Polynomial * p);
 #endif
+void doFreePolys (unsigned short keepMask);
+inline void discardPoly (Polynomial *p);
 
 #endif

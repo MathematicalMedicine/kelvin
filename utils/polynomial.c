@@ -292,6 +292,7 @@ int constantHashHits = 0,       ///< constantExp return is a pre-existing polyno
 int sumReleaseableCount = 0,    ///< Indicates if flag was set to release 1st term in sum
     sumNotReleaseableCount,     ///< ...or not.
     sumReturnConstantCount,     ///< plusExp return is actually a constant
+    sumReturnSameConstantCount,     ///< plusExp return is actually the same constant as the 1st term
     sumReturn1TermCount,        ///< plusExp return is single-term polynomial
     sumHashHits,        ///< plusExp return is pre-existing polynomial
     sumNewCount,        ///< plusExp return is a new polynomial
@@ -303,6 +304,7 @@ int productReleaseableCount = 0,        ///< Indicates if flag was set to releas
     productNotReleaseableCount = 0,     ///< ...or not.
     productReturn0Count = 0,    ///< timesExp return is actually zero
     productReturnConstantCount = 0,     ///< timesExp return is actually a non-zero constant
+    productReturnSameConstantCount = 0,     ///< timesExp return is actually the same constant as the 1st term
     productReturn1stTermCount = 0,      ///< timesExp return is actually the first term itself
     productReturn1TermSumCount = 0,     ///< timesExp return is a sum built from the first term itself
     productHashHits = 0,        ///< timesExp return is a pre-existing polynomial
@@ -323,6 +325,7 @@ int polyListSortingCount = 0, evaluatePolyCount = 0, evaluateValueCount = 0, kee
 int containerExpansions = 0;    ///< Count of expansions of any term-collection container.
 unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount = 0, highSPLCount = 0;
 unsigned long initialHashSize = 0;      ///< Total initial size of hash table and collision lists
+int pendingExplicitDiscards = 0; ///< Number of first-term explicit discards awaiting removal
 /*@}*/
 
 /// Flag set whenever we calculate our total data storage estimate
@@ -932,13 +935,15 @@ Polynomial *constantExp (double con)
   // Give the polynomial a unique ID
   p->id = nodeId;
   constantCount++;
+  //  if (constantCount >= 100000)
+  //    printf ("Hit 100K\n");
   nodeId++;
 #ifdef POLYSTATISTICS
   if ((nodeId & 0x1FFFFF) == 0)
     polyStatistics ("At 2M poly multiple");
 #endif
   p->key = key;
-  p->valid = 0;
+  p->valid = VALID_NOTDISC_FLAG;
   p->count = 0;
 
   // Record the constant polynomial in the hash table of constant polynomials
@@ -1053,7 +1058,7 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   p->index = variableCount;
   p->id = nodeId;
   p->key = key;
-  p->valid = 0;
+  p->valid = VALID_NOTDISC_FLAG;
   p->count = 0;
 #ifdef USE_GMP
   mpf_init (p->mpfValue);
@@ -1417,6 +1422,49 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
 }
 
 
+/** Explicitly discard a poly. Clear the VALID_NOTDISC_FLAG of valid to 
+    indicate that the user explicitly discarded the polynomial. When we
+    accumulate enough to be worth the effort, go purge them out. */
+inline void discardPoly (Polynomial *p)
+{
+  unsigned short allFlags = VALID_EVAL_FLAG|VALID_KEEP_FLAG|VALID_REF_FLAG|VALID_TOP_FLAG|VALID_NOTDISC_FLAG;
+
+  p->valid &= ~VALID_NOTDISC_FLAG; // Explicitly discarded
+  if (p->id == polynomialLostNodeId)
+    fprintf (stderr, "discardPoly sees id %d with valid %d and count %d\n", p->id, p->valid, p->count);
+
+  //  fprintf (stderr, "Flagged polynomial %u as explicitly discarded, valid is %u, value is %g\n", p->id, p->valid, p->value);
+
+  if (++pendingExplicitDiscards >= 1000) {
+    /*
+    fprintf (stderr, "Freeing %d explicitly discarded polynomials\n", 
+	     pendingExplicitDiscards);
+    int i, j;
+    if (constantCount > 0) {
+      fprintf (stderr, "All %d constants:\n", constantCount);
+      for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
+	if (constantHash[i].num <= 0)
+	  continue;
+	for (j = 0; j < constantHash[i].num; j++) {
+	  fprintf (stderr, "(%d %d) id=%d index=%d key=%d count=%d valid=%d constant: ", i, j, constantList[constantHash[i].index[j]]->id, constantHash[i].index[j], constantHash[i].key[j], constantList[constantHash[i].index[j]]->count, constantList[constantHash[i].index[j]]->valid);
+	  expTermPrinting (stderr, constantList[constantHash[i].index[j]], 1);
+	  fprintf (stderr, "\n");
+	}
+      }
+      fprintf (stderr, "\n");
+    }
+    */
+    if (polynomialDebugLevel >= 5)
+      fprintf (stderr, "Free w/mask of all flags (%d) preserved...", allFlags);
+    doFreePolys (allFlags);
+    if (polynomialDebugLevel >= 5)
+      fprintf (stderr, "\n");
+    pendingExplicitDiscards = 0;
+    //    exit (EXIT_SUCCESS);
+  }
+  return;
+}
+
 /**
 
   This function generates a sum polynomial.  It accepts a group of <factor, poly> pairs.
@@ -1598,9 +1646,14 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   // Handle the possible simple outcomes of collecting terms...
   if (counterSum == 0) {
     // After we go through all the items in the sum, we get only a constant.
-    rp = constantExp (con);
+    if (p0->eType == T_CONSTANT && p0->value == con) {
+      sumReturnSameConstantCount++;
+      return polyReturnWrapper (p0); // No net change at all from first term. Just return it.
+    }
     sumReturnConstantCount++;
-    return polyReturnWrapper (rp);
+    rp = constantExp (con);
+    if (flag != 0 && (p0->valid & ~VALID_NOTDISC_FLAG) == 0)
+      discardPoly (p0);
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
     return polyReturnWrapper (rp);
@@ -1749,7 +1802,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
 #endif
   rp->e.s = sP;
   rp->key = key;
-  rp->valid = 0;
+  rp->valid = VALID_NOTDISC_FLAG;
   rp->count = 0;
 #ifdef USE_GMP
   mpf_init (rp->mpfValue);
@@ -2059,7 +2112,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         exit (EXIT_FAILURE);
         break;
       default:
-        fprintf (stderr, "In timesExp, unknown polynomial type %d, exiting!\n", p1->eType);
+        fprintf (stderr, "In timesExp, unknown polynomial id %u type %d, exiting!\n", p1->id, p1->eType);
         raise (SIGUSR1);
         exit (EXIT_FAILURE);
         break;
@@ -2109,11 +2162,18 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
   }
   if (counterProd == 0) {
     // The product has 0 items, the result is a constant polynomial
-    rp = constantExp (factor);
+    if (p0->eType == T_CONSTANT && p0->value == factor) {
+      productReturnSameConstantCount++;
+      return polyReturnWrapper (p0); // No net change at all from first term. Just return it.
+    }
     productReturnConstantCount++;
+    rp = constantExp (factor);
+    if (flag != 0 && (p0->valid & ~VALID_NOTDISC_FLAG) == 0)
+      discardPoly (p0);
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
     return polyReturnWrapper (rp);
+
   } else        // If the result polynomial has only one term, it is not a product polynomial
   if (counterProd == 1 && exponentProd[0] == 1) {
     if (factor == 1.0) {
@@ -2258,7 +2318,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     rp->index = productCount;
     rp->id = nodeId;
     rp->key = key;
-    rp->valid = 0;
+    rp->valid = VALID_NOTDISC_FLAG;
     rp->count = 0;
 #ifdef USE_GMP
   mpf_init (rp->mpfValue);
@@ -2479,7 +2539,7 @@ Polynomial *functionCallExp (int num, ...)
   rp->index = functionCallCount;
   rp->id = nodeId;
   rp->key = key;
-  rp->valid = 0;
+  rp->valid = VALID_NOTDISC_FLAG;
   rp->count = 0;
 #ifdef USE_GMP
   mpf_init (rp->mpfValue);
@@ -3594,9 +3654,9 @@ void polyDynamicStatistics (char *title)
   if (sumReleaseableCount == 0 && sumNotReleaseableCount == 0 && productReleaseableCount == 0 && productNotReleaseableCount == 0)
     return;
 
-  fprintf (stderr, "Sum polys: try release=%d or not=%d return constant=%d return 1-term=%d hash hits=%d\n", sumReleaseableCount, sumNotReleaseableCount, sumReturnConstantCount, sumReturn1TermCount, sumHashHits);
+  fprintf (stderr, "Sum polys: try release=%d or not=%d return const=%d (same=%d) return 1-term=%d hash hits=%d\n", sumReleaseableCount, sumNotReleaseableCount, sumReturnConstantCount, sumReturnSameConstantCount, sumReturn1TermCount, sumHashHits);
   fprintf (stderr, "...really new=%d new on sumList=%d replaced on sumList=%d freed=%d 1st-term freed=%d\n", sumNewCount, sumListNewCount, sumListReplacementCount, sumFreedCount, sum1stTermsFreedCount);
-  fprintf (stderr, "Product polys: try release=%d or not=%d return 0=%d return constant=%d return 1st term=%d\n", productReleaseableCount, productNotReleaseableCount, productReturn0Count, productReturnConstantCount, productReturn1stTermCount);
+  fprintf (stderr, "Product polys: try release=%d or not=%d return 0=%d return const=%d (same=%d) return 1st term=%d\n", productReleaseableCount, productNotReleaseableCount, productReturn0Count, productReturnConstantCount, productReturnSameConstantCount, productReturn1stTermCount);
   fprintf (stderr, "...actually a sum poly=%d hash hits=%d hash hit but sum=%d return normal (factor is 1)=%d\n", productReturn1TermSumCount, productHashHits, productHashHitIsSumCount, productReturnNormalCount);
   fprintf (stderr, "...factor not 1 now sum=%d new on productList=%d replaced on productList=%d\n", productNon1FactorIsSumCount, productListNewCount, productListReplacementCount);
   fprintf (stderr, "...freed=%d 1st-term freed=%d\n", productFreedCount, product1stTermsFreedCount);
@@ -4107,7 +4167,7 @@ void doFreePolys (unsigned short keepMask)
     **newProductList;
 
   if (polynomialDebugLevel >= 10)
-    fprintf (stderr, "Starting doFreePolys\n");
+    fprintf (stderr, "Starting doFreePolys with keepMask of %uh\n", keepMask);
   if (polynomialDebugLevel >= 70) {
     fprintf (stderr, "...with the following:\n");
     printAllPolynomials ();
@@ -4389,7 +4449,7 @@ void doFreePolys (unsigned short keepMask)
   }
   /* Reset building statistics. */
   constantHashHits = variableHashHits = functionHashHits = 0;
-  sumReleaseableCount = sumNotReleaseableCount = sumReturnConstantCount = sumReturn1TermCount = sumHashHits = sumNewCount = sumListNewCount = sumListReplacementCount = 0;
+  sumReleaseableCount = sumNotReleaseableCount = sumReturnConstantCount = sumReturnSameConstantCount = sumReturn1TermCount = sumHashHits = sumNewCount = sumListNewCount = sumListReplacementCount = 0;
   productReleaseableCount = productNotReleaseableCount = productReturn0Count =
       productReturnConstantCount = productReturn1stTermCount = productReturn1TermSumCount = productHashHits = productHashHitIsSumCount = productReturnNormalCount = productNon1FactorIsSumCount = productListNewCount = productListReplacementCount = 0;
   totalSPLLengths = totalSPLCalls = lowSPLCount = highSPLCount = 0;
@@ -4722,7 +4782,7 @@ Polynomial *restoreExternalPoly (char *functionName)
   rp->index = externalCount;
   rp->id = nodeId;
   rp->eType = T_EXTERNAL;
-  rp->valid = 0;
+  rp->valid = VALID_NOTDISC_FLAG;
   rp->count = 0;
   externalList[externalCount] = rp;
   externalCount++;

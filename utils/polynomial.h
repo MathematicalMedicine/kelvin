@@ -17,14 +17,15 @@
 extern int maxHashLength, constantHashHits, variableHashHits,
   functionHashHits;
 extern int sumReleaseableCount, sumNotReleaseableCount,
-  sumReturnConstantCount, sumReturn1TermCount, sumHashHits, sumNewCount,
-  sumListNewCount, sumListReplacementCount, sumFreedCount,
-  sum1stTermsFreedCount;
+  sumReturnConstantCount, sumReturnSameConstantCount, sumReturn1TermCount, 
+  sumHashHits, sumNewCount, sumListNewCount, sumListReplacementCount, 
+  sumFreedCount, sum1stTermsFreedCount;
 extern int productReleaseableCount, productNotReleaseableCount,
-  productReturn0Count, productReturnConstantCount, productReturn1stTermCount,
-  productReturn1TermSumCount, productHashHits, productHashHitIsSumCount,
-  productReturnNormalCount, productNon1FactorIsSumCount, productListNewCount,
-  productListReplacementCount, productFreedCount, product1stTermsFreedCount;
+  productReturn0Count, productReturnConstantCount, productReturnSameConstantCount,
+  productReturn1stTermCount, productReturn1TermSumCount, productHashHits, 
+  productHashHitIsSumCount, productReturnNormalCount, productNon1FactorIsSumCount, 
+  productListNewCount, productListReplacementCount, productFreedCount, 
+  product1stTermsFreedCount;
 extern int constantPLExpansions, variablePLExpansions, sumPCollectExpansions,
   sumPTermMergeExpansions, sumPListExpansions, productPCollectExpansions,
   productPTermMergeExpansions, productPListExpansions;
@@ -37,6 +38,8 @@ extern int polyListSortingCount, evaluatePolyCount, evaluateValueCount,
 extern int containerExpansions;
 extern unsigned long totalSPLLengths, totalSPLCalls, lowSPLCount, highSPLCount;
 extern unsigned long initialHashSize;
+extern int pendingExplicitDiscards;
+
 
 /* These are the types of polynomials */
 enum expressionType
@@ -169,3 +172,6 @@ void dumpSourceParenting ();
 void writePolyDigraph (Polynomial *);
 
 #endif
+
+// Explicitly discard a polynomial
+void discardPoly (Polynomial * p);
