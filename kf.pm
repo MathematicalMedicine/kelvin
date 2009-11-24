@@ -480,7 +480,7 @@ sub loadPedigree {
 
     while (<IN>) {
         $LineNo++;
-        print "Read $LineNo lines of $File\n" if (($LineNo % 1001) == 1000);
+        print "Read $LineNo lines of $File\n" if (($LineNo % 1000) == 0);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
@@ -678,7 +678,7 @@ sub loadCompanion {
     my @PedColUse = ();
     while (<IN>) {
         $LineNo++;
-        print "Read $LineNo lines of $File\n" if (($LineNo % 1001) == 1000);
+        print "Read $LineNo lines of $File\n" if (($LineNo % 1000) == 0);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         s/^\s*//g;       # Trim leading whitespace
@@ -713,7 +713,7 @@ sub loadFrequencies {
     my $AlleleCount = 0;
     while (<IN>) {
         $LineNo++;
-        print "Read $LineNo lines of $File\n" if (($LineNo % 1001) == 1000);
+        print "Read $LineNo lines of $File\n" if (($LineNo % 1000) == 0);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);  # Drop empty lines
         my @Tokens     = split /\s+/;
@@ -793,7 +793,7 @@ sub loadMap {
     my $LineNo = 0;
     while (<IN>) {
         $LineNo++;
-        print "Read $LineNo lines of $File\n" if (($LineNo % 1001) == 1000);
+        print "Read $LineNo lines of $File\n" if (($LineNo % 1000) == 0);
         s/\s*\#.*//g;    # Trim comments
         next if (/^$/);          # Drop empty lines
         last if (/^\s*chr/i);    # Reached the header for map data
