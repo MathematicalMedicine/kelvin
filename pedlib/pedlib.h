@@ -42,7 +42,7 @@ int pedigree_genotype_elimination (int locus, Pedigree * pPedigree);
 void pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList);
 int compute_pedigree_likelihood (Pedigree * pPedigree);
 void adjustQuantitativeTraits (PedigreeSet *pPedigreeSet);
-void getPedigreeTraitRange (PedigreeSet *pPedigreeSet, double *min, double *max);
+int checkQtTraitRanges (PedigreeSet *pPedigreeSet);
 void getPedigreeSampleStdev (PedigreeSet *pPedigreeSet, double *mean, double *stdev);
 void renumberLiabilityClasses (PedigreeSet *pPedigreeSet);
 

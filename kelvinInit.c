@@ -242,61 +242,14 @@ void kelvinInit (int argc, char *argv[])
   /* sort, uniquify and expand the trait model dimensions, subject to constraints */
   finishConfig (modelRange, modelType);
 
-  /* QT/CT ChiSq with dynamic sampling requires min and max Degrees Of Freedom,
-   * which are stored as penetrance values. If none have been provided in the
-   * config, sample the min and max trait values in the pedigree data. NOTE
-   * WELL this carries on the assumption of a single trait column in the pedigree. 
-   */
-  if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_CHI_SQUARE && modelOptions->integration && !modelRange->penetLimits) {
-    int va, vb;
-    double min, max;
-
-    MALCHOKE (modelRange->penetLimits, (vb = NPENET (modelRange->nalleles)) * sizeof (double *), void *);
-    for (va = 0; va < vb; va++)
-      MALCHOKE (modelRange->penetLimits[va], 2 * sizeof (double), void *);
-    getPedigreeTraitRange (&pedigreeSet, &min, &max);
-    if (min < 0)
-      logMsg (LOGDEFAULT, LOGFATAL, "Trait values must be no less than 0 to use as default minimum Chi-squared DegreesOfFreedom, please configure explicitly\n");
-    if (max > 30)
-      logMsg (LOGDEFAULT, LOGFATAL, "Trait values must be no more than 30 to use as default maximum Chi-squared DegreesOfFreedom, please configure explicitly\n");
-    for (va = 0; va < vb; va++) {
-      modelRange->penetLimits[va][0] = min;
-      modelRange->penetLimits[va][1] = max;
-    }
-    logMsg (LOGDEFAULT, LOGWARNING, "Setting DegreesOfFreedom for all phenotypes: min %.4f, max %.4f\n", min, max);
-  }
-
-  /* QT/CT with a Normal (it's really a T) distrib requires a mean and standard
-   * deviation. If none have been provided in the config, calculate a sample mean
-   * and std dev from the trait values in the pedigree data. Again, assumes a
-   * single trait column in the pedigree.
-   */
+  /* Calculate sample mean and sample standard deviation for QT/CT T distrib, if needed */
   if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_T && (modelType->mean == -DBL_MAX || modelType->sd == -DBL_MAX)) {
     double mean, stdev;
-
+    
     getPedigreeSampleStdev (&pedigreeSet, &mean, &stdev);
     modelType->mean = mean;
     modelType->sd = stdev;
     logMsg (LOGDEFAULT, LOGWARNING, "Sample Mean is %.4f, Standard Deviation is %.4f\n", mean, stdev);
-  }
-
-  /* CT with dynamica sampling requires a min and max threshold. If none
-   * were provided in the config, use the min and max trait values from
-   * the pedigree file, just like with ChiSq+DegOfFreedom, above.
-   */
-  if (modelType->trait == CT && modelOptions->integration && modelRange->ntthresh == 0) {
-    double min, max;
-
-    getPedigreeTraitRange (&pedigreeSet, &min, &max);
-    if (min < 0)
-      logMsg (LOGDEFAULT, LOGFATAL, "Trait values must be no less than 0 to use as default minimum QTT Threshold, please configure explicitly\n");
-    if (max > 30)
-      logMsg (LOGDEFAULT, LOGFATAL, "Trait values must be no more than 30 to use as default maximum QTT Threshold, please configure explicitly\n");
-    addTraitThreshold (modelRange, min);
-    addTraitThreshold (modelRange, max);
-    if (modelRange->nlclass > 1)
-      expandClassThreshold (modelRange);
-    logMsg (LOGDEFAULT, LOGWARNING, "Setting QTT Threshold: min %.4f, max %.4f\n", min, max);
   }
 
   /* read in case control file if provided */
@@ -320,7 +273,10 @@ void kelvinInit (int argc, char *argv[])
     pTrait->unknownTraitValue = modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN];
     pTrait->lessCutoffFlag = modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED];
     pTrait->moreCutoffFlag = modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED];
-    adjustQuantitativeTraits (&pedigreeSet);
+    if (modelType->distrib == QT_FUNCTION_T)
+      adjustQuantitativeTraits (&pedigreeSet);
+    if (checkQtTraitRanges (&pedigreeSet) == -1)
+      logMsg (LOGDEFAULT, LOGFATAL, "Can't run analysis with illegal trait data\n");
   }
 
   /* FIXME: shouldn't this bit come BEFORE the !markerAnalysis block, above? */

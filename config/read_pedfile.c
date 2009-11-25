@@ -46,6 +46,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <float.h>
 
 #include "../utils/utils.h" // General support
 #include "model_options.h" // For options that affect pedigree file interpretation
@@ -55,6 +56,7 @@
 
 extern ModelOptions *modelOptions;
 extern ModelRange *modelRange;
+extern ModelType *modelType;
 
 // Functions listed below should not be called outside this library:
 Pedigree *create_pedigree (PedigreeSet * pPedigreeSet, char *sPedLabel);
@@ -1580,13 +1582,12 @@ void adjustQuantitativeTraits (PedigreeSet *pPedigreeSet)
 }
 
 
-void getPedigreeTraitRange (PedigreeSet *pPedigreeSet, double *min , double *max)
+int checkQtTraitRanges (PedigreeSet *pPedigreeSet)
 {
+  double min=DBL_MAX, max=-DBL_MAX, maxOrig=-DBL_MAX;
   int va, vb;
   struct Person *person;
 
-  *min = 999999999.00;
-  *max = -999999999.00;
   for (va = 0; va < pPedigreeSet->numPedigree; va++)
     for (vb = 0 ; vb < pPedigreeSet->ppPedigreeSet[va]->numPerson; vb++) {
       person = pPedigreeSet->ppPedigreeSet[va]->ppPersonList[vb];
@@ -1597,12 +1598,25 @@ void getPedigreeTraitRange (PedigreeSet *pPedigreeSet, double *min , double *max
 	  person->ppOrigTraitValue[0][0] ==
 	  modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED])
 	continue;
-      if (*min > person->ppOrigTraitValue[0][0])
-	*min = person->ppOrigTraitValue[0][0];
-      if (*max < person->ppOrigTraitValue[0][0])
-	*max = person->ppOrigTraitValue[0][0];
+      if (maxOrig < person->ppOrigTraitValue[0][0])
+	maxOrig = person->ppOrigTraitValue[0][0];
+      if (min > person->ppTraitValue[0][0])
+	min = person->ppTraitValue[0][0];
+      if (max < person->ppTraitValue[0][0])
+	max = person->ppTraitValue[0][0];
+
+      if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_CHI_SQUARE &&
+	  person->ppOrigTraitValue[0][0] <= 0) {
+	logMsg (LOGDEFAULT, LOGERROR, "Family %s, inidividual %s: illegal trait value for Chi-Squared distribution\n", pPedigreeSet->ppPedigreeSet[va]->sPedigreeID, person->sID);
+	return (-1);
+      }
     }
-  return;
+  if (modelType->distrib == QT_FUNCTION_T && (min < -3 || max > 3))
+    modelRange->atypicalQtTrait = TRUE;
+  else if (modelType->distrib == QT_FUNCTION_CHI_SQUARE && maxOrig > 40)
+    modelRange->atypicalQtTrait = TRUE;
+
+  return (0);
 }
 
 

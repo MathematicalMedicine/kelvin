@@ -72,9 +72,16 @@ typedef struct {
     penetrance,
     mean,
     standardDev,
-    degOfFreedom,
-    degOfFreedomGeno;
+    degOfFreedom;
 } st_observed;
+
+/* Some trait parameters (Mean, StandardDev, DegreesOfFreedom) can be specified
+ * with or without a trait genotype. We need to keep track of which, if any, were
+ * specified with trait genotypes.
+ */
+
+#define PARM_BARE 1
+#define PARM_GENO 2
 
 /** @defgroup vettedGlobals Vetted globals that will stay globals
     @{
@@ -132,8 +139,8 @@ int set_mapFlag (char **toks, int numtoks, void *unused);
 int set_disequilibrium (char **toks, int numtoks, void *unused);
 int set_quantitative (char **toks, int numtoks, void *unused);
 int set_qt_mean (char **toks, int numtoks, void *unused);
-int set_qt_standarddev (char **toks, int numtoks, void *unused);
 int set_qt_degfreedom (char **toks, int numtoks, void *unused);
+int set_qt_standarddev (char **toks, int numtoks, void *unused);
 int set_qt_threshold (char **toks, int numtoks, void *unused);
 int set_qt_truncation (char **toks, int numtoks, void *unused);
 int set_affectionStatus (char **toks, int numtoks, void *unused);
@@ -180,8 +187,8 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{QT_STR, set_quantitative, NULL},
 				{QTT_STR, set_quantitative, NULL},
 				{MEAN_STR, set_qt_mean, NULL},
-				{STANDARDDEV_STR, set_qt_standarddev, NULL},
 				{DEGOFFREEDOM_STR, set_qt_degfreedom, NULL},
+				{STANDARDDEV_STR, set_qt_standarddev, NULL},
 				{THRESHOLD_STR, set_qt_threshold, NULL},
 				{"Truncate", set_qt_truncation, NULL},
 				{"PhenoCodes", set_affectionStatus, NULL},
@@ -260,6 +267,7 @@ void initializeDefaults ()
   staticModelRange.tlocRangeStart = -1;
   staticModelRange.tlocRangeIncr = -1;
   staticModelRange.tlmark = FALSE;
+  staticModelRange.atypicalQtTrait = FALSE;
 
   staticModelType.type = TP;
   staticModelType.trait = DT;
@@ -483,24 +491,23 @@ void validateConfig ()
   if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && staticModelOptions.mapFlag == SS) 
     fault ("SexSpecific is not supported with LD\n");
 
+  if (observed.mean && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
+    fault ("%s requires %s Normal or %s Normal\n", MEAN_STR, QT_STR, QTT_STR);
+  if (observed.standardDev && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
+    fault ("%s requires %s Normal or %s Normal\n", STANDARDDEV_STR, QT_STR, QTT_STR);
+  if (observed.degOfFreedom && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_CHI_SQUARE))
+    fault ("%s requires %s ChiSq or %s ChiSq\n", STANDARDDEV_STR, QT_STR, QTT_STR);
+  
   if (staticModelOptions.integration) {
     /* Dynamic sampling, so disallow all fixed model directives */
     if (observed.penetrance)
       fault ("%s requires FixedModels\n", PENETRANCE_STR);
-    if (observed.mean)
-      fault ("%s requires FixedModels\n", MEAN_STR);
     if (observed.standardDev)
       fault ("%s requires FixedModels\n", STANDARDDEV_STR);
-    if (observed.degOfFreedom) {
-      if (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_CHI_SQUARE)
-	fault ("%s requires %s ChiSq or %s ChiSq\n", DEGOFFREEDOM_STR, QT_STR, QTT_STR);
-      if (observed.degOfFreedomGeno) {
-	fault ("%s with genotypes requires FixedModels\n", DEGOFFREEDOM_STR);
-      } else if (checkDegOfFreedom (&staticModelRange, staticModelOptions.imprintingFlag) != 0) {
-	fault ("%s ChiSq requires exactly two %s values (min and max)\n",
-	       (staticModelType.trait == QT) ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
-      }
-    }
+    if (observed.mean & PARM_GENO)
+      fault ("%s with trait genotypes requires FixedModels\n", MEAN_STR);
+    if (observed.degOfFreedom & PARM_GENO)
+      fault ("%s with trait genotypes requires FixedModels\n", DEGOFFREEDOM_STR);
     if (observed.constraints)
       fault ("Constraint requires FixedModels\n");
     if (staticModelRange.thetacnt != NULL)
@@ -569,18 +576,23 @@ void validateConfig ()
   } else {
     if (observed.penetrance)
       fault ("%s is incompatible with %s\n", PENETRANCE_STR, staticModelType.trait == QT ? QT_STR : QTT_STR);
-    if (staticModelType.distrib == QT_FUNCTION_T && ! observed.mean) 
-      fault ("%s Normal requires %s\n", staticModelType.trait == QT ? QT_STR : QTT_STR, MEAN_STR);
-    if (staticModelType.distrib == QT_FUNCTION_T && ! observed.standardDev) 
-      fault ("%s Normal requires %s\n", staticModelType.trait == QT ? QT_STR : QTT_STR, STANDARDDEV_STR);
-    if (staticModelType.distrib == QT_FUNCTION_T && observed.degOfFreedom)
-      fault ("%s requires %s ChiSq or %s ChiSq\n", DEGOFFREEDOM_STR, QT_STR, QTT_STR);
-    if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE && observed.mean) 
-      fault ("%s requires %s Normal or %s Normal\n", MEAN_STR, QT_STR, QTT_STR);
-    if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE && observed.standardDev) 
-      fault ("%s requires %s Normal or %s Normal\n", STANDARDDEV_STR, QT_STR, QTT_STR);
-    if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE && ! observed.degOfFreedom)
-      fault ("%s ChiSq requires %s\n", staticModelType.trait == QT ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
+    if (staticModelType.distrib == QT_FUNCTION_T) {
+      if (! observed.mean) {
+	fault ("%s Normal requires %s\n", staticModelType.trait == QT ? QT_STR : QTT_STR, MEAN_STR);
+      } else if (! observed.mean & PARM_GENO) {
+      	fault ("FixedModels and %s Normal requires %s with trait genotypes\n", staticModelType.trait == QT ? QT_STR : QTT_STR, MEAN_STR);
+      }
+      if (! observed.standardDev) 
+	fault ("%s Normal requires %s\n", staticModelType.trait == QT ? QT_STR : QTT_STR, STANDARDDEV_STR);
+    }
+    if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE) {
+      if (! observed.degOfFreedom) {
+	fault ("%s ChiSq requires %s\n", staticModelType.trait == QT ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
+      } else if (! observed.degOfFreedom & PARM_GENO) {
+      	fault ("FixedModels and %s ChiSq requires %s with trait genotypes\n", staticModelType.trait == QT ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
+      }
+    }
+    
     if (staticModelType.trait == CT) {
       if (staticModelRange.ntthresh == 0)
 	fault ("%s requires %s\n", QTT_STR, THRESHOLD_STR);
@@ -597,19 +609,21 @@ void validateConfig ()
   
   if ((checkImprintingPenets (&staticModelRange, staticModelOptions.imprintingFlag) < 0)) {
     if (staticModelOptions.imprintingFlag) {
-      if (staticModelType.trait == DT)
+      if (staticModelType.trait == DT) {
 	fault ("Imprinting requires Penetrance values for the dD trait genotype\n");
-      if (staticModelType.trait == QT)
-	fault ("Imprinting requires Mean values for the dD trait genotype\n");
-      if (staticModelType.trait == CT)
+      } else if (staticModelType.distrib == QT_FUNCTION_T) {
+	fault ("Imprinting requires Mean values for the dD trait genotype\n"); 
+      } else { /* QT_FUNCTION_CHI_SQUARE */	
 	fault ("Imprinting requires DegreesOfFreedom values for the dD trait genotype\n");
+      }
     } else 
-      if (staticModelType.trait == DT)
+      if (staticModelType.trait == DT) {
 	fault ("Penetrance values for the dD trait genotype require Imprinting\n");
-      if (staticModelType.trait == QT)
+      } else if (staticModelType.distrib == QT_FUNCTION_T) {
 	fault ("Mean values for the dD trait genotype require Imprinting\n");
-      if (staticModelType.trait == CT)
+      } else { /* QT_FUNCTION_CHI_SQUARE */
 	fault ("DegreesOfFreedom values for the dD trait genotype require Imprinting\n");
+      }
   }
   if (observed.maxclass != 0 && staticModelRange.nlclass < observed.maxclass)
     fault ("A Constraint references a liability class %d that is not specified with LiabilityClass\n", observed.maxclass);
@@ -691,23 +705,52 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
 	addDPrime (&staticModelRange, (double) 0.0);
     }
   }
-  /* For 2-point and fixed models, make sure there's a Theta of 0.5 */
-  if (staticModelType.type == TP && staticModelOptions.integration != TRUE) {
-    for (i = 0; i < staticModelRange.thetacnt[SEXAV]; i++)
-      if (fabs (0.05 - staticModelRange.theta[SEXAV][i]) <= ERROR_MARGIN) break;
-    if (i == staticModelRange.thetacnt[SEXAV])
-      addTheta (&staticModelRange, THETA_AVG, 0.5);
-
-    /* If SexSpecific is on, copy the sex-average (male) thetas for females */
-    if (staticModelOptions.mapFlag == SS) {
-      for (i = 0; i < staticModelRange.thetacnt[SEXAV]; i++)
-	addTheta (&staticModelRange, THETA_FEMALE, staticModelRange.theta[SEXAV][i]);
+  if (staticModelOptions.integration == TRUE) {
+    if (staticModelType.distrib == QT_FUNCTION_T) {
+      if (! observed.mean) {
+	addPenetrance (&staticModelRange, 0, -3.0);
+	addPenetrance (&staticModelRange, 0, 3.0);
+      }
+      if (! observed.standardDev) {
+	addParameter (&staticModelRange, 0, 0.7);
+	addParameter (&staticModelRange, 0, 1.0);
+      }
+      if (staticModelType.trait == CT && staticModelRange.ntthresh == 0) {
+	addTraitThreshold (&staticModelRange, 0);
+	addTraitThreshold (&staticModelRange, 3);
+      }
     }
+    if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE) {
+      if (! observed.degOfFreedom) {
+	addPenetrance (&staticModelRange, 0, 0.05);
+	addPenetrance (&staticModelRange, 0, 30);
+      }
+      if (staticModelType.trait == CT && staticModelRange.ntthresh == 0) {
+	addTraitThreshold (&staticModelRange, 0.05);
+	addTraitThreshold (&staticModelRange, 30);
+      }
+    }
+    if (staticModelType.trait != DT) 
+      duplicatePenets (&staticModelRange, staticModelOptions.imprintingFlag);
+    
+  } else { /* no integration (fixed grid) */
+    /* For 2-point and fixed models, make sure there's a Theta of 0.5 */
+    if (staticModelType.type == TP) {
+      for (i = 0; i < staticModelRange.thetacnt[SEXAV]; i++)
+	if (fabs (0.05 - staticModelRange.theta[SEXAV][i]) <= ERROR_MARGIN) break;
+      if (i == staticModelRange.thetacnt[SEXAV])
+	addTheta (&staticModelRange, THETA_AVG, 0.5);
+      
+      /* If SexSpecific is on, copy the sex-average (male) thetas for females */
+      if (staticModelOptions.mapFlag == SS) {
+	for (i = 0; i < staticModelRange.thetacnt[SEXAV]; i++)
+	  addTheta (&staticModelRange, THETA_FEMALE, staticModelRange.theta[SEXAV][i]);
+      }
+    }
+    /* Sync param values for hetrozygous genotypes in non-imprinting runs */
+    if ((staticModelType.trait != DT) && (staticModelOptions.imprintingFlag != TRUE))
+      addConstraint (PARAMC, PEN_dD, 0, 1, EQ, PEN_Dd, 0, 1, FALSE);
   }
-
-  /* Sync param values for hetrozygous genotypes in non-imprinting runs */
-  if ((staticModelType.trait != DT) && (staticModelOptions.imprintingFlag != TRUE))
-    addConstraint (PARAMC, PEN_dD, 0, 1, EQ, PEN_Dd, 0, 1, FALSE);
 
   /* Copy our statically-allocated structures over to their global page-allocated
    * counterparts so we can protect them from monkeying.
@@ -941,7 +984,7 @@ int set_penetrance (char **toks, int numtoks, void *unused)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
     addPenetrance (&staticModelRange, geno-PEN_DD, vals[va]);
-  observed.penetrance = 1;
+  observed.penetrance |= PARM_BARE;
   free (vals);
   return (0);
 }
@@ -1168,6 +1211,10 @@ int set_quantitative (char **toks, int numtoks, void *unused)
 }
 
 
+/* qt_set_mean: two forms are acceptable: no trait genotype and exactly
+ * two values (the form for 'advanced' users under dynamic sampling),
+ * or a trait genotype and at least one value (the form for fixed models).
+ */
 int set_qt_mean (char **toks, int numtoks, void *unused)
 {
   int numvals, va=0, geno;
@@ -1175,13 +1222,51 @@ int set_qt_mean (char **toks, int numtoks, void *unused)
 
   if (numtoks < 3)
     bail ("missing argument to directive '%s'\n", toks[0]);
-  if ((geno = lookup_modelparam (toks[1])) == -1)
-    bail ("illegal model parameter argument to directive '%s'\n", toks[0]);
-  if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
-    bail ("illegal argument to directive '%s'\n", toks[0]);
-  for (va = 0; va < numvals; va++)
-    addPenetrance (&staticModelRange, geno-PEN_DD, vals[va]);
-  observed.mean = 1;
+  if ((geno = lookup_modelparam (toks[1])) == -1) {
+    if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) == 0)
+      bail ("illegal model parameter argument to directive '%s'\n", toks[0]);
+    if (numvals != 2)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    addPenetrance (&staticModelRange, 0, vals[0]);
+    addPenetrance (&staticModelRange, 0, vals[1]);
+    observed.mean |= PARM_BARE;
+
+  } else {
+    if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    for (va = 0; va < numvals; va++)
+      addPenetrance (&staticModelRange, geno-PEN_DD, vals[va]);
+    observed.mean |= PARM_GENO;
+  }
+  free (vals);
+  return (0);
+}
+
+
+/* Basically the same as set_qt_mean, above. */
+int set_qt_degfreedom (char **toks, int numtoks, void *unused)
+{
+  int numvals, va=0, geno;
+  double *vals;
+
+  if (numtoks < 3)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if ((geno = lookup_modelparam (toks[1])) == -1) {
+    if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) == 0)
+      bail ("illegal model parameter argument to directive '%s'\n", toks[0]);
+    if (numvals != 2)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    addPenetrance (&staticModelRange, 0, vals[0]);
+    addPenetrance (&staticModelRange, 0, vals[1]);
+    observed.degOfFreedom |= PARM_BARE;
+
+  } else {
+    if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    for (va = 0; va < numvals; va++)
+      addPenetrance (&staticModelRange, geno-PEN_DD, vals[va]);
+    observed.degOfFreedom |= PARM_GENO;
+  }
   free (vals);
   return (0);
 }
@@ -1198,39 +1283,7 @@ int set_qt_standarddev (char **toks, int numtoks, void *unused)
     bail ("illegal argument to directive '%s'\n", toks[0]);
   for (va = 0; va < numvals; va++)
     addParameter (&staticModelRange, 0, vals[va]);
-  observed.standardDev = 1;
-  free (vals);
-  return (0);
-}
-
-
-int set_qt_degfreedom (char **toks, int numtoks, void *unused)
-{
-  int numvals, va=0, geno;
-  double *vals;
-
-  if (numtoks < 3)
-    bail ("missing argument to directive '%s'\n", toks[0]);
-  if ((geno = lookup_modelparam (toks[1])) == -1) {
-    /* If the first arg isn't a genotype (DD, Dd, dD, dd), we'll still accept 
-     * exactly two values, since a single min and max will suffice for all 
-     * genotypes under dynamic sampling.
-     */
-    if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) == 0)
-      bail ("illegal model parameter argument to directive '%s'\n", toks[0]);
-    if (numvals != 2)
-      bail ("illegal argument to directive '%s'\n", toks[0]);
-    addPenetrance (&staticModelRange, 0, vals[0]);
-    addPenetrance (&staticModelRange, 0, vals[1]);
-
-  } else {
-    if ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0)
-      bail ("illegal argument to directive '%s'\n", toks[0]);
-    for (va = 0; va < numvals; va++)
-      addPenetrance (&staticModelRange, geno-PEN_DD, vals[va]);
-    observed.degOfFreedomGeno = 1;
-  }
-  observed.degOfFreedom = 1;
+  observed.standardDev |= PARM_BARE;
   free (vals);
   return (0);
 }

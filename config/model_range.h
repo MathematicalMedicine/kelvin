@@ -59,6 +59,7 @@ typedef struct ModelRange
   struct lambdaCell *lambdas;	/* Cached arrays of lambdas for disequilibrium. */
   int nlambdas;			/* Number of cached arrays. */
   int maxnlambdas;		/* Maximum number of cached arrays. */
+  int atypicalQtTrait;          /* QT Trait is (or not) outside typical range */
 } ModelRange;
 
 
@@ -141,7 +142,7 @@ void addConstraint (int type, int a1, int c1, int p1, int op,
 void addParameter (ModelRange * range, int dim, double val);
 void addTraitThreshold (ModelRange * range, double val);
 int checkImprintingPenets (ModelRange *range, int imprinting);
-int checkDegOfFreedom (ModelRange *range, int imprinting);
+void duplicatePenets (ModelRange *range, int imprinting);
 int checkThetas (ModelRange * range, int i);
 int checkPenets (ModelRange * range, int i);
 int checkClassPenets (ModelRange * range, int i);

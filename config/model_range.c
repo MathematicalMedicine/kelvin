@@ -465,22 +465,14 @@ int checkImprintingPenets (ModelRange *range, int imprinting)
 }
 
 
-/* Following on the blockbuster success of checkImprintingPenets(), here
- * we validate that there are exactly two DegreesOfFreedom (stored in
- * penetrance data structures) for the DD trait genotype, or none at all.
- * QT/QTT ChiSq analyses under dynamic sampling are allowed to specify
- * min and max DegreeOfFreedom values that applies to all trait genotypes;
- * those are stored under the DD genotype initially. We'll copy them to
- * Dd and dd (and dD if imprinting is turned on).
+/* Under dynamic sampling and QT/CT, there will be one min/max pair of
+ * "penetrance" values (mean or degrees of freedom), either specified by
+ * the user or filled in as defaults. These are stored as the penetrance
+ * for the DD trait genotype. Those values need to be copied to all the
+ * other trait genotypes.
  */
-int checkDegOfFreedom (ModelRange *range, int imprinting)
+void duplicatePenets (ModelRange *range, int imprinting)
 {
-  if (penetcnt == NULL)
-    return (0);
-  if (penetcnt[PEN_DD-PEN_DD] != 2 || penetcnt[PEN_Dd-PEN_DD] != 0 ||
-      penetcnt[PEN_dD-PEN_DD] != 0 || penetcnt[PEN_dd-PEN_DD] != 0)
-    return (-1);
-
   addPenetrance (range, PEN_Dd-PEN_DD, range->penet[0][PEN_DD-PEN_DD][0]);
   addPenetrance (range, PEN_Dd-PEN_DD, range->penet[0][PEN_DD-PEN_DD][1]);
   if (imprinting) {
@@ -489,7 +481,7 @@ int checkDegOfFreedom (ModelRange *range, int imprinting)
   }
   addPenetrance (range, PEN_dd-PEN_DD, range->penet[0][PEN_DD-PEN_DD][0]);
   addPenetrance (range, PEN_dd-PEN_DD, range->penet[0][PEN_DD-PEN_DD][1]);
-  return (0);
+  return;
 }
 
 
