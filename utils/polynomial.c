@@ -899,7 +899,15 @@ Polynomial *constantExp (double con)
         // See if the two constants are the same
         if (tempI2 == tempI1 && (int) (tempD2 * 100000000) == (int) (tempD1 * 100000000)) {
           // If the two constants are the same, return the constant in the constant list
-          constantList[cIndex]->valid |= VALID_REF_FLAG;
+	  // Only set one or the other of VALID_REF_FLAG and VALID_NOTDISC_FLAG
+	  if (constantList[cIndex]->valid & VALID_NOTDISC_FLAG)
+	    // Not a pending discard, so now it's referenced
+	    constantList[cIndex]->valid |= VALID_REF_FLAG;
+	  else {
+	    // Pending discard is recycled, so not pending anymore (and not referenced!)
+	    constantList[cIndex]->valid |= VALID_NOTDISC_FLAG;
+	    pendingExplicitDiscards--;
+	  }
           constantHashHits++;
           return polyReturnWrapper (constantList[cIndex]);
         }
@@ -1429,16 +1437,32 @@ inline void discardPoly (Polynomial *p)
 {
   unsigned short allFlags = VALID_EVAL_FLAG|VALID_KEEP_FLAG|VALID_REF_FLAG|VALID_TOP_FLAG|VALID_NOTDISC_FLAG;
 
+  if (p->eType == T_CONSTANT && (p->value == 1 || p->value == 0)) {
+    //    fprintf (stderr, "Not discarding a 1 or 0 constant\n");
+    return;
+  }
+
+  if ((p->valid & ~VALID_NOTDISC_FLAG) != 0) {
+    fprintf (stderr, "Can't discard already flagged poly!\n");
+  }
+
   p->valid &= ~VALID_NOTDISC_FLAG; // Explicitly discarded
   if (p->id == polynomialLostNodeId)
     fprintf (stderr, "discardPoly sees id %d with valid %d and count %d\n", p->id, p->valid, p->count);
 
   //  fprintf (stderr, "Flagged polynomial %u as explicitly discarded, valid is %u, value is %g\n", p->id, p->valid, p->value);
 
+  /*
   if (++pendingExplicitDiscards >= 1000) {
-    /*
+    printAllPolynomials ();
+    exit(EXIT_FAILURE);
+  }
+  */
+  if (++pendingExplicitDiscards >= 100000) {
+
     fprintf (stderr, "Freeing %d explicitly discarded polynomials\n", 
 	     pendingExplicitDiscards);
+    /*
     int i, j;
     if (constantCount > 0) {
       fprintf (stderr, "All %d constants:\n", constantCount);
@@ -1716,6 +1740,8 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
                 fprintf (stderr, "\n");
               }
             }
+	    if (flag != 0 && (p0->valid & ~VALID_NOTDISC_FLAG) == 0)
+	      discardPoly (p0);
             return polyReturnWrapper (sumList[sIndex]);
           }
         }
@@ -2132,6 +2158,8 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     // The product is zero, a zero polynomial is returned
     rp = constantExp (0.0);
     productReturn0Count++;
+    if (flag != 0 && (p0->valid & ~VALID_NOTDISC_FLAG) == 0)
+      discardPoly (p0);
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant zero\n");
     return polyReturnWrapper (rp);
@@ -2185,7 +2213,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       return polyReturnWrapper (rp);
     } else {
       // If the factor is not 1, then the result polynomial is a sum polynomial
-      rp = plusExp (fileName, lineNo, 1, factor, pProd[0], 0);
+      rp = plusExp (fileName, lineNo, 1, factor, pProd[0], flag);
       if (polynomialDebugLevel >= 60)
         fprintf (stderr, "Returning via plusExp\n");
       productReturn1TermSumCount++;
@@ -2213,7 +2241,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
                   || exponentProd[k] != productList[pIndex]->e.p->exponent[k])
                 break;
             if (k >= counterProd) {
-              //If the polynomials are the same compare the exponents
+              // If the polynomials are the same compare the exponents
               if (factor == 1.0) {
                 productList[pIndex]->valid |= VALID_REF_FLAG;
                 productHashHits++;
@@ -2224,6 +2252,8 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
                     fprintf (stderr, "\n");
                   }
                 }
+		if (flag != 0 && (p0->valid & ~VALID_NOTDISC_FLAG) == 0)
+		  discardPoly (p0);
                 return polyReturnWrapper (productList[pIndex]);
               } else {
                 /* This product polynomial already exists so we don't need to construct a
@@ -2233,7 +2263,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
                 productList[pIndex]->valid |= VALID_REF_FLAG;
                 if (polynomialDebugLevel >= 60)
                   fprintf (stderr, "Returning existing product via plusExp\n");
-                return plusExp (fileName, lineNo, 1, factor, polyReturnWrapper(productList[pIndex]), 0);
+                return plusExp (fileName, lineNo, 1, factor, polyReturnWrapper(productList[pIndex]), flag);
               }
             }
           }
@@ -2412,7 +2442,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       productNon1FactorIsSumCount++;
       if (polynomialDebugLevel >= 60)
         fprintf (stderr, "Returning new product via plusExp\n");
-      return (plusExp (fileName, lineNo, 1, factor, polyReturnWrapper(rp), 0));
+      return (plusExp (fileName, lineNo, 1, factor, polyReturnWrapper(rp), 0 /* Already handled flag */));
     }
   }
 };
@@ -4166,7 +4196,7 @@ void doFreePolys (unsigned short keepMask)
     **newSumList,
     **newProductList;
 
-  if (polynomialDebugLevel >= 10)
+  if (polynomialDebugLevel >= 5)
     fprintf (stderr, "Starting doFreePolys with keepMask of %uh\n", keepMask);
   if (polynomialDebugLevel >= 70) {
     fprintf (stderr, "...with the following:\n");
@@ -4454,8 +4484,8 @@ void doFreePolys (unsigned short keepMask)
       productReturnConstantCount = productReturn1stTermCount = productReturn1TermSumCount = productHashHits = productHashHitIsSumCount = productReturnNormalCount = productNon1FactorIsSumCount = productListNewCount = productListReplacementCount = 0;
   totalSPLLengths = totalSPLCalls = lowSPLCount = highSPLCount = 0;
 
-  if (polynomialDebugLevel >= 10)
-    fprintf (stderr, "Reduced list of polynomials (and cleared hits)\n");
+  if (polynomialDebugLevel >= 5)
+    fprintf (stderr, "\n");
   if (polynomialDebugLevel >= 70) {
     fprintf (stderr, "...to the following:\n");
     printAllPolynomials ();
