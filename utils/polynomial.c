@@ -199,6 +199,7 @@
 #include "polynomial_internal.h"
 #include "polynomial.h"
 
+#undef constantExp
 #undef plusExp
 #undef timesExp
 
@@ -865,7 +866,7 @@ inline int keyConstantPolynomial (double tempD1, int tempI1)
    the existing constant polynomial is returned.
 
 */
-Polynomial *constantExp (double con)
+Polynomial *constantExp (char *fileName, int lineNo, double con)
 {
   int i;
   Polynomial *p;        // Newly built constant polynomial
@@ -875,6 +876,10 @@ Polynomial *constantExp (double con)
                                  * and location of the newly-built polynomial in the bucket */
   int tempI1 = -1, tempI2 = -1; // Normalized integer component
   double tempD1, tempD2;        // Normalized fractional component
+
+#ifdef SOURCEDIGRAPH
+  memset (originalChildren, 0, sizeof (originalChildren));
+#endif
 
   // Compute a key for the constant
   tempD1 = frexp (con, &tempI1);
@@ -953,6 +958,9 @@ Polynomial *constantExp (double con)
   p->key = key;
   p->valid = VALID_NOTDISC_FLAG;
   p->count = 0;
+#ifdef SOURCEDIGRAPH
+  p->source = findOrAddSource (fileName, lineNo, T_CONSTANT);
+#endif
 
   // Record the constant polynomial in the hash table of constant polynomials
   insertHashTable (&constantHash[hIndex], location, key, constantCount - 1);
@@ -1437,8 +1445,8 @@ inline void discardPoly (Polynomial *p)
 {
   unsigned short allFlags = VALID_EVAL_FLAG|VALID_KEEP_FLAG|VALID_REF_FLAG|VALID_TOP_FLAG|VALID_NOTDISC_FLAG;
 
-  if (p->eType == T_CONSTANT && (p->value == 1 || p->value == 0)) {
-    //    fprintf (stderr, "Not discarding a 1 or 0 constant\n");
+  if (p->eType == T_CONSTANT && (p->value == 1 || p->value == 0 || p->value == 0.5)) {
+    //    fprintf (stderr, "Not discarding a 1, 0 or 0.5 constant\n");
     return;
   }
 
@@ -1453,11 +1461,14 @@ inline void discardPoly (Polynomial *p)
   //  fprintf (stderr, "Flagged polynomial %u as explicitly discarded, valid is %u, value is %g\n", p->id, p->valid, p->value);
 
   /*
+#ifdef SOURCEDIGRAPH
   if (++pendingExplicitDiscards >= 1000) {
-    printAllPolynomials ();
+    dumpSourceParenting ();
     exit(EXIT_FAILURE);
   }
+#endif
   */
+
   if (++pendingExplicitDiscards >= 100000) {
 
     fprintf (stderr, "Freeing %d explicitly discarded polynomials\n", 
@@ -1675,9 +1686,9 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       return polyReturnWrapper (p0); // No net change at all from first term. Just return it.
     }
     sumReturnConstantCount++;
-    rp = constantExp (con);
     if (flag != 0 && (p0->valid & ~VALID_NOTDISC_FLAG) == 0)
       discardPoly (p0);
+    rp = constantExp (__FILE__, __LINE__, con);
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
     return polyReturnWrapper (rp);
@@ -1694,7 +1705,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   } else {
     // We've got more than one term, so we're going to go ahead and create it.
     if (con != 0.0) {
-      p1 = constantExp (con);
+      p1 = constantExp (__FILE__, __LINE__, con);
       factorSum[counterSum] = 1.0;
       pSum[counterSum] = p1;
       counterSum++;
@@ -2156,10 +2167,10 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
 
   if (isZero) {
     // The product is zero, a zero polynomial is returned
-    rp = constantExp (0.0);
     productReturn0Count++;
     if (flag != 0 && (p0->valid & ~VALID_NOTDISC_FLAG) == 0)
       discardPoly (p0);
+    rp = constantExp (__FILE__, __LINE__, 0.0);
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant zero\n");
     return polyReturnWrapper (rp);
@@ -2195,9 +2206,9 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       return polyReturnWrapper (p0); // No net change at all from first term. Just return it.
     }
     productReturnConstantCount++;
-    rp = constantExp (factor);
     if (flag != 0 && (p0->valid & ~VALID_NOTDISC_FLAG) == 0)
       discardPoly (p0);
+    rp = constantExp (__FILE__, __LINE__, factor);
     if (polynomialDebugLevel >= 60)
       fprintf (stderr, "Returning a constant %f\n", rp->value);
     return polyReturnWrapper (rp);

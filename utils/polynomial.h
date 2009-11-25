@@ -88,7 +88,9 @@ typedef struct polyList
 void polynomialInitialization (int polynomialScale);
 
 // Constructor for a constant polynomial
-Polynomial *constantExp (double con);
+Polynomial *constantExp (char *fileName, int lineNo, double con);
+
+#define constantExp(con) constantExp(__FILE__, __LINE__, con)
 
 // Constructor for a variable polynomial
 Polynomial *variableExp (double *vD, int *vI, char vType,

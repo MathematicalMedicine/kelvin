@@ -94,7 +94,21 @@ int newChromosome[2];
 int numLocus;
 NuclearFamily *pNucFam;
 
-/* 0 - don't keep result, 1 - keep result, 2 - use result */
+/**
+  Genotypes for parental pairs are said to be "related" when they are
+  identical except for a phase change. When this is the case, the same
+  likelihood calculation can be used for them all, and a trick is used to
+  identify the different xmission matrix entries that need to be
+  referenced to account for the phase difference.
+
+  The calcFlag is used to keep track of whether we are reusing old
+  calculation results from a related parental pair genotype (calcFlag = 2),
+  producing  results we need to keep for reuse on related parental pair 
+  genotypes (calcFlag = 1), or producing one-time only results that don't 
+  need to be kept because there are no related parental pair genotypes
+  (calcFlag = 0).
+
+*/
 int calcFlag;
 
 /* the following will facilitate parenatl pattern flip */
@@ -1849,9 +1863,39 @@ recalculate_child_likelihood (int flipMask[2], void *childProduct)
   }
 }
 
+/**
+   Basic likelihood calculation for a nuclear family conditional on one parental pair.
+
+
+   Globals Referenced:
+
+   - modelOptions
+     - .polynomial
+   - calcFlag
+
+   - pParent
+
+   Globals Changed:
+
+   - childSum
+
+   - ppairMatrix, Output, indexed by phases of proband and spouse.
+     Changed members:
+     - .likelihoodIndex gets multiLocusIndex of the proband.
+     - .count gets set to 1.
+     In polynomial mode, changed members:
+     - .slot.likelihoodPolynomial gets polynomial product of childPolynomial and weights and penetrances of parents.
+     In non-polynomial mode, changed members:
+     - .slot.likelihood gets product of childProduct and weights and penetrances of parents.
+
+*/
+
 int
-calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
-		      void *dWeight[2], void *childProductPtr)
+calculate_likelihood (int multiLocusIndex[2], ///< Input, index into pParent[i]->pLikelihood
+		      int multiLocusPhase[2], ///< Input, proband and spouse phases used as index into ppairMatrix
+		      void *dWeight[2], 
+		      void *childProductPtr
+)
 {
   int i;
   int proband;
@@ -1878,7 +1922,7 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 
   if (modelOptions->polynomial == TRUE) {
     childSum = &sumPolynomial;
-    if (calcFlag == 2)
+    if (calcFlag == 2) // If we're actually using the result
       childProductPolynomial = *(Polynomial **) childProductPtr;
   } else {
     childSum = &sum;
@@ -1887,11 +1931,9 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
   }
 
   for (i = DAD; i <= MOM; i++) {
-    if (modelOptions->polynomial == TRUE) {
-      if (newWeightPolynomial[i] != NULL)
-	discardPoly (newWeightPolynomial[i]);
-      newWeightPolynomial[i] = constant1Poly;
-    } else
+    if (modelOptions->polynomial == TRUE)
+      newWeightPolynomial[i] = constant1Poly; // Non-destructive assignment.
+    else
       newWeight[i] = 1.0;
     pConditional = &pParent[i]->pLikelihood[multiLocusIndex[i]];
     if (pParent[i]->touchedFlag == TRUE) {
@@ -1901,8 +1943,7 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 	  newWeightPolynomial[i] =
 	    timesExp (2,
 		      pConditional->lkslot.likelihoodPolynomial, 1,
-		      pConditional->wtslot.weightPolynomial, 1, 0);
-	//Dec 24
+		      pConditional->wtslot.weightPolynomial, 1, 1 /* Resetting, so freeing */);
 	else
 	  newWeight[i] =
 	    pConditional->lkslot.likelihood * pConditional->wtslot.weight;
@@ -1919,7 +1960,7 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 	if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM) {
 
 	  if (modelOptions->polynomial == TRUE)
-	    newWeightPolynomial[i] = (Polynomial *) dWeight[i];
+	    newWeightPolynomial[i] = (Polynomial *) dWeight[i]; // Never overwritten unless constant1Poly
 	  else
 	    newWeight[i] = *((double *) dWeight + i);
 	} else if (pParent[i]->loopBreaker == 0) {	/* founder under LD */
@@ -1934,7 +1975,7 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
     if (pParent[i]->touchedFlag != TRUE && pParent[i] == pProband) {
       if (modelOptions->polynomial == TRUE) {
 	pConditional->wtslot.weightPolynomial = newWeightPolynomial[i];
-	newWeightPolynomial[i] = constant1Poly;
+	newWeightPolynomial[i] = constant1Poly; // Assigning, but stored first.
       } else {
 	pConditional->wtslot.weight = newWeight[i];
 	newWeight[i] = 1.0;
@@ -1957,11 +1998,9 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 	  pHaplo->ppParentalPair[traitLocus][genoIndex].
 	  pGenotype[i]->penslot.penetrance;
     } else {
-      if (modelOptions->polynomial == TRUE) {
-	if (penetrancePolynomial[i] != NULL)
-	  discardPoly (penetrancePolynomial[i]);
-	penetrancePolynomial[i] = constant1Poly;
-      } else
+      if (modelOptions->polynomial == TRUE)
+	penetrancePolynomial[i] = constant1Poly; // Non-destructive assignment
+      else
 	penetrance[i] = 1.0;
 
     }
@@ -1972,11 +2011,8 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
     /* now work on the children conditional on this parental pair */
     childProduct = 1;
     multCount = 0;
-    if (modelOptions->polynomial == TRUE) {
-      if (childProductPolynomial != NULL)
-	discardPoly (childProductPolynomial);
-      childProductPolynomial = constant1Poly;
-    }
+    if (modelOptions->polynomial == TRUE)
+      childProductPolynomial = constant1Poly; // Non-destructive assignment
     for (child = 0; child < pNucFam->numChildren; child++) {
       pChild = pNucFam->ppChildrenList[child];
 
@@ -2009,7 +2045,7 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 		newWeightPolynomial[proband], 1,
 		newWeightPolynomial[spouse], 1,
 		penetrancePolynomial[proband], 1,
-		penetrancePolynomial[spouse], 1, 0);
+		penetrancePolynomial[spouse], 1, 0 /* End of call, discarding */);
 #if 0
     KLOG (LOGLIKELIHOOD, LOGDEBUG, "\t\t likelihood (%d) = %e\n",
 	  ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
@@ -2018,11 +2054,10 @@ calculate_likelihood (int multiLocusIndex[2], int multiLocusPhase[2],
 			 [multiLocusPhase[spouse]].slot.
 			 likelihoodPolynomial));
 #endif
-    discardPoly (childProductPolynomial);
-    //    discardPoly (newWeightPolynomial[proband]);
-    //    discardPoly (newWeightPolynomial[spouse]);
-    discardPoly (penetrancePolynomial[proband]);
-    discardPoly (penetrancePolynomial[spouse]);
+    //    discardPoly (newWeightPolynomial[proband]); // This blows-up
+    //    discardPoly (newWeightPolynomial[spouse]); // This blows-up
+    //    discardPoly (penetrancePolynomial[proband]);
+    //    discardPoly (penetrancePolynomial[spouse]);
   } else {
     /* save it */
     ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].
@@ -2307,9 +2342,7 @@ timesExp (2, newProbPolynomial, 1, pChild->pLikelihood[newMultiLocusIndex].lkslo
 	     * child
 	     */
 	    *(Polynomial **) childSum = plusExp (2,
-						 1.0,
-						 *(Polynomial
-						   **) childSum,
+						 1.0, *(Polynomial **) childSum,
 						 1.0, newProbPolynomial, 1);
 	    if (calcFlag == 1) {
 	      likelihoodChildElements[multCount].fslot.factorPolynomial =
@@ -2317,9 +2350,9 @@ timesExp (2, newProbPolynomial, 1, pChild->pLikelihood[newMultiLocusIndex].lkslo
 	    }
 	  }
 	} else {		/* this child is proband */
-	  *(Polynomial **) childSum = plusExp (2, 1.0, *(Polynomial **)
-					       childSum, 1.0,
-					       newProbPolynomial, 1);
+	  *(Polynomial **) childSum = plusExp (2,
+					       1.0, *(Polynomial **) childSum,
+					       1.0, newProbPolynomial, 1);
 	  if (calcFlag == 1) {
 	    likelihoodChildElements[multCount].fslot.factorPolynomial =
 	      constant1Poly;
@@ -2487,7 +2520,7 @@ do_populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 					 1.0, constantExp(1.0), 
 					 -1.0, constantExp(locusList->pPrevLocusDistance[i][loc]),
 					 1), 1, 
-				 0); 
+				 1); 
 					 
 		    }
 		  else
@@ -2503,7 +2536,7 @@ do_populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 					   (&locusList->
 					    pPrevLocusDistance
 					    [i][loc], NULL,
-					    'D', vName1), 1), 1, 0);
+					    'D', vName1), 1), 1, 1);
 		    }
 		}
 	      } else {

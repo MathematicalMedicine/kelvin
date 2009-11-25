@@ -1,4 +1,3 @@
-
 /**********************************************************************
  * Copyright 2008, Nationwide Children's Research Institute.  
  * All rights reserved.
@@ -1081,43 +1080,25 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 						      1][allele2 -
 							 1], NULL,
 					     'D', "mean"), 0);
-	    tempPoly = timesExp (2, tempPoly, 1,
-				 timesExp (2,
-					   variableExp (&pTrait->
-							stddev
-							[liabilityClass
-							 - 1][allele1 - 1]
-							[allele2 -
-							 1], NULL,
-							'D',
-							"stddev"),
-					   1, functionCallExp (2,
-							       "sqrt",
-							       timesExp
-							       (2,
-								plusExp
-								(2,
-								 1.0,
-								 variableExp
-								 (&pTrait->
-								  dfQT,
-								  NULL,
-								  'D',
-								  "df"),
-								 -1.0,
-								 constantExp
-								 (2.0),
-								 0),
-								1,
-								variableExp
-								(&pTrait->
-								 dfQT,
-								 NULL,
-								 'D',
-								 "df"),
-								-1,
-								0)),
-					   1, 1), -1, 1);
+
+	    // The following is  tempPoly^1 * ( stddev^1 * (sqrt((1*df + -1*2)^1 * df^-1 ))^1 )^-1
+	    // ...simplified is  tempPoly / ( stddev * (sqrt((df-2) / df )) )
+	    tempPoly = timesExp (2 /* terms */, 
+				 tempPoly, /* ^ */ 1,
+				 timesExp (2 /* terms */,
+					   variableExp (&pTrait->stddev[liabilityClass - 1][allele1 - 1][allele2 - 1], NULL,'D', "stddev"), /* ^ */ 1,
+					   functionCallExp (2 /* terms */,
+							    "sqrt",
+							    timesExp (2 /* terms */,
+								      plusExp(2 /* terms */,
+									      1.0 /* X */, variableExp(&pTrait->dfQT, NULL, 'D', "df"),
+									      -1.0 /* X */, constantExp(2.0), 
+									      0 /* Keep plusExp 1st term */), /* ^ */ 1,
+								      variableExp(&pTrait->dfQT, NULL, 'D', "df"), /* ^ */ -1,
+								      0 /* Keep timesExp 1st term */)
+							    ), /* ^ */ 1,
+					   1 /* Discard timesExp 1st term */), /* ^ */ -1,
+				 1 /* Discard timesExp 1st term */);
 
 	    *(Polynomial **) pen =
 	      functionCallExp (3, "gsl_cdf_tdist_P", tempPoly,

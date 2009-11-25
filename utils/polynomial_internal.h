@@ -1,4 +1,4 @@
-/** @file polynomial.h
+/** @file polynomial_internal.h
 
  Copyright 2008, Nationwide Children's Research Institute.  
  All rights reserved.
@@ -230,6 +230,7 @@ struct hashStruct
 // Initialization before polynomials care created and evaluated.
 void polynomialInitialization (int polynomialScale);
 
+short findOrAddSource (char *fileName, int lineNo, unsigned char eType);
 int loadPolyDL (Polynomial * p);
 Polynomial * exportPoly (Polynomial * p);
 Polynomial * importPoly (Polynomial * p);
