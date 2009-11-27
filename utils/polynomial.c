@@ -1455,9 +1455,10 @@ inline void discardPoly (Polynomial *p)
   }
 
   p->valid &= ~VALID_NOTDISC_FLAG; // Explicitly discarded
-  if (p->id == polynomialLostNodeId)
+  if (p->id == polynomialLostNodeId) {
+    raise (SIGINT);
     fprintf (stderr, "discardPoly sees id %d with valid %d and count %d\n", p->id, p->valid, p->count);
-
+  }
   //  fprintf (stderr, "Flagged polynomial %u as explicitly discarded, valid is %u, value is %g\n", p->id, p->valid, p->value);
 
   /*
@@ -1873,9 +1874,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     sumList[sumCount]->id = nodeId;
     if (nodeId == polynomialLostNodeId) {
       fprintf (stderr, "nodeId %d has valid of %d and count of %d\n", polynomialLostNodeId, rp->valid, rp->count);
-      //      expTermPrinting (stderr, rp, 16);
-      fprintf (stderr, "\nIf you're in gdb, continue from here to see more.\n");
-      raise (SIGUSR1);
+      raise (SIGINT);
     }
     sumList[sumCount]->valid |= VALID_TOP_FLAG; // Currently unreferenced
 
@@ -2400,9 +2399,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       }
       if (nodeId == polynomialLostNodeId) {
         fprintf (stderr, "nodeId %d has valid of %d and count of %d\n", polynomialLostNodeId, rp->valid, rp->count);
-	//        expTermPrinting (stderr, rp, 16);
-        fprintf (stderr, "\nIf you're in gdb, continue from here to see more.\n");
-        raise (SIGUSR1);
+	raise (SIGINT);
       }
       productList[productCount]->valid |= VALID_TOP_FLAG;       // Currently unreferenced
 
@@ -5116,6 +5113,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   totalSourceSize += fprintf (includeFile, "#define DLFUNCTIONCOUNT %d\n", fileCount);
 #endif
   fclose (includeFile);
+  fprintf (stderr, "Polynomial final internal size is %d, as code is %d.\n", totalInternalSize, totalSourceSize);
 
 #ifdef POLYCOMP_DL
   char command[256];
@@ -5127,12 +5125,14 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     exit (EXIT_FAILURE);
   }
   popStatus ('k');
+  /*
   sprintf (command, "echo internally %d, as code %d, and externally `wc -c %s.so`.", 
 	   totalInternalSize, totalSourceSize, name);
   if ((status = system (command)) != 0) {
     perror ("system()");
     exit (EXIT_FAILURE);
   }
+  */
 #endif
 
   popStatus ('k');
