@@ -1752,8 +1752,8 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
                 fprintf (stderr, "\n");
               }
             }
-	    if (flag != 0 && (p0->valid & ~VALID_NOTDISC_FLAG) == 0)
-	      discardPoly (p0);
+	    //	    if (flag != 0 && (p0->valid & ~VALID_NOTDISC_FLAG) == 0)
+	    //	      discardPoly (p0); // Causes a crash, but shouldn't! Maybe sumList == p0?
             return polyReturnWrapper (sumList[sIndex]);
           }
         }
