@@ -502,8 +502,6 @@ void validateConfig ()
     /* Dynamic sampling, so disallow all fixed model directives */
     if (observed.penetrance)
       fault ("%s requires FixedModels\n", PENETRANCE_STR);
-    if (observed.standardDev)
-      fault ("%s requires FixedModels\n", STANDARDDEV_STR);
     if (observed.mean & PARM_GENO)
       fault ("%s with trait genotypes requires FixedModels\n", MEAN_STR);
     if (observed.degOfFreedom & PARM_GENO)
