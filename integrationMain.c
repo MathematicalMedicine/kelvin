@@ -1,20 +1,11 @@
   /* total_dim is the number of all parameters in the 3-layer scheme
           s->dim in dcuhre.c is the number of parameters in the middle layer alone*/
+  int ct_index =-1;
+
   total_dim = 2;		// alpha gf
   total_dim += 3 * modelRange.nlclass;	//DD Dd dd
   if(modelOptions.imprintingFlag)
     total_dim += modelRange.nlclass;	//dD
-
-
-  if (modelType.type == TP) {
-    total_dim += 1;		// theta;
-    if(modelOptions.mapFlag == SS)
-      total_dim += 1;		// theta sex-specific case;
-
-    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
-      total_dim += 1;		// dprime
-    }
-  }
 
   if (modelType.trait != DT) {
     if (modelType.distrib != QT_FUNCTION_CHI_SQUARE) {
@@ -26,9 +17,21 @@
       total_dim += modelRange.nlclass;
     }
     if (modelType.trait == CT) {
+      ct_index = total_dim;
       total_dim ++; //modelRange.nlclass;
     }
   }
+
+  if (modelType.type == TP) {
+    total_dim += 1;		// theta;
+    if(modelOptions.mapFlag == SS)
+      total_dim += 1;		// theta sex-specific case;
+
+    if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM) {
+      total_dim += 1;		// dprime
+    }
+  }
+
 
   fprintf (stderr, "total dim =%d\n", total_dim);
 
@@ -413,8 +416,13 @@
 	          fprintf (fpHet, "%.2f ", pLambdaCell->lambda[dprimeIdx][ii][jj]);
 	        }
             }
-            fprintf (fpHet, "(%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f",
+            if(modelOptions.mapFlag == SA){
+              fprintf (fpHet, "(%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f",
 		     fixed_theta, fixed_theta, integral, log10 (localmax_value),R_square,localmax_x[1], localmax_x[0],0.0);
+            }else{
+              fprintf (fpHet, "(%.4f,%.4f) %.6e %.4f %.4f %.2f %.4f %.4f",
+		     fixed_thetaM,fixed_thetaF, integral, log10 (localmax_value),R_square,localmax_x[1], localmax_x[0],0.0);
+	    }
 
             j=2;
             for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++) {
@@ -439,15 +447,17 @@
                   j ++;
 		}
 	      }
-	      /*if (modelType.trait != DT) {
-	        fprintf (fpHet, ",%.3f)", localmax_x[j++]);
+	      if (modelType.trait == CT) {
+	        fprintf (fpHet, ",%.3f)", localmax_x[ct_index]);
 	      } else
-	      fprintf (fpHet, ")");*/
+	      fprintf (fpHet, ")");
             }
-            if (modelType.trait == CT) 
+            fprintf (fpHet, "\n");
+            /*if (modelType.trait == CT) 
 	        fprintf (fpHet, ",%.3f)", localmax_x[j++]);
 
             fprintf (fpHet, ")\n");
+	    */
 
 	    if (maximum_function_value < localmax_value) {
 	      maximum_function_value = localmax_value;
