@@ -370,7 +370,10 @@ to directives.
       or more classes. The penetrance values for individuals in one class will
       be considered independently from the other class(es). Note that a column that
       identifies the class for each individual must appear in the pedigree file.
-      This directive is incompatiable with the <a href='#markertomarker'>MarkerToMarker</a>
+      Kelvin expects liability classes to be numbered contiguously, starting at 1.
+      If Kelvin detects that one or more of the specified classes is empty, it will
+      drop the empty classes, and consolidate the remaining classes. This directive
+      is incompatiable with the <a href='#markertomarker'>MarkerToMarker</a>
       directive.
     </div><p>
 
@@ -744,7 +747,8 @@ to directives.
 
     <div class='hang' id='standarddev'>
       <b>StandardDev</b><br>
-      <tt>StandardDev [ DD | Dd | dD | dd ] [ <i>value</i> | <i>range</i> ] {, ... }</tt><br>
+      <tt>StandardDev <i>min</i>, <i>max</i></tt><br>
+      <tt>StandardDev [ <i>value</i> | <i>range</i> ] {, ... }</tt><br>
       Specifies the set of standard deviation values to be considered for each trait genotype
       (<tt>DD</tt>, <tt>Dd</tt>, <tt>dD</tt> or <tt>dd</tt>), when using the normal
       distribution for a quantitative trait analysis. This directive requires the
