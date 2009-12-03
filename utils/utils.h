@@ -18,6 +18,7 @@
 #define __UTILS_H__
 
 #include <stdio.h>
+#include "sw.h"
 
 /**********************************************************************
  * Some convenient and commonly-used defines.
@@ -32,6 +33,16 @@
   Casts aren't really necessary, but they can help clarify and constrain.
 
 */
+
+#ifdef DMTRACK
+//#warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
+#endif
+#if defined (DMTRACK)
+#define malloc(X) swMalloc((X), __FILE__, __LINE__)
+#define calloc(X,Y) swCalloc((X),(Y), __FILE__, __LINE__)
+#define realloc(X,Y) swRealloc((X),(Y), __FILE__, __LINE__)
+#define free(X) swFree((X), __FILE__, __LINE__)
+#endif
 
 #define MALCHOKE(pChunk,chunkSize,chunkCast)				\
   if ((pChunk = (chunkCast) malloc(chunkSize)) == 0) {			\
