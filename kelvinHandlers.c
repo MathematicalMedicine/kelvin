@@ -2,6 +2,11 @@
 #include <execinfo.h> // For stack dump on demand
 #endif
 #include <ctype.h> // For isalnum()
+
+#ifdef PTMALLOC3
+#include "malloc-2.8.3.h"
+#endif
+
 #include "kelvin.h"
 #include "kelvinHandlers.h"
 #include "utils/sw.h"
@@ -65,6 +70,10 @@ void quitSignalHandler (int ourSignal)
 #ifdef DMTRACK
   swLogPeaks ("Signal");
 #endif
+#ifdef PTMALLOC3
+  malloc_stats ();
+#endif
+
 }
 
 #if defined (GPROF) || (GCOV)
