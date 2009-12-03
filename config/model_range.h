@@ -8,8 +8,8 @@
 #ifndef __MODEL_RANGE_H__
 #define __MODEL_RANGE_H__
 
-#include "lambda_cell.h"
 #include "model_type.h"
+#include "lambda_cell.h"
 
 /* Information about the analysis parameters. */
 typedef struct ModelRange
