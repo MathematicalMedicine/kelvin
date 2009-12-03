@@ -18,6 +18,5 @@
 #include <stdlib.h>
 
 #include "utils/utils.h" // Common utilities
-#include "utils/sw.h" // Performance stopwatches
 
 #endif
