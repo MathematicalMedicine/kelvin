@@ -9,6 +9,7 @@
 #include "kelvin.h"
 #include "kelvinGlobals.h"
 #include "kelvinHandlers.h"
+#include "config/config.h"
 #include "trackProgress.h"
 #include "kelvinWriteFiles.h"
 #include "utils/pageManagement.h"

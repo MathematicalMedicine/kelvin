@@ -15,9 +15,7 @@
 
 */
 
-#include "config/model_type.h"
-#include "config/model_range.h"
-#include "config/model_options.h"
+#include "config/model.h"
 #include "pedlib/pedlib.h"
 #include "pedlib/likelihood.h" // For XMission matrix
 

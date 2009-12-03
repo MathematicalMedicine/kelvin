@@ -26,7 +26,7 @@
 
 #include "pedigree.h"
 #include "locus.h"
-#include "../config/config.h"
+#include "../config/model.h"
 
 /* pedigree related function prototypes */
 int read_pedfile (char *sPedfileName, PedigreeSet * pedigreeSet);
