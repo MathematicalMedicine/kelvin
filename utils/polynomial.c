@@ -218,6 +218,12 @@ extern struct swStopwatch *overallSW;   ///< Total run statistics stopwatch defi
 
 long nodeId; ///< @ingroup vettedGlobals
 
+/** This global variable is for status monitoring, and indicates the raw number
+    of terms processed from an external point of view. Note that simplification
+    and redundancy handling make the actual internal number of terms much less. */
+
+long termCount; ///< @ingroup vettedGlobals
+
 /**
 
   We have a polynomials list to save the polynomials in each polynomial category,
@@ -881,6 +887,11 @@ Polynomial *constantExp (char *fileName, int lineNo, double con)
   memset (originalChildren, 0, sizeof (originalChildren));
 #endif
 
+#ifdef POLYSTATISTICS
+  if ((termCount++ & 0x7FFFFF) == 0) ///< New term from an external standpoint.
+    polyStatistics ("At 8M raw term multiple");
+#endif
+
   // Compute a key for the constant
   tempD1 = frexp (con, &tempI1);
   key = keyConstantPolynomial (tempD1, tempI1);
@@ -951,10 +962,6 @@ Polynomial *constantExp (char *fileName, int lineNo, double con)
   //  if (constantCount >= 100000)
   //    printf ("Hit 100K\n");
   nodeId++;
-#ifdef POLYSTATISTICS
-  if ((nodeId & 0x1FFFFF) == 0)
-    polyStatistics ("At 2M poly multiple");
-#endif
   p->key = key;
   p->valid = VALID_NOTDISC_FLAG;
   p->count = 0;
@@ -1010,6 +1017,11 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   int key;      // Key of the newly-built variable polynomial
   int hIndex, vIndex;   // Index in the hash table and polynomial list
   int first, last, location;
+
+#ifdef POLYSTATISTICS
+  if ((termCount++ & 0x7FFFFF) == 0) ///< New term from an external standpoint.
+    polyStatistics ("At 8M raw term multiple");
+#endif
 
   // Create a key for this variable polynomial
   key = keyVariablePolynomial (vD, vI, vType);
@@ -1084,10 +1096,6 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   variableList[variableCount] = p;
   variableCount++;
   nodeId++;
-#ifdef POLYSTATISTICS
-  if ((nodeId & 0x1FFFFF) == 0)
-    polyStatistics ("At 2M poly multiple");
-#endif
 
   // Record the variable polynomial in the hash table of the variable polynomials
   insertHashTable (&variableHash[hIndex], location, key, variableCount - 1);
@@ -1545,6 +1553,11 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       p0Id = 0, p0Key, p0Valid;
   enum expressionType p0EType;
 
+#ifdef POLYSTATISTICS
+  if ((termCount++ & 0x7FFFFF) == 0) ///< New term from an external standpoint.
+    polyStatistics ("At 8M raw term multiple");
+#endif
+
   // Initialize the variables that keep tracks the number of terms collected for the new sum polynomial
   counter_v1 = 0;
   counter_p1 = 0;
@@ -1802,6 +1815,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       fprintf (stderr, "\n");
       exit (EXIT_FAILURE);
     }
+
     // Free the memory of the first polynomial in the parameter list
     sum1stTermsFreedCount++;
 #ifndef USE_SSD
@@ -1818,6 +1832,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     free (p0);
 #endif
   } else {
+    // Flag not set or not sum or actually valid
     p0EType = T_FREED;
     p0Valid = 7;
   }
@@ -1880,10 +1895,6 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
 
     sumCount++;
     nodeId++;
-#ifdef POLYSTATISTICS
-    if ((nodeId & 0x1FFFFF) == 0)
-      polyStatistics ("At 2M poly multiple");
-#endif
   }
 
   // Insert the newly built polynomial into the Hash table
@@ -1920,6 +1931,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     peakInMemoryTerms = importedTerms-(exportedWrittenTerms+exportedDroppedTerms);
 #endif
   exportTermList (rp, TRUE);
+
   return polyReturnWrapper (rp);
 };
 
@@ -2039,6 +2051,11 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       p0Key,    ///< Key
       p0Valid;  ///< Valid byte
   enum expressionType p0EType;
+
+#ifdef POLYSTATISTICS
+  if ((termCount++ & 0x7FFFFF) == 0) ///< New term from an external standpoint.
+    polyStatistics ("At 8M raw term multiple");
+#endif
 
   // Initialize the containers for the operands of a times operation
   counter_v2 = 0;
@@ -2405,10 +2422,6 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
 
       productCount++;
       nodeId++;
-#ifdef POLYSTATISTICS
-      if ((nodeId & 0x1FFFFF) == 0)
-        polyStatistics ("At 2M poly multiple");
-#endif
     }
 
     // The new polynomial is also recorded in the hash table
@@ -2502,6 +2515,11 @@ Polynomial *functionCallExp (int num, ...)
   int first,    ///< First term for comparison
     last,       ///< Last term for comparison
     location;   ///< Position of the new polynomial in a hash bucket
+
+#ifdef POLYSTATISTICS
+  if ((termCount++ & 0x7FFFFF) == 0) ///< New term from an external standpoint.
+    polyStatistics ("At 8M raw term multiple");
+#endif
 
   // Get the number of parameters for this function call
   va_start (args, num);
@@ -2598,10 +2616,7 @@ Polynomial *functionCallExp (int num, ...)
   if (polynomialDebugLevel >= 40)
     fprintf (stderr, "Polynomial %ld, (function %d) added\n", nodeId, functionCallCount);
   nodeId++;
-#ifdef POLYSTATISTICS
-  if ((nodeId & 0x1FFFFF) == 0)
-    polyStatistics ("At 2M poly multiple");
-#endif
+
   // Insert the polynomial in the hash table of function call polynomials
   insertHashTable (&functionCallHash[hIndex], location, key, functionCallCount - 1);
 
@@ -3132,6 +3147,7 @@ void polynomialInitialization (int newPolynomialScale)
     fprintf (stderr, "polynomialLostNodeId is %d\n", polynomialLostNodeId);
 
   nodeId = 0;
+  termCount = 0;
 
   /* Allocate memory for polynomial list of each type of polynomials, set the counter of each
      type of polynomials to be 0. */
@@ -3683,7 +3699,7 @@ void polyDynamicStatistics (char *title)
       (unsigned long) sizeof (void *) * variableListLength, (unsigned long) sizeof (void *) * sumListLength, (unsigned long) sizeof (void *) * productListLength, (unsigned long) sizeof (void *) * functionCallListLength);
 
   fprintf (stderr,
-      "NodeId: %ld Hash: max len=%d, init size=%lu, SPL: eff=%lu%%, avg len=%lu\n", nodeId, maxHashLength, initialHashSize, 100 * (lowSPLCount + highSPLCount) / (totalSPLCalls ? totalSPLCalls : 1), totalSPLLengths / (totalSPLCalls ? totalSPLCalls : 1));
+	   "TermCount: %ld NodeId: %ld Hash: max len=%d, init size=%lu, SPL: eff=%lu%%, avg len=%lu\n", termCount, nodeId, maxHashLength, initialHashSize, 100 * (lowSPLCount + highSPLCount) / (totalSPLCalls ? totalSPLCalls : 1), totalSPLLengths / (totalSPLCalls ? totalSPLCalls : 1));
 
   fprintf (stderr,
       "Calls: pLS=%d eP=%d eV=%d hAP=%d kP=%d hP=%d uHP=%d fP=%d(%d) fKP=%d\n",
@@ -3719,9 +3735,14 @@ int hi16Bit (unsigned short value) {
   return i;
 }
 
-/*
+/**
  This function prints out polynomial statistic information.  It is mainly used for
- performance evaluation and debugging. */
+ performance evaluation and debugging.
+
+ The calculation of memory utilization is very accurate when there is no
+ multithreading. Multithreading will add 15-20%.
+
+*/
 void polyStatistics (char *title)
 {
   long constantSize, variableSize, sumSize, productSize, functionCallSize;
@@ -3765,12 +3786,12 @@ void polyStatistics (char *title)
   }
   functionCallSize = functionCallCount * sizeof (Polynomial);
 
-  fprintf (stderr, "Term count(avg): s=%ld(%ld), p=%ld(%ld), ", sumTerms, sumTerms / (sumCount ? sumCount : 1), productTerms, productTerms / (productCount ? productCount : 1));
+  fprintf (stderr, "Subterm count(avg): s=%ld(%ld), p=%ld(%ld), ", sumTerms, sumTerms / (sumCount ? sumCount : 1), productTerms, productTerms / (productCount ? productCount : 1));
   fprintf (stderr, "sizes (w/terms): c=%ld, s=%ld, p=%ld, f=%ld\n", constantSize, sumSize + (sumTerms * (sizeof (Polynomial *) + sizeof (double))), productSize + (productTerms * (sizeof (Polynomial *) + sizeof (int))), functionCallSize);
-  fprintf (stderr, "Sum term dist <2^n: ");
+  fprintf (stderr, "Sum subterm dist <2^n: ");
   for (i=0; i<16; i++)
     fprintf (stderr, "%d=%d%s", i, sumTermCounts[i], i<15? "," : "\n");
-  fprintf (stderr, "Product term dist <2^n: ");
+  fprintf (stderr, "Product subterm dist <2^n: ");
   for (i=0; i<16; i++)
     fprintf (stderr, "%d=%d%s", i, productTermCounts[i], i<15? "," : "\n");
 
