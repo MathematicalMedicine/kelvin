@@ -106,6 +106,11 @@ void kelvinInit (int argc, char *argv[])
 #else
   swLogMsg ("GCC optimization disabled (or GCCOPT not defined)");
 #endif
+
+#ifdef PTMALLOC3
+  swLogMsg ("Using alternative allocator ptmalloc3");
+#endif
+
   fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, (int) getpid ());
 
   // Initialize the logging system.
