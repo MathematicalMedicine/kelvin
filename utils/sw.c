@@ -517,9 +517,8 @@ swAddChunk (void *chunkAddress, size_t chunkSize, int callType,
   newChunk->allocSource =
     findOrAddSource (fileName, lineNo, callType, chunkSize);
   newChunk->next = NULL;
-  newChunk->hashKey = lookup (&chunkAddress, sizeof (chunkAddress), 0);
-  if (hadd
-      (chunkHash, &newChunk->hashKey, sizeof (newChunk->hashKey),
+  newChunk->hashKey = lookup ((ub1 *) &chunkAddress, sizeof (chunkAddress), 0);
+  if (hadd (chunkHash, (ub1 *) &newChunk->hashKey, sizeof (newChunk->hashKey),
        newChunk) == FALSE) {
     /* Collision - see if we have the address anywhere. */
     oldChunk = (struct memChunk *) hstuff (chunkHash);
@@ -561,8 +560,8 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
   struct memChunk *oldChunk;
   int hashKey;
 
-  hashKey = lookup (&chunkAddress, sizeof (chunkAddress), 0);
-  if (hfind (chunkHash, &hashKey, sizeof (hashKey)) == FALSE) {
+  hashKey = lookup ((ub1 *) &chunkAddress, sizeof (chunkAddress), 0);
+  if (hfind (chunkHash, (ub1 *) &hashKey, sizeof (hashKey)) == FALSE) {
     //    fprintf (stderr,
     //	     "WARNING!! (%s: %d) - free() of address %lu that was never allocated (head)!\n",
     //	     fileName, lineNo, (unsigned long) chunkAddress);
