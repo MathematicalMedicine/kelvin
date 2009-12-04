@@ -1647,7 +1647,7 @@ int getNextTokgroup (FILE *fp, char ***tokgroup_h, int *tokgroupsize)
 int tokenizeLine (char *line, char ***tokgroup_h, int *tokgroupsize)
 {
   int numtoks=0;
-  char **tokgroup, *ca, *cb;
+  char **tokgroup, *ca, *cb = NULL;
   
   if ((tokgroup = *tokgroup_h) == NULL) {
     *tokgroupsize = 10;
