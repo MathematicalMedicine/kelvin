@@ -44,8 +44,8 @@ CFLAGS += -DBACKTRACE # Add backtrace where supported
 endif
 #CFLAGS += -fopenmp # Uncomment for multi-threading if using GCC 4.2+. MUST USE GSL TOO.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
-CFLAGS += -DPTMALLOC3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
-ADD_LDFLAGS += -lptmalloc3 -lpthread # ditto
+#CFLAGS += -DPTMALLOC3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
+#ADD_LDFLAGS += -lptmalloc3 -lpthread # ditto
 CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
 CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
