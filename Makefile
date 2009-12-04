@@ -31,7 +31,7 @@ INCFLAGS := -I$(INCDIR)
 
 CC := gcc
 #CC := icc # For the Intel C Compiler at OSC
-GCCOPT := 2 # GCC optimization level, 0=none, 1=default, 2=some (OSC's recommendation), 3=all
+GCCOPT := 0 # GCC optimization level, 0=none, 1=default, 2=some (OSC's recommendation), 3=all
 CFLAGS := -Wall -Werror -DGCCOPT=$(GCCOPT) -O$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
 CFLAGS += -D_REENTRANT # Thead-safe (different prototype) version of strtok_r under Solaris when using pthread
 LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
@@ -42,13 +42,14 @@ CFLAGS += -g # Only an ~10% drag on performance and we can monitor running proce
 ifneq (,$(wildcard /usr/include/execinfo.h))
 CFLAGS += -DBACKTRACE # Add backtrace where supported
 endif
-CFLAGS += -fopenmp # Uncomment for multi-threading if using GCC 4.2+. MUST USE GSL TOO.
+#CFLAGS += -fopenmp # Uncomment for multi-threading if using GCC 4.2+. MUST USE GSL TOO.
 #CFLAGS += -openmp # Same as above, but only for Intel C Compiler
-#LPTM3FLAG = -lptmalloc3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
+CFLAGS += -DPTMALLOC3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
+ADD_LDFLAGS += -lptmalloc3 -lpthread # ditto
 CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
-#CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
-#CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every 2Mp and at milestones
+CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
+CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every raw 8Mp and at milestones
 #CFLAGS += -DDMUSE # For our own static memory management, not beneficial as yet.
 #CFLAGS += -DDMTRACK # For our own memory tracking
 #CFLAGS += -DTREEEVALUATE # Use evaluateValue of tree instead of evaluatePoly of list.
@@ -114,7 +115,7 @@ clean :
 	make -C config -f Makefile clean
 	make -C utils -f Makefile clean
 	make -C seq_update -f Makefile clean
-	rm -f $(KOBJS) $(OBJS) kelvin seq_update/calc_updated_ppl lib/*
+	rm -f $(KOBJS) $(OBJS) kelvin seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/libped.a
 	make -C test-suite -f Makefile clean
 
 .PHONY : test test-USE_DL
