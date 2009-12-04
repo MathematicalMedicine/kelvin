@@ -28,9 +28,11 @@
   <ul>
     <li>Unpack the distribution archive with <tt>gunzip</tt> and <tt>tar</tt>. Move into
       the newly-created source directory.</li>
-    <li>Build <span class='sc'>Kelvin</span> by running <tt>make</tt>.</li>
-    <li>Test the build by running <tt>make test</tt>. The tests may take as long as 30 minutes,
-      depending on the system.</li>
+    <li>See if one of the pre-built executables in the <tt>bin</tt> subdirectory is suitable for
+      your system.</li>
+    <li>Otherwise, build <span class='sc'>Kelvin</span> by running <tt>make</tt>.</li>
+    <li>Test the executable by running <tt>make test</tt>. The tests may take as long as 30
+      minutes, depending on the system.</li>
     <li>Install the executable and supporting scripts by running <tt>make install</tt>. The
       default installation directory is <tt>/usr/local/bin</tt>.</li>
   </ul>
@@ -89,7 +91,7 @@
   
   <h3 id='howtoget'>2. Getting And Unpacking <span class='sc'>Kelvin</span></h3>
   
-  <font color='red'>Get Kelvin by emailing us or via FTP?</font>
+  <font color='red'>Get Kelvin by emailing us or via FTP?</font><p>
 
   <span class='sc'>Kelvin</span> is developed, and intended for use, in Linux or Unix 
   environments, so standard Unix-ish command line tools are used to manage the source code and
@@ -116,9 +118,49 @@
     <li><tt>kelvin-0.38.0/utils/</tt> - general-purpose utility components.</li>
   </ul>
 
+  Note that the <tt>bin</tt> subdirectory 
+
   <h3 id='buildoptions'>3. Building and Compilation Options</h3>
   
-  
+  If you cannot, or do not wish, to build a version of <span class='sc'>Kelvin</span> specific to
+  your computing platform, you might be able to use one of the precompiled executables provided
+  in the <tt>bin</tt> subdirectory of the distribution. The precompiled executables are
+  statically-linked executables built with no optional libraries and without support for
+  multi-threading. Versions are provided for each of the environments for which we can build and
+  test. Simply run:
+  <pre>
+    $ make install
+  </pre>
+  to install <span class='sc'>Kelvin</span> and the supporting scripts.  <font color='red'>User
+  has to <tt>make install</tt> to get supporting scripts and <tt>$KELVIN_ROOT</tt>, so Makefile
+  has to look in <tt>bin</tt> for executable? How to get the right architecture?</font>
+  <p>
+  A full set of <span class='sc'>Kelvin</span> variants can be built by executing the
+  <tt>rebuild.sh</tt> script in the top-level distribution directory, or you can edit the
+  Makefile and build your own variants individually. <font color='red'>Is <tt>rebuild.sh</tt>
+  really a user-safe tool?</font>
+  <p>
+  To build <span class='sc'>Kelvin</span> from source, you should first examine the 
+  <tt>Makefile</tt> in the top level of the source directory, and set the compilation options
+  as appropriate for your computing environment. Possible options include selecting the C
+  compiler, linking with replacement memory allocation libraries, enabling support for 
+  multithreading, among other options. At the very least, you should set the installation
+  directory. Full documentation on all compilation options can be found
+  <a href='compileoptions.html'>here</a>.
+
+  After editing the <tt>Makefile</tt>, run:
+  <pre>
+    $ make
+    $ make test
+    $ make install
+  </pre>
+
+  Because running <span class='sc'>Kelvin</span> requires that the support scripts know where
+  to find the executables, it's important the <span class='sc'>Kelvin</span> is properly
+  installed. If <span class='sc'>Kelvin</span> can't be installed in a system-wide directory
+  (e.g., <tt>/usr/local/bin</tt>) due to system policy, it will still work fine installed in
+  under a user home directory.
+
   <h3 id='inputformats'>4. Input File Formats</h3>
   <h3 id='configformat'>5. Configuration File and Directives</h3>
   <h3 id='howtorun'>6. Running <span class='sc'>Kelvin</span></h3>
@@ -126,7 +168,7 @@
   <h3 id='outputformats'>8. <span class='sc'>Kelvin</span> Output Files</h3>
   <h3 id='sequpdate'>9. Sequential Updating</h3>
 
-
+<b><font color='red'>END OF REVISIONS - Chopped up original text beyond this point</font></b></p>
 
 <h4>Libraries</h4>
 When <span class='sc'>Kelvin</span> is run in polynomial mode, it makes very extensive use of memory management, and can, under most
