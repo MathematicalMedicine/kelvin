@@ -27,6 +27,10 @@ make clean
 make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=3 -O3 -D_REENTRANT $OPENMP -DMEMGRAPH -DUSE_GSL" ADD_LDFLAGS="-ldl $PTMALLOC3 -lgsl -lgslcblas -lm" kelvin
 mv kelvin kelvin-normal
 
+make clean
+make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=3 -O3 -D_REENTRANT -DMEMGRAPH" ADD_LDFLAGS="-ldl $PTMALLOC3" kelvin
+mv kelvin kelvin-no_GSL
+
 # Set OMP_NUM_THREADS=<something big> for best performance after compiliation of DLs.
 make clean
 make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=3 -O3 -D_REENTRANT $OPENMP -DMEMGRAPH -DUSE_GSL -DPOLYUSE_DL" ADD_LDFLAGS="-ldl $PTMALLOC3 -lgsl -lgslcblas -lm" kelvin
