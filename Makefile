@@ -1,23 +1,109 @@
 # Kelvin
 # Copyright 2009, The Research Institute At Nationwide Children's Hospital
-# Permission granted to distribute and use for non-profit educational purposes only.
+# Permission granted to distribute and use for non-profit educational purposes
+# only.
 
-# Compiled executables and scripts will be installed in $BINDIR
+## Variables and options in this Makefile are fully documented in
+## doc/compileoptions.html
+
+## Directory into which compiled executables and scripts will be installed.
 BINDIR=/usr/local/bin
+
+## User and group IDs by which installed execuatbles and scripts will be owned.
 OWNER=root
 GROUP=root
 
-# $INCDIR and $LIBDIR should point to where headers and libraries for
-# GSL (GNU Scientific Library) can be found. Remember you can specify these
-# as command-line macros, e.g. at OSC:
-# $ make INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib
-#
+## Directories in which optional header files and libraries can be found (GSL,
+## etc). Remember you can specify these as command-line macros, e.g. at OSC:
+## $ make INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib
 ifndef LIBDIR
 LIBDIR=/usr/local/lib
 endif
 ifndef INCDIR
 INCDIR=/usr/local/include
 endif
+
+## The C compiler to be used to build executables. Pick one.
+## GCC (GNU C Compiler)
+CC := gcc
+## ICC (Intel C Compiler)
+# CC := icc
+
+## GCC optimization level, 0=none, 1=default, 2=some (recommended), 3=all
+GCCOPT := 2
+
+## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
+USE_OPENMP := yes
+
+## Enable use of GSL (GNU Scientific Library). Don't forget to set
+## INCDIR and LIBDIR (above) accordingly.
+USE_GSL := yes
+
+## Enable use of ptmalloc3. Don't forget to set LIBDIR (above) accordingly.
+## Not available on OSX.
+# USE_PTMALLOC3 := yes
+
+## Enable use of Hoard. Don't forget to set LIBDIR (above) accordingly.
+# USE_HOARD := yes
+
+## Beginning of Kelvin-specific options
+CFLAGS :=
+
+## Simplify progress reporting to a wobbly percentage and estimated time left
+CFLAGS += -DSIMPLEPROGRESS
+
+##                                                     ##
+## Should be no need to make changes beyond this point ##
+##                                                     ##
+
+LDFLAGS := -dynamic 
+ADD_LDFLAGS :=
+
+CFLAGS += -O$(GCCOPT)
+CFLAGS += -DGCCOPT=$(GCCOPT)
+
+## Compiler warnings
+CFLAGS += -Wall -Werror
+# CFLAGS += -Wshadow
+
+## Enable debugging symbols. Inflicts a small drag (10%) on performance
+# CFLAGS += -g
+
+# Required to get re-entrant routines under Solaris, benign on other platforms
+CFLAGS += -D_REENTRANT
+
+
+# If OpenMP support has been enabled, GSL is required. The GSL-replacement 
+# routines are not thread-safe.
+ifeq ($(strip $(USE_OPENMP)), yes)
+USE_GSL := yes
+ifeq ($(strip $(CC)), gcc)
+# Compiler flags for GCC
+CFLAGS += -fopenmp
+ADD_LDFLAGS += -fopenmp -lpthread
+else ifeq ($(strip $(CC)), icc)
+# Compiler flags for ICC
+CFLAGS += -openmp 
+ADD_LDFLAGS += -openmp -lpthread
+endif
+endif
+
+# If GLS support has been enabled
+ifeq ($(strip $(USE_GSL)), yes)
+CFLAGS += -DUSE_GSL
+ADD_LDFLAGS += -lgsl -lgslcblas -lm
+endif
+
+# If ptmalloc3 support has been enabled
+ifeq ($(strip $(USE_PTMALLOC3)), yes)
+ADD_LDFLAGS += -lptmalloc3
+endif
+
+# If Hoard support has been enabled
+ifeq ($(strip $(USE_HOARD)), yes)
+ADD_LDFLAGS += -lhoard
+endif
+
 KVNLIBDIR := $(shell pwd)/lib
 KELVIN_ROOT := $(shell pwd)
 TEST_KELVIN := $(KELVIN_ROOT)/kelvin
@@ -29,24 +115,12 @@ space:= $(empty) $(empty)
 PLATFORM = $(subst $(space),-,$(PLATFORM_NAME))
 INCFLAGS := -I$(INCDIR)
 
-CC := gcc
-#CC := icc # For the Intel C Compiler at OSC
-GCCOPT := 0 # GCC optimization level, 0=none, 1=default, 2=some (OSC's recommendation), 3=all
-CFLAGS := -Wall -Werror -DGCCOPT=$(GCCOPT) -O$(GCCOPT) # -Wshadow # PitA gcc won't tell me optimization level
-CFLAGS += -D_REENTRANT # Thead-safe (different prototype) version of strtok_r under Solaris when using pthread
 LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
 
-# For further details on compilation-time conditionals, see kelvin.c or the Doxygen documentation.
-
-CFLAGS += -g # Only an ~10% drag on performance and we can monitor running processes w/symbols.
 ifneq (,$(wildcard /usr/include/execinfo.h))
 CFLAGS += -DBACKTRACE # Add backtrace where supported
 endif
-#CFLAGS += -fopenmp # Uncomment for multi-threading if using GCC 4.2+. MUST USE GSL TOO.
-#CFLAGS += -openmp # Same as above, but only for Intel C Compiler
-#CFLAGS += -DPTMALLOC3 # For ptmalloc3 allocator, some performance gains, tighter memory use w/OpenMP, but not on Mac.
-#ADD_LDFLAGS += -lptmalloc3 -lpthread # ditto
-CFLAGS += -DSIMPLEPROGRESS # Simplify progress reporting to a wobbly percentage and estimated time left
+
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
 CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
 CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every raw 8Mp and at milestones
@@ -62,8 +136,6 @@ CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every raw 8
 #CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
 #ADD_LDFLAGS += -lsocket -lnsl # ditto for under Solaris
 #CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
-CFLAGS += -DUSE_GSL # Use GNU Scientific Library (GSL) statistical routines instead of internal ones
-ADD_LDFLAGS += -lgsl -lgslcblas -lm # ditto
 #CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13, no OpenMP
 
 LDFLAGS += ${ADD_LDFLAGS}
@@ -91,6 +163,7 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 	  $(BINDIR)/compileDL.sh
 
 kelvin : libs $(KOBJS) $(OBJS) $(INCS)
+	echo "CFLAGS is $(CFLAGS)"
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS) $(INCS)
@@ -101,6 +174,7 @@ seq_update/calc_updated_ppl :
 	+make -C seq_update -f Makefile calc_updated_ppl
 
 %.o : %.c $(INCS)
+	echo "USE_GSL is '$(USE_GSL)'"
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
 
 .PHONY : libs
