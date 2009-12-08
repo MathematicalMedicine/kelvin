@@ -14,8 +14,8 @@ OBJS = utils.o sw.o polynomial.o tpl.o sSDHandler.o pageManagement.o $(HASH_OBJS
 
 all : ../lib/libklvnutls.a # ../lib/libklvnutls.so # pt sw sSDHandler
 
-pt : pt.c polynomial.c polynomial.h polynomial_internal.h sw.c dists.c
-	gcc pt.c -o pt polynomial.c sw.c dists.c $(CFLAGS) -DUSE_GSL -DPOLYUSE_DL -DPOLYCODE_DL -ldl -lgsl -lgslcblas -lm
+pt : pt.c polynomial.c polynomial.h polynomial_internal.h sw.c dists.c $(NOGSL_INCS) $(NOGSL_OBJS)
+	gcc pt.c -o pt polynomial.c sw.c $(NOGSL_OBJS) $(CFLAGS) -DPOLYUSE_DL -DPOLYCODE_DL -ldl -lm
 
 sw : sw.c sw.h
 	gcc -DMAIN sw.c -o sw $(CFLAGS) -lm
