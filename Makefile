@@ -90,7 +90,7 @@ ifeq ($(strip $(USE_OPENMP)), yes)
   endif
 endif
 
-# If GLS support has been enabled
+# If GSL support has been enabled
 ifeq ($(strip $(USE_GSL)), yes)
   CFLAGS += -DUSE_GSL
   ADD_LDFLAGS += -lgsl -lgslcblas -lm
