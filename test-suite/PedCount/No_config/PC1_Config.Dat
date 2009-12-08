@@ -1,0 +1,22 @@
+# $Id: PedCount.pl 2408 2009-11-13 17:29:39Z whv001 $
+PedigreeFile PC1_Pedigrees.Dat
+LocusFile PC1_Data.Dat
+FrequencyFile PC1_Markers.Dat
+MapFile PC1_Map.Dat
+CountFile PC1_Counts.Dat
+BayesRatioFile PC1_BR.Out
+PPLFile PC1_PPL.Out
+
+# The rest is the standard analysis grid...
+FixedModels
+Theta 0-0.5:0.05
+DPrime -1-1:0.1
+DiseaseGeneFrequency 0.001, 0.999, 0.1-0.9:.1
+Alpha 0.05-1.0:0.1
+Penetrance DD 0.0-0.9:0.1, 0.999
+Penetrance Dd 0.0-0.9:0.1, 0.999
+Penetrance dd 0.0-0.9:0.1, 0.999
+Constrain Penetrance DD >= Dd
+Constrain Penetrance Dd >= dd
+Constrain Penetrance DD != Dd, Dd != dd
+
