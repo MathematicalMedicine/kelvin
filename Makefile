@@ -17,10 +17,10 @@ GROUP=root
 ## etc). Remember you can specify these as command-line macros, e.g. at OSC:
 ## $ make INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib
 ifndef LIBDIR
-LIBDIR=/usr/local/lib
+  LIBDIR=/usr/local/lib
 endif
 ifndef INCDIR
-INCDIR=/usr/local/include
+  INCDIR=/usr/local/include
 endif
 
 ## The C compiler to be used to build executables. Pick one.
@@ -62,12 +62,12 @@ ADD_LDFLAGS :=
 CFLAGS += -O$(GCCOPT)
 CFLAGS += -DGCCOPT=$(GCCOPT)
 
-## Compiler warnings
-CFLAGS += -Wall -Werror
-# CFLAGS += -Wshadow
+## Compiler warnings. In development, abort on warning
+CFLAGS += -Wall
+# CFLAGS += -Wshadow -Werror
 
 ## Enable debugging symbols. Inflicts a small drag (10%) on performance
-# CFLAGS += -g
+CFLAGS += -g
 
 # Required to get re-entrant routines under Solaris, benign on other platforms
 CFLAGS += -D_REENTRANT
@@ -76,32 +76,34 @@ CFLAGS += -D_REENTRANT
 # If OpenMP support has been enabled, GSL is required. The GSL-replacement 
 # routines are not thread-safe.
 ifeq ($(strip $(USE_OPENMP)), yes)
-USE_GSL := yes
-ifeq ($(strip $(CC)), gcc)
-# Compiler flags for GCC
-CFLAGS += -fopenmp
-ADD_LDFLAGS += -fopenmp -lpthread
-else ifeq ($(strip $(CC)), icc)
-# Compiler flags for ICC
-CFLAGS += -openmp 
-ADD_LDFLAGS += -openmp -lpthread
-endif
+  USE_GSL := yes
+  ifeq ($(strip $(CC)), gcc)
+    # Compiler flags for GCC
+    CFLAGS += -fopenmp
+    ADD_LDFLAGS += -fopenmp -lpthread
+  else
+    ifeq ($(strip $(CC)), icc)
+      # Compiler flags for ICC
+      CFLAGS += -openmp 
+      ADD_LDFLAGS += -openmp -lpthread
+    endif
+  endif
 endif
 
 # If GLS support has been enabled
 ifeq ($(strip $(USE_GSL)), yes)
-CFLAGS += -DUSE_GSL
-ADD_LDFLAGS += -lgsl -lgslcblas -lm
+  CFLAGS += -DUSE_GSL
+  ADD_LDFLAGS += -lgsl -lgslcblas -lm
 endif
 
 # If ptmalloc3 support has been enabled
 ifeq ($(strip $(USE_PTMALLOC3)), yes)
-ADD_LDFLAGS += -lptmalloc3
+  ADD_LDFLAGS += -lptmalloc3
 endif
 
 # If Hoard support has been enabled
 ifeq ($(strip $(USE_HOARD)), yes)
-ADD_LDFLAGS += -lhoard
+  ADD_LDFLAGS += -lhoard
 endif
 
 KVNLIBDIR := $(shell pwd)/lib
@@ -118,7 +120,7 @@ INCFLAGS := -I$(INCDIR)
 LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
 
 ifneq (,$(wildcard /usr/include/execinfo.h))
-CFLAGS += -DBACKTRACE # Add backtrace where supported
+  CFLAGS += -DBACKTRACE # Add backtrace where supported
 endif
 
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
