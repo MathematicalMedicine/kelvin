@@ -147,7 +147,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
       // Make sure we haven't seen this pedigree before
       for (i = 0; i < pPedigreeSet->numPedigree; i++) {
 	if (strcmp (sCurrPedLabel, pPedigreeSet->ppPedigreeSet[i]->sPedigreeID) == 0) {
-	  KLOG (LOGPEDFILE, LOGFATAL, "Pedigree %s appears in separate places in the pedigree file, please correct and re-run.\n",
+	  KLOG(LOGPEDFILE, LOGFATAL, "Pedigree %s appears in separate places in the pedigree file, please correct and re-run.\n",
 		sCurrPedLabel);
 	}
       }
@@ -161,7 +161,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
        * first person and generate a warning message */
       if (pCurrPedigree && pCurrPedigree->pPeelingProband == NULL) {
 	pCurrPedigree->pPeelingProband = *(pCurrPedigree->ppPersonList);
-	KLOG (LOGPEDFILE, LOGWARNING,
+	KLOG(LOGPEDFILE, LOGWARNING,
 	      "WARNING: No proband was given for this pedigree %s and proband is set to person %s.\n",
 	      pCurrPedigree->sPedigreeID,
 	      pCurrPedigree->pPeelingProband->sID);
@@ -212,7 +212,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
     /* Note: This assumess a single trait column/single LC column in the pedfile */
     if (modelRange->nlclass > 1) {
       if (pCurrPerson->ppLiabilityClass[0][0] > modelRange->nlclass)
-	logMsg (LOGDEFAULT, LOGFATAL, "Pedigree %s, person %s has liability class %d, only %d classes configured\n", pCurrPedigree->sPedigreeID, pCurrPerson->sID, pCurrPerson->ppLiabilityClass[0][0], modelRange->nlclass);
+	KLOG(LOGDEFAULT, LOGFATAL, "Pedigree %s, person %s has liability class %d, only %d classes configured\n", pCurrPedigree->sPedigreeID, pCurrPerson->sID, pCurrPerson->ppLiabilityClass[0][0], modelRange->nlclass);
       pPedigreeSet->liabilityClassCnt[pCurrPerson->ppLiabilityClass[0][0]] += 1;
     }
 
@@ -319,7 +319,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 		 "Line %d in pedfile %s doesn't have enough columns (LC). Is this a post-makeped file? \n",
 		 lineNo, sPedfileName);
 	if (pPerson->ppLiabilityClass[i][j] < 1)
-	  logMsg (LOGDEFAULT, LOGFATAL, "Line %d in pedfile %s has illegal liability class identifier %d\n", lineNo, sPedfileName, pPerson->ppLiabilityClass[i][j]);
+	  KLOG(LOGDEFAULT, LOGFATAL, "Line %d in pedfile %s has illegal liability class identifier %d\n", lineNo, sPedfileName, pPerson->ppLiabilityClass[i][j]);
 	pLine = &pLine[pos];
       }
 
@@ -1607,7 +1607,7 @@ int checkQtTraitRanges (PedigreeSet *pPedigreeSet)
 
       if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_CHI_SQUARE &&
 	  person->ppOrigTraitValue[0][0] <= 0) {
-	logMsg (LOGDEFAULT, LOGERROR, "Family %s, inidividual %s: illegal trait value for Chi-Squared distribution\n", pPedigreeSet->ppPedigreeSet[va]->sPedigreeID, person->sID);
+	KLOG(LOGDEFAULT, LOGERROR, "Family %s, inidividual %s: illegal trait value for Chi-Squared distribution\n", pPedigreeSet->ppPedigreeSet[va]->sPedigreeID, person->sID);
 	return (-1);
       }
     }
