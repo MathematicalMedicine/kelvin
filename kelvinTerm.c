@@ -73,7 +73,7 @@ void kelvinTerm () {
   swDumpSources ();
   //  swDumpCrossModuleChunks ();
 #endif
-  swLogMsg ("Finished run");
+  swLogMsg (stdout, "Finished run");
 
 /* Close file pointers */
 if (modelType->type == TP)
