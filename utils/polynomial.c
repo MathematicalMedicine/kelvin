@@ -3078,7 +3078,7 @@ void polynomialInitialization (int newPolynomialScale)
 
 #ifdef FREEDEBUG
 #warning "freePoly protection is turned on, so memory will purposefully leak!"
-  swLogMsg ("freePoly protection is turned on, so memory will purposefully leak!");
+  swLogMsg (stdout, "freePoly protection is turned on, so memory will purposefully leak!");
 #endif
 
   if ((envVar = getenv ("polynomialDebugLevel")) != NULL) {
@@ -3101,7 +3101,7 @@ void polynomialInitialization (int newPolynomialScale)
   else
     polynomialScale = newPolynomialScale;
   sprintf (messageBuffer, "polynomialScale is %d (1-10, 1 is default)", polynomialScale);
-  swLogMsg (messageBuffer);
+  swLogMsg (stdout, messageBuffer);
 
   evaluatePolySW = swCreate ("evaluatePoly");
   evaluateValueSW = swCreate ("evaluateValue");
@@ -3658,7 +3658,7 @@ void thrashingCheck ()
     deltaAccumUserTime = overallSW->swAccumRUSelf.ru_utime.tv_sec + overallSW->swAccumRUChildren.ru_utime.tv_sec - lastPDSAccumUserTime;
     if ((deltaAccumUserTime != 0) && (100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < THRASH_CPU)) {
       sprintf (messageBuffer, "Thrashing detected (utilization under %d%%), consider exiting!", THRASH_CPU);
-      swLogMsg (messageBuffer);
+      swLogMsg (stderr, messageBuffer);
       exit (EXIT_FAILURE);
     }
   }
