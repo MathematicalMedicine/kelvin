@@ -367,7 +367,7 @@ void logPedigreeSetStatistics (PedigreeSet * pSet,      ///< Pointer to pedigree
     }
   }
   sprintf (messageBuffer, "For %d pedigrees: unique groups:%d, similar groups:%d, polynomial terms:%ld", pSet->numPedigree, pg, sg, nodeId);
-  swLogMsg (messageBuffer);
+  swLogMsg (stdout, messageBuffer);
 }
 
 char analysisType[MAXSWMSG];    ///< Textual summary of analysis type built by dumpTrackingStats.

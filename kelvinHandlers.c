@@ -4,7 +4,7 @@
 #include <ctype.h> // For isalnum()
 
 #ifdef PTMALLOC3
-#include "malloc-2.8.3.h"
+#include "utils/malloc-2.8.3.h"
 #endif
 
 #include "kelvin.h"
@@ -68,7 +68,7 @@ void quitSignalHandler (int ourSignal)
 #endif
     swDump (overallSW);
 #ifdef DMTRACK
-  swLogPeaks ("Signal");
+  swLogPeaks (stdout, "Signal");
 #endif
 #ifdef PTMALLOC3
   malloc_stats ();
@@ -119,7 +119,7 @@ pid_t childPID = 0;     ///< For a child process producing timing (and memory?) 
 */
 void exitKelvin ()
 {
-  swLogMsg ("Exiting");
+  swLogMsg (stdout, "Exiting");
   if (childPID != 0)
     kill (childPID, SIGKILL);   /* Sweep away any errant children */
 }
