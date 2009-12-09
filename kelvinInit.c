@@ -49,45 +49,45 @@ void kelvinInit (int argc, char *argv[])
 
   pushStatus ('k', "NonSpecific");
   sprintf (messageBuffer, "kelvin %s built %s %s", programVersion, __DATE__, __TIME__);
-  swLogMsg (messageBuffer);
-  swLogMsg (kelvinVersion);
-  swLogMsg (likelihoodVersion);
-  swLogMsg (locusVersion);
-  swLogMsg (polynomialVersion);
+  swLogMsg (stdout, messageBuffer);
+  swLogMsg (stdout, kelvinVersion);
+  swLogMsg (stdout, likelihoodVersion);
+  swLogMsg (stdout, locusVersion);
+  swLogMsg (stdout, polynomialVersion);
   sprintf (messageBuffer, "Compiler %s\n", __VERSION__);
-  swLogMsg (messageBuffer);
+  swLogMsg (stdout, messageBuffer);
 
 #ifdef FAKEEVALUATE
-  swLogMsg ("Polynomial evaluation is being SKIPPED FOR TESTING, results will be wrong!");
+  swLogMsg (stdout, "Polynomial evaluation is being SKIPPED FOR TESTING, results will be wrong!");
 #endif
 #ifdef DMUSE
-  swLogMsg ("Experimental static memory handling enabled!");
+  swLogMsg (stdout, "Experimental static memory handling enabled!");
 #endif
 #ifdef DMTRACK
-  swLogMsg ("Dynamic memory usage dumping is turned on, so performance will be poor!");
+  swLogMsg (stdout, "Dynamic memory usage dumping is turned on, so performance will be poor!");
 #endif
 #ifdef GPROF
   sprintf (messageBuffer, "GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
-  swLogMsg (messageBuffer);
+  swLogMsg (stdout, messageBuffer);
 #endif
 #ifdef GCOV
   sprintf (messageBuffer, "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
-  swLogMsg (messageBuffer);
+  swLogMsg (stdout, messageBuffer);
 #endif
 
 #ifdef USE_GSL
-  swLogMsg ("Using GNU Scientific Library (GSL) statistical functions instead of internal ones");
+  swLogMsg (stdout, "Using GNU Scientific Library (GSL) statistical functions instead of internal ones");
 #ifdef VERIFY_GSL
 #ifdef _OPENMP
 #undef _OPENMP
 #warning "Cannot use OpenMP when using internal statistical functions.");
   sprintf (messageBuffer, "OpenMP is DISABLED when using internal statistical functions.");
-  swLogMsg (messageBuffer);
+swLogMsg (stdout, messageBuffer);
 #endif
 #else
 #ifdef _OPENMP
   sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", omp_get_num_threads ());
-  swLogMsg (messageBuffer);
+swLogMsg (stdout, messageBuffer);
 #endif
 #endif
 #else
@@ -96,20 +96,20 @@ void kelvinInit (int argc, char *argv[])
 #undef _OPENMP
 #warning "Cannot use OpenMP when using internal statistical functions.");
   sprintf (messageBuffer, "OpenMP is DISABLED when using internal statistical functions.");
-  swLogMsg (messageBuffer);
+swLogMsg (stdout, messageBuffer);
 #endif
 #endif
 
   swStart (overallSW);
 #ifdef GCCOPT
   sprintf (messageBuffer, "GCC optimization level %d enabled", GCCOPT);
-  swLogMsg (messageBuffer);
+swLogMsg (stdout, messageBuffer);
 #else
-  swLogMsg ("GCC optimization disabled (or GCCOPT not defined)");
+swLogMsg (stdout, "GCC optimization disabled (or GCCOPT not defined)");
 #endif
 
 #ifdef PTMALLOC3
-  swLogMsg ("Using alternative allocator ptmalloc3");
+swLogMsg (stdout, "Using alternative allocator ptmalloc3");
 #endif
 
   fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, (int) getpid ());
@@ -161,6 +161,21 @@ void kelvinInit (int argc, char *argv[])
   modelType = (ModelType *) allocatePages (sizeof (ModelType));
   fillConfigDefaults (modelRange, modelOptions, modelType);
 
+  if (modelOptions->polynomial == TRUE) {
+    swLogMsg (stdout, "Computation is done in polynomial mode");
+#ifdef POLYUSE_DL
+    swLogMsg (stdout, "Dynamic libraries for polynomial evaluation will be used if found");
+#endif
+    polynomialInitialization (modelOptions->polynomialScale);
+  } else {
+    swLogMsg (stdout, "Computation is done in non-polynomial (direct evaluation) mode");
+  }
+  if (modelOptions->integration == TRUE) {
+    swLogMsg (stdout, "Integration is done numerically (dkelvin)");
+  } else {
+    swLogMsg (stdout, "Integration is done with iteration (original kelvin)");
+  }
+
   /* Read in the map file. */
   read_mapfile (modelOptions->mapfile);
 
@@ -176,23 +191,9 @@ void kelvinInit (int argc, char *argv[])
     logMsg (LOGDEFAULT, LOGFATAL, "No trait information in %s, can't run trait analysis\n", 
 	    modelOptions->datafile);
 
-  /* read in marker allele frequencies */
+  /* Read in marker allele frequencies */
   read_markerfile (modelOptions->markerfile, modelType->numMarkers);
 
-  if (modelOptions->polynomial == TRUE) {
-    swLogMsg ("Computation is done in polynomial mode");
-#ifdef POLYUSE_DL
-    swLogMsg ("Dynamic libraries for polynomial evaluation will be used if found");
-#endif
-    polynomialInitialization (modelOptions->polynomialScale);
-  } else {
-    swLogMsg ("Computation is done in non-polynomial (direct evaluation) mode");
-  }
-  if (modelOptions->integration == TRUE) {
-    swLogMsg ("Integration is done numerically (dkelvin)");
-  } else {
-    swLogMsg ("Integration is done with iteration (original kelvin)");
-  }
 
   /* build allele set information */
   for (locus = 0; locus < originalLocusList.numLocus; locus++) {
@@ -345,7 +346,7 @@ void kelvinInit (int argc, char *argv[])
   /* Estimate number of calls to each (appropriate) instance of compute_likelihood for
    * use in progress reporting, and display model information at this point since markers have
    * already been added to locus list */
-  swLogMsg (estimateIterations (eCL));
+swLogMsg (stdout, estimateIterations (eCL));
 
   /* allocate storage for keeping track of het locus in nuclear families */
   allocate_nucfam_het (&pedigreeSet, totalLoci);
