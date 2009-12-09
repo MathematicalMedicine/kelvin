@@ -288,7 +288,7 @@ swDumpOutput (struct swStopwatch *theStopwatch, char *appendText)
      (unsigned long) theStopwatch->swAccumRUSelf.ru_minflt + theStopwatch->swAccumRUChildren.ru_minflt,
      (unsigned long) theStopwatch->swAccumRUSelf.ru_majflt + theStopwatch->swAccumRUChildren.ru_majflt,
      appendText);
-  swLogMsg (stdout, buffer);
+  INFO(buffer);
   return;
 }
 
@@ -706,12 +706,12 @@ swLogPeaks (char *reason)
 	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d",
 	   countMalloc, countFree, countReallocOK, countReallocMove,
 	   countReallocFree, maxListDepth, maxRecycles);
-  swLogMsg (stdout, messageBuffer);
+  INFO(messageBuffer);
   sprintf (messageBuffer,
 	   "Size malloc:%g, free:%g, realloc OK:%g, realloc move:%g, realloc free:%g, current:%g, peak:%g",
 	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
 	   totalReallocFree, currentAlloc, peakAlloc);
-  swLogMsg (stdout, messageBuffer);
+  INFO(messageBuffer);
   swStart (internalDMSW);
   return;
 }
@@ -748,12 +748,12 @@ swDumpBlockUse ()
 	   "Count malloc: %d, free: %d, realloc OK: %d, realloc move: %d, realloc free: %d, max depth: %d",
 	   countMalloc, countFree, countReallocOK, countReallocMove,
 	   countReallocFree, maxListDepth);
-  swLogMsg (stdout, messageBuffer);
+  INFO(messageBuffer);
   sprintf (messageBuffer,
 	   "Size malloc: %g, free: %g, realloc OK: %g, realloc move: %g, realloc free: %g, current: %g, peak: %g",
 	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
 	   totalReallocFree, currentAlloc, peakAlloc);
-  swLogMsg (stdout, messageBuffer);
+  INFO(messageBuffer);
 
   fprintf (stderr, "Memory blocks allocated:\n    Size      Count\n");
   for (i = 0; i < MAXSMALLBLOCK; i++)
@@ -834,7 +834,7 @@ swMalloc (size_t size, char *fileName, int lineNo)
 	sprintf (messageBuffer,
 		 "Block of size %lu exceeds %dMb, not tracked", size,
 		 MAXLARGEBLOCK);
-	swLogMsg (stdout, messageBuffer);
+	INFO(messageBuffer);
       }
     }
   }
@@ -893,7 +893,7 @@ swRealloc (void *pBlock, size_t newSize, char *fileName, int lineNo)
 	sprintf (messageBuffer,
 		 "Block of size %lu exceeds %dMb, not tracked", newSize,
 		 MAXLARGEBLOCK);
-	swLogMsg (stdout, messageBuffer);
+	INFO(messageBuffer);
       }
     }
   }
@@ -969,9 +969,9 @@ swLogMsg (FILE *stream, char *message)
 
   nowSec = time (NULL);
   nowTm = localtime(&nowSec);
-  fprintf (stream, "%02d/%02d/%02d %02d:%02d:%02d, %s\n", nowTm->tm_year - 100, nowTm->tm_mon, nowTm->tm_mday,
+  fprintf (stream, "%02d/%02d/%02d %02d:%02d:%02d %s\n", nowTm->tm_year - 100, nowTm->tm_mon, nowTm->tm_mday,
 	   nowTm->tm_hour, nowTm->tm_min, nowTm->tm_sec, message);
-  snprintf (udpBuffer, MAXUDPMSG, "PID: %d, %s\n", (int) getpid (), message);
+  snprintf (udpBuffer, MAXUDPMSG, "PID: %d %s\n", (int) getpid (), message);
 #ifdef TELLRITA
   // Don't need timestamp here because it'll show up with its own
   if (udpSend ("levi-montalcini.ccri.net", 4950, messageBuffer) ==
@@ -1121,12 +1121,12 @@ quitSignalHandler (int signal)
 	   "Count malloc: %d, free: %d, realloc OK: %d, realloc move: %d, realloc free: %d, max depth: %d, max recycles: %d",
 	   countMalloc, countFree, countReallocOK, countReallocMove,
 	   countReallocFree, maxListDepth, maxRecycles);
-  swLogMsg (stdout, messageBuffer);
+  INFO(messageBuffer);
   sprintf (messageBuffer,
 	   "Size malloc: %g, free: %g, realloc OK: %g, realloc move: %g, realloc free: %g, current: %g, peak: %g",
 	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
 	   totalReallocFree, currentAlloc, peakAlloc);
-  swLogMsg (stdout, messageBuffer);
+  INFO(messageBuffer);
 #endif
 }
 
@@ -1227,10 +1227,8 @@ main (int argc, char *argv[])
   quitAction.sa_flags = 0;
   sigaction (SIGQUIT, &quitAction, NULL);
 
-  fprintf (stdout,
-	   "To force a dump of stats, type CTRL-\\ (dangerous and terse but always works)\n");
-  fprintf (stdout,
-	   "or type \"kill -%d %d\" (safe and thorough, but requires program cooperation).\n",
+  INFO("To force a dump of stats, type CTRL-\\ (dangerous and terse but always works)");
+  INFO("or type \"kill -%d %d\" (safe and thorough, but requires program cooperation).",
 	   SIGUSR1, getpid ());
 
   /* Start the overall stopwatch so we have the resource utilization info for
@@ -1244,8 +1242,7 @@ main (int argc, char *argv[])
 
   STEP(0, "Beginning tests");
   SUBSTEP(0, "Computing primes");
-  printf
-    ("Computing primes between 1000000000 and 1000200000 responding to SIGQUIT-set flag...\n");
+  INFO ("Computing primes between 1000000000 and 1000200000 responding to SIGQUIT-set flag...");
   swStart (primeSW);
   k = 0;
   for (i = 1000000000; i < 1000200000; i++) {
@@ -1273,13 +1270,12 @@ main (int argc, char *argv[])
     swStop (iterateSW);
   }
   SUBSTEP(0, "Primes computed");
-  printf ("There are %d of them, and the last is %d\n", k, l);
+  INFO ("There are %d of them, and the last is %d", k, l);
   swStop (primeSW);
 
   SUBSTEP(0, "Computing fibonacci numbers");
   /* Now invoke a separate function like fibonacci. */
-  printf
-    ("Computing fibonacci numbers up to the 32nd responding to SIGUSR1-set flag...\n");
+  INFO ("Computing fibonacci numbers up to the 32nd responding to SIGUSR1-set flag...");
   for (i = 1; i <= 32; i++) {
     j = fibonacci (i);
     printf ("%d: %d\n", i, j);
@@ -1289,8 +1285,7 @@ main (int argc, char *argv[])
      will be the sum of sleepSW and napSW. */
 
   SUBSTEP(0, "Testing timer accumulation and memory tracking");
-  printf
-    ("Sleeping 21 seconds while marking memory in 200M and 1K chunks, ignoring SIGUSR1-set flag...\n");
+  INFO ("Sleeping 21 seconds while marking memory in 200M and 1K chunks, ignoring SIGUSR1-set flag...");
   swStart (restSW);
   char *p[7], *q[7];
 
@@ -1318,7 +1313,7 @@ main (int argc, char *argv[])
 
   p[0] = (char *) swMalloc (4 * 1024 * 1024, __FILE__, __LINE__);
   for (i = 3; i >= 0; i--) {
-    printf ("realloc down %d\n", i);
+    INFO("realloc down %d", i);
     p[0] = swRealloc (p[0], i * 1024 * 1024, __FILE__, __LINE__);
   }
 
@@ -1327,19 +1322,19 @@ main (int argc, char *argv[])
 
   swStop (overallSW);
 
-  printf ("prime will be the sum of sqrt + iterate + unknown loop cost\n");
+  INFO ("prime will be the sum of sqrt + iterate + unknown loop cost");
   swDumpM (sqrtSW);
   swDumpM (iterateSW);
   swDumpM (primeSW);
 
   swDumpM (fibSW);
 
-  printf ("rest will be almost exactly the sum of sleep and nap\n");
+  INFO ("rest will be almost exactly the sum of sleep and nap");
   swDumpM (sleepSW);
   swDumpM (napSW);
   swDumpM (restSW);
 
-  printf ("overall will be the sum of everything + unaccounted-for code\n");
+  INFO ("overall will be the sum of everything + unaccounted-for code");
   swDumpM (overallSW);
 
 #ifdef DMTRACK
@@ -1349,7 +1344,7 @@ main (int argc, char *argv[])
   swLogPeaks ("End of run");
 #endif
 
-  swLogMsg (stdout, "finished run");
+  INFO("finished run");
   return 0;
 }
 

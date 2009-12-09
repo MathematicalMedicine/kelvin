@@ -80,6 +80,10 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
   FATAL - A fatal error prefixed by "FATAL ERROR - ABORTING (<module>:<line no>), ". Doesn't return.
   WARNING - A warning. Prefixed by "WARNING (<module>:<line no>), ". Returns success.
 
+  The next simply prints the message to stdout prefaced by a timestamp:
+
+  INFO - A normal informational message to stdout. Returns success.
+
   The next three types are progress advisories that may or may not be displayed on stdout 
   depending upon their significance and the volume of progress advisories requested by the user.
   Only the latest advisory in each of these three categories is kept. Two different directives
@@ -106,8 +110,8 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
   int length; \
   char message[MAXLOGMSG + 1], *pMessage = message; \
   pMessage += length = snprintf (message, MAXLOGMSG, "FATAL ERROR - ABORTING (%s:%d), ", (__FILE__),(__LINE__)); \
-  snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__);			\
-  swLogMsg (stderr, message);						\
+  snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__); \
+  swLogMsg (stderr, message); \
   exit (EXIT_FAILURE); \
 }
 
@@ -116,8 +120,15 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
   int length; \
   char message[MAXLOGMSG + 1], *pMessage = message; \
   pMessage += length = snprintf (message, MAXLOGMSG, "WARNING (%s:%d), ", (__FILE__),(__LINE__)); \
-  snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__);			\
-  swLogMsg (stderr, message);						\
+  snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__); \
+  swLogMsg (stderr, message); \
+}
+
+#define INFO(...) \
+{ \
+  char message[MAXLOGMSG + 1]; \
+  snprintf (message, MAXLOGMSG,  __VA_ARGS__); \
+  swLogMsg (stdout, message); \
 }
 
 /* Use these to report progress (indents with tabs by level, doesn't show percent done if 0),
