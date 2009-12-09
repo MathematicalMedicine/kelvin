@@ -1021,7 +1021,11 @@ void
 usr1SignalHandler (int signal)
 {
   signalSeen = 1;
-  //  swLogPeaks ("Ding!");
+#ifdef DMTRACK
+  swLogPeaks ("Ding!");
+#else
+  printf ("Ding!");
+#endif
 }
 
 void
