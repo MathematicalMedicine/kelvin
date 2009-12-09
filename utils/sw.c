@@ -84,6 +84,8 @@ then #include sw.h in your source code, and link with sw.o.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <time.h>
+#include <stdarg.h>
 #ifdef TELLRITA
 #include <netdb.h>
 #include <netinet/in.h>
@@ -91,6 +93,10 @@ then #include sw.h in your source code, and link with sw.o.
 #include "sw.h"
 #include "hashtab.h"
 #include "lookupa.h"
+
+#ifndef MAX
+#define MAX(m,n) ((m)>=(n)?(m):(n))
+#endif
 
 long currentVMK, maximumPMK = -1;
 
@@ -282,7 +288,7 @@ swDumpOutput (struct swStopwatch *theStopwatch, char *appendText)
      (unsigned long) theStopwatch->swAccumRUSelf.ru_minflt + theStopwatch->swAccumRUChildren.ru_minflt,
      (unsigned long) theStopwatch->swAccumRUSelf.ru_majflt + theStopwatch->swAccumRUChildren.ru_majflt,
      appendText);
-  swLogMsg (buffer);
+  swLogMsg (stdout, buffer);
   return;
 }
 
@@ -700,12 +706,12 @@ swLogPeaks (char *reason)
 	   "Count malloc:%d, free:%d, realloc OK:%d, realloc move:%d, realloc free:%d, max depth:%d, max recycles:%d",
 	   countMalloc, countFree, countReallocOK, countReallocMove,
 	   countReallocFree, maxListDepth, maxRecycles);
-  swLogMsg (messageBuffer);
+  swLogMsg (stdout, messageBuffer);
   sprintf (messageBuffer,
 	   "Size malloc:%g, free:%g, realloc OK:%g, realloc move:%g, realloc free:%g, current:%g, peak:%g",
 	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
 	   totalReallocFree, currentAlloc, peakAlloc);
-  swLogMsg (messageBuffer);
+  swLogMsg (stdout, messageBuffer);
   swStart (internalDMSW);
   return;
 }
@@ -742,12 +748,12 @@ swDumpBlockUse ()
 	   "Count malloc: %d, free: %d, realloc OK: %d, realloc move: %d, realloc free: %d, max depth: %d",
 	   countMalloc, countFree, countReallocOK, countReallocMove,
 	   countReallocFree, maxListDepth);
-  swLogMsg (messageBuffer);
+  swLogMsg (stdout, messageBuffer);
   sprintf (messageBuffer,
 	   "Size malloc: %g, free: %g, realloc OK: %g, realloc move: %g, realloc free: %g, current: %g, peak: %g",
 	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
 	   totalReallocFree, currentAlloc, peakAlloc);
-  swLogMsg (messageBuffer);
+  swLogMsg (stdout, messageBuffer);
 
   fprintf (stderr, "Memory blocks allocated:\n    Size      Count\n");
   for (i = 0; i < MAXSMALLBLOCK; i++)
@@ -828,7 +834,7 @@ swMalloc (size_t size, char *fileName, int lineNo)
 	sprintf (messageBuffer,
 		 "Block of size %lu exceeds %dMb, not tracked", size,
 		 MAXLARGEBLOCK);
-	swLogMsg (messageBuffer);
+	swLogMsg (stdout, messageBuffer);
       }
     }
   }
@@ -887,7 +893,7 @@ swRealloc (void *pBlock, size_t newSize, char *fileName, int lineNo)
 	sprintf (messageBuffer,
 		 "Block of size %lu exceeds %dMb, not tracked", newSize,
 		 MAXLARGEBLOCK);
-	swLogMsg (messageBuffer);
+	swLogMsg (stdout, messageBuffer);
       }
     }
   }
@@ -955,17 +961,92 @@ udpSend (char *hostName, int serverPort, char *message)
 #endif
 
 void
-swLogMsg (char *message)
+swLogMsg (FILE *stream, char *message)
 {
-  char messageBuffer[MAXUDPMSG];
+  char udpBuffer[MAXUDPMSG];
+  time_t nowSec;
+  struct tm *nowTm;
 
-  sprintf (messageBuffer, "PID: %d, %s\n", (int) getpid (), message);
+  nowSec = time (NULL);
+  nowTm = localtime(&nowSec);
+  fprintf (stream, "%02d/%02d/%02d %02d:%02d:%02d, %s\n", nowTm->tm_year - 100, nowTm->tm_mon, nowTm->tm_mday,
+	   nowTm->tm_hour, nowTm->tm_min, nowTm->tm_sec, message);
+  snprintf (udpBuffer, MAXUDPMSG, "PID: %d, %s\n", (int) getpid (), message);
 #ifdef TELLRITA
+  // Don't need timestamp here because it'll show up with its own
   if (udpSend ("levi-montalcini.ccri.net", 4950, messageBuffer) ==
-      EXIT_FAILURE) messageBuffer[0] = 'p'; /* Yeah, it's embarassing */
+      EXIT_FAILURE) udpBuffer[0] = 'p'; /* Yeah, it's embarassing */
 #endif
-  fprintf (stdout, "%s", messageBuffer);
   return;
+}
+
+#define MAXPROGRESSLEVELS 8
+
+struct progressMessage {
+  time_t eventTime;
+  int percentDone;
+  char seen;
+  char text[MAXLOGMSG + 1];
+};
+
+struct progressMessage progressLevels[MAXPROGRESSLEVELS + 1];
+time_t swLogStartTime = 0;
+int logProgressDelayMinutes = 0;
+int logProgressLevel = MAXPROGRESSLEVELS;
+int swLogMaxUsedLevels = 0;
+
+void
+swLogTimedProgress() {
+  int i;
+
+  for (i=0; i< MAX(swLogMaxUsedLevels, logProgressLevel); i++)
+    if (progressLevels[i].seen == FALSE) {
+      swLogMsg (stderr, progressLevels[i].text);
+      progressLevels[i].seen = TRUE;
+    }
+}
+
+void 
+swLogProgress(int level, float percentDone, char *format, ...) {
+  int length;
+  char tabs[MAXPROGRESSLEVELS];
+  char *pMessage = progressLevels[level].text;
+  va_list argp;
+
+  if (swLogMaxUsedLevels < level)
+    swLogMaxUsedLevels = level;
+
+  if (swLogStartTime == 0)
+    swLogStartTime = time (NULL);
+
+  progressLevels[level].eventTime = time (NULL) - swLogStartTime;
+  progressLevels[level].percentDone = percentDone;
+  progressLevels[level].seen = FALSE;
+
+  if (level >= MAXPROGRESSLEVELS)
+    level = MAXPROGRESSLEVELS - 1;
+  memset (tabs, '\t', MAXPROGRESSLEVELS);
+  tabs[level] = '\0';
+  if (progressLevels[level].percentDone > 0)
+    pMessage += length = snprintf (progressLevels[level].text, MAXLOGMSG, "%sat %ds (~%2d%%), ",
+				   tabs, (int) progressLevels[level].eventTime,
+				   progressLevels[level].percentDone);
+  else
+    pMessage += length = snprintf (progressLevels[level].text, MAXLOGMSG, "%sat %ds, ",
+				   tabs, (int) progressLevels[level].eventTime);
+  
+  va_start (argp, format);
+  vsnprintf (pMessage, MAXLOGMSG - length, format, argp);
+  va_end (argp);
+
+  /* If we're not dumping everything the moment it happens, then
+     skip any output */
+  if (logProgressDelayMinutes > 0 || level > logProgressLevel)
+    return;
+
+  swLogMsg (stderr, progressLevels[level].text);
+  progressLevels[level].seen = TRUE;
+
 }
 
 int procSMapWorks = TRUE;
@@ -1021,6 +1102,7 @@ void
 usr1SignalHandler (int signal)
 {
   signalSeen = 1;
+  swDumpM (overallSW);
 #ifdef DMTRACK
   swLogPeaks ("Ding!");
 #else
@@ -1033,18 +1115,18 @@ quitSignalHandler (int signal)
 {
   char messageBuffer[MAXSWMSG];
 
-  swDumpM (overallSW);
+  signalSeen = 1;
 #ifdef DMTRACK
   sprintf (messageBuffer,
 	   "Count malloc: %d, free: %d, realloc OK: %d, realloc move: %d, realloc free: %d, max depth: %d, max recycles: %d",
 	   countMalloc, countFree, countReallocOK, countReallocMove,
 	   countReallocFree, maxListDepth, maxRecycles);
-  swLogMsg (messageBuffer);
+  swLogMsg (stdout, messageBuffer);
   sprintf (messageBuffer,
 	   "Size malloc: %g, free: %g, realloc OK: %g, realloc move: %g, realloc free: %g, current: %g, peak: %g",
 	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
 	   totalReallocFree, currentAlloc, peakAlloc);
-  swLogMsg (messageBuffer);
+  swLogMsg (stdout, messageBuffer);
 #endif
 }
 
@@ -1091,18 +1173,16 @@ main (int argc, char *argv[])
   int i, j, k, l, m, n;
   char messageBuffer[MAXSWMSG];
 
-  sprintf (messageBuffer, "At %s(%s %s)%d: %s", __FILE__, __DATE__, __TIME__,
-	   __LINE__, "starting run");
-  swLogMsg (messageBuffer);
+  STEP (0, "Initializing");
 
 #ifdef DMTRACK
 #warning "Dynamic memory usage dumping is turned on, so performance will be poor!"
-  swLogMsg
-    ("Dynamic memory usage dumping is turned on, so performance will be poor!\n");
+  WARNING("Dynamic memory usage dumping is turned on, so performance will be poor!");
 #endif
 
   /* Create the stopwatches we'll be using for this example... */
 
+  SUBSTEP(0, "Creating stopwatches");
   overallSW = swCreate ("overall");
   primeSW = swCreate ("prime");
   iterateSW = swCreate ("iterations");
@@ -1117,6 +1197,7 @@ main (int argc, char *argv[])
 
   pid_t childPID;
 
+  SUBSTEP(0, "Forking child process");
   childPID = fork ();
   if (childPID == 0) {
     pid_t parentPID;
@@ -1132,33 +1213,39 @@ main (int argc, char *argv[])
   struct sigaction usr1Action, quitAction;
   sigset_t usr1BlockMask, quitBlockMask;
 
+  SUBSTEP(0, "Setting-up handlers");
+  DETAIL(0, "SIGUSR1 handler");
   sigfillset (&usr1BlockMask);
   usr1Action.sa_handler = usr1SignalHandler;
   usr1Action.sa_mask = usr1BlockMask;
   usr1Action.sa_flags = 0;
   sigaction (SIGUSR1, &usr1Action, NULL);
+  DETAIL(0, "SIGQUIT handler");
   sigfillset (&quitBlockMask);
   quitAction.sa_handler = quitSignalHandler;
   quitAction.sa_mask = quitBlockMask;
   quitAction.sa_flags = 0;
   sigaction (SIGQUIT, &quitAction, NULL);
 
-  fprintf (stderr,
+  fprintf (stdout,
 	   "To force a dump of stats, type CTRL-\\ (dangerous and terse but always works)\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "or type \"kill -%d %d\" (safe and thorough, but requires program cooperation).\n",
 	   SIGUSR1, getpid ());
 
   /* Start the overall stopwatch so we have the resource utilization info for
      the entire run of the program. */
 
+  SUBSTEP(0, "Starting overall timer");
   swStart (overallSW);
 
   /* Now let's loop over our "hotspot" code (finding primes).
      primeSW will be the sum of sqrtSW + iterateSW + loop cost. */
 
+  STEP(0, "Beginning tests");
+  SUBSTEP(0, "Computing primes");
   printf
-    ("Computing primes between 1000000000 and 1000200000 responding to SIGUSR1-set flag...\n");
+    ("Computing primes between 1000000000 and 1000200000 responding to SIGQUIT-set flag...\n");
   swStart (primeSW);
   k = 0;
   for (i = 1000000000; i < 1000200000; i++) {
@@ -1171,7 +1258,7 @@ main (int argc, char *argv[])
        only modifying a volatile flag in the service routine, and then
        testing for that at our leisure in the executing code. */
     if (signalSeen) {
-      swDumpM (overallSW);
+      DETAIL(((i - 1000000000) * 100 / 200000), "Computing next prime after %d", i);
       signalSeen = 0;
     }
 
@@ -1185,9 +1272,11 @@ main (int argc, char *argv[])
     }
     swStop (iterateSW);
   }
+  SUBSTEP(0, "Primes computed");
   printf ("There are %d of them, and the last is %d\n", k, l);
   swStop (primeSW);
 
+  SUBSTEP(0, "Computing fibonacci numbers");
   /* Now invoke a separate function like fibonacci. */
   printf
     ("Computing fibonacci numbers up to the 32nd responding to SIGUSR1-set flag...\n");
@@ -1199,6 +1288,7 @@ main (int argc, char *argv[])
   /* Finally show some separate accumulation of elapsed time. restSW
      will be the sum of sleepSW and napSW. */
 
+  SUBSTEP(0, "Testing timer accumulation and memory tracking");
   printf
     ("Sleeping 21 seconds while marking memory in 200M and 1K chunks, ignoring SIGUSR1-set flag...\n");
   swStart (restSW);
@@ -1232,6 +1322,7 @@ main (int argc, char *argv[])
     p[0] = swRealloc (p[0], i * 1024 * 1024, __FILE__, __LINE__);
   }
 
+  STEP(0, "Displaying results");
   /* All done, so stop overall stopwatch and display results. */
 
   swStop (overallSW);
@@ -1258,7 +1349,7 @@ main (int argc, char *argv[])
   swLogPeaks ("End of run");
 #endif
 
-  swLogMsg ("finished run");
+  swLogMsg (stdout, "finished run");
   return 0;
 }
 
