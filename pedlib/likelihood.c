@@ -393,9 +393,6 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	  KLOG (LOGLIKELIHOOD, LOGWARNING,
 		"Pedigree %s has likelihood %G thats too small.\n",
 		pPedigree->sPedigreeID, pPedigree->likelihood);
-	  fprintf (stderr,
-		   "Pedigree %s has likelihood %e thats too small.\n",
-		   pPedigree->sPedigreeID, pPedigree->likelihood);
 	  if (modelOptions->polynomial) {
 	    fprintf (stderr, "Polynomial terms (depth of 1):\n");
 	    expTermPrinting (stderr, pPedigree->likelihoodPolynomial, 1);
