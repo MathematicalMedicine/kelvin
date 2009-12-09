@@ -82,34 +82,34 @@ void kelvinInit (int argc, char *argv[])
 #undef _OPENMP
 #warning "Cannot use OpenMP when using internal statistical functions.");
   sprintf (messageBuffer, "OpenMP is DISABLED when using internal statistical functions.");
-swLogMsg (stdout, messageBuffer);
+  swLogMsg (stdout, messageBuffer);
 #endif
 #else
 #ifdef _OPENMP
   sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", omp_get_num_threads ());
-swLogMsg (stdout, messageBuffer);
+  swLogMsg (stdout, messageBuffer);
 #endif
 #endif
 #else
-  swLogMsg ("Using internal statistical functions instead of GNU Scientific Library (GSL)");
+  swLogMsg (stdout, "Using internal statistical functions instead of GNU Scientific Library (GSL)");
 #ifdef _OPENMP
 #undef _OPENMP
 #warning "Cannot use OpenMP when using internal statistical functions.");
   sprintf (messageBuffer, "OpenMP is DISABLED when using internal statistical functions.");
-swLogMsg (stdout, messageBuffer);
+  swLogMsg (stdout, messageBuffer);
 #endif
 #endif
 
   swStart (overallSW);
 #ifdef GCCOPT
   sprintf (messageBuffer, "GCC optimization level %d enabled", GCCOPT);
-swLogMsg (stdout, messageBuffer);
+  swLogMsg (stdout, messageBuffer);
 #else
-swLogMsg (stdout, "GCC optimization disabled (or GCCOPT not defined)");
+  swLogMsg (stdout, "GCC optimization disabled (or GCCOPT not defined)");
 #endif
 
 #ifdef PTMALLOC3
-swLogMsg (stdout, "Using alternative allocator ptmalloc3");
+  swLogMsg (stdout, "Using alternative allocator ptmalloc3");
 #endif
 
   fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, (int) getpid ());
