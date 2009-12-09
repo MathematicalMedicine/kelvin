@@ -33,11 +33,11 @@ CC := gcc
 GCCOPT := 2
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
-USE_OPENMP := yes
+# USE_OPENMP := yes
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
-USE_GSL := yes
+# USE_GSL := yes
 
 ## Enable use of ptmalloc3. Don't forget to set LIBDIR (above) accordingly.
 ## Not available on OSX.
@@ -80,12 +80,14 @@ ifeq ($(strip $(USE_OPENMP)), yes)
   ifeq ($(strip $(CC)), gcc)
     # Compiler flags for GCC
     CFLAGS += -fopenmp
-    ADD_LDFLAGS += -fopenmp -lpthread
+    USE_PTHREAD := yes
+    ADD_LDFLAGS += -fopenmp
   else
     ifeq ($(strip $(CC)), icc)
       # Compiler flags for ICC
       CFLAGS += -openmp 
-      ADD_LDFLAGS += -openmp -lpthread
+      USE_PTHREAD := yes
+      ADD_LDFLAGS += -openmp
     endif
   endif
 endif
@@ -99,11 +101,17 @@ endif
 # If ptmalloc3 support has been enabled
 ifeq ($(strip $(USE_PTMALLOC3)), yes)
   ADD_LDFLAGS += -lptmalloc3
+  USE_PTHREAD := yes
 endif
 
 # If Hoard support has been enabled
 ifeq ($(strip $(USE_HOARD)), yes)
   ADD_LDFLAGS += -lhoard
+endif
+
+# If libpthread is required, either for OpenMP or libptmalloc3
+ifeq ($(strip $(USE_PTHREAD)), yes)
+  ADD_LDFLAGS += -lpthread
 endif
 
 KVNLIBDIR := $(shell pwd)/lib
@@ -165,7 +173,6 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 	  $(BINDIR)/compileDL.sh
 
 kelvin : libs $(KOBJS) $(OBJS) $(INCS)
-	echo "CFLAGS is $(CFLAGS)"
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS) $(INCS)
@@ -176,7 +183,6 @@ seq_update/calc_updated_ppl :
 	+make -C seq_update -f Makefile calc_updated_ppl
 
 %.o : %.c $(INCS)
-	echo "USE_GSL is '$(USE_GSL)'"
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
 
 .PHONY : libs
