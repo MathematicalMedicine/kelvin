@@ -86,15 +86,19 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
 
   INFO - A normal informational message to stdout. Returns success.
 
-  The next three types are progress advisories that may or may not be displayed on stdout 
-  depending upon their significance and the volume of progress advisories requested by the user.
-  Only the latest advisory in each of these three categories is kept. Two different directives
-  are used to determine which advisories are displayed. The first, LogProgressDelayMinutes <minutes>,
-  determines the delay between progress advisories. If it is set to zero (0), they are displayed
-  as they occur. The second, LogProgressLevel [step|substep|detail], determines the lowest level
-  displayed.
+  The next type is a progress advisory that always displays to stdout.
 
   STEP - A major user-viewpoint step such as start, finish and marker set change.
+
+  The next two types are optional progress advisories that may be displayed on stdout 
+  depending upon their timing and the volume of progress advisories requested by the user.
+  Only the most recent advisory in each of these these categories is kept. Two global 
+  variables are used to determine which advisories are displayed. logProgressDelaySeconds
+  determines the delay between optional progress advisories. If it is set to zero (0), 
+  they are displayed as they occur. logProgressLevel determines the lowest optional level
+  displayed, with 1 representing a SUBSTEP and 2 DETAIL. Note that you can have even more 
+  excruciating detail by invoking swLogProgress without a macro specifying levels beyond 2.
+
   SUBSTEP - A lesser user/analyst-viewpoint step such as position change.
   DETAIL - A low-level analyst-viewpoint step such as trait/marker/alternative likelihood 
   phase, xmission matrix build or polynomial load.
@@ -150,7 +154,7 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
 #define DETAIL(PERCENTDONE, ...) swLogProgress(2, PERCENTDONE, __VA_ARGS__)
 
 extern volatile sig_atomic_t swProgressRequestFlag;
-extern int swProgressDelayMinutes;
+extern int swProgressDelaySeconds;
 extern int swProgressLevel;
 
 void swStartProgressWakeUps();

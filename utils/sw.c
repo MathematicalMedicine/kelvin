@@ -69,7 +69,7 @@ DO NOT USE THESE IN SW.C because you'll get recurive looping.
 The test main() serves as an example of use. To build a standalone test 
 version:
 
-$ gcc -lm -o swTest sw.c -DMAIN
+$ gcc -lm -o swTest sw.c -lpthread -lm -DMAIN
 $ ./swTest
 
 To build an object you can link into your program:
@@ -97,6 +97,9 @@ then #include sw.h in your source code, and link with sw.o.
 
 #ifndef MAX
 #define MAX(m,n) ((m)>=(n)?(m):(n))
+#endif
+#ifndef MIN
+#define MIN(m,n) ((m)>=(n)?(n):(m))
 #endif
 
 long currentVMK, maximumPMK = -1;
@@ -997,13 +1000,16 @@ int swLogMaxUsedLevels = 0;
 
 void
 swLogTimedProgress() {
-  int i;
+  int i, nothingShown = TRUE;
 
-  for (i=0; i< MAX(swLogMaxUsedLevels, swProgressLevel); i++)
+  for (i=0; i< MIN(swLogMaxUsedLevels + 1, swProgressLevel); i++)
     if (progressLevels[i].seen == FALSE) {
       swLogMsg (stderr, progressLevels[i].text);
+      nothingShown = FALSE;
       progressLevels[i].seen = TRUE;
     }
+  if (nothingShown)
+    swLogMsg (stderr, "\t\t\t--- No further progress information available ---");
 }
 
 void 
@@ -1041,19 +1047,20 @@ swLogProgress(int level, float percentDone, char *format, ...) {
 
   /* If we're not dumping everything the moment it happens, then
      skip any output */
-  if (swProgressDelayMinutes > 0 || level > swProgressLevel)
-    return;
+  if (level > 0)
+    if (swProgressDelaySeconds > 0 || level > swProgressLevel)
+      return;
 
   swLogMsg (stderr, progressLevels[level].text);
   progressLevels[level].seen = TRUE;
 
 }
 
-/// Global flag to indicate that some sort of progress advisory has been requested.
+/// Global flag to indicate that a progress advisory has been requested.
 volatile sig_atomic_t swProgressRequestFlag = FALSE;
 
 /// Global number of minutes to delay between progress updates.
-int swProgressDelayMinutes = 0;
+int swProgressDelaySeconds = 0;
 
 /**
   Code for the progress thread.  We start by setting the request flag, 
@@ -1068,34 +1075,28 @@ void
   int sleepSeconds;
 
   swProgressRequestFlag = TRUE;
-  sleepSeconds = swProgressDelayMinutes * 60;
-  while (1) {
-    sleep (sleepSeconds);
-    if (swProgressRequestFlag == TRUE) {
-      // We need to handle the request personally
-      swProgressRequestFlag = FALSE;
-      swLogTimedProgress ();
-      // Request handled, sleep nearly a full cycle with flag off
-      sleep (swProgressDelayMinutes * 56);
-      // Give someone else a chance before we try ourselves
-      swProgressRequestFlag = TRUE;
-      sleepSeconds = swProgressDelayMinutes * 4;
-    } else {
-      // Someone else handled the the request
-      sleepSeconds = swProgressDelayMinutes * 60;
-      swProgressRequestFlag = TRUE;
-    }
+  sleepSeconds = swProgressDelaySeconds;
+  while (sleepSeconds > 0) {
+    sleep (sleepSeconds - 1);
+    swProgressRequestFlag = TRUE;
+    sleep (1); // Give any main program loop a moment to provide status
+    swProgressRequestFlag = FALSE;
+    swLogTimedProgress ();
   }
 }
+
+/// Timer thread to advise of progress
+pthread_t progressWakeUpThread = 0;
 
 /* Start a thread to wake-up and set a progress display flag at some interval. */
 void
 swStartProgressWakeUps (int seconds)
 {
-  pthread_t progressWakeUpThread;
+  swProgressDelaySeconds = seconds;
 
-  if (pthread_create (&progressWakeUpThread, NULL, progressSignalHandler, NULL))
-    WARNING("Failed to create progress request thread, no interval-based progress advisories will be shown");
+  if (progressWakeUpThread == 0)
+    if (pthread_create (&progressWakeUpThread, NULL, progressSignalHandler, NULL))
+      WARNING("Failed to create progress request thread, no interval-based progress advisories will be shown");
 }
 
 int procSMapWorks = TRUE;
@@ -1138,46 +1139,9 @@ long swGetMaximumPMK(void) {
 #ifdef MAIN
 
 #include <math.h>
-#include <signal.h>
 
 struct swStopwatch *overallSW, *primeSW, *sqrtSW, *iterateSW, *fibSW, *restSW,
   *sleepSW, *napSW;
-
-/* Stuff for periodic timer signal. We use this to display statistics
-   within cooperative code.  The same technique could be used to toggle
-   debug output dynamically. */
-volatile sig_atomic_t signalSeen = 0;
-void
-usr1SignalHandler (int signal)
-{
-  signalSeen = 1;
-  swDumpM (overallSW);
-#ifdef DMTRACK
-  swLogPeaks ("Ding!");
-#else
-  printf ("Ding!");
-#endif
-}
-
-void
-quitSignalHandler (int signal)
-{
-  char messageBuffer[MAXSWMSG];
-
-  signalSeen = 1;
-#ifdef DMTRACK
-  sprintf (messageBuffer,
-	   "Count malloc: %d, free: %d, realloc OK: %d, realloc move: %d, realloc free: %d, max depth: %d, max recycles: %d",
-	   countMalloc, countFree, countReallocOK, countReallocMove,
-	   countReallocFree, maxListDepth, maxRecycles);
-  INFO(messageBuffer);
-  sprintf (messageBuffer,
-	   "Size malloc: %g, free: %g, realloc OK: %g, realloc move: %g, realloc free: %g, current: %g, peak: %g",
-	   totalMalloc, totalFree, totalReallocOK, totalReallocMove,
-	   totalReallocFree, currentAlloc, peakAlloc);
-  INFO(messageBuffer);
-#endif
-}
 
 /* This is an example of recursive code that needs to be re-written in
    order to eliminate multiple exit points. */
@@ -1195,9 +1159,9 @@ fibonacci (int i)
 
   /* See if we should dump our overall timer. We are considerate
      of both the executing code and the request for information. */
-  if (signalSeen) {
-    swDumpM (overallSW);
-    signalSeen = 0;
+  if (swProgressRequestFlag) {
+    DETAIL(0, "Down to %d in fibonacci recursion", i);
+    swProgressRequestFlag = FALSE;
   }
 
   swStart (fibSW);
@@ -1222,6 +1186,8 @@ main (int argc, char *argv[])
   int i, j, k, l, m, n;
   char messageBuffer[MAXSWMSG];
 
+  swStartProgressWakeUps (10);
+
   STEP (0, "Initializing");
 
 #ifdef DMTRACK
@@ -1241,45 +1207,6 @@ main (int argc, char *argv[])
   sleepSW = swCreate ("sleep");
   napSW = swCreate ("nap");
 
-  /* Fork a child that loops sleeping several seconds and then signalling 
-     us with SIGUSR1. */
-
-  pid_t childPID;
-
-  SUBSTEP(0, "Forking child process");
-  childPID = fork ();
-  if (childPID == 0) {
-    pid_t parentPID;
-    parentPID = getppid ();
-    while (1) {
-      sleep (10);
-      if (getppid () != parentPID) exit;
-      kill (getppid (), SIGUSR1);
-    }
-  }
-
-  /* Setup signal handlers for SIGUSR1 and SIGQUIT (CTRL-\). */
-  struct sigaction usr1Action, quitAction;
-  sigset_t usr1BlockMask, quitBlockMask;
-
-  SUBSTEP(0, "Setting-up handlers");
-  DETAIL(0, "SIGUSR1 handler");
-  sigfillset (&usr1BlockMask);
-  usr1Action.sa_handler = usr1SignalHandler;
-  usr1Action.sa_mask = usr1BlockMask;
-  usr1Action.sa_flags = 0;
-  sigaction (SIGUSR1, &usr1Action, NULL);
-  DETAIL(0, "SIGQUIT handler");
-  sigfillset (&quitBlockMask);
-  quitAction.sa_handler = quitSignalHandler;
-  quitAction.sa_mask = quitBlockMask;
-  quitAction.sa_flags = 0;
-  sigaction (SIGQUIT, &quitAction, NULL);
-
-  INFO("To force a dump of stats, type CTRL-\\ (dangerous and terse but always works)");
-  INFO("or type \"kill -%d %d\" (safe and thorough, but requires program cooperation).",
-	   SIGUSR1, getpid ());
-
   /* Start the overall stopwatch so we have the resource utilization info for
      the entire run of the program. */
 
@@ -1289,12 +1216,20 @@ main (int argc, char *argv[])
   /* Now let's loop over our "hotspot" code (finding primes).
      primeSW will be the sum of sqrtSW + iterateSW + loop cost. */
 
-  STEP(0, "Beginning tests");
+  STEP(0, "Performing tests");
+  SUBSTEP(0, "Testing progress advisory wake-ups");
+  DETAIL(0, "Sleeping for 25 seconds");
+  sleep (25);
+  DETAIL(0, "Sleeping for 2 seconds");
+  sleep (2);
+  DETAIL(0, "Sleeping for 11 seconds");
+  sleep (11);
+
   SUBSTEP(0, "Computing primes");
-  INFO ("Computing primes between 1000000000 and 1000200000 responding to SIGQUIT-set flag...");
+  INFO ("Computing primes between 1000000000 and 1000300000 responding to progress flag...");
   swStart (primeSW);
   k = 0;
-  for (i = 1000000000; i < 1000200000; i++) {
+  for (i = 1000000000; i < 1000300000; i++) {
     swStart (sqrtSW);
     k = sqrt (i) + 1;
     swStop (sqrtSW);
@@ -1303,9 +1238,9 @@ main (int argc, char *argv[])
        of both the executing code and the request for information by
        only modifying a volatile flag in the service routine, and then
        testing for that at our leisure in the executing code. */
-    if (signalSeen) {
-      DETAIL(((i - 1000000000) * 100 / 200000), "Computing next prime after %d", i);
-      signalSeen = 0;
+    if (swProgressRequestFlag) {
+      DETAIL(((i - 1000000000) * 100 / 300000), "Computing next prime after %d", i);
+      swProgressRequestFlag = FALSE;
     }
 
     swStart (iterateSW);
@@ -1324,7 +1259,7 @@ main (int argc, char *argv[])
 
   SUBSTEP(0, "Computing fibonacci numbers");
   /* Now invoke a separate function like fibonacci. */
-  INFO ("Computing fibonacci numbers up to the 32nd responding to SIGUSR1-set flag...");
+  INFO ("Computing fibonacci numbers up to the 32nd responding to progress flag...");
   for (i = 1; i <= 32; i++) {
     j = fibonacci (i);
     printf ("%d: %d\n", i, j);
@@ -1334,13 +1269,13 @@ main (int argc, char *argv[])
      will be the sum of sleepSW and napSW. */
 
   SUBSTEP(0, "Testing timer accumulation and memory tracking");
-  INFO ("Sleeping 21 seconds while marking memory in 200M and 1K chunks, ignoring SIGUSR1-set flag...");
+  INFO ("Sleeping 28 seconds while marking memory in 200M and 1K chunks, ignoring progress flag...");
   swStart (restSW);
   char *p[7], *q[7];
 
   for (i = 0; i < 7; i++) {
     swStart (sleepSW);
-    sleep (2);
+    sleep (3);
     p[i] = (char *) swMalloc (256 * 1024 * 1024, __FILE__, __LINE__);
     memset (p[i], 'z', 256 * 1024 * 1024);
     swStop (sleepSW);
@@ -1349,10 +1284,6 @@ main (int argc, char *argv[])
     q[i] = (char *) malloc (4 * 1024);
     memset (q[i], 'Z', 4 * 1024);
     swStop (napSW);
-    if (signalSeen) {
-      swDumpM (overallSW);
-      signalSeen = 0;
-    }
   }
   for (i = 0; i < 7; i++) {
     swFree (p[i], __FILE__, __LINE__);
