@@ -86,6 +86,7 @@ then #include sw.h in your source code, and link with sw.o.
 #include <unistd.h>
 #include <time.h>
 #include <stdarg.h>
+#include <pthread.h>
 #ifdef TELLRITA
 #include <netdb.h>
 #include <netinet/in.h>
@@ -990,16 +991,15 @@ struct progressMessage {
 };
 
 struct progressMessage progressLevels[MAXPROGRESSLEVELS + 1];
-time_t swLogStartTime = 0;
-int logProgressDelayMinutes = 0;
-int logProgressLevel = MAXPROGRESSLEVELS;
+time_t logStartTime = 0;
+int swProgressLevel = MAXPROGRESSLEVELS;
 int swLogMaxUsedLevels = 0;
 
 void
 swLogTimedProgress() {
   int i;
 
-  for (i=0; i< MAX(swLogMaxUsedLevels, logProgressLevel); i++)
+  for (i=0; i< MAX(swLogMaxUsedLevels, swProgressLevel); i++)
     if (progressLevels[i].seen == FALSE) {
       swLogMsg (stderr, progressLevels[i].text);
       progressLevels[i].seen = TRUE;
@@ -1016,10 +1016,10 @@ swLogProgress(int level, float percentDone, char *format, ...) {
   if (swLogMaxUsedLevels < level)
     swLogMaxUsedLevels = level;
 
-  if (swLogStartTime == 0)
-    swLogStartTime = time (NULL);
+  if (logStartTime == 0)
+    logStartTime = time (NULL);
 
-  progressLevels[level].eventTime = time (NULL) - swLogStartTime;
+  progressLevels[level].eventTime = time (NULL) - logStartTime;
   progressLevels[level].percentDone = percentDone;
   progressLevels[level].seen = FALSE;
 
@@ -1041,12 +1041,61 @@ swLogProgress(int level, float percentDone, char *format, ...) {
 
   /* If we're not dumping everything the moment it happens, then
      skip any output */
-  if (logProgressDelayMinutes > 0 || level > logProgressLevel)
+  if (swProgressDelayMinutes > 0 || level > swProgressLevel)
     return;
 
   swLogMsg (stderr, progressLevels[level].text);
   progressLevels[level].seen = TRUE;
 
+}
+
+/// Global flag to indicate that some sort of progress advisory has been requested.
+volatile sig_atomic_t swProgressRequestFlag = FALSE;
+
+/// Global number of minutes to delay between progress updates.
+int swProgressDelayMinutes = 0;
+
+/**
+  Code for the progress thread.  We start by setting the request flag, 
+  then we wait for the interval. If the flag is still set at the end of 
+  the interval, we need to provide whatever progress information we can 
+  ourselves. Otherwise, something in the program has given an update, and 
+  we can go back to sleep for a while.
+*/
+void
+*progressSignalHandler ()
+{
+  int sleepSeconds;
+
+  swProgressRequestFlag = TRUE;
+  sleepSeconds = swProgressDelayMinutes * 60;
+  while (1) {
+    sleep (sleepSeconds);
+    if (swProgressRequestFlag == TRUE) {
+      // We need to handle the request personally
+      swProgressRequestFlag = FALSE;
+      swLogTimedProgress ();
+      // Request handled, sleep nearly a full cycle with flag off
+      sleep (swProgressDelayMinutes * 56);
+      // Give someone else a chance before we try ourselves
+      swProgressRequestFlag = TRUE;
+      sleepSeconds = swProgressDelayMinutes * 4;
+    } else {
+      // Someone else handled the the request
+      sleepSeconds = swProgressDelayMinutes * 60;
+      swProgressRequestFlag = TRUE;
+    }
+  }
+}
+
+/* Start a thread to wake-up and set a progress display flag at some interval. */
+void
+swStartProgressWakeUps (int seconds)
+{
+  pthread_t progressWakeUpThread;
+
+  if (pthread_create (&progressWakeUpThread, NULL, progressSignalHandler, NULL))
+    WARNING("Failed to create progress request thread, no interval-based progress advisories will be shown");
 }
 
 int procSMapWorks = TRUE;

@@ -152,11 +152,11 @@ void logMsg (unsigned int type, int level, const char *format, ...);
  * cause program termination, and are always produced on output.
  **********************************************************************/
 #define MAXLOGLEVELS 5
-#define LOGFATAL 0
-#define LOGERROR 1
-#define LOGWARNING 2
-#define LOGADVISE 3
-#define LOGDEBUG 4
+#define LOGFATAL 0 /* report to user and abort */
+#define LOGERROR 1 /* report to user but don't abort */
+#define LOGWARNING 2 /* report to user */
+#define LOGADVISE 3 /* allow filtered perusal by user */
+#define LOGDEBUG 4 /* diagnostic runs only */
 
 /**********************************************************************
  * Types of message output. We have 32 independent types of errors
@@ -179,20 +179,34 @@ void logMsg (unsigned int type, int level, const char *format, ...);
  * provide for automatic inclusion of source filename and line number.
  **********************************************************************/
 
+extern char *klog_prefix[]; ///< Prefixes allow message filtering
+extern int klog_diagLevel[]; ///< Levels allow selective diagnostic detail per facility
+
 /**********************************************************************
- * KLOG() invokes an error of a given type at a given level. If the
+ * KLOG() reports an error of a given type at a given level. If the
  * level is LOGFATAL, will also abort.
  * 
  * Invocation:
  *   KLOG(type, level, formatString, args...)
  * No space allowed between KLOG and leading argument paren!
  **********************************************************************/
-#define KLOG(TYPE, LEVEL, ...)                                        \
-{                                                                     \
-  if ((LEVEL == 0) || (TYPE & logFlag[LEVEL - 1])) { \
-    logMsg (TYPE, MAX(LOGERROR,LEVEL), "%s (%d): ", (__FILE__),(__LINE__)); \
-    logMsg (TYPE, LEVEL, __VA_ARGS__);                                \
-  }                                                                   \
+#define KLOGMSGLEN 2048
+#define KLOG(FACILITY, LEVEL, ...) \
+{ \
+  char message[KLOGMSGLEN + 1], *pMessage = message; \
+  pMessage += sprintf (message, "%s at %s:%d, ", klog_prefix[LEVEL], (__FILE__),(__LINE__)); \
+  sprintf (pMessage, __VA_ARGS__); \
+  if (LEVEL <= LOGWARNING) { \
+    swLogMsg (stderr, message); \
+    if (LEVEL == LOGFATAL) \
+      exit (EXIT_FAILURE); \
+  } else { \
+    if (LEVEL == LOGADVISE) \
+      swLogMsg (stdout, message); \
+    else \
+      if (LEVEL <= klog_diagLevel[FACILITY])	\
+	  swLogMsg (stderr, message);		\
+  } \
 }
 
 /**********************************************************************
@@ -205,11 +219,10 @@ void logMsg (unsigned int type, int level, const char *format, ...);
  **********************************************************************/
 #define KCHECK(CONDITION, TYPE, LEVEL, ...)                           \
 {                                                                     \
-  if (!(CONDITION))   				                      \
-   {                                                                  \
-      logMsg (TYPE, MAX(LOGERROR,LEVEL), "%s (%d): ", (__FILE__),(__LINE__));\
-      logMsg (TYPE, LEVEL, __VA_ARGS__);                              \
-    }							              \
+  if (!(CONDITION)) { \
+    logMsg (TYPE, MAX(LOGERROR,LEVEL), "%s at %s:%d, ", klog_prefix[LEVEL], (__FILE__),(__LINE__)); \
+    logMsg (TYPE, LEVEL, __VA_ARGS__);					\
+  }									\
 }
 
 /**********************************************************************
@@ -223,11 +236,10 @@ void logMsg (unsigned int type, int level, const char *format, ...);
  **********************************************************************/
 #define KASSERT(CONDITION, ...)                                       \
 {                                                                     \
-  if (!(CONDITION))   				                      \
-   {                                                                  \
-      logMsg (LOGDEFAULT, LOGERROR, "%s (%d): ", (__FILE__),(__LINE__));\
-      logMsg (LOGDEFAULT, LOGFATAL, __VA_ARGS__);                     \
-    }							              \
+  if (!(CONDITION)) { \
+    logMsg (LOGDEFAULT, LOGERROR, "%s at %s:%d, ", klog_prefix[LOGERROR], (__FILE__),(__LINE__)); \
+    logMsg (LOGDEFAULT, LOGFATAL, __VA_ARGS__);				\
+  }									\
 }
 
 #define KROUND(dbl) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * 10000.0) / 10000.0

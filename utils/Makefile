@@ -18,7 +18,7 @@ pt : pt.c polynomial.c polynomial.h polynomial_internal.h sw.c dists.c $(NOGSL_I
 	gcc pt.c -o pt polynomial.c sw.c $(NOGSL_OBJS) $(CFLAGS) -DPOLYUSE_DL -DPOLYCODE_DL -ldl -lm
 
 sw : sw.c sw.h
-	gcc -DMAIN sw.c -o sw $(CFLAGS) -lm
+	gcc -DMAIN sw.c -o sw $(CFLAGS) -lpthread -lm
 
 sSDHandler : sSDHandler.c sSDHandler.h
 	gcc -DMAIN sSDHandler.c -o sSDHandler

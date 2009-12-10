@@ -43,12 +43,21 @@
  something longer than 32 bits.
 
   @author Alberto Maria Segre - overall content.
-
-  @par Reviewers:
-     Bill Valentine-Cooper, 10/21/09
+  @author Bill Valentine-Cooper - revised.
 
 */
 unsigned int logFlag[MAXLOGLEVELS]; ///< 32 bits of logging flags for each of MAXLOGLEVELS levels
+
+char *klog_prefix[MAXLOGLEVELS] = {
+  "FATAL ERROR (aborting)",
+  "ERROR (attempting to continue)",
+  "WARNING (continuing)",
+  "INFO",
+  "DIAG"
+};
+
+int klog_diagLevel[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+			   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 // Initialize the log facility. LOGDEFAULT errors are on by default.
 void
@@ -98,7 +107,7 @@ logMsg (unsigned int type, int level, const char *format, ...)
   /* If this was a fatal error, dump. Level 0 errors are always checked
    * and are always fatal. */
   if (level == LOGFATAL)
-    exit (ERROR);
+    exit (EXIT_FAILURE);
 }
 
 

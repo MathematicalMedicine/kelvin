@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <signal.h>
 
 #define MAXSWNAME 32
 #define MAXSWMSG 220
@@ -77,8 +78,9 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
   The first two types are always logged immediately to stderr, and are prefaced by a timestamp and
   a keyword that allows easy identification:
 
-  FATAL - A fatal error prefixed by "FATAL ERROR - ABORTING (<module>:<line no>), ". Doesn't return.
-  WARNING - A warning. Prefixed by "WARNING (<module>:<line no>), ". Returns success.
+  FATAL - An integrity error prefixed by "FATAL - ABORTING (<module>:<line no>), ". Doesn't return.
+  ERROR - A user-induced error prefixed by "ERROR - EXITING, ". Doesn't return.
+  WARNING - A warning requiring user attention. Prefixed by "WARNING, ". Returns success.
 
   The next simply prints the message to stdout prefaced by a timestamp:
 
@@ -109,7 +111,17 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
 { \
   int length; \
   char message[MAXLOGMSG + 1], *pMessage = message; \
-  pMessage += length = snprintf (message, MAXLOGMSG, "FATAL ERROR - ABORTING (%s:%d), ", (__FILE__),(__LINE__)); \
+  pMessage += length = snprintf (message, MAXLOGMSG, "FATAL - ABORTING (%s:%d), ", (__FILE__),(__LINE__)); \
+  snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__); \
+  swLogMsg (stderr, message); \
+  exit (EXIT_FAILURE); \
+}
+
+#define ERROR(...) \
+{ \
+  int length; \
+  char message[MAXLOGMSG + 1], *pMessage = message; \
+  pMessage += length = snprintf (message, MAXLOGMSG, "ERROR - EXITING, "); \
   snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__); \
   swLogMsg (stderr, message); \
   exit (EXIT_FAILURE); \
@@ -119,7 +131,7 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
 { \
   int length; \
   char message[MAXLOGMSG + 1], *pMessage = message; \
-  pMessage += length = snprintf (message, MAXLOGMSG, "WARNING (%s:%d), ", (__FILE__),(__LINE__)); \
+  pMessage += length = snprintf (message, MAXLOGMSG, "WARNING, "); \
   snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__); \
   swLogMsg (stderr, message); \
 }
@@ -136,5 +148,11 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
 #define STEP(PERCENTDONE, ...) swLogProgress(0, PERCENTDONE, __VA_ARGS__)
 #define SUBSTEP(PERCENTDONE, ...) swLogProgress(1, PERCENTDONE, __VA_ARGS__)
 #define DETAIL(PERCENTDONE, ...) swLogProgress(2, PERCENTDONE, __VA_ARGS__)
+
+extern volatile sig_atomic_t swProgressRequestFlag;
+extern int swProgressDelayMinutes;
+extern int swProgressLevel;
+
+void swStartProgressWakeUps();
 
 #endif
