@@ -1,3 +1,34 @@
+/**
+@file integrationSupport.c
+
+  Functions supporting maximized logarithm of odds (MOD) calculation 
+  via DCUHRE routines for approximation of a vector of definite integrals 
+  via recursive partitioning into subregions.
+
+  A polynomial representation of the Elston-Stewart likelihood 
+  calculation for a pedigree structure is built in terms of trait 
+  space variables (position, frequency, penetrance) population
+  admixture (alpha) and sometimes linkage disequilibrium (d').
+  Plugging in values for these variables will allow calculation 
+  of the likelihood of the unvariant pedigree genotype given that 
+  set of values, and hence, the likelihood of that set of values.
+  
+  Our primary goal is to determine the peak likelihood of the set of
+  pedigrees with the trait at various positions independent of other
+  variables, one would
+  think that we wouldn't particularly care about the likelihood at 
+  any of the other variables, since ultimately all we'd want is the peak likelihood for 
+  the pedigree at a range of trait positions independent of all other 
+  variabiles. Actually we do care about them since they can give us
+  information about the nature of the 
+
+  Copyright &copy; 2009, Nationwide Children's Research Institute.  All
+  rights reserved.  Permission is hereby given to use this software
+  for non-profit educational purposes only.
+
+  @version $Id$
+
+*/
 #include <float.h>
 #include <math.h>
 
@@ -13,8 +44,31 @@
 #include "integrationSupport.h"
 #include "integrationLocals.h"
 
+// Application globals - globals that transcend the current file (module)
+
 extern LDLoci *pLDLoci;
 
+// Module-wide (file) globals
+
+/**
+
+  One-liner.
+
+  More.
+
+  @author Sang-Cheol Seok
+  @par Reviewers:
+     Bill Valentine-Cooper on 2009-10-30.<br>
+
+  @par Global Inputs
+
+  @par Global Outputs
+
+  @return the new value of secondArg, unless firstArg wasn't positive.
+  @retval -1 firstArg was less than zero
+  @retval 0 firstArg was zero
+
+*/
 int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double vol_region, int *scale)
 {
 
@@ -313,8 +367,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
     /*pPedigreeLocal->likelihood is now computed and now check it */
     if (pPedigreeLocal->likelihood == 0.0) {
-      KLOG (LOGLIKELIHOOD, LOGWARNING, "Pedigree %s has likelihood of 0 or too small.\n", pPedigreeLocal->sPedigreeID);
-      fprintf (stderr, "Pedigree %s has likelihood of 0 or too small.\n", pPedigreeLocal->sPedigreeID);
+      WARNING("Pedigree %s has likelihood of 0 or too small.", pPedigreeLocal->sPedigreeID);
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
 
@@ -655,8 +708,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 
     /*pPedigreeLocal->likelihood is now computed and now check it */
     if (pPedigreeLocal->likelihood == 0.0) {
-      KLOG (LOGLIKELIHOOD, LOGWARNING, "Pedigree %s has likelihood of 0 or too small.\n", pPedigreeLocal->sPedigreeID);
-      fprintf (stderr, "Pedigree %s has likelihood of 0 or too small.\n", pPedigreeLocal->sPedigreeID);
+      WARNING("Pedigree %s has likelihood of 0 or too small.", pPedigreeLocal->sPedigreeID);
       ret = -1;
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
@@ -1885,7 +1937,7 @@ void integrateMain ()
       if (modelOptions->markerAnalysis != FALSE && pLocus1->locusType != LOCUS_TYPE_MARKER)
         continue;
       if ((pLocus1->numAllele <= 1) || ((pLocus1->numAllele == 2) && ((pLocus1->pAlleleFrequency[0] <= ERROR_MARGIN) || (pLocus1->pAlleleFrequency[1] <= ERROR_MARGIN)))) {
-        KLOG (LOGINPUTFILE, LOGWARNING, "Biallelic marker %s has a minor allele frequency less than %g, skipping!\n", pLocus1->sName, ERROR_MARGIN);
+        WARNING("Biallelic marker %s has a minor allele frequency less than %g, skipping!", pLocus1->sName, ERROR_MARGIN);
         continue;
       }
 
@@ -1909,7 +1961,7 @@ void integrateMain ()
         if (pLocus2->locusType != LOCUS_TYPE_MARKER)
           continue;
         if ((pLocus2->numAllele <= 1) || ((pLocus2->numAllele == 2) && ((pLocus2->pAlleleFrequency[0] <= ERROR_MARGIN) || (pLocus2->pAlleleFrequency[1] <= ERROR_MARGIN)))) {
-          KLOG (LOGINPUTFILE, LOGWARNING, "Biallelic marker %s has a minor allele frequency less than %g, skipping!\n", pLocus2->sName, ERROR_MARGIN);
+          WARNING("Biallelic marker %s has a minor allele frequency less than %g, skipping!", pLocus2->sName, ERROR_MARGIN);
           continue;
         }
         savedLocusList.pLocusIndex[1] = loc2;
