@@ -253,5 +253,4 @@ char *get_nonblank_line (char *pLine, int maxLen, FILE * fp, int *pLineNo);
 char *fgetlongs (char **buff, int *bufflen, FILE * fp);
 int permuteLine (char *line, int maxlength);
 
-
 #endif /* __UTILS_H__ */

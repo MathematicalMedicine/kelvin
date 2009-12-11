@@ -996,13 +996,13 @@ struct progressMessage {
 struct progressMessage progressLevels[MAXPROGRESSLEVELS + 1];
 time_t logStartTime = 0;
 int swProgressLevel = MAXPROGRESSLEVELS;
-int swLogMaxUsedLevels = 0;
+int logMaxUsedLevels = 0;
 
 void
 swLogTimedProgress() {
   int i, nothingShown = TRUE;
 
-  for (i=0; i< MIN(swLogMaxUsedLevels + 1, swProgressLevel); i++)
+  for (i=0; i< MIN(logMaxUsedLevels + 1, swProgressLevel); i++)
     if (progressLevels[i].seen == FALSE) {
       swLogMsg (stderr, progressLevels[i].text);
       nothingShown = FALSE;
@@ -1012,15 +1012,41 @@ swLogTimedProgress() {
     swLogMsg (stderr, "\t\t\t--- No further progress information available ---");
 }
 
+char *formatElapsedTime (unsigned int t, char *buffer)
+{
+  unsigned int u /* Seconds less days */, v /* Seconds less days and hours */, w /* Seconds less minutes */;
+  unsigned int d, h, m, s;
+  // s = v - (w = (m = (v = (u - ((h = (u = (t - ((d = t/(24*60*60))*24*60*60))) / (60*60)) *60*60))) / 60) *60);
+  d = t/(24*60*60);
+  u = t - (d*24*60*60);
+  h = u / (60*60);
+  v = u - (h *60*60);
+  m = v / 60;
+  w = m *60;
+  s = v - w;
+  if (d != 0)
+    sprintf (buffer, "%dd%dh%dm%ds", d, h, m, s);
+  else if (h != 0)
+    sprintf (buffer, "%dh%dm%ds", h, m, s);
+    else if (m != 0)
+      sprintf (buffer, "%dm%ds", m, s);
+      else
+	sprintf (buffer, "%ds", s);
+  return buffer;
+}
+
 void 
 swLogProgress(int level, float percentDone, char *format, ...) {
   int length;
   char tabs[MAXPROGRESSLEVELS];
   char *pMessage = progressLevels[level].text;
+  char timeBuffer[32];
   va_list argp;
 
-  if (swLogMaxUsedLevels < level)
-    swLogMaxUsedLevels = level;
+  /* This may look wrong, but we really do want to suppress any
+     old lower-level messages if our new one is a higher level,
+     because they're sub-steps or details for a previous step. */
+  logMaxUsedLevels = level;
 
   if (logStartTime == 0)
     logStartTime = time (NULL);
@@ -1034,12 +1060,12 @@ swLogProgress(int level, float percentDone, char *format, ...) {
   memset (tabs, '\t', MAXPROGRESSLEVELS);
   tabs[level] = '\0';
   if (progressLevels[level].percentDone > 0)
-    pMessage += length = snprintf (progressLevels[level].text, MAXLOGMSG, "%sat %ds (~%2d%%), ",
-				   tabs, (int) progressLevels[level].eventTime,
+    pMessage += length = snprintf (progressLevels[level].text, MAXLOGMSG, "%s@%s (~%2d%%), ",
+				   tabs, formatElapsedTime ((int) progressLevels[level].eventTime, timeBuffer),
 				   progressLevels[level].percentDone);
   else
-    pMessage += length = snprintf (progressLevels[level].text, MAXLOGMSG, "%sat %ds, ",
-				   tabs, (int) progressLevels[level].eventTime);
+    pMessage += length = snprintf (progressLevels[level].text, MAXLOGMSG, "%s@%s, ",
+				   tabs, formatElapsedTime ((int) progressLevels[level].eventTime, timeBuffer));
   
   va_start (argp, format);
   vsnprintf (pMessage, MAXLOGMSG - length, format, argp);
@@ -1083,6 +1109,7 @@ void
     swProgressRequestFlag = FALSE;
     swLogTimedProgress ();
   }
+  pthread_exit (EXIT_SUCCESS);
 }
 
 /// Timer thread to advise of progress

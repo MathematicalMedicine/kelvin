@@ -110,7 +110,6 @@ logMsg (unsigned int type, int level, const char *format, ...)
     exit (EXIT_FAILURE);
 }
 
-
 /* Input handling/checking routines, used when reading configuration
  * and data files.
  */

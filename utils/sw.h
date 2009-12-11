@@ -131,6 +131,10 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
   exit (EXIT_FAILURE); \
 }
 
+#define ASSERT(CONDITION, ...) \
+  if (!(CONDITION)) \
+    ERROR(__VA_ARGS__); \
+
 #define WARNING(...) \
 { \
   int length; \
@@ -147,16 +151,27 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
   swLogMsg (stdout, message); \
 }
 
+
 /* Use these to report progress (indents with tabs by level, doesn't show percent done if 0),
    or just call swLogProgress directly. */
-#define STEP(PERCENTDONE, ...) swLogProgress(0, PERCENTDONE, __VA_ARGS__)
-#define SUBSTEP(PERCENTDONE, ...) swLogProgress(1, PERCENTDONE, __VA_ARGS__)
-#define DETAIL(PERCENTDONE, ...) swLogProgress(2, PERCENTDONE, __VA_ARGS__)
 
 extern volatile sig_atomic_t swProgressRequestFlag;
 extern int swProgressDelaySeconds;
 extern int swProgressLevel;
 
-void swStartProgressWakeUps();
+char *formatElapsedTime (unsigned int t, char *buffer);
+void swLogProgress(int level, float percentDone, char *format, ...);
+void swStartProgressWakeUps(int seconds);
+#define STEP(PERCENTDONE, ...) { swLogProgress(0, PERCENTDONE, __VA_ARGS__); }
+#define SUBSTEP(PERCENTDONE, ...) { swLogProgress(1, PERCENTDONE, __VA_ARGS__); }
+#define DETAIL(PERCENTDONE, ...) { swLogProgress(2, PERCENTDONE, __VA_ARGS__); }
+
+#define DISTRIBUTION
+
+#ifdef DISTRIBUTION
+  #define DIAG(FACILITY, ...) // Diagnostic was here
+#else
+  #define DIAG(FACILITY, ...) { swLogProgress(3, 0, __VA_ARGS__); }
+#endif
 
 #endif
