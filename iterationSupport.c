@@ -200,7 +200,7 @@ int dprimeIdx;
       MALCHOKE (pLDLoci->ppHaploFreq[0], sizeof (double) * 2, double *);
       MALCHOKE (pLDLoci->ppHaploFreq[1], sizeof (double) * 2, double *);
 
-      /* initialize it */
+      /* Initialize it */
       pLDLoci->ppDPrime[0][0] = 0;
     }
 
@@ -257,14 +257,16 @@ int dprimeIdx;
         savedLocusList.pLocusIndex[1] = loc2;
         initialize_max_scale ();
 
-        // #ifndef SIMPLEPROGRESS
         if (modelOptions->markerAnalysis == MM)
-          fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles\n", pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele);
+          SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
+		  "Starting w/loci %s(%d alleles) and %s(%d alleles",
+		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele)
         else
-          fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)\n", pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1);
-        // #endif
+          SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
+		  "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)",
+		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1)
 
-        /* find out number of alleles this marker locus has */
+        /* Find out number of alleles this marker locus has */
         if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM) {
           /* get the LD parameters */
           pLambdaCell = findLambdas (modelRange, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
@@ -410,7 +412,7 @@ int dprimeIdx;
                  * show progress at 1 minute intervals. Have a care to avoid division by zero. */
                 //print_xmission_matrix(xmissionMatrix, totalLoci, 0, 0, xmissionPattern);
                 if (gfreqInd != 0 || penIdx != 0) {
-                  pushStatus ('k', "evalTD");
+                  swPushPhase ('k', "evalTD");
                   //                  swStart (combinedComputeSW);
                   ret = compute_likelihood (&pedigreeSet);
                   cL[0]++;
@@ -424,16 +426,16 @@ int dprimeIdx;
                       fflush (stdout);
                     }
                   }
-                  popStatus ('k');
+                  swPopFac ('k');
                 } else {        // This _is_ the first iteration
-                  pushStatus ('k', "buildTD");
+                  swPushPhase ('k', "buildTD");
                   swStart (combinedBuildSW);
                   ret = compute_likelihood (&pedigreeSet);
                   cL[0]++;
                   swStop (combinedBuildSW);
                   fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]));
                   fflush (stdout);
-                  popStatus ('k');
+                  swPopFac ('k');
                 }
                 if (ret == -2) {
                   fprintf (stderr, "Negative likelihood for theta 0.5. Exiting!\n");
@@ -619,7 +621,7 @@ int dprimeIdx;
                     /* If we're not on the first iteration, it's not a polynomial build, so
                      * show progress at 1 minute intervals. Have a care to avoid division by zero. */
                     if (gfreqInd != 0 || penIdx != 0 || paramIdx != 0 || thresholdIdx != 0) {
-                      pushStatus ('k', "evalTQ");
+                      swPushPhase ('k', "evalTQ");
                       //                      swStart (combinedComputeSW);
                       ret = compute_likelihood (&pedigreeSet);
                       cL[2]++;
@@ -633,16 +635,16 @@ int dprimeIdx;
                           fflush (stdout);
                         }
                       }
-                      popStatus ('k');
+                      swPopFac ('k');
                     } else {    // This _is_ the first iteration
-                      pushStatus ('k', "buildTQ");
+                      swPushPhase ('k', "buildTQ");
                       swStart (combinedBuildSW);
                       ret = compute_likelihood (&pedigreeSet);
                       cL[2]++;
                       swStop (combinedBuildSW);
                       fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]));
                       fflush (stdout);
-                      popStatus ('k');
+                      swPopFac ('k');
                     }
                     if (ret == -2) {
                       fprintf (stderr, "Theta 0.5 has negative likelihood. Exiting!\n");
@@ -1181,7 +1183,7 @@ int dprimeIdx;
           }
         }
         if (markerSetChanged) {
-          pushStatus ('k', "buildMM");
+          swPushPhase ('k', "buildMM");
           /** Build a polynomial name including all involved marker ordinal numbers */
           char markerNo[8];
           if (modelOptions->polynomial == TRUE) {
@@ -1192,10 +1194,10 @@ int dprimeIdx;
             }
           }
         } else
-          pushStatus ('k', "evalMM");
+          swPushPhase ('k', "evalMM");
         ret = compute_likelihood (&pedigreeSet);
         cL[6]++;
-        popStatus ('k');
+        swPopFac ('k');
 
 #ifndef SIMPLEPROGRESS
         fprintf (stdout, "Marker set likelihood evaluations %lu%% complete...\n", MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
@@ -1387,7 +1389,7 @@ int dprimeIdx;
             if (strstr (partialPolynomialFunctionName, "_T") == NULL)
               strcat (partialPolynomialFunctionName, "_T");
             if (gfreqInd != 0 || penIdx != 0) {
-              pushStatus ('k', "evalMDA");
+              swPushPhase ('k', "evalMDA");
               swStart (combinedComputeSW);
               ret = compute_likelihood (&pedigreeSet);
               cL[7]++;
@@ -1406,9 +1408,9 @@ int dprimeIdx;
                   fflush (stdout);
                 }
               }
-              popStatus ('k');
+              swPopFac ('k');
             } else {    // This _is_ the first iteration
-              pushStatus ('k', "buildMDA");
+              swPushPhase ('k', "buildMDA");
               swStart (combinedBuildSW);
               ret = compute_likelihood (&pedigreeSet);
               cL[7]++;
@@ -1419,7 +1421,7 @@ int dprimeIdx;
               fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]));
 #endif
               fflush (stdout);
-              popStatus ('k');
+              swPopFac ('k');
             }
             /* print out some statistics under dry run */
             if (modelOptions->dryRun != 0) {
@@ -1561,7 +1563,7 @@ int dprimeIdx;
                 if (strstr (partialPolynomialFunctionName, "_T") == NULL)
                   strcat (partialPolynomialFunctionName, "_T");
                 if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
-                  pushStatus ('k', "evalMQA");
+                  swPushPhase ('k', "evalMQA");
                   swStart (combinedComputeSW);
                   ret = compute_likelihood (&pedigreeSet);
                   cL[8]++;
@@ -1580,9 +1582,9 @@ int dprimeIdx;
                       fflush (stdout);
                     }
                   }
-                  popStatus ('k');
+                  swPopFac ('k');
                 } else {        // This _is_ the first iteration
-                  pushStatus ('k', "buildMQA");
+                  swPushPhase ('k', "buildMQA");
                   swStart (combinedBuildSW);
                   ret = compute_likelihood (&pedigreeSet);
                   cL[8]++;
@@ -1593,7 +1595,7 @@ int dprimeIdx;
                   fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]));
 #endif
                   fflush (stdout);
-                  popStatus ('k');
+                  swPopFac ('k');
                 }
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                 /* add the result to the right placeholder */
