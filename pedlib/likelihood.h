@@ -77,6 +77,7 @@ extern double *half_pow;
 extern char partialPolynomialFunctionName[];
 
 
+int build_likelihood_polynomial (PedigreeSet * pPedigreeList);
 int compute_likelihood (PedigreeSet * pPedigreeList);
 int construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
 			     int locus);
