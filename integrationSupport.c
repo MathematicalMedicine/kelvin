@@ -1,26 +1,26 @@
 /**
 @file integrationSupport.c
 
-  Functions supporting maximized logarithm of odds (MOD) calculation 
-  via DCUHRE routines for approximation of a vector of definite integrals 
-  via recursive partitioning into subregions.
+  Functions supporting maximized logarithm of odds (MOD) calculation
+  via DCUHRE routines for approximation of a vector of definite
+  integrals via recursive partitioning into subregions.
 
-  A polynomial representation of the Elston-Stewart likelihood 
-  calculation for a pedigree structure is built in terms of trait 
+  A polynomial representation of the Elston-Stewart likelihood
+  calculation for a pedigree structure is built in terms of trait
   space variables (position, frequency, penetrance) population
   admixture (alpha) and sometimes linkage disequilibrium (d').
-  Plugging in values for these variables will allow calculation 
-  of the likelihood of the unvariant pedigree genotype given that 
-  set of values, and hence, the likelihood of that set of values.
+  Plugging in values for these variables will allow calculation of the
+  likelihood of the unvariant pedigree genotype given that set of
+  values, and hence, the likelihood of that set of values.
   
   Our primary goal is to determine the peak likelihood of the set of
   pedigrees with the trait at various positions independent of other
-  variables, one would
-  think that we wouldn't particularly care about the likelihood at 
-  any of the other variables, since ultimately all we'd want is the peak likelihood for 
-  the pedigree at a range of trait positions independent of all other 
-  variabiles. Actually we do care about them since they can give us
-  information about the nature of the 
+  variables, one would think that we wouldn't particularly care about
+  the likelihood at any of the other variables, since ultimately all
+  we'd want is the peak likelihood for the pedigree at a range of
+  trait positions independent of all other variabiles. Actually we do
+  care about them since they can give us information about the nature
+  of the disease.
 
   Copyright &copy; 2009, Nationwide Children's Research Institute.  All
   rights reserved.  Permission is hereby given to use this software
@@ -395,7 +395,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = product_likelihood;
   pedigreeSet.log10Likelihood = sum_log_likelihood;
   log10_likelihood_null = pedigreeSet.log10Likelihood;
-  KLOG (LOGLIKELIHOOD, LOGDEBUG, "Sum of log Likelihood is: %e\n", sum_log_likelihood);
+  DIAG (LIKELIHOOD, 0, "Sum of log Likelihood is: %e\n", sum_log_likelihood);
 
   /* This is for alternative likelihood */
   locusList = &savedLocusList;
@@ -737,7 +737,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = product_likelihood;
   pedigreeSet.log10Likelihood = sum_log_likelihood;
   log10_likelihood_null = pedigreeSet.log10Likelihood;
-  KLOG (LOGLIKELIHOOD, LOGDEBUG, "Sum of log Likelihood is: %e\n", sum_log_likelihood);
+  DIAG (LIKELIHOOD, 0, "Sum of log Likelihood is: %e\n", sum_log_likelihood);
 
   //fprintf(stderr,"Null likelihood = %20.15f\n", pedigreeSet.likelihood);
 
@@ -1441,7 +1441,6 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
         0);     /* current locus - start with 0 */
 
 
-  //  KLOG (LOGLIKELIHOOD, LOGDEBUG, "NULL Likelihood\n");
   sprintf (partialPolynomialFunctionName, "TD_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
   cL[7]++;
   ret = compute_likelihood (&pedigreeSet);
@@ -1499,7 +1498,6 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
         -1, -1, /* last het locus & last het pattern (P-1 or M-2) */
         0);     /* current locus - start with 0 */
 
-  //  KLOG (LOGLIKELIHOOD, LOGDEBUG, "ALT Likelihood\n");
   // No new name for a polynomial here because we're reusing the existing one
   cL[8]++;
   ret = compute_likelihood (&pedigreeSet);
@@ -1660,9 +1658,12 @@ void integrateMain ()
   int liabIdxLocal, pedIdx, statusLocal;
   Pedigree *pPedigreeLocal;
 
+  SUBSTEP(0, "Setting-up for integration-based analysis");
+
   /* total_dim is the number of all parameters in the 3-layer scheme
    * s->dim in dcuhre.c is the number of parameters in the middle layer alone */
 
+  DETAIL(0,"Calculating dimensionality of outer and inner layers");
   total_dim = 2;        // alpha gf
   total_dim += 3 * modelRange->nlclass; //DD Dd dd
   if (modelOptions->imprintingFlag)
@@ -1687,6 +1688,9 @@ void integrateMain ()
       total_dim += 1;   // dprime
     }
   }
+
+  DETAIL(0,"Outer dimension is %d, inner (BR) dimension is %d", total_dim, size_BR);
+  DETAIL(0,"Allocating and initializing storage for analysis");
 
   MALCHOKE (xl, size_BR * sizeof (double), double *);
   MALCHOKE (xu, size_BR * sizeof (double), double *);
@@ -1758,9 +1762,6 @@ void integrateMain ()
       fprintf (fpIR, " PosIdx\n");
     }
   }
-
-
-  fprintf (stderr, "Total dim =%d and BR dim=%d \n", total_dim, size_BR);
 
   if (modelType->trait != DT) {
     /* Setting ranges for each variables. Default is [0,1] */
@@ -1847,7 +1848,6 @@ void integrateMain ()
     fflush (fpDK);
   }
 
-
   /* only for multipoint - we don't handle LD under multipoint yet */
   /* DCUHRE do now use likelihoodDT or likelihoodQT to store null likelihoods */
 
@@ -1863,13 +1863,6 @@ void integrateMain ()
 
   /* conditional likelihood storage space for each individual */
   allocate_likelihood_space (&pedigreeSet, modelType->numMarkers + 1);
-
-  if (modelType->trait == DT)
-    fprintf (stderr, "Dichotomous Trait & ");
-  else if (modelType->trait == QT)
-    fprintf (stderr, "Quantitative Trait without threshold & ");
-  else
-    fprintf (stderr, "Quantitative Trait with threshold & ");
 
   /* assume the trait locus is the first one in the list */
   traitLocus = 0;
@@ -1909,6 +1902,8 @@ void integrateMain ()
       savedLocusList.pNextLocusDistance[i][1] = -1;
     }
 
+    SUBSTEP(0,"Building transmission matrix");
+
     if (modelOptions->polynomial == TRUE) {
       /* populate the matrix */
       statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,    /* probability */
@@ -1931,14 +1926,16 @@ void integrateMain ()
     }
 
     for (loc1 = 0; loc1 < originalLocusList.numLocus - 1; loc1++) {
-
       savedLocusList.pLocusIndex[0] = loc1;
       pLocus1 = originalLocusList.ppLocusList[loc1];
-      if (modelOptions->markerAnalysis != FALSE && pLocus1->locusType != LOCUS_TYPE_MARKER)
-        continue;
+
+      if (modelOptions->markerAnalysis != FALSE && pLocus1->locusType != LOCUS_TYPE_MARKER) {
+	DETAIL(0, "Skipping combination involving trait locus for marker analysis");
+        continue; // If we're doing a marker analysis, don't let the first locus be a trait
+      }
       if ((pLocus1->numAllele <= 1) || ((pLocus1->numAllele == 2) && ((pLocus1->pAlleleFrequency[0] <= ERROR_MARGIN) || (pLocus1->pAlleleFrequency[1] <= ERROR_MARGIN)))) {
         WARNING("Biallelic marker %s has a minor allele frequency less than %g, skipping!", pLocus1->sName, ERROR_MARGIN);
-        continue;
+        continue; // Skip MAF0 markers
       }
 
       for (loc2 = loc1 + 1; loc2 < originalLocusList.numLocus; loc2++) {
@@ -1966,12 +1963,15 @@ void integrateMain ()
         }
         savedLocusList.pLocusIndex[1] = loc2;
 
-#ifndef SIMPLEPROGRESS
         if (modelOptions->markerAnalysis == MM)
-          fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles\n", pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele);
-        else
-          fprintf (stdout, "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)\n", pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1);
-#endif
+	  SUBSTEP(0,
+		  "Starting w/loci %s(%d alleles) and %s(%d alleles)",
+		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele)
+	else
+          SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1)
+		  ,"Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)",
+		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, 
+		  pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1)
 
         /* find out number of alleles this marker locus has *//* Check if this is okay with DCUHRE  ???????????? */
         if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM) {
@@ -1979,8 +1979,9 @@ void integrateMain ()
           pLambdaCell = findLambdas (modelRange, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
           reallocate_LD_loci (pLDLoci, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
 
-
-          // Create these variables ahead of likelihood polynomial build in hopes of preventing in-build creation.
+          /* Create these variables ahead of likelihood polynomial build to prevent
+	     in-build creation. This allows polynomial compilation as the entire
+	     likelihood is fully parameterized at the outset. */
 
           if (modelOptions->polynomial == TRUE) {
             char vName[128];
@@ -1992,7 +1993,6 @@ void integrateMain ()
               }
             }
           }
-
 
           pLDLoci->locus1 = loc1;
           pLDLoci->locus2 = loc2;
@@ -2420,7 +2420,6 @@ void integrateMain ()
       else
         update_locus (&pedigreeSet, traitLocus);
       /* get the likelihood for the trait */
-      KLOG (LOGLIKELIHOOD, LOGDEBUG, "Trait Likelihood\n");
       sprintf (partialPolynomialFunctionName, "MDT_C%d_P%%sSL%d", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
       cL[0]++;
       compute_likelihood (&pedigreeSet);        /* This builds polynomials with dummy numbers */
@@ -2487,6 +2486,9 @@ void integrateMain ()
       if (fpIR != NULL) {
         dk_curModel.posIdx = loc2;
       }
+
+      SUBSTEP(posIdx * 100 / numPositions, "Starting with position %d of %d", posIdx + 1, numPositions);
+
       /* positions listed are sex average positions */
       traitPos = modelRange->tloc[posIdx];
       /* set the sex average position first 

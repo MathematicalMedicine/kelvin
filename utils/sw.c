@@ -964,10 +964,12 @@ udpSend (char *hostName, int serverPort, char *message)
 }
 #endif
 
+FILE *fullLogFile = NULL;
+char fullLogFileName[PATH_MAX];
+
 void
 swLogMsg (FILE *stream, char *message)
 {
-  char udpBuffer[MAXUDPMSG];
   time_t nowSec;
   struct tm *nowTm;
 
@@ -975,12 +977,18 @@ swLogMsg (FILE *stream, char *message)
   nowTm = localtime(&nowSec);
   fprintf (stream, "%02d/%02d/%02d %02d:%02d:%02d %s\n", nowTm->tm_year - 100, nowTm->tm_mon, nowTm->tm_mday,
 	   nowTm->tm_hour, nowTm->tm_min, nowTm->tm_sec, message);
-  snprintf (udpBuffer, MAXUDPMSG, "PID: %d %s\n", (int) getpid (), message);
 #ifdef TELLRITA
+  char udpBuffer[MAXUDPMSG + 1];
+
+  snprintf (udpBuffer, MAXUDPMSG, "PID: %d %s\n", (int) getpid (), message);
   // Don't need timestamp here because it'll show up with its own
-  if (udpSend ("levi-montalcini.ccri.net", 4950, messageBuffer) ==
-      EXIT_FAILURE) udpBuffer[0] = 'p'; /* Yeah, it's embarassing */
+  if (udpSend ("levi-montalcini.ccri.net", 4950, udpBuffer) == EXIT_SUCCESS)
+    return;
 #endif
+  if (fullLogFile == 0)
+    fullLogFile = fopen (fullLogFileName, "w+");
+  fprintf (fullLogFile, "%02d/%02d/%02d %02d:%02d:%02d %s\n", nowTm->tm_year - 100, nowTm->tm_mon, nowTm->tm_mday,
+	   nowTm->tm_hour, nowTm->tm_min, nowTm->tm_sec, message);
   return;
 }
 
@@ -1009,7 +1017,7 @@ swLogTimedProgress() {
       progressLevels[i].seen = TRUE;
     }
   if (nothingShown)
-    swLogMsg (stderr, "\t\t\t--- No further progress information available ---");
+    swLogMsg (stderr, "\t\t\t...running...");
 }
 
 char *formatElapsedTime (unsigned int t, char *buffer)
@@ -1128,7 +1136,7 @@ swStartProgressWakeUps (int seconds)
 
 int procSMapWorks = TRUE;
 long swGetCurrentVMK(pid_t pid) {
-  char procSMap[128], buffer[128];
+  char procSMap[PATH_MAX], buffer[128];
   FILE *fpProcSMap;
   long segmentSize = 0;
 

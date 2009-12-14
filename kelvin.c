@@ -108,6 +108,7 @@
   Global variables
 
 */
+#include "kelvin.h"
 #include "kelvinGlobals.h"
 #include "kelvinLocals.h"
 #include "kelvinInit.h"
@@ -125,14 +126,17 @@ char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
 
 int main (int argc, char *argv[])
 {
+  STEP(0, "Initializing")
   kelvinInit(argc, argv);
 
+  STEP(0, "Performing analysis");
   if (modelOptions->integration) {
     integrateMain();
   } else {
     iterateMain();
   }
 
+  STEP(0, "Terminating");
   kelvinTerm();
 
   return EXIT_SUCCESS;

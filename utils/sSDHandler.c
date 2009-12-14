@@ -228,7 +228,7 @@ void initSSD() {
   int i;
   unsigned long sSDFileSizeInGb;
   char *envVar;
-  char sSDFileName[256], *dirnameIsDamaged;
+  char sSDFileName[PATH_MAX], *dirnameIsDamaged;
   struct statfs sSDStats;
 
   if ((envVar = getenv ("sSDFileName")) != NULL)

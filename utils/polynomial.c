@@ -3625,7 +3625,7 @@ void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
 void writePolyDigraph (Polynomial * p)
 {
   FILE *diGraph;
-  char fileName[32];
+  char fileName[PATH_MAX];
 
   sprintf (fileName, "pD_%d.dot", p->id);
   if ((diGraph = fopen (fileName, "w")) == NULL) {
@@ -4930,7 +4930,7 @@ cc1: out of memory allocating 18446744058046806904 bytes after a total of 289832
 */
 void codePoly (Polynomial * p, struct polyList *l, char *name)
 {
-  char srcFileName[128], srcCalledFileName[128], includeFileName[128];
+  char srcFileName[PATH_MAX], srcCalledFileName[PATH_MAX], includeFileName[PATH_MAX];
   FILE *srcFile, *srcCalledFile = NULL, *includeFile;
   int i, j, srcSize = 0, fileCount = 0, totalSourceSize = 0, totalInternalSize = 0;
   int sumsUsed = 0, productsUsed = 0, functionCallsUsed = 0;
@@ -5137,7 +5137,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   fprintf (stderr, "Polynomial final internal size is %d, as code is %d.\n", totalInternalSize, totalSourceSize);
 
 #ifdef POLYCOMP_DL
-  char command[256];
+  char command[PATH_MAX];
   pushStatus ('k', "compile poly");
   sprintf (command, "$KELVIN_ROOT/compileDL.sh %s", name);
   int status;

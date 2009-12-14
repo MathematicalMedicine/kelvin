@@ -1,7 +1,6 @@
 #include <limits.h>     // For things like PATH_MAX.
 #include <float.h>      // Limits for floating point
 
-#include <pthread.h>    // For memory checks
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -27,89 +26,73 @@ extern Polynomial *constant1Poly;
 
 void kelvinInit (int argc, char *argv[])
 {
-
-  pthread_t statusThread;
-  int exitDueToLoop = FALSE;    /* exit due to unbroken loop */
+  int exitDueToLoop = FALSE;    /* exit due to unbroken pedigree loop */
   int i, k;
-  char messageBuffer[MAXSWMSG];
 
   overallSW = swCreate ("overall");
   combinedComputeSW = swCreate ("combinedComputeSW");
   combinedBuildSW = swCreate ("combinedBuildSW");
 
-  /* Setup all of our signal handlers BEFORE we start any threads. */
-  setupHandlers ();
-
-  /* Start a thread with a timer to do the memory checks. It can afford
-   * to hang, while the main process cannot. */
-  if (pthread_create (&statusThread, NULL, monitorStatus, NULL))
-    perror ("Failed to create status monitoring thread, no progress status will be displayed or written");
+  /* Setup all of our signal handlers. */
+  //&&&  setupHandlers ();
+  // swStartProgressWakeUps(30);
 
   /* Annouce ourselves for performance tracking. */
 
   pushStatus ('k', "NonSpecific");
-  sprintf (messageBuffer, "kelvin %s built %s %s", programVersion, __DATE__, __TIME__);
-  swLogMsg (stdout, messageBuffer);
-  swLogMsg (stdout, kelvinVersion);
-  swLogMsg (stdout, likelihoodVersion);
-  swLogMsg (stdout, locusVersion);
-  swLogMsg (stdout, polynomialVersion);
-  sprintf (messageBuffer, "Compiler %s\n", __VERSION__);
-  swLogMsg (stdout, messageBuffer);
+  INFO ("kelvin %s built %s %s", programVersion, __DATE__, __TIME__)
+  INFO (kelvinVersion)
+  INFO (likelihoodVersion)
+  INFO (locusVersion)
+  INFO (polynomialVersion)
+  INFO ("Compiler %s", __VERSION__)
 
 #ifdef FAKEEVALUATE
-  swLogMsg (stdout, "Polynomial evaluation is being SKIPPED FOR TESTING, results will be wrong!");
+  INFO ("Polynomial evaluation is being SKIPPED FOR TESTING, results will be wrong!")
 #endif
 #ifdef DMUSE
-  swLogMsg (stdout, "Experimental static memory handling enabled!");
+  INFO ("Experimental static memory handling enabled!")
 #endif
 #ifdef DMTRACK
-  swLogMsg (stdout, "Dynamic memory usage dumping is turned on, so performance will be poor!");
+  INFO ("Dynamic memory usage dumping is turned on, so performance will be poor!")
 #endif
 #ifdef GPROF
-  sprintf (messageBuffer, "GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
-  swLogMsg (stdout, messageBuffer);
+  INFO ("GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ())
 #endif
 #ifdef GCOV
-  sprintf (messageBuffer, "GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
-  swLogMsg (stdout, messageBuffer);
+  INFO ("GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ())
 #endif
 
 #ifdef USE_GSL
-  swLogMsg (stdout, "Using GNU Scientific Library (GSL) statistical functions instead of internal ones");
-#ifdef VERIFY_GSL
-#ifdef _OPENMP
-#undef _OPENMP
-#warning "Cannot use OpenMP when using internal statistical functions.");
-  sprintf (messageBuffer, "OpenMP is DISABLED when using internal statistical functions.");
-  swLogMsg (stdout, messageBuffer);
-#endif
-#else
-#ifdef _OPENMP
-  sprintf (messageBuffer, "OpenMP-enabled w/%d threads.", omp_get_num_threads ());
-  swLogMsg (stdout, messageBuffer);
-#endif
-#endif
-#else
-  swLogMsg (stdout, "Using internal statistical functions instead of GNU Scientific Library (GSL)");
-#ifdef _OPENMP
-#undef _OPENMP
-#warning "Cannot use OpenMP when using internal statistical functions.");
-  sprintf (messageBuffer, "OpenMP is DISABLED when using internal statistical functions.");
-  swLogMsg (stdout, messageBuffer);
-#endif
+  INFO ("Using GNU Scientific Library (GSL) statistical functions instead of internal ones")
+  #ifdef VERIFY_GSL
+    #ifdef _OPENMP
+      #undef _OPENMP
+      #warning "Cannot use OpenMP when using internal statistical functions.");
+      INFO ("OpenMP is DISABLED when using internal statistical functions.")
+    #endif
+  #else
+    #ifdef _OPENMP
+      INFO ("OpenMP-enabled w/%d thread(s).", omp_get_num_threads ())
+    #endif
+  #endif
+  INFO ("Using internal statistical functions instead of GNU Scientific Library (GSL)")
+  #ifdef _OPENMP
+    #undef _OPENMP
+    #warning "Cannot use OpenMP when using internal statistical functions.");
+    INFO ("OpenMP is DISABLED when using internal statistical functions.")
+  #endif
 #endif
 
   swStart (overallSW);
 #ifdef GCCOPT
-  sprintf (messageBuffer, "GCC optimization level %d enabled", GCCOPT);
-  swLogMsg (stdout, messageBuffer);
+  INFO ("GCC optimization level %d enabled", GCCOPT)
 #else
-  swLogMsg (stdout, "GCC optimization disabled (or GCCOPT not defined)");
+  INFO ("GCC optimization disabled (or GCCOPT not defined)")
 #endif
 
 #ifdef PTMALLOC3
-  swLogMsg (stdout, "Using alternative allocator ptmalloc3");
+  INFO ("Using alternative allocator ptmalloc3")
 #endif
 
   fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, (int) getpid ());
@@ -135,20 +118,23 @@ void kelvinInit (int argc, char *argv[])
   /* Set modelRange, modelOptions and modelType to default values */
   initializeDefaults ();
 
+  SUBSTEP(0, "Processing analysis configuration")
+
   /* Parse the configuration file. */
+  DETAIL(0, "Read and process config file %s", argv[1]);
   readConfigFile (argv[1]);
 
   /* If there's anything on the command line after the configuration file name, 
    * it must be override directives.
    */
-  if (argc > 2) {
+  if (argc > 2)
     parseCommandLine (argc - 2, &argv[2]);
-  }
 
   /* Make sure the config as read from the configuration file, and possibly modified on 
    * the command line, is legal. Then clean up the bits of memory allocated during
    * config parsing.
    */
+  DETAIL(0,"Validating configuration")
   validateConfig ();
 
   /* This fills in defaults for fields that are optional, and also copies the contents
@@ -159,24 +145,24 @@ void kelvinInit (int argc, char *argv[])
   modelOptions = (ModelOptions *) allocatePages (sizeof (ModelOptions));
   modelRange = (ModelRange *) allocatePages (sizeof (ModelRange));
   modelType = (ModelType *) allocatePages (sizeof (ModelType));
+
   fillConfigDefaults (modelRange, modelOptions, modelType);
 
   if (modelOptions->polynomial == TRUE) {
-    swLogMsg (stdout, "Computation is done in polynomial mode");
+    INFO ("Computation is done in polynomial mode")
 #ifdef POLYUSE_DL
-    swLogMsg (stdout, "Dynamic libraries for polynomial evaluation will be used if found");
+    INFO ("Dynamic libraries for polynomial evaluation will be used if found")
 #endif
     polynomialInitialization (modelOptions->polynomialScale);
-  } else {
-    swLogMsg (stdout, "Computation is done in non-polynomial (direct evaluation) mode");
-  }
-  if (modelOptions->integration == TRUE) {
-    swLogMsg (stdout, "Integration is done numerically (dkelvin)");
-  } else {
-    swLogMsg (stdout, "Integration is done with iteration (original kelvin)");
-  }
+  } else
+    INFO ("Computation is done in non-polynomial (direct evaluation) mode")
+  if (modelOptions->integration == TRUE)
+    INFO ("Integration is done numerically (dkelvin)")
+  else
+    INFO ("Integration is done with iteration (original kelvin)")
 
   /* Read in the map file. */
+  DETAIL(0,"Read and process map file %s", modelOptions->mapfile)
   read_mapfile (modelOptions->mapfile);
 
   /* Initialize the locus list and read in the marker file. */
@@ -185,29 +171,32 @@ void kelvinInit (int argc, char *argv[])
   memset (&traitLocusList, 0, sizeof (traitLocusList));
   memset (&originalLocusList, 0, sizeof (originalLocusList));
   /* read in what loci are in the pedigree file */
+  DETAIL(0,"Read and process locus file %s", modelOptions->datafile)
   read_datafile (modelOptions->datafile);
 
   if (originalLocusList.numTraitLocus == 0 && !modelOptions->markerAnalysis)
-    logMsg (LOGDEFAULT, LOGFATAL, "No trait information in %s, can't run trait analysis\n", 
-	    modelOptions->datafile);
+    ERROR("No trait information in %s, can't run trait analysis\n", 
+	  modelOptions->datafile)
 
   /* Read in marker allele frequencies */
+  DETAIL(0,"Read and process marker file %s", modelOptions->markerfile)
   read_markerfile (modelOptions->markerfile, modelType->numMarkers);
 
 
   /* build allele set information */
-  for (locus = 0; locus < originalLocusList.numLocus; locus++) {
+  DETAIL(0, "Constructing allele set")
+  for (locus = 0; locus < originalLocusList.numLocus; locus++)
     construct_original_allele_set_list (locus);
-  }
 
   /* Initialize the pedigree set datastructure and read in the pedigrees. */
   memset (&pedigreeSet, 0, sizeof (PedigreeSet));
+  DETAIL(0,"Read and process pedigree file %s", modelOptions->pedfile)
   read_pedfile (modelOptions->pedfile, &pedigreeSet);
 
   if (!modelOptions->markerAnalysis) {
     /* We are not doing marker to marker analysis; the configuration
      * has all the information about the disease trait if any.
-     * Assume the traitLoucs is 0 for now  - Need to fix this later */
+     * Assume the traitLocus is 0 for now  - Need to fix this later */
     traitLocus = 0;
     pLocus = originalLocusList.ppLocusList[traitLocus];
     /* Set the global pTrait */
@@ -223,14 +212,14 @@ void kelvinInit (int argc, char *argv[])
     }
     if (vb != modelRange->nlclass) {
       va = modelRange->nlclass - vb;
-      logMsg (LOGDEFAULT, LOGWARNING, "%d liability class%s empty. Dropping empty classes to improve performance\n", va, (va == 1) ? " is" : "s are");
+      WARNING("%d liability class%s empty. Dropping empty classes to improve performance", va, (va == 1) ? " is" : "s are")
       
       for (va = 1; va <= modelRange->nlclass; va++) {
 	if (pedigreeSet.liabilityClassCnt[va] == 0) 
-	  logMsg (LOGDEFAULT, LOGWARNING, "Dropping empty class %d\n", va);
-	else if (pedigreeSet.liabilityClassCnt[va] != va) 
-	  logMsg (LOGDEFAULT, LOGWARNING, "Renumbering class %d to %d\n", va,
-		  pedigreeSet.liabilityClassCnt[va]);
+	  WARNING("Dropping empty class %d", va)
+	else
+	  if (pedigreeSet.liabilityClassCnt[va] != va) 
+	    WARNING("Renumbering class %d to %d", va, pedigreeSet.liabilityClassCnt[va])
       }
       if (pedigreeSet.liabilityClassCnt[vb] != vb)
 	renumberLiabilityClasses (&pedigreeSet);
@@ -244,9 +233,10 @@ void kelvinInit (int argc, char *argv[])
     if (pPedigree->currentLoopFlag)
       exitDueToLoop = TRUE;
   }
-  KASSERT (exitDueToLoop == FALSE, "Not all loops in pedigrees are broken.\n");
+  ASSERT (exitDueToLoop == FALSE, "Not all loops in pedigrees are broken.")
 
   /* sort, uniquify and expand the trait model dimensions, subject to constraints */
+  DETAIL(0,"Post-processing model and configuration data")
   finishConfig (modelRange, modelType);
 
   /* Calculate sample mean and sample standard deviation for QT/CT T distrib, if needed */
@@ -256,15 +246,16 @@ void kelvinInit (int argc, char *argv[])
     getPedigreeSampleStdev (&pedigreeSet, &mean, &stdev);
     modelType->mean = mean;
     modelType->sd = stdev;
-    logMsg (LOGDEFAULT, LOGWARNING, "Sample Mean is %.4f, Standard Deviation is %.4f\n", mean, stdev);
+    WARNING("Sample Mean is %.4f, Standard Deviation is %.4f\n", mean, stdev)
   }
 
   /* read in case control file if provided */
-  if (strlen (modelOptions->ccfile) > 0)
+  if (strlen (modelOptions->ccfile) > 0) {
+    DETAIL(0,"Reading case control file %s", modelOptions->ccfile);
     read_ccfile (modelOptions->ccfile, &pedigreeSet);
-  fflush (stderr);
-  fflush (stdout);
+  }
 
+  SUBSTEP(0, "Initializing analysis data");
   if (modelType->trait == QT || modelType->trait == CT) {
     modelType->min = (modelType->minOriginal - modelType->mean) / modelType->sd;
     modelType->max = (modelType->maxOriginal - modelType->mean) / modelType->sd;
@@ -283,7 +274,7 @@ void kelvinInit (int argc, char *argv[])
     if (modelType->distrib == QT_FUNCTION_T)
       adjustQuantitativeTraits (&pedigreeSet);
     if (checkQtTraitRanges (&pedigreeSet) == -1)
-      logMsg (LOGDEFAULT, LOGFATAL, "Can't run analysis with illegal trait data\n");
+      ERROR("Can't run analysis with illegal trait data");
   }
 
   /* FIXME: shouldn't this bit come BEFORE the !markerAnalysis block, above? */
@@ -346,7 +337,7 @@ void kelvinInit (int argc, char *argv[])
   /* Estimate number of calls to each (appropriate) instance of compute_likelihood for
    * use in progress reporting, and display model information at this point since markers have
    * already been added to locus list */
-swLogMsg (stdout, estimateIterations (eCL));
+  INFO (estimateIterations (eCL));
 
   /* allocate storage for keeping track of het locus in nuclear families */
   allocate_nucfam_het (&pedigreeSet, totalLoci);
@@ -399,45 +390,39 @@ swLogMsg (stdout, estimateIterations (eCL));
 
   /* Open output files that get written across loops. */
 
+  SUBSTEP(0, "Opening cross-loop output files")
+
   if (modelOptions->conditionalRun == 1 || modelOptions->loopCondRun == 1) {
     fpCond = fopen (modelOptions->condFile, "w");
-    KASSERT (fpCond != NULL, "Error in opening file %s for write.\n", modelOptions->condFile);
-    //  fprintf( fpCond, "# Version %s\n", programVersion);
+    ASSERT (fpCond != NULL, "Error in opening file %s for write.\n", modelOptions->condFile)
   }
 
   if (modelOptions->markerAnalysis == FALSE || modelOptions->forceAvghetFile == TRUE) {
     fpHet = fopen (modelOptions->avghetfile, "w");
-    KASSERT (fpHet != NULL, "Error in opening file %s for write.\n", modelOptions->avghetfile);
+    ASSERT (fpHet != NULL, "Error in opening file %s for write.\n", modelOptions->avghetfile)
     fprintf (fpHet, "# Version %s\n", programVersion);
   }
 
   if (modelType->type == TP) {
     fpPPL = fopen (modelOptions->pplfile, "w");
-    KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", modelOptions->pplfile);
+    ASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", modelOptions->pplfile)
     writePPLFileHeader ();
-
-    /*
-     * if (strlen (modelOptions->maxmodelfile) > 0) {
-     * fpTP = fopen (modelOptions->maxmodelfile, "w");
-     * KASSERT (fpTP != NULL, "Error in opening file %s for write.\n", modelOptions->maxmodelfile);
-     * }
-     */
   }
 
   if (strlen (modelOptions->modfile) > 0) {
     fpMOD = fopen (modelOptions->modfile, "w");
-    KASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modelOptions->modfile);
+    ASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modelOptions->modfile)
     fprintf (fpMOD, "# Version %s\n", programVersion);
   }
 
   if (strlen (modelOptions->intermediatefile) > 0) {
     fpIR = fopen (modelOptions->intermediatefile, "w");
-    KASSERT (fpIR != NULL, "Error in opening file %s for write.\n", modelOptions->intermediatefile);
+    ASSERT (fpIR != NULL, "Error in opening file %s for write.\n", modelOptions->intermediatefile)
   }
   // DKelvin intermediate results are written here.
   if ((modelOptions->integration) && (strlen (modelOptions->dkelvinoutfile) > 0)) {
     fpDK = fopen (modelOptions->dkelvinoutfile, "w");
-    KASSERT (fpDK != NULL, "Error in opening file %s for write.\n", modelOptions->dkelvinoutfile);
+    ASSERT (fpDK != NULL, "Error in opening file %s for write.\n", modelOptions->dkelvinoutfile)
   }
 
   R_square_flag = 0;

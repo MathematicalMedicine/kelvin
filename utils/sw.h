@@ -75,8 +75,9 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
 
   Logging consists of 6 different message types:
 
-  The first two types are always logged immediately to stderr, and are prefaced by a timestamp and
-  a keyword that allows easy identification:
+  The first two types are always logged immediately to stderr, and are
+  prefaced by a timestamp and a keyword that allows easy
+  identification:
 
   FATAL - An integrity error prefixed by "FATAL - ABORTING (<module>:<line no>), ". Doesn't return.
   ERROR - A user-induced error prefixed by "ERROR - EXITING, ". Doesn't return.
@@ -90,22 +91,28 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
 
   STEP - A major user-viewpoint step such as start, finish and marker set change.
 
-  The next two types are optional progress advisories that may be displayed on stdout 
-  depending upon their timing and the volume of progress advisories requested by the user.
-  Only the most recent advisory in each of these these categories is kept. Two global 
-  variables are used to determine which advisories are displayed. logProgressDelaySeconds
-  determines the delay between optional progress advisories. If it is set to zero (0), 
-  they are displayed as they occur. logProgressLevel determines the lowest optional level
-  displayed, with 1 representing a SUBSTEP and 2 DETAIL. Note that you can have even more 
-  excruciating detail by invoking swLogProgress without a macro specifying levels beyond 2.
+  The next two types are optional progress advisories that may be
+  displayed on stdout depending upon their timing and the volume of
+  progress advisories requested by the user.  Only the most recent
+  advisory in each of these these categories is kept. Two global
+  variables are used to determine which advisories are
+  displayed. logProgressDelaySeconds determines the delay between
+  optional progress advisories. If it is set to zero (0), they are
+  displayed as they occur. logProgressLevel determines the lowest
+  optional level displayed, with 1 representing a SUBSTEP and 2
+  DETAIL. Note that you can have even more excruciating detail by
+  invoking swLogProgress without a macro specifying levels beyond 2.
 
   SUBSTEP - A lesser user/analyst-viewpoint step such as position change.
   DETAIL - A low-level analyst-viewpoint step such as trait/marker/alternative likelihood 
   phase, xmission matrix build or polynomial load.
 
-  The last type is DIAG. These are
-  used in conjunction with the facility-specific diagnostic level to determine if they are
-  displayed to stdout.
+  The last type is DIAG. These are used in conjunction with the
+  facility-specific diagnostic level to determine if they are
+  displayed to stdout. They are not normally present in the
+  distributed code, as they are all compilation conditionals. After
+  all, they can densely populate sensitive loops to the point where
+  performance is affected even though they're "turned off".
 
 */
 
