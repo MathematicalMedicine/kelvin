@@ -76,6 +76,7 @@ void kelvinInit (int argc, char *argv[])
       INFO ("OpenMP-enabled w/%d thread(s).", omp_get_num_threads ())
     #endif
   #endif
+#else
   INFO ("Using internal statistical functions instead of GNU Scientific Library (GSL)")
   #ifdef _OPENMP
     #undef _OPENMP
