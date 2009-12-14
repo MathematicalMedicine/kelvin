@@ -3071,10 +3071,10 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 #ifndef SIMPLEPROGRESS
   fprintf (stderr, "Building transmission matrix...\n");
 #endif
-  pushStatus ('k', "buildXM");
+  swPushPhase ('k', "buildXM");
 
   do_populate_xmission_matrix (pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc);
-  popStatus ('k');
+  swPopFac ('k');
 
   return 0;
 }
