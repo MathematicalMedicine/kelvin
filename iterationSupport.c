@@ -328,6 +328,22 @@ int dprimeIdx;
           /* Loop over the penetrances, genefrequencies, thetas and call
            * the likelihood calculation, storing each value obtained to
            * disk. */
+
+	  // Build the polynomial now to avoid interfering with evaluation later
+	  if (modelOptions->polynomial == TRUE)
+	    sprintf (partialPolynomialFunctionName, "TD_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
+	  swPushPhase ('k', "buildTD");
+	  swStart (combinedBuildSW);
+	  ret = build_likelihood_polynomial (&pedigreeSet);
+	  cL[0]++;
+	  swStop (combinedBuildSW);
+
+	  swPushPhase ('k', "evalTD"); // Now we're full-tilt evaluation
+	  swStart (combinedComputeSW);
+
+                  //                  swStop (combinedComputeSW); // REMEMBER TO MOVE THIS
+	  // swPopFac ('k');
+
           for (gfreqInd = 0; (gfreqInd == 0 && modelOptions->markerAnalysis != FALSE) || gfreqInd < modelRange->ngfreq; gfreqInd++) {
             paramSet.gfreqIdx = gfreqInd;
             /* Here's a little bomb that should highlight if paramSet.gfreq is used
@@ -348,7 +364,7 @@ int dprimeIdx;
                 update_locus (&pedigreeSet, loc1);
             }
 
-            /* clear Dprime combination impossible flag */
+            /* Clear Dprime combination impossible flag */
             memset (pLambdaCell->impossibleFlag, 0, sizeof (int) * pLambdaCell->ndprime);
             /* set up haplotype frequencies */
             dprime0Idx = -1;
@@ -359,7 +375,7 @@ int dprimeIdx;
               if (status < 0)
                 pLambdaCell->impossibleFlag[dprimeIdx] = 1;
             }
-            KASSERT ((modelOptions->equilibrium != LINKAGE_DISEQUILIBRIUM) || (dprime0Idx != -1), "The requisite zero D' was not found, aborting!\n");
+            ASSERT ((modelOptions->equilibrium != LINKAGE_DISEQUILIBRIUM) || (dprime0Idx != -1), "The requisite zero D' was not found");
 
             if (modelType->trait == DICHOTOMOUS) {
 
@@ -396,51 +412,27 @@ int dprimeIdx;
                   set_null_dprime (pLDLoci);
                   copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprime0Idx]);
                   copy_DValue (pLDLoci, pLambdaCell->DValue[dprime0Idx]);
-                  KASSERT (pLambdaCell->impossibleFlag[dprime0Idx] == 0, "Haplotype frequency combination impossible at LE. Exiting!\n");
+                  ASSERT (pLambdaCell->impossibleFlag[dprime0Idx] == 0, "Haplotype frequency combination impossible at LE");
                 }
                 for (k = 0; k < 3; k++) {
                   locusList->pNextLocusDistance[k][0] = 0.5;
                   locusList->pPrevLocusDistance[k][1] = 0.5;
                 }
 
-                if (modelOptions->polynomial == TRUE)
-                  sprintf (partialPolynomialFunctionName, "TD_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
-                else
+                if (modelOptions->polynomial != TRUE)
                   status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
+		ret = compute_likelihood (&pedigreeSet);
+		cL[0]++;
 
-                /* If we're not on the first iteration, it's not a polynomial build, so
-                 * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-                //print_xmission_matrix(xmissionMatrix, totalLoci, 0, 0, xmissionPattern);
-                if (gfreqInd != 0 || penIdx != 0) {
-                  swPushPhase ('k', "evalTD");
-                  //                  swStart (combinedComputeSW);
-                  ret = compute_likelihood (&pedigreeSet);
-                  cL[0]++;
-                  //                  swStop (combinedComputeSW);
-                  if (statusRequestSignal) {
-                    statusRequestSignal = FALSE;
-                    if (cL[0] > 1) {    // The first time thru we have no basis for estimation
-                      fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
-                          "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
-                          ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * (eCL[0] + eCL[1]) / (cL[0] + cL[1]) - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
-                      fflush (stdout);
-                    }
-                  }
-                  swPopFac ('k');
-                } else {        // This _is_ the first iteration
-                  swPushPhase ('k', "buildTD");
-                  swStart (combinedBuildSW);
-                  ret = compute_likelihood (&pedigreeSet);
-                  cL[0]++;
-                  swStop (combinedBuildSW);
-                  fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]));
-                  fflush (stdout);
-                  swPopFac ('k');
-                }
-                if (ret == -2) {
-                  fprintf (stderr, "Negative likelihood for theta 0.5. Exiting!\n");
-                  exit (EXIT_FAILURE);
-                }
+		if (statusRequestSignal) {
+		  statusRequestSignal = FALSE;
+		  DETAIL (0, "Calculations for marker set %lu%% complete (~%lu min left)",
+			   (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
+			   ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+			    (eCL[0] + eCL[1]) / (cL[0] + cL[1]) - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60)
+		}
+                if (ret == -2)
+                  ERROR ("Negative likelihood for theta 0.5");
 
                 if (ret == -1) {
                   fprintf (stderr, "Theta 0.5 has likelihood 0\n");
