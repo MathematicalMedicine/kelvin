@@ -84,6 +84,7 @@ then #include sw.h in your source code, and link with sw.o.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <limits.h>
 #include <time.h>
 #include <stdarg.h>
 #include <pthread.h>
@@ -965,7 +966,7 @@ udpSend (char *hostName, int serverPort, char *message)
 #endif
 
 FILE *fullLogFile = NULL;
-char fullLogFileName[PATH_MAX];
+char *fullLogFileName = "kelvin.full_log";
 
 void
 swLogMsg (FILE *stream, char *message)
