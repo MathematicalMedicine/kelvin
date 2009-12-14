@@ -1964,16 +1964,16 @@ void integrateMain ()
         savedLocusList.pLocusIndex[1] = loc2;
 
         if (modelOptions->markerAnalysis == MM)
-	  SUBSTEP(0,
+	  SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
 		  "Starting w/loci %s(%d alleles) and %s(%d alleles)",
 		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele)
 	else
-          SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1)
-		  ,"Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)",
+          SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
+		  "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)",
 		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, 
 		  pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1)
 
-        /* find out number of alleles this marker locus has *//* Check if this is okay with DCUHRE  ???????????? */
+        /* Find out number of alleles this marker locus has *//* Check if this is okay with DCUHRE  ???????????? */
         if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM) {
           /* get the LD parameters */
           pLambdaCell = findLambdas (modelRange, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
