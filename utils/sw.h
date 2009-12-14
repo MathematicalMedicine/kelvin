@@ -19,8 +19,8 @@
 #define MAXSWMSG 220
 #define MAXUDPMSG 230
 
-void pushStatus (char program, char *currentStatus);
-void popStatus (char program);
+void swPushPhase (char program, char *currentFacility);
+void swPopFac (char program);
 
 struct swStopwatch
 {

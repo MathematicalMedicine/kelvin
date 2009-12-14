@@ -147,7 +147,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <limits.h>
 #include <ctype.h>
 #include <math.h>
 #include <errno.h>
@@ -4938,7 +4939,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   struct sumPoly *sP;
   struct productPoly *pP;
 
-  pushStatus ('k', "encode poly");
+  swPushPhase ('k', "encode poly");
   result = p;
   fprintf (stdout, "\nGenerating DL for %s...\n", name);
 
@@ -5138,14 +5139,14 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
 #ifdef POLYCOMP_DL
   char command[PATH_MAX];
-  pushStatus ('k', "compile poly");
+  swPushPhase ('k', "compile poly");
   sprintf (command, "$KELVIN_ROOT/compileDL.sh %s", name);
   int status;
   if ((status = system (command)) != 0) {
     perror ("system()");
     exit (EXIT_FAILURE);
   }
-  popStatus ('k');
+  swPopFac ('k');
   /*
   sprintf (command, "echo internally %d, as code %d, and externally `wc -c %s.so`.", 
 	   totalInternalSize, totalSourceSize, name);
@@ -5156,7 +5157,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   */
 #endif
 
-  popStatus ('k');
+  swPopFac ('k');
   return;
 }
 

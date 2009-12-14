@@ -39,7 +39,7 @@ void kelvinInit (int argc, char *argv[])
 
   /* Annouce ourselves for performance tracking. */
 
-  pushStatus ('k', "NonSpecific");
+  swPushPhase ('k', "NonSpecific");
   INFO ("kelvin %s built %s %s", programVersion, __DATE__, __TIME__)
   INFO (kelvinVersion)
   INFO (likelihoodVersion)

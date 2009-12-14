@@ -116,33 +116,33 @@ Show the current state of the process in some obvious manner -- currently
 (on linux) set the process name.
 
 */
-#define STATUS_LENGTH 13
-#define STATUS_STACK_DEPTH 32
-char statusStack[STATUS_STACK_DEPTH][STATUS_LENGTH+1];
-int statusStackPosition = 0;
-void pushStatus (char program, char *currentStatus)
+#define MAXPHASELEN 13
+#define PHASE_STACK_DEPTH 32
+char phaseStack[PHASE_STACK_DEPTH][MAXPHASELEN+1];
+int phaseStackPosition = 0;
+void swPushPhase (char program, char *currentPhase)
 {
   char processName[16+1];
-  if (statusStackPosition == STATUS_STACK_DEPTH) {
-    fprintf (stderr, "Status stack overflow (not serious), status not changed to [%s]\n",
-	     currentStatus);
+  if (phaseStackPosition == PHASE_STACK_DEPTH) {
+    WARNING("Phase stack overflow (not serious), phase not changed to [%s]\n",
+	     currentPhase);
     return;
   }
-  strncpy (statusStack[++statusStackPosition], currentStatus, (size_t) STATUS_LENGTH);
-  sprintf (processName, "%c-%-.*s", program, STATUS_LENGTH, currentStatus);
+  strncpy (phaseStack[++phaseStackPosition], currentPhase, (size_t) MAXPHASELEN);
+  sprintf (processName, "%c-%-.*s", program, MAXPHASELEN, currentPhase);
 #ifdef PR_SET_NAME
   prctl (PR_SET_NAME, processName);
 #endif
   return;
 }
-void popStatus (char program)
+void swPopFac (char program)
 {
   char processName[16+1];
-  if (statusStackPosition == 0) {
-    fprintf (stderr, "Status stack underflow (not serious), status not reverted\n");
+  if (phaseStackPosition == 0) {
+    WARNING("Phase stack underflow (not serious), phase not reverted\n");
     return;
   }
-  sprintf (processName, "%c-%-.*s", program, STATUS_LENGTH, statusStack[--statusStackPosition]);
+  sprintf (processName, "%c-%-.*s", program, MAXPHASELEN, phaseStack[--phaseStackPosition]);
 #ifdef PR_SET_NAME
   prctl (PR_SET_NAME, processName);
 #endif
