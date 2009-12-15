@@ -15,8 +15,6 @@
 
 extern struct swStopwatch *overallSW;
 
-volatile sig_atomic_t statusRequestSignal = FALSE;      ///< Status update requested via signal
-
 void dumpStack (void) {
 #ifdef BACKTRACE
   const size_t MAXSTACKDEPTH = 20;
@@ -60,7 +58,7 @@ void dumpStack (void) {
 void quitSignalHandler (int ourSignal)
 {
   dumpStack ();
-  statusRequestSignal = TRUE;
+  swProgressRequestFlag = TRUE;
 #ifdef POLYSTATISTICS
   if (modelOptions->polynomial == TRUE)
     polyDynamicStatistics ("Signal received");

@@ -124,9 +124,12 @@ int phaseStackPosition = 0;
 void swPushPhase (char program, char *currentPhase)
 {
   char processName[16+1];
+  int i;
   if (phaseStackPosition == PHASE_STACK_DEPTH) {
-    WARNING("Phase stack overflow (not serious), phase not changed to [%s]\n",
+    WARNING("Phase stack overflow (not serious), phase not changed to [%s]",
 	     currentPhase);
+    for (i=0; i<PHASE_STACK_DEPTH; i++)
+      DIAG(0, 0, {fprintf (stderr, "%d is %s\n", i, phaseStack[i]);});
     return;
   }
   strncpy (phaseStack[++phaseStackPosition], currentPhase, (size_t) MAXPHASELEN);
@@ -136,11 +139,11 @@ void swPushPhase (char program, char *currentPhase)
 #endif
   return;
 }
-void swPopFac (char program)
+void swPopPhase (char program)
 {
   char processName[16+1];
   if (phaseStackPosition == 0) {
-    WARNING("Phase stack underflow (not serious), phase not reverted\n");
+    WARNING("Phase stack underflow (not serious), phase not reverted");
     return;
   }
   sprintf (processName, "%c-%-.*s", program, MAXPHASELEN, phaseStack[--phaseStackPosition]);

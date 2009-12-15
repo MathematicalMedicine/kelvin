@@ -21,10 +21,10 @@ extern unsigned long cL[9], ///< Actual compute_likelihood call counts
 /// Number of seconds to delay between updates of memory status
 #define MONSTATDELAYSEC 30
 
-void *monitorStatus ();
+void *monitorMemory ();
 void print_dryrun_stat (PedigreeSet * pSet, double pos);
 void logPedigreeSetStatistics (PedigreeSet * pSet, int posIdx);
 void dumpTrackingStats(unsigned long cl[], unsigned long eCl[]);
-char *estimateIterations (unsigned long eCl[]);
+void estimateIterations (unsigned long eCl[]);
 
 #endif

@@ -36,6 +36,7 @@
 #include "kelvinGlobals.h"
 #include "summary_result.h"
 #include "dkelvinWriteFiles.h"
+#include "kelvinWriteFiles.h" // Just for writeSurfaceFileHeader
 #include "trackProgress.h"
 #include "ppl.h"
 
@@ -395,7 +396,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = product_likelihood;
   pedigreeSet.log10Likelihood = sum_log_likelihood;
   log10_likelihood_null = pedigreeSet.log10Likelihood;
-  DIAG (LIKELIHOOD, 0, "Sum of log Likelihood is: %e\n", sum_log_likelihood);
+  DIAG (OVERALL, 1, {fprintf (stderr, "Sum of log Likelihood is: %e\n", sum_log_likelihood);});
 
   /* This is for alternative likelihood */
   locusList = &savedLocusList;
@@ -737,7 +738,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = product_likelihood;
   pedigreeSet.log10Likelihood = sum_log_likelihood;
   log10_likelihood_null = pedigreeSet.log10Likelihood;
-  DIAG (LIKELIHOOD, 0, "Sum of log Likelihood is: %e\n", sum_log_likelihood);
+  DIAG (OVERALL, 1, {fprintf (stderr,"Sum of log Likelihood is: %e\n", sum_log_likelihood);});
 
   //fprintf(stderr,"Null likelihood = %20.15f\n", pedigreeSet.likelihood);
 

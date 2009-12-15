@@ -5146,7 +5146,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     perror ("system()");
     exit (EXIT_FAILURE);
   }
-  swPopFac ('k');
+  swPopPhase ('k');
   /*
   sprintf (command, "echo internally %d, as code %d, and externally `wc -c %s.so`.", 
 	   totalInternalSize, totalSourceSize, name);
@@ -5157,7 +5157,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   */
 #endif
 
-  swPopFac ('k');
+  swPopPhase ('k');
   return;
 }
 

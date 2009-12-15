@@ -256,7 +256,7 @@ Thrashing was checked after some multiple of the MONSTATDELAYSEC periods.
   @return void
 
 */
-void *monitorStatus ()
+void *monitorMemory ()
 {
 
   long currentVMK, maximumPMK;
@@ -282,8 +282,6 @@ void *monitorStatus ()
 #ifdef THRASH_CHECK
 	thrashingCheck ();
 #endif
-        statusRequestSignal = TRUE;
-//      kill (getpid (), SIGQUIT);   // Send a status-updating signal
       }
       currentVMK = swGetCurrentVMK (getpid ());
 #ifdef MEMGRAPH
@@ -390,7 +388,7 @@ void dumpTrackingStats (unsigned long cl[], unsigned long eCL[])
 }
 
 /** 
-    Construct string describing the type of analysis and determine evaluations required. Note that
+    INFOrm the user of the type of analysis and determine evaluations required. Note that
     the model numbers we're going to display along with the type of the analysis does not directly
     relate to the number of iterations we're concerned about. Iterations are about likelihood
     evaluation, while model numbers describe two things -- iterations over the model space which will
@@ -402,7 +400,8 @@ void dumpTrackingStats (unsigned long cl[], unsigned long eCL[])
     enumerated results.
 
 */
-char *estimateIterations (unsigned long eCL[])
+void
+estimateIterations (unsigned long eCL[])
 {
   //  unsigned long cL[9];
   //  dumpTrackingStats(cL, eCL);
@@ -433,11 +432,15 @@ char *estimateIterations (unsigned long eCL[])
     }
     eCL[0] = 0;
     eCL[1] = totalLoopsForDPrime;
-    sprintf (analysisType, "%dD' cases of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)\n" "Marker-to-marker Two-Point ", totalLoopsForDPrime, modelRange->nalpha, modelRange->ngfreq, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
+    INFO ("%dD' cases of %dAL*%dGF*%dpv(%dLC)' space for %d pedigree(s)",
+	  totalLoopsForDPrime, modelRange->nalpha, modelRange->ngfreq, modelRange->npenet, 
+	  modelRange->nlclass, pedigreeSet.numPedigree);
+    strcpy (analysisType, "Marker-to-marker Two-Point ");
     if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM)
       strcat (analysisType, "Equilibrium.");
     else
       strcat (analysisType, "Disequilibrium.");
+    INFO (analysisType);
   } else {      // not AM/MM
     if (modelType->type == TP) {
       /* 
@@ -461,11 +464,14 @@ char *estimateIterations (unsigned long eCL[])
         totalLoopsForDPrime = 1;
 
       if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM)
-        sprintf (analysisType, "%dTh*%d pair(s) of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)\n"
-            "Trait-to-marker Two-Point, ", modelRange->ntheta, (originalLocusList.numLocus - 1), modelRange->nalpha, modelRange->ngfreq, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
+        INFO ("%dTh*%d pair(s) of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)",
+	      modelRange->ntheta, (originalLocusList.numLocus - 1), modelRange->nalpha, 
+	      modelRange->ngfreq, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
       else
-        sprintf (analysisType, "%dTh*%dD' cases of %dAL*%dGF*%dp1*%dpv(%dLC)' space for %d pedigree(s)\n"
-            "Trait-to-marker Two-Point, ", modelRange->ntheta, totalLoopsForDPrime, modelRange->nalpha, modelRange->ngfreq, modelRange->nparam, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
+        INFO ("%dTh*%dD' cases of %dAL*%dGF*%dp1*%dpv(%dLC)' space for %d pedigree(s)",
+	      modelRange->ntheta, totalLoopsForDPrime, modelRange->nalpha, modelRange->ngfreq, 
+	      modelRange->nparam, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
+      strcpy (analysisType, "Trait-to-marker Two-Point, ");
       if (modelType->trait == DT) {
         strcat (analysisType, "Dichotomous Trait, ");
         eCL[0] = (originalLocusList.numLocus - 1) * modelRange->ngfreq * modelRange->npenet;
@@ -492,6 +498,7 @@ char *estimateIterations (unsigned long eCL[])
         strcat (analysisType, "Equilibrium.");
       else
         strcat (analysisType, "Disequilibrium.");
+      INFO (analysisType);
     } else {    // not TP, so multipoint
 
       /* Pedigree likelihood calculation looping for MP is for trait, marker, then alternative hypothesis.
@@ -509,9 +516,12 @@ char *estimateIterations (unsigned long eCL[])
        * polynomials for each pedigree incorporate alpha?, # MP markers used in analysis.
        * 
        */
-      sprintf (analysisType, "%dTL of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)\n"
-          "Trait-to-marker, Sex-%s Multipoint (w/%d loci), ",
-          modelRange->ntloc, modelRange->nalpha, modelRange->ngfreq, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree, modelOptions->mapFlag == SS ? "Specific" : "Averaged", modelType->numMarkers + originalLocusList.numTraitLocus);
+      INFO ("%dTL of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)",
+	    modelRange->ntloc, modelRange->nalpha, modelRange->ngfreq, 
+	    modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
+      sprintf (analysisType, "Trait-to-marker, Sex-%s Multipoint (w/%d loci), ",
+	       modelOptions->mapFlag == SS ? "Specific" : "Averaged", 
+	       modelType->numMarkers + originalLocusList.numTraitLocus);
       eCL[6] = modelRange->ntloc;
       if (modelType->trait == DT) {
         strcat (analysisType, "Dichotomous Trait.");
@@ -535,7 +545,8 @@ char *estimateIterations (unsigned long eCL[])
           }
         }
       }
+      INFO (analysisType);
     }
   }
-  return (analysisType);
+  return;
 }

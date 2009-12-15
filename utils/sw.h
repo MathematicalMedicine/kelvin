@@ -19,8 +19,8 @@
 #define MAXSWMSG 220
 #define MAXUDPMSG 230
 
-void swPushPhase (char program, char *currentFacility);
-void swPopFac (char program);
+void swPushPhase (char program, char *currentPhase);
+void swPopPhase (char program);
 
 struct swStopwatch
 {
@@ -119,44 +119,43 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
 #define MAXLOGMSG 2048
     
 #define FATAL(...) \
-{ \
+do { \
   int length; \
   char message[MAXLOGMSG + 1], *pMessage = message; \
   pMessage += length = snprintf (message, MAXLOGMSG, "FATAL - ABORTING (%s:%d), ", (__FILE__),(__LINE__)); \
   snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__); \
   swLogMsg (stderr, message); \
   exit (EXIT_FAILURE); \
-}
+} while(0)
 
+// The rest of these don't really need to be macros.
 #define ERROR(...) \
-{ \
+do { \
   int length; \
   char message[MAXLOGMSG + 1], *pMessage = message; \
   pMessage += length = snprintf (message, MAXLOGMSG, "ERROR - EXITING, "); \
   snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__); \
   swLogMsg (stderr, message); \
   exit (EXIT_FAILURE); \
-}
+} while(0)
 
-#define ASSERT(CONDITION, ...) \
-  if (!(CONDITION)) \
-    ERROR(__VA_ARGS__); \
+#define ASSERT(CONDITION, ...) if (!(CONDITION)) ERROR(__VA_ARGS__)
 
 #define WARNING(...) \
-{ \
+do { \
   int length; \
   char message[MAXLOGMSG + 1], *pMessage = message; \
   pMessage += length = snprintf (message, MAXLOGMSG, "WARNING, "); \
   snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__); \
   swLogMsg (stderr, message); \
-}
+} while(0)
 
 #define INFO(...) \
-{ \
+do { \
   char message[MAXLOGMSG + 1]; \
   snprintf (message, MAXLOGMSG,  __VA_ARGS__); \
   swLogMsg (stdout, message); \
-}
+} while(0)
 
 
 /* Use these to report progress (indents with tabs by level, doesn't show percent done if 0),
@@ -173,12 +172,13 @@ void swStartProgressWakeUps(int seconds);
 #define SUBSTEP(PERCENTDONE, ...) { swLogProgress(1, PERCENTDONE, __VA_ARGS__); }
 #define DETAIL(PERCENTDONE, ...) { swLogProgress(2, PERCENTDONE, __VA_ARGS__); }
 
-#define DISTRIBUTION
+#define OVERALL 2
 
-#ifdef DISTRIBUTION
-  #define DIAG(FACILITY, ...) // Diagnostic was here
+// The beauty of this lines in the fact that all diags go away completely if DISTRIBUTION is defined.
+#ifndef DISTRIBUTION
+#define DIAG(ENV_LEVEL, DIAG_LEVEL, DIAG_CODE) if (ENV_LEVEL >= DIAG_LEVEL) { DIAG_CODE }
 #else
-  #define DIAG(FACILITY, ...) { swLogProgress(3, 0, __VA_ARGS__); }
+#define DIAG(ENV_LEVEL, DIAG_LEVEL, DIAG_CODE) // There was a diag here
 #endif
 
 #endif
