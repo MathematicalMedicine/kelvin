@@ -1719,48 +1719,7 @@ void integrateMain ()
       CALCHOKE (dk_curModel.dprime, (size_t) 1, sizeof (double), double *);
     }
     CALCHOKE (dk_curModel.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
-
-    /*SurfaceFile header */
-    fprintf (fpIR, "#HLOD");
-    if (modelType->type == TP) {
-      if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
-        fprintf (fpIR, " Dprime");
-      if (modelOptions->mapFlag == SA)
-        fprintf (fpIR, " Theta");
-      else
-        fprintf (fpIR, " Theta(M,F)");
-    }
-    fprintf (fpIR, " Alpha DGF");
-    for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
-      if (modelOptions->imprintingFlag) {
-        if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-          if (modelType->trait == DT)
-            fprintf (fpIR, " LC%dPV(DD,Dd,dD,dd)", liabIdxLocal);
-          else
-            fprintf (fpIR, " LC%dMV(DD,Dd,dD,dd)", liabIdxLocal);
-        } else
-          fprintf (fpIR, " LC%dDoFV(DD,Dd,dD,dd)", liabIdxLocal);
-      } else {
-        if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-          if (modelType->trait == DT)
-            fprintf (fpIR, " LC%dPV(DD,Dd,dd)", liabIdxLocal);
-          else
-            fprintf (fpIR, " LC%dMV(DD,Dd,dd)", liabIdxLocal);
-        } else
-          fprintf (fpIR, " LC%dDoFV(DD,Dd,dd)", liabIdxLocal);
-      }
-      if (modelType->trait != DICHOTOMOUS && modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-        fprintf (fpIR, " SD");
-      }
-    }
-    if (modelType->trait == CT) {
-      fprintf (fpIR, " Thresh");        /* If each LC uses different threshold, this does not work */
-    }
-    if (modelType->type == TP) {
-      fprintf (fpIR, " MkIdx\n");
-    } else {
-      fprintf (fpIR, " PosIdx\n");
-    }
+    writeSurfaceFileHeader ();
   }
 
   if (modelType->trait != DT) {

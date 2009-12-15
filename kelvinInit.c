@@ -87,16 +87,16 @@ void kelvinInit (int argc, char *argv[])
 
   swStart (overallSW);
 #ifdef GCCOPT
-  INFO ("GCC optimization level %d enabled", GCCOPT)
+  INFO ("GCC optimization level %d enabled", GCCOPT);
 #else
   INFO ("GCC optimization disabled (or GCCOPT not defined)")
 #endif
 
 #ifdef PTMALLOC3
-  INFO ("Using alternative allocator ptmalloc3")
+  INFO ("Using alternative allocator ptmalloc3");
 #endif
 
-  fprintf (stdout, "To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, (int) getpid ());
+  INFO ("To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\".\n", SIGQUIT, (int) getpid ())
 
   // Initialize the logging system.
   logInit ();
@@ -111,10 +111,8 @@ void kelvinInit (int argc, char *argv[])
       exit (0);
     } else
       strcpy (configfile, argv[1]);
-  } else {
-    fprintf (stderr, "usage: %s <conffile> [--directive arg1 arg2... [--directive...]]\n", argv[0]);
-    exit (-1);
-  }
+  } else
+    ERROR ("usage: %s <conffile> [--directive arg1 arg2... [--directive...]]\n", argv[0])
 
   /* Set modelRange, modelOptions and modelType to default values */
   initializeDefaults ();
