@@ -172,9 +172,10 @@ void swStartProgressWakeUps(int seconds);
 #define SUBSTEP(PERCENTDONE, ...) { swLogProgress(1, PERCENTDONE, __VA_ARGS__); }
 #define DETAIL(PERCENTDONE, ...) { swLogProgress(2, PERCENTDONE, __VA_ARGS__); }
 
-#define OVERALL 2
+#define OVERALL 0
 
-// The beauty of this lines in the fact that all diags go away completely if DISTRIBUTION is defined.
+/* The beauty of this lines in the fact that all diags go away completely if DISTRIBUTION is
+   defined, and an entire chunk of code can be the diagnostic. */
 #ifndef DISTRIBUTION
 #define DIAG(ENV_LEVEL, DIAG_LEVEL, DIAG_CODE) if (ENV_LEVEL >= DIAG_LEVEL) { DIAG_CODE }
 #else
