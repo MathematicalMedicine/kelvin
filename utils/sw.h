@@ -79,8 +79,10 @@ extern int countMalloc, countFree, countReallocOK, countReallocMove,
   prefaced by a timestamp and a keyword that allows easy
   identification:
 
-  FATAL - An integrity error prefixed by "FATAL - ABORTING (<module>:<line no>), ". Doesn't return.
-  ERROR - A user-induced error prefixed by "ERROR - EXITING, ". Doesn't return.
+  FATAL - An integrity error prefixed by "FATAL - ABORTING (<module>:<line no>), ". Doesn't 
+  return. These errors cannot be fixed by the user.
+  ERROR - A user-induced error prefixed by "ERROR - EXITING, ". Doesn't return. Usually
+  can be fixed by the user.
   WARNING - A warning requiring user attention. Prefixed by "WARNING, ". Returns success.
 
   The next simply prints the message to stdout prefaced by a timestamp:
@@ -173,6 +175,7 @@ void swStartProgressWakeUps(int seconds);
 #define DETAIL(PERCENTDONE, ...) { swLogProgress(2, PERCENTDONE, __VA_ARGS__); }
 
 #define OVERALL 0
+#define XM 0
 
 /* The beauty of this lines in the fact that all diags go away completely if DISTRIBUTION is
    defined, and an entire chunk of code can be the diagnostic. */

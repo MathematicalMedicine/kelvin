@@ -37,7 +37,7 @@ void kelvinInit (int argc, char *argv[])
 
   /* Setup all of our signal handlers. */
   setupHandlers ();
-  // swStartProgressWakeUps(30);
+  swStartProgressWakeUps(120);
 
   /* Start a thread with a timer to do the memory checks. It can afford                                                 
    * to hang, while the main process cannot. */

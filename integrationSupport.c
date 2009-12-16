@@ -2529,7 +2529,7 @@ void integrateMain ()
         if (modelOptions->polynomial == TRUE)
           freePolys ();
 
-        print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);
+	DIAG (XM, 1, { print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);});
 
         char markerNo[8];
         sprintf (partialPolynomialFunctionName, "MM_C%d_P%%sM", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
@@ -2634,7 +2634,7 @@ void integrateMain ()
               initialHetProbAddr, 0,    /* cell index */
               -1, -1,   /* last het locus & last het pattern (P-1 or M-2) */
               0);       /* current locus - start with 0 */
-          print_xmission_matrix (altMatrix, savedLocusList.numLocus, 0, 0, tmpID);
+	  DIAG (XM, 1, { print_xmission_matrix (altMatrix, savedLocusList.numLocus, 0, 0, tmpID);});
           if (modelOptions->polynomial == TRUE)
             freePolys ();
         }

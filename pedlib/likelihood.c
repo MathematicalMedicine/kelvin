@@ -302,10 +302,8 @@ PedigreeSet * pPedigreeList)
 	  pPedigree->cLikelihoodPolyList = pPedigree->likelihoodPolyList;
     #endif
     #ifdef POLYCOMP_DL
-	  if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
-	    fprintf (stderr, "Couldn't load compiled likelihood polynomial we just created!\n");
-	    exit (EXIT_FAILURE);
-	  }
+	  if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL)
+	    FATAL ("Couldn't load compiled likelihood polynomial that was just created!");
     #else
       #ifdef FAKEEVALUATE
 	  pPedigree->likelihoodPolynomial = constantExp(.05);
@@ -398,11 +396,10 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	  evaluatePoly (pPedigree->cLikelihoodPolynomial, 
 			pPedigree->cLikelihoodPolyList,
 			&pPedigree->cLikelihood);
-	  if (fabs (pPedigree->likelihood - pPedigree->cLikelihood) > 1E-15) {
-	    fprintf (stderr, "Discrepency between eV of %.*g and v of %.*g for %d\n", 
+	  if (fabs (pPedigree->likelihood - pPedigree->cLikelihood) > 1E-15)
+	    WARNING ("Discrepency between eV of %.*g and v of %.*g for %d\n", 
 		     DBL_DIG, pPedigree->likelihood, DBL_DIG, pPedigree->cLikelihood,
 		     pPedigree->likelihoodPolynomial->id);
-	  }
 	}
   #endif
 #endif
@@ -422,20 +419,17 @@ compute_likelihood (PedigreeSet * pPedigreeList)
 	  WARNING ("Pedigree %s has likelihood %G thats too small.\n",
 		pPedigree->sPedigreeID, pPedigree->likelihood);
 	  if (modelOptions->polynomial) {
-	    fprintf (stderr, "Polynomial terms (depth of 1):\n");
+	    DIAG (OVERALL, 1, {fprintf (stderr, "Polynomial terms (depth of 1):\n");
 	    expTermPrinting (stderr, pPedigree->likelihoodPolynomial, 1);
-	    fprintf (stderr, "\n");
-	    //	    printAllPolynomials();
-	    //	    fprintf (stderr, "\n");
+	    fprintf (stderr, "\n");});
 	  }
 	  ret = -1;
 	  product_likelihood = 0.0;
 	  sum_log_likelihood = -9999.99;
 	  //break;
 	} else if (pPedigree->likelihood < 0.0) {
-	  KASSERT (pPedigree->likelihood >= 0.0,
-		   "Pedigree %s with NEGATIVE likelihood - This is CRAZY!!!.\n",
-		   pPedigree->sPedigreeID);
+	  ASSERT (pPedigree->likelihood >= 0.0,
+		  "Pedigree %s has a NEGATIVE likelihood", pPedigree->sPedigreeID);
 	  product_likelihood = 0.0;
 	  sum_log_likelihood = -9999.99;
 	  ret = -2;
@@ -675,10 +669,9 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
       likelihood += tmpLikelihood;
 
     if (pPedigree->loopFlag == TRUE) {
-      if (modelOptions->polynomial == TRUE) {
-	//	fprintf(stderr, "keepPoly for pedigree\n");
+      if (modelOptions->polynomial == TRUE)
 	keepPoly (pLikelihoodPolynomial);
-      } else {
+      else {
 	DIAG (OVERALL, 1, 
 	      {fprintf (stderr, "Log Likelihood for this fixed looped pedigree %s is: %e\n",
 			pPedigree->sPedigreeID, log10 (tmpLikelihood));});
@@ -772,14 +765,10 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
     if( (modelOptions->loopCondRun == 1 || modelOptions->conditionalRun==1)
 	&& modelOptions->polynomial != TRUE) {
       for(k=0; k < condIdx; k++) {
-	fprintf(fpCond, "%s %s %d %s %s %e %5.1f%%\n", 
-		pCondSet[k].pPedigreeID,
-		pCondSet[k].pProbandID,
-		(int) pCondSet[k].trait, 
-		pCondSet[k].pAllele1,
-		pCondSet[k].pAllele2,
-		pCondSet[k].condL, 
-		pCondSet[k].condL/sumCondL*100);
+	fprintf(fpCond, "%s %s %d %s %s %e %5.1f%%\n", pCondSet[k].pPedigreeID,
+		pCondSet[k].pProbandID,	(int) pCondSet[k].trait, 
+		pCondSet[k].pAllele1,pCondSet[k].pAllele2,
+		pCondSet[k].condL, pCondSet[k].condL/sumCondL*100);
       }
     }
   }
@@ -962,15 +951,12 @@ peel_graph (NuclearFamily * pNucFam1, Person * pProband1,
 	  sizeof (int) * originalLocusList.numLocus);
 
   if (modelOptions->polynomial == TRUE) {
-    //    fprintf(stderr, "keepPoly for the %d likelihood and weight polynomials of proband %s\n",
-    //	    pProband->numConditionals, pProband->sID);
     for (i = 0; i < pProband->numConditionals; i++) {
       if (pProband->touchedFlag == TRUE) {
 	keepPoly (pProband->pLikelihood[i].lkslot.likelihoodPolynomial);
 	keepPoly (pProband->pLikelihood[i].wtslot.weightPolynomial);
       }
     }
-    //fprintf(stderr, "freePolys after keeping the likelihood and weight polynomials\n");
     freePolys ();
   }
 
@@ -1087,11 +1073,7 @@ loop_child_proband_genotype (int peelingDirection,
 	     */
 	    pConditional->lkslot.likelihood =
 	      penetrance * pNucFam->likelihood;
-	    /*
-	     * for a child, the weight should be
-	     * 1
-	     */
-	    pConditional->wtslot.weight = 1;
+	    pConditional->wtslot.weight = 1; // For a child, the weight should be 1
 	  }
 	}
 	/*
@@ -1102,26 +1084,23 @@ loop_child_proband_genotype (int peelingDirection,
 				 * this phased multilocus genotypes */
 	  /* no need to consider penetrance anymore */
 	  if (modelOptions->polynomial == TRUE) {
-	    pConditional->lkslot.
-	      likelihoodPolynomial =
-	      timesExp (2,
-			pConditional->lkslot.likelihoodPolynomial, 1,
+	    pConditional->lkslot.likelihoodPolynomial =
+	      timesExp (2, pConditional->lkslot.likelihoodPolynomial, 1,
 			pNucFam->likelihoodPolynomial, 1, 1);
-	    //fprintf(stderr, "Likelihood for this entire multi-locus genotype %f %f\n",
-	    //evaluateValue(pNucFam->likelihoodPolynomial),
-	    //evaluateValue(pProband->pLikelihood[multiLocusIndex].likelihoodPolynomial));
 #if 0
-	    DIAG (OVERALL, 1,
-		  {fprintf (stderr, "Proband %s Conditional Likelihood (%d) = %e.\n",});
-		  pProband->sID, multiLocusIndex,
-		  evaluateValue (pConditional->lkslot.likelihoodPolynomial));
+	    DIAG (OVERALL, 2,
+		  {fprintf(stderr, "Likelihood for this entire multi-locus genotype %f %f\n",
+			   evaluateValue(pNucFam->likelihoodPolynomial),
+			   evaluateValue(pProband->pLikelihood[multiLocusIndex].likelihoodPolynomial));
+		    fprintf (stderr, "Proband %s Conditional Likelihood (%d) = %e.\n",
+			     pProband->sID, multiLocusIndex,
+			     evaluateValue (pConditional->lkslot.likelihoodPolynomial));});
 #endif
 	  } else {
 	    pConditional->lkslot.likelihood *= pNucFam->likelihood;
-	    DIAG (OVERALL, 1, {fprintf (stderr, 
-		  "Proband %s Conditional Likelihood (%d) = %e.\n",
-		  pProband->sID, multiLocusIndex,
-				  pConditional->lkslot.likelihood);});
+	    DIAG (OVERALL, 1,
+		  {fprintf (stderr, "Proband %s Conditional Likelihood (%d) = %e.\n",
+			    pProband->sID, multiLocusIndex, pConditional->lkslot.likelihood);});
 	  }
 	}
       }
@@ -2131,7 +2110,7 @@ get_haplotype_freq (int locus, int myParent, void *freqPtr)
   pLocus2 = originalLocusList.ppLocusList[origLocus2];
   /* find the parameter values for these two loci */
   pLDLociLocal = find_LD_loci (origLocus1, origLocus2);
-  KASSERT (pLDLociLocal != NULL,
+  ASSERT (pLDLociLocal != NULL,
 	   "Can't find LD parameter between loci %d,%d.\n",
 	   origLocus1, origLocus2);
   /*
@@ -2273,15 +2252,13 @@ loop_child_multi_locus_genotype (int locus, int multiLocusIndex,
 			  xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2]);});
 	}
 	else {
-	  newProb =
-	    xmissionMatrix[newXmissionIndex[DAD]].slot.prob[1] *
+	  newProb = xmissionMatrix[newXmissionIndex[DAD]].slot.prob[1] *
 	    xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2];
 	  DIAG (OVERALL, 1,
 		{fprintf (stderr, "\t xmission prob: %f = %f * %f\n", newProb,
 		xmissionMatrix[newXmissionIndex[DAD]].slot.prob[1],
 			  xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2]);});
 	}
-	//fprintf(stderr, "newProb=%f newPenetrance=%f\n", newProb, newPenetrance);
       }
 
       /* we have completed one multilocus genotype for this child */
@@ -3123,33 +3100,28 @@ print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
   int newCellIndex;
   int i;
 
-  return;
-
   for (pattern = 0; pattern <= 2; pattern++) {
     newCellIndex = cellIndex * 4 + pattern;
-    if (pattern == 1) {
+    if (pattern == 1)
       pID[loc] = 'P';
-    } else if (pattern == 2) {
+    else if (pattern == 2)
       pID[loc] = 'M';
-    } else {
+    else
       pID[loc] = 'B';
-    }
+
     if (loc != totalLoci - 1) {
-      /* not complete multi-locus haplotype yet */
+      /* Not complete multi-locus haplotype yet */
       print_xmission_matrix (pMatrix, totalLoci, loc + 1, newCellIndex, pID);
     } else {
-      /* print the xmission probability out */
-      for (i = 0; i <= loc; i++) {
+      /* Print the xmission probability */
+      for (i = 0; i <= loc; i++)
 	fprintf (stderr, "%c", pID[i]);
-      }
       fprintf(stderr, ": ");
-      /* print out sex averaged xmission probability */
-      if(modelOptions->polynomial == TRUE)
-	{
-	  expTermPrinting(stderr, pMatrix[newCellIndex].slot.probPoly[0], 4);
-	  fprintf(stderr, "\n");
-	}
-      else
+      /* Print sex averaged xmission probability */
+      if(modelOptions->polynomial == TRUE) {
+	expTermPrinting(stderr, pMatrix[newCellIndex].slot.probPoly[0], 4);
+	fprintf(stderr, "\n");
+      } else
 	fprintf (stderr, "%f\n", pMatrix[newCellIndex].slot.prob[0]);
     }
   }

@@ -1086,7 +1086,7 @@ int dprimeIdx;
         if (modelOptions->polynomial == TRUE)
           freePolys ();
 
-        print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);
+	DIAG (XM, 1, { print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);});
 
 #ifndef SIMPLEPROGRESS
         /* Calculate likelihood for the marker set */
@@ -1230,7 +1230,7 @@ int dprimeIdx;
         if (modelOptions->polynomial == TRUE) {
           pedigreeSetPolynomialClearance (&pedigreeSet);
           status = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
-          print_xmission_matrix (altMatrix, savedLocusList.numLocus, 0, 0, tmpID);
+	  DIAG (XM, 1, { print_xmission_matrix (altMatrix, savedLocusList.numLocus, 0, 0, tmpID);});
           if (modelOptions->polynomial == TRUE)
             freePolys ();
         }
