@@ -953,7 +953,8 @@ int dprimeIdx;
               }
 
               log10_likelihood_null = pedigreeSet.log10Likelihood;
-              ASSERT (isnan (log10_likelihood_null), "Trait likelihood is NAN");
+              if (isnan (log10_likelihood_null))
+		ERROR ("Trait likelihood is NAN");
 	    }   /* thresholdIdx */
           }     /* penIdx */
         }       /* paramIdx */

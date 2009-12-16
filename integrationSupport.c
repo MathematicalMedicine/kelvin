@@ -425,7 +425,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
   if (isnan (log10_likelihood_alternative))
-    fprintf (stderr, "ALT likelihood is NAN.\n");
+    ERROR ("ALT likelihood is NAN");
   if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
     log10_likelihood_ratio = 0;
     avg_hetLR = 0.0;
@@ -445,7 +445,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       }
     }
     if (isnan (likelihood_ratio))
-      fprintf (stderr, "LR for the pedigree set is NAN.\n");
+      ERROR ("LR for the pedigree set is NAN");
 
     /* caculating the HET */
     for (j = 0; j < 5; j++) {
