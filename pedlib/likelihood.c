@@ -361,13 +361,26 @@ compute_likelihood (PedigreeSet * pPedigreeList)
   pPedigreeList->log10Likelihood = 0;
 
   if (modelOptions->polynomial == TRUE) {
+
+    /* Make sure they exist. Need to check until the day we have all builds separate, and
+       then we pull this to improve evaulation performance. */
+    for (i = 0; i < pPedigreeList->numPedigree; i++) {
+      pPedigree = pPedigreeList->ppPedigreeSet[i];
+      if (pPedigree->load_flag == 0) { // Skip everything if we're using saved results
+	if (pPedigree->likelihoodPolynomial == NULL) { // There's no polynomial, so come up with one
+	  build_likelihood_polynomial (pPedigreeList);
+	  break; // Don't need to keep checking if we've done the build.
+	}
+      }
+    }
+
     /* Now evaluate them all */
 #ifdef _OPENMP
 #pragma omp parallel for private(pPedigree)
 #endif
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
-      if (pPedigree->load_flag == 0) {
+      if (pPedigree->load_flag == 0) { // Skip everything if we're using saved results
 #ifdef FAKEEVALUATE
 	pPedigree->likelihood = .05;
 #else
@@ -513,16 +526,10 @@ compute_pedigree_likelihood (Pedigree * pPedigree)
 
   condIdx = 0;
   sumCondL = 0;
-  if (modelOptions->dryRun == 0 && modelOptions->polynomial == TRUE) {
-#ifndef SIMPLEPROGRESS
-    fprintf (stdout, "Building polynomial w/pedigree: %s (%d/%d)\r",
+  if (modelOptions->dryRun == 0 && modelOptions->polynomial == TRUE)
+    DETAIL (0, "Building polynomial w/pedigree: %s (%d/%d)",
 	     pPedigree->sPedigreeID, pPedigree->pedigreeIndex + 1,
 	     pPedigree->pPedigreeSet->numPedigree);
-    fflush (stdout);
-    if (pPedigree->pedigreeIndex + 1 == pPedigree->pPedigreeSet->numPedigree)
-      fprintf (stdout, "\n");
-#endif
-  }
 
   for (i = 0; i < pPedigree->numNuclearFamily; i++) {
     pMyNucFam = pPedigree->ppNuclearFamilyList[i];
@@ -3078,9 +3085,8 @@ populate_xmission_matrix (XMission * pMatrix, int totalLoci,
 			  int cellIndex,
 			  int lastHetLoc, int prevPattern, int loc)
 {
-#ifndef SIMPLEPROGRESS
-  fprintf (stderr, "Building transmission matrix...\n");
-#endif
+
+  DETAIL (0, "Building transmission matrix");
   swPushPhase ('k', "buildXM");
 
   do_populate_xmission_matrix (pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc);
