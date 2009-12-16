@@ -19,6 +19,7 @@
 #define MAXSWMSG 220
 #define MAXUDPMSG 230
 
+void swDumpStack (void);
 void swPushPhase (char program, char *currentPhase);
 void swPopPhase (char program);
 
@@ -174,6 +175,9 @@ void swStartProgressWakeUps(int seconds);
 #define SUBSTEP(PERCENTDONE, ...) { swLogProgress(1, PERCENTDONE, __VA_ARGS__); }
 #define DETAIL(PERCENTDONE, ...) { swLogProgress(2, PERCENTDONE, __VA_ARGS__); }
 
+/* These are the current facility levels, and I need a new way of defining them.
+   I refer to them in the macros as environment levels since I intend to set them
+   using environment variables. */
 #define OVERALL 0
 #define XM 0
 

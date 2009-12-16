@@ -85,6 +85,7 @@ then #include sw.h in your source code, and link with sw.o.
 #include <sys/stat.h>
 #include <unistd.h>
 #include <limits.h>
+#include <ctype.h>
 #include <time.h>
 #include <stdarg.h>
 #include <pthread.h>
@@ -95,6 +96,9 @@ then #include sw.h in your source code, and link with sw.o.
 #include "sw.h"
 #include "hashtab.h"
 #include "lookupa.h"
+#ifdef BACKTRACE
+#include <execinfo.h> // For stack dump on demand
+#endif
 
 #ifndef MAX
 #define MAX(m,n) ((m)>=(n)?(m):(n))
@@ -110,6 +114,37 @@ long currentVMK, maximumPMK = -1;
 #include <linux/prctl.h>
 int prctl (int, char *); // Strangely this is not included!
 #endif
+
+void swDumpStack (void) {
+#ifdef BACKTRACE
+  const size_t MAXSTACKDEPTH = 20;
+  size_t stack_depth;
+  void *stack_addrs[MAXSTACKDEPTH];
+  char **stack_strings;
+
+  stack_depth = backtrace(stack_addrs, MAXSTACKDEPTH);
+  stack_strings = backtrace_symbols(stack_addrs, stack_depth);
+
+  fprintf (stderr, "\nCall stack: ");
+  size_t i;
+  for (i = 2; i < stack_depth; i++) {
+    char *wordBoundary;
+    if ((wordBoundary = strchr( stack_strings[i], '+')) != '\0') {
+      while ((isalnum(*wordBoundary) == 0) && (*wordBoundary != '_'))
+	*(wordBoundary--) = '\0';
+      while (isalnum(*wordBoundary) || (*wordBoundary == '_'))
+	wordBoundary--;
+      wordBoundary++;
+      fprintf(stderr, "%s<-", wordBoundary);
+      if (strcmp(wordBoundary, "main") == 0)
+	break;
+    }
+  }
+  fprintf (stderr, "\n");
+  free(stack_strings); // malloc()ed by backtrace_symbols                                                             
+  fflush(stderr);
+#endif
+}
 
 /**
 

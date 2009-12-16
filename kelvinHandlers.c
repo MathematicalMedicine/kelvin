@@ -1,6 +1,3 @@
-#ifdef BACKTRACE
-#include <execinfo.h> // For stack dump on demand
-#endif
 #include <ctype.h> // For isalnum()
 
 #ifdef PTMALLOC3
@@ -15,37 +12,6 @@
 
 extern struct swStopwatch *overallSW;
 
-void dumpStack (void) {
-#ifdef BACKTRACE
-  const size_t MAXSTACKDEPTH = 20;
-  size_t stack_depth;
-  void *stack_addrs[MAXSTACKDEPTH];
-  char **stack_strings;
-
-  stack_depth = backtrace(stack_addrs, MAXSTACKDEPTH);
-  stack_strings = backtrace_symbols(stack_addrs, stack_depth);
-
-  fprintf (stderr, "\nCall stack: ");
-  size_t i;
-  for (i = 2; i < stack_depth; i++) {
-    char *wordBoundary;
-    if ((wordBoundary = strchr( stack_strings[i], '+')) != '\0') {
-      while ((isalnum(*wordBoundary) == 0) && (*wordBoundary != '_'))
-	*(wordBoundary--) = '\0';
-      while (isalnum(*wordBoundary) || (*wordBoundary == '_'))
-	wordBoundary--;
-      wordBoundary++;
-      fprintf(stderr, "%s<-", wordBoundary);
-      if (strcmp(wordBoundary, "main") == 0)
-	break;
-    }
-  }
-  fprintf (stderr, "\n");
-  free(stack_strings); // malloc()ed by backtrace_symbols                                                             
-#endif
-  fflush(stderr);
-}
-
 /**
 
   Handler for SIGQUIT.
@@ -57,7 +23,9 @@ void dumpStack (void) {
 */
 void quitSignalHandler (int ourSignal)
 {
-  dumpStack ();
+#ifdef BACKTRACE
+  swDumpStack ();
+#endif
   swProgressRequestFlag = TRUE;
 #ifdef POLYSTATISTICS
   if (modelOptions->polynomial == TRUE)

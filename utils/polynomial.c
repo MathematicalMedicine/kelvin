@@ -450,6 +450,10 @@ Polynomial *polyReturnWrapper (Polynomial * p)
 {
   // For testing purposes, we're going to export every polynomial!
   //  return exportPoly (p);
+  if (swProgressRequestFlag) {
+    swProgressRequestFlag = FALSE;
+    DETAIL (0, "Building polynomial, currently at %1.2g terms", (double) sumCount + productCount + constantCount + variableCount + functionCallCount);
+  }
   return (p);
 }
 
@@ -691,12 +695,15 @@ double evaluateValue (Polynomial * p)
   int i;
 
   evaluateValueCount++;
+
+  if (swProgressRequestFlag) {
+    swProgressRequestFlag = FALSE;
+    DETAIL (0, "Evaluating polynomial, currently at %G iterations", evaluateValueCount);
+  }
+
 #ifdef EVALUATESW
   swStart (evaluateValueSW);
 #endif
-
-  if ((evaluateValueCount & 0xFFFF) == 0)
-    fprintf (stdout, "%d polynomial value calculations performed\n", evaluateValueCount);
 
   /* Clear all of the VALID_EVAL_FLAGs */
   clearValidEvalFlag ();
@@ -1843,6 +1850,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   rp->eType = T_SUM;
   MALCHOKE(sP, sizeof (struct sumPoly), struct sumPoly *);
   sP->num = counterSum;
+  // When usage is up to around 32Gb, these two mallocs can take seconds and even minutes!
   MALCHOKE(sP->factor, counterSum * sizeof (double),double *);
   MALCHOKE(sP->sum, counterSum * sizeof (Polynomial *),Polynomial **);
   for (i = 0; i < sP->num; i++) {
@@ -2808,14 +2816,16 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 #endif
 
   evaluatePolyCount++;
+
+  if (swProgressRequestFlag) {
+    swProgressRequestFlag = FALSE;
+    DETAIL (0, "Evaluating polynomial, currently at %G iterations", evaluatePolyCount);
+  }
+
 #ifdef EVALUATESW
   swStart (evaluatePolySW);
 #endif
 
-#ifdef POLYSTATISTICS
-  if ((evaluatePolyCount & 0xFFFF) == 0)
-    fprintf (stderr, "%d polynomial evaluations performed\n", evaluatePolyCount);
-#endif
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Starting evaluatePoly...\n");
   if (l->listNext == 0) {

@@ -358,7 +358,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
 
     if (modelOptions->polynomial == TRUE) {
-      KASSERT (pPedigreeLocal->traitLikelihoodPolynomial != NULL, "Error in  \n");
+      ASSERT (pPedigreeLocal->traitLikelihoodPolynomial != NULL, "Trait likelihood polynomial is NULL");
       /* evaluate likelihood */
       evaluatePoly (pPedigreeLocal->traitLikelihoodPolynomial, pPedigreeLocal->traitLikelihoodPolyList, &pPedigreeLocal->likelihood);
     } else {
@@ -376,7 +376,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       return;
       //       break;
     } else if (pPedigreeLocal->likelihood < 0.0) {
-      KASSERT (pPedigreeLocal->likelihood >= 0.0, "Pedigree %s with NEGATIVE likelihood - This is CRAZY!!!.\n", pPedigreeLocal->sPedigreeID);
+      ASSERT (pPedigreeLocal->likelihood >= 0.0, "Pedigree %s with NEGATIVE likelihood - This is CRAZY!!!.\n", pPedigreeLocal->sPedigreeID);
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
       break;
@@ -692,7 +692,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 
 
     if (modelOptions->polynomial == TRUE) {
-      KASSERT (pPedigreeLocal->traitLikelihoodPolynomial != NULL, "Error in  \n");
+      ASSERT (pPedigreeLocal->traitLikelihoodPolynomial != NULL, "Pedigree trait likelihood is NULL");
       /* evaluate likelihood */
       evaluatePoly (pPedigreeLocal->traitLikelihoodPolynomial, pPedigreeLocal->traitLikelihoodPolyList, &pPedigreeLocal->likelihood);
       //fprintf(stderr, " is done %f with %d pedigrees\n",pPedigreeLocal->likelihood, pedigreeSet.numPedigree);
@@ -715,7 +715,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
       sum_log_likelihood = -9999.99;
       break;
     } else if (pPedigreeLocal->likelihood < 0.0) {
-      KASSERT (pPedigreeLocal->likelihood >= 0.0, "Pedigree %s with NEGATIVE likelihood - This is CRAZY!!!.\n", pPedigreeLocal->sPedigreeID);
+      ASSERT (pPedigreeLocal->likelihood >= 0.0, "Pedigree %s with NEGATIVE likelihood", pPedigreeLocal->sPedigreeID);
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
       ret = -2;
@@ -938,7 +938,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     statusLocal = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
     if (statusLocal < 0)
-      KASSERT (1, "Haplotype frequency combination impossible. Exiting!\n");
+      ASSERT (1, "Haplotype frequency combination impossible");
   }
 
 
@@ -1046,13 +1046,13 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
 
     statusLocal = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprime0Idx);
     if (statusLocal < 0)
-      KASSERT (1, "Haplotype frequency combination impossible. Exiting!\n");
+      ASSERT (1, "Haplotype frequency combination impossible. Exiting!\n");
 
     set_null_dprime (pLDLoci);
     copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprime0Idx]);
     copy_DValue (pLDLoci, pLambdaCell->DValue[dprime0Idx]);
 
-    KASSERT (pLambdaCell->impossibleFlag[dprime0Idx] == 0, "Haplotype frequency combination impossible at LE. Exiting!\n");
+    ASSERT (pLambdaCell->impossibleFlag[dprime0Idx] == 0, "Haplotype frequency combination impossible at LE. Exiting!\n");
   }
 
   for (k = 0; k < 3; k++) {
@@ -1381,7 +1381,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     statusLocal = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
     if (statusLocal < 0)
-      KASSERT (1, "Haplotype frequency combination impossible. Exiting!\n");
+      ASSERT (1, "Haplotype frequency combination impossible. Exiting!\n");
   }
 
   if (modelOptions->markerAnalysis == FALSE && pLocus1->locusType == LOCUS_TYPE_TRAIT) {
@@ -1421,12 +1421,12 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     statusLocal = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprime0Idx);
     if (statusLocal < 0)
-      KASSERT (1, "Haplotype frequency combination impossible. Exiting!\n");
+      ASSERT (1, "Haplotype frequency combination impossible. Exiting!\n");
 
     set_null_dprime (pLDLoci);
     copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprime0Idx]);
     copy_DValue (pLDLoci, pLambdaCell->DValue[dprime0Idx]);
-    KASSERT (pLambdaCell->impossibleFlag[dprime0Idx] == 0, "Haplotype frequency combination impossible at LE. Exiting!\n");
+    ASSERT (pLambdaCell->impossibleFlag[dprime0Idx] == 0, "Haplotype frequency combination impossible at LE. Exiting!\n");
   }
   for (k = 0; k < 3; k++) {
     locusList->pNextLocusDistance[k][0] = 0.5;
@@ -2068,7 +2068,7 @@ void integrateMain ()
 
             /* Call DCUHRE  Domain information is stored in global variables,  xl an xu */
             kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &(BRscale[i]));
-            KASSERT ((s->ifail == 0), "Dynamic integration failed. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c");
+            ASSERT ((s->ifail == 0), "Dynamic integration failed. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c");
 
             if (modelOptions->mapFlag == SA) {
               dcuhre2[i][3] = integral;
@@ -2653,7 +2653,7 @@ void integrateMain ()
       abserr = 0.0;
       num_out_constraint = 0;
       kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &max_scale);
-      KASSERT ((s->ifail == 0), "Dynamic integration failed. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c");
+      ASSERT ((s->ifail == 0), "Dynamic integration failed. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c");
 
       num_eval = s->total_neval;
 

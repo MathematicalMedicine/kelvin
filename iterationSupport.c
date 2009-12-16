@@ -407,7 +407,8 @@ int dprimeIdx;
 			  fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
 			else
 			  fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
-		      }});
+		      }
+		    });
 		  ERROR ("Zero likelihood for theta 0.5");
                 }
 
@@ -556,8 +557,7 @@ int dprimeIdx;
                       set_null_dprime (pLDLoci);
                       copy_haploFreq (pLDLoci, pLambdaCell->haploFreq[dprime0Idx]);
                       copy_DValue (pLDLoci, pLambdaCell->DValue[dprime0Idx]);
-
-                      KASSERT (pLambdaCell->impossibleFlag[dprime0Idx] == 0, "Haplotype frequency combination impossible at LE. Exiting!\n");
+                      ASSERT (pLambdaCell->impossibleFlag[dprime0Idx] == 0, "Haplotype frequency combination impossible for LE\n");
                     }
                     for (k = 0; k < 3; k++) {
                       locusList->pNextLocusDistance[k][0] = 0.5;
@@ -581,19 +581,20 @@ int dprimeIdx;
                       ERROR ("Negative likelihood for theta 0.5");
 
                     if (ret == -1) {
-                      fprintf (stderr, "Theta 0.5 has likelihood 0\n");
-                      fprintf (stderr, "dgf=%f\n", gfreq);
-                      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
-                        pen_DD = modelRange->penet[liabIdx][0][penIdx];
-                        pen_Dd = modelRange->penet[liabIdx][1][penIdx];
-                        pen_dD = modelRange->penet[liabIdx][2][penIdx];
-                        pen_dd = modelRange->penet[liabIdx][3][penIdx];
-                        if (modelOptions->imprintingFlag)
-                          fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
-                        else
-                          fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
-                      }
-                      exit (EXIT_FAILURE);
+		      DIAG(OVERALL, 1, {
+			  fprintf (stderr, "dgf=%f\n", gfreq);
+			  for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+			    pen_DD = modelRange->penet[liabIdx][0][penIdx];
+			    pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+			    pen_dD = modelRange->penet[liabIdx][2][penIdx];
+			    pen_dd = modelRange->penet[liabIdx][3][penIdx];
+			    if (modelOptions->imprintingFlag)
+			      fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
+			    else
+			      fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
+			  }
+			});
+                      ERROR ("Zero likelihood for theta of 0.5");
                     }
                     for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
                       /* save the likelihood at null */
@@ -755,12 +756,7 @@ int dprimeIdx;
       holdAllPolys ();
 
     /* For trait likelihood */
-#ifndef SIMPLEPROGRESS
-    fprintf (stdout, "Determining trait likelihood...\n");
-#else
-    fprintf (stdout, "CTalculations 0%% complete\r");
-    fflush (stdout);
-#endif
+    SUBSTEP (0, "Calculating trait likelihood");
 
     locusList = &traitLocusList;
     xmissionMatrix = traitMatrix;
@@ -810,34 +806,33 @@ int dprimeIdx;
 
           /* Compute the likelihood for the trait */
           ret = compute_likelihood (&pedigreeSet);
-          cL[4]++;
-#ifndef SIMPLEPROGRESS
-          if (cL[4] % MAX (1, eCL[4] / 5) == 1) {
-            fprintf (stdout, "Trait likelihood evaluations %lu%% complete\r", cL[4] * 100 / eCL[4]);
-            fflush (stdout);
+          cL[4]++; // MP DT trait likelihood
+	  if (swProgressRequestFlag) {
+	    swProgressRequestFlag = FALSE;
+            DETAIL (0, "Trait likelihood calculations %lu%% complete", cL[4] * 100 / eCL[4]);
           }
-#endif
+
           if (modelOptions->dryRun != 0)
             continue;
 
-          if (ret == -2) {
-            fprintf (stderr, "Trait has negative likelihood. Exiting!\n");
-            exit (EXIT_FAILURE);
-          }
+          if (ret == -2)
+	    ERROR ("Negative likelihood for trait");
+
           if (ret == -1) {
-            fprintf (stderr, "Trait has likelihood 0\n");
-            fprintf (stderr, "dgf=%f\n", gfreq);
-            for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
-              pen_DD = modelRange->penet[liabIdx][0][penIdx];
-              pen_Dd = modelRange->penet[liabIdx][1][penIdx];
-              pen_dD = modelRange->penet[liabIdx][2][penIdx];
-              pen_dd = modelRange->penet[liabIdx][3][penIdx];
-              if (modelOptions->imprintingFlag)
-                fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
-              else
-                fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
-            }
-            exit (EXIT_FAILURE);
+	    DIAG(OVERALL, 1, {
+		fprintf (stderr, "dgf=%f\n", gfreq);
+		for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+		  pen_DD = modelRange->penet[liabIdx][0][penIdx];
+		  pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+		  pen_dD = modelRange->penet[liabIdx][2][penIdx];
+		  pen_dd = modelRange->penet[liabIdx][3][penIdx];
+		  if (modelOptions->imprintingFlag)
+		    fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
+		  else
+		    fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
+		}
+	      });
+            ERROR ("Zero likelihood for trait");
           }
           /* save the results for NULL */
           for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -894,11 +889,10 @@ int dprimeIdx;
                 /* check against the hard coded constraint */
                 if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
                   constraint = (1 - gfreq) * (1 - gfreq) * mean_dd * SD_dd + 2 * gfreq * (1 - gfreq) * mean_Dd * SD_Dd + gfreq * gfreq * mean_DD * SD_DD;
-                  /*      fprintf(stderr, "constraint: %f gfreq:%f DD (%f,%f) Dd(%f,%f) dd(%f,%f)\n",
-                   * constraint, gfreq, mean_DD, SD_DD, 
-                   * mean_Dd, SD_DD, 
-                   * mean_dd, SD_dd);
-                   */
+                  DIAG(OVERALL, 1, {
+		      fprintf(stderr, "constraint: %f gfreq:%f DD (%f,%f) Dd(%f,%f) dd(%f,%f)\n",
+			      constraint, gfreq, mean_DD, SD_DD, mean_Dd, SD_DD, mean_dd, SD_dd);
+		    });
                   if (constraint >= 3.0 || constraint <= -3.0) {
                     breakFlag = TRUE;
                     break;
@@ -924,31 +918,30 @@ int dprimeIdx;
               else
                 update_penetrance (&pedigreeSet, traitLocus);
               ret = compute_likelihood (&pedigreeSet);
-              cL[5]++;
-#ifndef SIMPLEPROGRESS
-              if (cL[5] % MAX (1, eCL[5] / 5) == 1) {
-                fprintf (stdout, "Trait likelihood evaluations %lu%% complete\r", cL[5] * 100 / eCL[5]);
-                fflush (stdout);
-              }
-#endif
-              if (ret == -2) {
-                fprintf (stderr, "Trait has negative likelihood. Exiting!\n");
-                exit (EXIT_FAILURE);
-              }
+              cL[5]++; // MP QT/CT trait likelihood
+	      if (swProgressRequestFlag) {
+		swProgressRequestFlag = FALSE;
+                DETAIL (0, "Trait likelihood calculations %lu%% complete", cL[5] * 100 / eCL[5]);
+	      }
+
+              if (ret == -2)
+                ERROR ("Negative likelihood for trait");
+
               if (ret == -1) {
-                fprintf (stderr, "Trait has likelihood 0\n");
-                fprintf (stderr, "dgf=%f\n", gfreq);
-                for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
-                  pen_DD = modelRange->penet[liabIdx][0][penIdx];
-                  pen_Dd = modelRange->penet[liabIdx][1][penIdx];
-                  pen_dD = modelRange->penet[liabIdx][2][penIdx];
-                  pen_dd = modelRange->penet[liabIdx][3][penIdx];
-                  if (modelOptions->imprintingFlag)
-                    fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
-                  else
-                    fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
-                }
-                exit (EXIT_FAILURE);
+		DIAG(OVERALL, 1, {
+		    fprintf (stderr, "dgf=%f\n", gfreq);
+		    for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+		      pen_DD = modelRange->penet[liabIdx][0][penIdx];
+		      pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+		      pen_dD = modelRange->penet[liabIdx][2][penIdx];
+		      pen_dd = modelRange->penet[liabIdx][3][penIdx];
+		      if (modelOptions->imprintingFlag)
+			fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
+		      else
+			fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
+		    }
+		  });
+                ERROR ("Zero likelihood for trait");
               }
 
               for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -960,17 +953,14 @@ int dprimeIdx;
               }
 
               log10_likelihood_null = pedigreeSet.log10Likelihood;
-              if (isnan (log10_likelihood_null))
-                fprintf (stderr, "Trait likelihood is NAN.\n");
-            }   /* thresholdIdx */
+              ASSERT (isnan (log10_likelihood_null), "Trait likelihood is NAN");
+	    }   /* thresholdIdx */
           }     /* penIdx */
         }       /* paramIdx */
       } /* gfreq */
     }   /* end of QT */
 
-#ifndef SIMPLEPROGRESS
-    fprintf (stdout, "Trait likelihood evaluations 100%% complete\n");
-#endif
+    DETAIL (0, "Trait likelihood calculations complete");
 
     if (modelOptions->polynomial == TRUE) {
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -1043,10 +1033,7 @@ int dprimeIdx;
       locusList->traitLocusIndex = traitIndex;
       locusList->traitOrigLocus = traitLocus;
 
-#ifndef SIMPLEPROGRESS
-      /* Say where we're at with the trait locus and markers. */
-      fprintf (stdout, "Starting w/trait locus at %.2f (%d/%d positions) with", traitPos, posIdx + 1, numPositions);
-#endif
+      SUBSTEP (((posIdx + 1) * 100 / numPositions), "Starting w/trait locus at %.2f (%d/%d positions)", traitPos, posIdx + 1, numPositions);
 
       markerSetChanged = FALSE;
       if (prevFirstMarker != mp_result[posIdx].pMarkers[0] || prevLastMarker != mp_result[posIdx].pMarkers[modelType->numMarkers - 1]) {
@@ -1069,12 +1056,14 @@ int dprimeIdx;
           prevPos = currPos;
         }       /* end of loop over the markers to set up locus list */
 
-#ifndef SIMPLEPROGRESS
-        fprintf (stdout, " new markers");
-        for (k = 0; k < modelType->numMarkers; k++)
-          fprintf (stdout, " %d(%.2f)", markerLocusList.pLocusIndex[k], *get_map_position (markerLocusList.pLocusIndex[k]));
-        fprintf (stdout, "\n");
-#endif
+	{
+	  int length;
+	  char message[MAXLOGMSG + 1], *pMessage = message;
+	  pMessage += length = snprintf (message, MAXLOGMSG, "New markers: ");
+	  for (k = 0; k < modelType->numMarkers; k++)
+	    snprintf (pMessage, MAXLOGMSG - length, " %d(%.2f)", markerLocusList.pLocusIndex[k], *get_map_position (markerLocusList.pLocusIndex[k]));
+	  DETAIL (0, message);
+	}
 
         locusList = &markerLocusList;
         xmissionMatrix = markerMatrix;
@@ -1088,10 +1077,9 @@ int dprimeIdx;
 
 	DIAG (XM, 1, { print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);});
 
-#ifndef SIMPLEPROGRESS
         /* Calculate likelihood for the marker set */
-        fprintf (stdout, "Determining marker set likelihood...\n");
-#endif
+        DETAIL (0, "Determining marker set likelihood");
+
         for (k = 0; k < modelType->numMarkers; k++) {
           markerNameList[k] = (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[k]])->sName;
         }
@@ -1121,9 +1109,10 @@ int dprimeIdx;
         cL[6]++;
         swPopPhase ('k');
 
-#ifndef SIMPLEPROGRESS
-        fprintf (stdout, "Marker set likelihood evaluations %lu%% complete...\n", MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
-#endif
+	if (swProgressRequestFlag) {
+	  swProgressRequestFlag = FALSE;
+	  DETAIL (0, "Marker set likelihood evaluations %lu%% complete...\n", MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
+	}
 
         /* print out some statistics under dry run */
         if (modelOptions->dryRun != 0) {
@@ -1148,12 +1137,7 @@ int dprimeIdx;
           pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
         }
       } /* end of marker set change */
-      else
-#ifndef SIMPLEPROGRESS
-        fprintf (stdout, " same markers\n");
-#else
-        ;
-#endif
+
       prevFirstMarker = mp_result[posIdx].pMarkers[0];
       prevLastMarker = mp_result[posIdx].pMarkers[modelType->numMarkers - 1];
       if (markerSetChanged || prevTraitInd != mp_result[posIdx].trait)
@@ -1238,10 +1222,9 @@ int dprimeIdx;
 
       if (modelOptions->polynomial != TRUE)
         status = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
-      /* For alternative */
-#ifndef SIMPLEPROGRESS
-      fprintf (stdout, "Determining combined likelihood...\n");
-#endif
+
+      /* For Alternative */
+      DETAIL (0, "Determining combined likelihood");
 
       if (pTrait->type == DICHOTOMOUS) {
         for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
