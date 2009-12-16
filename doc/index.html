@@ -1,413 +1,701 @@
 <html>
+  <?-- This file is 100 characters wide -->
   <head>
-    <title>KELVIN V0.38.0</title>
+    <title>KELVIN V0.38.0 ReadMe</title>
     <style type='text/css'>
       span.sc { font-variant: small-caps; }
+      div.indent { padding-left: 2em; }
+      div.hang {padding-left: 2em ; text-indent: -2em; }
+      div.footnote { font-size: smaller; }
     </style>
   </head>
   <body>
-  <h1><span class='sc'>Kelvin</span> v0.38.0</h1>
-  <h2>INTRODUCTION</h2>
-  <span class='sc'>Kelvin</span> is a genetic analysis program that supports two-point and
-  multipoint linkage analyses, dichotomous and quantitative traits, linkage disequilibrium
-  (association) analysis (two-point only), and many other options. It uses the well-established
-  MAKEPED (part of the <a href="http://linkage.rockefeller.edu">LINKAGE</a> package) file
-  format for pedigree data. It is copyright 2008, Nationwide Children's Hospital Research
-  Institute. All rights reserved. Permission is hereby given to use this software for non-profit
-  educational purposes only. Please address any e-mail regarding <span class='sc'>Kelvin</span>
-  to <a href="mailto:kelvin@nationwidechildrens.org">kelvin@nationwidechildrens.org</a>.
-  <p>
-  <h2>QUICK START</h2>
-  This section provides an overview of getting, building and running
-  <span class='sc'>Kelvin</span>. Detailed instructions on each point can be found
-  <a href='#toc'>below</a>.
-  <h3>Building <span class='sc'>Kelvin</span></h3>
-  These instructions assume that <span class='sc'>Kelvin</span> is being built on a Linux or
-  Unix system of recent vintage, with a GCC compiler, and that the user is familiar with the
-  command line environment on that system.
-  <ul>
-    <li>Unpack the distribution archive with <tt>gunzip</tt> and <tt>tar</tt>. Move into
-      the newly-created source directory.</li>
-    <li>See if one of the pre-built executables in the <tt>bin</tt> subdirectory is suitable for
-      your system.</li>
-    <li>Otherwise, build <span class='sc'>Kelvin</span> by running <tt>make</tt>.</li>
-    <li>Test the executable by running <tt>make test</tt>. The tests may take as long as 30
-      minutes, depending on the system.</li>
-    <li>Install the executable and supporting scripts by running <tt>make install</tt>. The
-      default installation directory is <tt>/usr/local/bin</tt>.</li>
-  </ul>
-  <h3>Preparing Input Files</h3>
-  [ LaVonne stuff here ]
-  <h3>Creating A Configuration File</h3>
-  [ LaVonne stuff here ]
-  <h3>Running <span class='sc'>Kelvin</span></h3>
-  Run <tt>kelvin <i>configfile</i></tt>. The text that <span class='sc'>Kelvin</span> emits
-  as it runs contains important information, and is necessary to identify the cause if the
-  run fails.
-  <h3>Graphing The Results</h3>
-  [ Boonth stuff here ]
-  <h3>Examining The Results In Detail</h3>
-  [ John stuff here ]
+    <h1><span class='sc'>Kelvin</span> V0.38.0</h1>
+
+    <h2>Overview</h2>
+
+    <span class='sc'>Kelvin</span> is a flexible program for analysis of genetic data.  It is
+    based on the PPL framework<sup><a href='#foot1'>1</a>, <a href='#foot2'>2</a>,
+    <a href='#foot3'>3</a></sup>, and produces output on the posterior probability (0,..,1)
+    scale. Primary outcome statistics include the PPL (posterior probability of linkage (L)),
+    as well as various forms of the PPLD (posterior probability of linkage disequilibrium (LD)).
+    In the context of analysis between a marker and a SNP, the PPLD models allelic association
+    due to very close genomic proximity. Versions of the PPLD include the PP[L&LD] (posterior
+    probability of L and LD); the PPL(LD) (posterior probability of L allowing for LD); and the
+    PP[LD|L] (posterior probability of LD given L).
+    <p>
+    <span class='sc'>Kelvin</span> handles the trait model (i) by formulating an underlying
+    likelihood in terms of a vector of trait parameters; and (ii) integrating over all constituent
+    trait parameters. The standard dichotomous trait (DT) likelihood is written in terms of a
+    single disease allele frequency (for a two-allele disease locus), a vector of three
+    penetrances (one for each disease genotype), and the admixture parameter of
+    Smith<sup><a href='#foot4'>4</a></sup> (to allow for heterogeneity within data sets).
+    Quantitative trait (QT) models are parameterized as mixtures of continuous distributions,
+    one for each underlying disease genotype.  At present QT models can be configured as mixtures
+    of normal distributions (three means and three variances) or as mixtures of chi-square
+    distributions (three d.f. parameters). Also available is a QT threshold (QTT) model, which
+    adds an additional threshold parameter to the likelihood, allowing a mix of binary
+    (affected/unaffected) and QT phenotypes within the same pedigrees.
+    <p>
+    <span class='sc'>Kelvin</span> can accept as input multigenerational pedigree data, nuclear
+    families, "trios" (one affected child with two parents), and case-control data. There is no
+    need for the user to specify the data structures when running the program, and all models
+    can be applied to any structure. Limitations include application to very large pedigrees
+    for which the exact likelihood calculation may be intractable; and at present, multipoint
+    analyses involving large numbers of markers. (At present <span class='sc'>Kelvin</span> is
+    based on the Elston-Stewart algorithm<sup><a href='#foot5'>5</a></sup>; implementation of the
+    Lander-Green algorithm<sup><a href='#foot6'>6</a></sup> is underway.) Of course running the
+    PPL itself on case-control or trio data alone will not yield any information, because these
+    structures do not contain information on recombination in the absence of LD.
+    <p>
+    <span class='sc'>Kelvin</span> handles potential inter-sample heterogeneity via Bayesian
+    sequential updating. For this purpose, the user submits data in separate subsets. These can
+    be formed based on any clinical and/or demographic information which seems likely to demarcate
+    more homogeneous subsets of data. Sequential updating can and should also be used when
+    considering new data, "updating" previously calculated <span class='sc'>Kelvin</span> results
+    with the newly obtained data. That is, rather than adding the new data to the old data and
+    recomputing <span class='sc'>Kelvin</span> results based on the 'pooled' data set,
+    <span class='sc'>Kelvin</span> is designed to sequentially update previously obtained results
+    with new data as these become available. <span class='sc'>Kelvin</span> then integrates over
+    the trait parameters separately in each data subset, allowing the possibility that underlying
+    trait parameters do not have the same values across subsets. (It is advisable to introduce
+    new data in "chunks," that is, not one family at a time, but in batches
+    <sup><a href='#foot7'>7</a></sup>).
+    <p>
+    <span class='sc'>Kelvin</span> also provides various options for allowing the pentrances
+    (or in the case of QTs, means and variances or d.f.) to depend upon covariates. Any
+    classification can be used for this purpose, such as age classes, sex, or clinical features
+    (e.g., "strict" versus "broad" diagnoses).  To implement such an analysis the user assigns
+    individuals to liability classes based on the covariate, and <span class='sc'>Kelvin</span>
+    internally integrates over the penetrances separately across the classes.
+    <span class='sc'>Kelvin</span> can also perform analyses allowing for imprinting, or
+    penetrances dependent on parent of origin.  Finally, this feature can be used to implement
+    two-locus (2L) epistasis analyses based on measured genotypes at, e.g., an associated SNP,
+    by allowing the penetrances to depend on SNP genotype.
+    <p>
+    The <a href='#quickstart'>Quick Start</a> gives a brief introduction to preparing the input
+    files, running <span class='sc'>Kelvin</span>, and graphing and interpreting the output.
+    Additional technical details on the underlying statistical methods can be found in the
+    following references:
+
+    <div class='indent'>
+      Vieland VJ. Bayesian linkage analysis, or: How I learned to stop worrying and love the
+      posterior probability of linkage. Am J Hum Genet 63(4):947-954, 1998. 
+      <p> 
+      Wang K, Huang J, Vieland VJ. The consistency of the posterior probability of linkage.
+      Annals Hum Genet 64(Pt 6):533-553, 2000.  
+      <p>
+      Vieland VJ, Wang K, Huang J. Power to detect linkage based on multiple sets of data in
+      the presence of locus heterogeneity: Comparative evaluation of model-based linkage methods
+      for affected sib pair data. Hum Hered 51(4):199-208, 2001.
+      <p>
+      Logue MW, Vieland VJ. A new method for computing the multipoint posterior probability of
+      linkage. Hum Hered 57:90-99, 2004.
+      <p>
+      Yang X, Huang J, Logue MW, Vieland VJ. The posterior probability of linkage allowing for
+      linkage disequilibrium and a new estimate of disequilibrium between a trait and a marker.
+      Human Hered 59:210-219, 2005.
+      <p>
+      Vieland VJ. Thermometers: Something for statistical geneticists to think about. Human
+      Hered, 61:144-156, 2006. 
+      <p>
+      Bartlett CW, Vieland VJ. Accumulating quantitative trait linkage evidence across multiple
+      datasets using the posterior probability of linkage.  Genet Epidem, 31(2):91-102, 2007.
+      <p>
+      Wang H, Segre AM, Huang Y, O'Connell J, Vieland VJ. Fast computation of human genetic
+      linkage.  Proceedings of IEEE 7th Symposium on Bioinformatics and Bioengineering (BIBE
+      2007), pages 857-863, 2007.
+      <p>
+      Govil M, Vieland VJ. Practical considerations for dividing data into subsets prior to PPL
+      analysis.  Hum Hered 66:223-237, 2008.
+      <p>
+      Seok S, Evans M, Vieland VJ. Fast and accurate calculation of a computationally intensive
+      statistic for mapping disease genes. J Comput Biol 16(5):659-676, 2009.
+    </div>
+
+    <div class='footnote'>
+      References: <sup>1</sup>Smith, C.A.B. Some comments on the statistical methods used in
+      linkage investigations. Am J Hum Genet 11, 289-304 (1959). <sup>2</sup>Vieland, V.J.
+      Bayesian linkage analysis, or: how I learned to stop worrying and love the posterior
+      probability of linkage. Am J Hum Genet 63, 947-54 PMID: 9758634 (1998). <sup>3</sup>Vieland,
+      V.J. Thermometers: something for statistical geneticists to think about. Hum Hered 61,
+      144-56 PMID: 16770079 (2006). <sup>4</sup>Smith, C.A.B. Testing for heterogeneity of
+      recombination fraction values in human genetics. Ann Hum Genet 27, 175-182 (1963).
+      <sup>5</sup>Elston, R.C. & Stewart, J. A general model for the genetic analysis of pedigree
+      data. Hum Hered 21, 523-42 (1971). <sup>6</sup>Lander, E.S. & Green, P. Construction of
+      multilocus genetic linkage maps in humans. Proc Natl Acad Sci U S A 84, 2363-7 (1987).
+      <sup>7</sup>Govil, M. & Vieland, V.J. Practical considerations for dividing data into
+      subsets prior to PPL analysis. Hum Hered 66, 223-237 PMID: 18612207 (2008).
+    </div>
+
+    <h2 id='quickstart'>Quick Start</h2>
+
+    This section provides an overview of getting, building and running
+    <span class='sc'>Kelvin</span>. Detailed instructions on each point can be found
+    <a href='#toc'>below</a>.
+
+    <h3>Building <span class='sc'>Kelvin</span></h3>
+
+    These instructions assume that <span class='sc'>Kelvin</span> is being built on a Linux or
+    Unix system of recent vintage, with a GCC compiler, and that the user is familiar with the
+    command line environment on that system.
+    <ul>
+      <li>Unpack the distribution archive with <tt>gunzip</tt> and <tt>tar</tt>. Move into
+        the newly-created source directory.</li>
+      <li>See if one of the pre-built executables in the <tt>bin</tt> subdirectory is suitable for
+        your system.</li>
+      <li>Otherwise, build <span class='sc'>Kelvin</span> by running <tt>make</tt>.</li>
+      <li>Test the executable by running <tt>make test</tt>. The tests may take as long as 30
+        minutes, depending on the system.</li>
+      <li>Install the executable and supporting scripts by running <tt>make install</tt>. The
+        default installation directory is <tt>/usr/local/bin</tt>.</li>
+    </ul>
+
+    <h3>Preparing Input Files</h3>
+
+    Kelvin requires four input data files. In these examples, we show an affected sib-pair
+    family and three markers:
+
+    <ol>
+      <li>Pedigree File - This is a pedigree file containing phenotypic and genotypic
+        information. It should be in
+	post-<a href='http://linkage.rockefeller.edu/soft/linkage/sec2.7.html'>Makeped</a>
+	format.
+	<pre>
+        1 1 0 0 3 0 0 1 1 1 2 2 1 2 1 1  Ped: 1  Per: 1
+        1 2 0 0 3 0 0 2 0 1 1 1 1 2 1 1  Ped: 1  Per: 2
+        1 3 1 2 0 4 4 2 0 2 1 2 2 2 1 1  Ped: 1  Per: 3
+        1 4 1 2 0 0 0 1 0 2 2 1 1 1 1 1  Ped: 1  Per: 4
+        </pre>
+      </li>
+      <li>Locus (Data) File - Describes column order in the pedigree file starting with 
+        the position of the trait locus.
+	<pre>
+        T Trait
+        M MRK_1
+        M MRK_2
+        M MRK_3
+	</pre>
+      </li>
+      <li>Frequency File - Names the markers listed in datafile.dat and enumerates the allele
+        frequencies.
+        <pre>
+        M MRK_1
+        F 0.3 0.7
+        M MRK_2
+        F 0.35 0.65
+        M MRK_3
+        F 0.7 0.3
+        </pre>
+      </li>
+      <li>Map File - Gives the chromosomal position of the markers.
+        <pre>
+        CHROMOSOME	MARKER		POSITION
+        3		MRK_1		0.33
+        3		MRK_2		0.66
+        3		MRK_2		0.99
+        </pre>
+      </li>
+    </ol>    
+
+    <font color='red'>Old text, replaced by text below. Are we dropping the gKelvin screenshots?
+    <h3>Creating A Configuration File</h3>
+
+    The configuration file is generated from <tt><font color='red'>gKelvin</font></tt>. The
+    GUI provides options for different types of analyses and will write out <tt>kelvin.conf</tt>.
+    After starting <tt>gKelvin</tt>, open a new file. You may then <a href='gKelvin-1.png'>select
+    "Two point" or "Multi-point"</a>. Based on that choice, you will be presented with forms
+    for setting <a href='gKelvin-2.png'>two-point options</a>, or
+    <a href='gKelvin-3.png'>multipoint options</a>. When you've finished,
+    <a href='gKelvin-4.png'>save the configuation file.</a>
+    </font>
+
+    <h3>Creating a Configuration File</h3>
+
+    Kelvin takes all of its configuration information from a single file specified on the
+    command line. This file is composed of directives that describe the analysis to be performed,
+    and the locations of supporting data files. The graphical configuration tool
+    <font color='red'>gKelvin</font> will create the configuration for you. 
+    <p>
+    Kelvin supports a wide variety of analyses. The principle options which can be selected in
+    gKelvin are listed below. With certain exceptions, the user is free to select any combination
+    of options. gKelvin will also indicate when options are not available in combination with one
+    another.
+    <div class='indent'>
+      <div class='hang'>
+        <b>Two-point vs. multipoint analysis</b><br>
+        For linkage analysis, the user can select either; for LD analysis, only the two-point
+        option is available. In both cases, the user can choose to use either sex-averaged or
+        sex-specific marker maps.
+        <p>
+        <b>Marker-marker analysis</b><br>
+        This option is available only for two-point analyses, but can be used to estimate either
+        of linkage or LD distances between pairs of markers. The user can opt to consider all pairs
+        markers or only pairs which are adjascent to one another in the map file.
+        <p>
+        <b>Linkage Disequilibrium (LD, or association) analysis</b><br>
+        Unless specifically instructed to allow for LD, Kelvin assumes linkage equilibrium between
+        the trait and the marker or genomic location. For two-point analyses, it is possible to
+        allow for trait-marker LD.
+        <p>
+        <b>Trait models</b><br>
+        Kelvin handles dichotomous traits (DT) or quantitative traits QT). For QTÕs the user can
+        select the functional form of the trait distribution as either normal or chi-square. In
+        addition, a QT threshold model (QTT) can be specified.  In all cases Kelvin internally
+        integrates over the parameters of the trait model, so there is no need to specific trait
+        values or a mode of inheritance.
+        <p>
+        <b>Imprinting</b><br>
+        The imprinting option allows penetrances (or the corresponding QT parameters) to depend on
+        parent of origin.<p>
+        <b>Covariate-Dependent Penetrances (or corresponding QT parameters)</b><br>
+        When the user assigns individuals in a pedigree to "liability classes," Kelvin allows the
+        penetrances (or QT parameters) to depend upon class assignment.
+        <p>
+        <b>Two-Locus Epistasis</b><br>
+        Kelvin has special routines for handling two-locus analysis when supplied with genotypes at
+        one of the loci (Locus 1), by allowing the penetrances (or corresponding QT parameters) to
+	depend upon genotypes at Locus 1 when considering linkage and/or LD to other loci.
+      </div>
+    </div>
+
+    <h3>Running <span class='sc'>Kelvin</span></h3>
+
+    Run <tt>kelvin <i>configfile</i></tt>. The text that <span class='sc'>Kelvin</span> emits
+    as it runs contains important information, and is necessary to identify the cause if the
+    run fails.
+
+    <h3>Sequential Updating</h3>
+
+    One of <span class='sc'>Kelvin</span>'s distinctive features is the way in which it is
+    designed to handle the combined analysis of multiple data sets or data subsets, using
+    sequential updating. This is done by calling
+    <tt><a href='#calcupdatedppl'>calc_updated_ppl</a></tt>. This program takes as input the
+    output from <span class='sc'>Kelvin</span> analyes (in particular, it uses the <tt>br.out</tt>
+    files). Sequential updating works with any <span class='sc'>Kelvin</span> options, however,
+    it is important that all files being used as input to <tt>calc_updated_ppl</tt> should
+    reflect the same sets of options. Users interested in running calc_updated_ppl on output
+    generated by older versions of Kelvin must use the <tt>br.out</tt> conversion script
+    <a href='convertbr'>convert_br.pl</a>.
+
+    <h3>Graphing The Results</h3>
+
+    [ Boonth stuff here ]
+
+    <h3>Examining The Results In Detail</h3>
+
+    <span class='sc'>Kelvin</span> routinely creates multiple output files. For multipoint
+    analyses, there is a single primary output file, the <a href='#br-multipoint'>Bayes Ratio</a>
+    (BR) file, which contains the BRs for all positions at which calculations were done
+    (and/or at all markers), and the PPLs themselves.  The BRs are used for sequential updating
+    across data sets or subsets.  For two-point analyses, two separate files are created: the
+    <a href='#br-twopoint'>BR</a> file, with the BRs; and a separate
+    <a href='#ppl-twopoint'>PPL</a> file, with the PPLs.  The user can also request the MOD
+    score and the maximizing values of all parameters, which are contained in the
+    <a href='#modfile'>maximizing model</a> (MOD) file.
+
+    <h2 id='toc'>Detailed Instructions</h2>
+
+    <ol>
+      <li><a href='#installing'>Installing The Programs</a></li>
+      <li><a href='#prepconfig'>Preparing The Configuration File</a></li>
+      <li><a href='#running'>Running The Programs</a></li>
+      <li><a href='#outputfiles'>Contents Of Output Files</a></li>
+      <li><a href='#sequpdate'>Sequential Updating</a></li>
+    </ol>
+
+    <h2 id='installing'>Installing The Programs</h2>
+
+    <h3>Requirements</h3>
+
+    <h4>Platforms</h4>
+
+    <span class='sc'>Kelvin</span> is written in ANSI C, with some supporting scripts in Perl
+    and Python. <span class='sc'>Kelvin</span> can generally be expected to run on any relatively
+    recent Linux or Unix distribution. It has been successfully built with various versions of
+    the <a href='gcc.gnu.org'>Gnu C Compiler (GCC)</a> and the Intel C Compiler (ICC).
+    <span class='sc'>Kelvin</span> releases are currently tested on the following platforms:
+    <ul>
+      <li>Redhat Enterprise Linux x86_64 with GCC 4.1.1</li>
+      <li>Debian Linux i386 with GCC 4.1.1</li>
+      <li>Macintosh OSX 10.4 i386 with GCC 4.0.1 (no OpenMP) and GCC 4.3.0</li>
+      <li>Macintosh OSX 10.4 PowerPC with GCC 4.0.1 (no OpenMP)</li>
+      <li>Cygwin under Windows XP i386 with GCC 3.4.4 (cygming special)</li>
+      <li>SunOS 5.8 on an Ultra-1 sparc 64-bit with GCC 3.4.6 (no OpenMP)</li>
+    </ul>
+    Aside from the compiled execuatble, running <span class='sc'>Kelvin</span> requires
+    <a href='www.perl.org'>Perl 5.x</a>. <span class='sc'>Kelvin</span>'s graphical configuration
+    file generator, <font color='red'>gKelvin</font>, requires
+    <a href='www.python.org'>Python 2.5</a> and <a href='www.wxpython.org'>wxPython 2.8.3.0</a>.
+    <span class='sc'>Kelvin</span>'s results graphing tool, <font color='red'>graphApp</font>,
+    requires Python 2.5, wxPython 2.8.3.0, <a href='matplotlib.sourceforge.net'>Matplotlib</a>,
+    <a href='numpy.scipy.org'>NumPy</a>,
+    <a href='www.pythonware.com/products/pil'>Python Imaging Library (PIL)</a> and PyXML.
+
+    <h4>Libraries</h4>
+
+    Depending on the nature of the analysis, <span class='sc'>Kelvin</span> may make very
+    extensive use of memory management, and can, under most circumstances, definitely benefit
+    from a drop-in allocator such as <a href="http://www.hoard.org/">Hoard</a> or
+    <a href="http://www.malloc.de/en/">ptmalloc3</a>. Either of these can easily halve execution
+    time, and will keep memory fragmentation down when running in multi-threaded mode, but they
+    are not required. For more details on using drop-in allocators with
+    <span class='sc'>Kelvin</span>, see <a href="Allocators.html">the allocators section</a>.
+    <p>
+    When analysing quantitative traits, <span class='sc'>Kelvin</span> can also benefit from
+    the statistical distribution routines in the <a href='www.gnu.org/software/gsl'>GNU 
+    Scientific Library</a> (GSL). GSL's routines are a little faster than
+    <span class='sc'>Kelvin</span>'s internal routines, and are also thread-safe.
+
+    <h4>Resources</h4>
+
+    <span class='sc'>Kelvin</span>'s resource requirements vary widely depending upon the
+    complexity of the analysis being performed. By default, <span class='sc'>Kelvin</span>
+    uses polynomials to evaluate the likelihood calculation. This generally much faster than
+    not using polynomials, sometimes orders of magnitude faster, but complex pedigrees, untyped
+    founders, etc., can easily push the required memory to 16GB or more. Polynomial evaluation
+    can be disabled, but due to increased run times, this should only be done if limited memory
+    becomes and issue. <span class='sc'>Kelvin</span> monitors CPU and memory utilization and will
+    display warnings if thrashing memory.
+    <p>
+    If you have access to a high-performance solid-state drive (SSD), you may be able to use
+    <a href="SSDSupport.html">SSD support</a> to build polynomials that are much larger than
+    physical memory.
+    <p>
+    If you have a homogenous multi-machine Linux/GCC environment such as a Beowulf cluster and
+    are performing long-running analyses, you may be able to benefit from using
+    <a href="compiledPolys.html">compiled polynomials</a>, which can provide an order of magnitude
+    improvement in evaluation performance, and a degree of reusability.
+    <p>
+    If you are running on a multi-core platform and your compiler supports
+    <a href='www.openmp.org'>OpenMP</a> 2.0, you can build <span class='sc'>Kelvin</span> to use
+    multiple threads and reduce your single-analysis runtime significantly at a marginal increase
+    in memory, less if you use a drop-in allocator as described above. Note that because
+    <span class='sc'>Kelvin</span>'s internal statistcal distribution routines are not
+    thread-safe, building <span class='sc'>Kelvin</span> with OpenMP requires GSL.
+
+    <h3>Distribution</h3>
+
+    <span class='sc'>Kelvin</span> is developed in unix environments, so standard unix tools are
+    used for build management and distribution.
+    <p>
+    <span class='sc'>Kelvin</span> is currently distributed as a compressed tarball of the
+    directory hierarchy of our latest release, e.g. <tt>kelvin-0.38.0.tar.gz</tt>.
+
+    <h4>Directory Structure and Components</h4>
+
+    <ul>
+      <li><tt>&lt;RELEASE&gt;/</tt> - <span class='sc'>Kelvin</span> source components.
+        Includes normal and debug versions of the master Makefile. <span class='sc'>Kelvin</span>
+	is the primary analysis program and the focus of this documentation.</li>
+      <li><tt>&lt;RELEASE&gt;/bin/</tt> - simple prebuilt <span class='sc'>Kelvin</span> binaries
+        for different platforms. One of these may work for you.</li>
+      <li><tt>&lt;RELEASE&gt;/doc/</tt> - (very) limited documentation, including these HTML
+        files.</li>
+      <li><tt>&lt;RELEASE&gt;include/</tt> - a work directory for builds.</li>
+      <li><tt>&lt;RELEASE&gt;/lib/</tt> - a work directory for builds.</li>
+      <li><tt>&lt;RELEASE&gt;pedlib/</tt> - pedigree, likelihood, and polynomial components.
+        Includes a dependent Makefile - don't try to use it by itself.</li>
+      <li><tt>&lt;RELEASE&gt;/seq_update/</tt> - routines to perform a sequential updates of the
+        results of previous <span class='sc'>Kelvin</span> analyses.</li>
+      <li><tt>&lt;RELEASE&gt;/test-suite/</tt> - analyses that can be used for build validation
+        as well as configuration examples.</li>
+      <li><tt>&lt;RELEASE&gt;/utils/</tt> - general-purpose utility components. Includes a
+        dependent Makefile.</li>
+    </ul>
+
+    <h4 id="building">Building and Testing</h4>
+
+    If you cannot or do not wish to build a version of <span class='sc'>Kelvin</span> specific
+    to your computing platform, you might be able to run one of the binary versions provided in
+    the distribution. Binary versions of <span class='sc'>Kelvin</span> are statically-linked
+    executables built without support for multi-threading. Version are provided for each of the
+    environments for which we can build and test, and are in the <tt>bin</tt> subdirectory of
+    the distribution. Simply copy the version you will be using to a directory on your PATH, and
+    either name it <span class='sc'>Kelvin</span> or create a link to it named
+    <span class='sc'>Kelvin</span>.
+    <p>
+    A full set of <span class='sc'>Kelvin</span> variants can be built by executing the
+    <tt>rebuild.sh</tt> script in the top-level distribution directory, or you can edit the
+    Makefile and build your own variants individually.
+    <p>
+    There are a number of compilation conditionals that can be set in the Makefile to affect the
+    behavior of <span class='sc'>Kelvin</span>. These are disabled when commented-out with a
+    pound-sign (#) at the start of the line, and enabled otherwise. Some of the less useful
+    diagnostic conditionals will not be covered here.
+
+    <ul>
+      <li><tt>USE_OPENMP</tt> Enables OpenMP multi-threading. This must be commented-out if your
+        compiler does notsupport OpenMP. This is enabled in the Makefile by default, but disabled
+        in the prebuilt binaries. The number of threads used is determined from the environment
+        variable <tt>OMP_NUM_THREADS</tt>. If this variable is not set or is set to 0 (zero) the
+        behavior depends upon the operating system, but typically the number of threads used will
+        correspond to the number of cores available. If <tt>OMP_NUM_THREADS</tt> is set to 1
+        (one), then only a single thread is used and it is as if OpenMP multi-threading is
+        disabled. OpenMP multi-threading can greatly improve polynomial evaluation, but at a
+        moderate memory cost. The thread count should be less than the number of pedigrees in
+        your analysis, up to the maximum of the number of cores on your platform. Monitoring
+        user and system mode CPU utilization with <tt>ps</tt> during polynomial evaluation will
+        be your best indicator of the efficiency of threading in your situation, and should
+        guide you in selecting the right number of threads. Obviously you want the highest
+        possible user-mode CPU utilization, but you need to watch out for increased system-mode
+        CPU utilization, as it is an indication that time is being wasted on thread
+        synchronization, and that you probably have too many threads. If OpenMP multi-threading
+        support is built into the binary, <span class='sc'>Kelvin</span> displays the thread
+        count in a  diagnostic message on startup.</li>
+      <li><tt>USE_GSL</tt> Enable support for GNU Scientific Library. This is required if
+        <tt>USE_OPENMP</tt> has been enabled.</li>
+      <li><tt>USE_PTMALLOC</tt> and <tt>USE_HOARD</tt> Enable linking with the ptmalloc3 or
+        Hoard replacement memoray allocator libraries.</li>
+      <li><tt>SIMPLEPROGRESS</tt> Enables a simplified percentage-completion display, as opposed
+        to a more detailed version. This is enabled by default.</li>
+      <li><tt>MEMSTATUS</tt> Enables display of elapsed time and memory consumption every 30
+        seconds. Disabled by default.</li>
+      <li><tt>MEMGRAPH</tt> Logs elapsed time and memory consumption to a file named
+        <tt>kelvin_&lt;PID&gt;_memory.dat</tt> every 30 seconds. This format can be graphed by
+        <tt>gnuplot</tt> with a simple <tt>load "&lt;filename&gt;"</tt> command. Disabled by
+        default.</li>
+      <li><tt>POLYSTATISTICS</tt> Enables a dump of extensive polynomial build statistics at
+        every 2 million terms and at build milestones. Disabled by default.</li>
+      <li><tt>TREEEVALUATE</tt> Enables use of a polynomial evaluation technique that is optimal
+        in situations where polynomials are evaluated only a few times each. This is useful only
+        in rare cases, and is disabled by default.</li>
+      <li><tt>FAKEEVALUATE</tt> Does not do polynomial evaluation at all. This is used for
+        exercise, evaluation, and polynomial compilation. It will display a warning during
+        compilation and when the program is run to the effect that evaluation is disabled and
+        result file data will be meaningless. This is disabled by default, and should only be
+        enabled with caution. It is documented here because an optimal performance strategy for
+        analyses with extremely large amounts of evaluation is to build compiled polynomials
+        without evaluation on a single-core, large memory-capacity machine, and then evaluate
+        them on multi-core, smaller memory-capacity machines.</li>
+      <li><tt>POLYUSE_DL</tt> Enables the use of dynamic libraries built for named polynomials
+        should they be present in the current default directory. Currently the only named
+        polynomials implemented in <span class='sc'>Kelvin</span> are for pedigrees, and these
+        polynomials are specific to each marker set and relative trait position in the analysis.
+        Compiled polynomials can be evaluated up to 10 times faster than internal polynomials,
+        take up much less memory, and do not need to be rebuilt in subsequent runs. A more
+        detailed discussion of polynomial compilation is currently under development. Disabled
+        by default. See the section on <a href="compiledPolys.html">compiled polynomials</a>
+        for details.</li>
+      <li><tt>POLYCODE_DL</tt> Enables the writing of C source code implementing named
+        polynomials when a previously-built dynamic library for that polynomial has not been
+        found. Disabled by default, requires POLYUSE_DL. See the section on
+        <a href="compiledPolys.html">compiled polynomials</a> for details.</li>
+      <li><tt>POLYCOMP_DL</tt> Enables the in-run compilation of any C source code written and
+        the loading and use of the dynamic library built. Disabled by default, requires
+        POLYCODE_DL.  See the section on <a href="compiledPolys.html">compiled polynomials</a>
+        for details.</li>
+      <li><tt>POLYCHECK_DL</tt> Enables the comparison of evaluation results from any newly-built
+        polynomial dynamic library with those of its source (internal) polynomial. Disabled by
+        default, requires POLYCODE_DL.  See the section on <a href="compiledPolys.html">compiled
+        polynomials</a> for details.</li>
+      <li><tt>USE_SSD</tt> Enables the use of a file on a solid-state drive as an adjunct to
+        physical memory for building particularly large likelihood polynomials.  See the section
+        on <a href="SSDSupport.html">SSD support</a> for details.</li>
+    </ul>
+    <p>
+    Once you have edited the Makefile to your satisfaction, type <kbd>make clean</kbd> and
+    then <kbd>make</kbd>. This should build supporting libraries and then the two executable
+    images <span class='sc'>Kelvin</span> and calc_updated_ppl.
+    <p>
+    Whether you use one of the prebuilt binaries or have built your own, it should be tested to
+    verify functionality. Type <kbd>make test</kbd> to run a suite of tests. If you should see
+    errors during the build or test, or run into other problems with
+    <span class='sc'>Kelvin</span>, please send us a log of the build and test.
+    <p>
+    Finally, <span class='sc'>Kelvin</span> should be installed. Type <kbd>make install</kbd> to
+    move it into production. 
+
+    <h2 id='prepconfig'>Preparing The Configuration File</h2>
+
+    <span class='sc'>Kelvin</span> takes all of its configuration information from a single
+    file specified on the command line. This file is composed of directives that describe the
+    analysis to be performed, and the locations of supporting data files. The preferred
+    method for creating a configuration file is with the graphical configuration tool,
+    <font color='red'>gKelvin</font>, although users may opt to edit the configuration file
+    by hand. We provide <a href='Directives.html'>a complete reference</a> to
+    <span class='sc'>Kelvin</span> directives.
+    <p>
+    <span class='sc'>Kelvin</span> supports a wide variety of analyses and options. These can
+    be broken into general categories, with a small number of possibilities for each category.
+    Some analyses/options are compatible with other analyses/options, some are not.
+
+    <p><font color='red'>This bit needs to be edited to 1) better describe the different
+    types of analysis and 2) remove references to specific directives.
   
-  <h2 id='toc'>DETAILED INSTRUCTIONS</h2>
-  <ol>
-    <li><a href='#requirements'>System Requirements</a></li>
-    <li><a href='#howtoget'>Getting And Unpacking <span class='sc'>Kelvin</span></li>
-    <li><a href='#buildoptions'>Building and Compilation Options</a></li>
-    <li><a href='#inputformats'>Input File Formats</a></li>
-    <li><a href='#configformat'>Configuration File And Directives</a></li>
-    <li><a href='#howtorun'>Running <span class='sc'>Kelvin</span></a></li>
-    <li><a href='#graphing'>Graphing The Results</a></li>
-    <li><a href='#outputformats'><span class='sc'>Kelvin</span> Output Files</a></li>
-    <li><a href='#sequpdate'>Sequential Updating</a></li>
-  </ol>
+    <h3 id='twopoint_vs_multipoint'>Two-Point vs. Multipoint</h3>
 
-  <h3 id='requirements'>1. System Requirements</h3>
-  <span class='sc'>Kelvin</span> is written in ANSI C, with some supporting scripts in Perl
-  and Python. <span class='sc'>Kelvin</span> can be generally expected to run on any relatively
-  recent Linux or Unix distribution. It has been successfully built with various versions of
-  the <a href='gcc.gnu.org'>Gnu C Compiler (GCC)</a> and the Intel C Compiler (ICC).
-  <span class='sc'>Kelvin</span> releases are currently tested on the following platforms:
-  <ul>
-  <li>Redhat Enterprise Linux x86_64 with GCC 4.1.1</li>
-  <li>Debian Linux i386 with GCC 4.1.1</li>
-  <li>Macintosh OSX 10.4 i386 with GCC 4.0.1 (no OpenMP) and GCC 4.3.0</li>
-  <li>Macintosh OSX 10.4 PowerPC with GCC 4.0.1 (no OpenMP)</li>
-  <li>Cygwin under Windows XP i386 with GCC 3.4.4 (cygming special)</li>
-  <li>SunOS 5.8 on an Ultra-1 sparc 64-bit with GCC 3.4.6 (no OpenMP)</li>
-  </ul>
-  Aside from the compiled execuatble, running <span class='sc'>Kelvin</span> requires
-  <a href='www.perl.org'>Perl 5.x</a>. <span class='sc'>Kelvin</span>'s graphical configuration
-  file generator, <font color='red'>gKelvin</font>, requires
-  <a href='www.python.org'>Python 2.5</a> and <a href='www.wxpython.org'>wxPython 2.8.3.0</a>.
-  <span class='sc'>Kelvin</span>'s results graphing tool, <font color='red'>graphApp</font>,
-  requires Python 2.5, wxPython 2.8.3.0, <a href='matplotlib.sourceforge.net'>Matplotlib</a>,
-  <a href='numpy.scipy.org'>NumPy</a>,
-  <a href='www.pythonware.com/products/pil'>Python Imaging Library (PIL)</a> and PyXML.
-  <p>
-  While <span class='sc'>Kelvin</span> will run on any system on which it can be built, the 
-  system's CPU(s) and available memory are important in terms of what datasets and types of
-  analysis can be conducted in a reasonable amount of time, if at all.
+    Two-point analysis is the default. Multipoint analysis is enabled with the
+    <a href='#multipoint'>Multipoint</a> directive. Multipoint analysis is
+    incompatible with <a href='#ld_vs_le>linkage disequilibrium</a> and 
+    <a href='#traitmarker_vs_markermarker>marker-to-marker</a> analyses.
   
-  <h3 id='howtoget'>2. Getting And Unpacking <span class='sc'>Kelvin</span></h3>
+    <h3 id='ld_vs_le'>Linkage Disequilibrium (Association) vs. Linkage Equilibrium</h3>
+
+    Linkage equilibrium is the default for <a href='#twopoint_vs_multipoint'>
+    two-point</a> analyses, and is the only option for
+    <a href='#twopoint_vs_multipoint'>multipoint</a> analyses. Linkage
+    Disequilibrium can be enabled for two-point analyses with the
+    <a href='#ld'>LD</a> directive.
   
-  <font color='red'>Get Kelvin by emailing us or via FTP?</font><p>
+    <h3 id='dt_vs_qt_vs_qtt'>Dichotomous Trait vs. Quantitative Trait vs. Quantitative Trait
+    With Threshold</h3>
 
-  <span class='sc'>Kelvin</span> is developed, and intended for use, in Linux or Unix 
-  environments, so standard Unix-ish command line tools are used to manage the source code and
-  build the programs. The <span class='sc'>Kelvin</span> source code is distributed as a
-  compressed <tt>tar</tt> file. To unpack the source code, change directory to where the 
-  distribution file is located, and run:
-  <pre>
-    $ gunzip kelvin-0.38.0.tar.gz
-    $ tar xvf kelvin.tar
-  </pre>
-  This will create a directory <tt>kelvin-0.38.0</tt>, which is laid out as follows:
-  <ul>
-    <li><tt>kelvin-0.38.0/</tt> - main source code and Makefile.</li>
-    <li><tt>kelvin-0.38.0/bin/</tt> - simple prebuilt <span class='sc'>Kelvin</span> binaries
-      for different platforms. One of these may work for you.</li>
-    <li><tt>kelvin-0.38.0/doc/</tt> - documentation, including these HTML files.</li>
-    <li><tt>kelvin-0.38.0include/</tt> - a work directory for builds.</li>
-    <li><tt>kelvin-0.38.0/lib/</tt> - a work directory for builds.</li>
-    <li><tt>kelvin-0.38.0pedlib/</tt> - pedigree, likelihood, and polynomial components.</li>
-    <li><tt>kelvin-0.38.0/seq_update/</tt> - routines to perform sequential updates of 
-      previous <span class='sc'>Kelvin</span> analyses.</li>
-    <li><tt>kelvin-0.38.0/test-suite/</tt> - sample analyses used for build validation, that
-      also serve as configuration examples.</li>
-    <li><tt>kelvin-0.38.0/utils/</tt> - general-purpose utility components.</li>
-  </ul>
-
-  Note that the <tt>bin</tt> subdirectory 
-
-  <h3 id='buildoptions'>3. Building and Compilation Options</h3>
+    A dichotomous trait model is the default. A quantitative trait model can
+    be specified with the <a href='#qt'>QT</a> directive. A quantitative trait
+    model with a threshold can be specified with the <a href='#qtt'>QTT</a>
+    and <a href='#threshold'>Threshold</a> directives. Quantitative
+    trait directives are incompatible with, and the default dichotomous trait
+    model is disabled for, <a href='#traitmarker_vs_markermarker'>
+    marker-to-marker</a>.
   
-  If you cannot, or do not wish, to build a version of <span class='sc'>Kelvin</span> specific to
-  your computing platform, you might be able to use one of the precompiled executables provided
-  in the <tt>bin</tt> subdirectory of the distribution. The precompiled executables are
-  statically-linked executables built with no optional libraries and without support for
-  multi-threading. Versions are provided for each of the environments for which we can build and
-  test. Simply run:
-  <pre>
-    $ make install
-  </pre>
-  to install <span class='sc'>Kelvin</span> and the supporting scripts.  <font color='red'>User
-  has to <tt>make install</tt> to get supporting scripts and <tt>$KELVIN_ROOT</tt>, so Makefile
-  has to look in <tt>bin</tt> for executable? How to get the right architecture?</font>
-  <p>
-  A full set of <span class='sc'>Kelvin</span> variants can be built by executing the
-  <tt>rebuild.sh</tt> script in the top-level distribution directory, or you can edit the
-  Makefile and build your own variants individually. <font color='red'>Is <tt>rebuild.sh</tt>
-  really a user-safe tool?</font>
-  <p>
-  To build <span class='sc'>Kelvin</span> from source, you should first examine the 
-  <tt>Makefile</tt> in the top level of the source directory, and set the compilation options
-  as appropriate for your computing environment. Possible options include selecting the C
-  compiler, linking with replacement memory allocation libraries, enabling support for 
-  multithreading, among other options. At the very least, you should set the installation
-  directory. Full documentation on all compilation options can be found
-  <a href='compileoptions.html'>here</a>.
+    <h3 id='sexave_vs_sexspec'>Sex Averaged vs. Sex Specific</h3>
 
-  After editing the <tt>Makefile</tt>, run:
-  <pre>
-    $ make
-    $ make test
-    $ make install
-  </pre>
+    By default, <span class='sc'>Kelvin</span> will perform its calculations using the sex-averaged
+    centiMorgan marker positions in the map file. If sex-specific marker positions
+    are available, <span class='sc'>Kelvin</span> can be made to use those with the
+    <a href='#sexspecific'>SexSpecific</a> directive. Sex-specific maps are not supported for
+    <a href='#ld_vs_le'>LD</a> analyses.
+  
+    <h3 id='imprinting_vs_not'>Imprinting vs. Non-imprinting</h3>
 
-  Because running <span class='sc'>Kelvin</span> requires that the support scripts know where
-  to find the executables, it's important the <span class='sc'>Kelvin</span> is properly
-  installed. If <span class='sc'>Kelvin</span> can't be installed in a system-wide directory
-  (e.g., <tt>/usr/local/bin</tt>) due to system policy, it will still work fine installed in
-  under a user home directory.
+    <span class='sc'>Kelvin</span> will ignore the possibility of imprinting (parent-of-origin)
+    effects by default. Imprinting effects can be considered by specifying the
+    <a href=#'imprinting'>Imprinting</a> directive. Imprinting analysis is
+    incompatible with <a href='#traitmarker_vs_markermarker'>marker-to-marker</a>
+    analyses.
+  
+    <h3 id='traitmarker_vs_markermarker'>Trait-to-Marker vs. Marker-to-Marker</h3>
 
-  <h3 id='inputformats'>4. Input File Formats</h3>
-  <h3 id='configformat'>5. Configuration File and Directives</h3>
-  <h3 id='howtorun'>6. Running <span class='sc'>Kelvin</span></h3>
-  <h3 id='graphing'>7. Graphing The Results</h3>
-  <h3 id='outputformats'>8. <span class='sc'>Kelvin</span> Output Files</h3>
-  <h3 id='sequpdate'>9. Sequential Updating</h3>
+    Trait-to-marker analysis is the default, and considers the relationship
+    between a hypothetical trait locus and a marker or group of markers.
+    Marker-to-marker analysis is enabled with the <a href='#markertomarker'>
+    MarkerToMarker</a> directive, and considers the relationship between
+    pairs of markers only. Since no trait is considered at all under marker-to-marker,
+    <a href='#dt_vs_qt_vs_qtt'>QT, QTT</a>, <a href='#imprinting_vs_not'>imprinting</a>,
+    <a href='#lc_vs_nolc'>covariate-dependence</a> and <a href='#simple_vs_epistasis'>
+    epistasis</a> analyses are incompatible. <a href='#twopoint_vs_multipoint'>Multipoint</a>
+    analyses are also incompatible with marker-to-marker.
 
-<b><font color='red'>END OF REVISIONS - Chopped up original text beyond this point</font></b></p>
+    <h3 id='lc_vs_nolc'>Covariate-Dependent vs. Non-Covariate-Dependent</h3>
 
-<h4>Libraries</h4>
-When <span class='sc'>Kelvin</span> is run in polynomial mode, it makes very extensive use of memory management, and can, under most
-circumstances, definitely benefit from a drop-in allocator such as <a href="http://www.hoard.org/">hoard</a>
-or <a href="http://www.malloc.de/en/">ptmalloc3</a>. Either of these can easily halve execution time, and will
-keep memory fragmentation down when running in multi-threaded mode, but they are not required. For more
-details on using drop-in allocators with <span class='sc'>Kelvin</span>, see <a href="Allocators.html">the allocators section</a>.
+    By default, <span class='sc'>Kelvin</span> assumes the penetrance characteristics of
+    the trait are the same for all individuals in the analysis. <span class='sc'>Kelvin</span>
+    can be made to separate individuals into different classes of penetrance characteristics
+    based on a covariate. Covariate dependence is incompatible with
+    <a href='traitmarker_vs_markermarker'>marker-to-marker</a> analyses.
 
-<h4>Resources</h4>
-<span class='sc'>Kelvin</span>'s resource requirements vary widely depending upon the complexity of the analysis
-being performed. In general, the memory requirements are negligible unless you use polynomial
-mode (PE in the configuration file) to speed-up calculations. The idea of speeding-up calculations can become
-quite attractive, as some seemingly simple analyses involve trillions of calculations and might
-take months to run.
-Polynomial mode can reduce
-runtime by several orders of magnitude, but can also easily exceed 16Gb of memory for
-complex pedigrees or those with untyped founders. The best approach is to normally use
-polynomial mode, and fall back to non-polynomial mode if memory becomes an issue. Recent releases of <span class='sc'>Kelvin</span>
-monitor CPU and memory utilization and will display warnings if thrashing memory.
-<p>
-If you have access to a high-performance solid-state drive (SSD), you may be able to use
-<a href="SSDSupport.html">SSD support</a> to build polynomials that are much larger than physical memory.
-<p>
-If you have a homogenous multi-machine linux/GCC environment such as a Beowulf cluster and are performing
-long-running analyses, you may be able to benefit from using <a href="compiledPolys.html">compiled polynomials</a>,
-which can provide an order of magnitude improvement in evaluation performance, and a degree of reusability.
-<p>
-If you are running on a multi-core platform and your compiler supports 
-OpenMP 2.0, you can build <span class='sc'>Kelvin</span>
-to use multiple threads and reduce your single-analysis runtime significantly at a marginal increase in memory, less if
-you use a drop-in allocator as described above.
-<h4 id="building">Building and Testing</h4>
-If you cannot or do not wish to build a version of <span class='sc'>Kelvin</span> specific to your computing platform, 
-you might be able to run one of the binary
-versions provided in the distribution. Binary versions of <span class='sc'>Kelvin</span> are statically-linked executables
-built without support for multi-threading. Version are provided for each of the environments for which we can build and test, and
-are in the <tt>bin</tt> subdirectory of the distribution.
-Simply copy the version you will be using to a directory on your PATH, and either name it <span class='sc'>Kelvin</span> or create
-a link to it named <span class='sc'>Kelvin</span>.
-<p>
-A full set of <span class='sc'>Kelvin</span> variants can be build by executing the <tt>rebuild.sh</tt> script
-in the top-level distribution directory, or you can edit the Makefile and build your own variants individually.
-<p>
-There are a number of compilation conditionals that can be set in the Makefile to affect the behavior of <span class='sc'>Kelvin</span>.
-These are disabled when commented-out with a pound-sign (#) at the start of the line, and enabled otherwise. Some
-of the less useful diagnostic conditionals will not be covered here.
-<ul>
-<li><tt>-fopenmp</tt> Enables OpenMP multi-threading. This must be commented-out if your compiler does not
-support OpenMP. This is enabled in the Makefile by default, but disabled in the prebuilt binaries. The number
-of threads used is determined from the environment variable <tt>OMP_THREAD_COUNT</tt>. If this variable is not
-set or is set to 0 (zero) the behavior depends upon the operating system, but typically the number of threads used
-will correspond to the number of cores available. If <tt>OMP_THREAD_COUNT</tt> is set to 1 (one), then only a single
-thread is used and it is as if OpenMP multi-threading is disabled. OpenMP multi-threading can greatly improve
-polynomial evaluation, but at a moderate memory cost. The thread count should be less than the number of pedigrees 
-in your analysis, up to the maximum of the number of cores on your platform. Monitoring user and system mode CPU
-utilization with <tt>ps</tt> during polynomial evaluation will be your best indicator of the efficiency of threading
-in your situation, and should guide you in selecting the right number of threads. Obviously you want the highest-
-possible user-mode CPU utilization, but you need to watch out for increased system-mode CPU utilization, as it
-is an indication that time is being wasted on thread synchronization, and that you probably have too many threads.
-If OpenMP multi-threading support is built
-into the binary, <span class='sc'>Kelvin</span> displays the thread count in a  diagnostic message on startup. 
-<li><tt>SIMPLEPROGRESS</tt> Enables a simplified, but unfortunately non-linear percentage-completion display,
-as opposed to a more detailed and more linear version. This is enabled by default.
-<li><tt>MEMSTATUS</tt> Enables display of elapsed time and memory consumption every 30 seconds. Disabled by default.
-<li><tt>MEMGRAPH</tt> Logs elapsed time and memory consumption to a file named <tt><span class='sc'>Kelvin</span>_&lt;PID&gt;_memory.dat</tt>
-every 30 seconds. This format can be graphed by <tt>gnuplot</tt> with a simple <tt>load "&lt;filename&gt;"</tt> command.
-Disabled by default.
-<li><tt>POLYSTATISTICS</tt> Enables a dump of extensive polynomial build statistics at every 2 million terms and
-at build milestones. Disabled by default.
-<li><tt>TREEEVALUATE</tt> Enables use of a polynomial evaluation technique that is optimal in situations where
-polynomials are evaluated only a few times each. This is useful only in rare cases, and is disabled by default.
-<li><tt>FAKEEVALUATE</tt> Does not do polynomial evaluation at all. This is used for exercise, evaluation, and
-polynomial compilation. It will display a warning during compilation and when the program is run to the effect that
-evaluation is disabled and result file data will be meaningless. This is disabled by default, and should only be
-enabled with caution. It is documented here because an optimal performance strategy for analyses with extremely large
-amounts of evaluation is to build compiled polynomials without evaluation on a single-core, large memory-
-capacity machine, and then evaluate them on multi-core, smaller memory-capacity machines.
-<li><tt>POLYUSE_DL</tt> Enables the use of dynamic libraries built for named polynomials should they be present in
-the current default directory. Currently the only named polynomials implemented in <span class='sc'>Kelvin</span> are for
-pedigrees, and these polynomials are specific to each marker set and relative trait position in the analysis. 
-Compiled polynomials can be evaluated up to 10 times faster than internal polynomials, take up much less memory,
-and do not need to be rebuilt in subsequent runs. A more detailed discussion of polynomial compilation is currently
-under development. Disabled by default. See the section on <a href="compiledPolys.html">compiled polynomials</a>
-for details.
-<li><tt>POLYCODE_DL</tt> Enables the writing of C source code implementing named polynomials when a previously-built
-dynamic library for that polynomial has not been found. Disabled by default, requires POLYUSE_DL.
- See the section on <a href="compiledPolys.html">compiled polynomials</a>
-for details.
-<li><tt>POLYCOMP_DL</tt> Enables the in-run compilation of any C source code written and the loading and use of the 
-dynamic library built. Disabled by default, requires POLYCODE_DL.
- See the section on <a href="compiledPolys.html">compiled polynomials</a>
-for details.
-<li><tt>POLYCHECK_DL</tt> Enables the comparison of evaluation results from any newly-built polynomial dynamic 
-library with those of its source (internal) polynomial. Disabled by default, requires POLYCODE_DL.
- See the section on <a href="compiledPolys.html">compiled polynomials</a>
-for details.
-<li><tt>USE_SSD</tt> Enables the use of a file on a solid-state drive as an adjunct to physical memory for building
-particularly large likelihood polynomials.  See the section on <a href="SSDSupport.html">SSD support</a>
-for details.
-</ul>
-<p>
-Once you have edited the Makefile to your satisfaction, type <kbd>make clean</kbd> and then <kbd>make</kbd>.
-This should build supporting libraries and then the two executable images <span class='sc'>Kelvin</span> and calc_updated_ppl. 
-<p>
-Whether you use one of the prebuilt binaries or have built your own, it should be tested to
-verify functionality. Type <kbd>make test</kbd> to run a suite of tests.
-If you should see errors during the build or test, or run into other problems with <span class='sc'>Kelvin</span>,
-please send us a log of the build and test.
-<p>
-Finally, if you built your own version, type <kbd>make install</kbd> to move it into production. 
+    <h3 ld='simple_vs_epistasis'>Simple Trait vs. Epistasis</h3>
 
-<h2>PREPARING YOUR CONFIGURATION FILE</h2>
-<span class='sc'>Kelvin</span> takes configuration information from a file specified
-on the command line. This file contains directives that specify the type of analysis
-to be performed, and the names of input data files and output results files. A complete
-list of directives is provided <a href="Directives.html">here</a>.
+    By default, <span class='sc'>Kelvin</span> assumes that affectation depends solely on
+    a hypothetical trait locus. <span class='sc'>Kelvin</span> can be made to consider the
+    effects of epistasis between the hypthetical trait locus and a genetic marker. Epistasis
+    analysis is incompatible with <a href='#lc_vs_nolc'>covariate dependence</a> and 
+    <a href='#traitmarker_vs_markermarker'>marker-to-marker</a> analyses.
 
+    </font>
+    <p>
+    <a href="config.gif">Here is a directed graph</a> illustrating the legitimate combinations
+    of principal features and options. It illustrates the twenty-two current configuration
+    "paths" for <span class='sc'>Kelvin</span>. Ovals represent defaults that will be taken in
+    the absence of relevant directives, while squares represent analysis attributes that must
+    always be explicity specified.
+    <p>
+    The distribution includes subdirectories with sample configuration files for a few of
+    the configuration "paths". We typically name the configuration files <tt>kelvin.conf</tt>.
+    These illustrate the required configuration information, and can serve as starting points
+    for your own configurations. Unless otherwise noted, we have externally verified the
+    results of analysis for these tests, and they are provided in each directory in
+    <tt>br.out-baseline</tt> and (as appropriate) <tt>ppl.out-baseline</tt>. The runtimes
+    listed are on an Macintosh OSX 10.4 i386 with GCC 4.0.1 (no OpenMP).
 
- Optionally,
-additional directives may be specified on the command line, after the configuration
-file name. Each of these directives should be prefixed with two hyphens ("--"). Any
-required arguments 
-Extensive information on the directives used in the <span class='sc'>Kelvin</span> configuration file is provided in <tt>doc/ReadMe.conf</tt>.
-It is the final authority on the behavior of the directives, and the only source of information on the
-specification of
-parameters and ranges.
-<p>
-<span class='sc'>Kelvin</span> provides such a wide variety of options for linkage analysis that it can be confusing to
-determine what combinations of directives are appropriate. The following chart shows <span class='sc'>Kelvin</span> features and options.
-<p>
-<table border="1">
-<tr>
-<th colspan=3>Features and Options</th>
-<tr>
-<th>Marker/Map</th>
-<th>Phenotypes</th>
-<th>Genetic Model</th>
-<tr>
-<td>
-<ul>
-<li>multipoint (MP) or two point (2pt)
-<li>marker-to-marker (2pt only)
-<li>haldane or kosambi scale
-<li>sex-specific or averaged (MP only)
-</ul>
-</td>
-<td>
-<ul>
-<li>dichotomous trait (DT)
-<li>quantitative trait (QT)
-<li>QT with threshold
-<li>right/left truncated QT model (not tested)
-</ul>
-</td>
-<td>
-<ul>
-<li>parent-of-origin dependent penetrance
-<li>multiple liability classes
-(can be used for modelling 2L epistasis)
-<li>trait-to-marker LD (2pt only)
-</ul>
-</td>
-</table>
-<p>
-<a href="config.gif">Here is a directed graph</a> illustrating the legitimate combinations of features
-and options. It illustrates the twenty-two current configuration "paths" for <span class='sc'>Kelvin</span>, and the directives 
-they use. Ovals
-represent defaults that will be taken in the absence of relevant directives, while squares represent
-analysis attributes that must always be explicity specified.
-<p>
-The distribution includes subdirectories with sample configuration files for a few of
-the configuration "paths". We typically name the configuration files <tt>kelvin.conf</tt>.
-These illustrate the required configuration information, and can serve as starting points for your own
-versions. Unless otherwise noted, we have externally verified the results of analysis for these tests,
-and they are provided in each directory in <tt>br.out-baseline</tt> and (as appropriate) 
-<tt>ppl.out-baseline</tt>. The runtimes
-listed are on an Macintosh OSX 10.4 i386 with GCC 4.0.1 (no OpenMP).
-<ul>
-<li>Two-point analysis of a dichotomous trait: <tt>kelvin-0.38.0/test-suite/PE/TP_DT_LE/</tt>, runs in 53s.
-<li>Two-point analysis of a dichotomous trait allowing for trait-marker linkage disequilibrium: <tt>kelvin-0.38.0/test-suite/PE/TP_DT_LD/</tt>, runs in 1m 43s.
-<li>Two-point marker-to-marker analysis: <tt>kelvin-0.38.0/test-suite/PE/TP_DT_MM_LE/</tt>, 
-runs in less than 1s with a minor deviation (1 in 7th position) in one bayes ratio value from runs on other
-platforms. This sort of deviation in test results is attributable to the different C and gsl libraries used on
-different platforms.
-<li>Two-point analysis of a dichotomous trait going marker-to-marker with linkage disequilibrium: <tt>kelvin-0.38.0/test-suite/PE/TP_DT_MM_LD/</tt>, runs in less than 1s.
-<li>Two-point analysis of a quantitative trait: <tt>kelvin-0.38.0/test-suite/PE/TP_QT_LE/</tt>, runs in 26s.
-<li>Sex-averaged multipoint analysis of a dichotomous trait: <tt>kelvin-0.38.0/test-suite/PE/SA_DT/</tt>, runs in 2s.
-<li>Sex-averaged multipoint analysis of a quantitative trait: <tt>kelvin-0.38.0/test-suite/PE/SA_QT/</tt>, runs in 1s.
-<li>Two liability class version of sex-averaged multipoint analysis of a quantitative trait: <tt>kelvin-0.38.0/test-suite/PE/SA_QT_LC2/</tt>, runs in 3m 40s.
-</ul>
+    <ul>
+      <li>Two-point analysis of a dichotomous trait:
+        <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_LE/</tt>, runs in 53s.</li>
+      <li>Two-point analysis of a dichotomous trait allowing for trait-marker linkage
+        disequilibrium: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_LD/</tt>, runs in 1m 43s.</li>
+      <li>Two-point marker-to-marker analysis: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_MM_LE/</tt>,
+        runs in less than 1s with a minor deviation (1 in 7th position) in one bayes ratio value
+	from runs on other platforms. This sort of deviation in test results is attributable to
+	the different C and GSL libraries used on different platforms.</li>
+      <li>Two-point analysis of a dichotomous trait going marker-to-marker with linkage
+        disequilibrium: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_MM_LD/</tt>, runs in less than
+        1s.</li>
+      <li>Two-point analysis of a quantitative trait:
+        <tt>&lt;RELEASE&gt;/test-suite/PE/TP_QT_LE/</tt>, runs in 26s.</li>
+      <li>Sex-averaged multipoint analysis of a dichotomous trait:
+        <tt>&lt;RELEASE&gt;/test-suite/PE/SA_DT/</tt>, runs in 2s.</li>
+      <li>Sex-averaged multipoint analysis of a quantitative trait:
+        <tt>&lt;RELEASE&gt;/test-suite/PE/SA_QT/</tt>, runs in 1s.</li>
+      <li>Two liability class version of sex-averaged multipoint analysis of a quantitative
+        trait: <tt>&lt;RELEASE&gt;/test-suite/PE/SA_QT_LC2/</tt>, runs in 3m 40s.</li>
+    </ul>
 
-<h2>RUNNING THE PROGRAMS</h2>
-Once you have installed <span class='sc'>Kelvin</span>, you can run it from your data directory, where you keep your
-configuration and data files. <span class='sc'>Kelvin</span> takes only one parameter, which is the name of the
-configuration file, e.g.:
+    <h2 id='running'>Running The Programs</h2>
 
-<pre>
-_$ kelvin kelvin.conf
-</pre>
-Remember that if you did not specify absolute paths for output files in the configuration file, they
-will be written relative to your current directory.
-<p>
-It is often convenient to capture all output from a run into a file so that you may review it more
-conveniently, or send it to us for diagnosis. The following command (using bash shell syntax)
-runs <span class='sc'>Kelvin</span> with all output
-redirected to a file called <tt>kelvin.out</tt>:
-<pre>
-_$ kelvin kelvin.conf >& kelvin.out
-</pre>
-If you do need to send us information for diagnosis, please include the configuration and data files
-along with the output from the run.
-<h3>Diagnostic Messages</h3>
-When <span class='sc'>Kelvin</span> is run, it first display version, build and run configuration information, e.g.:
-<pre>
-PID: 26577, kelvin V0.37.1 built Feb 17 2009 11:26:55
-PID: 26577, Id: kelvinGlobals.h 1506 2009-02-17 15:51:43Z whv001 
-PID: 26577, Id: likelihood.c 1422 2009-01-21 15:38:49Z whv001 
-PID: 26577, Id: locus.c 1474 2009-02-03 14:27:19Z whv001 
-PID: 26577, Id: polynomial.c 1465 2009-01-30 21:17:33Z whv001 
-PID: 26577, Compiler 4.1.1 20070105 (Red Hat 4.1.1-52), GSL 1.9
-PID: 26577, OpenMP-enabled w/0 threads.
-PID: 26577, GCC optimization enabled
-To check status (at some risk), type CTRL-\ or type "kill -3 26577".
-PID: 26577, In /export/home/whv001/kelvin/trunk/test-suite/PE/TP_DT_LD w/kelvin.conf
-PID: 26577, Computation is done in polynomial mode
-PID: 26577, polynomialScale is 1 (1-10, 1 is default)
-PID: 26577, Integration is done with iteration (original kelvin)
-PID: 26577, 9 pair(s)*51Th of 20AL*6GF*275pv(1LC) space for 11 pedigree(s)
-Trait-to-marker, Two-Point, Dichotomous Trait, Equilibrium.
-</pre>
-The first line is the <span class='sc'>Kelvin</span> major version and build information, and the subsequent lines
-that contain "Id:" are source-managed component version information. Next is the compiler
-verison number, followed by
-important compilation conditionals as specified in the Makefile and run
-characteristics as influenced by environment variables. In the example given, OpenMP support
-status and the number of threads used (0 selects the platform-specific default number of threads)
-is displayed. Other options and their corresponding messages are covered in the <a href="#building">
-Building and Testing</a> section.
-<p>
+    Once you have installed <span class='sc'>Kelvin</span>, you can run it from your data
+    directory, where you keep your configuration and data files. <span class='sc'>Kelvin</span>
+    takes only one parameter, which is the name of the configuration file, e.g.:
+
+    <pre>
+    _$ kelvin kelvin.conf
+    </pre>
+
+    Remember that if you did not specify absolute paths for output files in the configuration
+    file, they will be written relative to your current directory.
+    <p>
+    It is often important to capture all output from a run into a file so that you may review
+    it more after the run completes, or send it to us for diagnosis. The following command
+    (using <tt>sh</tt>/<tt>ksh</tt>/<tt>bash</tt> syntax) runs <span class='sc'>Kelvin</span>
+    with all output redirected to a file called <tt>kelvin.out</tt>:
+
+    <pre>
+    _$ kelvin kelvin.conf > kelvin.out 2>&1
+    </pre>
+
+    Or, using <tt>csh</tt>/<tt>tcsh</tt> syntax:
+
+    <pre>
+    _$ kelvin kelvin.conf >& kelvin.out
+    </pre>
+
+    If you do need to send us information for diagnosis, please include the configuration and
+    data files along with the output from the run.
+
+    <h3>Diagnostic Messages</h3>
+
+    When <span class='sc'>Kelvin</span> is run, it first displays version, build and run
+    configuration information, e.g.:
+    <p><font color='red'>This next bit is almost certainly out-of-date:
+
+    <pre>
+    PID: 26577, kelvin V0.37.1 built Feb 17 2009 11:26:55
+    PID: 26577, Id: kelvinGlobals.h 1506 2009-02-17 15:51:43Z whv001 
+    PID: 26577, Id: likelihood.c 1422 2009-01-21 15:38:49Z whv001 
+    PID: 26577, Id: locus.c 1474 2009-02-03 14:27:19Z whv001 
+    PID: 26577, Id: polynomial.c 1465 2009-01-30 21:17:33Z whv001 
+    PID: 26577, Compiler 4.1.1 20070105 (Red Hat 4.1.1-52), GSL 1.9
+    PID: 26577, OpenMP-enabled w/0 threads.
+    PID: 26577, GCC optimization enabled
+    To check status (at some risk), type CTRL-\ or type "kill -3 26577".
+    PID: 26577, In /export/home/whv001/kelvin/trunk/test-suite/PE/TP_DT_LD w/kelvin.conf
+    PID: 26577, Computation is done in polynomial mode
+    PID: 26577, polynomialScale is 1 (1-10, 1 is default)
+    PID: 26577, Integration is done with iteration (original kelvin)
+    PID: 26577, 9 pair(s)*51Th of 20AL*6GF*275pv(1LC) space for 11 pedigree(s)
+    Trait-to-marker, Two-Point, Dichotomous Trait, Equilibrium.
+    </pre>
+    </font>
+
+    The first line is the <span class='sc'>Kelvin</span> major version and build information,
+    and the subsequent lines that contain "Id:" are source-managed component version information.
+    Next is the compiler verison number, followed by important compilation conditionals as
+    specified in the Makefile and run characteristics as influenced by environment variables. In
+    the example given, OpenMP support status and the number of threads used (0 selects the
+    platform-specific default number of threads) is displayed. Other options and their
+    corresponding messages are covered in the <a href="#building"> Building and Testing</a>
+    section.
+    <p>
 Following this is a line describing the action to take in order to force a dump of a line of
 statistics. The format of these statistics is described at the end of the next subsection (<a href="#adhoc">ad hoc status</a>).
 You can use this as a sort of "pulse check" to make sure <span class='sc'>Kelvin</span> is still alive
@@ -552,7 +840,8 @@ provided along with some other statistics (voluntary context switches, involunta
 and hard faults) that may or may not be available on your platform.
 <h4>Additional Options</h4>
 There are a number of additional progress reports that can be monitored during a run using compile-time
-conditionals. You will need to edit the <tt>Makefile</tt> and rebuild <span class='sc'>Kelvin</span> (<tt>make clean</tt> and <tt>make</tt>) to turn them on
+conditionals. You will need to edit the <tt>Makefile</tt> and rebuild <span class='sc'>Kelvin</span>
+ (<tt>make clean</tt> and <tt>make</tt>) to turn them on
 or off:
 <ol>
 <li><tt>MEMSTATUS</tt> conditional - When <span class='sc'>Kelvin</span> is run on compatible platforms (currently only those with a pmap command),
@@ -565,151 +854,160 @@ every 2M polynomial creations, when polynomial builds finish, and at the end of 
 include an estimation of internal memory usage when feasible and relevant.
 </ul>
 </ol>
-<h2>INTERPRETING THE RESULTS</h2>
-<span class='sc'>Kelvin</span> produces several different files of results depending upon the type of analysis performed.
-<h3>Bayes Ratio File</h3>
-Integrated likelihood ratio (BR) information is produced for all runs. It is written to the file specified by
-the <tt>HE</tt> directive, or <tt>br.out</tt> by default.
-The first line written to the file is a comment that contains the <span class='sc'>Kelvin</span> version number, e.g.:
-<pre>
-# kelvin V0.34.2 built May 29 2008 10:06:56
-</pre>
-This is included so that results can be associated with the version of <span class='sc'>Kelvin</span> that
-produced them, and will allow for variations in algorithms, file formats and data precision.
-Subsequent lines contain different information for each type of analysis being performed:
-<h4>Multipoint Analysis</h4>
-For multipoint runs, a single table with a header line is output. 
-The table consists of one row for each trait position with bayes ratio information for
-the position,
-and the values for alpha, disease gene frequency and penetrance that maximized the LOD at the
-position. Columns are whitespace-delimited:
-<ol>
-<li>Chr - chromosome number
-<li>Position - trait positions in centiMorgans
-<li>PPL - the posterior probability of linkage. This is rounded to two places if .025 or
-greater, and three decimal places otherwise.
-<li>BayesRatio - integrated likelihood ratio.
-<li>MOD - maximum HLOD score achieved at this position.
-<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the HLOD score. 
-<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the HLOD score.
-<li>LC<tt>n</tt>PV(...) - penetrance vector, one for each liability class in the analysis. 
-For dichotomous trait runs, it is three (or four) columns of 
-the maximizing penetrance for
-DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the HLOD score.
-For quantitative trait (QT) runs with normal or Student's-T distributions,
-it is three (or four) columns of means followed by three 
-(or four) of standard deviations for
-the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold
-in the case of the QT threshold model. Quantitative
-trait runs with the Chi-Square distribution  have only three (or four) columns of degrees of freedom followed
-by the threshold. Values are
-comma-separated and enclosed in parentheses. Header text reflects actual count and nature of columns.
-<li>MarkerList(...) - parenthesised list of the closest N markers for each position, where N is the number
-of markers being considered at a time. Header text reflects actual count of columns.
-</ol>
-<h4>Two-point and Marker-to-Marker Analysis</h4>
-Two-point analyses output separate tables for each pair of adjacent loci. For marker-to-marker runs,
-this is each pair of adjacent markers. For marker-to-trait runs, this is the disease locus with each marker.
-Each table is prefaced with a comment line that specifies the two loci of interest, e.g.:
-<pre>
-# 2  Loci_1 at (location) Loci_3 at (location)
-</pre>
-and consists of one row of whitespace-delimited values for each value of D' (d-prime) if this is an
-LD analysis, theta, integrated likelihood information, and the values for alpha, disease gene frequency and
-penetrance that maximized the HLOD for this D' and theta.
-<ol>
-<li>Chr - chromosome number
-<li>Position - trait positions in centiMorgans
-<li>multiple columns of D<i>nm</i> - the D' (d-prime) between allele <i>m</i> of the first locus and allele <i>n</i> of the
-second locus. There will be (<i>n</i>-1)*(<i>m</i>-1) columns present for linkage disequilibrium runs. These
-columns are not present on LE runs because
-LE is a special case of LD where D' is always 0. Note that the number of D' columns will vary within an analysis when the number
-of marker alleles varies.
-<li>Theta(M,F) - male and female theta values. They are identical for a sex-averaged analysis.
-<li>BayesRatio - integrated likelihood ratio.
-<li>MOD - maximum HLOD score achieved for these loci at these values of D' (if LD) and theta.
-<li>R2 - R square, an alternative measurement of LD.
-<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the HLOD score.
-<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the HLOD score.
-<li>MF - marker allele frequency for the first marker.
-<li>LC<tt>n</tt>PV(...) - penetrance vector, one for each liability class in the analysis. 
-For dichotomous trait runs, it is three (or four) columns of 
-the maximizing penetrance for
-DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the HLOD score.
-For quantitative trait runs with normal or Student's-T distributions,
-it is three (or four) columns of means followed by three 
-(or four) of standard deviations for
-the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold, if applicable. 
-Quantitative
-trait runs with the Chi-Square distribution  have only three (or four) columns of degrees of freedom followed
-by the threshold. Values are
-comma-separated and enclosed in parentheses. Header text reflects actual count and nature of columns.
-</ol>
-<h3>Posterior Probability of Linkage (PPL) File</h3>
-Separate PPL information is produced for two-point analyses.
-It is written to the file specified by the <tt>PF</tt> directive, or <tt>ppl.out</tt> by default.
-The first line is a comment that contains the <span class='sc'>Kelvin</span> version number as with the Bayes Ratio file.
-The next line is a header, followed by
-one line of whitespace-delimited values for each marker in the run.
-<ol>
-<li>Chr - chromosome number
-<li>Trait/Marker1 - trait name for trait-to-marker analysis, first marker name for marker-to-marker analysis.
-<li>Position1 - first marker position in centiMorgans (not present for trait-to-marker analysis)
-<li>Marker/Marker2 - marker name for trait-to-marker analysis, second marker name for marker-to-marker analysis.
-<li>Position/Position2 - marker position in centiMorgans.
-<li>PPL - posterior probability of linkage. Evidence for or against linkage to the disease 
-locus, not allowing for disequilibrium, i.e.
-D' is fixed at 0.  It is rounded to two places if .025 or
-greater, and three decimal places otherwise.
-<li>LD-PPL (only for LD analyses) - evidence for or against linkage allowing disequilibrium, i.e.
-D' can range from -1 to 1. It is rounded to two places if .025 or
-greater, and three decimal places otherwise.
-<li>PPLD (only for LD analyses) - posterior probability of linkage disequilibrium, a measure of
-LD. It is rounded to two places if .025 or
-greater, and three decimal places otherwise.
-</ol>
-<h3>Two-Point Maximizing Models (TP) File</h3>
-A file describing the maximizing model parameters for each pair of loci is
-produced for two-point analyses. It is written to the file specified by the <tt>MX</tt> directive,
-or <tt>tp.out</tt> by default.
-For each pair of loci, it displays six rows of maximizing model information, one for each of:
-<ol>
-<li>Overall MOD maximizing model
-<li>MOD maximizing model for theta=0
-<li>MOD maximizing model for dprime=0
-<li>Overall LR maximizing model
-<li>LR maximizing model for theta=0
-<li>LR maximizing model for dprime=0
-</ol>
-The maximizing values are provided under the following column headings:
-<ol>
-<li>Chr - chromosome number
-<li>Marker - marker name
-<li>Position - position in centiMorgans
-<li>MOD - maximum HLOD score achieved for these loci at these values of D' (if LD) and theta
-<li>DPrime - maximizing D'
-<li>Theta(M,F) - male and female theta values. They are identical for a sex-averaged analysis.
-<li>R2 - R square, an alternative measurement of LD. N/A for LR maximizing.
-<li>Alpha - the maximizing alpha, i.e. the value of alpha that maximized the HLOD score.
-<li>DGF - the maximizing disease gene frequency, i.e. the frequency that maximized the HLOD score. N/A for LR maximizing.
-<li>MF - marker allele frequency for the first marker. N/A for LR maximizing.
-<li>LC<tt>n</tt>PV(...) - penetrance vector, one for each liability class in the analysis. 
-For dichotomous trait runs, it is three (or four) columns of 
-the maximizing penetrance for
-DD, Dd, (optionally dD,) and dd, i.e. the penetrance that maximized the HLOD score.
-For quantitative trait runs with normal or Student's-T distributions,
-it is three (or four) columns of means followed by three 
-(or four) of standard deviations for
-the maximizing distributions for DD, Dd, (optionally dD,) and dd, followed by the threshold, if applicable. 
- N/A for LR maximizing.
-</ol>
 
-<h2>SEQUENTIAL UPDATING</h2>
+    <h2 id='outputfiles'>Contents Of Output Files</h2>
+
+    <span class='sc'>Kelvin</span> produces several different files of results depending upon the
+    type of analysis performed.
+
+    <h3>Bayes Ratio File</h3>
+
+    Integrated likelihood ratio (BR) information is produced for all runs. It is written to the
+    file <tt>br.out</tt> by default, although that filename is configurable. The first line
+    written to the file is a comment that contains the <span class='sc'>Kelvin</span> version
+    number, e.g.:
+
+    <pre>
+    # Version V0.38.0
+    </pre>
+
+    This is included so that results can be associated with the version of
+    <span class='sc'>Kelvin</span> that produced them, and will allow for variations in
+    algorithms, file formats and data precision. Subsequent lines contain different information
+    for each type of analysis being performed:
+
+    <h4 id='br-multipoint'>Multipoint Analysis</h4>
+
+    For multipoint runs, a single table with a header line is output. The table consists of one
+    row for each trait position. Columns are whitespace-delimited:
+
+    <ol>
+      <li>Chr - chromosome number</li>
+      <li>Position - trait positions in centiMorgans</li>
+      <li>PPL - the posterior probability of linkage. This is rounded to two places if .025 or
+        greater, and three decimal places otherwise.</li>
+      <li>BayesRatio - integrated likelihood ratio.</li>
+      <li>MarkerList(...) - parenthesised list of the closest N markers for each position, where
+        N is the number of markers being considered at a time. Header text reflects actual count
+	of columns.</li>
+    </ol>
+
+    <h4 id='br-twopoint'>Two-point Analysis</h4>
+
+    Two-point analyses output separate tables for each locus. Each table is prefaced with a
+    comment line that details the chromosome, name and position of the current marker, e.g.:
+
+    <pre>
+    # Seq: 1 Chr: 1 Trait: disease Marker: 1_3_mrk Position: 0.9900
+    </pre>
+
+    and consists of one row of whitespace-delimited values for each value of D' (in the case of an
+    LD analysis) and theta. Columns are whitespace-delimited:
+
+    <ol>
+      <li>multiple columns of D<i>nm</i> - the D' (d-prime) between allele <i>m</i> of the trait
+        and allele <i>n</i> of the marker. There will be (<i>n</i>-1)*(<i>m</i>-1) columns
+        present for linkage disequilibrium runs. These columns are not present on LE runs because
+        LE is a special case of LD where D' is always 0. Note that the number of D' columns will
+        vary within an analysis when the number of marker alleles varies.</li>
+      <li>Theta(M,F) - male and female theta values. They are identical for a sex-averaged
+        analysis.</li>
+      <li>BayesRatio - integrated likelihood ratio.</li>
+    </ol>
+
+    <h3 id='ppl-twopoint'>Posterior Probability of Linkage (PPL) File</h3>
+
+    Separate PPL information is produced for two-point and marker-to-marker analyses. It is
+    written to the file <tt>ppl.out</tt> by default, although that filename in configurable.
+    The first line is a comment that contains the <span class='sc'>Kelvin</span> version number
+    as with the Bayes Ratio file. The next line is a header, followed by one line of
+    whitespace-delimited values for each marker in the run.
+
+    <ol>
+      <li>Chr - chromosome number.</li>
+      <li>Trait/Marker1 - trait name for trait-to-marker analysis, first marker name for
+        marker-to-marker analysis.</li>
+      <li>Position1 - first marker position in centiMorgans (not present for trait-to-marker
+        analysis).</li>
+      <li>Marker/Marker2 - marker name for trait-to-marker analysis, second marker name for
+        marker-to-marker analysis.</li>
+      <li>Position/Position2 - marker position in centiMorgans.</li>
+      <li>PPL - posterior probability of linkage. Evidence for or against linkage to the disease 
+        locus, not allowing for disequilibrium, i.e., D' is fixed at 0. It is rounded to two
+        places if .025 or greater, and three decimal places otherwise.</li>
+      <li>PPL(LD) (only for LD analyses) - evidence for or against linkage allowing for
+        disequilibrium, i.e., D' can range from -1 to 1. It is rounded to two places if .025
+	or greater, and three decimal places otherwise.</li>
+      <li>PPL&LD (only for LD analyses) - posterior probability of linkage disequilibrium, a
+         measure of LD. It is rounded to two places if .025 or greater, and three decimal places
+         otherwise.</li>
+      <li>PPLD|L (only for LD analyses) - Posterior probability of LD, given linkage.</li>
+    </ol>
+
+    <h3 id='modfile'>Maximizing Model (MOD) File</h3>
+
+    All analyses can optionally write maximizing models to a separate file, named
+    <tt>mod.out</tt> by default, although that name is configurable. In all cases, the
+    first line is a comment line that identifies the version of <span class='sc'>Kelvin</span>
+    that created the file.
+
+    <h4>Multipoint Analysis</h4>
+
+    For multipoint runs, a single table with a header line is output. The table consits of
+    one row for each trait position, containing the values of all trait parameters that
+    maximized the likelihood at that position. Columns are whitespace delimited:
+
+    <ol>
+      <li>Chr - chromosome number</li>
+      <li>Position - trait positions in centiMorgans</li>
+      <li>MOD - maximum LOD score achieved at this position.</li>
+      <li>Alpha - the value of alpha that maximized the HLOD score.</li>
+      <li>DGF - the maximizing disease gene frequency.</li>
+      <li>LC<tt>n</tt>PV(...) - the maximizing penetrance vector, one for each liability class in
+         the analysis. For dichotomous trait runs, it is three (or four, if imprinting effects
+         are being considered) columns of the maximizing penetrance for DD, Dd, (dD,) and dd. For
+	 quantitative trait (QT) runs with the normal distribution, it is three (or four) columns
+	 of means followed by three (or four) of standard deviations for the maximizing
+	 distributions for DD, Dd, (dD,) and dd, followed by the threshold in the case of the
+	 QTT model. Quantitative trait runs with the Chi-Square distribution have only three
+	 (or four) columns of degrees of freedom followed by the threshold. Values are
+	 comma-separated and enclosed in parentheses. Header text reflects actual count and
+	 nature of columns.>/li>
+    </ol>
+
+    <h4>Two-point Analysis</h4>
+
+    For two-point analyses, a separate table is output for each marker, or pair of markers,
+    in the case of marker-to-marker analyses. Each table is prefaced with a comment line that
+    details the chromosome, name and position of the marker (or markers). For marker-to-trait
+    analyses, this line is identical to that in the Bayes Ratio file. For marker-to-marker, the
+    line looks like:
+
+    <pre>
+    # Seq: 2 Chr 1: Marker1: 1_3_mrk Position1: 0.9900 Marker2: 1_4_mrk Position2: 1.3200
+    </pre>
+
+    Each table is prefaced with a header line. Columns are whitespace-delimited:
+
+    <ol>
+      <li>Case - Identifies the model as maximizing overall, or maximizing where theta is 0, or
+        (in the case of LD analyses) as maximizing where D' is 0.</li>
+      <li>MOD - maximum LOD score achieved for the current Case.</li>
+      <li>multiple columns of D' values, as described for two-point Bayes Ratio files. For
+        LD analyses only.</li>
+      <li>Theta(M,F) - as described for two-point Bayes Ratio files.</li>
+      <li>Alpha, DGF and LC<tt>n</tt>PV(...) - as described for multipoint maximizing mode
+        files. Not present in marker-to-marker analyses.</li>
+      <li>R<sup>2</sup> - the standard LD correlation coefficient. Only present in 
+        marker-to-marker runs.</li>
+    </ol>
+
+<h2 id='sequpdate'>Sequential Updating</h2>
 Sequential updating is a method for combining the results of mutiple analyses in post-processing.
 Two tools are provided for performing sequential updating. Both tools expect
 <span class='sc'>Kelvin</span> Bayes Ratio files as input.
 
-<h3>convert_br.pl</h3>
+<h3 id='convertbr'>convert_br.pl</h3>
 
 This Perl script will convert <tt>avghet.out</tt> or <tt>br.out</tt> files generated by
 older versions of <span class='sc'>Kelvin</span> into the most recent format.<p>
@@ -740,11 +1038,11 @@ typing:
 _$ convert_br.pl --help
 </pre>
 
-<h3>calc_updated_ppl</h3>
+<h3 id='calcupdatedppl'>calc_updated_ppl</h3>
 
-This program will calculate two-point PPL, PPL(LD), PPLD|L, and PPLD(L) scores, or 
+This program will calculate two-point PPL, PPL(LD), PPL&LD and PPLD|L scores, or 
 multipoint PPLs, from one or more <span class='sc'>Kelvin</span> Bayes Ratio files. It
-handles multi-allele (multiple D's) by default, and sex-specific thetas with the
+handles multi-allelic markers (multiple D's) by default, and sex-specific thetas with the
 <tt>-s</tt> or <tt>--sexspecific</tt> command line options. A <span class='sc'>Kelvin</span>
 Bayes Ratio format file containing the updated Bayes Ratios can be requested by
 specifying <tt>--partout <i>filename</i></tt>. All input files should be from the
