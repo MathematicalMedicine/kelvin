@@ -280,8 +280,53 @@
 
     <h3>Graphing The Results</h3>
 
-    [ Boonth stuff here ]
-
+    To run the graphing application, at a command prompt, goto the
+    directory where the source files are
+    located, and type <br>
+    <br>
+    <span style="font-family: monospace;">python graphApp.py</span><br>
+    <br>
+    <br>To import data from a <span class='sc'>Kelvin</span> output file into the graphing application:<br>
+    1. Click on File-&gt;Import Data from File<span style="font-weight: bold;"> </span>on the menu bar. 
+    Alternatively you can click on the Import Text icon on the toolbar&nbsp;
+    <img style="width: 47px; height: 42px;" alt="" src="graphApp_import_text.png"> .<br>
+    <br>
+    2. A dialog box will appear asking for the name of the file to be opened.
+    Choose the file containing the data, and click on the Open button.<br>
+    <br>
+    3. Another dialog box will appear, that asks about the specific format
+    of the file. A screenshot of this dialog box is shown below. At
+    the very top a preview of the file showing the first five lines of the
+    file is shown.<br>
+    <br>
+    <br>
+    <div style="text-align: center;">
+        <img style="width: 712px; height: 559px;" alt="" src="graphApp_fileformat_dialog.png"><br>
+    </div>
+    <br>
+    <br>
+    4. Specify the Position column in the first drop down menu box.&nbsp;
+    The values of this column will be used as the x-value of points.<br>
+    <br>
+    5. Specify the PPL column in the second drop down menu box. The values
+    of this column will be used as the y-value of points.<br>
+    <br>
+    6. Specify the number of header lines at the top of the file.&nbsp;
+    Those lines will be skipped when processing the file.<br>
+    <br>
+    7. Select whether the file contains data for just one chromosome, or
+    multiple chromosomes. If Single Chromosome is chosen, then the number
+    of that particular chromosome needs to be specified. If Multiple
+    Chromosomes are chosen, and if there is a column in the file that
+    indicates chromosome number, then that needs to be specified. If no
+    column indicates chromosome number, then be sure to select 'None'.<br>
+    <br>
+    8. Once all the required information about the file is entered, press
+    the 'OK' button. The data in the file will be graphed.<br>
+    <br>
+    For more information about the features of the graphing application,
+    please consult the manual.<br>
+    <br>
     <h3>Examining The Results In Detail</h3>
 
     <span class='sc'>Kelvin</span> routinely creates multiple output files. For multipoint
