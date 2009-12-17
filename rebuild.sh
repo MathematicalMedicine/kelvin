@@ -2,12 +2,12 @@
 set -xe # Because it isn't enough for Darwin's cron for us to have it on the shebang
 
 case $HOSTNAME in
-    testbed*|ygg*|RESW843507NQW2*|Deimos )
+    testbed*|ygg*|RESW843507NQW2* )
         OPENMP=
 	PTMALLOC3=
         WERROR=-Werror
 	;;
-    RESD7X* )
+    RESD7X*|Deimos )
         OPENMP=
         WERROR=
 	;;
