@@ -7,7 +7,7 @@ case $HOSTNAME in
 	PTMALLOC3=
         WERROR=-Werror
 	;;
-    RESD7X* )
+    RESD7X*|Deimos )
         OPENMP=
         WERROR=
 	;;
