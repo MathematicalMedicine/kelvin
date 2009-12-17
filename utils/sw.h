@@ -179,6 +179,11 @@ void swStartProgressWakeUps(int seconds);
    I refer to them in the macros as environment levels since I intend to set them
    using environment variables. */
 #define OVERALL 0
+#define LIKELIHOOD 0
+#define READ_PEDFILE 0
+#define ALLELE_SET_RECODING 0
+#define GENOTYPE_ELIMINATION 0
+#define PARENTAL_PAIR 0
 #define XM 0
 
 /* The beauty of this lines in the fact that all diags go away completely if DISTRIBUTION is

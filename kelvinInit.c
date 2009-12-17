@@ -48,10 +48,10 @@ void kelvinInit (int argc, char *argv[])
 
   swPushPhase ('k', "NonSpecific");
   INFO ("kelvin %s built %s %s", programVersion, __DATE__, __TIME__);
-  INFO (kelvinVersion);
-  INFO (likelihoodVersion);
-  INFO (locusVersion);
-  INFO (polynomialVersion);
+  INFO ("%s", kelvinVersion);
+  INFO ("%s", likelihoodVersion);
+  INFO ("%s", locusVersion);
+  INFO ("%s", polynomialVersion);
   INFO ("Compiler %s", __VERSION__);
 
 #ifdef FAKEEVALUATE

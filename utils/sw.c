@@ -331,7 +331,7 @@ swDumpOutput (struct swStopwatch *theStopwatch, char *appendText)
      (unsigned long) theStopwatch->swAccumRUSelf.ru_minflt + theStopwatch->swAccumRUChildren.ru_minflt,
      (unsigned long) theStopwatch->swAccumRUSelf.ru_majflt + theStopwatch->swAccumRUChildren.ru_majflt,
      appendText);
-  INFO(buffer);
+  INFO("%s", buffer);
   return;
 }
 

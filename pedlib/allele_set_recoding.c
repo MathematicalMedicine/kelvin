@@ -83,9 +83,8 @@ allele_set_recoding (int locus, Pedigree * pPedigree)
     identify_transmitted_alleles (locus, pPedigree);
   }
 
-  /* print out some debug messages if the debug level is turned on */
-  print_pedigree_allele_sets (locus, pPedigree);
-
+  /* Print out some debug messages if the debug level is turned on */
+  DIAG (ALLELE_SET_RECODING, 1, {print_pedigree_allele_sets (locus, pPedigree);});
 
   /* now we actually recode the genotypes based on the 
    * non-transmitted allele sets */
@@ -396,7 +395,6 @@ print_pedigree_allele_sets (int locus, Pedigree * pPedigree)
 
   /* how many integers needed to represent one allele in bit mask 
    * on this locus */
-  //alleleSetLen = originalLocusList.ppLocusList[locus]->alleleSetLen;
   alleleSetLen = originalLocusList.alleleSetLen;
 
   /* going through nuclear families seems to be an easier way 
@@ -404,27 +402,25 @@ print_pedigree_allele_sets (int locus, Pedigree * pPedigree)
    * line of descent */
   for (i = 0; i < pPedigree->numNuclearFamily; i++) {
     pNucFam = pPedigree->ppNuclearFamilyList[i];
-    KLOG (LOGSETRECODING, LOGDEBUG, "Nuclear Family %d: \n", i);
+    fprintf (stderr, "Nuclear Family %d: \n", i);
 
-    /* print out parents first */
+    /* Print out parents first */
     for (k = DAD; k <= MOM; k++) {
       if (k == DAD)
 	sParent = DADID;
       else
 	sParent = MOMID;
       pPerson = pNucFam->pParents[k];
-      KLOG (LOGSETRECODING, LOGDEBUG, "  %s %s\n", sParent, pPerson->sID);
+      fprintf (stderr, "  %s %s\n", sParent, pPerson->sID);
       if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
 	pPerson = pPerson->pOriginalPerson;
-
       print_person_allele_set (pPerson, locus, alleleSetLen);
     }
 
-    /* print out children next */
+    /* Print out children next */
     for (j = 0; j < pNucFam->numChildren; j++) {
       pPerson = pNucFam->ppChildrenList[j];
-      KLOG (LOGSETRECODING, LOGDEBUG, "    Child %s\n", pPerson->sID);
-
+      fprintf (stderr, "    Child %s\n", pPerson->sID);
       print_person_allele_set (pPerson, locus, alleleSetLen);
     }
   }
@@ -537,12 +533,15 @@ recode_genotype (int locus, Pedigree * pPedigree)
 
   /* for debug purpose, print out locus allele set information */
   print_locus_allele_set (pLocus, alleleSetLen);
-  KLOG (LOGSETRECODING, LOGDEBUG, "Genotype after set recoding:\n");
-  /* print out person genotype */
-  for (i = 0; i < numPerson; i++) {
-    pPerson = pPedigree->ppPersonList[i];
-    print_person_locus_genotype_list (pPerson, locus);
-  }
+  DIAG (ALLELE_SET_RECODING, 1, {
+      fprintf (stderr, "Genotype after set recoding:\n");
+
+      /* Print out person genotype */
+      for (i = 0; i < numPerson; i++) {
+	pPerson = pPedigree->ppPersonList[i];
+	print_person_locus_genotype_list (pPerson, locus);
+      }
+    });
 
   return 0;
 }
@@ -550,61 +549,55 @@ recode_genotype (int locus, Pedigree * pPedigree)
 void
 print_person_allele_set (Person * pPerson, int locus, int alleleSetLen)
 {
-#if DEBUG
   Genotype *pGenotype;
 
   if (pPerson->pTypedFlag[locus] == TRUE) {
-    KLOG (LOGSETRECODING, LOGDEBUG, "    Typed:  ");
+    fprintf (stderr, "    Typed:  ");
     pGenotype = pPerson->ppGenotypeList[locus];
     while (pGenotype != NULL) {
       logMsg (LOGSETRECODING, LOGDEBUG, "(%d,%d) ",
 	      pGenotype->allele[DAD], pGenotype->allele[MOM]);
       pGenotype = pGenotype->pNext;
     }
-    logMsg (LOGSETRECODING, LOGDEBUG, "\n");
+    fprintf (stderr, "\n");
   } else {
-    /* paternal transmitted alleles */
-    KLOG (LOGSETRECODING, LOGDEBUG, "    Paternal Transmitted Alleles: \n");
+    /* Paternal transmitted alleles */
+    fprintf (stderr, "    Paternal Transmitted Alleles: \n");
     print_allele_set (pPerson->pTransmittedAlleles[DAD], alleleSetLen);
-    /* maternal transmitted alleles */
-    KLOG (LOGSETRECODING, LOGDEBUG, "    Maternal Transmitted Alleles: \n");
+    /* Maternal transmitted alleles */
+    fprintf (stderr, "    Maternal Transmitted Alleles: \n");
     print_allele_set (pPerson->pTransmittedAlleles[MOM], alleleSetLen);
-    /* paternal non-transmitted alleles */
-    KLOG (LOGSETRECODING, LOGDEBUG,
-	  "    Paternal Non-Transmitted Alleles: \n");
+    /* Paternal non-transmitted alleles */
+    fprintf (stderr, "    Paternal Non-Transmitted Alleles: \n");
     print_allele_set (pPerson->pNonTransmittedAlleles[DAD], alleleSetLen);
-    /* maternal non-transmitted alleles */
-    KLOG (LOGSETRECODING, LOGDEBUG,
-	  "    Maternal Non-Transmitted Alleles: \n");
+    /* Maternal non-transmitted alleles */
+    fprintf (stderr, "    Maternal Non-Transmitted Alleles: \n");
     print_allele_set (pPerson->pNonTransmittedAlleles[MOM], alleleSetLen);
   }
-#endif
 }
 
 int
 print_allele_set (unsigned int *pAlleleSet, int len)
 {
-#if DEBUG
   int i, j;
   int allele;
   unsigned long int mask;
   int base = 0;
 
-  logMsg (LOGSETRECODING, LOGDEBUG, "        ");
+  fprintf (stderr, "        ");
   for (i = 0; i < len; i++) {
     mask = 1;
     for (j = 0; j < INT_BITS; j++) {
       if ((mask & pAlleleSet[i]) > 0) {
 	allele = base + j + 1;
-	/* to avoid printing out file name and line number info... */
-	logMsg (LOGSETRECODING, LOGDEBUG, "%d ", allele);
+	/* To avoid printing out file name and line number info... */
+	fprintf (stderr, "%d ", allele);
       }
       mask = mask << 1;
     }
     base += INT_BITS;
   }
-  logMsg (LOGSETRECODING, LOGDEBUG, "\n");
-#endif
+  fprintf (stderr, "\n");
 
   return 0;
 }
@@ -613,16 +606,13 @@ print_allele_set (unsigned int *pAlleleSet, int len)
 int
 print_locus_allele_set (Locus * pLocus, int alleleSetLen)
 {
-#if DEBUG
   int i;
 
-  KLOG (LOGSETRECODING, LOGDEBUG, "Locus %s\n", pLocus->sName);
+  fprintf (stderr, "Locus %s\n", pLocus->sName);
   for (i = 0; i < pLocus->numAlleleSet; i++) {
-    KLOG (LOGSETRECODING, LOGDEBUG, "  AlleleSet %d(%f): ", i + 1,
-	  pLocus->ppAlleleSetList[i]->sumFreq);
+    fprintf (stderr, "  AlleleSet %d(%f): ", i + 1, pLocus->ppAlleleSetList[i]->sumFreq);
     print_allele_set (pLocus->ppAlleleSetList[i]->pAlleleBits, alleleSetLen);
   }
-#endif
   return 0;
 }
 

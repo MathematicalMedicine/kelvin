@@ -71,10 +71,11 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
     pFirstGenotype[i] = pGenotype[i];
   }
   /* now find the genotype pairs */
-  KLOG (LOGPARENTALPAIR, LOGDEBUG,
-	"Nuc Fam %d (Dad: %s - Mom: %s) Proband: %s origLocus %d, #ofChildren: %d\n",
-	pNucFam->nuclearFamilyIndex, pParents[DAD]->sID, pParents[MOM]->sID,
-	pProband->sID, origLocus, pNucFam->numChildren);
+  DIAG (PARENTAL_PAIR, 1, {
+      fprintf (stderr, "Nuc Fam %d (Dad: %s - Mom: %s) Proband: %s origLocus %d, #ofChildren: %d\n",
+	       pNucFam->nuclearFamilyIndex, pParents[DAD]->sID, pParents[MOM]->sID,
+	       pProband->sID, origLocus, pNucFam->numChildren);
+    });
   while (pGenotype[head]) {
     initialGeno[head] = pGenotype[head];
     pGenotype[spouse] = pFirstGenotype[spouse];
@@ -169,19 +170,19 @@ fill_parental_pair (int locus, int *numPair, NuclearFamily * pNucFam,
   parentalPairSpace.pNumParentalPair[locus]++;
   /* copy all children's valid genotype list into the parental pair's
    * children genotype array */
-  KLOG (LOGPARENTALPAIR, LOGDEBUG,
-	"Parental Pair(%d) %s(%d, %d) && %s(%d, %d)\n",
-	parentalPairSpace.pNumParentalPair[locus],
-	pNucFam->pParents[DAD]->sID,
-	pDad->allele[DAD], pDad->allele[MOM],
-	pNucFam->pParents[MOM]->sID, pMom->allele[DAD], pMom->allele[MOM]);
+  DIAG (PARENTAL_PAIR, 1, {
+      fprintf (stderr, "Parental Pair(%d) %s(%d, %d) && %s(%d, %d)\n",
+	       parentalPairSpace.pNumParentalPair[locus],
+	       pNucFam->pParents[DAD]->sID,
+	       pDad->allele[DAD], pDad->allele[MOM],
+	       pNucFam->pParents[MOM]->sID, pMom->allele[DAD], pMom->allele[MOM]);
+    });
   for (i = 0; i < pNucFam->numChildren; i++) {
     pChild = pNucFam->ppChildrenList[i];
     genoLen = pChild->pShadowGenotypeListLen[origLocus];
     pPair->pChildGenoLen[i] = genoLen;
     pChildGeno = pChild->ppShadowGenotypeList[origLocus];
-    KLOG (LOGPARENTALPAIR, LOGDEBUG,
-	  "Child %s #ofGenotypes: %d\n", pChild->sID, genoLen);
+    DIAG (PARENTAL_PAIR, 1, {fprintf (stderr, "Child %s #ofGenotypes: %d\n", pChild->sID, genoLen);});
     for (j = 0; j < genoLen; j++) {
       pPair->pppChildGenoList[i][j] = pChildGeno;
       if (dadAdjust == 0)
@@ -196,10 +197,11 @@ fill_parental_pair (int locus, int *numPair, NuclearFamily * pNucFam,
 	pPair->ppChildInheritance[MOM][i][j] =
 	  pChildGeno->inheritance[MOM] ^ 3;
 
-
-      KLOG (LOGPARENTALPAIR, LOGDEBUG, "  (%d, %d) inheritance (%d, %d) \n",
-	    pChildGeno->allele[DAD], pChildGeno->allele[MOM], 
-	    pPair->ppChildInheritance[DAD][i][j], pPair->ppChildInheritance[MOM][i][j]);
+      DIAG (PARENTAL_PAIR, 1, {
+	  fprintf (stderr, "  (%d, %d) inheritance (%d, %d) \n",
+		   pChildGeno->allele[DAD], pChildGeno->allele[MOM], 
+		   pPair->ppChildInheritance[DAD][i][j], pPair->ppChildInheritance[MOM][i][j]);
+	});
       pChildGeno = pChildGeno->pShadowNext;
     }
   }

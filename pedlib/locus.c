@@ -93,7 +93,7 @@ read_mapfile (char *sMapfileName)
   int basePairLoc;
 
   fp = fopen (sMapfileName, "r");
-  KASSERT (fp != NULL, "Can't open map file %s for read. Exiting!\n",
+  ASSERT (fp != NULL, "Can't open map file %s for read",
 	   sMapfileName);
   /* default map function is KOSAMBI */
   map.mapFunction = MAP_FUNCTION_KOSAMBI;
@@ -121,8 +121,8 @@ read_mapfile (char *sMapfileName)
     }
   }
 
-  KASSERT (feof (fp) == 0,
-	   "No marker information at all in the map file %s (Total # of Lines=%d). Exiting!\n",
+  ASSERT (feof (fp) == 0,
+	   "No marker information at all in the map file %s (Total # of Lines=%d)",
 	   sMapfileName, lineNo);
 
   /* read one line for each marker */
@@ -143,11 +143,11 @@ read_mapfile (char *sMapfileName)
       continue;
 
     /* sex specific map and/or base pair location are not always known, so not required */
-    KASSERT (numRet >= 3,
-	     "Marker map file %s line %d seems not complete.\n",
+    ASSERT (numRet >= 3,
+	     "Marker map file %s line %d seems not complete",
 	     sMapfileName, lineNo);
-    KASSERT (chr > 0,
-	     "Chromosome is not greater than 0 (%d) in file %s(%d).\n", chr,
+    ASSERT (chr > 0,
+	     "Chromosome is not greater than 0 (%d) in file %s(%d)", chr,
 	     sMapfileName, lineNo);
 
     pMarker = add_map_unit (&map);
@@ -162,8 +162,8 @@ read_mapfile (char *sMapfileName)
 	&& (pPrevMarker->mapPos[MAP_POS_SEX_AVERAGE] >
 	    pMarker->mapPos[MAP_POS_SEX_AVERAGE])) {
       /* this will kick the program out */
-      KASSERT (1 == 0,
-	       "Marker map given by %s is out of order between %s and %s.\n",
+      ASSERT (1 == 0,
+	       "Marker map given by %s is out of order between %s and %s",
 	       sMapfileName, pPrevMarker->sName, pMarker->sName);
     }
 
@@ -290,7 +290,7 @@ read_datafile (char *sDatafileName)
   char sLocusType[MAX_LINE_LEN];
 
   fp = fopen (sDatafileName, "r");
-  KASSERT (fp != NULL, "Can't open datafile %s for read. Exiting!\n",
+  ASSERT (fp != NULL, "Can't open datafile %s for read",
 	   sDatafileName);
 
   while (fgets (line, MAX_LINE_LEN, fp)) {
@@ -305,7 +305,7 @@ read_datafile (char *sDatafileName)
     /* expect to read <LocusName> <LocusType> */
     numRet = sscanf (line, "%s %s", sLocusType, sLocusName);
 
-    KASSERT (numRet == 2, "Can't get locus type or locus name.\n");
+    ASSERT (numRet == 2, "Can't get locus type or locus name");
     if (!strcasecmp (sLocusType, "M")) {
       locusType = LOCUS_TYPE_MARKER;
       /* marker locus */
@@ -313,8 +313,8 @@ read_datafile (char *sDatafileName)
       pLocus = add_locus (&originalLocusList, sLocusName, locusType);
       /* locate this marker in the map */
       pMapUnit = find_map_unit (&map, sLocusName);
-      KASSERT (pMapUnit != NULL,
-	       "Can't find marker %s in map.\n", pLocus->sName);
+      ASSERT (pMapUnit != NULL,
+	       "Can't find marker %s in map", pLocus->sName);
       pLocus->pMapUnit = pMapUnit;
     } else if (!strcasecmp (sLocusType, "C")) {
       if (pTraitLocus == NULL)
@@ -354,7 +354,7 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
 
 
   fp = fopen (sMarkerfileName, "r");
-  KASSERT (fp != NULL, "Can't open marker file %s for read. Exiting!\n",
+  ASSERT (fp != NULL, "Can't open marker file %s for read",
 	   sMarkerfileName);
 
   /* Sample marker file 
@@ -397,7 +397,7 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
 	This is not really a problem, because we could have a very large marker list.
 	We just need to skip storage of unused marker alleles.
 	
-	KASSERT (found == TRUE, "Couldn't find marker %s in locus list.\n",
+	ASSERT (found == TRUE, "Couldn't find marker %s in locus list",
 	sLocusName);
       */
     } else if (sscanf (line, "F %lf %n", &freq, &pos) == 1) {
@@ -421,7 +421,7 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
     }
   }				/* continue reading input */
 
-  KASSERT (markerCount >= requiredMarkerCount, "Only %d of %d required markers found in file %s.\n",
+  ASSERT (markerCount >= requiredMarkerCount, "Only %d of %d required markers found in file %s",
 	   markerCount, requiredMarkerCount, sMarkerfileName);
 
   fclose (fp);
@@ -1462,21 +1462,17 @@ remove_genotype (Genotype ** pHead, Genotype * pGenotype, int *pCount)
 void
 print_person_locus_genotype_list (Person * pPerson, int locus)
 {
-#if DEBUG
   Genotype *pGenotype = pPerson->ppGenotypeList[locus];
 
   /* print out person lable */
-  logMsg (LOGGENOELIM, LOGDEBUG,
-	  "    Person %s locus %d num of geno %d: \n\t", pPerson->sID, locus,
-	  pPerson->pNumGenotype[locus]);
+  fprintf (stderr,  "    Person %s locus %d num of geno %d: \n\t", pPerson->sID, locus,
+	   pPerson->pNumGenotype[locus]);
   while (pGenotype != NULL) {
-    logMsg (LOGGENOELIM, LOGDEBUG, "(%d,%d) ", pGenotype->allele[DAD],
-	    pGenotype->allele[MOM]);
+    fprintf (stderr, "(%d,%d) ", pGenotype->allele[DAD], pGenotype->allele[MOM]);
     pGenotype = pGenotype->pNext;
   }
-  logMsg (LOGGENOELIM, LOGDEBUG, "\n");
+  fprintf (stderr, "\n");
 
-#endif
   return;
 }
 
@@ -1485,8 +1481,8 @@ print_pedigree_locus_genotype_list (Pedigree * pPedigree, int locus)
 {
   int i;
 
-  KLOG (LOGGENOELIM, LOGDEBUG, "Pedigree %3s Locus %d: \n",
-	pPedigree->sPedigreeID, locus);
+  fprintf (stderr, "Pedigree %3s Locus %d: \n",
+	   pPedigree->sPedigreeID, locus);
   for (i = 0; i < pPedigree->numPerson; i++) {
     print_person_locus_genotype_list (pPedigree->ppPersonList[i], locus);
   }
@@ -1761,6 +1757,11 @@ initialize_multi_locus_genotype (Pedigree * pPedigree)
   return 0;
 }
 
+/**
+   Returns 0 for success, or -1 if a negative haplotype frequency encountered. This
+   should only happen with microsatellites, so the caller can test and error-out if
+   working with SNPs.
+*/
 int
 setup_LD_haplotype_freq (LDLoci * pLDLociParam, LambdaCell * pCell, int dprimeIdx)
 {
@@ -1827,8 +1828,7 @@ setup_LD_haplotype_freq (LDLoci * pLDLociParam, LambdaCell * pCell, int dprimeId
     else
       pCell->haploFreq[dprimeIdx][i][j] = p1 - sum;
     if ((p1 - sum) < 0) {
-      KLOG (LOGINPUTFILE, LOGWARNING,
-	    "Haplotype frequency is NEGATIVE - %s.\n", pBuf1);
+      WARNING ("Haplotype frequency is NEGATIVE - %s", pBuf1);
       return -1;
     }
   }				/* end of looping the first marker allele frequencies */
@@ -1846,8 +1846,7 @@ setup_LD_haplotype_freq (LDLoci * pLDLociParam, LambdaCell * pCell, int dprimeId
     else
       pCell->haploFreq[dprimeIdx][i][j] = q1 - sum;
     if ((q1 - sum) < 0) {
-      KLOG (LOGINPUTFILE, LOGWARNING,
-	    "Haplotype frequency is NEGATIVE - %s.\n", pBuf1);
+      WARNING ("Haplotype frequency is NEGATIVE - %s", pBuf1);
       return -1;
     }
   }
@@ -1905,36 +1904,35 @@ initialize_loci (PedigreeSet * pPedigreeSet)
       else
 	create_baseline_marker_genotypes (locus, pPedigree);
 
-      KLOG (LOGGENOELIM, LOGDEBUG, "Baseline Genotype Lists:\n");
-      print_pedigree_locus_genotype_list (pPedigree, locus);
-
+      DIAG (GENOTYPE_ELIMINATION, 1, {
+	  fprintf (stderr, "Baseline Genotype Lists:\n");
+	  print_pedigree_locus_genotype_list (pPedigree, locus);
+	});
 
       /* first step is do the set recoding: this should help speed up
        * genotype elimination process */
 
-      //fprintf(stderr,"Before 1th allele_set_recoding\n");
       allele_set_recoding (locus, pPedigree);
-      //fprintf(stderr,"After  allele_set_recoding\n");
 
       /* do genotype elimination next */
       ret = pedigree_genotype_elimination (locus, pPedigree);
-      KASSERT (ret == 0, "Genotype incompatibility has been detected.\n");
-      KLOG (LOGGENOELIM, LOGDEBUG,
-	    "Genotype Lists after genotype elimination :\n");
-      print_pedigree_locus_genotype_list (pPedigree, locus);
+      ASSERT (ret == 0, "Genotype incompatibility has been detected");
+      DIAG (GENOTYPE_ELIMINATION, 1, {
+	  fprintf (stderr, "Genotype Lists after genotype elimination :\n");
+	  print_pedigree_locus_genotype_list (pPedigree, locus);
+	});
 
-      //fprintf(stderr,"Before 2nd allele_set_recoding\n");
       /* do the set recoding again */
       allele_set_recoding (locus, pPedigree);
-      //fprintf(stderr,"After  allele_set_recoding\n");
 
       /* set genotype weight now to save likelihood calculation time */
       set_genotype_weight (pPedigree, locus);
       set_genotype_position (pPedigree, locus);
 
-      KLOG (LOGGENOELIM, LOGDEBUG, "Genotype Lists after set recoding :\n");
-      print_pedigree_locus_genotype_list (pPedigree, locus);
-
+      DIAG (GENOTYPE_ELIMINATION, 1, {
+	  fprintf (stderr, "Genotype Lists after set recoding :\n");
+	  print_pedigree_locus_genotype_list (pPedigree, locus);
+	});
       ped++;
     }
     locus++;
@@ -2304,15 +2302,12 @@ add_markers_to_locuslist (SubLocusList * pLocusList,
 				    traitPosition, mapFlag);
       /* should not encounter this */
       if (marker < 0 || marker > end) {
-	KLOG (LOGDEFAULT, LOGWARNING,
-	      "We have run out of markers(%d out of %d) to choose for multipoint.\n",
+	WARNING ("We have run out of markers (%d out of %d) to choose for multipoint",
 	      numMarkerSelected, total);
 	break;
       }
       numMarkerSelected++;
-      ret =
-	add_analysis_locus (pLocusList, marker, DIRECTION_LEFT,
-			    map.mapFunction);
+      ret = add_analysis_locus (pLocusList, marker, DIRECTION_LEFT, map.mapFunction);
     }
   }
 

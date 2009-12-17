@@ -56,7 +56,7 @@ void addTraitLocus (ModelRange * range, double val)
   
   /* Validate value. But trait loci may be negative! So no reasonable
    * validation is really possible. */
-  /* KASSERT ((val >=0), "Bad trait locus %g; aborting.\n", val); */
+  /* ASSERT ((val >=0), "Bad trait locus %g", val); */
 
   /* Initialize the structure if first access. */
   if (!range->tloc)
@@ -88,7 +88,7 @@ void addTraitLocus (ModelRange * range, double val)
 void addGeneFreq (ModelRange * range, double val)
 {
   /* Validate value. */
-  KASSERT ((val > 0 && val < 1.0), "Bad gene frequency value %g; aborting.\n", val);
+  ASSERT ((val > 0 && val < 1.0), "Bad gene frequency value %g", val);
 
   /* Initialize the structure if first access. */
   if (!range->gfreq)
@@ -107,7 +107,7 @@ void addGeneFreq (ModelRange * range, double val)
 void addAlleleFreq (ModelRange * range, double val)
 {
   /* Validate value. */
-  KASSERT ((val >= 0 && val <= 1.0), "Bad allele frequency value %g; aborting.\n", val);
+  ASSERT ((val >= 0 && val <= 1.0), "Bad allele frequency value %g", val);
 
   /* Initialize the structure if first access. */
   if (!range->afreq)
@@ -126,7 +126,7 @@ void addAlleleFreq (ModelRange * range, double val)
 void addAlpha (ModelRange * range, double val)
 {
   /* Validate value. */
-  KASSERT ((val >= 0 && val <= 1.0), "Bad alpha value %g; aborting.\n", val);
+  ASSERT ((val >= 0 && val <= 1.0), "Bad alpha value %g", val);
 
   /* Initialize the structure if first access. */
   if (!range->alpha)
@@ -145,7 +145,7 @@ void addAlpha (ModelRange * range, double val)
 void addDPrime (ModelRange * range, double val)
 {
   /* Validate value. DPrime values must be between -1 and 1. */
-  KASSERT ((val >= -1 && val <= 1), "Bad D prime value %g; aborting.\n", val);
+  ASSERT ((val >= -1 && val <= 1), "Bad D prime value %g", val);
 
   /* Initialize the structure if first access. */
   if (!range->dprime)
@@ -164,7 +164,7 @@ void addDPrime (ModelRange * range, double val)
 void addTheta (ModelRange * range, int type, double val)
 {
   /* Validate value. */
-  KASSERT ((val >= 0 && val <= 0.5), "Bad theta value %g; aborting.\n", val);
+  ASSERT ((val >= 0 && val <= 0.5), "Bad theta value %g", val);
 
   /* Initialize the structure if first access. */
   if (!range->theta) {
@@ -220,7 +220,7 @@ void addPenetrance (ModelRange * range, int type, double val)
    * should be between 0 and 1, but for QT/CT values given here
    * represent the mean of a distribution, and could be just about
    * anything. */
-  /* KASSERT ((val >= 0 && val <= 1.0), "Bad penetrance value %g; aborting.\n", val); */
+  /* ASSERT ((val >= 0 && val <= 1.0), "Bad penetrance value %g", val); */
 
   /* Initialize the structure if first access. */
   if (!range->penet) {
@@ -283,12 +283,11 @@ void addConstraint (int type, int a1, int c1, int p1,
 		    int op, int a2, int c2, int p2, int disjunct)
 {
   /* Check for meaningless constraints. TODO: do more of this! */
-  KASSERT ((((a1 == THETA_MALE && a2 == THETA_FEMALE) ||
+  ASSERT ((((a1 == THETA_MALE && a2 == THETA_FEMALE) ||
 	     (a1 == THETA_FEMALE && a2 == THETA_MALE)) ||
 	    (a1 == THRESHOLD && a2 == THRESHOLD) ||
 	    (a1 >= PEN_DD && a2 >= PEN_DD && a1 <= PEN_dd && a2 <= PEN_dd)),
-
-	   "Meaningless constraint %s %s %s %s; aborting.\n",
+	   "Meaningless constraint %s %s %s %s",
 	   mp_strs[a1], op_strs[op], mp_strs[a2], (disjunct == TRUE) ? "*" : "");
 
   /* Allocate more space if necessary. */
@@ -404,7 +403,7 @@ void addTraitThreshold (ModelRange * range, double val)
    * and highest means. But since trait thresholds are subject to
    * liability classes, we won't be able to impose this constraint
    * until later. */
-  /* KASSERT ((val >=0), "Bad trait threshold %g; aborting.\n", val); */
+  /* ASSERT ((val >=0), "Bad trait threshold %g", val); */
 
   /* Initialize the structure if first access. */
   if (!range->tthresh) {

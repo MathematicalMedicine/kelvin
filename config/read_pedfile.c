@@ -114,8 +114,8 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 
   /* open pedigree file */
   fpPedfile = fopen (sPedfileName, "r");
-  KASSERT (fpPedfile != NULL,
-	   "Can't open pedigree file %s for read. Exiting!", sPedfileName);
+  ASSERT (fpPedfile != NULL,
+	   "Can't open pedigree file %s for read", sPedfileName);
 
   sPrevPedLabel[0] = '\0';
   sPrevPedLabel[MAX_PED_LABEL_LEN - 1] = '\0';
@@ -135,8 +135,8 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
       numRet =
 	sscanf (flexBuffer, "%s %s %n", sCurrPedLabel, sCurrPersonLabel,
 		&pos);
-      KASSERT (numRet == 2,
-	       "Can't get pedigree Label from line no %d in pedfile %s.\n",
+      ASSERT (numRet == 2,
+	       "Can't get pedigree Label from line no %d in pedfile %s",
 	       lineNo, sPedfileName);
       pLine = &flexBuffer[pos];
     }
@@ -147,8 +147,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
       // Make sure we haven't seen this pedigree before
       for (i = 0; i < pPedigreeSet->numPedigree; i++) {
 	if (strcmp (sCurrPedLabel, pPedigreeSet->ppPedigreeSet[i]->sPedigreeID) == 0) {
-	  KLOG(LOGPEDFILE, LOGFATAL, "Pedigree %s appears in separate places in the pedigree file, please correct and re-run.\n",
-		sCurrPedLabel);
+	  ERROR ("Pedigree %s appears in separate places in the pedigree file", sCurrPedLabel);
 	}
       }
     }
@@ -161,11 +160,8 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
        * first person and generate a warning message */
       if (pCurrPedigree && pCurrPedigree->pPeelingProband == NULL) {
 	pCurrPedigree->pPeelingProband = *(pCurrPedigree->ppPersonList);
-	KLOG(LOGPEDFILE, LOGWARNING,
-	      "WARNING: No proband was given for this pedigree %s and proband is set to person %s.\n",
-	      pCurrPedigree->sPedigreeID,
-	      pCurrPedigree->pPeelingProband->sID);
-	
+	WARNING ("No proband was given for this pedigree %s and proband is set to person %s",
+		 pCurrPedigree->sPedigreeID, pCurrPedigree->pPeelingProband->sID);
       }
       if (pCurrPedigree) {
 	REALCHOKE(pPedigreeSet->pDonePerson, sizeof (int) * pPedigreeSet->maxNumPerson, int *);
@@ -183,8 +179,8 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	setup_loop_counts (pCurrPedigree);
 	/* set up nuclear families inside of this pedigree */
 	setup_nuclear_families (pCurrPedigree);
-	/* print out just for debug and verification purpose for now */
-	print_nuclear_family (stdout, pCurrPedigree);
+	/* Print out just for debug and verification purpose for now */
+	DIAG (READ_PEDFILE, 1, {print_nuclear_family (stdout, pCurrPedigree);});
       }
       if (lastFlag == 1)
 	/* we have processed the last pedigree in the file, done */
@@ -195,12 +191,9 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
     }
 
     // Make sure we haven't seen this person before
-    for (i = 0; i < pCurrPedigree->numPerson; i++) {
-      if (strcmp (sCurrPersonLabel, pCurrPedigree->ppPersonList[i]->sID) == 0) {
-	KLOG (LOGPEDFILE, LOGFATAL, "Person %s appears more than once in pedigree %s, please correct and re-run.\n",
-	      sCurrPersonLabel, sCurrPedLabel);
-      }
-    }
+    for (i = 0; i < pCurrPedigree->numPerson; i++)
+      if (strcmp (sCurrPersonLabel, pCurrPedigree->ppPersonList[i]->sID) == 0)
+	ERROR ("Person %s appears more than once in pedigree %s", sCurrPersonLabel, sCurrPedLabel);
 
     /* each line should be a new person for this pedigree */
     pCurrPerson = create_person (pCurrPedigree, sCurrPersonLabel);
@@ -212,7 +205,8 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
     /* Note: This assumess a single trait column/single LC column in the pedfile */
     if (modelRange->nlclass > 1) {
       if (pCurrPerson->ppLiabilityClass[0][0] > modelRange->nlclass)
-	KLOG(LOGDEFAULT, LOGFATAL, "Pedigree %s, person %s has liability class %d, only %d classes configured\n", pCurrPedigree->sPedigreeID, pCurrPerson->sID, pCurrPerson->ppLiabilityClass[0][0], modelRange->nlclass);
+	ERROR ("Pedigree %s, person %s has liability class %d, only %d classes configured",
+	       pCurrPedigree->sPedigreeID, pCurrPerson->sID, pCurrPerson->ppLiabilityClass[0][0], modelRange->nlclass);
       pPedigreeSet->liabilityClassCnt[pCurrPerson->ppLiabilityClass[0][0]] += 1;
     }
 
@@ -253,8 +247,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
   //numRet = sscanf (pLine, "%s %s %n", pPerson->sDadID, pPerson->sMomID, &pos);
   numRet = sscanf (pLine, "%s %s %n",
 		   pPerson->sParentID[DAD], pPerson->sParentID[MOM], &pos);
-  KASSERT (numRet == 2,
-	   "Line %d in pedfile %s doesn't have enough columns (parents). Is this a post-makeped file? \n",
+  ASSERT (numRet == 2,
+	   "Line %d in pedfile %s doesn't have enough columns (parents). Is this a post-makeped file?",
 	   lineNo, sPedfileName);
   /* ignore the next three columns: first child, next paternal sibling,
    * next maternal sibling, as we are going to build those pointers 
@@ -263,16 +257,16 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
   numRet = sscanf (pLine, "%s %s %s %n",
 		   pPerson->sFirstChildID,
 		   pPerson->sNextSibID[DAD], pPerson->sNextSibID[MOM], &pos);
-  KASSERT (numRet == 3,
-	   "Line %d in pedfile %s doesn't have enough columns (child & siblings). Is this a post-makeped file? \n",
+  ASSERT (numRet == 3,
+	   "Line %d in pedfile %s doesn't have enough columns (child & siblings). Is this a post-makeped file?",
 	   lineNo, sPedfileName);
   pLine = &pLine[pos];
   numRet = sscanf (pLine, "%d %d %n", &pPerson->sex, &pPerson->proband, &pos);
   /* input use 1 as MALE and 2 as FEMALE, while internally we use 0 - MALE
    * and 1 - FEMALE */
   pPerson->sex -= 1;
-  KASSERT (numRet == 2,
-	   "Line %d in pedfile %s doesn't have enough columns (sex & proband). Is this a post-makeped file? \n",
+  ASSERT (numRet == 2,
+	   "Line %d in pedfile %s doesn't have enough columns (sex & proband). Is this a post-makeped file?",
 	   lineNo, sPedfileName);
   if (pPerson->proband > 1)
     pPerson->loopBreaker = 1;
@@ -301,7 +295,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
       pTrait = pTraitLocus->pTraits[j];
       /* read trait value first - affection status or quantitative trait value */
       numRet = sscanf (pLine, "%lf %n", &pPerson->ppOrigTraitValue[i][j], &pos);
-      KASSERT (numRet == 1, "Failed to get affection status on line %d in file %s.\n",
+      ASSERT (numRet == 1, "Failed to get affection status on line %d in file %s",
 	       lineNo, sPedfileName);
       /* If trait is quantitative, we'll adjust it later on. For now, just copy over */
       pPerson->ppTraitValue[i][j] = pPerson->ppOrigTraitValue[i][j];
@@ -315,11 +309,12 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
       if (pTrait->numLiabilityClass > 1) {
 	numRet =
 	  sscanf (pLine, "%d %n", &pPerson->ppLiabilityClass[i][j], &pos);
-	KASSERT (numRet == 1,
-		 "Line %d in pedfile %s doesn't have enough columns (LC). Is this a post-makeped file? \n",
+	ASSERT (numRet == 1,
+		 "Line %d in pedfile %s doesn't have enough columns (LC). Is this a post-makeped file?",
 		 lineNo, sPedfileName);
 	if (pPerson->ppLiabilityClass[i][j] < 1)
-	  KLOG(LOGDEFAULT, LOGFATAL, "Line %d in pedfile %s has illegal liability class identifier %d\n", lineNo, sPedfileName, pPerson->ppLiabilityClass[i][j]);
+	  ERROR ("Line %d in pedfile %s has illegal liability class identifier %d",
+		 lineNo, sPedfileName, pPerson->ppLiabilityClass[i][j]);
 	pLine = &pLine[pos];
       }
 
@@ -343,8 +338,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
       numRet = sscanf (pLine, "%s | %s %n", a1, a2, &pos);
       pPerson->pPhasedFlag[numMarker] = 1;
     }
-    KASSERT (numRet == 2,
-	     "Line %d in pedfile %s doesn't have enough columns (Marker %d). Is this a post-makeped file? \n",
+    ASSERT (numRet == 2,
+	     "Line %d in pedfile %s doesn't have enough columns (Marker %d). Is this a post-makeped file?",
 	     lineNo, sPedfileName, numMarker);
     /* check whether this locus is untyped */
     if (strcmp(a1, "0") == 0 || strcmp(a2, "0") == 0 || strcasecmp(a1, "X") == 0 || strcasecmp(a2, "X") == 0)
@@ -355,8 +350,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     if (strcmp(a1, "0") != 0 && strcasecmp(a1, "X") != 0) {
       ret = find_allele (numMarker, a1);
       pPerson->pPhenotypeList[0][numMarker] = ret;
-      KASSERT (ret >= 0,
-	       "Line %d in pedfile %s contains a genotype with unknown allele %s at locus %s.\n",
+      ASSERT (ret >= 0,
+	       "Line %d in pedfile %s contains a genotype with unknown allele %s at locus %s",
 	       lineNo, sPedfileName, a1, pLocus->sName);
     }
     else
@@ -365,8 +360,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     if (strcmp(a2, "0") != 0 && strcasecmp(a2, "X") != 0) {
       ret = find_allele (numMarker, a2);
       pPerson->pPhenotypeList[1][numMarker] = ret;
-      KASSERT (ret >= 0,
-	       "Line %d in pedfile %s contains a genotype with unkown allele %s at locus %s.\n",
+      ASSERT (ret >= 0,
+	       "Line %d in pedfile %s contains a genotype with unkown allele %s at locus %s",
 	       lineNo, sPedfileName, a2, pLocus->sName);
     }
     else
@@ -377,8 +372,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     if (modelOptions->sexLinked && pPerson->sex == 0
 	&& pPerson->pPhenotypeList[0][numMarker] !=
 	pPerson->pPhenotypeList[1][numMarker]) {
-      KASSERT (0 == 1,
-	       "Line %d in pedfile %s contains heterozygous genotype(%d, %d) for a male at locus %s while doing X chromosome analysis.\n",
+      ASSERT (0 == 1,
+	       "Line %d in pedfile %s contains heterozygous genotype(%d, %d) for a male at locus %s while doing X chromosome analysis",
 	       lineNo, sPedfileName,
 	       pPerson->pPhenotypeList[0][numMarker],
 	       pPerson->pPhenotypeList[1][numMarker], pLocus->sName);
@@ -400,8 +395,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     strcpy (pPerson->pPedigree->sOriginalID, pPerson->pPedigree->sPedigreeID);
     strcpy (pPerson->sOriginalID, pPerson->sID);
   }
-  KASSERT (numRet <= 0 || numRet == 2,
-	   "Line %d in pedfile %s doesn't have enough columns (Old Ped, Per:). Is this a post-makeped file? \n",
+  ASSERT (numRet <= 0 || numRet == 2,
+	   "Line %d in pedfile %s doesn't have enough columns (Old Ped, Per:). Is this a post-makeped file?",
 	   lineNo, sPedfileName);
 
   return 0;
@@ -676,8 +671,8 @@ setup_pedigree_ptrs (Pedigree * pPed)
     if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL) {
       /* a duplicated person, find the original person */
       pOrigPerson = find_loop_breaker (pPerson);
-      KASSERT (pOrigPerson != NULL,
-	       "Can't find loop breaker's original information (original ID: %s current ID: %s).\n",
+      ASSERT (pOrigPerson != NULL,
+	       "Can't find loop breaker's original information (original ID: %s current ID: %s)",
 	       pPerson->sOriginalID, pPerson->sID);
       pPerson->pOriginalPerson = pOrigPerson;
       add_loopbreaker (pPed, pOrigPerson);
@@ -1074,46 +1069,44 @@ print_nuclear_family (FILE * fp, Pedigree * pPed)
   NuclearFamily *pNucFam;
   NuclearFamilyConnector *pNucFamConnector;
 
-  KLOG (LOGPEDFILE, LOGDEBUG, "Pedigree %s Nuclear Families (%d): \n",
-	pPed->sPedigreeID, pPed->numNuclearFamily);
+  fprintf (stderr, "Pedigree %s Nuclear Families (%d): \n",
+	   pPed->sPedigreeID, pPed->numNuclearFamily);
   for (i = 0; i < pPed->numNuclearFamily; i++) {
     pNucFam = pPed->ppNuclearFamilyList[i];
-    KLOG (LOGPEDFILE, LOGDEBUG, "  %3d: Dad - %s Mom - %s \n",
-	  i, pNucFam->pParents[DAD]->sID, pNucFam->pParents[MOM]->sID);
-    KLOG (LOGPEDFILE, LOGDEBUG, "       Children - ");
+    fprintf (stderr, "  %3d: Dad - %s Mom - %s \n",
+	     i, pNucFam->pParents[DAD]->sID, pNucFam->pParents[MOM]->sID);
+    fprintf (stderr, "       Children - ");
     for (j = 0; j < pNucFam->numChildren; j++)
-      KLOG (LOGPEDFILE, LOGDEBUG, "%s  ", pNucFam->ppChildrenList[j]->sID);
-    KLOG (LOGPEDFILE, LOGDEBUG, "\n");
+      fprintf (stderr, "%s  ", pNucFam->ppChildrenList[j]->sID);
+    fprintf (stderr, "\n");
 
-    /* now print out connector information */
+    /* Now print out connector information */
     pNucFamConnector = pNucFam->pUpConnectors;
-    KLOG (LOGPEDFILE, LOGDEBUG, "       Up Connectors:\n");
+    fprintf (stderr, "       Up Connectors:\n");
     while (pNucFamConnector != NULL) {
-      KLOG (LOGPEDFILE, LOGDEBUG,
-	    "\t Nuclear Family Index %3d, Connected Individual %s.\n",
-	    pNucFamConnector->pConnectedNuclearFamily->
-	    nuclearFamilyIndex, pNucFamConnector->pConnectedPerson->sID);
+      fprintf (stderr,
+	       "\t Nuclear Family Index %3d, Connected Individual %s.\n",
+	       pNucFamConnector->pConnectedNuclearFamily->
+	       nuclearFamilyIndex, pNucFamConnector->pConnectedPerson->sID);
       pNucFamConnector = pNucFamConnector->pNextConnector;
     }
     pNucFamConnector = pNucFam->pDownConnectors;
-    KLOG (LOGPEDFILE, LOGDEBUG, "       Down Connectors:\n");
+    fprintf (stderr, "       Down Connectors:\n");
     while (pNucFamConnector != NULL) {
-      KLOG (LOGPEDFILE, LOGDEBUG,
-	    "\t Nuclear Family Index %3d, Connected Individual %s.\n",
-	    pNucFamConnector->pConnectedNuclearFamily->
-	    nuclearFamilyIndex, pNucFamConnector->pConnectedPerson->sID);
+      fprintf (stderr,
+	       "\t Nuclear Family Index %3d, Connected Individual %s.\n",
+	       pNucFamConnector->pConnectedNuclearFamily->
+	       nuclearFamilyIndex, pNucFamConnector->pConnectedPerson->sID);
       pNucFamConnector = pNucFamConnector->pNextConnector;
     }
-
   }
 
-  /* print out top founder nuclear families */
-  KLOG (LOGPEDFILE, LOGDEBUG, "    Founder Nuclear Families:\n");
-  KLOG (LOGPEDFILE, LOGDEBUG, "      ");
+  /* Print out top founder nuclear families */
+  fprintf (stderr, "    Founder Nuclear Families:\n");
+  fprintf (stderr, "      ");
   for (i = 0; i < pPed->numFounderNuclearFamily; i++)
-    KLOG (LOGPEDFILE, LOGDEBUG, "%d ",
-	  pPed->ppFounderNuclearFamilyList[i]->nuclearFamilyIndex);
-  KLOG (LOGPEDFILE, LOGDEBUG, "\n");
+    fprintf (stderr, "%d ", pPed->ppFounderNuclearFamilyList[i]->nuclearFamilyIndex);
+  fprintf (stderr, "\n");
 
   return 0;
 }
@@ -1276,8 +1269,8 @@ read_ccfile (char *ccFileName, PedigreeSet * pPedigreeSet)
   Pedigree **pPedSet = NULL; // Vector of pedigree pointers from header columns
 
   fpFile = fopen (ccFileName, "r");
-  KASSERT (fpFile != NULL,
-	   "Can't open case control count file %s for read. Exiting!",
+  ASSERT (fpFile != NULL,
+	   "Can't open case control count file %s for read",
 	   ccFileName);
   while (fgetlongs (&flexBuffer, &flexBufferSize, fpFile) != NULL) {
     lineNo++;
@@ -1292,8 +1285,8 @@ read_ccfile (char *ccFileName, PedigreeSet * pPedigreeSet)
 	pLine = &pLine[pos];
 	Pedigree *pPed;
 	pPed = find_original_pedigree (pPedigreeSet, sCurrPedLabel);
-	KASSERT (pPed != NULL,
-		 "Can't find pedigree %s in pedigree file, but we got pattern count.\n",
+	ASSERT (pPed != NULL,
+		 "Can't find pedigree %s in pedigree file, but we got pattern count",
 		 sCurrPedLabel);
 	if (numPed + 1 > maxNumPed) {
 	  maxNumPed += 6;
@@ -1306,18 +1299,18 @@ read_ccfile (char *ccFileName, PedigreeSet * pPedigreeSet)
 
     /* Read the count information for each SNP */
     numRet = sscanf (flexBuffer, "%s %n", sCurrMarkerLabel, &pos);
-    KASSERT (numRet == 1,
-	     "Can't get marker label from line no %d in count file %s.\n",
+    ASSERT (numRet == 1,
+	     "Can't get marker label from line no %d in count file %s",
 	     lineNo, ccFileName);
     pLine = &flexBuffer[pos];
     /* Find the locus */
     j = find_locus (&originalLocusList, sCurrMarkerLabel);
-    KASSERT (j >= 0, "Can't get marker %s information.\n", sCurrMarkerLabel);
+    ASSERT (j >= 0, "Can't get marker %s information", sCurrMarkerLabel);
     i = 0;
     while (i < numPed) {
       numRet = sscanf (pLine, "%d %n", &(pPedSet[i]->pCount[j]), &pos);
-      KASSERT (numRet == 1,
-	       "Can't get count information for pedigree %s at locus %s.\n",
+      ASSERT (numRet == 1,
+	       "Can't get count information for pedigree %s at locus %s",
 	       pPedSet[i]->sPedigreeID, sCurrMarkerLabel);
       pLine = &pLine[pos];
       i++;
@@ -1607,7 +1600,8 @@ int checkQtTraitRanges (PedigreeSet *pPedigreeSet)
 
       if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_CHI_SQUARE &&
 	  person->ppOrigTraitValue[0][0] <= 0) {
-	KLOG(LOGDEFAULT, LOGERROR, "Family %s, inidividual %s: illegal trait value for Chi-Squared distribution\n", pPedigreeSet->ppPedigreeSet[va]->sPedigreeID, person->sID);
+	ERROR ("Family %s, inidividual %s: illegal trait value for Chi-Squared distribution",
+	       pPedigreeSet->ppPedigreeSet[va]->sPedigreeID, person->sID);
 	return (-1);
       }
     }
