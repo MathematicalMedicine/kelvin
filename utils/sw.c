@@ -1143,7 +1143,7 @@ int swProgressDelaySeconds = 0;
   we can go back to sleep for a while.
 */
 void
-*progressSignalHandler ()
+*progressSignalHandler (void *threadId)
 {
   int sleepSeconds;
 
@@ -1156,7 +1156,7 @@ void
     swProgressRequestFlag = FALSE;
     swLogTimedProgress ();
   }
-  pthread_exit (EXIT_SUCCESS);
+  pthread_exit (NULL);
 }
 
 /// Timer thread to advise of progress

@@ -214,6 +214,7 @@
 
 */
 #include <math.h>
+#include <pthread.h>
 
 #include "kelvin.h"
 #include "kelvinGlobals.h"
@@ -293,7 +294,7 @@ void *monitorMemory ()
 #endif
     }
   }
-  return NULL;
+  pthread_exit (NULL);
 }
 
 /**
@@ -364,8 +365,7 @@ void logPedigreeSetStatistics (PedigreeSet * pSet,      ///< Pointer to pedigree
       sg += pNucFam->totalNumSimilarPairs;
     }
   }
-  sprintf (messageBuffer, "For %d pedigrees: unique groups:%d, similar groups:%d, polynomial terms:%ld", pSet->numPedigree, pg, sg, nodeId);
-  swLogMsg (stdout, messageBuffer);
+  DETAIL (0, "For %d pedigrees: unique groups:%d, similar groups:%d, polynomial terms:%ld", pSet->numPedigree, pg, sg, nodeId);
 }
 
 char analysisType[MAXSWMSG];    ///< Textual summary of analysis type built by dumpTrackingStats.
