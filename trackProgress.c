@@ -440,7 +440,7 @@ estimateIterations (unsigned long eCL[])
       strcat (analysisType, "Equilibrium.");
     else
       strcat (analysisType, "Disequilibrium.");
-    INFO (analysisType);
+    INFO ("%s", analysisType);
   } else {      // not AM/MM
     if (modelType->type == TP) {
       /* 
@@ -498,7 +498,7 @@ estimateIterations (unsigned long eCL[])
         strcat (analysisType, "Equilibrium.");
       else
         strcat (analysisType, "Disequilibrium.");
-      INFO (analysisType);
+      INFO ("%s", analysisType);
     } else {    // not TP, so multipoint
 
       /* Pedigree likelihood calculation looping for MP is for trait, marker, then alternative hypothesis.
@@ -545,7 +545,7 @@ estimateIterations (unsigned long eCL[])
           }
         }
       }
-      INFO (analysisType);
+      INFO ("%s", analysisType);
     }
   }
   return;
