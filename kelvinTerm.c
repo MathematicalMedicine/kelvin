@@ -64,8 +64,8 @@ void kelvinTerm () {
     polyStatistics ("End of run");
 #endif
 #ifdef DMUSE
-  fprintf (stderr, "Missed/Used %d/%d 24s, %d/%d 48s, %d/%d 100s\n",
-           missed24s, used24s, missed48s, used48s, missed100s, used100s);
+  INFO ("Missed/Used %d/%d 24s, %d/%d 48s, %d/%d 100s",
+	missed24s, used24s, missed48s, used48s, missed100s, used100s);
 #endif
 #ifdef DMTRACK
   swLogPeaks ("End of run");
@@ -73,7 +73,7 @@ void kelvinTerm () {
   swDumpSources ();
   //  swDumpCrossModuleChunks ();
 #endif
-  swLogMsg (stdout, "Finished run");
+  STEP(0, "Finished run");
 
 /* Close file pointers */
 if (modelType->type == TP)

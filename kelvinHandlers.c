@@ -55,7 +55,7 @@ void quitSignalHandler (int ourSignal)
 */
 void termSignalHandler (int ourSignal)
 {
-  fprintf (stderr, "Terminating early for gprof or gcov!\n");
+  INFO ("Terminating early for gprof or gcov!");
   exit (EXIT_SUCCESS);
 }
 #endif
@@ -63,14 +63,14 @@ void termSignalHandler (int ourSignal)
 /// Handler for SIGINT
 void intSignalHandler (int ourSignal)
 {
-  fprintf (stderr, "Terminating early via interrupt!\n");
+  INFO ("Terminating early via interrupt");
   exit (EXIT_FAILURE);
 }
 
 /// Handler for SIGUSR1
 void usr1SignalHandler (int ourSignal)
 {
-  fprintf (stderr, "This interrupt used to implement self-setting gdb breakpoints\n");
+  INFO ("This interrupt used to implement self-setting gdb breakpoints");
 }
 
 pid_t childPID = 0;     ///< For a child process producing timing (and memory?) statistics.
@@ -85,7 +85,6 @@ pid_t childPID = 0;     ///< For a child process producing timing (and memory?) 
 */
 void exitKelvin ()
 {
-  swLogMsg (stdout, "Exiting");
   if (childPID != 0)
     kill (childPID, SIGKILL);   /* Sweep away any errant children */
 }

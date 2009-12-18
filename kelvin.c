@@ -136,7 +136,7 @@ int main (int argc, char *argv[])
     iterateMain();
   }
 
-  STEP(0, "Terminating");
+  STEP(0, "Analysis complete");
   kelvinTerm();
 
   return EXIT_SUCCESS;

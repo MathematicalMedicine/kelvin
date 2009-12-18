@@ -81,11 +81,6 @@ write2ptBRFile (int loc1, int loc2)
   if (fpHet == NULL)
     return;
 
-  /*
-  KASSERT (modelOptions->markerAnalysis == FALSE,
-	   "Don't call write2ptBRFile for a marker-to-marker analysis\n");
-  */
-
   /* Print the marker line: sequence number, trait name, marker name, and chromosome.
    * If the map is explicitly sex-specific, and the male and female position fields
    * contain non-negative values, print the average, female and male cM positions;
