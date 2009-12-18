@@ -12,7 +12,16 @@
 #include "../pedlib/pedlib.h"
 
 #define BUFFSIZE 256
-#define fault(...) { logMsg (LOGINPUTFILE, LOGERROR, __VA_ARGS__); fault++; }
+
+#define fault(...) \
+do { \
+  int length; \
+  char message[MAXLOGMSG + 1], *pMessage = message; \
+  pMessage += length = snprintf (message, MAXLOGMSG, "ERROR, "); \
+  snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__); \
+  swLogMsg (stderr, message); \
+  fault++; \
+} while(0)
 
 /* Structure for the configuration parser dispatch table.
  * 'key' is the configuration directive
@@ -201,10 +210,8 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 #if 0
 main (int argc, char *argv[])
 {
-  logInit ();
-
   if (argc == 1)
-    logMsg (LOGDEFAULT, LOGFATAL, "%s: no configuration file specified\n", argv[0]);
+    ERROR ("%s: no configuration file specified", argv[0]);
   initializeDefaults ();
   my_readConfigFile (argv[1]);
   if (argc > 2) {
@@ -294,19 +301,17 @@ void readConfigFile (char *config)
 
   conffilename = config;
   if ((conffp = fopen (config, "r")) == NULL)
-    logMsg (LOGDEFAULT, LOGFATAL, "open '%s' failed, %s\n", config, strerror (errno));
+    ERROR ("Unable to open '%s', %s\n", config, strerror (errno));
 
   while ((numtoks = getNextTokgroup (conffp, &toks, &tokgroupsize)) > 0) {
-    for (va = 0; va < numtoks; va++) {
-      logMsg (LOGINPUTFILE, LOGDEBUG, "token %d: %s\n", va, toks[va]);
-    }
+    for (va = 0; va < numtoks; va++)
+      DIAG (INPUTFILE, 1, {fprintf (stderr, "token %d: %s\n", va, toks[va]);});
     if ((va = lookupDispatch (toks[0], dispatchTable)) >= 0) {
-      logMsg (LOGINPUTFILE, LOGDEBUG, "directive '%s' matches at index %d\n", toks[0], va);
+      DIAG (INPUTFILE, 1, {fprintf (stderr, "directive '%s' matches at index %d\n", toks[0], va);});
       (*dispatchTable[va].parse) (toks, numtoks, dispatchTable[va].hint);
-    } else {
-      logMsg (LOGDEFAULT, LOGFATAL, "directive '%s' on line %d is %s\n", toks[0],
-	      lineno, (va == -1) ? "unknown" : "not unique");
-    }
+    } else
+      ERROR ("Directive '%s' on line %d is %s", toks[0],
+	     lineno, (va == -1) ? "unknown" : "not unique");
   }
 
   if (tokgroupsize > 0)
@@ -331,21 +336,21 @@ void parseCommandLine (int argc, char *argv[])
     return;
 
   if (strncmp (argv[0], "--", 2) != 0)
-    logMsg (LOGDEFAULT, LOGFATAL, "expected directive on command line, found '%s'\n", argv[0]);
+    ERROR ("Expected directive on command line, found '%s'", argv[0]);
   bufflen = strlen (argv[0]) - 2;
   strcpy (buff, argv[0]+2);
   
   curidx = 1;
   while (curidx < argc) {
     if (strncmp (argv[curidx], "--", 2) == 0) {
-      logMsg (LOGINPUTFILE, LOGDEBUG, "buffer is '%s'\n", buff);
+      DIAG (INPUTFILE, 1, { fprintf (stderr, "Buffer is '%s'\n", buff);});
       permuteLine (buff, BUFFSIZE);
       numtoks = tokenizeLine (buff, &toks, &tokgroupsize);
       if ((va = lookupDispatch (toks[0], dispatchTable)) >= 0) {
-	logMsg (LOGINPUTFILE, LOGDEBUG, "directive '%s' matches at index %d\n", toks[0], va);
+	DIAG (INPUTFILE, 1, { fprintf (stderr, "Directive '%s' matches at index %d\n", toks[0], va);});
 	(*dispatchTable[va].parse) (toks, numtoks, dispatchTable[va].hint);
       } else
-	logMsg (LOGDEFAULT, LOGFATAL, "directive '%s' on command line is %s\n", toks[0],
+	ERROR ("Directive '%s' on command line is %s", toks[0],
 		(va == -1) ? "unknown" : "not unique");
       bufflen = strlen (argv[curidx]) - 2;
       strcpy (buff, argv[curidx]+2);
@@ -359,14 +364,14 @@ void parseCommandLine (int argc, char *argv[])
     curidx++;
   }
     
-  logMsg (LOGINPUTFILE, LOGDEBUG, "buffer is '%s'\n", buff);
+  DIAG (INPUTFILE, 1, { fprintf (stderr, "Buffer is '%s'\n", buff);});
   permuteLine (buff, BUFFSIZE);
   numtoks = tokenizeLine (buff, &toks, &tokgroupsize);
   if ((va = lookupDispatch (toks[0], dispatchTable)) >= 0) {
-    logMsg (LOGINPUTFILE, LOGDEBUG, "directive '%s' matches at index %d\n", toks[0], va);
+    DIAG (INPUTFILE, 1, { fprintf (stderr, "Directive '%s' matches at index %d\n", toks[0], va);});
     (*dispatchTable[va].parse) (toks, numtoks, dispatchTable[va].hint);
   } else
-    logMsg (LOGDEFAULT, LOGFATAL, "directive '%s' on command line is %s\n", toks[0],
+    ERROR ("Directive '%s' on command line is %s\n", toks[0],
 	    (va == -1) ? "unknown" : "not unique");
   
   if (tokgroupsize > 0)
@@ -431,9 +436,9 @@ void validateConfig ()
     if (observed.constraints)
       fault ("Trait directives (Constraint) are incompatible with MarkerToMarker\n");
     if (staticModelOptions.avghetfile[0] != '\0' && ! staticModelOptions.forceAvghetFile)
-      logMsg (LOGINPUTFILE, LOGWARNING, "MarkerToMarker will write no output to BayesRatioFile\n");
+      WARNING ("MarkerToMarker will write no output to BayesRatioFile");
     if (staticModelOptions.dkelvinoutfile[0] != '\0')
-      logMsg (LOGINPUTFILE, LOGWARNING, "MarkerToMarker will write no output to NIDetailFile\n");
+      WARNING ("MarkerToMarker will write no output to NIDetailFile");
 
     if (! staticModelOptions.integration) {
       if (staticModelRange.ndprime == 0 && staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
@@ -449,7 +454,7 @@ void validateConfig ()
 	fault ("MarkerToMarker and %s require FixedModels\n", THETA_STR);
     }
     if (fault)
-      logMsg (LOGINPUTFILE, LOGFATAL, "Configuration errors detected, exiting\n");
+      ERROR ("%d configuration errors detected", fault);
     return;
   } 
   /* Everything hereafter is trait-to-marker */
@@ -479,7 +484,7 @@ void validateConfig ()
     if (staticModelRange.nafreq > 0)
       fault ("MarkerAlleleFrquency is incompatible with Multipoint\n");
     if (staticModelOptions.pplfile[0] != '\0')
-      logMsg (LOGINPUTFILE, LOGWARNING, "Multipoint will write no output to PPLFile\n");
+      WARNING ("Multipoint will write no output to PPLFile");
     if (! observed.traitPositions) 
       fault ("Multipoint requires TraitPositions\n");
   } else {
@@ -525,14 +530,14 @@ void validateConfig ()
     }
 
     if (fault)
-      logMsg (LOGINPUTFILE, LOGFATAL, "Configuration errors detected, exiting\n");
+      ERROR ("%d configuration errors detected", fault);
     return;
   }
   
   /* So much for the low-hanging fruit... */
   
   if (staticModelOptions.dkelvinoutfile[0] != '\0')
-    logMsg (LOGINPUTFILE, LOGWARNING, "FixedModels will write no output to NIDetailFile\n");
+    WARNING ("FixedModels will write no output to NIDetailFile");
 
   if (staticModelOptions.mapFlag == SS) {
     if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
@@ -603,7 +608,7 @@ void validateConfig ()
    * if the user hasn't specified any penetrance values at all.
    */
   if (fault)
-    logMsg (LOGINPUTFILE, LOGFATAL, "Configuration errors detected, exiting\n");
+    ERROR ("%d configuration errors detected", fault);
   
   if ((checkImprintingPenets (&staticModelRange, staticModelOptions.imprintingFlag) < 0)) {
     if (staticModelOptions.imprintingFlag) {
@@ -627,7 +632,8 @@ void validateConfig ()
     fault ("A Constraint references a liability class %d that is not specified with LiabilityClass\n", observed.maxclass);
   
   if (fault)
-    logMsg (LOGINPUTFILE, LOGFATAL, "Configuration errors detected, exiting\n");
+    ERROR ("%d configuration errors detected", fault);
+
   return;
 }
 
@@ -1375,50 +1381,6 @@ int set_resultsprefix (char **toks, int numtoks, void *unused)
 
 int set_logLevel (char **toks, int numtoks, void *filename)
 {
-  int logType=0, logLevel=0;
-
-  if (numtoks < 3)
-    bail ("missing argument(s) to directive '%s'\n", toks[0]);
-  if (numtoks > 3)
-    bail ("extra arguments to directive '%s'\n", toks[0]);
-
-  if (!strcasecmp (toks[1], "pedfile"))
-    logType = LOGPEDFILE;
-  else if (!strcasecmp (toks[1], "inputfile"))
-    logType = LOGINPUTFILE;
-  else if (!strcasecmp (toks[1], "genoelim"))
-    logType = LOGGENOELIM;
-  else if (!strcasecmp (toks[1], "parentalpair"))
-    logType = LOGPARENTALPAIR;
-  else if (!strcasecmp (toks[1], "peelgraph"))
-    logType = LOGPEELGRAPH;
-  else if (!strcasecmp (toks[1], "likelihood"))
-    logType = LOGLIKELIHOOD;
-  else if (!strcasecmp (toks[1], "setrecoding"))
-    logType = LOGSETRECODING;
-  else if (!strcasecmp (toks[1], "memory"))
-    logType = LOGMEMORY;
-  else if (!strcasecmp (toks[1], "integration"))
-    logType = LOGINTEGRATION;
-  else if (!strcasecmp (toks[1], "default"))
-    logType = LOGDEFAULT;
-  else
-    bail ("unknown log facility '%s'", toks[1]);
-  
-  if (!strcasecmp (toks[2], "fatal"))
-    logLevel = LOGFATAL;
-  else if (!strcasecmp (toks[2], "error"))
-    logLevel = LOGERROR;
-  else if (!strcasecmp (toks[2], "warning"))
-    logLevel = LOGWARNING;
-  else if (!strcasecmp (toks[2], "advise"))
-    logLevel = LOGADVISE;
-  else if (!strcasecmp (toks[2], "debug"))
-    logLevel = LOGDEBUG;
-  else
-    bail ("unknown log severity '%s'", toks[2]);
-
-  logSet (logType, logLevel);
   return (0);
 }
 
@@ -1438,21 +1400,17 @@ int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_
   if (((vlist_h == NULL) && (vals_h == NULL)) || ((vlist_h != NULL) && (vals_h != NULL)))
     return (-1);
   
-  if (vlist_h != NULL) {
-    if ((vlist = malloc (sizeof (st_valuelist) * listsize)) == NULL)
-      logMsg (LOGDEFAULT, LOGFATAL, "malloc failed\n");
-  } else {
-    if ((vals = malloc (sizeof (double) * listsize)) == NULL)
-      logMsg (LOGDEFAULT, LOGFATAL, "malloc failed\n");
-  }
+  if (vlist_h != NULL)
+    MALCHOKE (vlist, sizeof (st_valuelist) * listsize, void *);
+  else
+    MALCHOKE (vals, sizeof (double) * listsize, void *);
 
-  // printf ("starting\n");
   while (1) {
     if (numvals >= listsize) {
       if (((vlist != NULL) &&
 	   ((vlist = realloc (vlist, sizeof (st_valuelist) * (listsize += 10))) == NULL)) || 
 	  ((vals = realloc (vals, sizeof (double) * (listsize += 10))) == NULL))
-	logMsg (LOGDEFAULT, LOGFATAL, "realloc failed\n");
+	ERROR ("Complex config parsing realloc failed");
     }
     
     /* Skip the first character of the token to avoid the leading '-' of a negative number */
@@ -1530,7 +1488,7 @@ int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_
 	while ((val = start + (va++ * incr)) <= (end + ERROR_MARGIN)) {
 	  if ((numvals >= listsize) && 
 	      ((vals = realloc (vals, sizeof (double) * (listsize += 10))) == NULL))
-	    logMsg (LOGDEFAULT, LOGFATAL, "realloc failed\n");
+	    ERROR ("Complex config parsing realloc failed");
 	  vals[numvals++] = val;
 	}
       }
@@ -1651,18 +1609,14 @@ int tokenizeLine (char *line, char ***tokgroup_h, int *tokgroupsize)
   
   if ((tokgroup = *tokgroup_h) == NULL) {
     *tokgroupsize = 10;
-    if ((tokgroup = malloc (sizeof (char *) * *tokgroupsize)) == NULL) {
-      logMsg (LOGDEFAULT, LOGFATAL, "malloc failed\n");
-      exit (-1);
-    }
+    MALCHOKE (tokgroup, sizeof (char *) * *tokgroupsize, void *);
   }
   
   ca = strtok_r (line, " ", &cb);
   while (ca != NULL) {
     if (numtoks + 1 >= *tokgroupsize) {
       *tokgroupsize += 10;
-      if ((tokgroup = realloc (tokgroup, sizeof (char *) * *tokgroupsize)) == NULL)
-	logMsg (LOGDEFAULT, LOGFATAL, "ralloc failed\n");
+      REALCHOKE (tokgroup, sizeof (char *) * *tokgroupsize, void *);
     }
     tokgroup[numtoks++] = ca;
     ca = strtok_r (NULL, " ", &cb);
@@ -1710,10 +1664,10 @@ void bail (char *fmt, char *arg)
   if (lineno > 0) {
     strcpy (newfmt, "'%s' line %d: ");
     strcat (newfmt, fmt);
-    logMsg (LOGDEFAULT, LOGFATAL, newfmt, conffilename, lineno, arg);
+    ERROR (newfmt, conffilename, lineno, arg);
   } else {
     strcpy (newfmt, "on command line: ");
     strcat (newfmt, fmt);
-    logMsg (LOGDEFAULT, LOGFATAL, newfmt, arg);
+    ERROR (newfmt, arg);
   }
 }

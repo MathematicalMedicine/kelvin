@@ -318,7 +318,7 @@ read_datafile (char *sDatafileName)
       pLocus->pMapUnit = pMapUnit;
     } else if (!strcasecmp (sLocusType, "C")) {
       if (pTraitLocus == NULL)
-	logMsg (LOGDEFAULT, LOGFATAL, "Liability class '%s' in %s must follow a trait\n",
+	ERROR ("Liability class '%s' in %s must follow a trait",
 		sLocusName, sDatafileName);
       pTrait = pTraitLocus->pTraits[0];
       pTrait->numLiabilityClass = modelRange->nlclass;

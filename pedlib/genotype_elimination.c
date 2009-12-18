@@ -215,19 +215,17 @@ parent_children_genotype_elimination (int locus, NuclearFamily * pNucFam,
   }				/* end of looping of parent genotypes */
 
   if (pParent->loopBreaker >= 1 && pParent->pParents[DAD] == NULL) {
-    KCHECK (pParent->pOriginalPerson->ppGenotypeList[locus] != NULL,
-	    LOGDEFAULT, LOGWARNING,
-	    "Pedigree %s Person %s is not compatible at locus %s.\n",
-	    pParent->pPedigree->sPedigreeID, pParent->sID, pLocus->sName);
-    if (pParent->pOriginalPerson->ppGenotypeList[locus] == NULL)
+    if (pParent->pOriginalPerson->ppGenotypeList[locus] == NULL) {
+      WARNING ("Pedigree %s Person %s is not compatible at locus %s",
+	       pParent->pPedigree->sPedigreeID, pParent->sID, pLocus->sName);
       return -1;
+    }
   } else {
-    KCHECK (pParent->ppGenotypeList[locus] != NULL,
-	    LOGDEFAULT, LOGWARNING,
-	    "Pedigree %s Person %s is not compatible at locus %s.\n",
-	    pParent->pPedigree->sPedigreeID, pParent->sID, pLocus->sName);
-    if (pParent->ppGenotypeList[locus] == NULL)
+    if (pParent->ppGenotypeList[locus] == NULL) {
+      WARNING ("Pedigree %s Person %s is not compatible at locus %s",
+	       pParent->pPedigree->sPedigreeID, pParent->sID, pLocus->sName);
       return -1;
+    }
   }
 
   return ret;
@@ -319,15 +317,13 @@ child_parents_genotype_elimination (int locus, NuclearFamily * pNucFam,
       /* increase the counter of elimination */
       ret++;
     }
-  }				/* end of looping of child's genotype list */
+  } /* end of looping of child's genotype list */
 
-
-  KCHECK (pChild->ppGenotypeList[locus] != NULL,
-	  LOGDEFAULT, LOGWARNING,
-	  "Pedigree %s Person %s is not compatible at locus %s.\n",
-	  pChild->pPedigree->sPedigreeID, pChild->sID, pLocus->sName);
-  if (pChild->ppGenotypeList[locus] == NULL)
-    return -1;
+  if (pChild->ppGenotypeList[locus] == NULL) {
+    WARNING ("Pedigree %s Person %s is not compatible at locus %s",
+	     pChild->pPedigree->sPedigreeID, pChild->sID, pLocus->sName);
+    ret = -1;
+  }
   return ret;
 }
 
@@ -433,19 +429,19 @@ parent_parent_children_genotype_elimination (int locus,
   }				/* end of looping parent's genotype list */
 
   if (pParent1->loopBreaker >= 1 && pParent1->pParents[DAD] == NULL) {
-    KCHECK (pParent1->pOriginalPerson->ppGenotypeList[locus] != NULL,
-	    LOGDEFAULT, LOGWARNING,
-	    "Pedigree %s Person %s is not compatible at locus %s.\n",
-	    pParent1->pPedigree->sPedigreeID, pParent1->sID, pLocus->sName);
-    if (pParent1->pOriginalPerson->ppGenotypeList[locus] == NULL)
-      return -1;
+
+    if (pParent1->pOriginalPerson->ppGenotypeList[locus] == NULL) {
+      WARNING ("Pedigree %s Person %s is not compatible at locus %s",
+	       pParent1->pPedigree->sPedigreeID, pParent1->sID, pLocus->sName);
+      ret = -1;
+    }
+
   } else {
-    KCHECK (pParent1->ppGenotypeList[locus] != NULL,
-	    LOGDEFAULT, LOGWARNING,
-	    "Pedigree %s Person %s is not compatible at locus %s.\n",
-	    pParent1->pPedigree->sPedigreeID, pParent1->sID, pLocus->sName);
-    if (pParent1->ppGenotypeList[locus] == NULL)
-      return -1;
+    if (pParent1->ppGenotypeList[locus] == NULL) {
+      WARNING ("Pedigree %s Person %s is not compatible at locus %s",
+	       pParent1->pPedigree->sPedigreeID, pParent1->sID, pLocus->sName);
+      ret = -1;
+    }
   }
 
   return ret;
@@ -583,12 +579,11 @@ child_children_parents_genotype_elimination (int locus,
     }
   }				/* end of looping of child's genotype list */
 
-  KCHECK (pChild->ppGenotypeList[locus] != NULL,
-	  LOGDEFAULT, LOGWARNING,
-	  "Pedigree %s Person %s is not compatible at locus %s.\n",
-	  pChild->pPedigree->sPedigreeID, pChild->sID, pLocus->sName);
-  if (pChild->ppGenotypeList[locus] == NULL)
-    return -1;
+  if (pChild->ppGenotypeList[locus] == NULL) {
+    WARNING ("Pedigree %s Person %s is not compatible at locus %s",
+	     pChild->pPedigree->sPedigreeID, pChild->sID, pLocus->sName);
+    ret = -1;
+  }
 
   return ret;
 }

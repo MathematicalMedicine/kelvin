@@ -3,7 +3,7 @@
 
   Utility stuff included by everything.
 
-  Kelvin logging facility, string utilities, and otherwise useful macros.
+  String utilities, and otherwise useful macros.
   Most of it was originally written by Alberto Maria Segre.
 
   Copyright &copy; 2009, Nationwide Children's Research Institute.  All
@@ -21,94 +21,6 @@
 #include <limits.h>
 #include <ctype.h>
 #include "utils.h"
-
-/**
-
- Kelvin log facility. Keep an array of bitvectors, where each
- bitvector corresponds to a level of output verbosity and each bit
- corresponds to an independent "type" or stream of output.
- 
- Levels are defined from 0 (most serious, inevitably fatal, and
- always produced) to MAXLOGLEVELS (least serious). Commonly used
- names for the levels are defined in log.h.
- 
- Since level 0 errors are always produced, level k error bits are
- actually set in logFlag[k-1] (in other words, we don't need flag
- bits for level 0, so level 1 flag bits reside in logFlag[0]
- instead).
- 
- Types of output are also defined in log.h and are specific to
- Kelvin. Note that with 32 bit ints you are limited to 32 different
- output types; if you need more, you'll have to redefine logFlag as
- something longer than 32 bits.
-
-  @author Alberto Maria Segre - overall content.
-  @author Bill Valentine-Cooper - revised.
-
-*/
-unsigned int logFlag[MAXLOGLEVELS]; ///< 32 bits of logging flags for each of MAXLOGLEVELS levels
-
-char *klog_prefix[MAXLOGLEVELS] = {
-  "FATAL ERROR (aborting)",
-  "ERROR (attempting to continue)",
-  "WARNING (continuing)",
-  "INFO",
-  "DIAG"
-};
-
-int klog_diagLevel[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-			   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-// Initialize the log facility. LOGDEFAULT errors are on by default.
-void
-logInit ()
-{
-  int i;
-
-  for (i = 0; i < MAXLOGLEVELS; i++)
-    logFlag[i] = LOGDEFAULT;
-
-  logFlag[LOGFATAL] = UINT_MAX; // Give errors for everything by default
-  logFlag[LOGERROR] = UINT_MAX; // Give errors for everything by default
-  logFlag[LOGWARNING] = UINT_MAX; // Give warnings for everything by default
-}
-
-/* Set a particular type of output to a given level severity or
- * greater (which, internally, means this output will be produced if
- * level index is actually less than the specified level minus 1,
- * since (a) 0 is the most severe error, and we use "off by 1"
- * indexing to account for the fact that level 0 errors are always
- * produced). */
-void
-logSet (unsigned int type, int level)
-{
-  int i;
-
-  for (i = 0; i <= level; i++)
-    logFlag[i] |= type;
-}
-
-/* Print an output message if the specified type of output is turned
- * on at this level of output. Careful of off by 1 indexing of levels
- * here! */
-void
-logMsg (unsigned int type, int level, const char *format, ...)
-{
-  va_list argp;
-
-  /* Initialize the variable arguments list. */
-  va_start (argp, format);
-  /* Check to see if the criteria for making the message appear are met. */
-  if (type & logFlag[level])
-    vfprintf (stderr, format, argp);
-  /* Close the variable arguments list. */
-  va_end (argp);
-  
-  /* If this was a fatal error, dump. Level 0 errors are always checked
-   * and are always fatal. */
-  if (level == LOGFATAL)
-    exit (EXIT_FAILURE);
-}
 
 /* Input handling/checking routines, used when reading configuration
  * and data files.

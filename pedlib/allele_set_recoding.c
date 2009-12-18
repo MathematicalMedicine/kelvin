@@ -556,8 +556,7 @@ print_person_allele_set (Person * pPerson, int locus, int alleleSetLen)
     fprintf (stderr, "    Typed:  ");
     pGenotype = pPerson->ppGenotypeList[locus];
     while (pGenotype != NULL) {
-      logMsg (LOGSETRECODING, LOGDEBUG, "(%d,%d) ",
-	      pGenotype->allele[DAD], pGenotype->allele[MOM]);
+      fprintf (stderr, "(%d,%d) ", pGenotype->allele[DAD], pGenotype->allele[MOM]);
       pGenotype = pGenotype->pNext;
     }
     fprintf (stderr, "\n");

@@ -105,9 +105,6 @@ void kelvinInit (int argc, char *argv[])
 
   INFO ("To check status (at some risk), type CTRL-\\ or type \"kill -%d %d\"", SIGQUIT, (int) getpid ());
 
-  // Initialize the logging system.
-  logInit ();
-
   /* Tolerate a request for help as the first argument; ignore the rest of the command 
    * line if help is requested. Otherwise, argv[1] better be the name of the configuration
    * file; the rest of the command line will be treated as override directives.

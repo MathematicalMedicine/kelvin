@@ -184,6 +184,8 @@ void swStartProgressWakeUps(int seconds);
 #define ALLELE_SET_RECODING 0
 #define GENOTYPE_ELIMINATION 0
 #define PARENTAL_PAIR 0
+#define CONFIG 0
+#define INPUTFILE 0
 #define XM 0
 
 /* The beauty of this lines in the fact that all diags go away completely if DISTRIBUTION is
