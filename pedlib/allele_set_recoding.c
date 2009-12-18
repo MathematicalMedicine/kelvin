@@ -532,9 +532,10 @@ recode_genotype (int locus, Pedigree * pPedigree)
   }				/* end of person loop */
 
   /* for debug purpose, print out locus allele set information */
-  print_locus_allele_set (pLocus, alleleSetLen);
   DIAG (ALLELE_SET_RECODING, 1, {
       fprintf (stderr, "Genotype after set recoding:\n");
+
+      print_locus_allele_set (pLocus, alleleSetLen);
 
       /* Print out person genotype */
       for (i = 0; i < numPerson; i++) {

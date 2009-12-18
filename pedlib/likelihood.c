@@ -281,6 +281,7 @@ int build_likelihood_polynomial (PedigreeSet * pPedigreeList)
         if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
 #endif
           // Failed to load, construct it
+	  DETAIL (0, "Building polynomial for pedigree %s", pPedigree->sPedigreeID);
           initialize_multi_locus_genotype (pPedigree);
           status = compute_pedigree_likelihood (pPedigree);
 #ifdef POLYCODE_DL
@@ -313,11 +314,11 @@ int build_likelihood_polynomial (PedigreeSet * pPedigreeList)
           if (i == pPedigreeList->numPedigree - 1)
             polyDynamicStatistics ("Post-build");
 #endif
+	  pPedigree->likelihoodPolyList = buildPolyList ();
+	  polyListSorting (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList);
 #ifdef POLYUSE_DL
         }
 #endif
-        pPedigree->likelihoodPolyList = buildPolyList ();
-        polyListSorting (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList);
       }
     }
   }

@@ -452,7 +452,8 @@ Polynomial *polyReturnWrapper (Polynomial * p)
   //  return exportPoly (p);
   if (swProgressRequestFlag) {
     swProgressRequestFlag = FALSE;
-    DETAIL (0, "Building polynomial, currently at %1.2g terms", (double) sumCount + productCount + constantCount + variableCount + functionCallCount);
+    swLogProgress(3 /* DETAIL + 1 */, 0, "Building polynomial, currently at %1.2g terms",
+		  (double) sumCount + productCount + constantCount + variableCount + functionCallCount);
   }
   return (p);
 }
@@ -698,7 +699,7 @@ double evaluateValue (Polynomial * p)
 
   if (swProgressRequestFlag) {
     swProgressRequestFlag = FALSE;
-    DETAIL (0, "Evaluating polynomial, currently at %G iterations", evaluateValueCount);
+    DETAIL (0, "Evaluating polynomial, currently at %1.2g iterations", (double) evaluateValueCount);
   }
 
 #ifdef EVALUATESW
@@ -2819,7 +2820,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 
   if (swProgressRequestFlag) {
     swProgressRequestFlag = FALSE;
-    DETAIL (0, "Evaluating polynomial, currently at %G iterations", evaluatePolyCount);
+    DETAIL (0, "Evaluating polynomial, currently at %1.2g iterations", (double) evaluatePolyCount);
   }
 
 #ifdef EVALUATESW
