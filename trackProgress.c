@@ -349,7 +349,6 @@ void logPedigreeSetStatistics (PedigreeSet * pSet,      ///< Pointer to pedigree
     int posIdx  ///< Position for complexity analysis.
     )
 {
-  char messageBuffer[MAXSWMSG];
   int pedIdx, i;
   NuclearFamily *pNucFam;
   Pedigree *pPedigree;
