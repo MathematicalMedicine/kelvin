@@ -314,11 +314,12 @@ int build_likelihood_polynomial (PedigreeSet * pPedigreeList)
           if (i == pPedigreeList->numPedigree - 1)
             polyDynamicStatistics ("Post-build");
 #endif
-	  pPedigree->likelihoodPolyList = buildPolyList ();
-	  polyListSorting (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList);
 #ifdef POLYUSE_DL
         }
 #endif
+	// We still need to build a list even if there's only the external for the DL.
+	pPedigree->likelihoodPolyList = buildPolyList ();
+	polyListSorting (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList);
       }
     }
   }
