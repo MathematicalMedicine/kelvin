@@ -1335,11 +1335,8 @@ int dprimeIdx;
               print_dryrun_stat (&pedigreeSet, traitPos);
             } else {
 
-              if (ret == -2) {
-                /* negative likelihood */
-                fprintf (stderr, "Negative likelihood! Exiting!!\n");
-                exit (EXIT_FAILURE);
-              }
+              if (ret == -2)
+                ERROR ("Negative alternative likelihood");
 
               log10_likelihood_alternative = pedigreeSet.log10Likelihood;
 
@@ -1541,7 +1538,6 @@ int dprimeIdx;
 
     }   /* end of walking down the chromosome */
   }     /* end of multipoint */
-  fprintf (stdout, "\n");
 
   /* only for multipoint - deallocate memory  */
   if (modelType->type == MP) {
@@ -1566,7 +1562,7 @@ int dprimeIdx;
       free (markerNameList);
     }
   }
-  dumpTrackingStats (cL, eCL);
+  DIAG (OVERALL, 1, {dumpTrackingStats (cL, eCL);});
 
   if (fpIR != NULL) {
     if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)

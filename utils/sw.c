@@ -93,6 +93,9 @@ then #include sw.h in your source code, and link with sw.o.
 #include <netdb.h>
 #include <netinet/in.h>
 #endif
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <errno.h>
 #include "sw.h"
 #include "hashtab.h"
 #include "lookupa.h"
@@ -1208,6 +1211,21 @@ long swGetMaximumPMK(void) {
 	break;
       }
   return maximumPMK; 
+}
+
+volatile sig_atomic_t *envDiagLevel;
+
+void swDiagInit(void) {
+  int i, segid;
+  if ((segid = shmget ((key_t) getpid (), sizeof (int) * MAX_DIAG_FACILITY, 0666|IPC_CREAT)) == -1)
+    ERROR ("Cannot create shared memory segment for diagnostics, %s", strerror(errno));
+  INFO ("Use segment ID %d for diagnostic purposes", segid);
+  if ((envDiagLevel = shmat (segid, NULL, 0)) == ((void *) -1))
+    ERROR ("Cannot attach shared memory segment for diagnostics, %s", strerror(errno));
+  // Not needed if we're setting them all to zero, since shmget does that.
+  for (i=0; i<MAX_DIAG_FACILITY; i++)
+    envDiagLevel[i] = 0;
+  return;
 }
 
 #ifdef MAIN

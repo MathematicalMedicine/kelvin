@@ -376,7 +376,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       return;
       //       break;
     } else if (pPedigreeLocal->likelihood < 0.0) {
-      ASSERT (pPedigreeLocal->likelihood >= 0.0, "Pedigree %s with NEGATIVE likelihood - This is CRAZY!!!.\n", pPedigreeLocal->sPedigreeID);
+      ASSERT (pPedigreeLocal->likelihood >= 0.0, "Pedigree %s has negative likelihood", pPedigreeLocal->sPedigreeID);
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
       break;
@@ -715,7 +715,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
       sum_log_likelihood = -9999.99;
       break;
     } else if (pPedigreeLocal->likelihood < 0.0) {
-      ASSERT (pPedigreeLocal->likelihood >= 0.0, "Pedigree %s with NEGATIVE likelihood", pPedigreeLocal->sPedigreeID);
+      ASSERT (pPedigreeLocal->likelihood >= 0.0, "Pedigree %s has negative likelihood", pPedigreeLocal->sPedigreeID);
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
       ret = -2;
@@ -758,12 +758,8 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
     strcat (partialPolynomialFunctionName, "_T");
   cL[4]++;
   ret = compute_likelihood (&pedigreeSet);
-  if (ret == -2) {
-    /* negative likelihood */
-    fprintf (stderr, "Negative likelihood! Exiting!!\n");
-    exit (EXIT_FAILURE);
-  }
-
+  if (ret == -2)
+    ERROR ("Negative likelihood for trait");
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
   if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
@@ -1124,11 +1120,8 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   // No new name for a polynomial here because we're reusing the existing one
   cL[6]++;
   ret = compute_likelihood (&pedigreeSet);
-  if (ret == -2) {
-    /* negative likelihood */
-    fprintf (stderr, "Negative likelihood! Exiting!\n");
-    exit (EXIT_FAILURE);
-  }
+  if (ret == -2)
+    ERROR ("Negative likelihood for markers");
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
   if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
@@ -1502,14 +1495,10 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
   // No new name for a polynomial here because we're reusing the existing one
   cL[8]++;
   ret = compute_likelihood (&pedigreeSet);
-  if (ret == -2) {
-    fprintf (stderr, "Negative likelihood! Exiting...\n");
-    exit (EXIT_FAILURE);
-  }
+  if (ret == -2)
+    ERROR ("Negative alternative likelihood");
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
 
-
-  //printf("likelihood =%15.13f with theta %f  %d pedigree\n", pedigreeSet.likelihood,fixed_theta, pedigreeSet.numPedigree);                                  
   if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
     log10_likelihood_ratio = 0;
     avg_hetLR = 0.0;
@@ -2678,7 +2667,7 @@ void integrateMain ()
     }   /* end of walking down the chromosome */
   }     /* end of multipoint */
 
-  dumpTrackingStats (cL, eCL);
+  DIAG (OVERALL, 1, {dumpTrackingStats (cL, eCL);});
 
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     free (dk_globalmax.dprime);

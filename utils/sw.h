@@ -178,20 +178,27 @@ void swStartProgressWakeUps(int seconds);
 /* These are the current facility levels, and I need a new way of defining them.
    I refer to them in the macros as environment levels since I intend to set them
    using environment variables. */
-#define OVERALL 0
-#define LIKELIHOOD 0
-#define READ_PEDFILE 0
-#define ALLELE_SET_RECODING 0
-#define GENOTYPE_ELIMINATION 0
-#define PARENTAL_PAIR 0
-#define CONFIG 0
-#define INPUTFILE 0
-#define XM 0
+
+enum DIAG_FACILITIES {
+  OVERALL,
+  LIKELIHOOD,
+  READ_PEDFILE,
+  ALLELE_SET_RECODING,
+  GENOTYPE_ELIMINATION,
+  PARENTAL_PAIR,
+  CONFIG,
+  INPUTFILE,
+  XM,
+  MAX_DIAG_FACILITY
+};
+
+extern volatile sig_atomic_t *envDiagLevel;
 
 /* The beauty of this lines in the fact that all diags go away completely if DISTRIBUTION is
    defined, and an entire chunk of code can be the diagnostic. */
+#define DISTRIBUTION
 #ifndef DISTRIBUTION
-#define DIAG(ENV_LEVEL, DIAG_LEVEL, DIAG_CODE) if (ENV_LEVEL >= DIAG_LEVEL) { DIAG_CODE }
+#define DIAG(ENV_LEVEL, DIAG_LEVEL, DIAG_CODE) if (envDiagLevel[ENV_LEVEL] >= DIAG_LEVEL) { DIAG_CODE }
 #else
 #define DIAG(ENV_LEVEL, DIAG_LEVEL, DIAG_CODE) // There was a diag here
 #endif
