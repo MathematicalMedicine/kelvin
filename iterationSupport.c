@@ -1108,7 +1108,7 @@ int dprimeIdx;
         } else
           swPushPhase ('k', "evalMM");
         ret = compute_likelihood (&pedigreeSet);
-        cL[6]++;
+        cL[6]++; // MP marker likelihood
         swPopPhase ('k');
 
 	if (swProgressRequestFlag) {
@@ -1237,6 +1237,27 @@ int dprimeIdx;
             pPedigree->load_flag = 0;
         }
 
+	// Build the polynomial outside of the main loops
+	{
+	  char markerNo[8];
+	  sprintf (partialPolynomialFunctionName, "MDA_C%d_P%%sM", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+	  for (k = 0; k < modelType->numMarkers; k++) {
+	    if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
+	      strcat (partialPolynomialFunctionName, "_T");
+	    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
+	    strcat (partialPolynomialFunctionName, markerNo);
+	  }
+	}
+	if (strstr (partialPolynomialFunctionName, "_T") == NULL)
+	  strcat (partialPolynomialFunctionName, "_T");
+	swPushPhase ('k', "buildMDA");
+	swStart (combinedBuildSW);
+	ret = compute_likelihood (&pedigreeSet);
+	swStop (combinedBuildSW);
+	swPopPhase ('k');
+	swPushPhase ('k', "evalMDA");
+	swStart (combinedComputeSW);
+
         for (penIdx = 0; (penIdx == 0) || (modelOptions->dryRun == 0 && penIdx < modelRange->npenet); penIdx++) {
           paramSet.penIdx = penIdx;
           for (liabIdx = 0; (liabIdx == 0) || (modelOptions->dryRun == 0 && liabIdx < modelRange->nlclass); liabIdx++) {
@@ -1277,60 +1298,18 @@ int dprimeIdx;
             if (fpIR != NULL)
               dk_curModel.dgf = gfreq;
 
-
             if (modelOptions->polynomial != TRUE)
               update_locus (&pedigreeSet, traitLocus);
 
-            /* If we're not on the first iteration, it's not a polynomial build, so
-             * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-	    {
-	      char markerNo[8];
-	      sprintf (partialPolynomialFunctionName, "MDA_C%d_P%%sM", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
-	      for (k = 0; k < modelType->numMarkers; k++) {
-		if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
-		  strcat (partialPolynomialFunctionName, "_T");
-		sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
-		strcat (partialPolynomialFunctionName, markerNo);
-	      }
-	    }
-            if (strstr (partialPolynomialFunctionName, "_T") == NULL)
-              strcat (partialPolynomialFunctionName, "_T");
-            if (gfreqInd != 0 || penIdx != 0) {
-              swPushPhase ('k', "evalMDA");
-              swStart (combinedComputeSW);
-              ret = compute_likelihood (&pedigreeSet);
-              cL[7]++;
-              swStop (combinedComputeSW);
-              if (swProgressRequestFlag) {
-                swProgressRequestFlag = FALSE;
-                if (cL[7] > 1) {        // The first time thru we have no basis for estimation
-#ifndef SIMPLEPROGRESS
-                  fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
-                      "Combined likelihood evaluations", cL[7] * 100 / eCL[7], ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * eCL[7] / cL[7] - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
-#else
-                  fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
-                      "C7alculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]),
-                      ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * (eCL[6] + eCL[7]) / (cL[6] + cL[7]) - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
-#endif
-                  fflush (stdout);
-                }
-              }
-              swPopPhase ('k');
-            } else {    // This _is_ the first iteration
-              swPushPhase ('k', "buildMDA");
-              swStart (combinedBuildSW);
-              ret = compute_likelihood (&pedigreeSet);
-              cL[7]++;
-              swStop (combinedBuildSW);
-#ifndef SIMPLEPROGRESS
-              fprintf (stdout, "%s %lu%% complete\r", "Combined likelihood evaluations", cL[7] * 100 / eCL[7]);
-#else
-              fprintf (stdout, "%s %lu%% complete\r", "C77alculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]));
-#endif
-              fflush (stdout);
-              swPopPhase ('k');
+	    ret = compute_likelihood (&pedigreeSet);
+	    cL[7]++; // MP DT alternative likelihood
+	    if (swProgressRequestFlag) {
+	      swProgressRequestFlag = FALSE;
+	      DETAIL (((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * eCL[7] / cL[7] -
+		       (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60,
+		      "Combined likelihood evaluations %lu%% complete (~%lu min left)", cL[7] * 100 / eCL[7]);
             }
-            /* print out some statistics under dry run */
+            /* Print out some statistics under dry run */
             if (modelOptions->dryRun != 0) {
               print_dryrun_stat (&pedigreeSet, traitPos);
             } else {
@@ -1353,7 +1332,6 @@ int dprimeIdx;
           }     /* end of genFreq loop */
         }       /* end of penIdx loop */
 
-
         /* end of penetrance loop */
         /* save the alternative likelihood */
         for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -1364,13 +1342,7 @@ int dprimeIdx;
           pPedigree->load_flag = 0;
         }
 
-#ifndef SIMPLEPROGRESS
-        fprintf (stdout, "%s %lu%% complete (~%lu min left)\n", "Combined likelihood evaluations", cL[7] * 100 / eCL[7], (combinedComputeSW->swAccumWallTime * eCL[7] / cL[7] - combinedComputeSW->swAccumWallTime) / 60);
-#else
-        fprintf (stdout, "%s %lu%% complete (~%lu min left)\r", "Calculations", (cL[6] + cL[7]) * 100 / (eCL[6] + eCL[7]), (combinedComputeSW->swAccumWallTime * (eCL[6] + eCL[7]) / (cL[6] + cL[7]) - combinedComputeSW->swAccumWallTime) / 60);
-#endif
-
-      } /* end of TP */
+      } /* end of MP DT */
       else
         /* multipoint QT or COMBINED */
       {
