@@ -39,13 +39,6 @@ void iterateMain ()
   double gfreq = 0; /* disease gene frequency */
   int ret;
 
-int markerSetChanged; /* Flag for multipoint analysis, did set of markers change? */
-int locusListChanged; /* flag for multipoint analysis, did relative trait position or marker set change? */
-
-int prevFirstMarker;		/* first marker in the set for multipoint analysis */
-int prevLastMarker;		/* last marker in the set for multipoint analysis */
-
-
 int status;
 
 double *marker1Pos, *marker2Pos;
@@ -53,8 +46,6 @@ double *prevPos, *currPos;    /* for MP */
 double dist;
 double mkrFreq;
 double ppl;
-double relativePos;
-double traitPos;      /* trait position for multipoint analysis */
 int i, j, k;
 int liabIdx;
 int mkrFreqIdx;
@@ -141,6 +132,7 @@ int dprimeIdx;
   }
 
   if (modelType->type == TP) {
+
     /* Two point. */
     if (originalLocusList.pLDLoci == NULL)
       CALCHOKE (originalLocusList.pLDLoci, (size_t) 1, sizeof (LDLoci), LDLoci *);
@@ -466,10 +458,10 @@ int dprimeIdx;
 
                     // No new name for a polynomial here because we're reusing the existing one
                     ret = compute_likelihood (&pedigreeSet);
-                    cL[1]++; // TP DT alternative hypothesis
+                    cL[1]++; // TP DT alternative hypothesis (combined likelihood)
                     if (swProgressRequestFlag) {
                       swProgressRequestFlag = FALSE;
-		      DETAIL (0, "Likelihood calculation for alternative hypothesis %lu%% complete (~%lu min left)",
+		      DETAIL (0, "Combined likelihood calculation %lu%% complete (~%lu min left)",
                             (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
                             ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
 			     (eCL[0] + eCL[1]) / (cL[0] + cL[1]) - (combinedComputeSW->swAccumWallTime +
@@ -645,7 +637,7 @@ int dprimeIdx;
                         cL[3]++; // TP QT/CT alternative hypothesis
                         if (swProgressRequestFlag) {
                           swProgressRequestFlag = FALSE;
-			  DETAIL (0, "Likelihood calculation for alternative hypothesis  %lu%% complete (~%lu min left)",
+			  DETAIL (0, "Combined likelihood calculation %lu%% complete (~%lu min left)",
 				  (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]),
 				  ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
 				   (eCL[2] + eCL[3]) / (cL[2] + cL[3]) - (combinedComputeSW->swAccumWallTime +
@@ -711,6 +703,15 @@ int dprimeIdx;
 
   } /* end of two point */
   else {        /* multipoint */
+
+    int markerSetChanged; /* Flag for multipoint analysis, did set of markers change? */
+    int locusListChanged; /* flag for multipoint analysis, did relative trait position or marker set change? */
+
+    int prevFirstMarker;		/* first marker in the set for multipoint analysis */
+    int prevLastMarker;		/* last marker in the set for multipoint analysis */
+
+    double relativePos;
+    double traitPos;      /* trait position for multipoint analysis */
 
     /* marker set locus list for each position */
     markerLocusList.maxNumLocus = modelType->numMarkers;
@@ -1124,7 +1125,6 @@ int dprimeIdx;
             /* save the likelihood at null */
             Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
 
-            //      fprintf(stderr, "pedIdx=%d  markerpediLikehood %G\n", pedIdx, pPedigree->likelihood);
             if (modelOptions->saveResults == TRUE) {
               if (pPedigree->load_flag == 0) {  /*save only for the pedigrees which were add for this run */
                 pPedigree->markerLikelihood = pPedigree->likelihood;
@@ -1336,7 +1336,7 @@ int dprimeIdx;
             } else {
 
               if (ret == -2)
-                ERROR ("Negative alternative likelihood");
+                ERROR ("Negative combined likelihood");
 
               log10_likelihood_alternative = pedigreeSet.log10Likelihood;
 
