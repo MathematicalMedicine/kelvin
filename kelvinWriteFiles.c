@@ -207,23 +207,22 @@ writeMPMODFileHeader ()
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     if (modelType->trait == DT)
       if (modelOptions->imprintingFlag)
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", liabIdx);
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", modelRange->lclassLabels[liabIdx]);
       else
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", liabIdx);
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", modelRange->lclassLabels[liabIdx]);
     else
       {
 	if (modelType->distrib != QT_FUNCTION_CHI_SQUARE)
 	  if (modelOptions->imprintingFlag)
-	    fprintf (fpMOD,
-		     " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD",
-		     liabIdx);
+	    fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD",
+		     modelRange->lclassLabels[liabIdx]);
 	  else
 	    fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD",
-		     liabIdx);
+		     modelRange->lclassLabels[liabIdx]);
 	else if (modelOptions->imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF", modelRange->lclassLabels[liabIdx]);
 	else
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", modelRange->lclassLabels[liabIdx]);
 	if (modelType->trait == CT)
 	  fprintf (fpMOD, ",Thresh)");
 	else
@@ -441,9 +440,9 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
     for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
       if (modelType->trait == DT)
 	if (modelOptions->imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", modelRange->lclassLabels[liabIdx]);
 	else
-	  fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", modelRange->lclassLabels[liabIdx]);
       else
 	{
 	  if (modelType->distrib != QT_FUNCTION_CHI_SQUARE)
@@ -526,6 +525,7 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 			      maxTheta_at_dprime0);
     }
 
+  fprintf (fpMOD, "\n");
   return;
 }
 
@@ -549,19 +549,19 @@ writeSurfaceFileHeader ()
     if (modelOptions->imprintingFlag) {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
 	if (modelType->trait == DT)
-	  fprintf (fpIR, " LC%dPV(DD,Dd,dD,dd)", liabIdxLocal);
+	  fprintf (fpIR, " LC%dPV(DD,Dd,dD,dd)", modelRange->lclassLabels[liabIdxLocal]);
 	else
-	  fprintf (fpIR, " LC%dMV(DD,Dd,dD,dd)", liabIdxLocal);
+	  fprintf (fpIR, " LC%dMV(DD,Dd,dD,dd)", modelRange->lclassLabels[liabIdxLocal]);
       } else
-	fprintf (fpIR, " LC%dDoFV(DD,Dd,dD,dd)", liabIdxLocal);
+	fprintf (fpIR, " LC%dDoFV(DD,Dd,dD,dd)", modelRange->lclassLabels[liabIdxLocal]);
     } else {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
 	if (modelType->trait == DT)
-	  fprintf (fpIR, " LC%dPV(DD,Dd,dd)", liabIdxLocal);
+	  fprintf (fpIR, " LC%dPV(DD,Dd,dd)", modelRange->lclassLabels[liabIdxLocal]);
 	else
-	  fprintf (fpIR, " LC%dMV(DD,Dd,dd)", liabIdxLocal);
+	  fprintf (fpIR, " LC%dMV(DD,Dd,dd)", modelRange->lclassLabels[liabIdxLocal]);
       } else
-	fprintf (fpIR, " LC%dDoFV(DD,Dd,dd)", liabIdxLocal);
+	fprintf (fpIR, " LC%dDoFV(DD,Dd,dd)", modelRange->lclassLabels[liabIdxLocal]);
     }
     if (modelType->trait != DICHOTOMOUS && modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
       fprintf (fpIR, " SD");

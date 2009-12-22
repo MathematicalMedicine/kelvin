@@ -755,6 +755,9 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
     if ((staticModelType.trait != DT) && (staticModelOptions.imprintingFlag != TRUE))
       addConstraint (PARAMC, PEN_dD, 0, 1, EQ, PEN_Dd, 0, 1, FALSE);
   }
+  MALCHOKE (staticModelRange.lclassLabels, sizeof (int) * staticModelRange.nlclass, int *);
+  for (i = 0; i < staticModelRange.nlclass; i++)
+    staticModelRange.lclassLabels[i] = i+1;
 
   /* Copy our statically-allocated structures over to their global page-allocated
    * counterparts so we can protect them from monkeying.

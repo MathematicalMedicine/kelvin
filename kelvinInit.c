@@ -212,8 +212,10 @@ void kelvinInit (int argc, char *argv[])
     int va, vb=0;
     
     for (va = 1; va <= modelRange->nlclass; va++) {
-      if (pedigreeSet.liabilityClassCnt[va] != 0)
-	 pedigreeSet.liabilityClassCnt[va] = ++vb;
+      if (pedigreeSet.liabilityClassCnt[va] != 0) {
+	modelRange->lclassLabels[vb] = va;
+	pedigreeSet.liabilityClassCnt[va] = ++vb;
+      }
     }
     if (vb != modelRange->nlclass) {
       va = modelRange->nlclass - vb;
@@ -222,9 +224,6 @@ void kelvinInit (int argc, char *argv[])
       for (va = 1; va <= modelRange->nlclass; va++) {
 	if (pedigreeSet.liabilityClassCnt[va] == 0)
 	  WARNING("Dropping empty class %d", va);
-	else
-	  if (pedigreeSet.liabilityClassCnt[va] != va) 
-	    WARNING("Renumbering class %d to %d", va, pedigreeSet.liabilityClassCnt[va]);
       }
       if (pedigreeSet.liabilityClassCnt[vb] != vb)
 	renumberLiabilityClasses (&pedigreeSet);
