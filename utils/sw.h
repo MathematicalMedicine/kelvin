@@ -171,6 +171,8 @@ extern int swProgressLevel;
 char *formatElapsedTime (unsigned int t, char *buffer);
 void swLogProgress(int level, float percentDone, char *format, ...);
 void swStartProgressWakeUps(int seconds);
+void swDiagInit(void);
+
 #define STEP(PERCENTDONE, ...) { swLogProgress(0, PERCENTDONE, __VA_ARGS__); }
 #define SUBSTEP(PERCENTDONE, ...) { swLogProgress(1, PERCENTDONE, __VA_ARGS__); }
 #define DETAIL(PERCENTDONE, ...) { swLogProgress(2, PERCENTDONE, __VA_ARGS__); }
