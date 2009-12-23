@@ -1302,11 +1302,11 @@ int parse_command_line (int argc, char **argv)
   }
 
   if (bfoutfile != NULL) {
-    /*if (stat (bfoutfile, &statbuf) != -1) {
+    if (stat (bfoutfile, &statbuf) != -1) {
       fprintf (stderr, "%s: won't open '%s' for writing, file exists\n", pname, bfoutfile);
       exit (-1);
-      }*/
-    if ((bfout = fopen (bfoutfile, "a")) == NULL) {
+      }
+    if ((bfout = fopen (bfoutfile, "w")) == NULL) {
       fprintf (stderr, "%s: open '%s' for writing failed, %s\n", pname, bfoutfile,
 	       strerror (errno));
       exit (-1);
