@@ -44,6 +44,8 @@ sub numerically { $a <=> $b } # Sort things numerically
 # Associate column headers with configuration file directives
 my %nameDirectives = (
 		      'Theta' => 'Theta', 
+		      'Theta-M' => 'Theta', 
+		      'Theta-F' => 'Theta', 
 		      'Alpha' => 'Alpha',
 		      'DGF' => 'DiseaseGeneFrequency', 
 		      'LC1PV-DD' => 'Penetrance DD',
