@@ -49,9 +49,6 @@ GCCOPT := 2
 ## Beginning of Kelvin-specific options
 CFLAGS :=
 
-## Simplify progress reporting to a wobbly percentage and estimated time left
-CFLAGS += -DSIMPLEPROGRESS
-
 ##                                                     ##
 ## Should be no need to make changes beyond this point ##
 ##                                                     ##
@@ -132,8 +129,8 @@ ifneq (,$(wildcard /usr/include/execinfo.h))
 endif
 
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
-CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
-CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every raw 8Mp and at milestones
+#CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
+#CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every raw 8Mp and at milestones
 #CFLAGS += -DDMUSE # For our own static memory management, not beneficial as yet.
 #CFLAGS += -DDMTRACK # For our own memory tracking
 #CFLAGS += -DTREEEVALUATE # Use evaluateValue of tree instead of evaluatePoly of list.
