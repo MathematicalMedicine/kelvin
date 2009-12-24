@@ -201,6 +201,7 @@ extern volatile sig_atomic_t *envDiagLevel;
 /* The beauty of this lines in the fact that all diags go away completely if DISTRIBUTION is
    defined, and an entire chunk of code can be the diagnostic. */
 
+#define DISTRIBUTION
 #ifndef DISTRIBUTION
 #define DIAG(ENV_LEVEL, DIAG_LEVEL, DIAG_CODE) if (envDiagLevel[ENV_LEVEL] >= DIAG_LEVEL) { DIAG_CODE }
 #else
