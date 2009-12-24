@@ -368,8 +368,10 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
     /*pPedigreeLocal->likelihood is now computed and now check it */
     if (pPedigreeLocal->likelihood == 0.0) {
-      if (!modelRange->atypicalQtTrait)
+      if (modelRange->atypicalQtTrait)
 	WARNING("Pedigree %s has likelihood of 0 or too small.", pPedigreeLocal->sPedigreeID);
+      else
+	ERROR("Pedigree %s has likelihood of 0 or too small.", pPedigreeLocal->sPedigreeID);
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
 
@@ -2434,7 +2436,7 @@ void integrateMain ()
     /* Iterate over all positions in the analysis. */
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
       if (fpIR != NULL) {
-        dk_curModel.posIdx = loc2;
+        dk_curModel.posIdx = posIdx;
       }
 
       SUBSTEP(posIdx * 100 / numPositions, "Starting with position %d of %d", posIdx + 1, numPositions);
