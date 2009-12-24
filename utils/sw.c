@@ -1234,6 +1234,8 @@ void swDiagInit(void) {
 void swDiagTerm(void) {
   if (shmdt ((void *) envDiagLevel) != 0)
     ERROR ("Cannot detach shared memory segment, use ipcrm to clean-up");
+  if (shmctl(swSharedDiagMemoryID, IPC_RMID, (struct shmid_ds *) NULL) != 0)
+    ERROR ("Cannot mark shared memory segment for deletion, use ipcrm to clean-up");
   return;
 }
 
