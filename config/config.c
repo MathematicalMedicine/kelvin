@@ -436,9 +436,9 @@ void validateConfig ()
     if (observed.constraints)
       fault ("Trait directives (Constraint) are incompatible with MarkerToMarker\n");
     if (staticModelOptions.avghetfile[0] != '\0' && ! staticModelOptions.forceAvghetFile)
-      WARNING ("MarkerToMarker will write no output to BayesRatioFile");
+      INFO ("MarkerToMarker will write no output to BayesRatioFile");
     if (staticModelOptions.dkelvinoutfile[0] != '\0')
-      WARNING ("MarkerToMarker will write no output to NIDetailFile");
+      INFO ("MarkerToMarker will write no output to NIDetailFile");
 
     if (! staticModelOptions.integration) {
       if (staticModelRange.ndprime == 0 && staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
