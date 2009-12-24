@@ -73,7 +73,6 @@ void usr1SignalHandler (int ourSignal)
   INFO ("This interrupt used to implement self-setting gdb breakpoints");
 }
 
-pid_t childPID = 0;     ///< For a child process producing timing (and memory?) statistics.
 /**
 
   General-purpose exit handler
@@ -85,8 +84,9 @@ pid_t childPID = 0;     ///< For a child process producing timing (and memory?) 
 */
 void exitKelvin ()
 {
-  if (childPID != 0)
-    kill (childPID, SIGKILL);   /* Sweep away any errant children */
+#ifndef DISTRIBUTION
+  swDiagTerm ();
+#endif
 }
 
 void setupHandlers () {

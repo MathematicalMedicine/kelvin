@@ -31,7 +31,9 @@ void kelvinInit (int argc, char *argv[])
   int exitDueToLoop = FALSE;    /* exit due to unbroken pedigree loop */
   int i, k;
 
+#ifndef DISTRIBUTION
   swDiagInit ();
+#endif
 
   overallSW = swCreate ("overall");
   combinedComputeSW = swCreate ("combinedComputeSW");

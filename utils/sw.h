@@ -167,11 +167,13 @@ do { \
 extern volatile sig_atomic_t swProgressRequestFlag;
 extern int swProgressDelaySeconds;
 extern int swProgressLevel;
+extern int swSharedDiagMemoryID;
 
 char *formatElapsedTime (unsigned int t, char *buffer);
 void swLogProgress(int level, float percentDone, char *format, ...);
 void swStartProgressWakeUps(int seconds);
 void swDiagInit(void);
+void swDiagTerm(void);
 
 #define STEP(PERCENTDONE, ...) { swLogProgress(0, PERCENTDONE, __VA_ARGS__); }
 #define SUBSTEP(PERCENTDONE, ...) { swLogProgress(1, PERCENTDONE, __VA_ARGS__); }
@@ -198,7 +200,7 @@ extern volatile sig_atomic_t *envDiagLevel;
 
 /* The beauty of this lines in the fact that all diags go away completely if DISTRIBUTION is
    defined, and an entire chunk of code can be the diagnostic. */
-#define DISTRIBUTION
+
 #ifndef DISTRIBUTION
 #define DIAG(ENV_LEVEL, DIAG_LEVEL, DIAG_CODE) if (envDiagLevel[ENV_LEVEL] >= DIAG_LEVEL) { DIAG_CODE }
 #else

@@ -1214,17 +1214,26 @@ long swGetMaximumPMK(void) {
 }
 
 volatile sig_atomic_t *envDiagLevel;
+int swSharedDiagMemoryID;
 
 void swDiagInit(void) {
-  int i, segid;
-  if ((segid = shmget ((key_t) getpid (), sizeof (int) * MAX_DIAG_FACILITY, 0666|IPC_CREAT)) == -1)
+  int i;
+  if ((swSharedDiagMemoryID = shmget ((key_t) getpid (), sizeof (int) * MAX_DIAG_FACILITY, 0666|IPC_CREAT)) == -1)
     ERROR ("Cannot create shared memory segment for diagnostics, %s", strerror(errno));
-  INFO ("Use segment ID %d for diagnostic purposes", segid);
-  if ((envDiagLevel = shmat (segid, NULL, 0)) == ((void *) -1))
+
+  INFO ("Use segment ID %d for diagnostic purposes", swSharedDiagMemoryID);
+  if ((envDiagLevel = shmat (swSharedDiagMemoryID, NULL, 0)) == ((void *) -1))
     ERROR ("Cannot attach shared memory segment for diagnostics, %s", strerror(errno));
+
   // Not needed if we're setting them all to zero, since shmget does that.
   for (i=0; i<MAX_DIAG_FACILITY; i++)
     envDiagLevel[i] = 0;
+  return;
+}
+
+void swDiagTerm(void) {
+  if (shmdt ((void *) envDiagLevel) != 0)
+    ERROR ("Cannot detach shared memory segment, use ipcrm to clean-up");
   return;
 }
 
