@@ -17,6 +17,9 @@ use Data::Dumper;
 # environment variable to point to version of kelvin to run. Requires kelvin
 # V0.38 or later to support new directives and command-line directives.
 #
+# This will not work with any type of run for which individual trait space values
+# cannot be specified, such as multiple liability classes.
+#
 # 1. Run kelvin with the kelvin.conf in the current directory, with the addition
 # of the SurfaceFile directive.
 #
@@ -60,6 +63,30 @@ my %nameDirectives = (
 		      'LC1MV-Dd' => 'Mean Dd',
 		      'LC1MV-dD' => 'Mean dD',
 		      'LC1MV-dd' => 'Mean dd',
+		      'LC2PV-DD' => 'Penetrance DD',
+		      'LC2PV-Dd' => 'Penetrance Dd',
+		      'LC2PV-dD' => 'Penetrance dD',
+		      'LC2PV-dd' => 'Penetrance dd',
+		      'LC2DoFV-DD' => 'DegreesOfFreedom DD',
+		      'LC2DoFV-Dd' => 'DegreesOfFreedom Dd',
+		      'LC2DoFV-dD' => 'DegreesOfFreedom dD',
+		      'LC2DoFV-dd' => 'DegreesOfFreedom dd',
+		      'LC2MV-DD' => 'Mean DD',
+		      'LC2MV-Dd' => 'Mean Dd',
+		      'LC2MV-dD' => 'Mean dD',
+		      'LC2MV-dd' => 'Mean dd',
+		      'LC3PV-DD' => 'Penetrance DD',
+		      'LC3PV-Dd' => 'Penetrance Dd',
+		      'LC3PV-dD' => 'Penetrance dD',
+		      'LC3PV-dd' => 'Penetrance dd',
+		      'LC3DoFV-DD' => 'DegreesOfFreedom DD',
+		      'LC3DoFV-Dd' => 'DegreesOfFreedom Dd',
+		      'LC3DoFV-dD' => 'DegreesOfFreedom dD',
+		      'LC3DoFV-dd' => 'DegreesOfFreedom dd',
+		      'LC3MV-DD' => 'Mean DD',
+		      'LC3MV-Dd' => 'Mean Dd',
+		      'LC3MV-dD' => 'Mean dD',
+		      'LC3MV-dd' => 'Mean dd',
 		      'Dprime' => 'DPrime',
 		      'SD' => 'StandardDev',
 		      'Thresh' => 'Threshold',
@@ -74,12 +101,12 @@ sub parse_header {
     for my $word (@words) {
 	if ($word =~ /(\S+)\((.*,.*)\)/) {
 	    for my $partial (split(",",$2)) {
-		die "Directive unknown for group column header ".$1."-".$partial."\n"
+		die "ERROR, Directive unknown for group column header ".$1."-".$partial."\n"
 		    if (!defined($nameDirectives{$1."-".$partial}));
 		push @headerNames, $1."-".$partial;
 	    }
 	} else {
-	    die "Directive unknown for column header $word\n"
+	    die "ERROR, Directive unknown for column header $word\n"
 		if (!defined($nameDirectives{$word}));
 	    push @headerNames, $word;
 	}
@@ -90,7 +117,7 @@ sub parse_header {
 print "Generating dynamic-grid trait space baseline.\n";
 my $commandLine='$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dyn >LRTest.Out 2>&1';
 (system($commandLine) == 0)
-    or die "Couldn't run kelvin ($commandLine)\n";
+    or die "ERROR, Couldn't run kelvin ($commandLine)\n";
 
 # First pass thru file, pull-out min and max rows...
 open IN,"LRTest.Dyn";
@@ -194,19 +221,20 @@ for my $i (0..($offset - 1)) {
     $commandLine .= " --SurfaceFile LRTest-$i.Dat > LRTest-$i.Out 2>&1";
     $commandLine =~ s/--Dummy\s+[0-9]+/ /g if ($commandLine =~ /Dummy/); # Lose our dummy directives
     print "Generating fixed-grid trait space test point $i from dynamic grid output line ".$PsLine[$i].".\n";
-#    print "Execute [$commandLine]\n";
-    (system($commandLine) == 0) or die "Couldn't run \'$commandLine\'\n";
+    print "Execute [$commandLine]\n";
+    (system($commandLine) == 0) or die "ERROR, Couldn't run \'$commandLine\'\n";
 # Filter-out unrequested results, e.g. same parameters different marker, 0.5 Theta, etc.
     my $searchLine = sprintf($searchFormat, @{ $PsTSV[$i] }, $PsTSV[$i][$paramCnt]);
-#    print "Limit by [$searchLine]\n";
+    $searchLine .= '$';
+    print "Limit by [$searchLine]\n";
     $commandLine = "grep \'$searchLine\' LRTest-$i.Dat >LRTest-$i.Fix";
-    (system($commandLine) == 0) or die "Couldn't run \'$commandLine\'\n";
+    (system($commandLine) == 0) or die "ERROR, Couldn't run \'$commandLine\'\n";
 }
 
 # Now concatenate, uniq-ify and compare all of the output, then let our driver do
 # the differences and react accordingly.
 (system('cat LRTest-*.Fix | sort | uniq > LRTest.Fix') == 0) or
-    die "Cannot concatenate, sort or uniq all fixed-grid results\n";
+    die "ERROR, Cannot concatenate, sort or uniq all fixed-grid results\n";
 
 # Find each fixed line in the dynamic output (using a possibly rounded HLOD).
 print "Finding fixed results in dynamic results";
@@ -225,7 +253,7 @@ while (<IN>) {
 	s/$old/$new/;
     }
     (system("grep \'".$_."\' LRTest.Dyn > LRTest.grep 2>&1") == 0) or
-	die "Couldn't find line \'$_\' in LRTest.Dyn\n";
+	die "ERROR, Couldn't find line \'$_\' in LRTest.Dyn\n";
 }
 close IN;
 print "done!\n";
