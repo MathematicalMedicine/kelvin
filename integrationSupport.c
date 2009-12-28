@@ -239,7 +239,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   if (locusList->numLocus > 1)
     origLocus = locusList->pLocusIndex[1];
 
-  gfreq = x[0];
+  gfreq = x[0];   
   if (fpIR != NULL)
     dk_curModel.dgf = gfreq;
 
@@ -321,11 +321,11 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
     pTrait->means[liabIdxLocal][0][0] = mean_DD;
     pTrait->means[liabIdxLocal][0][1] = mean_Dd;
-    pTrait->means[liabIdxLocal][1][0] = mean_Dd;
+    pTrait->means[liabIdxLocal][1][0] = mean_dD;
     pTrait->means[liabIdxLocal][1][1] = mean_dd;
     pTrait->stddev[liabIdxLocal][0][0] = SD_DD;
     pTrait->stddev[liabIdxLocal][0][1] = SD_Dd;
-    pTrait->stddev[liabIdxLocal][1][0] = SD_Dd;
+    pTrait->stddev[liabIdxLocal][1][0] = SD_dD;
     pTrait->stddev[liabIdxLocal][1][1] = SD_dd;
 
     /* threshold for QT */
@@ -461,6 +461,8 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
         homoLR = pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood);
+	//fprintf(stderr,"pedIdx=%d alternative=%e trait null=%e marker null=%e\n",pedIdx,pPedigreeLocal->likelihood ,pedigreeSet.nullLikelihood[pedIdx] , pPedigreeLocal->markerLikelihood);
+
         if (alphaV * homoLR + alphaV2 < 0)
           fprintf (stderr, "HET LR less than 0. Check!!!\n");
         log10HetLR += log10 (alphaV * homoLR + alphaV2);
@@ -656,11 +658,11 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 
     pTrait->penetrance[2][liabIdxLocal][0][0] = pen_DD;
     pTrait->penetrance[2][liabIdxLocal][0][1] = pen_Dd;
-    pTrait->penetrance[2][liabIdxLocal][1][0] = pen_Dd;
+    pTrait->penetrance[2][liabIdxLocal][1][0] = pen_dD;
     pTrait->penetrance[2][liabIdxLocal][1][1] = pen_dd;
     pTrait->penetrance[1][liabIdxLocal][0][0] = 1 - pen_DD;
     pTrait->penetrance[1][liabIdxLocal][0][1] = 1 - pen_Dd;
-    pTrait->penetrance[1][liabIdxLocal][1][0] = 1 - pen_Dd;
+    pTrait->penetrance[1][liabIdxLocal][1][0] = 1 - pen_dD;
     pTrait->penetrance[1][liabIdxLocal][1][1] = 1 - pen_dd;
 
   }
@@ -1740,7 +1742,7 @@ void integrateMain ()
           xl[k + 3] = modelRange->penetLimits[3][0];
           xu[k + 3] = modelRange->penetLimits[3][1];
         }
-
+	//fprintf(stderr,"modelranage= %f %f %f %f %f %f %f %f\n",modelRange->penetLimits[0][0],modelRange->penetLimits[1][0],modelRange->penetLimits[2][0],modelRange->penetLimits[3][0],modelRange->penetLimits[0][1],modelRange->penetLimits[1][1],modelRange->penetLimits[2][1],modelRange->penetLimits[3][1]);
       }
       volume_region *= (xu[k] - xl[k]);
       volume_region *= (xu[k + 1] - xl[k + 1]);
