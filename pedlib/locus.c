@@ -154,8 +154,8 @@ read_mapfile (char *sMapfileName)
     pMarker->chromosome = chr;
     strcpy (pMarker->sName, sName);
     pMarker->mapPos[MAP_POS_SEX_AVERAGE] = sexAvgPos;
-    pMarker->mapPos[MAP_POS_FEMALE] = malePos;
-    pMarker->mapPos[MAP_POS_MALE] = femalePos;
+    pMarker->mapPos[MAP_POS_FEMALE] = femalePos;
+    pMarker->mapPos[MAP_POS_MALE] = malePos;
     pMarker->basePairLocation = basePairLoc;
     /* make sure marker is specified based on map order */
     if (pPrevMarker != NULL
