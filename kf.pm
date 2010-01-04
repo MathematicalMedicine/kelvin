@@ -420,7 +420,6 @@ sub assessPedigree {
         } elsif ($Type eq "POST") {
             $TotalColumns += 2 if ($noparents);    # Make up for no parents here
             $TotalColumns -= 1 if ($liability);    # Make up for extra liability class column
-	print "TC is $TotalColumns because liability is $liability\n";
                   # post-MAKEPED is Ped Ind Dad Mom Kid1 nPs nMs Sex Prb Aff Pairs, i.e. some even number > 10
             die "Invalid number of columns ($TotalColumns) in post-MAKEPED pedigree file $File."
               if (($TotalColumns < 12)); # || ($TotalColumns & 1));
