@@ -244,21 +244,15 @@ while (<IN>) {
     print ".";
     if ($_ =~ /^([ \-][0-9]*\.[0-9]{3})/) {
 	my $old = $1;
+	my $new;
+	my $scale = 0.001;
+	$scale = 10**(int(log(abs($old))/log(10)) - 2) if (abs($old) >= 1.0);
+
 # Heavy on the rounding slop. Go ahead and ask Sang for more surface precision!
-	my $new = "";
-	if (($old >= 1.0) || ($old <= -1.0)) {
-	    if ($old =~ /([^1-9]*)([1-9]\.?[0-9])(.*)/) {
-		$new = "$1$2.*";
-	    } else {
-		$new = $old;
-	    }
-	    $new =~ s/^[ \-]0.000/[ 0.000|-0.000]/g;
-	} else {
-	    $new = sprintf("[%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f ]",
-			   $1-0.005, $1-0.004, $1-0.003, $1-0.002, $1-0.001, $1, $1+0.001, $1+0.002,
-			   $1+0.003, $1+0.004, $1+0.005);
-	    $new =~ s/[ \-]0.000/ 0.000|-0.000/g;
-	}
+	$new = sprintf("[%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f |%5.3f ]",
+		       $1-(5*$scale), $1-(4*$scale), $1-(3*$scale), $1-(2*$scale), $1-$scale, $1, 
+		       $1+$scale, $1+(2*$scale), $1+(3*$scale), $1+(4*$scale), $1+(5*$scale));
+	$new =~ s/[ \-]0.000/ 0.000|-0.000/g;
 	print "HLOD is [$old], using $new\n";
 	s/$old/$new/;
 	s/\-/\\\-/;
