@@ -1186,7 +1186,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         if (modelOptions->mapFlag == SA) {
           fprintf (fpIR, " %4.3f", dk_curModel.theta[0]);
         } else {
-          fprintf (fpIR, " %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[0]);
+          fprintf (fpIR, " %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[1]);
         }
         fprintf (fpIR, " %4.3f %4.3f", dk_curModel.alpha, dk_curModel.dgf);
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
@@ -1551,7 +1551,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
         if (modelOptions->mapFlag == SA) {
           fprintf (fpIR, " %4.3f", dk_curModel.theta[0]);
         } else {
-          fprintf (fpIR, " %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[0]);
+          fprintf (fpIR, " %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[1]);
         }
         fprintf (fpIR, " %4.3f %4.3f", dk_curModel.alpha, dk_curModel.dgf);
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
