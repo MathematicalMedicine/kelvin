@@ -409,7 +409,7 @@ sub assessPedigree {
         my $TotalColumns = scalar(@Columns);
 
         # See if the number of columns makes any kind of sense...
-        my $MarkerColumns = (scalar(@Loci) - 1) * 2;
+        my $MarkerColumns = scalar(@Loci) * 2;
         if ($Type eq "PRE") {
             $TotalColumns += 2 if ($noparents);    # Make up for no parents here
             $TotalColumns -= 1 if ($liability);    # Make up for extra liability class column
