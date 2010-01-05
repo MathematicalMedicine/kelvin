@@ -1679,10 +1679,9 @@ void integrateMain ()
     if (modelOptions->mapFlag == SS)
       total_dim += 1;   // theta sex-specific case;
 
-    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
+    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
       total_dim += 1;   // dprime
-    }
-  }
+  }    
 
   DETAIL(0,"Outer dimension is %d, inner (BR) dimension is %d", total_dim, size_BR);
   DETAIL(0,"Allocating and initializing storage for analysis");
@@ -1925,10 +1924,14 @@ void integrateMain ()
           SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
 		  "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)",
 		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, 
-		  pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1)
+		  pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1);
 
         /* Find out number of alleles this marker locus has *//* Check if this is okay with DCUHRE  ???????????? */
         if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM) {
+
+	  if (pLocus1->numOriginalAllele + pLocus2->numOriginalAllele > 4)
+	    ERROR("Integration-based LD analysis not available for polyallelic loci");
+
           /* get the LD parameters */
           pLambdaCell = findLambdas (modelRange, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
           reallocate_LD_loci (pLDLoci, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
