@@ -1828,9 +1828,7 @@ setup_LD_haplotype_freq (LDLoci * pLDLociParam, LambdaCell * pCell, int dprimeId
     else
       pCell->haploFreq[dprimeIdx][i][j] = p1 - sum;
     if ((p1 - sum) < 0) {
-      if (pLocus1->numOriginalAllele + pLocus2->numOriginalAllele > 4)
-	ERROR ("Haplotype frequency for polyallelic marker is NEGATIVE - %s", pBuf1);
-      WARNING ("Haplotype frequency for biallelic marker is NEGATIVE - %s", pBuf1);
+      WARNING ("Haplotype frequency is NEGATIVE - %s", pBuf1);
       return -1;
     }
   }				/* end of looping the first marker allele frequencies */
@@ -1848,9 +1846,7 @@ setup_LD_haplotype_freq (LDLoci * pLDLociParam, LambdaCell * pCell, int dprimeId
     else
       pCell->haploFreq[dprimeIdx][i][j] = q1 - sum;
     if ((q1 - sum) < 0) {
-      if (pLocus1->numOriginalAllele + pLocus2->numOriginalAllele > 4)
-	ERROR ("Haplotype frequency for polyallelic marker is NEGATIVE - %s", pBuf1);
-      WARNING ("Haplotype frequency for biallelic marker is NEGATIVE - %s", pBuf1);
+      WARNING ("Haplotype frequency is NEGATIVE - %s", pBuf1);
       return -1;
     }
   }
