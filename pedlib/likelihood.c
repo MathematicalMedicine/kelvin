@@ -2526,11 +2526,7 @@ int do_populate_xmission_matrix (XMission * pMatrix, int totalLoci, void *prob[3
 int populate_xmission_matrix (XMission * pMatrix, int totalLoci, void *prob[3], void *prob2[3], void *hetProb[3], int cellIndex, int lastHetLoc, int prevPattern, int loc)
 {
 
-  DETAIL (0, "Building transmission matrix");
-  swPushPhase ('k', "buildXM");
-
   do_populate_xmission_matrix (pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc);
-  swPopPhase ('k');
 
   return 0;
 }
