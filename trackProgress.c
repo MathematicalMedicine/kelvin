@@ -295,6 +295,7 @@ void *monitorMemory ()
     }
   }
   pthread_exit (NULL);
+  return (void *) NULL; // Keep the compiler calm
 }
 
 /**
