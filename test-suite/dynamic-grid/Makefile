@@ -7,6 +7,9 @@ TESTS = $(shell ls -d */ | cut -f1 -d\/)
 
 .PHONY : test test-USE_DL clean $(TESTS)
 
+validate : ACTION := validate
+validate : $(TESTS)
+
 test : ACTION := test
 test : $(TESTS)
 

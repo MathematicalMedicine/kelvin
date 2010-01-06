@@ -197,15 +197,25 @@ clean :
 	rm -f $(KOBJS) $(OBJS) kelvin seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/libped.a
 	make -C test-suite -f Makefile clean
 
-.PHONY : test test-USE_DL
+.PHONY : test-USE_DL
+# Polynomial compilation tests
 test-USE_DL :
 	+make -C test-suite -f Makefile test-USE_DL
 
-.PHONY : test test-FIXED
+.PHONY : test-FIXED
+# Internal dynamic-to-fixed grid validation tests
 test-FIXED :
 	+make -C test-suite -f Makefile test-FIXED
+
+.PHONY : test
+# Extensive capability tests (~30 minutes)
 test :
 	+make -C test-suite -f Makefile test
+
+.PHONY : validate
+# Brief installation validation (~1-2 minutes)
+validate :
+	+make -C test-suite -f Makefile validate
 
 $(BINDIR)/kelvin-$(VERSION) : kelvin
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)

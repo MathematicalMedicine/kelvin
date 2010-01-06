@@ -7,6 +7,9 @@ TESTS = $(shell ls -d */ | cut -f1 -d\/)
 
 .PHONY : test test-USE_DL clean $(TESTS)
 
+validate :
+	$(MAKE) -C SA_DT -f Makefile test
+
 test : ACTION := test
 test : $(TESTS)
 
