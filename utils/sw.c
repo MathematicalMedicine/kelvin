@@ -1160,6 +1160,7 @@ void
     swLogTimedProgress ();
   }
   pthread_exit (NULL);
+  return (void *) NULL; // Keep the cygwin GCC compiler happy
 }
 
 /// Timer thread to advise of progress
