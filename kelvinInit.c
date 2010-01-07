@@ -213,6 +213,13 @@ void kelvinInit (int argc, char *argv[])
   if (modelRange->nlclass > 1) {
     int va, vb=0;
     
+    /* Under the current trait-is-always-first assumption, these values will
+     * set to the same value when a 'C' line is found in the locus file; otherwise
+     * numLiabilityClass will be set to it's default (1).
+     */
+    if (pTrait->numLiabilityClass != modelRange->nlclass)
+      ERROR ("Liability class analysis specified, but no class information in dataset.");
+
     for (va = 1; va <= modelRange->nlclass; va++) {
       if (pedigreeSet.liabilityClassCnt[va] != 0) {
 	modelRange->lclassLabels[vb] = va;
@@ -231,6 +238,8 @@ void kelvinInit (int argc, char *argv[])
 	renumberLiabilityClasses (&pedigreeSet);
       modelRange->nlclass = vb;
     }
+    if (modelRange->nlclass == 0)
+      ERROR ("Liability class analysis specified, but all classes are empty.");
   }
 
   int pedIdx;
