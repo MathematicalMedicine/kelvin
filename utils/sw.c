@@ -1172,6 +1172,7 @@ swStartProgressWakeUps (int seconds)
 {
   swProgressDelaySeconds = seconds;
 
+  INFO ("Further progress will be displayed at %d second intervals", seconds);
   if (progressWakeUpThread == 0)
     if (pthread_create (&progressWakeUpThread, NULL, progressSignalHandler, NULL))
       WARNING("Failed to create progress request thread, no interval-based progress advisories will be shown");

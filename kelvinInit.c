@@ -41,7 +41,6 @@ void kelvinInit (int argc, char *argv[])
 
   /* Setup all of our signal handlers. */
   setupHandlers ();
-  //  swStartProgressWakeUps(120);
 
   /* Start a thread with a timer to do the memory checks. It can afford                                                 
    * to hang, while the main process cannot. */
@@ -167,6 +166,9 @@ void kelvinInit (int argc, char *argv[])
     INFO ("Integration is done numerically (dkelvin)");
   else
     INFO ("Integration is done with iteration (original kelvin)");
+
+  if (swProgressDelaySeconds > 0)
+    swStartProgressWakeUps(swProgressDelaySeconds); // Make the configuration value have an effect
 
   /* Read in the map file. */
   DETAIL(0,"Read and process map file %s", modelOptions->mapfile);

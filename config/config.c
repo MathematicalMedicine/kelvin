@@ -154,7 +154,6 @@ int set_qt_threshold (char **toks, int numtoks, void *unused);
 int set_qt_truncation (char **toks, int numtoks, void *unused);
 int set_affectionStatus (char **toks, int numtoks, void *unused);
 int set_resultsprefix (char **toks, int numtoks, void *unused);
-int set_logLevel (char **toks, int numtoks, void *unused);
 
 
 st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOptions.markerfile},
@@ -203,7 +202,8 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"PhenoCodes", set_affectionStatus, NULL},
 				{"SurfacesPath", set_resultsprefix, NULL},
 				/*{"condfile", set_condrun, &staticModelOptions.condFile},*/
-				{"Log", set_logLevel, NULL}
+				{"ProgressDelaySeconds", set_int, &swProgressDelaySeconds},
+				{"ProgressLevel", set_int, &swProgressLevel}
 };
 
 
@@ -1378,12 +1378,6 @@ int set_resultsprefix (char **toks, int numtoks, void *unused)
   strcpy (staticModelOptions.resultsprefix, toks[1]);
   if (staticModelOptions.resultsprefix[len-1] != '/')
     strcat (staticModelOptions.resultsprefix, "/");
-  return (0);
-}
-
-
-int set_logLevel (char **toks, int numtoks, void *filename)
-{
   return (0);
 }
 
