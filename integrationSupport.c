@@ -145,15 +145,13 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
       s->mType = MP_DT;
     }
   }
-  if (modelOptions->maxIterations > -1) {
+  if (modelOptions->maxIterations > -1)
     s->maxcls = modelOptions->maxIterations;
-  } else if (dim < 10) {
+  else if (dim < 10)
     s->maxcls = 10000000;       //50000;
-  } else {
+  else
     s->maxcls = 100000 * (int) pow (2.0, dim);
-    //fprintf(stdout,"New maxcls is %d \n", s->maxcls);
-  }
-  s->verbose = 0;
+
   s->nlclass = modelRange->nlclass;
   s->aim_diff_suc = 3 * s->nlclass;
 
@@ -165,8 +163,7 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
   }
   s->vol_rate *= vol_region;    /*This is the rate to convert to average function value */
 
-  if (s->verbose > 0)
-    fprintf (stderr, "Starting DCUHRE with dim=%d\n", dim);
+  DIAG (DCUHRE, 1, {fprintf (stderr, "Starting DCUHRE with dim=%d\n", dim);});
 
   return_val = dcuhre_ (s);
   if (return_val > 0) {
@@ -176,20 +173,15 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
   s->result /= s->vol_rate;
   s->error /= s->vol_rate;
 
-  if (return_val > 0 && return_val < 20) {
-    fprintf (stderr, "Ending program with error! ifail =%d \n", s->ifail);
-  }
-
-  if (s->verbose > 0) {
-    fprintf (stderr, "Final result =%15.10f  with error =%15.10f and neval = %d\n", s->result, s->error, s->total_neval);
-    fprintf (stderr, "End of DCUHRE with ifail =%d\n", s->ifail);
-  }
+  DIAG (DCUHRE, 1, {
+      fprintf (stderr, "Final result =%15.10f  with error =%15.10f and neval = %d\n",
+	       s->result, s->error, s->total_neval);
+      fprintf (stderr, "End of DCUHRE with ifail =%d\n", s->ifail);
+    };)
 
   /* BR boosting is done here */
-  //fprintf(stderr, "Before boosting %e\n", s->result);
   if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM && modelType->trait == DT) {
-    //  if (modelType->trait == DT) {  // boosting 
-    //    for (i = 0; i < modelRange->nlclass; i++) 
+    //fprintf(stderr, "Before boosting %e\n", s->result);
     s->result = pow (10.0, (log10 (s->result) * boost_rate));
     //fprintf(stderr, "After boosting %e\n", s->result);
   }
@@ -338,12 +330,6 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     /* only need to update trait locus */
     update_penetrance (&pedigreeSet, traitLocus);
 
-  /*This is a temporary checking. *
-   * if (j != s->ndim) {
-   * fprintf (stderr, "j=%d  while dim for BR is %d\n", j, s->ndim);
-   * exit (EXIT_FAILURE);
-   * } */
-
   /* for trait likelihood */
   locusList = &traitLocusList;
   xmissionMatrix = traitMatrix;
@@ -369,9 +355,9 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     /*pPedigreeLocal->likelihood is now computed and now check it */
     if (pPedigreeLocal->likelihood == 0.0) {
       if (modelRange->atypicalQtTrait)
-	WARNING("Pedigree %s has likelihood of 0 or too small.", pPedigreeLocal->sPedigreeID);
+	WARNING("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
       else
-	ERROR("Pedigree %s has likelihood of 0 or too small.", pPedigreeLocal->sPedigreeID);
+	ERROR("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
 
@@ -428,7 +414,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
   if (isnan (log10_likelihood_alternative))
-    ERROR ("ALT likelihood is NAN");
+    ERROR ("Alternative hypothesis likelihood is not a number");
   if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
     log10_likelihood_ratio = 0;
     avg_hetLR = 0.0;
@@ -448,7 +434,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       }
     }
     if (isnan (likelihood_ratio))
-      ERROR ("LR for the pedigree set is NAN");
+      ERROR ("Likelihood ratio for the pedigree set is not a number");
 
     /* caculating the HET */
     for (j = 0; j < 5; j++) {
@@ -464,7 +450,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 	//fprintf(stderr,"pedIdx=%d alternative=%e trait null=%e marker null=%e\n",pedIdx,pPedigreeLocal->likelihood ,pedigreeSet.nullLikelihood[pedIdx] , pPedigreeLocal->markerLikelihood);
 
         if (alphaV * homoLR + alphaV2 < 0)
-          fprintf (stderr, "HET LR less than 0. Check!!!\n");
+          WARNING ("Heterogeneity likelihood ratio less than zero");
         log10HetLR += log10 (alphaV * homoLR + alphaV2);
       }
 
@@ -588,11 +574,6 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
        * k++;
        * } */
     }
-    /*This is a temporary checking. *
-     * if (k != s->ndim) {
-     * fprintf (stderr, "k=%d  while dim for BR is %d\n", k, s->ndim);
-     * exit (EXIT_FAILURE);
-     * } */
   }
   f[0] = avg_hetLR;
 
@@ -702,10 +683,8 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
       evaluatePoly (pPedigreeLocal->traitLikelihoodPolynomial, pPedigreeLocal->traitLikelihoodPolyList, &pPedigreeLocal->likelihood);
       //fprintf(stderr, " is done %f with %d pedigrees\n",pPedigreeLocal->likelihood, pedigreeSet.numPedigree);
 
-      if (isnan (pPedigreeLocal->likelihood)) {
-        fprintf (stderr, " likelihood is nan\n");
-        exit (1);
-      }
+      if (isnan (pPedigreeLocal->likelihood))
+	ERROR ("Null hypothesis likelihood is not a number");
 
     } else {
       initialize_multi_locus_genotype (pPedigreeLocal);
@@ -714,7 +693,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 
     /*pPedigreeLocal->likelihood is now computed and now check it */
     if (pPedigreeLocal->likelihood == 0.0) {
-      WARNING("Pedigree %s has likelihood of 0 or too small.", pPedigreeLocal->sPedigreeID);
+      WARNING("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
       ret = -1;
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
@@ -744,8 +723,6 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   pedigreeSet.log10Likelihood = sum_log_likelihood;
   log10_likelihood_null = pedigreeSet.log10Likelihood;
   DIAG (OVERALL, 1, {fprintf (stderr,"Sum of log Likelihood is: %e\n", sum_log_likelihood);});
-
-  //fprintf(stderr,"Null likelihood = %20.15f\n", pedigreeSet.likelihood);
 
   /* This is for alternative likelihood */
   locusList = &savedLocusList;
@@ -800,7 +777,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
         homoLR = pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood);
         //fprintf(stderr,"j=%d pedIdx=%d  %20.18f %20.16f %20.16f %20.16f \n",j, pedIdx,pPedigreeLocal->likelihood,pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood, homoLR ,log10HetLR);
         if (alphaV * homoLR + alphaV2 < 0)
-          fprintf (stderr, "HET LR less than 0. Check!!!\n");
+	  WARNING ("Heterogenous Likelihood Ratio is less than zero");
         log10HetLR += log10 (alphaV * homoLR + alphaV2);
       }
 
@@ -1037,11 +1014,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
 
 
   /* marker to marker analysis */
-  /*This is a temporary checking. *
-   * if (j != s->ndim) {
-   * fprintf (stderr, "j=%d  while dim for BR is %d\n", j, s->ndim);
-   * exit (0);
-   * } */
+
   /* get the likelihood at 0.5 first and LD=0 */
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
 
@@ -1076,6 +1049,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   ret = compute_likelihood (&pedigreeSet);
 
   if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
+    // &&& This needs fixin'
     fprintf (stderr, "Theta 0.5 has likelihood 0 \n");
     fprintf (stderr, "dgf=%f\n", gfreq);
     for (j = 1; j < s->ndim; j++) {
@@ -2057,6 +2031,7 @@ void integrateMain ()
                 }
               }
               if (dprimeIdx == pLambdaCell->ndprime) {
+		// &&& This needs fixin'
                 fprintf (stderr, "dprimeIdx is %d\n", dprimeIdx);
                 exit (0);
               }
@@ -2065,7 +2040,7 @@ void integrateMain ()
 
             /* Call DCUHRE  Domain information is stored in global variables,  xl an xu */
             kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &(BRscale[i]));
-            ASSERT ((s->ifail == 0), "Dynamic integration failed. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c");
+            ASSERT ((s->ifail == 0), "Dynamic integration failed with ifail of %d. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c", s->ifail);
 
             if (modelOptions->mapFlag == SA) {
               dcuhre2[i][3] = integral;
@@ -2650,7 +2625,7 @@ void integrateMain ()
       abserr = 0.0;
       num_out_constraint = 0;
       kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &max_scale);
-      ASSERT ((s->ifail == 0), "Dynamic integration failed. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c");
+      ASSERT ((s->ifail == 0), "Dynamic integration failed with ifail of %d. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c", s->ifail);
 
       num_eval = s->total_neval;
 
