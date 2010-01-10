@@ -113,6 +113,7 @@ int multipoint = 0;     /* -m or --multipoint */
 int okelvin = 0;        /* -o or --okelvin : expect original (fixed-grid) kelvin BR data */
 int relax = 0;          /* -r or --relax: don't compare marker names between files */
 int allstats = 0;       /* -a or --allstats: print all LD and iPPL stats */
+int epistasis = 0;      /* -e or --epistasis: compute mean, rather than product, of BRs */
 int quiet = 0;          /* -q or --quiet : supress non-fatal warnings */
 
 /* Defaults for variables used in calculation of the statistics */
@@ -124,6 +125,7 @@ double cutoff = 0.05;   /* -c or --cutoff: theta cutoff */
 int forcemap = 0;
 
 /* For optional output files, the filehandles are global */
+FILE *pplout = NULL;    /* --pplout: file to which to write PPL results */
 FILE *partout = NULL;   /* --partout: file to which to write partial results */
 FILE *bfout = NULL;     /* --bfout: file to which bayes factors will be written */
 FILE *sixout = NULL;    /* --sixout: file to which six-region (ldval) values will be written */
@@ -201,7 +203,7 @@ int main (int argc, char **argv)
     brfiles[va].name = argv[argidx + va];
     open_brfile (&brfiles[va]);
   }
-  printf ("# Version V%s\n", curversion);
+  fprintf (pplout, "# Version V%s\n", curversion);
   if (partout != NULL)
     fprintf (partout, "# Version V%s\n", curversion);
   
@@ -377,8 +379,13 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 		   current[fileno]->lineno, current[fileno]->name, current[0]->name);
 	  exit (-1);
 	}
-	lr[didx][thidx] *= data.lr;
+	if (! epistasis) 
+	  lr[didx][thidx] *= data.lr;
+	else 
+	  lr[didx][thidx] += data.lr;
       }
+      if (epistasis)
+	lr[didx][thidx] /= (double) numcurrent;
       if (partout != NULL) {
 	data.lr = lr[didx][thidx];
 	print_partial_data (current[0], &data);
@@ -456,13 +463,13 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
     }
     lrs[fileno] = data.lr;
   }
-  printf ("Chr Position PPL BayesRatio\n");
+  fprintf (pplout, "Chr Position PPL BayesRatio\n");
 
   while (1) {
     alldone = 1;
     curno = -1;
     howmany = 0;
-    lr = 1;
+    lr = (epistasis) ? 0 : 1;
     for (fileno = 0; fileno < numbrfiles; fileno++) {
       if (brfiles[fileno].eof)
 	continue;
@@ -480,12 +487,17 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
       if (compare_positions (&brfiles[fileno].curmarker, &brfiles[curno].curmarker) != 0)
 	continue;
       howmany++;
-      lr *= lrs[fileno];
+      if (! epistasis)
+	lr *= lrs[fileno];
+      else
+	lr += lrs[fileno];
       if (fileno != curno) {
 	if (get_data_line (&brfiles[fileno], &data) == 1)
 	  lrs[fileno] = data.lr;
       }
     }
+    if (epistasis)
+      lr /= (double) howmany;
 
     marker = &brfiles[curno].curmarker;
     if (howmany != numbrfiles) {
@@ -495,7 +507,7 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
     }
     if ((lr < 0.214) || ((ppl = (lr * lr) / (-5.77 + (54 * lr) + (lr * lr))) < 0.0))
       ppl = 0.0;
-    printf ("%s %.4f %.3f %.6e\n", marker->chr, marker->avgpos, ppl, lr);
+    fprintf (pplout, "%s %.4f %.3f %.6e\n", marker->chr, marker->avgpos, ppl, lr);
     
     if (get_data_line (&brfiles[curno], &data) == 1)
       lrs[curno] = data.lr;
@@ -605,8 +617,13 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 	  exit (-1);
 	}
 	compare_samples (&data_n, sampleno, current[fileno]);
-	data_0.lr *= data_n.lr;
+	if (! epistasis)
+	  data_0.lr *= data_n.lr;
+	else
+	  data_0.lr += data_n.lr;
       }
+      if (epistasis)
+	data_0.lr /= (double) numcurrent;
       if (partout != NULL)
 	print_partial_data (current[0], &data_0);
       
@@ -667,18 +684,18 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 void print_twopoint_headers (int no_ld)
 {
   if (no_ld) {
-    printf ("Chr Trait Marker Position PPL\n");
+    fprintf (pplout, "Chr Trait Marker Position PPL\n");
   } else {
     if (pplinfile == NULL) {
-      printf ("Chr Trait Marker Position PPL PPL(LD) PPLD|L PPLD(L)\n");
+      fprintf (pplout, "Chr Trait Marker Position PPL PPL(LD) PPLD|L PPLD(L)\n");
       if (bfout != NULL)
 	fprintf (bfout, "Chr Trait Marker Position PPL(LD) PPLD|L PPLD(L)\n");
     } else if (! allstats) {
-      printf ("Chr Trait Marker Position PPLD(L) iPPL iPPLD(L)\n");
+      fprintf (pplout, "Chr Trait Marker Position PPLD(L) iPPL iPPLD(L)\n");
       if (bfout != NULL)
 	fprintf (bfout, "Chr Trait Marker Position PPLD(L) iPPLD(L)\n");
     } else {
-      printf ("Chr Trait Marker Position PPL PPL(LD) PPLD|L PPLD(L) iPPL iPPLD(L)\n");
+      fprintf (pplout, "Chr Trait Marker Position PPL PPL(LD) PPLD|L PPLD(L) iPPL iPPLD(L)\n");
       if (bfout != NULL)
 	fprintf (bfout, "Chr Trait Marker Position PPL(LD) PPLD|L PPLD(L) iPPLD(L)\n");
     }
@@ -693,36 +710,36 @@ void print_twopoint_stats (int no_ld, st_brmarker *marker, st_ldvals *ldval)
 {
   double ldprior, ldstat;
 
-  printf ("%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->avgpos);
+  fprintf (pplout, "%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->avgpos);
 
   if (no_ld) {
-    printf (" %.3f", calc_upd_ppl (ldval));
+    fprintf (pplout, " %.3f", calc_upd_ppl (ldval));
   } else {
     if (bfout != NULL)
       fprintf (bfout, "%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->avgpos);
     
     if ((pplinfile == NULL) || (allstats)) {
-      printf (" %.3f", calc_upd_ppl (ldval));
+      fprintf (pplout, " %.3f", calc_upd_ppl (ldval));
       ldstat = calc_upd_ppl_allowing_ld (ldval, DEFAULT_LDPRIOR);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
       ldstat = calc_upd_ppld_given_linkage (ldval, DEFAULT_LDPRIOR);
-      printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     }
     ldstat = calc_upd_ppld_allowing_l (ldval, DEFAULT_LDPRIOR);
-    printf (" %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+    fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     if (pplinfile != NULL) {
       if ((ldprior = get_ippl (marker->chr, marker->avgpos)) < MIN_PRIOR)
 	ldprior = MIN_PRIOR;
       if (verbose >= 2)
 	printf ("ippl is %.6e\n", ldprior);
       ldstat = calc_upd_ppld_allowing_l (ldval, ldprior);
-      printf (" %.4f %.*f", ldprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      fprintf (pplout, " %.4f %.*f", ldprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     }
     
     if (bfout != NULL)
       fprintf (bfout, "\n");
   }
-  printf ("\n");
+  fprintf (pplout, "\n");
   if (sixout != NULL)
     fprintf (sixout, "%s %d %s %.4f %.6e %.6e %.6e %.6e %.6e %.6e\n",  marker->chr,
 	     marker->num, marker->name2, marker->avgpos, ldval->ld_small_theta,
@@ -1150,11 +1167,13 @@ double calc_upd_ppld_allowing_l (st_ldvals *ldval, double ldprior)
 #define OPT_SIXOUT   14
 #define OPT_FORCEMAP 15
 #define OPT_HELP     16
+#define OPT_EPI      17
+#define OPT_PPLOUT   18
 
 int parse_command_line (int argc, char **argv)
 {
   int arg, long_arg, long_idx;
-  char *partoutfile=NULL, *bfoutfile=NULL, *sixoutfile=NULL;
+  char *partoutfile=NULL, *bfoutfile=NULL, *sixoutfile=NULL, *pploutfile=NULL;
   struct stat statbuf;
 
 #ifdef __GNU_LIBRARY__
@@ -1174,11 +1193,13 @@ int parse_command_line (int argc, char **argv)
 			      { "sixout", 1, &long_arg, OPT_SIXOUT },
 			      { "forcemap", 0, &long_arg, OPT_FORCEMAP },
 			      { "help", 0, &long_arg, OPT_HELP },
+			      { "epistasis", 0, &long_arg, OPT_EPI },
+			      { "pplout", 1, &long_arg, OPT_PPLOUT },
 			      { NULL, 0, NULL, 0 } };
   
-  while ((arg = getopt_long (argc, argv, "smraovp:w:c:P:M:O:f?", cmdline, &long_idx)) != -1) {
+  while ((arg = getopt_long (argc, argv, "smraovp:w:c:P:M:O:f?eR:", cmdline, &long_idx)) != -1) {
 #else
-  while ((arg = getopt (argc, argv, "smraovp:w:c:P:M:O:f?")) != EOF) {
+  while ((arg = getopt (argc, argv, "smraovp:w:c:P:M:O:f?eR:")) != EOF) {
 #endif
 
     if (arg == 's') {
@@ -1210,6 +1231,10 @@ int parse_command_line (int argc, char **argv)
     } else if (arg == '?') {
       usage ();
       exit (0);
+    } else if (arg == 'e') {
+      epistasis = 1;
+    } else if (arg == 'R') {
+      pploutfile = optarg;
 
 #ifdef __GNU_LIBRARY__
     } else if (arg == 0 && long_arg == OPT_SEXSPEC) {
@@ -1245,6 +1270,10 @@ int parse_command_line (int argc, char **argv)
     } else if (arg == 0 && long_arg == OPT_HELP) {
       usage ();
       exit (0);
+    } else if (arg == 0 && long_arg == OPT_EPI) {
+      epistasis = 1;
+    } else if (arg == 0 && long_arg == OPT_PPLOUT {
+	pploutfile = optarg;
 #endif
 
     } else {
@@ -1325,6 +1354,19 @@ int parse_command_line (int argc, char **argv)
     }
   }
   
+  if (pploutfile != NULL) {
+    if (stat (pploutfile, &statbuf) != -1) {
+      fprintf (stderr, "%s: won't open '%s' for writing, file exists\n", pname, pploutfile);
+      exit (-1);
+    }
+    if ((pplout = fopen (pploutfile, "w")) == NULL) {
+      fprintf (stderr, "%s: open '%s' for writing failed, %s\n", pname, pploutfile,
+	       strerror (errno));
+      exit (-1);
+    }
+  } else 
+    pplout = stdout;
+  
   return (optind);
 }
 
@@ -1342,6 +1384,7 @@ void usage ()
   printf ("  -w <num>|--wieght <num> : set small-Theta weight to <num>\n");
   printf ("  -M <mapfile>|--mapin <mapfile> : use mapfile to order markers\n");
   printf ("  -O <partfile>|--partout <partfile> : write updated Bayes Ratios to partfile\n");
+  printf ("  -P <pploutfile>|--pplout <pploutfile> : write calculated PPLs to pploutfile\n");
   printf ("  -v|--verbose : verbose output\n");
   printf ("  -?|--help : display this help text\n");
 #else
@@ -1354,6 +1397,7 @@ void usage ()
   printf ("  -w <num> : set small-Theta weight to <num>\n");
   printf ("  -M <mapfile> : use mapfile to order markers\n");
   printf ("  -O <partfile> : write updated Bayes Ratios to partfile\n");
+  printf ("  -P <pploutfile> : write calculated PPLs to pploutfile\n");
   printf ("  -v : verbose output\n");
   printf ("  -? : display this help text\n");
 #endif
