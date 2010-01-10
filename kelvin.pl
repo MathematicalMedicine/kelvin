@@ -10,6 +10,7 @@ use Data::Dumper;
 
 my $KELVIN_ROOT='NO_KELVIN_ROOT';
 my $KELVIN_BINARY='NO_KELVIN_BINARY';
+my $SEQUPDATE_BINARY='NO_SEQUPDATE_BINARY';
 my $usage = "usage: $0 <configfile> [--directive ... ]\n";
 my $config;
 my $configFile;
@@ -29,6 +30,15 @@ if ($KELVIN_BINARY =~ /no_kelvin_binary/i) {
 	print ("WARN: no KELVIN_BINARY defined, using '$KELVIN_BINARY'\n");
     } else {
 	die ("FATAL: no kelvin binary found, quitting\n");
+    }
+}
+if ($SEQUPDATE_BINARY =~ /no_sequpdate_binary/i) {
+    if (-x ($SEQUPDATE_BINARY = "$KELVIN_ROOT/calc_updated_ppl")) {
+	print ("WARN: no SEQUPDATE_BINARY defined, using '$SEQUPDATE_BINARY'\n");
+    } elsif (-x ($SEQUPDATE_BINARY = "$KELVIN_ROOT/seq_update/calc_updated_ppl")) {
+	print ("WARN: no SEQUPDATE_BINARY defined, using '$SEQUPDATE_BINARY'\n");
+    } else {
+	$SEQUPDATE_BINARY = 'no_sequpdate_binary';
     }
 }
 
@@ -59,7 +69,7 @@ if ($config->isConfigured ("Epistasis")) {
     just_run_kelvin ($config, @ARGV);
 }
 
-exit;
+exit (0);
 
 sub run_epistasis
 {
@@ -70,14 +80,19 @@ sub run_epistasis
     my $individual;
     my %individuals;
     my ($directive, $args);
-    my $href;
+    my %conffiles = ();
+    my @sequpdateargs = ('-e');
+    my $struct;
+
+    my $href = {};
     my $aref;
 
-    # TODO: make sure we can find calc_updated_ppl
+    ($SEQUPDATE_BINARY =~ /no_sequpdate_binary/i)
+	and die ("FATAL: no sequpdate binary found, quitting\n");
 
     # Configuration validation means I don't have to check return codes here
     ($directive, $args) = $config->isConfigured ("EpistasisPedigreeFile");
-    $href = {pedigreefile => $$args[0]};
+    $$href{pedigreefile} = $$args[0];
     ($directive, $args) = $config->isConfigured ("EpistasisLocusFile");
     $$href{locusfile} = $$args[0];
     ($epidataset = KelvinDataset->new ($href))
@@ -87,23 +102,93 @@ sub run_epistasis
     $epidataset = $epidataset->copy ({preserve => [$epimarker]});
 
     while ($individual = $epidataset->readIndividual) {
-	$href = $individual->structure;
+	$struct = $individual->structure;
 	$aref = $individual->getGenotype ($epimarker);
-	$individuals{"P$$href{pedid}I$$href{indid}"} = $aref;
+	$individuals{"P$$struct{pedid}I$$struct{indid}"} = $aref;
     }
     
+    # TODO: either improve configuration validation to include PedigreeFile, et al., or
+    # check return codes here.
+
     ($directive, $args) = $config->isConfigured ("PedigreeFile");
-    $href = {pedigreefile => $$args[0]};
+    $conffiles{PedigreeFile} = $$href{pedigreefile} = $$args[0];
     ($directive, $args) = $config->isConfigured ("LocusFile");
-    $$href{locusfile} = $$args[0];
+    $conffiles{LocusFile} = $$href{locusfile} = $$args[0];
+    if (($directive, $args) = $config->isConfigured ("BayesRatioFile")) {
+	$conffiles{BayesRatioFile} = $$args[0];
+    } else {
+	($conffiles{BayesRatioFile} = $conffiles{PedigreeFile}) =~ s|^(.*/)?[^/]+$|${1}br.out|;
+    }
+    if (($directive, $args) = $config->isConfigured ("PPLFile")) {
+	$conffiles{PPLFile} = $$args[0];
+    } else {
+	($conffiles{PPLFile} = $conffiles{PedigreeFile}) =~ s|^(.*/)?[^/]+$|${1}ppl.out|;
+    }
+    (($directive, $args) = $config->isConfigured ("MODFile"))
+	and $conffiles{MODFile} = $$args[0];
+    $config->addDirective ("LiabilityClasses", 2);
+    $conffiles{configfile} = $config->filename;
+    push (@sequpdateargs, '-O', $conffiles{BayesRatioFile}, '-R', $conffiles{PPLFile});
+
     ($origdataset = KelvinDataset->new ($href))
     	or die ("FATAL: new KelvinDataset failed, $KelvinDataset::errstr\n");
+    $epidataset = $origdataset->copy;
+    $epidataset->addTrait ('EpistasisClass', 'C', 'end')
+	or die ("KelvinDataset addTrait failed, $KelvinDataset::errstr\n");
+    $$href{pedigreefile} .= '.pass1';
+    $$href{locusfile} .= '.pass1';
+    $$href{backupfile} = 0;
+    $epidataset->write ($href);
+    while ($individual = $origdataset->readIndividual) {
+	$individual->map ($epidataset);
+	$struct = $individual->structure;
+	$aref = $individuals{"P$$struct{pedid}I$$struct{indid}"};
+	$individual->setTrait ("EpistasisClass",(($$aref[0] == '2' && $$aref[1] == '2') ? 2 : 1));
+	$individual->write;
+    }
+    $origdataset->close;
 
+    map {
+	exists ($conffiles{$_}) and $config->setDirective ($_, $conffiles{$_}. '.pass1');
+    } qw/PedigreeFile LocusFile BayesRatioFile MODFile/;
+    $config->write ({configfile => $conffiles{configfile}. '.pass1',
+		     backupfile => 0, nolocal => 1});
+    push (@sequpdateargs, $conffiles{BayesRatioFile}. '.pass1');
+    system ($KELVIN_BINARY, $conffiles{configfile}. '.pass1');
+    ($? != 0) and die ("FATAL: $KELVIN_BINARY $conffiles{configfile}.pass1 failed\n");
 
-#   read locus file, add LC column, write new locus file
-#   read input pedigree by individual, setting the LC in each, write first new pedigree file
-#   set locus/ped file names in config, write new config
-#   run kelvin with new config
+    $$href{pedigreefile} =~ s/pass1$/pass2/;
+    $$href{locusfile} =~ s/pass1$/pass2/;
+    $epidataset->write ($href);
+    while ($individual = $origdataset->readIndividual) {
+	$individual->map ($epidataset);
+	$struct = $individual->structure;
+	$aref = $individuals{"P$$struct{pedid}I$$struct{indid}"};
+	$individual->setTrait ("EpistasisClass",(($$aref[0] == '2' || $$aref[1] == '2') ? 2 : 1));
+	$individual->write;
+    }
+
+    map {
+	exists ($conffiles{$_}) and $config->setDirective ($_, $conffiles{$_}. '.pass2');
+    } qw/PedigreeFile LocusFile BayesRatioFile MODFile/;
+    $config->write ({configfile => $conffiles{configfile}. '.pass2',
+		     backupfile => 0, nolocal => 1});
+    push (@sequpdateargs, $conffiles{BayesRatioFile}. '.pass2');
+    system ($KELVIN_BINARY, $conffiles{configfile}. '.pass2');
+    ($? != 0) and die ("FATAL: $KELVIN_BINARY $conffiles{configfile}.pass2 failed\n");
+
+    unlink ($conffiles{PPLFile});
+    system ($SEQUPDATE_BINARY, @sequpdateargs);
+    ($? != 0) and die ("FATAL: $KELVIN_BINARY $conffiles{configfile}.pass2 failed\n");
+
+    # TODO: mangle MOD files
+
+    map {
+	unlink ($conffiles{$_}. '.pass1');
+	unlink ($conffiles{$_}. '.pass2');
+    } qw/PedigreeFile LocusFile BayesRatioFile MODFile configfile/;
+
+    exit (0);
 }
 
 sub just_run_kelvin
@@ -118,9 +203,8 @@ sub just_run_kelvin
     $dataset = KelvinDataset->new ({freqfile => $$args[0]})
 	or die ($KelvinDataset::errstr. "\n");
     $dataset->close;
-    print ("exec ", join (' ', map { "'$_'" } ($KELVIN_BINARY, $config->filename, @argv)), "\n");
-#    exec ($KELVIN_BINARY, $config->filename, @argv)
-#	or die ("exec $KELVIN_BINARY failed, $!\n");
+    exec ($KELVIN_BINARY, $config->filename, @argv)
+	or die ("exec $KELVIN_BINARY failed, $!\n");
 }
 
 sub platform_name
@@ -133,40 +217,6 @@ sub platform_name
     return ($platform);
 }
 
-my $dataset;
-my $copydataset;
-my $pedigree;
-my $individual;
-my $family;
-
-my $href;
-
-(($directive, $args) = $config->isConfigured ("MapFile"))
-    or die ("no mapfile in configuration\n");
-$href = { mapfile => $$args[0] };
-(($directive, $args) = $config->isConfigured ("FrequencyFile"))
-    and $$href{freqfile} = $$args[0];
-(($directive, $args) = $config->isConfigured ("LocusFile"))
-    and $$href{locusfile} = $$args[0];
-(($directive, $args) = $config->isConfigured ("PedigreeFile"))
-    and $$href{pedigreefile} = $$args[0];
-
-$dataset = KelvinDataset->new ($href)
-    or die ("$KelvinDataset::errstr\n");
-($debug) and print Dumper ($dataset);
-
-$copydataset = $dataset->copy;
-
-$copydataset->addTrait ("Liability", "C", 'end')
-    or die ("$KelvinDataset::errstr\n");
-($debug) and print Dumper ($copydataset);
-$copydataset->write ({ped=>'ped.new', locus=>'locus.new', map=>'map.new', freq=>'freq.new'});
-
-($individual = $dataset->readIndividual)
-    or die ("$KelvinDataset::errstr  --  $KelvinIndividual::errstr\n");
-$individual->map ($copydataset);
-print Dumper ($individual);
-$individual->write;
 
 #
 # KelvinIndividual: an object for managing a individuals from pedigree files
@@ -1353,6 +1403,24 @@ BEGIN {
 	return ($directive);
     }
 
+    # Like addDirective, except it clears any previous configuration for the named
+    # directive.
+    sub setDirective
+    {
+	my ($self, $directive, $arg) = @_;
+	
+	($directive = $self->legalDirective ($directive))
+	    or return (undef);
+	if (exists ($directives{lc($directive)}{regex}) &&
+	    (! defined ($arg) || $arg !~ /^$directives{lc($directive)}{regex}$/)){
+	    $errstr = "Illegal argument to directive $directive";
+	    return (undef);
+	}
+	$$self{directives}{$directive} = [];
+	(defined ($arg)) and push (@{$$self{directives}{$directive}}, $arg);
+	return ($directive);
+    }
+
     sub removeDirective
     {
 	my ($self, $directive) = @_;
@@ -1495,7 +1563,7 @@ BEGIN {
 
 
 #
-# IO::File::Kelvin: A convenience wrapper around IO::FIle that only returns
+# IO::File::Kelvin: A convenience wrapper around IO::File that only returns
 # nonblank, noncomment lines, and counts lines read.
 #
 BEGIN {
