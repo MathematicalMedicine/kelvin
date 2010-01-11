@@ -175,9 +175,9 @@ void swStartProgressWakeUps(int seconds);
 void swDiagInit(void);
 void swDiagTerm(void);
 
-#define STEP(PERCENTDONE, ...) { swLogProgress(0, PERCENTDONE, __VA_ARGS__); }
-#define SUBSTEP(PERCENTDONE, ...) { swLogProgress(1, PERCENTDONE, __VA_ARGS__); }
-#define DETAIL(PERCENTDONE, ...) { swLogProgress(2, PERCENTDONE, __VA_ARGS__); }
+#define STEP(PERCENTDONE, ...) do { swLogProgress(0, PERCENTDONE, __VA_ARGS__); } while(0)
+#define SUBSTEP(PERCENTDONE, ...) do { swLogProgress(1, PERCENTDONE, __VA_ARGS__); } while(0)
+#define DETAIL(PERCENTDONE, ...) do { swLogProgress(2, PERCENTDONE, __VA_ARGS__); } while(0)
 
 /* These are the current facility levels, and I need a new way of defining them.
    I refer to them in the macros as environment levels since I intend to set them

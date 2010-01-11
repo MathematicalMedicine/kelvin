@@ -126,7 +126,7 @@ char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
 
 int main (int argc, char *argv[])
 {
-  STEP(0, "Initializing")
+  STEP(0, "Initializing");
   kelvinInit(argc, argv);
 
   STEP(0, "Performing analysis");

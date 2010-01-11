@@ -36,7 +36,7 @@
 #include "kelvinGlobals.h"
 #include "summary_result.h"
 #include "dkelvinWriteFiles.h"
-#include "kelvinWriteFiles.h" // Just for writeSurfaceFileHeader
+#include "kelvinWriteFiles.h"   // Just for writeSurfaceFileHeader
 #include "trackProgress.h"
 #include "ppl.h"
 
@@ -163,7 +163,10 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
   }
   s->vol_rate *= vol_region;    /*This is the rate to convert to average function value */
 
-  DIAG (DCUHRE, 1, {fprintf (stderr, "Starting DCUHRE with dim=%d\n", dim);});
+  DIAG (DCUHRE, 1, {
+        fprintf (stderr, "Starting DCUHRE with dim=%d\n", dim);
+      }
+  );
 
   return_val = dcuhre_ (s);
   if (return_val > 0) {
@@ -174,13 +177,11 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
   s->error /= s->vol_rate;
 
   DIAG (DCUHRE, 1, {
-      fprintf (stderr, "Final result =%15.10f  with error =%15.10f and neval = %d\n",
-	       s->result, s->error, s->total_neval);
-      fprintf (stderr, "End of DCUHRE with ifail =%d\n", s->ifail);
-    };)
+      fprintf (stderr, "Final result =%15.10f  with error =%15.10f and neval = %d\n", s->result, s->error, s->total_neval); fprintf (stderr, "End of DCUHRE with ifail =%d\n", s->ifail);};
+      )
 
-  /* BR boosting is done here */
-  if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM && modelType->trait == DT) {
+      /* BR boosting is done here */
+      if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM && modelType->trait == DT) {
     //fprintf(stderr, "Before boosting %e\n", s->result);
     s->result = pow (10.0, (log10 (s->result) * boost_rate));
     //fprintf(stderr, "After boosting %e\n", s->result);
@@ -231,7 +232,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   if (locusList->numLocus > 1)
     origLocus = locusList->pLocusIndex[1];
 
-  gfreq = x[0];   
+  gfreq = x[0];
   if (fpIR != NULL)
     dk_curModel.dgf = gfreq;
 
@@ -355,9 +356,9 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     /*pPedigreeLocal->likelihood is now computed and now check it */
     if (pPedigreeLocal->likelihood == 0.0) {
       if (modelRange->atypicalQtTrait)
-	WARNING("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
+        WARNING ("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
       else
-	ERROR("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
+        ERROR ("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
 
@@ -385,14 +386,17 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = product_likelihood;
   pedigreeSet.log10Likelihood = sum_log_likelihood;
   log10_likelihood_null = pedigreeSet.log10Likelihood;
-  DIAG (OVERALL, 1, {fprintf (stderr, "Sum of log Likelihood is: %e\n", sum_log_likelihood);});
+  DIAG (OVERALL, 1, {
+        fprintf (stderr, "Sum of log Likelihood is: %e\n", sum_log_likelihood);
+      }
+  );
 
   /* This is for alternative likelihood */
   locusList = &savedLocusList;
   xmissionMatrix = altMatrix;
   if (modelOptions->polynomial == TRUE);
   else
-    statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,      /* probability */
+    statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, /* probability */
         initialProbAddr2,       /* probability */
         initialHetProbAddr, 0,  /* cell index */
         -1, -1, /* last het locus & last het pattern (P-1 or M-2) */
@@ -447,7 +451,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
         homoLR = pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood);
-	//fprintf(stderr,"pedIdx=%d alternative=%e trait null=%e marker null=%e\n",pedIdx,pPedigreeLocal->likelihood ,pedigreeSet.nullLikelihood[pedIdx] , pPedigreeLocal->markerLikelihood);
+        //fprintf(stderr,"pedIdx=%d alternative=%e trait null=%e marker null=%e\n",pedIdx,pPedigreeLocal->likelihood ,pedigreeSet.nullLikelihood[pedIdx] , pPedigreeLocal->markerLikelihood);
 
         if (alphaV * homoLR + alphaV2 < 0)
           WARNING ("Heterogeneity likelihood ratio less than zero");
@@ -684,7 +688,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
       //fprintf(stderr, " is done %f with %d pedigrees\n",pPedigreeLocal->likelihood, pedigreeSet.numPedigree);
 
       if (isnan (pPedigreeLocal->likelihood))
-	ERROR ("Null hypothesis likelihood is not a number");
+        ERROR ("Null hypothesis likelihood is not a number");
 
     } else {
       initialize_multi_locus_genotype (pPedigreeLocal);
@@ -693,7 +697,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 
     /*pPedigreeLocal->likelihood is now computed and now check it */
     if (pPedigreeLocal->likelihood == 0.0) {
-      WARNING("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
+      WARNING ("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
       ret = -1;
       product_likelihood = 0.0;
       sum_log_likelihood = -9999.99;
@@ -722,7 +726,10 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = product_likelihood;
   pedigreeSet.log10Likelihood = sum_log_likelihood;
   log10_likelihood_null = pedigreeSet.log10Likelihood;
-  DIAG (OVERALL, 1, {fprintf (stderr,"Sum of log Likelihood is: %e\n", sum_log_likelihood);});
+  DIAG (OVERALL, 1, {
+        fprintf (stderr, "Sum of log Likelihood is: %e\n", sum_log_likelihood);
+      }
+  );
 
   /* This is for alternative likelihood */
   locusList = &savedLocusList;
@@ -777,7 +784,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
         homoLR = pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood);
         //fprintf(stderr,"j=%d pedIdx=%d  %20.18f %20.16f %20.16f %20.16f \n",j, pedIdx,pPedigreeLocal->likelihood,pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood, homoLR ,log10HetLR);
         if (alphaV * homoLR + alphaV2 < 0)
-	  WARNING ("Heterogenous Likelihood Ratio is less than zero");
+          WARNING ("Heterogenous Likelihood Ratio is less than zero");
         log10HetLR += log10 (alphaV * homoLR + alphaV2);
       }
 
@@ -1037,7 +1044,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   if (modelOptions->polynomial == TRUE);
   else
     /* populate the matrix */
-    statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,      /* probability */
+    statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, /* probability */
         initialProbAddr2,       /* probability */
         initialHetProbAddr, 0,  /* cell index */
         -1, -1, /* last het locus & last het pattern (P-1 or M-2) */
@@ -1090,7 +1097,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   if (modelOptions->polynomial == TRUE);
   else
     /* populate the matrix */
-    statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,      /* probability */
+    statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, /* probability */
         initialProbAddr2,       /* probability */
         initialHetProbAddr, 0,  /* cell index */
         -1, -1, /* last het locus & last het pattern (P-1 or M-2) */
@@ -1407,7 +1414,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
   if (modelOptions->polynomial == TRUE);
   else
     /* populate the matrix */
-    statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,      /* probability */
+    statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, /* probability */
         initialProbAddr2,       /* probability */
         initialHetProbAddr, 0,  /* cell index */
         -1, -1, /* last het locus & last het pattern (P-1 or M-2) */
@@ -1465,7 +1472,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
   if (modelOptions->polynomial == TRUE);
   else
     /* populate the matrix */
-    statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,      /* probability */
+    statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, /* probability */
         initialProbAddr2,       /* probability */
         initialHetProbAddr, 0,  /* cell index */
         -1, -1, /* last het locus & last het pattern (P-1 or M-2) */
@@ -1627,12 +1634,12 @@ void integrateMain ()
   int liabIdxLocal, pedIdx, statusLocal;
   Pedigree *pPedigreeLocal;
 
-  SUBSTEP(0, "Setting-up for integration-based analysis");
+  SUBSTEP (0, "Setting-up for integration-based analysis");
 
   /* total_dim is the number of all parameters in the 3-layer scheme
    * s->dim in dcuhre.c is the number of parameters in the middle layer alone */
 
-  DETAIL(0,"Calculating dimensionality of outer and inner layers");
+  DETAIL (0, "Calculating dimensionality of outer and inner layers");
   total_dim = 2;        // alpha gf
   total_dim += 3 * modelRange->nlclass; //DD Dd dd
   if (modelOptions->imprintingFlag)
@@ -1655,10 +1662,10 @@ void integrateMain ()
 
     if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
       total_dim += 1;   // dprime
-  }    
+  }
 
-  DETAIL(0,"Outer dimension is %d, inner (BR) dimension is %d", total_dim, size_BR);
-  DETAIL(0,"Allocating and initializing storage for analysis");
+  DETAIL (0, "Outer dimension is %d, inner (BR) dimension is %d", total_dim, size_BR);
+  DETAIL (0, "Allocating and initializing storage for analysis");
 
   MALCHOKE (xl, size_BR * sizeof (double), double *);
   MALCHOKE (xu, size_BR * sizeof (double), double *);
@@ -1715,7 +1722,7 @@ void integrateMain ()
           xl[k + 3] = modelRange->penetLimits[3][0];
           xu[k + 3] = modelRange->penetLimits[3][1];
         }
-	//fprintf(stderr,"modelranage= %f %f %f %f %f %f %f %f\n",modelRange->penetLimits[0][0],modelRange->penetLimits[1][0],modelRange->penetLimits[2][0],modelRange->penetLimits[3][0],modelRange->penetLimits[0][1],modelRange->penetLimits[1][1],modelRange->penetLimits[2][1],modelRange->penetLimits[3][1]);
+        //fprintf(stderr,"modelranage= %f %f %f %f %f %f %f %f\n",modelRange->penetLimits[0][0],modelRange->penetLimits[1][0],modelRange->penetLimits[2][0],modelRange->penetLimits[3][0],modelRange->penetLimits[0][1],modelRange->penetLimits[1][1],modelRange->penetLimits[2][1],modelRange->penetLimits[3][1]);
       }
       volume_region *= (xu[k] - xl[k]);
       volume_region *= (xu[k + 1] - xl[k + 1]);
@@ -1829,11 +1836,11 @@ void integrateMain ()
       savedLocusList.pNextLocusDistance[i][1] = -1;
     }
 
-    SUBSTEP(0,"Building transmission matrix");
+    SUBSTEP (0, "Building transmission matrix");
 
     if (modelOptions->polynomial == TRUE) {
       /* populate the matrix */
-      statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,    /* probability */
+      statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,       /* probability */
           initialProbAddr2,     /* probability */
           initialHetProbAddr, 0,        /* cell index */
           -1,   /* last het locus */
@@ -1857,12 +1864,12 @@ void integrateMain ()
       pLocus1 = originalLocusList.ppLocusList[loc1];
 
       if (modelOptions->markerAnalysis != FALSE && pLocus1->locusType != LOCUS_TYPE_MARKER) {
-	DETAIL(0, "Skipping combination involving trait locus for marker analysis");
-        continue; // If we're doing a marker analysis, don't let the first locus be a trait
+        DETAIL (0, "Skipping combination involving trait locus for marker analysis");
+        continue;       // If we're doing a marker analysis, don't let the first locus be a trait
       }
       if ((pLocus1->numAllele <= 1) || ((pLocus1->numAllele == 2) && ((pLocus1->pAlleleFrequency[0] <= ERROR_MARGIN) || (pLocus1->pAlleleFrequency[1] <= ERROR_MARGIN)))) {
-        WARNING("Biallelic marker %s has a minor allele frequency less than %g, skipping!", pLocus1->sName, ERROR_MARGIN);
-        continue; // Skip MAF0 markers
+        WARNING ("Biallelic marker %s has a minor allele frequency less than %g, skipping!", pLocus1->sName, ERROR_MARGIN);
+        continue;       // Skip MAF0 markers
       }
 
       for (loc2 = loc1 + 1; loc2 < originalLocusList.numLocus; loc2++) {
@@ -1885,34 +1892,30 @@ void integrateMain ()
         if (pLocus2->locusType != LOCUS_TYPE_MARKER)
           continue;
         if ((pLocus2->numAllele <= 1) || ((pLocus2->numAllele == 2) && ((pLocus2->pAlleleFrequency[0] <= ERROR_MARGIN) || (pLocus2->pAlleleFrequency[1] <= ERROR_MARGIN)))) {
-          WARNING("Biallelic marker %s has a minor allele frequency less than %g, skipping!", pLocus2->sName, ERROR_MARGIN);
+          WARNING ("Biallelic marker %s has a minor allele frequency less than %g, skipping!", pLocus2->sName, ERROR_MARGIN);
           continue;
         }
         savedLocusList.pLocusIndex[1] = loc2;
 
         if (modelOptions->markerAnalysis == MM)
-	  SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
-		  "Starting w/loci %s(%d alleles) and %s(%d alleles)",
-		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele)
-	else
-          SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
-		  "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)",
-		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, 
-		  pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1);
+          SUBSTEP ((loc2 - 1) * 100 / (originalLocusList.numLocus - 1), "Starting w/loci %s(%d alleles) and %s(%d alleles)", pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele);
+        else
+          SUBSTEP ((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
+              "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)", pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1);
 
         /* Find out number of alleles this marker locus has *//* Check if this is okay with DCUHRE  ???????????? */
         if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM) {
 
-	  if (pLocus1->numOriginalAllele + pLocus2->numOriginalAllele > 4)
-	    ERROR("Integration-based LD analysis not available for polyallelic loci");
+          if (pLocus1->numOriginalAllele + pLocus2->numOriginalAllele > 4)
+            ERROR ("Integration-based LD analysis not available for polyallelic loci");
 
           /* get the LD parameters */
           pLambdaCell = findLambdas (modelRange, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
           reallocate_LD_loci (pLDLoci, pLocus1->numOriginalAllele, pLocus2->numOriginalAllele);
 
           /* Create these variables ahead of likelihood polynomial build to prevent
-	     in-build creation. This allows polynomial compilation as the entire
-	     likelihood is fully parameterized at the outset. */
+           * in-build creation. This allows polynomial compilation as the entire
+           * likelihood is fully parameterized at the outset. */
 
           if (modelOptions->polynomial == TRUE) {
             char vName[128];
@@ -2031,7 +2034,7 @@ void integrateMain ()
                 }
               }
               if (dprimeIdx == pLambdaCell->ndprime) {
-		// &&& This needs fixin'
+                // &&& This needs fixin'
                 fprintf (stderr, "dprimeIdx is %d\n", dprimeIdx);
                 exit (0);
               }
@@ -2312,7 +2315,7 @@ void integrateMain ()
     /* populate the trait xmission matrix */
     locusList = &traitLocusList;
     xmissionMatrix = traitMatrix;
-    statusLocal = populate_xmission_matrix (traitMatrix, 1, initialProbAddr, /* probability */
+    statusLocal = populate_xmission_matrix (traitMatrix, 1, initialProbAddr,    /* probability */
         initialProbAddr2,       /* probability */
         initialHetProbAddr, 0,  /* cell index */
         -1,     /* last he locus */
@@ -2419,7 +2422,7 @@ void integrateMain ()
         dk_curModel.posIdx = posIdx;
       }
 
-      SUBSTEP(posIdx * 100 / numPositions, "Starting with position %d of %d", posIdx + 1, numPositions);
+      SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d of %d", posIdx + 1, numPositions);
 
       /* positions listed are sex average positions */
       traitPos = modelRange->tloc[posIdx];
@@ -2491,7 +2494,7 @@ void integrateMain ()
         }
 
         /* populate the matrix */
-        statusLocal = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,     /* probability */
+        statusLocal = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,        /* probability */
             initialProbAddr2,   /* probability */
             initialHetProbAddr, 0,      /* cell index */
             -1, /* last he locus */
@@ -2501,7 +2504,10 @@ void integrateMain ()
         if (modelOptions->polynomial == TRUE)
           freePolys ();
 
-	DIAG (XM, 1, { print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);});
+        DIAG (XM, 1, {
+              print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);
+            }
+        );
 
         char markerNo[8];
         sprintf (partialPolynomialFunctionName, "MM_C%d_P%%sM", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
@@ -2601,12 +2607,15 @@ void integrateMain ()
         if (modelOptions->polynomial == TRUE) {
           pedigreeSetPolynomialClearance (&pedigreeSet);
           /* populate the matrix */
-          statusLocal = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,     /* probability */
+          statusLocal = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,        /* probability */
               initialProbAddr2, /* probability */
               initialHetProbAddr, 0,    /* cell index */
               -1, -1,   /* last het locus & last het pattern (P-1 or M-2) */
               0);       /* current locus - start with 0 */
-	  DIAG (XM, 1, { print_xmission_matrix (altMatrix, savedLocusList.numLocus, 0, 0, tmpID);});
+          DIAG (XM, 1, {
+                print_xmission_matrix (altMatrix, savedLocusList.numLocus, 0, 0, tmpID);
+              }
+          );
           if (modelOptions->polynomial == TRUE)
             freePolys ();
         }
@@ -2614,7 +2623,7 @@ void integrateMain ()
 
       if (modelOptions->polynomial != TRUE);
       /* populate the matrix */
-      statusLocal = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr, /* probability */
+      statusLocal = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,    /* probability */
           initialProbAddr2,     /* probability */
           initialHetProbAddr, 0,        /* cell index */
           -1, -1,       /* last het locus & last het pattern (P-1 or M-2) */
@@ -2650,7 +2659,10 @@ void integrateMain ()
     }   /* end of walking down the chromosome */
   }     /* end of multipoint */
 
-  DIAG (OVERALL, 1, {dumpTrackingStats (cL, eCL);});
+  DIAG (OVERALL, 1, {
+        dumpTrackingStats (cL, eCL);
+      }
+  );
 
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     free (dk_globalmax.dprime);
@@ -2667,6 +2679,4 @@ void integrateMain ()
 
   free (xu);
   free (xl);
-
-
 }

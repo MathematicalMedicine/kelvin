@@ -211,11 +211,11 @@ int dprimeIdx;
         if (modelOptions->markerAnalysis == MM)
           SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
 		  "Starting w/loci %s(%d alleles) and %s(%d alleles",
-		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele)
+		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele);
         else
           SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
 		  "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)",
-		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1)
+		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1);
 
         /* Find out number of alleles this marker locus has */
         if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM) {
@@ -382,7 +382,7 @@ int dprimeIdx;
 			  (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
 			  ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
 			   (eCL[0] + eCL[1]) / (cL[0] + cL[1]) - (combinedComputeSW->swAccumWallTime +
-								  combinedBuildSW->swAccumWallTime)) / 60)
+								  combinedBuildSW->swAccumWallTime)) / 60);
 		}
                 if (ret == -2)
                   ERROR ("Negative likelihood for theta 0.5");
@@ -699,7 +699,7 @@ int dprimeIdx;
     }   /* end of looping first locus - loc1 */
 
     SUBSTEP (0,"Finished analysis w/build time of %d, evaluate time of %d",
-	     combinedBuildSW->swAccumWallTime, combinedComputeSW->swAccumWallTime)
+	     combinedBuildSW->swAccumWallTime, combinedComputeSW->swAccumWallTime);
 
   } /* end of two point */
   else {        /* multipoint */
