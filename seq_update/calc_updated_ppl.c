@@ -1272,7 +1272,7 @@ int parse_command_line (int argc, char **argv)
       exit (0);
     } else if (arg == 0 && long_arg == OPT_EPI) {
       epistasis = 1;
-    } else if (arg == 0 && long_arg == OPT_PPLOUT {
+    } else if (arg == 0 && long_arg == OPT_PPLOUT) {
 	pploutfile = optarg;
 #endif
 
