@@ -1,6 +1,8 @@
 /**
 @file integrationSupport.c
 
+  The new dynamic integration half of the former kelvin main program.
+
   Functions supporting maximized logarithm of odds (MOD) calculation
   via DCUHRE routines for approximation of a vector of definite
   integrals via recursive partitioning into subregions.
@@ -177,11 +179,14 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
   s->error /= s->vol_rate;
 
   DIAG (DCUHRE, 1, {
-      fprintf (stderr, "Final result =%15.10f  with error =%15.10f and neval = %d\n", s->result, s->error, s->total_neval); fprintf (stderr, "End of DCUHRE with ifail =%d\n", s->ifail);};
-      )
+      fprintf (stderr, "Final result =%15.10f  with error =%15.10f and neval = %d\n",
+	       s->result, s->error, s->total_neval);
+      fprintf (stderr, "End of DCUHRE with ifail =%d\n", s->ifail);
+    }
+    );
 
-      /* BR boosting is done here */
-      if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM && modelType->trait == DT) {
+  /* BR boosting is done here */
+  if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM && modelType->trait == DT) {
     //fprintf(stderr, "Before boosting %e\n", s->result);
     s->result = pow (10.0, (log10 (s->result) * boost_rate));
     //fprintf(stderr, "After boosting %e\n", s->result);
@@ -1618,13 +1623,23 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
 
   }
 
-
   f[0] = avg_hetLR;
-
 
 }
 
 
+
+/**
+
+  Driver for dynamic integration analysis.
+
+  Relatively recent cloning of the edifice of kelvin main program. Needs refactoring,
+  and some progress has been made in that regard.
+
+  @author Sang-Cheol Seok - overall content adapted from Yungui's iterative version..
+  @author Bill Valentine-Cooper - progress tracking.
+
+*/
 void integrateMain ()
 {
 

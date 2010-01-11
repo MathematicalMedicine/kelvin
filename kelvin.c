@@ -22,7 +22,7 @@
   @author Sang-Cheol Seok - Dynamic grid.
   @author John Burian - configuration parser, sequential update.
   @author Bill Valentine-Cooper - additional polynomial features,
-  compilation, SSD, refactoring, performance and tracking.
+  compilation, SSD, tiny bits of refactoring, performance and tracking.
 
 @file kelvin.c
 
@@ -90,16 +90,7 @@
   set the OMP_NUM_THREADS environment variable to 1, and no locking
   conflicts will occur.
 
-  - POLYSTATISTICS - enable or disable display of extensive polynomial
-  statistics at 2Mp creation intervals as well as at key points in
-  pedigree processing. This does not affect performance or processing.
-
-  - SIMPLEPROGRESS - suppresses more complicated progress reports in
-  favor of a single percentage progress and estimated remaining time.
-  This simple progress indication cannot be linear, but is easier to
-  understand. This conditional is on by default.
-
-  - SOURCEDIGRAPH
+  - Many more are documented in utils/polynomial.c
 
 */
 

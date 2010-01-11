@@ -1,9 +1,27 @@
+/**
+#file iterationSupport.c
+
+  The iterative half of the former kelvin main program.
+
+  Iterates over a fixed grid of explicitly-specified trait space parameters 
+  in order to average them out of the likelihood calculation. This is
+  the original version of kelvin, and has been nearly completely replaced
+  by a version that does dynamic integration to average-out the nuisance
+  parameters (integrationSupport.c).
+
+  Copyright &copy; 2010, Nationwide Children's Research Institute.  All
+  rights reserved.  Permission is hereby given to use this software
+  for non-profit educational purposes only.
+
+  @version $Id: iterationSupport.c 15 2009-10-16 12:14:59Z whv001 $
+
+*/
 #include <memory.h>
 #include <math.h>
 
 #include "kelvin.h"
 #include "kelvinGlobals.h"
-#include "kelvinHandlers.h" // For status request signal detection
+#include "kelvinHandlers.h"     // For status request signal detection
 #include "summary_result.h"
 #include "kelvinWriteFiles.h"
 #include "saveResults.h"
@@ -16,6 +34,22 @@ struct swStopwatch *combinedComputeSW,  ///< Combined likelihood compute stopwat
  *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch
  *overallSW;    ///< Overall stopwatch for the entire run.
 
+/**
+
+  Driver for iterative analysis.
+
+  Original edifice of kelvin main program. Needs refactoring in the worst way, but
+  our focus has moved on to the dynamic integration approach. This version is kept
+  around for validation purposes as it can, for most types of analyses, operate on
+  single set of trait space parameters just like all other linkage analysis programs.
+
+  It can also do polyallelic LD and marker-to-marker analysis, capabilities not yet
+  included in the dynamic integration approach.
+
+  @author Yungui Huang - overall content.
+  @author Bill Valentine-Cooper - progress tracking.
+
+*/
 void iterateMain ()
 {
   ParamStruct paramSet;
@@ -36,23 +70,23 @@ void iterateMain ()
   double SD_DD, SD_Dd, SD_dD, SD_dd;
   double theta[2];      /* theta */
   int breakFlag = FALSE;
-  double gfreq = 0; /* disease gene frequency */
+  double gfreq = 0;     /* disease gene frequency */
   int ret;
 
-int status;
+  int status;
 
-double *marker1Pos, *marker2Pos;
-double *prevPos, *currPos;    /* for MP */
-double dist;
-double mkrFreq;
-double ppl;
-int i, j, k;
-int liabIdx;
-int mkrFreqIdx;
-int posIdx, pedIdx;
-TraitLocus *pTraitLocus = NULL;
-int prevTraitInd;
-int dprimeIdx;
+  double *marker1Pos, *marker2Pos;
+  double *prevPos, *currPos;    /* for MP */
+  double dist;
+  double mkrFreq;
+  double ppl;
+  int i, j, k;
+  int liabIdx;
+  int mkrFreqIdx;
+  int posIdx, pedIdx;
+  TraitLocus *pTraitLocus = NULL;
+  int prevTraitInd;
+  int dprimeIdx;
 
   /* only for multipoint - we don't handle LD under multipoint yet */
   if (modelType->type == MP) {
@@ -189,7 +223,7 @@ int dprimeIdx;
       if (modelOptions->markerAnalysis != FALSE && pLocus1->locusType != LOCUS_TYPE_MARKER)
         continue;
       if ((pLocus1->numAllele <= 1) || ((pLocus1->numAllele == 2) && ((pLocus1->pAlleleFrequency[0] <= ERROR_MARGIN) || (pLocus1->pAlleleFrequency[1] <= ERROR_MARGIN)))) {
-        WARNING("Biallelic marker %s has a minor allele frequency less than %g, skipping!", pLocus1->sName, ERROR_MARGIN);
+        WARNING ("Biallelic marker %s has a minor allele frequency less than %g, skipping!", pLocus1->sName, ERROR_MARGIN);
         continue;
       }
 
@@ -201,7 +235,7 @@ int dprimeIdx;
         if (pLocus2->locusType != LOCUS_TYPE_MARKER)
           continue;
         if ((pLocus2->numAllele <= 1) || ((pLocus2->numAllele == 2) && ((pLocus2->pAlleleFrequency[0] <= ERROR_MARGIN) || (pLocus2->pAlleleFrequency[1] <= ERROR_MARGIN)))) {
-          WARNING("Biallelic marker %s has a minor allele frequency less than %g, skipping!", pLocus2->sName, ERROR_MARGIN);
+          WARNING ("Biallelic marker %s has a minor allele frequency less than %g, skipping!", pLocus2->sName, ERROR_MARGIN);
           continue;
         }
 
@@ -209,13 +243,10 @@ int dprimeIdx;
         initialize_max_scale ();
 
         if (modelOptions->markerAnalysis == MM)
-          SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
-		  "Starting w/loci %s(%d alleles) and %s(%d alleles",
-		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele);
+          SUBSTEP ((loc2 - 1) * 100 / (originalLocusList.numLocus - 1), "Starting w/loci %s(%d alleles) and %s(%d alleles", pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele);
         else
-          SUBSTEP((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
-		  "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)",
-		  pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1);
+          SUBSTEP ((loc2 - 1) * 100 / (originalLocusList.numLocus - 1),
+              "Starting w/loci %s(%d alleles) and %s(%d alleles) (%d of %d pairs)", pLocus1->sName, pLocus1->numOriginalAllele, pLocus2->sName, pLocus2->numOriginalAllele, loc2, originalLocusList.numLocus - 1);
 
         /* Find out number of alleles this marker locus has */
         if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM) {
@@ -245,23 +276,22 @@ int dprimeIdx;
           else
             R_square_flag = FALSE;
         }
-
-	// Build the polynomial now to avoid interfering with evaluation later
-	if (modelOptions->polynomial == TRUE) {
-	  if (modelType->trait == DICHOTOMOUS) {
-	    sprintf (partialPolynomialFunctionName, "TD_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
-	    swPushPhase ('k', "buildTD");
-	  } else {
-	    sprintf (partialPolynomialFunctionName, "TQ_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
-	    swPushPhase ('k', "buildTQ");
-	  }
-	  swStart (combinedBuildSW);
-	  ret = build_likelihood_polynomial (&pedigreeSet);
-	  swPopPhase ('k');
-	  swStop (combinedBuildSW);
-	}
-	swPushPhase ('k', "eval"); // Now we're full-tilt evaluation
-	swStart (combinedComputeSW);
+        // Build the polynomial now to avoid interfering with evaluation later
+        if (modelOptions->polynomial == TRUE) {
+          if (modelType->trait == DICHOTOMOUS) {
+            sprintf (partialPolynomialFunctionName, "TD_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
+            swPushPhase ('k', "buildTD");
+          } else {
+            sprintf (partialPolynomialFunctionName, "TQ_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
+            swPushPhase ('k', "buildTQ");
+          }
+          swStart (combinedBuildSW);
+          ret = build_likelihood_polynomial (&pedigreeSet);
+          swPopPhase ('k');
+          swStop (combinedBuildSW);
+        }
+        swPushPhase ('k', "eval");      // Now we're full-tilt evaluation
+        swStart (combinedComputeSW);
 
         loopMarkerFreqFlag = 0;
         if (modelRange->nafreq >= 2 && modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM && pLocus2->numOriginalAllele == 2) {
@@ -373,35 +403,36 @@ int dprimeIdx;
 
                 if (modelOptions->polynomial != TRUE)
                   status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
-		ret = compute_likelihood (&pedigreeSet);
-		cL[0]++; // TP DT NULL hypothesis
+                ret = compute_likelihood (&pedigreeSet);
+                cL[0]++;        // TP DT NULL hypothesis
 
-		if (swProgressRequestFlag) {
-		  swProgressRequestFlag = FALSE;
-		  DETAIL (0, "Likelihood calculation for NULL hypothesis %lu%% complete (~%lu min left)",
-			  (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
-			  ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-			   (eCL[0] + eCL[1]) / (cL[0] + cL[1]) - (combinedComputeSW->swAccumWallTime +
-								  combinedBuildSW->swAccumWallTime)) / 60);
-		}
+                if (swProgressRequestFlag) {
+                  swProgressRequestFlag = FALSE;
+                  DETAIL (0, "Likelihood calculation for NULL hypothesis %lu%% complete (~%lu min left)",
+                      (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
+                      ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * (eCL[0] + eCL[1]) / (cL[0] + cL[1]) - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
+                }
                 if (ret == -2)
                   ERROR ("Negative likelihood for theta 0.5");
 
                 if (ret == -1) {
-		  DIAG(OVERALL, 1, {
-		      fprintf (stderr, "dgf=%f\n", gfreq); 
-		      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
-			pen_DD = modelRange->penet[liabIdx][0][penIdx];
-			pen_Dd = modelRange->penet[liabIdx][1][penIdx];
-			pen_dD = modelRange->penet[liabIdx][2][penIdx];
-			pen_dd = modelRange->penet[liabIdx][3][penIdx];
-			if (modelOptions->imprintingFlag)
-			  fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
-			else
-			  fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
-		      }
-		    });
-		  ERROR ("Zero likelihood for theta 0.5");
+                  DIAG (OVERALL, 1, {
+                        fprintf (stderr, "dgf=%f\n", gfreq);
+			for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+                          pen_DD = modelRange->penet[liabIdx][0][penIdx];
+			  pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+			  pen_dD = modelRange->penet[liabIdx][2][penIdx];
+			  pen_dd = modelRange->penet[liabIdx][3][penIdx];
+			  if (modelOptions->imprintingFlag)
+			    fprintf (stderr, "Liab %d penentrance %f %f %f %f\n",
+				     liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
+                          else
+			    fprintf (stderr, "Liab %d penentrance %f %f %f\n",
+				     liabIdx + 1, pen_DD, pen_Dd, pen_dd);
+			}
+                      }
+                  );
+                  ERROR ("Zero likelihood for theta 0.5");
                 }
 
                 /* Save the results for NULL */
@@ -458,14 +489,12 @@ int dprimeIdx;
 
                     // No new name for a polynomial here because we're reusing the existing one
                     ret = compute_likelihood (&pedigreeSet);
-                    cL[1]++; // TP DT alternative hypothesis (combined likelihood)
+                    cL[1]++;    // TP DT alternative hypothesis (combined likelihood)
                     if (swProgressRequestFlag) {
                       swProgressRequestFlag = FALSE;
-		      DETAIL (0, "Combined likelihood calculation %lu%% complete (~%lu min left)",
-                            (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
-                            ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-			     (eCL[0] + eCL[1]) / (cL[0] + cL[1]) - (combinedComputeSW->swAccumWallTime +
-								    combinedBuildSW->swAccumWallTime)) / 60);
+                      DETAIL (0, "Combined likelihood calculation %lu%% complete (~%lu min left)",
+                          (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
+                          ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * (eCL[0] + eCL[1]) / (cL[0] + cL[1]) - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
                     }
                     record_tp_result (ret, &pedigreeSet, &paramSet, loc2);
                   }     /* end of theta loop */
@@ -480,7 +509,9 @@ int dprimeIdx;
                   break;
                 }
               } /* end of penetrance loop */
-            } /* end of DT */ else /* start of QT or COMBINED */ {
+            } /* end of DT */
+            else {      /* start of QT or COMBINED */
+
 
               /* this should be MEAN + SD */
               for (paramIdx = 0; (paramIdx == 0 && modelType->distrib == QT_FUNCTION_CHI_SQUARE)
@@ -517,8 +548,7 @@ int dprimeIdx;
                         }
                         /* check against the hard coded constraint */
                         if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-                          constraint = (1 - gfreq) * (1 - gfreq) * mean_dd * SD_dd + 2 * gfreq * 
-			    (1 - gfreq) * mean_Dd * SD_Dd + gfreq * gfreq * mean_DD * SD_DD;
+                          constraint = (1 - gfreq) * (1 - gfreq) * mean_dd * SD_dd + 2 * gfreq * (1 - gfreq) * mean_Dd * SD_Dd + gfreq * gfreq * mean_DD * SD_DD;
                           if (constraint >= 3.0 || constraint <= -3.0) {
                             breakFlag = TRUE;
                             break;
@@ -559,33 +589,34 @@ int dprimeIdx;
                     if (modelOptions->polynomial != TRUE)
                       status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
-		    ret = compute_likelihood (&pedigreeSet);
-		    cL[2]++; // TP QT NULL hypothesis likelihood
-		    if (swProgressRequestFlag) {
-		      swProgressRequestFlag = FALSE;
-		      DETAIL (0, "Likelihood calculation for NULL hypothesis  %lu%% complete (~%lu min left)",
-                              (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]),
-                              ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-			       (eCL[2] + eCL[3]) / (cL[2] + cL[3]) - (combinedComputeSW->swAccumWallTime +
-								      combinedBuildSW->swAccumWallTime)) / 60);
-		    }
+                    ret = compute_likelihood (&pedigreeSet);
+                    cL[2]++;    // TP QT NULL hypothesis likelihood
+                    if (swProgressRequestFlag) {
+                      swProgressRequestFlag = FALSE;
+                      DETAIL (0, "Likelihood calculation for NULL hypothesis  %lu%% complete (~%lu min left)",
+                          (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]),
+                          ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * (eCL[2] + eCL[3]) / (cL[2] + cL[3]) - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
+                    }
                     if (ret == -2)
                       ERROR ("Negative likelihood for theta 0.5");
 
                     if (ret == -1) {
-		      DIAG(OVERALL, 1, {
-			  fprintf (stderr, "dgf=%f\n", gfreq);
-			  for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
-			    pen_DD = modelRange->penet[liabIdx][0][penIdx];
-			    pen_Dd = modelRange->penet[liabIdx][1][penIdx];
-			    pen_dD = modelRange->penet[liabIdx][2][penIdx];
-			    pen_dd = modelRange->penet[liabIdx][3][penIdx];
-			    if (modelOptions->imprintingFlag)
-			      fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
-			    else
-			      fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
-			  }
-			});
+                      DIAG (OVERALL, 1, {
+                            fprintf (stderr, "dgf=%f\n", gfreq);
+                            for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+                              pen_DD = modelRange->penet[liabIdx][0][penIdx];
+			      pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+			      pen_dD = modelRange->penet[liabIdx][2][penIdx];
+			      pen_dd = modelRange->penet[liabIdx][3][penIdx];
+			      if (modelOptions->imprintingFlag)
+				fprintf (stderr, "Liab %d penentrance %f %f %f %f\n",
+					 liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
+                              else
+				fprintf (stderr, "Liab %d penentrance %f %f %f\n",
+				     liabIdx + 1, pen_DD, pen_Dd, pen_dd);
+			    }
+                          }
+                      );
                       ERROR ("Zero likelihood for theta of 0.5");
                     }
                     for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -630,18 +661,16 @@ int dprimeIdx;
                         }
 
                         if (modelOptions->polynomial != TRUE);
-                          status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
+                        status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
                         // No new name for a polynomial here because we're reusing the existing one
                         ret = compute_likelihood (&pedigreeSet);
-                        cL[3]++; // TP QT/CT alternative hypothesis
+                        cL[3]++;        // TP QT/CT alternative hypothesis
                         if (swProgressRequestFlag) {
                           swProgressRequestFlag = FALSE;
-			  DETAIL (0, "Combined likelihood calculation %lu%% complete (~%lu min left)",
-				  (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]),
-				  ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
-				   (eCL[2] + eCL[3]) / (cL[2] + cL[3]) - (combinedComputeSW->swAccumWallTime +
-									  combinedBuildSW->swAccumWallTime)) / 60);
+                          DETAIL (0, "Combined likelihood calculation %lu%% complete (~%lu min left)",
+                              (cL[2] + cL[3]) * 100 / (eCL[2] + eCL[3]),
+                              ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * (eCL[2] + eCL[3]) / (cL[2] + cL[3]) - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
                         }
                         record_tp_result (ret, &pedigreeSet, &paramSet, loc2);
                       } /* end of theta */
@@ -667,7 +696,7 @@ int dprimeIdx;
             break;
         }       /* end of marker allele frequency looping */
 
-        get_average_LR (tp_result); // Calculate the average BR per (D', theta) pair
+        get_average_LR (tp_result);     // Calculate the average BR per (D', theta) pair
         rescale_tp_result_dprime0 (dprime0Idx);
         rescale_tp_result (-1); // Rescale across (D', theta) pairs
 
@@ -682,10 +711,10 @@ int dprimeIdx;
         if (modelOptions->markerAnalysis == ADJACENTMARKER)
           loc2 = originalLocusList.numLocus;
 
-        free_tp_result_storage (); // Free two point result storage
+        free_tp_result_storage ();      // Free two point result storage
 
-	swPopPhase ('k');
-	swStop (combinedComputeSW);
+        swPopPhase ('k');
+        swStop (combinedComputeSW);
 
       } /* end of looping second locus - loc2 */
       /* if we are doing trait marker, then we are done */
@@ -698,20 +727,19 @@ int dprimeIdx;
         loc1 = originalLocusList.numLocus;
     }   /* end of looping first locus - loc1 */
 
-    SUBSTEP (0,"Finished analysis w/build time of %d, evaluate time of %d",
-	     combinedBuildSW->swAccumWallTime, combinedComputeSW->swAccumWallTime);
+    SUBSTEP (0, "Finished analysis w/build time of %d, evaluate time of %d", combinedBuildSW->swAccumWallTime, combinedComputeSW->swAccumWallTime);
 
   } /* end of two point */
   else {        /* multipoint */
 
-    int markerSetChanged; /* Flag for multipoint analysis, did set of markers change? */
-    int locusListChanged; /* flag for multipoint analysis, did relative trait position or marker set change? */
+    int markerSetChanged;       /* Flag for multipoint analysis, did set of markers change? */
+    int locusListChanged;       /* flag for multipoint analysis, did relative trait position or marker set change? */
 
-    int prevFirstMarker;		/* first marker in the set for multipoint analysis */
-    int prevLastMarker;		/* last marker in the set for multipoint analysis */
+    int prevFirstMarker;        /* first marker in the set for multipoint analysis */
+    int prevLastMarker; /* last marker in the set for multipoint analysis */
 
     double relativePos;
-    double traitPos;      /* trait position for multipoint analysis */
+    double traitPos;    /* trait position for multipoint analysis */
 
     /* marker set locus list for each position */
     markerLocusList.maxNumLocus = modelType->numMarkers;
@@ -807,9 +835,9 @@ int dprimeIdx;
 
           /* Compute the likelihood for the trait */
           ret = compute_likelihood (&pedigreeSet);
-          cL[4]++; // MP DT trait likelihood
-	  if (swProgressRequestFlag) {
-	    swProgressRequestFlag = FALSE;
+          cL[4]++;      // MP DT trait likelihood
+          if (swProgressRequestFlag) {
+            swProgressRequestFlag = FALSE;
             DETAIL (0, "Trait likelihood calculations %lu%% complete", cL[4] * 100 / eCL[4]);
           }
 
@@ -817,22 +845,25 @@ int dprimeIdx;
             continue;
 
           if (ret == -2)
-	    ERROR ("Negative likelihood for trait");
+            ERROR ("Negative likelihood for trait");
 
           if (ret == -1) {
-	    DIAG(OVERALL, 1, {
-		fprintf (stderr, "dgf=%f\n", gfreq);
-		for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
-		  pen_DD = modelRange->penet[liabIdx][0][penIdx];
-		  pen_Dd = modelRange->penet[liabIdx][1][penIdx];
-		  pen_dD = modelRange->penet[liabIdx][2][penIdx];
-		  pen_dd = modelRange->penet[liabIdx][3][penIdx];
-		  if (modelOptions->imprintingFlag)
-		    fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
-		  else
-		    fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
-		}
-	      });
+            DIAG (OVERALL, 1, {
+                  fprintf (stderr, "dgf=%f\n", gfreq);
+                  for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+                    pen_DD = modelRange->penet[liabIdx][0][penIdx];
+		    pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+		    pen_dD = modelRange->penet[liabIdx][2][penIdx];
+		    pen_dd = modelRange->penet[liabIdx][3][penIdx];
+		    if (modelOptions->imprintingFlag)
+		      fprintf (stderr, "Liab %d penentrance %f %f %f %f\n",
+			       liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
+                    else
+		      fprintf (stderr, "Liab %d penentrance %f %f %f\n",
+			       liabIdx + 1, pen_DD, pen_Dd, pen_dd);
+		  }
+                }
+            );
             ERROR ("Zero likelihood for trait");
           }
           /* save the results for NULL */
@@ -890,10 +921,11 @@ int dprimeIdx;
                 /* check against the hard coded constraint */
                 if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
                   constraint = (1 - gfreq) * (1 - gfreq) * mean_dd * SD_dd + 2 * gfreq * (1 - gfreq) * mean_Dd * SD_Dd + gfreq * gfreq * mean_DD * SD_DD;
-                  DIAG(OVERALL, 1, {
-		      fprintf(stderr, "constraint: %f gfreq:%f DD (%f,%f) Dd(%f,%f) dd(%f,%f)\n",
-			      constraint, gfreq, mean_DD, SD_DD, mean_Dd, SD_DD, mean_dd, SD_dd);
-		    });
+                  DIAG (OVERALL, 1, {
+                        fprintf (stderr, "constraint: %f gfreq:%f DD (%f,%f) Dd(%f,%f) dd(%f,%f)\n",
+				 constraint, gfreq, mean_DD, SD_DD, mean_Dd, SD_DD, mean_dd, SD_dd);
+                      }
+                  );
                   if (constraint >= 3.0 || constraint <= -3.0) {
                     breakFlag = TRUE;
                     break;
@@ -919,29 +951,32 @@ int dprimeIdx;
               else
                 update_penetrance (&pedigreeSet, traitLocus);
               ret = compute_likelihood (&pedigreeSet);
-              cL[5]++; // MP QT/CT trait likelihood
-	      if (swProgressRequestFlag) {
-		swProgressRequestFlag = FALSE;
+              cL[5]++;  // MP QT/CT trait likelihood
+              if (swProgressRequestFlag) {
+                swProgressRequestFlag = FALSE;
                 DETAIL (0, "Trait likelihood calculations %lu%% complete", cL[5] * 100 / eCL[5]);
-	      }
+              }
 
               if (ret == -2)
                 ERROR ("Negative likelihood for trait");
 
               if (ret == -1) {
-		DIAG(OVERALL, 1, {
-		    fprintf (stderr, "dgf=%f\n", gfreq);
-		    for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
-		      pen_DD = modelRange->penet[liabIdx][0][penIdx];
-		      pen_Dd = modelRange->penet[liabIdx][1][penIdx];
-		      pen_dD = modelRange->penet[liabIdx][2][penIdx];
-		      pen_dd = modelRange->penet[liabIdx][3][penIdx];
-		      if (modelOptions->imprintingFlag)
-			fprintf (stderr, "Liab %d penentrance %f %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
-		      else
-			fprintf (stderr, "Liab %d penentrance %f %f %f\n", liabIdx + 1, pen_DD, pen_Dd, pen_dd);
-		    }
-		  });
+                DIAG (OVERALL, 1, {
+                      fprintf (stderr, "dgf=%f\n", gfreq);
+                      for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+                        pen_DD = modelRange->penet[liabIdx][0][penIdx];
+			pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+			pen_dD = modelRange->penet[liabIdx][2][penIdx];
+			pen_dd = modelRange->penet[liabIdx][3][penIdx];
+			if (modelOptions->imprintingFlag)
+			  fprintf (stderr, "Liab %d penentrance %f %f %f %f\n",
+				   liabIdx + 1, pen_DD, pen_Dd, pen_dD, pen_dd);
+                        else
+			  fprintf (stderr, "Liab %d penentrance %f %f %f\n",
+				   liabIdx + 1, pen_DD, pen_Dd, pen_dd);
+		      }
+                    }
+                );
                 ERROR ("Zero likelihood for trait");
               }
 
@@ -955,8 +990,8 @@ int dprimeIdx;
 
               log10_likelihood_null = pedigreeSet.log10Likelihood;
               if (isnan (log10_likelihood_null))
-		ERROR ("Trait likelihood is NAN");
-	    }   /* thresholdIdx */
+                ERROR ("Trait likelihood is NAN");
+            }   /* thresholdIdx */
           }     /* penIdx */
         }       /* paramIdx */
       } /* gfreq */
@@ -1058,14 +1093,14 @@ int dprimeIdx;
           prevPos = currPos;
         }       /* end of loop over the markers to set up locus list */
 
-	{
-	  int length;
-	  char message[MAXLOGMSG + 1], *pMessage = message;
-	  pMessage += length = snprintf (message, MAXLOGMSG, "New markers: ");
-	  for (k = 0; k < modelType->numMarkers; k++)
-	    snprintf (pMessage, MAXLOGMSG - length, " %d(%.2f)", markerLocusList.pLocusIndex[k], *get_map_position (markerLocusList.pLocusIndex[k]));
-	  DETAIL (0, message);
-	}
+        {
+          int length;
+          char message[MAXLOGMSG + 1], *pMessage = message;
+          pMessage += length = snprintf (message, MAXLOGMSG, "New markers: ");
+          for (k = 0; k < modelType->numMarkers; k++)
+            snprintf (pMessage, MAXLOGMSG - length, " %d(%.2f)", markerLocusList.pLocusIndex[k], *get_map_position (markerLocusList.pLocusIndex[k]));
+          DETAIL (0, message);
+        }
 
         locusList = &markerLocusList;
         xmissionMatrix = markerMatrix;
@@ -1077,7 +1112,10 @@ int dprimeIdx;
         if (modelOptions->polynomial == TRUE)
           freePolys ();
 
-	DIAG (XM, 1, { print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);});
+        DIAG (XM, 1, {
+            print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);
+	  }
+        );
 
         /* Calculate likelihood for the marker set */
         DETAIL (0, "Determining marker set likelihood");
@@ -1108,13 +1146,13 @@ int dprimeIdx;
         } else
           swPushPhase ('k', "evalMM");
         ret = compute_likelihood (&pedigreeSet);
-        cL[6]++; // MP marker likelihood
+        cL[6]++;        // MP marker likelihood
         swPopPhase ('k');
 
-	if (swProgressRequestFlag) {
-	  swProgressRequestFlag = FALSE;
-	  DETAIL (0, "Marker set likelihood evaluations %lu%% complete...\n", MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
-	}
+        if (swProgressRequestFlag) {
+          swProgressRequestFlag = FALSE;
+          DETAIL (0, "Marker set likelihood evaluations %lu%% complete...\n", MAX (cL[6] * 100 / eCL[6], (posIdx + 1) * 100 / numPositions));
+        }
 
         /* print out some statistics under dry run */
         if (modelOptions->dryRun != 0) {
@@ -1137,8 +1175,8 @@ int dprimeIdx;
           }
           pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
         }
-      } /* end of marker set change */
-
+      }
+      /* end of marker set change */
       prevFirstMarker = mp_result[posIdx].pMarkers[0];
       prevLastMarker = mp_result[posIdx].pMarkers[modelType->numMarkers - 1];
       if (markerSetChanged || prevTraitInd != mp_result[posIdx].trait)
@@ -1215,7 +1253,10 @@ int dprimeIdx;
         if (modelOptions->polynomial == TRUE) {
           pedigreeSetPolynomialClearance (&pedigreeSet);
           status = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
-	  DIAG (XM, 1, { print_xmission_matrix (altMatrix, savedLocusList.numLocus, 0, 0, tmpID);});
+          DIAG (XM, 1, {
+              print_xmission_matrix (altMatrix, savedLocusList.numLocus, 0, 0, tmpID);
+	    }
+          );
           if (modelOptions->polynomial == TRUE)
             freePolys ();
         }
@@ -1237,26 +1278,26 @@ int dprimeIdx;
             pPedigree->load_flag = 0;
         }
 
-	// Build the polynomial outside of the main loops
-	{
-	  char markerNo[8];
-	  sprintf (partialPolynomialFunctionName, "MDA_C%d_P%%sM", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
-	  for (k = 0; k < modelType->numMarkers; k++) {
-	    if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
-	      strcat (partialPolynomialFunctionName, "_T");
-	    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
-	    strcat (partialPolynomialFunctionName, markerNo);
-	  }
-	}
-	if (strstr (partialPolynomialFunctionName, "_T") == NULL)
-	  strcat (partialPolynomialFunctionName, "_T");
-	swPushPhase ('k', "buildMDA");
-	swStart (combinedBuildSW);
-	ret = compute_likelihood (&pedigreeSet);
-	swStop (combinedBuildSW);
-	swPopPhase ('k');
-	swPushPhase ('k', "evalMDA");
-	swStart (combinedComputeSW);
+        // Build the polynomial outside of the main loops
+        {
+          char markerNo[8];
+          sprintf (partialPolynomialFunctionName, "MDA_C%d_P%%sM", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+          for (k = 0; k < modelType->numMarkers; k++) {
+            if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
+              strcat (partialPolynomialFunctionName, "_T");
+            sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
+            strcat (partialPolynomialFunctionName, markerNo);
+          }
+        }
+        if (strstr (partialPolynomialFunctionName, "_T") == NULL)
+          strcat (partialPolynomialFunctionName, "_T");
+        swPushPhase ('k', "buildMDA");
+        swStart (combinedBuildSW);
+        ret = compute_likelihood (&pedigreeSet);
+        swStop (combinedBuildSW);
+        swPopPhase ('k');
+        swPushPhase ('k', "evalMDA");
+        swStart (combinedComputeSW);
 
         for (penIdx = 0; (penIdx == 0) || (modelOptions->dryRun == 0 && penIdx < modelRange->npenet); penIdx++) {
           paramSet.penIdx = penIdx;
@@ -1301,13 +1342,12 @@ int dprimeIdx;
             if (modelOptions->polynomial != TRUE)
               update_locus (&pedigreeSet, traitLocus);
 
-	    ret = compute_likelihood (&pedigreeSet);
-	    cL[7]++; // MP DT alternative likelihood
-	    if (swProgressRequestFlag) {
-	      swProgressRequestFlag = FALSE;
-	      DETAIL (((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * eCL[7] / cL[7] -
-		       (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60,
-		      "Combined likelihood evaluations %lu%% complete (~%lu min left)", cL[7] * 100 / eCL[7]);
+            ret = compute_likelihood (&pedigreeSet);
+            cL[7]++;    // MP DT alternative likelihood
+            if (swProgressRequestFlag) {
+              swProgressRequestFlag = FALSE;
+              DETAIL (((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * eCL[7] / cL[7] -
+                      (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60, "Combined likelihood evaluations %lu%% complete (~%lu min left)", cL[7] * 100 / eCL[7]);
             }
             /* Print out some statistics under dry run */
             if (modelOptions->dryRun != 0) {
@@ -1534,7 +1574,10 @@ int dprimeIdx;
       free (markerNameList);
     }
   }
-  DIAG (OVERALL, 1, {dumpTrackingStats (cL, eCL);});
+  DIAG (OVERALL, 1, {
+      dumpTrackingStats (cL, eCL);
+    }
+  );
 
   if (fpIR != NULL) {
     if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
