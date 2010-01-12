@@ -66,12 +66,6 @@ void kelvinInit (int argc, char *argv[])
 #ifdef DMTRACK
   INFO ("Dynamic memory usage dumping is turned on, so performance will be poor!");
 #endif
-#ifdef GPROF
-  INFO ("GNU profiler (gprof) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
-#endif
-#ifdef GCOV
-  INFO ("GNU coverage analyzer (gcov) run, use \"kill -%d %d\" to finish early.", SIGTERM, (int) getpid ());
-#endif
 
 #ifdef USE_GSL
   INFO ("Using GNU Scientific Library (GSL) statistical functions instead of internal ones");

@@ -231,8 +231,6 @@ Loop sleeping for MONSTATDELAYSEC seconds and then:
 
 - Optionally write performance statistics to a file for graphing with gnuplot.
 - Optionally display dynamic statistics.
-- Used to do thrashing checks and "program apoptosis", but that's commented out.
-Thrashing was checked after some multiple of the MONSTATDELAYSEC periods.
 
   @author Bill Valentine-Cooper - overall content.
   @par Reviewers: None.

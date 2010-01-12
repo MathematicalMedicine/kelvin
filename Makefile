@@ -128,6 +128,9 @@ ifneq (,$(wildcard /usr/include/execinfo.h))
   CFLAGS += -DBACKTRACE # Add backtrace where supported
 endif
 
+# Flags for BCMM use only
+
+CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution purposes
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
 #CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
 #CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every raw 8Mp and at milestones
@@ -141,6 +144,7 @@ endif
 #CFLAGS += -DPOLYCOMP_DL # Enable compilation of dynamic library code for selected polynomials
 #CFLAGS += -DPOLYCHECK_DL # Keep both built and compiled DL polys and compare results (can be noisy!)
 #CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
+#CFLAGS += -DFULLLOG # Write all log messages to kelvin.full_log if TELLRITA isn't working
 #ADD_LDFLAGS += -lsocket -lnsl # ditto for under Solaris
 #CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
 #CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13, no OpenMP

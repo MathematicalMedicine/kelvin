@@ -181,7 +181,8 @@ void swDiagTerm(void);
 
 /* These are the current facility levels, and I need a new way of defining them.
    I refer to them in the macros as environment levels since I intend to set them
-   using environment variables. */
+   using environment variables. This is still in progress. In the meantime, you can
+   explicitly set them in code or the debugger, e.g. envDiagLevel[OVERALL] = 1. */
 
 enum DIAG_FACILITIES {
   OVERALL,

@@ -44,34 +44,18 @@
 
   @version $Id$
 
-  COMPILE-TIME CONDITIONALS
+  COMPILE-TIME CONDITIONALS of global consequence...
 
-  There are numerous compilation conditions that affect kelvin. Many
-  of them are diagnostic in nature.
-  
-  - DMTRACK - enable exhaustive memory management tracking. Keeps track
-  of all allocations and frees by source code line, and can provide
-  cross-references at any time by total utilization or retention. Can
-  also report on cross-module operations, i.e. one module allocates and
-  another module frees the same chunk of memory.
+  There are numerous user-specified compilation conditions that affect 
+  kelvin. Most of them are diagnostic in nature and should not be used
+  by the uninitiated.
 
-  - DMUSE
-  - FAKEEVALUATE
-  - GCOV
-  - GPROF
+  - USE_GSL - enables use of the GNU Scientific Library for quantitative
+  trait distributions instead of the internally-supplied routines. Definitely
+  a performance improvement, and probably an accuracy one as well.
 
-  - MEMGRAPH - provides the same information as MEMSTATUS but in a
-  format appropriate for graphing with a tool like gnuplot. The file
-  is named kelvin_<pid>_memory.dat, where <pid> is the process id.
-  These files will need to be cleaned-up periodically, so this 
-  conditional is not on by default. This is only possible on systems
-  with a supported pmap command.
-
-  - MEMSTATUS - handy when there is concern about memory capacity,
-  but can really clutter-up the display. Runs in a child process and
-  reports on the main process' memory usage every 30 seconds. This
-  is only possible on systems with a supported pmap command.
-
+  - USE_OPENMP - enables use of OpenMP-compliant multi-threading. Internal
+  references use _OPENMP, which is set by the compiler.
   - _OPENMP - this conditional is not defined by the user, but rather
   set by the compiler when the -fopenmp flag is specified to enable
   OpenMP multithreading. Aspects of polynomial build and evaluation
@@ -90,7 +74,40 @@
   set the OMP_NUM_THREADS environment variable to 1, and no locking
   conflicts will occur.
 
-  - Many more are documented in utils/polynomial.c
+  COMPILE-TIME CONDITIONALS for diagnostic and test purposes...
+
+  - DISTRIBUTION - when defined, eliminates all diagnostics from the
+  source.
+
+  - FULLLOG - writes all logging messages to a file named kelvin.full_log
+  in the current directory.
+
+  - VERIFY_GSL - uses both internal and GSL statistical routines and
+  compares the results.
+
+  - MEMSTATUS - handy when there is concern about memory capacity,
+  but can really clutter-up the display. Runs in a child process and
+  reports on the main process' memory usage every 30 seconds. This
+  is only possible on systems with a supported pmap command.
+
+  - MEMGRAPH - provides the same information as MEMSTATUS but in a
+  format appropriate for graphing with a tool like gnuplot. The file
+  is named kelvin_<pid>_memory.dat, where <pid> is the process id.
+  These files will need to be cleaned-up periodically, so this 
+  conditional is not on by default. This is only possible on systems
+  with a supported pmap command.
+  
+  - DMTRACK - enable exhaustive memory management tracking. Keeps track
+  of all allocations and frees by source code line, and can provide
+  cross-references at any time by total utilization or retention. Can
+  also report on cross-module operations, i.e. one module allocates and
+  another module frees the same chunk of memory.
+
+  - DMUSE - our own static memory management, implemented only for
+  experimental purposes. See sw.c for details.
+
+  - Many COMPILE-TIME CONDITIONALS specific to polynomial representation
+  are described in utils/polynomial.c.
 
 */
 

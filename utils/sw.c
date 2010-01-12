@@ -1006,8 +1006,10 @@ udpSend (char *hostName, int serverPort, char *message)
 }
 #endif
 
+#ifdef FULLLOG
 FILE *fullLogFile = NULL;
 char *fullLogFileName = "kelvin.full_log";
+#endif
 
 void
 swLogMsg (FILE *stream, char *message)
@@ -1027,10 +1029,12 @@ swLogMsg (FILE *stream, char *message)
   if (udpSend ("levi-montalcini.ccri.net", 4950, udpBuffer) == EXIT_SUCCESS)
     return;
 #endif
+#ifdef FULLLOG
   if (fullLogFile == 0)
     fullLogFile = fopen (fullLogFileName, "w+");
   fprintf (fullLogFile, "%02d/%02d/%02d %02d:%02d:%02d %s\n", nowTm->tm_year - 100, nowTm->tm_mon, nowTm->tm_mday,
 	   nowTm->tm_hour, nowTm->tm_min, nowTm->tm_sec, message);
+#endif
   return;
 }
 
