@@ -119,25 +119,28 @@ void dk_writeMPMODHeader ()
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     if (modelType->trait == DT)
       if (modelOptions->imprintingFlag)
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dD, dd)\n", liabIdx);
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", modelRange->lclassLabels[liabIdx]);
       else
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)\n", liabIdx);
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", modelRange->lclassLabels[liabIdx]);
     else {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE)
 	if (modelOptions->imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD",
+		   modelRange->lclassLabels[liabIdx]);
 	else
-	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD",
+		   modelRange->lclassLabels[liabIdx]);
       else
 	if (modelOptions->imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDF,ddDF", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDF,ddDF", modelRange->lclassLabels[liabIdx]);
 	else
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", modelRange->lclassLabels[liabIdx]);
       if (modelType->trait == CT)
-	fprintf (fpMOD, ",Thesh)\n");
-      else
-	fprintf (fpMOD, ")\n");
+	fprintf (fpMOD, ",Thesh)");
+      else 
+	fprintf (fpMOD, ")");
     }
+  fprintf (fpMOD, "\n");
   fflush (fpMOD);
 }
 
@@ -178,9 +181,10 @@ void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel 
 	/* Theshold */
 	fprintf (fpMOD, ",%.3f", model->pen[liabIdx].threshold);
     }
+    fprintf (fpMOD, ")");
   }
 
-  fprintf (fpMOD, ")\n");
+  fprintf (fpMOD, "\n");
   fflush (fpMOD);
 }
 
@@ -236,20 +240,22 @@ void dk_write2ptMODHeader ()
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     if (modelType->trait == DT)
       if (modelOptions->imprintingFlag)
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", liabIdx);
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dD,dd)", modelRange->lclassLabels[liabIdx]);
       else
-	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", liabIdx);
+	fprintf (fpMOD, " LC%dPV(DD,Dd,dd)", modelRange->lclassLabels[liabIdx]);
     else {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE)
 	if (modelOptions->imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,dDMean,ddMean,DDSD,DdSD,dDSD,ddSD",
+		   modelRange->lclassLabels[liabIdx]);
 	else
-	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD",
+		   modelRange->lclassLabels[liabIdx]);
       else
 	if (modelOptions->imprintingFlag)
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,dDDF,ddDF", modelRange->lclassLabels[liabIdx]);
 	else
-	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", liabIdx);
+	  fprintf (fpMOD, " LC%dPV(DDDF,DdDF,ddDF", modelRange->lclassLabels[liabIdx]);
       if (modelType->trait == CT)
 	fprintf (fpMOD, ",Thresh)");
       else
