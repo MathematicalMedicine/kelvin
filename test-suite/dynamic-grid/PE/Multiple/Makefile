@@ -19,4 +19,4 @@ test-FIXED :
 	echo Fixed-grid comparison not available
 
 clean :
-	- rm -rf PC* BR.Out-PCs ppl.out kelvin.out* LRTest*
+	- rm -rf PC* BR.Out-PCs br.out ppl.out kelvin.out* LRTest*
