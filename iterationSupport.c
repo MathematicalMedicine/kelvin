@@ -1386,6 +1386,27 @@ void iterateMain ()
       else
         /* multipoint QT or COMBINED */
       {
+	// Build the polynomial outside of the main loops
+	{
+	  char markerNo[8];
+	  sprintf (partialPolynomialFunctionName, "MQA_C%d_P%%sM", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+	  for (k = 0; k < modelType->numMarkers; k++) {
+	    if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
+	      strcat (partialPolynomialFunctionName, "_T");
+	    sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
+	    strcat (partialPolynomialFunctionName, markerNo);
+	  }
+	}
+	if (strstr (partialPolynomialFunctionName, "_T") == NULL)
+	  strcat (partialPolynomialFunctionName, "_T");
+	swPushPhase ('k', "buildMQA");
+	swStart (combinedBuildSW);
+	ret = compute_likelihood (&pedigreeSet);
+	swStop (combinedBuildSW);
+	swPopPhase ('k');
+	swPushPhase ('k', "evalMQA");
+	swStart (combinedComputeSW);
+
         for (gfreqInd = 0; gfreqInd < modelRange->ngfreq; gfreqInd++) {
           gfreq = modelRange->gfreq[gfreqInd];
           pLocus->pAlleleFrequency[0] = gfreq;
@@ -1466,53 +1487,14 @@ void iterateMain ()
                 else
                   status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
-                /* If we're not on the first iteration, it's not a polynomial build, so
-                 * show progress at 1 minute intervals. Have a care to avoid division by zero. */
-                char markerNo[8];
-                sprintf (partialPolynomialFunctionName, "MQA_C%d_P%%sM", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
-                for (k = 0; k < modelType->numMarkers; k++) {
-                  if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
-                    strcat (partialPolynomialFunctionName, "_T");
-                  sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
-                  strcat (partialPolynomialFunctionName, markerNo);
-                }
-                if (strstr (partialPolynomialFunctionName, "_T") == NULL)
-                  strcat (partialPolynomialFunctionName, "_T");
-                if (gfreqInd != 0 || paramIdx != 0 || penIdx != 0) {
-                  swPushPhase ('k', "evalMQA");
-                  swStart (combinedComputeSW);
-                  ret = compute_likelihood (&pedigreeSet);
-                  cL[8]++;
-                  swStop (combinedComputeSW);
-                  if (swProgressRequestFlag) {
-                    swProgressRequestFlag = FALSE;
-                    if (cL[8] > 1) {    // The first time thru we have no basis for estimation
-#ifndef SIMPLEPROGRESS
-                      fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
-                          "Combined likelihood evaluations", cL[8] * 100 / eCL[8], ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * eCL[8] / cL[8] - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
-#else
-                      fprintf (stdout, "%s %lu%% complete (~%lu min left)\r",
-                          "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]),
-                          ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * (eCL[6] + eCL[8]) / (cL[6] + cL[8]) - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
-#endif
-                      fflush (stdout);
-                    }
-                  }
-                  swPopPhase ('k');
-                } else {        // This _is_ the first iteration
-                  swPushPhase ('k', "buildMQA");
-                  swStart (combinedBuildSW);
-                  ret = compute_likelihood (&pedigreeSet);
-                  cL[8]++;
-                  swStop (combinedBuildSW);
-#ifndef SIMPLEPROGRESS
-                  fprintf (stdout, "%s %lu%% complete at %lu\r", "Combined likelihood evaluations", cL[8] * 100 / eCL[8], nodeId);
-#else
-                  fprintf (stdout, "%s %lu%% complete\r", "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]));
-#endif
-                  fflush (stdout);
-                  swPopPhase ('k');
-                }
+		ret = compute_likelihood (&pedigreeSet);
+		cL[8]++; // MP QT alternative likelihood
+		if (swProgressRequestFlag) {
+		  swProgressRequestFlag = FALSE;
+		  DETAIL (((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * eCL[8] / cL[8] -
+			   (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60, "Combined likelihood evaluations %lu%% complete (~%lu min left)", cL[8] * 100 / eCL[8]);
+		}
+
                 log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                 /* add the result to the right placeholder */
                 for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -1526,13 +1508,10 @@ void iterateMain ()
           }     /* end of parameter loop */
         }       /* end of gene freq */
 
-#ifndef SIMPLEPROGRESS
-        fprintf (stdout, "%s %lu%% complete (~%lu min left)\n", "Combined likelihood evaluations", cL[8] * 100 / eCL[8], (combinedComputeSW->swAccumWallTime * eCL[8] / cL[8] - combinedComputeSW->swAccumWallTime) / 60);
-#else
-        fprintf (stdout, "%s %lu%% complete (~%lu min left)\r", "Calculations", (cL[6] + cL[8]) * 100 / (eCL[6] + eCL[8]), (combinedComputeSW->swAccumWallTime * (eCL[6] + eCL[8]) / (cL[6] + cL[8]) - combinedComputeSW->swAccumWallTime) / 60);
-#endif
-
       } /* end of QT */
+
+      swStop (combinedComputeSW);
+      swPopPhase ('k');
 
       /* Print out average and log10(max) and maximizing parameters */
       avgLR = mp_result[posIdx].het_lr_total / (modelRange->nalpha * mp_result[posIdx].lr_count);
