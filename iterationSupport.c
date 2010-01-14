@@ -997,7 +997,7 @@ void iterateMain ()
       } /* gfreq */
     }   /* end of QT */
 
-    DETAIL (0, "Trait likelihood calculations complete");
+    SUBSTEP (0, "Trait likelihood calculations complete");
 
     if (modelOptions->polynomial == TRUE) {
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -1070,7 +1070,7 @@ void iterateMain ()
       locusList->traitLocusIndex = traitIndex;
       locusList->traitOrigLocus = traitLocus;
 
-      SUBSTEP (((posIdx + 1) * 100 / numPositions), "Starting w/trait locus at %.2f (%d/%d positions)", traitPos, posIdx + 1, numPositions);
+      SUBSTEP (((posIdx * 100) / numPositions), "Starting w/trait locus at %.2f (%d/%d positions)", traitPos, posIdx + 1, numPositions);
 
       markerSetChanged = FALSE;
       if (prevFirstMarker != mp_result[posIdx].pMarkers[0] || prevLastMarker != mp_result[posIdx].pMarkers[modelType->numMarkers - 1]) {
@@ -1344,10 +1344,14 @@ void iterateMain ()
 
             ret = compute_likelihood (&pedigreeSet);
             cL[7]++;    // MP DT alternative likelihood
+
             if (swProgressRequestFlag) {
               swProgressRequestFlag = FALSE;
-              DETAIL (((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * eCL[7] / cL[7] -
-                      (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60, "Combined likelihood evaluations %lu%% complete (~%lu min left)", cL[7] * 100 / eCL[7]);
+
+              DETAIL (0, "Combined likelihood evaluations %lu%% complete (~%lu min left)", cL[7] * 100 / eCL[7],
+		      ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * eCL[7] / cL[7] -
+		       (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
+
             }
             /* Print out some statistics under dry run */
             if (modelOptions->dryRun != 0) {

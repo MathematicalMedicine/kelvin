@@ -707,7 +707,7 @@ double evaluateValue (Polynomial * p)
 
   if (swProgressRequestFlag) {
     swProgressRequestFlag = FALSE;
-    DETAIL (0, "Evaluating polynomial, currently at %1.2g iterations", (double) evaluateValueCount);
+    swLogProgress(3 /* DETAIL + 1 */, 0, "Evaluating polynomial, currently at %1.2g iterations", (double) evaluateValueCount);
   }
 
 #ifdef EVALUATESW
@@ -2828,7 +2828,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 
   if (swProgressRequestFlag) {
     swProgressRequestFlag = FALSE;
-    DETAIL (0, "Evaluating polynomial, currently at %1.2g iterations", (double) evaluatePolyCount);
+    swLogProgress(3 /* DETAIL + 1 */, 0, "Evaluating polynomial, currently at %1.2g iterations", (double) evaluatePolyCount);
   }
 
 #ifdef EVALUATESW
