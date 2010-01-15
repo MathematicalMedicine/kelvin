@@ -137,7 +137,7 @@
     <h3>Building <span class='sc'>Kelvin</span></h3>
 
     These instructions assume that <span class='sc'>Kelvin</span> is being built on a Linux or
-    Unix system of recent vintage, with a GCC compiler, and that the user is familiar with the
+    Unix system of recent vintage, with a GCC compiler and that the user is familiar with the
     command line environment on that system.
     <ul>
       <li>Unpack the distribution archive with <tt>gunzip</tt> and <tt>tar</tt>. Move into
@@ -200,9 +200,14 @@
       </li>
     </ol>    
 
-    <font color='red'>Old text, replaced by text below. Are we dropping the gKelvin screenshots?
     <h3>Creating A Configuration File</h3>
 
+    There are two ways of creating a configuration file. If you are using a xterm or other X-windows-compatible
+    mechanism to access your system, you can use gKelvin, which is a simple graphic interface that will lead
+    you thru the necessary steps and ensure that your configuration is syntactically correct and internally
+    consistent. If you cannot or do not wish to use gKelvin, you can prepare your configuration file by hand
+    with any text editor.
+<p>
     The configuration file is generated from <tt><font color='red'>gKelvin</font></tt>. The
     GUI provides options for different types of analyses and will write out <tt>kelvin.conf</tt>.
     After starting <tt>gKelvin</tt>, open a new file. You may then <a href='gKelvin-1.png'>select
@@ -210,7 +215,6 @@
     for setting <a href='gKelvin-2.png'>two-point options</a>, or
     <a href='gKelvin-3.png'>multipoint options</a>. When you've finished,
     <a href='gKelvin-4.png'>save the configuation file.</a>
-    </font>
 
     <h3>Creating a Configuration File</h3>
 
@@ -565,9 +569,6 @@
     be broken into general categories, with a small number of possibilities for each category.
     Some analyses/options are compatible with other analyses/options, some are not.
 
-    <p><font color='red'>This bit needs to be edited to 1) better describe the different
-    types of analysis and 2) remove references to specific directives.
-  
     <h3 id='twopoint_vs_multipoint'>Two-Point vs. Multipoint</h3>
 
     Two-point analysis is the default. Multipoint analysis is enabled with the
@@ -638,7 +639,6 @@
     analysis is incompatible with <a href='#lc_vs_nolc'>covariate dependence</a> and 
     <a href='#traitmarker_vs_markermarker'>marker-to-marker</a> analyses.
 
-    </font>
     <p>
     <a href="config.gif">Here is a directed graph</a> illustrating the legitimate combinations
     of principal features and options. It illustrates the twenty-two current configuration
@@ -681,7 +681,7 @@
 
     When <span class='sc'>Kelvin</span> is run, it first displays version, build and
     configuration information. All messages are prefaced with the current date and time. Messages
-    can be divided into three categories:
+    fall into three categories:
     <ol>
       <li><b>Progress messages</b>, which begin with an at-sign (@) and elapsed time from the start of the run.
 	They are indented according to their level of detail. They
@@ -708,13 +708,13 @@
     <tr><td align='right' style='background: #888888'><tt> 2 </tt></td>
 <td><tt>10/01/15 08:26:25 kelvin V0.38.0 built Jan 15 2010 07:51:25</tt></td></tr>
     <tr><td align='right' style='background: #888888'><tt> 3 </tt></td>
-<td><tt>10/01/15 08:26:25 $Id$</tt></td></tr>
+<td><tt>10/01/15 08:26:25 $&nbsp;Id: kelvin.c 2574 2010-01-12 17:17:10Z whv001 $</tt></td></tr>
     <tr><td align='right' style='background: #888888'><tt> 4 </tt></td>
-<td><tt>10/01/15 08:26:25 $Id$</tt></td></tr>
+<td><tt>10/01/15 08:26:25 $&nbsp;Id: likelihood.c 2550 2010-01-05 16:31:50Z whv001 $</tt></td></tr>
     <tr><td align='right' style='background: #888888'><tt> 5 </tt></td>
-<td><tt>10/01/15 08:26:25 $Id$</tt></td></tr>
+<td><tt>10/01/15 08:26:25 $&nbsp;Id: locus.c 2548 2010-01-05 13:29:27Z whv001 $</tt></td></tr>
     <tr><td align='right' style='background: #888888'><tt> 6 </tt></td>
-<td><tt>10/01/15 08:26:25 $Id$</tt></td></tr>
+<td><tt>10/01/15 08:26:25 $&nbsp;Id: polynomial.c 2580 2010-01-14 17:54:49Z whv001 $</tt></td></tr>
     <tr><td align='right' style='background: #888888'><tt> 7 </tt></td>
 <td><tt>10/01/15 08:26:25 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)</tt></td></tr>
     <tr><td align='right' style='background: #888888'><tt> 8 </tt></td>
