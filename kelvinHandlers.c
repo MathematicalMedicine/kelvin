@@ -26,20 +26,21 @@ void quitSignalHandler (int ourSignal)
 #ifdef BACKTRACE
   swDumpStack ();
 #endif
-  swProgressRequestFlag = TRUE;
 #ifdef POLYSTATISTICS
   if (modelOptions->polynomial == TRUE)
     polyDynamicStatistics ("Signal received");
   else
 #endif
+#ifndef DISTRIBUTION
     swDump (overallSW);
+#endif
 #ifdef DMTRACK
   swLogPeaks (stdout, "Signal");
 #endif
 #ifdef PTMALLOC3
   malloc_stats ();
 #endif
-
+  swLogTimedProgress ();
 }
 
 #if defined (GPROF) || (GCOV)

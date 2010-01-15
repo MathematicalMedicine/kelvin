@@ -171,6 +171,7 @@ extern int swSharedDiagMemoryID;
 
 char *formatElapsedTime (unsigned int t, char *buffer);
 void swLogProgress(int level, float percentDone, char *format, ...);
+void swLogTimedProgress(void);
 void swStartProgressWakeUps(int seconds);
 void swDiagInit(void);
 void swDiagTerm(void);

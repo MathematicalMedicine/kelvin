@@ -1019,7 +1019,7 @@ swLogMsg (FILE *stream, char *message)
 
   nowSec = time (NULL);
   nowTm = localtime(&nowSec);
-  fprintf (stream, "%02d/%02d/%02d %02d:%02d:%02d %s\n", nowTm->tm_year - 100, nowTm->tm_mon, nowTm->tm_mday,
+  fprintf (stream, "%02d/%02d/%02d %02d:%02d:%02d %s\n", nowTm->tm_year - 100, nowTm->tm_mon + 1, nowTm->tm_mday,
 	   nowTm->tm_hour, nowTm->tm_min, nowTm->tm_sec, message);
 #ifdef TELLRITA
   char udpBuffer[MAXUDPMSG + 1];
@@ -1032,7 +1032,7 @@ swLogMsg (FILE *stream, char *message)
 #ifdef FULLLOG
   if (fullLogFile == 0)
     fullLogFile = fopen (fullLogFileName, "w+");
-  fprintf (fullLogFile, "%02d/%02d/%02d %02d:%02d:%02d %s\n", nowTm->tm_year - 100, nowTm->tm_mon, nowTm->tm_mday,
+  fprintf (fullLogFile, "%02d/%02d/%02d %02d:%02d:%02d %s\n", nowTm->tm_year - 100, nowTm->tm_mon + 1, nowTm->tm_mday,
 	   nowTm->tm_hour, nowTm->tm_min, nowTm->tm_sec, message);
 #endif
   return;
@@ -1140,7 +1140,7 @@ swLogProgress(int level, float percentDone, char *format, ...) {
 volatile sig_atomic_t swProgressRequestFlag = FALSE;
 
 /// Global number of minutes to delay between progress updates.
-int swProgressDelaySeconds = 0;
+int swProgressDelaySeconds;
 
 /**
   Code for the progress thread.  We start by setting the request flag, 
@@ -1220,17 +1220,21 @@ long swGetMaximumPMK(void) {
 }
 
 volatile sig_atomic_t *envDiagLevel;
+#ifndef DISTRIBUTION
 int swSharedDiagMemoryID;
+#endif
 
 void swDiagInit(void) {
   int i;
+  swProgressDelaySeconds = 120; ///< Default of two minutes delay between progress notifications
+#ifndef DISTRIBUTION
   if ((swSharedDiagMemoryID = shmget ((key_t) getpid (), sizeof (int) * MAX_DIAG_FACILITY, 0666|IPC_CREAT)) == -1)
     ERROR ("Cannot create shared memory segment for diagnostics, %s", strerror(errno));
 
   INFO ("Use segment ID %d for diagnostic purposes", swSharedDiagMemoryID);
   if ((envDiagLevel = shmat (swSharedDiagMemoryID, NULL, 0)) == ((void *) -1))
     ERROR ("Cannot attach shared memory segment for diagnostics, %s", strerror(errno));
-
+#endif
   // Not needed if we're setting them all to zero, since shmget does that.
   for (i=0; i<MAX_DIAG_FACILITY; i++)
     envDiagLevel[i] = 0;
@@ -1238,10 +1242,12 @@ void swDiagInit(void) {
 }
 
 void swDiagTerm(void) {
+#ifndef DISTRIBUTION
   if (shmdt ((void *) envDiagLevel) != 0)
     ERROR ("Cannot detach shared memory segment, use ipcrm to clean-up");
   if (shmctl(swSharedDiagMemoryID, IPC_RMID, (struct shmid_ds *) NULL) != 0)
     ERROR ("Cannot mark shared memory segment for deletion, use ipcrm to clean-up");
+#endif
   return;
 }
 
