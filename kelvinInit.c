@@ -113,6 +113,8 @@ void kelvinInit (int argc, char *argv[])
   } else
     ERROR ("usage: %s <conffile> [--directive arg1 arg2... [--directive...]]\n", argv[0]);
 
+  INFO ("Using configuration file %s", configfile);
+
   /* Set modelRange, modelOptions and modelType to default values */
   initializeDefaults ();
 

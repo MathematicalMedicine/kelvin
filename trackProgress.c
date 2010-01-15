@@ -462,13 +462,21 @@ estimateIterations (unsigned long eCL[])
         totalLoopsForDPrime = 1;
 
       if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM)
-        INFO ("%dTh*%d pair(s) of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)",
-	      modelRange->ntheta, (originalLocusList.numLocus - 1), modelRange->nalpha, 
-	      modelRange->ngfreq, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
+	if (modelOptions->integration)
+	  INFO ("%d pair(s) over a dynamic space (%dLC) for %d pedigree(s)",
+	      (originalLocusList.numLocus - 1), modelRange->nlclass, pedigreeSet.numPedigree);
+	else
+	  INFO ("%dTh*%d pair(s) of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)",
+		modelRange->ntheta, (originalLocusList.numLocus - 1), modelRange->nalpha, 
+		modelRange->ngfreq, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
       else
-        INFO ("%dTh*%dD' cases of %dAL*%dGF*%dp1*%dpv(%dLC)' space for %d pedigree(s)",
-	      modelRange->ntheta, totalLoopsForDPrime, modelRange->nalpha, modelRange->ngfreq, 
-	      modelRange->nparam, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
+	if (modelOptions->integration)
+	  INFO ("%dD' cases over a dynamic space (%dLC) for %d pedigree(s)",
+	      totalLoopsForDPrime, modelRange->nlclass, pedigreeSet.numPedigree);
+	else
+	  INFO ("%dTh*%dD' cases of %dAL*%dGF*%dp1*%dpv(%dLC)' space for %d pedigree(s)",
+		modelRange->ntheta, totalLoopsForDPrime, modelRange->nalpha, modelRange->ngfreq, 
+		modelRange->nparam, modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
       strcpy (analysisType, "Trait-to-marker Two-Point, ");
       if (modelType->trait == DT) {
         strcat (analysisType, "Dichotomous Trait, ");
@@ -514,9 +522,13 @@ estimateIterations (unsigned long eCL[])
        * polynomials for each pedigree incorporate alpha?, # MP markers used in analysis.
        * 
        */
-      INFO ("%dTL of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)",
-	    modelRange->ntloc, modelRange->nalpha, modelRange->ngfreq, 
-	    modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
+      if (modelOptions->integration)
+	INFO ("%dTL over a dynamic space (%dLC) for %d pedigree(s)",
+	      modelRange->ntloc, modelRange->nlclass, pedigreeSet.numPedigree);
+      else
+	INFO ("%dTL of %dAL*%dGF*%dpv(%dLC) space for %d pedigree(s)",
+	      modelRange->ntloc, modelRange->nalpha, modelRange->ngfreq, 
+	      modelRange->npenet, modelRange->nlclass, pedigreeSet.numPedigree);
       sprintf (analysisType, "Trait-to-marker, Sex-%s Multipoint (w/%d loci), ",
 	       modelOptions->mapFlag == SS ? "Specific" : "Averaged", 
 	       modelType->numMarkers + originalLocusList.numTraitLocus);

@@ -58,7 +58,9 @@ void kelvinTerm () {
 
   /* Final dump and clean-up for performance. */
   swStop (overallSW);
+#ifndef DISTRIBUTION
   swDump (overallSW);
+#endif
 #ifdef POLYSTATISTICS
   if (modelOptions->polynomial == TRUE)
     polyStatistics ("End of run");
