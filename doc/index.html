@@ -494,8 +494,6 @@
         <tt>USE_OPENMP</tt> has been enabled.</li>
       <li><tt>USE_PTMALLOC</tt> and <tt>USE_HOARD</tt> Enable linking with the ptmalloc3 or
         Hoard replacement memoray allocator libraries.</li>
-      <li><tt>SIMPLEPROGRESS</tt> Enables a simplified percentage-completion display, as opposed
-        to a more detailed version. This is enabled by default.</li>
       <li><tt>MEMSTATUS</tt> Enables display of elapsed time and memory consumption every 30
         seconds. Disabled by default.</li>
       <li><tt>MEMGRAPH</tt> Logs elapsed time and memory consumption to a file named
@@ -503,7 +501,7 @@
         <tt>gnuplot</tt> with a simple <tt>load "&lt;filename&gt;"</tt> command. Disabled by
         default.</li>
       <li><tt>POLYSTATISTICS</tt> Enables a dump of extensive polynomial build statistics at
-        every 2 million terms and at build milestones. Disabled by default.</li>
+        every 8 million raw terms and at build milestones. Disabled by default.</li>
       <li><tt>TREEEVALUATE</tt> Enables use of a polynomial evaluation technique that is optimal
         in situations where polynomials are evaluated only a few times each. This is useful only
         in rare cases, and is disabled by default.</li>
@@ -679,43 +677,92 @@
     If you do need to send us information for diagnosis, please include the configuration and
     data files along with the output from the run.
 
-    <h3>Diagnostic Messages</h3>
+    <h3>Status Messages</h3>
 
-    When <span class='sc'>Kelvin</span> is run, it first displays version, build and run
-    configuration information, e.g.:
-    <pre>
-10/01/14 15:00:03 @0s, Initializing
-10/01/14 15:00:03 kelvin V0.38.0 built Jan 14 2010 14:47:11
-10/01/14 15:00:03 $Id$
-10/01/14 15:00:03 $Id$
-10/01/14 15:00:03 $Id$
-10/01/14 15:00:03 $Id$
-10/01/14 15:00:03 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
-10/01/14 15:00:03 Using internal statistical functions instead of GNU Scientific Library (GSL)
-10/01/14 15:00:03 GCC optimization level 2 enabled
-10/01/14 15:00:03 To check status (at some risk), type CTRL-\ or type "kill -3 5823"
-10/01/14 15:00:03 @0s, Processing analysis configuration
-10/01/14 15:00:03 @0s, Read and process config file t.r
-10/01/14 15:00:03 Computation is done in polynomial mode
-10/01/14 15:00:03 polynomialScale is 1 (1-10, 1 is default)
-10/01/14 15:00:03 Integration is done numerically (dkelvin)
-10/01/14 15:00:03 Further progress will be displayed at 240 second intervals
-10/01/14 15:00:03 6TL of 0AL*0GF*0pv(1LC) space for 24 pedigree(s)
-10/01/14 15:00:03 Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.
-    </pre>
-    </font>
+    When <span class='sc'>Kelvin</span> is run, it first displays version, build and
+    configuration information. All messages are prefaced with the current date and time. Messages
+    can be divided into three categories:
+    <ol>
+      <li><b>Progress messages</b>, which begin with an at-sign (@) and elapsed time from the start of the run.
+	They are indented according to their level of detail. They
+	are relatively inconsequential, and intended only to let you know how much progress has been made
+	on the analysis. You can control how much detail is provided and how frequently messages are
+      displayed with the <a href='#progresslevel'>ProgressLevel</a> and <a href='#progressdelayseconds'>ProgressDelaySeconds</a>
+	directives. </li>
+      <li><b>Diagnostic messages</b>, which begin with a severity indication and then provide a description
+	of the difficulty encountered. Severity levels are <b>WARNING</b>, which indicates a potential problem
+	that requires your attention in order to ensure the integrity of the analysis results; 
+	<b>ERROR</b>, which indicates
+	some kind of analysis problem that will prevent the run from continuing; and <b>FATAL</b>, which indicates
+	an internal integrity failure in <span class='sc'>Kelvin</span> that should be brought to the attention of
+	the developers. </li>
+	<li><b>Informational messages</b>, are essentially everything else, and while helpful, do not necessarily
+	  need to be reviewed in order to ensure the integrity of the analysis results.
+</ol>
 
-    The first line is the <span class='sc'>Kelvin</span> major version and build information,
-    and the subsequent lines that contain "Id:" are source-managed component version information.
-    Next is the compiler verison number, followed by important compilation conditionals as
-    specified in the Makefile and run characteristics as influenced by environment variables. In
-    the example given, OpenMP support status and the number of threads used (0 selects the
-    platform-specific default number of threads) is displayed. Other options and their
-    corresponding messages are covered in the <a href="#building"> Building and Testing</a>
-    section.
+    For example:
+<p>
+  <table cellspacing=2>
+    <tr><td align='right' style='background: #888888'><tt> 1 </tt></td>
+<td><tt>10/01/15 08:26:25 @0s, Initializing</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 2 </tt></td>
+<td><tt>10/01/15 08:26:25 kelvin V0.38.0 built Jan 15 2010 07:51:25</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 3 </tt></td>
+<td><tt>10/01/15 08:26:25 $Id$</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 4 </tt></td>
+<td><tt>10/01/15 08:26:25 $Id$</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 5 </tt></td>
+<td><tt>10/01/15 08:26:25 $Id$</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 6 </tt></td>
+<td><tt>10/01/15 08:26:25 $Id$</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 7 </tt></td>
+<td><tt>10/01/15 08:26:25 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 8 </tt></td>
+<td><tt>10/01/15 08:26:25 Using GNU Scientific Library (GSL) statistical functions instead of internal ones</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 9 </tt></td>
+<td><tt>10/01/15 08:26:25 OpenMP-enabled w/maximum of 6 thread(s).</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 10 </tt></td>
+<td><tt>10/01/15 08:26:25 GCC optimization level 2 enabled</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 11 </tt></td>
+<td><tt>10/01/15 08:26:25 To check status (at some risk), type CTRL-\ or type "kill -3 22860"</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 12 </tt></td>
+<td><tt>10/01/15 08:26:25 Using configuration file kelvin.conf</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 13 </tt></td>
+<td><tt>10/01/15 08:26:25 Computation is done in polynomial mode</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 14 </tt></td>
+<td><tt>10/01/15 08:26:25 polynomialScale is 1 (1-10, 1 is default)</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 15 </tt></td>
+<td><tt>10/01/15 08:26:25 Integration is done numerically (dkelvin)</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 16 </tt></td>
+<td><tt>10/01/15 08:26:25 Further progress will be displayed at 90 second intervals</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 17 </tt></td>
+<td><tt>10/01/15 08:26:25 6TL of 20AL*6GF*275pv(1LC) space for 24 pedigree(s)</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 18 </tt></td>
+<td><tt>10/01/15 08:26:25 Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 19 </tt></td>
+<td><tt>10/01/15 08:26:25 @0s, Performing analysis</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 20 </tt></td>
+<td><tt>10/01/15 08:26:26&nbsp;&nbsp;&nbsp;&nbsp;@1s, Starting with position 1 of 6</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 21 </tt></td>
+<td><tt>10/01/15 08:27:56&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@1m30s, Building polynomial w/pedigree: 12 (12/24)</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 22 </tt></td>
+<td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@2m32s, Building polynomial w/pedigree: 24 (24/24)</tt></td></tr>
+    <tr><td align='right' style='background: #888888'><tt> 23 </tt></td>
+<td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@3m59s, Evaluating polynomials, currently at 8.1e+03 iterations</tt></td></tr>
+  </table>
+<p>
+  Lines 1 and 19-23 are progress messages.
+  Line 2 is the <span class='sc'>Kelvin</span> major version and build information,
+  and the subsequent lines (3-6) that contain "Id:" are source-managed component version information.
+  Next is the compiler verison number (line 7), followed by important compilation conditionals as
+  specified in the Makefile and run characteristics as influenced by environment variables. In
+  the example given, OpenMP support status and the number of threads used (line 9)
+  is displayed. Other options and their
+  corresponding messages are covered in the <a href="#building"> Building and Testing</a>
+  section.
     <p>
-Following this is a line describing the action to take in order to force a dump of a line of
-statistics. The format of these statistics is described at the end of the next subsection (<a href="#adhoc">ad hoc status</a>).
+      Following this is a line (11) describing the action to take in order to force an early display
+      of progress messages.
 You can use this as a sort of "pulse check" to make sure <span class='sc'>Kelvin</span> is still alive
 and well and making progress should there be a lull between automatic progress updates. If
 you are running <span class='sc'>Kelvin</span> interactively, you can 
@@ -732,10 +779,19 @@ process ID (26577 in the example) will be different from run-to-run. The "at som
 some status information is displayed asynchronously, i.e. regardless of the current context of the
 evaluation, and has been known, albeit extremely infrequently, to crash the program.
 <p>
-Next, location of the configuration file and the analysis characteristics as determined from that file
-are displayed. The last of these starts with a fairly cryptic description of the analysis, for example:
+Next, location of the configuration file (line 12) and the analysis and run characteristics as determined from that file
+(lines 13-16) are displayed. The last of these (lines 17 and 18) are a terse description of the scope and nature
+of the analysis, for example a fixed-grid run might display:
+<pre>
+6TL of 20AL*6GF*275pv(1LC) space for 24 pedigree(s)
+Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.
+</pre>
+This indicates that for each of 6 trait loci, PPLs will be computed using the closest 4 markers for the 
+standard 3-dimensional trait model space of 20 alpha values by 6 gene frequencies and 275 penetrance 
+values (from 1 liability class). A two-point analysis will provide slightly different information, e.g.:
 <pre>
 9 pair(s)*51Th of 20AL*6GF*275pv(1LC) space for 11 pedigree(s)
+Trait-to-marker Two-Point, Dichotomous Trait, Disequilibrium.
 </pre>
 This indicates that for each of the 9
 pairs of loci, 51 values of theta will be evaluated in the standard 3-dimensional trait model space of 20 alpha 
@@ -744,134 +800,14 @@ frequencies and 275 penetrance values (from 1 liability class), which is 459 int
 Likelihoods for the evaluation  will be derived from the phenotypic and genotypic information in 11 pedigrees.
 This can give you an idea of how complex your run is.
 <p>
+Note that dynamic grid runs cannot anticipate the number of sample points that will be used in the trait 
+model space, and therefore will display something like:
+<pre>
+6TL over a dynamic space for 24 pedigree(s)
+Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.
+</pre>
+<p>
 Finally, progress indicators are displayed up through the end of the run.
-<h3>Monitoring Progress</h3>
-There are two levels of detail of progress information for you to choose from. The default is to simply display
-a rough percentage of work completed and an estimate of how many minutes of work remain. These
-numbers can become extremely rough in polynomial evaluation mode, because few aspects of the complex operations
-they must consider can be accurately estimated, even while they're in-progress. Progress reporting will be most
-accurate and useful when you are doing many evaluations of simple pedigrees.
-<p>
-You need not take any special action in order for progress to be displayed in this manner:
-<pre>
-Calculations 18% complete (~15 min left)
-</pre>
-While the simple progress display incorporates trait and marker calculations and polynomial builds in its estimations, it doesn't report
-progress while they're being performed, so there might be a significant delay before seeing the first non-zero percentage for complex
-analyses, and during polynomial builds.
-<p>
-The alternative level of complexity is much more informative, but can overwhelm with details under certain
-circumstances. You will need to edit the <tt>Makefile</tt> to disable the compile-time conditional
-<tt>SIMPLEPROGRESS</tt>, and rebuild <span class='sc'>Kelvin</span> (<tt>make clean</tt> and <tt>make</tt>) to turn it on. When 
-<tt>SIMPLEPROGRESS</tt> is disabled, <span class='sc'>Kelvin</span> displays
-detailed information about each of the steps it goes thru to perform an analysis. These steps are
-fundamentally different for Two-Point and Multipoint analyses.
-
-<h4>Detailed Multipoint Displays</h4>
-<ol>
-<li>Trait likelihood determination progress in percentage until completion. This is only done once
-at the beginning of an analysis, so it will proceed to 100%. This is the simplest and therefore fastest
-calculation. If this step takes a lot of time, subsequent steps may not complete in a reasonable timeframe.
-<pre>
-Determining trait likelihood...
-Building polynomial w/pedigree: 87 (11/11)
-Trait likelihood evaluations 100% complete
-</pre>
-<li>For each trait position:
-<ol>
-<li>The new trait position, and the markers to be used in this step of the analysis along with their positions if they are new:
-<pre>
-Starting w/trait locus at 0.00 (1/8 positions) with new markers 1(0.00) 2(0.64)
-Determining marker set likelihood...
-</pre>
-or if they are the same:
-<pre>
-Starting w/trait locus at 0.50 (2/8 positions) with same markers.
-Determining combined likelihood...
-</pre>
-<li>Likelihood polynomial build progress when there are new markers. This is shown as progress thru the set of
-pedigrees, and is a function of the pedigree complexity and number of markers in the analysis. 
-This cannot be reliably estimated at this time, but is typically one of the less time-consuming steps:
-<pre>
-Building polynomial w/pedigree: 77 (1/11)
-</pre>
-<li>Marker likelihood evaluation progress when there are new markers. This is displayed as an incrementing percentage 
-until it is interrupted by the completion of the current position. At completion of a position it will reflect 
-overall percentage progress of marker likelihood evaluation thru all positions. This may jump because 
-we skip marker likelihood evaluation when the marker set does not change in relation to the trait position:
-<pre>
-Marker set likelihood evaluations 12% complete.
-Determining combined likelihood...
-</pre>
-<li>Combined likelihood polynomial build progress when there are new markers. This is shown as progress thru the set of pedigrees. This is
-the most memory-intensive step, and can be very time-consuming as well. Unfortunately, it is nearly completely unpredictable
-across trait positions, as it is a function of phenotypic and genotypic constraints for the trait and markers thru
-the pedigrees. If your analysis is going to fail due to lack of memory, it will be here. You can anticipate problem 
-pedigrees by noting those that took longer than average during
-the marker set likelihood polynomial build phase. Accurate estimation would almost require performing the analysis before performing the analysis.
-The good news is that evaluation is radically improved by having the polynomial, so if you are analyzing a grid of
-penetrances, disease gene frequencies and alpha values, polynomial mode will be much faster.
-<pre>
-Building polynomial w/pedigree: 87 (11/11)
-</pre>
-<li>Combined likelihood evaluation progress. This is displays every minute until completion for this position. Note
-that the estimation of time remaining can oscillate significantly, so don't use it as a timer when you're baking cookies.
-<pre>
-Combined likelihood evaluations 1% complete (~83 minutes left)
-</pre>
-</ol>
-</ol>
-If polynomial evaluation is not enabled, the progress reports involving polynomials are not displayed.
-<h4>Detailed Two-point and Marker-to-Marker Displays</h4>
-<ol>
-<li>The names of the pair of loci to be used in this step of the analysis:
-<pre>
-Starting w/loci Disease and Locus_7 at 0.00 (1/8 pairs)
-</pre>
-<li>Likelihood polynomial build progress. This is shown as progress thru the set of
-pedigrees, and is a function of the pedigree complexity. This cannot be reliably estimated 
-at this time, but is one of the less time-consuming steps:
-<pre>
-Building polynomial w/pedigree: 77 (1/11)
-</pre>
-<li>Likelihood evaluation progress. This is displayed as an incrementing percentage 
-until it is interrupted by the completion for the current pair of loci. At completion of a pair it will reflect 
-overall percentage progress of likelihood evaluation thru the entire analysis.
-<pre>
-Calculations 12% complete (~15 min left)
-</pre>
-</ol>
-</ol>
-If polynomial evaluation is not enabled, the progress reports involving polynomials are not displayed.
-
-<h4 id="adhoc">Final (and Ad Hoc) Status</h4>
-Under either level of complexity, a line of statistics will be displayed at the end of the run that looks
-something like this:
-<pre>
-PID: 3072, stopwatch overall(1) e:462s u:460s s:1s, vx:0, ivx:0, sf:0, hf:0
-</pre>
-This is a dump of the current values of a virtual stopwatch that was started at the beginning of the analysis.
-Of greatest interest are the elapsed time in seconds (<tt>e:462</tt> in the example) and the user CPU time used in seconds
-(<tt>u:460</tt>), which can be lower or higher than the elapsed time depending upon if <span class='sc'>Kelvin</span> is competing with
-other processes for CPU time or if it is efficiently using multiple threads. The system CPU time (<tt>s:1s</tt>) is also
-provided along with some other statistics (voluntary context switches, involuntary context switches, soft faults
-and hard faults) that may or may not be available on your platform.
-<h4>Additional Options</h4>
-There are a number of additional progress reports that can be monitored during a run using compile-time
-conditionals. You will need to edit the <tt>Makefile</tt> and rebuild <span class='sc'>Kelvin</span>
- (<tt>make clean</tt> and <tt>make</tt>) to turn them on
-or off:
-<ol>
-<li><tt>MEMSTATUS</tt> conditional - When <span class='sc'>Kelvin</span> is run on compatible platforms (currently only those with a pmap command),
-a child process is created that monitors elapsed time and memory utilization, and displays it every 30 seconds.
-<li><tt>POLYSTATISTICS</tt> conditional - If polynomial evaluation is enabled:
-<ul>
-<li>a count of evaluations peformed thus-far is displayed every 64K evaluations.
-<li>extensive statistics on the polynomial build process are displayed
-every 2M polynomial creations, when polynomial builds finish, and at the end of the run. Statistics will
-include an estimation of internal memory usage when feasible and relevant.
-</ul>
-</ol>
 
     <h2 id='outputfiles'>Contents Of Output Files</h2>
 
