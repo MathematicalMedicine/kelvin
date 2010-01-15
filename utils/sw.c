@@ -1234,6 +1234,8 @@ void swDiagInit(void) {
   INFO ("Use segment ID %d for diagnostic purposes", swSharedDiagMemoryID);
   if ((envDiagLevel = shmat (swSharedDiagMemoryID, NULL, 0)) == ((void *) -1))
     ERROR ("Cannot attach shared memory segment for diagnostics, %s", strerror(errno));
+#else
+  envDiagLevel = (int *) malloc(sizeof (int) * MAX_DIAG_FACILITY);
 #endif
   // Not needed if we're setting them all to zero, since shmget does that.
   for (i=0; i<MAX_DIAG_FACILITY; i++)
