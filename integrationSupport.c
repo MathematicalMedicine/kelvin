@@ -419,7 +419,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   if (strstr (partialPolynomialFunctionName, "_T") == NULL)
     strcat (partialPolynomialFunctionName, "_T");
   compute_likelihood (&pedigreeSet);
-  cL[3]++;
+  cL[3]++; // MP QT alternative likelihood
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
   if (isnan (log10_likelihood_alternative))
@@ -750,8 +750,8 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   }
   if (strstr (partialPolynomialFunctionName, "_T") == NULL)
     strcat (partialPolynomialFunctionName, "_T");
-  cL[4]++;
   ret = compute_likelihood (&pedigreeSet);
+  cL[4]++; // MP DT alternative likelihood
   if (ret == -2)
     ERROR ("Negative likelihood for trait");
 
@@ -1057,8 +1057,8 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
 
 
   sprintf (partialPolynomialFunctionName, "TQ_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
-  cL[5]++;
   ret = compute_likelihood (&pedigreeSet);
+  cL[5]++; // TP QT
 
   if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
     // &&& This needs fixin'
@@ -1109,8 +1109,8 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         0);     /* current locus - start with 0 */
 
   // No new name for a polynomial here because we're reusing the existing one
-  cL[6]++;
   ret = compute_likelihood (&pedigreeSet);
+  cL[6]++; // TP QT
   if (ret == -2)
     ERROR ("Negative likelihood for markers");
 
@@ -1427,7 +1427,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
 
 
   sprintf (partialPolynomialFunctionName, "TD_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
-  cL[7]++;
+  cL[7]++; // TP DT
   ret = compute_likelihood (&pedigreeSet);
 
   //printf("likelihood =%15.13f with theta 0.5 with %d pedigrees\n", pedigreeSet.likelihood, pedigreeSet.numPedigree);
@@ -1484,7 +1484,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
         0);     /* current locus - start with 0 */
 
   // No new name for a polynomial here because we're reusing the existing one
-  cL[8]++;
+  cL[8]++; // TP DT
   ret = compute_likelihood (&pedigreeSet);
   if (ret == -2)
     ERROR ("Negative alternative likelihood");
@@ -2371,7 +2371,7 @@ void integrateMain ()
         update_locus (&pedigreeSet, traitLocus);
       /* get the likelihood for the trait */
       sprintf (partialPolynomialFunctionName, "MDT_C%d_P%%sSL%d", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
-      cL[0]++;
+      cL[0]++; // MP DT trait likelihood
       compute_likelihood (&pedigreeSet);        /* This builds polynomials with dummy numbers */
 
     } else {    // QT
@@ -2399,7 +2399,7 @@ void integrateMain ()
       else
         update_penetrance (&pedigreeSet, traitLocus);
       compute_likelihood (&pedigreeSet);
-      cL[1]++;
+      cL[1]++; // MP QT trait likelihood
     }
 
     /* Copy the polynomials built from above to traitLikelihoodPolynomials */
@@ -2530,7 +2530,7 @@ void integrateMain ()
           sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
           strcat (partialPolynomialFunctionName, markerNo);
         }
-        cL[2]++;
+        cL[2]++; // MP marker likelihood
         compute_likelihood (&pedigreeSet);
 
         /* save the results for marker likelihood */
