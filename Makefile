@@ -33,7 +33,7 @@ CC := gcc
 GCCOPT := 2
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
-# USE_OPENMP := yes
+USE_OPENMP := yes
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
@@ -124,13 +124,12 @@ INCFLAGS := -I$(INCDIR)
 
 LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
 
-ifneq (,$(wildcard /usr/include/execinfo.h))
-  CFLAGS += -DBACKTRACE # Add backtrace where supported
-endif
-
 # Flags for BCMM use only
 
 CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution purposes
+ifneq (,$(wildcard /usr/include/execinfo.h))
+#  CFLAGS += -DBACKTRACE # Add backtrace where supported
+endif
 #CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
 #CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
 #CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every raw 8Mp and at milestones
