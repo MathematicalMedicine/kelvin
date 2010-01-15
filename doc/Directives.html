@@ -3,6 +3,7 @@
     <title>Kelvin Configuration Directives</title>
     <style type='text/css'>
       div.hang {padding-left: 2em ; text-indent: -2em }
+      div.hang ul{padding-left: 0em ; text-indent: 0em }
       span.sc { font-variant: small-caps; }
     </style>
   </head>
@@ -195,7 +196,8 @@
       <a href='#polynomialscale'>PolynomialScale</a><br>
       <a href='#nonpolynomial'>NonPolynomial</a><br>
       <a href='#dryrun'>DryRun</a><br>
-      <a href='#log'>Log</a><br>
+      <a href='#progresslevel'>ProgressLevel</a><br>
+      <a href='#progressdelayseconds'>ProgressDelaySeconds</a><br>
     </td>
   </tr>
   </table>
@@ -325,14 +327,40 @@
     layout information will be read. This file is sometimes referred to as a 
     'data file.' Defaults to <tt>datafile.dat</tt> if not specified.
   </div><p>
+
+  <div class='hang' id='progressLevel'>
+    <b>ProgressLevel</b><br>
+    <tt>ProgressLevel <i>number</i></tt><br>
+    Specifies the level of detail of progress information that <span class='sc'>Kelvin</span> should 
+    generate while it runs:
+    <ul>
+      <li>0, steps only, such as start and end of analysis</li>
+      <li>1, substeps, such as progress thru trait loci</li>
+      <li>2 thru 8, increasing levels of detail, such as polynomial build or evaluation</li>
+    </ul>
+    The default is 1. Use this in conjunction with the <a href='#progressdelayseconds'>ProgressDelaySeconds</a>
+    directive to fine-tune the flow of progress information to suite your needs.
+  </div><p>
   
-  <div class='hang' id='log'>
-    <b>Log</b><br>
-    <tt>Log <i>facility</i> <i>level</i></tt><br>
-    Specifies that <span class='sc'>Kelvin</span> should generate extra output while it runs. This
-    is generally useful only for debugging purposes. Under the default settings,
-    <span class='sc'>Kelvin</span> is adequately verbose to inform the user of any configuration or
-    data errors, and for the user to keep track of progress.<p>
+  <div class='hang' id='progressdelayseconds'>
+    <b>ProgressDelaySeconds</b><br>
+    <tt>ProgressDelaySeconds <i>number</i></tt><br>
+    Specifies the delay between progress notifications displayed by <span class='sc'>Kelvin</span>.
+    The intent of this directive is to stabilize the frequency of progress notifications and hence the overall
+    volume of progress information. The default value of 120 seconds causes only the most recent progress 
+    notifications for 
+    each of the levels permitted by the <a href='#progresslevels'>ProgressLevels</a> directive to be displayed
+    every two minutes. For example, if 32 pedigrees have been processed in the last two minutes, only the
+    notification of the start of processing of the 33rd will be displayed. Note that this can cause progress messages to
+    be delayed. If, in our example, the 33rd pedigree is start processing 2 seconds into the 120 second delay interval,
+    the message displayed at the end of the interval will be 118 seconds old.
+    <br>
+    If you want an earlier progress update, press <tt>CTRL/\</tt>.
+    <br>
+    If no fresh progress notifications are available, <tt>...running...</tt> will be displayed.
+    <br>
+    Specifying 0 (zero) causes  <span class='sc'>Kelvin</span> to display all permitted levels of progress 
+    messages as they occur.
   </div><p>
   
   <div class='hang' id='mapfile'>

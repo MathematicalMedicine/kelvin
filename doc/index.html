@@ -145,8 +145,10 @@
       <li>See if one of the pre-built executables in the <tt>bin</tt> subdirectory is suitable for
         your system.</li>
       <li>Otherwise, build <span class='sc'>Kelvin</span> by running <tt>make</tt>.</li>
-      <li>Test the executable by running <tt>make test</tt>. The tests may take as long as 30
-        minutes, depending on the system.</li>
+      <li>Validate the executable by running <tt>make validate</tt>. These tests take a minute or two.</li>
+      <li>You can perform a much more extensive set of tests if you wish by running <tt>make test</tt>. These tests 
+	will take anywhere from 30 minutes to several hours.</li> You can interrupt them at any time by
+      typing </tt>CTRL/C</tt>.
       <li>Install the executable and supporting scripts by running <tt>make install</tt>. The
         default installation directory is <tt>/usr/local/bin</tt>.</li>
     </ul>
@@ -645,36 +647,6 @@
     "paths" for <span class='sc'>Kelvin</span>. Ovals represent defaults that will be taken in
     the absence of relevant directives, while squares represent analysis attributes that must
     always be explicity specified.
-    <p>
-    The distribution includes subdirectories with sample configuration files for a few of
-    the configuration "paths". We typically name the configuration files <tt>kelvin.conf</tt>.
-    These illustrate the required configuration information, and can serve as starting points
-    for your own configurations. Unless otherwise noted, we have externally verified the
-    results of analysis for these tests, and they are provided in each directory in
-    <tt>br.out-baseline</tt> and (as appropriate) <tt>ppl.out-baseline</tt>. The runtimes
-    listed are on an Macintosh OSX 10.4 i386 with GCC 4.0.1 (no OpenMP).
-
-    <ul>
-      <li>Two-point analysis of a dichotomous trait:
-        <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_LE/</tt>, runs in 53s.</li>
-      <li>Two-point analysis of a dichotomous trait allowing for trait-marker linkage
-        disequilibrium: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_LD/</tt>, runs in 1m 43s.</li>
-      <li>Two-point marker-to-marker analysis: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_MM_LE/</tt>,
-        runs in less than 1s with a minor deviation (1 in 7th position) in one bayes ratio value
-	from runs on other platforms. This sort of deviation in test results is attributable to
-	the different C and GSL libraries used on different platforms.</li>
-      <li>Two-point analysis of a dichotomous trait going marker-to-marker with linkage
-        disequilibrium: <tt>&lt;RELEASE&gt;/test-suite/PE/TP_DT_MM_LD/</tt>, runs in less than
-        1s.</li>
-      <li>Two-point analysis of a quantitative trait:
-        <tt>&lt;RELEASE&gt;/test-suite/PE/TP_QT_LE/</tt>, runs in 26s.</li>
-      <li>Sex-averaged multipoint analysis of a dichotomous trait:
-        <tt>&lt;RELEASE&gt;/test-suite/PE/SA_DT/</tt>, runs in 2s.</li>
-      <li>Sex-averaged multipoint analysis of a quantitative trait:
-        <tt>&lt;RELEASE&gt;/test-suite/PE/SA_QT/</tt>, runs in 1s.</li>
-      <li>Two liability class version of sex-averaged multipoint analysis of a quantitative
-        trait: <tt>&lt;RELEASE&gt;/test-suite/PE/SA_QT_LC2/</tt>, runs in 3m 40s.</li>
-    </ul>
 
     <h2 id='running'>Running The Programs</h2>
 
@@ -711,24 +683,25 @@
 
     When <span class='sc'>Kelvin</span> is run, it first displays version, build and run
     configuration information, e.g.:
-    <p><font color='red'>This next bit is almost certainly out-of-date:
-
     <pre>
-    PID: 26577, kelvin V0.37.1 built Feb 17 2009 11:26:55
-    PID: 26577, Id: kelvinGlobals.h 1506 2009-02-17 15:51:43Z whv001 
-    PID: 26577, Id: likelihood.c 1422 2009-01-21 15:38:49Z whv001 
-    PID: 26577, Id: locus.c 1474 2009-02-03 14:27:19Z whv001 
-    PID: 26577, Id: polynomial.c 1465 2009-01-30 21:17:33Z whv001 
-    PID: 26577, Compiler 4.1.1 20070105 (Red Hat 4.1.1-52), GSL 1.9
-    PID: 26577, OpenMP-enabled w/0 threads.
-    PID: 26577, GCC optimization enabled
-    To check status (at some risk), type CTRL-\ or type "kill -3 26577".
-    PID: 26577, In /export/home/whv001/kelvin/trunk/test-suite/PE/TP_DT_LD w/kelvin.conf
-    PID: 26577, Computation is done in polynomial mode
-    PID: 26577, polynomialScale is 1 (1-10, 1 is default)
-    PID: 26577, Integration is done with iteration (original kelvin)
-    PID: 26577, 9 pair(s)*51Th of 20AL*6GF*275pv(1LC) space for 11 pedigree(s)
-    Trait-to-marker, Two-Point, Dichotomous Trait, Equilibrium.
+10/01/14 15:00:03 @0s, Initializing
+10/01/14 15:00:03 kelvin V0.38.0 built Jan 14 2010 14:47:11
+10/01/14 15:00:03 $Id$
+10/01/14 15:00:03 $Id$
+10/01/14 15:00:03 $Id$
+10/01/14 15:00:03 $Id$
+10/01/14 15:00:03 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
+10/01/14 15:00:03 Using internal statistical functions instead of GNU Scientific Library (GSL)
+10/01/14 15:00:03 GCC optimization level 2 enabled
+10/01/14 15:00:03 To check status (at some risk), type CTRL-\ or type "kill -3 5823"
+10/01/14 15:00:03 @0s, Processing analysis configuration
+10/01/14 15:00:03 @0s, Read and process config file t.r
+10/01/14 15:00:03 Computation is done in polynomial mode
+10/01/14 15:00:03 polynomialScale is 1 (1-10, 1 is default)
+10/01/14 15:00:03 Integration is done numerically (dkelvin)
+10/01/14 15:00:03 Further progress will be displayed at 240 second intervals
+10/01/14 15:00:03 6TL of 0AL*0GF*0pv(1LC) space for 24 pedigree(s)
+10/01/14 15:00:03 Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.
     </pre>
     </font>
 
