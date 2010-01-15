@@ -77,7 +77,7 @@ void kelvinInit (int argc, char *argv[])
     #endif
   #else
     #ifdef _OPENMP
-      INFO ("OpenMP-enabled w/%d thread(s).", omp_get_num_threads ());
+      INFO ("OpenMP-enabled w/maximum of %d thread(s).", omp_get_max_threads ());
     #endif
   #endif
 #else
