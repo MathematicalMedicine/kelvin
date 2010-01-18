@@ -548,19 +548,15 @@ double doEvaluateValue (Polynomial * p)
     } else if (p->e.v->vType == 'I') {
       p->value = *(p->e.v->vAddr.vAddrI);
       return *(p->e.v->vAddr.vAddrI);
-    } else {
-      fprintf (stderr, "Wrong variable type, exit!\n");
-      exit (EXIT_FAILURE);
-    }
+    } else
+      FATAL ("Unknown variable type '%c'", p->e.v->vType);
 
   case T_EXTERNAL:
 #ifdef POLYUSE_DL
     if (!p->e.e->entryOK)
-      if (!loadPolyDL (p)) {
-	fprintf (stderr, "Cannot (re)load DL-based polynomial %s for evaluateValue\n", 
+      if (!loadPolyDL (p))
+	FATAL ("Cannot (re)load DL-based polynomial %s for evaluateValue\n", 
 		 p->e.e->polynomialFunctionName);
-	exit (EXIT_FAILURE);
-      }
 #endif
     p->value = p->e.e->polynomialFunctionRoutine (1, variableList);
     return p->value;
@@ -673,17 +669,14 @@ double doEvaluateValue (Polynomial * p)
       result = exp (doEvaluateValue (fp->para[0]));
     } else if (strcmp (fp->name, "sqrt") == 0) {
       result = sqrt (doEvaluateValue (fp->para[0]));
-    } else {
-      fprintf (stderr, "Unknown function name %s in polynomial\n", fp->name);
-      exit (EXIT_FAILURE);
-    }
+    } else
+      ERROR ("Unknown function name %s in polynomial\n", fp->name);
     p->value = result;
     p->valid |= VALID_EVAL_FLAG;
     return result;
 
   default:
-    fprintf (stderr, "In evaluateValue, unknown expression type: [%d], exiting!\n", p->eType);
-    exit (EXIT_FAILURE);
+    FATAL ("In evaluateValue, unknown expression type: [%d], exiting!\n", p->eType);
   }
 }
 
@@ -836,10 +829,8 @@ inline void insertHashTable (struct hashStruct *hash, int location, int key, int
     hash->key = realloc (hash->key, sizeof (int) * hash->length);
     hash->index = realloc (hash->index, sizeof (int) * hash->length);
     initialHashSize += HASH_TABLE_INCREASE * sizeof (int) * 2;
-    if (hash->key == NULL || hash->index == NULL) {
-      fprintf (stderr, "Memory allocation for hash table failed!\n");
-      exit (EXIT_FAILURE);
-    }
+    if (hash->key == NULL || hash->index == NULL)
+      FATAL ("Memory allocation for hash table failed!");
   }
   // Prepare a place in hash table for the new polynomial
   if (location <= hash->num - 2) {
@@ -855,10 +846,8 @@ inline void insertHashTable (struct hashStruct *hash, int location, int key, int
 /// Delete the polynomial designated by location from a hash table
 inline void deleteHashTable (struct hashStruct *hash, int location)
 {
-  if (location >= hash->num) {
-    fprintf (stderr, "Deletion in hash table failed\n");
-    exit (EXIT_FAILURE);
-  }
+  if (location >= hash->num)
+    FATAL ("Deletion in hash table failed");
   memmove (&hash->key[location], &hash->key[location + 1], sizeof (int) * (hash->num - location - 1));
   memmove (&hash->index[location], &hash->index[location + 1], sizeof (int) * (hash->num - location - 1));
   hash->num--;
@@ -964,11 +953,7 @@ Polynomial *constantExp (char *fileName, int lineNo, double con)
   if (constantCount >= constantListLength) {
     constantListLength += CONSTANT_LIST_INCREASE;
     constantPListExpansions++;
-    constantList = realloc (constantList, constantListLength * sizeof (Polynomial *));
-    if (constantList == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    REALCHOKE (constantList, constantListLength * sizeof (Polynomial *), void *);
   }
   // Save the constant in the constant polynomial list
   constantList[constantCount] = p;
@@ -1011,10 +996,8 @@ inline int keyVariablePolynomial (double *vD, int *vI, char vType)
     key = (long int) vD;
   else if (vType == 'I')
     key = (long int) vI;
-  else {
-    fprintf (stderr, "UNKNOWN variable type !");
-    exit (EXIT_FAILURE);
-  }
+  else
+    FATAL ("Unknown variable type '%c'", vType);
 
   return key;
 };
@@ -1093,11 +1076,7 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
   if (variableCount >= variableListLength) {
     variableListLength += VARIABLE_LIST_INCREASE;
     variablePListExpansions++;
-    variableList = realloc (variableList, variableListLength * sizeof (Polynomial *));
-    if (variableList == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    REALCHOKE (variableList, variableListLength * sizeof (Polynomial *), void *);
   }
 
   p->index = variableCount;
@@ -1213,12 +1192,8 @@ inline void collectSumTerms (double **factor,   ///< Container, pointer to a lis
   if (*counter >= *containerLength - 1) {
     (*containerLength) += 50;
     containerExpansions++;
-    *factor = (double *) realloc (*factor, (*containerLength) * sizeof (double));
-    *p = (Polynomial **) realloc (*p, (*containerLength) * sizeof (Polynomial *));
-    if (*factor == NULL || *p == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    REALCHOKE (*factor, (*containerLength) * sizeof (double), double *);
+    REALCHOKE (*p, (*containerLength) * sizeof (Polynomial *), Polynomial **);
   }
   // This is a new item in the sum, insert it at the start or end
   if (location >= *counter) {
@@ -1286,7 +1261,7 @@ short findOrAddSource (char *fileName, int lineNo, unsigned char eType)
   result = bsearch (&target, polySources, polySourceCount, sizeof (struct polySource), compareSourcesByName);
   if (result == NULL) {
     if (polySourceCount >= MAXPOLYSOURCES) {
-      fprintf (stderr, "Exceeded maximum polynomial source count, no more locations can be monitored\n");
+      WARNING ("Exceeded maximum polynomial source count, no more locations can be monitored");
       return 0;
     }
     result = &polySources[polySourceCount];
@@ -1373,8 +1348,7 @@ void expPrinting (Polynomial * p)
   case T_FREED:
     fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
-    fprintf (stderr, "In expPrinting, unknown expression type %d, exiting\n", p->eType);
-    exit (EXIT_FAILURE);
+    FATAL ("In expPrinting, unknown expression type %d", p->eType);
   }
 }
 
@@ -1456,9 +1430,7 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
   case T_FREED:
     fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
-    fprintf (stderr, "In expTermPrinting, unknown expression type %d, exiting\n", p->eType);
-    raise (SIGUSR1);
-    exit (EXIT_FAILURE);
+    FATAL ("In expTermPrinting, unknown expression type %d", p->eType);
   }
 }
 
@@ -1476,13 +1448,13 @@ inline void discardPoly (Polynomial *p)
   }
 
   if ((p->valid & ~VALID_NOTDISC_FLAG) != 0) {
-    fprintf (stderr, "Can't discard already flagged poly!\n");
+    FATAL ("Can't discard already flagged poly!");
   }
 
   p->valid &= ~VALID_NOTDISC_FLAG; // Explicitly discarded
   if (p->id == polynomialLostNodeId) {
-    raise (SIGINT);
     fprintf (stderr, "discardPoly sees id %d with valid %d and count %d\n", p->id, p->valid, p->count);
+    raise (SIGINT);
   }
   //  fprintf (stderr, "Flagged polynomial %u as explicitly discarded, valid is %u, value is %g\n", p->id, p->valid, p->value);
 
@@ -1497,8 +1469,7 @@ inline void discardPoly (Polynomial *p)
 
   if (++pendingExplicitDiscards >= 100000) {
 
-    fprintf (stderr, "Freeing %d explicitly discarded polynomials\n", 
-	     pendingExplicitDiscards);
+    swLogProgress(3 /* DETAIL + 1 */, 0, "Freeing %d explicitly discarded polynomials", pendingExplicitDiscards);
     /*
     int i, j;
     if (constantCount > 0) {
@@ -1658,8 +1629,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
           collectSumTerms (&factor_f1, &p_f1, &counter_f1, &containerLength_f1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
         default:
-          fprintf (stderr, "In plusExp, unknown expression type %d\n", p1->e.s->sum[l]->eType);
-          exit (EXIT_FAILURE);
+          FATAL ("In plusExp, unknown expression type %d\n", p1->e.s->sum[l]->eType);
         }
       }
       exportTermList (p1, FALSE);
