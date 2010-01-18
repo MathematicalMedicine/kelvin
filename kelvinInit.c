@@ -28,7 +28,6 @@ extern Polynomial *constant1Poly;
 void kelvinInit (int argc, char *argv[])
 {
   pthread_t monitorMemoryThread;
-  int exitDueToLoop = FALSE;    /* exit due to unbroken pedigree loop */
   int i, k;
 
   swDiagInit ();
@@ -238,13 +237,14 @@ void kelvinInit (int argc, char *argv[])
       ERROR ("Liability class analysis specified, but all classes are empty.");
   }
 
-  int pedIdx;
-  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-    Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+  // Check for unbroken loops and unrelated individuals
+  for (i = 0; i < pedigreeSet.numPedigree; i++) {
+    Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[i];
     if (pPedigree->currentLoopFlag)
-      exitDueToLoop = TRUE;
+      ERROR ("Not all loops in pedigrees are broken");
+    if (pPedigree->numPerson < 3)
+      ERROR ("Pedigree %s has too few individuals", pPedigree->sPedigreeID);
   }
-  ASSERT (exitDueToLoop == FALSE, "Not all loops in pedigrees are broken.");
 
   /* sort, uniquify and expand the trait model dimensions, subject to constraints */
   DETAIL(0,"Post-processing model and configuration data");
@@ -369,8 +369,8 @@ void kelvinInit (int argc, char *argv[])
   if (modelOptions->dryRun != 0) {
     for (loc1 = 0; loc1 < originalLocusList.numLocus; loc1++) {
       fprintf (stderr, "Locus %d:\n", loc1);
-      for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-        Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+      for (i = 0; i < pedigreeSet.numPedigree; i++) {
+        Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[i];
         print_pedigree_locus_genotype_count (pPedigree, loc1);
       }
     }
@@ -393,8 +393,8 @@ void kelvinInit (int argc, char *argv[])
     }
   }
 
-  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-    Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+  for (i = 0; i < pedigreeSet.numPedigree; i++) {
+    Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[i];
     pPedigree->load_flag = 0;   /* Initially 0 and changes to 1 when marker or 
                                  * alternative likelihood values are retrieved */
   }
