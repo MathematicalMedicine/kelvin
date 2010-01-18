@@ -500,6 +500,10 @@ void validateConfig ()
     fault ("%s requires %s Normal or %s Normal\n", MEAN_STR, QT_STR, QTT_STR);
   if (observed.standardDev && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
     fault ("%s requires %s Normal or %s Normal\n", STANDARDDEV_STR, QT_STR, QTT_STR);
+#ifdef DISTRIBUTION
+  if (observed.degOfFreedom)
+    fault ("ChiSq distribution is still under development and unavailable at this time\n");
+#endif
   if (observed.degOfFreedom && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_CHI_SQUARE))
     fault ("%s requires %s ChiSq or %s ChiSq\n", STANDARDDEV_STR, QT_STR, QTT_STR);
   
