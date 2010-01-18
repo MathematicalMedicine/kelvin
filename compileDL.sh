@@ -1,5 +1,5 @@
 #!/bin/bash
-set -v
+#set -v
 #
 # Copyright 2008, Nationwide Children's Research Institute.  All
 # rights reserved.  Permission is hereby given to use this software

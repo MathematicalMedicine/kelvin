@@ -555,7 +555,7 @@ double doEvaluateValue (Polynomial * p)
 #ifdef POLYUSE_DL
     if (!p->e.e->entryOK)
       if (!loadPolyDL (p))
-	FATAL ("Cannot (re)load DL-based polynomial %s for evaluateValue\n", 
+	FATAL ("Cannot (re)load DL-based polynomial %s for evaluateValue", 
 		 p->e.e->polynomialFunctionName);
 #endif
     p->value = p->e.e->polynomialFunctionRoutine (1, variableList);
@@ -676,7 +676,7 @@ double doEvaluateValue (Polynomial * p)
     return result;
 
   default:
-    FATAL ("In evaluateValue, unknown expression type: [%d], exiting!\n", p->eType);
+    FATAL ("In evaluateValue, unknown expression type: [%d]", p->eType);
   }
 }
 
@@ -847,7 +847,7 @@ inline void insertHashTable (struct hashStruct *hash, int location, int key, int
 inline void deleteHashTable (struct hashStruct *hash, int location)
 {
   if (location >= hash->num)
-    FATAL ("Deletion in hash table failed");
+    FATAL ("Deletion in hash table failed!");
   memmove (&hash->key[location], &hash->key[location + 1], sizeof (int) * (hash->num - location - 1));
   memmove (&hash->index[location], &hash->index[location + 1], sizeof (int) * (hash->num - location - 1));
   hash->num--;
@@ -1629,20 +1629,18 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
           collectSumTerms (&factor_f1, &p_f1, &counter_f1, &containerLength_f1, f1 * p1->e.s->factor[l], p1->e.s->sum[l]);
           break;
         default:
-          FATAL ("In plusExp, unknown expression type %d\n", p1->e.s->sum[l]->eType);
+          FATAL ("In plusExp, unknown expression type %d", p1->e.s->sum[l]->eType);
         }
       }
       exportTermList (p1, FALSE);
       break;
     case T_FREED:      // The term being referenced has been freed!
-      fprintf (stderr, "In plusExp, polynomial term %d was freed:\n", i);
       expTermPrinting (stderr, p1, 1);
-      exit (EXIT_FAILURE);
+      fprintf (stderr, "\n");
+      FATAL ("In plusExp, preceeding polynomial term %d was freed while still referenced", i);
       break;
     default:
-      fprintf (stderr, "In plusExp, unknown polynomial type %d, exiting!\n", p1->eType);
-      raise (SIGUSR1);
-      exit (EXIT_FAILURE);
+      FATAL ("In plusExp, unknown polynomial type %d", p1->eType);
     }
   }
   flag = va_arg (args, int);
@@ -1658,12 +1656,8 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   counterSum = counter_v1 + counter_p1 + counter_f1;
   if (counterSum + 1 > lengthSum) {
     lengthSum = counterSum + 1;
-    factorSum = (double *) realloc (factorSum, lengthSum * sizeof (double));
-    pSum = (Polynomial **) realloc (pSum, lengthSum * sizeof (Polynomial *));
-    if (factorSum == NULL || pSum == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    REALCHOKE (factorSum, lengthSum * sizeof (double), double *);
+    REALCHOKE (pSum, lengthSum * sizeof (Polynomial *), Polynomial **);
   }
   /* While we do end-up with zero factors for variables here, they get swallowed-up
    * into the next tier where they become non-zero, so it all comes out in the wash. */
@@ -1777,10 +1771,9 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     p0Valid = p0->valid;
 
     if (sumHash[p0HIndex].num <= 0) {
-      fprintf (stderr, "Polynomial %d is not in the sum hash table (empty list), exiting!\n", p0Id);
       expTermPrinting (stderr, p0, 1);
       fprintf (stderr, "\n");
-      exit (EXIT_FAILURE);
+      FATAL ("Preceeding polynomial %d is not in the sum hash table (empty list)", p0Id);
     }
     // Locate the polynomial in the hash table
     if (searchHashTable (&sumHash[p0HIndex], &first, &last, p0Key)) {
@@ -1791,16 +1784,14 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       if (i <= last)
         p0SubHIndex = i;
       else {
-        fprintf (stderr, "Polynomial %d is not in the sum hash list (not in list), exiting!\n", p0Id);
         expTermPrinting (stderr, p0, 1);
         fprintf (stderr, "\n");
-        exit (EXIT_FAILURE);
+        FATAL ("Polynomial %d is not in the sum hash list (not in list)", p0Id);
       }
     } else {
-      fprintf (stderr, "Polynomial %d is not in the sum hash list (bad searchHashTable return), exiting!\n", p0Id);
       expTermPrinting (stderr, p0, 1);
       fprintf (stderr, "\n");
-      exit (EXIT_FAILURE);
+      FATAL ("Polynomial %d is not in the sum hash list (bad searchHashTable return)", p0Id);
     }
 
     // Free the memory of the first polynomial in the parameter list
@@ -1865,11 +1856,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
     if (sumCount >= sumListLength) {
       sumListLength += SUM_LIST_INCREASE;
       sumPListExpansions++;
-      sumList = realloc (sumList, sumListLength * sizeof (Polynomial *));
-      if (sumList == NULL) {
-        fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (EXIT_FAILURE);
-      }
+      REALCHOKE (sumList, sumListLength * sizeof (Polynomial *), void *);
     }
     sumListNewCount++;
     sumList[sumCount] = rp;
@@ -1963,18 +1950,14 @@ inline void collectProductTerms (int **exponent,        ///< Container, pointer 
   if (searchPolynomialList (*p, *counter, p1, &location) == 1) {
     (*exponent)[location] += e1;
     if ((*exponent)[location] == 0)
-      fprintf (stderr, "Zero exponent terms could be replaced with constant 1!\n");
+      WARNING ("Zero polynomial exponent terms could be replaced with constant 1!");
     return;
   }
 
   if ((*counter) >= (*containerLength) - 1) {
     (*containerLength) += 50;
-    (*exponent) = (int *) realloc ((*exponent), (*containerLength) * sizeof (int));
-    (*p) = (Polynomial **) realloc ((*p), (*containerLength) * sizeof (Polynomial *));
-    if ((*exponent) == NULL || (*p) == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    REALCHOKE ((*exponent), (*containerLength) * sizeof (int), int *);
+    REALCHOKE ((*p), (*containerLength) * sizeof (Polynomial *), Polynomial **);
   }
   // This is a new item in the product, insert it at the start or end
   if (location >= (*counter)) {
@@ -2142,20 +2125,17 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
             collectProductTerms (&exponent_f2, &p_f2, &counter_f2, &containerLength_f2, e1 * p1->e.p->exponent[l], p1->e.p->product[l]);
             break;
           default:
-            fprintf (stderr, "In timesExp, unknown expression type %d\n", p1->e.p->product[l]->eType);
-            exit (EXIT_FAILURE);
+            FATAL ("In timesExp, unknown expression type %d", p1->e.p->product[l]->eType);
           }
         }
         break;
       case T_FREED:    // The term being referenced has been freed!
-        fprintf (stderr, "In plusExp, polynomial term %d was freed:\n", i);
         expTermPrinting (stderr, p1, 1);
-        exit (EXIT_FAILURE);
+	fprintf (stderr, "\n");
+        FATAL ("In plusExp, preceeding polynomial term %d was freed while still referenced", i);
         break;
       default:
-        fprintf (stderr, "In timesExp, unknown polynomial id %u type %d, exiting!\n", p1->id, p1->eType);
-        raise (SIGUSR1);
-        exit (EXIT_FAILURE);
+        FATAL ("In timesExp, unknown polynomial id %u type %d", p1->id, p1->eType);
         break;
       }
     }
@@ -2184,12 +2164,8 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
   counterProd = counter_v2 + counter_s2 + counter_f2;
   if (counterProd > lengthProd) {
     lengthProd = counterProd;
-    exponentProd = (int *) realloc (exponentProd, lengthProd * sizeof (int));
-    pProd = (Polynomial **) realloc (pProd, lengthProd * sizeof (Polynomial *));
-    if (exponentProd == NULL || pProd == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    REALCHOKE (exponentProd, lengthProd * sizeof (int), int *);
+    REALCHOKE (pProd, lengthProd * sizeof (Polynomial *), Polynomial **);
   }
   if (counter_v2 > 0) {
     memcpy (&exponentProd[0], &exponent_v2[0], sizeof (int) * counter_v2);
@@ -2305,10 +2281,9 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
 
       // Determine the sub index of the old polynomial in the product hash table
       if (productHash[p0HIndex].num <= 0) {
-        fprintf (stderr, "This polynomial is not in the product hash list (1), exiting!\n");
         expTermPrinting (stderr, p0, 1);
         fprintf (stderr, "\n");
-        exit (EXIT_FAILURE);
+        FATAL ("Preceeding polynomial is not in the product hash list (1)");
       }
       if (searchHashTable (&productHash[p0HIndex], &first, &last, p0Key)) {
         for (i = first; i <= last; i++) {
@@ -2318,16 +2293,14 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
         if (i <= last)
           p0SubHIndex = i;
         else {
-          fprintf (stderr, "This polynomial is not in the product hash list (2), exiting!\n");
           expTermPrinting (stderr, p0, 1);
           fprintf (stderr, "\n");
-          exit (EXIT_FAILURE);
+          FATAL ("Preceeding polynomial is not in the product hash list (2)");
         }
       } else {
-        fprintf (stderr, "This polynomial is not in the product hash list (3), exiting!\n");
         expTermPrinting (stderr, p0, 1);
         fprintf (stderr, "\n");
-        exit (EXIT_FAILURE);
+        FATAL ("Preceeding polynomial is not in the product hash list (3)");
       }
 
       // Free the first operand
@@ -2376,11 +2349,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
     if (productCount >= productListLength) {
       productListLength += PRODUCT_LIST_INCREASE;
       productPListExpansions++;
-      productList = realloc (productList, productListLength * sizeof (Polynomial *));
-      if (productList == NULL) {
-        fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-        exit (EXIT_FAILURE);
-      }
+      REALCHOKE (productList, productListLength * sizeof (Polynomial *), void *);
     }
     /* We either use a new position in the product list for this polynomial, or
      * replace an existing polynomial with the newly created polynomial at the position
@@ -2593,11 +2562,7 @@ Polynomial *functionCallExp (int num, ...)
   if (functionCallCount >= functionCallListLength) {
     functionCallListLength += FUNCTIONCALL_LIST_INCREASE;
     functionCallPListExpansions++;
-    functionCallList = realloc (functionCallList, functionCallListLength * sizeof (Polynomial *));
-    if (functionCallList == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    REALCHOKE (functionCallList, functionCallListLength * sizeof (Polynomial *), void *);
   }
   functionCallList[functionCallCount] = rp;
   functionCallCount++;
@@ -2643,11 +2608,7 @@ void polyListAppend (struct polyList *l, Polynomial * p)
   p->valid |= VALID_EVAL_FLAG;
 
   if (l->listNext >= l->listSize) {
-    l->pList = realloc (l->pList, sizeof (Polynomial *) * (l->listSize + 1000));
-    if (l->pList == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    REALCHOKE (l->pList, sizeof (Polynomial *) * (l->listSize + 1000), void *);
     l->listSize = l->listSize + 1000;
   }
   l->pList[l->listNext] = p;
@@ -2836,10 +2797,8 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
         p->value = *(p->e.v->vAddr.vAddrD);
       else if (p->e.v->vType == 'I')
 	p->value = *(p->e.v->vAddr.vAddrI);
-      else {
-	fprintf (stderr, "Wrong variable type, exit!\n");
-	exit (EXIT_FAILURE);
-      }
+      else
+	FATAL ("Unknown variable type '%c'", p->e.v->vType);
 #ifdef USE_GMP
       mpf_set_d (p->mpfValue, p->value);
 #endif
@@ -2848,11 +2807,9 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
     case T_EXTERNAL:
 #ifdef POLYUSE_DL
       if (!p->e.e->entryOK)
-	if (!loadPolyDL (p)) {
-	  fprintf (stderr, "Cannot (re)load DL-based polynomial %s for evaluatePoly\n",
+	if (!loadPolyDL (p))
+	  FATAL ("Cannot (re)load DL-based polynomial %s for evaluatePoly",
 		   p->e.e->polynomialFunctionName);
-	  exit (EXIT_FAILURE);
-	}
       p->value = p->e.e->polynomialFunctionRoutine (1, variableList);
 #endif
       break;
@@ -2879,7 +2836,8 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 	}
 #endif
 	
-	/* I think that this is a big deal in a signal processing context.
+	// I think that this is a big deal in a signal processing context.
+	/*
 	int vPower, termPower;
 
 	frexp(v, &vPower);
@@ -3000,25 +2958,19 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
         p->value = exp (p->e.f->para[0]->value);
       } else if (strcmp (p->e.f->name, "sqrt") == 0) {
         p->value = sqrt (p->e.f->para[0]->value);
-      } else {
-        fprintf (stderr, "unknown function name %s in polynomials\n", p->e.f->name);
-        exit (EXIT_FAILURE);
-      }
+      } else
+        FATAL ("Unknown function name %s in polynomial", p->e.f->name);
 #ifdef USE_GMP
       mpf_set_d (p->mpfValue, p->value);
 #endif
       break;
 
     default:
-      fprintf (stderr, "In evaluatePoly, unknown expression type: [%d], exiting!\n", p->eType);
-      fprintf (stderr, "\nIf you're in gdb, continue from here to see more.\n");
-      raise (SIGUSR1);
+      FATAL ("In evaluatePoly, unknown expression type: [%d]", p->eType);
       break;
     }
-    if (isnan (p->value)) {
-      fprintf (stderr, "In evaluatePoly, evaluated value of type %d as not a number\n", p->eType);
-      exit (EXIT_FAILURE);
-    }
+    if (isnan (p->value))
+      ERROR ("In evaluatePoly, evaluated value of type %d as not a number (NaN)", p->eType);
     //    expTermPrinting (stderr, p, 1);
     //    fprintf (stderr, "\n%s[%d] = %g\n", eTypes[p->eType], p->id, p->value);
 
@@ -3447,13 +3399,12 @@ void doPrintSummaryPoly (Polynomial * p, int currentTier)
     }
     break;
   case T_FREED:
-    fprintf (stderr, "In doPrintSummaryPoly, evil caller is trying to use a polynomial that was freed:\n");
     expTermPrinting (stderr, p, 1);
-    exit (EXIT_FAILURE);
+    fprintf (stderr, "\n");
+    FATAL ("In doPrintSummaryPoly, preceeding polynomial was freed");
     break;
   default:
-    fprintf (stderr, "In doPrintSummaryPoly, unknown expression type: [%d], exiting!\n", p->eType);
-    exit (EXIT_FAILURE);
+    FATAL ("In doPrintSummaryPoly, unknown expression type: [%d]", p->eType);
   }
 }
 
@@ -3595,13 +3546,12 @@ void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
     }
     break;
   case T_FREED:
-    fprintf (stderr, "In doWritePolyDigraph, evil caller is trying to use a polynomial that was freed:\n");
     expTermPrinting (stderr, p, 1);
     exit (EXIT_FAILURE);
+    FATAL ("In doWritePolyDigraph, preceeding polynomial was freed");
     break;
   default:
-    fprintf (stderr, "In doWritePolyDigraph, unknown expression type: [%d], exiting!\n", p->eType);
-    exit (EXIT_FAILURE);
+    FATAL ("In doWritePolyDigraph, unknown expression type: [%d]", p->eType);
   }
 }
 
@@ -3646,11 +3596,8 @@ void thrashingCheck ()
   if (lastPDSAccumWallTime != 0) {
     deltaAccumWallTime = overallSW->swAccumWallTime - lastPDSAccumWallTime;
     deltaAccumUserTime = overallSW->swAccumRUSelf.ru_utime.tv_sec + overallSW->swAccumRUChildren.ru_utime.tv_sec - lastPDSAccumUserTime;
-    if ((deltaAccumUserTime != 0) && (100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < THRASH_CPU)) {
-      sprintf (messageBuffer, "Thrashing detected (utilization under %d%%), consider exiting!", THRASH_CPU);
-      swLogMsg (stderr, messageBuffer);
-      exit (EXIT_FAILURE);
-    }
+    if ((deltaAccumUserTime != 0) && (100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < THRASH_CPU))
+      WARNING ("Thrashing detected (utilization under %d%%), consider exiting!", THRASH_CPU);
   }
   swStart (overallSW);
   lastPDSAccumWallTime = overallSW->swAccumWallTime;
@@ -4073,12 +4020,10 @@ void doKeepPoly (Polynomial * p)
     }
     break;
   case T_FREED:
-    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n",
+    FATAL ("[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]",
 	     (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
-    fprintf (stderr, "In doKeepPoly, unknown expression type %d, exiting\n", p->eType);
-    raise (SIGUSR1);
-    exit (EXIT_FAILURE);
+    FATAL ("In doKeepPoly, unknown expression type %d", p->eType);
   }
   return;
 }
@@ -4134,8 +4079,7 @@ void doHoldPoly (Polynomial * p)
     }
     break;
   default:
-    fprintf (stderr, "In holdPoly, unknown expression type %d, exiting\n", p->eType);
-    exit (EXIT_FAILURE);
+    FATAL ("In holdPoly, unknown expression type %d", p->eType);
   }
   return;
 }
@@ -4191,8 +4135,7 @@ void doUnHoldPoly (Polynomial * p)
     }
     break;
   default:
-    fprintf (stderr, "In holdPoly, unknown expression type %d, exiting\n", p->eType);
-    exit (EXIT_FAILURE);
+    FATAL ("In holdPoly, unknown expression type %d", p->eType);
   }
   return;
 }
@@ -4614,10 +4557,8 @@ void importTermList (Polynomial * p)
     if (iMTL[i].cT.doublePairCount == 0)
       break;
 
-  if (i >= IMTL_COUNT) {
-    fprintf (stderr, "Out of in-memory term lists for sum term lists!\n");
-    exit (EXIT_FAILURE);
-  }
+  if (i >= IMTL_COUNT)
+    FATAL ("Exhausted in-memory term lists for sum term lists!");
 
   iMTL[i].cT.chunkOffset = (unsigned long) sP->sum;
   iMTL[i].cT.doublePairCount = (unsigned long) sP->factor;
@@ -4677,7 +4618,7 @@ void exportTermList (Polynomial * p, int writeFlag)
       double buffer[MAX_SSD_BUFFER];
 
       if (sP->num > (MAX_SSD_BUFFER / 2)) {
-	fprintf (stderr, "MAX_SSD_BUFFER of %d is too small for request for %d double pairs\n",
+	WARNING ("MAX_SSD_BUFFER of %d is too small for request for %d double pairs",
 		 MAX_SSD_BUFFER, sP->num);
 	return; // ...leave it in memory.
       }
@@ -4688,7 +4629,7 @@ void exportTermList (Polynomial * p, int writeFlag)
       if ((cT = putSSD (buffer, sP->num)) == NULL) {
 	// We're out of business, put up the "Closed" sign until we get enough back.
 	sSDDebt = sP->num << 2;
-	fprintf (stderr, "In SSD debt for %ludps, reverting to memory allocation.\n", sSDDebt);
+	WARNING ("In SSD debt for %ludps, reverting to memory allocation", sSDDebt);
 	return;
       }
       free (sP->sum);
@@ -4755,7 +4696,7 @@ void deportTermList (Polynomial * p)
     if (sSDDebt > 0) {
       sSDDebt -= cT->doublePairCount;
       if (sSDDebt <= 0)
-	fprintf (stderr, "Paid off our SSD debt!\n");
+	WARNING ("Paid-off SSD debt!");
     }
     freeSSD (cT);
   } else {
@@ -4786,10 +4727,8 @@ Polynomial *importPoly (Polynomial * p)
 void releaseExternalPoly (Polynomial *rp)
 {
   if (rp->eType == T_OFFLINE) importPoly (rp);
-  if (rp->eType != T_EXTERNAL) {
-    fprintf (stderr, "releaseExternalPoly called with polynomial eType of %d\n", rp->eType);
-    exit (EXIT_FAILURE);
-  }
+  if (rp->eType != T_EXTERNAL)
+    FATAL ("releaseExternalPoly called with polynomial eType of %d", rp->eType);
 #ifdef POLYUSE_DL
   int i;
   for (i=0; i<32; i++)
@@ -4798,7 +4737,7 @@ void releaseExternalPoly (Polynomial *rp)
     else
       break;
 #endif
-  fprintf (stderr, "Released polynomial DL %s\n", rp->e.e->polynomialFunctionName);
+  swLogProgress(3 /* DETAIL + 1 */, 0, "Released polynomial DL %s", rp->e.e->polynomialFunctionName);
   rp->e.e->fileOK = FALSE;
   rp->e.e->entryOK = FALSE;
   return;
@@ -4837,11 +4776,7 @@ Polynomial *restoreExternalPoly (char *functionName)
   externalCount++;
   if (externalCount >= externalListLength) {
     externalListLength += EXTERNAL_LIST_INCREASE;
-    externalList = realloc (externalList, externalListLength * sizeof (Polynomial *));
-    if (externalList == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
-    }
+    REALCHOKE (externalList, externalListLength * sizeof (Polynomial *), void *);
   }
   nodeId++;
 
@@ -4872,10 +4807,9 @@ int loadPolyDL (Polynomial * p)
       // Found it!
       p->e.e->fileOK = TRUE;
       p->e.e->entryOK = TRUE;
-      fprintf (stdout, "Using %d DL(s) for %s\n", i+1, p->e.e->polynomialFunctionName);
+      swLogProgress(3, 0, "Using %d DL(s) for %s", i+1, p->e.e->polynomialFunctionName);
     } else {
-      fprintf (stderr, "dlsym() error [%s] for polynomial %s\n", dlerror(),
-	       p->e.e->polynomialFunctionName);
+      WARNING ("dlsym() error [%s] for polynomial %s", dlerror(), p->e.e->polynomialFunctionName);
       for (i=0; i<32; i++)
 	if (p->e.e->polynomialFunctionHandle[i] != NULL)
 	  dlclose (p->e.e->polynomialFunctionHandle[i]);
@@ -4884,8 +4818,9 @@ int loadPolyDL (Polynomial * p)
       return FALSE;
     }
   } else {
-    fprintf (stderr, "dlopen() error [%s] for polynomial %s\n", dlerror(),
-	       p->e.e->polynomialFunctionName);
+    swLogProgress(3 /* DETAIL + 1 */, 0,
+		  "dlopen() error [%s] for polynomial %s",
+		  dlerror(), p->e.e->polynomialFunctionName);
     return FALSE;
   }
   return TRUE;
@@ -5087,8 +5022,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
       break;
 
     default:
-      fprintf (stderr, "In codePoly, unknown expression type: [%d], exiting!\n", p->eType);
-      exit (EXIT_FAILURE);
+      FATAL ("In codePoly, unknown expression type: [%d]", p->eType);
       break;
     }
     srcSize += fprintf (srcCalledFile, ";\n");
@@ -5124,7 +5058,9 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   totalSourceSize += fprintf (includeFile, "#define DLFUNCTIONCOUNT %d\n", fileCount);
 #endif
   fclose (includeFile);
-  fprintf (stderr, "Polynomial final internal size is %d, as code is %d.\n", totalInternalSize, totalSourceSize);
+  swLogProgress(3 /* DETAIL + 1 */, 0,
+		"Polynomial final internal size is %d, as code is %d",
+		totalInternalSize, totalSourceSize);
 
 #ifdef POLYCOMP_DL
   char command[PATH_MAX];
@@ -5178,8 +5114,7 @@ void doDependencyFlagging (Polynomial * p)
     p->dependencyFlag = (1UL << p->index);
     break;
   case T_EXTERNAL:
-    fprintf (stderr, "Don't know how to flag dependencies for EXTERNAL\n");
-    exit (EXIT_FAILURE);
+    FATAL ("Don't know how to flag dependencies for EXTERNAL");
     break;
   case T_SUM:
     totalNodes++;
@@ -5214,13 +5149,12 @@ void doDependencyFlagging (Polynomial * p)
       variableList[i]->e.v->dependentNodes++;
     break;
   case T_FREED:
-    fprintf (stderr, "In doDependencyFlagging, evil caller is trying to use a polynomial that was freed:\n");
     expTermPrinting (stderr, p, 1);
-    exit (EXIT_FAILURE);
+    fprintf (stderr, "\n");
+    FATAL ("In doDependencyFlagging, preceeding polynomial was freed");
     break;
   default:
-    fprintf (stderr, "In doDependencyFlagging, unknown expression type: [%d], exiting!\n", p->eType);
-    exit (EXIT_FAILURE);
+    FATAL ("In doDependencyFlagging, unknown expression type: [%d]", p->eType);
   }
 }
 
@@ -5234,7 +5168,7 @@ void dependencyFlagging (Polynomial * p)
 {
   int i;
 
-  fprintf (stderr, "Resetting all variable dependency flags\n");
+  swLogProgress(3 /* DETAIL + 1 */, 0, "Resetting all variable dependency flags");
   totalNodes = 0;
   for (i=0; i<variableCount; i++)
     variableList[i]->e.v->dependentNodes = 0;
@@ -5242,10 +5176,10 @@ void dependencyFlagging (Polynomial * p)
   clearValidEvalFlag ();
   doDependencyFlagging (p);
 
-  fprintf (stderr, "There are %lu nodes\n", totalNodes);
+  swLogProgress(3 /* DETAIL + 1 */, 0, "There are %lu nodes", totalNodes);
   for (i=0; i<variableCount; i++)
     if (totalNodes != 0)
-      fprintf (stderr, "Variable %s referenced by %4.1d%% nodes\n", variableList[i]->e.v->vName,
+      INFO ("Variable %s referenced by %4.1d%% nodes", variableList[i]->e.v->vName,
 	       (int) (variableList[i]->e.v->dependentNodes * 100.0 / totalNodes));
 }
 #endif
