@@ -1061,17 +1061,12 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   cL[5]++; // TP QT
 
   if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
-    // &&& This needs fixin'
-    fprintf (stderr, "Theta 0.5 has likelihood 0 \n");
-    fprintf (stderr, "dgf=%f\n", gfreq);
-    for (j = 1; j < s->ndim; j++) {
-      fprintf (stderr, " %f", x[j]);
-    }
-    fprintf (stderr, "mean %f %f %f %f SD %f %f %f %f\n", mean_DD, mean_Dd, mean_dD, mean_dd, SD_DD, SD_Dd, SD_dD, SD_dd);
-    fprintf (stderr, "\n");
-
-    //exit (EXIT_FAILURE);
-    *f = 1.0;
+    if (modelRange->atypicalQtTrait)
+      WARNING ("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
+    else
+      ERROR ("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
+    
+    f[0] = 1.0;
     return;
   }
 
