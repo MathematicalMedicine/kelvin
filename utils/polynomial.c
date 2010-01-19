@@ -1532,8 +1532,9 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       p0Id = 0, p0Key, p0Valid;
   enum expressionType p0EType;
 
-  if ((termCount++ & 0x3FFFFF) == 0) {
-    if ((termCount++ & 0x7FFFFF) == 0) {
+  termCount++;
+  if ((termCount & 0x1FFFFF) == 0) {
+    if ((termCount & 0xFFFFFF) == 0) {
 #ifdef POLYSTATISTICS
       polyStatistics ("At 8M raw term multiple");
 #endif
@@ -2022,8 +2023,9 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       p0Valid;  ///< Valid byte
   enum expressionType p0EType;
 
-  if ((termCount++ & 0x3FFFFF) == 0) {
-    if ((termCount++ & 0x7FFFFF) == 0) {
+  termCount++;
+  if ((termCount & 0x1FFFFF) == 0) {
+    if ((termCount & 0xFFFFFF) == 0) {
 #ifdef POLYSTATISTICS
       polyStatistics ("At 8M raw term multiple");
 #endif
