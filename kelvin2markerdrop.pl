@@ -164,7 +164,7 @@ close OUT;
 open OUT, ">" . $WritePrefix . "_Parameter.Dat";
 print OUT '# $Id$'; print OUT "\n";
 
-print OUT "simulate markers ".(scalar(@Loci)-1)." using trait\n";
+print OUT "simulate markers ".(scalar(@Loci))." using trait\n";
 print OUT "map marker Kosambi positions ";
 
 for my $Locus (@Loci) {
