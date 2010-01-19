@@ -237,15 +237,6 @@ void kelvinInit (int argc, char *argv[])
       ERROR ("Liability class analysis specified, but all classes are empty.");
   }
 
-  // Check for unbroken loops and unrelated individuals
-  for (i = 0; i < pedigreeSet.numPedigree; i++) {
-    Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[i];
-    if (pPedigree->currentLoopFlag)
-      ERROR ("Not all loops in pedigrees are broken");
-    if (pPedigree->numPerson < 3)
-      ERROR ("Pedigree %s has too few individuals", pPedigree->sPedigreeID);
-  }
-
   /* sort, uniquify and expand the trait model dimensions, subject to constraints */
   DETAIL(0,"Post-processing model and configuration data");
   finishConfig (modelRange, modelType);

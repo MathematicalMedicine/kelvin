@@ -83,7 +83,7 @@ int setup_loop_counts (Pedigree * pPed);
 void add_loopbreaker (Pedigree * pPed, Person * pPerson);
 Person *find_original_person (Pedigree * pPed, char *sPersonID);
 Person *find_loop_breaker (Person * breaker);
-void check_for_loop(Pedigree *);
+int check_for_loop(Pedigree *);
 
 /**
 
@@ -103,6 +103,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
   int flexBufferSize = 0;
   int pos;
   int numRet;
+  int loopsInPedigrees = FALSE;
   char *pLine = NULL;		/* current pointer to a string for strtok()  */
   Pedigree *pCurrPedigree = NULL;
   Person *pCurrPerson = NULL;
@@ -173,8 +174,33 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	/* set up pointers in the pedigree such as first child, 
 	 * * * next paternal sibling, next maternal sibling */
 	setup_pedigree_ptrs (pCurrPedigree);
-	/* Really figure out if there is a loop */
-	check_for_loop (pCurrPedigree);
+	// Really figure out if there is a loop
+	if (check_for_loop (pCurrPedigree) == EXIT_FAILURE)
+	  loopsInPedigrees = TRUE;
+	// Can't handle less than a nuclear family
+	if (pCurrPedigree->numPerson < 3)
+	  ERROR ("Pedigree %s has too few individuals", pCurrPedigree->sPedigreeID);
+	// Verify full connectivity
+	{
+	  int i, j, unconnected = TRUE;
+	  for (i = 0; i < pCurrPedigree->numPerson; i++) {
+	    Person *pP = pCurrPedigree->ppPersonList[i];
+	    if (pP->pParents[MOM] == NULL && pP->pParents[DAD] == NULL) // Check every founder...
+	      for (j = 0; j < pCurrPedigree->numPerson; j++) { // ...for a reference from someone else.
+		if (i == j) continue; // Skip self.
+		Person *pOP = pCurrPedigree->ppPersonList[j];
+		if ((strcmp(pOP->sParentID[MOM], pP->sID) == 0) ||
+		    (strcmp(pOP->sParentID[DAD], pP->sID) == 0)) {
+		  unconnected = FALSE;
+		  break;
+		}
+	      }
+	    else
+	      unconnected = FALSE; // Non-founders are connected
+	    if (unconnected)
+	      ERROR ("Unrelated individual %s in pedigree %s", pP->sID, pCurrPedigree->sPedigreeID);
+	  }
+	}
 	/* set up loop count, loop breaker count for this pedigree */
 	setup_loop_counts (pCurrPedigree);
 	/* set up nuclear families inside of this pedigree */
@@ -182,9 +208,12 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	/* Print out just for debug and verification purpose for now */
 	DIAG (READ_PEDFILE, 1, {print_nuclear_family (stdout, pCurrPedigree);});
       }
-      if (lastFlag == 1)
+      if (lastFlag == 1) {
 	/* we have processed the last pedigree in the file, done */
-	return 0;
+	if (loopsInPedigrees)
+	  ERROR ("Not all loops have been broken in pedigrees");
+	return EXIT_SUCCESS;
+      }
       /* create new pedigree */
       pCurrPedigree = create_pedigree (pPedigreeSet, sCurrPedLabel);
       strcpy (sPrevPedLabel, sCurrPedLabel);
@@ -221,8 +250,6 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
       pCurrPedigree->pPeelingProband = pCurrPerson;
     }
   }
-  /* Finished reading pedigree file successfully */
-  return 0;
 }
 
 int
@@ -631,10 +658,14 @@ setup_pedigree_ptrs (Pedigree * pPed)
     /* set up parents links first */
     //if (strcmp (pPerson->sDadID, pPed->pPedigreeSet->sUnknownID) != 0) {
     if (strcmp (pPerson->sParentID[DAD], modelOptions->sUnknownPersonID) != 0) {
-      /* dad is known */
-      pPerson->pParents[DAD] = find_person (pPed, pPerson->sParentID[DAD]);
-      /* mom is known */
-      pPerson->pParents[MOM] = find_person (pPed, pPerson->sParentID[MOM]);
+      /* Dad should be known */
+      if ((pPerson->pParents[DAD] = find_person (pPed, pPerson->sParentID[DAD])) == NULL)
+	ERROR ("Missing individual %s, father of %s in pedigree %s",
+	       pPerson->sParentID[DAD], pPerson->sID, pPed->sPedigreeID);
+      /* Mom should be known */
+      if ((pPerson->pParents[MOM] = find_person (pPed, pPerson->sParentID[MOM])) == NULL)
+	ERROR ("Missing individual %s, mother of %s in pedigree %s",
+	       pPerson->sParentID[MOM], pPerson->sID, pPed->sPedigreeID);
     } else {
       if (pPerson->loopBreaker == 0)
 	/* this person is a true founder 
@@ -648,17 +679,23 @@ setup_pedigree_ptrs (Pedigree * pPed)
     /* set up first child link */
     if (strcmp (pPerson->sFirstChildID, modelOptions->sUnknownPersonID) != 0) {
       /* first child is known */
-      pPerson->pFirstChild = find_person (pPed, pPerson->sFirstChildID);
+      if ((pPerson->pFirstChild = find_person (pPed, pPerson->sFirstChildID)) == NULL)
+	WARNING ("Missing individual %s, first child of %s and %s in pedigree %s",
+	       pPerson->sFirstChildID, pPerson->sParentID[DAD], pPerson->sParentID[MOM], pPed->sPedigreeID);
     }
     /* set up next paternal sibling link */
     if (strcmp (pPerson->sNextSibID[DAD], modelOptions->sUnknownPersonID) != 0) {
-      pPerson->pNextSib[DAD] = find_person (pPed, pPerson->sNextSibID[DAD]);
+      if ((pPerson->pNextSib[DAD] = find_person (pPed, pPerson->sNextSibID[DAD])) == NULL)
+	WARNING ("Missing individual %s, next paternal sibling of %s in pedigree %s",
+	       pPerson->sNextSibID[DAD], pPerson->sParentID[DAD], pPed->sPedigreeID);
     } else
       pPerson->pNextSib[DAD] = NULL;
 
     /* set up next maternal sibling link */
     if (strcmp (pPerson->sNextSibID[MOM], modelOptions->sUnknownPersonID) != 0) {
-      pPerson->pNextSib[MOM] = find_person (pPed, pPerson->sNextSibID[MOM]);
+      if ((pPerson->pNextSib[MOM] = find_person (pPed, pPerson->sNextSibID[MOM])) == NULL)
+	WARNING ("Missing individual %s, next maternal sibling of %s in pedigree %s",
+	       pPerson->sNextSibID[MOM], pPerson->sParentID[MOM], pPed->sPedigreeID);
     } else
       pPerson->pNextSib[MOM] = NULL;
 
@@ -1445,7 +1482,7 @@ check_for_common_ancestor (Pedigree *pPed) {
      loops, otherwise go to 2.
 
 */
-void
+int
 check_for_loop (Pedigree *pPed) {
 
   int tuple[256][3]; ///< Self, Mom, Dad
@@ -1453,7 +1490,7 @@ check_for_loop (Pedigree *pPed) {
   int i, j, numPRs = 0, firstPR, secondPR, potentialPR, remainingPersons, removedSome,
     referenceCount;
 
-  /// Copy individual and parent indexes to a structure we can destroy.
+  // Copy individual and parent indexes to a structure we can destroy.
   for (i = 0; i < pPed->numPerson; i++) {
     pPerson = pPed->ppPersonList[i];
     tuple[i][0] = atoi(pPerson->sID);
@@ -1534,13 +1571,19 @@ check_for_loop (Pedigree *pPed) {
     }
   }
   if (remainingPersons > 0) {
+    char *messageBuffer, *pMB;
+    MALCHOKE (messageBuffer, 2048, char *);
+    pMB = messageBuffer;
     pPed->currentLoopFlag = 1;
-    fprintf(stdout, "Pedigree %s, loop(s) found involving individuals ", pPed->sPedigreeID);
+    pMB += sprintf (pMB, "Pedigree %s, loop(s) found involving individuals ", pPed->sPedigreeID);
     for (i = 0; i< pPed->numPerson; i++)
       if (tuple[i][0] != 0)
-	printf("%d ", tuple[i][0]);
-    printf("\n");
+	pMB += sprintf(pMB, "%d ", tuple[i][0]);
+    WARNING (messageBuffer);
+    free (messageBuffer);
+    return (EXIT_FAILURE);
   }
+  return (EXIT_SUCCESS);
 }
 
 
