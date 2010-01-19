@@ -458,11 +458,6 @@ Polynomial *polyReturnWrapper (Polynomial * p)
 {
   // For testing purposes, we're going to export every polynomial!
   //  return exportPoly (p);
-  if (swProgressRequestFlag) {
-    swProgressRequestFlag = FALSE;
-    swLogProgress(3 /* DETAIL + 1 */, 0, "Building polynomial, currently at %1.2g terms",
-		  (double) sumCount + productCount + constantCount + variableCount + functionCallCount);
-  }
   return (p);
 }
 
@@ -696,12 +691,8 @@ double evaluateValue (Polynomial * p)
   double returnValue;
   int i;
 
-  evaluateValueCount++;
-
-  if (swProgressRequestFlag) {
-    swProgressRequestFlag = FALSE;
-    swLogProgress(3 /* DETAIL + 1 */, 0, "Evaluating polynomials, currently at %1.2g iterations", (double) evaluateValueCount);
-  }
+  if ((evaluateValueCount++ & 0x3FF) == 0)
+    DETAIL (0, "Evaluating polynomials, currently at %1.2g iterations", (double) evaluateValueCount);
 
 #ifdef EVALUATESW
   swStart (evaluateValueSW);
@@ -1541,10 +1532,18 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
       p0Id = 0, p0Key, p0Valid;
   enum expressionType p0EType;
 
+  if ((termCount++ & 0x3FFFFF) == 0) {
+    if ((termCount++ & 0x7FFFFF) == 0) {
 #ifdef POLYSTATISTICS
-  if ((termCount++ & 0x7FFFFF) == 0) ///< New term from an external standpoint.
-    polyStatistics ("At 8M raw term multiple");
+      polyStatistics ("At 8M raw term multiple");
 #endif
+      swLogProgress(3 /* DETAIL + 1 */, 0, "Building polynomial, currently at %1.2g terms, %2.3gGb",
+		    (double) sumCount + productCount + constantCount + variableCount + functionCallCount,
+		    polyMemory() / (1024 * 1024 * 1024));
+    } else
+      swLogProgress(4 /* DETAIL + 2 */, 0, "Building polynomial, currently at %1.2g terms",
+		    (double) sumCount + productCount + constantCount + variableCount + functionCallCount);
+  }
 
   // Initialize the variables that keep tracks the number of terms collected for the new sum polynomial
   counter_v1 = 0;
@@ -2023,10 +2022,18 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
       p0Valid;  ///< Valid byte
   enum expressionType p0EType;
 
+  if ((termCount++ & 0x3FFFFF) == 0) {
+    if ((termCount++ & 0x7FFFFF) == 0) {
 #ifdef POLYSTATISTICS
-  if ((termCount++ & 0x7FFFFF) == 0) ///< New term from an external standpoint.
-    polyStatistics ("At 8M raw term multiple");
+      polyStatistics ("At 8M raw term multiple");
 #endif
+      swLogProgress(3 /* DETAIL + 1 */, 0, "Building polynomial, currently at %1.2g terms, %2.3gGb",
+		    (double) sumCount + productCount + constantCount + variableCount + functionCallCount,
+		    polyMemory() / (1024 * 1024 * 1024));
+    } else
+      swLogProgress(4 /* DETAIL + 2 */, 0, "Building polynomial, currently at %1.2g terms",
+		    (double) sumCount + productCount + constantCount + variableCount + functionCallCount);
+  }
 
   // Initialize the containers for the operands of a times operation
   counter_v2 = 0;
@@ -2755,12 +2762,8 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
   mpf_init (mpfTerm);
 #endif
 
-  evaluatePolyCount++;
-
-  if (swProgressRequestFlag) {
-    swProgressRequestFlag = FALSE;
-    swLogProgress(3 /* DETAIL + 1 */, 0, "Evaluating polynomials, currently at %1.2g iterations", (double) evaluatePolyCount);
-  }
+  if ((evaluatePolyCount++ & 0x3FF) == 0)
+    DETAIL (0, "Evaluating polynomials, currently at %1.2g iterations", (double) evaluatePolyCount);
 
 #ifdef EVALUATESW
   swStart (evaluatePolySW);
@@ -3792,6 +3795,63 @@ void polyStatistics (char *title)
 #endif
   return;
 };
+
+/**
+ This function returns total polynomial memory utilization.
+
+ The calculation of memory utilization is very accurate when there is no
+ multithreading. Multithreading will add 15-20%.
+
+*/
+double polyMemory ()
+{
+  long constantSize, variableSize, sumSize, productSize, functionCallSize;
+  double grandTotal;
+  long sumTerms = 0, productTerms = 0;
+  int constantHashSize = 0, variableHashSize = 0, sumHashSize = 0, 
+    productHashSize = 0, functionCallHashSize = 0;
+  int i;
+
+  constantSize = constantCount * sizeof (Polynomial);
+  variableSize = variableCount * (sizeof (Polynomial) + sizeof (struct variablePoly));
+
+  sumSize = sumCount * (sizeof (Polynomial) + sizeof (struct sumPoly));
+  for (i = 0; i < sumCount; i++)
+    sumTerms += sumList[i]->e.s->num;
+
+  productSize = productCount * (sizeof (Polynomial) + sizeof (struct productPoly));
+  for (i = 0; i < productCount; i++)
+    productTerms += productList[i]->e.p->num;
+
+  functionCallSize = functionCallCount * sizeof (Polynomial);
+
+  constantHashSize = CONSTANT_HASH_SIZE * sizeof (struct hashStruct);
+  for (i = 0; i < CONSTANT_HASH_SIZE; i++)
+    constantHashSize += constantHash[i].length * 2 * sizeof (int);
+
+  variableHashSize = VARIABLE_HASH_SIZE * sizeof (struct hashStruct);
+  for (i = 0; i < VARIABLE_HASH_SIZE; i++)
+    variableHashSize += variableHash[i].length * 2 * sizeof (int);
+
+  sumHashSize = SUM_HASH_SIZE * sizeof (struct hashStruct);
+  for (i = 0; i < SUM_HASH_SIZE; i++)
+    sumHashSize += sumHash[i].length * 2 * sizeof (int);
+
+  productHashSize = PRODUCT_HASH_SIZE * sizeof (struct hashStruct);
+  for (i = 0; i < PRODUCT_HASH_SIZE; i++)
+    productHashSize += productHash[i].length * 2 * sizeof (int);
+
+  functionCallHashSize = FUNCTIONCALL_HASH_SIZE * sizeof (struct hashStruct);
+  for (i = 0; i < FUNCTIONCALL_HASH_SIZE; i++)
+    functionCallHashSize += functionCallHash[i].length * 2 * sizeof (int);
+
+  grandTotal = constantHashSize + variableHashSize + sumHashSize + productHashSize +
+      functionCallHashSize + constantSize + variableSize +
+      sumSize + (sumTerms * (sizeof (Polynomial *) + sizeof (double))) +
+      productSize + (productTerms * (sizeof (Polynomial *) + sizeof (int))) + functionCallSize + ((constantListLength + variableListLength + sumListLength + productListLength + functionCallListLength) * sizeof (void *));
+
+  return (grandTotal);
+}
 
 void printAllVariables ()
 {

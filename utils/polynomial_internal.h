@@ -230,6 +230,7 @@ void importTermList (Polynomial * p);
 void exportTermList (Polynomial * p, int writeFlag);
 void deportTermList (Polynomial * p);
 void thrashingCheck ();
+double polyMemory ();
 #ifdef DEPENDENCYFLAGGING
 void dependencyFlagging (Polynomial * p);
 #endif
