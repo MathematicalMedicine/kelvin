@@ -3,7 +3,7 @@
     <title>Kelvin Configuration Directives</title>
     <style type='text/css'>
       div.hang {padding-left: 2em ; text-indent: -2em }
-      div.hang ul{padding-left: 0em ; text-indent: 0em }
+      ul.hang {text-indent: 0em }
       span.sc { font-variant: small-caps; }
     </style>
   </head>
@@ -176,6 +176,8 @@
       <a href='#extramods'>ExtraMODs</a><br>
       <a href='#progresslevel'>ProgressLevel</a><br>
       <a href='#progressdelayseconds'>ProgressDelaySeconds</a><br>
+      <a href='#epistasispediegreefile'>EpistasisPedigreeFile</a><br>
+      <a href='#epistasislocusfile'>EpistasisLocusFile</a><br>
     </td>
     <td valign='top'>
       <a href='#multipoint'>MultiPoint</a><br>
@@ -187,6 +189,7 @@
       <a href='#qtt'>QTT</a><br>
       <a href='#threshold'>Threshold</a><br>
       <a href='#liabilityclasses'>LiabilityClassses</a><br>
+      <a href='#epistasis'>Epistasis</a><br>
     </td>
     <td valign='top'>
       <a href='#phenocodes'>PhenoCodes</a><br>
@@ -272,6 +275,43 @@
     are performed.
   </div><p>
   
+  <div class='hang' id='epistasis'>
+    <b>Epistasis</b><br>
+    <tt>Epistasis <i>markername</i></tt><br>
+    Specifies that <span class='sc'>Kelvin</span> should consider epistasis between
+    the trait and the marker identified by <tt><i>markername</i></tt>. Marker genotype
+    data for the selected marker must be provided using the
+    <a href='#epistasispedigreefile'>EpistasisPedigreeFile</a> and
+    <a href='#epistasislocusfile'>EpistasisLocusFile</a> directives. If the marker
+    also appears in the dataset to be analyzed, it will be dropped. This directive
+    is incompatible with the <a href='#liabilityclasses'>LiabilityClasses</a> directive.
+  </div><p>
+
+  <div class='hang' id='epistasispedigreefile'>
+    <b>EpistasisPedigreeFile</b><br>
+    <tt>EpistasisPedigreeFile <i>filename</i></tt><br>
+    Specifies the pedigree file that contains genotype data for the marker specified with
+    the <a href='#epistasis'>Epistasis</a> directive. This can be a pedigree file from
+    another dataset (another chromosome, for example), or it can be the same file specified
+    the the <a href='#pedigreefile'>PedigreeFile</a> directive. This directive requires
+    the <a href='#epistasis'>Epistasis</a> and <a href='#epistasislocusfile'>
+    EpistasisLocusFile</a> directives, and is incompatible with the 
+    <a href='#liabilityclasses'>LiabilityClasses</a> directive.
+  </div><p>
+
+  <div class='hang' id='epistasislocusfile'>
+    <b>EpistasisLocusFile</b><br>
+    <tt>EpistasisLocusFile <i>filename</i></tt><br>
+    Specifies the file that contains pedigree column layout information for the
+    file specified by the <a href='"#epistasispedigreefile'>EpistasisPedigreeFile</a>
+    directive. This can be a locus file from a another dataset (another chromosome,
+    for example), or it can be the same file specified with the 
+    <a href='#locusfile'>LocusFile</a> directive. This directive requires
+    the <a href='#epistasis'>Epistasis</a> and <a href='#epistasispedigreefile'>
+    EpistasisPedigreeFile</a> directives, and is incompatible with the 
+    <a href='#liabilityclasses'>LiabilityClasses</a> directive.
+  </div><p>
+
   <div class='hang' id='extramods'>
     <b>ExtraMODs</b><br>
     <tt>ExtraMODs</tt><br>
@@ -331,35 +371,36 @@
   <div class='hang' id='progresslevel'>
     <b>ProgressLevel</b><br>
     <tt>ProgressLevel <i>number</i></tt><br>
-    Specifies the level of detail of progress information that <span class='sc'>Kelvin</span> should 
-    generate while it runs:
-    <ul>
+    Specifies the level of detail of progress information that <span class='sc'>Kelvin</span>
+    should generate while it runs:
+    <ul class='hang'>
       <li>0, steps only, such as start and end of analysis</li>
       <li>1, substeps, such as progress thru trait loci</li>
       <li>2 thru 8, increasing levels of detail, such as polynomial build or evaluation</li>
     </ul>
-    The default is 1. Use this in conjunction with the <a href='#progressdelayseconds'>ProgressDelaySeconds</a>
-    directive to fine-tune the flow of progress information to suite your needs.
+    The default is 1. Use this in conjunction with the <a href='#progressdelayseconds'>
+    ProgressDelaySeconds</a> directive to fine-tune the flow of progress information to
+    suit your needs.
   </div><p>
   
   <div class='hang' id='progressdelayseconds'>
     <b>ProgressDelaySeconds</b><br>
     <tt>ProgressDelaySeconds <i>number</i></tt><br>
-    Specifies the delay between progress notifications displayed by <span class='sc'>Kelvin</span>.
-    The intent of this directive is to stabilize the frequency of progress notifications and hence the overall
-    volume of progress information. The default value is 120 seconds. This causes only the most recent progress 
-    notifications permitted by the <a href='#progresslevels'>ProgressLevels</a> directive to be displayed
-    every two minutes. For example, if 32 pedigrees have been processed in the last two minutes, only the
-    notification of the start of processing of the 33rd will be displayed. Note that this can cause progress messages to
-    be delayed. If, in our example, the 33rd pedigree is start processing 2 seconds into the 120 second delay interval,
-    the message displayed at the end of the interval will be 118 seconds old.
-    <br>
-    If you require an earlier progress update, press <tt>CTRL/\</tt>.
-    <br>
-    If no fresh progress notifications are available, <tt>...running...</tt> will be displayed.
-    <br>
-    Specifying 0 (zero) causes  <span class='sc'>Kelvin</span> to display all permitted levels of progress 
-    messages as they occur.
+    Specifies the delay between progress notifications displayed by
+    <span class='sc'>Kelvin</span>. The intent of this directive is to stabilize the frequency
+    of progress notifications and hence the overall volume of progress information. The default
+    value is 120 seconds. This causes only the most recent progress notifications permitted by
+    the <a href='#progresslevels'>ProgressLevels</a> directive to be displayed every two
+    minutes. For example, if 32 pedigrees have been processed in the last two minutes, only the
+    notification of the start of processing of the 33rd will be displayed. Note that this can
+    cause progress messages to be delayed. If, in our example, the 33rd pedigree is start
+    processing 2 seconds into the 120 second delay interval, the message displayed at the end
+    of the interval will be 118 seconds old.<br>
+    If you require an earlier progress update, press <tt>CTRL/\</tt>.<br>
+    If no fresh progress notifications are available, <tt>...running...</tt> will be
+    displayed.<br>
+    Specifying 0 (zero) causes <span class='sc'>Kelvin</span> to display all permitted levels
+    of progress messages as they occur.
   </div><p>
   
   <div class='hang' id='mapfile'>
