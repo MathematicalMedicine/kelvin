@@ -1062,9 +1062,9 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
 
   if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
     if (modelRange->atypicalQtTrait)
-      WARNING ("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
+      WARNING ("Pedigree set has likelihood of zero or nearly zero");
     else
-      ERROR ("Pedigree %s has likelihood of zero or nearly zero", pPedigreeLocal->sPedigreeID);
+      ERROR ("Pedigree set has likelihood of zero or nearly zero");
     
     f[0] = 1.0;
     return;
