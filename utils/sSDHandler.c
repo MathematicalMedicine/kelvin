@@ -282,14 +282,14 @@ void removeFreeListHead (unsigned short freeList) {
 
   // Handle failures first
   if (listHead[freeList].doublePairCount == 0) {
-#ifdef DIAG
+#ifdef DEBUG
     fprintf (stderr, "Attempt to remove head of empty L%d (Zero dpc, listDepth %d)!\n",
 	     freeList, listDepth[freeList]);
 #endif
     exit (EXIT_FAILURE);
   }
   if (listDepth[freeList] == 0) {
-#ifdef DIAG
+#ifdef DEBUG
     fprintf (stderr, "Attempt to remove head of empty L%d (Zero listDepth, %ludpc)!\n",
 	     freeList, listHead[freeList].doublePairCount);
 #endif
@@ -300,7 +300,7 @@ void removeFreeListHead (unsigned short freeList) {
   if (listHead[freeList].nextFree == ULONG_MAX) {
     listDepth[freeList] = 0;
     listHead[freeList].doublePairCount = 0;
-#ifdef DIAG
+#ifdef DEBUG
     fprintf (stderr, "Removed last head from L%d (according to nextFree)\n", freeList);
 #endif
   } else {
@@ -316,7 +316,7 @@ void removeFreeListHead (unsigned short freeList) {
     }
     listHead[freeList].chunkOffset--;
     listHead[freeList].doublePairCount++;
-#ifdef DIAG
+#ifdef DEBUG
     fprintf (stderr, "Popped new head of L%d at co%lu of %ludps", freeList,
 	     listHead[freeList].chunkOffset, listHead[freeList].doublePairCount);
     if (listHead[freeList].nextFree == ULONG_MAX)
@@ -335,13 +335,13 @@ void insertFreeListHead (unsigned long chunkOffset, unsigned long doublePairCoun
     freeList = high16Bit (doublePairCount - 1UL);
   else
     freeList = 0;
-#ifdef DIAG
+#ifdef DEBUG
   fprintf (stderr, "Pushing co%lu of %ludps onto L%d\n",
 	   chunkOffset, doublePairCount, freeList);
 #endif
   if (listHead[freeList].doublePairCount == 0UL) {
     // First one, an easy insertion
-#ifdef DIAG
+#ifdef DEBUG
     fprintf (stderr, "First of list!\n");
 #endif
     listHead[freeList].chunkOffset = chunkOffset;
@@ -354,7 +354,7 @@ void insertFreeListHead (unsigned long chunkOffset, unsigned long doublePairCoun
   // Not the first one, but adjacent to it?
   if (chunkOffset+doublePairCount == listHead[freeList].chunkOffset) {
     // Add to beginning...
-#ifdef DIAG
+#ifdef DEBUG
     fprintf (stderr, "Immediately preceeds first of list!\n");
 #endif
     listHead[freeList].chunkOffset = chunkOffset;
@@ -364,7 +364,7 @@ void insertFreeListHead (unsigned long chunkOffset, unsigned long doublePairCoun
 
   if (listHead[freeList].chunkOffset + listHead[freeList].doublePairCount == chunkOffset) {
     // Add to end...
-#ifdef DIAG
+#ifdef DEBUG
     fprintf (stderr, "Immediately follows first of list!\n");
 #endif
     listHead[freeList].doublePairCount += doublePairCount;
@@ -516,7 +516,7 @@ void garbageCollect () {
   fprintf (stderr, "\nSorting %lu entries...", freeVectorEntryCount);
   fflush (stderr);
 
-#ifdef DIAG
+#ifdef DEBUG
   fprintf (stderr, "Pre-sort:\n");
   for (i=0; i<freeVectorEntryCount; i++)
     fprintf (stderr, "#%d: co%lu-co%lu\n", i, freeVector[i].coStart, freeVector[i].coEnd);
@@ -524,7 +524,7 @@ void garbageCollect () {
 
   qqsort (freeVector, freeVectorEntryCount, sizeof (struct freeVectorEntry), compareFVE);
 
-#ifdef DIAG
+#ifdef DEBUG
   fprintf (stderr, "Post-sort:\n");
   for (i=0; i<freeVectorEntryCount; i++) {
     fprintf (stderr, "#%d: co%lu-co%lu\n", i, freeVector[i].coStart, freeVector[i].coEnd);
@@ -559,7 +559,7 @@ void garbageCollect () {
       if (coEnd == freeVector[i+1].coStart) {
 	coEnd = freeVector[++i].coEnd;
       } else {
-#ifdef DIAG
+#ifdef DEBUG
 	fprintf (stderr, "Unfree hole from co%lu to co%lu of %ludps\n",
 		 coEnd, freeVector[i+1].coStart, (freeVector[i+1].coStart - coEnd));
 #endif
@@ -635,7 +635,7 @@ void reorderFreeList (int freeList) {
       if (coEnd == freeVector[i+1].coStart) {
 	coEnd = freeVector[++i].coEnd;
       } else {
-#ifdef DIAG
+#ifdef DEBUG
 	fprintf (stderr, "Unfree hole from co%lu to co%lu of %ludps\n",
 		 coEnd, freeVector[i+1].coStart, (freeVector[i+1].coStart - coEnd));
 #endif
@@ -697,7 +697,7 @@ struct chunkTicket *doPutSSD (double *buffer, unsigned long myDPC, unsigned shor
   newCT->chunkOffset = listHead[freeList].chunkOffset;
   newCT->doublePairCount = myDPC;
 
-#ifdef DIAG
+#ifdef DEBUG
   fprintf (stderr, " at offset co%lu OK\n", newCT->chunkOffset);
 #endif
 
@@ -759,14 +759,14 @@ struct chunkTicket *putSSD (
     return ((struct chunkTicket *) NULL);
   }
 
-#ifdef DIAG
+#ifdef DEBUG
   fprintf (stderr, "putSSD for %ludpc...", myDPC);
 #endif
 
   // Use the head of the first available list that's large enough.
   bestFreeList  = MIN(15, high16Bit (myDPC));
   for (freeList = bestFreeList; freeList<16; freeList++) {
-#ifdef DIAG
+#ifdef DEBUG
     fprintf (stderr, "L%d has %ludpc ", freeList, listHead[freeList].doublePairCount);
 #endif
     if (listHead[freeList].doublePairCount >= myDPC)
@@ -781,7 +781,7 @@ struct chunkTicket *putSSD (
   reorderFreeList (bestFreeList);
 
   if (listHead[bestFreeList].doublePairCount >= myDPC) {
-#ifdef DIAG
+#ifdef DEBUG
     fprintf (stderr, "Best free list (%d) has %ludps\n", bestFreeList, listHead[bestFreeList].doublePairCount);
 #endif
     return (doPutSSD (buffer, myDPC, bestFreeList));
@@ -793,7 +793,7 @@ struct chunkTicket *putSSD (
 
   // Try again now...
   for (freeList = bestFreeList; freeList<16; freeList++) {
-#ifdef DIAG
+#ifdef DEBUG
     fprintf (stderr, "%d has %ludpc\n", freeList, listHead[freeList].doublePairCount);
 #endif
     if (listHead[freeList].doublePairCount >= myDPC)
@@ -833,7 +833,7 @@ void getSSD (
   if ((getCallCount & 0x3FFFF) == 0x3FFFF)
     statSSD ();
 
-#ifdef DIAG
+#ifdef DEBUG
   fprintf (stderr, "getSSD for %ludps at co%lu\n", myTicket->doublePairCount, myTicket->chunkOffset);
 #endif
   // Simply seek and read...
@@ -875,7 +875,7 @@ void freeSSD (
   if ((freeCallCount & 0x3FFFF) == 0x3FFFF)
     statSSD ();
 
-#ifdef DIAG
+#ifdef DEBUG
   fprintf (stderr, "freeSSD returning %ludps at co%lu\n", myTicket->doublePairCount, myTicket->chunkOffset);
 #endif
   insertFreeListHead (myTicket->chunkOffset, myTicket->doublePairCount);
@@ -914,7 +914,7 @@ int main (int argc, char *argv[]) {
   for (i=0; i<TEST_ITERATIONS; i++) {
     cT = rand() & MAX_TICKET_MASK;
 
-#ifdef DIAG
+#ifdef DEBUG
     fprintf (stderr, "%d, Ticket %d(%d):", i, cT, cTStatus[cT]);
 #endif
     switch (cTStatus[cT]) {
@@ -955,7 +955,7 @@ int main (int argc, char *argv[]) {
     case 72: // Release it...
       // Half the time we don't to this...
       if (rand() & 1) {
-#ifdef DIAG
+#ifdef DEBUG
 	fprintf (stderr, "Skip free\n");
 #endif
 	break;
@@ -978,7 +978,7 @@ int main (int argc, char *argv[]) {
   fprintf (stderr, "Freeing the rest...\n");
   for (i=0; i<=MAX_TICKET_MASK; i++) {
     if (cTStatus[i] != 70) {
-#ifdef DIAG
+#ifdef DEBUG
       fprintf (stderr, "%d, Ticket %d(%d):", i, cT, cTStatus[cT]);
 #endif
       freeSSD (listOTickets[i]);
