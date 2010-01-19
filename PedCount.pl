@@ -362,22 +362,7 @@ sub bucketizePedigrees {
             if ($liability) {
                 print OUT $Pedigrees{$Ped}{$Ind}{LC} . "  ";
             }
-            my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
-            for my $i (0 .. $PairCount - 1) {
-                next if (!$LociAttributes{ $Loci[ $i ] }{Included});
-                next if ($LociAttributes{ $Loci[ $i ] }{Type} =~ /^[AT]$/);
-                my ($Left, $Right) = split(/ /, $Pairs[$i]);
-                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Left})) {
-                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Left} . " ";
-                } else {
-                    print OUT AttributeMissing . " ";
-                }
-                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Right})) {
-                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Right} . "  ";
-                } else {
-                    print OUT AttributeMissing . "  ";
-                }
-            }
+            print OUT join("  ", @{ $Pedigrees{$Ped}{$Ind}{Mks} })."   ";;
             print OUT "Ped: $Ped Per: $Ind\n";
         }
     }
