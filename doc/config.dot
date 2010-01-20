@@ -14,10 +14,10 @@ digraph kelvin_conf {
 	"LD" [shape=box, label="Linkage\nDisequilibrium"] ;
 	"CTTP" [shape=box, label="Quantitative\nTrait w/Threshold"] ;
 	"CTMP"  [shape=box, label="Quantitative\nTrait w/Threshold"] ;
-	"CS" [shape=box, label="Chi-Square\nDistribution"] ;
-	"TD" [shape=box, label="Student's\nT-Distribution"] ;
-	"CSTP" [shape=box, label="Chi-Square\nDistribution"] ;
-	"TDTP" [shape=box, label="Student's\nT-Distribution"] ;
+#	"CS" [shape=box, label="Chi-Square\nDistribution"] ;
+#	"TD" [shape=box, label="Student's\nT-Distribution"] ;
+#	"CSTP" [shape=box, label="Chi-Square\nDistribution"] ;
+#	"TDTP" [shape=box, label="Student's\nT-Distribution"] ;
 
 	"start" -> "MM" ;
 	"start" -> "TM" ;
@@ -37,17 +37,21 @@ digraph kelvin_conf {
 	"SS" -> "CTMP" ;
 	"DTTP" -> "LE" ;
 	"DTTP" -> "LD" ;
-	"CTTP" -> "CSTP" ;
-	"CTTP" -> "TDTP" ;
-	"QTTP" -> "CSTP" ;
-	"QTTP" -> "TDTP" ;
-	"QTMP" -> "CS" ;
-	"QTMP" -> "TD" ;
-	"CTMP" -> "CS" ;
-	"CTMP" -> "TD" ;
-	"CSTP" -> "LE" ;
-	"CSTP" -> "LD" ;
-	"TDTP" -> "LE" ;
-	"TDTP" -> "LD" ;
+#	"CTTP" -> "CSTP" ;
+#	"CTTP" -> "TDTP" ;
+#	"QTTP" -> "CSTP" ;
+#	"QTTP" -> "TDTP" ;
+	"CTTP" -> "LE" ;
+	"CTTP" -> "LD" ;
+	"QTTP" -> "LE" ;
+	"QTTP" -> "LD" ;
+#	"QTMP" -> "CS" ;
+#	"QTMP" -> "TD" ;
+#	"CTMP" -> "CS" ;
+#	"CTMP" -> "TD" ;
+#	"CSTP" -> "LE" ;
+#	"CSTP" -> "LD" ;
+#	"TDTP" -> "LE" ;
+#	"TDTP" -> "LD" ;
 
 }
