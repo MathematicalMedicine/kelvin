@@ -368,12 +368,16 @@ sub bucketizePedigrees {
     }
 
     # Next the template pedigrees
+    my $WarnAboutCaseControlFlag = 1; # Should we warn about a case/control run?
     for my $PB (sort numericIsh keys %Templates) {
         my $Ped      = $Templates{$PB}{Ped};
         my $PairID   = $Templates{$PB}{PairID};
         my $PedSeq   = $Templates{$PB}{PedSeq};
         my $NiceName = defined($NiceNames{$PB}) ? $NiceNames{$PB} : $PB;
-
+	if (($NiceName =~ /case|ctrl/) && $WarnAboutCaseControlFlag) {
+	    $WarnAboutCaseControlFlag = 0;
+	    print "WARNING - Pedigree counting for case-control analysis is still under development!\n";
+	}
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             print OUT
               sprintf("%4s %3s %3s %3s ", $NiceName, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
