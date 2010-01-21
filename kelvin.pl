@@ -1,7 +1,8 @@
-#!perl -w
+#!/usr/bin/perl -w
 use strict;
 use File::Basename;
 use Data::Dumper;
+use IO::File;
 
 # KELVIN driver script 
 # Copyright 2009, Nationwide Children's Hospital Research Institute
@@ -11,41 +12,51 @@ use Data::Dumper;
 my $KELVIN_ROOT='NO_KELVIN_ROOT';
 my $KELVIN_BINARY='NO_KELVIN_BINARY';
 my $SEQUPDATE_BINARY='NO_SEQUPDATE_BINARY';
+my $PEDCOUNT_SCRIPT='NO_PEDCOUNT_SCRIPT';
+my $countable = undef;
+
 my $usage = "usage: $0 <configfile> [--directive ... ]\n";
 my $config;
 my $configFile;
 my ($directive, $args);
 my $arg;
 my $idx = 0;
-my $debug = 1;
+my $debug = 0;
 
 if ($KELVIN_ROOT =~ /no_kelvin_root/i) {
     $KELVIN_ROOT = dirname ($0);
-    print ("WARN: no KELVIN_ROOT defined, using '$KELVIN_ROOT'\n");
+    warner ("no KELVIN_ROOT defined, using '$KELVIN_ROOT'");
 }
 if ($KELVIN_BINARY =~ /no_kelvin_binary/i) {
     if (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.". platform_name ())) {
-	print ("WARN: no KELVIN_BINARY defined, using '$KELVIN_BINARY'\n");
+	warner ("no KELVIN_BINARY defined, using '$KELVIN_BINARY'");
     } elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.bin")) {
-	print ("WARN: no KELVIN_BINARY defined, using '$KELVIN_BINARY'\n");
+	warner ("no KELVIN_BINARY defined, using '$KELVIN_BINARY'");
     } else {
-	die ("FATAL: no kelvin binary found, quitting\n");
+	error ("no Kelvin binary found");
     }
 }
 if ($SEQUPDATE_BINARY =~ /no_sequpdate_binary/i) {
     if (-x ($SEQUPDATE_BINARY = "$KELVIN_ROOT/calc_updated_ppl")) {
-	print ("WARN: no SEQUPDATE_BINARY defined, using '$SEQUPDATE_BINARY'\n");
+	warner ("no SEQUPDATE_BINARY defined, using '$SEQUPDATE_BINARY'");
     } elsif (-x ($SEQUPDATE_BINARY = "$KELVIN_ROOT/seq_update/calc_updated_ppl")) {
-	print ("WARN: no SEQUPDATE_BINARY defined, using '$SEQUPDATE_BINARY'\n");
+	warner ("no SEQUPDATE_BINARY defined, using '$SEQUPDATE_BINARY'");
     } else {
 	$SEQUPDATE_BINARY = 'no_sequpdate_binary';
+    }
+}
+if ($PEDCOUNT_SCRIPT =~ /no_pedcount_script/i) {
+    if (-x ($PEDCOUNT_SCRIPT = "$KELVIN_ROOT/PedCount.pl")) {
+	warner ("no PEDCOUNT_SCRIPT defined, using '$PEDCOUNT_SCRIPT'");
+    } else {
+	$PEDCOUNT_SCRIPT = 'no_pedcount_script';
     }
 }
 
 ($configFile = shift (@ARGV))
     or die ($usage);
 ($config = KelvinConfig->new ($configFile))
-    or die ("FATAL: new KelvinConfig failed: $KelvinConfig::errstr\n");
+    or error ("new KelvinConfig failed: $KelvinConfig::errstr");
 if (@ARGV) {
     while (defined ($directive = $ARGV[$idx++])) {
 	($directive =~ s/^--//) or die ($usage);
@@ -55,16 +66,22 @@ if (@ARGV) {
 	    $args = (defined ($args)) ? $args .= " $arg" : $arg;
 	}
 	($config->addDirective ($directive, $args))
-	    or die ("FATAL: $KelvinConfig::errstr on command line\n");
+	    or error ("$KelvinConfig::errstr on command line");
     }
     $config->validate
-	or die ("FATAL: $KelvinConfig::errstr\n");
+	or error ("$KelvinConfig::errstr");
 }
 ($debug) and print Dumper ($config);
+(! ($config->isConfigured ("Multipoint") ||
+    $config->isConfigured ("CountFile") ||
+    $config->isConfigured ("QT") ||
+    $config->isConfigured ("QTT") ||
+    $PEDCOUNT_SCRIPT =~ /no_pedcount_script/i))
+    and $countable = 1;
+
 
 if ($config->isConfigured ("Epistasis")) {
-    run_epistasis ($config);
-    
+	run_epistasis ($config);
 } else {
     just_run_kelvin ($config, @ARGV);
 }
@@ -76,135 +93,330 @@ sub run_epistasis
     my ($config) = @_;
     my $epidataset;
     my $epimarker;
+    my $epigeno;
     my $origdataset;
     my $individual;
     my %individuals;
-    my ($directive, $args);
+    my ($multipoint, $ld, $extramods) = (undef, undef, undef);
+    my $undefpheno;
+    my $trait;
     my %conffiles = ();
     my @sequpdateargs = ('-e');
-    my $struct;
+    my @countargs = ();
+    my @lcmap = ();
+    my $ret;
+    my $va;
 
+    my $struct;
+    my $args;
     my $href = {};
     my $aref;
 
     ($SEQUPDATE_BINARY =~ /no_sequpdate_binary/i)
-	and die ("FATAL: no sequpdate binary found, quitting\n");
+	and error ("no sequpdate binary found");
+    ($config->isConfigured ("Multipoint")) and $multipoint = 1;
+    ($config->isConfigured ("LD")) and $ld = 1;
+    ($config->isConfigured ("ExtraMODs")) and $extramods = 1;
 
     # Configuration validation means I don't have to check return codes here
-    ($directive, $args) = $config->isConfigured ("EpistasisPedigreeFile");
-    $$href{pedigreefile} = $$args[0];
-    ($directive, $args) = $config->isConfigured ("EpistasisLocusFile");
-    $$href{locusfile} = $$args[0];
-    ($epidataset = KelvinDataset->new ($href))
-	or die ("FATAL: new KelvinDataset failed, $KelvinDataset::errstr\n");
-    ($directive, $args) = $config->isConfigured ("Epistasis");
-    $epimarker = $$args[0];
-    $epidataset = $epidataset->copy ({preserve => [$epimarker]});
+    $conffiles{PedigreeFile} = $ {$config->isConfigured ("EpistasisPedigreeFile")}[0];
+    $conffiles{LocusFile} = $ {$config->isConfigured ("EpistasisLocusFile")}[0];
+    $epimarker = $ {$config->isConfigured ("Epistasis")}[0];
+    $undefpheno = epistasis_undefpheno ($config);
+    ($countable) and $conffiles{CountFile} = "counts.dat";
 
+    map { $$href{$_} = $conffiles{$_} } qw/PedigreeFile LocusFile/;
+    ($epidataset = KelvinDataset->new ($href))
+	or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
+    $epidataset = $epidataset->copy ({preserve => [$epimarker]});
+    
     while ($individual = $epidataset->readIndividual) {
 	$struct = $individual->structure;
 	$aref = $individual->getGenotype ($epimarker);
-	$individuals{"P$$struct{pedid}I$$struct{indid}"} = $aref;
+	$individuals{"P$$struct{pedid}I$$struct{indid}"} = join ('_', sort (@$aref));
+    }
+    $epidataset->close;
+
+    # Load up %conffiles
+    $conffiles{configfile} = $config->filename;
+    $conffiles{PedigreeFile} = $ {$config->isConfigured ("PedigreeFile")}[0];
+    $conffiles{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
+    $conffiles{BayesRatioFile} = $ {$config->isConfigured ("BayesRatioFile")}[0];
+    if (! $multipoint) {
+	$conffiles{PPLFile} = ($args = $config->isConfigured ("PPLFile")) ? $$args[0] : 'ppl.out';
+	push (@sequpdateargs, '-O', $conffiles{BayesRatioFile}, '-R', $conffiles{PPLFile});
+    } else {
+	push (@sequpdateargs, '-m', '-R', $conffiles{BayesRatioFile});
+    }
+    ($args = $config->isConfigured ("MODFile")) and $conffiles{MODFile} = $$args[0];
+    $config->addDirective ("LiabilityClasses", epistasis_LC_map ($ld, \@lcmap, \%individuals));
+
+    map { $$href{$_} = $conffiles{$_} } qw/PedigreeFile LocusFile/;
+    ($origdataset = KelvinDataset->new ($href))
+        or die ("FATAL: new KelvinDataset failed, $KelvinDataset::errstr\n");
+    $aref = $origdataset->traitOrder;
+    (scalar (@$aref) == 0) and error ("dataset contains no trait data");
+    $trait = $$aref[0];
+    $epidataset = $origdataset->copy ({purge => [$epimarker]});
+    $epidataset->addTrait ('EpistasisClass', 'C', 'end')
+	or error ("KelvinDataset->addTrait failed, $KelvinDataset::errstr");
+    ($origdataset = KelvinDataset->new ($href))
+    	or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
+
+    $$href{backupfile} = 0;
+    for ($va = 0; $va < scalar (@lcmap); $va++) {
+	map {$$href{$_} = $conffiles{$_}.".pass$va"} qw/PedigreeFile LocusFile/;
+	$epidataset->write ($href);
+	while ($individual = $origdataset->readIndividual) {
+	    $individual->map ($epidataset);
+	    $struct = $individual->structure;
+	    $epigeno = $individuals{"P$$struct{pedid}I$$struct{indid}"};
+	    if (exists ($lcmap[$va]{$epigeno})) {
+		$individual->setTrait ("EpistasisClass", $lcmap[$va]{$epigeno});
+	    } else {
+		$individual->setTrait ($trait, $undefpheno);
+		$individual->setTrait ("EpistasisClass", 1);
+	    }
+	    $individual->write;
+	}
+	$origdataset->close;
+	$epidataset->close;
+	
+	map {
+	    exists ($conffiles{$_}) and $config->setDirective ($_, $conffiles{$_}. ".pass$va");
+	} qw/PedigreeFile LocusFile BayesRatioFile MODFile/;
+	$config->write ({configfile => $conffiles{configfile}. ".pass$va",
+			 backupfile => 0, nolocal => 1});
+	push (@sequpdateargs, $conffiles{BayesRatioFile}. ".pass$va");
+	if ($countable) {
+	    (($ret = system ($PEDCOUNT_SCRIPT, "-count", "-write", "-quiet",
+			     "-config", $conffiles{configfile}. ".pass$va")) != 0)
+		and error ("$PEDCOUNT_SCRIPT failed, " . ($ret == -1) ? "$!" : "status $?");
+	    rename ("PC1_Counts.Dat", $conffiles{CountFile}. ".pass$va");
+	    rename ("PC1_Pedigrees.Dat", $conffiles{PedigreeFile}. ".pass$va");
+	    unlink ("PC1_Data.Dat");
+	    @countargs = ("--CountFile", $conffiles{CountFile}. ".pass$va");
+	}
+
+	(($ret = system ($KELVIN_BINARY, $conffiles{configfile}. ".pass$va", @countargs)) != 0) 
+	    and error ("$KELVIN_BINARY $conffiles{configfile}.pass$va failed".
+		       ($ret == -1) ? "$!" : "status $?");
+    }
+    if (scalar (@lcmap) == 1) {
+	# If we only ran Kelvin once, clean up the inputs and rename the outputs
+	map { rename ($conffiles{$_}.'.pass0', $conffiles{$_}) } qw/BayesRatioFile MODFile/;
+	map { unlink ($conffiles{$_}.'.pass0') } qw/PedigreeFile LocusFile CountFile configfile/;
+    } else {
+	# Perform the sequential update, massage the MOD files, and clean up 
+	(exists ($conffiles{PPLFile})) and unlink ($conffiles{PPLFile});
+	(($ret = system ($SEQUPDATE_BINARY, @sequpdateargs)) != 0)
+	    and error ("$SEQUPDATE_BINARY failed, " . ($ret == -1) ? "$!" : "status $?");
+	
+	if (exists ($conffiles{MODFile})) {
+	    if (! $multipoint) {
+		epistasis_merge_TP_mod ($conffiles{MODFile}, $extramods);
+	    } else {
+		epistasis_merge_MP_mod ($conffiles{MODFile});
+	    }
+	}
+	
+	for ($va = 0; $va < scalar (@lcmap); $va++) {
+	    map {
+		unlink ($conffiles{$_}. ".pass$va");
+	    } qw/PedigreeFile LocusFile BayesRatioFile MODFile CountFile configfile/;
+	}
+    }
+    exit (0);
+}
+
+
+# This will need to be significantly retooled if we ever move to multi-marker 
+# epistasis. For the moment, we assume a single SNP. We need to provide three
+# pieces of information to the epistasis routine: the number of liability classes,
+# the number of Kelvin runs, and a mapping of genotypes to liability class for
+# each Kelvin run. We load the pass-by-reference array with one genotype-to-LC
+# map for each kelvin run, and return the number of liability classes directly.
+sub epistasis_LC_map
+{
+    my ($ld, $aref, $individuals) = @_;
+    my $href = {};
+    my $count = 0;
+    my $geno;
+
+    map { $$href{$_} = defined ($$href{$_}) ? $$href{$_} + 1 : 1 } values (%$individuals);
+    exists ($$href{'0_0'}) and delete ($$href{'0_0'});
+    foreach (qw/1_1 1_2 2_2/) {
+	if (exists ($$href{$_})) {
+	    $$href{$_} = ++$count;
+	} else {
+	    ($geno = $_) =~ s/_/,/;
+	    warner ("no individuals in pedigree with $geno genotype at epistasis marker");
+	}
+    }
+    if ($count != 3) {
+	warner ("Epistasis analysis reduced to $count class(es) due to limited observed genotypes.");
+	@$aref = ($href);
+	return ($count);
     }
     
-    # TODO: either improve configuration validation to include PedigreeFile, et al., or
-    # check return codes here.
-
-    ($directive, $args) = $config->isConfigured ("PedigreeFile");
-    $conffiles{PedigreeFile} = $$href{pedigreefile} = $$args[0];
-    ($directive, $args) = $config->isConfigured ("LocusFile");
-    $conffiles{LocusFile} = $$href{locusfile} = $$args[0];
-    if (($directive, $args) = $config->isConfigured ("BayesRatioFile")) {
-	$conffiles{BayesRatioFile} = $$args[0];
+    if ($ld) {
+	@$aref = ({'1_1', => 1, '1_2' => 2, '2_2' => 3});
+	return (3);
     } else {
-	($conffiles{BayesRatioFile} = $conffiles{PedigreeFile}) =~ s|^(.*/)?[^/]+$|${1}br.out|;
+	@$aref = ({'1_1', => 1, '1_2' => 1, '2_2' => 2},
+		  {'1_1', => 1, '1_2' => 2, '2_2' => 2});
+	return (2);
     }
-    if (($directive, $args) = $config->isConfigured ("PPLFile")) {
-	$conffiles{PPLFile} = $$args[0];
+}
+
+# Assumes epistasis with a single SNP
+sub epistasis_merge_MP_mod
+{
+    my ($modfile) = @_;
+    my ($fh0, $fh1, $outfh);
+    my (@flds0, @flds1);
+    my ($pen1, $pen2);
+    my $line;
+    my $modidx = 2;
+
+    $outfh = IO::File->new (">$modfile") or die ("open '$modfile' failed, $!\n");
+    $fh0 = IO::File->new ( "$modfile.pass0") or die ("open '$modfile.pass0' failed, $!\n");
+    $fh1 = IO::File->new  ("$modfile.pass1") or die ("open '$modfile.pass1' failed, $!\n");
+    
+    # Version line
+    $outfh->print ($fh0->getline);
+    $fh1->getline;
+
+    # Header line
+    ($line = $fh0->getline) =~ s/LC2PV(\([Dd,]+\))$/LC2PV$1 LC3PV$1/;
+    $outfh->print ($line);
+    $fh1->getline;
+
+    while ($line = $fh0->getline) {
+	@flds0 = split (/\s+/, $line);
+	@flds1 = split (/\s+/, $fh1->getline);
+	
+	if ($flds0[$modidx] >= $flds1[$modidx]) {
+	    ($pen1, $pen2) = splice (@flds0, -2, 2);
+	    $outfh->print (join (' ', @flds0, $pen1, $pen1, $pen2), "\n");
+	} else {
+	    ($pen1, $pen2) = splice (@flds1, -2, 2);
+	    $outfh->print (join (' ', @flds1, $pen1, $pen2, $pen2), "\n");
+	}
+    }
+    $outfh->close;
+    $fh0->close;
+    $fh1->close;
+    return (1);
+}
+
+# Again, assumes a single SNP
+sub epistasis_merge_TP_mod
+{
+    my ($modfile, $extramods) = @_;
+    my ($fh0, $fh1, $outfh);
+    my (@flds0, @flds1);
+    my ($pen1, $pen2);
+    my $line;
+    my $modidx = ($extramods) ? 1 : 0;
+
+    $outfh = IO::File->new (">$modfile") or die ("open '$modfile' failed, $!\n");
+    $fh0 = IO::File->new ( "$modfile.pass0") or die ("open '$modfile.pass0' failed, $!\n");
+    $fh1 = IO::File->new  ("$modfile.pass1") or die ("open '$modfile.pass1' failed, $!\n");
+
+    # Version line
+    $outfh->print ($fh0->getline);
+    $fh1->getline;
+
+    while ($line = $fh0->getline) {
+	# Marker line
+	$outfh->print ($line);
+	$fh1->getline;
+
+	# Header line
+	($line = $fh0->getline) =~ s/LC2PV(\([Dd,]+\))$/LC2PV$1 LC3PV$1/;
+	$outfh->print ($line);
+	$fh1->getline;
+
+	# Overall MOD line
+	@flds0 = split (/\s+/, $fh0->getline);
+	@flds1 = split (/\s+/, $fh1->getline);
+
+	if ($flds0[$modidx] >= $flds1[$modidx]) {
+	    ($pen1, $pen2) = splice (@flds0, -2, 2);
+	    $outfh->print (join (' ', @flds0, $pen1, $pen1, $pen2), "\n");
+	    if ($extramods) {
+		# Mod at Theta==0 line
+		@flds0 = split (/\s+/, $fh0->getline);
+		($pen1, $pen2) = splice (@flds0, -2, 2);
+		$outfh->print (join (' ', @flds0, $pen1, $pen1, $pen2), "\n");
+		$fh1->getline;
+	    }
+	} else {
+	    ($pen1, $pen2) = splice (@flds1, -2, 2);
+	    $outfh->print (join (' ', @flds1, $pen1, $pen2, $pen2), "\n");
+	    if ($extramods) {
+		# Mod at Theta==0 line
+		@flds1 = split (/\s+/, $fh1->getline);
+		($pen1, $pen2) = splice (@flds1, -2, 2);
+		$outfh->print (join (' ', @flds1, $pen1, $pen2, $pen2), "\n");
+		$fh0->getline;
+	    }
+	}
+    }
+    $outfh->close;
+    $fh0->close;
+    $fh1->close;
+    return (1);
+}
+
+# This really belongs in the KelvinConfig object, but there's no mechanism
+# for conditionalizing default values (yet).
+sub epistasis_undefpheno
+{
+    my ($config) = @_;
+    my $pheno;
+    my $aref;
+
+    if ($aref = $config->isConfigured ("PhenoCodes")) {
+	($pheno = $$aref[0]) =~ s/^([^,\s+]+).*/$1/;
+	return ($pheno);
+    }
+    if ($config->isconfigured ("QT") || $config->isConfigured ("QTT")) {
+	return (-99.99);
     } else {
-	($conffiles{PPLFile} = $conffiles{PedigreeFile}) =~ s|^(.*/)?[^/]+$|${1}ppl.out|;
+	return (0);
     }
-    (($directive, $args) = $config->isConfigured ("MODFile"))
-	and $conffiles{MODFile} = $$args[0];
-    $config->addDirective ("LiabilityClasses", 2);
-    $conffiles{configfile} = $config->filename;
-    push (@sequpdateargs, '-O', $conffiles{BayesRatioFile}, '-R', $conffiles{PPLFile});
-
-    ($origdataset = KelvinDataset->new ($href))
-    	or die ("FATAL: new KelvinDataset failed, $KelvinDataset::errstr\n");
-    $epidataset = $origdataset->copy;
-    $epidataset->addTrait ('EpistasisClass', 'C', 'end')
-	or die ("KelvinDataset addTrait failed, $KelvinDataset::errstr\n");
-    $$href{pedigreefile} .= '.pass1';
-    $$href{locusfile} .= '.pass1';
-    $$href{backupfile} = 0;
-    $epidataset->write ($href);
-    while ($individual = $origdataset->readIndividual) {
-	$individual->map ($epidataset);
-	$struct = $individual->structure;
-	$aref = $individuals{"P$$struct{pedid}I$$struct{indid}"};
-	$individual->setTrait ("EpistasisClass",(($$aref[0] == '2' && $$aref[1] == '2') ? 2 : 1));
-	$individual->write;
-    }
-    $origdataset->close;
-
-    map {
-	exists ($conffiles{$_}) and $config->setDirective ($_, $conffiles{$_}. '.pass1');
-    } qw/PedigreeFile LocusFile BayesRatioFile MODFile/;
-    $config->write ({configfile => $conffiles{configfile}. '.pass1',
-		     backupfile => 0, nolocal => 1});
-    push (@sequpdateargs, $conffiles{BayesRatioFile}. '.pass1');
-    system ($KELVIN_BINARY, $conffiles{configfile}. '.pass1');
-    ($? != 0) and die ("FATAL: $KELVIN_BINARY $conffiles{configfile}.pass1 failed\n");
-
-    $$href{pedigreefile} =~ s/pass1$/pass2/;
-    $$href{locusfile} =~ s/pass1$/pass2/;
-    $epidataset->write ($href);
-    while ($individual = $origdataset->readIndividual) {
-	$individual->map ($epidataset);
-	$struct = $individual->structure;
-	$aref = $individuals{"P$$struct{pedid}I$$struct{indid}"};
-	$individual->setTrait ("EpistasisClass",(($$aref[0] == '2' || $$aref[1] == '2') ? 2 : 1));
-	$individual->write;
-    }
-
-    map {
-	exists ($conffiles{$_}) and $config->setDirective ($_, $conffiles{$_}. '.pass2');
-    } qw/PedigreeFile LocusFile BayesRatioFile MODFile/;
-    $config->write ({configfile => $conffiles{configfile}. '.pass2',
-		     backupfile => 0, nolocal => 1});
-    push (@sequpdateargs, $conffiles{BayesRatioFile}. '.pass2');
-    system ($KELVIN_BINARY, $conffiles{configfile}. '.pass2');
-    ($? != 0) and die ("FATAL: $KELVIN_BINARY $conffiles{configfile}.pass2 failed\n");
-
-    unlink ($conffiles{PPLFile});
-    system ($SEQUPDATE_BINARY, @sequpdateargs);
-    ($? != 0) and die ("FATAL: $KELVIN_BINARY $conffiles{configfile}.pass2 failed\n");
-
-    # TODO: mangle MOD files
-
-    map {
-	unlink ($conffiles{$_}. '.pass1');
-	unlink ($conffiles{$_}. '.pass2');
-    } qw/PedigreeFile LocusFile BayesRatioFile MODFile configfile/;
-
-    exit (0);
 }
 
 sub just_run_kelvin
 {
     my ($config, @argv) = @_;
     my $dataset;
-    my $directive;
     my $args;
+    my $ret;
     
-    (($directive, $args) = $config->isConfigured ("FrequencyFile"))
-	or die ("no FrequencyFile in configuration file ". $config->filename);
+    $args = $config->isConfigured ("FrequencyFile");
+    # This has the effect of validating allele frequencies
     $dataset = KelvinDataset->new ({freqfile => $$args[0]})
-	or die ($KelvinDataset::errstr. "\n");
+	or error ($KelvinDataset::errstr);
     $dataset->close;
-    exec ($KELVIN_BINARY, $config->filename, @argv)
-	or die ("exec $KELVIN_BINARY failed, $!\n");
+
+    if ($countable) {
+	(($ret = system ($PEDCOUNT_SCRIPT, "-count", "-write", "-quiet",
+			 "-config", $config->filename)) != 0)
+	    and error ("$PEDCOUNT_SCRIPT failed, " . ($ret == -1) ? "$!" : "status $?");
+	$config->setDirective ("PedigreeFile", "PC1_Pedigrees.Dat");
+	$config->setDirective ("CountFile", "PC1_Counts.Dat");
+	$config->write ({configfile => "PC1_". $config->filename, backupfile => 0, nolocal => 1});
+	(($ret = system ($KELVIN_BINARY, "PC1_". $config->filename)) != 0)
+	    and error ("$KELVIN_BINARY failed, " . ($ret == -1) ? "$!" : "status $?");
+	map { unlink ("PC1_$_") } ($config->filename, 'Pedigrees.Dat', 'Counts.Dat', 'Data.Dat');
+	    
+    } else { 
+	exec ($KELVIN_BINARY, $config->filename, @argv)
+	    or error ("exec $KELVIN_BINARY failed, $!");
+    }
 }
 
 sub platform_name
@@ -217,9 +429,27 @@ sub platform_name
     return ($platform);
 }
 
+sub fatal
+{
+    die ("FATAL - ABORTING, @_");
+}
+
+sub error
+{
+    die ("ERROR - EXITING, @_\n");
+}
+
+sub warner
+{
+    warn ("WARNING, @_\n");
+}
+
 
 #
-# KelvinIndividual: an object for managing a individuals from pedigree files
+# KelvinIndividual: an object for managing a individuals from pedigree files. Note
+# that many methods of this object assume intimate knowledge of the internals of the
+# KelvinDataset object. Maybe not such great programming practice, but cuts down on
+# little utility methods that copy data back and forth.
 #
 BEGIN {
     package KelvinIndividual;
@@ -245,7 +475,6 @@ BEGIN {
 	(@$ind{qw/pedid indid dadid momid firstchildid patsibid matsibid sex proband/}, @arr) = 
 	    split (' ', $line);
 
-	# EVIL: assuming knowledge of the KelvinDataset internal structure, but so much easier
 	(defined ($trait = $$dataset{traitorder}[-1]))
 	    and $traitcol = $$dataset{traits}{$trait}{col};
 	(defined ($marker = $$dataset{markerorder}[-1]))
@@ -481,8 +710,15 @@ BEGIN {
 		}
 		map { $hash{$_} = 1; } @{$$arg{preserve}};
 	    }
+	    if (scalar (keys (%hash)) == 0) {
+		if (scalar (@{$$self{maporder}})) {
+		    map { $hash{$_} = 1; } @{$$self{maporder}};
+		} else {
+		    map { $hash{$_} = 1; } @{$$self{markerorder}};
+		}
+	    }
 	    if (exists ($$arg{purge})) {
-		if (ref ($$arg{preserve}) ne 'ARRAY') {
+		if (ref ($$arg{purge}) ne 'ARRAY') {
 		    $errstr = "subset method 'purge' requires an array reference";
 		    return (undef);
 		}
@@ -879,6 +1115,10 @@ BEGIN {
 	my $line;
 	my $individual;
 	
+	if ($$self{writing}) {
+	    $errstr = "can't read when pedigree file is open for writing";
+	    return (undef);
+	}
 	(defined ($$self{pedfh}) || (defined ($$self{pedfile}) && $self->readPedigreefile))
 	    or return (undef);
 	if (defined ($individual = $$self{individualcache})) {
@@ -900,31 +1140,25 @@ BEGIN {
 	my $pedid;
 	my $pos;
 	
-	(defined ($$self{pedfh}) || (defined ($$self{pedfile}) && $self->readPedigreefile))
-	    or return (undef);
 	if (defined ($individual = $$self{individualcache})) {
 	    $$self{individualcache} = undef;
 	} else {
-	    ($line = $$self{pedfh}->getline (\$$self{pedlineno})) or return (0);
-	    unless (defined ($individual = KelvinIndividual->new ($self, $line))) {
-		$errstr = $KelvinIndividual::errstr;
-		return (undef);
+	    unless ($individual = $self->readIndividual) {
+		(defined ($individual)) or return (undef);
+		return (0);
 	    }
 	}
 	push (@$family, $individual);
 	$pedid = $individual->pedid;
-	
-	while ($line = $$self{pedfh}->getline (\$$self{pedlineno})) {
-	    unless (defined ($individual = KelvinIndividual->new ($self, $line))) {
-		$errstr = $KelvinIndividual::errstr;
-		return (undef);
-	    }
+
+	while ($individual = $self->readIndividual) {
 	    if ($individual->pedid != $pedid) {
 		$$self{individualcache} = $individual;
 		last;
 	    }
 	    push (@$family, $individual);
 	}
+	(defined ($individual)) or return (undef);
 	return ($family);
     }
 
@@ -1195,6 +1429,7 @@ BEGIN {
 	    $$self{pedfh} = undef;
 	}
 	$$self{individualcache} = undef;
+	$$self{writing} = 0;
 	return (1);
     }
 
@@ -1210,18 +1445,27 @@ BEGIN {
 	    $errstr = "marker $marker has no alleles";
 	    return (undef);
 	}
-	if (abs (1 - $total) < $ROUNDING_ERROR) {
+	if (abs (1 - $total) <= $ROUNDING_ERROR) {
 	    if ($count == 1) {
+		# Assume here that a single allele, labeled either '1' or '2', with
+		# a frequency of 1, is a SNP and fill the missing complementary allele.
 		if (($label = (keys (%$href))[0]) eq '1') {
 		    $$href{2} = 0;
 		} elsif ($label eq '2') {
 		    $$href{1} = 0;
 		}
 	    }
-	    return (1);
-	}
-	if ($count == 2) {
-	    $errstr = "biallelic marker frequencies don't sum to 1";
+	} elsif ($total < 1 - $ROUNDING_ERROR) {
+	    if ($count == 2) {
+		$errstr = "biallelic marker $marker frequencies don't sum to 1";
+		return (undef);
+	    }
+	    # This stinks: we really shouldn't be emitting output directly here.
+	    # S'okay, tho, because frequency checking will eventually move to the C code.
+	    warn ("WARNING, marker $marker frequencies sum to $total\n");
+	} else {
+	    # Frquencies sum to greater than 1, and that's just wrong.
+	    $errstr = "marker $marker frequencies sub to $total";
 	    return (undef);
 	}
 	return (1);
@@ -1230,29 +1474,37 @@ BEGIN {
     sub mapFields
     {
 	my ($self) = @_;
+	my $aref = [];
 
-	return ($$self{mapfields});
+	@$aref = @{$$self{mapfields}};
+	return ($aref);
     }
 
     sub mapOrder 
     {
 	my ($self) = @_;
+	my $aref = [];
 
-	return ($$self{maporder});
+	@$aref = @{$$self{maporder}};
+	return ($aref);
     }
 
     sub markerOrder 
     {
 	my ($self) = @_;
+	my $aref = [];
 
-	return ($$self{markerorder});
+	@$aref = @{$$self{markerorder}};
+	return ($aref);
     }
 
     sub traitOrder 
     {
 	my ($self) = @_;
+	my $aref = [];
 
-	return ($$self{traitorder});
+	@$aref = @{$$self{traitorder}};
+	return ($aref);
     }
 
     sub markers
@@ -1280,15 +1532,20 @@ BEGIN {
     our $errstr='';
     my %directives = (
 		      pedigreefile => {canon => 'PedigreeFile',
-				       singlearg => 'true'},
+				       singlearg => 'true',
+				       default => 'pedfile.dat'},
 		      locusfile => {canon => 'LocusFile',
-				    singlearg => 'true'},
+				    singlearg => 'true',
+				    default => 'datafile.dat'},
 		      frequencyfile => {canon => 'FrequencyFile',
-					singlearg => 'true'},
+					singlearg => 'true',
+					default => 'markers.dat'},
 		      mapfile => {canon => 'MapFile',
-				  singlearg => 'true'},
+				  singlearg => 'true',
+				  default => 'mapfile.dat'},
 		      bayesratiofile => {canon => 'BayesRatioFile',
-					 singlearg => 'true'},
+					 singlearg => 'true',
+					 default => 'br.out'},
 		      pplfile => {canon => 'PPLFile',
 				  singlearg => 'true'},
 		      countfile => {canon => 'CountFile',
@@ -1336,7 +1593,8 @@ BEGIN {
 		      truncate=> {canon => 'Truncate'},
 		      markerallelefrequency => {canon => 'MarkerAlleleFrequency'},
 
-		      phenocodes => {canon => 'PhenoCodes'},
+		      phenocodes => {canon => 'PhenoCodes',
+				     singlearg => 'true'},
 		      sexspecific => {canon => 'SexSpecific'},
 		      sexlinked => {canon => 'SexLinked'},
 		      imprinting => {canon => 'Imprinting'},
@@ -1418,7 +1676,7 @@ BEGIN {
 	}
 	$$self{directives}{$directive} = [];
 	(defined ($arg)) and push (@{$$self{directives}{$directive}}, $arg);
-	return ($directive);
+	return (1);
     }
 
     sub removeDirective
@@ -1435,15 +1693,29 @@ BEGIN {
 	return (1);
     }
 
+
+# 
+# TODO: add a mechanism for returning a default where the default is conditional
+# on the presence of other directives.
     sub isConfigured
     {
 	my ($self, $directive) = @_;
+	my $aref;
 
 	($directive = $self->legalDirective ($directive))
 	    or return (undef);
-	exists ($$self{directives}{$directive})
-	    or return (undef);
-	return ($directive, $$self{directives}{$directive});
+	if (exists ($$self{directives}{$directive})) {
+	    $aref = $$self{directives}{$directive};
+	} elsif (exists ($directives{lc($directive)}{default})) {
+	    $aref = [$directives{lc($directive)}{default}];
+	} else {
+	    return (undef);
+	}
+	if (wantarray ()) {
+	    return ($directive, $aref);
+	} else {
+	    return ($aref);
+	}
     }
 
     sub write
