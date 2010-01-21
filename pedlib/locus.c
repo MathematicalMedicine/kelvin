@@ -342,7 +342,7 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
   char line[MAX_LINE_LEN];
   int pos = 0;
   char *pLine;
-  Locus *pLocus;
+  Locus *pLocus = NULL;
   int i;
   char sLocusName[MAX_LINE_LEN];
   int found = FALSE;
@@ -415,9 +415,13 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
 	allele++;
 	pLine = pLine + pos;
       }
+      if (pLocus != NULL && pLocus->numAllele > 2)
+	modelRange->microsats = 1;
     } else if (sscanf (line, "A %s %lf", sAlleleName, &freq) == 2) {
       if (!found) continue; // Don't bother with unused marker alleles
       add_allele (pLocus, sAlleleName, freq);
+      if (pLocus != NULL && pLocus->numAllele > 2)
+	modelRange->microsats = 1;
     }
   }				/* continue reading input */
 

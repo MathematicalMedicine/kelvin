@@ -61,6 +61,7 @@ typedef struct ModelRange
   int nlambdas;			/* Number of cached arrays. */
   int maxnlambdas;		/* Maximum number of cached arrays. */
   int atypicalQtTrait;          /* QT Trait is (or not) outside typical range */
+  int microsats;                /* Microsatellites detected */
 } ModelRange;
 
 
