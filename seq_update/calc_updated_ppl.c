@@ -1397,7 +1397,7 @@ void usage ()
   printf ("  -w <num> : set small-Theta weight to <num>\n");
   printf ("  -M <mapfile> : use mapfile to order markers\n");
   printf ("  -O <partfile> : write updated Bayes Ratios to partfile\n");
-  printf ("  -P <pploutfile> : write calculated PPLs to pploutfile\n");
+  printf ("  -R <pploutfile> : write calculated PPLs to pploutfile\n");
   printf ("  -v : verbose output\n");
   printf ("  -? : display this help text\n");
 #endif
