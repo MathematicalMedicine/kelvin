@@ -811,7 +811,9 @@ where <flags> are any of:
 		file)
 -imprinting	This in an imprinting analysis (also IMP in configuration file)
 -liability	The pedigree file has a column after affection status for liability 
-		class.
+		class. If no KELVIN configuration file was specified, the template
+                configuration file will include a count of unique liability classes
+                seen on the LiabilityClasses directive.xs
 -bare		The pedigree file has only individual, affection status and marker
 		allele pairs columns.
 -nokelvin	Skip verification that kelvin can handle the analysis.
