@@ -44,7 +44,6 @@ my $bare           = 0;
 my $count          = 0;
 my $write          = "unspecified";
 my $loops          = 0;
-my $quiet          = 0;
 my $stats          = 0;
 my $split          = 0;
 my $subdirectories = 0;
@@ -363,22 +362,33 @@ sub bucketizePedigrees {
             if ($liability) {
                 print OUT $Pedigrees{$Ped}{$Ind}{LC} . "  ";
             }
-            print OUT join("  ", @{ $Pedigrees{$Ped}{$Ind}{Mks} })."   ";;
+            my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
+            for my $i (0 .. $PairCount - 1) {
+                next if (!$LociAttributes{ $Loci[ $i ] }{Included});
+                next if ($LociAttributes{ $Loci[ $i ] }{Type} =~ /^[AT]$/);
+                my ($Left, $Right) = split(/ /, $Pairs[$i]);
+                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Left})) {
+                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Left} . " ";
+                } else {
+                    print OUT AttributeMissing . " ";
+                }
+                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Right})) {
+                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Right} . "  ";
+                } else {
+                    print OUT AttributeMissing . "  ";
+                }
+            }
             print OUT "Ped: $Ped Per: $Ind\n";
         }
     }
 
     # Next the template pedigrees
-    my $WarnAboutCaseControlFlag = 1; # Should we warn about a case/control run?
     for my $PB (sort numericIsh keys %Templates) {
         my $Ped      = $Templates{$PB}{Ped};
         my $PairID   = $Templates{$PB}{PairID};
         my $PedSeq   = $Templates{$PB}{PedSeq};
         my $NiceName = defined($NiceNames{$PB}) ? $NiceNames{$PB} : $PB;
-	if (($NiceName =~ /case|ctrl/) && $WarnAboutCaseControlFlag) {
-	    $WarnAboutCaseControlFlag = 0;
-	    print "WARNING - Pedigree counting for case-control analysis is still under development!\n";
-	}
+
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             print OUT
               sprintf("%4s %3s %3s %3s ", $NiceName, $Ind, $Pedigrees{$Ped}{$Ind}{Dad}, $Pedigrees{$Ped}{$Ind}{Mom});
@@ -502,6 +512,7 @@ sub bucketizePedigrees {
     open OUT, ">" . $Prefix . "Data.Dat";
     print OUT "T Trait\n";
     print OUT "C liabilityClass\n" if ($liability);
+
     for my $Name (@Loci) {
         next if (!$LociAttributes{$Name}{Included});
         print OUT $LociAttributes{$Name}{Type} . " " . $Name . "\n";
@@ -531,8 +542,7 @@ sub bucketizePedigrees {
         }
         close OUT;
 
-        print "Remember to modify your configuration file to specify the new pedigree, companion and count files.\n"
-	    if (!$quiet);
+        print "Remember to modify your configuration file to specify the new pedigree, companion and count files.\n";
         return;
     }
 
@@ -550,12 +560,27 @@ sub bucketizePedigrees {
     print OUT "BayesRatioFile " . $configPrefix . "BR.Out\n";
     print OUT "PPLFile " . $configPrefix . "PPL.Out\n";
 
+    if ($liability) {
+	# Determine number of unique liability classes
+	my @LiabilityList = ();
+	for my $Ped (%Pedigrees) {
+	    for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
+		push @LiabilityList, $Pedigrees{$Ped}{$Ind}{LC};
+	    }
+	}
+	my %Seen;
+	my @Uniqed = grep !$Seen{$_}++, @LiabilityList;
+	print OUT "LiabilityClasses ".scalar(@Uniqed)."\n" if ($liability);
+    }
+
+
     print OUT <<EOF;
 
 # The rest is the standard analysis grid...
 FixedModels
 Theta 0-0.5:0.05
 DPrime -1-1:0.1
+LD
 DiseaseGeneFrequency 0.001, 0.999, 0.1-0.9:.1
 Alpha 0.05-1.0:0.1
 Penetrance DD 0.0-0.9:0.1, 0.999
@@ -792,7 +817,6 @@ where <flags> are any of:
 -nokelvin	Skip verification that kelvin can handle the analysis.
 -loops		Check for consanguinity and marriage loops and print them if found.
 -stats		Print statistics on the make-up of the pedigree(s).
--quiet          Suppress non-essential output messages
 -count		Count genotypically identical pedigrees and print statistics.
 -include=<list>	Process only the markers named in the list. For pedigree file-only
 		runs, marker names are sequence numbers, e.g. 2,3,4,7 (no spaces) 
@@ -863,7 +887,6 @@ GetOptions(
     'bare'           => \$bare,
     'nokelvin'       => \$nokelvin,
     'loops'          => \$loops,
-    'quiet'          => \$quiet,
     'stats'          => \$stats,
     'count'          => \$count,
     'include=s'      => \@include,
@@ -882,24 +905,23 @@ if ($write ne "unspecified") {
 $Data::Dumper::Sortkeys = 1;
 
 die "Invalid number of arguments supplied.\n$Usage"       if ($#ARGV < 0);
-print "-config flag seen\n"                               if (($config) && (!$quiet));
-print "-pre flag seen\n"                                  if (($pre) && (!$quiet));
-print "-post flag seen\n"                                 if (($post) && (!$quiet));
-print "-noparents flag seen\n"                            if (($noparents) && (!$quiet));
-print "-XC flag seen\n"                                   if (($XC) && (!$quiet));
-print "-imprinting flag seen\n"                           if (($imprinting) && (!$quiet));
-print "-liability flag seen\n"                            if (($liability) && (!$quiet));
-print "-bare flag seen\n"                                 if (($bare) && (!$quiet));
-print "-nokelvin flag seen\n"                             if (($nokelvin) && (!$quiet));
-print "-loops flag seen\n"                                if (($loops) && (!$quiet));
-print "-quiet flag seen\n"                                if (($quiet) && (!$quiet));
-print "-stats flag seen\n"                                if (($stats) && (!$quiet));
-print "-count flag seen\n"                                if (($count) && (!$quiet));
-print "-include list of " . Dumper(\@include) . " seen\n" if ((@include) && (!$quiet));
-print "-exclude list of " . Dumper(\@exclude) . " seen\n" if ((@exclude) && (!$quiet));
-print "-split of $split seen\n"                           if (($split) && (!$quiet));
-print "-subdirectories flag seen\n"                       if (($subdirectories) && (!$quiet));
-print "-write seen, using \"$WritePrefix\" prefix\n"      if (($write) && (!$quiet));
+print "-config flag seen\n"                               if ($config);
+print "-pre flag seen\n"                                  if ($pre);
+print "-post flag seen\n"                                 if ($post);
+print "-noparents flag seen\n"                            if ($noparents);
+print "-XC flag seen\n"                                   if ($XC);
+print "-imprinting flag seen\n"                           if ($imprinting);
+print "-liability flag seen\n"                            if ($liability);
+print "-bare flag seen\n"                                 if ($bare);
+print "-nokelvin flag seen\n"                             if ($nokelvin);
+print "-loops flag seen\n"                                if ($loops);
+print "-stats flag seen\n"                                if ($stats);
+print "-count flag seen\n"                                if ($count);
+print "-include list of " . Dumper(\@include) . " seen\n" if (@include);
+print "-exclude list of " . Dumper(\@exclude) . " seen\n" if (@exclude);
+print "-split of $split seen\n"                           if ($split);
+print "-subdirectories flag seen\n"                       if ($subdirectories);
+print "-write seen, using \"$WritePrefix\" prefix\n"      if ($write);
 die "-pre -post and -bare are mutually exclusive flags."
   if ($pre + $post + $bare > 1);
 
