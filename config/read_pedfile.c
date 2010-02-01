@@ -1579,7 +1579,7 @@ check_for_loop (Pedigree *pPed) {
     for (i = 0; i< pPed->numPerson; i++)
       if (tuple[i][0] != 0)
 	pMB += sprintf(pMB, "%d ", tuple[i][0]);
-    WARNING (messageBuffer);
+    WARNING ("%s", messageBuffer);
     free (messageBuffer);
     return (EXIT_FAILURE);
   }
