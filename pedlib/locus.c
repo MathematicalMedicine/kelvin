@@ -2230,7 +2230,12 @@ pick_closest_marker (int *left, int *right, int start, int end,
 }
 
 /* 
- * pick markers set up the locusList for multipoint analysis
+ * Pick markers set up the locusList for multipoint analysis.
+ *
+ * Pick a marker on either side of the trait position and then add
+ * more markers based upon proximity and need. If equidistant on the
+ * last one, use the one on the left.
+ *
  * numMarkers - number of markers to use for the multipoint analysis
  * leftMarker - since we are moving left to right, if you know the last leftMarker, that 
  *              will speed up the search, if you don't know, put -1
