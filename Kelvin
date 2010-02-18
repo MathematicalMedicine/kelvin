@@ -24,11 +24,20 @@ my $idx = 0;
 my $debug = 0;
 
 if ($KELVIN_ROOT =~ /no_kelvin_root/i) {
-    $KELVIN_ROOT = dirname ($0);
+    # None defined internally (from 'make install'), try the environment and then script path.
+    if ($ENV{KELVIN_ROOT}) {
+	$KELVIN_ROOT = $ENV{KELVIN_ROOT};
+    } else {
+	$KELVIN_ROOT = dirname ($0);
+    }
     warner ("no KELVIN_ROOT defined, using '$KELVIN_ROOT'");
 }
 if ($KELVIN_BINARY =~ /no_kelvin_binary/i) {
-    if (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.". platform_name ())) {
+    # None defined internally (from 'make install') so try environment, composition
+    # with platform name, and finally kelvin.bin (whatever this is).
+    if ($ENV{KELVIN_BINARY}) {
+	$KELVIN_BINARY = $ENV{KELVIN_BINARY};
+    } elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.". platform_name ())) {
 	warner ("no KELVIN_BINARY defined, using '$KELVIN_BINARY'");
     } elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.bin")) {
 	warner ("no KELVIN_BINARY defined, using '$KELVIN_BINARY'");
