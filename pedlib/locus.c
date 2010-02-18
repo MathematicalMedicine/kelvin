@@ -1669,9 +1669,6 @@ allocate_multi_locus_genotype_storage (Pedigree * pPedigree, int numLocus)
     for (locus = 0; locus < numLocus && locus < originalLocusList.numLocus; locus++) {
       size *= sortedList[locus];
     }
-    // Be nicer about an anticipated problem than the default memory allocation failure message.
-    if (size > 8L * 1024 * 1024 * 1024)
-      ERROR ("Excessive memory required for multi-locus genotypes, reduce analysis complexity");
 
     /* Allocate space */
     CALCHOKE(pPerson->pLikelihood, (size_t) 1, sizeof (ConditionalLikelihood) * size, ConditionalLikelihood *);
