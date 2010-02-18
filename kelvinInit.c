@@ -223,7 +223,7 @@ void kelvinInit (int argc, char *argv[])
     }
     if (vb != modelRange->nlclass) {
       va = modelRange->nlclass - vb;
-      WARNING("%d liability class%s empty. Dropping empty classes to improve performance", va, (va == 1) ? " is" : "s are");
+      WARNING("%d liability class%s empty. Dropping empty classes to improve performance", va, (va == 1) ? " is" : "es are");
       
       for (va = 1; va <= modelRange->nlclass; va++) {
 	if (pedigreeSet.liabilityClassCnt[va] == 0)
