@@ -111,15 +111,15 @@ ifeq ($(strip $(USE_PTHREAD)), yes)
   ADD_LDFLAGS += -lpthread
 endif
 
-KVNLIBDIR := $(shell pwd)/lib
-KELVIN_ROOT := $(shell pwd)
-TEST_KELVIN := $(KELVIN_ROOT)/kelvin
-TEST_UPDATE := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
-VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
 empty:=
 space:= $(empty) $(empty)
 PLATFORM = $(subst $(space),-,$(PLATFORM_NAME))
+KVNLIBDIR := $(shell pwd)/lib
+KELVIN_ROOT := $(shell pwd)
+TEST_KELVIN := $(KELVIN_ROOT)/kelvin.$(PLATFORM)
+TEST_UPDATE := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
+VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 INCFLAGS := -I$(INCDIR)
 
 LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
@@ -164,8 +164,8 @@ INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinWriteFiles.h dkelvinWriteFiles.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
-# Binary releases include kelvin_$(PLATFORM)
-all : kelvin seq_update/calc_updated_ppl # kelvin_$(PLATFORM)
+# Binary releases include kelvin.$(PLATFORM)
+all : kelvin.$(PLATFORM) seq_update/calc_updated_ppl
 
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
@@ -175,8 +175,9 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 kelvin : libs $(KOBJS) $(OBJS) $(INCS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
-kelvin_$(PLATFORM) : libs $(KOBJS) $(OBJS) $(INCS)
-	$(CC) -static  -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
+kelvin.$(PLATFORM) : libs $(KOBJS) $(OBJS) $(INCS)
+#	$(CC) -static  -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
+	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :

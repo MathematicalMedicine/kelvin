@@ -33,7 +33,7 @@ if ($KELVIN_BINARY =~ /no_kelvin_binary/i) {
     } elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.bin")) {
 	warner ("no KELVIN_BINARY defined, using '$KELVIN_BINARY'");
     } else {
-	error ("no Kelvin binary found");
+	error ("no Kelvin binary $KELVIN_BINARY found");
     }
 }
 if ($SEQUPDATE_BINARY =~ /no_sequpdate_binary/i) {

@@ -10,10 +10,10 @@ test-FIXED :
 
 test-USE_DL :
 	- rm -rf br.out ppl.out kelvin-*_DL.out *.so compiled
-	(time $(KELVIN_ROOT)/kelvin-POLYCOMP_DL kelvin.conf) >kelvin-COMP_DL.out 2>&1
+	(time $(TEST_KELVIN)-POLYCOMP_DL kelvin.conf) >kelvin-COMP_DL.out 2>&1
 	diff -i br.out br.out-baseline
 	diff -i ppl.out ppl.out-baseline
-	(time $(KELVIN_ROOT)/kelvin-POLYUSE_DL kelvin.conf) >kelvin-USE_DL.out 2>&1
+	(time $(TEST_KELVIN)-POLYUSE_DL kelvin.conf) >kelvin-USE_DL.out 2>&1
 	diff -i br.out br.out-baseline
 	diff -i ppl.out ppl.out-baseline
 

@@ -5,9 +5,9 @@ test :
 
 test-USE_DL :
 	- rm -rf *.out *.so compiled
-	(time $(KELVIN_ROOT)/kelvin-POLYCOMP_DL kelvin.conf) >kelvin-COMP_DL.out 2>&1
+	(time $(TEST_KELVIN)-POLYCOMP_DL kelvin.conf) >kelvin-COMP_DL.out 2>&1
 	diff -i br.out br.out-baseline
-	(time $(KELVIN_ROOT)/kelvin-POLYUSE_DL kelvin.conf) >kelvin-USE_DL.out 2>&1
+	(time $(TEST_KELVIN)-POLYUSE_DL kelvin.conf) >kelvin-USE_DL.out 2>&1
 	diff -i br.out br.out-baseline
 
 clean :
