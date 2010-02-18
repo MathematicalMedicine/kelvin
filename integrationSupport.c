@@ -409,7 +409,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
 
   char markerNo[8];
-  sprintf (partialPolynomialFunctionName, "MQA_C%d_P%%sM", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
+  sprintf (partialPolynomialFunctionName, "MQA_LC%d_C%d_P%%sM", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
   for (k = 0; k < modelType->numMarkers; k++) {
     if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
       strcat (partialPolynomialFunctionName, "_T");
@@ -741,7 +741,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   xmissionMatrix = altMatrix;
   int k;
   char markerNo[8];
-  sprintf (partialPolynomialFunctionName, "MDA_C%d_P%%sM", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
+  sprintf (partialPolynomialFunctionName, "MDA_LC%d_C%d_P%%sM", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
   for (k = 0; k < modelType->numMarkers; k++) {
     if (*get_map_position (traitLocus) <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
       strcat (partialPolynomialFunctionName, "_T");
@@ -1056,7 +1056,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         0);     /* current locus - start with 0 */
 
 
-  sprintf (partialPolynomialFunctionName, "TQ_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
+  sprintf (partialPolynomialFunctionName, "TQ_LC%d_C%d_P%%s_%s_%s", modelRange->nlclass, pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
   ret = compute_likelihood (&pedigreeSet);
   cL[5]++; // TP QT
 
@@ -1421,7 +1421,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
         0);     /* current locus - start with 0 */
 
 
-  sprintf (partialPolynomialFunctionName, "TD_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
+  sprintf (partialPolynomialFunctionName, "TD_LC%d_C%d_P%%s_%s_%s", modelRange->nlclass, pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
   cL[7]++; // TP DT
   ret = compute_likelihood (&pedigreeSet);
 
@@ -2365,7 +2365,7 @@ void integrateMain ()
       else
         update_locus (&pedigreeSet, traitLocus);
       /* get the likelihood for the trait */
-      sprintf (partialPolynomialFunctionName, "MDT_C%d_P%%sSL%d", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
+      sprintf (partialPolynomialFunctionName, "MDT_LC%d_C%d_P%%sSL%d", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
       cL[0]++; // MP DT trait likelihood
       compute_likelihood (&pedigreeSet);        /* This builds polynomials with dummy numbers */
 
@@ -2390,7 +2390,7 @@ void integrateMain ()
 
       } /* liability class Index */
       if (modelOptions->polynomial == TRUE)
-        sprintf (partialPolynomialFunctionName, "MQT_C%d_P%%sSL%d", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
+        sprintf (partialPolynomialFunctionName, "MQT_LC%d_C%d_P%%sSL%d", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
       else
         update_penetrance (&pedigreeSet, traitLocus);
       compute_likelihood (&pedigreeSet);
@@ -2520,7 +2520,7 @@ void integrateMain ()
         );
 
         char markerNo[8];
-        sprintf (partialPolynomialFunctionName, "MM_C%d_P%%sM", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
+        sprintf (partialPolynomialFunctionName, "MM_LC%d_C%d_P%%sM", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
         for (k = 0; k < modelType->numMarkers; k++) {
           sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
           strcat (partialPolynomialFunctionName, markerNo);

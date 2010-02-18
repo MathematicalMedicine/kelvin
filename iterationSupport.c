@@ -30,9 +30,9 @@
 
 #include "iterationSupport.h"
 
-struct swStopwatch *combinedComputeSW,  ///< Combined likelihood compute stopwatch
- *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch
- *overallSW;    ///< Overall stopwatch for the entire run.
+extern struct swStopwatch *combinedComputeSW,  ///< Combined likelihood compute stopwatch
+  *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch
+  *overallSW;    ///< Overall stopwatch for the entire run.
 
 /**
 
@@ -279,10 +279,10 @@ void iterateMain ()
         // Build the polynomial now to avoid interfering with evaluation later
         if (modelOptions->polynomial == TRUE) {
           if (modelType->trait == DICHOTOMOUS) {
-            sprintf (partialPolynomialFunctionName, "TD_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
+            sprintf (partialPolynomialFunctionName, "TD_LC%d_C%d_P%%s_%s_%s", modelRange->nlclass, pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
             swPushPhase ('k', "buildTD");
           } else {
-            sprintf (partialPolynomialFunctionName, "TQ_C%d_P%%s_%s_%s", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
+            sprintf (partialPolynomialFunctionName, "TQ_LC%d_C%d_P%%s_%s_%s", modelRange->nlclass, pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName);
             swPushPhase ('k', "buildTQ");
           }
           swStart (combinedBuildSW);
@@ -492,9 +492,11 @@ void iterateMain ()
                     cL[1]++;    // TP DT alternative hypothesis (combined likelihood)
                     if (swProgressRequestFlag) {
                       swProgressRequestFlag = FALSE;
-                      DETAIL (0, "Combined likelihood calculation %lu%% complete (~%lu min left)",
-                          (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
-                          ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) * (eCL[0] + eCL[1]) / (cL[0] + cL[1]) - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60);
+                      DETAIL (0, "Combined likelihood calculation %lu%% comp1ete (~%lu min left [%lu %lu])",
+			      (cL[0] + cL[1]) * 100 / (eCL[0] + eCL[1]),
+			      ((combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime) *
+			       (eCL[0] + eCL[1]) / (cL[0] + cL[1]) - (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60,
+			      combinedComputeSW->swAccumWallTime, combinedBuildSW->swAccumWallTime);
                     }
                     record_tp_result (ret, &pedigreeSet, &paramSet, loc2);
                   }     /* end of theta loop */
@@ -829,7 +831,7 @@ void iterateMain ()
           pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
           if (modelOptions->polynomial == TRUE)
-            sprintf (partialPolynomialFunctionName, "MDT_C%d_P%%sSL%d", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
+            sprintf (partialPolynomialFunctionName, "MDT_LC%d_C%d_P%%sSL%d", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
           else
             update_locus (&pedigreeSet, traitLocus);
 
@@ -947,7 +949,7 @@ void iterateMain ()
               if (breakFlag == TRUE)
                 continue;
               if (modelOptions->polynomial == TRUE)
-                sprintf (partialPolynomialFunctionName, "MQT_C%d_P%%sSL%d", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
+                sprintf (partialPolynomialFunctionName, "MQT_LC%d_C%d_P%%sSL%d", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
               else
                 update_penetrance (&pedigreeSet, traitLocus);
               ret = compute_likelihood (&pedigreeSet);
@@ -1137,7 +1139,7 @@ void iterateMain ()
           /** Build a polynomial name including all involved marker ordinal numbers */
           char markerNo[8];
           if (modelOptions->polynomial == TRUE) {
-            sprintf (partialPolynomialFunctionName, "MM_C%d_P%%sM", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
+            sprintf (partialPolynomialFunctionName, "MM_LC%d_C%d_P%%sM", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome);
             for (k = 0; k < modelType->numMarkers; k++) {
               sprintf (markerNo, "_%d", markerLocusList.pLocusIndex[k]);
               strcat (partialPolynomialFunctionName, markerNo);
@@ -1281,7 +1283,7 @@ void iterateMain ()
         // Build the polynomial outside of the main loops
         {
           char markerNo[8];
-          sprintf (partialPolynomialFunctionName, "MDA_C%d_P%%sM", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+          sprintf (partialPolynomialFunctionName, "MDA_LC%d_C%d_P%%sM", modelRange->nlclass, (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
           for (k = 0; k < modelType->numMarkers; k++) {
             if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
               strcat (partialPolynomialFunctionName, "_T");
@@ -1393,7 +1395,7 @@ void iterateMain ()
 	// Build the polynomial outside of the main loops
 	{
 	  char markerNo[8];
-	  sprintf (partialPolynomialFunctionName, "MQA_C%d_P%%sM", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
+	  sprintf (partialPolynomialFunctionName, "MQA_LC%d_C%d_P%%sM", modelRange->nlclass, (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome);
 	  for (k = 0; k < modelType->numMarkers; k++) {
 	    if (traitPos <= *get_map_position (markerLocusList.pLocusIndex[k]) && (strstr (partialPolynomialFunctionName, "_T") == NULL))
 	      strcat (partialPolynomialFunctionName, "_T");

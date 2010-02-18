@@ -5103,7 +5103,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     totalSourceSize += fprintf (srcFile, "\n\treturn %s[%lu];\n}\n", eTypes[result->eType], (unsigned long) result->value);
 
 #ifdef POLYCODE_DL
-  totalSourceSize += fprintf (srcFile, "#ifdef MAIN\n// Compile with gcc -o %s %s.c -DMAIN -I../include/ (from pedlib)\n"
+  totalSourceSize += fprintf (srcFile, "#ifdef MAIN\n// Compile with gcc -o %s %s.c -DMAIN -I $KELVIN_ROOT/utils\n"
 			      "double (*baseFunction)() = %s;\n#include \"polyDLMain.c\"\n#endif\n", name, name, name);
 #endif
   fclose (srcFile);
