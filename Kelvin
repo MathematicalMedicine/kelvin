@@ -30,7 +30,7 @@ if ($KELVIN_ROOT =~ /no_kelvin_root/i) {
     } else {
 	$KELVIN_ROOT = dirname ($0);
     }
-    warner ("no KELVIN_ROOT defined, using '$KELVIN_ROOT'");
+    warner ("no install KELVIN_ROOT defined, using '$KELVIN_ROOT'");
 }
 if ($KELVIN_BINARY =~ /no_kelvin_binary/i) {
     # None defined internally (from 'make install') so try environment, composition
@@ -38,25 +38,25 @@ if ($KELVIN_BINARY =~ /no_kelvin_binary/i) {
     if ($ENV{KELVIN_BINARY}) {
 	$KELVIN_BINARY = $ENV{KELVIN_BINARY};
     } elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.". platform_name ())) {
-	warner ("no KELVIN_BINARY defined, using '$KELVIN_BINARY'");
+	warner ("no install KELVIN_BINARY defined, using '$KELVIN_BINARY'");
     } elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.bin")) {
-	warner ("no KELVIN_BINARY defined, using '$KELVIN_BINARY'");
+	warner ("no install KELVIN_BINARY defined, using '$KELVIN_BINARY'");
     } else {
 	error ("no Kelvin binary (kelvin.".platform_name ()." or kelvin.bin) found in $KELVIN_ROOT");
     }
 }
 if ($SEQUPDATE_BINARY =~ /no_sequpdate_binary/i) {
     if (-x ($SEQUPDATE_BINARY = "$KELVIN_ROOT/calc_updated_ppl")) {
-	warner ("no SEQUPDATE_BINARY defined, using '$SEQUPDATE_BINARY'");
+	warner ("no install SEQUPDATE_BINARY defined, using '$SEQUPDATE_BINARY'");
     } elsif (-x ($SEQUPDATE_BINARY = "$KELVIN_ROOT/seq_update/calc_updated_ppl")) {
-	warner ("no SEQUPDATE_BINARY defined, using '$SEQUPDATE_BINARY'");
+	warner ("no install SEQUPDATE_BINARY defined, using '$SEQUPDATE_BINARY'");
     } else {
 	$SEQUPDATE_BINARY = 'no_sequpdate_binary';
     }
 }
 if ($PEDCOUNT_SCRIPT =~ /no_pedcount_script/i) {
     if (-x ($PEDCOUNT_SCRIPT = "$KELVIN_ROOT/PedCount.pl")) {
-	warner ("no PEDCOUNT_SCRIPT defined, using '$PEDCOUNT_SCRIPT'");
+	warner ("no install PEDCOUNT_SCRIPT defined, using '$PEDCOUNT_SCRIPT'");
     } else {
 	$PEDCOUNT_SCRIPT = 'no_pedcount_script';
     }
