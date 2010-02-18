@@ -27,7 +27,7 @@ PLATFORM_NAME=`uname -m`-`uname -s`
 
 make clean
 make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O3 -D_REENTRANT $OPENMP -DMEMGRAPH -DUSE_GSL" ADD_LDFLAGS="-ldl $PTMALLOC3 -lgsl -lgslcblas -lm" kelvin
-mv kelvin kelvin.$PLATFORM_NAME
+mv kelvin kelvin.$PLATFORM_NAME-normal
 
 make clean
 make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O3 -D_REENTRANT -DMEMGRAPH" ADD_LDFLAGS="-ldl $PTMALLOC3" kelvin
