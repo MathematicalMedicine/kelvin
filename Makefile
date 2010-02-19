@@ -123,7 +123,7 @@ VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 INCFLAGS := -I$(INCDIR)
 
 # testmac doesn't recognize the -rdynamic bit...
-LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR)
+LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
 
 # Flags for BCMM use only
 
