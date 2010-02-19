@@ -114,7 +114,7 @@ endif
 PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
 empty:=
 space:= $(empty) $(empty)
-PLATFORM = $(subst $(space),-,$(PLATFORM_NAME))
+PLATFORM = $(subst $(space),$(empty),$(PLATFORM_NAME))
 KVNLIBDIR := $(shell pwd)/lib
 KELVIN_ROOT := $(shell pwd)
 TEST_KELVIN := $(KELVIN_ROOT)/kelvin.$(PLATFORM)
