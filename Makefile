@@ -122,7 +122,8 @@ TEST_UPDATE := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 INCFLAGS := -I$(INCDIR)
 
-LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
+# testmac doesn't recognize the -rdynamic bit...
+LDFLAGS := -L$(LIBDIR) -L$(KVNLIBDIR)
 
 # Flags for BCMM use only
 
