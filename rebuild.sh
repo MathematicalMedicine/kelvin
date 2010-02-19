@@ -24,6 +24,7 @@ if test -n "$1" ; then
 fi
 
 PLATFORM_NAME=`uname -m`-`uname -s`
+PLATFORM_NAME=${PLATFORM_NAME/ /}
 
 make clean
 make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O3 -D_REENTRANT $OPENMP -DMEMGRAPH -DUSE_GSL" ADD_LDFLAGS="-ldl $PTMALLOC3 -lgsl -lgslcblas -lm" kelvin
