@@ -363,32 +363,22 @@ sub bucketizePedigrees {
             if ($liability) {
                 print OUT $Pedigrees{$Ped}{$Ind}{LC} . "  ";
             }
-            my @Pairs = @{ $Pedigrees{$Ped}{$Ind}{Mks} };
-            for my $i (0 .. $PairCount - 1) {
-                next if (!$LociAttributes{ $Loci[ $i ] }{Included});
-                next if ($LociAttributes{ $Loci[ $i ] }{Type} =~ /^[AT]$/);
-                my ($Left, $Right) = split(/ /, $Pairs[$i]);
-                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Left})) {
-                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Left} . " ";
-                } else {
-                    print OUT AttributeMissing . " ";
-                }
-                if (defined($LociAttributes{ $Loci[ $i ] }{Alleles}{$Right})) {
-                    print OUT $LociAttributes{ $Loci[ $i ] }{Alleles}{$Right} . "  ";
-                } else {
-                    print OUT AttributeMissing . "  ";
-                }
-            }
+            print OUT join("  ", @{ $Pedigrees{$Ped}{$Ind}{Mks} })."   ";;
             print OUT "Ped: $Ped Per: $Ind\n";
         }
     }
 
     # Next the template pedigrees
+    my $WarnAboutCaseControlFlag = 1; # Should we warn about a case/control run?
     for my $PB (sort numericIsh keys %Templates) {
         my $Ped      = $Templates{$PB}{Ped};
         my $PairID   = $Templates{$PB}{PairID};
         my $PedSeq   = $Templates{$PB}{PedSeq};
         my $NiceName = defined($NiceNames{$PB}) ? $NiceNames{$PB} : $PB;
+        if (($NiceName =~ /case|ctrl/) && $WarnAboutCaseControlFlag) {
+            $WarnAboutCaseControlFlag = 0;
+            print "WARNING - Pedigree counting for case-control analysis is still under development!\n";
+        }
 
         for my $Ind (sort numericIsh keys %{ $Pedigrees{$Ped} }) {
             print OUT
