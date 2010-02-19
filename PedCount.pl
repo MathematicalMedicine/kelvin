@@ -48,6 +48,7 @@ my $stats          = 0;
 my $split          = 0;
 my $subdirectories = 0;
 my $nokelvin       = 0;
+my $quiet          = 0;
 my @include        = ();
 my @exclude        = ();
 my $WritePrefix    = "PC";
@@ -542,7 +543,8 @@ sub bucketizePedigrees {
         }
         close OUT;
 
-        print "Remember to modify your configuration file to specify the new pedigree, companion and count files.\n";
+        print "Remember to modify your configuration file to specify the new pedigree, companion and count files.\n"
+          if (!$quiet);
         return;
     }
 
@@ -817,6 +819,7 @@ where <flags> are any of:
 -bare		The pedigree file has only individual, affection status and marker
 		allele pairs columns.
 -nokelvin	Skip verification that kelvin can handle the analysis.
+-quiet		Suppress extraneous output (used by kelvin frontend)
 -loops		Check for consanguinity and marriage loops and print them if found.
 -stats		Print statistics on the make-up of the pedigree(s).
 -count		Count genotypically identical pedigrees and print statistics.
@@ -888,6 +891,7 @@ GetOptions(
     'liability'      => \$liability,
     'bare'           => \$bare,
     'nokelvin'       => \$nokelvin,
+    'quiet'          => \$quiet,
     'loops'          => \$loops,
     'stats'          => \$stats,
     'count'          => \$count,
@@ -906,24 +910,24 @@ if ($write ne "unspecified") {
 
 $Data::Dumper::Sortkeys = 1;
 
-die "Invalid number of arguments supplied.\n$Usage"       if ($#ARGV < 0);
-print "-config flag seen\n"                               if ($config);
-print "-pre flag seen\n"                                  if ($pre);
-print "-post flag seen\n"                                 if ($post);
-print "-noparents flag seen\n"                            if ($noparents);
-print "-XC flag seen\n"                                   if ($XC);
-print "-imprinting flag seen\n"                           if ($imprinting);
-print "-liability flag seen\n"                            if ($liability);
-print "-bare flag seen\n"                                 if ($bare);
-print "-nokelvin flag seen\n"                             if ($nokelvin);
-print "-loops flag seen\n"                                if ($loops);
-print "-stats flag seen\n"                                if ($stats);
-print "-count flag seen\n"                                if ($count);
-print "-include list of " . Dumper(\@include) . " seen\n" if (@include);
-print "-exclude list of " . Dumper(\@exclude) . " seen\n" if (@exclude);
-print "-split of $split seen\n"                           if ($split);
-print "-subdirectories flag seen\n"                       if ($subdirectories);
-print "-write seen, using \"$WritePrefix\" prefix\n"      if ($write);
+die "Invalid number of arguments supplied.\n$Usage"       if (($#ARGV < 0) && (!$quiet));
+print "-config flag seen\n"                               if (($config) && (!$quiet));
+print "-pre flag seen\n"                                  if (($pre) && (!$quiet));
+print "-post flag seen\n"                                 if (($post) && (!$quiet));
+print "-noparents flag seen\n"                            if (($noparents) && (!$quiet));
+print "-XC flag seen\n"                                   if (($XC) && (!$quiet));
+print "-imprinting flag seen\n"                           if (($imprinting) && (!$quiet));
+print "-liability flag seen\n"                            if (($liability) && (!$quiet));
+print "-bare flag seen\n"                                 if (($bare) && (!$quiet));
+print "-nokelvin flag seen\n"                             if (($nokelvin) && (!$quiet));
+print "-loops flag seen\n"                                if (($loops) && (!$quiet));
+print "-stats flag seen\n"                                if (($stats) && (!$quiet));
+print "-count flag seen\n"                                if (($count) && (!$quiet));
+print "-include list of " . Dumper(\@include) . " seen\n" if ((@include) && (!$quiet));
+print "-exclude list of " . Dumper(\@exclude) . " seen\n" if ((@exclude) && (!$quiet));
+print "-split of $split seen\n"                           if (($split) && (!$quiet));
+print "-subdirectories flag seen\n"                       if (($subdirectories) && (!$quiet));
+print "-write seen, using \"$WritePrefix\" prefix\n"      if (($write) && (!$quiet));
 die "-pre -post and -bare are mutually exclusive flags."
   if ($pre + $post + $bare > 1);
 
