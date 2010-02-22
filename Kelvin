@@ -19,6 +19,7 @@ my $usage = "usage: $0 <configfile> [--directive ... ]\n";
 my $config;
 my $configFile;
 my ($directive, $args);
+my $platform = platform_name ();
 my $arg;
 my $idx = 0;
 my $debug = 0;
@@ -37,12 +38,12 @@ if ($KELVIN_BINARY =~ /no_kelvin_binary/i) {
     # with platform name, and finally kelvin.bin (whatever this is).
     if ($ENV{KELVIN_BINARY}) {
 	$KELVIN_BINARY = $ENV{KELVIN_BINARY};
-    } elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.". platform_name ())) {
+    } elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.$platform")) {
 	warner ("no install KELVIN_BINARY defined, using '$KELVIN_BINARY'");
     } elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.bin")) {
 	warner ("no install KELVIN_BINARY defined, using '$KELVIN_BINARY'");
     } else {
-	error ("no Kelvin binary (kelvin.".platform_name ()." or kelvin.bin) found in $KELVIN_ROOT");
+	error ("no Kelvin binary (kelvin.$platform or kelvin.bin) found in $KELVIN_ROOT");
     }
 }
 if ($SEQUPDATE_BINARY =~ /no_sequpdate_binary/i) {
@@ -197,7 +198,7 @@ sub run_epistasis
 	$config->write ({configfile => $conffiles{configfile}. ".pass$va",
 			 backupfile => 0, nolocal => 1});
 	push (@sequpdateargs, $conffiles{BayesRatioFile}. ".pass$va");
-	if ($countable) {
+	if ($countable && ! $epidataset->microsats) {
 	    (($ret = system ($PEDCOUNT_SCRIPT, "-count", "-write", "-quiet",
 			     "-config", $conffiles{configfile}. ".pass$va")) != 0)
 		and error ("$PEDCOUNT_SCRIPT failed, " . ($ret == -1) ? "$!" : "status $?");
@@ -411,7 +412,7 @@ sub just_run_kelvin
 	or error ($KelvinDataset::errstr);
     $dataset->close;
 
-    if ($countable) {
+    if ($countable && ! $dataset->microsats) {
 	(($ret = system ($PEDCOUNT_SCRIPT, "-count", "-write", "-quiet",
 			 "-config", $config->filename)) != 0)
 	    and error ("$PEDCOUNT_SCRIPT failed, " . ($ret == -1) ? "$!" : "status $?");
@@ -642,6 +643,7 @@ BEGIN {
 	#   mapread: boolean, has a mapfile been read?
 	#   freqread: boolean, has an allele frequency file been read?
 	#   locusread: boolean, has a locus file been read?
+	#   microsats: dataset contains microsatellites?
 	#   consistant: loci data is consistant with source files
 	
 	@$self{qw/markers traits maporder/} = ({}, {}, []);
@@ -650,7 +652,7 @@ BEGIN {
 	@$self{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
 	@$self{qw/pedfile pedfh pedlineno/} = (undef, undef, 0);
 	@$self{qw/mapread freqread locusread/} = (0, 0, 0);
-	@$self{qw/consistant individualcache/} = (1, undef);
+	@$self{qw/consistant microsats individualcache/} = (1, 1, undef);
 	
 	if (! defined ($arg)) {
 	    $errstr = "missing argument";
@@ -752,6 +754,7 @@ BEGIN {
 	@$new{qw/mapfunction mapfile freqfile/} = @$self{qw/mapfunction mapfile freqfile/};
 	@$new{qw/locusfile pedfile mapread/} = @$self{qw/locusfile pedfile mapread/};
 	@$new{qw/freqread locusread consistant/} = @$self{qw/freqread locusread consistant/};
+	@$new{qw/microsat/} = @$self{qw/microsat/};
 
 	if ($$new{mapread}) {
 	    @{$$new{mapfields}} = @{$$self{mapfields}};
@@ -768,10 +771,12 @@ BEGIN {
 	    } @{$$new{maporder}};
 
 	} elsif ($$self{freqread}) {
+	    $$new{microsats} = 0;
 	    map {
 		$href = $$self{markers}{$_}{alleles};
 		@{$$new{markers}{$_}{alleles}}{keys (%$href)} = 
 		    @{$$self{markers}{$_}{alleles}}{keys (%$href)};
+		(scalar (keys (%$href)) > 2) and $$new{microsats} = 1;
 	    } keys (%{$$self{markers}});
 	    
 	}
@@ -898,11 +903,15 @@ BEGIN {
 	    return (undef);
 	}
 
+	$$self{microsats} = 0;
 	while ($line = $fh->getline (\$lineno)) {
 	    if ($line =~ /^M\s+(\S+)/) {
-		if ($marker && ! $self->validateAlleleFreqs ($marker, $markers{$marker}{alleles})) {
-		    $errstr = "$$self{freqfile}, line ". ($lineno-1) .": $errstr";
-		    return (undef);
+		if ($marker) {
+		    if (! $self->validateAlleleFreqs ($marker, $markers{$marker}{alleles})) {
+			$errstr = "$$self{freqfile}, line ". ($lineno-1) .": $errstr";
+			return (undef);
+		    }
+		    (scalar (keys (%{$markers{$marker}{alleles}})) > 2) and $$self{microsats} = 1;
 		}
 		push (@maporder, $marker = $1);
 		if ($$self{mapread} && ! exists ($$self{markers}{$marker})) {
@@ -944,6 +953,7 @@ BEGIN {
 		$errstr = "$$self{freqfile}, line $lineno: $errstr";
 		return (undef);
 	    }
+	    (scalar (keys (%{$markers{$marker}{alleles}})) > 2) and $$self{microsats} = 1;
 	} else { 
 	    $errstr = "$$self{freqfile} contains no markers";
 	    return (undef);
@@ -1528,6 +1538,13 @@ BEGIN {
 	my ($self) = @_;
 
 	return ($$self{traits});
+    }
+
+    sub microsats
+    {
+	my ($self) = @_;
+
+	return ($$self{microsats});
     }
 }
 
