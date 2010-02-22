@@ -10,6 +10,7 @@ case $HOSTNAME in
     Deimos|*VDI* )
         OPENMP=
         WERROR=
+	CFLAGS=-DDISTRIBUTION
 	;;
     * )
         OPENMP=-fopenmp
