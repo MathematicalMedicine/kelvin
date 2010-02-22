@@ -19,8 +19,8 @@ case $HOSTNAME in
 	;;
 esac
 
-ADD_CFLAGS=$1
 if test -n "$1" ; then
+    ADD_CFLAGS=$1
     shift
 fi
 
