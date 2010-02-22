@@ -173,8 +173,8 @@ install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh
 
-kelvin : libs $(KOBJS) $(OBJS) $(INCS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
+#kelvin : libs $(KOBJS) $(OBJS) $(INCS)
+#	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 
 kelvin.$(PLATFORM) : libs $(KOBJS) $(OBJS) $(INCS)
 #	$(CC) -static  -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
