@@ -24,7 +24,7 @@ double calculate_PPL (SUMMARY_STAT ** result);
 
 /* it shouldn't be residing here, will find appropriate place for this function later */
 double calculate_R_square (double p1, double q1, double d);
-void free_likelihood_storage ();
+void free_likelihood_storage (PedigreeSet *);
 
 
 #endif
