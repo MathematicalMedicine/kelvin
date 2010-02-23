@@ -1887,6 +1887,7 @@ void integrateMain ()
           dk_curModel.posIdx = loc2;
         }
         overallMOD = DBL_MIN_10_EXP + 1;        //0.0;  // global max 
+        overallMin = DBL_MAX;
         dprime0_MOD = 0.0;      // max when D' == 0
         theta0_MOD = 0.0;       // max when Theta == 0
         /* Since dynamic sampling is unlikely to ever sample at Theta == 0,
@@ -2092,6 +2093,8 @@ void integrateMain ()
               dk_copyMaxModel (localmax_x, &dk_globalmax, size_BR);
               memcpy (&(maxima_x[2]), localmax_x, sizeof (double) * 18);
             }
+	    if (overallMin > localMOD)
+	      overallMin = localMOD;
 
             /* If LD, and (D' less then stored D', or BR larger than stored BR */
             if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
@@ -2210,6 +2213,8 @@ void integrateMain ()
           free (BRscale);
 
           dk_write2ptMODHeader ();
+	  if (overallMOD == 0 && overallMin == 0)
+	    overallMOD = theta0_MOD = dprime0_MOD = -DBL_MAX;
           dk_write2ptMODData ("MOD(Overall)", overallMOD, &dk_globalmax);
 
           if (modelOptions->extraMODs) {

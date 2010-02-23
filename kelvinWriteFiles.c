@@ -3,6 +3,7 @@
 #include "summary_result.h"
 #include "ppl.h"
 #include <math.h>
+#include <float.h>
 
 void
 writePPLFileHeader ()
@@ -309,7 +310,10 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
 
   if (modelOptions->extraMODs)
     fprintf (fpMOD, "%s ", modelDescription);
-  fprintf (fpMOD, "%.4f", myMOD);
+  if (myMOD != -DBL_MAX) 
+    fprintf (fpMOD, "%.4f", myMOD);
+  else
+    fprintf (fpMOD, "NoInf");
 
   theta[0] = modelRange->theta[0][myThetaIdx];
   theta[1] = modelRange->theta[1][myThetaIdx];
@@ -373,9 +377,8 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
 void
 write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 {
-  double log10_lr;
+  double log10_lr, max, min, max_at_theta0, max_at_dprime0;
   int initialFlag;
-  float max, max_at_theta0, max_at_dprime0;
   int maxDPrimeIdx=0, maxThetaIdx=0;
   int dprimeIdx=0, thetaInd=0;
   int maxDPrimeIdx_at_theta0=0;
@@ -425,7 +428,11 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 
   if (modelOptions->extraMODs)
     fprintf (fpMOD, "Case ");
-  fprintf (fpMOD, "MOD");
+  if (modelOptions->markerAnalysis == FALSE)
+    fprintf (fpMOD, "MOD");
+  else
+    fprintf (fpMOD, "LOD");
+    
 
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
     for (i = 0; i < pLocus1->numOriginalAllele - 1; i++)
@@ -466,6 +473,7 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
   }
 
   initialFlag = 1;
+  min = 99999;
   max = -99999;
   max_at_theta0 = -99999;
   max_at_dprime0 = -99999;
@@ -484,6 +492,8 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 	      maxDPrimeIdx = dprimeIdx;
 	      maxThetaIdx = thetaInd;
 	    }
+	  if (initialFlag || log10_lr < min)
+	    min = log10_lr;
 	  if (initialFlag
 	      || (-ERROR_MARGIN <= theta[0] && theta[0] <= ERROR_MARGIN
 		  && -ERROR_MARGIN <= theta[1] && theta[1] <= ERROR_MARGIN))
@@ -511,6 +521,8 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
     }
 
   /* Overall maximizing model - MOD */
+  if (min == 0 && max == 0)
+    max = max_at_theta0 = max_at_dprime0 = -DBL_MAX;
   writeMaximizingModel ("MOD(Overall)", max, maxDPrimeIdx, maxThetaIdx);
 
   if (modelOptions->extraMODs)

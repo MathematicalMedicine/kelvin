@@ -7,6 +7,7 @@ double fixed_thetaM,fixed_thetaF; // Sex-specific analysis
 
 double maxima_x[20];
 double overallMOD= __DBL_MIN_10_EXP__ ;// replacing name : maximum_function_value = 0.0; 6/4/2009
+double overallMin= __DBL_MAX_10_EXP__; // For tracking the case where all LODs == 0
 double dprime0_MOD; //maximum_dprime0_value;
 double theta0_MOD; //maximum_theta0_value;
 double localmax_x[20];

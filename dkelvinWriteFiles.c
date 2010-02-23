@@ -2,6 +2,7 @@
 #include "kelvinGlobals.h"
 #include "summary_result.h"
 #include <math.h>
+#include <float.h>
 
 /* dkelvinWriteFiles.c */
 void dk_write2ptBRHeader (int loc1, int loc2)
@@ -275,7 +276,10 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
   /* MOD */
   if (modelOptions->extraMODs)
     fprintf (fpMOD, "%s ", description);
-  fprintf (fpMOD, "%.4f", value); ////log10 (value)); 6/4/2009
+  if (value != -DBL_MAX)
+    fprintf (fpMOD, "%.4f", value); ////log10 (value)); 6/4/2009
+  else
+    fprintf (fpMOD, "NoInf");
   
   /* D' */
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {	
