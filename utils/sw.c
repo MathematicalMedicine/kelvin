@@ -1224,6 +1224,15 @@ volatile sig_atomic_t *envDiagLevel;
 int swSharedDiagMemoryID;
 #endif
 
+/*
+
+If you get a "bad system call" from cygwin using this, you need to do two things:
+
+1. Make sure the environment variable CYGWIN is set to "server", and
+2. Run (in another window) /usr/sbin/cygserver
+
+*/
+
 void swDiagInit(void) {
   int i;
   swProgressDelaySeconds = 120; ///< Default of two minutes delay between progress notifications
