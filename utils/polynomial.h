@@ -32,9 +32,10 @@ extern int constantPLExpansions, variablePLExpansions, sumPCollectExpansions,
 extern long nodeId;
 extern int constantCount, variableCount, sumCount, productCount,
   functionCallCount;
-extern int polyListSortingCount, evaluatePolyCount, evaluateValueCount, 
+extern int polyListSortingCount, 
   keepPolyCount, freePolysCount, holdPolyCount, holdAllPolysCount, 
   unHoldPolyCount, freeKeptPolysCount, freePolysAttemptCount;
+extern long evaluatePolyCount, evaluateValueCount;
 extern int containerExpansions;
 extern unsigned long totalSPLLengths, totalSPLCalls, lowSPLCount, highSPLCount;
 extern unsigned long initialHashSize;

@@ -337,7 +337,8 @@ int constantPListExpansions = 0,        ///< Count of constantList expansions
     productPListExpansions = 0, ///< Count of productList expansions
     functionCallPListExpansions = 0;    ///< Count of functionCallList expansions
 /// Count of calls to various statistically interesting functions
-int polyListSortingCount = 0, evaluatePolyCount = 0, evaluateValueCount = 0, keepPolyCount = 0, freePolysCount = 0, holdPolyCount = 0, holdAllPolysCount = 0, unHoldPolyCount = 0, freeKeptPolysCount = 0, freePolysAttemptCount = 0;
+int polyListSortingCount = 0, keepPolyCount = 0, freePolysCount = 0, holdPolyCount = 0, holdAllPolysCount = 0, unHoldPolyCount = 0, freeKeptPolysCount = 0, freePolysAttemptCount = 0;
+long evaluatePolyCount = 0, evaluateValueCount = 0;
 int containerExpansions = 0;    ///< Count of expansions of any term-collection container.
 unsigned long totalSPLLengths = 0, totalSPLCalls = 0, lowSPLCount = 0, highSPLCount = 0;
 unsigned long initialHashSize = 0;      ///< Total initial size of hash table and collision lists
@@ -692,7 +693,7 @@ double evaluateValue (Polynomial * p)
   int i;
 
   if ((evaluateValueCount++ & 0x3FF) == 0)
-    DETAIL (0, "Evaluating polynomials, currently at %1.2g iterations", (double) evaluateValueCount);
+    DETAIL (0, "Evaluating polynomials, currently at %1.2g iterations", evaluateValueCount);
 
 #ifdef EVALUATESW
   swStart (evaluateValueSW);
@@ -2780,7 +2781,7 @@ void evaluatePoly (Polynomial * pp, struct polyList *l, double *pReturnValue)
 #ifdef EVALUATESW
     swStop (evaluatePolySW);
 #endif
-    fprintf (stderr, "Evaluation %u of polynomial gives %.16g\n", evaluatePolyCount, pp->value);
+    fprintf (stderr, "Evaluation %ld of polynomial gives %.16g\n", evaluatePolyCount, pp->value);
     return;
   }
 
@@ -3644,7 +3645,7 @@ void polyDynamicStatistics (char *title)
 	   "TermCount: %ld NodeId: %ld Hash: max len=%d, init size=%lu, SPL: eff=%lu%%, avg len=%lu\n", termCount, nodeId, maxHashLength, initialHashSize, 100 * (lowSPLCount + highSPLCount) / (totalSPLCalls ? totalSPLCalls : 1), totalSPLLengths / (totalSPLCalls ? totalSPLCalls : 1));
 
   fprintf (stderr,
-      "Calls: pLS=%d eP=%d eV=%d hAP=%d kP=%d hP=%d uHP=%d fP=%d(%d) fKP=%d\n",
+      "Calls: pLS=%d eP=%ld eV=%ld hAP=%d kP=%d hP=%d uHP=%d fP=%d(%d) fKP=%d\n",
       polyListSortingCount, evaluatePolyCount, evaluateValueCount, holdAllPolysCount, keepPolyCount, holdPolyCount, unHoldPolyCount, freePolysAttemptCount, freePolysCount, freeKeptPolysCount);
 
   if (sumReleaseableCount == 0 && sumNotReleaseableCount == 0 && productReleaseableCount == 0 && productNotReleaseableCount == 0)
