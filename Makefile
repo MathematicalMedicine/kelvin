@@ -119,7 +119,18 @@ KVNLIBDIR := $(shell pwd)/lib
 KELVIN_ROOT := $(shell pwd)
 TEST_KELVIN := $(KELVIN_ROOT)/kelvin.$(PLATFORM)
 TEST_UPDATE := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
+
+# If we're building in an svn-managed context, get AND preserve the latest svn version
+SVNVERSION := $(subst exported,,$(shell svnversion 2>/dev/null))
+ifeq ("$(strip $(SVNVERSION))","")
+  SVNVERSION := $(shell `cat .svnversion`)
+else
+  UPDATE_SVNVERSION := $(shell echo $(SVNVERSION) >.svnversion)
+endif
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
+# Use the concatenated version number and svnversion in header
+CFLAGS += -DVERSION='"$(VERSION)"' -DSVNVERSION='"$(SVNVERSION)"'
+
 INCFLAGS := -I$(INCDIR)
 
 # testmac doesn't recognize the -rdynamic bit...

@@ -20,6 +20,7 @@
 #include "pedlib/likelihood.h" // For XMission matrix
 
 extern char *programVersion;
+extern char *svnVersion;
 extern char *kelvinVersion;
 
 extern struct swStopwatch *overallSW;

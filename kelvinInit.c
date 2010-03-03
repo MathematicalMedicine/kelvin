@@ -47,11 +47,11 @@ void kelvinInit (int argc, char *argv[])
   /* Annouce ourselves for performance tracking. */
 
   swPushPhase ('k', "NonSpecific");
-  INFO ("kelvin %s built %s %s", programVersion, __DATE__, __TIME__);
-  INFO ("%s", kelvinVersion);
-  INFO ("%s", likelihoodVersion);
-  INFO ("%s", locusVersion);
-  INFO ("%s", polynomialVersion);
+  INFO ("kelvin %s edit %s built %s %s", programVersion, svnVersion, __DATE__, __TIME__);
+  //  INFO ("%s", kelvinVersion);
+  //  INFO ("%s", likelihoodVersion);
+  //  INFO ("%s", locusVersion);
+  //  INFO ("%s", polynomialVersion);
   INFO ("Compiler %s", __VERSION__);
 
 #ifdef FAKEEVALUATE

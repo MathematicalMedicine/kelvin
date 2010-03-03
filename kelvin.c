@@ -129,7 +129,8 @@
   Driver for all types of analyses.
 
 */
-char *programVersion = "V0.38.0";       ///< Overall kelvin version set upon release.
+char *programVersion = VERSION;       ///< Overall kelvin version set upon release.
+char *svnVersion = SVNVERSION;        ///< Latest svn version level for this source tree
 char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
 
 int main (int argc, char *argv[])
