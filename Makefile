@@ -129,7 +129,7 @@ else
 endif
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 # Use the concatenated version number and svnversion in header
-CFLAGS += -DVERSION='"$(VERSION)"' -DSVNVERSION='"$(SVNVERSION)"'
+CFLAGS += -DVERSION='"V$(VERSION)"' -DSVNVERSION='"$(SVNVERSION)"'
 
 INCFLAGS := -I$(INCDIR)
 
