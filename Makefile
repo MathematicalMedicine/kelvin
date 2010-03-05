@@ -128,8 +128,6 @@ else
   UPDATE_SVNVERSION := $(shell echo $(SVNVERSION) >.svnversion)
 endif
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
-# Use the concatenated version number and svnversion in header
-CFLAGS += -DVERSION='"V$(VERSION)"' -DSVNVERSION='"$(SVNVERSION)"'
 
 INCFLAGS := -I$(INCDIR)
 
@@ -138,7 +136,7 @@ LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
 
 # Flags for BCMM use only
 
-CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution purposes
+#CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution purposes
 ifneq (,$(wildcard /usr/include/execinfo.h))
 #  CFLAGS += -DBACKTRACE # Add backtrace where supported
 endif
@@ -184,9 +182,6 @@ install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh
 
-#kelvin : libs $(KOBJS) $(OBJS) $(INCS)
-#	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
-
 kelvin.$(PLATFORM) : libs $(KOBJS) $(OBJS) $(INCS)
 #	$(CC) -static  -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
@@ -196,7 +191,7 @@ seq_update/calc_updated_ppl :
 	+make -C seq_update -f Makefile calc_updated_ppl
 
 %.o : %.c $(INCS)
-	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) $< -o $@
+	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) -DVERSION='"V$(VERSION)"' -DSVNVERSION='"$(SVNVERSION)"' $< -o $@
 
 .PHONY : libs
 libs :
