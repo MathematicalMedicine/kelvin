@@ -185,6 +185,7 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 kelvin.$(PLATFORM) : libs $(KOBJS) $(OBJS) $(INCS)
 #	$(CC) -static  -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
+	cp $@ $@-$(SVNVERSION)
 
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
