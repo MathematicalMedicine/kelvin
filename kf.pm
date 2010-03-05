@@ -98,6 +98,8 @@ our %KnownDirectives = (
 			"PhenoCodes" => \&NoAction,
 			"SurfacesPath" => \&NoAction,
 			"Log" => \&NoAction,
+
+			"Constraint" => \&NoAction,
 			);
 
 our @EXPORT = qw(
