@@ -759,6 +759,9 @@ int peel_graph (NuclearFamily * pNucFam1, Person * pProband1, int peelingDirecti
   if (pNucFam1->doneFlag == TRUE)
     return 0;
 
+  swLogProgress(3, 0, "Start peeling nuclear family %d with parents %s x %s",
+		pNucFam1->nuclearFamilyIndex, pNucFam1->pParents[DAD]->sID, pNucFam1->pParents[MOM]->sID);
+
   /*
    * mark this nuclear family as done to avoid potential endless
    * recurisve calls
@@ -886,6 +889,9 @@ int peel_graph (NuclearFamily * pNucFam1, Person * pProband1, int peelingDirecti
     }
     freePolys ();
   }
+
+  swLogProgress(3, 0, "Finished peeling nuclear family %d with parents %s x %s",
+		pNucFam->nuclearFamilyIndex, pNucFam->pParents[DAD]->sID, pNucFam->pParents[MOM]->sID);
 
   return 0;
 }
