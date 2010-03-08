@@ -6,7 +6,7 @@
 # before you resubmit.
 
 clean :
-	- rm -rf *.out kelvin_*_memory.dat MAKE-* *.so compiled
+	- rm -rf adhoc.* *.out kelvin_*_memory.dat MAKE-* *.so compiled
 
 all : 
 ifeq ($(wildcard MAKE-RUNNING), MAKE-RUNNING)
