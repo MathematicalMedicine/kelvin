@@ -1,0 +1,12 @@
+Tue Mar  2 12:38:35 EST 2010
+Wed Mar  3 09:05:26 EST 2010
+Wed Mar  3 10:16:56 EST 2010
+Wed Mar  3 10:22:26 EST 2010
+Wed Mar  3 10:27:41 EST 2010
+/bin/sh: line 1: 16239 Bus error               ~/kelvin/trunk/kelvin.x86_64-Linux kelvin.conf > kelvin.out 2>&1
+
+real	1739m16.597s
+user	1738m45.166s
+sys	0m23.601s
+
+7h57m35s!
