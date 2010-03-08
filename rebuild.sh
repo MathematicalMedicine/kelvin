@@ -10,7 +10,8 @@ case $HOSTNAME in
     Deimos|*VDI* )
         OPENMP=
         WERROR=
-	ADD_CFLAGS=-DDISTRIBUTION
+#	ADD_CFLAGS=-DDISTRIBUTION
+	ADD_CFLAGS=
 	;;
     * )
         OPENMP=-fopenmp
@@ -29,7 +30,7 @@ PLATFORM_NAME=${PLATFORM_NAME/ /}
 
 make clean
 make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O3 -D_REENTRANT $OPENMP -DMEMGRAPH -DUSE_GSL" ADD_LDFLAGS="-ldl $PTMALLOC3 -lgsl -lgslcblas -lm" kelvin.$PLATFORM_NAME
-mv kelvin.$PLATFORM_NAME kelvin.$PLATFORM_NAME-normal
+cp kelvin.$PLATFORM_NAME kelvin.$PLATFORM_NAME-normal
 
 make clean
 make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O3 -D_REENTRANT -DMEMGRAPH" ADD_LDFLAGS="-ldl $PTMALLOC3" kelvin.$PLATFORM_NAME
