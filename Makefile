@@ -123,7 +123,7 @@ TEST_UPDATE := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
 # If we're building in an svn-managed context, get AND preserve the latest svn version
 SVNVERSION := $(subst exported,,$(shell svnversion 2>/dev/null))
 ifeq ("$(strip $(SVNVERSION))","")
-  SVNVERSION := $(shell `cat .svnversion`)
+  SVNVERSION := $(shell cat .svnversion)
 else
   UPDATE_SVNVERSION := $(shell echo $(SVNVERSION) >.svnversion)
 endif
@@ -176,6 +176,35 @@ INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 
 # Binary releases include kelvin.$(PLATFORM)
 all : kelvin.$(PLATFORM) seq_update/calc_updated_ppl
+
+dist :
+	- rm -rf kelvin-$(SVNVERSION)
+	mkdir kelvin-$(SVNVERSION)
+	ln .maj .min .pat .svnversion Kelvin CHANGES COPYRIGHT Makefile PedCount.pl kf.pm convertconfig.pl rebuild.sh *.[ch] kelvin-$(SVNVERSION)
+	mkdir kelvin-$(SVNVERSION)/lib
+	mkdir kelvin-$(SVNVERSION)/utils
+	ln utils/Makefile utils/*.[ch] kelvin-$(SVNVERSION)/utils
+	mkdir kelvin-$(SVNVERSION)/pedlib
+	ln pedlib/Makefile pedlib/*.[ch] kelvin-$(SVNVERSION)/pedlib
+	mkdir kelvin-$(SVNVERSION)/config
+	ln config/Makefile config/*.[ch] kelvin-$(SVNVERSION)/config
+	mkdir kelvin-$(SVNVERSION)/seq_update
+	ln config/Makefile seq_update/*.[ch] kelvin-$(SVNVERSION)/seq_update
+	mkdir -p kelvin-$(SVNVERSION)/test-suite/dynamic-grid/PE/SA_DT
+	ln test-suite/Makefile kelvin-$(SVNVERSION)/test-suite
+	ln test-suite/dynamic-grid/Makefile kelvin-$(SVNVERSION)/test-suite/dynamic-grid
+	ln test-suite/dynamic-grid/PE/Makefile kelvin-$(SVNVERSION)/test-suite/dynamic-grid/PE
+	ln test-suite/dynamic-grid/PE/SA_DT/* kelvin-$(SVNVERSION)/test-suite/dynamic-grid/PE/SA_DT
+	mkdir -p kelvin-$(SVNVERSION)/test-suite/PedCount/No_config
+	ln test-suite/PedCount/Makefile kelvin-$(SVNVERSION)/test-suite/PedCount
+	ln test-suite/PedCount/No_config/* kelvin-$(SVNVERSION)/test-suite/PedCount/No_config
+	mkdir -p kelvin-$(SVNVERSION)/test-suite/seq_update/d-2pt-le
+	ln test-suite/seq_update/Makefile kelvin-$(SVNVERSION)/test-suite/seq_update
+	ln test-suite/seq_update/d-2pt-le/* kelvin-$(SVNVERSION)/test-suite/seq_update/d-2pt-le
+	mkdir kelvin-$(SVNVERSION)/doc
+	ln doc/*.html doc/*.png doc/*.gif kelvin-$(SVNVERSION)/doc
+	tar cvzf kelvin-$(SVNVERSION).tar.gz kelvin-$(SVNVERSION)/
+	rm -rf kelvin-$(SVNVERSION)
 
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
