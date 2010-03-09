@@ -52,7 +52,7 @@ my @Ancestors;                                                         # ditto
 my $ShortestLoop = "";    # Just batted around too much to monkey with right now.
 
 # Known directives as well as dispatch routine if needed. I could avoid the NoActions, but
-# I prefer to be explicit.
+# I prefer to be explicit. By the way, for the parser to work, put "substring" directives last, e.g. QT after QTT.
 our %KnownDirectives = (
 			"FrequencyFile" => \&NoAction,
 			"MapFile" => \&NoAction,
@@ -83,16 +83,14 @@ our %KnownDirectives = (
 			"FemaleTheta" => \&NoAction,
 			"Alpha" => \&NoAction,
 			"Penetrance" => \&NoAction,
-			"Constrain" => \&NoAction,
 			"Multipoint" => \&NoAction,
 			"MarkerToMarker" => \&NoAction,
 			"SexSpecific" => \&NoAction,
 			"LD" => \&NoAction,
-			"QT" => \&NoAction,
 			"QTT" => \&NoAction,
+			"QT" => \&NoAction,
 			"Mean" => \&NoAction,
 			"StandardDev" => \&NoAction,
-			"DegOfFreedom" => \&NoAction,
 			"Threshold" => \&NoAction,
 			"Truncate" => \&NoAction,
 			"PhenoCodes" => \&NoAction,
@@ -100,6 +98,7 @@ our %KnownDirectives = (
 			"Log" => \&NoAction,
 
 			"Constraint" => \&NoAction,
+			"DegreesOfFreedom" => \&NoAction,
 			);
 
 our @EXPORT = qw(
@@ -381,7 +380,8 @@ sub loadConf {
 	    s/^\s*//g;       # Trim leading whitespace
 	    next if (/^$/);  # Drop empty lines
 	    my @Parameters = split /[,\s]+/;
-	    my $Directive  = shift @Parameters;
+	    my $PossibleDirective  = shift @Parameters;
+	    my ($Directive) = grep {$_ =~ m/^$PossibleDirective/i} keys %KnownDirectives;
 	    die "Configuration line $LineNo: \"$Directive\" is not a known configuration directive."
 		if (!defined($KnownDirectives{$Directive}));
 	    $Directives{$Directive} = \@Parameters;
