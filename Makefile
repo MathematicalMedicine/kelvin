@@ -183,13 +183,13 @@ dist :
 	ln .maj .min .pat .svnversion Kelvin CHANGES COPYRIGHT Makefile PedCount.pl kf.pm convertconfig.pl rebuild.sh *.[ch] kelvin-$(SVNVERSION)
 	mkdir kelvin-$(SVNVERSION)/lib
 	mkdir kelvin-$(SVNVERSION)/utils
-	ln utils/Makefile utils/*.[ch] kelvin-$(SVNVERSION)/utils
+	ln utils/Makefile utils/*.[ch] utils/wordDiff.pl kelvin-$(SVNVERSION)/utils
 	mkdir kelvin-$(SVNVERSION)/pedlib
 	ln pedlib/Makefile pedlib/*.[ch] kelvin-$(SVNVERSION)/pedlib
 	mkdir kelvin-$(SVNVERSION)/config
 	ln config/Makefile config/*.[ch] kelvin-$(SVNVERSION)/config
 	mkdir kelvin-$(SVNVERSION)/seq_update
-	ln config/Makefile seq_update/*.[ch] kelvin-$(SVNVERSION)/seq_update
+	ln seq_update/Makefile seq_update/*.[ch] kelvin-$(SVNVERSION)/seq_update
 	mkdir -p kelvin-$(SVNVERSION)/test-suite/dynamic-grid/PE/SA_DT
 	ln test-suite/Makefile kelvin-$(SVNVERSION)/test-suite
 	ln test-suite/dynamic-grid/Makefile kelvin-$(SVNVERSION)/test-suite/dynamic-grid
