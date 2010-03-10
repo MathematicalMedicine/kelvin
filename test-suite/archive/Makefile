@@ -1,5 +1,7 @@
 # This is a dummy makefile to prevent accidental execution of the whole archive.
 
+check :
+
 test :
 
 test-FIXED :

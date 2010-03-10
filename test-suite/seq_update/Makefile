@@ -10,7 +10,7 @@ TESTS = $(shell ls -d */ | cut -f1 -d\/)
 test : ACTION := test
 test : $(TESTS)
 
-validate :
+check :
 	$(MAKE) -C d-2pt-le -f Makefile test
 
 test-USE_DL : 

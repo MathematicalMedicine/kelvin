@@ -253,10 +253,10 @@ test-FIXED :
 test :
 	+make -C test-suite -f Makefile test
 
-.PHONY : validate
+.PHONY : check
 # Brief installation validation (~1-2 minutes)
-validate :
-	+make -C test-suite -f Makefile validate
+check :
+	+make -C test-suite -f Makefile check
 
 $(BINDIR)/kelvin-$(VERSION) : kelvin
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
