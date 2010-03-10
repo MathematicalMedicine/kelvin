@@ -1,4 +1,6 @@
 Version 0.38.0
+  Extensive changes to directive syntax, error, status and progress messages. Review documentation.
+
   12/28/2009 Kelvin Dynamic grid had imprinting problem for MP_QT in which dD parameter used Dd.
              This problem is fixed.
 
