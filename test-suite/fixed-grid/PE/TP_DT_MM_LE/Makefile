@@ -1,7 +1,7 @@
 test :
 	- rm -rf *.out
 	(time $(TEST_KELVIN) kelvin.conf) >kelvin.out 2>&1
-	diff -i ppl.out ppl.out-baseline
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out ppl.out-baseline .000001
 
 test-USE_DL :
 	- rm -rf *.out *.so compiled

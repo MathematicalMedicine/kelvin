@@ -21,6 +21,8 @@ open LEFT, $file_LEFT; open RIGHT, $file_RIGHT;
 $whole_LEFT = do { local $/; <LEFT> }; # Briefly make the special variable for line delimiter undefined...
 $whole_RIGHT = do { local $/; <RIGHT> }; # ...so we can slurp-in the whole file at once.
 close LEFT; close RIGHT;
+$whole_LEFT =~ s/Version V.*//g; # Ignore comparisons of Version strings
+$whole_RIGHT =~ s/Version V.*//g; # Ignore comparisons of Version strings
 $whole_LEFT =~ s/\$Id.* \$//g; # Ignore comparisons of SVN or CVS version Ids
 $whole_RIGHT =~ s/\$Id.* \$//g; # Ignore comparisons of SVN or CVS version Ids
 # Split the files into lists delimited by whitespace commas, newlines and parens, and keep delimiters

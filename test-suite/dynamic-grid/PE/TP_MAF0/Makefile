@@ -1,8 +1,8 @@
 test :
 	- rm -f br.out ppl.out kelvin.out
 	(time $(TEST_KELVIN) kelvin.conf) >kelvin.out 2>&1
-	diff -i br.out br.out-baseline
-	diff -i ppl.out ppl.out-baseline
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out ppl.out-baseline .000001
 
 test-FIXED :
 	echo Fixed-grid comparison not available

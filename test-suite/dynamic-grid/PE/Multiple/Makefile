@@ -10,7 +10,7 @@ test :
 	$(TEST_KELVIN) kelvin.conf-PC3 >kelvin.out-PC3 2>&1
 	perl -p -i -e 's/Seq: 1/Seq: 3/' PC3/BR.Out
 	grep -v Version PC3/BR.Out >>BR.Out-PCs
-	diff -i BR.Out-PCs br.out
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl BR.Out-PCs br.out .000001
 
 test-USE_DL :
 	echo Compilation not appropriate for this test.

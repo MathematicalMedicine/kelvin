@@ -402,7 +402,7 @@ void kelvinInit (int argc, char *argv[])
   if (modelOptions->markerAnalysis == FALSE || modelOptions->forceAvghetFile == TRUE) {
     fpHet = fopen (modelOptions->avghetfile, "w");
     ASSERT (fpHet != NULL, "Error in opening file %s for write.\n", modelOptions->avghetfile);
-    fprintf (fpHet, "# Version %s\n", programVersion);
+    fprintf (fpHet, "# Version %s edit %s\n", programVersion, svnVersion);
   }
 
   if (modelType->type == TP) {
@@ -414,7 +414,7 @@ void kelvinInit (int argc, char *argv[])
   if (strlen (modelOptions->modfile) > 0) {
     fpMOD = fopen (modelOptions->modfile, "w");
     ASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modelOptions->modfile);
-    fprintf (fpMOD, "# Version %s\n", programVersion);
+    fprintf (fpMOD, "# Version %s edit %s\n", programVersion, svnVersion);
   }
 
   if (strlen (modelOptions->intermediatefile) > 0) {

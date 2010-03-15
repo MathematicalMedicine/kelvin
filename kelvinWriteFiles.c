@@ -8,7 +8,7 @@
 void
 writePPLFileHeader ()
 {
-  fprintf (fpPPL, "# Version %s\n", programVersion);
+  fprintf (fpPPL, "# Version %s edit %s\n", programVersion, svnVersion);
   if (modelOptions->markerAnalysis != FALSE)
     {
       fprintf (fpPPL, "Chr Marker1 Position1 Marker2 Position2 PPL");

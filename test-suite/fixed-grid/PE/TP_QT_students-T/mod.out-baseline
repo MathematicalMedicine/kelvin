@@ -1,4 +1,4 @@
-# Version V0.38.0
+# Version V0.38.1
 # Seq: 1 Chr: 1 Trait: disease Marker: 1_3_mrk Position: 0.9900
 Case MOD D11 Theta(M,F) Alpha DGF LC0PV(DDMean,DdMean,ddMean,DDSD,DdSD,ddSD)
 MOD(Overall) 0.9809 -1.00 (0.0000,0.0000) 0.60 0.7000 (1.000,-1.000,-3.000,0.707,0.707,0.707)
