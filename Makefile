@@ -37,7 +37,7 @@ USE_OPENMP := yes
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
-# USE_GSL := yes
+USE_GSL := yes
 
 ## Enable use of ptmalloc3. Don't forget to set LIBDIR (above) accordingly.
 ## Not available on OSX.
@@ -175,7 +175,7 @@ INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
 # Binary releases include kelvin.$(PLATFORM)
-all : kelvin.$(PLATFORM) seq_update/calc_updated_ppl
+all : kelvin-$(VERSION) seq_update/calc_updated_ppl
 
 dist :
 	- rm -rf kelvin-$(SVNVERSION)
@@ -209,12 +209,21 @@ dist :
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
           $(BINDIR)/convert_br.pl \
-	  $(BINDIR)/compileDL.sh
+	  $(BINDIR)/compileDL.sh \
+	  $(BINDIR)/PedCount.pl \
+	  $(BINDIR)/kf.pm \
+	  $(BINDIR)/Kelvin
+
+.PHONY : kelvin
+kelvin : kelvin-$(VERSION)
+
+kelvin-$(VERSION) : libs $(KOBJS) $(OBJS) $(INCS)
+	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
+	cp $@ $@-$(SVNVERSION)
 
 kelvin.$(PLATFORM) : libs $(KOBJS) $(OBJS) $(INCS)
 #	$(CC) -static  -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
-	cp $@ $@-$(SVNVERSION)
 
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
@@ -258,8 +267,8 @@ test :
 check :
 	+make -C test-suite -f Makefile check
 
-$(BINDIR)/kelvin-$(VERSION) : kelvin
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
+$(BINDIR)/kelvin-$(VERSION) : kelvin-$(VERSION)
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-$(VERSION) $(BINDIR)/kelvin-$(VERSION)
 
 $(BINDIR)/calc_updated_ppl : seq_update/calc_updated_ppl
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/calc_updated_ppl $(BINDIR)/calc_updated_ppl
@@ -269,3 +278,13 @@ $(BINDIR)/convert_br.pl : seq_update/convert_br.pl
 
 $(BINDIR)/compileDL.sh : compileDL.sh
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p compileDL.sh $(BINDIR)/compileDL.sh
+
+$(BINDIR)/PedCount.pl : PedCount.pl
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p PedCount.pl $(BINDIR)/PedCount.pl
+
+$(BINDIR)/kf.pm : kf.pm
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kf.pm $(BINDIR)/kf.pm
+
+$(BINDIR)/Kelvin : Kelvin
+	perl -pe "s|NO_KELVIN_ROOT|$(BINDIR)|; s|NO_KELVIN_BINARY|$(BINDIR)/kelvin-$(VERSION)|; s|NO_SEQUPDATE_BINARY|$(BINDIR)/calc_updated_ppl|; s|NO_PEDCOUNT_SCRIPT|$(BINDIR)/PedCount.pl|" Kelvin > Kelvin.local
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p Kelvin.local $(BINDIR)/Kelvin
