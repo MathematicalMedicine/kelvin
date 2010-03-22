@@ -5,9 +5,6 @@
 # find . -name MAKE-FAILED -execdir rm MAKE-RUNNING \;
 # before you resubmit.
 
-clean :
-	- rm -rf adhoc.* *.out kelvin_*_memory.dat MAKE-* *.so compiled
-
 all : 
 ifeq ($(wildcard MAKE-RUNNING), MAKE-RUNNING)
 	echo Run already in progress
@@ -26,3 +23,6 @@ else
         # Here I _will_ grep kelvin\*version and put the results into some file
 	- touch MAKE-GOOD-CURRENT
 endif
+
+clean :
+	- rm -rf adhoc.* *.out kelvin_*_memory.dat MAKE-* *.so compiled
