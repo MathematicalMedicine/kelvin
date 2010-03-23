@@ -296,5 +296,5 @@ $(BINDIR)/kf.pm : kf.pm
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p kf.pm $(BINDIR)/kf.pm
 
 $(BINDIR)/Kelvin : Kelvin
-	perl -pe "s|NO_KELVIN_ROOT|$(BINDIR)|; s|NO_KELVIN_BINARY|$(BINDIR)/kelvin-$(VERSION)|; s|NO_SEQUPDATE_BINARY|$(BINDIR)/calc_updated_ppl|; s|NO_PEDCOUNT_SCRIPT|$(BINDIR)/PedCount.pl|" Kelvin > Kelvin.local
+	perl -pe "s|NO_KELVIN_ROOT|$(ABSBINDIR)|; s|NO_KELVIN_BINARY|$(ABSBINDIR)/kelvin-$(VERSION)|; s|NO_SEQUPDATE_BINARY|$(ABSBINDIR)/calc_updated_ppl|; s|NO_PEDCOUNT_SCRIPT|$(ABSBINDIR)/PedCount.pl|" Kelvin > Kelvin.local
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p Kelvin.local $(BINDIR)/Kelvin
