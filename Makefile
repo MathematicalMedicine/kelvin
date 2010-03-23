@@ -8,7 +8,6 @@
 
 ## Directory into which compiled executables and scripts will be installed.
 BINDIR=/usr/local/bin
-ABSBINDIR=`echo $(BINDIR)` # Sad that $(realpath) and $(abspath) be broked.
 
 ## User and group IDs by which installed execuatbles and scripts will be owned.
 OWNER=root
@@ -54,6 +53,7 @@ CFLAGS :=
 ## Should be no need to make changes beyond this point ##
 ##                                                     ##
 
+ABSBINDIR=$(shell echo $(BINDIR)) # Sad that $(realpath) and $(abspath) be broked.
 LDFLAGS := -dynamic 
 ADD_LDFLAGS :=
 
