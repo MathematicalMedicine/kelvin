@@ -180,6 +180,8 @@ all : kelvin-$(VERSION) seq_update/calc_updated_ppl
 dist :
 	- rm -rf kelvin-$(SVNVERSION)
 	mkdir kelvin-$(SVNVERSION)
+	mkdir kelvin-$(SVNVERSION)/bin
+	ln bin/kelvin.* kelvin-$(SVNVERSION)/bin
 	ln .maj .min .pat .svnversion Kelvin CHANGES COPYRIGHT Makefile PedCount.pl kf.pm convertconfig.pl rebuild.sh *.[ch] kelvin-$(SVNVERSION)
 	mkdir kelvin-$(SVNVERSION)/lib
 	mkdir kelvin-$(SVNVERSION)/utils
@@ -203,8 +205,8 @@ dist :
 	ln test-suite/seq_update/d-2pt-le/* kelvin-$(SVNVERSION)/test-suite/seq_update/d-2pt-le
 	mkdir kelvin-$(SVNVERSION)/doc
 	ln doc/*.html doc/*.png doc/*.gif kelvin-$(SVNVERSION)/doc
-	tar cvzf kelvin-$(SVNVERSION).tar.gz kelvin-$(SVNVERSION)/
-	rm -rf kelvin-$(SVNVERSION)
+	tar -hcvzf kelvin-$(SVNVERSION).tar.gz kelvin-$(SVNVERSION)/
+#	rm -rf kelvin-$(SVNVERSION)
 
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
@@ -214,14 +216,13 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 	  $(BINDIR)/kf.pm \
 	  $(BINDIR)/Kelvin
 
-install-prebuilt : bin/kelvin.$(PLATFORM) \
-          $(BINDIR)/calc_updated_ppl \
+install-prebuilt : $(BINDIR)/calc_updated_ppl \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh \
 	  $(BINDIR)/PedCount.pl \
 	  $(BINDIR)/kf.pm \
 	  $(BINDIR)/Kelvin
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin-$(PLATFORM) $(BINDIR)/kelvin-$(VERSION)
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin.$(PLATFORM) $(BINDIR)/kelvin-$(VERSION)
 
 .PHONY : kelvin
 kelvin : kelvin-$(VERSION)
@@ -229,9 +230,7 @@ kelvin : kelvin-$(VERSION)
 kelvin-$(VERSION) : libs $(KOBJS) $(OBJS) $(INCS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 	cp $@ $@-$(SVNVERSION)
-
-kelvin-platform : kelvin-$(VERSION)
-	cp kevin-$(VERSION) kelvin.$(PLATFORM)
+	cp $@ bin/kelvin.$(PLATFORM)
 
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
