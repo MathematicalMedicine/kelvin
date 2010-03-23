@@ -174,7 +174,6 @@ INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinWriteFiles.h dkelvinWriteFiles.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
-# Binary releases include kelvin.$(PLATFORM)
 all : kelvin-$(VERSION) seq_update/calc_updated_ppl
 
 dist :
@@ -216,13 +215,14 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 	  $(BINDIR)/kf.pm \
 	  $(BINDIR)/Kelvin
 
-install-prebuilt : $(BINDIR)/calc_updated_ppl \
+install-prebuilt : \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh \
 	  $(BINDIR)/PedCount.pl \
 	  $(BINDIR)/kf.pm \
 	  $(BINDIR)/Kelvin
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin.$(PLATFORM) $(BINDIR)/kelvin-$(VERSION)
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/calc_updated_ppl.$(PLATFORM) $(BINDIR)/calc_updated_ppl-$(VERSION)
 
 .PHONY : kelvin
 kelvin : kelvin-$(VERSION)
@@ -235,6 +235,7 @@ kelvin-$(VERSION) : libs $(KOBJS) $(OBJS) $(INCS)
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
 	+make -C seq_update -f Makefile calc_updated_ppl
+	cp $@ bin/calc_updated_ppl.$(PLATFORM)
 
 %.o : %.c $(INCS)
 	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) -DVERSION='"V$(VERSION)"' -DSVNVERSION='"$(SVNVERSION)"' $< -o $@
