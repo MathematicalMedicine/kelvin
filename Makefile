@@ -8,6 +8,7 @@
 
 ## Directory into which compiled executables and scripts will be installed.
 BINDIR=/usr/local/bin
+ABSBINDIR=`echo $(BINDIR)` # Sad that $(realpath) and $(abspath) be broked.
 
 ## User and group IDs by which installed execuatbles and scripts will be owned.
 OWNER=root
@@ -181,7 +182,8 @@ dist :
 	mkdir kelvin-$(VERSION)
 	mkdir kelvin-$(VERSION)/bin
 	ln bin/kelvin.* kelvin-$(VERSION)/bin
-	ln .maj .min .pat .svnversion Kelvin CHANGES COPYRIGHT Makefile PedCount.pl kf.pm convertconfig.pl rebuild.sh *.[ch] kelvin-$(VERSION)
+	ln bin/calc_updated_ppl.* kelvin-$(VERSION)/bin
+	ln .maj .min .pat .svnversion Kelvin CHANGES COPYRIGHT Makefile PedCount.pl kf.pm convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
 	mkdir kelvin-$(VERSION)/lib
 	mkdir kelvin-$(VERSION)/utils
 	ln utils/Makefile utils/*.[ch] utils/wordDiff.pl kelvin-$(VERSION)/utils
@@ -190,7 +192,7 @@ dist :
 	mkdir kelvin-$(VERSION)/config
 	ln config/Makefile config/*.[ch] kelvin-$(VERSION)/config
 	mkdir kelvin-$(VERSION)/seq_update
-	ln seq_update/Makefile seq_update/*.[ch] kelvin-$(VERSION)/seq_update
+	ln seq_update/Makefile seq_update/*.[ch] seq_update/*.pl kelvin-$(VERSION)/seq_update
 	mkdir -p kelvin-$(VERSION)/test-suite/dynamic-grid/PE/SA_DT
 	ln test-suite/Makefile kelvin-$(VERSION)/test-suite
 	ln test-suite/dynamic-grid/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid
