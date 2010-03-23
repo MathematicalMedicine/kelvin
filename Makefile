@@ -33,7 +33,7 @@ CC := gcc
 GCCOPT := 2
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
-USE_OPENMP := no
+USE_OPENMP := yes
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
@@ -206,7 +206,7 @@ dist :
 	mkdir kelvin-$(SVNVERSION)/doc
 	ln doc/*.html doc/*.png doc/*.gif kelvin-$(SVNVERSION)/doc
 	tar -hcvzf kelvin-$(SVNVERSION).tar.gz kelvin-$(SVNVERSION)/
-#	rm -rf kelvin-$(SVNVERSION)
+	rm -rf kelvin-$(SVNVERSION)
 
 install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
