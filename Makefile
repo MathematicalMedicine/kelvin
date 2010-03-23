@@ -214,6 +214,15 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 	  $(BINDIR)/kf.pm \
 	  $(BINDIR)/Kelvin
 
+install-prebuilt : bin/kelvin.$(PLATFORM) \
+          $(BINDIR)/calc_updated_ppl \
+          $(BINDIR)/convert_br.pl \
+	  $(BINDIR)/compileDL.sh \
+	  $(BINDIR)/PedCount.pl \
+	  $(BINDIR)/kf.pm \
+	  $(BINDIR)/Kelvin
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin-$(PLATFORM) $(BINDIR)/kelvin-$(VERSION)
+
 .PHONY : kelvin
 kelvin : kelvin-$(VERSION)
 
