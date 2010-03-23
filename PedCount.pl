@@ -33,6 +33,7 @@ my $frequencyFile      = "markers.dat";                 # Default input files
 my $DiagSolos = 0;    # Writes out a separate file for each marker with actual copies of template pedigrees
 
 # Command line option flags
+my $help           = 0;
 my $config         = 0;
 my $pre            = 0;
 my $post           = 0;
@@ -112,46 +113,7 @@ sub dirSexLinked {
 
 #####################################
 #
-# Evolved from a trios-only version by John Burian.
-#
-# Leverages pedigree inheritance patterns to reduce computational
-# complexity. Multiple pedigrees that conform to a single inheritance pattern
-# are converted to a single representative pedigree and a weight (count) for 
-# each marker. Currently works only for two-point analysis because it would be 
-# a real trick for there to be many pedigrees where multiple markers all fit the
-# same inheritance pattern.
-#
-# The traditional analyses for which this was designed are:
-# 1. Case/Control, where unrelated genotyped and phenotyped individuals are
-# divided into cases and controls and fall into one of 6 inheritance pattern
-# buckets normally, 10 for X chromosome analysis.
-# 2. Trios are 3-member pedigrees with one affected child both parents treated
-# as if unaffected. They fall into one of 30 inheritance pattern buckets
-# normally, and 44 for X chromosome analysis.
-# 3. ASPs (Affected Sibling Pairs) are essentially expanded trios, i.e. 4-member
-# pedigrees with two affected children and both parents in
-# any affectation category, which will fall first into one of the 3-member
-# trio buckets for the first child, and then a second 3-member bucket
-# with the same parentage for the second child.
-#
-# All cases are handled by building a "bucket key" for each family by:
-#
-# 1. Build parent components by concatenating ordered marker genotype w/affectation
-#    status.
-# 2. For each child concatenate ordered marker genotype w/affectation status and
-#    push onto list of children.
-# 3. Order list of children and append to ordered parental components.
-#
-# X-chromosome analysis requires only that gender be included in the parental and
-# child components.
-#
-# This handles all nuclear families. While enumerating every possible bucket for all
-# possible nuclear family combinations would be exhaustive, we use Perl hashes
-# to produce only the buckets needed. When we create a bucket, we keep track of
-# the last pedigree that fit into it so we can use that pedigree's genotypic and
-# phenotypic information to create the template pedigree for the bucket. We could
-# decode the bucket name and achieve the same goal, but this is easier and more
-# reliable.
+# Evolved from a trios-only version by John Burian. See -help output for documentation.
 #
 sub bucketizePedigrees {
 
@@ -784,16 +746,62 @@ sub kelvinLimits {
       if (defined($Directives{DiseaseAlleles}) && ($Directives{DiseaseAlleles}[0] != 2));
 }
 
+
 #####################################
 # Verify command line parameters, check flags and do what the user asks.
 #
 print '$Id$'; print "\n";
+
+my $Help = <<EOF;
+
+Leverages pedigree inheritance patterns to reduce computational complexity
+of linkage analysis. Multiple pedigrees that conform to a single inheritance 
+pattern are converted to a single representative pedigree and a weight
+(count) for each marker. Currently works only for two-point analysis because
+it would be real trick for there to be many pedigrees where multiple markers 
+all fit the same inheritance pattern.
+
+The traditional analyses for which this was designed are:
+1. Case/Control, where unrelated genotyped and phenotyped individuals are
+   divided into cases and controls and fall into one of 6 inheritance pattern
+   buckets normally, 10 for X-chromosome analysis.
+2. Trios are 3-member pedigrees with one affected child and both parents 
+   treated as if unaffected. They fall into one of 30 inheritance pattern
+    buckets normally, 44 for X-chromosome analysis.
+3. ASPs (Affected Sibling Pairs) are essentially expanded trios, i.e. 4-member
+   pedigrees with two affected children and both parents in any affectation
+   category, which will fall first into one of the 3-member trio buckets for 
+   the first child, and then a second 3-member bucket with the same parentage 
+   for the second child.
+
+All cases are handled by building a "bucket key" for each family by:
+
+1. Building parent components by concatenating ordered marker genotype
+   w/affectation status.
+2. For each child concatenating ordered marker genotype w/affectation status
+   and pushing onto list of children.
+3. Ordering list of children and appending to ordered parental components.
+
+X-chromosome analysis requires only that gender be included in the parental
+and child components.
+
+This handles all nuclear families. While enumerating every possible bucket for all
+possible nuclear family combinations would be exhaustive, we use Perl hashes
+to produce only the buckets needed. When we create a bucket, we keep track of
+the last pedigree that fit into it so we can use that pedigree's genotypic and
+phenotypic information to create the template pedigree for the bucket. We could
+decode the bucket name and achieve the same goal, but this is easier and more
+reliable.
+
+EOF
+
 my $Usage = <<EOF;
 
 Usage "perl $0 [<flags>...] <input file>"
 
 where <flags> are any of:
 
+-help		Print a more philosophical explanation of purpose.
 -config		The input file specified is a KELVIN configuration file. Otherwise
 		it is assumed to be a pedigree file.
 -pre		Pedigrees are in pre-MAKEPED format.
@@ -872,6 +880,7 @@ mappings are made every time.
 EOF
 
 GetOptions(
+    'help'           => \$help,
     'config'         => \$config,
     'pre'            => \$pre,
     'post'           => \$post,
@@ -900,7 +909,10 @@ if ($write ne "unspecified") {
 
 $Data::Dumper::Sortkeys = 1;
 
+print $Help if ($help);
+
 die "Invalid number of arguments supplied.\n$Usage"       if (($#ARGV < 0) && (!$quiet));
+print "-help flag seen\n"                                 if (($help) && (!$quiet));
 print "-config flag seen\n"                               if (($config) && (!$quiet));
 print "-pre flag seen\n"                                  if (($pre) && (!$quiet));
 print "-post flag seen\n"                                 if (($post) && (!$quiet));
