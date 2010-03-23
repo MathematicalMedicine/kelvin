@@ -1,7 +1,7 @@
 <html>
   <?-- This file is 100 characters wide -->
   <head>
-    <title>KELVIN V0.38.0 ReadMe</title>
+    <title>KELVIN V2.1.0 ReadMe</title>
     <style type='text/css'>
       span.sc { font-variant: small-caps; }
       div.indent { padding-left: 2em; }
@@ -10,9 +10,11 @@
     </style>
   </head>
   <body>
-    <h1><span class='sc'>Kelvin</span> V0.38.0</h1>
+    <center>
+    <h1><span class='sc'>Kelvin</span> V2.1.0</h1>
+    </center>
 
-    <h2>Overview</h2>
+    <h1>Overview</h1>
 
     <span class='sc'>Kelvin</span> is a flexible program for analysis of genetic data.  It is
     based on the PPL framework<sup><a href='#foot1'>1</a>, <a href='#foot2'>2</a>,
@@ -24,8 +26,8 @@
     probability of L and LD); the PPL(LD) (posterior probability of L allowing for LD); and the
     PP[LD|L] (posterior probability of LD given L).
     <p>
-    <span class='sc'>Kelvin</span> handles the trait model (i) by formulating an underlying
-    likelihood in terms of a vector of trait parameters; and (ii) integrating over all constituent
+    <span class='sc'>Kelvin</span> handles the trait model by formulating an underlying
+    likelihood in terms of a vector of trait parameters; and integrating over all constituent
     trait parameters. The standard dichotomous trait (DT) likelihood is written in terms of a
     single disease allele frequency (for a two-allele disease locus), a vector of three
     penetrances (one for each disease genotype), and the admixture parameter of
@@ -73,7 +75,9 @@
     two-locus (2L) epistasis analyses based on measured genotypes at, e.g., an associated SNP,
     by allowing the penetrances to depend on SNP genotype.
     <p>
-    The <a href='#quickstart'>Quick Start</a> gives a brief introduction to preparing the input
+    The <a href='#releasenotes'>Release Notes</a> describe the major changes in this version
+    and should be reviewed by all users. The <a href='#quickstart'>Quick Start</a> gives a 
+    brief introduction to preparing the input
     files, running <span class='sc'>Kelvin</span>, and graphing and interpreting the output.
     Additional technical details on the underlying statistical methods can be found in the
     following references:
@@ -128,7 +132,54 @@
       subsets prior to PPL analysis. Hum Hered 66, 223-237 PMID: 18612207 (2008).
     </div>
 
-    <h2 id='quickstart'>Quick Start</h2>
+    <hr>
+
+    <h1 id='releasenotes'>Release Notes</h1>
+
+    V2.1 is a major release of <span class='sc'>Kelvin</span> that provides significant
+    improvements in capabilities and performance. Users of previous versions will want to
+    review the changes in this section before installing and using the new version.
+    
+    <ol>
+      <li>The names and formats of directives in the configuration file have changed significantly. See the
+	<a href='Directives.html'>directives page</a> for a complete reference.
+	The Perl script <tt>convertconfig.pl</tt> is provided to help convert existing configuration files
+	to the new format. It can be invoked by typing:
+	<pre>
+	  _$ convertconfig.pl &lt;old.conf &gt;new.conf
+	</pre>
+	Be sure to review and modify the new configuration file as required, since not all aspects
+	of old configurations are supported.
+      </li>
+      <li>Output file format has changed significantly, so if you have written
+	scripts or programs to process that output, you will want to review the new formats
+	in the <a href='#outputfiles'>Contents Of Output Files</a> section.</li>
+      <li>The default mechanism of integration over constituent trait parameters is now adaptive 
+	instead of iterative, leading to significant improvements in performance and accuracy.</li>
+      <li>Pedigree binning and counting is now performed by default where possible. The <tt>PedCount.pl</tt>
+      Perl script will be invoked transparently by <span class='sc'>Kelvin</span> when applicable,
+      but can also be used separately.  A full description of command line syntax is available by typing:
+	<pre>
+	  _$ PedCount.pl --help
+	</pre>
+      </li>
+      <li>Individuals can now be divided into groups with separate sets of penetrance values. 
+	See the section on <a href='#lc_vs_nolc'>Covariate-Dependence</a> for details.</li>
+      <li>Limited support for considering epistasis is now provided, see the section on 
+	<a href='#simple_vs_epistasis'>Simple Trait vs Epistasis</a> for details.</li>
+      <li>Utilities for preparing the configuration file and graphing the results of analyses are now provided.
+	Separate documentation is provided for both <tt><font color='red'>gKelvin</font></tt> and 
+	<tt><font color='red'>graphApp</font></tt> as <tt>Readme.txt</tt>
+	files in their distribution directories. These utilities
+	have separate installation requirements and procedures as well.</li>
+      <li>Progress reporting now provides configurable fixed-frequency updates so as to
+	eliminate the output "feast or famine" effect across differing analyses. See the
+	<a href='#running'>Running The Programs</a> section for details.</li>
+    </ol>
+
+    <hr>
+
+    <h1 id='quickstart'>Quick Start</h1>
 
     This section provides an overview of getting, building and running
     <span class='sc'>Kelvin</span>. Detailed instructions on each point can be found
@@ -145,7 +196,7 @@
       <li>See if one of the pre-built executables in the <tt>bin</tt> subdirectory is suitable for
         your system.</li>
       <li>Otherwise, build <span class='sc'>Kelvin</span> by running <tt>make</tt>.</li>
-      <li>Validate the executable by running <tt>make validate</tt>. These tests take a minute or two.</li>
+      <li>Validate the executable by running <tt>make check</tt>. These tests should take less than a minute to perform.</li>
       <li>You can perform a much more extensive set of tests if you wish by running <tt>make test</tt>. These tests 
 	will take anywhere from 30 minutes to several hours.</li> You can interrupt them at any time by
       typing </tt>CTRL/C</tt>.
@@ -345,7 +396,9 @@
     score and the maximizing values of all parameters, which are contained in the
     <a href='#modfile'>maximizing model</a> (MOD) file.
 
-    <h2 id='toc'>Detailed Instructions</h2>
+    <hr>
+
+    <h1 id='toc'>Detailed Instructions</h1>
 
     <ol>
       <li><a href='#installing'>Installing The Programs</a></li>
@@ -369,9 +422,9 @@
     <ul>
       <li>Redhat Enterprise Linux x86_64 with GCC 4.1.1</li>
       <li>Debian Linux i386 with GCC 4.1.1</li>
-      <li>Macintosh OSX 10.4 i386 with GCC 4.0.1 (no OpenMP) and GCC 4.3.0</li>
+      <li>Macintosh OSX 10.6 i686 with GCC 4.2.1 and GCC 4.3.0</li>
       <li>Macintosh OSX 10.4 PowerPC with GCC 4.0.1 (no OpenMP)</li>
-      <li>Cygwin under Windows XP i386 with GCC 3.4.4 (cygming special)</li>
+      <li>Cygwin under Windows XP i386 with GCC 4.3.4</li>
       <li>SunOS 5.8 on an Ultra-1 sparc 64-bit with GCC 3.4.6 (no OpenMP)</li>
     </ul>
     Aside from the compiled execuatble, running <span class='sc'>Kelvin</span> requires
@@ -431,7 +484,7 @@
     used for build management and distribution.
     <p>
     <span class='sc'>Kelvin</span> is currently distributed as a compressed tarball of the
-    directory hierarchy of our latest release, e.g. <tt>kelvin-0.38.0.tar.gz</tt>.
+    directory hierarchy of our latest release, e.g. <tt>kelvin-2.1.0.tar.gz</tt>.
 
     <h4>Directory Structure and Components</h4>
 
@@ -627,7 +680,7 @@
     based on a covariate. Covariate dependence is incompatible with
     <a href='traitmarker_vs_markermarker'>marker-to-marker</a> analyses.
 
-    <h3 ld='simple_vs_epistasis'>Simple Trait vs. Epistasis</h3>
+    <h3 id='simple_vs_epistasis'>Simple Trait vs. Epistasis</h3>
 
     By default, <span class='sc'>Kelvin</span> assumes that affectation depends solely on
     a hypothetical trait locus. <span class='sc'>Kelvin</span> can be made to consider the
@@ -702,62 +755,53 @@
     <tr><td align='right' style='background: #888888'><tt> 1 </tt></td>
 <td><tt>10/01/15 08:26:25 @0s, Initializing</tt></td></tr>
     <tr><td align='right' style='background: #888888'><tt> 2 </tt></td>
-<td><tt>10/01/15 08:26:25 kelvin V0.38.0 built Jan 15 2010 07:51:25</tt></td></tr>
+<td><tt>10/01/15 08:26:25 kelvin V0.38.1 edit 2463 built Jan 14 2010 15:04:43</tt></td></tr>
     <tr><td align='right' style='background: #888888'><tt> 3 </tt></td>
-<td><tt>10/01/15 08:26:25 $&nbsp;Id: kelvin.c 2574 2010-01-12 17:17:10Z whv001 $</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 4 </tt></td>
-<td><tt>10/01/15 08:26:25 $&nbsp;Id: likelihood.c 2550 2010-01-05 16:31:50Z whv001 $</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 5 </tt></td>
-<td><tt>10/01/15 08:26:25 $&nbsp;Id: locus.c 2548 2010-01-05 13:29:27Z whv001 $</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 6 </tt></td>
-<td><tt>10/01/15 08:26:25 $&nbsp;Id: polynomial.c 2580 2010-01-14 17:54:49Z whv001 $</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 7 </tt></td>
 <td><tt>10/01/15 08:26:25 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 8 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 4 </tt></td>
 <td><tt>10/01/15 08:26:25 Using GNU Scientific Library (GSL) statistical functions instead of internal ones</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 9 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 5 </tt></td>
 <td><tt>10/01/15 08:26:25 OpenMP-enabled w/maximum of 6 thread(s).</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 10 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 6 </tt></td>
 <td><tt>10/01/15 08:26:25 GCC optimization level 2 enabled</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 11 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 7 </tt></td>
 <td><tt>10/01/15 08:26:25 To check status (at some risk), type CTRL-\ or type "kill -3 22860"</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 12 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 8 </tt></td>
 <td><tt>10/01/15 08:26:25 Using configuration file kelvin.conf</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 13 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 9 </tt></td>
 <td><tt>10/01/15 08:26:25 Computation is done in polynomial mode</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 14 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 10 </tt></td>
 <td><tt>10/01/15 08:26:25 polynomialScale is 1 (1-10, 1 is default)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 15 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 11 </tt></td>
 <td><tt>10/01/15 08:26:25 Integration is done numerically (dkelvin)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 16 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 12 </tt></td>
 <td><tt>10/01/15 08:26:25 Further progress will be displayed at 90 second intervals</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 17 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 13 </tt></td>
 <td><tt>10/01/15 08:26:25 6TL of 20AL*6GF*275pv(1LC) space for 24 pedigree(s)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 18 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 14 </tt></td>
 <td><tt>10/01/15 08:26:25 Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 19 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 15 </tt></td>
 <td><tt>10/01/15 08:26:25 @0s, Performing analysis</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 20 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 16 </tt></td>
 <td><tt>10/01/15 08:26:26&nbsp;&nbsp;&nbsp;&nbsp;@1s, Starting with position 1 of 6</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 21 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 17 </tt></td>
 <td><tt>10/01/15 08:27:56&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@1m30s, Building polynomial w/pedigree: 12 (12/24)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 22 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 18 </tt></td>
 <td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@2m32s, Building polynomial w/pedigree: 24 (24/24)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 23 </tt></td>
+    <tr><td align='right' style='background: #888888'><tt> 19 </tt></td>
 <td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@3m59s, Evaluating polynomials, currently at 8.1e+03 iterations</tt></td></tr>
   </table>
 <p>
-  Lines 1 and 19-23 are progress messages.
-  Line 2 is the <span class='sc'>Kelvin</span> major version and build information,
-  and the subsequent lines (3-6) that contain "Id:" are source-managed component version information.
-  Next is the compiler verison number (line 7), followed by important compilation conditionals as
+  Lines 1 and 15-19 are progress messages.
+  Line 2 is the <span class='sc'>Kelvin</span> major version and build information.
+  Next is the compiler verison number (line 3), followed by important compilation conditionals as
   specified in the Makefile and run characteristics as influenced by environment variables. In
-  the example given, OpenMP support status and the number of threads used (line 9)
+  the example given, OpenMP support status and the number of threads used (line 5)
   is displayed. Other options and their
   corresponding messages are covered in the <a href="#building"> Building and Testing</a>
   section.
     <p>
-      Following this is a line (11) describing the action to take in order to force an early display
+      Following this is a line (7) describing the action to take in order to force an early display
       of progress messages.
 You can use this as a sort of "pulse check" to make sure <span class='sc'>Kelvin</span> is still alive
 and well and making progress should there be a lull between automatic progress updates. If
@@ -775,8 +819,8 @@ process ID (26577 in the example) will be different from run-to-run. The "at som
 some status information is displayed asynchronously, i.e. regardless of the current context of the
 evaluation, and has been known, albeit extremely infrequently, to crash the program.
 <p>
-Next, location of the configuration file (line 12) and the analysis and run characteristics as determined from that file
-(lines 13-16) are displayed. The last of these (lines 17 and 18) are a terse description of the scope and nature
+Next, location of the configuration file (line 8) and the analysis and run characteristics as determined from that file
+(lines 9-12) are displayed. The last of these (lines 13 and 14) are a terse description of the scope and nature
 of the analysis, for example a fixed-grid run might display:
 <pre>
 6TL of 20AL*6GF*275pv(1LC) space for 24 pedigree(s)
@@ -818,7 +862,7 @@ Finally, progress indicators are displayed up through the end of the run.
     number, e.g.:
 
     <pre>
-    # Version V0.38.0
+    # Version V0.38.1 edit 2463
     </pre>
 
     This is included so that results can be associated with the version of
