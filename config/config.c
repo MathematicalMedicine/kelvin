@@ -170,7 +170,9 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"NonPolynomial", clear_flag, &staticModelOptions.polynomial},
 				{"Imprinting", set_flag, &staticModelOptions.imprintingFlag},
 				{"SexLinked", set_flag, &staticModelOptions.sexLinked},
+#ifndef DISTRIBUTION
 				{"FixedModels", clear_flag, &staticModelOptions.integration},
+#endif
 				{"DryRun", set_flag, &staticModelOptions.dryRun},
 				{"ExtraMODs", set_flag, &staticModelOptions.extraMODs},
 				{"ForceBRFile", set_flag, &staticModelOptions.forceAvghetFile},
@@ -275,6 +277,7 @@ void initializeDefaults ()
   staticModelRange.tlocRangeIncr = -1;
   staticModelRange.tlmark = FALSE;
   staticModelRange.atypicalQtTrait = FALSE;
+  staticModelRange.microsats = FALSE;
 
   staticModelType.type = TP;
   staticModelType.trait = DT;
