@@ -53,7 +53,7 @@ CFLAGS :=
 ## Should be no need to make changes beyond this point ##
 ##                                                     ##
 
-ABSBINDIR=$(shell echo $(BINDIR)) # Sad that $(realpath) and $(abspath) be broked.
+ABSBINDIR=$(shell echo $(BINDIR))
 LDFLAGS := -dynamic 
 ADD_LDFLAGS :=
 
