@@ -33,7 +33,7 @@ CC := gcc
 GCCOPT := 2
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
-USE_OPENMP := yes
+USE_OPENMP := no
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
@@ -230,9 +230,8 @@ kelvin-$(VERSION) : libs $(KOBJS) $(OBJS) $(INCS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 	cp $@ $@-$(SVNVERSION)
 
-kelvin.$(PLATFORM) : libs $(KOBJS) $(OBJS) $(INCS)
-#	$(CC) -static  -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
-	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
+kelvin-platform : kelvin-$(VERSION)
+	cp kevin-$(VERSION) kelvin.$(PLATFORM)
 
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
