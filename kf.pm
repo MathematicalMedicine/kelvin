@@ -99,6 +99,15 @@ our %KnownDirectives = (
 
 			"Constraint" => \&NoAction,
 			"DegreesOfFreedom" => \&NoAction,
+
+			"SkipAnalysis" => \&NoAction,
+			"SkipPedCount" => \&NoAction,
+			"EstimateFrequency" => \&NoAction,
+			"TraitPrevalance" => \&NoAction,
+			"EpistasisPedigreeFile" => \&NoAction,
+			"EpistasisLocusFile" => \&NoAction,
+			"Epistasis" => \&NoAction,
+
 			);
 
 our @EXPORT = qw(
