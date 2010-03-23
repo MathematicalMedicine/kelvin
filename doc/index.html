@@ -185,30 +185,27 @@
     <span class='sc'>Kelvin</span>. Detailed instructions on each point can be found
     <a href='#toc'>below</a>.
 
-    <h3>Building <span class='sc'>Kelvin</span></h3>
+    <h3>Installing <span class='sc'>Kelvin</span></h3>
 
-    These instructions assume that <span class='sc'>Kelvin</span> is being built on a Linux or
+    These instructions assume that <span class='sc'>Kelvin</span> is being installed on a Linux or
     Unix system of recent vintage, with a GCC compiler and that the user is familiar with the
     command line environment on that system. First, unpack the distribution archive with 
-    <tt>gunzip</tt> and <tt>tar</tt>. Next, move into the newly-created source directory and see 
-    if one of the pre-built executables in the <tt>bin</tt> subdirectory is suitable for your system. 
-    If you're not sure, simply attempting to run them should be informative. If one is, change
-    directories back up to the source level and type <tt>make install BIN=bin/&lt;kelvin executable that worked&gt;</tt>.
-    <p>
-    If none of the pre-built executables worked, or you want to build your own version anyhow, follow these
-    steps:
+    <tt>gunzip</tt> and <tt>tar</tt>, and move to the newly-created <tt>kelvin-&lt;version&gt;</tt> directory.
+    If you'd like to try to use one of the prebuilt  executables, simply type <tt>make install-prebuilt</tt>, 
+    and if you don't receive any errors, you're done. If no prebuilt executable was available, or you want to 
+    build your own version anyhow, follow these steps:
     <ul>
-      <li>Move to the source directory and build <span class='sc'>Kelvin</span> by running <tt>make</tt>.</li>
+      <li>Edit the <tt>Makefile</tt> if desired, and then build <span class='sc'>Kelvin</span> by running <tt>make</tt>.</li>
       <li>Validate the executable by running <tt>make check</tt>. These tests should take less than a minute to perform.</li>
       <li>You can perform a much more extensive set of tests if you wish by running <tt>make test</tt>. These tests 
-	will take anywhere from 30 minutes to several hours.</li> You can interrupt them at any time by
-      typing </tt>CTRL/C</tt>.
-      <li>Install the executable and supporting scripts by running <tt>make install</tt> (or <tt>sudo make install</tt>). The
-        default installation directory is <tt>/usr/local/bin</tt>, which will require the installer to
-	have administrative privileges.</li> To install in an alternative directory, e.g. $HOME/kelvin for individual use,
-	edit <tt>Makefile</tt> and replace the line <tt>BINDIR=/usr/local/bin</tt> with <tt>BINDIR=$HOME/kelvin</tt> or
-	some other path before issuing the <tt>make install</tt> command.
+	will take anywhere from 30 minutes to several hours. You can interrupt them at any time by
+	typing <tt>CTRL/C</tt>.</li>
+      <li>Install the executable and supporting scripts by running <tt>make install</tt>.</li>
     </ul>
+    Note that the default installation directory is <tt>/usr/local/bin</tt>, which will require the installer to
+    have administrative privileges. To install in an alternative directory, e.g. <tt>~/kelvin</tt> for 
+    individual use, edit <tt>Makefile</tt> and replace the line <tt>BINDIR=/usr/local/bin</tt> with 
+    <tt>BINDIR=~/kelvin</tt> or some other path before issuing the <tt>make install</tt> command.
 
     <h3>Preparing Input Files</h3>
 
