@@ -205,7 +205,8 @@
     Note that the default installation directory is <tt>/usr/local/bin</tt>, which will require the installer to
     have administrative privileges. To install in an alternative directory, e.g. <tt>~/kelvin</tt> for 
     individual use, edit <tt>Makefile</tt> and replace the line <tt>BINDIR=/usr/local/bin</tt> with 
-    <tt>BINDIR=~/kelvin</tt> or some other path before issuing the <tt>make install</tt> command.
+    <tt>BINDIR=~/kelvin</tt> or some other path, and then replace the lines <tt>GROUP=root</tt> and <tt>USER=root</tt>
+    with your group and user name before issuing the <tt>make install</tt> command.
 
     <h3>Preparing Input Files</h3>
 

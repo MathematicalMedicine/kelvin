@@ -182,8 +182,9 @@ build your own version anyhow, follow these steps:
 Note that the default installation directory is /usr/local/bin, which will
 require the installer to have administrative privileges. To install in an
 alternative directory, e.g. ~/kelvin for individual use, edit Makefile and
-replace the line BINDIR=/usr/local/bin with BINDIR=~/kelvin or some other path
-before issuing the make install command.
+replace the line BINDIR=/usr/local/bin with BINDIR=~/kelvin or some other path,
+and then replace the lines GROUP=root and USER=root with your group and user
+name before issuing the make install command.
 
 PPrreeppaarriinngg IInnppuutt FFiilleess
 
