@@ -24,7 +24,7 @@
   care about them since they can give us information about the nature
   of the disease.
 
-  Copyright &copy; 2009, Nationwide Children's Research Institute.  All
+  Copyright &copy; 2010, Nationwide Children's Research Institute.  All
   rights reserved.  Permission is hereby given to use this software
   for non-profit educational purposes only.
 
