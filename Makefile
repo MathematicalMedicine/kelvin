@@ -7,7 +7,7 @@
 ## doc/compileoptions.html
 
 ## Directory into which compiled executables and scripts will be installed.
-BINDIR=/usr/local/bin
+BINDIR=~/mykelvin
 
 ## User and group IDs by which installed execuatbles and scripts will be owned.
 OWNER=root
@@ -137,7 +137,7 @@ LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
 
 # Flags for BCMM use only
 
-#CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution purposes
+CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution, don't change, its a dist search target
 ifneq (,$(wildcard /usr/include/execinfo.h))
 #  CFLAGS += -DBACKTRACE # Add backtrace where supported
 endif
@@ -183,7 +183,8 @@ dist :
 	mkdir kelvin-$(VERSION)/bin
 	ln bin/kelvin.* kelvin-$(VERSION)/bin
 	ln bin/calc_updated_ppl.* kelvin-$(VERSION)/bin
-	ln README .maj .min .pat .svnversion Kelvin CHANGES COPYRIGHT Makefile PedCount.pl kf.pm convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
+	ln README .maj .min .pat .svnversion Kelvin CHANGES COPYRIGHT PedCount.pl kf.pm convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
+	perl -pe "s|#CFLAGS \+\= \-DDISTRIBUTION|CFLAGS \+\= \-DDISTRIBUTION|;" Makefile > kelvin-$(VERSION)/Makefile
 	mkdir kelvin-$(VERSION)/lib
 	mkdir kelvin-$(VERSION)/utils
 	ln utils/Makefile utils/*.[ch] utils/wordDiff.pl kelvin-$(VERSION)/utils
@@ -230,7 +231,17 @@ kelvin : kelvin-$(VERSION)
 kelvin-$(VERSION) : libs $(KOBJS) $(OBJS) $(INCS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 	cp $@ $@-$(SVNVERSION)
-	cp $@ bin/kelvin.$(PLATFORM)
+
+
+kelvin.platform : clean check_dist_flag kelvin
+	cp kelvin-$(VERSION) bin/kelvin.$(PLATFORM)
+
+check_dist_flag :
+ifeq ("$(findstring -DDISTRIBUTION,$(CFLAGS))", "")
+	echo You must enable the DISTRIBUTION compilation flag for prebuilt executables!
+	exit 1
+endif
+
 
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
