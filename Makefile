@@ -217,14 +217,12 @@ install : $(BINDIR)/kelvin-$(VERSION) \
 	  $(BINDIR)/kf.pm \
 	  $(BINDIR)/Kelvin
 
-install-prebuilt : \
+install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh \
 	  $(BINDIR)/PedCount.pl \
 	  $(BINDIR)/kf.pm \
 	  $(BINDIR)/Kelvin
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin.$(PLATFORM) $(BINDIR)/kelvin-$(VERSION)
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/calc_updated_ppl.$(PLATFORM) $(BINDIR)/calc_updated_ppl-$(VERSION)
 
 .PHONY : kelvin
 kelvin : kelvin-$(VERSION)
@@ -279,6 +277,16 @@ check :
 
 $(BINDIR)/kelvin-$(VERSION) : kelvin-$(VERSION)
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-$(VERSION) $(BINDIR)/kelvin-$(VERSION)
+
+$(BINDIR)/kelvin.$(PLATFORM) :
+ifeq (,$(wildcard bin/kelvin.$(PLATFORM)))
+	echo Platform-specific prebuilt executable bin/kelvin.$(PLATFORM) does not exist!
+	exit 1
+else
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin.$(PLATFORM) $(BINDIR)/kelvin.$(PLATFORM)
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin.$(PLATFORM) $(BINDIR)/kelvin-$(VERSION)
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/calc_updated_ppl.$(PLATFORM) $(BINDIR)/calc_updated_ppl-$(VERSION)
+endif
 
 $(BINDIR)/calc_updated_ppl : seq_update/calc_updated_ppl
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/calc_updated_ppl $(BINDIR)/calc_updated_ppl
