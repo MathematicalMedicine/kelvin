@@ -120,7 +120,9 @@ PLATFORM = $(subst $(space),$(empty),$(PLATFORM_NAME))
 KVNLIBDIR := $(shell pwd)/lib
 KELVIN_ROOT := $(shell pwd)
 TEST_KELVIN := $(KELVIN_ROOT)/kelvin-$(VERSION)
-TEST_UPDATE := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
+KELVIN_SCRIPT := $(KELVIN_ROOT)/Kelvin
+PEDCOUNT_SCRIPT := ($KELVIN_ROOT)/PedCount.pl
+SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
 
 # If we're building in an svn-managed context, get AND preserve the latest svn version
 SVNVERSION := $(subst exported,,$(shell svnversion 2>/dev/null))
@@ -160,7 +162,8 @@ endif
 #CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13, no OpenMP
 
 LDFLAGS += ${ADD_LDFLAGS}
-export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN
+export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN KELVIN_SCRIPT PEDCOUNT_SCRIPT SEQUPDATE_BINARY
+
 
 KOBJS = kelvin.o dcuhre.o
 OBJS = kelvinInit.o kelvinTerm.o iterationSupport.o integrationSupport.o \
@@ -175,7 +178,9 @@ INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinWriteFiles.h dkelvinWriteFiles.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
-all : kelvin-$(VERSION) seq_update/calc_updated_ppl
+# Building both kelvin-$(VERSION) and kelvin.$(PLATFORM) until we have a 
+# chance to clean up test-suite
+all : kelvin-$(VERSION) kelvin.$(PLATFORM) seq_update/calc_updated_ppl
 
 dist :
 	- rm -rf kelvin-$(VERSION)
@@ -226,7 +231,7 @@ install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
 	  $(BINDIR)/Kelvin
 
 .PHONY : kelvin
-kelvin : kelvin-$(VERSION)
+kelvin : kelvin-$(VERSION) kelvin.$(PLATFORM)
 
 kelvin-$(VERSION) : libs $(KOBJS) $(OBJS) $(INCS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
@@ -263,7 +268,7 @@ clean :
 	make -C config -f Makefile clean
 	make -C utils -f Makefile clean
 	make -C seq_update -f Makefile clean
-	rm -f $(KOBJS) $(OBJS) kelvin.$(PLATFORM) seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/libped.a
+	rm -f $(KOBJS) $(OBJS) kelvin.$(PLATFORM)* kelvin-$(VERSION)*  seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/libped.a
 	make -C test-suite -f Makefile clean
 
 .PHONY : test-USE_DL
