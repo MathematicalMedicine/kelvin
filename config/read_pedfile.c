@@ -3,7 +3,7 @@
 
  As for Vitesse, reads in post-makeped format pedigree files.
 
- Copyright 2008, Nationwide Children's Research Institute.  All rights
+ Copyright 2010, Nationwide Children's Research Institute.  All rights
  reserved.  Permission is hereby given to use this software for
  non-profit educational purposes only.
 

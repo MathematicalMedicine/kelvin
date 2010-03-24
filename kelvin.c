@@ -17,12 +17,10 @@
 
   @author Yungui Huang - principle author.
   @author Hongling Wang - Polynomial features.
-  @author Alberto Maria Segre - config and error logging modules.
-  @author Nathan Burnette - Regex code (now removed).
   @author Sang-Cheol Seok - Dynamic grid.
   @author John Burian - configuration parser, sequential update.
-  @author Bill Valentine-Cooper - additional polynomial features,
-  compilation, SSD, tiny bits of refactoring, performance and tracking.
+  @author Bill Valentine-Cooper - Polynomial features, compilation,
+  SSD, PedCount, error and message handling, and performance.
 
 @file kelvin.c
 
