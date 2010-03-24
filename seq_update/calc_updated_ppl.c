@@ -370,7 +370,7 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 	  exit (-1);
 	}
 	if ((ret = multi_find (&thetas, data.thetas, current[fileno]->numthetas)) != thidx) {
-	  fprintf (stderr, "unexpected thetas in '%s' at line %d\n", (ret == -1) ? "unexpected" :
+	  fprintf (stderr, "%s thetas in '%s' at line %d\n", (ret == -1) ? "unexpected" :
 		   "misordered", current[fileno]->name, current[fileno]->lineno);
 	  exit (-1);
 	}
