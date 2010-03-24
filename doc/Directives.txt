@@ -1,0 +1,541 @@
+
+
+KKeellvviinn CCoonnffiigguurraattiioonn DDiirreeccttiivveess
+
+If you are just getting started with kelvin, or are uncomfortable directly
+editing a configuration file, you can use the _g_r_a_p_h_i_c_ _c_o_n_f_i_g_u_r_a_t_i_o_n_ _f_i_l_e_ _e_d_i_t_o_r
+instead.
+
+TThhee CCoonnffiigguurraattiioonn FFiillee
+
+Kelvin's configuration file format is intended to be easy to read and edit.
+Kelvin, in general, requires the user to explicitly specify what Kelvin is to
+do, and doesn't make any assumptions about what the user may or may not want.
+Kelvin will display helpful error messages and terminate if the configuration
+file contains incompatible directives.
+
+CCoonnffiigguurraattiioonn FFiillee FFoorrmmaatt
+
+The kelvin configuration file is a text file containing directives that
+describe the nature of the analysis to be performed, and the names of input and
+output files. Directives typically appear on separate lines, but multiple
+directives, separated by a semicolon (';'), may appear on the same line. Some
+directives require arguments, which must appear on the same line as the
+directive they modify. Blank lines in the configuration file are ignored. Extra
+white space (spaces and tabs) around directives and arguments is ignored.
+Comments may be embedded in a configuration file with a pound sign ('#'). The
+pound sign and any text, up to the end of the line, will be ignored. Comments
+may appear on a line by themselves, or at the end of a line that also contains
+a directive(s). In the latter case, a semicolon is not required to separate the
+directive and the comment.
+
+DDiirreeccttiivveess
+
+Directives are words or combinations of words with no intervening spaces. This
+document will capitalize the individual words that make up a directive (for
+example, MapFile), but they may appear in the configuration file with any
+capitalization (Mapfile, mapfile, MAPFILE, etc.). Also, directives may be
+abbreviated, so long as the abbreviation is unique. For example, MapFile could
+be abbreviated to Map. SexLinked could be abbreviated to SexL, but not to Sex,
+since that could also be an abbreviation for SexSpecific.
+
+AArrgguummeennttss
+
+Most directives require one or more arguments, which will take one of the
+following forms:
+
+* A Filename - a character string that must be a valid filename, optionally
+  including a relative or absolute path preceding the filename. Generally,
+  Kelvin will abort if a file given as input does not exist, and will overwrite
+  a file given for output if it does exist. The total length of a filename may
+  not exceed 256 characters.
+* A Literal String - a few directives require a specific string as an argument.
+  These strings may appear with any capitalization, but they should not be
+  abbreviated.
+* A Value - an integer or real number, depending on the directive.
+* A Range - a shorthand method for specifiying a series of values with a
+  regular interval. A range is specified as a start value, a literal '-', an
+  end value, a literal ':', and an increment. Start, end and increment values
+  may be integers or real numbers. Start and end values may be positive or
+  negative, with the restriction that the end must be no less than the start.
+  The increment must be a positive value. Intervening whitespace may be added
+  for clarity, but is not necessary. Kelvin will expand the range into a list
+  of values that begins with the start value, increases by the increment, and
+  ends with the last value that is no greater than the end value. For example,
+  a range that runs from -1 to 1 in increments of 0.1 would be specified as '-
+  1 - 1 : 0.1'. A range specified as '0-1:0.15' would expand to 0, 0.15 ...
+  0.75, 0.90.
+
+
+SSaammppllee CCoonnffiigguurraattiioonn FFiillee
+
+Kelvin configuration files can be quite simple. Here's a file for a multipoint
+analysis that will generate PPLs for a dichotomous trait at one centiMorgan
+intervals, considering 4 markers around each trait position:
+
+ 1 # Sample multipoint, dictomous trait configuration
+ 2
+ 3 MultiPoint 4
+ 4 TraitPositions 0-end:1
+ 5
+ 6 PhenoCodes 0, 1, 2
+ 7
+ 8 PedigreeFile ped.post
+ 9 LocusFile locus.dat
+10 MapFile map.dat
+11 FrequencyFile freq.dat
+12 BayesRatioFile br.out
+13 PPLFile ppl.out
+
+Lines 3 and 4 specify a 4-marker multipoint analysis, and that the trait should
+be placed at 1 cM intervals, starting at 0 cM and running through the end of
+the map. Line 6 specifies the values that will appear in the affection status
+column in the pedigree file. Lines 8-13 specify input and output files.
+Here's a file for two-point analysis that will generate PPLs and linkage
+disequilibrium statistics between a dichotomous trait and each marker in the
+dataset:
+
+ 1 # Sample two-point, dictomous trait LD configuration
+ 2
+ 3 LD
+ 4
+ 5 PhenoCodes 0, 1, 2
+ 6
+ 7 PedigreeFile ped.post
+ 8 LocusFile locus.dat
+ 9 MapFile map.dat
+10 FrequencyFile freq.dat
+11 BayesRatioFile br.out
+12 PPLFile ppl.out
+13 MODFile mod.out
+14 ExtraMODs
+
+Two-point analysis is the default, so no directive is necessary to specify
+that. Line 3 specifies a linkage disequilibrium analysis. Line 5 specifies the
+values that will appear in the affection status field of the pedigree. Lines 7-
+13 specify input and output files. Line 14 specifies that additional
+information should be written to the MOD file specified on line 13.
+
+DDiirreeccttiivvee SSuummmmaarryy
+
+Kelvin directives are intended to be fairly self-descriptive.
+
+IInnppuutt AAnndd OOuuttppuutt      AAnnaallyyssiiss TTyyppee  TTrraaiitt MMooddeell       OOppttiioonnss
+_P_e_d_i_g_r_e_e_F_i_l_e          _M_u_l_t_i_P_o_i_n_t     _Q_T                _P_h_e_n_o_C_o_d_e_s
+_L_o_c_u_s_F_i_l_e             _L_D             _Q_T_T               _S_e_x_L_i_n_k_e_d
+_F_r_e_q_u_e_n_c_y_F_i_l_e         _M_a_r_k_e_r_T_o_M_a_r_k_e_r _T_h_r_e_s_h_o_l_d         _S_e_x_S_p_e_c_i_f_i_c
+_M_a_p_F_i_l_e                              _L_i_a_b_i_l_i_t_y_C_l_a_s_s_s_e_s _I_m_p_r_i_n_t_i_n_g
+_B_a_y_e_s_R_a_t_i_o_F_i_l_e                       _E_p_i_s_t_a_s_i_s         _T_r_a_i_t_P_o_s_i_t_i_o_n_s
+_P_P_L_F_i_l_e                                                _D_i_s_e_a_s_e_A_l_l_e_l_e_s
+_M_O_D_F_i_l_e                                                _P_o_l_y_n_o_m_i_a_l_S_c_a_l_e
+_E_x_t_r_a_M_O_D_s                                              _N_o_n_P_o_l_y_n_o_m_i_a_l
+_P_r_o_g_r_e_s_s_L_e_v_e_l                                          _D_r_y_R_u_n
+_P_r_o_g_r_e_s_s_D_e_l_a_y_S_e_c_o_n_d_s
+_E_p_i_s_t_a_s_i_s_P_e_d_i_g_r_e_e_F_i_l_e
+_E_p_i_s_t_a_s_i_s_L_o_c_u_s_F_i_l_e
+
+
+DDiirreeccttiivvee RReeffeerreennccee
+
+In this reference, the following convetions are used to describe the valid
+arguments to directives.
+
+* Arguments that appear in roman type are literals. If they are to be used in
+  the configuration file, they must appear as written in this reference. For
+  example,
+
+    QT ChiSq
+
+  indicates that the literal string ChiSq is a legal argument to the QT
+  directive.
+* Arguments that appear in italic type are symbolic, and refer to one of the
+  four types of _a_r_g_u_m_e_n_t_s, described above. If they are to be used in the
+  configuration file, they must conform to the description of the respective
+  argument type. For example,
+
+    PedigreeFile filename
+
+  indicates that the PedigreeFile directive requires a single argument that
+  conforms to the _f_i_l_e_n_a_m_e type.
+* A group of arguments inside brackets, separated by vertical bars, indicates a
+  choice between multiple possible arguments, of which exactly one must be
+  chosen. The individual options will either be literal or symbolic. For
+  example,
+
+    MarkerToMarker [ All | Adjacent ]
+
+  indicates that the MarkerToMarker directive can take either of the literals
+  All or Adjacent as arguments.
+* Arguments that appear inside braces are optional, but will otherwise be
+  literal, symbolic or a group of arguments, as described above. Braces
+  containing an ellipsis means that whatever came immediately before the
+  ellipsis may be optionally repeated one or more times. For example,
+
+    QTT Normal { mean, standarddeviation }
+
+  indicates that the QTT directive with the Normal argument optionally accepts
+  two additional arguments, mean and standarddeviation. In this example,
+
+    TraitPositions [ Marker | value | range ] {, ... }
+
+  the TraitPositions directive can take either a literal Marker, a single value
+  or a range, and furthermore can take one or more of any of the preceding,
+  after a separating comma.
+
+BBaayyeessRRaattiiooFFiillee
+BayesRatioFile filename
+Specifies the name of the output file to which Bayes ratios will be written.
+For _m_u_l_t_i_p_o_i_n_t analyses, PPLs will also be written to this file. For _M_a_r_k_e_r_-_t_o_-
+_m_a_r_k_e_r analyses, no output is written to this file. Defaults to br.out if not
+specified.
+DDiisseeaasseeAAlllleelleess
+DiseaseAlleles number
+Specifies the number of alleles for the hypothetical trait locus. Currently the
+only supported number of disease alleles is 2, which also the default. This
+directive is incompatible with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r directive.
+DDrryyRRuunn
+DryRun
+Specifies that configuration and input data should be read and validated, and
+that the complexity of the analysis should be estimated, but no calculations
+are performed.
+EEppiissttaassiiss
+Epistasis markername
+Specifies that Kelvin should consider epistasis between the trait and the
+marker identified by markername. Marker genotype data for the selected marker
+must be provided using the _E_p_i_s_t_a_s_i_s_P_e_d_i_g_r_e_e_F_i_l_e and _E_p_i_s_t_a_s_i_s_L_o_c_u_s_F_i_l_e
+directives. If the marker also appears in the dataset to be analyzed, it will
+be dropped. This directive is incompatible with the _L_i_a_b_i_l_i_t_y_C_l_a_s_s_e_s directive.
+EEppiissttaassiissPPeeddiiggrreeeeFFiillee
+EpistasisPedigreeFile filename
+Specifies the pedigree file that contains genotype data for the marker
+specified with the _E_p_i_s_t_a_s_i_s directive. This can be a pedigree file from
+another dataset (another chromosome, for example), or it can be the same file
+specified the the _P_e_d_i_g_r_e_e_F_i_l_e directive. This directive requires the _E_p_i_s_t_a_s_i_s
+and _E_p_i_s_t_a_s_i_s_L_o_c_u_s_F_i_l_e directives, and is incompatible with the
+_L_i_a_b_i_l_i_t_y_C_l_a_s_s_e_s directive.
+EEppiissttaassiissLLooccuussFFiillee
+EpistasisLocusFile filename
+Specifies the file that contains pedigree column layout information for the
+file specified by the _E_p_i_s_t_a_s_i_s_P_e_d_i_g_r_e_e_F_i_l_e directive. This can be a locus file
+from a another dataset (another chromosome, for example), or it can be the same
+file specified with the _L_o_c_u_s_F_i_l_e directive. This directive requires the
+_E_p_i_s_t_a_s_i_s and _E_p_i_s_t_a_s_i_s_P_e_d_i_g_r_e_e_F_i_l_e directives, and is incompatible with the
+_L_i_a_b_i_l_i_t_y_C_l_a_s_s_e_s directive.
+EExxttrraaMMOODDss
+ExtraMODs
+Specifes that additional data should be written to the file specified by the
+_M_O_D_F_i_l_e directive. For _t_w_o_-_p_o_i_n_t analyses, an extra line containing MOD
+information where Theta is 0 will be written, and for _L_D analyses, another line
+containing MOD information where D' is 0 will be written. This directive is
+incompatible with the _M_u_l_t_i_p_o_i_n_t directive.
+FFrreeqquueennccyyFFiillee
+FrequencyFile filename
+Specifies the name of the input file from which marker allele frequencies will
+be read. Defaults to markers.dat if not specified.
+IImmpprriinnttiinngg
+Imprinting
+Specifies that imprinting, or parent-of-origin, effects on the trait should be
+considered. This directive is incompatiable with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r directive.
+LLDD
+LD
+Specifies that linkage disequilibrium statistics should be calculated. This
+directive is incompatible with the _M_u_l_t_i_P_o_i_n_t and _S_e_x_S_p_e_c_i_f_i_c directives.
+LLiiaabbiilliittyyCCllaasssssseess
+LiabilityClasses number
+Specifies that individuals in the pedigrees have been categorized into two or
+more classes. The penetrance values for individuals in one class will be
+considered independently from the other class(es). Note that a column that
+identifies the class for each individual must appear in the pedigree file.
+Kelvin expects liability classes to be numbered contiguously, starting at 1. If
+Kelvin detects that one or more of the specified classes is empty, it will drop
+the empty classes, and consolidate the remaining classes. This directive is
+incompatiable with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r directive.
+LLooccuussFFiillee
+LocusFile filename
+Specifies the name of the input file from which the pedigree column layout
+information will be read. This file is sometimes referred to as a 'data file.'
+Defaults to datafile.dat if not specified.
+PPrrooggrreessssLLeevveell
+ProgressLevel number
+Specifies the level of detail of progress information that Kelvin should
+generate while it runs:
+
+* 0, steps only, such as start and end of analysis
+* 1, substeps, such as progress thru trait loci
+* 2 thru 8, increasing levels of detail, such as polynomial build or evaluation
+
+The default is 1. Use this in conjunction with the _P_r_o_g_r_e_s_s_D_e_l_a_y_S_e_c_o_n_d_s
+directive to fine-tune the flow of progress information to suit your needs.
+PPrrooggrreessssDDeellaayySSeeccoonnddss
+ProgressDelaySeconds number
+Specifies the delay between progress notifications displayed by Kelvin. The
+intent of this directive is to stabilize the frequency of progress
+notifications and hence the overall volume of progress information. The default
+value is 120 seconds. This causes only the most recent progress notifications
+permitted by the _P_r_o_g_r_e_s_s_L_e_v_e_l_s directive to be displayed every two minutes.
+For example, if 32 pedigrees have been processed in the last two minutes, only
+the notification of the start of processing of the 33rd will be displayed. Note
+that this can cause progress messages to be delayed. If, in our example, the
+33rd pedigree is start processing 2 seconds into the 120 second delay interval,
+the message displayed at the end of the interval will be 118 seconds old.
+If you require an earlier progress update, press CTRL/\.
+If no fresh progress notifications are available, ...running... will be
+displayed.
+Specifying 0 (zero) causes Kelvin to display all permitted levels of progress
+messages as they occur.
+MMaappFFiillee
+MapFile filename
+Specifies the name of the input file from which the marker map data will be
+read. Defaults to mapfile.dat if not specified.
+MMaarrkkeerrTTooMMaarrkkeerr
+MarkerToMarker [ All | Adjacent ]
+Specifies that only the relationships of pairs of markers should be considered,
+and that no trait is included in the analisys. Under linkage equilibrium, the
+intermarker distance is estimated. Under _l_i_n_k_a_g_e_ _d_i_s_e_q_u_i_l_i_b_r_i_u_m, the degree of
+linkage disequilibrium between the markers is estimated. If All is specified,
+all possible pairs of markers in the dataset are considered. If Adjacent is
+specified, only adjacent pairs of markers are considered.
+MMOODDFFiillee
+MODFile filename
+Specifies the name of the output file to which maximizing model information
+will be written. This directive is incompatible with the _M_u_l_t_i_P_o_i_n_t directive.
+MMuullttiiPPooiinntt
+MultiPoint count
+Specifies that Kelvin should perform a multipoint analysis, generating a
+multipoint PPL for each location specified with the _T_r_a_i_t_P_o_s_i_t_i_o_n_s directive.
+Groups of count adjacent markers, centered on each trait location, will be used
+to calculate the PPL. This directive is incompatible with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r
+and _L_D directives.
+NNoonnPPoollyynnoommiiaall
+NonPolynomial
+Specifies that Kelvin should not internally represent the likelihood
+caclulation as a polynomial. This option will dramatically reduce memory
+requirements, but can increase run time by orders of magnitude for complex
+analyses. This directive is incompatible with the _P_o_l_y_n_o_m_i_a_l_S_c_a_l_e directive.
+PPeeddiiggrreeeeFFiillee
+PedigreeFile filename
+Specifies the name of the input file from which the pedigree data will be read.
+Defaults to pedfile.dat if not specified.
+PPhheennooCCooddeess
+PhenoCodes unknown
+PhenoCodes unknown, unaffected, affected
+Specifies the values that will appear in the affection status (phenotype) field
+of the pedigree file, to indicate if an individual is affected, unaffected, or
+if the affection status is unknown. For quantitative trait analyses, only the
+value for unknown affection status should be specified. For dichotomous traits,
+the defaults are 0 (for unknown), 1 (for unaffected) and 2 (for affected). For
+quantitative threshold traits, the defaults are -99.99, -88.88 and 88.88. For
+quantitative traits, the default is -99.99 (for unknown). This directive is
+incompatible with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r directive.
+PPoollyynnoommiiaallSSccaallee
+PolynomialScale scale
+If the user knows in advance that an analysis will require large amounts of
+memory, this directive can be specified, and Kelvin will pre-allocate memory
+before it begins calculations. This will result in somewhat more efficient use
+of memory, compared to Kelvin incrementally allocating memory as it runs. The
+scale is an integer between 1 and 10. This directive is incompatible with the
+_N_o_n_P_o_l_y_n_o_m_i_a_l directive.
+PPPPLLFFiillee
+PPLFile filename
+For two-point analyses, specifies the name of the output file to which PPLs
+will be written. For multipoint analyses, PPLs are written to the file
+specified by the _B_a_y_e_s_R_a_t_i_o_F_i_l_e directive, and no data will written to the file
+specified with this directive. Defaults to ppl.out if not specified.
+QQTT
+QT Normal { mean, standarddeviation }
+QT ChiSq
+Specifies that the trait is quantitative, rather than dichotomous. The trait
+data in the pedigree file should be of a quantitative nature (values on a
+continuous scale, rather than discrete affected or unaffected values). Two
+distributions are available, Normal and Chi-squared. If Normal is specified,
+the sample mean and standarddeviation _v_a_l_u_e_s may be provided. Otherwise, a
+sample mean and standard deviation will be calculated using the trait values in
+the pedigree file. This directive is incompatible with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r
+directive.
+QQTTTT
+QTT Normal { mean, standarddeviation }
+QTT ChiSq
+Like the _Q_T directive, but in addition considers a threshold beyond which an
+individual as simply assumed to be affected. The minimum and maximum threshold
+may specified with the _T_h_r_e_s_h_o_l_d directive, but that is not required. This
+directive in incompatible with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r directive.
+SSeexxLLiinnkkeedd
+SexLinked
+Specifies that the pedigree contains data for the X chromosome.
+SSeexxSSppeecciiffiicc
+SexSpecific
+Specifies that the _m_a_p_ _f_i_l_e contains sex-specific centiMorgan positions for the
+markers, and that the sex-specific positions should be used instead of sex-
+averaged positions during the analysis. Requires that the map file actually
+contains sex-specific positions. This directive is incompatible with the _L_D
+directive.
+TThhrreesshhoolldd
+Threshold min, max
+Specifies the minimum and maximum _v_a_l_u_e_s for the threshold for use with the _Q_T_T
+directive, if needed. The default is for the minimum and maximum threshold
+values to be set using the smallest and largest values from the trait data in
+the pedigree file. If those values are less than 0 or greater than 30, then
+this directive must be specified. The min and max should be _v_a_l_u_e_s. This
+directive requires the _Q_T_T directive.
+TTrraaiittPPoossiittiioonnss
+TraitPositions [ Marker | value | range ] {, ... }
+Specifies the positions at which PPLs will be calculated in a multipoint
+analysis. The literal string Marker indicates that PPLs should be calculated at
+each marker position, in addition to any other positions. If a _r_a_n_g_e is
+specified, the end value of the range may be specified as the literal end. In
+that case, Kelvin will expand the range so the last value is just past the last
+marker in the map. The literal end in a range specification is only valid with
+this directive. This directive requires the _M_u_l_t_i_P_o_i_n_t directive.
+
+AAddvvaanncceedd DDiirreeccttiivvee SSuummmmaarryy
+
+Kelvin can be configured to perform calculations based on fixed grids of
+parameter values. This option should be used with extreme caution for purposes
+of computing PPLs because it is not compatible with Kelvin's underlying
+numerical integration routines and can return erroneous BRs. However, it can be
+useful in cases where, for instance, a very fine grid of values is wanted for
+purposes of increasing precision of the MOD and/or maximizing values, or for
+calculation of fixed-model LODs. It can also be configured to reproduce the
+"fixed-grid" numerical integration routines used by older versions of Kelvin
+for purposes of comparison with results generated under those versions. The
+_F_i_x_e_d_M_o_d_e_l_s directive enables this behavior, and is required for any advanced
+directives that fix points of the trait model.
+
+IInnppuutt AAnndd OOuuttppuutt TTrraaiitt MMooddeell          OOppttiioonnss
+_C_o_u_n_t_F_i_l_e        _A_l_p_h_a                _M_a_x_I_t_e_r_a_t_i_o_n_s
+_F_o_r_c_e_B_R_F_i_l_e      _C_o_n_s_t_r_a_i_n_t           /tr>
+_N_I_D_e_t_a_i_l_F_i_l_e     _D_e_g_r_e_e_s_O_f_F_r_e_e_d_o_m
+_S_u_r_f_a_c_e_F_i_l_e      _D_i_s_e_a_s_e_G_e_n_e_F_r_e_q_u_e_n_c_y
+_S_u_r_f_a_c_e_s_P_a_t_h     _D_P_r_i_m_e
+                 _F_i_x_e_d_M_o_d_e_l_s
+                 _M_e_a_n
+                 _P_e_n_e_t_r_a_n_c_e
+                 _S_t_a_n_d_a_r_d_D_e_v
+                 _T_h_e_t_a
+                 _T_h_r_e_s_h_o_l_d
+
+
+AAddvvaanncceedd DDiirreeccttiivvee RReeffeerreennccee
+
+AAllpphhaa
+Alpha [ value | range ] {, ... }
+Specifies the set of alpha values that will be considered during the analysis.
+This directive requires the _F_i_x_e_d_M_o_d_e_l_s directive. This directive is
+incompatible with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r directive.
+CCoonnssttrraaiinntt
+Constraint Penetrance [ [ DD | Dd | dD | dd ] { class } [ == | != | > | >= ]
+[ DD | Dd | dD | dd ] { class } ] {, ... }
+Constraint Mean [ [ DD | Dd | dD | dd ] { class } [ == | != | > | >= ] [ DD |
+Dd | dD | dd ] { class } ] {, ... }
+Constraint StandardDev [ [ DD | Dd | dD | dd ] { class } [ == | != | > | >= ]
+[ DD | Dd | dD | dd ] { class } ] {, ... }
+Constraint DegreesOfFreedom [ [ DD | Dd | dD | dd ] { class } [ == | != | > |
+>= ] [ DD | Dd | dD | dd ] { class } ] {, ... }
+Constraint Threshold [ class [ == | != | > | >= ] class ] {, ... }
+This directive allows the values specified using the various _t_r_a_i_t_ _m_o_d_e_l
+_d_i_r_e_c_t_i_v_e_s to be constrained based on trait genotype or liability class. For
+example, the trait penetrances might be constrained such that the penetrance
+given a single copy of the disease gene is always less than or equal to the
+penetrance given two copies of the disease gene. For constraints based solely
+on trait genotypes (no liability class is specified), the genotypes should be
+different. Constraints involving a liability class require that the
+_L_i_a_b_i_l_i_t_y_C_l_a_s_s directive. Constraints on a given dimension of the trait model
+(_P_e_n_e_t_r_a_n_c_e, _M_e_a_n, _S_t_a_n_d_a_r_d_D_e_v, _D_e_g_r_e_e_s_O_f_F_r_e_e_d_o_m, _T_h_r_e_s_h_o_l_d) require that the
+respective directive be specified, with all the requirements those directives
+imply. Multiple constraints on the same dimension may appear, separated by a
+comma, on the same line. In this case, if either of conditions is true, the
+constraint is satisfied. Constraints that appear on separate lines will all be
+enforced. This directive requires _F_i_x_e_d_M_o_d_e_l_s.
+CCoouunnttFFiillee
+CountFile filename
+Specifies the name of the input file from which pedigree count information will
+be read. The default is that pedigrees are not counted. Pedigree counting can
+dramatically improve efficiency by skipping redundant calculations when
+multiple families have the exact same structure, genotypes and affection
+status. This makes it very useful for case/control, trio or affected sib-pair
+analyses.
+DDeeggrreeeessOOffFFrreeeeddoomm
+DegreesOfFreedom min, max
+DegreesOfFreedom [ DD | Dd | dD | dd ] [ value | range ] {, ... }
+Specifies the degrees of freedom values when using the Chi-squared distribution
+for a quantitative trait analysis. Without the _F_i_x_e_d_M_o_d_e_l_s directive, the first
+form may used to specify a minimum and maximum degrees of freedom but is not
+required. The min and max should be specified as _v_a_l_u_e_s. With the FixedModels
+directive, the second form must be used to specify the set of degrees of
+freedom values to be considered for each trait genotype (DD, Dd, dD or dd).
+This directive requires either the _Q_T or _Q_T_T directives with the ChiSq
+distribution. The dD genotype is only legal if the _I_m_p_r_i_n_t_i_n_g directive is also
+specified. This directive is incompatible with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r directive.
+DDiisseeaasseeGGeenneeFFrreeqquueennccyy
+DiseaseGeneFrequency [ value | range ] {, ... }
+Specifies the set of disease gene frequency values that will be considered
+during the analysis. This directive requires the _F_i_x_e_d_M_o_d_e_l_s directive, and is
+incompatible with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r directive.
+DDPPrriimmee
+DPrime [ value | range ] {, ... }
+Specifies the set of D' values that will be considered during the analysis.
+This directive requires the _F_i_x_e_d_M_o_d_e_l_s and _L_D directives, and is not
+compatible with the _M_u_l_t_i_P_o_i_n_t directive.
+FFiixxeeddMMooddeellss
+FixedModels
+Specifies that Kelvin should not sample the trait space using numerical
+techniques, but should calculate Bayes ratios at specific points in the trait
+space as specified using _t_r_a_i_t_ _m_o_d_e_l_ _d_i_r_e_c_t_i_v_e_s_.
+FFoorrcceeBBRRFFiillee
+ForceBRFile
+Specifies that a _B_a_y_e_s_R_a_t_i_o_F_i_l_e be written during a _M_a_r_k_e_r_T_o_M_a_r_k_e_r analysis.
+This option is for debugging purposes.
+MMaaxxIItteerraattiioonnss
+MaxIterations number
+Specifies that Kelvin's dynamic trait space sampling algorithm should go
+through at most number iterations.
+MMeeaann
+Mean min, max
+Mean [ DD | Dd | dD | dd ] [ value | range ] {, ... }
+Specifies the mean values when using the normal distribution for a quantitative
+trait analysis. Without the _F_i_x_e_d_M_o_d_e_l_s directive, the first form may used to
+specify a minimum and maximum mean, but is not required. The min and max should
+be specified as _v_a_l_u_e_s. With the FixedModels directive, the second form must be
+used to specify the set of mean values to be considered for each trait genotype
+(DD, Dd, dD or dd). This directive requires either the _Q_T or _Q_T_T directives
+with the Normal distribution. The dD genotype is only legal if the _I_m_p_r_i_n_t_i_n_g
+directive is also specified. This directive is incompatible with the
+_M_a_r_k_e_r_T_o_M_a_r_k_e_r directive.
+NNIIDDeettaaiillFFiillee
+NIDetailFile filename
+PPeenneettrraannccee
+Penetrance [ DD | Dd | dD | dd ] [ value | range ] {, ... }
+Specifies the set of penetrances to be considered for each trait genotype (DD,
+Dd, dD or dd), when conducting a dichotomous trait analysis. This directive
+requires the _F_i_x_e_d_M_o_d_e_l_s, and is incompatible with the _Q_T, _Q_T_T and
+_M_a_r_k_e_r_T_o_M_a_r_k_e_r directives. The dD genotype is only legal if the _I_m_p_r_i_n_t_i_n_g
+directive is also specified.
+SSttaannddaarrddDDeevv
+StandardDev min, max
+StandardDev [ value | range ] {, ... }
+Specifies the standard deviation values when using the normal distribution for
+a quantitative trait analysis. Without the _F_i_x_e_d_M_o_d_e_l_s directive, the first
+form may used to specify a minimum and maximum standard deviation, but is not
+required. The min and max should be specified as _v_a_l_u_e_s. With the FixedModels
+directive, the second form must be used to specify the set of standard
+deviations. This directive requires the _F_i_x_e_d_M_o_d_e_l_s directive, and either the
+_Q_T or _Q_T_T directives with the Normal distribution. This directive is
+incompatible with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r directive.
+SSuurrffaacceeFFiillee
+SurfaceFile filename
+SSuurrffaacceessPPaatthh
+SurfacePath dirname
+TThheettaa
+Theta [ value | range ] {, ... }
+Specifies the set of sex-averaged thetas to be considered during the analysis.
+This directive requires _F_i_x_e_d_M_o_d_e_l_s, and is incompatible with the _S_e_x_S_p_e_c_i_f_i_c
+directive.
+TThhrreesshhoolldd
+Threshold min, max
+Threshold [ value | range ] {, ... }
+Specifies the threshold _v_a_l_u_e_s for use with the _Q_T_T directive. Without the
+_F_i_x_e_d_M_o_d_e_l_s directive, the first form may used to specify a minimum and maximum
+threshold, but is not required. The min and max should be specified as _v_a_l_u_e_s.
+With the FixedModels directive, the second form must be used to specify the set
+of thresholds. This directive requires the _Q_T_T directive, and is incompatible
+with the _M_a_r_k_e_r_T_o_M_a_r_k_e_r directive.
