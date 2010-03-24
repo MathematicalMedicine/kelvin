@@ -112,13 +112,14 @@ ifeq ($(strip $(USE_PTHREAD)), yes)
   ADD_LDFLAGS += -lpthread
 endif
 
+VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
 empty:=
 space:= $(empty) $(empty)
 PLATFORM = $(subst $(space),$(empty),$(PLATFORM_NAME))
 KVNLIBDIR := $(shell pwd)/lib
 KELVIN_ROOT := $(shell pwd)
-TEST_KELVIN := $(KELVIN_ROOT)/kelvin.$(PLATFORM)
+TEST_KELVIN := $(KELVIN_ROOT)/kelvin-$(VERSION)
 TEST_UPDATE := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
 
 # If we're building in an svn-managed context, get AND preserve the latest svn version
@@ -128,7 +129,6 @@ ifeq ("$(strip $(SVNVERSION))","")
 else
   UPDATE_SVNVERSION := $(shell echo $(SVNVERSION) >.svnversion)
 endif
-VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 
 INCFLAGS := -I$(INCDIR)
 
