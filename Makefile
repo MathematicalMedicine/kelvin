@@ -1,5 +1,5 @@
 # Kelvin
-# Copyright 2009, The Research Institute At Nationwide Children's Hospital
+# Copyright 2010, The Research Institute At Nationwide Children's Hospital
 # Permission granted to distribute and use for non-profit educational purposes
 # only.
 
@@ -183,7 +183,7 @@ dist :
 	mkdir kelvin-$(VERSION)/bin
 	ln bin/kelvin.* kelvin-$(VERSION)/bin
 	ln bin/calc_updated_ppl.* kelvin-$(VERSION)/bin
-	ln .maj .min .pat .svnversion Kelvin CHANGES COPYRIGHT Makefile PedCount.pl kf.pm convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
+	ln README .maj .min .pat .svnversion Kelvin CHANGES COPYRIGHT Makefile PedCount.pl kf.pm convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
 	mkdir kelvin-$(VERSION)/lib
 	mkdir kelvin-$(VERSION)/utils
 	ln utils/Makefile utils/*.[ch] utils/wordDiff.pl kelvin-$(VERSION)/utils
@@ -205,7 +205,7 @@ dist :
 	ln test-suite/seq_update/Makefile kelvin-$(VERSION)/test-suite/seq_update
 	ln test-suite/seq_update/d-2pt-le/* kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
 	mkdir kelvin-$(VERSION)/doc
-	ln doc/*.html doc/*.png doc/*.gif kelvin-$(VERSION)/doc
+	ln doc/*.html doc/*.png doc/*.gif doc/*.txt kelvin-$(VERSION)/doc
 	tar -hcvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
 	rm -rf kelvin-$(VERSION)
 

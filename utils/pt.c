@@ -14,7 +14,7 @@
 
   Build with: gcc -o pt pt.c -DPOLYUSE_DL -DPOLYCODE_DL polynomial.c -L../utils/ -I../include/ -lutils -lm -ldl
 
-  Copyright &copy; 2009, Nationwide Children's Research Institute.  All
+  Copyright &copy; 2010, Nationwide Children's Research Institute.  All
   rights reserved.  Permission is hereby given to use this software
   for non-profit educational purposes only.
 

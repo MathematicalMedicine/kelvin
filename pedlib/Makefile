@@ -1,5 +1,5 @@
 # Kelvin
-# Copyright 2008, The Research Institute At Nationwide Children's Hospital
+# Copyright 2010, The Research Institute At Nationwide Children's Hospital
 # Permission granted to distribute and use for non-profit educational purposes only.
 
 INCS = pedigree.h locus.h genotype_elimination.h \

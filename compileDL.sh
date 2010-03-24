@@ -1,7 +1,7 @@
 #!/bin/bash
 #set -v
 #
-# Copyright 2008, Nationwide Children's Research Institute.  All
+# Copyright 2010, Nationwide Children's Research Institute.  All
 # rights reserved.  Permission is hereby given to use this software
 # for non-profit educational purposes only.
 #

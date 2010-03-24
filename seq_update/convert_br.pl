@@ -7,7 +7,7 @@ use strict;
 #
 # John Burian - john.burian@nationwidechildrens.org
 #
-# Copyright 2008, The Research Institute at Nationwide Children's Hospital
+# Copyright 2010, The Research Institute at Nationwide Children's Hospital
 # All rights reserved. Permission is granted to use this software for
 # non-profit educational purposes only.
 #
