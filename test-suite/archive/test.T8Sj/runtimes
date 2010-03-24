@@ -32,3 +32,16 @@ real	0m0.017s
 user	0m0.001s
 sys	0m0.003s
 Mon Mar  8 11:17:36 EST 2010
+Wed Mar 17 10:09:07 EDT 2010
+Mon Mar 22 08:24:11 EDT 2010
+Mon Mar 22 13:34:54 EDT 2010
+
+real	0m0.002s
+user	0m0.000s
+sys	0m0.001s
+Mon Mar 22 15:03:20 EDT 2010
+/bin/sh: line 1: 17976 Bus error               ~/kelvin/trunk/kelvin-0.38.1 kelvin.conf > kelvin.out 2>&1
+
+real	1460m33.893s
+user	1272m53.922s
+sys	197m4.322s
