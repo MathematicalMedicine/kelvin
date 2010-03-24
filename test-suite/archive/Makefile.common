@@ -11,8 +11,7 @@ ifeq ($(wildcard MAKE-RUNNING), MAKE-RUNNING)
 else
 	- rm -rf *.out kelvin_*_memory.dat MAKE-* *.so compiled
 	- touch MAKE-RUNNING
-#	date >>runtimes ; time (~/kelvin/trunk/kelvin.x86_64-Linux kelvin.conf >kelvin.out 2>&1) 2>> runtimes
-	date >>runtimes ; (time (~/kelvin/trunk/kelvin.x86_64-Linux kelvin.conf >kelvin.out 2>&1) 2>&1) | tee -a kelvin.out >> runtimes
+	date >>runtimes ; (time (~/kelvin/trunk/kelvin-0.38.1 kelvin.conf >kelvin.out 2>&1) 2>&1) | tee -a kelvin.out >> runtimes
 	perl ~/kelvin/trunk/utils/wordDiff.pl br.out br.out-baseline .00001
   ifeq ($(wildcard ppl.out),ppl.out)
 	diff ppl.out ppl.out-baseline
