@@ -1,6 +1,6 @@
 
 /**********************************************************************
- * Copyright 2008, Nationwide Children's Research Institute.  
+ * Copyright 2010, Nationwide Children's Research Institute.  
  * All rights reserved.
  * Permission is hereby given to use this software 
  * for non-profit educational purposes only.
@@ -1011,11 +1011,22 @@ FILE *fullLogFile = NULL;
 char *fullLogFileName = "kelvin.full_log";
 #endif
 
+#define MAXDUPWARNING 4
+char lastWarnings[MAXDUPWARNING][MAXLOGMSG + 1];
+int lastLastWarning = 0;
 void
 swLogMsg (FILE *stream, char *message)
 {
   time_t nowSec;
   struct tm *nowTm;
+  int i;
+
+  if (strncmp(message, "WARNING", 7) == 0) {
+    for (i=0; i<MAXDUPWARNING; i++)
+      if (strcmp(message, lastWarnings[i]) == 0)
+	return;
+    strcpy(lastWarnings[++lastLastWarning % MAXDUPWARNING], message);
+  }
 
   nowSec = time (NULL);
   nowTm = localtime(&nowSec);

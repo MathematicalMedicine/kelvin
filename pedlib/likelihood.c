@@ -1,5 +1,5 @@
 /**********************************************************************
- * Copyright 2008, Nationwide Children's Research Institute.
+ * Copyright 2010, Nationwide Children's Research Institute.
  * All rights reserved.
  * Permission is hereby given to use this software
  * for non-profit educational purposes only.
@@ -405,7 +405,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
       if (modelOptions->dryRun == 0) {
         if (pPedigree->likelihood == 0.0) {
 	  if (!modelRange->atypicalQtTrait)
-	    WARNING ("Pedigree %s has likelihood %G thats too small.\n", pPedigree->sPedigreeID, pPedigree->likelihood);
+	    WARNING ("Pedigree %s has likelihood %G thats too small.", pPedigree->sPedigreeID, pPedigree->likelihood);
           if (modelOptions->polynomial)
             DIAG (LIKELIHOOD, 1, {fprintf (stderr, "Polynomial terms (depth of 1):\n"); expTermPrinting (stderr, pPedigree->likelihoodPolynomial, 1); fprintf (stderr, "\n");});
           ret = -1;
