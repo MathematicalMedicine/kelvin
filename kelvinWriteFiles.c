@@ -480,7 +480,8 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
   for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++)
     {
       //dprime = pLambdaCell->lambda[dprimeIdx][0][0];
-      for (thetaInd = 0; thetaInd < modelRange->ntheta; thetaInd++)
+      /* Reversed order of loop so if max LOD is 0, we use the highest theta (0.5, prolly) */
+      for (thetaInd = modelRange->ntheta-1; thetaInd >= 0; thetaInd--)
 	{
 	  theta[0] = modelRange->theta[0][thetaInd];
 	  theta[1] = modelRange->theta[1][thetaInd];
