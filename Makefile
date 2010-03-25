@@ -139,7 +139,7 @@ LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
 
 # Flags for BCMM use only
 
-CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution, don't change, its a dist search target
+#CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution, don't change, its a dist search target
 ifneq (,$(wildcard /usr/include/execinfo.h))
 #  CFLAGS += -DBACKTRACE # Add backtrace where supported
 endif
