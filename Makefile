@@ -178,9 +178,7 @@ INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinWriteFiles.h dkelvinWriteFiles.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
-# Building both kelvin-$(VERSION) and kelvin.$(PLATFORM) until we have a 
-# chance to clean up test-suite
-all : kelvin-$(VERSION) kelvin.$(PLATFORM) seq_update/calc_updated_ppl
+all : kelvin-$(VERSION) seq_update/calc_updated_ppl
 
 dist :
 	- rm -rf kelvin-$(VERSION)
@@ -231,7 +229,7 @@ install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
 	  $(BINDIR)/Kelvin
 
 .PHONY : kelvin
-kelvin : kelvin-$(VERSION) kelvin.$(PLATFORM)
+kelvin : kelvin-$(VERSION)
 
 kelvin-$(VERSION) : libs $(KOBJS) $(OBJS) $(INCS)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
@@ -268,7 +266,7 @@ clean :
 	make -C config -f Makefile clean
 	make -C utils -f Makefile clean
 	make -C seq_update -f Makefile clean
-	rm -f $(KOBJS) $(OBJS) kelvin.$(PLATFORM)* kelvin-$(VERSION)*  seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/libped.a
+	rm -f $(KOBJS) $(OBJS) kelvin-$(VERSION) seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/libped.a
 	make -C test-suite -f Makefile clean
 
 .PHONY : test-USE_DL
