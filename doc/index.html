@@ -7,6 +7,8 @@
       div.indent { padding-left: 2em; }
       div.hang {padding-left: 2em ; text-indent: -2em; }
       div.footnote { font-size: smaller; }
+      td.lineno { text-align: right; background-color: #888888; }
+      td.colno { text-align: center; background-color: #888888; width: 2em }
     </style>
   </head>
   <body>
@@ -216,7 +218,7 @@
     <ol>
       <li>Pedigree File - This is a pedigree file containing phenotypic and genotypic
         information. It should be in
-	post-<a href='http://linkage.rockefeller.edu/soft/linkage/sec2.7.html'>Makeped</a>
+	post-<a href='http://linkage.rockefeller.edu/soft/linkage/sec2.7.html'>MAKEPED</a>
 	format.
 	<pre>
         1 1 0 0 3 0 0 1 1 1 2 2 1 2 1 1  Ped: 1  Per: 1
@@ -253,7 +255,7 @@
         3		MRK_2		0.99
         </pre>
       </li>
-    </ol>    
+    </ol>
 
     <h3>Creating A Configuration File</h3>
 
@@ -407,6 +409,7 @@
     <ol>
       <li><a href='#installing'>Installing The Programs</a></li>
       <li><a href='#prepconfig'>Preparing The Configuration File</a></li>
+      <li><a href='#fileformats'>Input Data File Formats</a></li>
       <li><a href='#running'>Running The Programs</a></li>
       <li><a href='#outputfiles'>Contents Of Output Files</a></li>
       <li><a href='#sequpdate'>Sequential Updating</a></li>
@@ -621,11 +624,16 @@
     <span class='sc'>Kelvin</span> supports a wide variety of analyses and options. These can
     be broken into general categories, with a small number of possibilities for each category.
     Some analyses/options are compatible with other analyses/options, some are not.
+    <a href="config.gif">Here is a directed graph</a> illustrating the legitimate combinations
+    of principal features and options. It illustrates the twenty-two current configuration
+    "paths" for <span class='sc'>Kelvin</span>. Ovals represent defaults that will be taken in
+    the absence of relevant directives, while squares represent analysis attributes that must
+    always be explicity specified.
 
     <h3 id='twopoint_vs_multipoint'>Two-Point vs. Multipoint</h3>
 
     Two-point analysis is the default. Multipoint analysis is enabled with the
-    <a href='#multipoint'>Multipoint</a> directive. Multipoint analysis is
+    <a href='Directives.html#multipoint'>Multipoint</a> directive. Multipoint analysis is
     incompatible with <a href='#ld_vs_le>linkage disequilibrium</a> and 
     <a href='#traitmarker_vs_markermarker>marker-to-marker</a> analyses.
   
@@ -635,15 +643,15 @@
     two-point</a> analyses, and is the only option for
     <a href='#twopoint_vs_multipoint'>multipoint</a> analyses. Linkage
     Disequilibrium can be enabled for two-point analyses with the
-    <a href='#ld'>LD</a> directive.
+    <a href='Directives.html#ld'>LD</a> directive.
   
     <h3 id='dt_vs_qt_vs_qtt'>Dichotomous Trait vs. Quantitative Trait vs. Quantitative Trait
     With Threshold</h3>
 
     A dichotomous trait model is the default. A quantitative trait model can
-    be specified with the <a href='#qt'>QT</a> directive. A quantitative trait
-    model with a threshold can be specified with the <a href='#qtt'>QTT</a>
-    and <a href='#threshold'>Threshold</a> directives. Quantitative
+    be specified with the <a href='Directives.html#qt'>QT</a> directive. A quantitative trait
+    model with a threshold can be specified with the <a href='Directives.html#qtt'>QTT</a>
+    and <a href='Directives.html#threshold'>Threshold</a> directives. Quantitative
     trait directives are incompatible with, and the default dichotomous trait
     model is disabled for, <a href='#traitmarker_vs_markermarker'>
     marker-to-marker</a>.
@@ -653,14 +661,14 @@
     By default, <span class='sc'>Kelvin</span> will perform its calculations using the sex-averaged
     centiMorgan marker positions in the map file. If sex-specific marker positions
     are available, <span class='sc'>Kelvin</span> can be made to use those with the
-    <a href='#sexspecific'>SexSpecific</a> directive. Sex-specific maps are not supported for
-    <a href='#ld_vs_le'>LD</a> analyses.
+    <a href='Directives.html#sexspecific'>SexSpecific</a> directive. Sex-specific maps are
+    not supported for <a href='#ld_vs_le'>LD</a> analyses.
   
     <h3 id='imprinting_vs_not'>Imprinting vs. Non-imprinting</h3>
 
     <span class='sc'>Kelvin</span> will ignore the possibility of imprinting (parent-of-origin)
     effects by default. Imprinting effects can be considered by specifying the
-    <a href=#'imprinting'>Imprinting</a> directive. Imprinting analysis is
+    <a href='Directives.html#imprinting'>Imprinting</a> directive. Imprinting analysis is
     incompatible with <a href='#traitmarker_vs_markermarker'>marker-to-marker</a>
     analyses.
   
@@ -668,7 +676,7 @@
 
     Trait-to-marker analysis is the default, and considers the relationship
     between a hypothetical trait locus and a marker or group of markers.
-    Marker-to-marker analysis is enabled with the <a href='#markertomarker'>
+    Marker-to-marker analysis is enabled with the <a href='Directives.html#markertomarker'>
     MarkerToMarker</a> directive, and considers the relationship between
     pairs of markers only. Since no trait is considered at all under marker-to-marker,
     <a href='#dt_vs_qt_vs_qtt'>QT, QTT</a>, <a href='#imprinting_vs_not'>imprinting</a>,
@@ -682,7 +690,7 @@
     the trait are the same for all individuals in the analysis. <span class='sc'>Kelvin</span>
     can be made to separate individuals into different classes of penetrance characteristics
     based on a covariate. Covariate dependence is incompatible with
-    <a href='traitmarker_vs_markermarker'>marker-to-marker</a> analyses.
+    <a href='#traitmarker_vs_markermarker'>marker-to-marker</a> analyses.
 
     <h3 id='simple_vs_epistasis'>Simple Trait vs. Epistasis</h3>
 
@@ -692,12 +700,249 @@
     analysis is incompatible with <a href='#lc_vs_nolc'>covariate dependence</a> and 
     <a href='#traitmarker_vs_markermarker'>marker-to-marker</a> analyses.
 
-    <p>
-    <a href="config.gif">Here is a directed graph</a> illustrating the legitimate combinations
-    of principal features and options. It illustrates the twenty-two current configuration
-    "paths" for <span class='sc'>Kelvin</span>. Ovals represent defaults that will be taken in
-    the absence of relevant directives, while squares represent analysis attributes that must
-    always be explicity specified.
+    <h2 id='fileformats'>Data File Formats</h2>
+
+    <span class='sc'>Kelvin</span> typically requires four input data file: a pedigree
+    file, a locus file, a map file, and a frequency file.
+
+    <h3 id='pedfileformat'>Pedigree File</h3>
+
+    <span class='sc'>Kelvin</span> requires a 
+    post-<a href='http://linkage.rockefeller.edu/soft/linkage/sec2.7.html'>MAKEPED</a>
+    format pedigree file. MAKEPED is part of the LINKAGE package of analysis software.
+    While it is possible to create a post-MAKEPED pedigree file by hand, it's much easier
+    to create a pre-MAKEPED pedigree file, and run it through MAKEPED. Each line of a 
+    pre-MAKEPED pedigree file must start with five columns:
+
+    <ol>
+      <li>Pedigree ID - All individuals in the same family must have the same Pedigree ID.</li>
+      <li>Individual ID - The Individual ID must be unique inside a family. The combination of
+        Pedigree ID and Individual ID must be unique inside the pedigree file.</li>
+      <li>Father ID - this should be the Individual ID of the individual that is the father
+        of the current individual. This should be '0' (zero) if the father of the current
+        individual does not appear in the pedigree file.</li>
+      <li>Mother ID - as above, for the current individual's mother.</li>
+      <li>Sex - a <tt>1</tt> (one) if the current individual is male, or a <tt>2</tt> if
+        female.</li>
+    </ol>
+
+    The remaining columns in the pedigree file are governed by the
+    <a href='#locusfileformat'>locus file</a>.
+	
+    <h3 id='locusfileformat'>Locus File</h3>
+
+    This file may be referred to as a 'data file' in documentation for older versions of
+    <span class='sc'>Kelvin</span>. Each line in a locus file consists of an identifier
+    character, and a label. Each line corresponds to one (or two) columns in the pedigree
+    file. Put another way, the locus file defines the number and order of columns in the
+    pedigree file. The identifier characters, and their meanings, are as follows:
+
+    <ul>
+      <li><tt>A</tt> - Affection status/trait value. Corresponds to a single column in the
+        pedigree file, which indicates if individuals are affected, unaffected, unphenotyped,
+        or (for <a href='dt_vs_qt_vs_qtt'>quantitative trait</a> analyses) the trait value.
+        <a href='#traitmarker_vs_markermarker'>Trait-to-marker</a> analyses must have an
+        affection status/trait line in the locus file, and the trait label will appear in
+        all output files. An affections status/trait line need not appear for marker-to-marker
+        analyses. The specific values that indicate affected, unaffected, etc., are
+        controlled by the <a href='Directives.html#phenocodes'>PhenoCodes</a> configuration
+        directive.</li>
+      <li><tt>T</tt> - Used interchangeably with <tt>A</tt> in
+        <span class='sc'>Kelvin</span>.</li>
+      <li><tt>C</tt> - Covariate (Liability Class). Corresponds to a single column in the
+        pedigree file. The values in this column are used to group individuals into sets with
+        different trait penetrance characteristics.</li>
+      <li><tt>M</tt> - Marker. Corresponds to two adjacent columns in the pedigree file. The
+        values in these columns indicate the alleles of the named marker for each individual.
+        Every marker that is listed in the locus file must also appear in the 
+        <a href='#mapfileformat'>map file</a> and the <a href='#freqfileformat'>frequency
+        file</a>.</li>
+    </ul>
+
+    <h3 id='mapfileformat'>Map File</h3>
+
+    This file lists the positions of markers on the chromosome, in either Kosambi or
+    Haldane centiMorgans. The first line of the file may optionally explicitly indicate
+    the map function in use:
+
+    <pre>mapFunction=haldane</pre>
+
+    The rest of the file must consist of three (or more) columns, each identified by
+    a column header on the first (after the optional mapFunction) line. The column headers
+    are as follows:
+
+    <ul>
+      <li><tt>CHROMOSOME</tt> or <tt>CHR</tt> - The chromosome number.
+        <span class='sc'>Kelvin</span> currently does not allow map files to contain markers
+        from multiple chromosomes.</li>
+      <li><tt>MARKER</tt> or <tt>NAME</tt> - The marker name. Marker names may contain
+        numbers, letters, underscores and hyphens only.</li>
+      <li><tt>POSITION</tt> or <tt>POS</tt> or <tt>KOSAMBI</tt> or <tt>HALDANE</tt> - The
+        sex-averaged centiMorgan position of the marker. If the column header is 
+        <tt>KOSAMBI</tt> or <tt>HALDANE</tt>, the map function will be set accordingly.</li>
+      <li><tt>MALE</tt> or <tt>MALEPOSITION</tt> - The male sex-specific centiMorgan
+        position of the marker. This column is only required for
+	<a href='#sexave_vs_sexspec'>sex-specific</a> analyses, and will be ignored otherwise.
+      <li><tt>FEMALE</tt> or <tt>FEMALEPOSITION</tt> - Same as <tt>MALE</tt>, but for
+        females.</li>
+      <li><tt>PHYSICAL</tt> or <tt>BASEPAIR</tt> - The basepair position of the marker.
+        This column is optional. If present, this value will appear in some output files.</li>
+    </ul>
+
+    If the map function is specified by both a <tt>mapFunction</tt> line and by a column
+    header, the same map function must be specified. If the map function is specified by
+    neither, the default is Kosambi.
+
+    <h3 id='freqfileformat'>Frequency File</h3>
+
+    This file identifies the alleles for each marker, and the specifies the frequencies for
+    those alleles. The file is composed of a series of line groups. Each group begins with
+    marker line, followed by one or more allele lines. Similar to the
+    <a href='#locusfileformat'>locus file</a>, each line starts with an identifier character:
+
+    <ul>
+      <li><tt>M</tt> - Marker line. Should be followed by the marker name only. Starts a new
+        line grouop, and implicitly finishes any previous line group, if any.</li>
+      <li><tt>F</tt> - Unlabeled alleles. Must be followed by only space-separted frequencies.
+        This implicitly creates alleles labled with consecutive numbers, starting with '1'.
+        Multiple <tt>F</tt> lines may appear in a line group; the implied labels will be
+        consecutive with implied labels from previous <tt>F</tt> lines.
+      <li><tt>A</tt> - Labeled alleles. Must be followed by an allele label and the
+        frequency for that allele. Each allele must be specified on a separate line.</li>
+    </ul>
+
+    For any given marker, alleles must all be specified as labeled or unlabeled, although 
+    different markers in the same frequency file may use either method.
+
+    <h3 id='examplefileformat'>Example</h3>
+
+    Pedigree File (pre-MAKEPED):
+    <tt>
+      <table cellspacing=2>
+        <tr>
+	  <td></td><td class='colno'>1</td><td class='colno'>2</td><td class='colno'>3</td>
+	  <td class='colno'>4</td><td class='colno'>5</td><td class='colno'>6</td>
+	  <td class='colno'>7</td><td class='colno'>8</td><td class='colno'>9</td>
+	  <td class='colno'>10</td><td class='colno'>11</td><td class='colno'>12</td>
+	  <td class='colno'>13</td><td class='colno'>14</td><td class='colno'>15</td>
+	  <td class='colno'>16</td>
+        </tr>
+        <tr align='center'><td class='lineno'>1</td><td>212</td><td>101</td><td>0</td><td>0</td>
+          <td>1</td><td>1</td><td>3</td><td>4</td><td>1</td><td>3</td><td>2</td><td>2</td>
+          <td>1</td><td>2</td><td>1</td><td>1</td>
+        </tr>
+        <tr align='center'><td class='lineno'>2</td><td>212</td><td>102</td><td>0</td><td>0</td>
+          <td>2</td><td>0</td><td>1</td><td>2</td><td>2</td><td>3</td><td>2</td><td>2</td>
+          <td>1</td><td>1</td><td>2</td><td>2</td>
+        </tr>
+        <tr align='center'><td class='lineno'>3</td><td>212</td><td>103</td><td>101</td>
+          <td>102</td><td>1</td><td>1</td><td>3</td><td>2</td><td>3</td><td>3</td><td>2</td>
+          <td>2</td><td>1</td><td>2</td><td>2</td><td>1</td>
+        </tr>
+        <tr align='center'><td class='lineno'>4</td><td>212</td><td>104</td><td>0</td><td>0</td>
+          <td>2</td><td>1</td><td>1</td><td>4</td><td>1</td><td>1</td><td>1</td><td>2</td>
+          <td>1</td><td>2</td><td>1</td><td>1</td>
+        </tr>
+        <tr align='center'><td class='lineno'>5</td><td>212</td><td>105</td><td>103</td>
+          <td>104</td><td>1</td><td>2</td><td>3</td><td>1</td><td>1</td><td>3</td><td>2</td>
+          <td>2</td><td>2</td><td>2</td><td>2</td><td>2</td>
+        </tr>
+      </table>
+    </tt><p>
+
+    Locus File:
+    <tt>
+      <table cellspacing=2>
+        <tr><td class='lineno'>1</td><td>A WebbedToes</td></tr>
+        <tr><td class='lineno'>2</td><td>M rs2112</td></tr>
+        <tr><td class='lineno'>3</td><td>M SNP_A-90125</td></tr>
+        <tr><td class='lineno'>4</td><td>M SNP_GO-7188</td></tr>
+        <tr><td class='lineno'>5</td><td>M rs8675309</td></tr>
+        <tr><td class='lineno'>6</td><td>M rs1984</td></tr>
+      </table>
+    </tt><p>
+
+    In this example, we have a small three-generation family. The pedigree ID (<tt>212</tt>)
+    is in column 1, and individual IDs (<tt>101</tt> through <tt>105</tt>) are in column 2.
+    Note that individual IDs do not need to be consecutive. The father and mother IDs are in
+    columns 3 and 4, respectively. Individuals <tt>101</tt>, <tt>102</tt> and <tt>104</tt>
+    are <i>founders</i> (their parents are not present in the pedigree), so their father and
+    mother IDs are coded with <tt>0</tt> (zeros). Individual <tt>103</tt> is descended from
+    individuals <tt>101</tt> and <tt>102</tt>; individual <tt>105</tt> is descended from 
+    individuals <tt>103</tt> and <tt>105</tt>. Sex indicators are in column 5; individuals
+    <tt>101</tt>, <tt>103</tt> and <tt>105</tt> are males, and individuals <tt>102</tt> and
+    <tt>104</tt> are females. The remaining columns are defined by the locus file.<p>
+
+    Line 1 of the locus file specifies an affection status column, which corresponds to
+    column 6 in the pedigree file. This column follows the typical convention of dichotomous
+    traits, coding unaffected individuals with a <tt>1</tt> (one), affected individuals with
+    a <tt>2</tt> and unphenotyped individuals with a <tt>0</tt> (zero).<p>
+
+    Each of the remaining lines in locus file specify markers, and correspond to two columns
+    in the pedigree file: locus file line 2 corresponds to pedigree file columns 7 and 8, 
+    line 3 to columns 9 and 10, etc. For a fun exercise, spot the impossible inheritance in
+    the sample pedigree.<p>
+
+    Installing MAKEPED is beyond the scope of this documentation, but the general command
+    to process a pedigree file with MAKEPED is:
+
+    <pre>
+    $ makeped ped.pre ped.post n
+    </pre>
+
+    where <tt>ped.pre</tt> is the pre-MAKEPED file you've created, <tt>ped.post</tt> is the
+    post-MAKEPED file you want to create, and the last argument is either <tt>y</tt> or
+    <tt>n</tt>, depending on if any of the families in the pedigree file do or do not contain
+    consanguinity loops.<p>
+
+    Map File:
+    <tt>
+      <table cellspacing=2>
+        <tr><td></td><td class='colno'>1</td><td class='colno'>2</td><td class='colno'>3</td></tr>
+        <tr><td class='lineno'>1</td><td>CHR</td><td>MARKER</td><td>KOSAMBI</td></tr>
+        <tr><td class='lineno'>2</td><td>2</td><td>rs2112</td><td>1.732</td></tr>
+        <tr><td class='lineno'>3</td><td>2</td><td>SNP_A-90125</td><td>2.2361</td></tr>
+        <tr><td class='lineno'>4</td><td>2</td><td>SNP_GO-7188</td><td>2.6458</td></tr>
+        <tr><td class='lineno'>5</td><td>2</td><td>rs8675309</td><td>3.3166</td></tr>
+        <tr><td class='lineno'>6</td><td>2</td><td>rs1984</td><td>3.6056</td></tr>
+      </table>
+    </tt><p>
+
+    The map file contains the minimum three columns: chromosome (column 1), marker (column 2)
+    and sex-averaged centiMorgan position (column 3). The map function is not explicitly
+    specified with a <tt>mapFunction</tt> line, but the header of the column 3 specifies a
+    Kosambi map. If that header was <tt>HALDANE</tt>, then a Haldance map would be specified,
+    or of the header was <tt>POS</tt> or <tt>POSITION</tt>, then the map function would default
+    to Kosambi.<p>
+
+    Frequency File:
+    <tt>
+      <table cellspacing=2>
+        <tr><td class='lineno'>1</td><td>M rs2112</td></tr>
+        <tr><td class='lineno'>2</td><td>F 0.233 0.377</td></tr>
+        <tr><td class='lineno'>3</td><td>F 0.300 0.090</td></tr>
+        <tr><td class='lineno'>4</td><td>M SNP_A-90125</td></tr>
+        <tr><td class='lineno'>5</td><td>F 0.357 0.223 0.420</td></tr>
+        <tr><td class='lineno'>6</td><td>M SNP_GO-7188</td></tr>
+        <tr><td class='lineno'>7</td><td>A 2 0.866</td></tr>
+        <tr><td class='lineno'>8</td><td>A 1 0.134</td></tr>
+        <tr><td class='lineno'>9</td><td>M rs8675309</td></tr>
+        <tr><td class='lineno'>10</td><td>A 1 0.455</td></tr>
+        <tr><td class='lineno'>11</td><td>A 2 0.545</td></tr>
+        <tr><td class='lineno'>12</td><td>M rs1984</td></tr>
+        <tr><td class='lineno'>13</td><td>F 1.000</td></tr>
+      </table>
+    </tt><p>
+
+    The frequency file contains five line groups, one for each marker. Lines 1 through 3
+    specify marker <tt>rs2112</tt> with four unlabeled alleles, which will be implicitly
+    labeled 1, 2, 3 and 4, with corresponding frequencies of 0.233, 0.377, 0.300 and 0.090.
+    Lines 4 and 5 specify marker <tt>SNP_A-90125</tt> with three unlabeled alleles. Lines 6
+    through 8 specify marker <tt>SNP_GO-7188</tt> with two labeled alleles: <tt>2</tt>,
+    with a frequency of 0.866, and <tt>1</tt>, with a frequency of 0.134. Lines 9 through 11
+    specifiy marker <tt>rs8675309</tt> with two labeled alleles. Lines 12 and 13 specify
+    a marker <tt>rs1984</tt> with a single unlabeled allele with a frequency of 1.000. Note
+    than in no case are labeled and unlabelled alleles mixed within a single marker.
 
     <h2 id='running'>Running The Programs</h2>
 
@@ -756,43 +1001,43 @@
     For example:
 <p>
   <table cellspacing=2>
-    <tr><td align='right' style='background: #888888'><tt> 1 </tt></td>
+    <tr><td class='lineno'><tt> 1 </tt></td>
 <td><tt>10/01/15 08:26:25 @0s, Initializing</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 2 </tt></td>
+    <tr><td class='lineno'><tt> 2 </tt></td>
 <td><tt>10/01/15 08:26:25 kelvin V0.38.1 edit 2463 built Jan 14 2010 15:04:43</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 3 </tt></td>
+    <tr><td class='lineno'><tt> 3 </tt></td>
 <td><tt>10/01/15 08:26:25 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 4 </tt></td>
+    <tr><td class='lineno'><tt> 4 </tt></td>
 <td><tt>10/01/15 08:26:25 Using GNU Scientific Library (GSL) statistical functions instead of internal ones</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 5 </tt></td>
+    <tr><td class='lineno'><tt> 5 </tt></td>
 <td><tt>10/01/15 08:26:25 OpenMP-enabled w/maximum of 6 thread(s).</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 6 </tt></td>
+    <tr><td class='lineno'><tt> 6 </tt></td>
 <td><tt>10/01/15 08:26:25 GCC optimization level 2 enabled</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 7 </tt></td>
+    <tr><td class='lineno'><tt> 7 </tt></td>
 <td><tt>10/01/15 08:26:25 To check status (at some risk), type CTRL-\ or type "kill -3 22860"</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 8 </tt></td>
+    <tr><td class='lineno'><tt> 8 </tt></td>
 <td><tt>10/01/15 08:26:25 Using configuration file kelvin.conf</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 9 </tt></td>
+    <tr><td class='lineno'><tt> 9 </tt></td>
 <td><tt>10/01/15 08:26:25 Computation is done in polynomial mode</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 10 </tt></td>
+    <tr><td class='lineno'><tt> 10 </tt></td>
 <td><tt>10/01/15 08:26:25 polynomialScale is 1 (1-10, 1 is default)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 11 </tt></td>
+    <tr><td class='lineno'><tt> 11 </tt></td>
 <td><tt>10/01/15 08:26:25 Integration is done numerically (dkelvin)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 12 </tt></td>
+    <tr><td class='lineno'><tt> 12 </tt></td>
 <td><tt>10/01/15 08:26:25 Further progress will be displayed at 90 second intervals</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 13 </tt></td>
+    <tr><td class='lineno'><tt> 13 </tt></td>
 <td><tt>10/01/15 08:26:25 6TL of 20AL*6GF*275pv(1LC) space for 24 pedigree(s)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 14 </tt></td>
+    <tr><td class='lineno'><tt> 14 </tt></td>
 <td><tt>10/01/15 08:26:25 Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 15 </tt></td>
+    <tr><td class='lineno'><tt> 15 </tt></td>
 <td><tt>10/01/15 08:26:25 @0s, Performing analysis</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 16 </tt></td>
+    <tr><td class='lineno'><tt> 16 </tt></td>
 <td><tt>10/01/15 08:26:26&nbsp;&nbsp;&nbsp;&nbsp;@1s, Starting with position 1 of 6</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 17 </tt></td>
+    <tr><td class='lineno'><tt> 17 </tt></td>
 <td><tt>10/01/15 08:27:56&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@1m30s, Building polynomial w/pedigree: 12 (12/24)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 18 </tt></td>
+    <tr><td class='lineno'><tt> 18 </tt></td>
 <td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@2m32s, Building polynomial w/pedigree: 24 (24/24)</tt></td></tr>
-    <tr><td align='right' style='background: #888888'><tt> 19 </tt></td>
+    <tr><td class='lineno'><tt> 19 </tt></td>
 <td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@3m59s, Evaluating polynomials, currently at 8.1e+03 iterations</tt></td></tr>
   </table>
 <p>
