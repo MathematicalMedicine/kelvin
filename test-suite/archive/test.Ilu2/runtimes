@@ -1,0 +1,10 @@
+Tue Mar  2 12:36:18 EST 2010
+Wed Mar  3 09:05:25 EST 2010
+Wed Mar  3 10:16:56 EST 2010
+Wed Mar  3 10:22:26 EST 2010
+Wed Mar  3 10:27:41 EST 2010
+/bin/sh: line 1:  5960 Bus error               ~/kelvin/trunk/kelvin.x86_64-Linux kelvin.conf > kelvin.out 2>&1
+
+real	3472m29.673s
+user	3470m50.969s
+sys	0m10.832s
