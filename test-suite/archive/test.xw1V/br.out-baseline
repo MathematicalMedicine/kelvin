@@ -1,5 +1,5 @@
-# Version V0.38.1
-# Seq: 1 Chr: 40 Trait: Disease Marker: M1 Position: 0.0000
+# Version V0.38.1 edit 2799M
+# Seq: 1 Chr: 40 Trait: Disease Marker: M1 AvgPosition: 0.0000 FemalePosition: 0.0000 MalePosition: 0.0000
 Theta(M,F) BayesRatio
 (0.0250,0.0250) 1.499250e+00
 (0.0187,0.0250) 1.487847e+00
@@ -261,7 +261,7 @@ Theta(M,F) BayesRatio
 (0.2283,0.4025) 9.728441e-01
 (0.3217,0.1475) 1.509895e+00
 (0.2283,0.1475) 1.435143e+00
-# Seq: 2 Chr: 40 Trait: Disease Marker: M2 Position: 5.2500
+# Seq: 2 Chr: 40 Trait: Disease Marker: M2 AvgPosition: 5.2500 FemalePosition: 7.2500 MalePosition: 3.2500
 Theta(M,F) BayesRatio
 (0.0250,0.0250) 1.375496e+00
 (0.0187,0.0250) 1.366393e+00
@@ -523,7 +523,7 @@ Theta(M,F) BayesRatio
 (0.2283,0.4025) 9.332557e-01
 (0.3217,0.1475) 1.440590e+00
 (0.2283,0.1475) 1.352295e+00
-# Seq: 3 Chr: 40 Trait: Disease Marker: M3 Position: 10.5000
+# Seq: 3 Chr: 40 Trait: Disease Marker: M3 AvgPosition: 10.5000 FemalePosition: 11.2500 MalePosition: 9.7500
 Theta(M,F) BayesRatio
 (0.0250,0.0250) 1.039593e+00
 (0.0187,0.0250) 1.032663e+00
