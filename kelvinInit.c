@@ -183,8 +183,10 @@ void kelvinInit (int argc, char *argv[])
   /* Read in marker allele frequencies */
   DETAIL(0,"Read and process marker file %s", modelOptions->markerfile);
   read_markerfile (modelOptions->markerfile, modelType->numMarkers);
+#ifdef DISTRIBUTION
   if (modelRange->microsats && modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM)
     ERROR("LD analysis not supported with microsatellite datasets\n");
+#endif
 
   /* build allele set information */
   DETAIL(0, "Constructing allele set");
