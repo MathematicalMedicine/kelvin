@@ -2602,7 +2602,7 @@ Theta(M,F) BayesRatio
 (0.5000,0.4800) 1.006191e+00
 (0.5000,0.4900) 1.002878e+00
 (0.5000,0.5000) 1.000000e+00
-# Seq: 2 Chr: 40 Trait: Disease Marker: M2 AvgPosition: 5.2500 FemalePosition: 3.2500 MalePosition: 7.2500
+# Seq: 2 Chr: 40 Trait: Disease Marker: M2 AvgPosition: 5.2500 FemalePosition: 7.2500 MalePosition: 3.2500
 Theta(M,F) BayesRatio
 (0.0000,0.0000) 1.203426e+00
 (0.0000,0.0100) 1.195030e+00
@@ -5205,7 +5205,7 @@ Theta(M,F) BayesRatio
 (0.5000,0.4800) 1.006556e+00
 (0.5000,0.4900) 1.002968e+00
 (0.5000,0.5000) 1.000000e+00
-# Seq: 3 Chr: 40 Trait: Disease Marker: M3 AvgPosition: 10.5000 FemalePosition: 9.7500 MalePosition: 11.2500
+# Seq: 3 Chr: 40 Trait: Disease Marker: M3 AvgPosition: 10.5000 FemalePosition: 11.2500 MalePosition: 9.7500
 Theta(M,F) BayesRatio
 (0.0000,0.0000) 1.016227e+00
 (0.0000,0.0100) 1.009977e+00
