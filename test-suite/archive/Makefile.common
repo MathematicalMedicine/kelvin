@@ -1,5 +1,5 @@
 # Fire off a bunch of these with:
-# find . -name kelvin.conf -execdir nq "make -j 4 -f ../Makefile.common || touch MAKE-FAILED" -l jobs=4 \;
+# find . -name kelvin.conf -execdir nq "export OMP_NUM_THREADS=1; make -j 4 -f ../Makefile.common || touch MAKE-FAILED" -l jobs=4 \;
 # Won't allow multiple simultaneous runs, but alas, if a run fails, leaves MAKE-RUNNING there.
 # Clean it out with:
 # find . -name MAKE-FAILED -execdir rm MAKE-RUNNING \;
