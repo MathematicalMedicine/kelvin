@@ -1,5 +1,5 @@
 # Fire off a bunch of these with:
-# find . -name kelvin.conf -execdir nq "make -f ../Makefile.common || touch MAKE-FAILED" \;
+# find . -name kelvin.conf -execdir nq "make -j 4 -f ../Makefile.common || touch MAKE-FAILED" -l jobs=4 \;
 # Won't allow multiple simultaneous runs, but alas, if a run fails, leaves MAKE-RUNNING there.
 # Clean it out with:
 # find . -name MAKE-FAILED -execdir rm MAKE-RUNNING \;
@@ -12,8 +12,8 @@ BASE_KELVIN=~/kelvin/trunk/kelvin-0.38.1
 testrun = normal no_GSL POLYCOMP_DL POLYUSE_DL
 .PHONY: all $(testrun) NonPE
 
-#all : 	$(testrun) NonPE
-all : 	normal
+all : 	$(testrun) NonPE
+#all : 	normal
 
 # MUST build polynomial DLs before trying to simply use them
 POLYUSE_DL :	POLYCOMP_DL
@@ -28,9 +28,9 @@ else
 	# I have to use $(if) here because ifeq is evaluated at parse time and not when rules are run
 	$(if $(findstring $@,POLYCOMP_DL), -rm -rf *.so compiled)
 	date >>runtimes-$@ ; (time ($(BASE_KELVIN)-$@ kelvin.conf --bayes br.out-$@ --ppl ppl.out-$@ >kelvin.out-$@ 2>&1) 2>&1) | tee -a kelvin.out-$@ >> runtimes-$@
-	perl ~/kelvin/trunk/utils/wordDiff.pl br.out-$@ br.out-baseline .00001
+	perl ~/kelvin/trunk/utils/wordDiff.pl br.out-$@ br.out-baseline .0001
   ifeq ($(wildcard ppl.out),ppl.out)
-	perl ~/kelvin/trunk/utils/wordDiff.pl ppl.out-$@ ppl.out-baseline .00001
+	perl ~/kelvin/trunk/utils/wordDiff.pl ppl.out-$@ ppl.out-baseline .0001
   endif
         # Make sure we don't accumulate too much information
 	- tail -1000 runtimes-$@ >fewerRuntimes-$@
@@ -48,9 +48,9 @@ else
 	- rm -rf *.out-NonPE MAKE-*NonPE
 	- touch MAKE-RUNNING-NonPE
 	date >>runtimes-NonPE ; (time ($(BASE_KELVIN) kelvin.conf --bayes br.out-NonPE --ppl ppl.out-NonPE --NonPolynomial  >kelvin.out-NonPE 2>&1) 2>&1) | tee -a kelvin.out-NonPE >> runtimes-NonPE
-	perl ~/kelvin/trunk/utils/wordDiff.pl br.out-NonPE br.out-baseline .00001
+	perl ~/kelvin/trunk/utils/wordDiff.pl br.out-NonPE br.out-baseline .0001
   ifeq ($(wildcard ppl.out),ppl.out)
-	perl ~/kelvin/trunk/utils/wordDiff.pl ppl.out-NonPE ppl.out-baseline .00001
+	perl ~/kelvin/trunk/utils/wordDiff.pl ppl.out-NonPE ppl.out-baseline .0001
   endif
         # Make sure we don't accumulate too much information
 	- tail -1000 runtimes-NonPE >fewerRuntimes
