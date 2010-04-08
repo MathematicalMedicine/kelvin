@@ -239,12 +239,14 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
       pPedigreeSet->liabilityClassCnt[pCurrPerson->ppLiabilityClass[0][0]] += 1;
     }
 
-    /* mark this pedigree as having a loop if so */
+    /* Mark this pedigree as having a loop if so. We'll use the highest proband number so we can tell from the
+     flag how many loops are in the most convoluted pedigrees. */
     if (pCurrPerson->proband > 1) {
-      pCurrPedigree->loopFlag = 1;
-      pCurrPedigree->pPedigreeSet->loopFlag = 1;
+      if (pCurrPerson->proband > (pCurrPedigree->loopFlag + 1))
+	pCurrPedigree->loopFlag = pCurrPerson->proband - 1;
+      if (pCurrPerson->proband > (pCurrPedigree->pPedigreeSet->loopFlag + 1))
+	pCurrPedigree->pPedigreeSet->loopFlag = pCurrPerson->proband - 1;
     }
-
     if (pCurrPerson->proband == 1) {
       /* this person is selected as a peeling proband for this pedigree */
       pCurrPedigree->pPeelingProband = pCurrPerson;
@@ -1239,7 +1241,7 @@ need_transmission_matrices (PedigreeSet * pPedSet)
   /* NuclearFamily *pNucFam; */
 
   /* condition 1 - at least one pedigree has loop */
-  if (pPedSet->loopFlag == 1)
+  if (pPedSet->loopFlag > 0)
     return 1;
 
   /* go through each pedigree */

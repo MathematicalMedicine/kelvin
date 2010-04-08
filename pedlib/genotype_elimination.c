@@ -218,12 +218,16 @@ parent_children_genotype_elimination (int locus, NuclearFamily * pNucFam,
     if (pParent->pOriginalPerson->ppGenotypeList[locus] == NULL) {
       WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	       pParent->pPedigree->sPedigreeID, pParent->sID, pLocus->sName);
+      if (pParent->pPedigree->loopFlag > 1)
+	WARNING ("Make sure multiple loopbreakers are not in the same nuclear family!");
       return -1;
     }
   } else {
     if (pParent->ppGenotypeList[locus] == NULL) {
       WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	       pParent->pPedigree->sPedigreeID, pParent->sID, pLocus->sName);
+      if (pParent->pPedigree->loopFlag > 1)
+	WARNING ("Make sure multiple loopbreakers are not in the same nuclear family!");
       return -1;
     }
   }
@@ -322,6 +326,8 @@ child_parents_genotype_elimination (int locus, NuclearFamily * pNucFam,
   if (pChild->ppGenotypeList[locus] == NULL) {
     WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	     pChild->pPedigree->sPedigreeID, pChild->sID, pLocus->sName);
+    if (pChild->pPedigree->loopFlag > 1)
+      WARNING ("Make sure multiple loopbreakers are not in the same nuclear family!");
     ret = -1;
   }
   return ret;
@@ -433,6 +439,8 @@ parent_parent_children_genotype_elimination (int locus,
     if (pParent1->pOriginalPerson->ppGenotypeList[locus] == NULL) {
       WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	       pParent1->pPedigree->sPedigreeID, pParent1->sID, pLocus->sName);
+      if (pParent1->pPedigree->loopFlag > 1)
+	WARNING ("Make sure multiple loopbreakers are not in the same nuclear family!");
       ret = -1;
     }
 
@@ -440,6 +448,8 @@ parent_parent_children_genotype_elimination (int locus,
     if (pParent1->ppGenotypeList[locus] == NULL) {
       WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	       pParent1->pPedigree->sPedigreeID, pParent1->sID, pLocus->sName);
+      if (pParent1->pPedigree->loopFlag > 1)
+	WARNING ("Make sure multiple loopbreakers are not in the same nuclear family!");
       ret = -1;
     }
   }
@@ -582,6 +592,8 @@ child_children_parents_genotype_elimination (int locus,
   if (pChild->ppGenotypeList[locus] == NULL) {
     WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	     pChild->pPedigree->sPedigreeID, pChild->sID, pLocus->sName);
+    if (pChild->pPedigree->loopFlag > 1)
+      WARNING ("Make sure multiple loopbreakers are not in the same nuclear family!");
     ret = -1;
   }
 

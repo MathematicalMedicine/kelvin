@@ -77,7 +77,7 @@ allele_set_recoding (int locus, Pedigree * pPedigree)
   /* first identify transmitted and non-transmitted alleles */
   identify_transmitted_alleles (locus, pPedigree);
 
-  if (pPedigree->loopFlag == TRUE) {
+  if (pPedigree->loopFlag) {
     /* since loop breaker duplicates are tracked separately, make sure it got 
      * back to the original */
     identify_transmitted_alleles (locus, pPedigree);

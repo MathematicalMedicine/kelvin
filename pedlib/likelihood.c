@@ -508,7 +508,7 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
     pMyNucFam->totalNumSimilarPairs = 0;
   }
 
-  if (pPedigree->loopFlag == TRUE) {
+  if (pPedigree->loopFlag) {
     populate_pedigree_loopbreaker_genotype_vector (pPedigree);
     ret = -2;
     while (ret == -2) {
@@ -634,7 +634,7 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
     if (modelOptions->polynomial != TRUE)
       likelihood += tmpLikelihood;
 
-    if (pPedigree->loopFlag == TRUE) {
+    if (pPedigree->loopFlag) {
       if (modelOptions->polynomial == TRUE)
         keepPoly (pLikelihoodPolynomial);
       else {
