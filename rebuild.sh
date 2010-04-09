@@ -1,22 +1,29 @@
 #!/bin/bash -xe
 set -xe # Because it isn't enough for Darwin's cron for us to have it on the shebang
 
+# Get all of the GNU C compiler #defines as environment variables
+temp=/tmp/`echo $RANDOM`
+echo set +e >$temp
+cpp -dM /dev/null | perl -pe "s|#define |export\t|; s|\(||g; s|\)||g; s| |=\"|; s|$|\"|; s|\t| |;" >>$temp
+echo set -e >>$temp
+source $temp
+#rm $temp
+printenv | sort
+
+if test "$__VERSION__" \< "4.1"; then
+    OPENMP=
+else
+    OPENMP=-fopenmp
+fi
+
 case $HOSTNAME in
-    testbed*|ygg*|RESG8508* )
-        OPENMP=
-	PTMALLOC3=
-        WERROR=-Werror
-	;;
-    Deimos|*VDI* )
-        OPENMP=
-        WERROR=
-#	ADD_CFLAGS=-DDISTRIBUTION
-	ADD_CFLAGS=
-	;;
-    * )
-        OPENMP=-fopenmp
+    Levi-Montalcini* )
 	PTMALLOC3="-lptmalloc3 -lpthread"
         WERROR=-Werror
+        ;;
+    * )
+	PTMALLOC3=
+        WERROR=
 	;;
 esac
 
