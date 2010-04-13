@@ -98,6 +98,9 @@ if ($config->isConfigured ("EstimateFrequency")) {
 	and $config->addDirective ("FrequencyFile", "freq.dat");
 }
 
+($config->isConfigured ("GenerateKeywords"))
+    and generate_keywords ($config);
+
 ($config->isConfigured ("SkipAnalysis"))
     and exit (0);
 
@@ -108,6 +111,72 @@ if ($config->isConfigured ("Epistasis")) {
 }
 
 exit (0);
+
+sub generate_keywords
+{
+    my ($config) = @_;
+    my $href = {};
+    my $dataset;
+
+    $$href{PedigreeFile} = $ {$config->isConfigured ("PedigreeFile")}[0];
+    $$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
+    $$href{MapFile} = $ {$config->isConfigured ("MapFile")}[0];
+    $$href{FrequencyFile} = $ {$config->isConfigured ("FrequencyFile")}[0];
+    $dataset = KelvinDataset->new ($href)
+	or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
+
+    # First do the configuration directives...
+    print ($config->isConfigured ("SexLinked") ? "XC\n" : "AUC\n");
+    if ($dataset->microsats) {
+	print (($dataset->snps) ? "MXM\n" : "SNP\n");
+    } else {
+	print "MSAT\n";
+    }
+    print "How do we determine homogeneity VS heterogeneity?\n";
+    if ($config->isConfigured ("MarkerToMarker")) {
+	print "M2M\n";
+	if (($ {$config->isConfigured ("MarkerToMarker")}[0]) eq "adjacent") {
+	    print "ADJM\n";
+	} else {
+	    print "ALLM\n";
+	}
+    } else {
+	print "T2M\n";
+    }
+    if ($config->isConfigured ("QT")) {
+	print "QT\n";
+    } elsif ($config->isConfigured ("QTT")) {
+	print "QTT\n";
+    } else {
+	print "DT\n";
+    }
+#    &&&
+    
+    # Read first pedigree
+#    defined ($ped = $dataset->readFamily) 
+#	or error ("readFamily failed, $KelvinDataset::errstr");
+#    
+#    if (($pedsize = scalar (@$ped)) == 1) {
+#	($aref = $config->isConfigured ("TraitPrevalence"))
+#	    or error ("EstimateFrequency with cases and controls requires TraitPrevalence");
+#	$prevalence = $$aref[0];
+#	    and error ("EstimateFrequency is incompatible with QT/QTT and cases and controls.");
+#	$traits = $dataset->traitOrder;
+#	(scalar (@$traits) == 0)
+#	    and error ("Dataset contains no affection status (trait). EstimateFrequency requires a dichotomous trait.");
+#	$trait = $$traits[0];
+#	(scalar (@$traits) > 1)
+#	    and warn ("Using trait '$trait' to distinguish cases from controls for allele frequency estimation.");
+#
+#    } elsif ($pedsize == 3) {
+#	($config->isConfigured ("TraitPrevalence"))
+#	    and error ("EstimateFrequency with trios is incompatible with TraitPrevalence");
+#    } else {
+#	error ("EstimateFrequency is only legal with cases and controls or trios");
+#    }
+
+
+}
 
 sub estimate_frequency
 {
@@ -171,7 +240,7 @@ sub estimate_frequency
 		or error ("Pedigree ". $$ped[0]->pedid. " is a different size than preceding pedigrees. EstimateFrequency requires that all pedigrees be the same size.");
 
 	    # FIXME: we should be checking for the Phenocodes directive
-	    # instead of assuming (0, 1, 2) for DT.
+	    # instead of assuming (0, 1, 2) forDT.
 	    if (($pheno = $$ped[0]->getTrait ($trait)) == 1) {
 		record_case_control ($$ped[0], \%controls, $xchr, $markers);
 		# call sub with \%controls
@@ -913,6 +982,7 @@ BEGIN {
 	#   locusread: boolean, has a locus file been read?
 	#   freqset: boolean, have frequencies been explicitly set?
 	#   microsats: dataset contains microsatellites?
+	#   snps: dataset contains snps?
 	#   consistant: loci data is consistant with source files
 	#   individualcache: cache for KelvinIndividuals when reading families
 	
@@ -923,6 +993,7 @@ BEGIN {
 	@$self{qw/pedfile pedfh pedlineno/} = (undef, undef, 0);
 	@$self{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
 	@$self{qw/consistant microsats individualcache/} = (1, 0, undef);
+	@$self{qw/consistant snps individualcache/} = (1, 0, undef);
 	
 	if (! defined ($arg)) {
 	    $errstr = "missing argument";
@@ -1042,11 +1113,16 @@ BEGIN {
 
 	} elsif ($$self{freqread} || $$self{freqset}) {
 	    $$new{microsats} = 0;
+	    $$new{snps} = 0;
 	    map {
 		$href = $$self{markers}{$_}{alleles};
 		@{$$new{markers}{$_}{alleles}}{keys (%$href)} = 
 		    @{$$self{markers}{$_}{alleles}}{keys (%$href)};
-		(scalar (keys (%$href)) > 2) and $$new{microsats} = 1;
+		if (scalar (keys (%$href)) > 2) {
+		    $$new{microsats} = 1;
+		} else {
+		    $$new{snps} = 1;
+		}
 	    } keys (%{$$self{markers}});
 	    
 	}
@@ -1178,6 +1254,7 @@ BEGIN {
 	}
 
 	$$self{microsats} = 0;
+	$$self{snps} = 0;
 	while ($line = $fh->getline (\$lineno)) {
 	    if ($line =~ /^M\s+(\S+)/) {
 		if ($marker) {
@@ -1185,7 +1262,11 @@ BEGIN {
 			$errstr = "$$self{freqfile}, line ". ($lineno-1) .": $errstr";
 			return (undef);
 		    }
-		    (scalar (keys (%{$markers{$marker}{alleles}})) > 2) and $$self{microsats} = 1;
+		    if (scalar (keys (%{$markers{$marker}{alleles}})) > 2) {
+			$$self{microsats} = 1;
+		    } else {
+			$$self{snps} = 1;
+		    }
 		}
 		push (@maporder, $marker = $1);
 		if ($$self{mapread} && ! exists ($$self{markers}{$marker})) {
@@ -1227,7 +1308,11 @@ BEGIN {
 		$errstr = "$$self{freqfile}, line $lineno: $errstr";
 		return (undef);
 	    }
-	    (scalar (keys (%{$markers{$marker}{alleles}})) > 2) and $$self{microsats} = 1;
+	    if (scalar (keys (%{$markers{$marker}{alleles}})) > 2) {
+		$$self{microsats} = 1;
+	    } else {
+		$$self{snps} = 1;
+	    }
 	} else { 
 	    $errstr = "$$self{freqfile} contains no markers";
 	    return (undef);
@@ -1843,6 +1928,13 @@ BEGIN {
 
 	return ($$self{microsats});
     }
+
+    sub snps
+    {
+	my ($self) = @_;
+
+	return ($$self{snps});
+    }
 }
 
 
@@ -1865,6 +1957,8 @@ BEGIN {
     #   regex: A Perl regular expression that the directive argument must
     #     match. Note that the regex must be flexible enough to match 
     #     complex arguments, like comma-separated lists, optional keywords, etc.
+    #   parser: A function that will parse parameters or set defaults for this
+    #     particular directive.
 
     my %directives = (
 		      pedigreefile => {canon => 'PedigreeFile',
@@ -1906,7 +2000,11 @@ BEGIN {
 					     regex => '(\S+)'},
 
 		      multipoint => {canon => 'MultiPoint'},
-		      markertomarker => {canon => 'MarkerToMarker'},
+		      markertomarker => {canon => 'MarkerToMarker',
+					 singlearg => 'true',
+					 default => 'adjacent',
+					 regex => '(\S+)',
+				         parser => &parseMarkerToMarker},
 		      ld => {canon => 'LD'},
 		      epistasis => {canon => 'Epistasis',
 				    local => 'true',
@@ -1945,6 +2043,8 @@ BEGIN {
 		      skippedcount => {canon => 'SkipPedCount',
 				     local => 'true'},
 		      skipanalysis => {canon => 'SkipAnalysis',
+				       local => 'true'},
+		      generatekeywords => {canon => 'GenerateKeywords',
 				       local => 'true'},
 		      estimatefrequency => {canon => 'EstimateFrequency',
 					    local => 'true'},
