@@ -9,7 +9,8 @@ Near future Additions:
 1. Write out lods.out file
 2. Allele frequency estimation - MLE
 3. Lander green algorithm
-
+4. For marker to marker analysis
+   allow all pair wise within a window sized based on BP, cM, number of markers
 
 ************************
 Long shots (low priority):
