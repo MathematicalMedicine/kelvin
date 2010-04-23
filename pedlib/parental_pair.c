@@ -48,7 +48,7 @@ construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
   int i;
   int status;
   Person *pParents[2];
-  int origLocus = locusList->pLocusIndex[locus];
+  int origLocus = analysisLocusList->pLocusIndex[locus];
   int numPair;
   int adjust[2];
   int ourIndex[2];
@@ -159,7 +159,7 @@ fill_parental_pair (int locus, int *numPair, NuclearFamily * pNucFam,
   int genoLen;
   int i, j;
   Genotype *pChildGeno;
-  int origLocus = locusList->pLocusIndex[locus];
+  int origLocus = analysisLocusList->pLocusIndex[locus];
 
   pPair = &parentalPairSpace.ppParentalPair[locus][*numPair];
   pPair->pGenotype[DAD] = pDad;
@@ -218,7 +218,7 @@ shadow_genotype_elimnation (Genotype * pGenotype1, Genotype * pGenotype2,
   int numChildren = pNucFam->numChildren;
   int i;
   Genotype *pGenotype;
-  int origLocus = locusList->pLocusIndex[locus];
+  int origLocus = analysisLocusList->pLocusIndex[locus];
 
   /* check each child's genotype list against the parental pair */
   for (i = 0; i < numChildren; i++) {

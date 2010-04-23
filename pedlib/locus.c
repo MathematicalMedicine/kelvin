@@ -36,10 +36,10 @@ char *locusVersion = "$Id$";
 #include "../utils/utils.h"		/* for logging */
 #include "../utils/polynomial.h"
 
-/* global variables */
+/* Global variables */
 Map map;
 LocusList originalLocusList;
-SubLocusList *locusList;
+SubLocusList *analysisLocusList;
 
 /* Formerly declared in kelvinGlobals, then localized into
  * {integration,interation}Locals, then moved here (and effectively
@@ -1712,6 +1712,11 @@ free_multi_locus_genotype_storage (Pedigree * pPedigree)
   return 0;
 }
 
+/*
+  references global analysisLocusList
+
+*/
+
 int
 initialize_multi_locus_genotype (Pedigree * pPedigree)
 {
@@ -1728,9 +1733,9 @@ initialize_multi_locus_genotype (Pedigree * pPedigree)
     pPerson->touchedFlag = 0;
     pPerson->numTmpLikelihood = 0;
     size = 1;
-    for (locus = locusList->numLocus - 1; locus >= 0; locus--) {
-      origLocus = locusList->pLocusIndex[locus];
-      if (locus == locusList->numLocus - 1)
+    for (locus = analysisLocusList->numLocus - 1; locus >= 0; locus--) {
+      origLocus = analysisLocusList->pLocusIndex[locus];
+      if (locus == analysisLocusList->numLocus - 1)
 	pPerson->multiLocusAdjust[locus] = 1;
       else
 	pPerson->multiLocusAdjust[locus] =
@@ -2882,7 +2887,11 @@ populate_saved_genotype_link (PedigreeSet * pSet)
 /* likelihood on pedigrees with loops are calculated with fixing loop breaker
  * genotype vector one at a time, followed by genotype elimination on the entire
  * pedigree. so after each calculation, the genotype list
- * needs to be restored for everyone from the saved master list */
+ * needs to be restored for everyone from the saved master list
+
+ references global analysisLocusList
+
+*/
 void
 restore_pedigree_genotype_link_from_saved (Pedigree * pPed)
 {
@@ -2891,8 +2900,8 @@ restore_pedigree_genotype_link_from_saved (Pedigree * pPed)
   Genotype *pGeno;
   Person *pPerson;
 
-  for (j = 0; j < locusList->numLocus; j++) {
-    origLocus = locusList->pLocusIndex[j];
+  for (j = 0; j < analysisLocusList->numLocus; j++) {
+    origLocus = analysisLocusList->pLocusIndex[j];
 
     for (i = 0; i < pPed->numPerson; i++) {
       pPerson = pPed->ppPersonList[i];

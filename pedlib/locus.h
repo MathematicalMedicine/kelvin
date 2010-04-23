@@ -488,8 +488,8 @@ extern LocusList traitList;
 /* a master locus list with both marker and trait loci in */
 extern LocusList originalLocusList;
 
-/* the analysis locus list - this will be different than the originalLocusList in MP */
-extern SubLocusList *locusList;
+/* The analysis locus list - this will be different than the originalLocusList in MP */
+extern SubLocusList *analysisLocusList;
 extern SubLocusList savedLocusList;
 
 /* for MP null hypothesis */

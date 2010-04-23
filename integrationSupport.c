@@ -232,10 +232,10 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   if (modelOptions->imprintingFlag)
     pen_size = 4;
 
-  int origLocus = locusList->pLocusIndex[0];
+  int origLocus = analysisLocusList->pLocusIndex[0];
 
-  if (locusList->numLocus > 1)
-    origLocus = locusList->pLocusIndex[1];
+  if (analysisLocusList->numLocus > 1)
+    origLocus = analysisLocusList->pLocusIndex[1];
 
   gfreq = x[0];
   if (fpIR != NULL)
@@ -337,7 +337,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     update_penetrance (&pedigreeSet, traitLocus);
 
   /* for trait likelihood */
-  locusList = &traitLocusList;
+  analysisLocusList = &traitLocusList;
   xmissionMatrix = traitMatrix;
 
   /* compute the null likelihood with   */
@@ -397,7 +397,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   );
 
   /* This is for alternative likelihood */
-  locusList = &savedLocusList;
+  analysisLocusList = &savedLocusList;
   xmissionMatrix = altMatrix;
   if (modelOptions->polynomial == TRUE);
   else
@@ -615,13 +615,13 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 
 
 
-  int origLocus = locusList->pLocusIndex[0];
+  int origLocus = analysisLocusList->pLocusIndex[0];
 
   if (modelOptions->imprintingFlag)
     pen_size = 4;
 
-  if (locusList->numLocus > 1)
-    origLocus = locusList->pLocusIndex[1];
+  if (analysisLocusList->numLocus > 1)
+    origLocus = analysisLocusList->pLocusIndex[1];
 
   //fprintf(stderr,"in compute hlod x %G %G %G %G\n", x[0],x[1],x[2],x[3]);
   gfreq = x[0];
@@ -670,7 +670,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
     update_locus (&pedigreeSet, traitLocus);
 
   /* for trait likelihood */
-  locusList = &traitLocusList;
+  analysisLocusList = &traitLocusList;
   xmissionMatrix = traitMatrix;
 
   // fprintf(stderr, "Null likelihood computation is starting for %d pedigrees \n",pedigreeSet.numPedigree);
@@ -737,7 +737,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   );
 
   /* This is for alternative likelihood */
-  locusList = &savedLocusList;
+  analysisLocusList = &savedLocusList;
   xmissionMatrix = altMatrix;
   int k;
   char markerNo[8];
@@ -1042,8 +1042,8 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   }
 
   for (k = 0; k < 3; k++) {
-    locusList->pNextLocusDistance[k][0] = 0.5;
-    locusList->pPrevLocusDistance[k][1] = 0.5;
+    analysisLocusList->pNextLocusDistance[k][0] = 0.5;
+    analysisLocusList->pPrevLocusDistance[k][1] = 0.5;
   }
 
   if (modelOptions->polynomial == TRUE);
@@ -1086,12 +1086,12 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
 
   if (modelOptions->mapFlag == SA) {
     for (k = 0; k < 3; k++) {
-      locusList->pNextLocusDistance[k][0] = thetaM;
-      locusList->pPrevLocusDistance[k][1] = thetaF;
+      analysisLocusList->pNextLocusDistance[k][0] = thetaM;
+      analysisLocusList->pPrevLocusDistance[k][1] = thetaF;
     }
   } else {
-    locusList->pNextLocusDistance[MAP_POS_MALE][0] = locusList->pPrevLocusDistance[MAP_POS_MALE][1] = thetaM;
-    locusList->pNextLocusDistance[MAP_POS_FEMALE][0] = locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = thetaF;
+    analysisLocusList->pNextLocusDistance[MAP_POS_MALE][0] = analysisLocusList->pPrevLocusDistance[MAP_POS_MALE][1] = thetaM;
+    analysisLocusList->pNextLocusDistance[MAP_POS_FEMALE][0] = analysisLocusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = thetaF;
   }
 
   if (modelOptions->polynomial == TRUE);
@@ -1408,8 +1408,8 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
     ASSERT (pLambdaCell->impossibleFlag[dprime0Idx] == 0, "Haplotype frequency combination impossible at LE. Exiting!\n");
   }
   for (k = 0; k < 3; k++) {
-    locusList->pNextLocusDistance[k][0] = 0.5;
-    locusList->pPrevLocusDistance[k][1] = 0.5;
+    analysisLocusList->pNextLocusDistance[k][0] = 0.5;
+    analysisLocusList->pPrevLocusDistance[k][1] = 0.5;
   }
   if (modelOptions->polynomial == TRUE);
   else
@@ -1461,12 +1461,12 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
 
   if (modelOptions->mapFlag == SA) {
     for (k = 0; k < 3; k++) {
-      locusList->pNextLocusDistance[k][0] = thetaM;
-      locusList->pPrevLocusDistance[k][1] = thetaF;
+      analysisLocusList->pNextLocusDistance[k][0] = thetaM;
+      analysisLocusList->pPrevLocusDistance[k][1] = thetaF;
     }
   } else {
-    locusList->pNextLocusDistance[MAP_POS_MALE][0] = locusList->pPrevLocusDistance[MAP_POS_MALE][1] = thetaM;
-    locusList->pNextLocusDistance[MAP_POS_FEMALE][0] = locusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = thetaF;
+    analysisLocusList->pNextLocusDistance[MAP_POS_MALE][0] = analysisLocusList->pPrevLocusDistance[MAP_POS_MALE][1] = thetaM;
+    analysisLocusList->pNextLocusDistance[MAP_POS_FEMALE][0] = analysisLocusList->pPrevLocusDistance[MAP_POS_FEMALE][1] = thetaF;
   }
 
   if (modelOptions->polynomial == TRUE);
@@ -1835,7 +1835,7 @@ void integrateMain ()
       pLDLoci->ppDPrime[0][0] = 0;
     }
 
-    locusList = &savedLocusList;
+    analysisLocusList = &savedLocusList;
     savedLocusList.numLocus = 2;
     MALCHOKE (savedLocusList.pLocusIndex, sizeof (int) * savedLocusList.numLocus, int *);
 
@@ -2328,7 +2328,7 @@ void integrateMain ()
       traitLocusList.pNextLocusDistance[k][0] = -1;
     }
     /* populate the trait xmission matrix */
-    locusList = &traitLocusList;
+    analysisLocusList = &traitLocusList;
     xmissionMatrix = traitMatrix;
     statusLocal = populate_xmission_matrix (traitMatrix, 1, initialProbAddr,    /* probability */
         initialProbAddr2,       /* probability */
@@ -2342,7 +2342,7 @@ void integrateMain ()
     }
 
     /* for trait likelihood */
-    locusList = &traitLocusList;
+    analysisLocusList = &traitLocusList;
     xmissionMatrix = traitMatrix;
     if (pTrait->type == DICHOTOMOUS) {
 
@@ -2449,26 +2449,26 @@ void integrateMain ()
       pTraitLocus->mapPosition[1] = traitPos;
       pTraitLocus->mapPosition[2] = traitPos;
       /* initialize the locusList */
-      locusList = &savedLocusList;
-      memset (locusList->pLocusIndex, 0, sizeof (int) * locusList->maxNumLocus);
+      analysisLocusList = &savedLocusList;
+      memset (analysisLocusList->pLocusIndex, 0, sizeof (int) * analysisLocusList->maxNumLocus);
       for (k = 0; k < 3; k++) {
-        memset (&locusList->pPrevLocusDistance[k][0], 0, sizeof (double) * locusList->maxNumLocus);
-        memset (&locusList->pNextLocusDistance[k][0], 0, sizeof (double) * locusList->maxNumLocus);
+        memset (&analysisLocusList->pPrevLocusDistance[k][0], 0, sizeof (double) * analysisLocusList->maxNumLocus);
+        memset (&analysisLocusList->pNextLocusDistance[k][0], 0, sizeof (double) * analysisLocusList->maxNumLocus);
       }
-      locusList->numLocus = 1;
-      locusList->pLocusIndex[0] = traitLocus;
+      analysisLocusList->numLocus = 1;
+      analysisLocusList->pLocusIndex[0] = traitLocus;
       for (k = 0; k < 3; k++) {
-        locusList->pPrevLocusDistance[k][0] = -1;
-        locusList->pNextLocusDistance[k][0] = -1;
+        analysisLocusList->pPrevLocusDistance[k][0] = -1;
+        analysisLocusList->pNextLocusDistance[k][0] = -1;
       }
       /* select markers to be used for the multipoint analysis */
-      add_markers_to_locuslist (locusList, modelType->numMarkers, &leftMarker, 0, originalLocusList.numLocus - 1, traitPos, 0);
+      add_markers_to_locuslist (analysisLocusList, modelType->numMarkers, &leftMarker, 0, originalLocusList.numLocus - 1, traitPos, 0);
 
       /* store the markers used */
       CALCHOKE (mp_result[posIdx].pMarkers, (size_t) modelType->numMarkers, sizeof (int), int *);
       k = 0;    /* marker index */
-      for (i = 0; i < locusList->numLocus; i++) {
-        j = locusList->pLocusIndex[i];
+      for (i = 0; i < analysisLocusList->numLocus; i++) {
+        j = analysisLocusList->pLocusIndex[i];
         if (originalLocusList.ppLocusList[j]->locusType == LOCUS_TYPE_MARKER) {
           mp_result[posIdx].pMarkers[k] = j;
           k++;
@@ -2477,8 +2477,8 @@ void integrateMain ()
           traitIndex = i;
         }
       }
-      locusList->traitLocusIndex = traitIndex;
-      locusList->traitOrigLocus = traitLocus;
+      analysisLocusList->traitLocusIndex = traitIndex;
+      analysisLocusList->traitOrigLocus = traitLocus;
       markerSetChanged = FALSE;
       if (prevFirstMarker != mp_result[posIdx].pMarkers[0]
           || prevLastMarker != mp_result[posIdx].pMarkers[modelType->numMarkers - 1]) {
@@ -2502,7 +2502,7 @@ void integrateMain ()
         }       /* end of loop over the markers to set up locus list */
 
         /* calculate likelihood for the marker set */
-        locusList = &markerLocusList;
+        analysisLocusList = &markerLocusList;
         xmissionMatrix = markerMatrix;
         if (modelOptions->polynomial == TRUE) {
           pedigreeSetPolynomialClearance (&pedigreeSet);
@@ -2552,12 +2552,12 @@ void integrateMain ()
         locusListChanged = FALSE;
       prevTraitInd = mp_result[posIdx].trait;
 
-      locusList = &savedLocusList;
+      analysisLocusList = &savedLocusList;
       xmissionMatrix = altMatrix;
       /* interpolate trait postion for sex specific analysis */
       if (modelOptions->mapFlag == SS) {
         if (traitIndex == 0) {
-          marker1Pos = get_map_position (locusList->pLocusIndex[1]);
+          marker1Pos = get_map_position (analysisLocusList->pLocusIndex[1]);
           /* trait is the first one in the list */
           if (traitPos < ERROR_MARGIN && traitPos > -ERROR_MARGIN) {
             /* trait is at 0 */
@@ -2570,12 +2570,12 @@ void integrateMain ()
           }
           /* update the inter locus distance - sex averaged already done before */
           for (k = 1; k < 3; k++) {
-            locusList->pNextLocusDistance[k][0] = locusList->pPrevLocusDistance[k][1] = cm_to_recombination_fraction (marker1Pos[k] - pTraitLocus->mapPosition[k], map.mapFunction);
+            analysisLocusList->pNextLocusDistance[k][0] = analysisLocusList->pPrevLocusDistance[k][1] = cm_to_recombination_fraction (marker1Pos[k] - pTraitLocus->mapPosition[k], map.mapFunction);
           }
         } else if (traitIndex == modelType->numMarkers) {
           /* trait is the last one in the list */
-          marker1Pos = get_map_position (locusList->pLocusIndex[modelType->numMarkers - 2]);
-          marker2Pos = get_map_position (locusList->pLocusIndex[modelType->numMarkers - 1]);
+          marker1Pos = get_map_position (analysisLocusList->pLocusIndex[modelType->numMarkers - 2]);
+          marker2Pos = get_map_position (analysisLocusList->pLocusIndex[modelType->numMarkers - 1]);
           /* get the relative position on the sex average map */
           dist = marker2Pos[0] - marker1Pos[0];
           if (dist > ERROR_MARGIN) {
@@ -2589,12 +2589,12 @@ void integrateMain ()
 
           /* update the inter locus distance - sex averaged already done before */
           for (k = 1; k <= 2; k++) {
-            locusList->pNextLocusDistance[k][traitIndex - 1] = locusList->pPrevLocusDistance[k][traitIndex] = cm_to_recombination_fraction (pTraitLocus->mapPosition[k] - marker2Pos[k], map.mapFunction);
+            analysisLocusList->pNextLocusDistance[k][traitIndex - 1] = analysisLocusList->pPrevLocusDistance[k][traitIndex] = cm_to_recombination_fraction (pTraitLocus->mapPosition[k] - marker2Pos[k], map.mapFunction);
           }
         } else {
           /* trait is in between two markers */
-          marker1Pos = get_map_position (locusList->pLocusIndex[traitIndex - 1]);
-          marker2Pos = get_map_position (locusList->pLocusIndex[traitIndex + 1]);
+          marker1Pos = get_map_position (analysisLocusList->pLocusIndex[traitIndex - 1]);
+          marker2Pos = get_map_position (analysisLocusList->pLocusIndex[traitIndex + 1]);
           /* get the relative position on the sex average map */
           dist = marker2Pos[0] - marker1Pos[0];
           if (dist > ERROR_MARGIN) {
@@ -2607,8 +2607,8 @@ void integrateMain ()
           }
           /* update the inter locus distance - sex averaged already done before */
           for (k = 1; k < 3; k++) {
-            locusList->pNextLocusDistance[k][traitIndex - 1] = locusList->pPrevLocusDistance[k][traitIndex] = cm_to_recombination_fraction (pTraitLocus->mapPosition[k] - marker1Pos[k], map.mapFunction);
-            locusList->pNextLocusDistance[k][traitIndex] = locusList->pPrevLocusDistance[k][traitIndex + 1] = cm_to_recombination_fraction (marker2Pos[k] - pTraitLocus->mapPosition[k], map.mapFunction);
+            analysisLocusList->pNextLocusDistance[k][traitIndex - 1] = analysisLocusList->pPrevLocusDistance[k][traitIndex] = cm_to_recombination_fraction (pTraitLocus->mapPosition[k] - marker1Pos[k], map.mapFunction);
+            analysisLocusList->pNextLocusDistance[k][traitIndex] = analysisLocusList->pPrevLocusDistance[k][traitIndex + 1] = cm_to_recombination_fraction (marker2Pos[k] - pTraitLocus->mapPosition[k], map.mapFunction);
 
           }
         }
