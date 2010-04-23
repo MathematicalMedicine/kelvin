@@ -203,27 +203,10 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"Truncate", set_qt_truncation, NULL},
 				{"PhenoCodes", set_affectionStatus, NULL},
 				{"SurfacesPath", set_resultsprefix, NULL},
-				/*{"condfile", set_condrun, &staticModelOptions.condFile},*/
+				// {"condfile", set_condrun, &staticModelOptions.condFile},
 				{"ProgressDelaySeconds", set_int, &swProgressDelaySeconds},
 				{"ProgressLevel", set_int, &swProgressLevel}
 };
-
-
-#if 0
-main (int argc, char *argv[])
-{
-  if (argc == 1)
-    ERROR ("%s: no configuration file specified", argv[0]);
-  initializeDefaults ();
-  my_readConfigFile (argv[1]);
-  if (argc > 2) {
-    parseCommandLine (argc-2, &argv[2]);
-  }
-  dumpmodelOptions (&staticModelOptions);
-  validateConfig ();
-  finishConfig ();
-}
-#endif 
 
 
 void initializeDefaults ()
@@ -1652,7 +1635,7 @@ void dumpmodelOptions (ModelOptions *mo)
   printf ("%18s : %s\n", "datafile", mo->datafile);
   printf ("%18s : %s\n", "avghetfile", mo->avghetfile);
   printf ("%18s : %s\n", "pplfile", mo->pplfile);
-  printf ("%18s : %s\n", "condFile", mo->condFile);
+  //  printf ("%18s : %s\n", "condFile", mo->condFile);
   printf ("%18s : %s\n", "ccfile", mo->ccfile);
   printf ("%18s : %s\n", "modfile", mo->modfile);
   printf ("%18s : %s\n", "maxmodelfile", mo->maxmodelfile);

@@ -34,7 +34,7 @@ char *likelihoodVersion = "$Id$";
 
 #include <dlfcn.h>
 
-extern FILE *fpCond;
+//extern FILE *fpCond;
 extern struct polynomial **variableList;
 
 char partialPolynomialFunctionName[MAX_PFN_LEN + 1];
@@ -723,12 +723,12 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
     /* save the likelihood in the pedigree structure */
     pPedigree->likelihood = likelihood;
     DIAG (LIKELIHOOD, 1, {fprintf (stderr, "log Likelihood for pedigree %s is: %e\n", pPedigree->sPedigreeID, log10 (likelihood));});
-    if ((modelOptions->loopCondRun == 1 || modelOptions->conditionalRun == 1)
-        && modelOptions->polynomial != TRUE) {
-      for (k = 0; k < condIdx; k++) {
-        fprintf (fpCond, "%s %s %d %s %s %e %5.1f%%\n", pCondSet[k].pPedigreeID, pCondSet[k].pProbandID, (int) pCondSet[k].trait, pCondSet[k].pAllele1, pCondSet[k].pAllele2, pCondSet[k].condL, pCondSet[k].condL / sumCondL * 100);
-      }
-    }
+    //    if ((modelOptions->loopCondRun == 1 || modelOptions->conditionalRun == 1)
+    //        && modelOptions->polynomial != TRUE) {
+      //      for (k = 0; k < condIdx; k++) {
+      //        fprintf (fpCond, "%s %s %d %s %s %e %5.1f%%\n", pCondSet[k].pPedigreeID, pCondSet[k].pProbandID, (int) pCondSet[k].trait, pCondSet[k].pAllele1, pCondSet[k].pAllele2, pCondSet[k].condL, pCondSet[k].condL / sumCondL * 100);
+      //      }
+    //    }
   }
 
   return 0;

@@ -397,10 +397,10 @@ void kelvinInit (int argc, char *argv[])
 
   SUBSTEP(0, "Opening cross-loop output files");
 
-  if (modelOptions->conditionalRun == 1 || modelOptions->loopCondRun == 1) {
-    fpCond = fopen (modelOptions->condFile, "w");
-    ASSERT (fpCond != NULL, "Error in opening file %s for write.\n", modelOptions->condFile);
-  }
+//  if (modelOptions->conditionalRun == 1 || modelOptions->loopCondRun == 1) {
+//    fpCond = fopen (modelOptions->condFile, "w");
+//    ASSERT (fpCond != NULL, "Error in opening file %s for write.\n", modelOptions->condFile);
+//  }
 
   if (modelOptions->markerAnalysis == FALSE || modelOptions->forceAvghetFile == TRUE) {
     fpHet = fopen (modelOptions->avghetfile, "w");
