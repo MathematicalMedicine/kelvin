@@ -1,4 +1,10 @@
 **************
+Bugs:
+1. MarkerToMarker analyses crash when dataset contains no trait
+2. FixedGrid analyses should exit when constraints leave no models
+3. SexSpecific analyses should require male and female positions in map file.
+
+**************
 Current Issues:
 1. Memory demand under polynomial mode
 2. Multiple D' for dKelvin
@@ -11,6 +17,7 @@ Near future Additions:
 3. Lander green algorithm
 4. For marker to marker analysis
    allow all pair wise within a window sized based on BP, cM, number of markers
+5. Loopbreaker and proband selection for makeped replacement
 
 ************************
 Long shots (low priority):
