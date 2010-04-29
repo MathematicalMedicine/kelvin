@@ -4,12 +4,6 @@ Bugs:
 2. FixedGrid analyses should exit when constraints leave no models
 3. SexSpecific analyses should require male and female positions in map file.
 
-**************
-Current Issues:
-1. Memory demand under polynomial mode
-2. Multiple D' for dKelvin
-3. QT t distribution parameters
-
 *********************
 Near future Additions:
 1. Write out lods.out file
@@ -17,12 +11,19 @@ Near future Additions:
 3. Lander green algorithm
 4. For marker to marker analysis
    allow all pair wise within a window sized based on BP, cM, number of markers
-5. Loopbreaker and proband selection for makeped replacement
+5. In post-makeped pedigree files, individuals with the proband column -1 are probands and also loopbreaker. Currently Kelvin doesn't handle that 
+6. Currently when there are loopbreakers, Kelvin demands post-makeped ped
+   file. We could implement in such way that default loopbreakers are selected
+   based on pre-makeped, or users can input loopbreaker file in conjunction
+   with pre-makeped file
+   
 
 ************************
 Long shots (low priority):
-1. covariates
-2. allow >2 alleles for disease locus
-3. allow >1 disease loci
-4. sex specific LD for TP
+. Memory demand under polynomial mode
+. Multiple D' for dKelvin
+. covariates
+. allow >2 alleles for disease locus
+. allow >1 disease loci
+. sex specific LD for TP
 
