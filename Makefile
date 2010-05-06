@@ -46,6 +46,9 @@ USE_GSL := yes
 ## Enable use of Hoard. Don't forget to set LIBDIR (above) accordingly.
 # USE_HOARD := yes
 
+## Enable use of MySQL database for HLOD storage/retrieval/distributed processing.
+# USE_STUDYDB := yes
+
 ## Beginning of Kelvin-specific options
 CFLAGS :=
 
@@ -161,6 +164,11 @@ endif
 #CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
 #CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13, no OpenMP
 
+ifeq ($(strip $(USE_STUDYDB)), yes)
+  CFLAGS += -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql
+  LDFLAGS += -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
+endif
+
 LDFLAGS += ${ADD_LDFLAGS}
 export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN KELVIN_SCRIPT PEDCOUNT_SCRIPT SEQUPDATE_BINARY
 
@@ -259,14 +267,20 @@ libs :
 	+make -C utils -f Makefile all
 	+make -C config -f Makefile all
 	+make -C pedlib -f Makefile all
+ifeq ($(strip $(USE_STUDYDB)), yes)
+	+make -C database -f Makefile all
+endif
 
 .PHONY : clean
 clean :
 	make -C pedlib -f Makefile clean
 	make -C config -f Makefile clean
 	make -C utils -f Makefile clean
+ifeq ($(strip $(USE_STUDYDB)), yes)
+	make -C database -f Makefile clean
+endif
 	make -C seq_update -f Makefile clean
-	rm -f $(KOBJS) $(OBJS) kelvin-$(VERSION) seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/libped.a
+	rm -f $(KOBJS) $(OBJS) kelvin-$(VERSION) seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/klvndb.a lib/libped.a
 	make -C test-suite -f Makefile clean
 
 .PHONY : test-USE_DL

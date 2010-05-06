@@ -11,6 +11,10 @@
 #include "../utils/pageManagement.h"
 #include "../pedlib/pedlib.h"
 
+#ifdef STUDYDB
+  #include "../database/StudyDB.h"
+#endif
+
 #define BUFFSIZE 256
 
 #define fault(...) \
@@ -103,6 +107,9 @@ typedef struct {
 ModelOptions *modelOptions; ///< All configuration options for the working model
 ModelRange *modelRange; ///< All expanded parameter ranges for the working model
 ModelType *modelType; ///< All typing information for the working model
+#ifdef STUDYDB
+struct StudyDB studyDB; ///< All parameters relating to database access for storing studies
+#endif
 /*@}*/
 
 /* Module globals */
@@ -153,6 +160,7 @@ int set_qt_standarddev (char **toks, int numtoks, void *unused);
 int set_qt_threshold (char **toks, int numtoks, void *unused);
 int set_qt_truncation (char **toks, int numtoks, void *unused);
 int set_affectionStatus (char **toks, int numtoks, void *unused);
+int set_study_parameters (char **toks, int numtoks, void *unused);
 int set_resultsprefix (char **toks, int numtoks, void *unused);
 
 
@@ -205,7 +213,8 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"SurfacesPath", set_resultsprefix, NULL},
 				// {"condfile", set_condrun, &staticModelOptions.condFile},
 				{"ProgressDelaySeconds", set_int, &swProgressDelaySeconds},
-				{"ProgressLevel", set_int, &swProgressLevel}
+				{"ProgressLevel", set_int, &swProgressLevel},
+				{"Study", set_study_parameters, NULL}
 };
 
 
@@ -1331,6 +1340,29 @@ int set_qt_truncation (char **toks, int numtoks, void *unused)
   return (0);
 }
 
+#ifdef STUDYDB
+int set_study_parameters (char **toks, int numtoks, void *unused)
+{
+  char *ptr = NULL;
+  // Want studyId, hostname, dbName, username, password
+  if (numtoks != 6)
+    bail ("inappropriate number of arguments to directive '%s'\n", toks[0]);
+  studyDB.studyId = (int) strtol (toks[1], &ptr, 10);
+  if ((toks[1] == ptr) || (*ptr != '\0'))
+    bail ("directive '%s' requires an initial integer argument\n", toks[0]);
+  strncpy (studyDB.hostname, toks[2], sizeof (studyDB.hostname));
+  strncpy (studyDB.dBName, toks[3], sizeof (studyDB.dBName));
+  strncpy (studyDB.username, toks[4], sizeof (studyDB.username));
+  strncpy (studyDB.password, toks[5], sizeof (studyDB.password));
+  return (0);
+}
+#else
+int set_study_parameters (char **toks, int numtoks, void *unused)
+{
+  // Completely ignore it
+  return (0);
+}
+#endif
 
 int set_affectionStatus (char **toks, int numtoks, void *unused)
 {

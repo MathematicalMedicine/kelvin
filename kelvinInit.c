@@ -14,6 +14,12 @@
 #include "kelvinWriteFiles.h"
 #include "utils/pageManagement.h"
 
+#ifdef STUDYDB
+#include "database/StudyDB.h"
+extern struct StudyDB studyDB;
+#include "database/databaseSupport.h"
+#endif
+
 struct swStopwatch *combinedComputeSW,  ///< Combined likelihood compute stopwatch
  *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch
  *overallSW;    ///< Overall stopwatch for the entire run.
@@ -136,6 +142,13 @@ void kelvinInit (int argc, char *argv[])
    */
   DETAIL(0,"Validating configuration");
   validateConfig ();
+
+#ifdef STUDYDB
+
+  DETAIL(0,"Opening study database");
+  initializeDB ();
+
+#endif
 
   /* This fills in defaults for fields that are optional, and also copies the contents
    * of the static Model{Range,Options,Type} structures to their global page-allocated
