@@ -95,6 +95,18 @@ get_nonblank_line (char *pLine, int maxLen, FILE * fp, int *pLineNo)
   return NULL;
 }
 
+char *
+strlower (char *str)
+{
+  int va=0;
+  
+  while (str[va] != '\0') {
+    str[va] = tolower (str[va]);
+    va++;
+  }
+  return (str);
+}
+
 #define BUFF_INCR 512UL
 
 char *
