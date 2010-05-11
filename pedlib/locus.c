@@ -36,6 +36,14 @@ char *locusVersion = "$Id$";
 #include "../utils/utils.h"		/* for logging */
 #include "../utils/polynomial.h"
 
+#define MAP_CHR_COL        1
+#define MAP_NAME_COL       2
+#define MAP_AVGPOS_COL     3
+#define MAP_MALEPOS_COL    4
+#define MAP_FEMALEPOS_COL  5
+#define MAP_BASEPAIR_COL   6
+#define MAP_MINHEADERS ((1 << MAP_CHR_COL) | (1 << MAP_NAME_COL) | (1 << MAP_AVGPOS_COL))
+
 /* Global variables */
 Map map;
 LocusList originalLocusList;
@@ -81,95 +89,131 @@ int
 read_mapfile (char *sMapfileName)
 {
   FILE *fp = NULL;
-  int lineNo = 0;
-  char line[MAX_LINE_LEN];
-  int numRet;
+  int lineNo=0, mapheaders=0, numcols=0, *datacols=NULL, colno;
+  char *token, *p, *endptr, line[MAX_LINE_LEN];
   MapUnit *pMarker;		/* current marker */
   MapUnit *pPrevMarker = NULL;	/* previous marker */
-  char *p;
-  int chr;
-  char sName[MAX_LINE_LEN];
-  double sexAvgPos, malePos, femalePos;
-  int basePairLoc;
 
   fp = fopen (sMapfileName, "r");
   ASSERT (fp != NULL, "Can't open map file %s for read",
-	   sMapfileName);
-  /* default map function is KOSAMBI */
-  map.mapFunction = MAP_FUNCTION_KOSAMBI;
-  /* skip comment and blank lines 
-   *  read in map function indication - required */
+	  sMapfileName);
+  map.mapFunction = -1;
+
+  /* Skip over blank/comment lines, and optionally read a 'mapFunction' line. At the
+   * end of this loop, 'line' should contain the column headers.
+   */
   while (fgets (line, MAX_LINE_LEN, fp)) {
     lineNo++;
     if (is_line_blank_or_comment (line))
       continue;
-    /* assume we either have got our map function spec or we got marker data */
-    p = strtok (line, " =\t");
+    strlower (line);
+    /* Let's have a look at the first word... */
+    token = strtok_r (line, " =\t\n", &p);
     /* ignoring the case */
-    if (p != NULL && !strcasecmp (p, "mapFunction")) {
-      p = strtok (NULL, "\t =");
-      if (p != NULL && (p[0] == 'h' || p[0] == 'H')) {
+    if (token != NULL && strcmp (token, "mapfunction") == 0) {
+      token = strtok_r (NULL, "\t\n =", &p);
+      if (strcasecmp (token, "haldane") == 0) 
 	map.mapFunction = MAP_FUNCTION_HALDANE;
-      } else {
+      else if (strcasecmp (token, "kosambi") == 0) 
 	map.mapFunction = MAP_FUNCTION_KOSAMBI;
-      }
-      /* we can move on to the actual marker section */
+      else
+	ERROR ("illegal mapFunction on line %d of MapFile %s\n", lineNo, sMapfileName);
+      token = NULL;
+    } else
       break;
-    } else if (p != NULL && !strncasecmp (p, "chr", 3)) {
-      /* we get the header line */
-      break;
-    }
   }
-
-  ASSERT (feof (fp) == 0,
-	   "No marker information at all in the map file %s (Total # of Lines=%d)",
-	   sMapfileName, lineNo);
-
+  
+  /* 'token' should already be the first word of the line here... */
+  while (token != NULL) {
+    numcols++;
+    REALCHOKE (datacols, sizeof (int) * numcols, int *);
+    
+    if (strncmp (token, "chromosome", strlen (token)) == 0) {
+      datacols[numcols-1] = MAP_CHR_COL;
+    } else if (strcmp (token, "name") == 0 || strcmp (token, "marker") == 0) {
+      datacols[numcols-1] = MAP_NAME_COL;
+    } else if (strstr (token, "female") != NULL) {
+      datacols[numcols-1] = MAP_FEMALEPOS_COL;
+    } else if (strstr (token, "male") != NULL) {
+      datacols[numcols-1] = MAP_MALEPOS_COL;
+    } else if (strncmp (token, "position", strlen (token)) == 0 || strcmp (token, "cm") == 0) {
+      datacols[numcols-1] = MAP_AVGPOS_COL;
+    } else if (strcmp (token, "kosambi") == 0) {
+      datacols[numcols-1] = MAP_AVGPOS_COL;
+      if (map.mapFunction == MAP_FUNCTION_HALDANE)
+	ERROR ("Column header conflicts with explicit mapFunction in MapFile %s\n", sMapfileName);
+      map.mapFunction = MAP_FUNCTION_KOSAMBI;
+    } else if (strcmp (token, "haldane") == 0) {
+      datacols[numcols-1] = MAP_AVGPOS_COL;
+      if (map.mapFunction == MAP_FUNCTION_KOSAMBI)
+	ERROR ("Column header conflicts with explicit mapFunction in MapFile %s\n", sMapfileName);
+      map.mapFunction = MAP_FUNCTION_HALDANE;
+    } else if (strcmp (token, "basepair") == 0 ||
+	       strncmp (token, "physical", strlen (token)) == 0) {
+      datacols[numcols-1] = MAP_NAME_COL;
+    }
+    if (mapheaders & 1 << datacols[numcols-1])
+      ERROR ("Redundant headers in MapFile %s\n", sMapfileName);
+    mapheaders |= 1 << datacols[numcols-1];
+    token = strtok_r (NULL, " \t\n", &p);
+  }
+  if ((mapheaders & MAP_MINHEADERS) != MAP_MINHEADERS)
+    ERROR ("Missing one or more required headers in MapFile %s\n", sMapfileName);
+  if (map.mapFunction == -1)
+    map.mapFunction = MAP_FUNCTION_KOSAMBI;
+  
   /* read one line for each marker */
   pPrevMarker = NULL;
   while (fgets (line, MAX_LINE_LEN, fp)) {
     lineNo++;
     if (is_line_blank_or_comment (line))
       continue;
-    malePos = -100;
-    femalePos = -100;
-    basePairLoc = -1;
-    numRet =
-      sscanf (line, "%d %s %lf %lf %lf %d", &chr, sName, &sexAvgPos,
-	      &malePos, &femalePos, &basePairLoc);
-
-    if (numRet == 0)
-      /* assume this is a header line or comment line */
-      continue;
-
-    /* sex specific map and/or base pair location are not always known, so not required */
-    ASSERT (numRet >= 3,
-	     "Marker map file %s line %d seems not complete",
-	     sMapfileName, lineNo);
-    ASSERT (chr > 0,
-	     "Chromosome is not greater than 0 (%d) in file %s(%d)", chr,
-	     sMapfileName, lineNo);
-
     pMarker = add_map_unit (&map);
-    pMarker->chromosome = chr;
-    strcpy (pMarker->sName, sName);
-    pMarker->mapPos[MAP_POS_SEX_AVERAGE] = sexAvgPos;
-    pMarker->mapPos[MAP_POS_FEMALE] = femalePos;
-    pMarker->mapPos[MAP_POS_MALE] = malePos;
-    pMarker->basePairLocation = basePairLoc;
-    /* make sure marker is specified based on map order */
-    if (pPrevMarker != NULL
-	&& (pPrevMarker->mapPos[MAP_POS_SEX_AVERAGE] >
-	    pMarker->mapPos[MAP_POS_SEX_AVERAGE])) {
-      /* this will kick the program out */
-      ASSERT (1 == 0,
-	       "Marker map given by %s is out of order between %s and %s",
-	       sMapfileName, pPrevMarker->sName, pMarker->sName);
+    pMarker->mapPos[MAP_POS_FEMALE] = pMarker->mapPos[MAP_POS_MALE] = -100;
+    pMarker->basePairLocation = -1;
+    
+    token = strtok_r (line, " \t\n", &p);
+    for (colno = 0; colno < numcols; colno++) {
+      if (token == NULL) 
+	ERROR ("Line %d in MapFile %s ends unexpectedly\n", lineNo, sMapfileName);
+      switch (datacols[colno]) {
+      case MAP_CHR_COL:
+	pMarker->chromosome = (int) strtol (token, &endptr, 10);
+	break;
+      case MAP_NAME_COL:
+	endptr = strcpy (pMarker->sName, token);
+	break;
+      case MAP_AVGPOS_COL:
+	pMarker->mapPos[MAP_POS_SEX_AVERAGE] = strtod (token, &endptr);
+	break;
+      case MAP_MALEPOS_COL:
+	pMarker->mapPos[MAP_POS_MALE] = strtod (token, &endptr);
+	break;
+      case MAP_FEMALEPOS_COL:
+	pMarker->mapPos[MAP_POS_FEMALE] = strtod (token, &endptr);
+	break;
+      case MAP_BASEPAIR_COL:
+	pMarker->basePairLocation = (int) strtol (token, &endptr, 10);
+	break;
+      }
+      if (token == endptr)
+	ERROR ("illegal data in line %d of MapFile %s\n", lineNo, sMapfileName);
+      token = strtok_r (NULL, " \t\n", &p);
     }
+    if (token != NULL)
+      ERROR ("extra data at end of line %d in MapFile %s\n", lineNo, sMapfileName);
 
-    /* we should move on to next marker */
+    if (pPrevMarker != NULL
+	&& (pPrevMarker->mapPos[MAP_POS_SEX_AVERAGE] > pMarker->mapPos[MAP_POS_SEX_AVERAGE])) {
+      /* this will kick the program out */
+      ASSERT (1 == 0, "Marker map given by %s is out of order between %s and %s",
+	      sMapfileName, pPrevMarker->sName, pMarker->sName);
+    }
     pPrevMarker = pMarker;
   }
+  if (map.count == 0)
+    ERROR ("No marker information at all in the map file %s (Total # of Lines=%d)",
+	   sMapfileName, lineNo);
 
   fclose (fp);
   return 0;
