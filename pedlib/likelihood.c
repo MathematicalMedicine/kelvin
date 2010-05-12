@@ -28,6 +28,7 @@ char *likelihoodVersion = "$Id$";
 #include "../utils/sw.h"
 #include "likelihood.h"
 #include "genotype_elimination.h"
+#include "../database/databaseSupport.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -166,6 +167,7 @@ void populate_pedigree_loopbreaker_genotype_vector (Pedigree *);
 void populate_loopbreaker_genotype_vector (Person *, int);
 int set_next_loopbreaker_genotype_vector (Pedigree *, int);
 
+#include "../kelvinGlobals.h"
 
 /*
  * before likelihood calculation, pre-allocate space to store conditional
@@ -482,7 +484,6 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
   double likelihood = 0;
   double tmpLikelihood = 0;
   ConditionalLikelihood *pConditional;
-
   Polynomial *pLikelihoodPolynomial = NULL;
   int ret = 0;
   int origLocus = analysisLocusList->pLocusIndex[0];
@@ -496,6 +497,20 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
   int k, l, j, condIdx, idx;
   Person *pLoopBreaker;
   LoopBreaker *loopStruct;
+
+
+  // Get fake here instead of elsewhere
+#ifdef STUDYDB
+
+  if (dk_curModel.pen != NULL) {
+    //    fprintf (stderr, "curModel: pPFN: %s ped: %s pI:%d a:%g dgf:%.32g %g/%g/%g/%g\n",
+    //	     partialPolynomialFunctionName, pPedigree->sPedigreeID, dk_curModel.posIdx,
+    //	     dk_curModel.alpha, dk_curModel.dgf,
+    //	     dk_curModel.pen->DD, dk_curModel.pen->Dd, dk_curModel.pen->dD, dk_curModel.pen->dd);
+    getCurrentModelId ();
+  } else
+    fprintf (stderr, "Nothing yet\n");
+#endif
 
   condIdx = 0;
   sumCondL = 0;

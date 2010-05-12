@@ -1706,6 +1706,9 @@ void integrateMain ()
     CALCHOKE (dk_curModel.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
     writeSurfaceFileHeader ();
   }
+#ifdef STUDYDB
+  prepareModels ();
+#endif
 
   if (modelType->trait != DT) {
     /* Setting ranges for each variables. Default is [0,1] */
