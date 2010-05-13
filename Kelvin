@@ -209,7 +209,6 @@ sub estimate_frequency
 		$$href{$$aref[0]} = "1.0000";
 		
 	    } elsif (scalar (@$aref) <= 2) {
-
 		$case = (! exists ($cases{$marker}{$$aref[0]})) ? 0.0001 :
 		    ((! exists ($cases{$marker}{$$aref[1]})) ? 0.9999 : 
 		     $cases{$marker}{$$aref[0]} / ($cases{$marker}{$$aref[0]} + $cases{$marker}{$$aref[1]}));
@@ -258,7 +257,6 @@ sub estimate_frequency
     return (1);
  }
 
-
 sub record_case_control
 {
     my ($ind, $cat, $xchr, $markers) = @_;
@@ -269,7 +267,7 @@ sub record_case_control
     $href = $ind->structure;
     foreach $marker (@$markers) {
 	$geno = $ind->getGenotype ($marker);
-	($$geno[0] == 0 || $$geno[1] == 0) and return (0);
+	($$geno[0] == 0 || $$geno[1] == 0) and next;
 	# On X-chr, males only have one allele, coded as homozygous. Don't double count:
 	($xchr && $$href{sex} == 1) and shift (@$geno);
 	map {
@@ -865,10 +863,13 @@ BEGIN {
     {
 	my ($self, $marker) = @_;
 	my $dataset = $$self{dataset};
+	my $idx;
+	my $aref = [];
 
 	(exists ($$dataset{markers}{$marker})) or return (undef);
 	$idx = $$dataset{markers}{$marker}{idx};
-	return ($$self{markers}[$idx]);
+	@$aref = @{$$self{markers}[$idx]};
+	return ($aref);
     }
 
     sub pedid
