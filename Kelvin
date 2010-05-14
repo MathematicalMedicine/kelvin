@@ -145,6 +145,8 @@ sub estimate_frequency
     my $aref;
     my $va;
 
+    ($config->isConfigured ("LD"))
+	or error ("EstimateFrequency requires LD");
     $$href{PedigreeFile} = $ {$config->isConfigured ("PedigreeFile")}[0];
     $$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
     $$href{MapFile} = $ {$config->isConfigured ("MapFile")}[0];
