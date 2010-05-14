@@ -200,6 +200,8 @@
       <a href='#diseasealleles'>DiseaseAlleles</a><br>
       <a href='#polynomialscale'>PolynomialScale</a><br>
       <a href='#nonpolynomial'>NonPolynomial</a><br>
+      <a href='#estimatefrequency'>EstimateFrequency</a><br>
+      <a href='#traitprevalence'>TraitPrevalence</a><br>
       <a href='#dryrun'>DryRun</a><br>
     </td>
   </tr>
@@ -310,6 +312,20 @@
     the <a href='#epistasis'>Epistasis</a> and <a href='#epistasispedigreefile'>
     EpistasisPedigreeFile</a> directives, and is incompatible with the 
     <a href='#liabilityclasses'>LiabilityClasses</a> directive.
+  </div><p>
+
+  <div class='hang' id='estimatefrequency'>
+    <b>EstimateFrequency</b><br>
+    <tt>EstimateFrequency</tt><br>
+    Specifies that allele frequencies should be estimated internally, rather than read
+    from the <a href='#frequencyfile'>frequency file</a>. <span class='sc'>Kelvin</span>
+    can only estimate allele frequencies if the <a href='#pedigreefile'>pedigree file</a> 
+    contains only cases-and-controls, or only trios (not both together). All markers
+    must be SNPs. Frequency estimation is incompatible with linkage analyses (the
+    <a href='#ld'>LD</a> directive must be present) and with quantitative traits
+    (neither the <a href='#qt'>QT</a> nor <a href='#qtt'>QTT</a> directives may be
+    present). If the pedigree file contains cases-and-controls, then the 
+    <a href='#traitprevalence'>TraitPrevalence</a> directive is required.
   </div><p>
 
   <div class='hang' id='extramods'>
@@ -557,7 +573,16 @@
     past the last marker in the map. The literal <tt>end</tt> in a range specification is only
     valid with this directive. This directive requires the <a href='#multipoint'>MultiPoint</a>
     directive.
+  </div><p>
+
+  <div class='hang' id='traitprevalence'>
+    <b>TraitPrevalence</b><br>
+    <tt>TraitPrevalence <i>value</i></tt><br>
+    Specifies the prevalence to be used when estimating allele frequencies for cases-and-controls.
+    The value should be greater than 0 and less than 1. This directive requires the
+    <a href='#estimatefrequency'>EstimateFrequency</a> directive.
   </div>
+
   
   <h2 id="adsummary">Advanced Directive Summary</h2>
 
