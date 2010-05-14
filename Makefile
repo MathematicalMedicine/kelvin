@@ -215,6 +215,7 @@ kelvin.$(PLATFORM) : libs $(KOBJS) $(OBJS) $(INCS)
 #	$(CC) -static  -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
 	cp $@ $@-$(SVNVERSION)
+	cp $@ ./kelvin
 
 .PHONY : seq_update/calc_updated_ppl
 seq_update/calc_updated_ppl :
@@ -258,8 +259,8 @@ test :
 check :
 	+make -C test-suite -f Makefile check
 
-$(BINDIR)/kelvin-$(VERSION) : kelvin
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin $(BINDIR)/kelvin-$(VERSION)
+$(BINDIR)/kelvin-$(VERSION) : kelvin.$(PLATFORM)
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin.$(PLATFORM) $(BINDIR)/kelvin-$(VERSION)
 
 $(BINDIR)/calc_updated_ppl : seq_update/calc_updated_ppl
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/calc_updated_ppl $(BINDIR)/calc_updated_ppl
