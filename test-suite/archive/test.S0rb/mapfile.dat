@@ -1,5 +1,5 @@
 mapFunction = HALDANE
-Chr	Marker	sex-ave(cM)
+Chr	Marker	Position
 40	M1	0
 40	M2	5.25
 40	M3	10.50
