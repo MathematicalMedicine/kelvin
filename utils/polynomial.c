@@ -1432,7 +1432,7 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
     accumulate enough to be worth the effort, go purge them out. */
 inline void discardPoly (Polynomial *p)
 {
-  unsigned short allFlags = VALID_EVAL_FLAG|VALID_KEEP_FLAG|VALID_REF_FLAG|VALID_TOP_FLAG|VALID_NOTDISC_FLAG;
+  //  unsigned short allFlags = VALID_EVAL_FLAG|VALID_KEEP_FLAG|VALID_REF_FLAG|VALID_TOP_FLAG|VALID_NOTDISC_FLAG;
 
   if (p->eType == T_CONSTANT && (p->value == 1 || p->value == 0 || p->value == 0.5)) {
     //    fprintf (stderr, "Not discarding a 1, 0 or 0.5 constant\n");
@@ -1459,33 +1459,33 @@ inline void discardPoly (Polynomial *p)
 #endif
   */
 
-  if (++pendingExplicitDiscards >= 100000) {
-
-    swLogProgress(3 /* DETAIL + 1 */, 0, "Freeing %d explicitly discarded polynomials", pendingExplicitDiscards);
-    /*
-    int i, j;
-    if (constantCount > 0) {
-      fprintf (stderr, "All %d constants:\n", constantCount);
-      for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
-	if (constantHash[i].num <= 0)
-	  continue;
-	for (j = 0; j < constantHash[i].num; j++) {
-	  fprintf (stderr, "(%d %d) id=%d index=%d key=%d count=%d valid=%d constant: ", i, j, constantList[constantHash[i].index[j]]->id, constantHash[i].index[j], constantHash[i].key[j], constantList[constantHash[i].index[j]]->count, constantList[constantHash[i].index[j]]->valid);
-	  expTermPrinting (stderr, constantList[constantHash[i].index[j]], 1);
-	  fprintf (stderr, "\n");
-	}
-      }
-      fprintf (stderr, "\n");
-    }
-    */
-    if (polynomialDebugLevel >= 5)
-      fprintf (stderr, "Free w/mask of all flags (%d) preserved...", allFlags);
-    doFreePolys (allFlags);
-    if (polynomialDebugLevel >= 5)
-      fprintf (stderr, "\n");
-    pendingExplicitDiscards = 0;
+  //  if (++pendingExplicitDiscards >= 100000) {
+  //
+  //swLogProgress(3 /* DETAIL + 1 */, 0, "Freeing %d explicitly discarded polynomials", pendingExplicitDiscards);
+  ///*
+  //int i, j;
+  //if (constantCount > 0) {
+  //  fprintf (stderr, "All %d constants:\n", constantCount);
+  //  for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
+  //if (constantHash[i].num <= 0)
+  //  continue;
+  //for (j = 0; j < constantHash[i].num; j++) {
+  //  fprintf (stderr, "(%d %d) id=%d index=%d key=%d count=%d valid=%d constant: ", i, j, constantList[constantHash[i].index[j]]->id, constantHash[i].index[j], constantHash[i].key[j], constantList[constantHash[i].index[j]]->count, constantList[constantHash[i].index[j]]->valid);
+  //  expTermPrinting (stderr, constantList[constantHash[i].index[j]], 1);
+  //  fprintf (stderr, "\n");
+  //}
+  //  }
+  //  fprintf (stderr, "\n");
+  //}
+  //    */
+  //    if (polynomialDebugLevel >= 5)
+  //  fprintf (stderr, "Free w/mask of all flags (%d) preserved...", allFlags);
+  //doFreePolys (allFlags);
+  //if (polynomialDebugLevel >= 5)
+  //  fprintf (stderr, "\n");
+  //pendingExplicitDiscards = 0;
     //    exit (EXIT_SUCCESS);
-  }
+  //}
   return;
 }
 
