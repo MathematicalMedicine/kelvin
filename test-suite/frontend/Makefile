@@ -12,7 +12,7 @@ TESTS = $(shell ls -d */ | cut -f1 -d\/)
 test :
 	echo "tests temporarily disabled"
 
-validate :
+check :
 
 test-USE_DL :
 
