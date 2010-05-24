@@ -141,6 +141,8 @@ for my $i (0..$paramCnt) {
 }
 my $line = 0;
 while (<IN>) {
+    s/\s*\#.*//g;    # Trim comments
+    next if (/^$/);  # Drop empty lines
     $line++;
     @words = split;
     $HLOD = shift(@words);
@@ -189,6 +191,8 @@ $line = 0;
 my $nextLine = shift(@randLines);
 my $offset = $paramCnt * 2;
 while (<IN>) {
+    s/\s*\#.*//g;    # Trim comments
+    next if (/^$/);  # Drop empty lines
     $line++;
     if ($line == $nextLine) {
 	@words = split;
