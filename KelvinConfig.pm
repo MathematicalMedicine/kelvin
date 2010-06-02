@@ -223,6 +223,32 @@ sub new
 
 =over 2
 
+=item $newconfig = $config->copy;
+
+Creates a new KelvinConfig object by copying $config.
+
+=back 
+
+=cut
+
+sub copy
+{
+    my ($self) = @_;
+    my $new = {};
+    my $directive;
+
+    map { $$new{$_} = $$self{$_} } qw/filename localdirectives/;
+    $$new{directives} = {};
+
+    foreach $directive (keys (%{$$self{directives}})) {
+	$$new{directives}{$directive} = [];
+	@{$$new{directives}{$directive}} = @{$$self{directives}{$directive}};
+    }
+    return (bless ($new, ref ($self)));
+}
+
+=over 2
+
 =item $bool = $config->addDirective ($directive, $arg);
 
 Adds a directive to the $config. If $directive does not already 
@@ -457,6 +483,7 @@ sub write
 	$errstr = "open '$configfile' failed, $!";
 	return (undef);
     }
+    $$self{filename} = $configfile;
     foreach $directive (keys (%{$$self{directives}})) {
 	($nolocal && exists ($directives{lc($directive)}{local}) &&
 	 $directives{lc($directive)}{local} eq 'true')
