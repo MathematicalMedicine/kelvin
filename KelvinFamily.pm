@@ -10,23 +10,47 @@ our $VERSION=1.0;
 
 sub new
 {
-    my ($class, $dataset, $aref) = @_;
+    my ($class, $aref) = @_;
     my $family = bless ({}, $class);
+    my $dataset;
     my $makeped = undef;
     my $traits;
     my $trait = undef;
     my $affection;
     my $multigeneration = 0;
     my ($aff_founders, $unaff_founders, $aff_kids, $unaff_kids) = (0, 0, 0, 0);
+    my $href;
     my $va;
 
     @$family{qw/pedid pedtype count founders nonfounders/} = (undef, undef, 0, 0, 0);
     @$family{qw/founderpairs multmarriages individuals/} = (0, 0, []);
-
-    $$family{pedid} = $$aref[0]->pedid;
+    
+    unless (scalar (@$aref) > 0) {
+	$errstr = "array of individuals is empty";
+	return (undef);
+    }
+    $dataset = $$aref[0]{dataset};
+    $makeped = $$aref[0]{makeped};
+    $$family{pedid} = $$aref[0]{pedid};
     $$family{count} = scalar (@$aref);
+
+    for ($va = 1; $va < $$family{count}; $va++) {
+	if ($$aref[$va]{dataset} != $dataset) {
+	    $errstr = "individuals are based on different datasets";
+	    return (undef);
+	}
+	if ($$aref[$va]{makeped} ne $makeped) {
+	    $errstr = "individuals are mixed pre- and post-makeped format";
+	    return (undef);
+	}
+	if ($$aref[$va]{pedid} != $$family{pedid}) {
+	    $errstr = "individuals are from different families (pedigree IDs)";
+	    return (undef);
+	}
+    }
+    
     @{$$family{individuals}} = @$aref;
-    if ($$aref[0]->makeped eq 'pre') {
+    if ($$aref[0]{makeped} eq 'pre') {
 	$family->makeped or return (undef);
     }
     
@@ -80,6 +104,34 @@ sub new
 	$$family{pedtype} = ($$family{founders} > 2 || $multigeneration) ? 'general' : 'nuclear';
     }
     return ($family);
+}
+
+sub map
+{
+    my ($self, $newset) = @_;
+    my $new = {};
+    my $va;
+    
+    map {
+	$$new{$_} = $$self{$_};
+    } qw/pedid pedtype count founders nonfounders founderpairs multmarriages/;
+    $$new{individuals} = [];
+    
+    for ($va = 0; $va < $$self{count}; $va++) {
+	$$new{individuals}[$va] = $$self{individuals}[$va]->map ($newset);
+    }
+    return (bless ($new, ref ($self)));
+}
+
+sub write
+{
+    my ($self) = @_;
+    my $individual;
+
+    foreach $individual (@{$$self{individuals}}) {
+	$individual->write or return (undef);
+    }
+    return (1);
 }
 
 # This is an incomplete implementation of MAKEPED. It doesn't handle loops, and it
@@ -218,6 +270,7 @@ sub sort_family
 sub by_founder_desc
 {
     my ($a, $b, $desc) = @_;
+    my $ret;
 
     if ($$a{dadid} eq '0' && $$a{momid} eq '0') {
 	($$b{dadid} eq '0' && $$b{momid} eq '0')
@@ -225,8 +278,14 @@ sub by_founder_desc
 	return (-1);
     } elsif ($$b{dadid} eq '0' && $$b{momid} eq '0') {
 	return (1);
+    } elsif (($ret = $$desc{$$b{indid}} <=> $$desc{$$a{indid}}) != 0) {
+	return ($ret);
+    } elsif (($ret = $$desc{$$b{dadid}} <=> $$desc{$$a{dadid}}) != 0) {
+	return ($ret);
+    } elsif (($ret = $$desc{$$b{momid}} <=> $$desc{$$a{momid}}) != 0)  {
+	return ($ret);
     } else {
-	return ($$desc{$$b{indid}} <=> $$desc{$$a{indid}});
+	return ($$a{indid} cmp $$b{indid});
     }
 }
 
@@ -296,11 +355,11 @@ sub new
     if (scalar (@arr) < $colcount) {
 	$errstr = "$$dataset{pedfile}, line $$dataset{pedlineno}: too few columns in pedigree file";
 	return (undef);
-    } elsif (scalar (@arr) > $colcount && ! $$dataset{subset}) {
+    } elsif (scalar (@arr) > $colcount) {
 	$errstr = "$$dataset{pedfile}, line $$dataset{pedlineno}: too many columns in pedigree file";
 	return (undef);
     }
-
+    
     foreach $trait (@{$$dataset{traitorder}}) {
 	$traitcol = $$dataset{traits}{$trait}{col};
 	push (@{$$ind{traits}}, $arr[$traitcol]);
@@ -323,32 +382,32 @@ sub map
 {
     my ($self, $newset) = @_;
     my $oldset = $$self{dataset};
-    my @traits;
-    my @markers;
     my $trait;
     my $marker;
-
-    $$self{genotyped} = $$self{phenotyped} = 0;
+    my $new = {traits => [], markers => [], genotyped => 0, phenotyped => 0, dataset => $newset};
+    
+    map {
+	$$new{$_} = $$self{$_};
+    } qw/pedid indid dadid momid firstchildid patsibid matsibid origpedid
+	origindid sex proband makeped/;
+    
     foreach $trait (@{$$newset{traitorder}}) {
 	if (exists ($$oldset{traits}{$trait})) {
-	    push (@traits,  $$self{traits}[$$oldset{traits}{$trait}{idx}]);
-	    ($traits[-1] != 0) and $$self{phenotyped} = 1;
+	    push (@{$$new{traits}},  $$self{traits}[$$oldset{traits}{$trait}{idx}]);
+	    ($$new{traits}[-1] != 0) and $$self{phenotyped} = 1;
 	} else {
-	    push (@traits, 'x');
+	    push (@{$$new{traits}}, 'x');
 	}
     }
     foreach $marker (@{$$newset{markerorder}}) {
 	if (exists ($$oldset{markers}{$marker})) {
-	    push (@markers, [ @{$$self{markers}[$$oldset{markers}{$marker}{idx}]} ]);
-	    ($markers[-1][0] != 0 && $markers[-1][1] != 0) and $$self{genotyped} = 1;
+	    push (@{$$new{markers}}, [ @{$$self{markers}[$$oldset{markers}{$marker}{idx}]} ]);
+	    ($$new{markers}[-1][0] != 0) and $$self{genotyped} = 1;
 	} else {
-	    push (@markers, [ 'x', 'x' ]);
+	    push (@{$$new{markers}}, [ 'x', 'x' ]);
 	}
     }
-    @{$$self{traits}} = @traits;
-    @{$$self{markers}} = @markers;
-    $$self{dataset} = $newset;
-    return (1);
+    return (bless ($new, ref ($self)));
 }
 
 sub write
@@ -357,11 +416,13 @@ sub write
     my $dataset = $$self{dataset};
     my $origtext = '';
 
-    (! (defined ($$dataset{pedfh}) || $$dataset{writing}))
-	and $dataset->writePedigreefile;
+    if (! (defined ($$dataset{pedfh}) || $$dataset{writing})) {
+	$dataset->writePedigreefile
+	    or return (undef);
+    }
     (defined ($$self{origpedid}) && defined ($$self{origindid}))
 	and $origtext = "  Ped: $$self{origpedid}  Per: $$self{origindid}";
-
+    
     $$dataset{pedfh}->print (join (' ', @$self{qw/pedid indid dadid momid firstchildid patsibid matsibid sex proband/}, @{$$self{traits}}, map { "$$_[0] $$_[1]" } @{$$self{markers}}), $origtext, "\n");
     return (1);
 }
@@ -382,26 +443,37 @@ sub setTrait
     return (1);
 }
 
+# Traits are scalar values, so returns the value directly
 sub getTrait
 {
     my ($self, $trait) = @_;
     my $dataset = $$self{dataset};
     my $idx;
 
-    (exists ($$dataset{traits}{$trait})) or return (undef);
+    unless (exists ($$dataset{traits}{$trait})) {
+	$errstr = "no trait $trait in dataset";
+	return (undef);
+    }
     $idx = $$dataset{traits}{$trait}{idx};
     return ($$self{traits}[$idx]);
 }
 
+# Genotypes are stored in array refs, so copy the values into a new array ref and
+# return that
 sub getGenotype
 {
     my ($self, $marker) = @_;
     my $dataset = $$self{dataset};
     my $idx;
-
-    (exists ($$dataset{markers}{$marker})) or return (undef);
+    my $aref = [];
+    
+    unless (exists ($$dataset{markers}{$marker})) {
+	$errstr = "no marker $marker in dataset";
+	return (undef)
+    }
     $idx = $$dataset{markers}{$marker}{idx};
-    return ($$self{markers}[$idx]);
+    @$aref = @{$$self{markers}[$idx]};
+    return ($aref);
 }
 
 sub pedid
