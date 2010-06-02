@@ -27,7 +27,6 @@ sub new
     #   mapfields: a list of the fields that appeared in the map
     #   mapfunction: 'kosambi' or 'haldane'
     #   writing: boolean, is the pedfile open for writing?
-    #   subset: set if dataset was created as a subset of another dataset
     
     #   mapfile: the name of the mapfile
     #   freqfile: the name of the allele frequency file
@@ -41,16 +40,16 @@ sub new
     #   freqset: boolean, have frequencies been explicitly set?
     #   microsats: dataset contains microsatellites?
     #   snps: dataset contains snps?
-    #   consistant: loci data is consistant with source files
+    #   consistent: loci data is consistent with source files
     #   individualcache: cache for KelvinIndividuals when reading families
     
     @$self{qw/markers traits maporder/} = ({}, {}, []);
     @$self{qw/markerorder traitorder mapfields/} = ([], [], []);
-    @$self{qw/mapfunction writing subset/} = ('kosambi', 0, 0);
+    @$self{qw/mapfunction writing consistent/} = ('kosambi', 0, 1);
     @$self{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
     @$self{qw/pedfile pedfh pedlineno/} = (undef, undef, 0);
     @$self{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
-    @$self{qw/consistant microsats snps individualcache/} = (1, 0, 0, undef);
+    @$self{qw/microsats snps individualcache/} = (0, 0, undef);
  
     if (! defined ($arg)) {
 	$errstr = "missing argument";
@@ -101,7 +100,7 @@ sub copy
 
     @$new{qw/markers traits maporder/} = ({}, {}, []);
     @$new{qw/markerorder traitorder mapfields/} = ([], [], []);
-    @$new{qw/mapfunction writing subset/} = ('kosambi', 0, 0);
+    @$new{qw/mapfunction writing consistent/} = ('kosambi', 0, 1);
     @$new{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
     @$new{qw/pedfile pedfh pedlineno/} = (undef, undef, 0);
     @$new{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
@@ -141,18 +140,21 @@ sub copy
 	map {
 	    exists ($hash{$_}) and push (@{$$new{markerorder}}, $_);
 	} @{$$self{markerorder}};
-	$$new{subset} = 1;
     } else {
 	# Copy everything
 	($$self{mapread}) and @{$$new{maporder}} = @{$$self{maporder}};
 	($$self{locusread}) and @{$$new{markerorder}} = @{$$self{markerorder}};
     }
+    # If markers have been dropped, mark the dataset as inconsistent with the input files
+    (scalar (@{$$self{maporder}}) == scalar (@{$$new{maporder}}) &&
+     scalar (@{$$self{markerorder}}) == scalar (@{$$new{markerorder}}))
+	or $$new{consistent} = 0;
 
     # These fields always copy over, regardless of subsetting
-    @$new{qw/mapfunction mapfile freqfile/} = @$self{qw/mapfunction mapfile freqfile/};
-    @$new{qw/locusfile pedfile mapread/} = @$self{qw/locusfile pedfile mapread/};
-    @$new{qw/freqread locusread consistant/} = @$self{qw/freqread locusread consistant/};
-    @$new{qw/freqset microsat/} = @$self{qw/freqset microsat/};
+    map {
+	$$new{$_} = $$self{$_};
+    } qw/mapfunction mapfile freqfile locusfile pedfile mapread freqread locusread
+	freqset microsats snps/;
 
     if ($$new{mapread}) {
 	@{$$new{mapfields}} = @{$$self{mapfields}};
@@ -172,13 +174,15 @@ sub copy
 	$$new{microsats} = 0;
 	$$new{snps} = 0;
 	map {
-	    $href = $$self{markers}{$_}{alleles};
-	    @{$$new{markers}{$_}{alleles}}{keys (%$href)} = 
-		@{$$self{markers}{$_}{alleles}}{keys (%$href)};
-	    if (scalar (keys (%$href)) > 2) {
-		$$new{microsats} = 1;
-	    } else {
-		$$new{snps} = 1;
+	    if (exists ($$self{markers}{$_}{alleles})) {
+		$href = $$self{markers}{$_}{alleles};
+		@{$$new{markers}{$_}{alleles}}{keys (%$href)} = 
+		    @{$$self{markers}{$_}{alleles}}{keys (%$href)};
+		if (scalar (keys (%$href)) > 2) {
+		    $$new{microsats} = 1;
+		} else {
+		    $$new{snps} = 1;
+		}
 	    }
 	} keys (%{$$self{markers}});
 	
@@ -376,7 +380,7 @@ sub readFreqfile
     }
 
     # If no map has been read, use the order of the markers in the frequency file
-    # as a proxy for map order, so at least we can write a consistant frequency file.
+    # as a proxy for map order, so at least we can write a consistent frequency file.
     (! $$self{mapread})
 	and @{$$self{maporder}} = @maporder;
     if ($$self{locusread}) {
@@ -422,7 +426,7 @@ sub readMapfile
 	return (undef);
     }
     unless ($fh = IO::File::Kelvin->new ($$self{mapfile})) {
-	$errstr = "open '$$self{mapfile} failed, $!";
+	$errstr = "open '$$self{mapfile}' failed, $!";
 	return (undef);
     }
 
@@ -558,6 +562,10 @@ sub readIndividual
 	$errstr = "can't read when pedigree file is open for writing";
 	return (undef);
     }
+    if (! $$self{consistent}) {
+	$errstr = "dataset object is inconsistent with input files";
+	return (undef);
+    }
     (defined ($$self{pedfh}) || (defined ($$self{pedfile}) && $self->readPedigreefile))
 	or return (undef);
     if (defined ($individual = $$self{individualcache})) {
@@ -600,7 +608,7 @@ sub readFamily
     }
     (defined ($individual)) or return (undef);
 
-    ($family = KelvinFamily->new ($self, $aref))
+    ($family = KelvinFamily->new ($aref))
 	or $errstr = $KelvinFamily::errstr;
     return ($family);
 }
@@ -639,7 +647,7 @@ sub addTrait
 	$$self{traits}{$$self{traitorder}[$idx]}{idx} = $idx;
 	$idx++;
     }
-    $$self{consistant} = 0;
+    $$self{consistent} = 0;
     return (1);
 }
 
@@ -668,7 +676,7 @@ sub write
     if (defined ($$self{mapfile}) && $$self{mapread}) {
 	$self->writeMapfile ({backupfile => $backupfile}) or return (undef);
     }
-    if (defined ($$self{freqfile}) && $$self{freqread}) {
+    if (defined ($$self{freqfile}) && ($$self{freqread} || $$self{freqset})) {
 	$self->writeFreqfile ({backupfile => $backupfile}) or return (undef);
     }
     if (defined ($$self{locusfile}) && $$self{locusread}) {
@@ -718,7 +726,9 @@ sub writeMapfile
 	$errstr = "open '$mapfile' failed, $!";
 	return (undef);
     }
-    ($$self{mapfuntion} eq 'haldane')
+    $$self{mapfile} = $mapfile;
+
+    ($$self{mapfunction} eq 'haldane')
 	and print (FH "mapFunction=haldane\n");
     print (FH join (' ', map { $headers{$_} } @{$$self{mapfields}}), "\n");
     foreach $marker (@{$$self{maporder}}) {
@@ -764,6 +774,7 @@ sub writeFreqfile
 	$errstr = "open '$freqfile' failed, $!";
 	return (undef);
     }
+    $$self{freqfile} = $freqfile;
 
     foreach $marker (@{$$self{maporder}}) {
 	(exists ($$self{markers}{$marker}{alleles})) or next;
@@ -819,12 +830,16 @@ sub writeLocusfile
 	$errstr = "open '$locusfile' failed, $!";
 	return (undef);
     }
+    $$self{locusfile} = $locusfile;
     map { print (FH "$$self{traits}{$_}{flag} $_\n") } @{$$self{traitorder}};
     map { print (FH "M $_\n") } @{$$self{markerorder}};
     close (FH);
     return (1);
 }
 
+# This doesn't actually write the pedigree file, rather it opens the
+# ped file for writing. Pedigree data is written through the 
+# KelvinIndividual class.
 sub writePedigreefile
 {
     my ($self, $arg) = @_;
@@ -859,10 +874,11 @@ sub writePedigreefile
 	$errstr = "rename '$pedfile' failed, $!";
 	return (undef);
     }
-    unless ($$self{pedfh} = IO::File::Kelvin->new (">$$self{pedfile}")) {
-	$errstr = "open '$$self{pedfile}' failed, $!";
+    unless ($$self{pedfh} = IO::File::Kelvin->new (">$pedfile")) {
+	$errstr = "open '$pedfile' failed, $!";
 	return (undef);
     }
+    $$self{pedfile} = $pedfile;
     $$self{writing} = 1;
     $$self{pedlineno} = 0;
     return (1);
@@ -969,19 +985,19 @@ sub traitOrder
     return ($aref);
 }
 
-sub markers
-{
-    my ($self) = @_;
+#sub markers
+#{
+#    my ($self) = @_;
+#
+#    return ($$self{markers});
+#}
 
-    return ($$self{markers});
-}
-
-sub traits
-{
-    my ($self) = @_;
-
-    return ($$self{traits});
-}
+#sub traits
+#{
+#    my ($self) = @_;
+#
+#    return ($$self{traits});
+#}
 
 sub microsats
 {
