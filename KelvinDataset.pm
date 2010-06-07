@@ -985,19 +985,18 @@ sub traitOrder
     return ($aref);
 }
 
-#sub markers
-#{
-#    my ($self) = @_;
-#
-#    return ($$self{markers});
-#}
+sub getTrait
+{
+    my ($self, $trait) = @_;
+    my $href;
 
-#sub traits
-#{
-#    my ($self) = @_;
-#
-#    return ($$self{traits});
-#}
+    unless (exists ($$self{traits}{$trait})) {
+	$errstr = "no trait '$trait' in dataset";
+	return (undef);
+    }
+    map { $$href{$_} = $$self{traits}{$trait}{$_} } keys (%{$$self{traits}{$trait}{$_}});
+    return ($href);
+}
 
 sub microsats
 {
