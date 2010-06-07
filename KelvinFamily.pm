@@ -19,11 +19,13 @@ sub new
     my $affection;
     my $multigeneration = 0;
     my ($aff_founders, $unaff_founders, $aff_kids, $unaff_kids) = (0, 0, 0, 0);
+    my ($dad, $mom, $kids) = (undef, undef, []);
     my $href;
     my $va;
 
     @$family{qw/pedid pedtype count founders nonfounders/} = (undef, undef, 0, 0, 0);
     @$family{qw/founderpairs multmarriages individuals/} = (0, 0, []);
+    @$family{qw/dad mom kids/} = (undef, undef, undef);
     
     unless (scalar (@$aref) > 0) {
 	$errstr = "array of individuals is empty";
@@ -61,6 +63,11 @@ sub new
 	$affection = (defined ($trait)) ? $$aref[$va]->getTrait ($trait) : 1;
 	if ($$aref[$va]{dadid} eq '0' && $$aref[$va]{momid} eq '0') {
 	    $$family{founders}++;
+	    if ($$aref[$va]{sex} == 1) {
+		$dad = $$aref[$va];
+	    } else {
+		$mom = $$aref[$va];
+	    }
 	    if ($affection eq '2') {
 		$aff_founders++;
 	    } else {
@@ -70,6 +77,7 @@ sub new
 	    ($$aref[$va]{firstchildid} ne '0')
 		and $multigeneration = 1;
 	    $$family{nonfounders}++;
+	    push (@$kids, $$aref[$va]);
 	    if ($affection eq '2') {
 		$aff_kids++;
 	    } else {
@@ -81,6 +89,9 @@ sub new
     if ($$family{count} == 1) {
 	# TODO: additional verification? require undefined parents? require genotype?
 	$$family{pedtype} = 'casecontrol';
+	push (@{$$family{kids}}, (defined ($dad) ? $dad : $mom));
+	$$family{nonfounders} = 1;
+	$$family{founders} = 0;
     } elsif ($$family{count} == 3 && $$family{founders} == 2) {
 	if ($unaff_founders == 2 && $aff_kids == 1) {
 	    $$family{pedtype} = 'trio-strict';
@@ -102,6 +113,8 @@ sub new
 	return (undef);
     } else {
 	$$family{pedtype} = ($$family{founders} > 2 || $multigeneration) ? 'general' : 'nuclear';
+	($$family{pedtype} ne 'general')
+	    and @$family{qw/dad mom kids/} = ($dad, $mom, $kids);
     }
     return ($family);
 }
@@ -114,7 +127,13 @@ sub map
     
     map {
 	$$new{$_} = $$self{$_};
-    } qw/pedid pedtype count founders nonfounders founderpairs multmarriages/;
+    } qw/pedid pedtype count founders nonfounders founderpairs multmarriages dad mom/;
+    if ($$self{pedtype} ne 'general') {
+	$$new{kids} = [];
+	@{$$new{kids}} = @{$$self{kids}};
+    } else {
+	$$new{kids} = undef;
+    }
     $$new{individuals} = [];
     
     for ($va = 0; $va < $$self{count}; $va++) {
@@ -132,6 +151,13 @@ sub write
 	$individual->write or return (undef);
     }
     return (1);
+}
+
+sub dataset
+{
+    my ($self) = @_;
+
+    return ($$self{individuals}[0]{dataset});
 }
 
 # This is an incomplete implementation of MAKEPED. It doesn't handle loops, and it
@@ -273,8 +299,11 @@ sub by_founder_desc
     my $ret;
 
     if ($$a{dadid} eq '0' && $$a{momid} eq '0') {
-	($$b{dadid} eq '0' && $$b{momid} eq '0')
-	    and return ($$desc{$$b{indid}} <=> $$desc{$$a{indid}});
+	if ($$b{dadid} eq '0' && $$b{momid} eq '0') {
+	    (($$ret = $$desc{$$b{indid}} <=> $$desc{$$a{indid}}) != 0)
+		and return ($ret);
+	    return ($$a{sex} <=> $$b{sex});
+	}
 	return (-1);
     } elsif ($$b{dadid} eq '0' && $$b{momid} eq '0') {
 	return (1);
@@ -294,6 +323,29 @@ sub pedtype
     my ($self) = @_;
 
     return ($$self{pedtype});
+}
+
+sub dad
+{
+    my ($self) = @_;
+
+    return ($$self{dad});
+}
+
+sub mom
+{
+    my ($self) = @_;
+
+    return ($$self{dad});
+}
+
+sub children
+{
+    my ($self) = @_;
+    my $aref = [];
+    
+    @$aref = (@{$$self{kids}});
+    return ($aref);
 }
 
 sub individuals
@@ -474,6 +526,13 @@ sub getGenotype
     $idx = $$dataset{markers}{$marker}{idx};
     @$aref = @{$$self{markers}[$idx]};
     return ($aref);
+}
+
+sub dataset
+{
+    my ($self) = @_;
+
+    return ($$self{dataset});
 }
 
 sub pedid
