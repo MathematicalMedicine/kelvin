@@ -55,17 +55,17 @@ our $VERSION=1.0;
 #       the directive. If there is no default argument, this key should
 #       not exist. If the default argument is universally applicable,
 #       the value can be a plain string. If the default depends on the
-#       presence of, or arguments to, other direcrtives, than this
+#       presence of, or arguments to, other direcrtives, then this
 #       can be a reference to a method that will return the correct
 #       default argument.
 #     local: If the value is 'true', then the directive is only legal
 #       in the Perl frontend. The C code will not accept such directives.
 #     regex: The value is a Perl regular expression that the directive
-#       argument must match. The regex will be used in a substitution
-#       match ('s/regex/$1/i'), so the regex should be enclosed in
-#       parentheses (for example, '(\S+)'. Note that the regex must be
-#       flexible enough to match complex arguments, like comma-separated
-#       lists, optional keywords, etc.
+#       argument must match. Note that the regex must be flexible enough
+#       to match complex arguments, like comma-separated lists, optional
+#       keywords, etc. If the regex matches, the entire argument string
+#       will be stored; no consideration is given to parenthesized
+#       sub-expressions.
 #     parser: The value is a reference to a method that will parse the
 #       argument. The method must return either a reference to a 
 #       scalar, or a reference to an array.
@@ -74,7 +74,7 @@ our $VERSION=1.0;
 # the 'parser' key) should be used sparingly, and only in cases where
 # KelvinConfig methods or the Perl frontend require it. The 'regex'
 # and 'parser' keys should never both exist for a directive. In general,
-# the KelvinConfig onject should do as little validation as possible,
+# the KelvinConfig object should do as little validation as possible,
 # since the compiled Kelvin binary will exhaustively validate the 
 # config.
 
@@ -110,21 +110,21 @@ my %directives = (
 		  epistasispedigreefile => {canon => 'EpistasisPedigreeFile',
 					    singlearg => 'true',
 					    local => 'true',
-					    regex => '(\S+)'},
+					    regex => '\S+'},
 		  epistasislocusfile => {canon => 'EpistasisLocusFile',
 					 singlearg => 'true',
 					 local => 'true',
-					 regex => '(\S+)'},
+					 regex => '\S+'},
 
 		  multipoint => {canon => 'MultiPoint'},
 		  markertomarker => {canon => 'MarkerToMarker',
 				     singlearg => 'true',
 				     default => ['adjacent'],
-				     regex => '(all|adjacent)'},
+				     regex => '(?:all|adjacent)'},
 		  ld => {canon => 'LD'},
 		  epistasis => {canon => 'Epistasis',
 				local => 'true',
-				regex => '([\w\-]+(?:,\s*[\w\-]+)*)'},
+				regex => '[\w\-]+(?:,\s*[\w\-]+)*'},
 
 		  qt => {canon => 'QT'},
 		  qtt => {canon => 'QTT'},
@@ -146,7 +146,7 @@ my %directives = (
 		  phenocodes => {canon => 'PhenoCodes',
 				 singlearg => 'true',
 				 default => \&defaultPhenoCodes,
-				 regex => '([\-\d\.]+(?:\s*,\s*[\-\d\.]+){2})'},
+				 regex => '[\-\d\.]+(?:\s*,\s*[\-\d\.]+){2}'},
 		  sexspecific => {canon => 'SexSpecific'},
 		  sexlinked => {canon => 'SexLinked'},
 		  imprinting => {canon => 'Imprinting'},
@@ -158,7 +158,7 @@ my %directives = (
 		  dryrun => {canon => 'DryRun'},
 		  maxiterations => {canon => 'MaxIterations'},
 		  log=> {canon => 'Log',
-			 regex => '(\w+)\s+(\w+)'},
+			 regex => '\w+\s+\w+'},
 		  skippedcount => {canon => 'SkipPedCount',
 				   local => 'true'},
 		  skipanalysis => {canon => 'SkipAnalysis',
@@ -170,7 +170,7 @@ my %directives = (
 		  traitprevalence => {canon => 'TraitPrevalence',
 				      local => 'true',
 				      singlearg => 'true',
-				      regex => '(0*\.[0-9]+)'}
+				      regex => '0*\.[0-9]+'}
 		  );
 
 
@@ -276,7 +276,7 @@ sub addDirective
     }
     if (defined ($arg)) {
 	if (exists ($directives{lc($directive)}{regex}) &&
-	    $arg !~ s/^$directives{lc($directive)}{regex}$/$1/i) {
+	    $arg !~ /^$directives{lc($directive)}{regex}$/i) {
 	    $errstr = "Illegal argument to directive $directive";
 	    return (undef);
 	} elsif (exists ($directives{lc($directive)}{parser}) &&
