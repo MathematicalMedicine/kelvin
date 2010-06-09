@@ -598,6 +598,13 @@ sub founder
     return ($$self{dadid} eq '0' && $$self{momid} eq '0');
 }
 
+sub pedtype
+{
+    my ($self) = @_;
+
+    return ($$self{pedtype});
+}
+
 sub structure
 {
     my ($self) = @_;
