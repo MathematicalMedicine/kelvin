@@ -25,8 +25,10 @@ sub new
     #   markerorder: a list of markernames, ordered according to the locus file
     #   traitorder: a list of traits/liability classes, ordered according to the locus file
     #   mapfields: a list of the fields that appeared in the map
+    #   chromosome: the chromosome number from the map file
     #   mapfunction: 'kosambi' or 'haldane'
     #   writing: boolean, is the pedfile open for writing?
+    #   consistent: loci data is consistent with source files
     
     #   mapfile: the name of the mapfile
     #   freqfile: the name of the allele frequency file
@@ -40,12 +42,11 @@ sub new
     #   freqset: boolean, have frequencies been explicitly set?
     #   microsats: dataset contains microsatellites?
     #   snps: dataset contains snps?
-    #   consistent: loci data is consistent with source files
     #   individualcache: cache for KelvinIndividuals when reading families
     
     @$self{qw/markers traits maporder/} = ({}, {}, []);
     @$self{qw/markerorder traitorder mapfields/} = ([], [], []);
-    @$self{qw/mapfunction writing consistent/} = ('kosambi', 0, 1);
+    @$self{qw/chromosome mapfunction writing consistent/} = (undef, 'kosambi', 0, 1);
     @$self{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
     @$self{qw/pedfile pedfh pedlineno/} = (undef, undef, 0);
     @$self{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
@@ -519,6 +520,7 @@ sub readMapfile
     map { 
 	@{$$self{markers}{$_}}{keys %{$markers{$_}}} = @{$markers{$_}}{keys %{$markers{$_}}};
     } keys (%markers);
+    $$self{chromomsome} = $origchr;
     @{$$self{maporder}} = @maporder;
     @{$$self{mapfields}} = @headers;
     $$self{mapread} = 1;
@@ -996,6 +998,13 @@ sub getTrait
     }
     map { $$href{$_} = $$self{traits}{$trait}{$_} } keys (%{$$self{traits}{$trait}{$_}});
     return ($href);
+}
+
+sub chromosome
+{
+    my ($self) = @_;
+
+    return ($$self{chromosome});
 }
 
 sub microsats
