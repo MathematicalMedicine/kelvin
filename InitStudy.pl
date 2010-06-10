@@ -3,6 +3,7 @@ use strict;
 use Data::Dumper;
 use File::Basename;
 use DBI; # Database interaction
+$|=1; # Show the output when I say so.
 
 my $KELVIN_ROOT='NO_KELVIN_ROOT';
 
@@ -55,6 +56,8 @@ if (@ARGV) {
 
 ($config->isConfigured ("Study"))
     or error ("Study directive must be provided");
+($config->isConfigured ("Multipoint"))
+    or error ("Must be a multipoint analysis");
 
 perform_study($config);
 
@@ -124,13 +127,11 @@ sub perform_study
 
     # Make sure all PedigreeSIds and SingleModelTimes are present
 
-    print "About to read pedigrees\n";
     # Make a list of PedigreeSIds by reading the pedigree file
     while (my $ped = $dataset->readFamily) { 
 #	print Dumper($ped);
 	my $PedigreeSId = $$ped{pedid};
 	# Don't care if this fails...
-	print "Trying ped $PedigreeSId\n";
 	$dbh->do("Insert into Pedigrees (StudyId, PedigreeSId) values (?,?)",
 		 undef, $StudyId, $PedigreeSId);
     }
@@ -145,7 +146,45 @@ sub perform_study
 	     "a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.MarkerName = b.MarkerName ".
 	     "where b.StudyId IS NULL");
 
-    # 'Freshen' the Positions and PedigreePostions tables...
+    # 'Freshen' the Positions table
+    # Three cases we know of: marker, individual value, and range specification, and all can be in lists
+    my $JointTPs = join(',', @{$config->isConfigured ("TraitPositions")});
+    $JointTPs =~ s/\s+//g;
+    my @TPs = split(',',$JointTPs);
+    my $ChromosomeNo = $$dataset{chromosome};
+    for my $TP (@TPs) {
+	if ($TP eq "marker") {
+	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) ".
+		     "Select $StudyId, $ChromosomeNo, AveragePosCM from ".
+		     "MapMarkers where MapId = $ReferenceMapId AND AveragePosCM NOT in ".
+		     "(Select distinct RefTraitPosCM from Positions where ".
+		     "StudyId = $StudyId)", undef);
+	} elsif ($TP =~ /(\d*.?\d*)-(\d*.?\d*):(\d*.?\d*)/) {
+	    my $PosCM = $1;
+	    do {
+		$dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
+			 undef, $StudyId, $ChromosomeNo, $PosCM);
+		$PosCM += $2;
+	    } while ($PosCM <= $3);
+	} else {
+	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
+		     undef, $StudyId, $ChromosomeNo, $TP);
+	}
+    }
+
+    # Finally, freshen the PedigreePositions as needed...
+    my $MPMarkers = $ {$config->isConfigured ("Multipoint")}[0];
+    print "Running with $MPMarkers multipoint markers\n";
+    
+    $dbh->do("Create temporary table PPs Select a.StudyId, a.PedigreeSId, b.ChromosomeNo, ".
+	     "b.RefTraitPosCM, $MPMarkers 'MarkerCount' ".
+	     "from Pedigrees a, Positions b where a.StudyId = b.StudyId");
+    $dbh->do("Insert into PedigreePositions (StudyId, PedigreeSId, ChromosomeNo, RefTraitPosCM, MarkerCount) ".
+	     "Select a.StudyId, a.PedigreeSId, a.ChromosomeNo, a.RefTraitPosCM, a.MarkerCount from ".
+	     "PPs a left outer join PedigreePositions b on ".
+	     "a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.ChromosomeNo = b.ChromosomeNo AND ".
+	     "a.RefTraitPosCM = b.RefTraitPosCM AND a.MarkerCount = b.MarkerCount ".
+	     "where b.StudyId IS NULL");
 }
 
 sub find_or_insert_map
@@ -157,7 +196,6 @@ sub find_or_insert_map
     my $MapScale = uc(substr $$dataset{mapfunction},0,1);
     my $MapId = 0;
 	
-    print "Mapfile is $MapFile and function is $MapScale\n";
 #    print "fields are ".Dumper($$dataset{mapfields})."\n";
 
     # Get the Maps row...
