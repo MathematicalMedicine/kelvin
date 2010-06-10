@@ -300,7 +300,7 @@ sub by_founder_desc
 
     if ($$a{dadid} eq '0' && $$a{momid} eq '0') {
 	if ($$b{dadid} eq '0' && $$b{momid} eq '0') {
-	    (($$ret = $$desc{$$b{indid}} <=> $$desc{$$a{indid}}) != 0)
+	    (($ret = $$desc{$$b{indid}} <=> $$desc{$$a{indid}}) != 0)
 		and return ($ret);
 	    return ($$a{sex} <=> $$b{sex});
 	}
@@ -311,7 +311,7 @@ sub by_founder_desc
 	return ($ret);
     } elsif (($ret = $$desc{$$b{dadid}} <=> $$desc{$$a{dadid}}) != 0) {
 	return ($ret);
-    } elsif (($ret = $$desc{$$b{momid}} <=> $$desc{$$a{momid}}) != 0)  {
+    } elsif (($ret = $$desc{$$b{momid}} <=> $$desc{$$a{momid}}) != 0)  {	
 	return ($ret);
     } else {
 	return ($$a{indid} cmp $$b{indid});
