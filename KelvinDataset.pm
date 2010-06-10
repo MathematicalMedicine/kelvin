@@ -101,7 +101,7 @@ sub copy
 
     @$new{qw/markers traits maporder/} = ({}, {}, []);
     @$new{qw/markerorder traitorder mapfields/} = ([], [], []);
-    @$new{qw/mapfunction writing consistent/} = ('kosambi', 0, 1);
+    @$new{qw/chromosome mapfunction writing consistent/} = (undef, 'kosambi', 0, 1);
     @$new{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
     @$new{qw/pedfile pedfh pedlineno/} = (undef, undef, 0);
     @$new{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
@@ -154,8 +154,8 @@ sub copy
     # These fields always copy over, regardless of subsetting
     map {
 	$$new{$_} = $$self{$_};
-    } qw/mapfunction mapfile freqfile locusfile pedfile mapread freqread locusread
-	freqset microsats snps/;
+    } qw/chromosome mapfunction mapfile freqfile locusfile pedfile mapread freqread
+	locusread freqset microsats snps/;
 
     if ($$new{mapread}) {
 	@{$$new{mapfields}} = @{$$self{mapfields}};
@@ -520,7 +520,7 @@ sub readMapfile
     map { 
 	@{$$self{markers}{$_}}{keys %{$markers{$_}}} = @{$markers{$_}}{keys %{$markers{$_}}};
     } keys (%markers);
-    $$self{chromomsome} = $origchr;
+    $$self{chromosome} = $origchr;
     @{$$self{maporder}} = @maporder;
     @{$$self{mapfields}} = @headers;
     $$self{mapread} = 1;
