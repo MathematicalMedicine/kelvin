@@ -77,6 +77,7 @@ int add_founder_nuclear_family (NuclearFamily * pNucFam);
 int add_spouse (Person * pPerson, Person * pSpouse);
 int read_person (char *sPedfileName, int lineNo, char *pLine,
 		 Person * pPerson);
+int setup_casecontrol_parents (Pedigree *pCurrPedigree);
 int setup_pedigree_ptrs (Pedigree * pPed);
 int setup_nuclear_families (Pedigree * pPed);
 int setup_loop_counts (Pedigree * pPed);
@@ -157,13 +158,6 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
        * before we move onto the new pedigree, we need to set up 
        * * pointers for the current pedigree
        * * */
-      /* If there is no proband found for this pedigree, default to the
-       * first person and generate a warning message */
-      if (pCurrPedigree && pCurrPedigree->pPeelingProband == NULL) {
-	pCurrPedigree->pPeelingProband = *(pCurrPedigree->ppPersonList);
-	WARNING ("No proband was given for this pedigree %s and proband is set to person %s",
-		 pCurrPedigree->sPedigreeID, pCurrPedigree->pPeelingProband->sID);
-      }
       if (pCurrPedigree) {
 	REALCHOKE(pPedigreeSet->pDonePerson, sizeof (int) * pPedigreeSet->maxNumPerson, int *);
 	/** @warning Note that the realloc/memset is not a good idea since the existing data might
@@ -171,15 +165,26 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	memset (pPedigreeSet->pDonePerson, 0,
 		sizeof (int) * pPedigreeSet->maxNumPerson);
 	
+	// Can't handle less than a nuclear family
+	if (pCurrPedigree->numPerson == 1)
+	  setup_casecontrol_parents (pCurrPedigree);
+	if (pCurrPedigree->numPerson < 3)
+	  ERROR ("Pedigree %s has too few individuals", pCurrPedigree->sPedigreeID);
+	
+	/* If there is no proband found for this pedigree, default to the
+	 * first person and generate a warning message */
+	if (pCurrPedigree->pPeelingProband == NULL) {
+	  pCurrPedigree->pPeelingProband = *(pCurrPedigree->ppPersonList);
+	  WARNING ("No proband was given for this pedigree %s and proband is set to person %s",
+		   pCurrPedigree->sPedigreeID, pCurrPedigree->pPeelingProband->sID);
+	}
+
 	/* set up pointers in the pedigree such as first child, 
 	 * * * next paternal sibling, next maternal sibling */
 	setup_pedigree_ptrs (pCurrPedigree);
 	// Really figure out if there is a loop
 	if (check_for_loop (pCurrPedigree) == EXIT_FAILURE)
 	  loopsInPedigrees = TRUE;
-	// Can't handle less than a nuclear family
-	if (pCurrPedigree->numPerson < 3)
-	  ERROR ("Pedigree %s has too few individuals", pCurrPedigree->sPedigreeID);
 	// Verify full connectivity
 	{
 	  int i, j, unconnected = TRUE;
@@ -254,6 +259,90 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
   }
 }
 
+
+int
+setup_casecontrol_parents (Pedigree *pCurrPedigree)
+{
+  Person *pPerson = pCurrPedigree->ppPersonList[0];
+  Person *dad, *mom;
+  PedigreeSet *pPedigreeSet = pCurrPedigree->pPedigreeSet;
+  int numTrait, i, j;
+
+  /* Make sure this looks like a case/control, not just a busted family */
+  if (strcmp (pPerson->sParentID[0], modelOptions->sUnknownPersonID) != 0 ||
+      strcmp (pPerson->sParentID[1], modelOptions->sUnknownPersonID) != 0 ||
+      strcmp (pPerson->sFirstChildID, modelOptions->sUnknownPersonID) != 0 ||
+      strcmp (pPerson->sNextSibID[0], modelOptions->sUnknownPersonID) != 0 ||
+      strcmp (pPerson->sNextSibID[1], modelOptions->sUnknownPersonID) != 0)
+    return (-1);
+  /* Make sure we have space to create fake parent IDs */
+  if (strlen (pPerson->sID) >= MAX_PED_LABEL_LEN-2)
+    ERROR ("Pedigree %s, label '%s' is too long to build fake parent IDs",
+	   pCurrPedigree->sPedigreeID, pPerson->sID);
+  /* Create fake parent IDs, store them in case/control individual */
+  strcpy (pPerson->sParentID[0], pPerson->sID);
+  strcat (pPerson->sParentID[0], "1");
+  strcpy (pPerson->sParentID[1], pPerson->sID);
+  strcat (pPerson->sParentID[1], "2");
+  /* Clear the proband */
+  pPerson->proband = 0;
+
+  /* Fill in data structure for the fake dad */
+  dad = create_person (pCurrPedigree, pPerson->sParentID[0]);
+  strcpy (dad->sParentID[0], modelOptions->sUnknownPersonID);
+  strcpy (dad->sParentID[1], modelOptions->sUnknownPersonID);
+  strcpy (dad->sFirstChildID, pPerson->sID);
+  strcpy (dad->sNextSibID[0], modelOptions->sUnknownPersonID);
+  strcpy (dad->sNextSibID[1], modelOptions->sUnknownPersonID);
+  dad->sex = 0;
+  dad->proband = 1;
+  pCurrPedigree->pPeelingProband = dad;
+  strcpy (dad->sOriginalID, dad->sID);
+  for (i = 0; i < originalLocusList.numTraitLocus; i++) {
+    numTrait = originalLocusList.ppLocusList[i]->pTraitLocus->numTrait;
+    for (j = 0; j < numTrait; j++) {
+      dad->ppOrigTraitValue[i][j] = modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN];
+      dad->ppTraitValue[i][j] = dad->ppOrigTraitValue[i][j];
+      dad->ppTraitKnown[i][j] = FALSE;
+      if (originalLocusList.ppLocusList[i]->pTraitLocus->pTraits[j]->numLiabilityClass > 1) {
+	dad->ppLiabilityClass[i][j] = 1;
+	pPedigreeSet->liabilityClassCnt[1] += 1;
+      }
+    }
+  }
+  for (i = originalLocusList.numTraitLocus; i < originalLocusList.numLocus; i++) {
+    dad->pTypedFlag[i] = dad->pPhenotypeList[0][i] = dad->pPhenotypeList[1][i] = 0;
+  }
+  
+  /* Fill in data structure for the fake mom */
+  mom = create_person (pCurrPedigree, pPerson->sParentID[1]);
+  strcpy (mom->sParentID[0], modelOptions->sUnknownPersonID);
+  strcpy (mom->sParentID[1], modelOptions->sUnknownPersonID);
+  strcpy (mom->sFirstChildID, pPerson->sID);
+  strcpy (mom->sNextSibID[0], modelOptions->sUnknownPersonID);
+  strcpy (mom->sNextSibID[1], modelOptions->sUnknownPersonID);
+  mom->sex = 1;
+  mom->proband = 0;
+  strcpy (mom->sOriginalID, mom->sID);
+  for (i = 0; i < originalLocusList.numTraitLocus; i++) {
+    numTrait = originalLocusList.ppLocusList[i]->pTraitLocus->numTrait;
+    for (j = 0; j < numTrait; j++) {
+      mom->ppOrigTraitValue[i][j] = modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN];
+      mom->ppTraitValue[i][j] = dad->ppOrigTraitValue[i][j];
+      mom->ppTraitKnown[i][j] = FALSE;
+      if (originalLocusList.ppLocusList[i]->pTraitLocus->pTraits[j]->numLiabilityClass > 1) {
+	mom->ppLiabilityClass[i][j] = 1;
+	pPedigreeSet->liabilityClassCnt[1] += 1;
+      }
+    }
+  }
+  for (i = originalLocusList.numTraitLocus; i < originalLocusList.numLocus; i++) {
+    mom->pTypedFlag[i] = mom->pPhenotypeList[0][i] = mom->pPhenotypeList[1][i] = 0;
+  }
+
+  return (0);
+}
+
 int
 read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
 {
@@ -306,19 +395,14 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
    * if we ever got a disease locus 
    * i.e. disease locus information is expected to be listed 
    * before any marker locus */
-  MALCHOKE(pPerson->ppOrigTraitValue, sizeof (double *) * originalLocusList.numTraitLocus, double **);
-  MALCHOKE(pPerson->ppTraitValue, sizeof (double *) * originalLocusList.numTraitLocus, double **);
-  MALCHOKE(pPerson->ppTraitKnown, sizeof (int *) * originalLocusList.numTraitLocus, int **);
-  MALCHOKE(pPerson->ppLiabilityClass, sizeof (int *) * originalLocusList.numTraitLocus, int **);
-
+ 
+  /* Allocation of ppTraitValue, ppOrigTraitValue, ppTraitKnown and ppLiabilityClass
+   * moved to create_person(), JMB 8 June 2010
+   */
   i = 0;
   while (i < originalLocusList.numTraitLocus) {
     pTraitLocus = originalLocusList.ppLocusList[i]->pTraitLocus;
     numTrait = pTraitLocus->numTrait;
-    MALCHOKE(pPerson->ppOrigTraitValue[i], sizeof (double) * numTrait, double *);
-    MALCHOKE(pPerson->ppTraitValue[i], sizeof (double) * numTrait, double *);
-    CALCHOKE(pPerson->ppTraitKnown[i], (size_t) 1, sizeof (int) * numTrait, int *);
-    MALCHOKE(pPerson->ppLiabilityClass[i], sizeof (int) * numTrait, int *);
     j = 0;
     while (j < numTrait) {
       pTrait = pTraitLocus->pTraits[j];
@@ -471,7 +555,7 @@ create_pedigree (PedigreeSet * pPedigreeSet, char *sPedLabel)
 Person *
 create_person (Pedigree * pPed, char *sID)
 {
-  int num;
+  int num, numTrait, i;
   Person *pPerson;
   int oldNum;
   size_t size;
@@ -493,6 +577,21 @@ create_person (Pedigree * pPed, char *sID)
   pPed->ppPersonList[oldNum] = pPerson;
   pPerson->pPedigree = pPed;
   pPerson->personIndex = oldNum;
+
+  /* allocate space for trait locus information */
+  MALCHOKE(pPerson->ppOrigTraitValue, sizeof (double *) * originalLocusList.numTraitLocus, double **);
+  MALCHOKE(pPerson->ppTraitValue, sizeof (double *) * originalLocusList.numTraitLocus, double **);
+  MALCHOKE(pPerson->ppTraitKnown, sizeof (int *) * originalLocusList.numTraitLocus, int **);
+  MALCHOKE(pPerson->ppLiabilityClass, sizeof (int *) * originalLocusList.numTraitLocus, int **);
+  i = 0;
+  while (i < originalLocusList.numTraitLocus) {
+    numTrait = originalLocusList.ppLocusList[i]->pTraitLocus->numTrait;
+    MALCHOKE(pPerson->ppOrigTraitValue[i], sizeof (double) * numTrait, double *);
+    MALCHOKE(pPerson->ppTraitValue[i], sizeof (double) * numTrait, double *);
+    CALCHOKE(pPerson->ppTraitKnown[i], (size_t) 1, sizeof (int) * numTrait, int *);
+    MALCHOKE(pPerson->ppLiabilityClass[i], sizeof (int) * numTrait, int *);
+    i++;
+  }
 
   /* allocate space for phenotype list for each locus */
   size = originalLocusList.numLocus * sizeof (int);
