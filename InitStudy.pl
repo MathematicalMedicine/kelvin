@@ -61,12 +61,31 @@ if (@ARGV) {
 
 perform_study($config);
 
+#
+# Current limitations:
+#
+# 1. There can be only one genotype map per pedigree. Otherwise we have to track which position
+#    ranges to use for each map for each pedigree and it gets very confusing.
+# 2. Multiple disjoint client runs will produce *cross-products* of requested positions and 
+#    pedigrees whether you want that or not, i.e. client A requesting ped 1 & 2 for pos 1-10
+#    followed by a run of client B requesting ped 2 and 3 for pos 11-20 will also end up requesting
+#    pos 11-20 for ped 1 and pos 1-10 for ped 3. To avoid this I would have to associate both
+#    peds and pos with some kind of generated client ID to keep them together during the populating
+#    joins. Not horribly difficult, but tough enough to not warrant it when it is unlikely to be
+#    needed.
+#    
+
 sub perform_study
 {
     my ($config) = @_;
 
     $ {$config->isConfigured ("Study")}[0] =~ /(\d+)\s+(\w+)\s+\"(.+)\"\s+(\w+)\s+(\w+)/;
     my $StudyId = $1; my $StudyRole = lc($2); my $DBIDatabase = $3; my $Username = $4; my $Password = $5;
+    my $MapId; my $LiabilityClasses = 1; my $ImprintingFlag = 'n';
+
+    $LiabilityClasses = $ {$config->isConfigured ("LiabilityClasses")}[0]
+	if ($config->isConfigured ("LiabilityClasses"));
+    $ImprintingFlag = 'y' if ($config->isConfigured ("Imprinting"));
 
     my $dbh;
     until ($dbh = DBI->connect("dbi:$DBIDatabase", $Username, $Password,
@@ -75,66 +94,72 @@ sub perform_study
 	warn "Cannot connect to $DBIDatabase: $DBI::errstr, retrying!";
     }
 
-    my $ReferenceMapId; my $LiabilityClassCnt; my $ImprintingFlag;
-
-    # We always want a full map
+    # Parse in the data files...
 
     my $href = {};
     my $dataset;
-
-    # Parse in the data files...
     $$href{PedigreeFile} = $ {$config->isConfigured ("PedigreeFile")}[0];
     $$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
     $$href{MapFile} = $ {$config->isConfigured ("MapFile")}[0];
     $dataset = KelvinDataset->new ($href)
 	or error ("KelvinDataset->new failed");
-    $ReferenceMapId = find_or_insert_map($$href{MapFile}, $dataset, $dbh);
+
+    # We always want a full map whether it is for the client (ReferenceMap) or server (GenotypeMaps)
+
+    $MapId = find_or_insert_map($$href{MapFile}, $dataset, $dbh);
 
     # Get the Studies row indicated by the configuration...
+
     my $sth = $dbh->prepare("Select ReferenceMapId, LiabilityClassCnt, ImprintingFlag from Studies where StudyId = ?")
 	or die "Couldn't prepare Studies selection: $dbh->errstr";
     $sth->execute($StudyId) or die "Couldn't execute Studies selection: $dbh->errstr";
-    my @Results;
-    if (@Results = $sth->fetchrow_array()) {
-	# Check map, liability classes and imprinting
-	my $StudyMapId = $Results[0]; $LiabilityClassCnt = $Results[1]; $ImprintingFlag = lc($Results[2]);
+
+    if (my @Results = $sth->fetchrow_array()) {
+
+	# Study exists, check map, liability classes and imprinting
+
 	error ("Mismatch in map")
-	    if ($StudyMapId ne $ReferenceMapId);
-	if ($config->isConfigured ("LiabilityClasses")) {
-	    error ("Mismatch in liability study/run liability classes")
-		if ($ {$config->isConfigured ("LiabilityClasses")}[0] ne $LiabilityClassCnt);
-	} else {
-	    error ("LiabilityClasses directive missing and Studies row specifies $LiabilityClassCnt classes")
-		if ($LiabilityClassCnt ne 1);
-	}
-	if ($config->isConfigured ("Imprinting")) {
-	    error ("Mismatch in imprinting flag ('on' in directives, 'off' in Studies row)") if ($ImprintingFlag ne "y");
-	} else {
-	    error ("Mismatch in imprinting flag ('off' in directives, 'on' in Studies row)") if ($ImprintingFlag eq "y");
-	}
+	    if ($Results[0] ne $MapId);
+	error ("Mismatch in liability classes")
+	    if ($Results[1] ne $LiabilityClasses);
+	error ("Mismatch in imprinting flag")
+	    if (lc($Results[2]) ne $ImprintingFlag);
 	$sth->finish;
+
     } else {
+
+	# Study does not exist, OK for the client, bad for a server.
+
 	error ("Client run must setup Studies and other tables before servers can run")
 	    if ($StudyRole ne "client");
-	$LiabilityClassCnt = $ {$config->isConfigured ("LiabilityClasses")}[0];
-	$ImprintingFlag = $config->isConfigured ("Imprinting") ? 'Y' : 'N';
 
 	# Insert Studies row with information from this configuration
 	$dbh->do("Insert into Studies (StudyId, ReferenceMapId, LiabilityClassCnt, ImprintingFlag) values (?,?,?,?)",
-		 undef, $StudyId, $ReferenceMapId, $LiabilityClassCnt, $ImprintingFlag)
+		 undef, $StudyId, $MapId, $LiabilityClasses, $ImprintingFlag)
 	    or die "Cannot insert Studies row: $DBI::errstr";
     }
 
     # Make sure all PedigreeSIds and SingleModelTimes are present
 
-    # Make a list of PedigreeSIds by reading the pedigree file
+    # Get list of PedigreeSIds by reading the pedigree file. Add if we're a client, update if we're a server
+
     while (my $ped = $dataset->readFamily) { 
 #	print Dumper($ped);
 	my $PedigreeSId = $$ped{pedid};
-	# Don't care if this fails...
-	$dbh->do("Insert into Pedigrees (StudyId, PedigreeSId) values (?,?)",
-		 undef, $StudyId, $PedigreeSId);
+	if ($StudyRole eq "client") {
+	    # Client -- just slam 'em in, don't care if this fails with duplicates...
+	    $dbh->do("Insert into Pedigrees (StudyId, PedigreeSId) values (?,?)",
+		     undef, $StudyId, $PedigreeSId);
+	} else {
+	    # Server -- no worries about errors here either...
+	    $dbh->do("Update Pedigrees set GenotypeMapId = ? where PedigreeSId = ?",
+		     undef, $MapId, $PedigreeSId);
+	}
     }
+
+    # All client-only from here on out...
+    return if ($StudyRole eq "server");
+
     # 'Freshen' the SingleModelTimes table by creating a a replacement...
     $dbh->do("Create temporary table SMTs Select a.StudyId, b.PedigreeSId, c.ChromosomeNo, d.MarkerName, 2 ".
 	     "from Studies a, Pedigrees b, Markers c, MapMarkers d where ".
@@ -156,7 +181,7 @@ sub perform_study
 	if ($TP eq "marker") {
 	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) ".
 		     "Select $StudyId, $ChromosomeNo, AveragePosCM from ".
-		     "MapMarkers where MapId = $ReferenceMapId AND AveragePosCM NOT in ".
+		     "MapMarkers where MapId = $MapId AND AveragePosCM NOT in ".
 		     "(Select distinct RefTraitPosCM from Positions where ".
 		     "StudyId = $StudyId)", undef);
 	} elsif ($TP =~ /(\d*.?\d*)-(\d*.?\d*):(\d*.?\d*)/) {
@@ -174,7 +199,6 @@ sub perform_study
 
     # Finally, freshen the PedigreePositions as needed...
     my $MPMarkers = $ {$config->isConfigured ("Multipoint")}[0];
-    print "Running with $MPMarkers multipoint markers\n";
     
     $dbh->do("Create temporary table PPs Select a.StudyId, a.PedigreeSId, b.ChromosomeNo, ".
 	     "b.RefTraitPosCM, $MPMarkers 'MarkerCount' ".
@@ -185,6 +209,7 @@ sub perform_study
 	     "a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.ChromosomeNo = b.ChromosomeNo AND ".
 	     "a.RefTraitPosCM = b.RefTraitPosCM AND a.MarkerCount = b.MarkerCount ".
 	     "where b.StudyId IS NULL");
+    return;
 }
 
 sub find_or_insert_map
@@ -202,8 +227,7 @@ sub find_or_insert_map
     my $sth = $dbh->prepare("Select MapId from Maps where MapScale = ? AND Description like ?")
 	or die "Couldn't prepare Maps selection: $dbh->errstr";
     $sth->execute($MapScale, $MapFile."%") or die "Couldn't execute Maps selection: $dbh->errstr";
-    my @Results;
-    if (@Results = $sth->fetchrow_array()) {
+    if (my @Results = $sth->fetchrow_array()) {
 	# Got it, return it...
 	$MapId = $Results[0];
 	$sth->finish;
