@@ -116,10 +116,10 @@ sub perform_study
 
     if (my @Results = $sth->fetchrow_array()) {
 
-	# Study exists, check map, liability classes and imprinting
+	# Study exists, check map (if client), liability classes and imprinting
 
 	error ("Mismatch in map")
-	    if ($Results[0] ne $MapId);
+	    if ($StudyRole eq "client" and $Results[0] ne $MapId);
 	error ("Mismatch in liability classes")
 	    if ($Results[1] ne $LiabilityClasses);
 	error ("Mismatch in imprinting flag")
@@ -157,8 +157,10 @@ sub perform_study
 	}
     }
 
-    # All client-only from here on out...
-    return if ($StudyRole eq "server");
+    if ($StudyRole eq "server") {
+	$dbh->do("call BadScaling(?)", undef, $StudyId);
+	return; # All client-only from here on out...
+    }
 
     # 'Freshen' the SingleModelTimes table by creating a a replacement...
     $dbh->do("Create temporary table SMTs Select a.StudyId, b.PedigreeSId, c.ChromosomeNo, d.MarkerName, 2 ".
@@ -180,8 +182,8 @@ sub perform_study
     for my $TP (@TPs) {
 	if ($TP eq "marker") {
 	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) ".
-		     "Select $StudyId, $ChromosomeNo, AveragePosCM from ".
-		     "MapMarkers where MapId = $MapId AND AveragePosCM NOT in ".
+		     "Select $StudyId, $ChromosomeNo, AvePosCM from ".
+		     "MapMarkers where MapId = $MapId AND AvePosCM NOT in ".
 		     "(Select distinct RefTraitPosCM from Positions where ".
 		     "StudyId = $StudyId)", undef);
 	} elsif ($TP =~ /(\d*.?\d*)-(\d*.?\d*):(\d*.?\d*)/) {
@@ -189,8 +191,8 @@ sub perform_study
 	    do {
 		$dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 			 undef, $StudyId, $ChromosomeNo, $PosCM);
-		$PosCM += $2;
-	    } while ($PosCM <= $3);
+		$PosCM += $3;
+	    } while ($PosCM <= $2);
 	} else {
 	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 		     undef, $StudyId, $ChromosomeNo, $TP);
@@ -209,6 +211,8 @@ sub perform_study
 	     "a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.ChromosomeNo = b.ChromosomeNo AND ".
 	     "a.RefTraitPosCM = b.RefTraitPosCM AND a.MarkerCount = b.MarkerCount ".
 	     "where b.StudyId IS NULL");
+    $dbh->do("call BadScaling(?)", undef, $StudyId);
+
     return;
 }
 
@@ -250,7 +254,7 @@ sub find_or_insert_map
     foreach (@markerOrder) {
 	# Don't care if this fails...
 	$dbh->do("Insert into Markers (Name, ChromosomeNo) values (?,?)", undef, $_, $ChromosomeNo);
-	$dbh->do("Insert into MapMarkers (MapId, MarkerName, AveragePosCM) values (?,?,?)",
+	$dbh->do("Insert into MapMarkers (MapId, MarkerName, AvePosCM) values (?,?,?)",
 		 undef, $MapId, $_, $markers{$_}{avgpos});
     }
     return $MapId;
