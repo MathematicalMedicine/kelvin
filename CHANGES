@@ -1,3 +1,8 @@
+Version 0.38.1
+  06/15/2010 (Dprime,theta) values for LD analysis are changed. 
+  The number of values increase from 141 to 271. 
+
+
 Version 0.38.0
   Extensive changes to directive syntax, error, status and progress messages. Review documentation.
 
