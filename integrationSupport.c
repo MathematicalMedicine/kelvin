@@ -774,7 +774,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
         //mp_result[posIdx].lr_total += likelihood_ratio;
       }
     }
-
+    //fprintf(stderr," trait %e marker %e alter%e lr %e \n", log(pedigreeSet.nullLikelihood[0]) , log(pPedigreeLocal->markerLikelihood),log(pPedigreeLocal->likelihood), pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[0] * pPedigreeLocal->markerLikelihood));
     /* caculating the HET */
     for (j = 0; j < 5; j++) {
       //for (j = 0; j < 1; j++) {
@@ -787,7 +787,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
         homoLR = pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood);
-        //fprintf(stderr,"j=%d pedIdx=%d  %20.18f %20.16f %20.16f %20.16f \n",j, pedIdx,pPedigreeLocal->likelihood,pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood, homoLR ,log10HetLR);
+	//	fprintf(stderr,"j=%d pedIdx=%d  %e %e %e %e \n",j, pedIdx,pPedigreeLocal->likelihood,pedigreeSet.nullLikelihood[pedIdx] , pPedigreeLocal->markerLikelihood, homoLR);
         if (alphaV * homoLR + alphaV2 < 0)
           WARNING ("Heterogenous Likelihood Ratio is less than zero");
         log10HetLR += log10 (alphaV * homoLR + alphaV2);
@@ -2005,14 +2005,14 @@ void integrateMain ()
 
           /* analysis specific statistic initialization */
           if (modelOptions->mapFlag == SA) {
-            num_BR = num_sample_Dp_theta;       // currently 141
+            num_BR = num_sample_Dp_theta;       // currently 271
           } else {      ///  This is for sec-specific analysis in four regions
             num_BR = num_sample_SS_theta;       // currenlty 260
           }
           max_scale = 0;
           CALCHOKE (BRscale, (size_t) num_BR, sizeof (int), int *);
           /*The main loop to Calculate BR(theta, dprime) or BR(thetaM, thetaF) */
-          for (i = 0; i < num_BR; i++) {        /* num_BR = 141 for Sex-Average Analysis
+          for (i = 0; i < num_BR; i++) {        /* num_BR = 271 for Sex-Average Analysis
                                                  * = 260 for Sex-Specific Analysis */
 
             if (modelOptions->mapFlag == SA) {
@@ -2049,8 +2049,7 @@ void integrateMain ()
               }
               if (dprimeIdx == pLambdaCell->ndprime) {
                 // &&& This needs fixin'
-                fprintf (stderr, "dprimeIdx is %d\n", dprimeIdx);
-                exit (0);
+                ERROR ( "dprimeIdx is %d for dprime=%f theta=%f\n", dprimeIdx,fixed_dprime, fixed_theta);
               }
             }
             num_out_constraint = 0;
@@ -2138,7 +2137,7 @@ void integrateMain ()
             }
             if ((modelOptions->mapFlag == SA) && (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM) && (i == 9)) {
               //fprintf (stderr,"End of LE case\n");
-              i = 141;
+              i = num_BR;
             }
           }     /* end of for to calculate BR(theta, dprime) or BR(thetaM, thetaF) */
 
@@ -2157,7 +2156,7 @@ void integrateMain ()
             thetaSMBF = 0.0;    // 0< thetaM <0.05  0.05< thetaF <0.5  
             thetaBMBF = 0.0;    // 0.05< thetaM <0.05  0.05< thetaF <0.5 
           }
-          for (i = 0; i < num_BR; i++) {        /* num_BR = 141 for Sex-Average Analysis
+          for (i = 0; i < num_BR; i++) {        /* num_BR = 271 for Sex-Average Analysis
                                                  * = 260 for Sex-Specific Analysis */
             if (modelOptions->mapFlag == SA) {
               /* Use unifor scaling with max_scale */
@@ -2174,7 +2173,7 @@ void integrateMain ()
                 le_small_theta += dcuhre2[i][3] * dcuhre2[i][2];
               } else if (i < 10) {
                 le_big_theta += dcuhre2[i][3] * dcuhre2[i][2];
-              } else if (i < 140) {
+              } else if (i < 270) {
                 if (dcuhre2[i][1] < modelOptions->thetaCutoff[0]) {
                   ld_small_theta += dcuhre2[i][3] * dcuhre2[i][2];
                 } else {
@@ -2188,7 +2187,7 @@ void integrateMain ()
 
               if ((modelOptions->equilibrium == LINKAGE_EQUILIBRIUM) && (i == 9)) {
                 //fprintf (stderr,"End of LE case\n");
-                i = 141;
+                i = 271;
               }
             } else {
               /* Use unifor scaling with max_scale */
@@ -2238,6 +2237,7 @@ void integrateMain ()
           if (modelOptions->markerAnalysis != FALSE) {
             fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], ppl >= .025 ? 2 : 3, KROUND (ppl));
           } else {
+            //fprintf (fpPPL, "%d %s %s %.4f %6.5f %e", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], ppl,modelOptions->thetaWeight * le_small_theta + (1 - modelOptions->thetaWeight) * le_big_theta);
             fprintf (fpPPL, "%d %s %s %.4f %.*f ", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], ppl >= .025 ? 2 : 3, KROUND (ppl));
           }
 
