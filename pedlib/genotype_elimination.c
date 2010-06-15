@@ -215,7 +215,7 @@ parent_children_genotype_elimination (int locus, NuclearFamily * pNucFam,
   }				/* end of looping of parent genotypes */
 
   if (pParent->loopBreaker >= 1 && pParent->pParents[DAD] == NULL) {
-    if (pParent->pOriginalPerson->ppGenotypeList[locus] == NULL) {
+    if (genoElimState==0 && pParent->pOriginalPerson->ppGenotypeList[locus] == NULL) {
       WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	       pParent->pPedigree->sPedigreeID, pParent->sID, pLocus->sName);
       if (pParent->pPedigree->loopFlag > 1)
@@ -223,7 +223,7 @@ parent_children_genotype_elimination (int locus, NuclearFamily * pNucFam,
       return -1;
     }
   } else {
-    if (pParent->ppGenotypeList[locus] == NULL) {
+    if (genoElimState==0 && pParent->ppGenotypeList[locus] == NULL) {
       WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	       pParent->pPedigree->sPedigreeID, pParent->sID, pLocus->sName);
       if (pParent->pPedigree->loopFlag > 1)
@@ -323,7 +323,7 @@ child_parents_genotype_elimination (int locus, NuclearFamily * pNucFam,
     }
   } /* end of looping of child's genotype list */
 
-  if (pChild->ppGenotypeList[locus] == NULL) {
+  if (genoElimState==0 && pChild->ppGenotypeList[locus] == NULL) {
     WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	     pChild->pPedigree->sPedigreeID, pChild->sID, pLocus->sName);
     if (pChild->pPedigree->loopFlag > 1)
@@ -436,7 +436,7 @@ parent_parent_children_genotype_elimination (int locus,
 
   if (pParent1->loopBreaker >= 1 && pParent1->pParents[DAD] == NULL) {
 
-    if (pParent1->pOriginalPerson->ppGenotypeList[locus] == NULL) {
+    if (genoElimState==0 && pParent1->pOriginalPerson->ppGenotypeList[locus] == NULL) {
       WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	       pParent1->pPedigree->sPedigreeID, pParent1->sID, pLocus->sName);
       if (pParent1->pPedigree->loopFlag > 1)
@@ -445,7 +445,7 @@ parent_parent_children_genotype_elimination (int locus,
     }
 
   } else {
-    if (pParent1->ppGenotypeList[locus] == NULL) {
+    if (genoElimState==0 && pParent1->ppGenotypeList[locus] == NULL) {
       WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	       pParent1->pPedigree->sPedigreeID, pParent1->sID, pLocus->sName);
       if (pParent1->pPedigree->loopFlag > 1)
@@ -589,7 +589,7 @@ child_children_parents_genotype_elimination (int locus,
     }
   }				/* end of looping of child's genotype list */
 
-  if (pChild->ppGenotypeList[locus] == NULL) {
+  if (genoElimState ==0 && pChild->ppGenotypeList[locus] == NULL) {
     WARNING ("Pedigree %s Person %s is not compatible at locus %s",
 	     pChild->pPedigree->sPedigreeID, pChild->sID, pLocus->sName);
     if (pChild->pPedigree->loopFlag > 1)

@@ -46,4 +46,10 @@ int checkQtTraitRanges (PedigreeSet *pPedigreeSet);
 void getPedigreeSampleStdev (PedigreeSet *pPedigreeSet, double *mean, double *stdev);
 void renumberLiabilityClasses (PedigreeSet *pPedigreeSet);
 
+/* Genotype Elimination State - this is to help get rid off some warning messages 
+ * initialize state (0) - first state - genotype elimination warnings should be on
+ * running state (1) - second state - genotype elimination warnings should be off
+ */
+int genoElimState;
+
 #endif
