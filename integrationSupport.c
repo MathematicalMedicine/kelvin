@@ -2192,7 +2192,7 @@ void integrateMain ()
             } else {
               /* Use unifor scaling with max_scale */
               if ((BRscale[i] > max_scale) && (thetaSS[i][3] > 0)) {
-                newLog10BR = log10 (dcuhre2[i][3]) + BRscale[i] - max_scale;
+                newLog10BR = log10 (thetaSS[i][3]) + BRscale[i] - max_scale;
                 if (newLog10BR < DBL_MIN_10_EXP + 1) {
                   thetaSS[i][3] = 0;
                 } else {
@@ -2244,7 +2244,7 @@ void integrateMain ()
           //printf("%f %f %f %f %f %f\n",le_small_theta,le_big_theta,ld_small_theta,ld_big_theta,le_unlinked ,modelOptions->thetaCutoff[0]);
           /* output LD-PPL now if needed */
           if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
-            ldppl = 0.019 * (0.021 * ld_small_theta + 0.979 * le_small_theta) + 0.001 * (0.011 * ld_big_theta + 0.9989 * le_big_theta);
+            ldppl = 0.019 * (0.021 * ld_small_theta + 0.979 * le_small_theta) + 0.001 * (0.0011 * ld_big_theta + 0.9989 * le_big_theta);
 
             ldppl = ldppl / (ldppl + 0.98 * le_unlinked);
 
