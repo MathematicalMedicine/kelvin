@@ -34,6 +34,7 @@
 #include <multidim.h>
 #include <ippl.h>
 #include <map.h>
+#include <calc_updated_ppl.h>
 
 /* TO DO:
  * - sex-specific theta cutoffs
@@ -72,7 +73,8 @@ typedef struct {
 typedef struct {
   char *name;
   FILE *fp;
-  int lineno,
+  int version,
+    lineno,
     numcols,
     numdprimes,
     numthetas,
@@ -138,10 +140,15 @@ char *mapinfile=NULL;   /* --mapin: mapfile, to allow updating across files cont
 
 
 /* Globally available for error messages */
-char *curversion = "0.38.0";
+char *curversion = "0.38.2";
 char *minversion = "0.36.1";
 char *pname;
 int verbose = 0;
+
+/* Global just so it sits up here at the top */
+char *splitversion = "0.38.1";
+/* Global due to sloth */
+int postsplit = 0;
 
 void kelvin_twopoint (st_brfile *brfiles, int numbrfiles);
 void kelvin_multipoint (st_brfile *brfiles, int numbrfiles);
@@ -174,7 +181,7 @@ void print_partial_data (st_brfile *brfile, st_data *data);
 int compare_markers (st_brmarker *m1, st_brmarker *m2);
 void compare_headers (st_brfile *f1, st_brfile *f2);
 int compare_positions (st_brmarker *m1, st_brmarker *m2);
-void compare_samples (st_data *d, int sampleno, st_brfile *brfile);
+double *compare_samples (st_data *d, int sampleno, st_brfile *brfile);
 
 
 int main (int argc, char **argv)
@@ -203,10 +210,7 @@ int main (int argc, char **argv)
     brfiles[va].name = argv[argidx + va];
     open_brfile (&brfiles[va]);
   }
-  fprintf (pplout, "# Version V%s\n", curversion);
-  if (partout != NULL)
-    fprintf (partout, "# Version V%s\n", curversion);
-  
+
   if (multipoint) {
     kelvin_multipoint (brfiles, numbrfiles);
   } else if (okelvin) {
@@ -242,6 +246,10 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
   st_brfile **current;
   st_ldvals ldval;
 
+  fprintf (pplout, "# Version V%s\n", curversion);
+  if (partout != NULL)
+    fprintf (partout, "# Version V%s\n", curversion);
+  
   memset (&next_marker, 0, sizeof (st_brmarker));
   memset (&data, 0, sizeof (st_data));
   memset (&dprimes, 0, sizeof (st_multidim));
@@ -439,6 +447,10 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
   st_data data;
   double lr, *lrs, ppl;
 
+  fprintf (pplout, "# Version V%s\n", curversion);
+  if (partout != NULL)
+    fprintf (partout, "# Version V%s\n", curversion);
+  
   warnbuff[0] = '\0';
   memset (&data, 0, sizeof (st_data));
   if ((lrs = malloc (sizeof (double) * numbrfiles)) == NULL) {
@@ -526,14 +538,44 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 
 void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 {
-  int fileno, numcurrent, sampleno, alldone, ret;
-  double ldprior, ldstat;
+  int fileno, numcurrent, sampleno, alldone, ret, lastidx;
+  int version, split, major, minor, patch;
+  double ldprior, ldstat, *sample;
+  char *effective_version;
   st_brmarker next_marker, *marker;
   st_mapmarker *mapptr;
   st_data data_0, data_n;
   st_ldvals ldval;
   st_brfile **current;
 
+  sscanf (splitversion, "%d.%d.%d", &major, &minor, &patch);
+  split = major * 100000 + minor * 1000 + patch;
+  
+  if (sexspecific) {
+    effective_version = curversion;
+  } else {
+    version = brfiles[0].version;
+    for (fileno = 1; fileno < numbrfiles; fileno++) {
+      if ((version <= split && brfiles[fileno].version > split) ||
+	  (version > split && brfiles[fileno].version <= split)) {
+	fprintf (stderr, "ERROR - cannot update across files with versions both less than and greater than verion %s\n", splitversion);
+	exit (-1);
+      }
+    }
+    if (version <= split) {
+      effective_version = splitversion;
+      lastidx = 140;
+    } else {
+      postsplit = 1;
+      effective_version = curversion;
+      lastidx = 270;
+    }
+  }
+
+  fprintf (pplout, "# Version V%s\n", effective_version);
+  if (partout != NULL)
+    fprintf (partout, "# Version V%s\n", effective_version);
+  
   memset (&next_marker, 0, sizeof (st_brmarker));
   memset (&data_0, 0, sizeof (st_data));
   memset (&data_n, 0, sizeof (st_data));
@@ -608,7 +650,7 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     sampleno = 0;
     memset (&ldval, 0, sizeof (st_ldvals));
     while (get_data_line (current[0], &data_0) == 1) {
-      compare_samples (&data_0, sampleno, current[0]);
+      sample = compare_samples (&data_0, sampleno, current[0]);
       for (fileno = 1; fileno < numcurrent; fileno++) {
 	if ((ret = get_data_line (current[fileno], &data_n)) != 1) {
 	  fprintf (stderr, "expected data in '%s' at line %d, found %s\n",
@@ -616,7 +658,7 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 		   (ret == 0) ? "end-of-file" : "marker line");
 	  exit (-1);
 	}
-	compare_samples (&data_n, sampleno, current[fileno]);
+	(void) compare_samples (&data_n, sampleno, current[fileno]);
 	if (! epistasis)
 	  data_0.lr *= data_n.lr;
 	else
@@ -626,19 +668,28 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 	data_0.lr /= (double) numcurrent;
       if (partout != NULL)
 	print_partial_data (current[0], &data_0);
-      
-      if (sampleno < 5) {
-        ldval.le_small_theta += data_0.lr * dcuhre2[sampleno][2];
-      } else if (sampleno < 10) {
-        ldval.le_big_theta += data_0.lr * dcuhre2[sampleno][2];
-      } else if (sampleno < 140){
-        if (dcuhre2[sampleno][1] < cutoff) {
-          ldval.ld_small_theta += data_0.lr * dcuhre2[sampleno][2];
-        } else {
-          ldval.ld_big_theta += data_0.lr * dcuhre2[sampleno][2];
-        }
+
+      /* 'sample' is an 4-element array of doubles, the canonical values
+       * for the current dkelvin sample point. The 0th element is the D';
+       * the 1rst is the sex-avg theta; the 2nd is the DCUHRE weight; the
+       * 3rd is unused here.
+       */
+      if (! sexspecific) {
+	if (sampleno < 5) {
+	  ldval.le_small_theta += data_0.lr * sample[2];
+	} else if (sampleno < 10) {
+	  ldval.le_big_theta += data_0.lr * sample[2];
+	} else if (sampleno < lastidx){
+	  if (sample[1] < cutoff) {
+	    ldval.ld_small_theta += data_0.lr * sample[2];
+	  } else {
+	    ldval.ld_big_theta += data_0.lr * sample[2];
+	  }
+	} else {
+	  ldval.le_unlinked += data_0.lr * sample[2];
+	}
       } else {
-        ldval.le_unlinked += data_0.lr * dcuhre2[sampleno][2];
+	/* FIXME: what to do here? */
       }
       sampleno++;
     }
@@ -788,7 +839,7 @@ void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas
 
  void do_dkelvin_first_pass (st_brfile *brfile, st_data *data)
  {
-   int firstdata, lineno, sampleno, ret;
+   int firstdata, lineno, sampleno, ret, lastidx;
 
    if ((firstdata = ftell (brfile->fp)) == -1) {
      fprintf (stderr, "ftell on file '%s' failed, %s\n", brfile->name, strerror (errno));
@@ -798,11 +849,13 @@ void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas
    
    sampleno = 0;
    while ((ret = get_data_line (brfile, data)) == 1) {
-     compare_samples (data, sampleno, brfile);
+     (void) compare_samples (data, sampleno, brfile);
      sampleno++;
    }
-   
-   if (sampleno == 141) 
+
+   /* Actually one more than the last index, since we counted past the last data line */   
+   lastidx = (postsplit) ? 271 : 141;
+   if (sampleno == lastidx) 
      brfile->no_ld = 0;
    else if (sampleno != 10) {
      fprintf (stderr, "unexpected number of samples %d in file '%s'\n", sampleno, brfile->name);
@@ -1318,6 +1371,11 @@ int parse_command_line (int argc, char **argv)
     exit (-1);
   }
 
+  if (sexspecific && ! okelvin) {
+    fprintf (stderr, "%s: --sexspecific only works with --okelvin right now\n", pname);
+    exit (-1);
+  }
+
   if (partoutfile != NULL) {
     if (stat (partoutfile, &statbuf) != -1) {
       fprintf (stderr, "%s: won't open '%s' for writing, file exists\n", pname, partoutfile);
@@ -1448,6 +1506,7 @@ void open_brfile (st_brfile *brfile)
 	     brfile->name, major, minor, patch, minversion);
     exit (-1);
   }
+  brfile->version = fileverno;
   brfile->lineno = 1;
   return;
 }
@@ -1981,29 +2040,36 @@ int compare_positions (st_brmarker *m1, st_brmarker *m2)
 }
 
 
-void compare_samples (st_data *d, int sampleno, st_brfile *brfile)
+double *compare_samples (st_data *d, int sampleno, st_brfile *brfile)
 {
-  /* dcuhre2 imported from integrationLocals.h */
-  if (fabs (dcuhre2[sampleno][0] - d->dprimes[0]) > 0.005) {
-    fprintf (stderr, "D' varies from dKelvin at line %d in '%s'; expected %.2f, found %.2f\n",
-	     brfile->lineno, brfile->name, dcuhre2[sampleno][0], d->dprimes[0]);
-    exit (-1);
+  double *sample;
+
+  if (! sexspecific) {
+    sample = (postsplit) ? dcuhre2[sampleno] : old_dcuhre2[sampleno];
+    if (fabs (sample[0] - d->dprimes[0]) > 0.005) {
+      fprintf (stderr, "D' varies from dKelvin at line %d in '%s'; expected %.2f, found %.2f\n",
+	       brfile->lineno, brfile->name, sample[0], d->dprimes[0]);
+      exit (-1);
+    }
+    if (fabs (sample[1] - d->thetas[0]) > 0.00005) {
+      fprintf (stderr, "Theta varies from dKelvin at line %d in '%s'; expected %.4f, found %.4f\n",
+	       brfile->lineno, brfile->name, sample[1], d->thetas[0]);
+      exit (-1);
+    }
+  } else {
+    sample = thetaSS[sampleno];
+    if (fabs (sample[0] - d->thetas[0]) > 0.00005) {
+      fprintf (stderr, "Theta varies from dKelvin at line %d in '%s'; expected %.4f, found %.4f\n",
+	       brfile->lineno, brfile->name, sample[1], d->thetas[1]);
+      exit (-1);
+    }
+    if (fabs (sample[1] - d->thetas[1]) > 0.00005) {
+      fprintf (stderr, "Theta varies from dKelvin at line %d in '%s'; expected %.4f, found %.4f\n",
+	       brfile->lineno, brfile->name, sample[1], d->thetas[1]);
+      exit (-1);
+    }
   }
-  if (fabs (dcuhre2[sampleno][1] - d->thetas[0]) > 0.00005) {
-    fprintf (stderr, "Theta varies from dKelvin at line %d in '%s'; expected %.4f, found %.4f\n",
-	     brfile->lineno, brfile->name, dcuhre2[sampleno][1], d->thetas[0]);
-    exit (-1);
-  }
-  
-  /* I don't really think dKelvin supports sex-specific thetas... */
-  if (! sexspecific) 
-    return;
-  if (fabs (dcuhre2[sampleno][1] - d->thetas[1]) > 0.00005) {
-    fprintf (stderr, "Theta varies from dKelvin at line %d in '%s'; expected %.4f, found %.4f\n",
-	     brfile->lineno, brfile->name, dcuhre2[sampleno][1], d->thetas[1]);
-    exit (-1);
-  }
-  return;
+  return (sample);
 }
 
 
@@ -2163,4 +2229,3 @@ double calc_ppl_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr)
   return (ppl);
 }
 #endif
-
