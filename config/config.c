@@ -479,7 +479,7 @@ void validateConfig ()
     if (staticModelRange.nafreq > 0)
       fault ("MarkerAlleleFrquency is incompatible with Multipoint\n");
     if (staticModelOptions.pplfile[0] != '\0')
-      WARNING ("Multipoint will write no output to PPLFile");
+      WARNING ("Multipoint analysis will write no output to PPLFile '%s', but will write PPLs in BayesRatioFile '%s'", staticModelOptions.pplfile, staticModelOptions.avghetfile);
     if (! observed.traitPositions) 
       fault ("Multipoint requires TraitPositions\n");
   } else {
@@ -536,7 +536,7 @@ void validateConfig ()
   /* So much for the low-hanging fruit... */
   
   if (staticModelOptions.dkelvinoutfile[0] != '\0')
-    WARNING ("FixedModels will write no output to NIDetailFile");
+    WARNING ("Analysis with FixedModels will write no output to NIDetailFile '%s'", staticModelOptions.dkelvinoutfile);
 
   if (staticModelOptions.mapFlag == SS) {
     if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
