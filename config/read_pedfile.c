@@ -175,7 +175,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	 * first person and generate a warning message */
 	if (pCurrPedigree->pPeelingProband == NULL) {
 	  pCurrPedigree->pPeelingProband = *(pCurrPedigree->ppPersonList);
-	  WARNING ("No proband was given for this pedigree %s and proband is set to person %s",
+	  ERROR ("No proband was given for this pedigree %s and proband is set to person %s",
 		   pCurrPedigree->sPedigreeID, pCurrPedigree->pPeelingProband->sID);
 	}
 
@@ -781,13 +781,13 @@ setup_pedigree_ptrs (Pedigree * pPed)
     if (strcmp (pPerson->sFirstChildID, modelOptions->sUnknownPersonID) != 0) {
       /* first child is known */
       if ((pPerson->pFirstChild = find_person (pPed, pPerson->sFirstChildID)) == NULL)
-	WARNING ("Missing individual %s, first child of %s and %s in pedigree %s",
+	ERROR ("Missing individual %s, first child of %s and %s in pedigree %s",
 	       pPerson->sFirstChildID, pPerson->sParentID[DAD], pPerson->sParentID[MOM], pPed->sPedigreeID);
     }
     /* set up next paternal sibling link */
     if (strcmp (pPerson->sNextSibID[DAD], modelOptions->sUnknownPersonID) != 0) {
       if ((pPerson->pNextSib[DAD] = find_person (pPed, pPerson->sNextSibID[DAD])) == NULL)
-	WARNING ("Missing individual %s, next paternal sibling of %s in pedigree %s",
+	ERROR ("Missing individual %s, next paternal sibling of %s in pedigree %s",
 	       pPerson->sNextSibID[DAD], pPerson->sParentID[DAD], pPed->sPedigreeID);
     } else
       pPerson->pNextSib[DAD] = NULL;
@@ -795,7 +795,7 @@ setup_pedigree_ptrs (Pedigree * pPed)
     /* set up next maternal sibling link */
     if (strcmp (pPerson->sNextSibID[MOM], modelOptions->sUnknownPersonID) != 0) {
       if ((pPerson->pNextSib[MOM] = find_person (pPed, pPerson->sNextSibID[MOM])) == NULL)
-	WARNING ("Missing individual %s, next maternal sibling of %s in pedigree %s",
+	ERROR ("Missing individual %s, next maternal sibling of %s in pedigree %s",
 	       pPerson->sNextSibID[MOM], pPerson->sParentID[MOM], pPed->sPedigreeID);
     } else
       pPerson->pNextSib[MOM] = NULL;
