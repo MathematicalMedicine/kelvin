@@ -74,6 +74,7 @@ typedef struct {
   char *name;
   FILE *fp;
   int version,
+    postsplit,
     lineno,
     numcols,
     numdprimes,
@@ -147,8 +148,6 @@ int verbose = 0;
 
 /* Global just so it sits up here at the top */
 char *splitversion = "0.38.1";
-/* Global due to sloth */
-int postsplit = 0;
 
 void kelvin_twopoint (st_brfile *brfiles, int numbrfiles);
 void kelvin_multipoint (st_brfile *brfiles, int numbrfiles);
@@ -538,8 +537,7 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 
 void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 {
-  int fileno, numcurrent, sampleno, alldone, ret, lastidx;
-  int version, split, major, minor, patch;
+  int fileno, numcurrent, sampleno, alldone, ret, lastidx, ld=0;
   double ldprior, ldstat, *sample;
   char *effective_version;
   st_brmarker next_marker, *marker;
@@ -548,34 +546,6 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
   st_ldvals ldval;
   st_brfile **current;
 
-  sscanf (splitversion, "%d.%d.%d", &major, &minor, &patch);
-  split = major * 100000 + minor * 1000 + patch;
-  
-  if (sexspecific) {
-    effective_version = curversion;
-  } else {
-    version = brfiles[0].version;
-    for (fileno = 1; fileno < numbrfiles; fileno++) {
-      if ((version <= split && brfiles[fileno].version > split) ||
-	  (version > split && brfiles[fileno].version <= split)) {
-	fprintf (stderr, "ERROR - cannot update across files with versions both less than and greater than verion %s\n", splitversion);
-	exit (-1);
-      }
-    }
-    if (version <= split) {
-      effective_version = splitversion;
-      lastidx = 140;
-    } else {
-      postsplit = 1;
-      effective_version = curversion;
-      lastidx = 270;
-    }
-  }
-
-  fprintf (pplout, "# Version V%s\n", effective_version);
-  if (partout != NULL)
-    fprintf (partout, "# Version V%s\n", effective_version);
-  
   memset (&next_marker, 0, sizeof (st_brmarker));
   memset (&data_0, 0, sizeof (st_data));
   memset (&data_n, 0, sizeof (st_data));
@@ -594,7 +564,30 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     }
     if (verbose >= 2)
       printf ("first marker in %s is %s\n", brfiles[fileno].name, brfiles[fileno].curmarker.name2);
+    if (! brfiles[fileno].no_ld)
+      ld = 1;
   }
+
+  if (sexspecific || ! ld) {
+    effective_version = curversion;
+  } else {
+    for (fileno = 1; fileno < numbrfiles; fileno++) {
+      if (brfiles[0].postsplit != brfiles[fileno].postsplit) {
+	fprintf (stderr, "ERROR - cannot update across files with versions both less than and greater than verion %s\n", splitversion);
+	exit (-1);
+      }
+    }
+    if (brfiles[0].postsplit) {
+      effective_version = curversion;
+      lastidx = 270;
+    } else {
+      effective_version = splitversion;
+      lastidx = 140;
+    }
+  }
+  fprintf (pplout, "# Version V%s\n", effective_version);
+  if (partout != NULL)
+    fprintf (partout, "# Version V%s\n", effective_version);
   print_twopoint_headers (brfiles[0].no_ld);
 
   while (1) {
@@ -854,7 +847,7 @@ void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas
    }
 
    /* Actually one more than the last index, since we counted past the last data line */   
-   lastidx = (postsplit) ? 271 : 141;
+   lastidx = (brfile->postsplit) ? 271 : 141;
    if (sampleno == lastidx) 
      brfile->no_ld = 0;
    else if (sampleno != 10) {
@@ -1479,7 +1472,7 @@ double validate_double_arg (char *arg, char *optname)
 void open_brfile (st_brfile *brfile)
 {
   char buff[BUFFLEN];
-  int major, minor, patch, fileverno, minverno;
+  int major, minor, patch, fileverno, minverno, splitverno;
   
   if ((brfile->fp = fopen (brfile->name, "r")) == NULL) {
     fprintf (stderr, "open '%s' failed, %s\n", brfile->name, strerror (errno));
@@ -1506,6 +1499,10 @@ void open_brfile (st_brfile *brfile)
 	     brfile->name, major, minor, patch, minversion);
     exit (-1);
   }
+  sscanf (splitversion, "%d.%d.%d", &major, &minor, &patch);
+  splitverno = major * 100000 + minor * 1000 + patch;
+  if (fileverno > splitverno)
+    brfile->postsplit = 1;
   brfile->version = fileverno;
   brfile->lineno = 1;
   return;
@@ -2045,7 +2042,7 @@ double *compare_samples (st_data *d, int sampleno, st_brfile *brfile)
   double *sample;
 
   if (! sexspecific) {
-    sample = (postsplit) ? dcuhre2[sampleno] : old_dcuhre2[sampleno];
+    sample = (brfile->postsplit) ? dcuhre2[sampleno] : old_dcuhre2[sampleno];
     if (fabs (sample[0] - d->dprimes[0]) > 0.005) {
       fprintf (stderr, "D' varies from dKelvin at line %d in '%s'; expected %.2f, found %.2f\n",
 	       brfile->lineno, brfile->name, sample[0], d->dprimes[0]);
