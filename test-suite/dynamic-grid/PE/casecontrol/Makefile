@@ -9,5 +9,11 @@ test :
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl mod.full mod.out-baseline .000001
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl mod.cc mod.full .000001
 
+test-USE_DL :
+	echo Compilation not appropriate for this test.
+
+test-FIXED :
+	echo Fixed-grid comparison not available
+
 clean :
 	- rm -f *.full *.cc
