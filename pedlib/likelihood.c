@@ -499,7 +499,6 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
   LoopBreaker *loopStruct;
 
 
-  // Get fake here instead of elsewhere
 #ifdef STUDYDB
 
   if (dk_curModel.pen != NULL) {
