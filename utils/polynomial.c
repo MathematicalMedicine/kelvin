@@ -4925,7 +4925,8 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   Polynomial *result;
   struct sumPoly *sP;
   struct productPoly *pP;
-  struct strSV *sV;
+  struct strSV *sV = NULL;
+  int duplicateNamesFlag = FALSE;
 
   swPushPhase ('k', "encode poly");
   result = p;
@@ -4953,15 +4954,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   // Here's the global part...
 
 #ifdef POLYCODE_DL
-  totalSourceSize += fprintf (srcFile, "#include <dlfcn.h>\n#include \"polynomial.h\"\n#include \"dists.h\"\n\n");
-  totalSourceSize += fprintf (srcFile, "char *baseFunctionName = \"%s\";\nint baseFunctionArgs = %d, dLFunctionCount = DLFUNCTIONCOUNT;\n\n", 
-			      name, variableCount);
-  totalSourceSize += fprintf (srcFile, "double %s (int num, struct polynomial **variableList) {\n", name);
-#endif
-
-  // And now we're local... A static here keeps these off the stack, which would otherwise frequently trash it.
-
-  totalSourceSize += fprintf (srcFile, "static double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
+  totalSourceSize += fprintf (srcFile, "#include <dlfcn.h>\n#include \"polynomial_internal.h\"\n#include \"dists.h\"\n\n");
 
   // First build a copy of the variable list for sorting by variable name and binary searching
   MALCHOKE(sV, variableCount * sizeof (struct strSV), struct strSV *);
@@ -4971,7 +4964,6 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   }
   qsort (sV, variableCount, sizeof (struct strSV), compareSVByVName);
 
-  int duplicateNamesFlag = FALSE;
   {
     // Check for duplicate variable names as that precludes automatic external invocation. Re-order if possible
     char lastVName[100];
@@ -4983,17 +4975,42 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
       }
       strcpy (lastVName, sV[i].vName);
     }
-    for (i = 0; i < variableCount; i++) {
-      if (duplicateNamesFlag) {
-	totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", i, i, variableList[i]->e.v->vName);
-	variableList[i]->value = variableList[i]->index;
-      } else {
-	totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", i, sV[i].index, variableList[sV[i].index]->e.v->vName);
-	// was variableList[i]->value = variableList[sV[i].index]->index;
-	variableList[sV[i].index]->value = variableList[i]->index;
-      }
+  }
+
+  if (duplicateNamesFlag == FALSE)
+    totalSourceSize += fprintf (srcFile, "#ifdef NOTKELVIN\nint checkedVariableOrder = 0;\n#endif\n\n");
+
+  totalSourceSize += fprintf (srcFile, "char *baseFunctionName = \"%s\";\nint baseFunctionArgs = %d, dLFunctionCount = DLFUNCTIONCOUNT;\n\n", 
+			      name, variableCount);
+  totalSourceSize += fprintf (srcFile, "double %s (int num, struct polynomial **variableList) {\n", name);
+#endif
+
+  // And now we're local... A static here keeps these off the stack, which would otherwise frequently trash it.
+
+  totalSourceSize += fprintf (srcFile, "static double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
+
+  if (duplicateNamesFlag == FALSE) {
+    totalSourceSize += fprintf (srcFile, "#ifdef NOTKELVIN\n\tif (checkedVariableOrder == 0) {\n");
+    for (i = 0; i < variableCount; i++)
+      totalSourceSize += fprintf (srcFile, "\t\tif (strcmp (variableList[%d]->e.v->vName, \"%s\")) {\n"
+				  "\t\t\tfprintf (stderr, \"ERROR: Variable %s missing or out of order in call to function %s, aborting!\\n\");\n\t\t\texit(EXIT_FAILURE);\n\t\t}\n",
+				  i, variableList[i]->e.v->vName, variableList[i]->e.v->vName, name);
+    totalSourceSize += fprintf (srcFile, "\t\tcheckedVariableOrder = 1;\n\t}\n\n\tint i;\n\tfor (i=0; i<VARIABLESUSED; i++)\n\t\tV[0] = variableList[0]->value;\n\n#else\n\n");
+  }
+
+  for (i = 0; i < variableCount; i++) {
+    if (duplicateNamesFlag) {
+      totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", i, i, variableList[i]->e.v->vName);
+      variableList[i]->value = variableList[i]->index;
+    } else {
+      totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", i, sV[i].index, variableList[sV[i].index]->e.v->vName);
+      // was variableList[i]->value = variableList[sV[i].index]->index;
+      variableList[sV[i].index]->value = variableList[i]->index;
     }
   }
+
+  if (duplicateNamesFlag == FALSE)
+    totalSourceSize += fprintf (srcFile, "#endif\n\n");
 
   // Start by writing source lines to the first-tier DL
   srcCalledFile = srcFile;
