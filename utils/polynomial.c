@@ -1448,44 +1448,17 @@ inline void discardPoly (Polynomial *p)
     fprintf (stderr, "discardPoly sees id %d with valid %d and count %d\n", p->id, p->valid, p->count);
     raise (SIGINT);
   }
-  //  fprintf (stderr, "Flagged polynomial %u as explicitly discarded, valid is %u, value is %g\n", p->id, p->valid, p->value);
-
-  /*
-#ifdef SOURCEDIGRAPH
-  if (++pendingExplicitDiscards >= 1000) {
-    dumpSourceParenting ();
-    exit(EXIT_FAILURE);
-  }
-#endif
-  */
 
   if (++pendingExplicitDiscards >= 100000) {
-
     swLogProgress(3 /* DETAIL + 1 */, 0, "Freeing %d explicitly discarded polynomials", pendingExplicitDiscards);
-    /*
-    int i, j;
-    if (constantCount > 0) {
-      fprintf (stderr, "All %d constants:\n", constantCount);
-      for (i = 0; i < CONSTANT_HASH_SIZE; i++) {
-	if (constantHash[i].num <= 0)
-	  continue;
-	for (j = 0; j < constantHash[i].num; j++) {
-	  fprintf (stderr, "(%d %d) id=%d index=%d key=%d count=%d valid=%d constant: ", i, j, constantList[constantHash[i].index[j]]->id, constantHash[i].index[j], constantHash[i].key[j], constantList[constantHash[i].index[j]]->count, constantList[constantHash[i].index[j]]->valid);
-	  expTermPrinting (stderr, constantList[constantHash[i].index[j]], 1);
-	  fprintf (stderr, "\n");
-	}
-      }
-      fprintf (stderr, "\n");
-    }
-    */
     if (polynomialDebugLevel >= 5)
       fprintf (stderr, "Free w/mask of all flags (%d) preserved...", allFlags);
     doFreePolys (allFlags);
     if (polynomialDebugLevel >= 5)
       fprintf (stderr, "\n");
     pendingExplicitDiscards = 0;
-    //    exit (EXIT_SUCCESS);
   }
+
   return;
 }
 
@@ -3529,6 +3502,10 @@ void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
     fprintf (diGraph, "%d [label=\"%s()\"];\n", p->id, p->e.e->polynomialFunctionName);
     break;
   case T_SUM:
+    if (p->count > 0 || p->valid & VALID_KEEP_FLAG) {
+      fprintf (diGraph, "%d [label=\"s%d\"];\n", p->id, p->id);
+      break;
+    }
     fprintf (diGraph, "%d [label=\"+\"];\n", p->id);
     importTermList (p);
     for (i = 0; i < p->e.s->num; i++) {
@@ -3538,6 +3515,10 @@ void doWritePolyDigraph (Polynomial * p, FILE * diGraph)
     exportTermList (p, FALSE);
     break;
   case T_PRODUCT:
+    if (p->count > 0 || p->valid & VALID_KEEP_FLAG) {
+      fprintf (diGraph, "%d [label=\"p%d\"];\n", p->id, p->id);
+      break;
+    }
     fprintf (diGraph, "%d [label=\"*\"];\n", p->id);
     for (i = 0; i < p->e.p->num; i++) {
       doWritePolyDigraph (p->e.p->product[i], diGraph);
@@ -4093,6 +4074,7 @@ void doKeepPoly (Polynomial * p)
 
 void keepPoly (Polynomial * p)
 {
+  //  writePolyDigraph(p);
   if (p->valid & VALID_KEEP_FLAG)
     return;
   keepPolyCount++;
@@ -4890,6 +4872,24 @@ int loadPolyDL (Polynomial * p)
 }
 #endif
 
+struct strSV {
+  char vName[100];
+  int index;
+}; ///< Locally-referenced structure for ordering list of variables by name for compilation reuse.
+/**
+
+  qsort-referenced function to put variable list in name order for compiled polynomials.
+
+*/
+int compareSVByVName (const void *left, const void *right)
+{
+  struct strSV *sSVLeft, *sSVRight;
+
+  sSVLeft = (struct strSV *) left;
+  sSVRight = (struct strSV *) right;
+  return strcmp (sSVLeft->vName, sSVRight->vName);
+}
+
 /**
 
   Largest single source file to produce.
@@ -4925,6 +4925,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
   Polynomial *result;
   struct sumPoly *sP;
   struct productPoly *pP;
+  struct strSV *sV;
 
   swPushPhase ('k', "encode poly");
   result = p;
@@ -4962,8 +4963,37 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
   totalSourceSize += fprintf (srcFile, "static double V[VARIABLESUSED], S[SUMSUSED], " "P[PRODUCTSUSED], F[FUNCTIONCALLSUSED];\n\n");
 
-  for (i = 0; i < variableCount; i++)
-    totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", i, i, variableList[i]->e.v->vName);
+  // First build a copy of the variable list for sorting by variable name and binary searching
+  MALCHOKE(sV, variableCount * sizeof (struct strSV), struct strSV *);
+  for (i = 0; i < variableCount; i++) {
+    sV[i].index = variableList[i]->index;
+    strcpy (sV[i].vName, variableList[i]->e.v->vName);
+  }
+  qsort (sV, variableCount, sizeof (struct strSV), compareSVByVName);
+
+  int duplicateNamesFlag = FALSE;
+  {
+    // Check for duplicate variable names as that precludes automatic external invocation. Re-order if possible
+    char lastVName[100];
+    lastVName[0] = 0;
+    for (i = 0; i < variableCount; i++) {
+      if (strcmp (lastVName, sV[i].vName) == 0) {
+	WARNING ("Not all variables in compiled polynomial are uniquely named (%s is redundant in %s)", lastVName, name);
+	duplicateNamesFlag = TRUE;
+      }
+      strcpy (lastVName, sV[i].vName);
+    }
+    for (i = 0; i < variableCount; i++) {
+      if (duplicateNamesFlag) {
+	totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", i, i, variableList[i]->e.v->vName);
+	variableList[i]->value = variableList[i]->index;
+      } else {
+	totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", i, sV[i].index, variableList[sV[i].index]->e.v->vName);
+	// was variableList[i]->value = variableList[sV[i].index]->index;
+	variableList[sV[i].index]->value = variableList[i]->index;
+      }
+    }
+  }
 
   // Start by writing source lines to the first-tier DL
   srcCalledFile = srcFile;
@@ -5001,7 +5031,7 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
 
     case T_VARIABLE:
       totalInternalSize += sizeof (struct variablePoly);
-      p->value = p->index;
+      // Don't assign p->value here because we've already set it to consider sort order of names
       break;
 
     case T_SUM:
