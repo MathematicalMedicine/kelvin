@@ -38,6 +38,11 @@ make clean
 make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DMEMGRAPH" ADD_LDFLAGS="-ldl $PTMALLOC3" kelvin
 mv kelvin-$VERSION kelvin-$VERSION-no_GSL
 
+# Set OMP_NUM_THREADS=<something big> for best performance after compiliation of DLs, doesn't do compilation if DL not found.
+make clean
+make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT $OPENMP -DMEMGRAPH -DUSE_GSL -DPOLYUSE_DL" ADD_LDFLAGS="-ldl $PTMALLOC3 -lgsl -lgslcblas -lm" kelvin-$VERSION
+mv kelvin-$VERSION kelvin-$VERSION-POLYUSE_DL
+
 # Best reliable method for preparing code for DLs. Need to compile separately and then evaluate.
 # Notice no OpenMP, as it gains no speed and loses us lots of memory.
 make clean
