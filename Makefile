@@ -280,7 +280,10 @@ ifeq ($(strip $(USE_STUDYDB)), yes)
 	make -C database -f Makefile clean
 endif
 	make -C seq_update -f Makefile clean
-	rm -f $(KOBJS) $(OBJS) kelvin-$(VERSION) seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/klvndb.a lib/libped.a
+	rm -f $(KOBJS) $(OBJS) kelvin-$(VERSION) seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/libped.a
+ifeq ($(strip $(USE_STUDYDB)), yes)
+	rm -f lib/klvndb.a
+endif
 	make -C test-suite -f Makefile clean
 
 .PHONY : test-USE_DL
