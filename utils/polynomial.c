@@ -4994,19 +4994,25 @@ void codePoly (Polynomial * p, struct polyList *l, char *name)
     for (i = 0; i < variableCount; i++)
       totalSourceSize += fprintf (srcFile, "\t\tif (strcmp (variableList[%d]->e.v->vName, \"%s\")) {\n"
 				  "\t\t\tfprintf (stderr, \"ERROR: Variable %s missing or out of order in call to function %s, aborting!\\n\");\n\t\t\texit(EXIT_FAILURE);\n\t\t}\n",
-				  i, variableList[i]->e.v->vName, variableList[i]->e.v->vName, name);
-    totalSourceSize += fprintf (srcFile, "\t\tcheckedVariableOrder = 1;\n\t}\n\n\tint i;\n\tfor (i=0; i<VARIABLESUSED; i++)\n\t\tV[0] = variableList[0]->value;\n\n#else\n\n");
+				  i, variableList[sV[i].index]->e.v->vName, variableList[sV[i].index]->e.v->vName, name);
+    totalSourceSize += fprintf (srcFile, "\t\tcheckedVariableOrder = 1;\n\t}\n\n");
+
+    for (i = 0; i < variableCount; i++)
+      totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", sV[i].index, i, variableList[sV[i].index]->e.v->vName);
+    totalSourceSize += fprintf (srcFile, "\n\n#else\n\n");
   }
 
-  for (i = 0; i < variableCount; i++) {
-    if (duplicateNamesFlag) {
+  totalSourceSize += fprintf (srcFile, "\t/* Natural order is...\n\n");
+  for (i = 0; i < variableCount; i++)
       totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", i, i, variableList[i]->e.v->vName);
-      variableList[i]->value = variableList[i]->index;
-    } else {
-      totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", i, sV[i].index, variableList[sV[i].index]->e.v->vName);
-      // was variableList[i]->value = variableList[sV[i].index]->index;
-      variableList[sV[i].index]->value = variableList[i]->index;
-    }
+  totalSourceSize += fprintf (srcFile, "\n\t*/\n\n");
+
+  for (i = 0; i < variableCount; i++) {
+    variableList[i]->value = variableList[i]->index;
+    if (duplicateNamesFlag)
+      totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", i, i, variableList[i]->e.v->vName);
+    else
+      totalSourceSize += fprintf (srcFile, "\tV[%d] = variableList[%d]->value; // %s\n", sV[i].index, sV[i].index, variableList[sV[i].index]->e.v->vName);
   }
 
   if (duplicateNamesFlag == FALSE)

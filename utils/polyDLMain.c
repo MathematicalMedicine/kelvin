@@ -1,3 +1,24 @@
+#ifdef NOTKELVIN
+
+int main () {
+  int i;
+  double vD;
+  Polynomial **V;
+  V = (Polynomial **) malloc ((sizeof (Polynomial *)) * baseFunctionArgs);
+  for (i=0; i<baseFunctionArgs; i++) {
+    V[i] = (Polynomial *) malloc (sizeof (Polynomial));
+    V[i]->e.v = (struct variablePoly *) malloc (sizeof (struct variablePoly));
+    printf ("Name for variable number %d (no spaces or punctuation): ", i);
+    scanf ("%s", V[i]->e.v->vName);
+    printf ("Floating value for variable named %s (floating number only!): ", V[i]->e.v->vName);
+    scanf ("%f", &V[i]->value);
+  }
+  printf ("\n");
+  printf ("= %g\n", (baseFunction)(1, V));
+  exit (EXIT_SUCCESS);
+}
+
+#else
 
 int main (int argc, char *argv[]) {
   int i;
@@ -19,3 +40,5 @@ int main (int argc, char *argv[]) {
   printf ("= %g\n", (baseFunction)(1, V));
   exit (EXIT_SUCCESS);
 }
+
+#endif
