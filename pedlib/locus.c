@@ -896,7 +896,7 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 	    /* build the penetrance polynomial - single variable */
 	    char vName[100];
 
-	    sprintf (vName, "pen_aS%d_lC%d_lA1%d_rA%d",
+	    sprintf (vName, "pen_aS%d_lC%d_lA%d_rA%d",
 		     AFFECTION_STATUS_AFFECTED, liabilityClass - 1,
 		     allele1 - 1, allele2 - 1);
 
