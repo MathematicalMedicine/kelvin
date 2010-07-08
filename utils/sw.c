@@ -164,10 +164,11 @@ void swPushPhase (char program, char *currentPhase)
   char processName[16+1];
   int i;
   if (phaseStackPosition == PHASE_STACK_DEPTH) {
-    WARNING("Phase stack overflow (not serious), phase not changed to [%s]",
-	     currentPhase);
-    for (i=0; i<PHASE_STACK_DEPTH; i++)
-      DIAG(0, 0, {fprintf (stderr, "%d is %s\n", i, phaseStack[i]);});
+    DIAG(0, 0, {
+	WARNING("Phase stack overflow (not serious), phase not changed to [%s]", currentPhase);
+	for (i=0; i<PHASE_STACK_DEPTH; i++)
+	  fprintf (stderr, "%d is %s\n", i, phaseStack[i]);
+	});
     return;
   }
   strncpy (phaseStack[++phaseStackPosition], currentPhase, (size_t) MAXPHASELEN);
@@ -181,7 +182,9 @@ void swPopPhase (char program)
 {
   char processName[16+1];
   if (phaseStackPosition == 0) {
-    WARNING("Phase stack underflow (not serious), phase not reverted");
+    DIAG(0, 0, {
+	WARNING("Phase stack underflow (not serious), phase not reverted");
+      });
     return;
   }
   sprintf (processName, "%c-%-.*s", program, MAXPHASELEN, phaseStack[--phaseStackPosition]);
@@ -614,9 +617,10 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
 
   hashKey = lookup ((ub1 *) &chunkAddress, sizeof (chunkAddress), 0);
   if (hfind (chunkHash, (ub1 *) &hashKey, sizeof (hashKey)) == FALSE) {
-    //    fprintf (stderr,
-    //	     "WARNING!! (%s: %d) - free() of address %lu that was never allocated (head)!\n",
-    //	     fileName, lineNo, (unsigned long) chunkAddress);
+    DIAG (0, 0, {
+	WARNING("free() of address %lu that was never allocated (head)",
+		(unsigned long) chunkAddress);
+      });
     return 0;
   } else {
     oldChunk = (struct memChunk *) hstuff (chunkHash);
@@ -624,27 +628,31 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
       if (oldChunk->next != NULL) {
 	oldChunk = oldChunk->next;
       } else {
-	//	fprintf (stderr,
-	//		 "WARNING!! (%s: %d) = free() of address %lu that was never allocated (not head)!\n",
-	//		 fileName, lineNo, (unsigned long) chunkAddress);
+	DIAG (0, 0, {
+	    WARNING("free() of address %lu that was never allocated (not head)",
+		    (unsigned long) chunkAddress);
+	  });
 	return 0;
       }
     }
     if ((oldChunk->recycleCount % 2) == 0) {
-      //      fprintf (stderr,
-      //	       "ERROR!! (%s: %d) - free() of address %lu that is no longer in use for size %u and recycled %d times!\n",
-      //	       fileName, lineNo, (unsigned long) chunkAddress, (unsigned int) oldChunk->chunkSize,
-      //	       oldChunk->recycleCount);
+      DIAG (0, 0, {
+	  ERROR("free() of address %lu that is no longer in use for size %u and recycled %d times",
+		(unsigned long) chunkAddress, (unsigned int) oldChunk->chunkSize,
+		oldChunk->recycleCount);
+	});
       oldChunk->recycleCount++;
     } else {
       int i;
       for (i=0; i<memChunkSourceCount; i++)
         if (memChunkSources[i].entryNo == oldChunk->allocSource) {
-//	  if (callType == cTReAlloc || callType == cTReFree)
-	    //	    fprintf(stderr, "For %s: %d, subtracting %d from %d\n",
-	    //		    fileName, lineNo, oldChunk->chunkSize, memChunkSources[i].remainingBytes);
-          memChunkSources[i].remainingBytes -= oldChunk->chunkSize;
-          break;
+	  DIAG (0, 0, {
+	      if (callType == cTReAlloc || callType == cTReFree)
+		fprintf(stderr, "For %s: %d, subtracting %d from %d\n",
+			fileName, lineNo, oldChunk->chunkSize, memChunkSources[i].remainingBytes);
+	    });
+	  memChunkSources[i].remainingBytes -= oldChunk->chunkSize;
+	  break;
         }
     }
     oldChunk->freeSource =

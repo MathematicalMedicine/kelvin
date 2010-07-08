@@ -1923,8 +1923,10 @@ inline void collectProductTerms (int **exponent,        ///< Container, pointer 
   // Search for a position for this component in the container
   if (searchPolynomialList (*p, *counter, p1, &location) == 1) {
     (*exponent)[location] += e1;
-    if ((*exponent)[location] == 0)
-      WARNING ("Zero polynomial exponent terms could be replaced with constant 1!");
+    DIAG (POLYNOMIAL, 0, {
+	if ((*exponent)[location] == 0)
+	  WARNING ("Zero polynomial exponent terms could be replaced with constant 1!");
+      });
     return;
   }
 
@@ -3584,7 +3586,7 @@ void thrashingCheck ()
     deltaAccumWallTime = overallSW->swAccumWallTime - lastPDSAccumWallTime;
     deltaAccumUserTime = overallSW->swAccumRUSelf.ru_utime.tv_sec + overallSW->swAccumRUChildren.ru_utime.tv_sec - lastPDSAccumUserTime;
     if ((deltaAccumUserTime != 0) && (100 * deltaAccumUserTime / (deltaAccumWallTime ? deltaAccumWallTime : 1) < THRASH_CPU))
-      WARNING ("Thrashing detected (utilization under %d%%), consider exiting!", THRASH_CPU);
+      WARNING ("Thrashing detected (utilization under %d%%), consider aborting run before computer hangs!", THRASH_CPU);
   }
   swStart (overallSW);
   lastPDSAccumWallTime = overallSW->swAccumWallTime;
@@ -4741,7 +4743,7 @@ void deportTermList (Polynomial * p)
     if (sSDDebt > 0) {
       sSDDebt -= cT->doublePairCount;
       if (sSDDebt <= 0)
-	WARNING ("Paid-off SSD debt!");
+	WARNING ("Paid-off SSD debt, resuming use of memory!");
     }
     freeSSD (cT);
   } else {
@@ -4854,7 +4856,8 @@ int loadPolyDL (Polynomial * p)
       p->e.e->entryOK = TRUE;
       swLogProgress(3, 0, "Using %d DL(s) for %s", i+1, p->e.e->polynomialFunctionName);
     } else {
-      WARNING ("dlsym() error [%s] for polynomial %s", dlerror(), p->e.e->polynomialFunctionName);
+      WARNING ("Cannot load compiled polynomial dynamic library, dlsym() error [%s] for polynomial %s",
+	       dlerror(), p->e.e->polynomialFunctionName);
       for (i=0; i<32; i++)
 	if (p->e.e->polynomialFunctionHandle[i] != NULL)
 	  dlclose (p->e.e->polynomialFunctionHandle[i]);

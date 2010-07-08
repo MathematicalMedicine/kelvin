@@ -2358,11 +2358,9 @@ add_markers_to_locuslist (SubLocusList * pLocusList,
       marker = pick_closest_marker (&leftMarker, &rightMarker, start, end,
 				    traitPosition, mapFlag);
       /* should not encounter this */
-      if (marker < 0 || marker > end) {
-	WARNING ("We have run out of markers (%d out of %d) to choose for multipoint",
+      if (marker < 0 || marker > end)
+	ERROR ("We have run out of markers (%d out of %d) to choose for multipoint",
 	      numMarkerSelected, total);
-	break;
-      }
       numMarkerSelected++;
       ret = add_analysis_locus (pLocusList, marker, DIRECTION_LEFT, map.mapFunction);
     }

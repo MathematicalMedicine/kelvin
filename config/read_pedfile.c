@@ -1676,7 +1676,7 @@ check_for_loop (Pedigree *pPed) {
     MALCHOKE (messageBuffer, 2048, char *);
     pMB = messageBuffer;
     pPed->currentLoopFlag = 1;
-    pMB += sprintf (pMB, "Pedigree %s, loop(s) found involving individuals ", pPed->sPedigreeID);
+    pMB += sprintf (pMB, "Pedigree %s, unbroken loop(s) found involving individuals ", pPed->sPedigreeID);
     for (i = 0; i< pPed->numPerson; i++)
       if (tuple[i][0] != 0)
 	pMB += sprintf(pMB, "%d ", tuple[i][0]);
