@@ -34,7 +34,7 @@ int read_ccfile (char *ccFileName, PedigreeSet * pedigreeSet);
 Person *find_person (Pedigree * pPed, char *sPersonID);
 Pedigree *find_pedigree (PedigreeSet * pPedSet, char *sPedID);
 
-int read_mapfile (char *sMapfileName);
+int read_mapfile (char *sMapfileName, int sexspecific);
 int read_datafile (char *sMarkerfileName);
 
 int allele_set_recoding (int locus, Pedigree * pPedigree);

@@ -86,11 +86,11 @@ set_removeGenotypeFlag (int flag)
  * all marker information will be saved in the super marker list 
  * all markers should be on the same chromosome */
 int
-read_mapfile (char *sMapfileName)
+read_mapfile (char *sMapfileName, int sexspecific)
 {
   FILE *fp = NULL;
   int lineNo=0, mapheaders=0, numcols=0, *datacols=NULL, colno;
-  char *token, *p, *endptr, line[MAX_LINE_LEN];
+  char *token=NULL, *p, *endptr, line[MAX_LINE_LEN];
   MapUnit *pMarker;		/* current marker */
   MapUnit *pPrevMarker = NULL;	/* previous marker */
 
@@ -150,7 +150,7 @@ read_mapfile (char *sMapfileName)
       map.mapFunction = MAP_FUNCTION_HALDANE;
     } else if (strcmp (token, "basepair") == 0 ||
 	       strncmp (token, "physical", strlen (token)) == 0) {
-      datacols[numcols-1] = MAP_NAME_COL;
+      datacols[numcols-1] = MAP_BASEPAIR_COL;
     }
     if (mapheaders & 1 << datacols[numcols-1])
       ERROR ("Redundant headers in MapFile %s\n", sMapfileName);
@@ -159,6 +159,9 @@ read_mapfile (char *sMapfileName)
   }
   if ((mapheaders & MAP_MINHEADERS) != MAP_MINHEADERS)
     ERROR ("Missing one or more required headers in MapFile %s\n", sMapfileName);
+  if (sexspecific &&
+      ! (mapheaders & 1 << MAP_MALEPOS_COL && mapheaders & 1 << MAP_FEMALEPOS_COL))
+    ERROR ("SexSpecific analysis requires male and female positions in MapFile");
   if (map.mapFunction == -1)
     map.mapFunction = MAP_FUNCTION_KOSAMBI;
   

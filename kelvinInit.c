@@ -179,7 +179,7 @@ void kelvinInit (int argc, char *argv[])
 
   /* Read in the map file. */
   DETAIL(0,"Read and process map file %s", modelOptions->mapfile);
-  read_mapfile (modelOptions->mapfile);
+  read_mapfile (modelOptions->mapfile, modelOptions->mapFlag == SS);
 
   /* Initialize the locus list and read in the marker file. */
   memset (&savedLocusList, 0, sizeof (savedLocusList));

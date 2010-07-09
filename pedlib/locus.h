@@ -424,7 +424,7 @@ typedef struct ConditionalLikelihood
 } ConditionalLikelihood;
 
 /* global function prototypes */
-int read_mapfile (char *sMapfileName);
+int read_mapfile (char *sMapfileName, int sexspecific);
 int read_datafile (char *sMarkerfileName);
 int read_markerfile (char *sMarkerfileName, int requiredMarkerCount);
 int add_allele (Locus * pLocus, char *sAlleleName, double freq);
