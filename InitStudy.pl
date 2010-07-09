@@ -79,8 +79,9 @@ sub perform_study
 {
     my ($config) = @_;
 
-    $ {$config->isConfigured ("Study")}[0] =~ /(\d+)\s+(\w+)\s+\"(.+)\"\s+(\w+)\s+(\w+)/;
-    my $StudyId = $1; my $StudyRole = lc($2); my $DBIDatabase = $3; my $Username = $4; my $Password = $5;
+    $ {$config->isConfigured ("Study")}[0] =~ /(\d+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)/;
+    my $StudyId = $1; my $StudyRole = lc($2); my $DBIHost = $3; my $DBIDatabase = $4; my $Username = $5; my $Password = $6;
+    my $DBIConnectionString = "mysql:host=$DBIHost:database=$DBIDatabase";
     my $MapId; my $LiabilityClasses = 1; my $ImprintingFlag = 'n';
 
     $LiabilityClasses = $ {$config->isConfigured ("LiabilityClasses")}[0]
@@ -88,7 +89,7 @@ sub perform_study
     $ImprintingFlag = 'y' if ($config->isConfigured ("Imprinting"));
 
     my $dbh;
-    until ($dbh = DBI->connect("dbi:$DBIDatabase", $Username, $Password,
+    until ($dbh = DBI->connect("dbi:$DBIConnectionString", $Username, $Password,
 			       { RaiseError => 0, PrintError => 0, AutoCommit => 1 })) {
 	sleep(5);
 	warn "Cannot connect to $DBIDatabase: $DBI::errstr, retrying!";
@@ -191,7 +192,7 @@ sub perform_study
 	    do {
 		$dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 			 undef, $StudyId, $ChromosomeNo, $PosCM);
-		$PosCM += $3;
+		$PosCM = sprintf ("%.2f", $PosCM + $3);
 	    } while ($PosCM <= $2);
 	} else {
 	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
