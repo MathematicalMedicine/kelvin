@@ -5,4 +5,4 @@ test :
 	diff -I '^# Version' -i mod.out mod.out-baseline
 
 clean :
-	- rm -rf *.out *.so *memory.dat compiled
+	- rm -rf *.out *.pass?
