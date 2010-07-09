@@ -29,7 +29,7 @@
     PP[LD|L] (posterior probability of LD given L).
     <p>
     <span class='sc'>Kelvin</span> handles the trait model by formulating an underlying
-    likelihood in terms of a vector of trait parameters; and integrating over all constituent
+    likelihood in terms of a vector of trait parameters, and integrating over all constituent
     trait parameters. The standard dichotomous trait (DT) likelihood is written in terms of a
     single disease allele frequency (for a two-allele disease locus), a vector of three
     penetrances (one for each disease genotype), and the admixture parameter of
@@ -71,11 +71,11 @@
     classification can be used for this purpose, such as age classes, sex, or clinical features
     (e.g., "strict" versus "broad" diagnoses).  To implement such an analysis the user assigns
     individuals to liability classes based on the covariate, and <span class='sc'>Kelvin</span>
-    internally integrates over the penetrances separately across the classes.
+    internally integrates over the penetrances separately across the classes. This feature can
+    also be used to implement two-locus (2L) epistasis analyses based on measured genotypes at,
+    e.g., an associated SNP, by allowing the penetrances to depend on SNP genotype.
     <span class='sc'>Kelvin</span> can also perform analyses allowing for imprinting, or
-    penetrances dependent on parent of origin.  Finally, this feature can be used to implement
-    two-locus (2L) epistasis analyses based on measured genotypes at, e.g., an associated SNP,
-    by allowing the penetrances to depend on SNP genotype.
+    penetrances dependent on parent of origin.
     <p>
     The <a href='#releasenotes'>Release Notes</a> describe the major changes in this version
     and should be reviewed by all users. The <a href='#quickstart'>Quick Start</a> gives a 
@@ -293,8 +293,8 @@
         <p>
         <b>Marker-marker analysis</b><br>
         This option is available only for two-point analyses, but can be used to estimate either
-        of linkage or LD distances between pairs of markers. The user can opt to consider all pairs
-        markers or only pairs which are adjascent to one another in the map file.
+        linkage or LD distances between pairs of markers. The user can opt to consider all
+	possible pairs of markers or only pairs which are adjacent to one another in the map file.
         <p>
         <b>Linkage Disequilibrium (LD, or association) analysis</b><br>
         Unless specifically instructed to allow for LD, Kelvin assumes linkage equilibrium between
@@ -302,11 +302,11 @@
         allow for trait-marker LD.
         <p>
         <b>Trait models</b><br>
-        Kelvin handles dichotomous traits (DT) or quantitative traits QT). For QTÕs the user can
-        select the functional form of the trait distribution as either normal or chi-square. In
-        addition, a QT threshold model (QTT) can be specified.  In all cases Kelvin internally
-        integrates over the parameters of the trait model, so there is no need to specific trait
-        values or a mode of inheritance.
+        Kelvin handles dichotomous traits (DT) or quantitative traits (QT). For QT the user can
+        select the functional form of the genotypic trait distribution as either normal or
+        chi-square. In addition, a QT threshold model (QTT) can be specified. In all cases Kelvin
+        internally integrates over the parameters of the trait model, so there is no need to
+        specify trait values or a mode of inheritance.
         <p>
         <b>Imprinting</b><br>
         The imprinting option allows penetrances (or the corresponding QT parameters) to depend on
@@ -686,18 +686,23 @@
 
     <h3 id='lc_vs_nolc'>Covariate-Dependent vs. Non-Covariate-Dependent</h3>
 
-    By default, <span class='sc'>Kelvin</span> assumes the penetrance characteristics of
-    the trait are the same for all individuals in the analysis. <span class='sc'>Kelvin</span>
-    can be made to separate individuals into different classes of penetrance characteristics
-    based on a covariate. Covariate dependence is incompatible with
-    <a href='#traitmarker_vs_markermarker'>marker-to-marker</a> analyses.
+    By default, <span class='sc'>Kelvin</span> assumes the a single penetrance vector (or
+    vector of means). <span class='sc'>Kelvin</span> can be made to assign separate penetrance 
+    vectors to individuals assigned to different classes, based e.g. on a covariate. Covariate
+    dependence is enabled with the <a href='Directives.html#liabilityclasses>
+    LiabilityClasses</a> directive, and requires that a covariate be specified in the
+    <a href='#pedfileformat'>pedigree</a> and <a href='#locusfileformat'>locus</a> files.
+    Covariate dependence is incompatible with <a href='traitmarker_vs_markermarker'>
+    marker-to-marker</a> analyses, and doesn't currently work with
+    <a href='simple_vs_epistasis'>epistasis</a> analyses.
 
-    <h3 id='simple_vs_epistasis'>Simple Trait vs. Epistasis</h3>
+    <h3 id='simple_vs_epistasis'>Single Locus Analysis vs. Epistasis</h3>
 
-    By default, <span class='sc'>Kelvin</span> assumes that affectation depends solely on
-    a hypothetical trait locus. <span class='sc'>Kelvin</span> can be made to consider the
-    effects of epistasis between the hypthetical trait locus and a genetic marker. Epistasis
-    analysis is incompatible with <a href='#lc_vs_nolc'>covariate dependence</a> and 
+    By default, <span class='sc'>Kelvin</span> conducts single locus analysis. The
+    <a href='Dirctives.html#epistasis'>Epistasis</a> directive will provide a two-locus
+    model in which penetrances may depend upon genotypes at a specified marker. Currently,
+    the epistasis marker must be a SNP, and epistasis analysis doesn't work with
+    <a href='#lc_vs_nolc'>covariate dependence.</a> Epistasis is incompatible with
     <a href='#traitmarker_vs_markermarker'>marker-to-marker</a> analyses.
 
     <h2 id='fileformats'>Data File Formats</h2>
@@ -1179,12 +1184,12 @@ Finally, progress indicators are displayed up through the end of the run.
         locus, not allowing for disequilibrium, i.e., D' is fixed at 0. It is rounded to two
         places if .025 or greater, and three decimal places otherwise.</li>
       <li>PPL(LD) (only for LD analyses) - evidence for or against linkage allowing for
-        disequilibrium, i.e., D' can range from -1 to 1. It is rounded to two places if .025
-	or greater, and three decimal places otherwise.</li>
+        disequilibrium. The PPL(LD) is rounded to two places if .025 or greater, and three
+        decimal places otherwise.</li>
       <li>PPL&LD (only for LD analyses) - posterior probability of linkage disequilibrium, a
-         measure of LD. It is rounded to two places if .025 or greater, and three decimal places
-         otherwise.</li>
-      <li>PPLD|L (only for LD analyses) - Posterior probability of LD, given linkage.</li>
+         measure of LD. The PPL&LD is rounded like the PPL(LD).</li>
+      <li>PPLD|L (only for LD analyses) - Posterior probability of LD, given linkage. The
+        PPLD|L is rounded like the PPL(LD).</li>
     </ol>
 
     <h3 id='modfile'>Maximizing Model (MOD) File</h3>
@@ -1206,16 +1211,16 @@ Finally, progress indicators are displayed up through the end of the run.
       <li>MOD - maximum LOD score achieved at this position.</li>
       <li>Alpha - the value of alpha that maximized the HLOD score.</li>
       <li>DGF - the maximizing disease gene frequency.</li>
-      <li>LC<tt>n</tt>PV(...) - the maximizing penetrance vector, one for each liability class in
-         the analysis. For dichotomous trait runs, it is three (or four, if imprinting effects
-         are being considered) columns of the maximizing penetrance for DD, Dd, (dD,) and dd. For
-	 quantitative trait (QT) runs with the normal distribution, it is three (or four) columns
-	 of means followed by three (or four) of standard deviations for the maximizing
-	 distributions for DD, Dd, (dD,) and dd, followed by the threshold in the case of the
-	 QTT model. Quantitative trait runs with the Chi-Square distribution have only three
-	 (or four) columns of degrees of freedom followed by the threshold. Values are
-	 comma-separated and enclosed in parentheses. Header text reflects actual count and
-	 nature of columns.>/li>
+      <li>LC<tt>n</tt>PV(...) - the maximizing penetrance vector, one for each liability
+         (covariate) class in the analysis. For dichotomous trait runs, it is three (or four,
+         if imprinting effects are being considered) columns of the maximizing penetrance for
+         DD, Dd, (dD,) and dd. For quantitative trait (QT) runs with the normal distribution,
+         it is three (or four) columns of means followed by three (or four) of standard
+         deviations for the maximizing distributions for DD, Dd, (dD,) and dd, followed by the
+         threshold in the case of the QTT model. Quantitative trait runs with the Chi-Square
+         distribution have only three (or four) columns of degrees of freedom followed by the
+         threshold. Values are comma-separated and enclosed in parentheses. Header text
+         reflects actual count and nature of columns.</li>
     </ol>
 
     <h4>Two-point Analysis</h4>
