@@ -86,10 +86,10 @@ sub new
 	}
     }
 
-    if ($$family{count} == 1) {
+    if ($$family{count} == 1 && $$family{nonfounders} == 0) {
 	# TODO: additional verification? require undefined parents? require genotype?
 	$$family{pedtype} = 'casecontrol';
-	push (@{$$family{kids}}, (defined ($dad) ? $dad : $mom));
+	$$family{kids} = [ defined ($dad) ? $dad : $mom ];
 	$$family{nonfounders} = 1;
 	$$family{founders} = 0;
     } elsif ($$family{count} == 3 && $$family{founders} == 2) {
@@ -98,6 +98,7 @@ sub new
 	} else {
 	    $$family{pedtype} = 'trio';
 	}
+	@$family{qw/dad mom kids/} = ($dad, $mom, $kids);
     } elsif ($$family{count} == 4 && $$family{founders} == 2) {
 	if ($aff_kids == 2) {
 	    if ($unaff_founders == 2) {
@@ -108,6 +109,7 @@ sub new
 	} else {
 	    $$family{pedtype} = 'nuclear';
 	}
+	@$family{qw/dad mom kids/} = ($dad, $mom, $kids);
     } elsif ($$family{founders} < 2 || $$family{count} < 3) {
 	$errstr = "family $$family{pedid} has invalid structure";
 	return (undef);
@@ -119,25 +121,96 @@ sub new
     return ($family);
 }
 
+sub new_from_count
+{
+    my ($class, $dataset, $pedid, $traits, $individuals) = @_;
+    my $aref;
+    my $family = bless ({}, $class);
+    my ($dad, $mom, $kids) = (undef, undef, []);
+    my $ind;
+    my $va;
+
+    @$family{qw/pedid pedtype count founders nonfounders/} = ($pedid, undef, 0, 0, 0);
+    @$family{qw/founderpairs multmarriages individuals/} = (0, 0, []);
+    @$family{qw/dad mom kids/} = (undef, undef, undef);
+
+    $$family{count} = scalar (@$individuals);
+    if ($$family{count} == 1) {
+	@{$$family{individuals}} = (KelvinIndividual->new_from_count ($dataset, $pedid, $traits, $aref));
+	$$family{pedtype} = 'casecontrol';
+	$$family{kids} = [ $$family{individuals}[0] ];
+	$$family{nonfounders} = 1;
+	$$family{founders} = 0;
+
+    } elsif ($$family{count} >= 3) {
+	($dad, $mom, @$kids) = map { KelvinIndividual->new_from_count ($dataset, $pedid, $traits, $_) } @$individuals;
+	if ($$dad{sex} == 2 && $$mom{sex} == 1) {
+	    $ind = $dad;
+	    $dad = $mom;
+	    $mom = $ind;
+	} elsif ($$dad{sex} != 1 || $$mom{sex} != 2) {
+	    # TODO: set errstr and return failure
+	    die ("illegal sexes in parents");
+	}
+	# TODO: properly categorize trios and ASPs
+	$$family{pedtype} = 'nuclear';
+	$$dad{proband} = 1;
+	$$mom{indid} = $$mom{origindid} = 2;
+	$$family{founders} = 2;
+	$$family{nonfounders} = scalar (@$kids);
+	$$dad{firstchildid} = $$mom{firstchildid} = 3;
+	for ($va = 0; $va < scalar (@$kids); $va++) {
+	    $$kids[$va]{indid} = $$kids[$va]{origindid} = $va + 3;
+	    $$kids[$va]{patsibid} = $$kids[$va]{matsibid} = $va + 4;
+	    @{$$kids[$va]}{qw/dadid momid/} = (1, 2);
+	}
+	$$kids[-1]{patsibid} = $$kids[-1]{matsibid} = 0;
+	@{$$family{individuals}} = ($dad, $mom, @$kids);
+	@$family{qw/dad mom kids/} = ($dad, $mom, $kids);
+    } else {
+	# TODO: set errstr and return failure
+	die ("illegal family structure (2 people is enough for love, but not for a pedigree)");
+    }
+    return ($family);
+}
+
 sub map
 {
     my ($self, $newset) = @_;
     my $new = {};
+    my %hash;
     my $va;
     
     map {
 	$$new{$_} = $$self{$_};
-    } qw/pedid pedtype count founders nonfounders founderpairs multmarriages dad mom/;
-    if ($$self{pedtype} ne 'general') {
-	$$new{kids} = [];
-	@{$$new{kids}} = @{$$self{kids}};
-    } else {
-	$$new{kids} = undef;
-    }
+    } qw/pedid pedtype count founders nonfounders founderpairs multmarriages/;
+
     $$new{individuals} = [];
-    
     for ($va = 0; $va < $$self{count}; $va++) {
 	$$new{individuals}[$va] = $$self{individuals}[$va]->map ($newset);
+    }
+
+    if ($$self{pedtype} eq 'casecontrol') {
+	$$new{dad} = $$new{mom} = undef;
+	$$new{kids} = [ $$new{individuals}[0] ];
+    } elsif ($$self{pedtype} ne 'general') {
+	$hash{$$self{dad}{indid}} = 'dad';
+	$hash{$$self{mom}{indid}} = 'mom';
+	for ($va = 0; $va < scalar (@{$$self{kids}}); $va++) {
+	    $hash{$$self{kids}[$va]{indid}} = $va;
+	}
+	$$new{kids} = [];
+	for ($va = 0; $va < $$new{count}; $va++) {
+	    if ($hash{$$new{individuals}[$va]{indid}} eq 'dad') {
+		$$new{dad} = $$new{individuals}[$va]; 
+	    } elsif ($hash{$$new{individuals}[$va]{indid}} eq 'mom') {
+		$$new{mom} = $$new{individuals}[$va];
+	    } else {
+		$$new{kids}[$hash{$$new{individuals}[$va]{indid}}] = $$new{individuals}[$va];
+	    }
+	}
+    } else {
+	$$new{dad} = $$new{mom} = $$new{kids} = undef;
     }
     return (bless ($new, ref ($self)));
 }
@@ -318,6 +391,13 @@ sub by_founder_desc
     }
 }
 
+sub pedid
+{
+    my ($self) = @_;
+
+    return ($$self{pedid});
+}
+
 sub pedtype
 {
     my ($self) = @_;
@@ -336,7 +416,7 @@ sub mom
 {
     my ($self) = @_;
 
-    return ($$self{dad});
+    return ($$self{mom});
 }
 
 sub children
@@ -427,6 +507,34 @@ sub new
 	push (@{$$ind{markers}}, [ $arr[$markercol], $arr[$markercol+1] ]);
 	($arr[$markercol] ne '0') and $$ind{genotyped} = 1;
     }	      
+    return (bless ($ind, $class));
+}
+
+sub new_from_count
+{
+    my ($class, $dataset, $pedid, $traits, $aref) = @_;
+    my $ind = { pedid => $pedid, indid => 1, dadid => 0, momid => 0,
+		firstchildid => 0, patsibid => 0, matsibid => 0,
+		origpedid => $pedid, origindid => 1, sex => undef, proband => 0,
+		traits => [], markers => [], genotyped => 0, phenotyped => 0,
+		dataset => $dataset, makeped => 1 };
+    my $trait;
+    my $marker;
+    my ($allele1, $allele2);
+    my $va = 0;
+
+    $$ind{sex} = $$aref[2];
+    foreach $trait (@{$$dataset{traitorder}}) {
+	if ($trait eq $$traits[$va]) {
+	    push (@{$$ind{traits}}, substr ($$aref[1], $va, 1));
+	} else {
+	    push (@{$$ind{traits}}, 'x');
+	}
+    }
+    ($allele1, $allele2) = split (//, $$aref[0]);
+    foreach $marker (@{$$dataset{markerorder}}) {
+	push (@{$$ind{markers}}, [$allele1, $allele2]);
+    }
     return (bless ($ind, $class));
 }
 
