@@ -656,7 +656,9 @@ sub addTrait
 sub write
 {
     my ($self, $arg) = @_;
+    my ($mapfile, $locusfile, $freqfile, $pedfile);
     my $backupfile = 1;
+    my $only = 1;
 
     if (defined ($arg)) {
 	if (ref ($arg) ne "HASH") {
@@ -664,28 +666,40 @@ sub write
 	    return (undef);
 	}
 	foreach (keys (%$arg)) {
-	    if (/^map/i) { $$self{mapfile} = $$arg{$_}; }
-	    elsif (/^locus/i) { $$self{locusfile} = $$arg{$_}; }
-	    elsif (/^freq/i) { $$self{freqfile} = $$arg{$_}; }
-	    elsif (/^ped/i) { $$self{pedfile} = $$arg{$_}; }
-	    elsif (/^backup/i) { $backupfile = $$arg{$_}; }
-	    else {
+	    if (/^map/i) { $mapfile = $$arg{$_}; }
+	    elsif (/^locus/i) { $locusfile = $$arg{$_}; }
+	    elsif (/^freq/i) { $freqfile = $$arg{$_}; }
+	    elsif (/^ped/i) { $pedfile = $$arg{$_}; }
+	    elsif (/^backup$/i) { $backupfile = $$arg{$_}; }
+	    elsif (/^write$/i) { 
+		$only = ($$arg{$_} =~ /all/i) ? 0 : (($$arg{$_} =~ /only/i) ? 1 : undef);
+	    } else {
 		$errstr = "illegal argument '$_'";
 		return (undef);
 	    }
 	}
     }
-    if (defined ($$self{mapfile}) && $$self{mapread}) {
-	$self->writeMapfile ({backupfile => $backupfile}) or return (undef);
+    if (! $only) {
+	defined ($mapfile) or $mapfile = $$self{mapfile};
+	defined ($locusfile) or $locusfile = $$self{locusfile};
+        defined ($freqfile) or $freqfile = $$self{freqfile};
+	defined ($pedfile) or $pedfile = $$self{pedfile};
     }
-    if (defined ($$self{freqfile}) && ($$self{freqread} || $$self{freqset})) {
-	$self->writeFreqfile ({backupfile => $backupfile}) or return (undef);
+    if (defined ($mapfile) && $$self{mapread}) {
+	$self->writeMapfile ({mapfile => $mapfile, backupfile => $backupfile})
+	    or return (undef);
     }
-    if (defined ($$self{locusfile}) && $$self{locusread}) {
-	$self->writeLocusfile ({backupfile => $backupfile}) or return (undef);
+    if (defined ($freqfile) && ($$self{freqread} || $$self{freqset})) {
+	$self->writeFreqfile ({freqfile => $freqfile, backupfile => $backupfile})
+	    or return (undef);
     }
-    if (defined ($$self{pedfile})) {
-	$self->writePedigreefile ({backupfile => $backupfile}) or return (undef);
+    if (defined ($locusfile) && $$self{locusread}) {
+	$self->writeLocusfile ({locusfile => $locusfile, backupfile => $backupfile})
+	    or return (undef);
+    }
+    if (defined ($pedfile)) {
+	$self->writePedigreefile ({pedfile => $pedfile, backupfile => $backupfile})
+	    or return (undef);
     }
 }
 
@@ -695,6 +709,7 @@ sub writeMapfile
     my $mapfile = $$self{mapfile};
     my $backupfile = 1;
     my $marker;
+    my $va;
     my %headers = (chr => 'Chromosome', name => 'Marker',
 		   femalepos => 'FemalePosition', malepos => 'MalePosition',
 		   avgpos => 'Position', phys => 'Basepair');
@@ -720,9 +735,15 @@ sub writeMapfile
 	$errstr = "no map file specified";
 	return (undef);
     }
-    if ($backupfile && -f $mapfile && ! rename ($mapfile, "$mapfile.old")) {
-	$errstr = "rename '$mapfile' failed, $!";
-	return (undef);
+    if ($backupfile && -f $mapfile) {
+	$va = 1;
+	while (-f "$mapfile.$va") {
+	    $va++;
+	}
+	if (! rename ($mapfile, "$mapfile.$va")) {
+	    $errstr = "rename '$mapfile' failed, $!";
+	    return (undef);
+	}
     }
     unless (open (FH, ">$mapfile")) {
 	$errstr = "open '$mapfile' failed, $!";
@@ -746,6 +767,8 @@ sub writeFreqfile
     my $freqfile = $$self{freqfile};
     my $backupfile = 1;
     my $marker;
+    my $order;
+    my $va;
     
     ($$self{freqread} || $$self{freqset}) or return (undef);
     if (defined ($arg)) {
@@ -768,9 +791,15 @@ sub writeFreqfile
 	$errstr = "no frequency file specified";
 	return (undef);
     }
-    if ($backupfile && -f $freqfile && ! rename ($freqfile, "$freqfile.old")) {
-	$errstr = "rename '$freqfile' failed, $!";
-	return (undef);
+    if ($backupfile && -f $freqfile) {
+	$va = 1;
+	while (-f "$freqfile.$va") {
+	    $va++;
+	}
+	if (! rename ($freqfile, "$freqfile.$va")) {
+	    $errstr = "rename '$freqfile' failed, $!";
+	    return (undef);
+	}
     }
     unless (open (FH, ">$freqfile")) {
 	$errstr = "open '$freqfile' failed, $!";
@@ -778,7 +807,8 @@ sub writeFreqfile
     }
     $$self{freqfile} = $freqfile;
 
-    foreach $marker (@{$$self{maporder}}) {
+    $order = (scalar (@{$$self{maporder}}) > 0) ? $$self{maporder} : $$self{markerorder};
+    foreach $marker (@$order) {
 	(exists ($$self{markers}{$marker}{alleles})) or next;
 	print (FH "M $marker\n");
 	if (join (keys (%{$$self{markers}{$marker}{alleles}})) =~ /^\d+$/) {
@@ -802,6 +832,7 @@ sub writeLocusfile
     my $backupfile = 1;
     my $marker;
     my $trait;
+    my $va;
     
     ($$self{locusread}) or return (undef);
     if (defined ($arg)) {
@@ -824,9 +855,15 @@ sub writeLocusfile
 	$errstr = "no locus file specified";
 	return (undef);
     }
-    if ($backupfile && -f $locusfile && ! rename ($locusfile, "$locusfile.old")) {
-	$errstr = "rename '$locusfile' failed, $!";
-	return (undef);
+    if ($backupfile && -f $locusfile) {
+	$va = 1;
+	while (-f "$locusfile.$va") {
+	    $va++;
+	}
+	if (! rename ($locusfile, "$locusfile.$va")) {
+	    $errstr = "rename '$locusfile' failed, $!";
+	    return (undef);
+	}
     }
     unless (open (FH, ">$locusfile")) {
 	$errstr = "open '$locusfile' failed, $!";
@@ -849,7 +886,8 @@ sub writePedigreefile
     my $backupfile = 1;
     my $marker;
     my $trait;
-    
+    my $va;
+
     if (defined ($arg)) {
 	if (ref ($arg) eq "HASH") {
 	    # A hashref is allowed to specify pedfile and backupfile
@@ -872,6 +910,16 @@ sub writePedigreefile
     }
     (defined ($$self{pedfh}))
 	and $$self{pedfh}->close;
+    if ($backupfile && -f $pedfile) {
+	$va = 1;
+	while (-f "$pedfile.$va") {
+	    $va++;
+	}
+	if (! rename ($pedfile, "$pedfile.$va")) {
+	    $errstr = "rename '$pedfile' failed, $!";
+	    return (undef);
+	}
+    }
     if ($backupfile && -f $pedfile && ! rename ($pedfile, "$pedfile.old")) {
 	$errstr = "rename '$pedfile' failed, $!";
 	return (undef);
@@ -996,7 +1044,7 @@ sub getTrait
 	$errstr = "no trait '$trait' in dataset";
 	return (undef);
     }
-    map { $$href{$_} = $$self{traits}{$trait}{$_} } keys (%{$$self{traits}{$trait}{$_}});
+    map { $$href{$_} = $$self{traits}{$trait}{$_} } keys (%{$$self{traits}{$trait}});
     return ($href);
 }
 
@@ -1012,6 +1060,14 @@ sub microsats
     my ($self) = @_;
 
     return ($$self{microsats});
+}
+
+sub set_microsats
+{
+    my ($self, $arg) = @_;
+    my $flag = ($arg) ? 1 : 0;
+
+    return ($$self{microsats} = $flag);
 }
 
 sub snps
