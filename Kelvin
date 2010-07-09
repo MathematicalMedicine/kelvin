@@ -285,7 +285,7 @@ sub estimate_frequency
 	    map {
 		$$href{$_} = '';
 	    } (keys (%{$cases{$marker}}), keys (%{$controls{$marker}}));
-	    (scalar (@$aref = sort (keys (%$href))) == 2)
+	    (scalar (@$aref = sort (keys (%$href))) <= 2)
 		or error ("marker '$marker' has more than two alleles: ". join (', ', keys (%$href)));
 	    $case = ($cases{$marker}{$$aref[0]} == 0) ? 0.0001 :
 		(($cases{$marker}{$$aref[1]} == 0) ? 0.9999 : 
@@ -443,7 +443,8 @@ sub run_epistasis
     $conffiles{LocusFile} = $ {$config->isConfigured ("EpistasisLocusFile")}[0];
     $epimarker = $ {$config->isConfigured ("Epistasis")}[0];
     $aref = $config->isConfigured ("PhenoCodes");
-    $undefpheno = $$aref[0];
+    ($undefpheno) = ($$aref[0] =~ /^([\-\d\.]+)/);
+print ("undefpheno is $undefpheno\n");
     ($countable) and $conffiles{CountFile} = "counts.dat";
 
     map { $$href{$_} = $conffiles{$_} } qw/PedigreeFile LocusFile/;
@@ -543,7 +544,8 @@ sub run_epistasis
 	
 	for ($va = 0; $va < scalar (@lcmap); $va++) {
 	    map {
-		(-f $conffiles{$_}. ".pass$va") and unlink ($conffiles{$_}. ".pass$va");
+		(exists ($conffiles{$_}) && -f $conffiles{$_}. ".pass$va")
+                    and unlink ($conffiles{$_}. ".pass$va");
 	    } qw/PedigreeFile LocusFile BayesRatioFile MODFile CountFile configfile/;
 	}
     }
@@ -754,9 +756,9 @@ sub find_versioned_kelvin
     }
     if (! scalar (@arr)) {
 	# Nobody home? See if there's a bin subdirectory, and if so, look there
-	(-d "$dir/bin" && ($file = find_versioned_kelvin ("$dir/bin")))
+	(-d "$dir/bin" && ($file = find_versioned_kelvin ("$dir/bin")) ne "")
 	    and return ($file);
-	return (undef);
+	return ("");
     }
     @arr = reverse (sort (@arr));
     return ("$dir/$arr[0]");
