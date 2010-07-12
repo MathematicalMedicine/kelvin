@@ -257,6 +257,20 @@ void kelvinInit (int argc, char *argv[])
   /* sort, uniquify and expand the trait model dimensions, subject to constraints */
   DETAIL(0,"Post-processing model and configuration data");
   finishConfig (modelRange, modelType);
+  if (modelOptions->integration != TRUE) {
+    if (modelType->trait == DT && modelRange->npenet == 0)
+      ERROR ("No Penetrance values left after application of Constraints");
+    if (modelType->trait == QT || modelType->trait == CT) {
+      if (modelType->distrib == QT_FUNCTION_T && modelRange->npenet == 0)
+	ERROR ("No Mean values left after application of Constraints");
+      if (modelType->distrib == QT_FUNCTION_T && modelRange->nparam == 0)
+	ERROR ("No StandardDeviation values left after application of Constraints");
+      if (modelType->distrib == QT_FUNCTION_CHI_SQUARE && modelRange->npenet == 0)
+	ERROR ("No DegreesOfFreedom values left after application of Constraints");
+      if (modelType->trait == CT && modelRange->ntthresh == 0)
+	ERROR ("No Threshold values left after application of Constraints");
+    }
+  }
 
   /* Calculate sample mean and sample standard deviation for QT/CT T distrib, if needed */
   if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_T && (modelType->mean == -DBL_MAX || modelType->sd == -DBL_MAX)) {
