@@ -1,13 +1,9 @@
 test :
-	- rm -rf PC* *.out
-	$(KELVIN_ROOT)/PedCount.pl -config kelvin.conf -count -write
-# Write a new baseline when needed, but this is slow
-#	(time $(TEST_KELVIN) kelvin.conf) >kelvin.out 2>&1
-	(time $(TEST_KELVIN) kelvin-counts.conf) >kelvin-counts.out 2>&1
-	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001
-	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out ppl.out-baseline .000001
-
-test-USE_DL :
+	- rm -f ped.post.counted ped.post.counts *.out
+	(time $(KELVIN_SCRIPT) kelvin.conf) >kelvin.out 2>&1
+	diff -ib ped.post.counted ped.post.counted-baseline
+	diff -ib ped.post.counts ped.post.counts-baseline
 
 clean :
-	- rm -rf PC* *.out
+	- rm -f ped.post.counted ped.post.counts *.out
+
