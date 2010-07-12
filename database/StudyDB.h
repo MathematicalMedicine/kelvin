@@ -4,24 +4,35 @@
 #define MAXPARAMLEN 64
 
 struct StudyDB {
-  int studyId;
-  int modelId;
-  MYSQL *connection;
+  int inStudyId;
   char hostname[MAXPARAMLEN];
   char dBName[MAXPARAMLEN];
   char username[MAXPARAMLEN];
   char password[MAXPARAMLEN];
+  MYSQL *connection;
   char strAdhocStatement[MAXSTMTLEN];
-  char strSelectModels[MAXSTMTLEN];
-  char strInsertModels[MAXSTMTLEN];
-  MYSQL_STMT *stmtSelectModels;
-  MYSQL_STMT *stmtInsertModels;
-  MYSQL_BIND bindModelsParams[5];
-  MYSQL_BIND bindModelsResult[1];
-  unsigned long dummyLength;
-  my_bool dummyIsNull;
-  my_bool dummyError;
   MYSQL_RES *resultSet;
   MYSQL_ROW row;
+  MYSQL_STMT *stmtGetDLOD;
+  MYSQL_BIND bindGetDLOD[16];
+  char strGetDLOD[MAXSTMTLEN];
+  int inPedPosId;
+  double inAlpha;
+  double inDGF;
+  double inLC1BigPen;
+  double inLC1BigLittlePen;
+  double inLC1LittleBigPen;
+  double inLC1LittlePen;
+  double inLC2BigPen;
+  double inLC2BigLittlePen;
+  double inLC2LittleBigPen;
+  double inLC2LittlePen;
+  double inLC3BigPen;
+  double inLC3BigLittlePen;
+  double inLC3LittleBigPen;
+  double inLC3LittlePen;
+  int inRegionId;
+  MYSQL_BIND bindGetDLODResult[16];
+  double outLOD;
 };
 
