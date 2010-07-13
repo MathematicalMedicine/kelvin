@@ -32,6 +32,7 @@ struct StudyDB {
   double inLC3LittleBigPen;
   double inLC3LittlePen;
   int inRegionId;
+  MYSQL_RES *metaResultGetDLOD;
   MYSQL_BIND bindGetDLODResult[16];
   double outLOD;
 };
