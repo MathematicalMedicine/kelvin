@@ -368,7 +368,7 @@ read_datafile (char *sDatafileName)
 	ERROR ("Liability class '%s' in %s must follow a trait",
 		sLocusName, sDatafileName);
       pTrait = pTraitLocus->pTraits[0];
-      pTrait->numLiabilityClass = modelRange->nlclass;
+      pTrait->numLiabilityClass++;
     } else {
       locusType = LOCUS_TYPE_TRAIT;
       pLocus = add_locus (&originalLocusList, sLocusName, locusType);
@@ -518,7 +518,7 @@ add_locus (LocusList * pLocusList, char *sName, int locusType)
     /* Assume one liability class for now; we'll update this later if it turns
      * out we're running a liability class anlysis.
      */
-    pTrait->numLiabilityClass = 1;
+    pTrait->numLiabilityClass = 0;
     pLocusList->numTraitLocus++;
   }
 
@@ -885,7 +885,8 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
 
   while (i < pTraitLocus->numTrait) {
     pTrait = pTraitLocus->pTraits[i];
-    if (pTrait->numLiabilityClass > 1)
+    if (modelRange->nlclass > 1)
+      /*if (pTrait->numLiabilityClass)*/
       liabilityClass = pPerson->ppLiabilityClass[locus][i];
     else
       liabilityClass = 1;

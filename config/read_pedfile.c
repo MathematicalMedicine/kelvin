@@ -304,10 +304,9 @@ setup_casecontrol_parents (Pedigree *pCurrPedigree)
       dad->ppOrigTraitValue[i][j] = modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN];
       dad->ppTraitValue[i][j] = dad->ppOrigTraitValue[i][j];
       dad->ppTraitKnown[i][j] = FALSE;
-      if (originalLocusList.ppLocusList[i]->pTraitLocus->pTraits[j]->numLiabilityClass > 1) {
-	dad->ppLiabilityClass[i][j] = 1;
+      dad->ppLiabilityClass[i][j] = 1;
+      if (modelRange->nlclass > 1)
 	pPedigreeSet->liabilityClassCnt[1] += 1;
-      }
     }
   }
   for (i = originalLocusList.numTraitLocus; i < originalLocusList.numLocus; i++) {
@@ -330,10 +329,9 @@ setup_casecontrol_parents (Pedigree *pCurrPedigree)
       mom->ppOrigTraitValue[i][j] = modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN];
       mom->ppTraitValue[i][j] = dad->ppOrigTraitValue[i][j];
       mom->ppTraitKnown[i][j] = FALSE;
-      if (originalLocusList.ppLocusList[i]->pTraitLocus->pTraits[j]->numLiabilityClass > 1) {
-	mom->ppLiabilityClass[i][j] = 1;
+      mom->ppLiabilityClass[i][j] = 1;
+      if (modelRange->nlclass > 1)
 	pPedigreeSet->liabilityClassCnt[1] += 1;
-      }
     }
   }
   for (i = originalLocusList.numTraitLocus; i < originalLocusList.numLocus; i++) {
@@ -419,7 +417,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
       pLine = &pLine[pos];
       /* If the locus is defined as having liability class
        * we have to read the liability class data */
-      if (pTrait->numLiabilityClass > 1) {
+      if (pTrait->numLiabilityClass) {
 	numRet =
 	  sscanf (pLine, "%d %n", &pPerson->ppLiabilityClass[i][j], &pos);
 	ASSERT (numRet == 1,

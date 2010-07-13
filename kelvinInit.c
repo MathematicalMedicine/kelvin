@@ -225,11 +225,7 @@ void kelvinInit (int argc, char *argv[])
   if (modelRange->nlclass > 1) {
     int va, vb=0;
     
-    /* Under the current trait-is-always-first assumption, these values will
-     * set to the same value when a 'C' line is found in the locus file; otherwise
-     * numLiabilityClass will be set to it's default (1).
-     */
-    if (pTrait->numLiabilityClass != modelRange->nlclass)
+    if (! pTrait->numLiabilityClass)
       ERROR ("Liability class analysis specified, but no class information in dataset.");
 
     for (va = 1; va <= modelRange->nlclass; va++) {
@@ -257,7 +253,7 @@ void kelvinInit (int argc, char *argv[])
   /* sort, uniquify and expand the trait model dimensions, subject to constraints */
   DETAIL(0,"Post-processing model and configuration data");
   finishConfig (modelRange, modelType);
-  if (modelOptions->integration != TRUE) {
+  if (modelOptions->integration != TRUE && modelOptions->markerAnalysis == FALSE) {
     if (modelType->trait == DT && modelRange->npenet == 0)
       ERROR ("No Penetrance values left after application of Constraints");
     if (modelType->trait == QT || modelType->trait == CT) {
