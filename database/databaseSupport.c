@@ -19,7 +19,8 @@ void initializeDB () {
     FATAL("Cannot initialize MySQL (%s)", strerror(errno));
 
   /* Connect. */
-  if (!mysql_real_connect(studyDB.connection, studyDB.hostname, studyDB.username, studyDB.password, NULL, 0, NULL, 0))
+  if (!mysql_real_connect(studyDB.connection, studyDB.hostname, studyDB.username, studyDB.password, NULL, 0, NULL,
+			  CLIENT_MULTI_RESULTS))
     ERROR("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%s)", studyDB.hostname, 
 	  studyDB.username, studyDB.password, mysql_error(studyDB.connection));
 
@@ -114,18 +115,36 @@ void GetDLOD (int inPedPosId, double inAlpha, double inDGF,
   studyDB.inLC3LittlePen = inLC3LittlePen;
   studyDB.inRegionId = inRegionId;
 
+  fprintf (stderr, "About to EXECUTE\n");
+
   if (mysql_stmt_execute (studyDB.stmtGetDLOD))
-    ERROR("Cannot execute GetDLOD call statement (%s), mysql_stmt_error(studyDB.stmtGetDLOD)");
+    ERROR("Cannot execute GetDLOD call statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtGetDLOD), mysql_stmt_sqlstate(studyDB.stmtGetDLOD));
+  fprintf (stderr, "EXECUTEd!\n");
 
   if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
-    ERROR("Cannot retrieve LOD (%s)", mysql_error(studyDB.connection));
+    WARNING("Cannot retrieve LOD (%s)", mysql_error(studyDB.connection));
+  fprintf (stderr, "STOREd!\n");
+
   if (mysql_num_rows (studyDB.resultSet) == 0)
-    ERROR("LOD %d not found");
+    ERROR("LOD not found");
   else {
     if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
       ERROR("Cannot fetch study information (%s)", mysql_error(studyDB.connection));
-    INFO ("Got LOD %G (%s)", studyDB.row[0]);
+    INFO ("Got LOD %s", studyDB.row[0]);
   }
+  mysql_free_result (studyDB.resultSet);
+  fprintf (stderr, "RESULT FREEd\n");
+
+  if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
+    WARNING("Cannot retrieve more (%s)", mysql_error(studyDB.connection));
+  fprintf (stderr, "STOREd!\n");
+  mysql_free_result (studyDB.resultSet);
+  fprintf (stderr, "RESULT FREEd\n");
+
+  //  if (mysql_stmt_free_result (studyDB.stmtGetDLOD) != 0)
+  //    ERROR("Cannot free stmt result set for GetDLOD call statement");
+  //  fprintf (stderr, "STMT FREEd!\n");
 }
 
 #ifdef MAIN
@@ -150,6 +169,8 @@ int main (int argc, char *argv[]) {
 
   initializeDB ();
   prepareStatements ();
+  GetDLOD (7, .21, .3, .71, .42, .45, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
   GetDLOD (7, .2, .3, .71, .42, .45, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  GetDLOD (7, .22, .3, .71, .42, .45, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
 }
 #endif
