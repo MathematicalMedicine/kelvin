@@ -305,7 +305,7 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
       break;
     if (numcurrent == 0) {
       if (! quiet)
-	fprintf (stderr, "warning: marker %s from %s doesn't appear in any BR files, skipping\n",
+	fprintf (stderr, "WARNING: marker %s from %s doesn't appear in any BR files, skipping\n",
 		 next_marker.name2, mapinfile);
       continue;
     }
@@ -524,7 +524,7 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
       lrs[curno] = data.lr;
   }
   if (warning) {
-    fprintf (stderr, "warning: %d position%s missing from one or more input files:%s",
+    fprintf (stderr, "WARNING: %d position%s missing from one or more input files:%s",
 	     warning, (warning == 1) ? "" : "s", warnbuff);
     if (strlen (warnbuff) > 1014)
       fprintf (stderr, " and others");
@@ -625,7 +625,7 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     if (alldone)
       break;
     if (numcurrent == 0) {
-      fprintf (stderr, "warning: marker %s from %s doesn't appear in any BR files, skipping\n",
+      fprintf (stderr, "WARNING: marker %s from %s doesn't appear in any BR files, skipping\n",
 	       next_marker.name2, mapinfile);
       continue;
     }
@@ -1330,7 +1330,7 @@ int parse_command_line (int argc, char **argv)
   }
 
   if (prior < MIN_PRIOR) {
-    fprintf (stderr, "warning: specified prior too small, fixing prior at %.4e\n", MIN_PRIOR);
+    fprintf (stderr, "WARNING: specified prior too small, fixing prior at %.4e\n", MIN_PRIOR);
     prior = MIN_PRIOR;
   }
 
