@@ -14,8 +14,7 @@ test-USE_DL :
 	echo "Nope"
 
 test-FIXED :
-	-rm -f LRTest*
-	(perl $(KELVIN_ROOT)/LRTest.pl) >kelvin-FIXED.out 2>&1
+	echo "Nope"
 
 clean :
 	- rm -rf *.out *.so *memory.dat compiled LRTest*
