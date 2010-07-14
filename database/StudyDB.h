@@ -4,15 +4,27 @@
 #define MAXPARAMLEN 64
 
 struct StudyDB {
+  // Common...
   int inStudyId;
   char hostname[MAXPARAMLEN];
   char dBName[MAXPARAMLEN];
   char username[MAXPARAMLEN];
   char password[MAXPARAMLEN];
   MYSQL *connection;
+  // Adhoc...
   char strAdhocStatement[MAXSTMTLEN];
   MYSQL_RES *resultSet;
   MYSQL_ROW row;
+  // GetPedPosId...
+  MYSQL_STMT *stmtGetPedPosId;
+  MYSQL_BIND bindGetPedPosId[4];
+  char strGetPedPosId[MAXSTMTLEN];
+  char inPedigreeSId[16];
+  int inChromosomeNo;
+  double inRefTraitPosCM;
+  MYSQL_BIND bindGetPedPosIdResults[1];
+  double outPedPosId;
+  // GetDLOD...
   MYSQL_STMT *stmtGetDLOD;
   MYSQL_BIND bindGetDLOD[16];
   char strGetDLOD[MAXSTMTLEN];
