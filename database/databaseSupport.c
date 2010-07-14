@@ -12,6 +12,8 @@ extern
 #endif
 struct StudyDB studyDB;
 
+int dBInitNotDone = TRUE, dBStmtsNotReady = TRUE;
+
 void initializeDB () {
 
   /* Initialize structure for a MySQL connection. */
@@ -19,8 +21,8 @@ void initializeDB () {
     FATAL("Cannot initialize MySQL (%s)", strerror(errno));
 
   /* Connect. */
-  if (!mysql_real_connect(studyDB.connection, studyDB.hostname, studyDB.username, studyDB.password, NULL, 0, NULL,
-			  CLIENT_MULTI_RESULTS))
+  if (!mysql_real_connect(studyDB.connection, studyDB.hostname, studyDB.username, studyDB.password, 
+			  NULL, 0, NULL, CLIENT_MULTI_RESULTS /* Important discovery here */))
     ERROR("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%s)", studyDB.hostname, 
 	  studyDB.username, studyDB.password, mysql_error(studyDB.connection));
 
@@ -41,63 +43,78 @@ void initializeDB () {
       ERROR("Cannot fetch study information (%s)", mysql_error(studyDB.connection));
     INFO ("Storing/retrieving results under study %d (%s)", studyDB.inStudyId, studyDB.row[0]);
   }
+  dBInitNotDone = FALSE;
 }
 
-#define BINDLONG(WHERE, WHAT) { \
-  WHERE.buffer_type = MYSQL_TYPE_LONG; \
-  WHERE.buffer = &(WHAT);	       \
-  WHERE.buffer_length = sizeof (WHAT); \
-  WHERE.length = 0; \
-  WHERE.is_null = (my_bool *) 0; \
-  WHERE.is_unsigned = 0; \
-}
-#define BINDDOUBLE(WHERE, WHAT) { \
-  WHERE.buffer_type = MYSQL_TYPE_DOUBLE; \
+// Don't use this willy-nilly since it does allocate space for the null and sign indicators.
+#define BINDNUMERIC(WHERE, WHAT, TYPE) {	 \
+  WHERE.buffer_type = TYPE; \
   WHERE.buffer = &(WHAT);		 \
   WHERE.buffer_length = sizeof (WHAT); \
   WHERE.length = 0; \
-  WHERE.is_null = (my_bool *) 0; \
+  WHERE.is_null = (my_bool *) calloc (1, sizeof (my_bool));	\
   WHERE.is_unsigned = 0; \
 }
 
-void *prepareStatements () {
+void prepareDBStatements () {
+
+  if (dBInitNotDone)
+    initializeDB ();
 
   // Prepare the GetDLOD call
   studyDB.stmtGetDLOD = mysql_stmt_init (studyDB.connection);
   memset (studyDB.bindGetDLOD, 0, sizeof(studyDB.bindGetDLOD));
 
-  BINDLONG (studyDB.bindGetDLOD[0], studyDB.inPedPosId);
-  BINDDOUBLE (studyDB.bindGetDLOD[1], studyDB.inAlpha);
-  BINDDOUBLE (studyDB.bindGetDLOD[2], studyDB.inDGF);
-  BINDDOUBLE (studyDB.bindGetDLOD[3], studyDB.inLC1BigPen);
-  BINDDOUBLE (studyDB.bindGetDLOD[4], studyDB.inLC1BigLittlePen);
-  BINDDOUBLE (studyDB.bindGetDLOD[5], studyDB.inLC1LittleBigPen);
-  BINDDOUBLE (studyDB.bindGetDLOD[6], studyDB.inLC1LittlePen);
-  BINDDOUBLE (studyDB.bindGetDLOD[7], studyDB.inLC2BigPen);
-  BINDDOUBLE (studyDB.bindGetDLOD[8], studyDB.inLC2BigLittlePen);
-  BINDDOUBLE (studyDB.bindGetDLOD[9], studyDB.inLC2LittleBigPen);
-  BINDDOUBLE (studyDB.bindGetDLOD[10], studyDB.inLC2LittlePen);
-  BINDDOUBLE (studyDB.bindGetDLOD[11], studyDB.inLC3BigPen);
-  BINDDOUBLE (studyDB.bindGetDLOD[12], studyDB.inLC3BigLittlePen);
-  BINDDOUBLE (studyDB.bindGetDLOD[13], studyDB.inLC3LittleBigPen);
-  BINDDOUBLE (studyDB.bindGetDLOD[14], studyDB.inLC3LittlePen);
-  BINDLONG (studyDB.bindGetDLOD[15], studyDB.inRegionId);
+  BINDNUMERIC (studyDB.bindGetDLOD[0], studyDB.inPedPosId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLOD[1], studyDB.inAlpha, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[2], studyDB.inDGF, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[3], studyDB.inLC1BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[4], studyDB.inLC1BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[5], studyDB.inLC1LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[6], studyDB.inLC1LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[7], studyDB.inLC2BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[8], studyDB.inLC2BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[9], studyDB.inLC2LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[10], studyDB.inLC2LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[11], studyDB.inLC3BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[12], studyDB.inLC3BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[13], studyDB.inLC3LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[14], studyDB.inLC3LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[15], studyDB.inRegionId, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strGetDLOD, "call GetDLOD (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", MAXSTMTLEN-1);
+  strncpy (studyDB.strGetDLOD, "call GetDLOD (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outLOD)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtGetDLOD, studyDB.strGetDLOD, strlen (studyDB.strGetDLOD)))
     ERROR("Cannot prepare GetDLOD call statement (%s)", mysql_error(studyDB.connection));
   if (mysql_stmt_bind_param (studyDB.stmtGetDLOD, studyDB.bindGetDLOD))
-    ERROR("Cannot bind GetDLODs call statement (%s)", mysql_error(studyDB.connection));
-  fprintf (stderr, "BOUND!\n");
+    ERROR("Cannot bind GetDLOD call statement (%s)", mysql_error(studyDB.connection));
+
+  // Prepare the GetDLOD results call
+  studyDB.stmtGetDLODResults = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetDLODResults, 0, sizeof(studyDB.bindGetDLODResults));
+
+  BINDNUMERIC (studyDB.bindGetDLODResults[0], studyDB.outRegionId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLODResults[1], studyDB.outLOD, MYSQL_TYPE_DOUBLE);
+
+  strncpy (studyDB.strGetDLODResults, "Select @outRegionId, @outLOD", MAXSTMTLEN-1);
+  if (mysql_stmt_prepare (studyDB.stmtGetDLODResults, studyDB.strGetDLODResults, strlen (studyDB.strGetDLODResults)))
+    ERROR("Cannot prepare GetDLOD results select statement (%s)", mysql_error(studyDB.connection));
+  if (mysql_stmt_bind_result (studyDB.stmtGetDLODResults, studyDB.bindGetDLODResults))
+    ERROR("Cannot bind GetDLOD results select statement (%s)", mysql_error(studyDB.connection));
+  dBStmtsNotReady = FALSE;
 }
 
-void GetDLOD (int inPedPosId, double inAlpha, double inDGF,
+double GetDLOD (int inPedPosId, double inAlpha, double inDGF,
 	      double inLC1BigPen, double inLC1BigLittlePen, double inLC1LittleBigPen, double inLC1LittlePen,
 	      double inLC2BigPen, double inLC2BigLittlePen, double inLC2LittleBigPen, double inLC2LittlePen,
 	      double inLC3BigPen, double inLC3BigLittlePen, double inLC3LittleBigPen, double inLC3LittlePen,
 	      int inRegionId)
 {
+  int rows, columns;
+
+  if (dBStmtsNotReady)
+    prepareDBStatements ();
+
   studyDB.inPedPosId = inPedPosId;
   studyDB.inAlpha = inAlpha;
   studyDB.inDGF = inDGF;
@@ -115,36 +132,25 @@ void GetDLOD (int inPedPosId, double inAlpha, double inDGF,
   studyDB.inLC3LittlePen = inLC3LittlePen;
   studyDB.inRegionId = inRegionId;
 
-  fprintf (stderr, "About to EXECUTE\n");
-
   if (mysql_stmt_execute (studyDB.stmtGetDLOD))
     ERROR("Cannot execute GetDLOD call statement (%s, %s)", 
 	  mysql_stmt_error(studyDB.stmtGetDLOD), mysql_stmt_sqlstate(studyDB.stmtGetDLOD));
-  fprintf (stderr, "EXECUTEd!\n");
 
-  if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
-    WARNING("Cannot retrieve LOD (%s)", mysql_error(studyDB.connection));
-  fprintf (stderr, "STOREd!\n");
+  if (mysql_stmt_execute (studyDB.stmtGetDLODResults))
+    ERROR("Cannot execute GetDLOD results select statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtGetDLODResults), mysql_stmt_sqlstate(studyDB.stmtGetDLODResults));
+  if (mysql_stmt_store_result (studyDB.stmtGetDLODResults) != 0)
+    ERROR("Cannot retrieve adhoc information (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
+  if (mysql_stmt_fetch (studyDB.stmtGetDLODResults) != 0)
+    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
 
-  if (mysql_num_rows (studyDB.resultSet) == 0)
-    ERROR("LOD not found");
-  else {
-    if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
-      ERROR("Cannot fetch study information (%s)", mysql_error(studyDB.connection));
-    INFO ("Got LOD %s", studyDB.row[0]);
+  if (*studyDB.bindGetDLODResults[1].is_null) {
+    INFO ("In RegionId %d, LOD is NULL", studyDB.outRegionId);
+    return -1LL;
+  } else {
+    INFO ("In RegionId %d, LOD is %G", studyDB.outRegionId, studyDB.outLOD);
+    return studyDB.outLOD;
   }
-  mysql_free_result (studyDB.resultSet);
-  fprintf (stderr, "RESULT FREEd\n");
-
-  if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
-    WARNING("Cannot retrieve more (%s)", mysql_error(studyDB.connection));
-  fprintf (stderr, "STOREd!\n");
-  mysql_free_result (studyDB.resultSet);
-  fprintf (stderr, "RESULT FREEd\n");
-
-  //  if (mysql_stmt_free_result (studyDB.stmtGetDLOD) != 0)
-  //    ERROR("Cannot free stmt result set for GetDLOD call statement");
-  //  fprintf (stderr, "STMT FREEd!\n");
 }
 
 #ifdef MAIN
@@ -167,10 +173,12 @@ int main (int argc, char *argv[]) {
   strcpy (studyDB.username, argv[4]);
   strcpy (studyDB.password, argv[5]);
 
-  initializeDB ();
-  prepareStatements ();
-  GetDLOD (7, .21, .3, .71, .42, .45, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
-  GetDLOD (7, .2, .3, .71, .42, .45, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
-  GetDLOD (7, .22, .3, .71, .42, .45, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  GetDLOD (10, .2, .3, .71, .42, .44, .13, .71, .42, .44, .13, .71, .42, .46, .13, 1);
+  GetDLOD (10, .25, .3, .71, .42, .42, .13, .71, .42, .45, .13, .71, .42, .45, .13, 1);
+  GetDLOD (17, .2, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  GetDLOD (9, .2, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  GetDLOD (6, .2, .3, .71, .42, .44, .13, -1, 0, 0, 0, -1, 0, 0, 0, 1);
+  GetDLOD (7, .2, .3, .71, .42, .44, .13, .71, .42, .42, .13, -1, 0, 0, 0, 1);
+  return EXIT_SUCCESS;
 }
 #endif
