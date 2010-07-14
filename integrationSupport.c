@@ -1706,9 +1706,6 @@ void integrateMain ()
     CALCHOKE (dk_curModel.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
     writeSurfaceFileHeader ();
   }
-#ifdef STUDYDB
-  prepareModels ();
-#endif
 
   if (modelType->trait != DT) {
     /* Setting ranges for each variables. Default is [0,1] */
@@ -2348,7 +2345,7 @@ void integrateMain ()
     analysisLocusList = &traitLocusList;
     xmissionMatrix = traitMatrix;
     if (pTrait->type == DICHOTOMOUS) {
-
+      
       /*call compute_likelihood with dummy numbers to build polynomials */
       for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
         pTrait->penetrance[2][liabIdxLocal][0][0] = 0.7;
@@ -2374,9 +2371,10 @@ void integrateMain ()
         update_locus (&pedigreeSet, traitLocus);
       /* get the likelihood for the trait */
       sprintf (partialPolynomialFunctionName, "MDT_LC%d_C%d_P%%sSL%d", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
-      cL[0]++; // MP DT trait likelihood
-      compute_likelihood (&pedigreeSet);        /* This builds polynomials with dummy numbers */
-
+      if (modelOptions->polynomial == TRUE) {
+	cL[0]++; // MP DT trait likelihood
+	compute_likelihood (&pedigreeSet);        /* This builds polynomials with dummy numbers */
+      }
     } else {    // QT
       pLocus->pAlleleFrequency[0] = 0.5;
       pLocus->pAlleleFrequency[1] = 1 - 0.5;
