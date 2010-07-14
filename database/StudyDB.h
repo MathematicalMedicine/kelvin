@@ -5,6 +5,7 @@
 
 struct StudyDB {
   // Common...
+  char role[MAXPARAMLEN];
   int inStudyId;
   char hostname[MAXPARAMLEN];
   char dBName[MAXPARAMLEN];

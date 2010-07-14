@@ -28,12 +28,15 @@ char *likelihoodVersion = "$Id$";
 #include "../utils/sw.h"
 #include "likelihood.h"
 #include "genotype_elimination.h"
-#include "../database/databaseSupport.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
 #include <dlfcn.h>
+
+#ifdef STUDYDB
+#include "../database/databaseSupport.h"
+#endif
 
 //extern FILE *fpCond;
 extern struct polynomial **variableList;
@@ -355,6 +358,17 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
   pPedigreeList->likelihood = 1;
   pPedigreeList->log10Likelihood = 0;
 
+#ifdef STUDYDB
+  for (i = 0; i < pPedigreeList->numPedigree; i++) {
+    pPedigree = pPedigreeList->ppPedigreeSet[i];
+    GetDLOD (GetPedPosId (pPedigree->sPedigreeID, 44, dk_curModel.posIdx),
+	     dk_curModel.alpha, dk_curModel.dgf, dk_curModel.pen->DD, dk_curModel.pen->Dd, dk_curModel.pen->dD, dk_curModel.pen->dd,
+	     -1, 0, 0, 0,
+	     -1, 0, 0, 0,
+	     1);
+  }
+#endif
+
   if (modelOptions->polynomial == TRUE) {
 
     /* Make sure they exist. Need to check until the day we have all builds separate, and
@@ -497,19 +511,6 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
   int k, l, j, condIdx, idx;
   Person *pLoopBreaker;
   LoopBreaker *loopStruct;
-
-
-#ifdef STUDYDB
-
-  if (dk_curModel.pen != NULL) {
-    //    fprintf (stderr, "curModel: pPFN: %s ped: %s pI:%d a:%g dgf:%.32g %g/%g/%g/%g\n",
-    //	     partialPolynomialFunctionName, pPedigree->sPedigreeID, dk_curModel.posIdx,
-    //	     dk_curModel.alpha, dk_curModel.dgf,
-    //	     dk_curModel.pen->DD, dk_curModel.pen->Dd, dk_curModel.pen->dD, dk_curModel.pen->dd);
-    getCurrentModelId ();
-  } else
-    fprintf (stderr, "Nothing yet\n");
-#endif
 
   condIdx = 0;
   sumCondL = 0;
