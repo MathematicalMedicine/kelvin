@@ -361,7 +361,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
 #ifdef STUDYDB
   for (i = 0; i < pPedigreeList->numPedigree; i++) {
     pPedigree = pPedigreeList->ppPedigreeSet[i];
-    GetDLOD (GetPedPosId (pPedigree->sPedigreeID, 44, dk_curModel.posIdx),
+    GetDLOD (GetPedPosId (pPedigree->sPedigreeID, 40, KROUND(modelRange->tloc[dk_curModel.posIdx])),
 	     dk_curModel.alpha, dk_curModel.dgf, dk_curModel.pen->DD, dk_curModel.pen->Dd, dk_curModel.pen->dD, dk_curModel.pen->dd,
 	     -1, 0, 0, 0,
 	     -1, 0, 0, 0,

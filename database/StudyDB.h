@@ -24,7 +24,7 @@ struct StudyDB {
   int inChromosomeNo;
   double inRefTraitPosCM;
   MYSQL_BIND bindGetPedPosIdResults[1];
-  double outPedPosId;
+  int outPedPosId;
   // GetDLOD...
   MYSQL_STMT *stmtGetDLOD;
   MYSQL_BIND bindGetDLOD[16];

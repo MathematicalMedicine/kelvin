@@ -136,7 +136,7 @@ do { \
 do { \
   int length; \
   char message[MAXLOGMSG + 1], *pMessage = message; \
-  pMessage += length = snprintf (message, MAXLOGMSG, "ERROR - EXITING, "); \
+  pMessage += length = snprintf (message, MAXLOGMSG, "ERROR - EXITING (%s:%d), ", (__FILE__),(__LINE__)); \
   snprintf (pMessage, MAXLOGMSG - length,  __VA_ARGS__); \
   swLogMsg (stderr, message); \
   exit (EXIT_FAILURE); \

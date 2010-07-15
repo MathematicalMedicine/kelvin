@@ -86,7 +86,7 @@ void prepareDBStatements () {
   if (mysql_stmt_bind_param (studyDB.stmtGetPedPosId, studyDB.bindGetPedPosId))
     ERROR("Cannot bind GetPedPosId call statement (%s)", mysql_error(studyDB.connection));
 
-  BINDNUMERIC (studyDB.bindGetPedPosIdResults[0], studyDB.outPedPosId, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetPedPosIdResults[0], studyDB.outPedPosId, MYSQL_TYPE_LONG);
 
   if (mysql_stmt_bind_result (studyDB.stmtGetPedPosId, studyDB.bindGetPedPosIdResults))
     ERROR("Cannot bind GetPedPosId results (%s)", mysql_error(studyDB.connection));
@@ -136,10 +136,10 @@ void prepareDBStatements () {
 
 long GetPedPosId (char *inPedigreeSId, int inChromosomeNo, double inRefTraitPosCM)
 {
+  int foo;
+
   if (dBStmtsNotReady)
     prepareDBStatements ();
-
-  //  myPedPosId = GetPedPosId ("2", 44, 5.1);
 
   strncpy (studyDB.inPedigreeSId, inPedigreeSId, 16);
   *studyDB.bindGetPedPosId[1].length = strlen(inPedigreeSId);
@@ -147,12 +147,21 @@ long GetPedPosId (char *inPedigreeSId, int inChromosomeNo, double inRefTraitPosC
   studyDB.inRefTraitPosCM = inRefTraitPosCM;
 
   if (mysql_stmt_execute (studyDB.stmtGetPedPosId))
-    ERROR("Cannot execute PedPosId select statement (%s, %s)", 
+    ERROR("Cannot execute PedPosId select statement w/%d, '%s', %d, %G (%s, %s)", 
+	  studyDB.inStudyId, inPedigreeSId, inChromosomeNo, inRefTraitPosCM,
 	  mysql_stmt_error(studyDB.stmtGetPedPosId), mysql_stmt_sqlstate(studyDB.stmtGetPedPosId));
   if (mysql_stmt_store_result (studyDB.stmtGetPedPosId) != 0)
-    ERROR("Cannot retrieve PedPosId (%s)", mysql_stmt_error(studyDB.stmtGetPedPosId));
-  if (mysql_stmt_fetch (studyDB.stmtGetPedPosId) != 0)
-    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetPedPosId));
+    ERROR("Cannot retrieve PedPosId select results w/%d, '%s', %d, %G (%s)", 
+	  studyDB.inStudyId, inPedigreeSId, inChromosomeNo, inRefTraitPosCM, 
+	  mysql_stmt_error(studyDB.stmtGetPedPosId));
+  if ((foo = mysql_stmt_fetch (studyDB.stmtGetPedPosId)) != 0) {
+    printf ("Foo is %d and PedPosId is %d\n", foo, studyDB.outPedPosId);
+    WARNING("Cannot fetch PedPosId select results w/%d, '%s', %d, %G (%s %s)", 
+	    studyDB.inStudyId, inPedigreeSId, inChromosomeNo, inRefTraitPosCM, 
+	    mysql_stmt_error(studyDB.stmtGetPedPosId), mysql_stmt_sqlstate(studyDB.stmtGetPedPosId));
+    printf ("I'ma gonna break here!\n");
+    return -1L;
+  }
   return studyDB.outPedPosId;
 }
 
@@ -180,7 +189,7 @@ double GetDLOD (int inPedPosId, double inAlpha, double inDGF,
   studyDB.inRegionId = inRegionId;
 
   if (mysql_stmt_execute (studyDB.stmtGetDLOD))
-    ERROR("Cannot execute GetDLOD call statement (%s, %s)", 
+    ERROR("Cannot execute GetDLOD call statement w/%d (%s, %s)", inPedPosId,
 	  mysql_stmt_error(studyDB.stmtGetDLOD), mysql_stmt_sqlstate(studyDB.stmtGetDLOD));
 
   if (mysql_stmt_execute (studyDB.stmtGetDLODResults))
