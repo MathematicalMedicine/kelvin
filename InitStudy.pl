@@ -174,7 +174,7 @@ sub perform_study
 	     "a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.MarkerName = b.MarkerName ".
 	     "where b.StudyId IS NULL");
 
-    # 'Freshen' the Positions table
+    # 'Freshen' the Positions tables
     # Three cases we know of: marker, individual value, and range specification, and all can be in lists
     my $JointTPs = join(',', @{$config->isConfigured ("TraitPositions")});
     $JointTPs =~ s/\s+//g;

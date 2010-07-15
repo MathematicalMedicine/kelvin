@@ -44,7 +44,7 @@ struct StudyDB {
   double inLC3BigLittlePen;
   double inLC3LittleBigPen;
   double inLC3LittlePen;
-  int inRegionId;
+  int inRegionNo;
   MYSQL_STMT *stmtGetDLODResults;
   MYSQL_BIND bindGetDLODResults[2];
   char strGetDLODResults[MAXSTMTLEN];

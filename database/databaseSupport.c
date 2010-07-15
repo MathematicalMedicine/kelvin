@@ -110,7 +110,7 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindGetDLOD[12], studyDB.inLC3BigLittlePen, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetDLOD[13], studyDB.inLC3LittleBigPen, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetDLOD[14], studyDB.inLC3LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[15], studyDB.inRegionId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLOD[15], studyDB.inRegionNo, MYSQL_TYPE_LONG);
 
   strncpy (studyDB.strGetDLOD, "call GetDLOD (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outLOD)", MAXSTMTLEN-1);
 
@@ -169,7 +169,7 @@ double GetDLOD (int inPedPosId, double inAlpha, double inDGF,
 	      double inLC1BigPen, double inLC1BigLittlePen, double inLC1LittleBigPen, double inLC1LittlePen,
 	      double inLC2BigPen, double inLC2BigLittlePen, double inLC2LittleBigPen, double inLC2LittlePen,
 	      double inLC3BigPen, double inLC3BigLittlePen, double inLC3LittleBigPen, double inLC3LittlePen,
-	      int inRegionId)
+	      int inRegionNo)
 {
   studyDB.inPedPosId = inPedPosId;
   studyDB.inAlpha = inAlpha;
@@ -186,7 +186,7 @@ double GetDLOD (int inPedPosId, double inAlpha, double inDGF,
   studyDB.inLC3BigLittlePen = inLC3BigLittlePen;
   studyDB.inLC3LittleBigPen = inLC3LittleBigPen;
   studyDB.inLC3LittlePen = inLC3LittlePen;
-  studyDB.inRegionId = inRegionId;
+  studyDB.inRegionNo = inRegionNo;
 
   if (mysql_stmt_execute (studyDB.stmtGetDLOD))
     ERROR("Cannot execute GetDLOD call statement w/%d (%s, %s)", inPedPosId,
@@ -240,7 +240,7 @@ int main (int argc, char *argv[]) {
 	   /* LC1BigPen-> */ .71, /* LC1BigLittlePen-> */ .42, /* LC1LittleBigPen-> */ .44, /* LC1LittlePen-> */ .13, 
 	   /* LC2BigPen-> */ .71, /* LC2BigLittlePen-> */ .42, /* LC2LittleBigPen-> */ .44, /* LC2LittlePen-> */ .13, 
 	   /* LC3BigPen-> */ .71, /* LC3BigLittlePen-> */ .42, /* LC3LittleBigPen-> */ .46, /* LC3LittlePen-> */ .13, 
-	   /* RegionId-> */ 1);
+	   /* RegionNo-> */ 1);
 
   GetDLOD (myPedPosId, .25, .3, .71, .42, .42, .13, .71, .42, .45, .13, .71, .42, .45, .13, 1);
   myPedPosId = GetPedPosId ("3", 44, 10.43210987);
