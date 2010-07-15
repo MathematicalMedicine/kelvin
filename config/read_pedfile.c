@@ -349,7 +349,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
   int numMarker;		/* number of markers we have read genotypes */
   //  char tmpStr[MAX_LINE_LEN];
 
-  //Pedigree *pPed = pPerson->pPedigree;
+  Pedigree *pPed = pPerson->pPedigree;
   Trait *pTrait;
   TraitLocus *pTraitLocus;
   int numTrait;
@@ -363,9 +363,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
   //numRet = sscanf (pLine, "%s %s %n", pPerson->sDadID, pPerson->sMomID, &pos);
   numRet = sscanf (pLine, "%s %s %n",
 		   pPerson->sParentID[DAD], pPerson->sParentID[MOM], &pos);
-  ASSERT (numRet == 2,
-	   "Line %d in pedfile %s doesn't have enough columns (parents). Is this a post-makeped file?",
-	   lineNo, sPedfileName);
+  ASSERT (numRet == 2, "Pedfile %s, line %d: Pedigree %s, individual %s doesn't have enough columns (parents). Is this a post-makeped file?",
+	  sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID);
   /* ignore the next three columns: first child, next paternal sibling,
    * next maternal sibling, as we are going to build those pointers 
    * later once we have all the individuals in the pedigree */
@@ -373,17 +372,15 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
   numRet = sscanf (pLine, "%s %s %s %n",
 		   pPerson->sFirstChildID,
 		   pPerson->sNextSibID[DAD], pPerson->sNextSibID[MOM], &pos);
-  ASSERT (numRet == 3,
-	   "Line %d in pedfile %s doesn't have enough columns (child & siblings). Is this a post-makeped file?",
-	   lineNo, sPedfileName);
+  ASSERT (numRet == 3, "Pedfile %s, line %d: Pedigree %s, individual %s doesn't have enough columns (child & siblings). Is this a post-makeped file?",
+	  sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID);
   pLine = &pLine[pos];
   numRet = sscanf (pLine, "%d %d %n", &pPerson->sex, &pPerson->proband, &pos);
   /* input use 1 as MALE and 2 as FEMALE, while internally we use 0 - MALE
    * and 1 - FEMALE */
   pPerson->sex -= 1;
-  ASSERT (numRet == 2,
-	   "Line %d in pedfile %s doesn't have enough columns (sex & proband). Is this a post-makeped file?",
-	   lineNo, sPedfileName);
+  ASSERT (numRet == 2, "Pedfile %s, line %d: Pedigree %s, individual %s doesn't have enough columns (sex & proband). Is this a post-makeped file?",
+	  sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID);
   if (pPerson->proband > 1)
     pPerson->loopBreaker = 1;
 
@@ -420,12 +417,11 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
       if (pTrait->numLiabilityClass) {
 	numRet =
 	  sscanf (pLine, "%d %n", &pPerson->ppLiabilityClass[i][j], &pos);
-	ASSERT (numRet == 1,
-		 "Line %d in pedfile %s doesn't have enough columns (LC). Is this a post-makeped file?",
-		 lineNo, sPedfileName);
+	ASSERT (numRet == 1, "Pedfile %s, line %d: Pedigree %s, individual %s doesn't have enough columns (LC). Is this a post-makeped file?",
+		sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID);
 	if (pPerson->ppLiabilityClass[i][j] < 1)
-	  ERROR ("Line %d in pedfile %s has illegal liability class identifier %d",
-		 lineNo, sPedfileName, pPerson->ppLiabilityClass[i][j]);
+	  ERROR ("Pedfile %s, line %d: Pedigree %s, individual %s has illegal liability class identifier %d",
+		 sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID, pPerson->ppLiabilityClass[i][j]);
 	pLine = &pLine[pos];
       }
 
@@ -449,9 +445,9 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
       numRet = sscanf (pLine, "%s | %s %n", a1, a2, &pos);
       pPerson->pPhasedFlag[numMarker] = 1;
     }
-    ASSERT (numRet == 2,
-	     "Line %d in pedfile %s doesn't have enough columns (Marker %d). Is this a post-makeped file?",
-	     lineNo, sPedfileName, numMarker);
+
+    ASSERT (numRet == 2, "Pedfile %s, line %d: Pedigree %s, individual %s doesn't have enough columns (Marker %d). Is this a post-makeped file?",
+	    sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID, numMarker);
     /* check whether this locus is untyped */
     if (strcmp(a1, "0") == 0 || strcmp(a2, "0") == 0 || strcasecmp(a1, "X") == 0 || strcasecmp(a2, "X") == 0)
       pPerson->pTypedFlag[numMarker] = 0;
@@ -461,9 +457,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     if (strcmp(a1, "0") != 0 && strcasecmp(a1, "X") != 0) {
       ret = find_allele (numMarker, a1);
       pPerson->pPhenotypeList[0][numMarker] = ret;
-      ASSERT (ret >= 0,
-	       "Line %d in pedfile %s contains a genotype with unknown allele %s at locus %s",
-	       lineNo, sPedfileName, a1, pLocus->sName);
+      ASSERT (ret >= 0, "Pedfile %s, line %d: Pedigree %s, individual %s contains a genotype with unknown allele %s at locus %s",
+	      sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID, a1, pLocus->sName);
     }
     else
       pPerson->pPhenotypeList[0][numMarker] = 0;
@@ -471,9 +466,8 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     if (strcmp(a2, "0") != 0 && strcasecmp(a2, "X") != 0) {
       ret = find_allele (numMarker, a2);
       pPerson->pPhenotypeList[1][numMarker] = ret;
-      ASSERT (ret >= 0,
-	       "Line %d in pedfile %s contains a genotype with unkown allele %s at locus %s",
-	       lineNo, sPedfileName, a2, pLocus->sName);
+      ASSERT (ret >= 0, "Pedfile %s, line %d: Pedigree %s, individual %s contains a genotype with unkown allele %s at locus %s",
+	      sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID, a2, pLocus->sName);
     }
     else
       pPerson->pPhenotypeList[1][numMarker] = 0;
@@ -483,12 +477,11 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     if (modelOptions->sexLinked && pPerson->sex == 0
 	&& pPerson->pPhenotypeList[0][numMarker] !=
 	pPerson->pPhenotypeList[1][numMarker]) {
-      ASSERT (0 == 1,
-	       "Line %d in pedfile %s contains heterozygous genotype(%d, %d) for a male at locus %s while doing X chromosome analysis",
-	       lineNo, sPedfileName,
-	       pPerson->pPhenotypeList[0][numMarker],
-	       pPerson->pPhenotypeList[1][numMarker], pLocus->sName);
-
+      ASSERT (0 == 1, "Pedfile %s, line %d: Pedigree %s, individual %s contains heterozygous genotype(%d, %d) for a male at locus %s while doing X chromosome analysis",
+	      sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID,
+	      pPerson->pPhenotypeList[0][numMarker], pPerson->pPhenotypeList[1][numMarker],
+	      pLocus->sName);
+      
     }
 
     numMarker++;
