@@ -163,6 +163,9 @@ int set_affectionStatus (char **toks, int numtoks, void *unused);
 int set_study_parameters (char **toks, int numtoks, void *unused);
 int set_resultsprefix (char **toks, int numtoks, void *unused);
 
+int skip_analysis (char **toks, int numtoks, void *unused);
+int noop (char **toks, int numtoks, void *unused);
+
 
 st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOptions.markerfile},
 				{"MapFile", set_optionfile, &staticModelOptions.mapfile},
@@ -214,7 +217,11 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				// {"condfile", set_condrun, &staticModelOptions.condFile},
 				{"ProgressDelaySeconds", set_int, &swProgressDelaySeconds},
 				{"ProgressLevel", set_int, &swProgressLevel},
-				{"Study", set_study_parameters, NULL}
+				{"Study", set_study_parameters, NULL},
+
+				{"SkipEstimation", noop, NULL},
+				{"SkipPedCount", noop, NULL},
+				{"SkipAnalysis", skip_analysis, NULL}
 };
 
 
@@ -1426,7 +1433,19 @@ int set_resultsprefix (char **toks, int numtoks, void *unused)
 }
 
 
-int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_h)
+int skip_analysis (char **toks, int numtoks, void *unused)
+{
+  WARNING ("Skipping analysis due to directive");
+}
+
+
+int noop (char **toks, int numtoks, void *unused)
+{
+  return (0);
+}
+
+
+ expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_h)
 {
   int numvals=0, listsize=10, tokidx=0, va;
   char *ca = NULL, *cb = NULL;
