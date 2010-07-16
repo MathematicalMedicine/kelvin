@@ -359,12 +359,69 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
   pPedigreeList->log10Likelihood = 0;
 
 #ifdef STUDYDB
+  /* Here we can intercept all calls to compute_likelihood and suborn them to our purposes!
+
+     If we're a client, we want to call GetLOD with all the appropriate likelhood variables.
+     If we get a good LOD, then we just pass it on back up to the caller. If we didn't then
+     the request is in and we pass back a dummy LOD and set a flag indicating that the
+     calculation is to be ignored.
+
+     If we're a server, we want to sign-in with full range of pedigree/positions that we can
+     cover with the current set of markers, and start asking for work. When we're out of work
+     we can return to the caller until we hit a new set of markers. A properly-configured
+     config file can make this fast (only TM).
+
+     Twopoint variables
+
+     theta -- is both what is being varied by the driver and used by likelihood calculation.
+     It is the recomination frequency between the trait position and the marker. Nothing
+     fancy is required - we just store it as a client, and retrieve it as a server.
+
+     Multipoint variables:
+
+     trait position -- is what is being varied by the driver, and when we're a client, it
+     has already been converted into inter-position theta values that are used for the
+     likelihood calculation. Multipoint theta values specify distances between the trait 
+     and two nearest markers from the set of relative trait/marker positions. E.g. when 
+     for 3MP (2 markers  and 1 trait), we can have T-theta1-M-theta2-M, M-theta1-T-theta2-M, 
+     and M-theta1-M-theta2-T. There are theta values between other markers, but they're
+     constants.  The problem here lies in the LOD server situation. Execution will proceed
+     to this chunk of code whereupon we will have a set of relative trait/marker
+     positions for which we can calculate likelihoods, and a single (1) trait position and
+     corresponding pair of thetas. We will ask the database for work within the span of
+     positions covered by the current set of relative trait/marker positions, and get
+     work requests in terms of the trait position only. This trait position will have to be
+     converted to the two theta values that the likelihood calculation expects.
+
+     penetrance vector -- 
+
+     Where <liability-class> varies from 0-2, 
+     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][<liability-class>][0][0] is pen_DD
+     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][<liability-class>][0][1] is pen_Dd
+     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][<liability-class>][1][0] is pen_dD
+     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][<liability-class>][1][1] is pen_dd
+     pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][<liability-class>][0][0] is 1 - pen_DD
+     pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][<liability-class>][0][1] is 1 - pen_Dd
+     pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][<liability-class>][1][0] is 1 - pen_dD
+     pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][<liability-class>][1][1] is 1 - pen_dd
+
+  */
   for (i = 0; i < pPedigreeList->numPedigree; i++) {
     pPedigree = pPedigreeList->ppPedigreeSet[i];
     GetDLOD (GetPedPosId (pPedigree->sPedigreeID, 40, KROUND(modelRange->tloc[dk_curModel.posIdx])),
-	     dk_curModel.alpha, dk_curModel.dgf, dk_curModel.pen->DD, dk_curModel.pen->Dd, dk_curModel.pen->dD, dk_curModel.pen->dd,
-	     -1, 0, 0, 0,
-	     -1, 0, 0, 0,
+	     dk_curModel.dgf, 
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0],
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], 
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0],
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0],
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0],
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0],
+	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
 	     1);
   }
 #endif

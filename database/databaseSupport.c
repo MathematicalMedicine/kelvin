@@ -96,23 +96,22 @@ void prepareDBStatements () {
   memset (studyDB.bindGetDLOD, 0, sizeof(studyDB.bindGetDLOD));
 
   BINDNUMERIC (studyDB.bindGetDLOD[0], studyDB.inPedPosId, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDLOD[1], studyDB.inAlpha, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[2], studyDB.inDGF, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[3], studyDB.inLC1BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[4], studyDB.inLC1BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[5], studyDB.inLC1LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[6], studyDB.inLC1LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[7], studyDB.inLC2BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[8], studyDB.inLC2BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[9], studyDB.inLC2LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[10], studyDB.inLC2LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[11], studyDB.inLC3BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[12], studyDB.inLC3BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[13], studyDB.inLC3LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[14], studyDB.inLC3LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[15], studyDB.inRegionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLOD[1], studyDB.inDGF, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[2], studyDB.inLC1BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[3], studyDB.inLC1BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[4], studyDB.inLC1LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[5], studyDB.inLC1LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[6], studyDB.inLC2BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[7], studyDB.inLC2BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[8], studyDB.inLC2LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[9], studyDB.inLC2LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[10], studyDB.inLC3BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[11], studyDB.inLC3BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[12], studyDB.inLC3LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[13], studyDB.inLC3LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[14], studyDB.inRegionNo, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strGetDLOD, "call GetDLOD (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outLOD)", MAXSTMTLEN-1);
+  strncpy (studyDB.strGetDLOD, "call GetDLOD (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outLOD)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtGetDLOD, studyDB.strGetDLOD, strlen (studyDB.strGetDLOD)))
     ERROR("Cannot prepare GetDLOD call statement (%s)", mysql_error(studyDB.connection));
@@ -136,8 +135,6 @@ void prepareDBStatements () {
 
 long GetPedPosId (char *inPedigreeSId, int inChromosomeNo, double inRefTraitPosCM)
 {
-  int foo;
-
   if (dBStmtsNotReady)
     prepareDBStatements ();
 
@@ -154,25 +151,20 @@ long GetPedPosId (char *inPedigreeSId, int inChromosomeNo, double inRefTraitPosC
     ERROR("Cannot retrieve PedPosId select results w/%d, '%s', %d, %G (%s)", 
 	  studyDB.inStudyId, inPedigreeSId, inChromosomeNo, inRefTraitPosCM, 
 	  mysql_stmt_error(studyDB.stmtGetPedPosId));
-  if ((foo = mysql_stmt_fetch (studyDB.stmtGetPedPosId)) != 0) {
-    printf ("Foo is %d and PedPosId is %d\n", foo, studyDB.outPedPosId);
-    WARNING("Cannot fetch PedPosId select results w/%d, '%s', %d, %G (%s %s)", 
+  if (mysql_stmt_fetch (studyDB.stmtGetPedPosId) != 0)
+    ERROR("Cannot fetch PedPosId select results w/%d, '%s', %d, %G (%s %s)", 
 	    studyDB.inStudyId, inPedigreeSId, inChromosomeNo, inRefTraitPosCM, 
 	    mysql_stmt_error(studyDB.stmtGetPedPosId), mysql_stmt_sqlstate(studyDB.stmtGetPedPosId));
-    printf ("I'ma gonna break here!\n");
-    return -1L;
-  }
   return studyDB.outPedPosId;
 }
 
-double GetDLOD (int inPedPosId, double inAlpha, double inDGF,
+double GetDLOD (int inPedPosId, double inDGF,
 	      double inLC1BigPen, double inLC1BigLittlePen, double inLC1LittleBigPen, double inLC1LittlePen,
 	      double inLC2BigPen, double inLC2BigLittlePen, double inLC2LittleBigPen, double inLC2LittlePen,
 	      double inLC3BigPen, double inLC3BigLittlePen, double inLC3LittleBigPen, double inLC3LittlePen,
 	      int inRegionNo)
 {
   studyDB.inPedPosId = inPedPosId;
-  studyDB.inAlpha = inAlpha;
   studyDB.inDGF = inDGF;
   studyDB.inLC1BigPen = inLC1BigPen;
   studyDB.inLC1BigLittlePen = inLC1BigLittlePen;
@@ -201,10 +193,10 @@ double GetDLOD (int inPedPosId, double inAlpha, double inDGF,
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
 
   if (*studyDB.bindGetDLODResults[1].is_null) {
-    INFO ("In RegionId %d, LOD is NULL", studyDB.outRegionId);
+    //    INFO ("In RegionId %d, LOD is NULL", studyDB.outRegionId);
     return -1LL;
   } else {
-    INFO ("In RegionId %d, LOD is %G", studyDB.outRegionId, studyDB.outLOD);
+    //    INFO ("In RegionId %d, LOD is %G", studyDB.outRegionId, studyDB.outLOD);
     return studyDB.outLOD;
   }
 }
@@ -236,19 +228,19 @@ int main (int argc, char *argv[]) {
   // Annotated calls...
 
   myPedPosId = GetPedPosId (/* PedigreeSId-> */ "2", /* ChromosomeNo-> */ 44, /* RefTraitPosCM-> */ 5.1);
-  GetDLOD (/* PedPosId-> */ myPedPosId, /* Alpha-> */ .2, /* DGF-> */ .3,
+  GetDLOD (/* PedPosId-> */ myPedPosId, /* DGF-> */ .35,
 	   /* LC1BigPen-> */ .71, /* LC1BigLittlePen-> */ .42, /* LC1LittleBigPen-> */ .44, /* LC1LittlePen-> */ .13, 
 	   /* LC2BigPen-> */ .71, /* LC2BigLittlePen-> */ .42, /* LC2LittleBigPen-> */ .44, /* LC2LittlePen-> */ .13, 
 	   /* LC3BigPen-> */ .71, /* LC3BigLittlePen-> */ .42, /* LC3LittleBigPen-> */ .46, /* LC3LittlePen-> */ .13, 
 	   /* RegionNo-> */ 1);
 
-  GetDLOD (myPedPosId, .25, .3, .71, .42, .42, .13, .71, .42, .45, .13, .71, .42, .45, .13, 1);
+  GetDLOD (myPedPosId, .35, .71, .42, .42, .13, .71, .42, .45, .13, .71, .42, .45, .13, 1);
   myPedPosId = GetPedPosId ("3", 44, 10.43210987);
-  GetDLOD (myPedPosId, .2, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  GetDLOD (myPedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
   myPedPosId = GetPedPosId ("2", 44, 3.0);
-  GetDLOD (myPedPosId, .2, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
-  GetDLOD (6, .2, .3, .71, .42, .44, .13, -1, 0, 0, 0, -1, 0, 0, 0, 1);
-  GetDLOD (7, .2, .3, .71, .42, .44, .13, .71, .42, .42, .13, -1, 0, 0, 0, 1);
+  GetDLOD (myPedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  GetDLOD (6, .3, .71, .42, .44, .13, -1, 0, 0, 0, -1, 0, 0, 0, 1);
+  GetDLOD (7, .3, .71, .42, .44, .13, .71, .42, .42, .13, -1, 0, 0, 0, 1);
 
   return EXIT_SUCCESS;
 }

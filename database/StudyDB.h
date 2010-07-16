@@ -30,7 +30,6 @@ struct StudyDB {
   MYSQL_BIND bindGetDLOD[16];
   char strGetDLOD[MAXSTMTLEN];
   int inPedPosId;
-  double inAlpha;
   double inDGF;
   double inLC1BigPen;
   double inLC1BigLittlePen;
