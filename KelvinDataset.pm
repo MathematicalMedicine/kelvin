@@ -33,7 +33,7 @@ sub new
     #   mapfile: the name of the mapfile
     #   freqfile: the name of the allele frequency file
     #   locusfile: the name of the locus (data) file
-    #   pedfile: the name of the pedigree file
+    #   pedigreefile: the name of the pedigree file
     #   pedfh: IO::File::Kelvin handle for pedfile
     #   pedlineno: current line number in pedfile
     #   mapread: boolean, has a mapfile been read?
@@ -48,7 +48,7 @@ sub new
     @$self{qw/markerorder traitorder mapfields/} = ([], [], []);
     @$self{qw/chromosome mapfunction writing consistent/} = (undef, 'kosambi', 0, 1);
     @$self{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
-    @$self{qw/pedfile pedfh pedlineno/} = (undef, undef, 0);
+    @$self{qw/pedigreefile pedfh pedlineno/} = (undef, undef, 0);
     @$self{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
     @$self{qw/microsats snps individualcache/} = (0, 0, undef);
  
@@ -61,7 +61,7 @@ sub new
 	    if (/^map/i) { $$self{mapfile} = $$arg{$_}; }
 	    elsif (/^locus/i) { $$self{locusfile} = $$arg{$_}; }
 	    elsif (/^freq/i) { $$self{freqfile} = $$arg{$_}; }
-	    elsif (/^ped/i) { $$self{pedfile} = $$arg{$_}; }
+	    elsif (/^ped/i) { $$self{pedigreefile} = $$arg{$_}; }
 	    else {
 		$errstr = "illegal argument '$_'";
 		return (undef);
@@ -80,7 +80,7 @@ sub new
     if (defined ($$self{locusfile})) {
 	$self->readLocusfile or return (undef);
     }
-    if (defined ($$self{pedfile})) {
+    if (defined ($$self{pedigreefile})) {
 	$self->readPedigreefile or return (undef);
     }
     return ($self);
@@ -103,7 +103,7 @@ sub copy
     @$new{qw/markerorder traitorder mapfields/} = ([], [], []);
     @$new{qw/chromosome mapfunction writing consistent/} = (undef, 'kosambi', 0, 1);
     @$new{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
-    @$new{qw/pedfile pedfh pedlineno/} = (undef, undef, 0);
+    @$new{qw/pedigreefile pedfh pedlineno/} = (undef, undef, 0);
     @$new{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
     $$new{individualcache} = undef;
 
@@ -154,7 +154,7 @@ sub copy
     # These fields always copy over, regardless of subsetting
     map {
 	$$new{$_} = $$self{$_};
-    } qw/chromosome mapfunction mapfile freqfile locusfile pedfile mapread freqread
+    } qw/chromosome mapfunction mapfile freqfile locusfile pedigreefile mapread freqread
 	locusread freqset microsats snps/;
 
     if ($$new{mapread}) {
@@ -540,14 +540,14 @@ sub readPedigreefile
 	    $$self{pedfh}->close;
 	    $$self{pedfh} = undef;
 	}
-	$$self{pedfile} = $pedfile;
+	$$self{pedigreefile} = $pedfile;
     }
-    unless (defined ($$self{pedfile})) {
+    unless (defined ($$self{pedigreefile})) {
 	$errstr = "no pedigree file provided";
 	return (undef);
     }
-    unless ($$self{pedfh} = IO::File::Kelvin->new ($$self{pedfile})) {
-	$errstr = "open '$$self{pedfile}' failed, $!";
+    unless ($$self{pedfh} = IO::File::Kelvin->new ($$self{pedigreefile})) {
+	$errstr = "open '$$self{pedigreefile}' failed, $!";
 	return (undef);
     }
     $$self{pedlineno} = 0;
@@ -568,7 +568,7 @@ sub readIndividual
 	$errstr = "dataset object is inconsistent with input files";
 	return (undef);
     }
-    (defined ($$self{pedfh}) || (defined ($$self{pedfile}) && $self->readPedigreefile))
+    (defined ($$self{pedfh}) || (defined ($$self{pedigreefile}) && $self->readPedigreefile))
 	or return (undef);
     if (defined ($individual = $$self{individualcache})) {
 	$$self{individualcache} = undef;
@@ -683,7 +683,7 @@ sub write
 	defined ($mapfile) or $mapfile = $$self{mapfile};
 	defined ($locusfile) or $locusfile = $$self{locusfile};
         defined ($freqfile) or $freqfile = $$self{freqfile};
-	defined ($pedfile) or $pedfile = $$self{pedfile};
+	defined ($pedfile) or $pedfile = $$self{pedigreefile};
     }
     if (defined ($mapfile) && $$self{mapread}) {
 	$self->writeMapfile ({mapfile => $mapfile, backupfile => $backupfile})
@@ -698,7 +698,7 @@ sub write
 	    or return (undef);
     }
     if (defined ($pedfile)) {
-	$self->writePedigreefile ({pedfile => $pedfile, backupfile => $backupfile})
+	$self->writePedigreefile ({pedigreefile => $pedfile, backupfile => $backupfile})
 	    or return (undef);
     }
 }
@@ -882,7 +882,7 @@ sub writeLocusfile
 sub writePedigreefile
 {
     my ($self, $arg) = @_;
-    my $pedfile = $$self{pedfile};
+    my $pedfile = $$self{pedigreefile};
     my $backupfile = 1;
     my $marker;
     my $trait;
@@ -928,7 +928,7 @@ sub writePedigreefile
 	$errstr = "open '$pedfile' failed, $!";
 	return (undef);
     }
-    $$self{pedfile} = $pedfile;
+    $$self{pedigreefile} = $pedfile;
     $$self{writing} = 1;
     $$self{pedlineno} = 0;
     return (1);
@@ -1046,6 +1046,13 @@ sub getTrait
     }
     map { $$href{$_} = $$self{traits}{$trait}{$_} } keys (%{$$self{traits}{$trait}});
     return ($href);
+}
+
+sub pedigreefile
+{
+    my ($self) = @_;
+
+    return ($$self{pedigreefile});
 }
 
 sub chromosome
