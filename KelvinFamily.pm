@@ -465,31 +465,40 @@ sub new
 
     # Cut off the original pedigree and person IDs, split on whitespace
 
-    if ($line =~ s/\s*Ped:\s*(\w+)\s+Per:\s*(\w+)\s*$//) {
-	@$ind{qw/origpedid origindid/} = ($1, $2);
-	(@$ind{qw/pedid indid dadid momid firstchildid patsibid matsibid sex proband/}, @arr) = 
-	    split (' ', $line);
-	$$ind{makeped} = 'post';
-    } else {
-	(@$ind{qw/pedid indid dadid momid sex/}, @arr) = split (' ', $line);
-	@$ind{qw/origpedid origindid/} = @$ind{qw/pedid indid/};
-	@$ind{qw/firstchildid patsibid matsibid proband/} = (0, 0, 0, 0);
-	$$ind{makeped} = 'pre';
-    }
-
     (defined ($trait = $$dataset{traitorder}[-1]))
 	and $traitcol = $$dataset{traits}{$trait}{col};
     (defined ($marker = $$dataset{markerorder}[-1]))
 	and $markercol = $$dataset{markers}{$marker}{col};
     $colcount = ($markercol > $traitcol) ? $markercol + 2 : $traitcol + 1;
 
-    # Basic sanity check on number of fields
-    if (scalar (@arr) < $colcount) {
-	$errstr = "$$dataset{pedfile}, line $$dataset{pedlineno}: too few columns in pedigree file";
-	return (undef);
-    } elsif (scalar (@arr) > $colcount) {
-	$errstr = "$$dataset{pedfile}, line $$dataset{pedlineno}: too many columns in pedigree file";
-	return (undef);
+    if ($line =~ s/\s*Ped:\s*(\w+)\s+Per:\s*(\w+)\s*$//) {
+	# These extra fields are present in genuine post-MAKEPED(tm)-brand pedigree files
+	# (accept no substitutes).
+	@$ind{qw/origpedid origindid/} = ($1, $2);
+	(@$ind{qw/pedid indid dadid momid firstchildid patsibid matsibid sex proband/}, @arr) = 
+	    split (' ', $line);
+	$$ind{makeped} = 'post';
+	if (scalar (@arr) != $colcount) {
+	    $errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: too ". ((scalar (@arr) < $colcount) ? "few" : "many"). " columns in pedigree file";
+	    return (undef);
+	}
+	
+    } else {
+	@arr = split (' ', $line);
+	if (scalar (@arr) == $colcount + 9) {
+	    (@$ind{qw/pedid indid dadid momid firstchildid patsibid matsibid sex proband/}) =
+		splice (@arr, 0, 9);
+	    @$ind{qw/origpedid origindid/} = @$ind{qw/pedid indid/};
+	    $$ind{makeped} = 'post';
+	} elsif (scalar (@arr) == $colcount + 5) {
+	    (@$ind{qw/pedid indid dadid momid sex/}) = splice (@arr, 0, 5);
+	    @$ind{qw/origpedid origindid/} = @$ind{qw/pedid indid/};
+	    @$ind{qw/firstchildid patsibid matsibid proband/} = (0, 0, 0, 0);
+	    $$ind{makeped} = 'pre';
+	} else {
+	    $errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: unexpected number of columns, can't guess format";
+	    return (undef);
+	}
     }
     
     foreach $trait (@{$$dataset{traitorder}}) {
@@ -501,7 +510,7 @@ sub new
 	$markercol = $$dataset{markers}{$marker}{col};
 	if (($arr[$markercol] eq '0' && $arr[$markercol+1] ne '0') ||
 	    ($arr[$markercol] ne '0' && $arr[$markercol+1] eq '0')) {
-	    $errstr = "$$dataset{pedfile}, line $$dataset{pedlineno}: individual $$ind{indid} is half-genotyped at marker $marker";
+	    $errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: individual $$ind{indid} is half-genotyped at marker $marker";
 	    return (undef);
 	}
 	push (@{$$ind{markers}}, [ $arr[$markercol], $arr[$markercol+1] ]);
@@ -521,14 +530,13 @@ sub new_from_count
     my $trait;
     my $marker;
     my ($allele1, $allele2);
-    my $va = 0;
+    my $va;
 
     $$ind{sex} = $$aref[2];
     foreach $trait (@{$$dataset{traitorder}}) {
-	if ($trait eq $$traits[$va]) {
-	    push (@{$$ind{traits}}, substr ($$aref[1], $va, 1));
-	} else {
-	    push (@{$$ind{traits}}, 'x');
+	push (@{$$ind{traits}}, 'x');
+	for ($va = 0; $va < scalar (@$traits); $va++) {
+	    ($trait eq $$traits[$va]) and $$ind{traits}[-1] = substr ($$aref[1], $va, 1);
 	}
     }
     ($allele1, $allele2) = split (//, $$aref[0]);
