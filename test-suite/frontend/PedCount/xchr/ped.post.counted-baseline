@@ -1,0 +1,10 @@
+ctrl1 1 0 0 0 0 0 1 0 1 1 1 1 1 1 1 1 1  Ped: ctrl1  Per: 1
+ctrl11 1 0 0 0 0 0 2 0 1 1 1 1 1 1 1 1 1  Ped: ctrl11  Per: 1
+case1 1 0 0 0 0 0 1 0 2 1 1 1 1 1 1 1 1  Ped: case1  Per: 1
+case11 1 0 0 0 0 0 2 0 2 1 1 1 1 1 1 1 1  Ped: case11  Per: 1
+ctrl12 1 0 0 0 0 0 2 0 1 1 2 1 2 1 2 1 2  Ped: ctrl12  Per: 1
+case12 1 0 0 0 0 0 2 0 2 1 2 1 2 1 2 1 2  Ped: case12  Per: 1
+ctrl2 1 0 0 0 0 0 1 0 1 2 2 2 2 2 2 2 2  Ped: ctrl2  Per: 1
+ctrl22 1 0 0 0 0 0 2 0 1 2 2 2 2 2 2 2 2  Ped: ctrl22  Per: 1
+case2 1 0 0 0 0 0 1 0 2 2 2 2 2 2 2 2 2  Ped: case2  Per: 1
+case22 1 0 0 0 0 0 2 0 2 2 2 2 2 2 2 2 2  Ped: case22  Per: 1
