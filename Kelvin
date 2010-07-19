@@ -5,94 +5,51 @@ use File::Basename;
 # KelvinDataset will be required later
 # KelvinConfig, ditto
 # KelvinFamily, double ditto
+no warnings qw(once);
+
+$|=1;
 
 # KELVIN frontend script 
 # Copyright 2009, Nationwide Children's Hospital Research Institute
 # All rights reserved. Permission is hereby granted to use this software
 # for non-profit educational purposes only.
 
-# These four variables are typically set during the 'make install'. If the
+# These three variables are typically set during the 'make install'. If the
 # values are still 'NO_<variable_name>', then the script you are reading
-# was not formally installed. Never fear, we'll try to figure out appropriate
-# values for these variables momentarily.
+# was not properly installed. Never fear, we'll try to figure out appropriate
+# values for these variables pretty soon.
 my $KELVIN_ROOT='NO_KELVIN_ROOT';
 my $KELVIN_BINARY='NO_KELVIN_BINARY';
 my $SEQUPDATE_BINARY='NO_SEQUPDATE_BINARY';
-my $PEDCOUNT_SCRIPT='NO_PEDCOUNT_SCRIPT';
+
+# Used globally
+my %keylabels;
+my %equivalentkeys;
+my $config;
 
 my $usage = "usage: $0 <configfile> [--directive ... ]\n";
-my $config;
-my $configFile;
-my ($directive, $args);
 my $platform = platform_name ();
-my $arg;
+my ($directive, $args, $arg);
+my $configFile;
+my $dataset;
+my $family;
 my $idx = 0;
 my $debug = 0;
-my $countable = undef;
+my $href;
+my $aref;
+my $ret;
 
-# For all these, we allow environment variables to override everything, even if
-# values were set during installation.
-if ($ENV{KELVIN_ROOT}) {
-    ($KELVIN_ROOT !~ /no_kelvin_root/i)
-	and warner ("overriding installed KELVIN_ROOT with '$ENV{KELVIN_ROOT}' from environment");
-    $KELVIN_ROOT = $ENV{KELVIN_ROOT};
-} elsif ($KELVIN_ROOT =~ /no_kelvin_root/i) {
-    $KELVIN_ROOT = dirname ($0);
-    warner ("no KELVIN_ROOT defined by installation, using '$KELVIN_ROOT'");
-}
+my %freqState = ( estimate => 1, xchr => 0, prevalence => 0, qt => 0, affected => 2,
+		  kelvinargs => []);
+my %countState = ( countable => 1, alwayswrite => 0, cleanup => 0, imprinting => 0,
+		   pedigreefile => undef, countfile => undef, xchr => 0 );
+my %epiState = ( passes => 0, extramods => 0, ld => 0, multipoint => 0, trait => undef, 
+		 undefpheno => undef, xchr => 0, sequpdateargs => [] );
 
-# Instead of 'use'ing our support modules up above, we 'require' them after
-# we've had a chance to add KELVIN_ROOT to @INC.
-unshift (@INC, $KELVIN_ROOT);
-require KelvinDataset;
-KelvinDataset->VERSION (1.00);
-require KelvinConfig;
-KelvinConfig->VERSION (1.00);
-require KelvinFamily;
-KelvinFamily->VERSION (1.00);
+# Nail down values for those UPPERCASE VARIABLES, as needed
+check_paths ();
 
-if ($ENV{KELVIN_BINARY}) {
-    ($KELVIN_BINARY !~ /no_kelvin_binary/i)
-	and warner ("overriding installed KELVIN_BINARY with '$ENV{KELVIN_BINARY}' from environment");
-    $KELVIN_BINARY = $ENV{KELVIN_BINARY};
-} elsif ($KELVIN_BINARY =~ /no_kelvin_binary/i) {
-    if (-x ($KELVIN_BINARY = find_versioned_kelvin ($KELVIN_ROOT))) {
-	warner ("no KELVIN_BINARY defined by installation, using '$KELVIN_BINARY'");
-    } elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.$platform")) {
-	warner ("no KELVIN_BINARY defined by installation, using '$KELVIN_BINARY'");
-    } elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/bin/kelvin.$platform")) {
-	warner ("no KELVIN_BINARY defined by installation, using '$KELVIN_BINARY'");
-    } else {
-	error ("no kelvin binary (kelvin-x.y.z or kelvin.$platform) found under $KELVIN_ROOT");
-    }
-}
-
-if ($ENV{SEQUPDATE_BINARY}) {
-    ($SEQUPDATE_BINARY !~ /no_sequpdate_binary/i)
-	and warner ("overriding installed SEQUPDATE_BINARY with '$ENV{SEQUPDATE_BINARY}' from environment");
-    $SEQUPDATE_BINARY = $ENV{SEQUPDATE_BINARY};
-} elsif ($SEQUPDATE_BINARY =~ /no_sequpdate_binary/i) {
-    if (-x ($SEQUPDATE_BINARY = "$KELVIN_ROOT/calc_updated_ppl")) {
-	warner ("no SEQUPDATE_BINARY defined by installation, using '$SEQUPDATE_BINARY'");
-    } elsif (-x ($SEQUPDATE_BINARY = "$KELVIN_ROOT/seq_update/calc_updated_ppl")) {
-	warner ("no SEQUPDATE_BINARY defined by installation, using '$SEQUPDATE_BINARY'");
-    } else {
-	$SEQUPDATE_BINARY = 'no_sequpdate_binary';
-    }
-}
-
-if ($ENV{PEDCOUNT_SCRIPT}) {
-    ($PEDCOUNT_SCRIPT !~ /no_pedcount_script/i)
-	and warner ("overriding installed PEDCOUNT_SCRIPT with '$ENV{PEDCOUNT_SCRIPT}' from environment");
-    $PEDCOUNT_SCRIPT = $ENV{PEDCOUNT_SCRIPT};
-} elsif ($PEDCOUNT_SCRIPT =~ /no_pedcount_script/i) {
-    if (-x ($PEDCOUNT_SCRIPT = "$KELVIN_ROOT/PedCount.pl")) {
-	warner ("no PEDCOUNT_SCRIPT defined by installation, using '$PEDCOUNT_SCRIPT'");
-    } else {
-	$PEDCOUNT_SCRIPT = 'no_pedcount_script';
-    }
-}
-
+# Read config file and process any extra command line directives
 ($configFile = shift (@ARGV))
     or die ($usage);
 ($config = KelvinConfig->new ($configFile))
@@ -111,447 +68,504 @@ if (@ARGV) {
     $config->validate
 	or error ("$KelvinConfig::errstr");
 }
-($debug) and print Dumper ($config);
-(! ($config->isConfigured ("Multipoint") ||
-    $config->isConfigured ("CountFile") ||
-    $config->isConfigured ("QT") ||
-    $config->isConfigured ("QTT") ||
-    $config->isConfigured ("SkipPedCount") ||
-    $PEDCOUNT_SCRIPT =~ /no_pedcount_script/i))
-    and $countable = 1;
 
-if ($config->isConfigured ("EstimateFrequency")) {
-    estimate_frequency ($config);
-    (! $config->isConfigured ("SkipAnalysis")) 
-	and $config->addDirective ("FrequencyFile", "freq.dat");
+# Open dataset (that is, read the locus and freq files, and set up the
+# pedigree file for reading). We include the freq file, if one is available,
+# because prior knowledge of the presence of microsats will save us effort
+# later.
+$$href{PedigreeFile} = $ {$config->isConfigured ("PedigreeFile")}[0];
+$$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
+($aref = $config->isConfigured ("FrequencyFile"))
+    and $$href{FrequencyFile} = $$aref[0];
+$dataset = KelvinDataset->new ($href)
+    or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
+
+# Set up for allele frequency estimation. This will also validate the
+# conditions for frequency estimation that we can dope out from the
+# config and the dataset, short of reading the pedigree file.
+setup_frequency_estimation (\%freqState, $config, $dataset);
+
+# Set up for epistasis analysis, if called for.
+setup_epistasis (\%epiState, $config, $dataset, \%countState);
+#print Dumper (\%epiState);
+
+# Same for pedigree counting, only if Epistasis is turned off. If
+# Epistasis is on, setup_epistasis has already set up ped counting
+# for each pass of the epistasis run
+($epiState{passes}) or setup_pedcount (\%countState, $config, $dataset);
+
+while ($family = $dataset->readFamily) {
+    ($freqState{estimate}) and count_alleles (\%freqState, $family);
+    if ($epiState{passes}) {
+	epistasis_family (\%epiState, $family);
+    } elsif ($countState{countable}) {
+	count_family (\%countState, $family);
+    }
 }
+(! defined ($family)) and error ($KelvinDataset::errstr);
+#print Dumper (\%countState);
 
-($config->isConfigured ("GenerateKeywords"))
-    and generate_keywords ($config);
+($freqState{estimate}) and finish_frequency_estimation (\%freqState, $dataset);
 
-($config->isConfigured ("SkipAnalysis"))
-    and exit (0);
-
-if ($config->isConfigured ("Epistasis")) {
-    run_epistasis ($config);
+if ($epiState{passes}) {
+    # run_epistasis() needs to know if microsatellites have been detected since setup_epistasis()
+    run_epistasis (\%epiState, \%freqState, $config, $dataset->microsats);
 } else {
-    just_run_kelvin ($config, @ARGV);
+    if ($countState{countable}) {
+	write_pedcount (\%countState, $dataset, 1);
+    }
+    if ($config->isConfigured ("SkipAnalysis")) {
+	warner ("Skipping analysis.\n");
+    } else {
+	(($ret = system ($KELVIN_BINARY, $configFile, @ARGV, @{$freqState{kelvinargs}}, @{$countState{kelvinargs}})) != 0)
+	    and error ("$KELVIN_BINARY failed, ", ($ret == -1) ? "$!" : "status $?");
+	if ($countState{countable}) {
+	    remove ($countState{countfile});
+	    ($countState{cleanup}) and remove ($countState{pedigreefile});
+	}
+    }
 }
+
 
 exit (0);
 
-sub generate_keywords
+# An alias for unlink so we can easily disable cleaning up temp files,
+# for debugging purposes
+sub remove 
 {
-    my ($config) = @_;
-    my $href = {};
-    my $dataset;
-
-    $$href{PedigreeFile} = $ {$config->isConfigured ("PedigreeFile")}[0];
-    $$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
-    $$href{MapFile} = $ {$config->isConfigured ("MapFile")}[0];
-    $$href{FrequencyFile} = $ {$config->isConfigured ("FrequencyFile")}[0];
-    $dataset = KelvinDataset->new ($href)
-	or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
-
-    # First do the configuration directives...
-    print ($config->isConfigured ("SexLinked") ? "XC\n" : "AUC\n");
-    if ($dataset->microsats) {
-	print (($dataset->snps) ? "MXM\n" : "SNP\n");
-    } else {
-	print "MSAT\n";
-    }
-    print "How do we determine homogeneity VS heterogeneity?\n";
-    if ($config->isConfigured ("MarkerToMarker")) {
-	print "M2M\n";
-	if (($ {$config->isConfigured ("MarkerToMarker")}[0]) eq "adjacent") {
-	    print "ADJM\n";
-	} else {
-	    print "ALLM\n";
-	}
-    } else {
-	print "T2M\n";
-    }
-    if ($config->isConfigured ("QT")) {
-	print "QT\n";
-    } elsif ($config->isConfigured ("QTT")) {
-	print "QTT\n";
-    } else {
-	print "DT\n";
-    }
-#    &&&
-    
-    # Read first pedigree
-#    defined ($ped = $dataset->readFamily) 
-#	or error ("readFamily failed, $KelvinDataset::errstr");
-#    
-#    if (($pedsize = scalar (@$ped)) == 1) {
-#	($aref = $config->isConfigured ("TraitPrevalence"))
-#	    or error ("EstimateFrequency with cases and controls requires TraitPrevalence");
-#	$prevalence = $$aref[0];
-#	    and error ("EstimateFrequency is incompatible with QT/QTT and cases and controls.");
-#	$traits = $dataset->traitOrder;
-#	(scalar (@$traits) == 0)
-#	    and error ("Dataset contains no affection status (trait). EstimateFrequency requires a dichotomous trait.");
-#	$trait = $$traits[0];
-#	(scalar (@$traits) > 1)
-#	    and warn ("Using trait '$trait' to distinguish cases from controls for allele frequency estimation.");
-#
-#    } elsif ($pedsize == 3) {
-#	($config->isConfigured ("TraitPrevalence"))
-#	    and error ("EstimateFrequency with trios is incompatible with TraitPrevalence");
-#    } else {
-#	error ("EstimateFrequency is only legal with cases and controls or trios");
-#    }
-
-
+    # print ("unlink ", join (' ', @_), "\n");
+    unlink (@_);
 }
 
-sub estimate_frequency
+#
+# In general, we'll always try to do pedigree counting, although there are
+# a raft of configuration options that necessarily disable counting.
+#
+sub setup_pedcount
 {
-    my ($config) = @_;
-    my $dataset;
-    my ($markers, $traits);
-    my ($marker, $trait);
-    my (%transmitted, %nontransmitted);
-    my ($prevalence, %cases, %controls);
-    my ($case, $control);
-    my $xchr = undef;
-    my $ped;
-    my $pedsize;
-    my ($dad, $mom) = (undef, undef);
-    my ($dadgeno, $momgeno, $kidgeno);
-    my $pheno;
-    my $allele;
-    my $href = {};
+    my ($state, $config, $dataset) = @_;
+    my $traits;
+    my $trait;
+    my $href;
+    
+    # Set this so I don't have to worry about it being undefined later
+    $$state{kelvinargs} = [];
+
+    if ($config->isConfigured ("Multipoint") ||
+	$config->isConfigured ("CountFile") ||
+	$config->isConfigured ("QT") ||
+	$config->isConfigured ("QTT") ||
+	$config->isConfigured ("SkipPedCount") ||
+	$dataset->microsats) {
+	warner ("Pedigree counting is disabled due to configuration");
+	$$state{countable} = 0;
+	return;
+    }
+    ($config->isConfigured ("SexLinked")) and $$state{xchr} = 1;
+    ($config->isConfigured ("Imprinting")) and $$state{imprinting} = 1;
+    $$state{pedigreefile} = $dataset->pedigreefile;
+    $$state{countedpeds} = [];
+    $$state{counts} = [];
+    $$state{markers} = $dataset->markerOrder;
+    $$state{pedlabels} = {};
+    $$state{traits} = [];
+    $$state{uncountedpeds} = [];
+    $traits = $dataset->traitOrder;
+    push (@{$$state{traits}}, shift (@$traits));
+    if (scalar (@$traits) && $config->isConfigured ("LiabilityClasses")) {
+	$href = $dataset->getTrait ($$traits[0]);
+	($$href{flag} eq 'C') and push (@{$$state{traits}}, shift (@$traits));
+    }
+    return;
+}
+
+#
+# Count phenotype/LC/genotype combinations for each marker. We only count 
+# nuclear pedigrees
+#
+sub count_family
+{
+    my ($state, $family) = @_;
+    my ($dad, $mom, $kids);
+    my ($dadkey, $momkey, $key);
+    my @kidkeys;
+    my @parents;
+    my @kids;
+    my $geno;
     my $aref;
+    my ($va, $vb);
+
+    # We don't count general pedigrees, no way, no how. Save family to write out later.
+    if ($family->pedtype eq 'general') {
+	push (@{$$state{uncountedpeds}}, $family);
+	return;
+    }
+
+    # We save the countable families, too, just in case we have to abandon
+    # pedcounting for some reason (like we're counting alleles, and discover
+    # that there are microsatellites in the dataset).
+    push (@{$$state{countedpeds}}, $family);
+    $kids = $family->children;
+
+    if ($family->pedtype eq 'casecontrol') {
+	$kidkeys[0] = '';
+	map { $kidkeys[0] .= $$kids[0]->getTrait ($_) } @{$$state{traits}};
+	($$state{xchr} || $$state{imprinting}) and 
+	    $kidkeys[0] .= ($$kids[0]->sex == 1) ? 'm' : 'f';
+	for ($va = 0; $va < scalar (@{$$state{markers}}); $va++) {
+	    $aref = $$kids[0]->getGenotype ($$state{markers}[$va]);
+	    $geno = ($$aref[0] le $$aref[1]) ? $$aref[0] . $$aref[1] : $$aref[1] . $$aref[0];
+	    $key = equivalentkey ("_C" . $geno . $kidkeys[0]);
+	    
+	    if (! exists ($$state{counts}[$va]{$key})) {
+		$$state{counts}[$va]{$key} = 1;
+		$$state{pedlabels}{$key} = 1;
+	    } else {
+		$$state{counts}[$va]{$key}++;
+		$$state{pedlabels}{$key} = $$state{counts}[$va]{$key};
+	    }
+	}
+	
+    } else {
+	map { push (@kidkeys, '') } @$kids;
+	($dad, $mom) = ($family->dad, $family->mom);
+	map {
+	    $dadkey .= $dad->getTrait ($_);
+	    $momkey .= $mom->getTrait ($_);
+	    for ($va = 0; $va < scalar (@$kids); $va++) {
+		$kidkeys[$va] .= $$kids[$va]->getTrait ($_);
+	    }
+	} @{$$state{traits}};
+	if ($$state{xchr} || $$state{imprinting}) {
+	    $dadkey .= ($dad->sex == 1) ? 'm' : 'f';
+	    $momkey .= ($mom->sex == 1) ? 'm' : 'f';
+	    for ($va = 0; $va < scalar (@$kids); $va++) {
+		$kidkeys[$va] .= ($$kids[$va]->sex == 1) ? 'm' : 'f';
+	    }
+	}
+	for ($va = 0; $va < scalar (@{$$state{markers}}); $va++) {
+	    $aref = $dad->getGenotype ($$state{markers}[$va]);
+	    $geno = ($$aref[0] le $$aref[1]) ? $$aref[0] . $$aref[1] : $$aref[1] . $$aref[0];
+	    $parents[0] = $geno . $dadkey;
+	    $aref = $mom->getGenotype ($$state{markers}[$va]);
+	    $geno = ($$aref[0] le $$aref[1]) ? $$aref[0] . $$aref[1] : $$aref[1] . $$aref[0];
+	    $parents[1] = $geno . $momkey;
+	    $key = ($$state{xchr} || $$state{imprinting} || $parents[0] le $parents[1]) ? 
+		($parents[0] . $parents[1]) : ($parents[1] . $parents[0]);
+	    @kids = ();
+	    for ($vb = 0; $vb < scalar (@$kids); $vb++) {
+		$aref = $$kids[$vb]->getGenotype ($$state{markers}[$va]);
+		$geno = ($$aref[0] le $$aref[1]) ? $$aref[0] . $$aref[1] : $$aref[1] . $$aref[0];
+		$kids[$vb] = $geno . $kidkeys[$vb];
+	    }
+	    $key = '_N'. $key . join ('', sort (@kids));
+	    $key = equivalentkey ($key);
+	    if (! exists ($$state{counts}[$va]{$key})) {
+		$$state{counts}[$va]{$key} = 1;
+		$$state{pedlabels}{$key} = 1;
+	    } else {
+		$$state{counts}[$va]{$key}++;
+		$$state{pedlabels}{$key} = $$state{counts}[$va]{$key};
+	    }
+	}
+    }
+}
+
+sub write_pedcount
+{
+    my ($state, $dataset, $opennewfile) = @_;
+    my $countedsome = 0;
+    my @pedlabels = ();
+    my $counts;
+    my $family;
+    my @individuals;
+    my $key;
+    my $pedid;
+    my ($geno, $traits, $sex);
+    my $va;
+    my $n;
+
+    if ($dataset->microsats) {
+	$$state{countable} = 0;
+	warner ("Microsatellites detected, disabling pedigree counting");
+    } else {
+	foreach $key (keys (%{$$state{pedlabels}})) {
+	    ($$state{pedlabels}{$key} > 1) and $countedsome = 1;
+	}
+	if (! $countedsome) {
+	    $$state{countable} = 0;
+	    warner ("Pedigree counting results in no savings, disabling");
+	}
+    }
+
+    if ($$state{countable}) {
+	$$state{countfile} = $$state{pedigreefile} . ".counts";
+	@pedlabels = sort {by_len ($a, $b)} (keys (%{$$state{pedlabels}}));
+	open (FH, ">$$state{countfile}");
+	print (FH "Marker");
+	print (FH map { " ". $_->pedid } @{$$state{uncountedpeds}});
+	print (FH map { " " . keylabel ($_) } @pedlabels, "\n");
+	for ($va = 0; $va < scalar (@{$$state{markers}}); $va++) {
+	    print (FH "$$state{markers}[$va]");
+	    print (FH " 1" x scalar (@{$$state{uncountedpeds}}));
+	    $counts = $$state{counts}[$va];
+	    foreach $key (@pedlabels) {
+		print (FH " ". (exists ($$counts{$key}) ? $$counts{$key} : 0));
+	    }
+	    print (FH "\n");
+	}
+	if ($opennewfile) {
+	    $$state{cleanup} = 1;
+	    $$state{pedigreefile} .= ".counted";
+	    $dataset->writePedigreefile ({pedigreefile => $$state{pedigreefile}});
+	    push (@{$$state{kelvinargs}}, "--PedigreeFile", $$state{pedigreefile});
+	}
+	foreach $family (@{$$state{uncountedpeds}}) {
+	    $family->write ();
+	}
+	$n = scalar (@{$$state{traits}});
+	foreach $key (@pedlabels) {
+	    $pedid = keylabel ($key);
+	    if (substr ($key, 0, 2, "") eq '_C') {
+		# Case/control
+		if ($$state{imprinting} || $$state{xchr}) {
+		    ($geno, $traits, $sex) = ($key =~ /(..)(.{$n})(.)/);
+		    $sex = ($sex eq 'm') ? 1 : 2;
+		} else {
+		    ($geno, $traits, $sex) = ($key =~ /(..)(.{$n})/, 1);
+		}
+		$family = KelvinIndividual->new_from_count ($dataset, $pedid, $$state{traits}, [$geno, $traits, $sex]);
+		$family->write;
+	    } else {
+		# Nuclear ped
+		$va = 0;
+		@individuals = ();
+		while (length ($key) > 0) {
+		    if ($$state{imprinting} || $$state{xchr}) {
+			$key =~ s/^(..)(.{$n})(.)//;
+			($geno, $traits, $sex) = ($1, $2, $3);
+			$sex = ($sex eq 'm') ? 1 : 2;
+		    } else {
+			$key =~ s/^(..)(.{$n})//;
+			($geno, $traits, $sex) = ($1, $2, ($va++ % 2) + 1);
+		    }
+		    push (@individuals, [$geno, $traits, $sex]);
+		}
+		$family = KelvinFamily->new_from_count ($dataset, $pedid, $$state{traits}, \@individuals);
+		$family->write;
+	    }
+	}
+	push (@{$$state{kelvinargs}}, "--CountFile", $$state{countfile});
+	
+    } elsif ($$state{alwayswrite}) {
+	# Whoops. Guess we can't count pedigrees for some reason, but we still need to
+	# write a pedigree file (probably for epistasis).
+	foreach $family (@{$$state{countedpeds}}, @{$$state{uncountedpeds}}) {
+	    $family->write ();
+	}
+    }
+
+    # Free up most of the memory held by count-related data structures
+    $$state{countedpeds} = $$state{counts} = $$state{markers} = $$state{pedlabels} = 
+	$$state{traits} = $$state{uncountedpeds} = undef;
+    return;
+}
+
+sub by_len
+{
+    my ($a, $b) = @_;
+    my $ret;
+
+    (($ret = (length ($a) <=> length ($b))) != 0)
+	and return ($ret);
+    return ($a cmp $b);
+}
+
+
+#
+# If epistasis is called for, figure out how many passes we need to make,
+# and set up data structures and temporary files. 
+#
+sub setup_epistasis
+{
+    my ($state, $config, $dataset, $countstate) = @_;
+    my ($epimarker, $epidataset);
+    my $individual;
+    my $indgenos = {};
+    my $maps = [];
+    my $conffiles = {};
+    my $classes;
+    my $href = {};
+    my $aref = [];
+    my $geno;
+    my $pass;
     my $va;
 
-    $$href{PedigreeFile} = $ {$config->isConfigured ("PedigreeFile")}[0];
-    $$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
-    $$href{MapFile} = $ {$config->isConfigured ("MapFile")}[0];
-    $dataset = KelvinDataset->new ($href)
-	or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
-    ($dataset->microsats)
-	and error ("EstimateFrequency is incompatible with microsatellite datsets");
-    $markers = $dataset->markerOrder;
-    map { $transmitted{$_} = {}; $nontransmitted{$_} = {}; } @$markers;
-    ($config->isConfigured ("SexLinked")) and $xchr = 1;
-
-    # Read first pedigree, and validate pedigree size against config directives. Currently
-    # we only estimate allele frequencies for cases-n-controls or trios.
-    defined ($ped = $dataset->readFamily) 
-	or error ("readFamily failed, $KelvinDataset::errstr");
-    if (($pedsize = scalar (@$ped)) == 1) {
-	($aref = $config->isConfigured ("TraitPrevalence"))
-	    or error ("EstimateFrequency with cases and controls requires TraitPrevalence");
-	$prevalence = $$aref[0];
-	($config->isConfigured ("QT") || $config->isConfigured ("QTT"))
-	    and error ("EstimateFrequency is incompatible with QT/QTT and cases and controls.");
-	$traits = $dataset->traitOrder;
-	(scalar (@$traits) == 0)
-	    and error ("Dataset contains no affection status (trait). EstimateFrequency requires a dichotomous trait.");
-	$trait = $$traits[0];
-	(scalar (@$traits) > 1)
-	    and warn ("Using trait '$trait' to distinguish cases from controls for allele frequency estimation.");
-
-    } elsif ($pedsize == 3) {
-	($config->isConfigured ("TraitPrevalence"))
-	    and error ("EstimateFrequency with trios is incompatible with TraitPrevalence");
-    } else {
-	error ("EstimateFrequency is only legal with cases and controls or trios");
+    ($aref = $config->isConfigured ("Epistasis"))
+	or return;
+    $epimarker = $$aref[0];
+    ($SEQUPDATE_BINARY =~ /no_sequpdate_binary/i)
+	and error ("can't run Epistasis, no sequpdate binary found");
+    ($aref = $dataset->traitOrder)
+	or error ("can't run Epistasis on a dataset with no trait");
+    $$state{trait} = $$aref[0];
+    $aref = $config->isConfigured ("PhenoCodes");
+    ($$state{undefpheno}) = ($$aref[0] =~ /^([\-\d\.]+)/);
+    ($config->isConfigured ("SexLinked")) and $$state{xchr} = 1;
+    ($config->isConfigured ("LD")) and $$state{ld} = 1;
+    ($config->isConfigured ("Multipoint")) and $$state{multipoint} = 1;
+    ($config->isConfigured ("ExtraMODs")) and $$state{extramods} = 1;
+    $$conffiles{pedigreefile} = $ {$config->isConfigured ("EpistasisPedigreeFile")}[0];
+    $$conffiles{locusfile} = $ {$config->isConfigured ("EpistasisLocusFile")}[0];
+    $epidataset = KelvinDataset->new ($conffiles)
+	or error ("KelvinDataset new failed, $KelvinDataset::errstr");
+    while ($individual = $epidataset->readIndividual) {
+	($aref = $individual->getGenotype ($epimarker))
+	    or error ("KelvinIndividual getGenotype failed, $KelvinIndividual::errstr");
+	$geno = join ('_', sort (@$aref));
+	$$indgenos{"P".$individual->pedid."I".$individual->indid} = $geno;
+	(exists ($$href{$geno})) or $$href{$geno} = '';
     }
-
-    if ($pedsize == 1) {
-	# Cases and controls. Loop over all individuals.
-	while (@$ped) {
-	    (scalar (@$ped) == $pedsize)
-		or error ("Pedigree ". $$ped[0]->pedid. " is a different size than preceding pedigrees. EstimateFrequency requires that all pedigrees be the same size.");
-
-	    # FIXME: we should be checking for the Phenocodes directive
-	    # instead of assuming (0, 1, 2) forDT.
-	    if (($pheno = $$ped[0]->getTrait ($trait)) == 1) {
-		record_case_control ($$ped[0], \%controls, $xchr, $markers);
-		# call sub with \%controls
-	    } elsif ($pheno == 2) {
-		record_case_control ($$ped[0], \%cases, $xchr, $markers);
-	    }
-	    ($ped = $dataset->readFamily) or last;
-	}
-	defined ($ped)
-	    or error ("readFamily failed, $KelvinDataset::errstr");
-	
-	foreach $marker (@$markers) {
-	    %$href = ();
-	    map {
-		$$href{$_} = '';
-	    } (keys (%{$cases{$marker}}), keys (%{$controls{$marker}}));
-	    (scalar (@$aref = sort (keys (%$href))) <= 2)
-		or error ("marker '$marker' has more than two alleles: ". join (', ', keys (%$href)));
-	    $case = ($cases{$marker}{$$aref[0]} == 0) ? 0.0001 :
-		(($cases{$marker}{$$aref[1]} == 0) ? 0.9999 : 
-		 $cases{$marker}{$$aref[0]} / ($cases{$marker}{$$aref[0]} + $cases{$marker}{$$aref[1]}));
-	    $control = ($controls{$marker}{$$aref[0]} == 0) ? 0.0001 :
-		(($controls{$marker}{$$aref[1]} == 0) ? 0.9999 : 
-		 $controls{$marker}{$$aref[0]} / ($controls{$marker}{$$aref[0]} + $controls{$marker}{$$aref[1]}));
-	    $$href{$$aref[0]} = sprintf ("%.04f", $prevalence * $case + (1 - $prevalence) * $control);
-	    $$href{$$aref[1]} = sprintf ("%.04f", 1 - $$href{$$aref[0]});
-	    $dataset->setAlleleFreqs ($marker, $href);
-	}
-	    
+    (defined ($individual))
+	or error ("KelvinDataset readIndividual failed, $KelvinDataset::errstr");
+    $epidataset->close;
+    $$state{indgenos} = $indgenos;
+    (($classes = epistasis_LC_map ($$state{ld}, $maps, $href)) <= 1)
+	and return;
+    $config->addDirective ("LiabilityClasses", $classes);
+    
+    $$conffiles{pedigreefile} = $ {$config->isConfigured ("PedigreeFile")}[0];
+    $$conffiles{locusfile} = $ {$config->isConfigured ("LocusFile")}[0];
+    $$conffiles{bayesratiofile} = $ {$config->isConfigured ("BayesRatioFile")}[0];
+    ($aref = $config->isConfigured ("MODFile")) and $$conffiles{modfile} = $$aref[0];
+    if ($$state{multipoint}) {
+	$$state{sequpdateargs} = ['-e', '-m', '-R', $$conffiles{bayesratiofile}];
     } else {
-	# Trios. Loop over all pedigrees. Skip pedigrees that contain ungenotyped individuals.
-	while (@$ped) {
-	    (scalar (@$ped) == $pedsize)
-		or error ("Pedigree ". $$ped[0]->pedid. " is a different size than preceding pedigrees. EstimateFrequency requires that all pedigrees be the same size.");
-	    record_trios ($ped, \%transmitted, \%nontransmitted, $xchr, $markers);
-	    ($ped = $dataset->readFamily) or last;
-	}
-	defined ($ped = $dataset->readFamily)
-	    or error ("readFamily failed, $KelvinDataset::errstr");
-
-	foreach $marker (@$markers) {
-	    @$aref = keys (%{$nontransmitted{$marker}});
-	    (scalar (@$aref) == 2) 
-		or error ("marker '$marker' has more than two alleles: ". join (', ', @$aref));
-	    $href = { $$aref[0] => sprintf ("%.04f", $nontransmitted{$marker}{$$aref[0]} / 
-					    ($nontransmitted{$marker}{$$aref[0]} +
-					     $nontransmitted{$marker}{$$aref[1]})) };
-	    $$href{$$aref[1]} = sprintf ("%.04f", 1 - $$href{$$aref[0]});
-	    $dataset->setAlleleFreqs ($marker, $href);
-	}
+	$$conffiles{pplfile} = $ {$config->isConfigured ("PPLFile")}[0];
+	$$state{sequpdateargs} = ['-e', '-O', $$conffiles{bayesratiofile}, '-R',
+				  $$conffiles{pplfile}];
     }
-    
-    $dataset->writeFreqfile ("freq.dat")
-	or error ("writeFreqfile failed: $KelvinDataset::errstr");
-    return (1);
- }
+    $$conffiles{configfile} = $config->filename;
 
-
-sub record_case_control
-{
-    my ($ind, $cat, $xchr, $markers) = @_;
-    my $marker;
-    my $geno;
-    my $href;
-    
-    $href = $ind->structure;
-    foreach $marker (@$markers) {
-	$geno = $ind->getGenotype ($marker);
-	($$geno[0] == 0 || $$geno[1] == 0) and return (0);
-	# On X-chr, males only have one allele, coded as homozygous. Don't double count:
-	($xchr && $$href{sex} == 1) and shift (@$geno);
+    $$state{passes} = scalar (@$maps);
+    for ($va = 0; $va < $$state{passes}; $va++) {
+	$pass = $$state{"pass$va"} = {};
+	$$pass{map} = $$maps[$va];
+	$$pass{classes} = $classes;
+	$$pass{dataset} = $dataset->copy ({purge => [$epimarker]});
+	$$pass{kelvinargs} = [];
 	map {
-	    exists ($$cat{$marker}{$_}) or $$cat{$marker}{$_} = 0;
-	    $$cat{$marker}{$_}++;
-	} @$geno;
+	    if (exists ($$conffiles{$_})) {
+		$$pass{files}{$_} = $$conffiles{$_}. ".pass$va";
+		push (@{$$pass{kelvinargs}}, "--$_", $$pass{files}{$_});
+	    }
+	} qw/pedigreefile locusfile bayesratiofile modfile/;
+	$$pass{files}{configfile} = $$conffiles{configfile}. ".pass$va";
+	push (@{$$state{sequpdateargs}}, $$pass{files}{bayesratiofile});
+
+	$$pass{dataset}->addTrait ('EpistasisClass', 'C', 'end');
+	$$pass{dataset}->write ({pedigreefile => $$pass{files}{pedigreefile},
+				 locusfile => $$pass{files}{locusfile}})
+	    or error ("KelvinDataset write failed, $KelvinDataset::errstr");
+	if ($$pass{countstate}{countable} = $$countstate{countable}) {
+	    map { $$pass{countstate}{$_} = $$countstate{$_} } keys (%$countstate);
+	    $$pass{countstate}{alwayswrite} = 1;
+	    setup_pedcount ($$pass{countstate}, $config, $$pass{dataset});
+	}
     }
-    return (1);
+    $$state{conffiles} = $conffiles;
+    return;
 }
 
-
-sub record_trios
+sub epistasis_family
 {
-    my ($ped, $xm, $nxm, $xchr, $markers) = @_;
-    my ($dadgeno, $momgeno, $kidgeno);
-    my ($dad, $mom, $kid);
-    my $marker;
-    my $href;
-    my $va = 0;
+    my ($state, $family) = @_;
+    my $epifamily;
+    my $individual;
+    my $pass;
+    my $id;
+    my $va;
 
-    while ($va <= scalar (@$ped)) {
-	$$ped[0]->genotyped or return (0);
-	$href = $$ped[0]->structure;
-	if ($$href{dadid} == 0 && $$href{momid} == 0) {
-	    if ($$href{sex} == 1) {
-		$dad = shift (@$ped);
+    for ($va = 0; $va < $$state{passes}; $va++) {
+	$pass = $$state{"pass$va"};
+	$epifamily = $family->map ($$pass{dataset});
+	foreach $individual (@{$epifamily->individuals}) {
+	    $id = "P". $individual->pedid. "I". $individual->indid;
+	    if (exists ($$pass{map}{$$state{indgenos}{$id}})) {
+		$individual->setTrait ("EpistasisClass", $$pass{map}{$$state{indgenos}{$id}});
 	    } else {
-		$mom = shift (@$ped);
+		$individual->setTrait ($$state{trait}, $$state{undefpheno});
+		$individual->setTrait ("EpistasisClass", 1);
 	    }
 	}
-	$va++;
-    }
-    $href = ($kid = $$ped[0])->structure;
-
-    foreach $marker (@$markers) {
-	$dadgeno = $dad->getGenotype ($marker);
-	$momgeno = $mom->getGenotype ($marker);
-	$kidgeno = $kid->getGenotype ($marker);
-	($$dadgeno[0] == 0 || $$dadgeno[1] == 0 || $$momgeno[0] == 0 || $$momgeno[1] == 0 || 
-	 $$kidgeno[0] == 0 || $$kidgeno[1] == 0)
-	    and next;
-	map {
-	    exists ($$xm{$marker}{$_}) or $$xm{$marker}{$_} = 0;
-	    exists ($$nxm{$marker}{$_}) or $$nxm{$marker}{$_} = 0;
-	} (@$dadgeno, @$momgeno, @$kidgeno);
-	map { $$nxm{$marker}{$_}++; } @$momgeno;
-	if (! $xchr) {
-	    map { $$nxm{$marker}{$_}++; } @$dadgeno;
-	    map {
-		$$xm{$marker}{$_}++;
-		$$nxm{$marker}{$_}--;
-	    } @$kidgeno;
-	} elsif ($$href{sex} == 1) {
-	    # X-chromosome, male child
-	    $$xm{$marker}{$$kidgeno[0]}++;
-	    $$nxm{$marker}{$$kidgeno[0]}--;
-	    $$nxm{$marker}{$$dadgeno[0]} += 0.5;
+	if ($$pass{countstate}{countable}) {
+	    count_family ($$pass{countstate}, $epifamily);
 	} else {
-	    # X-chromosome, female child
-	    $$nxm{$marker}{$$dadgeno[0]} += 1.5;
-	    map {
-		$$xm{$marker}{$_}++;
-		$$nxm{$marker}{$_}--;
-	    } @$kidgeno;
+	    $epifamily->write;
 	}
     }
-    return (1);
 }
-
 
 sub run_epistasis
 {
-    my ($config) = @_;
-    my $epidataset;
-    my $epimarker;
-    my $epigeno;
-    my $origdataset;
-    my $individual;
-    my %individuals;
-    my ($multipoint, $ld, $extramods) = (undef, undef, undef);
-    my $undefpheno;
-    my $trait;
-    my %conffiles = ();
-    my @sequpdateargs = ('-e');
-    my @countargs = ();
-    my @lcmap = ();
+    my ($state, $freqstate, $config, $microsats) = @_;
+    my $pass;
     my $ret;
     my $va;
 
-    my $struct;
-    my $args;
-    my $href = {};
-    my $aref;
-
-    ($SEQUPDATE_BINARY =~ /no_sequpdate_binary/i)
-	and error ("no sequpdate binary found");
-    ($config->isConfigured ("Multipoint")) and $multipoint = 1;
-    ($config->isConfigured ("LD")) and $ld = 1;
-    ($config->isConfigured ("ExtraMODs")) and $extramods = 1;
-
-    # Configuration validation means I don't have to check return codes here
-    $conffiles{PedigreeFile} = $ {$config->isConfigured ("EpistasisPedigreeFile")}[0];
-    $conffiles{LocusFile} = $ {$config->isConfigured ("EpistasisLocusFile")}[0];
-    $epimarker = $ {$config->isConfigured ("Epistasis")}[0];
-    $aref = $config->isConfigured ("PhenoCodes");
-    ($undefpheno) = ($$aref[0] =~ /^([\-\d\.]+)/);
-print ("undefpheno is $undefpheno\n");
-    ($countable) and $conffiles{CountFile} = "counts.dat";
-
-    map { $$href{$_} = $conffiles{$_} } qw/PedigreeFile LocusFile/;
-    ($epidataset = KelvinDataset->new ($href))
-	or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
-    $epidataset = $epidataset->copy ({preserve => [$epimarker]});
+    # Write counted pedigrees for each pass first (if applicable), since this also frees
+    # up memory that we can use for running Kelvin
+    for ($va = 0; $va < $$state{passes}; $va++) {
+	$pass = $$state{"pass$va"};
+	$$pass{dataset}->set_microsats ($microsats);
+	if ($$pass{countstate}{countable}) {
+	    write_pedcount ($$pass{countstate}, $$pass{dataset}, 0);
+	}
+    }
+    if ($config->isConfigured ("SkipAnalysis")) {
+	warner ("Skipping analysis\n");
+	return;
+    }
     
-    while ($individual = $epidataset->readIndividual) {
-	$struct = $individual->structure;
-	$aref = $individual->getGenotype ($epimarker);
-	$individuals{"P$$struct{pedid}I$$struct{indid}"} = join ('_', sort (@$aref));
+    for ($va = 0; $va < $$state{passes}; $va++) {
+	$pass = $$state{"pass$va"};
+	$config->write ({configfile => $$pass{files}{configfile}, nolocal => 1});
+	(($ret = system ($KELVIN_BINARY, $$pass{files}{configfile}, @ARGV, @{$$freqstate{kelvinargs}}, @{$$pass{countstate}{kelvinargs}}, @{$$pass{kelvinargs}})) != 0)
+	    and error ("$KELVIN_BINARY failed, ", ($ret == -1) ? "$!" : "status $?");
     }
-    $epidataset->close;
-
-    # Load up %conffiles
-    $conffiles{configfile} = $config->filename;
-    $conffiles{PedigreeFile} = $ {$config->isConfigured ("PedigreeFile")}[0];
-    $conffiles{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
-    $conffiles{BayesRatioFile} = $ {$config->isConfigured ("BayesRatioFile")}[0];
-    if (! $multipoint) {
-	$conffiles{PPLFile} = ($args = $config->isConfigured ("PPLFile")) ? $$args[0] : 'ppl.out';
-	push (@sequpdateargs, '-O', $conffiles{BayesRatioFile}, '-R', $conffiles{PPLFile});
-    } else {
-	push (@sequpdateargs, '-m', '-R', $conffiles{BayesRatioFile});
-    }
-    ($args = $config->isConfigured ("MODFile")) and $conffiles{MODFile} = $$args[0];
-    $config->addDirective ("LiabilityClasses", epistasis_LC_map ($ld, \@lcmap, \%individuals));
-
-    map { $$href{$_} = $conffiles{$_} } qw/PedigreeFile LocusFile/;
-    ($origdataset = KelvinDataset->new ($href))
-        or die ("FATAL: new KelvinDataset failed, $KelvinDataset::errstr\n");
-    $aref = $origdataset->traitOrder;
-    (scalar (@$aref) == 0) and error ("dataset contains no trait data");
-    $trait = $$aref[0];
-    $epidataset = $origdataset->copy ({purge => [$epimarker]});
-    $epidataset->addTrait ('EpistasisClass', 'C', 'end')
-	or error ("KelvinDataset->addTrait failed, $KelvinDataset::errstr");
-    ($origdataset = KelvinDataset->new ($href))
-    	or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
-
-    $$href{backupfile} = 0;
-    for ($va = 0; $va < scalar (@lcmap); $va++) {
-	map {$$href{$_} = $conffiles{$_}.".pass$va"} qw/PedigreeFile LocusFile/;
-	$epidataset->write ($href);
-	while ($individual = $origdataset->readIndividual) {
-	    $individual->map ($epidataset);
-	    $struct = $individual->structure;
-	    $epigeno = $individuals{"P$$struct{pedid}I$$struct{indid}"};
-	    if (exists ($lcmap[$va]{$epigeno})) {
-		$individual->setTrait ("EpistasisClass", $lcmap[$va]{$epigeno});
-	    } else {
-		$individual->setTrait ($trait, $undefpheno);
-		$individual->setTrait ("EpistasisClass", 1);
-	    }
-	    $individual->write;
-	}
-	$origdataset->close;
-	$epidataset->close;
-	
+    
+    if ($$state{passes} == 1) {
 	map {
-	    exists ($conffiles{$_}) and $config->setDirective ($_, $conffiles{$_}. ".pass$va");
-	} qw/PedigreeFile LocusFile BayesRatioFile MODFile/;
-	$config->write ({configfile => $conffiles{configfile}. ".pass$va",
-			 backupfile => 0, nolocal => 1});
-	push (@sequpdateargs, $conffiles{BayesRatioFile}. ".pass$va");
-	if ($countable && ! $epidataset->microsats) {
-	    (($ret = system ($PEDCOUNT_SCRIPT, "-count", "-write", "-quiet",
-			     "-config", $conffiles{configfile}. ".pass$va")) != 0)
-		and error ("$PEDCOUNT_SCRIPT failed, " . ($ret == -1) ? "$!" : "status $?");
-	    rename ("PC1_Counts.Dat", $conffiles{CountFile}. ".pass$va");
-	    rename ("PC1_Pedigrees.Dat", $conffiles{PedigreeFile}. ".pass$va");
-	    unlink ("PC1_Data.Dat");
-	    @countargs = ("--CountFile", $conffiles{CountFile}. ".pass$va");
-	}
-
-	(($ret = system ($KELVIN_BINARY, $conffiles{configfile}. ".pass$va", @countargs)) != 0) 
-	    and error ("$KELVIN_BINARY $conffiles{configfile}.pass$va failed".
-		       ($ret == -1) ? "$!" : "status $?");
-    }
-    if (scalar (@lcmap) == 1) {
-	# If we only ran Kelvin once, clean up the inputs and rename the outputs
-	map { rename ($conffiles{$_}.'.pass0', $conffiles{$_}) } qw/BayesRatioFile MODFile/;
-	map { unlink ($conffiles{$_}.'.pass0') } qw/PedigreeFile LocusFile CountFile configfile/;
+	    exists ($$state{pass0}{files}{$_})
+		and rename ($$state{pass0}{files}{$_}, $$state{conffiles}{$_});
+	} qw/bayesratiofile modfile/;
+	($$state{pass0}{countstate}{countable})
+	    and remove ($$state{pass0}{countstate}{countfile});
     } else {
-	# Perform the sequential update, massage the MOD files, and clean up 
-	(exists ($conffiles{PPLFile})) and unlink ($conffiles{PPLFile});
-	(($ret = system ($SEQUPDATE_BINARY, @sequpdateargs)) != 0)
-	    and error ("$SEQUPDATE_BINARY failed, " . ($ret == -1) ? "$!" : "status $?");
-	
-	if (exists ($conffiles{MODFile})) {
-	    if (! $multipoint) {
-		epistasis_merge_TP_mod ($conffiles{MODFile}, $extramods);
+	# calc_updated_ppl will barf if one of its output files already exists
+	exists ($$state{conffiles}{pplfile}) and remove ($$state{conffiles}{pplfile});
+	(($ret = system ($SEQUPDATE_BINARY, @{$$state{sequpdateargs}})) != 0)
+	    and error ("$SEQUPDATE_BINARY failed, ", ($ret == -1) ? "$!" : "status $?");
+	if (exists ($$state{conffiles}{modfile})) {
+	    if (! $$state{multipoint}) {
+		epistasis_merge_TP_mod ($state);
 	    } else {
-		epistasis_merge_MP_mod ($conffiles{MODFile});
+		epistasis_merge_MP_mod ($state);
 	    }
 	}
-	
-	for ($va = 0; $va < scalar (@lcmap); $va++) {
-	    map {
-		(exists ($conffiles{$_}) && -f $conffiles{$_}. ".pass$va")
-                    and unlink ($conffiles{$_}. ".pass$va");
-	    } qw/PedigreeFile LocusFile BayesRatioFile MODFile CountFile configfile/;
-	}
     }
-    exit (0);
-}
 
+    for ($va = 0; $va < $$state{passes}; $va++) {
+	$pass = $$state{"pass$va"};
+	# A shotgun approach here: some of these files may not have been created
+	map {
+	    exists ($$pass{files}{$_}) and remove ($$pass{files}{$_});
+	} qw/pedigreefile locusfile bayesratiofile modfile configfile/;
+	($$pass{countstate}{countable})
+	    and remove ($$pass{countstate}{countfile});
+    }
+    return;
+}
 
 # This will need to be significantly retooled if we ever move to multi-marker 
 # epistasis. For the moment, we assume a single SNP. We need to provide three
@@ -561,51 +575,128 @@ print ("undefpheno is $undefpheno\n");
 # map for each kelvin run, and return the number of liability classes directly.
 sub epistasis_LC_map
 {
-    my ($ld, $aref, $individuals) = @_;
+    my ($ld, $aref, $genos) = @_;
     my $href = {};
     my $count = 0;
     my $geno;
 
-    map { $$href{$_} = defined ($$href{$_}) ? $$href{$_} + 1 : 1 } values (%$individuals);
-    exists ($$href{'0_0'}) and delete ($$href{'0_0'});
     foreach (qw/1_1 1_2 2_2/) {
-	if (exists ($$href{$_})) {
-	    $$href{$_} = ++$count;
-	} else {
-	    ($geno = $_) =~ s/_/,/;
-	    warner ("no individuals in pedigree with $geno genotype at epistasis marker");
-	}
+        if (exists ($$genos{$_})) {
+            $$href{$_} = ++$count;
+        } else {
+            ($geno = $_) =~ s/_/,/;
+            warner ("no individuals in pedigree with $geno genotype at epistasis marker");
+        }
     }
+    # All individuals have the same genotype at the epistasis locus. No point running
+    # with liability classes at all.
+    if ($count <= 1) {
+        warner ("Epistasis analysis disabled due to limited observed genotypes.");
+	return (1);
+    }
+    # One or more genotypes were not observed at the epistasis locus (so long as we
+    # only handle SNPs, $count should be exactly 2 in this case). We'll do one pass
+    # with $count liability classes, with the mapping set according to the genotypes
+    # that were observed.
     if ($count != 3) {
-	warner ("Epistasis analysis reduced to $count class(es) due to limited observed genotypes.");
-	@$aref = ($href);
-	return ($count);
+        warner ("Epistasis analysis limited due to limited observed genotypes.");
+        @$aref = ($href);
+        return ($count);
     }
-    
+
     if ($ld) {
-	@$aref = ({'1_1', => 1, '1_2' => 2, '2_2' => 3});
-	return (3);
+	# LD analyses require a proper 3-liability class run, no shortcuts here.
+        @$aref = ({'1_1', => 1, '1_2' => 2, '2_2' => 3});
+        return (3);
     } else {
-	@$aref = ({'1_1', => 1, '1_2' => 1, '2_2' => 2},
-		  {'1_1', => 1, '1_2' => 2, '2_2' => 2});
-	return (2);
+	# Otherwise, two passes with two liability classes each, and we'll merge
+	# the results.
+        @$aref = ({'1_1', => 1, '1_2' => 1, '2_2' => 2},
+                  {'1_1', => 1, '1_2' => 2, '2_2' => 2});
+        return (2);
     }
 }
 
-# Assumes epistasis with a single SNP
+# Assumes epistasis with a single SNP, which implies only two MOD files to merge.
+sub epistasis_merge_TP_mod
+{
+    my ($state) = @_;
+    my $modfile = $$state{conffiles}{modfile};
+    my $modpass0 = $$state{pass0}{files}{modfile};
+    my $modpass1 = $$state{pass1}{files}{modfile};
+    my ($fh0, $fh1, $outfh);
+    my (@flds0, @flds1);
+    my ($pen1, $pen2);
+    my $line;
+    my $modidx = ($$state{extramods}) ? 1 : 0;
+
+    $outfh = IO::File->new (">$modfile") or error ("open '$modfile' failed, $!\n");
+    $fh0 = IO::File->new ($modpass0) or error ("open '$modpass0' failed, $!\n");
+    $fh1 = IO::File->new ($modpass1) or error ("open '$modpass1' failed, $!\n");
+
+    # Version line
+    $outfh->print ($fh0->getline);
+    $fh1->getline;
+
+    while ($line = $fh0->getline) {
+        # Marker line
+        $outfh->print ($line);
+        $fh1->getline;
+
+        # Header line
+        ($line = $fh0->getline) =~ s/LC2PV(\([Dd,]+\))$/LC2PV$1 LC3PV$1/;
+        $outfh->print ($line);
+        $fh1->getline;
+
+        # Overall MOD line
+        @flds0 = split (/\s+/, $fh0->getline);
+        @flds1 = split (/\s+/, $fh1->getline);
+
+        if ($flds0[$modidx] >= $flds1[$modidx]) {
+            ($pen1, $pen2) = splice (@flds0, -2, 2);
+            $outfh->print (join (' ', @flds0, $pen1, $pen1, $pen2), "\n");
+            if ($$state{extramods}) {
+                # Mod at Theta==0 line
+                @flds0 = split (/\s+/, $fh0->getline);
+                ($pen1, $pen2) = splice (@flds0, -2, 2);
+                $outfh->print (join (' ', @flds0, $pen1, $pen1, $pen2), "\n");
+                $fh1->getline;
+            }
+        } else {
+            ($pen1, $pen2) = splice (@flds1, -2, 2);
+            $outfh->print (join (' ', @flds1, $pen1, $pen2, $pen2), "\n");
+            if ($$state{extramods}) {
+                # Mod at Theta==0 line
+                @flds1 = split (/\s+/, $fh1->getline);
+                ($pen1, $pen2) = splice (@flds1, -2, 2);
+                $outfh->print (join (' ', @flds1, $pen1, $pen2, $pen2), "\n");
+                $fh0->getline;
+            }
+        }
+    }
+    $outfh->close;
+    $fh0->close;
+    $fh1->close;
+    return (1);
+}
+
+# Assumes epistasis with a single SNP, which implies only two MOD files to merge.
 sub epistasis_merge_MP_mod
 {
-    my ($modfile) = @_;
+    my ($state) = @_;
+    my $modfile = $$state{conffiles}{modfile};
+    my $modpass0 = $$state{pass0}{files}{modfile};
+    my $modpass1 = $$state{pass1}{files}{modfile};
     my ($fh0, $fh1, $outfh);
     my (@flds0, @flds1);
     my ($pen1, $pen2);
     my $line;
     my $modidx = 2;
 
-    $outfh = IO::File->new (">$modfile") or die ("open '$modfile' failed, $!\n");
-    $fh0 = IO::File->new ( "$modfile.pass0") or die ("open '$modfile.pass0' failed, $!\n");
-    $fh1 = IO::File->new  ("$modfile.pass1") or die ("open '$modfile.pass1' failed, $!\n");
-    
+    $outfh = IO::File->new (">$modfile") or error ("open '$modfile' failed, $!\n");
+    $fh0 = IO::File->new ($modpass0) or error ("open '$modpass0' failed, $!\n");
+    $fh1 = IO::File->new ($modpass1) or error ("open '$modpass1' failed, $!\n");
+
     # Version line
     $outfh->print ($fh0->getline);
     $fh1->getline;
@@ -616,16 +707,16 @@ sub epistasis_merge_MP_mod
     $fh1->getline;
 
     while ($line = $fh0->getline) {
-	@flds0 = split (/\s+/, $line);
-	@flds1 = split (/\s+/, $fh1->getline);
-	
-	if ($flds0[$modidx] >= $flds1[$modidx]) {
-	    ($pen1, $pen2) = splice (@flds0, -2, 2);
-	    $outfh->print (join (' ', @flds0, $pen1, $pen1, $pen2), "\n");
-	} else {
-	    ($pen1, $pen2) = splice (@flds1, -2, 2);
-	    $outfh->print (join (' ', @flds1, $pen1, $pen2, $pen2), "\n");
-	}
+        @flds0 = split (/\s+/, $line);
+        @flds1 = split (/\s+/, $fh1->getline);
+
+        if ($flds0[$modidx] >= $flds1[$modidx]) {
+            ($pen1, $pen2) = splice (@flds0, -2, 2);
+            $outfh->print (join (' ', @flds0, $pen1, $pen1, $pen2), "\n");
+        } else {
+            ($pen1, $pen2) = splice (@flds1, -2, 2);
+            $outfh->print (join (' ', @flds1, $pen1, $pen2, $pen2), "\n");
+        }
     }
     $outfh->close;
     $fh0->close;
@@ -633,102 +724,420 @@ sub epistasis_merge_MP_mod
     return (1);
 }
 
-# Again, assumes a single SNP
-sub epistasis_merge_TP_mod
+#
+# Validate conditions for allele frequency estimation, and set up data
+# structures, if appropriate.
+#
+sub setup_frequency_estimation
 {
-    my ($modfile, $extramods) = @_;
-    my ($fh0, $fh1, $outfh);
-    my (@flds0, @flds1);
-    my ($pen1, $pen2);
-    my $line;
-    my $modidx = ($extramods) ? 1 : 0;
-
-    $outfh = IO::File->new (">$modfile") or die ("open '$modfile' failed, $!\n");
-    $fh0 = IO::File->new ( "$modfile.pass0") or die ("open '$modfile.pass0' failed, $!\n");
-    $fh1 = IO::File->new  ("$modfile.pass1") or die ("open '$modfile.pass1' failed, $!\n");
-
-    # Version line
-    $outfh->print ($fh0->getline);
-    $fh1->getline;
-
-    while ($line = $fh0->getline) {
-	# Marker line
-	$outfh->print ($line);
-	$fh1->getline;
-
-	# Header line
-	($line = $fh0->getline) =~ s/LC2PV(\([Dd,]+\))$/LC2PV$1 LC3PV$1/;
-	$outfh->print ($line);
-	$fh1->getline;
-
-	# Overall MOD line
-	@flds0 = split (/\s+/, $fh0->getline);
-	@flds1 = split (/\s+/, $fh1->getline);
-
-	if ($flds0[$modidx] >= $flds1[$modidx]) {
-	    ($pen1, $pen2) = splice (@flds0, -2, 2);
-	    $outfh->print (join (' ', @flds0, $pen1, $pen1, $pen2), "\n");
-	    if ($extramods) {
-		# Mod at Theta==0 line
-		@flds0 = split (/\s+/, $fh0->getline);
-		($pen1, $pen2) = splice (@flds0, -2, 2);
-		$outfh->print (join (' ', @flds0, $pen1, $pen1, $pen2), "\n");
-		$fh1->getline;
-	    }
-	} else {
-	    ($pen1, $pen2) = splice (@flds1, -2, 2);
-	    $outfh->print (join (' ', @flds1, $pen1, $pen2, $pen2), "\n");
-	    if ($extramods) {
-		# Mod at Theta==0 line
-		@flds1 = split (/\s+/, $fh1->getline);
-		($pen1, $pen2) = splice (@flds1, -2, 2);
-		$outfh->print (join (' ', @flds1, $pen1, $pen2, $pen2), "\n");
-		$fh0->getline;
-	    }
-	}
-    }
-    $outfh->close;
-    $fh0->close;
-    $fh1->close;
-    return (1);
-}
-
-sub just_run_kelvin
-{
-    my ($config, @argv) = @_;
-    my $dataset;
-    my $args;
-    my $ret;
+    my ($state, $config, $dataset) = @_;
+    my $aref;
     
-    $args = $config->isConfigured ("FrequencyFile");
-    # This has the effect of validating allele frequencies
-    $dataset = KelvinDataset->new ({freqfile => $$args[0]})
-	or error ($KelvinDataset::errstr);
-    $dataset->close;
+    ($config->isConfigured ("SexLinked"))
+	and $$state{xchr} = 1;
+    ($aref = $dataset->traitOrder)
+	and $$state{trait} = $$aref[0];
+    if ($config->isConfigured ("QT") || $config->isConfigured ("QTT")) {
+	$$state{qt} = 1;
+	$$state{prevalence} = 0;
+    } else {
+	($aref = $config->isConfigured ("TraitPrevalence"))
+	    and $$state{prevalence} = $$aref[0];
+	$aref = $config->isConfigured ("PhenoCodes");
+	($$state{affected}) = ($$aref[0] =~ /.*,\s*([\-\d\.]+)$/);
+    }
+    
+    if ($config->isConfigured ("SkipEstimation")) {
+	warner ("Automatic allele frequency estimation is disabled by directive");
+	$$state{estimate} = 0;
+    } elsif (! $config->isConfigured ("LD")) {
+	warner ("Automatic allele frequency estimation is disabled for linkage analysis");
+	$$state{estimate} = 0;
+    } elsif ($dataset->microsats) {
+	warner ("Automatic allele frequency estimation is disabled, microsatellites detected");
+	$$state{estimate} = 0;
+    } elsif (! defined ($$state{trait})) {
+	warner ("Automatic allele frequency estimation is disabled, no trait in dataset");
+	$$state{estimate} = 0;
+    }
+    ($$state{estimate}) or return;
+    warner ("Automatic allele frequency estimation is enabled (use SkipEstimation to disable)");
+    $$state{markers} = $dataset->markerOrder;
+    map { $$state{cases}{$_} = {count => 0, alleles => {}} } @{$$state{markers}};
+    map { $$state{controls}{$_} = {count => 0, alleles => {}} } @{$$state{markers}};
+    map { $$state{nuclear}{$_} = {count => 0, alleles => {}} } @{$$state{markers}};
+    map { $$state{freqs}{$_} = {} } @{$$state{markers}};
+    return;
+}
 
-    if ($countable && ! $dataset->microsats) {
-	(($ret = system ($PEDCOUNT_SCRIPT, "-count", "-write", "-quiet",
-			 "-config", $config->filename)) != 0)
-	    and error ("$PEDCOUNT_SCRIPT failed, " . ($ret == -1) ? "$!" : "status $?");
-	$config->setDirective ("PedigreeFile", "PC1_Pedigrees.Dat");
-	$config->setDirective ("CountFile", "PC1_Counts.Dat");
-	$config->write ({configfile => "PC1_". $config->filename, backupfile => 0, nolocal => 1});
-	(($ret = system ($KELVIN_BINARY, "PC1_". $config->filename)) != 0)
-	    and error ("$KELVIN_BINARY failed, " . ($ret == -1) ? "$!" : "status $?");
-	map { unlink ("PC1_$_") } ($config->filename, 'Pedigrees.Dat', 'Counts.Dat', 'Data.Dat');
-	    
-    } else { 
-	($config->localDirectives)
-	    and $config->write ({nolocal => 1});
-	
-	(($ret = system ($KELVIN_BINARY, $config->filename, @argv)) != 0)
-	    and error ("$KELVIN_BINARY failed, " . ($ret == -1) ? "$!" : "status $?");
+#
+# Process a family for allele frequency estimation.
+#
+sub count_alleles
+{
+    my ($state, $family) = @_;
+    my $marker;
+    my ($dad, $mom, $kid);
+    my ($dadgeno, $momgeno, $kidgeno);
+    my (%nonxmit, $kidcount);
+    my $dadcontrib;
+    my $sex;
+    my $pheno;
+    my $aref;
+    my $va;
 
-	if (($config->localDirectives) && (-f $config->filename. ".old")) {
-	    unlink ($config->filename);
-	    rename ($config->filename. ".old", $config->filename);
+    if ($family->pedtype eq 'general') {
+	warner ("Automatic allele frequency estimation is disabled, general pedigrees detected");
+	@{$$state}{qw/cases controls nuclear/} = (undef, undef, undef);
+	$$state{estimate} = 0;
+	return;
+    }
+
+    if ($family->pedtype eq 'casecontrol') {
+	$kid = $ {$family->individuals}[0];
+	($kid->genotyped) or return;
+	$sex = $kid->sex;
+	# For QT/QTT, everyone is coded as a control (unaffected)
+	$pheno = ($$state{qt}) ? ! $$state{affected} : $kid->getTrait ($$state{trait});
+	foreach $marker (@{$$state{markers}}) {
+	    $kidgeno = $kid->getGenotype ($marker);
+	    ($$kidgeno[0] eq '0') and next;
+	    # Only count one of the homozygous alleles for males on chr X
+	    ($$state{xchr} && $sex eq '1') and shift (@$kidgeno);
+	    if ($pheno ne $$state{affected}) {
+		map {
+		    exists ($$state{controls}{$marker}{alleles}{$_})
+			or $$state{controls}{$marker}{alleles}{$_} = 0;
+		    $$state{controls}{$marker}{alleles}{$_}++;
+		} @$kidgeno;
+		$$state{controls}{$marker}{count}++;
+	    } else {
+		map {
+		    exists ($$state{cases}{$marker}{alleles}{$_})
+			or $$state{cases}{$marker}{alleles}{$_} = 0;
+		    $$state{cases}{$marker}{alleles}{$_}++;
+		} @$kidgeno;
+		$$state{cases}{$marker}{count}++;
+	    }
+	}
+    } else {
+	$aref = $family->individuals;
+	# This assumes a post-makeped pedigree ordering (founders first)
+	if ($$aref[0]->sex eq '1') {
+	    ($dad, $mom) = splice (@$aref, 0, 2);
+	} else {
+	    ($mom, $dad) = splice (@$aref, 0, 2);
+	}
+	($dad->genotyped && $mom->genotyped) or return;
+	$va = 0;
+	if ($$state{qt}) {
+	    # QT or QTT, we only count alleles in founders
+	    foreach $marker (@{$$state{markers}}) {
+		$momgeno = $mom->getGenotype ($marker);
+		$dadgeno = $dad->getGenotype ($marker);
+		($$state{xchr}) and shift (@$dadgeno);
+		if ($$momgeno[0] eq '0') {
+		    ($$dadgeno[0] eq '0') and next;
+		    @$momgeno = ();
+		} elsif ($$dadgeno[0] ne '0') {
+		    push (@$momgeno, @$dadgeno);
+		}
+		map {
+		    exists ($$state{nuclear}{$marker}{alleles}{$_})
+			or $$state{nuclear}{$marker}{alleles}{$_} = 0;
+		    $$state{nuclear}{$marker}{alleles}{$_}++;
+		} @$momgeno;
+		$$state{nuclear}{$marker}{count}++;
+	    }
+	} else {
+	    # DT, we count alleles NOT transmitted to affected kids only
+	    $va = 0;
+	    while ($va < scalar (@$aref)) {
+		if ((! $$aref[$va]->genotyped) ||
+		    $$aref[$va]->getTrait ($$state{trait}) ne $$state{affected}) {
+		    splice (@$aref, $va, 1);
+		} else {
+		    $va++;
+		}
+	    }
+	    (scalar (@$aref)) or return;
+	    #print (join (',', ("mom", $mom->pedid, $mom->indid, "dad", $dad->pedid, $dad->indid, scalar (@$aref), "kids")), "\n");
+	    foreach $marker (@{$$state{markers}}) {
+		%nonxmit = ();
+		$momgeno = $mom->getGenotype ($marker);
+		$dadgeno = $dad->getGenotype ($marker);
+		#print ("($$momgeno[0],$$momgeno[1]) ($$dadgeno[0],$$dadgeno[1]) ");
+		($$momgeno[0] eq '0' || $$dadgeno[0] eq '0') and next;
+		($$state{xchr}) and shift (@$dadgeno);
+		map { $nonxmit{$_} = 0; } (@$momgeno, @$dadgeno);
+		#print (join (', ', map { "$_ => $nonxmit{$_}" } keys (%nonxmit)), "   ");
+		$kidcount = 0;
+		foreach $kid (@$aref) {
+		    $kidgeno = $kid->getGenotype ($marker);
+		    ($$kidgeno[0] eq '0') and next;
+		    #print ("($$kidgeno[0],$$kidgeno[1]) ");
+		    map { $nonxmit{$_}++ } @$momgeno;
+		    if ($$state{xchr}) {
+			if ($kid->sex eq '1') {
+			    shift (@$kidgeno);
+			    $nonxmit{$$dadgeno[0]} += 0.5;
+			} else {
+			    $nonxmit{$$dadgeno[0]} += 1.5;
+			}
+		    } else {
+			map { $nonxmit{$_}++; } @$dadgeno;
+		    }
+		    map { $nonxmit{$_}--; } @$kidgeno;
+		    $kidcount++;
+		}
+		($kidcount > 0) or next;
+		#print (join (', ', map { "$_ => $nonxmit{$_}" } keys (%nonxmit)), "\n");
+		map {
+		    $$state{nuclear}{$marker}{alleles}{$_} += $nonxmit{$_} / $kidcount;
+		} keys (%nonxmit);
+		$$state{nuclear}{$marker}{count}++;
+	    }
 	}
     }
+    return;
+}
+
+#
+# Calculate allele frequcies based on pedigree allele counts
+#
+sub finish_frequency_estimation
+{
+    my ($state, $dataset) = @_;
+    my $marker;
+    my ($count_case, $count_ctrl, $count_nuc);
+    my ($case, $control, $nuc) = (0, 0, 0);
+    my ($one, $two);
+    my $freq;
+    my %hash;
+    my @arr;
+
+    foreach $marker (@{$$state{markers}}) {
+	$count_case = $$state{cases}{$marker}{count};
+	$count_ctrl = $$state{controls}{$marker}{count};
+	$count_nuc = $$state{nuclear}{$marker}{count};
+	if ($count_ctrl + $count_nuc < 30) {
+	    warner ("Automatic allele frequency estimation is disabled, too few useful families for marker $marker");
+	    $$state{estimate} = 0;
+	    return;
+	}
+	%hash = ();
+	map {
+	    $hash{$_} = '';
+	} (keys (%{$$state{cases}{$marker}{alleles}}),
+	   keys (%{$$state{controls}{$marker}{alleles}}),
+	   keys (%{$$state{nuclear}{$marker}{alleles}}));
+	if (scalar (@arr = sort (keys (%hash))) > 2) {
+	    warner ("Automatic allele frequency estimation is disabled, marker $marker is a microsatellite");
+	    $$state{estimate} = 0;
+	    return;
+	} elsif (scalar (@arr) == 1) {
+	    $$state{freqs}{$marker}{$arr[0]} = "1.0000";
+	} else {
+	    #print ("marker $marker alleles ($arr[0],$arr[1]): ");
+	    if ($count_case > 0) {
+		($one, $two) = @{$$state{cases}{$marker}{alleles}}{@arr};
+		#print ("$count_case cases ($one, $two), ");
+		$case = (! defined ($one)) ? 0 : ((! defined ($two)) ? 1 : $one / ($one + $two));
+	    }
+	    if ($count_ctrl > 0) {
+		($one, $two) = @{$$state{controls}{$marker}{alleles}}{@arr};
+		#print ("$count_ctrl controls ($one, $two), ");
+		$control = (! defined ($one)) ? 0 : ((! defined ($two)) ? 1 : $one / ($one + $two));
+	    }
+	    if ($count_nuc > 0) {
+		($one, $two) = @{$$state{nuclear}{$marker}{alleles}}{@arr};
+		#print ("$count_nuc nucs ($one, $two), ");
+		$nuc = $one / ($one + $two);
+	    }
+	    #print ("prev $$state{prevalence}, ");
+	    $freq = $$state{prevalence} * $case + (1 - $$state{prevalence}) * $control;
+	    #printf ("freq %.04f, ", $freq);
+	    $freq = ($freq * $count_ctrl + $nuc * $count_nuc) / ($count_ctrl + $count_nuc);
+	    #printf ("freq %.04f\n", $freq);
+	    $$state{freqs}{$marker}{$arr[0]} = sprintf ("%.04f", $freq);
+	    $$state{freqs}{$marker}{$arr[1]} = sprintf ("%.04f", 1 - $$state{freqs}{$marker}{$arr[0]});
+	}
+    }
+
+    foreach $marker (@{$$state{markers}}) {
+	    $dataset->setAlleleFreqs ($marker, $$state{freqs}{$marker});
+    }
+    $dataset->writeFreqfile ("kelvin.freq") or die ("writeFreqfile failed, $KelvinDataset::errstr\n");
+    @{$$state{kelvinargs}} = ( "--FrequencyFile", "kelvin.freq" );
+    return;
+}
+
+
+BEGIN {
+    %equivalentkeys =
+	(
+	 '_N000000111' => '_C111', # Cases/controls with fake parents
+	 '_N000000112' => '_C112',
+	 '_N000000121' => '_C121',
+	 '_N000000122' => '_C122',
+	 '_N000000221' => '_C221',
+	 '_N000000222' => '_C222',
+	 
+	 '_N000m000f111m' => '_C111m', # Cases/Controls with fake parents, for X-Chr
+	 '_N000m000f112m' => '_C112m',
+	 '_N000m000f221m' => '_C221m',
+	 '_N000m000f222m' => '_C222m',
+	 '_N000m000f111f' => '_C111f',
+	 '_N000m000f112f' => '_C112f',
+	 '_N000m000f121f' => '_C121f',
+	 '_N000m000f122f' => '_C122f',
+	 '_N000m000f221f' => '_C221f',
+	 '_N000m000f222f' => '_C222f',
+	 );
+
+    %keylabels = 
+	(
+	 '_C111' => 'ctrl11', # Bare cases/controls
+	 '_C112' => 'case11',
+	 '_C121' => 'ctrl12',
+	 '_C122' => 'case12',
+	 '_C221' => 'ctrl22',
+	 '_C222' => 'case22',
+	 
+	 '_C111m' => 'ctrl1', # Bare cases/controls for X-Chr
+	 '_C112m' => 'case1',
+	 '_C221m' => 'ctrl2',
+	 '_C222m' => 'case2',
+	 '_C111f' => 'ctrl11',
+	 '_C112f' => 'case11',
+	 '_C121f' => 'ctrl12',
+	 '_C122f' => 'case12',
+	 '_C221f' => 'ctrl22',
+	 '_C222f' => 'case22',
+	 
+	 '_N000000111' => 'ctrl11', # Cases/controls with fake parents, map to the same labels
+	 '_N000000112' => 'case11',
+	 '_N000000121' => 'ctrl12',
+	 '_N000000122' => 'case12',
+	 '_N000000221' => 'ctrl22',
+	 '_N000000222' => 'case22',
+	 
+	 '_N000m000f111m' => 'ctrl1', # Cases/Controls with fake parents, for X-Chr
+	 '_N000m000f112m' => 'case1',
+	 '_N000m000f221m' => 'ctrl2',
+	 '_N000m000f222m' => 'case2',
+	 '_N000m000f111f' => 'ctrl11',
+	 '_N000m000f112f' => 'case11',
+	 '_N000m000f121f' => 'ctrl12',
+	 '_N000m000f122f' => 'case12',
+	 '_N000m000f221f' => 'ctrl22',
+	 '_N000m000f222f' => 'case22',
+	 
+	 '_N001001002' => 'T30', # Historical coding for strict trios
+	 '_N001001112' => 'T18',
+	 '_N001001122' => 'T19',
+	 '_N001001222' => 'T20',
+	 '_N001111002' => 'T24',
+	 '_N001111112' => 'T05',
+	 '_N001111122' => 'T06',
+	 '_N001121002' => 'T27',
+	 '_N001121112' => 'T12',
+	 '_N001121122' => 'T13',
+	 '_N001121222' => 'T14',
+	 '_N001221002' => 'T29',
+	 '_N001221122' => 'T16',
+	 '_N001221222' => 'T17',
+	 '_N111111002' => 'T21',
+	 '_N111111112' => 'T01',
+	 '_N111121002' => 'T22',
+	 '_N111121112' => 'T02',
+	 '_N111121122' => 'T03',
+	 '_N111221002' => 'T23',
+	 '_N111221122' => 'T04',
+	 '_N121121002' => 'T25',
+	 '_N121121112' => 'T07',
+	 '_N121121122' => 'T08',
+	 '_N121121222' => 'T09',
+	 '_N121221002' => 'T26',
+	 '_N121221122' => 'T10',
+	 '_N121221222' => 'T11',
+	 '_N221221002' => 'T28',
+	 '_N221221222' => 'T15'
+	 );
+}
+
+sub equivalentkey
+{
+    my ($key) = @_;
+
+    return (exists ($equivalentkeys{$key}) ? ($equivalentkeys{$key}) : $key);
+}
+
+sub keylabel
+{
+    my ($key) = @_;
+
+    return (exists ($keylabels{$key}) ? $keylabels{$key} : $key);
+}
+
+#
+# Check the paths to the executables and scripts we need to get work done.
+#
+sub check_paths
+{
+    # For all of these, we allow environment variables to override everything,
+    # even if values were set during installation.
+    if ($ENV{KELVIN_ROOT}) {
+	($KELVIN_ROOT !~ /no_kelvin_root/i)
+	    and warner ("overriding installed KELVIN_ROOT with '$ENV{KELVIN_ROOT}' from environment");
+	$KELVIN_ROOT = $ENV{KELVIN_ROOT};
+    } elsif ($KELVIN_ROOT =~ /no_kelvin_root/i) {
+	$KELVIN_ROOT = dirname ($0);
+	warner ("no KELVIN_ROOT defined by installation, using '$KELVIN_ROOT'");
+    }
+    
+    # Instead of 'use'ing our support modules up above, we 'require' them now,
+    # after we've had a chance to add KELVIN_ROOT to @INC.
+    unshift (@INC, $KELVIN_ROOT);
+    require KelvinDataset;
+    require KelvinConfig;
+    require KelvinFamily;
+    # Check versions ('use' would have done for us automatically)
+    KelvinDataset->VERSION (1.00);
+    KelvinConfig->VERSION (1.00);
+    KelvinFamily->VERSION (1.00);
+
+    if ($ENV{KELVIN_BINARY}) {
+	($KELVIN_BINARY !~ /no_kelvin_binary/i)
+	    and warner ("overriding installed KELVIN_BINARY with '$ENV{KELVIN_BINARY}' from environment");
+	$KELVIN_BINARY = $ENV{KELVIN_BINARY};
+    } elsif ($KELVIN_BINARY =~ /no_kelvin_binary/i) {
+	if (-x ($KELVIN_BINARY = find_versioned_kelvin ($KELVIN_ROOT))) {
+	    warner ("no KELVIN_BINARY defined by installation, using '$KELVIN_BINARY'");
+	} elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.$platform")) {
+	    warner ("no KELVIN_BINARY defined by installation, using '$KELVIN_BINARY'");
+	} elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/bin/kelvin.$platform")) {
+	    warner ("no KELVIN_BINARY defined by installation, using '$KELVIN_BINARY'");
+	} else {
+	    error ("no kelvin binary (kelvin-x.y.z or kelvin.$platform) found under $KELVIN_ROOT");
+	}
+    }
+    
+    if ($ENV{SEQUPDATE_BINARY}) {
+	($SEQUPDATE_BINARY !~ /no_sequpdate_binary/i)
+	    and warner ("overriding installed SEQUPDATE_BINARY with '$ENV{SEQUPDATE_BINARY}' from environment");
+	$SEQUPDATE_BINARY = $ENV{SEQUPDATE_BINARY};
+    } elsif ($SEQUPDATE_BINARY =~ /no_sequpdate_binary/i) {
+	if (-x ($SEQUPDATE_BINARY = "$KELVIN_ROOT/calc_updated_ppl")) {
+	    warner ("no SEQUPDATE_BINARY defined by installation, using '$SEQUPDATE_BINARY'");
+	} elsif (-x ($SEQUPDATE_BINARY = "$KELVIN_ROOT/seq_update/calc_updated_ppl")) {
+	    warner ("no SEQUPDATE_BINARY defined by installation, using '$SEQUPDATE_BINARY'");
+	} else {
+	    $SEQUPDATE_BINARY = 'no_sequpdate_binary';
+	}
+    }
+    
+    return;
 }
 
 sub platform_name
@@ -756,9 +1165,9 @@ sub find_versioned_kelvin
     }
     if (! scalar (@arr)) {
 	# Nobody home? See if there's a bin subdirectory, and if so, look there
-	(-d "$dir/bin" && ($file = find_versioned_kelvin ("$dir/bin")) ne "")
+	(-d "$dir/bin" && ($file = find_versioned_kelvin ("$dir/bin")))
 	    and return ($file);
-	return ("");
+	return (undef);
     }
     @arr = reverse (sort (@arr));
     return ("$dir/$arr[0]");
@@ -780,3 +1189,71 @@ sub warner
 }
 
 
+# Structures of the state hashs used for pedcounting, epistasis and frequency estimation
+# countState = {
+#   alwayswrite => boolean,
+#   cleanup => boolean,
+#   countable => boolean,
+#   countfile => scalar,
+#   imprinting => boolean,
+#   pedigreefile => scalar,
+#   xchr => boolean,
+#   countedpeds => [ KelvinFamily,
+#                    ...
+#                  ],
+#   counts => [ { pedstructlabel => count,
+#                 ...
+#               },
+#               { pedstructlabel => count,
+#                 ...
+#               }
+#               ...
+#             ],
+#   kelvinargs => [ ... ],
+#   markers => [ markername,
+#                ...
+#              ],
+#   pedlabels => { pedstructlabel => '',
+#                  ...
+#                }
+#   traits => [ traitname,
+#               ...
+#             ],
+#   uncountedpeds => [ KelvinFamily,
+#                      ...
+#                    ]
+# }
+# 
+# epiState = {
+#   passes => int,
+#   extramods => boolean,
+#   ld => boolean,
+#   multipoint => boolean,
+#   trait => scalar,
+#   undefpheno => scalar,
+#   xchr => boolean,
+#   sequpdateargs => [ ... ],
+#   conffiles => { 'pedigreefile' => scalar,
+#                  'locusfile' => scalar,
+#                  'bayesratiofile' => scalar,
+#                  'pplfile' => scalar,
+#                  'modfile' => scalar
+#                }
+#   indgenos => { identifier => geno,
+#                 ...
+#               },
+#   pass0 => { classes => scalar,
+#              dataset => KelvinDataset,
+#              files => { 'pedigreefile' => scalar,
+#                         ...
+#                       },
+#              map => { geno => int,
+#                       ...
+#                     }
+#              countstate => countState
+#              kelvinargs => [ ... ],
+#            }
+#   }
+#   
+# }
+# 
