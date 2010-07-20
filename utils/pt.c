@@ -274,6 +274,8 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
 int main(int argc, char *argv[]) {
   FILE *initFile, *nullFile;
 
+  swDiagInit ();
+
   overallSW = swCreate("overall");
   swStart(overallSW);
   polynomialInitialization(polynomialScale);
