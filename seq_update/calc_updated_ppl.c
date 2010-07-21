@@ -682,14 +682,27 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 	  ldval.le_unlinked += data_0.lr * sample[2];
 	}
       } else {
-	/* FIXME: what to do here? */
+	if (sample[0] < cutoff && sample[1] < cutoff) {
+	  /* both thetas are small */
+	  ldval.le_small_theta += data_0.lr * sample[2];
+	} else if (sample[0] > cutoff && sample[1] > cutoff) {
+	  /* both thetas are big */
+	  ldval.le_big_theta += data_0.lr * sample[2] * 0.81;
+	} else {
+	  /* one theta is big, one is small */
+	  ldval.le_big_theta += data_0.lr * sample[2] * 0.09;
+	}
       }
       sampleno++;
     }
+    if (sexspecific)
+      ldval.le_big_theta /= 0.99;
+
     ldval.le_small_theta *= weight;
     ldval.ld_small_theta *= weight;
     ldval.le_big_theta *= (1 - weight);
     ldval.ld_big_theta *= (1 - weight);
+    
     if (forcemap) {
       strcpy (current[0]->curmarker.chr, mapptr->chr);
       current[0]->curmarker.avgpos = mapptr->avgpos;
@@ -846,15 +859,24 @@ void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas
      sampleno++;
    }
 
-   /* Actually one more than the last index, since we counted past the last data line */   
-   lastidx = (brfile->postsplit) ? 271 : 141;
-   if (sampleno == lastidx) 
-     brfile->no_ld = 0;
-   else if (sampleno != 10) {
-     fprintf (stderr, "unexpected number of samples %d in file '%s'\n", sampleno, brfile->name);
-     exit (-1);
-   } else {
+   if (sexspecific) {
+     if (sampleno != 260) {
+       fprintf (stderr, "unexpected number of samples %d in file '%s'\n", sampleno, brfile->name);
+       exit (-1);
+     }
      brfile->no_ld = 1;
+     
+   } else {
+     /* Actually one more than the last index, since we counted past the last data line */   
+     lastidx = (brfile->postsplit) ? 271 : 141;
+     if (sampleno == lastidx) 
+       brfile->no_ld = 0;
+     else if (sampleno != 10) {
+       fprintf (stderr, "unexpected number of samples %d in file '%s'\n", sampleno, brfile->name);
+       exit (-1);
+     } else {
+       brfile->no_ld = 1;
+     }
    }
    
    if (fseek (brfile->fp, firstdata, SEEK_SET) == -1) {
@@ -1364,10 +1386,12 @@ int parse_command_line (int argc, char **argv)
     exit (-1);
   }
 
+  /*
   if (sexspecific && ! okelvin) {
     fprintf (stderr, "%s: --sexspecific only works with --okelvin right now\n", pname);
     exit (-1);
   }
+  */
 
   if (partoutfile != NULL) {
     if (stat (partoutfile, &statbuf) != -1) {
