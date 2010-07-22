@@ -23,10 +23,10 @@
     <a href='#foot3'>3</a></sup>, and produces output on the posterior probability (0,..,1)
     scale. Primary outcome statistics include the PPL (posterior probability of linkage (L)),
     as well as various forms of the PPLD (posterior probability of linkage disequilibrium (LD)).
-    In the context of analysis between a marker and a SNP, the PPLD models allelic association
-    due to very close genomic proximity. Versions of the PPLD include the PPLD(L) (posterior
-    probability of L and LD); the PPL(LD) (posterior probability of L allowing for LD); and the
-    PPLD|L (posterior probability of LD given L).
+    In the context of analysis between a trait locus and a marker, the PPLD models allelic
+    association due to very close genomic proximity. Versions of the PPLD include the PPLD(L)
+    (posterior probability of L and LD); the PPL(LD) (posterior probability of L allowing for LD);
+    and the PPLD|L (posterior probability of LD given L).
     <p>
     <span class='sc'>Kelvin</span> handles the trait model by formulating an underlying
     likelihood in terms of a vector of trait parameters, and integrating over all constituent
@@ -158,9 +158,13 @@
       <li>The default mechanism of integration over constituent trait parameters is now adaptive 
 	leading to significant improvements in performance and accuracy (see Seok, Evans
 	and Vieland).</li>
-      <li>Pedigree binning and counting is now performed by default where possible. This
-        behavior can be explicitly disabled through a configuration directive.</li>
-      <li>Allele frequencies are automatically calculated when possible, and these frequencies
+      <li><a href='pedcounting'>Pedigree counting and binning</a> is now performed by
+        default when possible. In this process, pedigree data is examined prior to analysis,
+        and identical pedigree structure/phenotype/genotype combinations are identified and
+        consolidated to reduce calculations. This behavior can be explicitly disabled through
+        a configuration directive.</li>
+      <li>Marker allele frequencies can be <a href='frequencyestimation'>automatically
+        estimated</a> for some linkage disequilibrium analyses. These frequencies
 	will be used in preference to user-supplied allele frequencies. This behavior can be
         explicitly disabled through a configuration directive.</li>
       <li>Individuals can now be divided into groups with separate sets of penetrance values. 
@@ -611,13 +615,24 @@
 
     <h2 id='prepconfig'>Preparing The Configuration File</h2>
 
-    <span class='sc'>Kelvin</span> takes all of its configuration information from a single
-    file specified on the command line. This file is composed of directives that describe the
-    analysis to be performed, and the locations of supporting data files. The preferred
+    <span class='sc'>Kelvin</span> typically takes all of its configuration information from a
+    single file specified on the command line. This file is composed of directives that describe
+    the analysis to be performed, and the locations of supporting data files. The preferred
     method for creating a configuration file is with the graphical configuration tool,
     <font color='red'>gKelvin</font>, although users may opt to edit the configuration file
-    by hand. We provide <a href='Directives.html'>a complete reference</a> to
-    <span class='sc'>Kelvin</span> directives.
+    by hand. We provide a complete reference to <span class='sc'>Kelvin</span> directives
+    in the <a href='Directives.html'>Directives document</a>.<p>
+
+    In addition to the configuration file, any valid directive may be specified on the command
+    line by prepending the directive with '--' (two hyphens). Any additional arguments on the
+    command line will be treated as arguments to the directive, up to the end of the line, or
+    the next directive, which again must be prepended with '--'. Directives on the command
+    line that specify input or output files will override the values set in the configuration
+    file. Directives that take a series or range of values (like
+    <a href='Directives.html#traitpositions'>TraitPositions</a>), will add to the values, if any,
+    specified in the configuration file. There is currently no way from the command line to
+    remove values set in the configuration file.
+
     <p>
     <span class='sc'>Kelvin</span> supports a wide variety of analyses and options. These can
     be broken into general categories, with a small number of possibilities for each category.
@@ -1212,10 +1227,10 @@ Finally, progress indicators are displayed up through the end of the run.
       <li>PPL(LD) (only for LD analyses) - evidence for or against linkage allowing for
         disequilibrium. The PPL(LD) is rounded to two places if .025 or greater, and three
         decimal places otherwise.</li>
-      <li>PPLD(L) (only for LD analyses) - posterior probability of linkage andlinkage
-        disequilibrium, The PPLD(L) is rounded like the PPL(LD).</li>
       <li>PPLD|L (only for LD analyses) - Posterior probability of LD, given linkage. The
         PPLD|L is rounded like the PPL(LD).</li>
+      <li>PPLD(L) (only for LD analyses) - posterior probability of linkage andlinkage
+        disequilibrium, The PPLD(L) is rounded like the PPL(LD).</li>
     </ol>
 
     <h3 id='modfile'>Maximizing Model (MOD) File</h3>
