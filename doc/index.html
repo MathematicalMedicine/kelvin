@@ -24,9 +24,9 @@
     scale. Primary outcome statistics include the PPL (posterior probability of linkage (L)),
     as well as various forms of the PPLD (posterior probability of linkage disequilibrium (LD)).
     In the context of analysis between a marker and a SNP, the PPLD models allelic association
-    due to very close genomic proximity. Versions of the PPLD include the PP[L&LD] (posterior
+    due to very close genomic proximity. Versions of the PPLD include the PPLD(L) (posterior
     probability of L and LD); the PPL(LD) (posterior probability of L allowing for LD); and the
-    PP[LD|L] (posterior probability of LD given L).
+    PPLD|L (posterior probability of LD given L).
     <p>
     <span class='sc'>Kelvin</span> handles the trait model by formulating an underlying
     likelihood in terms of a vector of trait parameters, and integrating over all constituent
@@ -78,8 +78,7 @@
     penetrances dependent on parent of origin.
     <p>
     The <a href='#releasenotes'>Release Notes</a> describe the major changes in this version
-    and should be reviewed by all users. The <a href='#quickstart'>Quick Start</a> gives a 
-    brief introduction to preparing the input
+    The <a href='#quickstart'>Quick Start</a> gives a brief introduction to preparing the input
     files, running <span class='sc'>Kelvin</span>, and graphing and interpreting the output.
     Additional technical details on the underlying statistical methods can be found in the
     following references:
@@ -157,22 +156,21 @@
 	scripts or programs to process that output, you will want to review the new formats
 	in the <a href='#outputfiles'>Contents Of Output Files</a> section.</li>
       <li>The default mechanism of integration over constituent trait parameters is now adaptive 
-	instead of iterative, leading to significant improvements in performance and accuracy.</li>
-      <li>Pedigree binning and counting is now performed by default where possible. The <tt>PedCount.pl</tt>
-      Perl script will be invoked transparently by <span class='sc'>Kelvin</span> when applicable,
-      but can also be used separately.  A full description of command line syntax is available by typing:
-	<pre>
-	  _$ PedCount.pl --help
-	</pre>
-      </li>
+	leading to significant improvements in performance and accuracy (see Seok, Evans
+	and Vieland).</li>
+      <li>Pedigree binning and counting is now performed by default where possible. This
+        behavior can be explicitly disabled through a configuration directive.</li>
+      <li>Allele frequencies are automatically calculated when possible, and these frequencies
+	will be used in preference to user-supplied allele frequencies. This behavior can be
+        explicitly disabled through a configuration directive.</li>
       <li>Individuals can now be divided into groups with separate sets of penetrance values. 
 	See the section on <a href='#lc_vs_nolc'>Covariate-Dependence</a> for details.</li>
-      <li>Limited support for considering epistasis is now provided, see the section on 
-	<a href='#simple_vs_epistasis'>Simple Trait vs Epistasis</a> for details.</li>
-      <li>Utilities for preparing the configuration file and graphing the results of analyses are now provided.
-	Separate documentation is provided for both <tt><font color='red'>gKelvin</font></tt> and 
-	<tt><font color='red'>graphApp</font></tt> as <tt>Readme.txt</tt>
-	files in their distribution directories. These utilities
+      <li>Epistasis analysis is now supported, see the section on 
+	<a href='#simple_vs_epistasis'>Single-locus vs 2L Epistasis</a> for details.</li>
+      <li>Utilities for preparing the configuration file and graphing the results of analyses
+	are now provided. Separate documentation is provided for both
+	<tt><font color='red'>gKelvin</font></tt> and <tt><font color='red'>graphApp</font></tt>
+        as <tt>Readme.txt</tt> files in their distribution directories. These utilities
 	have separate installation requirements and procedures as well.</li>
       <li>Progress reporting now provides configurable fixed-frequency updates so as to
 	eliminate the output "feast or famine" effect across differing analyses. See the
@@ -287,9 +285,9 @@
     <div class='indent'>
       <div class='hang'>
         <b>Two-point vs. multipoint analysis</b><br>
-        For linkage analysis, the user can select either; for LD analysis, only the two-point
-        option is available. In both cases, the user can choose to use either sex-averaged or
-        sex-specific marker maps.
+        For linkage analyses, the user can select either two-point or multipoint; for LD analyses,
+        only the two-point option is available. In any case, the user can choose to use either
+        sex-averaged or sex-specific marker maps.
         <p>
         <b>Marker-marker analysis</b><br>
         This option is available only for two-point analyses, but can be used to estimate either
@@ -315,7 +313,7 @@
         When the user assigns individuals in a pedigree to "liability classes," Kelvin allows the
         penetrances (or QT parameters) to depend upon class assignment.
         <p>
-        <b>Two-Locus Epistasis</b><br>
+        <b>Two-Locus (2L) Epistasis</b><br>
         Kelvin has special routines for handling two-locus analysis when supplied with genotypes at
         one of the loci (Locus 1), by allowing the penetrances (or corresponding QT parameters) to
 	depend upon genotypes at Locus 1 when considering linkage and/or LD to other loci.
@@ -624,11 +622,6 @@
     <span class='sc'>Kelvin</span> supports a wide variety of analyses and options. These can
     be broken into general categories, with a small number of possibilities for each category.
     Some analyses/options are compatible with other analyses/options, some are not.
-    <a href="config.gif">Here is a directed graph</a> illustrating the legitimate combinations
-    of principal features and options. It illustrates the twenty-two current configuration
-    "paths" for <span class='sc'>Kelvin</span>. Ovals represent defaults that will be taken in
-    the absence of relevant directives, while squares represent analysis attributes that must
-    always be explicity specified.
 
     <h3 id='twopoint_vs_multipoint'>Two-Point vs. Multipoint</h3>
 
@@ -705,19 +698,44 @@
     <a href='#lc_vs_nolc'>covariate dependence.</a> Epistasis is incompatible with
     <a href='#traitmarker_vs_markermarker'>marker-to-marker</a> analyses.
 
+    <h3 id='pedcounting'>Automatic Pedigree Counting</h3>
+
+    By default, <span class='sc'>Kelvin</span> will attempt to count and bin pedigrees to
+    reduce computation. This behavior can be explicitly disabled with the 
+    <a href='Directives.html#skippedcount'>SkipPedCount</a> directive. Pedigree counting
+    will be implcitly disabled for <a href='#twopoint_vs_multipoint'>multipoint</a> or
+    <a href='#dt_vs_qt_vs_qtt'>QT or QTT</a> analyses, and for any dataset that contains
+    microsatellites.
+
+    <h3 id='frequencyestimation'>Automatic Allele Frequency Estimation</h3>
+
+    By default, <span class='sc'>Kelvin</span> will attempt to estimate marker allele
+    frequencies, and will use those estimated frequencies in preference to frequencies
+    provided by the user. This behavior can be explicitly disabled with the 
+    <a href='Directives.html#skipestimation'>SkipEstimation</a> directive. Allele frequency
+    estimation is implicitly disabled for <a href='#ld_vs_le'>linkage equilibrium</a>
+    analyses, or for datasets that contain microsatellites or general pedigrees, or that
+    lack trait data. Both cases-and-controls and nuclear pedigrees (two parents with one or
+    more children) are permitted. If cases-and-controls are present, the trait prevalence
+    must be specified with the <a href='Directives.html#traitprevalence'>TraitPrevalence</a>
+    directive. The estimated frequencies are written to a file <tt>kelvin.freq</tt>.
+
     <h2 id='fileformats'>Data File Formats</h2>
 
     <span class='sc'>Kelvin</span> typically requires four input data file: a pedigree
-    file, a locus file, a map file, and a frequency file.
+    file, a locus file, a map file, and a frequency file. The frequency file may be 
+    omitted if <span class='sc'>Kelvin</span> is to estimate allele frequencies internally.
 
     <h3 id='pedfileformat'>Pedigree File</h3>
 
-    <span class='sc'>Kelvin</span> requires a 
+    <span class='sc'>Kelvin</span> will accept either a pre- or
     post-<a href='http://linkage.rockefeller.edu/soft/linkage/sec2.7.html'>MAKEPED</a>
-    format pedigree file. MAKEPED is part of the LINKAGE package of analysis software.
-    While it is possible to create a post-MAKEPED pedigree file by hand, it's much easier
-    to create a pre-MAKEPED pedigree file, and run it through MAKEPED. Each line of a 
-    pre-MAKEPED pedigree file must start with five columns:
+    format pedigree file. MAKEPED is part of the LINKAGE package. The only exception
+    is that for pedigrees that contain loops, or if the proband must be explicitly 
+    specified, then a post-MAKEPED pedigree file is required. While it is possible to
+    create a post-MAKEPED pedigree file by hand, it's much easier to create a pre-MAKEPED
+    pedigree file, and run it through MAKEPED. Each line of a pre-MAKEPED pedigree file
+    must start with five columns:
 
     <ol>
       <li>Pedigree ID - All individuals in the same family must have the same Pedigree ID.</li>
@@ -732,7 +750,9 @@
     </ol>
 
     The remaining columns in the pedigree file are governed by the
-    <a href='#locusfileformat'>locus file</a>.
+    <a href='#locusfileformat'>locus file</a>. The pedigree file may contain any combination
+    of cases-and-controls, nuclear families (defined as two founder parents and one or
+    more children) or general pedigrees.
 	
     <h3 id='locusfileformat'>Locus File</h3>
 
@@ -743,12 +763,12 @@
     pedigree file. The identifier characters, and their meanings, are as follows:
 
     <ul>
-      <li><tt>A</tt> - Affection status/trait value. Corresponds to a single column in the
+      <li><tt>A</tt> - Phenotype status/trait value. Corresponds to a single column in the
         pedigree file, which indicates if individuals are affected, unaffected, unphenotyped,
         or (for <a href='dt_vs_qt_vs_qtt'>quantitative trait</a> analyses) the trait value.
-        <a href='#traitmarker_vs_markermarker'>Trait-to-marker</a> analyses must have an
-        affection status/trait line in the locus file, and the trait label will appear in
-        all output files. An affections status/trait line need not appear for marker-to-marker
+        <a href='#traitmarker_vs_markermarker'>Trait-to-marker</a> analyses must have a
+        phenotype status/trait line in the locus file, and the trait label will appear in
+        all output files. A phenotype status/trait line need not appear for marker-to-marker
         analyses. The specific values that indicate affected, unaffected, etc., are
         controlled by the <a href='Directives.html#phenocodes'>PhenoCodes</a> configuration
         directive.</li>
@@ -763,6 +783,10 @@
         <a href='#mapfileformat'>map file</a> and the <a href='#freqfileformat'>frequency
         file</a>.</li>
     </ul>
+
+    <span class='sc'>Kelvin</span> currently requires that, if a phenotye status column is
+    present, it must appear first, before any markers. If a covariate column is present, it
+    must appear immediately after the phenotype status column, before any markers.
 
     <h3 id='mapfileformat'>Map File</h3>
 
@@ -801,9 +825,11 @@
     <h3 id='freqfileformat'>Frequency File</h3>
 
     This file identifies the alleles for each marker, and the specifies the frequencies for
-    those alleles. The file is composed of a series of line groups. Each group begins with
-    marker line, followed by one or more allele lines. Similar to the
-    <a href='#locusfileformat'>locus file</a>, each line starts with an identifier character:
+    those alleles. This file is only required if <span class=sc'>Kelvin</span> cannot 
+    <a href='#frequencyestimation'>estimate allele frequencies</a> internally. The file is
+    composed of a series of line groups. Each group begins with a marker line, followed by one
+    or more allele lines. Similar to the <a href='#locusfileformat'>locus file</a>, each line
+    starts with an identifier character:
 
     <ul>
       <li><tt>M</tt> - Marker line. Should be followed by the marker name only. Starts a new
@@ -817,7 +843,7 @@
     </ul>
 
     For any given marker, alleles must all be specified as labeled or unlabeled, although 
-    different markers in the same frequency file may use either method.
+    different markers in the same frequency file may use either method. Note that 
 
     <h3 id='examplefileformat'>Example</h3>
 
@@ -878,7 +904,7 @@
     <tt>101</tt>, <tt>103</tt> and <tt>105</tt> are males, and individuals <tt>102</tt> and
     <tt>104</tt> are females. The remaining columns are defined by the locus file.<p>
 
-    Line 1 of the locus file specifies an affection status column, which corresponds to
+    Line 1 of the locus file specifies a phenotype status column, which corresponds to
     column 6 in the pedigree file. This column follows the typical convention of dichotomous
     traits, coding unaffected individuals with a <tt>1</tt> (one), affected individuals with
     a <tt>2</tt> and unphenotyped individuals with a <tt>0</tt> (zero).<p>
@@ -1186,8 +1212,8 @@ Finally, progress indicators are displayed up through the end of the run.
       <li>PPL(LD) (only for LD analyses) - evidence for or against linkage allowing for
         disequilibrium. The PPL(LD) is rounded to two places if .025 or greater, and three
         decimal places otherwise.</li>
-      <li>PPL&LD (only for LD analyses) - posterior probability of linkage disequilibrium, a
-         measure of LD. The PPL&LD is rounded like the PPL(LD).</li>
+      <li>PPLD(L) (only for LD analyses) - posterior probability of linkage andlinkage
+        disequilibrium, The PPLD(L) is rounded like the PPL(LD).</li>
       <li>PPLD|L (only for LD analyses) - Posterior probability of LD, given linkage. The
         PPLD|L is rounded like the PPL(LD).</li>
     </ol>
@@ -1250,77 +1276,144 @@ Finally, progress indicators are displayed up through the end of the run.
         marker-to-marker runs.</li>
     </ol>
 
-<h2 id='sequpdate'>Sequential Updating</h2>
-Sequential updating is a method for combining the results of mutiple analyses in post-processing.
-Two tools are provided for performing sequential updating. Both tools expect
-<span class='sc'>Kelvin</span> Bayes Ratio files as input.
+    <h2 id='sequpdate'>Sequential Updating</h2>
+    Sequential updating is a method for combining the results of mutiple analyses in
+    post-processing. Sequential updating tools are included in the <span class='sc'>Kelvin</span>
+    distribution.
 
-<h3 id='convertbr'>convert_br.pl</h3>
+    <h3 id='calcupdatedppl'>calc_updated_ppl</h3>
 
-This Perl script will convert <tt>avghet.out</tt> or <tt>br.out</tt> files generated by
-older versions of <span class='sc'>Kelvin</span> into the most recent format.<p>
+    This program takes <span class='sc'>Kelvin</span>-format Bayes ratio files, and produces
+    PPL and PPLD statistics. Bayes ratio files created using older versions of
+    <span class='sc'>Kelvin</span> must be converted to the current format using the provided
+    <a href='convertbr'>conversion script</a>.<p>
 
-If the file was generated by <span class='sc'>Kelvin</span> 0.36.0 or earlier, it will
-contain no Position column, and the user will need to specify a map file containing
-marker position information using the <tt>-m <i>mapfile</i></tt> option. The
-<tt><i>mapfile</i></tt> should be in <span class='sc'>Kelvin</span> input format. If no 
-appropriate mapfile is available, the user may specify <tt>-m nomap</tt>, and the
-Position column will be filled with the sequential marker number.<p>
+    By default, <tt>calc_updated_ppl</tt> expects Bayes ratio files from two-point, sex-averaged
+    analyses, and displays PPL (and, if appropriate, PPLD) statisics. All input files must contain
+    Bayes ratios for the same markers, in the same order. The default behavior can be modified
+    with a number of command line flags:
 
-If the file was generated by <span class='sc'>Kelvin</span> 0.34.2 or earlier, there
-will be no Chomromsome column, and the user will additioanlly need to specify the
-chromosome on the command line using the <tt>-c <i>chrnum</i></tt> option. <p>
+    <div class='indent' cellpadding='2'>
+      <table>
+	<tr>
+          <td valign='top'><tt>-m</tt>,&nbsp<tt>--multipoint</tt></td>
+          <td>Specifies that the input Bayes ratio files are from multipoint analyses. PPLs
+            will be calculated at each position that appears in any of the input files. If a
+            given position does not appear in all files, the updated PPL will be calculated 
+            using only the files in which the position does appear.</td>
+        </tr>
+	<tr>
+          <td valign='top'><tt>-s</tt>,&nbsp<tt>--sexspecific</tt></td>
+	  <td>Specifies that the input Bayes ratio files were created using a sex-specific
+             map.</td>
+        </tr>
+	<tr>
+          <td valign='top'><tt>-M&nbsp<i>mapfile</i></tt>, <tt>--mapin&nbsp<i>mapfile</i></tt></td>
+	  <td>Specifies a map file for input. Only valid with two-point Bayes ratio files.
+            When a map is provided, individual Bayes ratio files are permitted to omit some
+            markers. Each file may only contain markers that appear in the map, and they must
+            all appear in the same order as they appear in the map. Updated statistics will be
+            calculated for each marker that appears in at least one Bayes ratio file.</td>
+        </tr>
+        <tr>
+          <td valign='top'><tt>-f</tt>,&nbsp<tt>--forcemap</tt></td>
+          <td>Specifies that marker position information in Bayes ratio files should be
+            ignored, and marker positions from a supplied map should be used instead. Requires
+            that a map have been provided with <tt>--mapin</tt>.</td>
+        </tr>
+        <tr>
+          <td valign='top'><tt>-R&nbsp<i>pplfile</i></tt>, <tt>--pplout&nbsp<i>pplfile</i></tt></td>
+          <td>Specifies the name of a file to which updated PPL statistics should be written,
+            rather than displaying them.</td>
+        </tr>
+        <tr>
+          <td valign='top'><tt>-O&nbsp<i>brfile</i></tt>, <tt>--partout&nbsp<i>brfile</i></tt></td>
+          <td>Specifies the name of a file to which updated Bayes ratios should be written.</td>
+        </tr>
+        <tr>
+          <td valign='top'><tt>-r</tt>,&nbsp<tt>--relax</tt></td>
+          <td>Specifies that marker names in Bayes ratio files should be ignored, and that updated
+            statistics should be calculated using Bayes ratios from all files in the order in
+            which it appears. This option should be used WITH CAUTION, since it implies that
+            the same markers appear in different analyses with different names, which is probably
+            not the case.</td>
+        </tr>
+        <tr>
+          <td valign='top'><tt>-?</tt>,&nbsp<tt>--help</tt></td>
+          <td>Displays usage help.</td>
+        </tr>
+      </table>
+    </div>
 
-Output is always to the terminal. Here's an example that captures the output to a file:
+    <h4>Examples</h4>
 
-<pre>
-_$ convert_br.pl -c 12 -m mapfile.dat avghet-old.out > br-new.out
-</pre>
+    Here's a simple example of updating across two two-point Bayes ratio files, and saving the
+    updated statistics to a file:
 
-Note in this example, <tt>-c 12</tt> specifies that <tt>avghet-old.out</tt> contains
-data from an analysis of chromosome 12, and that marker position information is in
-the file <tt>mapfile.dat</tt>. A full description of command line syntax is available by
-typing:
-
-<pre>
-_$ convert_br.pl --help
-</pre>
-
-<h3 id='calcupdatedppl'>calc_updated_ppl</h3>
-
-This program will calculate two-point PPL, PPL(LD), PPL&LD and PPLD|L scores, or 
-multipoint PPLs, from one or more <span class='sc'>Kelvin</span> Bayes Ratio files. It
-handles multi-allelic markers (multiple D's) by default, and sex-specific thetas with the
-<tt>-s</tt> or <tt>--sexspecific</tt> command line options. A <span class='sc'>Kelvin</span>
-Bayes Ratio format file containing the updated Bayes Ratios can be requested by
-specifying <tt>--partout <i>filename</i></tt>. All input files should be from the
-same type of analysis (two-point or multipoint, LD or not, etc.) By default,
-<tt>calc_updated_ppl</tt> expects that all input files contain information for the
-same markers. The comparison of marker name can be suppressed with the 
-<tt>-r</tt> or <tt>--relax</tt> command line option. Two-point mode is the
-default. Multipoint mode can be specified with the <tt>-m</tt> or <tt>--multipoint</tt>
-command line option. Output is alway to the terminal. Here's an example that, again,
-captures the output to a file:
-
-<pre>
+    <pre>
 _$ calc_updated_ppl br1.out br2.out > updated-ppl.out
-</pre>
+    </pre>
 
-Here's another example that spcecifies that the input data is multipoint, and
-requests that the updated Bayes Ratios be written to the file <tt>br-updated.out</tt>.
+    Here's an example of updating across three multipoint Bayes ratio files, and requests that
+    the updated Bayes Ratios be written to the file <tt>br-updated.out</tt>:
 
-<pre>
+    <pre>
 _$ calc_updated_ppl -m --partout br-updated.out br1.out br2.out > updated-ppl.out
-</pre>
+    </pre>
 
-A full description of command line syntax is available by typing:
+    Here's an example of updating across three two-point Bayes ratio files, each of which 
+    contains a slightly different subset of the total set of markers. A map file is required
+    in this case:
 
-<pre>
-_$ calc_updated_ppl --help
-</pre>
+    <pre>
+_$ calc_updated_ppl --mapin complete.map br1.out br2.out br3.out > updated-ppl.out
+    </pre>
 
-<hr>
-$Date$
-</body>
+    <h3 id='convertbr'>convert_br.pl</h3>
+
+    This Perl script will convert <tt>avghet.out</tt> or <tt>br.out</tt> files generated by
+    older versions of <span class='sc'>Kelvin</span> into the most recent format. Output is
+    always to the terminal.<p>
+
+    <div class='indent' cellpadding='2'>
+      <table>
+	<tr>
+          <td valign='top'><tt>-m&nbsp<i>mapfile</i></tt></td>
+          <td>If the Bayes ratio file was generated by <span class='sc'>Kelvin</span>
+            0.36.0 or earlier, it will contain no Position column. In this case, a mapfile
+            may be provided, and the marker positions from the mapfile will be used to 
+            fill position information in the output Bayes ratio file. If the string
+	    <tt>nomap</tt> is passed, instead of a mapfile, then the marker positions
+            will be filled with sequential integers.</td>
+        </tr>
+	<tr>
+          <td valign='top'><tt>-c&nbsp<i>chrnum</i></tt></td>
+	  <td>If the Bayes ratio file was generated by <span class='sc'>Kelvin</span>
+          0.34.2 or earlier, there will be no Chromosome column. In this case, the
+          user must specify the chromsome.</td>
+        </tr>
+      </table>
+    </div>
+
+    <h4>Examples</h4>
+
+    Here's an example that captures the output to a file:
+
+    <pre>
+_$ convert_br.pl -c 12 -m mapfile.dat avghet-old.out > br-new.out
+    </pre>
+
+    Note in this example, <tt>-c 12</tt> specifies that <tt>avghet-old.out</tt> contains
+    data from an analysis of chromosome 12, and that marker position information is in
+    the file <tt>mapfile.dat</tt>. A full description of command line syntax is available by
+    typing:
+
+    <pre>
+_$ convert_br.pl --help
+    </pre>
+
+    <hr>
+    $Date$
+  </body>
 
 </html>

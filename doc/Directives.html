@@ -193,13 +193,17 @@
     </td>
     <td valign='top'>
       <a href='#phenocodes'>PhenoCodes</a><br>
+      <a href='#traitpositions'>TraitPositions</a><br>
       <a href='#sexlinked'>SexLinked</a><br>
       <a href='#sexspecific'>SexSpecific</a><br>
       <a href='#imprinting'>Imprinting</a><br>
-      <a href='#traitpositions'>TraitPositions</a><br>
       <a href='#diseasealleles'>DiseaseAlleles</a><br>
       <a href='#polynomialscale'>PolynomialScale</a><br>
       <a href='#nonpolynomial'>NonPolynomial</a><br>
+      <a href='#skippedcount'>SkipPedCount</a><br>
+      <a href='#skipestimation'>SkipEstimation</a><br>
+      <a href='#skipanalysis'>SkipAnalysis</a><br>
+      <a href='#traitprevalence'>TraitPrevalence</a></br>
       <a href='#dryrun'>DryRun</a><br>
     </td>
   </tr>
@@ -533,6 +537,31 @@
     that the map file actually contains sex-specific positions. This directive is
     incompatible with the <a href='#ld'>LD</a> directive.
   </div><p>
+
+  <div class='hang' id='skipanalysis'>
+    <b>SkipAnalysis</b><br>
+    <tt>SkipAnalysis</tt><br>
+    Specifies that preprocessing steps (pedigree counting, allele frequency estimation)
+    should be done, if applicable, but no other processing. 
+  </div><p>
+  
+  <div class='hang' id='skipestimation'>
+    <b>SkipEstimation</b><br>
+    <tt>SkipEstimation</tt><br>
+    Specifies that automatic allele frequency estimation should be disabled. If this 
+    directive is present, then a allele frequencies must be provided using the
+    <a href='#frequencyfile'>FrequencyFile</a> directive. Note that allele frequency
+    estimation may be <a href='index.html#frequencyestimation'>implcitly disabled</a> for
+    certain datasets or types of analysis.
+  </div><p>
+  
+  <div class='hang' id='skippedcount'>
+    <b>SkipPedCount</b><br>
+    <tt>SkipPedCount</tt><br>
+    Specifies that automatic pedigree counting and binning should be disabled. Note that
+    pedigree counting may be <a href='index.html#pedcounting'>implicitly disabled</a> for
+    certain datasets or types of analysis.
+  </div><p>
   
   <div class='hang' id='threshold'>
     <b>Threshold</b><br>
@@ -557,8 +586,16 @@
     past the last marker in the map. The literal <tt>end</tt> in a range specification is only
     valid with this directive. This directive requires the <a href='#multipoint'>MultiPoint</a>
     directive.
-  </div>
+  </div><p>
   
+  <div class='hang' id='traitprevalence'>
+    <b>TraitPrevalence</b><br>
+    <tt>TraitPrevalence <i>value</i></tt><br>
+    Specifies the prevalence of the trait, presumably in the general population. This
+    directive is required for automatic allele frequency estimation if the pedigree file
+    contains any cases-and-controls.
+  </div>
+
   <h2 id="adsummary">Advanced Directive Summary</h2>
 
   <span class='sc'>Kelvin</span> can be configured to perform calculations based on fixed grids
