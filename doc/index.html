@@ -159,10 +159,9 @@
 	leading to significant improvements in performance and accuracy (see Seok, Evans
 	and Vieland).</li>
       <li><a href='pedcounting'>Pedigree counting and binning</a> is now performed by
-        default when possible. In this process, pedigree data is examined prior to analysis,
-        and identical pedigree structure/phenotype/genotype combinations are identified and
-        consolidated to reduce calculations. This behavior can be explicitly disabled through
-        a configuration directive.</li>
+        default when possible. Redundancies in the pedigree file are consolidated to reduce
+        calculations. This behavior can be explicitly disabled through a configuration
+        directive.</li>
       <li>Marker allele frequencies can be <a href='frequencyestimation'>automatically
         estimated</a> for some linkage disequilibrium analyses. These frequencies
 	will be used in preference to user-supplied allele frequencies. This behavior can be
@@ -707,7 +706,7 @@
     <h3 id='simple_vs_epistasis'>Single Locus Analysis vs. Epistasis</h3>
 
     By default, <span class='sc'>Kelvin</span> conducts single locus analysis. The
-    <a href='Dirctives.html#epistasis'>Epistasis</a> directive will provide a two-locus
+    <a href='Directives.html#epistasis'><tt>Epistasis</tt></a> directive will provide a two-locus
     model in which penetrances may depend upon genotypes at a specified marker. Currently,
     the epistasis marker must be a SNP, and epistasis analysis doesn't work with
     <a href='#lc_vs_nolc'>covariate dependence.</a> Epistasis is incompatible with
@@ -716,24 +715,54 @@
     <h3 id='pedcounting'>Automatic Pedigree Counting</h3>
 
     By default, <span class='sc'>Kelvin</span> will attempt to count and bin pedigrees to
-    reduce computation. This behavior can be explicitly disabled with the 
-    <a href='Directives.html#skippedcount'>SkipPedCount</a> directive. Pedigree counting
-    will be implcitly disabled for <a href='#twopoint_vs_multipoint'>multipoint</a> or
-    <a href='#dt_vs_qt_vs_qtt'>QT or QTT</a> analyses, and for any dataset that contains
-    microsatellites.
+    reduce computation. It does this by examining the pedigree file prior to analysis, and
+    identifying combinations of pedigree structure, phenotype and genotype that appear more
+    than once. Each unique combination need only be analyzed once, thus reducing the total
+    number of computations. This mechanism will realize the greatest gains for datasets
+    containing mostly small pedigrees: cases-and-controls, trios and affected sib-pairs.
+    <p>
+
+    Automatic pedigree counting will be implicitly disabled if any of the following are
+    true:
+
+    <ul>
+      <li>If a the <a href='Directives.html#multipoint'>MultiPoint</a> directive is present.</li>
+      <li>If either the <a href='Directives.html#qt'>QT</a> or
+        <a href='Directives.html#qtt'>QTT</a> directive is present.</li>
+      <li>If the dataset contains microsatellites.</li>
+    </ul>
+
+    Automatic pedigree counting can be explicitly disabled with the 
+    <a href='Directives.html#skippedcount'><tt>SkipPedCount</tt></a> directive.
 
     <h3 id='frequencyestimation'>Automatic Allele Frequency Estimation</h3>
 
-    By default, <span class='sc'>Kelvin</span> will attempt to estimate marker allele
-    frequencies, and will use those estimated frequencies in preference to frequencies
-    provided by the user. This behavior can be explicitly disabled with the 
-    <a href='Directives.html#skipestimation'>SkipEstimation</a> directive. Allele frequency
-    estimation is implicitly disabled for <a href='#ld_vs_le'>linkage equilibrium</a>
-    analyses, or for datasets that contain microsatellites or general pedigrees, or that
-    lack trait data. Both cases-and-controls and nuclear pedigrees (two parents with one or
-    more children) are permitted. If cases-and-controls are present, the trait prevalence
-    must be specified with the <a href='Directives.html#traitprevalence'>TraitPrevalence</a>
-    directive. The estimated frequencies are written to a file <tt>kelvin.freq</tt>.
+    <span class='sc'>Kelvin</span> typically requires that allele frequencies be provided
+    using the <a href='Directives.html#frequencyfile'><tt>FrequencyFile</tt></a> directive.
+    However, <span class='sc'>Kelvin</span> can estimate allele frequencies in specific
+    circumstances:
+  
+    <ul>
+      <li>The analysis must be a linkage disequilibrium analysis (specified with the
+        <a href='Directives.html#ld'><tt>LD</tt></a> directive).</li>
+      <li>The pedigree contains only cases-and-controls, or nuclear families (in this
+        context, nuclear means exactly two founders and one or more full-sibling children
+        of those founders).</li>
+      <li>For any given marker, at least 30 families (any combination of cases-and-controls
+        or nuclear families) must contain useful genotype information.</li>
+      <li>All markers must have no more than two alleles (SNPs, typically).</li>
+      <li>If the pedigree contains cases-and-controls, and the trait is dichotomous,
+        then a trait prevalence must be specified with the
+        <a href='Directives.html#traitprevalence'><tt>TraitPrevalence</tt></a> directive.</li>
+    </ul>
+
+    If <span class='sc'>Kelvin</span> can estimate allele frequencies, it will use those
+    allele frequencies in preference to any provided using the <tt>FrequencyFile</tt>
+    directive. Automatic allele frequency estimation can be explicitly disabled with the
+    <a href='Directives.html#skipestimation'><tt>SkipEstimation</tt></a> directive.
+
+    Kelvin will exit with error if allele frequency estimation is not possible and
+    the <tt>FrequencyFile</tt> directive is not present.
 
     <h2 id='fileformats'>Data File Formats</h2>
 
