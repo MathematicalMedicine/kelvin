@@ -143,13 +143,6 @@ void kelvinInit (int argc, char *argv[])
   DETAIL(0,"Validating configuration");
   validateConfig ();
 
-#ifdef STUDYDB
-
-  DETAIL(0,"Opening study database");
-  initializeDB ();
-
-#endif
-
   /* This fills in defaults for fields that are optional, and also copies the contents
    * of the static Model{Range,Options,Type} structures to their global page-allocated
    * counterparts so we can protect them from monkeying.
@@ -160,6 +153,13 @@ void kelvinInit (int argc, char *argv[])
   modelType = (ModelType *) allocatePages (sizeof (ModelType));
 
   fillConfigDefaults (modelRange, modelOptions, modelType);
+
+#ifdef STUDYDB
+
+  DETAIL(0,"Opening study database");
+  initializeDB ();
+
+#endif
 
   if (modelOptions->polynomial == TRUE) {
     INFO ("Computation is done in polynomial mode");

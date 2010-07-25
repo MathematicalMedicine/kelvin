@@ -36,6 +36,8 @@ char *likelihoodVersion = "$Id$";
 
 #ifdef STUDYDB
 #include "../database/databaseSupport.h"
+#include "../database/StudyDB.h"
+extern struct StudyDB studyDB;
 #endif
 
 //extern FILE *fpCond;
@@ -261,10 +263,8 @@ void free_likelihood_space (PedigreeSet * pPedigreeList)
   likelihoodChildCount = NULL;
 }
 
-int build_likelihood_polynomial (PedigreeSet * pPedigreeList)
+int build_likelihood_polynomial (Pedigree * pPedigree)
 {
-  Pedigree *pPedigree;
-  int i;
   int status;
 
   char polynomialFunctionName[MAX_PFN_LEN + 1];
@@ -272,64 +272,170 @@ int build_likelihood_polynomial (PedigreeSet * pPedigreeList)
   if (modelOptions->polynomial != TRUE)
     return EXIT_FAILURE;
 
-  /* First build (or restore) all of the pedigrees */
-  for (i = 0; i < pPedigreeList->numPedigree; i++) {
-    pPedigree = pPedigreeList->ppPedigreeSet[i];
-    if (pPedigree->load_flag == 0) {    // Skip everything, we're using saved results
-      if (pPedigree->likelihoodPolynomial == NULL) {    // There's no polynomial, so come up with one
+  /* First build (or restore) the pedigree */
+  if (pPedigree->load_flag == 0) {    // Skip everything, we're using saved results
+    if (pPedigree->likelihoodPolynomial == NULL) {    // There's no polynomial, so come up with one
 #ifdef POLYCHECK_DL
-        pPedigree->cLikelihoodPolynomial = NULL;        // Get rid of the old tree comparison poly
+      pPedigree->cLikelihoodPolynomial = NULL;        // Get rid of the old tree comparison poly
 #endif
-        // Construct polynomialFunctionName for attempted load and maybe compilation
-        sprintf (polynomialFunctionName, partialPolynomialFunctionName, pPedigree->sPedigreeID);
+      // Construct polynomialFunctionName for attempted load and maybe compilation
+      sprintf (polynomialFunctionName, partialPolynomialFunctionName, pPedigree->sPedigreeID);
 #ifdef POLYUSE_DL
-        if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
+      if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
 #endif
-          // Failed to load, construct it
-          initialize_multi_locus_genotype (pPedigree);
-          status = compute_pedigree_likelihood (pPedigree);
+	// Failed to load, construct it
+	initialize_multi_locus_genotype (pPedigree);
+	status = compute_pedigree_likelihood (pPedigree);
 #ifdef POLYCODE_DL
-          // Used to skip compilation of simple polys here, but there are simple ones that are tough builds.
-          pPedigree->likelihoodPolyList = buildPolyList ();
-          polyListSorting (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList);
-          codePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, polynomialFunctionName);
+	// Used to skip compilation of simple polys here, but there are simple ones that are tough builds.
+	pPedigree->likelihoodPolyList = buildPolyList ();
+	polyListSorting (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList);
+	codePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, polynomialFunctionName);
 #ifdef POLYUSE_DL
-          // Try to load the DL and ditch the tree polynomial
+	// Try to load the DL and ditch the tree polynomial
 #ifdef POLYCHECK_DL
-          // Squirrel-away the tree polynomial for later check
-          pPedigree->cLikelihoodPolynomial = pPedigree->likelihoodPolynomial;
-          holdPoly (pPedigree->cLikelihoodPolynomial);
-          pPedigree->cLikelihoodPolyList = pPedigree->likelihoodPolyList;
+	// Squirrel-away the tree polynomial for later check
+	pPedigree->cLikelihoodPolynomial = pPedigree->likelihoodPolynomial;
+	holdPoly (pPedigree->cLikelihoodPolynomial);
+	pPedigree->cLikelihoodPolyList = pPedigree->likelihoodPolyList;
 #endif
 #ifdef POLYCOMP_DL
-          if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL)
-            FATAL ("Couldn't load compiled likelihood polynomial that was just created!");
+	if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL)
+	  FATAL ("Couldn't load compiled likelihood polynomial that was just created!");
 #else
 #ifdef FAKEEVALUATE
-          pPedigree->likelihoodPolynomial = constantExp (.05);
+	pPedigree->likelihoodPolynomial = constantExp (.05);
 #endif
 #endif
 #endif
 #endif
-          // Notice we are normally holding only the external (compiled) poly!
-          holdPoly (pPedigree->likelihoodPolynomial);
-          freeKeptPolys ();
+	// Notice we are normally holding only the external (compiled) poly!
+	holdPoly (pPedigree->likelihoodPolynomial);
+	freeKeptPolys ();
 #ifdef POLYSTATISTICS
-          if (i == pPedigreeList->numPedigree - 1)
-            polyDynamicStatistics ("Post-build");
+	if (i == pPedigreeList->numPedigree - 1)
+	  polyDynamicStatistics ("Post-build");
 #endif
 #ifdef POLYUSE_DL
         }
 #endif
-	// We still need to build a list even if there's only the external for the DL.
-	pPedigree->likelihoodPolyList = buildPolyList ();
-	polyListSorting (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList);
-      }
+      // We still need to build a list even if there's only the external for the DL.
+      pPedigree->likelihoodPolyList = buildPolyList ();
+      polyListSorting (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList);
     }
   }
   return EXIT_SUCCESS;
 }
 
+#ifdef STUDYDB
+
+/* Alternative version of compute_likelihood to handle LOD server. We might as well have
+   a completely different version since we can't do the OMP work. */
+int compute_likelihood (PedigreeSet * pPedigreeList) {
+  Pedigree *pPedigree;
+  int i;
+  int status;   /* return status of function calls */
+  double product_likelihood = 1;        /* product of the likelihoods
+                                         * for all the pedigrees */
+  double sum_log_likelihood = 0;        /* sum of the
+                                         * log10(likelihood) for all
+                                         * the pedigrees */
+  double log10Likelihood;
+  int origLocus = 0;    /* locus index in the original locus list
+                         * this is used to find out the pedigree
+                         * counts mainly for case control analyses */
+  int ret = 0;
+  long myPedPosId;
+
+  if (analysisLocusList->numLocus > 1)
+    origLocus = analysisLocusList->pLocusIndex[1];
+  numLocus = analysisLocusList->numLocus;
+
+  /* Initialization */
+  sum_log_likelihood = 0;
+  product_likelihood = 1;
+  pPedigreeList->likelihood = 1;
+  pPedigreeList->log10Likelihood = 0;
+
+  if (toupper(*studyDB.role) == 'C') {
+    /* 
+       We're a client, we want to call GetLOD with all the appropriate likelhood variables
+       for every pedigree. If we get a good LOD back, then we incorporate it into the result. 
+       If we don't then the request has been made and we incorporate a dummy LOD into the 
+       results and set a flag indicating that the calculation is to be ignored.
+    */
+    for (i = 0; i < pPedigreeList->numPedigree; i++) {
+      pPedigree = pPedigreeList->ppPedigreeSet[i];
+      
+      myPedPosId = GetPedPosId (pPedigree->sPedigreeID, 40, KROUND(modelRange->tloc[dk_curModel.posIdx]));
+      if ((pPedigree->likelihood = GetDLOD (myPedPosId,
+			  dk_curModel.dgf, pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1], 1)) == -1) {
+	// Bogus result
+	studyDB.bogusLODs++;
+	pPedigree->likelihood = .05;
+      } else {
+	studyDB.realLODs++;
+      }
+      // Roll all the results together considering pedigrees with counts
+      if (pPedigree->pCount[origLocus] == 1) {
+	product_likelihood *= pPedigree->likelihood;
+	log10Likelihood = log10 (pPedigree->likelihood);
+      } else {
+	product_likelihood *= pow (pPedigree->likelihood, pPedigree->pCount[origLocus]);
+	log10Likelihood = log10 (pPedigree->likelihood) * pPedigree->pCount[origLocus];
+      }
+      sum_log_likelihood += log10Likelihood;
+    }
+  } else {
+
+    /*
+      If we're a server, we want to sign-in (if we haven't already) with full range of 
+      pedigrees that we can cover, and then start asking for work for positions within 
+      the current set of markers. When we're out of work we can return to the caller until 
+      we hit a new set of markers. A properly-configured config file can make this fast (TM).
+    */
+
+    // Compute our range of served positions
+    while (GetWork()) {
+
+      if (modelOptions->polynomial == TRUE) {
+	/* Make sure the polynomial we need exists. */
+	pPedigree = pPedigreeList->ppPedigreeSet[0]; // BOGUS
+	if (pPedigree->likelihoodPolynomial == NULL)
+	  build_likelihood_polynomial (pPedigree);
+	evaluatePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, &pPedigree->likelihood);
+      } else {
+	initialize_multi_locus_genotype (pPedigree);
+	status = compute_pedigree_likelihood (pPedigree);
+      }
+    }
+    // Clean up by faking all results
+    for (i = 0; i < pPedigreeList->numPedigree; i++) {
+      pPedigree = pPedigreeList->ppPedigreeSet[i];
+      studyDB.bogusLODs++;
+      pPedigree->likelihood = .05;
+      // Roll all the results together considering pedigrees with counts
+      if (pPedigree->pCount[origLocus] == 1) {
+	product_likelihood *= pPedigree->likelihood;
+	log10Likelihood = log10 (pPedigree->likelihood);
+      } else {
+	product_likelihood *= pow (pPedigree->likelihood, pPedigree->pCount[origLocus]);
+	log10Likelihood = log10 (pPedigree->likelihood) * pPedigree->pCount[origLocus];
+      }
+      sum_log_likelihood += log10Likelihood;
+    }
+  }
+  pPedigreeList->likelihood = product_likelihood;
+  pPedigreeList->log10Likelihood = sum_log_likelihood;
+  return ret;
+}
+
+#else
 
 /* the main API to compute likelihood for all pedigrees in a data set */
 int compute_likelihood (PedigreeSet * pPedigreeList)
@@ -358,74 +464,6 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
   pPedigreeList->likelihood = 1;
   pPedigreeList->log10Likelihood = 0;
 
-#ifdef STUDYDB
-  /* Here we can intercept all calls to compute_likelihood and suborn them to our purposes!
-
-     If we're a client, we want to call GetLOD with all the appropriate likelhood variables.
-     If we get a good LOD, then we just pass it on back up to the caller. If we didn't then
-     the request is in and we pass back a dummy LOD and set a flag indicating that the
-     calculation is to be ignored.
-
-     If we're a server, we want to sign-in with full range of pedigree/positions that we can
-     cover with the current set of markers, and start asking for work. When we're out of work
-     we can return to the caller until we hit a new set of markers. A properly-configured
-     config file can make this fast (only TM).
-
-     Twopoint variables
-
-     theta -- is both what is being varied by the driver and used by likelihood calculation.
-     It is the recomination frequency between the trait position and the marker. Nothing
-     fancy is required - we just store it as a client, and retrieve it as a server.
-
-     Multipoint variables:
-
-     trait position -- is what is being varied by the driver, and when we're a client, it
-     has already been converted into inter-position theta values that are used for the
-     likelihood calculation. Multipoint theta values specify distances between the trait 
-     and two nearest markers from the set of relative trait/marker positions. E.g. when 
-     for 3MP (2 markers  and 1 trait), we can have T-theta1-M-theta2-M, M-theta1-T-theta2-M, 
-     and M-theta1-M-theta2-T. There are theta values between other markers, but they're
-     constants.  The problem here lies in the LOD server situation. Execution will proceed
-     to this chunk of code whereupon we will have a set of relative trait/marker
-     positions for which we can calculate likelihoods, and a single (1) trait position and
-     corresponding pair of thetas. We will ask the database for work within the span of
-     positions covered by the current set of relative trait/marker positions, and get
-     work requests in terms of the trait position only. This trait position will have to be
-     converted to the two theta values that the likelihood calculation expects.
-
-     penetrance vector -- 
-
-     Where <liability-class> varies from 0-2, 
-     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][<liability-class>][0][0] is pen_DD
-     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][<liability-class>][0][1] is pen_Dd
-     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][<liability-class>][1][0] is pen_dD
-     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][<liability-class>][1][1] is pen_dd
-     pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][<liability-class>][0][0] is 1 - pen_DD
-     pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][<liability-class>][0][1] is 1 - pen_Dd
-     pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][<liability-class>][1][0] is 1 - pen_dD
-     pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][<liability-class>][1][1] is 1 - pen_dd
-
-  */
-  for (i = 0; i < pPedigreeList->numPedigree; i++) {
-    pPedigree = pPedigreeList->ppPedigreeSet[i];
-    GetDLOD (GetPedPosId (pPedigree->sPedigreeID, 40, KROUND(modelRange->tloc[dk_curModel.posIdx])),
-	     dk_curModel.dgf, 
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0],
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], 
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0],
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0],
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0],
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0],
-	     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
-	     1);
-  }
-#endif
-
   if (modelOptions->polynomial == TRUE) {
 
     /* Make sure they exist. Need to check until the day we have all builds separate, and
@@ -433,10 +471,8 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       if (pPedigree->load_flag == 0) {  // Skip everything if we're using saved results
-        if (pPedigree->likelihoodPolynomial == NULL) {  // There's no polynomial, so come up with one
-          build_likelihood_polynomial (pPedigreeList);
-          break;        // Don't need to keep checking if we've done the build.
-        }
+        if (pPedigree->likelihoodPolynomial == NULL)  // There's no polynomial, so come up with one
+          build_likelihood_polynomial (pPedigree);
       }
     }
 
@@ -517,6 +553,8 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
   DIAG (LIKELIHOOD, 1, {fprintf (stderr, "Sum of log Likelihood is: %e\n", sum_log_likelihood);});
   return ret;
 }
+
+#endif
 
 /* release polynomial for all pedigrees */
 void pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList)

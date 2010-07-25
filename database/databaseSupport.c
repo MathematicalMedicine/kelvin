@@ -111,7 +111,7 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindGetDLOD[13], studyDB.inLC3LittlePen, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetDLOD[14], studyDB.inRegionNo, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strGetDLOD, "call GetDLOD (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outLOD)", MAXSTMTLEN-1);
+  strncpy (studyDB.strGetDLOD, "call GetDLOD (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outMarkerCount,@outLOD)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtGetDLOD, studyDB.strGetDLOD, strlen (studyDB.strGetDLOD)))
     ERROR("Cannot prepare GetDLOD call statement (%s)", mysql_error(studyDB.connection));
@@ -123,9 +123,10 @@ void prepareDBStatements () {
   memset (studyDB.bindGetDLODResults, 0, sizeof(studyDB.bindGetDLODResults));
 
   BINDNUMERIC (studyDB.bindGetDLODResults[0], studyDB.outRegionId, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDLODResults[1], studyDB.outLOD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLODResults[1], studyDB.outMarkerCount, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLODResults[2], studyDB.outLOD, MYSQL_TYPE_DOUBLE);
 
-  strncpy (studyDB.strGetDLODResults, "Select @outRegionId, @outLOD", MAXSTMTLEN-1);
+  strncpy (studyDB.strGetDLODResults, "Select @outRegionId, @outMarkerCount, @outLOD", MAXSTMTLEN-1);
   if (mysql_stmt_prepare (studyDB.stmtGetDLODResults, studyDB.strGetDLODResults, strlen (studyDB.strGetDLODResults)))
     ERROR("Cannot prepare GetDLOD results select statement (%s)", mysql_error(studyDB.connection));
   if (mysql_stmt_bind_result (studyDB.stmtGetDLODResults, studyDB.bindGetDLODResults))
@@ -180,11 +181,13 @@ double GetDLOD (int inPedPosId, double inDGF,
   studyDB.inLC3LittlePen = inLC3LittlePen;
   studyDB.inRegionNo = inRegionNo;
 
-  if (mysql_stmt_execute (studyDB.stmtGetDLOD))
+  printf ("PPId:%u DGF:%G DD:%G Dd:%G dD:%G dd:%G\n", inPedPosId, inDGF, inLC1BigPen, inLC1BigLittlePen, inLC1LittleBigPen, inLC1LittlePen);
+
+  if (mysql_stmt_execute (studyDB.stmtGetDLOD) != 0)
     ERROR("Cannot execute GetDLOD call statement w/%d (%s, %s)", inPedPosId,
 	  mysql_stmt_error(studyDB.stmtGetDLOD), mysql_stmt_sqlstate(studyDB.stmtGetDLOD));
 
-  if (mysql_stmt_execute (studyDB.stmtGetDLODResults))
+  if (mysql_stmt_execute (studyDB.stmtGetDLODResults) != 0)
     ERROR("Cannot execute GetDLOD results select statement (%s, %s)", 
 	  mysql_stmt_error(studyDB.stmtGetDLODResults), mysql_stmt_sqlstate(studyDB.stmtGetDLODResults));
   if (mysql_stmt_store_result (studyDB.stmtGetDLODResults) != 0)
@@ -192,13 +195,17 @@ double GetDLOD (int inPedPosId, double inDGF,
   if (mysql_stmt_fetch (studyDB.stmtGetDLODResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
 
-  if (*studyDB.bindGetDLODResults[1].is_null) {
-    //    INFO ("In RegionId %d, LOD is NULL", studyDB.outRegionId);
+  if (*studyDB.bindGetDLODResults[2].is_null) {
+    INFO ("In RegionId %d, LOD is NULL", studyDB.outRegionId);
     return -1LL;
   } else {
-    //    INFO ("In RegionId %d, LOD is %G", studyDB.outRegionId, studyDB.outLOD);
+    INFO ("In RegionId %d, LOD is %G", studyDB.outRegionId, studyDB.outLOD);
     return studyDB.outLOD;
   }
+}
+
+int GetWork () {
+  return FALSE;
 }
 
 #ifdef MAIN

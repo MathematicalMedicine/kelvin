@@ -29,6 +29,7 @@ struct StudyDB {
   MYSQL_STMT *stmtGetDLOD;
   MYSQL_BIND bindGetDLOD[16];
   char strGetDLOD[MAXSTMTLEN];
+  char dummy[255];
   int inPedPosId;
   double inDGF;
   double inLC1BigPen;
@@ -45,9 +46,12 @@ struct StudyDB {
   double inLC3LittlePen;
   int inRegionNo;
   MYSQL_STMT *stmtGetDLODResults;
-  MYSQL_BIND bindGetDLODResults[2];
+  MYSQL_BIND bindGetDLODResults[3];
   char strGetDLODResults[MAXSTMTLEN];
   int outRegionId;
+  int outMarkerCount;
   double outLOD;
+  int bogusLODs;
+  int realLODs;
 };
 

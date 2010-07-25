@@ -6,3 +6,4 @@ double GetDLOD (int inPedPosId, double inDGF,
 		double inLC2BigPen, double inLC2BigLittlePen, double inLC2LittleBigPen, double inLC2LittlePen,
 		double inLC3BigPen, double inLC3BigLittlePen, double inLC3LittleBigPen, double inLC3LittlePen,
 		int inRegionId);
+int GetWork ();

@@ -286,7 +286,10 @@ void iterateMain ()
             swPushPhase ('k', "buildTQ");
           }
           swStart (combinedBuildSW);
-          ret = build_likelihood_polynomial (&pedigreeSet);
+	  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+	    Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+	    ret = build_likelihood_polynomial (pPedigree);
+	  }
           swPopPhase ('k');
           swStop (combinedBuildSW);
         }
