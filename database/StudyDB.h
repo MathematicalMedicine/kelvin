@@ -6,7 +6,7 @@
 struct StudyDB {
   // Common...
   char role[MAXPARAMLEN];
-  int inStudyId;
+  int studyId;
   char hostname[MAXPARAMLEN];
   char dBName[MAXPARAMLEN];
   char username[MAXPARAMLEN];
@@ -20,44 +20,50 @@ struct StudyDB {
   MYSQL_STMT *stmtGetPedPosId;
   MYSQL_BIND bindGetPedPosId[4];
   char strGetPedPosId[MAXSTMTLEN];
-  char inPedigreeSId[16];
-  int inChromosomeNo;
+  char pedigreeSId[16];
+  int chromosomeNo;
   double inRefTraitPosCM;
   MYSQL_BIND bindGetPedPosIdResults[1];
-  int outPedPosId;
+  int pedPosId;
   // GetDLOD...
   MYSQL_STMT *stmtGetDLOD;
   MYSQL_BIND bindGetDLOD[15];
   char strGetDLOD[MAXSTMTLEN];
-  int inPedPosId;
   double inDGF;
-  double inLC1BigPen;
-  double inLC1BigLittlePen;
-  double inLC1LittleBigPen;
-  double inLC1LittlePen;
-  double inLC2BigPen;
-  double inLC2BigLittlePen;
-  double inLC2LittleBigPen;
-  double inLC2LittlePen;
-  double inLC3BigPen;
-  double inLC3BigLittlePen;
-  double inLC3LittleBigPen;
-  double inLC3LittlePen;
-  int inRegionNo;
+  double lC1BigPen;
+  double lC1BigLittlePen;
+  double lC1LittleBigPen;
+  double lC1LittlePen;
+  double lC2BigPen;
+  double lC2BigLittlePen;
+  double lC2LittleBigPen;
+  double lC2LittlePen;
+  double lC3BigPen;
+  double lC3BigLittlePen;
+  double lC3LittleBigPen;
+  double lC3LittlePen;
+  int regionNo;
   // GetDLOD results...
   MYSQL_STMT *stmtGetDLODResults;
   MYSQL_BIND bindGetDLODResults[3];
   char strGetDLODResults[MAXSTMTLEN];
-  int outRegionId;
-  int outMarkerCount;
-  double outLOD;
+  int regionId;
+  int markerCount;
+  double lOD;
+  // Sign-on...
+  MYSQL_STMT *stmtSignOn;
+  MYSQL_BIND bindSignOn[6];
+  char strSignOn[MAXSTMTLEN];
+  char pedigreeRegEx[32];
+  char algorithm[2];
+  char programVersion[32];
   // GetWork...
   MYSQL_STMT *stmtGetWork;
   MYSQL_BIND bindGetWork[3];
   char strGetWork[MAXSTMTLEN];
-  int inServerId;
-  double inLowPosition;
-  double inHighPosition;
+  int serverId;
+  double lowPosition;
+  double highPosition;
   // GetDTParts...
   MYSQL_STMT *stmtGetDTParts;
   char strGetDTParts[MAXSTMTLEN];
@@ -65,27 +71,12 @@ struct StudyDB {
   MYSQL_STMT *stmtGetWorkResults;
   MYSQL_BIND bindGetWorkResults[16];
   char strGetWorkResults[MAXSTMTLEN];
-  char outPedigreeSId[16];
   double outPedTraitPosCM;
   double outDGF;
-  double outLC1BigPen;
-  double outLC1BigLittlePen;
-  double outLC1LittleBigPen;
-  double outLC1LittlePen;
-  double outLC2BigPen;
-  double outLC2BigLittlePen;
-  double outLC2LittleBigPen;
-  double outLC2LittlePen;
-  double outLC3BigPen;
-  double outLC3BigLittlePen;
-  double outLC3LittleBigPen;
-  double outLC3LittlePen;
   // PutWork...
   MYSQL_STMT *stmtPutWork;
   MYSQL_BIND bindPutWork[2];
   char strPutWork[MAXSTMTLEN];
-  int inMarkerCount;
-  double inLOD;
   // other...
   int bogusLODs;
   int realLODs;

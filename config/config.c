@@ -1375,7 +1375,7 @@ int set_study_parameters (char **toks, int numtoks, void *unused)
   // Want studyId, role, hostname, dbName, username, password
   if (numtoks != 7)
     bail ("inappropriate number of arguments to directive '%s'\n", toks[0]);
-  studyDB.inStudyId = (int) strtol (toks[1], &ptr, 10);
+  studyDB.studyId = (int) strtol (toks[1], &ptr, 10);
   if ((toks[1] == ptr) || (*ptr != '\0'))
     bail ("directive '%s' requires an initial integer argument\n", toks[0]);
   strncpy (studyDB.role, toks[2], sizeof (studyDB.role));
