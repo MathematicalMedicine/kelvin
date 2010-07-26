@@ -27,9 +27,8 @@ struct StudyDB {
   int outPedPosId;
   // GetDLOD...
   MYSQL_STMT *stmtGetDLOD;
-  MYSQL_BIND bindGetDLOD[16];
+  MYSQL_BIND bindGetDLOD[15];
   char strGetDLOD[MAXSTMTLEN];
-  char dummy[255];
   int inPedPosId;
   double inDGF;
   double inLC1BigPen;
@@ -45,12 +44,49 @@ struct StudyDB {
   double inLC3LittleBigPen;
   double inLC3LittlePen;
   int inRegionNo;
+  // GetDLOD results...
   MYSQL_STMT *stmtGetDLODResults;
   MYSQL_BIND bindGetDLODResults[3];
   char strGetDLODResults[MAXSTMTLEN];
   int outRegionId;
   int outMarkerCount;
   double outLOD;
+  // GetWork...
+  MYSQL_STMT *stmtGetWork;
+  MYSQL_BIND bindGetWork[3];
+  char strGetWork[MAXSTMTLEN];
+  int inServerId;
+  double inLowPosition;
+  double inHighPosition;
+  // GetDTParts...
+  MYSQL_STMT *stmtGetDTParts;
+  char strGetDTParts[MAXSTMTLEN];
+  // GetWorkResults
+  MYSQL_STMT *stmtGetWorkResults;
+  MYSQL_BIND bindGetWorkResults[16];
+  char strGetWorkResults[MAXSTMTLEN];
+  char outPedigreeSId[16];
+  double outPedTraitPosCM;
+  double outDGF;
+  double outLC1BigPen;
+  double outLC1BigLittlePen;
+  double outLC1LittleBigPen;
+  double outLC1LittlePen;
+  double outLC2BigPen;
+  double outLC2BigLittlePen;
+  double outLC2LittleBigPen;
+  double outLC2LittlePen;
+  double outLC3BigPen;
+  double outLC3BigLittlePen;
+  double outLC3LittleBigPen;
+  double outLC3LittlePen;
+  // PutWork...
+  MYSQL_STMT *stmtPutWork;
+  MYSQL_BIND bindPutWork[2];
+  char strPutWork[MAXSTMTLEN];
+  int inMarkerCount;
+  double inLOD;
+  // other...
   int bogusLODs;
   int realLODs;
 };

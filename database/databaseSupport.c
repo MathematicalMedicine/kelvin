@@ -131,6 +131,74 @@ void prepareDBStatements () {
     ERROR("Cannot prepare GetDLOD results select statement (%s)", mysql_error(studyDB.connection));
   if (mysql_stmt_bind_result (studyDB.stmtGetDLODResults, studyDB.bindGetDLODResults))
     ERROR("Cannot bind GetDLOD results select statement (%s)", mysql_error(studyDB.connection));
+
+  // Prepare the GetWork call
+  studyDB.stmtGetWork = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetWork, 0, sizeof(studyDB.bindGetWork));
+
+  BINDNUMERIC (studyDB.bindGetWork[0], studyDB.inServerId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetWork[1], studyDB.inLowPosition, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWork[2], studyDB.inHighPosition, MYSQL_TYPE_DOUBLE);
+
+  strncpy (studyDB.strGetWork, "call GetWork (?,?,?,@outPedPosId, @outPedigreeSId, @outPedTraitPosCM, @outLC1MPId, @outLC2MPId, @outLC3MPId)", MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtGetWork, studyDB.strGetWork, strlen (studyDB.strGetWork)))
+    ERROR("Cannot prepare GetWork call statement (%s)", mysql_error(studyDB.connection));
+  if (mysql_stmt_bind_param (studyDB.stmtGetWork, studyDB.bindGetWork))
+    ERROR("Cannot bind GetWork call statement (%s)", mysql_error(studyDB.connection));
+
+  // Prepare the GetDTParts call
+  studyDB.stmtGetDTParts = mysql_stmt_init (studyDB.connection);
+  strncpy (studyDB.strGetDTParts, "call GetDTParts (@outLC1MPId, @outLC2MPId, @outLC3MPId)", MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtGetDTParts, studyDB.strGetDTParts, strlen (studyDB.strGetDTParts)))
+    ERROR("Cannot prepare GetDTParts call statement (%s)", mysql_error(studyDB.connection));
+
+  // Prepare the GetWork results call
+  studyDB.stmtGetWorkResults = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetWorkResults, 0, sizeof(studyDB.bindGetWorkResults));
+
+  BINDNUMERIC (studyDB.bindGetWorkResults[0], studyDB.outPedPosId, MYSQL_TYPE_LONG);
+  BINDSTRING (studyDB.bindGetWorkResults[1], studyDB.outPedigreeSId, sizeof (studyDB.outPedigreeSId));
+  BINDNUMERIC (studyDB.bindGetWorkResults[2], studyDB.outPedTraitPosCM, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[3], studyDB.outDGF, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[4], studyDB.outLC1BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[5], studyDB.outLC1BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[6], studyDB.outLC1LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[7], studyDB.outLC1LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[8], studyDB.outLC2BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[9], studyDB.outLC2BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[10], studyDB.outLC2LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[11], studyDB.outLC2LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[12], studyDB.outLC3BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[13], studyDB.outLC3BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[14], studyDB.outLC3LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[15], studyDB.outLC3LittlePen, MYSQL_TYPE_DOUBLE);
+
+  strncpy (studyDB.strGetWorkResults, "Select @outPedPosId, @outPedigreeSId, @outPedTraitPosCM, @outDGF,"
+	   "@outLC1BigPen, @outLC1BigLittlePen, @outLC1LittleBigPen, @outLC1LittlePen, "
+	   "@outLC2BigPen, @outLC2BigLittlePen, @outLC2LittleBigPen, @outLC2LittlePen, "
+	   "@outLC3BigPen, @outLC3BigLittlePen, @outLC3LittleBigPen, @outLC3LittlePen", MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtGetWorkResults, studyDB.strGetWorkResults, strlen (studyDB.strGetWorkResults)))
+    ERROR("Cannot prepare GetWorkResults call statement (%s)", mysql_error(studyDB.connection));
+  if (mysql_stmt_bind_param (studyDB.stmtGetWorkResults, studyDB.bindGetWorkResults))
+    ERROR("Cannot bind GetWorkResults call statement (%s)", mysql_error(studyDB.connection));
+
+  // Prepare the PutWork call
+  studyDB.stmtPutWork = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindPutWork, 0, sizeof(studyDB.bindPutWork));
+
+  BINDNUMERIC (studyDB.bindPutWork[0], studyDB.inMarkerCount, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindPutWork[1], studyDB.inLOD, MYSQL_TYPE_DOUBLE);
+
+  strncpy (studyDB.strPutWork, "call PutWork (@outServerId, @outPedPosId, @outLC1MPId, @outLC2MPId, @outLC3MPId,?,?)", MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtPutWork, studyDB.strPutWork, strlen (studyDB.strPutWork)))
+    ERROR("Cannot prepare PutWork call statement (%s)", mysql_error(studyDB.connection));
+  if (mysql_stmt_bind_param (studyDB.stmtPutWork, studyDB.bindPutWork))
+    ERROR("Cannot bind PutWork call statement (%s)", mysql_error(studyDB.connection));
+
   dBStmtsNotReady = FALSE;
 }
 
@@ -181,7 +249,7 @@ double GetDLOD (int inPedPosId, double inDGF,
   studyDB.inLC3LittlePen = inLC3LittlePen;
   studyDB.inRegionNo = inRegionNo;
 
-  printf ("PPId:%u DGF:%G DD:%G Dd:%G dD:%G dd:%G\n", inPedPosId, inDGF, inLC1BigPen, inLC1BigLittlePen, inLC1LittleBigPen, inLC1LittlePen);
+  //  printf ("PPId:%u DGF:%G DD:%G Dd:%G dD:%G dd:%G\n", inPedPosId, inDGF, inLC1BigPen, inLC1BigLittlePen, inLC1LittleBigPen, inLC1LittlePen);
 
   if (mysql_stmt_execute (studyDB.stmtGetDLOD) != 0)
     ERROR("Cannot execute GetDLOD call statement w/%d (%s, %s)", inPedPosId,
@@ -196,10 +264,10 @@ double GetDLOD (int inPedPosId, double inDGF,
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
 
   if (*studyDB.bindGetDLODResults[2].is_null) {
-    INFO ("In RegionId %d, LOD is NULL", studyDB.outRegionId);
+    //    INFO ("In RegionId %d, LOD is NULL", studyDB.outRegionId);
     return -1LL;
   } else {
-    INFO ("In RegionId %d, LOD is %G", studyDB.outRegionId, studyDB.outLOD);
+    //    INFO ("In RegionId %d, LOD is %G", studyDB.outRegionId, studyDB.outLOD);
     return studyDB.outLOD;
   }
 }
