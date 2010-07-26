@@ -400,12 +400,26 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       we hit a new set of markers. A properly-configured config file can make this fast (TM).
     */
 
-    // Compute our range of served positions
-    while (GetWork()) {
+    double lowPosition, highPosition, pedTraitPosCM;
+    char pedigreeSId[33];
 
+    // &&& TBS - compute our range of served positions for the current set of loci
+    lowPosition = 0.0; highPosition = 150.0;
+
+    while (GetDWork(lowPosition, highPosition, &pedTraitPosCM, pedigreeSId, &dk_curModel.dgf,
+		    &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+		    &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+		    &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+		    &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+		    &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+		    &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
+
+      // &&& TBS - convert the pedTraitPosCM into two theta values and store in a 'victim' dk_curModel.posIdx
+      // &&& TBS - set the pPedigree according to the pedigreeSId
+
+      pPedigree = pPedigreeList->ppPedigreeSet[0]; // BOGUS
       if (modelOptions->polynomial == TRUE) {
 	/* Make sure the polynomial we need exists. */
-	pPedigree = pPedigreeList->ppPedigreeSet[0]; // BOGUS
 	if (pPedigree->likelihoodPolynomial == NULL)
 	  build_likelihood_polynomial (pPedigree);
 	evaluatePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, &pPedigree->likelihood);
@@ -413,6 +427,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	initialize_multi_locus_genotype (pPedigree);
 	status = compute_pedigree_likelihood (pPedigree);
       }
+      PutWork (/* &&& TBS */ 7, pPedigree->likelihood);
     }
     // Clean up by faking all results
     for (i = 0; i < pPedigreeList->numPedigree; i++) {

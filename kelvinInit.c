@@ -158,7 +158,8 @@ void kelvinInit (int argc, char *argv[])
 
   DETAIL(0,"Opening study database");
   initializeDB ();
-
+  if (toupper(*studyDB.role) != 'C')
+    SignOn (".*", /* &&& TBS */ 40, "ES", 7, programVersion);
 #endif
 
   if (modelOptions->polynomial == TRUE) {

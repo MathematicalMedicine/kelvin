@@ -11,4 +11,5 @@ int GetDWork (int, int, double *, char *, double *,
 	      double *, double *, double *, double *,
 	      double *, double *, double *, double *,
 	      double *, double *, double *, double *);
+void PutWork (int, double);
 

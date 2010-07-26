@@ -293,6 +293,9 @@ double GetDLOD (int pedPosId, double dGF,
 
 void SignOn (char *pedigreeRegEx, int chromosomeNo, char *algorithm, int markerCount, char *programVersion) {
 
+  if (dBStmtsNotReady)
+    prepareDBStatements ();
+
   // studyId is already set
   strncpy (studyDB.pedigreeRegEx, pedigreeRegEx, 32);
   *studyDB.bindSignOn[1].length = strlen(pedigreeRegEx);
