@@ -209,10 +209,11 @@ void prepareDBStatements () {
   studyDB.stmtPutWork = mysql_stmt_init (studyDB.connection);
   memset (studyDB.bindPutWork, 0, sizeof(studyDB.bindPutWork));
 
-  BINDNUMERIC (studyDB.bindPutWork[0], studyDB.markerCount, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindPutWork[1], studyDB.lOD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindPutWork[0], studyDB.serverId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindPutWork[1], studyDB.markerCount, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindPutWork[2], studyDB.lOD, MYSQL_TYPE_DOUBLE);
 
-  strncpy (studyDB.strPutWork, "call PutWork (@outServerId, @outPedPosId, @outLC1MPId, @outLC2MPId, @outLC3MPId,?,?)", MAXSTMTLEN-1);
+  strncpy (studyDB.strPutWork, "call PutWork (?, @outPedPosId, @outLC1MPId, @outLC2MPId, @outLC3MPId,?,?)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtPutWork, studyDB.strPutWork, strlen (studyDB.strPutWork)))
     ERROR("Cannot prepare PutWork call statement (%s)", mysql_stmt_error(studyDB.stmtPutWork));
@@ -327,7 +328,11 @@ void SignOn (char *pedigreeRegEx, int chromosomeNo, char *algorithm, int markerC
 
 }
 
-int GetDWork (int lowPosition, int highPosition) {
+int GetDWork (int lowPosition, int highPosition, double *pedTraitPosCM, char *pedigreeSId, double *dGF,
+	      double *lC1BigPen, double *lC1BigLittlePen, double *lC1LittleBigPen, double *lC1LittlePen,
+	      double *lC2BigPen, double *lC2BigLittlePen, double *lC2LittleBigPen, double *lC2LittlePen,
+	      double *lC3BigPen, double *lC3BigLittlePen, double *lC3LittleBigPen, double *lC3LittlePen)
+{
 
   // serverId is already set
   studyDB.lowPosition = lowPosition;
@@ -362,8 +367,38 @@ int GetDWork (int lowPosition, int highPosition) {
     INFO ("Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G",
 	  studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, 
 	  studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);
+    strcpy (pedigreeSId, studyDB.pedigreeSId);
+    *pedTraitPosCM = studyDB.pedTraitPosCM;
+    *dGF = studyDB.dGF;
+    *lC1BigPen = studyDB.lC1BigPen;
+    *lC1BigLittlePen = studyDB.lC1BigLittlePen;
+    *lC1LittleBigPen = studyDB.lC1LittleBigPen;
+    *lC1LittlePen = studyDB.lC1LittlePen;
+    *lC2BigPen = studyDB.lC2BigPen;
+    *lC2BigLittlePen = studyDB.lC2BigLittlePen;
+    *lC2LittleBigPen = studyDB.lC2LittleBigPen;
+    *lC2LittlePen = studyDB.lC2LittlePen;
+    *lC3BigPen = studyDB.lC3BigPen;
+    *lC3BigLittlePen = studyDB.lC3BigLittlePen;
+    *lC3LittleBigPen = studyDB.lC3LittleBigPen;
+    *lC3LittlePen = studyDB.lC3LittlePen;
     return TRUE;
   }
+}
+
+void PutWork (int markerCount, double lOD)
+{
+  
+  // serverId is already set
+  studyDB.markerCount = markerCount;
+  studyDB.lOD = lOD;
+
+  // PutWork
+  if (mysql_stmt_execute (studyDB.stmtPutWork))
+    ERROR("Cannot execute GetPut statement w/%d, %G, (%s, %s)", 
+	  markerCount, lOD,
+	  mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork));
+  
 }
 
 #ifdef MAIN
@@ -381,7 +416,8 @@ gcc -g -o test databaseSupport.c ../utils/libklvnutls.a -DMAIN -lmysqlclient -lp
 
 int main (int argc, char *argv[]) {
   
-  double myPedPosId;
+  double pedPosId, pedTraitPosCM, dGF, lC1DD, lC1Dd, lC1dD, lC1dd, lC2DD, lC2Dd, lC2dD, lC2dd, lC3DD, lC3Dd, lC3dD, lC3dd, lOD;
+  char pedigreeSId[33];
 
   // Done for you by directive parsing:
 
@@ -393,25 +429,28 @@ int main (int argc, char *argv[]) {
 
   // Annotated calls...
 
-  myPedPosId = GetPedPosId (/* PedigreeSId-> */ "2", /* ChromosomeNo-> */ 40, /* RefTraitPosCM-> */ 5.1);
-  GetDLOD (/* PedPosId-> */ myPedPosId, /* DGF-> */ .35,
-	   /* LC1BigPen-> */ .71, /* LC1BigLittlePen-> */ .42, /* LC1LittleBigPen-> */ .44, /* LC1LittlePen-> */ .13, 
-	   /* LC2BigPen-> */ .71, /* LC2BigLittlePen-> */ .42, /* LC2LittleBigPen-> */ .44, /* LC2LittlePen-> */ .13, 
-	   /* LC3BigPen-> */ .71, /* LC3BigLittlePen-> */ .42, /* LC3LittleBigPen-> */ .46, /* LC3LittlePen-> */ .13, 
+  pedPosId = GetPedPosId (/* PedigreeSId-> */ "2", /* ChromosomeNo-> */ 40, /* RefTraitPosCM-> */ 5.1);
+  GetDLOD (/* PedPosId-> */ pedPosId, /* DGF-> */ .35,
+	   /* LC1DD-> */ .71, /* LC1Dd-> */ .42, /* LC1dD-> */ .44, /* LC1dd-> */ .13, 
+	   /* LC2DD-> */ .71, /* LC2Dd-> */ .42, /* LC2dD-> */ .44, /* LC2dd-> */ .13, 
+	   /* LC3DD-> */ .71, /* LC3Dd-> */ .42, /* LC3dD-> */ .46, /* LC3dd-> */ .13, 
 	   /* RegionNo-> */ 1);
 
-  GetDLOD (myPedPosId, .35, .71, .42, .42, .13, .71, .42, .45, .13, .71, .42, .45, .13, 1);
-  myPedPosId = GetPedPosId ("3", 40, 10.43210987);
-  GetDLOD (myPedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
-  myPedPosId = GetPedPosId ("2", 40, 3.0);
-  GetDLOD (myPedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  GetDLOD (pedPosId, .35, .71, .42, .42, .13, .71, .42, .45, .13, .71, .42, .45, .13, 1);
+  pedPosId = GetPedPosId ("3", 40, 10.43210987);
+  GetDLOD (pedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  pedPosId = GetPedPosId ("2", 40, 3.0);
+  GetDLOD (pedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
   GetDLOD (6, .3, .71, .42, .44, .13, -1, 0, 0, 0, -1, 0, 0, 0, 1);
   GetDLOD (7, .3, .71, .42, .44, .13, .71, .42, .42, .13, -1, 0, 0, 0, 1);
 
   SignOn (".*", 40, "ES", 4, "Test driver");
 
-  while (GetDWork (0, 10)) {
-    printf ("Doing work...\n");
+  while (GetDWork (0, 10, &pedTraitPosCM, pedigreeSId, &dGF, &lC1DD, &lC1Dd, &lC1dD, &lC1dd,
+		   &lC2DD, &lC2Dd, &lC2dD, &lC2dd, &lC3DD, &lC3Dd, &lC3dD, &lC3dd)) {
+    lOD = ((double)(rand() % 9999)) / 1000.0;
+    printf ("Trying LOD of %G\n", lOD);
+    PutWork (5, lOD);
   }
 
   return EXIT_SUCCESS;

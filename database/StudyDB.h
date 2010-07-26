@@ -74,7 +74,7 @@ struct StudyDB {
   double pedTraitPosCM;
   // PutWork...
   MYSQL_STMT *stmtPutWork;
-  MYSQL_BIND bindPutWork[2];
+  MYSQL_BIND bindPutWork[3];
   char strPutWork[MAXSTMTLEN];
   // other...
   int bogusLODs;
