@@ -12,6 +12,25 @@ extern
 #endif
 struct StudyDB studyDB;
 
+// Don't use these willy-nilly since they do allocate space for length, is_null and error.
+#define BINDNUMERIC(WHERE, WHAT, TYPE) {	 \
+  WHERE.buffer_type = TYPE; \
+  WHERE.buffer = &(WHAT);		 \
+  WHERE.length = (unsigned long *) calloc (1, sizeof (unsigned long)); \
+  WHERE.is_null = (my_bool *) calloc (1, sizeof (my_bool)); \
+  WHERE.error = (my_bool *) calloc (1, sizeof (my_bool)); \
+  WHERE.is_unsigned = 0; \
+}
+#define BINDSTRING(WHERE, WHAT, SIZE) {	 \
+  WHERE.buffer_type = MYSQL_TYPE_STRING; \
+  WHERE.buffer = &(WHAT);		 \
+  WHERE.buffer_length = SIZE; \
+  WHERE.length = (unsigned long *) calloc (1, sizeof (unsigned long)); \
+  WHERE.is_null = (my_bool *) calloc (1, sizeof (my_bool)); \
+  WHERE.error = (my_bool *) calloc (1, sizeof (my_bool)); \
+  WHERE.is_unsigned = 0; \
+}
+
 int dBInitNotDone = TRUE, dBStmtsNotReady = TRUE;
 
 void initializeDB () {
@@ -46,25 +65,6 @@ void initializeDB () {
   dBInitNotDone = FALSE;
 }
 
-// Don't use these willy-nilly since they do allocate space for length, is_null and error.
-#define BINDNUMERIC(WHERE, WHAT, TYPE) {	 \
-  WHERE.buffer_type = TYPE; \
-  WHERE.buffer = &(WHAT);		 \
-  WHERE.length = (unsigned long *) calloc (1, sizeof (unsigned long)); \
-  WHERE.is_null = (my_bool *) calloc (1, sizeof (my_bool)); \
-  WHERE.error = (my_bool *) calloc (1, sizeof (my_bool)); \
-  WHERE.is_unsigned = 0; \
-}
-#define BINDSTRING(WHERE, WHAT, SIZE) {	 \
-  WHERE.buffer_type = MYSQL_TYPE_STRING; \
-  WHERE.buffer = &(WHAT);		 \
-  WHERE.buffer_length = SIZE; \
-  WHERE.length = (unsigned long *) calloc (1, sizeof (unsigned long)); \
-  WHERE.is_null = (my_bool *) calloc (1, sizeof (my_bool)); \
-  WHERE.error = (my_bool *) calloc (1, sizeof (my_bool)); \
-  WHERE.is_unsigned = 0; \
-}
-
 void prepareDBStatements () {
 
   if (dBInitNotDone)
@@ -77,7 +77,7 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindGetPedPosId[0], studyDB.studyId, MYSQL_TYPE_LONG);
   BINDSTRING (studyDB.bindGetPedPosId[1], studyDB.pedigreeSId, sizeof (studyDB.pedigreeSId));
   BINDNUMERIC (studyDB.bindGetPedPosId[2], studyDB.chromosomeNo, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetPedPosId[3], studyDB.inRefTraitPosCM, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetPedPosId[3], studyDB.refTraitPosCM, MYSQL_TYPE_DOUBLE);
 
   strncpy (studyDB.strGetPedPosId, "Select PedPosId from PedigreePositions where StudyId = ? AND PedigreeSId = ? AND ChromosomeNo = ? AND RefTraitPosCM = ?", MAXSTMTLEN-1);
 
@@ -96,7 +96,7 @@ void prepareDBStatements () {
   memset (studyDB.bindGetDLOD, 0, sizeof(studyDB.bindGetDLOD));
 
   BINDNUMERIC (studyDB.bindGetDLOD[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDLOD[1], studyDB.inDGF, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLOD[1], studyDB.dGF, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetDLOD[2], studyDB.lC1BigPen, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetDLOD[3], studyDB.lC1BigLittlePen, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetDLOD[4], studyDB.lC1LittleBigPen, MYSQL_TYPE_DOUBLE);
@@ -164,12 +164,15 @@ void prepareDBStatements () {
   if (mysql_stmt_bind_param (studyDB.stmtGetWork, studyDB.bindGetWork))
     ERROR("Cannot bind GetWork call statement (%s)", mysql_stmt_error(studyDB.stmtGetWork));
 
-  // Prepare the GetDTParts call
-  studyDB.stmtGetDTParts = mysql_stmt_init (studyDB.connection);
-  strncpy (studyDB.strGetDTParts, "call GetDTParts (@outLC1MPId, @outLC2MPId, @outLC3MPId)", MAXSTMTLEN-1);
+  // Prepare the GetDParts call
+  studyDB.stmtGetDParts = mysql_stmt_init (studyDB.connection);
+  strncpy (studyDB.strGetDParts, "call GetDParts (@outLC1MPId, @outLC2MPId, @outLC3MPId, @outDGF, "
+	   "@outLC1BP, @outLC1BLP, @outLC1LBP, @outLC1LP,"
+	   "@outLC2BP, @outLC2BLP, @outLC2LBP, @outLC2LP,"
+	   "@outLC3BP, @outLC3BLP, @outLC3LBP, @outLC3LP)", MAXSTMTLEN-1);
 
-  if (mysql_stmt_prepare (studyDB.stmtGetDTParts, studyDB.strGetDTParts, strlen (studyDB.strGetDTParts)))
-    ERROR("Cannot prepare GetDTParts call statement (%s)", mysql_stmt_error(studyDB.stmtGetDTParts));
+  if (mysql_stmt_prepare (studyDB.stmtGetDParts, studyDB.strGetDParts, strlen (studyDB.strGetDParts)))
+    ERROR("Cannot prepare GetDParts call statement (%s)", mysql_stmt_error(studyDB.stmtGetDParts));
 
   // Prepare the GetWork results call
   studyDB.stmtGetWorkResults = mysql_stmt_init (studyDB.connection);
@@ -177,8 +180,8 @@ void prepareDBStatements () {
 
   BINDNUMERIC (studyDB.bindGetWorkResults[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
   BINDSTRING (studyDB.bindGetWorkResults[1], studyDB.pedigreeSId, sizeof (studyDB.pedigreeSId));
-  BINDNUMERIC (studyDB.bindGetWorkResults[2], studyDB.outPedTraitPosCM, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[3], studyDB.outDGF, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[2], studyDB.pedTraitPosCM, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWorkResults[3], studyDB.dGF, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetWorkResults[4], studyDB.lC1BigPen, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetWorkResults[5], studyDB.lC1BigLittlePen, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetWorkResults[6], studyDB.lC1LittleBigPen, MYSQL_TYPE_DOUBLE);
@@ -193,13 +196,13 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindGetWorkResults[15], studyDB.lC3LittlePen, MYSQL_TYPE_DOUBLE);
 
   strncpy (studyDB.strGetWorkResults, "Select @outPedPosId, @outPedigreeSId, @outPedTraitPosCM, @outDGF,"
-	   "@outLC1BigPen, @outLC1BigLittlePen, @outLC1LittleBigPen, @outLC1LittlePen, "
-	   "@outLC2BigPen, @outLC2BigLittlePen, @outLC2LittleBigPen, @outLC2LittlePen, "
-	   "@outLC3BigPen, @outLC3BigLittlePen, @outLC3LittleBigPen, @outLC3LittlePen", MAXSTMTLEN-1);
+	   "@outLC1BP, @outLC1BLP, @outLC1LBP, @outLC1LP, "
+	   "@outLC2BP, @outLC2BLP, @outLC2LBP, @outLC2LP, "
+	   "@outLC3BP, @outLC3BLP, @outLC3LBP, @outLC3LP", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtGetWorkResults, studyDB.strGetWorkResults, strlen (studyDB.strGetWorkResults)))
     ERROR("Cannot prepare GetWorkResults call statement (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
-  if (mysql_stmt_bind_param (studyDB.stmtGetWorkResults, studyDB.bindGetWorkResults))
+  if (mysql_stmt_bind_result (studyDB.stmtGetWorkResults, studyDB.bindGetWorkResults))
     ERROR("Cannot bind GetWorkResults call statement (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
 
   // Prepare the PutWork call
@@ -219,7 +222,7 @@ void prepareDBStatements () {
   dBStmtsNotReady = FALSE;
 }
 
-long GetPedPosId (char *pedigreeSId, int chromosomeNo, double inRefTraitPosCM)
+long GetPedPosId (char *pedigreeSId, int chromosomeNo, double refTraitPosCM)
 {
   if (dBStmtsNotReady)
     prepareDBStatements ();
@@ -227,31 +230,31 @@ long GetPedPosId (char *pedigreeSId, int chromosomeNo, double inRefTraitPosCM)
   strncpy (studyDB.pedigreeSId, pedigreeSId, 16);
   *studyDB.bindGetPedPosId[1].length = strlen(pedigreeSId);
   studyDB.chromosomeNo = chromosomeNo;
-  studyDB.inRefTraitPosCM = inRefTraitPosCM;
+  studyDB.refTraitPosCM = refTraitPosCM;
 
   if (mysql_stmt_execute (studyDB.stmtGetPedPosId))
     ERROR("Cannot execute PedPosId select statement w/%d, '%s', %d, %G (%s, %s)", 
-	  studyDB.studyId, pedigreeSId, chromosomeNo, inRefTraitPosCM,
+	  studyDB.studyId, pedigreeSId, chromosomeNo, refTraitPosCM,
 	  mysql_stmt_error(studyDB.stmtGetPedPosId), mysql_stmt_sqlstate(studyDB.stmtGetPedPosId));
   if (mysql_stmt_store_result (studyDB.stmtGetPedPosId) != 0)
     ERROR("Cannot retrieve PedPosId select results w/%d, '%s', %d, %G (%s)", 
-	  studyDB.studyId, pedigreeSId, chromosomeNo, inRefTraitPosCM, 
+	  studyDB.studyId, pedigreeSId, chromosomeNo, refTraitPosCM, 
 	  mysql_stmt_error(studyDB.stmtGetPedPosId));
   if (mysql_stmt_fetch (studyDB.stmtGetPedPosId) != 0)
     ERROR("Cannot fetch PedPosId select results w/%d, '%s', %d, %G (%s %s)", 
-	    studyDB.studyId, pedigreeSId, chromosomeNo, inRefTraitPosCM, 
+	    studyDB.studyId, pedigreeSId, chromosomeNo, refTraitPosCM, 
 	    mysql_stmt_error(studyDB.stmtGetPedPosId), mysql_stmt_sqlstate(studyDB.stmtGetPedPosId));
   return studyDB.pedPosId;
 }
 
-double GetDLOD (int pedPosId, double inDGF,
+double GetDLOD (int pedPosId, double dGF,
 	      double lC1BigPen, double lC1BigLittlePen, double lC1LittleBigPen, double lC1LittlePen,
 	      double lC2BigPen, double lC2BigLittlePen, double lC2LittleBigPen, double lC2LittlePen,
 	      double lC3BigPen, double lC3BigLittlePen, double lC3LittleBigPen, double lC3LittlePen,
 	      int regionNo)
 {
   studyDB.pedPosId = pedPosId;
-  studyDB.inDGF = inDGF;
+  studyDB.dGF = dGF;
   studyDB.lC1BigPen = lC1BigPen;
   studyDB.lC1BigLittlePen = lC1BigLittlePen;
   studyDB.lC1LittleBigPen = lC1LittleBigPen;
@@ -279,24 +282,97 @@ double GetDLOD (int pedPosId, double inDGF,
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
 
   if (*studyDB.bindGetDLODResults[2].is_null) {
-    //    INFO ("In RegionId %d, LOD is NULL", studyDB.regionId);
+    INFO ("In RegionId %d, LOD is NULL", studyDB.regionId);
     return -1LL;
   } else {
-    //    INFO ("In RegionId %d, LOD is %G", studyDB.regionId, studyDB.lOD);
+    INFO ("In RegionId %d, LOD is %G", studyDB.regionId, studyDB.lOD);
     return studyDB.lOD;
   }
 }
 
-int GetWork () {
-  return FALSE;
+void SignOn (char *pedigreeRegEx, int chromosomeNo, char *algorithm, int markerCount, char *programVersion) {
+
+  // studyId is already set
+  strncpy (studyDB.pedigreeRegEx, pedigreeRegEx, 32);
+  *studyDB.bindSignOn[1].length = strlen(pedigreeRegEx);
+  studyDB.chromosomeNo = chromosomeNo;
+  strncpy (studyDB.algorithm, algorithm, 2);
+  *studyDB.bindSignOn[3].length = strlen(algorithm);
+  studyDB.markerCount = markerCount;
+  strncpy (studyDB.programVersion, programVersion, 32);
+  *studyDB.bindSignOn[5].length = strlen(programVersion);
+
+  if (mysql_stmt_execute (studyDB.stmtSignOn))
+    ERROR("Cannot execute sign-on insert statement w/%d, '%s', %d, '%s', %d, '%s' (%s, %s)", 
+	  studyDB.studyId, pedigreeRegEx, chromosomeNo, algorithm, markerCount, programVersion,
+	  mysql_stmt_error(studyDB.stmtSignOn), mysql_stmt_sqlstate(studyDB.stmtSignOn));
+
+  /* Sigh...we really do need the serverId for logging, otherwise I'd let it be yet another
+     temporary variable that flows between procedures under our connection context. */
+
+  /* Verify our studyId. */
+  sprintf (studyDB.strAdhocStatement, "Select LAST_INSERT_ID()");
+  if (mysql_query (studyDB.connection, studyDB.strAdhocStatement))
+    ERROR("Cannot select LAST_INSERT_ID() (serverId) (%s:%s)", studyDB.strAdhocStatement, mysql_error(studyDB.connection));
+  if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
+    ERROR("Cannot retrieve LAST_SERVER_ID() (serverId) (%s)", mysql_error(studyDB.connection));
+  if (mysql_num_rows (studyDB.resultSet) == 0)
+    ERROR("serverId not found");
+  else {
+    if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
+      ERROR("Cannot fetch LAST_SERVER_ID() (serverId) (%s)", mysql_error(studyDB.connection));
+    studyDB.serverId = atoi(studyDB.row[0]);
+    INFO ("Signed on as serverId %d", studyDB.serverId);
+  }
+
+}
+
+int GetDWork (int lowPosition, int highPosition) {
+
+  // serverId is already set
+  studyDB.lowPosition = lowPosition;
+  studyDB.highPosition = highPosition;
+
+  // GetWork
+  if (mysql_stmt_execute (studyDB.stmtGetWork))
+    ERROR("Cannot execute GetWork statement w/%d, %d, (%s, %s)", 
+	  lowPosition, highPosition,
+	  mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
+
+  // Get DT parts - this uses the temporary variables in our session to get parameters from GetWork.
+  if (mysql_stmt_execute (studyDB.stmtGetDParts))
+    ERROR("Cannot execute GetDParts statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtGetDParts), mysql_stmt_sqlstate(studyDB.stmtGetDParts));
+
+  // GetWork results - a slew of parameters
+  studyDB.pedPosId = 0;
+  studyDB.pedTraitPosCM = studyDB.dGF = studyDB.lC1BigPen = studyDB.lC1BigLittlePen = 
+    studyDB.lC1LittleBigPen = studyDB.lC1LittlePen = 0.0;
+  if (mysql_stmt_execute (studyDB.stmtGetWorkResults))
+    ERROR("Cannot execute GetWorkResults statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtGetWorkResults), mysql_stmt_sqlstate(studyDB.stmtGetWorkResults));
+  if (mysql_stmt_store_result (studyDB.stmtGetWorkResults) != 0)
+    ERROR("Cannot retrieve GetWork results (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
+  if (mysql_stmt_fetch (studyDB.stmtGetWorkResults) != 0)
+    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
+  if (*studyDB.bindGetWorkResults[0].is_null) {
+    INFO ("No more work!");
+    return FALSE;
+  } else {
+    INFO ("Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G",
+	  studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, 
+	  studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);
+    return TRUE;
+  }
 }
 
 #ifdef MAIN
 
 /*
 
-gcc -g -o test databaseSupport.c ../utils/libklvnutls.a -DMAIN -lmysqlclient -I/usr/local/mysql/include -L/usr/local/mysql/lib/ 
-./test 19 localhost LOD_dev whv001 foobar
+gcc -g -o test databaseSupport.c ../utils/libklvnutls.a -DMAIN -lmysqlclient -lpthread -I/usr/include/mysql -L/usr/lib64/mysql/
+./test 1 mcclintock dev adminDev foobar
+
 
 */
 
@@ -317,7 +393,7 @@ int main (int argc, char *argv[]) {
 
   // Annotated calls...
 
-  myPedPosId = GetPedPosId (/* PedigreeSId-> */ "2", /* ChromosomeNo-> */ 44, /* RefTraitPosCM-> */ 5.1);
+  myPedPosId = GetPedPosId (/* PedigreeSId-> */ "2", /* ChromosomeNo-> */ 40, /* RefTraitPosCM-> */ 5.1);
   GetDLOD (/* PedPosId-> */ myPedPosId, /* DGF-> */ .35,
 	   /* LC1BigPen-> */ .71, /* LC1BigLittlePen-> */ .42, /* LC1LittleBigPen-> */ .44, /* LC1LittlePen-> */ .13, 
 	   /* LC2BigPen-> */ .71, /* LC2BigLittlePen-> */ .42, /* LC2LittleBigPen-> */ .44, /* LC2LittlePen-> */ .13, 
@@ -325,12 +401,18 @@ int main (int argc, char *argv[]) {
 	   /* RegionNo-> */ 1);
 
   GetDLOD (myPedPosId, .35, .71, .42, .42, .13, .71, .42, .45, .13, .71, .42, .45, .13, 1);
-  myPedPosId = GetPedPosId ("3", 44, 10.43210987);
+  myPedPosId = GetPedPosId ("3", 40, 10.43210987);
   GetDLOD (myPedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
-  myPedPosId = GetPedPosId ("2", 44, 3.0);
+  myPedPosId = GetPedPosId ("2", 40, 3.0);
   GetDLOD (myPedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
   GetDLOD (6, .3, .71, .42, .44, .13, -1, 0, 0, 0, -1, 0, 0, 0, 1);
   GetDLOD (7, .3, .71, .42, .44, .13, .71, .42, .42, .13, -1, 0, 0, 0, 1);
+
+  SignOn (".*", 40, "ES", 4, "Test driver");
+
+  while (GetDWork (0, 10)) {
+    printf ("Doing work...\n");
+  }
 
   return EXIT_SUCCESS;
 }

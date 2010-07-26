@@ -1,6 +1,6 @@
 #include "mysql.h"
 
-#define MAXSTMTLEN 256
+#define MAXSTMTLEN 512
 #define MAXPARAMLEN 64
 
 struct StudyDB {
@@ -20,16 +20,16 @@ struct StudyDB {
   MYSQL_STMT *stmtGetPedPosId;
   MYSQL_BIND bindGetPedPosId[4];
   char strGetPedPosId[MAXSTMTLEN];
-  char pedigreeSId[16];
+  char pedigreeSId[17];
   int chromosomeNo;
-  double inRefTraitPosCM;
+  double refTraitPosCM;
   MYSQL_BIND bindGetPedPosIdResults[1];
   int pedPosId;
   // GetDLOD...
   MYSQL_STMT *stmtGetDLOD;
   MYSQL_BIND bindGetDLOD[15];
   char strGetDLOD[MAXSTMTLEN];
-  double inDGF;
+  double dGF;
   double lC1BigPen;
   double lC1BigLittlePen;
   double lC1LittleBigPen;
@@ -54,25 +54,24 @@ struct StudyDB {
   MYSQL_STMT *stmtSignOn;
   MYSQL_BIND bindSignOn[6];
   char strSignOn[MAXSTMTLEN];
-  char pedigreeRegEx[32];
-  char algorithm[2];
-  char programVersion[32];
+  char pedigreeRegEx[33];
+  char algorithm[3];
+  char programVersion[33];
+  int serverId;
   // GetWork...
   MYSQL_STMT *stmtGetWork;
   MYSQL_BIND bindGetWork[3];
   char strGetWork[MAXSTMTLEN];
-  int serverId;
   double lowPosition;
   double highPosition;
-  // GetDTParts...
-  MYSQL_STMT *stmtGetDTParts;
-  char strGetDTParts[MAXSTMTLEN];
+  // GetDParts...
+  MYSQL_STMT *stmtGetDParts;
+  char strGetDParts[MAXSTMTLEN];
   // GetWorkResults
   MYSQL_STMT *stmtGetWorkResults;
   MYSQL_BIND bindGetWorkResults[16];
   char strGetWorkResults[MAXSTMTLEN];
-  double outPedTraitPosCM;
-  double outDGF;
+  double pedTraitPosCM;
   // PutWork...
   MYSQL_STMT *stmtPutWork;
   MYSQL_BIND bindPutWork[2];
