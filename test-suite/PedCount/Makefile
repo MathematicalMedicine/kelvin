@@ -7,8 +7,10 @@ TESTS = $(shell ls -d */ | cut -f1 -d\/)
 
 .PHONY : test test-USE_DL clean $(TESTS)
 
-test : ACTION := test
-test : $(TESTS)
+#test : ACTION := test
+#test : $(TESTS)
+test : 
+	echo These tests have been disabled
 
 check :
 	$(MAKE) -C No_config -f Makefile test
