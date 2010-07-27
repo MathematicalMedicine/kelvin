@@ -265,7 +265,7 @@ void free_likelihood_space (PedigreeSet * pPedigreeList)
 
 int build_likelihood_polynomial (Pedigree * pPedigree)
 {
-  int i, status;
+  int status;
 
   char polynomialFunctionName[MAX_PFN_LEN + 1];
 
@@ -313,8 +313,7 @@ int build_likelihood_polynomial (Pedigree * pPedigree)
 	holdPoly (pPedigree->likelihoodPolynomial);
 	freeKeptPolys ();
 #ifdef POLYSTATISTICS
-	if (i == pPedigreeList->numPedigree - 1)
-	  polyDynamicStatistics ("Post-build");
+	polyDynamicStatistics ("Post-build");
 #endif
 #ifdef POLYUSE_DL
         }
