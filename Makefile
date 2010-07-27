@@ -124,7 +124,6 @@ KVNLIBDIR := $(shell pwd)/lib
 KELVIN_ROOT := $(shell pwd)
 TEST_KELVIN := $(KELVIN_ROOT)/kelvin-$(VERSION)
 KELVIN_SCRIPT := $(KELVIN_ROOT)/Kelvin
-PEDCOUNT_SCRIPT := ($KELVIN_ROOT)/PedCount.pl
 SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
 
 # If we're building in an svn-managed context, get AND preserve the latest svn version
@@ -170,7 +169,7 @@ ifeq ($(strip $(USE_STUDYDB)), yes)
 endif
 
 LDFLAGS += ${ADD_LDFLAGS}
-export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN KELVIN_SCRIPT PEDCOUNT_SCRIPT SEQUPDATE_BINARY
+export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN KELVIN_SCRIPT SEQUPDATE_BINARY
 
 
 KOBJS = kelvin.o dcuhre.o
@@ -194,7 +193,7 @@ dist :
 	mkdir kelvin-$(VERSION)/bin
 	ln bin/kelvin.* kelvin-$(VERSION)/bin
 	ln bin/calc_updated_ppl.* kelvin-$(VERSION)/bin
-	ln README .maj .min .pat .svnversion Kelvin CHANGES COPYRIGHT PedCount.pl kf.pm convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
+	ln README .maj .min .pat .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
 	perl -pe "s|#CFLAGS \+\= \-DDISTRIBUTION|CFLAGS \+\= \-DDISTRIBUTION|;" Makefile > kelvin-$(VERSION)/Makefile
 	mkdir kelvin-$(VERSION)/lib
 	mkdir kelvin-$(VERSION)/utils
@@ -210,9 +209,6 @@ dist :
 	ln test-suite/dynamic-grid/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid
 	ln test-suite/dynamic-grid/PE/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid/PE
 	ln test-suite/dynamic-grid/PE/SA_DT/* kelvin-$(VERSION)/test-suite/dynamic-grid/PE/SA_DT
-	mkdir -p kelvin-$(VERSION)/test-suite/PedCount/No_config
-	ln test-suite/PedCount/Makefile kelvin-$(VERSION)/test-suite/PedCount
-	ln test-suite/PedCount/No_config/* kelvin-$(VERSION)/test-suite/PedCount/No_config
 	mkdir -p kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
 	ln test-suite/seq_update/Makefile kelvin-$(VERSION)/test-suite/seq_update
 	ln test-suite/seq_update/d-2pt-le/* kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
@@ -225,15 +221,20 @@ install : $(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/calc_updated_ppl \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh \
-	  $(BINDIR)/PedCount.pl \
-	  $(BINDIR)/kf.pm \
+	  $(BINDIR)/KelvinConfig.pm \
+	  $(BINDIR)/KelvinDataset.pm \
+	  $(BINDIR)/KelvinFamily.pm \
+	  $(BINDIR)/KelvinIO.pm \
 	  $(BINDIR)/Kelvin
 
 install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh \
-	  $(BINDIR)/PedCount.pl \
-	  $(BINDIR)/kf.pm \
+	  $(BINDIR)/$(MODS) \
+	  $(BINDIR)/KelvinConfig.pm \
+	  $(BINDIR)/KelvinDataset.pm \
+	  $(BINDIR)/KelvinFamily.pm \
+	  $(BINDIR)/KelvinIO.pm \
 	  $(BINDIR)/Kelvin
 
 .PHONY : kelvin
@@ -328,12 +329,9 @@ $(BINDIR)/convert_br.pl : seq_update/convert_br.pl
 $(BINDIR)/compileDL.sh : compileDL.sh
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p compileDL.sh $(BINDIR)/compileDL.sh
 
-$(BINDIR)/PedCount.pl : PedCount.pl
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p PedCount.pl $(BINDIR)/PedCount.pl
-
-$(BINDIR)/kf.pm : kf.pm
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p kf.pm $(BINDIR)/kf.pm
+$(BINDIR)/%.pm : %.pm
+	install -o $(OWNER) -g $(GROUP) -m 0644 -p $< $@
 
 $(BINDIR)/Kelvin : Kelvin
-	perl -pe "s|NO_KELVIN_ROOT|$(ABSBINDIR)|; s|NO_KELVIN_BINARY|$(ABSBINDIR)/kelvin-$(VERSION)|; s|NO_SEQUPDATE_BINARY|$(ABSBINDIR)/calc_updated_ppl|; s|NO_PEDCOUNT_SCRIPT|$(ABSBINDIR)/PedCount.pl|" Kelvin > Kelvin.local
+	perl -pe "s|NO_KELVIN_ROOT|$(ABSBINDIR)|; s|NO_KELVIN_BINARY|$(ABSBINDIR)/kelvin-$(VERSION)|; s|NO_SEQUPDATE_BINARY|$(ABSBINDIR)/calc_updated_ppl|;" Kelvin > Kelvin.local
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p Kelvin.local $(BINDIR)/Kelvin
