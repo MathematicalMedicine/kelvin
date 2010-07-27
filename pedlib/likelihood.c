@@ -265,7 +265,7 @@ void free_likelihood_space (PedigreeSet * pPedigreeList)
 
 int build_likelihood_polynomial (Pedigree * pPedigree)
 {
-  int status;
+  int i, status;
 
   char polynomialFunctionName[MAX_PFN_LEN + 1];
 
