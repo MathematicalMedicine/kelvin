@@ -33,6 +33,7 @@
 */
 #include <float.h>
 #include <math.h>
+#include <ctype.h>
 
 #include "kelvin.h"
 #include "kelvinGlobals.h"
@@ -52,6 +53,23 @@
 extern LDLoci *pLDLoci;
 
 // Module-wide (file) globals
+
+#ifdef STUDYDB
+#include "database/StudyDB.h"
+extern struct StudyDB studyDB;
+
+#define MAXLSTP 4096
+double *oldTLoc; // Pointer to original list of trait loci, which we're going to ignore
+double lociSetTransitionPositions[MAXLSTP];
+double newTLoc[MAXLSTP];
+
+int compare_doubles (const void *a, const void *b) {
+  const double *da = (const double *) a;
+  const double *db = (const double *) b;
+  return (*da > *db) - (*da < *db);
+}
+
+#endif
 
 /**
 
@@ -2433,6 +2451,37 @@ void integrateMain ()
     leftMarker = -1;
 
     /* Iterate over all positions in the analysis. */
+
+#ifdef STUDYDB
+    if (toupper(*studyDB.role) != 'C') {
+      // We're a server! Completely suborn the trait loci vector in modelRange
+      int i, j = 0;
+
+      // Marker positions are themselves transition positions...
+      for (i=1; i<originalLocusList.numLocus; i++)
+	lociSetTransitionPositions[j++] = originalLocusList.ppLocusList[i]->pMapUnit->mapPos[0];
+
+      // ...as are the midpoints of marker N and N+M, where M is the number of markers in the analysis
+      for (i=0; i<(originalLocusList.numLocus - modelType->numMarkers); i++)
+	lociSetTransitionPositions[j++] = lociSetTransitionPositions[i] +
+	  ((lociSetTransitionPositions[i+modelType->numMarkers] - lociSetTransitionPositions[i])/2.0);
+
+      // Sort the list of transition positions
+      qsort (lociSetTransitionPositions, j, sizeof (double), compare_doubles);
+
+      // Choose new trait positions between transition positions
+
+      for (i=0; i<j; i++)
+	newTLoc[i] = lociSetTransitionPositions[i] - .00001;
+      newTLoc[j] = lociSetTransitionPositions[j-1] + .00001;
+
+      oldTLoc = modelRange->tloc;
+      modelRange->tloc = newTLoc;
+      modelRange->ntloc = j+1;
+      numPositions = j+1;
+    }
+#endif
+
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
       if (fpIR != NULL) {
         dk_curModel.posIdx = posIdx;

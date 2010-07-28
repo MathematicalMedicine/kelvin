@@ -38,6 +38,7 @@ char *likelihoodVersion = "$Id$";
 #include "../database/databaseSupport.h"
 #include "../database/StudyDB.h"
 extern struct StudyDB studyDB;
+extern double lociSetTransitionPositions[];
 #endif
 
 //extern FILE *fpCond;
@@ -401,9 +402,19 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 
     double lowPosition, highPosition, pedTraitPosCM;
     char pedigreeSId[33];
+    Locus **pMyLocusList;
 
-    // &&& TBS - compute our range of served positions for the current set of loci
-    lowPosition = 0.0; highPosition = 150.0;
+    /* Find our range of served positions for the current set of loci. We've already suborned the
+       modelRange->tloc vector so there are only exemplar trait positions. All we need to do is
+       fetch the next lower and higer transition positions from lociSetTransitionPositions.
+    */
+    lowPosition = -9999.99;
+    fprintf (stderr, "0 is %G and 1 is %g\n", lociSetTransitionPositions[0], lociSetTransitionPositions[0]);
+    if (dk_curModel.posIdx != 0)
+      lowPosition = lociSetTransitionPositions[dk_curModel.posIdx - 1];
+    highPosition = 9999.99;
+    if (dk_curModel.posIdx != modelRange->ntloc)
+      highPosition = lociSetTransitionPositions[dk_curModel.posIdx];
 
     while (GetDWork(lowPosition, highPosition, &pedTraitPosCM, pedigreeSId, &dk_curModel.dgf,
 		    &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
@@ -413,10 +424,22 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 		    &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
 		    &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
 
-      // &&& TBS - convert the pedTraitPosCM into two theta values and store in a 'victim' dk_curModel.posIdx
-      // &&& TBS - set the pPedigree according to the pedigreeSId
+      /* &&& TBS - convert the pedTraitPosCM into two theta values and store in a 'victim' dk_curModel.posIdx. I _have_
+	 to do this because we'll never see the exact positions required by map interpolation if maps differ. */
 
-      pPedigree = pPedigreeList->ppPedigreeSet[0]; // BOGUS
+      printf ("There are %d loci in the analysis\n", analysisLocusList->numLocus);
+      printf ("Trait locus index should be at %d or %d in...\n", analysisLocusList->traitLocusIndex, analysisLocusList->traitOrigLocus);
+      for (i=0; i<analysisLocusList->numLocus; i++)
+	printf ("index for locus %d is %d, prev dist is %G, next dist is %G\n", i, analysisLocusList->pLocusIndex[i],
+		analysisLocusList->pPrevLocusDistance[i][0], analysisLocusList->pNextLocusDistance[i][0]);
+
+      pMyLocusList = originalLocusList.ppLocusList;
+      
+      // Find the pedigree in the set
+      if ((pPedigree = find_pedigree(pPedigreeList, pedigreeSId)) == NULL)
+	ERROR ("Got work for unexpected pedigree %s", pedigreeSId);
+
+      // Compute the likelihood
       if (modelOptions->polynomial == TRUE) {
 	/* Make sure the polynomial we need exists. */
 	if (pPedigree->likelihoodPolynomial == NULL)
@@ -426,7 +449,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	initialize_multi_locus_genotype (pPedigree);
 	status = compute_pedigree_likelihood (pPedigree);
       }
-      PutWork (/* &&& TBS */ 7, pPedigree->likelihood);
+      PutWork (modelType->numMarkers + originalLocusList.numTraitLocus, pPedigree->likelihood);
     }
     // Clean up by faking all results
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
