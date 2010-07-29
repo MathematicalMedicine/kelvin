@@ -32,7 +32,10 @@ my $platform = platform_name ();
 my ($directive, $args, $arg);
 my $configFile;
 my $dataset;
+my @kelvinargs = ();
 my $family;
+my @familycache = ();
+my $tmppedfile = undef;
 my $idx = 0;
 my $debug = 0;
 my $href;
@@ -42,7 +45,8 @@ my $ret;
 my %freqState = ( estimate => 1, xchr => 0, prevalence => 0, qt => 0, affected => 2,
 		  kelvinargs => []);
 my %countState = ( countable => 1, alwayswrite => 0, cleanup => 0, imprinting => 0,
-		   pedigreefile => undef, countfile => undef, xchr => 0 );
+		   pedigreefile => undef, countfile => undef, xchr => 0, precounted => 0,
+		   postcounted => 0);
 my %epiState = ( passes => 0, extramods => 0, ld => 0, multipoint => 0, trait => undef, 
 		 undefpheno => undef, xchr => 0, sequpdateargs => [] );
 
@@ -100,11 +104,20 @@ while ($family = $dataset->readFamily) {
 	epistasis_family (\%epiState, $family);
     } elsif ($countState{countable}) {
 	count_family (\%countState, $family);
+    } else {
+	if ($family->origfmt eq 'pre' && ! $tmppedfile) {
+	    $tmppedfile = $dataset->pedigreefile . ".autopost";
+	    push (@kelvinargs, "--PedigreeFile", $tmppedfile);
+	}
+	push (@familycache, $family);
     }
 }
 (! defined ($family)) and error ($KelvinDataset::errstr);
-#print Dumper (\%countState);
 
+if ($tmppedfile) {
+    $dataset->writePedigreefile ({pedigreefile => $tmppedfile});
+    map { $_->write } @familycache;
+}
 ($freqState{estimate}) and finish_frequency_estimation (\%freqState, $dataset);
 
 if ($epiState{passes}) {
@@ -117,12 +130,13 @@ if ($epiState{passes}) {
     if ($config->isConfigured ("SkipAnalysis")) {
 	warner ("Skipping analysis.\n");
     } else {
-	(($ret = system ($KELVIN_BINARY, $configFile, @ARGV, @{$freqState{kelvinargs}}, @{$countState{kelvinargs}})) != 0)
+	(($ret = system ($KELVIN_BINARY, $configFile, @ARGV, @{$freqState{kelvinargs}}, @{$countState{kelvinargs}}, @kelvinargs)) != 0)
 	    and error ("$KELVIN_BINARY failed, ", ($ret == -1) ? "$!" : "status $?");
 	if ($countState{countable}) {
 	    remove ($countState{countfile});
 	    ($countState{cleanup}) and remove ($countState{pedigreefile});
 	}
+	($tmppedfile) and remove ($tmppedfile);
     }
 }
 
@@ -195,6 +209,9 @@ sub count_family
     my $aref;
     my ($va, $vb);
 
+    # If families in the input dataset are pre-makeped, we must write a new pedfile
+    ($family->origfmt eq 'pre') and $$state{alwayswrite} = 1;
+
     # We don't count general pedigrees, no way, no how. Save family to write out later.
     if ($family->pedtype eq 'general') {
 	push (@{$$state{uncountedpeds}}, $family);
@@ -216,14 +233,17 @@ sub count_family
 	    $aref = $$kids[0]->getGenotype ($$state{markers}[$va]);
 	    $geno = ($$aref[0] le $$aref[1]) ? $$aref[0] . $$aref[1] : $$aref[1] . $$aref[0];
 	    $key = equivalentkey ("_C" . $geno . $kidkeys[0]);
+	    $$state{precounted}++;
 	    
 	    if (! exists ($$state{counts}[$va]{$key})) {
 		$$state{counts}[$va]{$key} = 1;
-		$$state{pedlabels}{$key} = 1;
+		$$state{postcounted}++;
 	    } else {
 		$$state{counts}[$va]{$key}++;
-		$$state{pedlabels}{$key} = $$state{counts}[$va]{$key};
 	    }
+	    (! exists $$state{pedlabels}{$key} ||
+	     $$state{pedlabels}{$key} < $$state{counts}[$va]{$key})
+		and $$state{pedlabels}{$key} = $$state{counts}[$va]{$key};
 	}
 	
     } else {
@@ -260,13 +280,17 @@ sub count_family
 	    }
 	    $key = '_N'. $key . join ('', sort (@kids));
 	    $key = equivalentkey ($key);
+	    $$state{precounted}++;
+
 	    if (! exists ($$state{counts}[$va]{$key})) {
 		$$state{counts}[$va]{$key} = 1;
-		$$state{pedlabels}{$key} = 1;
+		$$state{postcounted}++;
 	    } else {
 		$$state{counts}[$va]{$key}++;
-		$$state{pedlabels}{$key} = $$state{counts}[$va]{$key};
 	    }
+	    (! exists $$state{pedlabels}{$key} ||
+	     $$state{pedlabels}{$key} < $$state{counts}[$va]{$key})
+		and $$state{pedlabels}{$key} = $$state{counts}[$va]{$key};
 	}
     }
 }
@@ -274,7 +298,6 @@ sub count_family
 sub write_pedcount
 {
     my ($state, $dataset, $opennewfile) = @_;
-    my $countedsome = 0;
     my @pedlabels = ();
     my $counts;
     my $family;
@@ -288,16 +311,19 @@ sub write_pedcount
     if ($dataset->microsats) {
 	$$state{countable} = 0;
 	warner ("Microsatellites detected, disabling pedigree counting");
+    } elsif ($$state{postcounted} >= $$state{precounted}) {
+	$$state{countable} = 0;
+	warner ("Pedigree counting results in no savings, disabling");
+    } elsif ($$state{precounted} / scalar (@{$$state{markers}}) < scalar (keys (%{$$state{pedlabels}}))) {
+	# This compares the number of potentially countable pedigrees against the number
+	# of pedigreee patterns. If the former is less, it's (currently) cheaper to just
+	# analyze the uncounted pedigrees.
+	$$state{countable} = 0;
+	warner ("Pedigree counting will not result in savings, disabling");
     } else {
-	foreach $key (keys (%{$$state{pedlabels}})) {
-	    ($$state{pedlabels}{$key} > 1) and $countedsome = 1;
-	}
-	if (! $countedsome) {
-	    $$state{countable} = 0;
-	    warner ("Pedigree counting results in no savings, disabling");
-	}
+	printf ("Pedigree counting reduces evaluations from $$state{precounted} to $$state{postcounted} (%.2f%%)\n", (1 - $$state{postcounted} / $$state{precounted}) * 100);
     }
-
+    
     if ($$state{countable}) {
 	$$state{countfile} = $$state{pedigreefile} . ".counts";
 	@pedlabels = sort {by_len ($a, $b)} (keys (%{$$state{pedlabels}}));
@@ -1198,6 +1224,8 @@ sub warner
 #   imprinting => boolean,
 #   pedigreefile => scalar,
 #   xchr => boolean,
+#   precounted => int,
+#   postcounted => int,
 #   countedpeds => [ KelvinFamily,
 #                    ...
 #                  ],

@@ -25,7 +25,7 @@ sub new
 
     @$family{qw/pedid pedtype count founders nonfounders/} = (undef, undef, 0, 0, 0);
     @$family{qw/founderpairs multmarriages individuals/} = (0, 0, []);
-    @$family{qw/dad mom kids/} = (undef, undef, undef);
+    @$family{qw/dad mom kids origfmt/} = (undef, undef, undef, undef);
     
     unless (scalar (@$aref) > 0) {
 	$errstr = "array of individuals is empty";
@@ -50,10 +50,14 @@ sub new
 	    return (undef);
 	}
     }
-    
+
     @{$$family{individuals}} = @$aref;
     if ($$aref[0]{makeped} eq 'pre') {
 	$family->makeped or return (undef);
+	$$family{origfmt} = 'pre';
+    } else {
+	($$family{count} == 1 || $family->verify_links) or return (undef);
+	$$family{origfmt} = 'post';
     }
     
     defined ($traits = $dataset->traitOrder)
@@ -132,7 +136,7 @@ sub new_from_count
 
     @$family{qw/pedid pedtype count founders nonfounders/} = ($pedid, undef, 0, 0, 0);
     @$family{qw/founderpairs multmarriages individuals/} = (0, 0, []);
-    @$family{qw/dad mom kids/} = (undef, undef, undef);
+    @$family{qw/dad mom kids origfmt/} = (undef, undef, undef, 'post');
 
     $$family{count} = scalar (@$individuals);
     if ($$family{count} == 1) {
@@ -183,7 +187,7 @@ sub map
     
     map {
 	$$new{$_} = $$self{$_};
-    } qw/pedid pedtype count founders nonfounders founderpairs multmarriages/;
+    } qw/pedid pedtype count founders nonfounders founderpairs multmarriages origfmt/;
 
     $$new{individuals} = [];
     for ($va = 0; $va < $$self{count}; $va++) {
@@ -233,6 +237,109 @@ sub dataset
     return ($$self{individuals}[0]{dataset});
 }
 
+# Verify the parental, offspring and sibling links in a post-makeped family.
+sub verify_links
+{
+    my ($self) = @_;
+    my %hash;
+    my $ind;
+    my ($pedid, $indid, $dadid, $momid, $firstchildid, $patsibid, $matsibid, $sex);
+
+    foreach $ind (@{$$self{individuals}}) {
+	($pedid, $indid, $dadid, $momid, $firstchildid, $patsibid, $matsibid, $sex) = 
+	    @$ind{qw/pedid indid dadid momid firstchildid patsibid matsibid sex/};
+	foreach ($indid, $firstchildid, $patsibid, $matsibid) {
+	    ($_ ne 0 && ! exists ($hash{$_}))
+		and $hash{$_} = {sex => undef, dadid => undef, momid => undef,
+				 prevpatsib => undef, prevmatsib => undef, isfirstchild => undef};
+	}
+	if (defined ($hash{$indid}{sex})) {
+	    $errstr = "pedid $pedid, person $indid appears more than once";
+	    return (undef);
+	}
+	@{$hash{$indid}}{qw/dadid momid sex/} = ($dadid, $momid, $sex);
+
+	($firstchildid ne '0') and $hash{$firstchildid}{isfirstchild} = 1;
+	($patsibid ne '0') and $hash{$patsibid}{prevpatsib} = $indid;
+	($matsibid ne '0') and $hash{$matsibid}{prevmatsib} = $indid;
+    }
+
+    foreach $ind (@{$$self{individuals}}) {
+	($pedid, $indid) = @$ind{qw/pedid indid/};
+	if ($$ind{dadid} eq '0') {
+	    # Founder. KelvinIndividual guarantees that if dad is undefined, mom is also
+	    if ($$ind{firstchildid} eq '0') {
+		$errstr = "pedid $pedid, person $indid is a founder with no children";
+		return (undef);
+	    } elsif (! exists ($hash{$$ind{firstchildid}})) {
+		$errstr = "pedid $pedid, person $indid missing child $$ind{firstchildid}";
+		return (undef);
+	    }
+	} else {
+	    # Non-founder
+	    if (! exists ($hash{$$ind{dadid}})) {
+		$errstr = "pedid $pedid, person $indid missing father $$ind{dadid}";
+		return (undef);
+	    } elsif ($$ind{dadid} eq $indid) {
+		$errstr = "pedid $pedid, person $indid is coded as their own father";
+		return (undef);
+	    } elsif ($hash{$$ind{dadid}}{sex} != 1) {
+		$errstr = "pedid $pedid, person $indid father $$ind{dadid} is not coded as male";
+		return (undef);
+	    }
+	    if (! exists ($hash{$$ind{momid}})) {
+		$errstr = "pedid $pedid, person $indid missing mother $$ind{momid}";
+		return (undef);
+	    } elsif ($$ind{momid} eq $indid) {
+		$errstr = "pedid $pedid, person $indid is coded as it's own mother";
+		return (undef);
+	    } elsif ($hash{$$ind{momid}}{sex} != 2) {
+		$errstr = "pedid $pedid, person $indid mother $$ind{momid} is not coded as female";
+		return (undef);
+	    }
+	    if (! $hash{$indid}{isfirstchild}) {
+		if (! defined ($hash{$indid}{prevpatsib})) {
+		    $errstr = "pedid $pedid, person $indid is not coded as either a first child or a paternal sibling to other children";
+		    return (undef);
+		}
+		if (! defined ($hash{$indid}{prevmatsib})) {
+		    $errstr = "pedid $pedid, person $indid is not coded as either a first child or a maternal sibling to other children";
+		    return (undef);
+		}
+	    }
+	}
+	if ($$ind{firstchildid} eq $indid) {
+	    $errstr = "pedid $pedid, person $indid is coded as their own child";
+	    return (undef);
+	}
+	if ($$ind{patsibid} ne '0') {
+	    if (! exists ($hash{$$ind{patsibid}})) {
+		$errstr = "pedid $pedid, person $indid missing sibling $$ind{patsibid}";
+		return (undef);
+	    } elsif ($$ind{patsibid} eq $indid) {
+		$errstr = "pedid $pedid, person $indid is coded as their own sibling";
+		return (undef);
+	    } elsif ($$ind{dadid} ne $hash{$$ind{patsibid}}{dadid}) {
+		$errstr = "pedid $pedid, person $indid and paternal sibling $$ind{patsibid} have different fathers";
+		return (undef);
+	    }
+	}
+	if ($$ind{matsibid} ne '0') {
+	    if (! exists ($hash{$$ind{matsibid}})) {
+		$errstr = "pedid $pedid, person $indid missing sibling $$ind{matsibid}";
+		return (undef);
+	    } elsif ($$ind{matsibid} eq $indid) {
+		$errstr = "pedid $pedid, person $indid is coded is it's own sibling";
+		return (undef);
+	    } elsif ($$ind{momid} ne $hash{$$ind{matsibid}}{momid}) {
+		$errstr = "pedid $pedid, person $indid and maternal sibling $$ind{matsibid} have different mothers";
+		return (undef);
+	    }
+	}
+    }
+    return (1);
+}
+
 # This is an incomplete implementation of MAKEPED. It doesn't handle loops, and it
 # always sets the proband to the first founder. Other than that, it should handle
 # general pedigrees, multiple marriages, multiple founder pairs, etc.
@@ -245,8 +352,9 @@ sub makeped
     my ($pedid, $indid, $dadid, $momid, $kidid);
 
     # Sort individuals such that no one precedes their parents 
-    ($$self{count} > 1)
-	and $self->sort_family;
+    if ($$self{count} > 1) {
+	$self->sort_family or return (undef);
+    }
 
     for ($va = 0; $va < scalar (@{$$self{individuals}}); $va++) {
 	$individual = $$self{individuals}[$va];
@@ -255,9 +363,13 @@ sub makeped
 	    return (undef);
 	}
 	($pedid, $indid, $dadid, $momid) = @$individual{qw/pedid indid dadid momid/};
-	
+
+	if (exists ($hash{$indid})) {
+	    $errstr = "pedid $pedid, person $indid appears more than once";
+	    return (undef);
+	}
 	$hash{$indid} = { newid => $va+1, kids => [0], sex => $$individual{sex} };
-	if ($dadid eq '0' && $momid eq '0') { 
+	if ($dadid eq '0') { 
 	    @{$hash{$indid}}{qw/founder patkididx matkididx/} = (1, undef, undef);
 	} else {
 	    if (! exists ($hash{$dadid})) {
@@ -325,6 +437,10 @@ sub sort_family
 
     foreach $individual (@{$$self{individuals}}) {
 	push (@arr, $$individual{indid});
+	if (exists ($famhash{$$individual{indid}})) {
+	    $errstr = "pedid $$individual{pedid}, person $$individual{indid} appears more than once";
+	    return (undef);
+	}
 	$famhash{$$individual{indid}} = $individual;
 	$descendants{$$individual{indid}} = 1;
     }
@@ -403,6 +519,13 @@ sub pedtype
     my ($self) = @_;
 
     return ($$self{pedtype});
+}
+
+sub origfmt
+{
+    my ($self) = @_;
+
+    return ($$self{origfmt});
 }
 
 sub dad
@@ -499,6 +622,19 @@ sub new
 	    $errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: unexpected number of columns, can't guess format";
 	    return (undef);
 	}
+    }
+
+    if ($$ind{pedid} eq '0') {
+	$errstr = "$$dataset{pedigreefile}, $line $$dataset{pedlineno}: illegal pedigree ID '0'";
+	return undef;
+    }
+    if ($$ind{indid} eq '0') {
+	$errstr = "$$dataset{pedigreefile}, $line $$dataset{pedlineno}: illegal person ID '0'";
+	return undef;
+    }
+    if (($$ind{dadid} eq '0') != ($$ind{momid} eq '0')) {
+	$errstr = "pedid $$ind{pedid}, person $$ind{indid} parents must both be either known or unknown";
+	return (undef);
     }
     
     foreach $trait (@{$$dataset{traitorder}}) {
@@ -712,13 +848,6 @@ sub founder
     my ($self) = @_;
 
     return ($$self{dadid} eq '0' && $$self{momid} eq '0');
-}
-
-sub pedtype
-{
-    my ($self) = @_;
-
-    return ($$self{pedtype});
 }
 
 sub structure
