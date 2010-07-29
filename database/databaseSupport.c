@@ -331,7 +331,7 @@ void SignOn (char *pedigreeRegEx, int chromosomeNo, char *algorithm, int markerC
 
 }
 
-int GetDWork (int lowPosition, int highPosition, double *pedTraitPosCM, char *pedigreeSId, double *dGF,
+int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, char *pedigreeSId, double *dGF,
 	      double *lC1BigPen, double *lC1BigLittlePen, double *lC1LittleBigPen, double *lC1LittlePen,
 	      double *lC2BigPen, double *lC2BigLittlePen, double *lC2LittleBigPen, double *lC2LittlePen,
 	      double *lC3BigPen, double *lC3BigLittlePen, double *lC3LittleBigPen, double *lC3LittlePen)
@@ -343,7 +343,7 @@ int GetDWork (int lowPosition, int highPosition, double *pedTraitPosCM, char *pe
 
   // GetWork
   if (mysql_stmt_execute (studyDB.stmtGetWork))
-    ERROR("Cannot execute GetWork statement w/%d, %d, (%s, %s)", 
+    ERROR("Cannot execute GetWork statement w/%G, %G, (%s, %s)", 
 	  lowPosition, highPosition,
 	  mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
 
@@ -367,9 +367,11 @@ int GetDWork (int lowPosition, int highPosition, double *pedTraitPosCM, char *pe
     INFO ("No more work!");
     return FALSE;
   } else {
+    /*
     INFO ("Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G",
 	  studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, 
 	  studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);
+    */
     strcpy (pedigreeSId, studyDB.pedigreeSId);
     *pedTraitPosCM = studyDB.pedTraitPosCM;
     *dGF = studyDB.dGF;
