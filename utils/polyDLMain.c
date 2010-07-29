@@ -1,4 +1,4 @@
-#ifdef NOTKELVIN
+#ifdef NOKELVIN
 
 int main () {
   int i;
