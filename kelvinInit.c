@@ -154,14 +154,6 @@ void kelvinInit (int argc, char *argv[])
 
   fillConfigDefaults (modelRange, modelOptions, modelType);
 
-#ifdef STUDYDB
-
-  DETAIL(0,"Opening study database");
-  initializeDB ();
-  if (toupper(*studyDB.role) != 'C')
-    SignOn ("^[1-5]$", /* &&& TBS */ 40, "ES", modelType->numMarkers, programVersion);
-#endif
-
   if (modelOptions->polynomial == TRUE) {
     INFO ("Computation is done in polynomial mode");
 #ifdef POLYUSE_DL
@@ -357,6 +349,13 @@ void kelvinInit (int argc, char *argv[])
       }
     }
   }
+#ifdef STUDYDB
+
+  DETAIL(0,"Opening study database");
+  initializeDB ();
+  if (toupper(*studyDB.role) != 'C')
+    SignOn ("^[1-5]$", originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "ES", modelType->numMarkers, programVersion);
+#endif
 
   /* Enable handling of segmentation faults/bus errors due to configuration monkeying */
   setupSegvHandler ();
