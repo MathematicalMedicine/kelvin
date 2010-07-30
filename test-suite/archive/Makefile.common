@@ -6,7 +6,7 @@
 # before you resubmit.
 
 # This is the "base" name of the set of binaries to test. It will be built-upon, e.g. $(BASE_KELVIN)-normal.
-BASE_KELVIN=~/kelvin/trunk/kelvin-2.1.0
+BASE_KELVIN=../../../kelvin-2.1.0
 
 # Set of tests that can use the "subroutine" ($(testrun):) below.
 testrun = normal POLYCOMP_DL POLYUSE_DL # no_GSL 
@@ -28,9 +28,9 @@ else
 	# I have to use $(if) here because ifeq is evaluated at parse time and not when rules are run
 	$(if $(findstring $@,POLYCOMP_DL), -rm -rf *.so compiled)
 	date >>runtimes-$@ ; (time ($(BASE_KELVIN)-$@ kelvin.conf --bayes br.out-$@ --ppl ppl.out-$@ >kelvin.out-$@ 2>&1) 2>&1) | tee -a kelvin.out-$@ >> runtimes-$@
-	perl ~/kelvin/trunk/utils/wordDiff.pl br.out-$@ br.out-baseline .0002
+	perl ../../../utils/wordDiff.pl br.out-$@ br.out-baseline .0002
   ifeq ($(wildcard ppl.out),ppl.out)
-	perl ~/kelvin/trunk/utils/wordDiff.pl ppl.out-$@ ppl.out-baseline .0002
+	perl ../../../utils/wordDiff.pl ppl.out-$@ ppl.out-baseline .0002
   endif
         # Make sure we don't accumulate too much information
 	- tail -1000 runtimes-$@ >fewerRuntimes-$@
@@ -48,9 +48,9 @@ else
 	- rm -rf *.out-NonPE MAKE-*NonPE
 	- touch MAKE-RUNNING-NonPE
 	date >>runtimes-NonPE ; (time ($(BASE_KELVIN) kelvin.conf --bayes br.out-NonPE --ppl ppl.out-NonPE --NonPolynomial  >kelvin.out-NonPE 2>&1) 2>&1) | tee -a kelvin.out-NonPE >> runtimes-NonPE
-	perl ~/kelvin/trunk/utils/wordDiff.pl br.out-NonPE br.out-baseline .0002
+	perl ../../../utils/wordDiff.pl br.out-NonPE br.out-baseline .0002
   ifeq ($(wildcard ppl.out),ppl.out)
-	perl ~/kelvin/trunk/utils/wordDiff.pl ppl.out-NonPE ppl.out-baseline .0002
+	perl ../../../utils/wordDiff.pl ppl.out-NonPE ppl.out-baseline .0002
   endif
         # Make sure we don't accumulate too much information
 	- tail -1000 runtimes-NonPE >fewerRuntimes
@@ -61,4 +61,4 @@ else
 endif
 
 clean :
-	- rm -rf adhoc.* kelvin_*_memory.dat MAKE-* *.so compiled
+	- rm -rf adhoc.* kelvin_*_memory.dat MAKE-* *.so compiled *compiling *linking kelvin.out-POLY*
