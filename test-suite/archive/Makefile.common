@@ -6,7 +6,7 @@
 # before you resubmit.
 
 # This is the "base" name of the set of binaries to test. It will be built-upon, e.g. $(BASE_KELVIN)-normal.
-BASE_KELVIN=~/kelvin/trunk/kelvin-0.38.2
+BASE_KELVIN=~/kelvin/trunk/kelvin-2.1.0
 
 # Set of tests that can use the "subroutine" ($(testrun):) below.
 testrun = normal POLYCOMP_DL POLYUSE_DL # no_GSL 
