@@ -127,12 +127,12 @@ KELVIN_SCRIPT := $(KELVIN_ROOT)/Kelvin
 SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
 
 # If we're building in an svn-managed context, get AND preserve the latest svn version
-SVNVERSION := $(subst exported,,$(shell svnversion 2>/dev/null))
-ifeq ("$(strip $(SVNVERSION))","")
+#SVNVERSION := $(subst exported,,$(shell svnversion 2>/dev/null))
+#ifeq ("$(strip $(SVNVERSION))","")
   SVNVERSION := $(shell cat .svnversion)
-else
-  UPDATE_SVNVERSION := $(shell echo $(SVNVERSION) >.svnversion)
-endif
+#else
+#  UPDATE_SVNVERSION := $(shell echo $(SVNVERSION) >.svnversion)
+#endif
 
 INCFLAGS := -I$(INCDIR)
 
@@ -213,7 +213,12 @@ dist :
 	ln test-suite/seq_update/Makefile kelvin-$(VERSION)/test-suite/seq_update
 	ln test-suite/seq_update/d-2pt-le/* kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
 	mkdir kelvin-$(VERSION)/doc
-	ln doc/*.html doc/*.png doc/*.gif doc/*.txt kelvin-$(VERSION)/doc
+	ln doc/*.html doc/*.png doc/*.gif kelvin-$(VERSION)/doc
+	html2text -rcfile doc/html2text.rc doc/index.html >kelvin-$(VERSION)/doc/index.html
+	html2text -rcfile doc/html2text.rc doc/Directives.html >kelvin-$(VERSION)/doc/Directives.html
+	html2text -rcfile doc/html2text.rc doc/Allocators.html >kelvin-$(VERSION)/doc/Allocators.html
+	html2text -rcfile doc/html2text.rc doc/SSDSupport.html >kelvin-$(VERSION)/doc/SSDSupport.html
+	html2text -rcfile doc/html2text.rc doc/compiledPolys.html >kelvin-$(VERSION)/doc/compiledPolys.html
 	tar -hcvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
 	rm -rf kelvin-$(VERSION)
 
