@@ -127,12 +127,12 @@ KELVIN_SCRIPT := $(KELVIN_ROOT)/Kelvin
 SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
 
 # If we're building in an svn-managed context, get AND preserve the latest svn version
-#SVNVERSION := $(subst exported,,$(shell svnversion 2>/dev/null))
-#ifeq ("$(strip $(SVNVERSION))","")
+SVNVERSION := $(subst exported,,$(shell svnversion 2>/dev/null))
+ifeq ("$(strip $(SVNVERSION))","")
   SVNVERSION := $(shell cat .svnversion)
-#else
-#  UPDATE_SVNVERSION := $(shell echo $(SVNVERSION) >.svnversion)
-#endif
+else
+  UPDATE_SVNVERSION := $(shell echo $(SVNVERSION) >.svnversion)
+endif
 
 INCFLAGS := -I$(INCDIR)
 
@@ -212,13 +212,16 @@ dist :
 	mkdir -p kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
 	ln test-suite/seq_update/Makefile kelvin-$(VERSION)/test-suite/seq_update
 	ln test-suite/seq_update/d-2pt-le/* kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
+	mkdir -p kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
+	ln test-suite/frontend/Makefile kelvin-$(VERSION)/test-suite/frontend
+	ln test-suite/frontend/KelvinClasses/* kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
 	mkdir kelvin-$(VERSION)/doc
+	html2text -rcfile doc/html2text.rc doc/index.html >kelvin-$(VERSION)/doc/index.txt
+	html2text -rcfile doc/html2text.rc doc/Directives.html >kelvin-$(VERSION)/doc/Directives.txt
+	html2text -rcfile doc/html2text.rc doc/Allocators.html >kelvin-$(VERSION)/doc/Allocators.txt
+	html2text -rcfile doc/html2text.rc doc/SSDSupport.html >kelvin-$(VERSION)/doc/SSDSupport.txt
+	html2text -rcfile doc/html2text.rc doc/compiledPolys.html >kelvin-$(VERSION)/doc/compiledPolys.txt
 	ln doc/*.html doc/*.png doc/*.gif kelvin-$(VERSION)/doc
-	html2text -rcfile doc/html2text.rc doc/index.html >kelvin-$(VERSION)/doc/index.html
-	html2text -rcfile doc/html2text.rc doc/Directives.html >kelvin-$(VERSION)/doc/Directives.html
-	html2text -rcfile doc/html2text.rc doc/Allocators.html >kelvin-$(VERSION)/doc/Allocators.html
-	html2text -rcfile doc/html2text.rc doc/SSDSupport.html >kelvin-$(VERSION)/doc/SSDSupport.html
-	html2text -rcfile doc/html2text.rc doc/compiledPolys.html >kelvin-$(VERSION)/doc/compiledPolys.html
 	tar -hcvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
 	rm -rf kelvin-$(VERSION)
 
