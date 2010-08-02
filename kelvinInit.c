@@ -2,6 +2,8 @@
 #include <float.h>      // Limits for floating point
 
 #include <pthread.h>    // For memory-use tracking
+#include <ctype.h>      // For toupper
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -354,8 +356,7 @@ void kelvinInit (int argc, char *argv[])
   DETAIL(0,"Opening study database");
   initializeDB ();
   if (toupper(*studyDB.role) != 'C')
-    //    SignOn (/* &&& */ "^[1-5]$", originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "ES", modelType->numMarkers, programVersion);
-    SignOn (/* &&& */ ".*", originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "ES", modelType->numMarkers, programVersion);
+    SignOn (/* &&& */ "^[1-5]$", originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "ES", modelType->numMarkers, programVersion);
 #endif
 
   /* Enable handling of segmentation faults/bus errors due to configuration monkeying */

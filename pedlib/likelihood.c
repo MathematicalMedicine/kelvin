@@ -330,6 +330,8 @@ int build_likelihood_polynomial (Pedigree * pPedigree)
 
 #ifdef STUDYDB
 
+int original_compute_likelihood (PedigreeSet * pPedigreeList);
+
 /* Alternative version of compute_likelihood to handle LOD server. We might as well have
    a completely different version since we can't do the OMP work. */
 int compute_likelihood (PedigreeSet * pPedigreeList) {
@@ -347,6 +349,15 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
                          * counts mainly for case control analyses */
   int ret = 0;
   long myPedPosId;
+
+  // We only want to work with combined likelihood, so reject single locus, or non-trait models
+
+  if ((analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
+      || (analysisLocusList->numLocus == 1)) { // Trait likelihood
+    INFO ("Bailing w/tLI %d and numLocus %d\n", analysisLocusList->traitLocusIndex == -1,
+	  analysisLocusList->numLocus == 1); 
+    return original_compute_likelihood (pPedigreeList);
+  }
 
   if (analysisLocusList->numLocus > 1)
     origLocus = analysisLocusList->pLocusIndex[1];
@@ -369,8 +380,8 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       
       myPedPosId = GetPedPosId (pPedigree->sPedigreeID, 40, KROUND(modelRange->tloc[dk_curModel.posIdx]));
-      if ((pPedigree->likelihood = GetDLOD (myPedPosId,
-			  dk_curModel.dgf, pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+      if ((pPedigree->likelihood = GetDLOD (myPedPosId, pLocus->pAlleleFrequency[0],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
 			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
 			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
 			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
@@ -392,6 +403,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       }
       sum_log_likelihood += log10Likelihood;
     }
+    pPedigreeList->likelihood = product_likelihood;
+    pPedigreeList->log10Likelihood = sum_log_likelihood;
+    return ret;
+    
   } else {
 
     /*
@@ -403,15 +418,14 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 
     double traitPosition, lowPosition, highPosition, pedTraitPosCM;
     char pedigreeSId[33];
-
+    
     /* Find our range of served positions for the current set of loci. We've already suborned the
        modelRange->tloc vector so there are only exemplar trait positions. All we need to do is
        fetch the next lower and higer transition positions from lociSetTransitionPositions.
     */
 
     traitPosition = modelRange->tloc[dk_curModel.posIdx];
-    if ((traitPosition != lastTraitPosition) && // Only do work if this is a new position...
-	(analysisLocusList->traitLocusIndex != -1)) { // ...and not a marker likelihood
+    if (traitPosition != lastTraitPosition) { // Only do work if this is a new position
 
       lastTraitPosition = traitPosition;
 
@@ -421,11 +435,11 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       highPosition = 9999.99;
       if (dk_curModel.posIdx != (modelRange->ntloc - 1))
 	highPosition = lociSetTransitionPositions[dk_curModel.posIdx];
-
+      /*
       fprintf (stderr, "Driver trait position is %G, lowPosition is %G and highPosition is %g\n", traitPosition,
 	       lowPosition, highPosition);
-
-      while (GetDWork(lowPosition, highPosition, &pedTraitPosCM, pedigreeSId, &dk_curModel.dgf,
+      */
+      while (GetDWork(lowPosition, highPosition, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
@@ -433,9 +447,21 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
 	
+	
+	// We've stored DGF, now compute dGF (made that up!)
+	pLocus->pAlleleFrequency[1] = 1 - pLocus->pAlleleFrequency[0];
+
+	// We've stored the affected penetrance. Use it to compute unaffected
+	for (i=0; i<modelRange->nlclass; i++) {
+	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][0];
+	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][1];
+	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0];
+	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1];
+	}
+
 	/* &&& TBS - convert the pedTraitPosCM into two theta values and overwrite the analysisLocusList trait entry. We have
 	   to do this because we'll never see the exact positions required by map interpolation if maps differ. */
-
+	/*
 	printf ("Driver trait position is %G, work trait position is %G, lowPosition is %G and highPosition is %g\n", traitPosition,
 		pedTraitPosCM, lowPosition, highPosition);
 
@@ -443,7 +469,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	for (i=0; i<analysisLocusList->numLocus; i++)
 	  printf ("\tindex for locus %d is %d, prev dist is %G, next dist is %G\n", i, analysisLocusList->pLocusIndex[i],
 		  analysisLocusList->pPrevLocusDistance[0][i], analysisLocusList->pNextLocusDistance[0][i]);
-
+	*/
 	originalLocusList.ppLocusList[0]->pTraitLocus->mapPosition[0] = pedTraitPosCM; // Set position on originalLocusList just to be sure.
 
 	if (analysisLocusList->traitLocusIndex != 0) {
@@ -463,12 +489,12 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	    analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex];
 	} else
 	  analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex] = -1;
-
+	/*
 	printf ("Post-conversion:\n");
 	for (i=0; i<analysisLocusList->numLocus; i++)
 	  printf ("\tindex for locus %d is %d, prev dist is %G, next dist is %G\n", i, analysisLocusList->pLocusIndex[i],
 		  analysisLocusList->pPrevLocusDistance[0][i], analysisLocusList->pNextLocusDistance[0][i]);
-
+	*/
 	// Find the pedigree in the set
 	if ((pPedigree = find_pedigree(pPedigreeList, pedigreeSId)) == NULL)
 	  ERROR ("Got work for unexpected pedigree %s", pedigreeSId);
@@ -484,6 +510,13 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	  status = compute_pedigree_likelihood (pPedigree);
 	}
 	PutWork (modelType->numMarkers + originalLocusList.numTraitLocus, pPedigree->likelihood);
+
+	fprintf (stderr, "Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => LOD %.4g\n", 
+		 pedTraitPosCM, pLocus->pAlleleFrequency[0],
+		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0],
+		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1],
+		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+		 pPedigree->likelihood);
       }
     }
 
@@ -502,16 +535,21 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       }
       sum_log_likelihood += log10Likelihood;
     }
+    pPedigreeList->likelihood = product_likelihood;
+    pPedigreeList->log10Likelihood = sum_log_likelihood;
+    return ret;
   }
-  pPedigreeList->likelihood = product_likelihood;
-  pPedigreeList->log10Likelihood = sum_log_likelihood;
-  return ret;
 }
+
+/* the main API to compute likelihood for all pedigrees in a data set */
+int original_compute_likelihood (PedigreeSet * pPedigreeList)
 
 #else
 
 /* the main API to compute likelihood for all pedigrees in a data set */
 int compute_likelihood (PedigreeSet * pPedigreeList)
+
+#endif
 {
   Pedigree *pPedigree;
   int i;
@@ -584,6 +622,14 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
         initialize_multi_locus_genotype (pPedigree);
         status = compute_pedigree_likelihood (pPedigree);
       }
+
+	fprintf (stderr, "Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => LOD %.4g\n", 
+		 modelRange->tloc[dk_curModel.posIdx], pLocus->pAlleleFrequency[0],
+		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0],
+		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1],
+		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+		 pPedigree->likelihood);
+
       if (modelOptions->dryRun == 0) {
         if (pPedigree->likelihood == 0.0) {
 	  if (!modelRange->atypicalQtTrait)
@@ -626,8 +672,6 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
   DIAG (LIKELIHOOD, 1, {fprintf (stderr, "Sum of log Likelihood is: %e\n", sum_log_likelihood);});
   return ret;
 }
-
-#endif
 
 /* release polynomial for all pedigrees */
 void pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList)
