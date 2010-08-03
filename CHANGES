@@ -1,3 +1,17 @@
+Version 2.1.0
+  07/30/2010
+  First release of Kelvin front-end Perl script, which provides new functionality:
+    1. Handlling pre-MAKEPED pedigree files.
+    2. Automatic pedigree counting (without a separate step).
+    3. Automatic allele frequency estimation
+    4. Epistasis analyses
+  Kelvin binary:
+    1. Automatic reduction of empty liability classes.
+    2. Map file columns are identified by headers, rather than fixed order.
+    3. Improved warnings, errors and sanity checking.
+  Sequential updating:
+    1. Linkage results can be used to provide prior probabilities for LD results.
+
 Version 0.38.1
   06/15/2010 (Dprime,theta) values for LD analysis are changed. 
   The number of values increase from 141 to 271. 
