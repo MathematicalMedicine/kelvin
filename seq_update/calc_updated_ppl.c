@@ -750,11 +750,11 @@ void print_twopoint_headers (int no_ld)
     } else if (! allstats) {
       fprintf (pplout, "Chr Trait Marker Position PPLD(L) iPPL iPPLD(L)\n");
       if (bfout != NULL)
-	fprintf (bfout, "Chr Trait Marker Position PPLD(L) iPPLD(L)\n");
+	fprintf (bfout, "Chr Trait Marker Position PPLD(L) cPPLD\n");
     } else {
-      fprintf (pplout, "Chr Trait Marker Position PPL PPL(LD) PPLD|L PPLD(L) iPPL iPPLD(L)\n");
+      fprintf (pplout, "Chr Trait Marker Position PPL PPL(LD) PPLD|L PPLD(L) iPPL cPPLD\n");
       if (bfout != NULL)
-	fprintf (bfout, "Chr Trait Marker Position PPL(LD) PPLD|L PPLD(L) iPPLD(L)\n");
+	fprintf (bfout, "Chr Trait Marker Position PPL(LD) PPLD|L PPLD(L) cPPLD\n");
     }
   }
   if (sixout != NULL)

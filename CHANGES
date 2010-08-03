@@ -9,6 +9,8 @@ Version 2.1.0
     1. Automatic reduction of empty liability classes.
     2. Map file columns are identified by headers, rather than fixed order.
     3. Improved warnings, errors and sanity checking.
+  Sequential updating:
+    1. Linkage results can be used to provide prior probabilities for LD results.
 
 Version 0.38.1
   06/15/2010 (Dprime,theta) values for LD analysis are changed. 
