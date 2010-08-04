@@ -11,6 +11,7 @@ struct StudyDB {
   char dBName[MAXPARAMLEN];
   char username[MAXPARAMLEN];
   char password[MAXPARAMLEN];
+  char pedigreeRegEx[33];
   MYSQL *connection;
   // Adhoc...
   char strAdhocStatement[MAXSTMTLEN];
@@ -54,7 +55,6 @@ struct StudyDB {
   MYSQL_STMT *stmtSignOn;
   MYSQL_BIND bindSignOn[6];
   char strSignOn[MAXSTMTLEN];
-  char pedigreeRegEx[33];
   char algorithm[3];
   char programVersion[33];
   int serverId;

@@ -60,7 +60,7 @@ void initializeDB () {
   else {
     if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
       ERROR("Cannot fetch study information (%s)", mysql_error(studyDB.connection));
-    INFO ("Storing/retrieving results under study %d (%s)", studyDB.studyId, studyDB.row[0]);
+    //    INFO ("Storing/retrieving results under study %d (%s)", studyDB.studyId, studyDB.row[0]);
   }
   dBInitNotDone = FALSE;
 }
@@ -283,22 +283,21 @@ double GetDLOD (int pedPosId, double dGF,
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
 
   if (*studyDB.bindGetDLODResults[2].is_null) {
-    INFO ("In RegionId %d, LOD is NULL", studyDB.regionId);
+    //    INFO ("In RegionId %d, LOD is NULL", studyDB.regionId);
     return -1LL;
   } else {
-    INFO ("In RegionId %d, LOD is %G", studyDB.regionId, studyDB.lOD);
+    //    INFO ("In RegionId %d, LOD is %G", studyDB.regionId, studyDB.lOD);
     return studyDB.lOD;
   }
 }
 
-void SignOn (char *pedigreeRegEx, int chromosomeNo, char *algorithm, int markerCount, char *programVersion) {
+void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVersion) {
 
   if (dBStmtsNotReady)
     prepareDBStatements ();
 
-  // studyId is already set
-  strncpy (studyDB.pedigreeRegEx, pedigreeRegEx, 32);
-  *studyDB.bindSignOn[1].length = strlen(pedigreeRegEx);
+  // studyId and pedigreeRegEx are already set, but pedigreeRegEx needs size set
+  *studyDB.bindSignOn[1].length = strlen(studyDB.pedigreeRegEx);
   studyDB.chromosomeNo = chromosomeNo;
   strncpy (studyDB.algorithm, algorithm, 2);
   *studyDB.bindSignOn[3].length = strlen(algorithm);
@@ -308,7 +307,7 @@ void SignOn (char *pedigreeRegEx, int chromosomeNo, char *algorithm, int markerC
 
   if (mysql_stmt_execute (studyDB.stmtSignOn))
     ERROR("Cannot execute sign-on insert statement w/%d, '%s', %d, '%s', %d, '%s' (%s, %s)", 
-	  studyDB.studyId, pedigreeRegEx, chromosomeNo, algorithm, markerCount, programVersion,
+	  studyDB.studyId, studyDB.pedigreeRegEx, chromosomeNo, algorithm, markerCount, programVersion,
 	  mysql_stmt_error(studyDB.stmtSignOn), mysql_stmt_sqlstate(studyDB.stmtSignOn));
 
   /* Sigh...we really do need the serverId for logging, otherwise I'd let it be yet another
@@ -367,11 +366,9 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
     INFO ("No more work!");
     return FALSE;
   } else {
-    /*
-    INFO ("Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G",
-	  studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, 
-	  studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);
-    */
+    //    INFO ("Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G",
+    //	  studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, 
+    //	  studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);
     strcpy (pedigreeSId, studyDB.pedigreeSId);
     *pedTraitPosCM = studyDB.pedTraitPosCM;
     *dGF = studyDB.dGF;
@@ -404,6 +401,8 @@ void PutWork (int markerCount, double lOD)
 	  markerCount, lOD,
 	  mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork));
   
+  //  INFO ("Put work stored LOD of %.8g\n", lOD);
+
 }
 
 #ifdef MAIN
@@ -411,7 +410,7 @@ void PutWork (int markerCount, double lOD)
 /*
 
 gcc -g -o test databaseSupport.c ../utils/libklvnutls.a -DMAIN -lmysqlclient -lpthread -I/usr/include/mysql -L/usr/lib64/mysql/
-./test 1 mcclintock dev adminDev foobar
+./test 1 mcclintock dev adminDev foobar '.*'
 
 
 */
@@ -431,6 +430,7 @@ int main (int argc, char *argv[]) {
   strcpy (studyDB.dBName, argv[3]);
   strcpy (studyDB.username, argv[4]);
   strcpy (studyDB.password, argv[5]);
+  strcpy (studyDB.pedigreeRegEx, argv[6]);
 
   // Annotated calls...
 
@@ -449,7 +449,7 @@ int main (int argc, char *argv[]) {
   GetDLOD (6, .3, .71, .42, .44, .13, -1, 0, 0, 0, -1, 0, 0, 0, 1);
   GetDLOD (7, .3, .71, .42, .44, .13, .71, .42, .42, .13, -1, 0, 0, 0, 1);
 
-  SignOn (".*", 40, "ES", 4, "Test driver");
+  SignOn (40, "ES", 4, "Test driver");
 
   while (GetDWork (0, 10, &pedTraitPosCM, pedigreeSId, &dGF, &lC1DD, &lC1Dd, &lC1dD, &lC1dd,
 		   &lC2DD, &lC2Dd, &lC2dD, &lC2dd, &lC3DD, &lC3Dd, &lC3dD, &lC3dd)) {

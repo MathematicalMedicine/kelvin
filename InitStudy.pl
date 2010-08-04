@@ -79,8 +79,8 @@ sub perform_study
 {
     my ($config) = @_;
 
-    $ {$config->isConfigured ("Study")}[0] =~ /(\d+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)/;
-    my $StudyId = $1; my $StudyRole = lc($2); my $DBIHost = $3; my $DBIDatabase = $4; my $Username = $5; my $Password = $6;
+    $ {$config->isConfigured ("Study")}[0] =~ /(\d+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+/;
+    my $StudyId = $1; my $StudyRole = lc($2); my $DBIHost = $3; my $DBIDatabase = $4; my $Username = $5; my $Password = $6; my $PedigreeRegEx = $7;
     my $DBIConnectionString = "mysql:host=$DBIHost:database=$DBIDatabase";
     my $MapId; my $LiabilityClasses = 1; my $ImprintingFlag = 'n';
 
@@ -90,7 +90,7 @@ sub perform_study
 
     my $dbh;
     until ($dbh = DBI->connect("dbi:$DBIConnectionString", $Username, $Password,
-			       { RaiseError => 0, PrintError => 0, AutoCommit => 1 })) {
+			       { RaiseError => 0, PrintError => 1, AutoCommit => 1 })) {
 	sleep(5);
 	warn "Cannot connect to $DBIDatabase: $DBI::errstr, retrying!";
     }
@@ -144,9 +144,11 @@ sub perform_study
 
     # Get list of PedigreeSIds by reading the pedigree file. Add if we're a client, update if we're a server
 
-    while (my $ped = $dataset->readFamily) { 
+    my $ped;
+    while ($ped = $dataset->readFamily) { 
 #	print Dumper($ped);
 	my $PedigreeSId = $$ped{pedid};
+	print "PEDIGREE $PedigreeSId...\n";
 	if ($StudyRole eq "client") {
 	    # Client -- just slam 'em in, don't care if this fails with duplicates...
 	    $dbh->do("Insert into Pedigrees (StudyId, PedigreeSId) values (?,?)",
@@ -157,6 +159,7 @@ sub perform_study
 		     undef, $MapId, $PedigreeSId);
 	}
     }
+    (! defined ($ped)) and error ($KelvinDataset::errstr);
 
     if ($StudyRole eq "server") {
 	$dbh->do("call BadScaling(?)", undef, $StudyId);

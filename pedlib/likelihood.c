@@ -511,7 +511,8 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	}
 	PutWork (modelType->numMarkers + originalLocusList.numTraitLocus, pPedigree->likelihood);
 
-	fprintf (stderr, "Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => LOD %.4g\n", 
+	fprintf (stderr, "Ped: %s, Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => LOD %.4g\n", 
+		 pPedigree->sPedigreeID,
 		 pedTraitPosCM, pLocus->pAlleleFrequency[0],
 		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0],
 		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1],
@@ -623,13 +624,17 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
         status = compute_pedigree_likelihood (pPedigree);
       }
 
-	fprintf (stderr, "Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => LOD %.4g\n", 
-		 modelRange->tloc[dk_curModel.posIdx], pLocus->pAlleleFrequency[0],
-		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0],
-		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1],
-		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-		 pPedigree->likelihood);
+#ifdef STUDYDB
 
+      fprintf (stderr, "Ped: %s, Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => LOD %.4g\n", 
+	       pPedigree->sPedigreeID,
+	       modelRange->tloc[dk_curModel.posIdx], pLocus->pAlleleFrequency[0],
+	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0],
+	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1],
+	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+	       pPedigree->likelihood);
+
+#endif
       if (modelOptions->dryRun == 0) {
         if (pPedigree->likelihood == 0.0) {
 	  if (!modelRange->atypicalQtTrait)
