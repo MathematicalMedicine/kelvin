@@ -385,9 +385,6 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       
       myPedPosId = GetPedPosId (pPedigree->sPedigreeID, 40, KROUND(modelRange->tloc[dk_curModel.posIdx]));
 
-      if (s->sbrgns > 0)
-	printf ("There are %d subregions\n",  s->sbrgns);
-
       if ((pPedigree->likelihood = GetDLOD (myPedPosId, pLocus->pAlleleFrequency[0],
 			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
 			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
@@ -468,17 +465,8 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1];
 	}
 
-	/* &&& TBS - convert the pedTraitPosCM into two theta values and overwrite the analysisLocusList trait entry. We have
+	/* Convert the pedTraitPosCM into two theta values and overwrite the analysisLocusList trait entry. We have
 	   to do this because we'll never see the exact positions required by map interpolation if maps differ. */
-	/*
-	printf ("Driver trait position is %G, work trait position is %G, lowPosition is %G and highPosition is %g\n", traitPosition,
-		pedTraitPosCM, lowPosition, highPosition);
-
-	printf ("Pre-conversion:\n");
-	for (i=0; i<analysisLocusList->numLocus; i++)
-	  printf ("\tindex for locus %d is %d, prev dist is %G, next dist is %G\n", i, analysisLocusList->pLocusIndex[i],
-		  analysisLocusList->pPrevLocusDistance[0][i], analysisLocusList->pNextLocusDistance[0][i]);
-	*/
 	originalLocusList.ppLocusList[0]->pTraitLocus->mapPosition[0] = pedTraitPosCM; // Set position on originalLocusList just to be sure.
 
 	if (analysisLocusList->traitLocusIndex != 0) {
@@ -498,12 +486,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	    analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex];
 	} else
 	  analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex] = -1;
-	/*
-	printf ("Post-conversion:\n");
-	for (i=0; i<analysisLocusList->numLocus; i++)
-	  printf ("\tindex for locus %d is %d, prev dist is %G, next dist is %G\n", i, analysisLocusList->pLocusIndex[i],
-		  analysisLocusList->pPrevLocusDistance[0][i], analysisLocusList->pNextLocusDistance[0][i]);
-	*/
+
 	// Find the pedigree in the set
 	if ((pPedigree = find_pedigree(pPedigreeList, pedigreeSId)) == NULL)
 	  ERROR ("Got work for unexpected pedigree %s", pedigreeSId);
@@ -515,6 +498,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	    build_likelihood_polynomial (pPedigree);
 	  evaluatePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, &pPedigree->likelihood);
 	} else {
+	  // As usual, assume the traitLocus is the first entry in the pedigree list...
+	  update_penetrance (pPedigreeList, 0);
+	  update_locus (pPedigreeList, 0);
+	  populate_xmission_matrix (xmissionMatrix, analysisLocusList->numLocus, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 	  initialize_multi_locus_genotype (pPedigree);
 	  status = compute_pedigree_likelihood (pPedigree);
 	}
