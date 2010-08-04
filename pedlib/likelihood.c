@@ -28,6 +28,10 @@ char *likelihoodVersion = "$Id$";
 #include "../utils/sw.h"
 #include "likelihood.h"
 #include "genotype_elimination.h"
+
+#include "../dcuhre.h"
+extern dcuhre_state *s;
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -380,13 +384,18 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       
       myPedPosId = GetPedPosId (pPedigree->sPedigreeID, 40, KROUND(modelRange->tloc[dk_curModel.posIdx]));
+
+      if (s->sbrgns > 0)
+	printf ("There are %d subregions\n",  s->sbrgns);
+
       if ((pPedigree->likelihood = GetDLOD (myPedPosId, pLocus->pAlleleFrequency[0],
 			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
 			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
 			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
 			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
 			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
-			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1], 1)) == -1) {
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
+					    s->sbrgns)) == -1) {
 	// Bogus result
 	studyDB.bogusLODs++;
 	pPedigree->likelihood = .05;
@@ -625,7 +634,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
       }
 
 #ifdef STUDYDB
-
+      /*
       fprintf (stderr, "Ped: %s, Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => LOD %.4g\n", 
 	       pPedigree->sPedigreeID,
 	       modelRange->tloc[dk_curModel.posIdx], pLocus->pAlleleFrequency[0],
@@ -633,7 +642,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
 	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1],
 	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
 	       pPedigree->likelihood);
-
+      */
 #endif
       if (modelOptions->dryRun == 0) {
         if (pPedigree->likelihood == 0.0) {

@@ -27,6 +27,7 @@ struct StudyDB {
   MYSQL_BIND bindGetPedPosIdResults[1];
   int pedPosId;
   // GetDLOD...
+  int posEvals;
   MYSQL_STMT *stmtGetDLOD;
   MYSQL_BIND bindGetDLOD[15];
   char strGetDLOD[MAXSTMTLEN];
