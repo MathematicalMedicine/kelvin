@@ -334,6 +334,7 @@ int build_likelihood_polynomial (Pedigree * pPedigree)
 
 #ifdef STUDYDB
 
+// Function definition for what we turn the old compute_likelihood into.
 int original_compute_likelihood (PedigreeSet * pPedigreeList);
 
 /* Alternative version of compute_likelihood to handle LOD server. We might as well have
@@ -356,11 +357,17 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 
   // We only want to work with combined likelihood, so reject single locus, or non-trait models
 
-  if ((analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
-      || (analysisLocusList->numLocus == 1)) { // Trait likelihood
-    INFO ("Bailing w/tLI %d and numLocus %d\n", analysisLocusList->traitLocusIndex == -1,
-	  analysisLocusList->numLocus == 1); 
-    return original_compute_likelihood (pPedigreeList);
+  if (analysisLocusList->numLocus == 1) { // Trait likelihood
+    int ret;
+    ret = original_compute_likelihood (pPedigreeList);
+    DIAG (LODSERVER, 1, {fprintf (stderr, "Normal trait likelihood is %.4g\n", pPedigreeList->likelihood);});
+    return ret;
+  }
+  if (analysisLocusList->traitLocusIndex == -1) { // Marker set likelihood
+    int ret;
+    ret = original_compute_likelihood (pPedigreeList);
+    DIAG (LODSERVER, 1, {fprintf (stderr, "Normal marker set likelihood is %.4g\n", pPedigreeList->likelihood);});
+    return ret;
   }
 
   if (analysisLocusList->numLocus > 1)
@@ -396,6 +403,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	// Bogus result
 	studyDB.bogusLODs++;
 	pPedigree->likelihood = .05;
+
       } else {
 	studyDB.realLODs++;
       }
@@ -411,6 +419,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
     }
     pPedigreeList->likelihood = product_likelihood;
     pPedigreeList->log10Likelihood = sum_log_likelihood;
+    DIAG (LODSERVER, 1, {fprintf (stderr, "Client returning bogosity of %d, likelihood of %.4g\n", studyDB.bogusLODs, pPedigreeList->likelihood);});
     return ret;
     
   } else {
@@ -441,10 +450,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       highPosition = 9999.99;
       if (dk_curModel.posIdx != (modelRange->ntloc - 1))
 	highPosition = lociSetTransitionPositions[dk_curModel.posIdx];
-      /*
+
       fprintf (stderr, "Driver trait position is %G, lowPosition is %G and highPosition is %g\n", traitPosition,
 	       lowPosition, highPosition);
-      */
+
       while (GetDWork(lowPosition, highPosition, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
@@ -459,10 +468,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 
 	// We've stored the affected penetrance. Use it to compute unaffected
 	for (i=0; i<modelRange->nlclass; i++) {
-	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][0];
-	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][1];
-	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0];
-	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1];
+	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][0];
+	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][1];
+	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][0];
+	  pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][1];
 	}
 
 	/* Convert the pedTraitPosCM into two theta values and overwrite the analysisLocusList trait entry. We have
@@ -499,21 +508,23 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	  evaluatePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, &pPedigree->likelihood);
 	} else {
 	  // As usual, assume the traitLocus is the first entry in the pedigree list...
-	  update_penetrance (pPedigreeList, 0);
+	  // We will want to change the next two calls to do the updates only for a single pedigree
 	  update_locus (pPedigreeList, 0);
+	  update_penetrance (pPedigreeList, 0);
 	  populate_xmission_matrix (xmissionMatrix, analysisLocusList->numLocus, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 	  initialize_multi_locus_genotype (pPedigree);
 	  status = compute_pedigree_likelihood (pPedigree);
 	}
 	PutWork (modelType->numMarkers + originalLocusList.numTraitLocus, pPedigree->likelihood);
 
-	fprintf (stderr, "Ped: %s, Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => LOD %.4g\n", 
-		 pPedigree->sPedigreeID,
-		 pedTraitPosCM, pLocus->pAlleleFrequency[0],
-		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0],
-		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1],
-		 pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-		 pPedigree->likelihood);
+	DIAG (LODSERVER, 1, { \
+	    fprintf (stderr, "Ped: %s, Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => AltL %.4g\n", \
+		     pPedigree->sPedigreeID, \
+		     pedTraitPosCM, pLocus->pAlleleFrequency[0], \
+		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], \
+		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], \
+		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1], \
+		     pPedigree->likelihood);});
       }
     }
 
@@ -534,6 +545,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
     }
     pPedigreeList->likelihood = product_likelihood;
     pPedigreeList->log10Likelihood = sum_log_likelihood;
+    DIAG (LODSERVER, 1, {fprintf (stderr, "Server returning likelihood of %.4g\n", pPedigreeList->likelihood);});
     return ret;
   }
 }
@@ -620,17 +632,15 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
         status = compute_pedigree_likelihood (pPedigree);
       }
 
-#ifdef STUDYDB
-      /*
-      fprintf (stderr, "Ped: %s, Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => LOD %.4g\n", 
-	       pPedigree->sPedigreeID,
-	       modelRange->tloc[dk_curModel.posIdx], pLocus->pAlleleFrequency[0],
-	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0],
-	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1],
-	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-	       pPedigree->likelihood);
-      */
-#endif
+      DIAG (LODSERVER, 1, { \
+      fprintf (stderr, "Ped: %s, Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => AltL %.4g (normal)\n", \
+	       pPedigree->sPedigreeID, \
+	       modelRange->tloc[dk_curModel.posIdx], pLocus->pAlleleFrequency[0], \
+	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], \
+	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], \
+	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1], \
+	       pPedigree->likelihood);});
+
       if (modelOptions->dryRun == 0) {
         if (pPedigree->likelihood == 0.0) {
 	  if (!modelRange->atypicalQtTrait)
@@ -951,14 +961,21 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
     /* save the likelihood in the pedigree structure */
     pPedigree->likelihood = likelihood;
     DIAG (LIKELIHOOD, 1, {fprintf (stderr, "log Likelihood for pedigree %s is: %e\n", pPedigree->sPedigreeID, log10 (likelihood));});
-    //    if ((modelOptions->loopCondRun == 1 || modelOptions->conditionalRun == 1)
-    //        && modelOptions->polynomial != TRUE) {
-      //      for (k = 0; k < condIdx; k++) {
-      //        fprintf (fpCond, "%s %s %d %s %s %e %5.1f%%\n", pCondSet[k].pPedigreeID, pCondSet[k].pProbandID, (int) pCondSet[k].trait, pCondSet[k].pAllele1, pCondSet[k].pAllele2, pCondSet[k].condL, pCondSet[k].condL / sumCondL * 100);
-      //      }
-    //    }
+    /* I don't think fpCond is in any kind of shape anymore...
+    if ((modelOptions->loopCondRun == 1 || modelOptions->conditionalRun == 1) && modelOptions->polynomial != TRUE)
+      for (k = 0; k < condIdx; k++)
+        fprintf (fpCond, "%s %s %d %s %s %e %5.1f%%\n", pCondSet[k].pPedigreeID, pCondSet[k].pProbandID,
+	(int) pCondSet[k].trait, pCondSet[k].pAllele1, pCondSet[k].pAllele2, pCondSet[k].condL, pCondSet[k].condL / sumCondL * 100);
+    */
   }
-
+  /*
+  if (analysisLocusList->numLocus == 1) // Trait likelihood
+    fprintf (stderr, "Leaving c_p_l with trait likelihood of %.12g\n", pPedigree->likelihood);
+  else if (analysisLocusList->traitLocusIndex == -1)
+    fprintf (stderr, "Leaving c_p_l with marker likelihood of %.12g\n", pPedigree->likelihood);
+  else
+    fprintf (stderr, "Leaving c_p_l with combined likelihood of %.12g\n", pPedigree->likelihood);
+  */
   return 0;
 }
 
