@@ -91,7 +91,7 @@ sub perform_study
 
     my $dbh;
     until ($dbh = DBI->connect("dbi:$DBIConnectionString", $Username, $Password,
-			       { RaiseError => 0, PrintError => 1, AutoCommit => 1 })) {
+			       { RaiseError => 1, PrintError => 1, AutoCommit => 1 })) {
 	sleep(5);
 	warn "Cannot connect to $DBIDatabase: $DBI::errstr, retrying!";
     }
@@ -104,7 +104,7 @@ sub perform_study
     $$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
     $$href{MapFile} = $ {$config->isConfigured ("MapFile")}[0];
     $dataset = KelvinDataset->new ($href)
-	or error ("KelvinDataset->new failed");
+	or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
 
     # We always want a full map whether it is for the client (ReferenceMap) or server (GenotypeMaps)
 
@@ -256,12 +256,14 @@ sub find_or_insert_map
     my @markerOrder = @{$$dataset{markerorder}};
     my $ChromosomeNo = $$dataset{chromosome};
     # Find or insert the markers. Marker names must be identical between maps for interpolation.
+    $dbh->{PrintError} = 0; $dbh->{RaiseError} = 0;
     foreach (@markerOrder) {
 	# Don't care if this fails...
 	$dbh->do("Insert into Markers (Name, ChromosomeNo) values (?,?)", undef, $_, $ChromosomeNo);
 	$dbh->do("Insert into MapMarkers (MapId, MarkerName, AvePosCM) values (?,?,?)",
 		 undef, $MapId, $_, $markers{$_}{avgpos});
     }
+    $dbh->{PrintError} = 1; $dbh->{RaiseError} = 1;
     return $MapId;
 }
 
