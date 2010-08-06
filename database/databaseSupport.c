@@ -341,10 +341,20 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
   studyDB.highPosition = highPosition;
 
   // GetWork
-  if (mysql_stmt_execute (studyDB.stmtGetWork))
-    ERROR("Cannot execute GetWork statement w/%G, %G, (%s, %s)", 
-	  lowPosition, highPosition,
-	  mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
+  while (1) {
+    if (mysql_stmt_execute (studyDB.stmtGetWork) != 0)
+    if (mysql_stmt_execute (studyDB.stmtPutWork) != 0)
+      if (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "40001") != 0)
+	ERROR("Cannot execute GetPut statement w/%G, %G, (%s, %s)", 
+	      lowPosition, highPosition,
+	      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
+      else {
+	fprintf (stderr, "...\n");
+	//	sleep(1);
+	continue;
+      }
+    break;
+  }    
 
   // Get DT parts - this uses the temporary variables in our session to get parameters from GetWork.
   if (mysql_stmt_execute (studyDB.stmtGetDParts))
@@ -396,10 +406,20 @@ void PutWork (int markerCount, double lOD)
   studyDB.lOD = lOD;
 
   // PutWork
-  if (mysql_stmt_execute (studyDB.stmtPutWork))
-    ERROR("Cannot execute GetPut statement w/%d, %G, (%s, %s)", 
-	  markerCount, lOD,
-	  mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork));
+  while (1) {
+    if (mysql_stmt_execute (studyDB.stmtPutWork) != 0)
+      if (strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") != 0)
+	ERROR("Cannot execute GetPut statement w/%d, %G, (%s, %s)", 
+	      markerCount, lOD,
+	      mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork));
+      else {
+	fprintf (stderr, "...\n");
+	//	sleep(1);
+	continue;
+      }
+    break;
+  }    
+
   
   //  INFO ("Put work stored LOD of %.8g\n", lOD);
 
