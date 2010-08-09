@@ -451,7 +451,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       if (dk_curModel.posIdx != (modelRange->ntloc - 1))
 	highPosition = lociSetTransitionPositions[dk_curModel.posIdx];
 
-      fprintf (stderr, "Driver trait position is %G, lowPosition is %G and highPosition is %g\n", traitPosition,
+      INFO ("Driver trait position is %G, lowPosition is %G and highPosition is %g\n", traitPosition,
 	       lowPosition, highPosition);
 
       while (GetDWork(lowPosition, highPosition, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
@@ -475,7 +475,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	}
 
 	/* Convert the pedTraitPosCM into two theta values and overwrite the analysisLocusList trait entry. We have
-	   to do this because we'll never see the exact positions required by map interpolation if maps differ. */
+	   to do this because we'll never see the exact positions required by map interpolation if maps differ. We
+	   only need to change the distances around the trait, which we'll do for one gender, and then copy to the
+	   other two.
+	*/
 	originalLocusList.ppLocusList[0]->pTraitLocus->mapPosition[0] = pedTraitPosCM; // Set position on originalLocusList just to be sure.
 
 	if (analysisLocusList->traitLocusIndex != 0) {
@@ -495,6 +498,14 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	    analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex];
 	} else
 	  analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex] = -1;
+	{
+	  int i, j;
+	  for (i=0; i<analysisLocusList->numLocus; i++)
+	    for (j=1; j<3; j++) {
+	      analysisLocusList->pPrevLocusDistance[j][i] = analysisLocusList->pPrevLocusDistance[0][i];
+	      analysisLocusList->pNextLocusDistance[j][i] = analysisLocusList->pNextLocusDistance[0][i];
+	    }
+	}
 
 	// Find the pedigree in the set
 	if ((pPedigree = find_pedigree(pPedigreeList, pedigreeSId)) == NULL)
@@ -511,6 +522,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	  // We will want to change the next two calls to do the updates only for a single pedigree
 	  update_locus (pPedigreeList, 0);
 	  update_penetrance (pPedigreeList, 0);
+	  // Theory has it that we only need to re-populate when loci change, but practice says no, always do it.
 	  populate_xmission_matrix (xmissionMatrix, analysisLocusList->numLocus, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 	  initialize_multi_locus_genotype (pPedigree);
 	  status = compute_pedigree_likelihood (pPedigree);
@@ -518,7 +530,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	PutWork (modelType->numMarkers + originalLocusList.numTraitLocus, pPedigree->likelihood);
 
 	DIAG (LODSERVER, 1, { \
-	    fprintf (stderr, "Ped: %s, Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => AltL %.4g\n", \
+	    fprintf (stderr, "Ped: %s, Pos: %.8g, DGF: %.8g, LC1DD: %.8g, LC1Dd: %.8g, LC1dd: %.8g => AltL %.8g\n", \
 		     pPedigree->sPedigreeID, \
 		     pedTraitPosCM, pLocus->pAlleleFrequency[0], \
 		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], \
@@ -633,7 +645,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
       }
 
       DIAG (LODSERVER, 1, { \
-      fprintf (stderr, "Ped: %s, Pos: %.4g, DGF: %.4g, LC1DD: %.4g, LC1Dd: %.4g, LC1dd: %.4g => AltL %.4g (normal)\n", \
+      fprintf (stderr, "Ped: %s, Pos: %.8g, DGF: %.8g, LC1DD: %.8g, LC1Dd: %.8g, LC1dd: %.8g => AltL %.8g (normal)\n", \
 	       pPedigree->sPedigreeID, \
 	       modelRange->tloc[dk_curModel.posIdx], pLocus->pAlleleFrequency[0], \
 	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], \
@@ -734,6 +746,13 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
   int k, l, j, condIdx, idx;
   Person *pLoopBreaker;
   LoopBreaker *loopStruct;
+
+  DIAG (LODSERVER, 1, {				\
+      int i;								\
+      fprintf (stderr, "analysisLocusList entry %d of %d is trait: ", analysisLocusList->traitLocusIndex, analysisLocusList->numLocus); \
+      for (i=0; i<analysisLocusList->numLocus; i++)			\
+	fprintf (stderr, "<%.6g[%d]%.6g>", analysisLocusList->pPrevLocusDistance[0][i], analysisLocusList->pLocusIndex[i], analysisLocusList->pNextLocusDistance[0][i]); \
+      fprintf (stderr, "\n");});
 
   condIdx = 0;
   sumCondL = 0;

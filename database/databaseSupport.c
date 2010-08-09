@@ -372,7 +372,7 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
   if (mysql_stmt_fetch (studyDB.stmtGetWorkResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
   if (*studyDB.bindGetWorkResults[0].is_null) {
-    DIAG (LODSERVER, 0, { fprintf (stderr, "No more work! (bindGetWorkResults)");});
+    DIAG (LODSERVER, 1, { fprintf (stderr, "No more work! (bindGetWorkResults)");});
     return FALSE;
   } else {
     DIAG (LODSERVER, 1, { \
