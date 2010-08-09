@@ -60,7 +60,7 @@ void initializeDB () {
   else {
     if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
       ERROR("Cannot fetch study information (%s)", mysql_error(studyDB.connection));
-    //    INFO ("Storing/retrieving results under study %d (%s)", studyDB.studyId, studyDB.row[0]);
+    DIAG (LODSERVER, 1, { fprintf (stderr, "Storing/retrieving results under study %d (%s)", studyDB.studyId, studyDB.row[0]);});
   }
   dBInitNotDone = FALSE;
 }
@@ -283,10 +283,10 @@ double GetDLOD (int pedPosId, double dGF,
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
 
   if (*studyDB.bindGetDLODResults[2].is_null) {
-    //    INFO ("In RegionId %d, LOD is NULL", studyDB.regionId);
+    DIAG (LODSERVER, 1, { fprintf (stderr, "In RegionId %d, LOD is NULL", studyDB.regionId);});
     return -1LL;
   } else {
-    //    INFO ("In RegionId %d, LOD is %G", studyDB.regionId, studyDB.lOD);
+    DIAG (LODSERVER, 1, { fprintf (stderr, "In RegionId %d, LOD is %G", studyDB.regionId, studyDB.lOD);});
     return studyDB.lOD;
   }
 }
@@ -325,7 +325,7 @@ void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVe
     if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
       ERROR("Cannot fetch LAST_SERVER_ID() (serverId) (%s)", mysql_error(studyDB.connection));
     studyDB.serverId = atoi(studyDB.row[0]);
-    INFO ("Signed on as serverId %d", studyDB.serverId);
+    DIAG (LODSERVER, 1, { fprintf (stderr, "Signed on as serverId %d", studyDB.serverId);});
   }
 
 }
@@ -342,17 +342,16 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
 
   // GetWork
   while (1) {
-    if (mysql_stmt_execute (studyDB.stmtGetWork) != 0)
-    if (mysql_stmt_execute (studyDB.stmtPutWork) != 0)
-      if (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "40001") != 0)
+    if (mysql_stmt_execute (studyDB.stmtPutWork) != 0) {
+      if (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "40001") != 0) {
 	ERROR("Cannot execute GetPut statement w/%G, %G, (%s, %s)", 
 	      lowPosition, highPosition,
 	      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
-      else {
-	fprintf (stderr, "...\n");
-	//	sleep(1);
+      } else {
+	swLogProgress(5, 0, "Retrying deadlock");
 	continue;
       }
+    }
     break;
   }    
 
@@ -373,12 +372,13 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
   if (mysql_stmt_fetch (studyDB.stmtGetWorkResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
   if (*studyDB.bindGetWorkResults[0].is_null) {
-    INFO ("No more work!");
+    DIAG (LODSERVER, 1, { fprintf (stderr, "No more work!");});
     return FALSE;
   } else {
-    //    INFO ("Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G",
-    //	  studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, 
-    //	  studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);
+    DIAG (LODSERVER, 1, { \
+	fprintf (stderr, "Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G", \
+		 studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
+		 studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);});
     strcpy (pedigreeSId, studyDB.pedigreeSId);
     *pedTraitPosCM = studyDB.pedTraitPosCM;
     *dGF = studyDB.dGF;
@@ -407,21 +407,20 @@ void PutWork (int markerCount, double lOD)
 
   // PutWork
   while (1) {
-    if (mysql_stmt_execute (studyDB.stmtPutWork) != 0)
-      if (strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") != 0)
+    if (mysql_stmt_execute (studyDB.stmtPutWork) != 0) {
+      if (strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") != 0) {
 	ERROR("Cannot execute GetPut statement w/%d, %G, (%s, %s)", 
 	      markerCount, lOD,
 	      mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork));
-      else {
+      } else {
 	fprintf (stderr, "...\n");
-	//	sleep(1);
+	swLogProgress(5, 0, "Retrying deadlock");
 	continue;
       }
+    }
     break;
   }    
-
-  
-  //  INFO ("Put work stored LOD of %.8g\n", lOD);
+  DIAG (LODSERVER, 1, { fprintf (stderr, "Put work stored LOD of %.8g\n", lOD);});
 
 }
 
