@@ -149,6 +149,34 @@ void prepareDBStatements () {
   if (mysql_stmt_bind_param (studyDB.stmtSignOn, studyDB.bindSignOn))
     ERROR("Cannot bind sign-on insert statement (%s)", mysql_stmt_error(studyDB.stmtSignOn));
 
+  // Prepare the CountWork call
+  studyDB.stmtCountWork = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindCountWork, 0, sizeof(studyDB.bindCountWork));
+
+  BINDNUMERIC (studyDB.bindCountWork[0], studyDB.serverId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindCountWork[1], studyDB.lowPosition, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindCountWork[2], studyDB.highPosition, MYSQL_TYPE_DOUBLE);
+
+  strncpy (studyDB.strCountWork, "call CountWork (?,?,?, @outWorkCount)", MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtCountWork, studyDB.strCountWork, strlen (studyDB.strCountWork)))
+    ERROR("Cannot prepare CountWork call statement (%s)", mysql_stmt_error(studyDB.stmtCountWork));
+  if (mysql_stmt_bind_param (studyDB.stmtCountWork, studyDB.bindCountWork))
+    ERROR("Cannot bind CountWork call statement (%s)", mysql_stmt_error(studyDB.stmtCountWork));
+
+  // Prepare the CountWork results call
+  studyDB.stmtCountWorkResults = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindCountWorkResults, 0, sizeof(studyDB.bindCountWorkResults));
+
+  BINDNUMERIC (studyDB.bindCountWorkResults[0], studyDB.workCount, MYSQL_TYPE_LONG);
+
+  strncpy (studyDB.strCountWorkResults, "Select @outWorkCount", MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtCountWorkResults, studyDB.strCountWorkResults, strlen (studyDB.strCountWorkResults)))
+    ERROR("Cannot prepare CountWorkResults call statement (%s)", mysql_stmt_error(studyDB.stmtCountWorkResults));
+  if (mysql_stmt_bind_result (studyDB.stmtCountWorkResults, studyDB.bindCountWorkResults))
+    ERROR("Cannot bind CountWorkResults call statement (%s)", mysql_stmt_error(studyDB.stmtCountWorkResults));
+
   // Prepare the GetWork call
   studyDB.stmtGetWork = mysql_stmt_init (studyDB.connection);
   memset (studyDB.bindGetWork, 0, sizeof(studyDB.bindGetWork));
@@ -328,6 +356,37 @@ void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVe
     DIAG (LODSERVER, 1, { fprintf (stderr, "Signed on as serverId %d", studyDB.serverId);});
   }
 
+}
+
+int CountWork (double lowPosition, double highPosition)
+{
+  // serverId is already set
+  studyDB.lowPosition = lowPosition;
+  studyDB.highPosition = highPosition;
+
+  // CountWork
+  while (1) {
+    if (mysql_stmt_execute (studyDB.stmtCountWork) != 0) {
+      if (strcmp (mysql_stmt_sqlstate(studyDB.stmtCountWork), "40001") != 0) {
+	ERROR("Cannot execute Count statement w/%G, %G, (%s, %s)", 
+	      lowPosition, highPosition,
+	      mysql_stmt_error(studyDB.stmtCountWork), mysql_stmt_sqlstate(studyDB.stmtCountWork));
+      } else {
+	swLogProgress(5, 0, "Retrying deadlock");
+	continue;
+      }
+    }
+    break;
+  }    
+  if (mysql_stmt_execute (studyDB.stmtCountWorkResults))
+    ERROR("Cannot execute CountWorkResults statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtCountWorkResults), mysql_stmt_sqlstate(studyDB.stmtCountWorkResults));
+  if (mysql_stmt_store_result (studyDB.stmtCountWorkResults) != 0)
+    ERROR("Cannot retrieve CountWork results (%s)", mysql_stmt_error(studyDB.stmtCountWorkResults));
+  if (mysql_stmt_fetch (studyDB.stmtCountWorkResults) != 0)
+    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtCountWorkResults));
+
+  return studyDB.workCount;
 }
 
 int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, char *pedigreeSId, double *dGF,

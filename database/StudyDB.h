@@ -59,6 +59,15 @@ struct StudyDB {
   char algorithm[3];
   char programVersion[33];
   int serverId;
+  // CountWork...
+  MYSQL_STMT *stmtCountWork;
+  MYSQL_BIND bindCountWork[3];
+  char strCountWork[MAXSTMTLEN];
+  // CountWorkResults
+  MYSQL_STMT *stmtCountWorkResults;
+  MYSQL_BIND bindCountWorkResults[16];
+  char strCountWorkResults[MAXSTMTLEN];
+  long workCount;
   // GetWork...
   MYSQL_STMT *stmtGetWork;
   MYSQL_BIND bindGetWork[3];

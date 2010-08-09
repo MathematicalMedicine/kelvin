@@ -7,6 +7,7 @@ double GetDLOD (int, double,
 		double, double, double, double,
 		int);
 void SignOn (int, char *, int, char *);
+int CountWork (double, double);
 int GetDWork (double, double, double *, char *, double *,
 	      double *, double *, double *, double *,
 	      double *, double *, double *, double *,

@@ -56,6 +56,7 @@ extern LDLoci *pLDLoci;
 
 #ifdef STUDYDB
 #include "database/StudyDB.h"
+#include "database/databaseSupport.h"
 extern struct StudyDB studyDB;
 
 #define MAXLSTP 4096
@@ -2487,10 +2488,31 @@ void integrateMain ()
         dk_curModel.posIdx = posIdx;
       }
 
-      SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d of %d", posIdx + 1, numPositions);
-
       /* positions listed are sex average positions */
       traitPos = modelRange->tloc[posIdx];
+
+#ifdef STUDYDB
+      
+    if (toupper(*studyDB.role) != 'C') {
+	// If we have models to work on, say how many, otherwise say we're skipping this position
+	double lowPosition  = -9999.99, highPosition = 9999.99;
+	int freeModels = 0;
+
+	if (dk_curModel.posIdx != 0)
+	  lowPosition = lociSetTransitionPositions[dk_curModel.posIdx - 1];
+	if (dk_curModel.posIdx != (modelRange->ntloc - 1))
+	  highPosition = lociSetTransitionPositions[dk_curModel.posIdx];
+
+	if ((freeModels = CountWork(lowPosition, highPosition)) == 0) {
+	  SUBSTEP (posIdx * 100 / numPositions, "Skipping position %d of %d (no work)", posIdx + 1, numPositions);
+	  continue;
+	} else
+	  SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d of %d (%d available models)", posIdx + 1, numPositions, freeModels);
+      }
+#else
+      SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d of %d", posIdx + 1, numPositions);
+#endif
+
       /* set the sex average position first 
        * the sex specific positions will be updated once markers are selected
        * as interpolation might be needed
