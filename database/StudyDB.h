@@ -13,6 +13,7 @@ struct StudyDB {
   char password[MAXPARAMLEN];
   char pedigreeRegEx[33];
   MYSQL *connection;
+  int driverPosIdx;
   // Adhoc...
   char strAdhocStatement[MAXSTMTLEN];
   MYSQL_RES *resultSet;

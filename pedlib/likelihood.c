@@ -390,7 +390,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       
-      myPedPosId = GetPedPosId (pPedigree->sPedigreeID, 40, KROUND(modelRange->tloc[dk_curModel.posIdx]));
+      myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, KROUND(modelRange->tloc[studyDB.driverPosIdx]));
 
       if ((pPedigree->likelihood = GetDLOD (myPedPosId, pLocus->pAlleleFrequency[0],
 			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
@@ -439,17 +439,17 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
        fetch the next lower and higer transition positions from lociSetTransitionPositions.
     */
 
-    traitPosition = modelRange->tloc[dk_curModel.posIdx];
+    traitPosition = modelRange->tloc[studyDB.driverPosIdx];
     if (traitPosition != lastTraitPosition) { // Only do work if this is a new position
 
       lastTraitPosition = traitPosition;
 
       lowPosition = -9999.99;
-      if (dk_curModel.posIdx != 0)
-	lowPosition = lociSetTransitionPositions[dk_curModel.posIdx - 1];
+      if (studyDB.driverPosIdx != 0)
+	lowPosition = lociSetTransitionPositions[studyDB.driverPosIdx - 1];
       highPosition = 9999.99;
-      if (dk_curModel.posIdx != (modelRange->ntloc - 1))
-	highPosition = lociSetTransitionPositions[dk_curModel.posIdx];
+      if (studyDB.driverPosIdx != (modelRange->ntloc - 1))
+	highPosition = lociSetTransitionPositions[studyDB.driverPosIdx];
 
       DIAG (LODSERVER, 1, { fprintf (stderr, "Driver trait position is %G, lowPosition is %G and highPosition is %g", traitPosition, lowPosition, highPosition);});
 
@@ -646,7 +646,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
       DIAG (LODSERVER, 1, { \
       fprintf (stderr, "Ped: %s, Pos: %.8g, DGF: %.8g, LC1DD: %.8g, LC1Dd: %.8g, LC1dd: %.8g => AltL %.8g (normal)\n", \
 	       pPedigree->sPedigreeID, \
-	       modelRange->tloc[dk_curModel.posIdx], pLocus->pAlleleFrequency[0], \
+	       modelRange->tloc[studyDB.driverPosIdx], pLocus->pAlleleFrequency[0], \
 	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], \
 	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], \
 	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1], \

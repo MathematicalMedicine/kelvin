@@ -2480,6 +2480,11 @@ void integrateMain ()
       modelRange->tloc = newTLoc;
       modelRange->ntloc = j+1;
       numPositions = j+1;
+
+      DIAG (LODSERVER, 1, { \
+	  for (i=0; i<numPositions; i++) \
+	    fprintf (stderr, "nTL[%d] is %.6g\n", i, newTLoc[i]);});
+
     }
 #endif
 
@@ -2493,24 +2498,26 @@ void integrateMain ()
 
 #ifdef STUDYDB
       
-    if (toupper(*studyDB.role) != 'C') {
+      studyDB.driverPosIdx = posIdx;
+
+      if (toupper(*studyDB.role) != 'C') {
 	// If we have models to work on, say how many, otherwise say we're skipping this position
 	double lowPosition  = -9999.99, highPosition = 9999.99;
 	int freeModels = 0;
 
-	if (dk_curModel.posIdx != 0)
-	  lowPosition = lociSetTransitionPositions[dk_curModel.posIdx - 1];
-	if (dk_curModel.posIdx != (modelRange->ntloc - 1))
-	  highPosition = lociSetTransitionPositions[dk_curModel.posIdx];
+	if (posIdx != 0)
+	  lowPosition = lociSetTransitionPositions[posIdx - 1];
+	if (posIdx != (modelRange->ntloc - 1))
+	  highPosition = lociSetTransitionPositions[posIdx];
 
 	if ((freeModels = CountWork(lowPosition, highPosition)) == 0) {
-	  SUBSTEP (posIdx * 100 / numPositions, "Skipping position %d of %d (no work)", posIdx + 1, numPositions);
+	  SUBSTEP (posIdx * 100 / numPositions, "Skipping position %d (%.4g) of %d (no work)", posIdx + 1, traitPos, numPositions);
 	  continue;
 	} else
-	  SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d of %d (%d available models)", posIdx + 1, numPositions, freeModels);
-      }
+	  SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4g) of %d (%d available models)", posIdx + 1, traitPos, numPositions, freeModels);
+    }
 #else
-      SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d of %d", posIdx + 1, numPositions);
+    SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4g) of %d", posIdx + 1, traitPos, numPositions);
 #endif
 
       /* set the sex average position first 
