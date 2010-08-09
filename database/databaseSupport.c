@@ -342,7 +342,7 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
 
   // GetWork
   while (1) {
-    if (mysql_stmt_execute (studyDB.stmtPutWork) != 0) {
+    if (mysql_stmt_execute (studyDB.stmtGetWork) != 0) {
       if (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "40001") != 0) {
 	ERROR("Cannot execute GetPut statement w/%G, %G, (%s, %s)", 
 	      lowPosition, highPosition,
@@ -372,7 +372,7 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
   if (mysql_stmt_fetch (studyDB.stmtGetWorkResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
   if (*studyDB.bindGetWorkResults[0].is_null) {
-    DIAG (LODSERVER, 1, { fprintf (stderr, "No more work!");});
+    DIAG (LODSERVER, 0, { fprintf (stderr, "No more work! (bindGetWorkResults)");});
     return FALSE;
   } else {
     DIAG (LODSERVER, 1, { \
