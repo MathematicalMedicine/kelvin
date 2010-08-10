@@ -402,6 +402,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 					    s->sbrgns)) == -1) {
 	// Bogus result
 	studyDB.bogusLODs++;
+	s->sbrg_heap[s->next_sbrg]->bogusAltLs++;
 	pPedigree->likelihood = .05;
 
       } else {

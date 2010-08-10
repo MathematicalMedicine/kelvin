@@ -372,7 +372,8 @@ int CountWork (double lowPosition, double highPosition)
 	      lowPosition, highPosition,
 	      mysql_stmt_error(studyDB.stmtCountWork), mysql_stmt_sqlstate(studyDB.stmtCountWork));
       } else {
-	swLogProgress(5, 0, "Retrying deadlock");
+	swLogProgress(5, 0, "Retrying deadlock in 1 second");
+	sleep(1);
 	continue;
       }
     }
@@ -407,7 +408,8 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
 	      lowPosition, highPosition,
 	      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
       } else {
-	swLogProgress(5, 0, "Retrying deadlock");
+	swLogProgress(5, 0, "Retrying deadlock in 1 second");
+	sleep(1);
 	continue;
       }
     }
@@ -473,7 +475,8 @@ void PutWork (int markerCount, double lOD)
 	      mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork));
       } else {
 	fprintf (stderr, "...\n");
-	swLogProgress(5, 0, "Retrying deadlock");
+	swLogProgress(5, 0, "Retrying deadlock in 1 second");
+	sleep(1);
 	continue;
       }
     }

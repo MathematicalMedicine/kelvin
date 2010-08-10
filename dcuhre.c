@@ -211,6 +211,7 @@ dadhre_ (dcuhre_state * s)
 
   cw_sbrg->region_id = 0;
   cw_sbrg->region_level = 0;
+  cw_sbrg->bogusAltLs = 0;
   MALCHOKE(cw_sbrg->center, sizeof (double) * s->ndim, double *);
   MALCHOKE(cw_sbrg->hwidth, sizeof (double) * s->ndim, double *);
   cw_sbrg->cur_scale = s->scale;
@@ -307,7 +308,21 @@ dadhre_ (dcuhre_state * s)
     //if ((s->result <0)||((s->diff_result[s->sbrgns - 1] > s->epsabs) && (real_error > s->epsabs))) {  // before 11/25/2008
     //  if (((s->result <0)|| (s->diff_result[s->sbrgns - 1] >= s->epsabs)) && ( (real_result <0.9)|| (real_error > s->epsabs) )){// adding s->result <0) on 3/23/2009
     // if ( (real_result <0.0)||((real_error > s->epsabs)&&(real_result >=0.214)) ){//for long run (error_est < error_tol)
+
+#ifdef STUDYDB
+
+    fprintf (stderr, "DCUHRE split about to be considered w/%d bogus results in evaluation for subregion %d...",
+	     s->sbrg_heap[s->next_sbrg]->region_id == 0 ? -1 : s->sbrg_heap[s->sbrg_heap[s->next_sbrg]->parent_id]->bogusAltLs,
+	     s->sbrg_heap[s->next_sbrg]->region_id);
+    if (
+	((s->sbrg_heap[s->next_sbrg]->region_id == 0) || (s->sbrg_heap[s->sbrg_heap[s->next_sbrg]->parent_id]->bogusAltLs == 0)) &&
+	(
+	 (real_result < 0.0) || ((real_error > s->epsabs) && (s->cur_diff_suc< s->aim_diff_suc) && (real_result >=0.214))
+	)
+       ) { //short and consecutive 2*nlclass of diff(BR)< error_tol
+#else
     if ( (real_result <0.0)||((real_error > s->epsabs)&&(s->cur_diff_suc< s->aim_diff_suc)&&(real_result >=0.214)) ){//short and consecutive 2*nlclass of diff(BR)< error_tol
+#endif
       /*   If we are allowed to divide further, */
       /*   prepare to apply basic rule over each half of the */
       /*   NDIV subregions with greatest errors. */
@@ -330,6 +345,7 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->parent_id = parent_sbrg->region_id;
       cw_sbrg->region_id = s->sbrgns;
       parent_sbrg->lchild_id = cw_sbrg->region_id;
+      cw_sbrg->bogusAltLs = 0;
       cw_sbrg->region_level = parent_sbrg->region_level + 1;
       MALCHOKE(cw_sbrg->center, sizeof (double) * s->ndim, double *);
       MALCHOKE(cw_sbrg->hwidth, sizeof (double) * s->ndim, double *);
@@ -343,6 +359,9 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->center[direct] += cw_sbrg->hwidth[direct];
       cw_sbrg->lchild_id = 0;
 
+#ifdef STUDYDB
+      fprintf (stderr, "DCUHRE split performed from parent %d, direction %d!\n", cw_sbrg->parent_id, parent_sbrg->dir);
+#endif
       if (s->verbose > 1) {
 	print_sbrg (cw_sbrg, s->ndim);
       }
@@ -367,6 +386,7 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->parent_id = parent_sbrg->region_id;
       cw_sbrg->region_id = s->sbrgns;
       parent_sbrg->rchild_id = cw_sbrg->region_id;
+      cw_sbrg->bogusAltLs = 0;
       cw_sbrg->region_level = parent_sbrg->region_level + 1;
       MALCHOKE(cw_sbrg->center, sizeof (double) * s->ndim, double *);
       MALCHOKE(cw_sbrg->hwidth, sizeof (double) * s->ndim, double *);
@@ -418,6 +438,9 @@ dadhre_ (dcuhre_state * s)
       }
       s->ifail = 1;
     } else {
+#ifdef STUDYDB
+      fprintf (stderr, "DCUHRE split averted!\n");
+#endif
       s->ifail = 0;
       break;
     }
