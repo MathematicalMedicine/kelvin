@@ -644,6 +644,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
         status = compute_pedigree_likelihood (pPedigree);
       }
 
+#ifdef STUDYDB
       DIAG (LODSERVER, 1, { \
       fprintf (stderr, "Ped: %s, Pos: %.8g, DGF: %.8g, LC1DD: %.8g, LC1Dd: %.8g, LC1dd: %.8g => AltL %.8g (normal)\n", \
 	       pPedigree->sPedigreeID, \
@@ -652,7 +653,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
 	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], \
 	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1], \
 	       pPedigree->likelihood);});
-
+#endif
       if (modelOptions->dryRun == 0) {
         if (pPedigree->likelihood == 0.0) {
 	  if (!modelRange->atypicalQtTrait)
