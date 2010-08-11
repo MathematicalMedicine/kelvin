@@ -2481,7 +2481,7 @@ void integrateMain ()
       modelRange->ntloc = j+1;
       numPositions = j+1;
 
-      DIAG (LODSERVER, 1, { \
+      DIAG (ALTLSERVER, 1, { \
 	  for (i=0; i<numPositions; i++) \
 	    fprintf (stderr, "nTL[%d] is %.6g\n", i, newTLoc[i]);});
 

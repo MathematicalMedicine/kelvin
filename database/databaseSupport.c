@@ -61,7 +61,7 @@ void initializeDB () {
   else {
     if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
       ERROR("Cannot fetch study information (%s)", mysql_error(studyDB.connection));
-    DIAG (LODSERVER, 1, { fprintf (stderr, "Storing/retrieving results under study %d (%s)", studyDB.studyId, studyDB.row[0]);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "Storing/retrieving results under study %d (%s)", studyDB.studyId, studyDB.row[0]);});
   }
   dBInitNotDone = FALSE;
 }
@@ -92,46 +92,49 @@ void prepareDBStatements () {
   if (mysql_stmt_bind_result (studyDB.stmtGetPedPosId, studyDB.bindGetPedPosIdResults))
     ERROR("Cannot bind GetPedPosId results (%s)", mysql_stmt_error(studyDB.stmtGetPedPosId));
 
-  // Prepare the GetDLOD call
-  studyDB.stmtGetDLOD = mysql_stmt_init (studyDB.connection);
-  memset (studyDB.bindGetDLOD, 0, sizeof(studyDB.bindGetDLOD));
+  // Prepare the GetDAltL call
+  studyDB.stmtGetDAltL = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetDAltL, 0, sizeof(studyDB.bindGetDAltL));
 
-  BINDNUMERIC (studyDB.bindGetDLOD[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDLOD[1], studyDB.dGF, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[2], studyDB.lC1BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[3], studyDB.lC1BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[4], studyDB.lC1LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[5], studyDB.lC1LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[6], studyDB.lC2BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[7], studyDB.lC2BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[8], studyDB.lC2LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[9], studyDB.lC2LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[10], studyDB.lC3BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[11], studyDB.lC3BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[12], studyDB.lC3LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[13], studyDB.lC3LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLOD[14], studyDB.regionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDAltL[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDAltL[1], studyDB.dGF, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[2], studyDB.lC1BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[3], studyDB.lC1BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[4], studyDB.lC1LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[5], studyDB.lC1LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[6], studyDB.lC2BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[7], studyDB.lC2BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[8], studyDB.lC2LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[9], studyDB.lC2LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[10], studyDB.lC3BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[11], studyDB.lC3BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[12], studyDB.lC3LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[13], studyDB.lC3LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[14], studyDB.regionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDAltL[15], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDAltL[16], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltL[17], studyDB.parentRegionSplitDir, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strGetDLOD, "call GetDLOD (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outMarkerCount,@outLOD)", MAXSTMTLEN-1);
+  strncpy (studyDB.strGetDAltL, "call GetDAltL (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outMarkerCount,@outAltL)", MAXSTMTLEN-1);
 
-  if (mysql_stmt_prepare (studyDB.stmtGetDLOD, studyDB.strGetDLOD, strlen (studyDB.strGetDLOD)))
-    ERROR("Cannot prepare GetDLOD call statement (%s)", mysql_stmt_error(studyDB.stmtGetDLOD));
-  if (mysql_stmt_bind_param (studyDB.stmtGetDLOD, studyDB.bindGetDLOD))
-    ERROR("Cannot bind GetDLOD call statement (%s)", mysql_stmt_error(studyDB.stmtGetDLOD));
+  if (mysql_stmt_prepare (studyDB.stmtGetDAltL, studyDB.strGetDAltL, strlen (studyDB.strGetDAltL)))
+    ERROR("Cannot prepare GetDAltL call statement (%s)", mysql_stmt_error(studyDB.stmtGetDAltL));
+  if (mysql_stmt_bind_param (studyDB.stmtGetDAltL, studyDB.bindGetDAltL))
+    ERROR("Cannot bind GetDAltL call statement (%s)", mysql_stmt_error(studyDB.stmtGetDAltL));
 
-  // Prepare the GetDLOD results call
-  studyDB.stmtGetDLODResults = mysql_stmt_init (studyDB.connection);
-  memset (studyDB.bindGetDLODResults, 0, sizeof(studyDB.bindGetDLODResults));
+  // Prepare the GetDAltL results call
+  studyDB.stmtGetDAltLResults = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetDAltLResults, 0, sizeof(studyDB.bindGetDAltLResults));
 
-  BINDNUMERIC (studyDB.bindGetDLODResults[0], studyDB.regionId, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDLODResults[1], studyDB.markerCount, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDLODResults[2], studyDB.lOD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDAltLResults[0], studyDB.regionId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDAltLResults[1], studyDB.markerCount, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDAltLResults[2], studyDB.lOD, MYSQL_TYPE_DOUBLE);
 
-  strncpy (studyDB.strGetDLODResults, "Select @outRegionId, @outMarkerCount, @outLOD", MAXSTMTLEN-1);
-  if (mysql_stmt_prepare (studyDB.stmtGetDLODResults, studyDB.strGetDLODResults, strlen (studyDB.strGetDLODResults)))
-    ERROR("Cannot prepare GetDLOD results select statement (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
-  if (mysql_stmt_bind_result (studyDB.stmtGetDLODResults, studyDB.bindGetDLODResults))
-    ERROR("Cannot bind GetDLOD results select statement (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
+  strncpy (studyDB.strGetDAltLResults, "Select @outRegionId, @outMarkerCount, @outAltL", MAXSTMTLEN-1);
+  if (mysql_stmt_prepare (studyDB.stmtGetDAltLResults, studyDB.strGetDAltLResults, strlen (studyDB.strGetDAltLResults)))
+    ERROR("Cannot prepare GetDAltL results select statement (%s)", mysql_stmt_error(studyDB.stmtGetDAltLResults));
+  if (mysql_stmt_bind_result (studyDB.stmtGetDAltLResults, studyDB.bindGetDAltLResults))
+    ERROR("Cannot bind GetDAltL results select statement (%s)", mysql_stmt_error(studyDB.stmtGetDAltLResults));
 
   // Prepare the server sign-on
   studyDB.stmtSignOn = mysql_stmt_init (studyDB.connection);
@@ -277,11 +280,11 @@ long GetPedPosId (char *pedigreeSId, int chromosomeNo, double refTraitPosCM)
   return studyDB.pedPosId;
 }
 
-double GetDLOD (int pedPosId, double dGF,
-	      double lC1BigPen, double lC1BigLittlePen, double lC1LittleBigPen, double lC1LittlePen,
-	      double lC2BigPen, double lC2BigLittlePen, double lC2LittleBigPen, double lC2LittlePen,
-	      double lC3BigPen, double lC3BigLittlePen, double lC3LittleBigPen, double lC3LittlePen,
-	      int regionNo)
+double GetDAltL (int pedPosId, double dGF,
+		double lC1BigPen, double lC1BigLittlePen, double lC1LittleBigPen, double lC1LittlePen,
+		double lC2BigPen, double lC2BigLittlePen, double lC2LittleBigPen, double lC2LittlePen,
+		double lC3BigPen, double lC3BigLittlePen, double lC3LittleBigPen, double lC3LittlePen,
+		int regionNo, int parentRegionNo, double parentRegionError, int parentRegionSplitDir)
 {
   studyDB.pedPosId = pedPosId;
   studyDB.dGF = dGF;
@@ -298,24 +301,27 @@ double GetDLOD (int pedPosId, double dGF,
   studyDB.lC3LittleBigPen = lC3LittleBigPen;
   studyDB.lC3LittlePen = lC3LittlePen;
   studyDB.regionNo = regionNo;
+  studyDB.parentRegionNo = parentRegionNo;
+  studyDB.parentRegionError = parentRegionError;
+  studyDB.parentRegionSplitDir = parentRegionSplitDir;
 
-  if (mysql_stmt_execute (studyDB.stmtGetDLOD) != 0)
-    ERROR("Cannot execute GetDLOD call statement w/%d (%s, %s)", pedPosId,
-	  mysql_stmt_error(studyDB.stmtGetDLOD), mysql_stmt_sqlstate(studyDB.stmtGetDLOD));
+  if (mysql_stmt_execute (studyDB.stmtGetDAltL) != 0)
+    ERROR("Cannot execute GetDAltL call statement w/%d (%s, %s)", pedPosId,
+	  mysql_stmt_error(studyDB.stmtGetDAltL), mysql_stmt_sqlstate(studyDB.stmtGetDAltL));
 
-  if (mysql_stmt_execute (studyDB.stmtGetDLODResults) != 0)
-    ERROR("Cannot execute GetDLOD results select statement (%s, %s)", 
-	  mysql_stmt_error(studyDB.stmtGetDLODResults), mysql_stmt_sqlstate(studyDB.stmtGetDLODResults));
-  if (mysql_stmt_store_result (studyDB.stmtGetDLODResults) != 0)
-    ERROR("Cannot retrieve GetDLOD (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
-  if (mysql_stmt_fetch (studyDB.stmtGetDLODResults) != 0)
-    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDLODResults));
+  if (mysql_stmt_execute (studyDB.stmtGetDAltLResults) != 0)
+    ERROR("Cannot execute GetDAltL results select statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtGetDAltLResults), mysql_stmt_sqlstate(studyDB.stmtGetDAltLResults));
+  if (mysql_stmt_store_result (studyDB.stmtGetDAltLResults) != 0)
+    ERROR("Cannot retrieve GetDAltL (%s)", mysql_stmt_error(studyDB.stmtGetDAltLResults));
+  if (mysql_stmt_fetch (studyDB.stmtGetDAltLResults) != 0)
+    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDAltLResults));
 
-  if (*studyDB.bindGetDLODResults[2].is_null) {
-    DIAG (LODSERVER, 1, { fprintf (stderr, "In RegionId %d, LOD is NULL", studyDB.regionId);});
+  if (*studyDB.bindGetDAltLResults[2].is_null) {
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, AltL is NULL", studyDB.regionId);});
     return -1LL;
   } else {
-    DIAG (LODSERVER, 1, { fprintf (stderr, "In RegionId %d, LOD is %G", studyDB.regionId, studyDB.lOD);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, AltL is %G", studyDB.regionId, studyDB.lOD);});
     return studyDB.lOD;
   }
 }
@@ -354,7 +360,7 @@ void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVe
     if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
       ERROR("Cannot fetch LAST_SERVER_ID() (serverId) (%s)", mysql_error(studyDB.connection));
     studyDB.serverId = atoi(studyDB.row[0]);
-    DIAG (LODSERVER, 1, { fprintf (stderr, "Signed on as serverId %d", studyDB.serverId);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "Signed on as serverId %d", studyDB.serverId);});
   }
 
 }
@@ -434,10 +440,10 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
   if (mysql_stmt_fetch (studyDB.stmtGetWorkResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
   if (*studyDB.bindGetWorkResults[0].is_null) {
-    DIAG (LODSERVER, 1, { fprintf (stderr, "No more work! (bindGetWorkResults)");});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetWorkResults)");});
     return FALSE;
   } else {
-    DIAG (LODSERVER, 1, { \
+    DIAG (ALTLSERVER, 1, { \
 	fprintf (stderr, "Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G", \
 		 studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
 		 studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);});
@@ -483,7 +489,7 @@ void PutWork (int markerCount, double lOD)
     }
     break;
   }    
-  DIAG (LODSERVER, 1, { fprintf (stderr, "Put work stored LOD of %.8g\n", lOD);});
+  DIAG (ALTLSERVER, 1, { fprintf (stderr, "Put work stored AltL of %.8g\n", lOD);});
 
 }
 
@@ -517,26 +523,26 @@ int main (int argc, char *argv[]) {
   // Annotated calls...
 
   pedPosId = GetPedPosId (/* PedigreeSId-> */ "2", /* ChromosomeNo-> */ 40, /* RefTraitPosCM-> */ 5.1);
-  GetDLOD (/* PedPosId-> */ pedPosId, /* DGF-> */ .35,
+  GetDAltL (/* PedPosId-> */ pedPosId, /* DGF-> */ .35,
 	   /* LC1DD-> */ .71, /* LC1Dd-> */ .42, /* LC1dD-> */ .44, /* LC1dd-> */ .13, 
 	   /* LC2DD-> */ .71, /* LC2Dd-> */ .42, /* LC2dD-> */ .44, /* LC2dd-> */ .13, 
 	   /* LC3DD-> */ .71, /* LC3Dd-> */ .42, /* LC3dD-> */ .46, /* LC3dd-> */ .13, 
 	   /* RegionNo-> */ 1);
 
-  GetDLOD (pedPosId, .35, .71, .42, .42, .13, .71, .42, .45, .13, .71, .42, .45, .13, 1);
+  GetDAltL (pedPosId, .35, .71, .42, .42, .13, .71, .42, .45, .13, .71, .42, .45, .13, 1);
   pedPosId = GetPedPosId ("3", 40, 10.43210987);
-  GetDLOD (pedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  GetDAltL (pedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
   pedPosId = GetPedPosId ("2", 40, 3.0);
-  GetDLOD (pedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
-  GetDLOD (6, .3, .71, .42, .44, .13, -1, 0, 0, 0, -1, 0, 0, 0, 1);
-  GetDLOD (7, .3, .71, .42, .44, .13, .71, .42, .42, .13, -1, 0, 0, 0, 1);
+  GetDAltL (pedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  GetDAltL (6, .3, .71, .42, .44, .13, -1, 0, 0, 0, -1, 0, 0, 0, 1);
+  GetDAltL (7, .3, .71, .42, .44, .13, .71, .42, .42, .13, -1, 0, 0, 0, 1);
 
   SignOn (40, "ES", 4, "Test driver");
 
   while (GetDWork (0, 10, &pedTraitPosCM, pedigreeSId, &dGF, &lC1DD, &lC1Dd, &lC1dD, &lC1dd,
 		   &lC2DD, &lC2Dd, &lC2dD, &lC2dd, &lC3DD, &lC3Dd, &lC3dD, &lC3dd)) {
     lOD = ((double)(rand() % 9999)) / 1000.0;
-    printf ("Trying LOD of %G\n", lOD);
+    printf ("Trying AltL of %G\n", lOD);
     PutWork (5, lOD);
   }
 

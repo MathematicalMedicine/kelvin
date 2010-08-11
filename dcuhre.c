@@ -212,6 +212,7 @@ dadhre_ (dcuhre_state * s)
   cw_sbrg->region_id = 0;
   cw_sbrg->region_level = 0;
   cw_sbrg->bogusAltLs = 0;
+  cw_sbrg->parent_id = 0;
   MALCHOKE(cw_sbrg->center, sizeof (double) * s->ndim, double *);
   MALCHOKE(cw_sbrg->hwidth, sizeof (double) * s->ndim, double *);
   cw_sbrg->cur_scale = s->scale;
@@ -312,10 +313,9 @@ dadhre_ (dcuhre_state * s)
 #ifdef STUDYDB
 
     fprintf (stderr, "DCUHRE split about to be considered w/%d bogus results in evaluation for subregion %d...",
-	     s->sbrg_heap[s->next_sbrg]->region_id == 0 ? -1 : s->sbrg_heap[s->sbrg_heap[s->next_sbrg]->parent_id]->bogusAltLs,
-	     s->sbrg_heap[s->next_sbrg]->region_id);
+	     s->sbrg_heap[s->next_sbrg]->bogusAltLs, s->next_sbrg);
     if (
-	((s->sbrg_heap[s->next_sbrg]->region_id == 0) || (s->sbrg_heap[s->sbrg_heap[s->next_sbrg]->parent_id]->bogusAltLs == 0)) &&
+	(s->sbrg_heap[s->next_sbrg]->bogusAltLs == 0) &&
 	(
 	 (real_result < 0.0) || ((real_error > s->epsabs) && (s->cur_diff_suc< s->aim_diff_suc) && (real_result >=0.214))
 	)

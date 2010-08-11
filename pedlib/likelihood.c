@@ -337,7 +337,7 @@ int build_likelihood_polynomial (Pedigree * pPedigree)
 // Function definition for what we turn the old compute_likelihood into.
 int original_compute_likelihood (PedigreeSet * pPedigreeList);
 
-/* Alternative version of compute_likelihood to handle LOD server. We might as well have
+/* Alternative version of compute_likelihood to handle AltL server. We might as well have
    a completely different version since we can't do the OMP work. */
 int compute_likelihood (PedigreeSet * pPedigreeList) {
   Pedigree *pPedigree;
@@ -360,13 +360,13 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
   if (analysisLocusList->numLocus == 1) { // Trait likelihood
     int ret;
     ret = original_compute_likelihood (pPedigreeList);
-    DIAG (LODSERVER, 1, {fprintf (stderr, "Normal trait likelihood is %.4g\n", pPedigreeList->likelihood);});
+    DIAG (ALTLSERVER, 1, {fprintf (stderr, "Normal trait likelihood is %.4g\n", pPedigreeList->likelihood);});
     return ret;
   }
   if (analysisLocusList->traitLocusIndex == -1) { // Marker set likelihood
     int ret;
     ret = original_compute_likelihood (pPedigreeList);
-    DIAG (LODSERVER, 1, {fprintf (stderr, "Normal marker set likelihood is %.4g\n", pPedigreeList->likelihood);});
+    DIAG (ALTLSERVER, 1, {fprintf (stderr, "Normal marker set likelihood is %.4g\n", pPedigreeList->likelihood);});
     return ret;
   }
 
@@ -382,9 +382,9 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 
   if (toupper(*studyDB.role) == 'C') {
     /* 
-       We're a client, we want to call GetLOD with all the appropriate likelhood variables
-       for every pedigree. If we get a good LOD back, then we incorporate it into the result. 
-       If we don't then the request has been made and we incorporate a dummy LOD into the 
+       We're a client, we want to call GetAltL with all the appropriate likelhood variables
+       for every pedigree. If we get a good AltL back, then we incorporate it into the result. 
+       If we don't then the request has been made and we incorporate a dummy AltL into the 
        results and set a flag indicating that the calculation is to be ignored.
     */
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
@@ -392,21 +392,25 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       
       myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, KROUND(modelRange->tloc[studyDB.driverPosIdx]));
 
-      if ((pPedigree->likelihood = GetDLOD (myPedPosId, pLocus->pAlleleFrequency[0],
-			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
-			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
-			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
-			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
-			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
-					    s->sbrgns)) == -1) {
+      if ((pPedigree->likelihood = GetDAltL (myPedPosId, pLocus->pAlleleFrequency[0],
+					     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+					     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+					     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+					     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+					     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+					     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
+					     s->sbrgns, 
+					     (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrgns]->parent_id),
+					     (s->sbrgns == 0 ? 0 : s->greate),
+					     (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrg_heap[s->sbrgns]->parent_id]->dir)
+					     )) == -1) {
 	// Bogus result
-	studyDB.bogusLODs++;
-	s->sbrg_heap[s->next_sbrg]->bogusAltLs++;
+	studyDB.bogusAltLs++;
+	s->sbrg_heap[s->sbrgns]->bogusAltLs++;
 	pPedigree->likelihood = .05;
 
       } else {
-	studyDB.realLODs++;
+	studyDB.realAltLs++;
       }
       // Roll all the results together considering pedigrees with counts
       if (pPedigree->pCount[origLocus] == 1) {
@@ -420,7 +424,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
     }
     pPedigreeList->likelihood = product_likelihood;
     pPedigreeList->log10Likelihood = sum_log_likelihood;
-    DIAG (LODSERVER, 1, {fprintf (stderr, "Client returning bogosity of %d, likelihood of %.4g\n", studyDB.bogusLODs, pPedigreeList->likelihood);});
+    DIAG (ALTLSERVER, 1, {fprintf (stderr, "Client returning bogosity of %d, likelihood of %.4g\n", studyDB.bogusAltLs, pPedigreeList->likelihood);});
     return ret;
     
   } else {
@@ -452,7 +456,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       if (studyDB.driverPosIdx != (modelRange->ntloc - 1))
 	highPosition = lociSetTransitionPositions[studyDB.driverPosIdx];
 
-      DIAG (LODSERVER, 1, { fprintf (stderr, "Driver trait position is %G, lowPosition is %G and highPosition is %g", traitPosition, lowPosition, highPosition);});
+      DIAG (ALTLSERVER, 1, { fprintf (stderr, "Driver trait position is %G, lowPosition is %G and highPosition is %g", traitPosition, lowPosition, highPosition);});
 
       while (GetDWork(lowPosition, highPosition, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
@@ -529,7 +533,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	}
 	PutWork (modelType->numMarkers + originalLocusList.numTraitLocus, pPedigree->likelihood);
 
-	DIAG (LODSERVER, 1, { \
+	DIAG (ALTLSERVER, 1, { \
 	    fprintf (stderr, "Ped: %s, Pos: %.8g, DGF: %.8g, LC1DD: %.8g, LC1Dd: %.8g, LC1dd: %.8g => AltL %.8g\n", \
 		     pPedigree->sPedigreeID, \
 		     pedTraitPosCM, pLocus->pAlleleFrequency[0], \
@@ -543,7 +547,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
     // Clean up by faking all results
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
-      studyDB.bogusLODs++;
+      studyDB.bogusAltLs++;
       pPedigree->likelihood = .05;
       // Roll all the results together considering pedigrees with counts
       if (pPedigree->pCount[origLocus] == 1) {
@@ -557,7 +561,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
     }
     pPedigreeList->likelihood = product_likelihood;
     pPedigreeList->log10Likelihood = sum_log_likelihood;
-    DIAG (LODSERVER, 1, {fprintf (stderr, "Server returning likelihood of %.4g\n", pPedigreeList->likelihood);});
+    DIAG (ALTLSERVER, 1, {fprintf (stderr, "Server returning likelihood of %.4g\n", pPedigreeList->likelihood);});
     return ret;
   }
 }
@@ -645,7 +649,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
       }
 
 #ifdef STUDYDB
-      DIAG (LODSERVER, 1, { \
+      DIAG (ALTLSERVER, 1, { \
       fprintf (stderr, "Ped: %s, Pos: %.8g, DGF: %.8g, LC1DD: %.8g, LC1Dd: %.8g, LC1dd: %.8g => AltL %.8g (normal)\n", \
 	       pPedigree->sPedigreeID, \
 	       modelRange->tloc[studyDB.driverPosIdx], pLocus->pAlleleFrequency[0], \
@@ -748,7 +752,7 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
   Person *pLoopBreaker;
   LoopBreaker *loopStruct;
 
-  DIAG (LODSERVER, 1, {				\
+  DIAG (ALTLSERVER, 1, {				\
       int i;								\
       fprintf (stderr, "analysisLocusList entry %d of %d is trait: ", analysisLocusList->traitLocusIndex, analysisLocusList->numLocus); \
       for (i=0; i<analysisLocusList->numLocus; i++)			\
