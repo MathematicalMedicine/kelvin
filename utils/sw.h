@@ -60,6 +60,8 @@ void swLogPeaks (char *);
 long swGetMaximumPMK (void);
 long swGetCurrentVMK (pid_t);
 
+void swShuffle(int *, size_t);
+
 /// Maximum amount of physical memory available in Kbytes
 extern long maximumPMK;
 

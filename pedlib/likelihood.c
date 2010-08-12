@@ -456,7 +456,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       if (studyDB.driverPosIdx != (modelRange->ntloc - 1))
 	highPosition = lociSetTransitionPositions[studyDB.driverPosIdx];
 
-      DIAG (ALTLSERVER, 1, { fprintf (stderr, "Driver trait position is %G, lowPosition is %G and highPosition is %g", traitPosition, lowPosition, highPosition);});
+      DIAG (ALTLSERVER, 0, { fprintf (stderr, "Driver trait position is %G, lowPosition is %G and highPosition is %g\n", traitPosition, lowPosition, highPosition);});
 
       while (GetDWork(lowPosition, highPosition, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 

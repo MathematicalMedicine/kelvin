@@ -63,6 +63,8 @@ extern struct StudyDB studyDB;
 double *oldTLoc; // Pointer to original list of trait loci, which we're going to ignore
 double lociSetTransitionPositions[MAXLSTP];
 double newTLoc[MAXLSTP];
+int newTLocOrder[MAXLSTP];
+int newTLocOrderIndex;
 
 int compare_doubles (const void *a, const void *b) {
   const double *da = (const double *) a;
@@ -2471,14 +2473,21 @@ void integrateMain ()
 
       // Choose new trait positions between transition positions
 
-      for (i=0; i<j; i++)
+      for (i=0; i<j; i++) {
 	newTLoc[i] = lociSetTransitionPositions[i] - .00001;
+	newTLocOrder[i] = i; // Looks weird, but we'll shuffle this later
+      }
       newTLoc[j] = lociSetTransitionPositions[j-1] + .00001;
+      newTLocOrder[j] = j;
 
       oldTLoc = modelRange->tloc;
       modelRange->tloc = newTLoc;
       modelRange->ntloc = j+1;
       numPositions = j+1;
+
+      // Now SHUFFLE the list of trait positions - that's right, SHUFFLE 'EM!  Bwahah ha ha. (OK, just their order)
+
+      swShuffle (newTLocOrder, modelRange->ntloc);
 
       DIAG (ALTLSERVER, 1, { \
 	  for (i=0; i<numPositions; i++) \
@@ -2489,7 +2498,12 @@ void integrateMain ()
 
     CALCHOKE (mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
 
+#ifdef STUDYDB
+    for (newTLocOrderIndex=0; newTLocOrderIndex<numPositions; newTLocOrderIndex++) {
+      posIdx = newTLocOrder[newTLocOrderIndex];
+#else
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
+#endif
       if (fpIR != NULL) {
         dk_curModel.posIdx = posIdx;
       }
