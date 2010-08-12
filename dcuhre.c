@@ -439,7 +439,7 @@ dadhre_ (dcuhre_state * s)
       s->ifail = 1;
     } else {
 #ifdef STUDYDB
-      if (parent_sbrg->bogusAltLs > 0)
+      if (s->sbrg_heap[s->next_sbrg]->bogusAltLs > 0)
 	fprintf (stderr, "averted!\n");
       else
 	fprintf (stderr, "unnecessary.\n");
