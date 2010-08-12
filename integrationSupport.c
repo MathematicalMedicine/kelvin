@@ -2440,7 +2440,6 @@ void integrateMain ()
 
     /* get the trait locations we need to evaluate at */
     numPositions = modelRange->ntloc;
-    CALCHOKE (mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
 
     /* Need to output the results */
     dk_writeMPBRHeader ();
@@ -2487,6 +2486,8 @@ void integrateMain ()
 
     }
 #endif
+
+    CALCHOKE (mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
 
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
       if (fpIR != NULL) {

@@ -312,7 +312,7 @@ dadhre_ (dcuhre_state * s)
 
 #ifdef STUDYDB
 
-    fprintf (stderr, "DCUHRE split about to be considered w/%d bogus results in evaluation for subregion %d...",
+    fprintf (stderr, "DCUHRE split being considered w/%d bogus evaluation results subregion %d...",
 	     s->sbrg_heap[s->next_sbrg]->bogusAltLs, s->next_sbrg);
     if (
 	(s->sbrg_heap[s->next_sbrg]->bogusAltLs == 0) &&
@@ -439,7 +439,11 @@ dadhre_ (dcuhre_state * s)
       s->ifail = 1;
     } else {
 #ifdef STUDYDB
-      fprintf (stderr, "DCUHRE split averted!\n");
+      if (parent_sbrg->bogusAltLs > 0)
+	fprintf (stderr, "averted!\n");
+      else
+	fprintf (stderr, "unnecessary.\n");
+	  
 #endif
       s->ifail = 0;
       break;
