@@ -2475,7 +2475,6 @@ void integrateMain ()
 
       for (i=0; i<j; i++) {
 	newTLoc[i] = lociSetTransitionPositions[i] - .00001;
-	newTLocOrder[i] = i; // Looks weird, but we'll shuffle this later
       }
       newTLoc[j] = lociSetTransitionPositions[j-1] + .00001;
       newTLocOrder[j] = j;
@@ -2484,41 +2483,46 @@ void integrateMain ()
       modelRange->tloc = newTLoc;
       modelRange->ntloc = j+1;
       numPositions = j+1;
-
-      // Now SHUFFLE the list of trait positions - that's right, SHUFFLE 'EM!  Bwahah ha ha. (OK, just their order)
-
-      swShuffle (newTLocOrder, modelRange->ntloc);
-
-      DIAG (ALTLSERVER, 1, { \
-	  for (i=0; i<numPositions; i++) \
-	    fprintf (stderr, "nTL[%d] is %.6g\n", i, newTLoc[i]);});
-
     }
-#endif
+
+    DIAG (ALTLSERVER, 1, {		 \
+	for (i=0; i<numPositions; i++)					\
+	  fprintf (stderr, "nTL[%d] is %.6g\n", i, newTLoc[i]);});
 
     CALCHOKE (mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
 
-#ifdef STUDYDB
+    /* Looks weird, but we shuffle things for the server to enhance performance. Can't
+       do this for the client because it is driven by config trait loci. */
+    for (newTLocOrderIndex=0; newTLocOrderIndex<numPositions; newTLocOrderIndex++)
+      newTLocOrder[newTLocOrderIndex] = newTLocOrderIndex;
+
+    // Now SHUFFLE the list of trait positions - that's right, SHUFFLE 'EM!  Bwahah ha ha. (OK, just their order)
+    //    if (toupper(*studyDB.role) != 'C')
+    //      swShuffle (newTLocOrder, modelRange->ntloc);
+	
     for (newTLocOrderIndex=0; newTLocOrderIndex<numPositions; newTLocOrderIndex++) {
       posIdx = newTLocOrder[newTLocOrderIndex];
 #else
+
+    CALCHOKE (mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
+
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
 #endif
-      if (fpIR != NULL) {
+      if (fpIR != NULL)
         dk_curModel.posIdx = posIdx;
-      }
 
       /* positions listed are sex average positions */
       traitPos = modelRange->tloc[posIdx];
 
 #ifdef STUDYDB
       
+      int freeModels = 0;
+
       studyDB.driverPosIdx = posIdx;
 
       if (toupper(*studyDB.role) != 'C') {
 	// If we have models to work on, say how many, otherwise say we're skipping this position
 	double lowPosition  = -9999.99, highPosition = 9999.99;
-	int freeModels = 0;
 
 	if (posIdx != 0)
 	  lowPosition = lociSetTransitionPositions[posIdx - 1];
@@ -2528,11 +2532,11 @@ void integrateMain ()
 	if ((freeModels = CountWork(lowPosition, highPosition)) == 0) {
 	  SUBSTEP (posIdx * 100 / numPositions, "Skipping position %d (%.4g) of %d (no work)", posIdx + 1, traitPos, numPositions);
 	  continue;
-	} else
-	  SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4g) of %d (%d available models)", posIdx + 1, traitPos, numPositions, freeModels);
-    }
+	}
+      }
+      SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4g) of %d (%d available models)", posIdx + 1, traitPos, numPositions, freeModels);
 #else
-    SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4g) of %d", posIdx + 1, traitPos, numPositions);
+      SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4g) of %d", posIdx + 1, traitPos, numPositions);
 #endif
 
       /* set the sex average position first 
