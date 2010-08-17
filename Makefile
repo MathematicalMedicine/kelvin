@@ -30,10 +30,10 @@ CC := gcc
 # CC := icc
 
 ## GCC optimization level, 0=none, 1=default, 2=some (recommended), 3=all
-GCCOPT := 0
+GCCOPT := 2
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
-# USE_OPENMP := yes
+USE_OPENMP := yes
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
@@ -47,7 +47,7 @@ USE_GSL := yes
 # USE_HOARD := yes
 
 ## Enable use of MySQL database for HLOD storage/retrieval/distributed processing.
-USE_STUDYDB := yes
+# USE_STUDYDB := yes
 
 ## Beginning of Kelvin-specific options
 CFLAGS :=
