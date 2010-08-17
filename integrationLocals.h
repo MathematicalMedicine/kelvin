@@ -10,7 +10,6 @@ int leftMarker = -1;
 int posIdx;
 double traitPos;      /* trait position for multipoint analysis */
 int markerSetChanged; /* Flag for multipoint analysis, did set of markers change? */
-int locusListChanged; /* flag for multipoint analysis, did relative trait position or marker set change? */
 double *prevPos, *currPos;    /* for MP */
 double *marker1Pos, *marker2Pos;
 double dist;
