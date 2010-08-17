@@ -30,10 +30,10 @@ CC := gcc
 # CC := icc
 
 ## GCC optimization level, 0=none, 1=default, 2=some (recommended), 3=all
-GCCOPT := 2
+GCCOPT := 0
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
-USE_OPENMP := yes
+# USE_OPENMP := yes
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
@@ -180,7 +180,7 @@ OBJS = kelvinInit.o kelvinTerm.o iterationSupport.o integrationSupport.o \
 
 INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinInit.h kelvinTerm.h \
-	iterationLocals.h iterationSupport.h \
+	iteratinGlobals.h iterationLocals.h iterationSupport.h \
 	integrationGlobals.h integrationLocals.h integrationSupport.h \
 	kelvinWriteFiles.h dkelvinWriteFiles.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
@@ -212,8 +212,16 @@ dist :
 	mkdir -p kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
 	ln test-suite/seq_update/Makefile kelvin-$(VERSION)/test-suite/seq_update
 	ln test-suite/seq_update/d-2pt-le/* kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
+	mkdir -p kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
+	ln test-suite/frontend/Makefile kelvin-$(VERSION)/test-suite/frontend
+	ln test-suite/frontend/KelvinClasses/* kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
 	mkdir kelvin-$(VERSION)/doc
-	ln doc/*.html doc/*.png doc/*.gif doc/*.txt kelvin-$(VERSION)/doc
+	html2text -rcfile doc/html2text.rc doc/index.html >kelvin-$(VERSION)/doc/index.txt
+	html2text -rcfile doc/html2text.rc doc/Directives.html >kelvin-$(VERSION)/doc/Directives.txt
+	html2text -rcfile doc/html2text.rc doc/Allocators.html >kelvin-$(VERSION)/doc/Allocators.txt
+	html2text -rcfile doc/html2text.rc doc/SSDSupport.html >kelvin-$(VERSION)/doc/SSDSupport.txt
+	html2text -rcfile doc/html2text.rc doc/compiledPolys.html >kelvin-$(VERSION)/doc/compiledPolys.txt
+	ln doc/*.html doc/*.png doc/*.gif kelvin-$(VERSION)/doc
 	tar -hcvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
 	rm -rf kelvin-$(VERSION)
 
