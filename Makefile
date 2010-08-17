@@ -30,10 +30,10 @@ CC := gcc
 # CC := icc
 
 ## GCC optimization level, 0=none, 1=default, 2=some (recommended), 3=all
-GCCOPT := 2
+GCCOPT := 0
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
-USE_OPENMP := yes
+# USE_OPENMP := yes
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
@@ -47,7 +47,7 @@ USE_GSL := yes
 # USE_HOARD := yes
 
 ## Enable use of MySQL database for HLOD storage/retrieval/distributed processing.
-# USE_STUDYDB := yes
+USE_STUDYDB := yes
 
 ## Beginning of Kelvin-specific options
 CFLAGS :=
@@ -165,7 +165,7 @@ endif
 
 ifeq ($(strip $(USE_STUDYDB)), yes)
   CFLAGS += -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql
-  LDFLAGS += -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
+  LDFLAGS += -lrt -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
 endif
 
 LDFLAGS += ${ADD_LDFLAGS}
@@ -180,7 +180,7 @@ OBJS = kelvinInit.o kelvinTerm.o iterationSupport.o integrationSupport.o \
 
 INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinInit.h kelvinTerm.h \
-	iteratinGlobals.h iterationLocals.h iterationSupport.h \
+	iterationGlobals.h iterationLocals.h iterationSupport.h \
 	integrationGlobals.h integrationLocals.h integrationSupport.h \
 	kelvinWriteFiles.h dkelvinWriteFiles.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
