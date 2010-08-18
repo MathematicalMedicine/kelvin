@@ -212,7 +212,7 @@ sub perform_study
 	     "Select a.StudyId, a.PedigreeSId, a.ChromosomeNo, a.RefTraitPosCM, a.MarkerCount from ".
 	     "PPs a left outer join PedigreePositions b on ".
 	     "a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.ChromosomeNo = b.ChromosomeNo AND ".
-	     "a.RefTraitPosCM = b.RefTraitPosCM AND a.MarkerCount = b.MarkerCount ".
+	     "a.RefTraitPosCM = b.RefTraitPosCM ".
 	     "where b.StudyId IS NULL");
     $dbh->do("call BadScaling(?)", undef, $StudyId);
 
