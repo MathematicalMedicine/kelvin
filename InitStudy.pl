@@ -194,7 +194,8 @@ sub perform_study
 	    do {
 		$dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 			 undef, $StudyId, $ChromosomeNo, $PosCM);
-		$PosCM = sprintf ("%.2f", $PosCM + $3);
+#		$PosCM = sprintf ("%.2f", $PosCM + $3);
+		$PosCM += $3;
 	    } while ($PosCM <= $2);
 	} else {
 	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
