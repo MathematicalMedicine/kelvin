@@ -390,7 +390,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       
-      myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, KROUND(modelRange->tloc[studyDB.driverPosIdx]));
+      myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelRange->tloc[studyDB.driverPosIdx]);
 
       if ((pPedigree->likelihood = GetDAltL (myPedPosId, pLocus->pAlleleFrequency[0],
 					     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
