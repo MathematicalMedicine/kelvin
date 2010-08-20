@@ -2761,6 +2761,11 @@ void integrateMain ()
         ppl = 0;
 
       dk_writeMPBRData (posIdx, traitPos, ppl, integral, max_scale);
+#ifdef STUDYDB
+      if (studyDB.bogusAltLs > 0)
+	fprintf (fpHet, "WARNING - Some positions have not been completely analyzed!\n");
+#endif
+
       dk_copyMaxModel (localmax_x, &dk_globalmax, size_BR);
       dk_writeMPMODData (posIdx, traitPos, localMOD, &dk_globalmax);
 
