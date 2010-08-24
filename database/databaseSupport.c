@@ -411,7 +411,7 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
   while (1) {
     if (mysql_stmt_execute (studyDB.stmtGetWork) != 0) {
       if (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "40001") != 0) {
-	ERROR("Cannot execute GetPut statement w/%G, %G, (%s, %s)", 
+	ERROR("Cannot execute Get statement w/%G, %G, (%s, %s)", 
 	      lowPosition, highPosition,
 	      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
       } else {
@@ -477,7 +477,7 @@ void PutWork (int markerCount, double lOD)
   while (1) {
     if (mysql_stmt_execute (studyDB.stmtPutWork) != 0) {
       if (strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") != 0) {
-	ERROR("Cannot execute GetPut statement w/%d, %G, (%s, %s)", 
+	ERROR("Cannot execute Put statement w/%d, %G, (%s, %s)", 
 	      markerCount, lOD,
 	      mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork));
       } else {
