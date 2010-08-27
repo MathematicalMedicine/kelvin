@@ -354,6 +354,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
                          * counts mainly for case control analyses */
   int ret = 0;
   long myPedPosId;
+  struct swStopwatch *singleModelSW;
 
   // We only want to work with combined likelihood, so reject single locus, or non-trait models
 
@@ -387,6 +388,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
        If we don't then the request has been made and we incorporate a dummy AltL into the 
        results and set a flag indicating that the calculation is to be ignored.
     */
+
+    if (mysql_query (studyDB.connection, "BEGIN"))
+      ERROR("Cannot begin transaction (%s)", mysql_error(studyDB.connection));
+
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       
@@ -422,6 +427,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       }
       sum_log_likelihood += log10Likelihood;
     }
+
+    if (mysql_query (studyDB.connection, "COMMIT"))
+      ERROR("Cannot commit transaction (%s)", mysql_error(studyDB.connection));
+
     pPedigreeList->likelihood = product_likelihood;
     pPedigreeList->log10Likelihood = sum_log_likelihood;
     DIAG (ALTLSERVER, 1, {fprintf (stderr, "Client returning bogosity of %d, likelihood of %.4g\n", studyDB.bogusAltLs, pPedigreeList->likelihood);});
@@ -515,7 +524,11 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	if ((pPedigree = find_pedigree(pPedigreeList, pedigreeSId)) == NULL)
 	  ERROR ("Got work for unexpected pedigree %s", pedigreeSId);
 	
-	// Compute the likelihood
+	// Compute the likelihood (and time it!)
+
+	swReset (singleModelSW);
+	swStart (singleModelSW);
+
 	if (modelOptions->polynomial == TRUE) {
 	  /* Make sure the polynomial we need exists. */
 	  if (pPedigree->likelihoodPolynomial == NULL)
@@ -531,7 +544,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	  initialize_multi_locus_genotype (pPedigree);
 	  status = compute_pedigree_likelihood (pPedigree);
 	}
-	PutWork (modelType->numMarkers + originalLocusList.numTraitLocus, pPedigree->likelihood);
+	swStop (singleModelSW);
+	PutWork (modelType->numMarkers + originalLocusList.numTraitLocus, 
+		 pPedigree->likelihood,
+		 difftime (time (NULL), singleModelSW->swStartWallTime));
 
 	DIAG (ALTLSERVER, 1, { \
 	    fprintf (stderr, "Ped: %s, Pos: %.8g, DGF: %.8g, LC1DD: %.8g, LC1Dd: %.8g, LC1dd: %.8g => AltL %.8g\n", \

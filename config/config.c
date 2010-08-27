@@ -1372,14 +1372,14 @@ int set_qt_truncation (char **toks, int numtoks, void *unused)
 int set_study_parameters (char **toks, int numtoks, void *unused)
 {
   char *ptr = NULL;
-  // Want studyId, role, hostname, dbName, username, password, pedigreeRegEx
+  // Want studyId, role, dBHostname, dbName, username, password, pedigreeRegEx
   if (numtoks != 8)
     bail ("inappropriate number of arguments to directive '%s'\n", toks[0]);
   studyDB.studyId = (int) strtol (toks[1], &ptr, 10);
   if ((toks[1] == ptr) || (*ptr != '\0'))
     bail ("directive '%s' requires an initial integer argument\n", toks[0]);
   strncpy (studyDB.role, toks[2], sizeof (studyDB.role));
-  strncpy (studyDB.hostname, toks[3], sizeof (studyDB.hostname));
+  strncpy (studyDB.dBHostname, toks[3], sizeof (studyDB.dBHostname));
   strncpy (studyDB.dBName, toks[4], sizeof (studyDB.dBName));
   strncpy (studyDB.username, toks[5], sizeof (studyDB.username));
   strncpy (studyDB.password, toks[6], sizeof (studyDB.password));

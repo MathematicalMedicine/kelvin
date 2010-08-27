@@ -41,9 +41,9 @@ void initializeDB () {
     FATAL("Cannot initialize MySQL (%s)", strerror(errno));
 
   /* Connect. */
-  if (!mysql_real_connect(studyDB.connection, studyDB.hostname, studyDB.username, studyDB.password, 
+  if (!mysql_real_connect(studyDB.connection, studyDB.dBHostname, studyDB.username, studyDB.password, 
 			  NULL, 0, NULL, CLIENT_MULTI_RESULTS /* Important discovery here */))
-    ERROR("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%s)", studyDB.hostname, 
+    ERROR("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%s)", studyDB.dBHostname, 
 	  studyDB.username, studyDB.password, mysql_error(studyDB.connection));
 
   /* Change database. */
@@ -140,14 +140,17 @@ void prepareDBStatements () {
   studyDB.stmtSignOn = mysql_stmt_init (studyDB.connection);
   memset (studyDB.bindSignOn, 0, sizeof(studyDB.bindSignOn));
 
-  BINDNUMERIC (studyDB.bindSignOn[0], studyDB.studyId, MYSQL_TYPE_LONG);
-  BINDSTRING (studyDB.bindSignOn[1], studyDB.pedigreeRegEx, sizeof (studyDB.pedigreeRegEx));
-  BINDNUMERIC (studyDB.bindSignOn[2], studyDB.chromosomeNo, MYSQL_TYPE_LONG);
-  BINDSTRING (studyDB.bindSignOn[3], studyDB.algorithm, sizeof (studyDB.algorithm));
-  BINDNUMERIC (studyDB.bindSignOn[4], studyDB.markerCount, MYSQL_TYPE_LONG);
-  BINDSTRING (studyDB.bindSignOn[5], studyDB.programVersion, sizeof (studyDB.programVersion));
+  BINDSTRING (studyDB.bindSignOn[0], studyDB.hostName, sizeof (studyDB.hostName));
+  BINDNUMERIC (studyDB.bindSignOn[1], studyDB.processId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindSignOn[2], studyDB.keepAliveFlag, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindSignOn[3], studyDB.studyId, MYSQL_TYPE_LONG);
+  BINDSTRING (studyDB.bindSignOn[4], studyDB.pedigreeRegEx, sizeof (studyDB.pedigreeRegEx));
+  BINDNUMERIC (studyDB.bindSignOn[5], studyDB.chromosomeNo, MYSQL_TYPE_LONG);
+  BINDSTRING (studyDB.bindSignOn[6], studyDB.algorithm, sizeof (studyDB.algorithm));
+  BINDNUMERIC (studyDB.bindSignOn[7], studyDB.markerCount, MYSQL_TYPE_LONG);
+  BINDSTRING (studyDB.bindSignOn[8], studyDB.programVersion, sizeof (studyDB.programVersion));
 
-  strncpy (studyDB.strSignOn, "Insert into Servers (StudyId, PedigreeRegEx, ChromosomeNo, Algorithm, MarkerCount, ProgramVersion) values (?,?,?,?,?,?)", MAXSTMTLEN-1);
+  strncpy (studyDB.strSignOn, "Insert into Servers (HostName, ProcessId, KeepAliveFlag, StudyId, PedigreeRegEx, ChromosomeNo, Algorithm, MarkerCount, ProgramVersion) values (?,?,?,?,?,?,?,?,?)", MAXSTMTLEN-1);
   if (mysql_stmt_prepare (studyDB.stmtSignOn, studyDB.strSignOn, strlen (studyDB.strSignOn)))
     ERROR("Cannot prepare sign-on insert statement (%s)", mysql_stmt_error(studyDB.stmtSignOn));
   if (mysql_stmt_bind_param (studyDB.stmtSignOn, studyDB.bindSignOn))
@@ -244,8 +247,9 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindPutWork[0], studyDB.serverId, MYSQL_TYPE_LONG);
   BINDNUMERIC (studyDB.bindPutWork[1], studyDB.markerCount, MYSQL_TYPE_LONG);
   BINDNUMERIC (studyDB.bindPutWork[2], studyDB.lOD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindPutWork[3], studyDB.runtimeCostSec, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strPutWork, "call PutWork (?, @outPedPosId, @outLC1MPId, @outLC2MPId, @outLC3MPId,?,?)", MAXSTMTLEN-1);
+  strncpy (studyDB.strPutWork, "call PutWork (?, @outPedPosId, @outLC1MPId, @outLC2MPId, @outLC3MPId,?,?,?)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtPutWork, studyDB.strPutWork, strlen (studyDB.strPutWork)))
     ERROR("Cannot prepare PutWork call statement (%s)", mysql_stmt_error(studyDB.stmtPutWork));
@@ -331,14 +335,18 @@ void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVe
   if (dBStmtsNotReady)
     prepareDBStatements ();
 
-  // studyId and pedigreeRegEx are already set, but pedigreeRegEx needs size set
-  *studyDB.bindSignOn[1].length = strlen(studyDB.pedigreeRegEx);
+  // studyId and pedigreeRegEx are already set, but location info is needed and pedigreeRegEx needs size set
+  gethostname (studyDB.hostName, 32);
+  *studyDB.bindSignOn[0].length = strlen(studyDB.hostName);
+  studyDB.processId = getpid();
+  studyDB.keepAliveFlag = 1;
+  *studyDB.bindSignOn[4].length = strlen(studyDB.pedigreeRegEx);
   studyDB.chromosomeNo = chromosomeNo;
   strncpy (studyDB.algorithm, algorithm, 2);
-  *studyDB.bindSignOn[3].length = strlen(algorithm);
+  *studyDB.bindSignOn[6].length = strlen(algorithm);
   studyDB.markerCount = markerCount;
   strncpy (studyDB.programVersion, programVersion, 32);
-  *studyDB.bindSignOn[5].length = strlen(programVersion);
+  *studyDB.bindSignOn[8].length = strlen(programVersion);
 
   if (mysql_stmt_execute (studyDB.stmtSignOn))
     ERROR("Cannot execute sign-on insert statement w/%d, '%s', %d, '%s', %d, '%s' (%s, %s)", 
@@ -467,12 +475,13 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
   }
 }
 
-void PutWork (int markerCount, double lOD)
+void PutWork (int markerCount, double lOD, int runtimeCostSec)
 {
   
   // serverId is already set
   studyDB.markerCount = markerCount;
   studyDB.lOD = lOD;
+  studyDB.runtimeCostSec = runtimeCostSec;
 
   // PutWork
   while (1) {
@@ -515,7 +524,7 @@ int main (int argc, char *argv[]) {
   // Done for you by directive parsing:
 
   studyDB.studyId = atoi (argv[1]);
-  strcpy (studyDB.hostname, argv[2]);
+  strcpy (studyDB.dBHostname, argv[2]);
   strcpy (studyDB.dBName, argv[3]);
   strcpy (studyDB.username, argv[4]);
   strcpy (studyDB.password, argv[5]);

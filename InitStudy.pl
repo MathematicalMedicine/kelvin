@@ -107,7 +107,7 @@ sub perform_study
 
     # We always want a full map whether it is for the client (ReferenceMap) or server (GenotypeMaps)
 
-    $MapId = find_or_insert_map($$href{MapFile}, $dataset, $dbh);
+    $MapId = find_or_insert_map($$href{MapFile}, $dataset, $dbh, $StudyId);
 
     # Get the Studies row indicated by the configuration...
 
@@ -165,17 +165,6 @@ sub perform_study
 	return; # All client-only from here on out...
     }
 
-    # 'Freshen' the SingleModelTimes table by creating a a replacement...
-    $dbh->do("Create temporary table SMTs Select a.StudyId, b.PedigreeSId, c.ChromosomeNo, d.MarkerName, 2 ".
-	     "from Studies a, Pedigrees b, Markers c, MapMarkers d where ".
-	     "a.StudyId = 17 AND b.StudyId = a.StudyId AND c.Name = d.MarkerName AND d.MapId = a.ReferenceMapId");
-    # ...and then inserting any new combinations.
-    $dbh->do("Insert into SingleModelTimes (StudyId, PedigreeSId, ChromosomeNo, MarkerName) ".
-	     "Select a.StudyId, a.PedigreeSId, a.ChromosomeNo, a.MarkerName from ".
-	     "SMTs a left outer join SingleModelTimes b on ".
-	     "a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.MarkerName = b.MarkerName ".
-	     "where b.StudyId IS NULL");
-
     # 'Freshen' the Positions tables
     # Three cases we know of: marker, individual value, and range specification, and all can be in lists
     my $JointTPs = join(',', @{$config->isConfigured ("TraitPositions")});
@@ -186,7 +175,7 @@ sub perform_study
 	if ($TP eq "marker") {
 	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) ".
 		     "Select $StudyId, $ChromosomeNo, AvePosCM from ".
-		     "MapMarkers where MapId = $MapId AND AvePosCM NOT in ".
+		     "MapMarkers where StudyId = $StudyId AND MapId = $MapId AND AvePosCM NOT in ".
 		     "(Select distinct RefTraitPosCM from Positions where ".
 		     "StudyId = $StudyId)", undef);
 	} elsif ($TP =~ /(\d*.?\d*)-(\d*.?\d*):(\d*.?\d*)/) {
@@ -225,6 +214,7 @@ sub find_or_insert_map
     my $MapFile = shift();
     my $dataset = shift();
     my $dbh = shift();
+    my $StudyId = shift();
 
     my $MapScale = uc(substr $$dataset{mapfunction},0,1);
     my $MapId = 0;
@@ -232,7 +222,7 @@ sub find_or_insert_map
 #    print "fields are ".Dumper($$dataset{mapfields})."\n";
 
     # Get the Maps row...
-    my $sth = $dbh->prepare("Select MapId from Maps where MapScale = ? AND Description like ?")
+    my $sth = $dbh->prepare("Select MapId from Maps where StudyId = $StudyId AND MapScale = ? AND Description like ?")
 	or die "Couldn't prepare Maps selection: $dbh->errstr";
     $sth->execute($MapScale, $MapFile."%") or die "Couldn't execute Maps selection: $dbh->errstr";
     if (my @Results = $sth->fetchrow_array()) {
@@ -241,7 +231,7 @@ sub find_or_insert_map
 	$sth->finish;
     } else {
 	# No such map, insert it
-	$dbh->do("Insert into Maps (MapScale, Description) values (?,?)", undef, $MapScale, $MapFile)
+	$dbh->do("Insert into Maps (StudyId, MapScale, Description) values (?,?,?)", undef, $StudyId, $MapScale, $MapFile)
 	    or die "Cannot insert Maps row: $DBI::errstr";
 	$sth->finish;
 	$sth = $dbh->prepare("Select LAST_INSERT_ID()");
@@ -258,9 +248,9 @@ sub find_or_insert_map
     $dbh->{PrintError} = 0; $dbh->{RaiseError} = 0;
     foreach (@markerOrder) {
 	# Don't care if this fails...
-	$dbh->do("Insert into Markers (Name, ChromosomeNo) values (?,?)", undef, $_, $ChromosomeNo);
-	$dbh->do("Insert into MapMarkers (MapId, MarkerName, AvePosCM) values (?,?,?)",
-		 undef, $MapId, $_, $markers{$_}{avgpos});
+	$dbh->do("Insert into Markers (StudyId, Name, ChromosomeNo) values (?,?,?)", undef, $StudyId, $_, $ChromosomeNo);
+	$dbh->do("Insert into MapMarkers (StudyId, MapId, MarkerName, AvePosCM) values (?,?,?,?)",
+		 undef, $StudyId, $MapId, $_, $markers{$_}{avgpos});
     }
     $dbh->{PrintError} = 1; $dbh->{RaiseError} = 1;
     return $MapId;

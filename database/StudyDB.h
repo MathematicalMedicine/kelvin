@@ -7,7 +7,7 @@ struct StudyDB {
   // Common...
   char role[MAXPARAMLEN];
   int studyId;
-  char hostname[MAXPARAMLEN];
+  char dBHostname[MAXPARAMLEN];
   char dBName[MAXPARAMLEN];
   char username[MAXPARAMLEN];
   char password[MAXPARAMLEN];
@@ -58,8 +58,11 @@ struct StudyDB {
   double lOD;
   // Sign-on...
   MYSQL_STMT *stmtSignOn;
-  MYSQL_BIND bindSignOn[6];
+  MYSQL_BIND bindSignOn[9];
   char strSignOn[MAXSTMTLEN];
+  char hostName[33];
+  int processId;
+  int keepAliveFlag;
   char algorithm[3];
   char programVersion[33];
   int serverId;
@@ -88,8 +91,9 @@ struct StudyDB {
   double pedTraitPosCM;
   // PutWork...
   MYSQL_STMT *stmtPutWork;
-  MYSQL_BIND bindPutWork[3];
+  MYSQL_BIND bindPutWork[4];
   char strPutWork[MAXSTMTLEN];
+  int runtimeCostSec;
   // other...
   int bogusAltLs;
   int realAltLs;
