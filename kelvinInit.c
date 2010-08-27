@@ -23,8 +23,10 @@ extern struct StudyDB studyDB;
 #endif
 
 struct swStopwatch *combinedComputeSW,  ///< Combined likelihood compute stopwatch
- *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch
- *overallSW;    ///< Overall stopwatch for the entire run.
+  *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch
+  *overallSW,    ///< Overall stopwatch for the entire run.
+  *singleModelSW;
+
 
 char configfile[PATH_MAX];      ///< Configuration file read to populate all of this
 
@@ -43,6 +45,7 @@ void kelvinInit (int argc, char *argv[])
   overallSW = swCreate ("overall");
   combinedComputeSW = swCreate ("combinedComputeSW");
   combinedBuildSW = swCreate ("combinedBuildSW");
+  singleModelSW = swCreate ("singleModelSW");
 
   /* Setup all of our signal handlers. */
   setupHandlers ();

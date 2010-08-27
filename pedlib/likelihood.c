@@ -354,7 +354,6 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
                          * counts mainly for case control analyses */
   int ret = 0;
   long myPedPosId;
-  struct swStopwatch *singleModelSW;
 
   // We only want to work with combined likelihood, so reject single locus, or non-trait models
 
