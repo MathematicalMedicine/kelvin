@@ -154,8 +154,10 @@ sub perform_study
 		     undef, $StudyId, $PedigreeSId);
 	} else {
 	    # Server -- no worries about errors here either...
+	    
 	    $dbh->do("Update ignore Pedigrees set GenotypeMapId = ? where PedigreeSId = ?",
-		     undef, $MapId, $PedigreeSId);
+		     undef, $MapId, $PedigreeSId)
+		if ($PedigreeSId =~ $PedigreeRegEx);
 	}
     }
     (! defined ($ped)) and error ($KelvinDataset::errstr);
