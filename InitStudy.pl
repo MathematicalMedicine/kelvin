@@ -150,11 +150,11 @@ sub perform_study
 	my $PedigreeSId = $$ped{pedid};
 	if ($StudyRole eq "client") {
 	    # Client -- just slam 'em in, don't care if this fails with duplicates...
-	    $dbh->do("Insert into Pedigrees (StudyId, PedigreeSId) values (?,?)",
+	    $dbh->do("Insert ignore into Pedigrees (StudyId, PedigreeSId) values (?,?)",
 		     undef, $StudyId, $PedigreeSId);
 	} else {
 	    # Server -- no worries about errors here either...
-	    $dbh->do("Update Pedigrees set GenotypeMapId = ? where PedigreeSId = ?",
+	    $dbh->do("Update ignore Pedigrees set GenotypeMapId = ? where PedigreeSId = ?",
 		     undef, $MapId, $PedigreeSId);
 	}
     }
@@ -172,8 +172,25 @@ sub perform_study
     my @TPs = split(',',$JointTPs);
     my $ChromosomeNo = $$dataset{chromosome};
     for my $TP (@TPs) {
-	if ($TP eq "marker") {
-	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) ".
+	if ($TP =~ /(\d*.?\d*)-end:(\d*.?\d*)/) {
+	    # First find where "end" is for the current set of markers (should be end of chromosome, dagnabit!)
+	    my $lastMarkerPos = 0;
+	    my %markers = %{$$dataset{markers}};
+	    foreach (keys %markers) {
+		if ($markers{$_}{avgpos} > $lastMarkerPos) {
+		    $lastMarkerPos = $markers{$_}{avgpos};
+		}
+	    }
+	    $lastMarkerPos += $2;
+	    my $PosCM = $1;
+	    do {
+		$dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
+			 undef, $StudyId, $ChromosomeNo, $PosCM);
+		$PosCM = sprintf ("%.2f", $PosCM);
+		$PosCM += $2;
+	    } while ($PosCM < $lastMarkerPos);
+	} elsif ($TP eq "marker") {
+	    $dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) ".
 		     "Select $StudyId, $ChromosomeNo, AvePosCM from ".
 		     "MapMarkers where StudyId = $StudyId AND MapId = $MapId AND AvePosCM NOT in ".
 		     "(Select distinct RefTraitPosCM from Positions where ".
@@ -181,13 +198,13 @@ sub perform_study
 	} elsif ($TP =~ /(\d*.?\d*)-(\d*.?\d*):(\d*.?\d*)/) {
 	    my $PosCM = $1;
 	    do {
-		$dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
+		$dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 			 undef, $StudyId, $ChromosomeNo, $PosCM);
-#		$PosCM = sprintf ("%.2f", $PosCM + $3);
+#		$PosCM = sprintf ("%.2f", $PosCM);
 		$PosCM += $3;
 	    } while ($PosCM <= $2);
 	} else {
-	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
+	    $dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 		     undef, $StudyId, $ChromosomeNo, $TP);
 	}
     }
@@ -241,18 +258,16 @@ sub find_or_insert_map
 	$sth->finish;
     }
     # Ensure that all markers are present even if they're a superset of an existing map
-    my %markers = %{$$dataset{markers}};
     my @markerOrder = @{$$dataset{markerorder}};
+    my %markers = %{$$dataset{markers}};
     my $ChromosomeNo = $$dataset{chromosome};
     # Find or insert the markers. Marker names must be identical between maps for interpolation.
-    $dbh->{PrintError} = 0; $dbh->{RaiseError} = 0;
     foreach (@markerOrder) {
 	# Don't care if this fails...
-	$dbh->do("Insert into Markers (StudyId, Name, ChromosomeNo) values (?,?,?)", undef, $StudyId, $_, $ChromosomeNo);
-	$dbh->do("Insert into MapMarkers (StudyId, MapId, MarkerName, AvePosCM) values (?,?,?,?)",
+	$dbh->do("Insert ignore into Markers (StudyId, Name, ChromosomeNo) values (?,?,?)", undef, $StudyId, $_, $ChromosomeNo);
+	$dbh->do("Insert ignore into MapMarkers (StudyId, MapId, MarkerName, AvePosCM) values (?,?,?,?)",
 		 undef, $StudyId, $MapId, $_, $markers{$_}{avgpos});
     }
-    $dbh->{PrintError} = 1; $dbh->{RaiseError} = 1;
     return $MapId;
 }
 
