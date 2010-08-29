@@ -44,7 +44,7 @@ extern dcuhre_state *s;
 extern struct StudyDB studyDB;
 extern double lociSetTransitionPositions[];
 double lastTraitPosition = -1.0; // Used by server to keep dcuhre's multiple-requests per trait position from bothering the database
-int lastLocusListType = 4; // Used by server to keep which type of locusList we've been given coordinated with our work requests
+int locusListTypesDone = 0; // Used by server to keep which type of locusList we've worked on in order to coordinate our work requests
 #endif
 
 //extern FILE *fpCond;
@@ -407,16 +407,24 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	if (analysisLocusList->traitLocusIndex != -1)
 	  s->sbrg_heap[s->sbrgns]->bogusAltLs++;
 	pPedigree->likelihood = .05;
-	//	if (analysisLocusList->numLocus == 1)
-	//	  fprintf (stderr, "Looping to leave c_l with BOGUS/REQUESTED trait likelihood of %.12g\n", pPedigree->likelihood);
-	//	if (analysisLocusList->traitLocusIndex == -1)
-	//	  fprintf (stderr, "Looping to leave c_l with BOGUS/REQUESTED marker likelihood of %.12g\n", pPedigree->likelihood);
+	/*
+	if (analysisLocusList->numLocus == 1)
+	  fprintf (stderr, "Looping to leave c_l with BOGUS/REQUESTED trait likelihood of %.12g\n", pPedigree->likelihood);
+	else if (analysisLocusList->traitLocusIndex == -1)
+	  fprintf (stderr, "Looping to leave c_l with BOGUS/REQUESTED marker likelihood of %.12g\n", pPedigree->likelihood);
+	else
+	  fprintf (stderr, "Looping to leave c_l with BOGUS/REQUESTED combined likelihood of %.12g\n", pPedigree->likelihood);
+	*/
       } else {
 	studyDB.realAltLs++;
-	//	if (analysisLocusList->numLocus == 1)
-	//	  fprintf (stderr, "Looping to leave c_l with RETRIEVED trait likelihood of %.12g\n", pPedigree->likelihood);
-	//	if (analysisLocusList->traitLocusIndex == -1)
-	//	  fprintf (stderr, "Looping to leave c_l with RETRIEVED marker likelihood of %.12g\n", pPedigree->likelihood);
+	/*
+	if (analysisLocusList->numLocus == 1)
+	  fprintf (stderr, "Looping to leave c_l with RETRIEVED trait likelihood of %.12g\n", pPedigree->likelihood);
+	else if (analysisLocusList->traitLocusIndex == -1)
+	  fprintf (stderr, "Looping to leave c_l with RETRIEVED marker likelihood of %.12g\n", pPedigree->likelihood);
+	else
+	  fprintf (stderr, "Looping to leave c_l with RETRIEVED combined likelihood of %.12g\n", pPedigree->likelihood);
+	*/
       }
 
       // Roll all the results together considering pedigrees with counts
@@ -464,10 +472,14 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
 	locusListType = 1;
 
-    if (traitPosition != lastTraitPosition || locusListType > lastLocusListType) { // Only do work if this is a new position or different analysisLocusList
+    if (traitPosition != lastTraitPosition ||
+	((1 << (locusListType - 1)) & locusListTypesDone) == 0) { // Only do work if on a new position or different type analysisLocusList
 
-      lastTraitPosition = traitPosition;
-      lastLocusListType = locusListType;
+      if (traitPosition != lastTraitPosition) {
+	lastTraitPosition = traitPosition;
+	locusListTypesDone = 1 << (locusListType - 1);
+      } else
+	locusListTypesDone |= 1 << (locusListType - 1);
 
       lowPosition = -0.99;
       if (studyDB.driverPosIdx != 0)
@@ -574,10 +586,14 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], \
 		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1], \
 		     pPedigree->likelihood);});
-	//	if (locusListType == 1)
-	//	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED  marker likelihood of %.12g\n", pPedigree->likelihood);
-	//	if (locusListType == 2)
-	//	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED trait likelihood of %.12g\n", pPedigree->likelihood);
+	/*
+	if (locusListType == 1)
+	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED  marker likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
+	else if (locusListType == 2)
+	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
+	else
+	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED combined likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
+	*/
       }
     }
 
@@ -723,8 +739,16 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
         }
       }
     }
-    //    if (analysisLocusList->traitLocusIndex == -1)
-    //      fprintf (stderr, "Leaving c_l with COMPUTED marker likelihood of %.12g\n", pPedigree->likelihood);
+#ifndef STUDYDB
+    /*
+    if (analysisLocusList->traitLocusIndex == -1)
+      fprintf (stderr, "Looping to leave c_l with COMPUTED marker likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
+    else if (analysisLocusList->numLocus == 1)
+      fprintf (stderr, "Looping to leave c_l with COMPUTED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
+    else
+      fprintf (stderr, "Looping to leave c_l with COMPUTED combined likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
+    */
+#endif
   }
 
   if (ret < 0) {
@@ -791,6 +815,35 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
   int k, l, j, condIdx, idx;
   Person *pLoopBreaker;
   LoopBreaker *loopStruct;
+
+#ifdef STUDYDB
+
+  int myPedPosId;
+
+  if (analysisLocusList->numLocus == 1) { // Trait likelihood
+    if (toupper(*studyDB.role) == 'C') {
+      myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, -1);
+      pPedigree->likelihood = GetDAltL (myPedPosId, pLocus->pAlleleFrequency[0],
+					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
+					0, 0, 0, 0);
+      if (pPedigree->likelihood == -1) {
+	// Bogus result
+	studyDB.bogusAltLs++;
+	pPedigree->likelihood = .05;
+	//	fprintf (stderr, "Leaving c_p_l with BOGUS/REQUESTED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
+      } else {
+	studyDB.realAltLs++;
+	//	fprintf (stderr, "Leaving c_p_l with RETRIEVED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
+      }
+      return 0;
+    }
+  }
+#endif
 
   DIAG (ALTLSERVER, 1, {				\
       int i;								\
@@ -1032,8 +1085,8 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
 	(int) pCondSet[k].trait, pCondSet[k].pAllele1, pCondSet[k].pAllele2, pCondSet[k].condL, pCondSet[k].condL / sumCondL * 100);
     */
   }
-  //  if (analysisLocusList->numLocus == 1) // Trait likelihood
-  //    fprintf (stderr, "Leaving c_p_l with COMPUTED trait likelihood of %.12g\n", pPedigree->likelihood);
+  if (analysisLocusList->numLocus == 1) // Trait likelihood
+    fprintf (stderr, "Leaving c_p_l with COMPUTED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
   return 0;
 }
 
