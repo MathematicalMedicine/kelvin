@@ -1085,8 +1085,10 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
 	(int) pCondSet[k].trait, pCondSet[k].pAllele1, pCondSet[k].pAllele2, pCondSet[k].condL, pCondSet[k].condL / sumCondL * 100);
     */
   }
+  /*
   if (analysisLocusList->numLocus == 1) // Trait likelihood
     fprintf (stderr, "Leaving c_p_l with COMPUTED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
+  */
   return 0;
 }
 
