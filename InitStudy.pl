@@ -167,7 +167,7 @@ sub perform_study
 	# Add the following to hold trait likelihood references
 	$dbh->do("Insert ignore into PedigreePositions ".
 		 "(StudyId, PedigreeSId, ChromosomeNo, RefTraitPosCM, PedTraitPosCM, MarkerCount, FreeModels) ".
-		 "Select distinct $StudyId, PedigreeSId, ChromosomeNo, -1, -1, MarkerCount, 0 from PedigreePositions where StudyId = $StudyId", undef);
+		 "Select distinct $StudyId, PedigreeSId, ChromosomeNo, -9999.99, -9999.99, MarkerCount, 0 from PedigreePositions where StudyId = $StudyId", undef);
 
 	return; # All client-only from here on out...
     }
@@ -178,25 +178,24 @@ sub perform_study
     $JointTPs =~ s/\s+//g;
     my @TPs = split(',',$JointTPs);
     my $ChromosomeNo = $$dataset{chromosome};
+    # First find where "begin" and "end" are for the current set of markers.
+    my $lastMarkerPos = 0;
+    my $firstMarkerPos = 9999.9;
+    my %markers = %{$$dataset{markers}};
+    foreach (keys %markers) {
+	$lastMarkerPos = $markers{$_}{avgpos} if ($markers{$_}{avgpos} > $lastMarkerPos);
+	$firstMarkerPos = $markers{$_}{avgpos} if ($markers{$_}{avgpos} < $firstMarkerPos);
+    }
     for my $TP (@TPs) {
-	if ($TP =~ /(\d*.?\d*)-end:(\d*.?\d*)/) {
-	    # First find where "end" is for the current set of markers (should be end of chromosome, dagnabit!)
-	    my $lastMarkerPos = 0;
-	    my %markers = %{$$dataset{markers}};
-	    foreach (keys %markers) {
-		if ($markers{$_}{avgpos} > $lastMarkerPos) {
-		    $lastMarkerPos = $markers{$_}{avgpos};
-		}
-	    }
-	    $lastMarkerPos += $2;
-	    my $PosCM = $1;
-	    do {
-		$dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
-			 undef, $StudyId, $ChromosomeNo, $PosCM);
-		$PosCM = sprintf ("%.2f", $PosCM);
-		$PosCM += $2;
-	    } while ($PosCM < $lastMarkerPos);
-	} elsif ($TP eq "marker") {
+	if ($TP =~ /.*-end:(\d*.?\d*)/) {
+	    my $newEnd = $lastMarkerPos + $1;
+	    $TP =~ s/-end:/-$newEnd:/;
+	}
+	if ($TP =~ /begin-(\d*.?\d*):(\d*.?\d*)/) {
+	    my $newBegin = int($firstMarkerPos / $2) * $2;
+	    $TP =~ s/begin-/$newBegin-/;
+	}
+	if ($TP eq "marker") {
 	    $dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) ".
 		     "Select $StudyId, $ChromosomeNo, AvePosCM from ".
 		     "MapMarkers where StudyId = $StudyId AND MapId = $MapId AND AvePosCM NOT in ".

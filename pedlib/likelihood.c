@@ -381,7 +381,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       
       if (analysisLocusList->numLocus == 1) // Trait likelihood
-	myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, -1);
+	myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, -9999.99);
       else
 	myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelRange->tloc[studyDB.driverPosIdx]);
 
@@ -481,7 +481,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       } else
 	locusListTypesDone |= 1 << (locusListType - 1);
 
-      lowPosition = -0.99;
+      lowPosition = -9.99;
       if (studyDB.driverPosIdx != 0)
 	lowPosition = lociSetTransitionPositions[studyDB.driverPosIdx - 1];
       highPosition = 9999.99;
@@ -822,7 +822,7 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
 
   if (analysisLocusList->numLocus == 1) { // Trait likelihood
     if (toupper(*studyDB.role) == 'C') {
-      myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, -1);
+      myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, -9999.99);
       pPedigree->likelihood = GetDAltL (myPedPosId, pLocus->pAlleleFrequency[0],
 					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
 					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
