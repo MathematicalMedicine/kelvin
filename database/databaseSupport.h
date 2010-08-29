@@ -8,7 +8,7 @@ double GetDAltL (int, double,
 		int, int, double, int);
 void SignOn (int, char *, int, char *);
 int CountWork (double, double);
-int GetDWork (double, double, double *, char *, double *,
+int GetDWork (double, double, int, double *, char *, double *,
 	      double *, double *, double *, double *,
 	      double *, double *, double *, double *,
 	      double *, double *, double *, double *);

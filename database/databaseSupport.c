@@ -191,8 +191,9 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindGetWork[0], studyDB.serverId, MYSQL_TYPE_LONG);
   BINDNUMERIC (studyDB.bindGetWork[1], studyDB.lowPosition, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetWork[2], studyDB.highPosition, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetWork[3], studyDB.locusListType, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strGetWork, "call GetWork (?,?,?,@outPedPosId, @outPedigreeSId, @outPedTraitPosCM, @outLC1MPId, @outLC2MPId, @outLC3MPId)", MAXSTMTLEN-1);
+  strncpy (studyDB.strGetWork, "call GetWork (?,?,?,?,@outPedPosId, @outPedigreeSId, @outPedTraitPosCM, @outLC1MPId, @outLC2MPId, @outLC3MPId)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtGetWork, studyDB.strGetWork, strlen (studyDB.strGetWork)))
     ERROR("Cannot prepare GetWork call statement (%s)", mysql_stmt_error(studyDB.stmtGetWork));
@@ -405,7 +406,7 @@ int CountWork (double lowPosition, double highPosition)
   return studyDB.workCount;
 }
 
-int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, char *pedigreeSId, double *dGF,
+int GetDWork (double lowPosition, double highPosition, int locusListType, double *pedTraitPosCM, char *pedigreeSId, double *dGF,
 	      double *lC1BigPen, double *lC1BigLittlePen, double *lC1LittleBigPen, double *lC1LittlePen,
 	      double *lC2BigPen, double *lC2BigLittlePen, double *lC2LittleBigPen, double *lC2LittlePen,
 	      double *lC3BigPen, double *lC3BigLittlePen, double *lC3LittleBigPen, double *lC3LittlePen)
@@ -414,6 +415,7 @@ int GetDWork (double lowPosition, double highPosition, double *pedTraitPosCM, ch
   // serverId is already set
   studyDB.lowPosition = lowPosition;
   studyDB.highPosition = highPosition;
+  studyDB.locusListType = locusListType;
 
   // GetWork
   while (1) {

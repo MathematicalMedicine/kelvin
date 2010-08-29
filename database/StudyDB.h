@@ -77,10 +77,11 @@ struct StudyDB {
   long workCount;
   // GetWork...
   MYSQL_STMT *stmtGetWork;
-  MYSQL_BIND bindGetWork[3];
+  MYSQL_BIND bindGetWork[4];
   char strGetWork[MAXSTMTLEN];
   double lowPosition;
   double highPosition;
+  int locusListType;
   // GetDParts...
   MYSQL_STMT *stmtGetDParts;
   char strGetDParts[MAXSTMTLEN];

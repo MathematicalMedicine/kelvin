@@ -164,6 +164,11 @@ sub perform_study
 
     if ($StudyRole eq "server") {
 	$dbh->do("call BadScaling(?)", undef, $StudyId);
+	# Add the following to hold trait likelihood references
+	$dbh->do("Insert ignore into PedigreePositions ".
+		 "(StudyId, PedigreeSId, ChromosomeNo, RefTraitPosCM, PedTraitPosCM, MarkerCount, FreeModels) ".
+		 "Select distinct $StudyId, PedigreeSId, ChromosomeNo, -1, -1, MarkerCount, 0 from PedigreePositions where StudyId = $StudyId", undef);
+
 	return; # All client-only from here on out...
     }
 

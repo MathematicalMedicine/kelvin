@@ -192,6 +192,8 @@ typedef struct Pedigree
   /* for case control analyses, count of this kind of pedigree at each marker  */
   int *pCount;
 
+  int runtimeCostMSec; // (hopefully) Typical cost of evaluation with the current loci set
+
 } Pedigree;
 
 /* loop breaker's multilocus genotype */

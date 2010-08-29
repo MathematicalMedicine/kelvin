@@ -700,6 +700,11 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = 1;
   pedigreeSet.log10Likelihood = 0;
 
+#ifdef STUDYDB
+  if (toupper(*studyDB.role) != 'C') {
+    compute_likelihood (&pedigreeSet);
+  }
+#endif
 
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 
@@ -2522,7 +2527,7 @@ void integrateMain ()
 
       if (toupper(*studyDB.role) != 'C') {
 	// If we have models to work on, say how many, otherwise say we're skipping this position
-	double lowPosition  = -9999.99, highPosition = 9999.99;
+	double lowPosition  = -0.99, highPosition = 9999.99;
 
 	if (posIdx != 0)
 	  lowPosition = lociSetTransitionPositions[posIdx - 1];
