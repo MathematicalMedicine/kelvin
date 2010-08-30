@@ -2527,7 +2527,7 @@ void integrateMain ()
 
       if (toupper(*studyDB.role) != 'C') {
 	// If we have models to work on, say how many, otherwise say we're skipping this position
-	double lowPosition  = -9.99, highPosition = 9999.99;
+	double lowPosition  = -99.99, highPosition = 9999.99;
 
 	if (posIdx != 0)
 	  lowPosition = lociSetTransitionPositions[posIdx - 1];

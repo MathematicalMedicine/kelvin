@@ -481,7 +481,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       } else
 	locusListTypesDone |= 1 << (locusListType - 1);
 
-      lowPosition = -9.99;
+      lowPosition = -99.99;
       if (studyDB.driverPosIdx != 0)
 	lowPosition = lociSetTransitionPositions[studyDB.driverPosIdx - 1];
       highPosition = 9999.99;
