@@ -247,7 +247,7 @@ sub find_or_insert_map
     # Get the Maps row...
     my $sth = $dbh->prepare("Select MapId from Maps where StudyId = $StudyId AND MapScale = ? AND Description like ?")
 	or die "Couldn't prepare Maps selection: $dbh->errstr";
-    $sth->execute($MapScale, $MapFile."%") or die "Couldn't execute Maps selection: $dbh->errstr";
+    $sth->execute($MapScale, $MapFile) or die "Couldn't execute Maps selection: $dbh->errstr";
     if (my @Results = $sth->fetchrow_array()) {
 	# Got it, return it...
 	$MapId = $Results[0];
