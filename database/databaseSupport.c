@@ -310,10 +310,19 @@ double GetDAltL (int pedPosId, double dGF,
   studyDB.parentRegionError = parentRegionError;
   studyDB.parentRegionSplitDir = parentRegionSplitDir;
 
-  if (mysql_stmt_execute (studyDB.stmtGetDAltL) != 0)
-    ERROR("Cannot execute GetDAltL call statement w/%d (%s, %s)", pedPosId,
-	  mysql_stmt_error(studyDB.stmtGetDAltL), mysql_stmt_sqlstate(studyDB.stmtGetDAltL));
-
+  while (1) {
+    if (mysql_stmt_execute (studyDB.stmtGetDAltL) != 0) {
+      if (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDAltL), "40001") != 0) {
+	ERROR("Cannot execute GetDAltL call statement w/%d, (%s, %s)", pedPosId,
+	      mysql_stmt_error(studyDB.stmtGetDAltL), mysql_stmt_sqlstate(studyDB.stmtGetDAltL));
+      } else {
+	swLogProgress(5, 0, "Retrying deadlock in 1 second");
+	sleep(1);
+	continue;
+      }
+    }
+    break;
+  }
   if (mysql_stmt_execute (studyDB.stmtGetDAltLResults) != 0)
     ERROR("Cannot execute GetDAltL results select statement (%s, %s)", 
 	  mysql_stmt_error(studyDB.stmtGetDAltLResults), mysql_stmt_sqlstate(studyDB.stmtGetDAltLResults));
