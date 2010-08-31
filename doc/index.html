@@ -116,6 +116,9 @@
       <p>
       Seok S, Evans M, Vieland VJ. Fast and accurate calculation of a computationally intensive
       statistic for mapping disease genes. J Comput Biol 16(5):659-676, 2009.
+      <p>
+      Huang Y, Vieland VJ. Association Statistics under the PPL Framework.  Genet Epi, 2010. 
+      <i>In Press</i>.
     </div>
 
     <div class='footnote'>
@@ -164,10 +167,8 @@
         estimated</a> for linkage disequilibrium analyses. These frequencies
 	will be used in preference to user-supplied allele frequencies. This behavior can be
         explicitly disabled through a configuration directive.</li>
-      <li>Utilities for preparing the configuration file and graphing the results of analyses
-	are now provided. Separate documentation is provided for both
-	<tt><font color='red'>gKelvin</font></tt> and <tt><font color='red'>graphApp</font></tt>
-        as <tt>Readme.txt</tt> files in their distribution directories. These utilities
+      <li>Utilities for preparing the configuration file (<font color='red'>gKelvin</font>)
+        and graphing the results of analyses (graphApp) are now provided. These utilities
 	have separate installation requirements and procedures as well.</li>
       <li>Progress reporting now provides configurable fixed-frequency updates. See the
 	<a href='#running'>Running The Programs</a> section for details.</li>
@@ -406,6 +407,7 @@
       <li><a href='#running'>Running The Programs</a></li>
       <li><a href='#outputfiles'>Contents Of Output Files</a></li>
       <li><a href='#sequpdate'>Sequential Updating</a></li>
+      <li><a href='#graphapp'>Graphing The Results</a></li>
     </ol>
 
     <h2 id='installing'>Installing The Programs</h2>
@@ -430,10 +432,10 @@
     Aside from the compiled execuatble, running <span class='sc'>Kelvin</span> requires
     <a href='http://www.perl.org'>Perl 5.x</a>. <span class='sc'>Kelvin</span>'s graphical
     configuration file generator, <font color='red'>gKelvin</font>, requires
-    <a href='http://www.python.org'>Python 2.5</a> and <a href='http://www.wxpython.org'>wxPython
-    2.8.3.0</a>. <span class='sc'>Kelvin</span>'s results graphing tool,
-    <font color='red'>graphApp</font>, requires Python 2.5, wxPython 2.8.3.0,
-    <a href='http://matplotlib.sourceforge.net'>Matplotlib</a>,
+    <a href='http://www.python.org'>Python 2.6</a> and <a href='http://www.wxpython.org'>wxPython
+    2.8.3.0</a>. <span class='sc'>Kelvin</span>'s results graphing tool, 
+    <a href='graphApp_manual.htm#Installing_graphApp'>graphApp</a>, requires
+    Python 2.5, wxPython 2.8.3.0, <a href='http://matplotlib.sourceforge.net'>Matplotlib</a>,
     <a href='http://numpy.scipy.org'>NumPy</a>,
     <a href='http://www.pythonware.com/products/pil'>Python Imaging Library (PIL)</a> and PyXML.
 
@@ -707,7 +709,7 @@
     true:
 
     <ul>
-      <li>If a the <a href='Directives.html#multipoint'>MultiPoint</a> directive is present.</li>
+      <li>If the <a href='Directives.html#multipoint'>MultiPoint</a> directive is present.</li>
       <li>If either the <a href='Directives.html#qt'>QT</a> or
         <a href='Directives.html#qtt'>QTT</a> directive is present.</li>
       <li>If the dataset contains microsatellites.</li>
@@ -1042,117 +1044,141 @@
         has been made on the analysis. You can control how much detail is provided and how
         frequently messages are displayed with the
         <a href='Directives.html#progresslevel'>ProgressLevel</a> and
-        <a href='Directives.html#progressdelayseconds'>ProgressDelaySeconds</a> directives. </li>
-      <li><b>Diagnostic messages</b>, which begin with a severity indication and then provide a description
-	of the difficulty encountered. Severity levels are <b>WARNING</b>, which indicates a potential problem
-	that requires your attention in order to ensure the integrity of the analysis results; 
-	<b>ERROR</b>, which indicates
-	some kind of analysis problem that will prevent the run from continuing; and <b>FATAL</b>, which indicates
-	an internal integrity failure in <span class='sc'>Kelvin</span> that should be brought to the attention of
-	the developers. </li>
-	<li><b>Informational messages</b>, are essentially everything else, and while helpful, do not necessarily
-	  need to be reviewed in order to ensure the integrity of the analysis results.
-</ol>
+        <a href='Directives.html#progressdelayseconds'>ProgressDelaySeconds</a> directives.</li>
+      <li><b>Diagnostic messages</b>, which begin with a severity indication and then provide
+        a description of the difficulty encountered. Severity levels are <b>WARNING</b>, which
+        indicates a potential problem that requires your attention in order to ensure the
+        integrity of the analysis results; <b>ERROR</b>, which indicates some kind of analysis
+        problem that will prevent the run from continuing; and <b>FATAL</b>, which indicates
+	an internal integrity failure in <span class='sc'>Kelvin</span> that should be brought
+        to the attention of the developers.</li>
+      <li><b>Informational messages</b>, are essentially everything else, and while helpful,
+        do not necessarily need to be reviewed in order to ensure the integrity of the analysis
+        results.</li>
+    </ol>
 
-    For example:
-<p>
-  <table cellspacing=2>
-    <tr><td class='lineno'><tt> 1 </tt></td>
-<td><tt>10/01/15 08:26:25 @0s, Initializing</tt></td></tr>
-    <tr><td class='lineno'><tt> 2 </tt></td>
-<td><tt>10/01/15 08:26:25 kelvin V0.38.1 edit 2463 built Jan 14 2010 15:04:43</tt></td></tr>
-    <tr><td class='lineno'><tt> 3 </tt></td>
-<td><tt>10/01/15 08:26:25 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)</tt></td></tr>
-    <tr><td class='lineno'><tt> 4 </tt></td>
-<td><tt>10/01/15 08:26:25 Using GNU Scientific Library (GSL) statistical functions instead of internal ones</tt></td></tr>
-    <tr><td class='lineno'><tt> 5 </tt></td>
-<td><tt>10/01/15 08:26:25 OpenMP-enabled w/maximum of 6 thread(s).</tt></td></tr>
-    <tr><td class='lineno'><tt> 6 </tt></td>
-<td><tt>10/01/15 08:26:25 GCC optimization level 2 enabled</tt></td></tr>
-    <tr><td class='lineno'><tt> 7 </tt></td>
-<td><tt>10/01/15 08:26:25 To check status (at some risk), type CTRL-\ or type "kill -3 22860"</tt></td></tr>
-    <tr><td class='lineno'><tt> 8 </tt></td>
-<td><tt>10/01/15 08:26:25 Using configuration file kelvin.conf</tt></td></tr>
-    <tr><td class='lineno'><tt> 9 </tt></td>
-<td><tt>10/01/15 08:26:25 Computation is done in polynomial mode</tt></td></tr>
-    <tr><td class='lineno'><tt> 10 </tt></td>
-<td><tt>10/01/15 08:26:25 polynomialScale is 1 (1-10, 1 is default)</tt></td></tr>
-    <tr><td class='lineno'><tt> 11 </tt></td>
-<td><tt>10/01/15 08:26:25 Integration is done numerically (dkelvin)</tt></td></tr>
-    <tr><td class='lineno'><tt> 12 </tt></td>
-<td><tt>10/01/15 08:26:25 Further progress will be displayed at 90 second intervals</tt></td></tr>
-    <tr><td class='lineno'><tt> 13 </tt></td>
-<td><tt>10/01/15 08:26:25 6TL of 20AL*6GF*275pv(1LC) space for 24 pedigree(s)</tt></td></tr>
-    <tr><td class='lineno'><tt> 14 </tt></td>
-<td><tt>10/01/15 08:26:25 Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.</tt></td></tr>
-    <tr><td class='lineno'><tt> 15 </tt></td>
-<td><tt>10/01/15 08:26:25 @0s, Performing analysis</tt></td></tr>
-    <tr><td class='lineno'><tt> 16 </tt></td>
-<td><tt>10/01/15 08:26:26&nbsp;&nbsp;&nbsp;&nbsp;@1s, Starting with position 1 of 6</tt></td></tr>
-    <tr><td class='lineno'><tt> 17 </tt></td>
-<td><tt>10/01/15 08:27:56&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@1m30s, Building polynomial w/pedigree: 12 (12/24)</tt></td></tr>
-    <tr><td class='lineno'><tt> 18 </tt></td>
-<td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@2m32s, Building polynomial w/pedigree: 24 (24/24)</tt></td></tr>
-    <tr><td class='lineno'><tt> 19 </tt></td>
-<td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@3m59s, Evaluating polynomials, currently at 8.1e+03 iterations</tt></td></tr>
-  </table>
-<p>
-  Lines 1 and 15-19 are progress messages.
-  Line 2 is the <span class='sc'>Kelvin</span> major version and build information.
-  Next is the compiler verison number (line 3), followed by important compilation conditionals as
-  specified in the Makefile and run characteristics as influenced by environment variables. In
-  the example given, OpenMP support status and the number of threads used (line 5)
-  is displayed. Other options and their
-  corresponding messages are covered in the <a href="#building"> Building and Testing</a>
-  section.
-    <p>
-      Following this is a line (7) describing the action to take in order to force an early display
-      of progress messages.
-You can use this as a sort of "pulse check" to make sure <span class='sc'>Kelvin</span> is still alive
-and well and making progress should there be a lull between automatic progress updates. If
-you are running <span class='sc'>Kelvin</span> interactively, you can 
-perform this "pulse check" by type <tt>CTRL-\</tt> (that means to hold down the CTRL
-or CONTROL key while pressing the backslash). If you are running under cygwin, you will first need to
-type <tt>stty quit ^C</tt> to make this to work. Note that the aforementioned <tt>^C</tt> is actually the two
-character sequence of 'carat' (shifted 6) and 'C'. Pressing <tt>CTRL-\</tt> sends a SIGQUIT signal to <span class='sc'>Kelvin</span>, which it
-interprets as a request for status. If you are running <span class='sc'>Kelvin</span> as a detached
-process or in a batch queue, you can send a SIGQUIT to the process by being logged-into the same
-node as it is running on, and using the <tt>kill</tt> command
-as described in the diagnostic output. Note that the signal number (-3 in the example) can be
-different from platform-to-platform, and the
-process ID (26577 in the example) will be different from run-to-run. The "at some risk" bit is because
-some status information is displayed asynchronously, i.e. regardless of the current context of the
-evaluation, and has been known, albeit extremely infrequently, to crash the program.
-<p>
-Next, location of the configuration file (line 8) and the analysis and run characteristics as determined from that file
-(lines 9-12) are displayed. The last of these (lines 13 and 14) are a terse description of the scope and nature
-of the analysis, for example a fixed-grid run might display:
-<pre>
-6TL of 20AL*6GF*275pv(1LC) space for 24 pedigree(s)
+    For example: <p>
+
+    <table cellspacing=2>
+      <tr>
+        <td class='lineno'><tt> 1 </tt></td>
+        <td><tt>10/01/15 08:26:25 @0s, Initializing</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 2 </tt></td>
+        <td><tt>10/01/15 08:26:25 kelvin V0.38.1 edit 2463 built Jan 14 2010 15:04:43</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 3 </tt></td>
+        <td><tt>10/01/15 08:26:25 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 4 </tt></td>
+        <td><tt>10/01/15 08:26:25 Using GNU Scientific Library (GSL) statistical functions
+          instead of internal ones</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 5 </tt></td>
+        <td><tt>10/01/15 08:26:25 OpenMP-enabled w/maximum of 6 thread(s).</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 6 </tt></td>
+        <td><tt>10/01/15 08:26:25 GCC optimization level 2 enabled</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 7 </tt></td>
+        <td><tt>10/01/15 08:26:25 To check status (at some risk), type CTRL-\ or type "kill -3
+          22860"</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 8 </tt></td>
+        <td><tt>10/01/15 08:26:25 Using configuration file kelvin.conf</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 9 </tt></td>
+        <td><tt>10/01/15 08:26:25 Computation is done in polynomial mode</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 10 </tt></td>
+        <td><tt>10/01/15 08:26:25 polynomialScale is 1 (1-10, 1 is default)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 11 </tt></td>
+        <td><tt>10/01/15 08:26:25 Integration is done numerically (dkelvin)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 12 </tt></td>
+        <td><tt>10/01/15 08:26:25 Further progress will be displayed at 90 second intervals
+          </tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 13 </tt></td>
+        <td><tt>10/01/15 08:26:25 6TL of 20AL*6GF*275pv(1LC) space for 24 pedigree(s)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 14 </tt></td>
+        <td><tt>10/01/15 08:26:25 Trait-to-marker, Sex-Averaged Multipoint (w/4 loci),
+          Dichotomous Trait.</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 15 </tt></td>
+        <td><tt>10/01/15 08:26:25 @0s, Performing analysis</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 16 </tt></td>
+        <td><tt>10/01/15 08:26:26&nbsp;&nbsp;&nbsp;&nbsp;@1s, Starting with position 1 of 6
+          </tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 17 </tt></td>
+        <td><tt>10/01/15 08:27:56&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@1m30s,
+          Building polynomial w/pedigree: 12 (12/24)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 18 </tt></td>
+        <td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@2m32s,
+          Building polynomial w/pedigree: 24 (24/24)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 19 </tt></td>
+        <td><tt>10/01/15
+          09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@3m59s,
+          Evaluating polynomials, currently at 8.1e+03 iterations</tt></td>
+      </tr>
+    </table><p>
+
+    Lines 1 and 15-19 are progress messages. Line 2 is the <span class='sc'>Kelvin</span> major
+    version and build information. Next is the compiler verison number (line 3), followed by
+    important compilation conditionals as specified in the Makefile and run characteristics as
+    influenced by environment variables. In the example given, OpenMP support status and the
+    number of threads used (line 5) is displayed. Other options and their corresponding messages
+    are covered in the <a href="#building"> Building and Testing</a> section.<p>
+
+    Following this is a line (7) describing the action to take in order to force an early display
+    of progress messages. You can use this as a sort of "pulse check" to make sure
+    <span class='sc'>Kelvin</span> is still alive and well and making progress should there be
+    a lull between automatic progress updates. If you are running <span class='sc'>Kelvin</span>
+    interactively, you can perform this "pulse check" by type <tt>CTRL-\</tt> (that means to hold
+    down the CTRL or CONTROL key while pressing the backslash). If you are running under cygwin,
+    you will first need to type <tt>stty quit ^C</tt> to make this to work. Note that the
+    aforementioned <tt>^C</tt> is actually the two character sequence of 'carat' (shifted 6)
+    and 'C'. Pressing <tt>CTRL-\</tt> sends a SIGQUIT signal to <span class='sc'>Kelvin</span>,
+    which it interprets as a request for status. If you are running <span class='sc'>Kelvin</span>
+    as a detached process or in a batch queue, you can send a SIGQUIT to the process by being
+    logged-into the same node as it is running on, and using the <tt>kill</tt> command as
+    described in the diagnostic output. Note that the signal number (-3 in the example) can be
+    different from platform-to-platform, and the process ID (26577 in the example) will be
+    different from run-to-run. The "at some risk" bit is because some status information is
+    displayed asynchronously, i.e. regardless of the current context of the evaluation, and has
+    been known, albeit extremely infrequently, to crash the program.<p>
+
+    Next, location of the configuration file (line 8) and the analysis and run characteristics
+    as determined from that file (lines 9-12) are displayed. The last of these (lines 13 and 14)
+    are a terse description of the scope and nature of the analysis, for example a multipoint
+    run might display:
+
+    <pre>
+8TL over a dynamic space (1LC) for 11 pedigree(s)
 Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.
-</pre>
-This indicates that for each of 6 trait loci, PPLs will be computed using the closest 4 markers for the 
-standard 3-dimensional trait model space of 20 alpha values by 6 gene frequencies and 275 penetrance 
-values (from 1 liability class). A two-point analysis will provide slightly different information, e.g.:
-<pre>
-9 pair(s)*51Th of 20AL*6GF*275pv(1LC) space for 11 pedigree(s)
-Trait-to-marker Two-Point, Dichotomous Trait, Disequilibrium.
-</pre>
-This indicates that for each of the 9
-pairs of loci, 51 values of theta will be evaluated in the standard 3-dimensional trait model space of 20 alpha 
-values by 6 gene 
-frequencies and 275 penetrance values (from 1 liability class), which is 459 integrations over a 33,000 point grid. 
-Likelihoods for the evaluation  will be derived from the phenotypic and genotypic information in 11 pedigrees.
-This can give you an idea of how complex your run is.
-<p>
-Note that dynamic grid runs cannot anticipate the number of sample points that will be used in the trait 
-model space, and therefore will display something like:
-<pre>
-6TL over a dynamic space for 24 pedigree(s)
-Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.
-</pre>
-<p>
-Finally, progress indicators are displayed up through the end of the run.
+    </pre>
+ 
+    This indicates that for each of 8 trait loci, PPLs will be computed using the closest 4
+    markers, integrating over a dynamically-sampled trait space, with all individuals in a 
+    single liability class. A two-point analysis will provide slightly different information,
+    e.g.:
+
+    <pre>
+67D' cases over a dynamic space (1LC) for 4 pedigree(s)
+Trait-to-marker Two-Point, Dichotomous Trait, Linkage Disequilibrium.
+    </pre>
+
+    This indicates that for each of 67 initial D' values, two-point PPLs and LD statistics
+    will be computed, integrating over a dynamically-sampled trait space, with all individuals
+    in a single liability class.<p>
+
+    Finally, progress indicators are displayed up through the end of the run.
 
     <h2 id='outputfiles'>Contents Of Output Files</h2>
 
@@ -1465,6 +1491,14 @@ _$ convert_br.pl -c 12 -m mapfile.dat avghet-old.out > br-new.out
     <pre>
 _$ convert_br.pl --help
     </pre>
+
+    <h2 id='graphapp'>Graphing The Results</h2>
+
+    <span class='sc'>Kelvin</span> is distributed with a richly-featured graphing program,
+    graphApp. It reads <span class='sc'>Kelvin</span>-formatted PPL output, and can write
+    output in a number of graphics formats. It is specifically tailored to graphing the 
+    results of genetic analyses. Full documentation is provided in the
+    <a href='graphApp_manual.htm'>graphApp manual</a>.
 
     <hr>
     $Date$
