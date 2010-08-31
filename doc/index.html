@@ -24,7 +24,7 @@
     scale. Primary outcome statistics include the PPL (posterior probability of linkage (L)),
     as well as various forms of the PPLD (posterior probability of linkage disequilibrium (LD)).
     In the context of analysis between a trait locus and a marker, the PPLD models allelic
-    association due to very close genomic proximity. Versions of the PPLD include the PPLD(L)
+    association due to very close genomic proximity. Versions of the PPLD include the PPLD
     (posterior probability of L and LD); the PPL(LD) (posterior probability of L allowing for LD);
     and the PPLD|L (posterior probability of LD given L).
     <p>
@@ -116,6 +116,9 @@
       <p>
       Seok S, Evans M, Vieland VJ. Fast and accurate calculation of a computationally intensive
       statistic for mapping disease genes. J Comput Biol 16(5):659-676, 2009.
+      <p>
+      Huang Y, Vieland VJ. Association Statistics under the PPL Framework.  Genet Epi, 2010. 
+      <i>In Press</i>.
     </div>
 
     <div class='footnote'>
@@ -160,27 +163,14 @@
 	and Vieland).</li>
       <li>Pedigree files may generally be in pre-MAKEPED format, except in limited cases,
         as detailed under <a href='#pedfileformat'>data file formats</a>.
-      <li><a href='#pedcounting'>Pedigree counting and binning</a> is now performed by
-        default when possible. Redundancies in the pedigree file are consolidated to reduce
-        calculations. This behavior can be explicitly disabled through a configuration
-        directive.</li>
-      <li>Marker allele frequencies can be <a href='#frequencyestimation'>automatically
-        estimated</a> for some linkage disequilibrium analyses. These frequencies
+      <li>Marker allele frequencies are <a href='#frequencyestimation'>automatically
+        estimated</a> for linkage disequilibrium analyses. These frequencies
 	will be used in preference to user-supplied allele frequencies. This behavior can be
         explicitly disabled through a configuration directive.</li>
-      <li>Individuals can now be divided into groups with separate sets of penetrance values. 
-	See the section on <a href='#lc_vs_nolc'>Covariate-Dependence</a> for details.</li>
-      <li>Epistasis analysis is now supported, see the section on 
-	<a href='#simple_vs_epistasis'>Single-locus vs 2L Epistasis</a> for details.</li>
-      <li>Linkage results can be combined with LD results in post processing using the
-        <a href='#sequpdate'>sequential updating</a> tools.
-      <li>Utilities for preparing the configuration file and graphing the results of analyses
-	are now provided. Separate documentation is provided for both
-	<tt><font color='red'>gKelvin</font></tt> and <tt><font color='red'>graphApp</font></tt>
-        as <tt>Readme.txt</tt> files in their distribution directories. These utilities
+      <li>Utilities for preparing the configuration file (<font color='red'>gKelvin</font>)
+        and graphing the results of analyses (graphApp) are now provided. These utilities
 	have separate installation requirements and procedures as well.</li>
-      <li>Progress reporting now provides configurable fixed-frequency updates so as to
-	eliminate the output "feast or famine" effect across differing analyses. See the
+      <li>Progress reporting now provides configurable fixed-frequency updates. See the
 	<a href='#running'>Running The Programs</a> section for details.</li>
     </ol>
 
@@ -294,8 +284,8 @@
       <div class='hang'>
         <b>Two-point vs. multipoint analysis</b><br>
         For linkage analyses, the user can select either two-point or multipoint; for LD analyses,
-        only the two-point option is available. In any case, the user can choose to use either
-        sex-averaged or sex-specific marker maps.
+        only the two-point option is available. For linkage analyses, the user can choose to use
+        either sex-averaged or sex-specific marker maps.
         <p>
         <b>Marker-marker analysis</b><br>
         This option is available only for two-point analyses, but can be used to estimate either
@@ -309,7 +299,7 @@
         <p>
         <b>Trait models</b><br>
         Kelvin handles dichotomous traits (DT) or quantitative traits (QT). For QT the user can
-        select the functional form of the genotypic trait distribution as either normal or
+        select the functional form of the <i>genotypic</i> trait distribution as either normal or
         chi-square. In addition, a QT threshold model (QTT) can be specified. In all cases Kelvin
         internally integrates over the parameters of the trait model, so there is no need to
         specify trait values or a mode of inheritance.
@@ -341,10 +331,8 @@
     sequential updating. This is done by calling
     <tt><a href='#calcupdatedppl'>calc_updated_ppl</a></tt>. This program takes as input the
     output from <span class='sc'>Kelvin</span> analyes (in particular, it uses the <tt>br.out</tt>
-    files). Sequential updating works with any <span class='sc'>Kelvin</span> options, however,
-    it is important that all files being used as input to <tt>calc_updated_ppl</tt> should
-    reflect the same sets of options. Users interested in running calc_updated_ppl on output
-    generated by older versions of Kelvin must use the <tt>br.out</tt> conversion script
+    files). Users interested in running calc_updated_ppl on output generated by older versions
+    of Kelvin must use the <tt>br.out</tt> conversion script
     <a href='#convertbr'>convert_br.pl</a>.
 
     <h3>Graphing The Results</h3>
@@ -419,6 +407,7 @@
       <li><a href='#running'>Running The Programs</a></li>
       <li><a href='#outputfiles'>Contents Of Output Files</a></li>
       <li><a href='#sequpdate'>Sequential Updating</a></li>
+      <li><a href='#graphapp'>Graphing The Results</a></li>
     </ol>
 
     <h2 id='installing'>Installing The Programs</h2>
@@ -443,10 +432,10 @@
     Aside from the compiled execuatble, running <span class='sc'>Kelvin</span> requires
     <a href='http://www.perl.org'>Perl 5.x</a>. <span class='sc'>Kelvin</span>'s graphical
     configuration file generator, <font color='red'>gKelvin</font>, requires
-    <a href='http://www.python.org'>Python 2.5</a> and <a href='http://www.wxpython.org'>wxPython
-    2.8.3.0</a>. <span class='sc'>Kelvin</span>'s results graphing tool,
-    <font color='red'>graphApp</font>, requires Python 2.5, wxPython 2.8.3.0,
-    <a href='http://matplotlib.sourceforge.net'>Matplotlib</a>,
+    <a href='http://www.python.org'>Python 2.6</a> and <a href='http://www.wxpython.org'>wxPython
+    2.8.3.0</a>. <span class='sc'>Kelvin</span>'s results graphing tool, 
+    <a href='graphApp_manual.htm#Installing_graphApp'>graphApp</a>, requires
+    Python 2.5, wxPython 2.8.3.0, <a href='http://matplotlib.sourceforge.net'>Matplotlib</a>,
     <a href='http://numpy.scipy.org'>NumPy</a>,
     <a href='http://www.pythonware.com/products/pil'>Python Imaging Library (PIL)</a> and PyXML.
 
@@ -469,12 +458,11 @@
 
     <span class='sc'>Kelvin</span>'s resource requirements vary widely depending upon the
     complexity of the analysis being performed. By default, <span class='sc'>Kelvin</span>
-    uses polynomials to evaluate the likelihood calculation. This generally much faster than
-    not using polynomials, sometimes orders of magnitude faster, but complex pedigrees, untyped
-    founders, etc., can easily push the required memory to 16GB or more. Polynomial evaluation
-    can be disabled, but due to increased run times, this should only be done if limited memory
-    becomes and issue. <span class='sc'>Kelvin</span> monitors CPU and memory utilization and will
-    display warnings if thrashing memory.
+    uses a polynomial representation of the likelihood. This is generally much faster but
+    complex pedigrees, untyped founders, etc., can easily push the required memory to 16GB
+    or more. Polynomial evaluation can be disabled, but due to increased run times, this
+    should only be done if limited memory becomes and issue. <span class='sc'>Kelvin</span>
+    monitors CPU and memory utilization and will display warnings if thrashing memory.
     <p>
     If you have access to a high-performance solid-state drive (SSD), you may be able to use
     <a href="SSDSupport.html">SSD support</a> to build polynomials that are much larger than
@@ -664,10 +652,7 @@
     A dichotomous trait model is the default. A quantitative trait model can
     be specified with the <a href='Directives.html#qt'>QT</a> directive. A quantitative trait
     model with a threshold can be specified with the <a href='Directives.html#qtt'>QTT</a>
-    and <a href='Directives.html#threshold'>Threshold</a> directives. Quantitative
-    trait directives are incompatible with, and the default dichotomous trait
-    model is disabled for, <a href='#traitmarker_vs_markermarker'>
-    marker-to-marker</a>.
+    and <a href='Directives.html#threshold'>Threshold</a> directives.
   
     <h3 id='sexave_vs_sexspec'>Sex Averaged vs. Sex Specific</h3>
 
@@ -680,10 +665,8 @@
     <h3 id='imprinting_vs_not'>Imprinting vs. Non-imprinting</h3>
 
     <span class='sc'>Kelvin</span> will ignore the possibility of imprinting (parent-of-origin)
-    effects by default. Imprinting effects can be considered by specifying the
-    <a href='Directives.html#imprinting'>Imprinting</a> directive. Imprinting analysis is
-    incompatible with <a href='#traitmarker_vs_markermarker'>marker-to-marker</a>
-    analyses.
+    effects by default. Imprinting effects can be allowed for by specifying the
+    <a href='Directives.html#imprinting'>Imprinting</a> directive.
   
     <h3 id='traitmarker_vs_markermarker'>Trait-to-Marker vs. Marker-to-Marker</h3>
 
@@ -691,32 +674,26 @@
     between a hypothetical trait locus and a marker or group of markers.
     Marker-to-marker analysis is enabled with the <a href='Directives.html#markertomarker'>
     MarkerToMarker</a> directive, and considers the relationship between
-    pairs of markers only. Since no trait is considered at all under marker-to-marker,
-    <a href='#dt_vs_qt_vs_qtt'>QT, QTT</a>, <a href='#imprinting_vs_not'>imprinting</a>,
-    <a href='#lc_vs_nolc'>covariate-dependence</a> and <a href='#simple_vs_epistasis'>
-    epistasis</a> analyses are incompatible. <a href='#twopoint_vs_multipoint'>Multipoint</a>
-    analyses are also incompatible with marker-to-marker.
+    pairs of markers only.
 
     <h3 id='lc_vs_nolc'>Covariate-Dependent vs. Non-Covariate-Dependent</h3>
 
-    By default, <span class='sc'>Kelvin</span> assumes the a single penetrance vector (or
-    vector of means). <span class='sc'>Kelvin</span> can be made to assign separate penetrance 
-    vectors to individuals assigned to different classes, based e.g. on a covariate. Covariate
-    dependence is enabled with the <a href='Directives.html#liabilityclasses'>
-    LiabilityClasses</a> directive, and requires that a covariate be specified in the
-    <a href='#pedfileformat'>pedigree</a> and <a href='#locusfileformat'>locus</a> files.
-    Covariate dependence is incompatible with <a href='#traitmarker_vs_markermarker'>
-    marker-to-marker</a> analyses, and doesn't currently work with
-    <a href='#simple_vs_epistasis'>epistasis</a> analyses.
+    By default, <span class='sc'>Kelvin</span> does not condition penetrances (or QT parameters)
+    on covariates. <span class='sc'>Kelvin</span> can be made to allow covariate-dependent
+    penetrances (or QT parameters) with the <a href='Directives.html#liabilityclasses'>
+    LiabilityClasses</a> directive, and appropriate entries in the
+    <a href='#pedfileformat'>pedigree</a> and <a href='#locusfileformat'>locus</a> files,
+    whieh assign individuals to different liability classe. Covariate dependence does not
+    currently work with <a href='#simple_vs_epistasis'>epistasis</a> analyses.
 
     <h3 id='simple_vs_epistasis'>Single Locus Analysis vs. Epistasis</h3>
 
     By default, <span class='sc'>Kelvin</span> conducts single locus analysis. The
-    <a href='Directives.html#epistasis'><tt>Epistasis</tt></a> directive will provide a two-locus
-    model in which penetrances may depend upon genotypes at a specified marker. Currently,
-    the epistasis marker must be a SNP, and epistasis analysis doesn't work with
-    <a href='#lc_vs_nolc'>covariate dependence.</a> Epistasis is incompatible with
-    <a href='#traitmarker_vs_markermarker'>marker-to-marker</a> analyses.
+    <a href='Directives.html#epistasis'><tt>Epistasis</tt></a> directive will provide a
+    two-locus model in which penetrances at one locus are allowed to depend upon genotypes
+    at a specified marker. Currently, this marker must be a SNP (two alleles only), and
+    epistasis analysis does not work with additional
+    <a href='#lc_vs_nolc'>covariate dependence.</a>
 
     <h3 id='pedcounting'>Automatic Pedigree Counting</h3>
 
@@ -732,7 +709,7 @@
     true:
 
     <ul>
-      <li>If a the <a href='Directives.html#multipoint'>MultiPoint</a> directive is present.</li>
+      <li>If the <a href='Directives.html#multipoint'>MultiPoint</a> directive is present.</li>
       <li>If either the <a href='Directives.html#qt'>QT</a> or
         <a href='Directives.html#qtt'>QTT</a> directive is present.</li>
       <li>If the dataset contains microsatellites.</li>
@@ -745,18 +722,17 @@
 
     <span class='sc'>Kelvin</span> typically requires that allele frequencies be provided
     using the <a href='Directives.html#frequencyfile'><tt>FrequencyFile</tt></a> directive.
-    However, <span class='sc'>Kelvin</span> can estimate allele frequencies in specific
-    circumstances:
+    However, <span class='sc'>Kelvin</span> will estimate allele frequencies internally 
+    in specific circumstances:
   
     <ul>
       <li>The analysis must be a linkage disequilibrium analysis (specified with the
         <a href='Directives.html#ld'><tt>LD</tt></a> directive).</li>
-      <li>The pedigree must contain only cases-and-controls, or nuclear families (in this
-        context, nuclear means exactly two founders and one or more full-sibling children
-        of those founders).</li>
+      <li>The pedigree must contain only cases-and-controls, or simple nuclear families
+        (exactly two founders and one or more full-sibling offspring).</li>
       <li>For any given marker, at least 30 families (any combination of cases-and-controls
         or nuclear families) must contain useful genotype information.</li>
-      <li>All markers must have no more than two alleles (SNPs, typically).</li>
+      <li>All markers must have no more than two alleles (SNPs).</li>
       <li>If the pedigree contains cases-and-controls, and the trait is dichotomous,
         then a trait prevalence must be specified with the
         <a href='Directives.html#traitprevalence'><tt>TraitPrevalence</tt></a> directive.</li>
@@ -772,7 +748,7 @@
 
     <h2 id='fileformats'>Data File Formats</h2>
 
-    <span class='sc'>Kelvin</span> typically requires four input data file: a pedigree
+    <span class='sc'>Kelvin</span> typically requires four input data files: a pedigree
     file, a locus file, a map file, and a frequency file. The frequency file may be 
     omitted if <span class='sc'>Kelvin</span> is to estimate allele frequencies internally.
 
@@ -809,12 +785,12 @@
     This file may be referred to as a 'data file' in documentation for older versions of
     <span class='sc'>Kelvin</span>. Each line in a locus file consists of an identifier
     character, and a label. Each line corresponds to one (or two) columns in the pedigree
-    file. Put another way, the locus file defines the number and order of columns in the
-    pedigree file. The identifier characters, and their meanings, are as follows:
+    file. The locus file defines the number and order of columns in the pedigree file. The
+    identifier characters, and their meanings, are as follows:
 
     <ul>
       <li><tt>A</tt> - Phenotype status/trait value. Corresponds to a single column in the
-        pedigree file, which indicates if individuals are affected, unaffected, unphenotyped,
+        pedigree file, which indicates if individuals are affected, unaffected, unknown,
         or (for <a href='#dt_vs_qt_vs_qtt'>quantitative trait</a> analyses) the trait value.
         <a href='#traitmarker_vs_markermarker'>Trait-to-marker</a> analyses must have a
         phenotype status/trait line in the locus file, and the trait label will appear in
@@ -825,8 +801,8 @@
       <li><tt>T</tt> - Used interchangeably with <tt>A</tt> in
         <span class='sc'>Kelvin</span>.</li>
       <li><tt>C</tt> - Covariate (Liability Class). Corresponds to a single column in the
-        pedigree file. The values in this column are used to group individuals into sets with
-        different trait penetrance characteristics.</li>
+        pedigree file. The values in this column are used to group individuals into liability
+        classes to allow for covariate dependence of the penetrances (or QT parameters).</li>
       <li><tt>M</tt> - Marker. Corresponds to two adjacent columns in the pedigree file. The
         values in these columns indicate the alleles of the named marker for each individual.
         Every marker that is listed in the locus file must also appear in the 
@@ -1068,117 +1044,141 @@
         has been made on the analysis. You can control how much detail is provided and how
         frequently messages are displayed with the
         <a href='Directives.html#progresslevel'>ProgressLevel</a> and
-        <a href='Directives.html#progressdelayseconds'>ProgressDelaySeconds</a> directives. </li>
-      <li><b>Diagnostic messages</b>, which begin with a severity indication and then provide a description
-	of the difficulty encountered. Severity levels are <b>WARNING</b>, which indicates a potential problem
-	that requires your attention in order to ensure the integrity of the analysis results; 
-	<b>ERROR</b>, which indicates
-	some kind of analysis problem that will prevent the run from continuing; and <b>FATAL</b>, which indicates
-	an internal integrity failure in <span class='sc'>Kelvin</span> that should be brought to the attention of
-	the developers. </li>
-	<li><b>Informational messages</b>, are essentially everything else, and while helpful, do not necessarily
-	  need to be reviewed in order to ensure the integrity of the analysis results.
-</ol>
+        <a href='Directives.html#progressdelayseconds'>ProgressDelaySeconds</a> directives.</li>
+      <li><b>Diagnostic messages</b>, which begin with a severity indication and then provide
+        a description of the difficulty encountered. Severity levels are <b>WARNING</b>, which
+        indicates a potential problem that requires your attention in order to ensure the
+        integrity of the analysis results; <b>ERROR</b>, which indicates some kind of analysis
+        problem that will prevent the run from continuing; and <b>FATAL</b>, which indicates
+	an internal integrity failure in <span class='sc'>Kelvin</span> that should be brought
+        to the attention of the developers.</li>
+      <li><b>Informational messages</b>, are essentially everything else, and while helpful,
+        do not necessarily need to be reviewed in order to ensure the integrity of the analysis
+        results.</li>
+    </ol>
 
-    For example:
-<p>
-  <table cellspacing=2>
-    <tr><td class='lineno'><tt> 1 </tt></td>
-<td><tt>10/01/15 08:26:25 @0s, Initializing</tt></td></tr>
-    <tr><td class='lineno'><tt> 2 </tt></td>
-<td><tt>10/01/15 08:26:25 kelvin V0.38.1 edit 2463 built Jan 14 2010 15:04:43</tt></td></tr>
-    <tr><td class='lineno'><tt> 3 </tt></td>
-<td><tt>10/01/15 08:26:25 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)</tt></td></tr>
-    <tr><td class='lineno'><tt> 4 </tt></td>
-<td><tt>10/01/15 08:26:25 Using GNU Scientific Library (GSL) statistical functions instead of internal ones</tt></td></tr>
-    <tr><td class='lineno'><tt> 5 </tt></td>
-<td><tt>10/01/15 08:26:25 OpenMP-enabled w/maximum of 6 thread(s).</tt></td></tr>
-    <tr><td class='lineno'><tt> 6 </tt></td>
-<td><tt>10/01/15 08:26:25 GCC optimization level 2 enabled</tt></td></tr>
-    <tr><td class='lineno'><tt> 7 </tt></td>
-<td><tt>10/01/15 08:26:25 To check status (at some risk), type CTRL-\ or type "kill -3 22860"</tt></td></tr>
-    <tr><td class='lineno'><tt> 8 </tt></td>
-<td><tt>10/01/15 08:26:25 Using configuration file kelvin.conf</tt></td></tr>
-    <tr><td class='lineno'><tt> 9 </tt></td>
-<td><tt>10/01/15 08:26:25 Computation is done in polynomial mode</tt></td></tr>
-    <tr><td class='lineno'><tt> 10 </tt></td>
-<td><tt>10/01/15 08:26:25 polynomialScale is 1 (1-10, 1 is default)</tt></td></tr>
-    <tr><td class='lineno'><tt> 11 </tt></td>
-<td><tt>10/01/15 08:26:25 Integration is done numerically (dkelvin)</tt></td></tr>
-    <tr><td class='lineno'><tt> 12 </tt></td>
-<td><tt>10/01/15 08:26:25 Further progress will be displayed at 90 second intervals</tt></td></tr>
-    <tr><td class='lineno'><tt> 13 </tt></td>
-<td><tt>10/01/15 08:26:25 6TL of 20AL*6GF*275pv(1LC) space for 24 pedigree(s)</tt></td></tr>
-    <tr><td class='lineno'><tt> 14 </tt></td>
-<td><tt>10/01/15 08:26:25 Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.</tt></td></tr>
-    <tr><td class='lineno'><tt> 15 </tt></td>
-<td><tt>10/01/15 08:26:25 @0s, Performing analysis</tt></td></tr>
-    <tr><td class='lineno'><tt> 16 </tt></td>
-<td><tt>10/01/15 08:26:26&nbsp;&nbsp;&nbsp;&nbsp;@1s, Starting with position 1 of 6</tt></td></tr>
-    <tr><td class='lineno'><tt> 17 </tt></td>
-<td><tt>10/01/15 08:27:56&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@1m30s, Building polynomial w/pedigree: 12 (12/24)</tt></td></tr>
-    <tr><td class='lineno'><tt> 18 </tt></td>
-<td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@2m32s, Building polynomial w/pedigree: 24 (24/24)</tt></td></tr>
-    <tr><td class='lineno'><tt> 19 </tt></td>
-<td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@3m59s, Evaluating polynomials, currently at 8.1e+03 iterations</tt></td></tr>
-  </table>
-<p>
-  Lines 1 and 15-19 are progress messages.
-  Line 2 is the <span class='sc'>Kelvin</span> major version and build information.
-  Next is the compiler verison number (line 3), followed by important compilation conditionals as
-  specified in the Makefile and run characteristics as influenced by environment variables. In
-  the example given, OpenMP support status and the number of threads used (line 5)
-  is displayed. Other options and their
-  corresponding messages are covered in the <a href="#building"> Building and Testing</a>
-  section.
-    <p>
-      Following this is a line (7) describing the action to take in order to force an early display
-      of progress messages.
-You can use this as a sort of "pulse check" to make sure <span class='sc'>Kelvin</span> is still alive
-and well and making progress should there be a lull between automatic progress updates. If
-you are running <span class='sc'>Kelvin</span> interactively, you can 
-perform this "pulse check" by type <tt>CTRL-\</tt> (that means to hold down the CTRL
-or CONTROL key while pressing the backslash). If you are running under cygwin, you will first need to
-type <tt>stty quit ^C</tt> to make this to work. Note that the aforementioned <tt>^C</tt> is actually the two
-character sequence of 'carat' (shifted 6) and 'C'. Pressing <tt>CTRL-\</tt> sends a SIGQUIT signal to <span class='sc'>Kelvin</span>, which it
-interprets as a request for status. If you are running <span class='sc'>Kelvin</span> as a detached
-process or in a batch queue, you can send a SIGQUIT to the process by being logged-into the same
-node as it is running on, and using the <tt>kill</tt> command
-as described in the diagnostic output. Note that the signal number (-3 in the example) can be
-different from platform-to-platform, and the
-process ID (26577 in the example) will be different from run-to-run. The "at some risk" bit is because
-some status information is displayed asynchronously, i.e. regardless of the current context of the
-evaluation, and has been known, albeit extremely infrequently, to crash the program.
-<p>
-Next, location of the configuration file (line 8) and the analysis and run characteristics as determined from that file
-(lines 9-12) are displayed. The last of these (lines 13 and 14) are a terse description of the scope and nature
-of the analysis, for example a fixed-grid run might display:
-<pre>
-6TL of 20AL*6GF*275pv(1LC) space for 24 pedigree(s)
+    For example: <p>
+
+    <table cellspacing=2>
+      <tr>
+        <td class='lineno'><tt> 1 </tt></td>
+        <td><tt>10/01/15 08:26:25 @0s, Initializing</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 2 </tt></td>
+        <td><tt>10/01/15 08:26:25 kelvin V0.38.1 edit 2463 built Jan 14 2010 15:04:43</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 3 </tt></td>
+        <td><tt>10/01/15 08:26:25 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 4 </tt></td>
+        <td><tt>10/01/15 08:26:25 Using GNU Scientific Library (GSL) statistical functions
+          instead of internal ones</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 5 </tt></td>
+        <td><tt>10/01/15 08:26:25 OpenMP-enabled w/maximum of 6 thread(s).</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 6 </tt></td>
+        <td><tt>10/01/15 08:26:25 GCC optimization level 2 enabled</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 7 </tt></td>
+        <td><tt>10/01/15 08:26:25 To check status (at some risk), type CTRL-\ or type "kill -3
+          22860"</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 8 </tt></td>
+        <td><tt>10/01/15 08:26:25 Using configuration file kelvin.conf</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 9 </tt></td>
+        <td><tt>10/01/15 08:26:25 Computation is done in polynomial mode</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 10 </tt></td>
+        <td><tt>10/01/15 08:26:25 polynomialScale is 1 (1-10, 1 is default)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 11 </tt></td>
+        <td><tt>10/01/15 08:26:25 Integration is done numerically (dkelvin)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 12 </tt></td>
+        <td><tt>10/01/15 08:26:25 Further progress will be displayed at 90 second intervals
+          </tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 13 </tt></td>
+        <td><tt>10/01/15 08:26:25 6TL of 20AL*6GF*275pv(1LC) space for 24 pedigree(s)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 14 </tt></td>
+        <td><tt>10/01/15 08:26:25 Trait-to-marker, Sex-Averaged Multipoint (w/4 loci),
+          Dichotomous Trait.</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 15 </tt></td>
+        <td><tt>10/01/15 08:26:25 @0s, Performing analysis</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 16 </tt></td>
+        <td><tt>10/01/15 08:26:26&nbsp;&nbsp;&nbsp;&nbsp;@1s, Starting with position 1 of 6
+          </tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 17 </tt></td>
+        <td><tt>10/01/15 08:27:56&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@1m30s,
+          Building polynomial w/pedigree: 12 (12/24)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 18 </tt></td>
+        <td><tt>10/01/15 09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@2m32s,
+          Building polynomial w/pedigree: 24 (24/24)</tt></td>
+      </tr><tr>
+        <td class='lineno'><tt> 19 </tt></td>
+        <td><tt>10/01/15
+          09:26:20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@3m59s,
+          Evaluating polynomials, currently at 8.1e+03 iterations</tt></td>
+      </tr>
+    </table><p>
+
+    Lines 1 and 15-19 are progress messages. Line 2 is the <span class='sc'>Kelvin</span> major
+    version and build information. Next is the compiler verison number (line 3), followed by
+    important compilation conditionals as specified in the Makefile and run characteristics as
+    influenced by environment variables. In the example given, OpenMP support status and the
+    number of threads used (line 5) is displayed. Other options and their corresponding messages
+    are covered in the <a href="#building"> Building and Testing</a> section.<p>
+
+    Following this is a line (7) describing the action to take in order to force an early display
+    of progress messages. You can use this as a sort of "pulse check" to make sure
+    <span class='sc'>Kelvin</span> is still alive and well and making progress should there be
+    a lull between automatic progress updates. If you are running <span class='sc'>Kelvin</span>
+    interactively, you can perform this "pulse check" by type <tt>CTRL-\</tt> (that means to hold
+    down the CTRL or CONTROL key while pressing the backslash). If you are running under cygwin,
+    you will first need to type <tt>stty quit ^C</tt> to make this to work. Note that the
+    aforementioned <tt>^C</tt> is actually the two character sequence of 'carat' (shifted 6)
+    and 'C'. Pressing <tt>CTRL-\</tt> sends a SIGQUIT signal to <span class='sc'>Kelvin</span>,
+    which it interprets as a request for status. If you are running <span class='sc'>Kelvin</span>
+    as a detached process or in a batch queue, you can send a SIGQUIT to the process by being
+    logged-into the same node as it is running on, and using the <tt>kill</tt> command as
+    described in the diagnostic output. Note that the signal number (-3 in the example) can be
+    different from platform-to-platform, and the process ID (26577 in the example) will be
+    different from run-to-run. The "at some risk" bit is because some status information is
+    displayed asynchronously, i.e. regardless of the current context of the evaluation, and has
+    been known, albeit extremely infrequently, to crash the program.<p>
+
+    Next, location of the configuration file (line 8) and the analysis and run characteristics
+    as determined from that file (lines 9-12) are displayed. The last of these (lines 13 and 14)
+    are a terse description of the scope and nature of the analysis, for example a multipoint
+    run might display:
+
+    <pre>
+8TL over a dynamic space (1LC) for 11 pedigree(s)
 Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.
-</pre>
-This indicates that for each of 6 trait loci, PPLs will be computed using the closest 4 markers for the 
-standard 3-dimensional trait model space of 20 alpha values by 6 gene frequencies and 275 penetrance 
-values (from 1 liability class). A two-point analysis will provide slightly different information, e.g.:
-<pre>
-9 pair(s)*51Th of 20AL*6GF*275pv(1LC) space for 11 pedigree(s)
-Trait-to-marker Two-Point, Dichotomous Trait, Disequilibrium.
-</pre>
-This indicates that for each of the 9
-pairs of loci, 51 values of theta will be evaluated in the standard 3-dimensional trait model space of 20 alpha 
-values by 6 gene 
-frequencies and 275 penetrance values (from 1 liability class), which is 459 integrations over a 33,000 point grid. 
-Likelihoods for the evaluation  will be derived from the phenotypic and genotypic information in 11 pedigrees.
-This can give you an idea of how complex your run is.
-<p>
-Note that dynamic grid runs cannot anticipate the number of sample points that will be used in the trait 
-model space, and therefore will display something like:
-<pre>
-6TL over a dynamic space for 24 pedigree(s)
-Trait-to-marker, Sex-Averaged Multipoint (w/4 loci), Dichotomous Trait.
-</pre>
-<p>
-Finally, progress indicators are displayed up through the end of the run.
+    </pre>
+ 
+    This indicates that for each of 8 trait loci, PPLs will be computed using the closest 4
+    markers, integrating over a dynamically-sampled trait space, with all individuals in a 
+    single liability class. A two-point analysis will provide slightly different information,
+    e.g.:
+
+    <pre>
+67D' cases over a dynamic space (1LC) for 4 pedigree(s)
+Trait-to-marker Two-Point, Dichotomous Trait, Linkage Disequilibrium.
+    </pre>
+
+    This indicates that for each of 67 initial D' values, two-point PPLs and LD statistics
+    will be computed, integrating over a dynamically-sampled trait space, with all individuals
+    in a single liability class.<p>
+
+    Finally, progress indicators are displayed up through the end of the run.
 
     <h2 id='outputfiles'>Contents Of Output Files</h2>
 
@@ -1265,8 +1265,8 @@ Finally, progress indicators are displayed up through the end of the run.
         decimal places otherwise.</li>
       <li>PPLD|L (only for LD analyses) - Posterior probability of LD, given linkage. The
         PPLD|L is rounded like the PPL(LD).</li>
-      <li>PPLD(L) (only for LD analyses) - posterior probability of linkage andlinkage
-        disequilibrium, The PPLD(L) is rounded like the PPL(LD).</li>
+      <li>PPLD (only for LD analyses) - posterior probability of linkage and linkage
+        disequilibrium, The PPLD is rounded like the PPL(LD).</li>
     </ol>
 
     <h3 id='modfile'>Maximizing Model (MOD) File</h3>
@@ -1274,7 +1274,11 @@ Finally, progress indicators are displayed up through the end of the run.
     All analyses can optionally write maximizing models to a separate file, named
     <tt>mod.out</tt> by default, although that name is configurable. In all cases, the
     first line is a comment line that identifies the version of <span class='sc'>Kelvin</span>
-    that created the file.
+    that created the file. Note that due to Kelvin's use of an efficient numerical integration
+    algorithm, there is no guarantee that the maximum MOD will occur at the true maximum values
+    of all parameters. The default integration routine can be overridden in order to perform
+    maximization over a fixed grid of user-specified parameter values for precise maximization.
+    See [[??]] for details. 
 
     <h4>Multipoint Analysis</h4>
 
@@ -1297,7 +1301,9 @@ Finally, progress indicators are displayed up through the end of the run.
          threshold in the case of the QTT model. Quantitative trait runs with the Chi-Square
          distribution have only three (or four) columns of degrees of freedom followed by the
          threshold. Values are comma-separated and enclosed in parentheses. Header text
-         reflects actual count and nature of columns.</li>
+         reflects actual count and nature of columns. Again, the models reported here may not
+         represent true maximizing models, if the integration algorithm has bypassed the true
+         overall maximum of the parameter space.</li>
     </ol>
 
     <h4>Two-point Analysis</h4>
@@ -1341,9 +1347,9 @@ Finally, progress indicators are displayed up through the end of the run.
     sequentially updated and new PPL statistics are generated.<p>
 
     <tt>calc_updated_ppl</tt> can also use the PPL statistics generated by a multipoint analysis
-    as prior probabilities when calculating the PPLD(L) (posterior probability of linkage and LD)
+    as prior probabilities when calculating the PPLD (posterior probability of linkage and LD)
     statistic. In this way, the results of a linkage analysis can be combined with an LD
-    analysis. Both the linkage and LD analyses should have been conducted using the same map.<p>
+    analysis. Both the linkage and LD analyses must be aligned against the the same map.<p>
 
     By default, <tt>calc_updated_ppl</tt> expects Bayes ratio files from two-point, sex-averaged
     analyses, in the most recent format, and displays PPL statisics. Bayes ratio files created
@@ -1392,7 +1398,7 @@ Finally, progress indicators are displayed up through the end of the run.
         <tr>
           <td valign='top'><tt>-P&nbsp<i>pplfile</i></tt>, <tt>--pplin&nbsp<i>pplfile</i></tt></td>
           <td>Specifies the name of a file containing multipoint PPLs which should be used
-            as prior probabilities for calculating the PPLD(L) statistic. This new statistic is
+            as prior probabilities for calculating the PPLD statistic. This new statistic is
             labled cPPLD (combined PPLD). For each marker in the LD analysis, the prior
             probability will be sampled from the multipoint PPLs. If there is no PPL at the
             exact marker position, one will be estimated using linear interpolation.</td>
@@ -1402,8 +1408,7 @@ Finally, progress indicators are displayed up through the end of the run.
           <td>Specifies that marker names in Bayes ratio files should be ignored, and that updated
             statistics should be calculated using Bayes ratios from all files in the order in
             which it appears. This option should be used WITH CAUTION, since it implies that
-            the same markers appear in different analyses with different names, which is probably
-            not the case.</td>
+            the same markers appear in different analyses with different names.</td>
         </tr>
         <tr>
           <td valign='top'><tt>-?</tt>,&nbsp<tt>--help</tt></td>
@@ -1438,7 +1443,7 @@ _$ calc_updated_ppl --mapin complete.map br1.out br2.out br3.out > updated-ppl.o
 
     Here's an example of using multipoint PPLs with a single two-point, LD Bayes ratio
     file. This just recalculates the PPLD statistics for the given Bayes ratios, but uses
-    the multipoint PPLs as priors for the PPLD(L) statistic (producing the cPPLD statistic):
+    the multipoint PPLs as priors for the PPLD statistic (producing the cPPLD statistic):
 
     <pre>
 _$ calc_updated_ppl --pplin mp-ppl.out br.out > cppld.out
@@ -1486,6 +1491,14 @@ _$ convert_br.pl -c 12 -m mapfile.dat avghet-old.out > br-new.out
     <pre>
 _$ convert_br.pl --help
     </pre>
+
+    <h2 id='graphapp'>Graphing The Results</h2>
+
+    <span class='sc'>Kelvin</span> is distributed with a richly-featured graphing program,
+    graphApp. It reads <span class='sc'>Kelvin</span>-formatted PPL output, and can write
+    output in a number of graphics formats. It is specifically tailored to graphing the 
+    results of genetic analyses. Full documentation is provided in the
+    <a href='graphApp_manual.htm'>graphApp manual</a>.
 
     <hr>
     $Date$
