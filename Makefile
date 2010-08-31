@@ -191,38 +191,36 @@ dist :
 	- rm -rf kelvin-$(VERSION)
 	mkdir kelvin-$(VERSION)
 	mkdir kelvin-$(VERSION)/bin
-	ln bin/kelvin.* kelvin-$(VERSION)/bin
-	ln bin/calc_updated_ppl.* kelvin-$(VERSION)/bin
-	ln README .maj .min .pat .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
+	cp -a bin/{kelvin,calc_updated_ppl}.* kelvin-$(VERSION)/bin
+	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
 	perl -pe "s|#CFLAGS \+\= \-DDISTRIBUTION|CFLAGS \+\= \-DDISTRIBUTION|;" Makefile > kelvin-$(VERSION)/Makefile
-	mkdir kelvin-$(VERSION)/lib
-	mkdir kelvin-$(VERSION)/utils
-	ln utils/Makefile utils/*.[ch] utils/wordDiff.pl kelvin-$(VERSION)/utils
-	mkdir kelvin-$(VERSION)/pedlib
-	ln pedlib/Makefile pedlib/*.[ch] kelvin-$(VERSION)/pedlib
-	mkdir kelvin-$(VERSION)/config
-	ln config/Makefile config/*.[ch] kelvin-$(VERSION)/config
-	mkdir kelvin-$(VERSION)/seq_update
-	ln seq_update/Makefile seq_update/*.[ch] seq_update/*.pl kelvin-$(VERSION)/seq_update
+	mkdir kelvin-$(VERSION)/{lib,utils,pedlib,config,seq_update}
+	cp -a utils/Makefile utils/*.{c,h,pl} kelvin-$(VERSION)/utils
+	cp -a pedlib/Makefile pedlib/*.[ch] kelvin-$(VERSION)/pedlib
+	cp -a config/Makefile config/*.[ch] kelvin-$(VERSION)/config
+	cp -a seq_update/Makefile seq_update/*.{c,h,pl} kelvin-$(VERSION)/seq_update
 	mkdir -p kelvin-$(VERSION)/test-suite/dynamic-grid/PE/SA_DT
-	ln test-suite/Makefile kelvin-$(VERSION)/test-suite
-	ln test-suite/dynamic-grid/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid
-	ln test-suite/dynamic-grid/PE/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid/PE
-	ln test-suite/dynamic-grid/PE/SA_DT/* kelvin-$(VERSION)/test-suite/dynamic-grid/PE/SA_DT
+	cp -a test-suite/Makefile kelvin-$(VERSION)/test-suite
+	cp -a test-suite/dynamic-grid/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid
+	cp -a test-suite/dynamic-grid/PE/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid/PE
+	cp -a test-suite/dynamic-grid/PE/SA_DT/* kelvin-$(VERSION)/test-suite/dynamic-grid/PE/SA_DT
 	mkdir -p kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
-	ln test-suite/seq_update/Makefile kelvin-$(VERSION)/test-suite/seq_update
-	ln test-suite/seq_update/d-2pt-le/* kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
+	cp -a test-suite/seq_update/Makefile kelvin-$(VERSION)/test-suite/seq_update
+	cp -a test-suite/seq_update/d-2pt-le/* kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
 	mkdir -p kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
-	ln test-suite/frontend/Makefile kelvin-$(VERSION)/test-suite/frontend
-	ln test-suite/frontend/KelvinClasses/* kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
+	cp -a test-suite/frontend/Makefile kelvin-$(VERSION)/test-suite/frontend
+	cp -a test-suite/frontend/KelvinClasses/* kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
 	mkdir kelvin-$(VERSION)/doc
 	html2text -rcfile doc/html2text.rc doc/index.html >kelvin-$(VERSION)/doc/index.txt
 	html2text -rcfile doc/html2text.rc doc/Directives.html >kelvin-$(VERSION)/doc/Directives.txt
 	html2text -rcfile doc/html2text.rc doc/Allocators.html >kelvin-$(VERSION)/doc/Allocators.txt
 	html2text -rcfile doc/html2text.rc doc/SSDSupport.html >kelvin-$(VERSION)/doc/SSDSupport.txt
 	html2text -rcfile doc/html2text.rc doc/compiledPolys.html >kelvin-$(VERSION)/doc/compiledPolys.txt
-	ln doc/*.html doc/*.png doc/*.gif kelvin-$(VERSION)/doc
-	tar -hcvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
+	cp -a doc/*.{html,png,gif} kelvin-$(VERSION)/doc
+	svn export $(SVNROOT)/graphApp/trunk kelvin-$(VERSION)/graphApp
+	ln -s ../graphApp/doc/graphApp_manual{.htm,_files} kelvin-$(VERSION)/doc/
+	svn export $(SVNROOT)/gKelvin/trunk/src kelvin-$(VERSION)/gKelvin
+	tar -cvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
 	rm -rf kelvin-$(VERSION)
 
 install : $(BINDIR)/kelvin-$(VERSION) \
