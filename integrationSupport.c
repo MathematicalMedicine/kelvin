@@ -2583,8 +2583,12 @@ void integrateMain ()
       analysisLocusList->traitLocusIndex = traitIndex;
       analysisLocusList->traitOrigLocus = traitLocus;
       markerSetChanged = FALSE;
+#ifdef STUDYDB
+      if (TRUE) { // Marker set must change for every position because we don't know when it does for all study maps
+#else
       if (prevFirstMarker != mp_result[posIdx].pMarkers[0]
           || prevLastMarker != mp_result[posIdx].pMarkers[modelType->numMarkers - 1]) {
+#endif
         /* marker set has changed */
         markerSetChanged = TRUE;
         markerLocusList.pLocusIndex[0] = mp_result[posIdx].pMarkers[0];
