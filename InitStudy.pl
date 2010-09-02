@@ -155,8 +155,8 @@ sub perform_study
 	} else {
 	    # Server -- no worries about errors here either...
 	    
-	    $dbh->do("Update ignore Pedigrees set GenotypeMapId = ? where PedigreeSId = ?",
-		     undef, $MapId, $PedigreeSId)
+	    $dbh->do("Update ignore Pedigrees set GenotypeMapId = ? where StudyId = ? AND PedigreeSId = ?",
+		     undef, $MapId, $StudyId, $PedigreeSId)
 		if ($PedigreeSId =~ $PedigreeRegEx);
 	}
     }
