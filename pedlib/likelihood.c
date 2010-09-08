@@ -387,7 +387,16 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 
       if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
 	pPedigree->likelihood = GetDAltL (myPedPosId, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0);
-      else
+      else if (analysisLocusList->numLocus == 1) // Trait likelihood
+	pPedigree->likelihood = GetDAltL (myPedPosId, pLocus->pAlleleFrequency[0],
+					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
+					  0, 0, 0, 0); 
+      else // Alternative likelihood
 	pPedigree->likelihood = GetDAltL (myPedPosId, pLocus->pAlleleFrequency[0],
 					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
 					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
@@ -404,7 +413,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       if (pPedigree->likelihood == -1) {
 	// Bogus result
 	studyDB.bogusAltLs++;
-	if (analysisLocusList->traitLocusIndex != -1)
+	if ((analysisLocusList->traitLocusIndex != -1) && (analysisLocusList->numLocus != 1))
 	  s->sbrg_heap[s->sbrgns]->bogusAltLs++;
 	pPedigree->likelihood = .05;
 	/*
@@ -488,7 +497,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       if (studyDB.driverPosIdx != (modelRange->ntloc - 1))
 	highPosition = lociSetTransitionPositions[studyDB.driverPosIdx];
 
-      DIAG (ALTLSERVER, 0, { fprintf (stderr, "Driver trait position is %G, lowPosition is %G and highPosition is %g\n", traitPosition, lowPosition, highPosition);});
+      DIAG (ALTLSERVER, 0, { fprintf (stderr, "Driver trait position for locusListType %d is %GcM (%GcM to %gcM)\n", locusListType, traitPosition, lowPosition, highPosition);});
 
       while (GetDWork(lowPosition, highPosition, locusListType, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
