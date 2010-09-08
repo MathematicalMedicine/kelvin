@@ -63,8 +63,6 @@ extern struct StudyDB studyDB;
 double *oldTLoc; // Pointer to original list of trait loci, which we're going to ignore
 double lociSetTransitionPositions[MAXLSTP];
 double newTLoc[MAXLSTP];
-int newTLocOrder[MAXLSTP];
-int newTLocOrderIndex;
 
 int compare_doubles (const void *a, const void *b) {
   const double *da = (const double *) a;
@@ -2459,7 +2457,6 @@ void integrateMain ()
 
     /* Iterate over all positions in the analysis. */
 
-#ifdef STUDYDB
     if (toupper(*studyDB.role) != 'C') {
       // We're a server! Completely suborn the trait loci vector in modelRange
       int i, j = 0;
@@ -2478,11 +2475,11 @@ void integrateMain ()
 
       // Choose new trait positions between transition positions
 
-      for (i=0; i<j; i++) {
-	newTLoc[i] = lociSetTransitionPositions[i] - .00001;
+      newTLoc[0] = lociSetTransitionPositions[0] - 1.0;
+      for (i=1; i<j; i++) {
+	newTLoc[i] = lociSetTransitionPositions[i-1] + ((lociSetTransitionPositions[i] - lociSetTransitionPositions[i-1]) / 2.0);
       }
-      newTLoc[j] = lociSetTransitionPositions[j-1] + .00001;
-      newTLocOrder[j] = j;
+      newTLoc[j] = lociSetTransitionPositions[j-1] + 1.0;
 
       oldTLoc = modelRange->tloc;
       modelRange->tloc = newTLoc;
@@ -2496,23 +2493,8 @@ void integrateMain ()
 
     CALCHOKE (mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
 
-    /* Looks weird, but we shuffle things for the server to enhance performance. Can't
-       do this for the client because it is driven by config trait loci. */
-    for (newTLocOrderIndex=0; newTLocOrderIndex<numPositions; newTLocOrderIndex++)
-      newTLocOrder[newTLocOrderIndex] = newTLocOrderIndex;
-
-    // Now SHUFFLE the list of trait positions - that's right, SHUFFLE 'EM!  Bwahah ha ha. (OK, just their order)
-    //    if (toupper(*studyDB.role) != 'C')
-    //      swShuffle (newTLocOrder, modelRange->ntloc);
-	
-    for (newTLocOrderIndex=0; newTLocOrderIndex<numPositions; newTLocOrderIndex++) {
-      posIdx = newTLocOrder[newTLocOrderIndex];
-#else
-
-    CALCHOKE (mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
-
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
-#endif
+
       if (fpIR != NULL)
         dk_curModel.posIdx = posIdx;
 
@@ -2526,7 +2508,7 @@ void integrateMain ()
       studyDB.driverPosIdx = posIdx;
 
       if (toupper(*studyDB.role) != 'C') {
-	// If we have models to work on, say how many, otherwise say we're skipping this position
+
 	double lowPosition  = -99.99, highPosition = 9999.99;
 
 	if (posIdx != 0)
@@ -2534,14 +2516,16 @@ void integrateMain ()
 	if (posIdx != (modelRange->ntloc - 1))
 	  highPosition = lociSetTransitionPositions[posIdx];
 
+	// If we have models to work on, say how many, otherwise say we're skipping this position
+
 	if ((freeModels = CountWork(lowPosition, highPosition)) == 0) {
-	  SUBSTEP (posIdx * 100 / numPositions, "Skipping position %d (%.4g) of %d (no work)", posIdx + 1, traitPos, numPositions);
+	  SUBSTEP (posIdx * 100 / numPositions, "Skipping position %d (%.4gcM from %.4gcM to %.4gcM) of %d (no work)", posIdx + 1, traitPos, lowPosition, highPosition, numPositions);
 	  continue;
-	}
+	} else
+	  SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4gcM from %.4gcM to %.4gcM) of %d (%d available models)", posIdx + 1, traitPos, lowPosition, highPosition, numPositions, freeModels);
       }
-      SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4g) of %d (%d available models)", posIdx + 1, traitPos, numPositions, freeModels);
 #else
-      SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4g) of %d", posIdx + 1, traitPos, numPositions);
+      SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4gcM) of %d", posIdx + 1, traitPos, numPositions);
 #endif
 
       /* set the sex average position first 
