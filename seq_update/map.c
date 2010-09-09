@@ -7,6 +7,7 @@
 st_mapchr *mapchrs = NULL;
 int nummapchrs = 0;
 int nextchridx=0, nextmarkeridx=0;
+int physicalpos = 0;
 char *mapfile;
 
 void insert_mapmarker (st_mapmarker *mrk);
@@ -74,6 +75,7 @@ void read_map (char *filename)
 	       (strstr (token, "phys") != NULL)) {
       /* physical or basepair position */
       datacols[numcols - 1] = MAP_BASEPAIR_COL;
+      physicalpos = 1;
       
     } else if ((strstr (token, "sex") != NULL) || (strstr (token, "ave") != NULL) ||
 	       (strstr (token, "agv") != NULL) || (strstr (token, "pos") != NULL) ||
@@ -270,6 +272,12 @@ void free_map ()
   if (nummapchrs > 0)
     free (mapchrs);
   return;
+}
+
+
+int map_has_physicalpos ()
+{
+  return (physicalpos);
 }
 
 

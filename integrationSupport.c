@@ -2254,14 +2254,20 @@ void integrateMain ()
           ppl = modelOptions->thetaWeight * le_small_theta + (1 - modelOptions->thetaWeight) * le_big_theta;
           ppl = ppl / (ppl + (1 - modelOptions->prior) / modelOptions->prior);
 
-
-          if (modelOptions->markerAnalysis != FALSE) {
-            fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], ppl >= .025 ? 2 : 3, KROUND (ppl));
-          } else {
-            //fprintf (fpPPL, "%d %s %s %.4f %6.5f %e", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], ppl,modelOptions->thetaWeight * le_small_theta + (1 - modelOptions->thetaWeight) * le_big_theta);
-            fprintf (fpPPL, "%d %s %s %.4f %.*f ", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], ppl >= .025 ? 2 : 3, KROUND (ppl));
-          }
-
+	  fprintf (fpPPL, "%d", pLocus2->pMapUnit->chromosome);
+	  if (modelOptions->markerAnalysis != FALSE)
+	    fprintf (fpPPL, " %s %.4f %s %.4f",
+		     pLocus1->sName, pLocus1->pMapUnit->mapPos[SEX_AVERAGED],
+		     pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
+	  else
+	    {
+	      fprintf (fpPPL, " %s %s %.4f", pLocus1->sName, pLocus2->sName,
+		       pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
+	      if (modelOptions->physicalMap)
+		fprintf (fpPPL, " %d", pLocus2->pMapUnit->basePairLocation);
+	    }
+	  fprintf (fpPPL, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl));
+	  
           //printf("%f %f %f %f %f %f\n",le_small_theta,le_big_theta,ld_small_theta,ld_big_theta,le_unlinked ,modelOptions->thetaCutoff[0]);
           /* output LD-PPL now if needed */
           if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
@@ -2278,9 +2284,9 @@ void integrateMain ()
             ppldGl = 0.019 * 0.021 * ld_small_theta + 0.001 * 0.0011 * ld_big_theta;
             ppldGl = ppldGl / (ppldGl + 0.019 * 0.979 * le_small_theta + 0.001 * 0.9989 * le_big_theta);
 
-            fprintf (fpPPL, "%.*f ", ldppl >= .025 ? 2 : 4, KROUND (ldppl));
-            fprintf (fpPPL, "%.*f ", ppldGl >= .025 ? 2 : 4, KROUND (ppldGl));
-            fprintf (fpPPL, "%.*f ", ppld >= .025 ? 2 : 4, KROUND (ppld));
+            fprintf (fpPPL, " %.*f", ldppl >= .025 ? 2 : 4, KROUND (ldppl));
+            fprintf (fpPPL, " %.*f", ppldGl >= .025 ? 2 : 4, KROUND (ppldGl));
+            fprintf (fpPPL, " %.*f", ppld >= .025 ? 2 : 4, KROUND (ppld));
           }
           fprintf (fpPPL, "\n");
           fflush (fpPPL);

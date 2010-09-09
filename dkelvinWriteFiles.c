@@ -27,7 +27,7 @@ void dk_write2ptBRHeader (int loc1, int loc2)
   }
   
   if (pLocus2->pMapUnit->basePairLocation >= 0)
-    fprintf (fpHet, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
+    fprintf (fpHet, " Physical: %d", pLocus2->pMapUnit->basePairLocation);
   fprintf (fpHet, "\n");
   
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
@@ -74,8 +74,10 @@ void dk_writeMPBRHeader ()
   if (fpHet == NULL)
     return;
 
-  fprintf (fpHet, "Chr Position PPL BayesRatio");
-  fprintf (fpHet, " MarkerList(0");
+  fprintf (fpHet, "Chr Position");
+  if (modelOptions->physicalMap)
+    fprintf (fpHet, " Physical");
+  fprintf (fpHet, " PPL BayesRatio MarkerList(0");
   for (i = 1; i < modelType->numMarkers; i++)
     fprintf (fpHet, ",%d", i);
   fprintf (fpHet, ")\n");
@@ -96,9 +98,13 @@ void dk_writeMPBRData (int posIdx, float traitPos, double ppl, double br, int ma
   if (fpHet == NULL)
     return;
 
-  fprintf (fpHet, "%d %f %.*f %.6fe%+.2d",
-	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-	   traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000., base, exponent+max_scale);
+  fprintf (fpHet, "%d %f",
+	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->
+	   pMapUnit->chromosome, traitPos);
+  if (modelOptions->physicalMap)
+    fprintf (fpHet, " %d", interpolate_physical_location (traitPos));
+  fprintf (fpHet, " %.*f %.6fe%+.2d", ppl >= .025 ? 2 : 3, KROUND (ppl), base,
+	   exponent+max_scale);
   /* print out markers used for this position */
   fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
   for (i = 1; i < modelType->numMarkers; i++) {
@@ -116,7 +122,11 @@ void dk_writeMPMODHeader ()
   if (fpMOD == NULL)
     return;
 
-  fprintf (fpMOD, "Chr Position MOD Alpha DGF");
+  fprintf (fpMOD, "Chr Position");
+  if (modelOptions->physicalMap) 
+    fprintf (fpMOD, " Physical");
+  fprintf (fpMOD, " MOD Alpha DGF");
+
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     if (modelType->trait == DT)
       if (modelOptions->imprintingFlag)
@@ -153,9 +163,11 @@ void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel 
   if (fpMOD == NULL)
     return;
 
-  fprintf (fpMOD, "%d %f %.6f %f %f",
-	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
-	   traitPos, value, model->alpha, model->dgf);
+  fprintf (fpMOD, "%d %f", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->
+	   pMapUnit->chromosome, traitPos);
+  if (modelOptions->physicalMap)
+    fprintf (fpMOD, " %d", interpolate_physical_location (traitPos));
+  fprintf (fpMOD, " %.6f %f %f", value, model->alpha, model->dgf);
   
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
     if (! modelOptions->imprintingFlag)
@@ -221,7 +233,7 @@ void dk_write2ptMODHeader ()
   }
   
   if (pLocus2->pMapUnit->basePairLocation >= 0)
-    fprintf (fpMOD, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
+    fprintf (fpMOD, " Physical: %d", pLocus2->pMapUnit->basePairLocation);
   fprintf (fpMOD, "\n");
 
   if (modelOptions->extraMODs)

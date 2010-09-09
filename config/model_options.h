@@ -109,6 +109,7 @@ typedef struct ModelOptions
   int loopCondRun;              ///< Flag indicating to print out loop breaker's conditional LR.
   char loopBreaker[16];         ///< When loopCondRun set, use this ID to identify the loop breaker */
   int extraMODs;                ///< Flag indicating to put Theta==0 and D'==0 max models in MOD file.
+  int physicalMap;              ///< Set when Map is read to indicate physical positions are available
 
   /* Storage and default names for files that are always opened (depending on analysis options) */
   char markerfile[PATH_MAX];  ///< Marker (frequency) file

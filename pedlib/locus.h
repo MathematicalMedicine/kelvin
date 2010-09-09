@@ -472,6 +472,7 @@ int copy_dprime (LDLoci * pLocus, double **pSrc);
 int copy_haploFreq (LDLoci * pLocus, double **pSrc);
 int copy_DValue (LDLoci * pLocus, double **pSrc);
 int find_locus (LocusList * pLocusList, char *sName);
+int interpolate_physical_location (double pos);
 
 void populate_pedigree_saved_genotype_link (int locus, Pedigree * pPed);
 void populate_saved_genotype_link (PedigreeSet * pSet);

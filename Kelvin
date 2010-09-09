@@ -717,7 +717,7 @@ sub epistasis_merge_MP_mod
     my (@flds0, @flds1);
     my ($pen1, $pen2);
     my $line;
-    my $modidx = 2;
+    my $modidx = 0;
 
     $outfh = IO::File->new (">$modfile") or error ("open '$modfile' failed, $!\n");
     $fh0 = IO::File->new ($modpass0) or error ("open '$modpass0' failed, $!\n");
@@ -729,6 +729,10 @@ sub epistasis_merge_MP_mod
 
     # Header line
     ($line = $fh0->getline) =~ s/LC2PV(\([Dd,]+\))$/LC2PV$1 LC3PV$1/;
+    @flds0 = split (/\s+/, $line);
+    while ($flds0[$modidx] !~ /MOD/i) {
+	$modidx++;
+    }
     $outfh->print ($line);
     $fh1->getline;
 

@@ -255,6 +255,7 @@ void initializeDefaults ()
   staticModelOptions.forceAvghetFile = FALSE;
   staticModelOptions.polynomialScale = 0;
   staticModelOptions.extraMODs = FALSE;
+  staticModelOptions.physicalMap = FALSE;
   staticModelOptions.affectionStatus[AFFECTION_STATUS_UNKNOWN] = -DBL_MAX;
   staticModelOptions.affectionStatus[AFFECTION_STATUS_UNAFFECTED] = -DBL_MAX;
   staticModelOptions.affectionStatus[AFFECTION_STATUS_AFFECTED] = -DBL_MAX;

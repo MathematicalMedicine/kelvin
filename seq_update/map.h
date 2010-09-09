@@ -34,6 +34,7 @@ st_mapmarker *find_mapmarker (char *chr, char *name);
 st_mapmarker *next_mapmarker (st_mapmarker *mrk);
 void dump_map ();
 void free_map ();
+int map_has_physicalpos ();
 
 #define _MAP_H
 #endif
