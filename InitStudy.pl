@@ -148,7 +148,7 @@ sub perform_study
     while ($ped = $dataset->readFamily) { 
 #	print Dumper($ped);
 	my $PedigreeSId = $$ped{pedid};
-	if ($StudyRole eq "client") {
+	if (uc $StudyRole eq "CLIENT") {
 	    # Client -- just slam 'em in, don't care if this fails with duplicates...
 	    $dbh->do("Insert ignore into Pedigrees (StudyId, PedigreeSId) values (?,?)",
 		     undef, $StudyId, $PedigreeSId);
@@ -162,7 +162,7 @@ sub perform_study
     }
     (! defined ($ped)) and error ($KelvinDataset::errstr);
 
-    if ($StudyRole eq "server") {
+    if (uc $StudyRole eq "SERVER") {
 	$dbh->do("call BadScaling(?)", undef, $StudyId);
 	# Add the following to hold trait likelihood references
 	$dbh->do("Insert ignore into PedigreePositions ".
@@ -195,7 +195,7 @@ sub perform_study
 	    my $newBegin = int($firstMarkerPos / $2) * $2;
 	    $TP =~ s/begin-/$newBegin-/;
 	}
-	if ($TP eq "marker") {
+	if (uc $TP eq "MARKER") {
 	    $dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) ".
 		     "Select $StudyId, $ChromosomeNo, AvePosCM from ".
 		     "MapMarkers where StudyId = $StudyId AND MapId = $MapId AND AvePosCM NOT in ".
