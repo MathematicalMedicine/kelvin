@@ -2461,6 +2461,8 @@ void integrateMain ()
     prevTraitInd = -1;
     leftMarker = -1;
 
+#ifdef STUDYDB
+
     /* Iterate over all positions in the analysis. */
 
     if (toupper(*studyDB.role) != 'C') {
@@ -2496,6 +2498,8 @@ void integrateMain ()
     DIAG (ALTLSERVER, 1, {		 \
 	for (i=0; i<numPositions; i++)					\
 	  fprintf (stderr, "nTL[%d] is %.6g\n", i, newTLoc[i]);});
+
+#endif
 
     CALCHOKE (mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
 
