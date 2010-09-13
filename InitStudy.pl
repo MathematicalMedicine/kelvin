@@ -224,6 +224,7 @@ sub perform_study
     $dbh->do("Insert into PedigreePositions (StudyId, PedigreeSId, ChromosomeNo, RefTraitPosCM, MarkerCount) ".
 	     "Select a.StudyId, a.PedigreeSId, a.ChromosomeNo, a.RefTraitPosCM, a.MarkerCount from ".
 	     "PPs a left outer join PedigreePositions b on ".
+	     "a.StudyId = $StudyId AND ".
 	     "a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.ChromosomeNo = b.ChromosomeNo AND ".
 	     "a.RefTraitPosCM = b.RefTraitPosCM ".
 	     "where b.StudyId IS NULL");
