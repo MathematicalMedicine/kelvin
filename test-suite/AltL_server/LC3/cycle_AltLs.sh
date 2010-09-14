@@ -7,12 +7,13 @@ do
   if test $? -ne 0 ; then
     break
   fi
-  nq "~/kelvin/trunk/kelvin-2.2.0-study server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study server.conf"
+  nq "~/bcmmtools/run_server.sh server"
+  nq "~/bcmmtools/run_server.sh server"
+  nq "~/bcmmtools/run_server.sh server"
+  nq "~/bcmmtools/run_server.sh server"
+  nq "~/bcmmtools/run_server.sh server"
+  nq "~/bcmmtools/run_server.sh server"
+  nq "~/bcmmtools/run_server.sh server"
+  nq "~/bcmmtools/run_server.sh server"
   ~/kelvin/trunk/kelvin-2.2.0-study server.conf
 done
