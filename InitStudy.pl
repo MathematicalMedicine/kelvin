@@ -220,12 +220,13 @@ sub perform_study
     
     $dbh->do("Create temporary table PPs Select a.StudyId, a.PedigreeSId, b.ChromosomeNo, ".
 	     "b.RefTraitPosCM, $MPMarkers 'MarkerCount' ".
-	     "from Pedigrees a, Positions b where a.StudyId = b.StudyId");
+	     "from Pedigrees a, Positions b where a.StudyId = $StudyId AND a.StudyId = b.StudyId");
     $dbh->do("Insert into PedigreePositions (StudyId, PedigreeSId, ChromosomeNo, RefTraitPosCM, MarkerCount) ".
 	     "Select a.StudyId, a.PedigreeSId, a.ChromosomeNo, a.RefTraitPosCM, a.MarkerCount from ".
 	     "PPs a left outer join PedigreePositions b on ".
-	     "a.StudyId = $StudyId AND ".
-	     "a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.ChromosomeNo = b.ChromosomeNo AND ".
+	     "a.StudyId = $StudyId AND a.StudyId = b.StudyId AND ".
+	     "a.PedigreeSId = b.PedigreeSId AND ".
+	     "a.ChromosomeNo = b.ChromosomeNo AND ".
 	     "a.RefTraitPosCM = b.RefTraitPosCM ".
 	     "where b.StudyId IS NULL");
     $dbh->do("call BadScaling(?)", undef, $StudyId);
