@@ -7,12 +7,13 @@ do
   if test $? -ne 0 ; then
     break
   fi
-  nq "~/kelvin/trunk/kelvin-2.2.0-study nonpoly-server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study nonpoly-server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study nonpoly-server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study nonpoly-server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study nonpoly-server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study nonpoly-server.conf"
-  nq "~/kelvin/trunk/kelvin-2.2.0-study nonpoly-server.conf"
+  nq "~/bcmmtools/run_server.sh nonpoly-server"
+  nq "~/bcmmtools/run_server.sh nonpoly-server"
+  nq "~/bcmmtools/run_server.sh nonpoly-server"
+  nq "~/bcmmtools/run_server.sh nonpoly-server"
+  nq "~/bcmmtools/run_server.sh nonpoly-server"
+  nq "~/bcmmtools/run_server.sh nonpoly-server"
+  nq "~/bcmmtools/run_server.sh nonpoly-server"
+  nq "~/bcmmtools/run_server.sh nonpoly-server"
   ~/kelvin/trunk/kelvin-2.2.0-study nonpoly-server.conf
 done
