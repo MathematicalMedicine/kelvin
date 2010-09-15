@@ -15,5 +15,5 @@ do
   nq "~/bcmmtools/run_server.sh server"
   nq "~/bcmmtools/run_server.sh server"
   nq "~/bcmmtools/run_server.sh server"
-  ~/kelvin/trunk/kelvin-2.2.0-study server.conf
+  ~/bcmmtools/run_server.sh server
 done
