@@ -358,7 +358,7 @@ void kelvinInit (int argc, char *argv[])
 
   DETAIL(0,"Opening study database");
   initializeDB ();
-  if (toupper(*studyDB.role) != 'C')
+  if (toupper(*studyDB.role) == 'S')
     SignOn (originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "ES", modelType->numMarkers, programVersion);
 #endif
 
