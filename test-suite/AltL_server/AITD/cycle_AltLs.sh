@@ -16,5 +16,5 @@ do
   nq "~/bcmmtools/run_server.sh server"
   nq "~/bcmmtools/run_server.sh server"
   nq "~/bcmmtools/run_server.sh server"
-  ~/kelvin/trunk/kelvin-2.2.0-study server.conf --ProgressLevel 2 --ProgressDelaySeconds 0
+  ~/bcmmtools/run_server.sh server
 done
