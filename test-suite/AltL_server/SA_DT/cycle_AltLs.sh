@@ -15,5 +15,5 @@ do
   nq "~/bcmmtools/run_server.sh nonpoly-server"
   nq "~/bcmmtools/run_server.sh nonpoly-server"
   nq "~/bcmmtools/run_server.sh nonpoly-server"
-  ~/kelvin/trunk/kelvin-2.2.0-study nonpoly-server.conf
+  ~/bcmmtools/run_server.sh nonpoly-server
 done
