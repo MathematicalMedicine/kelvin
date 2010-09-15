@@ -699,7 +699,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   pedigreeSet.log10Likelihood = 0;
 
 #ifdef STUDYDB
-  if (toupper(*studyDB.role) != 'C') {
+  if (toupper(*studyDB.role) == 'S') {
     compute_likelihood (&pedigreeSet);
   }
 #endif
@@ -2465,7 +2465,7 @@ void integrateMain ()
 
     /* Iterate over all positions in the analysis. */
 
-    if (toupper(*studyDB.role) != 'C') {
+    if (toupper(*studyDB.role) == 'S') {
       // We're a server! Completely suborn the trait loci vector in modelRange
       int i, j = 0;
 
@@ -2517,7 +2517,7 @@ void integrateMain ()
 
       studyDB.driverPosIdx = posIdx;
 
-      if (toupper(*studyDB.role) != 'C') {
+      if (toupper(*studyDB.role) == 'S') {
 
 	double lowPosition  = -99.99, highPosition = 9999.99;
 
