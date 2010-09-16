@@ -44,6 +44,7 @@ extern dcuhre_state *s;
 extern struct StudyDB studyDB;
 extern double lociSetTransitionPositions[];
 double lastTraitPosition = -1.0; // Used by server to keep dcuhre's multiple-requests per trait position from bothering the database
+int lastMarkerIndex = 0; // Used by 2pt server same as lastTraitPosition above.
 int locusListTypesDone = 0; // Used by server to keep which type of locusList we've worked on in order to coordinate our work requests
 #endif
 
@@ -455,11 +456,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
     DIAG (ALTLSERVER, 1, {fprintf (stderr, "Client returning bogosity of %d, likelihood of %.4g\n", studyDB.bogusAltLs, pPedigreeList->likelihood);});
     return ret;
     
-  } else {
+  } else if (toupper(*studyDB.role) == 'S') {
 
     /*
-      If we're a server, we want to sign-in (if we haven't already) with full range of 
-      pedigrees that we can cover, and then start asking for work for positions within 
+      Since we're a multipoint server, we want to start asking for work for positions within 
       the current set of markers. When we're out of work we can return to the caller until 
       we hit a new set of markers. A properly-configured config file can make this fast (TM).
     */
@@ -497,7 +497,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       if (studyDB.driverPosIdx != (modelRange->ntloc - 1))
 	highPosition = lociSetTransitionPositions[studyDB.driverPosIdx];
 
-      DIAG (ALTLSERVER, 0, { fprintf (stderr, "Driver trait position for locusListType %d is %GcM (%GcM to %gcM)\n", locusListType, traitPosition, lowPosition, highPosition);});
+      DIAG (ALTLSERVER, 0, { fprintf (stderr, "Driver trait position %GcM of type %d serves range  from %GcM to %gcM\n", traitPosition, locusListType, lowPosition, highPosition);});
 
       while (GetDWork(lowPosition, highPosition, locusListType, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
@@ -583,7 +583,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	  status = compute_pedigree_likelihood (pPedigree);
 	}
 	swStop (singleModelSW);
-	PutWork (modelType->numMarkers + originalLocusList.numTraitLocus, 
+	PutWork (modelType->numMarkers,
 		 pPedigree->likelihood,
 		 difftime (time (NULL), singleModelSW->swStartWallTime));
 
@@ -603,6 +603,110 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	else
 	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED combined likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
 	*/
+      } 
+   }
+
+    // Clean up by faking all results
+    for (i = 0; i < pPedigreeList->numPedigree; i++) {
+      pPedigree = pPedigreeList->ppPedigreeSet[i];
+      studyDB.bogusAltLs++;
+      pPedigree->likelihood = .05;
+      // Roll all the results together considering pedigrees with counts
+      if (pPedigree->pCount[origLocus] == 1) {
+	product_likelihood *= pPedigree->likelihood;
+	log10Likelihood = log10 (pPedigree->likelihood);
+      } else {
+	product_likelihood *= pow (pPedigree->likelihood, pPedigree->pCount[origLocus]);
+	log10Likelihood = log10 (pPedigree->likelihood) * pPedigree->pCount[origLocus];
+      }
+      sum_log_likelihood += log10Likelihood;
+    }
+    pPedigreeList->likelihood = product_likelihood;
+    pPedigreeList->log10Likelihood = sum_log_likelihood;
+    DIAG (ALTLSERVER, 1, {fprintf (stderr, "Server returning likelihood of %.4g\n", pPedigreeList->likelihood);});
+    return ret;
+
+  } else {
+
+    /*
+      Fake 2pt server. Set trait and marker set likelihoods to 1 for all of our pedigrees
+       and compute weightedLRComponent for positions surrounding the current marker.
+       Store the left component in a shadow table of Models called TP2MP, and add that to
+       the right component to actually finish work on the model.
+    */
+    double markerPosition, lowPosition, highPosition, pedTraitPosCM;
+    double nullLikelihood, alternativeLikelihood, weightedLRComponent;
+    char pedigreeSId[33], lastPedigreeSId[33];
+    int markerIndex;
+    
+    // For 2pt, trait is first in the analysisLocusList and the only marker is second.
+    // Use the index from the original locus list for everything.
+
+    markerIndex = analysisLocusList->pLocusIndex[1]; 
+
+    if (markerIndex != lastMarkerIndex) { // Only do work if a new marker
+      lastMarkerIndex = markerIndex;
+
+      markerPosition = get_map_position (markerIndex);
+
+      // This marker serves positions the adjacent left to the adjacent right marker.
+
+      lowPosition = -99.99;
+      if (markerIndex > 1) // The current marker is not the leftmost, so get the position of adjacent left marker.
+	lowPosition = get_map_position (markerIndex - 1);
+      highPosition = 9999.99;
+      if (markerIndex < (originalLocusList.numLocus - originalLocusList.numTraitLocus - 1)) // Not the rightmost either.
+	highPosition = get_map_position (markerIndex + 1);
+
+      DIAG (ALTLSERVER, 0, { fprintf (stderr, "Marker index %d at %GcM serves range from %GcM to %gcM\n", markerIndex, markerPosition, lowPosition, highPosition);});
+
+      /* Set all of the trait and marker set likelihoods to 1.0 so they'll have no effect
+	 as the null hypothesis likelhood, because the weighted component we're storing is actually
+	 already part of the likelihood ratio.
+
+      SetDummyNullLikelihood (); // Will hit all trait and marker set likelihood models for all pedigrees for this server instance. Only do once.
+      */
+
+      // Next all of the alternative hypothesis likelihood models get the weighted likelihood ratio for the two surrounding markers
+
+      while (GetDWork(lowPosition, highPosition, 0 /* Get everything ordered by PedigreeSId */, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
+		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
+
+	// Take advantage of PedigreeSId ordering to compute null hypothesis likelihood only once per pedigree.
+	if (strcmp (lastPedigreeSId, pedigreeSId) != 0) {
+
+	  strcpy (lastPedigreeSId, pedigreeSId);
+
+	  // Find the pedigree in the set
+	  if ((pPedigree = find_pedigree(pPedigreeList, pedigreeSId)) == NULL)
+	    ERROR ("Got work for unexpected pedigree %s", pedigreeSId);
+
+	  // TBS &&& blah blah blah compute null hypothesis likelihood for this pedigree on this marker (theta of 0.5) blah blah blah
+	  nullLikelihood = 0.01;
+
+	}
+
+	// TBS &&& - blah blah blah compute actual alternative hypothesis likelihood for this pedigre on this marker from theta of actual distance  blah blah blah
+
+	swReset (singleModelSW);
+	swStart (singleModelSW);
+
+	alternativeLikelihood = 0.2;
+
+	if (markerPosition >= pedTraitPosCM) {
+	  weightedLRComponent = ((alternativeLikelihood / nullLikelihood) *
+				 (highPosition - pedTraitPosCM)) / (highPosition - lowPosition);
+	  PutWork (0 /* Only the first half, so store it elsewhere */, pPedigree->likelihood, difftime (time (NULL), singleModelSW->swStartWallTime));
+	} else {
+	  weightedLRComponent = ((alternativeLikelihood / nullLikelihood) * (pedTraitPosCM - lowPosition)) / (highPosition - lowPosition);
+	  PutWork (1 /* Second half, so add to first have and store properly */, pPedigree->likelihood, difftime (time (NULL), singleModelSW->swStartWallTime));
+	}
+
       }
     }
 
@@ -625,6 +729,7 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
     pPedigreeList->log10Likelihood = sum_log_likelihood;
     DIAG (ALTLSERVER, 1, {fprintf (stderr, "Server returning likelihood of %.4g\n", pPedigreeList->likelihood);});
     return ret;
+
   }
 }
 

@@ -184,6 +184,19 @@ void prepareDBStatements () {
   if (mysql_stmt_bind_result (studyDB.stmtCountWorkResults, studyDB.bindCountWorkResults))
     ERROR("Cannot bind CountWorkResults call statement (%s)", mysql_stmt_error(studyDB.stmtCountWorkResults));
 
+  // Prepare the SetDummyNullLikelihood call
+  studyDB.stmtSetDummyNullLikelihood = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindSetDummyNullLikelihood, 0, sizeof(studyDB.bindSetDummyNullLikelihood));
+
+  BINDNUMERIC (studyDB.bindSetDummyNullLikelihood[0], studyDB.serverId, MYSQL_TYPE_LONG);
+
+  strncpy (studyDB.strSetDummyNullLikelihood, "call SetDummyNullLikelihood (?)", MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtSetDummyNullLikelihood, studyDB.strSetDummyNullLikelihood, strlen (studyDB.strSetDummyNullLikelihood)))
+    ERROR("Cannot prepare SetDummyNullLikelihood call statement (%s)", mysql_stmt_error(studyDB.stmtSetDummyNullLikelihood));
+  if (mysql_stmt_bind_param (studyDB.stmtSetDummyNullLikelihood, studyDB.bindSetDummyNullLikelihood))
+    ERROR("Cannot bind SetDummyNullLikelihood call statement (%s)", mysql_stmt_error(studyDB.stmtSetDummyNullLikelihood));
+
   // Prepare the GetWork call
   studyDB.stmtGetWork = mysql_stmt_init (studyDB.connection);
   memset (studyDB.bindGetWork, 0, sizeof(studyDB.bindGetWork));
@@ -383,6 +396,19 @@ void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVe
 
 }
 
+void SetDummyNullLikelihood () {
+
+  if (dBStmtsNotReady)
+    prepareDBStatements ();
+
+  // studyId is already set
+
+  if (mysql_stmt_execute (studyDB.stmtSetDummyNullLikelihood))
+    ERROR("Cannot execute SetDummyNullLikelihood stored procedure w/%d (%s, %s)", 
+	  studyDB.studyId,
+	  mysql_stmt_error(studyDB.stmtSetDummyNullLikelihood), mysql_stmt_sqlstate(studyDB.stmtSetDummyNullLikelihood));
+}
+
 int CountWork (double lowPosition, double highPosition)
 {
   // serverId is already set
@@ -512,7 +538,7 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
     }
     break;
   }    
-  DIAG (ALTLSERVER, 1, { fprintf (stderr, "Put work stored AltL of %.8g\n", lOD);});
+  DIAG (ALTLSERVER, 1, { fprintf (stderr, "Put work stored AltL of %.8g for marker count of \n", lOD, markerCount);});
 
 }
 

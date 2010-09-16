@@ -66,6 +66,10 @@ struct StudyDB {
   char algorithm[3];
   char programVersion[33];
   int serverId;
+  // SetDummyNullLikelihood...
+  MYSQL_STMT *stmtSetDummyNullLikelihood;
+  MYSQL_BIND bindSetDummyNullLikelihood[1];
+  char strSetDummyNullLikelihood[MAXSTMTLEN];
   // CountWork...
   MYSQL_STMT *stmtCountWork;
   MYSQL_BIND bindCountWork[3];
