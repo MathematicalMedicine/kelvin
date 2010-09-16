@@ -360,6 +360,8 @@ void kelvinInit (int argc, char *argv[])
   initializeDB ();
   if (toupper(*studyDB.role) == 'S')
     SignOn (originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "ES", modelType->numMarkers, programVersion);
+  else if (toupper(*studyDB.role) == '2')
+    SignOn (originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "es", 1, programVersion);
 #endif
 
   /* Enable handling of segmentation faults/bus errors due to configuration monkeying */
