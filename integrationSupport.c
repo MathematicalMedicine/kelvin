@@ -2266,7 +2266,7 @@ void integrateMain ()
 	      if (modelOptions->physicalMap)
 		fprintf (fpPPL, " %d", pLocus2->pMapUnit->basePairLocation);
 	    }
-	  fprintf (fpPPL, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl));
+	  fprintf (fpPPL, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl, 3));
 	  
           //printf("%f %f %f %f %f %f\n",le_small_theta,le_big_theta,ld_small_theta,ld_big_theta,le_unlinked ,modelOptions->thetaCutoff[0]);
           /* output LD-PPL now if needed */
@@ -2284,9 +2284,9 @@ void integrateMain ()
             ppldGl = 0.019 * 0.021 * ld_small_theta + 0.001 * 0.0011 * ld_big_theta;
             ppldGl = ppldGl / (ppldGl + 0.019 * 0.979 * le_small_theta + 0.001 * 0.9989 * le_big_theta);
 
-            fprintf (fpPPL, " %.*f", ldppl >= .025 ? 2 : 4, KROUND (ldppl));
-            fprintf (fpPPL, " %.*f", ppldGl >= .025 ? 2 : 4, KROUND (ppldGl));
-            fprintf (fpPPL, " %.*f", ppld >= .025 ? 2 : 4, KROUND (ppld));
+            fprintf (fpPPL, " %.*f", ldppl >= .025 ? 2 : 4, KROUND (ldppl, 4));
+            fprintf (fpPPL, " %.*f", ppldGl >= .025 ? 2 : 4, KROUND (ppldGl, 4));
+            fprintf (fpPPL, " %.*f", ppld >= .025 ? 2 : 4, KROUND (ppld, 4));
           }
           fprintf (fpPPL, "\n");
           fflush (fpPPL);

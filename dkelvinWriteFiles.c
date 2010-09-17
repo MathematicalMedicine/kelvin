@@ -103,7 +103,7 @@ void dk_writeMPBRData (int posIdx, float traitPos, double ppl, double br, int ma
 	   pMapUnit->chromosome, traitPos);
   if (modelOptions->physicalMap)
     fprintf (fpHet, " %d", interpolate_physical_location (traitPos));
-  fprintf (fpHet, " %.*f %.6fe%+.2d", ppl >= .025 ? 2 : 3, KROUND (ppl), base,
+  fprintf (fpHet, " %.*f %.6fe%+.2d", ppl >= .025 ? 2 : 3, KROUND (ppl, 3), base,
 	   exponent+max_scale);
   /* print out markers used for this position */
   fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
@@ -245,10 +245,13 @@ void dk_write2ptMODHeader ()
       for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
 	fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
 
-  if (modelOptions->markerAnalysis != FALSE)
-    fprintf (fpMOD, " Theta(M,F) R2 Alpha DGF");
-  else
-    fprintf (fpMOD, " Theta(M,F) Alpha DGF");
+  
+  fprintf (fpMOD, " Theta(M,F)");
+  if (modelOptions->markerAnalysis != FALSE) {
+    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
+      fprintf (fpMOD, " R2");
+  } else
+    fprintf (fpMOD, " Alpha DGF");
   
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     if (modelType->trait == DT)
@@ -303,14 +306,15 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
     fprintf (fpMOD, " %.2f", model->dprime[0]);
   }
 
-  if (modelOptions->markerAnalysis == FALSE)
-    /* Theta Alpha DGF */
-    fprintf (fpMOD, " (%.4f,%.4f) %.2f %.4f", model->theta[0], model->theta[1],
-	     model->alpha, model->dgf);
-  else
-    /* Theta R2 Alpha DGF */
-    fprintf (fpMOD, " (%.4f,%.4f) %.3f %.2f %.4f", model->theta[0], model->theta[1],
-	     model->r2, model->alpha, model->dgf);
+  /* Theta */
+  fprintf (fpMOD, " (%.4f,%.4f)", model->theta[0], model->theta[1]);
+  if (modelOptions->markerAnalysis != FALSE) {
+    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
+      /* R2 for LD marker-to-marker only */
+      fprintf (fpMOD, " %.3f", model->r2);
+  } else
+    /* Alpha and DGF for trait-to-marker only */
+    fprintf (fpMOD, " %.2f %.4f", model->alpha, model->dgf);
 	    
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
     if (! modelOptions->imprintingFlag)

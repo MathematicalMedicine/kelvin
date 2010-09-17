@@ -46,7 +46,7 @@ writePPLFileDetail (int dprime0Idx)
       if (modelOptions->physicalMap)
 	fprintf (fpPPL, " %d", pLocus2->pMapUnit->basePairLocation);
     }
-  fprintf (fpPPL, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl));
+  fprintf (fpPPL, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl, 3));
   
   /* output LD-PPL now if needed */
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
@@ -54,11 +54,11 @@ writePPLFileDetail (int dprime0Idx)
       /* load up ldvals first */
       get_LDVals (tp_result, &ldvals);
       ldstat = calc_ppl_allowing_ld (&ldvals, modelOptions->LDprior);
-      fprintf (fpPPL, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      fprintf (fpPPL, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
       ldstat = calc_ppld_given_linkage (&ldvals, modelOptions->LDprior);
-      fprintf (fpPPL, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      fprintf (fpPPL, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
       ldstat = calc_ppld_allowing_l (&ldvals, modelOptions->LDprior);
-      fprintf (fpPPL, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      fprintf (fpPPL, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
     }
   fprintf (fpPPL, "\n");
   fflush (fpPPL);
@@ -180,7 +180,7 @@ writeMPBRFileDetail (int posIdx, float traitPos, float ppl, double avgLR)
 	   pMapUnit->chromosome, traitPos);
   if (modelOptions->physicalMap)
     fprintf (fpHet, " %d", interpolate_physical_location (traitPos));
-  fprintf (fpHet, " %.*f %.6e", ppl >= .025 ? 2 : 3, KROUND (ppl), avgLR);
+  fprintf (fpHet, " %.*f %.6e", ppl >= .025 ? 2 : 3, KROUND (ppl, 3), avgLR);
 
   /* print out markers used for this position */
   fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
@@ -336,7 +336,8 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
 	fprintf (fpMOD, " %.2f", pLambdaCell->lambda[myDPrimeIdx][i][j]);
   fprintf (fpMOD, " (%.4f,%.4f)", theta[0], theta[1]);
   if (modelOptions->markerAnalysis != FALSE) { 
-    fprintf (fpMOD, " %.3f\n", R_square);
+    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
+      fprintf (fpMOD, " %.3f\n", R_square);
   } else { 
     fprintf (fpMOD, " %.2f %.4f", alphaV, gfreq);
     
@@ -444,7 +445,8 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 	fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
   fprintf (fpMOD, " Theta(M,F)");
   if (modelOptions->markerAnalysis != FALSE) {
-    fprintf (fpMOD, " R2\n");
+    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
+      fprintf (fpMOD, " R2\n");
   } else { 
     fprintf (fpMOD, " Alpha DGF");
     

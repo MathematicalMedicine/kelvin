@@ -30,6 +30,7 @@
 
 /* Kelvin header files */
 #include <ppl.h>
+#include <utils/utils.h>
 #include <integrationLocals.h>
 #include <multidim.h>
 #include <ippl.h>
@@ -56,8 +57,6 @@
 #define DEFAULT_LDPRIOR 0.02
 /* the multipoint PPL for a BR of 0.214 */
 #define MIN_PRIOR 7.8528124097619317e-03
-
-#define KROUND(dbl) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * 10000.0) / 10000.0
 
 typedef struct {
   char name1[MAX_MAP_NAME_LEN],
@@ -793,7 +792,7 @@ void print_twopoint_headers (int no_ld, int physicalpos)
 
 void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_ldvals *ldval)
 {
-  double ldprior, ldstat;
+  double ldprior, ppl, ldstat;
 
   fprintf (pplout, "%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->avgpos);
   if (physicalpos)
@@ -806,21 +805,22 @@ void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_l
       fprintf (bfout, "%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->avgpos);
     
     if ((pplinfile == NULL) || (allstats)) {
-      fprintf (pplout, " %.3f", calc_upd_ppl (ldval));
+      ppl = calc_upd_ppl (ldval);
+      fprintf (pplout, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl, 3));
       ldstat = calc_upd_ppl_allowing_ld (ldval, DEFAULT_LDPRIOR);
-      fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
       ldstat = calc_upd_ppld_given_linkage (ldval, DEFAULT_LDPRIOR);
-      fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
     }
     ldstat = calc_upd_ppld_allowing_l (ldval, DEFAULT_LDPRIOR);
-    fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+    fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
     if (pplinfile != NULL) {
       if ((ldprior = get_ippl (marker->chr, marker->avgpos)) < MIN_PRIOR)
 	ldprior = MIN_PRIOR;
       if (verbose >= 2)
 	printf ("ippl is %.6e\n", ldprior);
       ldstat = calc_upd_ppld_allowing_l (ldval, ldprior);
-      fprintf (pplout, " %.4f %.*f", ldprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat));
+      fprintf (pplout, " %.4f %.*f", ldprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
     }
     
     if (bfout != NULL)

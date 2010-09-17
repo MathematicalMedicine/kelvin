@@ -133,7 +133,7 @@ do { \
 /* number of bits in an integer */
 #define INT_BITS		(sizeof(int)*8)
 
-#define KROUND(dbl) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * 10000.0) / 10000.0
+#define KROUND(dbl,prec) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * pow (10.0,prec)) / pow (10.0,prec)
 
 /* Routines for checking/manipulating lines of file input */
 
