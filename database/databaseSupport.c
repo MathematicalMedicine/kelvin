@@ -401,11 +401,9 @@ void SetDummyNullLikelihood () {
   if (dBStmtsNotReady)
     prepareDBStatements ();
 
-  // studyId is already set
-
   if (mysql_stmt_execute (studyDB.stmtSetDummyNullLikelihood))
     ERROR("Cannot execute SetDummyNullLikelihood stored procedure w/%d (%s, %s)", 
-	  studyDB.studyId,
+	  studyDB.serverId,
 	  mysql_stmt_error(studyDB.stmtSetDummyNullLikelihood), mysql_stmt_sqlstate(studyDB.stmtSetDummyNullLikelihood));
 }
 
@@ -538,7 +536,7 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
     }
     break;
   }    
-  DIAG (ALTLSERVER, 1, { fprintf (stderr, "Put work stored AltL of %.8g for marker count of \n", lOD, markerCount);});
+  DIAG (ALTLSERVER, 1, { fprintf (stderr, "Put work stored AltL of %.8g for marker count of %d\n", lOD, markerCount);});
 
 }
 

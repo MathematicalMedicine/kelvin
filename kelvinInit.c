@@ -360,8 +360,11 @@ void kelvinInit (int argc, char *argv[])
   initializeDB ();
   if (toupper(*studyDB.role) == 'S')
     SignOn (originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "ES", modelType->numMarkers, programVersion);
-  else if (toupper(*studyDB.role) == '2')
+  else if (toupper(*studyDB.role) == '2') {
     SignOn (originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "es", 1, programVersion);
+    DIAG (ALTLSERVER, 0, { fprintf (stderr, "Explicitly setting all trait and marker-set models for all pedigrees for this server instance to 1.0\n");});
+    SetDummyNullLikelihood (); // Set all trait and marker-set models for all pedigrees for this server instance to 1.0.
+  }
 #endif
 
   /* Enable handling of segmentation faults/bus errors due to configuration monkeying */
