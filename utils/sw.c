@@ -1151,6 +1151,7 @@ swLogProgress(int level, float percentDone, char *format, ...) {
       return;
 
   swLogMsg (stderr, progressLevels[level].text);
+  fflush (stderr);
   progressLevels[level].seen = TRUE;
 
 }
