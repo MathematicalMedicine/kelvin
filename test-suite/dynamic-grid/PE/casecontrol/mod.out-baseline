@@ -1,58 +1,13 @@
 # Version V2.2.0 edit 3220M
-# Seq: 2 Chr: 40 Trait: Trait Marker: M2 Position: 3.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-1.0119 -0.98 (0.0250,0.0250) 0.95 0.5000 (0.022,0.022,0.000)
-# Seq: 3 Chr: 40 Trait: Trait Marker: M3 Position: 4.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.8593 1.00 (0.0000,0.0000) 0.95 0.5000 (0.703,0.352,0.344)
-# Seq: 4 Chr: 40 Trait: Trait Marker: M4 Position: 5.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.3096 0.42 (0.0290,0.0290) 0.77 0.9780 (0.978,0.489,0.011)
-# Seq: 5 Chr: 40 Trait: Trait Marker: M5 Position: 6.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.4430 1.00 (0.0000,0.0000) 0.50 0.5000 (0.022,0.022,0.000)
-# Seq: 6 Chr: 40 Trait: Trait Marker: M6 Position: 7.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.0891 1.00 (0.0000,0.0000) 0.95 0.9780 (0.978,0.956,0.478)
-# Seq: 7 Chr: 40 Trait: Trait Marker: M7 Position: 8.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-1.0430 1.00 (0.0000,0.0000) 0.95 0.5000 (0.703,0.688,0.344)
-# Seq: 8 Chr: 40 Trait: Trait Marker: M8 Position: 9.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.4019 -1.00 (0.0000,0.0000) 0.50 0.5000 (0.978,0.489,0.478)
-# Seq: 9 Chr: 40 Trait: Trait Marker: M9 Position: 10.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.6901 1.00 (0.0000,0.0000) 0.77 0.5000 (0.978,0.489,0.478)
-# Seq: 10 Chr: 40 Trait: Trait Marker: M10 Position: 11.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.4563 -1.00 (0.0000,0.0000) 0.50 0.1570 (0.157,0.025,0.021)
-# Seq: 11 Chr: 40 Trait: Trait Marker: M11 Position: 12.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.1079 -0.94 (0.1944,0.1944) 0.23 0.5000 (0.978,0.956,0.478)
-# Seq: 12 Chr: 40 Trait: Trait Marker: M12 Position: 13.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.2366 0.60 (0.0108,0.0108) 0.50 0.9780 (0.978,0.489,0.478)
-# Seq: 13 Chr: 40 Trait: Trait Marker: M13 Position: 14.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.5880 -0.99 (0.1289,0.1289) 0.77 0.5000 (0.500,0.148,0.145)
-# Seq: 14 Chr: 40 Trait: Trait Marker: M14 Position: 15.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.2950 1.00 (0.0000,0.0000) 0.95 0.7030 (0.500,0.489,0.244)
-# Seq: 15 Chr: 40 Trait: Trait Marker: M15 Position: 16.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.4282 -0.60 (0.0108,0.0108) 0.50 0.1570 (0.843,0.711,0.112)
-# Seq: 16 Chr: 40 Trait: Trait Marker: M16 Position: 17.0000
-MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
-0.4067 -1.00 (0.0000,0.0000) 0.05 0.2970 (0.500,0.011,0.006)
-# Seq: 17 Chr: 40 Trait: Trait Marker: M17 Position: 18.0000
+# Seq: 1 Chr: 40 Trait: Trait Marker: M17 Position: 18.0000
 MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
 0.5588 1.00 (0.0000,0.0000) 0.23 0.5000 (0.978,0.956,0.478)
-# Seq: 18 Chr: 40 Trait: Trait Marker: M18 Position: 19.0000
+# Seq: 2 Chr: 40 Trait: Trait Marker: M18 Position: 19.0000
 MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
 0.6682 -1.00 (0.0000,0.0000) 0.95 0.5000 (0.500,0.489,0.145)
-# Seq: 19 Chr: 40 Trait: Trait Marker: M19 Position: 20.0000
+# Seq: 3 Chr: 40 Trait: Trait Marker: M19 Position: 20.0000
 MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
 0.3885 -1.00 (0.0000,0.0000) 0.50 0.5000 (0.978,0.489,0.478)
-# Seq: 20 Chr: 40 Trait: Trait Marker: M20 Position: 21.0000
+# Seq: 4 Chr: 40 Trait: Trait Marker: M20 Position: 21.0000
 MOD D11 Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd)
 0.2341 -0.37 (0.2750,0.2750) 0.77 0.0220 (0.022,0.011,0.000)
