@@ -433,12 +433,10 @@ void getAndPut2ptModels (PedigreeSet *pPedigreeList, int stepFlag, int realityFl
 
       weightedLRComponent = (alternativeLikelihood / nullLikelihood) * fabs(pedTraitPosCM - weightNumeratorCM) / weightDenominatorCM;
 
-      fprintf (stderr, "Trait %GcM, marker %GcM->delta %G(%GcM), Null %G, Alt %G->LR %G, total dist %GcM, opp dist %GcM->weighted LR component %G\n",
-	       pedTraitPosCM, markerPosition, analysisLocusList->pNextLocusDistance[0][0], fabs(pedTraitPosCM - markerPosition),
-	       nullLikelihood, alternativeLikelihood, alternativeLikelihood / nullLikelihood,
-	       weightDenominatorCM, fabs(pedTraitPosCM - weightNumeratorCM), weightedLRComponent);
-
-
+      DIAG (ALTLSERVER, 1, {fprintf (stderr, "Trait %GcM, marker %GcM->delta %G(%GcM), Null %G, Alt %G->LR %G, total dist %GcM, opp dist %GcM->weighted LR component %G\n", \
+				     pedTraitPosCM, markerPosition, analysisLocusList->pNextLocusDistance[0][0], fabs(pedTraitPosCM - markerPosition), \
+				     nullLikelihood, alternativeLikelihood, alternativeLikelihood / nullLikelihood, \
+				     weightDenominatorCM, fabs(pedTraitPosCM - weightNumeratorCM), weightedLRComponent);});
     } else {
       weightedLRComponent = 0;
       runtimeCostSec = 0.0;
