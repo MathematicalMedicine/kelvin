@@ -145,12 +145,13 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindSignOn[2], studyDB.keepAliveFlag, MYSQL_TYPE_LONG);
   BINDNUMERIC (studyDB.bindSignOn[3], studyDB.studyId, MYSQL_TYPE_LONG);
   BINDSTRING (studyDB.bindSignOn[4], studyDB.pedigreeRegEx, sizeof (studyDB.pedigreeRegEx));
-  BINDNUMERIC (studyDB.bindSignOn[5], studyDB.chromosomeNo, MYSQL_TYPE_LONG);
-  BINDSTRING (studyDB.bindSignOn[6], studyDB.algorithm, sizeof (studyDB.algorithm));
-  BINDNUMERIC (studyDB.bindSignOn[7], studyDB.markerCount, MYSQL_TYPE_LONG);
-  BINDSTRING (studyDB.bindSignOn[8], studyDB.programVersion, sizeof (studyDB.programVersion));
+  BINDSTRING (studyDB.bindSignOn[5], studyDB.pedigreeNotRegEx, sizeof (studyDB.pedigreeNotRegEx));
+  BINDNUMERIC (studyDB.bindSignOn[6], studyDB.chromosomeNo, MYSQL_TYPE_LONG);
+  BINDSTRING (studyDB.bindSignOn[7], studyDB.algorithm, sizeof (studyDB.algorithm));
+  BINDNUMERIC (studyDB.bindSignOn[8], studyDB.markerCount, MYSQL_TYPE_LONG);
+  BINDSTRING (studyDB.bindSignOn[9], studyDB.programVersion, sizeof (studyDB.programVersion));
 
-  strncpy (studyDB.strSignOn, "Insert into Servers (HostName, ProcessId, KeepAliveFlag, StudyId, PedigreeRegEx, ChromosomeNo, Algorithm, MarkerCount, ProgramVersion) values (?,?,?,?,?,?,?,?,?)", MAXSTMTLEN-1);
+  strncpy (studyDB.strSignOn, "Insert into Servers (HostName, ProcessId, KeepAliveFlag, StudyId, PedigreeRegEx, PedigreeNotRegEx, ChromosomeNo, Algorithm, MarkerCount, ProgramVersion) values (?,?,?,?,?,?,?,?,?,?)", MAXSTMTLEN-1);
   if (mysql_stmt_prepare (studyDB.stmtSignOn, studyDB.strSignOn, strlen (studyDB.strSignOn)))
     ERROR("Cannot prepare sign-on insert statement (%s)", mysql_stmt_error(studyDB.stmtSignOn));
   if (mysql_stmt_bind_param (studyDB.stmtSignOn, studyDB.bindSignOn))
@@ -364,16 +365,17 @@ void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVe
   studyDB.processId = getpid();
   studyDB.keepAliveFlag = 1;
   *studyDB.bindSignOn[4].length = strlen(studyDB.pedigreeRegEx);
+  *studyDB.bindSignOn[5].length = strlen(studyDB.pedigreeNotRegEx);
   studyDB.chromosomeNo = chromosomeNo;
   strncpy (studyDB.algorithm, algorithm, 2);
-  *studyDB.bindSignOn[6].length = strlen(algorithm);
+  *studyDB.bindSignOn[7].length = strlen(algorithm);
   studyDB.markerCount = markerCount;
   strncpy (studyDB.programVersion, programVersion, 32);
-  *studyDB.bindSignOn[8].length = strlen(programVersion);
+  *studyDB.bindSignOn[9].length = strlen(programVersion);
 
   if (mysql_stmt_execute (studyDB.stmtSignOn))
-    ERROR("Cannot execute sign-on insert statement w/%d, '%s', %d, '%s', %d, '%s' (%s, %s)", 
-	  studyDB.studyId, studyDB.pedigreeRegEx, chromosomeNo, algorithm, markerCount, programVersion,
+    ERROR("Cannot execute sign-on insert statement w/%d, '%s', '%s', %d, '%s', %d, '%s' (%s, %s)", 
+	  studyDB.studyId, studyDB.pedigreeRegEx, studyDB.pedigreeNotRegEx, chromosomeNo, algorithm, markerCount, programVersion,
 	  mysql_stmt_error(studyDB.stmtSignOn), mysql_stmt_sqlstate(studyDB.stmtSignOn));
 
   /* Sigh...we really do need the serverId for logging, otherwise I'd let it be yet another
@@ -566,6 +568,7 @@ int main (int argc, char *argv[]) {
   strcpy (studyDB.username, argv[4]);
   strcpy (studyDB.password, argv[5]);
   strcpy (studyDB.pedigreeRegEx, argv[6]);
+  strcpy (studyDB.pedigreeNotRegEx, argv[7]);
 
   // Annotated calls...
 

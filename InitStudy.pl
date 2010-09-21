@@ -79,8 +79,8 @@ sub perform_study
 {
     my ($config) = @_;
 
-    $ {$config->isConfigured ("Study")}[0] =~ /(\d+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\S+)/;
-    my $StudyId = $1; my $StudyRole = lc($2); my $DBIHost = $3; my $DBIDatabase = $4; my $Username = $5; my $Password = $6; my $PedigreeRegEx = $7;
+    $ {$config->isConfigured ("Study")}[0] =~ /(\d+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\S+)\s+(\S+)/;
+    my $StudyId = $1; my $StudyRole = lc($2); my $DBIHost = $3; my $DBIDatabase = $4; my $Username = $5; my $Password = $6; my $PedigreeRegEx = $7; my $PedigreeNotRegEx = $8;
     my $DBIConnectionString = "mysql:host=$DBIHost:database=$DBIDatabase";
     my $MapId; my $LiabilityClasses = 1; my $ImprintingFlag = 'n';
 

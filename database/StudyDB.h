@@ -12,6 +12,7 @@ struct StudyDB {
   char username[MAXPARAMLEN];
   char password[MAXPARAMLEN];
   char pedigreeRegEx[33];
+  char pedigreeNotRegEx[33];
   MYSQL *connection;
   int driverPosIdx;
   // Adhoc...
@@ -58,7 +59,7 @@ struct StudyDB {
   double lOD;
   // Sign-on...
   MYSQL_STMT *stmtSignOn;
-  MYSQL_BIND bindSignOn[9];
+  MYSQL_BIND bindSignOn[10];
   char strSignOn[MAXSTMTLEN];
   char hostName[33];
   int processId;

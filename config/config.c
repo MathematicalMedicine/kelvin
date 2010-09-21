@@ -1373,8 +1373,8 @@ int set_qt_truncation (char **toks, int numtoks, void *unused)
 int set_study_parameters (char **toks, int numtoks, void *unused)
 {
   char *ptr = NULL;
-  // Want studyId, role, dBHostname, dbName, username, password, pedigreeRegEx
-  if (numtoks != 8)
+  // Want studyId, role, dBHostname, dbName, username, password, pedigreeRegEx, pedigreeNotRegEx
+  if (numtoks != 9)
     bail ("inappropriate number of arguments to directive '%s'\n", toks[0]);
   studyDB.studyId = (int) strtol (toks[1], &ptr, 10);
   if ((toks[1] == ptr) || (*ptr != '\0'))
@@ -1385,6 +1385,7 @@ int set_study_parameters (char **toks, int numtoks, void *unused)
   strncpy (studyDB.username, toks[5], sizeof (studyDB.username));
   strncpy (studyDB.password, toks[6], sizeof (studyDB.password));
   strncpy (studyDB.pedigreeRegEx, toks[7], sizeof (studyDB.pedigreeRegEx));
+  strncpy (studyDB.pedigreeNotRegEx, toks[8], sizeof (studyDB.pedigreeNotRegEx));
   return (0);
 }
 #else
