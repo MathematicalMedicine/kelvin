@@ -94,7 +94,7 @@ void kelvinInit (int argc, char *argv[])
   #ifdef _OPENMP
     #undef _OPENMP
     #warning "Cannot use OpenMP when using internal statistical functions.");
-    INFO ("OpenMP is DISABLED when using internal statistical functions.")
+    INFO ("OpenMP is DISABLED when using internal statistical functions.");
   #endif
 #endif
 
