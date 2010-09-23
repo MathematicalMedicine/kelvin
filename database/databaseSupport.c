@@ -326,7 +326,8 @@ double GetDAltL (int pedPosId, double dGF,
 
   while (1) {
     if (mysql_stmt_execute (studyDB.stmtGetDAltL) != 0) {
-      if (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDAltL), "40001") != 0) {
+      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDAltL), "40001") != 0) &&
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDAltL), "HY000") != 0)) {
 	ERROR("Cannot execute GetDAltL call statement w/%d, (%s, %s)", pedPosId,
 	      mysql_stmt_error(studyDB.stmtGetDAltL), mysql_stmt_sqlstate(studyDB.stmtGetDAltL));
       } else {
@@ -418,7 +419,8 @@ int CountWork (double lowPosition, double highPosition)
   // CountWork
   while (1) {
     if (mysql_stmt_execute (studyDB.stmtCountWork) != 0) {
-      if (strcmp (mysql_stmt_sqlstate(studyDB.stmtCountWork), "40001") != 0) {
+      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtCountWork), "40001") != 0) &&
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtCountWork), "HY000") != 0)) {
 	ERROR("Cannot execute Count statement w/%G, %G, (%s, %s)", 
 	      lowPosition, highPosition,
 	      mysql_stmt_error(studyDB.stmtCountWork), mysql_stmt_sqlstate(studyDB.stmtCountWork));
