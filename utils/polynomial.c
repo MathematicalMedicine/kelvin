@@ -480,17 +480,13 @@ void clearValidEvalFlag ()
 #endif
   for (i = 0; i < constantCount; i++)
     constantList[i]->valid &= ~VALID_EVAL_FLAG;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (i = 0; i < variableCount; i++)
     variableList[i]->valid &= ~VALID_EVAL_FLAG;
   for (i = 0; i < externalCount; i++)
     externalList[i]->valid &= ~VALID_EVAL_FLAG;
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-  for (i = 0; i < constantCount; i++)
-    constantList[i]->valid &= ~VALID_EVAL_FLAG;
-  for (i = 0; i < variableCount; i++)
-    variableList[i]->valid &= ~VALID_EVAL_FLAG;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
