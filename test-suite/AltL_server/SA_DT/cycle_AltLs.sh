@@ -12,7 +12,7 @@ qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 
 # Grab STUDY directive for database parameters
 study=$(grep -i ^Study client.conf)
 set -- $study
-# Initial set of "new" trait positions is the original set
+# Initial set of "new" trait positions is the original set so we can detect if _no_ splits ever occurred
 cp client.conf client-newTP.conf
 while :
 do
@@ -28,12 +28,7 @@ do
   TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct RefTraitPosCM from Regions where StudyId = $2 AND RefTraitPosCM >= 0 AND PendingAltLs > 0;" | tr "\n" " ")
   grep -vi TraitPosition client.conf > client-newTP.conf
   # Add them one per line to be safe with line length
-  echo "TPs contains $TPs"
   for tp in $TPs;  do   echo "In the loop";  echo "TraitPosition $tp" >> client-newTP.conf; done
-  echo "Done with the loop"
 done
 # Don't bother with a second run if there were no splits at all
-diff client.conf client-newTP.conf
-if test $? -ne 0 ; then
-  qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"      
-fi
+diff client.conf client-newTP.conf || { qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0" ; }
