@@ -211,7 +211,7 @@ dadhre_ (dcuhre_state * s)
 
   cw_sbrg->region_id = 0;
   cw_sbrg->region_level = 0;
-  cw_sbrg->bogusAltLs = 0;
+  cw_sbrg->bogusLikelihoods = 0;
   cw_sbrg->parent_id = 0;
   MALCHOKE(cw_sbrg->center, sizeof (double) * s->ndim, double *);
   MALCHOKE(cw_sbrg->hwidth, sizeof (double) * s->ndim, double *);
@@ -313,9 +313,9 @@ dadhre_ (dcuhre_state * s)
 #ifdef STUDYDB
 
     fprintf (stderr, "DCUHRE split being considered w/%d bogus evaluation results subregion %d...",
-	     s->sbrg_heap[s->next_sbrg]->bogusAltLs, s->next_sbrg);
+	     s->sbrg_heap[s->next_sbrg]->bogusLikelihoods, s->next_sbrg);
     if (
-	(s->sbrg_heap[s->next_sbrg]->bogusAltLs == 0) &&
+	(s->sbrg_heap[s->next_sbrg]->bogusLikelihoods == 0) &&
 	(
 	 (real_result < 0.0) || ((real_error > s->epsabs) && (s->cur_diff_suc< s->aim_diff_suc) && (real_result >=0.214))
 	)
@@ -345,7 +345,7 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->parent_id = parent_sbrg->region_id;
       cw_sbrg->region_id = s->sbrgns;
       parent_sbrg->lchild_id = cw_sbrg->region_id;
-      cw_sbrg->bogusAltLs = 0;
+      cw_sbrg->bogusLikelihoods = 0;
       cw_sbrg->region_level = parent_sbrg->region_level + 1;
       MALCHOKE(cw_sbrg->center, sizeof (double) * s->ndim, double *);
       MALCHOKE(cw_sbrg->hwidth, sizeof (double) * s->ndim, double *);
@@ -386,7 +386,7 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->parent_id = parent_sbrg->region_id;
       cw_sbrg->region_id = s->sbrgns;
       parent_sbrg->rchild_id = cw_sbrg->region_id;
-      cw_sbrg->bogusAltLs = 0;
+      cw_sbrg->bogusLikelihoods = 0;
       cw_sbrg->region_level = parent_sbrg->region_level + 1;
       MALCHOKE(cw_sbrg->center, sizeof (double) * s->ndim, double *);
       MALCHOKE(cw_sbrg->hwidth, sizeof (double) * s->ndim, double *);
@@ -439,7 +439,7 @@ dadhre_ (dcuhre_state * s)
       s->ifail = 1;
     } else {
 #ifdef STUDYDB
-      if (s->sbrg_heap[s->next_sbrg]->bogusAltLs > 0)
+      if (s->sbrg_heap[s->next_sbrg]->bogusLikelihoods > 0)
 	fprintf (stderr, "averted!\n");
       else
 	fprintf (stderr, "unnecessary.\n");

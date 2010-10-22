@@ -92,49 +92,49 @@ void prepareDBStatements () {
   if (mysql_stmt_bind_result (studyDB.stmtGetPedPosId, studyDB.bindGetPedPosIdResults))
     ERROR("Cannot bind GetPedPosId results (%s)", mysql_stmt_error(studyDB.stmtGetPedPosId));
 
-  // Prepare the GetDAltL call
-  studyDB.stmtGetDAltL = mysql_stmt_init (studyDB.connection);
-  memset (studyDB.bindGetDAltL, 0, sizeof(studyDB.bindGetDAltL));
+  // Prepare the GetDLikelihood call
+  studyDB.stmtGetDLikelihood = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetDLikelihood, 0, sizeof(studyDB.bindGetDLikelihood));
 
-  BINDNUMERIC (studyDB.bindGetDAltL[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDAltL[1], studyDB.dGF, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[2], studyDB.lC1BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[3], studyDB.lC1BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[4], studyDB.lC1LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[5], studyDB.lC1LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[6], studyDB.lC2BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[7], studyDB.lC2BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[8], studyDB.lC2LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[9], studyDB.lC2LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[10], studyDB.lC3BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[11], studyDB.lC3BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[12], studyDB.lC3LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[13], studyDB.lC3LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[14], studyDB.regionNo, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDAltL[15], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDAltL[16], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDAltL[17], studyDB.parentRegionSplitDir, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[1], studyDB.dGF, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[2], studyDB.lC1BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[3], studyDB.lC1BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[4], studyDB.lC1LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[5], studyDB.lC1LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[6], studyDB.lC2BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[7], studyDB.lC2BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[8], studyDB.lC2LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[9], studyDB.lC2LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[10], studyDB.lC3BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[11], studyDB.lC3BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[12], studyDB.lC3LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[13], studyDB.lC3LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[14], studyDB.regionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[15], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[16], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[17], studyDB.parentRegionSplitDir, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strGetDAltL, "call GetDAltL (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outMarkerCount,@outAltL)", MAXSTMTLEN-1);
+  strncpy (studyDB.strGetDLikelihood, "call GetDLikelihood (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outMarkerCount,@outLikelihood)", MAXSTMTLEN-1);
 
-  if (mysql_stmt_prepare (studyDB.stmtGetDAltL, studyDB.strGetDAltL, strlen (studyDB.strGetDAltL)))
-    ERROR("Cannot prepare GetDAltL call statement (%s)", mysql_stmt_error(studyDB.stmtGetDAltL));
-  if (mysql_stmt_bind_param (studyDB.stmtGetDAltL, studyDB.bindGetDAltL))
-    ERROR("Cannot bind GetDAltL call statement (%s)", mysql_stmt_error(studyDB.stmtGetDAltL));
+  if (mysql_stmt_prepare (studyDB.stmtGetDLikelihood, studyDB.strGetDLikelihood, strlen (studyDB.strGetDLikelihood)))
+    ERROR("Cannot prepare GetDLikelihood call statement (%s)", mysql_stmt_error(studyDB.stmtGetDLikelihood));
+  if (mysql_stmt_bind_param (studyDB.stmtGetDLikelihood, studyDB.bindGetDLikelihood))
+    ERROR("Cannot bind GetDLikelihood call statement (%s)", mysql_stmt_error(studyDB.stmtGetDLikelihood));
 
-  // Prepare the GetDAltL results call
-  studyDB.stmtGetDAltLResults = mysql_stmt_init (studyDB.connection);
-  memset (studyDB.bindGetDAltLResults, 0, sizeof(studyDB.bindGetDAltLResults));
+  // Prepare the GetDLikelihood results call
+  studyDB.stmtGetDLikelihoodResults = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetDLikelihoodResults, 0, sizeof(studyDB.bindGetDLikelihoodResults));
 
-  BINDNUMERIC (studyDB.bindGetDAltLResults[0], studyDB.regionId, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDAltLResults[1], studyDB.markerCount, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDAltLResults[2], studyDB.lOD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihoodResults[0], studyDB.regionId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLikelihoodResults[1], studyDB.markerCount, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLikelihoodResults[2], studyDB.lOD, MYSQL_TYPE_DOUBLE);
 
-  strncpy (studyDB.strGetDAltLResults, "Select @outRegionId, @outMarkerCount, @outAltL", MAXSTMTLEN-1);
-  if (mysql_stmt_prepare (studyDB.stmtGetDAltLResults, studyDB.strGetDAltLResults, strlen (studyDB.strGetDAltLResults)))
-    ERROR("Cannot prepare GetDAltL results select statement (%s)", mysql_stmt_error(studyDB.stmtGetDAltLResults));
-  if (mysql_stmt_bind_result (studyDB.stmtGetDAltLResults, studyDB.bindGetDAltLResults))
-    ERROR("Cannot bind GetDAltL results select statement (%s)", mysql_stmt_error(studyDB.stmtGetDAltLResults));
+  strncpy (studyDB.strGetDLikelihoodResults, "Select @outRegionId, @outMarkerCount, @outLikelihood", MAXSTMTLEN-1);
+  if (mysql_stmt_prepare (studyDB.stmtGetDLikelihoodResults, studyDB.strGetDLikelihoodResults, strlen (studyDB.strGetDLikelihoodResults)))
+    ERROR("Cannot prepare GetDLikelihood results select statement (%s)", mysql_stmt_error(studyDB.stmtGetDLikelihoodResults));
+  if (mysql_stmt_bind_result (studyDB.stmtGetDLikelihoodResults, studyDB.bindGetDLikelihoodResults))
+    ERROR("Cannot bind GetDLikelihood results select statement (%s)", mysql_stmt_error(studyDB.stmtGetDLikelihoodResults));
 
   // Prepare the server sign-on
   studyDB.stmtSignOn = mysql_stmt_init (studyDB.connection);
@@ -299,7 +299,7 @@ long GetPedPosId (char *pedigreeSId, int chromosomeNo, double refTraitPosCM)
   return studyDB.pedPosId;
 }
 
-double GetDAltL (int pedPosId, double dGF,
+double GetDLikelihood (int pedPosId, double dGF,
 		double lC1BigPen, double lC1BigLittlePen, double lC1LittleBigPen, double lC1LittlePen,
 		double lC2BigPen, double lC2BigLittlePen, double lC2LittleBigPen, double lC2LittlePen,
 		double lC3BigPen, double lC3BigLittlePen, double lC3LittleBigPen, double lC3LittlePen,
@@ -325,11 +325,11 @@ double GetDAltL (int pedPosId, double dGF,
   studyDB.parentRegionSplitDir = parentRegionSplitDir;
 
   while (1) {
-    if (mysql_stmt_execute (studyDB.stmtGetDAltL) != 0) {
-      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDAltL), "40001") != 0) &&
-	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDAltL), "HY000") != 0)) {
-	ERROR("Cannot execute GetDAltL call statement w/%d, (%s, %s)", pedPosId,
-	      mysql_stmt_error(studyDB.stmtGetDAltL), mysql_stmt_sqlstate(studyDB.stmtGetDAltL));
+    if (mysql_stmt_execute (studyDB.stmtGetDLikelihood) != 0) {
+      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood), "40001") != 0) &&
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood), "HY000") != 0)) {
+	ERROR("Cannot execute GetDLikelihood call statement w/%d, (%s, %s)", pedPosId,
+	      mysql_stmt_error(studyDB.stmtGetDLikelihood), mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood));
       } else {
 	swLogProgress(5, 0, "Retrying deadlock in 1 second");
 	sleep(1);
@@ -338,19 +338,19 @@ double GetDAltL (int pedPosId, double dGF,
     }
     break;
   }
-  if (mysql_stmt_execute (studyDB.stmtGetDAltLResults) != 0)
-    ERROR("Cannot execute GetDAltL results select statement (%s, %s)", 
-	  mysql_stmt_error(studyDB.stmtGetDAltLResults), mysql_stmt_sqlstate(studyDB.stmtGetDAltLResults));
-  if (mysql_stmt_store_result (studyDB.stmtGetDAltLResults) != 0)
-    ERROR("Cannot retrieve GetDAltL (%s)", mysql_stmt_error(studyDB.stmtGetDAltLResults));
-  if (mysql_stmt_fetch (studyDB.stmtGetDAltLResults) != 0)
-    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDAltLResults));
+  if (mysql_stmt_execute (studyDB.stmtGetDLikelihoodResults) != 0)
+    ERROR("Cannot execute GetDLikelihood results select statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtGetDLikelihoodResults), mysql_stmt_sqlstate(studyDB.stmtGetDLikelihoodResults));
+  if (mysql_stmt_store_result (studyDB.stmtGetDLikelihoodResults) != 0)
+    ERROR("Cannot retrieve GetDLikelihood (%s)", mysql_stmt_error(studyDB.stmtGetDLikelihoodResults));
+  if (mysql_stmt_fetch (studyDB.stmtGetDLikelihoodResults) != 0)
+    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDLikelihoodResults));
 
-  if (*studyDB.bindGetDAltLResults[2].is_null) {
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, AltL is NULL", studyDB.regionId);});
+  if (*studyDB.bindGetDLikelihoodResults[2].is_null) {
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL", studyDB.regionId);});
     return -1LL;
   } else {
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, AltL is %G", studyDB.regionId, studyDB.lOD);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is %G", studyDB.regionId, studyDB.lOD);});
     return studyDB.lOD;
   }
 }
@@ -540,7 +540,7 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
     }
     break;
   }    
-  DIAG (ALTLSERVER, 1, { fprintf (stderr, "Put work stored AltL of %.8g for marker count of %d\n", lOD, markerCount);});
+  DIAG (ALTLSERVER, 1, { fprintf (stderr, "Put work stored Likelihood of %.8g for marker count of %d\n", lOD, markerCount);});
 
 }
 
@@ -575,26 +575,26 @@ int main (int argc, char *argv[]) {
   // Annotated calls...
 
   pedPosId = GetPedPosId (/* PedigreeSId-> */ "2", /* ChromosomeNo-> */ 40, /* RefTraitPosCM-> */ 5.1);
-  GetDAltL (/* PedPosId-> */ pedPosId, /* DGF-> */ .35,
+  GetDLikelihood (/* PedPosId-> */ pedPosId, /* DGF-> */ .35,
 	   /* LC1DD-> */ .71, /* LC1Dd-> */ .42, /* LC1dD-> */ .44, /* LC1dd-> */ .13, 
 	   /* LC2DD-> */ .71, /* LC2Dd-> */ .42, /* LC2dD-> */ .44, /* LC2dd-> */ .13, 
 	   /* LC3DD-> */ .71, /* LC3Dd-> */ .42, /* LC3dD-> */ .46, /* LC3dd-> */ .13, 
 	   /* RegionNo-> */ 1);
 
-  GetDAltL (pedPosId, .35, .71, .42, .42, .13, .71, .42, .45, .13, .71, .42, .45, .13, 1);
+  GetDLikelihood (pedPosId, .35, .71, .42, .42, .13, .71, .42, .45, .13, .71, .42, .45, .13, 1);
   pedPosId = GetPedPosId ("3", 40, 10.43210987);
-  GetDAltL (pedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  GetDLikelihood (pedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
   pedPosId = GetPedPosId ("2", 40, 3.0);
-  GetDAltL (pedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
-  GetDAltL (6, .3, .71, .42, .44, .13, -1, 0, 0, 0, -1, 0, 0, 0, 1);
-  GetDAltL (7, .3, .71, .42, .44, .13, .71, .42, .42, .13, -1, 0, 0, 0, 1);
+  GetDLikelihood (pedPosId, .3, .71, .42, .44, .13, .71, .42, .42, .13, .71, .42, .42, .13, 1);
+  GetDLikelihood (6, .3, .71, .42, .44, .13, -1, 0, 0, 0, -1, 0, 0, 0, 1);
+  GetDLikelihood (7, .3, .71, .42, .44, .13, .71, .42, .42, .13, -1, 0, 0, 0, 1);
 
   SignOn (40, "ES", 4, "Test driver");
 
   while (GetDWork (0, 10, &pedTraitPosCM, pedigreeSId, &dGF, &lC1DD, &lC1Dd, &lC1dD, &lC1dd,
 		   &lC2DD, &lC2Dd, &lC2dD, &lC2dd, &lC3DD, &lC3Dd, &lC3dD, &lC3dd)) {
     lOD = ((double)(rand() % 9999)) / 1000.0;
-    printf ("Trying AltL of %G\n", lOD);
+    printf ("Trying Likelihood of %G\n", lOD);
     PutWork (5, lOD);
   }
 

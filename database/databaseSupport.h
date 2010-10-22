@@ -1,7 +1,7 @@
 void initializeDB ();
 void prepareDBStatements ();
 long GetPedPosId (char *, int, double);
-double GetDAltL (int, double, 
+double GetDLikelihood (int, double, 
 		double, double, double, double, 
 		double, double, double, double, 
 		double, double, double, double,

@@ -28,11 +28,11 @@ struct StudyDB {
   double refTraitPosCM;
   MYSQL_BIND bindGetPedPosIdResults[1];
   int pedPosId;
-  // GetDAltL...
+  // GetDLikelihood...
   int posEvals;
-  MYSQL_STMT *stmtGetDAltL;
-  MYSQL_BIND bindGetDAltL[18];
-  char strGetDAltL[MAXSTMTLEN];
+  MYSQL_STMT *stmtGetDLikelihood;
+  MYSQL_BIND bindGetDLikelihood[18];
+  char strGetDLikelihood[MAXSTMTLEN];
   double dGF;
   double lC1BigPen;
   double lC1BigLittlePen;
@@ -50,10 +50,10 @@ struct StudyDB {
   int parentRegionNo;
   double parentRegionError;
   int parentRegionSplitDir;
-  // GetDAltL results...
-  MYSQL_STMT *stmtGetDAltLResults;
-  MYSQL_BIND bindGetDAltLResults[3];
-  char strGetDAltLResults[MAXSTMTLEN];
+  // GetDLikelihood results...
+  MYSQL_STMT *stmtGetDLikelihoodResults;
+  MYSQL_BIND bindGetDLikelihoodResults[3];
+  char strGetDLikelihoodResults[MAXSTMTLEN];
   int regionId;
   int markerCount;
   double lOD;
@@ -101,7 +101,7 @@ struct StudyDB {
   char strPutWork[MAXSTMTLEN];
   int runtimeCostSec;
   // other...
-  int bogusAltLs;
-  int realAltLs;
+  int bogusLikelihoods;
+  int realLikelihoods;
 };
 

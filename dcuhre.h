@@ -108,7 +108,7 @@ typedef struct{
   /*Scaling 6/16/2009*/
   int cur_scale;
 
-  int bogusAltLs; /* Number of specious alternative likelihoods in this region, if > 0, DO NOT SPLIT */
+  int bogusLikelihoods; /* Number of specious likelihoods in this region, if > 0, DO NOT SPLIT */
 
 } sub_region;
 

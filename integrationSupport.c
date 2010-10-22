@@ -2765,7 +2765,7 @@ void integrateMain ()
 
       dk_writeMPBRData (posIdx, traitPos, ppl, integral, max_scale);
 #ifdef STUDYDB
-      if (studyDB.bogusAltLs > 0)
+      if (studyDB.bogusLikelihoods > 0)
 	fprintf (fpHet, "WARNING - Some positions have not been completely analyzed!\n");
 #endif
 
