@@ -3052,8 +3052,10 @@ int do_populate_xmission_matrix (XMission * pMatrix, int totalLoci, void *prob[3
       for (i = 0; i < 3; i++) {
         if (modelOptions->polynomial == TRUE) {
           if (pMatrix[newCellIndex].slot.probPoly[i] != NULL)
+	    // This makes Yungui's test incredibly slow...
             unHoldPoly (pMatrix[newCellIndex].slot.probPoly[i]);
           pMatrix[newCellIndex].slot.probPoly[i] = newProbPoly[i];
+	  // ...as does this.
           holdPoly (newProbPoly[i]);
         } else
           pMatrix[newCellIndex].slot.prob[i] = newProb[i];
