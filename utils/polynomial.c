@@ -4132,6 +4132,7 @@ void holdPoly (Polynomial * p)
   holdPolyCount++;
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Into holdPoly\n");
+  // Probably should do a clearSubtreeValidEvalFlag (p) call instead
   clearValidEvalFlag ();
   doHoldPoly (p);
   if (polynomialDebugLevel >= 10)
@@ -4186,6 +4187,7 @@ void doUnHoldPoly (Polynomial * p)
 void unHoldPoly (Polynomial * p)
 {
   unHoldPolyCount++;
+  // Probably should do a clearSubtreeValidEvalFlag (p) call instead
   clearValidEvalFlag ();
   doUnHoldPoly (p);
   return;
