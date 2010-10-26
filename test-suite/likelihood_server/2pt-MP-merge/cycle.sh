@@ -3,9 +3,11 @@
 set -x
 
 # These are for nodes other than Levi-Montalcini
-shopt -s expand_aliases
-alias qrsh="bash -c"
-alias nq="echo Not submitting: "
+if test "$HOSTNAME" != "Levi-Montalcini" ; then
+    shopt -s expand_aliases
+    alias qrsh="bash -c"
+    alias nq="echo Not submitting: "
+fi
 
 # Do the normal 2pt run for comparison in a normal queue
 nq "~/kelvin/trunk/kelvin-2.2.0-normal client-normal-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
@@ -32,6 +34,34 @@ do
   # Enqueue a few servers and...
   nq "~/bcmmtools/run_server.sh server-mp"
   nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-mp"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "~/bcmmtools/run_server.sh server-2pt-run"
   nq "~/bcmmtools/run_server.sh server-2pt-run"
   nq "~/bcmmtools/run_server.sh server-2pt-run"
   # Run single blocking ones to prevent further processing until all work is done
