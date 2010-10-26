@@ -2,7 +2,7 @@
 
 test :
 	- rm -rf *.out adhoc* *memory.dat
-	./remove_study.sh 1
+	~/bcmmtools/remove_study.sh 1
 	(time ./cycle.sh) >cycle.out 2>&1
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001
 
