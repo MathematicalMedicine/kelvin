@@ -5,7 +5,7 @@ set -x
 alias qrsh="qrsh -now no "
 
 # These are for nodes other than Levi-Montalcini, where SGE is not available
-if test "$HOSTNAME" -ne "Levi-Montalcini" ; then
+if test "$HOSTNAME" != "Levi-Montalcini" ; then
     shopt -s expand_aliases
     alias qrsh="bash -c "
     alias nq="echo Not submitting: "
