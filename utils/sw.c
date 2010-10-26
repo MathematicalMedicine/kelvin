@@ -1288,7 +1288,7 @@ void swDiagTerm(void) {
    If this may not be the case, use a better random number generator. */
 void swShuffle(int *array, size_t n)
 {
-  int i, stime;
+  int stime;
   long ltime;
 
   ltime = time(NULL);
