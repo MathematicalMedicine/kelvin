@@ -36,6 +36,7 @@ my @kelvinargs = ();
 my $family;
 my @familycache = ();
 my $tmppedfile = undef;
+my $tmpcfgfile = undef;
 my $idx = 0;
 my $debug = 0;
 my $href;
@@ -130,13 +131,19 @@ if ($epiState{passes}) {
     if ($config->isConfigured ("SkipAnalysis")) {
 	warner ("Skipping analysis.\n");
     } else {
-	(($ret = system ($KELVIN_BINARY, $configFile, @ARGV, @{$freqState{kelvinargs}}, @{$countState{kelvinargs}}, @kelvinargs)) != 0)
+	$tmpcfgfile = $configFile;
+	if ($freqState{estimate}) {
+	    $tmpcfgfile .= ".localdirectives";
+	    $config->write ({configfile => $tmpcfgfile, nolocal => 1});
+	}
+	(($ret = system ($KELVIN_BINARY, $tmpcfgfile, @ARGV, @{$freqState{kelvinargs}}, @{$countState{kelvinargs}}, @kelvinargs)) != 0)
 	    and error ("$KELVIN_BINARY failed, ", ($ret == -1) ? "$!" : "status $?");
 	if ($countState{countable}) {
 	    remove ($countState{countfile});
 	    ($countState{cleanup}) and remove ($countState{pedigreefile});
 	}
 	($tmppedfile) and remove ($tmppedfile);
+	($tmpcfgfile eq $configFile) and remore ($tmpcfgfile);
     }
 }
 
