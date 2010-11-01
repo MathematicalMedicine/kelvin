@@ -1,0 +1,9 @@
+# Version V2.2.0
+# Seq: 1 Chr: 40 Trait: Disease Marker: M1 Position: 6.9950
+Theta(M,F) BayesRatio
+(0.0000,0.0000) 9.003041e-01
+(0.5000,0.5000) 1.000000e+00
+# Seq: 2 Chr: 40 Trait: Disease Marker: M2 Position: 13.9900
+Theta(M,F) BayesRatio
+(0.0000,0.0000) 1.087238e+00
+(0.5000,0.5000) 1.000000e+00
