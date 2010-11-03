@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -e
 
 set -x
 
@@ -11,7 +11,7 @@ if test "$HOSTNAME" != "Levi-Montalcini" ; then
     alias nq="echo Not submitting: "
 fi
 
-if test "$1" -eq "" ; then
+if test -z "$1" ; then
     # Setup database tables
     perl ~/kelvin/trunk/InitStudy.pl client.conf
     perl ~/kelvin/trunk/InitStudy.pl server.conf
