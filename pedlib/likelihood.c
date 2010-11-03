@@ -453,7 +453,6 @@ int original_compute_likelihood (PedigreeSet * pPedigreeList);
 int compute_likelihood (PedigreeSet * pPedigreeList) {
   Pedigree *pPedigree;
   int i;
-  int status;   /* return status of function calls */
   double product_likelihood = 1;        /* product of the likelihoods
                                          * for all the pedigrees */
   double sum_log_likelihood = 0;        /* sum of the

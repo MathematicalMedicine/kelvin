@@ -40,11 +40,17 @@ void initializeDB () {
   if ((studyDB.connection = mysql_init(NULL)) == NULL)
     FATAL("Cannot initialize MySQL (%s)", strerror(errno));
 
-  /* Connect. */
-  if (!mysql_real_connect(studyDB.connection, studyDB.dBHostname, studyDB.username, studyDB.password, 
-			  NULL, 0, NULL, CLIENT_MULTI_RESULTS /* Important discovery here */))
-    ERROR("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%s)", studyDB.dBHostname, 
-	  studyDB.username, studyDB.password, mysql_error(studyDB.connection));
+  /* Weird problem connecting to Walker. Error 2003, message 110. No log entry. Only happens once in a while, so
+     we're just going to try to avoid it by attempting connection up to 3 times with 10 second delays. */
+  int retries = 3;
+  while ((--retries > 0) && (!mysql_real_connect(studyDB.connection, studyDB.dBHostname, studyDB.username, studyDB.password, 
+						 NULL, 0, NULL, CLIENT_MULTI_RESULTS /* Important discovery here */))) {
+    WARNING("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%d: %s)", studyDB.dBHostname, 
+	  studyDB.username, studyDB.password, mysql_errno(studyDB.connection), mysql_error(studyDB.connection));
+    sleep(10);
+  }
+  if (retries <= 0)
+    ERROR("Failed to connect to database after 3 tries");
 
   /* Change database. */
   if (mysql_select_db(studyDB.connection, studyDB.dBName))
@@ -394,7 +400,7 @@ void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVe
     if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
       ERROR("Cannot fetch LAST_SERVER_ID() (serverId) (%s)", mysql_error(studyDB.connection));
     studyDB.serverId = atoi(studyDB.row[0]);
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "Signed on as serverId %d", studyDB.serverId);});
+    DIAG (ALTLSERVER, 0, { fprintf (stderr, "Signed on as serverId %d\n", studyDB.serverId);});
   }
 
 }
