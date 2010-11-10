@@ -58,7 +58,7 @@ void kelvinInit (int argc, char *argv[])
   /* Annouce ourselves for performance tracking. */
 
   swPushPhase ('k', "NonSpecific");
-  INFO ("kelvin %s edit %s built %s %s", programVersion, svnVersion, __DATE__, __TIME__);
+  INFO ("kelvin %s edit %s built %s %s on %s", programVersion, svnVersion, __DATE__, __TIME__, getenv("HOSTNAME"));
   INFO ("References for this version of kelvin:\n\n\t(1) Vieland VJ. Thermometers: Something for statistical geneticists to think\n\tabout. Human Hered, 61:144-156, 2006.\n\t(2) Huang Y, Segre A, O'Connell J, Valentine-Cooper W, Seok SC, Vieland VJ.\n\tKelvin:  A 2nd generation software package for computation of the PPL\n\tframework. [Abstract Program number 2336]. Presented at the annual meeting\n\tof The American Society of Human Genetics, November 2008, Philadelphia,\n\tPennsylvania. Available at http://www.ashg.org/2008meeting/abstracts/fulltext/\n");
   //  INFO ("%s", kelvinVersion);
   //  INFO ("%s", likelihoodVersion);
