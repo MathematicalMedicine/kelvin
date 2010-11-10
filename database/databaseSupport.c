@@ -41,16 +41,16 @@ void initializeDB () {
     FATAL("Cannot initialize MySQL (%s)", strerror(errno));
 
   /* Weird problem connecting to Walker. Error 2003, message 110. No log entry. Only happens once in a while, so
-     we're just going to try to avoid it by attempting connection up to 3 times with 10 second delays. */
+     we're just going to try to avoid it by attempting connection multiple times with intervening delays. */
   int retries = 3;
   while ((--retries > 0) && (!mysql_real_connect(studyDB.connection, studyDB.dBHostname, studyDB.username, studyDB.password, 
 						 NULL, 0, NULL, CLIENT_MULTI_RESULTS /* Important discovery here */))) {
-    WARNING("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%d: %s)", studyDB.dBHostname, 
-	  studyDB.username, studyDB.password, mysql_errno(studyDB.connection), mysql_error(studyDB.connection));
+    WARNING("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%d: %s) with attempt %d", studyDB.dBHostname, 
+	    studyDB.username, studyDB.password, mysql_errno(studyDB.connection), mysql_error(studyDB.connection), 3-retries);
     sleep(10);
   }
   if (retries <= 0)
-    ERROR("Failed to connect to database after 3 tries");
+    ERROR("Failed to connect to database after 3 tries and 10 second delays");
 
   /* Change database. */
   if (mysql_select_db(studyDB.connection, studyDB.dBName))
