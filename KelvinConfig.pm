@@ -170,7 +170,7 @@ my %directives = (
 		  study => {canon => 'Study',
 			    local => 'true',
 			    singlearg => 'true',
-			    regex => '(\d+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)'},
+			    regex => '(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)'},
 		  traitprevalence => {canon => 'TraitPrevalence',
 				      local => 'true',
 				      singlearg => 'true',
@@ -456,6 +456,7 @@ sub write
     my $backupfile = 1;
     my $nolocal = 0;
     my $directive;
+    my $va;
 
     if (! defined ($arg)) {
 	$errstr = "missing argument";
@@ -478,6 +479,16 @@ sub write
     unless (defined ($configfile)) {
 	$errstr = "no configfile specified";
 	return (undef);
+    }
+    if ($backupfile && -f $configfile) {
+	$va = 1;
+	while (-f "$configfile.$va") {
+	    $va++;
+	}
+	if (! rename ($configfile, "$configfile.$va")) {
+	    $errstr = "rename '$configfile' failed, $!";
+	    return (undef);
+	}
     }
     if ($backupfile && -f $configfile && ! rename ($configfile, "$configfile.old")) {
 	$errstr = "rename '$configfile' failed, $!";
