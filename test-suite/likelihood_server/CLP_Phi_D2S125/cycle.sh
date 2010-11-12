@@ -19,6 +19,7 @@
 #
 set -x
 
+# Don't just quit if nothing is available -- wait for it.
 alias qrsh="qrsh -now no "
 
 # These are for nodes other than Levi-Montalcini, where SGE is not available
@@ -62,6 +63,7 @@ do
   nq "~/bcmmtools/run_server.sh server"
   nq "~/bcmmtools/run_server.sh server"
   nq "~/bcmmtools/run_server.sh server"
+
   # Run a single one blocking further processing until most work is done
   qrsh "cd `pwd`; ~/bcmmtools/run_server.sh server"
   # Make sure that nothing remains undone
