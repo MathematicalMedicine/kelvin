@@ -1,5 +1,22 @@
-#!/bin/bash -eu
-
+#!/bin/bash -e
+#
+# Run the likelihood server version of kelvin as cleverly as possible to minimize the overall
+# runtime. Study-specific versions are common, with changes reflecting the various servers
+# that have to run to perform all the work between client passes.
+#
+# Really intended to run on the head node so that batch jobs can be submitted, but it will run
+# (slowly) on other nodes for simple tests.
+#
+# Initially run without any parameters, as it gets everything it needs from the STUDY directive
+# line in the client.conf file. If a parameter is specified (no matter what it is), then the
+# initialization steps will be skipped under the assumption that this is a resumed run.
+#
+# It is definitely best to have run SMRT.sh first to generate and load Single Model RunTimes
+# for all pedigree/positions. Otherwise servers could be gobbling-up 50 models, each of which 
+# takes days to run, and running them in serial.
+#
+# $Id$
+#
 set -x
 
 alias qrsh="qrsh -now no "
@@ -11,47 +28,33 @@ if test "$HOSTNAME" != "Levi-Montalcini" ; then
     alias nq="echo Not submitting: "
 fi
 
-# Setup database tables
-perl ~/kelvin/trunk/InitStudy.pl client.conf
-perl ~/kelvin/trunk/InitStudy.pl server.conf
+# Do the initialization only if there was no command line parameter
+if test -z "$1" ; then
+    # Setup database tables
+    perl ~/kelvin/trunk/InitStudy.pl client.conf
+    perl ~/kelvin/trunk/InitStudy.pl server.conf
 
-# Initial full run of client
-qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+    # Initial full run of client
+    qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+
+    # Initial set of "new" trait positions is the original set so we can detect if _no_ splits ever occurred
+    cp client.conf client-newTP.conf
+fi
 
 # Grab STUDY directive for database parameters
 study=$(grep -i ^Study client.conf)
 set -- $study
 
-# Initial set of "new" trait positions is the original set so we can detect if _no_ splits ever occurred
-cp client.conf client-newTP.conf
+# Setup the Single-Model RunTimes so bucket loading can be intelligent
+SMRTs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions a, SingleModelRuntimes b set a.SingleModelEstimate = b.SingleModelRuntime, a.SingleModelRuntime = b.SingleModelRuntime where a.StudyId = $2 AND a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.PedTraitPosCM = b.PedTraitPosCM;")
+if test $SMRTs -ne 0 ; then
+    # Assuming SOME finished, any that we missed should be treated as if they took too long..
+    Singles=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions set SingleModelRuntime = 999999 where StudyId = $2 AND PedTraitPosCM <> 9999.99 AND SingleModelRuntime IS NULL;")
+fi
+
 while :
 do
-  # Enqueue a few servers and...
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
+  # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
   nq "~/bcmmtools/run_server.sh server"
   nq "~/bcmmtools/run_server.sh server"
   nq "~/bcmmtools/run_server.sh server"
