@@ -623,17 +623,11 @@ sub epistasis_LC_map
         return ($count);
     }
 
-    if ($ld) {
-	# LD analyses require a proper 3-liability class run, no shortcuts here.
-        @$aref = ({'1_1', => 1, '1_2' => 2, '2_2' => 3});
-        return (3);
-    } else {
-	# Otherwise, two passes with two liability classes each, and we'll merge
-	# the results.
-        @$aref = ({'1_1', => 1, '1_2' => 1, '2_2' => 2},
-                  {'1_1', => 1, '1_2' => 2, '2_2' => 2});
-        return (2);
-    }
+    # Once upon a time (in r3506), LD epistasis analyses were handled as a single
+    # 3LC run. Now LD is handled like LE, as two 2LC runs, and we'll merge the results.
+    @$aref = ({'1_1', => 1, '1_2' => 1, '2_2' => 2},
+	      {'1_1', => 1, '1_2' => 2, '2_2' => 2});
+    return (2);
 }
 
 # Assumes epistasis with a single SNP, which implies only two MOD files to merge.
@@ -648,6 +642,14 @@ sub epistasis_merge_TP_mod
     my ($pen1, $pen2);
     my $line;
     my $modidx = ($$state{extramods}) ? 1 : 0;
+    my $extralines = 0;
+    my $va;
+
+    # If extramods if turned on, there will be one (or two, if LD is also on) 
+    # extra MOD lines for each marker. If extramods is off, there are no extras
+    # lines, regardless of LD.
+    $extralines = (($$state{extramods}) ? 1 : 0);
+    ($extralines && $$state{ld}) and $extralines++;
 
     $outfh = IO::File->new (">$modfile") or error ("open '$modfile' failed, $!\n");
     $fh0 = IO::File->new ($modpass0) or error ("open '$modpass0' failed, $!\n");
@@ -674,8 +676,7 @@ sub epistasis_merge_TP_mod
         if ($flds0[$modidx] >= $flds1[$modidx]) {
             ($pen1, $pen2) = splice (@flds0, -2, 2);
             $outfh->print (join (' ', @flds0, $pen1, $pen1, $pen2), "\n");
-            if ($$state{extramods}) {
-                # Mod at Theta==0 line
+	    for ($va = 0; $va < $extralines; $va++) {
                 @flds0 = split (/\s+/, $fh0->getline);
                 ($pen1, $pen2) = splice (@flds0, -2, 2);
                 $outfh->print (join (' ', @flds0, $pen1, $pen1, $pen2), "\n");
@@ -684,8 +685,7 @@ sub epistasis_merge_TP_mod
         } else {
             ($pen1, $pen2) = splice (@flds1, -2, 2);
             $outfh->print (join (' ', @flds1, $pen1, $pen2, $pen2), "\n");
-            if ($$state{extramods}) {
-                # Mod at Theta==0 line
+	    for ($va = 0; $va < $extralines; $va++) {
                 @flds1 = split (/\s+/, $fh1->getline);
                 ($pen1, $pen2) = splice (@flds1, -2, 2);
                 $outfh->print (join (' ', @flds1, $pen1, $pen2, $pen2), "\n");
@@ -975,7 +975,7 @@ sub finish_frequency_estimation
 	    if ($count_nuc > 0) {
 		($one, $two) = @{$$state{nuclear}{$marker}{alleles}}{@arr};
 		#print ("$count_nuc nucs ($one, $two), ");
-		$nuc = $one / ($one + $two);
+		$nuc = (! defined ($one)) ? 0 : ((! defined ($two)) ? 1 : $one / ($one + $two));
 	    }
 	    #print ("prev $$state{prevalence}, ");
 	    $freq = $$state{prevalence} * $case + (1 - $$state{prevalence}) * $control;
