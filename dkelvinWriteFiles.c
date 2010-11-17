@@ -27,7 +27,7 @@ void dk_write2ptBRHeader (int loc1, int loc2)
   }
   
   if (pLocus2->pMapUnit->basePairLocation >= 0)
-    fprintf (fpHet, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
+    fprintf (fpHet, " Physical %d", pLocus2->pMapUnit->basePairLocation);
   fprintf (fpHet, "\n");
   
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
@@ -221,7 +221,7 @@ void dk_write2ptMODHeader ()
   }
   
   if (pLocus2->pMapUnit->basePairLocation >= 0)
-    fprintf (fpMOD, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
+    fprintf (fpMOD, " Physical %d", pLocus2->pMapUnit->basePairLocation);
   fprintf (fpMOD, "\n");
 
   if (modelOptions->extraMODs)

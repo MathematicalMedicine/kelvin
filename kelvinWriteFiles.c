@@ -106,7 +106,7 @@ write2ptBRFile (int loc1, int loc2)
 	       pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]);
     }
   if (pLocus2->pMapUnit->basePairLocation >= 0)
-    fprintf (fpHet, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
+    fprintf (fpHet, " Physical %d", pLocus2->pMapUnit->basePairLocation);
   fprintf (fpHet, "\n");
 
   /* For each D prime and theta, print out average and maximizing model information - MOD */
@@ -423,7 +423,7 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
     }
 
   if (pLocus2->pMapUnit->basePairLocation >= 0)
-    fprintf (fpMOD, " Phyiscal %d", pLocus2->pMapUnit->basePairLocation);
+    fprintf (fpMOD, " Physical %d", pLocus2->pMapUnit->basePairLocation);
   fprintf (fpMOD, "\n");
 
   if (modelOptions->extraMODs)
