@@ -7,14 +7,11 @@ struct StudyDB {
   // Common...
   char role[MAXPARAMLEN];
   int studyId;
-  char dBHostname[MAXPARAMLEN];
+  char hostname[MAXPARAMLEN];
   char dBName[MAXPARAMLEN];
   char username[MAXPARAMLEN];
   char password[MAXPARAMLEN];
-  char pedigreeRegEx[33];
-  char pedigreeNotRegEx[33];
   MYSQL *connection;
-  int driverPosIdx;
   // Adhoc...
   char strAdhocStatement[MAXSTMTLEN];
   MYSQL_RES *resultSet;
@@ -28,11 +25,10 @@ struct StudyDB {
   double refTraitPosCM;
   MYSQL_BIND bindGetPedPosIdResults[1];
   int pedPosId;
-  // GetDLikelihood...
-  int posEvals;
-  MYSQL_STMT *stmtGetDLikelihood;
-  MYSQL_BIND bindGetDLikelihood[18];
-  char strGetDLikelihood[MAXSTMTLEN];
+  // GetDLOD...
+  MYSQL_STMT *stmtGetDLOD;
+  MYSQL_BIND bindGetDLOD[15];
+  char strGetDLOD[MAXSTMTLEN];
   double dGF;
   double lC1BigPen;
   double lC1BigLittlePen;
@@ -47,46 +43,27 @@ struct StudyDB {
   double lC3LittleBigPen;
   double lC3LittlePen;
   int regionNo;
-  int parentRegionNo;
-  double parentRegionError;
-  int parentRegionSplitDir;
-  // GetDLikelihood results...
-  MYSQL_STMT *stmtGetDLikelihoodResults;
-  MYSQL_BIND bindGetDLikelihoodResults[3];
-  char strGetDLikelihoodResults[MAXSTMTLEN];
+  // GetDLOD results...
+  MYSQL_STMT *stmtGetDLODResults;
+  MYSQL_BIND bindGetDLODResults[3];
+  char strGetDLODResults[MAXSTMTLEN];
   int regionId;
   int markerCount;
   double lOD;
   // Sign-on...
   MYSQL_STMT *stmtSignOn;
-  MYSQL_BIND bindSignOn[10];
+  MYSQL_BIND bindSignOn[6];
   char strSignOn[MAXSTMTLEN];
-  char hostName[33];
-  int processId;
-  int keepAliveFlag;
+  char pedigreeRegEx[33];
   char algorithm[3];
   char programVersion[33];
   int serverId;
-  // SetDummyNullLikelihood...
-  MYSQL_STMT *stmtSetDummyNullLikelihood;
-  MYSQL_BIND bindSetDummyNullLikelihood[1];
-  char strSetDummyNullLikelihood[MAXSTMTLEN];
-  // CountWork...
-  MYSQL_STMT *stmtCountWork;
-  MYSQL_BIND bindCountWork[3];
-  char strCountWork[MAXSTMTLEN];
-  // CountWorkResults
-  MYSQL_STMT *stmtCountWorkResults;
-  MYSQL_BIND bindCountWorkResults[16];
-  char strCountWorkResults[MAXSTMTLEN];
-  long workCount;
   // GetWork...
   MYSQL_STMT *stmtGetWork;
-  MYSQL_BIND bindGetWork[4];
+  MYSQL_BIND bindGetWork[3];
   char strGetWork[MAXSTMTLEN];
   double lowPosition;
   double highPosition;
-  int locusListType;
   // GetDParts...
   MYSQL_STMT *stmtGetDParts;
   char strGetDParts[MAXSTMTLEN];
@@ -97,11 +74,10 @@ struct StudyDB {
   double pedTraitPosCM;
   // PutWork...
   MYSQL_STMT *stmtPutWork;
-  MYSQL_BIND bindPutWork[4];
+  MYSQL_BIND bindPutWork[3];
   char strPutWork[MAXSTMTLEN];
-  int runtimeCostSec;
   // other...
-  int bogusLikelihoods;
-  int realLikelihoods;
+  int bogusLODs;
+  int realLODs;
 };
 

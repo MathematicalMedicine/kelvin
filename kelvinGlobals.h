@@ -23,7 +23,7 @@ extern char *programVersion;
 extern char *svnVersion;
 extern char *kelvinVersion;
 
-extern struct swStopwatch *overallSW, *singleModelSW;
+extern struct swStopwatch *overallSW;
 //char *messageBuffer;
 
 extern LambdaCell *pLambdaCell;

@@ -33,6 +33,7 @@
   int ret;
 
 int markerSetChanged; /* Flag for multipoint analysis, did set of markers change? */
+int locusListChanged; /* flag for multipoint analysis, did relative trait position or marker set change? */
 
 int prevFirstMarker;		/* first marker in the set for multipoint analysis */
 int prevLastMarker;		/* last marker in the set for multipoint analysis */

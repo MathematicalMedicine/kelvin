@@ -594,7 +594,7 @@ sub new
 	and $markercol = $$dataset{markers}{$marker}{col};
     $colcount = ($markercol > $traitcol) ? $markercol + 2 : $traitcol + 1;
 
-    if ($line =~ s/\s*Ped:\s*(\w+)\s+Per:\s*(\w+)\s*$//) {
+    if ($line =~ s/\s*Ped:\s*(\S+)\s+Per:\s*(\S+)\s*$//) {
 	# These extra fields are present in genuine post-MAKEPED(tm)-brand pedigree files
 	# (accept no substitutes).
 	@$ind{qw/origpedid origindid/} = ($1, $2);

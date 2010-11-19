@@ -1,4 +1,4 @@
-# Version V2.2.0 edit 3220M
+# Version V2.1.0 edit 3220M
 # Seq: 1 Chr: 1 Trait: disease Marker: 1_3_mrk Position: 0.9900
 Case MOD D11 Theta(M,F) Alpha DGF LC1PV(DDDF,DdDF,ddDF,Thresh)
 MOD(Overall) 0.8540 1.00 (0.4996,0.4996) 0.95 0.0220 (1.600,0.133,0.117,0.066)

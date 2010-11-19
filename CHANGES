@@ -1,12 +1,7 @@
-Version 2.2.0
-  If physical positions appear in map file, they are now displayed in two-point PPL
-    (trait-to-marker only) and multipoint PPL and MOD files (interpolated to trait
-    positions from nearest markers).
-
 Version 2.1.0
   07/30/2010
   First release of Kelvin front-end Perl script, which provides new functionality:
-    1. Handling pre-MAKEPED pedigree files.
+    1. Handlling pre-MAKEPED pedigree files.
     2. Automatic pedigree counting (without a separate step).
     3. Automatic allele frequency estimation
     4. Epistasis analyses

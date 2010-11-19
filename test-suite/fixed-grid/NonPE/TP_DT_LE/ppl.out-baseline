@@ -1,11 +1,11 @@
-# Version V2.2.0 edit 3428:3430M
+# Version V2.1.0
 Chr Trait Marker Position PPL
-40 disease Loci_1 0.0000 0.05
-40 disease Loci_3 0.6400 0.022
-40 disease Loci_4 0.9700 0.03
-40 disease Loci_5 1.3500 0.04
-40 disease Loci_6 1.6600 0.03
-40 disease Loci_7 1.9900 0.03
-40 disease Loci_8 2.3100 0.018
-40 disease Loci_9 2.6600 0.017
-40 disease Loci_10 3.0200 0.06
+40 disease Loci_1 0.0000 0.051 
+40 disease Loci_3 0.6400 0.022 
+40 disease Loci_4 0.9700 0.032 
+40 disease Loci_5 1.3500 0.043 
+40 disease Loci_6 1.6600 0.028 
+40 disease Loci_7 1.9900 0.030 
+40 disease Loci_8 2.3100 0.018 
+40 disease Loci_9 2.6600 0.017 
+40 disease Loci_10 3.0200 0.056 

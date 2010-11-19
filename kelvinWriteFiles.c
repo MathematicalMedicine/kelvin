@@ -9,18 +9,22 @@ void
 writePPLFileHeader ()
 {
   fprintf (fpPPL, "# Version %s edit %s\n", programVersion, svnVersion);
-  fprintf (fpPPL, "Chr");
   if (modelOptions->markerAnalysis != FALSE)
-    fprintf (fpPPL, " Marker1 Position1 Marker2 Position2");
+    {
+      fprintf (fpPPL, "Chr Marker1 Position1 Marker2 Position2 PPL");
+      if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
+	{
+	  fprintf (fpPPL, " PPL(LD) PPLD|L PPLD(L)");
+	}
+    }
   else
     {
-      fprintf (fpPPL, " Trait Marker Position");
-      if (modelOptions->physicalMap)
-	fprintf (fpPPL, " Physical");
+      fprintf (fpPPL, "Chr Trait Marker Position PPL");
+      if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
+	{
+	  fprintf (fpPPL, " PPL(LD) PPLD|L PPLD(L)");
+	}
     }
-  fprintf (fpPPL, " PPL");
-  if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
-    fprintf (fpPPL, " PPL(LD) PPLD|L PPLD(L)");
   fprintf (fpPPL, "\n");
   fflush (fpPPL);
 }
@@ -34,31 +38,31 @@ writePPLFileDetail (int dprime0Idx)
 
   /* Chromosome, marker name, position, PPL */
   ppl = calculate_PPL (tp_result[dprime0Idx]);
-  fprintf (fpPPL, "%d", pLocus2->pMapUnit->chromosome);
   if (modelOptions->markerAnalysis != FALSE)
-    fprintf (fpPPL, " %s %.4f %s %.4f",
-	     pLocus1->sName, pLocus1->pMapUnit->mapPos[SEX_AVERAGED],
-	     pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
+    {
+      fprintf (fpPPL, "%d %s %.4f %s %.4f %.3f ",
+	       pLocus2->pMapUnit->chromosome, pLocus1->sName,
+	       pLocus1->pMapUnit->mapPos[SEX_AVERAGED], pLocus2->sName,
+	       pLocus2->pMapUnit->mapPos[SEX_AVERAGED], ppl);
+    }
   else
     {
-      fprintf (fpPPL, " %s %s %.4f", pLocus1->sName, pLocus2->sName,
-	       pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
-      if (modelOptions->physicalMap)
-	fprintf (fpPPL, " %d", pLocus2->pMapUnit->basePairLocation);
+      fprintf (fpPPL, "%d %s %s %.4f %.3f ",
+	       pLocus2->pMapUnit->chromosome, pLocus1->sName,
+	       pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED], ppl);
     }
-  fprintf (fpPPL, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl, 3));
-  
+  fflush (fpPPL);
   /* output LD-PPL now if needed */
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
     {
       /* load up ldvals first */
       get_LDVals (tp_result, &ldvals);
       ldstat = calc_ppl_allowing_ld (&ldvals, modelOptions->LDprior);
-      fprintf (fpPPL, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+      fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
       ldstat = calc_ppld_given_linkage (&ldvals, modelOptions->LDprior);
-      fprintf (fpPPL, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+      fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
       ldstat = calc_ppld_allowing_l (&ldvals, modelOptions->LDprior);
-      fprintf (fpPPL, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+      fprintf (fpPPL, "%.*f ", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     }
   fprintf (fpPPL, "\n");
   fflush (fpPPL);
@@ -101,8 +105,8 @@ write2ptBRFile (int loc1, int loc2)
       fprintf (fpHet, " Position: %.4f",
 	       pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]);
     }
-  if (modelOptions->physicalMap == TRUE)
-    fprintf (fpHet, " Physical: %d", pLocus2->pMapUnit->basePairLocation);
+  if (pLocus2->pMapUnit->basePairLocation >= 0)
+    fprintf (fpHet, " Physical %d", pLocus2->pMapUnit->basePairLocation);
   fprintf (fpHet, "\n");
 
   /* For each D prime and theta, print out average and maximizing model information - MOD */
@@ -156,14 +160,12 @@ writeMPBRFileHeader ()
   if (fpHet == NULL)
     return;
 
-  fprintf (fpHet, "Chr Position");
-  if (modelOptions->physicalMap)
-    fprintf (fpHet, " Physical");
-  fprintf (fpHet, " PPL BayesRatio MarkerList(0");
+  /* Need to output the results */
+  fprintf (fpHet, "Chr Position PPL BayesRatio");
+  fprintf (fpHet, " MarkerList(0");
   for (k = 1; k < modelType->numMarkers; k++)
     fprintf (fpHet, ",%d", k);
   fprintf (fpHet, ")\n");
-  fflush (fpHet);
 }
 
 
@@ -175,12 +177,12 @@ writeMPBRFileDetail (int posIdx, float traitPos, float ppl, double avgLR)
   if (fpHet == NULL)
     return;
 
-  fprintf (fpHet, "%d %f",
+  fprintf (fpHet, "%d %f %.*f %.6e",
 	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->
-	   pMapUnit->chromosome, traitPos);
-  if (modelOptions->physicalMap)
-    fprintf (fpHet, " %d", interpolate_physical_location (traitPos));
-  fprintf (fpHet, " %.*f %.6e", ppl >= .025 ? 2 : 3, KROUND (ppl, 3), avgLR);
+	   pMapUnit->chromosome, traitPos, ppl >= .025 ? 2 : 3,
+	   ppl >=
+	   .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000.,
+	   avgLR);
 
   /* print out markers used for this position */
   fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
@@ -201,10 +203,7 @@ writeMPMODFileHeader ()
   if (fpMOD == NULL)
     return;
 
-  fprintf (fpMOD, "Chr Position");
-  if (modelOptions->physicalMap) 
-    fprintf (fpMOD, " Physical");
-  fprintf (fpMOD, " MOD Alpha DGF");
+  fprintf (fpMOD, "Chr Position MOD Alpha DGF");
 
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     if (modelType->trait == DT)
@@ -258,12 +257,9 @@ writeMPMODFileDetail (int posIdx, float traitPos)
   paramIdx = mp_result[posIdx].max_paramIdx;
   thresholdIdx = mp_result[posIdx].max_thresholdIdx;
 
-  fprintf (fpMOD, "%d %f",
+  fprintf (fpMOD, "%d %f %.6f %f %f",
 	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->
-	   pMapUnit->chromosome, traitPos);
-  if (modelOptions->physicalMap)
-    fprintf (fpMOD, " %d", interpolate_physical_location (traitPos));
-  fprintf (fpMOD, " %.6f %f %f", max, alphaV, gfreq);
+	   pMapUnit->chromosome, traitPos, max, alphaV, gfreq);
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     {
       pen_DD = modelRange->penet[liabIdx][0][penIdx];
@@ -336,8 +332,7 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
 	fprintf (fpMOD, " %.2f", pLambdaCell->lambda[myDPrimeIdx][i][j]);
   fprintf (fpMOD, " (%.4f,%.4f)", theta[0], theta[1]);
   if (modelOptions->markerAnalysis != FALSE) { 
-    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
-      fprintf (fpMOD, " %.3f\n", R_square);
+    fprintf (fpMOD, " %.3f\n", R_square);
   } else { 
     fprintf (fpMOD, " %.2f %.4f", alphaV, gfreq);
     
@@ -427,8 +422,8 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 	       pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE]);
     }
 
-  if (modelOptions->physicalMap == TRUE)
-    fprintf (fpMOD, " Physical: %d", pLocus2->pMapUnit->basePairLocation);
+  if (pLocus2->pMapUnit->basePairLocation >= 0)
+    fprintf (fpMOD, " Physical %d", pLocus2->pMapUnit->basePairLocation);
   fprintf (fpMOD, "\n");
 
   if (modelOptions->extraMODs)
@@ -445,8 +440,7 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 	fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
   fprintf (fpMOD, " Theta(M,F)");
   if (modelOptions->markerAnalysis != FALSE) {
-    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
-      fprintf (fpMOD, " R2\n");
+    fprintf (fpMOD, " R2\n");
   } else { 
     fprintf (fpMOD, " Alpha DGF");
     

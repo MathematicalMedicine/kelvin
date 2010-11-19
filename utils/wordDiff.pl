@@ -25,14 +25,13 @@ $whole_LEFT =~ s/Version V.*//g; # Ignore comparisons of Version strings
 $whole_RIGHT =~ s/Version V.*//g; # Ignore comparisons of Version strings
 $whole_LEFT =~ s/\$Id.* \$//g; # Ignore comparisons of SVN or CVS version Ids
 $whole_RIGHT =~ s/\$Id.* \$//g; # Ignore comparisons of SVN or CVS version Ids
-# Split the files into lists delimited by whitespace, commas, newlines and parens, and keep delimiters
-@chunks_LEFT = split (/([\s\n]+|[,\(\)])/, $whole_LEFT);
-@chunks_RIGHT = split (/([\s\n]+|[,\(\)])/, $whole_RIGHT);
+# Split the files into lists delimited by whitespace commas, newlines and parens, and keep delimiters
+@chunks_LEFT = split (/([\s,\n\(\)])/, $whole_LEFT);
+@chunks_RIGHT = split (/([\s,\n\(\)])/, $whole_RIGHT);
 # Compare all of the tokens and delimiters
 for ($i = 0; $i < $#chunks_LEFT; $i++) {
     $left = $chunks_LEFT[$i]; $right = $chunks_RIGHT[$i];
-    next if ($left =~ /V\S+/ && $right =~ /V\S+/); # Ignore comparisons of version numbers (e.g. V2.3)
-    next if ($left =~ /^\s*$/ && $right =~ /^\s*$/); # chunks of contiguous whitespace always match
+    next if (($left =~ /V\S+/) and ($right =~ /V\S+/)); # Ignore comparisons of version numbers (e.g. V2.3)
     if ($left ne $right) {
 	# Not a textual match
 	if ($left =~ /^[-+]?[0-9]+[\.]?[0-9]*([Ee][+-][0-9]*)?$/) {

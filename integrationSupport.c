@@ -56,7 +56,6 @@ extern LDLoci *pLDLoci;
 
 #ifdef STUDYDB
 #include "database/StudyDB.h"
-#include "database/databaseSupport.h"
 extern struct StudyDB studyDB;
 
 #define MAXLSTP 4096
@@ -698,11 +697,6 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = 1;
   pedigreeSet.log10Likelihood = 0;
 
-#ifdef STUDYDB
-  if (toupper(*studyDB.role) == 'S') {
-    compute_likelihood (&pedigreeSet);
-  }
-#endif
 
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 
@@ -2254,20 +2248,14 @@ void integrateMain ()
           ppl = modelOptions->thetaWeight * le_small_theta + (1 - modelOptions->thetaWeight) * le_big_theta;
           ppl = ppl / (ppl + (1 - modelOptions->prior) / modelOptions->prior);
 
-	  fprintf (fpPPL, "%d", pLocus2->pMapUnit->chromosome);
-	  if (modelOptions->markerAnalysis != FALSE)
-	    fprintf (fpPPL, " %s %.4f %s %.4f",
-		     pLocus1->sName, pLocus1->pMapUnit->mapPos[SEX_AVERAGED],
-		     pLocus2->sName, pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
-	  else
-	    {
-	      fprintf (fpPPL, " %s %s %.4f", pLocus1->sName, pLocus2->sName,
-		       pLocus2->pMapUnit->mapPos[SEX_AVERAGED]);
-	      if (modelOptions->physicalMap)
-		fprintf (fpPPL, " %d", pLocus2->pMapUnit->basePairLocation);
-	    }
-	  fprintf (fpPPL, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl, 3));
-	  
+
+          if (modelOptions->markerAnalysis != FALSE) {
+            fprintf (fpPPL, "%d %s %.4f %s %.4f %.*f ", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus1->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], ppl >= .025 ? 2 : 3, KROUND (ppl));
+          } else {
+            //fprintf (fpPPL, "%d %s %s %.4f %6.5f %e", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], ppl,modelOptions->thetaWeight * le_small_theta + (1 - modelOptions->thetaWeight) * le_big_theta);
+            fprintf (fpPPL, "%d %s %s %.4f %.*f ", pLocus2->pMapUnit->chromosome, pLocus1->sName, pLocus2->sName, pLocus2->pMapUnit->mapPos[MAP_POS_SEX_AVERAGE], ppl >= .025 ? 2 : 3, KROUND (ppl));
+          }
+
           //printf("%f %f %f %f %f %f\n",le_small_theta,le_big_theta,ld_small_theta,ld_big_theta,le_unlinked ,modelOptions->thetaCutoff[0]);
           /* output LD-PPL now if needed */
           if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
@@ -2284,9 +2272,9 @@ void integrateMain ()
             ppldGl = 0.019 * 0.021 * ld_small_theta + 0.001 * 0.0011 * ld_big_theta;
             ppldGl = ppldGl / (ppldGl + 0.019 * 0.979 * le_small_theta + 0.001 * 0.9989 * le_big_theta);
 
-            fprintf (fpPPL, " %.*f", ldppl >= .025 ? 2 : 4, KROUND (ldppl, 4));
-            fprintf (fpPPL, " %.*f", ppldGl >= .025 ? 2 : 4, KROUND (ppldGl, 4));
-            fprintf (fpPPL, " %.*f", ppld >= .025 ? 2 : 4, KROUND (ppld, 4));
+            fprintf (fpPPL, "%.*f ", ldppl >= .025 ? 2 : 4, KROUND (ldppl));
+            fprintf (fpPPL, "%.*f ", ppldGl >= .025 ? 2 : 4, KROUND (ppldGl));
+            fprintf (fpPPL, "%.*f ", ppld >= .025 ? 2 : 4, KROUND (ppld));
           }
           fprintf (fpPPL, "\n");
           fflush (fpPPL);
@@ -2451,6 +2439,7 @@ void integrateMain ()
 
     /* get the trait locations we need to evaluate at */
     numPositions = modelRange->ntloc;
+    CALCHOKE (mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
 
     /* Need to output the results */
     dk_writeMPBRHeader ();
@@ -2461,11 +2450,10 @@ void integrateMain ()
     prevTraitInd = -1;
     leftMarker = -1;
 
-#ifdef STUDYDB
-
     /* Iterate over all positions in the analysis. */
 
-    if (toupper(*studyDB.role) == 'S') {
+#ifdef STUDYDB
+    if (toupper(*studyDB.role) != 'C') {
       // We're a server! Completely suborn the trait loci vector in modelRange
       int i, j = 0;
 
@@ -2483,61 +2471,26 @@ void integrateMain ()
 
       // Choose new trait positions between transition positions
 
-      newTLoc[0] = lociSetTransitionPositions[0] - 1.0;
-      for (i=1; i<j; i++) {
-	newTLoc[i] = lociSetTransitionPositions[i-1] + ((lociSetTransitionPositions[i] - lociSetTransitionPositions[i-1]) / 2.0);
-      }
-      newTLoc[j] = lociSetTransitionPositions[j-1] + 1.0;
+      for (i=0; i<j; i++)
+	newTLoc[i] = lociSetTransitionPositions[i] - .00001;
+      newTLoc[j] = lociSetTransitionPositions[j-1] + .00001;
 
       oldTLoc = modelRange->tloc;
       modelRange->tloc = newTLoc;
       modelRange->ntloc = j+1;
       numPositions = j+1;
     }
-
-    DIAG (ALTLSERVER, 1, {		 \
-	for (i=0; i<numPositions; i++)					\
-	  fprintf (stderr, "nTL[%d] is %.6g\n", i, newTLoc[i]);});
-
 #endif
 
-    CALCHOKE (mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
-
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
-
-      if (fpIR != NULL)
+      if (fpIR != NULL) {
         dk_curModel.posIdx = posIdx;
+      }
+
+      SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d of %d", posIdx + 1, numPositions);
 
       /* positions listed are sex average positions */
       traitPos = modelRange->tloc[posIdx];
-
-#ifdef STUDYDB
-      
-      int freeModels = 0;
-
-      studyDB.driverPosIdx = posIdx;
-
-      if (toupper(*studyDB.role) == 'S') {
-
-	double lowPosition  = -99.99, highPosition = 9999.99;
-
-	if (posIdx != 0)
-	  lowPosition = lociSetTransitionPositions[posIdx - 1];
-	if (posIdx != (modelRange->ntloc - 1))
-	  highPosition = lociSetTransitionPositions[posIdx];
-
-	// If we have models to work on, say how many, otherwise say we're skipping this position
-
-	if ((freeModels = CountWork(lowPosition, highPosition)) == 0) {
-	  SUBSTEP (posIdx * 100 / numPositions, "Skipping position %d (%.4gcM from %.4gcM to %.4gcM) of %d (no work)", posIdx + 1, traitPos, lowPosition, highPosition, numPositions);
-	  continue;
-	} else
-	  SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4gcM from %.4gcM to %.4gcM) of %d (%d available models)", posIdx + 1, traitPos, lowPosition, highPosition, numPositions, freeModels);
-      }
-#else
-      SUBSTEP (posIdx * 100 / numPositions, "Starting with position %d (%.4gcM) of %d", posIdx + 1, traitPos, numPositions);
-#endif
-
       /* set the sex average position first 
        * the sex specific positions will be updated once markers are selected
        * as interpolation might be needed
@@ -2577,12 +2530,8 @@ void integrateMain ()
       analysisLocusList->traitLocusIndex = traitIndex;
       analysisLocusList->traitOrigLocus = traitLocus;
       markerSetChanged = FALSE;
-#ifdef STUDYDB
-      if (TRUE) { // Marker set must change for every position because we don't know when it does for all study maps
-#else
       if (prevFirstMarker != mp_result[posIdx].pMarkers[0]
           || prevLastMarker != mp_result[posIdx].pMarkers[modelType->numMarkers - 1]) {
-#endif
         /* marker set has changed */
         markerSetChanged = TRUE;
         markerLocusList.pLocusIndex[0] = mp_result[posIdx].pMarkers[0];
@@ -2764,11 +2713,6 @@ void integrateMain ()
         ppl = 0;
 
       dk_writeMPBRData (posIdx, traitPos, ppl, integral, max_scale);
-#ifdef STUDYDB
-      if (studyDB.bogusLikelihoods > 0)
-	fprintf (fpHet, "WARNING - Some positions have not been completely analyzed!\n");
-#endif
-
       dk_copyMaxModel (localmax_x, &dk_globalmax, size_BR);
       dk_writeMPMODData (posIdx, traitPos, localMOD, &dk_globalmax);
 

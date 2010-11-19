@@ -4,7 +4,6 @@ int num_out_constraint;
 double fixed_theta, fixed_dprime;
 double fixed_thetaM,fixed_thetaF; // Sex-specific analysis
 
-int locusListChanged; /* flag for multipoint analysis, did relative trait position or marker set change? */
 
 double maxima_x[20];
 double overallMOD= __DBL_MIN_10_EXP__ ;// replacing name : maximum_function_value = 0.0; 6/4/2009

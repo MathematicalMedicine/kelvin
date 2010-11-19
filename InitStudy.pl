@@ -79,9 +79,9 @@ sub perform_study
 {
     my ($config) = @_;
 
-    $ {$config->isConfigured ("Study")}[0] =~ /(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/;
-    my $StudyId = $1; my $StudyRole = lc($2); my $DBIHost = $3; my $DBIDatabase = $4; my $Username = $5; my $Password = $6; my $PedigreeRegEx = $7; my $PedigreeNotRegEx = $8;
-    my $DBIConnectionString = "mysql:host=".$DBIHost.":database=$DBIDatabase";
+    $ {$config->isConfigured ("Study")}[0] =~ /(\d+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)/;
+    my $StudyId = $1; my $StudyRole = lc($2); my $DBIHost = $3; my $DBIDatabase = $4; my $Username = $5; my $Password = $6;
+    my $DBIConnectionString = "mysql:host=$DBIHost:database=$DBIDatabase";
     my $MapId; my $LiabilityClasses = 1; my $ImprintingFlag = 'n';
 
     $LiabilityClasses = $ {$config->isConfigured ("LiabilityClasses")}[0]
@@ -90,7 +90,7 @@ sub perform_study
 
     my $dbh;
     until ($dbh = DBI->connect("dbi:$DBIConnectionString", $Username, $Password,
-			       { RaiseError => 1, PrintError => 1, AutoCommit => 1 })) {
+			       { RaiseError => 0, PrintError => 0, AutoCommit => 1 })) {
 	sleep(5);
 	warn "Cannot connect to $DBIDatabase: $DBI::errstr, retrying!";
     }
@@ -103,11 +103,11 @@ sub perform_study
     $$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
     $$href{MapFile} = $ {$config->isConfigured ("MapFile")}[0];
     $dataset = KelvinDataset->new ($href)
-	or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
+	or error ("KelvinDataset->new failed");
 
     # We always want a full map whether it is for the client (ReferenceMap) or server (GenotypeMaps)
 
-    $MapId = find_or_insert_map($$href{MapFile}, $dataset, $dbh, $StudyId);
+    $MapId = find_or_insert_map($$href{MapFile}, $dataset, $dbh);
 
     # Get the Studies row indicated by the configuration...
 
@@ -144,33 +144,35 @@ sub perform_study
 
     # Get list of PedigreeSIds by reading the pedigree file. Add if we're a client, update if we're a server
 
-    my $ped;
-    while ($ped = $dataset->readFamily) { 
+    while (my $ped = $dataset->readFamily) { 
 #	print Dumper($ped);
 	my $PedigreeSId = $$ped{pedid};
-	if (uc $StudyRole eq "CLIENT") {
+	if ($StudyRole eq "client") {
 	    # Client -- just slam 'em in, don't care if this fails with duplicates...
-	    $dbh->do("Insert ignore into Pedigrees (StudyId, PedigreeSId) values (?,?)",
+	    $dbh->do("Insert into Pedigrees (StudyId, PedigreeSId) values (?,?)",
 		     undef, $StudyId, $PedigreeSId);
 	} else {
 	    # Server -- no worries about errors here either...
-	    
-	    $dbh->do("Update ignore Pedigrees set GenotypeMapId = ? where StudyId = ? AND PedigreeSId = ?",
-		     undef, $MapId, $StudyId, $PedigreeSId)
-		if ($PedigreeSId =~ $PedigreeRegEx);
+	    $dbh->do("Update Pedigrees set GenotypeMapId = ? where PedigreeSId = ?",
+		     undef, $MapId, $PedigreeSId);
 	}
     }
-    (! defined ($ped)) and error ($KelvinDataset::errstr);
 
-    if (uc $StudyRole eq "SERVER") {
+    if ($StudyRole eq "server") {
 	$dbh->do("call BadScaling(?)", undef, $StudyId);
-	# Add the following to hold trait likelihood references
-	$dbh->do("Insert ignore into PedigreePositions ".
-		 "(StudyId, PedigreeSId, ChromosomeNo, RefTraitPosCM, PedTraitPosCM, MarkerCount, FreeModels) ".
-		 "Select distinct $StudyId, PedigreeSId, ChromosomeNo, -9999.99, -9999.99, MarkerCount, 0 from PedigreePositions where StudyId = $StudyId", undef);
-
 	return; # All client-only from here on out...
     }
+
+    # 'Freshen' the SingleModelTimes table by creating a a replacement...
+    $dbh->do("Create temporary table SMTs Select a.StudyId, b.PedigreeSId, c.ChromosomeNo, d.MarkerName, 2 ".
+	     "from Studies a, Pedigrees b, Markers c, MapMarkers d where ".
+	     "a.StudyId = 17 AND b.StudyId = a.StudyId AND c.Name = d.MarkerName AND d.MapId = a.ReferenceMapId");
+    # ...and then inserting any new combinations.
+    $dbh->do("Insert into SingleModelTimes (StudyId, PedigreeSId, ChromosomeNo, MarkerName) ".
+	     "Select a.StudyId, a.PedigreeSId, a.ChromosomeNo, a.MarkerName from ".
+	     "SMTs a left outer join SingleModelTimes b on ".
+	     "a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.MarkerName = b.MarkerName ".
+	     "where b.StudyId IS NULL");
 
     # 'Freshen' the Positions tables
     # Three cases we know of: marker, individual value, and range specification, and all can be in lists
@@ -178,39 +180,22 @@ sub perform_study
     $JointTPs =~ s/\s+//g;
     my @TPs = split(',',$JointTPs);
     my $ChromosomeNo = $$dataset{chromosome};
-    # First find where "begin" and "end" are for the current set of markers.
-    my $lastMarkerPos = 0;
-    my $firstMarkerPos = 9999.9;
-    my %markers = %{$$dataset{markers}};
-    foreach (keys %markers) {
-	$lastMarkerPos = $markers{$_}{avgpos} if ($markers{$_}{avgpos} > $lastMarkerPos);
-	$firstMarkerPos = $markers{$_}{avgpos} if ($markers{$_}{avgpos} < $firstMarkerPos);
-    }
     for my $TP (@TPs) {
-	if ($TP =~ /.*-end:(\d*.?\d*)/) {
-	    my $newEnd = $lastMarkerPos + $1;
-	    $TP =~ s/-end:/-$newEnd:/;
-	}
-	if ($TP =~ /begin-(\d*.?\d*):(\d*.?\d*)/) {
-	    my $newBegin = int($firstMarkerPos / $2) * $2;
-	    $TP =~ s/begin-/$newBegin-/;
-	}
-	if (uc $TP eq "MARKER") {
-	    $dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) ".
+	if ($TP eq "marker") {
+	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) ".
 		     "Select $StudyId, $ChromosomeNo, AvePosCM from ".
-		     "MapMarkers where StudyId = $StudyId AND MapId = $MapId AND AvePosCM NOT in ".
+		     "MapMarkers where MapId = $MapId AND AvePosCM NOT in ".
 		     "(Select distinct RefTraitPosCM from Positions where ".
 		     "StudyId = $StudyId)", undef);
 	} elsif ($TP =~ /(\d*.?\d*)-(\d*.?\d*):(\d*.?\d*)/) {
 	    my $PosCM = $1;
 	    do {
-		$dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
+		$dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 			 undef, $StudyId, $ChromosomeNo, $PosCM);
-#		$PosCM = sprintf ("%.2f", $PosCM);
-		$PosCM += $3;
+		$PosCM = sprintf ("%.2f", $PosCM + $3);
 	    } while ($PosCM <= $2);
 	} else {
-	    $dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
+	    $dbh->do("Insert into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 		     undef, $StudyId, $ChromosomeNo, $TP);
 	}
     }
@@ -220,14 +205,12 @@ sub perform_study
     
     $dbh->do("Create temporary table PPs Select a.StudyId, a.PedigreeSId, b.ChromosomeNo, ".
 	     "b.RefTraitPosCM, $MPMarkers 'MarkerCount' ".
-	     "from Pedigrees a, Positions b where a.StudyId = $StudyId AND a.StudyId = b.StudyId");
+	     "from Pedigrees a, Positions b where a.StudyId = b.StudyId");
     $dbh->do("Insert into PedigreePositions (StudyId, PedigreeSId, ChromosomeNo, RefTraitPosCM, MarkerCount) ".
 	     "Select a.StudyId, a.PedigreeSId, a.ChromosomeNo, a.RefTraitPosCM, a.MarkerCount from ".
 	     "PPs a left outer join PedigreePositions b on ".
-	     "a.StudyId = $StudyId AND a.StudyId = b.StudyId AND ".
-	     "a.PedigreeSId = b.PedigreeSId AND ".
-	     "a.ChromosomeNo = b.ChromosomeNo AND ".
-	     "a.RefTraitPosCM = b.RefTraitPosCM ".
+	     "a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.ChromosomeNo = b.ChromosomeNo AND ".
+	     "a.RefTraitPosCM = b.RefTraitPosCM AND a.MarkerCount = b.MarkerCount ".
 	     "where b.StudyId IS NULL");
     $dbh->do("call BadScaling(?)", undef, $StudyId);
 
@@ -239,7 +222,6 @@ sub find_or_insert_map
     my $MapFile = shift();
     my $dataset = shift();
     my $dbh = shift();
-    my $StudyId = shift();
 
     my $MapScale = uc(substr $$dataset{mapfunction},0,1);
     my $MapId = 0;
@@ -247,16 +229,16 @@ sub find_or_insert_map
 #    print "fields are ".Dumper($$dataset{mapfields})."\n";
 
     # Get the Maps row...
-    my $sth = $dbh->prepare("Select MapId from Maps where StudyId = $StudyId AND MapScale = ? AND Description like ?")
+    my $sth = $dbh->prepare("Select MapId from Maps where MapScale = ? AND Description like ?")
 	or die "Couldn't prepare Maps selection: $dbh->errstr";
-    $sth->execute($MapScale, $MapFile) or die "Couldn't execute Maps selection: $dbh->errstr";
+    $sth->execute($MapScale, $MapFile."%") or die "Couldn't execute Maps selection: $dbh->errstr";
     if (my @Results = $sth->fetchrow_array()) {
 	# Got it, return it...
 	$MapId = $Results[0];
 	$sth->finish;
     } else {
 	# No such map, insert it
-	$dbh->do("Insert into Maps (StudyId, MapScale, Description) values (?,?,?)", undef, $StudyId, $MapScale, $MapFile)
+	$dbh->do("Insert into Maps (MapScale, Description) values (?,?)", undef, $MapScale, $MapFile)
 	    or die "Cannot insert Maps row: $DBI::errstr";
 	$sth->finish;
 	$sth = $dbh->prepare("Select LAST_INSERT_ID()");
@@ -266,15 +248,15 @@ sub find_or_insert_map
 	$sth->finish;
     }
     # Ensure that all markers are present even if they're a superset of an existing map
-    my @markerOrder = @{$$dataset{markerorder}};
     my %markers = %{$$dataset{markers}};
+    my @markerOrder = @{$$dataset{markerorder}};
     my $ChromosomeNo = $$dataset{chromosome};
     # Find or insert the markers. Marker names must be identical between maps for interpolation.
     foreach (@markerOrder) {
 	# Don't care if this fails...
-	$dbh->do("Insert ignore into Markers (StudyId, Name, ChromosomeNo) values (?,?,?)", undef, $StudyId, $_, $ChromosomeNo);
-	$dbh->do("Insert ignore into MapMarkers (StudyId, MapId, MarkerName, AvePosCM) values (?,?,?,?)",
-		 undef, $StudyId, $MapId, $_, $markers{$_}{avgpos});
+	$dbh->do("Insert into Markers (Name, ChromosomeNo) values (?,?)", undef, $_, $ChromosomeNo);
+	$dbh->do("Insert into MapMarkers (MapId, MarkerName, AvePosCM) values (?,?,?)",
+		 undef, $MapId, $_, $markers{$_}{avgpos});
     }
     return $MapId;
 }

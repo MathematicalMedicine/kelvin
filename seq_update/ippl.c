@@ -27,9 +27,8 @@ void read_ppls (char *filename)
     exit (-1);
   }
 
-  /* We don't require that the PPL file have a version line, since multipoint PPLs might
-   * have been generated with something other than Kelvin. At the same time, we allow
-   * 'comment' lines; that is, a line that starts with a '#'.
+  /* Not requiring that the PPL file have a version line, since the multipoint PPLs might
+   * have been calculated by something other than Kelvin.
    */
   while (1) {
     if (fgets (buff, BUFFLEN, fp) == NULL) {
@@ -41,7 +40,7 @@ void read_ppls (char *filename)
       exit (-1);
     }
     lineno++;
-    if (buff[0] != '#')
+    if (strcasecmp (buff, "# Version") != 0)
       break;
   }
 

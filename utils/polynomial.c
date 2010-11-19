@@ -480,13 +480,17 @@ void clearValidEvalFlag ()
 #endif
   for (i = 0; i < constantCount; i++)
     constantList[i]->valid &= ~VALID_EVAL_FLAG;
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
   for (i = 0; i < variableCount; i++)
     variableList[i]->valid &= ~VALID_EVAL_FLAG;
   for (i = 0; i < externalCount; i++)
     externalList[i]->valid &= ~VALID_EVAL_FLAG;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+  for (i = 0; i < constantCount; i++)
+    constantList[i]->valid &= ~VALID_EVAL_FLAG;
+  for (i = 0; i < variableCount; i++)
+    variableList[i]->valid &= ~VALID_EVAL_FLAG;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -4132,7 +4136,6 @@ void holdPoly (Polynomial * p)
   holdPolyCount++;
   if (polynomialDebugLevel >= 10)
     fprintf (stderr, "Into holdPoly\n");
-  // Probably should do a clearSubtreeValidEvalFlag (p) call instead
   clearValidEvalFlag ();
   doHoldPoly (p);
   if (polynomialDebugLevel >= 10)
@@ -4187,7 +4190,6 @@ void doUnHoldPoly (Polynomial * p)
 void unHoldPoly (Polynomial * p)
 {
   unHoldPolyCount++;
-  // Probably should do a clearSubtreeValidEvalFlag (p) call instead
   clearValidEvalFlag ();
   doUnHoldPoly (p);
   return;

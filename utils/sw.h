@@ -60,8 +60,6 @@ void swLogPeaks (char *);
 long swGetMaximumPMK (void);
 long swGetCurrentVMK (pid_t);
 
-void swShuffle(int *, size_t);
-
 /// Maximum amount of physical memory available in Kbytes
 extern long maximumPMK;
 
@@ -199,7 +197,6 @@ enum DIAG_FACILITIES {
   XM,
   DCUHRE,
   POLYNOMIAL,
-  ALTLSERVER,
   MAX_DIAG_FACILITY
 };
 
@@ -209,7 +206,7 @@ extern volatile sig_atomic_t *envDiagLevel;
    defined, and an entire chunk of code can be the diagnostic. */
 
 #ifndef DISTRIBUTION
-#define DIAG(ENV_LEVEL, DIAG_LEVEL, DIAG_CODE) do {if (envDiagLevel[ENV_LEVEL] >= DIAG_LEVEL) { DIAG_CODE fflush(stderr); }} while(0)
+#define DIAG(ENV_LEVEL, DIAG_LEVEL, DIAG_CODE) do {if (envDiagLevel[ENV_LEVEL] >= DIAG_LEVEL) { DIAG_CODE }} while(0)
 #else
 #define DIAG(ENV_LEVEL, DIAG_LEVEL, DIAG_CODE) // There was a diag here
 #endif

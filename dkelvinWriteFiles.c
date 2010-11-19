@@ -27,7 +27,7 @@ void dk_write2ptBRHeader (int loc1, int loc2)
   }
   
   if (pLocus2->pMapUnit->basePairLocation >= 0)
-    fprintf (fpHet, " Physical: %d", pLocus2->pMapUnit->basePairLocation);
+    fprintf (fpHet, " Physical %d", pLocus2->pMapUnit->basePairLocation);
   fprintf (fpHet, "\n");
   
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
@@ -74,10 +74,8 @@ void dk_writeMPBRHeader ()
   if (fpHet == NULL)
     return;
 
-  fprintf (fpHet, "Chr Position");
-  if (modelOptions->physicalMap)
-    fprintf (fpHet, " Physical");
-  fprintf (fpHet, " PPL BayesRatio MarkerList(0");
+  fprintf (fpHet, "Chr Position PPL BayesRatio");
+  fprintf (fpHet, " MarkerList(0");
   for (i = 1; i < modelType->numMarkers; i++)
     fprintf (fpHet, ",%d", i);
   fprintf (fpHet, ")\n");
@@ -98,13 +96,9 @@ void dk_writeMPBRData (int posIdx, float traitPos, double ppl, double br, int ma
   if (fpHet == NULL)
     return;
 
-  fprintf (fpHet, "%d %f",
-	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->
-	   pMapUnit->chromosome, traitPos);
-  if (modelOptions->physicalMap)
-    fprintf (fpHet, " %d", interpolate_physical_location (traitPos));
-  fprintf (fpHet, " %.*f %.6fe%+.2d", ppl >= .025 ? 2 : 3, KROUND (ppl, 3), base,
-	   exponent+max_scale);
+  fprintf (fpHet, "%d %f %.*f %.6fe%+.2d",
+	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+	   traitPos, ppl >= .025 ? 2 : 3, ppl >= .025 ? rint (ppl * 100.) / 100. : rint (ppl * 1000.) / 1000., base, exponent+max_scale);
   /* print out markers used for this position */
   fprintf (fpHet, " (%d", mp_result[posIdx].pMarkers[0]);
   for (i = 1; i < modelType->numMarkers; i++) {
@@ -122,11 +116,7 @@ void dk_writeMPMODHeader ()
   if (fpMOD == NULL)
     return;
 
-  fprintf (fpMOD, "Chr Position");
-  if (modelOptions->physicalMap) 
-    fprintf (fpMOD, " Physical");
-  fprintf (fpMOD, " MOD Alpha DGF");
-
+  fprintf (fpMOD, "Chr Position MOD Alpha DGF");
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     if (modelType->trait == DT)
       if (modelOptions->imprintingFlag)
@@ -163,11 +153,9 @@ void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel 
   if (fpMOD == NULL)
     return;
 
-  fprintf (fpMOD, "%d %f", (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->
-	   pMapUnit->chromosome, traitPos);
-  if (modelOptions->physicalMap)
-    fprintf (fpMOD, " %d", interpolate_physical_location (traitPos));
-  fprintf (fpMOD, " %.6f %f %f", value, model->alpha, model->dgf);
+  fprintf (fpMOD, "%d %f %.6f %f %f",
+	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->pMapUnit->chromosome,
+	   traitPos, value, model->alpha, model->dgf);
   
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
     if (! modelOptions->imprintingFlag)
@@ -233,7 +221,7 @@ void dk_write2ptMODHeader ()
   }
   
   if (pLocus2->pMapUnit->basePairLocation >= 0)
-    fprintf (fpMOD, " Physical: %d", pLocus2->pMapUnit->basePairLocation);
+    fprintf (fpMOD, " Physical %d", pLocus2->pMapUnit->basePairLocation);
   fprintf (fpMOD, "\n");
 
   if (modelOptions->extraMODs)
@@ -245,13 +233,10 @@ void dk_write2ptMODHeader ()
       for (j = 0; j < pLocus2->numOriginalAllele - 1; j++)
 	fprintf (fpMOD, " D%1d%1d", i + 1, j + 1);
 
-  
-  fprintf (fpMOD, " Theta(M,F)");
-  if (modelOptions->markerAnalysis != FALSE) {
-    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
-      fprintf (fpMOD, " R2");
-  } else
-    fprintf (fpMOD, " Alpha DGF");
+  if (modelOptions->markerAnalysis != FALSE)
+    fprintf (fpMOD, " Theta(M,F) R2 Alpha DGF");
+  else
+    fprintf (fpMOD, " Theta(M,F) Alpha DGF");
   
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     if (modelType->trait == DT)
@@ -306,15 +291,14 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
     fprintf (fpMOD, " %.2f", model->dprime[0]);
   }
 
-  /* Theta */
-  fprintf (fpMOD, " (%.4f,%.4f)", model->theta[0], model->theta[1]);
-  if (modelOptions->markerAnalysis != FALSE) {
-    if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
-      /* R2 for LD marker-to-marker only */
-      fprintf (fpMOD, " %.3f", model->r2);
-  } else
-    /* Alpha and DGF for trait-to-marker only */
-    fprintf (fpMOD, " %.2f %.4f", model->alpha, model->dgf);
+  if (modelOptions->markerAnalysis == FALSE)
+    /* Theta Alpha DGF */
+    fprintf (fpMOD, " (%.4f,%.4f) %.2f %.4f", model->theta[0], model->theta[1],
+	     model->alpha, model->dgf);
+  else
+    /* Theta R2 Alpha DGF */
+    fprintf (fpMOD, " (%.4f,%.4f) %.3f %.2f %.4f", model->theta[0], model->theta[1],
+	     model->r2, model->alpha, model->dgf);
 	    
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
     if (! modelOptions->imprintingFlag)

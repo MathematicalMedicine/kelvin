@@ -28,10 +28,6 @@ char *likelihoodVersion = "$Id$";
 #include "../utils/sw.h"
 #include "likelihood.h"
 #include "genotype_elimination.h"
-
-#include "../dcuhre.h"
-extern dcuhre_state *s;
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -44,8 +40,6 @@ extern dcuhre_state *s;
 extern struct StudyDB studyDB;
 extern double lociSetTransitionPositions[];
 double lastTraitPosition = -1.0; // Used by server to keep dcuhre's multiple-requests per trait position from bothering the database
-int lastMarkerIndex = 0; // Used by 2pt server same as lastTraitPosition above.
-int locusListTypesDone = 0; // Used by server to keep which type of locusList we've worked on in order to coordinate our work requests
 #endif
 
 //extern FILE *fpCond;
@@ -336,123 +330,12 @@ int build_likelihood_polynomial (Pedigree * pPedigree)
 
 #ifdef STUDYDB
 
-void compute_server_pedigree_likelihood (PedigreeSet *pPedigreeList, Pedigree *pPedigree) {
-
-  // &&& WARNING WARNING WARNING WE DON'T HAVE THE RIGHT POLYNOMIAL HERE TO DO MARKER SET OR TRAIT LIKELIHOOD
-
-  if (modelOptions->polynomial == TRUE) {
-    ERROR ("We cannot at this time handle polynomials in the likelihood server");
-    /* Make sure the polynomial we need exists. */
-    if (pPedigree->likelihoodPolynomial == NULL)
-      build_likelihood_polynomial (pPedigree);
-    evaluatePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, &pPedigree->likelihood);
-  } else {
-    // As usual, assume the traitLocus is the first entry in the pedigree list...
-    // We will want to change the next two calls to do the updates only for a single pedigree
-    update_locus (pPedigreeList, 0);
-    update_penetrance (pPedigreeList, 0);
-    // Theory has it that we only need to re-populate when loci change, but practice says no, always do it.
-    populate_xmission_matrix (xmissionMatrix, analysisLocusList->numLocus, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
-    initialize_multi_locus_genotype (pPedigree);
-    compute_pedigree_likelihood (pPedigree);
-  }
-}
-
-void getAndPut2ptModels (PedigreeSet *pPedigreeList, int stepFlag, int realityFlag, 
-			 double lowPosition, double highPosition,
-			 double weightNumeratorCM, double weightDenominatorCM) {
-
-  double pedTraitPosCM, markerPosition;
-  double nullLikelihood, alternativeLikelihood, weightedLRComponent;
-  char pedigreeSId[33];
-  Pedigree *pPedigree;
-  int i, runtimeCostSec;
-
-  while (GetDWork(lowPosition, highPosition, stepFlag /* Yes, double-use of locusListType, so shoot me, I was on a deadline */,
-		  &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
-
-    if (realityFlag) {
-
-      // We've retrieved DGF, now compute dGF (made that up!)
-      pLocus->pAlleleFrequency[1] = 1 - pLocus->pAlleleFrequency[0];
-
-      // We've retrieved the affected penetrance. Use it to compute unaffected
-      for (i=0; i<modelRange->nlclass; i++) {
-	pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][0];
-	pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][1];
-	pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][0];
-	pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][1];
-      }
-
-      // Find the pedigree in the set
-      if ((pPedigree = find_pedigree(pPedigreeList, pedigreeSId)) == NULL)
-	ERROR ("Got work for unexpected pedigree %s", pedigreeSId);
-
-      // Compute null hypothesis likelihood for this pedigree on this marker (theta of 0.5 to/from trait)
-      analysisLocusList->pNextLocusDistance[0][0] = 0.5;
-      analysisLocusList->pPrevLocusDistance[0][1] = 0.5;
-
-      // Homogenize the distances
-      {
-	int i, j;
-	for (i=0; i<analysisLocusList->numLocus; i++)
-	  for (j=1; j<3; j++) {
-	    analysisLocusList->pPrevLocusDistance[j][i] = analysisLocusList->pPrevLocusDistance[0][i];
-	    analysisLocusList->pNextLocusDistance[j][i] = analysisLocusList->pNextLocusDistance[0][i];
-	  }
-      }
-      compute_server_pedigree_likelihood (pPedigreeList, pPedigree);
-      nullLikelihood = pPedigree->likelihood;
-
-      // Compute actual alternative hypothesis likelihood for this pedigree on this marker from theta of actual distance
-
-      swReset (singleModelSW); swStart (singleModelSW);
-      
-      markerPosition = *get_map_position (analysisLocusList->pLocusIndex[1]);
-      analysisLocusList->pNextLocusDistance[0][0] = cm_to_recombination_fraction (fabs(pedTraitPosCM - markerPosition), map.mapFunction);
-      analysisLocusList->pPrevLocusDistance[0][1] = analysisLocusList->pNextLocusDistance[0][0];
-
-      // Homogenize the distances
-      {
-	int i, j;
-	for (i=0; i<analysisLocusList->numLocus; i++)
-	  for (j=1; j<3; j++) {
-	    analysisLocusList->pPrevLocusDistance[j][i] = analysisLocusList->pPrevLocusDistance[0][i];
-	    analysisLocusList->pNextLocusDistance[j][i] = analysisLocusList->pNextLocusDistance[0][i];
-	  }
-      }
-      compute_server_pedigree_likelihood (pPedigreeList, pPedigree);
-      runtimeCostSec = difftime (time (NULL), singleModelSW->swStartWallTime);
-      alternativeLikelihood = pPedigree->likelihood;
-
-      weightedLRComponent = (alternativeLikelihood / nullLikelihood) * fabs(pedTraitPosCM - weightNumeratorCM) / weightDenominatorCM;
-
-      DIAG (ALTLSERVER, 1, {fprintf (stderr, "Trait %GcM, marker %GcM->delta %G(%GcM), Null %G, Alt %G->LR %G, total dist %GcM, opp dist %GcM->weighted LR component %G\n", \
-				     pedTraitPosCM, markerPosition, analysisLocusList->pNextLocusDistance[0][0], fabs(pedTraitPosCM - markerPosition), \
-				     nullLikelihood, alternativeLikelihood, alternativeLikelihood / nullLikelihood, \
-				     weightDenominatorCM, fabs(pedTraitPosCM - weightNumeratorCM), weightedLRComponent);});
-    } else {
-      weightedLRComponent = 0;
-      runtimeCostSec = 0.0;
-    }
-    PutWork (stepFlag /* Again, double use of MarkerCount, but 100 and 101 are beyond the pale. */, weightedLRComponent, runtimeCostSec);
-  }
-}
-
-// Function definition for what we turn the old compute_likelihood into.
-int original_compute_likelihood (PedigreeSet * pPedigreeList);
-
-/* Alternative version of compute_likelihood to handle Likelihood server. We might as well have
+/* Alternative version of compute_likelihood to handle LOD server. We might as well have
    a completely different version since we can't do the OMP work. */
 int compute_likelihood (PedigreeSet * pPedigreeList) {
   Pedigree *pPedigree;
   int i;
+  int status;   /* return status of function calls */
   double product_likelihood = 1;        /* product of the likelihoods
                                          * for all the pedigrees */
   double sum_log_likelihood = 0;        /* sum of the
@@ -477,74 +360,28 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 
   if (toupper(*studyDB.role) == 'C') {
     /* 
-       We're a client, we want to call GetLikelihood with all the appropriate likelhood variables
-       for every pedigree. If we get a good Likelihood back, then we incorporate it into the result. 
-       If we don't then the request has been made and we incorporate a dummy Likelihood into the 
+       We're a client, we want to call GetLOD with all the appropriate likelhood variables
+       for every pedigree. If we get a good LOD back, then we incorporate it into the result. 
+       If we don't then the request has been made and we incorporate a dummy LOD into the 
        results and set a flag indicating that the calculation is to be ignored.
     */
-
-    if (mysql_query (studyDB.connection, "BEGIN"))
-      ERROR("Cannot begin transaction (%s)", mysql_error(studyDB.connection));
-
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
       
-      if (analysisLocusList->numLocus == 1) // Trait likelihood
-	myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, -9999.99);
-      else
-	myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelRange->tloc[studyDB.driverPosIdx]);
-
-      if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
-	pPedigree->likelihood = GetDLikelihood (myPedPosId, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0);
-      else if (analysisLocusList->numLocus == 1) // Trait likelihood
-	pPedigree->likelihood = GetDLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
-					  0, 0, 0, 0); 
-      else // Alternative likelihood
-	pPedigree->likelihood = GetDLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
-					  s->sbrgns, 
-					  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrgns]->parent_id),
-					  (s->sbrgns == 0 ? 0 : s->greate),
-					  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrg_heap[s->sbrgns]->parent_id]->dir)
-					  );
-
-      if (pPedigree->likelihood == -1) {
+      myPedPosId = GetPedPosId (pPedigree->sPedigreeID, 40, KROUND(modelRange->tloc[dk_curModel.posIdx]));
+      if ((pPedigree->likelihood = GetDLOD (myPedPosId,
+			  dk_curModel.dgf, pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1], 1)) == -1) {
 	// Bogus result
-	studyDB.bogusLikelihoods++;
-	if ((analysisLocusList->traitLocusIndex != -1) && (analysisLocusList->numLocus != 1))
-	  s->sbrg_heap[s->sbrgns]->bogusLikelihoods++;
+	studyDB.bogusLODs++;
 	pPedigree->likelihood = .05;
-	/*
-	if (analysisLocusList->numLocus == 1)
-	  fprintf (stderr, "Looping to leave c_l with BOGUS/REQUESTED trait likelihood of %.12g\n", pPedigree->likelihood);
-	else if (analysisLocusList->traitLocusIndex == -1)
-	  fprintf (stderr, "Looping to leave c_l with BOGUS/REQUESTED marker likelihood of %.12g\n", pPedigree->likelihood);
-	else
-	  fprintf (stderr, "Looping to leave c_l with BOGUS/REQUESTED combined likelihood of %.12g\n", pPedigree->likelihood);
-	*/
       } else {
-	studyDB.realLikelihoods++;
-	/*
-	if (analysisLocusList->numLocus == 1)
-	  fprintf (stderr, "Looping to leave c_l with RETRIEVED trait likelihood of %.12g\n", pPedigree->likelihood);
-	else if (analysisLocusList->traitLocusIndex == -1)
-	  fprintf (stderr, "Looping to leave c_l with RETRIEVED marker likelihood of %.12g\n", pPedigree->likelihood);
-	else
-	  fprintf (stderr, "Looping to leave c_l with RETRIEVED combined likelihood of %.12g\n", pPedigree->likelihood);
-	*/
+	studyDB.realLODs++;
       }
-
       // Roll all the results together considering pedigrees with counts
       if (pPedigree->pCount[origLocus] == 1) {
 	product_likelihood *= pPedigree->likelihood;
@@ -555,59 +392,40 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       }
       sum_log_likelihood += log10Likelihood;
     }
-
-    if (mysql_query (studyDB.connection, "COMMIT"))
-      ERROR("Cannot commit transaction (%s)", mysql_error(studyDB.connection));
-
-    pPedigreeList->likelihood = product_likelihood;
-    pPedigreeList->log10Likelihood = sum_log_likelihood;
-    DIAG (ALTLSERVER, 1, {fprintf (stderr, "Client returning bogosity of %d, likelihood of %.4g\n", studyDB.bogusLikelihoods, pPedigreeList->likelihood);});
-    return ret;
-    
-  } else if (toupper(*studyDB.role) == 'S') {
+  } else {
 
     /*
-      Since we're a multipoint server, we want to start asking for work for positions within 
+      If we're a server, we want to sign-in (if we haven't already) with full range of 
+      pedigrees that we can cover, and then start asking for work for positions within 
       the current set of markers. When we're out of work we can return to the caller until 
       we hit a new set of markers. A properly-configured config file can make this fast (TM).
     */
 
     double traitPosition, lowPosition, highPosition, pedTraitPosCM;
     char pedigreeSId[33];
-    int locusListType;
-    
+
     /* Find our range of served positions for the current set of loci. We've already suborned the
        modelRange->tloc vector so there are only exemplar trait positions. All we need to do is
        fetch the next lower and higer transition positions from lociSetTransitionPositions.
     */
 
-    traitPosition = modelRange->tloc[studyDB.driverPosIdx];
-    locusListType = 3; // ...for combined likelihood
-    if (analysisLocusList->numLocus == 1) // Trait likelihood
-      locusListType = 2;
-    else
-      if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
-	locusListType = 1;
+    traitPosition = modelRange->tloc[dk_curModel.posIdx];
+    if ((traitPosition != lastTraitPosition) && // Only do work if this is a new position...
+	(analysisLocusList->traitLocusIndex != -1)) { // ...and not a marker likelihood
 
-    if (traitPosition != lastTraitPosition ||
-	((1 << (locusListType - 1)) & locusListTypesDone) == 0) { // Only do work if on a new position or different type analysisLocusList
+      lastTraitPosition = traitPosition;
 
-      if (traitPosition != lastTraitPosition) {
-	lastTraitPosition = traitPosition;
-	locusListTypesDone = 1 << (locusListType - 1);
-      } else
-	locusListTypesDone |= 1 << (locusListType - 1);
-
-      lowPosition = -99.99;
-      if (studyDB.driverPosIdx != 0)
-	lowPosition = lociSetTransitionPositions[studyDB.driverPosIdx - 1];
+      lowPosition = -9999.99;
+      if (dk_curModel.posIdx != 0)
+	lowPosition = lociSetTransitionPositions[dk_curModel.posIdx - 1];
       highPosition = 9999.99;
-      if (studyDB.driverPosIdx != (modelRange->ntloc - 1))
-	highPosition = lociSetTransitionPositions[studyDB.driverPosIdx];
+      if (dk_curModel.posIdx != (modelRange->ntloc - 1))
+	highPosition = lociSetTransitionPositions[dk_curModel.posIdx];
 
-      DIAG (ALTLSERVER, 0, { fprintf (stderr, "Driver trait position %GcM of type %d serves range from %GcM to %gcM\n", traitPosition, locusListType, lowPosition, highPosition);});
+      fprintf (stderr, "Driver trait position is %G, lowPosition is %G and highPosition is %g\n", traitPosition,
+	       lowPosition, highPosition);
 
-      while (GetDWork(lowPosition, highPosition, locusListType, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
+      while (GetDWork(lowPosition, highPosition, &pedTraitPosCM, pedigreeSId, &dk_curModel.dgf,
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
@@ -615,93 +433,64 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
 	
+	/* &&& TBS - convert the pedTraitPosCM into two theta values and overwrite the analysisLocusList trait entry. We have
+	   to do this because we'll never see the exact positions required by map interpolation if maps differ. */
+
+	printf ("Driver trait position is %G, work trait position is %G, lowPosition is %G and highPosition is %g\n", traitPosition,
+		pedTraitPosCM, lowPosition, highPosition);
+
+	printf ("Pre-conversion:\n");
+	for (i=0; i<analysisLocusList->numLocus; i++)
+	  printf ("\tindex for locus %d is %d, prev dist is %G, next dist is %G\n", i, analysisLocusList->pLocusIndex[i],
+		  analysisLocusList->pPrevLocusDistance[0][i], analysisLocusList->pNextLocusDistance[0][i]);
+
+	originalLocusList.ppLocusList[0]->pTraitLocus->mapPosition[0] = pedTraitPosCM; // Set position on originalLocusList just to be sure.
+
+	if (analysisLocusList->traitLocusIndex != 0) {
+	  analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex] =
+	    cm_to_recombination_fraction (pedTraitPosCM - *get_map_position (analysisLocusList->pLocusIndex[analysisLocusList->traitLocusIndex - 1]),
+					  map.mapFunction);
+	  analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex - 1] =
+	    analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex];
+	} else
+	  analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex] = -1;
+
+	if (analysisLocusList->traitLocusIndex != (analysisLocusList->numLocus - 1)) {
+	  analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex] =
+	    cm_to_recombination_fraction (*get_map_position (analysisLocusList->pLocusIndex[analysisLocusList->traitLocusIndex + 1]) -
+					  pedTraitPosCM, map.mapFunction);
+	  analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex + 1] =
+	    analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex];
+	} else
+	  analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex] = -1;
+
+	printf ("Post-conversion:\n");
+	for (i=0; i<analysisLocusList->numLocus; i++)
+	  printf ("\tindex for locus %d is %d, prev dist is %G, next dist is %G\n", i, analysisLocusList->pLocusIndex[i],
+		  analysisLocusList->pPrevLocusDistance[0][i], analysisLocusList->pNextLocusDistance[0][i]);
+
 	// Find the pedigree in the set
 	if ((pPedigree = find_pedigree(pPedigreeList, pedigreeSId)) == NULL)
 	  ERROR ("Got work for unexpected pedigree %s", pedigreeSId);
 	
-	if (locusListType != 1) { // Do trait-related setup (trait and combined likelihoods)
-
-	  // We've retrieved DGF, now compute dGF (made that up!)
-	  pLocus->pAlleleFrequency[1] = 1 - pLocus->pAlleleFrequency[0];
-
-	  // We've retrieved the affected penetrance. Use it to compute unaffected
-	  for (i=0; i<modelRange->nlclass; i++) {
-	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][0];
-	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][1];
-	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][0];
-	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][1];
-	  }
-
-	  /* Convert the pedTraitPosCM into two theta values and overwrite the analysisLocusList trait entry. We have
-	     to do this because we'll never see the exact positions required by map interpolation if maps differ. We
-	     only need to change the distances around the trait, which we'll do for one gender, and then copy to the
-	     other two.
-	  */
-	  originalLocusList.ppLocusList[0]->pTraitLocus->mapPosition[0] = pedTraitPosCM; // Set position on originalLocusList just to be sure.
-	  
-	  if (analysisLocusList->traitLocusIndex != 0) {
-	    analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex] =
-	      cm_to_recombination_fraction (pedTraitPosCM - *get_map_position (analysisLocusList->pLocusIndex[analysisLocusList->traitLocusIndex - 1]),
-					    map.mapFunction);
-	    analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex - 1] =
-	      analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex];
-	  } else
-	    analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex] = -1;
-	  
-	  if (analysisLocusList->traitLocusIndex != (analysisLocusList->numLocus - 1)) {
-	    analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex] =
-	      cm_to_recombination_fraction (*get_map_position (analysisLocusList->pLocusIndex[analysisLocusList->traitLocusIndex + 1]) -
-					    pedTraitPosCM, map.mapFunction);
-	    analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex + 1] =
-	      analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex];
-	  } else
-	    analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex] = -1;
-
-	  // Homogenize the distances
-	  {
-	    int i, j;
-	    for (i=0; i<analysisLocusList->numLocus; i++)
-	      for (j=1; j<3; j++) {
-		analysisLocusList->pPrevLocusDistance[j][i] = analysisLocusList->pPrevLocusDistance[0][i];
-		analysisLocusList->pNextLocusDistance[j][i] = analysisLocusList->pNextLocusDistance[0][i];
-	      }
-	  }
+	// Compute the likelihood
+	if (modelOptions->polynomial == TRUE) {
+	  /* Make sure the polynomial we need exists. */
+	  if (pPedigree->likelihoodPolynomial == NULL)
+	    build_likelihood_polynomial (pPedigree);
+	  evaluatePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, &pPedigree->likelihood);
+	} else {
+	  initialize_multi_locus_genotype (pPedigree);
+	  status = compute_pedigree_likelihood (pPedigree);
 	}
-
-	// Compute the likelihood (and time it!)
-
-	swReset (singleModelSW);
-	swStart (singleModelSW);
-	compute_server_pedigree_likelihood (pPedigreeList, pPedigree);
-	swStop (singleModelSW);
-
-	PutWork (modelType->numMarkers,
-		 pPedigree->likelihood,
-		 difftime (time (NULL), singleModelSW->swStartWallTime));
-
-	DIAG (ALTLSERVER, 1, { \
-	    fprintf (stderr, "Ped: %s, Pos: %.8g, DGF: %.8g, LC1DD: %.8g, LC1Dd: %.8g, LC1dd: %.8g => Likelihood %.8g\n", \
-		     pPedigree->sPedigreeID, \
-		     pedTraitPosCM, pLocus->pAlleleFrequency[0], \
-		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], \
-		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], \
-		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1], \
-		     pPedigree->likelihood);});
-	/*
-	if (locusListType == 1)
-	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED  marker likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
-	else if (locusListType == 2)
-	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
-	else
-	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED combined likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
-	*/
-      } 
-   }
+	PutWork (modelType->numMarkers + originalLocusList.numTraitLocus, pPedigree->likelihood);
+      }
+    }
 
     // Clean up by faking all results
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
-      studyDB.bogusLikelihoods++;
+      studyDB.bogusLODs++;
       pPedigree->likelihood = .05;
       // Roll all the results together considering pedigrees with counts
       if (pPedigree->pCount[origLocus] == 1) {
@@ -713,104 +502,16 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
       }
       sum_log_likelihood += log10Likelihood;
     }
-    pPedigreeList->likelihood = product_likelihood;
-    pPedigreeList->log10Likelihood = sum_log_likelihood;
-    DIAG (ALTLSERVER, 1, {fprintf (stderr, "Server returning likelihood of %.4g\n", pPedigreeList->likelihood);});
-    return ret;
-
-  } else {
-
-    /*
-      Fake 2pt server. Set trait and marker set likelihoods to 1 for all of our pedigrees
-       and compute weightedLRComponent for positions surrounding the current marker.
-       Store the left component in a shadow table of Models called TP2MP, and add that to
-       the right component to actually finish work on the model.
-    */
-    int markerIndex;
-    double markerPosition, lowPosition, highPosition;
-    
-    // For 2pt, trait is first in the analysisLocusList and the only marker is second.
-    // Use the index from the original locus list for everything.
-
-    markerIndex = analysisLocusList->pLocusIndex[1]; 
-
-    if (markerIndex != lastMarkerIndex) { // Only do work if a new marker
-      lastMarkerIndex = markerIndex;
-
-      markerPosition = *get_map_position (markerIndex);
-
-      // This marker serves positions the adjacent left to the adjacent right marker.
-
-      lowPosition = -99.99;
-      if (markerIndex > 1) // The current marker is not the leftmost, so get the position of adjacent left marker.
-	lowPosition = *get_map_position (markerIndex - 1);
-      highPosition = 9999.99;
-      if (markerIndex < (originalLocusList.numLocus - originalLocusList.numTraitLocus - 1)) // Not the rightmost either.
-	highPosition = *get_map_position (markerIndex + 1);
-
-      DIAG (ALTLSERVER, 0, { fprintf (stderr, "Marker index %d at %GcM serves range from %GcM to %gcM\n", markerIndex, markerPosition, lowPosition, highPosition);});
-
-      /*
-	Next all of the alternative hypothesis likelihood models get the weighted likelihood ratio for 
-	the two surrounding markers (but not at the same time). This is a much more complicated process
-	than multipoint because there are three states the work can be in: available, in-process half-
-	done, and complete. I'm undermining the recoverability but simplifying development by assuming
-	that the server that starts the work will proceed to the next marker and finish the work, or
-	else it just won't get done (and will have to be cleaned-out with CleanOrphans).
-
-	If this is the first marker then we initial-dummy-left to begin with. Then for all markers
-	we initial-right and final-left. Finally if this is the last marker we final-dummy-right.
-
-      */
-
-      if (lowPosition == -99.99) { // initial step, dummy results, left of marker
-	DIAG (ALTLSERVER, 0, { fprintf (stderr, "Initial step with dummy results for left-of-marker %GcM to %GcM\n", lowPosition, markerPosition);});
-	getAndPut2ptModels (pPedigreeList, 100 /* Initial step */, 0 /* Dummy results */, lowPosition, markerPosition, 0, 0);
-      }
-
-      DIAG (ALTLSERVER, 0, { fprintf (stderr, "Initial step with real results for right-of-marker %GcM to %GcM\n", markerPosition, highPosition);});
-      getAndPut2ptModels (pPedigreeList, 100 /* Initial step */, 1 /* Real results */, markerPosition, highPosition, highPosition, highPosition - markerPosition);
-      DIAG (ALTLSERVER, 0, { fprintf (stderr, "Final step with real results for left-of-marker %GcM to %GcM\n", lowPosition, markerPosition);});
-      getAndPut2ptModels (pPedigreeList, 101 /* Final step */, 1 /* Real results */, lowPosition, markerPosition, lowPosition, markerPosition - lowPosition);
-
-      if (highPosition == 9999.99) { // Final step, dummy results, right of marker
-	DIAG (ALTLSERVER, 0, { fprintf (stderr, "Final step with dummy results for right-of-marker %GcM to %GcM\n", markerPosition, highPosition);});
-	getAndPut2ptModels (pPedigreeList, 101 /* Final step */, 0 /* Dummy results */, markerPosition, highPosition, 0, 0);
-      }
-    }
-
-    // Clean up by faking all results
-    for (i = 0; i < pPedigreeList->numPedigree; i++) {
-      pPedigree = pPedigreeList->ppPedigreeSet[i];
-      studyDB.bogusLikelihoods++;
-      pPedigree->likelihood = .05;
-      // Roll all the results together considering pedigrees with counts
-      if (pPedigree->pCount[origLocus] == 1) {
-	product_likelihood *= pPedigree->likelihood;
-	log10Likelihood = log10 (pPedigree->likelihood);
-      } else {
-	product_likelihood *= pow (pPedigree->likelihood, pPedigree->pCount[origLocus]);
-	log10Likelihood = log10 (pPedigree->likelihood) * pPedigree->pCount[origLocus];
-      }
-      sum_log_likelihood += log10Likelihood;
-    }
-    pPedigreeList->likelihood = product_likelihood;
-    pPedigreeList->log10Likelihood = sum_log_likelihood;
-    DIAG (ALTLSERVER, 1, {fprintf (stderr, "Server returning likelihood of %.4g\n", pPedigreeList->likelihood);});
-    return ret;
-
   }
+  pPedigreeList->likelihood = product_likelihood;
+  pPedigreeList->log10Likelihood = sum_log_likelihood;
+  return ret;
 }
-
-/* the main API to compute likelihood for all pedigrees in a data set */
-int original_compute_likelihood (PedigreeSet * pPedigreeList)
 
 #else
 
 /* the main API to compute likelihood for all pedigrees in a data set */
 int compute_likelihood (PedigreeSet * pPedigreeList)
-
-#endif
 {
   Pedigree *pPedigree;
   int i;
@@ -883,17 +584,6 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
         initialize_multi_locus_genotype (pPedigree);
         status = compute_pedigree_likelihood (pPedigree);
       }
-
-#ifdef STUDYDB
-      DIAG (ALTLSERVER, 1, { \
-      fprintf (stderr, "Ped: %s, Pos: %.8g, DGF: %.8g, LC1DD: %.8g, LC1Dd: %.8g, LC1dd: %.8g => Likelihood %.8g (normal)\n", \
-	       pPedigree->sPedigreeID, \
-	       modelRange->tloc[studyDB.driverPosIdx], pLocus->pAlleleFrequency[0], \
-	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], \
-	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], \
-	       pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1], \
-	       pPedigree->likelihood);});
-#endif
       if (modelOptions->dryRun == 0) {
         if (pPedigree->likelihood == 0.0) {
 	  if (!modelRange->atypicalQtTrait)
@@ -922,16 +612,6 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
         }
       }
     }
-#ifndef STUDYDB
-    /*
-    if (analysisLocusList->traitLocusIndex == -1)
-      fprintf (stderr, "Looping to leave c_l with COMPUTED marker likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
-    else if (analysisLocusList->numLocus == 1)
-      fprintf (stderr, "Looping to leave c_l with COMPUTED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
-    else
-      fprintf (stderr, "Looping to leave c_l with COMPUTED combined likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
-    */
-#endif
   }
 
   if (ret < 0) {
@@ -944,9 +624,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
     pPedigreeList->log10Likelihood = sum_log_likelihood;
   }
   DIAG (LIKELIHOOD, 1, {fprintf (stderr, "Sum of log Likelihood is: %e\n", sum_log_likelihood);});
-
   return ret;
 }
+
+#endif
 
 /* release polynomial for all pedigrees */
 void pedigreeSetPolynomialClearance (PedigreeSet * pPedigreeList)
@@ -998,42 +679,6 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
   int k, l, j, condIdx, idx;
   Person *pLoopBreaker;
   LoopBreaker *loopStruct;
-
-#ifdef STUDYDB
-
-  int myPedPosId;
-
-  if (analysisLocusList->numLocus == 1) { // Trait likelihood
-    if (toupper(*studyDB.role) == 'C') {
-      myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, -9999.99);
-      pPedigree->likelihood = GetDLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
-					0, 0, 0, 0);
-      if (pPedigree->likelihood == -1) {
-	// Bogus result
-	studyDB.bogusLikelihoods++;
-	pPedigree->likelihood = .05;
-	//	fprintf (stderr, "Leaving c_p_l with BOGUS/REQUESTED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
-      } else {
-	studyDB.realLikelihoods++;
-	//	fprintf (stderr, "Leaving c_p_l with RETRIEVED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
-      }
-      return 0;
-    }
-  }
-#endif
-
-  DIAG (ALTLSERVER, 1, {				\
-      int i;								\
-      fprintf (stderr, "analysisLocusList entry %d of %d is trait: ", analysisLocusList->traitLocusIndex, analysisLocusList->numLocus); \
-      for (i=0; i<analysisLocusList->numLocus; i++)			\
-	fprintf (stderr, "<%.6g[%d]%.6g>", analysisLocusList->pPrevLocusDistance[0][i], analysisLocusList->pLocusIndex[i], analysisLocusList->pNextLocusDistance[0][i]); \
-      fprintf (stderr, "\n");});
 
   condIdx = 0;
   sumCondL = 0;
@@ -1261,17 +906,14 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
     /* save the likelihood in the pedigree structure */
     pPedigree->likelihood = likelihood;
     DIAG (LIKELIHOOD, 1, {fprintf (stderr, "log Likelihood for pedigree %s is: %e\n", pPedigree->sPedigreeID, log10 (likelihood));});
-    /* I don't think fpCond is in any kind of shape anymore...
-    if ((modelOptions->loopCondRun == 1 || modelOptions->conditionalRun == 1) && modelOptions->polynomial != TRUE)
-      for (k = 0; k < condIdx; k++)
-        fprintf (fpCond, "%s %s %d %s %s %e %5.1f%%\n", pCondSet[k].pPedigreeID, pCondSet[k].pProbandID,
-	(int) pCondSet[k].trait, pCondSet[k].pAllele1, pCondSet[k].pAllele2, pCondSet[k].condL, pCondSet[k].condL / sumCondL * 100);
-    */
+    //    if ((modelOptions->loopCondRun == 1 || modelOptions->conditionalRun == 1)
+    //        && modelOptions->polynomial != TRUE) {
+      //      for (k = 0; k < condIdx; k++) {
+      //        fprintf (fpCond, "%s %s %d %s %s %e %5.1f%%\n", pCondSet[k].pPedigreeID, pCondSet[k].pProbandID, (int) pCondSet[k].trait, pCondSet[k].pAllele1, pCondSet[k].pAllele2, pCondSet[k].condL, pCondSet[k].condL / sumCondL * 100);
+      //      }
+    //    }
   }
-  /*
-  if (analysisLocusList->numLocus == 1) // Trait likelihood
-    fprintf (stderr, "Leaving c_p_l with COMPUTED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
-  */
+
   return 0;
 }
 
@@ -3051,10 +2693,8 @@ int do_populate_xmission_matrix (XMission * pMatrix, int totalLoci, void *prob[3
       for (i = 0; i < 3; i++) {
         if (modelOptions->polynomial == TRUE) {
           if (pMatrix[newCellIndex].slot.probPoly[i] != NULL)
-	    // This makes Yungui's test incredibly slow...
             unHoldPoly (pMatrix[newCellIndex].slot.probPoly[i]);
           pMatrix[newCellIndex].slot.probPoly[i] = newProbPoly[i];
-	  // ...as does this.
           holdPoly (newProbPoly[i]);
         } else
           pMatrix[newCellIndex].slot.prob[i] = newProb[i];

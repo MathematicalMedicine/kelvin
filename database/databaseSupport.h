@@ -1,17 +1,15 @@
 void initializeDB ();
 void prepareDBStatements ();
 long GetPedPosId (char *, int, double);
-double GetDLikelihood (int, double, 
+double GetDLOD (int, double, 
 		double, double, double, double, 
 		double, double, double, double, 
 		double, double, double, double,
-		int, int, double, int);
-void SignOn (int, char *, int, char *);
-void SetDummyNullLikelihood ();
-int CountWork (double, double);
-int GetDWork (double, double, int, double *, char *, double *,
+		int);
+void SignOn (char *, int, char *, int, char *);
+int GetDWork (double, double, double *, char *, double *,
 	      double *, double *, double *, double *,
 	      double *, double *, double *, double *,
 	      double *, double *, double *, double *);
-void PutWork (int, double, int);
+void PutWork (int, double);
 

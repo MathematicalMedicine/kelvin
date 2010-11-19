@@ -151,7 +151,6 @@ read_mapfile (char *sMapfileName, int sexspecific)
     } else if (strcmp (token, "basepair") == 0 ||
 	       strncmp (token, "physical", strlen (token)) == 0) {
       datacols[numcols-1] = MAP_BASEPAIR_COL;
-      modelOptions->physicalMap = TRUE;
     }
     if (mapheaders & 1 << datacols[numcols-1])
       ERROR ("Redundant headers in MapFile %s\n", sMapfileName);
@@ -207,13 +206,10 @@ read_mapfile (char *sMapfileName, int sexspecific)
     if (token != NULL)
       ERROR ("extra data at end of line %d in MapFile %s\n", lineNo, sMapfileName);
 
-    if (pPrevMarker != NULL) {
-      ASSERT (pPrevMarker->mapPos[MAP_POS_SEX_AVERAGE] <= pMarker->mapPos[MAP_POS_SEX_AVERAGE],
-	      "Marker map given by %s is out of order between %s and %s",
-	      sMapfileName, pPrevMarker->sName, pMarker->sName);
-      ASSERT (modelOptions->physicalMap == FALSE || 
-	      pPrevMarker->basePairLocation < pMarker->basePairLocation,
-	      "Marker pysical positions given by %s are out of order between %s and %s",
+    if (pPrevMarker != NULL
+	&& (pPrevMarker->mapPos[MAP_POS_SEX_AVERAGE] > pMarker->mapPos[MAP_POS_SEX_AVERAGE])) {
+      /* this will kick the program out */
+      ASSERT (1 == 0, "Marker map given by %s is out of order between %s and %s",
 	      sMapfileName, pPrevMarker->sName, pMarker->sName);
     }
     pPrevMarker = pMarker;
@@ -2893,39 +2889,6 @@ find_locus (LocusList * pLocusList, char *sName)
   }
   return -1;
 }
-
-int
-interpolate_physical_location (double pos)
-{
-  int i=0, j;
-  double ratio;
-  MapUnit **markers = map.ppMapUnitList;
-
-  if (pos < markers[0]->mapPos[MAP_POS_SEX_AVERAGE]) {
-    i = 0;
-    j = 1;
-  } else if (pos >= markers[map.count-1]->mapPos[MAP_POS_SEX_AVERAGE]) {
-    i = map.count - 2;
-    j = map.count - 1;
-  } else {
-    while (i < map.count - 1) {
-      if (markers[i]->mapPos[MAP_POS_SEX_AVERAGE] <= pos &&
-	  pos < markers[i+1]->mapPos[MAP_POS_SEX_AVERAGE])
-	break;
-      i++;
-    }
-    j = i + 1;
-  }
-  if (markers[i]->mapPos[MAP_POS_SEX_AVERAGE] == pos)
-    return (markers[i]->basePairLocation);
-  if (markers[j]->mapPos[MAP_POS_SEX_AVERAGE] == pos)
-    return (markers[j]->basePairLocation);
-  ratio = (markers[i]->mapPos[MAP_POS_SEX_AVERAGE] - pos) /
-    (markers[i]->mapPos[MAP_POS_SEX_AVERAGE] - markers[j]->mapPos[MAP_POS_SEX_AVERAGE]);
-  return (markers[i]->basePairLocation -
-	  (int) (ratio * (double) (markers[i]->basePairLocation - markers[j]->basePairLocation)));
-}
-
 
 /* populate the master list of valid genotype list for given pedigree 
  * locus - index in original locus list */

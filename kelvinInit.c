@@ -2,8 +2,6 @@
 #include <float.h>      // Limits for floating point
 
 #include <pthread.h>    // For memory-use tracking
-#include <ctype.h>      // For toupper
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -23,10 +21,8 @@ extern struct StudyDB studyDB;
 #endif
 
 struct swStopwatch *combinedComputeSW,  ///< Combined likelihood compute stopwatch
-  *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch
-  *overallSW,    ///< Overall stopwatch for the entire run.
-  *singleModelSW;
-
+ *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch
+ *overallSW;    ///< Overall stopwatch for the entire run.
 
 char configfile[PATH_MAX];      ///< Configuration file read to populate all of this
 
@@ -45,7 +41,6 @@ void kelvinInit (int argc, char *argv[])
   overallSW = swCreate ("overall");
   combinedComputeSW = swCreate ("combinedComputeSW");
   combinedBuildSW = swCreate ("combinedBuildSW");
-  singleModelSW = swCreate ("singleModelSW");
 
   /* Setup all of our signal handlers. */
   setupHandlers ();
@@ -58,7 +53,7 @@ void kelvinInit (int argc, char *argv[])
   /* Annouce ourselves for performance tracking. */
 
   swPushPhase ('k', "NonSpecific");
-  INFO ("kelvin %s edit %s built %s %s on %s", programVersion, svnVersion, __DATE__, __TIME__, getenv("HOSTNAME"));
+  INFO ("kelvin %s edit %s built %s %s", programVersion, svnVersion, __DATE__, __TIME__);
   INFO ("References for this version of kelvin:\n\n\t(1) Vieland VJ. Thermometers: Something for statistical geneticists to think\n\tabout. Human Hered, 61:144-156, 2006.\n\t(2) Huang Y, Segre A, O'Connell J, Valentine-Cooper W, Seok SC, Vieland VJ.\n\tKelvin:  A 2nd generation software package for computation of the PPL\n\tframework. [Abstract Program number 2336]. Presented at the annual meeting\n\tof The American Society of Human Genetics, November 2008, Philadelphia,\n\tPennsylvania. Available at http://www.ashg.org/2008meeting/abstracts/fulltext/\n");
   //  INFO ("%s", kelvinVersion);
   //  INFO ("%s", likelihoodVersion);
@@ -94,7 +89,7 @@ void kelvinInit (int argc, char *argv[])
   #ifdef _OPENMP
     #undef _OPENMP
     #warning "Cannot use OpenMP when using internal statistical functions.");
-    INFO ("OpenMP is DISABLED when using internal statistical functions.");
+    INFO ("OpenMP is DISABLED when using internal statistical functions.")
   #endif
 #endif
 
@@ -358,13 +353,9 @@ void kelvinInit (int argc, char *argv[])
 
   DETAIL(0,"Opening study database");
   initializeDB ();
-  if (toupper(*studyDB.role) == 'S')
-    SignOn (originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "ES", modelType->numMarkers, programVersion);
-  else if (toupper(*studyDB.role) == '2') {
-    SignOn (originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "es", 1, programVersion);
-    DIAG (ALTLSERVER, 0, { fprintf (stderr, "Explicitly setting all trait and marker-set models for all pedigrees for this server instance to 1.0\n");});
-    SetDummyNullLikelihood (); // Set all trait and marker-set models for all pedigrees for this server instance to 1.0.
-  }
+  if (toupper(*studyDB.role) != 'C')
+    //    SignOn (/* &&& */ "^[1-5]$", originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "ES", modelType->numMarkers, programVersion);
+    SignOn (/* &&& */ ".*", originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "ES", modelType->numMarkers, programVersion);
 #endif
 
   /* Enable handling of segmentation faults/bus errors due to configuration monkeying */

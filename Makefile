@@ -165,7 +165,7 @@ endif
 
 ifeq ($(strip $(USE_STUDYDB)), yes)
   CFLAGS += -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql
-  LDFLAGS += -lrt -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
+  LDFLAGS += -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
 endif
 
 LDFLAGS += ${ADD_LDFLAGS}
@@ -180,7 +180,7 @@ OBJS = kelvinInit.o kelvinTerm.o iterationSupport.o integrationSupport.o \
 
 INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinInit.h kelvinTerm.h \
-	iterationGlobals.h iterationLocals.h iterationSupport.h \
+	iterationLocals.h iterationSupport.h \
 	integrationGlobals.h integrationLocals.h integrationSupport.h \
 	kelvinWriteFiles.h dkelvinWriteFiles.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h

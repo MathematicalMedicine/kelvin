@@ -30,7 +30,6 @@
 
 /* Kelvin header files */
 #include <ppl.h>
-#include <utils/utils.h>
 #include <integrationLocals.h>
 #include <multidim.h>
 #include <ippl.h>
@@ -46,8 +45,8 @@
 #define THETA_COL  2
 #define LR_COL     3
 #define POS_COL    4
-#define PHYS_COL   5
-#define CHR_COL    6
+#define CHR_COL    5
+#define PPL_COL    6
 
 #define METH_OLD   1
 #define METH_NEW   2
@@ -57,6 +56,8 @@
 #define DEFAULT_LDPRIOR 0.02
 /* the multipoint PPL for a BR of 0.214 */
 #define MIN_PRIOR 7.8528124097619317e-03
+
+#define KROUND(dbl) dbl >= 0.025 ? rint (dbl * 100.0) / 100.0 : rint (dbl * 10000.0) / 10000.0
 
 typedef struct {
   char name1[MAX_MAP_NAME_LEN],
@@ -79,7 +80,6 @@ typedef struct {
     numdprimes,
     numthetas,
     no_ld,
-    physical_pos,
     holey_grid,
     two_point,
     eof,
@@ -152,8 +152,8 @@ char *splitversion = "0.38.1";
 void kelvin_twopoint (st_brfile *brfiles, int numbrfiles);
 void kelvin_multipoint (st_brfile *brfiles, int numbrfiles);
 void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles);
-void print_twopoint_headers (int no_ld, int physicalpos);
-void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_ldvals *ldval);
+void print_twopoint_headers (int no_ld);
+void print_twopoint_stats (int no_ld, st_brmarker *marker, st_ldvals *ldval);
 void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas, st_data *data);
 void do_dkelvin_first_pass (st_brfile *brfile, st_data *data);
 /*
@@ -236,8 +236,7 @@ int main (int argc, char **argv)
 
 void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 {
-  int fileno, alldone=0, didx, thidx, numcurrent, dsize=0, thsize=0, ret, physicalpos=0;
-  long basepair=-1;
+  int fileno, alldone=0, didx, thidx, numcurrent, dsize=0, thsize=0, ret;
   double **lr=NULL, ldprior, ldstat;
   st_brmarker next_marker;
   st_mapmarker *mapptr;
@@ -260,16 +259,12 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     exit (-1);
   }
 
-  if (mapinfile != NULL)
-    physicalpos = map_has_physicalpos ();
   for (fileno = 0; fileno < numbrfiles; fileno++) {
     get_next_marker (&brfiles[fileno], &data);
-    if (brfiles[fileno].physical_pos && ! forcemap)
-      physicalpos = 1;
     if (verbose >= 2)
       printf ("first marker in %s is %s\n", brfiles[fileno].name, brfiles[fileno].curmarker.name2);
   }
-  print_twopoint_headers (brfiles[0].no_ld, physicalpos);
+  print_twopoint_headers (brfiles[0].no_ld);
 
   while (1) {
     if (mapinfile != NULL) {
@@ -305,8 +300,6 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
       }
       current[numcurrent++] = &brfiles[fileno];
       compare_headers (current[0], &brfiles[fileno]);
-      if (physicalpos && current[0]->curmarker.basepair == -1)
-	current[0]->curmarker.basepair = brfiles[fileno].curmarker.basepair;
     }
     if (alldone)
       break;
@@ -418,7 +411,7 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
       current[0]->curmarker.femalepos = mapptr->femalepos;
       current[0]->curmarker.basepair = mapptr->basepair;
     }
-    print_twopoint_stats (current[0]->no_ld, physicalpos, &(current[0]->curmarker), &ldval);
+    print_twopoint_stats (current[0]->no_ld, &(current[0]->curmarker), &ldval);
     for (fileno = 0; fileno < numcurrent; fileno++) {
       get_next_marker (current[fileno], &data);
     }
@@ -447,7 +440,7 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 
 void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 {
-  int fileno, ret, alldone, curno, howmany, warning=0, physicalpos=0;
+  int fileno, ret, alldone, curno, howmany, warning=0;
   char warnbuff[1024];
   st_brmarker *marker;
   st_data data;
@@ -470,8 +463,6 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 	     brfiles[0].lineno, (ret == 0) ? "end-of-file" : "marker line");
     exit (-1);
   }
-  if (brfiles[0].physical_pos)
-    physicalpos = 1;
   lrs[0] = data.lr;
   for (fileno = 1; fileno < numbrfiles; fileno++) {
     get_header_line (&brfiles[fileno]);
@@ -482,10 +473,8 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
       exit (-1);
     }
     lrs[fileno] = data.lr;
-    if (brfiles[fileno].physical_pos)
-      physicalpos = 1;
   }
-  fprintf (pplout, "Chr Position%s PPL BayesRatio\n", (physicalpos) ? " Physical" : "");
+  fprintf (pplout, "Chr Position PPL BayesRatio\n");
 
   while (1) {
     alldone = 1;
@@ -508,8 +497,6 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 	continue;
       if (compare_positions (&brfiles[fileno].curmarker, &brfiles[curno].curmarker) != 0)
 	continue;
-      if (physicalpos && brfiles[curno].curmarker.basepair == -1)
-	brfiles[curno].curmarker.basepair = brfiles[fileno].curmarker.basepair;
       howmany++;
       if (! epistasis)
 	lr *= lrs[fileno];
@@ -531,10 +518,7 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
     }
     if ((lr < 0.214) || ((ppl = (lr * lr) / (-5.77 + (54 * lr) + (lr * lr))) < 0.0))
       ppl = 0.0;
-    fprintf (pplout, "%s %.4f", marker->chr, marker->avgpos);
-    if (physicalpos)
-      fprintf (pplout, " %ld", marker->basepair);
-    fprintf (pplout, " %.3f %.6e\n", ppl, lr);
+    fprintf (pplout, "%s %.4f %.3f %.6e\n", marker->chr, marker->avgpos, ppl, lr);
     
     if (get_data_line (&brfiles[curno], &data) == 1)
       lrs[curno] = data.lr;
@@ -553,7 +537,7 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 
 void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 {
-  int fileno, numcurrent, sampleno, alldone, ret, lastidx, ld=0, physicalpos=0;
+  int fileno, numcurrent, sampleno, alldone, ret, lastidx, ld=0;
   double ldprior, ldstat, *sample;
   char *effective_version;
   st_brmarker next_marker, *marker;
@@ -570,8 +554,6 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     exit (-1);
   }
 
-  if (mapinfile != NULL)
-    physicalpos = map_has_physicalpos ();
   for (fileno = 0; fileno < numbrfiles; fileno++) {
     if (fileno == 0) {
       get_next_marker (&brfiles[fileno], &data_0);
@@ -580,8 +562,6 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
       get_next_marker (&brfiles[fileno], &data_n);
       do_dkelvin_first_pass (&brfiles[fileno], &data_n);
     }
-    if (brfiles[fileno].physical_pos && ! forcemap)
-      physicalpos = 1;
     if (verbose >= 2)
       printf ("first marker in %s is %s\n", brfiles[fileno].name, brfiles[fileno].curmarker.name2);
     if (! brfiles[fileno].no_ld)
@@ -608,7 +588,7 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
   fprintf (pplout, "# Version V%s\n", effective_version);
   if (partout != NULL)
     fprintf (partout, "# Version V%s\n", effective_version);
-  print_twopoint_headers (brfiles[0].no_ld, physicalpos);
+  print_twopoint_headers (brfiles[0].no_ld);
 
   while (1) {
     if (mapinfile != NULL) {
@@ -641,8 +621,6 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
       }
       current[numcurrent++] = &brfiles[fileno];
       compare_headers (current[0], &brfiles[fileno]);
-      if (physicalpos && current[0]->curmarker.basepair == -1)
-	current[0]->curmarker.basepair = brfiles[fileno].curmarker.basepair;
     }
     if (alldone)
       break;
@@ -732,7 +710,7 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
       current[0]->curmarker.femalepos = mapptr->femalepos;
       current[0]->curmarker.basepair = mapptr->basepair;
     }
-    print_twopoint_stats (current[0]->no_ld, physicalpos, &(current[0]->curmarker), &ldval);
+    print_twopoint_stats (current[0]->no_ld, &(current[0]->curmarker), &ldval);
 
     for (fileno = 0; fileno < numcurrent; fileno++) {
       if (&brfiles[0] == current[fileno]) {
@@ -760,28 +738,23 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 }
 
 
-void print_twopoint_headers (int no_ld, int physicalpos)
+void print_twopoint_headers (int no_ld)
 {
-  fprintf (pplout, "Chr Trait Marker Position%s", (physicalpos) ? " Physical" : "");
-  
   if (no_ld) {
-    fprintf (pplout, " PPL\n");
+    fprintf (pplout, "Chr Trait Marker Position PPL\n");
   } else {
-    if (bfout != NULL)
-      fprintf (bfout, "Chr Trait Marker Position");
-    
     if (pplinfile == NULL) {
-      fprintf (pplout, " PPL PPL(LD) PPLD|L PPLD(L)\n");
+      fprintf (pplout, "Chr Trait Marker Position PPL PPL(LD) PPLD|L PPLD(L)\n");
       if (bfout != NULL)
-	fprintf (bfout, " PPL(LD) PPLD|L PPLD(L)\n");
+	fprintf (bfout, "Chr Trait Marker Position PPL(LD) PPLD|L PPLD(L)\n");
     } else if (! allstats) {
-      fprintf (pplout, " PPLD(L) iPPL iPPLD(L)\n");
+      fprintf (pplout, "Chr Trait Marker Position PPLD(L) iPPL iPPLD(L)\n");
       if (bfout != NULL)
-	fprintf (bfout, " PPLD(L) cPPLD\n");
+	fprintf (bfout, "Chr Trait Marker Position PPLD(L) cPPLD\n");
     } else {
-      fprintf (pplout, " PPL PPL(LD) PPLD|L PPLD(L) iPPL cPPLD\n");
+      fprintf (pplout, "Chr Trait Marker Position PPL PPL(LD) PPLD|L PPLD(L) iPPL cPPLD\n");
       if (bfout != NULL)
-	fprintf (bfout, " PPL(LD) PPLD|L PPLD(L) cPPLD\n");
+	fprintf (bfout, "Chr Trait Marker Position PPL(LD) PPLD|L PPLD(L) cPPLD\n");
     }
   }
   if (sixout != NULL)
@@ -790,13 +763,11 @@ void print_twopoint_headers (int no_ld, int physicalpos)
 }
 
 
-void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_ldvals *ldval)
+void print_twopoint_stats (int no_ld, st_brmarker *marker, st_ldvals *ldval)
 {
-  double ldprior, ppl, ldstat;
+  double ldprior, ldstat;
 
   fprintf (pplout, "%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->avgpos);
-  if (physicalpos)
-    fprintf (pplout, " %ld", marker->basepair);
 
   if (no_ld) {
     fprintf (pplout, " %.3f", calc_upd_ppl (ldval));
@@ -805,22 +776,21 @@ void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_l
       fprintf (bfout, "%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->avgpos);
     
     if ((pplinfile == NULL) || (allstats)) {
-      ppl = calc_upd_ppl (ldval);
-      fprintf (pplout, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl, 3));
+      fprintf (pplout, " %.3f", calc_upd_ppl (ldval));
       ldstat = calc_upd_ppl_allowing_ld (ldval, DEFAULT_LDPRIOR);
-      fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+      fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
       ldstat = calc_upd_ppld_given_linkage (ldval, DEFAULT_LDPRIOR);
-      fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+      fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     }
     ldstat = calc_upd_ppld_allowing_l (ldval, DEFAULT_LDPRIOR);
-    fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+    fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     if (pplinfile != NULL) {
       if ((ldprior = get_ippl (marker->chr, marker->avgpos)) < MIN_PRIOR)
 	ldprior = MIN_PRIOR;
       if (verbose >= 2)
 	printf ("ippl is %.6e\n", ldprior);
       ldstat = calc_upd_ppld_allowing_l (ldval, ldprior);
-      fprintf (pplout, " %.4f %.*f", ldprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+      fprintf (pplout, " %.4f %.*f", ldprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat));
     }
     
     if (bfout != NULL)
@@ -1401,11 +1371,6 @@ int parse_command_line (int argc, char **argv)
     exit (-1);
   }
 
-  if ((multipoint) && (mapinfile != NULL)) {
-    fprintf (stderr, "%s: --mapin is nonsensical with --multipoint\n", pname);
-    exit (-1);
-  }
-
   if ((multipoint) && (allstats)) {
     fprintf (stderr, "%s: --allstats is nonsensical with --multipoint\n", pname);
     exit (-1);
@@ -1676,7 +1641,6 @@ int get_marker_line (st_brfile *brfile)
 	fprintf (stderr, "bad Physical in '%s', at line %d\n", brfile->name, brfile->lineno);
 	exit (-1);
       }
-      brfile->physical_pos = 1;
 
     } else if ((strcasecmp (pa, "Marker1:") == 0) || (strcasecmp (pa, "Position1:") == 0) ||
 	       (strcasecmp (pa, "Marker2:") == 0) || (strcasecmp (pa, "Position2:") == 0)) {
@@ -1795,18 +1759,10 @@ int get_header_line (st_brfile *brfile)
 #endif
       
     } else if ((strcasecmp (token, "Pos") == 0) || (strcasecmp (token, "Position") == 0)) {
-      /* Centimorgan position column */
+      /* The position column */
       brfile->datacols[brfile->numcols - 1] = POS_COL;
 #ifdef DEBUG
       printf ("position col\n");
-#endif
-      
-    } else if (strcasecmp (token, "Physical") == 0) {
-      /* Physical position column */
-      brfile->datacols[brfile->numcols - 1] = PHYS_COL;
-      brfile->physical_pos = 1;
-#ifdef DEBUG
-      printf ("physical col\n");
 #endif
       
     } else if ((strcasecmp (token, "Chr") == 0) || (strcasecmp (token, "Chromosome") == 0)) {
@@ -1850,12 +1806,12 @@ int get_header_line (st_brfile *brfile)
   } else if (brfile->numdprimes > 1) {
     brfile->holey_grid = 1;
   }
-
-#ifdef DEBUG
+  
+  #ifdef DEBUG
   for (numlrcols = 0; numlrcols < brfile->numcols; numlrcols++) {
     printf ("col %d is type %d\n", numlrcols, brfile->datacols[numlrcols]);
   }
-#endif
+  #endif
 
   return (1);
 }
@@ -1913,9 +1869,6 @@ int get_data_line (st_brfile *brfile, st_data *data)
     case POS_COL:
       marker->avgpos = strtod (pa, &endptr);
       break;
-    case PHYS_COL:
-      marker->basepair = strtol (pa, &endptr, 10);
-      break;
     case CHR_COL:
       endptr = strcpy (marker->chr, pa);
       break;
@@ -1938,9 +1891,6 @@ int get_data_line (st_brfile *brfile, st_data *data)
    */
   if ((brfile->two_point) && (brfile->no_ld))
     data->dprimes[0] = 0;
-
-  if (multipoint && ! brfile->physical_pos)
-    brfile->curmarker.basepair = -1;
 
 #ifdef DEBUG
   printf ("%5d: chr %s, pos %6.4f, dprimes", brfile->lineno, marker->chr, marker->avgpos);
