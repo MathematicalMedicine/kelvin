@@ -185,7 +185,7 @@ void insert_mapmarker (st_mapmarker *mrk)
   }
 
   if ((chr_p->nummarkers != 0) && (chr_p->markers[chr_p->nummarkers-1].avgpos > mrk->avgpos)) {
-    fprintf (stderr, "position '%f' out of order in '%s'\n", mrk->avgpos, mapfile);
+    fprintf (stderr, "marker '%s' out of order in '%s' (position %f less than preceding position %f\n)", mrk->name, mapfile, mrk->avgpos, chr_p->markers[chr_p->nummarkers-1].avgpos);
     exit (-1);
   }
   if ((chr_p->markers = realloc (chr_p->markers, sizeof (st_mapmarker) * (chr_p->nummarkers+1))) == NULL) {
