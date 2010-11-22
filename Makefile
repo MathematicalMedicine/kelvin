@@ -7,7 +7,7 @@
 ## doc/compileoptions.html
 
 ## Directory into which compiled executables and scripts will be installed.
-BINDIR=~/mykelvin
+BINDIR=/usr/local/bin
 
 ## User and group IDs by which installed execuatbles and scripts will be owned.
 OWNER=root
@@ -33,11 +33,11 @@ CC := gcc
 GCCOPT := 2
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
-USE_OPENMP := yes
+#USE_OPENMP := yes
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
-USE_GSL := yes
+#USE_GSL := yes
 
 ## Enable use of ptmalloc3. Don't forget to set LIBDIR (above) accordingly.
 ## Not available on OSX.
@@ -141,7 +141,7 @@ LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
 
 # Flags for BCMM use only
 
-#CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution, don't change, its a dist search target
+CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution, don't change, its a dist search target
 ifneq (,$(wildcard /usr/include/execinfo.h))
 #  CFLAGS += -DBACKTRACE # Add backtrace where supported
 endif
