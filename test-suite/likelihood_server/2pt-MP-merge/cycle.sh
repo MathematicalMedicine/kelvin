@@ -17,6 +17,7 @@
 #
 # $Id$
 #
+shopt -s expand_aliases
 set -x
 
 # Don't just quit if nothing is available -- wait for it.
@@ -24,7 +25,6 @@ alias qrsh="qrsh -now no "
 
 # These are for nodes other than Levi-Montalcini
 if test "$HOSTNAME" != "Levi-Montalcini" ; then
-    shopt -s expand_aliases
     alias qrsh="bash -c"
     alias nq="echo Not submitting: "
 fi

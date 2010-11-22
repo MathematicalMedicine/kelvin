@@ -21,10 +21,10 @@ set -x
 
 # Don't just quit if nothing is available -- wait for it.
 alias qrsh="qrsh -now no "
+shopt -s expand_aliases
 
 # These are for nodes other than Levi-Montalcini, where SGE is not available
 if test "$HOSTNAME" != "Levi-Montalcini" ; then
-    shopt -s expand_aliases
     alias qrsh="bash -c "
     alias nq="echo Not submitting: "
 fi
