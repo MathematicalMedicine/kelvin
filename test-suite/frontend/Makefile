@@ -11,6 +11,7 @@ test : ACTION := test
 test : $(TESTS)
 
 check :
+	$(MAKE) -C KelvinClasses -f Makefile test
 
 test-USE_DL :
 
