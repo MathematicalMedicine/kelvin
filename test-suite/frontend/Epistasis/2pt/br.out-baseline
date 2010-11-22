@@ -1,5 +1,5 @@
-# Version V2.1.0
-# Seq: 1 Chr: 40 Trait: disease Marker: Loci_1 Position: 0.0000
+# Version V2.1.2
+# Seq: 1 Chr: 40 Trait: disease Marker: Loci_1 Position: 0.0000 Physical: 100000
 Theta(M,F) BayesRatio
 (0.0023,0.0023) 1.513961e+00
 (0.0115,0.0115) 1.494406e+00
@@ -11,7 +11,7 @@ Theta(M,F) BayesRatio
 (0.2750,0.2750) 1.084249e+00
 (0.3962,0.3962) 1.020798e+00
 (0.4789,0.4789) 1.002670e+00
-# Seq: 2 Chr: 40 Trait: disease Marker: Loci_3 Position: 0.6400
+# Seq: 2 Chr: 40 Trait: disease Marker: Loci_3 Position: 0.6400 Physical: 200000
 Theta(M,F) BayesRatio
 (0.0023,0.0023) 1.085313e+00
 (0.0115,0.0115) 1.084366e+00
@@ -23,7 +23,7 @@ Theta(M,F) BayesRatio
 (0.2750,0.2750) 1.024124e+00
 (0.3962,0.3962) 1.005129e+00
 (0.4789,0.4789) 1.000206e+00
-# Seq: 3 Chr: 40 Trait: disease Marker: Loci_4 Position: 0.9700
+# Seq: 3 Chr: 40 Trait: disease Marker: Loci_4 Position: 0.9700 Physical: 300000
 Theta(M,F) BayesRatio
 (0.0023,0.0023) 1.269243e+00
 (0.0115,0.0115) 1.263401e+00
@@ -35,7 +35,7 @@ Theta(M,F) BayesRatio
 (0.2750,0.2750) 1.080507e+00
 (0.3962,0.3962) 1.026774e+00
 (0.4789,0.4789) 1.004063e+00
-# Seq: 4 Chr: 40 Trait: disease Marker: Loci_5 Position: 1.3500
+# Seq: 4 Chr: 40 Trait: disease Marker: Loci_5 Position: 1.3500 Physical: 400000
 Theta(M,F) BayesRatio
 (0.0023,0.0023) 1.556869e+00
 (0.0115,0.0115) 1.526487e+00
@@ -47,7 +47,7 @@ Theta(M,F) BayesRatio
 (0.2750,0.2750) 1.046582e+00
 (0.3962,0.3962) 9.896083e-01
 (0.4789,0.4789) 9.934595e-01
-# Seq: 5 Chr: 40 Trait: disease Marker: Loci_6 Position: 1.6600
+# Seq: 5 Chr: 40 Trait: disease Marker: Loci_6 Position: 1.6600 Physical: 500000
 Theta(M,F) BayesRatio
 (0.0023,0.0023) 1.233971e+00
 (0.0115,0.0115) 1.222355e+00
@@ -59,7 +59,7 @@ Theta(M,F) BayesRatio
 (0.2750,0.2750) 1.003814e+00
 (0.3962,0.3962) 9.810602e-01
 (0.4789,0.4789) 9.930850e-01
-# Seq: 6 Chr: 40 Trait: disease Marker: Loci_8 Position: 2.3100
+# Seq: 6 Chr: 40 Trait: disease Marker: Loci_8 Position: 2.3100 Physical: 700000
 Theta(M,F) BayesRatio
 (0.0023,0.0023) 9.533419e-01
 (0.0115,0.0115) 9.538930e-01
@@ -71,7 +71,7 @@ Theta(M,F) BayesRatio
 (0.2750,0.2750) 9.619772e-01
 (0.3962,0.3962) 9.750039e-01
 (0.4789,0.4789) 9.935903e-01
-# Seq: 7 Chr: 40 Trait: disease Marker: Loci_9 Position: 2.6600
+# Seq: 7 Chr: 40 Trait: disease Marker: Loci_9 Position: 2.6600 Physical: 800000
 Theta(M,F) BayesRatio
 (0.0023,0.0023) 9.433490e-01
 (0.0115,0.0115) 9.467466e-01
@@ -83,7 +83,7 @@ Theta(M,F) BayesRatio
 (0.2750,0.2750) 9.952355e-01
 (0.3962,0.3962) 9.994346e-01
 (0.4789,0.4789) 9.999869e-01
-# Seq: 8 Chr: 40 Trait: disease Marker: Loci_10 Position: 3.0200
+# Seq: 8 Chr: 40 Trait: disease Marker: Loci_10 Position: 3.0200 Physical: 900000
 Theta(M,F) BayesRatio
 (0.0023,0.0023) 1.711250e+00
 (0.0115,0.0115) 1.685698e+00
