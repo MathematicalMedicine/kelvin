@@ -266,7 +266,7 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindSignOn[8], studyDB.markerCount, MYSQL_TYPE_LONG);
   BINDSTRING (studyDB.bindSignOn[9], studyDB.programVersion, sizeof (studyDB.programVersion));
 
-  strncpy (studyDB.strSignOn, "Insert into Servers (HostName, ProcessId, KeepAliveFlag, StudyId, PedigreeRegEx, PedigreeNotRegEx, ChromosomeNo, Algorithm, MarkerCount, ProgramVersion) values (?,?,?,?,?,?,?,?,?,?)", MAXSTMTLEN-1);
+  strncpy (studyDB.strSignOn, "Insert into Servers (ConnectionId, HostName, ProcessId, KeepAliveFlag, StudyId, PedigreeRegEx, PedigreeNotRegEx, ChromosomeNo, Algorithm, MarkerCount, ProgramVersion) values (connection_id(),?,?,?,?,?,?,?,?,?,?)", MAXSTMTLEN-1);
   if (mysql_stmt_prepare (studyDB.stmtSignOn, studyDB.strSignOn, strlen (studyDB.strSignOn)))
     ERROR("Cannot prepare sign-on insert statement (%s)", mysql_stmt_error(studyDB.stmtSignOn));
   if (mysql_stmt_bind_param (studyDB.stmtSignOn, studyDB.bindSignOn))
