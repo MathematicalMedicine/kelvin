@@ -80,7 +80,8 @@
 
  This module consists of support routines that are called by
  Kelvin's main driver and likelihood calculation components and as
- such is not intended for separate use.
+ such is not intended for separate use.  For detailed instructions on
+ usage, please see the Kelvin documentation.
 
  LIMITATIONS:
 
