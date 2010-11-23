@@ -1,33 +1,33 @@
-# Version V2.2.0
-# Seq: 1 Chr: 40 Trait: disease Marker: Loci_1 Position: 0.0000
+# Version V2.2.0 edit 3449:3493M
+# Seq: 1 Chr: 40 Trait: disease Marker: Loci_1 Position: 0.0000 Physical: 100000
 Case MOD Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd) LC2PV(DD,Dd,dd) LC3PV(DD,Dd,dd)
 MOD(Overall) 1.7042 (0.0023,0.0023) 0.95 0.5000 (0.978,0.489,0.011) (0.978,0.489,0.011) (0.500,0.011,0.006)
 MOD(Theta==0) 1.7042 (0.0023,0.0023) 0.95 0.5000 (0.978,0.489,0.011) (0.978,0.489,0.011) (0.500,0.011,0.006)
-# Seq: 2 Chr: 40 Trait: disease Marker: Loci_3 Position: 0.6400
+# Seq: 2 Chr: 40 Trait: disease Marker: Loci_3 Position: 0.6400 Physical: 200000
 Case MOD Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd) LC2PV(DD,Dd,dd) LC3PV(DD,Dd,dd)
 MOD(Overall) 0.4443 (0.0023,0.0023) 0.95 0.9780 (0.500,0.250,0.125) (0.978,0.489,0.011) (0.978,0.489,0.011)
 MOD(Theta==0) 0.4443 (0.0023,0.0023) 0.95 0.9780 (0.500,0.250,0.125) (0.978,0.489,0.011) (0.978,0.489,0.011)
-# Seq: 3 Chr: 40 Trait: disease Marker: Loci_4 Position: 0.9700
+# Seq: 3 Chr: 40 Trait: disease Marker: Loci_4 Position: 0.9700 Physical: 300000
 Case MOD Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd) LC2PV(DD,Dd,dd) LC3PV(DD,Dd,dd)
 MOD(Overall) 0.9169 (0.0477,0.0477) 0.95 0.5000 (0.978,0.956,0.021) (0.978,0.956,0.021) (0.500,0.250,0.125)
 MOD(Theta==0) 0.8763 (0.0023,0.0023) 0.95 0.5000 (0.978,0.956,0.021) (0.978,0.956,0.021) (0.500,0.250,0.125)
-# Seq: 4 Chr: 40 Trait: disease Marker: Loci_5 Position: 1.3500
+# Seq: 4 Chr: 40 Trait: disease Marker: Loci_5 Position: 1.3500 Physical: 400000
 Case MOD Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd) LC2PV(DD,Dd,dd) LC3PV(DD,Dd,dd)
 MOD(Overall) 1.0512 (0.0023,0.0023) 0.95 0.9780 (0.978,0.022,0.011) (0.500,0.250,0.125) (0.500,0.250,0.125)
 MOD(Theta==0) 1.0512 (0.0023,0.0023) 0.95 0.9780 (0.978,0.022,0.011) (0.500,0.250,0.125) (0.500,0.250,0.125)
-# Seq: 5 Chr: 40 Trait: disease Marker: Loci_6 Position: 1.6600
+# Seq: 5 Chr: 40 Trait: disease Marker: Loci_6 Position: 1.6600 Physical: 500000
 Case MOD Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd) LC2PV(DD,Dd,dd) LC3PV(DD,Dd,dd)
 MOD(Overall) 2.0180 (0.0023,0.0023) 0.95 0.5000 (0.978,0.956,0.478) (0.500,0.011,0.006) (0.500,0.011,0.006)
 MOD(Theta==0) 2.0180 (0.0023,0.0023) 0.95 0.5000 (0.978,0.956,0.478) (0.500,0.011,0.006) (0.500,0.011,0.006)
-# Seq: 6 Chr: 40 Trait: disease Marker: Loci_8 Position: 2.3100
+# Seq: 6 Chr: 40 Trait: disease Marker: Loci_8 Position: 2.3100 Physical: 700000
 Case MOD Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd) LC2PV(DD,Dd,dd) LC3PV(DD,Dd,dd)
 MOD(Overall) 0.2265 (0.0023,0.0023) 0.95 0.0220 (0.978,0.022,0.011) (0.500,0.250,0.125) (0.500,0.250,0.125)
 MOD(Theta==0) 0.2265 (0.0023,0.0023) 0.95 0.0220 (0.978,0.022,0.011) (0.500,0.250,0.125) (0.500,0.250,0.125)
-# Seq: 7 Chr: 40 Trait: disease Marker: Loci_9 Position: 2.6600
+# Seq: 7 Chr: 40 Trait: disease Marker: Loci_9 Position: 2.6600 Physical: 800000
 Case MOD Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd) LC2PV(DD,Dd,dd) LC3PV(DD,Dd,dd)
 MOD(Overall) 0.7168 (0.0023,0.0023) 0.95 0.5000 (0.978,0.489,0.244) (0.978,0.489,0.244) (0.022,0.000,0.000)
 MOD(Theta==0) 0.7168 (0.0023,0.0023) 0.95 0.5000 (0.978,0.489,0.244) (0.978,0.489,0.244) (0.022,0.000,0.000)
-# Seq: 8 Chr: 40 Trait: disease Marker: Loci_10 Position: 3.0200
+# Seq: 8 Chr: 40 Trait: disease Marker: Loci_10 Position: 3.0200 Physical: 900000
 Case MOD Theta(M,F) Alpha DGF LC1PV(DD,Dd,dd) LC2PV(DD,Dd,dd) LC3PV(DD,Dd,dd)
 MOD(Overall) 1.7681 (0.0477,0.0477) 0.95 0.5000 (0.978,0.956,0.478) (0.500,0.011,0.006) (0.500,0.011,0.006)
 MOD(Theta==0) 1.6236 (0.0023,0.0023) 0.95 0.5000 (0.978,0.956,0.478) (0.500,0.250,0.006) (0.500,0.250,0.006)
