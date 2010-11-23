@@ -75,6 +75,9 @@ void kelvinInit (int argc, char *argv[])
 #ifdef DMTRACK
   INFO ("Dynamic memory usage dumping is turned on, so performance will be poor!");
 #endif
+#ifdef STUDYDB
+  INFO ("Likelihood Server version!");
+#endif
 
 #ifdef USE_GSL
   INFO ("Using GNU Scientific Library (GSL) statistical functions instead of internal ones");
