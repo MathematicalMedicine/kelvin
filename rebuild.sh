@@ -63,6 +63,11 @@ make clean
 make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DPOLYUSE_DL -DPOLYCODE_DL -DPOLYCOMP_DL" ADD_LDFLAGS="-ldl $PTMALLOC3 -lgsl -lgslcblas -lm" kelvin
 mv kelvin-$VERSION kelvin-$VERSION-POLYCOMP_DL
 
+# Likelihood server build.
+make clean
+make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DUSE_GSL -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql" ADD_LDFLAGS="-ldl $PTMALLOC3 -lgsl -lgslcblas -lm -lrt -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql" kelvin
+mv kelvin-$VERSION kelvin-$VERSION-study
+
 make clean
 make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT $OPENMP -DMEMGRAPH -DUSE_GSL" ADD_LDFLAGS="-ldl $PTMALLOC3 -lgsl -lgslcblas -lm" kelvin
 cp kelvin-$VERSION kelvin-$VERSION-normal
