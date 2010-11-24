@@ -1256,7 +1256,7 @@ If you get a "bad system call" from cygwin using this, you need to do two things
 void swDiagInit(void) {
   int i;
   swProgressDelaySeconds = 120; ///< Default of two minutes delay between progress notifications
-#if defined(DISTRIBUTION) || defined(__CYGWIN__)
+#if defined(DISTRIBUTION) || defined(__CYGWIN__) || !defined(USESHM)
   envDiagLevel = (int *) malloc(sizeof (int) * MAX_DIAG_FACILITY);
 #else
   if ((swSharedDiagMemoryID = shmget ((key_t) getpid (), sizeof (int) * MAX_DIAG_FACILITY, 0666|IPC_CREAT)) == -1)
@@ -1273,7 +1273,7 @@ void swDiagInit(void) {
 }
 
 void swDiagTerm(void) {
-#if defined(DISTRIBUTION) || defined(__CYGWIN__)
+#if defined(DISTRIBUTION) || defined(__CYGWIN__) || !defined(USESHM)
 #else
   if (shmdt ((void *) envDiagLevel) != 0)
     ERROR ("Cannot detach shared memory segment, use ipcrm to clean-up");
