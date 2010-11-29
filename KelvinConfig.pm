@@ -38,7 +38,7 @@ undef on failure.
 
 package KelvinConfig;
 our $errstr='';
-our $VERSION=1.0;
+our $VERSION=1.1;
 
 
 # The %directive hash: The keys are lowercased versions of the 

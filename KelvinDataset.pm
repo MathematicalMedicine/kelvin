@@ -9,7 +9,7 @@ use KelvinFamily;
 #
 package KelvinDataset;
 our $errstr='';
-our $VERSION=1.0;
+our $VERSION=1.1;
 
 my $ROUNDING_ERROR=0.0001;
 
