@@ -149,16 +149,17 @@ sub perform_study
 #	print Dumper($ped);
 	my $PedigreeSId = $$ped{pedid};
 	if (uc $StudyRole eq "CLIENT") {
-	    # Client -- just slam 'em in, don't care if this fails with duplicates...
+	    # Client -- just slam 'em in, don't care if this fails with duplicates...NOTE that
+            # Inclusion and exclusion regexps are ignored since the kelvin client processes
+            # all pedigrees. Only servers have a restricted view.
 	    $dbh->do("Insert ignore into Pedigrees (StudyId, PedigreeSId) values (?,?)",
-		     undef, $StudyId, $PedigreeSId)
-		if (($PedigreeSId =~ $PedigreeRegEx) && ($PedigreeSId !~ $PedigreeNotRegEx))
+		     undef, $StudyId, $PedigreeSId);
 	} else {
 	    # Server -- no worries about errors here either...
 	    
 	    $dbh->do("Update ignore Pedigrees set GenotypeMapId = ? where StudyId = ? AND PedigreeSId = ?",
 		     undef, $MapId, $StudyId, $PedigreeSId)
-		if (($PedigreeSId =~ $PedigreeRegEx) && ($PedigreeSId !~ $PedigreeNotRegEx))
+		if (($PedigreeSId =~ $PedigreeRegEx) && ($PedigreeSId !~ $PedigreeNotRegEx));
 	}
     }
     (! defined ($ped)) and error ($KelvinDataset::errstr);
