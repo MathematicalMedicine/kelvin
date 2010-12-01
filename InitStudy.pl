@@ -151,7 +151,8 @@ sub perform_study
 	if (uc $StudyRole eq "CLIENT") {
 	    # Client -- just slam 'em in, don't care if this fails with duplicates...
 	    $dbh->do("Insert ignore into Pedigrees (StudyId, PedigreeSId) values (?,?)",
-		     undef, $StudyId, $PedigreeSId);
+		     undef, $StudyId, $PedigreeSId)
+		if (($PedigreeSId =~ $PedigreeRegEx) && ($PedigreeSId !~ $PedigreeNotRegEx))
 	} else {
 	    # Server -- no worries about errors here either...
 	    
