@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use KelvinIO;
-use KelvinFamily;
+use KelvinFamily 1.2;
 
 #
 # KelvinDataset: an object for managing a Kelvin-compatible marker files
@@ -9,7 +9,7 @@ use KelvinFamily;
 #
 package KelvinDataset;
 our $errstr='';
-our $VERSION=1.1;
+our $VERSION=1.2;
 
 my $ROUNDING_ERROR=0.0001;
 
@@ -43,6 +43,7 @@ sub new
     #   microsats: dataset contains microsatellites?
     #   snps: dataset contains snps?
     #   individualcache: cache for KelvinIndividuals when reading families
+    #   pedwriteformat: 'pre' or 'post'
     
     @$self{qw/markers traits maporder/} = ({}, {}, []);
     @$self{qw/markerorder traitorder mapfields/} = ([], [], []);
@@ -50,7 +51,7 @@ sub new
     @$self{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
     @$self{qw/pedigreefile pedfh pedlineno/} = (undef, undef, 0);
     @$self{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
-    @$self{qw/microsats snps individualcache/} = (0, 0, undef);
+    @$self{qw/microsats snps individualcache pedwriteformat/} = (0, 0, undef, 'post');
  
     if (! defined ($arg)) {
 	$errstr = "missing argument";
@@ -105,7 +106,7 @@ sub copy
     @$new{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
     @$new{qw/pedigreefile pedfh pedlineno/} = (undef, undef, 0);
     @$new{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
-    $$new{individualcache} = undef;
+    @$new{qw/individualcache pedwriteformat/} = (undef, 'post');
 
     if (defined ($arg)) {
 	if (ref ($arg) ne 'HASH') {
@@ -884,6 +885,7 @@ sub writePedigreefile
     my ($self, $arg) = @_;
     my $pedfile = $$self{pedigreefile};
     my $backupfile = 1;
+    my $premakeped = 0;
     my $marker;
     my $trait;
     my $va;
@@ -894,6 +896,7 @@ sub writePedigreefile
 	    foreach (keys (%$arg)) {
 		if (/^ped/i) { $pedfile = $$arg{$_}; }
 		elsif (/^backup/i) { $backupfile = $$arg{$_}; }
+		elsif (/^premakeped/i) { $premakeped = $$arg{$_}; }
 		else {
 		    $errstr = "illegal argument '$_'";
 		    return (undef);
@@ -931,6 +934,7 @@ sub writePedigreefile
     $$self{pedigreefile} = $pedfile;
     $$self{writing} = 1;
     $$self{pedlineno} = 0;
+    ($premakeped) and $$self{pedwriteformat} = 'pre';
     return (1);
 }
 

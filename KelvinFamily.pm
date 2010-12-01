@@ -6,7 +6,7 @@ use strict;
 #
 package KelvinFamily;
 our $errstr='';
-our $VERSION=1.1;
+our $VERSION=1.2;
 
 sub new
 {
@@ -718,16 +718,23 @@ sub write
 {
     my ($self) = @_;
     my $dataset = $$self{dataset};
-    my $origtext = '';
 
     if (! (defined ($$dataset{pedfh}) || $$dataset{writing})) {
 	$dataset->writePedigreefile
 	    or return (undef);
     }
-    (defined ($$self{origpedid}) && defined ($$self{origindid}))
-	and $origtext = "  Ped: $$self{origpedid}  Per: $$self{origindid}";
-    
-    $$dataset{pedfh}->print (join (' ', @$self{qw/pedid indid dadid momid firstchildid patsibid matsibid sex proband/}, @{$$self{traits}}, map { "$$_[0] $$_[1]" } @{$$self{markers}}), $origtext, "\n");
+
+    if ($$dataset{pedwriteformat} eq 'post') {
+	# Write post-MAKEPED format. Don't care what the input format was.
+
+	$$dataset{pedfh}->print (join (' ', @$self{qw/pedid indid dadid momid firstchildid patsibid matsibid sex proband/}, @{$$self{traits}}, map { "$$_[0] $$_[1]" } @{$$self{markers}}), "  Ped: $$self{origpedid}  Per: $$self{origindid}\n");
+
+    } else {
+	# Write pre-MAKEPED format from post-MAKEPED input.
+
+	$$dataset{pedfh}->print (join (' ', @$self{qw/pedid indid dadid momid sex/}, @{$$self{traits}}, map { "$$_[0] $$_[1]" } @{$$self{markers}}), "\n");
+
+    }
     return (1);
 }
 
