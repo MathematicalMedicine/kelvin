@@ -12,11 +12,11 @@ if test "$HOSTNAME" != "Levi-Montalcini" ; then
 fi
 
 # Setup database tables
-perl ~/kelvin/trunk/InitStudy.pl client.conf
-perl ~/kelvin/trunk/InitStudy.pl server.conf
+perl $KELVIN_ROOT/InitStudy.pl client.conf
+perl $KELVIN_ROOT/InitStudy.pl server.conf
 
 # Initial full run of client
-qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+qrsh -cwd -b y $KELVIN_ROOT/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0
 
 # Grab STUDY directive for database parameters
 study=$(grep -i ^Study client.conf)
@@ -27,11 +27,7 @@ cp client.conf client-newTP.conf
 while :
 do
 
-
-  # PUT YOUR SERVERS HERE, PREFERABLY BLOCKING.  FOR THE MOMENT I'M GOING TO EXIT HERE, BUT YOU'LL WANT TO LOOP
-  exit
-
-
+  perl -I$KELVIN_ROOT $KELVIN_ROOT/merlin_lk_server.pl server.conf
 
   # Make sure that nothing remains undone
   while :
@@ -49,7 +45,7 @@ do
     sleep 300
   done
   # Run the client to see if any splits occur
-  qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+  qrsh -cwd -b y $KELVIN_ROOT/kelvin-2.2.0-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0
   grep WARNING br.out || { break; }
   # Get the new set of trait positions
   TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct RefTraitPosCM from Regions where StudyId = $2 AND RefTraitPosCM >= 0 AND PendingLikelihoods > 0;" | tr "\n" " ")
