@@ -3,7 +3,7 @@ test :
 	(time $(KELVIN_SCRIPT) kelvin.conf) >kelvin.out 2>&1
 	#diff -ib ped.post.counted ped.post.counted-baseline
 	#diff -ib ped.post.counts ped.post.counts-baseline
-	diff -ibB kelvin.freq freq.dat-baseline
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl kelvin.freq freq.dat-baseline 0
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out ppl.out-baseline .000001
 
