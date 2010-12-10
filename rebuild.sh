@@ -45,17 +45,16 @@ mv kelvin-$VERSION kelvin-$VERSION-POLYUSE_DL
 
 # Best reliable method for preparing code for DLs. Need to compile separately and then evaluate.
 # Notice no OpenMP, as it gains no speed and loses us lots of memory.
-make clean
+#make clean
 #make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DPOLYUSE_DL -DPOLYCODE_DL -DFAKEEVALUATE  -I/usr/local/mysql/include -I/usr/include/mysql" ADD_LDFLAGS="-g -ldl $PTMALLOC3 -lgsl -lgslcblas -lm  -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql"  kelvin
-make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DPOLYUSE_DL -DPOLYCODE_DL -DFAKEEVALUATE"  ADD_LDFLAGS="-g -ldl $PTMALLOC3 -lgsl -lgslcblas -lm "  kelvin
-mv kelvin-$VERSION kelvin-$VERSION-POLYCODE_DL-FAKEEVALUATE
+#make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DPOLYUSE_DL -DPOLYCODE_DL -DFAKEEVALUATE"  ADD_LDFLAGS="-g -ldl $PTMALLOC3 -lgsl -lgslcblas -lm "  kelvin
+#mv kelvin-$VERSION kelvin-$VERSION-POLYCODE_DL-FAKEEVALUATE
 
 # Best experimental method for preparing LARGE DLs. Need to compile separately then evaluate.
 # Notice no OpenMP, as it gains no speed and loses us lots of memory.
-make clean
-#make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DUSE_SSD -DPOLYUSE_DL -DPOLYCODE_DL -DFAKEEVALUATE -I/usr/local/mysql/include -I/usr/include/mysql" ADD_LDFLAGS="-g -ldl $PTMALLOC3 -lgsl -lgslcblas -lm  -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql"  kelvin
-make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DUSE_SSD -DPOLYUSE_DL -DPOLYCODE_DL -DFAKEEVALUATE"  ADD_LDFLAGS="-g -ldl $PTMALLOC3 -lgsl -lgslcblas -lm "  kelvin
-mv kelvin-$VERSION kelvin-$VERSION-POLYCODE_DL-FAKEEVALUATE-SSD
+#make clean
+#make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DUSE_SSD -DPOLYUSE_DL -DPOLYCODE_DL -DFAKEEVALUATE"  ADD_LDFLAGS="-g -ldl $PTMALLOC3 -lgsl -lgslcblas -lm "  kelvin
+#mv kelvin-$VERSION kelvin-$VERSION-POLYCODE_DL-FAKEEVALUATE-SSD
 
 # Build, code and then compile and evaluate DLs. Works fine for small polynomials.
 # Notice no OpenMP, as it gains no speed and loses us lots of memory.
