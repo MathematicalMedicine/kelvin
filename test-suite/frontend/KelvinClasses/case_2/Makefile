@@ -1,10 +1,10 @@
 test :
 	- rm -rf *.new*
 	perl -I $(KELVIN_ROOT) classtest.pl
-	diff -bB ped.post.new.1 ped.post-test1
-	diff -bB ped.post.new.2 ped.post-test2
-	diff -bB ped.pre.new.1 ped.pre-test1
-	diff -bB ped.pre.new.2 ped.pre-test2
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl ped.post.new.1 ped.post-test1 0
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl ped.post.new.2 ped.post-test2 0
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl ped.pre.new.1 ped.pre-test1 0
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl ped.pre.new.2 ped.pre-test2 0
 
 clean :
 	- rm -rf *.new*
