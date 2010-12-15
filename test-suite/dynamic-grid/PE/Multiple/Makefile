@@ -1,7 +1,5 @@
 test :
 	- rm -f br.out br.tmp br.split ppl.out kelvin.out*
-	set >env.out 2>&1
-	ldd $(TEST_KELVIN) >libs.out 2>&1
 	$(TEST_KELVIN) kelvin.conf >kelvin.out 2>&1
 	$(TEST_KELVIN) kelvin.conf --PedigreeFile ped.post.1 --LocusFile locus.dat.1 \
 		--BayesRatioFile br.split >>kelvin.out 2>&1
