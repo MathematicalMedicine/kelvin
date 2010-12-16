@@ -249,7 +249,8 @@ while (<IN>) {
 	my $old = $1;
 	my $new;
 	my $scale = 0.001;
-	$scale = 10**(int(log(abs($old))/log(10)) - 2) if (abs($old) >= 1.0);
+#	$scale = 10**(int(log(abs($old))/log(10)) - 2) if (abs($old) >= 1.0);
+	$scale = 10**(-length((split(/\./, "$old"))[1]));
         # Exact match for enumerated HLODs within +/-5%
 	$new = sprintf("(%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f)",
 		       $1-(6*$scale), $1-(5*$scale), $1-(4*$scale), $1-(3*$scale), $1-(2*$scale), $1-$scale, $1, 
