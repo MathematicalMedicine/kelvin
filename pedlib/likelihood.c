@@ -29,8 +29,10 @@ char *likelihoodVersion = "$Id$";
 #include "likelihood.h"
 #include "genotype_elimination.h"
 
+#ifdef STUDYDB
 #include "../dcuhre.h"
 extern dcuhre_state *s;
+#endif
 
 #ifdef _OPENMP
 #include <omp.h>
