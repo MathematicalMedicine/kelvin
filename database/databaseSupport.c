@@ -144,6 +144,8 @@ struct StudyDB studyDB;
 int dBInitNotDone = TRUE, dBStmtsNotReady = TRUE;
 
 void initializeDB () {
+  unsigned int connectionTimeoutInSec = 3*24*60*60;
+  my_bool booleanFlag = 0;
 
   /* Initialize structure for a MySQL connection. */
   if ((studyDB.connection = mysql_init(NULL)) == NULL)
@@ -152,14 +154,22 @@ void initializeDB () {
   /* Weird problem connecting to Walker. Error 2003, message 110. No log entry. Only happens once in a while, so
      we're just going to try to avoid it by attempting connection multiple times with intervening delays. */
   int retries = 3;
-  while ((--retries > 0) && (!mysql_real_connect(studyDB.connection, studyDB.dBHostname, studyDB.username, studyDB.password, 
-						 NULL, 0, NULL, CLIENT_MULTI_RESULTS /* Important discovery here */))) {
-    WARNING("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%d: %s) with attempt %d", studyDB.dBHostname, 
-	    studyDB.username, studyDB.password, mysql_errno(studyDB.connection), mysql_error(studyDB.connection), 3-retries);
+  do {
+    if (retries < 3) // Must have failed on a previious trip thru here
+      WARNING("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%d: %s) with attempt %d", studyDB.dBHostname, 
+	      studyDB.username, studyDB.password, mysql_errno(studyDB.connection), mysql_error(studyDB.connection), 3-retries);
+    /* (Re)set any connection options, like disconnect timeout, and to try to reconnect. */
+    if (mysql_options(studyDB.connection, MYSQL_OPT_CONNECT_TIMEOUT, (void *) &connectionTimeoutInSec))
+      ERROR("Cannot set MySQL connection timeout (%s)", mysql_error(studyDB.connection));
+    booleanFlag = TRUE;
+    if (mysql_options(studyDB.connection, MYSQL_OPT_RECONNECT, (void *) &booleanFlag))
+      ERROR("Cannot ensure MySQL reconnection (%s)", mysql_error(studyDB.connection));
     sleep(10);
-  }
+  } while ((--retries > 0) && (!mysql_real_connect(studyDB.connection, studyDB.dBHostname, studyDB.username, studyDB.password, 
+						   NULL, 0, NULL, CLIENT_MULTI_RESULTS /* Important discovery here */)));
   if (retries <= 0)
-    ERROR("Failed to connect to database after 3 tries and 10 second delays");
+    ERROR("Failed final attempt to connect to MySQL on hostname [%s] as username [%s/%s] (%d: %s)", studyDB.dBHostname, 
+	    studyDB.username, studyDB.password, mysql_errno(studyDB.connection), mysql_error(studyDB.connection));
 
   /* Change database. */
   if (mysql_select_db(studyDB.connection, studyDB.dBName))
