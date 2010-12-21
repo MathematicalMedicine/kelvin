@@ -493,7 +493,7 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
       }
       if(pLocus->pAlleleFrequency[j] > 1-sum+0.0000001 || pLocus->pAlleleFrequency[j] < 1-sum-0.0000001) {
 	if(pLocus->pAlleleFrequency[j] - (1-sum) > 0.001 || pLocus->pAlleleFrequency[j] - (1-sum) < -0.001) {
-	  ERROR("The discrepancy of the sum of AFs and 1 is too big (>0.001). Exiting!");
+	  ERROR("The discrepancy of the sum of AFs %8.6f and 1 is too big (>0.001) at locus %s. Exiting!", sum+pLocus->pAlleleFrequency[j], pLocus->sName);
 	}
 	else {
 	  WARNING("Allele frequencies for %s don't sum to 1. AF for allele %s has been adjusted from %8.6f to %8.6f!",
