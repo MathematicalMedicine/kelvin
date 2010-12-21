@@ -210,7 +210,7 @@ close IN;
 system('rm LRTest-* > /dev/null 2>&1');
 
 # Generate all of the kelvin configuration variations and run them
-my $searchFormat = " " . ("%5.3f " x $paramCnt) . "%d";
+my $searchFormat = " " . ("%7.5f " x $paramCnt) . "%d";
 for my $i (0..($offset - 1)) {
     my $commandLine = '$TEST_KELVIN kelvin.conf --FixedModels';
 #    print "Test from line ".$PsLine[$i]." has HLOD ".
@@ -229,7 +229,7 @@ for my $i (0..($offset - 1)) {
     my $searchLine = sprintf($searchFormat, @{ $PsTSV[$i] }, $PsTSV[$i][$paramCnt]);
     $searchLine .= '$';
     print "Limit by [$searchLine]\n";
-    $commandLine = "egrep \'$searchLine\' LRTest-$i.Dat >LRTest-$i.Fix";
+    $commandLine = "egrep \"$searchLine\" LRTest-$i.Dat >LRTest-$i.Fix";
     (system($commandLine) == 0) or die "ERROR, Couldn't run \'$commandLine\'\n";
 }
 
@@ -252,9 +252,12 @@ while (<IN>) {
 #	$scale = 10**(int(log(abs($old))/log(10)) - 2) if (abs($old) >= 1.0);
 	$scale = 10**(-length((split(/\./, "$old"))[1]));
         # Exact match for enumerated HLODs within +/-5%
-	$new = sprintf("(%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f)",
-		       $1-(6*$scale), $1-(5*$scale), $1-(4*$scale), $1-(3*$scale), $1-(2*$scale), $1-$scale, $1, 
-		       $1+$scale, $1+(2*$scale), $1+(3*$scale), $1+(4*$scale), $1+(5*$scale), $1+(6*$scale));
+#	$new = sprintf("(%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f)",
+#		       $1-(6*$scale), $1-(5*$scale), $1-(4*$scale), $1-(3*$scale), $1-(2*$scale), $1-$scale, $1, 
+#		       $1+$scale, $1+(2*$scale), $1+(3*$scale), $1+(4*$scale), $1+(5*$scale), $1+(6*$scale));
+#	$new = sprintf("(5.3f|%5.3f|%5.3f|%5.3f|%5.3f)",
+#		       $1-(2*$scale), $1-$scale, $1, $1+$scale, $1+(2*$scale));
+	$new = sprintf("(%5.3f|%5.3f|%5.3f)", $1-$scale, $1, $1+$scale);
 	$new =~ s/( \-)0.000/ 0.000|-0.000/g;
 #	print "HLOD is [$old], using $new\n";
 	s/$old/$new/;
