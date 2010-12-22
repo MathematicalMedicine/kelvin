@@ -70,7 +70,7 @@ cp kelvin-$VERSION kelvin-$VERSION-normal
 if test "$HOSTNAME" = "Levi-Montalcini" ; then
     # Likelihood server build.
     make clean
-    make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DUSE_GSL -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql" ADD_LDFLAGS="-g -ldl $PTMALLOC3 -lgsl -lgslcblas -lm -lrt -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql" kelvin
+    make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DUSE_GSL -DUSE_STUDYDB -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql" ADD_LDFLAGS="-g -ldl $PTMALLOC3 -lgsl -lgslcblas -lm -lrt -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql" kelvin
     mv kelvin-$VERSION kelvin-$VERSION-study
 fi
 
