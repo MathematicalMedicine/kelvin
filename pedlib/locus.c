@@ -402,6 +402,8 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
   int allele = 1;
   double freq;
   char sAlleleName[MAX_LINE_LEN];
+  int j;
+  double sum;
 
 
   fp = fopen (sMarkerfileName, "r");
@@ -480,6 +482,27 @@ read_markerfile (char *sMarkerfileName, int requiredMarkerCount)
 	   markerCount, requiredMarkerCount, sMarkerfileName);
 
   fclose (fp);
+
+  // force the allele frequency to sum up to 1 under LD
+  if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
+    for (i = 0; i < originalLocusList.numLocus; i++) {
+      pLocus = originalLocusList.ppLocusList[i];
+      sum=0;
+      for (j=0; j < pLocus->numOriginalAllele-1; j++) {
+	sum += pLocus->pAlleleFrequency[j]; 
+      }
+      if(pLocus->pAlleleFrequency[j] > 1-sum+0.0000001 || pLocus->pAlleleFrequency[j] < 1-sum-0.0000001) {
+	if(pLocus->pAlleleFrequency[j] - (1-sum) > 0.001 || pLocus->pAlleleFrequency[j] - (1-sum) < -0.001) {
+	  ERROR("The discrepancy of the sum of AFs %8.6f and 1 is too big (>0.001) at locus %s. Exiting!", sum+pLocus->pAlleleFrequency[j], pLocus->sName);
+	}
+	else {
+	  WARNING("Allele frequencies for %s don't sum to 1. AF for allele %s has been adjusted from %8.6f to %8.6f!",
+		  pLocus->sName, pLocus->ppAlleleNames[j], pLocus->pAlleleFrequency[j], 1-sum);
+	}
+      }
+      pLocus->pAlleleFrequency[j]=1-sum;
+    }
+  }
   return 0;
 }
 
@@ -1888,7 +1911,8 @@ setup_LD_haplotype_freq (LDLoci * pLDLociParam, LambdaCell * pCell, int dprimeId
     else
       pCell->haploFreq[dprimeIdx][i][j] = p1 - sum;
     if ((p1 - sum) < 0) {
-      WARNING ("Haplotype frequency is NEGATIVE - %s", pBuf1);
+      WARNING ("Haplotype frequency is NEGATIVE - %s between locus %s and locus %s", 
+	       pBuf1, pLocus1->sName, pLocus2->sName);
       return -1;
     }
   }				/* end of looping the first marker allele frequencies */
@@ -1906,7 +1930,8 @@ setup_LD_haplotype_freq (LDLoci * pLDLociParam, LambdaCell * pCell, int dprimeId
     else
       pCell->haploFreq[dprimeIdx][i][j] = q1 - sum;
     if ((q1 - sum) < 0) {
-      WARNING ("Haplotype frequency is NEGATIVE - %s", pBuf1);
+      WARNING ("Haplotype frequency is NEGATIVE - %s between locus %s and locus %s", 
+	       pBuf1, pLocus1->sName, pLocus2->sName);
       return -1;
     }
   }
