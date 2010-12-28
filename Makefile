@@ -154,14 +154,14 @@ ifeq ($(strip $(USE_STUDYDB)), yes)
   FILE_LDFLAGS += -lrt -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
 endif
 
-CFLAGS := $(FILE_CFLAGS) $(ENV_CFLAGS)
-LDFLAGS := -L$(KVNLIBDIR) $(FILE_LDFLAGS) $(ENV_LDFLAGS)
-
 # If GSL support has been enabled
 ifeq ($(strip $(USE_GSL)), yes)
   FILE_CFLAGS += -DUSE_GSL
   FILE_LDFLAGS += -lgsl -lgslcblas
 endif
+
+CFLAGS := $(FILE_CFLAGS) $(ENV_CFLAGS)
+LDFLAGS := -L$(KVNLIBDIR) $(FILE_LDFLAGS) $(ENV_LDFLAGS)
 
 export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN KELVIN_SCRIPT SEQUPDATE_BINARY
 
