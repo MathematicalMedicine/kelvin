@@ -11,54 +11,49 @@ source $temp
 printenv | sort
 
 if test "$__VERSION__" \< "4.1"; then
-    OPENMP=
+    USE_OPENMP=no
 else
-    OPENMP=-fopenmp
+    USE_OPENMP=yes
 fi
 
 case $HOSTNAME in
     Levi-Montalcini* )
-	PTMALLOC3="-lptmalloc3 -lpthread"
+	USE_PTMALLOC3=yes
 #        WERROR=-Werror
         ;;
     * )
-	PTMALLOC3=
+	USE_PTMALLOC3=no
         WERROR=
 	;;
 esac
 
-if test -n "$1" ; then
-    ADD_CFLAGS=$1
-    shift
-fi
-
 VERSION="`cat .maj`.`cat .min`.`cat .pat`"
 
 make clean
-make USE_GSL=no USE_OPENMP=no $* kelvin-$VERSION
+make USE_GSL=no USE_OPENMP=no USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR" ENV_LDFLAGS="" kelvin
 mv kelvin-$VERSION kelvin-$VERSION-no_GSL
 
 # Set OMP_NUM_THREADS=<something big> for best performance after compiliation of DLs, doesn't do compilation if DL not found.
 make clean
-make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT $OPENMP -DMEMGRAPH -DUSE_GSL -DPOLYUSE_DL" ADD_LDFLAGS="-g -ldl $PTMALLOC3 -lgsl -lgslcblas -lm" kelvin-$VERSION
+make USE_OPENMP=$USE_OPENMP USE_GSL=yes USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR -DMEMGRAPH -DPOLYSTATISTICS -DPOLYUSE_DL" ENV_LDFLAGS=" -ldl" kelvin
 mv kelvin-$VERSION kelvin-$VERSION-POLYUSE_DL
 
 # Build, code and then compile and evaluate DLs. Works fine for small polynomials.
 # Notice no OpenMP, as it gains no speed and loses us lots of memory.
 make clean
-make $* CFLAGS=" $ADD_CFLAGS -Wall $WERROR -DGCCOPT=2 -O2 -g -D_REENTRANT -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DPOLYUSE_DL -DPOLYCODE_DL -DPOLYCOMP_DL" ADD_LDFLAGS="-g -ldl $PTMALLOC3 -lgsl -lgslcblas -lm" kelvin-$VERSION
+make USE_OPENMP=no USE_GSL=yes USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DPOLYUSE_DL -DPOLYCODE_DL -DPOLYCOMP_DL" ENV_LDFLAGS=" -ldl"  kelvin
 mv kelvin-$VERSION kelvin-$VERSION-POLYCOMP_DL
 
 if test "$HOSTNAME" = "Levi-Montalcini" ; then
     # Likelihood server build.
     make clean
-    make  USE_STUDYDB=yes $* kelvin
+    make  USE_STUDYDB=yes USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR" ENV_LDFLAGS="" kelvin
     mv kelvin-$VERSION kelvin-$VERSION-study
 fi
 
 # Normal every-day use
 make clean
-make $* kelvin
+make USE_OPENMP=$USE_OPENMP USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR" ENV_LDFLAGS="" kelvin
 cp kelvin-$VERSION kelvin-$VERSION-normal
 
 make seq_update/calc_updated_ppl

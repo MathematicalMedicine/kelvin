@@ -33,7 +33,7 @@ CC := gcc
 GCCOPT := 2
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
-USE_OPENMP := yes
+# USE_OPENMP := yes
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
@@ -49,29 +49,25 @@ USE_GSL := yes
 ## Enable use of MySQL database for HLOD storage/retrieval/distributed processing.
 # USE_STUDYDB := yes
 
-## Beginning of Kelvin-specific options
-CFLAGS :=
-
 ##                                                     ##
 ## Should be no need to make changes beyond this point ##
 ##                                                     ##
 
 ABSBINDIR=$(shell echo $(BINDIR))
-LDFLAGS := -dynamic 
-ADD_LDFLAGS :=
 
-CFLAGS += -O$(GCCOPT)
-CFLAGS += -DGCCOPT=$(GCCOPT)
+# FILE_CFLAGS and FILE_LDFLAGS are built internally based upon the configuration options
+FILE_CFLAGS := -O$(GCCOPT) -DGCCOPT=$(GCCOPT)
+FILE_LDFLAGS := -dynamic -L$(LIBDIR)
 
 ## Compiler warnings. In development, abort on warning
-CFLAGS += -Wall
-# CFLAGS += -Wshadow -Werror
+# FILE_CFLAGS += -Wshadow -Werror
+FILE_CFLAGS += -Wall
 
 ## Enable debugging symbols. Inflicts a small drag (10%) on performance
-CFLAGS += -g
+FILE_CFLAGS += -g
 
 # Required to get re-entrant routines under Solaris, benign on other platforms
-CFLAGS += -D_REENTRANT
+FILE_CFLAGS += -D_REENTRANT
 
 
 # If OpenMP support has been enabled, GSL is required. The GSL-replacement 
@@ -80,39 +76,34 @@ ifeq ($(strip $(USE_OPENMP)), yes)
   USE_GSL := yes
   ifeq ($(strip $(CC)), gcc)
     # Compiler flags for GCC
-    CFLAGS += -fopenmp
-    USE_PTHREAD := yes
-    ADD_LDFLAGS += -fopenmp
+    FILE_CFLAGS += -fopenmp
+    FILE_LDFLAGS += -fopenmp
   else
     ifeq ($(strip $(CC)), icc)
       # Compiler flags for ICC
-      CFLAGS += -openmp 
-      USE_PTHREAD := yes
-      ADD_LDFLAGS += -openmp
+      FILE_CFLAGS += -openmp 
+      FILE_LDFLAGS += -openmp
     endif
   endif
 endif
 
 # If GSL support has been enabled
 ifeq ($(strip $(USE_GSL)), yes)
-  CFLAGS += -DUSE_GSL
-  ADD_LDFLAGS += -lgsl -lgslcblas -lm
+  FILE_CFLAGS += -DUSE_GSL
+  FILE_LDFLAGS += -lgsl -lgslcblas
 endif
 
 # If ptmalloc3 support has been enabled
 ifeq ($(strip $(USE_PTMALLOC3)), yes)
-  ADD_LDFLAGS += -lptmalloc3
-  USE_PTHREAD := yes
+  FILE_LDFLAGS += -lptmalloc3
 endif
+
+# libpthread is required for the timing thread and various options
+FILE_LDFLAGS += -lpthread
 
 # If Hoard support has been enabled
 ifeq ($(strip $(USE_HOARD)), yes)
-  ADD_LDFLAGS += -lhoard
-endif
-
-# If libpthread is required, either for OpenMP or libptmalloc3
-ifeq ($(strip $(USE_PTHREAD)), yes)
-  ADD_LDFLAGS += -lpthread
+  FILE_LDFLAGS += -lhoard
 endif
 
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
@@ -137,39 +128,41 @@ endif
 INCFLAGS := -I$(INCDIR)
 
 # testmac doesn't recognize the -rdynamic bit...
-LDFLAGS := -rdynamic -L$(LIBDIR) -L$(KVNLIBDIR)
+FILE_LDFLAGS += -rdynamic
 
 # Flags for BCMM use only
 
-#CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution, don't change, its a dist search target
-#CFLAGS += -DUSESHM # Enables shared memory diagnostic segment
+#FILE_CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution, don't change, its a dist search target
+#FILE_CFLAGS += -DUSESHM # Enables shared memory diagnostic segment
 ifneq (,$(wildcard /usr/include/execinfo.h))
-#  CFLAGS += -DBACKTRACE # Add backtrace where supported
+#  FILE_CFLAGS += -DBACKTRACE # Add backtrace where supported
 endif
-#CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
-#CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
-#CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every raw 8Mp and at milestones
-#CFLAGS += -DDMUSE # For our own static memory management, not beneficial as yet.
-#CFLAGS += -DDMTRACK # For our own memory tracking
-#CFLAGS += -DTREEEVALUATE # Use evaluateValue of tree instead of evaluatePoly of list.
-#CFLAGS += -DFAKEEVALUATE # Don't evaluate at all - use only for exercise/compilation. Results will be wrong!
-#CFLAGS += -DPOLYUSE_DL # Dynamically load compiled polynomials for in-process use
-#ADD_LDFLAGS += -ldl # ditto
-#CFLAGS += -DPOLYCODE_DL # Enable generation of dynamic library code for selected polynomials
-#CFLAGS += -DPOLYCOMP_DL # Enable compilation of dynamic library code for selected polynomials
-#CFLAGS += -DPOLYCHECK_DL # Keep both built and compiled DL polys and compare results (can be noisy!)
-#CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
-#CFLAGS += -DFULLLOG # Write all log messages to kelvin.full_log if TELLRITA isn't working
-#ADD_LDFLAGS += -lsocket -lnsl # ditto for under Solaris
-#CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
-#CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13, no OpenMP
+#FILE_CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
+#FILE_CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
+#FILE_CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every raw 8Mp and at milestones
+#FILE_CFLAGS += -DDMUSE # For our own static memory management, not beneficial as yet.
+#FILE_CFLAGS += -DDMTRACK # For our own memory tracking
+#FILE_CFLAGS += -DTREEEVALUATE # Use evaluateValue of tree instead of evaluatePoly of list.
+#FILE_CFLAGS += -DFAKEEVALUATE # Don't evaluate at all - use only for exercise/compilation. Results will be wrong!
+#FILE_CFLAGS += -DPOLYUSE_DL # Dynamically load compiled polynomials for in-process use
+#FILE_LDFLAGS += -ldl # ditto
+#FILE_CFLAGS += -DPOLYCODE_DL # Enable generation of dynamic library code for selected polynomials
+#FILE_CFLAGS += -DPOLYCOMP_DL # Enable compilation of dynamic library code for selected polynomials
+#FILE_CFLAGS += -DPOLYCHECK_DL # Keep both built and compiled DL polys and compare results (can be noisy!)
+#FILE_CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
+#FILE_CFLAGS += -DFULLLOG # Write all log messages to kelvin.full_log if TELLRITA isn't working
+#FILE_LDFLAGS += -lsocket -lnsl # ditto for under Solaris
+#FILE_CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
+#FILE_CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13, no OpenMP
 
 ifeq ($(strip $(USE_STUDYDB)), yes)
-  CFLAGS += -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql
-  LDFLAGS += -lrt -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
+  FILE_CFLAGS += -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql
+  FILE_LDFLAGS += -lrt -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
 endif
 
-LDFLAGS += ${ADD_LDFLAGS}
+CFLAGS := $(FILE_CFLAGS) $(ENV_CFLAGS)
+LDFLAGS := -L$(KVNLIBDIR) $(FILE_LDFLAGS) $(ENV_LDFLAGS)
+
 export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN KELVIN_SCRIPT SEQUPDATE_BINARY
 
 
@@ -194,7 +187,7 @@ dist :
 	mkdir kelvin-$(VERSION)/bin
 	cp -a bin/{kelvin,calc_updated_ppl}.* kelvin-$(VERSION)/bin
 	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
-	perl -pe "s|#CFLAGS \+\= \-DDISTRIBUTION|CFLAGS \+\= \-DDISTRIBUTION|;" Makefile > kelvin-$(VERSION)/Makefile
+	perl -pe "s|#FILE_CFLAGS \+\= \-DDISTRIBUTION|FILE_CFLAGS \+\= \-DDISTRIBUTION|;" Makefile > kelvin-$(VERSION)/Makefile
 	mkdir kelvin-$(VERSION)/{lib,utils,pedlib,config,seq_update}
 	cp -a utils/Makefile utils/*.{c,h,pl} kelvin-$(VERSION)/utils
 	cp -a pedlib/Makefile pedlib/*.[ch] kelvin-$(VERSION)/pedlib
@@ -248,7 +241,7 @@ install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
 kelvin : kelvin-$(VERSION)
 
 kelvin-$(VERSION) : libs $(KOBJS) $(OBJS) $(INCS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) -lped -lconfig -lklvnutls -lm -lpthread $(LDFLAGS) $(CFLAGS) $(EXTRAFLAG)
+	$(CC) -o $@ $(KOBJS) $(OBJS) $(CFLAGS) $(LDFLAGS) -lped -lconfig -lklvnutls -lm $(EXTRAFLAG)
 	cp $@ $@-$(SVNVERSION)
 
 
