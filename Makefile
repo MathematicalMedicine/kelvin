@@ -121,8 +121,8 @@ endif
 
 INCFLAGS := -I$(INCDIR)
 
-# testmac doesn't recognize the -rdynamic bit...
-FILE_LDFLAGS += -rdynamic
+# cygwin, testmac? and flair don't recognize the -rdynamic bit...
+#FILE_LDFLAGS += -rdynamic
 
 # Flags for BCMM use only
 
