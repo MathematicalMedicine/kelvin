@@ -87,12 +87,6 @@ ifeq ($(strip $(USE_OPENMP)), yes)
   endif
 endif
 
-# If GSL support has been enabled
-ifeq ($(strip $(USE_GSL)), yes)
-  FILE_CFLAGS += -DUSE_GSL
-  FILE_LDFLAGS += -lgsl -lgslcblas
-endif
-
 # If ptmalloc3 support has been enabled
 ifeq ($(strip $(USE_PTMALLOC3)), yes)
   FILE_LDFLAGS += -lptmalloc3
@@ -162,6 +156,12 @@ endif
 
 CFLAGS := $(FILE_CFLAGS) $(ENV_CFLAGS)
 LDFLAGS := -L$(KVNLIBDIR) $(FILE_LDFLAGS) $(ENV_LDFLAGS)
+
+# If GSL support has been enabled
+ifeq ($(strip $(USE_GSL)), yes)
+  FILE_CFLAGS += -DUSE_GSL
+  FILE_LDFLAGS += -lgsl -lgslcblas
+endif
 
 export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN KELVIN_SCRIPT SEQUPDATE_BINARY
 
