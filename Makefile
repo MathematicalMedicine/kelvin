@@ -122,7 +122,7 @@ endif
 INCFLAGS := -I$(INCDIR)
 
 # cygwin, testmac? and flair don't recognize the -rdynamic bit...
-#FILE_LDFLAGS += -rdynamic
+FILE_LDFLAGS += -rdynamic
 
 # Flags for BCMM use only
 
@@ -241,7 +241,7 @@ install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
 kelvin : kelvin-$(VERSION)
 
 kelvin-$(VERSION) : libs $(KOBJS) $(OBJS) $(INCS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) $(CFLAGS) $(LDFLAGS) -lped -lconfig -lklvnutls -lm $(EXTRAFLAG)
+	$(CC) -o $@ $(KOBJS) $(OBJS) $(CFLAGS) -lped -lconfig -lklvnutls $(LDFLAGS) -lm $(EXTRAFLAG)
 	cp $@ $@-$(SVNVERSION)
 
 
