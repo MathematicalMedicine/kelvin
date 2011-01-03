@@ -1883,7 +1883,6 @@ void integrateMain ()
 
       holdAllPolys ();
     }
-    //total_count = modelRange->npenet * modelRange->ngfreq * modelRange->nalpha;
 
     if (modelOptions->markerAnalysis == FALSE) {
       savedLocusList.traitLocusIndex = 0;

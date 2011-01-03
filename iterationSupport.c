@@ -204,12 +204,6 @@ void iterateMain ()
     }
 
     if (modelOptions->markerAnalysis == FALSE) {
-      total_count = modelRange->npenet * modelRange->ngfreq * modelRange->nalpha * modelRange->nafreq;
-    } else {
-      total_count = modelRange->nafreq;
-    }
-
-    if (modelOptions->markerAnalysis == FALSE) {
       savedLocusList.traitLocusIndex = 0;
       savedLocusList.traitOrigLocus = 0;
     } else {
