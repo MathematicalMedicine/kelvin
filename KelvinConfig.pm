@@ -94,6 +94,7 @@ my %directives = (
 				     singlearg => 'true',
 				     default => ['br.out']},
 		  pplfile => {canon => 'PPLFile',
+			      default => \&defaultPPLFile,
 			      singlearg => 'true'},
 		  countfile => {canon => 'CountFile',
 				singlearg => 'true'},
@@ -585,6 +586,18 @@ sub isConfigured
 	return ($directive, $aref);
     } else {
 	return ($aref);
+    }
+}
+
+sub defaultPPLFile
+{
+    my ($self) = @_;
+
+    if (exists ($$self{directives}{'MultiPoint'})) {
+	# PPLFile only has a default for multipoint analyses
+	return (['ppl.out']);
+    } else {
+	return (undef);
     }
 }
 
