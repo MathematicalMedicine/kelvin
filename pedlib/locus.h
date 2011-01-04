@@ -487,10 +487,6 @@ extern LocusList originalLocusList;
 
 /* The analysis locus list - this will be different than the originalLocusList in MP */
 extern SubLocusList *analysisLocusList;
-extern SubLocusList savedLocusList;
-
-/* for MP null hypothesis */
-extern SubLocusList nullLocusList;
 
 extern LDLoci *pLDLoci;
 

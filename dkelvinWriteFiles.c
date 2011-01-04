@@ -99,8 +99,7 @@ void dk_writeMPBRData (int posIdx, float traitPos, double ppl, double br, int ma
     return;
 
   fprintf (fpHet, "%d %f",
-	   (originalLocusList.ppLocusList[mp_result[posIdx].pMarkers[0]])->
-	   pMapUnit->chromosome, traitPos);
+	   (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, traitPos);
   if (modelOptions->physicalMap)
     fprintf (fpHet, " %d", interpolate_physical_location (traitPos));
   fprintf (fpHet, " %.*f %.6fe%+.2d", ppl >= .025 ? 2 : 3, KROUND (ppl, 3), base,

@@ -50,7 +50,6 @@ int lastMarkerIndex = 0; // Used by 2pt server same as lastTraitPosition above.
 int locusListTypesDone = 0; // Used by server to keep which type of locusList we've worked on in order to coordinate our work requests
 #endif
 
-//extern FILE *fpCond;
 extern struct polynomial **variableList;
 
 char partialPolynomialFunctionName[MAX_PFN_LEN + 1];
