@@ -482,10 +482,6 @@ void set_removeGenotypeFlag (int flag);
 /* global variable */
 extern Map map;
 
-/* extern LocusList markerList;
-extern LocusList traitList;
-*/
-
 /* a master locus list with both marker and trait loci in */
 extern LocusList originalLocusList;
 
