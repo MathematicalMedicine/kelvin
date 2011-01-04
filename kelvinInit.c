@@ -33,7 +33,6 @@ char configfile[PATH_MAX];      ///< Configuration file read to populate all of 
 int dprime0Idx = 0;
 
 extern char *likelihoodVersion, *locusVersion, *polynomialVersion;
-extern Polynomial *constant1Poly;
 
 void kelvinInit (int argc, char *argv[])
 {

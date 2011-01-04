@@ -69,6 +69,10 @@ typedef struct polynomial
   unsigned int id;		// unique id - 4 bytes
 } Polynomial;
 
+/* The following are convenience constants. */
+extern Polynomial *constant0Poly;
+extern Polynomial *constant1Poly;
+
 /* Optimized list for polynomial evaluation.  When we evaluate a polynomial multiple
    times, it is more efficient to do a single traversal of the the polynomial tree
    to build a list of unique terms in dependency order, and then drive evaluation

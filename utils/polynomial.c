@@ -233,6 +233,11 @@ long nodeId; ///< @ingroup vettedGlobals
 
 long termCount; ///< @ingroup vettedGlobals
 
+/** Convenience constants */
+
+Polynomial *constant0Poly;
+Polynomial *constant1Poly;
+
 /**
 
   We have a polynomials list to save the polynomials in each polynomial category,
@@ -3195,6 +3200,11 @@ void polynomialInitialization (int newPolynomialScale)
   lengthProd = 300;
   MALCHOKE(exponentProd, lengthProd * sizeof (int),int *);
   MALCHOKE(pProd, lengthProd * sizeof (Polynomial *),Polynomial **);
+
+  // Create the convenience constants
+
+  constant0Poly = constantExp (__FILE__, __LINE__, 0.0);
+  constant1Poly = constantExp (__FILE__, __LINE__, 1.0);
 
 }
 

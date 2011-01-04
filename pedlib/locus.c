@@ -56,9 +56,6 @@ SubLocusList *analysisLocusList;
  */
 LDLoci *pLDLoci = NULL;
 
-extern Polynomial *constant0Poly;
-extern Polynomial *constant1Poly;
-
 /* internal functions */
 MapUnit *add_map_unit (Map *);
 Locus *add_locus (LocusList *, char *, int);
@@ -1969,10 +1966,6 @@ initialize_loci (PedigreeSet * pPedigreeSet)
   int ret;
 
   set_removeGenotypeFlag (TRUE);
-  if (modelOptions->polynomial == TRUE) {
-    constant1Poly = constantExp (1);
-    constant0Poly = constantExp (0);
-  }
 
   /* go through all loci in the original locus list */
   locus = 0;

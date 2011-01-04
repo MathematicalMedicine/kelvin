@@ -88,9 +88,6 @@ int ppairMatrixNumLocus;
 /* this is used to flip parental pair phases */
 int *bitMask = NULL;
 
-Polynomial *constant0Poly;
-Polynomial *constant1Poly;
-
 /* these are work space for likelihood calculation 
  * reluctant to use global variables, but they do save stack and heap space, time to allocate
  */
