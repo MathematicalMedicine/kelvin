@@ -210,7 +210,7 @@ close IN;
 system('rm LRTest-* > /dev/null 2>&1');
 
 # Generate all of the kelvin configuration variations and run them
-my $searchFormat = " " . ("%7.5f " x $paramCnt) . "%d";
+my $searchFormat = " " . ("%10.8f " x $paramCnt) . "%d";
 for my $i (0..($offset - 1)) {
     my $commandLine = '$TEST_KELVIN kelvin.conf --FixedModels';
 #    print "Test from line ".$PsLine[$i]." has HLOD ".

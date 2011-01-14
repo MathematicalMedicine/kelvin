@@ -119,27 +119,27 @@ int record_tp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
         dk_curModel.alpha = alphaV;
         fprintf(fpIR,"%6.3f", log10HetLR);
         if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
-          fprintf(fpIR," %6.5f", dk_curModel.dprime[0]);
+          fprintf(fpIR," %9.8f", dk_curModel.dprime[0]);
         }
         if(modelOptions->mapFlag == SA){
-          fprintf(fpIR," %6.5f", dk_curModel.theta[0]);
+          fprintf(fpIR," %9.8f", dk_curModel.theta[0]);
         } else{
-          fprintf(fpIR," %6.5f %6.5f", dk_curModel.theta[0], dk_curModel.theta[1] );
+          fprintf(fpIR," %9.8f %9.8f", dk_curModel.theta[0], dk_curModel.theta[1] );
         }
-        fprintf(fpIR," %6.5f %6.5f",dk_curModel.alpha,dk_curModel.dgf);
+        fprintf(fpIR," %9.8f %9.8f",dk_curModel.alpha,dk_curModel.dgf);
         for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
-          fprintf(fpIR," %6.5f %6.5f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
+          fprintf(fpIR," %9.8f %9.8f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
           if(modelOptions->imprintingFlag){
-            fprintf(fpIR," %6.5f %6.5f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
+            fprintf(fpIR," %9.8f %9.8f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
           }else{
-            fprintf(fpIR," %6.5f",dk_curModel.pen[liabIdx].dd); 
+            fprintf(fpIR," %9.8f",dk_curModel.pen[liabIdx].dd); 
           }
           if (modelType->trait != DICHOTOMOUS && modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-            fprintf(fpIR," %6.5f",dk_curModel.pen[liabIdx].DDSD); 
+            fprintf(fpIR," %9.8f",dk_curModel.pen[liabIdx].DDSD); 
 	  }
         }
         if (modelType->trait == CT){
-          fprintf(fpIR," %6.5f",dk_curModel.pen[0].threshold);  /* If each LC uses different threshold, this does not work*/
+          fprintf(fpIR," %9.8f",dk_curModel.pen[0].threshold);  /* If each LC uses different threshold, this does not work*/
         }
         fprintf(fpIR," %d\n",dk_curModel.posIdx );
       }
@@ -347,20 +347,20 @@ int record_mp_result(int callStatus, PedigreeSet *pedigreeSet, ParamStruct *para
         dk_curModel.alpha = alphaV;
         fprintf(fpIR,"%6.3f", log10HetLR);
 
-        fprintf(fpIR," %6.5f %6.5f",dk_curModel.alpha,dk_curModel.dgf);
+        fprintf(fpIR," %9.8f %9.8f",dk_curModel.alpha,dk_curModel.dgf);
         for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
-          fprintf(fpIR," %6.5f %6.5f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
+          fprintf(fpIR," %9.8f %9.8f",dk_curModel.pen[liabIdx].DD,dk_curModel.pen[liabIdx].Dd);
           if(modelOptions->imprintingFlag){
-            fprintf(fpIR," %6.5f %6.5f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
+            fprintf(fpIR," %9.8f %9.8f",dk_curModel.pen[liabIdx].dD,dk_curModel.pen[liabIdx].dd);
           }else{
-            fprintf(fpIR," %6.5f",dk_curModel.pen[liabIdx].dd); 
+            fprintf(fpIR," %9.8f",dk_curModel.pen[liabIdx].dd); 
           }
           if (modelType->trait != DICHOTOMOUS && modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-            fprintf(fpIR," %6.5f",dk_curModel.pen[liabIdx].DDSD); 
+            fprintf(fpIR," %9.8f",dk_curModel.pen[liabIdx].DDSD); 
 	  }
         }
         if (modelType->trait == CT){
-          fprintf(fpIR," %6.5f",dk_curModel.pen[0].threshold);  /* If each LC uses different threshold, this does not work*/
+          fprintf(fpIR," %9.8f",dk_curModel.pen[0].threshold);  /* If each LC uses different threshold, this does not work*/
         }
         fprintf(fpIR," %d\n",dk_curModel.posIdx);
       }
