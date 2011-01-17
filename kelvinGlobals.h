@@ -24,7 +24,6 @@ extern char *svnVersion;
 extern char *kelvinVersion;
 
 extern struct swStopwatch *overallSW, *singleModelSW;
-//char *messageBuffer;
 
 extern LambdaCell *pLambdaCell;
 
@@ -36,7 +35,6 @@ int locus; // Probably an evil global, i.e. recycled local
 Polynomial *initialProbPoly2[3];
 double initialProb[3];
 Polynomial *initialProbPoly[3];
-//void *initialProbAddr[3];
 
 /** Transmission matrices provide the pre-computed probability of
  inheritance of a a given combination of marker and trait alleles. */
@@ -45,9 +43,11 @@ XMission *altMatrix;
 XMission *traitMatrix;
 XMission *markerMatrix;
 
-int loc1, loc2;
-Locus *pLocus1;
-Locus *pLocus2;
+/// Indicies into originalLocusList of loci in 2pt analysis, or first 2 in multipoint analysis
+int loc1, loc2; 
+/// Pointers to originalLocusList entries for loci in 2pth analysis, or first 2 in multipoint analysis
+Locus *pLocus1, *pLocus2;
+
 Locus *pLocus;
 Trait *pTrait;
 int traitLocus;

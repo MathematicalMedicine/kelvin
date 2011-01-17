@@ -44,6 +44,12 @@ make clean
 make USE_OPENMP=no USE_GSL=yes USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DPOLYUSE_DL -DPOLYCODE_DL -DPOLYCOMP_DL" ENV_LDFLAGS=" -ldl"  kelvin
 mv kelvin-$VERSION kelvin-$VERSION-POLYCOMP_DL
 
+# Build and code DLs, pretend to evaluate. Best for making hay out of limited memory.
+# Notice no OpenMP, as it gains no speed and loses us lots of memory.
+make clean
+make USE_OPENMP=no USE_GSL=yes USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DPOLYUSE_DL -DPOLYCODE_DL -DFAKEEVALUATE" ENV_LDFLAGS=" -ldl"  kelvin
+mv kelvin-$VERSION kelvin-$VERSION-POLYCODE_DL_FAKEEVALUATE
+
 if test "$HOSTNAME" = "Levi-Montalcini" ; then
     # Likelihood server build.
     make clean
