@@ -47,7 +47,7 @@ USE_GSL := yes
 # USE_HOARD := yes
 
 ## Enable use of MySQL database for HLOD storage/retrieval/distributed processing.
-USE_STUDYDB := yes
+# USE_STUDYDB := yes
 
 ##                                                     ##
 ## Should be no need to make changes beyond this point ##
