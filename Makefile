@@ -47,7 +47,7 @@ USE_GSL := yes
 # USE_HOARD := yes
 
 ## Enable use of MySQL database for HLOD storage/retrieval/distributed processing.
-# USE_STUDYDB := yes
+USE_STUDYDB := yes
 
 ##                                                     ##
 ## Should be no need to make changes beyond this point ##
@@ -160,14 +160,14 @@ ifeq ($(strip $(USE_GSL)), yes)
   FILE_LDFLAGS += -lgsl -lgslcblas
 endif
 
-CFLAGS := $(FILE_CFLAGS) $(ENV_CFLAGS)
+CFLAGS := $(FILE_CFLAGS) $(ENV_CFLAGS) -DVERSION='"V$(VERSION)"' -DSVNVERSION='"$(SVNVERSION)"'
+
 LDFLAGS := -L$(KVNLIBDIR) $(FILE_LDFLAGS) $(ENV_LDFLAGS)
 
 export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN KELVIN_SCRIPT SEQUPDATE_BINARY
 
 
-KOBJS = kelvin.o dcuhre.o
-OBJS = kelvinInit.o kelvinTerm.o iterationSupport.o integrationSupport.o \
+OBJS = kelvin.o dcuhre.o kelvinInit.o kelvinTerm.o iterationSupport.o integrationSupport.o \
 	kelvinHandlers.o kelvinWriteFiles.o dkelvinWriteFiles.o \
 	ppl.o saveResults.o trackProgress.o \
 	summary_result.o tp_result_hash.o
@@ -240,8 +240,8 @@ install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
 .PHONY : kelvin
 kelvin : kelvin-$(VERSION)
 
-kelvin-$(VERSION) : libs $(KOBJS) $(OBJS) $(INCS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) $(CFLAGS) -lped -lconfig -lklvnutls $(LDFLAGS) -lm
+kelvin-$(VERSION) : libs $(OBJS) $(INCS)
+	$(CC) -o $@ $(OBJS) $(CFLAGS) -lped -lconfig -lklvnutls $(LDFLAGS) -lm
 	cp $@ $@-$(SVNVERSION)
 
 
@@ -259,9 +259,6 @@ endif
 seq_update/calc_updated_ppl :
 	+make -C seq_update -f Makefile calc_updated_ppl
 	cp $@ bin/calc_updated_ppl.$(PLATFORM)
-
-%.o : %.c $(INCS)
-	$(CC) -c $(CFLAGS) $(INCFLAGS) -DVERSION='"V$(VERSION)"' -DSVNVERSION='"$(SVNVERSION)"' $< -o $@
 
 .PHONY : libs
 libs :
@@ -281,7 +278,7 @@ ifeq ($(strip $(USE_STUDYDB)), yes)
 	make -C database -f Makefile clean
 endif
 	make -C seq_update -f Makefile clean
-	rm -f $(KOBJS) $(OBJS) kelvin-$(VERSION) seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/libped.a
+	rm -f $(OBJS) kelvin-$(VERSION) seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/libped.a
 ifeq ($(strip $(USE_STUDYDB)), yes)
 	rm -f lib/klvndb.a
 endif
