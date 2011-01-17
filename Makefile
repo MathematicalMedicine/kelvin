@@ -241,7 +241,7 @@ install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
 kelvin : kelvin-$(VERSION)
 
 kelvin-$(VERSION) : libs $(KOBJS) $(OBJS) $(INCS)
-	$(CC) -o $@ $(KOBJS) $(OBJS) $(CFLAGS) -lped -lconfig -lklvnutls $(LDFLAGS) -lm $(EXTRAFLAG)
+	$(CC) -o $@ $(KOBJS) $(OBJS) $(CFLAGS) -lped -lconfig -lklvnutls $(LDFLAGS) -lm
 	cp $@ $@-$(SVNVERSION)
 
 
@@ -261,7 +261,7 @@ seq_update/calc_updated_ppl :
 	cp $@ bin/calc_updated_ppl.$(PLATFORM)
 
 %.o : %.c $(INCS)
-	$(CC) -c $(CFLAGS) $(INCFLAGS) $(EXTRAFLAG) -DVERSION='"V$(VERSION)"' -DSVNVERSION='"$(SVNVERSION)"' $< -o $@
+	$(CC) -c $(CFLAGS) $(INCFLAGS) -DVERSION='"V$(VERSION)"' -DSVNVERSION='"$(SVNVERSION)"' $< -o $@
 
 .PHONY : libs
 libs :
