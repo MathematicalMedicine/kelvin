@@ -5,8 +5,8 @@ CFLAGS=-g -D_REENTRANT
 LDFLAGS=-lm
 #LDFLAGS=-g -lm  # If you want to run in a debugger
 
-calc_updated_ppl : calc_updated_ppl.o map.o ippl.o multidim.o
-	$(CC) -o $@ $(LDFLAGS) calc_updated_ppl.o map.o ippl.o multidim.o 
+calc_updated_ppl : calc_updated_ppl.o map.o iplist.o positionlist.o multidim.o
+	$(CC) -o $@ $(LDFLAGS) calc_updated_ppl.o map.o iplist.o positionlist.o multidim.o 
 
 %.o : %.c 
 	$(CC) $(INC) $(CFLAGS) -c -o $@ $<

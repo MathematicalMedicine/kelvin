@@ -33,7 +33,8 @@
 #include <utils/utils.h>
 #include <integrationLocals.h>
 #include <multidim.h>
-#include <ippl.h>
+#include <iplist.h>
+#include <positionlist.h>
 #include <map.h>
 #include <calc_updated_ppl.h>
 
@@ -48,6 +49,10 @@
 #define POS_COL    4
 #define PHYS_COL   5
 #define CHR_COL    6
+
+#define IPPL_CHR_COL    1
+#define IPPL_POS_COL    2
+#define IPPL_PPL_COL    3
 
 #define METH_OLD   1
 #define METH_NEW   2
@@ -138,6 +143,7 @@ char *pplinfile=NULL;   /* --pplin: file from which to read PPLs for use as posi
 	  		            specific priors */
 char *mapinfile=NULL;   /* --mapin: mapfile, to allow updating across files containing sets of
  			            markers that only partially overlap */
+st_iplist ippl;
 
 
 /* Globally available for error messages */
@@ -181,6 +187,7 @@ int compare_markers (st_brmarker *m1, st_brmarker *m2);
 void compare_headers (st_brfile *f1, st_brfile *f2);
 int compare_positions (st_brmarker *m1, st_brmarker *m2);
 double *compare_samples (st_data *d, int sampleno, st_brfile *brfile);
+void read_ppls ();
 
 
 int main (int argc, char **argv)
@@ -191,8 +198,10 @@ int main (int argc, char **argv)
   pname = argv[0];
   argidx = parse_command_line (argc, argv);
 
-  if (pplinfile != NULL)
-    read_ppls (pplinfile);
+  if (pplinfile != NULL) {
+    memset (&ippl, 0, sizeof (st_iplist));
+    read_ppls ();
+  }
   if (mapinfile != NULL)
     read_map (mapinfile);
 
@@ -223,7 +232,7 @@ int main (int argc, char **argv)
   }
   free (brfiles);
   if (pplinfile != NULL)
-    free_ppls ();
+    iplist_free (&ippl);
   if (mapinfile != NULL)
     free_map ();
   if (partout != NULL)
@@ -448,105 +457,79 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 {
   int fileno, ret, alldone, curno, howmany, warning=0, physicalpos=0;
-  char warnbuff[1024];
+  char warnbuff[1024], chr[8];
   st_brmarker *marker;
   st_data data;
-  double lr, *lrs, ppl;
+  st_iplist *iplist, bplist;
+  double pos, lr, *lrs, ppl, basepair;
 
   fprintf (pplout, "# Version V%s\n", curversion);
   if (partout != NULL)
     fprintf (partout, "# Version V%s\n", curversion);
-  
+
   warnbuff[0] = '\0';
   memset (&data, 0, sizeof (st_data));
   if ((lrs = malloc (sizeof (double) * numbrfiles)) == NULL) {
     fprintf (stderr, "malloc failed, %s\n", strerror (errno));
     exit (-1);
   }
-  
-  get_header_line (&brfiles[0]);
-  if ((ret = get_data_line (&brfiles[0], &data)) != 1) {
-    fprintf (stderr, "expected data in '%s' at line %d, found %s\n", brfiles[0].name,
-	     brfiles[0].lineno, (ret == 0) ? "end-of-file" : "marker line");
+  if ((iplist = (st_iplist *) calloc (numbrfiles, sizeof (st_iplist))) == NULL) {
+    fprintf (stderr, "calloc failed, %s\n", strerror (errno));
     exit (-1);
   }
-  if (brfiles[0].physical_pos)
-    physicalpos = 1;
-  lrs[0] = data.lr;
-  for (fileno = 1; fileno < numbrfiles; fileno++) {
+  memset (&bplist, 0, sizeof (st_iplist));
+
+  for (fileno = 0; fileno < numbrfiles; fileno++) {
     get_header_line (&brfiles[fileno]);
     compare_headers (&brfiles[0], &brfiles[fileno]);
-    if ((ret = get_data_line (&brfiles[fileno], &data)) != 1) {
+    if (brfiles[fileno].physical_pos)
+      physicalpos = 1;
+    while ((ret = get_data_line (&brfiles[fileno], &data)) == 1) {
+      strcpy (chr, brfiles[fileno].curmarker.chr);
+      pos = brfiles[fileno].curmarker.avgpos;
+      iplist_insert (&iplist[fileno], chr, pos, data.lr);
+      insert_pos (chr, pos, fileno);
+      if (brfiles[fileno].physical_pos && iplist_lookup (&bplist, chr, pos, &basepair) != 0)
+	iplist_insert (&bplist, chr, pos, (double) brfiles[fileno].curmarker.basepair);
+    }
+    if ((ret == 0 && iplist[fileno].numipchr == 0) || ret == 2) {
       fprintf (stderr, "expected data in '%s' at line %d, found %s\n", brfiles[fileno].name,
 	       brfiles[fileno].lineno, (ret == 0) ? "end-of-file" : "marker line");
       exit (-1);
     }
-    lrs[fileno] = data.lr;
-    if (brfiles[fileno].physical_pos)
-      physicalpos = 1;
   }
-  fprintf (pplout, "Chr Position%s PPL BayesRatio\n", (physicalpos) ? " Physical" : "");
 
-  while (1) {
-    alldone = 1;
-    curno = -1;
-    howmany = 0;
+  /* TODO: What to do about physical pos ? */
+  
+  fprintf (pplout, "Chr Position%s PPL BayesRatio\n", (physicalpos) ? " Physical" : "");
+  
+  while (get_next_pos (chr, &pos) == 0) {
     lr = (epistasis) ? 0 : 1;
     for (fileno = 0; fileno < numbrfiles; fileno++) {
-      if (brfiles[fileno].eof)
-	continue;
-      alldone = 0;
-      if (curno == -1)
-	curno = fileno;
-      else if (compare_positions (&brfiles[fileno].curmarker, &brfiles[curno].curmarker) < 0)
-	curno = fileno;
-    }
-    if (alldone)
-      break;
-    for (fileno = 0; fileno < numbrfiles; fileno++) {
-      if (brfiles[fileno].eof)
-	continue;
-      if (compare_positions (&brfiles[fileno].curmarker, &brfiles[curno].curmarker) != 0)
-	continue;
-      if (physicalpos && brfiles[curno].curmarker.basepair == -1)
-	brfiles[curno].curmarker.basepair = brfiles[fileno].curmarker.basepair;
-      howmany++;
-      if (! epistasis)
-	lr *= lrs[fileno];
+      if (epistasis)
+	lr += iplist_interpolate (&iplist[fileno], chr, pos);
       else
-	lr += lrs[fileno];
-      if (fileno != curno) {
-	if (get_data_line (&brfiles[fileno], &data) == 1)
-	  lrs[fileno] = data.lr;
-      }
+	lr *= iplist_interpolate (&iplist[fileno], chr, pos);
     }
     if (epistasis)
-      lr /= (double) howmany;
-
-    marker = &brfiles[curno].curmarker;
-    if (howmany != numbrfiles) {
-      warning++;
-      if (strlen (warnbuff) <= 1014)
-	sprintf (warnbuff+strlen (warnbuff), " %.4f", marker->avgpos);
-    }
+      lr /= numbrfiles;
     if ((lr < 0.214) || ((ppl = (lr * lr) / (-5.77 + (54 * lr) + (lr * lr))) < 0.0))
       ppl = 0.0;
-    fprintf (pplout, "%s %.4f", marker->chr, marker->avgpos);
-    if (physicalpos)
-      fprintf (pplout, " %ld", marker->basepair);
+    fprintf (pplout, "%s %.4f", chr, pos);
+    if (physicalpos) {
+      if (iplist_lookup (&bplist, chr, pos, &basepair) == -1)
+	basepair = -1.0;
+      fprintf (pplout, " %ld", (long) basepair);
+    }
     fprintf (pplout, " %.3f %.6e\n", ppl, lr);
     
-    if (get_data_line (&brfiles[curno], &data) == 1)
-      lrs[curno] = data.lr;
-  }
-  if (warning) {
-    fprintf (stderr, "WARNING: %d position%s missing from one or more input files:%s",
-	     warning, (warning == 1) ? "" : "s", warnbuff);
-    if (strlen (warnbuff) > 1014)
-      fprintf (stderr, " and others");
-    fprintf (stderr, "\n");
   }
   free (lrs);
+  free_poslist ();
+  for (fileno = 0; fileno < numbrfiles; fileno++) {
+    iplist_free (&iplist[fileno]);
+  }
+  free (iplist);
   return;
 }
 
@@ -815,7 +798,7 @@ void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_l
     ldstat = calc_upd_ppld_allowing_l (ldval, DEFAULT_LDPRIOR);
     fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
     if (pplinfile != NULL) {
-      if ((ldprior = get_ippl (marker->chr, marker->avgpos)) < MIN_PRIOR)
+      if ((ldprior = iplist_interpolate (&ippl, marker->chr, marker->avgpos)) < MIN_PRIOR)
 	ldprior = MIN_PRIOR;
       if (verbose >= 2)
 	printf ("ippl is %.6e\n", ldprior);
@@ -2141,6 +2124,134 @@ double *compare_samples (st_data *d, int sampleno, st_brfile *brfile)
     }
   }
   return (sample);
+}
+
+
+void read_ppls ()
+{
+  int numcols=0, *datacols=NULL, lineno=0, foundcols=0, colno;
+  double pos, prevpos, ppl;
+  char buff[BUFFLEN], chr[8], prevchr[8], *token, *pb, *endptr;
+  FILE *fp;
+  
+  if ((fp = fopen (pplinfile, "r")) == NULL) {
+    fprintf (stderr, "open '%s' failed, %s\n", pplinfile, strerror (errno));
+    exit (-1);
+  }
+
+  /* We don't require that the PPL file have a version line, since multipoint PPLs might
+   * have been generated with something other than Kelvin. At the same time, we allow
+   * 'comment' lines; that is, a line that starts with a '#'.
+   */
+  while (1) {
+    if (fgets (buff, BUFFLEN, fp) == NULL) {
+      if (feof (fp))
+	fprintf (stderr, "pplfile '%s' ends unexpectedly at line %d\n", pplinfile, lineno);
+      else 
+	fprintf (stderr, "error reading '%s' at line %d, %s\n", pplinfile, lineno,
+		 strerror (errno));
+      exit (-1);
+    }
+    lineno++;
+    if (buff[0] != '#')
+      break;
+  }
+
+  /* We'll try to be flexible about file format, so long as there are column headers that
+   * allow us to identify the columns. 
+   */
+
+  token = strtok_r (buff, " \t\n", &pb);
+  while ((token != NULL) &&
+	 (foundcols != ((1 << IPPL_CHR_COL) | (1 << IPPL_POS_COL) | (1 << IPPL_PPL_COL)))) {
+    numcols++;
+    if ((datacols = (int *) realloc (datacols, sizeof (int) * numcols)) == NULL) {
+      fprintf (stderr, "realloc datacols failed, %s\n", strerror (errno));
+      exit (-1);
+    }
+    
+    if ((strcasecmp (token, "Chr") == 0) || (strcasecmp (token, "Chromosome") == 0)) {
+      /* The chromosome column */
+      datacols[numcols - 1] = IPPL_CHR_COL;
+      foundcols |= 1 << IPPL_CHR_COL;
+
+    } else if ((strcasecmp (token, "Pos") == 0) || (strcasecmp (token, "Position") == 0)) {
+      /* The position column */
+      datacols[numcols - 1] = IPPL_POS_COL;
+      foundcols |= 1 << IPPL_POS_COL;
+      
+    } else if (strcasecmp (token, "PPL") == 0) {
+      datacols[numcols - 1] = IPPL_PPL_COL;
+      foundcols |= 1 << IPPL_PPL_COL;
+      
+    } else {
+      /* Something else */
+      datacols[numcols - 1] = 0;
+    }
+    
+    token = strtok_r (NULL, " \t\n", &pb);
+  }
+  if ((foundcols & (1 << IPPL_CHR_COL)) == 0) {
+    fprintf (stderr, "pplfile '%s' contains no chromosome column\n", pplinfile);
+    exit (-1);
+  } else if ((foundcols & (1 << IPPL_POS_COL)) == 0) {
+    fprintf (stderr, "pplfile '%s' contains no position column\n", pplinfile);
+    exit (-1);
+  } else if ((foundcols & (1 << IPPL_PPL_COL)) == 0) {
+    fprintf (stderr, "pplfile '%s' contains no PPL column\n", pplinfile);
+    exit (-1);
+  }
+
+  prevpos = -1;
+  prevchr[0] = '\0';
+  while (fgets (buff, BUFFLEN, fp) != NULL) {
+    lineno++;
+    token = strtok_r (buff, " \t\n", &pb);
+    for (colno = 0; colno < numcols; colno++) {
+      if (token == NULL) {
+	fprintf (stderr, "short line in '%s', line %d\n", pplinfile, lineno);
+	exit (-1);
+      }
+      switch (datacols[colno]) {
+      case IPPL_CHR_COL:
+	/* Sure, I could handle this better, but seriously, how many characters do
+	 * you need to specify the chromosome? 
+	 */
+	if (strlen (token) > 7) {
+	  fprintf (stderr, "chromosome identifier '%s' in pplfile '%s' is too long\n", 
+		   token, pplinfile);
+	    exit (-1);
+	}
+	endptr = strcpy (chr, token);
+	break;
+      case IPPL_POS_COL:
+	pos = strtod (token, &endptr);
+	break;
+      case IPPL_PPL_COL:
+	ppl = strtod (token, &endptr);
+	break;
+      }
+      if (token == endptr) {
+	fprintf (stderr, "illegal data in line %d in '%s'\n", lineno, pplinfile);
+	exit (-1);
+      }
+      token = strtok_r (NULL, " \t\n", &pb);
+    }
+    if (strlen (prevchr) > 0 && strcmp (prevchr, chr) == 0) {
+      if (prevpos > pos)
+	fprintf (stderr, "position '%f' out of order in '%s', line %d \n", pos, pplinfile, lineno);
+    } else 
+      strcpy (prevchr, chr);
+    prevpos = pos;
+    iplist_insert (&ippl, chr, pos, ppl);
+  }
+  if (! feof (fp)) {
+    fprintf (stderr, "error reading '%s' at line %d, %s\n", pplinfile, lineno, strerror (errno));
+    exit (-1);
+  }
+  fclose (fp);
+  free (datacols);
+  return;
 }
 
 
