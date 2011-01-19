@@ -11,6 +11,10 @@ void iplist_insert (st_iplist *list, char *chr, double pos, double val)
   int va;
   st_ipchr *ptr = NULL;
 
+  if (list == NULL) {
+    fprintf (stderr, "iplist pointer is NULL\n");
+    exit (-1);
+  }
   for (va = 0; va < list->numipchr; va++) {
     if (strcmp (list->ipchr[va].chr, chr) == 0) {
       ptr = &list->ipchr[va];
@@ -59,16 +63,18 @@ int iplist_lookup (st_iplist *list, char *chr, double pos, double *val)
   int va;
   st_ipchr *ptr = NULL;
 
+  if (list == NULL) {
+    fprintf (stderr, "iplist pointer is NULL\n");
+    exit (-1);
+  }
   for (va = 0; va < list->numipchr; va++) {
     if (strcmp (list->ipchr[va].chr, chr) == 0) {
       ptr = &list->ipchr[va];
       break;
     }
   }
-  if (ptr == NULL) {
-    fprintf (stderr, "iplist doesn't contain data for chromosome '%s'\n", chr);
-    exit (-1);
-  }
+  if (ptr == NULL)
+    return (-1);
   for (va = 0; va < ptr->numpos; va++) {
     if (ptr->pos[va] == pos) {
       *val = ptr->val[va];
@@ -86,6 +92,10 @@ double iplist_interpolate (st_iplist *list, char *chr, double pos)
   double ival;
   st_ipchr *ptr = NULL;
 
+  if (list == NULL) {
+    fprintf (stderr, "iplist pointer is NULL\n");
+    exit (-1);
+  }
   for (va = 0; va < list->numipchr; va++) {
     if (strcmp (list->ipchr[va].chr, chr) == 0) {
       ptr = &list->ipchr[va];
@@ -115,6 +125,8 @@ void iplist_free (st_iplist *list)
 {
   int va;
 
+  if (list == NULL)
+    return;
   for (va = 0; va < list->numipchr; va++) {
     if (list->ipchr[va].numpos > 0) {
       free (list->ipchr[va].pos);
