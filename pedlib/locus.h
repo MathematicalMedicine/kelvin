@@ -445,6 +445,7 @@ int set_genotype_weight (Pedigree * pPedigree, int locus);
 int set_genotype_position (Pedigree * pPedigree, int locus);
 int initialize_loci (PedigreeSet * pPedigreeSet);
 int update_locus (PedigreeSet * pPedigreeSet, int locus);
+int update_pedigree_penetrance (Pedigree *pPedigree, int locus);
 int update_penetrance (PedigreeSet * pPedigreeSet, int locus);
 double cm_to_recombination_fraction (double distance, int mapFunctionFlag);
 

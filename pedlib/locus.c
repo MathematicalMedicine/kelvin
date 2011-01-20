@@ -2097,14 +2097,12 @@ update_locus (PedigreeSet * pPedigreeSet, int locus)
 /* When penetrance vector changes, each person's penetrance is affected, 
  * thus this function needs to be called */
 int
-update_penetrance (PedigreeSet * pPedigreeSet, int locus)
+update_pedigree_penetrance (Pedigree *pPedigree, int locus)
 {
   Person *pPerson;
   Genotype *pGenotype;
   int i;
   double pen;
-  int ped;
-  Pedigree *pPedigree;
 
   /* update genotype weight and position 
    * in the genotype list 
@@ -2112,34 +2110,41 @@ update_penetrance (PedigreeSet * pPedigreeSet, int locus)
 
   Polynomial *penPolynomial;
 
+  for (i = 0; i < pPedigree->numPerson; i++) {
+    pPerson = pPedigree->ppPersonList[i];
+    /* pass the loop breaker duplicates */
+    if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
+      continue;
+    pGenotype = pPerson->ppSavedGenotypeList[locus];
+    while (pGenotype) {
+      if (modelOptions->polynomial == TRUE) {
+	compute_penetrance (pPerson, locus,
+			    pGenotype->allele[0],
+			    pGenotype->allele[1], &penPolynomial);
+	
+	pGenotype->penslot.penetrancePolynomial = penPolynomial;
+      } else {
+	compute_penetrance (pPerson, locus,
+			    pGenotype->allele[0],
+			    pGenotype->allele[1], &pen);
+	
+	pGenotype->penslot.penetrance = pen;
+      }
+      pGenotype = pGenotype->pSavedNext;
+    }
+  }
+}
+
+int
+update_penetrance (PedigreeSet * pPedigreeSet, int locus)
+{
+  int ped;
+  Pedigree *pPedigree;
+
   ped = 0;
   while (ped < pPedigreeSet->numPedigree) {
     pPedigree = pPedigreeSet->ppPedigreeSet[ped];
-    for (i = 0; i < pPedigree->numPerson; i++) {
-      pPerson = pPedigree->ppPersonList[i];
-      /* pass the loop breaker duplicates */
-      if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
-	continue;
-      pGenotype = pPerson->ppSavedGenotypeList[locus];
-      while (pGenotype) {
-	if (modelOptions->polynomial == TRUE) {
-	  compute_penetrance (pPerson, locus,
-			      pGenotype->allele[0],
-			      pGenotype->allele[1], &penPolynomial);
-
-	  pGenotype->penslot.penetrancePolynomial = penPolynomial;
-	} else {
-	  compute_penetrance (pPerson, locus,
-			      pGenotype->allele[0],
-			      pGenotype->allele[1], &pen);
-
-	  pGenotype->penslot.penetrance = pen;
-	}
-
-
-	pGenotype = pGenotype->pSavedNext;
-      }
-    }
+    update_pedigree_penetrance (pPedigree, locus);
     ped++;
   }
   return 0;
