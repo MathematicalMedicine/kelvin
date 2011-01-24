@@ -33,8 +33,8 @@ void iplist_insert (st_iplist *list, char *chr, double pos, double val)
     strcpy (ptr->chr, chr);
   }
   
-  if (((ptr->pos = (double *) realloc (ptr->pos, sizeof (double) * ptr->numpos+1)) == NULL) || 
-      ((ptr->val = (double *) realloc (ptr->val, sizeof (double) * ptr->numpos+1)) == NULL)) {
+  if (((ptr->pos = (double *) realloc (ptr->pos, sizeof (double) * (ptr->numpos+1))) == NULL) || 
+      ((ptr->val = (double *) realloc (ptr->val, sizeof (double) * (ptr->numpos+1))) == NULL)) {
     fprintf (stderr, "realloc failed, %s\n", strerror (errno));
     exit (-1);
   }
