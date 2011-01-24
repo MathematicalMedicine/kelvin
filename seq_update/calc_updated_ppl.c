@@ -276,7 +276,8 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     if (brfiles[fileno].physical_pos && ! forcemap)
       physicalpos = 1;
     if (verbose >= 2)
-      printf ("first marker in %s is %s\n", brfiles[fileno].name, brfiles[fileno].curmarker.name2);
+      fprintf (stderr, "first marker in %s is %s\n", brfiles[fileno].name,
+	       brfiles[fileno].curmarker.name2);
   }
   print_twopoint_headers (brfiles[0].no_ld, physicalpos);
 
@@ -293,14 +294,14 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     }
     
     if (verbose >= 2)
-      printf ("first marker to update is %s\n", next_marker.name2);
+      fprintf (stderr, "first marker to update is %s\n", next_marker.name2);
     
     numcurrent = 0;
     alldone = 1;
     for (fileno = 0; fileno < numbrfiles; fileno++) {
       if (brfiles[fileno].eof) {
 	if (verbose >= 3)
-	  printf ("%s is at EOF\n", brfiles[fileno].name);
+	  fprintf (stderr, "%s is at EOF\n", brfiles[fileno].name);
 	continue;
       }
       alldone = 0;
@@ -320,13 +321,13 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     if (alldone)
       break;
     if (numcurrent == 0) {
-      if (! quiet)
+      if (verbose >= 1)
 	fprintf (stderr, "WARNING: marker %s from %s doesn't appear in any BR files, skipping\n",
 		 next_marker.name2, mapinfile);
       continue;
     }
     if (verbose >= 1) {
-      printf ("current marker is '%s', using BR file%s %s", next_marker.name2,
+      fprintf (stderr, "current marker is '%s', using BR file%s %s", next_marker.name2,
 	      (numcurrent > 1) ? "s" : "", current[0]->name);
       for (fileno = 1; fileno < numcurrent; fileno++) 
 	printf (", %s", current[fileno]->name);
@@ -566,7 +567,7 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     if (brfiles[fileno].physical_pos && ! forcemap)
       physicalpos = 1;
     if (verbose >= 2)
-      printf ("first marker in %s is %s\n", brfiles[fileno].name, brfiles[fileno].curmarker.name2);
+      fprintf (stderr, "first marker in %s is %s\n", brfiles[fileno].name, brfiles[fileno].curmarker.name2);
     if (! brfiles[fileno].no_ld)
       ld = 1;
   }
@@ -610,7 +611,7 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     for (fileno = 0; fileno < numbrfiles; fileno++) {
       if (brfiles[fileno].eof) {
 	if (verbose >= 3)
-	  printf ("%s is at EOF\n", brfiles[fileno].name);
+	  fprintf (stderr, "%s is at EOF\n", brfiles[fileno].name);
 	continue;
       }
       alldone = 0;
@@ -630,12 +631,13 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     if (alldone)
       break;
     if (numcurrent == 0) {
-      fprintf (stderr, "WARNING: marker %s from %s doesn't appear in any BR files, skipping\n",
-	       next_marker.name2, mapinfile);
+      if (verbose >= 1)
+	fprintf (stderr, "WARNING: marker %s from %s doesn't appear in any BR files, skipping\n",
+		 next_marker.name2, mapinfile);
       continue;
     }
     if (verbose >= 1) {
-      printf ("current marker is '%s', using BR file%s %s", next_marker.name2,
+      fprintf (stderr, "current marker is '%s', using BR file%s %s", next_marker.name2,
 	      (numcurrent > 1) ? "s" : "", current[0]->name);
       for (fileno = 1; fileno < numcurrent; fileno++) 
 	printf (", %s", current[fileno]->name);
@@ -726,6 +728,12 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
     }
   }
 
+  for (fileno = 0; fileno < numbrfiles; fileno++) {
+    if (! brfiles[fileno].eof)
+      fprintf (stderr, "WARNING - file '%s' not processed beyond marker '%s'\n",
+	       brfiles[fileno].name, brfiles[fileno].curmarker.name2);
+  }
+
   free (current);
   if (data_0.dprimesize > 0)
     free (data_0.dprimes);
@@ -801,7 +809,7 @@ void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_l
       if ((ldprior = iplist_interpolate (&ippl, marker->chr, marker->avgpos)) < MIN_PRIOR)
 	ldprior = MIN_PRIOR;
       if (verbose >= 2)
-	printf ("ippl is %.6e\n", ldprior);
+	fprintf (stderr, "ippl is %.6e\n", ldprior);
       ldstat = calc_upd_ppld_allowing_l (ldval, ldprior);
       fprintf (pplout, " %.4f %.*f", ldprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
     }
