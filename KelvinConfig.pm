@@ -38,7 +38,7 @@ undef on failure.
 
 package KelvinConfig;
 our $errstr='';
-our $VERSION=1.1;
+our $VERSION=1.2;
 
 
 # The %directive hash: The keys are lowercased versions of the 
@@ -162,6 +162,8 @@ my %directives = (
 			 regex => '\w+\s+\w+'},
 		  skippedcount => {canon => 'SkipPedCount',
 				   local => 'true'},
+		  skipcountweighting => {canon => 'SkipCountWeighting',
+					 local => 'true'},
 		  skipanalysis => {canon => 'SkipAnalysis',
 				   local => 'true'},
 		  generatekeywords => {canon => 'GenerateKeywords',
@@ -593,8 +595,8 @@ sub defaultPPLFile
 {
     my ($self) = @_;
 
-    if (exists ($$self{directives}{'MultiPoint'})) {
-	# PPLFile only has a default for multipoint analyses
+    if (! exists ($$self{directives}{'MultiPoint'})) {
+	# PPLFile only has a default for twopoint analyses
 	return (['ppl.out']);
     } else {
 	return (undef);
