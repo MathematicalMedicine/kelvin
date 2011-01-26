@@ -983,7 +983,7 @@ sub validateAlleleFreqs
 	warn ("WARNING, marker $marker frequencies sum to $total\n");
     } else {
 	# Frquencies sum to greater than 1, and that's just wrong.
-	$errstr = "marker $marker frequencies sub to $total";
+	$errstr = "marker $marker frequencies sum to $total";
 	return (undef);
     }
     return (1);
