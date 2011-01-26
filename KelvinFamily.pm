@@ -45,7 +45,7 @@ sub new
 	    $errstr = "individuals are mixed pre- and post-makeped format";
 	    return (undef);
 	}
-	if ($$aref[$va]{pedid} != $$family{pedid}) {
+	if ($$aref[$va]{pedid} ne $$family{pedid}) {
 	    $errstr = "individuals are from different families (pedigree IDs)";
 	    return (undef);
 	}
@@ -569,7 +569,7 @@ sub individuals
 #
 package KelvinIndividual;
 our $errstr='';
-our $VERSION=1.0;
+our $VERSION=1.2;
 
 sub new
 {
