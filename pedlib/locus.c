@@ -2133,6 +2133,7 @@ update_pedigree_penetrance (Pedigree *pPedigree, int locus)
       pGenotype = pGenotype->pSavedNext;
     }
   }
+  return 0;
 }
 
 int
