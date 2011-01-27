@@ -1,3 +1,13 @@
+Version 2.3.0
+  27 Jan 2011
+  Kelvin binary:
+    Shared memory segment for debugging is disabled by default in all builds
+  Front End: 
+    KelvinFamily can write pre-MAKEPED format pedigree files
+    Pedigree counts for case/control pedigrees uses a weighting algorithm
+  Sequential Update:
+    Multipoint updating interpolates BRs for missing positions
+
 Version 2.2.0
   If physical positions appear in map file, they are now displayed in two-point PPL
     (trait-to-marker only) and multipoint PPL and MOD files (interpolated to trait
