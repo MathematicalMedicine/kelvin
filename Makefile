@@ -245,7 +245,7 @@ kelvin-$(VERSION) : libs $(OBJS) $(INCS)
 	cp $@ $@-$(SVNVERSION)
 
 
-kelvin.platform : clean check_dist_flag kelvin
+platform : clean check_dist_flag kelvin seq_update/calc_updated_ppl
 	cp kelvin-$(VERSION) bin/kelvin.$(PLATFORM)
 
 check_dist_flag :
