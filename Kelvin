@@ -45,7 +45,7 @@ my $ret;
 
 my %freqState = ( estimate => 1, xchr => 0, prevalence => 0, qt => 0, affected => 2,
 		  kelvinargs => []);
-my %countState = ( countable => 1, imprinting => 0,
+my %countState = ( countable => 1, imprinting => 0, cases => 0, controls => 0, skipweighting => 0,
 		   pedigreefile => undef, countfile => undef, xchr => 0, precounted => 0,
 		   postcounted => 0);
 my %epiState = ( passes => 0, extramods => 0, ld => 0, multipoint => 0, trait => undef, 
@@ -188,6 +188,7 @@ sub setup_pedcount
     }
     ($config->isConfigured ("SexLinked")) and $$state{xchr} = 1;
     ($config->isConfigured ("Imprinting")) and $$state{imprinting} = 1;
+    ($config->isConfigured ("SkipCountWeighting")) and $$state{skipweighting} = 1;
     $$state{pedigreefile} = $dataset->pedigreefile;
     $$state{counts} = [];
     $$state{markers} = $dataset->markerOrder;
@@ -296,6 +297,13 @@ sub count_family
 		and $$state{pedlabels}{$key} = $$state{counts}[$va]{$key};
 	}
     }
+    if (keylabel ($key) =~ /^(case|ctrl).*/) {
+	if ($1 eq 'case') {
+	    $$state{cases}++;
+	} else {
+	    $$state{controls}++;
+	}
+    }
 }
 
 sub write_pedcount
@@ -303,11 +311,13 @@ sub write_pedcount
     my ($state, $dataset) = @_;
     my @pedlabels = ();
     my $counts;
+    my $count;
     my $family;
     my @individuals;
     my $key;
     my $pedid;
     my ($geno, $traits, $sex);
+    my $average;
     my $va;
     my $n;
 
@@ -328,6 +338,12 @@ sub write_pedcount
     }
 
     if ($$state{countable}) {
+	$average = ($$state{cases} + $$state{controls}) / 2;
+	($average > 0 && ! $$state{skipweighting})
+	    and warner ("Pedigree count weighting for cases/controls is in effect");
+	($$state{cases} != 0) and $$state{cases} = $average / $$state{cases};
+	($$state{controls} != 0) and $$state{controls} = $average / $$state{controls};
+
 	$$state{countfile} = $$state{pedigreefile} . ".counts";
 	@pedlabels = sort {by_len ($a, $b)} (keys (%{$$state{pedlabels}}));
 	open (FH, ">$$state{countfile}");
@@ -339,7 +355,20 @@ sub write_pedcount
 	    print (FH " 1" x scalar (@{$$state{uncountedpeds}}));
 	    $counts = $$state{counts}[$va];
 	    foreach $key (@pedlabels) {
-		print (FH " ". (exists ($$counts{$key}) ? $$counts{$key} : 0));
+		if (exists ($$counts{$key})) {
+		    if (keylabel ($key) =~ /^(case|ctrl).*/ && ! $$state{skipweighting}) {
+			if ($1 eq "case") {
+			    $count = sprintf ("%.0f", $$counts{$key} * $$state{cases});
+			} else {
+			    $count = sprintf ("%.0f", $$counts{$key} * $$state{controls});
+			}
+		    } else {
+			$count = $$counts{$key};
+		    }
+		} else {
+		    $count = 0;
+		}
+		print (FH " ". $count);
 	    }
 	    print (FH "\n");
 	}
@@ -1127,7 +1156,7 @@ sub check_paths
     require KelvinFamily;
     # Check versions ('use' would have done for us automatically)
     KelvinDataset->VERSION (1.20);
-    KelvinConfig->VERSION (1.10);
+    KelvinConfig->VERSION (1.20);
     KelvinFamily->VERSION (1.20);
 
     if ($ENV{KELVIN_BINARY}) {
