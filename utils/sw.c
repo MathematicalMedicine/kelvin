@@ -162,10 +162,10 @@ int phaseStackPosition = 0;
 void swPushPhase (char program, char *currentPhase)
 {
   char processName[16+1];
-  int i;
   if (phaseStackPosition == PHASE_STACK_DEPTH) {
     DIAG(0, 0, {
 	WARNING("Phase stack overflow (not serious), phase not changed to [%s]", currentPhase);
+	int i;
 	for (i=0; i<PHASE_STACK_DEPTH; i++)
 	  fprintf (stderr, "%d is %s\n", i, phaseStack[i]);
 	});
