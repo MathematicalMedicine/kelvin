@@ -357,6 +357,8 @@ void iterateMain ()
             }
             ASSERT ((modelOptions->equilibrium != LINKAGE_DISEQUILIBRIUM) || (dprime0Idx != -1), "The requisite zero D' was not found");
 	    }
+	    else
+	      dprime0Idx=0;
 
             if (modelType->trait == DICHOTOMOUS) {
 

@@ -2020,6 +2020,8 @@ void integrateMain ()
              * }      moved to each HLR calculation function */
           }
 	  }
+	  else
+	    dprime0Idx=0;
 
           /* for each D prime and theta, print out average and maximizing model information - MOD */
           if (modelOptions->markerAnalysis == FALSE)
