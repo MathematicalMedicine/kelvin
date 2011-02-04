@@ -1,3 +1,8 @@
+Version 2.3.1
+  4 Feb 2011
+  Kelvin binary:
+    Fix for segfault in certain 2pt M-M LE analyses
+
 Version 2.3.0
   27 Jan 2011
   Kelvin binary:
