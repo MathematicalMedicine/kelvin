@@ -2010,14 +2010,17 @@ void integrateMain ()
           /* clear Dprime combination impossible flag */
           memset (pLambdaCell->impossibleFlag, 0, sizeof (int) * pLambdaCell->ndprime);
           /* set up haplotype frequencies */
-          for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-            if (isDPrime0 (pLambdaCell->lambda[dprimeIdx], pLambdaCell->m, pLambdaCell->n))
-              dprime0Idx = dprimeIdx;
-            /* statusLocal = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
-             * if (statusLocal < 0) {
-             * pLambdaCell->impossibleFlag[dprimeIdx] = 1;
-             * }      moved to each HLR calculation function */
-          }
+	  if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM) {
+	    for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
+	      if (isDPrime0 (pLambdaCell->lambda[dprimeIdx], pLambdaCell->m, pLambdaCell->n))
+		dprime0Idx = dprimeIdx;
+	      /* statusLocal = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
+	       * if (statusLocal < 0) {
+	       * pLambdaCell->impossibleFlag[dprimeIdx] = 1;
+	       * }      moved to each HLR calculation function */
+	    }
+	  } else
+	    dprime0Idx = 0;
 
           /* for each D prime and theta, print out average and maximizing model information - MOD */
           if (modelOptions->markerAnalysis == FALSE)

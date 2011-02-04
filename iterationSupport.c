@@ -347,14 +347,17 @@ void iterateMain ()
             memset (pLambdaCell->impossibleFlag, 0, sizeof (int) * pLambdaCell->ndprime);
             /* set up haplotype frequencies */
             dprime0Idx = -1;
-            for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
-              if (isDPrime0 (pLambdaCell->lambda[dprimeIdx], pLambdaCell->m, pLambdaCell->n))
-                dprime0Idx = dprimeIdx;
-              status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
-              if (status < 0)
-                pLambdaCell->impossibleFlag[dprimeIdx] = 1;
-            }
-            ASSERT ((modelOptions->equilibrium != LINKAGE_DISEQUILIBRIUM) || (dprime0Idx != -1), "The requisite zero D' was not found");
+	    if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM) {
+	      for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++) {
+		if (isDPrime0 (pLambdaCell->lambda[dprimeIdx], pLambdaCell->m, pLambdaCell->n))
+		  dprime0Idx = dprimeIdx;
+		status = setup_LD_haplotype_freq (pLDLoci, pLambdaCell, dprimeIdx);
+		if (status < 0)
+		  pLambdaCell->impossibleFlag[dprimeIdx] = 1;
+	      }
+	      ASSERT ((modelOptions->equilibrium != LINKAGE_DISEQUILIBRIUM) || (dprime0Idx != -1), "The requisite zero D' was not found");
+	    } else
+	      dprime0Idx = 0;
 
             if (modelType->trait == DICHOTOMOUS) {
 
