@@ -50,11 +50,6 @@ int lastMarkerIndex = 0; // Used by 2pt server same as lastTraitPosition above.
 int locusListTypesDone = 0; // Used by server to keep which type of locusList we've worked on in order to coordinate our work requests
 #endif
 
-void print_xmission_matrix_differences (XMission *, XMission *, int, int, int, char *);
-int xmission_matrix_different = 0;
-
-double lastPedTraitPosCM = -9999.99;
-
 char partialPolynomialFunctionName[MAX_PFN_LEN + 1];
 
 /* this is for working out loop breaker's multilocus genotypes */
@@ -62,19 +57,6 @@ Genotype **pTempGenoVector;
 
 /* transmission probability matrix */
 XMission *xmissionMatrix = NULL;
-
-void dump_analysisLocusList () {
-  fprintf (stderr, "DUMPING aLL w/numLocus of %d, traitLocusIndex of %d",
-	   analysisLocusList->numLocus, analysisLocusList->traitLocusIndex);
-  {
-    int i;
-    for (i=0; i<analysisLocusList->numLocus; i++)
-      fprintf (stderr, "<-%g/%g/%g-%d(O:%d)-%g/%g/%g->\n",
-	       analysisLocusList->pPrevLocusDistance[0][i], analysisLocusList->pPrevLocusDistance[1][i], analysisLocusList->pPrevLocusDistance[2][i], 
-	       i, analysisLocusList->pLocusIndex[i],
-	       analysisLocusList->pNextLocusDistance[0][i], analysisLocusList->pNextLocusDistance[1][i], analysisLocusList->pNextLocusDistance[2][i]);
-  }
-}
 
 /* temporary likelihood results for related parental pairs */
 typedef struct PPairElement
@@ -362,8 +344,11 @@ void compute_server_pedigree_likelihood (PedigreeSet *pPedigreeList, Pedigree *p
     evaluatePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, &pPedigree->likelihood);
   } else {
     // As usual, assume the traitLocus is the first entry in the pedigree list...
-    set_genotype_weight (pPedigree, 0);
-    update_pedigree_penetrance (pPedigree, 0); // Call whenever the penetrance vector changes, which is every time we get new work
+    // We will want to change the next two calls to do the updates only for a single pedigree
+    update_locus (pPedigreeList, 0);
+    update_penetrance (pPedigreeList, 0);
+    // Theory has it that we only need to re-populate when loci change, but practice says no, always do it.
+    populate_xmission_matrix (xmissionMatrix, analysisLocusList->numLocus, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
     initialize_multi_locus_genotype (pPedigree);
     compute_pedigree_likelihood (pPedigree);
   }
@@ -603,6 +588,12 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
     if (traitPosition != lastTraitPosition ||
 	((1 << (locusListType - 1)) & locusListTypesDone) == 0) { // Only do work if on a new position or different type analysisLocusList
 
+      if (traitPosition != lastTraitPosition) {
+	lastTraitPosition = traitPosition;
+	locusListTypesDone = 1 << (locusListType - 1);
+      } else
+	locusListTypesDone |= 1 << (locusListType - 1);
+
       lowPosition = -99.99;
       if (studyDB.driverPosIdx != 0)
 	lowPosition = lociSetTransitionPositions[studyDB.driverPosIdx - 1];
@@ -619,11 +610,11 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
-
+	
 	// Find the pedigree in the set
 	if ((pPedigree = find_pedigree(pPedigreeList, pedigreeSId)) == NULL)
 	  ERROR ("Got work for unexpected pedigree %s", pedigreeSId);
-
+	
 	if (locusListType != 1) { // Do trait-related setup (trait and combined likelihoods)
 
 	  // We've retrieved DGF, now compute dGF (made that up!)
@@ -673,16 +664,6 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	  }
 	}
 
-	// Rebuild the transmission matrix whenever likelihood type (trait, marker set, alternative), position changes, but not for anything else (pedigree or trait parameters).
-
-	// So we could make a hash out of analysisLocusList->numLocus and position/theta to find (or build) the xmission_matrix and/or (if we add pedigreeIndex) the likelihood polynomial.
-	// So the only variable in transmission matrices polynomials is position/theta and we'd need one per pedigree/ordered set of loci.
-
-	if (pedTraitPosCM != lastPedTraitPosCM || ((1 << (locusListType - 1)) & locusListTypesDone) == 0) {
-	  populate_xmission_matrix (xmissionMatrix, analysisLocusList->numLocus, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
-	  lastPedTraitPosCM = pedTraitPosCM;
-	}
-
 	// Compute the likelihood (and time it!)
 
 	swReset (singleModelSW);
@@ -711,13 +692,6 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED combined likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
 	*/
       } 
-
-      if (traitPosition != lastTraitPosition) {
-	lastTraitPosition = traitPosition;
-	locusListTypesDone = 1 << (locusListType - 1);
-      } else
-	locusListTypesDone |= 1 << (locusListType - 1);
-
    }
 
     // Clean up by faking all results
@@ -3118,52 +3092,6 @@ int build_xmission_matrix (XMission ** ppMatrix, int totalLoci)
     return -1;
 
   return 0;
-}
-
-void print_xmission_matrix_differences (XMission *p1Matrix, XMission *p2Matrix, int totalLoci, int loc, int cellIndex, char *pID)
-{
-  int pattern;
-  int newCellIndex;
-  int i;
-
-  for (pattern = 0; pattern <= 2; pattern++) {
-    newCellIndex = cellIndex * 4 + pattern;
-    if (pattern == 1)
-      pID[loc] = 'P';
-    else if (pattern == 2)
-      pID[loc] = 'M';
-    else
-      pID[loc] = 'B';
-
-    if (loc != totalLoci - 1) {
-      /* Not complete multi-locus haplotype yet */
-      print_xmission_matrix_differences (p1Matrix, p2Matrix, totalLoci, loc + 1, newCellIndex, pID);
-    } else {
-      /* Compare and maybe print the xmission probability */
-      int different = 0;
-      if (modelOptions->polynomial == TRUE) {
-	if (p1Matrix[newCellIndex].slot.probPoly[0] != p2Matrix[newCellIndex].slot.probPoly[0])
-	  different = 1;
-      } else
-        if (p1Matrix[newCellIndex].slot.prob[0] != p2Matrix[newCellIndex].slot.prob[0])
-	  different = 1;
-
-      if (different) {
-	xmission_matrix_different = 1;
-	for (i = 0; i <= loc; i++)
-	  fprintf (stderr, "%c", pID[i]);
-	fprintf (stderr, ": ");
-	/* Print sex averaged xmission probability */
-	if (modelOptions->polynomial == TRUE) {
-	  expTermPrinting (stderr, p1Matrix[newCellIndex].slot.probPoly[0], 4);
-	  fprintf (stderr, " vs ");
-	  expTermPrinting (stderr, p2Matrix[newCellIndex].slot.probPoly[0], 4);
-	  fprintf (stderr, "\n");
-	} else
-	  fprintf (stderr, "%f vs %f\n", p1Matrix[newCellIndex].slot.prob[0], p2Matrix[newCellIndex].slot.prob[0]);
-      }
-    }
-  }
 }
 
 void print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc, int cellIndex, char *pID)
