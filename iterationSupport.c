@@ -1072,7 +1072,7 @@ void iterateMain ()
       analysisLocusList->traitLocusIndex = traitIndex;
       analysisLocusList->traitOrigLocus = traitLocus;
 
-      SUBSTEP (((posIdx * 100) / numPositions), "Starting w/trait locus at %.4g (%d/%d positions)", traitPos, posIdx + 1, numPositions);
+      SUBSTEP (((posIdx * 100) / numPositions), "Starting w/trait locus at %.6g (%d/%d positions)", traitPos, posIdx + 1, numPositions);
 
       markerSetChanged = FALSE;
       if (prevFirstMarker != mp_result[posIdx].pMarkers[0] || prevLastMarker != mp_result[posIdx].pMarkers[modelType->numMarkers - 1]) {
