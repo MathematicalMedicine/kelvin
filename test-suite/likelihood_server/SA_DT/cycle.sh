@@ -19,9 +19,13 @@
 #
 set -x
 
+# Any queuing modifier, like using -q johntest
+qmods=""
+
 # Don't just quit if nothing is available -- wait for it.
 shopt -s expand_aliases
-alias qrsh="qrsh -now no "
+
+alias qrsh="qrsh -now no $qmods"
 
 # These are for nodes other than Levi-Montalcini, where SGE is not available
 if test "$HOSTNAME" != "Levi-Montalcini" ; then
@@ -56,13 +60,13 @@ fi
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
-  nq "~/bcmmtools/run_server.sh server"
+  nq "~/bcmmtools/run_server.sh server" $qmods
+  nq "~/bcmmtools/run_server.sh server" $qmods
+  nq "~/bcmmtools/run_server.sh server" $qmods
+  nq "~/bcmmtools/run_server.sh server" $qmods
+  nq "~/bcmmtools/run_server.sh server" $qmods
+  nq "~/bcmmtools/run_server.sh server" $qmods
+  nq "~/bcmmtools/run_server.sh server" $qmods
 
   # Run a single one blocking further processing until most work is done
   qrsh "cd `pwd`; ~/bcmmtools/run_server.sh server"
