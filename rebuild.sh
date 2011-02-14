@@ -50,10 +50,11 @@ make clean
 make USE_OPENMP=no USE_GSL=yes USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DPOLYUSE_DL -DPOLYCODE_DL -DFAKEEVALUATE" ENV_LDFLAGS=" -ldl"  kelvin
 mv kelvin-$VERSION kelvin-$VERSION-POLYCODE_DL_FAKEEVALUATE
 
-if test "$HOSTNAME" = "Levi-Montalcini" ; then
-    # Likelihood server build.
+# Likelihood server build.
+if ksh whence mysql >/dev/null 2>&1; then
     make clean
     make  USE_STUDYDB=yes USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR" ENV_LDFLAGS="" kelvin
+    cp kelvin-$VERSION kelvin-study
     mv kelvin-$VERSION kelvin-$VERSION-study
 fi
 
