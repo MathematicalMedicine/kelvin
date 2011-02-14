@@ -1,6 +1,8 @@
 #!/bin/bash -e
 #
-# Run the likelihood server version of kelvin as cleverly as possible to minimize the overall
+# EDIT THE KELVIN VERSION referenced throughout the script to ensure you get what you want.
+#
+# Runs the likelihood server version of kelvin as cleverly as possible to minimize the overall
 # runtime. Study-specific versions are common, with changes reflecting the various servers
 # that have to run to perform all the work between client passes.
 #
@@ -40,7 +42,7 @@ if test -z "$1" ; then
     perl ~/kelvin/trunk/InitStudy.pl server.conf
 
     # Initial full run of client
-    qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+    qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.3.2-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
 
     # Initial set of "new" trait positions is the original set so we can detect if _no_ splits ever occurred
     cp client.conf client-newTP.conf
@@ -60,16 +62,16 @@ fi
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
-  nq "~/bcmmtools/run_server.sh server" $qmods
-  nq "~/bcmmtools/run_server.sh server" $qmods
-  nq "~/bcmmtools/run_server.sh server" $qmods
-  nq "~/bcmmtools/run_server.sh server" $qmods
-  nq "~/bcmmtools/run_server.sh server" $qmods
-  nq "~/bcmmtools/run_server.sh server" $qmods
-  nq "~/bcmmtools/run_server.sh server" $qmods
+  nq "./run_server.sh server" $qmods
+  nq "./run_server.sh server" $qmods
+  nq "./run_server.sh server" $qmods
+  nq "./run_server.sh server" $qmods
+  nq "./run_server.sh server" $qmods
+  nq "./run_server.sh server" $qmods
+  nq "./run_server.sh server" $qmods
 
   # Run a single one blocking further processing until most work is done
-  qrsh "cd `pwd`; ~/bcmmtools/run_server.sh server"
+  qrsh "cd `pwd`; ./run_server.sh server"
   # Make sure that nothing remains undone
   while :
   do
@@ -86,7 +88,7 @@ do
     sleep 300
   done
   # Run the client to see if any splits occur
-  qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+  qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.3.2-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
   grep WARNING br.out || { break; }
   # Get the new set of trait positions
   TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct RefTraitPosCM from Regions where StudyId = $2 AND RefTraitPosCM >= 0 AND PendingLikelihoods > 0;" | tr "\n" " ")
@@ -95,4 +97,4 @@ do
   for tp in $TPs;  do   echo "In the loop";  echo "TraitPosition $tp" >> client-newTP.conf; done
 done
 # Don't bother with a second run if there were no splits at all
-diff client.conf client-newTP.conf || qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+diff client.conf client-newTP.conf || qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.3.2-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
