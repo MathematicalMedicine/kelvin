@@ -151,7 +151,7 @@ endif
 
 ifeq ($(strip $(USE_STUDYDB)), yes)
   FILE_CFLAGS += -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql
-  FILE_LDFLAGS += -lrt -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
+  FILE_LDFLAGS += -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
 endif
 
 # If GSL support has been enabled
