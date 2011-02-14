@@ -641,8 +641,8 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
   // PutWork...if this fails due to a lost connection (like, it took days to compute), then we've lost context and temporary tables, so just do salvage.
   while (1) {
     if (mysql_stmt_execute (studyDB.stmtPutWork) != 0) {
-      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") != 0) &&
-	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "HY000") != 0)) {
+      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") == 0) ||
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "HY000") == 0)) {
         ERROR("Cannot execute PutWork statement w/markerCount %d, lOD %18G, runtimeCostSec %d (%s, %s), in a pinch, clean-up manually and try them in [%s]",
               markerCount, lOD, runtimeCostSec, mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork), studyDB.strPutWork);
       } else {
