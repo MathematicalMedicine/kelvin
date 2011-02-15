@@ -8,7 +8,7 @@ cpp -dM /dev/null | perl -pe "s|#define |export\t|; s|\(||g; s|\)||g; s| |=\"|; 
 echo set -e >>$temp
 source $temp
 #rm $temp
-printenv | sort
+set | sort
 
 if test "$__VERSION__" \< "4.1"; then
     USE_OPENMP=no
