@@ -150,7 +150,7 @@ endif
 #FILE_CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13, no OpenMP
 
 ifeq ($(strip $(USE_STUDYDB)), yes)
-  FILE_CFLAGS += -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql
+  FILE_CFLAGS += -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql -I/usr/sfw/include/mysql/
   FILE_LDFLAGS += -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
 endif
 
