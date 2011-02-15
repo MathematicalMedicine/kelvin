@@ -23,14 +23,14 @@ set -x
 # Don't just quit if nothing is available -- wait for it.
 alias qrsh="qrsh -now no "
 
-# These are for nodes other than Levi-Montalcini
+# These are for nodes other than Levi-Montalcini, where SGE is not available
 if test "$HOSTNAME" != "Levi-Montalcini" ; then
     alias qrsh="bash -c"
     alias nq="echo Not submitting: "
 fi
 
 # Do the normal 2pt run for comparison in a normal queue
-nq "~/kelvin/trunk/kelvin-2.2.0-normal client-normal-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+nq "~/kelvin/trunk/kelvin-normal client-normal-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
 
 # Do the initialization only if there was no command line parameter
 if test -z "$1" ; then
@@ -40,7 +40,7 @@ if test -z "$1" ; then
     perl ~/kelvin/trunk/InitStudy.pl server-2pt-init.conf
 
     # Initial full run of client
-    qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+    qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
 
     # Initial set of "new" trait positions is the original set so we can detect if _no_ splits ever occurred
     cp client.conf client-newTP.conf
@@ -50,7 +50,7 @@ fi
 study=$(grep -i ^Study client.conf)
 set -- $study
 
-# Set all 2pt PedigreePositions to one marker
+# Set all 2pt PedigreePositions to one marker (CHANGE THIS FOR DIFFERENT STUDIES)
 echo "Update PedigreePositions set MarkerCount = 1 where StudyId = $2 AND PedigreeSId in (180);" | mysql --host=$4 --user=$6 --password=$7 $5
 
 # Setup the Single-Model RunTimes so bucket loading can be intelligent
@@ -63,17 +63,29 @@ fi
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
-  nq "~/bcmmtools/run_server.sh server-mp"
-  nq "~/bcmmtools/run_server.sh server-mp"
-  nq "~/bcmmtools/run_server.sh server-mp"
-  nq "~/bcmmtools/run_server.sh server-mp"
-  nq "~/bcmmtools/run_server.sh server-2pt-run"
-  nq "~/bcmmtools/run_server.sh server-2pt-run"
-  nq "~/bcmmtools/run_server.sh server-2pt-run"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-mp"
+  nq "./run_server.sh server-2pt-run"
+  nq "./run_server.sh server-2pt-run"
+  nq "./run_server.sh server-2pt-run"
 
   # Run single blocking ones to prevent further processing until all work is done
-  qrsh "cd `pwd`; ~/bcmmtools/run_server.sh server-mp"
-  qrsh "cd `pwd`; ~/bcmmtools/run_server.sh server-2pt-run"
+  qrsh "cd `pwd`; ./run_server.sh server-mp"
+  qrsh "cd `pwd`; ./run_server.sh server-2pt-run"
   # Make sure that nothing remains undone
   while :
   do
@@ -90,7 +102,7 @@ do
     sleep 300
   done
   # Run the client to see if any splits occur
-  qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+  qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
   grep WARNING br.out-all-pedigrees || { break; }
   # Get the new set of trait positions
   TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct RefTraitPosCM from Regions where StudyId = $2 AND RefTraitPosCM >= 0 AND PendingLikelihoods > 0;" | tr "\n" " ")
@@ -99,7 +111,7 @@ do
   for tp in $TPs;  do   echo "In the loop";  echo "TraitPosition $tp" >> client-newTP.conf; done
 done
 # Don't bother with a second run if there were no splits at all
-diff client.conf client-newTP.conf || qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+diff client.conf client-newTP.conf || qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
 
 # Run a 2pt for just the 2pt pedigrees for comparison purposes
-nq "~/kelvin/trunk/kelvin-2.2.0-study client-just-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+nq "~/kelvin/trunk/kelvin-study client-just-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
