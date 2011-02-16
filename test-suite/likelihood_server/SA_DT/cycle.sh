@@ -1,7 +1,5 @@
 #!/bin/bash -e
 #
-# EDIT THE KELVIN VERSION referenced throughout the script to ensure you get what you want.
-#
 # Runs the likelihood server version of kelvin as cleverly as possible to minimize the overall
 # runtime. Study-specific versions are common, with changes reflecting the various servers
 # that have to run to perform all the work between client passes.
@@ -19,14 +17,13 @@
 #
 # $Id$
 #
+shopt -s expand_aliases
 set -x
 
 # Any queuing modifier, like using -q johntest
 qmods=""
 
 # Don't just quit if nothing is available -- wait for it.
-shopt -s expand_aliases
-
 alias qrsh="qrsh -now no $qmods"
 
 # These are for nodes other than Levi-Montalcini, where SGE is not available
