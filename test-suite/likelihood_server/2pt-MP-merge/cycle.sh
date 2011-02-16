@@ -20,8 +20,11 @@
 shopt -s expand_aliases
 set -x
 
+# Any queuing modifier, like using -q johntest
+qmods=""
+
 # Don't just quit if nothing is available -- wait for it.
-alias qrsh="qrsh -now no "
+alias qrsh="qrsh -now no $qmods"
 
 # These are for nodes other than Levi-Montalcini, where SGE is not available
 if test "$HOSTNAME" != "Levi-Montalcini" ; then
@@ -63,25 +66,25 @@ fi
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-mp"
-  nq "./run_server.sh server-2pt-run"
-  nq "./run_server.sh server-2pt-run"
-  nq "./run_server.sh server-2pt-run"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-mp $qmods"
+  nq "./run_server.sh server-2pt-run $qmods"
+  nq "./run_server.sh server-2pt-run $qmods"
+  nq "./run_server.sh server-2pt-run $qmods"
 
   # Run single blocking ones to prevent further processing until all work is done
   qrsh "cd `pwd`; ./run_server.sh server-mp"

@@ -17,11 +17,14 @@
 #
 # $Id$
 #
+shopt -s expand_aliases
 set -x
 
+# Any queuing modifier, like using -q johntest
+qmods=""
+
 # Don't just quit if nothing is available -- wait for it.
-alias qrsh="qrsh -now no "
-shopt -s expand_aliases
+alias qrsh="qrsh -now no $qmods"
 
 # These are for nodes other than Levi-Montalcini, where SGE is not available
 if test "$HOSTNAME" != "Levi-Montalcini" ; then
@@ -37,7 +40,7 @@ if test -z "$1" ; then
     perl ~/kelvin/trunk/InitStudy.pl server-dataset11.01.conf
 
     # Initial full run of client
-    qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+    qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
 
     # Initial set of "new" trait positions is the original set so we can detect if _no_ splits ever occurred
     cp client.conf client-newTP.conf
@@ -57,13 +60,13 @@ fi
 while :
 do
   # Enqueue a few servers and...
-  nq "~/bcmmtools/run_server.sh server-dataset1"
-  nq "~/bcmmtools/run_server.sh server-dataset1"
-  nq "~/bcmmtools/run_server.sh server-dataset1"
-  nq "~/bcmmtools/run_server.sh server-dataset1"
-  nq "~/bcmmtools/run_server.sh server-dataset11.01"
-  nq "~/bcmmtools/run_server.sh server-dataset11.01"
-  nq "~/bcmmtools/run_server.sh server-dataset11.01"
+  nq "~/bcmmtools/run_server.sh server-dataset1 $qmods"
+  nq "~/bcmmtools/run_server.sh server-dataset1 $qmods"
+  nq "~/bcmmtools/run_server.sh server-dataset1 $qmods"
+  nq "~/bcmmtools/run_server.sh server-dataset1 $qmods"
+  nq "~/bcmmtools/run_server.sh server-dataset11.01 $qmods"
+  nq "~/bcmmtools/run_server.sh server-dataset11.01 $qmods"
+  nq "~/bcmmtools/run_server.sh server-dataset11.01 $qmods"
 
   # Run single ones blocking further processing until most work is done
   qrsh "cd `pwd`; ~/bcmmtools/run_server.sh server-dataset1"
@@ -84,7 +87,7 @@ do
     sleep 300
   done
   # Run the client to see if any splits occur
-  qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+  qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
   grep WARNING br.out || { break; }
   # Get the new set of trait positions
   TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct RefTraitPosCM from Regions where StudyId = $2 AND RefTraitPosCM >= 0 AND PendingLikelihoods > 0;" | tr "\n" " ")
@@ -93,8 +96,8 @@ do
   for tp in $TPs;  do   echo "In the loop";  echo "TraitPosition $tp" >> client-newTP.conf; done
 done
 # Don't bother with a second run if there were no splits at all
-diff client.conf client-newTP.conf || qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+diff client.conf client-newTP.conf || qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
 
 # Get baselines of separate runs
-nq "~/kelvin/trunk/kelvin-2.2.0-normal dataset1.conf --MapFile reference.map --BayesRatioFile br.reference-dataset1"
-nq "~/kelvin/trunk/kelvin-2.2.0-normal dataset11.01.conf --MapFile reference.map --BayesRatioFile br.reference-dataset11.01"
+nq "~/kelvin/trunk/kelvin-normal dataset1.conf --MapFile reference.map --BayesRatioFile br.reference-dataset1"
+nq "~/kelvin/trunk/kelvin-normal dataset11.01.conf --MapFile reference.map --BayesRatioFile br.reference-dataset11.01"
