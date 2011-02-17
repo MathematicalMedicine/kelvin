@@ -1,3 +1,9 @@
+Use the following as examples:
+
+Look for imprinting runs with more than one liability class:
+find . -name KEYWORDS -exec grep -Hv NOIMPR /dev/null \{\} \; | egrep -e LC2 -e LC3
+
+
 Autosomal AUC
 Allosomal XC
 
