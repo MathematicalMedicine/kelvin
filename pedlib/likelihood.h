@@ -9,7 +9,6 @@
 #ifndef __PARENTALPAIR_H__
 #define __PARENTALPAIR_H__
 
-
 /* each nuclear family can have many ParentalPair depends on the 
  * possible genotypes of the father and mother 
  * these parental pairs are phased single locus . */
@@ -78,7 +77,7 @@ extern char partialPolynomialFunctionName[];
 
 
 int build_likelihood_polynomial (Pedigree * pPedigree);
-int compute_likelihood (PedigreeSet * pPedigreeList);
+int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList);
 int construct_parental_pair (NuclearFamily * pNucFam, Person * pProband,
 			     int locus);
 int stat_parental_pair_workspace (PedigreeSet *);
@@ -92,13 +91,16 @@ int count_likelihood_space (PedigreeSet * pPedigreeList);
 void free_likelihood_space (PedigreeSet * pPedigreeList);
 void allocate_nucfam_het (PedigreeSet * pPedigreeList, int numLocus);
 int build_xmission_matrix (XMission ** ppMatrix, int totalLoci);
-int populate_xmission_matrix (XMission * pMatrix, int totalLoci,
+
+int populate_xmission_matrix (char *fileName, int lineNo, XMission * pMatrix, int totalLoci,
 			      void *prob[3], void *prob2[3],
 			      void *hetProb[3],
 			      int cellIndex,
 			      int lastHetLoc, int prevPattern, int loc);
+
 void
 print_xmission_matrix (XMission * pMatrix, int totalLoci, int loc,
 		       int cellIndex, char *pID);
+void print_xmission_matrix_differences (XMission *, XMission *, int, int, int, char *);
 
 #endif

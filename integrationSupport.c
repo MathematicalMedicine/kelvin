@@ -43,6 +43,10 @@
 #include "trackProgress.h"
 #include "ppl.h"
 
+// This will go into a 'client include' for likelihood in the future.
+#define compute_likelihood(pPedigreeList) compute_likelihood(__FILE__, __LINE__, pPedigreeList)
+#define populate_xmission_matrix(pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc) populate_xmission_matrix(__FILE__, __LINE__, pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc)
+
 #include "dcuhre.h"
 #include "integrationGlobals.h"
 #include "integrationSupport.h"
@@ -2623,7 +2627,7 @@ void integrateMain ()
         if (modelOptions->polynomial == TRUE)
           freePolys ();
 
-        DIAG (XM, 1, {
+        DIAG (XM, 3, {
               print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);
             }
         );

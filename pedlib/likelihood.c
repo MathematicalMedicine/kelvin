@@ -50,11 +50,6 @@ int lastMarkerIndex = 0; // Used by 2pt server same as lastTraitPosition above.
 int locusListTypesDone = 0; // Used by server to keep which type of locusList we've worked on in order to coordinate our work requests
 #endif
 
-void print_xmission_matrix_differences (XMission *, XMission *, int, int, int, char *);
-int xmission_matrix_different = 0;
-
-double lastPedTraitPosCM = -9999.99;
-
 char partialPolynomialFunctionName[MAX_PFN_LEN + 1];
 
 /* this is for working out loop breaker's multilocus genotypes */
@@ -62,6 +57,9 @@ Genotype **pTempGenoVector;
 
 /* transmission probability matrix */
 XMission *xmissionMatrix = NULL;
+
+// Flag to indicate if the comparison of xmission matrices found a difference
+int xmission_matrix_different = 0;
 
 void dump_analysisLocusList () {
   fprintf (stderr, "DUMPING aLL w/numLocus of %d, traitLocusIndex of %d",
@@ -362,8 +360,11 @@ void compute_server_pedigree_likelihood (PedigreeSet *pPedigreeList, Pedigree *p
     evaluatePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, &pPedigree->likelihood);
   } else {
     // As usual, assume the traitLocus is the first entry in the pedigree list...
-    set_genotype_weight (pPedigree, 0);
-    update_pedigree_penetrance (pPedigree, 0); // Call whenever the penetrance vector changes, which is every time we get new work
+    // We will want to change the next two calls to do the updates only for a single pedigree
+    update_locus (pPedigreeList, 0);
+    update_penetrance (pPedigreeList, 0);
+    // Theory has it that we only need to re-populate when loci change, but practice says no, always do it.
+    populate_xmission_matrix (__FILE__, __LINE__, xmissionMatrix, analysisLocusList->numLocus, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
     initialize_multi_locus_genotype (pPedigree);
     compute_pedigree_likelihood (pPedigree);
   }
@@ -457,11 +458,11 @@ void getAndPut2ptModels (PedigreeSet *pPedigreeList, int stepFlag, int realityFl
 }
 
 // Function definition for what we turn the old compute_likelihood into.
-int original_compute_likelihood (PedigreeSet * pPedigreeList);
+int original_compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList);
 
 /* Alternative version of compute_likelihood to handle Likelihood server. We might as well have
    a completely different version since we can't do the OMP work. */
-int compute_likelihood (PedigreeSet * pPedigreeList) {
+int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList) {
   Pedigree *pPedigree;
   int i;
   double product_likelihood = 1;        /* product of the likelihoods
@@ -475,6 +476,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
                          * counts mainly for case control analyses */
   int ret = 0;
   long myPedPosId;
+
+  DIAG (XM, 2, {
+      fprintf (stderr, "In compute_likelihood from %s:%d\n", fileName, lineNo);
+    });
 
   if (analysisLocusList->numLocus > 1)
     origLocus = analysisLocusList->pLocusIndex[1];
@@ -603,6 +608,12 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
     if (traitPosition != lastTraitPosition ||
 	((1 << (locusListType - 1)) & locusListTypesDone) == 0) { // Only do work if on a new position or different type analysisLocusList
 
+      if (traitPosition != lastTraitPosition) {
+	lastTraitPosition = traitPosition;
+	locusListTypesDone = 1 << (locusListType - 1);
+      } else
+	locusListTypesDone |= 1 << (locusListType - 1);
+
       lowPosition = -99.99;
       if (studyDB.driverPosIdx != 0)
 	lowPosition = lociSetTransitionPositions[studyDB.driverPosIdx - 1];
@@ -619,11 +630,11 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
-
+	
 	// Find the pedigree in the set
 	if ((pPedigree = find_pedigree(pPedigreeList, pedigreeSId)) == NULL)
 	  ERROR ("Got work for unexpected pedigree %s", pedigreeSId);
-
+	
 	if (locusListType != 1) { // Do trait-related setup (trait and combined likelihoods)
 
 	  // We've retrieved DGF, now compute dGF (made that up!)
@@ -673,16 +684,6 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	  }
 	}
 
-	// Rebuild the transmission matrix whenever likelihood type (trait, marker set, alternative), position changes, but not for anything else (pedigree or trait parameters).
-
-	// So we could make a hash out of analysisLocusList->numLocus and position/theta to find (or build) the xmission_matrix and/or (if we add pedigreeIndex) the likelihood polynomial.
-	// So the only variable in transmission matrices polynomials is position/theta and we'd need one per pedigree/ordered set of loci.
-
-	if (pedTraitPosCM != lastPedTraitPosCM || ((1 << (locusListType - 1)) & locusListTypesDone) == 0) {
-	  populate_xmission_matrix (xmissionMatrix, analysisLocusList->numLocus, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
-	  lastPedTraitPosCM = pedTraitPosCM;
-	}
-
 	// Compute the likelihood (and time it!)
 
 	swReset (singleModelSW);
@@ -711,13 +712,6 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED combined likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
 	*/
       } 
-
-      if (traitPosition != lastTraitPosition) {
-	lastTraitPosition = traitPosition;
-	locusListTypesDone = 1 << (locusListType - 1);
-      } else
-	locusListTypesDone |= 1 << (locusListType - 1);
-
    }
 
     // Clean up by faking all results
@@ -825,12 +819,12 @@ int compute_likelihood (PedigreeSet * pPedigreeList) {
 }
 
 /* the main API to compute likelihood for all pedigrees in a data set */
-int original_compute_likelihood (PedigreeSet * pPedigreeList)
+int original_compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 
 #else
 
 /* the main API to compute likelihood for all pedigrees in a data set */
-int compute_likelihood (PedigreeSet * pPedigreeList)
+int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 
 #endif
 {
@@ -847,6 +841,10 @@ int compute_likelihood (PedigreeSet * pPedigreeList)
                          * this is used to find out the pedigree
                          * counts mainly for case control analyses */
   int ret = 0;
+
+  DIAG (XM, 2, {
+      fprintf (stderr, "In compute_likelihood from %s:%d\n", fileName, lineNo);
+    });
 
   if (analysisLocusList->numLocus > 1)
     origLocus = analysisLocusList->pLocusIndex[1];
@@ -2758,7 +2756,7 @@ int do_populate_xmission_matrix (XMission * pMatrix, int totalLoci, void *prob[3
   char vName1[100];
 
   /* at each locus, the inheritance could be paternal only (1), maternal only (2), and
-   * both (3) which indicates the parent is homozygous at that locus 
+   * both (3) which indicates the parents are homozygous at that locus 
    * added 0 for easy handle of pattern flip, 0 is equivalent of 3 */
   for (pattern = 0; pattern <= 3; pattern++) {
     /* sex averaged or sex specific map */
@@ -3093,8 +3091,12 @@ int do_populate_xmission_matrix (XMission * pMatrix, int totalLoci, void *prob[3
   return 0;
 }
 
-int populate_xmission_matrix (XMission * pMatrix, int totalLoci, void *prob[3], void *prob2[3], void *hetProb[3], int cellIndex, int lastHetLoc, int prevPattern, int loc)
+int populate_xmission_matrix (char *fileName, int lineNo, XMission *pMatrix, int totalLoci, void *prob[3], void *prob2[3], void *hetProb[3], int cellIndex, int lastHetLoc, int prevPattern, int loc)
 {
+
+  DIAG (XM, 2, {
+      fprintf (stderr, "In populate_xmission_matrix from %s:%d\n", fileName, lineNo);
+    });
 
   do_populate_xmission_matrix (pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc);
 
