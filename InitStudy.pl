@@ -204,13 +204,14 @@ sub perform_study
 		     "(Select distinct RefTraitPosCM from Positions where ".
 		     "StudyId = $StudyId)", undef);
 	} elsif ($TP =~ /(\d*.?\d*)-(\d*.?\d*):(\d*.?\d*)/) {
-	    my $PosCM = $1;
+	    my ($begin, $end, $inc, $precision, $va) = ($1, $2, $3, $3, 0);
+	    $precision =~ s/^[^\.]\.?(\d*)?/$1/;
+	    my $PosCM;
 	    do {
+		$PosCM = sprintf ("%0.*f", length ($precision), $begin + $inc * $va++);
 		$dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 			 undef, $StudyId, $ChromosomeNo, $PosCM);
-#		$PosCM = sprintf ("%.2f", $PosCM);
-		$PosCM += $3;
-	    } while ($PosCM <= $2);
+	    } while ($PosCM <= $end);
 	} else {
 	    $dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 		     undef, $StudyId, $ChromosomeNo, $TP);
