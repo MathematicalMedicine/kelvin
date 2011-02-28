@@ -2627,7 +2627,7 @@ void integrateMain ()
         if (modelOptions->polynomial == TRUE)
           freePolys ();
 
-        DIAG (XM, 3, {
+        DIAG (XM, 4, {
               print_xmission_matrix (markerMatrix, markerLocusList.numLocus, 0, 0, tmpID);
             }
         );
@@ -2735,7 +2735,7 @@ void integrateMain ()
               initialHetProbAddr, 0,    /* cell index */
               -1, -1,   /* last het locus & last het pattern (P-1 or M-2) */
               0);       /* current locus - start with 0 */
-          DIAG (XM, 1, {
+          DIAG (XM, 4, {
                 print_xmission_matrix (altMatrix, savedLocusList.numLocus, 0, 0, tmpID);
               }
           );
