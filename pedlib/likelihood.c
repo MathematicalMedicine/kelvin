@@ -1412,10 +1412,8 @@ int peel_graph (NuclearFamily * pNucFam1, Person * pProband1, int peelingDirecti
           }
           pConditional->lkslot.likelihoodPolynomial = timesExp (2, pConditional->lkslot.likelihoodPolynomial, 1, pConditional->tmpslot.tmpLikelihoodPolynomial, 1, 0);
           pConditional->tmpslot.tmpLikelihoodPolynomial = constant0Poly;
-#if 0
           DIAG (LIKELIHOOD, 1, {fprintf (stderr, "Proband %s Conditional Likelihood (%d) = %e. Weight = %e\n",
 					 pProband->sID, i, evaluateValue (pConditional->lkslot.likelihoodPolynomial), evaluateValue (pConditional->wtslot.weightPolynomial));});
-#endif
         } else {        /* PE is not enabled */
           if (pProband->touchedFlag == FALSE)
             pConditional->lkslot.likelihood = 1;
@@ -1569,15 +1567,6 @@ int loop_child_proband_genotype (int peelingDirection, int locus, int multiLocus
           /* no need to consider penetrance anymore */
           if (modelOptions->polynomial == TRUE) {
             pConditional->lkslot.likelihoodPolynomial = timesExp (2, pConditional->lkslot.likelihoodPolynomial, 1, pNucFam->likelihoodPolynomial, 1, 1);
-#if 0
-            DIAG (LIKELIHOOD, 2, {
-                  fprintf (stderr, "Likelihood for this entire multi-locus genotype %f %f\n",
-                      evaluateValue (pNucFam->likelihoodPolynomial),
-                      evaluateValue (pProband->pLikelihood[multiLocusIndex].likelihoodPolynomial));
-                  fprintf (stderr, "Proband %s Conditional Likelihood (%d) = %e.\n", pProband->sID, multiLocusIndex, evaluateValue (pConditional->lkslot.likelihoodPolynomial));
-                }
-            );
-#endif
           } else {
             pConditional->lkslot.likelihood *= pNucFam->likelihood;
             DIAG (LIKELIHOOD, 1, {fprintf (stderr, "Proband %s Conditional Likelihood (%d) = %e.\n", pProband->sID, multiLocusIndex, pConditional->lkslot.likelihood);});
@@ -2097,13 +2086,11 @@ void loop_phases (int locus, int multiLocusIndex[2], int multiLocusPhase[2], int
         if (calculateFlag == 0) {
           ppairMatrix[phase[proband]][phase[spouse]].count++;
           if (modelOptions->polynomial == TRUE) {
-#if 0
             DIAG (LIKELIHOOD, 1, {
                   fprintf (stderr, "\t\t likelihood (%d) = %e\n", ppairMatrix[phase[proband]][phase[spouse]].likelihoodIndex, evaluateValue (ppairMatrix[phase[proband]]
                           [phase[spouse]].slot.likelihoodPolynomial));
                 }
             );
-#endif
           } else
             DIAG (LIKELIHOOD, 1, {
                 fprintf (stderr, "\t\t likelihood (%d) = %e\n", ppairMatrix[phase[proband]][phase[spouse]].likelihoodIndex, ppairMatrix[phase[proband]][phase[spouse]].slot.likelihood);
@@ -2401,12 +2388,10 @@ int calculate_likelihood (int multiLocusIndex[2],       ///< Input, index into p
     ppairMatrix[multiLocusPhase[proband]]
         [multiLocusPhase[spouse]].slot.likelihoodPolynomial =
         timesExp (5, childProductPolynomial, 1, newWeightPolynomial[proband], 1, newWeightPolynomial[spouse], 1, penetrancePolynomial[proband], 1, penetrancePolynomial[spouse], 1, 0 /* End of call, discarding */ );
-#if 0
     DIAG (LIKELIHOOD, 1, {
-        fprintf (stderr, "\t\t likelihood (%d) = %e\n",}
-        ); ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].likelihoodIndex, evaluateValue (ppairMatrix[multiLocusPhase[proband]]
-            [multiLocusPhase[spouse]].slot.likelihoodPolynomial));
-#endif
+        fprintf (stderr, "\t\t likelihood (%d) = %e\n",
+		 ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].likelihoodIndex, evaluateValue (ppairMatrix[multiLocusPhase[proband]][multiLocusPhase[spouse]].slot.likelihoodPolynomial));
+      });
     //    discardPoly (newWeightPolynomial[proband]); // This blows-up
     //    discardPoly (newWeightPolynomial[spouse]); // This blows-up
     //    discardPoly (penetrancePolynomial[proband]);
@@ -2573,11 +2558,10 @@ int loop_child_multi_locus_genotype (int locus, int multiLocusIndex, int xmissio
         } else {
           newProbPolynomial = timesExp (2, xmissionMatrix[newXmissionIndex[DAD]].slot.probPoly[1], 1, xmissionMatrix[newXmissionIndex[MOM]].slot.probPoly[2], 1, 0);
         }
-#if 0
         DIAG (LIKELIHOOD, 1, {
-            fprintf (stderr, "\t xmission prob: %f = %f * %f\n", evaluateValue (newProbPolynomial),}
-            ); evaluateValue (xmissionMatrix[newXmissionIndex[DAD]].slot.probPoly[1]), evaluateValue (xmissionMatrix[newXmissionIndex[MOM]].slot.probPoly[2]));
-#endif
+            fprintf (stderr, "\t xmission prob: %f = %f * %f\n", evaluateValue (newProbPolynomial),
+		     evaluateValue (xmissionMatrix[newXmissionIndex[DAD]].slot.probPoly[1]), evaluateValue (xmissionMatrix[newXmissionIndex[MOM]].slot.probPoly[2]));
+	  });
       } else {
         if ((modelOptions->sexLinked != 0) && pChild->sex + 1 == MALE) {
           newProb = xmissionMatrix[newXmissionIndex[MOM]].slot.prob[2];
@@ -2619,12 +2603,7 @@ int loop_child_multi_locus_genotype (int locus, int multiLocusIndex, int xmissio
               likelihoodChildElements[multCount].fslot.factorPolynomial = pChild->pLikelihood[newMultiLocusIndex].lkslot.likelihoodPolynomial;
             }
             //end of plusExp
-#if 0
-            DIAG (LIKELIHOOD, 1, {
-                  fprintf (stderr, "\t use already calculated child prob %e \n", evaluateValue (pChild->pLikelihood[newMultiLocusIndex].lkslot.likelihoodPolynomial));
-                }
-            );
-#endif
+            DIAG (LIKELIHOOD, 1, { fprintf (stderr, "\t use already calculated child prob %e \n", evaluateValue (pChild->pLikelihood[newMultiLocusIndex].lkslot.likelihoodPolynomial)); });
           } else if (analysisLocusList->traitLocusIndex >= 0)
             /*
              * first time working on this child's
@@ -2658,12 +2637,7 @@ int loop_child_multi_locus_genotype (int locus, int multiLocusIndex, int xmissio
             likelihoodChildElements[multCount].fslot.factorPolynomial = constant1Poly;
           }
         }
-#if 0
-        DIAG (LIKELIHOOD, 1, {
-              fprintf (stderr, "\t child sum %e \n", evaluateValue (*(Polynomial **) childSum));
-            }
-        );
-#endif
+        DIAG (LIKELIHOOD, 1, { fprintf (stderr, "\t child sum %e \n", evaluateValue (*(Polynomial **) childSum)); });
       } else {  /* PE is not turned on */
         if (pChild != pProband) {
           /* the child is not a proband */
