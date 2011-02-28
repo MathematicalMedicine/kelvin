@@ -2733,12 +2733,12 @@ int loop_child_multi_locus_genotype (int locus, int multiLocusIndex, int xmissio
 
 
 /*
- * A recursive call to build transmission probability matrix pMatrix - pass
+ * A recursive call to build transmission probability matrix my_pMatrix - pass
  * in matrix pointer - This should have been pre-allocated totalLoci - total
  * number of loci loc - current locus prob -
  */
 
-int do_populate_xmission_matrix (XMission * pMatrix, int totalLoci, void *prob[3], void *prob2[3], void *hetProb[3], int cellIndex, int lastHetLoc, int prevPattern, int loc)
+int do_populate_xmission_matrix (XMission * my_pMatrix, int totalLoci, void *prob[3], void *prob2[3], void *hetProb[3], int cellIndex, int lastHetLoc, int prevPattern, int loc)
 {
   int pattern;
 
@@ -3070,35 +3070,35 @@ int do_populate_xmission_matrix (XMission * pMatrix, int totalLoci, void *prob[3
 
       for (i = 0; i < 3; i++) {
         if (modelOptions->polynomial == TRUE) {
-          if (pMatrix[newCellIndex].slot.probPoly[i] != NULL)
+          if (my_pMatrix[newCellIndex].slot.probPoly[i] != NULL)
 	    // This makes Yungui's test incredibly slow...
-            unHoldPoly (pMatrix[newCellIndex].slot.probPoly[i]);
-          pMatrix[newCellIndex].slot.probPoly[i] = newProbPoly[i];
+            unHoldPoly (my_pMatrix[newCellIndex].slot.probPoly[i]);
+          my_pMatrix[newCellIndex].slot.probPoly[i] = newProbPoly[i];
 	  // ...as does this.
           holdPoly (newProbPoly[i]);
         } else
-          pMatrix[newCellIndex].slot.prob[i] = newProb[i];
+          my_pMatrix[newCellIndex].slot.prob[i] = newProb[i];
       }
 
     } else {
       /* move on to next locus */
       if (modelOptions->polynomial == TRUE) {
-        do_populate_xmission_matrix (pMatrix, totalLoci, (void *) newProbPoly, (void *) newProbPoly2, (void *) newHetProbPoly, newCellIndex, newLastHetLoc, pattern, loc + 1);
+        do_populate_xmission_matrix (my_pMatrix, totalLoci, (void *) newProbPoly, (void *) newProbPoly2, (void *) newHetProbPoly, newCellIndex, newLastHetLoc, pattern, loc + 1);
       } else
-        do_populate_xmission_matrix (pMatrix, totalLoci, (void *) newProbPtr, (void *) newProbPtr2, (void *) newHetProbPtr, newCellIndex, newLastHetLoc, pattern, loc + 1);
+        do_populate_xmission_matrix (my_pMatrix, totalLoci, (void *) newProbPtr, (void *) newProbPtr2, (void *) newHetProbPtr, newCellIndex, newLastHetLoc, pattern, loc + 1);
     }
   }
   return 0;
 }
 
-int populate_xmission_matrix (char *fileName, int lineNo, XMission *pMatrix, int totalLoci, void *prob[3], void *prob2[3], void *hetProb[3], int cellIndex, int lastHetLoc, int prevPattern, int loc)
+int populate_xmission_matrix (char *fileName, int lineNo, XMission *my_pMatrix, int totalLoci, void *prob[3], void *prob2[3], void *hetProb[3], int cellIndex, int lastHetLoc, int prevPattern, int loc)
 {
 
   DIAG (XM, 2, {
       fprintf (stderr, "In populate_xmission_matrix from %s:%d\n", fileName, lineNo);
     });
 
-  do_populate_xmission_matrix (pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc);
+  do_populate_xmission_matrix (my_pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc);
 
   return 0;
 }
