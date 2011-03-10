@@ -1628,9 +1628,9 @@ check_for_disconnect(Pedigree *pPed) {
   // Compare what we've seen with what there should be
   if (connected < pPed->numPerson) {
     WARNING ("Pedigree %s is not fully connected (one subset is %d of %d)", pPed->sPedigreeID, connected, pPed->numPerson);
-    return FALSE;
+    return EXIT_FAILURE;
   }
-  return TRUE;
+  return EXIT_SUCCESS;
 }
 
 
