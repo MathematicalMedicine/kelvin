@@ -1,0 +1,25 @@
+Using alternative allocator ptmalloc3.
+11/03/10 12:38:03 @0s, Initializing
+11/03/10 12:38:03 WARNING, Pedigree 2 is not fully connected (one subset is 14 of 20)
+11/03/10 12:38:03 ERROR - EXITING (read_pedfile.c:225), Some pedigrees have disconnected individuals
+11/03/10 12:38:03 kelvin V2.3.1 edit 3664:3685M built Mar 10 2011 12:21:10 on Levi-Montalcini
+11/03/10 12:38:03 References for this version of kelvin:
+
+	(1) Vieland VJ. Thermometers: Something for statistical geneticists to think
+	about. Human Hered, 61:144-156, 2006.
+	(2) Huang Y, Segre A, O'Connell J, Valentine-Cooper W, Seok SC, Vieland VJ.
+	Kelvin:  A 2nd generation software package for computation of the PPL
+	framework. [Abstract Program number 2336]. Presented at the annual meeting
+	of The American Society of Human Genetics, November 2008, Philadelphia,
+	Pennsylvania. Available at http://www.ashg.org/2008meeting/abstracts/fulltext/
+
+11/03/10 12:38:03 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
+11/03/10 12:38:03 Using GNU Scientific Library (GSL) statistical functions instead of internal ones
+11/03/10 12:38:03 OpenMP-enabled w/maximum of 1 thread(s).
+11/03/10 12:38:03 GCC optimization level 0 enabled
+11/03/10 12:38:03 To check status (at some risk), type CTRL-\ or type "kill -3 16917"
+11/03/10 12:38:03 Using configuration file kelvin.conf
+11/03/10 12:38:03 Computation is done in polynomial mode
+11/03/10 12:38:03 polynomialScale is 1 (1-10, 1 is default)
+11/03/10 12:38:03 Integration is done with iteration (original kelvin)
+11/03/10 12:38:03 Further progress will be displayed at 120 second intervals
