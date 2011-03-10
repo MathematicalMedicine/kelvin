@@ -85,6 +85,7 @@ void add_loopbreaker (Pedigree * pPed, Person * pPerson);
 Person *find_original_person (Pedigree * pPed, char *sPersonID);
 Person *find_loop_breaker (Person * breaker);
 int check_for_loop(Pedigree *);
+int check_for_disconnect(Pedigree *);
 
 /**
 
@@ -105,6 +106,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
   int pos;
   int numRet;
   int loopsInPedigrees = FALSE;
+  int disconnectsInPedigrees = FALSE;
   char *pLine = NULL;		/* current pointer to a string for strtok()  */
   Pedigree *pCurrPedigree = NULL;
   Person *pCurrPerson = NULL;
@@ -185,6 +187,8 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	// Really figure out if there is a loop
 	if (check_for_loop (pCurrPedigree) == EXIT_FAILURE)
 	  loopsInPedigrees = TRUE;
+	if (check_for_disconnect (pCurrPedigree) == EXIT_FAILURE)
+	  disconnectsInPedigrees = TRUE;
 	// Verify full connectivity
 	{
 	  int i, j, unconnected = TRUE;
@@ -217,6 +221,8 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	/* we have processed the last pedigree in the file, done */
 	if (loopsInPedigrees)
 	  ERROR ("Not all loops have been broken in pedigrees");
+	if (disconnectsInPedigrees)
+	  ERROR ("Some pedigrees have disconnected individuals");
 	return EXIT_SUCCESS;
       }
       /* create new pedigree */
@@ -1552,6 +1558,79 @@ check_for_common_ancestor (Pedigree *pPed) {
   for (i = 0; i < pPed->numPerson; i++)
     getAncestryVector(i, pPed);
   return;
+}
+
+
+void
+traversePedigree (Pedigree *pPed, int personIndex, int *beenThere)
+{
+  int i;
+  Person *pPerson, *pMom, *pDad;
+
+  if (beenThere[personIndex])
+    return;
+  beenThere[personIndex] = TRUE;
+  //  fprintf (stderr, "Marking %d (%s) TRUE\n", personIndex, pPed->ppPersonList[personIndex]->sID);
+  pPerson = pPed->ppPersonList[personIndex];
+
+  // Do parents (easy)
+  if ((pMom = pPerson->pParents[MOM]) != NULL) {
+    //    fprintf (stderr, "%d->%d Child->Mom\n", personIndex, pMom->personIndex);
+    traversePedigree (pPed, pMom->personIndex, beenThere);
+  }
+  if ((pDad = pPerson->pParents[DAD]) != NULL) {
+    //    fprintf (stderr, "%d->%d as Child->Dad\n", personIndex, pDad->personIndex);
+    traversePedigree (pPed, pDad->personIndex, beenThere);
+  }
+
+  // Do any kids (harder, requires checking all individuals since there's no down-link
+  for (i = 0; i < pPed->numPerson; i++) {
+    if (beenThere[i])
+      continue;
+    if ((pMom = pPed->ppPersonList[i]->pParents[MOM]) != NULL)
+      if (pMom->personIndex == personIndex) {
+	//	fprintf (stderr, "%d->%d as Mom->Child\n", personIndex, i);
+	traversePedigree (pPed, i, beenThere);
+      }
+    if ((pDad = pPed->ppPersonList[i]->pParents[DAD]) != NULL)
+      if (pDad->personIndex == personIndex) {
+	//	fprintf (stderr, "%d->%d as Dad->Child\n", personIndex, i);
+	traversePedigree (pPed, i, beenThere);
+      }
+  }
+  return;
+}
+
+/**
+
+  Find any disconnects in pedigree.
+
+  This approach recursively traverses the pedigree from a random individual
+  to get a count of connected individuals, which must match the total
+  number of individuals in the pedigree for full connectivity to be true.
+
+*/
+int
+check_for_disconnect(Pedigree *pPed) {
+  int i;
+  int beenThere[256]; // Vector for keeping track of the individuals seen in traversal
+
+  // Indicate that we've seen nothing
+  for (i = 0; i < pPed->numPerson; i++)
+    beenThere[i] = 0;
+  // Go see everything connected to the first individual
+  traversePedigree (pPed, 0, beenThere);
+  // Count everything we've seen
+  int connected = 0;
+  for (i = 0; i < pPed->numPerson; i++)
+    if (beenThere[i])
+      connected++;
+  // Compare what we've seen with what there should be
+  if (connected < pPed->numPerson) {
+    WARNING ("Pedigree %s is not fully connected (one subset is %d of %d)", pPed->sPedigreeID, connected, pPed->numPerson);
+    return FALSE;
+  }
+  return TRUE;
 }
 
 
