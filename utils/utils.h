@@ -47,8 +47,8 @@
 #define MALCHOKE(pChunk,chunkSize,chunkCast) \
 do { \
   if ((pChunk = (chunkCast) malloc(chunkSize)) == 0) { \
-    fprintf (stderr,"FATAL, malloc of %lu bytes for variable %s cast as (%s) failed at %s:%d!\n", \
-	     (unsigned long)chunkSize,#pChunk,#chunkCast,(__FILE__),(__LINE__)); \
+    fprintf (stderr,"FATAL - ABORTING (%s:%d), malloc of %lu bytes for variable %s cast as (%s) failed!\n", \
+	     (__FILE__),(__LINE__),(unsigned long)chunkSize,#pChunk,#chunkCast); \
     exit (EXIT_FAILURE); \
   } \
 } while(0)
@@ -56,8 +56,8 @@ do { \
 #define REALCHOKE(pChunk,chunkSize,chunkCast) \
 do {									\
   if ((pChunk = (chunkCast) realloc(pChunk, chunkSize)) == 0) {		\
-    fprintf (stderr,"FATAL, realloc to %lu bytes of variable %s cast as (%s) failed at %s:%d!\n", \
-	     (unsigned long)chunkSize,#pChunk,#chunkCast,(__FILE__),(__LINE__)); \
+    fprintf (stderr,"FATAL - ABORTING (%s:%d), realloc to %lu bytes of variable %s cast as (%s) failed!\n", \
+	     (__FILE__),(__LINE__),(unsigned long)chunkSize,#pChunk,#chunkCast); \
     exit (EXIT_FAILURE);						\
   } \
 } while(0)
@@ -65,8 +65,8 @@ do {									\
 #define CALCHOKE(pChunk,chunkSize,chunkCount,chunkCast)			\
 do { \
   if ((pChunk = (chunkCast) calloc(chunkSize, chunkCount)) == 0) {	\
-    fprintf (stderr,"FATAL, calloc of %lu * %lu zeroed bytes of variable %s cast as (%s) failed at %s:%d!\n", \
-	     (unsigned long)chunkSize,(unsigned long)chunkCount,#pChunk,#chunkCast,(__FILE__),(__LINE__)); \
+    fprintf (stderr,"FATAL - ABORTING (%s:%d), calloc of %lu * %lu zeroed bytes of variable %s cast as (%s) failed!\n", \
+	     (__FILE__),(__LINE__),(unsigned long)chunkSize,(unsigned long)chunkCount,#pChunk,#chunkCast); \
     exit (EXIT_FAILURE);						\
   } \
 } while(0)
