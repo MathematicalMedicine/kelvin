@@ -26,6 +26,7 @@ my $SEQUPDATE_BINARY='NO_SEQUPDATE_BINARY';
 my %keylabels;
 my %equivalentkeys;
 my $config;
+my $svn_version='$Id$';
 
 my $usage = "usage: $0 <configfile> [--directive ... ]\n";
 my $platform = platform_name ();
@@ -47,7 +48,7 @@ my %freqState = ( estimate => 1, xchr => 0, prevalence => 0, qt => 0, affected =
 		  kelvinargs => []);
 my %countState = ( countable => 1, imprinting => 0, cases => 0, controls => 0, skipweighting => 0,
 		   pedigreefile => undef, countfile => undef, xchr => 0, precounted => 0,
-		   postcounted => 0);
+		   postcounted => 0, uninformative => 0);
 my %epiState = ( passes => 0, extramods => 0, ld => 0, multipoint => 0, trait => undef, 
 		 undefpheno => undef, xchr => 0, sequpdateargs => [] );
 
@@ -172,6 +173,7 @@ sub setup_pedcount
     my $traits;
     my $trait;
     my $href;
+    my $va;
     
     # Set this so I don't have to worry about it being undefined later
     $$state{kelvinargs} = [];
@@ -195,11 +197,20 @@ sub setup_pedcount
     $$state{pedlabels} = {};
     $$state{traits} = [];
     $$state{uncountedpeds} = [];
+    $$state{labelmap} = [];
+    $$state{revlabelmap} = [];
     $traits = $dataset->traitOrder;
     push (@{$$state{traits}}, shift (@$traits));
     if (scalar (@$traits) && $config->isConfigured ("LiabilityClasses")) {
 	$href = $dataset->getTrait ($$traits[0]);
 	($$href{flag} eq 'C') and push (@{$$state{traits}}, shift (@$traits));
+    }
+    if ($dataset->freqread) {
+	for ($va = 0; $va < scalar (@{$$state{markers}}); $va++) {
+	    $href = $dataset->getAlleleFreqs ($$state{markers}[$va]);
+	    # This will add the alleles to mappings, we'll just ignore the return values
+	    get_allele_mapping ($state, $va, [ keys (%$href) ]);
+	}
     }
     return;
 }
@@ -229,15 +240,30 @@ sub count_family
     $kids = $family->children;
 
     if ($family->pedtype eq 'casecontrol') {
+	if (! $$kids[0]->phenotyped) {
+	    # Count every marker for this individual as uninformative
+	    $$state{uninformative} += scalar @{$$state{markers}};
+	    return;
+	}
 	$kidkeys[0] = '';
+	# Get the trait and any liability class assignment
 	map { $kidkeys[0] .= $$kids[0]->getTrait ($_) } @{$$state{traits}};
+
+	# And tack on the sex, if matters
 	($$state{xchr} || $$state{imprinting}) and 
 	    $kidkeys[0] .= ($$kids[0]->sex == 1) ? 'm' : 'f';
+
+	# The per-individual key combined with per-marker genotypes create the pedigree patterns
 	for ($va = 0; $va < scalar (@{$$state{markers}}); $va++) {
-	    $aref = $$kids[0]->getGenotype ($$state{markers}[$va]);
-	    $geno = ($$aref[0] le $$aref[1]) ? $$aref[0] . $$aref[1] : $$aref[1] . $$aref[0];
-	    $key = equivalentkey ("_C" . $geno . $kidkeys[0]);
 	    $$state{precounted}++;
+	    get_allele_mapping ($state, $va,
+				$aref = $$kids[0]->getGenotype ($$state{markers}[$va]));;
+	    $geno = ($$aref[0] le $$aref[1]) ? $$aref[0] . $$aref[1] : $$aref[1] . $$aref[0];
+	    if ($geno eq '00') {
+		$$state{uninformative}++;
+		next;
+	    }
+	    $key = equivalentkey ("_C" . $geno . $kidkeys[0]);
 	    
 	    if (! exists ($$state{counts}[$va]{$key})) {
 		$$state{counts}[$va]{$key} = 1;
@@ -268,17 +294,20 @@ sub count_family
 	    }
 	}
 	for ($va = 0; $va < scalar (@{$$state{markers}}); $va++) {
-	    $aref = $dad->getGenotype ($$state{markers}[$va]);
+	    get_allele_mapping ($state, $va,
+				$aref = $dad->getGenotype ($$state{markers}[$va]));
 	    $geno = ($$aref[0] le $$aref[1]) ? $$aref[0] . $$aref[1] : $$aref[1] . $$aref[0];
 	    $parents[0] = $geno . $dadkey;
-	    $aref = $mom->getGenotype ($$state{markers}[$va]);
+	    get_allele_mapping ($state, $va,
+				$aref = $mom->getGenotype ($$state{markers}[$va]));
 	    $geno = ($$aref[0] le $$aref[1]) ? $$aref[0] . $$aref[1] : $$aref[1] . $$aref[0];
 	    $parents[1] = $geno . $momkey;
 	    $key = ($$state{xchr} || $$state{imprinting} || $parents[0] le $parents[1]) ? 
 		($parents[0] . $parents[1]) : ($parents[1] . $parents[0]);
 	    @kids = ();
 	    for ($vb = 0; $vb < scalar (@$kids); $vb++) {
-		$aref = $$kids[$vb]->getGenotype ($$state{markers}[$va]);
+		get_allele_mapping ($state, $va,
+				    $aref = $$kids[$vb]->getGenotype ($$state{markers}[$va]));
 		$geno = ($$aref[0] le $$aref[1]) ? $$aref[0] . $$aref[1] : $$aref[1] . $$aref[0];
 		$kids[$vb] = $geno . $kidkeys[$vb];
 	    }
@@ -335,12 +364,14 @@ sub write_pedcount
 	warner ("Pedigree counting will not result in savings, disabling");
     } else {
 	printf ("Pedigree counting reduces evaluations from $$state{precounted} to $$state{postcounted} (%.2f%%)\n", (1 - $$state{postcounted} / $$state{precounted}) * 100);
+	($$state{uninformative} > 0) and printf ("Pedigree counting dropped %d uninformative pedigree/locus combinations\n", $$state{uninformative});
     }
 
     if ($$state{countable}) {
-	$average = ($$state{cases} + $$state{controls}) / 2;
+#	$average = ($$state{cases} + $$state{controls}) / 2;
+	$average = $$state{cases};
 	($average > 0 && ! $$state{skipweighting})
-	    and warner ("Pedigree count weighting for cases/controls is in effect");
+	    and warner ("Pedigree count weighting (v2) for cases/controls is in effect");
 	($$state{cases} != 0) and $$state{cases} = $average / $$state{cases};
 	($$state{controls} != 0) and $$state{controls} = $average / $$state{controls};
 
@@ -390,7 +421,7 @@ sub write_pedcount
 		} else {
 		    ($geno, $traits, $sex) = ($key =~ /(..)(.{$n})/, 1);
 		}
-		$family = KelvinIndividual->new_from_count ($dataset, $pedid, $$state{traits}, [$geno, $traits, $sex]);
+		$family = KelvinIndividual->new_from_count ($dataset, $pedid, $$state{traits}, $$state{revlabelmap}, [$geno, $traits, $sex]);
 		$family->write;
 	    } else {
 		# Nuclear ped
@@ -407,7 +438,7 @@ sub write_pedcount
 		    }
 		    push (@individuals, [$geno, $traits, $sex]);
 		}
-		$family = KelvinFamily->new_from_count ($dataset, $pedid, $$state{traits}, \@individuals);
+		$family = KelvinFamily->new_from_count ($dataset, $pedid, $$state{traits}, $$state{revlabelmap}, , \@individuals);
 		$family->write;
 	    }
 	}
@@ -428,6 +459,34 @@ sub by_len
     (($ret = (length ($a) <=> length ($b))) != 0)
 	and return ($ret);
     return ($a cmp $b);
+}
+
+sub get_allele_mapping
+{
+    my ($state, $idx, $aref) = @_;
+    my ($a1, $a2);
+    my $va;
+
+    
+    if (! defined ($$state{labelmap}[$idx])) {
+	$$state{labelmap}[$idx] = { 0 => 0 };
+	$$state{revlabelmap}[$idx] = { 0 => 0 };
+    }
+    if (scalar (@$aref) == 1) {
+	# Not particularly efficient.
+	($a1, $a2) = ($$aref[0], $$aref[0]);
+    } else {
+	($a1, $a2) = ($$aref[0] le $$aref[1]) ? (@$aref[0,1]) : (@$aref[1,0]);
+    }
+    $va = scalar (keys (%{$$state{labelmap}[$idx]}));
+    map {
+	if (! exists ($$state{labelmap}[$idx]{$_})) {
+	    $$state{labelmap}[$idx]{$_} = $va;
+	    $$state{revlabelmap}[$idx]{$va++} = $_;
+	}
+    } ($a1, $a2);
+    @$aref = @{$$state{labelmap}[$idx]}{($a1, $a2)};
+    return (1);
 }
 
 
@@ -1155,9 +1214,9 @@ sub check_paths
     require KelvinConfig;
     require KelvinFamily;
     # Check versions ('use' would have done for us automatically)
-    KelvinDataset->VERSION (1.20);
+    KelvinDataset->VERSION (1.30);
     KelvinConfig->VERSION (1.20);
-    KelvinFamily->VERSION (1.20);
+    KelvinFamily->VERSION (1.30);
 
     if ($ENV{KELVIN_BINARY}) {
 	($KELVIN_BINARY !~ /no_kelvin_binary/i)

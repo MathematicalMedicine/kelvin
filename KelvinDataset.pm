@@ -9,7 +9,7 @@ use KelvinFamily 1.2;
 #
 package KelvinDataset;
 our $errstr='';
-our $VERSION=1.2;
+our $VERSION=1.3;
 
 my $ROUNDING_ERROR=0.0001;
 
@@ -603,7 +603,7 @@ sub readFamily
     $pedid = $individual->pedid;
 
     while ($individual = $self->readIndividual) {
-	if ($individual->pedid != $pedid) {
+	if ($individual->pedid ne $pedid) {
 	    $$self{individualcache} = $individual;
 	    last;
 	}
@@ -1003,6 +1003,21 @@ sub setAlleleFreqs
     return (1);
 }
 
+sub getAlleleFreqs
+{
+    my ($self, $marker) = @_;
+    my $href = {};
+
+    unless (exists ($$self{markers}{$marker})) {
+	$errstr = "can't get allele frquencies for marker '$marker', not present in dataset";
+	return (undef);
+    }
+    @$href{keys (%{$$self{markers}{$marker}{alleles}})} = 
+	@{$$self{markers}{$marker}{alleles}}{keys (%{$$self{markers}{$marker}{alleles}})};
+    return ($href);
+    
+}
+
 sub mapFields
 {
     my ($self) = @_;
@@ -1086,6 +1101,13 @@ sub snps
     my ($self) = @_;
 
     return ($$self{snps});
+}
+
+sub freqread
+{
+    my ($self) = @_;
+
+    return ($$self{freqread});
 }
 
 1;

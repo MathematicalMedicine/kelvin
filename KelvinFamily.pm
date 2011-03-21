@@ -6,7 +6,7 @@ use strict;
 #
 package KelvinFamily;
 our $errstr='';
-our $VERSION=1.2;
+our $VERSION=1.3;
 
 sub new
 {
@@ -60,7 +60,7 @@ sub new
 	$$family{origfmt} = 'post';
     }
     
-    defined ($traits = $dataset->traitOrder)
+    (defined ($traits = $dataset->traitOrder))
 	and $trait = $$traits[0];
     for ($va = 0; $va < $$family{count}; $va++) {
         # TODO: shouldn't assume default affection status coding (0, 1, 2)
@@ -97,7 +97,9 @@ sub new
 	$$family{nonfounders} = 1;
 	$$family{founders} = 0;
     } elsif ($$family{count} == 3 && $$family{founders} == 2) {
-	if ($unaff_founders == 2 && $aff_kids == 1) {
+	if ($$dad{genotyped} + $$dad{phenotyped} + $$mom{genotyped} + $$mom{genotyped} == 0) {
+	    $$family{pedtype} = 'casecontrol';
+	} elsif ($unaff_founders == 2 && $aff_kids == 1) {
 	    $$family{pedtype} = 'trio-strict';
 	} else {
 	    $$family{pedtype} = 'trio';
@@ -127,8 +129,7 @@ sub new
 
 sub new_from_count
 {
-    my ($class, $dataset, $pedid, $traits, $individuals) = @_;
-    my $aref;
+    my ($class, $dataset, $pedid, $traits, $labelmap, $individuals) = @_;
     my $family = bless ({}, $class);
     my ($dad, $mom, $kids) = (undef, undef, []);
     my $ind;
@@ -140,14 +141,14 @@ sub new_from_count
 
     $$family{count} = scalar (@$individuals);
     if ($$family{count} == 1) {
-	@{$$family{individuals}} = (KelvinIndividual->new_from_count ($dataset, $pedid, $traits, $aref));
+	@{$$family{individuals}} = (KelvinIndividual->new_from_count ($dataset, $pedid, $traits, $labelmap, $$individuals[0]));
 	$$family{pedtype} = 'casecontrol';
 	$$family{kids} = [ $$family{individuals}[0] ];
 	$$family{nonfounders} = 1;
 	$$family{founders} = 0;
 
     } elsif ($$family{count} >= 3) {
-	($dad, $mom, @$kids) = map { KelvinIndividual->new_from_count ($dataset, $pedid, $traits, $_) } @$individuals;
+	($dad, $mom, @$kids) = map { KelvinIndividual->new_from_count ($dataset, $pedid, $traits, $labelmap, $_) } @$individuals;
 	if ($$dad{sex} == 2 && $$mom{sex} == 1) {
 	    $ind = $dad;
 	    $dad = $mom;
@@ -194,7 +195,8 @@ sub map
 	$$new{individuals}[$va] = $$self{individuals}[$va]->map ($newset);
     }
 
-    if ($$self{pedtype} eq 'casecontrol') {
+    # Case/control can be a single individual, or it can be one kid with two dummy parents
+    if ($$self{pedtype} eq 'casecontrol' && $$self{count} == 1) {
 	$$new{dad} = $$new{mom} = undef;
 	$$new{kids} = [ $$new{individuals}[0] ];
     } elsif ($$self{pedtype} ne 'general') {
@@ -569,7 +571,7 @@ sub individuals
 #
 package KelvinIndividual;
 our $errstr='';
-our $VERSION=1.2;
+our $VERSION=1.3;
 
 sub new
 {
@@ -640,24 +642,34 @@ sub new
     foreach $trait (@{$$dataset{traitorder}}) {
 	$traitcol = $$dataset{traits}{$trait}{col};
 	push (@{$$ind{traits}}, $arr[$traitcol]);
-	($arr[$traitcol] != 0) and $$ind{phenotyped} = 1;
+	($$dataset{traits}{$trait}{flag} ne 'C' && $arr[$traitcol] != 0)
+	    and $$ind{phenotyped}++;
     }	      
     foreach $marker (@{$$dataset{markerorder}}) {
 	$markercol = $$dataset{markers}{$marker}{col};
-	if (($arr[$markercol] eq '0' && $arr[$markercol+1] ne '0') ||
-	    ($arr[$markercol] ne '0' && $arr[$markercol+1] eq '0')) {
+	if (($arr[$markercol] eq '0') != ($arr[$markercol+1] eq '0')) {
 	    $errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: individual $$ind{indid} is half-genotyped at marker $marker";
 	    return (undef);
 	}
+	if ($arr[$markercol] ne '0') {
+	    if (exists ($$dataset{markers}{$marker}{alleles})) {
+		map {
+		    if (!exists ($$dataset{markers}{$marker}{alleles}{$_})) {
+			$errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: individual $$ind{indid} has unknown allele $_ for $marker";
+			return (undef);
+		    }
+		} @arr[$markercol, $markercol+1];
+	    }
+	    $$ind{genotyped} = 1;
+	}
 	push (@{$$ind{markers}}, [ $arr[$markercol], $arr[$markercol+1] ]);
-	($arr[$markercol] ne '0') and $$ind{genotyped} = 1;
     }	      
     return (bless ($ind, $class));
 }
 
 sub new_from_count
 {
-    my ($class, $dataset, $pedid, $traits, $aref) = @_;
+    my ($class, $dataset, $pedid, $traits, $labelmap, $aref) = @_;
     my $ind = { pedid => $pedid, indid => 1, dadid => 0, momid => 0,
 		firstchildid => 0, patsibid => 0, matsibid => 0,
 		origpedid => $pedid, origindid => 1, sex => undef, proband => 0,
@@ -676,8 +688,12 @@ sub new_from_count
 	}
     }
     ($allele1, $allele2) = split (//, $$aref[0]);
-    foreach $marker (@{$$dataset{markerorder}}) {
-	push (@{$$ind{markers}}, [$allele1, $allele2]);
+    for ($va = 0; $va < scalar (@{$$dataset{markerorder}}); $va++) {
+	if (exists ($$labelmap[$va]{$allele1}) && exists ($$labelmap[$va]{$allele2})) {
+	    $$ind{markers}[$va] = [@{$$labelmap[$va]}{($allele1, $allele2)}];
+	} else {
+	    $$ind{markers}[$va] = [0, 0];
+	}
     }
     return (bless ($ind, $class));
 }
@@ -694,11 +710,12 @@ sub map
 	$$new{$_} = $$self{$_};
     } qw/pedid indid dadid momid firstchildid patsibid matsibid origpedid
 	origindid sex proband makeped/;
-    
+
     foreach $trait (@{$$newset{traitorder}}) {
 	if (exists ($$oldset{traits}{$trait})) {
 	    push (@{$$new{traits}},  $$self{traits}[$$oldset{traits}{$trait}{idx}]);
-	    ($$new{traits}[-1] != 0) and $$self{phenotyped} = 1;
+	    ($$newset{traits}{$trait}{flag} ne 'C' && $$new{traits}[-1] != 0)
+		and $$new{phenotyped}++;
 	} else {
 	    push (@{$$new{traits}}, 'x');
 	}
@@ -706,7 +723,7 @@ sub map
     foreach $marker (@{$$newset{markerorder}}) {
 	if (exists ($$oldset{markers}{$marker})) {
 	    push (@{$$new{markers}}, [ @{$$self{markers}[$$oldset{markers}{$marker}{idx}]} ]);
-	    ($$new{markers}[-1][0] != 0) and $$self{genotyped} = 1;
+	    ($$new{markers}[-1][0] ne '0') and $$new{genotyped} = 1;
 	} else {
 	    push (@{$$new{markers}}, [ 'x', 'x' ]);
 	}
@@ -750,6 +767,10 @@ sub setTrait
     }
     $idx = $$dataset{traits}{$trait}{idx};
     (defined ($value)) or $value = 'x';
+    if ($$dataset{traits}{$trait}{flag} ne 'C') {
+	($$self{traits}[$idx] =~ /^(?:0|x)$/) and $$self{phenotyped}++;
+	($value =~ /^(?:0|x)$/) and $$self{phenotyped}--;
+    }
     $$self{traits}[$idx] = $value;
     return (1);
 }
