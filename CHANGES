@@ -1,3 +1,9 @@
+Version 2.3.2
+  TBD
+  Kelvin binary
+    Reorganize signal and exit handlers to better support SGE qdel
+    Make sure memory problems show up in the log as FATAL errors
+
 Version 2.3.1
   4 Feb 2011
   Kelvin binary:
