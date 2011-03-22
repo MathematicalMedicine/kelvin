@@ -59,13 +59,18 @@ void termSignalHandler (int ourSignal)
   INFO ("Terminating early for gprof or gcov!");
   exit (EXIT_SUCCESS);
 }
+#else
+/// Handler for SIGTERM. is same as SIGINT
+void termSignalHandler (int ourSignal)
+{
+  FATAL ("Terminating early via interrupt");
+}
 #endif
 
 /// Handler for SIGINT
 void intSignalHandler (int ourSignal)
 {
-  INFO ("Terminating early via interrupt");
-  exit (EXIT_FAILURE);
+  FATAL ("Terminating early via interrupt");
 }
 
 /// Handler for SIGUSR1
@@ -85,9 +90,8 @@ void usr1SignalHandler (int ourSignal)
 */
 void exitKelvin ()
 {
-#ifndef DISTRIBUTION
+  INFO ("Cleaning-up for exit");
   swDiagTerm ();
-#endif
 }
 
 void setupHandlers () {
