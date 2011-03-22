@@ -1,0 +1,6 @@
+ctrl11 1 0 0 0 0 0 1 0 1 A A C C A A C C  Ped: ctrl11  Per: 1
+case11 1 0 0 0 0 0 1 0 2 A A C C A A C C  Ped: case11  Per: 1
+ctrl12 1 0 0 0 0 0 1 0 1 A T C G A T 0 0  Ped: ctrl12  Per: 1
+case12 1 0 0 0 0 0 1 0 2 A T C G A T 0 0  Ped: case12  Per: 1
+ctrl22 1 0 0 0 0 0 1 0 1 T T G G T T 0 0  Ped: ctrl22  Per: 1
+case22 1 0 0 0 0 0 1 0 2 T T G G T T 0 0  Ped: case22  Per: 1
