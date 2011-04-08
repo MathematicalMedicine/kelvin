@@ -293,55 +293,53 @@ int build_likelihood_polynomial (Pedigree * pPedigree)
     return EXIT_FAILURE;
 
   /* First build (or restore) the pedigree */
-  if (pPedigree->load_flag == 0) {    // Skip everything, we're using saved results
-    if (pPedigree->likelihoodPolynomial == NULL) {    // There's no polynomial, so come up with one
+  if (pPedigree->likelihoodPolynomial == NULL) {    // There's no polynomial, so come up with one
 #ifdef POLYCHECK_DL
-      pPedigree->cLikelihoodPolynomial = NULL;        // Get rid of the old tree comparison poly
+    pPedigree->cLikelihoodPolynomial = NULL;        // Get rid of the old tree comparison poly
 #endif
-      // Construct polynomialFunctionName for attempted load and maybe compilation
-      sprintf (polynomialFunctionName, partialPolynomialFunctionName, pPedigree->sPedigreeID);
+    // Construct polynomialFunctionName for attempted load and maybe compilation
+    sprintf (polynomialFunctionName, partialPolynomialFunctionName, pPedigree->sPedigreeID);
 #ifdef POLYUSE_DL
-      if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
+    if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL) {
 #endif
-	// Failed to load, construct it
-	initialize_multi_locus_genotype (pPedigree);
-	status = compute_pedigree_likelihood (pPedigree);
+      // Failed to load, construct it
+      initialize_multi_locus_genotype (pPedigree);
+      status = compute_pedigree_likelihood (pPedigree);
 #ifdef POLYCODE_DL
-	// Used to skip compilation of simple polys here, but there are simple ones that are tough builds.
-	pPedigree->likelihoodPolyList = buildPolyList ();
-	polyListSorting (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList);
-	codePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, polynomialFunctionName);
-#ifdef POLYUSE_DL
-	// Try to load the DL and ditch the tree polynomial
-#ifdef POLYCHECK_DL
-	// Squirrel-away the tree polynomial for later check
-	pPedigree->cLikelihoodPolynomial = pPedigree->likelihoodPolynomial;
-	holdPoly (pPedigree->cLikelihoodPolynomial);
-	pPedigree->cLikelihoodPolyList = pPedigree->likelihoodPolyList;
-#endif
-#ifdef POLYCOMP_DL
-	if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL)
-	  FATAL ("Couldn't load compiled likelihood polynomial that was just created!");
-#else
-#ifdef FAKEEVALUATE
-	pPedigree->likelihoodPolynomial = constantExp (.05);
-#endif
-#endif
-#endif
-#endif
-	// Notice we are normally holding only the external (compiled) poly!
-	holdPoly (pPedigree->likelihoodPolynomial);
-	freeKeptPolys ();
-#ifdef POLYSTATISTICS
-	polyDynamicStatistics ("Post-build");
-#endif
-#ifdef POLYUSE_DL
-        }
-#endif
-      // We still need to build a list even if there's only the external for the DL.
+      // Used to skip compilation of simple polys here, but there are simple ones that are tough builds.
       pPedigree->likelihoodPolyList = buildPolyList ();
       polyListSorting (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList);
+      codePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, polynomialFunctionName);
+#ifdef POLYUSE_DL
+      // Try to load the DL and ditch the tree polynomial
+#ifdef POLYCHECK_DL
+      // Squirrel-away the tree polynomial for later check
+      pPedigree->cLikelihoodPolynomial = pPedigree->likelihoodPolynomial;
+      holdPoly (pPedigree->cLikelihoodPolynomial);
+      pPedigree->cLikelihoodPolyList = pPedigree->likelihoodPolyList;
+#endif
+#ifdef POLYCOMP_DL
+      if ((pPedigree->likelihoodPolynomial = restoreExternalPoly (polynomialFunctionName)) == NULL)
+	FATAL ("Couldn't load compiled likelihood polynomial that was just created!");
+#else
+#ifdef FAKEEVALUATE
+      pPedigree->likelihoodPolynomial = constantExp (.05);
+#endif
+#endif
+#endif
+#endif
+      // Notice we are normally holding only the external (compiled) poly!
+      holdPoly (pPedigree->likelihoodPolynomial);
+      freeKeptPolys ();
+#ifdef POLYSTATISTICS
+      polyDynamicStatistics ("Post-build");
+#endif
+#ifdef POLYUSE_DL
     }
+#endif
+    // We still need to build a list even if there's only the external for the DL.
+    pPedigree->likelihoodPolyList = buildPolyList ();
+    polyListSorting (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList);
   }
   return EXIT_SUCCESS;
 }
@@ -862,10 +860,8 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
      * then we pull this to improve evaulation performance. */
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
-      if (pPedigree->load_flag == 0) {  // Skip everything if we're using saved results
-        if (pPedigree->likelihoodPolynomial == NULL)  // There's no polynomial, so come up with one
-          build_likelihood_polynomial (pPedigree);
-      }
+      if (pPedigree->likelihoodPolynomial == NULL)  // There's no polynomial, so come up with one
+	build_likelihood_polynomial (pPedigree);
     }
 
     /* Now evaluate them all */
@@ -874,35 +870,31 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 #endif
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
       pPedigree = pPedigreeList->ppPedigreeSet[i];
-      if (pPedigree->load_flag == 0) {  // Skip everything if we're using saved results
 #ifdef FAKEEVALUATE
-        pPedigree->likelihood = .05;
+      pPedigree->likelihood = .05;
 #else
 #ifdef MANYSMALLEVALUATE
-        pPedigree->likelihood = evaluateValue (pPedigree->likelihoodPolynomial);
+      pPedigree->likelihood = evaluateValue (pPedigree->likelihoodPolynomial);
 #else
-        evaluatePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, &pPedigree->likelihood);
+      evaluatePoly (pPedigree->likelihoodPolynomial, pPedigree->likelihoodPolyList, &pPedigree->likelihood);
 #endif
 #ifdef POLYCHECK_DL
-        // Check the result only if we actually just built a polynomial to check
-        if (pPedigree->cLikelihoodPolynomial != NULL) {
-          evaluatePoly (pPedigree->cLikelihoodPolynomial, pPedigree->cLikelihoodPolyList, &pPedigree->cLikelihood);
-          if (fabs (pPedigree->likelihood - pPedigree->cLikelihood) > 1E-15)
-            WARNING ("Discrepency between eV of %.*g and v of %.*g for %d\n", DBL_DIG, pPedigree->likelihood, DBL_DIG, pPedigree->cLikelihood, pPedigree->likelihoodPolynomial->id);
-        }
-#endif
-#endif
+      // Check the result only if we actually just built a polynomial to check
+      if (pPedigree->cLikelihoodPolynomial != NULL) {
+	evaluatePoly (pPedigree->cLikelihoodPolynomial, pPedigree->cLikelihoodPolyList, &pPedigree->cLikelihood);
+	if (fabs (pPedigree->likelihood - pPedigree->cLikelihood) > 1E-15)
+	  WARNING ("Discrepency between eV of %.*g and v of %.*g for %d\n", DBL_DIG, pPedigree->likelihood, DBL_DIG, pPedigree->cLikelihood, pPedigree->likelihoodPolynomial->id);
       }
+#endif
+#endif
     }
   }
   /* Now (optional non-poly) and incorporate results */
   for (i = 0; i < pPedigreeList->numPedigree; i++) {
     pPedigree = pPedigreeList->ppPedigreeSet[i];
-    if (pPedigree->load_flag == 0) {
-      if (modelOptions->polynomial == FALSE) {
-        initialize_multi_locus_genotype (pPedigree);
-        status = compute_pedigree_likelihood (pPedigree);
-      }
+    if (modelOptions->polynomial == FALSE) {
+      initialize_multi_locus_genotype (pPedigree);
+      status = compute_pedigree_likelihood (pPedigree);
 
 #ifdef STUDYDB
       DIAG (ALTLSERVER, 1, { \

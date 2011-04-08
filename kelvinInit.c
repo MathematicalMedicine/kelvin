@@ -423,12 +423,6 @@ void kelvinInit (int argc, char *argv[])
     }
   }
 
-  for (i = 0; i < pedigreeSet.numPedigree; i++) {
-    Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[i];
-    pPedigree->load_flag = 0;   /* Initially 0 and changes to 1 when marker or 
-                                 * alternative likelihood values are retrieved */
-  }
-
   /* Open output files that get written across loops. */
 
   SUBSTEP(0, "Opening cross-loop output files");
