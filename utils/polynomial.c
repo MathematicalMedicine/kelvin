@@ -1,3 +1,5 @@
+#define FREEDEBUG 1
+
 /**
 @file polynomial.c
 
@@ -1339,7 +1341,7 @@ void expPrinting (Polynomial * p)
     fprintf (stderr, ")");
     break;
   case T_FREED:
-    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
+    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%u count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
     FATAL ("In expPrinting, unknown expression type %d", p->eType);
   }
@@ -1421,7 +1423,7 @@ void expTermPrinting (FILE * output, Polynomial * p, int depth)
     fprintf (output, ")");
     break;
   case T_FREED:
-    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
+    fprintf (stderr, "[FREED eType=%d id=%d index=%d key=%u count=%d valid=%d]\n", (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
     FATAL ("In expTermPrinting, unknown expression type %d", p->eType);
   }
@@ -4072,7 +4074,7 @@ void doKeepPoly (Polynomial * p)
     }
     break;
   case T_FREED:
-    FATAL ("[FREED eType=%d id=%d index=%d key=%d count=%d valid=%d]",
+    FATAL ("[FREED eType=%d id=%d index=%d key=%u count=%d valid=%d]",
 	     (int) p->value, p->id, p->index, p->key, p->count, p->valid);
   default:
     FATAL ("In doKeepPoly, unknown expression type %d", p->eType);
