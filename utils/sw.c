@@ -168,6 +168,7 @@ void swPushPhase (char program, char *currentPhase)
 	int i;
 	for (i=0; i<PHASE_STACK_DEPTH; i++)
 	  fprintf (stderr, "%d is %s\n", i, phaseStack[i]);
+	fflush (stderr);
 	});
     return;
   }
@@ -206,6 +207,7 @@ swCreate (char *swName)
     fprintf (stderr,
 	     "Unable to allocate memory for another stopwatch (%s)\n",
 	     swName);
+    fflush (stderr);
     exit (EXIT_FAILURE);
   } else {
     memset (newStopwatch, 0, sizeof (struct swStopwatch));
@@ -227,12 +229,14 @@ swStart (struct swStopwatch *theStopwatch)
     fprintf (stderr,
 	     "Unable to get resource information for self using rusage call (%s)\n",
 	     theStopwatch->swName);
+    fflush (stderr);
     exit (EXIT_FAILURE);
   }
   if (getrusage (RUSAGE_CHILDREN, &theStopwatch->swStartRUChildren) != 0) {
     fprintf (stderr,
 	     "Unable to get resource information for children using rusage call (%s)\n",
 	     theStopwatch->swName);
+    fflush (stderr);
     exit (EXIT_FAILURE);
   }
   theStopwatch->swStartWallTime = time (NULL);
@@ -259,12 +263,14 @@ swStop (struct swStopwatch *theStopwatch)
     fprintf (stderr,
 	     "Unable to get resource information for self using rusage call (%s)\n",
 	     theStopwatch->swName);
+    fflush (stderr);
     exit (EXIT_FAILURE);
   }
   if (getrusage (RUSAGE_CHILDREN, &stopStatsChildren) != 0) {
     fprintf (stderr,
 	     "Unable to get resource information for children using rusage call (%s)\n",
 	     theStopwatch->swName);
+    fflush (stderr);
     exit (EXIT_FAILURE);
   }
   stopTime = time (NULL);
@@ -543,6 +549,7 @@ findOrAddSource (char *fileName, int lineNo, int callType, size_t chunkSize)
     if (memChunkSourceCount >= MAXMEMCHUNKSOURCECOUNT) {
       fprintf (stderr,
 	       "Exceeded maximum chunkSourceCount, no more locations can be monitored\n");
+      fflush (stderr);
       return 0;
     }
     if (callType != cTFree && callType != cTReFree)
@@ -647,9 +654,11 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
       for (i=0; i<memChunkSourceCount; i++)
         if (memChunkSources[i].entryNo == oldChunk->allocSource) {
 	  DIAG (0, 0, {
-	      if (callType == cTReAlloc || callType == cTReFree)
+	      if (callType == cTReAlloc || callType == cTReFree) {
 		fprintf(stderr, "For %s: %d, subtracting %d from %d\n",
 			fileName, lineNo, oldChunk->chunkSize, memChunkSources[i].remainingBytes);
+		fflush (stderr);
+	      }
 	    });
 	  memChunkSources[i].remainingBytes -= oldChunk->chunkSize;
 	  break;
@@ -680,6 +689,7 @@ swDumpSources ()
 	     callTypeNames[memChunkSources[i].callType],
 	     memChunkSources[i].totalCalls, memChunkSources[i].totalBytes);
   }
+  fflush (stderr);
   qsort (memChunkSources, ++memChunkSourceCount,
          sizeof (struct memChunkSource), compareSourcesByName);
 }
@@ -698,6 +708,7 @@ swDumpHeldTotals ()
 	     callTypeNames[memChunkSources[i].callType],
 	     memChunkSources[i].remainingBytes);
   }
+  fflush (stderr);
   qsort (memChunkSources, ++memChunkSourceCount,
          sizeof (struct memChunkSource), compareSourcesByName);
 }
@@ -740,6 +751,7 @@ swDumpCrossModuleChunks ()
 	}
       }
     } while (hnext (chunkHash));
+  fflush (stderr);
   qsort (memChunkSources, ++memChunkSourceCount,
          sizeof (struct memChunkSource), compareSourcesByName);
 }
@@ -750,6 +762,7 @@ swLogPeaks (char *reason)
   char messageBuffer[MAXSWMSG];
   if (firstMallocCall) {
     fprintf (stderr, "=> (%s): Before first memory allocation\n", reason);
+    fflush (stderr);
     return;
   }
   swStop (internalDMSW);
@@ -841,6 +854,7 @@ swDumpBlockUse ()
   for (i = 0; i < MAXLARGEBLOCK; i++)
     if (largeBlocks[i][2] != 0)
       fprintf (stderr, "%8dMb %8d\n", i, largeBlocks[i][2]);
+  fflush (stderr);
   return;
 }
 #endif
@@ -1040,6 +1054,7 @@ swLogMsg (FILE *stream, char *message)
   nowTm = localtime(&nowSec);
   fprintf (stream, "%02d/%02d/%02d %02d:%02d:%02d %s\n", nowTm->tm_year - 100, nowTm->tm_mon + 1, nowTm->tm_mday,
 	   nowTm->tm_hour, nowTm->tm_min, nowTm->tm_sec, message);
+  fflush (stream);
 #ifdef TELLRITA
   char udpBuffer[MAXUDPMSG + 1];
 
@@ -1053,6 +1068,7 @@ swLogMsg (FILE *stream, char *message)
     fullLogFile = fopen (fullLogFileName, "w+");
   fprintf (fullLogFile, "%02d/%02d/%02d %02d:%02d:%02d %s\n", nowTm->tm_year - 100, nowTm->tm_mon + 1, nowTm->tm_mday,
 	   nowTm->tm_hour, nowTm->tm_min, nowTm->tm_sec, message);
+  fflush (stream);
 #endif
   return;
 }
