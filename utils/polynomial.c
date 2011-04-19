@@ -1,5 +1,3 @@
-#define FREEDEBUG 1
-
 /**
 @file polynomial.c
 
