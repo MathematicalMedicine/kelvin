@@ -475,6 +475,11 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       if (alphaV2 < 0)
         alphaV2 = 0;
 
+      if(pedigreeSet.numPedigree ==1){   // One pedigree then alpha is fixed at 1.
+        alphaV=1.0;
+        alphaV2 = 0;
+      }
+
       log10HetLR = 0;
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
@@ -541,7 +546,10 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
-      alpha_integral += hetLR * alpha[j][1];
+      if(pedigreeSet.numPedigree ==1)
+        alpha_integral = hetLR ;
+      else
+        alpha_integral += hetLR * alpha[j][1];
 
 
       /*Update local maximum as necessary */
@@ -582,6 +590,8 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
           k++;
         }
       }
+      if(pedigreeSet.numPedigree ==1)
+	  j=5;
     }
 
     avg_hetLR = alpha_integral;
@@ -811,6 +821,11 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
       if (alphaV2 < 0)
         alphaV2 = 0;
 
+      if(pedigreeSet.numPedigree ==1){
+        alphaV=1.0;
+        alphaV2 = 0;
+      }
+
       log10HetLR = 0;
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
@@ -870,8 +885,11 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
-      alpha_integral += hetLR * alpha[j][1];
-
+      if(pedigreeSet.numPedigree ==1)
+        alpha_integral = hetLR ;
+      else
+        alpha_integral += hetLR * alpha[j][1];
+ 
       if (log10HetLR > localMOD) {
         localMOD = log10HetLR;
         localmax_x[0] = gfreq;
@@ -888,7 +906,8 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
           }
         }
       }
-
+      if(pedigreeSet.numPedigree ==1)
+	  j=5;
     }   /* end of calculating HET LR */
 
     avg_hetLR = alpha_integral;
@@ -1173,6 +1192,11 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
         alphaV2 = 0;
+  
+      if(pedigreeSet.numPedigree ==1){   // One pedigree then alpha is fixed at 1.
+        alphaV=1.0;
+        alphaV2 = 0;
+      }
 
       log10HetLR = 0;
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -1248,7 +1272,10 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
-      alpha_integral += hetLR * alpha[j][1];
+      if(pedigreeSet.numPedigree ==1)
+        alpha_integral = hetLR ;
+      else
+        alpha_integral += hetLR * alpha[j][1];
 
 
       /*Update local maximum as necessary */
@@ -1290,6 +1317,9 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
           k++;
         }
       }
+      if(pedigreeSet.numPedigree ==1)
+	  j=5;
+
     }
 
     avg_hetLR = alpha_integral;
@@ -1540,6 +1570,11 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
       if (alphaV2 < 0)
         alphaV2 = 0;
 
+      if(pedigreeSet.numPedigree ==1){   // One pedigree then alpha is fixed at 1.
+        alphaV=1.0;
+        alphaV2 = 0;
+      }
+
       log10HetLR = 0;
 
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -1609,7 +1644,10 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
-      alpha_integral += hetLR * alpha[j][1];
+      if(pedigreeSet.numPedigree ==1)
+        alpha_integral = hetLR ;
+      else
+        alpha_integral += hetLR * alpha[j][1];
 
       if (log10HetLR > localMOD) {
         localMOD = log10HetLR;
@@ -1629,6 +1667,9 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
         }
       }
       // fprintf(fphlod,"%f %f %f %f %f %f %f\n", log10(hetLR*x[1]*x[1]*x[2]), gfreq, pen_DD,pen_Dd, pen_dd, alphaV,fixed_theta);
+
+      if(pedigreeSet.numPedigree ==1)
+	  j=5;
     }   //end of calculating the HET         
 
 
