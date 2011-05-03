@@ -18,7 +18,6 @@ my $lcname = undef;
 
 my $dataset;
 my $predataset;
-my $pedfile;
 my $family;
 my $markercount;
 my $serverid = undef;
@@ -29,14 +28,13 @@ my %positions;
 my %reversemap;
 my $merlinmodelid;
 my $pedid;
-my $position;
 my @parts;
 my @args;
 my $merlinfailed = 0;
 
-my %markerLK_modelids;
 my @modelids;
 my @LKs;
+my ($trait_cnt, $combined_cnt, $marker_cnt) = (0, 0, 0);
 
 my $dsn;
 my $dbh;
@@ -44,7 +42,7 @@ my $aref;
 my $href;
 my $line;
 
-print ("$0 starting on $ENV{HOSTNAME} in $ENV{PWD}, pid $$". (exists ($ENV{JOB_ID}) ? ", job ID $ENV{JOB_ID}" : ""). "\n");
+print (ts(), "$0 starting on $ENV{HOSTNAME} in $ENV{PWD}, pid $$". (exists ($ENV{JOB_ID}) ? ", job ID $ENV{JOB_ID}" : ""). "\n");
 
 (exists ($ENV{JOB_ID})) and $prefix = $ENV{JOB_ID};
 (exists ($ENV{SGE_TASK_ID}) && $ENV{SGE_TASK_ID} ne 'undefined')
@@ -52,7 +50,7 @@ print ("$0 starting on $ENV{HOSTNAME} in $ENV{PWD}, pid $$". (exists ($ENV{JOB_I
 
 ($configfile && -f $configfile)
     or die ("usage: $0 <configfile>\n");
-print ("Using configfile $configfile\n");
+print (ts(), "Using configfile $configfile\n");
 $config = KelvinConfig->new ($configfile)
     or die ("KelvinConfig->new failed: $KelvinConfig::errstr\n");
 $aref = $config->isConfigured ("Study")
@@ -65,8 +63,8 @@ $aref = $config->isConfigured ("Imprinting");
 defined ($aref) and $imprinting = 1;
 $aref = $config->isConfigured ("LiabilityClasses");
 $liability = defined ($aref) ? $$aref[0] : 1;
-print ("StudyId $study{id}");
-print (($liability > 1) ? ", 1 liability class" : ", $liability liability classes");
+print (ts(), "StudyId $study{id}");
+print (($liability > 1) ? ", $liability liability classes" : ", 1 liability class");
 print (($imprinting) ? ", imprinting enabled\n" : "\n");
 
 $$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
@@ -82,7 +80,14 @@ foreach (@{$dataset->traitOrder}) {
 }
 (defined ($traitname)) or die ("no affection status in dataset\n");
 (defined ($lcname) || $liability == 1) or die ("no liability class in dataset\n");
-# Release the KelvinDataset object
+
+# If we've been given a post-MAKEPED pedigree file, we need to create a pre-makeped file
+# for Merlin. Also, we'll create a new pedigree file if the regular expressions in the Study
+# directive actually exclude any pedigrees, so we only give Merlin the pedigrees we want
+# to analyze. NOTE this is actually a bad design. Preprocessing ped files should be done
+# before this script is called and it's not clear that InitStudy properly honors pedigree
+# exclusion via regex anyway.
+
 ($family = $dataset->readFamily)
     or die ("KelvinDataset readFamily failed: $KelvinDataset::errstr\n");
 if ($study{pedregex} ne "^.*\$" || $study{pednotregex} ne 'xyzzy' || $family->origfmt ne 'pre') {
@@ -100,8 +105,10 @@ if ($study{pedregex} ne "^.*\$" || $study{pednotregex} ne 'xyzzy' || $family->or
     }
     (defined ($family)) 
 	or die ("KelvinDataset readFamily failed: $KelvinDataset::errstr\n");
+    # Release the pre-makeped copy of the KelvinDataset object to free memory
     $predataset = undef;
 }
+# Release the KelvinDataset object to free memory
 $dataset = undef;
 
 $dsn = "DBI:mysql:host=$study{dbhost};database=$study{dbname}";
@@ -114,20 +121,22 @@ db_get_study_info (\%study);
 (defined ($study{PendingWorkFlag}) && $study{PendingWorkFlag} eq 'D')
     and die ("Study PendingWorkFlag is already set to 'done'\n");
 $serverid = db_get_serverid (\%study);
-print ("ServerId is $serverid\n");
+print (ts(), "ServerId is $serverid\n");
 
 while (1) {
-    $models = db_get_model_batch (\%study, $serverid, \%markerLK_modelids);
+    $models = db_get_model_batch (\%study, $serverid);
     (scalar (keys (%$models)) == 0) and last;
-    print ("Selected ". scalar (keys (%$models)). " models\n");
+    print (ts(), "Selected ". scalar (keys (%$models)). " models\n");
 
-    # $models{modelDetails}{pedigreeID}{"trait"|position} = ModelId
+    # $models{modelDetails}{pedigreeID}{"trait"|position} = ModelId  -- or --
+    # $models{"marker"}{pedigreeID}{position} = ModelId 
     # modelDetails := dgf-pen1dd-pen1Dd[-pen1dD]-pen1DD[-pen2dd...]
 
     %positions = %reversemap = @args = ();
     $merlinmodelid = 1;
     open (FH, ">$prefix.models") or die ("open '$prefix.models' failed, $!\n");
     foreach $key (keys (%$models)) {
+	($key eq 'marker') and next;
 	@parts = split (/-/, $key);
 	if ($liability == 1) {
 	    print (FH join (' ', $traitname, shift (@parts), merlin_pens (\@parts, $imprinting), "model-$merlinmodelid"), "\n");
@@ -162,7 +171,7 @@ while (1) {
     ($imprinting) and push (@args, '--parentOfOrigin');
     push (@args, '--positions', join (',', sort ({$a <=> $b} keys (%positions))));
 
-    print ("Running '". join (' ', @args). "'\n");
+    print (ts(), "Running '". join (' ', @args). "'\n");
     open (FH, join (' ', @args, '2>&1 |'))
 	or die ("open '$args[0]' failed, $!\n");
     while ($line = <FH>) {
@@ -188,47 +197,44 @@ while (1) {
 	    push (@LKs, $parts[4]);
 	    #print (OUT "trait $parts[1] $key $parts[4]\n");
 	    delete ($$models{$key}{$parts[1]}{trait});
+	    $trait_cnt++;
 	}
 	if (exists ($$models{$key}{$parts[1]}{$parts[2]})) {
 	    push (@modelids, $$models{$key}{$parts[1]}{$parts[2]});
 	    push (@LKs, $parts[6]);
 	    #print (OUT "combined $parts[1] $parts[2] $key $parts[6]\n");
 	    delete ($$models{$key}{$parts[1]}{$parts[2]});
+	    $combined_cnt++;
 	}
-
-	if (exists ($markerLK_modelids{$parts[1]}{$parts[2]})) {
-	    push (@modelids, $markerLK_modelids{$parts[1]}{$parts[2]});
+	if (exists ($$models{marker}{$parts[1]}{$parts[2]})) {
+	    push (@modelids, $$models{marker}{$parts[1]}{$parts[2]});
 	    push (@LKs, $parts[5]);
-	    #print (OUT "marker $parts[1] $parts[2] $parts[5]\n");
-	    delete ($markerLK_modelids{$parts[1]}{$parts[2]});
+	    #print (OUT "marker $parts[1] $parts[2] $key $parts[5]\n");
+	    delete ($$models{marker}{$parts[1]}{$parts[2]});
+	    $marker_cnt++;
 	}
     }
     close (FH);
     #close (OUT);
+    print (ts(), "found LKs for $trait_cnt trait models, $combined_cnt cobined models, and $marker_cnt marker models\n");
 
     foreach $key (keys (%$models)) {
 	foreach $pedid (keys(%{$$models{$key}})) {
 	    foreach (keys (%{$$models{$key}{$pedid}})) {
-		print ("leftover model: $$models{$key}{$pedid}{$_} $pedid $_ $key\n");
+		print (ts(), "leftover model: $$models{$key}{$pedid}{$_} $pedid $_ $key\n");
 	    }
 	}
     }
 
-    foreach $pedid (keys (%markerLK_modelids)) {
-	foreach $position (keys (%{$markerLK_modelids{$pedid}})) {
-	    print ("leftover pedid in markerLK_modelids: $pedid at pos $position\n");
-	}
-    }
-
     db_update_LKs (\%study, \@modelids, \@LKs, 100);
-#    unlink ("$prefix.models", "$prefix.par");
+    unlink ("$prefix.models", "$prefix.par");
 
-    my $va = 1;
-    while (-f "$prefix.models.$va") {
-	$va++;
-    rename ("$prefix.models", "$prefix.models.$va");
-    rename ("$prefix.par", "$prefix.par.$va");
-    }
+#    my $va = 1;
+#    while (-f "$prefix.models.$va") {
+#	$va++;
+#	rename ("$prefix.models", "$prefix.models.$va");
+#	rename ("$prefix.par", "$prefix.par.$va");
+#    }
 }
 
 END {
@@ -278,18 +284,6 @@ sub db_get_study_info
     $sth->finish;
     @$study{keys (%$href)} = @$href{keys (%$href)};
     
-    (($sth = $dbh->prepare ("select distinct (PedigreeSId) ".
-			    "from PedigreePositions ".
-			    "where StudyId = ? ".
-			    "  and PedigreeSId regexp ? ".
-			    "  and PedigreeSId not regexp ? ".
-			    "order by PedigreeSId limit 1")) &&
-     $sth->execute (@$study{qw/id pedregex pednotregex/}))
-	or die ("DBI select from PedigreePositions failed, $DBI::errstr\n");
-    $aref = $sth->fetchrow_arrayref;
-    $$study{minPedigreeSId} = $$aref[0];
-    $sth->finish;
-
     return (1);
 }
 
@@ -321,112 +315,112 @@ sub db_get_serverid
 }
 
 
+
 sub db_get_model_batch
 {
-    my ($study, $serverid, $markerLK_modelids) = @_;
-    my $sth;
-    my $partcols = ", d1.DGF";
-    my $parttabs = "";
-    my $whereclause1 = "";
-    my $whereclause2 = " and d1.DGF != -1";
-    my @mpidcols = ();
-    my @mpids = ();
-    my @modelcols = (3);
+    my ($study, $serverid) = @_;
+    my $batch = {};
+
+    my $MPId_colnames = '';
+    my $DModelPart_colnames = '';
+    my $DModelPart_tabnames = '';
+    my $MPId_whereclause = '';
+
+    my @MPIds = ();
+    my @Models = ();
     my @modelids = ();
-    my @tmpmodelids = ();
-    my @status;
-    my $href = {};
+    my ($modelid, $pedid, $traitpos, $key);
+    my $sth;
     my $aref;
-    my $rowref;
-    my $offset;
-    my $key;
 
-    db_connect ($study);
+    $MPId_colnames = join (', ', map { "LC${_}MPId" } (1 .. $$study{LiabilityClassCnt}));
+    
+    print (ts(), "Selecting model part IDs\n");
+    (($sth = $dbh->prepare ("select LGModelId, $MPId_colnames from LGModels ".
+			    "where StudyId = ? and ServerId is NULL ".
+			    "limit $batchsize for update"))
+     && $sth->execute ($study{id}))
+	or die ("select from LGModels failed, $DBI::errstr\n");
+    # @MPIds will contain a list of arrayrefs. Each arrayref contains one or more model
+    # part Ids, depending on the number of liability classes
+    @MPIds = @{$sth->fetchall_arrayref};
+    $sth->finish;
+    print (ts(), "selected ". scalar (@MPIds). " rows\n");
+    (scalar (@MPIds) == 0) and return ($batch);
 
-    # Build some where clauses for selecting trait models given the number of liability
-    # classes in the analysis, and whether or not imprinting is enabled. NOTE that we
-    # select penetrances out of the database in the  order in which Merlin will want to
-    # see them, which is mostly the reverse of how Kelvin would want them.
+    foreach (@MPIds) {
+	push (@modelids, shift (@$_));
+    }
+    db_update_lgmodels ($study, $serverid, \@modelids);
+    @modelids = ();
+
+    # select trait/combined modelIDs from Models based on the LCxMPIds we got from LGModels
+
+    map {
+	$DModelPart_tabnames .= ", DModelParts d$_";
+	$MPId_whereclause .= " and m.LC${_}MPId = d$_.MPId and m.LC${_}MPId = ?";
+    } (1 .. $$study{LiabilityClassCnt});
 
     if ($$study{ImprintingFlag} !~ /^y$/i) {
 	map {
-	    $offset = ($_ - 1) * 4;
-	    $partcols .= ", d$_.MPId, d$_.LittlePen, d$_.BigLittlePen, d$_.BigPen";
-	    push (@mpidcols, 4 + $offset);
-	    push (@modelcols, 5 + $offset, 6 + $offset, 7 + $offset);
+	    $DModelPart_colnames .= ", d$_.LittlePen, d$_.BigLittlePen, d$_.BigPen";
 	} (1 .. $$study{LiabilityClassCnt});
     } else {
 	map {
-	    $offset = ($_ - 1) * 5;
-	    $partcols .= ", d$_.MPId, d$_.LittlePen, d$_.BigLittlePen, d$_.LittleBigPen, d$_.BigPen";
-	    push (@mpidcols, 4 + $offset);
-	    push (@modelcols, 5 + $offset, 6 + $offset, 7 + $offset, 8 + $offset);
+	    $DModelPart_colnames .= ", d$_.LittlePen, d$_.BigLittlePen, d$_.LittleBigPen, d$_.BigPen";
 	} (1 .. $$study{LiabilityClassCnt});
     }
-    map {
-	$parttabs .= ", DModelParts d$_";
-	$whereclause1 .= " and m.LC${_}MPId = d$_.MPId ";
-	$whereclause2 .= " and m.LC${_}MPId = ? ";
-    } (1 .. $$study{LiabilityClassCnt});
 
-    # Any given trait model will apply to every pedigree (that is, there will be ModelIds
-    # for that trait model for every pedigree). We only select ModelIds for one pedigree
-    # (the lowest numbered pedigree that matches our configured regexs) to limit the
-    # number of rows we need to lock in the database. We'll use trait model details to
-    # select ModelIds for these models and all pedigrees later on.
+    # We're guaranteed to have at least 'DModelParts d1' in $DModelPart_tabnames, so it's
+    # safe to refer to 'd1.DGF' in the static part of the SQL. Also, merlin_lk_prepare.pl
+    # already excluded marker-only LK models (that is, DGF == -1), so we don't need to 
+    # exclude those again here.
 
-    ($sth = $dbh->prepare ("select m.ModelId, p.PedigreeSId, ".
-			    "  p.PedTraitPosCM". $partcols. " ".
-			    "from Models m, PedigreePositions p". $parttabs. " ".
-			    "where p.StudyId = ? ".
-			    "  and p.PedigreeSId = ? ".
-			    "  and p.PedTraitPosCM = -9999.99 ".
-			    "  and m.ServerId is NULL ".
-			    "  and m.Likelihood is NULL ".
-			    "  and m.PedPosId = p.PedPosId ". $whereclause1.
-			    "limit $batchsize for update"))
-	or die ("DBI prepare select trait LK models for pedigree $study{minPedigreeSId} failed, $DBI::errstr\nSQL is '". $dbh->{Statement}. "'\n");
-    #print ("SQL is ", $sth->{Statement}, "\n");
-    while (1) {
-	if (! $sth->execute (@$study{qw/id minPedigreeSId/})) {
-	    die ("DBI select trait LK models for pedigree $study{minPedigreeSId} failed, $DBI::errstr\nSQL is '". $dbh->{Statement}. "'\n");
-	} elsif (defined ($DBI::errstr) && $DBI::errstr =~ /try restarting transaction/) {
-	    print ("retrying select trait LK models for pedigree $study{minPedigreeSId}\n");
-	} else {
-	    last;
+    print (ts(), "Selecting trait LK and combined LK models\n");
+    ($sth = $dbh->prepare ("select m.ModelId, p.PedigreeSId, p.PedTraitPosCM, d1.DGF".
+			   $DModelPart_colnames . " ".
+			   "from Models m, PedigreePositions p".
+			   $DModelPart_tabnames . " ".
+			   "where p.StudyId = ? ".
+			   "  and p.PedigreeSId regexp ? ".
+			   "  and p.PedigreeSId not regexp ? ".
+			   "  and p.PedPosId = m.PedPosId".
+			   $MPId_whereclause))
+	or die ("prepare select from Models failed, $DBI::errstr\n");
+    print ("SQL is ". $sth->{Statement}. "\n");
+    foreach (@MPIds) {
+	print ("Selecting for model part IDs ". join (', ', @$_). "\n");
+	# Recall that each element in @MPIds is an arrayref containing one or more model part IDs
+	$sth->execute (@$study{qw/id pedregex pednotregex/}, @$_)
+	    or die ("execute select from Models failed, $DBI::errstr\n");
+	@Models = @{$sth->fetchall_arrayref};
+	(scalar (@Models) == 0) and die ("select returned no models\n");
+	foreach $aref (@Models) {
+	    ($modelid, $pedid, $traitpos) = splice (@$aref, 0, 3);
+	    $key = join ('-', @$aref);
+	    if ($traitpos == -9999.99) {
+		$$batch{$key}{$pedid}{trait} = $modelid;
+	    } else {
+		$$batch{$key}{$pedid}{$traitpos} = $modelid;
+	    }
+	    push (@modelids, $modelid);
 	}
+	print ("Select returned ". scalar (@Models). " rows\n");
     }
-    $aref = $sth->fetchall_arrayref;
     $sth->finish;
+    db_update_modelids ($study, $serverid, \@modelids);
+    @modelids = ();
 
-    # We get ModelIds for each trait model for the 'first family', and store those in
-    # a list so we can update ownership, below. We also get MPIds (Model Part Ids) for
-    # the models, so we can select the same trait models for all the other pedigrees
-    # later. And we store each ModelId in a hash indexed by model details (DGF and
-    # penetrance vector) and pedigree.
+    # This next select is a great opportunity for database deadlocking, so we're only
+    # going to try it if 1) we're apparently running as a standalone (not an array) job,
+    # or 2) if we are part of an array job, but we're running as task ID 1.
 
-    my %pedids = ();
-
-    foreach $rowref (@$aref) {
-	push (@modelids, $$rowref[0]);
-	push (@mpids, [ @$rowref[@mpidcols] ]);
-	$key = join ('-', @$rowref[@modelcols]);
-	$$href{$key}{$$rowref[1]}{trait} = $$rowref[0];
-	$pedids{$$rowref[1]} = '';
+    if (defined ($ENV{SGE_TASK_ID}) && $ENV{SGE_TASK_ID} != 1) {
+	print (ts(), "Skipping marker LK models\n");
+	return ($batch);
     }
 
-    print ("first family trait model count: ". scalar (@modelids). ", total keys: ". scalar (keys (%$href)). ", total pedids: ". scalar (keys (%pedids))."\n");
-
-    # Update the current batch of models with our ServerId
-    db_update_modelids ($study, $serverid, \@modelids);
-
-    # Now select the markers-only ModelIds. There will be one of these for each pedigree
-    # and calculation position. Since LG uses all markers at once, each pedigree will
-    # have the same markers-only likelihood at every position. We store each ModelId in
-    # a list for updating model ownership, below. We also store each ModelId in a hash
-    # indexed by pedigree.
-
-    %$markerLK_modelids = ();
+    print (ts(), "Selecting marker LK models\n");
     ($sth = $dbh->prepare ("select m.ModelId, p.PedigreeSId, p.PedTraitPosCM ".
 			   "from Models m, PedigreePositions p, DModelParts d ".
 			   "where p.StudyId = ? ".
@@ -448,76 +442,45 @@ sub db_get_model_batch
 	    last;
 	}
     }
-    $aref = $sth->fetchall_arrayref;
+    @Models = @{$sth->fetchall_arrayref};
     $sth->finish;
+    print (ts(), "select returned ". scalar (@Models). " rows\n");
+    (scalar (@Models) == 0) and return ($batch);
 
-    %pedids = ();
-
-    foreach $rowref (@$aref) {
-	$$markerLK_modelids{$$rowref[1]}{$$rowref[2]} = $$rowref[0];
-	push (@modelids, $$rowref[0]);
-	exists ($pedids{$$rowref[1]}) or $pedids{$$rowref[1]} = 0;
-	$pedids{$$rowref[1]}++;
+    foreach $aref (@Models) {
+        ($modelid, $pedid, $traitpos) = @$aref;
+	$$batch{marker}{$pedid}{$traitpos} = $modelid;
+	push (@modelids, $modelid);
     }
+    db_update_modelids ($study, $serverid, \@modelids);
+    @modelids = ();
+    return ($batch);
+}
 
-    if (scalar (@modelids)) {
-	my $count = $pedids{(keys (%pedids))[0]};
-	if ($count * scalar (keys (%pedids)) != scalar (@modelids)) {
-	    print ("not all families returned the same number of marker models:\n");
-	    print (map { "$_ => $pedids{$_}\n" } keys (%pedids));
+
+sub db_update_lgmodels
+{
+    my ($study, $serverid, $LGModelIds) = @_;
+    my $sth;
+    my @status;
+    my @errors;
+    my $retries = 0;
+
+    ($sth = $dbh->prepare ("update LGModels set ServerId = $serverid ".
+			   "where LGModelId = ?"))
+	or die ("prepare update LGModels failed, $DBI::errstr\n");
+    while (1) {
+	if ($sth->execute_array ({ArrayTupStatus => \@status}, $LGModelIds)) {
+	    last;
+	} elsif (! all_retry_errors (\@status, \@errors)) {
+	    die ("execute update Models failed:\n", map { "$_\n" } @errors);
 	}
-	print ("marker model count: ". scalar (@modelids). "\n");
-
-	# Update the current batch of models with our ServerId
-	db_update_modelids ($study, $serverid, \@modelids);
-    } else {
-	print ("marker model count: 0\n");
+	$retries++;
     }
-
-    # Now select all the trait-only and combined ModelIds for all the families, based on
-    # the Model Part Ids we selected above. Leave out the trait-only models for the 'first
-    # family' that we've already selected.
-
-    $sth = $dbh->prepare ("select m.ModelId, p.PedigreeSId, ".
-			  "  p.PedTraitPosCM". $partcols. " ".
-			  "from Models m, PedigreePositions p". $parttabs. " ".
-			  "where p.StudyId = ? ".
-			  "  and p.PedigreeSId regexp ? ".
-			  "  and p.PedigreeSId not regexp ? ".
-			  "  and not (p.PedTraitPosCM = -9999.99 ".
-			  "           and p.PedigreeSId = ?) ".
-			  "  and m.ServerId is NULL ".
-			  "  and m.Likelihood is NULL ".
-			  "  and m.PedPosId = p.PedPosId ".
-			  $whereclause1 . $whereclause2)
-	or die ("DBI prepare select trait/combined LK models failed, $DBI::errstr\nSQL is '". $dbh->{Statement}. "'\n");
-    #print ("SQL is ", $sth->{Statement}, "\n");
-
-    foreach (@mpids) {
-	$sth->execute (@$study{qw/id pedregex pednotregex minPedigreeSId/}, @$_)
-	    or die ("DBI execute select trait/combined LK models failed, $DBI::errstr\n");
-	
-	$aref = $sth->fetchall_arrayref;
-	(defined ($aref) && scalar (@$aref) > 0)
-	    or die ("select model parts returned no rows for MPIds ". join (',', $@). "\n");
-	foreach $rowref (@$aref) {
-	    push (@modelids, $$rowref[0]);
-	    $key = join ('-', @$rowref[@modelcols]);
-	    if ($$rowref[2] eq '-9999.99') {
-		$$href{$key}{$$rowref[1]}{trait} = $$rowref[0];
-	    } else {
-		$$href{$key}{$$rowref[1]}{$$rowref[2]} = $$rowref[0];
-	    }
-	}
-    }
+    $dbh->commit or die ("commit update LGModels failed, $DBI::errstr\n");
     $sth->finish;
-
-    print ("remaining model count: ", scalar (@modelids), "\n");
-    
-    # Update the current batch of models with our ServerId
-    db_update_modelids ($study, $serverid, \@modelids, 100);
-
-    return ($href);
+    print (ts(), "Claimed ". scalar (@$LGModelIds). " LGModels with $retries retries\n");
+    return (1);
 }
 
 
@@ -555,7 +518,7 @@ sub db_update_modelids
 	$dbh->commit or die ("commit update Models failed, $DBI::errstr\n");
     }
     $sth->finish;
-    print ("updated $count model IDs with $retries retries\n");
+    print (ts(), "Updated $count model IDs with $retries retries\n");
     return (1);
 }
 
@@ -628,4 +591,10 @@ sub all_retry_errors
 	push (@$errors, $$status[$va][1]);
     }
     return (scalar (@$errors) ? undef : 1);
+}
+
+sub ts
+{
+    my @arr = localtime ();
+    return (sprintf ("%02d/%02d %02d:%02d:%02d ", $arr[4]+1, @arr[3,2,1,0]));
 }
