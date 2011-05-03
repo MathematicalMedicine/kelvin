@@ -1807,13 +1807,13 @@ int get_header_line (st_brfile *brfile)
       printf ("chromosome col\n");
 #endif
       
-    } else if ((strcasecmp (token, "MarkerList") == 0) || (strcasecmp (token, "PPL") == 0)) {
-      brfile->two_point = 0;
-
     } else {
       /* Something else */
       for (; actualcols > 0; actualcols--) 
         brfile->datacols[brfile->numcols - actualcols] = 0;
+      
+      if ((strcasecmp (token, "MarkerList") == 0) || (strcasecmp (token, "PPL") == 0))
+	brfile->two_point = 0;
     }
 
 #ifdef DEBUG
