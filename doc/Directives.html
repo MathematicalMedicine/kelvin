@@ -466,12 +466,13 @@
     <tt>PhenoCodes <i>unknown</i>, <i>unaffected</i>, <i>affected</i></tt><br>
     Specifies the values that will appear in the affection status (phenotype) field
     of the pedigree file, to indicate if an individual is affected, unaffected, or
-    if the affection status is unknown. For quantitative trait analyses, only the value
-    for unknown affection status should be specified. For dichotomous 
-    traits, the defaults are 0 (for unknown), 1 (for unaffected) and 2 (for affected).
-    For quantitative threshold traits, the defaults are -99.99, -88.88 and 88.88.
-    For quantitative traits, the default is -99.99 (for unknown). This directive
-    is incompatible with the <a href='#markertomarker'>MarkerToMarker</a> directive.
+    if the affection status is unknown. For dichotomous traits, all three values must be
+    integers; the defaults are 0 (for unknown), 1 (for unaffected) and 2 (for affected).
+    For quantitative trait analyses, only the value for unknown affection status should be
+    specified, which may be any real number; the default is -99.99. For quantitative
+    threshold traits, all three must be specified; the defaults are -99.99, -88.88 and 88.88.
+    This directive is incompatible with the <a href='#markertomarker'>MarkerToMarker</a>
+    directive.
   </div><p>
   
   <div class='hang' id='polynomialscale'>
