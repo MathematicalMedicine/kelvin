@@ -493,7 +493,9 @@ sub by_founder_desc
 	if ($$b{dadid} eq '0' && $$b{momid} eq '0') {
 	    (($ret = $$desc{$$b{indid}} <=> $$desc{$$a{indid}}) != 0)
 		and return ($ret);
-	    return ($$a{sex} <=> $$b{sex});
+	    (($ret = $$a{sex} <=> $$b{sex}) != 0)
+		and return ($ret);
+	    return ($$a{indid} cmp $$b{indid});
 	}
 	return (-1);
     } elsif ($$b{dadid} eq '0' && $$b{momid} eq '0') {
