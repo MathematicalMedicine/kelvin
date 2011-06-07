@@ -168,7 +168,7 @@
 	will be used in preference to user-supplied allele frequencies. This behavior can be
         explicitly disabled through a configuration directive.</li>
       <li>Utilities for preparing the configuration file (<font color='red'>gKelvin</font>)
-        and graphing the results of analyses (graphApp) are now provided. These utilities
+        and graphing the results of analyses (KELVIZ) are now provided. These utilities
 	have separate installation requirements and procedures as well.</li>
       <li>Progress reporting now provides configurable fixed-frequency updates. See the
 	<a href='#running'>Running The Programs</a> section for details.</li>
@@ -341,7 +341,7 @@
     directory where the source files are
     located, and type <br>
     <br>
-    <span style="font-family: monospace;">python graphApp.py</span><br>
+    <span style="font-family: monospace;">python kelviz.py</span><br>
     <br>
     <br>To import data from a <span class='sc'>Kelvin</span> output file:<br>
     1. Click on File-&gt;Import Data on the menu bar. 
@@ -434,7 +434,7 @@
     configuration file generator, <font color='red'>gKelvin</font>, requires
     <a href='http://www.python.org'>Python 2.6</a> and <a href='http://www.wxpython.org'>wxPython
     2.8.3.0</a>. <span class='sc'>Kelvin</span>'s results graphing tool, 
-    <a href='graphApp_manual.htm#Installing_graphApp'>graphApp</a>, requires
+    <a href='graphApp_manual.htm#Installing_graphApp'><span class='sc'>Kelviz</span></a>, requires
     Python 2.5, wxPython 2.8.3.0, <a href='http://matplotlib.sourceforge.net'>Matplotlib</a>,
     <a href='http://numpy.scipy.org'>NumPy</a>,
     <a href='http://www.pythonware.com/products/pil'>Python Imaging Library (PIL)</a> and PyXML.
@@ -1495,10 +1495,10 @@ _$ convert_br.pl --help
     <h2 id='graphapp'>Graphing The Results</h2>
 
     <span class='sc'>Kelvin</span> is distributed with a richly-featured graphing program,
-    graphApp. It reads <span class='sc'>Kelvin</span>-formatted PPL output, and can write
+    <span class='sc'>Kelviz</span>. It reads <span class='sc'>Kelvin</span>-formatted PPL output, and can write
     output in a number of graphics formats. It is specifically tailored to graphing the 
     results of genetic analyses. Full documentation is provided in the
-    <a href='graphApp_manual.htm'>graphApp manual</a>.
+    <a href='kelviz_manual.htm'><span class='sc'>Kelviz</span> manual</a>.
 
     <hr>
     $Date$
