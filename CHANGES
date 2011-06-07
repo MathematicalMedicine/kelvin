@@ -1,5 +1,7 @@
-Version TBA
-   YOUR CHANGES HERE
+Version 2.3.3
+  9 May 2011
+  Kelvin Binary
+    Fix handling of PhenoCodes directive when non-default codes are used
 
 Version 2.3.2
   27 Apr 2011
