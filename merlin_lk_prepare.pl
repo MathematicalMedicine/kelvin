@@ -42,13 +42,14 @@ print (($liability > 1) ? ", $liability liability classes\n" : ", 1 liability cl
 
 $dsn = "DBI:mysql:host=$study{dbhost};database=$study{dbname}";
 $dbh = DBI->connect ($dsn, $study{dbuser}, $study{dbpasswd},
-#		     {AutoCommit => 1})
-		     {AutoCommit => 1, PrintError => 0})
+#		     {AutoCommit => 0})
+		     {AutoCommit => 0, PrintError => 0})
     or die ("DBI connect to '$dsn' as $study{dbuser} failed, $DBI::errstr\n");
 
 (($sth = $dbh->prepare ("delete from LGModels where StudyId = ?"))
  && ($rows = $sth->execute ($study{id})))
     or die ("delete from LGModels failed, $DBI::errstr\n");
+$dbh->commit or die ("commit delete from LGModels failed, $DBI::errstr\n");
 print (ts(), "Deleted $rows from LGModels\n");
 
 $lc_select = join ('', map { ", LC${_}MPId" } (1 .. $liability));
@@ -68,9 +69,19 @@ $sql = "insert into LGModels (LGModelId, StudyId" . $lc_select. ") ".
 $sql =~ s/  */ /g;
 # print ("SQL is '$sql'\n");
 
-(($sth = $dbh->prepare ($sql)) &&
- ($rows = $sth->execute (@study{qw/id pedregex pednotregex/})))
-    or die ("insert into LGModels failed, $DBI::errstr\n");
+($sth = $dbh->prepare ($sql))
+    or die ("prepare insert into LGModels failed, $DBI::errstr\n");
+
+while (1) {
+    if (! ($rows = $sth->execute (@study{qw/id pedregex pednotregex/}))) {
+	die ("insert into LGModels failed, $DBI::errstr\n");
+    } elsif (defined ($DBI::errstr) && $DBI::errstr =~ /try restarting transaction/) {
+	print ("retrying insert into LGModels\n");
+    } else {
+	last;
+    }
+}
+$dbh->commit or die ("commit insert into LGModels failed, $DBI::errstr\n");
 print (ts(), "Inserted $rows into LGModels\n");
 
 exit (0);

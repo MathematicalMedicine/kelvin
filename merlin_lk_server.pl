@@ -1,11 +1,13 @@
 #!perl -w
 use strict;
+use POSIX qw(ceil);
 use KelvinConfig;
 use KelvinDataset;
 use KelvinFamily;
 use DBI;
 
-my $batchsize = 17;
+my $taskcount = 9;
+my $batchsize;
 my $prefix = 'merlin';
 
 my $configfile = shift (@ARGV);
@@ -47,6 +49,11 @@ print (ts(), "$0 starting on $ENV{HOSTNAME} in $ENV{PWD}, pid $$". (exists ($ENV
 (exists ($ENV{JOB_ID})) and $prefix = $ENV{JOB_ID};
 (exists ($ENV{SGE_TASK_ID}) && $ENV{SGE_TASK_ID} ne 'undefined')
     and $prefix .= '.' . $ENV{SGE_TASK_ID};
+(exists ($ENV{SGE_TASK_LAST}) && $ENV{SGE_TASK_LAST} ne 'undefined')
+    and $taskcount = $ENV{SGE_TASK_LAST};
+
+# $taskcount is initialized to 9, up top, and is overridden if SGE_TASK_LAST is set
+$batchsize = ceil (153 / $taskcount);
 
 ($configfile && -f $configfile)
     or die ("usage: $0 <configfile>\n");
@@ -332,6 +339,14 @@ sub db_get_model_batch
     my ($modelid, $pedid, $traitpos, $key);
     my $sth;
     my $aref;
+
+    # This is a cheap hack: with really fast datasets, sometimes the higher-numbered
+    # (n > 1) tasks snorkle up all the trait-marker models, and the first task gets
+    # none. This is a problem, since only the first task will select the marker-only
+    # models, but only if gets some trait-marker models also. So, we give the first
+    # task a five second head start.
+    (defined ($ENV{SGE_TASK_ID}) && $ENV{SGE_TASK_ID} != 1)
+	and sleep (5);
 
     $MPId_colnames = join (', ', map { "LC${_}MPId" } (1 .. $$study{LiabilityClassCnt}));
     
