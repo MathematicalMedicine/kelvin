@@ -27,6 +27,9 @@ my %keylabels;
 my %equivalentkeys;
 my $config;
 my $svn_version='$Id$';
+my %phenocodes;
+my %phenomap;
+my ($UNDEFINED, $UNAFFECTED, $AFFECTED) = (0, 1, 2);
 
 my $usage = "usage: $0 <configfile> [--directive ... ]\n";
 my $platform = platform_name ();
@@ -50,8 +53,9 @@ my %countState = ( countable => 1, imprinting => 0, cases => 0, controls => 0, s
 		   pedigreefile => undef, countfile => undef, xchr => 0, precounted => 0,
 		   postcounted => 0, uninformative => 0);
 my %epiState = ( passes => 0, extramods => 0, ld => 0, multipoint => 0, trait => undef, 
-		 undefpheno => undef, xchr => 0, sequpdateargs => [] );
+		 xchr => 0, sequpdateargs => [] );
 
+print ("Kelvin version $svn_version\n");
 # Nail down values for those UPPERCASE VARIABLES, as needed
 check_paths ();
 
@@ -74,6 +78,9 @@ if (@ARGV) {
     $config->validate
 	or error ("$KelvinConfig::errstr");
 }
+$aref = $config->isConfigured ("PhenoCodes");
+@phenocodes{$UNDEFINED, $UNAFFECTED, $AFFECTED} = split (/,\s*/, $$aref[0]);
+map { defined ($phenocodes{$_}) and $phenomap{$phenocodes{$_}} = $_ } keys (%phenocodes);
 
 # Open dataset (that is, read the locus and freq files, and set up the
 # pedigree file for reading). We include the freq file, if one is available,
@@ -85,6 +92,7 @@ $$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
     and $$href{FrequencyFile} = $$aref[0];
 $dataset = KelvinDataset->new ($href)
     or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
+$dataset->setUndefPhenocode ($phenocodes{$UNDEFINED});
 
 # Set up for allele frequency estimation. This will also validate the
 # conditions for frequency estimation that we can dope out from the
@@ -171,7 +179,6 @@ sub setup_pedcount
 {
     my ($state, $config, $dataset) = @_;
     my $traits;
-    my $trait;
     my $href;
     my $va;
     
@@ -247,7 +254,15 @@ sub count_family
 	}
 	$kidkeys[0] = '';
 	# Get the trait and any liability class assignment
-	map { $kidkeys[0] .= $$kids[0]->getTrait ($_) } @{$$state{traits}};
+	map { $kidkeys[0] .= get_trait_mapping ($$kids[0], $_); } @{$$state{traits}};
+
+	# The first character in the key should be the trait/affection status, which has
+	# been mapped from the dataset value to 0, 1 or 2 (UNDEFINED, UNAFFECTED, or AFFECTED)
+	if (substr ($kidkeys[0], 0, 1) == $UNAFFECTED) {
+	    $$state{controls}++;
+	} elsif (substr ($kidkeys[0], 0, 1) == $AFFECTED) {
+	    $$state{cases}++;
+	}
 
 	# And tack on the sex, if matters
 	($$state{xchr} || $$state{imprinting}) and 
@@ -280,10 +295,10 @@ sub count_family
 	map { push (@kidkeys, '') } @$kids;
 	($dad, $mom) = ($family->dad, $family->mom);
 	map {
-	    $dadkey .= $dad->getTrait ($_);
-	    $momkey .= $mom->getTrait ($_);
+	    $dadkey .= get_trait_mapping ($dad, $_);
+	    $momkey .= get_trait_mapping ($mom, $_);
 	    for ($va = 0; $va < scalar (@$kids); $va++) {
-		$kidkeys[$va] .= $$kids[$va]->getTrait ($_);
+		$kidkeys[$va] .= get_trait_mapping ($$kids[$va], $_);
 	    }
 	} @{$$state{traits}};
 	if ($$state{xchr} || $$state{imprinting}) {
@@ -324,13 +339,6 @@ sub count_family
 	    (! exists $$state{pedlabels}{$key} ||
 	     $$state{pedlabels}{$key} < $$state{counts}[$va]{$key})
 		and $$state{pedlabels}{$key} = $$state{counts}[$va]{$key};
-	}
-    }
-    if (keylabel ($key) =~ /^(case|ctrl).*/) {
-	if ($1 eq 'case') {
-	    $$state{cases}++;
-	} else {
-	    $$state{controls}++;
 	}
     }
 }
@@ -421,7 +429,7 @@ sub write_pedcount
 		} else {
 		    ($geno, $traits, $sex) = ($key =~ /(..)(.{$n})/, 1);
 		}
-		$family = KelvinIndividual->new_from_count ($dataset, $pedid, $$state{traits}, $$state{revlabelmap}, [$geno, $traits, $sex]);
+		$family = KelvinIndividual->new_from_count ($dataset, $pedid, $$state{traits}, $$state{revlabelmap}, [$geno, unmap_traits ($dataset, $traits), $sex]);
 		$family->write;
 	    } else {
 		# Nuclear ped
@@ -436,9 +444,9 @@ sub write_pedcount
 			$key =~ s/^(..)(.{$n})//;
 			($geno, $traits, $sex) = ($1, $2, ($va++ % 2) + 1);
 		    }
-		    push (@individuals, [$geno, $traits, $sex]);
+		    push (@individuals, [$geno, unmap_traits ($dataset, $traits), $sex]);
 		}
-		$family = KelvinFamily->new_from_count ($dataset, $pedid, $$state{traits}, $$state{revlabelmap}, , \@individuals);
+		$family = KelvinFamily->new_from_count ($dataset, $pedid, $$state{traits}, $$state{revlabelmap}, \@individuals);
 		$family->write;
 	    }
 	}
@@ -490,6 +498,37 @@ sub get_allele_mapping
 }
 
 
+sub get_trait_mapping
+{
+    my ($individual, $trait) = @_;
+    my $val = $individual->getTrait ($trait);
+    my $flag = $ {$individual->dataset->getTrait ($trait)}{flag};
+
+    ($flag eq 'C') and return ($val);
+    (! exists ($phenomap{$val}))
+	and error ("illegal phenotype for family ". $individual->pedid. ", individual ". $individual->indid);
+    return ($phenomap{$val});
+}
+
+
+sub unmap_traits
+{
+    my ($dataset, $traits) = @_;
+    my $trait;
+    my $aref = [];
+    my $va = 0;
+
+    foreach $trait (@{$dataset->traitOrder}) {
+	if ($ {$dataset->getTrait ($trait)}{flag} eq 'C') {
+	    push (@$aref, substr ($traits, $va++, 1));
+	} else {
+	    push (@$aref, $phenocodes{substr ($traits, $va++, 1)});
+	}
+    }
+    return ($aref);
+}
+
+
 #
 # If epistasis is called for, figure out how many passes we need to make,
 # and set up data structures and temporary files. 
@@ -518,8 +557,6 @@ sub setup_epistasis
     ($aref = $dataset->traitOrder)
 	or error ("can't run Epistasis on a dataset with no trait");
     $$state{trait} = $$aref[0];
-    $aref = $config->isConfigured ("PhenoCodes");
-    ($$state{undefpheno}) = ($$aref[0] =~ /^([\-\d\.]+)/);
     ($config->isConfigured ("SexLinked")) and $$state{xchr} = 1;
     ($config->isConfigured ("LD")) and $$state{ld} = 1;
     ($config->isConfigured ("Multipoint")) and $$state{multipoint} = 1;
@@ -604,7 +641,7 @@ sub epistasis_family
 	    if (exists ($$pass{map}{$$state{indgenos}{$id}})) {
 		$individual->setTrait ("EpistasisClass", $$pass{map}{$$state{indgenos}{$id}});
 	    } else {
-		$individual->setTrait ($$state{trait}, $$state{undefpheno});
+		$individual->setTrait ($$state{trait}, $phenocodes{$UNDEFINED});
 		$individual->setTrait ("EpistasisClass", 1);
 	    }
 	}
@@ -854,8 +891,6 @@ sub setup_frequency_estimation
     } else {
 	($aref = $config->isConfigured ("TraitPrevalence"))
 	    and $$state{prevalence} = $$aref[0];
-	$aref = $config->isConfigured ("PhenoCodes");
-	($$state{affected}) = ($$aref[0] =~ /.*,\s*([\-\d\.]+)$/);
     }
     
     if ($config->isConfigured ("SkipEstimation")) {
@@ -909,13 +944,13 @@ sub count_alleles
 	($kid->genotyped) or return;
 	$sex = $kid->sex;
 	# For QT/QTT, everyone is coded as a control (unaffected)
-	$pheno = ($$state{qt}) ? ! $$state{affected} : $kid->getTrait ($$state{trait});
+	$pheno = ($$state{qt}) ? ! $phenocodes{$AFFECTED} : $kid->getTrait ($$state{trait});
 	foreach $marker (@{$$state{markers}}) {
 	    $kidgeno = $kid->getGenotype ($marker);
 	    ($$kidgeno[0] eq '0') and next;
 	    # Only count one of the homozygous alleles for males on chr X
 	    ($$state{xchr} && $sex eq '1') and shift (@$kidgeno);
-	    if ($pheno ne $$state{affected}) {
+	    if ($pheno ne $phenocodes{$AFFECTED}) {
 		map {
 		    exists ($$state{controls}{$marker}{alleles}{$_})
 			or $$state{controls}{$marker}{alleles}{$_} = 0;
@@ -965,7 +1000,7 @@ sub count_alleles
 	    $va = 0;
 	    while ($va < scalar (@$aref)) {
 		if ((! $$aref[$va]->genotyped) ||
-		    $$aref[$va]->getTrait ($$state{trait}) ne $$state{affected}) {
+		    $$aref[$va]->getTrait ($$state{trait}) ne $phenocodes{$AFFECTED}) {
 		    splice (@$aref, $va, 1);
 		} else {
 		    $va++;
@@ -1214,9 +1249,9 @@ sub check_paths
     require KelvinConfig;
     require KelvinFamily;
     # Check versions ('use' would have done for us automatically)
-    KelvinDataset->VERSION (1.30);
+    KelvinDataset->VERSION (1.40);
     KelvinConfig->VERSION (1.20);
-    KelvinFamily->VERSION (1.30);
+    KelvinFamily->VERSION (1.40);
 
     if ($ENV{KELVIN_BINARY}) {
 	($KELVIN_BINARY !~ /no_kelvin_binary/i)
@@ -1339,7 +1374,6 @@ sub warner
 #   ld => boolean,
 #   multipoint => boolean,
 #   trait => scalar,
-#   undefpheno => scalar,
 #   xchr => boolean,
 #   sequpdateargs => [ ... ],
 #   conffiles => { 'pedigreefile' => scalar,
