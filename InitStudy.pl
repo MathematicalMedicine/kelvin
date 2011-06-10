@@ -28,11 +28,11 @@ if ($ENV{KELVIN_ROOT}) {
 
 unshift (@INC, $KELVIN_ROOT);
 require KelvinDataset;
-KelvinDataset->VERSION (1.00);
+KelvinDataset->VERSION (1.40);
 require KelvinConfig;
-KelvinConfig->VERSION (1.00);
+KelvinConfig->VERSION (1.20);
 require KelvinFamily;
-KelvinFamily->VERSION (1.00);
+KelvinFamily->VERSION (1.40);
 
 ($configFile = shift (@ARGV))
     or die ($usage);
@@ -104,6 +104,10 @@ sub perform_study
     $$href{MapFile} = $ {$config->isConfigured ("MapFile")}[0];
     $dataset = KelvinDataset->new ($href)
 	or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
+ 
+    # Set the undefined phenocode so KelvinFamily can identify unphenotyped individuals
+    my $aref = $config->isConfigured ("PhenoCodes");
+    $dataset->setUndefPhenocode ((split (/,\s*/, $$aref[0]))[0]);
 
     # We always want a full map whether it is for the client (ReferenceMap) or server (GenotypeMaps)
 
