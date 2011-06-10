@@ -1,15 +1,14 @@
 #!/usr/bin/perl -w
 use strict;
 use KelvinIO;
-use KelvinFamily 1.2;
-
+use KelvinFamily 1.4;
 #
 # KelvinDataset: an object for managing a Kelvin-compatible marker files
 # (marker map, frequencies, and locus files, and pedigree files).
 #
 package KelvinDataset;
 our $errstr='';
-our $VERSION=1.3;
+our $VERSION=1.4;
 
 my $ROUNDING_ERROR=0.0001;
 
@@ -21,6 +20,7 @@ sub new
     # Initialize the fields: 
     #   markers: a hash of all markers in the set, indexed by name
     #   traits: a hash or all traits/liability classes, indexed by name
+    #   undefpheno: a value for undefined phenotypes that can be set by the user
     #   maporder: a list of markernames, ordered according to the map file
     #   markerorder: a list of markernames, ordered according to the locus file
     #   traitorder: a list of traits/liability classes, ordered according to the locus file
@@ -45,7 +45,7 @@ sub new
     #   individualcache: cache for KelvinIndividuals when reading families
     #   pedwriteformat: 'pre' or 'post'
     
-    @$self{qw/markers traits maporder/} = ({}, {}, []);
+    @$self{qw/markers traits undefpheno maporder/} = ({}, {}, undef, []);
     @$self{qw/markerorder traitorder mapfields/} = ([], [], []);
     @$self{qw/chromosome mapfunction writing consistent/} = (undef, 'kosambi', 0, 1);
     @$self{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
@@ -100,7 +100,7 @@ sub copy
     my $idx;
     my $new = bless ({}, ref ($self));
 
-    @$new{qw/markers traits maporder/} = ({}, {}, []);
+    @$new{qw/markers traits undefpheno maporder/} = ({}, {}, undef, []);
     @$new{qw/markerorder traitorder mapfields/} = ([], [], []);
     @$new{qw/chromosome mapfunction writing consistent/} = (undef, 'kosambi', 0, 1);
     @$new{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
@@ -156,7 +156,7 @@ sub copy
     map {
 	$$new{$_} = $$self{$_};
     } qw/chromosome mapfunction mapfile freqfile locusfile pedigreefile mapread freqread
-	locusread freqset microsats snps/;
+	locusread freqset microsats snps undefpheno/;
 
     if ($$new{mapread}) {
 	@{$$new{mapfields}} = @{$$self{mapfields}};
@@ -1065,6 +1065,14 @@ sub getTrait
     }
     map { $$href{$_} = $$self{traits}{$trait}{$_} } keys (%{$$self{traits}{$trait}});
     return ($href);
+}
+
+sub setUndefPhenocode
+{
+    my ($self, $code) = @_;
+
+    $$self{undefpheno} = $code;
+    return (1);
 }
 
 sub pedigreefile
