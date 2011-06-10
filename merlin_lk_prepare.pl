@@ -74,8 +74,8 @@ $sql =~ s/  */ /g;
 
 while (1) {
     if (! ($rows = $sth->execute (@study{qw/id pedregex pednotregex/}))) {
-	die ("insert into LGModels failed, $DBI::errstr\n");
-    } elsif (defined ($DBI::errstr) && $DBI::errstr =~ /try restarting transaction/) {
+	($DBI::errstr !~ /try restarting transaction/)
+	    and die ("insert into LGModels failed, $DBI::errstr\n");
 	print ("retrying insert into LGModels\n");
     } else {
 	last;
