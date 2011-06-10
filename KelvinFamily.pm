@@ -6,7 +6,7 @@ use strict;
 #
 package KelvinFamily;
 our $errstr='';
-our $VERSION=1.3;
+our $VERSION=1.4;
 
 sub new
 {
@@ -97,7 +97,7 @@ sub new
 	$$family{nonfounders} = 1;
 	$$family{founders} = 0;
     } elsif ($$family{count} == 3 && $$family{founders} == 2) {
-	if ($$dad{genotyped} + $$dad{phenotyped} + $$mom{genotyped} + $$mom{genotyped} == 0) {
+	if (! ($$dad{genotyped} || $$dad{phenotyped} || $$mom{genotyped} || $$mom{phenotyped})) {
 	    $$family{pedtype} = 'casecontrol';
 	} elsif ($unaff_founders == 2 && $aff_kids == 1) {
 	    $$family{pedtype} = 'trio-strict';
@@ -587,16 +587,17 @@ sub new
     my $ind = { pedid => undef, indid => undef, dadid => undef, momid => undef,
 		firstchildid => undef, patsibid => undef, matsibid => undef,
 		origpedid => undef, origindid => undef, sex => undef, proband => undef,
-		traits => [], markers => [], genotyped => 0, phenotyped => 0,
+		traits => [], markers => [], genotyped => 0, phenotyped => undef,
 		dataset => $dataset, makeped => undef };
-
-    # Cut off the original pedigree and person IDs, split on whitespace
 
     (defined ($trait = $$dataset{traitorder}[-1]))
 	and $traitcol = $$dataset{traits}{$trait}{col};
     (defined ($marker = $$dataset{markerorder}[-1]))
 	and $markercol = $$dataset{markers}{$marker}{col};
     $colcount = ($markercol > $traitcol) ? $markercol + 2 : $traitcol + 1;
+    (defined ($$dataset{undefpheno})) and $$ind{phenotyped} = 0;
+
+    # Cut off the original pedigree and person IDs, split on whitespace
 
     if ($line =~ s/\s*Ped:\s*(\S+)\s+Per:\s*(\S+)\s*$//) {
 	# These extra fields are present in genuine post-MAKEPED(tm)-brand pedigree files
@@ -644,9 +645,11 @@ sub new
     foreach $trait (@{$$dataset{traitorder}}) {
 	$traitcol = $$dataset{traits}{$trait}{col};
 	push (@{$$ind{traits}}, $arr[$traitcol]);
-	($$dataset{traits}{$trait}{flag} ne 'C' && $arr[$traitcol] != 0)
+	($$dataset{traits}{$trait}{flag} ne 'C' && defined ($$dataset{undefpheno})
+	 && $arr[$traitcol] ne $$dataset{undefpheno})
 	    and $$ind{phenotyped}++;
     }	      
+
     foreach $marker (@{$$dataset{markerorder}}) {
 	$markercol = $$dataset{markers}{$marker}{col};
 	if (($arr[$markercol] eq '0') != ($arr[$markercol+1] eq '0')) {
@@ -686,7 +689,7 @@ sub new_from_count
     foreach $trait (@{$$dataset{traitorder}}) {
 	push (@{$$ind{traits}}, 'x');
 	for ($va = 0; $va < scalar (@$traits); $va++) {
-	    ($trait eq $$traits[$va]) and $$ind{traits}[-1] = substr ($$aref[1], $va, 1);
+	    ($trait eq $$traits[$va]) and $$ind{traits}[-1] = $$aref[1][$va];
 	}
     }
     ($allele1, $allele2) = split (//, $$aref[0]);
