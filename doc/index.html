@@ -1,7 +1,7 @@
 <html>
   <?-- This file is 100 characters wide -->
   <head>
-    <title>KELVIN V2.1.0 ReadMe</title>
+    <title>KELVIN V2.4.2 ReadMe</title>
     <style type='text/css'>
       span.sc { font-variant: small-caps; }
       div.indent { padding-left: 2em; }
@@ -13,7 +13,7 @@
   </head>
   <body>
     <center>
-    <h1><span class='sc'>Kelvin</span> V2.1.0</h1>
+    <h1><span class='sc'>Kelvin</span> V2.4.2</h1>
     </center>
 
     <h1>Overview</h1>
@@ -168,7 +168,7 @@
 	will be used in preference to user-supplied allele frequencies. This behavior can be
         explicitly disabled through a configuration directive.</li>
       <li>Utilities for preparing the configuration file (<font color='red'>gKelvin</font>)
-        and graphing the results of analyses (KELVIZ) are now provided. These utilities
+        and graphing the results of analyses (<span class='sc'>Kelviz</span>) are now provided. These utilities
 	have separate installation requirements and procedures as well.</li>
       <li>Progress reporting now provides configurable fixed-frequency updates. See the
 	<a href='#running'>Running The Programs</a> section for details.</li>
@@ -346,7 +346,7 @@
     <br>To import data from a <span class='sc'>Kelvin</span> output file:<br>
     1. Click on File-&gt;Import Data on the menu bar. 
     Alternatively you can click on the Import Text icon on the toolbar&nbsp;
-    <img style="width: 47px; height: 42px;" alt="" src="graphApp_import_text.png"> .<br>
+    <img style="width: 47px; height: 42px;" alt="" src="kelviz_import_text.png"> .<br>
     <br>
     2. A dialog box will appear asking for the name of the file to be opened.
     Choose the file containing the data, and click on the Open button.<br>
@@ -358,7 +358,7 @@
     <br>
     <br>
     <div style="text-align: center;">
-        <img style="width: 712px; height: 559px;" alt="" src="graphApp_fileformat_dialog.png"><br>
+        <img style="width: 712px; height: 559px;" alt="" src="kelviz_fileformat_dialog.png"><br>
     </div>
     <br>
     <br>
@@ -407,7 +407,7 @@
       <li><a href='#running'>Running The Programs</a></li>
       <li><a href='#outputfiles'>Contents Of Output Files</a></li>
       <li><a href='#sequpdate'>Sequential Updating</a></li>
-      <li><a href='#graphapp'>Graphing The Results</a></li>
+      <li><a href='#kelviz'>Graphing The Results</a></li>
     </ol>
 
     <h2 id='installing'>Installing The Programs</h2>
@@ -434,7 +434,7 @@
     configuration file generator, <font color='red'>gKelvin</font>, requires
     <a href='http://www.python.org'>Python 2.6</a> and <a href='http://www.wxpython.org'>wxPython
     2.8.3.0</a>. <span class='sc'>Kelvin</span>'s results graphing tool, 
-    <a href='graphApp_manual.htm#Installing_graphApp'><span class='sc'>Kelviz</span></a>, requires
+    <a href='kelviz_manual.htm#Installing_kelviz'><span class='sc'>Kelviz</span></a>, requires
     Python 2.5, wxPython 2.8.3.0, <a href='http://matplotlib.sourceforge.net'>Matplotlib</a>,
     <a href='http://numpy.scipy.org'>NumPy</a>,
     <a href='http://www.pythonware.com/products/pil'>Python Imaging Library (PIL)</a> and PyXML.
@@ -1492,7 +1492,7 @@ _$ convert_br.pl -c 12 -m mapfile.dat avghet-old.out > br-new.out
 _$ convert_br.pl --help
     </pre>
 
-    <h2 id='graphapp'>Graphing The Results</h2>
+    <h2 id='kelviz'>Graphing The Results</h2>
 
     <span class='sc'>Kelvin</span> is distributed with a richly-featured graphing program,
     <span class='sc'>Kelviz</span>. It reads <span class='sc'>Kelvin</span>-formatted PPL output, and can write
