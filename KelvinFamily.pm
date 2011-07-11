@@ -6,7 +6,7 @@ use strict;
 #
 package KelvinFamily;
 our $errstr='';
-our $VERSION=1.4;
+our $VERSION=1.5;
 
 sub new
 {
@@ -20,7 +20,7 @@ sub new
     my $multigeneration = 0;
     my ($aff_founders, $unaff_founders, $aff_kids, $unaff_kids) = (0, 0, 0, 0);
     my ($dad, $mom, $kids) = (undef, undef, []);
-    my $href;
+    my $href = {};
     my $va;
 
     @$family{qw/pedid pedtype count founders nonfounders/} = (undef, undef, 0, 0, 0);
@@ -36,6 +36,7 @@ sub new
     $$family{pedid} = $$aref[0]{pedid};
     $$family{count} = scalar (@$aref);
 
+    $$href{$$aref[0]{indid}} = '';
     for ($va = 1; $va < $$family{count}; $va++) {
 	if ($$aref[$va]{dataset} != $dataset) {
 	    $errstr = "individuals are based on different datasets";
@@ -49,8 +50,13 @@ sub new
 	    $errstr = "individuals are from different families (pedigree IDs)";
 	    return (undef);
 	}
+	if (exists ($$href{$$aref[$va]{indid}})) {
+	    $errstr = "individual $$aref[$va]{indid} appears more than once";
+	    return (undef);
+	}
+	$$href{$$aref[$va]{indid}} = '';
     }
-
+    
     @{$$family{individuals}} = @$aref;
     if ($$aref[0]{makeped} eq 'pre') {
 	$family->makeped or return (undef);
