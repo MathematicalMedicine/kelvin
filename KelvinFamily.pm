@@ -321,7 +321,7 @@ sub verify_links
 	    return (undef);
 	}
 	if ($$ind{patsibid} ne '0') {
-	    if (! exists ($hash{$$ind{patsibid}})) {
+	    if (! (exists ($hash{$$ind{patsibid}}) && defined ($hash{$$ind{patsibid}}{sex}))) {
 		$errstr = "pedid $pedid, person $indid missing sibling $$ind{patsibid}";
 		return (undef);
 	    } elsif ($$ind{patsibid} eq $indid) {
@@ -333,7 +333,7 @@ sub verify_links
 	    }
 	}
 	if ($$ind{matsibid} ne '0') {
-	    if (! exists ($hash{$$ind{matsibid}})) {
+	    if (! (exists ($hash{$$ind{matsibid}}) && defined ($hash{$$ind{matsibid}}{sex}))) {
 		$errstr = "pedid $pedid, person $indid missing sibling $$ind{matsibid}";
 		return (undef);
 	    } elsif ($$ind{matsibid} eq $indid) {
