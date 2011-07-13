@@ -21,8 +21,8 @@ my $use_found_files = 0;
 my $verbose = 0;
 my $help = 0;
 my $pedfiles = 0; my $dup_pedfiles = 0;
-my $freqfiles = 0; my $dup_freqfiles = 0;
-my $mapfiles = 0; my $dup_mapfiles = 0;
+my $freqfiles = 0;
+my $mapfiles = 0;
 my $path1 = ''; my $path2 = '';
 my $pedfile1 = ''; my $pedfile2 = '';
 my $locusfile1 = ''; my $locusfile2 = '';
@@ -74,90 +74,162 @@ print "Processing all \"found\" data files\n" if ($verbose and $use_found_files)
 ($config2 = KelvinConfig->new ($configfile2))
     or error ("Processing of configuration file 2:\"$configfile2\" failed: $KelvinConfig::errstr");
 
+if ($use_found_files or $freqfiles) {
+    # Construct path and name for frequency files
+    my $filename = $ {$config1->isConfigured ("FrequencyFile")}[0];
+    $filename = catfile($path1, $filename)
+	if ((!file_name_is_absolute($filename)) && $path1);
+    $$data1ref{FrequencyFile} = $filename if ((-e $filename) or $freqfiles);
+	
+    $filename = $ {$config2->isConfigured ("FrequencyFile")}[0];
+    $filename = catfile($path2, $filename)
+	if ((!file_name_is_absolute($filename)) && $path2);
+    $$data2ref{FrequencyFile} = $filename if ((-e $filename) or $freqfiles);
+
+    $freqfiles = 1 if ($$data1ref{FrequencyFile} and $$data2ref{FrequencyFile});
+}
+
+if ($use_found_files or $mapfiles) {
+    # Construct path and name for map files
+    my $filename = $ {$config1->isConfigured ("MapFile")}[0];
+    $filename = catfile($path1, $filename)
+	if ((!file_name_is_absolute($filename)) && $path1);
+    $$data1ref{MapFile} = $filename if ((-e $filename) or $mapfiles);
+	
+    $filename = $ {$config2->isConfigured ("MapFile")}[0];
+    $filename = catfile($path2, $filename)
+	if ((!file_name_is_absolute($filename)) && $path2);
+    $$data2ref{MapFile} = $filename if ((-e $filename) or $mapfiles);
+
+    $mapfiles = 1 if ($$data1ref{MapFile}) and ($$data2ref{MapFile});
+}
+
 if ($use_found_files or $pedfiles) {
     # Construct path and name for pedigree and locus files
-    $$data1ref{PedigreeFile} = $ {$config1->isConfigured ("PedigreeFile")}[0];
-    $$data1ref{LocusFile} = $ {$config1->isConfigured ("LocusFile")}[0];
-    # Consider any specified path1..
-    $$data1ref{PedigreeFile} = catfile($path1, $$data1ref{PedigreeFile})
-	if ((!file_name_is_absolute($$data1ref{PedigreeFile})) && $path1);
-    $$data1ref{LocusFile} = catfile($path1, $$data1ref{LocusFile})
-	if ((!file_name_is_absolute($$data1ref{LocusFile})) && $path1);
-
-    $$data2ref{PedigreeFile} = $ {$config2->isConfigured ("PedigreeFile")}[0];
-    $$data2ref{LocusFile} = $ {$config2->isConfigured ("LocusFile")}[0];
-    # Consider any specified path2...
-    $$data2ref{PedigreeFile} = catfile($path2, $$data2ref{PedigreeFile})
-	if ((!file_name_is_absolute($$data2ref{PedigreeFile})) && $path2);
-    $$data2ref{LocusFile} = catfile($path2, $$data2ref{LocusFile})
-	if ((!file_name_is_absolute($$data2ref{LocusFile})) && $path2);
+    my $pedname = $ {$config1->isConfigured ("PedigreeFile")}[0];
+    my $locusname = $ {$config1->isConfigured ("LocusFile")}[0];
+    $pedname = catfile($path1, $pedname)
+	if ((!file_name_is_absolute($pedname)) && $path1);
+    $locusname = catfile($path1, $locusname)
+	if ((!file_name_is_absolute($locusname)) && $path1);
+    if (((-e $pedname) and (-e $locusname)) or $pedfiles) {
+	$$data1ref{PedigreeFile} = $pedname;
+	$$data1ref{LocusFile} = $locusname;
+    }
+    $pedname = $ {$config2->isConfigured ("PedigreeFile")}[0];
+    $locusname = $ {$config2->isConfigured ("LocusFile")}[0];
+    $pedname = catfile($path2, $pedname)
+	if ((!file_name_is_absolute($pedname)) && $path2);
+    $locusname = catfile($path2, $locusname)
+	if ((!file_name_is_absolute($locusname)) && $path2);
+    if (((-e $pedname) and (-e $locusname)) or $pedfiles) {
+	$$data2ref{PedigreeFile} = $pedname;
+	$$data2ref{LocusFile} = $locusname;
+    }
 
     # Turn on option if we find them, but don't turn it off if we don't so we can error-out as needed.
-    $pedfiles = 1 if ((-e $$data1ref{PedigreeFile}) and (-e $$data1ref{LocusFile}) and
-		      (-e $$data2ref{PedigreeFile}) and (-e $$data2ref{LocusFile}));
+    $pedfiles = 1 if (($$data1ref{PedigreeFile}) and ($$data1ref{LocusFile}) and
+		      ($$data2ref{PedigreeFile}) and ($$data2ref{LocusFile}));
 
     # If all files are the same, don't bother validating again. We'll still compare just to verify this code.
     $dup_pedfiles = 1 if ((($$data1ref{PedigreeFile}) eq ($$data2ref{PedigreeFile})) and
 			  (($$data1ref{LocusFile}) eq ($$data2ref{LocusFile})));
 }
 
+# Read and validate everything we have (except the pedfile contents)
+$dataset1 = KelvinDataset->new ($data1ref)
+    or error ("1: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
+$dataset2 = KelvinDataset->new ($data2ref)
+    or error ("2: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
+
 if ($pedfiles) {
-    # Read and validate the pedigree and locus files
-    print "Validating pedigree file 1:\"".$$data1ref{PedigreeFile}."\" as described by locus file 1:\"".$$data1ref{LocusFile}."\"\n" if $verbose;
-    $dataset1 = KelvinDataset->new ($data1ref)
-	or error ("Processing of pedigree file 1:\"".$$data1ref{PedigreeFile}."\" as described by locus file 1:\"".$$data1ref{LocusFile}."\ failed: $KelvinDataset::errstr");
+    # Read, validate and describe the pedigrees
+    print "1: Validating pedigree file \"".$$data1ref{PedigreeFile}."\" as described by locus file \"".$$data1ref{LocusFile}."\"\n" if $verbose;
     my $family;
     my $totalInds = 0;
-    # print "Dataset structure is ".Dumper($dataset1)."\n";
     while ($family = $dataset1->readFamily) {
-	# print "Family structure is ".Dumper($family)."\n";
 	$$dataset1{origfmt} = $$family{origfmt};
 	$totalInds += $$family{count};
-	print $family->pedtype." family ".$$family{pedid}." of ".$$family{count}." (".$$family{founders}."f/".$$family{nonfounders}."nf)\n" if $verbose;
+	print "1: ".$family->pedtype." family ".$$family{pedid}." of ".$$family{count}." (".$$family{founders}."f/".$$family{nonfounders}."nf)\n" if $verbose;
 	$families1{$$family{pedid}} = $family;
     }
     (defined ($family))
-	or error ("Read of pedigree in file 1 failed, $KelvinDataset::errstr");
-    print "P/L 1: A ".$$dataset1{origfmt}."-makeped format file with ".scalar(keys %{$$dataset1{markers}})." markers, ".
-	scalar(keys %families1)." families and $totalInds individuals.\n";
+	or error ("1: Read of pedigree file \"".$$data1ref{PedigreeFile}."\" failed, $KelvinDataset::errstr");
+    print "1: ".$$dataset1{origfmt}."-makeped format file with ".scalar(keys %{$$dataset1{markers}})." markers, ".
+	scalar(keys %families1)." families and $totalInds individuals.\n" if $verbose;
 
     if ($dup_pedfiles) {
 	$dataset2 = $dataset1;
-	%families2 = %families1;
+	%families2 = %families1; # Don't really want to double storage, so fix this.
     } else {
-	print "Validating pedigree file 2:\"".$$data2ref{PedigreeFile}."\" as described by locus file 2:\"".$$data2ref{LocusFile}."\"\n" if $verbose;
-	$dataset2 = KelvinDataset->new ($data2ref)
-	    or error ("Processing of pedigree file 2:\"".$$data2ref{PedigreeFile}."\" as described by locus file 2:\"".$$data2ref{LocusFile}."\ failed: $KelvinDataset::errstr");
+	print "2: Validating pedigree file \"".$$data2ref{PedigreeFile}."\" as described by locus file \"".$$data2ref{LocusFile}."\"\n" if $verbose;
 	$totalInds = 0;
 	while ($family = $dataset2->readFamily) {
 	    # print "Family structure is ".Dumper($family)."\n";
 	    $$dataset2{origfmt} = $$family{origfmt};
 	    $totalInds += $$family{count};
-	    print $family->pedtype." family ".$$family{pedid}." of ".$$family{count}." (".$$family{founders}."f/".$$family{nonfounders}."nf)\n" if $verbose;
+	    print "2: ".$family->pedtype." family ".$$family{pedid}." of ".$$family{count}." (".$$family{founders}."f/".$$family{nonfounders}."nf)\n" if $verbose;
 	    $families2{$$family{pedid}} = $family;
 	}
 	(defined ($family))
-	    or error ("Read of pedigree in file 2 failed, $KelvinDataset::errstr");
-	print "P/L 2: A ".$$dataset2{origfmt}."-makeped format file with ".scalar(keys %{$$dataset2{markers}})." markers, ".
-	    scalar(keys %families2)." families and $totalInds individuals.\n";
+	    or error ("2: Read of pedigree in file \"".$$data1ref{PedigreeFile}."\" failed, $KelvinDataset::errstr");
+	print "2: ".$$dataset2{origfmt}."-makeped format file with ".scalar(keys %{$$dataset2{markers}})." markers, ".
+	    scalar(keys %families2)." families and $totalInds individuals.\n" if $verbose;
+    }
+}
+
+if ($mapfiles) {
+    # Describe and compare the map files
+    print "1: ".$$dataset1{mapfunction}." map of ".scalar(@{$$dataset1{maporder}})." markers for chromosome ".$$dataset1{chromosome}." providing ".join(", ",@{$$dataset1{mapfields}})."\n" if $verbose;
+    print "2: ".$$dataset2{mapfunction}." map of ".scalar(@{$$dataset2{maporder}})." markers for chromosome ".$$dataset2{chromosome}." providing ".join(", ",@{$$dataset2{mapfields}})."\n" if $verbose;
+
+    my %fieldhash1 = map { $_ => 1 } @{$$dataset1{mapfields}};
+    my %fieldhash2 = map { $_ => 1 } @{$$dataset2{mapfields}};
+    my @common_fields = ();
+    for my $field (uniqua ((@{$$dataset1{mapfields}}, @{$$dataset2{mapfields}}))) {
+	if (!defined($fieldhash1{$field})) {
+	    print "1: Map doesn't provide $field, will not be compared!\n";
+	    $are_different += 1;
+	    next;
+	}
+	if (!defined($fieldhash2{$field})) {
+	    print "2: Map doesn't provide $field, will not be compared!\n";
+	    $are_different += 1;
+	    next;
+	}
+	push @common_fields, $field;
+    }
+
+    my %map1 = %{$$dataset1{markers}}; my %map2 = %{$$dataset2{markers}};
+    # Compare markers by looping over the superset of keys (marker names)
+    for my $name (uniqua ((@{$$dataset1{maporder}}, @{$$dataset2{maporder}}))) {
+	if (!defined($map1{$name})) {
+	    print "1: Marker \"$name\" not found in map, skipping!\n";
+	    $are_different += 1;
+	    next;
+	}
+	if (!defined($map2{$name})) {
+	    print "2: Marker \"$name\" not found in map, skipping!\n";
+	    $are_different += 1;
+	    next;
+	}
+	for my $field (@common_fields) {
+	    if ($map1{$name}{$field} ne $map2{$name}{$field}) {
+		$are_different += 1;
+		print "2: Marker $name has a different value for $field - 1:".$map1{$name}{$field}." vs 2:".$map2{$name}{$field}."\n";
+	    }
+	}
     }
 }
 
 if ($freqfiles) {
-    # Read and validate the frequency files
-    print "WARNING -- Read/validate frequency files not implemented yet.";
-    exit 1;
-}
-
-if ($mapfiles) {
-    # Read and validate the map files
-    print "WARNING -- Read/validate map files not implemented yet.";
-    exit 1;
+    # Describe and compare the frequency files
+    print "WARNING -- Read/validate frequency files not implemented yet.\n";
 }
 
 if ($pedfiles) {
     # Compare the pedigree files by looping over the superset of keys (pedids)
-    for my $pedid (uniq ((keys %families1, keys %families2))) {
+    for my $pedid (uniqn ((keys %families1, keys %families2))) {
 	my %individuals1;
 	my %individuals2;
 	# Compare individuals by looping over the superset of keys (indids)
@@ -176,7 +248,7 @@ if ($pedfiles) {
 	@aref = @{$ {$families2{$pedid}}{individuals}};
 	map { $individuals2{$_->indid} = $_; } @aref;
 
-	for my $indid (uniq (keys %individuals1, keys %individuals2)) {
+	for my $indid (uniqn (keys %individuals1, keys %individuals2)) {
 	    my %individual1;
 	    my %individual2;
 	    if (!defined($individuals1{$indid})) {
@@ -198,7 +270,7 @@ if ($pedfiles) {
 		next if (ref ($individual1{$key}) ne "");
 		if ($individual1{$key} ne $individual2{$key}) {
 		    $are_different += 1;
-		    print "Ped \"$pedid\" ind \"$indid\" has different values for $key - 1:".$individual1{$key}." vs 2:".$individual2{$key}."\n";
+		    print "2: Ped \"$pedid\" ind \"$indid\" has different values for $key - 1:".$individual1{$key}." vs 2:".$individual2{$key}."\n";
 		}
 	    }
 
@@ -206,7 +278,7 @@ if ($pedfiles) {
 	    for (my $i=0; $i<1; $i++) {
 		if ($individual1{traits}[$i] ne $individual2{traits}[$i]) {
 		    $are_different += 1;
-		    print "Ped \"$pedid\" ind \"$indid\" has different values for trait ".($i+1)." - 1:".
+		    print "2: Ped \"$pedid\" ind \"$indid\" has different values for trait ".($i+1)." - 1:".
 			$individual1{traits}[$i]." vs 2:".$individual2{traits}[$i]."\n";
 		}
 	    }
@@ -216,7 +288,7 @@ if ($pedfiles) {
 		if (($individual1{markers}[$i][0] ne $individual2{markers}[$i][0]) or
 		    ($individual1{markers}[$i][1] ne $individual2{markers}[$i][1])) {
 		    $are_different += 1;
-		    print "Ped \"$pedid\" ind \"$indid\" has different values for marker ".($i+1)." (\"".$$dataset1{markerorder}[$i]."\") - 1:".
+		    print "2: Ped \"$pedid\" ind \"$indid\" has different values for marker ".($i+1)." (\"".$$dataset1{markerorder}[$i]."\") - 1:".
 			$individual1{markers}[$i][0]." ".$individual1{markers}[$i][1]." vs 2:".
 			$individual2{markers}[$i][0]." ".$individual2{markers}[$i][1]."\n";
 		}
@@ -226,8 +298,12 @@ if ($pedfiles) {
     error ("Files are different") if ($are_different > 0);
 }
 
-sub uniq {
+sub uniqn {
     return sort { $a <=> $b } keys %{{ map { $_ => 1 } @_ }};
+}
+
+sub uniqua {
+    return sort keys %{{ map { $_ => 1 } @_ }};
 }
 
 #
@@ -288,11 +364,11 @@ Use:
 
 kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--c1 CONFIG1] [--c2 CONFIG2] [--p1 PATH1] [--p2 PATH2] 
 
+=back
+
 where CONFIG1 and CONFIG2 are paths to standard Kelvin configuration files, and 
 PATH1 and PATH2 are the default paths for locating data files referenced or defaulted
 in CONFIG1 and CONFIG2.
-
-=back
 
 =head1 DESCRIPTION
 
