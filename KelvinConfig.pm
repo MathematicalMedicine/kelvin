@@ -38,7 +38,7 @@ undef on failure.
 
 package KelvinConfig;
 our $errstr='';
-our $VERSION=1.2;
+our $VERSION=1.3;
 
 
 # The %directive hash: The keys are lowercased versions of the 
@@ -147,7 +147,7 @@ my %directives = (
 		  phenocodes => {canon => 'PhenoCodes',
 				 singlearg => 'true',
 				 default => \&defaultPhenoCodes,
-				 regex => '[\-\d\.]+(?:\s*,\s*[\-\d\.]+){2}'},
+				 regex => '[\-\d\.]+(?:\s*,\s*[\-\d\.]+\s*,\s*[\-\d\.]+)?'},
 		  sexspecific => {canon => 'SexSpecific'},
 		  sexlinked => {canon => 'SexLinked'},
 		  imprinting => {canon => 'Imprinting'},
