@@ -28,12 +28,13 @@ my $pedfile1 = ''; my $pedfile2 = '';
 my $locusfile1 = ''; my $locusfile2 = '';
 my $freqfile1 = ''; my $freqfile2 = '';
 my $mapfile1 = ''; my $mapfile2 = '';
-my ($config1, $config2);
+my $configfile1 = './kelvin.conf'; my $configfile2 = './kelvin.conf';
 
 # Hash references to keep KelvinDataset happy
 my ($data1ref, $data2ref);
 
 # Primary Kelvin* workhorses
+my ($config1, $config2);
 my ($dataset1, $dataset2);
 
 # Something I'd expected to find in Kelvin* but wasn't there...
@@ -47,8 +48,10 @@ GetOptions (
     'pedfiles' => \$pedfiles,
     'freqfiles' => \$freqfiles,
     'mapfiles' => \$mapfiles,
-    'path1=s' => \$path1,
-    'path2=s' => \$path2
+    'configfile1|c1=s' => \$configfile1,
+    'configfile2|c2=s' => \$configfile2,
+    'path1|p1=s' => \$path1,
+    'path2|p2=s' => \$path2
     ) or pod2usage(2);
 
 pod2usage(-noperldoc => 1, -verbose => 2) if ($help); # All source is shown if -noperdoc isn't specified!
@@ -56,9 +59,6 @@ pod2usage(-noperldoc => 1, -verbose => 2) if ($help); # All source is shown if -
 pod2usage(-verbose => 0) if ($#ARGV > 1);
 
 check_paths ();
-
-my $configfile1 = shift() || "./kelvin.conf";
-my $configfile2 = shift() || "./kelvin.conf";
 
 print "Processing configuration files 1:\"$configfile1\" and 2:\"$configfile2\"\n" if $verbose;
 
@@ -98,7 +98,7 @@ if ($use_found_files or $pedfiles) {
 
     # If all files are the same, don't bother validating again. We'll still compare just to verify this code.
     $dup_pedfiles = 1 if ((($$data1ref{PedigreeFile}) eq ($$data2ref{PedigreeFile})) and
-			   (($$data1ref{LocusFile}) eq ($$data2ref{LocusFile})));
+			  (($$data1ref{LocusFile}) eq ($$data2ref{LocusFile})));
 }
 
 if ($pedfiles) {
@@ -278,13 +278,21 @@ __END__
 
 =head1 NAME
 
-kdiff - validate and compare sets of kelvin data files
+kdiff - validate and compare sets of Kelvin data files
 
 =head1 SYNOPSIS
 
 Use:
 
-    kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--path1] [--path2] [configfile1 [configfile2]]
+=over 5
+
+kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--c1 CONFIG1] [--c2 CONFIG2] [--p1 PATH1] [--p2 PATH2] 
+
+where CONFIG1 and CONFIG2 are paths to standard Kelvin configuration files, and 
+PATH1 and PATH2 are the default paths for locating data files referenced or defaulted
+in CONFIG1 and CONFIG2.
+
+=back
 
 =head1 DESCRIPTION
 
@@ -294,52 +302,41 @@ transformations of data files performed as a part of the cleaning protocol.
 
 If at least one of the data file options is specified, then only
 the data files indicated by the options will be processed. If
-no data file options are specified, all data files
+no data file options are specified, then all data files
 referenced (or defaulted) in the configuration file that actually exist
-will be processed. The default Kelvin data files are pedfile.dat,
-datafile.dat, markers.dat and mapfile.dat.
+will be processed. As a reminder, the default Kelvin data files are "pedfile.dat",
+"datafile.dat", "markers.dat" and "mapfile.dat".
 
 Pedigree files require locus files for proper interpretation.
 
-Config file(s) can be completely empty if Kelvin the intention is to use the default 
-data file names, e.g.:
+Configuration file(s) can be completely empty if the intention is to use the default 
+Kelvin data file names, e.g.:
 
 =over 5
 
-kdiff --pedfiles --path1 old --path2 new /dev/null /dev/null
+kdiff --pedfiles --p1 old --p2 new --c1 /dev/null --c2 /dev/null
 
 =back
 
-will compare old/pedfile.dat using old/datafile.dat for column info
-with new/pedfile.dat using new/datafile.dat for column info.
+will compare "old/pedfile.dat" using "old/datafile.dat" for column info
+with "new/pedfile.dat" using "new/datafile.dat" for column info.
 
-Config file(s) default to kelvin.conf, and not specifying any data file options
-implies using all data file options, so:
+Config file(s) default to "./kelvin.conf", so:
 
 =over 5
 
-kdiff --path2 old
+kdiff --p2 old
 
 =back
 
-will compare all data files referenced (or defaulted) in ./kelvin.conf to
-their equivalents in old/kelvin.conf.
+will compare all data files referenced (or defaulted) in "./kelvin.conf" to
+the identically-named data files in the "old" subdirectory. NOTE that "./kelvin.conf" is used
+for both CONFIG1 and CONFIG2.  If you want to use the "old/kelvin.conf"
+as CONFIG2, you need to specify it, e.g.:
 
-=head2 ARGUMENTS
+=over 5
 
-=over 3
-
-=item B<configfile1 configfile2>
-
-Standard Kelvin configuration files that need only specify the data
-files to be considered, or nothing at all if the default data file names
-are used. If only one is specified, it will be used as B<configfile1>.
-If B<configfile1> and/or B<configfile2> are not 
-specified, they default to ./kelvin.conf.
-
-If analysis characteristics are specified in the configuration files, they will
-be validated, and could therefore cause kdiff to exit if incorrectly
-specified.
+kdiff --p2 old --c2 old/kelvin.conf
 
 =back
 
@@ -373,20 +370,34 @@ files if --pedfiles is specified as well. Validate
 map files against frequency files if --freqfiles is specified as
 well.
 
-=item B<--path1>
+=item B<--c1 CONFIG1> | B<--configfile1 CONFIG1>
 
-Locate data files specified in B<configfile1> relative to B<path1>.
-Current path is used if B<--path1> is not specified. Configuration
+Specifies a standard Kelvin configuration file that references the data
+files to be considered, or nothing at all if the default data file names
+are to be used. If the option is not specified, CONFIG1 defaults to "./kelvin.conf".
+
+If analysis characteristics are included in the configuration file, they will
+be validated, and could cause kdiff to exit prematurely if incorrectly
+specified.
+
+=item B<--c1 CONFIG2> | B<--configfile1 CONFIG2>
+
+A standard Kelvin configuration file. See B<--c1 CONFIG1> for details.
+
+=item B<--p1 PATH1> | B<--path1 PATH1>
+
+Locate data files referenced or defaulted in CONFIG1 relative to PATH1.
+The current path is used if this option is not specified. Configuration
 files are typically written with data file paths relative to
-some presumed current default path. Since kdiff compares two
+some presumed current default path for Kelvin execution. Since kdiff compares two
 sets of data files, a single current default path cannot be used,
-so B<--path1> and B<--path2> are provided to allow the specification of a
-"default path" for each set of data files instead.
+so B<--p1 PATH> and B<--p2 PATH> are provided to allow the specification of separate
+default paths for each set of data files.
 
-=item B<--path2>
+=item B<--p2 PATH2> | B<--path2 PATH2>
 
-Locate data files specified in B<configfile2> relative to B<path2>.
-See B<--path1> for details.
+Locate data files referenced or defaulted in CONFIG1 relative to PATH2.
+See B<--p1 PATH1> for details.
 
 =back
 
