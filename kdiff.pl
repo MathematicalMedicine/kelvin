@@ -15,41 +15,29 @@ $|=1; # Immediate output
 my $svn_version='$Id$';
 
 my $are_different = 0;
-
 my $use_found_files = 0;
 
+# Argument- and option-related
 my $verbose = 0;
 my $help = 0;
-my $pedfiles = 0;
-my $dup_pedfiles = 0;
-my $freqfiles = 0;
-my $dup_freqfiles = 0;
-my $mapfiles = 0;
-my $dup_mapfiles = 0;
-my $path1 = '';
-my $path2 = '';
-
-my $pedfile1 = '';
-my $pedfile2 = '';
-my $locusfile1 = '';
-my $locusfile2 = '';
-my $freqfile1 = '';
-my $freqfile2 = '';
-my $mapfile1 = '';
-my $mapfile2 = '';
-
-my $config1;
-my $config2;
+my $pedfiles = 0; my $dup_pedfiles = 0;
+my $freqfiles = 0; my $dup_freqfiles = 0;
+my $mapfiles = 0; my $dup_mapfiles = 0;
+my $path1 = ''; my $path2 = '';
+my $pedfile1 = ''; my $pedfile2 = '';
+my $locusfile1 = ''; my $locusfile2 = '';
+my $freqfile1 = ''; my $freqfile2 = '';
+my $mapfile1 = ''; my $mapfile2 = '';
+my ($config1, $config2);
 
 # Hash references to keep KelvinDataset happy
-my $data1ref;
-my $data2ref;
+my ($data1ref, $data2ref);
 
-my $dataset1;
-my $dataset2;
+# Primary Kelvin* workhorses
+my ($dataset1, $dataset2);
 
-my %families1;
-my %families2;
+# Something I'd expected to find in Kelvin* but wasn't there...
+my (%families1, %families2);
 
 my $KELVIN_ROOT='no_kelvin_root';
 
@@ -178,14 +166,14 @@ if ($pedfiles) {
 	    $are_different += 1;
 	    next;
 	}
-	my @aref = @{${$families1{$pedid}}{individuals}};
+	my @aref = @{$ {$families1{$pedid}}{individuals}};
 	map { $individuals1{$_->indid} = $_; } @aref;
 	if (!defined($families2{$pedid})) {
 	    print "2: Pedigree \"$pedid\" not found, skipping!\n";
 	    $are_different += 1;
 	    next;
 	}
-	@aref = @{${$families2{$pedid}}{individuals}};
+	@aref = @{$ {$families2{$pedid}}{individuals}};
 	map { $individuals2{$_->indid} = $_; } @aref;
 
 	for my $indid (uniq (keys %individuals1, keys %individuals2)) {
@@ -296,7 +284,7 @@ kdiff - validate and compare sets of kelvin data files
 
 Use:
 
-    kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--path1] [--path2] [configfile1] [configfile2]]
+    kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--path1] [--path2] [configfile1 [configfile2]]
 
 =head1 DESCRIPTION
 
@@ -316,20 +304,37 @@ Pedigree files require locus files for proper interpretation.
 Config file(s) can be completely empty if Kelvin the intention is to use the default 
 data file names, e.g.:
 
+=over 5
+
 kdiff --pedfiles --path1 old --path2 new /dev/null /dev/null
+
+=back
 
 will compare old/pedfile.dat using old/datafile.dat for column info
 with new/pedfile.dat using new/datafile.dat for column info.
+
+Config file(s) default to kelvin.conf, and not specifying any data file options
+implies using all data file options, so:
+
+=over 5
+
+kdiff --path2 old
+
+=back
+
+will compare all data files referenced (or defaulted) in ./kelvin.conf to
+their equivalents in old/kelvin.conf.
 
 =head2 ARGUMENTS
 
 =over 3
 
-=item B<configfile1 configfile1>
+=item B<configfile1 configfile2>
 
 Standard Kelvin configuration files that need only specify the data
 files to be considered, or nothing at all if the default data file names
-are used. If the B<configfile1> or B<configfile2> arguments are not 
+are used. If only one is specified, it will be used as B<configfile1>.
+If B<configfile1> and/or B<configfile2> are not 
 specified, they default to ./kelvin.conf.
 
 If analysis characteristics are specified in the configuration files, they will
