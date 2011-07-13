@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+
 use strict;
 use File::Basename;
 use Getopt::Long;
@@ -13,11 +14,18 @@ $|=1; # Immediate output
 # Used globally
 my $svn_version='$Id$';
 
+my $are_different = 0;
+
+my $use_found_files = 0;
+
 my $verbose = 0;
 my $help = 0;
 my $pedfiles = 0;
+my $dup_pedfiles = 0;
 my $freqfiles = 0;
+my $dup_freqfiles = 0;
 my $mapfiles = 0;
+my $dup_mapfiles = 0;
 my $path1 = '';
 my $path2 = '';
 
@@ -54,18 +62,22 @@ GetOptions (
     'path1=s' => \$path1,
     'path2=s' => \$path2
     ) or pod2usage(2);
-pod2usage(1) if ($help);
 
-pod2usage(2) if ($#ARGV != 1);
+pod2usage(-noperldoc => 1, -verbose => 2) if ($help); # All source is shown if -noperdoc isn't specified!
+
+pod2usage(-verbose => 0) if ($#ARGV > 1);
+
+check_paths ();
+
+my $configfile1 = shift() || "./kelvin.conf";
+my $configfile2 = shift() || "./kelvin.conf";
+
+print "Processing configuration files 1:\"$configfile1\" and 2:\"$configfile2\"\n" if $verbose;
 
 check_paths ();
 
-my $configfile1 = shift();
-my $configfile2 = shift();
-
-print "Working with configuration files 1:\"$configfile1\" and 2:\"$configfile2\"\n" if $verbose;
-
-check_paths ();
+$use_found_files = 1 if (($pedfiles eq 0) and ($freqfiles eq 0) and ($mapfiles eq 0));
+print "Processing all \"found\" data files\n" if ($verbose and $use_found_files);
 
 # First we load (and thereby validate) everything
 
@@ -74,15 +86,35 @@ check_paths ();
 ($config2 = KelvinConfig->new ($configfile2))
     or error ("Processing of configuration file 2:\"$configfile2\" failed: $KelvinConfig::errstr");
 
-if ($pedfiles) {
-    # Read and validate the pedigree and locus files
+if ($use_found_files or $pedfiles) {
+    # Construct path and name for pedigree and locus files
     $$data1ref{PedigreeFile} = $ {$config1->isConfigured ("PedigreeFile")}[0];
-    $$data1ref{LocusFile} = ${$config1->isConfigured ("LocusFile")}[0];
+    $$data1ref{LocusFile} = $ {$config1->isConfigured ("LocusFile")}[0];
     # Consider any specified path1..
     $$data1ref{PedigreeFile} = catfile($path1, $$data1ref{PedigreeFile})
-        if ((!file_name_is_absolute($$data1ref{PedigreeFile})) && $path1);
+	if ((!file_name_is_absolute($$data1ref{PedigreeFile})) && $path1);
     $$data1ref{LocusFile} = catfile($path1, $$data1ref{LocusFile})
 	if ((!file_name_is_absolute($$data1ref{LocusFile})) && $path1);
+
+    $$data2ref{PedigreeFile} = $ {$config2->isConfigured ("PedigreeFile")}[0];
+    $$data2ref{LocusFile} = $ {$config2->isConfigured ("LocusFile")}[0];
+    # Consider any specified path2...
+    $$data2ref{PedigreeFile} = catfile($path2, $$data2ref{PedigreeFile})
+	if ((!file_name_is_absolute($$data2ref{PedigreeFile})) && $path2);
+    $$data2ref{LocusFile} = catfile($path2, $$data2ref{LocusFile})
+	if ((!file_name_is_absolute($$data2ref{LocusFile})) && $path2);
+
+    # Turn on option if we find them, but don't turn it off if we don't so we can error-out as needed.
+    $pedfiles = 1 if ((-e $$data1ref{PedigreeFile}) and (-e $$data1ref{LocusFile}) and
+		      (-e $$data2ref{PedigreeFile}) and (-e $$data2ref{LocusFile}));
+
+    # If all files are the same, don't bother validating again. We'll still compare just to verify this code.
+    $dup_pedfiles = 1 if ((($$data1ref{PedigreeFile}) eq ($$data2ref{PedigreeFile})) and
+			   (($$data1ref{LocusFile}) eq ($$data2ref{LocusFile})));
+}
+
+if ($pedfiles) {
+    # Read and validate the pedigree and locus files
     print "Validating pedigree file 1:\"".$$data1ref{PedigreeFile}."\" as described by locus file 1:\"".$$data1ref{LocusFile}."\"\n" if $verbose;
     $dataset1 = KelvinDataset->new ($data1ref)
 	or error ("Processing of pedigree file 1:\"".$$data1ref{PedigreeFile}."\" as described by locus file 1:\"".$$data1ref{LocusFile}."\ failed: $KelvinDataset::errstr");
@@ -98,32 +130,29 @@ if ($pedfiles) {
     }
     (defined ($family))
 	or error ("Read of pedigree in file 1 failed, $KelvinDataset::errstr");
-    print "P/D 1: A ".$$dataset1{origfmt}."-makeped format file with ".scalar(keys %{$$dataset1{markers}})." markers, ".
+    print "P/L 1: A ".$$dataset1{origfmt}."-makeped format file with ".scalar(keys %{$$dataset1{markers}})." markers, ".
 	scalar(keys %families1)." families and $totalInds individuals.\n";
 
-    $$data2ref{PedigreeFile} = $ {$config2->isConfigured ("PedigreeFile")}[0];
-    $$data2ref{LocusFile} = $ {$config2->isConfigured ("LocusFile")}[0];
-    # Consider any specified path2...
-    $$data2ref{PedigreeFile} = catfile($path2, $$data2ref{PedigreeFile})
-	if ((!file_name_is_absolute($$data2ref{PedigreeFile})) && $path2);
-    $$data2ref{LocusFile} = catfile($path2, $$data2ref{LocusFile})
-	if ((!file_name_is_absolute($$data2ref{LocusFile})) && $path2);
-    print "Validating pedigree file 2:\"".$$data2ref{PedigreeFile}."\" as described by locus file 2:\"".$$data2ref{LocusFile}."\"\n" if $verbose;
-    $dataset2 = KelvinDataset->new ($data2ref)
-	or error ("Processing of pedigree file 2:\"".$$data2ref{PedigreeFile}."\" as described by locus file 2:\"".$$data2ref{LocusFile}."\ failed: $KelvinDataset::errstr");
-    $totalInds = 0;
-    while ($family = $dataset2->readFamily) {
-	# print "Family structure is ".Dumper($family)."\n";
-	$$dataset2{origfmt} = $$family{origfmt};
-	$totalInds += $$family{count};
-	print $family->pedtype." family ".$$family{pedid}." of ".$$family{count}." (".$$family{founders}."f/".$$family{nonfounders}."nf)\n" if $verbose;
-	$families2{$$family{pedid}} = $family;
+    if ($dup_pedfiles) {
+	$dataset2 = $dataset1;
+	%families2 = %families1;
+    } else {
+	print "Validating pedigree file 2:\"".$$data2ref{PedigreeFile}."\" as described by locus file 2:\"".$$data2ref{LocusFile}."\"\n" if $verbose;
+	$dataset2 = KelvinDataset->new ($data2ref)
+	    or error ("Processing of pedigree file 2:\"".$$data2ref{PedigreeFile}."\" as described by locus file 2:\"".$$data2ref{LocusFile}."\ failed: $KelvinDataset::errstr");
+	$totalInds = 0;
+	while ($family = $dataset2->readFamily) {
+	    # print "Family structure is ".Dumper($family)."\n";
+	    $$dataset2{origfmt} = $$family{origfmt};
+	    $totalInds += $$family{count};
+	    print $family->pedtype." family ".$$family{pedid}." of ".$$family{count}." (".$$family{founders}."f/".$$family{nonfounders}."nf)\n" if $verbose;
+	    $families2{$$family{pedid}} = $family;
+	}
+	(defined ($family))
+	    or error ("Read of pedigree in file 2 failed, $KelvinDataset::errstr");
+	print "P/L 2: A ".$$dataset2{origfmt}."-makeped format file with ".scalar(keys %{$$dataset2{markers}})." markers, ".
+	    scalar(keys %families2)." families and $totalInds individuals.\n";
     }
-    (defined ($family))
-	or error ("Read of pedigree in file 2 failed, $KelvinDataset::errstr");
-    print "P/D 2: A ".$$dataset2{origfmt}."-makeped format file with ".scalar(keys %{$$dataset2{markers}})." markers, ".
-	scalar(keys %families2)." families and $totalInds individuals.\n";
-
 }
 
 if ($freqfiles) {
@@ -145,13 +174,15 @@ if ($pedfiles) {
 	my %individuals2;
 	# Compare individuals by looping over the superset of keys (indids)
 	if (!defined($families1{$pedid})) {
-	    print "1: Pedigree $pedid not found, skipping!\n";
+	    print "1: Pedigree \"$pedid\" not found, skipping!\n";
+	    $are_different += 1;
 	    next;
 	}
 	my @aref = @{${$families1{$pedid}}{individuals}};
 	map { $individuals1{$_->indid} = $_; } @aref;
 	if (!defined($families2{$pedid})) {
-	    print "2: Pedigree $pedid not found, skipping!\n";
+	    print "2: Pedigree \"$pedid\" not found, skipping!\n";
+	    $are_different += 1;
 	    next;
 	}
 	@aref = @{${$families2{$pedid}}{individuals}};
@@ -161,12 +192,14 @@ if ($pedfiles) {
 	    my %individual1;
 	    my %individual2;
 	    if (!defined($individuals1{$indid})) {
-		print "1: Pedigree $pedid individual $indid not found, skipping!\n";
+		print "1: Pedigree \"$pedid\" individual \"$indid\" not found, skipping!\n";
+		$are_different += 1;
 		next;
 	    }
 	    %individual1 = %{$individuals1{$indid}};
 	    if (!defined($individuals2{$indid})) {
-		print "2: Pedigree $pedid individual $indid not found, skipping!\n";
+		print "2: Pedigree \"$pedid\" individual \"$indid\" not found, skipping!\n";
+		$are_different += 1;
 		next;
 	    }
 	    %individual2 = %{$individuals2{$indid}};
@@ -175,27 +208,34 @@ if ($pedfiles) {
 	    for my $key (keys %individual1) {
 		next if ((!defined ($individual1{$key})) and (!defined ($individual2{$key})));
 		next if (ref ($individual1{$key}) ne "");
-		print "Pedigree $pedid individual $indid has different values for $key - 1:".$individual1{$key}." vs 2:".$individual2{$key}."\n"
-		    if ($individual1{$key} ne $individual2{$key});
+		if ($individual1{$key} ne $individual2{$key}) {
+		    $are_different += 1;
+		    print "Ped \"$pedid\" ind \"$indid\" has different values for $key - 1:".$individual1{$key}." vs 2:".$individual2{$key}."\n";
+		}
 	    }
 
 	    # All traits...(every one!)
 	    for (my $i=0; $i<1; $i++) {
-		print "Pedigree $pedid individual $indid has different values for trait $i - 1:".
-		    $individual1{traits}[$i]." vs 2:".$individual2{traits}[$i]."\n" if ($individual1{traits}[$i] ne $individual2{traits}[$i]);
+		if ($individual1{traits}[$i] ne $individual2{traits}[$i]) {
+		    $are_different += 1;
+		    print "Ped \"$pedid\" ind \"$indid\" has different values for trait ".($i+1)." - 1:".
+			$individual1{traits}[$i]." vs 2:".$individual2{traits}[$i]."\n";
+		}
 	    }
 
 	    # All markers...
 	    for (my $i=0; $i<scalar(keys %{$$dataset1{markers}}); $i++) {
-		print "Pedigree $pedid individual $indid has different values for marker ".($i+1)." (".$$dataset1{markerorder}[$i].") - 1:".
-		    $individual1{markers}[$i][0]." ".$individual1{markers}[$i][1]." vs 2:".
-		    $individual2{markers}[$i][0]." ".$individual2{markers}[$i][1]."\n"
-		    if (($individual1{markers}[$i][0] ne $individual2{markers}[$i][0]) or
-			($individual1{markers}[$i][1] ne $individual2{markers}[$i][1]));
+		if (($individual1{markers}[$i][0] ne $individual2{markers}[$i][0]) or
+		    ($individual1{markers}[$i][1] ne $individual2{markers}[$i][1])) {
+		    $are_different += 1;
+		    print "Ped \"$pedid\" ind \"$indid\" has different values for marker ".($i+1)." (\"".$$dataset1{markerorder}[$i]."\") - 1:".
+			$individual1{markers}[$i][0]." ".$individual1{markers}[$i][1]." vs 2:".
+			$individual2{markers}[$i][0]." ".$individual2{markers}[$i][1]."\n";
+		}
 	    }
 	}
     }
-    
+    error ("Files are different") if ($are_different > 0);
 }
 
 sub uniq {
@@ -203,7 +243,7 @@ sub uniq {
 }
 
 #
-# Check the paths to scripts we need to get work done.
+# Check the paths to scripts we need to get work done. Lifted from Kelvin.
 #
 sub check_paths
 {
@@ -247,40 +287,56 @@ sub warner
 
 __END__
 
+
 =head1 NAME
 
 kdiff - validate and compare sets of kelvin data files
 
 =head1 SYNOPSIS
 
-kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--path1] [--path2] configfile1 configfile2
+Use:
+
+    kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--path1] [--path2] [configfile1] [configfile2]]
 
 =head1 DESCRIPTION
 
-kdiff.pl validates and compares sets of kelvin data files as identified by a pair of
+kdiff.pl validates and compares sets of Kelvin data files as identified by a pair of
 (potentially dummy) configuration files. kdiff is primarily intended to validate the
-transformations of data files performed by cleaning.
+transformations of data files performed as a part of the cleaning protocol.
 
-At least one of the data file comparison flags needs to be specified.
-Pedigree files require locus files for proper interpretation. Config
-file(s) can be empty if Kelvin default data file names are used and
-path is specified, e.g.:
+If at least one of the data file options is specified, then only
+the data files indicated by the options will be processed. If
+no data file options are specified, all data files
+referenced (or defaulted) in the configuration file that actually exist
+will be processed. The default Kelvin data files are pedfile.dat,
+datafile.dat, markers.dat and mapfile.dat.
 
-kdiff --postfiles --path1 old --path2 new /dev/null /dev/null
+Pedigree files require locus files for proper interpretation.
+
+Config file(s) can be completely empty if Kelvin the intention is to use the default 
+data file names, e.g.:
+
+kdiff --pedfiles --path1 old --path2 new /dev/null /dev/null
 
 will compare old/pedfile.dat using old/datafile.dat for column info
 with new/pedfile.dat using new/datafile.dat for column info.
 
 =head2 ARGUMENTS
 
+=over 3
+
 =item B<configfile1 configfile1>
 
 Standard Kelvin configuration files that need only specify the data
 files to be considered, or nothing at all if the default data file names
-are used and a path option is specified. Note that if analysis
-characteristics are specified in the configuration files, they will
+are used. If the B<configfile1> or B<configfile2> arguments are not 
+specified, they default to ./kelvin.conf.
+
+If analysis characteristics are specified in the configuration files, they will
 be validated, and could therefore cause kdiff to exit if incorrectly
 specified.
+
+=back
 
 =head2 OPTIONS
 
@@ -339,5 +395,8 @@ Copyright 2011, Nationwide Children's Hospital Research Institute
 All rights reserved. Permission is hereby granted to use this software
 for non-profit educational purposes only.
 
-=cut
+=head1 DATE
 
+$Id$
+
+=cut
