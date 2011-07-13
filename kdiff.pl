@@ -75,6 +75,7 @@ print "Processing all \"found\" data files\n" if ($verbose and $use_found_files)
     or error ("Processing of configuration file 2:\"$configfile2\" failed: $KelvinConfig::errstr");
 
 if ($use_found_files or $freqfiles) {
+    print "Find freqs\n";
     # Construct path and name for frequency files
     my $filename = $ {$config1->isConfigured ("FrequencyFile")}[0];
     $filename = catfile($path1, $filename)
@@ -90,6 +91,7 @@ if ($use_found_files or $freqfiles) {
 }
 
 if ($use_found_files or $mapfiles) {
+    print "Find maps\n";
     # Construct path and name for map files
     my $filename = $ {$config1->isConfigured ("MapFile")}[0];
     $filename = catfile($path1, $filename)
@@ -105,6 +107,7 @@ if ($use_found_files or $mapfiles) {
 }
 
 if ($use_found_files or $pedfiles) {
+    print "Find peds\n";
     # Construct path and name for pedigree and locus files
     my $pedname = $ {$config1->isConfigured ("PedigreeFile")}[0];
     my $locusname = $ {$config1->isConfigured ("LocusFile")}[0];
@@ -137,10 +140,13 @@ if ($use_found_files or $pedfiles) {
 }
 
 # Read and validate everything we have (except the pedfile contents)
+#print "Going in with data1ref of ".Dumper($data1ref)."\n";
 $dataset1 = KelvinDataset->new ($data1ref)
     or error ("1: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
+print "Dataset1 is ".Dumper($dataset1)."\n";
 $dataset2 = KelvinDataset->new ($data2ref)
     or error ("2: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
+print "Dataset2 is ".Dumper($dataset2)."\n";
 
 if ($pedfiles) {
     # Read, validate and describe the pedigrees
@@ -200,8 +206,14 @@ if ($mapfiles) {
 	push @common_fields, $field;
     }
 
+# The following won't work until 5.10 shows up on the cluster! And upon reflection, order doesn't matter (to us).
+#    if (!(@{$$dataset1{maporder}} ~~ @{$$dataset2{maporder}})) {
+#	print "2: Order of markers in maps is different!\n";
+#	$are_different += 1;
+#    }
+
     my %map1 = %{$$dataset1{markers}}; my %map2 = %{$$dataset2{markers}};
-    # Compare markers by looping over the superset of keys (marker names)
+    # Compare markers by looping over the superset of keys (marker names) in maporder. This is safe because the map must define a superset of markers
     for my $name (uniqua ((@{$$dataset1{maporder}}, @{$$dataset2{maporder}}))) {
 	if (!defined($map1{$name})) {
 	    print "1: Marker \"$name\" not found in map, skipping!\n";
@@ -223,8 +235,41 @@ if ($mapfiles) {
 }
 
 if ($freqfiles) {
-    # Describe and compare the frequency files
-    print "WARNING -- Read/validate frequency files not implemented yet.\n";
+    # Describe and compare the allele frequency files
+    # First build frequency file marker lists since they're not intrinsically present. A superset map file might be present.
+    my @freqList1 = @{$$dataset1{maporder}};
+    my %markers1 = %{$$dataset1{markers}};
+    for (my $i = $#freqList1; $i >= 0; --$i) {
+	splice(@freqList1, $i, 1) if (!defined($markers1{$freqList1[$i]}{alleles}));
+    }
+    my @type = ("", "microsatellite", "SNP", "microsatellite and SNP");
+    print "1: Frequency file for ".$#freqList1." ".$type[($$dataset1{snps}*2+$$dataset1{microsats})]." markers\n" if $verbose;
+    my @freqList2 = @{$$dataset2{maporder}};
+    my %markers2 = %{$$dataset2{markers}};
+    for (my $i = $#freqList2; $i >= 0; --$i) {
+	splice(@freqList2, $i, 1) if (!defined($markers2{$freqList2[$i]}{alleles}));
+    }
+    print "2: Frequency file for ".$#freqList2." ".$type[($$dataset2{snps}*2+$$dataset2{microsats})]." markers\n" if $verbose;
+
+    # Compare frequency files by looping over the superset marker names
+    for my $name (uniqua (@freqList1, @freqList2)) {
+	if (!defined($markers1{$name})) {
+	    print "1: Marker \"$name\" not found in frequency file, skipping!\n";
+	    $are_different += 1;
+	    next;
+	}
+	if (!defined($markers2{$name})) {
+	    print "2: Marker \"$name\" not found in frequency file, skipping!\n";
+	    $are_different += 1;
+	    next;
+	}
+	print "Compare $name\n";
+	# Loop over superset of allele names
+	for my $allele (uniqua (keys %{$markers1{$name}{alleles}}, keys %{$markers2{$name}{alleles}})) {
+	    print "    allele $allele\n";
+	}
+    }
+
 }
 
 if ($pedfiles) {
@@ -295,13 +340,15 @@ if ($pedfiles) {
 	    }
 	}
     }
-    error ("Files are different") if ($are_different > 0);
 }
+
+error ("Files are different") if ($are_different > 0);
 
 sub uniqn {
     return sort { $a <=> $b } keys %{{ map { $_ => 1 } @_ }};
 }
 
+# Yeah, the Backyardigan!
 sub uniqua {
     return sort keys %{{ map { $_ => 1 } @_ }};
 }
