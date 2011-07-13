@@ -252,6 +252,7 @@ sub verify_links
     my %hash;
     my $ind;
     my ($pedid, $indid, $dadid, $momid, $firstchildid, $patsibid, $matsibid, $sex);
+    my $setlist = [];
 
     foreach $ind (@{$$self{individuals}}) {
 	($pedid, $indid, $dadid, $momid, $firstchildid, $patsibid, $matsibid, $sex) = 
@@ -283,6 +284,7 @@ sub verify_links
 		$errstr = "pedid $pedid, person $indid missing child $$ind{firstchildid}";
 		return (undef);
 	    }
+	    add_to_set ($setlist, $indid);
 	} else {
 	    # Non-founder
 	    if (! exists ($hash{$$ind{dadid}})) {
@@ -315,6 +317,7 @@ sub verify_links
 		    return (undef);
 		}
 	    }
+	    add_to_set ($setlist, @$ind{qw/indid dadid momid/});
 	}
 	if ($$ind{firstchildid} eq $indid) {
 	    $errstr = "pedid $pedid, person $indid is coded as their own child";
@@ -345,6 +348,14 @@ sub verify_links
 	    }
 	}
     }
+
+    # $setlist is a ref to an array of sets of connected individuals. There should
+    # only be one set, otherwise the family is not completely connected.
+    if (scalar (@$setlist > 1)) {
+	$errstr = "in family $$self{pedid}, individual(s) ". join (', ', keys %{$$setlist[-1]}). " disconnected from the rest of the pedigree";
+	return (undef);
+    }
+
     return (1);
 }
 
@@ -358,6 +369,7 @@ sub makeped
     my $va;
     my $individual;
     my ($pedid, $indid, $dadid, $momid, $kidid);
+    my $setlist = [];
 
     # Sort individuals such that no one precedes their parents 
     if ($$self{count} > 1) {
@@ -379,6 +391,7 @@ sub makeped
 	$hash{$indid} = { newid => $va+1, kids => [0], sex => $$individual{sex} };
 	if ($dadid eq '0') { 
 	    @{$hash{$indid}}{qw/founder patkididx matkididx/} = (1, undef, undef);
+	    add_to_set ($setlist, $indid);
 	} else {
 	    if (! exists ($hash{$dadid})) {
 		$errstr = "ped $pedid, person $indid missing father $dadid";
@@ -402,7 +415,14 @@ sub makeped
 	    # Build kid list with new, rather then current, IDs, to save lookups later
 	    splice (@{$hash{$dadid}{kids}}, -1, 0, $hash{$indid}{newid});
 	    splice (@{$hash{$momid}{kids}}, -1, 0, $hash{$indid}{newid});
+	    add_to_set ($setlist, $indid, $dadid, $momid);
 	}
+    }
+    # $setlist is a ref to an array of sets of connected individuals. There should
+    # only be one set, otherwise the family is not completely connected.
+    if (scalar (@$setlist > 1)) {
+	$errstr = "in family $$self{pedid}, individual(s) ". join (', ', keys %{$$setlist[-1]}). " disconnected from the rest of the pedigree";
+	return (undef);
     }
 
     for ($va = scalar (@{$$self{individuals}}) - 1; $va >= 0 ; $va--) {
@@ -515,6 +535,46 @@ sub by_founder_desc
     } else {
 	return ($$a{indid} cmp $$b{indid});
     }
+}
+
+sub add_to_set
+{
+    my ($list, @ids) = @_;
+    my $merge = 0;
+    my $id;
+    my ($va, $vb);
+    
+
+    for ($va = 0; $va < scalar (@$list); $va++) {
+	foreach $id (@ids) {
+	    if (exists $$list[$va]{$id})  {
+		map { $$list[$va]{$_} = '' } @ids;
+		$merge = 1;
+	    }
+	}
+    }
+    if (! $merge) {
+	push (@$list, {});
+	map { $$list[-1]{$_} = '' } @ids;
+    } else {
+	$va = 0;
+	while ($va < scalar (@$list)) {
+	    $vb = $va + 1;
+	    while ($vb < scalar (@$list)) {
+		$merge = 0;
+		map { exists ($$list[$va]{$_}) and $merge = 1; } (keys (%{$$list[$vb]}));
+		if ($merge) {
+		    map { $$list[$va]{$_} = ''; } (keys (%{$$list[$vb]}));
+		    splice (@$list, $vb, 1);
+		} else {
+		    $vb++;
+		}
+	    }
+	    $va++;
+	}
+    }
+    @$list = sort {scalar (keys (%$b)) <=> scalar (keys (%$a))} (@$list);
+    return (1);
 }
 
 sub pedid
