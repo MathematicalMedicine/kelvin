@@ -75,7 +75,6 @@ print "Processing all \"found\" data files\n" if ($verbose and $use_found_files)
     or error ("Processing of configuration file 2:\"$configfile2\" failed: $KelvinConfig::errstr");
 
 if ($use_found_files or $freqfiles) {
-    print "Find freqs\n";
     # Construct path and name for frequency files
     my $filename = $ {$config1->isConfigured ("FrequencyFile")}[0];
     $filename = catfile($path1, $filename)
@@ -91,7 +90,6 @@ if ($use_found_files or $freqfiles) {
 }
 
 if ($use_found_files or $mapfiles) {
-    print "Find maps\n";
     # Construct path and name for map files
     my $filename = $ {$config1->isConfigured ("MapFile")}[0];
     $filename = catfile($path1, $filename)
@@ -107,7 +105,6 @@ if ($use_found_files or $mapfiles) {
 }
 
 if ($use_found_files or $pedfiles) {
-    print "Find peds\n";
     # Construct path and name for pedigree and locus files
     my $pedname = $ {$config1->isConfigured ("PedigreeFile")}[0];
     my $locusname = $ {$config1->isConfigured ("LocusFile")}[0];
@@ -143,10 +140,10 @@ if ($use_found_files or $pedfiles) {
 #print "Going in with data1ref of ".Dumper($data1ref)."\n";
 $dataset1 = KelvinDataset->new ($data1ref)
     or error ("1: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
-print "Dataset1 is ".Dumper($dataset1)."\n";
+#print "Dataset1 is ".Dumper($dataset1)."\n";
 $dataset2 = KelvinDataset->new ($data2ref)
     or error ("2: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
-print "Dataset2 is ".Dumper($dataset2)."\n";
+#print "Dataset2 is ".Dumper($dataset2)."\n";
 
 if ($pedfiles) {
     # Read, validate and describe the pedigrees
@@ -263,13 +260,27 @@ if ($freqfiles) {
 	    $are_different += 1;
 	    next;
 	}
-	print "Compare $name\n";
 	# Loop over superset of allele names
-	for my $allele (uniqua (keys %{$markers1{$name}{alleles}}, keys %{$markers2{$name}{alleles}})) {
-	    print "    allele $allele\n";
+	my %alleles1 = %{$markers1{$name}{alleles}};
+	my %alleles2 = %{$markers2{$name}{alleles}};
+	for my $allele (uniqua (keys %alleles1, keys %alleles2)) {
+	    if (!defined($alleles1{$allele})) {
+		print "1: Marker \"$name\" allele \"$allele\" not found in frequency file, skipping!\n";
+		$are_different += 1;
+		next;
+	    }
+	    if (!defined($alleles2{$allele})) {
+		print "2: Marker \"$name\" allele \"$allele\" not found in frequency file, skipping!\n";
+		$are_different += 1;
+		next;
+	    }
+	    if ($alleles1{$allele} ne $alleles2{$allele}) {
+		$are_different += 1;
+		print "2: Marker $name allele \"$allele\" has a different frequency - 1:".
+		    $alleles1{$allele}." vs 2:".$alleles2{$allele}."\n";
+	    }
 	}
     }
-
 }
 
 if ($pedfiles) {
