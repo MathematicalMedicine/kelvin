@@ -6,6 +6,7 @@ use Getopt::Long;
 use Pod::Usage;
 use File::Spec::Functions;
 use Data::Dumper;
+$Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
 
 $|=1; # Immediate output
 
@@ -71,17 +72,24 @@ print "Processing all \"found\" data files\n" if ($verbose and $use_found_files)
 
 ($config1 = KelvinConfig->new ($configfile1))
     or error ("Processing of configuration file 1:\"$configfile1\" failed: $KelvinConfig::errstr");
+#print "Config 1 is ".Dumper($config1)."\n";
 ($config2 = KelvinConfig->new ($configfile2))
     or error ("Processing of configuration file 2:\"$configfile2\" failed: $KelvinConfig::errstr");
+#print "Config 2 is ".Dumper($config2)."\n";
 
 if ($use_found_files or $freqfiles) {
-    # Construct path and name for frequency files
-    my $filename = $ {$config1->isConfigured ("FrequencyFile")}[0];
+    # Construct path and name for frequency files using default since KelvinConfig doesn't.
+    my $filename = defined ($config1->isConfigured ("FrequencyFile")) ?
+	$ {$config1->isConfigured ("FrequencyFile")}[0] : "markers.dat";
+
     $filename = catfile($path1, $filename)
 	if ((!file_name_is_absolute($filename)) && $path1);
+    # Admitted strangeness here...I'm letting KelvinConfig give them the bad news.
     $$data1ref{FrequencyFile} = $filename if ((-e $filename) or $freqfiles);
 	
-    $filename = $ {$config2->isConfigured ("FrequencyFile")}[0];
+    $filename = defined ($config2->isConfigured ("FrequencyFile")) ?
+	$ {$config2->isConfigured ("FrequencyFile")}[0] : "markers.dat";
+
     $filename = catfile($path2, $filename)
 	if ((!file_name_is_absolute($filename)) && $path2);
     $$data2ref{FrequencyFile} = $filename if ((-e $filename) or $freqfiles);
@@ -128,26 +136,26 @@ if ($use_found_files or $pedfiles) {
     }
 
     # Turn on option if we find them, but don't turn it off if we don't so we can error-out as needed.
-    $pedfiles = 1 if (($$data1ref{PedigreeFile}) and ($$data1ref{LocusFile}) and
-		      ($$data2ref{PedigreeFile}) and ($$data2ref{LocusFile}));
-
-    # If all files are the same, don't bother validating again. We'll still compare just to verify this code.
-    $dup_pedfiles = 1 if ((($$data1ref{PedigreeFile}) eq ($$data2ref{PedigreeFile})) and
-			  (($$data1ref{LocusFile}) eq ($$data2ref{LocusFile})));
+    if (($$data1ref{PedigreeFile}) and ($$data1ref{LocusFile}) and
+	($$data2ref{PedigreeFile}) and ($$data2ref{LocusFile})) {
+	$pedfiles = 1;
+	# If all files are the same, don't bother validating again. We'll still compare just to verify this code.
+	$dup_pedfiles = 1 if ((($$data1ref{PedigreeFile}) eq ($$data2ref{PedigreeFile})) and
+			      (($$data1ref{LocusFile}) eq ($$data2ref{LocusFile})));
+    }
 }
 
 # Read and validate everything we have (except the pedfile contents)
-#print "Going in with data1ref of ".Dumper($data1ref)."\n";
+#for my $key (%{$dataref1}) {print "$key: 
+print "1: Validating".($use_found_files ? " found" : "")." files: ".Dumper($data1ref)."\n" if ($verbose or $use_found_files);
 $dataset1 = KelvinDataset->new ($data1ref)
     or error ("1: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
-#print "Dataset1 is ".Dumper($dataset1)."\n";
+print "2: Validating".($use_found_files ? " found" : "")." files: ".Dumper($data2ref)."\n" if ($verbose or $use_found_files);
 $dataset2 = KelvinDataset->new ($data2ref)
     or error ("2: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
-#print "Dataset2 is ".Dumper($dataset2)."\n";
 
 if ($pedfiles) {
     # Read, validate and describe the pedigrees
-    print "1: Validating pedigree file \"".$$data1ref{PedigreeFile}."\" as described by locus file \"".$$data1ref{LocusFile}."\"\n" if $verbose;
     my $family;
     my $totalInds = 0;
     while ($family = $dataset1->readFamily) {
@@ -158,14 +166,13 @@ if ($pedfiles) {
     }
     (defined ($family))
 	or error ("1: Read of pedigree file \"".$$data1ref{PedigreeFile}."\" failed, $KelvinDataset::errstr");
-    print "1: ".$$dataset1{origfmt}."-makeped format file with ".scalar(keys %{$$dataset1{markers}})." markers, ".
+    print "1: ".$$dataset1{origfmt}."-makeped format file with ".scalar(@{$$dataset1{markerorder}})." markers, ".
 	scalar(keys %families1)." families and $totalInds individuals.\n" if $verbose;
 
     if ($dup_pedfiles) {
 	$dataset2 = $dataset1;
 	%families2 = %families1; # Don't really want to double storage, so fix this.
     } else {
-	print "2: Validating pedigree file \"".$$data2ref{PedigreeFile}."\" as described by locus file \"".$$data2ref{LocusFile}."\"\n" if $verbose;
 	$totalInds = 0;
 	while ($family = $dataset2->readFamily) {
 	    # print "Family structure is ".Dumper($family)."\n";
@@ -176,7 +183,7 @@ if ($pedfiles) {
 	}
 	(defined ($family))
 	    or error ("2: Read of pedigree in file \"".$$data1ref{PedigreeFile}."\" failed, $KelvinDataset::errstr");
-	print "2: ".$$dataset2{origfmt}."-makeped format file with ".scalar(keys %{$$dataset2{markers}})." markers, ".
+	print "2: ".$$dataset2{origfmt}."-makeped format file with ".scalar(@{$$dataset2{markerorder}})." markers, ".
 	    scalar(keys %families2)." families and $totalInds individuals.\n" if $verbose;
     }
 }
@@ -340,7 +347,7 @@ if ($pedfiles) {
 	    }
 
 	    # All markers...
-	    for (my $i=0; $i<scalar(keys %{$$dataset1{markers}}); $i++) {
+	    for (my $i=0; $i<scalar(@{$$dataset1{markerorder}}); $i++) {
 		if (($individual1{markers}[$i][0] ne $individual2{markers}[$i][0]) or
 		    ($individual1{markers}[$i][1] ne $individual2{markers}[$i][1])) {
 		    $are_different += 1;
