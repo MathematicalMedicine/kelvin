@@ -487,7 +487,9 @@ in CONFIG1 and CONFIG2.
 
 kdiff.pl validates and compares sets of Kelvin data files as identified by a pair of
 (potentially dummy) configuration files. kdiff is primarily intended to validate the
-transformations of data files performed as a part of the cleaning protocol.
+transformations of data files performed as a part of the cleaning protocol. kdiff is
+concerned only with content and not formatting or column order where it does not affect
+the analysis.
 
 If at least one of the data file options is specified, then only
 the data files indicated by the options will be processed. If
