@@ -6,7 +6,7 @@ use Getopt::Long;
 use Pod::Usage;
 use File::Spec::Functions;
 use Data::Dumper;
-$Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
+#$Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
 
 $|=1; # Immediate output
 
@@ -57,7 +57,7 @@ GetOptions (
 
 pod2usage(-noperldoc => 1, -verbose => 2) if ($help); # All source is shown if -noperdoc isn't specified!
 
-pod2usage(-verbose => 0) if ($#ARGV > 1);
+pod2usage(-verbose => 0) if ($#ARGV > -1);
 
 check_paths ();
 
@@ -150,9 +150,11 @@ if ($use_found_files or $pedfiles) {
 print "1: Validating".($use_found_files ? " found" : "")." files: ".Dumper($data1ref)."\n" if ($verbose or $use_found_files);
 $dataset1 = KelvinDataset->new ($data1ref)
     or error ("1: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
+#print "Dataset1 is ".Dumper($dataset1)."\n";
 print "2: Validating".($use_found_files ? " found" : "")." files: ".Dumper($data2ref)."\n" if ($verbose or $use_found_files);
 $dataset2 = KelvinDataset->new ($data2ref)
     or error ("2: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
+#print "Dataset2 is ".Dumper($dataset2)."\n";
 
 if ($pedfiles) {
     # Read, validate and describe the pedigrees
@@ -232,7 +234,7 @@ if ($mapfiles) {
 	for my $field (@common_fields) {
 	    if ($map1{$name}{$field} ne $map2{$name}{$field}) {
 		$are_different += 1;
-		print "2: Marker $name has a different value for $field - 1:".$map1{$name}{$field}." vs 2:".$map2{$name}{$field}."\n";
+		print "2: Marker \"$name\" has a different value for $field - 1:".$map1{$name}{$field}." vs 2:".$map2{$name}{$field}."\n";
 	    }
 	}
     }
@@ -283,7 +285,7 @@ if ($freqfiles) {
 	    }
 	    if ($alleles1{$allele} ne $alleles2{$allele}) {
 		$are_different += 1;
-		print "2: Marker $name allele \"$allele\" has a different frequency - 1:".
+		print "2: Marker \"$name\" allele \"$allele\" has a different frequency - 1:".
 		    $alleles1{$allele}." vs 2:".$alleles2{$allele}."\n";
 	    }
 	}
@@ -291,6 +293,48 @@ if ($freqfiles) {
 }
 
 if ($pedfiles) {
+    # Compare the superset of trait columns
+    my %traits1 = %{$$dataset1{traits}};
+    my %traits2 = %{$$dataset2{traits}};
+    for my $trait (uniqua (keys %traits1, keys %traits2)) {
+	if (!defined($traits1{$trait})) {
+	    print "1: Trait \"$trait\" not found, skipping!\n";
+	    $are_different += 1;
+	    next;
+	}
+	if (!defined($traits2{$trait})) {
+	    print "2: Trait \"$trait\" not found, skipping!\n";
+	    $are_different += 1;
+	    next;
+	}
+    }
+
+    # First build locus lists since they're not intrinsically present. A superset map file might be present.
+    my @locusList1 = @{$$dataset1{maporder}};
+    my %markers1 = %{$$dataset1{markers}};
+    for (my $i = $#locusList1; $i >= 0; --$i) {
+	splice(@locusList1, $i, 1) if (!defined($markers1{$locusList1[$i]}{idx}));
+    }
+    my @locusList2 = @{$$dataset2{maporder}};
+    my %markers2 = %{$$dataset2{markers}};
+    for (my $i = $#locusList2; $i >= 0; --$i) {
+	splice(@locusList2, $i, 1) if (!defined($markers2{$locusList2[$i]}{alleles}));
+    }
+
+    # Compare the superset of marker columns
+    for my $marker (uniqua (@locusList1, @locusList2)) {
+	if (!defined($markers1{$marker})) {
+	    print "1: Marker \"$marker\" not found, skipping!\n";
+	    $are_different += 1;
+	    next;
+	}
+	if (!defined($markers2{$marker})) {
+	    print "2: Marker \"$marker\" not found, skipping!\n";
+	    $are_different += 1;
+	    next;
+	}
+    }
+
     # Compare the pedigree files by looping over the superset of keys (pedids)
     for my $pedid (uniqn ((keys %families1, keys %families2))) {
 	my %individuals1;
@@ -337,23 +381,27 @@ if ($pedfiles) {
 		}
 	    }
 
-	    # All traits...(every one!)
-	    for (my $i=0; $i<1; $i++) {
-		if ($individual1{traits}[$i] ne $individual2{traits}[$i]) {
+	    # Compare all common traits considering position
+	    for my $trait (keys %traits1) {
+		next if (!defined($traits2{$trait})); # We've already complained once, so just bail
+		my $i = $traits1{$trait}{col}; my $j = $traits2{$trait}{col};
+		if ($individual1{traits}[$i] ne $individual2{traits}[$j]) {
 		    $are_different += 1;
-		    print "2: Ped \"$pedid\" ind \"$indid\" has different values for trait ".($i+1)." - 1:".
-			$individual1{traits}[$i]." vs 2:".$individual2{traits}[$i]."\n";
+		    print "2: Ped \"$pedid\" ind \"$indid\" has different values for trait \"$trait\" - 1:".
+			$individual1{traits}[$i]." vs 2:".$individual2{traits}[$j]."\n";
 		}
 	    }
 
-	    # All markers...
-	    for (my $i=0; $i<scalar(@{$$dataset1{markerorder}}); $i++) {
-		if (($individual1{markers}[$i][0] ne $individual2{markers}[$i][0]) or
-		    ($individual1{markers}[$i][1] ne $individual2{markers}[$i][1])) {
+	    # Compare all common marker alleles
+	    for my $locus (@locusList1) {
+		next if (!defined($markers2{$locus}));
+		my $i = $markers1{$locus}->idx; my $j = $markers2{$locus}->idx;
+		if (($individual1{locus}[$i][0] ne $individual2{markers}[$j][0]) or
+		    ($individual1{markers}[$i][1] ne $individual2{markers}[$j][1])) {
 		    $are_different += 1;
 		    print "2: Ped \"$pedid\" ind \"$indid\" has different values for marker ".($i+1)." (\"".$$dataset1{markerorder}[$i]."\") - 1:".
 			$individual1{markers}[$i][0]." ".$individual1{markers}[$i][1]." vs 2:".
-			$individual2{markers}[$i][0]." ".$individual2{markers}[$i][1]."\n";
+			$individual2{markers}[$j][0]." ".$individual2{markers}[$j][1]."\n";
 		}
 	    }
 	}
