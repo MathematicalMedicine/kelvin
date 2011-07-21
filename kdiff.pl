@@ -395,13 +395,14 @@ if ($pedfiles) {
 	    # Compare all common marker alleles
 	    for my $locus (@locusList1) {
 		next if (!defined($markers2{$locus}));
-		my $i = $markers1{$locus}->idx; my $j = $markers2{$locus}->idx;
-		if (($individual1{locus}[$i][0] ne $individual2{markers}[$j][0]) or
+		my $i = $markers1{$locus}{idx}; my $j = $markers2{$locus}{idx};
+		if (($individual1{markers}[$i][0] ne $individual2{markers}[$j][0]) or
 		    ($individual1{markers}[$i][1] ne $individual2{markers}[$j][1])) {
 		    $are_different += 1;
 		    print "2: Ped \"$pedid\" ind \"$indid\" has different values for marker ".($i+1)." (\"".$$dataset1{markerorder}[$i]."\") - 1:".
 			$individual1{markers}[$i][0]." ".$individual1{markers}[$i][1]." vs 2:".
 			$individual2{markers}[$j][0]." ".$individual2{markers}[$j][1]."\n";
+		    exit;
 		}
 	    }
 	}
