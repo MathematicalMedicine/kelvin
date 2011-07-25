@@ -1,16 +1,25 @@
 WARNING, overriding installed KELVIN_ROOT with '/Users/whv001/kelvin/trunk' from environment
-Use of uninitialized value in string eq at /Users/whv001/kelvin/trunk/kdiff.pl line 135.
+1: Validating found files: $VAR1 = {
+          'LocusFile' => 'original/datafile.dat',
+          'MapFile' => 'original/mapfile.dat',
+          'FrequencyFile' => 'original/markers.dat',
+          'PedigreeFile' => 'original/pedfile.dat'
+        };
+
+2: Validating found files: $VAR1 = {
+          'MapFile' => 'maps_different/mapfile.dat'
+        };
+
 1: Map doesn't provide phys, will not be compared!
-2: Order of markers in maps is different!
-2: Marker Loci_1 has a different value for chr - 1:40 vs 2:22
-2: Marker Loci_10 has a different value for chr - 1:40 vs 2:22
+2: Marker "Loci_1" has a different value for chr - 1:40 vs 2:22
+2: Marker "Loci_10" has a different value for chr - 1:40 vs 2:22
 1: Marker "Loci_11" not found in map, skipping!
-2: Marker Loci_3 has a different value for chr - 1:40 vs 2:22
-2: Marker Loci_4 has a different value for chr - 1:40 vs 2:22
-2: Marker Loci_5 has a different value for chr - 1:40 vs 2:22
-2: Marker Loci_6 has a different value for chr - 1:40 vs 2:22
-2: Marker Loci_7 has a different value for avgpos - 1:1.99 vs 2:1.98
-2: Marker Loci_7 has a different value for chr - 1:40 vs 2:22
-2: Marker Loci_8 has a different value for chr - 1:40 vs 2:22
-2: Marker Loci_9 has a different value for chr - 1:40 vs 2:22
+2: Marker "Loci_3" has a different value for chr - 1:40 vs 2:22
+2: Marker "Loci_4" has a different value for chr - 1:40 vs 2:22
+2: Marker "Loci_5" has a different value for chr - 1:40 vs 2:22
+2: Marker "Loci_6" has a different value for chr - 1:40 vs 2:22
+2: Marker "Loci_7" has a different value for avgpos - 1:1.99 vs 2:1.98
+2: Marker "Loci_7" has a different value for chr - 1:40 vs 2:22
+2: Marker "Loci_8" has a different value for chr - 1:40 vs 2:22
+2: Marker "Loci_9" has a different value for chr - 1:40 vs 2:22
 ERROR - EXITING, Files are different
