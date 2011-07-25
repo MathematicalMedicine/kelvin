@@ -1,0 +1,22 @@
+WARNING, overriding installed KELVIN_ROOT with '/Users/whv001/kelvin/trunk' from environment
+1: Validating found files: $VAR1 = {
+          'LocusFile' => 'original/datafile.dat',
+          'MapFile' => 'original/mapfile.dat',
+          'FrequencyFile' => 'original/markers.dat',
+          'PedigreeFile' => 'original/pedfile.dat'
+        };
+
+2: Validating found files: $VAR1 = {
+          'FrequencyFile' => 'markers_different/markers.dat'
+        };
+
+2: Marker "Loci_4" allele "1" has a different frequency - 1:0.239956 vs 2:0.238956
+2: Marker "Loci_4" allele "2" has a different frequency - 1:0.760044 vs 2:0.661044
+1: Marker "Loci_4" allele "3" not found in frequency file, skipping!
+2: Marker "Loci_7" allele "1" has a different frequency - 1:0.718029 vs 2:0.281971
+2: Marker "Loci_7" allele "2" has a different frequency - 1:0.281971 vs 2:0.718029
+2: Marker "Loci_8" allele "1" not found in frequency file, skipping!
+2: Marker "Loci_8" allele "2" not found in frequency file, skipping!
+1: Marker "Loci_8" allele "BigA" not found in frequency file, skipping!
+1: Marker "Loci_8" allele "LittleA" not found in frequency file, skipping!
+ERROR - EXITING, Files are different
