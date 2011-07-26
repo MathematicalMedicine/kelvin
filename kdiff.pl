@@ -336,7 +336,7 @@ if ($pedfiles) {
     }
 
     # Compare the pedigree files by looping over the superset of keys (pedids)
-    for my $pedid (uniqn ((keys %families1, keys %families2))) {
+    for my $pedid (uniqua ((keys %families1, keys %families2))) {
 	my %individuals1;
 	my %individuals2;
 	# Compare individuals by looping over the superset of keys (indids)
@@ -364,7 +364,7 @@ if ($pedfiles) {
 	    map { $individuals2{$_->indid} = $_; } @aref;
 	}
 
-	for my $indid (uniqn (keys %individuals1, keys %individuals2)) {
+	for my $indid (uniqua (keys %individuals1, keys %individuals2)) {
 	    my %individual1;
 	    my %individual2;
 	    if (!defined($individuals1{$indid})) {
