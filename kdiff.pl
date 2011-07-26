@@ -184,7 +184,7 @@ if ($pedfiles) {
 	    $families2{$$family{pedid}} = $family;
 	}
 	(defined ($family))
-	    or error ("2: Read of pedigree in file \"".$$data1ref{PedigreeFile}."\" failed, $KelvinDataset::errstr");
+	    or error ("2: Read of pedigree in file \"".$$data2ref{PedigreeFile}."\" failed, $KelvinDataset::errstr");
 	print "2: ".$$dataset2{origfmt}."-makeped format file with ".scalar(@{$$dataset2{markerorder}})." markers, ".
 	    scalar(keys %families2)." families and $totalInds individuals.\n" if $verbose;
     }
@@ -346,14 +346,23 @@ if ($pedfiles) {
 	    next;
 	}
 	my @aref = @{$ {$families1{$pedid}}{individuals}};
-	map { $individuals1{$_->indid} = $_; } @aref;
+	if ($$dataset1{origfmt} eq "pre") {
+	    print "Pre\n";
+	    map { $individuals1{$_->origindid} = $_; } @aref;
+	} else {
+	    map { $individuals1{$_->indid} = $_; } @aref;
+	}
 	if (!defined($families2{$pedid})) {
 	    print "2: Pedigree \"$pedid\" not found, skipping!\n";
 	    $are_different += 1;
 	    next;
 	}
 	@aref = @{$ {$families2{$pedid}}{individuals}};
-	map { $individuals2{$_->indid} = $_; } @aref;
+	if ($$dataset2{origfmt} eq "pre") {
+	    map { $individuals2{$_->origindid} = $_; } @aref;
+	} else {
+	    map { $individuals2{$_->indid} = $_; } @aref;
+	}
 
 	for my $indid (uniqn (keys %individuals1, keys %individuals2)) {
 	    my %individual1;
@@ -429,7 +438,7 @@ sub check_paths
     # even if values were set during installation.
     if ($ENV{KELVIN_ROOT}) {
         ($KELVIN_ROOT !~ /no_kelvin_root/i)
-            and warner ("overriding installed KELVIN_ROOT with '$ENV{KELVIN_ROOT}' from environment");
+            and informer ("overriding installed KELVIN_ROOT with '$ENV{KELVIN_ROOT}' from environment");
         $KELVIN_ROOT = $ENV{KELVIN_ROOT};
     } elsif ($KELVIN_ROOT =~ /no_kelvin_root/i) {
         $KELVIN_ROOT = dirname ($0);
@@ -461,6 +470,11 @@ sub error
 sub warner
 {   
     warn ("WARNING, @_\n");
+}
+
+sub informer
+{   
+    warn ("INFO, @_\n") if $verbose;
 }
 
 __END__
