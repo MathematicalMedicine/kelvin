@@ -6,8 +6,8 @@
         };
 
 2: Validating found files: $VAR1 = {
-          'LocusFile' => 'pedfile_disconnected/datafile.dat',
-          'PedigreeFile' => 'pedfile_disconnected/pedfile.dat'
+          'LocusFile' => 'pedfile_many-non-structural-changes/datafile.dat',
+          'PedigreeFile' => 'pedfile_many-non-structural-changes/pedfile.dat'
         };
 
-ERROR - EXITING, 2: Read of pedigree in file "pedfile_disconnected/pedfile.dat" failed, in family 9, individual(s) 17 disconnected from the rest of the pedigree
+2: Ped "1" ind "1" has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 2

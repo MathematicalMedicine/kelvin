@@ -6,8 +6,10 @@
         };
 
 2: Validating found files: $VAR1 = {
-          'LocusFile' => 'pedfile_disconnected/datafile.dat',
-          'PedigreeFile' => 'pedfile_disconnected/pedfile.dat'
+          'LocusFile' => 'pedfile_missing_pedigree/datafile.dat',
+          'PedigreeFile' => 'pedfile_missing_pedigree/pedfile.dat'
         };
 
-ERROR - EXITING, 2: Read of pedigree in file "pedfile_disconnected/pedfile.dat" failed, in family 9, individual(s) 17 disconnected from the rest of the pedigree
+2: Pedigree "5" not found, skipping!
+1: Pedigree "12" not found, skipping!
+ERROR - EXITING, Files are different
