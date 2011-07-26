@@ -6,10 +6,11 @@
         };
 
 2: Validating found files: $VAR1 = {
-          'LocusFile' => 'pedfile_missing_pedigree/datafile.dat',
-          'PedigreeFile' => 'pedfile_missing_pedigree/pedfile.dat'
+          'LocusFile' => 'extra_trait/datafile.dat',
+          'MapFile' => 'extra_trait/mapfile.dat',
+          'FrequencyFile' => 'extra_trait/markers.dat',
+          'PedigreeFile' => 'extra_trait/pedfile.dat'
         };
 
-1: Pedigree "12" not found, skipping!
-2: Pedigree "5" not found, skipping!
+1: Trait "Extra" not found, skipping!
 ERROR - EXITING, Files are different

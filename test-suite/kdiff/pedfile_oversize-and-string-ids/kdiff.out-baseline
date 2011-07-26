@@ -10,19 +10,18 @@
           'PedigreeFile' => 'pedfile_oversize-and-string-ids/pedfile.dat'
         };
 
-Argument "foo" isn't numeric in sort at /Users/whv001/kelvin/trunk//kdiff.pl line 424, <GEN7> line 115.
-1: Pedigree "2" individual "foo" not found, skipping!
-2: Ped "2" ind "8" has different values for matsibid - 1:14 vs 2:1000000000004
-2: Ped "2" ind "8" has different values for patsibid - 1:14 vs 2:1000000000004
-2: Pedigree "2" individual "9" not found, skipping!
 2: Ped "2" ind "10" has different values for momid - 1:9 vs 2:foo
+1: Pedigree "2" individual "1000000000004" not found, skipping!
 2: Ped "2" ind "11" has different values for momid - 1:9 vs 2:foo
 2: Ped "2" ind "12" has different values for momid - 1:9 vs 2:foo
 2: Ped "2" ind "13" has different values for momid - 1:9 vs 2:foo
 2: Pedigree "2" individual "14" not found, skipping!
 2: Pedigree "2" individual "15" not found, skipping!
 2: Pedigree "2" individual "16" not found, skipping!
-1: Pedigree "2" individual "1000000000004" not found, skipping!
 1: Pedigree "2" individual "2000000000004" not found, skipping!
 1: Pedigree "2" individual "2000000000005" not found, skipping!
+2: Ped "2" ind "8" has different values for matsibid - 1:14 vs 2:1000000000004
+2: Ped "2" ind "8" has different values for patsibid - 1:14 vs 2:1000000000004
+2: Pedigree "2" individual "9" not found, skipping!
+1: Pedigree "2" individual "foo" not found, skipping!
 ERROR - EXITING, Files are different
