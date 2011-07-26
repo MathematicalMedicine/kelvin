@@ -6,8 +6,8 @@
         };
 
 2: Validating found files: $VAR1 = {
-          'LocusFile' => 'pedfile_missing_pedigree/datafile.dat',
-          'PedigreeFile' => 'pedfile_missing_pedigree/pedfile.dat'
+          'LocusFile' => 'pedfile_missing-pedigree/datafile.dat',
+          'PedigreeFile' => 'pedfile_missing-pedigree/pedfile.dat'
         };
 
 1: Pedigree "12" not found, skipping!

@@ -6,9 +6,9 @@
         };
 
 2: Validating found files: $VAR1 = {
-          'LocusFile' => 'marker_order/datafile.dat',
-          'MapFile' => 'marker_order/mapfile.dat',
-          'FrequencyFile' => 'marker_order/markers.dat',
-          'PedigreeFile' => 'marker_order/pedfile.dat'
+          'LocusFile' => 'markers_order/datafile.dat',
+          'MapFile' => 'markers_order/mapfile.dat',
+          'FrequencyFile' => 'markers_order/markers.dat',
+          'PedigreeFile' => 'markers_order/pedfile.dat'
         };
 
