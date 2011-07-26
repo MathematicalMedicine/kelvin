@@ -1,0 +1,13 @@
+1: Validating found files: $VAR1 = {
+          'LocusFile' => 'original/datafile.dat',
+          'MapFile' => 'original/mapfile.dat',
+          'FrequencyFile' => 'original/markers.dat',
+          'PedigreeFile' => 'original/pedfile.dat'
+        };
+
+2: Validating found files: $VAR1 = {
+          'LocusFile' => 'pedfile_short-rows/datafile.dat',
+          'PedigreeFile' => 'pedfile_short-rows/pedfile.dat'
+        };
+
+ERROR - EXITING, 2: Read of pedigree in file "pedfile_short-rows/pedfile.dat" failed, pedfile_short-rows/pedfile.dat, line 98: too few columns in pedigree file

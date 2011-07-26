@@ -19,6 +19,7 @@ test-FIXED :
 clean :
 
 $(TESTS) : 
+#	($(KELVIN_ROOT)/kdiff.pl -p1 $@ -p2 $@ -c1 /dev/null -c2 /dev/null)
 	rm $@/kdiff.out 2>/dev/null || true
 	($(KELVIN_ROOT)/kdiff.pl -p1 original -p2 $@ -c1 /dev/null -c2 /dev/null) >$@/kdiff.out 2>&1 || true
 	diff $@/kdiff.out $@/kdiff.out-baseline
