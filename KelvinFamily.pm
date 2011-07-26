@@ -900,6 +900,13 @@ sub indid
     return ($$self{indid});
 }
 
+sub origindid
+{
+    my ($self) = @_;
+
+    return ($$self{origindid});
+}
+
 sub dadid
 {
     my ($self) = @_;
