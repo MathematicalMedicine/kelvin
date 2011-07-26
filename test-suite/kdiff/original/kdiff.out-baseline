@@ -1,4 +1,3 @@
-WARNING, overriding installed KELVIN_ROOT with '/Users/whv001/kelvin/trunk' from environment
 1: Validating found files: $VAR1 = {
           'LocusFile' => 'original/datafile.dat',
           'MapFile' => 'original/mapfile.dat',
