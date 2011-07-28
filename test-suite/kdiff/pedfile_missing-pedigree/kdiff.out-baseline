@@ -1,4 +1,4 @@
-1: Validating found files: LocusFile->original/datafile.dat MapFile->original/mapfile.dat FrequencyFile->original/markers.dat PedigreeFile->original/pedfile.dat 
+1: Validating found files: FrequencyFile->original/markers.dat LocusFile->original/datafile.dat MapFile->original/mapfile.dat PedigreeFile->original/pedfile.dat 
 2: Validating found files: LocusFile->pedfile_missing-pedigree/datafile.dat PedigreeFile->pedfile_missing-pedigree/pedfile.dat 
 1: Pedigree "12" not found, skipping!
 2: Pedigree "5" not found, skipping!

@@ -1,3 +1,3 @@
-1: Validating found files: LocusFile->original/datafile.dat MapFile->original/mapfile.dat FrequencyFile->original/markers.dat PedigreeFile->original/pedfile.dat 
+1: Validating found files: FrequencyFile->original/markers.dat LocusFile->original/datafile.dat MapFile->original/mapfile.dat PedigreeFile->original/pedfile.dat 
 2: Validating found files: LocusFile->pedfile_extra-eol-stuff/datafile.dat PedigreeFile->pedfile_extra-eol-stuff/pedfile.dat 
 ERROR - EXITING, 2: Read of pedigree in file "pedfile_extra-eol-stuff/pedfile.dat" failed, pedfile_extra-eol-stuff/pedfile.dat, line 13: unexpected number of columns, can't guess format

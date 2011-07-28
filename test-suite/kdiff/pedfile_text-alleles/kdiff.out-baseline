@@ -1,3 +1,3 @@
-1: Validating found files: LocusFile->original/datafile.dat MapFile->original/mapfile.dat FrequencyFile->original/markers.dat PedigreeFile->original/pedfile.dat 
+1: Validating found files: FrequencyFile->original/markers.dat LocusFile->original/datafile.dat MapFile->original/mapfile.dat PedigreeFile->original/pedfile.dat 
 2: Validating found files: LocusFile->pedfile_text-alleles/datafile.dat PedigreeFile->pedfile_text-alleles/pedfile.dat 
 2: Ped "7" ind "1" has different values for marker 2 ("Loci_3") - 1:2 1 vs 2:T A

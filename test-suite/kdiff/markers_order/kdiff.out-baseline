@@ -1,2 +1,2 @@
-1: Validating found files: LocusFile->original/datafile.dat MapFile->original/mapfile.dat FrequencyFile->original/markers.dat PedigreeFile->original/pedfile.dat 
-2: Validating found files: LocusFile->markers_order/datafile.dat MapFile->markers_order/mapfile.dat FrequencyFile->markers_order/markers.dat PedigreeFile->markers_order/pedfile.dat 
+1: Validating found files: FrequencyFile->original/markers.dat LocusFile->original/datafile.dat MapFile->original/mapfile.dat PedigreeFile->original/pedfile.dat 
+2: Validating found files: FrequencyFile->markers_order/markers.dat LocusFile->markers_order/datafile.dat MapFile->markers_order/mapfile.dat PedigreeFile->markers_order/pedfile.dat 

@@ -1,4 +1,4 @@
-1: Validating found files: LocusFile->original/datafile.dat MapFile->original/mapfile.dat FrequencyFile->original/markers.dat PedigreeFile->original/pedfile.dat 
+1: Validating found files: FrequencyFile->original/markers.dat LocusFile->original/datafile.dat MapFile->original/mapfile.dat PedigreeFile->original/pedfile.dat 
 2: Validating found files: FrequencyFile->markers_different/markers.dat 
 2: Marker "Loci_4" allele "1" has a different frequency - 1:0.239956 vs 2:0.238956
 2: Marker "Loci_4" allele "2" has a different frequency - 1:0.760044 vs 2:0.661044
