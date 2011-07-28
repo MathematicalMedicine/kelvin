@@ -273,6 +273,13 @@ sub verify_links
 	($matsibid ne '0') and $hash{$matsibid}{prevmatsib} = $indid;
     }
 
+    foreach $indid (keys (%hash)) {
+	# If sex is undefined, then the individual ID was inserted due to being
+	# referenced as a paternal or maternal sib, or first child, but no such
+	# individual was actually present in the pedigree.
+	defined ($hash{$indid}{sex}) || delete ($hash{$indid});
+    }
+
     foreach $ind (@{$$self{individuals}}) {
 	($pedid, $indid) = @$ind{qw/pedid indid/};
 	if ($$ind{dadid} eq '0') {
@@ -324,7 +331,7 @@ sub verify_links
 	    return (undef);
 	}
 	if ($$ind{patsibid} ne '0') {
-	    if (! (exists ($hash{$$ind{patsibid}}) && defined ($hash{$$ind{patsibid}}{sex}))) {
+	    if (! exists ($hash{$$ind{patsibid}})) {
 		$errstr = "pedid $pedid, person $indid missing sibling $$ind{patsibid}";
 		return (undef);
 	    } elsif ($$ind{patsibid} eq $indid) {
@@ -336,7 +343,7 @@ sub verify_links
 	    }
 	}
 	if ($$ind{matsibid} ne '0') {
-	    if (! (exists ($hash{$$ind{matsibid}}) && defined ($hash{$$ind{matsibid}}{sex}))) {
+	    if (! exists ($hash{$$ind{matsibid}})) {
 		$errstr = "pedid $pedid, person $indid missing sibling $$ind{matsibid}";
 		return (undef);
 	    } elsif ($$ind{matsibid} eq $indid) {
