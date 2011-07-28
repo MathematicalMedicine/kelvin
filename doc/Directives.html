@@ -12,8 +12,8 @@
   <h1><span class='sc'>Kelvin</span> Configuration Directives</h1>
 
   If you are just getting started with kelvin, or are uncomfortable directly editing a
-  configuration file, you can use the <a href="http://hodgkin.ccri.net/software/gKelvin/">graphic
-  configuration file editor</a> instead.
+  configuration file, you can use the graphic configuration file editor,
+  <font color='red'>gKelvin</font>, instead.
 
   <h2>The Configuration File</h2>
 
@@ -176,7 +176,7 @@
       <a href='#extramods'>ExtraMODs</a><br>
       <a href='#progresslevel'>ProgressLevel</a><br>
       <a href='#progressdelayseconds'>ProgressDelaySeconds</a><br>
-      <a href='#epistasispediegreefile'>EpistasisPedigreeFile</a><br>
+      <a href='#epistasispedigreefile'>EpistasisPedigreeFile</a><br>
       <a href='#epistasislocusfile'>EpistasisLocusFile</a><br>
     </td>
     <td valign='top'>
@@ -257,8 +257,8 @@
     <b>BayesRatioFile</b><br>
     <tt>BayesRatioFile <i>filename</i></tt><br>
     Specifies the name of the output file to which Bayes ratios will be written.
-    For <a href='#twopoint_vs_multipoint'>multipoint</a> analyses, PPLs will also
-    be written to this file. For <a href='#traitmarker_vs_markermarker'>
+    For <a href='index.html#twopoint_vs_multipoint'>multipoint</a> analyses, PPLs will also
+    be written to this file. For <a href='index.html#traitmarker_vs_markermarker'>
     Marker-to-marker</a> analyses, no output is written to this file. Defaults
     to <tt>br.out</tt> if not specified.
   </div><p>
@@ -308,7 +308,7 @@
     <b>EpistasisLocusFile</b><br>
     <tt>EpistasisLocusFile <i>filename</i></tt><br>
     Specifies the file that contains pedigree column layout information for the
-    file specified by the <a href='"#epistasispedigreefile'>EpistasisPedigreeFile</a>
+    file specified by the <a href='#epistasispedigreefile'>EpistasisPedigreeFile</a>
     directive. This can be a locus file from a another dataset (another chromosome,
     for example), or it can be the same file specified with the 
     <a href='#locusfile'>LocusFile</a> directive. This directive requires
@@ -321,9 +321,9 @@
     <b>ExtraMODs</b><br>
     <tt>ExtraMODs</tt><br>
     Specifes that additional data should be written to the file specified by the
-    <a href='#modfile'>MODFile</a> directive. For <a href='#twopoint_vs_multipoint'>
+    <a href='#modfile'>MODFile</a> directive. For <a href='index.html#twopoint_vs_multipoint'>
     two-point</a> analyses, an extra line containing MOD information where Theta is 0
-    will be written, and for <a href='#ld_vs_le'>LD</a> analyses, another line 
+    will be written, and for <a href='index.html#ld_vs_le'>LD</a> analyses, another line 
     containing MOD information where D' is 0 will be written. This directive is
     incompatible with the <a href='#Multipoint'>Multipoint</a> directive.
   </div><p>
@@ -395,7 +395,7 @@
     <span class='sc'>Kelvin</span>. The intent of this directive is to stabilize the frequency
     of progress notifications and hence the overall volume of progress information. The default
     value is 120 seconds. This causes only the most recent progress notifications permitted by
-    the <a href='#progresslevels'>ProgressLevels</a> directive to be displayed every two
+    the <a href='#progresslevel'>ProgressLevel</a> directive to be displayed every two
     minutes. For example, if 32 pedigrees have been processed in the last two minutes, only the
     notification of the start of processing of the 33rd will be displayed. Note that this can
     cause progress messages to be delayed. If, in our example, the 33rd pedigree is start
@@ -420,11 +420,11 @@
     <tt>MarkerToMarker [ All | Adjacent ]</tt><br>
     Specifies that only the relationships of pairs of markers should be considered,
     and that no trait is included in the analisys. Under linkage equilibrium,
-    the intermarker distance is estimated. Under <a href='#ld'>linkage disequilibrium</a>,
-    the degree of linkage disequilibrium between the markers is estimated.
-    If <tt>All</tt> is specified, all possible pairs of markers in the dataset
-    are considered. If <tt>Adjacent</tt> is specified, only adjacent pairs of
-    markers are considered.
+    the intermarker distance is estimated. Under <a href='index.html#ld_vs_le'>
+    linkage disequilibrium</a>, the degree of linkage disequilibrium between the
+    markers is estimated. If <tt>All</tt> is specified, all possible pairs of markers
+    in the dataset are considered. If <tt>Adjacent</tt> is specified, only adjacent
+    pairs of markers are considered.
   </div><p>
   
   <div class='hang' id='modfile'>
@@ -580,7 +580,7 @@
     the minimum and maximum threshold values to be set using the smallest and largest
     values from the trait data in the pedigree file. If those values are less than 0 
     or greater than 30, then this directive must be specified. The <tt><i>min</i></tt>
-    and <tt><i>max</i></tt> should be <a href='arguments'>values</a>. This directive
+    and <tt><i>max</i></tt> should be <a href='#arguments'>values</a>. This directive
     requires the <a href='#qtt'>QTT</a> directive.
   </div><p>
   
@@ -676,9 +676,9 @@
     than or equal to the penetrance given two copies of the disease gene. For 
     constraints based solely on trait genotypes (no liability class is specified), the
     genotypes should be different. Constraints involving a liability class require
-    that the <a href='#liabilityclass'>LiabilityClass</a> directive. Constraints
+    that the <a href='#liabilityclasses'>LiabilityClasses</a> directive. Constraints
     on a given dimension of the trait model (<a href='#penetrance'>Penetrance</a>,
-    <a href='#Mean'>Mean</a>, <a href='#standarddev'>StandardDev</a>,
+    <a href='#Mean'>mean</a>, <a href='#standarddev'>StandardDev</a>,
     <a href='#degreesoffreedom'>DegreesOfFreedom</a>, <a href='#threshold'>Threshold</a>)
     require that the respective directive be specified, with all the requirements
     those directives imply. Multiple constraints on the same dimension may appear,
@@ -710,7 +710,7 @@
     considered for each trait genotype (<tt>DD</tt>, <tt>Dd</tt>, <tt>dD</tt> or
     <tt>dd</tt>). This directive requires either the <a href='#qt'>QT</a> or
     <a href='#qtt'>QTT</a> directives with the <tt>ChiSq</tt> distribution. The
-    <tt>dD</tt> genotype is only legal if the <a href=#'imprinting'>Imprinting</a>
+    <tt>dD</tt> genotype is only legal if the <a href='#imprinting'>Imprinting</a>
     directive is also specified. This directive is incompatible with the
     <a href='#markertomarker'>MarkerToMarker</a> directive.
   </div><p>
@@ -744,7 +744,7 @@
   <div class='hang' id='forcebrfile'>
     <b>ForceBRFile</b><br>
     <tt>ForceBRFile</tt><br>
-    Specifies that a <a href='bayesratiofile'>BayesRatioFile</a> be written
+    Specifies that a <a href='#bayesratiofile'>BayesRatioFile</a> be written
     during a <a href='#markertomarker'>MarkerToMarker</a> analysis. This option is 
     for debugging purposes.
   </div><p>
