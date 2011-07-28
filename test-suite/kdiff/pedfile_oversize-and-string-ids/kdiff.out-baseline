@@ -1,15 +1,5 @@
-1: Validating found files: $VAR1 = {
-          'FrequencyFile' => 'original/markers.dat',
-          'LocusFile' => 'original/datafile.dat',
-          'MapFile' => 'original/mapfile.dat',
-          'PedigreeFile' => 'original/pedfile.dat'
-        };
-
-2: Validating found files: $VAR1 = {
-          'LocusFile' => 'pedfile_oversize-and-string-ids/datafile.dat',
-          'PedigreeFile' => 'pedfile_oversize-and-string-ids/pedfile.dat'
-        };
-
+1: Validating found files: LocusFile->original/datafile.dat MapFile->original/mapfile.dat FrequencyFile->original/markers.dat PedigreeFile->original/pedfile.dat 
+2: Validating found files: LocusFile->pedfile_oversize-and-string-ids/datafile.dat PedigreeFile->pedfile_oversize-and-string-ids/pedfile.dat 
 2: Ped "2" ind "10" has different values for momid - 1:9 vs 2:foo
 1: Pedigree "2" individual "1000000000004" not found, skipping!
 2: Ped "2" ind "11" has different values for momid - 1:9 vs 2:foo

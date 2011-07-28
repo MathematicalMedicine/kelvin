@@ -6,7 +6,6 @@ use Getopt::Long;
 use Pod::Usage;
 use File::Spec::Functions;
 use Data::Dumper;
-$Data::Dumper::Sortkeys = 1; # $Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
 
 $|=1; # Immediate output
 
@@ -146,12 +145,18 @@ if ($use_found_files or $pedfiles) {
 }
 
 # Read and validate everything we have (except the pedfile contents)
-#for my $key (%{$dataref1}) {print "$key: 
-print "1: Validating".($use_found_files ? " found" : "")." files: ".Dumper($data1ref)."\n" if ($verbose or $use_found_files);
+if ($verbose or $use_found_files) {
+    print "1: Validating".($use_found_files ? " found" : "")." files: ";
+    for my $key (%{$data1ref}) {print "$key->".$$data1ref{$key}." " if (defined($$data1ref{$key})); }
+    print "\n";
+}
 $dataset1 = KelvinDataset->new ($data1ref)
     or error ("1: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
-#print "Dataset1 is ".Dumper($dataset1)."\n";
-print "2: Validating".($use_found_files ? " found" : "")." files: ".Dumper($data2ref)."\n" if ($verbose or $use_found_files);
+if ($verbose or $use_found_files) {
+    print "2: Validating".($use_found_files ? " found" : "")." files: ";
+    for my $key (%{$data2ref}) {print "$key->".$$data2ref{$key}." " if (defined($$data2ref{$key})); }
+    print "\n";
+}
 $dataset2 = KelvinDataset->new ($data2ref)
     or error ("2: Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
 #print "Dataset2 is ".Dumper($dataset2)."\n";

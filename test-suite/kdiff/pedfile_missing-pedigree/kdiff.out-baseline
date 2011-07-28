@@ -1,15 +1,5 @@
-1: Validating found files: $VAR1 = {
-          'FrequencyFile' => 'original/markers.dat',
-          'LocusFile' => 'original/datafile.dat',
-          'MapFile' => 'original/mapfile.dat',
-          'PedigreeFile' => 'original/pedfile.dat'
-        };
-
-2: Validating found files: $VAR1 = {
-          'LocusFile' => 'pedfile_missing-pedigree/datafile.dat',
-          'PedigreeFile' => 'pedfile_missing-pedigree/pedfile.dat'
-        };
-
+1: Validating found files: LocusFile->original/datafile.dat MapFile->original/mapfile.dat FrequencyFile->original/markers.dat PedigreeFile->original/pedfile.dat 
+2: Validating found files: LocusFile->pedfile_missing-pedigree/datafile.dat PedigreeFile->pedfile_missing-pedigree/pedfile.dat 
 1: Pedigree "12" not found, skipping!
 2: Pedigree "5" not found, skipping!
 ERROR - EXITING, Files are different
