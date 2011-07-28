@@ -1,14 +1,14 @@
 1: Validating found files: $VAR1 = {
+          'FrequencyFile' => 'original/markers.dat',
           'LocusFile' => 'original/datafile.dat',
           'MapFile' => 'original/mapfile.dat',
-          'FrequencyFile' => 'original/markers.dat',
           'PedigreeFile' => 'original/pedfile.dat'
         };
 
 2: Validating found files: $VAR1 = {
+          'FrequencyFile' => 'original/markers.dat',
           'LocusFile' => 'original/datafile.dat',
           'MapFile' => 'original/mapfile.dat',
-          'FrequencyFile' => 'original/markers.dat',
           'PedigreeFile' => 'original/pedfile.dat'
         };
 

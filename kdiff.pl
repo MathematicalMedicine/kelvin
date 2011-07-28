@@ -6,7 +6,7 @@ use Getopt::Long;
 use Pod::Usage;
 use File::Spec::Functions;
 use Data::Dumper;
-#$Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
+$Data::Dumper::Sortkeys = 1; # $Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
 
 $|=1; # Immediate output
 
