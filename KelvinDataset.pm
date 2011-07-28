@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use KelvinIO;
-use KelvinFamily 1.4;
+use KelvinFamily 1.5;
 #
 # KelvinDataset: an object for managing a Kelvin-compatible marker files
 # (marker map, frequencies, and locus files, and pedigree files).
@@ -344,7 +344,7 @@ sub readFreqfile
 	    $allelename = '';
 	    $alleleno = 0;
 
-	} elsif ($line =~ /^A\s+(\S+)\s+([\d\.]+)/) {
+	} elsif ($line =~ /^A\s+(\S+)\s+([\d\.]+(?:e[+\-]\d+)?)\s*$/) {
 	    if ($alleleno > 0) {
 		$errstr = "$$self{freqfile}, line $lineno: illegal allele specification for marker $marker";
 		return (undef);
@@ -352,7 +352,7 @@ sub readFreqfile
 	    ($allelename, $freq) = ($1, $2);
 	    $markers{$marker}{alleles}{$allelename} = $freq;
 
-	} elsif (($freq) = $line =~ /^F((?:\s+[\d\.]+)+)/) {
+	} elsif (($freq) = $line =~ /^F((?:\s+[\d\.]+(?:e[+\-]\d+)?)+)\s*$/) {
 	    if ($allelename) {
 		$errstr = "$$self{freqfile}, line $lineno: illegal allele specification for marker $marker";
 		return (undef);
