@@ -396,6 +396,7 @@ void kelvinInit (int argc, char *argv[])
   /* initialize loci by doing genotype elimination, set recoding */
   initialize_loci (&pedigreeSet);
 
+/*
   if (modelOptions->dryRun != 0) {
     for (loc1 = 0; loc1 < originalLocusList.numLocus; loc1++) {
       fprintf (stderr, "Locus %d:\n", loc1);
@@ -405,6 +406,7 @@ void kelvinInit (int argc, char *argv[])
       }
     }
   }
+*/
   if (modelOptions->polynomial == TRUE) {
     for (k = 0; k < 3; k++) {
       initialProbPoly[k] = constant1Poly;
@@ -431,6 +433,12 @@ void kelvinInit (int argc, char *argv[])
 //    fpCond = fopen (modelOptions->condFile, "w");
 //    ASSERT (fpCond != NULL, "Error in opening file %s for write.\n", modelOptions->condFile);
 //  }
+
+  if (modelOptions->dryRun == 1) {
+    fpDry = fopen ("kelvin.dry", "w");
+    ASSERT (fpDry != NULL, "Error opening file %s for write.\n", "kelvin.dry");
+    fprintf (fpDry, "# Version %s edit %s\n", programVersion, svnVersion);
+  }
 
   if (modelOptions->markerAnalysis == FALSE || modelOptions->forceAvghetFile == TRUE) {
     fpHet = fopen (modelOptions->avghetfile, "w");

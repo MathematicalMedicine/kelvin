@@ -7,5 +7,6 @@ FILE *fpPPL = NULL;     ///< PPL output file pointer
 FILE *fpMOD = NULL;     // MOD and maximizing model information
 FILE *fpIR = NULL;      ///< Intermediate results, used to go to stderr, normally dkelvin-only
 FILE *fpDK = NULL;      // DCHURE detail file
+FILE *fpDry = NULL;     ///< Dry-run statistics output for sizing estimation   
 
 LambdaCell *pLambdaCell;

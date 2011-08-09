@@ -77,6 +77,9 @@ void kelvinTerm () {
 #endif
   STEP(0, "Finished run");
 
+  if (modelOptions->dryRun != 0)
+    INFO("Single model total parental pairs: %ld, peak per-polynomial parental pairs is %ld", grandTotalPairs, peakTotalPairs);
+
 /* Close file pointers */
 if (modelType->type == TP)
   fclose (fpPPL);
@@ -85,4 +88,6 @@ if (fpMOD != NULL)
   fclose (fpMOD);
 if (fpHet != NULL)
   fclose (fpHet);
+if (fpDry != NULL)
+  fclose (fpDry);
 }

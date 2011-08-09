@@ -223,6 +223,9 @@ extern PedigreeSet pedigreeSet;
 #include "utils/polynomial.h"
 #include "trackProgress.h"
 
+unsigned long grandTotalPairs = 0;
+unsigned long peakTotalPairs = 0;
+
 /** 
 
 Make sure this thread is started AFTER signal handling has been setup.
@@ -313,27 +316,34 @@ void print_dryrun_stat (PedigreeSet * pSet,     ///< Pointer to set of pedigrees
   Pedigree *pPedigree;
   int i;
 
+  if (pos != -1)
+    fprintf (fpDry, "%f\t", pos);
   totalPairGroups = 0;
   totalSimilarPairs = 0;
   for (pedIdx = 0; pedIdx < pSet->numPedigree; pedIdx++) {
-    /* save the likelihood at null */
+    /* Save the likelihood at null */
     pPedigree = pSet->ppPedigreeSet[pedIdx];
-    fprintf (stderr, "Ped %s(%d) has %d loops, %d nuclear families.\n", pPedigree->sPedigreeID, pedIdx, pPedigree->numLoop, pPedigree->numNuclearFamily);
+    //    fprintf (stderr, "Ped %s(%d) has %d loops, %d nuclear families.\n", pPedigree->sPedigreeID, pedIdx, pPedigree->numLoop, pPedigree->numNuclearFamily);
     subTotalPairGroups = 0;
     subTotalSimilarPairs = 0;
     for (i = 0; i < pPedigree->numNuclearFamily; i++) {
       pNucFam = pPedigree->ppNuclearFamilyList[i];
-      fprintf (stderr,
-          "    Nuc %d w/ proband %s(%s) has %ld unique pp groups, %ld similar pp, total %ld.\n",
-          i, pNucFam->pProband->sID, pNucFam->childProbandFlag ? "child" : "parent", pNucFam->totalNumPairGroups, pNucFam->totalNumSimilarPairs, pNucFam->totalNumPairGroups + pNucFam->totalNumSimilarPairs);
+      //      fprintf (stderr, "    Nuc %d w/ proband %s(%s) has %ld unique pp groups, %ld similar pp, total %ld.\n",
+      //          i, pNucFam->pProband->sID, pNucFam->childProbandFlag ? "child" : "parent", pNucFam->totalNumPairGroups, pNucFam->totalNumSimilarPairs, pNucFam->totalNumPairGroups + pNucFam->totalNumSimilarPairs);
       subTotalPairGroups += pNucFam->totalNumPairGroups;
       subTotalSimilarPairs += pNucFam->totalNumSimilarPairs;
     }
-    fprintf (stderr, "    Ped has total %ld unique pp groups, %ld similar pp, total %ld.\n", subTotalPairGroups, subTotalSimilarPairs, subTotalPairGroups + subTotalSimilarPairs);
+    if (pos != -1)
+      fprintf (fpDry, "%ld\t", subTotalPairGroups + subTotalSimilarPairs);
     totalPairGroups += subTotalPairGroups;
     totalSimilarPairs += subTotalSimilarPairs;
+    if (peakTotalPairs < (subTotalPairGroups + subTotalSimilarPairs))
+      peakTotalPairs = subTotalPairGroups + subTotalSimilarPairs;
   }
-  fprintf (stderr, "POS %f has %ld unique pp groups, %ld similar pp, total %ld.\n", pos, totalPairGroups, totalSimilarPairs, totalPairGroups + totalSimilarPairs);
+  if (pos != -1)
+    fprintf (fpDry, "\n");
+  //  fprintf (stderr, "POS %f has %ld unique pp groups, %ld similar pp, total %ld.\n", pos, totalPairGroups, totalSimilarPairs, totalPairGroups + totalSimilarPairs);
+  grandTotalPairs += totalPairGroups + totalSimilarPairs;
 }
 
 /**

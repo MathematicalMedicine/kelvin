@@ -27,6 +27,9 @@ extern struct swStopwatch *overallSW, *singleModelSW;
 
 extern LambdaCell *pLambdaCell;
 
+extern unsigned long grandTotalPairs;
+extern unsigned long peakTotalPairs;
+
 int loopMarkerFreqFlag;
 int total_count;
 
@@ -61,6 +64,7 @@ extern FILE *fpPPL;     ///< PPL output file pointer
 extern FILE *fpMOD;     // MOD and maximizing model information
 extern FILE *fpIR;      ///< Intermediate results, used to go to stderr, normally dkelvin-only
 extern FILE *fpDK;      // DCHURE detail file
+extern FILE *fpDry;     ///< Dry-run statistics output for sizing estimation   
 
 /* Moved here from integrationGlobals.h 6/18/2009 
    Use dk_curModel for printing surface points in fpIR*/
