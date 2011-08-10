@@ -426,7 +426,7 @@ void kelvinInit (int argc, char *argv[])
     }
     pLocus->noVariationFlag = noVariation;
     if (noVariation)
-      WARNING ("Marker %s provides no information, it should be removed before analysis", pLocus->sName);
+      WARNING ("Marker %s provides no information, it will be ignored during analysis", pLocus->sName);
   }
 
 /*

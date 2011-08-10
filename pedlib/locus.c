@@ -2188,7 +2188,7 @@ pick_left_flanking_marker (int start, int end, double traitPosition,
    */
   while (start <= end) {
     pLocus = originalLocusList.ppLocusList[start];
-    if (pLocus->locusType != LOCUS_TYPE_MARKER) {
+    if (pLocus->locusType != LOCUS_TYPE_MARKER || pLocus->noVariationFlag) {
       start++;
       continue;
     }
@@ -2233,7 +2233,7 @@ pick_right_flanking_marker (int start, int end, double traitPosition,
 
   while (start <= end) {
     pLocus = originalLocusList.ppLocusList[start];
-    if (pLocus->locusType != LOCUS_TYPE_MARKER) {
+    if (pLocus->locusType != LOCUS_TYPE_MARKER || pLocus->noVariationFlag) {
       start++;
       continue;
     }
@@ -2263,6 +2263,9 @@ pick_closest_marker (int *left, int *right, int start, int end,
 		     double traitPosition, int mapFlag)
 {
   Locus *pLocus;
+  double leftPos, rightPos;
+
+  /* Not sure why this was here, so I'm leaving it for now. */
 
   if (*right > end + 1)
     *right = end + 1;
@@ -2270,34 +2273,25 @@ pick_closest_marker (int *left, int *right, int start, int end,
   if (*left < -1)
     *left = -1;
 
-  if (*left < start) {
-    /* nothing on the left of the traitPosition, we probably are at the beginning of a
-     * chromosome, so just pick the right marker */
-    (*right)++;
-    return *right - 1;
-  }
-  if (*right >= end + 1) {
-    /* nothing on the right of the traitPosition, we probably are at the end of the 
-     * chromosome, so just pick the left marker */
-    (*left)--;
-    return *left + 1;
-  }
+  /* Get index and distance to next valid left marker. */
+
   pLocus = originalLocusList.ppLocusList[*left];
-  while (pLocus->locusType == LOCUS_TYPE_TRAIT) {
-    (*left)--;
-    if (*left < 0) {
-      (*right)++;
-      return *right - 1;
-    }
-    pLocus = originalLocusList.ppLocusList[*left];
-  }
+  while (*left >= start && (pLocus->locusType != LOCUS_TYPE_MARKER || pLocus->noVariationFlag)) // Not a valid choice, try again
+    pLocus = originalLocusList.ppLocusList[--(*left)];
+  if (*left < start)
+    leftPos = -9999.0;
+  else
+    leftPos = originalLocusList.ppLocusList[*left]->pMapUnit->mapPos[mapFlag];
 
-  /* neither left or right is negative or out of range of the marker list */
+  pLocus = originalLocusList.ppLocusList[*right];
+  while (*right < end + 1 && (pLocus->locusType != LOCUS_TYPE_MARKER || pLocus->noVariationFlag)) // Not a valid choice, try again
+    pLocus = originalLocusList.ppLocusList[++(*right)];
+  if (*right >= end + 1)
+    rightPos = 9999.0;
+  else
+    rightPos = originalLocusList.ppLocusList[*right]->pMapUnit->mapPos[mapFlag];
 
-  if (traitPosition -
-      originalLocusList.ppLocusList[*left]->pMapUnit->mapPos[mapFlag] >
-      originalLocusList.ppLocusList[*right]->pMapUnit->mapPos[mapFlag] -
-      traitPosition) {
+  if (traitPosition - leftPos > rightPos - traitPosition) {
     /* the right distance is shorter, right marker is closer */
     (*right)++;
     return *right - 1;
@@ -2306,7 +2300,6 @@ pick_closest_marker (int *left, int *right, int start, int end,
     (*left)--;
     return *left + 1;
   }
-
 }
 
 /* 

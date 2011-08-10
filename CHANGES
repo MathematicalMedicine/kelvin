@@ -1,3 +1,8 @@
+Version ???
+  Kelvin Binary
+    Warn and skip uninformative markers (due to homogeneity or missingness)
+    Repurpose dry run to portable sizing
+
 Version 2.3.3
   9 May 2011
   Kelvin Binary
