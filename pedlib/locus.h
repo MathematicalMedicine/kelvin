@@ -235,6 +235,8 @@ typedef struct Locus
   /* number of alleles for this locus including super alleles */
   short numAllele;
 
+  int noVariationFlag; ///< Set if this locus is completely uninformative
+
   /* number of original alleles for this locus without super alleles */
   short numOriginalAllele;
   /* number of integers required to set allele bits for this locus

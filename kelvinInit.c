@@ -211,7 +211,7 @@ void kelvinInit (int argc, char *argv[])
   memset (&pedigreeSet, 0, sizeof (PedigreeSet));
   DETAIL(0,"Read and process pedigree file %s", modelOptions->pedfile);
   read_pedfile (modelOptions->pedfile, &pedigreeSet);
-
+  
   if (!modelOptions->markerAnalysis) {
     /* We are not doing marker to marker analysis; the configuration
      * has all the information about the disease trait if any.
@@ -395,6 +395,39 @@ void kelvinInit (int argc, char *argv[])
 
   /* initialize loci by doing genotype elimination, set recoding */
   initialize_loci (&pedigreeSet);
+
+  /* Check for markers devoid of information, give warning and avoid using in analyses. */
+  for (locus = 1; locus < originalLocusList.numLocus; locus++) { // Skip assumed trait locus
+    int j, k, unknown, knownAllele, noVariation = 1;
+    Pedigree *pPedigree;
+    Person *pPerson;
+    pLocus = originalLocusList.ppLocusList[locus];
+    unknown = pLocus->numOriginalAllele + 1; // Unknown allele code is originals plus one
+    knownAllele = unknown;
+    for (j = 0; (noVariation && j < pedigreeSet.numPedigree); j++) {
+      pPedigree = pedigreeSet.ppPedigreeSet[j];
+      for (k = 0; (noVariation && k < pPedigree->numPerson); k++) {
+	pPerson = pPedigree->ppPersonList[k];
+	if (pPerson->ppGenotypeList[locus]->allele[0] != unknown) {
+	  if (knownAllele == unknown)
+	    knownAllele = pPerson->ppGenotypeList[locus]->allele[0];
+	  else
+	    if (pPerson->ppGenotypeList[locus]->allele[0] != knownAllele)
+	      noVariation = 0; // There's variation so we're done with this one
+	}
+	if (pPerson->ppGenotypeList[locus]->allele[1] != unknown) {
+	  if (knownAllele == unknown)
+	    knownAllele = pPerson->ppGenotypeList[locus]->allele[1];
+	  else
+	    if (pPerson->ppGenotypeList[locus]->allele[1] != knownAllele)
+	      noVariation = 0; // There's variation so we're done with this one
+	}
+      }
+    }
+    pLocus->noVariationFlag = noVariation;
+    if (noVariation)
+      WARNING ("Marker %s provides no information, it should be removed before analysis", pLocus->sName);
+  }
 
 /*
   if (modelOptions->dryRun != 0) {

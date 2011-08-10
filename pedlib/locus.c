@@ -2161,7 +2161,7 @@ update_penetrance (PedigreeSet * pPedigreeSet, int locus)
  * Usually we move trait from left to right in a fixed (an input parameter) interval
  */
 
-/* pick the marker immediately to the left of the marker 
+/* Pick the marker immediately to the left of the trait.
  * start - start marker index in the originalLocusList
  * trait - trait position in cM within the chromosome
  * search from left to right
@@ -2208,7 +2208,7 @@ pick_left_flanking_marker (int start, int end, double traitPosition,
   return lastLeft;
 }
 
-/* pick the marker immediately to the right of the marker 
+/* Pick the marker immediately to the right of the trait.
  * start - start marker index in the originalLocusList
  * end - end marker index in the originalLocusList
  * Both start & end are inclusive
