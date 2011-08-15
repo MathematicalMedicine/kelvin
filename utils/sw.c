@@ -1286,6 +1286,30 @@ void swDiagInit(void) {
   // Not needed if we're setting them all to zero, since shmget does that.
   for (i=0; i<MAX_DIAG_FACILITY; i++)
     envDiagLevel[i] = 0;
+
+  /* For the moment, to use, add a line like this right here: envDiagLevel[FACILITY] = N; where FACILITY is one of:
+
+  OVERALL,
+  LIKELIHOOD,
+  READ_PEDFILE,
+  ALLELE_SET_RECODING,
+  GENOTYPE_ELIMINATION,
+  PARENTAL_PAIR,
+  CONFIG,
+  INPUTFILE,
+  XM,
+  DCUHRE,
+  POLYNOMIAL,
+  ALTLSERVER,
+
+  and N is the diagnostic level number, the higher the number the more diagnostics.
+
+  e.g.:
+
+  envDiagLevel[LIKELIHOOD] = 77;
+
+  */
+
   return;
 }
 
