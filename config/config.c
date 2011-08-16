@@ -707,6 +707,7 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
    */
   if (staticModelOptions.markerAnalysis) {
     staticModelOptions.integration = FALSE;
+    staticModelOptions.polynomial = FALSE;
     if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM && staticModelRange.ndprime == 0)
       /* Default range of DPrimes is -1 to 1 in steps of 0.02 */
       for (i = -50; i <= 50; i++)
@@ -1227,6 +1228,9 @@ int set_quantitative (char **toks, int numtoks, void *unused)
     if (numtoks == 2)
       return (0);
     if ((numtoks != 3) && ((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) != 2))
+      bail ("illegal arguments to directive '%s'\n", toks[0]);
+    /* Standard deviation can't be 0 */
+    if (vals[1] == 0)
       bail ("illegal arguments to directive '%s'\n", toks[0]);
     staticModelType.mean = vals[0];
     staticModelType.sd = vals[1];
