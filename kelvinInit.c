@@ -275,6 +275,8 @@ void kelvinInit (int argc, char *argv[])
     getPedigreeSampleStdev (&pedigreeSet, &mean, &stdev);
     modelType->mean = mean;
     modelType->sd = stdev;
+    if (stdev == 0)
+      ERROR ("The calculated sample standard deviation is 0.");
     DIAG (INPUTFILE, 3, {printf ("Sample Mean is %.4f, Standard Deviation is %.4f\n", mean, stdev);});
   }
 
