@@ -1246,6 +1246,9 @@ int set_quantitative (char **toks, int numtoks, void *unused)
     addParameter (&staticModelRange, 0, 1.0);
   } else
     bail ("illegal arguments to directive '%s'\n", toks[0]);
+#ifdef STUDYDB
+    studyDB.traitType=1;
+#endif
   return (0);
 }
 
@@ -1378,7 +1381,7 @@ int set_study_parameters (char **toks, int numtoks, void *unused)
 {
   char *ptr = NULL;
   // Want studyId, role, dBHostname, dbName, username, password, pedigreeRegEx, pedigreeNotRegEx
-  if (numtoks != 9)
+  if (numtoks != 9 && numtoks != 13)
     bail ("inappropriate number of arguments to directive '%s'\n", toks[0]);
   studyDB.studyId = (int) strtol (toks[1], &ptr, 10);
   if ((toks[1] == ptr) || (*ptr != '\0'))
@@ -1390,6 +1393,15 @@ int set_study_parameters (char **toks, int numtoks, void *unused)
   strncpy (studyDB.password, toks[6], sizeof (studyDB.password));
   strncpy (studyDB.pedigreeRegEx, toks[7], sizeof (studyDB.pedigreeRegEx));
   strncpy (studyDB.pedigreeNotRegEx, toks[8], sizeof (studyDB.pedigreeNotRegEx));
+  studyDB.MCMC_flag = 0;
+  if (numtoks > 9) {
+    if(strcasecmp(toks[9], "MCMC")!=0) 
+      bail("directive '%s' exceeded number of parameters, but not MCMC analysis!\n", toks[0]);
+    studyDB.MCMC_flag = 1; 
+    studyDB.totalSampleCount = atoi(toks[10]);
+    studyDB.sampleIdStart = atoi(toks[11]);
+    studyDB.sampleIdEnd = atoi(toks[12]);
+  }
   return (0);
 }
 #else
