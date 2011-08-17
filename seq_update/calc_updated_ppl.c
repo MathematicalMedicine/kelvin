@@ -59,7 +59,7 @@
 
 #define BUFFLEN 256
 /* Default prior for LD statistic calculations */
-#define DEFAULT_LDPRIOR 0.02
+#define DEFAULT_LEPRIOR 0.02
 /* the multipoint PPL for a BR of 0.214 */
 #define MIN_PRIOR 7.8528124097619317e-03
 
@@ -128,6 +128,13 @@ int quiet = 0;          /* -q or --quiet : supress non-fatal warnings */
 double prior = 0.02;    /* -p or --prior: prior probability */
 double weight = 0.95;   /* -w or --weight: weighting factor */
 double cutoff = 0.05;   /* -c or --cutoff: theta cutoff */
+// combined with leprior of 2%, the prior probability of LD would be 0.0004
+double ldpriorSmallTheta = 0.021;
+double ldpriorBigTheta = 0.0011;
+// prior probability of LD set at 10^-7
+//double ldpriorSmallTheta = 0.021 /4 * 0.001;
+//double ldpriorBigTheta = 0.0011 /4 * 0.001;
+
 
 /* For input BRs with fake Chr/cM info, force the output to use Chr/cM from the optional map */
 int forcemap = 0;
@@ -169,9 +176,9 @@ double calc_ppl_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr);
 void calc_ldvals_sexavg (st_multidim *dprimes, st_multidim *thetas, double **lr, st_ldvals *ldval);
 void calc_ldvals_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr, st_ldvals *ldval);
 double calc_upd_ppl (st_ldvals *ldval);
-double calc_upd_ppl_allowing_ld (st_ldvals *ldval, double ldprior);
-double calc_upd_ppld_given_linkage (st_ldvals *ldval, double ldprior);
-double calc_upd_ppld_allowing_l (st_ldvals *ldval, double ldprior);
+double calc_upd_ppl_allowing_ld (st_ldvals *ldval, double leprior);
+double calc_upd_ppld_given_linkage (st_ldvals *ldval, double leprior);
+double calc_upd_ppld_allowing_l (st_ldvals *ldval, double leprior);
 
 int parse_command_line (int argc, char **argv);
 void usage ();
@@ -247,7 +254,7 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 {
   int fileno, alldone=0, didx, thidx, numcurrent, dsize=0, thsize=0, ret, physicalpos=0;
   long basepair=-1;
-  double **lr=NULL, ldprior, ldstat;
+  double **lr=NULL;
   st_brmarker next_marker;
   st_mapmarker *mapptr;
   st_data data;
@@ -538,7 +545,7 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 {
   int fileno, numcurrent, sampleno, alldone, ret, lastidx, ld=0, physicalpos=0;
-  double ldprior, ldstat, *sample;
+  double *sample;
   char *effective_version;
   st_brmarker next_marker, *marker;
   st_mapmarker *mapptr;
@@ -783,7 +790,7 @@ void print_twopoint_headers (int no_ld, int physicalpos)
 
 void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_ldvals *ldval)
 {
-  double ldprior, ppl, ldstat;
+  double leprior, ppl, ldstat;
 
   fprintf (pplout, "%s %s %s %.4f", marker->chr, marker->name1, marker->name2, marker->avgpos);
   if (physicalpos)
@@ -798,20 +805,20 @@ void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_l
     if ((pplinfile == NULL) || (allstats)) {
       ppl = calc_upd_ppl (ldval);
       fprintf (pplout, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl, 3));
-      ldstat = calc_upd_ppl_allowing_ld (ldval, DEFAULT_LDPRIOR);
+      ldstat = calc_upd_ppl_allowing_ld (ldval, DEFAULT_LEPRIOR);
       fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
-      ldstat = calc_upd_ppld_given_linkage (ldval, DEFAULT_LDPRIOR);
+      ldstat = calc_upd_ppld_given_linkage (ldval, DEFAULT_LEPRIOR);
       fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
     }
-    ldstat = calc_upd_ppld_allowing_l (ldval, DEFAULT_LDPRIOR);
+    ldstat = calc_upd_ppld_allowing_l (ldval, DEFAULT_LEPRIOR);
     fprintf (pplout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
     if (pplinfile != NULL) {
-      if ((ldprior = iplist_interpolate (&ippl, marker->chr, marker->avgpos)) < MIN_PRIOR)
-	ldprior = MIN_PRIOR;
+      if ((leprior = iplist_interpolate (&ippl, marker->chr, marker->avgpos)) < MIN_PRIOR)
+	leprior = MIN_PRIOR;
       if (verbose >= 2)
-	fprintf (stderr, "ippl is %.6e\n", ldprior);
-      ldstat = calc_upd_ppld_allowing_l (ldval, ldprior);
-      fprintf (pplout, " %.4f %.*f", ldprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+	fprintf (stderr, "ippl is %.6e\n", leprior);
+      ldstat = calc_upd_ppld_allowing_l (ldval, leprior);
+      fprintf (pplout, " %.4f %.*f", leprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
     }
     
     if (bfout != NULL)
@@ -1178,19 +1185,19 @@ void calc_ldvals_sexspc (st_multidim *dprimes, st_multidim *thetas, double **lr,
  }
 
 
-double calc_upd_ppl_allowing_ld (st_ldvals *ldval, double ldprior)
+double calc_upd_ppl_allowing_ld (st_ldvals *ldval, double leprior)
 {
   double numerator;
   double denomRight;
   double ldppl;
 
   numerator =
-    ldval->ld_small_theta * ldprior * 0.021 + 
-    ldval->ld_big_theta * ldprior * 0.0011+ 
-    ldval->le_small_theta * ldprior * 0.979 + 
-    ldval->le_big_theta * ldprior * 0.9989;
+    ldval->ld_small_theta * leprior * ldpriorSmallTheta + 
+    ldval->ld_big_theta * leprior * ldpriorBigTheta+ 
+    ldval->le_small_theta * leprior * (1-ldpriorSmallTheta) + 
+    ldval->le_big_theta * leprior * (1-ldpriorBigTheta);
   denomRight =
-    ldval->le_unlinked * (1 - ldprior);
+    ldval->le_unlinked * (1 - leprior);
   ldppl = numerator / (numerator + denomRight);
   
   if (bfout != NULL) 
@@ -1199,18 +1206,18 @@ double calc_upd_ppl_allowing_ld (st_ldvals *ldval, double ldprior)
 }
 
 
-double calc_upd_ppld_given_linkage (st_ldvals *ldval, double ldprior)
+double calc_upd_ppld_given_linkage (st_ldvals *ldval, double leprior)
 {
   double numerator;
   double denomRight;
   double ppld_given_l;
 
   numerator =
-    ldval->ld_small_theta * ldprior * 0.021 + 
-    ldval->ld_big_theta * ldprior * 0.0011;
+    ldval->ld_small_theta * leprior * ldpriorSmallTheta + 
+    ldval->ld_big_theta * leprior * ldpriorBigTheta;
   denomRight =
-    ldval->le_small_theta * ldprior * 0.979 + 
-    ldval->le_big_theta * ldprior * 0.9989;
+    ldval->le_small_theta * leprior * (1-ldpriorSmallTheta) + 
+    ldval->le_big_theta * leprior * (1-ldpriorBigTheta);
   ppld_given_l = numerator / (numerator + denomRight);
 
   if (bfout != NULL) 
@@ -1219,19 +1226,19 @@ double calc_upd_ppld_given_linkage (st_ldvals *ldval, double ldprior)
 }
 
 
-double calc_upd_ppld_allowing_l (st_ldvals *ldval, double ldprior)
+double calc_upd_ppld_allowing_l (st_ldvals *ldval, double leprior)
 {
   double numerator;
   double denomRight;
   double ppld; 
 
   numerator =
-    ldval->ld_small_theta * ldprior * 0.021 +
-    ldval->ld_big_theta * ldprior * 0.0011; 
+    ldval->ld_small_theta * leprior * ldpriorSmallTheta +
+    ldval->ld_big_theta * leprior * ldpriorBigTheta; 
   denomRight =
-    ldval->le_small_theta * ldprior * 0.979 + 
-    ldval->le_big_theta * ldprior * 0.9989 + 
-    ldval->le_unlinked * (1 - ldprior);
+    ldval->le_small_theta * leprior * (1-ldpriorSmallTheta) + 
+    ldval->le_big_theta * leprior * (1-ldpriorBigTheta) + 
+    ldval->le_unlinked * (1 - leprior);
   ppld = numerator / (numerator + denomRight); 
 
   if (bfout != NULL) 
