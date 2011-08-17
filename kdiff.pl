@@ -622,6 +622,10 @@ Copyright 2011, Nationwide Children's Hospital Research Institute
 All rights reserved. Permission is hereby granted to use this software
 for non-profit educational purposes only.
 
+=head1 AUTHOR
+
+Bill Valentine-Cooper (William.Valentine-Cooper@NationwideChildrens.org)
+
 =head1 DATE
 
 $Id$
