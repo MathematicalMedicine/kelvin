@@ -21,6 +21,7 @@ char *likelihoodVersion = "$Id$";
 #include <math.h>
 #include <float.h>
 #include <sys/types.h>
+#include <sys/time.h>
 
 #include "pedlib.h"
 #include "locus.h"
@@ -346,7 +347,7 @@ int build_likelihood_polynomial (Pedigree * pPedigree)
 
 #ifdef STUDYDB
 
-void compute_server_pedigree_likelihood (PedigreeSet *pPedigreeList, Pedigree *pPedigree) {
+void compute_server_pedigree_likelihood (PedigreeSet *pPedigreeList, Pedigree *pPedigree, int updateFlag) {
 
   // &&& WARNING WARNING WARNING WE DON'T HAVE THE RIGHT POLYNOMIAL HERE TO DO MARKER SET OR TRAIT LIKELIHOOD
 
@@ -359,8 +360,10 @@ void compute_server_pedigree_likelihood (PedigreeSet *pPedigreeList, Pedigree *p
   } else {
     // As usual, assume the traitLocus is the first entry in the pedigree list...
     // We will want to change the next two calls to do the updates only for a single pedigree
-    update_locus (pPedigreeList, 0);
-    update_penetrance (pPedigreeList, 0);
+    if(updateFlag != 0) {
+      update_locus (pPedigreeList, 0);
+      update_penetrance (pPedigreeList, 0);
+    }
     // Theory has it that we only need to re-populate when loci change, but practice says no, always do it.
     populate_xmission_matrix (__FILE__, __LINE__, xmissionMatrix, analysisLocusList->numLocus, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
     initialize_multi_locus_genotype (pPedigree);
@@ -377,8 +380,10 @@ void getAndPut2ptModels (PedigreeSet *pPedigreeList, int stepFlag, int realityFl
   char pedigreeSId[33];
   Pedigree *pPedigree;
   int i, runtimeCostSec;
+  int getwork_ret =0;
 
-  while (GetDWork(lowPosition, highPosition, stepFlag /* Yes, double-use of locusListType, so shoot me, I was on a deadline */,
+  /*
+  while (GetDWork(lowPosition, highPosition, stepFlag, // Yes, double-use of locusListType, so shoot me, I was on a deadline
 		  &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
 		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
 		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
@@ -386,7 +391,32 @@ void getAndPut2ptModels (PedigreeSet *pPedigreeList, int stepFlag, int realityFl
 		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
 		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
 		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
-
+  */
+  while (1) {
+    if(modelType->trait == DICHOTOMOUS) {
+      getwork_ret = GetDWork(lowPosition, highPosition, stepFlag, // Yes, double-use of locusListType, so shoot me, I was on a deadline
+		  &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
+		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+			   &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1]);
+    }
+    else {
+	  getwork_ret = 
+	    GetQWork(lowPosition, highPosition, stepFlag, 
+		     &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
+		     &pTrait->means[0][0][0], &pTrait->means[0][0][1], &pTrait->means[0][1][0], &pTrait->means[0][1][1],
+		     &pTrait->means[1][0][0], &pTrait->means[1][0][1], &pTrait->means[1][1][0], &pTrait->means[1][1][1],
+		     &pTrait->means[2][0][0], &pTrait->means[2][0][1], &pTrait->means[2][1][0], &pTrait->means[2][1][1],
+		     &pTrait->stddev[0][0][0], &pTrait->stddev[0][0][1], &pTrait->stddev[0][1][0], &pTrait->stddev[0][1][1],
+		     &pTrait->stddev[1][0][0], &pTrait->stddev[1][0][1], &pTrait->stddev[1][1][0], &pTrait->stddev[1][1][1],
+		     &pTrait->stddev[2][0][0], &pTrait->stddev[2][0][1], &pTrait->stddev[2][1][0], &pTrait->stddev[2][1][1],
+		     &pTrait->cutoffValue[0], &pTrait->cutoffValue[1], &pTrait->cutoffValue[2]);
+    }
+    if(getwork_ret ==0)
+      break;
     if (realityFlag) {
 
       // We've retrieved DGF, now compute dGF (made that up!)
@@ -417,7 +447,7 @@ void getAndPut2ptModels (PedigreeSet *pPedigreeList, int stepFlag, int realityFl
 	    analysisLocusList->pNextLocusDistance[j][i] = analysisLocusList->pNextLocusDistance[0][i];
 	  }
       }
-      compute_server_pedigree_likelihood (pPedigreeList, pPedigree);
+      compute_server_pedigree_likelihood (pPedigreeList, pPedigree, 1);
       nullLikelihood = pPedigree->likelihood;
 
       // Compute actual alternative hypothesis likelihood for this pedigree on this marker from theta of actual distance
@@ -437,7 +467,7 @@ void getAndPut2ptModels (PedigreeSet *pPedigreeList, int stepFlag, int realityFl
 	    analysisLocusList->pNextLocusDistance[j][i] = analysisLocusList->pNextLocusDistance[0][i];
 	  }
       }
-      compute_server_pedigree_likelihood (pPedigreeList, pPedigree);
+      compute_server_pedigree_likelihood (pPedigreeList, pPedigree, 1);
       runtimeCostSec = difftime (time (NULL), singleModelSW->swStartWallTime);
       alternativeLikelihood = pPedigree->likelihood;
 
@@ -474,6 +504,11 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
                          * counts mainly for case control analyses */
   int ret = 0;
   long myPedPosId;
+  char tmpPedigreeSId[MAX_PED_LABEL_LEN];
+  char sampleIdStr[32];
+  int sampleId;
+  int getwork_ret=0;
+  struct timeval t_start, t_end;
 
   DIAG (XM, 2, {
       fprintf (stderr, "In compute_likelihood from %s:%d\n", fileName, lineNo);
@@ -508,8 +543,10 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
       else
 	myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelRange->tloc[studyDB.driverPosIdx]);
 
+      if(modelType->trait == DICHOTOMOUS) {
       if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
-	pPedigree->likelihood = GetDLikelihood (myPedPosId, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0);
+	pPedigree->likelihood = GetDLikelihood (myPedPosId, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+						0, 0, 0, 0);
       else if (analysisLocusList->numLocus == 1) // Trait likelihood
 	pPedigree->likelihood = GetDLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
 					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
@@ -532,7 +569,44 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 					  (s->sbrgns == 0 ? 0 : s->greate),
 					  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrg_heap[s->sbrgns]->parent_id]->dir)
 					  );
-
+      } else {
+      if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
+	pPedigree->likelihood = GetQLikelihood (myPedPosId, -1, 
+						-1, -1, -1, -1, 
+						-1, -1, -1, -1, 
+						-1, -1, -1, -1, 
+						-1, -1, -1, -1, 
+						-1, -1, -1, -1, 
+						-1, -1, -1, -1, 
+						-1, -1, -1,
+						0, 0, 0, 0);
+      else if (analysisLocusList->numLocus == 1) // Trait likelihood
+	pPedigree->likelihood = 
+          GetQLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
+			  pTrait->means[0][0][0], pTrait->means[0][0][1], pTrait->means[0][1][0], pTrait->means[0][1][1],
+			  pTrait->means[1][0][0], pTrait->means[1][0][1], pTrait->means[1][1][0], pTrait->means[1][1][1],
+			  pTrait->means[2][0][0], pTrait->means[2][0][1], pTrait->means[2][1][0], pTrait->means[2][1][1],
+			  pTrait->stddev[0][0][0], pTrait->stddev[0][0][1], pTrait->stddev[0][1][0], pTrait->stddev[0][1][1],
+			  pTrait->stddev[1][0][0], pTrait->stddev[1][0][1], pTrait->stddev[1][1][0], pTrait->stddev[1][1][1],
+			  pTrait->stddev[2][0][0], pTrait->stddev[2][0][1], pTrait->stddev[2][1][0], pTrait->stddev[2][1][1],
+			  pTrait->cutoffValue[0], pTrait->cutoffValue[1], pTrait->cutoffValue[2], 
+					  0, 0, 0, 0); 
+      else // Alternative likelihood
+          pPedigree->likelihood = 
+          GetQLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
+			  pTrait->means[0][0][0], pTrait->means[0][0][1], pTrait->means[0][1][0], pTrait->means[0][1][1],
+			  pTrait->means[1][0][0], pTrait->means[1][0][1], pTrait->means[1][1][0], pTrait->means[1][1][1],
+			  pTrait->means[2][0][0], pTrait->means[2][0][1], pTrait->means[2][1][0], pTrait->means[2][1][1],
+			  pTrait->stddev[0][0][0], pTrait->stddev[0][0][1], pTrait->stddev[0][1][0], pTrait->stddev[0][1][1],
+			  pTrait->stddev[1][0][0], pTrait->stddev[1][0][1], pTrait->stddev[1][1][0], pTrait->stddev[1][1][1],
+			  pTrait->stddev[2][0][0], pTrait->stddev[2][0][1], pTrait->stddev[2][1][0], pTrait->stddev[2][1][1],
+			  pTrait->cutoffValue[0], pTrait->cutoffValue[1], pTrait->cutoffValue[2], 
+					  s->sbrgns, 
+					  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrgns]->parent_id),
+					  (s->sbrgns == 0 ? 0 : s->greate),
+					  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrg_heap[s->sbrgns]->parent_id]->dir)
+					  );
+      }
       if (pPedigree->likelihood == -1) {
 	// Bogus result
 	studyDB.bogusLikelihoods++;
@@ -621,6 +695,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 
       DIAG (ALTLSERVER, 0, { fprintf (stderr, "Driver trait position %GcM of type %d serves range from %GcM to %gcM\n", traitPosition, locusListType, lowPosition, highPosition);});
 
+	/*
       while (GetDWork(lowPosition, highPosition, locusListType, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
@@ -628,88 +703,153 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
-	
+	*/
+      while (1) {
+	if(modelType->trait == DICHOTOMOUS) {
+	  getwork_ret = GetDWork(lowPosition, highPosition, locusListType, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
+		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+		       &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1]) ;
+
+	}
+	else {
+	  getwork_ret = 
+	    GetQWork(lowPosition, highPosition, locusListType, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
+		     &pTrait->means[0][0][0], &pTrait->means[0][0][1], &pTrait->means[0][1][0], &pTrait->means[0][1][1],
+		     &pTrait->means[1][0][0], &pTrait->means[1][0][1], &pTrait->means[1][1][0], &pTrait->means[1][1][1],
+		     &pTrait->means[2][0][0], &pTrait->means[2][0][1], &pTrait->means[2][1][0], &pTrait->means[2][1][1],
+		     &pTrait->stddev[0][0][0], &pTrait->stddev[0][0][1], &pTrait->stddev[0][1][0], &pTrait->stddev[0][1][1],
+		     &pTrait->stddev[1][0][0], &pTrait->stddev[1][0][1], &pTrait->stddev[1][1][0], &pTrait->stddev[1][1][1],
+		     &pTrait->stddev[2][0][0], &pTrait->stddev[2][0][1], &pTrait->stddev[2][1][0], &pTrait->stddev[2][1][1],
+		     &pTrait->cutoffValue[0], &pTrait->cutoffValue[1], &pTrait->cutoffValue[2]);
+	}
+	if(getwork_ret ==0)
+	  break;
+
 	// Find the pedigree in the set
-	if ((pPedigree = find_pedigree(pPedigreeList, pedigreeSId)) == NULL)
-	  ERROR ("Got work for unexpected pedigree %s", pedigreeSId);
-	
-	if (locusListType != 1) { // Do trait-related setup (trait and combined likelihoods)
+	sampleIdStr[0]='\0';
+	gettimeofday(&t_start, NULL);
+	//	for(sampleId=modelOptions->mcmcSampleStart; modelOptions->algorithm!= ALGORITHM_MCMC || sampleId <= modelOptions->mcmcSampleEnd; sampleId++) {
+	for(sampleId=studyDB.sampleIdStart; studyDB.MCMC_flag==0 || sampleId <= studyDB.sampleIdEnd; sampleId++) {
+	  sprintf(sampleIdStr, ".%d", sampleId);
+	  sprintf(tmpPedigreeSId, "%s%s", pedigreeSId, sampleIdStr);
+	  if ((pPedigree = find_pedigree(pPedigreeList, tmpPedigreeSId)) == NULL)
+	    ERROR ("Got work for unexpected pedigree %s. This might indicates kelvin config for MCMC sampling range (%d-%d)doesn't match pedigree file, or the pedigree server assigned is not in our pedigree at all!", tmpPedigreeSId, studyDB.sampleIdStart, studyDB.sampleIdEnd);
+	  
+	  if (locusListType != 1) { // Do trait-related setup (trait and combined likelihoods)
 
-	  // We've retrieved DGF, now compute dGF (made that up!)
-	  pLocus->pAlleleFrequency[1] = 1 - pLocus->pAlleleFrequency[0];
-
-	  // We've retrieved the affected penetrance. Use it to compute unaffected
-	  for (i=0; i<modelRange->nlclass; i++) {
-	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][0];
-	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][1];
-	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][0];
-	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][1];
-	  }
-
-	  /* Convert the pedTraitPosCM into two theta values and overwrite the analysisLocusList trait entry. We have
+	    // We've retrieved DGF, now compute dGF (made that up!)
+	    pLocus->pAlleleFrequency[1] = 1 - pLocus->pAlleleFrequency[0];
+	    
+	    // We've retrieved the affected penetrance. Use it to compute unaffected
+	    for (i=0; i<modelRange->nlclass; i++) {
+	      pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][0];
+	      pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][1];
+	      pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][0];
+	      pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][1];
+	    }
+	    
+	    /* Convert the pedTraitPosCM into two theta values and overwrite the analysisLocusList trait entry. We have
 	     to do this because we'll never see the exact positions required by map interpolation if maps differ. We
 	     only need to change the distances around the trait, which we'll do for one gender, and then copy to the
 	     other two.
-	  */
-	  originalLocusList.ppLocusList[0]->pTraitLocus->mapPosition[0] = pedTraitPosCM; // Set position on originalLocusList just to be sure.
-	  
-	  if (analysisLocusList->traitLocusIndex != 0) {
-	    analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex] =
-	      cm_to_recombination_fraction (pedTraitPosCM - *get_map_position (analysisLocusList->pLocusIndex[analysisLocusList->traitLocusIndex - 1]),
-					    map.mapFunction);
-	    analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex - 1] =
-	      analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex];
-	  } else
-	    analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex] = -1;
-	  
-	  if (analysisLocusList->traitLocusIndex != (analysisLocusList->numLocus - 1)) {
-	    analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex] =
-	      cm_to_recombination_fraction (*get_map_position (analysisLocusList->pLocusIndex[analysisLocusList->traitLocusIndex + 1]) -
-					    pedTraitPosCM, map.mapFunction);
-	    analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex + 1] =
-	      analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex];
-	  } else
-	    analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex] = -1;
-
-	  // Homogenize the distances
-	  {
-	    int i, j;
-	    for (i=0; i<analysisLocusList->numLocus; i++)
-	      for (j=1; j<3; j++) {
-		analysisLocusList->pPrevLocusDistance[j][i] = analysisLocusList->pPrevLocusDistance[0][i];
-		analysisLocusList->pNextLocusDistance[j][i] = analysisLocusList->pNextLocusDistance[0][i];
-	      }
+	    */
+	    originalLocusList.ppLocusList[0]->pTraitLocus->mapPosition[0] = pedTraitPosCM; // Set position on originalLocusList just to be sure.
+	    
+	    if (analysisLocusList->traitLocusIndex != 0) {
+	      analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex] =
+		cm_to_recombination_fraction (pedTraitPosCM - *get_map_position (analysisLocusList->pLocusIndex[analysisLocusList->traitLocusIndex - 1]),
+					      map.mapFunction);
+	      analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex - 1] =
+		analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex];
+	    } else
+	      analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex] = -1;
+	    
+	    if (analysisLocusList->traitLocusIndex != (analysisLocusList->numLocus - 1)) {
+	      analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex] =
+		cm_to_recombination_fraction (*get_map_position (analysisLocusList->pLocusIndex[analysisLocusList->traitLocusIndex + 1]) -
+					      pedTraitPosCM, map.mapFunction);
+	      analysisLocusList->pPrevLocusDistance[0][analysisLocusList->traitLocusIndex + 1] =
+		analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex];
+	    } else
+	      analysisLocusList->pNextLocusDistance[0][analysisLocusList->traitLocusIndex] = -1;
+	    
+	    // Homogenize the distances
+	    {
+	      int i, j;
+	      for (i=0; i<analysisLocusList->numLocus; i++)
+		for (j=1; j<3; j++) {
+		  analysisLocusList->pPrevLocusDistance[j][i] = analysisLocusList->pPrevLocusDistance[0][i];
+		  analysisLocusList->pNextLocusDistance[j][i] = analysisLocusList->pNextLocusDistance[0][i];
+		}
+	    }
 	  }
-	}
+	  
+	  // Compute the likelihood (and time it!)
+	  
+	  swReset (singleModelSW);
+	  swStart (singleModelSW);
+	  if(sampleId == studyDB.sampleIdStart || studyDB.MCMC_flag ==0) {
+	    compute_server_pedigree_likelihood (pPedigreeList, pPedigree, 1);
+	  }
+	  else {
+	    compute_server_pedigree_likelihood (pPedigreeList, pPedigree, 0);
+	  }
+	  swStop (singleModelSW);
 
-	// Compute the likelihood (and time it!)
+	  if(studyDB.MCMC_flag == 0) {
+	    PutWork (modelType->numMarkers,
+		     pPedigree->likelihood,
+		     difftime (time (NULL), singleModelSW->swStartWallTime));
+	  }
+	  else {
+	    PutWork ( sampleId * 10 + modelType->numMarkers + 200, 
+		      pPedigree->likelihood,
+		      difftime (time(NULL), singleModelSW->swStartWallTime));
+	  }
 
-	swReset (singleModelSW);
-	swStart (singleModelSW);
-	compute_server_pedigree_likelihood (pPedigreeList, pPedigree);
-	swStop (singleModelSW);
-
-	PutWork (modelType->numMarkers,
-		 pPedigree->likelihood,
-		 difftime (time (NULL), singleModelSW->swStartWallTime));
-
-	DIAG (ALTLSERVER, 1, { \
+	  DIAG (ALTLSERVER, 1, {fprintf(stderr, "#Markers: %d, SampleId: %d, likelihood; %.8g\n", \
+					modelType->numMarkers, sampleId, pPedigree->likelihood); });
+	  if(modelType->trait == DICHOTOMOUS) {
+	    DIAG (ALTLSERVER, 1, {					\
 	    fprintf (stderr, "Ped: %s, Pos: %.8g, DGF: %.8g, LC1DD: %.8g, LC1Dd: %.8g, LC1dd: %.8g => Likelihood %.8g\n", \
-		     pPedigree->sPedigreeID, \
-		     pedTraitPosCM, pLocus->pAlleleFrequency[0], \
+		     pPedigree->sPedigreeID,				\
+		     pedTraitPosCM, pLocus->pAlleleFrequency[0],	\
 		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], \
 		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], \
 		     pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1], \
 		     pPedigree->likelihood);});
+	  } else {
+	    DIAG (ALTLSERVER, 1, {					\
+		fprintf (stderr, "Ped: %s, Pos: %.8g, DGF: %.8g, LC1MeanDD: %.8g, LC1Dd: %.8g, LC1dd: %.8g, \
+                         LC1SD: %.8g,  LC2SD: %.8g, LC3SD: %.8g, Threshold: %.8g => Likelihood %.8g\n", \
+			 pPedigree->sPedigreeID,			\
+			 pedTraitPosCM, pLocus->pAlleleFrequency[0],	\
+			 pTrait->means[0][0][0], \
+			 pTrait->means[0][0][1], \
+			 pTrait->means[0][1][1], \
+			 pTrait->stddev[0][0][0], \
+			 pTrait->stddev[0][0][1], \
+			 pTrait->stddev[0][1][1], \
+			 pTrait->cutoffValue[0], \
+			 pPedigree->likelihood);});
+	  }
 	/*
-	if (locusListType == 1)
+	  if (locusListType == 1)
 	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED  marker likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
-	else if (locusListType == 2)
+	  else if (locusListType == 2)
 	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
-	else
+	  else
 	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED combined likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
 	*/
-      } 
+	} // end of samplings
+	gettimeofday(&t_end, NULL);
+	DIAG (ALTLSERVER, 0, {fprintf(stderr, "Elapsed time for samplings is: %6.4f seconds\n", \
+				      ((double)t_end.tv_sec - (double)t_start.tv_sec)+ ((double)t_end.tv_usec - (double)t_start.tv_usec)/1000000); });
+      }
    }
 
     // Clean up by faking all results
@@ -1018,13 +1158,15 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
   if (analysisLocusList->numLocus == 1) { // Trait likelihood
     if (toupper(*studyDB.role) == 'C') {
       myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, -9999.99);
-      pPedigree->likelihood = GetDLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
-					pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
+      pPedigree->likelihood = 
+          GetQLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
+			  pTrait->means[0][0][0], pTrait->means[0][0][1], pTrait->means[0][1][0], pTrait->means[0][1][1],
+			  pTrait->means[1][0][0], pTrait->means[1][0][1], pTrait->means[1][1][0], pTrait->means[1][1][1],
+			  pTrait->means[2][0][0], pTrait->means[2][0][1], pTrait->means[2][1][0], pTrait->means[2][1][1],
+			  pTrait->stddev[0][0][0], pTrait->stddev[0][0][1], pTrait->stddev[0][1][0], pTrait->stddev[0][1][1],
+			  pTrait->stddev[1][0][0], pTrait->stddev[1][0][1], pTrait->stddev[1][1][0], pTrait->stddev[1][1][1],
+			  pTrait->stddev[2][0][0], pTrait->stddev[2][0][1], pTrait->stddev[2][1][0], pTrait->stddev[2][1][1],
+			  pTrait->cutoffValue[0], pTrait->cutoffValue[1], pTrait->cutoffValue[2],
 					0, 0, 0, 0);
       if (pPedigree->likelihood == -1) {
 	// Bogus result

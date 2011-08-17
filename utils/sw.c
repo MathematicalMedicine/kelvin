@@ -1306,7 +1306,7 @@ void swDiagInit(void) {
 
   e.g.:
 
-  envDiagLevel[LIKELIHOOD] = 77;
+  envDiagLevel[LIKELIHOOD] = 2;
 
   */
 

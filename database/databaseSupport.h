@@ -15,3 +15,22 @@ int GetDWork (double, double, int, double *, char *, double *,
 	      double *, double *, double *, double *);
 void PutWork (int, double, int);
 
+double GetQLikelihood (int, double, 
+		       double, double, double, double,
+		       double, double, double, double,
+		       double, double, double, double,
+		       double, double, double, double,
+		       double, double, double, double,
+		       double, double, double, double,
+		       double, double, double,
+		       int, int, double, int);
+int GetQWork (double, double, int, double *, char *, double *, 
+	      double *, double *, double *, double *,
+	      double *, double *, double *, double *,
+	      double *, double *, double *, double *,
+	      double *, double *, double *, double *,
+	      double *, double *, double *, double *,
+	      double *, double *, double *, double *,
+	      double *, double *, double *);
+
+

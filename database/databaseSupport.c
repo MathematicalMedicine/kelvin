@@ -251,6 +251,65 @@ void prepareDBStatements () {
   if (mysql_stmt_bind_result (studyDB.stmtGetDLikelihoodResults, studyDB.bindGetDLikelihoodResults))
     ERROR("Cannot bind GetDLikelihood results select statement (%s)", mysql_stmt_error(studyDB.stmtGetDLikelihoodResults));
 
+  // Prepare the GetQLikelihood call
+  studyDB.stmtGetQLikelihood = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetQLikelihood, 0, sizeof(studyDB.bindGetQLikelihood));
+
+  BINDNUMERIC (studyDB.bindGetQLikelihood[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[1], studyDB.dGF, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[2], studyDB.lC1BigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[3], studyDB.lC1BigLittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[4], studyDB.lC1LittleBigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[5], studyDB.lC1LittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[6], studyDB.lC2BigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[7], studyDB.lC2BigLittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[8], studyDB.lC2LittleBigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[9], studyDB.lC2LittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[10], studyDB.lC3BigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[11], studyDB.lC3BigLittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[12], studyDB.lC3LittleBigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[13], studyDB.lC3LittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[14], studyDB.lC1BigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[15], studyDB.lC1BigLittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[16], studyDB.lC1LittleBigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[17], studyDB.lC1LittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[18], studyDB.lC2BigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[19], studyDB.lC2BigLittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[20], studyDB.lC2LittleBigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[21], studyDB.lC2LittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[22], studyDB.lC3BigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[23], studyDB.lC3BigLittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[24], studyDB.lC3LittleBigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[25], studyDB.lC3LittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[26], studyDB.lC1Threshold, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[27], studyDB.lC2Threshold, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[28], studyDB.lC3Threshold, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[29], studyDB.regionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[30], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[31], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[32], studyDB.parentRegionSplitDir, MYSQL_TYPE_LONG);
+
+  strncpy (studyDB.strGetQLikelihood, "call GetQLikelihood (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outMarkerCount,@outLikelihood)", MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtGetQLikelihood, studyDB.strGetQLikelihood, strlen (studyDB.strGetQLikelihood)))
+    ERROR("Cannot prepare GetQLikelihood call statement (%s)", mysql_stmt_error(studyDB.stmtGetQLikelihood));
+  if (mysql_stmt_bind_param (studyDB.stmtGetQLikelihood, studyDB.bindGetQLikelihood))
+    ERROR("Cannot bind GetQLikelihood call statement (%s)", mysql_stmt_error(studyDB.stmtGetQLikelihood));
+
+  // Prepare the GetQLikelihood results call
+  studyDB.stmtGetQLikelihoodResults = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetQLikelihoodResults, 0, sizeof(studyDB.bindGetQLikelihoodResults));
+
+  BINDNUMERIC (studyDB.bindGetQLikelihoodResults[0], studyDB.regionId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetQLikelihoodResults[1], studyDB.markerCount, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetQLikelihoodResults[2], studyDB.lOD, MYSQL_TYPE_DOUBLE);
+
+  strncpy (studyDB.strGetQLikelihoodResults, "Select @outRegionId, @outMarkerCount, @outLikelihood", MAXSTMTLEN-1);
+  if (mysql_stmt_prepare (studyDB.stmtGetQLikelihoodResults, studyDB.strGetQLikelihoodResults, strlen (studyDB.strGetQLikelihoodResults)))
+    ERROR("Cannot prepare GetQLikelihood results select statement (%s)", mysql_stmt_error(studyDB.stmtGetQLikelihoodResults));
+  if (mysql_stmt_bind_result (studyDB.stmtGetQLikelihoodResults, studyDB.bindGetQLikelihoodResults))
+    ERROR("Cannot bind GetQLikelihood results select statement (%s)", mysql_stmt_error(studyDB.stmtGetQLikelihoodResults));
+
   // Prepare the server sign-on
   studyDB.stmtSignOn = mysql_stmt_init (studyDB.connection);
   memset (studyDB.bindSignOn, 0, sizeof(studyDB.bindSignOn));
@@ -265,8 +324,10 @@ void prepareDBStatements () {
   BINDSTRING (studyDB.bindSignOn[7], studyDB.algorithm, sizeof (studyDB.algorithm));
   BINDNUMERIC (studyDB.bindSignOn[8], studyDB.markerCount, MYSQL_TYPE_LONG);
   BINDSTRING (studyDB.bindSignOn[9], studyDB.programVersion, sizeof (studyDB.programVersion));
+  BINDNUMERIC (studyDB.bindSignOn[10], studyDB.sampleIdStart, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindSignOn[11], studyDB.sampleIdEnd, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strSignOn, "Insert into Servers (ConnectionId, HostName, ProcessId, KeepAliveFlag, StudyId, PedigreeRegEx, PedigreeNotRegEx, ChromosomeNo, Algorithm, MarkerCount, ProgramVersion) values (connection_id(),?,?,?,?,?,?,?,?,?,?)", MAXSTMTLEN-1);
+  strncpy (studyDB.strSignOn, "Insert into Servers (ConnectionId, HostName, ProcessId, KeepAliveFlag, StudyId, PedigreeRegEx, PedigreeNotRegEx, ChromosomeNo, Algorithm, MarkerCount, ProgramVersion, SampleIdStart, SampleIdEnd) values (connection_id(),?,?,?,?,?,?,?,?,?,?,?,?)", MAXSTMTLEN-1);
   if (mysql_stmt_prepare (studyDB.stmtSignOn, studyDB.strSignOn, strlen (studyDB.strSignOn)))
     ERROR("Cannot prepare sign-on insert statement (%s)", mysql_stmt_error(studyDB.stmtSignOn));
   if (mysql_stmt_bind_param (studyDB.stmtSignOn, studyDB.bindSignOn))
@@ -339,36 +400,102 @@ void prepareDBStatements () {
   if (mysql_stmt_prepare (studyDB.stmtGetDParts, studyDB.strGetDParts, strlen (studyDB.strGetDParts)))
     ERROR("Cannot prepare GetDParts call statement (%s)", mysql_stmt_error(studyDB.stmtGetDParts));
 
-  // Prepare the GetWork results call
-  studyDB.stmtGetWorkResults = mysql_stmt_init (studyDB.connection);
-  memset (studyDB.bindGetWorkResults, 0, sizeof(studyDB.bindGetWorkResults));
+  // Prepare the GetQParts call
+  studyDB.stmtGetQParts = mysql_stmt_init (studyDB.connection);
+  strncpy (studyDB.strGetQParts, "call GetQParts (@outLC1MPId, @outLC2MPId, @outLC3MPId, @outDGF, "
+	   "@outLC1BMean, @outLC1BLMean, @outLC1LBMean, @outLC1LMean,"
+	   "@outLC2BMean, @outLC2BLMean, @outLC2LBMean, @outLC2LMean,"
+	   "@outLC3BMean, @outLC3BLMean, @outLC3LBMean, @outLC3LMean," 
+	   "@outLC1BSD, @outLC1BLSD, @outLC1LBSD, @outLC1LSD,"
+	   "@outLC2BSD, @outLC2BLSD, @outLC2LBSD, @outLC2LSD,"
+	   "@outLC3BSD, @outLC3BLSD, @outLC3LBSD, @outLC3LSD," 
+	   "@outLC1Threshold, @outLC2Threshold, @outLC3Threshold)", 
+	   MAXSTMTLEN-1);
 
-  BINDNUMERIC (studyDB.bindGetWorkResults[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
-  BINDSTRING (studyDB.bindGetWorkResults[1], studyDB.pedigreeSId, sizeof (studyDB.pedigreeSId));
-  BINDNUMERIC (studyDB.bindGetWorkResults[2], studyDB.pedTraitPosCM, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[3], studyDB.dGF, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[4], studyDB.lC1BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[5], studyDB.lC1BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[6], studyDB.lC1LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[7], studyDB.lC1LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[8], studyDB.lC2BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[9], studyDB.lC2BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[10], studyDB.lC2LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[11], studyDB.lC2LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[12], studyDB.lC3BigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[13], studyDB.lC3BigLittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[14], studyDB.lC3LittleBigPen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetWorkResults[15], studyDB.lC3LittlePen, MYSQL_TYPE_DOUBLE);
+  if (mysql_stmt_prepare (studyDB.stmtGetQParts, studyDB.strGetQParts, strlen (studyDB.strGetQParts)))
+    ERROR("Cannot prepare GetQParts call statement (%s)", mysql_stmt_error(studyDB.stmtGetQParts));
 
-  strncpy (studyDB.strGetWorkResults, "Select @outPedPosId, @outPedigreeSId, @outPedTraitPosCM, @outDGF,"
+  // Prepare the GetDWork results call
+  studyDB.stmtGetDWorkResults = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetDWorkResults, 0, sizeof(studyDB.bindGetDWorkResults));
+
+  BINDNUMERIC (studyDB.bindGetDWorkResults[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
+  BINDSTRING (studyDB.bindGetDWorkResults[1], studyDB.pedigreeSId, sizeof (studyDB.pedigreeSId));
+  BINDNUMERIC (studyDB.bindGetDWorkResults[2], studyDB.pedTraitPosCM, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[3], studyDB.dGF, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[4], studyDB.lC1BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[5], studyDB.lC1BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[6], studyDB.lC1LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[7], studyDB.lC1LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[8], studyDB.lC2BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[9], studyDB.lC2BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[10], studyDB.lC2LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[11], studyDB.lC2LittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[12], studyDB.lC3BigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[13], studyDB.lC3BigLittlePen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[14], studyDB.lC3LittleBigPen, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDWorkResults[15], studyDB.lC3LittlePen, MYSQL_TYPE_DOUBLE);
+
+  strncpy (studyDB.strGetDWorkResults, "Select @outPedPosId, @outPedigreeSId, @outPedTraitPosCM, @outDGF,"
 	   "@outLC1BP, @outLC1BLP, @outLC1LBP, @outLC1LP, "
 	   "@outLC2BP, @outLC2BLP, @outLC2LBP, @outLC2LP, "
 	   "@outLC3BP, @outLC3BLP, @outLC3LBP, @outLC3LP", MAXSTMTLEN-1);
 
-  if (mysql_stmt_prepare (studyDB.stmtGetWorkResults, studyDB.strGetWorkResults, strlen (studyDB.strGetWorkResults)))
-    ERROR("Cannot prepare GetWorkResults call statement (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
-  if (mysql_stmt_bind_result (studyDB.stmtGetWorkResults, studyDB.bindGetWorkResults))
-    ERROR("Cannot bind GetWorkResults call statement (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
+  if (mysql_stmt_prepare (studyDB.stmtGetDWorkResults, studyDB.strGetDWorkResults, strlen (studyDB.strGetDWorkResults)))
+    ERROR("Cannot prepare GetDWorkResults call statement (%s)", mysql_stmt_error(studyDB.stmtGetDWorkResults));
+  if (mysql_stmt_bind_result (studyDB.stmtGetDWorkResults, studyDB.bindGetDWorkResults))
+    ERROR("Cannot bind GetDWorkResults call statement (%s)", mysql_stmt_error(studyDB.stmtGetDWorkResults));
+
+  // Prepare the GetQWork results call
+  studyDB.stmtGetQWorkResults = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetQWorkResults, 0, sizeof(studyDB.bindGetQWorkResults));
+
+  BINDNUMERIC (studyDB.bindGetQWorkResults[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
+  BINDSTRING (studyDB.bindGetQWorkResults[1], studyDB.pedigreeSId, sizeof (studyDB.pedigreeSId));
+  BINDNUMERIC (studyDB.bindGetQWorkResults[2], studyDB.pedTraitPosCM, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[3], studyDB.dGF, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[4], studyDB.lC1BigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[5], studyDB.lC1BigLittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[6], studyDB.lC1LittleBigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[7], studyDB.lC1LittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[8], studyDB.lC2BigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[9], studyDB.lC2BigLittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[10], studyDB.lC2LittleBigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[11], studyDB.lC2LittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[12], studyDB.lC3BigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[13], studyDB.lC3BigLittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[14], studyDB.lC3LittleBigMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[15], studyDB.lC3LittleMean, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[16], studyDB.lC1BigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[17], studyDB.lC1BigLittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[18], studyDB.lC1LittleBigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[19], studyDB.lC1LittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[20], studyDB.lC2BigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[21], studyDB.lC2BigLittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[22], studyDB.lC2LittleBigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[23], studyDB.lC2LittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[24], studyDB.lC3BigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[25], studyDB.lC3BigLittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[26], studyDB.lC3LittleBigSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[27], studyDB.lC3LittleSD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[28], studyDB.lC1Threshold, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[29], studyDB.lC2Threshold, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQWorkResults[30], studyDB.lC3Threshold, MYSQL_TYPE_DOUBLE);
+
+  strncpy (studyDB.strGetQWorkResults, "Select @outPedPosId, @outPedigreeSId, @outPedTraitPosCM, @outDGF,"
+	   "@outLC1BMean, @outLC1BLMean, @outLC1LBMean, @outLC1LMean,"
+	   "@outLC2BMean, @outLC2BLMean, @outLC2LBMean, @outLC2LMean,"
+	   "@outLC3BMean, @outLC3BLMean, @outLC3LBMean, @outLC3LMean," 
+	   "@outLC1BSD, @outLC1BLSD, @outLC1LBSD, @outLC1LSD,"
+	   "@outLC2BSD, @outLC2BLSD, @outLC2LBSD, @outLC2LSD,"
+	   "@outLC3BSD, @outLC3BLSD, @outLC3LBSD, @outLC3LSD," 
+	   "@outLC1Threshold, @outLC2Threshold, @outLC3Threshold", 
+	   MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtGetQWorkResults, studyDB.strGetQWorkResults, strlen (studyDB.strGetQWorkResults)))
+    ERROR("Cannot prepare GetQWorkResults call statement (%s)", mysql_stmt_error(studyDB.stmtGetQWorkResults));
+  if (mysql_stmt_bind_result (studyDB.stmtGetQWorkResults, studyDB.bindGetQWorkResults))
+    ERROR("Cannot bind GetQWorkResults call statement (%s)", mysql_stmt_error(studyDB.stmtGetQWorkResults));
 
   // Prepare the PutWork call
   studyDB.stmtPutWork = mysql_stmt_init (studyDB.connection);
@@ -470,6 +597,81 @@ double GetDLikelihood (int pedPosId, double dGF,
   }
 }
 
+double GetQLikelihood (int pedPosId, double dGF,
+	      double lC1BigMean, double lC1BigLittleMean, double lC1LittleBigMean, double lC1LittleMean,
+	      double lC2BigMean, double lC2BigLittleMean, double lC2LittleBigMean, double lC2LittleMean,
+	      double lC3BigMean, double lC3BigLittleMean, double lC3LittleBigMean, double lC3LittleMean, 
+	      double lC1BigSD, double lC1BigLittleSD, double lC1LittleBigSD, double lC1LittleSD,
+	      double lC2BigSD, double lC2BigLittleSD, double lC2LittleBigSD, double lC2LittleSD,
+	      double lC3BigSD, double lC3BigLittleSD, double lC3LittleBigSD, double lC3LittleSD,
+		       double lC1Threshold, double lC2Threshold, double lC3Threshold,
+		       int regionNo, int parentRegionNo, double parentRegionError, int parentRegionSplitDir)
+{
+  studyDB.pedPosId = pedPosId;
+  studyDB.dGF = dGF;
+  studyDB.lC1BigMean = lC1BigMean;
+  studyDB.lC1BigLittleMean = lC1BigLittleMean;
+  studyDB.lC1LittleBigMean = lC1LittleBigMean;
+  studyDB.lC1LittleMean = lC1LittleMean;
+  studyDB.lC2BigMean = lC2BigMean;
+  studyDB.lC2BigLittleMean = lC2BigLittleMean;
+  studyDB.lC2LittleBigMean = lC2LittleBigMean;
+  studyDB.lC2LittleMean = lC2LittleMean;
+  studyDB.lC3BigMean = lC3BigMean;
+  studyDB.lC3BigLittleMean = lC3BigLittleMean;
+  studyDB.lC3LittleBigMean = lC3LittleBigMean;
+  studyDB.lC3LittleMean = lC3LittleMean;
+  studyDB.lC1BigSD = lC1BigSD;
+  studyDB.lC1BigLittleSD = lC1BigLittleSD;
+  studyDB.lC1LittleBigSD = lC1LittleBigSD;
+  studyDB.lC1LittleSD = lC1LittleSD;
+  studyDB.lC2BigSD = lC2BigSD;
+  studyDB.lC2BigLittleSD = lC2BigLittleSD;
+  studyDB.lC2LittleBigSD = lC2LittleBigSD;
+  studyDB.lC2LittleSD = lC2LittleSD;
+  studyDB.lC3BigSD = lC3BigSD;
+  studyDB.lC3BigLittleSD = lC3BigLittleSD;
+  studyDB.lC3LittleBigSD = lC3LittleBigSD;
+  studyDB.lC3LittleSD = lC3LittleSD;
+  studyDB.lC1Threshold = lC1Threshold;
+  studyDB.lC2Threshold = lC2Threshold;
+  studyDB.lC3Threshold = lC3Threshold;
+  studyDB.regionNo = regionNo;
+  studyDB.parentRegionNo = parentRegionNo;
+  studyDB.parentRegionError = parentRegionError;
+  studyDB.parentRegionSplitDir = parentRegionSplitDir;
+
+  while (1) {
+    if (mysql_stmt_execute (studyDB.stmtGetQLikelihood) != 0) {
+      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood), "40001") != 0) &&
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood), "HY000") != 0)) {
+	ERROR("Cannot execute GetQLikelihood call statement w/%d, (%s, %s)", pedPosId,
+	      mysql_stmt_error(studyDB.stmtGetQLikelihood), mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood));
+      } else {
+	swLogProgress(5, 0, "Retrying deadlock in 1 second");
+	sleep(1);
+	continue;
+      }
+    }
+    break;
+  }
+  if (mysql_stmt_execute (studyDB.stmtGetQLikelihoodResults) != 0)
+    ERROR("Cannot execute GetQLikelihood results select statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtGetQLikelihoodResults), mysql_stmt_sqlstate(studyDB.stmtGetQLikelihoodResults));
+  if (mysql_stmt_store_result (studyDB.stmtGetQLikelihoodResults) != 0)
+    ERROR("Cannot retrieve GetQLikelihood (%s)", mysql_stmt_error(studyDB.stmtGetQLikelihoodResults));
+  if (mysql_stmt_fetch (studyDB.stmtGetQLikelihoodResults) != 0)
+    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetQLikelihoodResults));
+
+  if (*studyDB.bindGetQLikelihoodResults[2].is_null) {
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL", studyDB.regionId);});
+    return -1LL;
+  } else {
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is %G", studyDB.regionId, studyDB.lOD);});
+    return studyDB.lOD;
+  }
+}
+
 void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVersion) {
 
   if (dBStmtsNotReady)
@@ -511,6 +713,11 @@ void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVe
     studyDB.serverId = atoi(studyDB.row[0]);
     DIAG (ALTLSERVER, 0, { fprintf (stderr, "Signed on as serverId %d\n", studyDB.serverId);});
   }
+
+  /* set trait type */
+  sprintf(studyDB.strAdhocStatement, "set @traitType=%d", studyDB.traitType);
+  if (mysql_query(studyDB.connection, studyDB.strAdhocStatement))
+    ERROR("Can't set trait type %d (%s)", studyDB.traitType, mysql_error(studyDB.connection));
 
 }
 
@@ -567,7 +774,12 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
   // serverId is already set
   studyDB.lowPosition = lowPosition;
   studyDB.highPosition = highPosition;
-  studyDB.locusListType = locusListType;
+  if(studyDB.MCMC_flag == 0) {
+    studyDB.locusListType = locusListType;
+  }
+  else {
+    studyDB.locusListType = studyDB.totalSampleCount * 10 + locusListType + 200;
+  }
 
   // GetWork
   while (1) {
@@ -596,15 +808,15 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
   studyDB.pedPosId = 0;
   studyDB.pedTraitPosCM = studyDB.dGF = studyDB.lC1BigPen = studyDB.lC1BigLittlePen = 
     studyDB.lC1LittleBigPen = studyDB.lC1LittlePen = 0.0;
-  if (mysql_stmt_execute (studyDB.stmtGetWorkResults))
-    ERROR("Cannot execute GetWorkResults statement (%s, %s)", 
-	  mysql_stmt_error(studyDB.stmtGetWorkResults), mysql_stmt_sqlstate(studyDB.stmtGetWorkResults));
-  if (mysql_stmt_store_result (studyDB.stmtGetWorkResults) != 0)
-    ERROR("Cannot retrieve GetWork results (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
-  if (mysql_stmt_fetch (studyDB.stmtGetWorkResults) != 0)
-    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetWorkResults));
-  if (*studyDB.bindGetWorkResults[0].is_null) {
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetWorkResults)");});
+  if (mysql_stmt_execute (studyDB.stmtGetDWorkResults))
+    ERROR("Cannot execute GetDWorkResults statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtGetDWorkResults), mysql_stmt_sqlstate(studyDB.stmtGetDWorkResults));
+  if (mysql_stmt_store_result (studyDB.stmtGetDWorkResults) != 0)
+    ERROR("Cannot retrieve GetWork results (%s)", mysql_stmt_error(studyDB.stmtGetDWorkResults));
+  if (mysql_stmt_fetch (studyDB.stmtGetDWorkResults) != 0)
+    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDWorkResults));
+  if (*studyDB.bindGetDWorkResults[0].is_null) {
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetDWorkResults)");});
     return FALSE;
   } else {
     DIAG (ALTLSERVER, 1, { \
@@ -629,11 +841,115 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
     return TRUE;
   }
 }
+int GetQWork (double lowPosition, double highPosition, int locusListType, double *pedTraitPosCM, char *pedigreeSId, double *dGF,
+	      double *lC1BigMean, double *lC1BigLittleMean, double *lC1LittleBigMean, double *lC1LittleMean,
+	      double *lC2BigMean, double *lC2BigLittleMean, double *lC2LittleBigMean, double *lC2LittleMean,
+	      double *lC3BigMean, double *lC3BigLittleMean, double *lC3LittleBigMean, double *lC3LittleMean, 
+	      double *lC1BigSD, double *lC1BigLittleSD, double *lC1LittleBigSD, double *lC1LittleSD,
+	      double *lC2BigSD, double *lC2BigLittleSD, double *lC2LittleBigSD, double *lC2LittleSD,
+	      double *lC3BigSD, double *lC3BigLittleSD, double *lC3LittleBigSD, double *lC3LittleSD,
+	      double *lC1Threshold, double *lC2Threshold, double *lC3Threshold
+	      )
+{
+
+  // serverId is already set
+  studyDB.lowPosition = lowPosition;
+  studyDB.highPosition = highPosition;
+  if(studyDB.MCMC_flag == 0) {
+    studyDB.locusListType = locusListType;
+  }
+  else {
+    studyDB.locusListType = studyDB.totalSampleCount * 10 + locusListType + 200;
+  }
+
+  // GetWork
+  while (1) {
+    if (mysql_stmt_execute (studyDB.stmtGetWork) != 0) {
+      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "40001") != 0) &&
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "HY000") != 0)) {
+	ERROR("Cannot execute Get statement w/%G, %G, (%s, %s)", 
+	      lowPosition, highPosition,
+	      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
+      } else {
+	swLogProgress(5, 0, "Retrying presumed deadlock in 1 second (%s, %s)",
+		      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
+	sleep(1);
+	continue;
+      }
+    }
+    break;
+  }    
+
+  // Get QT parts - this uses the temporary variables in our session to get parameters from GetWork.
+  if (mysql_stmt_execute (studyDB.stmtGetQParts))
+    ERROR("Cannot execute GetQParts statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtGetQParts), mysql_stmt_sqlstate(studyDB.stmtGetQParts));
+
+  // GetQWork results - a slew of parameters
+  studyDB.pedPosId = 0;
+  studyDB.pedTraitPosCM = studyDB.dGF = studyDB.lC1BigPen = studyDB.lC1BigLittlePen = 
+    studyDB.lC1LittleBigPen = studyDB.lC1LittlePen = 0.0;
+  if (mysql_stmt_execute (studyDB.stmtGetQWorkResults))
+    ERROR("Cannot execute GetQWorkResults statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtGetQWorkResults), mysql_stmt_sqlstate(studyDB.stmtGetQWorkResults));
+  if (mysql_stmt_store_result (studyDB.stmtGetQWorkResults) != 0)
+    ERROR("Cannot retrieve GetQWork results (%s)", mysql_stmt_error(studyDB.stmtGetQWorkResults));
+  if (mysql_stmt_fetch (studyDB.stmtGetQWorkResults) != 0)
+    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetQWorkResults));
+  if (*studyDB.bindGetQWorkResults[0].is_null) {
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetQWorkResults)");});
+    return FALSE;
+  } else {
+    DIAG (ALTLSERVER, 1, { \
+	fprintf (stderr, "Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G", \
+		 studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
+		 studyDB.lC1BigMean, studyDB.lC1BigLittleMean, studyDB.lC1LittleBigMean, studyDB.lC1LittleMean);});
+    strcpy (pedigreeSId, studyDB.pedigreeSId);
+    *pedTraitPosCM = studyDB.pedTraitPosCM;
+    *dGF = studyDB.dGF;
+    *lC1BigMean = studyDB.lC1BigMean;
+    *lC1BigLittleMean = studyDB.lC1BigLittleMean;
+    *lC1LittleBigMean = studyDB.lC1LittleBigMean;
+    *lC1LittleMean = studyDB.lC1LittleMean;
+    *lC2BigMean = studyDB.lC2BigMean;
+    *lC2BigLittleMean = studyDB.lC2BigLittleMean;
+    *lC2LittleBigMean = studyDB.lC2LittleBigMean;
+    *lC2LittleMean = studyDB.lC2LittleMean;
+    *lC3BigMean = studyDB.lC3BigMean;
+    *lC3BigLittleMean = studyDB.lC3BigLittleMean;
+    *lC3LittleBigMean = studyDB.lC3LittleBigMean;
+    *lC3LittleMean = studyDB.lC3LittleMean;
+    *lC1BigSD = studyDB.lC1BigSD;
+    *lC1BigLittleSD = studyDB.lC1BigLittleSD;
+    *lC1LittleBigSD = studyDB.lC1LittleBigSD;
+    *lC1LittleSD = studyDB.lC1LittleSD;
+    *lC2BigSD = studyDB.lC2BigSD;
+    *lC2BigLittleSD = studyDB.lC2BigLittleSD;
+    *lC2LittleBigSD = studyDB.lC2LittleBigSD;
+    *lC2LittleSD = studyDB.lC2LittleSD;
+    *lC3BigSD = studyDB.lC3BigSD;
+    *lC3BigLittleSD = studyDB.lC3BigLittleSD;
+    *lC3LittleBigSD = studyDB.lC3LittleBigSD;
+    *lC3LittleSD = studyDB.lC3LittleSD;
+    *lC1Threshold = studyDB.lC1Threshold;
+    *lC2Threshold = studyDB.lC2Threshold;
+    *lC3Threshold = studyDB.lC3Threshold;
+    return TRUE;
+  }
+}
 
 void PutWork (int markerCount, double lOD, int runtimeCostSec)
 {
   
   // serverId is already set
+  /*
+  if(studyDB.MCMC_flag == 0) {
+    studyDB.markerCount = markerCount;
+  }
+  else {
+    studyDB.markerCount = markerCount + 200;
+  }
+  */
   studyDB.markerCount = markerCount;
   studyDB.lOD = lOD;
   studyDB.runtimeCostSec = runtimeCostSec;

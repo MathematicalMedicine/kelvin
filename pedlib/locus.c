@@ -2961,7 +2961,7 @@ populate_pedigree_saved_genotype_link (int locus, Pedigree * pPed)
     }
     pGeno = pPerson->ppGenotypeList[locus];
     pPerson->ppSavedGenotypeList[locus] = pGeno;
-    pPerson->pSavedNumGenotype[locus] = pPerson->pSavedNumGenotype[locus];
+    pPerson->pSavedNumGenotype[locus] = pPerson->pNumGenotype[locus];
     while (pGeno != NULL) {
       pGeno->pSavedNext = pGeno->pNext;
       pGeno = pGeno->pNext;

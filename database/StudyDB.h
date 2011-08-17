@@ -59,7 +59,7 @@ struct StudyDB {
   double lOD;
   // Sign-on...
   MYSQL_STMT *stmtSignOn;
-  MYSQL_BIND bindSignOn[10];
+  MYSQL_BIND bindSignOn[12];
   char strSignOn[MAXSTMTLEN];
   char hostName[33];
   int processId;
@@ -90,10 +90,10 @@ struct StudyDB {
   // GetDParts...
   MYSQL_STMT *stmtGetDParts;
   char strGetDParts[MAXSTMTLEN];
-  // GetWorkResults
-  MYSQL_STMT *stmtGetWorkResults;
-  MYSQL_BIND bindGetWorkResults[16];
-  char strGetWorkResults[MAXSTMTLEN];
+  // GetDWorkResults
+  MYSQL_STMT *stmtGetDWorkResults;
+  MYSQL_BIND bindGetDWorkResults[16];
+  char strGetDWorkResults[MAXSTMTLEN];
   double pedTraitPosCM;
   // PutWork...
   MYSQL_STMT *stmtPutWork;
@@ -103,5 +103,69 @@ struct StudyDB {
   // other...
   int bogusLikelihoods;
   int realLikelihoods;
+
+  // MCMC
+  int totalSampleCount;
+  int sampleIdStart;
+  int sampleIdEnd;
+  int MCMC_flag;
+
+  int traitType;
+
+  // GetQLikelihood...
+  //  int posEvals;
+  MYSQL_STMT *stmtGetQLikelihood;
+  MYSQL_BIND bindGetQLikelihood[33];
+  char strGetQLikelihood[MAXSTMTLEN];
+  //  double dGF;
+  double lC1BigMean;
+  double lC1BigLittleMean;
+  double lC1LittleBigMean;
+  double lC1LittleMean;
+  double lC2BigMean;
+  double lC2BigLittleMean;
+  double lC2LittleBigMean;
+  double lC2LittleMean;
+  double lC3BigMean;
+  double lC3BigLittleMean;
+  double lC3LittleBigMean;
+  double lC3LittleMean;
+  double lC1BigSD;
+  double lC1BigLittleSD;
+  double lC1LittleBigSD;
+  double lC1LittleSD;
+  double lC2BigSD;
+  double lC2BigLittleSD;
+  double lC2LittleBigSD;
+  double lC2LittleSD;
+  double lC3BigSD;
+  double lC3BigLittleSD;
+  double lC3LittleBigSD;
+  double lC3LittleSD;
+  double lC1Threshold;
+  double lC2Threshold;
+  double lC3Threshold;
+  //int regionNo;
+  //int parentRegionNo;
+  //double parentRegionError;
+  //int parentRegionSplitDir;
+
+  // GetQLikelihood results...
+  MYSQL_STMT *stmtGetQLikelihoodResults;
+  MYSQL_BIND bindGetQLikelihoodResults[3];
+  char strGetQLikelihoodResults[MAXSTMTLEN];
+  //int regionId;
+  //int markerCount;
+  //double lOD;
+
+  // GetQParts...
+  MYSQL_STMT *stmtGetQParts;
+  char strGetQParts[MAXSTMTLEN];
+
+  // GetQWorkResults
+  MYSQL_STMT *stmtGetQWorkResults;
+  MYSQL_BIND bindGetQWorkResults[31];
+  char strGetQWorkResults[MAXSTMTLEN];
+  //double pedTraitPosCM;
 };
 

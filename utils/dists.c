@@ -3,11 +3,58 @@
 #include <math.h>
 #include "cdflib.h"
 
+#include "hashtab.h"
+
 #if defined (USE_GSL) || defined (VERIFY_GSL)
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_sf_gamma.h>
 #endif
+
+htab *t_pdf_hash = NULL;
+htab *t_cdf_hash = NULL;
+htab *chisq_pdf_hash = NULL;
+htab *chisq_cdf_hash = NULL;
+
+#define DIST_HASH_SIZE 15
+#define DIST_KEY_SIZE 12
+
+
+void dump_dist_hash(){
+} 
+int get_hash_t_pdf(double x, double *value);
+int hash_t_pdf(double x, double value);
+
+// only support DF 30 
+int get_hash_t_pdf(double x, double *value) {
+  unsigned char mykey[DIST_KEY_SIZE];
+
+  if(t_pdf_hash == NULL) {
+    t_pdf_hash = hcreate(DIST_HASH_SIZE);
+    return 0;
+  }
+  sprintf((char *)mykey, "%11.6f", x);
+  if(hfind(t_pdf_hash, mykey, DIST_KEY_SIZE)) {
+    // the value is already in the hash table, return the value
+    *value= *(double *)(hstuff(t_pdf_hash));
+    return 1;
+  }
+  else {
+    return 0;
+  }
+}
+
+// insert to t_pdf_hash
+int hash_t_pdf(double x, double value) {
+  unsigned char mykey[DIST_KEY_SIZE];
+  double *storage= (double *) malloc(sizeof(double));
+ 
+  *storage = value;
+  sprintf((char *)mykey, "%11.6f", x);
+  return (hadd(t_pdf_hash, mykey, DIST_KEY_SIZE, storage));
+ 
+}
+
 
 double interpolate (double xTarget, int tableSize, double *tableX, double *tableY) {
   double result;
@@ -714,6 +761,7 @@ double t_pdf_30 (double x, double degFree) {
 };
 
   double result;
+  double pdf;
 
   // Handle bad data first
   if (degFree != 30) {
@@ -721,8 +769,14 @@ double t_pdf_30 (double x, double degFree) {
     exit (EXIT_FAILURE);
   }
   //  fprintf (stderr, "t_pdf_30\n");
+
+  //  if(get_hash_t_pdf(x, &pdf))
+  //  return pdf;
+
 #ifdef USE_GSL
-  return(gsl_ran_tdist_pdf (x, (double) 30));
+  pdf=gsl_ran_tdist_pdf (x, (double) 30);
+  //hash_t_pdf(x, pdf);
+  return pdf;
 #endif
 
   // Simple cases...
@@ -743,6 +797,8 @@ double t_pdf_30 (double x, double degFree) {
       fprintf (stderr, "t_pdf_30 gives %g vs GSL of %g (difference is %g) for x of %g\n", result,
 	       gsl_ran_tdist_pdf (x, (double) 30), (result - gsl_ran_tdist_pdf (x, (double) 30)), x);
 #endif
+  
+  hash_t_pdf(x, result);
   return(result);
 }
 
