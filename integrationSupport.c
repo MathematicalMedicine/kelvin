@@ -367,6 +367,13 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = 1;
   pedigreeSet.log10Likelihood = 0;
 
+#ifdef STUDYDB
+  if (toupper(*studyDB.role) == 'S') {
+    compute_likelihood (&pedigreeSet);
+    return;
+  }
+#endif
+
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
 
     /* save the likelihood at null */
@@ -715,6 +722,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 #ifdef STUDYDB
   if (toupper(*studyDB.role) == 'S') {
     compute_likelihood (&pedigreeSet);
+    return;
   }
 #endif
 
@@ -2514,6 +2522,7 @@ void integrateMain ()
     /* Iterate over all positions in the analysis. */
 
     if (toupper(*studyDB.role) == 'S') {
+      //    if (toupper(*studyDB.role) == 'S' && numPositions > 1.5*originalLocusList.numLocus) {
       // We're a server! Completely suborn the trait loci vector in modelRange
       int i, j = 0;
 
@@ -2552,12 +2561,12 @@ void integrateMain ()
     CALCHOKE (mp_result, (size_t) numPositions, sizeof (SUMMARY_STAT), SUMMARY_STAT *);
 
     for (posIdx = 0; posIdx < numPositions; posIdx++) {
-
       if (fpIR != NULL)
         dk_curModel.posIdx = posIdx;
 
       /* positions listed are sex average positions */
       traitPos = modelRange->tloc[posIdx];
+      fprintf(stderr, "Position %f (%d/%d)\n", traitPos, posIdx+1, numPositions);
 
 #ifdef STUDYDB
       

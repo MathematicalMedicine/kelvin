@@ -509,6 +509,8 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
   int sampleId;
   int getwork_ret=0;
   struct timeval t_start, t_end;
+  double tmpLikelihood = 0;
+  Pedigree *firstPed; 
 
   DIAG (XM, 2, {
       fprintf (stderr, "In compute_likelihood from %s:%d\n", fileName, lineNo);
@@ -525,6 +527,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
   pPedigreeList->log10Likelihood = 0;
 
   if (toupper(*studyDB.role) == 'C') {
+    DIAG (ALTLSERVER, 0, {fprintf(stderr, "Client compute_likelihood");});
     /* 
        We're a client, we want to call GetLikelihood with all the appropriate likelhood variables
        for every pedigree. If we get a good Likelihood back, then we incorporate it into the result. 
@@ -677,6 +680,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
       if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
 	locusListType = 1;
 
+    DIAG (ALTLSERVER, 0, {fprintf(stderr, "Server compute_likelihood locusListType %d traitPosition %f\n", locusListType, traitPosition);});
     if (traitPosition != lastTraitPosition ||
 	((1 << (locusListType - 1)) & locusListTypesDone) == 0) { // Only do work if on a new position or different type analysisLocusList
 
@@ -729,9 +733,14 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	if(getwork_ret ==0)
 	  break;
 
+	DIAG (ALTLSERVER, 0, { fprintf (stderr, "Found work for trait position %GcM of type %d serves range from %GcM to %gcM\n", traitPosition, locusListType, lowPosition, highPosition);});
+
 	// Find the pedigree in the set
 	sampleIdStr[0]='\0';
+	tmpLikelihood = 0;
 	gettimeofday(&t_start, NULL);
+	swReset (singleModelSW);
+	swStart (singleModelSW);
 	//	for(sampleId=modelOptions->mcmcSampleStart; modelOptions->algorithm!= ALGORITHM_MCMC || sampleId <= modelOptions->mcmcSampleEnd; sampleId++) {
 	for(sampleId=studyDB.sampleIdStart; studyDB.MCMC_flag==0 || sampleId <= studyDB.sampleIdEnd; sampleId++) {
 	  sprintf(sampleIdStr, ".%d", sampleId);
@@ -790,16 +799,22 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	  
 	  // Compute the likelihood (and time it!)
 	  
-	  swReset (singleModelSW);
-	  swStart (singleModelSW);
+	  //swReset (singleModelSW);
+	  //swStart (singleModelSW);
 	  if(sampleId == studyDB.sampleIdStart || studyDB.MCMC_flag ==0) {
-	    compute_server_pedigree_likelihood (pPedigreeList, pPedigree, 1);
-	  }
-	  else {
+	    update_locus(pPedigreeList, 0);
+	    update_pedigree_penetrance(pPedigree, 0);
+	    firstPed = pPedigree;
 	    compute_server_pedigree_likelihood (pPedigreeList, pPedigree, 0);
 	  }
-	  swStop (singleModelSW);
-
+	  else {
+	    copy_pedigree_penetrance(pPedigree, firstPed, 0);
+	    compute_server_pedigree_likelihood (pPedigreeList, pPedigree, 0);
+	  }
+	  //swStop (singleModelSW);
+	  tmpLikelihood += pPedigree->likelihood;
+	  
+	  /*
 	  if(studyDB.MCMC_flag == 0) {
 	    PutWork (modelType->numMarkers,
 		     pPedigree->likelihood,
@@ -810,6 +825,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 		      pPedigree->likelihood,
 		      difftime (time(NULL), singleModelSW->swStartWallTime));
 	  }
+	  */
 
 	  DIAG (ALTLSERVER, 1, {fprintf(stderr, "#Markers: %d, SampleId: %d, likelihood; %.8g\n", \
 					modelType->numMarkers, sampleId, pPedigree->likelihood); });
@@ -846,11 +862,24 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED combined likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
 	*/
 	} // end of samplings
+	swStop (singleModelSW);
+	if(studyDB.MCMC_flag == 0) {
+	  PutWork (modelType->numMarkers,
+		   tmpLikelihood,
+		   difftime (time (NULL), singleModelSW->swStartWallTime));
+	}
+	else {
+	  int total = studyDB.sampleIdEnd - studyDB.sampleIdStart + 1;
+	  PutWork (  total * 10 + modelType->numMarkers + 200, 
+		     tmpLikelihood/total, 
+		    difftime (time(NULL), singleModelSW->swStartWallTime));
+	}
+
 	gettimeofday(&t_end, NULL);
 	DIAG (ALTLSERVER, 0, {fprintf(stderr, "Elapsed time for samplings is: %6.4f seconds\n", \
 				      ((double)t_end.tv_sec - (double)t_start.tv_sec)+ ((double)t_end.tv_usec - (double)t_start.tv_usec)/1000000); });
       }
-   }
+    }
 
     // Clean up by faking all results
     for (i = 0; i < pPedigreeList->numPedigree; i++) {
@@ -869,7 +898,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
     }
     pPedigreeList->likelihood = product_likelihood;
     pPedigreeList->log10Likelihood = sum_log_likelihood;
-    DIAG (ALTLSERVER, 1, {fprintf (stderr, "Server returning likelihood of %.4g\n", pPedigreeList->likelihood);});
+    DIAG (ALTLSERVER, 0, {fprintf (stderr, "Server returning likelihood of %.4g\n", pPedigreeList->likelihood);});
     return ret;
 
   } else {

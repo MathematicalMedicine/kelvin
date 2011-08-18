@@ -2136,6 +2136,43 @@ update_pedigree_penetrance (Pedigree *pPedigree, int locus)
   return 0;
 }
 
+/* use this function at your own risk!!! 
+ * ASSUMPTION - both pedigrees have exactly the same structure and represented in memory the same way!!!!
+ * this is created specifically for MCMC likelihood server use for performance reasons
+ * only works under non-polynomial 
+ */
+int
+copy_pedigree_penetrance (Pedigree *pPedigree, Pedigree *pSrc, int locus)
+{
+  Person *pPerson, *pPersonSrc;
+  Genotype *pGenotype, *pGenotypeSrc;
+  int i;
+
+  /* update genotype weight and position 
+   * in the genotype list 
+   * this will be done on the loci in the original locus list */
+
+  for (i = 0; i < pPedigree->numPerson; i++) {
+    pPerson = pPedigree->ppPersonList[i];
+    pPersonSrc = pSrc->ppPersonList[i];
+    /* pass the loop breaker duplicates */
+    if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
+      continue;
+    pGenotype = pPerson->ppSavedGenotypeList[locus];
+    pGenotypeSrc = pPersonSrc->ppSavedGenotypeList[locus];
+    while (pGenotype) {
+      if (modelOptions->polynomial == TRUE) {
+	pGenotype->penslot.penetrancePolynomial = pGenotypeSrc->penslot.penetrancePolynomial;
+      } else {
+	pGenotype->penslot.penetrance = pGenotypeSrc->penslot.penetrance;
+      }
+      pGenotype = pGenotype->pSavedNext;
+      pGenotypeSrc = pGenotypeSrc->pSavedNext;
+    }
+  }
+  return 0;
+}
+
 int
 update_penetrance (PedigreeSet * pPedigreeSet, int locus)
 {
