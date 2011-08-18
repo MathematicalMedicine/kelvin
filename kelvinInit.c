@@ -427,11 +427,12 @@ void kelvinInit (int argc, char *argv[])
       }
     }
     pLocus->noVariationFlag = noVariation;
-    if (noVariation)
+    if (noVariation) {
       if (modelType->type == TP)
 	WARNING ("Marker %s provides no information, it should be removed before two-point analysis", pLocus->sName);
       else
 	WARNING ("Marker %s provides no information, it will be ignored during multipoint analysis", pLocus->sName);
+    }
   }
 
 /*
