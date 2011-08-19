@@ -511,6 +511,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
   struct timeval t_start, t_end;
   double tmpLikelihood = 0;
   Pedigree *firstPed; 
+  int locusListType;
 
   DIAG (XM, 2, {
       fprintf (stderr, "In compute_likelihood from %s:%d\n", fileName, lineNo);
@@ -527,14 +528,23 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
   pPedigreeList->log10Likelihood = 0;
 
   if (toupper(*studyDB.role) == 'C') {
-    DIAG (ALTLSERVER, 0, {fprintf(stderr, "Client compute_likelihood");});
     /* 
        We're a client, we want to call GetLikelihood with all the appropriate likelhood variables
        for every pedigree. If we get a good Likelihood back, then we incorporate it into the result. 
        If we don't then the request has been made and we incorporate a dummy Likelihood into the 
        results and set a flag indicating that the calculation is to be ignored.
     */
+    locusListType = 3; // ...for combined likelihood
+    if (analysisLocusList->numLocus == 1) // Trait likelihood
+      locusListType = 2;
+    else
+      if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
+	locusListType = 1;
 
+    /*
+    DIAG (ALTLSERVER, 0, {fprintf(stderr, "Client compute_likelihood traitLocusIndex %d numLocus %d\n", \
+      				  analysisLocusList->traitLocusIndex, analysisLocusList->numLocus );});
+    */
     if (mysql_query (studyDB.connection, "BEGIN"))
       ERROR("Cannot begin transaction (%s)", mysql_error(studyDB.connection));
 
@@ -665,7 +675,6 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 
     double traitPosition, lowPosition, highPosition, pedTraitPosCM;
     char pedigreeSId[33];
-    int locusListType;
     
     /* Find our range of served positions for the current set of loci. We've already suborned the
        modelRange->tloc vector so there are only exemplar trait positions. All we need to do is
@@ -718,6 +727,20 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
 		       &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1]) ;
 
+	  // We've retrieved the affected penetrance. Use it to compute unaffected
+	  for (i=0; i<modelRange->nlclass; i++) {
+	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][0];
+	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][1];
+	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][0];
+	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][1];
+	  }
+	  fprintf(stderr, "Retrieved penetrances: %f %f %f %f with dgf %f\n", 
+		  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0],
+		  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1],
+ 		  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0],
+		  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+		  pLocus->pAlleleFrequency[0]);
+	    
 	}
 	else {
 	  getwork_ret = 
@@ -733,8 +756,11 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	if(getwork_ret ==0)
 	  break;
 
-	DIAG (ALTLSERVER, 0, { fprintf (stderr, "Found work for trait position %GcM of type %d serves range from %GcM to %gcM\n", traitPosition, locusListType, lowPosition, highPosition);});
+	DIAG (ALTLSERVER, 1, { fprintf (stderr, "Found work for Pedigree %s trait position %GcM of type %d serves range from %GcM to %gcM\n", pedigreeSId, traitPosition, locusListType, lowPosition, highPosition);});
 
+	// We've retrieved DGF, now compute dGF (made that up!)
+	pLocus->pAlleleFrequency[1] = 1 - pLocus->pAlleleFrequency[0];
+	
 	// Find the pedigree in the set
 	sampleIdStr[0]='\0';
 	tmpLikelihood = 0;
@@ -743,24 +769,14 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	swStart (singleModelSW);
 	//	for(sampleId=modelOptions->mcmcSampleStart; modelOptions->algorithm!= ALGORITHM_MCMC || sampleId <= modelOptions->mcmcSampleEnd; sampleId++) {
 	for(sampleId=studyDB.sampleIdStart; studyDB.MCMC_flag==0 || sampleId <= studyDB.sampleIdEnd; sampleId++) {
-	  sprintf(sampleIdStr, ".%d", sampleId);
+          if(studyDB.MCMC_flag != 0)
+	    sprintf(sampleIdStr, ".%d", sampleId);
 	  sprintf(tmpPedigreeSId, "%s%s", pedigreeSId, sampleIdStr);
 	  if ((pPedigree = find_pedigree(pPedigreeList, tmpPedigreeSId)) == NULL)
 	    ERROR ("Got work for unexpected pedigree %s. This might indicates kelvin config for MCMC sampling range (%d-%d)doesn't match pedigree file, or the pedigree server assigned is not in our pedigree at all!", tmpPedigreeSId, studyDB.sampleIdStart, studyDB.sampleIdEnd);
 	  
 	  if (locusListType != 1) { // Do trait-related setup (trait and combined likelihoods)
 
-	    // We've retrieved DGF, now compute dGF (made that up!)
-	    pLocus->pAlleleFrequency[1] = 1 - pLocus->pAlleleFrequency[0];
-	    
-	    // We've retrieved the affected penetrance. Use it to compute unaffected
-	    for (i=0; i<modelRange->nlclass; i++) {
-	      pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][0];
-	      pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][0][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][0][1];
-	      pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][0];
-	      pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][1];
-	    }
-	    
 	    /* Convert the pedTraitPosCM into two theta values and overwrite the analysisLocusList trait entry. We have
 	     to do this because we'll never see the exact positions required by map interpolation if maps differ. We
 	     only need to change the distances around the trait, which we'll do for one gender, and then copy to the
@@ -805,12 +821,11 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	    update_locus(pPedigreeList, 0);
 	    update_pedigree_penetrance(pPedigree, 0);
 	    firstPed = pPedigree;
-	    compute_server_pedigree_likelihood (pPedigreeList, pPedigree, 0);
 	  }
 	  else {
 	    copy_pedigree_penetrance(pPedigree, firstPed, 0);
-	    compute_server_pedigree_likelihood (pPedigreeList, pPedigree, 0);
 	  }
+	  compute_server_pedigree_likelihood (pPedigreeList, pPedigree, 0);
 	  //swStop (singleModelSW);
 	  tmpLikelihood += pPedigree->likelihood;
 	  
@@ -861,23 +876,29 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	  else
 	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED combined likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
 	*/
+	  if(studyDB.MCMC_flag == 0)
+	    break;
 	} // end of samplings
 	swStop (singleModelSW);
 	if(studyDB.MCMC_flag == 0) {
 	  PutWork (modelType->numMarkers,
 		   tmpLikelihood,
 		   difftime (time (NULL), singleModelSW->swStartWallTime));
+
 	}
 	else {
 	  int total = studyDB.sampleIdEnd - studyDB.sampleIdStart + 1;
+	  tmpLikelihood /= total;
 	  PutWork (  total * 10 + modelType->numMarkers + 200, 
-		     tmpLikelihood/total, 
+		     tmpLikelihood, 
 		    difftime (time(NULL), singleModelSW->swStartWallTime));
 	}
-
+	if(tmpLikelihood < 0) 
+	  DIAG (ALTLSERVER, 0, {fprintf(stderr, "Likelihood is negative %lf\n", tmpLikelihood);});
+	
 	gettimeofday(&t_end, NULL);
-	DIAG (ALTLSERVER, 0, {fprintf(stderr, "Elapsed time for samplings is: %6.4f seconds\n", \
-				      ((double)t_end.tv_sec - (double)t_start.tv_sec)+ ((double)t_end.tv_usec - (double)t_start.tv_usec)/1000000); });
+	DIAG (ALTLSERVER, 0, {fprintf(stderr, "Elapsed time for samplings Ped %s is: %6.4f seconds with likelihood %.8g\n", \
+				      pedigreeSId, ((double)t_end.tv_sec - (double)t_start.tv_sec)+ ((double)t_end.tv_usec - (double)t_start.tv_usec)/1000000, tmpLikelihood); });
       }
     }
 
@@ -898,7 +919,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
     }
     pPedigreeList->likelihood = product_likelihood;
     pPedigreeList->log10Likelihood = sum_log_likelihood;
-    DIAG (ALTLSERVER, 0, {fprintf (stderr, "Server returning likelihood of %.4g\n", pPedigreeList->likelihood);});
+    DIAG (ALTLSERVER, 0, {fprintf (stderr, "Server compute_likelihood returning\n");});
     return ret;
 
   } else {
@@ -1187,7 +1208,20 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
   if (analysisLocusList->numLocus == 1) { // Trait likelihood
     if (toupper(*studyDB.role) == 'C') {
       myPedPosId = GetPedPosId (pPedigree->sPedigreeID, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, -9999.99);
-      pPedigree->likelihood = 
+      if(modelType->trait == DICHOTOMOUS) {
+	pPedigree->likelihood =
+          GetDLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+			  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
+			  0, 0, 0, 0); 
+			  
+      }
+      else {
+        pPedigree->likelihood = 
           GetQLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
 			  pTrait->means[0][0][0], pTrait->means[0][0][1], pTrait->means[0][1][0], pTrait->means[0][1][1],
 			  pTrait->means[1][0][0], pTrait->means[1][0][1], pTrait->means[1][1][0], pTrait->means[1][1][1],
@@ -1196,7 +1230,8 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
 			  pTrait->stddev[1][0][0], pTrait->stddev[1][0][1], pTrait->stddev[1][1][0], pTrait->stddev[1][1][1],
 			  pTrait->stddev[2][0][0], pTrait->stddev[2][0][1], pTrait->stddev[2][1][0], pTrait->stddev[2][1][1],
 			  pTrait->cutoffValue[0], pTrait->cutoffValue[1], pTrait->cutoffValue[2],
-					0, 0, 0, 0);
+			  0, 0, 0, 0);
+      }
       if (pPedigree->likelihood == -1) {
 	// Bogus result
 	studyDB.bogusLikelihoods++;

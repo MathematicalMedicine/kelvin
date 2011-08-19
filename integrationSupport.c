@@ -267,8 +267,9 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   pLocus->pAlleleFrequency[0] = gfreq;
   pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
+#ifndef STUDYDB
   update_locus (&pedigreeSet, traitLocus);
-
+#endif 
 
   j = 1;        // j=0 for gfrequency
   if (modelType->trait == CT) {
@@ -354,10 +355,12 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
   }     /* liability class Index */
 
+#ifndef STUDYDB
   if (modelOptions->polynomial == TRUE);
   else
     /* only need to update trait locus */
     update_penetrance (&pedigreeSet, traitLocus);
+#endif
 
   /* for trait likelihood */
   analysisLocusList = &traitLocusList;
@@ -370,12 +373,16 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 #ifdef STUDYDB
   if (toupper(*studyDB.role) == 'S') {
     compute_likelihood (&pedigreeSet);
-    return;
   }
 #endif
 
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-
+#ifdef STUDYDB
+    if (toupper(*studyDB.role) == 'S') {
+      break;
+    }
+#endif
+  
     /* save the likelihood at null */
     pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
 
@@ -450,6 +457,10 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     strcat (partialPolynomialFunctionName, "_T");
   compute_likelihood (&pedigreeSet);
   cL[3]++; // MP QT alternative likelihood
+#ifdef STUDYDB
+    if (toupper(*studyDB.role) == 'S') 
+      return;
+#endif
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
   if (isnan (log10_likelihood_alternative))
@@ -697,18 +708,19 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 
   }
 
+#ifndef STUDYDB
   if (modelOptions->polynomial == TRUE);
   else
     /* only need to update trait locus */
     update_penetrance (&pedigreeSet, traitLocus);
-
+#endif
   pLocus->pAlleleFrequency[0] = gfreq;
   pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
-
+#ifndef STUDYDB
   if (modelOptions->polynomial != TRUE)
     update_locus (&pedigreeSet, traitLocus);
-
+#endif
   /* for trait likelihood */
   analysisLocusList = &traitLocusList;
   xmissionMatrix = traitMatrix;
@@ -722,11 +734,15 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 #ifdef STUDYDB
   if (toupper(*studyDB.role) == 'S') {
     compute_likelihood (&pedigreeSet);
-    return;
   }
 #endif
 
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
+#ifdef STUDYDB
+    if (toupper(*studyDB.role) == 'S') {
+      break;
+    }
+#endif
 
     /* save the likelihood at null */
     pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
@@ -800,6 +816,10 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   cL[4]++; // MP DT alternative likelihood
   if (ret == -2)
     ERROR ("Negative likelihood for trait");
+#ifdef STUDYDB
+    if (toupper(*studyDB.role) == 'S') 
+      return;
+#endif
 
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
   if (pedigreeSet.likelihood == 0.0 && pedigreeSet.log10Likelihood == -9999.99) {
@@ -2576,7 +2596,7 @@ void integrateMain ()
 
       if (toupper(*studyDB.role) == 'S') {
 
-	double lowPosition  = -99.99, highPosition = 9999.99;
+	double lowPosition  = -9999.99, highPosition = 9999.99;
 
 	if (posIdx != 0)
 	  lowPosition = lociSetTransitionPositions[posIdx - 1];
