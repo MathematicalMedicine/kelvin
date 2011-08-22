@@ -1,0 +1,60 @@
++ qmods=
++ alias 'qrsh=qrsh -now no '
++ test Levi-Montalcini '!=' Levi-Montalcini
++ test -z ''
++ perl /home/yungui/kelvin/trunk/InitStudy.pl client.conf
+WARNING, no KELVIN_ROOT defined by installation, using '/home/yungui/kelvin/trunk'
++ perl /home/yungui/kelvin/trunk/InitStudy.pl server.conf
+WARNING, no KELVIN_ROOT defined by installation, using '/home/yungui/kelvin/trunk'
+++ pwd
++ qrsh -now no 'cd /home/yungui/code/svn/kelvin/trunk/test-suite/likelihood_server/SA_QT; ~/kelvin/trunk/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0'
+11/08/19 23:35:20 @0s, Initializing
+11/08/19 23:35:20 kelvin V2.3.3 edit 3800:3801M built Aug 18 2011 15:27:33 on Levi-Montalcini72
+11/08/19 23:35:20 References for this version of kelvin:
+
+	(1) Vieland VJ. Thermometers: Something for statistical geneticists to think
+	about. Human Hered, 61:144-156, 2006.
+	(2) Huang Y, Segre A, O'Connell J, Valentine-Cooper W, Seok SC, Vieland VJ.
+	Kelvin:  A 2nd generation software package for computation of the PPL
+	framework. [Abstract Program number 2336]. Presented at the annual meeting
+	of The American Society of Human Genetics, November 2008, Philadelphia,
+	Pennsylvania. Available at http://www.ashg.org/2008meeting/abstracts/fulltext/
+
+11/08/19 23:35:20 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
+11/08/19 23:35:20 Likelihood Server version!
+11/08/19 23:35:20 Using GNU Scientific Library (GSL) statistical functions instead of internal ones
+11/08/19 23:35:20 GCC optimization level 0 enabled
+11/08/19 23:35:20 To check status (at some risk), type CTRL-\ or type "kill -3 17282"
+11/08/19 23:35:20 Using configuration file client.conf
+11/08/19 23:35:20 		@0s, Validating configuration
+11/08/19 23:35:20 		@0s, Read and process map file reference.map
+11/08/19 23:35:20 Computation is done in non-polynomial (direct evaluation) mode
+11/08/19 23:35:20 Integration is done numerically (dkelvin)
+11/08/19 23:35:20 		@0s, Read and process locus file datafile.dat
+11/08/19 23:35:20 		@0s, Read and process marker file markers.dat
+11/08/19 23:35:20 		@0s, Constructing allele set
+11/08/19 23:35:20 		@0s, Read and process pedigree file pedfile.dat
+11/08/19 23:35:20 		@0s, Post-processing model and configuration data
+11/08/19 23:35:20 	@0s, Initializing analysis data
+11/08/19 23:35:20 		@0s, Opening study database
+11/08/19 23:35:20 4TL over a dynamic space (1LC) for 10 pedigree(s)
+11/08/19 23:35:20 Trait-to-marker, Sex-Averaged Multipoint (w/3 loci), Quantitative Trait, Student's T-Distribution.
+11/08/19 23:35:20 	@0s, Opening cross-loop output files
+11/08/19 23:35:20 @0s, Performing analysis
+11/08/19 23:35:20 	@0s, Setting-up for integration-based analysis
+11/08/19 23:35:20 		@0s, Calculating dimensionality of outer and inner layers
+11/08/19 23:35:20 		@0s, Outer dimension is 6, inner (BR) dimension is 6
+11/08/19 23:35:20 		@0s, Allocating and initializing storage for analysis
+Position 0.000000 (1/4)
+DCUHRE split being considered w/2730 bogus evaluation results subregion 0...averted!
+Position 0.300000 (2/4)
+DCUHRE split being considered w/2730 bogus evaluation results subregion 0...averted!
+Position 0.600000 (3/4)
+DCUHRE split being considered w/2730 bogus evaluation results subregion 0...averted!
+Position 0.900000 (4/4)
+11/08/19 23:35:37 ERROR - EXITING (databaseSupport.c:540), Cannot fetch PedPosId select results w/2, '13', 40, 0.9 ( 00000)
+11/08/19 23:35:37 Cleaning-up for exit
+
+real	0m35.086s
+user	0m0.358s
+sys	0m0.088s
