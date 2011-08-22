@@ -370,19 +370,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = 1;
   pedigreeSet.log10Likelihood = 0;
 
-#ifdef STUDYDB
-  if (toupper(*studyDB.role) == 'S') {
-    compute_likelihood (&pedigreeSet);
-  }
-#endif
-
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-#ifdef STUDYDB
-    if (toupper(*studyDB.role) == 'S') {
-      break;
-    }
-#endif
-  
     /* save the likelihood at null */
     pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
 
@@ -731,19 +719,8 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   pedigreeSet.likelihood = 1;
   pedigreeSet.log10Likelihood = 0;
 
-#ifdef STUDYDB
-  if (toupper(*studyDB.role) == 'S') {
-    compute_likelihood (&pedigreeSet);
-  }
-#endif
 
   for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
-#ifdef STUDYDB
-    if (toupper(*studyDB.role) == 'S') {
-      break;
-    }
-#endif
-
     /* save the likelihood at null */
     pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
 
@@ -2151,6 +2128,8 @@ void integrateMain ()
             }
             num_out_constraint = 0;
 
+#ifdef STUDYDB
+#endif
             /* Call DCUHRE  Domain information is stored in global variables,  xl an xu */
             kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &(BRscale[i]));
             ASSERT ((s->ifail == 0), "Dynamic integration failed with ifail of %d. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c", s->ifail);
@@ -2501,13 +2480,19 @@ void integrateMain ()
         pTrait->cutoffValue[liabIdxLocal] = 0.5;
 
       } /* liability class Index */
-      if (modelOptions->polynomial == TRUE)
+      if (modelOptions->polynomial == TRUE){
         sprintf (partialPolynomialFunctionName, "MQT_LC%d_C%d_P%%sSL%d", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
-      else
-        update_penetrance (&pedigreeSet, traitLocus);
-      compute_likelihood (&pedigreeSet);
-      cL[1]++; // MP QT trait likelihood
+	cL[1]++; // MP QT trait likelihood
+	compute_likelihood (&pedigreeSet);
+      }
     }
+#ifdef STUDYDB
+      if (toupper(*studyDB.role) == 'S' && modelOptions->polynomial == FALSE) {
+	// we are likelihood server, get all the trait likelihood here
+	// instead of doing it inside the position loop
+	compute_likelihood (&pedigreeSet);
+      }
+#endif 
 
     /* Copy the polynomials built from above to traitLikelihoodPolynomials */
     if (modelOptions->polynomial == TRUE) {
@@ -2822,7 +2807,15 @@ void integrateMain ()
           -1, -1,       /* last het locus & last het pattern (P-1 or M-2) */
           0);   /* current locus - start with 0 */
 
-      /* multipoint DT */
+#ifdef STUDYDB
+      if (toupper(*studyDB.role) == 'S') {
+	compute_likelihood(&pedigreeSet);
+	// we are likelihood server, go run the next position
+	// we don't care about the integration
+	continue;
+      }
+#endif 
+      /* multipoint  */
       integral = 0.0;
       abserr = 0.0;
       num_out_constraint = 0;

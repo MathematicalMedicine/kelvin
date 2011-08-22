@@ -178,6 +178,7 @@ void initializeDB () {
       ERROR("Cannot fetch study information (%s)", mysql_error(studyDB.connection));
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "Storing/retrieving results under study %d (%s)", studyDB.studyId, studyDB.row[0]);});
   }
+  mysql_free_result(studyDB.resultSet);
   dBInitNotDone = FALSE;
 }
 
@@ -518,6 +519,8 @@ void prepareDBStatements () {
 
 long GetPedPosId (char *pedigreeSId, int chromosomeNo, double refTraitPosCM)
 {
+  int ret;
+
   if (dBStmtsNotReady)
     prepareDBStatements ();
 
@@ -534,10 +537,24 @@ long GetPedPosId (char *pedigreeSId, int chromosomeNo, double refTraitPosCM)
     ERROR("Cannot retrieve PedPosId select results w/%d, '%s', %d, %G (%s)", 
 	  studyDB.studyId, pedigreeSId, chromosomeNo, refTraitPosCM, 
 	  mysql_stmt_error(studyDB.stmtGetPedPosId));
-  if (mysql_stmt_fetch (studyDB.stmtGetPedPosId) != 0)
-    ERROR("Cannot fetch PedPosId select results w/%d, '%s', %d, %G (%s %s)", 
+  //fprintf(stderr, "Result #rows: %lu\n", mysql_stmt_num_rows(studyDB.stmtGetPedPosId));
+  ret = mysql_stmt_fetch (studyDB.stmtGetPedPosId);
+  //  if (mysql_stmt_fetch (studyDB.stmtGetPedPosId) != 0)
+  if (ret != 0) {
+    if(ret == MYSQL_NO_DATA) 
+      fprintf(stderr, "MYSQL_NO_DATA!\n");
+    if(ret == MYSQL_DATA_TRUNCATED)
+      fprintf(stderr, "MYSQL_DATA_TRUNCATED!");
+  
+    ERROR("Cannot fetch PedPosId select results (%d) w/%d, '%s', %d, %G (%d-%s %s)", 
+	  ret, 
 	    studyDB.studyId, pedigreeSId, chromosomeNo, refTraitPosCM, 
+	  mysql_stmt_errno(studyDB.stmtGetPedPosId),
 	    mysql_stmt_error(studyDB.stmtGetPedPosId), mysql_stmt_sqlstate(studyDB.stmtGetPedPosId));
+  }
+
+  mysql_stmt_free_result(studyDB.stmtGetPedPosId);
+
   return studyDB.pedPosId;
 }
 
@@ -583,10 +600,13 @@ double GetDLikelihood (int pedPosId, double dGF,
   if (mysql_stmt_execute (studyDB.stmtGetDLikelihoodResults) != 0)
     ERROR("Cannot execute GetDLikelihood results select statement (%s, %s)", 
 	  mysql_stmt_error(studyDB.stmtGetDLikelihoodResults), mysql_stmt_sqlstate(studyDB.stmtGetDLikelihoodResults));
-  if (mysql_stmt_store_result (studyDB.stmtGetDLikelihoodResults) != 0)
+  if ( mysql_stmt_store_result (studyDB.stmtGetDLikelihoodResults) != 0)
     ERROR("Cannot retrieve GetDLikelihood (%s)", mysql_stmt_error(studyDB.stmtGetDLikelihoodResults));
+
   if (mysql_stmt_fetch (studyDB.stmtGetDLikelihoodResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDLikelihoodResults));
+
+  mysql_stmt_free_result(studyDB.stmtGetDLikelihoodResults);
 
   if (*studyDB.bindGetDLikelihoodResults[2].is_null) {
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL", studyDB.regionId);});
@@ -607,6 +627,8 @@ double GetQLikelihood (int pedPosId, double dGF,
 		       double lC1Threshold, double lC2Threshold, double lC3Threshold,
 		       int regionNo, int parentRegionNo, double parentRegionError, int parentRegionSplitDir)
 {
+  int ret;
+
   studyDB.pedPosId = pedPosId;
   studyDB.dGF = dGF;
   studyDB.lC1BigMean = lC1BigMean;
@@ -642,12 +664,18 @@ double GetQLikelihood (int pedPosId, double dGF,
   studyDB.parentRegionSplitDir = parentRegionSplitDir;
 
   while (1) {
-    if (mysql_stmt_execute (studyDB.stmtGetQLikelihood) != 0) {
+    ret = mysql_stmt_execute (studyDB.stmtGetQLikelihood);
+    if( ret != 0) {
       if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood), "40001") != 0) &&
 	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood), "HY000") != 0)) {
 	ERROR("Cannot execute GetQLikelihood call statement w/%d, (%s, %s)", pedPosId,
 	      mysql_stmt_error(studyDB.stmtGetQLikelihood), mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood));
       } else {
+	fprintf(stderr, "mysql_stmt_execute ret %d (%d-%s, %s).\n", ret, 
+		mysql_stmt_errno(studyDB.stmtGetQLikelihood), 
+		mysql_stmt_error(studyDB.stmtGetQLikelihood), 
+		mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood));
+
 	swLogProgress(5, 0, "Retrying deadlock in 1 second");
 	sleep(1);
 	continue;
@@ -658,11 +686,13 @@ double GetQLikelihood (int pedPosId, double dGF,
   if (mysql_stmt_execute (studyDB.stmtGetQLikelihoodResults) != 0)
     ERROR("Cannot execute GetQLikelihood results select statement (%s, %s)", 
 	  mysql_stmt_error(studyDB.stmtGetQLikelihoodResults), mysql_stmt_sqlstate(studyDB.stmtGetQLikelihoodResults));
-  if (mysql_stmt_store_result (studyDB.stmtGetQLikelihoodResults) != 0)
+  if ( mysql_stmt_store_result (studyDB.stmtGetQLikelihoodResults) != 0)
     ERROR("Cannot retrieve GetQLikelihood (%s)", mysql_stmt_error(studyDB.stmtGetQLikelihoodResults));
+
   if (mysql_stmt_fetch (studyDB.stmtGetQLikelihoodResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetQLikelihoodResults));
 
+  mysql_stmt_free_result(studyDB.stmtGetQLikelihoodResults);
   if (*studyDB.bindGetQLikelihoodResults[2].is_null) {
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL", studyDB.regionId);});
     return -1LL;
@@ -713,6 +743,7 @@ void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVe
     studyDB.serverId = atoi(studyDB.row[0]);
     DIAG (ALTLSERVER, 0, { fprintf (stderr, "Signed on as serverId %d\n", studyDB.serverId);});
   }
+  mysql_free_result(studyDB.resultSet);
 
   /* set trait type */
   sprintf(studyDB.strAdhocStatement, "set @traitType=%d", studyDB.traitType);
@@ -757,11 +788,13 @@ int CountWork (double lowPosition, double highPosition)
   if (mysql_stmt_execute (studyDB.stmtCountWorkResults))
     ERROR("Cannot execute CountWorkResults statement (%s, %s)", 
 	  mysql_stmt_error(studyDB.stmtCountWorkResults), mysql_stmt_sqlstate(studyDB.stmtCountWorkResults));
-  if (mysql_stmt_store_result (studyDB.stmtCountWorkResults) != 0)
+  if ( mysql_stmt_store_result (studyDB.stmtCountWorkResults) != 0)
     ERROR("Cannot retrieve CountWork results (%s)", mysql_stmt_error(studyDB.stmtCountWorkResults));
-  if (mysql_stmt_fetch (studyDB.stmtCountWorkResults) != 0)
+
+  if ( mysql_stmt_fetch (studyDB.stmtCountWorkResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtCountWorkResults));
 
+  mysql_stmt_free_result(studyDB.stmtCountWorkResults);
   return studyDB.workCount;
 }
 
@@ -811,10 +844,14 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
   if (mysql_stmt_execute (studyDB.stmtGetDWorkResults))
     ERROR("Cannot execute GetDWorkResults statement (%s, %s)", 
 	  mysql_stmt_error(studyDB.stmtGetDWorkResults), mysql_stmt_sqlstate(studyDB.stmtGetDWorkResults));
-  if (mysql_stmt_store_result (studyDB.stmtGetDWorkResults) != 0)
+  if ( mysql_stmt_store_result (studyDB.stmtGetDWorkResults) != 0)
     ERROR("Cannot retrieve GetWork results (%s)", mysql_stmt_error(studyDB.stmtGetDWorkResults));
+
   if (mysql_stmt_fetch (studyDB.stmtGetDWorkResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDWorkResults));
+
+  mysql_stmt_free_result(studyDB.stmtGetDWorkResults);
+
   if (*studyDB.bindGetDWorkResults[0].is_null) {
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetDWorkResults)");});
     return FALSE;
@@ -892,18 +929,22 @@ int GetQWork (double lowPosition, double highPosition, int locusListType, double
   if (mysql_stmt_execute (studyDB.stmtGetQWorkResults))
     ERROR("Cannot execute GetQWorkResults statement (%s, %s)", 
 	  mysql_stmt_error(studyDB.stmtGetQWorkResults), mysql_stmt_sqlstate(studyDB.stmtGetQWorkResults));
-  if (mysql_stmt_store_result (studyDB.stmtGetQWorkResults) != 0)
+  if ( mysql_stmt_store_result (studyDB.stmtGetQWorkResults) != 0)
     ERROR("Cannot retrieve GetQWork results (%s)", mysql_stmt_error(studyDB.stmtGetQWorkResults));
+
   if (mysql_stmt_fetch (studyDB.stmtGetQWorkResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetQWorkResults));
+
+  mysql_stmt_free_result(studyDB.stmtGetQWorkResults);
+
   if (*studyDB.bindGetQWorkResults[0].is_null) {
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetQWorkResults)");});
     return FALSE;
   } else {
     DIAG (ALTLSERVER, 1, { \
-	fprintf (stderr, "Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G", \
+	fprintf (stderr, "Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G std DD %G, Dd %G, dD %G, dd %G", \
 		 studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
-		 studyDB.lC1BigMean, studyDB.lC1BigLittleMean, studyDB.lC1LittleBigMean, studyDB.lC1LittleMean);});
+		 studyDB.lC1BigMean, studyDB.lC1BigLittleMean, studyDB.lC1LittleBigMean, studyDB.lC1LittleMean, studyDB.lC1BigSD, studyDB.lC1BigLittleSD, studyDB.lC1LittleBigSD, studyDB.lC1LittleSD);});
     strcpy (pedigreeSId, studyDB.pedigreeSId);
     *pedTraitPosCM = studyDB.pedTraitPosCM;
     *dGF = studyDB.dGF;
@@ -957,8 +998,26 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
   // PutWork...if this fails due to a lost connection (like, it took days to compute), then we've lost context and temporary tables, so just do salvage.
   while (1) {
     if (mysql_stmt_execute (studyDB.stmtPutWork) != 0) {
-      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") == 0) ||
+      //      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") == 0) ||
+      if(
 	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "HY000") == 0)) {
+	// print out more information, so we can fix the db by hand 
+	if(studyDB.traitType == 0) {
+	  // DT
+	  DIAG (ALTLSERVER, 0, {					\
+	      fprintf (stderr, "Failed putting result for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G\n", \
+		       studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
+		       studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);});
+	  
+	}
+	else {
+	  // QT
+	  DIAG (ALTLSERVER, 0 , {					\
+	      fprintf (stderr, "Failed putting result for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G std DD %G, Dd %G, dD %G, dd %G\n", \
+		       studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
+		       studyDB.lC1BigMean, studyDB.lC1BigLittleMean, studyDB.lC1LittleBigMean, studyDB.lC1LittleMean, studyDB.lC1BigSD, studyDB.lC1BigLittleSD, studyDB.lC1LittleBigSD, studyDB.lC1LittleSD);});
+	  
+	}
         ERROR("Cannot execute PutWork statement w/markerCount %d, lOD %18G, runtimeCostSec %d (%s, %s), in a pinch, clean-up manually and try them in [%s]",
               markerCount, lOD, runtimeCostSec, mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork), studyDB.strPutWork);
       } else {

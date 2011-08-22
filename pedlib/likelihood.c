@@ -382,16 +382,6 @@ void getAndPut2ptModels (PedigreeSet *pPedigreeList, int stepFlag, int realityFl
   int i, runtimeCostSec;
   int getwork_ret =0;
 
-  /*
-  while (GetDWork(lowPosition, highPosition, stepFlag, // Yes, double-use of locusListType, so shoot me, I was on a deadline
-		  &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
-		  &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
-  */
   while (1) {
     if(modelType->trait == DICHOTOMOUS) {
       getwork_ret = GetDWork(lowPosition, highPosition, stepFlag, // Yes, double-use of locusListType, so shoot me, I was on a deadline
@@ -708,15 +698,6 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 
       DIAG (ALTLSERVER, 0, { fprintf (stderr, "Driver trait position %GcM of type %d serves range from %GcM to %gcM\n", traitPosition, locusListType, lowPosition, highPosition);});
 
-	/*
-      while (GetDWork(lowPosition, highPosition, locusListType, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
-		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
-		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
-		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
-		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
-		      &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], &pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1])) {
-	*/
       while (1) {
 	if(modelType->trait == DICHOTOMOUS) {
 	  getwork_ret = GetDWork(lowPosition, highPosition, locusListType, &pedTraitPosCM, pedigreeSId, &pLocus->pAlleleFrequency[0],
@@ -734,12 +715,14 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][0] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][0];
 	    pTrait->penetrance[AFFECTION_STATUS_UNAFFECTED][i][1][1] = 1 - pTrait->penetrance[AFFECTION_STATUS_AFFECTED][i][1][1];
 	  }
+	  /*
 	  fprintf(stderr, "Retrieved penetrances: %f %f %f %f with dgf %f\n", 
 		  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0],
 		  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1],
  		  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0],
 		  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
 		  pLocus->pAlleleFrequency[0]);
+	  */
 	    
 	}
 	else {
@@ -919,7 +902,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
     }
     pPedigreeList->likelihood = product_likelihood;
     pPedigreeList->log10Likelihood = sum_log_likelihood;
-    DIAG (ALTLSERVER, 0, {fprintf (stderr, "Server compute_likelihood returning\n");});
+    //DIAG (ALTLSERVER, 0, {fprintf (stderr, "Server compute_likelihood returning\n");});
     return ret;
 
   } else {
