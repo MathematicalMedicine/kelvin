@@ -194,9 +194,10 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindGetPedPosId[0], studyDB.studyId, MYSQL_TYPE_LONG);
   BINDSTRING (studyDB.bindGetPedPosId[1], studyDB.pedigreeSId, sizeof (studyDB.pedigreeSId));
   BINDNUMERIC (studyDB.bindGetPedPosId[2], studyDB.chromosomeNo, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetPedPosId[3], studyDB.refTraitPosCM, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetPedPosId[3], studyDB.refTraitPosCMleft, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetPedPosId[4], studyDB.refTraitPosCMright, MYSQL_TYPE_DOUBLE);
 
-  strncpy (studyDB.strGetPedPosId, "Select PedPosId from PedigreePositions where StudyId = ? AND PedigreeSId = ? AND ChromosomeNo = ? AND RefTraitPosCM = ?", MAXSTMTLEN-1);
+  strncpy (studyDB.strGetPedPosId, "Select PedPosId from PedigreePositions where StudyId = ? AND PedigreeSId = ? AND ChromosomeNo = ? AND RefTraitPosCM >= ? AND RefTraitPosCM<= ?", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtGetPedPosId, studyDB.strGetPedPosId, strlen (studyDB.strGetPedPosId)))
     ERROR("Cannot prepare GetPedPosId call statement (%s)", mysql_stmt_error(studyDB.stmtGetPedPosId));
@@ -328,11 +329,25 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindSignOn[10], studyDB.sampleIdStart, MYSQL_TYPE_LONG);
   BINDNUMERIC (studyDB.bindSignOn[11], studyDB.sampleIdEnd, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strSignOn, "Insert into Servers (ConnectionId, HostName, ProcessId, KeepAliveFlag, StudyId, PedigreeRegEx, PedigreeNotRegEx, ChromosomeNo, Algorithm, MarkerCount, ProgramVersion, SampleIdStart, SampleIdEnd) values (connection_id(),?,?,?,?,?,?,?,?,?,?,?,?)", MAXSTMTLEN-1);
+  strncpy (studyDB.strSignOn, "call ServerSignOn (?,?,?,?,?,?,?,?,?,?,?,?, @outServerId)", MAXSTMTLEN-1);
   if (mysql_stmt_prepare (studyDB.stmtSignOn, studyDB.strSignOn, strlen (studyDB.strSignOn)))
-    ERROR("Cannot prepare sign-on insert statement (%s)", mysql_stmt_error(studyDB.stmtSignOn));
+    ERROR("Cannot prepare ServerSignOn call statement (%s)", mysql_stmt_error(studyDB.stmtSignOn));
   if (mysql_stmt_bind_param (studyDB.stmtSignOn, studyDB.bindSignOn))
-    ERROR("Cannot bind sign-on insert statement (%s)", mysql_stmt_error(studyDB.stmtSignOn));
+    ERROR("Cannot bind ServerSignOn call statement (%s)", mysql_stmt_error(studyDB.stmtSignOn));
+
+  // Prepare the ServerSignOn results call
+  studyDB.stmtSignOnResults = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindSignOnResults, 0, sizeof(studyDB.bindSignOnResults));
+
+  BINDNUMERIC (studyDB.bindSignOnResults[0], studyDB.serverId, MYSQL_TYPE_LONG);
+
+  strncpy (studyDB.strSignOnResults, "Select @outServerId", MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtSignOnResults, studyDB.strSignOnResults, strlen (studyDB.strSignOnResults)))
+    ERROR("Cannot prepare SignOnResults call statement (%s)", mysql_stmt_error(studyDB.stmtSignOnResults));
+  if (mysql_stmt_bind_result (studyDB.stmtSignOnResults, studyDB.bindSignOnResults))
+    ERROR("Cannot bind SignOnResults call statement (%s)", mysql_stmt_error(studyDB.stmtSignOnResults));
+
 
   // Prepare the CountWork call
   studyDB.stmtCountWork = mysql_stmt_init (studyDB.connection);
@@ -384,6 +399,7 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindGetWork[2], studyDB.highPosition, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetWork[3], studyDB.locusListType, MYSQL_TYPE_LONG);
 
+
   strncpy (studyDB.strGetWork, "call GetWork (?,?,?,?,@outPedPosId, @outPedigreeSId, @outPedTraitPosCM, @outLC1MPId, @outLC2MPId, @outLC3MPId)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtGetWork, studyDB.strGetWork, strlen (studyDB.strGetWork)))
@@ -391,12 +407,16 @@ void prepareDBStatements () {
   if (mysql_stmt_bind_param (studyDB.stmtGetWork, studyDB.bindGetWork))
     ERROR("Cannot bind GetWork call statement (%s)", mysql_stmt_error(studyDB.stmtGetWork));
 
+  //BINDNUMERIC (studyDB.bindGetWork[4], studyDB.pedPosId, MYSQL_TYPE_LONG);
+  //BINDSTRING (studyDB.bindGetWork[5], studyDB.pedigreeSId, sizeof(studyDB.pedigreeSId));
+  //BINDNUMERIC (studyDB.bindGetWork[6], studyDB.pedTraitPosCM, MYSQL_TYPE_DOUBLE);
+
   // Prepare the GetDParts call
   studyDB.stmtGetDParts = mysql_stmt_init (studyDB.connection);
   strncpy (studyDB.strGetDParts, "call GetDParts (@outLC1MPId, @outLC2MPId, @outLC3MPId, @outDGF, "
-	   "@outLC1BP, @outLC1BLP, @outLC1LBP, @outLC1LP,"
-	   "@outLC2BP, @outLC2BLP, @outLC2LBP, @outLC2LP,"
-	   "@outLC3BP, @outLC3BLP, @outLC3LBP, @outLC3LP)", MAXSTMTLEN-1);
+           "@outLC1BP, @outLC1BLP, @outLC1LBP, @outLC1LP,"
+           "@outLC2BP, @outLC2BLP, @outLC2LBP, @outLC2LP,"
+           "@outLC3BP, @outLC3BLP, @outLC3LBP, @outLC3LP)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtGetDParts, studyDB.strGetDParts, strlen (studyDB.strGetDParts)))
     ERROR("Cannot prepare GetDParts call statement (%s)", mysql_stmt_error(studyDB.stmtGetDParts));
@@ -415,6 +435,10 @@ void prepareDBStatements () {
 
   if (mysql_stmt_prepare (studyDB.stmtGetQParts, studyDB.strGetQParts, strlen (studyDB.strGetQParts)))
     ERROR("Cannot prepare GetQParts call statement (%s)", mysql_stmt_error(studyDB.stmtGetQParts));
+
+  if (mysql_stmt_bind_param (studyDB.stmtGetQParts, studyDB.bindGetQParts))
+    ERROR("Cannot bind GetQParts call statement (%s)", mysql_stmt_error(studyDB.stmtGetQParts));
+
 
   // Prepare the GetDWork results call
   studyDB.stmtGetDWorkResults = mysql_stmt_init (studyDB.connection);
@@ -503,11 +527,13 @@ void prepareDBStatements () {
   memset (studyDB.bindPutWork, 0, sizeof(studyDB.bindPutWork));
 
   BINDNUMERIC (studyDB.bindPutWork[0], studyDB.serverId, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindPutWork[1], studyDB.markerCount, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindPutWork[2], studyDB.lOD, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindPutWork[3], studyDB.runtimeCostSec, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindPutWork[1], studyDB.pedPosId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindPutWork[2], studyDB.markerCount, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindPutWork[3], studyDB.lOD, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindPutWork[4], studyDB.runtimeCostSec, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strPutWork, "call PutWork (?, @outPedPosId, @outLC1MPId, @outLC2MPId, @outLC3MPId,?,?,?)", MAXSTMTLEN-1);
+
+  strncpy (studyDB.strPutWork, "call PutWork (?, ?, @outLC1MPId, @outLC2MPId, @outLC3MPId,?,?,?)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtPutWork, studyDB.strPutWork, strlen (studyDB.strPutWork)))
     ERROR("Cannot prepare PutWork call statement (%s)", mysql_stmt_error(studyDB.stmtPutWork));
@@ -528,6 +554,8 @@ long GetPedPosId (char *pedigreeSId, int chromosomeNo, double refTraitPosCM)
   *studyDB.bindGetPedPosId[1].length = strlen(pedigreeSId);
   studyDB.chromosomeNo = chromosomeNo;
   studyDB.refTraitPosCM = refTraitPosCM;
+  studyDB.refTraitPosCMleft = refTraitPosCM - (1e-10);
+  studyDB.refTraitPosCMright = refTraitPosCM + (1e-10);
 
   if (mysql_stmt_execute (studyDB.stmtGetPedPosId))
     ERROR("Cannot execute PedPosId select statement w/%d, '%s', %d, %G (%s, %s)", 
@@ -564,6 +592,8 @@ double GetDLikelihood (int pedPosId, double dGF,
 		double lC3BigPen, double lC3BigLittlePen, double lC3LittleBigPen, double lC3LittlePen,
 		int regionNo, int parentRegionNo, double parentRegionError, int parentRegionSplitDir)
 {
+  int ret;
+
   studyDB.pedPosId = pedPosId;
   studyDB.dGF = dGF;
   studyDB.lC1BigPen = lC1BigPen;
@@ -584,13 +614,18 @@ double GetDLikelihood (int pedPosId, double dGF,
   studyDB.parentRegionSplitDir = parentRegionSplitDir;
 
   while (1) {
-    if (mysql_stmt_execute (studyDB.stmtGetDLikelihood) != 0) {
+    ret = mysql_stmt_execute (studyDB.stmtGetDLikelihood);
+    if (ret != 0) {
       if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood), "40001") != 0) &&
 	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood), "HY000") != 0)) {
 	ERROR("Cannot execute GetDLikelihood call statement w/%d, (%s, %s)", pedPosId,
 	      mysql_stmt_error(studyDB.stmtGetDLikelihood), mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood));
       } else {
-	swLogProgress(5, 0, "Retrying deadlock in 1 second");
+	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetDLikelihood: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+				     mysql_stmt_errno(studyDB.stmtGetDLikelihood), 
+				     mysql_stmt_error(studyDB.stmtGetDLikelihood), 
+				     mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood));});
+	swLogProgress(5, 0, "Retrying deadlock in 1 second in GetDLikelihood");
 	sleep(1);
 	continue;
       }
@@ -671,12 +706,11 @@ double GetQLikelihood (int pedPosId, double dGF,
 	ERROR("Cannot execute GetQLikelihood call statement w/%d, (%s, %s)", pedPosId,
 	      mysql_stmt_error(studyDB.stmtGetQLikelihood), mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood));
       } else {
-	fprintf(stderr, "mysql_stmt_execute ret %d (%d-%s, %s).\n", ret, 
-		mysql_stmt_errno(studyDB.stmtGetQLikelihood), 
-		mysql_stmt_error(studyDB.stmtGetQLikelihood), 
-		mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood));
-
-	swLogProgress(5, 0, "Retrying deadlock in 1 second");
+	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetQLikelihood: mysql_stmt_execute ret %d (%d-%s, %s).\n", ret, 
+				     mysql_stmt_errno(studyDB.stmtGetQLikelihood), 
+				     mysql_stmt_error(studyDB.stmtGetQLikelihood), 
+				     mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood));});
+	swLogProgress(5, 0, "Retrying deadlock in 1 second in GetQLikelihood");
 	sleep(1);
 	continue;
       }
@@ -765,20 +799,26 @@ void SetDummyNullLikelihood () {
 
 int CountWork (double lowPosition, double highPosition)
 {
+  int ret;
   // serverId is already set
   studyDB.lowPosition = lowPosition;
   studyDB.highPosition = highPosition;
 
   // CountWork
   while (1) {
-    if (mysql_stmt_execute (studyDB.stmtCountWork) != 0) {
+    ret = mysql_stmt_execute (studyDB.stmtCountWork);
+    if (ret !=0 ) {
       if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtCountWork), "40001") != 0) &&
 	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtCountWork), "HY000") != 0)) {
 	ERROR("Cannot execute Count statement w/%G, %G, (%s, %s)", 
 	      lowPosition, highPosition,
 	      mysql_stmt_error(studyDB.stmtCountWork), mysql_stmt_sqlstate(studyDB.stmtCountWork));
       } else {
-	swLogProgress(5, 0, "Retrying deadlock in 1 second");
+	DIAG(ALTLSERVER, 0, { fprintf(stderr, "CountWork: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+				     mysql_stmt_errno(studyDB.stmtCountWork), 
+				     mysql_stmt_error(studyDB.stmtCountWork), 
+				     mysql_stmt_sqlstate(studyDB.stmtCountWork));});
+	swLogProgress(5, 0, "Retrying deadlock in 1 second in CountWork");
 	sleep(1);
 	continue;
       }
@@ -803,7 +843,7 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
 	      double *lC2BigPen, double *lC2BigLittlePen, double *lC2LittleBigPen, double *lC2LittlePen,
 	      double *lC3BigPen, double *lC3BigLittlePen, double *lC3LittleBigPen, double *lC3LittlePen)
 {
-
+  int ret;
   // serverId is already set
   studyDB.lowPosition = lowPosition;
   studyDB.highPosition = highPosition;
@@ -816,15 +856,19 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
 
   // GetWork
   while (1) {
-    if (mysql_stmt_execute (studyDB.stmtGetWork) != 0) {
+    ret = mysql_stmt_execute (studyDB.stmtGetWork);
+    if( ret != 0) {
       if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "40001") != 0) &&
 	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "HY000") != 0)) {
 	ERROR("Cannot execute Get statement w/%G, %G, (%s, %s)", 
 	      lowPosition, highPosition,
 	      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
       } else {
-	swLogProgress(5, 0, "Retrying presumed deadlock in 1 second (%s, %s)",
-		      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
+	DIAG(ALTLSERVER, 0, {fprintf(stderr, "GetDWork: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+				    mysql_stmt_errno(studyDB.stmtGetWork), 
+				    mysql_stmt_error(studyDB.stmtGetWork), 
+				    mysql_stmt_sqlstate(studyDB.stmtGetWork));});
+	swLogProgress(5, 0, "Retrying presumed deadlock in 1 second in GetDWork");
 	sleep(1);
 	continue;
       }
@@ -832,31 +876,30 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
     break;
   }    
 
-  // Get DT parts - this uses the temporary variables in our session to get parameters from GetWork.
-  if (mysql_stmt_execute (studyDB.stmtGetDParts))
-    ERROR("Cannot execute GetDParts statement (%s, %s)", 
-	  mysql_stmt_error(studyDB.stmtGetDParts), mysql_stmt_sqlstate(studyDB.stmtGetDParts));
-
-  // GetWork results - a slew of parameters
+  // If not a marker work, then get DT parts
+  if(locusListType != 1) {
+    // Get DT parts - this uses the temporary variables in our session to get parameters from GetWork.
+    if (mysql_stmt_execute (studyDB.stmtGetDParts))
+      ERROR("Cannot execute GetDParts statement (%s, %s)", 
+	    mysql_stmt_error(studyDB.stmtGetDParts), mysql_stmt_sqlstate(studyDB.stmtGetDParts));
+  }
+    
   studyDB.pedPosId = 0;
-  studyDB.pedTraitPosCM = studyDB.dGF = studyDB.lC1BigPen = studyDB.lC1BigLittlePen = 
+  studyDB.pedTraitPosCM = studyDB.dGF = studyDB.lC1BigPen = studyDB.lC1BigLittlePen =
     studyDB.lC1LittleBigPen = studyDB.lC1LittlePen = 0.0;
-  if (mysql_stmt_execute (studyDB.stmtGetDWorkResults))
-    ERROR("Cannot execute GetDWorkResults statement (%s, %s)", 
-	  mysql_stmt_error(studyDB.stmtGetDWorkResults), mysql_stmt_sqlstate(studyDB.stmtGetDWorkResults));
-  if ( mysql_stmt_store_result (studyDB.stmtGetDWorkResults) != 0)
-    ERROR("Cannot retrieve GetWork results (%s)", mysql_stmt_error(studyDB.stmtGetDWorkResults));
 
+  if (mysql_stmt_execute (studyDB.stmtGetDWorkResults))
+    ERROR("Cannot execute GetDWorkResults statement (%s, %s)",
+          mysql_stmt_error(studyDB.stmtGetDWorkResults), mysql_stmt_sqlstate(studyDB.stmtGetDWorkResults));
+  if (mysql_stmt_store_result (studyDB.stmtGetDWorkResults) != 0)
+    ERROR("Cannot retrieve GetWork results (%s)", mysql_stmt_error(studyDB.stmtGetDWorkResults));
   if (mysql_stmt_fetch (studyDB.stmtGetDWorkResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDWorkResults));
-
-  mysql_stmt_free_result(studyDB.stmtGetDWorkResults);
-
   if (*studyDB.bindGetDWorkResults[0].is_null) {
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetDWorkResults)");});
     return FALSE;
   } else {
-    DIAG (ALTLSERVER, 1, { \
+    DIAG (ALTLSERVER, 1, {						\
 	fprintf (stderr, "Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G", \
 		 studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
 		 studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);});
@@ -888,7 +931,7 @@ int GetQWork (double lowPosition, double highPosition, int locusListType, double
 	      double *lC1Threshold, double *lC2Threshold, double *lC3Threshold
 	      )
 {
-
+  int ret;
   // serverId is already set
   studyDB.lowPosition = lowPosition;
   studyDB.highPosition = highPosition;
@@ -901,15 +944,19 @@ int GetQWork (double lowPosition, double highPosition, int locusListType, double
 
   // GetWork
   while (1) {
-    if (mysql_stmt_execute (studyDB.stmtGetWork) != 0) {
+    ret = mysql_stmt_execute (studyDB.stmtGetWork);
+    if (ret != 0) {
       if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "40001") != 0) &&
 	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "HY000") != 0)) {
 	ERROR("Cannot execute Get statement w/%G, %G, (%s, %s)", 
 	      lowPosition, highPosition,
 	      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
       } else {
-	swLogProgress(5, 0, "Retrying presumed deadlock in 1 second (%s, %s)",
-		      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
+	DIAG(ALTLSERVER, 0, {fprintf(stderr, "GetQWork: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+				    mysql_stmt_errno(studyDB.stmtGetWork), 
+				    mysql_stmt_error(studyDB.stmtGetWork), 
+				    mysql_stmt_sqlstate(studyDB.stmtGetWork));});
+	swLogProgress(5, 0, "Retrying presumed deadlock in 1 second in GetQWork");
 	sleep(1);
 	continue;
       }
@@ -917,26 +964,25 @@ int GetQWork (double lowPosition, double highPosition, int locusListType, double
     break;
   }    
 
-  // Get QT parts - this uses the temporary variables in our session to get parameters from GetWork.
-  if (mysql_stmt_execute (studyDB.stmtGetQParts))
-    ERROR("Cannot execute GetQParts statement (%s, %s)", 
-	  mysql_stmt_error(studyDB.stmtGetQParts), mysql_stmt_sqlstate(studyDB.stmtGetQParts));
+  // If not a marker work, then get QT parts
+  if(locusListType != 1) {
+    // Get QT parts - this uses the temporary variables in our session to get parameters from GetWork.
+    if (mysql_stmt_execute (studyDB.stmtGetQParts))
+      ERROR("Cannot execute GetQParts statement (%s, %s)", 
+	    mysql_stmt_error(studyDB.stmtGetQParts), mysql_stmt_sqlstate(studyDB.stmtGetQParts));
+  }
 
-  // GetQWork results - a slew of parameters
   studyDB.pedPosId = 0;
-  studyDB.pedTraitPosCM = studyDB.dGF = studyDB.lC1BigPen = studyDB.lC1BigLittlePen = 
+  studyDB.pedTraitPosCM = studyDB.dGF = studyDB.lC1BigPen = studyDB.lC1BigLittlePen =
     studyDB.lC1LittleBigPen = studyDB.lC1LittlePen = 0.0;
-  if (mysql_stmt_execute (studyDB.stmtGetQWorkResults))
-    ERROR("Cannot execute GetQWorkResults statement (%s, %s)", 
-	  mysql_stmt_error(studyDB.stmtGetQWorkResults), mysql_stmt_sqlstate(studyDB.stmtGetQWorkResults));
-  if ( mysql_stmt_store_result (studyDB.stmtGetQWorkResults) != 0)
-    ERROR("Cannot retrieve GetQWork results (%s)", mysql_stmt_error(studyDB.stmtGetQWorkResults));
 
+  if (mysql_stmt_execute (studyDB.stmtGetQWorkResults))
+    ERROR("Cannot execute GetQWorkResults statement (%s, %s)",
+          mysql_stmt_error(studyDB.stmtGetQWorkResults), mysql_stmt_sqlstate(studyDB.stmtGetQWorkResults));
+  if (mysql_stmt_store_result (studyDB.stmtGetQWorkResults) != 0)
+    ERROR("Cannot retrieve GetQWork results (%s)", mysql_stmt_error(studyDB.stmtGetQWorkResults));
   if (mysql_stmt_fetch (studyDB.stmtGetQWorkResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetQWorkResults));
-
-  mysql_stmt_free_result(studyDB.stmtGetQWorkResults);
-
   if (*studyDB.bindGetQWorkResults[0].is_null) {
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetQWorkResults)");});
     return FALSE;
@@ -981,7 +1027,7 @@ int GetQWork (double lowPosition, double highPosition, int locusListType, double
 
 void PutWork (int markerCount, double lOD, int runtimeCostSec)
 {
-  
+  int ret;
   // serverId is already set
   /*
   if(studyDB.MCMC_flag == 0) {
@@ -997,10 +1043,10 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
 
   // PutWork...if this fails due to a lost connection (like, it took days to compute), then we've lost context and temporary tables, so just do salvage.
   while (1) {
-    if (mysql_stmt_execute (studyDB.stmtPutWork) != 0) {
-      //      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") == 0) ||
-      if(
-	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "HY000") == 0)) {
+    ret = mysql_stmt_execute (studyDB.stmtPutWork);
+    if ( ret != 0) {
+      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") != 0) &&
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "HY000") != 0)) {
 	// print out more information, so we can fix the db by hand 
 	if(studyDB.traitType == 0) {
 	  // DT
@@ -1021,8 +1067,11 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
         ERROR("Cannot execute PutWork statement w/markerCount %d, lOD %18G, runtimeCostSec %d (%s, %s), in a pinch, clean-up manually and try them in [%s]",
               markerCount, lOD, runtimeCostSec, mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork), studyDB.strPutWork);
       } else {
-	swLogProgress(5, 0, "Retrying presumed deadlock in 1 second (%s, %s)",
-		      mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork));
+	DIAG(ALTLSERVER, 0, {fprintf(stderr, "PutWork: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+				    mysql_stmt_errno(studyDB.stmtPutWork), 
+				    mysql_stmt_error(studyDB.stmtPutWork), 
+				    mysql_stmt_sqlstate(studyDB.stmtPutWork));});
+	swLogProgress(5, 0, "Retrying presumed deadlock in 1 second in PutWork");
 	sleep(1);
 	continue;
       }

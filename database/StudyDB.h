@@ -21,11 +21,13 @@ struct StudyDB {
   MYSQL_ROW row;
   // GetPedPosId...
   MYSQL_STMT *stmtGetPedPosId;
-  MYSQL_BIND bindGetPedPosId[4];
+  MYSQL_BIND bindGetPedPosId[5];
   char strGetPedPosId[MAXSTMTLEN];
   char pedigreeSId[17];
   int chromosomeNo;
   double refTraitPosCM;
+  double refTraitPosCMleft;
+  double refTraitPosCMright;
   MYSQL_BIND bindGetPedPosIdResults[1];
   int pedPosId;
   // GetDLikelihood...
@@ -33,6 +35,8 @@ struct StudyDB {
   MYSQL_STMT *stmtGetDLikelihood;
   MYSQL_BIND bindGetDLikelihood[18];
   char strGetDLikelihood[MAXSTMTLEN];
+  // index - LC
+  int partsIdx[3];
   double dGF;
   double lC1BigPen;
   double lC1BigLittlePen;
@@ -61,6 +65,9 @@ struct StudyDB {
   MYSQL_STMT *stmtSignOn;
   MYSQL_BIND bindSignOn[12];
   char strSignOn[MAXSTMTLEN];
+  MYSQL_BIND bindSignOnResults[1];
+  MYSQL_STMT *stmtSignOnResults;
+  char strSignOnResults[MAXSTMTLEN];
   char hostName[33];
   int processId;
   int keepAliveFlag;
@@ -77,18 +84,21 @@ struct StudyDB {
   char strCountWork[MAXSTMTLEN];
   // CountWorkResults
   MYSQL_STMT *stmtCountWorkResults;
-  MYSQL_BIND bindCountWorkResults[16];
+  MYSQL_BIND bindCountWorkResults[1];
   char strCountWorkResults[MAXSTMTLEN];
   long workCount;
   // GetWork...
   MYSQL_STMT *stmtGetWork;
-  MYSQL_BIND bindGetWork[4];
+  MYSQL_BIND bindGetWork[7];
   char strGetWork[MAXSTMTLEN];
   double lowPosition;
   double highPosition;
   int locusListType;
+  MYSQL_BIND bindGetWorkResults[6];
   // GetDParts...
   MYSQL_STMT *stmtGetDParts;
+  MYSQL_BIND bindGetDParts[13];
+  MYSQL_BIND bindGetDPartsResults[13];
   char strGetDParts[MAXSTMTLEN];
   // GetDWorkResults
   MYSQL_STMT *stmtGetDWorkResults;
@@ -97,7 +107,7 @@ struct StudyDB {
   double pedTraitPosCM;
   // PutWork...
   MYSQL_STMT *stmtPutWork;
-  MYSQL_BIND bindPutWork[4];
+  MYSQL_BIND bindPutWork[5];
   char strPutWork[MAXSTMTLEN];
   int runtimeCostSec;
   // other...
@@ -161,6 +171,8 @@ struct StudyDB {
   // GetQParts...
   MYSQL_STMT *stmtGetQParts;
   char strGetQParts[MAXSTMTLEN];
+  MYSQL_BIND bindGetQParts[28];
+  MYSQL_BIND bindGetQPartsResults[28];
 
   // GetQWorkResults
   MYSQL_STMT *stmtGetQWorkResults;

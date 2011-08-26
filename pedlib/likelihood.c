@@ -880,7 +880,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	  DIAG (ALTLSERVER, 0, {fprintf(stderr, "Likelihood is negative %lf\n", tmpLikelihood);});
 	
 	gettimeofday(&t_end, NULL);
-	DIAG (ALTLSERVER, 0, {fprintf(stderr, "Elapsed time for samplings Ped %s is: %6.4f seconds with likelihood %.8g\n", \
+	DIAG (ALTLSERVER, 1, {fprintf(stderr, "Elapsed time for samplings Ped %s is: %6.4f seconds with likelihood %.8g\n", \
 				      pedigreeSId, ((double)t_end.tv_sec - (double)t_start.tv_sec)+ ((double)t_end.tv_usec - (double)t_start.tv_usec)/1000000, tmpLikelihood); });
       }
     }
