@@ -410,6 +410,8 @@ void kelvinInit (int argc, char *argv[])
       pPedigree = pedigreeSet.ppPedigreeSet[j];
       for (k = 0; (noVariation && k < pPedigree->numPerson); k++) {
 	pPerson = pPedigree->ppPersonList[k];
+	if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
+	  continue;
 	if (pPerson->ppGenotypeList[locus]->allele[0] != unknown) {
 	  if (knownAllele == unknown)
 	    knownAllele = pPerson->ppGenotypeList[locus]->allele[0];
