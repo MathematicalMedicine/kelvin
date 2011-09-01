@@ -127,6 +127,7 @@ static int fault = 0;              /* For tracking number of configuration fault
 /* prototypes for non-public routines */
 void initializeDefaults ();
 int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_h);
+int expandEnvVars (char *str, char *expanded, int maxlen);
 int lookupDispatch (char *key, st_dispatch *table);
 int compareDispatch (const void *a, const void *b);
 int getNextTokgroup (FILE *fp, char ***tokgroup_h, int *tokgroupsize);
@@ -852,12 +853,23 @@ void finishConfig (ModelRange *modelRange, ModelType *modelType)
 
 int set_optionfile (char **toks, int numtoks, void *filename)
 {
+  char expanded[PATH_MAX];
+  
   if (numtoks < 2)
-    bail ("missing filename argument to directive '%s'\n", toks[0]);
+    bail ("missing argument to directive '%s'\n", toks[0]);
   if (numtoks > 2)
     bail ("extra arguments to directive '%s'\n", toks[0]);
-  strcpy ((char *) filename, toks[1]);
-  return (0);
+  if (strchr (toks[1], '$') == NULL) {
+    if (strlen (toks[1]) > PATH_MAX - 1)
+      bail ("argument to directive '%s' is too long\n", toks[0]);
+    strcpy ((char *) filename, toks[1]);
+  } else {
+    if (expandEnvVars (toks[1], expanded, PATH_MAX-1) == -1)
+      bail ("argument to directive '%s' references undefined environment variable or is too long after variable substitution\n", toks[0]);
+    strcpy ((char *) filename, expanded);
+  }
+
+   return (0);
 }
 
 
@@ -1438,14 +1450,21 @@ int set_affectionStatus (char **toks, int numtoks, void *unused)
 int set_resultsprefix (char **toks, int numtoks, void *unused)
 {
   int len;
+  char expanded[PATH_MAX];
 
   if (numtoks < 2)
     bail ("missing argument to directive '%s'\n", toks[0]);
   if (numtoks > 2)
     bail ("extra arguments to directive '%s'\n", toks[0]);
-  if ((len = strlen (toks[1])) > PATH_MAX - 1)
-    bail ("argument to directive '%s' is too long\n", toks[0]);
-  strcpy (staticModelOptions.resultsprefix, toks[1]);
+  if (strchr (toks[1], '$') == NULL) {
+    if ((len = strlen (toks[1])) > PATH_MAX - 2)
+      bail ("argument to directive '%s' is too long\n", toks[0]);
+    strcpy (staticModelOptions.resultsprefix, toks[1]);
+  } else {
+    if (expandEnvVars (toks[1], expanded, PATH_MAX-2) == -1)
+      bail ("argument to directive '%s' references undefined environment variable or is too long after variable substitution\n", toks[0]);
+    len = strlen (strcpy (staticModelOptions.resultsprefix, expanded));
+  }
   if (staticModelOptions.resultsprefix[len-1] != '/')
     strcat (staticModelOptions.resultsprefix, "/");
   return (0);
@@ -1589,6 +1608,44 @@ int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_
   else 
     free (vals);
   return (-1);
+}
+
+
+int expandEnvVars (char *str, char *expanded, int maxlen)
+{
+  char *ca, *cb, *var;
+  int len=0, trailing;
+
+  memset (expanded, 0, maxlen);
+  if (str[0] == '/') 
+    expanded[len++] = '/';
+  ca = &(str[len]);
+
+  while (1) {
+    if ((cb = index (ca, '/')) != NULL) {
+      *cb = '\0';
+      trailing = 1;
+    } else
+      trailing = 0;
+
+    if (ca[0] == '$') {
+      if ((var = getenv (&(ca[1]))) == NULL)
+	return (-1);
+      ca = var;
+    }
+    if ((len += strlen (ca)) > maxlen)
+      return (-1);
+    strcat (expanded, ca);
+    if (trailing) {
+      if (len + 1 > maxlen)
+	return (-1);
+      expanded[len++] = '/';
+    }
+    if (cb == NULL)
+      break;
+    ca = cb+1;
+  }
+  return (0);
 }
 
 

@@ -131,7 +131,7 @@ char *programVersion = VERSION;       ///< Overall kelvin version set upon relea
 char *svnVersion = SVNVERSION;        ///< Latest svn version level for this source tree
 char *kelvinVersion = "$Id$";        ///< svn's version for kelvin.c
 
-int main (int argc, char *argv[])
+int main (int argc, char *argv[], char *env[])
 {
   STEP(0, "Initializing");
   kelvinInit(argc, argv);

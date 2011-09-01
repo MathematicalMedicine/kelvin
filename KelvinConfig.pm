@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use KelvinIO;
+use File::Spec::Functions;
 
 =head1 SUMMARY
 
@@ -38,7 +39,7 @@ undef on failure.
 
 package KelvinConfig;
 our $errstr='';
-our $VERSION=1.3;
+our $VERSION=1.4;
 
 
 # The %directive hash: The keys are lowercased versions of the 
@@ -68,7 +69,8 @@ our $VERSION=1.3;
 #       sub-expressions.
 #     parser: The value is a reference to a method that will parse the
 #       argument. The method must return either a reference to a 
-#       scalar, or a reference to an array.
+#       scalar, or a reference to an array. Note the parser routine
+#       is responsible for filling $errstr in the event of an error.
 #
 # Argument regular-expression matching (the 'regex' key) or parsing
 # the 'parser' key) should be used sparingly, and only in cases where
@@ -81,41 +83,54 @@ our $VERSION=1.3;
 my %directives = (
 		  pedigreefile => {canon => 'PedigreeFile',
 				   singlearg => 'true',
-				   default => ['pedfile.dat']},
+				   default => ['pedfile.dat'],
+				   parser => \&parseFilename},
 		  locusfile => {canon => 'LocusFile',
 				singlearg => 'true',
-				default => ['datafile.dat']},
+				default => ['datafile.dat'],
+				parser => \&parseFilename},
 		  frequencyfile => {canon => 'FrequencyFile',
-				    singlearg => 'true'},
+				    singlearg => 'true',
+				    parser => \&parseFilename},
 		  mapfile => {canon => 'MapFile',
 			      singlearg => 'true',
-			      default => ['mapfile.dat']},
+			      default => ['mapfile.dat'],
+			      parser => \&parseFilename},
 		  bayesratiofile => {canon => 'BayesRatioFile',
 				     singlearg => 'true',
-				     default => ['br.out']},
+				     default => ['br.out'],
+				     parser => \&parseFilename},
 		  pplfile => {canon => 'PPLFile',
 			      default => \&defaultPPLFile,
-			      singlearg => 'true'},
+			      singlearg => 'true',
+			      parser => \&parseFilename},
 		  countfile => {canon => 'CountFile',
-				singlearg => 'true'},
+				singlearg => 'true',
+				parser => \&parseFilename},
 		  modfile => {canon => 'MODFile',
-			      singlearg => 'true'},
+			      singlearg => 'true',
+			      parser => \&parseFilename},
 		  extramods => {canon => 'ExtraMODs'},
 		  forcebrfile => {canon => 'ForceBRFile'},
 		  surfacespath=> {canon => 'SurfacesPath',
-				  singlearg => 'true'},
+				  singlearg => 'true',
+				  parser => \&parseFilename},
 		  surfacefile => {canon => 'SurfaceFile',
-				  singlearg => 'true'},
+				  singlearg => 'true',
+				  parser => \&parseFilename},
 		  nidetailfile => {canon => 'NIDetailFile',
-				   singlearg => 'true'},
+				   singlearg => 'true',
+				   parser => \&parseFilename},
 		  epistasispedigreefile => {canon => 'EpistasisPedigreeFile',
 					    singlearg => 'true',
 					    local => 'true',
-					    regex => '\S+'},
+					    regex => '\S+',
+					    parser => \&parseFilename},
 		  epistasislocusfile => {canon => 'EpistasisLocusFile',
 					 singlearg => 'true',
 					 local => 'true',
-					 regex => '\S+'},
+					 regex => '\S+',
+					 parser => \&parseFilename},
 
 		  multipoint => {canon => 'MultiPoint'},
 		  markertomarker => {canon => 'MarkerToMarker',
@@ -287,8 +302,7 @@ sub addDirective
 	    $errstr = "Illegal argument to directive $directive";
 	    return (undef);
 	} elsif (exists ($directives{lc($directive)}{parser}) &&
-		 ! ($ref = &{$directives{lc($directive)}{parser}} ($self, $arg))) {
-	    $errstr = "Illegal argument to directive $directive";
+		 ! ($ref = &{$directives{lc($directive)}{parser}} ($self, $directive, $arg))) {
 	    return (undef);
 	}
 	if (exists ($directives{lc($directive)}{singlearg}) && 
@@ -589,6 +603,28 @@ sub isConfigured
     } else {
 	return ($aref);
     }
+}
+
+sub parseFilename
+{
+    my ($self, $directive, $arg) = @_;
+    my ($vol, $path, $filename);
+    my @directories;
+    my $result;
+
+    ($vol, $path, $filename) = splitpath ($arg);
+    @directories = splitdir ($path);
+    foreach (@directories, $filename) {
+	/^\$(\w+)$/ or next;
+	unless (exists $ENV{$1}) {
+	    $errstr = "Directive $directive references a variable '$_' that is not set in environment";
+	    return (undef);
+	}
+	$_ = $ENV{$1};
+    }
+    $path = catdir (@directories);
+    $result = catpath ($vol, $path, $filename);
+    return (\$result);
 }
 
 sub defaultPPLFile
