@@ -1249,8 +1249,8 @@ sub check_paths
     require KelvinConfig;
     require KelvinFamily;
     # Check versions ('use' would have done for us automatically)
-    KelvinDataset->VERSION (1.50);
-    KelvinConfig->VERSION (1.30);
+    KelvinDataset->VERSION (1.40);
+    KelvinConfig->VERSION (1.40);
     KelvinFamily->VERSION (1.50);
 
     if ($ENV{KELVIN_BINARY}) {
