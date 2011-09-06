@@ -1,7 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
 use KelvinIO;
-use File::Spec::Functions;
 
 =head1 SUMMARY
 
@@ -40,6 +39,7 @@ undef on failure.
 package KelvinConfig;
 our $errstr='';
 our $VERSION=1.4;
+use File::Spec::Functions qw(splitpath splitdir catpath catdir);
 
 
 # The %directive hash: The keys are lowercased versions of the 
