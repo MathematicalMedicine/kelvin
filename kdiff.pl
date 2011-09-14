@@ -351,23 +351,15 @@ if ($pedfiles) {
 	    next;
 	}
 	my @aref = @{$ {$families1{$pedid}}{individuals}};
-	if ($$dataset1{origfmt} eq "pre") {
-	    print "Pre\n";
-	    map { $individuals1{$_->origindid} = $_; } @aref;
-	} else {
-	    map { $individuals1{$_->indid} = $_; } @aref;
-	}
+	map { $individuals1{$_->indid} = $_; } @aref;
+
 	if (!defined($families2{$pedid})) {
 	    print "2: Pedigree \"$pedid\" not found, skipping!\n";
 	    $are_different += 1;
 	    next;
 	}
 	@aref = @{$ {$families2{$pedid}}{individuals}};
-	if ($$dataset2{origfmt} eq "pre") {
-	    map { $individuals2{$_->origindid} = $_; } @aref;
-	} else {
-	    map { $individuals2{$_->indid} = $_; } @aref;
-	}
+	map { $individuals2{$_->indid} = $_; } @aref;
 
 	for my $indid (uniqua (keys %individuals1, keys %individuals2)) {
 	    my %individual1;
@@ -387,6 +379,11 @@ if ($pedfiles) {
 
 	    # Compare all scalar attributes (nice if they're named in an illuminating fashion)
 	    for my $key (keys %individual1) {
+		next if (($$dataset1{origfmt} eq "pre" or $$dataset2{origfmt} eq "pre") and
+			 ($key eq "matsibid" or
+			  $key eq "patsibid" or
+			  $key eq "proband" or
+			  $key eq "firstchildid"));
 		next if ((!defined ($individual1{$key})) and (!defined ($individual2{$key})));
 		next if (ref ($individual1{$key}) ne "");
 		if ($individual1{$key} ne $individual2{$key}) {
