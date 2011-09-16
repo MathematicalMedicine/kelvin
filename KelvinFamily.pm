@@ -420,8 +420,10 @@ sub makeped
 	    $hash{$indid}{patkididx} = scalar (@{$hash{$dadid}{kids}});
 	    $hash{$indid}{matkididx} = scalar (@{$hash{$momid}{kids}});
 	    # Build kid list with new, rather then current, IDs, to save lookups later
-	    splice (@{$hash{$dadid}{kids}}, -1, 0, $hash{$indid}{newid});
-	    splice (@{$hash{$momid}{kids}}, -1, 0, $hash{$indid}{newid});
+	    # splice (@{$hash{$dadid}{kids}}, -1, 0, $hash{$indid}{newid});
+	    # splice (@{$hash{$momid}{kids}}, -1, 0, $hash{$indid}{newid});
+	    splice (@{$hash{$dadid}{kids}}, -1, 0, $indid);
+	    splice (@{$hash{$momid}{kids}}, -1, 0, $indid);
 	    add_to_set ($setlist, $indid, $dadid, $momid);
 	}
     }
@@ -439,12 +441,12 @@ sub makeped
 	if (! $hash{$indid}{founder}) {
 	    $$individual{patsibid} = $hash{$dadid}{kids}[$hash{$indid}{patkididx}];
 	    $$individual{matsibid} = $hash{$momid}{kids}[$hash{$indid}{matkididx}];
-	    $$individual{dadid} = $hash{$dadid}{newid};
-	    $$individual{momid} = $hash{$momid}{newid};
+	    # $$individual{dadid} = $hash{$dadid}{newid};
+	    # $$individual{momid} = $hash{$momid}{newid};
 	}
 	(scalar (@{$hash{$indid}{kids}}))
 	    and $$individual{firstchildid} = $hash{$indid}{kids}[0];
-	$$individual{indid} = $hash{$indid}{newid};
+	# $$individual{indid} = $hash{$indid}{newid};
     }
     $$self{individuals}[0]{proband} = 1;
     return (1);
