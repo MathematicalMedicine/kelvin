@@ -490,7 +490,7 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     if (strcmp(a2, "0") != 0 && strcasecmp(a2, "X") != 0) {
       ret = find_allele (numMarker, a2);
       pPerson->pPhenotypeList[1][numMarker] = ret;
-      ASSERT (ret >= 0, "Pedfile %s, line %d: Pedigree %s, individual %s contains a genotype with unkown allele %s at locus %s",
+      ASSERT (ret >= 0, "Pedfile %s, line %d: Pedigree %s, individual %s contains a genotype with unknown allele %s at locus %s",
 	      sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID, a2, pLocus->sName);
     }
     else
