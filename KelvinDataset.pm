@@ -10,7 +10,7 @@ package KelvinDataset;
 our $errstr='';
 our $VERSION=1.4;
 
-my $ROUNDING_ERROR=0.0001;
+our $ROUNDING_ERROR=0.0001;
 
 sub new
 {
@@ -44,6 +44,7 @@ sub new
     #   snps: dataset contains snps?
     #   individualcache: cache for KelvinIndividuals when reading families
     #   pedwriteformat: 'pre' or 'post'
+    #   unkallelesok: allow unknown alleles when reading pedfile
     
     @$self{qw/markers traits undefpheno maporder/} = ({}, {}, undef, []);
     @$self{qw/markerorder traitorder mapfields/} = ([], [], []);
@@ -52,6 +53,7 @@ sub new
     @$self{qw/pedigreefile pedfh pedlineno/} = (undef, undef, 0);
     @$self{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
     @$self{qw/microsats snps individualcache pedwriteformat/} = (0, 0, undef, 'post');
+    @$self{qw/unkallelesok/} = (0);
  
     if (! defined ($arg)) {
 	$errstr = "missing argument";
@@ -107,6 +109,7 @@ sub copy
     @$new{qw/pedigreefile pedfh pedlineno/} = (undef, undef, 0);
     @$new{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
     @$new{qw/individualcache pedwriteformat/} = (undef, 'post');
+    @$new{qw/unkallelesok/} = (0);
 
     if (defined ($arg)) {
 	if (ref ($arg) ne 'HASH') {
@@ -1072,6 +1075,14 @@ sub setUndefPhenocode
     my ($self, $code) = @_;
 
     $$self{undefpheno} = $code;
+    return (1);
+}
+
+sub allowUnknownAlleles
+{
+    my ($self) = @_;
+
+    $$self{unkallelesok} = 1;
     return (1);
 }
 

@@ -735,8 +735,13 @@ sub new
 	    if (exists ($$dataset{markers}{$marker}{alleles})) {
 		map {
 		    if (!exists ($$dataset{markers}{$marker}{alleles}{$_})) {
-			$errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: individual $$ind{indid} has unknown allele $_ for $marker";
-			return (undef);
+			if ($$dataset{unkallelesok}) {
+			    $$dataset{markers}{$marker}{alleles}{$_} = $KelvinDataset::ROUNDING_ERROR;
+			    warn ("WARNING, adding allele $_ for marker $marker\n");
+			} else {
+			    $errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: individual $$ind{indid} has unknown allele $_ for $marker";
+			    return (undef);
+			}
 		    }
 		} @arr[$markercol, $markercol+1];
 	    }
