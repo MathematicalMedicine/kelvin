@@ -455,20 +455,20 @@ sub readMapfile
 	    $regex .= (($regex) ? '\s+' : '') . '(\S+)';
 	} elsif ($arr[$va] =~ /female/i) {
 	    push (@headers, "femalepos");
-	    $regex .= (($regex) ? '\s+' : '') . '([\-\d\.]+)';
+	    $regex .= (($regex) ? '\s+' : '') . '([\-\d\.]+(?:[eE][+\-]\d+)?)';
 	} elsif ($arr[$va] =~ /male/i) {
 	    push (@headers, "malepos");
-	    $regex .= (($regex) ? '\s+' : '') . '([\-\d\.]+)';
+	    $regex .= (($regex) ? '\s+' : '') . '([\-\d\.]+(?:[eE][+\-]\d+)?)';
 	} elsif ($arr[$va] =~ /(basepair|bp|phys)/i) {
 	    push (@headers, "phys");
 	    $regex .= (($regex) ? '\s+' : '') . '(\d+)';
 	} elsif ($arr[$va] =~ /(sex|avg|ave|pos|kosambi)/i) {
 	    push (@headers, "avgpos");
-	    $regex .= (($regex) ? '\s+' : '') . '([\-\d\.]+)';
+	    $regex .= (($regex) ? '\s+' : '') . '([\-\d\.]+(?:[eE][+\-]\d+)?)';
 	} elsif ($arr[$va] =~ /haldane/i) {
 	    push (@headers, "avgpos");
 	    $$self{mapfunction} = 'haldane';
-	    $regex .= (($regex) ? '\s+' : '') . '([\-\d\.]+)';
+	    $regex .= (($regex) ? '\s+' : '') . '([\-\d\.]+(?:[eE][+\-]\d+)?)';
 	} else {
 	    $errstr = "$$self{mapfile}, line $lineno: unknown column header '$arr[$va]'";
 	    return (undef);
@@ -662,6 +662,7 @@ sub write
     my ($self, $arg) = @_;
     my ($mapfile, $locusfile, $freqfile, $pedfile);
     my $backupfile = 1;
+    my $premakeped = 0;
     my $only = 1;
 
     if (defined ($arg)) {
@@ -675,6 +676,7 @@ sub write
 	    elsif (/^freq/i) { $freqfile = $$arg{$_}; }
 	    elsif (/^ped/i) { $pedfile = $$arg{$_}; }
 	    elsif (/^backup$/i) { $backupfile = $$arg{$_}; }
+	    elsif (/^premakeped$/i) { $premakeped = $$arg{$_}; }
 	    elsif (/^write$/i) { 
 		$only = ($$arg{$_} =~ /all/i) ? 0 : (($$arg{$_} =~ /only/i) ? 1 : undef);
 	    } else {
@@ -702,7 +704,8 @@ sub write
 	    or return (undef);
     }
     if (defined ($pedfile)) {
-	$self->writePedigreefile ({pedigreefile => $pedfile, backupfile => $backupfile})
+	$self->writePedigreefile ({pedigreefile => $pedfile, backupfile => $backupfile,
+				   premakeped => $premakeped})
 	    or return (undef);
     }
 }
