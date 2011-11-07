@@ -288,7 +288,7 @@ if ($freqfiles) {
 		$are_different += 1;
 		next;
 	    }
-	    if ($alleles1{$allele} ne $alleles2{$allele}) {
+	    if ($alleles1{$allele} != $alleles2{$allele}) {
 		$are_different += 1;
 		print "2: Marker \"$name\" allele \"$allele\" has a different frequency - 1:".
 		    $alleles1{$allele}." vs 2:".$alleles2{$allele}."\n";
