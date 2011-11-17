@@ -109,7 +109,13 @@ KVNLIBDIR := $(shell pwd)/lib
 KELVIN_ROOT := $(shell pwd)
 TEST_KELVIN := $(KELVIN_ROOT)/kelvin-$(VERSION)
 KELVIN_SCRIPT := $(KELVIN_ROOT)/Kelvin
-SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/calc_updated_ppl
+# If the build is occurring under cygwin, then we have to change the name of this binary due to Microsoft IDioT (Installer Detection Technology)
+ifeq ("$(findstring CYGWIN,$(PLATFORM))", "")
+  CALC_UPDATED_PPL := calc_updtd_ppl
+else
+  CALC_UPDATED_PPL := calc_updated_ppl
+endif
+SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/$(CALC_UPDATED_PPL)
 
 # If we're building in an svn-managed context, get AND preserve the latest svn version
 SVNVERSION := $(subst exported,,$(shell svnversion 2>/dev/null))
@@ -179,13 +185,13 @@ INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinWriteFiles.h dkelvinWriteFiles.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
-all : kelvin-$(VERSION) seq_update/calc_updated_ppl
+all : kelvin-$(VERSION) seq_update/$(CALC_UPDATED_PPL)
 
 dist :
 	- rm -rf kelvin-$(VERSION)
 	mkdir kelvin-$(VERSION)
 	mkdir kelvin-$(VERSION)/bin
-	cp -a bin/{kelvin,calc_updated_ppl}.* kelvin-$(VERSION)/bin
+	cp -a bin/{kelvin,$(CALC_UPDATED_PPL)}.* kelvin-$(VERSION)/bin
 	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
 	perl -pe "s|#FILE_CFLAGS \+\= \-DDISTRIBUTION|FILE_CFLAGS \+\= \-DDISTRIBUTION|;" Makefile > kelvin-$(VERSION)/Makefile
 	mkdir kelvin-$(VERSION)/{lib,utils,pedlib,config,seq_update}
@@ -218,7 +224,7 @@ dist :
 	rm -rf kelvin-$(VERSION)
 
 install : $(BINDIR)/kelvin-$(VERSION) \
-          $(BINDIR)/calc_updated_ppl \
+          $(BINDIR)/$(CALC_UPDATED_PPL) \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh \
 	  $(BINDIR)/KelvinConfig.pm \
@@ -255,10 +261,14 @@ ifeq ("$(findstring -DDISTRIBUTION,$(CFLAGS))", "")
 endif
 
 
-.PHONY : seq_update/calc_updated_ppl
-seq_update/calc_updated_ppl :
+.PHONY : seq_update/$(CALC_UPDATED_PPL)
+seq_update/$(CALC_UPDATED_PPL) :
 	+make -C seq_update -f Makefile calc_updated_ppl
-	cp $@ bin/calc_updated_ppl.$(PLATFORM)
+	# The following dance is the fast way of being able to build both the same and differently
+	# named final target without modifying a subordinate makefile. Its harmless, ignore it.
+	mv seq_update/calc_updated_ppl seq_update/intermediate-name
+	mv seq_update/intermediate-name $@
+	cp $@ bin/$(CALC_UPDATED_PPL).$(PLATFORM)
 
 .PHONY : libs
 libs :
@@ -278,7 +288,7 @@ ifeq ($(strip $(USE_STUDYDB)), yes)
 	make -C database -f Makefile clean
 endif
 	make -C seq_update -f Makefile clean
-	rm -f $(OBJS) kelvin-$(VERSION) seq_update/calc_updated_ppl lib/libconfig.a lib/klvnutls.a lib/libped.a
+	rm -f $(OBJS) kelvin-$(VERSION) seq_update/$(CALC_UPDATED_PPL) lib/libconfig.a lib/klvnutls.a lib/libped.a
 ifeq ($(strip $(USE_STUDYDB)), yes)
 	rm -f lib/klvndb.a
 endif
@@ -314,11 +324,11 @@ ifeq (,$(wildcard bin/kelvin.$(PLATFORM)))
 else
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin.$(PLATFORM) $(BINDIR)/kelvin.$(PLATFORM)
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin.$(PLATFORM) $(BINDIR)/kelvin-$(VERSION)
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/calc_updated_ppl.$(PLATFORM) $(BINDIR)/calc_updated_ppl-$(VERSION)
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/$(CALC_UPDATED_PPL).$(PLATFORM) $(BINDIR)/$(CALC_UPDATED_PPL)-$(VERSION)
 endif
 
-$(BINDIR)/calc_updated_ppl : seq_update/calc_updated_ppl
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/calc_updated_ppl $(BINDIR)/calc_updated_ppl
+$(BINDIR)/$(CALC_UPDATED_PPL) : seq_update/$(CALC_UPDATED_PPL)
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/$(CALC_UPDATED_PPL) $(BINDIR)/$(CALC_UPDATED_PPL)
 
 $(BINDIR)/convert_br.pl : seq_update/convert_br.pl
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/convert_br.pl $(BINDIR)/convert_br.pl
@@ -330,5 +340,5 @@ $(BINDIR)/%.pm : %.pm
 	install -o $(OWNER) -g $(GROUP) -m 0644 -p $< $@
 
 $(BINDIR)/Kelvin : Kelvin
-	perl -pe "s|NO_KELVIN_ROOT|$(ABSBINDIR)|; s|NO_KELVIN_BINARY|$(ABSBINDIR)/kelvin-$(VERSION)|; s|NO_SEQUPDATE_BINARY|$(ABSBINDIR)/calc_updated_ppl|;" Kelvin > Kelvin.local
+	perl -pe "s|NO_KELVIN_ROOT|$(ABSBINDIR)|; s|NO_KELVIN_BINARY|$(ABSBINDIR)/kelvin-$(VERSION)|; s|NO_SEQUPDATE_BINARY|$(ABSBINDIR)/$(CALC_UPDATED_PPL)|;" Kelvin > Kelvin.local
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p Kelvin.local $(BINDIR)/Kelvin
