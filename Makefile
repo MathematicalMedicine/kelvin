@@ -111,9 +111,9 @@ TEST_KELVIN := $(KELVIN_ROOT)/kelvin-$(VERSION)
 KELVIN_SCRIPT := $(KELVIN_ROOT)/Kelvin
 # If the build is occurring under cygwin, then we have to change the name of this binary due to Microsoft IDioT (Installer Detection Technology)
 ifeq ("$(findstring CYGWIN,$(PLATFORM))", "")
-  CALC_UPDATED_PPL := calc_updtd_ppl
-else
   CALC_UPDATED_PPL := calc_updated_ppl
+else
+  CALC_UPDATED_PPL := calc_updtd_ppl
 endif
 SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/$(CALC_UPDATED_PPL)
 
