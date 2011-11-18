@@ -61,8 +61,6 @@ fi
 
 # Normal every-day use
 make clean
-make USE_OPENMP=$USE_OPENMP USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR" ENV_LDFLAGS="" kelvin
+make USE_OPENMP=$USE_OPENMP USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR" ENV_LDFLAGS=""
 cp kelvin-$VERSION kelvin-normal
 cp kelvin-$VERSION kelvin-$VERSION-normal
-
-make seq_update/calc_updated_ppl
