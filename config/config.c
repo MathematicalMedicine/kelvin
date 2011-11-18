@@ -6,6 +6,9 @@
 #include <math.h>
 #include <float.h>
 #include <limits.h>
+#include <sys/types.h>
+#include <regex.h>
+
 #include "config.h"
 #include "../utils/utils.h"
 #include "../utils/pageManagement.h"
@@ -1392,12 +1395,11 @@ int set_qt_truncation (char **toks, int numtoks, void *unused)
 int set_study_parameters (char **toks, int numtoks, void *unused)
 {
   char *ptr = NULL;
-  // Want studyId, role, dBHostname, dbName, username, password, pedigreeRegEx, pedigreeNotRegEx
+  ptr=NULL;
+  // Want studyLabel, role, dBHostname, dbName, username, password, pedigreeRegEx, pedigreeNotRegEx
   if (numtoks != 9 && numtoks != 13)
     bail ("inappropriate number of arguments to directive '%s'\n", toks[0]);
-  studyDB.studyId = (int) strtol (toks[1], &ptr, 10);
-  if ((toks[1] == ptr) || (*ptr != '\0'))
-    bail ("directive '%s' requires an initial integer argument\n", toks[0]);
+  strncpy(studyDB.studyLabel, toks[1], sizeof(studyDB.studyLabel));
   strncpy (studyDB.role, toks[2], sizeof (studyDB.role));
   strncpy (studyDB.dBHostname, toks[3], sizeof (studyDB.dBHostname));
   strncpy (studyDB.dBName, toks[4], sizeof (studyDB.dBName));
@@ -1405,6 +1407,9 @@ int set_study_parameters (char **toks, int numtoks, void *unused)
   strncpy (studyDB.password, toks[6], sizeof (studyDB.password));
   strncpy (studyDB.pedigreeRegEx, toks[7], sizeof (studyDB.pedigreeRegEx));
   strncpy (studyDB.pedigreeNotRegEx, toks[8], sizeof (studyDB.pedigreeNotRegEx));
+  // compile the regular expressions here
+  regcomp(&studyDB.includePattern, studyDB.pedigreeRegEx, 0);
+  regcomp(&studyDB.excludePattern, studyDB.pedigreeNotRegEx, 0);
   studyDB.MCMC_flag = 0;
   if (numtoks > 9) {
     if(strcasecmp(toks[9], "MCMC")!=0) 
@@ -1413,6 +1418,10 @@ int set_study_parameters (char **toks, int numtoks, void *unused)
     studyDB.totalSampleCount = atoi(toks[10]);
     studyDB.sampleIdStart = atoi(toks[11]);
     studyDB.sampleIdEnd = atoi(toks[12]);
+    // allocate space to store markerset likelihood for each MCMC sampling
+    // unfortunately we have to keep them to calculate the LR per sample, 
+    // otherwise we get wrong results
+    studyDB.markerSetLikelihood = calloc(sizeof(double), studyDB.sampleIdEnd - studyDB.sampleIdStart+1);
   }
   return (0);
 }

@@ -249,6 +249,10 @@ void kelvinInit (int argc, char *argv[])
     if (modelRange->nlclass == 0)
       ERROR ("Liability class analysis specified, but all classes are empty.");
   }
+#ifdef STUDYDB
+studyDB.liabilityClassCnt = modelRange->nlclass;
+strcpy(studyDB.imprintingFlag, modelOptions->imprintingFlag ? "y" : "n");
+#endif
 
   /* sort, uniquify and expand the trait model dimensions, subject to constraints */
   DETAIL(0,"Post-processing model and configuration data");
@@ -339,7 +343,7 @@ void kelvinInit (int argc, char *argv[])
   } else {
     /* we are doing multipoint analysis */
     totalLoci = modelType->numMarkers + originalLocusList.numTraitLocus;
-    if (modelRange->tlocRangeStart >= 0) {
+    if ( modelRange->tlocRangeIncr >= 0) {
       double endofmap, tloc;
       endofmap = map.ppMapUnitList[map.count - 1]->mapPos[MAP_POS_SEX_AVERAGE] + modelRange->tlocRangeIncr;
       i = 0;
@@ -411,7 +415,7 @@ void kelvinInit (int argc, char *argv[])
       for (k = 0; (noVariation && k < pPedigree->numPerson); k++) {
 	pPerson = pPedigree->ppPersonList[k];
 	if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
-	  continue;
+          continue;
 	if (pPerson->ppGenotypeList[locus]->allele[0] != unknown) {
 	  if (knownAllele == unknown)
 	    knownAllele = pPerson->ppGenotypeList[locus]->allele[0];

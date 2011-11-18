@@ -188,7 +188,7 @@ my %directives = (
 		  study => {canon => 'Study',
 			    local => 'true',
 			    singlearg => 'true',
-			    regex => '(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)'},
+			    regex => '(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)'},
 		  traitprevalence => {canon => 'TraitPrevalence',
 				      local => 'true',
 				      singlearg => 'true',

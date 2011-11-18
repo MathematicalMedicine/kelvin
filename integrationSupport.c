@@ -1717,6 +1717,9 @@ void integrateMain ()
   int i, j, k;
   int liabIdxLocal, pedIdx, statusLocal;
   Pedigree *pPedigreeLocal;
+#ifdef STUDYDB
+  int *pMarkers;
+#endif
 
   SUBSTEP (0, "Setting-up for integration-based analysis");
 
@@ -2523,6 +2526,7 @@ void integrateMain ()
     leftMarker = -1;
 
 #ifdef STUDYDB
+    CALCHOKE(pMarkers, (size_t)modelType->numMarkers, sizeof(int), int *); 
 
     /* Iterate over all positions in the analysis. */
 
@@ -2547,7 +2551,7 @@ void integrateMain ()
 
       newTLoc[0] = lociSetTransitionPositions[0] - 1.0;
       for (i=1; i<j; i++) {
-	newTLoc[i] = lociSetTransitionPositions[i-1] + ((lociSetTransitionPositions[i] - lociSetTransitionPositions[i-1]) / 2.0);
+        newTLoc[i] = lociSetTransitionPositions[i-1] + ((lociSetTransitionPositions[i] - lociSetTransitionPositions[i-1]) / 2.0);
       }
       newTLoc[j] = lociSetTransitionPositions[j-1] + 1.0;
 

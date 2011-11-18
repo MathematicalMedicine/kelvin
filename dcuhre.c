@@ -359,9 +359,6 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->center[direct] += cw_sbrg->hwidth[direct];
       cw_sbrg->lchild_id = 0;
 
-#ifdef STUDYDB
-      fprintf (stderr, "DCUHRE split performed from parent %d, direction %d!\n", cw_sbrg->parent_id, parent_sbrg->dir);
-#endif
       if (s->verbose > 1) {
 	print_sbrg (cw_sbrg, s->ndim);
       }
@@ -377,6 +374,12 @@ dadhre_ (dcuhre_state * s)
 	fprintf (stderr, "After %d sub regions result=%10.8f error=%10.8f\n",
 		 s->sbrgns, s->result, s->error);
       }
+#ifdef STUDYDB
+      fprintf (stderr, "DCUHRE split performed from parent %d, direction %d!\n", cw_sbrg->parent_id, parent_sbrg->dir);
+      fprintf(stderr, "Left half region %d w/%d bogus evaluation results\n", 
+	      s->sbrgns, 
+	      s->sbrg_heap[s->sbrgns]->bogusLikelihoods);
+#endif
       s->sbrgns++;
 
       /*Step 3.3 Compute second half region.(right child) */
@@ -422,8 +425,19 @@ dadhre_ (dcuhre_state * s)
 		 s->sbrgns, real_result, real_error, s->diff_result[s->sbrgns]);
       }
 
+#ifdef STUDYDB
+      fprintf(stderr, "Right half region %d w/%d bogus evaluation results\n", 
+	      s->sbrgns, 
+	      s->sbrg_heap[s->sbrgns]->bogusLikelihoods);
+#endif
       s->sbrgns++;
-
+#ifdef STUDYDB
+      if (s->sbrg_heap[s->sbrgns-1]->bogusLikelihoods > 0 || s->sbrg_heap[s->sbrgns-2]->bogusLikelihoods > 0) {
+	// fprintf (stderr, "averted!\n");
+	s->ifail=0;
+	break;
+      }
+#endif
 
       /*find the next subregion with greatest error among leaves to split */
       s->greate = 0.0;

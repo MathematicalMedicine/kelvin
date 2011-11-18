@@ -34,3 +34,6 @@ int GetQWork (double, double, int, double *, char *, double *,
 	      double *, double *, double *);
 
 
+double GetMarkerSetLikelihood(int pedPosId, int regionNo, int parentRegionNo, double parentRegionError, int parentRegionSplitDir);
+int GetMarkerSetLikelihood_MCMC(int pedPosId);
+

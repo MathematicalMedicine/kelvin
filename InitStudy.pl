@@ -3,6 +3,7 @@ use strict;
 use Data::Dumper;
 use File::Basename;
 use DBI; # Database interaction
+use DBI qw(:sql_types);
 $|=1; # Show the output when I say so.
 
 my $KELVIN_ROOT='NO_KELVIN_ROOT';
@@ -79,8 +80,13 @@ sub perform_study
 {
     my ($config) = @_;
 
-    $ {$config->isConfigured ("Study")}[0] =~ /(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/;
-    my $StudyId = $1; my $StudyRole = lc($2); my $DBIHost = $3; my $DBIDatabase = $4; my $Username = $5; my $Password = $6; my $PedigreeRegEx = $7; my $PedigreeNotRegEx = $8;
+    # The following regex allows quoting of StudyLabel and Password, which bears narration: optionally
+    # match a single or full quote, then a string excluding single or full quotes, and finally, if
+    # some quote was found, require its closure. Only shortcoming is not allowing embedded single or
+    # full quotes.
+    ${$config->isConfigured ("Study")}[0] =~ /(["'])?([^"']+)(?(1)\1|)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(["'])?([^"']+)(?(7)\7|)\s+(\S+)\s+(\S+)/;
+
+    my $StudyLabel = $2; my $StudyRole = uc($3); my $DBIHost = $4; my $DBIDatabase = $5; my $Username = $6; my $Password = $8; my $PedigreeRegEx = $9; my $PedigreeNotRegEx = $10;
     my $DBIConnectionString = "mysql:host=".$DBIHost.":database=$DBIDatabase";
     my $MapId; my $LiabilityClasses = 1; my $ImprintingFlag = 'n';
 
@@ -109,39 +115,34 @@ sub perform_study
     my $aref = $config->isConfigured ("PhenoCodes");
     $dataset->setUndefPhenocode ((split (/,\s*/, $$aref[0]))[0]);
 
-    # We always want a full map whether it is for the client (ReferenceMap) or server (GenotypeMaps)
+    # Get or insert the Study
+    my $StudyId;
+    #my $sth = $dbh->prepare("Call GetStudyId(?, ?, ?, ?)")
+    #	or die "Couldn't prepare GetStuydId: $dbh->errstr";
+    # $sth->bind_param_inout(4, \$StudyId, 11, {TYPE=>SQL_INTEGER});
+    # $sth->execute($StudyName, $LiabilityClasses, $ImprintingFlag) or die "Couldn't execute GetStudyId: $dbh->errstr";
+    # The above nets me: DBD::mysql::st bind_param_inout failed: Output parameters not implemented at ../InitStudy.pl line 121,
+    # so the workaround is:
+    $dbh->do("Call GetStudyId(\'$StudyLabel\', $LiabilityClasses, \'$ImprintingFlag\', \@StudyId)");
+    $StudyId = $dbh->selectrow_array('Select @StudyId');
 
-    $MapId = find_or_insert_map($$href{MapFile}, $dataset, $dbh, $StudyId);
+    # Get or insert the Map
+    my $MapScale = uc(substr $$dataset{mapfunction},0,1);
+    my $MapFile = $$href{MapFile};
+    my $MapDescription;
+    $dbh->do("Call GetMapId(\'$StudyId\', \'".(($StudyRole eq "CLIENT")? 1:0)."\', \'$MapScale\', \'$MapFile\', \@MapId, \@MapScale, \@MapDescription)");
+    ($MapId, $MapScale, $MapDescription) = $dbh->selectrow_array('Select @MapId, @MapScale, @MapDescription');
 
-    # Get the Studies row indicated by the configuration...
-
-    my $sth = $dbh->prepare("Select ReferenceMapId, LiabilityClassCnt, ImprintingFlag from Studies where StudyId = ?")
-	or die "Couldn't prepare Studies selection: $dbh->errstr";
-    $sth->execute($StudyId) or die "Couldn't execute Studies selection: $dbh->errstr";
-
-    if (my @Results = $sth->fetchrow_array()) {
-
-	# Study exists, check map (if client), liability classes and imprinting
-
-	error ("Mismatch in map")
-	    if ($StudyRole eq "client" and $Results[0] ne $MapId);
-	error ("Mismatch in liability classes")
-	    if ($Results[1] ne $LiabilityClasses);
-	error ("Mismatch in imprinting flag")
-	    if (lc($Results[2]) ne $ImprintingFlag);
-	$sth->finish;
-
-    } else {
-
-	# Study does not exist, OK for the client, bad for a server.
-
-	error ("Client run must setup Studies and other tables before servers can run")
-	    if ($StudyRole ne "client");
-
-	# Insert Studies row with information from this configuration
-	$dbh->do("Insert into Studies (StudyId, ReferenceMapId, LiabilityClassCnt, ImprintingFlag) values (?,?,?,?)",
-		 undef, $StudyId, $MapId, $LiabilityClasses, $ImprintingFlag)
-	    or die "Cannot insert Studies row: $DBI::errstr";
+    # Ensure that all markers are present even if they're a superset of an existing map
+    my @markerOrder = @{$$dataset{markerorder}};
+    my %markers = %{$$dataset{markers}};
+    my $ChromosomeNo = $$dataset{chromosome};
+    # Find or insert the markers. Marker names must be identical between maps for interpolation.
+    foreach (@markerOrder) {
+	# Don't care if this fails...
+	$dbh->do("Insert ignore into Markers (StudyId, Name, ChromosomeNo) values (?,?,?)", undef, $StudyId, $_, $ChromosomeNo);
+	$dbh->do("Insert ignore into MapMarkers (StudyId, MapId, MarkerName, AvePosCM) values (?,?,?,?)",
+		 undef, $StudyId, $MapId, $_, $markers{$_}{avgpos});
     }
 
     # Make sure all PedigreeSIds and SingleModelTimes are present
@@ -152,7 +153,7 @@ sub perform_study
     while ($ped = $dataset->readFamily) { 
 #	print Dumper($ped);
 	my $PedigreeSId = $$ped{pedid};
-	if (uc $StudyRole eq "CLIENT") {
+	if ($StudyRole eq "CLIENT") {
 	    # Client -- just slam 'em in, don't care if this fails with duplicates...NOTE that
             # Inclusion and exclusion regexps are ignored since the kelvin client processes
             # all pedigrees. Only servers have a restricted view.
@@ -168,7 +169,7 @@ sub perform_study
     }
     (! defined ($ped)) and error ($KelvinDataset::errstr);
 
-    if (uc $StudyRole eq "SERVER") {
+    if ($StudyRole eq "SERVER") {
 	$dbh->do("call BadScaling(?)", undef, $StudyId);
 	# Add the following to hold trait likelihood references
 	$dbh->do("Insert ignore into PedigreePositions ".
@@ -183,11 +184,11 @@ sub perform_study
     my $JointTPs = join(',', @{$config->isConfigured ("TraitPositions")});
     $JointTPs =~ s/\s+//g;
     my @TPs = split(',',$JointTPs);
-    my $ChromosomeNo = $$dataset{chromosome};
+    $ChromosomeNo = $$dataset{chromosome};
     # First find where "begin" and "end" are for the current set of markers.
     my $lastMarkerPos = 0;
     my $firstMarkerPos = 9999.9;
-    my %markers = %{$$dataset{markers}};
+    %markers = %{$$dataset{markers}};
     foreach (keys %markers) {
 	$lastMarkerPos = $markers{$_}{avgpos} if ($markers{$_}{avgpos} > $lastMarkerPos);
 	$firstMarkerPos = $markers{$_}{avgpos} if ($markers{$_}{avgpos} < $firstMarkerPos);
@@ -239,51 +240,6 @@ sub perform_study
     $dbh->do("call BadScaling(?)", undef, $StudyId);
 
     return;
-}
-
-sub find_or_insert_map
-{
-    my $MapFile = shift();
-    my $dataset = shift();
-    my $dbh = shift();
-    my $StudyId = shift();
-
-    my $MapScale = uc(substr $$dataset{mapfunction},0,1);
-    my $MapId = 0;
-	
-#    print "fields are ".Dumper($$dataset{mapfields})."\n";
-
-    # Get the Maps row...
-    my $sth = $dbh->prepare("Select MapId from Maps where StudyId = $StudyId AND MapScale = ? AND Description like ?")
-	or die "Couldn't prepare Maps selection: $dbh->errstr";
-    $sth->execute($MapScale, $MapFile) or die "Couldn't execute Maps selection: $dbh->errstr";
-    if (my @Results = $sth->fetchrow_array()) {
-	# Got it, return it...
-	$MapId = $Results[0];
-	$sth->finish;
-    } else {
-	# No such map, insert it
-	$dbh->do("Insert into Maps (StudyId, MapScale, Description) values (?,?,?)", undef, $StudyId, $MapScale, $MapFile)
-	    or die "Cannot insert Maps row: $DBI::errstr";
-	$sth->finish;
-	$sth = $dbh->prepare("Select LAST_INSERT_ID()");
-	$sth->execute;
-	$sth->bind_col(1, \$MapId);
-	$sth->fetch;
-	$sth->finish;
-    }
-    # Ensure that all markers are present even if they're a superset of an existing map
-    my @markerOrder = @{$$dataset{markerorder}};
-    my %markers = %{$$dataset{markers}};
-    my $ChromosomeNo = $$dataset{chromosome};
-    # Find or insert the markers. Marker names must be identical between maps for interpolation.
-    foreach (@markerOrder) {
-	# Don't care if this fails...
-	$dbh->do("Insert ignore into Markers (StudyId, Name, ChromosomeNo) values (?,?,?)", undef, $StudyId, $_, $ChromosomeNo);
-	$dbh->do("Insert ignore into MapMarkers (StudyId, MapId, MarkerName, AvePosCM) values (?,?,?,?)",
-		 undef, $StudyId, $MapId, $_, $markers{$_}{avgpos});
-    }
-    return $MapId;
 }
 
 sub fatal

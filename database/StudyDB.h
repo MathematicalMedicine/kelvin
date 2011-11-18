@@ -1,4 +1,5 @@
 #include "mysql.h"
+#include <regex.h>
 
 #define MAXSTMTLEN 512
 #define MAXPARAMLEN 64
@@ -6,19 +7,31 @@
 struct StudyDB {
   // Common...
   char role[MAXPARAMLEN];
+  char studyLabel[MAXPARAMLEN];
+  char studyDescription[128];
   int studyId;
+  int liabilityClassCnt;
+  char imprintingFlag[2];
   char dBHostname[MAXPARAMLEN];
   char dBName[MAXPARAMLEN];
   char username[MAXPARAMLEN];
   char password[MAXPARAMLEN];
   char pedigreeRegEx[33];
   char pedigreeNotRegEx[33];
+  regex_t includePattern;
+  regex_t excludePattern;
+  regmatch_t pmatch[1];
   MYSQL *connection;
   int driverPosIdx;
   // Adhoc...
   char strAdhocStatement[MAXSTMTLEN];
   MYSQL_RES *resultSet;
   MYSQL_ROW row;
+  // GetStudyId...
+  MYSQL_STMT *stmtGetStudyId;
+  MYSQL_BIND bindGetStudyId[4];
+  char strGetStudyId[MAXSTMTLEN];
+
   // GetPedPosId...
   MYSQL_STMT *stmtGetPedPosId;
   MYSQL_BIND bindGetPedPosId[5];
@@ -30,8 +43,29 @@ struct StudyDB {
   double refTraitPosCMright;
   MYSQL_BIND bindGetPedPosIdResults[1];
   int pedPosId;
-  // GetDLikelihood...
   int posEvals;
+  // allocate space to store markerset likelihood for each MCMC sampling
+  // unfortunately we have to keep them to calculate the LR per sample, 
+  // otherwise we get wrong results
+  // just server side though
+  int markerSetLikelihoodFlag;
+  int markerSetPedPosId;
+  double *markerSetLikelihood;
+  char strGetMarkerSetLikelihood_MCMC[MAXSTMTLEN];
+  MYSQL_STMT *stmtGetMarkerSetLikelihood_MCMC;
+  char strGetMarkerSetId[MAXSTMTLEN];
+  MYSQL_STMT *stmtGetMarkerSetId;
+  MYSQL_BIND bindGetMarkerSetId[1];
+  // GetMarkerSetLiklihood
+  MYSQL_STMT *stmtGetMarkerSetLikelihood;
+  MYSQL_BIND bindGetMarkerSetLikelihood[5];
+  char strGetMarkerSetLikelihood[MAXSTMTLEN];
+  // GetMarkerSetLikelihood results
+  MYSQL_STMT *stmtGetMarkerSetLikelihoodResults;
+  MYSQL_BIND bindGetMarkerSetLikelihoodResults[3];
+  char strGetMarkerSetLikelihoodResults[MAXSTMTLEN];
+  
+  // GetDLikelihood...
   MYSQL_STMT *stmtGetDLikelihood;
   MYSQL_BIND bindGetDLikelihood[18];
   char strGetDLikelihood[MAXSTMTLEN];

@@ -106,11 +106,13 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "../utils/sw.h"
 #include "../utils/utils.h"
 
 #include "StudyDB.h"
+#include "databaseSupport.h"
 
 #ifndef MAIN
 extern 
@@ -144,6 +146,7 @@ struct StudyDB studyDB;
 int dBInitNotDone = TRUE, dBStmtsNotReady = TRUE;
 
 void initializeDB () {
+  int ret;
 
   /* Initialize structure for a MySQL connection. */
   if ((studyDB.connection = mysql_init(NULL)) == NULL)
@@ -165,8 +168,41 @@ void initializeDB () {
   if (mysql_select_db(studyDB.connection, studyDB.dBName))
     ERROR("Cannot change MySQL db (%s)", mysql_error(studyDB.connection));
 
-  /* Verify our studyId. */
-  sprintf (studyDB.strAdhocStatement, "Select Description from Studies where StudyId = %d", studyDB.studyId);
+  // Get the study Id first
+  studyDB.stmtGetStudyId = mysql_stmt_init (studyDB.connection);
+  memset(studyDB.bindGetStudyId, 0, sizeof(studyDB.bindGetStudyId));
+  BINDSTRING (studyDB.bindGetStudyId[0], studyDB.studyLabel, sizeof (studyDB.studyLabel));
+  *studyDB.bindGetStudyId[0].length = strlen(studyDB.studyLabel);
+  BINDNUMERIC (studyDB.bindGetStudyId[1], studyDB.liabilityClassCnt, MYSQL_TYPE_LONG);
+  BINDSTRING (studyDB.bindGetStudyId[2], studyDB.imprintingFlag, sizeof (studyDB.imprintingFlag));
+  *studyDB.bindGetStudyId[2].length = strlen(studyDB.imprintingFlag);
+  strncpy(studyDB.strGetStudyId, "call GetStudyId(?,?,?,@outStudyId)", sizeof(studyDB.strGetStudyId));
+ 
+  if (mysql_stmt_prepare(studyDB.stmtGetStudyId, studyDB.strGetStudyId, strlen(studyDB.strGetStudyId)))
+    ERROR("Cannot prepare GetStudyId call statement (%s)", mysql_stmt_error(studyDB.stmtGetStudyId));
+  if (mysql_stmt_bind_param(studyDB.stmtGetStudyId, studyDB.bindGetStudyId))
+    ERROR("Cannot bind GetStudyId call statement (%s)", mysql_stmt_error(studyDB.stmtGetStudyId));
+
+  while(1) {
+    ret = mysql_stmt_execute(studyDB.stmtGetStudyId);
+    if (ret != 0) {
+      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetStudyId), "40001") != 0) &&
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetStudyId), "HY000") != 0)) {
+	ERROR("Cannot execute GetStudyId call statement w/%s, (%s, %s)", studyDB.studyLabel,
+	      mysql_stmt_error(studyDB.stmtGetStudyId), mysql_stmt_sqlstate(studyDB.stmtGetStudyId));
+      } else {
+	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetStudyId: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+				      mysql_stmt_errno(studyDB.stmtGetStudyId), 
+				      mysql_stmt_error(studyDB.stmtGetStudyId), 
+				      mysql_stmt_sqlstate(studyDB.stmtGetStudyId));});
+	swLogProgress(5, 0, "Retrying deadlock in 1 second in GetStudyId");
+	sleep(1);
+	continue;
+      }
+    }
+    break;
+  }
+  sprintf (studyDB.strAdhocStatement, "Select @outStudyId");
   if (mysql_query (studyDB.connection, studyDB.strAdhocStatement))
     ERROR("Cannot select study information (%s:%s)", studyDB.strAdhocStatement, mysql_error(studyDB.connection));
   if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
@@ -176,6 +212,9 @@ void initializeDB () {
   else {
     if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
       ERROR("Cannot fetch study information (%s)", mysql_error(studyDB.connection));
+    studyDB.studyId = atoi(studyDB.row[0]);
+    if(studyDB.studyId <= 0) 
+      ERROR("Failed to get study ID");
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "Storing/retrieving results under study %d (%s)", studyDB.studyId, studyDB.row[0]);});
   }
   mysql_free_result(studyDB.resultSet);
@@ -187,10 +226,10 @@ void prepareDBStatements () {
   if (dBInitNotDone)
     initializeDB ();
 
+
   // Prepare the select for the pedigree/position
   studyDB.stmtGetPedPosId = mysql_stmt_init (studyDB.connection);
   memset (studyDB.bindGetPedPosId, 0, sizeof(studyDB.bindGetPedPosId));
-
   BINDNUMERIC (studyDB.bindGetPedPosId[0], studyDB.studyId, MYSQL_TYPE_LONG);
   BINDSTRING (studyDB.bindGetPedPosId[1], studyDB.pedigreeSId, sizeof (studyDB.pedigreeSId));
   BINDNUMERIC (studyDB.bindGetPedPosId[2], studyDB.chromosomeNo, MYSQL_TYPE_LONG);
@@ -208,6 +247,61 @@ void prepareDBStatements () {
 
   if (mysql_stmt_bind_result (studyDB.stmtGetPedPosId, studyDB.bindGetPedPosIdResults))
     ERROR("Cannot bind GetPedPosId results (%s)", mysql_stmt_error(studyDB.stmtGetPedPosId));
+
+  // Prepare the GetMarkerSetId call
+  studyDB.stmtGetMarkerSetId = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetMarkerSetId, 0, sizeof(studyDB.bindGetMarkerSetId));
+
+  BINDNUMERIC (studyDB.bindGetMarkerSetId[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
+
+  strncpy (studyDB.strGetMarkerSetId, "select MarkerSetId into @outMarkerSetId from MarkerSetLikelihood where PedPosId=? order by MarkerCount desc limit 1", MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtGetMarkerSetId, studyDB.strGetMarkerSetId, strlen (studyDB.strGetMarkerSetId)))
+    ERROR("Cannot prepare GetMarkerSetId call statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetId));
+  if (mysql_stmt_bind_param (studyDB.stmtGetMarkerSetId, studyDB.bindGetMarkerSetId))
+    ERROR("Cannot bind GetMarkerSetId call statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetId));
+
+  // Prepare the GetMarkerSetLikelihood_MCMC call
+  strncpy(studyDB.strGetMarkerSetLikelihood_MCMC, "Select SampleId, Likelihood from MarkerSetLikelihood_MCMC where MarkerSetId=@outMarkerSetId order by SampleId", MAXSTMTLEN-1);
+  /*
+  studyDB.stmtGetMarkerSetLikelihood_MCMC = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetMarkerSetLikelihood_MCMC, 0, sizeof(studyDB.bindGetMarkerSetLikelihood_MCMC));
+  if (mysql_stmt_prepare (studyDB.stmtGetMarkerSetLikelihood_MCMC, studyDB.strGetMarkerSetLikelihood_MCMC, strlen (studyDB.strGetMarkerSetLikelihood_MCMC)))
+    ERROR("Cannot prepare GetMarkerSetLikelihood_MCMC call statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihood_MCMC));
+  if (mysql_stmt_bind_param (studyDB.stmtGetMarkerSetLikelihood_MCMC, studyDB.bindGetMarkerSetLikelihood_MCMC))
+    ERROR("Cannot bind GetMarkerSetLikelihood_MCMC call statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerLikelihood_MCMC));
+  */
+
+  // Prepare the GetMarkerSetLikelihood call
+  studyDB.stmtGetMarkerSetLikelihood = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetMarkerSetLikelihood, 0, sizeof(studyDB.bindGetMarkerSetLikelihood));
+
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[1], studyDB.regionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[2], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[3], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[4], studyDB.parentRegionSplitDir, MYSQL_TYPE_LONG);
+  
+  strncpy (studyDB.strGetMarkerSetLikelihood, "call GetMarkerSetLikelihood (?,?,?,?,?,@outRegionId,@outMarkerCount,@outLikelihood)", MAXSTMTLEN-1);
+
+  if (mysql_stmt_prepare (studyDB.stmtGetMarkerSetLikelihood, studyDB.strGetMarkerSetLikelihood, strlen (studyDB.strGetMarkerSetLikelihood)))
+    ERROR("Cannot prepare GetMarkerSetLikelihood call statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihood));
+  if (mysql_stmt_bind_param (studyDB.stmtGetMarkerSetLikelihood, studyDB.bindGetMarkerSetLikelihood))
+    ERROR("Cannot bind GetMarkerSetLikelihood call statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihood));
+
+  // Prepare the GetMarkerSetLikelihood results call
+  studyDB.stmtGetMarkerSetLikelihoodResults = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindGetMarkerSetLikelihoodResults, 0, sizeof(studyDB.bindGetMarkerSetLikelihoodResults));
+
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihoodResults[0], studyDB.regionId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihoodResults[1], studyDB.markerCount, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihoodResults[2], studyDB.lOD, MYSQL_TYPE_DOUBLE);
+
+  strncpy (studyDB.strGetMarkerSetLikelihoodResults, "Select @outRegionId, @outMarkerCount, @outLikelihood", MAXSTMTLEN-1);
+  if (mysql_stmt_prepare (studyDB.stmtGetMarkerSetLikelihoodResults, studyDB.strGetMarkerSetLikelihoodResults, strlen (studyDB.strGetMarkerSetLikelihoodResults)))
+    ERROR("Cannot prepare GetMarkerSetLikelihood results select statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihoodResults));
+  if (mysql_stmt_bind_result (studyDB.stmtGetMarkerSetLikelihoodResults, studyDB.bindGetMarkerSetLikelihoodResults))
+    ERROR("Cannot bind GetMarkerSetLikelihood results select statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihoodResults));
 
   // Prepare the GetDLikelihood call
   studyDB.stmtGetDLikelihood = mysql_stmt_init (studyDB.connection);
@@ -573,7 +667,7 @@ long GetPedPosId (char *pedigreeSId, int chromosomeNo, double refTraitPosCM)
       fprintf(stderr, "MYSQL_NO_DATA!\n");
     if(ret == MYSQL_DATA_TRUNCATED)
       fprintf(stderr, "MYSQL_DATA_TRUNCATED!");
-  
+
     ERROR("Cannot fetch PedPosId select results (%d) w/%d, '%s', %d, %G (%d-%s %s)", 
 	  ret, 
 	    studyDB.studyId, pedigreeSId, chromosomeNo, refTraitPosCM, 
@@ -585,6 +679,109 @@ long GetPedPosId (char *pedigreeSId, int chromosomeNo, double refTraitPosCM)
 
   return studyDB.pedPosId;
 }
+
+double GetMarkerSetLikelihood(int pedPosId, int regionNo, int parentRegionNo, double parentRegionError, int parentRegionSplitDir)
+{
+  int ret;
+
+  studyDB.pedPosId = pedPosId;
+  studyDB.regionNo = regionNo;
+  studyDB.parentRegionNo = parentRegionNo;
+  studyDB.parentRegionError = parentRegionError;
+  studyDB.parentRegionSplitDir = parentRegionSplitDir;
+  studyDB.markerSetLikelihoodFlag=0;
+  studyDB.markerSetPedPosId = studyDB.pedPosId;
+  while (1) {
+    ret = mysql_stmt_execute (studyDB.stmtGetMarkerSetLikelihood);
+    if (ret != 0) {
+      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetMarkerSetLikelihood), "40001") != 0) &&
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetMarkerSetLikelihood), "HY000") != 0)) {
+	ERROR("Cannot execute GetMarkerSetLikelihood call statement w/%d, (%s, %s)", pedPosId,
+	      mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihood), mysql_stmt_sqlstate(studyDB.stmtGetMarkerSetLikelihood));
+      } else {
+	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetMarkerSetLikelihood: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+				     mysql_stmt_errno(studyDB.stmtGetMarkerSetLikelihood), 
+				     mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihood), 
+				     mysql_stmt_sqlstate(studyDB.stmtGetMarkerSetLikelihood));});
+	swLogProgress(5, 0, "Retrying deadlock in 1 second in GetMarkerSetLikelihood");
+	sleep(1);
+	continue;
+      }
+    }
+    break;
+  }
+  if (mysql_stmt_execute (studyDB.stmtGetMarkerSetLikelihoodResults) != 0)
+    ERROR("Cannot execute GetMarkerSetLikelihood results select statement (%s, %s)", 
+	  mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihoodResults), mysql_stmt_sqlstate(studyDB.stmtGetMarkerSetLikelihoodResults));
+
+  if ( mysql_stmt_store_result (studyDB.stmtGetMarkerSetLikelihoodResults) != 0)
+    ERROR("Cannot retrieve GetMarkerSetLikelihood (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihoodResults));
+
+  if (mysql_stmt_fetch (studyDB.stmtGetMarkerSetLikelihoodResults) != 0)
+    ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihoodResults));
+
+  mysql_stmt_free_result(studyDB.stmtGetMarkerSetLikelihoodResults);
+
+  if (*studyDB.bindGetMarkerSetLikelihoodResults[2].is_null) {
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL", studyDB.regionId);});
+    return -1LL;
+  } else {
+    /*
+        if(studyDB.MCMC_flag == 1 && toupper(*studyDB.role)=='S' && analysisLocusList->traitLocusIndex!=-1) {
+      GetMarkerSetLikelihood_MCMC(pedPosId);
+    }
+    */
+
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is %G", studyDB.regionId, studyDB.lOD);});
+    return studyDB.lOD;
+  }
+}
+
+int GetMarkerSetLikelihood_MCMC(int pedPosId)
+{
+  int idx=0;
+  int sampleId;
+
+  if(studyDB.markerSetPedPosId == pedPosId && studyDB.markerSetLikelihoodFlag == 1)
+    // we already have the results
+    return 0;
+  if(studyDB.markerSetPedPosId != pedPosId) {
+    // need to get the markerSetId first
+    if(mysql_stmt_execute(studyDB.stmtGetMarkerSetId))
+      ERROR("Cannot execute GetMarkerSetId select statement(%s:%s)", studyDB.strGetMarkerSetId, mysql_stmt_error(studyDB.stmtGetMarkerSetId));
+    if(mysql_stmt_store_result(studyDB.stmtGetMarkerSetId) != 0)
+      ERROR("Cannot retrieve markerSetId (%s)", mysql_error(studyDB.connection));
+    mysql_stmt_free_result(studyDB.stmtGetMarkerSetId);
+  }
+
+    // now retreive the markerset likelihood for each sampling
+    if(mysql_query(studyDB.connection, studyDB.strGetMarkerSetLikelihood_MCMC))
+      ERROR("Cannot select from MarkerSetLikelihood_MCMC (%s:%s)", studyDB.strGetMarkerSetLikelihood_MCMC, mysql_error(studyDB.connection));
+    if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
+      ERROR("Cannot retrieve markerSetLikelihood_MCMC (%s)", mysql_error(studyDB.connection));
+    if (mysql_num_rows (studyDB.resultSet) == studyDB.totalSampleCount) {
+      sampleId=studyDB.sampleIdStart;
+      idx=0;
+      while (sampleId<=studyDB.sampleIdEnd && (studyDB.row = mysql_fetch_row (studyDB.resultSet)) != NULL){
+	if(atoi(studyDB.row[0])!=sampleId)
+	  continue;
+	studyDB.markerSetLikelihood[idx] = atof(studyDB.row[1]);
+	idx++;
+	sampleId++;
+      } // end of while
+      // mark we do have the markerSetlikelihood
+      studyDB.markerSetLikelihoodFlag=1;
+      studyDB.markerSetPedPosId = studyDB.pedPosId;
+    } // end of there is any row
+    else {
+      mysql_free_result(studyDB.resultSet);
+      return -1;
+    }
+    mysql_free_result(studyDB.resultSet);
+
+    return 0;
+}
+
 
 double GetDLikelihood (int pedPosId, double dGF,
 		double lC1BigPen, double lC1BigLittlePen, double lC1LittleBigPen, double lC1LittlePen,
@@ -864,7 +1061,7 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
 	      lowPosition, highPosition,
 	      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
       } else {
-	DIAG(ALTLSERVER, 0, {fprintf(stderr, "GetDWork: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+	DIAG(ALTLSERVER, 0, {fprintf(stderr, "GetDWork: mysql_stmt_execute ret %d (%d-%s, %s).\n", ret, 
 				    mysql_stmt_errno(studyDB.stmtGetWork), 
 				    mysql_stmt_error(studyDB.stmtGetWork), 
 				    mysql_stmt_sqlstate(studyDB.stmtGetWork));});

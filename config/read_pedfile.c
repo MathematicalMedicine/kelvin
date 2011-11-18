@@ -58,6 +58,11 @@ extern ModelOptions *modelOptions;
 extern ModelRange *modelRange;
 extern ModelType *modelType;
 
+#ifdef STUDYDB
+#include "../database/StudyDB.h"
+extern struct StudyDB studyDB;
+#endif
+
 // Functions listed below should not be called outside this library:
 Pedigree *create_pedigree (PedigreeSet * pPedigreeSet, char *sPedLabel);
 Person *create_person (Pedigree * pPed, char *sPersonLabel);
@@ -111,6 +116,9 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
   Pedigree *pCurrPedigree = NULL;
   Person *pCurrPerson = NULL;
   int lastFlag = 0, i;
+#ifdef STUDYDB
+  int regRet1, regRet2;
+#endif
 
   /* Prepare to count the number of indiviuals in each liability class */
   if (modelRange->nlclass > 1)
@@ -144,6 +152,16 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
 	       lineNo, sPedfileName);
       pLine = &flexBuffer[pos];
     }
+#ifdef STUDYDB
+    // The reason this should applies to client is that:
+    // under MCMC, the pedigree name changes to include sample ID, such origPed 15 becomes 15.1, 15.2, ... 
+    if(lastFlag == 0 && toupper(studyDB.role[0])=='C') {
+      regRet1=regexec(&studyDB.includePattern, sCurrPedLabel, 1, studyDB.pmatch, 0);
+      regRet2=regexec(&studyDB.excludePattern, sCurrPedLabel, 1, studyDB.pmatch, 0);
+      if(regRet1 != 0 || regRet2 == 0)
+	continue;
+    }
+#endif
     /* if this is not the first pedigree and it has a different pedigree
      * * Label than the previous one, it indicates a new pedigree starts now
      * * */
@@ -462,12 +480,14 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
     pLocus = originalLocusList.ppLocusList[numMarker];
 
     /* read a pair of genotypes for the current marker */
-    numRet = sscanf (pLine, "%s %s %n", a1, a2, &pos);
-    if (numRet != 2) {
+    numRet = sscanf (pLine, "%s | %s %n", a1, a2, &pos);
+    if (numRet == 2) {
       /* phase of alleles might be known 
        * paternal | maternal     is assumed */
-      numRet = sscanf (pLine, "%s | %s %n", a1, a2, &pos);
       pPerson->pPhasedFlag[numMarker] = 1;
+    }
+    else {
+      numRet = sscanf (pLine, "%s %s %n", a1, a2, &pos);
     }
 
     ASSERT (numRet == 2, "Pedfile %s, line %d: Pedigree %s, individual %s doesn't have enough columns (Marker %d). Is this a post-makeped file?",

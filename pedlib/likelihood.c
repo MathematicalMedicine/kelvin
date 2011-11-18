@@ -46,7 +46,7 @@ extern dcuhre_state *s;
 #include "../database/StudyDB.h"
 extern struct StudyDB studyDB;
 extern double lociSetTransitionPositions[];
-double lastTraitPosition = -1.0; // Used by server to keep dcuhre's multiple-requests per trait position from bothering the database
+double lastTraitPosition = -1000.0; // Used by server to keep dcuhre's multiple-requests per trait position from bothering the database
 int lastMarkerIndex = 0; // Used by 2pt server same as lastTraitPosition above.
 int locusListTypesDone = 0; // Used by server to keep which type of locusList we've worked on in order to coordinate our work requests
 #endif
@@ -500,7 +500,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
   int getwork_ret=0;
   struct timeval t_start, t_end;
   double tmpLikelihood = 0;
-  Pedigree *firstPed; 
+  Pedigree *firstPed = NULL; 
   int locusListType;
 
   DIAG (XM, 2, {
@@ -548,8 +548,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 
       if(modelType->trait == DICHOTOMOUS) {
       if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
-	pPedigree->likelihood = GetDLikelihood (myPedPosId, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
-						0, 0, 0, 0);
+	pPedigree->likelihood = GetMarkerSetLikelihood (myPedPosId, 0, 0, 0, 0);
       else if (analysisLocusList->numLocus == 1) // Trait likelihood
 	pPedigree->likelihood = GetDLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
 					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
@@ -570,19 +569,11 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 					  s->sbrgns, 
 					  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrgns]->parent_id),
 					  (s->sbrgns == 0 ? 0 : s->greate),
-					  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrg_heap[s->sbrgns]->parent_id]->dir)
+						(s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrg_heap[s->sbrgns]->parent_id]->dir)
 					  );
       } else {
       if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
-	pPedigree->likelihood = GetQLikelihood (myPedPosId, -1, 
-						-1, -1, -1, -1, 
-						-1, -1, -1, -1, 
-						-1, -1, -1, -1, 
-						-1, -1, -1, -1, 
-						-1, -1, -1, -1, 
-						-1, -1, -1, -1, 
-						-1, -1, -1,
-						0, 0, 0, 0);
+	pPedigree->likelihood = GetMarkerSetLikelihood (myPedPosId, 0, 0, 0, 0);
       else if (analysisLocusList->numLocus == 1) // Trait likelihood
 	pPedigree->likelihood = 
           GetQLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
@@ -671,13 +662,16 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
        fetch the next lower and higer transition positions from lociSetTransitionPositions.
     */
 
-    traitPosition = modelRange->tloc[studyDB.driverPosIdx];
     locusListType = 3; // ...for combined likelihood
-    if (analysisLocusList->numLocus == 1) // Trait likelihood
+    if (analysisLocusList->numLocus == 1) { // Trait likelihood 
       locusListType = 2;
-    else
+      traitPosition = 0;
+    }
+    else {
+      traitPosition = modelRange->tloc[studyDB.driverPosIdx];
       if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
 	locusListType = 1;
+    }
 
     DIAG (ALTLSERVER, 0, {fprintf(stderr, "Server compute_likelihood locusListType %d traitPosition %f\n", locusListType, traitPosition);});
     if (traitPosition != lastTraitPosition ||
@@ -690,11 +684,13 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	locusListTypesDone |= 1 << (locusListType - 1);
 
       lowPosition = -99.99;
-      if (studyDB.driverPosIdx != 0)
-	lowPosition = lociSetTransitionPositions[studyDB.driverPosIdx - 1];
       highPosition = 9999.99;
-      if (studyDB.driverPosIdx != (modelRange->ntloc - 1))
-	highPosition = lociSetTransitionPositions[studyDB.driverPosIdx];
+      if (analysisLocusList->numLocus != 1) { // Trait likelihood 
+	if (studyDB.driverPosIdx != 0)
+	  lowPosition = lociSetTransitionPositions[studyDB.driverPosIdx - 1];
+	if (studyDB.driverPosIdx != (modelRange->ntloc - 1))
+	  highPosition = lociSetTransitionPositions[studyDB.driverPosIdx];
+      }
 
       DIAG (ALTLSERVER, 0, { fprintf (stderr, "Driver trait position %GcM of type %d serves range from %GcM to %gcM\n", traitPosition, locusListType, lowPosition, highPosition);});
 
@@ -750,6 +746,14 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	gettimeofday(&t_start, NULL);
 	swReset (singleModelSW);
 	swStart (singleModelSW);
+	if(studyDB.MCMC_flag !=0 && analysisLocusList->numLocus>1 && analysisLocusList->traitLocusIndex >= 0) {
+	  // if we are doing alternative likelihood under MCMC
+	  // we need retrieve the markerset likelihood for each sample
+	  while (GetMarkerSetLikelihood_MCMC(studyDB.pedPosId) != 0)
+	    sleep(60);
+	  
+	}
+
 	//	for(sampleId=modelOptions->mcmcSampleStart; modelOptions->algorithm!= ALGORITHM_MCMC || sampleId <= modelOptions->mcmcSampleEnd; sampleId++) {
 	for(sampleId=studyDB.sampleIdStart; studyDB.MCMC_flag==0 || sampleId <= studyDB.sampleIdEnd; sampleId++) {
           if(studyDB.MCMC_flag != 0)
@@ -810,20 +814,36 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	  }
 	  compute_server_pedigree_likelihood (pPedigreeList, pPedigree, 0);
 	  //swStop (singleModelSW);
-	  tmpLikelihood += pPedigree->likelihood;
 	  
-	  /*
+	  // before we write to the DB, we better check whether the likelihood is negative
+          ASSERT (pPedigree->likelihood >= 0.0, "Pedigree %s has a NEGATIVE likelihood", pPedigree->sPedigreeID);
+
 	  if(studyDB.MCMC_flag == 0) {
+	  /*
 	    PutWork (modelType->numMarkers,
 		     pPedigree->likelihood,
 		     difftime (time (NULL), singleModelSW->swStartWallTime));
+	  */
+	    tmpLikelihood += pPedigree->likelihood;
 	  }
-	  else {
+	  else if(analysisLocusList->traitLocusIndex == -1) {
+	    // MCMC and only for markerset likelihood
+	    studyDB.markerSetLikelihood[sampleId-studyDB.sampleIdStart] = pPedigree->likelihood;
+            studyDB.markerSetLikelihoodFlag = 1;
+	    studyDB.markerSetPedPosId = studyDB.pedPosId;
 	    PutWork ( sampleId * 10 + modelType->numMarkers + 200, 
 		      pPedigree->likelihood,
 		      difftime (time(NULL), singleModelSW->swStartWallTime));
+	    tmpLikelihood = 1;
 	  }
-	  */
+	  else if(analysisLocusList->numLocus > 1) {
+	    // MCMC and alternative likelihood 
+	    tmpLikelihood += pPedigree->likelihood / studyDB.markerSetLikelihood[sampleId-studyDB.sampleIdStart];
+	  }
+	  else {
+	    // MCMC and trait
+	    tmpLikelihood += pPedigree->likelihood;
+	  }
 
 	  DIAG (ALTLSERVER, 1, {fprintf(stderr, "#Markers: %d, SampleId: %d, likelihood; %.8g\n", \
 					modelType->numMarkers, sampleId, pPedigree->likelihood); });
@@ -859,11 +879,11 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	  else
 	  fprintf (stderr, "Looping to leave c_l with COMPUTED AND STORED combined likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
 	*/
-	  if(studyDB.MCMC_flag == 0)
+	  if(studyDB.MCMC_flag == 0 || (analysisLocusList->numLocus==1 && analysisLocusList->traitLocusIndex!=-1))
 	    break;
 	} // end of samplings
 	swStop (singleModelSW);
-	if(studyDB.MCMC_flag == 0) {
+	if(studyDB.MCMC_flag == 0 || (analysisLocusList->numLocus==1 && analysisLocusList->traitLocusIndex!=-1)) {
 	  PutWork (modelType->numMarkers,
 		   tmpLikelihood,
 		   difftime (time (NULL), singleModelSW->swStartWallTime));
@@ -872,7 +892,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	else {
 	  int total = studyDB.sampleIdEnd - studyDB.sampleIdStart + 1;
 	  tmpLikelihood /= total;
-	  PutWork (  total * 10 + modelType->numMarkers + 200, 
+	  PutWork (  0 * 10 + modelType->numMarkers + 200, 
 		     tmpLikelihood, 
 		    difftime (time(NULL), singleModelSW->swStartWallTime));
 	}
@@ -1219,6 +1239,8 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
 	// Bogus result
 	studyDB.bogusLikelihoods++;
 	pPedigree->likelihood = .05;
+	if ((analysisLocusList->traitLocusIndex != -1) && (analysisLocusList->numLocus != 1))
+	  s->sbrg_heap[s->sbrgns]->bogusLikelihoods++;
 	//	fprintf (stderr, "Leaving c_p_l with BOGUS/REQUESTED trait likelihood for pedigree %s of %.12g\n", pPedigree->sPedigreeID, pPedigree->likelihood);
       } else {
 	studyDB.realLikelihoods++;
