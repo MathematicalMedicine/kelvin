@@ -16,7 +16,7 @@ perl $KELVIN_ROOT/InitStudy.pl client.conf
 perl $KELVIN_ROOT/InitStudy.pl server.conf
 
 # Initial full run of client
-qrsh -cwd -b y $KELVIN_ROOT/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0
+qrsh -cwd -b y $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0
 
 # Grab STUDY directive for database parameters
 study=$(grep -i ^Study client.conf)
@@ -45,7 +45,7 @@ do
     sleep 300
   done
   # Run the client to see if any splits occur
-  qrsh -cwd -b y $KELVIN_ROOT/kelvin-2.2.0-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0
+  qrsh -cwd -b y $KELVIN_ROOT/kelvin-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0
   grep WARNING br.out || { break; }
   # Get the new set of trait positions
   TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct RefTraitPosCM from Regions where StudyId = $2 AND RefTraitPosCM >= 0 AND PendingLikelihoods > 0;" | tr "\n" " ")
@@ -54,4 +54,4 @@ do
   for tp in $TPs;  do   echo "In the loop";  echo "TraitPosition $tp" >> client-newTP.conf; done
 done
 # Don't bother with a second run if there were no splits at all
-diff client.conf client-newTP.conf || qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-2.2.0-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+diff client.conf client-newTP.conf || qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
