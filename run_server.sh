@@ -1,5 +1,6 @@
 #!/bin/bash
-~/kelvin/trunk/kelvin-study $1.conf --ProgressLevel 2 --ProgressDelaySeconds 0 &
+kp=$(dirname $0)
+$kp/kelvin-study $1.conf --ProgressLevel 2 --ProgressDelaySeconds 0 &
 study=$(grep -i ^Study $1.conf)
 set -- $study
 kid=$!
