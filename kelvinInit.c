@@ -403,6 +403,9 @@ strcpy(studyDB.imprintingFlag, modelOptions->imprintingFlag ? "y" : "n");
   initialize_loci (&pedigreeSet);
 
   /* Check for markers devoid of information, give warning and avoid using in analyses. */
+#ifdef STUDYDB
+  if (toupper(*studyDB.role) != 'C') { // No markers are informative for LKS merge client runs
+#endif
   for (locus = 1; locus < originalLocusList.numLocus; locus++) { // Skip assumed trait locus
     int j, k, unknown, knownAllele, noVariation = 1;
     Pedigree *pPedigree;
@@ -440,7 +443,9 @@ strcpy(studyDB.imprintingFlag, modelOptions->imprintingFlag ? "y" : "n");
 	WARNING ("Marker %s provides no information, it will be ignored during multipoint analysis", pLocus->sName);
     }
   }
-
+#ifdef STUDYDB
+  }
+#endif
 /*
   if (modelOptions->dryRun != 0) {
     for (loc1 = 0; loc1 < originalLocusList.numLocus; loc1++) {
