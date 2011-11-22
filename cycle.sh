@@ -29,7 +29,7 @@ alias qrsh="qrsh -now no $qmods"
 # These are for nodes other than Levi-Montalcini, where SGE is not available
 if test "$HOSTNAME" != "Levi-Montalcini" ; then
     alias qrsh="bash -c "
-    alias nq="echo Not submitting: "
+    alias nq="bash -c "
 fi
 
 # Do the initialization only if there was no command line parameter
@@ -54,7 +54,7 @@ StudyId=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names
 
 # Setup the Single-Model RunTimes so bucket loading can be intelligent
 SMRTs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions a, SingleModelRuntimes b set a.SingleModelEstimate = b.SingleModelRuntime, a.SingleModelRuntime = b.SingleModelRuntime where a.StudyId = $StudyId AND a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.PedTraitPosCM = b.PedTraitPosCM;")
-if test $SMRTs -ne 0 ; then
+if test "$SMRTs" != "0" ; then
     # Assuming SOME finished, any that we missed should be treated as if they took too long..
     Singles=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions set SingleModelRuntime = 999999 where StudyId = $StudyId AND PedTraitPosCM <> 9999.99 AND SingleModelRuntime IS NULL;")
 fi
@@ -62,13 +62,13 @@ fi
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
-  nq "$KELVIN_ROOT/run_server.sh server $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
 
   # Run a single one blocking further processing until most work is done
   qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server"
