@@ -1,7 +1,10 @@
-Version ???
+Version 2.3.4
   Kelvin Binary
     Warn and skip uninformative markers (due to homogeneity or missingness)
     Repurpose dry run to portable sizing
+    Support Windows Vista/7, Mac OS X 10.6
+  LKS
+    Extensive changes to support LG and MC-MC, facilitate use, etc.
 
 Version 2.3.3
   9 May 2011
