@@ -33,17 +33,17 @@ if test "$HOSTNAME" != "Levi-Montalcini" ; then
 fi
 
 # Do the normal 2pt run for comparison in a normal queue
-nq "~/kelvin/trunk/kelvin-normal client-normal-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+nq "$KELVIN_ROOT/kelvin-normal client-normal-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
 
 # Do the initialization only if there was no command line parameter
 if test -z "$1" ; then
     # Setup database tables
-    perl ~/kelvin/trunk/InitStudy.pl client.conf
-    perl ~/kelvin/trunk/InitStudy.pl server-mp.conf
-    perl ~/kelvin/trunk/InitStudy.pl server-2pt-init.conf
+    perl $KELVIN_ROOT/InitStudy.pl client.conf
+    perl $KELVIN_ROOT/InitStudy.pl server-mp.conf
+    perl $KELVIN_ROOT/InitStudy.pl server-2pt-init.conf
 
     # Initial full run of client
-    qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+    qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
 
     # Initial set of "new" trait positions is the original set so we can detect if _no_ splits ever occurred
     cp client.conf client-newTP.conf
@@ -53,50 +53,53 @@ fi
 study=$(grep -i ^Study client.conf)
 set -- $study
 
+# Get the actual StudyId from the StudyLabel
+StudyId=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="Select StudyId from Studies where StudyLabel = '$2';")
+
 # Set all 2pt PedigreePositions to one marker (CHANGE THIS FOR DIFFERENT STUDIES)
-echo "Update PedigreePositions set MarkerCount = 1 where StudyId = $2 AND PedigreeSId in (180);" | mysql --host=$4 --user=$6 --password=$7 $5
+echo "Update PedigreePositions set MarkerCount = 1 where StudyId = $StudyId AND PedigreeSId in (180);" | mysql --host=$4 --user=$6 --password=$7 $5
 
 # Setup the Single-Model RunTimes so bucket loading can be intelligent
-SMRTs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions a, SingleModelRuntimes b set a.SingleModelEstimate = b.SingleModelRuntime, a.SingleModelRuntime = b.SingleModelRuntime where a.StudyId = $2 AND a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.PedTraitPosCM = b.PedTraitPosCM;")
+SMRTs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions a, SingleModelRuntimes b set a.SingleModelEstimate = b.SingleModelRuntime, a.SingleModelRuntime = b.SingleModelRuntime where a.StudyId = $StudyId AND a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.PedTraitPosCM = b.PedTraitPosCM;")
 if test $SMRTs -ne 0 ; then
     # Assuming SOME finished, any that we missed should be treated as if they took too long..
-    Singles=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions set SingleModelRuntime = 999999 where StudyId = $2 AND PedTraitPosCM <> 9999.99 AND SingleModelRuntime IS NULL;")
+    Singles=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions set SingleModelRuntime = 999999 where StudyId = $StudyId AND PedTraitPosCM <> 9999.99 AND SingleModelRuntime IS NULL;")
 fi
 
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-mp $qmods"
-  nq "./run_server.sh server-2pt-run $qmods"
-  nq "./run_server.sh server-2pt-run $qmods"
-  nq "./run_server.sh server-2pt-run $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-2pt-run $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-2pt-run $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-2pt-run $qmods"
 
   # Run single blocking ones to prevent further processing until all work is done
-  qrsh "cd `pwd`; ./run_server.sh server-mp"
-  qrsh "cd `pwd`; ./run_server.sh server-2pt-run"
+  qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server-mp"
+  qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server-2pt-run"
   # Make sure that nothing remains undone
   while :
   do
-    ToDos=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select sum(PendingLikelihoods) from Regions where StudyId = $2;")
+    ToDos=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select sum(PendingLikelihoods) from Regions where StudyId = $StudyId;")
     if test $ToDos -eq 0 ; then
         break;
     fi
-    Servers=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Servers where StudyId = $2 AND ExitStatus IS NULL;")
+    Servers=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Servers where StudyId = $StudyId AND ExitStatus IS NULL;")
     if test $Servers -eq 0 ; then
 	echo There are still Regions with incomplete work and no more servers are running!
 	exit 1
@@ -105,16 +108,16 @@ do
     sleep 300
   done
   # Run the client to see if any splits occur
-  qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+  qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
   grep WARNING br.out-all-pedigrees || { break; }
   # Get the new set of trait positions
-  TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct RefTraitPosCM from Regions where StudyId = $2 AND RefTraitPosCM >= 0 AND PendingLikelihoods > 0;" | tr "\n" " ")
+  TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct RefTraitPosCM from Regions where StudyId = $StudyId AND RefTraitPosCM >= 0 AND PendingLikelihoods > 0;" | tr "\n" " ")
   grep -vi TraitPosition client.conf > client-newTP.conf
   # Add them one per line to be safe with line length
   for tp in $TPs;  do   echo "In the loop";  echo "TraitPosition $tp" >> client-newTP.conf; done
 done
 # Don't bother with a second run if there were no splits at all
-diff client.conf client-newTP.conf || qrsh "cd `pwd`; ~/kelvin/trunk/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+diff client.conf client-newTP.conf || qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
 
 # Run a 2pt for just the 2pt pedigrees for comparison purposes
-nq "~/kelvin/trunk/kelvin-study client-just-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+nq "$KELVIN_ROOT/kelvin-study client-just-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
