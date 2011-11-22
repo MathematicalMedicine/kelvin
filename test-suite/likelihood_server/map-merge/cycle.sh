@@ -29,7 +29,7 @@ alias qrsh="qrsh -now no $qmods"
 # These are for nodes other than Levi-Montalcini, where SGE is not available
 if test "$HOSTNAME" != "Levi-Montalcini" ; then
     alias qrsh="bash -c "
-    alias nq="echo Not submitting: "
+    alias nq="bash -c "
 fi
 
 # Do the initialization only if there was no command line parameter
@@ -63,13 +63,13 @@ fi
 while :
 do
   # Enqueue a few servers and...
-  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-dataset11.01 $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-dataset11.01 $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-dataset11.01 $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-dataset11.01 $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-dataset11.01 $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-dataset11.01 $qmods" &
 
   # Run single ones blocking further processing until most work is done
   qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server-dataset1"

@@ -29,7 +29,7 @@ alias qrsh="qrsh -now no $qmods"
 # These are for nodes other than Levi-Montalcini, where SGE is not available
 if test "$HOSTNAME" != "Levi-Montalcini" ; then
     alias qrsh="bash -c"
-    alias nq="echo Not submitting: "
+    alias nq="bash -c "
 fi
 
 # Do the normal 2pt run for comparison in a normal queue
@@ -69,25 +69,16 @@ fi
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-2pt-run $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-2pt-run $qmods"
-  nq "$KELVIN_ROOT/run_server.sh server-2pt-run $qmods"
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-2pt-run $qmods" &
+  nq "$KELVIN_ROOT/run_server.sh server-2pt-run $qmods" &
 
   # Run single blocking ones to prevent further processing until all work is done
   qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server-mp"
