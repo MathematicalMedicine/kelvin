@@ -51,10 +51,14 @@
   Most directives require one or more arguments, which will take one of the following forms:
   <ul>
     <li>A Filename - a character string that must be a valid filename, optionally including a
-      relative or absolute path preceding the filename. Generally, <span class='sc'>Kelvin</span>
-      will abort if a file given as input does not exist, and will overwrite a file
-      given for output if it does exist. The total length of a filename may not
-      exceed 256 characters.</li>
+      relative or absolute path preceding the filename. A filename may include an environment
+      variable as an element of a fully specified or relative path, or as the name of the
+      file itself. Environment variables must appear either at the beginning of the string,
+      or immediately following the path separator ('/'). <span class='sc'>Kelvin</span> will
+      abort if a variable that appears as part of a filename is not defined in the 
+      environment. Generally, <span class='sc'>Kelvin</span> will abort if a file given as
+      input does not exist, and will overwrite a file given for output if it does exist. The
+      total length of a filename may not exceed 256 characters.</li>
     <li>A Literal String - a few directives require a specific string as an argument. These
       strings may appear with any capitalization, but they should not be abbreviated.</li>
     <li>A Value - an integer or real number, depending on the directive.</li>
@@ -178,6 +182,7 @@
       <a href='#progressdelayseconds'>ProgressDelaySeconds</a><br>
       <a href='#epistasispedigreefile'>EpistasisPedigreeFile</a><br>
       <a href='#epistasislocusfile'>EpistasisLocusFile</a><br>
+      <a href='#epistasisfrequencyfile'>EpistasisFrequencyFile</a><br>
     </td>
     <td valign='top'>
       <a href='#multipoint'>MultiPoint</a><br>
@@ -314,6 +319,18 @@
     <a href='#locusfile'>LocusFile</a> directive. This directive requires
     the <a href='#epistasis'>Epistasis</a> and <a href='#epistasispedigreefile'>
     EpistasisPedigreeFile</a> directives, and is incompatible with the 
+    <a href='#liabilityclasses'>LiabilityClasses</a> directive.
+  </div><p>
+
+  <div class='hang' id='epistasisfrequencyfile'>
+    <b>EpistasisFrequencyFile</b><br>
+    <tt>EpistasisFrequencyFile <i>filename</i></tt><br>
+    Specifies the file that contains allele information for the marker specified by
+    the <a href='#epistasis'>Epistasis</a> directive. This directive is only 
+    required if the epistasis marker alleles are not '1' and '2'. This directive requires
+    the <a href='#epistasis'>Epistasis</a>, <a href='#epistasispedigreefile'>
+    EpistasisPedigreeFile</a> and <a href='#epistasislocusfile'>
+    EpistasisLocusFile</a> directives, and is incompatible with the 
     <a href='#liabilityclasses'>LiabilityClasses</a> directive.
   </div><p>
 

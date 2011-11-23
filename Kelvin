@@ -539,6 +539,7 @@ sub setup_epistasis
     my ($epimarker, $epidataset);
     my $family;
     my $individual;
+    my %allele_map = ('0' => '0');
     my $indgenos = {};
     my $maps = [];
     my $conffiles = {};
@@ -563,13 +564,25 @@ sub setup_epistasis
     ($config->isConfigured ("ExtraMODs")) and $$state{extramods} = 1;
     $$conffiles{pedigreefile} = $ {$config->isConfigured ("EpistasisPedigreeFile")}[0];
     $$conffiles{locusfile} = $ {$config->isConfigured ("EpistasisLocusFile")}[0];
+    ($aref = $config->isConfigured ("EpistasisFrequencyFile"))
+	and $$conffiles{freqfile} = $$aref[0];
     $epidataset = KelvinDataset->new ($conffiles)
 	or error ("KelvinDataset new failed, $KelvinDataset::errstr");
+    if ($epidataset->freqread) {
+	$va = 1;
+	map { 
+	    $allele_map{$_} = $va++;
+	} sort ({$a cmp $b} keys %{$epidataset->getAlleleFreqs ($epimarker)});
+	(scalar (keys (%allele_map)) > 3)
+	    and error ("Epistasis marker '$epimarker' has more than two alleles");
+    } else {
+	@allele_map{(1,2)} = (1, 2);
+    }
     while ($family = $epidataset->readFamily) {
 	foreach $individual (@{$family->individuals}) {
 	    ($aref = $individual->getGenotype ($epimarker))
 		or error ("KelvinIndividual getGenotype failed, $KelvinIndividual::errstr");
-	    $geno = join ('_', sort (@$aref));
+	    $geno = join ('_', sort (map { $allele_map{$_} } @$aref));
 	    $$indgenos{"P".$individual->pedid."I".$individual->indid} = $geno;
 	    (exists ($$href{$geno})) or $$href{$geno} = '';
 	}
@@ -934,7 +947,7 @@ sub count_alleles
 
     if ($family->pedtype eq 'general') {
 	warner ("Automatic allele frequency estimation is disabled, general pedigrees detected");
-	@{$$state}{qw/cases controls nuclear/} = (undef, undef, undef);
+	@$state{qw/cases controls nuclear/} = (undef, undef, undef);
 	$$state{estimate} = 0;
 	return;
     }
