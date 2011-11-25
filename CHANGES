@@ -1,4 +1,4 @@
-Version 2.3.4
+Version 2.4.0
   Kelvin Binary
     Warn and skip uninformative markers (due to homogeneity or missingness)
     Repurpose dry run to portable sizing
