@@ -10,7 +10,7 @@ package KelvinDataset;
 our $errstr='';
 our $VERSION=1.4;
 
-our $ROUNDING_ERROR=0.0001;
+our $ROUNDING_ERROR=0.001;
 
 sub new
 {
