@@ -14,6 +14,7 @@ sub new
     my $family = bless ({}, $class);
     my $dataset;
     my $makeped = undef;
+    my $phased = undef;
     my $traits;
     my $trait = undef;
     my $affection;
@@ -33,6 +34,7 @@ sub new
     }
     $dataset = $$aref[0]{dataset};
     $makeped = $$aref[0]{makeped};
+    $phased = $$aref[0]{phased};
     $$family{pedid} = $$aref[0]{pedid};
     $$family{count} = scalar (@$aref);
 
@@ -44,6 +46,10 @@ sub new
 	}
 	if ($$aref[$va]{makeped} ne $makeped) {
 	    $errstr = "individuals are mixed pre- and post-makeped format";
+	    return (undef);
+	}
+	if ($$aref[$va]{phased} ne $phased) {
+	    $errstr = "individuals are mixed phased and non-phased genotypes";
 	    return (undef);
 	}
 	if ($$aref[$va]{pedid} ne $$family{pedid}) {
@@ -663,7 +669,7 @@ sub new
 		firstchildid => undef, patsibid => undef, matsibid => undef,
 		origpedid => undef, origindid => undef, sex => undef, proband => undef,
 		traits => [], markers => [], genotyped => 0, phenotyped => undef,
-		dataset => $dataset, makeped => undef };
+		phased => undef, dataset => $dataset, makeped => undef };
 
     (defined ($trait = $$dataset{traitorder}[-1]))
 	and $traitcol = $$dataset{traits}{$trait}{col};
@@ -672,6 +678,10 @@ sub new
     $colcount = ($markercol > $traitcol) ? $markercol + 2 : $traitcol + 1;
     (defined ($$dataset{undefpheno})) and $$ind{phenotyped} = 0;
 
+    # Pipes indicate phased genotypes. Rearrange the whitespace around the pipes so
+    # splitting on whitespace still works like it does with unphased genotypes.
+    $$ind{phased} = (($line =~ s/\s*\|\s*/| /g) > 0);
+    
     # Cut off the original pedigree and person IDs, split on whitespace
 
     if ($line =~ s/\s*Ped:\s*(\S+)\s+Per:\s*(\S+)\s*$//) {
@@ -727,6 +737,10 @@ sub new
 
     foreach $marker (@{$$dataset{markerorder}}) {
 	$markercol = $$dataset{markers}{$marker}{col};
+	if ($$ind{phased} && substr ($arr[$markercol], -1, 1, '') ne '|') {
+	    $errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: individual $$ind{indid}, phased genotypes inconsistantly coded at marker $marker";
+	    return (undef);
+	}
 	if (($arr[$markercol] eq '0') != ($arr[$markercol+1] eq '0')) {
 	    $errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: individual $$ind{indid} is half-genotyped at marker $marker";
 	    return (undef);
@@ -759,7 +773,7 @@ sub new_from_count
 		firstchildid => 0, patsibid => 0, matsibid => 0,
 		origpedid => $pedid, origindid => 1, sex => undef, proband => 0,
 		traits => [], markers => [], genotyped => 0, phenotyped => 0,
-		dataset => $dataset, makeped => 1 };
+		phased => 0, dataset => $dataset, makeped => 1 };
     my $trait;
     my $marker;
     my ($allele1, $allele2);
@@ -794,7 +808,7 @@ sub map
     map {
 	$$new{$_} = $$self{$_};
     } qw/pedid indid dadid momid firstchildid patsibid matsibid origpedid
-	origindid sex proband makeped/;
+	origindid sex proband phased makeped/;
 
     foreach $trait (@{$$newset{traitorder}}) {
 	if (exists ($$oldset{traits}{$trait})) {
@@ -820,6 +834,7 @@ sub write
 {
     my ($self) = @_;
     my $dataset = $$self{dataset};
+    my $genosep = ($$self{phased} ? " | " : " ");
 
     if (! (defined ($$dataset{pedfh}) || $$dataset{writing})) {
 	$dataset->writePedigreefile
@@ -829,12 +844,12 @@ sub write
     if ($$dataset{pedwriteformat} eq 'post') {
 	# Write post-MAKEPED format. Don't care what the input format was.
 
-	$$dataset{pedfh}->print (join (' ', @$self{qw/pedid indid dadid momid firstchildid patsibid matsibid sex proband/}, @{$$self{traits}}, map { "$$_[0] $$_[1]" } @{$$self{markers}}), "  Ped: $$self{origpedid}  Per: $$self{origindid}\n");
+	$$dataset{pedfh}->print (join (' ', @$self{qw/pedid indid dadid momid firstchildid patsibid matsibid sex proband/}, @{$$self{traits}}, map { "$$_[0]$genosep$$_[1]" } @{$$self{markers}}), "  Ped: $$self{origpedid}  Per: $$self{origindid}\n");
 
     } else {
 	# Write pre-MAKEPED format from post-MAKEPED input.
 
-	$$dataset{pedfh}->print (join (' ', @$self{qw/pedid indid dadid momid sex/}, @{$$self{traits}}, map { "$$_[0] $$_[1]" } @{$$self{markers}}), "\n");
+	$$dataset{pedfh}->print (join (' ', @$self{qw/pedid indid dadid momid sex/}, @{$$self{traits}}, map { "$$_[0]$genosep$$_[1]" } @{$$self{markers}}), "\n");
 
     }
     return (1);
@@ -954,6 +969,13 @@ sub genotyped
     my ($self) = @_;
 
     return ($$self{genotyped});
+}
+
+sub phased
+{
+    my ($self) = @_;
+
+    return ($$self{phased});
 }
 
 sub makeped
