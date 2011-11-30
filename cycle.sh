@@ -49,8 +49,13 @@ fi
 study=$(grep -i ^Study client.conf)
 set -- $study
 
-# Get the actual StudyId from the StudyLabel
+# Get the actual StudyId from the StudyLabel. This MUST succeed if InitStudy.pl is worth its salt.
 StudyId=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="Select StudyId from Studies where StudyLabel = '$2';")
+
+if test -z "$StudyId"; then
+    echo "ERROR - STUDY directive in configuration file specified StudyLabel ($2) that was not found in the database, exiting!"
+    exit 2
+fi
 
 # Setup the Single-Model RunTimes so bucket loading can be intelligent
 SMRTs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions a, SingleModelRuntimes b set a.SingleModelEstimate = b.SingleModelRuntime, a.SingleModelRuntime = b.SingleModelRuntime where a.StudyId = $StudyId AND a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.PedTraitPosCM = b.PedTraitPosCM;")

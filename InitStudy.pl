@@ -87,6 +87,7 @@ sub perform_study
     ${$config->isConfigured ("Study")}[0] =~ /(["'])?([^"']+)(?(1)\1|)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(["'])?([^"']+)(?(7)\7|)\s+(\S+)\s+(\S+)/;
 
     my $StudyLabel = $2; my $StudyRole = uc($3); my $DBIHost = $4; my $DBIDatabase = $5; my $Username = $6; my $Password = $8; my $PedigreeRegEx = $9; my $PedigreeNotRegEx = $10;
+    error ("StudyLabel ($StudyLabel) in STUDY directive too long") if (length($StudyLabel) > 63);
     my $DBIConnectionString = "mysql:host=".$DBIHost.":database=$DBIDatabase";
     my $MapId; my $LiabilityClasses = 1; my $ImprintingFlag = 'n';
 
