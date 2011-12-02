@@ -100,7 +100,3 @@ do
 done
 # Don't bother with a second run if there were no splits at all
 diff client.conf client-newTP.conf || qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
-
-# Get baselines of separate runs
-nq "$KELVIN_ROOT/kelvin-normal dataset1.conf --MapFile reference.map --BayesRatioFile br.reference-dataset1"
-nq "$KELVIN_ROOT/kelvin-normal dataset11.01.conf --MapFile reference.map --BayesRatioFile br.reference-dataset11.01"

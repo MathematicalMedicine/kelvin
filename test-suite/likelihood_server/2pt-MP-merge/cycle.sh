@@ -109,6 +109,3 @@ do
 done
 # Don't bother with a second run if there were no splits at all
 diff client.conf client-newTP.conf || qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
-
-# Run a 2pt for just the 2pt pedigrees for comparison purposes
-#nq "$KELVIN_ROOT/kelvin-study client-just-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
