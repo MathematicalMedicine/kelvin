@@ -63,7 +63,7 @@ extern LDLoci *pLDLoci;
 #include "database/databaseSupport.h"
 extern struct StudyDB studyDB;
 
-#define MAXLSTP 4096
+#define MAXLSTP 16384
 double *oldTLoc; // Pointer to original list of trait loci, which we're going to ignore
 double lociSetTransitionPositions[MAXLSTP];
 double newTLoc[MAXLSTP];
@@ -2543,6 +2543,10 @@ void integrateMain ()
       for (i=0; i<(originalLocusList.numLocus - modelType->numMarkers); i++)
 	lociSetTransitionPositions[j++] = lociSetTransitionPositions[i] +
 	  ((lociSetTransitionPositions[i+modelType->numMarkers] - lociSetTransitionPositions[i])/2.0);
+
+      // See if we've wandered off the reservation
+      if (j >= MAXLSTP)
+        ERROR ("Analysis exceeds internal limit of %d positions, modify MAXLSTP in integrationSupport.c and rebuild", MAXLSTP);
 
       // Sort the list of transition positions
       qsort (lociSetTransitionPositions, j, sizeof (double), compare_doubles);
