@@ -798,7 +798,7 @@ double t_pdf_30 (double x, double degFree) {
 	       gsl_ran_tdist_pdf (x, (double) 30), (result - gsl_ran_tdist_pdf (x, (double) 30)), x);
 #endif
   
-  hash_t_pdf(x, result);
+  //hash_t_pdf(x, result);
   return(result);
 }
 
