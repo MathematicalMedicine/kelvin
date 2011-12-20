@@ -1515,10 +1515,11 @@ int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_
 
   while (1) {
     if (numvals >= listsize) {
-      if (((vlist != NULL) &&
-	   ((vlist = realloc (vlist, sizeof (st_valuelist) * (listsize += 10))) == NULL)) || 
-	  ((vals = realloc (vals, sizeof (double) * (listsize += 10))) == NULL))
-	ERROR ("Complex config parsing realloc failed");
+      listsize += 10;
+      if (vlist != NULL)
+	REALCHOKE (vlist, sizeof (st_valuelist) * listsize, st_valuelist *);
+      else
+	REALCHOKE (vals, sizeof (double) * listsize, double *);
     }
     
     /* Skip the first character of the token to avoid the leading '-' of a negative number */
