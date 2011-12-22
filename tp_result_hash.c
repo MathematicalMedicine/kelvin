@@ -146,22 +146,14 @@ SUMMARY_STAT *new_tp_result (int dprimeIdx, int thetaIdx, int mkrFreqIdx)
   if (tp_result_list_count >= tp_result_list_limit) {
     tp_result_list_limit += 1024;
     if (tp_result_list != NULL) {
-      tp_result_list = (struct SUMMARY_STAT **) realloc (tp_result_list, tp_result_list_limit * sizeof (struct SUMMARY_STAT *));
+      REALCHOKE(tp_result_list, tp_result_list_limit * sizeof(struct SUMMARY_STAT *), struct SUMMARY_STAT **);
     } else {
-      tp_result_list = (struct SUMMARY_STAT **) malloc (tp_result_list_limit * sizeof (struct SUMMARY_STAT *));
-    }
-    if (tp_result_list == NULL) {
-      fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-      exit (EXIT_FAILURE);
+      MALCHOKE(tp_result_list, tp_result_list_limit * sizeof (struct SUMMARY_STAT *), struct SUMMARY_STAT **);
     }
   }
 
   MALCHOKE(newTPRhe, sizeof (struct tp_result_hash_entry), struct tp_result_hash_entry *);
-  newTPRhe->tp_result = (SUMMARY_STAT *) calloc (sizeof (SUMMARY_STAT), 1);
-  if (newTPRhe->tp_result == NULL) {
-    fprintf (stderr, "Memory allocation failure at %s line %d\n", __FILE__, __LINE__);
-    exit (EXIT_FAILURE);
-  }
+  CALCHOKE(newTPRhe->tp_result, sizeof (SUMMARY_STAT), 1, SUMMARY_STAT *);
   newTPRhe->next = NULL;
 
   // Combine the 3 integer indexes of tp_result into a single sequence of bytes and generate a key.

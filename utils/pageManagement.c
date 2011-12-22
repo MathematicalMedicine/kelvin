@@ -25,6 +25,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "sw.h"
 
 /*
   The signals for violations of memory protection depend upon 
@@ -100,6 +101,7 @@ void *allocatePages (
 		     int objectSizeInBytes ///< Number of bytes to allocate
 		     )
 {
+  char messageBuffer[MAXSWMSG];
   void *pageStart;
   int pageSize, pageCount;
 
@@ -116,6 +118,12 @@ void *allocatePages (
     fprintf (stderr, "Memory page allocation for %d-byte structure failed!\n", objectSizeInBytes);
     exit (EXIT_FAILURE);
   }
+#ifdef DMTRACK
+  sprintf (messageBuffer,
+	   "Memory page management allocated %d pages of %d bytes for an object of %d bytes not accounted for in dynamic memory tracking",
+	   pageCount, pageSize, objectSizeInBytes);
+  INFO(messageBuffer);
+#endif
   return pageStart;
 }
 

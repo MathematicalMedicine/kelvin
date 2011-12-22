@@ -653,10 +653,10 @@ swDelChunk (void *chunkAddress, int callType, char *fileName, int lineNo)
       int i;
       for (i=0; i<memChunkSourceCount; i++)
         if (memChunkSources[i].entryNo == oldChunk->allocSource) {
-	  DIAG (0, 0, {
+	  DIAG (0, 3, {
 	      if (callType == cTReAlloc || callType == cTReFree) {
 		fprintf(stderr, "For %s: %d, subtracting %d from %d\n",
-			fileName, lineNo, oldChunk->chunkSize, memChunkSources[i].remainingBytes);
+			fileName, lineNo, (int) oldChunk->chunkSize, (int) memChunkSources[i].remainingBytes);
 		fflush (stderr);
 	      }
 	    });
@@ -679,11 +679,11 @@ swDumpSources ()
 {
   int i;
 
-  fprintf (stderr, "Top 20 sources out of %d total:\n",
+  fprintf (stderr, "Top 100 sources out of %d total:\n",
 	   memChunkSourceCount);
   qsort (memChunkSources, memChunkSourceCount, sizeof (struct memChunkSource),
 	 compareSourcesByTotalBytes);
-  for (i=0; i<min(memChunkSourceCount, 20); i++) {
+  for (i=0; i<min(memChunkSourceCount, 100); i++) {
     fprintf (stderr, "At %s line %d, %s called %d times for %ld bytes\n",
 	     memChunkSources[i].moduleName, memChunkSources[i].lineNo,
 	     callTypeNames[memChunkSources[i].callType],
@@ -898,12 +898,8 @@ swMalloc (size_t size, char *fileName, int lineNo)
     else {
       if (size < MAXLARGEBLOCK * MAXMEDIUMBLOCK * MAXSMALLBLOCK)
 	largeBlocks[size / (MAXMEDIUMBLOCK * MAXSMALLBLOCK)][0]++;
-      else {
-	sprintf (messageBuffer,
-		 "Block of size %lu exceeds %dMb, not tracked", size,
-		 MAXLARGEBLOCK);
-	INFO(messageBuffer);
-      }
+      else
+	WARNING("Block of size %lu exceeds %dMb, not tracked", size, MAXLARGEBLOCK);
     }
   }
 #endif

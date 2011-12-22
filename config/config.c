@@ -1595,9 +1595,8 @@ int expandVals (char **toks, int numtoks, double **vals_h, st_valuelist **vlist_
 	  break;
 	va = 0;
 	while ((val = start + (va++ * incr)) <= (end + ERROR_MARGIN)) {
-	  if ((numvals >= listsize) && 
-	      ((vals = realloc (vals, sizeof (double) * (listsize += 10))) == NULL))
-	    ERROR ("Complex config parsing realloc failed");
+	  if (numvals >= listsize)
+	    REALCHOKE(vals, sizeof (double) * (listsize += 10), void *);
 	  vals[numvals++] = val;
 	}
       }

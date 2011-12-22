@@ -1098,8 +1098,7 @@ void expandClassPenet (ModelRange * range)
     /* Allocate a new param array structure. */
     MALCHOKE(range->param, range->nlclass * sizeof (double ***), void *);
     for (k = 0; k < range->nlclass; k++) {
-      range->param[k] =
-	malloc (NPENET (range->nalleles) * sizeof (double **));
+      MALCHOKE(range->param[k], NPENET (range->nalleles) * sizeof (double **), void *);
       for (l = 0; l < NPENET (range->nalleles); l++) {
 	MALCHOKE(range->param[k][l], range->npardim * sizeof (double *), void *);
 	for (m = 0; m < range->npardim; m++)

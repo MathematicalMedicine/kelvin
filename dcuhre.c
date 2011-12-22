@@ -312,8 +312,8 @@ dadhre_ (dcuhre_state * s)
 
 #ifdef STUDYDB
 
-    fprintf (stderr, "DCUHRE split being considered w/%d bogus evaluation results subregion %d...",
-	     s->sbrg_heap[s->next_sbrg]->bogusLikelihoods, s->next_sbrg);
+    fprintf (stderr, "DCUHRE split being considered w/%d bogus evaluation results subregion %d, tentative BR %g, real error %g...",
+	     s->sbrg_heap[s->next_sbrg]->bogusLikelihoods, s->next_sbrg, real_result, real_error);
     if (
 	(s->sbrg_heap[s->next_sbrg]->bogusLikelihoods == 0) &&
 	(
@@ -466,8 +466,8 @@ dadhre_ (dcuhre_state * s)
     if((s->sbrgns  == s->maxsub) && (s->result / s->vol_rate <0)){   
                   /* in case of a negative result, double the current maxsub*/
       s->maxsub = 2* s->maxsub+1;
-      s->diff_result=realloc(s->diff_result, sizeof (double) *s->maxsub);
-      s->sbrg_heap=realloc(s->sbrg_heap, sizeof (sub_region *) * s->maxsub);
+      REALCHOKE(s->diff_result, sizeof(double) * s->maxsub, double *);
+      REALCHOKE(s->sbrg_heap, sizeof (sub_region *) * s->maxsub, sub_region **);
       for (i = s->maxsub/2; i < s->maxsub; i++) {
         s->sbrg_heap[i] = NULL;
       }
