@@ -35,7 +35,7 @@ void quitSignalHandler (int ourSignal)
     swDump (overallSW);
 #endif
 #ifdef DMTRACK
-  swLogPeaks (stdout, "Signal");
+  swLogPeaks ("Signal");
 #endif
 #ifdef PTMALLOC3
   malloc_stats ();
