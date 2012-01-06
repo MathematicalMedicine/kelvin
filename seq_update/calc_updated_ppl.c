@@ -122,7 +122,7 @@ int okelvin = 0;        /* -o or --okelvin : expect original (fixed-grid) kelvin
 int relax = 0;          /* -r or --relax: don't compare marker names between files */
 int allstats = 0;       /* -a or --allstats: print all LD and iPPL stats */
 int epistasis = 0;      /* -e or --epistasis: compute mean, rather than product, of BRs */
-int quiet = 0;          /* -q or --quiet : supress non-fatal warnings */
+int quiet = 0;          /* -q or --quiet : suppress non-fatal warnings */
 
 /* Defaults for variables used in calculation of the statistics */
 double prior = 0.02;    /* -p or --prior: prior probability */
@@ -1486,7 +1486,7 @@ void usage ()
   printf ("  -s|--sexspecific : input data contains sex-specific Thetas\n");
   printf ("  -m|--multipoint : input data is multipoint\n");
   printf ("  -o|--okelvin : input data is from original (fixed-grid) kelvin\n");
-  printf ("  -r|--relax : supress comparing marker names across input files\n");
+  printf ("  -r|--relax : suppress comparing marker names across input files\n");
   printf ("  -p <num>|--prior <num> : set linkage prior probability to <num>\n");
   printf ("  -c <num>|--cutoff <num> : set small-Theta cutoff to <num>\n");
   printf ("  -w <num>|--wieght <num> : set small-Theta weight to <num>\n");
@@ -1499,7 +1499,7 @@ void usage ()
   printf ("  -s : input data contains sex-specific Thetas\n");
   printf ("  -m : input data is multipoint\n");
   printf ("  -o : input data is from original (fixed-grid) kelvin\n");
-  printf ("  -r : supress comparing marker names across input files\n");
+  printf ("  -r : suppress comparing marker names across input files\n");
   printf ("  -p <num> : set linkage prior probability to <num>\n");
   printf ("  -c <num> : set small-Theta cutoff to <num>\n");
   printf ("  -w <num> : set small-Theta weight to <num>\n");
