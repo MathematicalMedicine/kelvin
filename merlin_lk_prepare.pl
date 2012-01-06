@@ -14,9 +14,9 @@ my $liability;
 my $sth;
 my $sql;
 my $lc_select = '';
-my $lc_where = '';
 my $aref;
 my $rows;
+my $modelPartTable = 'DModelParts';
 
 # build insert ... select statement based on config (liability classes, mostly)
 # execute
@@ -31,20 +31,30 @@ $config = KelvinConfig->new ($configfile)
     or die ("KelvinConfig->new failed: $KelvinConfig::errstr\n");
 $aref = $config->isConfigured ("Study")
     or die ("no Study directive in config file '$configfile'\n'");
-@study{qw/id role dbhost dbname dbuser dbpasswd pedregex pednotregex/} = split (' ', $$aref[0]);
+@study{qw/label role dbhost dbname dbuser dbpasswd pedregex pednotregex/} = split (' ', $$aref[0]);
 ($study{role} =~ /server/i)
     or die ("Study role in config file '$configfile' is not 'server'\n");
-
+($config->isConfigured ("QT") || $config->isConfigured ("QTT")) 
+    and $modelPartTable = 'QModelParts';
 $aref = $config->isConfigured ("LiabilityClasses");
 $liability = defined ($aref) ? $$aref[0] : 1;
-print (ts(), "StudyId $study{id}");
-print (($liability > 1) ? ", $liability liability classes\n" : ", 1 liability class\n");
 
 $dsn = "DBI:mysql:host=$study{dbhost};database=$study{dbname}";
 $dbh = DBI->connect ($dsn, $study{dbuser}, $study{dbpasswd},
 #		     {AutoCommit => 0})
 		     {AutoCommit => 0, PrintError => 0})
     or die ("DBI connect to '$dsn' as $study{dbuser} failed, $DBI::errstr\n");
+
+(($sth = $dbh->prepare ("select StudyId from Studies ".
+			"where StudyLabel = ? "))
+ && $sth->execute ($study{label}))
+    or die ("select from Studies failed, $DBI::errstr\n");
+(defined ($aref = $sth->fetchrow_arrayref))
+    or die ("select from Studies returned no data\n");
+$study{id} = $$aref[0];
+  
+print (ts(), "StudyLabel $study{label}, Id $study{id}");
+print (($liability > 1) ? ", $liability liability classes\n" : ", 1 liability class\n");
 
 (($sth = $dbh->prepare ("delete from LGModels where StudyId = ?"))
  && ($rows = $sth->execute ($study{id})))
@@ -56,7 +66,7 @@ $lc_select = join ('', map { ", LC${_}MPId" } (1 .. $liability));
 
 $sql = "insert into LGModels (LGModelId, StudyId" . $lc_select. ") ".
        "select distinct 0, p.StudyId" . $lc_select . " ".
-       "from PedigreePositions p, Models m, DModelParts d ".
+       "from PedigreePositions p, Models m, ". $modelPartTable. " d ".
        "where p.StudyId = ? ".
        "  and p.PedigreeSId regexp ? ".
        "  and p.PedigreeSId not regexp ? ".
