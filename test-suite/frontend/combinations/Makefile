@@ -7,10 +7,8 @@ TESTS = $(shell ls -d */ | cut -f1 -d\/)
 
 .PHONY : test test-USE_DL clean $(TESTS)
 
-#test : ACTION := test
-#test : $(TESTS)
-test :
-	echo "tests temporarily disabled"
+test : ACTION := test
+test : $(TESTS)
 
 check :
 
