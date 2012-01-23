@@ -217,7 +217,7 @@ sub perform_study
 		$PosCM = sprintf ("%0.*f", length ($precision), $begin + $inc * $va++);
 		$dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 			 undef, $StudyId, $ChromosomeNo, $PosCM);
-	    } while ($PosCM <= $end);
+	    } while ($PosCM < $end);
 	} else {
 	    $dbh->do("Insert ignore into Positions (StudyId, ChromosomeNo, RefTraitPosCM) values (?,?,?)",
 		     undef, $StudyId, $ChromosomeNo, $TP);
