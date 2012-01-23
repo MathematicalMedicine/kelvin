@@ -23,14 +23,19 @@ set -x
 # Any queuing modifier, like using -q johntest
 qmods=""
 
-# Don't just quit if nothing is available -- wait for it.
-alias qrsh="qrsh -now no $qmods"
-
-# These are for nodes other than Levi-Montalcini, where SGE is not available
-if test "$HOSTNAME" != "Levi-Montalcini" ; then
+# Handle unique job submission situations.
+case $HOSTNAME in
+    Levi-Montalcini )
+    # Don't just quit if nothing is available -- wait for it.
+    alias qrsh="qrsh -now no $qmods"
+    ;;
+    opt* ) # OSC's Opteron cluster
+    ;;
+    * ) # Everything else
     alias qrsh="bash -c "
     alias nq="bash -c "
-fi
+    ;;
+esac
 
 # Do the initialization only if there was no command line parameter
 if test -z "$1" ; then
