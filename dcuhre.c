@@ -69,7 +69,7 @@
 
 #define checkpt() fprintf (stderr, "Checkpoint at line %d of file \"%s\"\n",__LINE__,__FILE__)
 
-
+dcuhre_state *held_dcuhre_state;
 
 int
 dcuhre_ (dcuhre_state * s)
@@ -311,7 +311,10 @@ dadhre_ (dcuhre_state * s)
     // if ( (real_result <0.0)||((real_error > s->epsabs)&&(real_result >=0.214)) ){//for long run (error_est < error_tol)
 
 #ifdef STUDYDB
-
+    // About to check for a split, so preserve the current dcuhre state for restoration. We should
+    // only need to preserve this one state because we only split once for any given client position in LKS.
+    MALCHOKE(held_dcuhre_state, sizeof (dcuhre_state), dcuhre_state *);
+    memcpy (held_dcuhre_state, s, sizeof (dcuhre_state));
     fprintf (stderr, "DCUHRE split being considered w/%d bogus evaluation results subregion %d, tentative BR %g, real error %g...",
 	     s->sbrg_heap[s->next_sbrg]->bogusLikelihoods, s->next_sbrg, real_result, real_error);
     if (
@@ -433,7 +436,12 @@ dadhre_ (dcuhre_state * s)
       s->sbrgns++;
 #ifdef STUDYDB
       if (s->sbrg_heap[s->sbrgns-1]->bogusLikelihoods > 0 || s->sbrg_heap[s->sbrgns-2]->bogusLikelihoods > 0) {
-	// fprintf (stderr, "averted!\n");
+	// Did a split, but with bogus results we need to PRETEND that we didn't by
+	// resetting s back to the pre-split state? Ew!
+	int totalBogusLikelihoods = s->sbrg_heap[s->sbrgns-1]->bogusLikelihoods + s->sbrg_heap[s->sbrgns-2]->bogusLikelihoods;
+	memcpy (s, held_dcuhre_state, sizeof (dcuhre_state));
+	free (held_dcuhre_state);
+	s->sbrg_heap[s->next_sbrg]->bogusLikelihoods = totalBogusLikelihoods; // Preserve the count for no particular reason.
 	s->ifail=0;
 	break;
       }
@@ -453,11 +461,9 @@ dadhre_ (dcuhre_state * s)
       s->ifail = 1;
     } else {
 #ifdef STUDYDB
-      if (s->sbrg_heap[s->next_sbrg]->bogusLikelihoods > 0)
-	fprintf (stderr, "averted!\n");
-      else
-	fprintf (stderr, "unnecessary.\n");
-	  
+      // Didn't do a split
+      free (held_dcuhre_state);
+      fprintf (stderr, "unnecessary.\n");
 #endif
       s->ifail = 0;
       break;

@@ -2817,9 +2817,8 @@ void integrateMain ()
 
 #ifdef STUDYDB
       if (toupper(*studyDB.role) == 'S') {
+	// This is an LKS server run, so we don't care about integration -- just invoke compute_likelihood and go to the next position.
 	compute_likelihood(&pedigreeSet);
-	// we are likelihood server, go run the next position
-	// we don't care about the integration
 	continue;
       }
 #endif 
@@ -2828,6 +2827,7 @@ void integrateMain ()
       abserr = 0.0;
       num_out_constraint = 0;
       kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &max_scale);
+      // Would it kill us to actually use parameters and not seemingly-unrelated single-character globals?
       ASSERT ((s->ifail == 0), "Dynamic integration failed with ifail of %d. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c", s->ifail);
 
       num_eval = s->total_neval;
@@ -2841,11 +2841,15 @@ void integrateMain ()
       } else
         ppl = 0;
 
-      dk_writeMPBRData (posIdx, traitPos, ppl, integral, max_scale);
 #ifdef STUDYDB
-      if (studyDB.bogusLikelihoods > 0)
-	fprintf (fpHet, "WARNING - Some positions have not been completely analyzed!\n");
+      // This is an LKS client run (since server diverted a few lines up)
+      if (studyDB.bogusLikelihoods > 0) {
+	// There were bogus likelihoods for this position, note that in the output and zero count for next position.
+	fprintf (fpHet, "WARNING - The following position has not been completely analyzed!\n");
+	studyDB.bogusLikelihoods = 0;
+      }
 #endif
+      dk_writeMPBRData (posIdx, traitPos, ppl, integral, max_scale);
 
       dk_copyMaxModel (localmax_x, &dk_globalmax, size_BR);
       dk_writeMPMODData (posIdx, traitPos, localMOD, &dk_globalmax);
