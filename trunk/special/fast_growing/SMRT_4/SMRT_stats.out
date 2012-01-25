@@ -1,0 +1,7 @@
+StudyId	Liability Classes	Imprinting?	Ped/Pos count	Total SMRTs (s)	Max SMRT (s)	Dimensions	DCUHRE models	Serial time (Days H:M:S)
+100000	1	n	298	1325	26	4	153	5 16:37:30
+StudyId	PedigreeSId	Pos count	Total SMRT (s)	Max SMRT (s)
+100000	1	149	1093	26
+100000	4	149	232	16
+Note:
+Max SMRT values less than 10 seconds can be Polynomial runs (in 16G), but if any are over 20 seconds they must be NonPolynomial runs

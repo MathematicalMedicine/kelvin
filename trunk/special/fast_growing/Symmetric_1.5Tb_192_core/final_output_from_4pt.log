@@ -1,0 +1,25 @@
+12/01/24 14:57:40                               @4h10m26s, Building polynomial, currently at 1.4e+07 terms
+Dynamic polynomial statistics (At 8M raw term multiple):
+Counts/Hits: c=65/5935544(91316.1:1), v=8/1152, s=12894993/122664757(9.5:1), p=1465454/21859271(14.9:1), f=0/0
+Lists: expansions(@size): c=0(@10000), v=1(@5), s=2418(@10000), p=254(@10000), f=0(@10), tcc=566(@16)
+...sizes: c=800000, v=80, s=103223680, p=11760120, f=800
+TermCount: 553648128 NodeId: 28171010 Hash: max len=104, init size=135406456, SPL: eff=99%, avg len=7744
+Calls: pLS=16 eP=1225 eV=0 hAP=1 kP=50 hP=45332 uHP=41479 fP=63(5) fKP=16
+Sum polys: try release=79810623 or not=61114873 return const=796 (same=0) return 1-term=5365050 hash hits=122664757
+...really new=12894893 new on sumList=12894893 replaced on sumList=0 freed=11972229 1st-term freed=0
+Product polys: try release=30250119 or not=69349341 return 0=0 return const=1338 (same=434) return 1st term=5364745
+...actually a sum poly=42498 hash hits=21859271 hash hit but sum=70866169 return normal (factor is 1)=597564
+...factor not 1 now sum=867875 new on productList=1465439 replaced on productList=0
+...freed=1687027 1st-term freed=0
+Calculated polynomial statistics (At 8M raw term multiple):
+Subterm count(avg): s=75344665359(5842), p=6886125(4), sizes (w/terms): c=2600, s=1206339925296, p=176422556, f=0
+Sum subterm dist <2^n: 0=6811872,1=106808,2=45818,3=3670,4=1026,5=832,6=1332,7=7568,8=18474,9=38404,10=67331,11=143397,12=816516,13=3477276,14=1354669,15=0
+Product subterm dist <2^n: 0=22,1=427754,2=997552,3=40126,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=8041544(1), v=3880(1), s=108812920(103), p=18148472(33), f=399640(0)
+---Total data storage estimate: 1178483929Kb---
+12/01/24 14:59:40                       @4h13m30s, Building polynomial, currently at 1.4e+07 terms, 1.12e+03Gb
+12/01/24 15:01:40                               @4h15m35s, Building polynomial, currently at 1.5e+07 terms
+12/01/24 15:03:40                               @4h16m57s, Building polynomial, currently at 1.5e+07 terms
+12/01/24 15:05:41                               @4h18m14s, Building polynomial, currently at 1.5e+07 terms
+FATAL - ABORTING (polynomial.c:1800), malloc of 199920 bytes for variable sP->sum cast as (Polynomial **) failed!
+12/01/24 15:07:37 Cleaning-up for exit

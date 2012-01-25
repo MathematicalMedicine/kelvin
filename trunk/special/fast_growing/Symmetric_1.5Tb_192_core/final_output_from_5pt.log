@@ -1,0 +1,24 @@
+Dynamic polynomial statistics (At 8M raw term multiple):
+Counts/Hits: c=208/6226902(29937.0:1), v=6/23, s=5917140/76826068(13.0:1), p=783610/12952608(16.5:1), f=0/0
+Lists: expansions(@size): c=4(@10000), v=1(@5), s=582(@10000), p=69(@10000), f=0(@10), tcc=1055(@16)
+...sizes: c=1120000, v=80, s=47360000, p=6320000, f=800
+TermCount: 184549376 NodeId: 6835776 Hash: max len=120, init size=73371944, SPL: eff=99%, avg len=15637
+Calls: pLS=4 eP=1 eV=0 hAP=1 kP=87 hP=27662 uHP=12289 fP=19(1) fKP=4
+Sum polys: try release=49109830 or not=35662789 return const=460800 (same=0) return 1-term=1568614 hash hits=76826068
+...really new=5917137 new on sumList=5917137 replaced on sumList=0 freed=150 1st-term freed=0
+Product polys: try release=18202400 or not=41809391 return 0=0 return const=469440 (same=260) return 1st term=3169078
+...actually a sum poly=3696043 hash hits=12952608 hash hit but sum=38941015 return normal (factor is 1)=431199
+...factor not 1 now sum=352408 new on productList=783607 replaced on productList=0
+...freed=174 1st-term freed=0
+Calculated polynomial statistics (At 8M raw term multiple):
+Subterm count(avg): s=74651784919(12616), p=3242839(4), sizes (w/terms): c=8320, s=1194807255664, p=89065108, f=0
+Sum subterm dist <2^n: 0=2372938,1=90031,2=59931,3=8885,4=3629,5=13740,6=9040,7=53855,8=40213,9=104593,10=63679,11=291124,12=152183,13=644752,14=1131128,15=877419
+Product subterm dist <2^n: 0=20,1=352843,2=427871,3=2876,4=0,5=0,6=0,7=0,8=0,9=0,10=0,11=0,12=0,13=0,14=0,15=0
+Hash: size(peak length): c=8096776(1), v=3880(1), s=52939016(120), p=11932632(16), f=399640(0)
+---Total data storage estimate: 1167016116Kb---
+12/01/23 16:24:58                       @2h29m33s, Building polynomial, currently at 6.7e+06 terms, 1.11e+03Gb
+12/01/23 16:26:58                               @2h31m40s, Building polynomial, currently at 6.9e+06 terms
+12/01/23 16:28:58                               @2h33m49s, Building polynomial, currently at 7e+06 terms
+12/01/23 16:30:58                       ...running...
+FATAL - ABORTING (polynomial.c:1800), malloc of 241280 bytes for variable sP->sum cast as (Polynomial **) failed!
+12/01/23 16:32:19 Cleaning-up for exit
