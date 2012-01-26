@@ -457,8 +457,9 @@ sub db_get_model_batch
 			   "from Models m, PedigreePositions p".
 			   $DModelPart_tabnames . " ".
 			   "where p.StudyId = ? ".
-			   "  and p.PedigreeSId regexp ? ".
-			   "  and p.PedigreeSId not regexp ? ".
+			   "  and p.PedigreeSId in ".
+			   "    (select PedigreeSId from ServerPedigrees ".
+			   "     where ServerId = ?) ".
 			   "  and p.PedPosId = m.PedPosId".
 			   $MPId_whereclause))
 	or die ("prepare select from Models failed, $DBI::errstr\n");
@@ -466,7 +467,7 @@ sub db_get_model_batch
     foreach (@MPIds) {
 	print ("Selecting for model part IDs ". join (', ', @$_). "\n");
 	# Recall that each element in @MPIds is an arrayref containing one or more model part IDs
-	$sth->execute (@$study{qw/id pedregex pednotregex/}, @$_)
+	$sth->execute ($$study{id}, $serverid, @$_)
 	    or die ("execute select from Models failed, $DBI::errstr\n");
 	@Models = @{$sth->fetchall_arrayref};
 	(scalar (@Models) == 0) and die ("select returned no models\n");
@@ -498,15 +499,16 @@ sub db_get_model_batch
     ($sth = $dbh->prepare ("select m.MarkerSetId, p.PedigreeSId, p.PedTraitPosCM ".
 			   "from MarkerSetLikelihood m, PedigreePositions p ".
 			   "where p.StudyId = ? ".
-			   "  and p.PedigreeSId regexp ? ".
-			   "  and p.PedigreeSId not regexp ? ".
+			   "  and p.PedigreeSId in ".
+			   "    (select PedigreeSId from ServerPedigrees ".
+			   "     where ServerId = ?) ".
 			   "  and p.PedPosId = m.PedPosId ".
 			   "  and m.ServerId is NULL ".
 			   "  and m.Likelihood is NULL ".
 			   "for update"))
 	or die ("DBI prepare select marker LK IDs failed, $DBI::errstr\n");
     while (1) {
-	if (! $sth->execute (@$study{qw/id pedregex pednotregex/})) {
+	if (! $sth->execute ($$study{id}, $serverid)) {
 	    die ("DBI select marker LK models failed, $DBI::errstr\n");
 	} elsif (defined ($DBI::errstr) && $DBI::errstr =~ /try restarting transaction/) {
 	    print ("retrying select marker LK models\n");
@@ -720,10 +722,9 @@ sub db_set_server_status
     my $sth;
 
     db_connect ($study);
-    (($sth = $dbh->prepare ("update Servers set StopTime = NOW(), ExitStatus = ? ".
-			    "where ServerID = ?"))
-     && $sth->execute ($status, $serverid))
-	or warn ("DBI update Servers failed, $DBI::errstr\n");
+    (($sth = $dbh->prepare ("call ServerSignOff (?, ?)")) &&
+     $sth->execute ($serverid, $status))
+	or warn ("DBI call ServerSignOff() failed, $DBI::errstr\n");
     $dbh->commit or warn ("DBI commit update Servers failed, $DBI::errstr\n");
     return (1);
 }
