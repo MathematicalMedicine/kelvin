@@ -355,6 +355,7 @@ sub write_pedcount
     my $pedid;
     my ($geno, $traits, $sex);
     my $average;
+    my $str;
     my $va;
     my $n;
 
@@ -395,8 +396,11 @@ sub write_pedcount
 	    $counts = $$state{counts}[$va];
 	    foreach $key (@pedlabels) {
 		if (exists ($$counts{$key})) {
-		    if (keylabel ($key) =~ /^(case|ctrl).*/ && ! $$state{skipweighting}) {
-			if ($1 eq "case") {
+		    # Label will be _C1xxx/_C2xxx for case/control with covariate or imprinting
+		    if (! $$state{skipweighting} &&
+			(($str) = (keylabel ($key) =~ /^(case|ctrl|_C..[12])/))) {
+			if ($str eq "case" ||
+			    substr ($str, 0, 2) eq "_C" && substr ($str, 4, 1) eq "2") {
 			    $count = sprintf ("%.0f", $$counts{$key} * $$state{cases});
 			} else {
 			    $count = sprintf ("%.0f", $$counts{$key} * $$state{controls});
