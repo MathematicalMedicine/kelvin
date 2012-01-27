@@ -288,7 +288,30 @@ int map_has_physicalpos ()
 
 int mapchr_compare (const void *p1, const void *p2)
 {
-  return (strcmp (((st_mapchr *) p1)->chr, ((st_mapchr *) p2)->chr));
+  char *str1, *str2, *c1, *c2;
+  int chr1, chr2;
+
+  str1 = ((st_mapchr *) p1)->chr;
+  str2 = ((st_mapchr *) p2)->chr;
+
+  /* strip off a leading 'chr', if it exists */
+  if (strncmp (str1, "chr", 3) == 0)
+    str1 = str1 + 3;
+  if (strncmp (str2, "chr", 3) == 0)
+    str2 = str2 + 3;
+
+  /* convert the remaining string to an int */
+  chr1 = (int) strtol (str1, &c1, 10);
+  chr2 = (int) strtol (str2, &c2, 10);
+
+  /* If either integer conversion failed, just return the comparison of the orignal strings */
+  if (str1 == c1 || str2 == c2)
+    return (strcmp (((st_mapchr *) p1)->chr, ((st_mapchr *) p2)->chr));
+
+  /* Compare the integers; if they're the same compare any trailing string */
+  if (chr1 != chr2)
+    return (chr1 - chr2);
+  return (strcmp (c1, c2));
 }
 
 
