@@ -62,10 +62,15 @@
    ./test
 ***********************************************************************/
 
-
 #include "dcuhre.h"
 #include "utils/utils.h"
-
+#ifdef STUDYDB
+#include "utils/tpl.h"
+#include "database/StudyDB.h"
+#include "database/databaseSupport.h"
+extern struct StudyDB studyDB;
+#endif
+extern double traitPos;
 
 #define checkpt() fprintf (stderr, "Checkpoint at line %d of file \"%s\"\n",__LINE__,__FILE__)
 
@@ -502,6 +507,29 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   rgnvol = 1.0;
   divaxn = 0;
 
+#ifdef STUDYDB
+  tpl_node *tn;
+  char *regionTPLFormat = "iiffii";
+  char *regionFileFormat = "study_%d-pos_%g-reg_%d.dat";
+  char fileName[256];
+  FILE *file;
+
+  sprintf (fileName, regionFileFormat, studyDB.studyId, traitPos , cw_sbrg->region_id);
+  tn = tpl_map (regionTPLFormat, &cw_sbrg->parent_id, &cw_sbrg->region_level, &cw_sbrg->local_result, &cw_sbrg->local_error, &cw_sbrg->dir, &cw_sbrg->cur_scale);
+  fprintf (stderr, "StudyId: %d, trait pos: %g, seeking subregion %d...", studyDB.studyId, traitPos , cw_sbrg->region_id);
+
+  if ((file = fopen (fileName, "r"))) {
+    fprintf (stderr, "OK\n");
+    fclose (file);
+    tpl_load (tn, TPL_FILE, fileName);
+    tpl_unpack (tn, 0);
+    tpl_free (tn);
+    cw_sbrg->lchild_id = 0; cw_sbrg->rchild_id = 0;
+    return 0;
+  }
+  fprintf (stderr, "not found (maybe had bogus likelihoods), calculating.\n");
+#endif
+
   MALCHOKE(x, sizeof (double) * s->ndim, double *);
   MALCHOKE(null, sizeof (double) * 8, double *);
   for (i = 0; i < s->ndim; i++) {
@@ -668,6 +696,19 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   free (x);
   free (null);
 
+#ifdef STUDYDB
+
+  if (cw_sbrg->bogusLikelihoods == 0) {
+    fprintf (stderr, "Saving cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d\n",
+	     cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale);
+
+    tpl_pack (tn, 0);
+    tpl_dump (tn, TPL_FILE, fileName);
+    tpl_free (tn);
+    fprintf (stderr, "Exiting cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d\n",
+	   cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale);
+  }
+#endif
   return 0;
 }
 
