@@ -10,6 +10,7 @@ use Data::Dumper;
 my $taskcount = 9;
 my $batchsize;
 my $prefix = 'merlin';
+my $svn_version='$Id:$';
 
 my $configfile = shift (@ARGV);
 my $config;
@@ -49,6 +50,7 @@ my $href;
 my $line;
 
 print (ts(), "$0 starting on $ENV{HOSTNAME} in $ENV{PWD}, pid $$". (exists ($ENV{JOB_ID}) ? ", job ID $ENV{JOB_ID}" : ""). "\n");
+print (ts(), "Version $svn_version\n");
 
 (exists ($ENV{JOB_ID})) and $prefix = $ENV{JOB_ID};
 (exists ($ENV{SGE_TASK_ID}) && $ENV{SGE_TASK_ID} ne 'undefined')
