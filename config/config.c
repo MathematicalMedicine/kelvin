@@ -18,7 +18,7 @@
   #include "../database/StudyDB.h"
 #endif
 
-#define BUFFSIZE 256
+#define BUFFSIZE 1024
 
 #define fault(...) \
 do { \
