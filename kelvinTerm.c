@@ -4,6 +4,12 @@
 #include "summary_result.h"
 #include "ppl.h"
 
+#ifdef STUDYDB
+#include "database/StudyDB.h"
+extern struct StudyDB studyDB;
+#include "database/databaseSupport.h"
+#endif
+
 int posIdx;
 extern LDLoci *pLDLoci;
 
@@ -50,6 +56,13 @@ void kelvinTerm () {
   free_sub_locus_list (&savedLocusList);
   free (modelOptions->sUnknownPersonID);
   final_cleanup ();
+
+#ifdef STUDYDB
+  if (toupper(*studyDB.role) == 'S') {
+    DETAIL(0,"Signing out of database");
+    SignOff (0);
+  }
+#endif
 
 #ifdef SOURCEDIGRAPH
   if (modelOptions->polynomial == TRUE)

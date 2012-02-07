@@ -442,6 +442,18 @@ void prepareDBStatements () {
   if (mysql_stmt_bind_result (studyDB.stmtSignOnResults, studyDB.bindSignOnResults))
     ERROR("Cannot bind SignOnResults call statement (%s)", mysql_stmt_error(studyDB.stmtSignOnResults));
 
+  // Prepare the server sign-off
+  studyDB.stmtSignOff = mysql_stmt_init (studyDB.connection);
+  memset (studyDB.bindSignOff, 0, sizeof(studyDB.bindSignOff));
+
+  BINDNUMERIC (studyDB.bindSignOff[0], studyDB.serverId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindSignOff[1], studyDB.exitStatus, MYSQL_TYPE_LONG);
+
+  strncpy (studyDB.strSignOff, "call ServerSignOff (?,?)", MAXSTMTLEN-1);
+  if (mysql_stmt_prepare (studyDB.stmtSignOff, studyDB.strSignOff, strlen (studyDB.strSignOff)))
+    ERROR("Cannot prepare ServerSignOff call statement (%s)", mysql_stmt_error(studyDB.stmtSignOff));
+  if (mysql_stmt_bind_param (studyDB.stmtSignOff, studyDB.bindSignOff))
+    ERROR("Cannot bind ServerSignOff call statement (%s)", mysql_stmt_error(studyDB.stmtSignOff));
 
   // Prepare the CountWork call
   studyDB.stmtCountWork = mysql_stmt_init (studyDB.connection);
@@ -981,6 +993,20 @@ void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVe
   if (mysql_query(studyDB.connection, studyDB.strAdhocStatement))
     ERROR("Can't set trait type %d (%s)", studyDB.traitType, mysql_error(studyDB.connection));
 
+}
+
+void SignOff (int exitStatus)
+{
+  if (dBStmtsNotReady)
+    prepareDBStatements ();
+
+  // The first argument to the ServerSignOff proc, serverId, should already be set
+  studyDB.exitStatus = exitStatus;  
+  if (mysql_stmt_execute (studyDB.stmtSignOff))
+    ERROR("Cannot execute ServerSignOff stored procedure w/ status %d (%s, %s)", 
+	  studyDB.exitStatus, mysql_stmt_error(studyDB.stmtSetDummyNullLikelihood),
+	  mysql_stmt_sqlstate(studyDB.stmtSetDummyNullLikelihood));
+  return;
 }
 
 void SetDummyNullLikelihood () {

@@ -108,6 +108,11 @@ struct StudyDB {
   char algorithm[3];
   char programVersion[33];
   int serverId;
+  // Sign-off...
+  MYSQL_STMT *stmtSignOff;
+  MYSQL_BIND bindSignOff[2];
+  char strSignOff[MAXSTMTLEN];
+  int exitStatus;
   // SetDummyNullLikelihood...
   MYSQL_STMT *stmtSetDummyNullLikelihood;
   MYSQL_BIND bindSetDummyNullLikelihood[1];
