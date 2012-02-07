@@ -826,7 +826,10 @@ double GetDLikelihood (int pedPosId, double dGF,
     ret = mysql_stmt_execute (studyDB.stmtGetDLikelihood);
     if (ret != 0) {
       if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood), "40001") != 0) &&
-	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood), "HY000") != 0)) {
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood), "HY000") != 0) &&
+          !(strlen (mysql_stmt_error(studyDB.stmtGetDLikelihood)) > 9 && 
+            strncasecmp(mysql_stmt_error(studyDB.stmtGetDLikelihood), "Duplicate", 9) == 0)
+         ) {
 	ERROR("Cannot execute GetDLikelihood call statement w/%d, (%s, %s)", pedPosId,
 	      mysql_stmt_error(studyDB.stmtGetDLikelihood), mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood));
       } else {
@@ -911,7 +914,10 @@ double GetQLikelihood (int pedPosId, double dGF,
     ret = mysql_stmt_execute (studyDB.stmtGetQLikelihood);
     if( ret != 0) {
       if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood), "40001") != 0) &&
-	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood), "HY000") != 0)) {
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood), "HY000") != 0) &&
+          !(strlen (mysql_stmt_error(studyDB.stmtGetQLikelihood)) > 9 && 
+            strncasecmp(mysql_stmt_error(studyDB.stmtGetQLikelihood), "Duplicate", 9) == 0)
+         ) {
 	ERROR("Cannot execute GetQLikelihood call statement w/%d, (%s, %s)", pedPosId,
 	      mysql_stmt_error(studyDB.stmtGetQLikelihood), mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood));
       } else {
