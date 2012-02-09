@@ -5,7 +5,7 @@ test :
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out ppl.out-baseline .000001
 
 test-FIXED :
-	-rm -f LRTest*
+	- rm -f LRTest*
 	(perl $(KELVIN_ROOT)/LRTest.pl) >kelvin-FIXED.out 2>&1
 
 test-USE_DL :
