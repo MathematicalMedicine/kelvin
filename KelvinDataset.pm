@@ -53,7 +53,7 @@ sub new
     @$self{qw/pedigreefile pedfh pedlineno/} = (undef, undef, 0);
     @$self{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
     @$self{qw/microsats snps individualcache pedwriteformat/} = (0, 0, undef, 'post');
-    @$self{qw/unkallelesok/} = (0);
+    @$self{qw/unkallelesok misordered/} = (0, 0);
  
     if (! defined ($arg)) {
 	$errstr = "missing argument";
@@ -109,7 +109,7 @@ sub copy
     @$new{qw/pedigreefile pedfh pedlineno/} = (undef, undef, 0);
     @$new{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
     @$new{qw/individualcache pedwriteformat/} = (undef, 'post');
-    @$new{qw/unkallelesok/} = (0);
+    @$new{qw/unkallelesok misordered/} = (0, 0);
 
     if (defined ($arg)) {
 	if (ref ($arg) ne 'HASH') {
@@ -218,6 +218,9 @@ sub readLocusfile
     my @traitorder = ();
     my %markers = ();
     my %traits = ();
+    my $lastpos = -1;
+    my $misordered = $$self{misordered};
+    my $idx;
     my $fh;
 
     if (defined ($locusfile)) {
@@ -257,9 +260,13 @@ sub readLocusfile
 	    push (@traitorder, $name);
 	    $col++;
 	} else {  # $flag must be 'M' here
-	    if ($$self{mapread} && ! exists ($$self{markers}{$name})) {
-		$errstr = "$$self{locusfile}, line $lineno: marker $name in did not appear in $$self{mapfile}";
-		return (undef);
+	    if ($$self{mapread}) {
+		if (! exists ($$self{markers}{$name})) {
+		    $errstr = "$$self{locusfile}, line $lineno: marker $name in did not appear in $$self{mapfile}";
+		    return (undef);
+		}
+		($$self{markers}{$name}{avgpos} < $lastpos) and $misordered = 1;
+		$lastpos = $$self{markers}{$name}{avgpos};
 	    }
 	    if ($$self{freqread} && ! exists ($$self{markers}{$name}{alleles})) {
 		$errstr = "$$self{locusfile}, line $lineno: marker $name in did not appear in $$self{freqfile}";
@@ -274,11 +281,18 @@ sub readLocusfile
 	    $col += 2;
 	}
     }
-    $$self{traitorder} = [ @traitorder ];
+    if ($misordered) {
+	@markerorder = sort ({$$self{markers}{$a}{avgpos} <=> $$self{markers}{$b}{avgpos}} @markerorder);
+	$idx = 0;
+	map { $markers{$_}{idx} = $idx++; } @markerorder;
+    }
+    $$self{misordered} = $misordered;
     $$self{markerorder} = [ @markerorder ];
     map {
 	@{$$self{markers}{$_}}{qw/col idx/} = @{$markers{$_}}{qw/col idx/};
     } @markerorder;
+    
+    $$self{traitorder} = [ @traitorder ];
     $$self{traits} = {};
     map { $$self{traits}{$_} = $traits{$_} } @traitorder;
 
@@ -416,6 +430,8 @@ sub readMapfile
     my $origchr = undef;;
     my $lastpos = undef;
     my ($line, @arr);
+    my $misordered = $$self{misordered};
+    my @markerorder;
     my $href;
     my $va;
     my $fh;
@@ -505,12 +521,20 @@ sub readMapfile
     }
 
     if ($$self{locusread}) {
+	$lastpos = -1;
 	map {
 	    if (! exists ($markers{$_})) {
 		$errstr = "$$self{locusfile}: marker $_ does not appear in $$self{mapfile}";
 		return (undef);
 	    }
+	    ($markers{$_}{avgpos} < $lastpos) and $misordered = 1;
+	    $lastpos = $markers{$_}{avgpos};
 	} @{$$self{markerorder}};
+	if ($misordered) {
+	    @markerorder = sort ({$markers{$a}{avgpos} <=> $markers{$b}{avgpos}} @{$$self{markerorder}});
+	    $va = 0;
+	    map { $markers{$_}{idx} = $va++; } @markerorder;
+	}
     }
     # This works because readFreqfile will load maporder if mapread is clear
     if ($$self{freqread}) {
@@ -521,6 +545,8 @@ sub readMapfile
 	    }
 	} @{$$self{maporder}};
     }
+    $$self{misordered} = $misordered;
+    (scalar (@markerorder)) and @{$$self{markerorder}} = @markerorder;
     map { 
 	@{$$self{markers}{$_}}{keys %{$markers{$_}}} = @{$markers{$_}}{keys %{$markers{$_}}};
     } keys (%markers);
@@ -1130,6 +1156,13 @@ sub freqread
     my ($self) = @_;
 
     return ($$self{freqread});
+}
+
+sub misordered
+{
+    my ($self) = @_;
+
+    return ($$self{misordered});
 }
 
 1;

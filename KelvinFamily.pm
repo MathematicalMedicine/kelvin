@@ -662,8 +662,9 @@ sub new
     my $trait;
     my $marker;
     my @arr;
-    my $traitcol = -1;
-    my $markercol = -1;
+    my $traitcol;
+    my $markercol;
+    my $idx;
     my $colcount;
     my $ind = { pedid => undef, indid => undef, dadid => undef, momid => undef,
 		firstchildid => undef, patsibid => undef, matsibid => undef,
@@ -671,11 +672,7 @@ sub new
 		traits => [], markers => [], genotyped => 0, phenotyped => undef,
 		phased => undef, dataset => $dataset, makeped => undef };
 
-    (defined ($trait = $$dataset{traitorder}[-1]))
-	and $traitcol = $$dataset{traits}{$trait}{col};
-    (defined ($marker = $$dataset{markerorder}[-1]))
-	and $markercol = $$dataset{markers}{$marker}{col};
-    $colcount = ($markercol > $traitcol) ? $markercol + 2 : $traitcol + 1;
+    $colcount = scalar (@{$$dataset{markerorder}}) * 2 + scalar (@{$$dataset{traitorder}});
     (defined ($$dataset{undefpheno})) and $$ind{phenotyped} = 0;
 
     # Pipes indicate phased genotypes. Rearrange the whitespace around the pipes so
@@ -736,7 +733,7 @@ sub new
     }	      
 
     foreach $marker (@{$$dataset{markerorder}}) {
-	$markercol = $$dataset{markers}{$marker}{col};
+	($markercol, $idx) = @{$$dataset{markers}{$marker}}{qw/col idx/};
 	if ($$ind{phased} && substr ($arr[$markercol], -1, 1, '') ne '|') {
 	    $errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: individual $$ind{indid}, phased genotypes inconsistantly coded at marker $marker";
 	    return (undef);
@@ -761,7 +758,8 @@ sub new
 	    }
 	    $$ind{genotyped} = 1;
 	}
-	push (@{$$ind{markers}}, [ $arr[$markercol], $arr[$markercol+1] ]);
+	# Assign genotypes to the correct index in the individual's array of genotypes
+	$$ind{markers}[$idx] = [ $arr[$markercol], $arr[$markercol+1] ];
     }	      
     return (bless ($ind, $class));
 }
