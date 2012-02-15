@@ -12,6 +12,7 @@ my $individual;
 $dataset = KelvinDataset->new ({pedigreefile => 'ped.pre', locusfile => 'locus.dat',
 				frequencyfile => 'freq.dat', mapfile => 'map.dat'})
     or die ("KelvinDataset new failed: $KelvinDataset::errstr\n");
+$dataset->misordered or exit (0);
 $copy = $dataset->copy
     or die ("KelvinDataset copy failed, $KelvinDataset::errstr\n");
 $copy->write ({pedigreefile => 'ped.new', locusfile => 'locus.new', mapfile => 'map.new',
