@@ -1886,6 +1886,8 @@ void getPedigreeSampleStdev (PedigreeSet *pPedigreeSet, double *mean, double *st
       *mean += person->ppOrigTraitValue[0][0];
       count++;
     }
+  if (count <= 1)
+    ERROR ("Insufficient samples (%d) to calculate mean/standard deviation", count);
   *mean /= (double) count;
 
   for (va = 0; va < pPedigreeSet->numPedigree; va++)
@@ -1901,7 +1903,7 @@ void getPedigreeSampleStdev (PedigreeSet *pPedigreeSet, double *mean, double *st
       delta = *mean - person->ppOrigTraitValue[0][0];
       *stdev += (delta * delta);
     }
-  *stdev = sqrt (*stdev / count);
+  *stdev = sqrt (*stdev / (count - 1));
   return;
 }
 
