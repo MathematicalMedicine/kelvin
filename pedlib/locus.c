@@ -210,7 +210,7 @@ read_mapfile (char *sMapfileName, int sexspecific)
 	      sMapfileName, pPrevMarker->sName, pMarker->sName);
       ASSERT (modelOptions->physicalMap == FALSE || 
 	      pPrevMarker->basePairLocation < pMarker->basePairLocation,
-	      "Marker pysical positions given by %s are out of order between %s and %s",
+	      "Marker physical positions given by %s are out of order between %s and %s",
 	      sMapfileName, pPrevMarker->sName, pMarker->sName);
     }
     pPrevMarker = pMarker;
@@ -230,7 +230,7 @@ add_map_unit (Map * pMap)
   MapUnit *pMapUnit;
 
   if (pMap->maxUnit <= pMap->count) {
-    /* need to allocate a chunk of memories now */
+    /* Expand the list */
     pMap->maxUnit += DEF_LOCUS_MALLOC_INCREMENT;
     REALCHOKE(pMap->ppMapUnitList, sizeof (MapUnit *) * pMap->maxUnit, MapUnit **);
   }
@@ -321,7 +321,8 @@ cm_to_recombination_fraction (double distance, int mapFunctionFlag)
   return theta;
 }
 
-/* read datafile with specifications for each locus */
+/* Read datafile with specifications for each locus, and validate the order
+   against the map we've already read. */
 int
 read_datafile (char *sDatafileName)
 {
@@ -334,6 +335,7 @@ read_datafile (char *sDatafileName)
   TraitLocus *pTraitLocus = NULL;
   Trait *pTrait;
   int locusType;		/* temporary place holder */
+  double lastMapPos = -100.0;
   char sLocusName[MAX_LINE_LEN];
   char sLocusType[MAX_LINE_LEN];
 
@@ -363,6 +365,9 @@ read_datafile (char *sDatafileName)
       pMapUnit = find_map_unit (&map, sLocusName);
       ASSERT (pMapUnit != NULL,
 	       "Can't find marker %s in map", pLocus->sName);
+      ASSERT (pMapUnit->mapPos[0] > lastMapPos,
+	      "Pedigree file locus %s is not in map order", pLocus->sName);
+      lastMapPos = pMapUnit->mapPos[0];
       pLocus->pMapUnit = pMapUnit;
     } else if (!strcasecmp (sLocusType, "C")) {
       if (pTraitLocus == NULL)
