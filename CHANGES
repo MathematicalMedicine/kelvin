@@ -1,5 +1,6 @@
-Version 2.4.0
+Version 2.4.1
   Kelvin Binary
+    Verify that locus file markers are in map file order (required)
     Warn and skip uninformative markers (due to homogeneity or missingness)
     Repurpose dry run to portable sizing
     Support Windows Vista/7, Mac OS X 10.6
