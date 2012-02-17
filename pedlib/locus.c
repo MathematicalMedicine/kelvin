@@ -365,7 +365,7 @@ read_datafile (char *sDatafileName)
       pMapUnit = find_map_unit (&map, sLocusName);
       ASSERT (pMapUnit != NULL,
 	       "Can't find marker %s in map", pLocus->sName);
-      ASSERT (pMapUnit->mapPos[0] > lastMapPos,
+      ASSERT (pMapUnit->mapPos[0] >= lastMapPos,
 	      "Pedigree file locus %s is not in map order", pLocus->sName);
       lastMapPos = pMapUnit->mapPos[0];
       pLocus->pMapUnit = pMapUnit;
