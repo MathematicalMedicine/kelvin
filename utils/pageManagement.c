@@ -101,7 +101,9 @@ void *allocatePages (
 		     int objectSizeInBytes ///< Number of bytes to allocate
 		     )
 {
+#ifdef DMTRACK
   char messageBuffer[MAXSWMSG];
+#endif
   void *pageStart;
   int pageSize, pageCount;
 
