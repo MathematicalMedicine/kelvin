@@ -14,6 +14,7 @@ $|=1; # Immediate output
 # Used globally
 my $svn_version='$Id$';
 
+
 my $are_different = 0;
 my $use_found_files = 0;
 
@@ -29,6 +30,7 @@ my $locusfile1 = ''; my $locusfile2 = '';
 my $freqfile1 = ''; my $freqfile2 = '';
 my $mapfile1 = ''; my $mapfile2 = '';
 my $configfile1 = './kelvin.conf'; my $configfile2 = './kelvin.conf';
+my $closeCounts = 0;
 
 # Hash references to keep KelvinDataset happy
 my ($data1ref, $data2ref);
@@ -51,7 +53,8 @@ GetOptions (
     'configfile1|c1=s' => \$configfile1,
     'configfile2|c2=s' => \$configfile2,
     'path1|p1=s' => \$path1,
-    'path2|p2=s' => \$path2
+    'path2|p2=s' => \$path2,
+    'close-counts=s' => \$closeCounts,
     ) or pod2usage(2);
 
 pod2usage(-noperldoc => 1, -verbose => 2) if ($help); # All source is shown if -noperdoc isn't specified!
@@ -239,7 +242,10 @@ if ($mapfiles) {
 	for my $field (@common_fields) {
 	    if ($map1{$name}{$field} ne $map2{$name}{$field}) {
 		$are_different += 1;
-		print "2: Marker \"$name\" has a different value for $field - 1:".$map1{$name}{$field}." vs 2:".$map2{$name}{$field}."\n";
+
+		if (($closeCounts == 0) || !($map1{$name}{$field} =~ /^-?(\d+)?\.\d*$/) || ((abs($map1{$name}{$field} - $map2{$name}{$field})/($map1{$name}{$field} + $map2{$name}{$field})) > $closeCounts)) {
+		    print "2: Marker \"$name\" has a different value for $field - 1:".$map1{$name}{$field}." vs 2:".$map2{$name}{$field}."\n";
+		}
 	    }
 	}
     }
@@ -290,8 +296,10 @@ if ($freqfiles) {
 	    }
 	    if ($alleles1{$allele} != $alleles2{$allele}) {
 		$are_different += 1;
-		print "2: Marker \"$name\" allele \"$allele\" has a different frequency - 1:".
-		    $alleles1{$allele}." vs 2:".$alleles2{$allele}."\n";
+		if (($closeCounts == 0) || ((abs($alleles1{$allele} - $alleles2{$allele})/($alleles1{$allele} + $alleles2{$allele})) > $closeCounts)) {
+		    print "2: Marker \"$name\" allele \"$allele\" has a different frequency - 1:".
+			$alleles1{$allele}." vs 2:".$alleles2{$allele}."\n";
+		}
 	    }
 	}
     }
@@ -492,7 +500,7 @@ Use:
 
 =over 5
 
-kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--c1 CONFIG1] [--c2 CONFIG2] [--p1 PATH1] [--p2 PATH2] 
+kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--c1 CONFIG1] [--c2 CONFIG2] [--p1 PATH1] [--p2 PATH2] [--close-counts FRACTION]
 
 =back
 
@@ -606,6 +614,12 @@ default paths for each set of data files.
 
 Locate data files referenced or defaulted in CONFIG1 relative to PATH2.
 See B<--p1 PATH1> for details.
+
+=item B<--close-counts FRACTION>
+
+For decimal marker attributes (positions and frequencies) don't display anything
+less than a FRACTION match.  E.g. --close 0.01 won't display frequencies of 0.1 and
+0.999 as different, although the files will still be flagged as different.
 
 =back
 
