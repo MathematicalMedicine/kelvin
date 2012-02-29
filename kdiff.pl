@@ -30,7 +30,9 @@ my $locusfile1 = ''; my $locusfile2 = '';
 my $freqfile1 = ''; my $freqfile2 = '';
 my $mapfile1 = ''; my $mapfile2 = '';
 my $configfile1 = './kelvin.conf'; my $configfile2 = './kelvin.conf';
-my $closeCounts = 0;
+my $freqFuzz = 0;
+my $posFuzz = 0;
+my $freqTable = 0;
 
 # Hash references to keep KelvinDataset happy
 my ($data1ref, $data2ref);
@@ -54,7 +56,9 @@ GetOptions (
     'configfile2|c2=s' => \$configfile2,
     'path1|p1=s' => \$path1,
     'path2|p2=s' => \$path2,
-    'close-counts=s' => \$closeCounts,
+    'freq-fuzz=s' => \$freqFuzz,
+    'pos-fuzz=s' => \$posFuzz,
+    'freq-table' => \$freqTable,
     ) or pod2usage(2);
 
 pod2usage(-noperldoc => 1, -verbose => 2) if ($help); # All source is shown if -noperdoc isn't specified!
@@ -242,8 +246,7 @@ if ($mapfiles) {
 	for my $field (@common_fields) {
 	    if ($map1{$name}{$field} ne $map2{$name}{$field}) {
 		$are_different += 1;
-
-		if (($closeCounts == 0) || !($map1{$name}{$field} =~ /^-?(\d+)?\.\d*$/) || ((abs($map1{$name}{$field} - $map2{$name}{$field})/($map1{$name}{$field} + $map2{$name}{$field})) > $closeCounts)) {
+		if (($posFuzz == 0) || !($field =~ /.*pos$/) || (abs($map1{$name}{$field} - $map2{$name}{$field}) > $posFuzz)) {
 		    print "2: Marker \"$name\" has a different value for $field - 1:".$map1{$name}{$field}." vs 2:".$map2{$name}{$field}."\n";
 		}
 	    }
@@ -252,6 +255,9 @@ if ($mapfiles) {
 }
 
 if ($freqfiles) {
+    if ($freqTable) {
+	print "#F,Path1,Path2,Marker,Allele,Freq1,Freq2,Difference\n";
+    }
     # Describe and compare the allele frequency files
     # First build frequency file marker lists since they're not intrinsically present. A superset map file might be present.
     my @freqList1 = @{$$dataset1{maporder}};
@@ -271,13 +277,13 @@ if ($freqfiles) {
     # Compare frequency files by looping over the superset marker names
     for my $name (uniqua (@freqList1, @freqList2)) {
 	if (!defined($markers1{$name})) {
-	    print "1: Marker \"$name\" not found in frequency file, skipping!\n";
 	    $are_different += 1;
+	    print "1: Marker \"$name\" not found in frequency file, skipping!\n";
 	    next;
 	}
 	if (!defined($markers2{$name})) {
-	    print "2: Marker \"$name\" not found in frequency file, skipping!\n";
 	    $are_different += 1;
+	    print "2: Marker \"$name\" not found in frequency file, skipping!\n";
 	    next;
 	}
 	# Loop over superset of allele names
@@ -285,20 +291,32 @@ if ($freqfiles) {
 	my %alleles2 = %{$markers2{$name}{alleles}};
 	for my $allele (uniqua (keys %alleles1, keys %alleles2)) {
 	    if (!defined($alleles1{$allele})) {
-		print "1: Marker \"$name\" allele \"$allele\" not found in frequency file, skipping!\n";
 		$are_different += 1;
+		if ($freqTable) {
+		    print "#F,$path1,$path2,$name,$allele,N/A,".($alleles2{$allele}).",N/A\n";
+		} else {
+		    print "1: Marker \"$name\" allele \"$allele\" not found in frequency file, skipping!\n";
+		}
 		next;
 	    }
 	    if (!defined($alleles2{$allele})) {
-		print "2: Marker \"$name\" allele \"$allele\" not found in frequency file, skipping!\n";
 		$are_different += 1;
+		if ($freqTable) {
+		    print "#F,$path1,$path2,$name,$allele,".($alleles1{$allele}).",N/A,N/A\n";
+		} else {
+		    print "2: Marker \"$name\" allele \"$allele\" not found in frequency file, skipping!\n";
+		}
 		next;
 	    }
 	    if ($alleles1{$allele} != $alleles2{$allele}) {
 		$are_different += 1;
-		if (($closeCounts == 0) || ((abs($alleles1{$allele} - $alleles2{$allele})/($alleles1{$allele} + $alleles2{$allele})) > $closeCounts)) {
-		    print "2: Marker \"$name\" allele \"$allele\" has a different frequency - 1:".
-			$alleles1{$allele}." vs 2:".$alleles2{$allele}."\n";
+		if ($freqTable) {
+		    print "#F,$path1,$path2,$name,$allele,".($alleles1{$allele}).",".($alleles2{$allele}).",".sprintf("%.4f", abs($alleles1{$allele} - $alleles2{$allele}))."\n";
+		} else {
+		    if (($freqFuzz == 0) || (abs($alleles1{$allele} - $alleles2{$allele}) > $freqFuzz)) {
+			print "2: Marker \"$name\" allele \"$allele\" has a different frequency - 1:".
+			    $alleles1{$allele}." vs 2:".$alleles2{$allele}." (actual difference of ".sprintf("%.4f", abs($alleles1{$allele} - $alleles2{$allele})).")\n";
+		    }
 		}
 	    }
 	}
@@ -500,7 +518,7 @@ Use:
 
 =over 5
 
-kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--c1 CONFIG1] [--c2 CONFIG2] [--p1 PATH1] [--p2 PATH2] [--close-counts FRACTION]
+kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--c1 CONFIG1] [--c2 CONFIG2] [--p1 PATH1] [--p2 PATH2] [--freq-fuzz MAXDIFF] [--pos-fuzz MAXDIFF] [--freq-table]
 
 =back
 
@@ -615,11 +633,22 @@ default paths for each set of data files.
 Locate data files referenced or defaulted in CONFIG1 relative to PATH2.
 See B<--p1 PATH1> for details.
 
-=item B<--close-counts FRACTION>
+=item B<--freq-fuzz MAXDIFF>
 
-For decimal marker attributes (positions and frequencies) don't display anything
-less than a FRACTION match.  E.g. --close 0.01 won't display frequencies of 0.1 and
-0.999 as different, although the files will still be flagged as different.
+Don't display any differing allele frequencies unless they are greater than MAXDIFF.
+E.g. --freq 0.01 won't display frequencies of 0.1 and 0.999 as different, although 
+the files will still be flagged as different.
+
+=item B<--pos-fuzz MAXDIFF>
+
+Don't display any different marker positions unless they are greater than MADIFF.
+E.g. --pos 8 won't display positions of 87.234 and 93.500 as different, although
+the files will still be flagged as different.
+
+=item B<--freq-table>
+
+Display all allele frequency differences in tabular (CSV) format. You'll want to grep
+them out of the rest of the output stream to use them.
 
 =back
 
