@@ -232,6 +232,7 @@ if ($mapfiles) {
 
     my %map1 = %{$$dataset1{markers}}; my %map2 = %{$$dataset2{markers}};
     # Compare markers by looping over the superset of keys (marker names) in maporder. This is safe because the map must define a superset of markers
+    my $lastName = "";
     for my $name (uniqua ((@{$$dataset1{maporder}}, @{$$dataset2{maporder}}))) {
 	if (!defined($map1{$name})) {
 	    print "1: Marker \"$name\" not found in map, skipping!\n";
@@ -243,10 +244,35 @@ if ($mapfiles) {
 	    $are_different += 1;
 	    next;
 	}
+    }
+    # Now we have to go over the common markers in map order, so either list will work provided we ditch entries not present in the other
+    for my $name (@{$$dataset1{maporder}}) {
+	next if (!defined($map2{$name}));
 	for my $field (@common_fields) {
-	    if ($map1{$name}{$field} ne $map2{$name}{$field}) {
-		$are_different += 1;
-		if (($posFuzz == 0) || !($field =~ /.*pos$/) || (abs($map1{$name}{$field} - $map2{$name}{$field}) > $posFuzz)) {
+	    if ($field =~ /.*pos$/) {
+		# Try to compare position fields by delta instead of absolute position
+		if ($lastName eq "") {
+		    # First marker, so go absolute
+		    if ($map1{$name}{$field} != $map2{$name}{$field}) {
+			$are_different += 1;
+			if (($posFuzz == 0) || (abs($map1{$name}{$field} - $map2{$name}{$field}) > $posFuzz)) {
+			    print "2: Marker \"$name\" has a different value for $field - 1:".$map1{$name}{$field}." vs 2:".$map2{$name}{$field}."\n";
+			}
+		    }
+		} else {
+		    # There is a previous marker, so use delta
+		    if (($map1{$name}{$field} - $map1{$lastName}{$field}) != ($map2{$name}{$field} - $map2{$lastName}{$field})) {
+			$are_different += 1;
+			if (($posFuzz == 0) || (abs(($map1{$name}{$field} - $map1{$lastName}{$field}) - ($map2{$name}{$field} - $map2{$lastName}{$field})) > $posFuzz)) {
+			    print "2: Marker \"$name\" $field distance from predecessor \"$lastName\" is different - 1:".
+				($map1{$name}{$field} - $map1{$lastName}{$field})." vs 2: ".($map2{$name}{$field} - $map2{$lastName}{$field})."\n";
+			}
+		    }
+		}
+		$lastName = $name;
+	    } else {
+		if ($map1{$name}{$field} ne $map2{$name}{$field}) {
+		    $are_different += 1;
 		    print "2: Marker \"$name\" has a different value for $field - 1:".$map1{$name}{$field}." vs 2:".$map2{$name}{$field}."\n";
 		}
 	    }
@@ -311,11 +337,11 @@ if ($freqfiles) {
 	    if ($alleles1{$allele} != $alleles2{$allele}) {
 		$are_different += 1;
 		if ($freqTable) {
-		    print "#F,$path1,$path2,$name,$allele,".($alleles1{$allele}).",".($alleles2{$allele}).",".sprintf("%.4f", abs($alleles1{$allele} - $alleles2{$allele}))."\n";
+		    print "#F,$path1,$path2,$name,$allele,".($alleles1{$allele}).",".($alleles2{$allele}).",".sprintf("%.5f", abs($alleles1{$allele} - $alleles2{$allele}))."\n";
 		} else {
 		    if (($freqFuzz == 0) || (abs($alleles1{$allele} - $alleles2{$allele}) > $freqFuzz)) {
 			print "2: Marker \"$name\" allele \"$allele\" has a different frequency - 1:".
-			    $alleles1{$allele}." vs 2:".$alleles2{$allele}." (actual difference of ".sprintf("%.4f", abs($alleles1{$allele} - $alleles2{$allele})).")\n";
+			    $alleles1{$allele}." vs 2:".$alleles2{$allele}." (actual difference of ".sprintf("%.5f", abs($alleles1{$allele} - $alleles2{$allele})).")\n";
 		    }
 		}
 	    }
@@ -446,7 +472,7 @@ if ($pedfiles) {
     }
 }
 
-error ("Files are different") if ($are_different > 0);
+warner ("Files are different") if ($are_different > 0);
 
 sub uniqn {
     return sort { $a <=> $b } keys %{{ map { $_ => 1 } @_ }};
