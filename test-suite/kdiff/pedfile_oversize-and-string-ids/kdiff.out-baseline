@@ -14,4 +14,4 @@
 2: Ped "2" ind "8" has different values for patsibid - 1:14 vs 2:1000000000004
 2: Pedigree "2" individual "9" not found, skipping!
 1: Pedigree "2" individual "foo" not found, skipping!
-ERROR - EXITING, Files are different
+WARNING, Files are different

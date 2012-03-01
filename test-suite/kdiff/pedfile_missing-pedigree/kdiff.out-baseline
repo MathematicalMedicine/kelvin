@@ -2,4 +2,4 @@
 2: Validating found files: LocusFile->pedfile_missing-pedigree/datafile.dat PedigreeFile->pedfile_missing-pedigree/pedfile.dat 
 1: Pedigree "12" not found, skipping!
 2: Pedigree "5" not found, skipping!
-ERROR - EXITING, Files are different
+WARNING, Files are different
