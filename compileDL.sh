@@ -31,6 +31,13 @@
 # environment variables INCDIR and LIBDIR as paths to the include
 # and library locations.
 #
+# A nice way of firing-up a bunch might be:
+#
+# find . -maxdepth 1 -name \*.h -exec nq "~/kelvin/trunk/compileDL.sh {}" -N PolyC4pt \;
+#
+# NOTE - we should start placing everything in separate subdirectories to
+# keep contention to a minimum.
+#
 if test -z "${INCDIR}" ; then
     INCDIR=/usr/local/include
     LIBDIR=/usr/local/lib
