@@ -1,4 +1,4 @@
 1: Validating found files: FrequencyFile->original/markers.dat LocusFile->original/datafile.dat MapFile->original/mapfile.dat PedigreeFile->original/pedfile.dat 
 2: Validating found files: FrequencyFile->extra_trait/markers.dat LocusFile->extra_trait/datafile.dat MapFile->extra_trait/mapfile.dat PedigreeFile->extra_trait/pedfile.dat 
 1: Trait "Extra" not found, skipping!
-ERROR - EXITING, Files are different
+WARNING, Files are different
