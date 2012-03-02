@@ -696,8 +696,11 @@ Assuming you produce an output file called compare_all.txt from a mult-analysis 
 you can split-up the output with something like:
 
 grep "^#A" compare_all.txt | sort -r | uniq >compare_all.absolute_positions.csv
+
 grep "^#R" compare_all.txt | sort -r | uniq >compare_all.relative_positions.csv
+
 grep "^#F" compare_all.txt | sort -r | uniq >compare_all.frequencies.csv
+
 grep -v -e "^#A" -e "^#R" -e "^#F" compare_all.txt >compare_all.other.txt
 
 =back
