@@ -32,7 +32,7 @@ my $mapfile1 = ''; my $mapfile2 = '';
 my $configfile1 = './kelvin.conf'; my $configfile2 = './kelvin.conf';
 my $freqFuzz = 0;
 my $posFuzz = 0;
-my $freqTable = 0;
+my $tabular = 0;
 
 # Hash references to keep KelvinDataset happy
 my ($data1ref, $data2ref);
@@ -58,7 +58,7 @@ GetOptions (
     'path2|p2=s' => \$path2,
     'freq-fuzz=s' => \$freqFuzz,
     'pos-fuzz=s' => \$posFuzz,
-    'freq-table' => \$freqTable,
+    'tabular' => \$tabular,
     ) or pod2usage(2);
 
 pod2usage(-noperldoc => 1, -verbose => 2) if ($help); # All source is shown if -noperdoc isn't specified!
@@ -207,6 +207,11 @@ if ($mapfiles) {
     print "1: ".$$dataset1{mapfunction}." map of ".scalar(@{$$dataset1{maporder}})." markers for chromosome ".$$dataset1{chromosome}." providing ".join(", ",@{$$dataset1{mapfields}})."\n" if $verbose;
     print "2: ".$$dataset2{mapfunction}." map of ".scalar(@{$$dataset2{maporder}})." markers for chromosome ".$$dataset2{chromosome}." providing ".join(", ",@{$$dataset2{mapfields}})."\n" if $verbose;
 
+    if ($tabular) {
+	print "#A,Path1,Path2,Marker,Attribute,Value1,Value2,Difference\n";
+	print "#R,Path1,Path2,Marker,PreviousMarker,Attribute,Value1,PreviousValue1,Value2,PreviousValue2,Difference1,Difference2\n";
+    }
+
     my %fieldhash1 = map { $_ => 1 } @{$$dataset1{mapfields}};
     my %fieldhash2 = map { $_ => 1 } @{$$dataset2{mapfields}};
     my @common_fields = ();
@@ -256,7 +261,12 @@ if ($mapfiles) {
 		    if ($map1{$name}{$field} != $map2{$name}{$field}) {
 			$are_different += 1;
 			if (($posFuzz == 0) || (abs($map1{$name}{$field} - $map2{$name}{$field}) > $posFuzz)) {
-			    print "2: Marker \"$name\" has a different value for $field - 1:".$map1{$name}{$field}." vs 2:".$map2{$name}{$field}."\n";
+			    if ($tabular) {
+				print "#A,$path1,$path2,$name,$field,".$map1{$name}{$field}.",".$map2{$name}{$field}.",".sprintf("%.5f", abs($map1{$name}{$field} - $map2{$name}{$field}))."\n";
+			    } else {
+				print "2: Marker \"$name\" has a different value for $field - 1:".$map1{$name}{$field}." vs 2:".$map2{$name}{$field}." (actual difference of ".
+				    sprintf("%.5f", abs($map1{$name}{$field} - $map2{$name}{$field}))."\n";
+			    }
 			}
 		    }
 		} else {
@@ -264,8 +274,13 @@ if ($mapfiles) {
 		    if (($map1{$name}{$field} - $map1{$lastName}{$field}) != ($map2{$name}{$field} - $map2{$lastName}{$field})) {
 			$are_different += 1;
 			if (($posFuzz == 0) || (abs(($map1{$name}{$field} - $map1{$lastName}{$field}) - ($map2{$name}{$field} - $map2{$lastName}{$field})) > $posFuzz)) {
-			    print "2: Marker \"$name\" $field distance from predecessor \"$lastName\" is different - 1:".
-				($map1{$name}{$field} - $map1{$lastName}{$field})." vs 2: ".($map2{$name}{$field} - $map2{$lastName}{$field})."\n";
+			    if ($tabular) {
+				print "#R,$path1,$path2,$name,$lastName,$field,".$map1{$name}{$field}.",".$map1{$lastName}{$field}.",".$map2{$name}{$field}.",".$map2{$lastName}{$field}.",".
+				    ($map1{$name}{$field} - $map1{$lastName}{$field}).",".($map2{$name}{$field} - $map2{$lastName}{$field})."\n";
+			    } else {
+				print "2: Marker \"$name\" $field distance from predecessor \"$lastName\" is different - 1:".
+				    ($map1{$name}{$field} - $map1{$lastName}{$field})." vs 2: ".($map2{$name}{$field} - $map2{$lastName}{$field})."\n";
+			    }
 			}
 		    }
 		}
@@ -281,7 +296,7 @@ if ($mapfiles) {
 }
 
 if ($freqfiles) {
-    if ($freqTable) {
+    if ($tabular) {
 	print "#F,Path1,Path2,Marker,Allele,Freq1,Freq2,Difference\n";
     }
     # Describe and compare the allele frequency files
@@ -318,7 +333,7 @@ if ($freqfiles) {
 	for my $allele (uniqua (keys %alleles1, keys %alleles2)) {
 	    if (!defined($alleles1{$allele})) {
 		$are_different += 1;
-		if ($freqTable) {
+		if ($tabular) {
 		    print "#F,$path1,$path2,$name,$allele,N/A,".($alleles2{$allele}).",N/A\n";
 		} else {
 		    print "1: Marker \"$name\" allele \"$allele\" not found in frequency file, skipping!\n";
@@ -327,7 +342,7 @@ if ($freqfiles) {
 	    }
 	    if (!defined($alleles2{$allele})) {
 		$are_different += 1;
-		if ($freqTable) {
+		if ($tabular) {
 		    print "#F,$path1,$path2,$name,$allele,".($alleles1{$allele}).",N/A,N/A\n";
 		} else {
 		    print "2: Marker \"$name\" allele \"$allele\" not found in frequency file, skipping!\n";
@@ -336,7 +351,7 @@ if ($freqfiles) {
 	    }
 	    if ($alleles1{$allele} != $alleles2{$allele}) {
 		$are_different += 1;
-		if ($freqTable) {
+		if ($tabular) {
 		    print "#F,$path1,$path2,$name,$allele,".($alleles1{$allele}).",".($alleles2{$allele}).",".sprintf("%.5f", abs($alleles1{$allele} - $alleles2{$allele}))."\n";
 		} else {
 		    if (($freqFuzz == 0) || (abs($alleles1{$allele} - $alleles2{$allele}) > $freqFuzz)) {
@@ -544,7 +559,7 @@ Use:
 
 =over 5
 
-kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--c1 CONFIG1] [--c2 CONFIG2] [--p1 PATH1] [--p2 PATH2] [--freq-fuzz MAXDIFF] [--pos-fuzz MAXDIFF] [--freq-table]
+kdiff [--verbose] [--pedfiles] [--freqfiles] [--mapfiles] [--c1 CONFIG1] [--c2 CONFIG2] [--p1 PATH1] [--p2 PATH2] [--freq-fuzz MAXDIFF] [--pos-fuzz MAXDIFF] [--tabular]
 
 =back
 
@@ -671,10 +686,11 @@ Don't display any different marker positions unless they are greater than MADIFF
 E.g. --pos 8 won't display positions of 87.234 and 93.500 as different, although
 the files will still be flagged as different.
 
-=item B<--freq-table>
+=item B<--tabular>
 
-Display all allele frequency differences in tabular (CSV) format. You'll want to grep
-them out of the rest of the output stream to use them.
+Display marker position and allele frequency differences in tabular (CSV) format. 
+You'll want to grep them out of the rest of the output stream to use them. The
+first column will be #F for allele frequencies, and #P for marker positions.
 
 =back
 
