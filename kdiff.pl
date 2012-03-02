@@ -276,10 +276,10 @@ if ($mapfiles) {
 			if (($posFuzz == 0) || (abs(($map1{$name}{$field} - $map1{$lastName}{$field}) - ($map2{$name}{$field} - $map2{$lastName}{$field})) > $posFuzz)) {
 			    if ($tabular) {
 				print "#R,$path1,$path2,$name,$lastName,$field,".$map1{$name}{$field}.",".$map1{$lastName}{$field}.",".$map2{$name}{$field}.",".$map2{$lastName}{$field}.",".
-				    ($map1{$name}{$field} - $map1{$lastName}{$field}).",".($map2{$name}{$field} - $map2{$lastName}{$field})."\n";
+				    sprintf("%.5f", $map1{$name}{$field} - $map1{$lastName}{$field}).",".sprintf("%.5f", $map2{$name}{$field} - $map2{$lastName}{$field})."\n";
 			    } else {
 				print "2: Marker \"$name\" $field distance from predecessor \"$lastName\" is different - 1:".
-				    ($map1{$name}{$field} - $map1{$lastName}{$field})." vs 2: ".($map2{$name}{$field} - $map2{$lastName}{$field})."\n";
+				    sprintf("%.5f", $map1{$name}{$field} - $map1{$lastName}{$field})." vs 2: ".sprintf("%.5f", $map2{$name}{$field} - $map2{$lastName}{$field})."\n";
 			    }
 			}
 		    }
@@ -351,10 +351,10 @@ if ($freqfiles) {
 	    }
 	    if ($alleles1{$allele} != $alleles2{$allele}) {
 		$are_different += 1;
-		if ($tabular) {
-		    print "#F,$path1,$path2,$name,$allele,".($alleles1{$allele}).",".($alleles2{$allele}).",".sprintf("%.5f", abs($alleles1{$allele} - $alleles2{$allele}))."\n";
-		} else {
-		    if (($freqFuzz == 0) || (abs($alleles1{$allele} - $alleles2{$allele}) > $freqFuzz)) {
+		if (($freqFuzz == 0) || (abs($alleles1{$allele} - $alleles2{$allele}) > $freqFuzz)) {
+		    if ($tabular) {
+			print "#F,$path1,$path2,$name,$allele,".($alleles1{$allele}).",".($alleles2{$allele}).",".sprintf("%.5f", abs($alleles1{$allele} - $alleles2{$allele}))."\n";
+		    } else {
 			print "2: Marker \"$name\" allele \"$allele\" has a different frequency - 1:".
 			    $alleles1{$allele}." vs 2:".$alleles2{$allele}." (actual difference of ".sprintf("%.5f", abs($alleles1{$allele} - $alleles2{$allele})).")\n";
 		    }
@@ -690,7 +690,15 @@ the files will still be flagged as different.
 
 Display marker position and allele frequency differences in tabular (CSV) format. 
 You'll want to grep them out of the rest of the output stream to use them. The
-first column will be #F for allele frequencies, and #P for marker positions.
+first column will be #F for allele frequencies, and #A and #R for marker positions.
+
+Assuming you produce an output file called compare_all.txt from a mult-analysis run,
+you can split-up the output with something like:
+
+grep "^#A" compare_all.txt | sort -r | uniq >compare_all.absolute_positions.csv
+grep "^#R" compare_all.txt | sort -r | uniq >compare_all.relative_positions.csv
+grep "^#F" compare_all.txt | sort -r | uniq >compare_all.frequencies.csv
+grep -v -e "^#A" -e "^#R" -e "^#F" compare_all.txt >compare_all.other.txt
 
 =back
 
