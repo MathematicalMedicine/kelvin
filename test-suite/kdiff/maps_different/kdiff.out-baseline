@@ -7,9 +7,9 @@
 2: Marker "Loci_4" has a different value for chr - 1:40 vs 2:22
 2: Marker "Loci_5" has a different value for chr - 1:40 vs 2:22
 2: Marker "Loci_6" has a different value for chr - 1:40 vs 2:22
-2: Marker "Loci_7" avgpos distance from predecessor "Loci_6" is different - 1:0.33 vs 2: 0.32
+2: Marker "Loci_7" avgpos distance from predecessor "Loci_6" is different - 1:0.33000 vs 2: 0.32000
 2: Marker "Loci_7" has a different value for chr - 1:40 vs 2:22
-2: Marker "Loci_8" avgpos distance from predecessor "Loci_7" is different - 1:0.32 vs 2: 0.33
+2: Marker "Loci_8" avgpos distance from predecessor "Loci_7" is different - 1:0.32000 vs 2: 0.33000
 2: Marker "Loci_8" has a different value for chr - 1:40 vs 2:22
 2: Marker "Loci_9" has a different value for chr - 1:40 vs 2:22
 2: Marker "Loci_10" has a different value for chr - 1:40 vs 2:22
