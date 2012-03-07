@@ -3767,17 +3767,17 @@ void polyStatistics (char *title)
 
   fprintf (stderr, "---Total data storage estimate: %.0fKb---\n", grandTotal / 1024);
 
-  // Set a flag so we can take action as needed
-  if ((grandTotal / 1024) > (maximumPMK / 4)) {
+  // Set a flag so we can take action as needed. We want at least 8G of physical memory free until the SSD is used-up.
+  if ((maximumPMK - (grandTotal / 1024)) < (8 * 1024 * 1024)) {
     memoryLow = TRUE;
 #ifdef USE_SSD
-    fprintf (stderr, "Maximum of %ldKb of physical memory is %.0f%% used, utilizing SSD.\n", 
+    fprintf (stderr, "Less than 8G of %ldKb physical memory available, total usage is %.0f%%, utilizing SSD.\n", 
 	     maximumPMK, (grandTotal / 1024) / maximumPMK * 100);
 #endif
   } else {
     memoryLow = FALSE;
 #ifdef USE_SSD
-    fprintf (stderr, "Maximum of %ldKb physical memory is at %.0f%% used.\n", 
+    fprintf (stderr, "More than 8G of %ldKb physical memory available, total usage is %.0f%%.\n", 
 	     maximumPMK, (grandTotal / 1024) / maximumPMK * 100);
 #endif
   }
@@ -4847,38 +4847,38 @@ int loadPolyDL (Polynomial * p)
 
   sprintf (polynomialFileName, "./%s.so", p->e.e->polynomialFunctionName);
   if ((p->e.e->polynomialFunctionHandle[0] = 
-       dlopen (polynomialFileName, RTLD_LAZY|RTLD_LOCAL)) != NULL) {
-
-    // Loaded! Do any supporting 1K clump DLs.
-    for (i=0; i<=32; i++) {
-      sprintf (polynomialFileName, "./%s_%dK.so", p->e.e->polynomialFunctionName, i);
-      if ((p->e.e->polynomialFunctionHandle[i+1] = dlopen (polynomialFileName, RTLD_LAZY|RTLD_LOCAL)) == NULL)
-	break;
-    }
-
-    // Now get the first entry point symbol
-    if ((p->e.e->polynomialFunctionRoutine = 
-	 dlsym (p->e.e->polynomialFunctionHandle[0], p->e.e->polynomialFunctionName)) != NULL) {
-      // Found it!
-      p->e.e->fileOK = TRUE;
-      p->e.e->entryOK = TRUE;
-      swLogProgress(3, 0, "Using %d DL(s) for %s", i+1, p->e.e->polynomialFunctionName);
-    } else {
-      WARNING ("Cannot load compiled polynomial dynamic library, dlsym() error [%s] for polynomial %s",
-	       dlerror(), p->e.e->polynomialFunctionName);
-      for (i=0; i<32; i++)
-	if (p->e.e->polynomialFunctionHandle[i] != NULL)
-	  dlclose (p->e.e->polynomialFunctionHandle[i]);
-	else
-	  break;
-      return FALSE;
-    }
-  } else {
+       dlopen (polynomialFileName, RTLD_LAZY|RTLD_LOCAL)) == NULL) {
     swLogProgress(3 /* DETAIL + 1 */, 0,
 		  "dlopen() error [%s] for polynomial %s",
 		  dlerror(), p->e.e->polynomialFunctionName);
     return FALSE;
   }
+
+  // Loaded! Do up to 192 supporting 100 clump DLs.
+  for (i=0; i<=192; i++) {
+    sprintf (polynomialFileName, "./%s_%02d00.so", p->e.e->polynomialFunctionName, i);
+    if ((p->e.e->polynomialFunctionHandle[i+1] = dlopen (polynomialFileName, RTLD_LAZY|RTLD_LOCAL)) == NULL)
+      break;
+    else
+      swLogProgress(3, 0, "Loaded %s_%02d00.so", p->e.e->polynomialFunctionName, i);
+  }
+  
+  // Now get the first entry point symbol
+  if ((p->e.e->polynomialFunctionRoutine = 
+       dlsym (p->e.e->polynomialFunctionHandle[0], p->e.e->polynomialFunctionName)) == NULL) {
+    WARNING ("Cannot load compiled polynomial dynamic library, dlsym() error [%s] for polynomial %s",
+	     dlerror(), p->e.e->polynomialFunctionName);
+    for (i=0; i<192; i++)
+      if (p->e.e->polynomialFunctionHandle[i] != NULL)
+	dlclose (p->e.e->polynomialFunctionHandle[i]);
+      else
+	break;
+    return FALSE;
+  }
+  // Found it!
+  p->e.e->fileOK = TRUE;
+  p->e.e->entryOK = TRUE;
+  swLogProgress(3, 0, "Using %d DL(s) for %s", i+1, p->e.e->polynomialFunctionName);
   return TRUE;
 }
 #endif
