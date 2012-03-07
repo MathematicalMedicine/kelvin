@@ -62,6 +62,5 @@ fi
 # Normal every-day use
 make clean
 make all
-cp kelvin-$VERSION kelvin
 cp kelvin-$VERSION kelvin-normal
 cp kelvin-$VERSION kelvin-$VERSION-normal
