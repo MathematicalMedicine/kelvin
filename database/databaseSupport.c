@@ -221,11 +221,65 @@ void initializeDB () {
   dBInitNotDone = FALSE;
 }
 
+
+void GetAnalysisId () {
+  int ret;
+
+  // Get the analysis Id from the study Id and pedigree regular expressions
+  studyDB.stmtGetAnalysisId = mysql_stmt_init (studyDB.connection);
+  memset(studyDB.bindGetAnalysisId, 0, sizeof(studyDB.bindGetAnalysisId));
+  BINDNUMERIC (studyDB.bindGetAnalysisId[0], studyDB.studyId, MYSQL_TYPE_LONG);
+  BINDSTRING (studyDB.bindGetAnalysisId[1], studyDB.pedigreeRegEx, sizeof (studyDB.pedigreeRegEx));
+  *studyDB.bindGetAnalysisId[1].length = strlen(studyDB.pedigreeRegEx);
+  BINDSTRING (studyDB.bindGetAnalysisId[2], studyDB.pedigreeNotRegEx, sizeof (studyDB.pedigreeNotRegEx));
+  *studyDB.bindGetAnalysisId[2].length = strlen(studyDB.pedigreeNotRegEx);
+  strncpy(studyDB.strGetAnalysisId, "call GetAnalysisId(?,?,?,@outAnalysisId)", sizeof(studyDB.strGetAnalysisId));
+  if (mysql_stmt_prepare(studyDB.stmtGetAnalysisId, studyDB.strGetAnalysisId, strlen(studyDB.strGetAnalysisId)))
+    ERROR("Cannot prepare GetAnalysisId call statement (%s)", mysql_stmt_error(studyDB.stmtGetAnalysisId));
+  if (mysql_stmt_bind_param(studyDB.stmtGetAnalysisId, studyDB.bindGetAnalysisId))
+    ERROR("Cannot bind GetAnalysisId call statement (%s)", mysql_stmt_error(studyDB.stmtGetAnalysisId));
+
+  while(1) {
+    ret = mysql_stmt_execute(studyDB.stmtGetAnalysisId);
+    if (ret != 0) {
+      if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetAnalysisId), "40001") != 0) &&
+	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetAnalysisId), "HY000") != 0)) {
+	ERROR("Cannot execute GetAnalysisId call statement w/%s, (%s, %s)", studyDB.studyLabel,
+	      mysql_stmt_error(studyDB.stmtGetAnalysisId), mysql_stmt_sqlstate(studyDB.stmtGetAnalysisId));
+      } else {
+	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetAnalysisId: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+				      mysql_stmt_errno(studyDB.stmtGetAnalysisId), 
+				      mysql_stmt_error(studyDB.stmtGetAnalysisId), 
+				      mysql_stmt_sqlstate(studyDB.stmtGetAnalysisId));});
+	swLogProgress(5, 0, "Retrying deadlock in 1 second in GetAnalysisId");
+	sleep(1);
+	continue;
+      }
+    }
+    break;
+  }
+  sprintf (studyDB.strAdhocStatement, "Select @outAnalysisId");
+  if (mysql_query (studyDB.connection, studyDB.strAdhocStatement))
+    ERROR("Cannot select study information (%s:%s)", studyDB.strAdhocStatement, mysql_error(studyDB.connection));
+  if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
+    ERROR("Cannot retrieve study information (%s)", mysql_error(studyDB.connection));
+  if (mysql_num_rows (studyDB.resultSet) == 0)
+    ERROR("analysisId not found or generated for studyId %d", studyDB.studyId);
+  else {
+    if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
+      ERROR("Cannot fetch study information (%s)", mysql_error(studyDB.connection));
+    studyDB.analysisId = atoi(studyDB.row[0]);
+    if(studyDB.analysisId <= 0) 
+      ERROR("Failed to find or generate analysisId");
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "Client is storing/retrieving results under studyId %d, analysisId %d", studyDB.studyId, studyDB.analysisId);});
+  }
+  mysql_free_result(studyDB.resultSet);
+}
+
 void prepareDBStatements () {
 
   if (dBInitNotDone)
     initializeDB ();
-
 
   // Prepare the select for the pedigree/position
   studyDB.stmtGetPedPosId = mysql_stmt_init (studyDB.connection);
@@ -277,12 +331,13 @@ void prepareDBStatements () {
   memset (studyDB.bindGetMarkerSetLikelihood, 0, sizeof(studyDB.bindGetMarkerSetLikelihood));
 
   BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[0], studyDB.pedPosId, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[1], studyDB.regionNo, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[2], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[3], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[4], studyDB.parentRegionSplitDir, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[1], studyDB.analysisId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[2], studyDB.regionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[3], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[4], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetMarkerSetLikelihood[5], studyDB.parentRegionSplitDir, MYSQL_TYPE_LONG);
   
-  strncpy (studyDB.strGetMarkerSetLikelihood, "call GetMarkerSetLikelihood (?,?,?,?,?,@outRegionId,@outMarkerCount,@outLikelihood)", MAXSTMTLEN-1);
+  strncpy (studyDB.strGetMarkerSetLikelihood, "call GetMarkerSetLikelihood (?,?,?,?,?,?,@outRegionId,@outMarkerCount,@outLikelihood)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtGetMarkerSetLikelihood, studyDB.strGetMarkerSetLikelihood, strlen (studyDB.strGetMarkerSetLikelihood)))
     ERROR("Cannot prepare GetMarkerSetLikelihood call statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihood));
@@ -321,12 +376,13 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindGetDLikelihood[11], studyDB.lC3BigLittlePen, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetDLikelihood[12], studyDB.lC3LittleBigPen, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetDLikelihood[13], studyDB.lC3LittlePen, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLikelihood[14], studyDB.regionNo, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDLikelihood[15], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetDLikelihood[16], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLikelihood[17], studyDB.parentRegionSplitDir, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[14], studyDB.analysisId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[15], studyDB.regionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[16], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[17], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[18], studyDB.parentRegionSplitDir, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strGetDLikelihood, "call GetDLikelihood (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outMarkerCount,@outLikelihood)", MAXSTMTLEN-1);
+  strncpy (studyDB.strGetDLikelihood, "call GetDLikelihood (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outMarkerCount,@outLikelihood)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtGetDLikelihood, studyDB.strGetDLikelihood, strlen (studyDB.strGetDLikelihood)))
     ERROR("Cannot prepare GetDLikelihood call statement (%s)", mysql_stmt_error(studyDB.stmtGetDLikelihood));
@@ -380,12 +436,13 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindGetQLikelihood[26], studyDB.lC1Threshold, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetQLikelihood[27], studyDB.lC2Threshold, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetQLikelihood[28], studyDB.lC3Threshold, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetQLikelihood[29], studyDB.regionNo, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetQLikelihood[30], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
-  BINDNUMERIC (studyDB.bindGetQLikelihood[31], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetQLikelihood[32], studyDB.parentRegionSplitDir, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetDLikelihood[29], studyDB.analysisId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[30], studyDB.regionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[31], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[32], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[33], studyDB.parentRegionSplitDir, MYSQL_TYPE_LONG);
 
-  strncpy (studyDB.strGetQLikelihood, "call GetQLikelihood (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outMarkerCount,@outLikelihood)", MAXSTMTLEN-1);
+  strncpy (studyDB.strGetQLikelihood, "call GetQLikelihood (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,@outRegionId,@outMarkerCount,@outLikelihood)", MAXSTMTLEN-1);
 
   if (mysql_stmt_prepare (studyDB.stmtGetQLikelihood, studyDB.strGetQLikelihood, strlen (studyDB.strGetQLikelihood)))
     ERROR("Cannot prepare GetQLikelihood call statement (%s)", mysql_stmt_error(studyDB.stmtGetQLikelihood));

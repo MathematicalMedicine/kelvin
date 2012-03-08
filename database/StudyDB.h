@@ -18,6 +18,7 @@ struct StudyDB {
   char password[MAXPARAMLEN];
   char pedigreeRegEx[33];
   char pedigreeNotRegEx[33];
+  int analysisId;
   regex_t includePattern;
   regex_t excludePattern;
   regmatch_t pmatch[1];
@@ -31,6 +32,10 @@ struct StudyDB {
   MYSQL_STMT *stmtGetStudyId;
   MYSQL_BIND bindGetStudyId[4];
   char strGetStudyId[MAXSTMTLEN];
+  // GetAnalysisId...
+  MYSQL_STMT *stmtGetAnalysisId;
+  MYSQL_BIND bindGetAnalysisId[4];
+  char strGetAnalysisId[MAXSTMTLEN];
 
   // GetPedPosId...
   MYSQL_STMT *stmtGetPedPosId;
@@ -58,7 +63,7 @@ struct StudyDB {
   MYSQL_BIND bindGetMarkerSetId[1];
   // GetMarkerSetLiklihood
   MYSQL_STMT *stmtGetMarkerSetLikelihood;
-  MYSQL_BIND bindGetMarkerSetLikelihood[5];
+  MYSQL_BIND bindGetMarkerSetLikelihood[6];
   char strGetMarkerSetLikelihood[MAXSTMTLEN];
   // GetMarkerSetLikelihood results
   MYSQL_STMT *stmtGetMarkerSetLikelihoodResults;
@@ -67,7 +72,7 @@ struct StudyDB {
   
   // GetDLikelihood...
   MYSQL_STMT *stmtGetDLikelihood;
-  MYSQL_BIND bindGetDLikelihood[18];
+  MYSQL_BIND bindGetDLikelihood[19];
   char strGetDLikelihood[MAXSTMTLEN];
   // index - LC
   int partsIdx[3];
@@ -164,7 +169,7 @@ struct StudyDB {
   // GetQLikelihood...
   //  int posEvals;
   MYSQL_STMT *stmtGetQLikelihood;
-  MYSQL_BIND bindGetQLikelihood[33];
+  MYSQL_BIND bindGetQLikelihood[34];
   char strGetQLikelihood[MAXSTMTLEN];
   //  double dGF;
   double lC1BigMean;

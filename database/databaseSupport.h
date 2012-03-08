@@ -7,6 +7,7 @@ double GetDLikelihood (int, double,
 		double, double, double, double,
 		int, int, double, int);
 void SignOn (int, char *, int, char *);
+void GetAnalysisId ();
 void SignOff (int);
 void SetDummyNullLikelihood ();
 int CountWork (double, double);

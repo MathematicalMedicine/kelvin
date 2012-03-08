@@ -372,6 +372,9 @@ strcpy(studyDB.imprintingFlag, modelOptions->imprintingFlag ? "y" : "n");
     SignOn (originalLocusList.ppLocusList[1]->pMapUnit->chromosome, "es", 1, programVersion);
     DIAG (ALTLSERVER, 0, { fprintf (stderr, "Explicitly setting all trait and marker-set models for all pedigrees for this server instance to 1.0\n");});
     SetDummyNullLikelihood (); // Set all trait and marker-set models for all pedigrees for this server instance to 1.0.
+  } else {
+    GetAnalysisId ();
+    INFO ("Study %d client instance will be using analysisId of %d (from %s and %s)\n", studyDB.studyId, studyDB.analysisId, studyDB.pedigreeRegEx, studyDB.pedigreeNotRegEx);
   }
 #endif
 

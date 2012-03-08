@@ -510,11 +510,11 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
 #ifdef STUDYDB
   tpl_node *tn;
   char *regionTPLFormat = "iiffii";
-  char *regionFileFormat = "study_%d-pos_%g-reg_%d.dat";
+  char *regionFileFormat = "study_%d-anl_%d-pos_%g-reg_%d.dat";
   char fileName[256];
   FILE *file;
 
-  sprintf (fileName, regionFileFormat, studyDB.studyId, traitPos , cw_sbrg->region_id);
+  sprintf (fileName, regionFileFormat, studyDB.studyId, studyDB.analysisId, traitPos , cw_sbrg->region_id);
   tn = tpl_map (regionTPLFormat, &cw_sbrg->parent_id, &cw_sbrg->region_level, &cw_sbrg->local_result, &cw_sbrg->local_error, &cw_sbrg->dir, &cw_sbrg->cur_scale);
   fprintf (stderr, "StudyId: %d, trait pos: %g, seeking subregion %d...", studyDB.studyId, traitPos , cw_sbrg->region_id);
 
