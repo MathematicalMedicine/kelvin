@@ -110,9 +110,9 @@ double iplist_interpolate (st_iplist *list, char *chr, double pos)
     fprintf (stderr, "iplist doesn't contain data for chromosome '%s'\n", chr);
     exit (-1);
   }
-  if (pos < ptr->pos[0])
+  if (pos <= ptr->pos[0])
     return (ptr->val[0]);
-  if (pos > ptr->pos[ptr->numpos-1])
+  if (pos >= ptr->pos[ptr->numpos-1])
     return (ptr->val[ptr->numpos-1]);
   for (va = 1; va < ptr->numpos; va++) {
     if ((ptr->pos[va-1] <= pos) && (pos <= ptr->pos[va])) {
