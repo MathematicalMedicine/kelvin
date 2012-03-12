@@ -436,7 +436,7 @@ void prepareDBStatements () {
   BINDNUMERIC (studyDB.bindGetQLikelihood[26], studyDB.lC1Threshold, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetQLikelihood[27], studyDB.lC2Threshold, MYSQL_TYPE_DOUBLE);
   BINDNUMERIC (studyDB.bindGetQLikelihood[28], studyDB.lC3Threshold, MYSQL_TYPE_DOUBLE);
-  BINDNUMERIC (studyDB.bindGetDLikelihood[29], studyDB.analysisId, MYSQL_TYPE_LONG);
+  BINDNUMERIC (studyDB.bindGetQLikelihood[29], studyDB.analysisId, MYSQL_TYPE_LONG);
   BINDNUMERIC (studyDB.bindGetQLikelihood[30], studyDB.regionNo, MYSQL_TYPE_LONG);
   BINDNUMERIC (studyDB.bindGetQLikelihood[31], studyDB.parentRegionNo, MYSQL_TYPE_LONG);
   BINDNUMERIC (studyDB.bindGetQLikelihood[32], studyDB.parentRegionError, MYSQL_TYPE_DOUBLE);
