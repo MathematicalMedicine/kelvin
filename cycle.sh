@@ -57,6 +57,9 @@ set -- $study
 # Get the actual StudyId from the StudyLabel. This MUST succeed if InitStudy.pl is worth its salt.
 StudyId=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="Select StudyId from Studies where StudyLabel = '$2';")
 
+# Get the AnalysisId from the database.
+AnalysisId=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="Select AnalysisId from Analyses where StudyId = $StudyId AND PedigreeRegEx = '$8' AND PedigreeNotRegEx = '$9'")
+
 if test -z "$StudyId"; then
     echo "ERROR - STUDY directive in configuration file specified StudyLabel ($2) that was not found in the database, exiting!"
     exit 2
@@ -85,7 +88,7 @@ do
   # Make sure that nothing remains undone
   while :
   do
-    ToDos=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select sum(a.PendingLikelihoods) from PedigreePositions a, Analyses b where a.StudyId = $StudyId AND a.StudyId = b.StudyId AND a.PedigreeSId RLIKE '$8' AND a.PedigreeSId NOT RLIKE '$9';")
+    ToDos=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId;")
     if test $ToDos -eq 0 ; then
         break;
     fi
@@ -101,7 +104,7 @@ do
   qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
   grep WARNING br.out || { break; }
   # Get the new set of trait positions
-  TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct RefTraitPosCM from PedigreePositions where StudyId = $StudyId AND RefTraitPosCM >= 0 AND PendingLikelihoods > 0;" | tr "\n" " ")
+  TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct a.RefTraitPosCM from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId AND a.RefTraitPosCM > 0.0;" | tr "\n" " ")
   grep -vi TraitPosition client.conf > client-newTP.conf
   # Add them one per line to be safe with line length
   for tp in $TPs;  do   echo "In the loop";  echo "TraitPosition $tp" >> client-newTP.conf; done
