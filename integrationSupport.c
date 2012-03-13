@@ -2834,9 +2834,11 @@ void integrateMain ()
 
       /* calculate imputed PPL and print the results */
       if (integral > 0.214) {
-        if ((log10 (integral) + max_scale) > 8)
+        if ((log10 (integral) + max_scale) > 8) {
+	  signal (SIGQUIT, SIG_DFL); // Restore the default handler
+	  raise (SIGQUIT); // Make a core dump
           ppl = 1.0;
-        else
+	} else
           ppl = (integral * integral) / (-5.77 + 54 * integral + integral * integral);
       } else
         ppl = 0;
