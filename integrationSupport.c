@@ -223,7 +223,7 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
 }
 
 
-void compute_hlod_mp_qt (double x[], double *f, int *scale)
+void compute_hlod_mp_qt (double x[], double *f, int *scale, double sample_x[])
 {
 
   int k, j;
@@ -596,6 +596,44 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
           k++;
         }
       }
+
+      /*Update local sample points */
+        sample_x[0] = gfreq;
+        sample_x[1] = alphaV;
+        k = 2;
+        for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
+          sample_x[k] = x[k - 1];
+          sample_x[k + 1] = (x[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k];
+
+          if (modelOptions->imprintingFlag) {
+            sample_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
+            sample_x[k + 3] = (x[k + 2] - xl[k + 2]) * (x[k + 1] - xl[k + 1]) / (xu[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 2];
+          } else {
+            sample_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
+          }
+          k += pen_size;
+          if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
+            /* sample_x[k] = x[k - 1];
+             * sample_x[k + 1] = x[k];
+             * sample_x[k + 2] = x[k + 1];
+             * if(modelOptions->imprintingFlag)
+             * sample_x[k + 3] = x[k + 2];
+             * k += pen_size; */
+            sample_x[k] = x[k - 1];
+            k++;
+          }
+          /* threshold for QT *
+           * if (modelType->trait == CT) {
+           * sample_x[k] = x[k - 1];
+           * k++;
+           * } */
+        }
+        if (modelType->trait == CT) {
+          sample_x[k] = x[k - 1];
+          k++;
+        }
+	/**  end of updating sample points*/
+
       if(pedigreeSet.numPedigree ==1)
 	  j=5;
     }
@@ -628,7 +666,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 }
 
 
-void compute_hlod_mp_dt (double x[], double *f, int *scale)
+void compute_hlod_mp_dt (double x[], double *f, int *scale,double sample_x[])
 {
 
   int j;
@@ -911,6 +949,23 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
           }
         }
       }
+
+
+      /* Update local sample points*/ 
+        sample_x[0] = gfreq;
+        sample_x[1] = alphaV;
+
+        for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
+          sample_x[pen_size * liabIdxLocal + 2] = x[pen_size * liabIdxLocal + 1];
+          sample_x[pen_size * liabIdxLocal + 3] = x[pen_size * liabIdxLocal + 2] * x[pen_size * liabIdxLocal + 1];
+          sample_x[pen_size * liabIdxLocal + 4] = x[pen_size * liabIdxLocal + 3] * x[pen_size * liabIdxLocal + 1] * x[pen_size * liabIdxLocal + 2];
+
+          if (modelOptions->imprintingFlag) {
+            sample_x[pen_size * liabIdxLocal + 4] = x[pen_size * liabIdxLocal + 3] * x[pen_size * liabIdxLocal + 1];
+            sample_x[pen_size * liabIdxLocal + 5] = x[pen_size * liabIdxLocal + 4] * x[pen_size * liabIdxLocal + 3] * x[pen_size * liabIdxLocal + 1] * x[pen_size * liabIdxLocal + 2];
+          }
+        }
+	/* end of updating sample points*/
       if(pedigreeSet.numPedigree ==1)
 	  j=5;
     }   /* end of calculating HET LR */
@@ -928,7 +983,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   *f = avg_hetLR;
 }
 
-void compute_hlod_2p_qt (double x[], double *f, int *scale)
+void compute_hlod_2p_qt (double x[], double *f, int *scale,double sample_x[])
 {
 
   int k, j, ret;
@@ -1322,6 +1377,46 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
           k++;
         }
       }
+
+      /*Update local sample points */
+        sample_x[0] = gfreq;
+        sample_x[1] = alphaV;
+        k = 2;
+        for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
+
+          sample_x[k] = x[k - 1];
+          sample_x[k + 1] = (x[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k];
+
+          if (modelOptions->imprintingFlag) {
+            sample_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
+            sample_x[k + 3] = (x[k + 2] - xl[k + 2]) * (x[k + 1] - xl[k + 1]) / (xu[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 2];
+          } else {
+            sample_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
+          }
+          k += pen_size;
+          if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
+            /* sample_x[k] = x[k - 1];
+             * sample_x[k + 1] = x[k];
+             * sample_x[k + 2] = x[k + 1];
+             * if(modelOptions->imprintingFlag)
+             * sample_x[k + 3] = x[k + 2];
+             * k += pen_size; */
+            sample_x[k] = x[k - 1];
+            k++;
+          }
+          /* threshold for QT *
+           * if (modelType->trait == CT) {
+           * sample_x[k] = x[k - 1];
+           * k++;
+           * } */
+        }
+        if (modelType->trait == CT) {
+          sample_x[k] = x[k - 1];
+          k++;
+        }
+	/*end of updating local sample points*/
+
+
       if(pedigreeSet.numPedigree ==1)
 	  j=5;
 
@@ -1359,7 +1454,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   *f = avg_hetLR;
 }
 
-void compute_hlod_2p_dt (double x[], double *f, int *scale)
+void compute_hlod_2p_dt (double x[], double *f, int *scale,double sample_x[])
 {
 
 //double compute_hlod(PedigreeSet *pedigreeSet,double x[], int loc1, int loc2, Locus *pLocus, Trait *pTrait, int traitLocus, int totalLoci, double * initialProbAddr[3], Locus *pLocus1){
@@ -1671,6 +1766,22 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
           }
         }
       }
+
+      /*updating local sample points*/
+        sample_x[0] = gfreq;
+        sample_x[1] = alphaV;
+
+        for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
+          sample_x[pen_size * liabIdxLocal + 2] = x[pen_size * liabIdxLocal + 1];
+          sample_x[pen_size * liabIdxLocal + 3] = x[pen_size * liabIdxLocal + 2] * x[pen_size * liabIdxLocal + 1];
+          sample_x[pen_size * liabIdxLocal + 4] = x[pen_size * liabIdxLocal + 3] * x[pen_size * liabIdxLocal + 1] * x[pen_size * liabIdxLocal + 2];
+
+          if (modelOptions->imprintingFlag) {
+            sample_x[pen_size * liabIdxLocal + 4] = x[pen_size * liabIdxLocal + 3] * x[pen_size * liabIdxLocal + 1];
+            sample_x[pen_size * liabIdxLocal + 5] = x[pen_size * liabIdxLocal + 4] * x[pen_size * liabIdxLocal + 3] * x[pen_size * liabIdxLocal + 1] * x[pen_size * liabIdxLocal + 2];
+          }
+        }
+	/*endof updating local sample points*/
       // fprintf(fphlod,"%f %f %f %f %f %f %f\n", log10(hetLR*x[1]*x[1]*x[2]), gfreq, pen_DD,pen_Dd, pen_dd, alphaV,fixed_theta);
 
       if(pedigreeSet.numPedigree ==1)

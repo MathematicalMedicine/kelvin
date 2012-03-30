@@ -190,9 +190,15 @@ typedef struct{
   /* 2-dim arrays for dynamic sampling     3/3/2009 */
   int sampling_mode;       /* turn this on when we apply to Merlin. Default is 0 assigned in initialization fucntion
                            0 : normal dcuhre for Kelvin                             
-                           1: sampling mode for one subset
-                           2: calculating the BR for only one subset 
+                           1: sampling mode for one subset (not for kelvin ES)
+                           2: calculating the BR for only one subset (not for kelvin ES)
                                The main difference is s->maxsub is fixed at one
+
+                          -1: sampling parameter values, lr,and weight  for kelvin
+                               size of sample_pts is s->num * (s->ndim +3) 
+                               order is 
+                               gf, alpha, pene....., lr, weight.
+
  */
   double *sample_pts;
   double cur_weight;       /* This holds the weigt for the currently working group of samples */
@@ -233,7 +239,7 @@ int sbrg_free(sub_region ** sr_control, int);
 int print_sbrg(sub_region *cw_sbrg, int dim);
 
 
-
+int dump_sample_pts(dcuhre_state *s);  /* dump sample_pts*/
 
 
 #endif /* __DCUHRE_H__ */
