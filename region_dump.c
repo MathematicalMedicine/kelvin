@@ -10,12 +10,12 @@ int main(int argc, char *argv[]) {
   sub_region s;
 
   if (argc != 2) {
-    fprintf (stderr, "Usage: %s <region file name>\n");
+    fprintf (stderr, "Usage: %s <region file name>\n", argv[0]);
     exit (1);
   }
   tn = tpl_map (regionTPLFormat, &s.parent_id, &s.region_level, &s.local_result, &s.local_error, &s.dir, &s.cur_scale);
   if ((file = fopen (argv[1], "r")) == NULL) {
-    fprintf (stderr, "File %s cannot be read\n", argv[0]);
+    fprintf (stderr, "File %s cannot be read\n", argv[1]);
     exit (2);
   }
   fclose (file);
