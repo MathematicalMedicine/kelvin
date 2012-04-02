@@ -180,6 +180,7 @@ my %directives = (
 		  maxiterations => {canon => 'MaxIterations'},
 		  log=> {canon => 'Log',
 			 regex => '\w+\s+\w+'},
+		  dropemptyclasses => {canon => 'DropEmptyClasses'},
 		  skippedcount => {canon => 'SkipPedCount',
 				   local => 'true'},
 		  skipcountweighting => {canon => 'SkipCountWeighting',

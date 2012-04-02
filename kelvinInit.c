@@ -234,20 +234,24 @@ void kelvinInit (int argc, char *argv[])
 	pedigreeSet.liabilityClassCnt[va] = ++vb;
       }
     }
+    if (vb == 0)
+      ERROR ("Liability class analysis specified, but all classes are empty.");
     if (vb != modelRange->nlclass) {
       va = modelRange->nlclass - vb;
-      WARNING("%d liability class%s empty. Dropping empty classes to improve performance", va, (va == 1) ? " is" : "es are");
-      
-      for (va = 1; va <= modelRange->nlclass; va++) {
-	if (pedigreeSet.liabilityClassCnt[va] == 0)
-	  WARNING("Dropping empty class %d", va);
+      if (modelOptions->dropEmptyClasses) {
+	WARNING("%d liability class%s empty. Dropping empty classes to improve performance", va, (va == 1) ? " is" : "es are");
+	
+	for (va = 1; va <= modelRange->nlclass; va++) {
+	  if (pedigreeSet.liabilityClassCnt[va] == 0)
+	    WARNING("Dropping empty class %d", va);
+	}
+	if (pedigreeSet.liabilityClassCnt[vb] != vb)
+	  renumberLiabilityClasses (&pedigreeSet);
+	modelRange->nlclass = vb;
+      } else {
+	WARNING("%d liability class%s empty. Use DropEmptyClasses to improve performance", va, (va == 1) ? " is" : "es are");
       }
-      if (pedigreeSet.liabilityClassCnt[vb] != vb)
-	renumberLiabilityClasses (&pedigreeSet);
-      modelRange->nlclass = vb;
     }
-    if (modelRange->nlclass == 0)
-      ERROR ("Liability class analysis specified, but all classes are empty.");
   }
 #ifdef STUDYDB
 studyDB.liabilityClassCnt = modelRange->nlclass;

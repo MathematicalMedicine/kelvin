@@ -190,6 +190,7 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 #endif
 				{"DryRun", set_flag, &staticModelOptions.dryRun},
 				{"ExtraMODs", set_flag, &staticModelOptions.extraMODs},
+				{"DropEmptyClasses", set_flag, &staticModelOptions.dropEmptyClasses},
 				{"ForceBRFile", set_flag, &staticModelOptions.forceAvghetFile},
 
 				{"PolynomialScale", set_int, &staticModelOptions.polynomialScale},
