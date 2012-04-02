@@ -25,7 +25,7 @@ sub getline
     
     while ($line = $self->SUPER::getline) {
 	$lineno++;
-	$line =~ s/^\s*([^\#\n]*)\#?.*$/$1/s;
+	$line =~ s/^\s*([^\#\n\r]*)\#?.*$/$1/s;
 	if ($line) {
 	    # This is clumsy. How to do it better?
 	    (ref ($ref) eq 'SCALAR' && $$ref =~ /^\d+$/) and $$ref += $lineno;
