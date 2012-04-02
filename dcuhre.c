@@ -169,9 +169,6 @@ dcuhre_ (dcuhre_state * s)
   free (s->errcof);
   free (s->diff_result);
 
-  if (s->sampling_mode ==-1)
-    free(s->sample_pts);
-
   return s->ifail;
 }
 
@@ -260,7 +257,7 @@ dadhre_ (dcuhre_state * s)
 
 
   /* ***End initialisation. */
-  if(s->sampling_mode >0){  /* Only one subregion for sampling */
+  if(s->sampling_mode){  /* Only one subregion for sampling */
     if(s->sampling_mode==2)
       s->next_dir = cw_sbrg->dir;
     return 0;
@@ -545,19 +542,11 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
 
   if(s->sampling_mode>0)
     (s->funsub) ( x, &(cw_sbrg->local_error),s);
-  else if (s->sampling_mode<0)
-    (s->funsub) ( x, &(cw_sbrg->local_error),&(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
   else{
-    (s->funsub) ( x, &(cw_sbrg->local_error), &(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
+    (s->funsub) ( x, &(cw_sbrg->local_error), &(cw_sbrg->cur_scale));
   }
   if(s->sampling_mode==1)
     s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][0];
-
-  if(s->sampling_mode== -1){
-    s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+1 ] = cw_sbrg->local_error; /* lr */
-    s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+2 ] = s->w[0][0];           /* weight */
-    s->cur_sample ++;
-  }
 
   //fprintf (stderr, "1 local result =%10.8f  and local error =%10.8f\n", cw_sbrg->local_result,cw_sbrg->local_error);
   //fprintf(stderr," sw00 is %G   %p %p\n", s->w[0][0], s->w, s->w[0]);
@@ -581,67 +570,39 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
 
     if(s->sampling_mode>0)
       (s->funsub) ( x, &null[4],s);
-    else if (s->sampling_mode<0)
-      (s->funsub) ( x, &null[4], &(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
     else{
-      (s->funsub) ( x, &null[4], &(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
+      (s->funsub) ( x, &null[4], &(cw_sbrg->cur_scale));
     }
     if(s->sampling_mode==1)
       s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][1];
-    if(s->sampling_mode== -1){
-      s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+1 ] = null[4]; /* lr */
-      s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+2 ] = s->w[0][1];           /* weight */
-      s->cur_sample ++;
-    }
 
     x[i] = cw_sbrg->center[i] + cw_sbrg->hwidth[i] * s->g[0][1];
 
     if(s->sampling_mode>0)
       (s->funsub) ( x, &null[5],s);
-    else if (s->sampling_mode<0)
-      (s->funsub) ( x, &null[5], &(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
     else{
-      (s->funsub) ( x, &null[5], &(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
+      (s->funsub) ( x, &null[5], &(cw_sbrg->cur_scale));
     }
     if(s->sampling_mode==1)
       s->sample_pts[s->cur_sample*(s->ndim+1)] =  s->w[0][1];
-    if(s->sampling_mode== -1){
-      s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+1 ] = null[5]; /* lr */
-      s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+2 ] = s->w[0][1];           /* weight */
-      s->cur_sample ++;
-    }
 
     x[i] = cw_sbrg->center[i] - cw_sbrg->hwidth[i] * s->g[0][2];
     if(s->sampling_mode>0)
       (s->funsub) ( x, &null[6],s);
-    else if (s->sampling_mode<0)
-      (s->funsub) ( x, &null[6], &(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
     else{
-      (s->funsub) ( x, &null[6], &(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
+      (s->funsub) ( x, &null[6], &(cw_sbrg->cur_scale));
     }
     if(s->sampling_mode==1)
       s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][2];
-    if(s->sampling_mode== -1){
-      s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+1 ] = null[6]; /* lr */
-      s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+2 ] = s->w[0][2];           /* weight */
-      s->cur_sample ++;
-    }
 
     x[i] = cw_sbrg->center[i] + cw_sbrg->hwidth[i] * s->g[0][2];
     if(s->sampling_mode>0)
       (s->funsub) (x, &null[7],s);
-    else if (s->sampling_mode<0)
-      (s->funsub) ( x, &null[7], &(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
     else{
-      (s->funsub) ( x, &null[7], &(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
+      (s->funsub) ( x, &null[7], &(cw_sbrg->cur_scale));
     }
     if(s->sampling_mode==1)
       s->sample_pts[s->cur_sample*(s->ndim+1)] = s->w[0][2];
-    if(s->sampling_mode== -1){
-      s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+1 ] = null[7]; /* lr */
-      s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+2 ] = s->w[0][2];           /* weight */
-      s->cur_sample ++;
-    }
 
     x[i] = cw_sbrg->center[i];
     difsum = 0.;
@@ -679,7 +640,7 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
     //fprintf (stderr, "i=%d calling dfshre\n",i);
     //fprintf (stderr, "g is %f %f %f %f %f\n",s->g[0][g_work_col],s->g[1][g_work_col],s->g[2][g_work_col],s->g[3][g_work_col],s->g[4][g_work_col]);
 
-    if ((s->sampling_mode == 1) || (s->sampling_mode == -1)){
+    if(s->sampling_mode==1){
       s->cur_weight = s->w[0][i];
     }
 
@@ -748,10 +709,6 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
 	   cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale);
   }
 #endif
-
-  if (s->sampling_mode ==-1)
-    dump_sample_pts(s);
-
   return 0;
 }
 
@@ -777,19 +734,11 @@ L20:
 L40:
   if(s->sampling_mode>0)  
     (s->funsub) ( x, funvls,s);
-  else if (s->sampling_mode<0)
-    (s->funsub) ( x, funvls,&(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
   else
-    (s->funsub) ( x, funvls, &(cw_sbrg->cur_scale), &(s->sample_pts[s->cur_sample*(s->ndim+3)]));
+    (s->funsub) ( x, funvls, &(cw_sbrg->cur_scale));
 
   if(s->sampling_mode==1)
     s->sample_pts[s->cur_sample*(s->ndim+1)] = s->cur_weight;
-  if(s->sampling_mode== -1){
-    s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+1 ] = *funvls; /* lr */
-    s->sample_pts[s->cur_sample*(s->ndim+3) + s->ndim+2 ] = s->cur_weight;           /* weight */
-    s->cur_sample ++;
-  }
-
 
   *fulsms += *funvls;
 
@@ -1642,12 +1591,6 @@ dchhre_ (dcuhre_state * s)
     return 1;
   }
 
-
-  /* allocate memory for sample points when sampling_mode ==-1*/
-  if (s->sampling_mode ==-1)
-    s->sample_pts = (double *) malloc ( s->num * (s->ndim + 3)*sizeof(double)); /* 3 is for alpha, lr, weight*/
-
-
   return 0;
 
 /* ***END DCHHRE */
@@ -1700,9 +1643,6 @@ initialize_state (dcuhre_state * s, double *a, double *b, int dim)
   s->vol_rate =1.0;
 
   s->scale=0;
-
-  s->sampling_mode =-1;     /* change this to -1  to get parameter values, lr, and weight*/
-  s->cur_sample =0; 
 
   return 0;
 }
@@ -1817,19 +1757,4 @@ print_sbrg (sub_region * cw_sbrg, int dim)
   }
 
   return 0;
-}
-
-
-int 
-dump_sample_pts(dcuhre_state *s)
-{
-  int i,j;
-
-  fprintf (stderr, " gf     alpha   pene...              lr   weight");
-  for (i=0; i< s->num; i++){
-    fprintf (stderr, "%4d ",i);
-    for(j=1; j< (s->ndim +3); j++)
-      fprintf (stderr, "%10.4e ", s->sample_pts[ i*(s->ndim +3) +j]);
-    fprintf (stderr, "\n");
-  }
 }
