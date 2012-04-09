@@ -307,13 +307,13 @@ if ($freqfiles) {
 	splice(@freqList1, $i, 1) if (!defined($markers1{$freqList1[$i]}{alleles}));
     }
     my @type = ("", "microsatellite", "SNP", "microsatellite and SNP");
-    print "1: Frequency file for ".$#freqList1." ".$type[($$dataset1{snps}*2+$$dataset1{microsats})]." markers\n" if $verbose;
+    print "1: Frequency file for ".($#freqList1 + 1)." ".$type[($$dataset1{snps}*2+$$dataset1{microsats})]." markers\n" if $verbose;
     my @freqList2 = @{$$dataset2{maporder}};
     my %markers2 = %{$$dataset2{markers}};
     for (my $i = $#freqList2; $i >= 0; --$i) {
 	splice(@freqList2, $i, 1) if (!defined($markers2{$freqList2[$i]}{alleles}));
     }
-    print "2: Frequency file for ".$#freqList2." ".$type[($$dataset2{snps}*2+$$dataset2{microsats})]." markers\n" if $verbose;
+    print "2: Frequency file for ".($#freqList2 + 1)." ".$type[($$dataset2{snps}*2+$$dataset2{microsats})]." markers\n" if $verbose;
 
     # Compare frequency files by looping over the superset marker names
     for my $name (uniqua (@freqList1, @freqList2)) {
