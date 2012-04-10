@@ -53,8 +53,8 @@ mv kelvin-$VERSION kelvin-$VERSION-POLYCODE_DL_FAKEEVALUATE_SSD
 # Likelihood server build iff mysql exists and is version 5 or better.
 over4=$(mysql --version | grep "Distrib [5-9]" || true)
 if test -n "$over4"; then
-    make clean
-    make  USE_STUDYDB=yes USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR" ENV_LDFLAGS="" kelvin
+    make clean USE_STUDYDB=yes
+    make USE_STUDYDB=yes USE_PTMALLOC3=$USE_PTMALLOC3 $* ENV_CFLAGS=" $WERROR" ENV_LDFLAGS="" kelvin
     cp kelvin-$VERSION kelvin-study
     mv kelvin-$VERSION kelvin-$VERSION-study
 fi
