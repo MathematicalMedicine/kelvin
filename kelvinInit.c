@@ -230,12 +230,13 @@ void kelvinInit (int argc, char *argv[])
 
     for (va = 1; va <= modelRange->nlclass; va++) {
       if (pedigreeSet.liabilityClassCnt[va] != 0) {
-	modelRange->lclassLabels[vb] = va;
+	if (modelOptions->dropEmptyClasses)
+	  modelRange->lclassLabels[vb] = va;
 	pedigreeSet.liabilityClassCnt[va] = ++vb;
-      }
+      } else 
+	if (! modelOptions->dropEmptyClasses)
+	  modelRange->lclassEmpty[va-1] = 1;
     }
-    if (vb == 0)
-      ERROR ("Liability class analysis specified, but all classes are empty.");
     if (vb != modelRange->nlclass) {
       va = modelRange->nlclass - vb;
       if (modelOptions->dropEmptyClasses) {

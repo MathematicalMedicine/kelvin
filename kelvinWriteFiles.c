@@ -266,10 +266,13 @@ writeMPMODFileDetail (int posIdx, float traitPos)
   fprintf (fpMOD, " %.6f %f %f", max, alphaV, gfreq);
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     {
-      pen_DD = modelRange->penet[liabIdx][0][penIdx];
-      pen_Dd = modelRange->penet[liabIdx][1][penIdx];
-      pen_dD = modelRange->penet[liabIdx][2][penIdx];
-      pen_dd = modelRange->penet[liabIdx][3][penIdx];
+      if (! modelRange->lclassEmpty[liabIdx]) {
+	pen_DD = modelRange->penet[liabIdx][0][penIdx];
+	pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+	pen_dD = modelRange->penet[liabIdx][2][penIdx];
+	pen_dd = modelRange->penet[liabIdx][3][penIdx];
+      } else
+	pen_DD = pen_Dd = pen_dD = pen_dd = -99.0;
       if (modelOptions->imprintingFlag)
 	fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD,
 		 pen_dd);
@@ -278,10 +281,13 @@ writeMPMODFileDetail (int posIdx, float traitPos)
       if (modelType->trait != DT
 	  && modelType->distrib != QT_FUNCTION_CHI_SQUARE)
 	{
-	  SD_DD = modelRange->param[liabIdx][0][0][paramIdx];
-	  SD_Dd = modelRange->param[liabIdx][1][0][paramIdx];
-	  SD_dD = modelRange->param[liabIdx][2][0][paramIdx];
-	  SD_dd = modelRange->param[liabIdx][3][0][paramIdx];
+	  if (! modelRange->lclassEmpty[liabIdx]) {
+	    SD_DD = modelRange->param[liabIdx][0][0][paramIdx];
+	    SD_Dd = modelRange->param[liabIdx][1][0][paramIdx];
+	    SD_dD = modelRange->param[liabIdx][2][0][paramIdx];
+	    SD_dd = modelRange->param[liabIdx][3][0][paramIdx];
+	  } else
+	    SD_DD = SD_Dd = SD_dD = SD_dd = -99.0;
 	  if (modelOptions->imprintingFlag)
 	    fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD,
 		     SD_dd);
@@ -290,7 +296,8 @@ writeMPMODFileDetail (int posIdx, float traitPos)
 	}
       if (modelType->trait == CT)
 	{
-	  threshold = modelRange->tthresh[liabIdx][thresholdIdx];
+	  threshold = (modelRange->lclassEmpty[liabIdx]) ? -99.0 :
+	    modelRange->tthresh[liabIdx][thresholdIdx];
 	  fprintf (fpMOD, ",%.3f)", threshold);
 	}
       else
@@ -343,10 +350,13 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
     
     for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
       {
-	pen_DD = modelRange->penet[liabIdx][0][penIdx];
-	pen_Dd = modelRange->penet[liabIdx][1][penIdx];
-	pen_dD = modelRange->penet[liabIdx][2][penIdx];
-	pen_dd = modelRange->penet[liabIdx][3][penIdx];
+	if (! modelRange->lclassEmpty[liabIdx]) {
+	  pen_DD = modelRange->penet[liabIdx][0][penIdx];
+	  pen_Dd = modelRange->penet[liabIdx][1][penIdx];
+	  pen_dD = modelRange->penet[liabIdx][2][penIdx];
+	  pen_dd = modelRange->penet[liabIdx][3][penIdx];
+	} else 
+	  pen_DD = pen_Dd = pen_dD = pen_dd = -99.0;
 	if (modelOptions->imprintingFlag)
 	  fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD,
 		   pen_dd);
@@ -355,10 +365,13 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
 	if (modelType->trait != DT
 	    && modelType->distrib != QT_FUNCTION_CHI_SQUARE)
 	  {
-	    SD_DD = modelRange->param[liabIdx][0][0][paramIdx];
-	    SD_Dd = modelRange->param[liabIdx][1][0][paramIdx];
-	    SD_dD = modelRange->param[liabIdx][2][0][paramIdx];
-	    SD_dd = modelRange->param[liabIdx][3][0][paramIdx];
+	    if (! modelRange->lclassEmpty[liabIdx]) {
+	      SD_DD = modelRange->param[liabIdx][0][0][paramIdx];
+	      SD_Dd = modelRange->param[liabIdx][1][0][paramIdx];
+	      SD_dD = modelRange->param[liabIdx][2][0][paramIdx];
+	      SD_dd = modelRange->param[liabIdx][3][0][paramIdx];
+	    } else
+	      SD_DD = SD_Dd = SD_dD = SD_dd = -99.0;
 	    if (modelOptions->imprintingFlag)
 	      fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD,
 		       SD_dd);
@@ -367,7 +380,8 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
 	  }
 	if (modelType->trait == CT)
 	  {
-	    threshold = modelRange->tthresh[liabIdx][thresholdIdx];
+	    threshold = (modelRange->lclassEmpty[liabIdx]) ? -99.0 :
+	      modelRange->tthresh[liabIdx][thresholdIdx];
 	    fprintf (fpMOD, ",%.3f)", threshold);
 	  }
 	else

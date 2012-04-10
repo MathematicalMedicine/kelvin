@@ -158,6 +158,9 @@ void dk_writeMPMODHeader ()
 void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel *model)
 {
   int liabIdx;
+  double Pen_DD, Pen_Dd, Pen_dD, Pen_dd;
+  double SD_DD, SD_Dd, SD_dD, SD_dd;
+  double threshold;
 
   if (fpMOD == NULL)
     return;
@@ -169,29 +172,41 @@ void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel 
   fprintf (fpMOD, " %.6f %f %f", value, model->alpha, model->dgf);
   
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+    if (! modelRange->lclassEmpty[liabIdx]) {
+      Pen_DD = model->pen[liabIdx].DD;
+      Pen_Dd = model->pen[liabIdx].Dd;
+      Pen_dD = model->pen[liabIdx].dD;
+      Pen_dd = model->pen[liabIdx].dd;
+    } else 
+      Pen_DD = Pen_Dd = Pen_dD = Pen_dd = -99.0;
     if (! modelOptions->imprintingFlag)
       /* DD Dd dd or DDMean DdMean ddMean */
-      fprintf (fpMOD, " (%.3f,%.3f,%.3f", model->pen[liabIdx].DD, model->pen[liabIdx].Dd,
-	       model->pen[liabIdx].dd);
+      fprintf (fpMOD, " (%.3f,%.3f,%.3f", Pen_DD, Pen_Dd, Pen_dd);
     else 
       /* DD Dd dD dd or DDMean DdMean dDMean ddMean */
-      fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", model->pen[liabIdx].DD,
-	       model->pen[liabIdx].Dd, model->pen[liabIdx].dD, model->pen[liabIdx].dd);
+      fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", Pen_DD, Pen_Dd, Pen_dD, Pen_dd);
     
     if (modelType->trait != DICHOTOMOUS) {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
+	if (! modelRange->lclassEmpty[liabIdx]) {
+	  SD_DD = model->pen[liabIdx].DDSD;
+	  SD_Dd = model->pen[liabIdx].DdSD;
+	  SD_dD = model->pen[liabIdx].dDSD;
+	  SD_dd = model->pen[liabIdx].ddSD;
+	} else 
+	  SD_DD = SD_Dd = SD_dD = SD_dd = -99.0;
 	if (! modelOptions->imprintingFlag)
 	  /* DDSD DdSD ddSD */
-	  fprintf (fpMOD, ",%.3f,%.3f,%.3f", model->pen[liabIdx].DDSD,
-		   model->pen[liabIdx].DdSD, model->pen[liabIdx].ddSD);
+	  fprintf (fpMOD, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
 	else 
 	  /* DDSD DdSD dDSD ddSD */
-	  fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", model->pen[liabIdx].DDSD,
-		   model->pen[liabIdx].DdSD, model->pen[liabIdx].dDSD, model->pen[liabIdx].ddSD);
+	  fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
       }
-      if (modelType->trait == CT)
+      if (modelType->trait == CT) {
+	threshold = (modelOptions->imprintingFlag) ? -99.0 : model->pen[liabIdx].threshold;
 	/* Theshold */
-	fprintf (fpMOD, ",%.3f", model->pen[liabIdx].threshold);
+	fprintf (fpMOD, ",%.3f", threshold);
+      }
     }
     fprintf (fpMOD, ")");
   }
@@ -283,6 +298,9 @@ void dk_write2ptMODHeader ()
 void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
 {
   int liabIdx;
+  double Pen_DD, Pen_Dd, Pen_dD, Pen_dd;
+  double SD_DD, SD_Dd, SD_dD, SD_dd;
+  double threshold;
 
   if (fpMOD == NULL)
     return;
@@ -316,29 +334,40 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
     fprintf (fpMOD, " %.2f %.4f", model->alpha, model->dgf);
 	    
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
+    if (! modelRange->lclassEmpty[liabIdx]) {
+      Pen_DD = model->pen[liabIdx].DD;
+      Pen_Dd = model->pen[liabIdx].Dd;
+      Pen_dD = model->pen[liabIdx].dD;
+      Pen_dd = model->pen[liabIdx].dd;
+    } else 
+      Pen_DD = Pen_Dd = Pen_dD = Pen_dd = -99.0;
     if (! modelOptions->imprintingFlag)
       /* DD Dd dd or DDMean DdMean ddMean */
-      fprintf (fpMOD, " (%.3f,%.3f,%.3f", model->pen[liabIdx].DD, model->pen[liabIdx].Dd,
-	       model->pen[liabIdx].dd);
+      fprintf (fpMOD, " (%.3f,%.3f,%.3f", Pen_DD, Pen_Dd, Pen_dd);
     else 
       /* DD Dd dD dd or DDMean DdMean dDMean ddMean */
-      fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", model->pen[liabIdx].DD,
-	       model->pen[liabIdx].Dd, model->pen[liabIdx].dD, model->pen[liabIdx].dd);
+      fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", Pen_DD, Pen_Dd, Pen_dD, Pen_dd);
     
     if (modelType->trait != DICHOTOMOUS) {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
+	if (! modelRange->lclassEmpty[liabIdx]) {
+	  SD_DD = model->pen[liabIdx].DDSD;
+	  SD_Dd = model->pen[liabIdx].DdSD;
+	  SD_dD = model->pen[liabIdx].dDSD;
+	  SD_dd = model->pen[liabIdx].ddSD;
+	} else 
+	  SD_DD = SD_Dd = SD_dD = SD_dd = -99.0;
 	if (! modelOptions->imprintingFlag)
 	  /* DDSD DdSD ddSD */
-	  fprintf (fpMOD, ",%.3f,%.3f,%.3f", model->pen[liabIdx].DDSD,
-		   model->pen[liabIdx].DdSD, model->pen[liabIdx].ddSD);
+	  fprintf (fpMOD, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
 	else 
 	  /* DDSD DdSD dDSD ddSD */
-	  fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", model->pen[liabIdx].DDSD,
-		   model->pen[liabIdx].DdSD, model->pen[liabIdx].dDSD, model->pen[liabIdx].ddSD);
+	  fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
       }
       if (modelType->trait == CT)
+	threshold = (modelOptions->imprintingFlag) ? -99.0 : model->pen[liabIdx].threshold;
 	/* Theshold */
-	fprintf (fpMOD, ",%.3f", model->pen[liabIdx].threshold);
+	fprintf (fpMOD, ",%.3f", threshold);
     }
     fprintf (fpMOD, ")");
   }

@@ -20,6 +20,7 @@ typedef struct ModelRange
   double ***penet;		/* 3D array of penetrance values */
   int nlclass;			/* Default is 1 liability class */
   int *lclassLabels;            /* numeric labels for liability classes */
+  int *lclassEmpty;             /* flag for empty liability classes */
   int nalleles;			/* Default is 2 trait alleles D,d */
   int npenet;			/* Number of penetrance records */
   double **penetLimits;         /* 2D array of raw penetrance limits by allele and min/max */
