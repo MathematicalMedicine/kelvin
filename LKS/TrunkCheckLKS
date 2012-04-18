@@ -1,0 +1,30 @@
+#!/bin/bash -xe
+#
+# Rely upon the kelvin trunk being completely rebuilt for TrunkCheck under ~/specific/trunk and
+# run a select group of LKS tests.
+#
+trap onexit 0
+echo '$Id$'
+
+function onexit() {
+    local exit_status=${1:-$?}
+    echo Exiting $0 at `date` with status of $exit_status
+    MAIL="mail -s"
+    if test $exit_status -ne 0 ; then
+	${MAIL} "$0 on $HOSTNAME failed with status $exit_status" whv001@ccri.net </dev/null
+    else
+	${MAIL} "$0 on $HOSTNAME succeeded" whv001@ccri.net </dev/null
+    fi
+}
+set -xe # Because it isn't enough for Darwin's cron for us to have it on the shebang
+
+echo `date`: Starting
+export KELVIN_ROOT=$HOME/specific/trunk
+export LD_LIBRARY_PATH=$KELVIN_ROOT/lib:${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH}
+echo `date`: Selected likelihood server tests on rita only due to SGE restrictions
+cd ~/specific/trunk/test-suite/likelihood_server
+cd SA_DT; make; cd ..
+cd SA_QT; make; cd ..
+cd imprinting; make; cd ..
+cd map-merge; make; cd ..
+cd LC3; make; cd ..
