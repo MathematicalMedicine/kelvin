@@ -1,0 +1,1 @@
+mysqldump  --host $1 --user adminLKS --password=$2 LKS Models --no-create-info --skip-lock-tables --skip-triggers --where="PedPosId in (Select PedPosId from PedigreePositions where StudyId = $3)" >Models_for_$1_StudyId_$3.sql

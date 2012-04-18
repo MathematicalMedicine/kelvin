@@ -1,0 +1,21 @@
+NonPolynomial
+FixedModels
+DiseaseGeneFrequency 0.1
+Alpha 0.5
+Mean DD 0.7
+Mean dD 0.3
+Mean Dd 0.2
+Mean dd 0.1
+StandardDev 0.707, 0.707
+Constrain Penetrance DD >= Dd
+Constrain Penetrance Dd >= dd
+Constrain Penetrance DD >= dD
+Constrain Penetrance dD >= dd
+Constrain Penetrance DD != Dd, Dd != dD, dD != dd
+Constrain Mean DD >= Dd
+Constrain Mean Dd >= dd
+Constrain Mean DD >= dD
+Constrain Mean dD >= dd
+Constrain StandardDev DD == Dd
+Constrain StandardDev Dd == dD
+Constrain StandardDev dD == dd

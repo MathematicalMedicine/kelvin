@@ -1,0 +1,18 @@
+[mysqld]
+max_connections=512
+wait_timeout=2419200
+
+# DIRECTORIES
+datadir=/dev/shm/MySQL/data
+
+# LOG OPTIONS
+log-error=/dev/shm/MySQL/data/virtual.err
+general-log=0
+log-slow-queries=0
+
+# INNODB
+innodb_file_per_table
+innodb_buffer_pool_size=512M
+
+[mysql]
+port=3306
