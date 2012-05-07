@@ -226,6 +226,7 @@ dadhre_ (dcuhre_state * s)
     cw_sbrg->hwidth[i] = fabs ((s->xu[i] - s->xl[i]) / 2);
   }
   if (s->verbose > 1) {
+    fprintf (stderr, "A");
     print_sbrg (cw_sbrg, s->ndim);
   }
 
@@ -234,7 +235,7 @@ dadhre_ (dcuhre_state * s)
     fprintf (stderr, "Apply DRLHRE over the whole region\n");
   }
   drlhre_ (s, cw_sbrg);
-  //fprintf (stderr, "end fo first\n");
+
   if( cw_sbrg->cur_scale > s->scale){
     s->scale=cw_sbrg->cur_scale;
   }
@@ -243,18 +244,15 @@ dadhre_ (dcuhre_state * s)
   s->error += cw_sbrg->local_error;
   tmp_result = s->result /s->vol_rate;
 
-
   if (s->verbose > 1) {
     fprintf (stderr, "After first %d sub regions result=%20.18f error=%20.18f\n",
 	     s->sbrgns, s->result, s->error);
   }
 
-
   s->greate = cw_sbrg->local_error;
   s->sbrgns++;
   s->next_sbrg = 0;
   /*Some action which DRTHRE_ does should be here */
-
 
   /* ***End initialisation. */
   if(s->sampling_mode){  /* Only one subregion for sampling */
@@ -368,6 +366,7 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->lchild_id = 0;
 
       if (s->verbose > 1) {
+    fprintf (stderr, "B");
 	print_sbrg (cw_sbrg, s->ndim);
       }
       drlhre_ (s, cw_sbrg);
@@ -412,6 +411,7 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->lchild_id = 0;
 
       if (s->verbose > 1) {
+    fprintf (stderr, "C");
 	print_sbrg (cw_sbrg, s->ndim);
       }
       drlhre_ (s, cw_sbrg);
@@ -440,13 +440,16 @@ dadhre_ (dcuhre_state * s)
 #endif
       s->sbrgns++;
 #ifdef STUDYDB
-      if (s->sbrg_heap[s->sbrgns-1]->bogusLikelihoods > 0 || s->sbrg_heap[s->sbrgns-2]->bogusLikelihoods > 0) {
+      if (studyDB.bogusLikelihoods > 0) {
 	// Did a split, but with bogus results we need to PRETEND that we didn't by
 	// resetting s back to the pre-split state? Ew!
-	int totalBogusLikelihoods = s->sbrg_heap[s->sbrgns-1]->bogusLikelihoods + s->sbrg_heap[s->sbrgns-2]->bogusLikelihoods;
 	memcpy (s, held_dcuhre_state, sizeof (dcuhre_state));
+	// Turns out that s is not all that has to be restored, so recalculate the real_result and real_error
+	real_result = s->result / s->vol_rate;
+	real_error = s->error / s->vol_rate;
 	free (held_dcuhre_state);
-	s->sbrg_heap[s->next_sbrg]->bogusLikelihoods = totalBogusLikelihoods; // Preserve the count for no particular reason.
+	fprintf (stderr, "Held DCUHRE state restored for trend analysis after %d bogus evaluation results in subregion %d, tentative BR %g, real error %g...",
+	     s->sbrg_heap[s->next_sbrg]->bogusLikelihoods, s->next_sbrg, real_result, real_error);
 	s->ifail=0;
 	break;
       }
@@ -691,22 +694,38 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   cw_sbrg->local_error *= rgnvol;
   cw_sbrg->local_result *= rgnvol;
 
-  //fprintf (stderr, "local result =%10.8f  and local error =%10.8f\n", cw_sbrg->local_result,cw_sbrg->local_error);
-
   free (x);
   free (null);
+
+  if ((cw_sbrg->local_result > 1e+15) || (cw_sbrg->local_result < 1e-15)) {
+#ifdef STUDYDB
+    if (cw_sbrg->bogusLikelihoods == 0) {
+      fprintf (stderr, "FATAL - DUMPING (%s:%d), extreme local_result of %g (w/error %g) encountered with %d global bogus likelihoods and %d local bogus likelihoods!\n",
+	       (__FILE__), (__LINE__), cw_sbrg->local_result, cw_sbrg->local_error, studyDB.bogusLikelihoods, cw_sbrg->bogusLikelihoods);
+      print_sbrg (cw_sbrg, s->ndim);
+      signal (SIGQUIT, SIG_DFL); // Restore the default handler
+      raise (SIGQUIT); // Make a core dump
+    }
+#else
+    fprintf (stderr, "FATAL - DUMPING (%s:%d), extreme local_result of %g (w/error %g) encountered!\n", (__FILE__), (__LINE__), cw_sbrg->local_result, cw_sbrg->local_error);
+    print_sbrg (cw_sbrg, s->ndim);
+    signal (SIGQUIT, SIG_DFL); // Restore the default handler
+    raise (SIGQUIT); // Make a core dump
+#endif
+  }
 
 #ifdef STUDYDB
 
   if (cw_sbrg->bogusLikelihoods == 0) {
-    fprintf (stderr, "Saving cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d\n",
-	     cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale);
+    fprintf (stderr, "Saving cw_sbrg->region_id: %d, cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d\n",
+	     cw_sbrg->region_id, cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale);
 
     tpl_pack (tn, 0);
     tpl_dump (tn, TPL_FILE, fileName);
     tpl_free (tn);
-    fprintf (stderr, "Exiting cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d\n",
-	   cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale);
+  } else {
+    fprintf (stderr, "NOT saving (because of %d bogus likelihoods) cw_sbrg->region_id: %d, cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d\n",
+	     cw_sbrg->bogusLikelihoods, cw_sbrg->region_id, cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale);
   }
 #endif
   return 0;

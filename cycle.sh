@@ -72,6 +72,7 @@ if test "$SMRTs" != "0" ; then
     Singles=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions set SingleModelRuntime = 999999 where StudyId = $StudyId AND PedTraitPosCM <> 9999.99 AND SingleModelRuntime IS NULL;")
 fi
 
+c=1
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
@@ -102,6 +103,8 @@ do
   done
   # Run the client to see if any splits occur
   qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+  cp br.out br.out.$c
+  c=$((c+1))
   grep WARNING br.out || { break; }
   # Get the new set of trait positions
   TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct a.RefTraitPosCM from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId AND a.RefTraitPosCM > 0.0;" | tr "\n" " ")

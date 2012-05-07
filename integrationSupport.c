@@ -624,7 +624,6 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     }
   }
   f[0] = avg_hetLR;
-
 }
 
 
@@ -2837,9 +2836,15 @@ void integrateMain ()
         if ((log10 (integral) + max_scale) > 8) {
 #ifdef STUDYDB
 	  if (studyDB.bogusLikelihoods == 0) {
+	    fprintf (stderr, "FATAL - DUMPING (%s:%d), extreme integral of %g encountered with %d global bogus likelihoods!\n",
+		     (__FILE__), (__LINE__), integral, studyDB.bogusLikelihoods);
 	    signal (SIGQUIT, SIG_DFL); // Restore the default handler
 	    raise (SIGQUIT); // Make a core dump
 	  }
+#else
+	  fprintf (stderr, "FATAL - DUMPING (%s:%d), extreme integral of %g encountered!\n", (__FILE__), (__LINE__), integral);
+	  signal (SIGQUIT, SIG_DFL); // Restore the default handler
+	  raise (SIGQUIT); // Make a core dump
 #endif
           ppl = 1.0;
 	} else
@@ -2852,7 +2857,7 @@ void integrateMain ()
       if (studyDB.bogusLikelihoods > 0) {
 	// There were bogus likelihoods for this position, note that in the output and zero count for next position.
 	fprintf (fpHet, "WARNING - The following position has not been completely analyzed!\n");
-	studyDB.bogusLikelihoods = 0;
+	studyDB.bogusLikelihoods = 0; // Reset for the next position.
       }
 #endif
       dk_writeMPBRData (posIdx, traitPos, ppl, integral, max_scale);
