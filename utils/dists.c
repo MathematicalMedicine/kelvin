@@ -761,7 +761,9 @@ double t_pdf_30 (double x, double degFree) {
 };
 
   double result;
+#ifdef USE_GSL
   double pdf;
+#endif
 
   // Handle bad data first
   if (degFree != 30) {

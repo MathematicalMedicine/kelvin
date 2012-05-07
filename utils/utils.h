@@ -18,6 +18,7 @@
 #define __UTILS_H__
 
 #include <stdio.h>
+#include <ctype.h>
 #include "sw.h"
 
 /**********************************************************************
