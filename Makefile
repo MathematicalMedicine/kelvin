@@ -13,16 +13,6 @@ BINDIR=~/mykelvin
 OWNER=root
 GROUP=root
 
-## Directories in which optional header files and libraries can be found (GSL,
-## etc). Remember you can specify these as command-line macros, e.g. at OSC:
-## $ make INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib
-ifndef LIBDIR
-  LIBDIR=/usr/local/lib
-endif
-ifndef INCDIR
-  INCDIR=/usr/local/include
-endif
-
 ## The C compiler to be used to build executables. Pick one.
 ## GCC (GNU C Compiler)
 CC := gcc
@@ -30,7 +20,7 @@ CC := gcc
 # CC := icc
 
 ## GCC optimization level, 0=none, 1=default, 2=some (recommended), 3=all
-GCCOPT := 2
+GCCOPT := 0
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
 # USE_OPENMP := yes
@@ -39,11 +29,11 @@ GCCOPT := 2
 ## INCDIR and LIBDIR (above) accordingly.
 USE_GSL := yes
 
-## Enable use of ptmalloc3. Don't forget to set LIBDIR (above) accordingly.
+## Enable use of ptmalloc3. Don't forget to set LIBDIR (below) accordingly.
 ## Not available on OSX.
 # USE_PTMALLOC3 := yes
 
-## Enable use of Hoard. Don't forget to set LIBDIR (above) accordingly.
+## Enable use of Hoard. Don't forget to set LIBDIR (below) accordingly.
 # USE_HOARD := yes
 
 ## Enable use of MySQL database for HLOD storage/retrieval/distributed processing.
@@ -52,6 +42,33 @@ USE_GSL := yes
 ##                                                     ##
 ## Should be no need to make changes beyond this point ##
 ##                                                     ##
+
+VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
+PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
+empty:=
+space:= $(empty) $(empty)
+PLATFORM = $(subst $(space),$(empty),$(PLATFORM_NAME))
+KVNLIBDIR := $(shell pwd)/lib
+KELVIN_ROOT := $(shell pwd)
+TEST_KELVIN := $(KELVIN_ROOT)/kelvin-$(VERSION)
+KELVIN_SCRIPT := $(KELVIN_ROOT)/Kelvin
+# If the build is occurring under cygwin, then we have to change the name of this binary due to Microsoft IDioT (Installer Detection Technology)
+ifeq ("$(findstring CYGWIN,$(PLATFORM))", "")
+  CALC_UPDATED_PPL := calc_updated_ppl
+else
+  CALC_UPDATED_PPL := calc_updtd_ppl
+endif
+SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/$(CALC_UPDATED_PPL)
+
+## Directories in which optional header files and libraries can be found (GSL,
+## etc). Remember you can specify these as command-line macros, e.g. at OSC:
+## $ make INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib
+ifndef LIBDIR
+  LIBDIR=/export/local/$(PLATFORM)/lib
+endif
+ifndef INCDIR
+  INCDIR=/usr/local/lib/include
+endif
 
 ABSBINDIR=$(shell echo $(BINDIR))
 
@@ -99,23 +116,6 @@ FILE_LDFLAGS += -lpthread
 ifeq ($(strip $(USE_HOARD)), yes)
   FILE_LDFLAGS += -lhoard
 endif
-
-VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
-PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
-empty:=
-space:= $(empty) $(empty)
-PLATFORM = $(subst $(space),$(empty),$(PLATFORM_NAME))
-KVNLIBDIR := $(shell pwd)/lib
-KELVIN_ROOT := $(shell pwd)
-TEST_KELVIN := $(KELVIN_ROOT)/kelvin-$(VERSION)
-KELVIN_SCRIPT := $(KELVIN_ROOT)/Kelvin
-# If the build is occurring under cygwin, then we have to change the name of this binary due to Microsoft IDioT (Installer Detection Technology)
-ifeq ("$(findstring CYGWIN,$(PLATFORM))", "")
-  CALC_UPDATED_PPL := calc_updated_ppl
-else
-  CALC_UPDATED_PPL := calc_updtd_ppl
-endif
-SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/$(CALC_UPDATED_PPL)
 
 # If we're building in an svn-managed context, get AND preserve the latest svn version
 SVNVERSION := $(subst exported,,$(shell svnversion 2>/dev/null))
