@@ -2834,18 +2834,20 @@ void integrateMain ()
       /* calculate imputed PPL and print the results */
       if (integral > 0.214) {
         if ((log10 (integral) + max_scale) > 8) {
+	  if (modelOptions->equilibrium != LINKAGE_DISEQUILIBRIUM) { // PPL of 1 is not unusual for LD runs.
 #ifdef STUDYDB
-	  if (studyDB.bogusLikelihoods == 0) {
-	    fprintf (stderr, "FATAL - DUMPING (%s:%d), extreme integral of %g encountered with %d global bogus likelihoods!\n",
-		     (__FILE__), (__LINE__), integral, studyDB.bogusLikelihoods);
+	    if (studyDB.bogusLikelihoods == 0) {
+	      fprintf (stderr, "FATAL - DUMPING (%s:%d), extreme integral of %g encountered with %d global bogus likelihoods!\n",
+		       (__FILE__), (__LINE__), integral, studyDB.bogusLikelihoods);
+	      signal (SIGQUIT, SIG_DFL); // Restore the default handler
+	      raise (SIGQUIT); // Make a core dump
+	    }
+#else
+	    fprintf (stderr, "FATAL - DUMPING (%s:%d), extreme integral of %g encountered!\n", (__FILE__), (__LINE__), integral);
 	    signal (SIGQUIT, SIG_DFL); // Restore the default handler
 	    raise (SIGQUIT); // Make a core dump
-	  }
-#else
-	  fprintf (stderr, "FATAL - DUMPING (%s:%d), extreme integral of %g encountered!\n", (__FILE__), (__LINE__), integral);
-	  signal (SIGQUIT, SIG_DFL); // Restore the default handler
-	  raise (SIGQUIT); // Make a core dump
 #endif
+	  }
           ppl = 1.0;
 	} else
           ppl = (integral * integral) / (-5.77 + 54 * integral + integral * integral);

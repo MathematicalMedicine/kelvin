@@ -64,12 +64,15 @@
 
 #include "dcuhre.h"
 #include "utils/utils.h"
+#include "config/model.h" // for LINKAGE_DISEQUILIBRIUM
+
 #ifdef STUDYDB
 #include "utils/tpl.h"
 #include "database/StudyDB.h"
 #include "database/databaseSupport.h"
 extern struct StudyDB studyDB;
 #endif
+
 extern double traitPos;
 
 #define checkpt() fprintf (stderr, "Checkpoint at line %d of file \"%s\"\n",__LINE__,__FILE__)
@@ -697,7 +700,8 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   free (x);
   free (null);
 
-  if ((cw_sbrg->local_result > 1e+15) || (cw_sbrg->local_result < 1e-15)) {
+  if ((modelOptions->equilibrium != LINKAGE_DISEQUILIBRIUM) && // PPLs of 1 are not unusual for LD runs
+      ((cw_sbrg->local_result > 1e+15) || (cw_sbrg->local_result < 1e-15))) {
 #ifdef STUDYDB
     if (cw_sbrg->bogusLikelihoods == 0) {
       fprintf (stderr, "FATAL - DUMPING (%s:%d), extreme local_result of %g (w/error %g) encountered with %d global bogus likelihoods and %d local bogus likelihoods!\n",
