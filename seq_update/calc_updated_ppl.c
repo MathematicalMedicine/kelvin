@@ -43,21 +43,23 @@
  * - mechanism for detecting missing D'/Theta combinations
  */
 
-#define DPRIME_COL 1
-#define THETA_COL  2
-#define LR_COL     3
-#define POS_COL    4
-#define PHYS_COL   5
-#define CHR_COL    6
+#define DPRIME_COL       1
+#define THETA_COL        2
+#define LR_COL           3
+#define POS_COL          4
+#define PHYS_COL         5
+#define CHR_COL          6
+#define SBR_PPL_COL      7
+#define SBR_PPL_ALD_COL  8
+#define SBR_PPLD_GL_COL  9
+#define SBR_PPLD_AL_COL 10
+#define MARKER_COL      11
 
 #define IPPL_CHR_COL    1
 #define IPPL_POS_COL    2
 #define IPPL_PPL_COL    3
 
-#define METH_OLD   1
-#define METH_NEW   2
-
-#define BUFFLEN 256
+#define BUFFLEN 1024
 /* Default prior for LD statistic calculations */
 #define DEFAULT_LEPRIOR 0.02
 /* the multipoint PPL for a BR of 0.214 */
@@ -87,6 +89,7 @@ typedef struct {
     physical_pos,
     holey_grid,
     two_point,
+    superbrs, 
     eof,
     datacolsize,
     *datacols;
@@ -100,6 +103,13 @@ typedef struct {
     *dprimes,
     *thetas;
 } st_data;
+
+typedef struct {
+  double linkage,     /* super BR for PPL */
+    l_allowing_ld,    /* super BR for PPL(LD) */
+    ld_given_l,       /* super BR for PPLD|L */
+    ld_allowing_l;    /* super BR for PPLD(L) */
+} st_superbrs;
 
 typedef LDVals st_ldvals;
 /* LDVals looks like this :
@@ -118,6 +128,7 @@ typedef struct {
 /* Defaults for varaiables that define the nature of the data */
 int sexspecific = 0;    /* -s or --sexspecific: sex-specific thetas */
 int multipoint = 0;     /* -m or --multipoint */
+int supertwopoint = 0;  /* -U or --super : expect Super BR two-point data */
 int okelvin = 0;        /* -o or --okelvin : expect original (fixed-grid) kelvin BR data */
 int relax = 0;          /* -r or --relax: don't compare marker names between files */
 int allstats = 0;       /* -a or --allstats: print all LD and iPPL stats */
@@ -125,15 +136,13 @@ int epistasis = 0;      /* -e or --epistasis: compute mean, rather than product,
 int quiet = 0;          /* -q or --quiet : suppress non-fatal warnings */
 
 /* Defaults for variables used in calculation of the statistics */
-double prior = 0.02;    /* -p or --prior: prior probability */
+double prior = DEFAULT_LEPRIOR;  /* -p or --prior: prior probability of linkage*/
 double weight = 0.95;   /* -w or --weight: weighting factor */
 double cutoff = 0.05;   /* -c or --cutoff: theta cutoff */
 // combined with leprior of 2%, the prior probability of LD would be 0.0004
+double ld_given_l_prior = 0.02;
 double ldpriorSmallTheta = 0.021;
 double ldpriorBigTheta = 0.0011;
-// prior probability of LD set at 10^-7
-//double ldpriorSmallTheta = 0.021 /4 * 0.001;
-//double ldpriorBigTheta = 0.0011 /4 * 0.001;
 
 
 /* For input BRs with fake Chr/cM info, force the output to use Chr/cM from the optional map */
@@ -144,6 +153,7 @@ FILE *pplout = NULL;    /* --pplout: file to which to write PPL results */
 FILE *partout = NULL;   /* --partout: file to which to write partial results */
 FILE *bfout = NULL;     /* --bfout: file to which bayes factors will be written */
 FILE *sixout = NULL;    /* --sixout: file to which six-region (ldval) values will be written */
+FILE *superout = NULL;  /* --superout: file to which to write super BRs */
 
 /* For option input files, the filenames are global */
 char *pplinfile=NULL;   /* --pplin: file from which to read PPLs for use as position-
@@ -164,9 +174,13 @@ char *splitversion = "0.38.1";
 
 void kelvin_twopoint (st_brfile *brfiles, int numbrfiles);
 void kelvin_multipoint (st_brfile *brfiles, int numbrfiles);
+void super_twopoint (st_brfile *brfiles, int numbrfiles);
 void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles);
+void bucketize_ldval (int sampleno, double *sample, int lastidx, double lr, st_ldvals *ldval);
 void print_twopoint_headers (int no_ld, int physicalpos);
 void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_ldvals *ldval);
+void print_superbr_headers (int physicalpos);
+void print_superbr_stats (int physicalpos, st_brmarker *marker, st_superbrs *superbrs);
 void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas, st_data *data);
 void do_dkelvin_first_pass (st_brfile *brfile, st_data *data);
 /*
@@ -179,6 +193,7 @@ double calc_upd_ppl (st_ldvals *ldval);
 double calc_upd_ppl_allowing_ld (st_ldvals *ldval, double leprior);
 double calc_upd_ppld_given_linkage (st_ldvals *ldval, double leprior);
 double calc_upd_ppld_allowing_l (st_ldvals *ldval, double leprior);
+void calc_super_brs (st_ldvals *ldval, st_superbrs *superbrs);
 
 int parse_command_line (int argc, char **argv);
 void usage ();
@@ -187,7 +202,7 @@ void open_brfile (st_brfile *brfile);
 void get_next_marker (st_brfile *brfile, st_data *data);
 int get_marker_line (st_brfile *brfile);
 int get_header_line (st_brfile *brfile);
-int get_data_line (st_brfile *brfile, st_data *data);
+int get_data_line (st_brfile *brfile, void *ptr);
 void print_partial_header (st_brfile *brfile);
 void print_partial_data (st_brfile *brfile, st_data *data);
 int compare_markers (st_brmarker *m1, st_brmarker *m2);
@@ -228,6 +243,8 @@ int main (int argc, char **argv)
 
   if (multipoint) {
     kelvin_multipoint (brfiles, numbrfiles);
+  } else if (supertwopoint) {
+    super_twopoint (brfiles, numbrfiles);
   } else if (okelvin) {
     kelvin_twopoint (brfiles, numbrfiles);
   } else {
@@ -246,6 +263,8 @@ int main (int argc, char **argv)
     fclose (partout);
   if (bfout != NULL)
     fclose (bfout);
+  if (sixout != NULL) 
+    fclose (sixout);
   exit (0);
 }
 
@@ -464,7 +483,7 @@ void kelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 
 void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 {
-  int fileno, ret, alldone, curno, howmany, warning=0, physicalpos=0;
+  int fileno, ret, alldone, curno, warning=0, physicalpos=0;
   char warnbuff[1024], chr[8];
   st_brmarker *marker;
   st_data data;
@@ -542,6 +561,101 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 }
 
 
+void super_twopoint (st_brfile *brfiles, int numbrfiles)
+{
+  int fileno, numcurrent, alldone, ret, physicalpos=0;
+  st_brmarker next_marker;
+  st_superbrs *superbrs, superupd;
+  st_mapmarker *mapptr;
+
+  if ((superbrs = calloc (numbrfiles, sizeof (st_superbrs))) == NULL) {
+    fprintf (stderr, "calloc failed, %s\n", strerror (errno));
+    exit (-1);
+  }
+  if (mapinfile != NULL)
+    physicalpos = map_has_physicalpos ();
+  
+  for (fileno = 0; fileno < numbrfiles; fileno++) {
+    get_header_line (&brfiles[fileno]);
+    compare_headers (&brfiles[0], &brfiles[fileno]);
+    if (brfiles[fileno].physical_pos && ! forcemap)
+      physicalpos = 1;
+    if ((ret = get_data_line (&brfiles[fileno], &superbrs[fileno])) != 1) {
+      fprintf (stderr, "ERROR - expected data, found %s at line %d in '%s'\n",
+	       (ret == 0) ? "EOF" : "something else", brfiles[fileno].lineno, brfiles[fileno].name);
+      exit (-1);
+    }
+  }
+  fprintf (superout, "# Version V%s\n", curversion);
+  print_superbr_headers (physicalpos);
+
+  while (1) {
+    if (mapinfile != NULL) {
+      if ((mapptr = next_mapmarker (NULL)) != NULL) {
+	strcpy (next_marker.chr, mapptr->chr);
+	strcpy (next_marker.name2, mapptr->name);
+	if (forcemap) {
+	  next_marker.avgpos = mapptr->avgpos;
+	  next_marker.malepos = mapptr->malepos;
+	  next_marker.femalepos = mapptr->femalepos;
+	  next_marker.basepair = mapptr->basepair;
+	}
+      } else {
+	break;
+      }
+    } else {
+      memcpy (&next_marker, &brfiles[0].curmarker, sizeof (st_brmarker));
+    }
+    superupd.linkage = superupd.ld_given_l = superupd.ld_allowing_l =
+      superupd.l_allowing_ld = 1.0;
+
+    numcurrent = 0;
+    alldone = 1;
+    for (fileno = 0; fileno < numbrfiles; fileno++) {
+      if (brfiles[fileno].eof) {
+	if (verbose >= 3)
+	  fprintf (stderr, "%s is at EOF\n", brfiles[fileno].name);
+	continue;
+      }
+      alldone = 0;
+      if (compare_markers (&next_marker, &brfiles[fileno].curmarker) == -1) {
+	if (mapinfile != NULL)
+	  continue;
+	fprintf (stderr, "marker mismatch at line %d in '%s', expecting %s, found %s\n",
+		 brfiles[fileno].lineno, brfiles[fileno].name, next_marker.name2,
+		 brfiles[fileno].curmarker.name2);
+	exit (-1);
+      }
+      numcurrent++;
+      if (physicalpos && next_marker.basepair == -1)
+	next_marker.basepair = brfiles[fileno].curmarker.basepair;
+      superupd.linkage *= superbrs[fileno].linkage;
+      superupd.l_allowing_ld *= superbrs[fileno].l_allowing_ld;
+      superupd.ld_given_l *= superbrs[fileno].ld_given_l;
+      superupd.ld_allowing_l *= superbrs[fileno].ld_allowing_l;
+      if ((ret = get_data_line (&brfiles[fileno], &superbrs[fileno])) != 1) {
+	if (ret != 0) {
+	  fprintf (stderr, "ERROR - expected data, found something else at line %d in '%s'\n",
+		   brfiles[fileno].lineno, brfiles[fileno].name);
+	  exit (-1);
+	}
+      }
+    }
+    if (alldone)
+      break;
+    if (numcurrent == 0) {
+      if (verbose >= 1)
+	fprintf (stderr, "WARNING: marker %s from %s doesn't appear in any BR files, skipping\n",
+		 next_marker.name2, mapinfile);
+      continue;
+    }
+    print_superbr_stats (physicalpos, &next_marker, &superupd);
+      
+  }
+  return;
+}
+
+
 void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 {
   int fileno, numcurrent, sampleno, alldone, ret, lastidx, ld=0, physicalpos=0;
@@ -551,6 +665,7 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
   st_mapmarker *mapptr;
   st_data data_0, data_n;
   st_ldvals ldval;
+  st_superbrs superbrs, superupd;
   st_brfile **current;
 
   memset (&next_marker, 0, sizeof (st_brmarker));
@@ -596,10 +711,15 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
       lastidx = 140;
     }
   }
-  fprintf (pplout, "# Version V%s\n", effective_version);
-  if (partout != NULL)
-    fprintf (partout, "# Version V%s\n", effective_version);
-  print_twopoint_headers (brfiles[0].no_ld, physicalpos);
+  if (superout == NULL) {
+    fprintf (pplout, "# Version V%s\n", effective_version);
+    if (partout != NULL)
+      fprintf (partout, "# Version V%s\n", effective_version);
+    print_twopoint_headers (brfiles[0].no_ld, physicalpos);
+  } else {
+    fprintf (superout, "#  Version V%s\n", effective_version);
+    print_superbr_headers (physicalpos);
+  }
 
   while (1) {
     if (mapinfile != NULL) {
@@ -650,73 +770,7 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 	printf (", %s", current[fileno]->name);
       printf ("\n");
     }
-    
-    if (partout != NULL)
-      print_partial_header (current[0]);
 
-    sampleno = 0;
-    memset (&ldval, 0, sizeof (st_ldvals));
-    while (get_data_line (current[0], &data_0) == 1) {
-      sample = compare_samples (&data_0, sampleno, current[0]);
-      for (fileno = 1; fileno < numcurrent; fileno++) {
-	if ((ret = get_data_line (current[fileno], &data_n)) != 1) {
-	  fprintf (stderr, "expected data in '%s' at line %d, found %s\n",
-		   current[fileno]->name, current[fileno]->lineno,
-		   (ret == 0) ? "end-of-file" : "marker line");
-	  exit (-1);
-	}
-	(void) compare_samples (&data_n, sampleno, current[fileno]);
-	if (! epistasis)
-	  data_0.lr *= data_n.lr;
-	else
-	  data_0.lr += data_n.lr;
-      }
-      if (epistasis)
-	data_0.lr /= (double) numcurrent;
-      if (partout != NULL)
-	print_partial_data (current[0], &data_0);
-
-      /* 'sample' is an 4-element array of doubles, the canonical values
-       * for the current dkelvin sample point. The 0th element is the D';
-       * the 1rst is the sex-avg theta; the 2nd is the DCUHRE weight; the
-       * 3rd is unused here.
-       */
-      if (! sexspecific) {
-	if (sampleno < 5) {
-	  ldval.le_small_theta += data_0.lr * sample[2];
-	} else if (sampleno < 10) {
-	  ldval.le_big_theta += data_0.lr * sample[2];
-	} else if (sampleno < lastidx){
-	  if (sample[1] < cutoff) {
-	    ldval.ld_small_theta += data_0.lr * sample[2];
-	  } else {
-	    ldval.ld_big_theta += data_0.lr * sample[2];
-	  }
-	} else {
-	  ldval.le_unlinked += data_0.lr * sample[2];
-	}
-      } else {
-	if (sample[0] < cutoff && sample[1] < cutoff) {
-	  /* both thetas are small */
-	  ldval.le_small_theta += data_0.lr * sample[2];
-	} else if (sample[0] > cutoff && sample[1] > cutoff) {
-	  /* both thetas are big */
-	  ldval.le_big_theta += data_0.lr * sample[2] * 0.81;
-	} else {
-	  /* one theta is big, one is small */
-	  ldval.le_big_theta += data_0.lr * sample[2] * 0.09;
-	}
-      }
-      sampleno++;
-    }
-    if (sexspecific)
-      ldval.le_big_theta /= 0.99;
-
-    ldval.le_small_theta *= weight;
-    ldval.ld_small_theta *= weight;
-    ldval.le_big_theta *= (1 - weight);
-    ldval.ld_big_theta *= (1 - weight);
-    
     if (forcemap) {
       strcpy (current[0]->curmarker.chr, mapptr->chr);
       current[0]->curmarker.avgpos = mapptr->avgpos;
@@ -724,7 +778,76 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
       current[0]->curmarker.femalepos = mapptr->femalepos;
       current[0]->curmarker.basepair = mapptr->basepair;
     }
-    print_twopoint_stats (current[0]->no_ld, physicalpos, &(current[0]->curmarker), &ldval);
+    if (partout != NULL)
+      print_partial_header (current[0]);
+
+    if (superout == NULL) {
+      /* Regular sequential update algorithm */
+      sampleno = 0;
+      memset (&ldval, 0, sizeof (st_ldvals));
+      while (get_data_line (current[0], &data_0) == 1) {
+	sample = compare_samples (&data_0, sampleno, current[0]);
+	for (fileno = 1; fileno < numcurrent; fileno++) {
+	  if ((ret = get_data_line (current[fileno], &data_n)) != 1) {
+	    fprintf (stderr, "expected data in '%s' at line %d, found %s\n",
+		     current[fileno]->name, current[fileno]->lineno,
+		     (ret == 0) ? "end-of-file" : "marker line");
+	    exit (-1);
+	  }
+	  (void) compare_samples (&data_n, sampleno, current[fileno]);
+	  if (! epistasis)
+	    data_0.lr *= data_n.lr;
+	  else
+	    data_0.lr += data_n.lr;
+	}
+	if (epistasis)
+	  data_0.lr /= (double) numcurrent;
+	if (partout != NULL)
+	  print_partial_data (current[0], &data_0);
+	
+	bucketize_ldval (sampleno, sample, lastidx, data_0.lr, &ldval);
+	sampleno++;
+      }
+      if (sexspecific)
+	ldval.le_big_theta /= 0.99;
+      
+      ldval.le_small_theta *= weight;
+      ldval.ld_small_theta *= weight;
+      ldval.le_big_theta *= (1 - weight);
+      ldval.ld_big_theta *= (1 - weight);
+      
+      print_twopoint_stats (current[0]->no_ld, physicalpos, &(current[0]->curmarker), &ldval);
+
+    } else {
+      /* Super Bayes Ratio sequential update algorithm */
+      superupd.linkage = superupd.ld_given_l = superupd.ld_allowing_l =
+	superupd.l_allowing_ld = 1.0;
+      for (fileno = 0; fileno < numcurrent; fileno++) {
+	sampleno = 0;
+	memset (&ldval, 0, sizeof (st_ldvals));
+	while ((ret = get_data_line (current[fileno], &data_0)) == 1) {
+	  sample = compare_samples (&data_0, sampleno, current[fileno]);
+	  bucketize_ldval (sampleno, sample, lastidx, data_0.lr, &ldval);
+	  sampleno++;
+	}
+	if (sampleno - 1 != lastidx) {
+ 	  fprintf (stderr, "expected data in '%s' at line %d, found %s\n",
+		   current[fileno]->name, current[fileno]->lineno,
+		   (ret == 0) ? "end-of-file" : "marker line");	
+	  exit (-1);
+	}
+	ldval.le_small_theta *= weight;
+	ldval.ld_small_theta *= weight;
+	ldval.le_big_theta *= (1 - weight);
+	ldval.ld_big_theta *= (1 - weight);
+	calc_super_brs (&ldval, &superbrs);
+	superupd.linkage *= superbrs.linkage;
+	superupd.l_allowing_ld *= superbrs.l_allowing_ld;
+	superupd.ld_given_l *= superbrs.ld_given_l;
+	superupd.ld_allowing_l *= superbrs.ld_allowing_l;
+      }
+      print_superbr_stats (physicalpos, &(current[0]->curmarker), &superupd);
+    }
 
     for (fileno = 0; fileno < numcurrent; fileno++) {
       if (&brfiles[0] == current[fileno]) {
@@ -758,6 +881,44 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 }
 
 
+void bucketize_ldval (int sampleno, double *sample, int lastidx, double lr, st_ldvals *ldval)
+{
+  /* 'sample' is an 4-element array of doubles, the canonical values
+   * for the current dkelvin sample point. The 0th element is the D';
+   * the 1rst is the sex-avg theta; the 2nd is the DCUHRE weight; the
+   * 3rd is unused here.
+   */
+
+  if (! sexspecific) {
+    if (sampleno < 5) {
+      ldval->le_small_theta += lr * sample[2];
+    } else if (sampleno < 10) {
+      ldval->le_big_theta += lr * sample[2];
+    } else if (sampleno < lastidx){
+      if (sample[1] < cutoff) {
+	ldval->ld_small_theta += lr * sample[2];
+      } else {
+	ldval->ld_big_theta += lr * sample[2];
+      }
+    } else {
+      ldval->le_unlinked += lr * sample[2];
+    }
+  } else {
+    if (sample[0] < cutoff && sample[1] < cutoff) {
+      /* both thetas are small */
+      ldval->le_small_theta += lr * sample[2];
+    } else if (sample[0] > cutoff && sample[1] > cutoff) {
+      /* both thetas are big */
+      ldval->le_big_theta += lr * sample[2] * 0.81;
+    } else {
+      /* one theta is big, one is small */
+      ldval->le_big_theta += lr * sample[2] * 0.09;
+    }
+  }
+  return;
+}
+
+
 void print_twopoint_headers (int no_ld, int physicalpos)
 {
   fprintf (pplout, "Chr Trait Marker Position%s", (physicalpos) ? " Physical" : "");
@@ -773,7 +934,7 @@ void print_twopoint_headers (int no_ld, int physicalpos)
       if (bfout != NULL)
 	fprintf (bfout, " PPL(LD) PPLD|L PPLD(L)\n");
     } else if (! allstats) {
-      fprintf (pplout, " PPLD(L) iPPL iPPLD(L)\n");
+      fprintf (pplout, " PPLD(L) iPPL cPPLD\n");
       if (bfout != NULL)
 	fprintf (bfout, " PPLD(L) cPPLD\n");
     } else {
@@ -830,6 +991,69 @@ void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_l
 	     marker->num, marker->name2, marker->avgpos, ldval->ld_small_theta,
 	     ldval->ld_big_theta, ldval->ld_unlinked, ldval->le_small_theta,
 	     ldval->le_big_theta, ldval->le_unlinked);
+  return;
+}
+
+
+void print_superbr_headers (int physicalpos)
+{
+  fprintf (superout, "Chr Marker Position%s PPL", (physicalpos) ? " Physical" : "");
+  if (pplinfile == NULL) {
+    fprintf (superout, " PPL(LD) PPLD|L PPLD(L) SBR-PPL SBR-PPL(LD) SBR-PPLD|L SBR-PPLD(L)\n");
+  } else if (! allstats) {
+    fprintf (superout, " PPLD(L) iPPL cPPLD SBR-PPL SBR-PPLD(L)\n");
+  } else {
+    fprintf (superout, " PPL(LD) PPLD|L PPLD(L) iPPL cPPLD SBR-PPL SBR-PPL(LD) SBR-PPLD|L SBR-PPLD(L)\n");
+  }
+  return;
+}
+
+
+void print_superbr_stats (int physicalpos, st_brmarker *marker, st_superbrs *superbrs)
+{
+  double ppl;
+  double ldstat;
+  double leprior;
+
+  fprintf (superout, "%s %s %.4f", marker->chr, marker->name2, marker->avgpos);
+  if (physicalpos)
+    fprintf (superout, " %ld", marker->basepair);
+
+  /* calculate PPL */
+  ppl = (prior * superbrs->linkage) / (prior * superbrs->linkage + (1 - prior));
+  fprintf (superout, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl, 3));
+    
+  if (pplinfile == NULL || allstats) {
+    /* calculate PPL(LD) */
+    ldstat = (prior * superbrs->l_allowing_ld) / (prior * superbrs->l_allowing_ld + (1 - prior));
+    fprintf (superout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+
+    /*calculate PPLD|L */
+    ldstat = (ld_given_l_prior * superbrs->ld_given_l) /
+      (ld_given_l_prior * superbrs->ld_given_l + (1 - ld_given_l_prior));
+    fprintf (superout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+  }
+
+  /* calculate PPLD(L) */
+  ldstat = (ld_given_l_prior * prior * superbrs->ld_allowing_l) / 
+    (ld_given_l_prior * prior * superbrs->ld_allowing_l + (1 - ld_given_l_prior * prior));
+  fprintf (superout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+  
+  if (pplinfile != NULL) {
+    /* calculate iPPL and cPPLD (which is PPLD(L) with iPPL as leprior) */
+    if ((leprior = iplist_interpolate (&ippl, marker->chr, marker->avgpos)) < MIN_PRIOR)
+      leprior = MIN_PRIOR;
+    ldstat = (ld_given_l_prior * leprior * superbrs->ld_allowing_l) / 
+      (ld_given_l_prior * leprior * superbrs->ld_allowing_l + (1 - ld_given_l_prior * leprior));
+    fprintf (superout, " %.4f %.*f", leprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+  }
+
+  fprintf (superout, " %.6e", superbrs->linkage);
+  if (pplinfile == NULL || allstats)
+    fprintf (superout, " %.6e %.6e", superbrs->l_allowing_ld, superbrs->ld_given_l);
+  fprintf (superout, " %.6e", superbrs->ld_allowing_l);
+
+  fprintf (superout, "\n");
   return;
 }
 
@@ -1247,6 +1471,50 @@ double calc_upd_ppld_allowing_l (st_ldvals *ldval, double leprior)
 }
 
 
+void calc_super_brs (st_ldvals *ldval, st_superbrs *superbrs)
+{
+  double numerator;
+  double denominator;
+  double super_br;
+
+  /* Super BR for PPL */
+   numerator = 
+     ldval->le_small_theta * prior +
+     ldval->le_big_theta * prior;
+   superbrs->linkage = numerator / prior;
+
+  /* Super BR for PPL(LD) */
+  numerator =
+    ldval->ld_small_theta * prior * ldpriorSmallTheta + 
+    ldval->ld_big_theta * prior * ldpriorBigTheta+ 
+    ldval->le_small_theta * prior * (1-ldpriorSmallTheta) + 
+    ldval->le_big_theta * prior * (1-ldpriorBigTheta);
+  superbrs->l_allowing_ld = numerator / prior;
+
+  /* Super BR for PPLD|L */
+  numerator =
+    ldval->ld_small_theta * prior * ldpriorSmallTheta + 
+    ldval->ld_big_theta * prior * ldpriorBigTheta;
+  denominator =
+    ldval->le_small_theta * prior * (1-ldpriorSmallTheta) + 
+    ldval->le_big_theta * prior * (1-ldpriorBigTheta);
+  superbrs->ld_given_l = ((1 - ld_given_l_prior) / ld_given_l_prior) * (numerator / denominator);
+
+  /* Super BR for PPLD(L) */
+  numerator =
+    ldval->ld_small_theta * prior * ldpriorSmallTheta +
+    ldval->ld_big_theta * prior * ldpriorBigTheta; 
+  denominator =
+    ldval->le_small_theta * prior * (1-ldpriorSmallTheta) + 
+    ldval->le_big_theta * prior * (1-ldpriorBigTheta) + 
+    ldval->le_unlinked * (1 - prior);
+  superbrs->ld_allowing_l = ((1 - prior * ld_given_l_prior) / (prior * ld_given_l_prior)) * 
+    (numerator / denominator);
+  
+ return ;
+}
+
+
 #define OPT_SEXSPEC   1
 #define OPT_MULTI     2
 #define OPT_RELAX     3
@@ -1265,11 +1533,13 @@ double calc_upd_ppld_allowing_l (st_ldvals *ldval, double leprior)
 #define OPT_HELP     16
 #define OPT_EPI      17
 #define OPT_PPLOUT   18
+#define OPT_SUPEROUT 19
+#define OPT_SUPER    20
 
 int parse_command_line (int argc, char **argv)
 {
   int arg, long_arg, long_idx;
-  char *partoutfile=NULL, *bfoutfile=NULL, *sixoutfile=NULL, *pploutfile=NULL;
+  char *partoutfile=NULL, *bfoutfile=NULL, *sixoutfile=NULL, *pploutfile=NULL, *superoutfile=NULL;
   struct stat statbuf;
 
 #ifdef __GNU_LIBRARY__
@@ -1291,11 +1561,13 @@ int parse_command_line (int argc, char **argv)
 			      { "help", 0, &long_arg, OPT_HELP },
 			      { "epistasis", 0, &long_arg, OPT_EPI },
 			      { "pplout", 1, &long_arg, OPT_PPLOUT },
+			      { "superout", 1, &long_arg, OPT_SUPEROUT },
+			      { "super", 1, &long_arg, OPT_SUPER },
 			      { NULL, 0, NULL, 0 } };
   
-  while ((arg = getopt_long (argc, argv, "smraovp:w:c:P:M:O:f?eR:", cmdline, &long_idx)) != -1) {
+  while ((arg = getopt_long (argc, argv, "smraovp:w:c:P:M:O:f?eR:S:U", cmdline, &long_idx)) != -1) {
 #else
-  while ((arg = getopt (argc, argv, "smraovp:w:c:P:M:O:f?eR:")) != EOF) {
+  while ((arg = getopt (argc, argv, "smraovp:w:c:P:M:O:f?eR:S:U")) != EOF) {
 #endif
 
     if (arg == 's') {
@@ -1331,6 +1603,10 @@ int parse_command_line (int argc, char **argv)
       epistasis = 1;
     } else if (arg == 'R') {
       pploutfile = optarg;
+    } else if (arg == 'S') {
+      superoutfile = optarg;
+    } else if (arg == 'U') {
+      supertwopoint = 1;
 
 #ifdef __GNU_LIBRARY__
     } else if (arg == 0 && long_arg == OPT_SEXSPEC) {
@@ -1370,6 +1646,10 @@ int parse_command_line (int argc, char **argv)
       epistasis = 1;
     } else if (arg == 0 && long_arg == OPT_PPLOUT) {
 	pploutfile = optarg;
+    } else if (arg == 0 && long_arg == OPT_SUPEROUT) {
+	superoutfile = optarg;
+    } else if (arg == 0 && long_arg == OPT_SUPER) {
+      supertwopoint = 1;
 #endif
 
     } else {
@@ -1382,6 +1662,44 @@ int parse_command_line (int argc, char **argv)
   if (prior < MIN_PRIOR) {
     fprintf (stderr, "WARNING: specified prior too small, fixing prior at %.4e\n", MIN_PRIOR);
     prior = MIN_PRIOR;
+  }
+
+  if (supertwopoint) {
+    if (sexspecific) {
+      fprintf (stderr, "%s: --sexspecific is nonsensical with --super\n", pname);
+      exit (-1);
+    }
+    if (multipoint) {
+      fprintf (stderr, "%s: --multipoint is nonsensical with --super\n", pname);
+      exit (-1);
+    }
+    if (okelvin) {
+      fprintf (stderr, "%s: --okelvin is nonsensical with --super\n", pname);
+      exit (-1);
+    }
+    if (epistasis) {
+      fprintf (stderr, "%s: --epistasis is unsupported with --super\n", pname);
+      exit (-1);
+    }
+    if (partoutfile != NULL) {
+      if (superoutfile == NULL)
+	superoutfile = partoutfile;
+      else 
+	fprintf (stderr, "%s: --partout is superfluous with --super and --superout, ignoring\n", pname);
+      partoutfile = NULL;
+    }
+    if (sixoutfile != NULL) {
+      fprintf (stderr, "%s: --sixout is nonsensical with --super\n", pname);
+      exit (-1);
+    }
+    if (bfoutfile != NULL) {
+      fprintf (stderr, "%s: --bfout is nonsensical with --super\n", pname);
+      exit (-1);
+    }
+  }
+  if (partoutfile != NULL && superoutfile != NULL) {
+    fprintf (stderr, "%s: --partoutfile is nonsensical with --superoutfile\n", pname);
+    exit (-1);
   }
 
   if ((multipoint) && (bfoutfile != NULL)) {
@@ -1419,13 +1737,6 @@ int parse_command_line (int argc, char **argv)
     exit (-1);
   }
 
-  /*
-  if (sexspecific && ! okelvin) {
-    fprintf (stderr, "%s: --sexspecific only works with --okelvin right now\n", pname);
-    exit (-1);
-  }
-  */
-
   if (partoutfile != NULL) {
     if (stat (partoutfile, &statbuf) != -1) {
       fprintf (stderr, "%s: won't open '%s' for writing, file exists\n", pname, partoutfile);
@@ -1433,6 +1744,18 @@ int parse_command_line (int argc, char **argv)
     }
     if ((partout = fopen (partoutfile, "w")) == NULL) {
       fprintf (stderr, "%s: open '%s' for writing failed, %s\n", pname, partoutfile,
+	       strerror (errno));
+      exit (-1);
+    }
+  }
+
+  if (superoutfile != NULL) {
+    if (stat (superoutfile, &statbuf) != -1) {
+      fprintf (stderr, "%s: won't open '%s' for writing, file exists\n", pname, superoutfile);
+      exit (-1);
+    }
+    if ((superout = fopen (superoutfile, "w")) == NULL) {
+      fprintf (stderr, "%s: open '%s' for writing failed, %s\n", pname, superoutfile,
 	       strerror (errno));
       exit (-1);
     }
@@ -1472,9 +1795,14 @@ int parse_command_line (int argc, char **argv)
 	       strerror (errno));
       exit (-1);
     }
-  } else 
+  }
+
+  if (supertwopoint && superoutfile == NULL) {
+    superout = stdout;
+  } else if (pploutfile == NULL) {
     pplout = stdout;
-  
+  }
+
   return (optind);
 }
 
@@ -1491,7 +1819,9 @@ void usage ()
   printf ("  -c <num>|--cutoff <num> : set small-Theta cutoff to <num>\n");
   printf ("  -w <num>|--wieght <num> : set small-Theta weight to <num>\n");
   printf ("  -M <mapfile>|--mapin <mapfile> : use mapfile to order markers\n");
+  printf ("  -f|--forcemap : force marker positions in output to input map\n");
   printf ("  -O <partfile>|--partout <partfile> : write updated Bayes Ratios to partfile\n");
+  printf ("  -S <superfile>|--superout <superfile> : write super Bayes Ratios to superfile\n");
   printf ("  -P <pploutfile>|--pplout <pploutfile> : write calculated PPLs to pploutfile\n");
   printf ("  -v|--verbose : verbose output\n");
   printf ("  -?|--help : display this help text\n");
@@ -1504,7 +1834,9 @@ void usage ()
   printf ("  -c <num> : set small-Theta cutoff to <num>\n");
   printf ("  -w <num> : set small-Theta weight to <num>\n");
   printf ("  -M <mapfile> : use mapfile to order markers\n");
+  printf ("  -f : force marker positions in output to input map\n");
   printf ("  -O <partfile> : write updated Bayes Ratios to partfile\n");
+  printf ("  -S <superfile> : write super Bayes Ratios to superfile\n");
   printf ("  -R <pploutfile> : write calculated PPLs to pploutfile\n");
   printf ("  -v : verbose output\n");
   printf ("  -? : display this help text\n");
@@ -1710,7 +2042,7 @@ int get_header_line (st_brfile *brfile)
   }
   brfile->lineno++;
   brfile->numcols = brfile->numdprimes = brfile->numthetas = brfile->no_ld = 
-    brfile->holey_grid = brfile->two_point = 0;
+    brfile->holey_grid = brfile->two_point = brfile->superbrs = 0;
 
   pa = (char *) strtok_r (buff, " \t\n", &pb);
   while (pa != NULL) {
@@ -1728,8 +2060,11 @@ int get_header_line (st_brfile *brfile)
       fprintf (stderr, "header '%s' has no identifying string before '('\n", token);
       exit (-1);
     }
-    
-    if ((pa = strchr (token, '(')) == NULL) {
+
+    /* Explicitly look for Super BR headers here, since they can include parenthesized
+     * expresssions that should _not_ be stripped off.
+     */
+    if ((pa = strchr (token, '(')) == NULL || strncasecmp (token, "SBR", 3) == 0) {
       actualcols = 1;
     } else {
       /* Some parenthesized expression */
@@ -1814,6 +2149,45 @@ int get_header_line (st_brfile *brfile)
       printf ("chromosome col\n");
 #endif
       
+    } else if (strcasecmp (token, "SBR-PPL") == 0) {
+      /* SuperBR-PPL column */
+      brfile->datacols[brfile->numcols - 1] = SBR_PPL_COL;
+      brfile->superbrs = 1;
+#ifdef DEBUG
+      printf ("SBR-PPL col\n");
+#endif
+      
+    } else if (strcasecmp (token, "SBR-PPL(LD)") == 0) {
+      /* SuperBR-PPL(LD) column */
+      brfile->datacols[brfile->numcols - 1] = SBR_PPL_ALD_COL;
+      brfile->superbrs = 1;
+#ifdef DEBUG
+      printf ("SBR-PPL(LD) col\n");
+#endif
+      
+    } else if (strcasecmp (token, "SBR-PPLD|L") == 0) {
+      /* SuperBR-PPLD|L column */
+      brfile->datacols[brfile->numcols - 1] = SBR_PPLD_GL_COL;
+      brfile->superbrs = 1;
+#ifdef DEBUG
+      printf ("SBR-PPLD|L col\n");
+#endif
+      
+    } else if (strcasecmp (token, "SBR-PPLD(L)") == 0) {
+      /* SuperBR-PPLD(L) column */
+      brfile->datacols[brfile->numcols - 1] = SBR_PPLD_AL_COL;
+      brfile->superbrs = 1;
+#ifdef DEBUG
+      printf ("SBR-PPLD(L) col\n");
+#endif
+      
+    } else if (strcasecmp (token, "Marker") == 0 || strcasecmp (token, "Name") == 0) {
+      /* SuperBR-PPLD(L) column */
+      brfile->datacols[brfile->numcols - 1] = MARKER_COL;
+#ifdef DEBUG
+      printf ("Marker col\n");
+#endif
+      
     } else {
       /* Something else */
       for (; actualcols > 0; actualcols--) 
@@ -1829,24 +2203,26 @@ int get_header_line (st_brfile *brfile)
     pa = (char *) strtok_r (NULL, " \t\n", &pb);
   }
 
-  if (numlrcols != 1) {
-    fprintf (stderr, "header at line %d in '%s' has no BR column\n", brfile->lineno,
-	     brfile->name);
-    exit (-1);
-  }
-
-  if (brfile->numdprimes == 0) {
-    /* If there's no D' columns, then we've got a non-LD run, so we set that flag */
-    brfile->no_ld = 1;
-    if (brfile->two_point) {
-      /* We need at least one dimension of D's for our 2-dimensional array of avgLRs,
-       * though, so we'll fake D' == 0 for every data line, and we need allocate
-       * space for our dummy D'.
-       */
-      brfile->numdprimes = 1;
+  if (! brfile->superbrs) {
+    if (numlrcols != 1) {
+      fprintf (stderr, "header at line %d in '%s' has no BR column\n", brfile->lineno,
+	       brfile->name);
+      exit (-1);
     }
-  } else if (brfile->numdprimes > 1) {
-    brfile->holey_grid = 1;
+    
+    if (brfile->numdprimes == 0) {
+      /* If there's no D' columns, then we've got a non-LD run, so we set that flag */
+      brfile->no_ld = 1;
+      if (brfile->two_point) {
+	/* We need at least one dimension of D's for our 2-dimensional array of avgLRs,
+	 * though, so we'll fake D' == 0 for every data line, and we need allocate
+	 * space for our dummy D'.
+	 */
+	brfile->numdprimes = 1;
+      }
+    } else if (brfile->numdprimes > 1) {
+      brfile->holey_grid = 1;
+    }
   }
 
 #ifdef DEBUG
@@ -1859,13 +2235,24 @@ int get_header_line (st_brfile *brfile)
 }
 
 
-int get_data_line (st_brfile *brfile, st_data *data)
+int get_data_line (st_brfile *brfile, void  *ptr)
 {
   char buff[BUFFLEN], *endptr=NULL;
   char *pa=NULL, *pb=NULL;
   long previous;
   int va = 0, dprimecnt=0, thetacnt=0;
   st_brmarker *marker;
+  st_data *data = NULL;
+  st_superbrs *superbrs = NULL;
+
+  /* When we're upating with SuperBRs, get_data_line is called with a pointer to a
+   * st_superbr structure, and st_data structures aren't used at all. Otherwise, the
+   * reverse is true.
+   */
+  if (brfile->superbrs)
+    superbrs = (st_superbrs *) ptr;
+  else
+    data = (st_data *) ptr;
 
   marker = &brfile->curmarker;
   if ((previous = ftell (brfile->fp)) == -1) {
@@ -1917,6 +2304,21 @@ int get_data_line (st_brfile *brfile, st_data *data)
     case CHR_COL:
       endptr = strcpy (marker->chr, pa);
       break;
+    case SBR_PPL_COL:
+      superbrs->linkage = strtod (pa, &endptr);
+      break;
+    case SBR_PPL_ALD_COL:
+      superbrs->l_allowing_ld = strtod (pa, &endptr);
+      break;
+    case SBR_PPLD_GL_COL:
+      superbrs->ld_given_l = strtod (pa, &endptr);
+      break;
+    case SBR_PPLD_AL_COL:
+      superbrs->ld_allowing_l = strtod (pa, &endptr);
+      break;
+    case MARKER_COL:
+      endptr = strcpy (marker->name2, pa);
+      break;
     }
     if (pa == endptr) {
       fprintf (stderr, "illegal data in line %d in '%s'\n", brfile->lineno, brfile->name);
@@ -1941,15 +2343,17 @@ int get_data_line (st_brfile *brfile, st_data *data)
     brfile->curmarker.basepair = -1;
 
 #ifdef DEBUG
-  printf ("%5d: chr %s, pos %6.4f, dprimes", brfile->lineno, marker->chr, marker->avgpos);
-  for (va = 0; va < dprimecnt; va++) {
-    printf (" %5.2f", data->dprimes[va]);
+  if (data != NULL) {
+    printf ("%5d: chr %s, pos %6.4f, dprimes", brfile->lineno, marker->chr, marker->avgpos);
+    for (va = 0; va < dprimecnt; va++) {
+      printf (" %5.2f", data->dprimes[va]);
+    }
+    printf (", thetas");
+    for (va = 0; va < thetacnt; va++) {
+      printf (" %5.2f", data->thetas[va]);
+    }
+    printf (", BR %8.6e, buff %lx, pa %lx, pb %lx\n", data->lr, buff, pa, pb);
   }
-  printf (", thetas");
-  for (va = 0; va < thetacnt; va++) {
-    printf (" %5.2f", data->thetas[va]);
-  }
-  printf (", BR %8.6e, buff %lx, pa %lx, pb %lx\n", data->lr, buff, pa, pb);
 #endif
 
   return (1);
@@ -2059,6 +2463,15 @@ void compare_headers (st_brfile *f1, st_brfile *f2)
   if (f1->numthetas != f2->numthetas) {
     fprintf (stderr, "header at line %d in '%s' has %d Theta columns, expected %d\n",
 	     f2->lineno, f2->name, f2->numthetas, f1->numthetas);
+    exit (-1);
+  }
+  if (f1->superbrs != f2->superbrs) {
+    if (f1->superbrs)
+      fprintf (stderr, "file '%s' contains %s data, expected SuperBR data\n", f2->name,
+	       (f2->two_point) ? "two-point" : "multipoint");
+    else
+      fprintf (stderr, "file '%s' contains SuperBR data, expected %s data\n", f2->name,
+	       (f1->two_point) ? "two-point" : "multipoint");
     exit (-1);
   }
   if (f1->two_point != f2->two_point) {
