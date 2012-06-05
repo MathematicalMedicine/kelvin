@@ -4,6 +4,8 @@
 #include <errno.h>
 #include <map.h>
 
+#define BUFFLEN          256
+
 st_mapchr *mapchrs = NULL;
 int nummapchrs = 0;
 int nextchridx=0, nextmarkeridx=0;

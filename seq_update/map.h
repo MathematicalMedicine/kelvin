@@ -1,6 +1,5 @@
 #ifndef _MAP_H
 
-#define BUFFLEN          256
 #define MAX_MAP_CHR_LEN    8
 #define MAX_MAP_NAME_LEN  32
 
