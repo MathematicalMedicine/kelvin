@@ -179,8 +179,8 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles);
 void bucketize_ldval (int sampleno, double *sample, int lastidx, double lr, st_ldvals *ldval);
 void print_twopoint_headers (int no_ld, int physicalpos);
 void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_ldvals *ldval);
-void print_superbr_headers (int physicalpos);
-void print_superbr_stats (int physicalpos, st_brmarker *marker, st_superbrs *superbrs);
+void print_superbr_headers (int physicalpos, int which);
+void print_superbr_stats (int physicalpos, int which, st_brmarker *marker, st_superbrs *superbrs);
 void do_first_pass (st_brfile *brfile, st_multidim *dprimes, st_multidim *thetas, st_data *data);
 void do_dkelvin_first_pass (st_brfile *brfile, st_data *data);
 /*
@@ -563,7 +563,7 @@ void kelvin_multipoint (st_brfile *brfiles, int numbrfiles)
 
 void super_twopoint (st_brfile *brfiles, int numbrfiles)
 {
-  int fileno, numcurrent, alldone, ret, physicalpos=0;
+  int fileno, numcurrent, alldone, ret, physicalpos=0, which;
   st_brmarker next_marker;
   st_superbrs *superbrs, superupd;
   st_mapmarker *mapptr;
@@ -586,8 +586,9 @@ void super_twopoint (st_brfile *brfiles, int numbrfiles)
       exit (-1);
     }
   }
+  which = brfiles[0].superbrs;
   fprintf (superout, "# Version V%s\n", curversion);
-  print_superbr_headers (physicalpos);
+  print_superbr_headers (physicalpos, which);
 
   while (1) {
     if (mapinfile != NULL) {
@@ -649,7 +650,7 @@ void super_twopoint (st_brfile *brfiles, int numbrfiles)
 		 next_marker.name2, mapinfile);
       continue;
     }
-    print_superbr_stats (physicalpos, &next_marker, &superupd);
+    print_superbr_stats (physicalpos, which, &next_marker, &superupd);
       
   }
   return;
@@ -658,7 +659,7 @@ void super_twopoint (st_brfile *brfiles, int numbrfiles)
 
 void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 {
-  int fileno, numcurrent, sampleno, alldone, ret, lastidx, ld=0, physicalpos=0;
+  int fileno, numcurrent, sampleno, alldone, ret, lastidx, ld=0, physicalpos=0, which=0;
   double *sample;
   char *effective_version;
   st_brmarker next_marker, *marker;
@@ -717,8 +718,11 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
       fprintf (partout, "# Version V%s\n", effective_version);
     print_twopoint_headers (brfiles[0].no_ld, physicalpos);
   } else {
+    which = (1 << SBR_PPL_COL) | (1 << SBR_PPLD_AL_COL);
+    if (pplinfile == NULL || allstats)
+      which |= (1 << SBR_PPL_ALD_COL) | (1 << SBR_PPLD_GL_COL);
     fprintf (superout, "#  Version V%s\n", effective_version);
-    print_superbr_headers (physicalpos);
+    print_superbr_headers (physicalpos, which);
   }
 
   while (1) {
@@ -846,7 +850,7 @@ void dkelvin_twopoint (st_brfile *brfiles, int numbrfiles)
 	superupd.ld_given_l *= superbrs.ld_given_l;
 	superupd.ld_allowing_l *= superbrs.ld_allowing_l;
       }
-      print_superbr_stats (physicalpos, &(current[0]->curmarker), &superupd);
+      print_superbr_stats (physicalpos, which, &(current[0]->curmarker), &superupd);
     }
 
     for (fileno = 0; fileno < numcurrent; fileno++) {
@@ -995,21 +999,25 @@ void print_twopoint_stats (int no_ld, int physicalpos, st_brmarker *marker, st_l
 }
 
 
-void print_superbr_headers (int physicalpos)
+void print_superbr_headers (int physicalpos, int which)
 {
-  fprintf (superout, "Chr Marker Position%s PPL", (physicalpos) ? " Physical" : "");
-  if (pplinfile == NULL) {
-    fprintf (superout, " PPL(LD) PPLD|L PPLD(L) SBR-PPL SBR-PPL(LD) SBR-PPLD|L SBR-PPLD(L)\n");
-  } else if (! allstats) {
-    fprintf (superout, " PPLD(L) iPPL cPPLD SBR-PPL SBR-PPLD(L)\n");
-  } else {
-    fprintf (superout, " PPL(LD) PPLD|L PPLD(L) iPPL cPPLD SBR-PPL SBR-PPL(LD) SBR-PPLD|L SBR-PPLD(L)\n");
-  }
+  fprintf (superout, "Chr Marker Position%s", (physicalpos) ? " Physical" : "");
+  fprintf (superout, "%s%s%s%s", (which & (1 << SBR_PPL_COL)) ? " PPL" : "", 
+	   (which & (1 << SBR_PPL_ALD_COL)) ? " PPL(LD)" : "", 
+	   (which & (1 << SBR_PPLD_GL_COL)) ? " PPLD|L" : "", 
+	   (which & (1 << SBR_PPLD_AL_COL)) ? " PPLD(L)" : "");
+  if (pplinfile != NULL)
+    fprintf (superout, " iPPL cPPLD");
+  fprintf (superout, "%s%s%s%s", (which & (1 << SBR_PPL_COL)) ? " SBR-PPL" : "", 
+	   (which & (1 << SBR_PPL_ALD_COL)) ? " SBR-PPL(LD)" : "", 
+	   (which & (1 << SBR_PPLD_GL_COL)) ? " SBR-PPLD|L" : "", 
+	   (which & (1 << SBR_PPLD_AL_COL)) ? " SBR-PPLD(L)" : "");
+  fprintf (superout, "\n");
   return;
 }
 
 
-void print_superbr_stats (int physicalpos, st_brmarker *marker, st_superbrs *superbrs)
+void print_superbr_stats (int physicalpos, int which, st_brmarker *marker, st_superbrs *superbrs)
 {
   double ppl;
   double ldstat;
@@ -1019,25 +1027,31 @@ void print_superbr_stats (int physicalpos, st_brmarker *marker, st_superbrs *sup
   if (physicalpos)
     fprintf (superout, " %ld", marker->basepair);
 
-  /* calculate PPL */
-  ppl = (prior * superbrs->linkage) / (prior * superbrs->linkage + (1 - prior));
-  fprintf (superout, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl, 3));
+  if (which & (1 << SBR_PPL_COL)) {
+    /* calculate PPL */
+    ppl = (prior * superbrs->linkage) / (prior * superbrs->linkage + (1 - prior));
+    fprintf (superout, " %.*f", ppl >= .025 ? 2 : 3, KROUND (ppl, 3));
+  }
     
-  if (pplinfile == NULL || allstats) {
+  if (which & (1 << SBR_PPL_ALD_COL)) {
     /* calculate PPL(LD) */
     ldstat = (prior * superbrs->l_allowing_ld) / (prior * superbrs->l_allowing_ld + (1 - prior));
     fprintf (superout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+  }
 
+  if (which & (1 << SBR_PPLD_GL_COL)) {
     /*calculate PPLD|L */
     ldstat = (ld_given_l_prior * superbrs->ld_given_l) /
       (ld_given_l_prior * superbrs->ld_given_l + (1 - ld_given_l_prior));
     fprintf (superout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
   }
 
-  /* calculate PPLD(L) */
-  ldstat = (ld_given_l_prior * prior * superbrs->ld_allowing_l) / 
-    (ld_given_l_prior * prior * superbrs->ld_allowing_l + (1 - ld_given_l_prior * prior));
-  fprintf (superout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+  if (which & (1 << SBR_PPLD_AL_COL)) {
+    /* calculate PPLD(L) */
+    ldstat = (ld_given_l_prior * prior * superbrs->ld_allowing_l) / 
+      (ld_given_l_prior * prior * superbrs->ld_allowing_l + (1 - ld_given_l_prior * prior));
+    fprintf (superout, " %.*f", ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
+  }
   
   if (pplinfile != NULL) {
     /* calculate iPPL and cPPLD (which is PPLD(L) with iPPL as leprior) */
@@ -1048,10 +1062,14 @@ void print_superbr_stats (int physicalpos, st_brmarker *marker, st_superbrs *sup
     fprintf (superout, " %.4f %.*f", leprior, ldstat >= .025 ? 2 : 4, KROUND (ldstat, 4));
   }
 
-  fprintf (superout, " %.6e", superbrs->linkage);
-  if (pplinfile == NULL || allstats)
-    fprintf (superout, " %.6e %.6e", superbrs->l_allowing_ld, superbrs->ld_given_l);
-  fprintf (superout, " %.6e", superbrs->ld_allowing_l);
+  if (which & (1 << SBR_PPL_COL))
+    fprintf (superout, " %.6e", superbrs->linkage);
+  if (which & (1 << SBR_PPL_ALD_COL))
+    fprintf (superout, " %.6e", superbrs->l_allowing_ld);
+  if (which & (1 << SBR_PPLD_GL_COL))
+    fprintf (superout, " %.6e", superbrs->ld_given_l);
+  if (which & (1 << SBR_PPLD_AL_COL))
+    fprintf (superout, " %.6e", superbrs->ld_allowing_l);
 
   fprintf (superout, "\n");
   return;
@@ -2152,7 +2170,7 @@ int get_header_line (st_brfile *brfile)
     } else if (strcasecmp (token, "SBR-PPL") == 0) {
       /* SuperBR-PPL column */
       brfile->datacols[brfile->numcols - 1] = SBR_PPL_COL;
-      brfile->superbrs = 1;
+      brfile->superbrs |= 1 << SBR_PPL_COL;
 #ifdef DEBUG
       printf ("SBR-PPL col\n");
 #endif
@@ -2160,7 +2178,7 @@ int get_header_line (st_brfile *brfile)
     } else if (strcasecmp (token, "SBR-PPL(LD)") == 0) {
       /* SuperBR-PPL(LD) column */
       brfile->datacols[brfile->numcols - 1] = SBR_PPL_ALD_COL;
-      brfile->superbrs = 1;
+      brfile->superbrs |= 1 << SBR_PPL_ALD_COL;
 #ifdef DEBUG
       printf ("SBR-PPL(LD) col\n");
 #endif
@@ -2168,7 +2186,7 @@ int get_header_line (st_brfile *brfile)
     } else if (strcasecmp (token, "SBR-PPLD|L") == 0) {
       /* SuperBR-PPLD|L column */
       brfile->datacols[brfile->numcols - 1] = SBR_PPLD_GL_COL;
-      brfile->superbrs = 1;
+      brfile->superbrs |= 1 << SBR_PPLD_GL_COL;
 #ifdef DEBUG
       printf ("SBR-PPLD|L col\n");
 #endif
@@ -2176,7 +2194,7 @@ int get_header_line (st_brfile *brfile)
     } else if (strcasecmp (token, "SBR-PPLD(L)") == 0) {
       /* SuperBR-PPLD(L) column */
       brfile->datacols[brfile->numcols - 1] = SBR_PPLD_AL_COL;
-      brfile->superbrs = 1;
+      brfile->superbrs |= 1 << SBR_PPLD_AL_COL;
 #ifdef DEBUG
       printf ("SBR-PPLD(L) col\n");
 #endif
@@ -2465,13 +2483,18 @@ void compare_headers (st_brfile *f1, st_brfile *f2)
 	     f2->lineno, f2->name, f2->numthetas, f1->numthetas);
     exit (-1);
   }
-  if (f1->superbrs != f2->superbrs) {
+  if (f1->superbrs == 0 != f2->superbrs == 0) {
     if (f1->superbrs)
       fprintf (stderr, "file '%s' contains %s data, expected SuperBR data\n", f2->name,
 	       (f2->two_point) ? "two-point" : "multipoint");
     else
       fprintf (stderr, "file '%s' contains SuperBR data, expected %s data\n", f2->name,
 	       (f1->two_point) ? "two-point" : "multipoint");
+    exit (-1);
+  }
+  if (f1->superbrs && f1->superbrs != f2->superbrs) {
+    fprintf (stderr, "file '%s' contains a different set of SuperBR than file '%s'\n", f2->name,
+	     f1->name);
     exit (-1);
   }
   if (f1->two_point != f2->two_point) {
