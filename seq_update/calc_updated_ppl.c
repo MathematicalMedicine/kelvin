@@ -600,6 +600,9 @@ void super_twopoint (st_brfile *brfiles, int numbrfiles)
 	  next_marker.malepos = mapptr->malepos;
 	  next_marker.femalepos = mapptr->femalepos;
 	  next_marker.basepair = mapptr->basepair;
+	} else {
+	  next_marker.avgpos = -1.0;
+	  next_marker.basepair = -1;
 	}
       } else {
 	break;
@@ -628,6 +631,8 @@ void super_twopoint (st_brfile *brfiles, int numbrfiles)
 	exit (-1);
       }
       numcurrent++;
+      if (next_marker.avgpos == -1.0)
+	next_marker.avgpos = brfiles[fileno].curmarker.avgpos;
       if (physicalpos && next_marker.basepair == -1)
 	next_marker.basepair = brfiles[fileno].curmarker.basepair;
       superupd.linkage *= superbrs[fileno].linkage;
@@ -1592,39 +1597,39 @@ int parse_command_line (int argc, char **argv)
       sexspecific = 1;
     } else if (arg == 'm') {
       multipoint = 1;
+    } else if (arg == 'U') {
+      supertwopoint = 1;
     } else if (arg == 'r') {
       relax = 1;
     } else if (arg == 'a') {
       allstats = 1;
     } else if (arg == 'o') {
       okelvin = 1;
-    } else if (arg == 'v') {
-      verbose++;
     } else if (arg == 'p') {
       prior = validate_double_arg (optarg, "-p");
-    } else if (arg == 'w') {
-      weight = validate_double_arg (optarg, "-w");
     } else if (arg == 'c') {
       cutoff = validate_double_arg (optarg, "-c");
-    } else if (arg == 'P') {
-      pplinfile = optarg;
+    } else if (arg == 'w') {
+      weight = validate_double_arg (optarg, "-w");
     } else if (arg == 'M') {
       mapinfile = optarg;
-    } else if (arg == 'O') {
-      partoutfile = optarg;
     } else if (arg == 'f') {
       forcemap = 1;
-    } else if (arg == '?') {
-      usage ();
-      exit (0);
+    } else if (arg == 'O') {
+      partoutfile = optarg;
     } else if (arg == 'e') {
       epistasis = 1;
     } else if (arg == 'R') {
       pploutfile = optarg;
     } else if (arg == 'S') {
       superoutfile = optarg;
-    } else if (arg == 'U') {
-      supertwopoint = 1;
+    } else if (arg == 'P') {
+      pplinfile = optarg;
+    } else if (arg == 'v') {
+      verbose++;
+    } else if (arg == '?') {
+      usage ();
+      exit (0);
 
 #ifdef __GNU_LIBRARY__
     } else if (arg == 0 && long_arg == OPT_SEXSPEC) {
@@ -1831,31 +1836,37 @@ void usage ()
 #ifdef __GNU_LIBRARY__
   printf ("  -s|--sexspecific : input data contains sex-specific Thetas\n");
   printf ("  -m|--multipoint : input data is multipoint\n");
-  printf ("  -o|--okelvin : input data is from original (fixed-grid) kelvin\n");
+  printf ("  -U|--super : input data is Super BR twopoint\n");
   printf ("  -r|--relax : suppress comparing marker names across input files\n");
+  printf ("  -a|--allstats : calculate all LD statistics when calculating cPPLD\n");
+  printf ("  -o|--okelvin : input data is from original (fixed-grid) kelvin\n");
   printf ("  -p <num>|--prior <num> : set linkage prior probability to <num>\n");
   printf ("  -c <num>|--cutoff <num> : set small-Theta cutoff to <num>\n");
   printf ("  -w <num>|--wieght <num> : set small-Theta weight to <num>\n");
   printf ("  -M <mapfile>|--mapin <mapfile> : use mapfile to order markers\n");
   printf ("  -f|--forcemap : force marker positions in output to input map\n");
   printf ("  -O <partfile>|--partout <partfile> : write updated Bayes Ratios to partfile\n");
+  printf ("  -R <pploutfile>|--pplout <pploutfile> : write calculated PPLs to pploutfile\n");
   printf ("  -S <superfile>|--superout <superfile> : write super Bayes Ratios to superfile\n");
-  printf ("  -P <pploutfile>|--pplout <pploutfile> : write calculated PPLs to pploutfile\n");
+  printf ("  -P <pplinfile>|--pplin <pplinfile> : calculate cPPLD using linkage PPLs in pplinfile\n");
   printf ("  -v|--verbose : verbose output\n");
   printf ("  -?|--help : display this help text\n");
 #else
   printf ("  -s : input data contains sex-specific Thetas\n");
   printf ("  -m : input data is multipoint\n");
-  printf ("  -o : input data is from original (fixed-grid) kelvin\n");
+  printf ("  -U : input data is Super BR twopoint\n");
   printf ("  -r : suppress comparing marker names across input files\n");
+  printf ("  -a : calculate all LD statistics when calculating cPPLD\n");
+  printf ("  -o : input data is from original (fixed-grid) kelvin\n");
   printf ("  -p <num> : set linkage prior probability to <num>\n");
   printf ("  -c <num> : set small-Theta cutoff to <num>\n");
   printf ("  -w <num> : set small-Theta weight to <num>\n");
   printf ("  -M <mapfile> : use mapfile to order markers\n");
   printf ("  -f : force marker positions in output to input map\n");
   printf ("  -O <partfile> : write updated Bayes Ratios to partfile\n");
-  printf ("  -S <superfile> : write super Bayes Ratios to superfile\n");
   printf ("  -R <pploutfile> : write calculated PPLs to pploutfile\n");
+  printf ("  -S <superfile> : write super Bayes Ratios to superfile\n");
+  printf ("  -P <pplinfile> : calculate cPPLD using linkage PPLs in pplinfile\n");
   printf ("  -v : verbose output\n");
   printf ("  -? : display this help text\n");
 #endif
