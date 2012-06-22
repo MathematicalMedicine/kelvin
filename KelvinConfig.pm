@@ -20,6 +20,7 @@ that are handled directly in the frontend.
 	$config->addDirective ($directive, $arg);
 	$config->setDirective ($directive, $arg);
 	$config->removeDirective ($directive);
+        $config->directives;
 	$config->legalDirective ($directive);
 	$config->write ($filename);
 	$config->write ($href);
@@ -363,6 +364,18 @@ sub setDirective
     return ($self->addDirective ($directive, $arg));
 }
 
+=over 2
+
+=item $bool = $config->removeDirective ($directive);
+
+Removes $directive completely frmothe configuration. Returns
+undef if $directive is illegal or is not present in the 
+configuration, or return 1 otherwise.
+
+=back 
+
+=cut
+
 sub removeDirective
 {
     my ($self, $directive) = @_;
@@ -379,6 +392,25 @@ sub removeDirective
     return (1);
 }
 
+=over 2
+
+=item $arrayref = $config->directives;
+
+Returns a reference to an array containing the canonical namesa
+of all the directives in the configuration.
+
+=back 
+
+=cut
+
+sub directives
+{
+    my ($self) = @_;
+    my $aref = [];
+
+    @$aref = (keys (%{$$self{directives}}));
+    return ($aref);
+}
 
 sub legalDirective
 {
