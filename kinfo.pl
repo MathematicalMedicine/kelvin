@@ -125,8 +125,8 @@ if ($pedigrees) {
 	foreach my $ind (@{$family->individuals}) {
 	    $gC++ if ($ind->{genotyped});
 	    $pC++ if (defined($ind->{phenotyped}));
-	    $aC++ if ($ind->{traits}[0] == $AFFECTED);
-	    $gaC++ if (($ind->{genotyped}) and ($ind->{traits}[0] == $AFFECTED));
+	    $aC++ if (defined($ind->{traits}[0]) and ($ind->{traits}[0] == $AFFECTED));
+	    $gaC++ if ($ind->{genotyped} and (defined($ind->{traits}[0]) and ($ind->{traits}[0] == $AFFECTED)));
 	}
 	print $gC."\t".$pC."\t".$aC."\t".$gaC."\n";
 	$families{$$family{pedid}} = $family;
