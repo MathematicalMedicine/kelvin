@@ -756,7 +756,7 @@ sub new
 		    }
 		} @arr[$markercol, $markercol+1];
 	    }
-	    $$ind{genotyped} = 1;
+	    $$ind{genotyped}++;
 	}
 	# Assign genotypes to the correct index in the individual's array of genotypes
 	$$ind{markers}[$idx] = [ $arr[$markercol], $arr[$markercol+1] ];
@@ -788,6 +788,7 @@ sub new_from_count
     for ($va = 0; $va < scalar (@{$$dataset{markerorder}}); $va++) {
 	if (exists ($$labelmap[$va]{$allele1}) && exists ($$labelmap[$va]{$allele2})) {
 	    $$ind{markers}[$va] = [@{$$labelmap[$va]}{($allele1, $allele2)}];
+	    $$ind{genotyped}++;
 	} else {
 	    $$ind{markers}[$va] = [0, 0];
 	}
@@ -820,7 +821,7 @@ sub map
     foreach $marker (@{$$newset{markerorder}}) {
 	if (exists ($$oldset{markers}{$marker})) {
 	    push (@{$$new{markers}}, [ @{$$self{markers}[$$oldset{markers}{$marker}{idx}]} ]);
-	    ($$new{markers}[-1][0] ne '0') and $$new{genotyped} = 1;
+	    ($$new{markers}[-1][0] ne '0') and $$new{genotyped}++;
 	} else {
 	    push (@{$$new{markers}}, [ 'x', 'x' ]);
 	}
