@@ -430,27 +430,29 @@ read_person (char *sPedfileName, int lineNo, char *pLine, Person * pPerson)
       ASSERT (numRet == 1, "Failed to get affection status on line %d in file %s",
 	       lineNo, sPedfileName);
 
-      if (modelType->trait == DT) {
-	/* If trait is dichotomous, validate affection status and convert to standard codes */
-	if (pPerson->ppOrigTraitValue[i][j] ==
-	    modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN])
-	  pPerson->ppTraitValue[i][j] = AFFECTION_STATUS_UNKNOWN;
-	else if (pPerson->ppOrigTraitValue[i][j] ==
-		 modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED]) {
-	  pPerson->ppTraitValue[i][j] = AFFECTION_STATUS_UNAFFECTED;
-	  pPerson->ppTraitKnown[i][j] = TRUE;
-	} else if (pPerson->ppOrigTraitValue[i][j] ==
-		   modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED]) {
-	  pPerson->ppTraitValue[i][j] = AFFECTION_STATUS_AFFECTED;
-	  pPerson->ppTraitKnown[i][j] = TRUE;
-	} else
-	  ERROR ("Pedfile %s, line %d: Pedigree %s, individual %s has illegal affection status code", sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID);
-      } else {
-	/* If trait is quantitative, we'll adjust it later on. For now, just copy over */
-	pPerson->ppTraitValue[i][j] = pPerson->ppOrigTraitValue[i][j];
-	if ((!isnan(pPerson->ppTraitValue[i][j])) &&
-	    (pPerson->ppTraitValue[i][j] != modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN]))
-	  pPerson->ppTraitKnown[i][j] = TRUE;
+      if (modelOptions->markerAnalysis == TRAITTOMARKER) {
+	if (modelType->trait == DT) {
+	  /* If trait is dichotomous, validate affection status and convert to standard codes */
+	  if (pPerson->ppOrigTraitValue[i][j] ==
+	      modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN])
+	    pPerson->ppTraitValue[i][j] = AFFECTION_STATUS_UNKNOWN;
+	  else if (pPerson->ppOrigTraitValue[i][j] ==
+		   modelOptions->affectionStatus[AFFECTION_STATUS_UNAFFECTED]) {
+	    pPerson->ppTraitValue[i][j] = AFFECTION_STATUS_UNAFFECTED;
+	    pPerson->ppTraitKnown[i][j] = TRUE;
+	  } else if (pPerson->ppOrigTraitValue[i][j] ==
+		     modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED]) {
+	    pPerson->ppTraitValue[i][j] = AFFECTION_STATUS_AFFECTED;
+	    pPerson->ppTraitKnown[i][j] = TRUE;
+	  } else
+	    ERROR ("Pedfile %s, line %d: Pedigree %s, individual %s has illegal affection status code", sPedfileName, lineNo, pPed->sPedigreeID, pPerson->sID);
+	} else {
+	  /* If trait is quantitative, we'll adjust it later on. For now, just copy over */
+	  pPerson->ppTraitValue[i][j] = pPerson->ppOrigTraitValue[i][j];
+	  if ((!isnan(pPerson->ppTraitValue[i][j])) &&
+	      (pPerson->ppTraitValue[i][j] != modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN]))
+	    pPerson->ppTraitKnown[i][j] = TRUE;
+	}
       }
       
       pLine = &pLine[pos];
