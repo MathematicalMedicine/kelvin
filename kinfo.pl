@@ -116,19 +116,47 @@ if ($pedigrees) {
     # Read, validate and describe the pedigrees
     my $family; my $totalInds;
 
-    print "Ped\tType\t#Ind\t#Fdr\t#Nfdr\t2N-F\t#Geno\t#Pheno\t#Aff\t#G+A\n";
+    my $pc=5; # Five percent
+    my $mc=(scalar(@{$$dataset{maporder}}) + 1) * $pc / 100;
+
+    print "Ped\tType\t#Ind\t#Fdr\t#Nfdr\t2N-F\t#Gen>$pc\%\t#Phen\t#Aff\t#G+A\t#Dum\n";
     while ($family = $dataset->readFamily) {
 	$$dataset{origfmt} = $$family{origfmt};
 	$totalInds += $$family{count};
-	printf $$family{pedid}."\t".sprintf("%7.7s\t%d\t%d\t%d\t%d\t",$family->pedtype, $$family{count}, $$family{founders}, $$family{nonfounders}, (2 * $$family{nonfounders}) - $$family{founders});
-	my ($gC, $pC, $aC, $gaC) = (0, 0, 0, 0);
+	my ($gC, $pC, $aC, $gaC, $dmC) = (0, 0, 0, 0, 0);
+	my @g = (); # List of individuals with a genotype for finding degenerate cases
 	foreach my $ind (@{$family->individuals}) {
-	    $gC++ if ($ind->{genotyped});
-	    $pC++ if (defined($ind->{phenotyped}));
+	    if ($ind->{genotyped} > $mc) {
+		$gC++;
+		push @g, $ind;
+	    }
 	    $aC++ if (defined($ind->{traits}[0]) and ($ind->{traits}[0] == $AFFECTED));
-	    $gaC++ if ($ind->{genotyped} and (defined($ind->{traits}[0]) and ($ind->{traits}[0] == $AFFECTED)));
+	    $pC++ if (defined($ind->{phenotyped}) and ($ind->{phenotyped} > 0));
+	    $gaC++ if ($ind->{genotyped} > $mc and (defined($ind->{traits}[0]) and ($ind->{traits}[0] == $AFFECTED)));
+	    $dmC++ if ($ind->{genotyped} <= $mc and ($ind->{phenotyped} == 0));
 	}
-	print $gC."\t".$pC."\t".$aC."\t".$gaC."\n";
+	# Identify two degenerate cases IN A NON-DESTRUCTIVE MANNER for later removal
+	# If these are a parent and child, call this a uninformative duo. If these are two parents and 
+	# a single child, call this an uninformative trio. Believe it or nuts this performs the fewest tests
+	# to determine both cases.
+	my $f=$family->pedtype;
+	if ($gC == 2 and
+	    ($g[0]->{momid} eq $g[1]->{indid} or $g[0]->{dadid} eq $g[1]->{indid} or
+	     $g[1]->{momid} eq $g[0]->{indid} or $g[1]->{dadid} eq $g[0]->{indid})) {
+	    $f = "ui-duo";
+	} elsif ($gC == 3 and
+		 ((($g[0]->{momid} eq $g[1]->{indid} and $g[0]->{dadid} eq $g[2]->{indid}) or
+		   ($g[0]->{momid} eq $g[2]->{indid} and $g[0]->{dadid} eq $g[1]->{indid})) or
+
+		  (($g[1]->{momid} eq $g[0]->{indid} and $g[1]->{dadid} eq $g[2]->{indid}) or
+		   ($g[1]->{momid} eq $g[2]->{indid} and $g[1]->{dadid} eq $g[0]->{indid})) or
+
+		  (($g[2]->{momid} eq $g[1]->{indid} and $g[2]->{dadid} eq $g[0]->{indid}) or
+		   ($g[2]->{momid} eq $g[0]->{indid} and $g[2]->{dadid} eq $g[1]->{indid})))) {
+	    $f = "ui-trio";
+	}
+	printf $$family{pedid}."\t".sprintf("%7.7s\t%d\t%d\t%d\t%d\t",$f, $$family{count}, $$family{founders}, $$family{nonfounders}, (2 * $$family{nonfounders}) - $$family{founders});
+	print $gC."\t".$pC."\t".$aC."\t".$gaC."\t".$dmC."\n";
 	$families{$$family{pedid}} = $family;
     }
     (defined ($family))
