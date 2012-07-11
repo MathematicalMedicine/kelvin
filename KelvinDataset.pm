@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use KelvinIO;
-use KelvinFamily 1.5;
+use KelvinFamily 1.6;
 #
 # KelvinDataset: an object for managing a Kelvin-compatible marker files
 # (marker map, frequencies, and locus files, and pedigree files).
@@ -45,10 +45,11 @@ sub new
     #   individualcache: cache for KelvinIndividuals when reading families
     #   pedwriteformat: 'pre' or 'post'
     #   unkallelesok: allow unknown alleles when reading pedfile
+    #   misordered: boolean, was marker order mismatch detected between map and locus
     
     @$self{qw/markers traits undefpheno maporder/} = ({}, {}, undef, []);
     @$self{qw/markerorder traitorder mapfields/} = ([], [], []);
-    @$self{qw/chromosome mapfunction writing consistent/} = (undef, 'kosambi', 0, 1);
+    @$self{qw/chromosome mapfunction writing consistent/} = (undef, 'default', 0, 1);
     @$self{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
     @$self{qw/pedigreefile pedfh pedlineno/} = (undef, undef, 0);
     @$self{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
@@ -104,7 +105,7 @@ sub copy
 
     @$new{qw/markers traits undefpheno maporder/} = ({}, {}, undef, []);
     @$new{qw/markerorder traitorder mapfields/} = ([], [], []);
-    @$new{qw/chromosome mapfunction writing consistent/} = (undef, 'kosambi', 0, 1);
+    @$new{qw/chromosome mapfunction writing consistent/} = (undef, 'default', 0, 1);
     @$new{qw/mapfile freqfile locusfile/} = (undef, undef, undef);
     @$new{qw/pedigreefile pedfh pedlineno/} = (undef, undef, 0);
     @$new{qw/mapread freqread locusread freqset/} = (0, 0, 0, 0);
@@ -218,7 +219,7 @@ sub readLocusfile
     my @traitorder = ();
     my %markers = ();
     my %traits = ();
-    my $lastpos = -1;
+    my $lastpos = -9999;
     my $misordered = $$self{misordered};
     my $idx;
     my $fh;
@@ -268,9 +269,15 @@ sub readLocusfile
 		($$self{markers}{$name}{avgpos} < $lastpos) and $misordered = 1;
 		$lastpos = $$self{markers}{$name}{avgpos};
 	    }
-	    if ($$self{freqread} && ! exists ($$self{markers}{$name}{alleles})) {
-		$errstr = "$$self{locusfile}, line $lineno: marker $name in did not appear in $$self{freqfile}";
-		return (undef);
+	    if ($$self{freqread}) {
+		if (! exists ($$self{markers}{$name}{alleles})) {
+		    $errstr = "$$self{locusfile}, line $lineno: marker $name in did not appear in $$self{freqfile}";
+		    return (undef);
+		}
+		if (! $$self{mapread}) {
+		    ($$self{markers}{$name}{avgpos} < $lastpos) and $misordered = 1;
+		    $lastpos = $$self{markers}{$name}{avgpos};
+		}
 	    }
 	    if (exists ($markers{$name})) {
 		$errstr = "$$self{locusfile}, line $lineno: marker $name appears more than once";
@@ -311,6 +318,8 @@ sub readFreqfile
     my $alleleno = 0;
     my $allelename = '';
     my $freq;
+    my $lastpos = -9999;
+    my $misordered = $$self{misordered};
     my $fh;
     
     if ($$self{freqread}) {
@@ -332,6 +341,7 @@ sub readFreqfile
 	$errstr = "open '$$self{freqfile}' failed, $!";
 	return (undef);
     }
+    (! $$self{mapread}) and $lastpos = 0;
 
     $$self{microsats} = 0;
     $$self{snps} = 0;
@@ -349,9 +359,16 @@ sub readFreqfile
 		}
 	    }
 	    push (@maporder, $marker = $1);
-	    if ($$self{mapread} && ! exists ($$self{markers}{$marker})) {
-		$errstr = "$$self{freqfile}, line $lineno: marker $marker in did not appear in $$self{mapfile}";
-		return (undef);
+	    if ($$self{mapread}) {
+		if (! exists ($$self{markers}{$marker})) {
+		    $errstr = "$$self{freqfile}, line $lineno: marker $marker in did not appear in $$self{mapfile}";
+		    return (undef);
+		}
+		($$self{markers}{$marker}{avgpos} >= $lastpos) or $misordered = 1;
+		$lastpos = $markers{$marker}{avgpos} = $$self{markers}{$marker}{avgpos};
+	    } else {
+		# If no map has been read, fake a cM position, for misorder detection.
+		$markers{$marker}{avgpos} = $lastpos++;
 	    }
 	    if (exists ($markers{$marker}{alleles})) {
 		$errstr = "$$self{freqfile}, line $lineno: marker $marker appears more than once";
@@ -403,16 +420,21 @@ sub readFreqfile
     (! $$self{mapread})
 	and @{$$self{maporder}} = @maporder;
     if ($$self{locusread}) {
+	$lastpos = -9999;
 	map {
 	    if (! exists ($markers{$_})) {
 		$errstr = "$$self{locusfile}: marker $_ does not appear in $$self{freqfile}";
 		return (undef);
 	    }
+	    ($lastpos < $markers{$marker}{avgpos}) or $misordered = 1;
+	    $lastpos = $markers{$marker}{avgpos};
 	} @{$$self{markerorder}};
     }
 
+    $$self{misordered} = $misordered;
     foreach $marker (keys (%markers)) {
 	$$self{markers}{$marker}{alleles} = $markers{$marker}{alleles};
+	($$self{mapread}) or $$self{markers}{$marker}{avgpos} = $markers{$marker}{avgpos};
     }
     $$self{freqread} = 1;
     return ($self);
@@ -427,7 +449,7 @@ sub readMapfile
     my $regex = '';
     my $lineno = 0;
     my $mapfunction;
-    my $origchr = undef;;
+    my $origchr = undef;
     my $lastpos = undef;
     my ($line, @arr);
     my $misordered = $$self{misordered};
@@ -455,8 +477,10 @@ sub readMapfile
     while ($line = $fh->getline (\$lineno)) {
 	($mapfunction) = ($line =~ /mapfunction=(\w+)/i) or last;
 	if ($mapfunction =~ /^hal/i) {
-	    $$self{mapfunction} = 'haldane';
-	} elsif ($mapfunction !~ /^kos/i) {
+	    $mapfunction = 'haldane';
+	} elsif ($mapfunction =~ /^kos/i) {
+	    $mapfunction = 'kosambi';
+	} else {
 	    $errstr = "$$self{mapfile}, line $lineno: unknown mapFunction '$mapfunction'";
 	    return (undef);
 	}
@@ -478,13 +502,20 @@ sub readMapfile
 	} elsif ($arr[$va] =~ /(basepair|bp|phys)/i) {
 	    push (@headers, "phys");
 	    $regex .= (($regex) ? '\s+' : '') . '(\d+)';
-	} elsif ($arr[$va] =~ /(sex|avg|ave|pos|kosambi)/i) {
+	} elsif ($arr[$va] =~ /(sex|avg|ave|pos)/i) {
 	    push (@headers, "avgpos");
+	    $regex .= (($regex) ? '\s+' : '') . '([\-\d\.]+(?:[eE][+\-]\d+)?)';
+	} elsif ($arr[$va] =~ /kosambi/i) {
+	    push (@headers, "avgpos");
+	    $$self{mapfunction} = 'kosambi';
 	    $regex .= (($regex) ? '\s+' : '') . '([\-\d\.]+(?:[eE][+\-]\d+)?)';
 	} elsif ($arr[$va] =~ /haldane/i) {
 	    push (@headers, "avgpos");
 	    $$self{mapfunction} = 'haldane';
 	    $regex .= (($regex) ? '\s+' : '') . '([\-\d\.]+(?:[eE][+\-]\d+)?)';
+	} elsif ($arr[$va] =~ /^seq/i) {
+	    push (@headers, "sequence");
+	    $regex .= (($regex) ? '\s+' : '') . '(\d+)';
 	} else {
 	    $errstr = "$$self{mapfile}, line $lineno: unknown column header '$arr[$va]'";
 	    return (undef);
@@ -494,6 +525,13 @@ sub readMapfile
     unless ($line =~ /chr/ && $line =~ /name/ && $line =~ /avgpos/) {
 	$errstr = "$$self{mapfile}, line $lineno: missing header for chromosome, marker name and/or position column";
 	return (undef);
+    }
+    if (defined ($mapfunction)) {
+	if ($$self{mapfunction} ne 'default' &&	$mapfunction ne $$self{mapfunction}) {
+	    $errstr = "$$self{mapfile}, explicit mapFunction '$mapfunction' conclicts with implied map function $$self{mapfunction}";
+	    return (undef);
+	}
+	$$self{mapfunction} = $mapfunction;
     }
 
     while ($line = $fh->getline (\$lineno)) {
@@ -521,7 +559,7 @@ sub readMapfile
     }
 
     if ($$self{locusread}) {
-	$lastpos = -1;
+	$lastpos = -9999;
 	map {
 	    if (! exists ($markers{$_})) {
 		$errstr = "$$self{locusfile}: marker $_ does not appear in $$self{mapfile}";
@@ -538,11 +576,14 @@ sub readMapfile
     }
     # This works because readFreqfile will load maporder if mapread is clear
     if ($$self{freqread}) {
+	$lastpos = -9999;
 	map {
 	    if (! exists ($markers{$_})) {
 		$errstr = "$$self{freqfile}: marker $_ does not appear in $$self{mapfile}";
 		return (undef);
 	    }
+	    ($markers{$_}{avgpos} < $lastpos) and $misordered = 1;
+	    $lastpos = $markers{$_}{avgpos};
 	} @{$$self{maporder}};
     }
     $$self{misordered} = $misordered;
@@ -745,7 +786,14 @@ sub writeMapfile
     my $va;
     my %headers = (chr => 'Chromosome', name => 'Marker',
 		   femalepos => 'FemalePosition', malepos => 'MalePosition',
-		   avgpos => 'Position', phys => 'Basepair');
+		   avgpos => 'Position', phys => 'Basepair',
+		   sequence => "Sequence");
+
+    if ($$self{mapfunction} eq 'haldane') {
+	$headers{avgpos} = 'Haldane';
+    } elsif ($$self{mapfunction} eq 'kosambi') {
+	$headers{avgpos} = 'Kosambi';
+    }
     
     ($$self{mapread}) or return (undef);
     if (defined ($arg)) {
@@ -784,8 +832,6 @@ sub writeMapfile
     }
     $$self{mapfile} = $mapfile;
 
-    ($$self{mapfunction} eq 'haldane')
-	and print (FH "mapFunction=haldane\n");
     print (FH join (' ', map { $headers{$_} } @{$$self{mapfields}}), "\n");
     foreach $marker (@{$$self{maporder}}) {
 	print (FH join (' ', map { $$self{markers}{$marker}{$_} } @{$$self{mapfields}}), "\n");
@@ -1077,6 +1123,19 @@ sub markerOrder
     return ($aref);
 }
 
+sub getMarker
+{
+    my ($self, $marker) = @_;
+    my $href = {};
+
+    unless (exists ($$self{markers}{$marker})) {
+	$errstr = "no marker '$marker' in dataset";
+	return (undef);
+    }
+    map { $$href{$_} = $$self{markers}{$marker}{$_} } @{$$self{mapfields}};
+    return ($href);
+}
+
 sub traitOrder 
 {
     my ($self) = @_;
@@ -1156,6 +1215,13 @@ sub freqread
     my ($self) = @_;
 
     return ($$self{freqread});
+}
+
+sub mapread
+{
+    my ($self) = @_;
+
+    return ($$self{mapread});
 }
 
 sub misordered
