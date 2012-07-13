@@ -1,14 +1,14 @@
 #!/usr/bin/perl -w
 use strict;
 use KelvinIO;
-use KelvinFamily 1.6;
+use KelvinFamily 1.5;
 #
 # KelvinDataset: an object for managing a Kelvin-compatible marker files
 # (marker map, frequencies, and locus files, and pedigree files).
 #
 package KelvinDataset;
 our $errstr='';
-our $VERSION=1.4;
+our $VERSION=1.5;
 
 our $ROUNDING_ERROR=0.001;
 
