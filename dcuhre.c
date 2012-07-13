@@ -720,16 +720,16 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
 
 #ifdef STUDYDB
 
-  if (cw_sbrg->bogusLikelihoods == 0) {
-    fprintf (stderr, "Saving cw_sbrg->region_id: %d, cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d\n",
-	     cw_sbrg->region_id, cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale);
+  if (cw_sbrg->bogusLikelihoods == 0 && (cw_sbrg->region_id != 0 || studyDB.bogusLikelihoods == 0)) {
+    fprintf (stderr, "Saving cw_sbrg->region_id: %d, cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d, studyDB.bogusLikelihoods: %d\n",
+	     cw_sbrg->region_id, cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale, studyDB.bogusLikelihoods);
 
     tpl_pack (tn, 0);
     tpl_dump (tn, TPL_FILE, fileName);
     tpl_free (tn);
   } else {
-    fprintf (stderr, "NOT saving (because of %d bogus likelihoods) cw_sbrg->region_id: %d, cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d\n",
-	     cw_sbrg->bogusLikelihoods, cw_sbrg->region_id, cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale);
+    fprintf (stderr, "NOT saving (because of %d regional or %d global bogus likelihoods) cw_sbrg->region_id: %d, cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d\n",
+	     cw_sbrg->bogusLikelihoods, studyDB.bogusLikelihoods, cw_sbrg->region_id, cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale);
   }
 #endif
   return 0;
