@@ -747,7 +747,7 @@ sub new
 		map {
 		    if (!exists ($$dataset{markers}{$marker}{alleles}{$_})) {
 			if ($$dataset{unkallelesok}) {
-			    $$dataset{markers}{$marker}{alleles}{$_} = $KelvinDataset::ROUNDING_ERROR;
+			    $$dataset{markers}{$marker}{alleles}{$_} = $KelvinDataset::ROUNDING_ERROR / 10;
 			    warn ("WARNING, adding allele $_ for marker $marker\n");
 			} else {
 			    $errstr = "$$dataset{pedigreefile}, line $$dataset{pedlineno}: individual $$ind{indid} has unknown allele $_ for $marker";
