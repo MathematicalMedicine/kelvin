@@ -6,7 +6,7 @@ use strict;
 #
 package KelvinFamily;
 our $errstr='';
-our $VERSION=1.5;
+our $VERSION=1.6;
 
 sub new
 {
@@ -654,7 +654,7 @@ sub individuals
 #
 package KelvinIndividual;
 our $errstr='';
-our $VERSION=1.3;
+our $VERSION=1.4;
 
 sub new
 {
@@ -887,6 +887,22 @@ sub getTrait
     }
     $idx = $$dataset{traits}{$trait}{idx};
     return ($$self{traits}[$idx]);
+}
+
+
+sub setGenotype
+{
+    my ($self, $marker, $aref) = @_;
+    my $dataset = $$self{dataset};
+    my $idx;
+
+    unless (exists ($$dataset{markers}{$marker})) {
+	$errstr = "no marker $marker in dataset";
+	return (undef)
+    }
+    $idx = $$dataset{markers}{$marker}{idx};
+    @{$$self{markers}[$idx]} = @$aref;
+    return (1);
 }
 
 # Genotypes are stored in array refs, so copy the values into a new array ref and
