@@ -1697,16 +1697,27 @@ int
 check_for_loop (Pedigree *pPed) {
 
   int tuple[256][3]; ///< Self, Mom, Dad
-  Person *pPerson;
+  Person *pPerson, *pDAD, *pMOM;
   int i, j, numPRs = 0, firstPR, secondPR, potentialPR, remainingPersons, removedSome,
     referenceCount;
 
   // Copy individual and parent indexes to a structure we can destroy.
   for (i = 0; i < pPed->numPerson; i++) {
     pPerson = pPed->ppPersonList[i];
-    tuple[i][0] = atoi(pPerson->sID);
-    tuple[i][1] = atoi(pPerson->sParentID[MOM]);
-    tuple[i][2] = atoi(pPerson->sParentID[DAD]);
+    pMOM = pPerson->pParents[MOM];
+    pDAD = pPerson->pParents[DAD];
+    tuple[i][0] = pPerson->personIndex+1;
+    if (pMOM == NULL){
+      tuple[i][1] = 0;
+    }else{
+      tuple[i][1] = pMOM->personIndex + 1;
+    }
+    if (pDAD == NULL){
+      tuple[i][2] = 0;
+    }else{
+      tuple[i][2] = pDAD->personIndex + 1;
+    }
+
     potentialPR = tuple[i][1] * 1000 + tuple[i][2];
     for (j = pPed->numPerson; j < (pPed->numPerson + numPRs); j++)
       if (tuple[j][0] == potentialPR) break;
@@ -1787,9 +1798,12 @@ check_for_loop (Pedigree *pPed) {
     pMB = messageBuffer;
     pPed->currentLoopFlag = 1;
     pMB += sprintf (pMB, "Pedigree %s, unbroken loop(s) found involving individuals ", pPed->sPedigreeID);
-    for (i = 0; i< pPed->numPerson; i++)
-      if (tuple[i][0] != 0)
-	pMB += sprintf(pMB, "%d ", tuple[i][0]);
+    for (i = 0; i< pPed->numPerson; i++){
+      pPerson = pPed->ppPersonList[i];
+      if (tuple[i][0] != 0){
+	pMB += sprintf(pMB, "%s ", pPerson->sID);
+      }
+    }
     WARNING ("%s", messageBuffer);
     free (messageBuffer);
     return (EXIT_FAILURE);
