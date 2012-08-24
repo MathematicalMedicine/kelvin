@@ -13,6 +13,7 @@
 #include "../utils/utils.h"
 #include "../utils/pageManagement.h"
 #include "../pedlib/pedlib.h"
+#include "../utils/sw.h"
 
 #ifdef STUDYDB
   #include "../database/StudyDB.h"
@@ -167,6 +168,8 @@ int set_affectionStatus (char **toks, int numtoks, void *unused);
 int set_study_parameters (char **toks, int numtoks, void *unused);
 int set_resultsprefix (char **toks, int numtoks, void *unused);
 
+int set_envDiag (char **toks, int numtoks, void *unused);
+
 int skip_analysis (char **toks, int numtoks, void *unused);
 int noop (char **toks, int numtoks, void *unused);
 
@@ -226,7 +229,23 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 
 				{"SkipEstimation", noop, NULL},
 				{"SkipPedCount", noop, NULL},
-				{"SkipAnalysis", skip_analysis, NULL}
+				{"SkipAnalysis", skip_analysis, NULL},
+
+                                // New arguments to set Diag Level 
+				{"DiagOVERALL",set_envDiag,NULL },
+				{"DiagLIKELIHOOD",set_envDiag,NULL },
+				{"DiagREAD_PEDFILE",set_envDiag,NULL },
+				{"DiagALLELE_SET_RECODING",set_envDiag,NULL },
+				{"DiagGENOTYPE_ELIMINATION",set_envDiag,NULL },
+				{"DiagPARENTAL_PAIR",set_envDiag,NULL },
+				{"DiagCONFIG",set_envDiag,NULL },
+				{"DiagINPUTFILE",set_envDiag,NULL },
+				{"DiagXM",set_envDiag,NULL },
+				{"DiagDCUHRE",set_envDiag,NULL },
+				{"DiagPOLYNOMIAL",set_envDiag,NULL },
+				{"DiagALTLSERVER",set_envDiag,NULL },
+				{"DiagMAX_DIAG_FACILITY",set_envDiag,NULL }
+
 };
 
 
@@ -908,9 +927,60 @@ int set_int (char **toks, int numtoks, void *field)
   value = (int) strtol (toks[1], &ptr, 10);
   if ((toks[1] == ptr) || (*ptr != '\0'))
     bail ("directive '%s' requires an integer argument\n", toks[0]);
+
   *((int *) field) = value;
+
   return (0);
 }
+
+int set_envDiag (char **toks, int numtoks, void *unused)
+{
+  int value;
+  char *ptr = NULL;
+
+  if (numtoks < 2)
+    bail ("missing integer argument to directive '%s'\n", toks[0]);
+  if (numtoks > 2)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  value = (int) strtol (toks[1], &ptr, 10);
+  if ((toks[1] == ptr) || (*ptr != '\0'))
+    bail ("directive '%s' requires an integer argument\n", toks[0]);
+
+
+ 
+  if ( strcmp(toks[0],"DiagOVERALL") ==0)
+    envDiagLevel[OVERALL]=value;
+  else if ( strcmp(toks[0],"DiagLIKELIHOOD") ==0)
+    envDiagLevel[LIKELIHOOD]=value;
+  else if ( strcmp(toks[0],"DiagREAD_PEDFILE") ==0)
+    envDiagLevel[READ_PEDFILE]=value;
+  else if ( strcmp(toks[0],"DiagALLELE_SET_RECODING") ==0)
+    envDiagLevel[ALLELE_SET_RECODING]=value;
+  else if ( strcmp(toks[0],"DiagGENOTYPE_ELIMINATION") ==0)
+    envDiagLevel[GENOTYPE_ELIMINATION]=value;
+  else if ( strcmp(toks[0],"DiagPARENTAL_PAIR") ==0)
+    envDiagLevel[PARENTAL_PAIR]=value;
+  else if ( strcmp(toks[0],"DiagCONFIG") ==0)
+    envDiagLevel[CONFIG]=value;
+  else if ( strcmp(toks[0],"DiagINPUTFILE") ==0)
+    envDiagLevel[INPUTFILE]=value;
+  else if ( strcmp(toks[0],"DiagXM") ==0)
+    envDiagLevel[XM]=value;
+  else if ( strcmp(toks[0],"DiagDCUHRE") ==0)
+    envDiagLevel[DCUHRE]=value;
+  else if ( strcmp(toks[0],"DiagPOLYNOMIAL") ==0)
+    envDiagLevel[POLYNOMIAL]=value;
+  else if ( strcmp(toks[0],"DiagALTLSERVER") ==0)
+    envDiagLevel[ALTLSERVER]=value;
+  else if ( strcmp(toks[0],"DiagMAX_DIAG_FACILITY") ==0)
+    envDiagLevel[MAX_DIAG_FACILITY]=value;
+  else
+    fprintf(stderr,"  No envDiag facilities");
+
+
+  return (0);
+}
+
 
 
 int set_traitPositions (char **toks, int numtoks, void *unused)
