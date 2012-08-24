@@ -208,6 +208,10 @@ typedef struct{
   int cur_diff_suc;
   int aim_diff_suc;  // Aiming number of success, which is set in integrationSupport.c
 
+  /*Consecutive runs with 0<= BR <=0.214  */
+  int cur_num_smallBR;
+  int aim_num_smallBR;  // Aiming number of success, which is set in integrationSupport.c
+
 } dcuhre_state;
 
 

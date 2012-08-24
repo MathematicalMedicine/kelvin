@@ -308,6 +308,11 @@ dadhre_ (dcuhre_state * s)
     }else{
       s->cur_diff_suc=0;
     }
+    if( (real_result <=0.214)&&(real_result >=0) ){
+      s->cur_num_smallBR ++;
+    }else{
+      s->cur_num_smallBR=0;
+    }
     //if ( s->error > s->epsabs) {    //this is for stopping criterion 
     //if ((s->error > s->epsrel *fabs(s->result)) && (s->error > s->epsabs)) {    
     //if ((s->diff_result[s->sbrgns - 1] > s->epsabs) && (s->error > s->epsabs)) { // before 5/18/2008
@@ -326,11 +331,11 @@ dadhre_ (dcuhre_state * s)
     if (
 	(s->sbrg_heap[s->next_sbrg]->bogusLikelihoods == 0) &&
 	(
-	 (real_result < 0.0) || ((real_error > s->epsabs) && (s->cur_diff_suc< s->aim_diff_suc) && (real_result >=0.214))
+	 (real_result < 0.0) || ((real_error > s->epsabs) && (s->cur_diff_suc< s->aim_diff_suc))// && (s->cur_num_smallBR< s->aim_num_smallBR) )
 	)
        ) { //short and consecutive 2*nlclass of diff(BR)< error_tol
 #else
-    if ( (real_result <0.0)||((real_error > s->epsabs)&&(s->cur_diff_suc< s->aim_diff_suc)&&(real_result >=0.214)) ){//short and consecutive 2*nlclass of diff(BR)< error_tol
+      if ( (real_result <0.0)||((real_error > s->epsabs)&&(s->cur_diff_suc< s->aim_diff_suc))){//&& (s->cur_num_smallBR< s->aim_num_smallBR))){//short and consecutive 2*nlclass of diff(BR)< error_tol
 #endif
       /*   If we are allowed to divide further, */
       /*   prepare to apply basic rule over each half of the */
