@@ -174,6 +174,8 @@ my %directives = (
 		  imprinting => {canon => 'Imprinting'},
 		  traitpositions => {canon => 'TraitPositions'},
 		  diseasealleles=> {canon => 'DiseaseAlleles'},
+		  progresslevel=> {canon => 'ProgressLevel'},
+		  progressdelayseconds=> {canon => 'ProgressDelaySeconds'},
 		  polynomialscale=> {canon => 'PolynomialScale'},
 		  nonpolynomial=> {canon => 'NonPolynomial'},
 		  fixedmodels => {canon => 'FixedModels'},
@@ -450,7 +452,7 @@ sub validate
 
     # Epistasis, EpistasisPedigreeFile and EpistatisLocusFile are mutually
     # dependent, and incompatible with LiabilityClasses
-    foreach $directive qw(Epistasis EpistasisPedigreeFile EpistasisLocusFile) {
+    foreach $directive (qw(Epistasis EpistasisPedigreeFile EpistasisLocusFile)) {
 	exists ($$self{directives}{$directive}) or next;
 	map {
 	    if (! exists ($$self{directives}{$_})) {
