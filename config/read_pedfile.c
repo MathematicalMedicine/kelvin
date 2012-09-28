@@ -118,6 +118,9 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
   int lastFlag = 0, i;
 #ifdef STUDYDB
   int regRet1, regRet2;
+  char *prevToken, *token;
+  int numtoken;
+  int sampleId;
 #endif
 
   /* Prepare to count the number of indiviuals in each liability class */
@@ -161,6 +164,24 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
       if(regRet1 != 0 || regRet2 == 0)
 	continue;
     }
+    // for server, under MCMC, we only want to read in pedigrees relevant to this server
+    // and only the sample ranges per the server configuration
+    // this is assuming pedname is now with trailing number indicating sample id
+    // e.g. ped15 15 now becomes 15.1 15.2... 15.1000 etc.
+    if(studyDB.MCMC_flag==1 && lastFlag==0 && toupper(studyDB.role[0])=='S'){
+      // parse out the sample id - last trailing number
+      token=strtok(sCurrPedLabel, ".");
+      if(token == NULL) continue;
+      numtoken=0;
+      while(token!=NULL){
+	numtoken++;
+	prevToken=token;
+        token=strtok(NULL, ".");
+      }
+      sampleId=atoi(prevToken);
+      if(numtoken==1 || sampleId<studyDB.sampleIdStart || sampleId>studyDB.sampleIdEnd) continue;
+    }
+
 #endif
     /* if this is not the first pedigree and it has a different pedigree
      * * Label than the previous one, it indicates a new pedigree starts now
