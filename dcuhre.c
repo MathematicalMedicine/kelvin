@@ -706,7 +706,7 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   free (null);
 
   if ((modelOptions->equilibrium != LINKAGE_DISEQUILIBRIUM) && // PPLs of 1 are not unusual for LD runs
-      ((cw_sbrg->local_result > 1e+15) || (cw_sbrg->local_result < 1e-15))) {
+      ((cw_sbrg->local_result > 1e+15) || (cw_sbrg->local_result < -1e+15))) {
 #ifdef STUDYDB
     if (cw_sbrg->bogusLikelihoods == 0) {
       fprintf (stderr, "FATAL - DUMPING (%s:%d), extreme local_result of %g (w/error %g) encountered with %d global bogus likelihoods and %d local bogus likelihoods!\n",
