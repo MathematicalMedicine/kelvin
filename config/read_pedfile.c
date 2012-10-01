@@ -118,6 +118,7 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
   int lastFlag = 0, i;
 #ifdef STUDYDB
   int regRet1, regRet2;
+  char sCurrPedLabel_tmp[MAX_PED_LABEL_LEN];
   char *prevToken, *token;
   int numtoken;
   int sampleId;
@@ -169,8 +170,9 @@ read_pedfile (char *sPedfileName, PedigreeSet * pPedigreeSet)
     // this is assuming pedname is now with trailing number indicating sample id
     // e.g. ped15 15 now becomes 15.1 15.2... 15.1000 etc.
     if(studyDB.MCMC_flag==1 && lastFlag==0 && toupper(studyDB.role[0])=='S'){
+      strcpy(sCurrPedLabel_tmp, sCurrPedLabel);
       // parse out the sample id - last trailing number
-      token=strtok(sCurrPedLabel, ".");
+      token=strtok(sCurrPedLabel_tmp, ".");
       if(token == NULL) continue;
       numtoken=0;
       while(token!=NULL){
