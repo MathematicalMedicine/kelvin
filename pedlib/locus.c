@@ -335,7 +335,7 @@ read_datafile (char *sDatafileName)
   TraitLocus *pTraitLocus = NULL;
   Trait *pTrait;
   int locusType;		/* temporary place holder */
-  double lastMapPos = -100.0;
+  double lastMapPos = -10000.0;
   char sLocusName[MAX_LINE_LEN];
   char sLocusType[MAX_LINE_LEN];
 
@@ -366,7 +366,7 @@ read_datafile (char *sDatafileName)
       ASSERT (pMapUnit != NULL,
 	       "Can't find marker %s in map", pLocus->sName);
       ASSERT (pMapUnit->mapPos[0] >= lastMapPos,
-	      "Pedigree file locus %s is not in map order", pLocus->sName);
+	      "Pedigree file locus %s is not in map order (current position: %G, last position: %G)", pLocus->sName, pMapUnit->mapPos[0], lastMapPos);
       lastMapPos = pMapUnit->mapPos[0];
       pLocus->pMapUnit = pMapUnit;
     } else if (!strcasecmp (sLocusType, "C")) {
