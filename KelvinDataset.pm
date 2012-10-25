@@ -19,10 +19,13 @@ sub new
     
     # Initialize the fields: 
     #   markers: a hash of all markers in the set, indexed by name
+    #     each marker value is a ref to a hash with keys 'idx', 'col', one key for
+    #     each map header in 'mapfields', and maybe 'alleles'
     #   traits: a hash or all traits/liability classes, indexed by name
     #   undefpheno: a value for undefined phenotypes that can be set by the user
     #   maporder: a list of markernames, ordered according to the map file
     #   markerorder: a list of markernames, ordered according to the locus file
+    #     TODO: since the addition of misordering detection, maporder and markerorder are redundant
     #   traitorder: a list of traits/liability classes, ordered according to the locus file
     #   mapfields: a list of the fields that appeared in the map
     #   chromosome: the chromosome number from the map file
@@ -490,7 +493,7 @@ sub readMapfile
 	if ($arr[$va] =~ /^chr/i) {
 	    push (@headers, "chr");
 	    $regex .= (($regex) ? '\s+' : '') . '(?:chr)?(\d+)';
-	} elsif ($arr[$va] =~ /(name|marker)/i) {
+	} elsif ($arr[$va] =~ /^(name|marker)/i) {
 	    push (@headers, "name");
 	    $regex .= (($regex) ? '\s+' : '') . '(\S+)';
 	} elsif ($arr[$va] =~ /female/i) {
@@ -720,6 +723,89 @@ sub addTrait
 	$$self{traits}{$$self{traitorder}[$idx]}{idx} = $idx;
 	$idx++;
     }
+    $$self{consistent} = 0;
+    return (1);
+}
+
+sub deleteTrait
+{
+    my ($self, $trait) = @_;
+    my $idx;
+
+    if (! exists ($$self{traits}{$trait})) {
+	$errstr = "trait '$trait' does not exist in dataset";
+	return (undef);
+    }
+    $idx = $$self{traits}{$trait}{idx};
+    splice (@{$$self{traitorder}}, $idx, 1);
+    delete ($$self{traits}{$trait});
+    for (; $idx < scalar (@{$$self{traitorder}}); $idx++) {
+	$$self{traits}{$$self{traitorder}[$idx]}{idx} = $idx;
+    }
+    return (1);
+}
+
+sub addMarker
+{
+    my ($self, $marker, $mapref, $freqref) = @_;
+    my $href = { col => undef, idx => -1 };
+    my $markers = $$self{markers};
+    my $maporder = $$self{maporder};
+    my $mapfields;
+    my $header;
+    my $insertpos;
+    my ($start, $end, $mid);
+
+    if (exists ($$self{markers}{$marker})) {
+	$errstr = "marker '$marker' already exists in dataset";
+	return (undef);
+    }
+
+    # Make sure the keys in $mapref are valid for the current dataset
+    $self->validateMapfields ([keys (%$mapref)])
+	or return (undef);
+    @$href{keys (%$mapref)} = @$mapref{keys (%$mapref)};
+    
+    # If a freq file had been read, validate the contents of $freqref
+    if ($$self{freqread}) {
+	if (! defined ($freqref) || ref ($freqref) ne "HASH") {
+	    $errstr = "no allele frequencies were provided";
+	    return (undef);
+	} elsif (! $self->validateAlleleFreqs ($marker, $freqref)) {
+	    return (undef);
+	}
+	$$href{alleles} = {};
+	@{$$href{alleles}}{keys (%$freqref)} = @$freqref{keys (%$freqref)};
+    }
+
+    # Locate the correct position for the new marker, with a binary search if necessary
+    if ($$mapref{avgpos} < $$markers{$$maporder[0]}{avgpos}) {
+	$insertpos = 0;
+    } elsif ($$mapref{avgpos} >= $$markers{$$maporder[-1]}{avgpos}) {
+	$insertpos = scalar (@$maporder);
+    } else {
+	$mid = int ((($start = 0) + ($end = scalar (@$maporder))) / 2);
+	while (1) {
+	    if ($$mapref{avgpos} < $$markers{$$maporder[$mid]}{avgpos}) {
+		$mid = int (($start + ($end = $mid)) / 2);
+	    } elsif ($$mapref{avgpos} >= $$markers{$$maporder[$mid+1]}{avgpos}) {
+		$mid = int ((($start = $mid) + $end) / 2);
+	    } else {
+		$insertpos = $mid + 1;
+		last;
+	    }
+	}
+    }
+
+    # Insert into maporder and markerorder lists, fix idx for markers that come after
+    $$href{idx} = $insertpos;
+    splice (@{$$self{maporder}}, $insertpos, 0, $marker);
+    splice (@{$$self{markerorder}}, $insertpos, 0, $marker);
+    for (++$insertpos; $insertpos < scalar (@$maporder); $insertpos++) {
+	$$markers{$$maporder[$insertpos]}{idx} = $insertpos;
+    }
+
+    $$self{markers}{$marker} = $href;
     $$self{consistent} = 0;
     return (1);
 }
@@ -1136,6 +1222,23 @@ sub getMarker
     return ($href);
 }
 
+sub setMarker
+{
+    my ($self, $marker, $href) = @_;
+    my $mapfields;
+    my $header;
+    
+    unless (exists ($$self{markers}{$marker})) {
+	$errstr = "no marker '$marker' in dataset";
+	return (undef);
+    }
+    $$self->validateMapfields ([keys (%$href)])
+	or return (undef);
+    # TODO: thie really ought to make sure that no misordering is introduced
+    @{$$self{markers}{$marker}}{keys (%$href)} = @$href{keys (%$href)};
+    return (1);
+}
+
 sub traitOrder 
 {
     my ($self) = @_;
@@ -1156,6 +1259,28 @@ sub getTrait
     }
     map { $$href{$_} = $$self{traits}{$trait}{$_} } keys (%{$$self{traits}{$trait}});
     return ($href);
+}
+
+sub validateMapfields
+{
+    my ($self, $aref) = @_;
+    my $mapfields;
+    my $header;
+    my $href = {};
+
+    $mapfields = join (' ', @{$$self{mapfields}});
+    foreach $header (@$aref) {
+	$$href{$header} = '';
+	($mapfields =~ /\b$header\b/) and next;
+	$errstr = "map field '$header' does not exist in dataset";
+	return (undef);
+    }
+    foreach $header (@{$$self{mapfields}}) {
+	(exists ($$href{$header})) and next;
+	$errstr = "map fields '$header' is missing from marker information";
+	return (undef);
+    }
+    return (1);
 }
 
 sub setUndefPhenocode
