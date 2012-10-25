@@ -16,7 +16,7 @@ $copy = $dataset->copy
     or die ("KelvinDataset copy failed, $KelvinDataset::errstr\n");
 $copy->deleteTrait ("Affection")
     or die ("KelvinDataset deleteTrait failed, $KelvinDataset::errstr\n");
-$copy->addMarker ("Loci_5", {chr => 40, name => 'Loci_5', avgpos => 0.01},
+$copy->addMarker ("Loci_5", {chr => 40, name => 'Loci_5', avgpos => 1.66},
                   {51 => 0.445057, 52 => 0.554943})
     or die ("KelvinDataset addMarker failed, $KelvinDataset::errstr\n");
 $copy->write ({pedigreefile => 'ped.new', locusfile => 'locus.new', mapfile => 'map.new',
