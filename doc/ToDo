@@ -4,6 +4,16 @@ Bugs:
 2. FixedGrid analyses should exit when constraints leave no models
 3. SexSpecific analyses should require male and female positions in map file.
 
+****************
+Need to add:
+Add directives for truncated QT analyses. Two parameters allowed:
+  minQT - floor of QT
+  maxQT - ceiling of QT 
+  Presence of either or both parameters indicates truncated QT
+Test truncated QT 
+Test QT chisq and truncated QT with likelihood server
+Add polynomial with likelihood server
+
 *********************
 Near future Additions:
 1. Write out lods.out file
