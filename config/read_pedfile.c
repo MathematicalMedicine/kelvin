@@ -1890,6 +1890,7 @@ int checkQtTraitRanges (PedigreeSet *pPedigreeSet)
 	max = person->ppTraitValue[0][0];
 
       if (modelType->trait != DT && modelType->distrib == QT_FUNCTION_CHI_SQUARE &&
+	  person->ppOrigTraitValue[0][0] != modelOptions->affectionStatus[AFFECTION_STATUS_UNKNOWN] &&
 	  person->ppOrigTraitValue[0][0] <= 0) {
 	ERROR ("Family %s, inidividual %s: illegal trait value for Chi-Squared distribution",
 	       pPedigreeSet->ppPedigreeSet[va]->sPedigreeID, person->sID);
