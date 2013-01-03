@@ -111,6 +111,7 @@ print "\n";
 $dataset = KelvinDataset->new ($dataref)
     or error ("Validation of referenced or defaulted data files failed: $KelvinDataset::errstr");
 $dataset->setUndefPhenocode ($UNDEFINED);
+my $markerOrder = $dataset->markerOrder;
 
 if ($pedigrees) {
     # Read, validate and describe the pedigrees
@@ -119,12 +120,13 @@ if ($pedigrees) {
     my $pc=5; # Five percent
     my $mc=(scalar(@{$$dataset{maporder}}) + 1) * $pc / 100;
 
-    print "Ped\tType\t#Ind\t#Fdr\t#Nfdr\t2N-F\t#Gen>$pc\%\t#Phen\t#Aff\t#G+A\t#Dum\n";
+    print "Ped\tType\t#Ind\t#Fdr\t#Nfdr\t2N-F\t#Gen>$pc\%\t#Phen\t#Aff\t#G+A\t#Dum\t%Het\t%Msg\n";
     while ($family = $dataset->readFamily) {
 	$$dataset{origfmt} = $$family{origfmt};
 	$totalInds += $$family{count};
 	my ($gC, $pC, $aC, $gaC, $dmC) = (0, 0, 0, 0, 0);
 	my @g = (); # List of individuals with a genotype for finding degenerate cases
+	my $het = 0; my $hom = 0; my $msgmk = 0; my $totmk = 0;
 	foreach my $ind (@{$family->individuals}) {
 	    if ($ind->{genotyped} > $mc) {
 		$gC++;
@@ -134,6 +136,19 @@ if ($pedigrees) {
 	    $pC++ if (defined($ind->{phenotyped}) and ($ind->{phenotyped} > 0));
 	    $gaC++ if ($ind->{genotyped} > $mc and (defined($ind->{traits}[0]) and ($ind->{traits}[0] == $AFFECTED)));
 	    $dmC++ if ($ind->{genotyped} <= $mc and ($ind->{phenotyped} == 0));
+
+	    # Determine heterozygosity and missingness
+	    foreach my $marker (@$markerOrder) {
+		my $aref = $ind->getGenotype ($marker);
+		$totmk++;
+		if ($$aref[0] eq "0") {
+		    $msgmk++;
+		    next;
+		}
+		# print "$$aref[0]/$$aref[1], ";
+		($$aref[0] ne $$aref[1]) and $het++;
+		($$aref[0] eq $$aref[1]) and $hom++;
+	    }
 	}
 	# Identify two degenerate cases IN A NON-DESTRUCTIVE MANNER for later removal
 	# If these are a parent and child, call this a uninformative duo. If these are two parents and 
@@ -156,7 +171,7 @@ if ($pedigrees) {
 	    $f = "ui-trio";
 	}
 	printf $$family{pedid}."\t".sprintf("%7.7s\t%d\t%d\t%d\t%d\t",$f, $$family{count}, $$family{founders}, $$family{nonfounders}, (2 * $$family{nonfounders}) - $$family{founders});
-	print $gC."\t".$pC."\t".$aC."\t".$gaC."\t".$dmC."\n";
+	print $gC."\t".$pC."\t".$aC."\t".$gaC."\t".$dmC."\t".int($het*100/$totmk)."\t".int($msgmk*100/$totmk)."\n";
 	$families{$$family{pedid}} = $family;
     }
     (defined ($family))
