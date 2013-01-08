@@ -6,6 +6,7 @@ use Getopt::Long;
 use Pod::Usage;
 use File::Spec::Functions;
 use Data::Dumper;
+no warnings 'once';
 
 $|=1; # Immediate output
 
