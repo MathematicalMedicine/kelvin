@@ -1,5 +1,6 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 use strict;
+use warnings FATAL=>qw(all);
 use Data::Dumper;
 use File::Basename;
 # KelvinDataset will be required later
@@ -37,6 +38,7 @@ my ($directive, $args, $arg);
 my $configFile;
 my $dataset;
 my $postdataset = undef;
+my $misordered = undef;
 my $makeped = undef;
 my @kelvinargs = ();
 my $family;
@@ -82,12 +84,13 @@ $aref = $config->isConfigured ("PhenoCodes");
 @phenocodes{$UNDEFINED, $UNAFFECTED, $AFFECTED} = split (/,\s*/, $$aref[0]);
 map { defined ($phenocodes{$_}) and $phenomap{$phenocodes{$_}} = $_ } keys (%phenocodes);
 
-# Open dataset (that is, read the locus and freq files, and set up the
+# Open dataset (that is, read the locus, map and freq files, and set up the
 # pedigree file for reading). We include the freq file, if one is available,
 # because prior knowledge of the presence of microsats will save us effort
 # later.
 $$href{PedigreeFile} = $ {$config->isConfigured ("PedigreeFile")}[0];
 $$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
+$$href{MapFile} = $ {$config->isConfigured ("MapFile")}[0];
 ($aref = $config->isConfigured ("FrequencyFile"))
     and $$href{FrequencyFile} = $$aref[0];
 $dataset = KelvinDataset->new ($href)
@@ -945,7 +948,6 @@ sub count_alleles
     my (%nonxmit, $kidcount);
     my $dadcontrib;
     my $sex;
-    my $pheno;
     my $aref;
     my $va;
 
@@ -960,14 +962,13 @@ sub count_alleles
 	$kid = $ {$family->individuals}[0];
 	($kid->genotyped) or return;
 	$sex = $kid->sex;
-	# For QT/QTT, everyone is coded as a control (unaffected)
-	$pheno = ($$state{qt}) ? ! $phenocodes{$AFFECTED} : $kid->getTrait ($$state{trait});
 	foreach $marker (@{$$state{markers}}) {
 	    $kidgeno = $kid->getGenotype ($marker);
 	    ($$kidgeno[0] eq '0') and next;
 	    # Only count one of the homozygous alleles for males on chr X
 	    ($$state{xchr} && $sex eq '1') and shift (@$kidgeno);
-	    if ($pheno ne $phenocodes{$AFFECTED}) {
+	    # For QT/QTT, everyone is coded as a control (unaffected)
+	    if ($$state{qt} || $kid->getTrait ($$state{trait}) ne $phenocodes{$AFFECTED}) {
 		map {
 		    exists ($$state{controls}{$marker}{alleles}{$_})
 			or $$state{controls}{$marker}{alleles}{$_} = 0;
@@ -1275,7 +1276,7 @@ sub check_paths
 	    and warner ("overriding installed KELVIN_BINARY with '$ENV{KELVIN_BINARY}' from environment");
 	$KELVIN_BINARY = $ENV{KELVIN_BINARY};
     } elsif ($KELVIN_BINARY =~ /no_kelvin_binary/i) {
-	if (-x ($KELVIN_BINARY = find_versioned_kelvin ($KELVIN_ROOT))) {
+	if (defined ($KELVIN_BINARY = find_versioned_kelvin ($KELVIN_ROOT)) && -x $KELVIN_BINARY) {
 	    warner ("no KELVIN_BINARY defined by installation, using '$KELVIN_BINARY'");
 	} elsif (-x ($KELVIN_BINARY = "$KELVIN_ROOT/kelvin.$platform")) {
 	    warner ("no KELVIN_BINARY defined by installation, using '$KELVIN_BINARY'");
