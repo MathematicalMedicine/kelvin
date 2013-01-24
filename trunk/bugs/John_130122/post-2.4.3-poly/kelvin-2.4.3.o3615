@@ -1,0 +1,66 @@
+13/01/17 15:49:52 @0s, Initializing
+13/01/17 15:49:52 kelvin V2.4.3 edit 3967M built Aug 24 2012 12:18:36 on Levi-Montalcini86
+13/01/17 15:49:52 References for this version of kelvin:
+
+	(1) Vieland VJ. Thermometers: Something for statistical geneticists to think
+	about. Human Hered, 61:144-156, 2006.
+	(2) Huang Y, Segre A, O'Connell J, Valentine-Cooper W, Seok SC, Vieland VJ.
+	Kelvin:  A 2nd generation software package for computation of the PPL
+	framework. [Abstract Program number 2336]. Presented at the annual meeting
+	of The American Society of Human Genetics, November 2008, Philadelphia,
+	Pennsylvania. Available at http://www.ashg.org/2008meeting/abstracts/fulltext/
+
+13/01/17 15:49:52 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
+13/01/17 15:49:52 Using GNU Scientific Library (GSL) statistical functions instead of internal ones
+13/01/17 15:49:52 GCC optimization level 2 enabled
+13/01/17 15:49:52 To check status (at some risk), type CTRL-\ or type "kill -3 22488"
+13/01/17 15:49:52 Using configuration file john.conf
+13/01/17 15:49:52 Computation is done in polynomial mode
+13/01/17 15:49:52 polynomialScale is 1 (1-10, 1 is default)
+13/01/17 15:49:52 Integration is done numerically (dkelvin)
+13/01/17 15:49:52 Further progress will be displayed at 120 second intervals
+13/01/17 15:49:52 38TL over a dynamic space (1LC) for 494 pedigree(s)
+13/01/17 15:49:52 Trait-to-marker, Sex-Averaged Multipoint (w/3 loci), Dichotomous Trait.
+13/01/17 15:49:53 @1s, Performing analysis
+Position 128.000000 (1/38)
+Position 130.000000 (2/38)
+Position 132.000000 (3/38)
+Position 134.000000 (4/38)
+Position 136.000000 (5/38)
+Position 138.000000 (6/38)
+Position 140.000000 (7/38)
+Position 142.000000 (8/38)
+Position 144.000000 (9/38)
+Position 146.000000 (10/38)
+Position 148.000000 (11/38)
+Position 150.000000 (12/38)
+Position 152.000000 (13/38)
+Position 154.000000 (14/38)
+Position 156.000000 (15/38)
+Position 158.000000 (16/38)
+Position 160.000000 (17/38)
+Position 162.000000 (18/38)
+Position 164.000000 (19/38)
+Position 166.000000 (20/38)
+Position 168.000000 (21/38)
+Position 170.000000 (22/38)
+Position 172.000000 (23/38)
+Position 174.000000 (24/38)
+Position 176.000000 (25/38)
+Position 178.000000 (26/38)
+Position 180.000000 (27/38)
+Position 182.000000 (28/38)
+Position 184.000000 (29/38)
+Position 186.000000 (30/38)
+Position 188.000000 (31/38)
+Position 190.000000 (32/38)
+Position 192.000000 (33/38)
+Position 194.000000 (34/38)
+Position 196.000000 (35/38)
+Position 198.000000 (36/38)
+Position 200.000000 (37/38)
+Position 202.000000 (38/38)
+13/01/17 15:51:10 @1m18s, Analysis complete
+13/01/17 15:51:10 stopwatch overall(1) e:78s u:77s s:0s, vx:21, ivx:4005, sf:25427, hf:0
+13/01/17 15:51:10 @1m18s, Finished run
+13/01/17 15:51:10 Cleaning-up for exit

@@ -1,0 +1,95 @@
+13/01/17 15:50:08 @0s, Initializing
+13/01/17 15:50:08 kelvin V2.4.3 edit 3967M built Aug 24 2012 12:18:36 on Levi-Montalcini46
+13/01/17 15:50:08 References for this version of kelvin:
+
+	(1) Vieland VJ. Thermometers: Something for statistical geneticists to think
+	about. Human Hered, 61:144-156, 2006.
+	(2) Huang Y, Segre A, O'Connell J, Valentine-Cooper W, Seok SC, Vieland VJ.
+	Kelvin:  A 2nd generation software package for computation of the PPL
+	framework. [Abstract Program number 2336]. Presented at the annual meeting
+	of The American Society of Human Genetics, November 2008, Philadelphia,
+	Pennsylvania. Available at http://www.ashg.org/2008meeting/abstracts/fulltext/
+
+13/01/17 15:50:08 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
+13/01/17 15:50:08 Using GNU Scientific Library (GSL) statistical functions instead of internal ones
+13/01/17 15:50:08 GCC optimization level 2 enabled
+13/01/17 15:50:08 To check status (at some risk), type CTRL-\ or type "kill -3 10060"
+13/01/17 15:50:08 Using configuration file john.conf
+13/01/17 15:50:08 Computation is done in non-polynomial (direct evaluation) mode
+13/01/17 15:50:08 Integration is done numerically (dkelvin)
+13/01/17 15:50:08 Further progress will be displayed at 120 second intervals
+13/01/17 15:50:08 55TL over a dynamic space (1LC) for 494 pedigree(s)
+13/01/17 15:50:08 Trait-to-marker, Sex-Averaged Multipoint (w/3 loci), Dichotomous Trait.
+13/01/17 15:50:09 @1s, Performing analysis
+Position 94.000000 (1/55)
+Position 96.000000 (2/55)
+Position 98.000000 (3/55)
+Position 100.000000 (4/55)
+Position 102.000000 (5/55)
+Position 104.000000 (6/55)
+Position 106.000000 (7/55)
+Position 108.000000 (8/55)
+Position 110.000000 (9/55)
+13/01/17 15:52:08 	@1m50s (~14%), Starting with position 9 (110cM) of 55
+13/01/17 15:52:08 		@1s, Allocating and initializing storage for analysis
+13/01/17 15:52:08 			@2m0s, Start peeling nuclear family 0 with parents 1 x 2
+Position 112.000000 (10/55)
+Position 114.000000 (11/55)
+Position 116.000000 (12/55)
+Position 118.000000 (13/55)
+Position 120.000000 (14/55)
+Position 122.000000 (15/55)
+Position 124.000000 (16/55)
+Position 126.000000 (17/55)
+Position 128.000000 (18/55)
+13/01/17 15:54:08 	@3m48s (~30%), Starting with position 18 (128cM) of 55
+13/01/17 15:54:08 			@4m0s, Start peeling nuclear family 0 with parents 1 x 2
+Position 130.000000 (19/55)
+Position 132.000000 (20/55)
+Position 134.000000 (21/55)
+Position 136.000000 (22/55)
+Position 138.000000 (23/55)
+Position 140.000000 (24/55)
+Position 142.000000 (25/55)
+Position 144.000000 (26/55)
+Position 146.000000 (27/55)
+Position 148.000000 (28/55)
+13/01/17 15:56:08 	@5m51s (~49%), Starting with position 28 (148cM) of 55
+13/01/17 15:56:08 			@6m0s, Finished peeling nuclear family 0 with parents 1 x 2
+Position 150.000000 (29/55)
+Position 152.000000 (30/55)
+Position 154.000000 (31/55)
+Position 156.000000 (32/55)
+Position 158.000000 (33/55)
+Position 160.000000 (34/55)
+Position 162.000000 (35/55)
+Position 164.000000 (36/55)
+Position 166.000000 (37/55)
+13/01/17 15:58:08 	@7m49s (~65%), Starting with position 37 (166cM) of 55
+13/01/17 15:58:08 			@8m0s, Finished peeling nuclear family 1 with parents 3 x 5
+Position 168.000000 (38/55)
+Position 170.000000 (39/55)
+Position 172.000000 (40/55)
+Position 174.000000 (41/55)
+Position 176.000000 (42/55)
+Position 178.000000 (43/55)
+Position 180.000000 (44/55)
+Position 182.000000 (45/55)
+Position 184.000000 (46/55)
+13/01/17 16:00:08 	@9m57s (~81%), Starting with position 46 (184cM) of 55
+13/01/17 16:00:08 			@10m0s, Start peeling nuclear family 0 with parents 1 x 2
+Position 186.000000 (47/55)
+Position 188.000000 (48/55)
+Position 190.000000 (49/55)
+Position 192.000000 (50/55)
+Position 194.000000 (51/55)
+Position 196.000000 (52/55)
+Position 198.000000 (53/55)
+Position 200.000000 (54/55)
+Position 202.000000 (55/55)
+13/01/17 16:02:08 	@11m54s (~98%), Starting with position 55 (202cM) of 55
+13/01/17 16:02:08 			@12m0s, Start peeling nuclear family 0 with parents 1 x 2
+13/01/17 16:02:44 @12m36s, Analysis complete
+13/01/17 16:02:44 stopwatch overall(1) e:756s u:756s s:0s, vx:57, ivx:26394, sf:14241, hf:0
+13/01/17 16:02:44 @12m36s, Finished run
+13/01/17 16:02:44 Cleaning-up for exit

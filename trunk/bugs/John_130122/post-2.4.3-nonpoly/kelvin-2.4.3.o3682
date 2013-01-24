@@ -1,0 +1,105 @@
+13/01/17 15:50:08 @0s, Initializing
+13/01/17 15:50:08 kelvin V2.4.3 edit 3967M built Aug 24 2012 12:18:36 on Levi-Montalcini53
+13/01/17 15:50:08 References for this version of kelvin:
+
+	(1) Vieland VJ. Thermometers: Something for statistical geneticists to think
+	about. Human Hered, 61:144-156, 2006.
+	(2) Huang Y, Segre A, O'Connell J, Valentine-Cooper W, Seok SC, Vieland VJ.
+	Kelvin:  A 2nd generation software package for computation of the PPL
+	framework. [Abstract Program number 2336]. Presented at the annual meeting
+	of The American Society of Human Genetics, November 2008, Philadelphia,
+	Pennsylvania. Available at http://www.ashg.org/2008meeting/abstracts/fulltext/
+
+13/01/17 15:50:08 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
+13/01/17 15:50:08 Using GNU Scientific Library (GSL) statistical functions instead of internal ones
+13/01/17 15:50:08 GCC optimization level 2 enabled
+13/01/17 15:50:08 To check status (at some risk), type CTRL-\ or type "kill -3 9741"
+13/01/17 15:50:08 Using configuration file john.conf
+13/01/17 15:50:08 Computation is done in non-polynomial (direct evaluation) mode
+13/01/17 15:50:08 Integration is done numerically (dkelvin)
+13/01/17 15:50:08 Further progress will be displayed at 120 second intervals
+13/01/17 15:50:08 63TL over a dynamic space (1LC) for 494 pedigree(s)
+13/01/17 15:50:08 Trait-to-marker, Sex-Averaged Multipoint (w/3 loci), Dichotomous Trait.
+13/01/17 15:50:08 @0s, Performing analysis
+Position 78.000000 (1/63)
+Position 80.000000 (2/63)
+Position 82.000000 (3/63)
+Position 84.000000 (4/63)
+Position 86.000000 (5/63)
+Position 88.000000 (6/63)
+Position 90.000000 (7/63)
+Position 92.000000 (8/63)
+Position 94.000000 (9/63)
+Position 96.000000 (10/63)
+13/01/17 15:52:08 	@1m59s (~14%), Starting with position 10 (96cM) of 63
+13/01/17 15:52:08 		@0s, Allocating and initializing storage for analysis
+13/01/17 15:52:08 			@2m0s, Start peeling nuclear family 0 with parents 1 x 2
+Position 98.000000 (11/63)
+Position 100.000000 (12/63)
+Position 102.000000 (13/63)
+Position 104.000000 (14/63)
+Position 106.000000 (15/63)
+Position 108.000000 (16/63)
+Position 110.000000 (17/63)
+Position 112.000000 (18/63)
+13/01/17 15:54:08 	@3m49s (~26%), Starting with position 18 (112cM) of 63
+13/01/17 15:54:08 			@4m0s, Finished peeling nuclear family 0 with parents 1 x 2
+Position 114.000000 (19/63)
+Position 116.000000 (20/63)
+Position 118.000000 (21/63)
+Position 120.000000 (22/63)
+Position 122.000000 (23/63)
+Position 124.000000 (24/63)
+Position 126.000000 (25/63)
+Position 128.000000 (26/63)
+Position 130.000000 (27/63)
+Position 132.000000 (28/63)
+13/01/17 15:56:08 	@5m56s (~42%), Starting with position 28 (132cM) of 63
+13/01/17 15:56:08 			@6m0s, Start peeling nuclear family 0 with parents 1 x 2
+Position 134.000000 (29/63)
+Position 136.000000 (30/63)
+Position 138.000000 (31/63)
+Position 140.000000 (32/63)
+Position 142.000000 (33/63)
+Position 144.000000 (34/63)
+Position 146.000000 (35/63)
+Position 148.000000 (36/63)
+Position 150.000000 (37/63)
+13/01/17 15:58:08 	@7m48s (~57%), Starting with position 37 (150cM) of 63
+13/01/17 15:58:08 			@8m0s, Start peeling nuclear family 0 with parents 1 x 2
+Position 152.000000 (38/63)
+Position 154.000000 (39/63)
+Position 156.000000 (40/63)
+Position 158.000000 (41/63)
+Position 160.000000 (42/63)
+Position 162.000000 (43/63)
+Position 164.000000 (44/63)
+Position 166.000000 (45/63)
+Position 168.000000 (46/63)
+13/01/17 16:00:08 	@9m55s (~71%), Starting with position 46 (168cM) of 63
+13/01/17 16:00:08 			@10m0s, Start peeling nuclear family 0 with parents 1 x 2
+Position 170.000000 (47/63)
+Position 172.000000 (48/63)
+Position 174.000000 (49/63)
+Position 176.000000 (50/63)
+Position 178.000000 (51/63)
+Position 180.000000 (52/63)
+Position 182.000000 (53/63)
+Position 184.000000 (54/63)
+13/01/17 16:02:08 	@11m55s (~84%), Starting with position 54 (184cM) of 63
+13/01/17 16:02:08 			@12m0s, Start peeling nuclear family 0 with parents 1 x 2
+Position 186.000000 (55/63)
+Position 188.000000 (56/63)
+Position 190.000000 (57/63)
+Position 192.000000 (58/63)
+Position 194.000000 (59/63)
+Position 196.000000 (60/63)
+Position 198.000000 (61/63)
+Position 200.000000 (62/63)
+13/01/17 16:04:08 	@13m46s (~96%), Starting with position 62 (200cM) of 63
+13/01/17 16:04:08 			@14m0s, Start peeling nuclear family 0 with parents 1 x 2
+Position 202.000000 (63/63)
+13/01/17 16:04:52 @14m44s, Analysis complete
+13/01/17 16:04:52 stopwatch overall(1) e:884s u:884s s:0s, vx:60, ivx:33144, sf:15270, hf:0
+13/01/17 16:04:52 @14m44s, Finished run
+13/01/17 16:04:52 Cleaning-up for exit

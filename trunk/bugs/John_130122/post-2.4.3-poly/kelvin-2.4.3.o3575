@@ -1,0 +1,108 @@
+13/01/17 15:49:37 @0s, Initializing
+13/01/17 15:49:37 kelvin V2.4.3 edit 3967M built Aug 24 2012 12:18:36 on Levi-Montalcini78
+13/01/17 15:49:37 References for this version of kelvin:
+
+	(1) Vieland VJ. Thermometers: Something for statistical geneticists to think
+	about. Human Hered, 61:144-156, 2006.
+	(2) Huang Y, Segre A, O'Connell J, Valentine-Cooper W, Seok SC, Vieland VJ.
+	Kelvin:  A 2nd generation software package for computation of the PPL
+	framework. [Abstract Program number 2336]. Presented at the annual meeting
+	of The American Society of Human Genetics, November 2008, Philadelphia,
+	Pennsylvania. Available at http://www.ashg.org/2008meeting/abstracts/fulltext/
+
+13/01/17 15:49:37 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
+13/01/17 15:49:37 Using GNU Scientific Library (GSL) statistical functions instead of internal ones
+13/01/17 15:49:37 GCC optimization level 2 enabled
+13/01/17 15:49:37 To check status (at some risk), type CTRL-\ or type "kill -3 20256"
+13/01/17 15:49:37 Using configuration file john.conf
+13/01/17 15:49:37 Computation is done in polynomial mode
+13/01/17 15:49:37 polynomialScale is 1 (1-10, 1 is default)
+13/01/17 15:49:37 Integration is done numerically (dkelvin)
+13/01/17 15:49:37 Further progress will be displayed at 120 second intervals
+13/01/17 15:49:37 78TL over a dynamic space (1LC) for 494 pedigree(s)
+13/01/17 15:49:37 Trait-to-marker, Sex-Averaged Multipoint (w/3 loci), Dichotomous Trait.
+13/01/17 15:49:38 @1s, Performing analysis
+Position 48.000000 (1/78)
+Position 50.000000 (2/78)
+Position 52.000000 (3/78)
+Position 54.000000 (4/78)
+Position 56.000000 (5/78)
+Position 58.000000 (6/78)
+Position 60.000000 (7/78)
+Position 62.000000 (8/78)
+Position 64.000000 (9/78)
+Position 66.000000 (10/78)
+Position 68.000000 (11/78)
+Position 70.000000 (12/78)
+Position 72.000000 (13/78)
+Position 74.000000 (14/78)
+Position 76.000000 (15/78)
+Position 78.000000 (16/78)
+Position 80.000000 (17/78)
+Position 82.000000 (18/78)
+Position 84.000000 (19/78)
+Position 86.000000 (20/78)
+Position 88.000000 (21/78)
+Position 90.000000 (22/78)
+Position 92.000000 (23/78)
+Position 94.000000 (24/78)
+Position 96.000000 (25/78)
+Position 98.000000 (26/78)
+Position 100.000000 (27/78)
+Position 102.000000 (28/78)
+Position 104.000000 (29/78)
+Position 106.000000 (30/78)
+Position 108.000000 (31/78)
+Position 110.000000 (32/78)
+Position 112.000000 (33/78)
+Position 114.000000 (34/78)
+Position 116.000000 (35/78)
+Position 118.000000 (36/78)
+Position 120.000000 (37/78)
+Position 122.000000 (38/78)
+Position 124.000000 (39/78)
+Position 126.000000 (40/78)
+Position 128.000000 (41/78)
+Position 130.000000 (42/78)
+Position 132.000000 (43/78)
+Position 134.000000 (44/78)
+Position 136.000000 (45/78)
+Position 138.000000 (46/78)
+13/01/17 15:51:37 	@2m0s (~57%), Starting with position 46 (138cM) of 78
+13/01/17 15:51:37 		@2m0s, Evaluating polynomials, currently at 6.8e+06 iterations
+Position 140.000000 (47/78)
+Position 142.000000 (48/78)
+Position 144.000000 (49/78)
+Position 146.000000 (50/78)
+Position 148.000000 (51/78)
+Position 150.000000 (52/78)
+Position 152.000000 (53/78)
+Position 154.000000 (54/78)
+Position 156.000000 (55/78)
+Position 158.000000 (56/78)
+Position 160.000000 (57/78)
+Position 162.000000 (58/78)
+Position 164.000000 (59/78)
+Position 166.000000 (60/78)
+Position 168.000000 (61/78)
+Position 170.000000 (62/78)
+Position 172.000000 (63/78)
+Position 174.000000 (64/78)
+Position 176.000000 (65/78)
+Position 178.000000 (66/78)
+Position 180.000000 (67/78)
+Position 182.000000 (68/78)
+Position 184.000000 (69/78)
+Position 186.000000 (70/78)
+Position 188.000000 (71/78)
+Position 190.000000 (72/78)
+Position 192.000000 (73/78)
+Position 194.000000 (74/78)
+Position 196.000000 (75/78)
+Position 198.000000 (76/78)
+Position 200.000000 (77/78)
+Position 202.000000 (78/78)
+13/01/17 15:52:59 @3m22s, Analysis complete
+13/01/17 15:53:00 stopwatch overall(1) e:203s u:202s s:0s, vx:27, ivx:12099, sf:27191, hf:0
+13/01/17 15:53:00 @3m23s, Finished run
+13/01/17 15:53:00 Cleaning-up for exit

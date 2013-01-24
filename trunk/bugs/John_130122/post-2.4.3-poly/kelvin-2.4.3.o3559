@@ -1,0 +1,130 @@
+13/01/17 15:49:37 @0s, Initializing
+13/01/17 15:49:37 kelvin V2.4.3 edit 3967M built Aug 24 2012 12:18:36 on Levi-Montalcini47
+13/01/17 15:49:37 References for this version of kelvin:
+
+	(1) Vieland VJ. Thermometers: Something for statistical geneticists to think
+	about. Human Hered, 61:144-156, 2006.
+	(2) Huang Y, Segre A, O'Connell J, Valentine-Cooper W, Seok SC, Vieland VJ.
+	Kelvin:  A 2nd generation software package for computation of the PPL
+	framework. [Abstract Program number 2336]. Presented at the annual meeting
+	of The American Society of Human Genetics, November 2008, Philadelphia,
+	Pennsylvania. Available at http://www.ashg.org/2008meeting/abstracts/fulltext/
+
+13/01/17 15:49:37 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
+13/01/17 15:49:37 Using GNU Scientific Library (GSL) statistical functions instead of internal ones
+13/01/17 15:49:37 GCC optimization level 2 enabled
+13/01/17 15:49:37 To check status (at some risk), type CTRL-\ or type "kill -3 9936"
+13/01/17 15:49:37 Using configuration file john.conf
+13/01/17 15:49:37 Computation is done in polynomial mode
+13/01/17 15:49:37 polynomialScale is 1 (1-10, 1 is default)
+13/01/17 15:49:37 Integration is done numerically (dkelvin)
+13/01/17 15:49:37 Further progress will be displayed at 120 second intervals
+13/01/17 15:49:37 94TL over a dynamic space (1LC) for 494 pedigree(s)
+13/01/17 15:49:37 Trait-to-marker, Sex-Averaged Multipoint (w/3 loci), Dichotomous Trait.
+13/01/17 15:49:39 @2s, Performing analysis
+Position 16.000000 (1/94)
+Position 18.000000 (2/94)
+Position 20.000000 (3/94)
+Position 22.000000 (4/94)
+Position 24.000000 (5/94)
+Position 26.000000 (6/94)
+Position 28.000000 (7/94)
+Position 30.000000 (8/94)
+Position 32.000000 (9/94)
+Position 34.000000 (10/94)
+Position 36.000000 (11/94)
+Position 38.000000 (12/94)
+Position 40.000000 (13/94)
+Position 42.000000 (14/94)
+13/01/17 15:51:37 	@1m44s (~13%), Starting with position 14 (42cM) of 94
+13/01/17 15:51:37 		@2m0s, Evaluating polynomials, currently at 2.1e+06 iterations
+Position 44.000000 (15/94)
+Position 46.000000 (16/94)
+Position 48.000000 (17/94)
+Position 50.000000 (18/94)
+Position 52.000000 (19/94)
+Position 54.000000 (20/94)
+Position 56.000000 (21/94)
+Position 58.000000 (22/94)
+Position 60.000000 (23/94)
+Position 62.000000 (24/94)
+Position 64.000000 (25/94)
+Position 66.000000 (26/94)
+Position 68.000000 (27/94)
+Position 70.000000 (28/94)
+Position 72.000000 (29/94)
+Position 74.000000 (30/94)
+Position 76.000000 (31/94)
+Position 78.000000 (32/94)
+Position 80.000000 (33/94)
+Position 82.000000 (34/94)
+13/01/17 15:53:37 	@3m57s (~35%), Starting with position 34 (82cM) of 94
+13/01/17 15:53:37 		@4m0s, Evaluating polynomials, currently at 5.1e+06 iterations
+Position 84.000000 (35/94)
+Position 86.000000 (36/94)
+Position 88.000000 (37/94)
+Position 90.000000 (38/94)
+Position 92.000000 (39/94)
+Position 94.000000 (40/94)
+Position 96.000000 (41/94)
+Position 98.000000 (42/94)
+Position 100.000000 (43/94)
+Position 102.000000 (44/94)
+Position 104.000000 (45/94)
+Position 106.000000 (46/94)
+Position 108.000000 (47/94)
+Position 110.000000 (48/94)
+Position 112.000000 (49/94)
+Position 114.000000 (50/94)
+Position 116.000000 (51/94)
+Position 118.000000 (52/94)
+13/01/17 15:55:37 	@5m47s (~54%), Starting with position 52 (118cM) of 94
+13/01/17 15:55:37 		@6m0s, Evaluating polynomials, currently at 7.7e+06 iterations
+Position 120.000000 (53/94)
+Position 122.000000 (54/94)
+Position 124.000000 (55/94)
+Position 126.000000 (56/94)
+Position 128.000000 (57/94)
+Position 130.000000 (58/94)
+Position 132.000000 (59/94)
+Position 134.000000 (60/94)
+Position 136.000000 (61/94)
+Position 138.000000 (62/94)
+Position 140.000000 (63/94)
+Position 142.000000 (64/94)
+Position 144.000000 (65/94)
+Position 146.000000 (66/94)
+Position 148.000000 (67/94)
+Position 150.000000 (68/94)
+Position 152.000000 (69/94)
+Position 154.000000 (70/94)
+Position 156.000000 (71/94)
+Position 158.000000 (72/94)
+Position 160.000000 (73/94)
+Position 162.000000 (74/94)
+Position 164.000000 (75/94)
+Position 166.000000 (76/94)
+13/01/17 15:57:37 	@7m59s (~79%), Starting with position 76 (166cM) of 94
+13/01/17 15:57:37 		@8m0s, Evaluating polynomials, currently at 1.1e+07 iterations
+Position 168.000000 (77/94)
+Position 170.000000 (78/94)
+Position 172.000000 (79/94)
+Position 174.000000 (80/94)
+Position 176.000000 (81/94)
+Position 178.000000 (82/94)
+Position 180.000000 (83/94)
+Position 182.000000 (84/94)
+Position 184.000000 (85/94)
+Position 186.000000 (86/94)
+Position 188.000000 (87/94)
+Position 190.000000 (88/94)
+Position 192.000000 (89/94)
+Position 194.000000 (90/94)
+Position 196.000000 (91/94)
+Position 198.000000 (92/94)
+Position 200.000000 (93/94)
+Position 202.000000 (94/94)
+13/01/17 15:59:31 @9m54s, Analysis complete
+13/01/17 15:59:31 stopwatch overall(1) e:594s u:593s s:0s, vx:43, ivx:21530, sf:26893, hf:0
+13/01/17 15:59:31 @9m54s, Finished run
+13/01/17 15:59:31 Cleaning-up for exit

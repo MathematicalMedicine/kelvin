@@ -1,0 +1,30 @@
+13/01/18 14:33:08 @0s, Initializing
+13/01/18 14:33:08 kelvin V2.4.3 edit 3967M built Aug 24 2012 12:18:36 on Levi-Montalcini62
+13/01/18 14:33:08 References for this version of kelvin:
+
+	(1) Vieland VJ. Thermometers: Something for statistical geneticists to think
+	about. Human Hered, 61:144-156, 2006.
+	(2) Huang Y, Segre A, O'Connell J, Valentine-Cooper W, Seok SC, Vieland VJ.
+	Kelvin:  A 2nd generation software package for computation of the PPL
+	framework. [Abstract Program number 2336]. Presented at the annual meeting
+	of The American Society of Human Genetics, November 2008, Philadelphia,
+	Pennsylvania. Available at http://www.ashg.org/2008meeting/abstracts/fulltext/
+
+13/01/18 14:33:08 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
+13/01/18 14:33:08 Using GNU Scientific Library (GSL) statistical functions instead of internal ones
+13/01/18 14:33:08 GCC optimization level 2 enabled
+13/01/18 14:33:08 To check status (at some risk), type CTRL-\ or type "kill -3 28684"
+13/01/18 14:33:08 Using configuration file john.conf
+13/01/18 14:33:08 Computation is done in polynomial mode
+13/01/18 14:33:08 polynomialScale is 1 (1-10, 1 is default)
+13/01/18 14:33:08 Integration is done numerically (dkelvin)
+13/01/18 14:33:08 Further progress will be displayed at 120 second intervals
+13/01/18 14:33:08 2TL over a dynamic space (1LC) for 494 pedigree(s)
+13/01/18 14:33:08 Trait-to-marker, Sex-Averaged Multipoint (w/3 loci), Dichotomous Trait.
+13/01/18 14:33:09 @1s, Performing analysis
+Position 0.000000 (1/2)
+Position 182.000000 (2/2)
+13/01/18 14:33:42 @34s, Analysis complete
+13/01/18 14:33:43 stopwatch overall(1) e:35s u:35s s:0s, vx:16, ivx:1451, sf:25427, hf:0
+13/01/18 14:33:43 @35s, Finished run
+13/01/18 14:33:43 Cleaning-up for exit

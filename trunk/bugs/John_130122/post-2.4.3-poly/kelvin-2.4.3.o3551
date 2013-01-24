@@ -1,0 +1,135 @@
+13/01/17 15:49:37 @0s, Initializing
+13/01/17 15:49:37 kelvin V2.4.3 edit 3967M built Aug 24 2012 12:18:36 on Levi-Montalcini68
+13/01/17 15:49:37 References for this version of kelvin:
+
+	(1) Vieland VJ. Thermometers: Something for statistical geneticists to think
+	about. Human Hered, 61:144-156, 2006.
+	(2) Huang Y, Segre A, O'Connell J, Valentine-Cooper W, Seok SC, Vieland VJ.
+	Kelvin:  A 2nd generation software package for computation of the PPL
+	framework. [Abstract Program number 2336]. Presented at the annual meeting
+	of The American Society of Human Genetics, November 2008, Philadelphia,
+	Pennsylvania. Available at http://www.ashg.org/2008meeting/abstracts/fulltext/
+
+13/01/17 15:49:37 Compiler 4.1.1 20070105 (Red Hat 4.1.1-52)
+13/01/17 15:49:37 Using GNU Scientific Library (GSL) statistical functions instead of internal ones
+13/01/17 15:49:37 GCC optimization level 2 enabled
+13/01/17 15:49:37 To check status (at some risk), type CTRL-\ or type "kill -3 21193"
+13/01/17 15:49:37 Using configuration file john.conf
+13/01/17 15:49:37 Computation is done in polynomial mode
+13/01/17 15:49:37 polynomialScale is 1 (1-10, 1 is default)
+13/01/17 15:49:37 Integration is done numerically (dkelvin)
+13/01/17 15:49:37 Further progress will be displayed at 120 second intervals
+13/01/17 15:49:37 102TL over a dynamic space (1LC) for 494 pedigree(s)
+13/01/17 15:49:37 Trait-to-marker, Sex-Averaged Multipoint (w/3 loci), Dichotomous Trait.
+13/01/17 15:49:38 @1s, Performing analysis
+Position 0.000000 (1/102)
+Position 2.000000 (2/102)
+Position 4.000000 (3/102)
+Position 6.000000 (4/102)
+Position 8.000000 (5/102)
+Position 10.000000 (6/102)
+Position 12.000000 (7/102)
+Position 14.000000 (8/102)
+Position 16.000000 (9/102)
+Position 18.000000 (10/102)
+Position 20.000000 (11/102)
+Position 22.000000 (12/102)
+Position 24.000000 (13/102)
+Position 26.000000 (14/102)
+Position 28.000000 (15/102)
+Position 30.000000 (16/102)
+Position 32.000000 (17/102)
+Position 34.000000 (18/102)
+Position 36.000000 (19/102)
+Position 38.000000 (20/102)
+Position 40.000000 (21/102)
+Position 42.000000 (22/102)
+Position 44.000000 (23/102)
+Position 46.000000 (24/102)
+Position 48.000000 (25/102)
+Position 50.000000 (26/102)
+Position 52.000000 (27/102)
+Position 54.000000 (28/102)
+Position 56.000000 (29/102)
+Position 58.000000 (30/102)
+Position 60.000000 (31/102)
+Position 62.000000 (32/102)
+Position 64.000000 (33/102)
+Position 66.000000 (34/102)
+Position 68.000000 (35/102)
+Position 70.000000 (36/102)
+Position 72.000000 (37/102)
+Position 74.000000 (38/102)
+Position 76.000000 (39/102)
+Position 78.000000 (40/102)
+Position 80.000000 (41/102)
+Position 82.000000 (42/102)
+Position 84.000000 (43/102)
+Position 86.000000 (44/102)
+Position 88.000000 (45/102)
+Position 90.000000 (46/102)
+Position 92.000000 (47/102)
+Position 94.000000 (48/102)
+Position 96.000000 (49/102)
+Position 98.000000 (50/102)
+Position 100.000000 (51/102)
+13/01/17 15:51:37 	@1m57s (~49%), Starting with position 51 (100cM) of 102
+13/01/17 15:51:37 		@2m0s, Building polynomial w/pedigree: 3578149 (434/494)
+13/01/17 15:51:37 			@2m0s, Finished peeling nuclear family 0 with parents 1 x 2
+Position 102.000000 (52/102)
+Position 104.000000 (53/102)
+Position 106.000000 (54/102)
+Position 108.000000 (55/102)
+Position 110.000000 (56/102)
+Position 112.000000 (57/102)
+Position 114.000000 (58/102)
+Position 116.000000 (59/102)
+Position 118.000000 (60/102)
+Position 120.000000 (61/102)
+Position 122.000000 (62/102)
+Position 124.000000 (63/102)
+Position 126.000000 (64/102)
+Position 128.000000 (65/102)
+Position 130.000000 (66/102)
+Position 132.000000 (67/102)
+Position 134.000000 (68/102)
+Position 136.000000 (69/102)
+Position 138.000000 (70/102)
+Position 140.000000 (71/102)
+Position 142.000000 (72/102)
+Position 144.000000 (73/102)
+Position 146.000000 (74/102)
+Position 148.000000 (75/102)
+Position 150.000000 (76/102)
+Position 152.000000 (77/102)
+Position 154.000000 (78/102)
+Position 156.000000 (79/102)
+Position 158.000000 (80/102)
+Position 160.000000 (81/102)
+Position 162.000000 (82/102)
+Position 164.000000 (83/102)
+Position 166.000000 (84/102)
+Position 168.000000 (85/102)
+Position 170.000000 (86/102)
+Position 172.000000 (87/102)
+Position 174.000000 (88/102)
+Position 176.000000 (89/102)
+Position 178.000000 (90/102)
+Position 180.000000 (91/102)
+Position 182.000000 (92/102)
+Position 184.000000 (93/102)
+13/01/17 15:53:37 	@3m57s (~90%), Starting with position 93 (184cM) of 102
+13/01/17 15:53:37 		@4m0s, Evaluating polynomials, currently at 1.7e+07 iterations
+Position 186.000000 (94/102)
+Position 188.000000 (95/102)
+Position 190.000000 (96/102)
+Position 192.000000 (97/102)
+Position 194.000000 (98/102)
+Position 196.000000 (99/102)
+Position 198.000000 (100/102)
+Position 200.000000 (101/102)
+Position 202.000000 (102/102)
+13/01/17 15:55:18 @5m41s, Analysis complete
+13/01/17 15:55:18 stopwatch overall(1) e:341s u:340s s:0s, vx:37, ivx:33247, sf:28568, hf:0
+13/01/17 15:55:18 @5m41s, Finished run
+13/01/17 15:55:18 Cleaning-up for exit
