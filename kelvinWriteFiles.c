@@ -318,7 +318,7 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
   float SD_DD, SD_Dd, SD_dD, SD_dd;
   float threshold;
   int i, j; 
-
+  //fprintf(stderr,"dpIdx=%d  thetatIdx=%d\n", myDPrimeIdx,myThetaIdx);
   if (modelOptions->extraMODs)
     fprintf (fpMOD, "%s ", modelDescription);
   if (myMOD != -DBL_MAX) 
@@ -396,15 +396,20 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
 void
 write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 {
-  double log10_lr, max, min, max_at_theta0, max_at_dprime0;
+  double log10_lr, max, min, max_at_theta0, max_at_dprime0,max_at_dprimeP1,max_at_dprimeN1;
   int initialFlag;
   int maxDPrimeIdx=0, maxThetaIdx=0;
   int dprimeIdx=0, thetaInd=0;
   int maxDPrimeIdx_at_theta0=0;
   int maxTheta_at_dprime0=0;
+  int maxTheta_at_dprimeP1=0;
+  int maxTheta_at_dprimeN1=0;
   int i, j, liabIdx;
   float theta[2];
   int theta0Idx=0;
+  double curdprime;
+  int dprimeP1Idx=0,dprimeN1Idx=0;
+    
   
   if (fpMOD == NULL)
     return;
@@ -497,9 +502,11 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
   max = -99999;
   max_at_theta0 = -99999;
   max_at_dprime0 = -99999;
+  max_at_dprimeP1 = -DBL_MAX;
+  max_at_dprimeN1 = -DBL_MAX;
   for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++)
     {
-      //dprime = pLambdaCell->lambda[dprimeIdx][0][0];
+      curdprime = pLambdaCell->lambda[dprimeIdx][0][0];
       /* Reversed order of loop so if max LOD is 0, we use the highest theta (0.5, prolly) */
       for (thetaInd = modelRange->ntheta-1; thetaInd >= 0; thetaInd--)
 	{
@@ -536,6 +543,19 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 		  maxTheta_at_dprime0 = thetaInd;
 		}
 	    }
+
+	  if (curdprime ==1 && (-ERROR_MARGIN <= theta[0] && theta[0] <= ERROR_MARGIN
+			     && -ERROR_MARGIN <= theta[1] && theta[1] <= ERROR_MARGIN)){
+            dprimeP1Idx = dprimeIdx;
+	    max_at_dprimeP1 = log10_lr;
+	    maxTheta_at_dprimeP1 = thetaInd;
+	  }
+	  if (curdprime ==-1 && (-ERROR_MARGIN <= theta[0] && theta[0] <= ERROR_MARGIN
+			     && -ERROR_MARGIN <= theta[1] && theta[1] <= ERROR_MARGIN)){
+	    dprimeN1Idx = dprimeIdx;
+	    max_at_dprimeN1 = log10_lr;
+	    maxTheta_at_dprimeN1 = thetaInd;
+	  }
 	  initialFlag = 0;
 	}
       initialFlag = 0;
@@ -543,7 +563,7 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 
   /* Overall maximizing model - MOD */
   if (min == 0 && max == 0)
-    max = max_at_theta0 = max_at_dprime0 = -DBL_MAX;
+    max = max_at_theta0 = max_at_dprime0 = max_at_dprimeP1 =max_at_dprimeN1 =-DBL_MAX;
   writeMaximizingModel ("MOD(Overall)", max, maxDPrimeIdx, maxThetaIdx);
 
   if (modelOptions->extraMODs)
@@ -553,9 +573,14 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
 			    maxDPrimeIdx_at_theta0, theta0Idx);
 
       /* Maximizing model at d prime equal to 0 - MOD */
-      if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
+      if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM){
 	writeMaximizingModel ("MOD(D'==0)", max_at_dprime0, dprime0Idx,
 			      maxTheta_at_dprime0);
+	writeMaximizingModel ("MOD(D'==1,Theta==0)", max_at_dprimeP1, dprimeP1Idx,
+			      maxTheta_at_dprimeP1);
+	writeMaximizingModel ("MOD(D'==-1,Theta==0)", max_at_dprimeN1, dprimeN1Idx,
+			      maxTheta_at_dprimeN1);
+      }
     }
 
   fprintf (fpMOD, "\n");

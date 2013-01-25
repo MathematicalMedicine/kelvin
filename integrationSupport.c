@@ -122,7 +122,7 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
   int dim, return_val, i;
   double boost_rate = 1.3;      //1.1;
 
-
+ 
   if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM)
     boost_rate = 1.0;
   //extern /* Subroutine */ int ftest_();  
@@ -179,6 +179,7 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
 
   s->nlclass = modelRange->nlclass;
   s->aim_diff_suc = 3 * s->nlclass;
+  s->aim_num_smallBR = 5 * s->nlclass;
 
   for (i = 0; i < s->nlclass; i++) {
     if (modelOptions->imprintingFlag)
@@ -192,6 +193,7 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
         fprintf (stderr, "Starting DCUHRE with dim=%d\n", dim);
       }
   );
+
 
   return_val = dcuhre_ (s);
   if (return_val > 0) {
@@ -250,7 +252,6 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   double oldsum;
   double oldsum_log10;
   double newsum_log10;
-
 
   if (modelOptions->imprintingFlag)
     pen_size = 4;
@@ -450,6 +451,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       return;
 #endif
 
+
   log10_likelihood_alternative = pedigreeSet.log10Likelihood;
   if (isnan (log10_likelihood_alternative))
     ERROR ("Alternative hypothesis likelihood is not a number");
@@ -490,7 +492,9 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
         homoLR = pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood);
-        //fprintf(stderr,"pedIdx=%d alternative=%e trait null=%e marker null=%e\n",pedIdx,pPedigreeLocal->likelihood ,pedigreeSet.nullLikelihood[pedIdx] , pPedigreeLocal->markerLikelihood);
+	//if ((gfreq > 0.4999) &&(gfreq < 0.500001) &&   (mean_DD>2.02)&&( mean_DD<2.027272)&&   (mean_dd>-1.1564)&&( mean_dd<-1.1563)){
+	//	 fprintf(stderr,"pedIdx=%d homoLR=%e alternative=%e trait null=%e marker null=%e\n",pedIdx,homoLR,pPedigreeLocal->likelihood ,pedigreeSet.nullLikelihood[pedIdx] , pPedigreeLocal->markerLikelihood);
+	//  }
 
         if (alphaV * homoLR + alphaV2 < 0)
           WARNING ("Heterogeneity likelihood ratio less than zero");
@@ -601,6 +605,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     }
 
     avg_hetLR = alpha_integral;
+    //fprintf(stderr,"hetLR = %e gf=%f meanDD=%f meanDd=%f meandd=%f SD=%f\n", avg_hetLR,gfreq,mean_DD,mean_Dd,mean_dd,SD_DD);
 
     /* Jacobian */
     k = 1;
@@ -651,7 +656,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   double oldsum_log10;
   double newsum_log10;
 
-
+  //    fprintf(stderr, "        Before avg hetLR calculation mp dt\n");
 
   int origLocus = analysisLocusList->pLocusIndex[0];
 
@@ -965,7 +970,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
     thetaM = fixed_theta;
     thetaF = fixed_theta;
   }
-
+  //fprintf(stderr, "          Before avg hetLR calculation 2p qt\n");
   if (1 && modelOptions->markerAnalysis == FALSE) {
     pLocus->pAlleleFrequency[0] = gfreq;
     pLocus->pAlleleFrequency[1] = 1 - gfreq;
@@ -1407,7 +1412,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
     thetaF = fixed_theta;
   }
 
-
+  //fprintf(stderr, "    Before avg hetLR calculation 2p  dt\n");
 
   if (1 && modelOptions->markerAnalysis == FALSE) {
     pLocus->pAlleleFrequency[0] = gfreq;
@@ -1762,15 +1767,21 @@ void integrateMain ()
 
   memset (&dk_globalmax, 0, sizeof (st_DKMaxModel));
   memset (&dk_dprime0max, 0, sizeof (st_DKMaxModel));
+  memset (&dk_dprimeP1max, 0, sizeof (st_DKMaxModel));
+  memset (&dk_dprimeN1max, 0, sizeof (st_DKMaxModel));
   memset (&dk_theta0max, 0, sizeof (st_DKMaxModel));
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     /* Assumes that dkelvin can only handle a single D' */
     CALCHOKE (dk_globalmax.dprime, (size_t) 1, sizeof (double), double *);
     CALCHOKE (dk_dprime0max.dprime, (size_t) 1, sizeof (double), double *);
+    CALCHOKE (dk_dprimeP1max.dprime, (size_t) 1, sizeof (double), double *);
+    CALCHOKE (dk_dprimeN1max.dprime, (size_t) 1, sizeof (double), double *);
     CALCHOKE (dk_theta0max.dprime, (size_t) 1, sizeof (double), double *);
   }
   CALCHOKE (dk_globalmax.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
   CALCHOKE (dk_dprime0max.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
+  CALCHOKE (dk_dprimeP1max.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
+  CALCHOKE (dk_dprimeN1max.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
   CALCHOKE (dk_theta0max.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
 
   if (fpIR != NULL) {
@@ -1964,6 +1975,8 @@ void integrateMain ()
         overallMOD = DBL_MIN_10_EXP + 1;        //0.0;  // global max 
         overallMin = DBL_MAX;
         dprime0_MOD = 0.0;      // max when D' == 0
+        dprimeP1_MOD = 0.0;      // max when D' == 1 theta ==0
+        dprimeN1_MOD = 0.0;      // max when D' == -1 theta ==0
         theta0_MOD = 0.0;       // max when Theta == 0
         /* Since dynamic sampling is unlikely to ever sample at Theta == 0,
          * we'll need to narrow down the Theta that's closest. Start by setting
@@ -1971,8 +1984,11 @@ void integrateMain ()
          */
         dk_theta0max.theta[0] = dk_theta0max.theta[1] = 0.5;
         /* Same thing for dprime0max as for theta0max, above */
-        if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
+        if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM){
           dk_dprime0max.dprime[0] = 1;
+	  dk_dprimeP1max.dprime[0] = 1;
+	  dk_dprimeN1max.dprime[0] = 1;
+	}
 
         pLocus2 = originalLocusList.ppLocusList[loc2];
         if (pLocus2->locusType != LOCUS_TYPE_MARKER)
@@ -2185,6 +2201,21 @@ void integrateMain ()
                 dk_dprime0max.theta[0] = dk_dprime0max.theta[1] = fixed_theta;
                 dk_copyMaxModel (localmax_x, &dk_dprime0max, size_BR);
               }
+	      
+	      if (i==50){ //D'=1 theta =0
+		dprimeP1_MOD = localMOD;
+                dk_dprimeP1max.dprime[0] = fixed_dprime;
+                dk_dprimeP1max.theta[0] = dk_dprimeP1max.theta[1] = fixed_theta;
+                dk_copyMaxModel (localmax_x, &dk_dprimeP1max, size_BR);
+	      }
+	      if (i==114){ //D'=1 theta =0
+		dprimeN1_MOD = localMOD;
+                dk_dprimeN1max.dprime[0] = fixed_dprime;
+                dk_dprimeN1max.theta[0] = dk_dprimeN1max.theta[1] = fixed_theta;
+                dk_copyMaxModel (localmax_x, &dk_dprimeN1max, size_BR);
+	      }
+
+	      //fprintf(stderr,"i=%d dprime =%f theta=%f MOD=%f\n", i,fixed_dprime, fixed_theta, localMOD);
             }
 
             if (modelOptions->mapFlag == SA) {
@@ -2294,13 +2325,15 @@ void integrateMain ()
 
           dk_write2ptMODHeader ();
 	  if (overallMOD == 0 && overallMin == 0)
-	    overallMOD = theta0_MOD = dprime0_MOD = -DBL_MAX;
+	    overallMOD = theta0_MOD = dprime0_MOD = dprimeP1_MOD = dprimeN1_MOD = -DBL_MAX;
           dk_write2ptMODData ("MOD(Overall)", overallMOD, &dk_globalmax);
 
           if (modelOptions->extraMODs) {
             dk_write2ptMODData ("MOD(Theta==0)", theta0_MOD, &dk_theta0max);
             if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
               dk_write2ptMODData ("MOD(D'==0)", dprime0_MOD, &dk_dprime0max);
+	      dk_write2ptMODData ("MOD(D'==1,Theta==0)", dprimeP1_MOD, &dk_dprimeP1max);
+	      dk_write2ptMODData ("MOD(D'==-1,Theta==0)", dprimeN1_MOD, &dk_dprimeN1max);
           }
 
           /*Calculate ppl, ppld and ldppl */
@@ -2883,12 +2916,16 @@ void integrateMain ()
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     free (dk_globalmax.dprime);
     free (dk_dprime0max.dprime);
+    free (dk_dprimeP1max.dprime);
+    free (dk_dprimeN1max.dprime);
     free (dk_theta0max.dprime);
     if (fpIR != NULL)
       free (dk_curModel.dprime);
   }
   free (dk_globalmax.pen);
   free (dk_dprime0max.pen);
+  free (dk_dprimeP1max.pen);
+  free (dk_dprimeN1max.pen);
   free (dk_theta0max.pen);
   if (fpIR != NULL)
     free (dk_curModel.pen);
