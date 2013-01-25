@@ -2202,13 +2202,13 @@ void integrateMain ()
                 dk_copyMaxModel (localmax_x, &dk_dprime0max, size_BR);
               }
 	      
-	      if (i==50){ //D'=1 theta =0
+	      if (i==114){ //D'=1 theta =0
 		dprimeP1_MOD = localMOD;
                 dk_dprimeP1max.dprime[0] = fixed_dprime;
                 dk_dprimeP1max.theta[0] = dk_dprimeP1max.theta[1] = fixed_theta;
                 dk_copyMaxModel (localmax_x, &dk_dprimeP1max, size_BR);
 	      }
-	      if (i==114){ //D'=1 theta =0
+	      if (i==50){ //D'=-1 theta =0
 		dprimeN1_MOD = localMOD;
                 dk_dprimeN1max.dprime[0] = fixed_dprime;
                 dk_dprimeN1max.theta[0] = dk_dprimeN1max.theta[1] = fixed_theta;
