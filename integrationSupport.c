@@ -237,7 +237,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   double alphaV;
   double threshold = 0.0;
   double log10_likelihood_null, log10_likelihood_alternative, log10_likelihood_ratio, likelihood_ratio;
-  double hetLR, log10HetLR, homoLR, alphaV2;
+  double hetLR, log10HetLR, homoLR, alphaV2,tmp;
   double alpha_integral = 0.0, avg_hetLR;
   double log10Likelihood;
 
@@ -498,7 +498,10 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
         if (alphaV * homoLR + alphaV2 < 0)
           WARNING ("Heterogeneity likelihood ratio less than zero");
-        log10HetLR += log10 (alphaV * homoLR + alphaV2);
+        //log10HetLR += log10 (alphaV * homoLR + alphaV2);
+        tmp = log10 (alphaV * homoLR + (1 - alphaV));
+        log10HetLR += tmp * pPedigreeLocal->pCount[loc2];
+
       }
 
       if (fpIR != NULL) {
@@ -640,7 +643,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 
   double pen_DD, pen_Dd, pen_dD, pen_dd, gfreq, alphaV;
   double log10_likelihood_null, log10_likelihood_alternative, log10_likelihood_ratio, likelihood_ratio;
-  double hetLR, log10HetLR, homoLR, alphaV2;
+  double hetLR, log10HetLR, homoLR, alphaV2, tmp;
   double alpha_integral = 0.0, avg_hetLR;
   double log10Likelihood;
 
@@ -842,7 +845,10 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 	//	fprintf(stderr,"j=%d pedIdx=%d  %e %e %e %e \n",j, pedIdx,pPedigreeLocal->likelihood,pedigreeSet.nullLikelihood[pedIdx] , pPedigreeLocal->markerLikelihood, homoLR);
         if (alphaV * homoLR + alphaV2 < 0)
           WARNING ("Heterogenous Likelihood Ratio is less than zero");
-        log10HetLR += log10 (alphaV * homoLR + alphaV2);
+        //log10HetLR += log10 (alphaV * homoLR + alphaV2);
+        tmp = log10 (alphaV * homoLR + (1 - alphaV));
+        log10HetLR += tmp * pPedigreeLocal->pCount[loc2];
+
       }
 
       if (fpIR != NULL) {
@@ -945,7 +951,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   double thetaM, thetaF;
   double threshold = 0.0;
   double log10_likelihood_null, log10_likelihood_alternative, log10_likelihood_ratio, likelihood_ratio;
-  double hetLR, log10HetLR, homoLR, alphaV2;
+  double hetLR, log10HetLR, homoLR, alphaV2, tmp;
   double alpha_integral = 0.0, avg_hetLR;
 
   Pedigree *pPedigreeLocal;
@@ -1211,7 +1217,10 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
         homoLR = pPedigreeLocal->likelihood / pedigreeSet.nullLikelihood[pedIdx];
-        log10HetLR += log10 (alphaV * homoLR + alphaV2);
+        //log10HetLR += log10 (alphaV * homoLR + alphaV2);
+        tmp = log10 (alphaV * homoLR + (1 - alphaV));
+        log10HetLR += tmp * pPedigreeLocal->pCount[loc2];
+        //fprintf(stderr, "in compute 2p qt count is %d\n", pPedigreeLocal->pCount[loc2]);
 
         if (isnan (homoLR)) {
           printf ("pedIdx =%d  homeLR=%e log10HLR=%e\n", pedIdx, homoLR, log10HetLR);
@@ -1799,8 +1808,8 @@ void integrateMain ()
     k = 1;
     for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-        xl[k] = xl[k + 1] = xl[k + 2] = -3;
-        xu[k] = xu[k + 1] = xu[k + 2] = 3;
+        xl[k] = xl[k + 1] = xl[k + 2] = -3.0;
+        xu[k] = xu[k + 1] = xu[k + 2] = 3.0;
         if (modelOptions->imprintingFlag) {
           xl[k + 3] = -3;
           xu[k + 3] = 3;
