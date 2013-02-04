@@ -2339,10 +2339,11 @@ void integrateMain ()
 
           if (modelOptions->extraMODs) {
             dk_write2ptMODData ("MOD(Theta==0)", theta0_MOD, &dk_theta0max);
-            if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
+            if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM){
               dk_write2ptMODData ("MOD(D'==0)", dprime0_MOD, &dk_dprime0max);
 	      dk_write2ptMODData ("MOD(D'==1,Theta==0)", dprimeP1_MOD, &dk_dprimeP1max);
 	      dk_write2ptMODData ("MOD(D'==-1,Theta==0)", dprimeN1_MOD, &dk_dprimeN1max);
+	    }
           }
 
           /*Calculate ppl, ppld and ldppl */
