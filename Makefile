@@ -7,7 +7,9 @@
 ## doc/compileoptions.html
 
 ## Directory into which compiled executables and scripts will be installed.
-BINDIR=~/mykelvin
+ifndef BINDIR
+  BINDIR=~/mykelvin
+endif
 
 ## User and group IDs by which installed execuatbles and scripts will be owned.
 OWNER=root
@@ -20,7 +22,7 @@ CC := gcc
 # CC := icc
 
 ## GCC optimization level, 0=none, 1=default, 2=some (recommended), 3=all
-GCCOPT := 0
+GCCOPT := 2
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
 # USE_OPENMP := yes
@@ -67,7 +69,7 @@ ifndef LIBDIR
   LIBDIR=/export/local/$(PLATFORM)/lib
 endif
 ifndef INCDIR
-  INCDIR=/usr/local/lib/include
+  INCDIR=/export/local/$(PLATFORM)/include
 endif
 
 ABSBINDIR=$(shell echo $(BINDIR))
