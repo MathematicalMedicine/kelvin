@@ -2876,7 +2876,7 @@ void integrateMain ()
 
       /* calculate imputed PPL and print the results */
       if (integral > 0.214) {
-        if ((log10 (integral) + max_scale) > 8) {
+        if ((log10 (integral) + max_scale) > DBL_MAX_EXP) {
 	  if (modelOptions->equilibrium != LINKAGE_DISEQUILIBRIUM) { // PPL of 1 is not unusual for LD runs.
 #ifdef STUDYDB
 	    if (studyDB.bogusLikelihoods == 0) {
