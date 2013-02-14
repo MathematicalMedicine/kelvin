@@ -1909,9 +1909,28 @@ int checkQtTraitRanges (PedigreeSet *pPedigreeSet)
 void getPedigreeSampleStdev (PedigreeSet *pPedigreeSet, double *mean, double *stdev)
 {
   int va, vb, count=0;
-  double delta;
+  double delta, *multipliers=NULL;
   struct Person *person;
 
+  /* If a count file has been specified, then each 'pedigree' actually
+   * represents multiple pedigrees with the same trait value. We need to
+   * calculate mean and variance based on the complete set of traits. So,
+   * we create a per-pedigree list of how many times the trait values for
+   * that pedigree should be counted in the mean and variance calculation.
+   */
+
+  CALCHOKE (multipliers, pPedigreeSet->numPedigree, sizeof (double), double *);
+  for (va = 0; va < pPedigreeSet->numPedigree; va++) {
+    if (strlen (modelOptions->ccfile) > 0) {
+      for (vb = 0 ; vb < originalLocusList.numLocus; vb++) {
+	if (originalLocusList.ppLocusList[vb]->locusType == LOCUS_TYPE_MARKER)
+	  multipliers[va] += pPedigreeSet->ppPedigreeSet[va]->pCount[vb];
+      }
+    } else {
+      multipliers[va] = 1; 
+    }
+  }
+  
   *mean = *stdev = 0;
   for (va = 0; va < pPedigreeSet->numPedigree; va++)
     for (vb = 0 ; vb < pPedigreeSet->ppPedigreeSet[va]->numPerson; vb++) {
@@ -1923,8 +1942,8 @@ void getPedigreeSampleStdev (PedigreeSet *pPedigreeSet, double *mean, double *st
 	  person->ppOrigTraitValue[0][0] ==
 	  modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED])
 	continue;
-      *mean += person->ppOrigTraitValue[0][0];
-      count++;
+      *mean += (person->ppOrigTraitValue[0][0] * multipliers[va]);
+      count += multipliers[va];
     }
   if (count <= 1)
     ERROR ("Insufficient samples (%d) to calculate mean/standard deviation", count);
@@ -1941,9 +1960,11 @@ void getPedigreeSampleStdev (PedigreeSet *pPedigreeSet, double *mean, double *st
 	  modelOptions->affectionStatus[AFFECTION_STATUS_AFFECTED])
 	continue;
       delta = *mean - person->ppOrigTraitValue[0][0];
-      *stdev += (delta * delta);
+      *stdev += (delta * delta) * multipliers[va];
     }
   *stdev = sqrt (*stdev / (count - 1));
+
+  free (multipliers);
   return;
 }
 

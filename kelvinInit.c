@@ -212,6 +212,12 @@ void kelvinInit (int argc, char *argv[])
   DETAIL(0,"Read and process pedigree file %s", modelOptions->pedfile);
   read_pedfile (modelOptions->pedfile, &pedigreeSet);
   
+  /* read in case control file if provided */
+  if (strlen (modelOptions->ccfile) > 0) {
+    DETAIL(0,"Reading case control file %s", modelOptions->ccfile);
+    read_ccfile (modelOptions->ccfile, &pedigreeSet);
+  }
+
   if (!modelOptions->markerAnalysis) {
     /* We are not doing marker to marker analysis; the configuration
      * has all the information about the disease trait if any.
@@ -287,12 +293,6 @@ strcpy(studyDB.imprintingFlag, modelOptions->imprintingFlag ? "y" : "n");
     if (stdev == 0)
       ERROR ("The calculated sample standard deviation is 0.");
     DIAG (INPUTFILE, 3, {printf ("Sample Mean is %.4f, Standard Deviation is %.4f\n", mean, stdev);});
-  }
-
-  /* read in case control file if provided */
-  if (strlen (modelOptions->ccfile) > 0) {
-    DETAIL(0,"Reading case control file %s", modelOptions->ccfile);
-    read_ccfile (modelOptions->ccfile, &pedigreeSet);
   }
 
   SUBSTEP(0, "Initializing analysis data");
