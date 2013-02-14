@@ -344,7 +344,8 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
   fprintf (fpMOD, " (%.4f,%.4f)", theta[0], theta[1]);
   if (modelOptions->markerAnalysis != FALSE) { 
     if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
-      fprintf (fpMOD, " %.3f\n", R_square);
+      fprintf (fpMOD, " %.3f", R_square);
+    fprintf (fpMOD, "\n");
   } else { 
     fprintf (fpMOD, " %.2f %.4f", alphaV, gfreq);
     
@@ -583,7 +584,6 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
       }
     }
 
-  fprintf (fpMOD, "\n");
   return;
 }
 
