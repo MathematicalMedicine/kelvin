@@ -790,11 +790,11 @@ sub epistasis_merge_TP_mod
     my $extralines = 0;
     my $va;
 
-    # If extramods if turned on, there will be one (or two, if LD is also on) 
+    # If extramods if turned on, there will be one (or four, if LD is also on) 
     # extra MOD lines for each marker. If extramods is off, there are no extras
     # lines, regardless of LD.
     $extralines = (($$state{extramods}) ? 1 : 0);
-    ($extralines && $$state{ld}) and $extralines++;
+    ($extralines && $$state{ld}) and $extralines += 3;
 
     $outfh = IO::File->new (">$modfile") or error ("open '$modfile' failed, $!\n");
     $fh0 = IO::File->new ($modpass0) or error ("open '$modpass0' failed, $!\n");
