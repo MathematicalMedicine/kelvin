@@ -2,7 +2,7 @@
 
 test :
 	- rm -rf *.out perl.o* kelvin*study.o* client-newTP.conf
-	./remove_study.sh 4
+	./LKS/remove_study.sh 4
 	(time ./cycle.sh) >cycle.out 2>&1
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001
 
