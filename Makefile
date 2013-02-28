@@ -66,10 +66,10 @@ SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/$(CALC_UPDATED_PPL)
 ## etc). Remember you can specify these as command-line macros, e.g. at OSC:
 ## $ make INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib
 ifndef LIBDIR
-  LIBDIR=/export/local/$(PLATFORM)/lib
+  LIBDIR=/usr/local/lib
 endif
 ifndef INCDIR
-  INCDIR=/export/local/$(PLATFORM)/include
+  INCDIR=/usr/local/lib/include
 endif
 
 ABSBINDIR=$(shell echo $(BINDIR))
