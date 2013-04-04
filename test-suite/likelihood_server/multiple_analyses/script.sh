@@ -22,7 +22,7 @@ if test -z "$StudyId"; then
 fi
 
 # Run a single partial server - will do a subset of the pedigrees for all positions
-qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server-just-a-few"
+qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server-just-a-few"
 ToDos=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId;")
 echo Original client still has $ToDos models pending.
 
@@ -42,7 +42,7 @@ TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --e
 echo Positions $TPs are pending.
 
 # Finish the pending full client models
-qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server"
+qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server"
 ToDos=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId;")
 echo Original client still has $ToDos models pending.
 
@@ -61,7 +61,7 @@ echo Reduced client finishes fine.
 # Run the full server and client a few more times to get final results
 while :
 do
-  qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server"
+  qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server"
   qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
   grep WARNING br.out || { break; }
 done
