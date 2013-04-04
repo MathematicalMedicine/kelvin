@@ -66,17 +66,17 @@ fi
 while :
 do
   # Enqueue a few servers and...
-  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-dataset1 $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-dataset11.01 $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-dataset11.01 $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-dataset11.01 $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset1 $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset1 $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset1 $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset1 $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset11.01 $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset11.01 $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset11.01 $qmods" &
 
   # Run single ones blocking further processing until most work is done
-  qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server-dataset1"
-  qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server-dataset11.01"
+  qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server-dataset1"
+  qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server-dataset11.01"
   # Make sure that nothing remains undone
   while :
   do

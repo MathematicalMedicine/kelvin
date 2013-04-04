@@ -69,20 +69,20 @@ fi
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-2pt-run $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server-2pt-run $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-2pt-run $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server-2pt-run $qmods" &
 
   # Run single blocking ones to prevent further processing until all work is done
-  qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server-mp"
-  qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server-2pt-run"
+  qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server-mp"
+  qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server-2pt-run"
   # Make sure that nothing remains undone
   while :
   do
