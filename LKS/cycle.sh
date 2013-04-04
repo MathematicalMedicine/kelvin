@@ -76,16 +76,16 @@ c=1
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
-  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
+  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
 
   # Run a single one blocking further processing until most work is done
-  qrsh "cd `pwd`; $KELVIN_ROOT/run_server.sh server"
+  qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server"
   # Make sure that nothing remains undone
   while :
   do
