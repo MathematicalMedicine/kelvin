@@ -191,7 +191,7 @@ void initializeDB () {
 	ERROR("Cannot execute GetStudyId call statement w/%s, (%s, %s)", studyDB.studyLabel,
 	      mysql_stmt_error(studyDB.stmtGetStudyId), mysql_stmt_sqlstate(studyDB.stmtGetStudyId));
       } else {
-	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetStudyId: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetStudyId: mysql_stmt_execute ret %d (%d-%s, %s).\n", ret, 
 				      mysql_stmt_errno(studyDB.stmtGetStudyId), 
 				      mysql_stmt_error(studyDB.stmtGetStudyId), 
 				      mysql_stmt_sqlstate(studyDB.stmtGetStudyId));});
@@ -215,7 +215,7 @@ void initializeDB () {
     studyDB.studyId = atoi(studyDB.row[0]);
     if(studyDB.studyId <= 0) 
       ERROR("Failed to get study ID");
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "Storing/retrieving results under study %d (%s)", studyDB.studyId, studyDB.row[0]);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "Storing/retrieving results under study %d (%s).\n", studyDB.studyId, studyDB.row[0]);});
   }
   mysql_free_result(studyDB.resultSet);
   dBInitNotDone = FALSE;
@@ -247,7 +247,7 @@ void GetAnalysisId () {
 	ERROR("Cannot execute GetAnalysisId call statement w/%s, (%s, %s)", studyDB.studyLabel,
 	      mysql_stmt_error(studyDB.stmtGetAnalysisId), mysql_stmt_sqlstate(studyDB.stmtGetAnalysisId));
       } else {
-	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetAnalysisId: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetAnalysisId: mysql_stmt_execute ret %d (%d-%s, %s).\n", ret, 
 				      mysql_stmt_errno(studyDB.stmtGetAnalysisId), 
 				      mysql_stmt_error(studyDB.stmtGetAnalysisId), 
 				      mysql_stmt_sqlstate(studyDB.stmtGetAnalysisId));});
@@ -271,7 +271,7 @@ void GetAnalysisId () {
     studyDB.analysisId = atoi(studyDB.row[0]);
     if(studyDB.analysisId <= 0) 
       ERROR("Failed to find or generate analysisId");
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "Client is storing/retrieving results under studyId %d, analysisId %d", studyDB.studyId, studyDB.analysisId);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "Client is storing/retrieving results under studyId %d, analysisId %d.\n", studyDB.studyId, studyDB.analysisId);});
   }
   mysql_free_result(studyDB.resultSet);
 }
@@ -768,7 +768,7 @@ double GetMarkerSetLikelihood(int pedPosId, int regionNo, int parentRegionNo, do
 	ERROR("Cannot execute GetMarkerSetLikelihood call statement w/%d, (%s, %s)", pedPosId,
 	      mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihood), mysql_stmt_sqlstate(studyDB.stmtGetMarkerSetLikelihood));
       } else {
-	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetMarkerSetLikelihood: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetMarkerSetLikelihood: mysql_stmt_execute ret %d (%d-%s, %s).\n", ret, 
 				     mysql_stmt_errno(studyDB.stmtGetMarkerSetLikelihood), 
 				     mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihood), 
 				     mysql_stmt_sqlstate(studyDB.stmtGetMarkerSetLikelihood));});
@@ -792,7 +792,7 @@ double GetMarkerSetLikelihood(int pedPosId, int regionNo, int parentRegionNo, do
   mysql_stmt_free_result(studyDB.stmtGetMarkerSetLikelihoodResults);
 
   if (*studyDB.bindGetMarkerSetLikelihoodResults[2].is_null) {
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL", studyDB.regionId);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL.\n", studyDB.regionId);});
     return -1LL;
   } else {
     /*
@@ -801,7 +801,7 @@ double GetMarkerSetLikelihood(int pedPosId, int regionNo, int parentRegionNo, do
     }
     */
 
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is %G", studyDB.regionId, studyDB.lOD);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is %G.\n", studyDB.regionId, studyDB.lOD);});
     return studyDB.lOD;
   }
 }
@@ -890,7 +890,7 @@ double GetDLikelihood (int pedPosId, double dGF,
 	ERROR("Cannot execute GetDLikelihood call statement w/%d, (%s, %s)", pedPosId,
 	      mysql_stmt_error(studyDB.stmtGetDLikelihood), mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood));
       } else {
-	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetDLikelihood: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+	DIAG(ALTLSERVER, 0, { fprintf(stderr, "GetDLikelihood: mysql_stmt_execute ret %d (%d-%s, %s).\n", ret, 
 				     mysql_stmt_errno(studyDB.stmtGetDLikelihood), 
 				     mysql_stmt_error(studyDB.stmtGetDLikelihood), 
 				     mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood));});
@@ -913,10 +913,10 @@ double GetDLikelihood (int pedPosId, double dGF,
   mysql_stmt_free_result(studyDB.stmtGetDLikelihoodResults);
 
   if (*studyDB.bindGetDLikelihoodResults[2].is_null) {
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL", studyDB.regionId);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL.\n", studyDB.regionId);});
     return -1LL;
   } else {
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is %G", studyDB.regionId, studyDB.lOD);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is %G.\n", studyDB.regionId, studyDB.lOD);});
     return studyDB.lOD;
   }
 }
@@ -1000,10 +1000,10 @@ double GetQLikelihood (int pedPosId, double dGF,
 
   mysql_stmt_free_result(studyDB.stmtGetQLikelihoodResults);
   if (*studyDB.bindGetQLikelihoodResults[2].is_null) {
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL", studyDB.regionId);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL.\n", studyDB.regionId);});
     return -1LL;
   } else {
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is %G", studyDB.regionId, studyDB.lOD);});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is %G.\n", studyDB.regionId, studyDB.lOD);});
     return studyDB.lOD;
   }
 }
@@ -1047,7 +1047,7 @@ void SignOn (int chromosomeNo, char *algorithm, int markerCount, char *programVe
     if ((studyDB.row = mysql_fetch_row (studyDB.resultSet)) == NULL)
       ERROR("Cannot fetch LAST_SERVER_ID() (serverId) (%s)", mysql_error(studyDB.connection));
     studyDB.serverId = atoi(studyDB.row[0]);
-    DIAG (ALTLSERVER, 0, { fprintf (stderr, "Signed on as serverId %d\n", studyDB.serverId);});
+    DIAG (ALTLSERVER, 0, { fprintf (stderr, "Signed on as serverId %d.\n", studyDB.serverId);});
   }
   mysql_free_result(studyDB.resultSet);
 
@@ -1100,7 +1100,7 @@ int CountWork (double lowPosition, double highPosition)
 	      lowPosition, highPosition,
 	      mysql_stmt_error(studyDB.stmtCountWork), mysql_stmt_sqlstate(studyDB.stmtCountWork));
       } else {
-	DIAG(ALTLSERVER, 0, { fprintf(stderr, "CountWork: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+	DIAG(ALTLSERVER, 0, { fprintf(stderr, "CountWork: mysql_stmt_execute ret %d (%d-%s, %s).\n", ret, 
 				     mysql_stmt_errno(studyDB.stmtCountWork), 
 				     mysql_stmt_error(studyDB.stmtCountWork), 
 				     mysql_stmt_sqlstate(studyDB.stmtCountWork));});
@@ -1182,7 +1182,7 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
   if (mysql_stmt_fetch (studyDB.stmtGetDWorkResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetDWorkResults));
   if (*studyDB.bindGetDWorkResults[0].is_null) {
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetDWorkResults)");});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetDWorkResults).\n");});
     return FALSE;
   } else {
     DIAG (ALTLSERVER, 1, {						\
@@ -1238,7 +1238,7 @@ int GetQWork (double lowPosition, double highPosition, int locusListType, double
 	      lowPosition, highPosition,
 	      mysql_stmt_error(studyDB.stmtGetWork), mysql_stmt_sqlstate(studyDB.stmtGetWork));
       } else {
-	DIAG(ALTLSERVER, 0, {fprintf(stderr, "GetQWork: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+	DIAG(ALTLSERVER, 0, {fprintf(stderr, "GetQWork: mysql_stmt_execute ret %d (%d-%s, %s).\n", ret, 
 				    mysql_stmt_errno(studyDB.stmtGetWork), 
 				    mysql_stmt_error(studyDB.stmtGetWork), 
 				    mysql_stmt_sqlstate(studyDB.stmtGetWork));});
@@ -1270,11 +1270,11 @@ int GetQWork (double lowPosition, double highPosition, int locusListType, double
   if (mysql_stmt_fetch (studyDB.stmtGetQWorkResults) != 0)
     ERROR("Cannot fetch results (%s)", mysql_stmt_error(studyDB.stmtGetQWorkResults));
   if (*studyDB.bindGetQWorkResults[0].is_null) {
-    DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetQWorkResults)");});
+    DIAG (ALTLSERVER, 1, { fprintf (stderr, "No more work! (bindGetQWorkResults)\n");});
     return FALSE;
   } else {
     DIAG (ALTLSERVER, 1, { \
-	fprintf (stderr, "Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G std DD %G, Dd %G, dD %G, dd %G", \
+	fprintf (stderr, "Got work for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G std DD %G, Dd %G, dD %G, dd %G.\n", \
 		 studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
 		 studyDB.lC1BigMean, studyDB.lC1BigLittleMean, studyDB.lC1LittleBigMean, studyDB.lC1LittleMean, studyDB.lC1BigSD, studyDB.lC1BigLittleSD, studyDB.lC1LittleBigSD, studyDB.lC1LittleSD);});
     strcpy (pedigreeSId, studyDB.pedigreeSId);
@@ -1337,7 +1337,7 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
 	if(studyDB.traitType == 0) {
 	  // DT
 	  DIAG (ALTLSERVER, 0, {					\
-	      fprintf (stderr, "Failed putting result for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G\n", \
+	      fprintf (stderr, "Failed putting result for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G.\n", \
 		       studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
 		       studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);});
 	  
@@ -1345,7 +1345,7 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
 	else {
 	  // QT
 	  DIAG (ALTLSERVER, 0 , {					\
-	      fprintf (stderr, "Failed putting result for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G std DD %G, Dd %G, dD %G, dd %G\n", \
+	      fprintf (stderr, "Failed putting result for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G std DD %G, Dd %G, dD %G, dd %G.\n", \
 		       studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
 		       studyDB.lC1BigMean, studyDB.lC1BigLittleMean, studyDB.lC1LittleBigMean, studyDB.lC1LittleMean, studyDB.lC1BigSD, studyDB.lC1BigLittleSD, studyDB.lC1LittleBigSD, studyDB.lC1LittleSD);});
 	  
@@ -1353,7 +1353,7 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
         ERROR("Cannot execute PutWork statement w/markerCount %d, lOD %18G, runtimeCostSec %d (%s, %s), in a pinch, clean-up manually and try them in [%s]",
               markerCount, lOD, runtimeCostSec, mysql_stmt_error(studyDB.stmtPutWork), mysql_stmt_sqlstate(studyDB.stmtPutWork), studyDB.strPutWork);
       } else {
-	DIAG(ALTLSERVER, 0, {fprintf(stderr, "PutWork: mysql_stmt_execute ret %d (%d-%s, %s).", ret, 
+	DIAG(ALTLSERVER, 0, {fprintf(stderr, "PutWork: mysql_stmt_execute ret %d (%d-%s, %s).\n", ret, 
 				    mysql_stmt_errno(studyDB.stmtPutWork), 
 				    mysql_stmt_error(studyDB.stmtPutWork), 
 				    mysql_stmt_sqlstate(studyDB.stmtPutWork));});
@@ -1364,7 +1364,7 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
     }
     break;
   }    
-  DIAG (ALTLSERVER, 1, { fprintf (stderr, "Put work stored Likelihood of %.8g for marker count of %d\n", lOD, markerCount);});
+  DIAG (ALTLSERVER, 1, { fprintf (stderr, "Put work stored Likelihood of %.8g for marker count of %d.\n", lOD, markerCount);});
 
 }
 

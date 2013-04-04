@@ -29,6 +29,12 @@
 #include "trackProgress.h"
 #include "ppl.h"
 
+#ifdef STUDYDB
+#include "database/StudyDB.h"
+#include "database/databaseSupport.h"
+extern struct StudyDB studyDB;
+#endif
+
 // This will go into a 'client include' for likelihood in the future.
 #define compute_likelihood(pPedigreeList) compute_likelihood(__FILE__, __LINE__, pPedigreeList)
 #define populate_xmission_matrix(pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc) populate_xmission_matrix(__FILE__, __LINE__, pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc)
@@ -38,20 +44,6 @@
 extern struct swStopwatch *combinedComputeSW,  ///< Combined likelihood compute stopwatch
   *combinedBuildSW,      ///< Combined likelihood polynomial build stopwatch
   *overallSW;    ///< Overall stopwatch for the entire run.
-
-#ifdef STUDYDB
-#include "database/StudyDB.h"
-#include "database/databaseSupport.h"
-extern struct StudyDB studyDB;
-
-#define MAXLSTP 4096
-extern double *oldTLoc; // Pointer to original list of trait loci, which we're going to ignore
-extern double lociSetTransitionPositions[MAXLSTP];
-extern double newTLoc[MAXLSTP];
-
-int compare_doubles (const void *a, const void *b);
-
-#endif
 
 /**
 
@@ -334,10 +326,8 @@ void iterateMain ()
             /* update the locus */
             pLocus2->pAlleleFrequency[0] = mkrFreq;
             pLocus2->pAlleleFrequency[1] = 1 - mkrFreq;
-#ifndef STUDYDB
             if (modelOptions->polynomial != TRUE)
               update_locus (&pedigreeSet, loc2);
-#endif
           }
           /* Loop over the penetrances, genefrequencies, thetas and call
            * the likelihood calculation, storing each value obtained to
@@ -358,10 +348,8 @@ void iterateMain ()
 
               pLocus->pAlleleFrequency[0] = gfreq;
               pLocus->pAlleleFrequency[1] = 1 - gfreq;
-#ifndef STUDYDB
               if (modelOptions->polynomial != TRUE)
                 update_locus (&pedigreeSet, loc1);
-#endif
             }
 
             /* Clear Dprime combination impossible flag */
@@ -407,10 +395,8 @@ void iterateMain ()
                       dk_curModel.pen[liabIdx].dd = pen_dd;
                     }
                   }
-#ifndef STUDYDB
                   if (modelOptions->polynomial != TRUE)
                     update_penetrance (&pedigreeSet, traitLocus);
-#endif
                 }
                 /* get the likelihood at 0.5 first and LD=0 */
                 if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
@@ -594,10 +580,8 @@ void iterateMain ()
                       } /* liability class Index */
                       if (breakFlag == TRUE)
                         continue;
-#ifndef STUDYDB
                       if (modelOptions->polynomial != TRUE)
                         update_penetrance (&pedigreeSet, traitLocus);
-#endif
                     }
                     /* marker to marker analysis */
                     /* get the likelihood at 0.5 first and LD=0 */
@@ -841,11 +825,9 @@ void iterateMain ()
           pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
         }
 
-#ifndef STUDYDB
         if (modelOptions->polynomial != TRUE)
           /* only need to update trait locus */
           update_penetrance (&pedigreeSet, traitLocus);
-#endif
 
         /* Iterate over gene frequencies, but only one time thru if doing a dry-run. */
         for (gfreqInd = 0; (gfreqInd == 0) || (modelOptions->dryRun == 0 && gfreqInd < modelRange->ngfreq); gfreqInd++) {
@@ -857,10 +839,8 @@ void iterateMain ()
 
           if (modelOptions->polynomial == TRUE)
             sprintf (partialPolynomialFunctionName, "MDT_LC%d_C%d_P%%sSL%d", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
-#ifndef STUDYDB
           else
             update_locus (&pedigreeSet, traitLocus);
-#endif
 
           /* Compute the likelihood for the trait */
           ret = compute_likelihood (&pedigreeSet);
@@ -930,9 +910,7 @@ void iterateMain ()
         pLocus->pAlleleFrequency[0] = gfreq;
         pLocus->pAlleleFrequency[1] = 1 - gfreq;
 
-#ifndef STUDYDB
         update_locus (&pedigreeSet, traitLocus);
-#endif
         /* this should be MEAN + SD */
         for (paramIdx = 0; paramIdx < modelRange->nparam; paramIdx++) {
           for (penIdx = 0; penIdx < modelRange->npenet; penIdx++) {
@@ -979,10 +957,8 @@ void iterateMain ()
                 continue;
               if (modelOptions->polynomial == TRUE)
                 sprintf (partialPolynomialFunctionName, "MQT_LC%d_C%d_P%%sSL%d", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
-#ifndef STUDYDB
               else
                 update_penetrance (&pedigreeSet, traitLocus);
-#endif
               ret = compute_likelihood (&pedigreeSet);
               cL[5]++;  // MP QT/CT trait likelihood
               if (swProgressRequestFlag) {
@@ -1063,7 +1039,9 @@ void iterateMain ()
       if (fpIR != NULL) {
         dk_curModel.posIdx = posIdx;
       }
-
+#ifdef STUDYDB
+      studyDB.driverPosIdx = posIdx;
+#endif
       mp_result[posIdx].max_penIdx = -1;
       /* positions listed are sex average positions */
       traitPos = modelRange->tloc[posIdx];
@@ -1356,10 +1334,8 @@ void iterateMain ()
             }
           }
 
-#ifndef STUDYDB
           if (modelOptions->polynomial != TRUE)
             update_penetrance (&pedigreeSet, traitLocus);       // Only need to update trait locus
-#endif
 
           /* Iterate over gene frequencies -- just one loop for dry-runs. */
           for (gfreqInd = 0; (gfreqInd == 0) || (modelOptions->dryRun == 0 && gfreqInd < modelRange->ngfreq); gfreqInd++) {
@@ -1374,19 +1350,10 @@ void iterateMain ()
             if (fpIR != NULL)
               dk_curModel.dgf = gfreq;
 
-#ifndef STUDYDB
             if (modelOptions->polynomial != TRUE)
               update_locus (&pedigreeSet, traitLocus);
-#endif
 
             ret = compute_likelihood (&pedigreeSet);
-#ifdef STUDYDB
-		if (toupper(*studyDB.role) == 'S') {
-		  // get out of the model loops for likelihood servers
-		  penIdx=modelRange->npenet;
-		  gfreqInd=modelRange->ngfreq;
-		}
-#endif	       
             cL[7]++;    // MP DT alternative likelihood
 
             if (swProgressRequestFlag) {
@@ -1413,12 +1380,10 @@ void iterateMain ()
                 if (pPedigree->load_flag == 0) {
                   pPedigree->alternativeLikelihoodDT[gfreqInd]
                       [penIdx] = pPedigree->likelihood;
-		  // ***** TMP purely for debug. remove please ****
-		  fprintf(stderr, "Trait: %e Marker: %e Combined: %e\n", 
-			  pPedigree->traitLikelihoodDT[gfreqInd][penIdx], pPedigree->markerLikelihood, pPedigree->likelihood);
                 }
               }
               record_mp_result (ret, &pedigreeSet, &paramSet, posIdx);
+
             }   /* end of not dryRun */
           }     /* end of genFreq loop */
         }       /* end of penIdx loop */
@@ -1468,9 +1433,7 @@ void iterateMain ()
           if (fpIR != NULL)
             dk_curModel.dgf = gfreq;
 
-#ifndef STUDYDB
           update_locus (&pedigreeSet, traitLocus);
-#endif
           /* this should be MEAN + SD */
           for (paramIdx = 0; paramIdx < modelRange->nparam; paramIdx++) {
             paramSet.paramIdx = paramIdx;
@@ -1530,10 +1493,8 @@ void iterateMain ()
                 }       /* liability class Index */
                 if (breakFlag == TRUE)
                   continue;
-#ifndef STUDYDB
                 if (modelOptions->polynomial != TRUE)
                   update_penetrance (&pedigreeSet, traitLocus);
-#endif
                 /* ready for the alternative hypothesis */
                 analysisLocusList = &savedLocusList;
                 xmissionMatrix = altMatrix;
@@ -1542,15 +1503,6 @@ void iterateMain ()
                   status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr, initialProbAddr2, initialHetProbAddr, 0, -1, -1, 0);
 
 		ret = compute_likelihood (&pedigreeSet);
-#ifdef STUDYDB
-		if (toupper(*studyDB.role) == 'S') {
-		  // get out of the model loops for likelihood servers
-		  thresholdIdx=modelRange->ntthresh;
-		  paramIdx=modelRange->nparam;
-		  penIdx=modelRange->npenet;
-		  gfreqInd=modelRange->ngfreq;
-		}
-#endif	       
 		cL[8]++; // MP QT alternative likelihood
 		if (swProgressRequestFlag) {
 		  swProgressRequestFlag = FALSE;
@@ -1586,6 +1538,14 @@ void iterateMain ()
           ppl = (avgLR * avgLR) / (-5.77 + 54 * avgLR + avgLR * avgLR);
       } else
         ppl = 0;
+
+#ifdef STUDYDB
+      if (studyDB.bogusLikelihoods > 0) {
+	// There were bogus likelihoods for this position, note that in the output and zero count for next position.
+	fprintf (fpHet, "WARNING - The following position has not been completely analyzed!\n");
+	studyDB.bogusLikelihoods = 0; // Reset for the next position.
+      }
+#endif
 
       writeMPBRFileDetail (posIdx, traitPos, ppl, avgLR);
       writeMPMODFileDetail (posIdx, traitPos);

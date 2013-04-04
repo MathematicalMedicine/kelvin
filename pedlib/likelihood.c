@@ -52,6 +52,9 @@ int locusListTypesDone = 0; // Used by server to keep which type of locusList we
 #endif
 
 char partialPolynomialFunctionName[MAX_PFN_LEN + 1];
+Polynomial *prerccl;
+int prerccl_type;
+int postrccl_type;
 
 /* this is for working out loop breaker's multilocus genotypes */
 Genotype **pTempGenoVector;
@@ -559,18 +562,28 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
 					  0, 0, 0, 0); 
       else // Alternative likelihood
-	pPedigree->likelihood = GetDLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
-					  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
-					  s->sbrgns, 
-					  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrgns]->parent_id),
-					  (s->sbrgns == 0 ? 0 : s->greate),
-						(s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrg_heap[s->sbrgns]->parent_id]->dir)
-					  );
+	if (modelOptions->integration)
+	  pPedigree->likelihood = GetDLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
+						  s->sbrgns, 
+						  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrgns]->parent_id),
+						  (s->sbrgns == 0 ? 0 : s->greate),
+						  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrg_heap[s->sbrgns]->parent_id]->dir)
+						  );
+	else
+	  pPedigree->likelihood = GetDLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][0][1], 
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][0][1][1],
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][0][1],
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][1][1][1],
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][0][1],
+						  pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][0], pTrait->penetrance[AFFECTION_STATUS_AFFECTED][2][1][1],
+						  0, 0, 0, 0);
       } else {
       if (analysisLocusList->traitLocusIndex == -1) // Marker set likelihood
 	pPedigree->likelihood = GetMarkerSetLikelihood (myPedPosId, 0, 0, 0, 0);
@@ -604,7 +617,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
       if (pPedigree->likelihood == -1) {
 	// Bogus result
 	studyDB.bogusLikelihoods++;
-	if ((analysisLocusList->traitLocusIndex != -1) && (analysisLocusList->numLocus != 1))
+	if (modelOptions->integration && (analysisLocusList->traitLocusIndex != -1) && (analysisLocusList->numLocus != 1))
 	  s->sbrg_heap[s->sbrgns]->bogusLikelihoods++;
 	pPedigree->likelihood = .05;
 	/*
@@ -2374,7 +2387,12 @@ void loop_phases (int locus, int multiLocusIndex[2], int multiLocusPhase[2], int
             calcFlag = 1;
           } else {
             calcFlag = 2;
+	    //	    prerccl = childProductPtr;
+	    //	    Polynomial *foo = *(Polynomial **) childProductPtr;
+	    //	    prerccl_type = (int) ((Polynomial *) foo)->eType;
             recalculate_child_likelihood (newFlipMask, childProductPtr);
+	    //	    foo = *(Polynomial **) childProductPtr;
+	    //	    postrccl_type = (int) ((Polynomial *) foo)->eType;
           }
         }
         calculate_likelihood (multiLocusIndex2, multiLocusPhase2, dWeight, childProductPtr);
