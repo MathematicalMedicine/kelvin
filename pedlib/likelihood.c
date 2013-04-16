@@ -599,20 +599,32 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 			  pTrait->cutoffValue[0], pTrait->cutoffValue[1], pTrait->cutoffValue[2], 
 					  0, 0, 0, 0); 
       else // Alternative likelihood
+	if (modelOptions->integration)
           pPedigree->likelihood = 
-          GetQLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
-			  pTrait->means[0][0][0], pTrait->means[0][0][1], pTrait->means[0][1][0], pTrait->means[0][1][1],
-			  pTrait->means[1][0][0], pTrait->means[1][0][1], pTrait->means[1][1][0], pTrait->means[1][1][1],
-			  pTrait->means[2][0][0], pTrait->means[2][0][1], pTrait->means[2][1][0], pTrait->means[2][1][1],
-			  pTrait->stddev[0][0][0], pTrait->stddev[0][0][1], pTrait->stddev[0][1][0], pTrait->stddev[0][1][1],
-			  pTrait->stddev[1][0][0], pTrait->stddev[1][0][1], pTrait->stddev[1][1][0], pTrait->stddev[1][1][1],
-			  pTrait->stddev[2][0][0], pTrait->stddev[2][0][1], pTrait->stddev[2][1][0], pTrait->stddev[2][1][1],
-			  pTrait->cutoffValue[0], pTrait->cutoffValue[1], pTrait->cutoffValue[2], 
-					  s->sbrgns, 
-					  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrgns]->parent_id),
-					  (s->sbrgns == 0 ? 0 : s->greate),
-					  (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrg_heap[s->sbrgns]->parent_id]->dir)
-					  );
+	    GetQLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
+			    pTrait->means[0][0][0], pTrait->means[0][0][1], pTrait->means[0][1][0], pTrait->means[0][1][1],
+			    pTrait->means[1][0][0], pTrait->means[1][0][1], pTrait->means[1][1][0], pTrait->means[1][1][1],
+			    pTrait->means[2][0][0], pTrait->means[2][0][1], pTrait->means[2][1][0], pTrait->means[2][1][1],
+			    pTrait->stddev[0][0][0], pTrait->stddev[0][0][1], pTrait->stddev[0][1][0], pTrait->stddev[0][1][1],
+			    pTrait->stddev[1][0][0], pTrait->stddev[1][0][1], pTrait->stddev[1][1][0], pTrait->stddev[1][1][1],
+			    pTrait->stddev[2][0][0], pTrait->stddev[2][0][1], pTrait->stddev[2][1][0], pTrait->stddev[2][1][1],
+			    pTrait->cutoffValue[0], pTrait->cutoffValue[1], pTrait->cutoffValue[2], 
+			    s->sbrgns, 
+			    (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrgns]->parent_id),
+			    (s->sbrgns == 0 ? 0 : s->greate),
+			    (s->sbrgns == 0 ? 0 : s->sbrg_heap[s->sbrg_heap[s->sbrgns]->parent_id]->dir)
+			    );
+	else
+          pPedigree->likelihood = 
+	    GetQLikelihood (myPedPosId, pLocus->pAlleleFrequency[0],
+			    pTrait->means[0][0][0], pTrait->means[0][0][1], pTrait->means[0][1][0], pTrait->means[0][1][1],
+			    pTrait->means[1][0][0], pTrait->means[1][0][1], pTrait->means[1][1][0], pTrait->means[1][1][1],
+			    pTrait->means[2][0][0], pTrait->means[2][0][1], pTrait->means[2][1][0], pTrait->means[2][1][1],
+			    pTrait->stddev[0][0][0], pTrait->stddev[0][0][1], pTrait->stddev[0][1][0], pTrait->stddev[0][1][1],
+			    pTrait->stddev[1][0][0], pTrait->stddev[1][0][1], pTrait->stddev[1][1][0], pTrait->stddev[1][1][1],
+			    pTrait->stddev[2][0][0], pTrait->stddev[2][0][1], pTrait->stddev[2][1][0], pTrait->stddev[2][1][1],
+			    pTrait->cutoffValue[0], pTrait->cutoffValue[1], pTrait->cutoffValue[2], 
+			    0, 0, 0, 0);
       }
       if (pPedigree->likelihood == -1) {
 	// Bogus result
