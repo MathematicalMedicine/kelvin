@@ -56,7 +56,7 @@ pod2usage(-verbose => 0) if ($#ARGV > -1);
 
 check_paths ();
 
-print "Processing configuration file:\"$configfile\"\n" if $verbose;
+print "Processing configuration file:\"$configfile\"\n";
 
 check_paths ();
 
@@ -151,8 +151,8 @@ if ($pedigrees) {
 		($$aref[0] eq $$aref[1]) and $hom++;
 	    }
 	}
-	# Identify two degenerate cases IN A NON-DESTRUCTIVE MANNER for later removal
-	# If these are a parent and child, call this a uninformative duo. If these are two parents and 
+	# Identify degenerate cases IN A NON-DESTRUCTIVE MANNER for later removal
+	# If the genotyped individuals are a parent and child, call this a uninformative duo. If these are two parents and 
 	# a single child, call this an uninformative trio. Believe it or nuts this performs the fewest tests
 	# to determine both cases.
 	my $f=$family->pedtype;
@@ -170,6 +170,10 @@ if ($pedigrees) {
 		  (($g[2]->{momid} eq $g[1]->{indid} and $g[2]->{dadid} eq $g[0]->{indid}) or
 		   ($g[2]->{momid} eq $g[0]->{indid} and $g[2]->{dadid} eq $g[1]->{indid})))) {
 	    $f = "ui-trio";
+	} elsif ($gC == 1) {
+	    $f = "ui-sglt";
+	} elsif ($gC == 0) {
+	    $f = "ui-null";
 	}
 	printf $$family{pedid}."\t".sprintf("%7.7s\t%d\t%d\t%d\t%d\t",$f, $$family{count}, $$family{founders}, $$family{nonfounders}, (2 * $$family{nonfounders}) - $$family{founders});
 	print $gC."\t".$pC."\t".$aC."\t".$gaC."\t".$dmC."\t".int($het*100/$totmk)."\t".int($msgmk*100/$totmk)."\n";
