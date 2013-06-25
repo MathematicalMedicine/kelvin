@@ -30,8 +30,8 @@ my $locusfile1 = ''; my $locusfile2 = '';
 my $freqfile1 = ''; my $freqfile2 = '';
 my $mapfile1 = ''; my $mapfile2 = '';
 my $configfile1 = './kelvin.conf'; my $configfile2 = './kelvin.conf';
-my $freqFuzz = 0;
-my $posFuzz = 0;
+my $freqFuzz = 0; # Might want to allow up to 0.02;
+my $posFuzz = 0; # Might want to allow up to 0.001;
 my $tabular = 0;
 
 # Hash references to keep KelvinDataset happy
@@ -254,7 +254,7 @@ if ($mapfiles) {
     for my $name (@{$$dataset1{maporder}}) {
 	next if (!defined($map2{$name}));
 	for my $field (@common_fields) {
-	    if ($field =~ /.*pos$/) {
+	    if (($field =~ /pos/) || ($field =~/phys/)) {
 		# Try to compare position fields by delta instead of absolute position
 		if ($lastName eq "") {
 		    # First marker, so go absolute
