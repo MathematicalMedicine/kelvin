@@ -27,23 +27,26 @@ TP=`perl -we 'use strict;
 	      use POSIX qw(ceil);
               use KelvinConfig;
               use KelvinDataset;
-              my ($c, $d, $a, $s, $e, $i, $p, $x, @p);
+              my ($c, $d, $ar, $as, $s, $e, $i, $p, $x, %p, @p);
               $c = KelvinConfig->new ($ENV{CONF})
                   or die ("KelvinConfig new failed, $KelvinConfig::errstr \n");
-	      $a = $c->isConfigured ("TraitPositions")
+	      $ar = $c->isConfigured ("TraitPositions")
                   or die ("no TraitPositions directive in $ENV{CONF}\n");
-              if (($s, $e, $i) =
-		      ($$a[0] =~ /(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?|end):(\d+(?:\.\d+)?)/)) {
-                  if ($e eq "end") {
-		     $d = KelvinDataset->new ({mapfile => ${$c->isConfigured ("MapFile")}[0]})
-	                 or die ("KelvinDataset new failed, $KelvinDataset::errstr\n");
-                     $e = ceil (${$d->getMarker (${$d->mapOrder}[-1])}{avgpos});
-		     while ($e % $i) { $e++; } 
+	      foreach $as (@$ar) {
+                  if (($s, $e, $i) =
+                      ($as =~ /(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?|end):(\d+(?:\.\d+)?)/)) {
+                      if ($e eq "end") {
+                          $d = KelvinDataset->new ({mapfile => ${$c->isConfigured ("MapFile")}[0]})
+	                      or die ("KelvinDataset new failed, $KelvinDataset::errstr\n");
+                          $e = ceil (${$d->getMarker (${$d->mapOrder}[-1])}{avgpos});
+		          while ($e % $i) { $e++; } 
+                      }
+                      for ( $p = $s, $x = 1 ; $p <= $e; $p = $s + ($i * $x++)) { $p{$p} = ''; }
+                  } else {
+                      map { $p{$_} = ''; } split (/[, ]+/, $as);
                   }
-                  for ( $p = $s, $x = 1 ; $p <= $e; $p = $s + ($i * $x++)) { push (@p , $p); }
-              } else {
-                  @p = split (/[, ]+/, $$a[0]);
               }
+	      @p = sort { $a <=> $b } (keys (%p));
 	      $i = int (scalar (@p) / $ENV{SGE_TASK_LAST}) + 1;
 	      $s = $i * ($ENV{SGE_TASK_ID} - 1);
               print (join (",", splice (@p, $s, $i)), "\n");'`
