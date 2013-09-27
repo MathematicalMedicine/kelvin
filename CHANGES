@@ -1,3 +1,6 @@
+Version 2.4.5
+  Patches, e.g. set and check maximum number of positions.
+
 Version 2.4.1
   Kelvin Binary
     Verify that locus file markers are in map file order (required)
