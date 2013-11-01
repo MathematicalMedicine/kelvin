@@ -219,9 +219,9 @@ dist :
 	html2text -rcfile doc/html2text.rc doc/SSDSupport.html >kelvin-$(VERSION)/doc/SSDSupport.txt
 	html2text -rcfile doc/html2text.rc doc/compiledPolys.html >kelvin-$(VERSION)/doc/compiledPolys.txt
 	cp -a doc/*.{html,png,gif} kelvin-$(VERSION)/doc
-	svn export $(SVNROOT)/graphApp/trunk kelvin-$(VERSION)/graphApp
-	ln -s ../graphApp/doc/graphApp_manual{.htm,_files} kelvin-$(VERSION)/doc/
-	svn export $(SVNROOT)/gKelvin/trunk/src kelvin-$(VERSION)/gKelvin
+#	svn export $(SVNROOT)/graphApp/trunk kelvin-$(VERSION)/graphApp
+#	ln -s ../graphApp/doc/graphApp_manual{.htm,_files} kelvin-$(VERSION)/doc/
+#	svn export $(SVNROOT)/gKelvin/trunk/src kelvin-$(VERSION)/gKelvin
 	tar -cvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
 	rm -rf kelvin-$(VERSION)
 
