@@ -959,7 +959,7 @@ sub count_alleles
     }
 
     if ($family->pedtype eq 'casecontrol') {
-	$kid = $ {$family->individuals}[0];
+	$kid = $ {$family->children}[0];
 	($kid->genotyped) or return;
 	$sex = $kid->sex;
 	foreach $marker (@{$$state{markers}}) {
