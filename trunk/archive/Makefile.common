@@ -1,13 +1,13 @@
 # Fire off a bunch of these with:
-# find . -name kelvin.conf -execdir nq "export OMP_NUM_THREADS=1; rm MAKE-FAILED; make -j 4 -f ../Makefile.common || touch MAKE-FAILED" -l jobs=4 -N arctest \;
+# find . -name kelvin.conf -execdir nq "export OMP_NUM_THREADS=1; rm MAKE-FAILED; make -j 4 -f ../Makefile.common || touch MAKE-FAILED" -pe make 4 -N arctest \;
 # Won't allow multiple simultaneous runs, but alas, if a run fails, leaves MAKE-RUNNING there.
 # Clean it out with:
 # find . -name MAKE-FAILED -execdir rm MAKE-RUNNING \;
 # before you resubmit.
 
 # This is the "base" name of the set of binaries to test. It will be built-upon, e.g. $(BASE_KELVIN)-normal.
-KELVIN_ROOT=/home/whv001/kelvin/trunk
-BASE_KELVIN=$(KELVIN_ROOT)/kelvin-2.2.0
+KELVIN_ROOT=/export/local/src/kelvin-2.4.5
+BASE_KELVIN=$(KELVIN_ROOT)/kelvin-2.4.5
 
 # Set of tests that can use the "subroutine" ($(testrun):) below.
 testrun = normal POLYCOMP_DL POLYUSE_DL # no_GSL 
