@@ -1,9 +1,6 @@
 # Fire off a bunch of these with:
-# find . -name kelvin.conf -execdir nq "export OMP_NUM_THREADS=1; rm MAKE-FAILED; make -j 4 -f ../Makefile.common || touch MAKE-FAILED" -pe make 4 -N arctest \;
-# Won't allow multiple simultaneous runs, but alas, if a run fails, leaves MAKE-RUNNING there.
-# Clean it out with:
-# find . -name MAKE-FAILED -execdir rm MAKE-RUNNING \;
-# before you resubmit.
+# find . -name kelvin.conf -execdir nq "export OMP_NUM_THREADS=1; rm MAKE-FAILED; make -j 4 -f ../Makefile.common || mv MAKE-RUNNING-* MAKE-FAILED" -pe make 4 -N arctest \;
+# Won't allow multiple simultaneous runs.
 
 # This is the "base" name of the set of binaries to test. It will be built-upon, e.g. $(BASE_KELVIN)-normal.
 KELVIN_ROOT=/export/local/src/kelvin-2.4.5
@@ -48,9 +45,10 @@ ifeq ($(wildcard MAKE-RUNNING-NonPE), MAKE-RUNNING-NonPE)
 else
 	- rm -rf *.out-NonPE MAKE-*NonPE
 	- touch MAKE-RUNNING-NonPE
-	date >>runtimes-NonPE ; (time ($(BASE_KELVIN) kelvin.conf --bayes br.out-NonPE --ppl ppl.out-NonPE --NonPolynomial  >kelvin.out-NonPE 2>&1) 2>&1) | tee -a kelvin.out-NonPE >> runtimes-NonPE
+	date >>runtimes-NonPE ; (time ($(BASE_KELVIN) kelvin.conf --bayes br.out-NonPE --ppl ppl.out-NonPE --NonPolynomial  >kelvin.out-NonPE 2>&1) 2>&1) > temp-runtime
+	cat temp-runtime | tee -a kelvin.out-NonPE >> runtimes-NonPE ; rm temp-runtime
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out-NonPE br.out-baseline .0002
-  ifeq ($(wildcard ppl.out),ppl.out)
+  ifeq ($(wildcard ppl.out-NonPE),ppl.out-NonPE)
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out-NonPE ppl.out-baseline .0002
   endif
         # Make sure we don't accumulate too much information
