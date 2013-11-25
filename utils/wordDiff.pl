@@ -17,6 +17,15 @@ if ($#ARGV < 2) {
 $file_LEFT = shift;
 $file_RIGHT = shift;
 $maxOffByFactor = shift;
+# verify that files exist before we proceed
+unless (-e $file_LEFT) {
+    print "File $file_LEFT not found.\n";
+    exit (1);
+}
+unless (-e $file_RIGHT) {
+    print "File $file_RIGHT not found.\n";
+    exit (1);
+}
 open LEFT, $file_LEFT; open RIGHT, $file_RIGHT;
 $whole_LEFT = do { local $/; <LEFT> }; # Briefly make the special variable for line delimiter undefined...
 $whole_RIGHT = do { local $/; <RIGHT> }; # ...so we can slurp-in the whole file at once.
