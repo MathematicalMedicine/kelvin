@@ -25,7 +25,8 @@ else
 	echo Comparing [$@] to [POLYCOMP_DL]
 	# I have to use $(if) here because ifeq is evaluated at parse time and not when rules are run
 	$(if $(findstring $@,POLYCOMP_DL), -rm -rf *.so compiled)
-	date >>runtimes-$@ ; (time ($(BASE_KELVIN)-$@ kelvin.conf --bayes br.out-$@ --ppl ppl.out-$@ >kelvin.out-$@ 2>&1) 2>&1) | tee -a kelvin.out-$@ >> runtimes-$@
+	date >>runtimes-$@ ; (time ($(BASE_KELVIN)-$@ kelvin.conf --bayes br.out-$@ --ppl ppl.out-$@ >kelvin.out-$@ 2>&1) 2>&1) > temp-runtime
+	cat temp-runtime | tee -a kelvin.out-$@ >> runtimes-$@ ; rm temp-runtime
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out-$@ br.out-baseline .0002
   ifeq ($(wildcard ppl.out),ppl.out)
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out-$@ ppl.out-baseline .0002
