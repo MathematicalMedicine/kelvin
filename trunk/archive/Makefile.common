@@ -1,5 +1,5 @@
 # Fire off a bunch of these with:
-# find . -name kelvin.conf -execdir nq "export OMP_NUM_THREADS=1; rm MAKE-FAILED* | true; make -j 4 -f ../Makefile.common || for i in MAKE-RUNNING-*; do mv $i ${i/RUNNING/FAILED}; done" -pe make 4 -N arctest \;
+# find . -name kelvin.conf -execdir nq ../arctest.sh -pe make 4 -N arctest \;
 # Won't allow multiple simultaneous runs.
 
 # This is the "base" name of the set of binaries to test. It will be built-upon, e.g. $(BASE_KELVIN)-normal.
@@ -7,10 +7,10 @@ KELVIN_ROOT=/export/local/src/kelvin-2.4.5
 BASE_KELVIN=$(KELVIN_ROOT)/kelvin-2.4.5
 
 # Set of tests that can use the "subroutine" ($(testrun):) below.
-testrun = normal POLYCOMP_DL POLYUSE_DL # no_GSL 
-.PHONY: all $(testrun) NonPE
+testrun = normal # NonPE POLYCOMP_DL POLYUSE_DL no_GSL 
+.PHONY: all $(testrun)
 
-all : 	$(testrun) NonPE
+all : 	$(testrun)
 #all : 	normal
 
 # MUST build polynomial DLs before trying to simply use them
@@ -22,46 +22,22 @@ ifeq ($(wildcard MAKE-RUNNING-$@),MAKE-RUNNING-$@)
 else
 	- rm -rf *.out-$@ MAKE-*$@
 	- touch MAKE-RUNNING-$@
-	echo Comparing [$@] to [POLYCOMP_DL]
 	# I have to use $(if) here because ifeq is evaluated at parse time and not when rules are run
 	$(if $(findstring $@,POLYCOMP_DL), -rm -rf *.so compiled)
-	date >>runtimes-$@ ; (time ($(BASE_KELVIN)-$@ kelvin.conf --bayes br.out-$@ --ppl ppl.out-$@ >kelvin.out-$@ 2>&1) 2>&1) > runtime-$@
-	cat runtime-$@ | tee -a kelvin.out-$@ >> runtimes-$@
-	- rm runtime-$@
+	date >>runtimes-$@; (time ($(BASE_KELVIN)$(if $(findstring $@,NonPE),,-$@) kelvin.conf $(if $(findstring $@,NonPE),--NonPolynomial) --bayes br.out-$@ --ppl ppl.out-$@ >kelvin.out-$@ 2>&1) 2>&1) > runtime-$@
+	mv MAKE-RUNNING-$@ MAKE-FAILED-$@
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out-$@ br.out-baseline 0.0002
   ifeq ($(wildcard ppl.out),ppl.out)
 	# Rounding to 3 places makes the ppl sloppier, so a 1% correspondence is good
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out-$@ ppl.out-baseline 0.01
   endif
+	mv MAKE-FAILED-$@ MAKE-GOOD-CURRENT-$@
+	cat runtime-$@ | tee -a kelvin.out-$@ >> runtimes-$@
+	- rm runtime-$@
         # Make sure we don't accumulate too much information
 	- tail -1000 runtimes-$@ >fewerRuntimes-$@
 	- mv fewerRuntimes-$@ runtimes-$@
-	- rm MAKE-RUNNING-$@
         # Here I _will_ grep kelvin\*version and put the results into some file
-	- touch MAKE-GOOD-CURRENT-$@
-endif
-
-# Non-polynomial evaluation. Requires an additional command-line switch, so not a candidate for $(testrun)
-NonPE :
-ifeq ($(wildcard MAKE-RUNNING-NonPE), MAKE-RUNNING-NonPE)
-	echo Run already in progress
-else
-	- rm -rf *.out-NonPE MAKE-*NonPE
-	- touch MAKE-RUNNING-NonPE
-	date >>runtimes-NonPE ; (time ($(BASE_KELVIN) kelvin.conf --bayes br.out-NonPE --ppl ppl.out-NonPE --NonPolynomial  >kelvin.out-NonPE 2>&1) 2>&1) > runtime-$@
-	cat runtime-$@ | tee -a kelvin.out-NonPE >> runtimes-NonPE
-	- rm runtime-$@
-	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out-NonPE br.out-baseline 0.0002
-  ifeq ($(wildcard ppl.out-NonPE),ppl.out-NonPE)
-	# Rounding to 3 places makes the ppl sloppier, so a 1% correspondence is good
-	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out-NonPE ppl.out-baseline 0.01
-  endif
-        # Make sure we don't accumulate too much information
-	- tail -1000 runtimes-NonPE >fewerRuntimes
-	- mv fewerRuntimes runtimes-NonPE
-	- rm MAKE-RUNNING-NonPE
-        # Here I _will_ grep kelvin\*version and put the results into some file
-	- touch MAKE-GOOD-CURRENT-NonPE
 endif
 
 clean :
