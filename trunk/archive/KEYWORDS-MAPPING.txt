@@ -4,6 +4,9 @@ Look for imprinting runs with more than one liability class:
 find . -name KEYWORDS -exec grep -Hv NOIMPR /dev/null \{\} \; | egrep -e LC2 -e LC3
 
 
+Single Pedigree SNGPD
+Multiple Pedigrees MLTPD
+
 Autosomal AUC
 Allosomal XC
 
