@@ -156,6 +156,7 @@ endif
 #FILE_LDFLAGS += -lsocket -lnsl # ditto for under Solaris
 #FILE_CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
 #FILE_CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13, no OpenMP
+#FILE_LDFLAGS += -lgsl -lgslcblas # UNCOMMENT THIS if you are doing VERIFY_GSL
 
 ifeq ($(strip $(USE_STUDYDB)), yes)
   FILE_CFLAGS += -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql -I/usr/sfw/include/mysql/
