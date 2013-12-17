@@ -1,0 +1,11 @@
+#!/bin/bash -xe
+#
+# Check the status of the full archive test suite. This will run Monday morning and mail to interested parties
+#
+cd ~/kelvin/tests/trunk/archive
+good=$(find . -name MAKE-GOOD* | wc -l)
+find . -name MAKE-FAIL* >archive.failed
+failed=$(cat archive.failed | wc -l)
+running=$(find . -name MAKE-RUN* | wc -l)
+let running=$running-$failed
+mail -s "Archive test at $good OK, $failed failed, and $running still running" whv001@ccri.net <archive.failed

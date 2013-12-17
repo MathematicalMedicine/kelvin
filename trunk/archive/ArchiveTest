@@ -1,0 +1,11 @@
+#!/bin/bash -xe
+#
+# Start the full archive test suite. This will run over the weekend. Another cron job will check on Monday for failures.
+#
+cd ~/kelvin/tests/trunk/archive
+# Clean-out everything that finished from last week
+find test.* -name MAKE-GOOD\* -delete
+find test.* -name MAKE-FAIL\* -delete
+find test.* -name arctest\* -delete
+# Start all of the tests
+find test.* -name kelvin.conf -execdir nq ../arctest.sh -pe make 4 -N arctest \;
