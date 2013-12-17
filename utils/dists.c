@@ -3,6 +3,8 @@
 #include <math.h>
 #include "cdflib.h"
 
+#include "sw.h"
+
 #include "hashtab.h"
 
 #if defined (USE_GSL) || defined (VERIFY_GSL)
@@ -129,7 +131,7 @@ double linearInterpolate (double xTarget, int tableSize, double *tableX, double 
 
 // Just calculate the probability density function given mean and stdDev
 double gaussian_pdf (double x, double mean, double stdDev) {
-  //  fprintf (stderr, "gaussian_pdf\n");
+
 #ifdef USE_GSL
   return (gsl_ran_gaussian_pdf (x, stdDev));
 #else
@@ -447,13 +449,9 @@ double gaussian_cdf (double x, double mean, double stdDev) {
   return (gsl_cdf_gaussian_P (x, stdDev));
 #endif
 
-  //  fprintf (stderr, "gaussian_cdf\n");
-
   // Handle bad data first
-  if (stdDev < 0.0) {
-    fprintf (stderr, "In gaussian_cdf, invalid stdDev of %g\n", stdDev);
-    exit (EXIT_FAILURE);
-  }
+  if (stdDev < 0.0)
+    ERROR( "In gaussian_cdf, invalid stdDev of %g\n", stdDev);
 
   // Translation by mean and distortion by stdDev first...
   x = (x - mean) * TBL_STDDEV / stdDev;
@@ -468,7 +466,7 @@ double gaussian_cdf (double x, double mean, double stdDev) {
 
 #ifdef VERIFY_GSL
   if (fabs(result - gsl_cdf_gaussian_P (x, stdDev)) > 1e-13)
-    fprintf (stderr, "&&& For %.15g/%.15g we get %.15g, GSL gets %.15g, diff is %.15g\n",
+    WARNING( "For %.15g/%.15g we get %.15g, GSL gets %.15g, diff is %.15g\n",
 	     x, stdDev, result, gsl_cdf_gaussian_P (x, stdDev), fabs(result - gsl_cdf_gaussian_P (x, stdDev)));
 #endif
   return (result);
@@ -482,9 +480,10 @@ double ugaussian_cdf (double x) {
 }
 
 double t_pdf_30 (double x, double degFree) {
-  int TBL_VALUES = 1341;
+  int TBL_VALUES = 1353;
 #define TBL_DEGFREE 30
-  double X[1341] = {
+  double X[1353] = {
+-30, -25, -20, -19, -18, -17, -16, -15, -14, -13, -12, -11,
 -10, -9.99, -9.98, -9.97, -9.96, -9.95, -9.94, -9.93, -9.92,
 -9.91, -9.9, -9.89, -9.88, -9.87, -9.86, -9.85, -9.84, -9.83, -9.82,
 -9.81, -9.8, -9.79, -9.78, -9.77, -9.76, -9.75, -9.74, -9.73, -9.72,
@@ -622,7 +621,8 @@ double t_pdf_30 (double x, double degFree) {
 -0.005, 0.0
 };
 
-  double Y[1341] = {
+  double Y[1353] = {
+3.02821e-24, 6.93316e-22, 4.71965e-19, 2.0603e-18, 9.61879e-18, 4.82965e-17, 2.6242e-16, 1.55345e-15, 1.00923e-14, 7.25184e-14, 5.80975e-13 ,5.23032e-12,
 5.32781458e-11, 5.45642441e-11, 5.58821057e-11, 5.72325321e-11, 5.86163455e-11, 6.00343894e-11, 6.14875288e-11, 6.29766513e-11, 6.45026672e-11,
 6.60665104e-11, 6.76691389e-11, 6.93115354e-11, 7.0994708e-11, 7.27196911e-11, 7.44875455e-11, 7.62993597e-11, 7.81562504e-11, 8.00593632e-11, 8.20098734e-11,
 8.40089868e-11, 8.60579404e-11, 8.81580034e-11, 9.0310478e-11, 9.25167003e-11, 9.47780409e-11, 9.70959063e-11, 9.94717395e-11, 1.01907021e-10, 1.0440327e-10,
@@ -761,16 +761,21 @@ double t_pdf_30 (double x, double degFree) {
 };
 
   double result;
+  static int warn_count = 0;
+
 #ifdef USE_GSL
   double pdf;
 #endif
 
   // Handle bad data first
-  if (degFree != 30) {
-    fprintf (stderr, "In t_pdf_30, only 30 degrees of freedom supported\n");
-    exit (EXIT_FAILURE);
+  if (degFree != 30)
+    ERROR( "In t_pdf_30, only 30 degrees of freedom supported");
+
+  if (fabs(x) > 10) {
+    if ((++warn_count % 16384) == 1) {
+      WARNING ( "%d value(s) of X (e.g., %g) are beyond the bounds of safe t-dist PDF interpolation, use GSL or adjust your distribution parameters", warn_count, x);
+    }
   }
-  //  fprintf (stderr, "t_pdf_30\n");
 
   //  if(get_hash_t_pdf(x, &pdf))
   //  return pdf;
@@ -781,23 +786,16 @@ double t_pdf_30 (double x, double degFree) {
   return pdf;
 #endif
 
-  // Simple cases...
-  if (x <= -10)
-    return ((double) 5e-11);
-  if (x >= 10)
-    return ((double) 5e-11);
-
-  // Not simple, do the lookup and interpolation
-
   if (x > 0)
     result = interpolate (-x, TBL_VALUES, X, Y);
   else
     result = interpolate (x, TBL_VALUES, X, Y);
 
 #ifdef VERIFY_GSL
-  if (fabs(result - gsl_ran_tdist_pdf (x, (double) 30) > 1e-13))
-      fprintf (stderr, "t_pdf_30 gives %g vs GSL of %g (difference is %g) for x of %g\n", result,
-	       gsl_ran_tdist_pdf (x, (double) 30), (result - gsl_ran_tdist_pdf (x, (double) 30)), x);
+  //  if (fabs(result - gsl_ran_tdist_pdf (x, (double) 30) > 1e-8))
+  if (fabs((result - gsl_ran_tdist_pdf (x, (double) 30)) / result) > 1e-4)
+    WARNING( "t_pdf_30 gives %g vs GSL of %g (difference fraction is %g) for x of %g", result,
+	       gsl_ran_tdist_pdf (x, (double) 30), ((result - gsl_ran_tdist_pdf (x, (double) 30)) / result), x);
 #endif
   
   //hash_t_pdf(x, result);
@@ -1095,11 +1093,9 @@ double t_cdf_30 (double x, double degFree) {
   double result;
 
   // Handle bad data first
-  if (degFree != 30.0) {
-    fprintf (stderr, "In t_cdf_30, only 30 degrees of freedom supported\n");
-    exit (EXIT_FAILURE);
-  }
-  //  fprintf (stderr, "t_cdf_30\n");
+  if (degFree != 30.0)
+    ERROR("In t_cdf_30, only 30 degrees of freedom supported");
+
 #ifdef USE_GSL
   return(gsl_cdf_tdist_P (x, (double) 30));
 #endif
@@ -1113,8 +1109,8 @@ double t_cdf_30 (double x, double degFree) {
 
 #ifdef VERIFY_GSL
   if (fabs(result - gsl_cdf_tdist_P (x, (double) 30) > 1e-13))
-      fprintf (stderr, "t_cdf_30 gives %g vs GSL of %g (difference is %g) for x of %g\n", result,
-	       gsl_cdf_tdist_P (x, (double) 30), (result - gsl_cdf_tdist_P (x, (double) 30)), x);
+    WARNING( "t_cdf_30 gives %g vs GSL of %g (difference is %g) for x of %g", result,
+	  gsl_cdf_tdist_P (x, (double) 30), (result - gsl_cdf_tdist_P (x, (double) 30)), x);
 #endif
   return(result);
 }
@@ -1126,20 +1122,20 @@ double t_cdf_30 (double x, double degFree) {
 double t_cdf (double x, double degFree) {
   double P, Q, bound;
   int type = 1, status;
-  //  fprintf (stderr, "t_cdf\n");
+
 #ifdef USE_GSL
   return(gsl_cdf_tdist_P (x, degFree));
 #endif
 
   cdft(&type, &P, &Q, &x, &degFree, &status, &bound);
-  if (status !=0 ) {
-    printf ("In t_cdf, cdft error w/status %d, bound %g\n", status, bound);
-    exit (EXIT_FAILURE);
-  }
+  if (status !=0 )
+    ERROR ("In t_cdf, cdft error w/status %d, bound %g", status, bound);
 
-  //  if (fabs(P - gsl_cdf_tdist_P (x, degFree) > 1e-13))
-  //      fprintf (stderr, "t_cdf gives %g at %gdf vs GSL of %g (difference is %g) for x of %g\n", P,
-  //	       degFree, gsl_cdf_tdist_P (x, degFree), (P - gsl_cdf_tdist_P (x, degFree)), x);
+#ifdef VERIFY_GSL
+  if (fabs(P - gsl_cdf_tdist_P (x, degFree) > 1e-13))
+    WARNING( "t_cdf gives %g at %gdf vs GSL of %g (difference is %g) for x of %g", P,
+	     degFree, gsl_cdf_tdist_P (x, degFree), (P - gsl_cdf_tdist_P (x, degFree)), x);
+#endif
 
   return (P);
 }
@@ -1163,8 +1159,8 @@ double chisq_pdf (double x, double degFree) {
 
 #ifdef VERIFY_GSL
   if (fabs(result - gsl_ran_chisq_pdf (x, degFree) > 1e-13))
-      fprintf (stderr, "chisq_pdf gives %g vs GSL of %g (difference is %g) for x of %g\n", result,
-	       gsl_ran_chisq_pdf (x, degFree), (result - gsl_ran_chisq_pdf (x, degFree)), x);
+    WARNING( "chisq_pdf gives %g vs GSL of %g (difference is %g) for x of %g", result,
+	     gsl_ran_chisq_pdf (x, degFree), (result - gsl_ran_chisq_pdf (x, degFree)), x);
 #endif
   return(result);
 }
@@ -1189,8 +1185,8 @@ double chisq_cdf (double x, double degFree) {
 
 #ifdef VERIFY_GSL
   if (fabs(P - gsl_cdf_chisq_P (x, degFree) > 1e-13))
-      fprintf (stderr, "chisq_cdf gives %g vs GSL of %g (difference is %g) for x of %g\n", P,
-	       gsl_cdf_chisq_P (x, degFree), (P - gsl_cdf_chisq_P (x, degFree)), x);
+    WARNING( "chisq_cdf gives %g vs GSL of %g (difference is %g) for x of %g", P,
+	     gsl_cdf_chisq_P (x, degFree), (P - gsl_cdf_chisq_P (x, degFree)), x);
 #endif
   return (P);
 }
