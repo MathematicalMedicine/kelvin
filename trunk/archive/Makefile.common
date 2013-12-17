@@ -26,11 +26,13 @@ else
 	$(if $(findstring $@,POLYCOMP_DL), -rm -rf *.so compiled)
 	date >>runtimes-$@; (time ($(BASE_KELVIN)$(if $(findstring $@,NonPE),,-$@) kelvin.conf $(if $(findstring $@,NonPE),--NonPolynomial) --bayes br.out-$@ --ppl ppl.out-$@ >kelvin.out-$@ 2>&1) 2>&1) > runtime-$@
 	mv MAKE-RUNNING-$@ MAKE-FAILED-$@
-	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out-$@ br.out-baseline 0.002
-  ifeq ($(wildcard ppl.out),ppl.out)
+	# no_GSL is only within 1%, but I bet Dr. Vieland is unconcerned. Others should be darn-near exact.
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out-$@ br.out-baseline $(if $(findstring $@,no_GSL),0.01,0.0002)
+	# Only check a ppl.out file if one exists!
+    ifeq ($(wildcard ppl.out),ppl.out)
 	# Rounding to 3 places makes the ppl sloppier, so a 1% correspondence is good
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out-$@ ppl.out-baseline 0.01
-  endif
+    endif
 	mv MAKE-FAILED-$@ MAKE-GOOD-CURRENT-$@
 	cat runtime-$@ | tee -a kelvin.out-$@ >> runtimes-$@
 	- rm runtime-$@
