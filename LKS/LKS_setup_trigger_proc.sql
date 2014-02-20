@@ -237,7 +237,7 @@ CREATE PROCEDURE GetMarkerSetLikelihood (
 )
 BEGIN
     DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
-    DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
+    DECLARE MNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
     DECLARE outMarkerSetId INT DEFAULT -1;
     DECLARE no_rows_indicator INT DEFAULT 0;
     DECLARE no_rows CONDITION FOR 1329;
@@ -327,7 +327,7 @@ CREATE PROCEDURE GetDLikelihood (
 )
 BEGIN
     DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
-    DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
+    DECLARE MNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _MIGHT_ not exist
 
     DECLARE no_rows_indicator INT DEFAULT 0;
     DECLARE no_rows CONDITION FOR 1329;
@@ -375,7 +375,7 @@ BEGIN
         Insert into DModelParts (DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen)
         values (inDGF, inLC1BigPen, inLC1BigLittlePen, inLC1LittleBigPen, inLC1LittlePen);
         Select LAST_INSERT_ID() INTO @LC1MPId;
-        SET WNE_indicator = 1;
+        SET MNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
@@ -387,7 +387,7 @@ BEGIN
         Insert into DModelParts (DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen)
         values (inDGF, inLC2BigPen, inLC2BigLittlePen, inLC2LittleBigPen, inLC2LittlePen);
         Select LAST_INSERT_ID() INTO @LC2MPId;
-        SET WNE_indicator = 1;
+        SET MNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
@@ -399,29 +399,28 @@ BEGIN
         Insert into DModelParts (DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen)
         values (inDGF, inLC3BigPen, inLC3BigLittlePen, inLC3LittleBigPen, inLC3LittlePen);
         Select LAST_INSERT_ID() INTO @LC3MPId;
-        SET WNE_indicator = 1;
+        SET MNE_indicator = 1;
       END IF;
 
-      -- find or insert a row in Models table
-      IF WNE_indicator THEN
-        -- Some of the model parts are not even in the table, so this model is not either
-        Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
+      -- Maybe attempt to insert a row in Models table
+      IF MNE_indicator THEN
+        -- Some of the model parts are not even in the table, so this model was not either,
+	-- although that does not guarentee that it isn't there now.
+        Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
   	(inPedPosId, @LC1MPId, @LC2MPId, @LC3MPId);
-        Select LAST_INSERT_ID() INTO @ModelId;
-	Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, @ModelId);
-      ELSE
-        -- Go for the Likelihood! If it doesn't exist, request it and return the NULL.
-        SET no_rows_indicator = 0;
-        Select Likelihood, MarkerCount into outLikelihood, outMarkerCount from
-  	Models where PedPosId = inPedPosId AND LC1MPId = @LC1MPId AND
-  	  LC2MPId = @LC2MPId AND LC3MPId = @LC3MPId order by MarkerCount desc limit 1;
+      END IF;
 
-        IF no_rows_indicator THEN
-          Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
-  	  (inPedPosId, @LC1MPId, @LC2MPId, @LC3MPId);
-          Select LAST_INSERT_ID() INTO @ModelId;
-	  Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, @ModelId);
-        END IF;
+      -- Go for the Likelihood! If it doesn't exist, request it and return the NULL.
+      SET no_rows_indicator = 0;
+      Select Likelihood, MarkerCount into outLikelihood, outMarkerCount from
+      Models where PedPosId = inPedPosId AND LC1MPId = @LC1MPId AND
+        LC2MPId = @LC2MPId AND LC3MPId = @LC3MPId order by MarkerCount desc limit 1;
+
+      IF no_rows_indicator THEN
+        Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
+        (inPedPosId, @LC1MPId, @LC2MPId, @LC3MPId);
+        Select LAST_INSERT_ID() INTO @ModelId;
+        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, @ModelId);
       END IF;
     END IF;
     Commit;
@@ -452,7 +451,7 @@ CREATE PROCEDURE GetQLikelihood (
 )
 BEGIN
     DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
-    DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
+    DECLARE MNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
 
     DECLARE no_rows_indicator INT DEFAULT 0;
     DECLARE no_rows CONDITION FOR 1329;
@@ -500,7 +499,7 @@ BEGIN
         Insert into QModelParts (DGF, BigMean, BigLittleMean, LittleBigMean, LittleMean, BigSD, BigLittleSD, LittleBigSD, LittleSD, Threshold)
         values (inDGF, inLC1BigMean, inLC1BigLittleMean, inLC1LittleBigMean, inLC1LittleMean, inLC1BigSD, inLC1BigLittleSD, inLC1LittleBigSD, inLC1LittleSD, inLC1Threshold);
         Select LAST_INSERT_ID() INTO @LC1MPId;
-        SET WNE_indicator = 1;
+        SET MNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
@@ -512,7 +511,7 @@ BEGIN
         Insert into QModelParts (DGF, BigMean, BigLittleMean, LittleBigMean, LittleMean, BigSD, BigLittleSD, LittleBigSD, LittleSD, Threshold)
         values (inDGF, inLC2BigMean, inLC2BigLittleMean, inLC2LittleBigMean, inLC2LittleMean, inLC2BigSD, inLC2BigLittleSD, inLC2LittleBigSD, inLC2LittleSD, inLC2Threshold);
         Select LAST_INSERT_ID() INTO @LC2MPId;
-        SET WNE_indicator = 1;
+        SET MNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
@@ -524,27 +523,29 @@ BEGIN
         Insert into QModelParts (DGF, BigMean, BigLittleMean, LittleBigMean, LittleMean, BigSD, BigLittleSD, LittleBigSD, LittleSD, Threshold)
         values (inDGF, inLC3BigMean, inLC3BigLittleMean, inLC3LittleBigMean, inLC3LittleMean, inLC3BigSD, inLC3BigLittleSD, inLC3LittleBigSD, inLC3LittleSD, inLC3Threshold);
         Select LAST_INSERT_ID() INTO @LC3MPId;
-        SET WNE_indicator = 1;
+        SET MNE_indicator = 1;
       END IF;
 
-      IF WNE_indicator THEN
-        Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
+      -- Maybe attempt to insert a row in Models table
+      IF MNE_indicator THEN
+        -- Some of the model parts are not even in the table, so this model was not either,
+	-- although that does not guarentee that it isn't there now.
+        Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
   	(inPedPosId, @LC1MPId, @LC2MPId, @LC3MPId);
         Select LAST_INSERT_ID() INTO @ModelId;
-	Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, @ModelId);
-      ELSE
-        -- Go for the Likelihood! If it doesn't exist, request it and return the NULL.
-        SET no_rows_indicator = 0;
-        Select Likelihood, MarkerCount into outLikelihood, outMarkerCount from
-  	Models where PedPosId = inPedPosId AND LC1MPId = @LC1MPId AND
-  	  LC2MPId = @LC2MPId AND LC3MPId = @LC3MPId order by MarkerCount desc limit 1;
+      END IF;
+
+      -- Go for the Likelihood! If it doesn't exist, request it and return the NULL.
+      SET no_rows_indicator = 0;
+      Select Likelihood, MarkerCount into outLikelihood, outMarkerCount from
+      Models where PedPosId = inPedPosId AND LC1MPId = @LC1MPId AND
+        LC2MPId = @LC2MPId AND LC3MPId = @LC3MPId order by MarkerCount desc limit 1;
 	
-        IF no_rows_indicator THEN
-          Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
-  	  (inPedPosId, @LC1MPId, @LC2MPId, @LC3MPId);
-          Select LAST_INSERT_ID() INTO @ModelId;
-	  Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, @ModelId);
-        END IF;
+      IF no_rows_indicator THEN
+        Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
+        (inPedPosId, @LC1MPId, @LC2MPId, @LC3MPId);
+        Select LAST_INSERT_ID() INTO @ModelId;
+        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, @ModelId);
       END IF;
     END IF;
     Commit;
