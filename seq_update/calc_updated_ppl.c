@@ -1773,6 +1773,10 @@ int parse_command_line (int argc, char **argv)
   }
 
   if (superoutfile != NULL) {
+    if (okelvin) {
+      fprintf (stderr, "%s: SuperBR output is not implemented for fixed-grid input\n");
+      exit (-1);
+    }
     if (stat (superoutfile, &statbuf) != -1) {
       fprintf (stderr, "%s: won't open '%s' for writing, file exists\n", pname, superoutfile);
       exit (-1);
