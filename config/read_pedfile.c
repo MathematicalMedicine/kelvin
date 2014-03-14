@@ -1482,7 +1482,7 @@ read_ccfile (char *ccFileName, PedigreeSet * pPedigreeSet)
       while ((numRet = sscanf (pLine, "%s %n", sCurrPedLabel, &pos)) > 0) {
 	pLine = &pLine[pos];
 	Pedigree *pPed;
-	pPed = find_original_pedigree (pPedigreeSet, sCurrPedLabel);
+	pPed = find_pedigree (pPedigreeSet, sCurrPedLabel);
 	ASSERT (pPed != NULL,
 		 "Can't find pedigree %s in pedigree file, but we got pattern count",
 		 sCurrPedLabel);
