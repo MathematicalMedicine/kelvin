@@ -216,7 +216,7 @@ WholeThing: LOOP
 	b.GenotypeMapId = c.MapId AND 
 	a.RefTraitPosCM >= c.RefPosCM AND a.RefTraitPosCM < c.NextRefPosCM;
 
-  Delete from MapMarkers where MarkerName = 'Dummy';
+  Delete from MapMarkers where MarkerName = 'Dummy' AND StudyId = inStudyId;
 
   -- Yeah, this is just a diagnostic, a way of bailing early to test incrementally.
   Leave WholeThing;
@@ -237,7 +237,7 @@ CREATE PROCEDURE GetMarkerSetLikelihood (
 )
 BEGIN
     DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
-    DECLARE MNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
+    DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
     DECLARE outMarkerSetId INT DEFAULT -1;
     DECLARE no_rows_indicator INT DEFAULT 0;
     DECLARE no_rows CONDITION FOR 1329;
@@ -327,7 +327,7 @@ CREATE PROCEDURE GetDLikelihood (
 )
 BEGIN
     DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
-    DECLARE MNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _MIGHT_ not exist
+    DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood will not exist
 
     DECLARE no_rows_indicator INT DEFAULT 0;
     DECLARE no_rows CONDITION FOR 1329;
@@ -375,7 +375,7 @@ BEGIN
         Insert into DModelParts (DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen)
         values (inDGF, inLC1BigPen, inLC1BigLittlePen, inLC1LittleBigPen, inLC1LittlePen);
         Select LAST_INSERT_ID() INTO @LC1MPId;
-        SET MNE_indicator = 1;
+        SET WNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
@@ -387,7 +387,7 @@ BEGIN
         Insert into DModelParts (DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen)
         values (inDGF, inLC2BigPen, inLC2BigLittlePen, inLC2LittleBigPen, inLC2LittlePen);
         Select LAST_INSERT_ID() INTO @LC2MPId;
-        SET MNE_indicator = 1;
+        SET WNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
@@ -399,11 +399,11 @@ BEGIN
         Insert into DModelParts (DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen)
         values (inDGF, inLC3BigPen, inLC3BigLittlePen, inLC3LittleBigPen, inLC3LittlePen);
         Select LAST_INSERT_ID() INTO @LC3MPId;
-        SET MNE_indicator = 1;
+        SET WNE_indicator = 1;
       END IF;
 
       -- Maybe attempt to insert a row in Models table
-      IF MNE_indicator THEN
+      IF WNE_indicator THEN
         -- Some of the model parts are not even in the table, so this model was not either,
 	-- although that does not guarentee that it isn't there now.
         Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
@@ -451,7 +451,7 @@ CREATE PROCEDURE GetQLikelihood (
 )
 BEGIN
     DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
-    DECLARE MNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
+    DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
 
     DECLARE no_rows_indicator INT DEFAULT 0;
     DECLARE no_rows CONDITION FOR 1329;
@@ -499,7 +499,7 @@ BEGIN
         Insert into QModelParts (DGF, BigMean, BigLittleMean, LittleBigMean, LittleMean, BigSD, BigLittleSD, LittleBigSD, LittleSD, Threshold)
         values (inDGF, inLC1BigMean, inLC1BigLittleMean, inLC1LittleBigMean, inLC1LittleMean, inLC1BigSD, inLC1BigLittleSD, inLC1LittleBigSD, inLC1LittleSD, inLC1Threshold);
         Select LAST_INSERT_ID() INTO @LC1MPId;
-        SET MNE_indicator = 1;
+        SET WNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
@@ -511,7 +511,7 @@ BEGIN
         Insert into QModelParts (DGF, BigMean, BigLittleMean, LittleBigMean, LittleMean, BigSD, BigLittleSD, LittleBigSD, LittleSD, Threshold)
         values (inDGF, inLC2BigMean, inLC2BigLittleMean, inLC2LittleBigMean, inLC2LittleMean, inLC2BigSD, inLC2BigLittleSD, inLC2LittleBigSD, inLC2LittleSD, inLC2Threshold);
         Select LAST_INSERT_ID() INTO @LC2MPId;
-        SET MNE_indicator = 1;
+        SET WNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
@@ -523,11 +523,11 @@ BEGIN
         Insert into QModelParts (DGF, BigMean, BigLittleMean, LittleBigMean, LittleMean, BigSD, BigLittleSD, LittleBigSD, LittleSD, Threshold)
         values (inDGF, inLC3BigMean, inLC3BigLittleMean, inLC3LittleBigMean, inLC3LittleMean, inLC3BigSD, inLC3BigLittleSD, inLC3LittleBigSD, inLC3LittleSD, inLC3Threshold);
         Select LAST_INSERT_ID() INTO @LC3MPId;
-        SET MNE_indicator = 1;
+        SET WNE_indicator = 1;
       END IF;
 
       -- Maybe attempt to insert a row in Models table
-      IF MNE_indicator THEN
+      IF WNE_indicator THEN
         -- Some of the model parts are not even in the table, so this model was not either,
 	-- although that does not guarentee that it isn't there now.
         Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
@@ -1497,10 +1497,12 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS CleanOrphans;
 DELIMITER //
 
-CREATE PROCEDURE CleanOrphans (IN inStudyId int)
+CREATE PROCEDURE CleanOrphans (IN inStudyLabel varchar(64))
 BEGIN
 
+  DECLARE inStudyId int;
   DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE no_rows_indicator INT DEFAULT 0;
 
 -- Put orphaned Models back up for adoption.
 
@@ -1521,6 +1523,16 @@ BEGIN
 	PedPosId in (Select PedPosId from PedigreePositions where StudyId = inStudyId) AND
 	ServerId NOT IN (Select ServerId from Servers where ExitStatus IS NULL);
   DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET EmptyCursor = 1;
+
+-- Get the actual StudyId
+  WholeThing: LOOP
+  SET no_rows_indicator = 0;
+  Select StudyId into inStudyId from Studies where StudyLabel = inStudyLabel;
+  IF no_rows_indicator THEN
+--    Insert into Diag (Message) values (Concat('CleanOrphans(', inStudyLabel, '): cannot find the study!'));
+      Leave WholeThing;      
+  END IF;
+
 
   OPEN OrphanModels;
   FETCH OrphanModels into inModelId, inPedPosId;
@@ -1547,6 +1559,8 @@ BEGIN
   CLOSE OrphanMarkers;
 
   Select orphanCount 'Orphans Freed';
+  Leave WholeThing;
+  END LOOP WholeThing; 
 
 END;
 //
@@ -1555,7 +1569,7 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS CleanStudy;
 DELIMITER //
 
-CREATE PROCEDURE CleanStudy (IN inStudyLabel varchar(24))
+CREATE PROCEDURE CleanStudy (IN inStudyLabel varchar(64))
 BEGIN
 
   DECLARE inStudyId int;
@@ -1570,6 +1584,7 @@ BEGIN
   SET no_rows_indicator = 0;
   Select StudyId into inStudyId from Studies where StudyLabel = inStudyLabel;
   IF no_rows_indicator THEN
+    Insert into Diag (Message) values (Concat('CleanStudy(', inStudyLabel, '): cannot find the study!'));
     LEAVE WholeThing;
   END IF;
 
@@ -1726,6 +1741,16 @@ WholeThing: LOOP
     Leave WholeThing;
   END IF;
 
+  -- TotalFree: Show total unallocated work by StudyLabel
+  IF inWhich = 'TotalFree' THEN
+    Select S.StudyLabel, P.PedigreeSId, count(*) from
+      Studies S, Pedigrees P, PedigreePositions PP, Models M where
+      S.StudyId = P.StudyId AND P.PedigreeSId = PP.PedigreeSId AND S.StudyId = PP.StudyId AND
+      PP.PedPosId = M.PedPosId AND M.ServerId is NULL group by S.StudyLabel, P.PedigreeSId;
+    Leave WholeThing;
+  END IF;
+
+  -- Reconcile: Mark any servers not really in processlist with ExitStatus 42
   IF inWhich = 'Reconcile' THEN
     Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from INFORMATION_SCHEMA.PROCESSLIST) AND ExitStatus IS NULL;
     Leave WholeThing;
@@ -1739,6 +1764,7 @@ WholeThing: LOOP
 	('Active', 'Work rate and status for servers that are still running'),
 	('Delta', 'Loop showing overall work progress for the last minute using servers active in the last hour'),
 	('Free', 'Show unallocated work by StudyId/PedPosId with SingleModelRuntime'),
+	('TotalFree', 'Show total unallocated work by StudyLabel'),
 	('Reconcile', 'Mark any servers not really in processlist with ExitStatus 42');
    Select * from Q_help;
    Drop table Q_help;
