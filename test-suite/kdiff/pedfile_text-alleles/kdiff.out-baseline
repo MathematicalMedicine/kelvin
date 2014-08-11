@@ -1,3 +1,17 @@
 1: Validating found files: FrequencyFile->original/markers.dat LocusFile->original/datafile.dat MapFile->original/mapfile.dat PedigreeFile->original/pedfile.dat 
 2: Validating found files: LocusFile->pedfile_text-alleles/datafile.dat PedigreeFile->pedfile_text-alleles/pedfile.dat 
 2: Ped "7" ("7") ind "1" ("1") has different values for marker 2 ("Loci_3") - 1:2 1 vs 2:T A
+2: Ped "7" ("7") ind "10" ("10") has different values for marker 2 ("Loci_3") - 1:1 1 vs 2:A A
+2: Ped "7" ("7") ind "11" ("11") has different values for marker 2 ("Loci_3") - 1:1 2 vs 2:A T
+2: Ped "7" ("7") ind "12" ("12") has different values for marker 2 ("Loci_3") - 1:2 1 vs 2:T A
+2: Ped "7" ("7") ind "13" ("13") has different values for marker 2 ("Loci_3") - 1:2 2 vs 2:T T
+2: Ped "7" ("7") ind "2" ("2") has different values for marker 2 ("Loci_3") - 1:1 2 vs 2:A T
+2: Ped "7" ("7") ind "3" ("3") has different values for marker 2 ("Loci_3") - 1:2 1 vs 2:T A
+2: Ped "7" ("7") ind "4" ("4") has different values for marker 2 ("Loci_3") - 1:2 1 vs 2:T A
+2: Ped "7" ("7") ind "5" ("5") has different values for marker 2 ("Loci_3") - 1:2 2 vs 2:T T
+2: Ped "7" ("7") ind "6" ("6") has different values for marker 2 ("Loci_3") - 1:1 1 vs 2:A A
+2: Ped "7" ("7") ind "7" ("7") has different values for marker 2 ("Loci_3") - 1:1 1 vs 2:A A
+2: Ped "7" ("7") ind "8" ("8") has different values for marker 2 ("Loci_3") - 1:1 1 vs 2:A A
+2: Ped "7" ("7") ind "9" ("9") has different values for marker 2 ("Loci_3") - 1:1 1 vs 2:A A
+2: Ped "9" ("9") ind "13" ("13") has different values for marker 2 ("Loci_3") - 1:1 1 vs 2:1 3
+WARNING, Files are different
