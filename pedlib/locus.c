@@ -895,10 +895,9 @@ compute_penetrance (Person * pPerson, int locus, int allele1, int allele2,
   double trait, mean, stddev, temp;
   double df;
 
-  Polynomial *tempPoly = NULL, *tempPoly2 = NULL;
+  Polynomial *tempPoly = NULL;
 
   tempPoly = NULL;
-  tempPoly2 = NULL;
 
   if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL)
     pPerson = pPerson->pOriginalPerson;
@@ -1696,9 +1695,7 @@ set_genotype_position (Pedigree * pPedigree, int locus)
   Genotype *pGenotype;
   int i;
   int position;
-  Locus *pLocus;
 
-  pLocus = originalLocusList.ppLocusList[locus];
   for (i = 0; i < pPedigree->numPerson; i++) {
     pPerson = pPedigree->ppPersonList[i];
     pGenotype = pPerson->ppGenotypeList[locus];
@@ -2370,7 +2367,9 @@ add_markers_to_locuslist (SubLocusList * pLocusList,
   int rightMarker;
   int marker;
   int leftMarker;
-  int ret;			/* return status */
+//  int ret;			/* return status */
+//      removed because it appears to be unused and thus is generating spurious
+//      compiler warnings
   int i;
 
   /* number of markers to use can't exceed what we have */
@@ -2387,7 +2386,7 @@ add_markers_to_locuslist (SubLocusList * pLocusList,
     /* no brainer - select all of them */
     for (i = 0; i < originalLocusList.numLocus; i++) {
       if (originalLocusList.ppLocusList[i]->locusType == LOCUS_TYPE_MARKER) {
-	ret =
+//	ret =
 	  add_analysis_locus (pLocusList, i, DIRECTION_RIGHT,
 			      map.mapFunction);
       }
@@ -2401,7 +2400,7 @@ add_markers_to_locuslist (SubLocusList * pLocusList,
       pick_left_flanking_marker (*pLeftMarker, end, traitPosition, mapFlag);
     if (*pLeftMarker >= 0) {
       numMarkerSelected++;
-      ret =
+//      ret =
 	add_analysis_locus (pLocusList, *pLeftMarker, DIRECTION_RIGHT,
 			    map.mapFunction);
     }
@@ -2411,7 +2410,7 @@ add_markers_to_locuslist (SubLocusList * pLocusList,
 				  mapFlag);
     if (rightMarker <= end) {
       numMarkerSelected++;
-      ret =
+//      ret =
 	add_analysis_locus (pLocusList, rightMarker, DIRECTION_RIGHT,
 			    map.mapFunction);
     }
@@ -2429,7 +2428,8 @@ add_markers_to_locuslist (SubLocusList * pLocusList,
 	ERROR ("We have run out of markers (%d out of %d) to choose for multipoint",
 	      numMarkerSelected, total);
       numMarkerSelected++;
-      ret = add_analysis_locus (pLocusList, marker, DIRECTION_LEFT, map.mapFunction);
+//      ret = 
+      add_analysis_locus (pLocusList, marker, DIRECTION_LEFT, map.mapFunction);
     }
   }
 
@@ -2456,7 +2456,6 @@ add_analysis_locus (SubLocusList * pLocusList, int locus, int directionFlag,
   double *thisPos;
   double *currPos;
   int i, j, k;
-  int left;
   double *leftPos;
 
   /* if we can't return anything, what's the purpose of proceeding */
@@ -2577,7 +2576,6 @@ add_analysis_locus (SubLocusList * pLocusList, int locus, int directionFlag,
 
   /* We can't add it to the beginning or the end of the list
    * Find the right place first */
-  left = first;
   leftPos = firstPos;
   i = 1;
   while (i < numLocus) {
@@ -2642,7 +2640,6 @@ add_analysis_locus (SubLocusList * pLocusList, int locus, int directionFlag,
       return 0;
     }
     i++;
-    left = curr;
     leftPos = currPos;
   }
   return 0;

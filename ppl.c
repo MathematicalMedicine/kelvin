@@ -37,7 +37,6 @@ calculate_PPL (SUMMARY_STAT ** result)
   double I = 0;			/* integral for the entire region */
   double A = 0;			/* integral for current theta block */
   double B;			/* area of the theta block */
-  int caseIdx = 0;
 
   integral = 0;
   if (modelOptions->mapFlag == SA) {
@@ -110,37 +109,31 @@ calculate_PPL (SUMMARY_STAT ** result)
 	if (thetam2 < rm && thetaf2 < rf) {
 	  /* case #1 */
 	  /* entirely under skewed region */
-	  caseIdx = 1;
 	  A = w1 * 0.25 * B * (avgLR1 + avgLR2 + avgLR3 + avgLR4);
 	} else if (rm <= thetam1 || rf <= thetaf1) {
 	  /* case #2 */
-	  caseIdx = 2;
 	  /* entirely outside of skewed region */
 	  A = w2 * 0.25 * B * (avgLR1 + avgLR2 + avgLR3 + avgLR4);
 
 	} else if (thetam1 < rm && rm <= mavg && thetaf1 < rf && rf <= favg) {
 	  /* case #3 */
-	  caseIdx = 3;
 	  A = avgLR1 * w1 * mdist * fdist +
 	    avgLR1 * w2 * (0.25 * B - mdist * fdist) +
 	    0.25 * w2 * B * (avgLR2 + avgLR3 + avgLR4);
 	} else if (mavg < rm && rm <= thetam2 && thetaf1 < rf && rf < favg) {
 	  /* case #4 */
-	  caseIdx = 4;
 	  A = avgLR1 * 0.5 * mdiff * (w1 * fdist + w2 * (favg - rf)) +
 	    avgLR3 * w1 + (rm - mavg) * fdist +
 	    avgLR3 * w2 * (0.25 * B - (rm - mavg) * fdist) +
 	    w2 * 0.25 * B * (avgLR2 + avgLR4);
 	} else if (thetam1 < rm && rm <= mavg && favg < rf && rf <= thetaf2) {
 	  /* case #5 */
-	  caseIdx = 5;
 	  A = avgLR1 * 0.5 * fdiff * (w1 * mdist + w2 * (mavg - rm)) +
 	    avgLR2 * w1 * (rf - favg) * mdist +
 	    avgLR2 * w2 * (0.25 * B - (rf - favg) * mdist) +
 	    w2 * 0.25 * B * (avgLR3 + avgLR4);
 	} else if (mavg < rm && rm <= thetam2 && favg < rf && rf <= thetaf2) {
 	  /* case #6 */
-	  caseIdx = 6;
 	  A = avgLR1 * w1 * 0.25 * B +
 	    avgLR2 * 0.5 * mdiff * (w1 * (rf - favg) + w2 * (thetaf2 - rf)) +
 	    avgLR3 * 0.5 * fdiff * (w1 * (rm - mavg) + w2 * (thetam2 - rm)) +
@@ -148,7 +141,6 @@ calculate_PPL (SUMMARY_STAT ** result)
 	    avgLR4 * w2 * (0.25 * B - (rm - mavg) * (rf - favg));
 	} else if (thetam2 < rm && thetaf1 < rf && rf <= favg) {
 	  /* case #7 */
-	  caseIdx = 7;
 	  A =
 	    (avgLR1 + avgLR3) * 0.5 * mdiff * (w1 * fdist +
 					       w2 * (favg - rf)) + (avgLR2 +
@@ -157,13 +149,11 @@ calculate_PPL (SUMMARY_STAT ** result)
 
 	} else if (thetam2 < rm && favg < rf && rf <= thetaf2) {
 	  /* case #8 */
-	  caseIdx = 8;
 	  A = (avgLR1 + avgLR3) * w1 * 0.25 * B +
 	    (avgLR2 + avgLR4) * 0.5 * mdiff * (w1 * (rf - favg) +
 					       w2 * (thetaf2 - rf));
 	} else if (thetaf2 < rf && thetam1 < rm && rm <= mavg) {
 	  /* case #9 */
-	  caseIdx = 9;
 	  A =
 	    (avgLR1 + avgLR2) * 0.5 * fdiff * (w1 * mdist +
 					       w2 * (mavg - rm)) + (avgLR3 +
@@ -171,7 +161,6 @@ calculate_PPL (SUMMARY_STAT ** result)
 	    w2 * 0.25 * B;
 	} else if (thetaf2 < rf && mavg < rm && rm <= thetam2) {
 	  /* case #10 */
-	  caseIdx = 10;
 	  A = (avgLR1 + avgLR2) * w1 * 0.25 * B +
 	    (avgLR3 + avgLR4) * 0.5 * fdiff * (w1 * (rm - mavg) +
 					       w2 * (thetam2 - rm));

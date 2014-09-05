@@ -1774,7 +1774,7 @@ int parse_command_line (int argc, char **argv)
 
   if (superoutfile != NULL) {
     if (okelvin) {
-      fprintf (stderr, "%s: SuperBR output is not implemented for fixed-grid input\n");
+      fprintf (stderr, "%s: SuperBR output is not implemented for fixed-grid input\n", pname);
       exit (-1);
     }
     if (stat (superoutfile, &statbuf) != -1) {
@@ -1901,7 +1901,7 @@ void open_brfile (st_brfile *brfile)
     exit (-1);
   }
   if (fgets (buff, BUFFLEN, brfile->fp) == NULL) {
-    if (brfile->eof = feof (brfile->fp))
+    if ((brfile->eof = feof (brfile->fp)))
       fprintf (stderr, "error reading %s at line 0, %s\n", brfile->name, strerror (errno));
     else 
       fprintf (stderr, "file %s is empty\n", brfile->name);
@@ -1970,7 +1970,7 @@ int get_marker_line (st_brfile *brfile)
   
   if (fgets (buff, BUFFLEN, brfile->fp) == NULL) {
     /* An end-of-file looking for a marker is not necessarily fatal, so let the caller decide */
-    if (brfile->eof = feof (brfile->fp))
+    if ((brfile->eof = feof (brfile->fp)))
       return (0);
     fprintf (stderr, "error reading '%s' at line %d, %s\n", brfile->name, brfile->lineno,
 	     strerror (errno));
@@ -2293,7 +2293,7 @@ int get_data_line (st_brfile *brfile, void  *ptr)
     exit (-1);
   }
   if (fgets (buff, BUFFLEN, brfile->fp) == NULL) {
-    if (brfile->eof = feof (brfile->fp))
+    if ((brfile->eof = feof (brfile->fp)))
       return (0);
     fprintf (stderr, "error reading '%s' at line %d, %s\n", brfile->name, brfile->lineno,
 	     strerror (errno));

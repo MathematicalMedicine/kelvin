@@ -260,11 +260,13 @@ Loop sleeping for MONSTATDELAYSEC seconds and then:
 */
 void *monitorMemory ()
 {
-
-  long currentVMK, maximumPMK;
+  long maximumPMK;
+#if defined(MEMGRAPH) || defined(MEMSTATUS)
+  long currentVMK;
   time_t startTime;
 
   startTime = time (NULL);
+#endif
 
   if ((maximumPMK = swGetMaximumPMK ()) != 0) {
 #ifdef MEMGRAPH
@@ -285,7 +287,9 @@ void *monitorMemory ()
 	thrashingCheck ();
 #endif
       }
+#if defined(MEMGRAPH) || defined(MEMSTATUS)
       currentVMK = swGetCurrentVMK (getpid ());
+#endif
 #ifdef MEMGRAPH
       fprintf (graphFile, "%lu, %ld, %ld\n", time (NULL) - startTime, currentVMK, nodeId);
       fflush (graphFile);

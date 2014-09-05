@@ -312,7 +312,7 @@ void
 writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
 		      int myThetaIdx)
 {
-  float theta[2], gfreq, mkrFreq, alphaV, R_square;
+  float theta[2], gfreq, alphaV, R_square;
   int penIdx, paramIdx, thresholdIdx, liabIdx;
   float pen_DD, pen_Dd, pen_dD, pen_dd;
   float SD_DD, SD_Dd, SD_dD, SD_dd;
@@ -329,7 +329,6 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
   theta[0] = modelRange->theta[0][myThetaIdx];
   theta[1] = modelRange->theta[1][myThetaIdx];
   gfreq = tp_result[myDPrimeIdx][myThetaIdx][modelRange->nafreq].max_gfreq;
-  mkrFreq = tp_result[myDPrimeIdx][myThetaIdx][modelRange->nafreq].max_mf;
   alphaV = tp_result[myDPrimeIdx][myThetaIdx][modelRange->nafreq].max_alpha;
   penIdx = tp_result[myDPrimeIdx][myThetaIdx][modelRange->nafreq].max_penIdx;
   R_square = tp_result[myDPrimeIdx][myThetaIdx][modelRange->nafreq].R_square;

@@ -1728,7 +1728,7 @@ void integrateMain ()
   int numPositions;
   int size_BR;
   int i, j, k;
-  int liabIdxLocal, pedIdx, statusLocal;
+  int liabIdxLocal, pedIdx/*, statusLocal*/;
   Pedigree *pPedigreeLocal;
 #ifdef STUDYDB
   int *pMarkers;
@@ -1946,7 +1946,7 @@ void integrateMain ()
 
     if (modelOptions->polynomial == TRUE) {
       /* populate the matrix */
-      statusLocal = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,       /* probability */
+      /*statusLocal = */populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,       /* probability */
           initialProbAddr2,     /* probability */
           initialHetProbAddr, 0,        /* cell index */
           -1,   /* last het locus */
@@ -2155,8 +2155,6 @@ void integrateMain ()
             }
             num_out_constraint = 0;
 
-#ifdef STUDYDB
-#endif
             /* Call DCUHRE  Domain information is stored in global variables,  xl an xu */
             kelvin_dcuhre_integrate (&integral, &abserr, volume_region, &(BRscale[i]));
             ASSERT ((s->ifail == 0), "Dynamic integration failed with ifail of %d. Please increase the maxcls parameter in integrationSupport.c if ifail is 1. Others, check dchhre function in dcuhre.c", s->ifail);
@@ -2460,7 +2458,7 @@ void integrateMain ()
     /* populate the trait xmission matrix */
     analysisLocusList = &traitLocusList;
     xmissionMatrix = traitMatrix;
-    statusLocal = populate_xmission_matrix (traitMatrix, 1, initialProbAddr,    /* probability */
+    /*statusLocal = */populate_xmission_matrix (traitMatrix, 1, initialProbAddr,    /* probability */
         initialProbAddr2,       /* probability */
         initialHetProbAddr, 0,  /* cell index */
         -1,     /* last he locus */
@@ -2722,7 +2720,7 @@ void integrateMain ()
         }
 
         /* populate the matrix */
-        statusLocal = populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,        /* probability */
+        /*statusLocal = */populate_xmission_matrix (markerMatrix, markerLocusList.numLocus, initialProbAddr,        /* probability */
             initialProbAddr2,   /* probability */
             initialHetProbAddr, 0,      /* cell index */
             -1, /* last he locus */
@@ -2835,7 +2833,7 @@ void integrateMain ()
         if (modelOptions->polynomial == TRUE) {
           pedigreeSetPolynomialClearance (&pedigreeSet);
           /* populate the matrix */
-          statusLocal = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,        /* probability */
+          /*statusLocal = */populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,        /* probability */
               initialProbAddr2, /* probability */
               initialHetProbAddr, 0,    /* cell index */
               -1, -1,   /* last het locus & last het pattern (P-1 or M-2) */
@@ -2851,7 +2849,7 @@ void integrateMain ()
 
       if (modelOptions->polynomial != TRUE);
       /* populate the matrix */
-      statusLocal = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,    /* probability */
+      /*statusLocal = */populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,    /* probability */
           initialProbAddr2,     /* probability */
           initialHetProbAddr, 0,        /* cell index */
           -1, -1,       /* last het locus & last het pattern (P-1 or M-2) */

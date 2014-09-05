@@ -300,7 +300,7 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
   int liabIdx;
   double Pen_DD, Pen_Dd, Pen_dD, Pen_dd;
   double SD_DD, SD_Dd, SD_dD, SD_dd;
-  double threshold;
+  double threshold = -99.0; // assigned to get rid of a spurious compiler warning
 
   if (fpMOD == NULL)
     return;

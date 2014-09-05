@@ -613,7 +613,7 @@ void validateConfig ()
     if (staticModelType.distrib == QT_FUNCTION_T) {
       if (! observed.mean) {
 	fault ("%s Normal requires %s\n", staticModelType.trait == QT ? QT_STR : QTT_STR, MEAN_STR);
-      } else if (! observed.mean & PARM_GENO) {
+      } else if (!(observed.mean & PARM_GENO)) {
       	fault ("FixedModels and %s Normal requires %s with trait genotypes\n", staticModelType.trait == QT ? QT_STR : QTT_STR, MEAN_STR);
       }
       if (! observed.standardDev) 
@@ -622,7 +622,7 @@ void validateConfig ()
     if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE) {
       if (! observed.degOfFreedom) {
 	fault ("%s ChiSq requires %s\n", staticModelType.trait == QT ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
-      } else if (! observed.degOfFreedom & PARM_GENO) {
+      } else if (!(observed.degOfFreedom & PARM_GENO)) {
       	fault ("FixedModels and %s ChiSq requires %s with trait genotypes\n", staticModelType.trait == QT ? QT_STR : QTT_STR, DEGOFFREEDOM_STR);
       }
     }

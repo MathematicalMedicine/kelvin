@@ -203,7 +203,6 @@ identify_transmitted_alleles (int locus, Pedigree * pPedigree)
 {
 
   Person *pPerson, *pChild;
-  Person *pOrigPerson;
   int numPerson = pPedigree->numPerson;
   int i;
 
@@ -225,7 +224,6 @@ identify_transmitted_alleles (int locus, Pedigree * pPedigree)
   for (i = 0; i < numPerson; i++) {
     pPerson = pPedigree->ppPersonList[i];
     pChild = pPerson->pFirstChild;
-    pOrigPerson = pPerson;
     if (pPerson->loopBreaker >= 1 && pPerson->pParents[DAD] == NULL) {
       pPerson = pPerson->pOriginalPerson;
     }
@@ -267,8 +265,6 @@ Person *
 identify_child_transmitted_alleles (Person * pFounder,
 				    Person * pChild, int locus)
 {
-  Locus *pLocus;
-
   /* number of alleles */
   /* allele set length for this locus */
   int alleleSetLen;
@@ -276,9 +272,6 @@ identify_child_transmitted_alleles (Person * pFounder,
   int j, k;
   Person *pChildChild;
   int sex = pFounder->sex;
-
-  /* get the locus structure */
-  pLocus = originalLocusList.ppLocusList[locus];
 
   /* get allele set length */
   alleleSetLen = originalLocusList.alleleSetLen;

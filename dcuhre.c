@@ -83,7 +83,7 @@ int
 dcuhre_ (dcuhre_state * s)
 {
 
-  int i, num_eval;
+  int i;
 
   //double fun_val;
 
@@ -140,7 +140,6 @@ dcuhre_ (dcuhre_state * s)
   s->key = s->keyf;
   dadhre_ (s);
 
-  num_eval = s->total_neval;
   if (s->verbose > 1) {
     print_rule (s);
   }

@@ -727,7 +727,7 @@ double evaluateValue (Polynomial * p)
   A polynomial is zero if it is a constant polynomial and its value is 0.
 
 */
-inline int isZeroExp (Polynomial * p)
+static inline int isZeroExp (Polynomial * p)
 {
   if (p->eType == T_OFFLINE) importPoly (p);
   if (p->eType != T_CONSTANT)
@@ -745,7 +745,7 @@ inline int isZeroExp (Polynomial * p)
   array. The polynomials are searched based on their keys.
 
 */
-inline int binarySearch (int *array, int length, int target, int *location)
+static inline int binarySearch (int *array, int length, int target, int *location)
 {
   int binaryStart, binaryEnd, binaryMiddle;
 
@@ -781,7 +781,7 @@ inline int binarySearch (int *array, int length, int target, int *location)
   key of the target polynomial.
 
 */
-inline int searchHashTable (struct hashStruct *hash, int *start, int *end, int key)
+static inline int searchHashTable (struct hashStruct *hash, int *start, int *end, int key)
 {
   int found;
   int location;
@@ -811,7 +811,7 @@ inline int searchHashTable (struct hashStruct *hash, int *start, int *end, int k
   sorted by their keys in increasing order.
 
 */
-inline void insertHashTable (struct hashStruct *hash, int location, int key, int ourIndex)
+static inline void insertHashTable (struct hashStruct *hash, int location, int key, int ourIndex)
 {
   hash->num++;
   // If the hash collision list is full, allocate more memory
@@ -837,7 +837,7 @@ inline void insertHashTable (struct hashStruct *hash, int location, int key, int
 };
 
 /// Delete the polynomial designated by location from a hash table
-inline void deleteHashTable (struct hashStruct *hash, int location)
+static inline void deleteHashTable (struct hashStruct *hash, int location)
 {
   if (location >= hash->num)
     FATAL ("Deletion in hash table failed!");
@@ -853,7 +853,7 @@ inline void deleteHashTable (struct hashStruct *hash, int location)
   and integral components.
 
 */
-inline int keyConstantPolynomial (double tempD1, int tempI1)
+static inline int keyConstantPolynomial (double tempD1, int tempI1)
 {
   int key;
 
@@ -979,7 +979,7 @@ Polynomial *constantExp (char *fileName, int lineNo, double con)
   random keys.
 
 */
-inline int keyVariablePolynomial (double *vD, int *vI, char vType)
+static inline int keyVariablePolynomial (double *vD, int *vI, char vType)
 {
   int key;
 
@@ -1099,7 +1099,7 @@ Polynomial *variableExp (double *vD, int *vI, char vType, char name[10])
    good hash strategy so that the polynomials are well distributed in the hash table.
 
 */
-inline int keySumPolynomial (Polynomial ** p, double *factor, int counter)
+static inline int keySumPolynomial (Polynomial ** p, double *factor, int counter)
 {
   int key = 0;
   int j;
@@ -1123,7 +1123,7 @@ inline int keySumPolynomial (Polynomial ** p, double *factor, int counter)
   been heavily optimized for degenerate cases due to it's intensive use.
 
 */
-inline int searchPolynomialList (Polynomial ** p, int length, Polynomial * target, int *location)
+static inline int searchPolynomialList (Polynomial ** p, int length, Polynomial * target, int *location)
 {
   int binaryStart, binaryEnd, binaryMiddle;
 
@@ -1165,7 +1165,7 @@ inline int searchPolynomialList (Polynomial ** p, int length, Polynomial * targe
   resulting polynomial and other polynomials.
 
 */
-inline void collectSumTerms (double **factor,   ///< Container, pointer to a list of double factors
+static inline void collectSumTerms (double **factor,   ///< Container, pointer to a list of double factors
     Polynomial *** p,   ///< Container, pointer to a list of pointers to polynomials
     int *counter,       ///< Number of terms currently in the container lists
     int *containerLength,       ///< Current size of the container lists
@@ -1491,7 +1491,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   Polynomial *rp;       ///< Pointer of the new sum polynomial
   int counterSum;       ///< Counter of the number of terms in the new sum polynomial
   int flag;     //< 1st-term replacement flag
-  double f1, f0;        ///< Some factors
+  double f1;        ///< Some factors
   Polynomial *p1 = 0, *p0 = 0;  ///< Some polynomial terms
   double con = 0;       ///< Accumulates constant values appearing in the function parameters
   int key = 0;  ///< Key for the new polynomial
@@ -1559,7 +1559,6 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
      * same variable, e.g. p=p+..., therefore, when we build a new polynomial for the result of the
      * plus operation, the first operand polynomial of the plus operation can be freed. */
     if (i == 0) {
-      f0 = f1;
       p0 = p1;
     }
     // If a term is constant 0, it has no effect on a sum, therefore we do nothing
@@ -1892,7 +1891,7 @@ Polynomial *plusExp (char *fileName, int lineNo, int num, ...)
   are required for good distribution of product polynomials in product hash table.
 
 */
-inline int keyProductPolynomial (Polynomial ** p, int *exponent, int counter)
+static inline int keyProductPolynomial (Polynomial ** p, int *exponent, int counter)
 {
   int key = 0;
   int j;
@@ -1911,7 +1910,7 @@ inline int keyProductPolynomial (Polynomial ** p, int *exponent, int counter)
   so that these terms can have a unique order in the constructed product polynomial.
 
 */
-inline void collectProductTerms (int **exponent,        ///< Container, pointer to a list of int exponents
+static inline void collectProductTerms (int **exponent,        ///< Container, pointer to a list of int exponents
     Polynomial *** p,   ///< Container, pointer to a list of pointers to polynomials
     int *counter,       ///< Number of terms currently in the container lists
     int *containerLength,       ///< Current size of the container lists
@@ -1983,7 +1982,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
   struct productPoly *pP;       ///< Product structure for the new polynomial
   Polynomial *rp;       ///< New product polynomial
   Polynomial *p1 = 0, *p0 = 0;  ///< Some polynomial terms
-  int e1, e0;   ///< Component of a term
+  int e1;   ///< Component of a term
   int isZero = 0;       ///< If the result is zero
   double factor = 1;    ///< Collect the constant terms in the parameter list
   int key = 0;  ///< Key of the new polynomial
@@ -2053,7 +2052,6 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
      * for the result of the times operation, the polynomial that represents the first operand of the
      * times operation can be freed. */
     if (i == 0) {
-      e0 = e1;
       p0 = p1;
     }
     // If any of the operand is zero, then the product is zero
@@ -2417,7 +2415,7 @@ Polynomial *timesExp (char *fileName, int lineNo, int num, ...)
    called function and the parameters.
 
 */
-inline int keyFunctionCallPolynomial (char *fName, Polynomial ** p, int num)
+static inline int keyFunctionCallPolynomial (char *fName, Polynomial ** p, int num)
 {
   int key = 0;
   int i;

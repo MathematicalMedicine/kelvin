@@ -29,7 +29,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-static const char id[] = "$Id$";
+// $Id$
 
 
 #include <stdlib.h>		/* malloc */
@@ -1304,7 +1304,7 @@ static int
 tpl_serlen (tpl_node * r, tpl_node * n, void *dv, size_t * serlen)
 {
   uint32_t slen;
-  int num, fidx;
+  int num=0, fidx;
   tpl_node *c;
   size_t len = 0, alen, buf_past;
 

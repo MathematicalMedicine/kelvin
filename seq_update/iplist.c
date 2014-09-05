@@ -122,6 +122,9 @@ double iplist_interpolate (st_iplist *list, char *chr, double pos)
       return (ival);
     }
   }
+  // if all else fails
+  fprintf (stderr, "iplist_interpolate had no value to return; this should be impossible\n");
+  exit (-1);
 }
 
 

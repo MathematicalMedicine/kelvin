@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>  // apparently this is where clang finds tolower()
 #include <map.h>
 
 #define BUFFLEN          256

@@ -440,11 +440,9 @@ int get_average_LR (SUMMARY_STAT *** result)
   double max_lr = -9999.99;
   double max_max_lr = -9999.999;
   double dprime;
-  double theta;
   double lr;
   int max_theta = -1;
   int max_max_theta = -1;
-  int max_dprime = -1;
   int max_max_dprime = -1;
   double maxLR;
   int maxScale, scale; 
@@ -454,7 +452,6 @@ int get_average_LR (SUMMARY_STAT *** result)
     dprime = pLambdaCell->lambda[dprimeIdx][0][0];
     for (thetaInd = 0; thetaInd < modelRange->ntheta; thetaInd++) {
       /* sex averaged theta */
-      theta = modelRange->theta[0][thetaInd];
       total_lr = 0;
       count = 0;
       if(modelRange->nafreq > 1) {
@@ -543,14 +540,13 @@ int get_average_LR (SUMMARY_STAT *** result)
 	if ((thetaInd == 0 && mkrFreqIdx == 0 && dprimeIdx == 0) ||
 	    (lr > max_lr)) {
 	  max_lr = lr;
-	  /* max theta would be in tp_result[max_dprime][#theta][#mf] */
-	  max_dprime = dprimeIdx;
+	  /* max theta would be in tp_result[dprimeIdx][#theta][#mf] */
 	}
 	/* find overal max MOD  */
 	if ((thetaInd == 0 && mkrFreqIdx == 0 && dprimeIdx == 0) ||
 	    (maxLR > max_max_lr)) {
 	  max_max_lr = maxLR;
-	  /* max theta would be in tp_result[max_dprime][#theta][#mf] */
+	  /* max theta would be in tp_result[max_max_dprime][#theta][#mf] */
 	  max_max_dprime = dprimeIdx;
 	}
 

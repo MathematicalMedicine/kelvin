@@ -73,7 +73,7 @@ void iterateMain ()
   double threshold = 0;
   double avgLR;
   double constraint;
-  double log10_likelihood_null, log10_likelihood_alternative;
+  double log10_likelihood_null;
   int paramIdx = -1;
   int penIdx, gfreqInd, thetaInd;
   double pen_DD, pen_Dd, pen_dD, pen_dd;
@@ -1372,8 +1372,6 @@ void iterateMain ()
               if (ret == -2)
                 ERROR ("Negative combined likelihood");
 
-              log10_likelihood_alternative = pedigreeSet.log10Likelihood;
-
               /* add the result to the right placeholder */
               for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
                 Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
@@ -1510,7 +1508,6 @@ void iterateMain ()
 			   (combinedComputeSW->swAccumWallTime + combinedBuildSW->swAccumWallTime)) / 60, "Combined likelihood evaluations %lu%% complete (~%lu min left)", cL[8] * 100 / eCL[8]);
 		}
 
-                log10_likelihood_alternative = pedigreeSet.log10Likelihood;
                 /* add the result to the right placeholder */
                 for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
                   Pedigree *pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];

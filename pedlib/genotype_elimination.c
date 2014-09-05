@@ -254,7 +254,6 @@ child_parents_genotype_elimination (int locus, NuclearFamily * pNucFam,
   Genotype *pElimGenotype;
   Person *pParent[2];
   int elimFlag;
-  int keepFlag;
   int compatibleFlag;
   Locus *pLocus = originalLocusList.ppLocusList[locus];
   int i;
@@ -262,7 +261,6 @@ child_parents_genotype_elimination (int locus, NuclearFamily * pNucFam,
   /* loop through all genotypes for this child */
   pChildGenotype = pChild->ppGenotypeList[locus];
   while (pChildGenotype != NULL) {
-    keepFlag = TRUE;
     /* now find a compatible set from parents */
     elimFlag = FALSE;
     for (i = DAD; i <= MOM; i++) {
@@ -612,8 +610,7 @@ child_children_parents_genotype_elimination (int locus,
  *
  * well, we should always take the route of checking allele set
  * */
-inline int
-is_parent_child_genotype_compatible (int locus, int parent, int childSex,
+int is_parent_child_genotype_compatible (int locus, int parent, int childSex,
 				     Genotype * pParentGeno,
 				     Genotype * pChildGeno)
 {
@@ -678,8 +675,7 @@ is_parent_child_genotype_compatible (int locus, int parent, int childSex,
   return TRUE;
 }
 
-inline int
-is_parent_child_allele_compatible (int alleleSetLen,
+int is_parent_child_allele_compatible (int alleleSetLen,
 				   int *pParentAlleleSet,
 				   int parent, int childSex,
 				   Genotype * pChildGenotype)
@@ -700,8 +696,7 @@ is_parent_child_allele_compatible (int alleleSetLen,
   return TRUE;
 }
 
-inline int
-isHet (Genotype * pGeno)
+int isHet (Genotype * pGeno)
 {
   return pGeno->allele[DAD] == pGeno->allele[MOM] ? 0 : 1;
 }

@@ -289,7 +289,6 @@ void free_likelihood_space (PedigreeSet * pPedigreeList)
 
 int build_likelihood_polynomial (Pedigree * pPedigree)
 {
-  int status;
 
   char polynomialFunctionName[MAX_PFN_LEN + 1];
 
@@ -308,7 +307,7 @@ int build_likelihood_polynomial (Pedigree * pPedigree)
 #endif
       // Failed to load, construct it
       initialize_multi_locus_genotype (pPedigree);
-      status = compute_pedigree_likelihood (pPedigree);
+      compute_pedigree_likelihood (pPedigree);
 #ifdef POLYCODE_DL
       // Used to skip compilation of simple polys here, but there are simple ones that are tough builds.
       pPedigree->likelihoodPolyList = buildPolyList ();
@@ -1046,7 +1045,6 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 {
   Pedigree *pPedigree;
   int i;
-  int status;   /* return status of function calls */
   double product_likelihood = 1;        /* product of the likelihoods
                                          * for all the pedigrees */
   double sum_log_likelihood = 0;        /* sum of the
@@ -1112,7 +1110,7 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
     pPedigree = pPedigreeList->ppPedigreeSet[i];
     if (modelOptions->polynomial == FALSE) {
       initialize_multi_locus_genotype (pPedigree);
-      status = compute_pedigree_likelihood (pPedigree);
+      compute_pedigree_likelihood (pPedigree);
 
 #ifdef STUDYDB
       DIAG (ALTLSERVER, 1, { \
@@ -1210,7 +1208,6 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
 {
   int i;
   NuclearFamily *pMyNucFam;     /* nuclear families within the pedigree */
-  int status;   /* function return status */
   Person *pMyProband;   /* peeling proband */
   double likelihood = 0;
   double tmpLikelihood = 0;
@@ -1328,7 +1325,7 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
      * will come back to the same proband this process will
      * obtain the conditional likelihoods for the proband
      */
-    status = peel_graph (pPedigree->pPeelingNuclearFamily, pPedigree->pPeelingProband, pPedigree->peelingDirection);
+    peel_graph (pPedigree->pPeelingNuclearFamily, pPedigree->pPeelingProband, pPedigree->peelingDirection);
 
     /*
      * done peeling, need to add up the conditional likelihood
@@ -1827,7 +1824,6 @@ int compute_nuclear_family_likelihood (int peelingDirection)
   /* need to define some terms for the polynomail operations */
   Polynomial *weightPolynomial[2];
   int numHaplotypePair = 1;     /* number of multilocus genotypes */
-  int numChild; /* number of children in this nuclear family */
   int i, j;
   int multiLocusIndex[2] = { 0, 0 };
 
@@ -1852,8 +1848,6 @@ int compute_nuclear_family_likelihood (int peelingDirection)
     pNucFam->head = DAD;
     pNucFam->spouse = MOM;
   }
-
-  numChild = pNucFam->numChildren;
 
   /*
    * first construct the parental pair for this nuclear family locus by
