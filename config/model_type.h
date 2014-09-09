@@ -66,4 +66,8 @@ typedef struct ModelType
   int ccFlag;			/* Case Ctrl flag */
 } ModelType;
 
+
+double deNormalizeMean (ModelType *mt, double mean);
+double deNormalizeStdev (ModelType *mt, double stdev);
+
 #endif

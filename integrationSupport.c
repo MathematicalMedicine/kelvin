@@ -290,10 +290,10 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     j += pen_size;
 
     if (fpIR != NULL) {
-      dk_curModel.pen[liabIdxLocal].DD = mean_DD;
-      dk_curModel.pen[liabIdxLocal].Dd = mean_Dd;
-      dk_curModel.pen[liabIdxLocal].dD = mean_dD;
-      dk_curModel.pen[liabIdxLocal].dd = mean_dd;
+      dk_curModel.pen[liabIdxLocal].DD = deNormalizeMean (modelType, mean_DD);
+      dk_curModel.pen[liabIdxLocal].Dd = deNormalizeMean (modelType, mean_Dd);
+      dk_curModel.pen[liabIdxLocal].dD = deNormalizeMean (modelType, mean_dD);
+      dk_curModel.pen[liabIdxLocal].dd = deNormalizeMean (modelType, mean_dd);
     }
 
 
@@ -311,16 +311,16 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
 
       if (fpIR != NULL) {
-        dk_curModel.pen[liabIdxLocal].DDSD = SD_DD;
-        dk_curModel.pen[liabIdxLocal].DdSD = SD_Dd;
-        dk_curModel.pen[liabIdxLocal].dDSD = SD_dD;
-        dk_curModel.pen[liabIdxLocal].ddSD = SD_dd;
+        dk_curModel.pen[liabIdxLocal].DDSD = deNormalizeStdev (modelType, SD_DD);
+        dk_curModel.pen[liabIdxLocal].DdSD = deNormalizeStdev (modelType, SD_Dd);
+        dk_curModel.pen[liabIdxLocal].dDSD = deNormalizeStdev (modelType, SD_dD);
+        dk_curModel.pen[liabIdxLocal].ddSD = deNormalizeStdev (modelType, SD_dd);
       }
 
     }
     if (fpIR != NULL) {
       if (modelType->trait == CT)
-        dk_curModel.pen[liabIdxLocal].threshold = threshold;
+        dk_curModel.pen[liabIdxLocal].threshold = deNormalizeMean (modelType, threshold);
     }
 
     /* threshold for QT *
@@ -1014,10 +1014,10 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
       j += pen_size;
 
       if (fpIR != NULL) {
-        dk_curModel.pen[liabIdxLocal].DD = mean_DD;
-        dk_curModel.pen[liabIdxLocal].Dd = mean_Dd;
-        dk_curModel.pen[liabIdxLocal].dD = mean_dD;
-        dk_curModel.pen[liabIdxLocal].dd = mean_dd;
+        dk_curModel.pen[liabIdxLocal].DD = deNormalizeMean (modelType, mean_DD);
+        dk_curModel.pen[liabIdxLocal].Dd = deNormalizeMean (modelType, mean_Dd);
+        dk_curModel.pen[liabIdxLocal].dD = deNormalizeMean (modelType, mean_dD);
+        dk_curModel.pen[liabIdxLocal].dd = deNormalizeMean (modelType, mean_dd);
       }
 
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
@@ -1034,16 +1034,16 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
 
         if (fpIR != NULL) {
-          dk_curModel.pen[liabIdxLocal].DDSD = SD_DD;
-          dk_curModel.pen[liabIdxLocal].DdSD = SD_Dd;
-          dk_curModel.pen[liabIdxLocal].dDSD = SD_dD;
-          dk_curModel.pen[liabIdxLocal].ddSD = SD_dd;
+          dk_curModel.pen[liabIdxLocal].DDSD = deNormalizeStdev (modelType, SD_DD);
+          dk_curModel.pen[liabIdxLocal].DdSD = deNormalizeStdev (modelType, SD_Dd);
+          dk_curModel.pen[liabIdxLocal].dDSD = deNormalizeStdev (modelType, SD_dD);
+          dk_curModel.pen[liabIdxLocal].ddSD = deNormalizeStdev (modelType, SD_dd);
         }
 
       }
       if (fpIR != NULL) {
         if (modelType->trait == CT)
-          dk_curModel.pen[liabIdxLocal].threshold = threshold;
+          dk_curModel.pen[liabIdxLocal].threshold = deNormalizeMean (modelType, threshold);
       }
 
       /* threshold for QT *

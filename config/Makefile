@@ -6,7 +6,7 @@
 
 INCS = config.h model_options.h model_type.h model_range.h lambda_cell.h
 
-OBJS = config.o read_pedfile.o model_range.o
+OBJS = config.o read_pedfile.o model_range.o model_type.o
 
 all : ../lib/libconfig.a
 

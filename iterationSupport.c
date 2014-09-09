@@ -547,15 +547,16 @@ void iterateMain ()
                         threshold = modelRange->tthresh[liabIdx][thresholdIdx];
 
                         if (fpIR != NULL) {
-                          dk_curModel.pen[liabIdx].DD = mean_DD;
-                          dk_curModel.pen[liabIdx].Dd = mean_Dd;
-                          dk_curModel.pen[liabIdx].dD = mean_dD;
-                          dk_curModel.pen[liabIdx].dd = mean_dd;
-                          dk_curModel.pen[liabIdx].DDSD = SD_DD;
-                          dk_curModel.pen[liabIdx].DdSD = SD_Dd;
-                          dk_curModel.pen[liabIdx].dDSD = SD_dD;
-                          dk_curModel.pen[liabIdx].ddSD = SD_dd;
-                          dk_curModel.pen[liabIdx].threshold = threshold;
+                          dk_curModel.pen[liabIdx].DD = deNormalizeMean (modelType, mean_DD);
+                          dk_curModel.pen[liabIdx].Dd = deNormalizeMean (modelType, mean_Dd);
+                          dk_curModel.pen[liabIdx].dD = deNormalizeMean (modelType, mean_dD);
+                          dk_curModel.pen[liabIdx].dd = deNormalizeMean (modelType, mean_dd);
+                          dk_curModel.pen[liabIdx].DDSD = deNormalizeStdev (modelType, SD_DD);
+                          dk_curModel.pen[liabIdx].DdSD = deNormalizeStdev (modelType, SD_Dd);
+                          dk_curModel.pen[liabIdx].dDSD = deNormalizeStdev (modelType, SD_dD);
+                          dk_curModel.pen[liabIdx].ddSD = deNormalizeStdev (modelType, SD_dd);
+                          dk_curModel.pen[liabIdx].threshold =
+			    deNormalizeMean (modelType, threshold);
                         }
                         /* check against the hard coded constraint */
                         if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
@@ -1452,15 +1453,16 @@ void iterateMain ()
                   threshold = modelRange->tthresh[liabIdx][thresholdIdx];
 
                   if (fpIR != NULL) {
-                    dk_curModel.pen[liabIdx].DD = mean_DD;
-                    dk_curModel.pen[liabIdx].Dd = mean_Dd;
-                    dk_curModel.pen[liabIdx].dD = mean_dD;
-                    dk_curModel.pen[liabIdx].dd = mean_dd;
-                    dk_curModel.pen[liabIdx].DDSD = SD_DD;
-                    dk_curModel.pen[liabIdx].DdSD = SD_Dd;
-                    dk_curModel.pen[liabIdx].dDSD = SD_dD;
-                    dk_curModel.pen[liabIdx].ddSD = SD_dd;
-                    dk_curModel.pen[liabIdx].threshold = threshold;
+                    dk_curModel.pen[liabIdx].DD = deNormalizeMean (modelType, mean_DD);
+                    dk_curModel.pen[liabIdx].Dd = deNormalizeMean (modelType, mean_Dd);
+                    dk_curModel.pen[liabIdx].dD = deNormalizeMean (modelType, mean_dD);
+                    dk_curModel.pen[liabIdx].dd = deNormalizeMean (modelType, mean_dd);
+                    dk_curModel.pen[liabIdx].DDSD = deNormalizeStdev (modelType, SD_DD);
+                    dk_curModel.pen[liabIdx].DdSD = deNormalizeStdev (modelType, SD_Dd);
+                    dk_curModel.pen[liabIdx].dDSD = deNormalizeStdev (modelType, SD_dD);
+                    dk_curModel.pen[liabIdx].ddSD = deNormalizeStdev (modelType, SD_dd);
+                    dk_curModel.pen[liabIdx].threshold = 
+		      deNormalizeMean (modelType, threshold);
                   }
 
                   if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {

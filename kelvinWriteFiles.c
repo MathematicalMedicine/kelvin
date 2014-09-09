@@ -2,6 +2,7 @@
 #include "kelvinGlobals.h"
 #include "summary_result.h"
 #include "ppl.h"
+#include "config/model_type.h"
 #include <math.h>
 #include <float.h>
 
@@ -267,37 +268,35 @@ writeMPMODFileDetail (int posIdx, float traitPos)
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
     {
       if (! modelRange->lclassEmpty[liabIdx]) {
-	pen_DD = modelRange->penet[liabIdx][0][penIdx];
-	pen_Dd = modelRange->penet[liabIdx][1][penIdx];
-	pen_dD = modelRange->penet[liabIdx][2][penIdx];
-	pen_dd = modelRange->penet[liabIdx][3][penIdx];
+	pen_DD = deNormalizeMean (modelType, modelRange->penet[liabIdx][0][penIdx]);
+	pen_Dd = deNormalizeMean (modelType, modelRange->penet[liabIdx][1][penIdx]);
+	pen_dD = deNormalizeMean (modelType, modelRange->penet[liabIdx][2][penIdx]);
+	pen_dd = deNormalizeMean (modelType, modelRange->penet[liabIdx][3][penIdx]);
       } else
 	pen_DD = pen_Dd = pen_dD = pen_dd = -99.0;
       if (modelOptions->imprintingFlag)
-	fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD,
-		 pen_dd);
+	fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
       else
 	fprintf (fpMOD, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
       if (modelType->trait != DT
 	  && modelType->distrib != QT_FUNCTION_CHI_SQUARE)
 	{
 	  if (! modelRange->lclassEmpty[liabIdx]) {
-	    SD_DD = modelRange->param[liabIdx][0][0][paramIdx];
-	    SD_Dd = modelRange->param[liabIdx][1][0][paramIdx];
-	    SD_dD = modelRange->param[liabIdx][2][0][paramIdx];
-	    SD_dd = modelRange->param[liabIdx][3][0][paramIdx];
+	    SD_DD = deNormalizeStdev (modelType, modelRange->param[liabIdx][0][0][paramIdx]);
+	    SD_Dd = deNormalizeStdev (modelType, modelRange->param[liabIdx][1][0][paramIdx]);
+	    SD_dD = deNormalizeStdev (modelType, modelRange->param[liabIdx][2][0][paramIdx]);
+	    SD_dd = deNormalizeStdev (modelType, modelRange->param[liabIdx][3][0][paramIdx]);
 	  } else
 	    SD_DD = SD_Dd = SD_dD = SD_dd = -99.0;
 	  if (modelOptions->imprintingFlag)
-	    fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD,
-		     SD_dd);
+	    fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
 	  else
 	    fprintf (fpMOD, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
 	}
       if (modelType->trait == CT)
 	{
 	  threshold = (modelRange->lclassEmpty[liabIdx]) ? -99.0 :
-	    modelRange->tthresh[liabIdx][thresholdIdx];
+	    deNormalizeMean (modelType, modelRange->tthresh[liabIdx][thresholdIdx]);
 	  fprintf (fpMOD, ",%.3f)", threshold);
 	}
       else
@@ -351,37 +350,35 @@ writeMaximizingModel (char *modelDescription, double myMOD, int myDPrimeIdx,
     for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++)
       {
 	if (! modelRange->lclassEmpty[liabIdx]) {
-	  pen_DD = modelRange->penet[liabIdx][0][penIdx];
-	  pen_Dd = modelRange->penet[liabIdx][1][penIdx];
-	  pen_dD = modelRange->penet[liabIdx][2][penIdx];
-	  pen_dd = modelRange->penet[liabIdx][3][penIdx];
+	  pen_DD = deNormalizeMean (modelType, modelRange->penet[liabIdx][0][penIdx]);
+	  pen_Dd = deNormalizeMean (modelType, modelRange->penet[liabIdx][1][penIdx]);
+	  pen_dD = deNormalizeMean (modelType, modelRange->penet[liabIdx][2][penIdx]);
+	  pen_dd = deNormalizeMean (modelType, modelRange->penet[liabIdx][3][penIdx]);
 	} else 
 	  pen_DD = pen_Dd = pen_dD = pen_dd = -99.0;
 	if (modelOptions->imprintingFlag)
-	  fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD,
-		   pen_dd);
+	  fprintf (fpMOD, " (%.3f,%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dD, pen_dd);
 	else
 	  fprintf (fpMOD, " (%.3f,%.3f,%.3f", pen_DD, pen_Dd, pen_dd);
 	if (modelType->trait != DT
 	    && modelType->distrib != QT_FUNCTION_CHI_SQUARE)
 	  {
 	    if (! modelRange->lclassEmpty[liabIdx]) {
-	      SD_DD = modelRange->param[liabIdx][0][0][paramIdx];
-	      SD_Dd = modelRange->param[liabIdx][1][0][paramIdx];
-	      SD_dD = modelRange->param[liabIdx][2][0][paramIdx];
-	      SD_dd = modelRange->param[liabIdx][3][0][paramIdx];
+	      SD_DD = deNormalizeStdev (modelType, modelRange->param[liabIdx][0][0][paramIdx]);
+	      SD_Dd = deNormalizeStdev (modelType, modelRange->param[liabIdx][1][0][paramIdx]);
+	      SD_dD = deNormalizeStdev (modelType, modelRange->param[liabIdx][2][0][paramIdx]);
+	      SD_dd = deNormalizeStdev (modelType, modelRange->param[liabIdx][3][0][paramIdx]);
 	    } else
 	      SD_DD = SD_Dd = SD_dD = SD_dd = -99.0;
 	    if (modelOptions->imprintingFlag)
-	      fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD,
-		       SD_dd);
+	      fprintf (fpMOD, ",%.3f,%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dD, SD_dd);
 	    else
 	      fprintf (fpMOD, ",%.3f,%.3f,%.3f", SD_DD, SD_Dd, SD_dd);
 	  }
 	if (modelType->trait == CT)
 	  {
 	    threshold = (modelRange->lclassEmpty[liabIdx]) ? -99.0 :
-	      modelRange->tthresh[liabIdx][thresholdIdx];
+	      deNormalizeMean (modelType, modelRange->tthresh[liabIdx][thresholdIdx]);
 	    fprintf (fpMOD, ",%.3f)", threshold);
 	  }
 	else
@@ -465,7 +462,8 @@ write2ptMODFile (int loc1, int loc2, int dprime0Idx)
   fprintf (fpMOD, " Theta(M,F)");
   if (modelOptions->markerAnalysis != FALSE) {
     if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
-      fprintf (fpMOD, " R2\n");
+      fprintf (fpMOD, " R2");
+    fprintf (fpMOD, "\n");
   } else { 
     fprintf (fpMOD, " Alpha DGF");
     
