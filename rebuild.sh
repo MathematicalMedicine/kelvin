@@ -1,3 +1,11 @@
+#!/bin/bash
+exec make specialty
+
+
+
+# Old script follows...
+# (note that none of it will run!)
+
 #!/bin/bash -xe
 set -xe # Because it isn't enough for Darwin's cron for us to have it on the shebang
 

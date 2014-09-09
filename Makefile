@@ -24,8 +24,12 @@ CC := gcc
 ## GCC optimization level, 0=none, 1=default, 2=some (recommended), 3=all
 GCCOPT := 2
 
+##                                                     ##
+## Should be no need to make changes beyond this point ##
+##                                                     ##
+
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
-# USE_OPENMP := yes
+USE_OPENMP := $(shell ./specialty-scripts/use_openmp.sh)
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
@@ -33,17 +37,13 @@ USE_GSL := yes
 
 ## Enable use of ptmalloc3. Don't forget to set LIBDIR (below) accordingly.
 ## Not available on OSX.
-# USE_PTMALLOC3 := yes
+USE_PTMALLOC3 := $(shell ./specialty-scripts/use_ptmalloc3.sh)
 
 ## Enable use of Hoard. Don't forget to set LIBDIR (below) accordingly.
 # USE_HOARD := yes
 
 ## Enable use of MySQL database for HLOD storage/retrieval/distributed processing.
 # USE_STUDYDB := yes
-
-##                                                     ##
-## Should be no need to make changes beyond this point ##
-##                                                     ##
 
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
@@ -133,6 +133,7 @@ INCFLAGS := -I$(INCDIR)
 FILE_LDFLAGS += -rdynamic
 
 # Flags for BCMM use only
+# Several of these are used for generating the "specialty" binaries.
 
 #FILE_CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution, don't change, its a dist search target
 #FILE_CFLAGS += -DUSESHM # Enables shared memory diagnostic segment
@@ -190,17 +191,25 @@ INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 
 all : kelvin-$(VERSION) seq_update/$(CALC_UPDATED_PPL)
 
+specialty : kelvin-$(VERSION)-no_GSL \
+	kelvin-$(VERSION)-POLYUSE_DL \
+	kelvin-$(VERSION)-POLYCOMP_DL \
+	kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD \
+	kelvin-study \
+	kelvin-normal
+
 dist :
 	- rm -rf kelvin-$(VERSION)
 	mkdir kelvin-$(VERSION)
 	mkdir kelvin-$(VERSION)/bin
 	cp -a bin/{kelvin,$(CALC_UPDATED_PPL)}.* kelvin-$(VERSION)/bin
-	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl rebuild.sh *.[ch] compileDL.sh kelvin-$(VERSION)
+	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kelvin-$(VERSION)
 	perl -pe "s|#FILE_CFLAGS \+\= \-DDISTRIBUTION|FILE_CFLAGS \+\= \-DDISTRIBUTION|;" Makefile > kelvin-$(VERSION)/Makefile
 	mkdir kelvin-$(VERSION)/{lib,utils,pedlib,config,seq_update}
 	cp -a utils/Makefile utils/*.{c,h,pl} kelvin-$(VERSION)/utils
 	cp -a pedlib/Makefile pedlib/*.[ch] kelvin-$(VERSION)/pedlib
 	cp -a config/Makefile config/*.[ch] kelvin-$(VERSION)/config
+	cp -a database/Makefile database/*.[ch] kelvin-$(VERSION)/database
 	cp -a seq_update/Makefile seq_update/*.{c,h,pl} kelvin-$(VERSION)/seq_update
 	mkdir -p kelvin-$(VERSION)/test-suite/dynamic-grid/PE/SA_DT
 	cp -a test-suite/Makefile kelvin-$(VERSION)/test-suite
@@ -220,13 +229,11 @@ dist :
 	html2text -rcfile doc/html2text.rc doc/SSDSupport.html >kelvin-$(VERSION)/doc/SSDSupport.txt
 	html2text -rcfile doc/html2text.rc doc/compiledPolys.html >kelvin-$(VERSION)/doc/compiledPolys.txt
 	cp -a doc/*.{html,png,gif} kelvin-$(VERSION)/doc
-	svn export $(SVNROOT)/graphApp/trunk kelvin-$(VERSION)/graphApp
-	ln -s ../graphApp/doc/graphApp_manual{.htm,_files} kelvin-$(VERSION)/doc/
-	svn export $(SVNROOT)/gKelvin/trunk/src kelvin-$(VERSION)/gKelvin
 	tar -cvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
 	rm -rf kelvin-$(VERSION)
 
-install : $(BINDIR)/kelvin-$(VERSION) \
+install : $(BINDIR) \
+	$(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/$(CALC_UPDATED_PPL) \
           $(BINDIR)/convert_br.pl \
 	  $(BINDIR)/compileDL.sh \
@@ -246,8 +253,19 @@ install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
 	  $(BINDIR)/KelvinIO.pm \
 	  $(BINDIR)/Kelvin
 
+install-specialty : install \
+	$(BINDIR)/kelvin-$(VERSION)-no_GSL \
+	$(BINDIR)/kelvin-$(VERSION)-POLYUSE_DL \
+	$(BINDIR)/kelvin-$(VERSION)-POLYCOMP_DL \
+	$(BINDIR)/kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD \
+	$(BINDIR)/kelvin-study \
+	$(BINDIR)/kelvin-normal
+
 .PHONY : kelvin
 kelvin : kelvin-$(VERSION)
+
+$(BINDIR) : 
+	mkdir -p $(BINDIR)
 
 kelvin-$(VERSION) : libs $(OBJS) $(INCS)
 	$(CC) -o $@ $(OBJS) $(CFLAGS) -lped -lconfig -lklvnutls $(LDFLAGS) -lm
@@ -282,20 +300,24 @@ ifeq ($(strip $(USE_STUDYDB)), yes)
 	+make -C database -f Makefile all
 endif
 
-.PHONY : clean
-clean :
+.PHONY : clean-build
+clean-build : 
 	make -C pedlib -f Makefile clean
 	make -C config -f Makefile clean
 	make -C utils -f Makefile clean
 ifeq ($(strip $(USE_STUDYDB)), yes)
 	make -C database -f Makefile clean
 endif
-	make -C seq_update -f Makefile clean
-	rm -f $(OBJS) kelvin-$(VERSION) seq_update/$(CALC_UPDATED_PPL) lib/libconfig.a lib/klvnutls.a lib/libped.a
+	rm -f $(OBJS) kelvin-$(VERSION) kelvin-$(VERSION)-$(SVNVERSION) seq_update/$(CALC_UPDATED_PPL) lib/libconfig.a lib/klvnutls.a lib/libped.a
 ifeq ($(strip $(USE_STUDYDB)), yes)
 	rm -f lib/klvndb.a
 endif
+
+.PHONY : clean
+clean : clean-build
+	make -C seq_update -f Makefile clean
 	make -C test-suite -f Makefile clean
+	rm -f kelvin-$(VERSION)-no_GSL kelvin-$(VERSION)-POLYUSE_DL kelvin-$(VERSION)-POLYCOMP_DL kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD kelvin-$(VERSION)-study kelvin-study kelvin-$(VERSION)-normal kelvin-normal
 
 .PHONY : test-USE_DL
 # Polynomial compilation tests
@@ -345,3 +367,130 @@ $(BINDIR)/%.pm : %.pm
 $(BINDIR)/Kelvin : Kelvin
 	perl -pe "s|NO_KELVIN_ROOT|$(ABSBINDIR)|; s|NO_KELVIN_BINARY|$(ABSBINDIR)/kelvin-$(VERSION)|; s|NO_SEQUPDATE_BINARY|$(ABSBINDIR)/$(CALC_UPDATED_PPL)|;" Kelvin > Kelvin.local
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p Kelvin.local $(BINDIR)/Kelvin
+	rm Kelvin.local
+
+
+# Specialty binaries follow.
+# These represent four different variants of Kelvin usage:
+#  * standalone usage (kelvin-normal)
+#  * standalone usage without GSL (kelvin-no_GSL)
+#  * compiled polynomial usage (kelvin-POLY*)
+#  * Likelihood Server usage (kelvin-study)
+
+# GSL-free version. OpenMP also disabled as it requires GSL.
+.PHONY : kelvin-no_GSL
+kelvin-no_GSL : kelvin-$(VERSION)-no_GSL
+
+kelvin-$(VERSION)-no_GSL :
+	make clean-build
+	make USE_GSL=no USE_OPENMP=no kelvin
+	mv kelvin-$(VERSION) kelvin-$(VERSION)-no_GSL
+
+$(BINDIR)/kelvin-$(VERSION)-no_GSL : kelvin-$(VERSION)-no_GSL
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-$(VERSION)-no_GSL $(BINDIR)/kelvin-$(VERSION)-no_GSL
+
+# Dynamic polynomial version with OpenMP. Use with existing compiled
+# polynomials.
+# Set OMP_NUM_THREADS=<something big> for best performance after compilation of
+# DLs. Doesn't do compilation if DL not found.
+.PHONY: kelvin-POLYUSE_DL
+kelvin-POLYUSE_DL : kelvin-$(VERSION)-POLYUSE_DL
+
+kelvin-$(VERSION)-POLYUSE_DL :
+	make clean-build
+	make ENV_CFLAGS=" -DMEMGRAPH -DPOLYSTATISTICS -DPOLYUSE_DL" ENV_LDFLAGS=" -ldl" kelvin
+	mv kelvin-$(VERSION) kelvin-$(VERSION)-POLYUSE_DL
+
+$(BINDIR)/kelvin-$(VERSION)-POLYUSE_DL : kelvin-$(VERSION)-POLYUSE_DL
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-$(VERSION)-POLYUSE_DL $(BINDIR)/kelvin-$(VERSION)-POLYUSE_DL
+
+# Polynomial compiling version - build, code and then compile and evaluate DLs.
+# Works fine for small polynomials.
+# Notice no OpenMP, as it gains no speed and loses us lots of memory.
+.PHONY: kelvin-POLYCOMP_DL
+kelvin-POLYCOMP_DL : kelvin-$(VERSION)-POLYCOMP_DL
+
+kelvin-$(VERSION)-POLYCOMP_DL : 
+	make clean-build
+	make ENV_CFLAGS=" -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DPOLYUSE_DL -DPOLYCODE_DL -DPOLYCOMP_DL" ENV_LDFLAGS=" -ldl" kelvin
+	mv kelvin-$(VERSION) kelvin-$(VERSION)-POLYCOMP_DL
+
+$(BINDIR)/kelvin-$(VERSION)-POLYCOMP_DL : kelvin-$(VERSION)-POLYCOMP_DL
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-$(VERSION)-POLYCOMP_DL $(BINDIR)/kelvin-$(VERSION)-POLYCOMP_DL
+
+# Polynomial generating version - build and code DLs, pretend to evaluate. Best
+# for making hay out of limited memory.
+# Again, notice no OpenMP, as it gains no speed and loses us lots of memory.
+.PHONY: kelvin-POLYCODE_DL_FAKEEVALUATE_SSD
+kelvin-POLYCODE_DL_FAKEEVALUATE_SSD : kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD
+
+kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD :
+	make clean-build
+	make ENV_CFLAGS=" -DMEMGRAPH -DUSE_GSL -DPOLYSTATISTICS -DUSE_SSD -DPOLYUSE_DL -DPOLYCODE_DL -DFAKEEVALUATE" ENV_LDFLAGS=" -ldl" kelvin
+	mv kelvin-$(VERSION) kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD
+
+$(BINDIR)/kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD : kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD $(BINDIR)/kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD
+
+# Likelihood server version. Requires mySQL version 5 or better!
+kelvin-study: kelvin-$(VERSION)-study
+	cp kelvin-$(VERSION)-study kelvin-study
+
+kelvin-$(VERSION)-study :
+	make clean-build USE_STUDYDB=yes
+	make USE_STUDYDB=yes kelvin
+	mv kelvin-$(VERSION) kelvin-$(VERSION)-study
+
+$(BINDIR)/kelvin-study : kelvin-study
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-$(VERSION)-study $(BINDIR)/kelvin-$(VERSION)-study
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-study $(BINDIR)/kelvin-study
+
+# Standard standalone version
+kelvin-normal : kelvin-$(VERSION)-normal
+	cp kelvin-$(VERSION)-normal kelvin-normal
+
+kelvin-$(VERSION)-normal :
+	make clean-build
+	make kelvin
+	mv kelvin-$(VERSION) kelvin-$(VERSION)-normal
+
+$(BINDIR)/kelvin-normal : kelvin-normal
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-normal $(BINDIR)/kelvin-normal
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-$(VERSION)-normal $(BINDIR)/kelvin-$(VERSION)-normal
+
+
+# Uninstallation routines follow.
+
+uninstall :
+	rm -f $(BINDIR)/kelvin-$(VERSION) \ 
+	$(BINDIR)/$(CALC_UPDATED_PPL) \ 
+	$(BINDIR)/convert_br.pl \ 
+	$(BINDIR)/compileDL.sh \ 
+	$(BINDIR)/KelvinConfig.pm \ 
+	$(BINDIR)/KelvinDataset.pm \ 
+	$(BINDIR)/KelvinFamily.pm \ 
+	$(BINDIR)/KelvinIO.pm \ 
+	$(BINDIR)/Kelvin
+
+uninstall-prebuilt : 
+	rm -f $(BINDIR)/kelvin.$(PLATFORM) \ 
+	$(BINDIR)/kelvin-$(VERSION) \ 
+	$(BINDIR)/$(CALC_UPDATED_PPL)-$(VERSION) \ 
+	$(BINDIR)/convert_br.pl \ 
+	$(BINDIR)/compileDL.sh \ 
+	$(BINDIR)/$(MODS) \ 
+	$(BINDIR)/KelvinConfig.pm \ 
+	$(BINDIR)/KelvinDataset.pm \ 
+	$(BINDIR)/KelvinFamily.pm \ 
+	$(BINDIR)/KelvinIO.pm \ 
+	$(BINDIR)/Kelvin
+
+uninstall-specialty :
+	rm -f $(BINDIR)/kelvin-$(VERSION)-no_GSL \ 
+	$(BINDIR)/kelvin-$(VERSION)-POLYUSE_DL \ 
+	$(BINDIR)/kelvin-$(VERSION)-POLYCOMP_DL \ 
+	$(BINDIR)/kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD \ 
+	$(BINDIR)/kelvin-$(VERSION)-study \ 
+	$(BINDIR)/kelvin-study \ 
+	$(BINDIR)/kelvin-$(VERSION)-normal \ 
+	$(BINDIR)/kelvin-normal
