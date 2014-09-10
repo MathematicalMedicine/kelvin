@@ -1,3 +1,11 @@
+Version 2.4.6
+  Kelvin Binary
+    Meens and standard deviations that appear in the MOD files for
+      QT and QTT analyses are now scaled using the sample mean and
+      standard deviation, regardless of how the sample values are 
+      provided (either specified in the configuration, or calculated
+      from input phenotypes).
+
 Version 2.4.5
   Patches, e.g. set and check maximum number of positions.
 
