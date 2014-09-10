@@ -10,6 +10,11 @@ if [ ! "$SGE_TASK_ID" -a "$SGE_TASK_LAST" ] ; then
     exit -1
 fi
 
+# This is a cheap hack to avoid a race condition in the database.
+DELAY=`expr $SGE_TASK_ID \* 10`
+echo "delaying $DELAY seconds"
+sleep $DELAY
+
 MOD=`perl -we 'use strict;
                use KelvinConfig;
 	       my $c = KelvinConfig->new ($ENV{CONF})
