@@ -41,9 +41,9 @@ TP=`perl -we 'use strict;
                           $e = ceil (${$d->getMarker (${$d->mapOrder}[-1])}{avgpos});
 		          while ($e % $i) { $e++; } 
                       }
-                      for ( $p = $s, $x = 1 ; $p <= $e; $p = $s + ($i * $x++)) { $p{$p} = ''; }
+                      for ( $p = $s, $x = 1 ; $p <= $e; $p = $s + ($i * $x++)) { $p{$p} = ""; }
                   } else {
-                      map { $p{$_} = ''; } split (/[, ]+/, $as);
+                      map { $p{$_} = ""; } split (/[, ]+/, $as);
                   }
               }
 	      @p = sort { $a <=> $b } (keys (%p));
