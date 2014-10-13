@@ -1964,6 +1964,7 @@ int get_marker_line (st_brfile *brfile)
 {
   char buff[BUFFLEN], *pa, *pb, *pc;
   st_brmarker *marker;
+  double basepair;
 
   marker = &brfile->curmarker;
   marker->basepair = (long) (marker->malepos = marker->femalepos = -1);
@@ -2035,10 +2036,12 @@ int get_marker_line (st_brfile *brfile)
       }
 
     } else if (strcasecmp (pa, "Physical:") == 0) {
-      if (sscanf (pb, "%ld", &marker->basepair) == 0) {
+      if (sscanf (pb, "%lf", &basepair) == 0) {
 	fprintf (stderr, "bad Physical in '%s', at line %d\n", brfile->name, brfile->lineno);
 	exit (-1);
       }
+      /* Convert basepair as double and cast to long, to accomodate exp. notation */
+      marker->basepair = (long) basepair;
       brfile->physical_pos = 1;
 
     } else if ((strcasecmp (pa, "Marker1:") == 0) || (strcasecmp (pa, "Position1:") == 0) ||
@@ -2332,7 +2335,8 @@ int get_data_line (st_brfile *brfile, void  *ptr)
       marker->avgpos = strtod (pa, &endptr);
       break;
     case PHYS_COL:
-      marker->basepair = strtol (pa, &endptr, 10);
+      /* Convert basepairs as double and cast to long, to accomodate exp. notation (pbth) */
+      marker->basepair = (long) strtod (pa, &endptr);
       break;
     case CHR_COL:
       endptr = strcpy (marker->chr, pa);
