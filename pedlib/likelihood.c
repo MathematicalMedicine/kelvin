@@ -773,10 +773,11 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	if(studyDB.MCMC_flag !=0 && analysisLocusList->numLocus>1 && analysisLocusList->traitLocusIndex >= 0) {
 	  // if we are doing alternative likelihood under MCMC
 	  // we need retrieve the markerset likelihood for each sample
-	  while (GetMarkerSetLikelihood_MCMC(studyDB.pedPosId) != 0)
+	  while (GetMarkerSetLikelihood_MCMC(studyDB.pedPosId) != 0) {
 	    // This code bit us and we don't know why it is here, but at least it won't silently spin now. More to come.
 	    WARNING ("Unexpected return status from GetMarkerSetLikelihood_MCMC, waiting 60 seconds and then retrying for some reason\n");
 	    sleep(60);
+	  }
 	}
 
 	//	for(sampleId=modelOptions->mcmcSampleStart; modelOptions->algorithm!= ALGORITHM_MCMC || sampleId <= modelOptions->mcmcSampleEnd; sampleId++) {
