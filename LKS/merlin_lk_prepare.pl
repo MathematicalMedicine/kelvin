@@ -1,5 +1,6 @@
 #!perl -w
 use strict;
+use FindBin; use lib split(/:+/, "!:$ENV{'KELVIN_ROOT'}:NO_KELVIN_ROOT:$ENV{'TOOLPATH'}:$FindBin::Bin");
 use KelvinConfig;
 use DBI;
 

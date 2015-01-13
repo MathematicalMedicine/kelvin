@@ -1,12 +1,16 @@
 #!/usr/bin/perl -w
 use strict;
+
+use FindBin; use lib split(/:+/, "!:$ENV{'KELVIN_ROOT'}:NO_KELVIN_ROOT:$ENV{'TOOLPATH'}:$FindBin::Bin");
 use Data::Dumper;
 use File::Basename;
 use DBI; # Database interaction
 use DBI qw(:sql_types);
+use KelvinDataset 1.40;
+use KelvinConfig 1.20;
+use KelvinFamily 1.40;
 $|=1; # Show the output when I say so.
 
-my $KELVIN_ROOT='NO_KELVIN_ROOT';
 
 my $usage = "usage: $0 <configfile> [--directive ... ]\n";
 my $config;
@@ -16,24 +20,6 @@ my $arg;
 my $idx = 0;
 my $debug = 0;
 
-# For all these, we allow environment variables to override everything, even if
-# values were set during installation.
-if ($ENV{KELVIN_ROOT}) {
-    ($KELVIN_ROOT !~ /no_kelvin_root/i)
-	and warner ("overriding installed KELVIN_ROOT with '$ENV{KELVIN_ROOT}' from environment");
-    $KELVIN_ROOT = $ENV{KELVIN_ROOT};
-} elsif ($KELVIN_ROOT =~ /no_kelvin_root/i) {
-    $KELVIN_ROOT = dirname ($0);
-    warner ("no KELVIN_ROOT defined by installation, using '$KELVIN_ROOT'");
-}
-
-unshift (@INC, $KELVIN_ROOT);
-require KelvinDataset;
-KelvinDataset->VERSION (1.40);
-require KelvinConfig;
-KelvinConfig->VERSION (1.20);
-require KelvinFamily;
-KelvinFamily->VERSION (1.40);
 
 ($configFile = shift (@ARGV))
     or die ($usage);

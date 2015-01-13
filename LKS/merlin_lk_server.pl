@@ -1,5 +1,7 @@
-#!perl -w
+#!perl 
 use strict;
+use FindBin; use lib split(/:+/, "!:$ENV{'KELVIN_ROOT'}:NO_KELVIN_ROOT:$ENV{'TOOLPATH'}:$FindBin::Bin");
+use warnings;
 use POSIX qw(ceil);
 use KelvinConfig;
 use KelvinDataset;
@@ -10,7 +12,7 @@ use Data::Dumper;
 my $taskcount = 9;
 my $batchsize;
 my $prefix = 'merlin';
-my $svn_version='$Id:$';
+my $svn_version='$Id$';
 
 my $configfile = shift (@ARGV);
 my $config;
@@ -51,6 +53,9 @@ my $line;
 
 print (ts(), "$0 starting on $ENV{HOSTNAME} in $ENV{PWD}, pid $$". (exists ($ENV{JOB_ID}) ? ", job ID $ENV{JOB_ID}" : ""). "\n");
 print (ts(), "Version $svn_version\n");
+(exists($ENV{TOOLPATH})) and $ENV{PATH} = "$ENV{TOOLPATH}:$ENV{PATH}";
+        # because PATH gets reset on some hosts for some reason, and we need it
+        # properly set so we can invoke Merlin
 
 (exists ($ENV{JOB_ID})) and $prefix = $ENV{JOB_ID};
 (exists ($ENV{SGE_TASK_ID}) && $ENV{SGE_TASK_ID} ne 'undefined')
@@ -134,7 +139,9 @@ foreach (@{$dataset->traitOrder}) {
 
 ($family = $dataset->readFamily)
     or die ("KelvinDataset readFamily failed: $KelvinDataset::errstr\n");
-if ($study{pedregex} ne "^.*\$" || $study{pednotregex} ne 'xyzzy' || $family->origfmt ne 'pre') {
+#if ($study{pedregex} ne "^.*\$" || $study{pednotregex} ne 'xyzzy' || $family->origfmt ne 'pre') {
+# Temporarily not considering pedregex and pednotregex
+if ($family->origfmt ne 'pre') {
     $config->setDirective ("PedigreeFile", $ {$config->isConfigured ("PedigreeFile")}[0].'.pre');
     $predataset = $dataset->copy;
     $predataset->writePedigreefile ({pedigreefile => $ {$config->isConfigured ("PedigreeFile")}[0],
@@ -210,6 +217,7 @@ while (1) {
     ($study{TraitType} eq 'QTT') and push (@args, "--qtThreshold");
     push (@args, '--bits', '80', '--quiet', '--perFamily', '--likelihoodServer');
     push (@args, '--positions', join (',', sort ({$a <=> $b} keys (%positions))));
+    (-f "merlin-clusters.freq") and push (@args, '--clusters', 'merlin-clusters.freq');
 
     print (ts(), "Running '". join (' ', @args). "'\n");
     open (FH, join (' ', @args, '2>&1 |'))

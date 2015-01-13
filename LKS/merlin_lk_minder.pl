@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings FATAL => qw(all);
+use FindBin; use lib split(/:+/, "!:$ENV{'TOOLPATH'}:$FindBin::Bin");
 use DBI;
 use POSIX ":sys_wait_h";
 
