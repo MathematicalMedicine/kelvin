@@ -26,14 +26,22 @@ qmods=""
 # Handle unique job submission situations.
 case $HOSTNAME in
     Levi-Montalcini )
-    # Don't just quit if nothing is available -- wait for it.
-    alias qrsh="qrsh -now no $qmods"
+        # Don't just quit if nothing is available -- wait for it.
+        alias qrsh="qrsh -now no $qmods "
+        lks_server_count=${lks_server_count-8}
     ;;
     opt* ) # OSC's Opteron cluster
+        lks_server_count=${lks_server_count-8}
+    ;;
+    master | node* ) # StarCluster
+        alias qrsh="qrsh -now no $qmods "
+        alias nq="qsub -cwd "
+        lks_server_count=${lks_server_count-2}
     ;;
     * ) # Everything else
-    alias qrsh="bash -c "
-    alias nq="bash -c "
+        alias qrsh="bash -c "
+        alias nq="bash -c "
+        lks_server_count=${lks_server_count-2}
     ;;
 esac
 
@@ -76,14 +84,9 @@ c=1
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
-  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server $qmods" &
-
+  for ((servs=1; servs<lks_server_count; servs++)); do
+    qsub -cwd $KELVIN_ROOT/LKS/run_server.sh server $qmods
+  done
   # Run a single one blocking further processing until most work is done
   qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server"
   # Make sure that nothing remains undone
@@ -95,8 +98,8 @@ do
     fi
     Servers=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Servers where StudyId = $StudyId AND ExitStatus IS NULL;")
     if test $Servers -eq 0 ; then
-	echo There are still Regions with incomplete work and no more servers are running!
-	exit 1
+        echo There are still Regions with incomplete work and no more servers are running!
+        exit 1
     fi
     echo Waiting for servers to finish
     sleep 300

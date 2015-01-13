@@ -23,24 +23,37 @@ set -x
 # Any queuing modifier, like using -q johntest
 qmods=""
 
-# Don't just quit if nothing is available -- wait for it.
-alias qrsh="qrsh -now no $qmods"
-
-# These are for nodes other than Levi-Montalcini, where SGE is not available
-if test "$HOSTNAME" != "Levi-Montalcini" ; then
-    alias qrsh="bash -c"
-    alias nq="bash -c "
-fi
+# Handle unique job submission situations.
+case $HOSTNAME in
+    Levi-Montalcini )
+        # Don't just quit if nothing is available -- wait for it.
+        alias qrsh="qrsh -now no $qmods "
+        lks_server_count=${lks_server_count-8}
+    ;;
+    opt* ) # OSC's Opteron cluster
+        lks_server_count=${lks_server_count-8}
+    ;;
+    master | node* ) # StarCluster
+        alias qrsh="qrsh -now no $qmods "
+        alias nq="qsub -cwd "
+        lks_server_count=${lks_server_count-2}
+    ;;
+    * ) # Everything else
+        alias qrsh="bash -c "
+        alias nq="bash -c "
+        lks_server_count=${lks_server_count-2}
+    ;;
+esac
 
 # Do the normal 2pt run for comparison in a normal queue
-nq "$KELVIN_ROOT/kelvin-normal client-normal-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+qsub -cwd $KELVIN_ROOT/kelvin-normal client-normal-2pt.conf --ProgressLevel 2 --ProgressDelaySeconds 0
 
 # Do the initialization only if there was no command line parameter
 if test -z "$1" ; then
     # Setup database tables
-    perl $KELVIN_ROOT/InitStudy.pl client.conf
-    perl $KELVIN_ROOT/InitStudy.pl server-mp.conf
-    perl $KELVIN_ROOT/InitStudy.pl server-2pt-init.conf
+    perl $KELVIN_ROOT/LKS/InitStudy.pl client.conf
+    perl $KELVIN_ROOT/LKS/InitStudy.pl server-mp.conf
+    perl $KELVIN_ROOT/LKS/InitStudy.pl server-2pt-init.conf
 
     # Initial full run of client
     qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
@@ -53,33 +66,35 @@ fi
 study=$(grep -i ^Study client.conf)
 set -- $study
 
-# Get the actual StudyId from the StudyLabel
+# Get the actual StudyId from the StudyLabel. This MUST succeed if InitStudy.pl is worth its salt.
 StudyId=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="Select StudyId from Studies where StudyLabel = '$2';")
+
+# Get the AnalysisId from the database.
+AnalysisId=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="Select AnalysisId from Analyses where StudyId = $StudyId AND PedigreeRegEx = '$8' AND PedigreeNotRegEx = '$9'")
+
+if test -z "$StudyId"; then
+    echo "ERROR - STUDY directive in configuration file specified StudyLabel ($2) that was not found in the database, exiting!"
+    exit 2
+fi
 
 # Set all 2pt PedigreePositions to one marker (CHANGE THIS FOR DIFFERENT STUDIES)
 echo "Update PedigreePositions set MarkerCount = 1 where StudyId = $StudyId AND PedigreeSId in (180);" | mysql --host=$4 --user=$6 --password=$7 $5
 
 # Setup the Single-Model RunTimes so bucket loading can be intelligent
 SMRTs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions a, SingleModelRuntimes b set a.SingleModelEstimate = b.SingleModelRuntime, a.SingleModelRuntime = b.SingleModelRuntime where a.StudyId = $StudyId AND a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.PedTraitPosCM = b.PedTraitPosCM;")
-if test $SMRTs -ne 0 ; then
+if test "$SMRTs" != "0" ; then
     # Assuming SOME finished, any that we missed should be treated as if they took too long..
     Singles=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions set SingleModelRuntime = 999999 where StudyId = $StudyId AND PedTraitPosCM <> 9999.99 AND SingleModelRuntime IS NULL;")
 fi
 
+c=1
 while :
 do
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-mp $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-2pt-run $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-2pt-run $qmods" &
-
+  for ((servs=2; servs<lks_server_count; servs++)); do
+    # (note servs=2 because we're running two blocking servers instead of the usual one)
+    qsub -cwd $KELVIN_ROOT/LKS/run_server.sh server-mp $qmods
+  done
   # Run single blocking ones to prevent further processing until all work is done
   qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server-mp"
   qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server-2pt-run"
@@ -92,17 +107,19 @@ do
     fi
     Servers=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Servers where StudyId = $StudyId AND ExitStatus IS NULL;")
     if test $Servers -eq 0 ; then
-	echo There are still Regions with incomplete work and no more servers are running!
-	exit 1
+        echo There are still Regions with incomplete work and no more servers are running!
+        exit 1
     fi
     echo Waiting for servers to finish
     sleep 300
   done
   # Run the client to see if any splits occur
   qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+  cp br.out br.out.$c
+  c=$((c+1))
   grep WARNING br.out-all-pedigrees || { break; }
   # Get the new set of trait positions
-  TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct RefTraitPosCM from Regions where StudyId = $StudyId AND RefTraitPosCM >= 0 AND PendingLikelihoods > 0;" | tr "\n" " ")
+  TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct a.RefTraitPosCM from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId AND a.RefTraitPosCM > 0.0;" | tr "\n" " ")
   grep -vi TraitPosition client.conf > client-newTP.conf
   # Add them one per line to be safe with line length
   for tp in $TPs;  do   echo "In the loop";  echo "TraitPosition $tp" >> client-newTP.conf; done

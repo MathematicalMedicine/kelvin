@@ -1,7 +1,7 @@
 #!/bin/bash -e
 #
-perl $KELVIN_ROOT/InitStudy.pl client.conf
-perl $KELVIN_ROOT/InitStudy.pl server.conf
+perl $KELVIN_ROOT/LKS/InitStudy.pl client.conf
+perl $KELVIN_ROOT/LKS/InitStudy.pl server.conf
 
 # Initial full run of client
 qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"

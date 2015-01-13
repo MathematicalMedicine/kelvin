@@ -3,7 +3,7 @@
 test :
 	- rm -rf *.out adhoc* *memory.dat
 	$(KELVIN_ROOT)/LKS/remove_study.sh 4
-	(time ./cycle.sh) >cycle.out 2>&1
+	(time /export/local/bcmmtools/LKS/merlin_lk_cycle.sh) >cycle.out 2>&1
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001
 
 test-USE_DL :
