@@ -8,7 +8,7 @@ use KelvinFamily 1.5;
 #
 package KelvinDataset;
 our $errstr='';
-our $VERSION=1.5;
+our $VERSION=1.6;
 
 our $ROUNDING_ERROR=0.001;
 
@@ -547,6 +547,10 @@ sub readMapfile
 	    $errstr = "$$self{mapfile}, line $lineno: chromosome number changes";
 	    return (undef);
 	}
+	if (exists ($markers{$$href{name}})) {
+	    $errstr = "$$self{locusfile}, line $lineno: marker $$href{name} appears more than once";
+	    return (undef);
+	}
 	if (defined ($lastpos) && $$href{avgpos} < $lastpos) {
 	    $errstr = "$$self{mapfile}, line $lineno: marker $$href{name} out of centiMorgan order";
 	    return (undef);
@@ -810,6 +814,45 @@ sub addMarker
     return (1);
 }
 
+sub renameMarker
+{
+    my ($self, $oldname, $newname) = @_;
+    my $href;
+    my $idx;
+    
+    if (! exists ($$self{markers}{$oldname})) {
+	$errstr = "no marker '$oldname' in dataset";
+	return (undef);
+    }
+
+    $href = $$self{markers}{$oldname};
+    $$href{name} = $newname;
+    $$self{markers}{$newname} = $href;
+    delete ($$self{markers}{$oldname});
+
+    exists ($$href{idx}) and $idx = $$href{idx};
+
+    # If we read a locus file, and the old marker was in it, we know it's index
+    ($$self{locusread} && defined ($idx))
+	and $$self{markerorder}[$idx] = $newname;
+
+    # The locus file marker set can be a subset of the map (or frequency) file, so 
+    # even if we have an index, it's not guaranteed to be the right index into maporder.
+    # For now, we'll hunt for the marker, rather than track a separate index for the map.
+    if ($$self{mapread} || $$self{freqread}) {
+	defined ($idx) or $idx = 0;
+	for (; $idx < scalar (@{$$self{maporder}}); $idx++) {
+	    if ($$self{maporder}[$idx] eq $oldname) {
+		$$self{maporder}[$idx] = $newname;
+		last;
+	    }
+	}
+    }
+
+    $$self{consistent} = 0;
+    return (1);
+}
+
 sub write
 {
     my ($self, $arg) = @_;
@@ -861,6 +904,7 @@ sub write
 				   premakeped => $premakeped})
 	    or return (undef);
     }
+    return (1);
 }
 
 sub writeMapfile
