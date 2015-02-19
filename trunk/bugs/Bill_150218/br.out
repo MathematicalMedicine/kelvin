@@ -1,0 +1,9 @@
+# Version V2.4.6 edit 4081M
+# Seq: 1 Chr: 40 Trait: has_genos Marker: snpA Position: 0.0000
+Theta(M,F) BayesRatio
+(0.2000,0.2000) 1.000000e+00
+(0.5000,0.5000) 1.000000e+00
+# Seq: 2 Chr: 40 Trait: has_genos Marker: snpB Position: 1.0000
+Theta(M,F) BayesRatio
+(0.2000,0.2000) 1.000000e+00
+(0.5000,0.5000) 1.000000e+00

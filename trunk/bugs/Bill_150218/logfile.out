@@ -1,0 +1,15 @@
+Self-logging to /tmp/cleaning.a17195/logfile.out on Levi-Montalcini86
+Processing output is in /export/01/NCTA/trunk/ACEP/processing_output
+Specified input base name s30_PRE_chr22
+Specified output base name s38_SUM
+Specified pheno files base name ../phenotypes/phenotypes
+Specified trait column pheno1
+Specified geno file base name genotyped_fid_iids.csv
+Specified reports prefix /export/projects/NCTA/trunk/ACEP/processing_output/data/preclean/genotypes/
+Specified loop breakers file /export/projects/NCTA/trunk/ACEP/decision_files/loop_breakers_fid_iids.txt
+/tmp/cleaning.a17195 /export/01/NCTA/trunk/ACEP/data/preclean/genotypes
+logfile name: /tmp/cleaning.a17195/logfile.out\n
+
+ERROR - /export/local/bcmmtools/cleaning/preclean_reporting.sh:105 - Unexpected error occurred; see log
+
+sending log /tmp/cleaning.a17195/logfile.out (logfile name: /tmp/cleaning.a17195/logfile.out)\n

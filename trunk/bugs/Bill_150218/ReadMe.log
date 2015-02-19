@@ -1,0 +1,2 @@
+[Wed Feb 18 19:15:30 EST 2015][Levi-Montalcini86][whv001][/home/whv001/kelvin/tests/trunk/bugs/Bill_150218] Pedigree 12 causes this on exit: #4  0x0000000000428f3f in free_multi_locus_genotype_storage (pPedigree=0x2aaaab5328a0) at locus.c:1778
+[Wed Feb 18 19:16:17 EST 2015][Levi-Montalcini86][whv001][/home/whv001/kelvin/tests/trunk/bugs/Bill_150218] run with kelvin with_phenos.conf --PedigreeFile with_phenos.post
