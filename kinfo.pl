@@ -176,7 +176,7 @@ if ($pedigrees) {
 	    $f = "ui-null";
 	}
 	printf $$family{pedid}."\t".sprintf("%7.7s\t%d\t%d\t%d\t%d\t",$f, $$family{count}, $$family{founders}, $$family{nonfounders}, (2 * $$family{nonfounders}) - $$family{founders});
-	print $gC."\t".$pC."\t".$aC."\t".$gaC."\t".$dmC."\t".int($het*100/$totmk)."\t".int($msgmk*100/$totmk)."\n";
+	print $gC."\t".$pC."\t".$aC."\t".$gaC."\t".$dmC."\t".int($het*100/($totmk > 0 ? $totmk : 1))."\t".int($msgmk*100/($totmk > 0 ? $totmk : 1))."\n";
 	$families{$$family{pedid}} = $family;
     }
     (defined ($family))
