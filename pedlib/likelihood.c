@@ -2047,6 +2047,9 @@ int loop_parental_pair (int locus, int multiLocusIndex[2], void *dWeight[2])
             pNucFam->likelihood += pElement->slot.likelihood;
         } else {        /* one of the parent is the proband */
           likelihoodIndex = multiLocusIndex2[head];
+	  if (likelihoodIndex >= pProband->numConditionals)
+	    ERROR ("Peeling error, can't roll likelihoods into FID %s, IID %s. Possibly pick a different loopbreaker.\n", pProband->pPedigree->sPedigreeID, pProband->sID);
+
           pConditional = &pProband->pLikelihood[likelihoodIndex];
           if (modelOptions->polynomial == TRUE) {
             pConditional->tmpslot.tmpLikelihoodPolynomial = plusExp (2, 1.0, pConditional->tmpslot.tmpLikelihoodPolynomial, 1.0, pElement->slot.likelihoodPolynomial, 1);
