@@ -281,8 +281,8 @@ DROP PROCEDURE IF EXISTS GetAnalysisId;
 DELIMITER //
 CREATE PROCEDURE GetAnalysisId (
  IN inStudyId int, 
- IN inPedigreeRegEx varchar(33),
- IN inPedigreeNotRegEx varchar(33),
+ IN inPedigreeRegEx varchar(1025),
+ IN inPedigreeNotRegEx varchar(1025),
  OUT outAnalysisId int)
 BEGIN
     DECLARE version char(64) DEFAULT '$Id$';
@@ -1843,7 +1843,7 @@ DROP PROCEDURE IF EXISTS ServerSignOn;
 DELIMITER //
 
 CREATE PROCEDURE ServerSignOn (IN inHostName varchar(32), IN inProcessId int, IN inKeepAliveFlag int,
-	IN inStudyId int, IN inPedigreeRegEx varchar(32), IN inPedigreeNotRegEx varchar(32), 
+	IN inStudyId int, IN inPedigreeRegEx varchar(1025), IN inPedigreeNotRegEx varchar(1025), 
 	IN inChromosomeNo int, IN inAlgorithm varchar(2), IN inMarkerCount int, 
 	IN inProgramVersion varchar(32), IN inSampleIdStart int, IN inSampleIdEnd int, 
 	OUT outServerId int)

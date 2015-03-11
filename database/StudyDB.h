@@ -16,8 +16,8 @@ struct StudyDB {
   char dBName[MAXPARAMLEN];
   char username[MAXPARAMLEN];
   char password[MAXPARAMLEN];
-  char pedigreeRegEx[33];
-  char pedigreeNotRegEx[33];
+  char pedigreeRegEx[1025];
+  char pedigreeNotRegEx[1025];
   int analysisId;
   regex_t includePattern;
   regex_t excludePattern;

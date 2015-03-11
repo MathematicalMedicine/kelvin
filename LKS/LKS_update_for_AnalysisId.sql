@@ -1,7 +1,7 @@
 CREATE TABLE Analyses (
 StudyId int(11) NOT NULL,
-PedigreeRegEx varchar(32) NOT NULL,
-PedigreeNotRegEx varchar(32) NOT NULL DEFAULT 'XYZZY',
+PedigreeRegEx varchar(1024) NOT NULL,
+PedigreeNotRegEx varchar(1024) NOT NULL DEFAULT 'XYZZY',
 AnalysisId int(11) NOT NULL AUTO_INCREMENT,
 InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 PRIMARY KEY (StudyId, PedigreeRegEx, PedigreeNotRegEx),
