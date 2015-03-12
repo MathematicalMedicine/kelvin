@@ -157,17 +157,17 @@ endif
 #FILE_LDFLAGS += -lsocket -lnsl # ditto for under Solaris
 #FILE_CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
 #FILE_CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13, no OpenMP
-#FILE_LDFLAGS += -lgsl -lgslcblas # UNCOMMENT THIS if you are doing VERIFY_GSL
+#FILE_LDFLAGS += $(shell pkg-config --libs gsl) # UNCOMMENT THIS if you are doing VERIFY_GSL
 
 ifeq ($(strip $(USE_STUDYDB)), yes)
-  FILE_CFLAGS += -DSTUDYDB -I/usr/local/mysql/include -I/usr/include/mysql -I/usr/sfw/include/mysql/
-  FILE_LDFLAGS += -lklvndb -lmysqlclient -L/usr/local/mysql/lib -L/usr/lib64/mysql
+  FILE_CFLAGS += -DSTUDYDB $(shell mysql_config --include)
+  FILE_LDFLAGS += -lklvndb $(shell mysql_config --libs)
 endif
 
 # If GSL support has been enabled
 ifeq ($(strip $(USE_GSL)), yes)
-  FILE_CFLAGS += -DUSE_GSL
-  FILE_LDFLAGS += -lgsl -lgslcblas
+  FILE_CFLAGS += -DUSE_GSL $(shell pkg-config --cflags gsl)
+  FILE_LDFLAGS += $(shell pkg-config --libs gsl)
 endif
 
 CFLAGS := $(FILE_CFLAGS) $(ENV_CFLAGS) -DVERSION='"V$(VERSION)"' -DSVNVERSION='"$(SVNVERSION)"'
