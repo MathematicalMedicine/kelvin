@@ -95,7 +95,6 @@ PedigreeRegEx varchar(1024) NOT NULL,
 PedigreeNotRegEx varchar(1024) NOT NULL DEFAULT 'XYZZY',
 AnalysisId int(11) NOT NULL AUTO_INCREMENT,
 InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-PRIMARY KEY (StudyId, PedigreeRegEx, PedigreeNotRegEx),
 KEY `AnalysisId` (AnalysisId)
 ) ENGINE=InnoDB;
 
