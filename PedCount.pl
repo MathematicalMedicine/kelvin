@@ -1,5 +1,6 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
 use strict;
+use warnings;
 use Getopt::Long;
 use List::Util qw(sum min);
 use Data::Dumper;

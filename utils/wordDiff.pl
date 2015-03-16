@@ -1,4 +1,8 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
+
+# FIXME: why isn't 'use strict;' present?
+use warnings;
+
 #
 # Word-oriented file comparison with case folding and a numeric slop factor.
 #

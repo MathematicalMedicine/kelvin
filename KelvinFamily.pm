@@ -1,5 +1,6 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
 use strict;
+use warnings;
 
 #
 # KelvinFamily: an object for managing groups of related KelvinIndividuals (families).
