@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use strict;
 use warnings FATAL => qw(all);
 use FindBin; use lib split(/:+/, "!:$ENV{'TOOLPATH'}:$FindBin::Bin");

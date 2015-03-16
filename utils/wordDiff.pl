@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 #
 # Word-oriented file comparison with case folding and a numeric slop factor.
 #
