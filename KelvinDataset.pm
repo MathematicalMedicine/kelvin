@@ -1172,7 +1172,10 @@ sub validateAlleleFreqs
 	$errstr = "marker $marker has no alleles";
 	return (undef);
     }
-    if (abs (1 - $total) <= $ROUNDING_ERROR) {
+    # The string comparison is necessary to catch decimal number representation
+    # cases where $total is greater than $ROUNDING_ERROR, but only out at 12+ digits
+    if (abs (1 - $total) <= $ROUNDING_ERROR || 
+	sprintf ("%.3f", abs (1 - $total)) eq "$ROUNDING_ERROR") {
 	if ($count == 1) {
 	    # Assume here that a single allele, labeled either '1' or '2', with
 	    # a frequency of 1, is a SNP and fill the missing complementary allele.
