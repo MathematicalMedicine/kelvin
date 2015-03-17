@@ -79,7 +79,7 @@ PRIMARY KEY (StudyId, MapId, MarkerName)) ENGINE=InnoDB;
 CREATE TABLE Studies (
 StudyId int NOT NULL AUTO_INCREMENT,
 StudyLabel varchar(64) NOT NULL COMMENT 'Should be concisely descriptive and uniq',
-ReferenceMapId int NOT NULL COMMENT 'Merge results onto this map',
+ReferenceMapId int NOT DEFAULT 0 NULL COMMENT 'Merge results onto this map',
 LiabilityClassCnt int NOT NULL COMMENT 'Reasonably 1, 2 or 3',
 ImprintingFlag char(1) NOT NULL COMMENT 'Y/N',
 Description varchar(128),
