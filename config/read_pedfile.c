@@ -1820,11 +1820,11 @@ check_for_loop (Pedigree *pPed) {
     MALCHOKE (messageBuffer, 2048, char *);
     pMB = messageBuffer;
     pPed->currentLoopFlag = 1;
-    pMB += sprintf (pMB, "Pedigree %s, unbroken loop(s) found involving individuals ", pPed->sPedigreeID);
+    pMB += sprintf (pMB, "Pedigree %s(%s), unbroken loop(s) found involving individuals ", pPed->sPedigreeID, pPed->sOriginalID);
     for (i = 0; i< pPed->numPerson; i++){
       pPerson = pPed->ppPersonList[i];
       if (tuple[i][0] != 0){
-	pMB += sprintf(pMB, "%s ", pPerson->sID);
+	pMB += sprintf(pMB, "%s(%s) ", pPerson->sID, pPerson->sOriginalID);
       }
     }
     WARNING ("%s", messageBuffer);
