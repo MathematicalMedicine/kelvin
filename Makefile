@@ -305,6 +305,7 @@ clean-build :
 	make -C pedlib -f Makefile clean
 	make -C config -f Makefile clean
 	make -C utils -f Makefile clean
+	make -C database -f Makefile clean
 ifeq ($(strip $(USE_STUDYDB)), yes)
 	make -C database -f Makefile clean
 endif
