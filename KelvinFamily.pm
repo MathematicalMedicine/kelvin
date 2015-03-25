@@ -258,22 +258,24 @@ sub verify_links
     my ($self) = @_;
     my %hash;
     my $ind;
-    my ($pedid, $indid, $dadid, $momid, $firstchildid, $patsibid, $matsibid, $sex);
+    my ($pedid, $indid, $dadid, $momid, $firstchildid, $patsibid, $matsibid, $sex, $origindid);
     my $setlist = [];
+    my $origpedid;
 
+    $origpedid = $$self{individuals}[0]{origpedid};
     foreach $ind (@{$$self{individuals}}) {
-	($pedid, $indid, $dadid, $momid, $firstchildid, $patsibid, $matsibid, $sex) = 
-	    @$ind{qw/pedid indid dadid momid firstchildid patsibid matsibid sex/};
+	($pedid, $indid, $dadid, $momid, $firstchildid, $patsibid, $matsibid, $sex, $origindid) = 
+	    @$ind{qw/pedid indid dadid momid firstchildid patsibid matsibid sex origindid/};
 	foreach ($indid, $firstchildid, $patsibid, $matsibid) {
 	    ($_ ne 0 && ! exists ($hash{$_}))
-		and $hash{$_} = {sex => undef, dadid => undef, momid => undef,
+		and $hash{$_} = {sex => undef, dadid => undef, momid => undef, origindid => undef,
 				 prevpatsib => undef, prevmatsib => undef, isfirstchild => undef};
 	}
 	if (defined ($hash{$indid}{sex})) {
 	    $errstr = "pedid $pedid, person $indid appears more than once";
 	    return (undef);
 	}
-	@{$hash{$indid}}{qw/dadid momid sex/} = ($dadid, $momid, $sex);
+	@{$hash{$indid}}{qw/dadid momid origindid sex/} = ($dadid, $momid, $origindid, $sex);
 
 	($firstchildid ne '0') and $hash{$firstchildid}{isfirstchild} = 1;
 	($patsibid ne '0') and $hash{$patsibid}{prevpatsib} = $indid;
@@ -366,7 +368,7 @@ sub verify_links
     # $setlist is a ref to an array of sets of connected individuals. There should
     # only be one set, otherwise the family is not completely connected.
     if (scalar (@$setlist > 1)) {
-	$errstr = "in family $$self{pedid}, individual(s) ". join (', ', keys %{$$setlist[-1]}). " disconnected from the rest of the pedigree";
+	$errstr = sprintf ("in family %s (orig %s), individuals(s) %s are disconnected from the rest of the pedigree", $$self{pedid}, $origpedid, join (', ', map { "$_ ($hash{$_}{origindid})" } keys (%{$$setlist[-1]})));
 	return (undef);
     }
 
