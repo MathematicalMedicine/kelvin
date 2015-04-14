@@ -134,9 +134,9 @@ if ($pedigrees) {
 		$gC++;
 		push @g, $ind;
 	    }
-	    $aC++ if (defined($ind->{traits}[0]) and ($ind->{traits}[0] == $AFFECTED));
+	    $aC++ if (defined($ind->{traits}[0]) and ($ind->{traits}[0] eq $AFFECTED));
 	    $pC++ if (defined($ind->{phenotyped}) and ($ind->{phenotyped} > 0));
-	    $gaC++ if ($ind->{genotyped} > $mc and (defined($ind->{traits}[0]) and ($ind->{traits}[0] == $AFFECTED)));
+	    $gaC++ if ($ind->{genotyped} > $mc and (defined($ind->{traits}[0]) and ($ind->{traits}[0] eq $AFFECTED)));
 	    $dmC++ if ($ind->{genotyped} <= $mc and ($ind->{phenotyped} == 0));
 
 	    # Determine heterozygosity and missingness
