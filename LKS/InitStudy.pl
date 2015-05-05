@@ -1,7 +1,8 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use FindBin; use lib split(/:+/, "!:$ENV{'KELVIN_ROOT'}:NO_KELVIN_ROOT:$ENV{'TOOLPATH'}:$FindBin::Bin");
+use FindBin;
+use lib split(/:+/, "!:$ENV{'TOOLPATH'}:$FindBin::Bin");
 use Data::Dumper;
 use File::Basename;
 use DBI; # Database interaction
@@ -209,23 +210,47 @@ sub perform_study
 	}
     }
 
+    # Random name for temp table
+    my $temptable = "PPs_" . join ('', map { chr (int (rand () * 26) + 65) } (0 .. 7));
+
+    # Turn off automatic error handling
+    $dbh->{PrintError} = $dbh->{RaiseError} = 0;
+
     # Finally, freshen the PedigreePositions as needed...
     my $MPMarkers = $ {$config->isConfigured ("Multipoint")}[0];
     
-    $dbh->do("Create temporary table PPs Select a.StudyId, a.PedigreeSId, b.ChromosomeNo, ".
-	     "b.RefTraitPosCM, $MPMarkers 'MarkerCount' ".
-	     "from Pedigrees a, Positions b where a.StudyId = $StudyId AND a.StudyId = b.StudyId");
-    $dbh->do("Insert into PedigreePositions (StudyId, PedigreeSId, ChromosomeNo, RefTraitPosCM, MarkerCount) ".
-	     "Select a.StudyId, a.PedigreeSId, a.ChromosomeNo, a.RefTraitPosCM, a.MarkerCount from ".
-	     "PPs a left outer join PedigreePositions b on ".
-	     "a.StudyId = $StudyId AND a.StudyId = b.StudyId AND ".
-	     "a.PedigreeSId = b.PedigreeSId AND ".
-	     "a.ChromosomeNo = b.ChromosomeNo AND ".
-	     "a.RefTraitPosCM = b.RefTraitPosCM ".
-	     "where b.StudyId IS NULL");
-    $dbh->do("call BadScaling(?)", undef, $StudyId);
+    until ($dbh->do ("Create temporary table $temptable Select a.StudyId, a.PedigreeSId, ".
+	            "b.ChromosomeNo, b.RefTraitPosCM, $MPMarkers 'MarkerCount' ".
+                    "from Pedigrees a, Positions b ".
+                    "where a.StudyId = $StudyId AND a.StudyId = b.StudyId")) {
+        check_mysql_retry ($dbh);
+    }
+    until ($dbh->do ("Insert into PedigreePositions (StudyId, PedigreeSId, ChromosomeNo, ".
+                     "RefTraitPosCM, MarkerCount) ".
+                     "Select a.StudyId, a.PedigreeSId, a.ChromosomeNo, a.RefTraitPosCM, ".
+                     "a.MarkerCount ".
+                     " from $temptable a left outer join PedigreePositions b on ".
+                     "a.StudyId = $StudyId AND a.StudyId = b.StudyId AND ".
+                     "a.PedigreeSId = b.PedigreeSId AND ".
+                     "a.ChromosomeNo = b.ChromosomeNo AND ".
+                     "a.RefTraitPosCM = b.RefTraitPosCM ".
+                     "where b.StudyId IS NULL")) {
+        check_mysql_retry ($dbh);
+    }
+    until ($dbh->do("call BadScaling(?)", undef, $StudyId)) {
+        check_mysql_retry ($dbh);
+    }
 
     return;
+}
+
+sub check_mysql_retry
+{
+    my ($handle) = @_;
+
+    ($DBI::errstr =~ /try restarting transaction/)
+	or die ("DBI failure executing '", $handle->{Statement}, "'\n", "$DBI::errstr\n");
+    ($debug) and print ("Retrying mysql statement\n");
 }
 
 sub fatal
