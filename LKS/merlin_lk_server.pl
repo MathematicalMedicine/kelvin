@@ -1,4 +1,4 @@
-#!perl 
+#!/usr/bin/env perl 
 use strict;
 use FindBin; use lib split(/:+/, "!:$ENV{'KELVIN_ROOT'}:NO_KELVIN_ROOT:$ENV{'TOOLPATH'}:$FindBin::Bin");
 use warnings;
