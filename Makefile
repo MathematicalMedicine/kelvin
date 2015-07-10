@@ -11,7 +11,7 @@ ifndef BINDIR
   BINDIR=~/mykelvin
 endif
 
-## User and group IDs by which installed execuatbles and scripts will be owned.
+## User and group IDs by which installed executables and scripts will be owned.
 OWNER=root
 GROUP=root
 
@@ -24,12 +24,40 @@ CC := gcc
 ## GCC optimization level, 0=none, 1=default, 2=some (recommended), 3=all
 GCCOPT := 2
 
+## LKS Portable Edition site-wide configuration
+## These values can be changed after installation by editing
+## $(BINDIR)/site_settings.sh
+# MySQL distribution location, for setting up transient MySQL servers
+LKSPE_MYSQL_BASE="/opt/mysql-5.6"
+
+# Directories that need to also go into $TOOLPATH. This is for if you had more
+# than one directory in DEFAULT_TOOLPATH in old versions of Portable Edition;
+# typically it's only used at sites that also need to include $MYSQL_BASE/bin
+LKSPE_EXTENDED_TOOLPATH=""
+
+# qsub command line arguments used to specify that a job will itself submit
+# jobs. If left blank, then it's assumed all jobs can submit subsequent jobs.
+LKSPE_JOB_SUBMITS_JOBS=$(shell if [[ "$$HOSTNAME" == "Levi-Montalcini"* ]]; then echo "-q headnode -P headnode"; fi)
+
 ##                                                     ##
 ## Should be no need to make changes beyond this point ##
 ##                                                     ##
 
+## Command used to download files from the Web. Used to build patched Merlin.
+## This is necessary because Merlin's licensing terms do not allow us to
+## distribute a patched source tree directly.
+#WGET := wget
+WGET := curl -L -O
+## URL path to the Merlin downloadable tarball
+MERLIN_URL := http://csg.sph.umich.edu/abecasis/merlin/download
+## Filename of the Merlin downloadable tarball
+MERLIN_TARBALL := merlin-1.1.2.tar.gz
+
+# Current date, used to mark LKS Portable Edition distributions
+DATE=$(shell date +%Y%m%d)
+
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
-USE_OPENMP := $(shell ./specialty-scripts/use_openmp.sh)
+USE_OPENMP ?= $(shell if [ "$$(cpp --version | head -1 | sed -e 's/[^0-9. ]*//g' -e 's/^ *//' -e 's/ .*//')" \< "4.1" ]; then echo 'no'; else echo 'yes'; fi)
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
 ## INCDIR and LIBDIR (above) accordingly.
@@ -37,7 +65,10 @@ USE_GSL := yes
 
 ## Enable use of ptmalloc3. Don't forget to set LIBDIR (below) accordingly.
 ## Not available on OSX.
-USE_PTMALLOC3 := $(shell ./specialty-scripts/use_ptmalloc3.sh)
+USE_PTMALLOC3 ?= $(shell if ldconfig -p 2>/dev/null | grep ptmalloc3 >/dev/null; then echo "yes"; else echo "no"; fi)
+
+## Current Merlin patch file
+MERLIN_PATCH := $(shell cd merlin; /bin/ls merlin-*.diff.gz)
 
 ## Enable use of Hoard. Don't forget to set LIBDIR (below) accordingly.
 # USE_HOARD := yes
@@ -61,6 +92,10 @@ else
   CALC_UPDATED_PPL := calc_updtd_ppl
 endif
 SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/$(CALC_UPDATED_PPL)
+
+# Repository where we can find the pipeline scripts
+# Note that this will probably only work internally for obvious reasons!
+PIPELINE_SVNROOT:=https://hodgkin/svn/bcmmtools
 
 ## Directories in which optional header files and libraries can be found (GSL,
 ## etc). Remember you can specify these as command-line macros, e.g. at OSC:
@@ -189,6 +224,9 @@ INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinWriteFiles.h dkelvinWriteFiles.h \
 	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
+.SECONDEXPANSION: 
+# this is necessary because otherwise references to $(bindir_pipeline) and $(bindir_lks) won't work as prereqs!
+
 all : kelvin-$(VERSION) seq_update/$(CALC_UPDATED_PPL)
 
 specialty : kelvin-$(VERSION)-no_GSL \
@@ -198,19 +236,23 @@ specialty : kelvin-$(VERSION)-no_GSL \
 	kelvin-study \
 	kelvin-normal
 
-dist :
+dist : all-pipeline-scripts
 	- rm -rf kelvin-$(VERSION)
 	mkdir kelvin-$(VERSION)
 	mkdir kelvin-$(VERSION)/bin
 	cp -a bin/{kelvin,$(CALC_UPDATED_PPL)}.* kelvin-$(VERSION)/bin
-	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kelvin-$(VERSION)
+	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kinfo.pl kelvin-$(VERSION)
 	perl -pe "s|#FILE_CFLAGS \+\= \-DDISTRIBUTION|FILE_CFLAGS \+\= \-DDISTRIBUTION|;" Makefile > kelvin-$(VERSION)/Makefile
-	mkdir kelvin-$(VERSION)/{lib,utils,pedlib,config,seq_update}
+	mkdir kelvin-$(VERSION)/{lib,utils,pedlib,config,seq_update,database,merlin,LKS}
 	cp -a utils/Makefile utils/*.{c,h,pl} kelvin-$(VERSION)/utils
 	cp -a pedlib/Makefile pedlib/*.[ch] kelvin-$(VERSION)/pedlib
 	cp -a config/Makefile config/*.[ch] kelvin-$(VERSION)/config
 	cp -a database/Makefile database/*.[ch] kelvin-$(VERSION)/database
 	cp -a seq_update/Makefile seq_update/*.{c,h,pl} kelvin-$(VERSION)/seq_update
+	cp -a merlin/$(MERLIN_PATCH) kelvin-$(VERSION)/merlin
+	cp -a pipeline-scripts kelvin-$(VERSION)/
+	cp -a auxbin kelvin-$(VERSION)/
+	cd LKS/; cp -a $(lks_target_names) ../kelvin-$(VERSION)/LKS/; cd ..
 	mkdir -p kelvin-$(VERSION)/test-suite/dynamic-grid/PE/SA_DT
 	cp -a test-suite/Makefile kelvin-$(VERSION)/test-suite
 	cp -a test-suite/dynamic-grid/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid
@@ -231,6 +273,14 @@ dist :
 	cp -a doc/*.{html,png,gif} kelvin-$(VERSION)/doc
 	tar -cvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
 	rm -rf kelvin-$(VERSION)
+
+dist-lks : LKSPortableEdition-$(DATE).tar.gz
+LKSPortableEdition-$(DATE).tar.gz : 
+	rm -rf kelvin-lks
+	mkdir kelvin-lks
+	make OWNER=`id -u -n` GROUP=`id -g -n` BINDIR=kelvin-lks install-lks-dist
+	tar zcf LKSPortableEdition-$(DATE).tar.gz kelvin-lks
+	rm -rf kelvin-lks
 
 install : $(BINDIR) \
 	$(BINDIR)/kelvin-$(VERSION) \
@@ -260,6 +310,33 @@ install-specialty : install \
 	$(BINDIR)/kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD \
 	$(BINDIR)/kelvin-study \
 	$(BINDIR)/kelvin-normal
+
+install-lks-base : \
+	$(BINDIR)/kelvin-$(VERSION) \
+	$(BINDIR)/KelvinConfig.pm \
+	$(BINDIR)/KelvinDataset.pm \
+	$(BINDIR)/KelvinFamily.pm \
+	$(BINDIR)/KelvinIO.pm \
+	$(BINDIR)/kelvin-study \
+	$$(bindir_pipeline) \
+	$$(bindir_lks) \
+	$(BINDIR)/ready_kelvin_lks_analysis.sh \
+	$(BINDIR)/site_settings.sh \
+	$(BINDIR)/BCMM \
+	$(BINDIR)/kinfo.pl \
+	$(BINDIR)/wordDiff.pl \
+	$(BINDIR)/merlin \
+	$(BINDIR)/minx \
+	$(BINDIR)/McSample.run \
+	$(BINDIR)/makeped
+
+install-lks-dist : install-lks-base Kelvin
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p Kelvin $(BINDIR)/Kelvin
+# the above rule is because if we just use the existing $(BINDIR)/Kelvin rule,
+# we'll also get a hardcoded location for the Kelvin binary, and for LKS
+# premade tarballs that's something we want to avoid
+
+install-lks : install-lks-base $(BINDIR)/Kelvin
 
 .PHONY : kelvin
 kelvin : kelvin-$(VERSION)
@@ -315,10 +392,24 @@ ifeq ($(strip $(USE_STUDYDB)), yes)
 endif
 
 .PHONY : clean
-clean : clean-build
+clean : clean-build clean-merlin clean-pscripts
 	make -C seq_update -f Makefile clean
 	make -C test-suite -f Makefile clean
 	rm -f kelvin-$(VERSION)-no_GSL kelvin-$(VERSION)-POLYUSE_DL kelvin-$(VERSION)-POLYCOMP_DL kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD kelvin-$(VERSION)-study kelvin-study kelvin-$(VERSION)-normal kelvin-normal
+	rm -f LKSPortableEdition-*.tar.gz
+
+.PHONY : clean-pscripts
+clean-pscripts : 
+ifeq ("$(findstring -DDISTRIBUTION,$(CFLAGS))", "")
+	rm -rf pipeline-scripts
+endif
+
+.PHONY : clean-merlin
+clean-merlin :
+	mv merlin merlin-cleaning
+	mkdir merlin
+	mv merlin-cleaning/$(MERLIN_PATCH) merlin
+	rm -rf merlin-cleaning
 
 .PHONY : test-USE_DL
 # Polynomial compilation tests
@@ -370,6 +461,188 @@ $(BINDIR)/Kelvin : Kelvin
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p Kelvin.local $(BINDIR)/Kelvin
 	rm Kelvin.local
 
+
+# Kelvin-LKS Portable Edition BCMMTools Pipeline Scripts
+
+# These are all scripts that are currently maintained in a SVN repository other
+# than the one the Kelvin tree is in. Therefore, we need to retrieve them.
+# 
+# The idea here is that we export all our required scripts to a
+# pipeline-scripts subdirectory - that's how we "make" each target script.
+# Then, when it's time to install, we copy from that directory into $BINDIR.
+# Conceptually simple, but surprisingly awkward to implement in make.
+# 
+# It also doesn't help that there's two directories in the repository that, for
+# Portable Edition purposes, we want to convert into one...
+
+# Pipeline scripts included in SVN bcmmtools/
+bt_scriptnames := \
+    qtdt_munge.pl \
+    mysql_run_script.pl \
+    kdtk.pl \
+    BCMMTools.pm \
+    depcheck_funcs.sh \
+    depcheck.pl
+# Pipeline scripts included in SVN bcmmtools/cleaning/
+btc_scriptnames := \
+    cleaning_arrayjob.sh \
+    cleaning_common.sh \
+    error_handling.sh \
+    cmdline_parser.sh \
+    template_control_analysis_portable.sh \
+    template_settings_portable.sh \
+    get_ped_complexity.sh \
+    prep_for_kelvin.sh \
+    setup_for_LKS.sh \
+    MCMC_setup.sh \
+    MCMC_sizing.sh \
+    MCMC_size_pedigree.sh \
+    MCMC_sampling.sh \
+    MCMC_sample_pedigree.sh \
+    MCMC_gathering.sh \
+    collect_MCMC_pedigrees.pl \
+    source_a_script.sh \
+    transient_MySQL_LKS_setup.sh \
+    initial_LKS_runs.sh \
+    MCMC_kelvin_MP_only_setup.sh \
+    LKS_iteration.sh \
+    MCMC_kelvin_server_pedigree.sh \
+    LKS_pool_ppl.sh \
+    kelvin-split-client.pl \
+    LKS_transient_servers.sh \
+    transient_server_common_custopts.sh \
+    mp_marker_strip.pl \
+    mysql-transient-ramdisk.cnf \
+    MCMC_size_reporting.pl \
+    makeped.pl
+# Pipeline scripts included in SVN bcmmtools/cleaning/ that require special
+# handling at install time
+btc_scriptspecials := \
+    BCMM \
+    ready_kelvin_lks_analysis.sh \
+    site_settings.sh
+# There's also a pair of tarballs, each with one of the Acid Tests; those are
+# handled below.
+
+# The following are a few mutations of the above lists that we'll need later.
+# 
+# Convert the lists above to "pipeline-scripts/<scriptname>" lists (our
+# "intermediate" target names):
+bt_targets = $(patsubst %,pipeline-scripts/%,$(bt_scriptnames))
+btc_targets = $(patsubst %,pipeline-scripts/%,$(btc_scriptnames) $(btc_scriptspecials))
+# Convert the lists above to a "$(BINDIR)/<scriptname>" list (our installation
+# target names):
+bindir_pipeline = $(patsubst %,$(wildcard $(BINDIR))/%,$(bt_scriptnames) $(btc_scriptnames) sa_dt-acid-test.tgz merlin-only-sadt-acid-test.tgz)
+
+# How our scripts and/or acid test tarballs are brought in
+$(bt_targets) :
+	@mkdir -p pipeline-scripts
+	svn export $(PIPELINE_SVNROOT)/$(notdir $@) $@
+
+$(btc_targets) :
+	@mkdir -p pipeline-scripts
+	svn export $(PIPELINE_SVNROOT)/cleaning/$(notdir $@) $@
+
+pipeline-scripts/%.tgz :
+	@mkdir -p pipeline-scripts
+	svn export $(PIPELINE_SVNROOT)/cleaning/test-suite/depcheck/$*
+	tar zcf $@ $*
+	rm -rf $*
+
+# How they're installed
+# (one generic rule, and two special cases)
+# FIXME: The below will fail if $(BINDIR) does not exist!
+$(bindir_pipeline): $(wildcard $(BINDIR))/%: pipeline-scripts/% $(BINDIR)
+	install -o $(OWNER) -g $(GROUP) -m $(shell if [ -x $< ]; then echo "0755"; else echo "0644"; fi) -p $< $@
+# special case #1: ready_kelvin_lks_analysis.sh needs to be symlinked to
+# somewhere in $PATH
+# FIXME: We may want to do this sort of thing with some Kelvin binaries as
+# well; it depends on future distribution plans. So this may cease to be a
+# Special Case before too long.
+# FIXME: note that /usr/local/bin is hardcoded and that is probably wrong
+$(BINDIR)/ready_kelvin_lks_analysis.sh : pipeline-scripts/ready_kelvin_lks_analysis.sh
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p $< $@
+#	ln -s $@ /usr/local/bin
+# special case #2: site_settings.sh actually gets modified on the fly with
+# variables defined in this Makefile
+$(BINDIR)/site_settings.sh : pipeline-scripts/site_settings.sh
+	cat $< | sed -e 's|MYSQL_BASE-".*"|MYSQL_BASE-"$(LKSPE_MYSQL_BASE)"|' -e 's|EXTENDED_TOOLPATH-".*"|EXTENDED_TOOLPATH-"$(LKSPE_EXTENDED_TOOLPATH)"|' -e 's|JOB_SUBMITS_JOBS-".*"|JOB_SUBMITS_JOBS-"$(LKSPE_JOB_SUBMITS_JOBS)"|' > sitesettings.local
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p sitesettings.local $@
+	rm sitesettings.local
+# special case #3: BCMM is actually a directory; we need to install that
+# directory's contents
+$(BINDIR)/BCMM : pipeline-scripts/BCMM
+	mkdir -p $@
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p $</CLIParser.pm $@/CLIParser.pm
+
+# Generic target for all of the above
+all-pipeline-scripts : $(bt_targets) $(btc_targets) pipeline-scripts/sa_dt-acid-test.tgz pipeline-scripts/merlin-only-sadt-acid-test.tgz
+	mkdir -p pipeline-scripts
+# and a target to create the directory
+# Got rid of this because no matter what I tried, make would perpetually redo
+# everything in the directory if I tried to make this a dependency. :(
+#pipeline-scripts/.dirstamp :
+#	mkdir pipeline-scripts && touch $@
+
+# Kelvin-LKS Portable Edition LKS scripts from this repository
+
+# Pipeline scripts included in LKS/ in this repository
+# We define a list here because LKS/ has a bunch of other related bits in it
+# that aren't needed for Portable Edition but are still necessary for other
+# circumstances.
+lks_target_names := \
+    LKS_transient_server.sql \
+    LKS_transient_database.sql \
+    LKS_setup_tables.sql \
+    LKS_setup_trigger_proc.sql \
+    DModelParts.sql \
+    QModelParts.sql \
+    InitStudy.pl \
+    remove_study.sh \
+    merlin_lk_prepare.pl \
+    merlin_lk_server.pl
+bindir_lks = $(patsubst %,$(BINDIR)/%, $(lks_target_names))
+$(bindir_lks) : $(wildcard $(BINDIR))/%: LKS/%
+	install -o $(OWNER) -g $(GROUP) -m $(shell if [ -x $< ]; then echo "0755"; else echo "0644"; fi) -p $< $@
+# Other such scripts located in different spots
+$(BINDIR)/wordDiff.pl :
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p utils/wordDiff.pl $(BINDIR)/wordDiff.pl
+$(BINDIR)/kinfo.pl :
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p kinfo.pl $(BINDIR)/kinfo.pl
+
+
+# Targets for patched Merlin
+# This is also needed for Kelvin-LKS Portable Edition.
+$(BINDIR)/merlin : merlin/executables/merlin
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p merlin/executables/merlin $(BINDIR)/merlin
+
+$(BINDIR)/minx : merlin/executables/minx
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p merlin/executables/minx $(BINDIR)/minx
+
+$(BINDIR)/pedstats : merlin/executables/pedstats
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p merlin/executables/pedstats $(BINDIR)/pedstats
+
+merlin/executables/% : merlin/Makefile
+	+make -C merlin -f Makefile BINDIR=executables executables/$*
+
+# To get the Makefile, we download the tarball from the Merlin distribution
+# website, untar it, and patch the result. This is necessary because Merlin's
+# licensing terms nominally forbid redistribution of any sort.
+merlin/Makefile :
+	cd merlin; \
+	$(WGET) $(MERLIN_URL)/$(MERLIN_TARBALL) ; \
+	tar zxf $(MERLIN_TARBALL) --strip=1 ; \
+	tar zxf pedstats*.tar.gz ; \
+	zcat $(MERLIN_PATCH) | patch -p1
+
+
+# Auxillary binaries
+# Will work out a better way of distributing these later.
+$(BINDIR)/makeped :
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p auxbin/makeped $(BINDIR)/makeped
+
+$(BINDIR)/McSample.run :
+	install -o $(OWNER) -g $(GROUP) -m 0755 -p auxbin/McSample.run $(BINDIR)/McSample.run
 
 # Specialty binaries follow.
 # These represent four different variants of Kelvin usage:
@@ -495,3 +768,24 @@ uninstall-specialty :
 	$(BINDIR)/kelvin-study \ 
 	$(BINDIR)/kelvin-$(VERSION)-normal \ 
 	$(BINDIR)/kelvin-normal
+
+uninstall-lks :
+	rm -rf $(BINDIR)/kelvin-$(VERSION) \
+	$(BINDIR)/KelvinConfig.pm \
+	$(BINDIR)/KelvinDataset.pm \
+	$(BINDIR)/KelvinFamily.pm \
+	$(BINDIR)/KelvinIO.pm \
+	$(BINDIR)/kelvin-study \
+	$$(bindir_pipeline) \
+	$$(bindir_lks) \
+	$(BINDIR)/ready_kelvin_lks_analysis.sh \
+	$(BINDIR)/site_settings.sh \
+	$(BINDIR)/BCMM \
+	$(BINDIR)/kinfo.pl \
+	$(BINDIR)/wordDiff.pl \
+	$(BINDIR)/kinfo.pl \
+	$(BINDIR)/merlin \
+	$(BINDIR)/minx \
+	$(BINDIR)/McSample.run \
+	$(BINDIR)/makeped \
+	$(BINDIR)/Kelvin
