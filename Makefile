@@ -3,13 +3,15 @@
 # Permission granted to distribute and use for non-profit educational purposes
 # only.
 
-## Variables and options in this Makefile are fully documented in
-## doc/compileoptions.html
-
 ## Directory into which compiled executables and scripts will be installed.
+## For LKS, this should generally NOT be a directory in $PATH.
 ifndef BINDIR
-  BINDIR=~/mykelvin
+  BINDIR=/usr/local/share/kelvin
 endif
+
+## Directory on your system's $PATH into which Kelvin-LKS front end scripts 
+## will be symlinked
+PATHDIR=/usr/local/bin
 
 ## User and group IDs by which installed executables and scripts will be owned.
 OWNER=root
@@ -39,9 +41,13 @@ LKSPE_EXTENDED_TOOLPATH=""
 # jobs. If left blank, then it's assumed all jobs can submit subsequent jobs.
 LKSPE_JOB_SUBMITS_JOBS=$(shell if [[ "$$HOSTNAME" == "Levi-Montalcini"* ]]; then echo "-q headnode -P headnode"; fi)
 
+
+
 ##                                                     ##
 ## Should be no need to make changes beyond this point ##
 ##                                                     ##
+
+
 
 ## Command used to download files from the Web. Used to build patched Merlin.
 ## This is necessary because Merlin's licensing terms do not allow us to
@@ -52,9 +58,6 @@ WGET := curl -L -O
 MERLIN_URL := http://csg.sph.umich.edu/abecasis/merlin/download
 ## Filename of the Merlin downloadable tarball
 MERLIN_TARBALL := merlin-1.1.2.tar.gz
-
-# Current date, used to mark LKS Portable Edition distributions
-DATE=$(shell date +%Y%m%d)
 
 ## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
 USE_OPENMP ?= $(shell if [ "$$(cpp --version | head -1 | sed -e 's/[^0-9. ]*//g' -e 's/^ *//' -e 's/ .*//')" \< "4.1" ]; then echo 'no'; else echo 'yes'; fi)
@@ -274,14 +277,6 @@ dist : all-pipeline-scripts
 	tar -cvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
 	rm -rf kelvin-$(VERSION)
 
-dist-lks : LKSPortableEdition-$(DATE).tar.gz
-LKSPortableEdition-$(DATE).tar.gz : 
-	rm -rf kelvin-lks
-	mkdir kelvin-lks
-	make OWNER=`id -u -n` GROUP=`id -g -n` BINDIR=kelvin-lks install-lks-dist
-	tar zcf LKSPortableEdition-$(DATE).tar.gz kelvin-lks
-	rm -rf kelvin-lks
-
 install : $(BINDIR) \
 	$(BINDIR)/kelvin-$(VERSION) \
           $(BINDIR)/$(CALC_UPDATED_PPL) \
@@ -311,12 +306,13 @@ install-specialty : install \
 	$(BINDIR)/kelvin-study \
 	$(BINDIR)/kelvin-normal
 
-install-lks-base : \
+install-lks : \
 	$(BINDIR)/kelvin-$(VERSION) \
 	$(BINDIR)/KelvinConfig.pm \
 	$(BINDIR)/KelvinDataset.pm \
 	$(BINDIR)/KelvinFamily.pm \
 	$(BINDIR)/KelvinIO.pm \
+	$(BINDIR)/Kelvin \
 	$(BINDIR)/kelvin-study \
 	$$(bindir_pipeline) \
 	$$(bindir_lks) \
@@ -329,14 +325,9 @@ install-lks-base : \
 	$(BINDIR)/minx \
 	$(BINDIR)/McSample.run \
 	$(BINDIR)/makeped
-
-install-lks-dist : install-lks-base Kelvin
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p Kelvin $(BINDIR)/Kelvin
-# the above rule is because if we just use the existing $(BINDIR)/Kelvin rule,
-# we'll also get a hardcoded location for the Kelvin binary, and for LKS
-# premade tarballs that's something we want to avoid
-
-install-lks : install-lks-base $(BINDIR)/Kelvin
+	ln -s $(BINDIR)/Kelvin $(PATHDIR)/Kelvin
+# that rule is because we don't want to insert this bit into the existing
+# $(BINDIR)/Kelvin rule, as that would break standalone builds
 
 .PHONY : kelvin
 kelvin : kelvin-$(VERSION)
@@ -550,19 +541,15 @@ pipeline-scripts/%.tgz :
 	rm -rf $*
 
 # How they're installed
-# (one generic rule, and two special cases)
+# (one generic rule, and three special cases)
 # FIXME: The below will fail if $(BINDIR) does not exist!
 $(bindir_pipeline): $(wildcard $(BINDIR))/%: pipeline-scripts/% $(BINDIR)
 	install -o $(OWNER) -g $(GROUP) -m $(shell if [ -x $< ]; then echo "0755"; else echo "0644"; fi) -p $< $@
 # special case #1: ready_kelvin_lks_analysis.sh needs to be symlinked to
 # somewhere in $PATH
-# FIXME: We may want to do this sort of thing with some Kelvin binaries as
-# well; it depends on future distribution plans. So this may cease to be a
-# Special Case before too long.
-# FIXME: note that /usr/local/bin is hardcoded and that is probably wrong
 $(BINDIR)/ready_kelvin_lks_analysis.sh : pipeline-scripts/ready_kelvin_lks_analysis.sh
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p $< $@
-#	ln -s $@ /usr/local/bin
+	ln -s $@ $(PATHDIR)
 # special case #2: site_settings.sh actually gets modified on the fly with
 # variables defined in this Makefile
 $(BINDIR)/site_settings.sh : pipeline-scripts/site_settings.sh
