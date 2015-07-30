@@ -59,7 +59,11 @@ MERLIN_URL := http://csg.sph.umich.edu/abecasis/merlin/download
 ## Filename of the Merlin downloadable tarball
 MERLIN_TARBALL := merlin-1.1.2.tar.gz
 
-## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL
+## Current Merlin patch file
+MERLIN_PATCH := $(shell cd merlin; /bin/ls merlin-*.diff.gz)
+
+## Enable OpenMP support. Requires icc or gcc 4.2+, and GSL. By default, it's
+## enabled if it's available.
 USE_OPENMP ?= $(shell if [ "$$(cpp --version | head -1 | sed -e 's/[^0-9. ]*//g' -e 's/^ *//' -e 's/ .*//')" \< "4.1" ]; then echo 'no'; else echo 'yes'; fi)
 
 ## Enable use of GSL (GNU Scientific Library). Don't forget to set
@@ -67,19 +71,15 @@ USE_OPENMP ?= $(shell if [ "$$(cpp --version | head -1 | sed -e 's/[^0-9. ]*//g'
 USE_GSL := yes
 
 ## Enable use of ptmalloc3. Don't forget to set LIBDIR (below) accordingly.
-## Not available on OSX.
+## Not available on OSX. By default, it's enabled if it's available.
 USE_PTMALLOC3 ?= $(shell if ldconfig -p 2>/dev/null | grep ptmalloc3 >/dev/null; then echo "yes"; else echo "no"; fi)
-
-## Current Merlin patch file
-MERLIN_PATCH := $(shell cd merlin; /bin/ls merlin-*.diff.gz)
 
 ## Enable use of Hoard. Don't forget to set LIBDIR (below) accordingly.
 # USE_HOARD := yes
 
-## Enable use of MySQL database for HLOD storage/retrieval/distributed processing.
-# USE_STUDYDB := yes
 
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
+LKS_VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`-`cat .lks`)
 PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
 empty:=
 space:= $(empty) $(empty)
@@ -170,41 +170,110 @@ INCFLAGS := -I$(INCDIR)
 # cygwin, testmac? and flair don't recognize the -rdynamic bit...
 FILE_LDFLAGS += -rdynamic
 
-# Flags for BCMM use only
-# Several of these are used for generating the "specialty" binaries.
 
-#FILE_CFLAGS += -DDISTRIBUTION # Eliminates all diagnostics for distribution, don't change, its a dist search target
-#FILE_CFLAGS += -DUSESHM # Enables shared memory diagnostic segment
-ifneq (,$(wildcard /usr/include/execinfo.h))
-#  FILE_CFLAGS += -DBACKTRACE # Add backtrace where supported
-endif
-#FILE_CFLAGS += -DMEMSTATUS # Display time and memory consumption every 30 seconds
-#FILE_CFLAGS += -DMEMGRAPH # Log terse time and memory consumption info to a data file every 30 seconds for graphing
-#FILE_CFLAGS += -DPOLYSTATISTICS # Display extensive polynomial statistics every raw 8Mp and at milestones
-#FILE_CFLAGS += -DDMUSE # For our own static memory management, not beneficial as yet.
-#FILE_CFLAGS += -DDMTRACK # For our own memory tracking
-#FILE_CFLAGS += -DTREEEVALUATE # Use evaluateValue of tree instead of evaluatePoly of list.
-#FILE_CFLAGS += -DFAKEEVALUATE # Don't evaluate at all - use only for exercise/compilation. Results will be wrong!
-#FILE_CFLAGS += -DPOLYUSE_DL # Dynamically load compiled polynomials for in-process use
-#FILE_LDFLAGS += -ldl # ditto
-#FILE_CFLAGS += -DPOLYCODE_DL # Enable generation of dynamic library code for selected polynomials
-#FILE_CFLAGS += -DPOLYCOMP_DL # Enable compilation of dynamic library code for selected polynomials
-#FILE_CFLAGS += -DPOLYCHECK_DL # Keep both built and compiled DL polys and compare results (can be noisy!)
-#FILE_CFLAGS += -DTELLRITA # Relay all log messages to rita via UDP
-#FILE_CFLAGS += -DFULLLOG # Write all log messages to kelvin.full_log if TELLRITA isn't working
-#FILE_LDFLAGS += -lsocket -lnsl # ditto for under Solaris
-#FILE_CFLAGS += -DUSE_SSD # Experimental use of solid state drive when building polynomials. NOT THREAD-SAFE!
-#FILE_CFLAGS += -DVERIFY_GSL # Use both internal and GSL returning internal and printing if error > 1e-13, no OpenMP
-#FILE_LDFLAGS += $(shell pkg-config --libs gsl) # UNCOMMENT THIS if you are doing VERIFY_GSL
+## Debugging and diagnostic flags. For BCMM use only!
+
+## DISTRIBUTION - Eliminates all diagnostics for distribution. Do not change
+## this, as it is a dist search target!
+#FILE_CFLAGS += -DDISTRIBUTION
+
+## USESHM and BACKTRACE - Shared memory diagnostics. Backtrace may not always
+## be supported and so is conditional
+#FILE_CFLAGS += -DUSESHM
+#ifneq (,$(wildcard /usr/include/execinfo.h))
+#  FILE_CFLAGS += -DBACKTRACE
+#endif
+
+## MEMSTATUS and MEMGRAPH - Reports information on elapsed time and memory
+## consumption every 30 seconds for diagnostic/reporting purposes. MEMSTATUS
+## displays this information directly; MEMGRAPH logs it to a file named
+## `kelvin_<PID>_memory.dat` that can be graphed by gnuplot with a simple `load
+## "<filename>"` command. 
+#FILE_CFLAGS += -DMEMSTATUS
+#FILE_CFLAGS += -DMEMGRAPH
+
+## DMUSE - experimental in-house static memory management
+#FILE_CFLAGS += -DDMUSE
+
+## DMTRACK - enable exhaustive memory management tracking.
+#FILE_CFLAGS += -DDMTRACK
+
+## POLYSTATISTICS - Enables a dump of extensive polynomial build statistics at
+## every 8 million raw terms and at build milestones.
+#FILE_CFLAGS += -DPOLYSTATISTICS
+
+## POLYCHECK_DL - Do a verification comparison between in-memory built
+## polynomials and compiled dynamic-library polynomials (keep them both and
+## compare results)
+#FILE_CFLAGS += -DPOLYCHECK_DL
+#FILE_LDFLAGS += -lsocket -lnsl # needed for this under Solaris
+
+## VERIFY_GSL - Do a verification comparison between our own internal
+## statistical routines and those from GSL. Routines will return internal-
+## routine result and print a warning if error > 1e-13. Incompatible with
+## OpenMP as internal routines are not threadsafe.
+#FILE_CFLAGS += -DVERIFY_GSL
+
+## TELLRITA and FULLLOG - Saves all log messages. TELLRITA sends them via UDP
+## port 4590 to our head node (hardcoded destination); FULLLOG writes them to
+## a file named `kelvin.full_log`.
+#FILE_CFLAGS += -DTELLRITA
+#FILE_CFLAGS += -DFULLLOG
+
+
+## Enable use of MySQL database for HLOD storage/retrieval/distributed
+## processing (the "likelihood server").
+# USE_STUDYDB := yes
+
+
+## Polynomial compilation flags. Used by special Makefile targets; most of the
+## time, you'll just want to run `make specialty` to take advantage of these.
+
+## POLYUSE_DL - Use dynamic libraries built for named polynomials if they're
+## present in the current default directory. See olddoc/compiledPolys.html for
+## usage details.
+#FILE_CFLAGS += -DPOLYUSE_DL
+#FILE_LDFLAGS += -ldl
+
+## POLYCODE_DL - Generate C code for polynomials that can be compiled into
+## dynamic libraries for later reuse by a Kelvin binary with POLYUSE_DL
+## enabled. See olddoc/compiledPolys.html for usage details.
+#FILE_CFLAGS += -DPOLYCODE_DL
+#FILE_LDFLAGS += -ldl
+
+## POLYCOMP_DL - Compile any generated C code for dynamic polynomial libraries
+## on the fly. (They can then be used if POLYUSE_DL is turned on.) See 
+## olddoc/compiledPolys.html for usage details.
+#FILE_CFLAGS += -DPOLYCOMP_DL
+#FILE_LDFLAGS += -ldl
+
+## FAKEEVALUATE - Don't evaluate any generated polynomials. Results will be
+## wrong! Used with POLYCODE_DL to do code generation for dynamic polynomial
+## libraries.
+#FILE_CFLAGS += -DFAKEEVALUATE
+
+## USE_SSD - Highly experimental use of solid state drive when building
+## polynomials that are larger than available memory. Recommended only for
+## generating code for polynomials. NOT THREAD-SAFE!
+#FILE_CFLAGS += -DUSE_SSD
+
+
 
 ifeq ($(strip $(USE_STUDYDB)), yes)
   FILE_CFLAGS += -DSTUDYDB $(shell mysql_config --include)
   FILE_LDFLAGS += -lklvndb $(shell mysql_config --libs)
 endif
 
-# If GSL support has been enabled
+# If GSL support has been enabled, in any fashion
 ifeq ($(strip $(USE_GSL)), yes)
-  FILE_CFLAGS += -DUSE_GSL $(shell pkg-config --cflags gsl)
+  FILE_CFLAGS += -DUSE_GSL
+  GSL_FLAGS := yes
+endif
+ifneq (,$(findstring VERIFY_GSL,$(FILE_CFLAGS)))
+  GSL_FLAGS := yes
+endif
+ifeq ($(strip $(GSL_FLAGS)), yes)
+  FILE_CFLAGS += $(shell pkg-config --cflags gsl)
   FILE_LDFLAGS += $(shell pkg-config --libs gsl)
 endif
 
@@ -240,42 +309,44 @@ specialty : kelvin-$(VERSION)-no_GSL \
 	kelvin-normal
 
 dist : all-pipeline-scripts
-	- rm -rf kelvin-$(VERSION)
-	mkdir kelvin-$(VERSION)
-	mkdir kelvin-$(VERSION)/bin
-	cp -a bin/{kelvin,$(CALC_UPDATED_PPL)}.* kelvin-$(VERSION)/bin
-	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kinfo.pl kelvin-$(VERSION)
-	perl -pe "s|#FILE_CFLAGS \+\= \-DDISTRIBUTION|FILE_CFLAGS \+\= \-DDISTRIBUTION|;" Makefile > kelvin-$(VERSION)/Makefile
-	mkdir kelvin-$(VERSION)/{lib,utils,pedlib,config,seq_update,database,merlin,LKS}
-	cp -a utils/Makefile utils/*.{c,h,pl} kelvin-$(VERSION)/utils
-	cp -a pedlib/Makefile pedlib/*.[ch] kelvin-$(VERSION)/pedlib
-	cp -a config/Makefile config/*.[ch] kelvin-$(VERSION)/config
-	cp -a database/Makefile database/*.[ch] kelvin-$(VERSION)/database
-	cp -a seq_update/Makefile seq_update/*.{c,h,pl} kelvin-$(VERSION)/seq_update
-	cp -a merlin/$(MERLIN_PATCH) kelvin-$(VERSION)/merlin
-	cp -a pipeline-scripts kelvin-$(VERSION)/
-	cp -a auxbin kelvin-$(VERSION)/
-	cd LKS/; cp -a $(lks_target_names) ../kelvin-$(VERSION)/LKS/; cd ..
-	mkdir -p kelvin-$(VERSION)/test-suite/dynamic-grid/PE/SA_DT
-	cp -a test-suite/Makefile kelvin-$(VERSION)/test-suite
-	cp -a test-suite/dynamic-grid/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid
-	cp -a test-suite/dynamic-grid/PE/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid/PE
-	cp -a test-suite/dynamic-grid/PE/SA_DT/* kelvin-$(VERSION)/test-suite/dynamic-grid/PE/SA_DT
-	mkdir -p kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
-	cp -a test-suite/seq_update/Makefile kelvin-$(VERSION)/test-suite/seq_update
-	cp -a test-suite/seq_update/d-2pt-le/* kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
-	mkdir -p kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
-	cp -a test-suite/frontend/Makefile kelvin-$(VERSION)/test-suite/frontend
-	cp -a test-suite/frontend/KelvinClasses/* kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
-	mkdir kelvin-$(VERSION)/doc
-	html2text -rcfile doc/html2text.rc doc/index.html >kelvin-$(VERSION)/doc/index.txt
-	html2text -rcfile doc/html2text.rc doc/Directives.html >kelvin-$(VERSION)/doc/Directives.txt
-	html2text -rcfile doc/html2text.rc doc/Allocators.html >kelvin-$(VERSION)/doc/Allocators.txt
-	html2text -rcfile doc/html2text.rc doc/SSDSupport.html >kelvin-$(VERSION)/doc/SSDSupport.txt
-	html2text -rcfile doc/html2text.rc doc/compiledPolys.html >kelvin-$(VERSION)/doc/compiledPolys.txt
-	cp -a doc/*.{html,png,gif} kelvin-$(VERSION)/doc
-	tar -cvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
-	rm -rf kelvin-$(VERSION)
+	- rm -rf kelvin-$(LKS_VERSION)
+	mkdir kelvin-$(LKS_VERSION)
+	#mkdir kelvin-$(LKS_VERSION)/bin
+	#cp -a bin/{kelvin,$(CALC_UPDATED_PPL)}.* kelvin-$(LKS_VERSION)/bin
+	cp -a README .maj .min .pat .lks .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kinfo.pl kelvin-$(LKS_VERSION)
+	perl -pe "s|#FILE_CFLAGS \+\= \-DDISTRIBUTION|FILE_CFLAGS \+\= \-DDISTRIBUTION|;" Makefile > kelvin-$(LKS_VERSION)/Makefile
+	mkdir kelvin-$(LKS_VERSION)/{lib,utils,pedlib,config,seq_update,database,merlin,LKS}
+	cp -a utils/Makefile utils/*.{c,h,pl} kelvin-$(LKS_VERSION)/utils
+	cp -a pedlib/Makefile pedlib/*.[ch] kelvin-$(LKS_VERSION)/pedlib
+	cp -a config/Makefile config/*.[ch] kelvin-$(LKS_VERSION)/config
+	cp -a database/Makefile database/*.[ch] kelvin-$(LKS_VERSION)/database
+	cp -a seq_update/Makefile seq_update/*.{c,h,pl} kelvin-$(LKS_VERSION)/seq_update
+	cp -a merlin/$(MERLIN_PATCH) kelvin-$(LKS_VERSION)/merlin
+	cp -a pipeline-scripts kelvin-$(LKS_VERSION)/
+	cp -a auxbin kelvin-$(LKS_VERSION)/
+	cd LKS/; cp -a $(lks_target_names) ../kelvin-$(LKS_VERSION)/LKS/; cd ..
+	mkdir -p kelvin-$(LKS_VERSION)/test-suite/dynamic-grid/PE/SA_DT
+	cp -a test-suite/Makefile kelvin-$(LKS_VERSION)/test-suite
+	cp -a test-suite/dynamic-grid/Makefile kelvin-$(LKS_VERSION)/test-suite/dynamic-grid
+	cp -a test-suite/dynamic-grid/PE/Makefile kelvin-$(LKS_VERSION)/test-suite/dynamic-grid/PE
+	cp -a test-suite/dynamic-grid/PE/SA_DT/* kelvin-$(LKS_VERSION)/test-suite/dynamic-grid/PE/SA_DT
+	mkdir -p kelvin-$(LKS_VERSION)/test-suite/seq_update/d-2pt-le
+	cp -a test-suite/seq_update/Makefile kelvin-$(LKS_VERSION)/test-suite/seq_update
+	cp -a test-suite/seq_update/d-2pt-le/* kelvin-$(LKS_VERSION)/test-suite/seq_update/d-2pt-le
+	mkdir -p kelvin-$(LKS_VERSION)/test-suite/frontend/KelvinClasses
+	cp -a test-suite/frontend/Makefile kelvin-$(LKS_VERSION)/test-suite/frontend
+	cp -a test-suite/frontend/KelvinClasses/* kelvin-$(LKS_VERSION)/test-suite/frontend/KelvinClasses
+	mkdir kelvin-$(LKS_VERSION)/doc
+	doc/convert_docs.py
+	cp -a doc/*.md doc/*.html doc/*.jpg kelvin-$(LKS_VERSION)/doc
+	#html2text -rcfile doc/html2text.rc doc/index.html >kelvin-$(LKS_VERSION)/doc/index.txt
+	#html2text -rcfile doc/html2text.rc doc/Directives.html >kelvin-$(LKS_VERSION)/doc/Directives.txt
+	#html2text -rcfile doc/html2text.rc doc/Allocators.html >kelvin-$(LKS_VERSION)/doc/Allocators.txt
+	#html2text -rcfile doc/html2text.rc doc/SSDSupport.html >kelvin-$(LKS_VERSION)/doc/SSDSupport.txt
+	#html2text -rcfile doc/html2text.rc doc/compiledPolys.html >kelvin-$(LKS_VERSION)/doc/compiledPolys.txt
+	#cp -a doc/*.{html,png,gif} kelvin-$(LKS_VERSION)/doc
+	tar -cvzf kelvin-$(LKS_VERSION).tar.gz kelvin-$(LKS_VERSION)/
+	rm -rf kelvin-$(LKS_VERSION)
 
 install : $(BINDIR) \
 	$(BINDIR)/kelvin-$(VERSION) \
