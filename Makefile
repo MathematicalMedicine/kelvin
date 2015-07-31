@@ -397,9 +397,6 @@ install-lks : \
 	$(BINDIR)/minx \
 	$(BINDIR)/McSample.run \
 	$(BINDIR)/makeped
-	ln -s $(BINDIR)/Kelvin $(PATHDIR)/Kelvin
-# that rule is because we don't want to insert this bit into the existing
-# $(BINDIR)/Kelvin rule, as that would break standalone builds
 
 .PHONY : kelvin
 kelvin : kelvin-$(VERSION)
@@ -523,6 +520,7 @@ $(BINDIR)/Kelvin : Kelvin
 	perl -pe "s|NO_KELVIN_ROOT|$(ABSBINDIR)|; s|NO_KELVIN_BINARY|$(ABSBINDIR)/kelvin-$(VERSION)|; s|NO_SEQUPDATE_BINARY|$(ABSBINDIR)/$(CALC_UPDATED_PPL)|;" Kelvin > Kelvin.local
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p Kelvin.local $(BINDIR)/Kelvin
 	rm Kelvin.local
+	ln -s $(BINDIR)/Kelvin $(PATHDIR)/Kelvin
 
 
 # Kelvin-LKS Portable Edition BCMMTools Pipeline Scripts

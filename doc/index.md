@@ -75,6 +75,8 @@ For Kelvin-LKS and Kelvin-original together, installation requires several steps
 
 5. (optional) Verify that setup worked by running one or both of the two Acid Tests - these are preassembled analyses stored in tarballs in `PATHDIR` named `sa_dt-acid-test.tar.gz` and `merlin-only-sadt-acid-test.tar.gz`. The former tests the whole thing; the latter verifies that Merlin integration is working. (It is normal for sa_dt-acid-test to report a small difference in Bayes ratios at the end of the test; this is due to the nature of MC-MC analysis.)
 
+Uninstallation may be done by running `make uninstall-lks`; this simply deletes all files that were installed.
+
 
 If you are only interested in Kelvin-original, installation is simpler:
 
@@ -84,6 +86,7 @@ If you are only interested in Kelvin-original, installation is simpler:
 
 3. (optional) Verify the build worked by running `make check` (for a quick check) or `make test` (for a more involved one).
 
+Uninstallation may be done by running `make uninstall`; this simply deletes all files that were installed.
 
 
 Input Files for Kelvin
