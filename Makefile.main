@@ -272,7 +272,7 @@ dist : all-pipeline-scripts
 	mkdir kelvin-$(LKS_VERSION)
 	#mkdir kelvin-$(LKS_VERSION)/bin
 	#cp -a bin/{kelvin,$(CALC_UPDATED_PPL)}.* kelvin-$(LKS_VERSION)/bin
-	cp -a README .maj .min .pat .lks .svnversion Kelvin Kelvin*.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kinfo.pl Makefile kelvin-$(LKS_VERSION)
+	cp -a README .maj .min .pat .lks .svnversion Kelvin Kelvin*.pm LKS_setupSGEDB.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kinfo.pl Makefile kelvin-$(LKS_VERSION)
 	perl -pe "s|#FILE_CFLAGS \+\= \-DDISTRIBUTION|FILE_CFLAGS \+\= \-DDISTRIBUTION|;" Makefile.main > kelvin-$(LKS_VERSION)/Makefile.main
 	mkdir kelvin-$(LKS_VERSION)/{lib,utils,pedlib,config,seq_update,database,merlin,LKS}
 	cp -a utils/Makefile utils/*.{c,h,pl} kelvin-$(LKS_VERSION)/utils
