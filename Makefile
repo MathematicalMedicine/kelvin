@@ -80,16 +80,17 @@ USE_PTMALLOC3 ?= $(shell if ldconfig -p 2>/dev/null | grep ptmalloc3 >/dev/null;
 
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
 LKS_VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`-`cat .lks`)
-PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
-empty:=
-space:= $(empty) $(empty)
-PLATFORM = $(subst $(space),$(empty),$(PLATFORM_NAME))
+#PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
+#empty:=
+#space:= $(empty) $(empty)
+#PLATFORM = $(subst $(space),$(empty),$(PLATFORM_NAME))
 KVNLIBDIR := $(shell pwd)/lib
 KELVIN_ROOT := $(shell pwd)
 TEST_KELVIN := $(KELVIN_ROOT)/kelvin-$(VERSION)
 KELVIN_SCRIPT := $(KELVIN_ROOT)/Kelvin
 # If the build is occurring under cygwin, then we have to change the name of this binary due to Microsoft IDioT (Installer Detection Technology)
-ifeq ("$(findstring CYGWIN,$(PLATFORM))", "")
+#ifeq ("$(findstring CYGWIN,$(PLATFORM))", "")
+ifeq ("$(findstring CYGWIN,$(shell uname -s))", "")
   CALC_UPDATED_PPL := calc_updated_ppl
 else
   CALC_UPDATED_PPL := calc_updtd_ppl
@@ -359,15 +360,15 @@ install : $(BINDIR) \
 	  $(BINDIR)/KelvinIO.pm \
 	  $(BINDIR)/Kelvin
 
-install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
-          $(BINDIR)/convert_br.pl \
-	  $(BINDIR)/compileDL.sh \
-	  $(BINDIR)/$(MODS) \
-	  $(BINDIR)/KelvinConfig.pm \
-	  $(BINDIR)/KelvinDataset.pm \
-	  $(BINDIR)/KelvinFamily.pm \
-	  $(BINDIR)/KelvinIO.pm \
-	  $(BINDIR)/Kelvin
+#install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
+#          $(BINDIR)/convert_br.pl \
+#	  $(BINDIR)/compileDL.sh \
+#	  $(BINDIR)/$(MODS) \
+#	  $(BINDIR)/KelvinConfig.pm \
+#	  $(BINDIR)/KelvinDataset.pm \
+#	  $(BINDIR)/KelvinFamily.pm \
+#	  $(BINDIR)/KelvinIO.pm \
+#	  $(BINDIR)/Kelvin
 
 install-specialty : install \
 	$(BINDIR)/kelvin-$(VERSION)-no_GSL \
@@ -411,8 +412,8 @@ kelvin-$(VERSION) : libs $(OBJS) $(INCS)
 	cp $@ $@-$(SVNVERSION)
 
 
-kelvin.platform : clean check_dist_flag kelvin
-	cp kelvin-$(VERSION) bin/kelvin.$(PLATFORM)
+#kelvin.platform : clean check_dist_flag kelvin
+#	cp kelvin-$(VERSION) bin/kelvin.$(PLATFORM)
 
 check_dist_flag :
 ifeq ("$(findstring -DDISTRIBUTION,$(CFLAGS))", "")
@@ -428,7 +429,7 @@ seq_update/$(CALC_UPDATED_PPL) :
 	# named final target without modifying a subordinate makefile. Its harmless, ignore it.
 	mv seq_update/calc_updated_ppl seq_update/intermediate-name
 	mv seq_update/intermediate-name $@
-	cp $@ bin/$(CALC_UPDATED_PPL).$(PLATFORM)
+#	cp $@ bin/$(CALC_UPDATED_PPL).$(PLATFORM)
 
 .PHONY : libs
 libs :
@@ -496,15 +497,15 @@ check :
 $(BINDIR)/kelvin-$(VERSION) : kelvin-$(VERSION)
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-$(VERSION) $(BINDIR)/kelvin-$(VERSION)
 
-$(BINDIR)/kelvin.$(PLATFORM) :
-ifeq (,$(wildcard bin/kelvin.$(PLATFORM)))
-	echo Platform-specific prebuilt executable bin/kelvin.$(PLATFORM) does not exist!
-	exit 1
-else
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin.$(PLATFORM) $(BINDIR)/kelvin.$(PLATFORM)
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin.$(PLATFORM) $(BINDIR)/kelvin-$(VERSION)
-	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/$(CALC_UPDATED_PPL).$(PLATFORM) $(BINDIR)/$(CALC_UPDATED_PPL)-$(VERSION)
-endif
+#$(BINDIR)/kelvin.$(PLATFORM) :
+#ifeq (,$(wildcard bin/kelvin.$(PLATFORM)))
+#	echo Platform-specific prebuilt executable bin/kelvin.$(PLATFORM) does not exist!
+#	exit 1
+#else
+#	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin.$(PLATFORM) $(BINDIR)/kelvin.$(PLATFORM)
+#	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/kelvin.$(PLATFORM) $(BINDIR)/kelvin-$(VERSION)
+#	install -o $(OWNER) -g $(GROUP) -m 0755 -p bin/$(CALC_UPDATED_PPL).$(PLATFORM) $(BINDIR)/$(CALC_UPDATED_PPL)-$(VERSION)
+#endif
 
 $(BINDIR)/$(CALC_UPDATED_PPL) : seq_update/$(CALC_UPDATED_PPL)
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/$(CALC_UPDATED_PPL) $(BINDIR)/$(CALC_UPDATED_PPL)
@@ -613,7 +614,8 @@ pipeline-scripts/%.tgz :
 
 # How they're installed
 # (one generic rule, and three special cases)
-# FIXME: The below will fail if $(BINDIR) does not exist!
+# FIXME: The below will fail if $(BINDIR) (the directory, not the variable)
+# does not exist!
 $(bindir_pipeline): $(wildcard $(BINDIR))/%: pipeline-scripts/% $(BINDIR)
 	install -o $(OWNER) -g $(GROUP) -m $(shell if [ -x $< ]; then echo "0755"; else echo "0644"; fi) -p $< $@
 # special case #1: ready_kelvin_lks_analysis.sh needs to be symlinked to
@@ -804,18 +806,18 @@ uninstall :
 	$(BINDIR)/KelvinIO.pm \ 
 	$(BINDIR)/Kelvin
 
-uninstall-prebuilt : 
-	rm -f $(BINDIR)/kelvin.$(PLATFORM) \ 
-	$(BINDIR)/kelvin-$(VERSION) \ 
-	$(BINDIR)/$(CALC_UPDATED_PPL)-$(VERSION) \ 
-	$(BINDIR)/convert_br.pl \ 
-	$(BINDIR)/compileDL.sh \ 
-	$(BINDIR)/$(MODS) \ 
-	$(BINDIR)/KelvinConfig.pm \ 
-	$(BINDIR)/KelvinDataset.pm \ 
-	$(BINDIR)/KelvinFamily.pm \ 
-	$(BINDIR)/KelvinIO.pm \ 
-	$(BINDIR)/Kelvin
+#uninstall-prebuilt : 
+#	rm -f $(BINDIR)/kelvin.$(PLATFORM) \ 
+#	$(BINDIR)/kelvin-$(VERSION) \ 
+#	$(BINDIR)/$(CALC_UPDATED_PPL)-$(VERSION) \ 
+#	$(BINDIR)/convert_br.pl \ 
+#	$(BINDIR)/compileDL.sh \ 
+#	$(BINDIR)/$(MODS) \ 
+#	$(BINDIR)/KelvinConfig.pm \ 
+#	$(BINDIR)/KelvinDataset.pm \ 
+#	$(BINDIR)/KelvinFamily.pm \ 
+#	$(BINDIR)/KelvinIO.pm \ 
+#	$(BINDIR)/Kelvin
 
 uninstall-specialty :
 	rm -f $(BINDIR)/kelvin-$(VERSION)-no_GSL \ 
@@ -834,8 +836,9 @@ uninstall-lks :
 	$(BINDIR)/KelvinFamily.pm \
 	$(BINDIR)/KelvinIO.pm \
 	$(BINDIR)/kelvin-study \
-	$$(bindir_pipeline) \
-	$$(bindir_lks) \
+	$(BINDIR)/kelvin-$(VERSION)-study \
+	$(bindir_pipeline) \
+	$(bindir_lks) \
 	$(BINDIR)/ready_kelvin_lks_analysis.sh \
 	$(BINDIR)/site_settings.sh \
 	$(BINDIR)/BCMM \
@@ -846,4 +849,6 @@ uninstall-lks :
 	$(BINDIR)/minx \
 	$(BINDIR)/McSample.run \
 	$(BINDIR)/makeped \
-	$(BINDIR)/Kelvin
+	$(BINDIR)/Kelvin \
+	$(PATHDIR)/Kelvin \
+	$(PATHDIR)/ready_kelvin_lks_analysis.sh
