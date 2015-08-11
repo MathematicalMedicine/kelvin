@@ -511,8 +511,7 @@ btc_scriptnames := \
     template_control_analysis_portable.sh \
     template_settings_portable.sh \
     get_ped_complexity.sh \
-    prep_for_kelvin.sh \
-    setup_for_LKS.sh \
+    LKS_sortPedsForRun.pm \
     MCMC_setup.sh \
     MCMC_sizing.sh \
     MCMC_size_pedigree.sh \
