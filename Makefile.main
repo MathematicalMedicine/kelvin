@@ -741,7 +741,7 @@ kelvin-normal : kelvin-$(VERSION)-normal
 kelvin-$(VERSION)-normal :
 	make clean-build
 	make kelvin
-	mv kelvin-$(VERSION) kelvin-$(VERSION)-normal
+	cp kelvin-$(VERSION) kelvin-$(VERSION)-normal
 
 $(BINDIR)/kelvin-normal : kelvin-normal
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p kelvin-normal $(BINDIR)/kelvin-normal
