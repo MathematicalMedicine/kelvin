@@ -1,5 +1,5 @@
 #!/bin/bash
-exec make specialty
+exec make specialty all
 
 
 
