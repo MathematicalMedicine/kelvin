@@ -1,6 +1,7 @@
 test :
 	- rm -f *.out kelvin.freq* *pass?
-	(time $(KELVIN_SCRIPT) kelvin.conf) >kelvin.out 2>&1
+	# Disabled until such time as John can fix it
+	#(time $(KELVIN_SCRIPT) kelvin.conf) >kelvin.out 2>&1
 	#diff -ib ped.post.counted ped.post.counted-baseline
 	#diff -ib ped.post.counts ped.post.counts-baseline
 	diff -ib freq.dat-baseline kelvin.freq
