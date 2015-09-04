@@ -1,175 +1,273 @@
 1: Validating found files: FrequencyFile->original/markers.dat LocusFile->original/datafile.dat MapFile->original/mapfile.dat PedigreeFile->original/pedfile.dat 
 2: Validating found files: LocusFile->pedfile_many-non-structural-changes/datafile.dat PedigreeFile->pedfile_many-non-structural-changes/pedfile.dat 
 2: Ped "1" ("1") ind "1" ("1") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 2
+2: Ped "1" ("1") ind "1" ("1") has different values for 1 marker(s)
 2: Ped "1" ("1") ind "10" ("10") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:1 1
 2: Ped "1" ("1") ind "10" ("10") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:1 2
+2: Ped "1" ("1") ind "10" ("10") has different values for 2 marker(s)
 2: Ped "1" ("1") ind "2" ("2") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:1 1
 2: Ped "1" ("1") ind "2" ("2") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 2
+2: Ped "1" ("1") ind "2" ("2") has different values for 2 marker(s)
 2: Ped "1" ("1") ind "3" ("3") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:1 1
 2: Ped "1" ("1") ind "3" ("3") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 2
+2: Ped "1" ("1") ind "3" ("3") has different values for 2 marker(s)
 2: Ped "1" ("1") ind "4" ("4") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "1" ("1") ind "4" ("4") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "1" ("1") ind "4" ("4") has different values for 2 marker(s)
 2: Ped "1" ("1") ind "5" ("5") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "1" ("1") ind "5" ("5") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "1" ("1") ind "5" ("5") has different values for 2 marker(s)
 2: Ped "1" ("1") ind "6" ("6") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:1 1
 2: Ped "1" ("1") ind "6" ("6") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 2
+2: Ped "1" ("1") ind "6" ("6") has different values for 2 marker(s)
 2: Ped "1" ("1") ind "7" ("7") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:1 1
 2: Ped "1" ("1") ind "7" ("7") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 2
+2: Ped "1" ("1") ind "7" ("7") has different values for 2 marker(s)
 2: Ped "1" ("1") ind "8" ("8") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "1" ("1") ind "8" ("8") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "1" ("1") ind "8" ("8") has different values for 2 marker(s)
 2: Ped "1" ("1") ind "9" ("9") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:1 1
 2: Ped "1" ("1") ind "9" ("9") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:1 2
+2: Ped "1" ("1") ind "9" ("9") has different values for 2 marker(s)
 2: Ped "10" ("10") ind "1" ("1") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:1 2
 2: Ped "10" ("10") ind "1" ("1") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 1
+2: Ped "10" ("10") ind "1" ("1") has different values for 2 marker(s)
 2: Ped "10" ("10") ind "3" ("3") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:1 2
 2: Ped "10" ("10") ind "3" ("3") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 1
+2: Ped "10" ("10") ind "3" ("3") has different values for 2 marker(s)
 2: Ped "10" ("10") ind "4" ("4") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 1
+2: Ped "10" ("10") ind "4" ("4") has different values for 1 marker(s)
 2: Ped "10" ("10") ind "5" ("5") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 2
+2: Ped "10" ("10") ind "5" ("5") has different values for 1 marker(s)
 2: Ped "10" ("10") ind "7" ("7") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:2 1
 2: Ped "10" ("10") ind "7" ("7") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 2
+2: Ped "10" ("10") ind "7" ("7") has different values for 2 marker(s)
 2: Ped "10" ("10") ind "8" ("8") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:1 1
 2: Ped "10" ("10") ind "8" ("8") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:1 2
+2: Ped "10" ("10") ind "8" ("8") has different values for 2 marker(s)
 2: Ped "10" ("10") ind "9" ("9") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:2 1
+2: Ped "10" ("10") ind "9" ("9") has different values for 1 marker(s)
 2: Ped "11" ("11") ind "1" ("1") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:2 1
 2: Ped "11" ("11") ind "1" ("1") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 2
+2: Ped "11" ("11") ind "1" ("1") has different values for 2 marker(s)
 2: Ped "11" ("11") ind "3" ("3") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:2 1
 2: Ped "11" ("11") ind "3" ("3") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 2
+2: Ped "11" ("11") ind "3" ("3") has different values for 2 marker(s)
 2: Ped "11" ("11") ind "4" ("4") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "11" ("11") ind "4" ("4") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "11" ("11") ind "4" ("4") has different values for 2 marker(s)
 2: Ped "11" ("11") ind "5" ("5") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:1 2
 2: Ped "11" ("11") ind "5" ("5") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:2 2
+2: Ped "11" ("11") ind "5" ("5") has different values for 2 marker(s)
 2: Ped "11" ("11") ind "6" ("6") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:2 1
 2: Ped "11" ("11") ind "6" ("6") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 2
+2: Ped "11" ("11") ind "6" ("6") has different values for 2 marker(s)
 2: Ped "11" ("11") ind "8" ("8") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:1 1
 2: Ped "11" ("11") ind "8" ("8") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:1 2
+2: Ped "11" ("11") ind "8" ("8") has different values for 2 marker(s)
 2: Ped "11" ("11") ind "9" ("9") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:1 2
 2: Ped "11" ("11") ind "9" ("9") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:2 2
+2: Ped "11" ("11") ind "9" ("9") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "1" ("1") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:2 1
 2: Ped "2" ("2") ind "1" ("1") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 2
+2: Ped "2" ("2") ind "1" ("1") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "10" ("10") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 1
 2: Ped "2" ("2") ind "10" ("10") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:1 1
+2: Ped "2" ("2") ind "10" ("10") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "11" ("11") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 1
+2: Ped "2" ("2") ind "11" ("11") has different values for 1 marker(s)
 2: Ped "2" ("2") ind "12" ("12") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 1
 2: Ped "2" ("2") ind "12" ("12") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:1 1
+2: Ped "2" ("2") ind "12" ("12") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "13" ("13") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 1
 2: Ped "2" ("2") ind "13" ("13") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:1 1
+2: Ped "2" ("2") ind "13" ("13") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "14" ("14") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 1
+2: Ped "2" ("2") ind "14" ("14") has different values for 1 marker(s)
 2: Ped "2" ("2") ind "15" ("15") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 1
+2: Ped "2" ("2") ind "15" ("15") has different values for 1 marker(s)
 2: Ped "2" ("2") ind "16" ("16") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "2" ("2") ind "16" ("16") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "2" ("2") ind "16" ("16") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "17" ("17") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:2 2
 2: Ped "2" ("2") ind "17" ("17") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:2 1
+2: Ped "2" ("2") ind "17" ("17") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "18" ("18") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:2 2
 2: Ped "2" ("2") ind "18" ("18") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:2 1
+2: Ped "2" ("2") ind "18" ("18") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "19" ("19") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:2 2
 2: Ped "2" ("2") ind "19" ("19") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:2 1
+2: Ped "2" ("2") ind "19" ("19") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "2" ("2") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:1 2
 2: Ped "2" ("2") ind "2" ("2") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 1
+2: Ped "2" ("2") ind "2" ("2") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "20" ("20") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:2 2
 2: Ped "2" ("2") ind "20" ("20") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:2 1
+2: Ped "2" ("2") ind "20" ("20") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "3" ("3") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 1
+2: Ped "2" ("2") ind "3" ("3") has different values for 1 marker(s)
 2: Ped "2" ("2") ind "5" ("5") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:1 2
 2: Ped "2" ("2") ind "5" ("5") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 1
+2: Ped "2" ("2") ind "5" ("5") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "6" ("6") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "2" ("2") ind "6" ("6") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "2" ("2") ind "6" ("6") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "7" ("7") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:2 2
 2: Ped "2" ("2") ind "7" ("7") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:2 1
+2: Ped "2" ("2") ind "7" ("7") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "8" ("8") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "2" ("2") ind "8" ("8") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "2" ("2") ind "8" ("8") has different values for 2 marker(s)
 2: Ped "2" ("2") ind "9" ("9") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 2
 2: Ped "2" ("2") ind "9" ("9") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:1 1
+2: Ped "2" ("2") ind "9" ("9") has different values for 2 marker(s)
 2: Ped "3" ("3") ind "1" ("1") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 1
 2: Ped "3" ("3") ind "1" ("1") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:1 1
+2: Ped "3" ("3") ind "1" ("1") has different values for 2 marker(s)
 2: Ped "3" ("3") ind "2" ("2") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:1 1
 2: Ped "3" ("3") ind "2" ("2") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 2
+2: Ped "3" ("3") ind "2" ("2") has different values for 2 marker(s)
 2: Ped "3" ("3") ind "3" ("3") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:1 1
 2: Ped "3" ("3") ind "3" ("3") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:1 2
+2: Ped "3" ("3") ind "3" ("3") has different values for 2 marker(s)
 2: Ped "3" ("3") ind "4" ("4") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 2
+2: Ped "3" ("3") ind "4" ("4") has different values for 1 marker(s)
 2: Ped "3" ("3") ind "5" ("5") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:1 1
 2: Ped "3" ("3") ind "5" ("5") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:1 2
+2: Ped "3" ("3") ind "5" ("5") has different values for 2 marker(s)
 2: Ped "3" ("3") ind "6" ("6") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 2
+2: Ped "3" ("3") ind "6" ("6") has different values for 1 marker(s)
 2: Ped "4" ("4") ind "2" ("2") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:1 2
 2: Ped "4" ("4") ind "2" ("2") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:2 2
+2: Ped "4" ("4") ind "2" ("2") has different values for 2 marker(s)
 2: Ped "4" ("4") ind "3" ("3") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:2 1
+2: Ped "4" ("4") ind "3" ("3") has different values for 1 marker(s)
 2: Ped "4" ("4") ind "4" ("4") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:2 1
+2: Ped "4" ("4") ind "4" ("4") has different values for 1 marker(s)
 2: Ped "4" ("4") ind "5" ("5") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 2
+2: Ped "4" ("4") ind "5" ("5") has different values for 1 marker(s)
 2: Ped "4" ("4") ind "6" ("6") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:2 1
+2: Ped "4" ("4") ind "6" ("6") has different values for 1 marker(s)
 2: Ped "5" ("5") ind "1" ("1") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:2 2
 2: Ped "5" ("5") ind "1" ("1") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:2 1
+2: Ped "5" ("5") ind "1" ("1") has different values for 2 marker(s)
 2: Ped "5" ("5") ind "2" ("2") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 2
 2: Ped "5" ("5") ind "2" ("2") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:1 1
+2: Ped "5" ("5") ind "2" ("2") has different values for 2 marker(s)
 2: Ped "5" ("5") ind "3" ("3") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 2
 2: Ped "5" ("5") ind "3" ("3") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:1 1
+2: Ped "5" ("5") ind "3" ("3") has different values for 2 marker(s)
 2: Ped "5" ("5") ind "4" ("4") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:2 2
 2: Ped "5" ("5") ind "4" ("4") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:1 2
+2: Ped "5" ("5") ind "4" ("4") has different values for 2 marker(s)
 2: Ped "5" ("5") ind "5" ("5") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 2
 2: Ped "5" ("5") ind "5" ("5") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:1 1
+2: Ped "5" ("5") ind "5" ("5") has different values for 2 marker(s)
 2: Ped "5" ("5") ind "6" ("6") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:2 2
 2: Ped "5" ("5") ind "6" ("6") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:2 1
+2: Ped "5" ("5") ind "6" ("6") has different values for 2 marker(s)
 2: Ped "6" ("6") ind "1" ("1") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "6" ("6") ind "1" ("1") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "6" ("6") ind "1" ("1") has different values for 2 marker(s)
 2: Ped "6" ("6") ind "2" ("2") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 2
 2: Ped "6" ("6") ind "2" ("2") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:1 1
+2: Ped "6" ("6") ind "2" ("2") has different values for 2 marker(s)
 2: Ped "6" ("6") ind "3" ("3") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 1
 2: Ped "6" ("6") ind "3" ("3") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:1 1
+2: Ped "6" ("6") ind "3" ("3") has different values for 2 marker(s)
 2: Ped "6" ("6") ind "6" ("6") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 1
 2: Ped "6" ("6") ind "6" ("6") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:1 1
+2: Ped "6" ("6") ind "6" ("6") has different values for 2 marker(s)
 2: Ped "7" ("7") ind "1" ("1") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:1 1
 2: Ped "7" ("7") ind "1" ("1") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:1 2
+2: Ped "7" ("7") ind "1" ("1") has different values for 2 marker(s)
 2: Ped "7" ("7") ind "10" ("10") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 2
+2: Ped "7" ("7") ind "10" ("10") has different values for 1 marker(s)
 2: Ped "7" ("7") ind "11" ("11") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "7" ("7") ind "11" ("11") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "7" ("7") ind "11" ("11") has different values for 2 marker(s)
 2: Ped "7" ("7") ind "12" ("12") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:1 1
 2: Ped "7" ("7") ind "12" ("12") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 2
+2: Ped "7" ("7") ind "12" ("12") has different values for 2 marker(s)
 2: Ped "7" ("7") ind "13" ("13") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "7" ("7") ind "13" ("13") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "7" ("7") ind "13" ("13") has different values for 2 marker(s)
 2: Ped "7" ("7") ind "2" ("2") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "7" ("7") ind "2" ("2") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "7" ("7") ind "2" ("2") has different values for 2 marker(s)
 2: Ped "7" ("7") ind "3" ("3") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:1 1
 2: Ped "7" ("7") ind "3" ("3") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:1 2
+2: Ped "7" ("7") ind "3" ("3") has different values for 2 marker(s)
 2: Ped "7" ("7") ind "4" ("4") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 1
+2: Ped "7" ("7") ind "4" ("4") has different values for 1 marker(s)
 2: Ped "7" ("7") ind "5" ("5") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:1 1
 2: Ped "7" ("7") ind "5" ("5") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:1 2
+2: Ped "7" ("7") ind "5" ("5") has different values for 2 marker(s)
 2: Ped "7" ("7") ind "6" ("6") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 1
+2: Ped "7" ("7") ind "6" ("6") has different values for 1 marker(s)
 2: Ped "7" ("7") ind "7" ("7") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:1 1
 2: Ped "7" ("7") ind "7" ("7") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 2
+2: Ped "7" ("7") ind "7" ("7") has different values for 2 marker(s)
 2: Ped "7" ("7") ind "8" ("8") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 2
 2: Ped "7" ("7") ind "8" ("8") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:1 1
+2: Ped "7" ("7") ind "8" ("8") has different values for 2 marker(s)
 2: Ped "7" ("7") ind "9" ("9") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 2
+2: Ped "7" ("7") ind "9" ("9") has different values for 1 marker(s)
 2: Ped "8" ("8") ind "10" ("10") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:2 1
 2: Ped "8" ("8") ind "10" ("10") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 2
+2: Ped "8" ("8") ind "10" ("10") has different values for 2 marker(s)
 2: Ped "8" ("8") ind "12" ("12") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:2 1
 2: Ped "8" ("8") ind "12" ("12") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 2
+2: Ped "8" ("8") ind "12" ("12") has different values for 2 marker(s)
 2: Ped "8" ("8") ind "4" ("4") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:1 2
 2: Ped "8" ("8") ind "4" ("4") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 1
+2: Ped "8" ("8") ind "4" ("4") has different values for 2 marker(s)
 2: Ped "8" ("8") ind "5" ("5") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 2
+2: Ped "8" ("8") ind "5" ("5") has different values for 1 marker(s)
 2: Ped "8" ("8") ind "7" ("7") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:2 1
 2: Ped "8" ("8") ind "7" ("7") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 2
+2: Ped "8" ("8") ind "7" ("7") has different values for 2 marker(s)
 2: Ped "8" ("8") ind "8" ("8") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:2 1
 2: Ped "8" ("8") ind "8" ("8") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 2
+2: Ped "8" ("8") ind "8" ("8") has different values for 2 marker(s)
 2: Ped "9" ("9") ind "1" ("1") has different values for marker 8 ("Loci_9") - 1:1 2 vs 2:1 1
 2: Ped "9" ("9") ind "1" ("1") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:1 2
+2: Ped "9" ("9") ind "1" ("1") has different values for 2 marker(s)
 2: Ped "9" ("9") ind "10" ("10") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 1
 2: Ped "9" ("9") ind "10" ("10") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:1 1
+2: Ped "9" ("9") ind "10" ("10") has different values for 2 marker(s)
 2: Ped "9" ("9") ind "12" ("12") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "9" ("9") ind "12" ("12") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "9" ("9") ind "12" ("12") has different values for 2 marker(s)
 2: Ped "9" ("9") ind "13" ("13") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:2 2
 2: Ped "9" ("9") ind "13" ("13") has different values for marker 9 ("Loci_10") - 1:2 2 vs 2:2 1
+2: Ped "9" ("9") ind "13" ("13") has different values for 2 marker(s)
 2: Ped "9" ("9") ind "14" ("14") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 2
+2: Ped "9" ("9") ind "14" ("14") has different values for 1 marker(s)
 2: Ped "9" ("9") ind "15" ("15") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 2
+2: Ped "9" ("9") ind "15" ("15") has different values for 1 marker(s)
 2: Ped "9" ("9") ind "17" ("17") has different values for marker 8 ("Loci_9") - 1:2 2 vs 2:1 1
 2: Ped "9" ("9") ind "17" ("17") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 2
+2: Ped "9" ("9") ind "17" ("17") has different values for 2 marker(s)
 2: Ped "9" ("9") ind "18" ("18") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "9" ("9") ind "18" ("18") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "9" ("9") ind "18" ("18") has different values for 2 marker(s)
 2: Ped "9" ("9") ind "2" ("2") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:1 2
 2: Ped "9" ("9") ind "2" ("2") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 1
+2: Ped "9" ("9") ind "2" ("2") has different values for 2 marker(s)
 2: Ped "9" ("9") ind "4" ("4") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:2 1
 2: Ped "9" ("9") ind "4" ("4") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:1 1
+2: Ped "9" ("9") ind "4" ("4") has different values for 2 marker(s)
 2: Ped "9" ("9") ind "5" ("5") has different values for marker 8 ("Loci_9") - 1:1 1 vs 2:1 2
 2: Ped "9" ("9") ind "5" ("5") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 1
+2: Ped "9" ("9") ind "5" ("5") has different values for 2 marker(s)
 2: Ped "9" ("9") ind "6" ("6") has different values for marker 8 ("Loci_9") - 1:2 1 vs 2:1 1
 2: Ped "9" ("9") ind "6" ("6") has different values for marker 9 ("Loci_10") - 1:1 1 vs 2:2 1
+2: Ped "9" ("9") ind "6" ("6") has different values for 2 marker(s)
 2: Ped "9" ("9") ind "7" ("7") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 1
+2: Ped "9" ("9") ind "7" ("7") has different values for 1 marker(s)
 2: Ped "9" ("9") ind "8" ("8") has different values for marker 9 ("Loci_10") - 1:1 2 vs 2:2 1
+2: Ped "9" ("9") ind "8" ("8") has different values for 1 marker(s)
 2: Ped "9" ("9") ind "9" ("9") has different values for marker 9 ("Loci_10") - 1:2 1 vs 2:1 2
+2: Ped "9" ("9") ind "9" ("9") has different values for 1 marker(s)
 WARNING, Files are different
