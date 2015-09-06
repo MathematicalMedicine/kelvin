@@ -10,8 +10,8 @@
 2: Pedigree "2" individual "16" not found, skipping!
 1: Pedigree "2" individual "2000000000004" not found, skipping!
 1: Pedigree "2" individual "2000000000005" not found, skipping!
-2: Ped "2" ind "8" has different values for matsibid - 1:14 vs 2:1000000000004
 2: Ped "2" ind "8" has different values for patsibid - 1:14 vs 2:1000000000004
+2: Ped "2" ind "8" has different values for matsibid - 1:14 vs 2:1000000000004
 2: Pedigree "2" individual "9" not found, skipping!
 1: Pedigree "2" individual "foo" not found, skipping!
 WARNING, Files are different
