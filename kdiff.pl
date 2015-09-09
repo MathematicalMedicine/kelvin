@@ -446,7 +446,7 @@ if ($pedfiles) {
 	    %individual2 = %{$individuals2{$indid}};
 
 	    # Compare all scalar attributes (nice if they're named in an illuminating fashion)
-	    for my $key (keys %individual1) {
+	    for my $key (sort keys %individual1) {
 		next if (($$dataset1{origfmt} eq "pre" or $$dataset2{origfmt} eq "pre") and
 			 ($key eq "matsibid" or
 			  $key eq "patsibid" or
@@ -461,7 +461,7 @@ if ($pedfiles) {
 	    }
 
 	    # Compare all common traits considering position
-	    for my $trait (keys %traits1) {
+	    for my $trait (sort keys %traits1) {
 		next if (!defined($traits2{$trait})); # We've already complained once, so just bail
 		my $i = $traits1{$trait}{col}; my $j = $traits2{$trait}{col};
 		if ($individual1{traits}[$i] ne $individual2{traits}[$j]) {
