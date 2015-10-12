@@ -23,7 +23,7 @@ Kelvin-original
 
 Kelvin-original has been tested and run on several platforms, but the reference and development platform is CentOS 6 (or any other Linux distribution of similar vintage).
 
-To install Kelvin, you will also need a working C compiler (GCC will do and is tested; ICC (the Intel C Compiler) has also been tested). You will also almost certainly want libgsl (the GNU Scientific Library); compiling without GSL is an option but not supported by default.
+To install Kelvin, you will also need a working C compiler (GCC will do and is tested; ICC (the Intel C Compiler) has also been tested). You will also almost certainly want libgsl (the GNU Scientific Library); compiling without GSL is an option but not supported by default. pkg-config is also needed; normally this is included in any install of Linux development tools, but we've seen instances where it wasn't.
 
 Running Kelvin requires libgsl (if compiled with same) and Perl 5.8 (or any later version)
 
@@ -38,6 +38,7 @@ Kelvin-LKS, in addition to the requirements for Kelvin-original, requires an Ope
 Build requirements are:
 
 * GCC and G++
+* pkg-config (should be present, but we've seen platforms where it isn't)
 * libgsl, with headers (unlike Kelvin-original, it is not optional for Kelvin-LKS)
 * libmysqlclient, with headers
 * an Internet connection (so that we can download and build Merlin)

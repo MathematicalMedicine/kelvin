@@ -198,7 +198,7 @@ my %directives = (
 		  study => {canon => 'Study',
 			    local => 'true',
 			    singlearg => 'true',
-			    regex => '(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(MCMC)\s+(\d+)\s+(\d+)\s+(\d+))?'},
+                            regex => '(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(MCMC)\s+(\d+)\s+(\d+)\s+(\d+))?'},
 		  traitprevalence => {canon => 'TraitPrevalence',
 				      local => 'true',
 				      singlearg => 'true',
@@ -693,6 +693,41 @@ sub defaultPhenoCodes
     } else {
 	# DT codes for unknown, unaffected and affected
 	return (['0, 1, 2']);
+    }
+}
+
+sub readStudyLine {
+    # Returns a hashref containing the contents of the Study line in a Kelvin
+    # config file.
+    my ($self) = @_;
+    
+    my $arg = ${$self->isConfigured("Study")}[0];
+    
+    # The following regex is taken from InitStudy.pl and allows for quoting of
+    # StudyLabel and Password.
+    # Narration: optionally match a single or full quote, then a string
+    # excluding single or full quotes, and finally, if some quote was found,
+    # require its closure. Only shortcoming is not allowing embedded single or
+    # full quotes.
+    # Groups 1 and 7 are used as part of "internal processing" and so will not
+    # have useful values. If any of other groups are blank or otherwise
+    # undefined, then this is an invalid Study directive.
+    $arg =~ /(["'])?([^"']+)(?(1)\1|)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(["'])?([^"']+)(?(7)\7|)\s+(\S+)\s+(\S+)/;
+    
+    if ($2) {
+        return {
+                label => $2,
+                role => uc($3),
+                host => $4,
+                database => $5,
+                username => $6,
+                password => $8,
+                pedregex => $9,
+                pednotregex => $10
+        }
+    } else {
+        $errstr = "Invalid Study directive $arg";
+        return (undef);
     }
 }
 

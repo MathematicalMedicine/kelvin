@@ -497,7 +497,7 @@ $(BINDIR)/Kelvin : Kelvin
 # Pipeline scripts included in SVN bcmmtools/
 bt_scriptnames := \
     qtdt_munge.pl \
-    mysql_run_script.pl \
+    RunSQLScript.pm \
     kdtk.pl \
     BCMMTools.pm \
     depcheck_funcs.sh \
@@ -526,12 +526,12 @@ btc_scriptnames := \
     LKS_iteration.sh \
     MCMC_kelvin_server_pedigree.sh \
     LKS_pool_ppl.sh \
-    kelvin-split-client.pl \
+    LKS_KelvinSplitClient.pm \
     LKS_transient_servers.sh \
     transient_server_common_custopts.sh \
     mp_marker_strip.pl \
     mysql-transient-ramdisk.cnf \
-    MCMC_size_reporting.pl \
+    LKS_MCMCSizeReporting.pm \
     makeped.pl
 # Pipeline scripts included in SVN bcmmtools/cleaning/ that require special
 # handling at install time
@@ -612,7 +612,7 @@ lks_target_names := \
     LKS_setup_trigger_proc.sql \
     DModelParts.sql \
     QModelParts.sql \
-    InitStudy.pl \
+    LKS_InitStudy.pm \
     remove_study.sh \
     merlin_lk_prepare.pl \
     merlin_lk_server.pl
