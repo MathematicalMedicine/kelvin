@@ -40,7 +40,7 @@ undef on failure.
 
 package KelvinConfig;
 our $errstr='';
-our $VERSION=1.4;
+our $VERSION=1.5;
 use File::Spec::Functions qw(splitpath splitdir catpath catdir);
 
 
@@ -230,8 +230,8 @@ sub new
     my $fh;
 
     unless (defined ($configfile)) {
-	$errstr = "config file name is undefined.";
-	return (undef);
+        $self = bless ({ filename => undef, directives => {} }, $class);
+        return ($self);
     }
     unless ($fh = IO::File::Kelvin->new ($configfile)) {
 	$errstr = $!;
