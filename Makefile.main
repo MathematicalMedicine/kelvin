@@ -410,7 +410,7 @@ ifeq ($(strip $(USE_STUDYDB)), yes)
 endif
 
 .PHONY : clean
-clean : clean-build clean-merlin clean-pscripts
+clean : clean-build clean-merlin
 	make -C seq_update -f Makefile clean
 	make -C test-suite -f Makefile clean
 	rm -f kelvin-$(VERSION)-no_GSL kelvin-$(VERSION)-POLYUSE_DL kelvin-$(VERSION)-POLYCOMP_DL kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD kelvin-$(VERSION)-study kelvin-study kelvin-$(VERSION)-normal kelvin-normal
@@ -418,9 +418,7 @@ clean : clean-build clean-merlin clean-pscripts
 
 .PHONY : clean-pscripts
 clean-pscripts : 
-ifeq ("$(findstring -DDISTRIBUTION,$(CFLAGS))", "")
 	rm -rf pipeline-scripts
-endif
 
 .PHONY : clean-merlin
 clean-merlin :
