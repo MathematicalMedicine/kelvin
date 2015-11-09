@@ -17,7 +17,7 @@ use DBI qw(:sql_types);
 
 use RunSQLScript;
 use KelvinDataset 1.40;
-use KelvinConfig 1.20;
+use KelvinConfig 1.50;
 use KelvinFamily 1.40;
 
 use Exporter qw(import);
@@ -120,7 +120,8 @@ sub perform_study {
     my $MapScale = uc(substr $$dataset{mapfunction}, 0, 1);
     my $MapFile = $$datafiles{MapFile};
     my $MapDescription;
-    $dbh->do("CALL GetMapId(\'$StudyId\', \'" . (($$study{role} eq "CLIENT")? 1:0)
+    $dbh->do("CALL GetMapId(\'$StudyId\', \'"
+            . (($$study{role} eq "CLIENT") ? 1 : 0)
             . "\', \'$MapScale\', \'$MapFile\', \@MapId, \@MapScale, "
             . "\@MapDescription)");
     ($MapId, $MapScale, $MapDescription) = $dbh->selectrow_array(
