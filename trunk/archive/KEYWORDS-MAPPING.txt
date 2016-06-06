@@ -3,6 +3,13 @@ Use the following as examples:
 Look for imprinting runs with more than one liability class:
 find . -name KEYWORDS -exec grep -Hv NOIMPR /dev/null \{\} \; | egrep -e LC2 -e LC3
 
+Epistasis EPI ("new", with FE only, does multiple runs)
+
+Phased Alleles PHASE ("new")
+
+Allele frequency estimation AFE ("new", FE only)
+
+Likelihood server variants NOLKS, CLIENT, SERVER
 
 Single Pedigree SNGPD
 Multiple Pedigrees MLTPD
@@ -43,7 +50,7 @@ Multiple marriage loop MMLP
 Multiple mixed loop MXLP
 No Loops NOLP
 
-Imprinting IMPR
+Imprinting IMPR (runs will have 4 penetrances dd dD Dd DD)
 No Imprinting NOIMPR
 
 Liability class 1,2,3,+ LC1, LC2, LC3, LC+
