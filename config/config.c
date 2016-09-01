@@ -145,6 +145,7 @@ int set_optionfile (char **toks, int numtoks, void *filename);
 int set_flag (char **toks, int numtoks, void *flag);
 int clear_flag (char **toks, int numtoks, void *flag);
 int set_int (char **toks, int numtoks, void *field);
+int set_double (char **toks, int numtoks, void *field);
 
 int set_traitPositions (char **toks, int numtoks, void *unused);
 int set_alleleFreq (char **toks, int numtoks, void *unused);
@@ -201,6 +202,8 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"DiseaseAlleles", set_int, &staticModelRange.nalleles},
 				{"MaxIterations", set_int, &staticModelOptions.maxIterations},
 
+                                {"MODThreshold", set_double, &staticModelOptions.modThreshold},
+
 				{"TraitPositions", set_traitPositions, NULL},
 				{"MarkerAlleleFrequency", set_alleleFreq, NULL},
 				{"DiseaseGeneFrequency", set_geneFreq, NULL},
@@ -224,6 +227,8 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"SurfacesPath", set_resultsprefix, NULL},
 				// {"condfile", set_condrun, &staticModelOptions.condFile},
 				{"ProgressDelaySeconds", set_int, &swProgressDelaySeconds},
+
+                                {"MODThreshold", set_double, &staticModelOptions.modThreshold},
 				{"ProgressLevel", set_int, &swProgressLevel},
 				{"Study", set_study_parameters, NULL},
 
@@ -291,6 +296,8 @@ void initializeDefaults ()
   staticModelOptions.thetaWeight = 0.95;      /* Weight for LRs when theta < cutoff */
   staticModelOptions.prior = 0.02;            /* Prior probability of linkage */
   staticModelOptions.LDprior = 0.02;          /* Prior probability of LD given close linkage */
+
+  staticModelOptions.modThreshold = DBL_MAX;
   
   staticModelRange.nalleles = 2;
   staticModelRange.nlclass = 1;
@@ -932,6 +939,26 @@ int set_int (char **toks, int numtoks, void *field)
 
   return (0);
 }
+
+
+int set_double (char **toks, int numtoks, void *field)
+{
+  double value;
+  char *ptr = NULL;
+
+  if (numtoks < 2)
+    bail ("missing double argument to directive '%s'\n", toks[0]);
+  if (numtoks > 2)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  value = (double) strtod (toks[1], &ptr);
+  if ((toks[1] == ptr) || (*ptr != '\0'))
+    bail ("directive '%s' requires an double argument\n", toks[0]);
+
+  *((double *) field) = value;
+
+  return (0);
+}
+
 
 int set_envDiag (char **toks, int numtoks, void *unused)
 {

@@ -103,6 +103,9 @@ typedef struct ModelOptions
   double prior;			///< Prior probability of linkage.
   double LDprior;		///< Prior probability of LD (D' not 0) given linkage and theta within thetaCutoff.
 
+  /* For experimental LOD maximization algorithm */
+  double modThreshold;          ///< Threshold over which LOD maximization kicks in
+
   int dryRun;                   ///< Flag indicating dry run to get statistics for complexity.
   int forceAvghetFile;          ///< Flag to force open a BR file, regardless of other directives.
   int conditionalRun;           ///< Flag indicating to print out proband's conditional LR.

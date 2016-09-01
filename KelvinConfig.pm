@@ -164,6 +164,7 @@ my %directives = (
 		  constraint => {canon => 'Constraint'},
 		  truncate=> {canon => 'Truncate'},
 		  markerallelefrequency => {canon => 'MarkerAlleleFrequency'},
+		  modthreshold => {canon => 'MODThreshold'},
 
 		  # Note we validate args to PhenoCodes in validate()
 		  phenocodes => {canon => 'PhenoCodes',
