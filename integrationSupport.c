@@ -824,7 +824,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
         //mp_result[posIdx].lr_total += likelihood_ratio;
       }
     }
-    //fprintf(stderr," trait %e marker %e alter%e lr %e \n", log(pedigreeSet.nullLikelihood[0]) , log(pPedigreeLocal->markerLikelihood),log(pPedigreeLocal->likelihood), pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[0] * pPedigreeLocal->markerLikelihood));
+    //fprintf(stderr," trait %e marker %e alter %e lr %e \n", log(pedigreeSet.nullLikelihood[0]) , log(pPedigreeLocal->markerLikelihood),log(pPedigreeLocal->likelihood), pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[0] * pPedigreeLocal->markerLikelihood));
     /* caculating the HET */
     for (j = 0; j < 5; j++) {
       //for (j = 0; j < 1; j++) {
