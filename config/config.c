@@ -165,6 +165,7 @@ int set_qt_degfreedom (char **toks, int numtoks, void *unused);
 int set_qt_standarddev (char **toks, int numtoks, void *unused);
 int set_qt_threshold (char **toks, int numtoks, void *unused);
 int set_qt_truncation (char **toks, int numtoks, void *unused);
+int set_qt_mean_sd_mode (char **toks, int numtoks, void *unused);
 int set_affectionStatus (char **toks, int numtoks, void *unused);
 int set_study_parameters (char **toks, int numtoks, void *unused);
 int set_resultsprefix (char **toks, int numtoks, void *unused);
@@ -203,6 +204,7 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"MaxIterations", set_int, &staticModelOptions.maxIterations},
 
                                 {"MODThreshold", set_double, &staticModelOptions.modThreshold},
+                                {"QTMeanSDMode", set_qt_mean_sd_mode, NULL},
 
 				{"TraitPositions", set_traitPositions, NULL},
 				{"MarkerAlleleFrequency", set_alleleFreq, NULL},
@@ -298,6 +300,7 @@ void initializeDefaults ()
   staticModelOptions.LDprior = 0.02;          /* Prior probability of LD given close linkage */
 
   staticModelOptions.modThreshold = DBL_MAX;
+  staticModelOptions.qtMeanSDMode = 0;
   
   staticModelRange.nalleles = 2;
   staticModelRange.nlclass = 1;
@@ -473,6 +476,10 @@ void validateConfig ()
       INFO ("MarkerToMarker will write no output to BayesRatioFile");
     if (staticModelOptions.dkelvinoutfile[0] != '\0')
       INFO ("MarkerToMarker will write no output to NIDetailFile");
+    if (staticModelOptions.modThreshold != DBL_MAX)
+      fault ("MODThreshold is incompatible with MarkerToMarker\n");
+    if (staticModelOptions.qtMeanSDMode != 0)
+      fault ("QTMeanSDMode is incompatible with MarkerToMarker\n");
 
     if (! staticModelOptions.integration) {
       if (staticModelRange.ndprime == 0 && staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
@@ -534,6 +541,8 @@ void validateConfig ()
     fault ("%s requires %s Normal or %s Normal\n", MEAN_STR, QT_STR, QTT_STR);
   if (observed.standardDev && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
     fault ("%s requires %s Normal or %s Normal\n", STANDARDDEV_STR, QT_STR, QTT_STR);
+  if (staticModelOptions.qtMeanSDMode != 0 && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
+    fault ("QTMeanSDMode requires %s Normal or %s Normal\n", QT_STR, QTT_STR);
 #ifdef DISTRIBUTION
   if (observed.degOfFreedom)
     fault ("ChiSq distribution is still under development and unavailable at this time\n");
@@ -571,16 +580,14 @@ void validateConfig ()
       ERROR ("%d configuration errors detected", fault);
     return;
   }
+
+  if (staticModelOptions.qtMeanSDMode != 0)
+    fault ("QTMeanSDMode is not compatible with FixedModels\n");
   
   /* So much for the low-hanging fruit... */
   
   if (staticModelOptions.dkelvinoutfile[0] != '\0')
     WARNING ("Analysis with FixedModels will write no output to NIDetailFile '%s'", staticModelOptions.dkelvinoutfile);
-
-  if (staticModelOptions.mapFlag == SS) {
-    if (staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
-      fault ("SexSpecific is not supported with LD\n");
-  }
 
   if (staticModelType.type == MP) {
     /* Multipoint */
@@ -703,12 +710,6 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
      0.8506966822267,0.9363710600566,0.9380736582515,0.9795480315810,0.9895111329084,
      0.9978005239276,0.9991215920266};
 
-
-
-
-
-
-
   /* Fill in default values for fields that could have been configured, if they weren't */
 
   if (staticModelType.trait == DT) {
@@ -783,6 +784,8 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
 	addTraitThreshold (&staticModelRange, 0);
 	addTraitThreshold (&staticModelRange, 3);
       }
+      if (staticModelOptions.qtMeanSDMode == 0)
+        staticModelOptions.qtMeanSDMode = QT_MODE_MEANS;
     }
     if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE) {
       if (! observed.degOfFreedom) {
@@ -1489,6 +1492,25 @@ int set_qt_truncation (char **toks, int numtoks, void *unused)
   }
   return (0);
 }
+
+
+int set_qt_mean_sd_mode (char **toks, int numtoks, void *unused)
+{
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if (numtoks > 2)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  if (strncasecmp (toks[1], "Means", strlen (toks[1])) == 0)
+    staticModelOptions.qtMeanSDMode = QT_MODE_MEANS;
+  else if (strncasecmp (toks[1], "StDev", strlen (toks[1])) == 0)
+    staticModelOptions.qtMeanSDMode = QT_MODE_STDEV;
+  else if (strncasecmp (toks[1], "Both", strlen (toks[1])) == 0)
+    staticModelOptions.qtMeanSDMode = QT_MODE_BOTH;
+  else
+    bail ("unknown argument to directive '%s'\n", toks[1]);
+  return (0);
+}
+
 
 #ifdef STUDYDB
 int set_study_parameters (char **toks, int numtoks, void *unused)

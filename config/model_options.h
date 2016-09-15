@@ -66,6 +66,11 @@ enum MapFlag {
 /// Phenotype code (affection status) for a dichotomous trait known to be affected.
 #define AFFECTION_STATUS_AFFECTED       2
 
+/* For experimental QT-normal analysis integrating over multiple SD and/or means. */
+#define QT_MODE_MEANS    1      // Old-style, fix StDev and integrate over means
+#define QT_MODE_STDEV    2      // Fix mean and integrate over StDevs
+#define QT_MODE_BOTH     3      // Inntegrate over both means and StDevs
+
 typedef struct ModelOptions
 {
   int equilibrium;  ///< Analysis type - LINKAGE_EQUILIBRIUM or LINKAGE_DISEQUILIBRIUM
@@ -106,6 +111,9 @@ typedef struct ModelOptions
   /* For experimental LOD maximization algorithm */
   double modThreshold;          ///< Threshold over which LOD maximization kicks in
 
+  /* For experimental QT analysis integrating over multiple SD and/or means. */
+  int qtMeanSDMode;
+  
   int dryRun;                   ///< Flag indicating dry run to get statistics for complexity.
   int forceAvghetFile;          ///< Flag to force open a BR file, regardless of other directives.
   int conditionalRun;           ///< Flag indicating to print out proband's conditional LR.
