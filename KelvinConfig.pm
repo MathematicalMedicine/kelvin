@@ -40,7 +40,7 @@ undef on failure.
 
 package KelvinConfig;
 our $errstr='';
-our $VERSION=1.5;
+our $VERSION=1.6;
 use File::Spec::Functions qw(splitpath splitdir catpath catdir);
 
 
@@ -165,6 +165,7 @@ my %directives = (
 		  truncate=> {canon => 'Truncate'},
 		  markerallelefrequency => {canon => 'MarkerAlleleFrequency'},
 		  modthreshold => {canon => 'MODThreshold'},
+                  qtmeansdmode => { canon => 'QTMeanSDMode' },
 
 		  # Note we validate args to PhenoCodes in validate()
 		  phenocodes => {canon => 'PhenoCodes',
