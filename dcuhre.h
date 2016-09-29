@@ -83,7 +83,7 @@ typedef double (*D_fp)(), (*E_fp)();
 
 enum model_Type {TP_DT=0, TP_QT=1, MP_DT=2, MP_QT=3};
 
-
+enum ld_Type{LD_ANAL=0, LK_ANAL=1};// Added on 9/28/2016 to accomodate LD case
 
 typedef struct{
   /* all local variables for each sub region kept here */
@@ -186,6 +186,7 @@ typedef struct{
   int nlclass;
   double vol_rate ;    /* Use this to convert results to average function value*/
   enum model_Type mType;
+  enum ld_Type ldType;
   
   /* 2-dim arrays for dynamic sampling     3/3/2009 */
   int sampling_mode;       /* turn this on when we apply to Merlin. Default is 0 assigned in initialization fucntion

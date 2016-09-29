@@ -184,7 +184,7 @@ dadhre_ (dcuhre_state * s)
   sub_region *cw_sbrg, *parent_sbrg;	/* currently working subregion */
   double tmp_result;		/*store the just previous error to calculate the difference in error from the previous one to currrent one */
   double real_result, real_error;
-
+  double consta,constb,tolBR1,tolBR100;  //These are used to calculat the target error for the LD analysis 
   intsgn = 1;
   i = s->ndim;
   for (j = 0; j < i; ++j) {
@@ -276,18 +276,30 @@ dadhre_ (dcuhre_state * s)
     if (s->verbose > 1) 
       fprintf(stderr, "s result %f  real result %f\n ", s->result, real_result);
 
-    if(real_result>1.0){
-      s->epsabs *=
-        (-5.77 + 54.0 * real_result + real_result * real_result) * (-5.77 +
-								  54.0 *
-								  real_result
-								  +
-								  real_result
-								  *
-								  real_result);
-      s->epsabs /= (-11.54 * real_result + 54.0 * real_result * real_result);
-    }else{
-      s->epsabs = real_result *.5 ;
+    if (s->ldType == LK_ANAL){
+      if(real_result>1.0){
+        s->epsabs *= (-5.77 + 54.0 * real_result + real_result * real_result) * 
+                     (-5.77 +  54.0 * real_result + real_result * real_result);
+        s->epsabs /= (-11.54 * real_result + 54.0 * real_result * real_result);
+      }else{
+        s->epsabs = real_result *.5 ;
+      }
+    }else{  //LD analysis has different target error 9/28/2016
+      consta = 0.019 * 0.021  + 0.001 * 0.0011 ;
+      constb = 0.019 * 0.979   + 0.001 * 0.9989 + 0.98;
+
+      tolBR1= (consta+constb)*(consta+constb)/(consta*constb)*0.0001;
+      tolBR100=(consta*100+constb)*(consta*100+constb)/(consta*constb)*0.01;
+      if(real_result>100){
+	s->epsabs = (consta*real_result +constb)*(consta*real_result +constb);
+        s->epsabs = 0.01* s->epsabs /consta/constb;
+      }else if(real_result>1){
+        s->epsabs = (100-real_result)/99*tolBR1 + (real_result-1)/99*tolBR100;
+      }else if(real_result>0) {
+        s->epsabs = real_result*tolBR1;
+      }else{
+        s->epsabs=tolBR1;
+      }
     }
 
     if(s->epsabs <0)
@@ -334,6 +346,7 @@ dadhre_ (dcuhre_state * s)
 	)
        ) { //short and consecutive 2*nlclass of diff(BR)< error_tol
 #else
+      //if ( (real_result <0.0)||((real_error > s->epsabs))){//&& (s->cur_num_smallBR< s->aim_num_smallBR))){//short and consecutive 2*nlclass of diff(BR)< error_tol
       if ( (real_result <0.0)||((real_error > s->epsabs)&&(s->cur_diff_suc< s->aim_diff_suc))){//&& (s->cur_num_smallBR< s->aim_num_smallBR))){//short and consecutive 2*nlclass of diff(BR)< error_tol
 #endif
       /*   If we are allowed to divide further, */
