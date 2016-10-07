@@ -761,21 +761,23 @@ double t_pdf_30 (double x, double degFree) {
 };
 
   double result;
-  static int warn_count = 0;
-
 #ifdef USE_GSL
   double pdf;
+#else
+  static int warn_count = 0;
 #endif
 
   // Handle bad data first
   if (degFree != 30)
     ERROR( "In t_pdf_30, only 30 degrees of freedom supported");
 
+#ifndef USE_GSL
   if (fabs(x) > 10) {
     if ((++warn_count % 16384) == 1) {
       WARNING ( "%d value(s) of X (e.g., %g) are beyond the bounds of safe t-dist PDF interpolation, use GSL or adjust your distribution parameters", warn_count, x);
     }
   }
+#endif
 
   //  if(get_hash_t_pdf(x, &pdf))
   //  return pdf;
