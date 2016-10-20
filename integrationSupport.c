@@ -229,7 +229,7 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
   if (localMOD > modelOptions->modThreshold){  
     //fprintf(stderr,"Current MOD is %f > %f so Start extra MOD improvement.\n", localMOD,modelOptions->modThreshold); // EXTRA_MOD_THRESHOLD);
     EXTRA_MOD_MODE = 1;
-    num_alpha =100;
+    //num_alpha =100;  // commented out for fixed alpha =1;
     sMOD = &init_stateMOD;
     MODinitialize_state (sMOD, xl, xu, dim);
     //fprintf(stderr,"Initialization od Amoeba is done\n");
@@ -557,11 +557,12 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     /* caculating the HET */
     for (j = 0; j < num_alpha; j++) { // changed from '5' to num_alpha 8/24/2016 
       
-      if (EXTRA_MOD_MODE == 1){
+      /*if (EXTRA_MOD_MODE == 1){
         alphaV = (j+1)/(double)num_alpha; 
       }else{
 	alphaV = alpha[j][0]; 
-      }
+	}*/
+      alphaV =1;
 
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
@@ -638,10 +639,11 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
-      if(pedigreeSet.numPedigree ==1)
+      /*if(pedigreeSet.numPedigree ==1)
         alpha_integral = hetLR ;
       else
-        alpha_integral += hetLR * alpha[j][1];
+      alpha_integral += hetLR * alpha[j][1];*/
+      alpha_integral += hetLR;    // Fixed alpha =1
 
       if (( EXTRA_MOD_MODE==1) && (log10HetLR > alpha_MOD))
         alpha_MOD = log10HetLR;
@@ -1357,9 +1359,10 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
     }
 
     /* caculating the HET */
+    num_alpha=1; 
     for (j = 0; j < num_alpha; j++) { // changed from '5' to num_alpha 8/24/2016
       //for (j = 0; j < 5; j++) {
-      if (EXTRA_MOD_MODE == 1){
+      /*if (EXTRA_MOD_MODE == 1){
         alphaV = (j+1)/(double)num_alpha; 
       }else{
 	alphaV = alpha[j][0]; 
@@ -1371,7 +1374,10 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
       if(pedigreeSet.numPedigree ==1){   // One pedigree then alpha is fixed at 1.
         alphaV=1.0;
         alphaV2 = 0;
-      }
+	}*/
+
+      alphaV=1.0;
+      alphaV2 = 0;
 
       log10HetLR = 0;
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -1445,10 +1451,14 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
+      /*
       if(pedigreeSet.numPedigree ==1)
         alpha_integral = hetLR ;
       else
         alpha_integral += hetLR * alpha[j][1];
+      */
+      alpha_integral = hetLR; 
+      
 
       if (( EXTRA_MOD_MODE==1) && (log10HetLR > alpha_MOD))
         alpha_MOD = log10HetLR;
@@ -2523,6 +2533,8 @@ void integrateMain ()
                 }
               }
 
+	      ld_small_theta += dcuhre2[i][3] * dcuhre2[i][2];
+	      /*
               if (i < 5) {
                 le_small_theta += dcuhre2[i][3] * dcuhre2[i][2];
               } else if (i < 10) {
@@ -2535,13 +2547,13 @@ void integrateMain ()
                 }
               } else {
                 le_unlinked += dcuhre2[i][3] * dcuhre2[i][2];
-              }
+		}*/
               if (modelOptions->markerAnalysis == FALSE)
                 dk_write2ptBRData (dcuhre2[i][0], dcuhre2[i][1], dcuhre2[i][1], dcuhre2[i][3], max_scale);
 
               if ((modelOptions->equilibrium == LINKAGE_EQUILIBRIUM) && (i == 9)) {
                 //fprintf (stderr,"End of LE case\n");
-                i = 271;
+                i = num_BR; //271;
               }
             } else {
               /* Use unifor scaling with max_scale */
@@ -2616,6 +2628,8 @@ void integrateMain ()
             //ppld= pow(0.02*(ld_small_theta *0.95 +ld_big_theta * 0.05), 0.3);
             //ppld *=  0.0004/0.020392;
             //ppld = ppld/(ppld + 1-0.0004/0.020392 * 0.02);
+            ppld = 0.02*0.02*ld_small_theta;
+            ppld = ppld/(ppld + 0.996);
 
             ppldGl = 0.019 * 0.021 * ld_small_theta + 0.001 * 0.0011 * ld_big_theta;
             ppldGl = ppldGl / (ppldGl + 0.019 * 0.979 * le_small_theta + 0.001 * 0.9989 * le_big_theta);
@@ -2623,6 +2637,7 @@ void integrateMain ()
             fprintf (fpPPL, " %.*f", ldppl >= .025 ? 2 : 4, KROUND (ldppl, 4));
             fprintf (fpPPL, " %.*f", ppldGl >= .025 ? 2 : 4, KROUND (ppldGl, 4));
             fprintf (fpPPL, " %.*f", ppld >= .025 ? 2 : 4, KROUND (ppld, 4));
+            fprintf (fpPPL, " %.*f", ld_small_theta >= .025 ? 2 : 4, KROUND (ld_small_theta, 4));
           }
           fprintf (fpPPL, "\n");
           fflush (fpPPL);
