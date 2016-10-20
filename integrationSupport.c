@@ -184,7 +184,7 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
   if (modelType->trait == DICHOTOMOUS) {
     s->aim_diff_suc = 3 * s->nlclass;
   } else {
-    s->aim_diff_suc = 10 * s->nlclass;     // made bigger aim for QT analysis
+    s->aim_diff_suc = 3 * s->nlclass;     // made bigger aim for QT analysis  on 10/20/2016
   }
   s->aim_num_smallBR = 5 * s->nlclass;
 

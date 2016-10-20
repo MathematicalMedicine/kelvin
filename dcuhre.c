@@ -288,7 +288,7 @@ dadhre_ (dcuhre_state * s)
       consta = 0.019 * 0.021  + 0.001 * 0.0011 ;
       constb = 0.019 * 0.979   + 0.001 * 0.9989 + 0.98;
 
-      tolBR1= (consta+constb)*(consta+constb)/(consta*constb)*0.0001;
+      tolBR1= (consta+constb)*(consta+constb)/(consta*constb)*0.0001*4;
       tolBR100=(consta*100+constb)*(consta*100+constb)/(consta*constb)*0.01;
       if(real_result>100){
 	s->epsabs = (consta*real_result +constb)*(consta*real_result +constb);
