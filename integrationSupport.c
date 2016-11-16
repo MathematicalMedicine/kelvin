@@ -2089,21 +2089,21 @@ void integrateMain ()
          */
         if (modelOptions->qtMeanSDMode ==QT_MODE_MEANS){
 	  xl[k] = 0.3; // changed on 9/13/2016  from 0.7;
-	  xu[k] = 1.0;
+	  xu[k] = 1;
 	  volume_region *= (xu[k] - xl[k]);
 	  k++;
-	} else if ((modelOptions->qtMeanSDMode ==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode ==QT_MODE_MEANS)){
+	} else if ((modelOptions->qtMeanSDMode ==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode ==QT_MODE_BOTH)){
 	  xl[k] = xl[k+1] = xl[k+2] = 0.3; // changed on 9/13/2016  from 0.7;
-	  xu[k] = xu[k+1] = xu[k+2] = 1.0;
+	  xu[k] = xu[k+1] = xu[k+2] = 1;
 	  volume_region *= (xu[k] - xl[k])*(xu[k+1] - xl[k+1])*(xu[k+2] - xl[k+2]);
 	  if (modelOptions->imprintingFlag) {
 	    xl[k + 3] = 0.3; // changed on 9/13/2016  from 0.7;
-	    xu[k + 3] = 1.0;
+	    xu[k + 3] = 1;
             volume_region *= (xu[k+3] - xl[k+3]);
 	  }
        
 	}
-      }
+      } // end of std
       /*if (modelType->trait == CT) {
        * xl[k] = modelRange->tthresh[liabIdxLocal][0];//0.3;
        * xu[k] = modelRange->tthresh[liabIdxLocal][modelRange->ntthresh -1];// 23.0;
@@ -2122,8 +2122,8 @@ void integrateMain ()
     // fprintf (stderr,"The number of dimension for calculation of BR is %d\n",k);
   }
 
-  //fprintf(stderr,"sizeBR =%d k=%d xl =%f %f %f %f %f \n", size_BR, k,xl[0],xl[1],xl[2],xl[3],xl[4]);
-  //fprintf(stderr,"MeanMode =%d %d xu =%f %f %f %f %f \n", modelOptions->qtMeanSDMode, QT_MODE_STDEV,xu[0],xu[1],xu[2],xu[3],xu[4]);
+  fprintf(stderr,"sizeBR =%d k=%d xl =%f %f %f %f %f %f %f %f \n", size_BR, k,xl[0],xl[1],xl[2],xl[3],xl[4],xl[5],xl[6],xl[7]);
+  fprintf(stderr,"MeanMode =%d %d xu =%f %f %f %f %f  %f %f %f \n", modelOptions->qtMeanSDMode, QT_MODE_BOTH,xu[0],xu[1],xu[2],xu[3],xu[4],xu[5],xu[6],xu[7]);
 
 
   /*fpDK header */
