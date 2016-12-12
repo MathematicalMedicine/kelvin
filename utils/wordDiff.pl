@@ -1,8 +1,4 @@
-#!/usr/bin/env perl
-
-# FIXME: why isn't 'use strict;' present?
-use warnings;
-
+#!/usr/bin/perl -w
 #
 # Word-oriented file comparison with case folding and a numeric slop factor.
 #
@@ -21,15 +17,6 @@ if ($#ARGV < 2) {
 $file_LEFT = shift;
 $file_RIGHT = shift;
 $maxOffByFactor = shift;
-# verify that files exist before we proceed
-unless (-e $file_LEFT) {
-    print "File $file_LEFT not found.\n";
-    exit (1);
-}
-unless (-e $file_RIGHT) {
-    print "File $file_RIGHT not found.\n";
-    exit (1);
-}
 open LEFT, $file_LEFT; open RIGHT, $file_RIGHT;
 $whole_LEFT = do { local $/; <LEFT> }; # Briefly make the special variable for line delimiter undefined...
 $whole_RIGHT = do { local $/; <RIGHT> }; # ...so we can slurp-in the whole file at once.
@@ -52,11 +39,10 @@ for ($i = 0; $i < $#chunks_LEFT; $i++) {
 	    # It's numeric, try simple equality to avoid e+/-00 issues.
 	    if ($left != $right) {
 		# Not simply equal, get the deviation and compare to maximum allowable
-		if ($left != 0) {
+		if ($left != 0 and $right != 0) {
 		    $offByFactor = ($left-$right)/$left;
 		} else {
-		    print "Zero value prevents proper comparison\n";
-		    exit (1);
+		    $offByFactor = $right+$left;
 		}
 #		print "Off by $offByFactor vs limit of $maxOffByFactor\n";
 		if (abs($offByFactor) > $maxOffByFactor) {
