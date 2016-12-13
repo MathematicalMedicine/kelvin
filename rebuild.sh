@@ -18,10 +18,12 @@ source $temp
 #rm $temp
 set | sort
 
-if test "$__VERSION__" \< "4.1"; then
-    USE_OPENMP=no
-else
-    USE_OPENMP=yes
+if test -z "$USE_OPENMP"; then
+    if test "$__VERSION__" \< "4.1"; then
+	USE_OPENMP=no
+    else
+	USE_OPENMP=yes
+    fi
 fi
 
 case $HOSTNAME in
