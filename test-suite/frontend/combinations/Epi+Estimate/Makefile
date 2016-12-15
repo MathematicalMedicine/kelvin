@@ -1,9 +1,9 @@
 test :
 	- rm -f *.out kelvin.freq* *pass?
 	# Disabled until such time as John can fix it
-	#(time $(KELVIN_SCRIPT) kelvin.conf) >kelvin.out 2>&1
-	#diff -ib ped.post.counted ped.post.counted-baseline
-	#diff -ib ped.post.counts ped.post.counts-baseline
+	(time $(KELVIN_SCRIPT) kelvin.conf) >kelvin.out 2>&1
+	diff -ib ped.post.counted ped.post.counted-baseline
+	diff -ib ped.post.counts ped.post.counts-baseline
 	echo THIS TEST IS CURRENTLY DISABLED
 	cp freq.dat-baseline kelvin.freq
 	cp br.out-baseline br.out
