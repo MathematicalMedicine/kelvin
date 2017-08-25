@@ -694,7 +694,7 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
      0.3582614645881, 0.3808991135940, 0.5000000000000, 0.5666666666667, 0.6492284325645,
      0.6582769255267, 0.7013933644534, 0.8727421201131, 0.8761473165029, 0.9590960631620,
      0.9790222658168, 0.9956010478552, 0.9982431840532}; old */
-  /*double integrationLDDPrimeValues[67] = 
+  double integrationLDDPrimeValues[67] = 
     {-0.9991215920266,-0.9978005239276,-0.9895111329084,-0.9795480315810,-0.9380736582515,
      -0.9363710600566,-0.8506966822267,-0.8291384627634,-0.8246142162823,-0.7833333333333,
      -0.7500000000000,-0.6904495567970,-0.6791307322941,-0.6258564671727,-0.6038888888889,
@@ -708,9 +708,7 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
      0.5000000000000,0.5797272329149,0.6038888888889,0.6258564671727,0.6791307322941,
      0.6904495567970,0.7500000000000,0.7833333333333,0.8246142162823,0.8291384627634,
      0.8506966822267,0.9363710600566,0.9380736582515,0.9795480315810,0.9895111329084,
-     0.9978005239276,0.9991215920266};*/
-  double integrationLDDPrimeValues[21] = 
-    {-1.0,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0};
+     0.9978005239276,0.9991215920266};
 
   /* Fill in default values for fields that could have been configured, if they weren't */
 
@@ -759,7 +757,7 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
        * be any DPrimes at all, and we need to insert some. These are MAGIC DPrimes,
        * statically declared at the top of this function.
        */
-      for (i = 0; i < 21; i++)
+      for (i = 0; i < 67; i++)
 	addDPrime (&staticModelRange, integrationLDDPrimeValues[i]);
       
     } else {

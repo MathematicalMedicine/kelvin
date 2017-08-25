@@ -48,7 +48,6 @@
 #define populate_xmission_matrix(pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc) populate_xmission_matrix(__FILE__, __LINE__, pMatrix, totalLoci, prob, prob2, hetProb, cellIndex, lastHetLoc, prevPattern, loc)
 
 #include "dcuhre.h"
-#include "amoeba.h"  // 8/24/2016
 #include "integrationGlobals.h"
 #include "integrationSupport.h"
 #include "integrationLocals.h"
@@ -124,10 +123,8 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
   double boost_rate = 1.3;      //1.1;
 
  
-  if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM){
+  if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM)
     boost_rate = 1.0;
-    MEAN_STD_MODE = modelOptions->qtMeanSDMode;  //overwrite the default qt mean-std mode.   9/15/2016
-  }
   //extern /* Subroutine */ int ftest_();  
 
   localMOD = DBL_MIN_10_EXP;
@@ -167,10 +164,10 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
 
     if (modelType->type == TP) {
       s->funsub = (U_fp) compute_hlod_2p_qt;
-      s->mType = TP_QT;
+      s->mType = TP_DT;
     } else {
       s->funsub = (U_fp) compute_hlod_mp_qt;
-      s->mType = MP_QT;
+      s->mType = MP_DT;
     }
   }
   if (modelOptions->maxIterations > -1)
@@ -181,26 +178,14 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
     s->maxcls = 100000 * (int) pow (2.0, dim);
 
   s->nlclass = modelRange->nlclass;
-  if (modelType->trait == DICHOTOMOUS) {
-    s->aim_diff_suc = 3 * s->nlclass;
-  } else {
-    s->aim_diff_suc = 3 * s->nlclass;     // made bigger aim for QT analysis  on 10/20/2016
-  }
+  s->aim_diff_suc = 3 * s->nlclass;
   s->aim_num_smallBR = 5 * s->nlclass;
 
-  if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
-    s->ldType = LD_ANAL;       // LD analysis
-  } else {
-    s->ldType = LK_ANAL;      // Linkage analyssi
-  }
-
-  if ((modelOptions->equilibrium == LINKAGE_EQUILIBRIUM)||(modelOptions->qtMeanSDMode==QT_MODE_MEANS)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)) {   // Thsi is only for same std mode or both 
-    for (i = 0; i < s->nlclass; i++) {
-      if (modelOptions->imprintingFlag)
-        s->vol_rate /= 16.0;
-      else
-        s->vol_rate /= 6.0;
-    }
+  for (i = 0; i < s->nlclass; i++) {
+    if (modelOptions->imprintingFlag)
+      s->vol_rate /= 16.0;
+    else
+      s->vol_rate /= 6.0;
   }
   s->vol_rate *= vol_region;    /*This is the rate to convert to average function value */
 
@@ -224,45 +209,6 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
       fprintf (stderr, "End of DCUHRE with ifail =%d\n", s->ifail);
     }
     );
-
-  //if (modelOptions->equilibrium == LINKAGE_DISEQUILIBRIUM &&  modelType->trait == QT  && localMOD > modelOptions->modThreshold){
-  if (localMOD > modelOptions->modThreshold){  
-    //fprintf(stderr,"Current MOD is %f > %f so Start extra MOD improvement.\n", localMOD,modelOptions->modThreshold); // EXTRA_MOD_THRESHOLD);
-    EXTRA_MOD_MODE = 1;
-    //num_alpha =100;  // commented out for fixed alpha =1;
-    sMOD = &init_stateMOD;
-    MODinitialize_state (sMOD, xl, xu, dim);
-    //fprintf(stderr,"Initialization od Amoeba is done\n");
-
-    if (modelType->trait == DICHOTOMOUS) {
-      if (modelType->type == TP) {
-        sMOD->funsub = (U_fp) compute_hlod_2p_dt;
-        sMOD->mType = TP_DT;
-      } else {
-        sMOD->funsub = (U_fp) compute_hlod_mp_dt;
-        sMOD->mType = MP_DT;
-      }
-    } else {      /*  QT or combined */
-
-      if (modelType->type == TP) {
-        sMOD->funsub = (U_fp) compute_hlod_2p_qt;
-        sMOD->mType = TP_QT;
-      } else {
-        sMOD->funsub = (U_fp) compute_hlod_mp_qt;
-        sMOD->mType = MP_QT;
-      }
-    }
-    //    sMOD->funsub = (U_fp) compute_hlod_2p_qt;
-    //    sMOD->mType = TP_QT;
-    //fprintf(stderr,"Call Amoeba with %f %f %f %f %f for dp=%f, th=%f\n",dcuhre_x[0],dcuhre_x[1], dcuhre_x[2],dcuhre_x[3],dcuhre_x[4],fixed_dprime, fixed_theta);
-    amoeba(sMOD, dcuhre_x);
-    s->total_neval += sMOD->total_neval;
-    
-    //fprintf(stderr,"Amoeba is over with new mod = %f at %f %f %f %f %f\n", localMOD,dcuhre_x[0],dcuhre_x[1], dcuhre_x[2],dcuhre_x[3],dcuhre_x[4]);
-    num_alpha = 5; 
-    EXTRA_MOD_MODE = 0;
-  }
-
 
   /* BR boosting is done here */
   if (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM && modelType->trait == DT) {
@@ -306,7 +252,6 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   double oldsum;
   double oldsum_log10;
   double newsum_log10;
-  double alpha_MOD= overallMOD;   // 8/24/2016
 
   if (modelOptions->imprintingFlag)
     pen_size = 4;
@@ -332,25 +277,17 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     threshold = x[s->ndim - 1];
   }
   for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
+    mean_DD = x[j];
+    mean_Dd = (x[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 1];
 
-    if ((modelOptions->qtMeanSDMode==QT_MODE_MEANS)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)) {
-      mean_DD = x[j];
-      mean_Dd = (x[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 1];
-
-      if (modelOptions->imprintingFlag) {
-        mean_dD = (x[j + 2] - xl[j + 2]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 2];
-        mean_dd = (x[j + 3] - xl[j + 3]) * (x[j + 2] - xl[j + 2]) / (xu[j + 2] - xl[j + 2]) * (x[j + 1] - xl[j + 1]) / (xu[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 3];
-      } else {
-        mean_dd = (x[j + 2] - xl[j + 2]) * (x[j + 1] - xl[j + 1]) / (xu[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 2];
-        mean_dD = mean_Dd;
-      }
-      j += pen_size;
-    } else if (modelOptions->qtMeanSDMode==QT_MODE_STDEV){
-      mean_DD = mean_Dd = mean_dD = mean_dd = x[j];
-      
-      j ++; 
-    } 
-
+    if (modelOptions->imprintingFlag) {
+      mean_dD = (x[j + 2] - xl[j + 2]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 2];
+      mean_dd = (x[j + 3] - xl[j + 3]) * (x[j + 2] - xl[j + 2]) / (xu[j + 2] - xl[j + 2]) * (x[j + 1] - xl[j + 1]) / (xu[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 3];
+    } else {
+      mean_dd = (x[j + 2] - xl[j + 2]) * (x[j + 1] - xl[j + 1]) / (xu[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 2];
+      mean_dD = mean_Dd;
+    }
+    j += pen_size;
 
     if (fpIR != NULL) {
       dk_curModel.pen[liabIdxLocal].DD = deNormalizeMean (modelType, mean_DD);
@@ -371,22 +308,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
        * SD_dD= SD_Dd;
        * }
        * j += pen_size; */
-
-      if  (modelOptions->qtMeanSDMode==QT_MODE_MEANS){ 
-        SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
-      } else if ((modelOptions->qtMeanSDMode==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-        SD_DD = x[j];         
-	SD_Dd = x[j + 1];    
-	if(modelOptions->imprintingFlag){
-	  SD_dD = x[j+2];
-	  SD_dd = x[j+3];
-	}else{
-	  SD_dd = x[j+2];      
-          SD_dD= SD_Dd;
-	}
-	j += pen_size;   
-      }
-      //SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
+      SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
 
       if (fpIR != NULL) {
         dk_curModel.pen[liabIdxLocal].DDSD = deNormalizeStdev (modelType, SD_DD);
@@ -555,15 +477,8 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       ERROR ("Likelihood ratio for the pedigree set is not a number");
 
     /* caculating the HET */
-    for (j = 0; j < num_alpha; j++) { // changed from '5' to num_alpha 8/24/2016 
-      
-      /*if (EXTRA_MOD_MODE == 1){
-        alphaV = (j+1)/(double)num_alpha; 
-      }else{
-	alphaV = alpha[j][0]; 
-	}*/
-      alphaV =1;
-
+    for (j = 0; j < 5; j++) {
+      alphaV = alpha[j][0];
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
         alphaV2 = 0;
@@ -595,9 +510,14 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
         fprintf (fpIR, " %9.8f %9.8f", dk_curModel.alpha, dk_curModel.dgf);
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
-          fprintf (fpIR, " %9.8f %9.8f %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].DD, dk_curModel.pen[liabIdxLocal].Dd, dk_curModel.pen[liabIdxLocal].dD, dk_curModel.pen[liabIdxLocal].dd);
+          fprintf (fpIR, " %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].DD, dk_curModel.pen[liabIdxLocal].Dd);
+          if (modelOptions->imprintingFlag) {
+            fprintf (fpIR, " %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].dD, dk_curModel.pen[liabIdxLocal].dd);
+          } else {
+            fprintf (fpIR, " %9.8f", dk_curModel.pen[liabIdxLocal].dd);
+          }
           if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-            fprintf (fpIR, " %9.8f %9.8f %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].DDSD, dk_curModel.pen[liabIdxLocal].DdSD, dk_curModel.pen[liabIdxLocal].dDSD, dk_curModel.pen[liabIdxLocal].ddSD);
+            fprintf (fpIR, " %9.8f", dk_curModel.pen[liabIdxLocal].DDSD);
           }
         }
         if (modelType->trait == CT) {
@@ -639,64 +559,45 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
-      /*if(pedigreeSet.numPedigree ==1)
+      if(pedigreeSet.numPedigree ==1)
         alpha_integral = hetLR ;
       else
-      alpha_integral += hetLR * alpha[j][1];*/
-      alpha_integral += hetLR;    // Fixed alpha =1
+        alpha_integral += hetLR * alpha[j][1];
 
-      if (( EXTRA_MOD_MODE==1) && (log10HetLR > alpha_MOD))
-        alpha_MOD = log10HetLR;
 
       /*Update local maximum as necessary */
       if (log10HetLR > localMOD) {
         localMOD = log10HetLR;
         localmax_x[0] = gfreq;
         localmax_x[1] = alphaV;
-        memcpy (dcuhre_x, x, sizeof (double) * s->ndim);// 8/24/2016
-
         k = 2;
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
-          if ((modelOptions->qtMeanSDMode==QT_MODE_MEANS)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-	    localmax_x[k] = x[k - 1];
-	    localmax_x[k + 1] = (x[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k];
+          localmax_x[k] = x[k - 1];
+          localmax_x[k + 1] = (x[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k];
 
-	    if (modelOptions->imprintingFlag) {
-	      localmax_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
-	      localmax_x[k + 3] = (x[k + 2] - xl[k + 2]) * (x[k + 1] - xl[k + 1]) / (xu[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 2];
-	    } else {
-	      localmax_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
-	    }
-	    k += pen_size;
-          }else if(modelOptions->qtMeanSDMode==QT_MODE_STDEV){
-	    localmax_x[k] = x[k - 1];  // mean_DD, mean_Dd, mean_dD, mean_dd
-	    k++;
-	  }
-	  if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-            if (modelOptions->qtMeanSDMode==QT_MODE_MEANS){
-	      /*localmax_x[k] = x[k - 1];
-	       * localmax_x[k + 1] = x[k];
-	       * localmax_x[k + 2] = x[k + 1];
-	       * if(modelOptions->imprintingFlag)
-	       * localmax_x[k + 3] = x[k + 2];
-	       * k += pen_size; */
-	      localmax_x[k] = x[k - 1];
-	      k++;
-	    }else if((modelOptions->qtMeanSDMode==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-	      localmax_x[k ] = x[k-1]; // SD_DD 
-	      if (modelOptions->imprintingFlag) {
-		localmax_x[k + 1] = x[k]; //SD_Dd;
-		localmax_x[k + 2] = x[k + 1]; //SD_dD
-		localmax_x[k + 3] = x[k + 2]; //SD_dd
-	      } else {
-		localmax_x[k + 1] = x[k]; // SD_Dd;
-		localmax_x[k + 2] = x[k + 1]; // SD_Dd;
-	      }
-	      k += pen_size;
-	    }
-	  }
-	 
-	}
+          if (modelOptions->imprintingFlag) {
+            localmax_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
+            localmax_x[k + 3] = (x[k + 2] - xl[k + 2]) * (x[k + 1] - xl[k + 1]) / (xu[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 2];
+          } else {
+            localmax_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
+          }
+          k += pen_size;
+          if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
+            /*localmax_x[k] = x[k - 1];
+             * localmax_x[k + 1] = x[k];
+             * localmax_x[k + 2] = x[k + 1];
+             * if(modelOptions->imprintingFlag)
+             * localmax_x[k + 3] = x[k + 2];
+             * k += pen_size; */
+            localmax_x[k] = x[k - 1];
+            k++;
+          }
+          /* threshold for QT *
+           * if (modelType->trait == CT) {
+           * localmax_x[k] = x[k - 1];
+           * k++;
+           * } */
+        }
         if (modelType->trait == CT) {
           localmax_x[k] = x[k - 1];
           k++;
@@ -704,43 +605,33 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
       }
       if(pedigreeSet.numPedigree ==1)
 	  j=5;
-
     }
 
     avg_hetLR = alpha_integral;
     //fprintf(stderr,"hetLR = %e gf=%f meanDD=%f meanDd=%f meandd=%f SD=%f\n", avg_hetLR,gfreq,mean_DD,mean_Dd,mean_dd,SD_DD);
 
     /* Jacobian */
-    if ((modelOptions->qtMeanSDMode==QT_MODE_MEANS)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-      k = 1;
-      for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
-	avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
-	avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
-	avg_hetLR *= (x[k + 1] - xl[k + 1]) / (xu[k + 1] - xl[k + 1]);
+    k = 1;
+    for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
+      avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
+      avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
+      avg_hetLR *= (x[k + 1] - xl[k + 1]) / (xu[k + 1] - xl[k + 1]);
 
-	if (modelOptions->imprintingFlag) {
-	  avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
-	  avg_hetLR *= (x[k + 2] - xl[k + 2]) / (xu[k + 2] - xl[k + 2]);
-	}
-
-	k += pen_size;
-	if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-	  k++;    //+= pen_size;
-	}
-	/*if (modelType->trait == CT) {
-	 * k++;
-	 * } */
+      if (modelOptions->imprintingFlag) {
+        avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
+        avg_hetLR *= (x[k + 2] - xl[k + 2]) / (xu[k + 2] - xl[k + 2]);
       }
-    }  // end of jacobian
 
+      k += pen_size;
+      if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
+        k++;    //+= pen_size;
+      }
+      /*if (modelType->trait == CT) {
+       * k++;
+       * } */
+    }
   }
-  //  f[0] = avg_hetLR;
-  // The output depends on the mode   8/24/2016
-  if ( EXTRA_MOD_MODE ==1) {
-    f[0]= alpha_MOD;
-  }else{
-    f[0] = avg_hetLR;
-  }
+  f[0] = avg_hetLR;
 }
 
 
@@ -767,7 +658,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
   double oldsum;
   double oldsum_log10;
   double newsum_log10;
-  double alpha_MOD= overallMOD;   // 8/24/2016
+
   //    fprintf(stderr, "        Before avg hetLR calculation mp dt\n");
 
   int origLocus = analysisLocusList->pLocusIndex[0];
@@ -935,13 +826,9 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
     }
     //fprintf(stderr," trait %e marker %e alter %e lr %e \n", log(pedigreeSet.nullLikelihood[0]) , log(pPedigreeLocal->markerLikelihood),log(pPedigreeLocal->likelihood), pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[0] * pPedigreeLocal->markerLikelihood));
     /* caculating the HET */
-    for (j = 0; j < num_alpha; j++) { // changed from '5' to num_alpha 8/24/2016 
+    for (j = 0; j < 5; j++) {
       //for (j = 0; j < 1; j++) {
-      if (EXTRA_MOD_MODE == 1){
-        alphaV = (j+1)/(double)num_alpha; 
-      }else{
-	alphaV = alpha[j][0]; 
-      }
+      alphaV = alpha[j][0];
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
         alphaV2 = 0;
@@ -1017,20 +904,11 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
         alpha_integral = hetLR ;
       else
         alpha_integral += hetLR * alpha[j][1];
-
-      if (( EXTRA_MOD_MODE==1) && (log10HetLR > alpha_MOD)){
-        alpha_MOD = log10HetLR;
-        //fprintf(stderr,"localMod = %f alphaMOD=%f,alpha=%f,  %f %f %f %f  j=%d, with num_alpha=%d\n", localMOD,alpha_MOD,alphaV, x[0],x[1], x[2],x[3], j, num_alpha);
-      }
-
-
+ 
       if (log10HetLR > localMOD) {
         localMOD = log10HetLR;
         localmax_x[0] = gfreq;
         localmax_x[1] = alphaV;
-    
-        memcpy (dcuhre_x, x, sizeof (double) * s->ndim);// 8/24/2016
-        //fprintf(stderr,"New mod = %f at %f %f %f %f %f\n", localMOD,dcuhre_x[0],dcuhre_x[1], dcuhre_x[2],dcuhre_x[3],dcuhre_x[4]);
 
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
           localmax_x[pen_size * liabIdxLocal + 2] = x[pen_size * liabIdxLocal + 1];
@@ -1057,15 +935,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
         avg_hetLR *= x[pen_size * liabIdxLocal + 1] * x[pen_size * liabIdxLocal + 1] * x[pen_size * liabIdxLocal + 2];
     }
   }
-  //*f = avg_hetLR;
-  // The output depends on the mode   8/24/2016
-  if ( EXTRA_MOD_MODE ==1) {
-    f[0]= alpha_MOD;
-  }else{
-    f[0] = avg_hetLR;
-  }
-
-
+  *f = avg_hetLR;
 }
 
 void compute_hlod_2p_qt (double x[], double *f, int *scale)
@@ -1091,13 +961,11 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   double oldsum;
   double oldsum_log10;
   double newsum_log10;
-  double alpha_MOD= overallMOD;   // 8/24/2016
 
   if (modelOptions->imprintingFlag)
     pen_size = 4;
 
   gfreq = x[0];
-
   if (fpIR != NULL)
     dk_curModel.dgf = gfreq;
 
@@ -1133,24 +1001,17 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   }
   if (modelOptions->markerAnalysis == FALSE) {
     for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
+      mean_DD = x[j];
+      mean_Dd = (x[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 1];
 
-      if ((modelOptions->qtMeanSDMode==QT_MODE_MEANS)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-        mean_DD = x[j];
-        mean_Dd = (x[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 1];
-
-        if (modelOptions->imprintingFlag) {
-          mean_dD = (x[j + 2] - xl[j + 2]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 2];
-          mean_dd = (x[j + 3] - xl[j + 3]) * (x[j + 2] - xl[j + 2]) / (xu[j + 2] - xl[j + 2]) * (x[j + 1] - xl[j + 1]) / (xu[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 3];
-        } else {
-          mean_dd = (x[j + 2] - xl[j + 2]) * (x[j + 1] - xl[j + 1]) / (xu[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 2];
-          mean_dD = mean_Dd;
-        }
-        j += pen_size;
-      } else if ((modelOptions->qtMeanSDMode==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-	mean_DD = mean_Dd = mean_dD = mean_dd = x[j];
-      
-	j ++; 
-      } 
+      if (modelOptions->imprintingFlag) {
+        mean_dD = (x[j + 2] - xl[j + 2]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 2];
+        mean_dd = (x[j + 3] - xl[j + 3]) * (x[j + 2] - xl[j + 2]) / (xu[j + 2] - xl[j + 2]) * (x[j + 1] - xl[j + 1]) / (xu[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 3];
+      } else {
+        mean_dd = (x[j + 2] - xl[j + 2]) * (x[j + 1] - xl[j + 1]) / (xu[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 2];
+        mean_dD = mean_Dd;
+      }
+      j += pen_size;
 
       if (fpIR != NULL) {
         dk_curModel.pen[liabIdxLocal].DD = deNormalizeMean (modelType, mean_DD);
@@ -1158,7 +1019,6 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         dk_curModel.pen[liabIdxLocal].dD = deNormalizeMean (modelType, mean_dD);
         dk_curModel.pen[liabIdxLocal].dd = deNormalizeMean (modelType, mean_dd);
       }
-
 
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
         /*SD_DD = x[j];         
@@ -1171,25 +1031,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
          * SD_dD= SD_Dd;
          * }
          * j += pen_size; */
-          
-        if (modelOptions->qtMeanSDMode==QT_MODE_MEANS){ 
-          SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
-	} else if ((modelOptions->qtMeanSDMode==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-          SD_DD = x[j];         
-	  SD_Dd = x[j + 1];    
-	  if(modelOptions->imprintingFlag){
-	    SD_dD = x[j+2];
-	    SD_dd = x[j+3];
-	  }else{
-	    SD_dd = x[j+2];      
-	    SD_dD= SD_Dd;
-	  }
-	  j += pen_size;   
-        }
-    
-
-
-
+        SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
 
         if (fpIR != NULL) {
           dk_curModel.pen[liabIdxLocal].DDSD = deNormalizeStdev (modelType, SD_DD);
@@ -1205,7 +1047,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
       }
 
       /* threshold for QT *
-       *  if (modelType->trait == CT) {
+       * if (modelType->trait == CT) {
        * threshold = x[j];      // modelRange->tthresh[liabIdxLocal][thresholdIdx];
        * j++;
        * } */
@@ -1359,14 +1201,9 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
     }
 
     /* caculating the HET */
-    num_alpha=1; 
-    for (j = 0; j < num_alpha; j++) { // changed from '5' to num_alpha 8/24/2016
-      //for (j = 0; j < 5; j++) {
-      /*if (EXTRA_MOD_MODE == 1){
-        alphaV = (j+1)/(double)num_alpha; 
-      }else{
-	alphaV = alpha[j][0]; 
-      }
+    for (j = 0; j < 5; j++) {
+      //for (j = 0; j < 1; j++) {
+      alphaV = alpha[j][0];
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
         alphaV2 = 0;
@@ -1374,10 +1211,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
       if(pedigreeSet.numPedigree ==1){   // One pedigree then alpha is fixed at 1.
         alphaV=1.0;
         alphaV2 = 0;
-	}*/
-
-      alphaV=1.0;
-      alphaV2 = 0;
+      }
 
       log10HetLR = 0;
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
@@ -1407,9 +1241,14 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         }
         fprintf (fpIR, " %9.8f %9.8f", dk_curModel.alpha, dk_curModel.dgf);
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
-          fprintf (fpIR, " %9.8f %9.8f %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].DD, dk_curModel.pen[liabIdxLocal].Dd, dk_curModel.pen[liabIdxLocal].dD, dk_curModel.pen[liabIdxLocal].dd);
+          fprintf (fpIR, " %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].DD, dk_curModel.pen[liabIdxLocal].Dd);
+          if (modelOptions->imprintingFlag) {
+            fprintf (fpIR, " %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].dD, dk_curModel.pen[liabIdxLocal].dd);
+          } else {
+            fprintf (fpIR, " %9.8f", dk_curModel.pen[liabIdxLocal].dd);
+          }
           if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-            fprintf (fpIR, " %9.8f %9.8f %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].DDSD, dk_curModel.pen[liabIdxLocal].DdSD, dk_curModel.pen[liabIdxLocal].dDSD, dk_curModel.pen[liabIdxLocal].ddSD);
+            fprintf (fpIR, " %9.8f", dk_curModel.pen[liabIdxLocal].DDSD);
           }
         }
         if (modelType->trait == CT) {
@@ -1451,17 +1290,11 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
-      /*
       if(pedigreeSet.numPedigree ==1)
         alpha_integral = hetLR ;
       else
         alpha_integral += hetLR * alpha[j][1];
-      */
-      alpha_integral = hetLR; 
-      
 
-      if (( EXTRA_MOD_MODE==1) && (log10HetLR > alpha_MOD))
-        alpha_MOD = log10HetLR;
 
       /*Update local maximum as necessary */
       if (log10HetLR > localMOD) {
@@ -1469,106 +1302,75 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         localmax_x[0] = gfreq;
         localmax_x[1] = alphaV;
         k = 2;
-        memcpy (dcuhre_x, x, sizeof (double) * s->ndim);// 8/24/2016
-
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
-          if ((modelOptions->qtMeanSDMode==QT_MODE_MEANS)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-	    localmax_x[k] = x[k - 1];
-	    localmax_x[k + 1] = (x[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k];
 
-	    if (modelOptions->imprintingFlag) {
-	      localmax_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
-	      localmax_x[k + 3] = (x[k + 2] - xl[k + 2]) * (x[k + 1] - xl[k + 1]) / (xu[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 2];
-	    } else {
-	      localmax_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
-	    }
-	    k += pen_size;
-          }else if(modelOptions->qtMeanSDMode==QT_MODE_STDEV){
-	    localmax_x[k] = x[k - 1];  // mean_DD, mean_Dd, mean_dD, mean_dd
-	    k++;
-	  }
-	  if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-            if (modelOptions->qtMeanSDMode==QT_MODE_MEANS){
-	      /*localmax_x[k] = x[k - 1];
-	       * localmax_x[k + 1] = x[k];
-	       * localmax_x[k + 2] = x[k + 1];
-	       * if(modelOptions->imprintingFlag)
-	       * localmax_x[k + 3] = x[k + 2];
-	       * k += pen_size; */
-	      localmax_x[k] = x[k - 1];
-	      k++;
-	    }else if((modelOptions->qtMeanSDMode==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-	      localmax_x[k ] = x[k-1]; // SD_DD 
-	      if (modelOptions->imprintingFlag) {
-		localmax_x[k + 1] = x[k]; //SD_Dd;
-		localmax_x[k + 2] = x[k + 1]; //SD_dD
-		localmax_x[k + 3] = x[k + 2]; //SD_dd
-	      } else {
-		localmax_x[k + 1] = x[k]; // SD_Dd;
-		localmax_x[k + 2] = x[k + 1]; // SD_Dd;
-	      }
-	      k += pen_size;
-	    }
-	  }
-	 
-	}
+          localmax_x[k] = x[k - 1];
+          localmax_x[k + 1] = (x[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k];
+
+          if (modelOptions->imprintingFlag) {
+            localmax_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
+            localmax_x[k + 3] = (x[k + 2] - xl[k + 2]) * (x[k + 1] - xl[k + 1]) / (xu[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 2];
+          } else {
+            localmax_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
+          }
+          k += pen_size;
+          if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
+            /*localmax_x[k] = x[k - 1];
+             * localmax_x[k + 1] = x[k];
+             * localmax_x[k + 2] = x[k + 1];
+             * if(modelOptions->imprintingFlag)
+             * localmax_x[k + 3] = x[k + 2];
+             * k += pen_size; */
+            localmax_x[k] = x[k - 1];
+            k++;
+          }
+          /* threshold for QT *
+           * if (modelType->trait == CT) {
+           * localmax_x[k] = x[k - 1];
+           * k++;
+           * } */
+        }
         if (modelType->trait == CT) {
           localmax_x[k] = x[k - 1];
           k++;
         }
-        
-	//fprintf(stderr,"localMOD= %f gf=%e meanDD=%f meanDd=%f meandd=%f SDDD=%f SDDd=%f SDdd=%f \n", localMOD,gfreq,mean_DD,mean_Dd,mean_dd,SD_DD,SD_Dd,SD_dd);
-	//fprintf(stderr,"localMOD= %f localmax 0=%e 1=%f 2=%f 3=%f 4=%f 5=%f 6=%f 7=%f\n", localMOD,localmax_x[0],localmax_x[1],localmax_x[2],localmax_x[3],localmax_x[4],localmax_x[5],localmax_x[6],localmax_x[7]);
-	
-      } // end of updating localMOD 
+      }
       if(pedigreeSet.numPedigree ==1)
 	  j=5;
+
     }
 
     avg_hetLR = alpha_integral;
 
     /* Jacobian */
-    if ((modelOptions->qtMeanSDMode==QT_MODE_MEANS)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-      k = 1;
-      for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
-	avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
-	avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
-	avg_hetLR *= (x[k + 1] - xl[k + 1]) / (xu[k + 1] - xl[k + 1]);
+    k = 1;
+    for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
+      avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
+      avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
+      avg_hetLR *= (x[k + 1] - xl[k + 1]) / (xu[k + 1] - xl[k + 1]);
 
-	if (modelOptions->imprintingFlag) {
-	  avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
-	  avg_hetLR *= (x[k + 2] - xl[k + 2]) / (xu[k + 2] - xl[k + 2]);
-	}
+      if (modelOptions->imprintingFlag) {
+        avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
+        avg_hetLR *= (x[k + 2] - xl[k + 2]) / (xu[k + 2] - xl[k + 2]);
+      }
 
-	k += pen_size;
-	if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-	  k++;    //= pen_size;
-	}
+      k += pen_size;
+      if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
+        k++;    //= pen_size;
+      }
       /*if (modelType->trait == CT) {
        * k++;
        * } */
-      }
-    }  //end fo jacobian
+    }
     /*This is a temporary checking. *
      * if (k != s->ndim) {
      * printf ("k=%d  while dim for BR is %d\n", k, s->ndim);
      * exit (EXIT_FAILURE);
      * } */
 
-  }  
-
-  //*f = avg_hetLR;
-  // The output depends on the mode   8/24/2016
-  if ( EXTRA_MOD_MODE ==1) {
-    f[0]= alpha_MOD;
-  }else{
-    f[0] = avg_hetLR;
   }
-
+  *f = avg_hetLR;
 }
-
-
-
 
 void compute_hlod_2p_dt (double x[], double *f, int *scale)
 {
@@ -1601,7 +1403,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
   double oldsum;
   double oldsum_log10;
   double newsum_log10;
-  double alpha_MOD= overallMOD;   // 8/24/2016
+
 
   if (modelOptions->imprintingFlag)
     pen_size = 4;
@@ -1779,13 +1581,9 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
 
 
     /* caculating the HET */
-    for (j = 0; j < num_alpha; j++) { // changed from '5' to num_alpha 8/24/2016
+    for (j = 0; j < 5; j++) {
       //for (j = 0; j < 1; j++) {
-      if (EXTRA_MOD_MODE == 1){
-        alphaV = (j+1)/(double)num_alpha; 
-      }else{
-	alphaV = alpha[j][0]; 
-      }
+      alphaV = alpha[j][0];
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
         alphaV2 = 0;
@@ -1869,15 +1667,11 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
       else
         alpha_integral += hetLR * alpha[j][1];
 
-      if (( EXTRA_MOD_MODE==1) && (log10HetLR > alpha_MOD))
-        alpha_MOD = log10HetLR;
-
       if (log10HetLR > localMOD) {
         localMOD = log10HetLR;
 
         localmax_x[0] = gfreq;
         localmax_x[1] = alphaV;
-        memcpy (dcuhre_x, x, sizeof (double) * s->ndim); // 8/24/2016
 
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
           localmax_x[pen_size * liabIdxLocal + 2] = x[pen_size * liabIdxLocal + 1];
@@ -1911,13 +1705,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
 
   }
 
-  //f[0] = avg_hetLR;
-  // The output depends on the mode   8/24/2016
-  if ( EXTRA_MOD_MODE ==1) {
-    f[0]= alpha_MOD;
-  }else{
-    f[0] = avg_hetLR;
-  }
+  f[0] = avg_hetLR;
 
 }
 
@@ -1952,21 +1740,14 @@ void integrateMain ()
    * s->dim in dcuhre.c is the number of parameters in the middle layer alone */
 
   DETAIL (0, "Calculating dimensionality of outer and inner layers");
-  total_dim = 2;        //alpha gf
+  total_dim = 2;        // alpha gf
   total_dim += 3 * modelRange->nlclass; //DD Dd dd
   if (modelOptions->imprintingFlag)
     total_dim += modelRange->nlclass;   //dD
 
   if (modelType->trait != DT) {
     if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-
-      if  ((modelOptions->qtMeanSDMode==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-        total_dim += 3* modelRange->nlclass;
-        if (modelOptions->imprintingFlag)
-          total_dim += modelRange->nlclass;   //dD
-      }else{
-        total_dim += modelRange->nlclass;
-      }
+      total_dim += modelRange->nlclass;
     }
     if (modelType->trait == CT) {
       total_dim++;      //  One threshold for all LCs    //   = modelRange->nlclass;
@@ -1994,7 +1775,6 @@ void integrateMain ()
   }
 
   memset (&dk_globalmax, 0, sizeof (st_DKMaxModel));
-  //memset (&dk_localmax, 0, sizeof (st_DKMaxModel));  // add 9/14/2016
   memset (&dk_dprime0max, 0, sizeof (st_DKMaxModel));
   memset (&dk_dprimeP1max, 0, sizeof (st_DKMaxModel));
   memset (&dk_dprimeN1max, 0, sizeof (st_DKMaxModel));
@@ -2002,14 +1782,12 @@ void integrateMain ()
   if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
     /* Assumes that dkelvin can only handle a single D' */
     CALCHOKE (dk_globalmax.dprime, (size_t) 1, sizeof (double), double *);
-    //CALCHOKE (dk_localmax.dprime, (size_t) 1, sizeof (double), double *);
     CALCHOKE (dk_dprime0max.dprime, (size_t) 1, sizeof (double), double *);
     CALCHOKE (dk_dprimeP1max.dprime, (size_t) 1, sizeof (double), double *);
     CALCHOKE (dk_dprimeN1max.dprime, (size_t) 1, sizeof (double), double *);
     CALCHOKE (dk_theta0max.dprime, (size_t) 1, sizeof (double), double *);
   }
   CALCHOKE (dk_globalmax.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
-  //CALCHOKE (dk_localmax.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
   CALCHOKE (dk_dprime0max.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
   CALCHOKE (dk_dprimeP1max.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
   CALCHOKE (dk_dprimeN1max.pen, (size_t) modelRange->nlclass, sizeof (st_DKMaxModelPenVector), void *);
@@ -2030,17 +1808,12 @@ void integrateMain ()
     k = 1;
     for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-        if ((modelOptions->qtMeanSDMode ==QT_MODE_MEANS)||(modelOptions->qtMeanSDMode ==QT_MODE_BOTH)){
-	  xl[k] = xl[k + 1] = xl[k + 2] = -3.0;
-	  xu[k] = xu[k + 1] = xu[k + 2] = 3.0;
-	  if (modelOptions->imprintingFlag) {
-	    xl[k + 3] = -3;
-	    xu[k + 3] = 3;
-	  }
-	} else if (modelOptions->qtMeanSDMode ==QT_MODE_STDEV){
-	  xl[k] = -3.0;
-	  xu[k] = 3.0;
-	}
+        xl[k] = xl[k + 1] = xl[k + 2] = -3.0;
+        xu[k] = xu[k + 1] = xu[k + 2] = 3.0;
+        if (modelOptions->imprintingFlag) {
+          xl[k + 3] = -3;
+          xu[k + 3] = 3;
+        }
       } else {
         xl[k] = modelRange->penetLimits[0][0];  //0.1;
         xl[k + 1] = modelRange->penetLimits[1][0];      //0.1;
@@ -2057,19 +1830,14 @@ void integrateMain ()
         }
         //fprintf(stderr,"modelranage= %f %f %f %f %f %f %f %f\n",modelRange->penetLimits[0][0],modelRange->penetLimits[1][0],modelRange->penetLimits[2][0],modelRange->penetLimits[3][0],modelRange->penetLimits[0][1],modelRange->penetLimits[1][1],modelRange->penetLimits[2][1],modelRange->penetLimits[3][1]);
       }
-      if ((modelOptions->qtMeanSDMode ==QT_MODE_MEANS)||(modelOptions->qtMeanSDMode ==QT_MODE_BOTH)){
-	volume_region *= (xu[k] - xl[k]);
-	volume_region *= (xu[k + 1] - xl[k + 1]);
-	volume_region *= (xu[k + 2] - xl[k + 2]);
-	if (modelOptions->imprintingFlag) {
-	  volume_region *= (xu[k + 3] - xl[k + 3]);
-	  k++;
-	}
-	k += 3;
-      } else if (modelOptions->qtMeanSDMode ==QT_MODE_STDEV){
-        volume_region *= (xu[k] - xl[k]);
-	k++;
+      volume_region *= (xu[k] - xl[k]);
+      volume_region *= (xu[k + 1] - xl[k + 1]);
+      volume_region *= (xu[k + 2] - xl[k + 2]);
+      if (modelOptions->imprintingFlag) {
+        volume_region *= (xu[k + 3] - xl[k + 3]);
+        k++;
       }
+      k += 3;
 
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
         /*xl[k] = xl[k + 1] = xl[k + 2] = 0.7;
@@ -2087,23 +1855,11 @@ void integrateMain ()
          * }
          * k += 3;
          */
-        if (modelOptions->qtMeanSDMode ==QT_MODE_MEANS){
-	  xl[k] = 0.3; // changed on 9/13/2016  from 0.7;
-	  xu[k] = 1;
-	  volume_region *= (xu[k] - xl[k]);
-	  k++;
-	} else if ((modelOptions->qtMeanSDMode ==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode ==QT_MODE_BOTH)){
-	  xl[k] = xl[k+1] = xl[k+2] = 0.3; // changed on 9/13/2016  from 0.7;
-	  xu[k] = xu[k+1] = xu[k+2] = 1;
-	  volume_region *= (xu[k] - xl[k])*(xu[k+1] - xl[k+1])*(xu[k+2] - xl[k+2]);
-	  if (modelOptions->imprintingFlag) {
-	    xl[k + 3] = 0.3; // changed on 9/13/2016  from 0.7;
-	    xu[k + 3] = 1;
-            volume_region *= (xu[k+3] - xl[k+3]);
-	  }
-       
-	}
-      } // end of std
+        xl[k] = 0.7;
+        xu[k] = 1.0;
+        volume_region *= (xu[k] - xl[k]);
+        k++;
+      }
       /*if (modelType->trait == CT) {
        * xl[k] = modelRange->tthresh[liabIdxLocal][0];//0.3;
        * xu[k] = modelRange->tthresh[liabIdxLocal][modelRange->ntthresh -1];// 23.0;
@@ -2121,10 +1877,6 @@ void integrateMain ()
     }
     // fprintf (stderr,"The number of dimension for calculation of BR is %d\n",k);
   }
-
-  fprintf(stderr,"sizeBR =%d k=%d xl =%f %f %f %f %f %f %f %f \n", size_BR, k,xl[0],xl[1],xl[2],xl[3],xl[4],xl[5],xl[6],xl[7]);
-  fprintf(stderr,"MeanMode =%d %d xu =%f %f %f %f %f  %f %f %f \n", modelOptions->qtMeanSDMode, QT_MODE_BOTH,xu[0],xu[1],xu[2],xu[3],xu[4],xu[5],xu[6],xu[7]);
-
 
   /*fpDK header */
   if (fpDK != NULL) {
@@ -2354,7 +2106,7 @@ void integrateMain ()
 
           /* analysis specific statistic initialization */
           if (modelOptions->mapFlag == SA) {
-            num_BR =  num_sample_Dp_theta;       // currently 271
+            num_BR = num_sample_Dp_theta;       // currently 271
           } else {      ///  This is for sec-specific analysis in four regions
             num_BR = num_sample_SS_theta;       // currenlty 260
           }
@@ -2533,8 +2285,6 @@ void integrateMain ()
                 }
               }
 
-	      ld_small_theta += dcuhre2[i][3] * dcuhre2[i][2];
-	      /*
               if (i < 5) {
                 le_small_theta += dcuhre2[i][3] * dcuhre2[i][2];
               } else if (i < 10) {
@@ -2547,13 +2297,13 @@ void integrateMain ()
                 }
               } else {
                 le_unlinked += dcuhre2[i][3] * dcuhre2[i][2];
-		}*/
+              }
               if (modelOptions->markerAnalysis == FALSE)
                 dk_write2ptBRData (dcuhre2[i][0], dcuhre2[i][1], dcuhre2[i][1], dcuhre2[i][3], max_scale);
 
               if ((modelOptions->equilibrium == LINKAGE_EQUILIBRIUM) && (i == 9)) {
                 //fprintf (stderr,"End of LE case\n");
-                i = num_BR; //271;
+                i = 271;
               }
             } else {
               /* Use unifor scaling with max_scale */
@@ -2628,8 +2378,6 @@ void integrateMain ()
             //ppld= pow(0.02*(ld_small_theta *0.95 +ld_big_theta * 0.05), 0.3);
             //ppld *=  0.0004/0.020392;
             //ppld = ppld/(ppld + 1-0.0004/0.020392 * 0.02);
-            ppld = 0.02*0.02*ld_small_theta;
-            ppld = ppld/(ppld + 0.996);
 
             ppldGl = 0.019 * 0.021 * ld_small_theta + 0.001 * 0.0011 * ld_big_theta;
             ppldGl = ppldGl / (ppldGl + 0.019 * 0.979 * le_small_theta + 0.001 * 0.9989 * le_big_theta);
@@ -2637,7 +2385,6 @@ void integrateMain ()
             fprintf (fpPPL, " %.*f", ldppl >= .025 ? 2 : 4, KROUND (ldppl, 4));
             fprintf (fpPPL, " %.*f", ppldGl >= .025 ? 2 : 4, KROUND (ppldGl, 4));
             fprintf (fpPPL, " %.*f", ppld >= .025 ? 2 : 4, KROUND (ppld, 4));
-            fprintf (fpPPL, " %.*f", ld_small_theta >= .025 ? 2 : 4, KROUND (ld_small_theta, 4));
           }
           fprintf (fpPPL, "\n");
           fflush (fpPPL);

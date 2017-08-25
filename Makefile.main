@@ -246,14 +246,14 @@ export KVNLIBDIR VERSION CC CFLAGS LDFLAGS INCFLAGS KELVIN_ROOT TEST_KELVIN KELV
 OBJS = kelvin.o dcuhre.o kelvinInit.o kelvinTerm.o iterationSupport.o integrationSupport.o \
 	kelvinHandlers.o kelvinWriteFiles.o dkelvinWriteFiles.o \
 	ppl.o saveResults.o trackProgress.o \
-	summary_result.o tp_result_hash.o amoeba.o
+	summary_result.o tp_result_hash.o
 
 INCS = kelvin.h kelvinGlobals.h kelvinLocals.h kelvinHandlers.h \
 	kelvinInit.h kelvinTerm.h \
 	iterationGlobals.h iterationLocals.h iterationSupport.h \
 	integrationGlobals.h integrationLocals.h integrationSupport.h \
 	kelvinWriteFiles.h dkelvinWriteFiles.h \
-	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h amoeba.h
+	ppl.h dcuhre.h saveResults.h summary_result.h trackProgress.h tp_result_hash.h
 
 .SECONDEXPANSION: 
 # this is necessary because otherwise references to $(bindir_pipeline) and $(bindir_lks) won't work as prereqs!

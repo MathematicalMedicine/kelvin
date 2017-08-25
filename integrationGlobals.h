@@ -13,7 +13,7 @@ double dprime0_MOD; //maximum_dprime0_value;
 double dprimeP1_MOD; //maximum_dprimeP1_value;
 double dprimeN1_MOD; //maximum_dprimeN1_value;
 double theta0_MOD; //maximum_theta0_value;
-double localmax_x[20], dcuhre_x[20];
+double localmax_x[20];
 double localMOD; // replacing name :localmax_value = 0.0; 6/4/2009
 
 //double localMaxLR;
@@ -28,18 +28,9 @@ double alpha[5][2] = { //{0.8, 1.0},  //This is for LOD not for HLOD
 {0.95309, 0.118463443}
 };
 
-amoeba_state *sMOD, init_stateMOD;
-int EXTRA_MOD_MODE = 0;  // This must be turned on by a flag in Kelvin.conf
-double EXTRA_MOD_THRESHOLD = __DBL_MAX_10_EXP__; //1.5;
-int MEAN_STD_MODE =1;  // 1: This is the flag for various sample mean but same std
-                       // 2: This is the flag for same sample mean but various std
-
-
 dcuhre_state *s,init_state;
 double *xl;   //xl[17] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0 };
 double *xu;   //xu[17] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1 };
 
 
 /* st_DKMaxModel Moved to integrationGlobals.h 6/18/2009 */
-
-
