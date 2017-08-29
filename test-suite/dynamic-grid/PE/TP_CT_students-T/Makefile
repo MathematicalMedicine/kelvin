@@ -5,7 +5,9 @@ test :
 
 test-FIXED :
 	-rm -f LRTest*
-	(perl $(KELVIN_ROOT)/LRTest.pl) >kelvin-FIXED.out 2>&1
+	#(perl $(KELVIN_ROOT)/LRTest.pl) >kelvin-FIXED.out 2>&1
+	echo Disabled
+	date
 
 test-USE_DL :
 	- rm -rf *.out *.so compiled *.linking *.compiling
