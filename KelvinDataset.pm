@@ -2,14 +2,14 @@
 use strict;
 use warnings;
 use KelvinIO;
-use KelvinFamily 1.5;
+use KelvinFamily 1.7;
 #
 # KelvinDataset: an object for managing a Kelvin-compatible marker files
 # (marker map, frequencies, and locus files, and pedigree files).
 #
 package KelvinDataset;
 our $errstr='';
-our $VERSION=1.6;
+our $VERSION=1.7;
 
 our $ROUNDING_ERROR=0.001;
 
@@ -1402,6 +1402,81 @@ sub misordered
     my ($self) = @_;
 
     return ($$self{misordered});
+}
+
+
+sub expand_traitpositions {
+    # Given a TraitPositions directive in "summarized" format, converts it to
+    # an explicit list of all trait positions that would be analyzed in this
+    # dataset.
+    
+    my ($self, $traitpositiondirectives) = @_;
+    
+    # The following is taken from the Kelvin Split Client.
+    # 
+    # Another attempted implementation of this was found as part of
+    # parse_traitpositionlist() in mp_marker_strip.pl. The tokenization
+    # approach it uses doesn't strike me as quite as trustworthy, though, since
+    # it includes checks for illegal tokens ("begin") and bails out if the
+    # "Marker" string is included (but only if it's in allcaps). So, yeah,
+    # we're not using that. It's included below for reference, but commented
+    # out.
+
+    my ($posstart, $posend, $posinterval, %uniquepos);
+    foreach my $postoken (@$traitpositiondirectives) {
+        if (($posstart, $posend, $posinterval) =
+                ($postoken =~ 
+                /(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?|end):(\d+(?:\.\d+)?)/)) {
+            if ($posend eq "end") {
+                $posend = ceil(${$self->getMarker(
+                        ${$self->mapOrder}[-1])}{avgpos});
+                while (fmod($posend, $posinterval)) { $posend++; }
+            }
+            for (my ($p, $x) = ($posstart, 1); $p <= $posend;
+                    $p = $posstart + ($posinterval * $x++)) {
+                $uniquepos{$p} = "";
+            }
+        } else {
+            map { $uniquepos{$ARG} = ""; } split (/[, ]+/, $postoken);
+        }
+    }
+    my $traitpositions = [sort { $a <=> $b } (keys(%uniquepos))];
+    return $traitpositions;
+    
+    
+    # The aforementioned alternate implementation of the above follows.
+    #my $markermap = $dataset->mapOrder;
+    #my $markercount = scalar(@$markermap)
+    #my $firstMarkerPos = ${$dataset->getMarker($$markermap[0])}{avgpos};
+    #my $lastMarkerPos = ${$dataset->getMarker($$markermap[-1])}{avgpos};
+    #print "Processing TPs $traitpositiondirectives with $flankingmarkers flanking markers using $markercount markers from $firstMarkerPos to $lastMarkerPos\n";
+    #
+    #my @pos = ();
+    #
+    #for my $TP (@TPs) {
+    #    if ($TP =~ /.*-end:(\d*.?\d*)/) {
+    #        my $newEnd = int($lastMarkerPos + 0.9999);
+    #        $TP =~ s/-end:/-$newEnd:/;
+    #    }
+    #    if ($TP =~ /begin-(\d*.?\d*):(\d*.?\d*)/) {
+    #        my $newBegin = int($firstMarkerPos / $2) * $2;
+    #        $TP =~ s/begin-/$newBegin-/;
+    #    }
+    #    if (uc $TP eq "MARKER") {
+    #        die "All markers are included as 'TraitPosition Marker' is specified";
+    #    } elsif ($TP =~ /(\d*.?\d*)-(\d*.?\d*):(\d*.?\d*)/) {
+    #        my ($begin, $end, $inc, $precision, $va) = ($1, $2, $3, $3, 0);
+    #        $precision =~ s/^[^\.]\.?(\d*)?/$1/;
+    #        my $PosCM;
+    #        do {
+    #            $PosCM = sprintf ("%0.*f", length ($precision), $begin + $inc * $va++);
+    #            push @pos,$PosCM;
+    #        } while ($PosCM < $end);
+    #    } else {
+    #        push @pos,$TP;
+    #    }
+    #}
+    #my @spos = sort { $a <=> $b } @pos;
 }
 
 1;
