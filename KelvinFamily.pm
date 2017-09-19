@@ -936,11 +936,12 @@ sub setAllGenotypes {
     # Given an arrayref with marker info, sets all our markers en masse.
     # Used primarily when assembling MC-MC fully informative pedigree samples.
     my ($self, $markers) = @_;
+    my $dataset = $$self{dataset};
     
     # minor sanity check - verify that we have the same number of markers as is
     # in the dataset
     my $datasetcount = scalar(@{$dataset->markerOrder()});
-    unless (scalar(@$markers) == $datsetcount) {
+    unless (scalar(@$markers) == $datasetcount) {
         $errstr = "count mismatch between provided and dataset markers";
         return (undef)
     }

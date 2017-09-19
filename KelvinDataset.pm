@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use POSIX qw(ceil fmod);
 use KelvinIO;
 use KelvinFamily 1.7;
 #
@@ -1428,16 +1429,16 @@ sub expand_traitpositions {
                 ($postoken =~ 
                 /(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?|end):(\d+(?:\.\d+)?)/)) {
             if ($posend eq "end") {
-                $posend = ceil(${$self->getMarker(
+                $posend = POSIX::ceil(${$self->getMarker(
                         ${$self->mapOrder}[-1])}{avgpos});
-                while (fmod($posend, $posinterval)) { $posend++; }
+                while (POSIX::fmod($posend, $posinterval)) { $posend++; }
             }
             for (my ($p, $x) = ($posstart, 1); $p <= $posend;
                     $p = $posstart + ($posinterval * $x++)) {
                 $uniquepos{$p} = "";
             }
         } else {
-            map { $uniquepos{$ARG} = ""; } split (/[, ]+/, $postoken);
+            map { $uniquepos{$_} = ""; } split (/[, ]+/, $postoken);
         }
     }
     my $traitpositions = [sort { $a <=> $b } (keys(%uniquepos))];
