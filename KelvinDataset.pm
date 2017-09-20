@@ -1429,7 +1429,7 @@ sub expand_traitpositions {
     # out.
 
     my ($posstart, $posend, $posinterval, %uniquepos);
-    foreach my $postoken (@$traitpositiondirectives) {
+    foreach my $postoken (split(/,/, $traitpositiondirectives)) {
         if (($posstart, $posend, $posinterval) =
                 ($postoken =~ 
                 /(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?|end):(\d+(?:\.\d+)?)/)) {
