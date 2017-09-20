@@ -18,6 +18,7 @@ sub new
 {
     my ($class, $arg) = @_;
     my $self = bless ({}, $class);
+    my $conf;
     
     # Initialize the fields: 
     #   markers: a hash of all markers in the set, indexed by name
@@ -65,7 +66,7 @@ sub new
 	$errstr = "missing argument";
 	return (undef);
     } elsif (ref ($arg) eq "HASH") {
-	# A hashref is allowed to specify mapfile, locusfile and freqfile
+        # A hashref is allowed to specify mapfile, locusfile, pedfile and freqfile
 	foreach (keys (%$arg)) {
 	    if (/^map/i) { $$self{mapfile} = $$arg{$_}; }
 	    elsif (/^locus/i) { $$self{locusfile} = $$arg{$_}; }
@@ -76,6 +77,13 @@ sub new
 		return (undef);
 	    }
 	}
+
+    } elsif (ref ($arg) eq "KelvinConfig") {
+        ($conf = $arg->isConfigured ("PedigreeFile")) and $$self{pedigreefile} = $$conf[0];
+        ($conf = $arg->isConfigured ("LocusFile")) and $$self{locusfile} = $$conf[0];
+        ($conf = $arg->isConfigured ("MapFile")) and $$self{mapfile} = $$conf[0];
+        ($conf = $arg->isConfigured ("FrequencyFile")) and $$self{freqfile} = $$conf[0];
+
     } else {
 	# A single arg should be mapfile only. 
 	$$self{mapfile} = $arg;
@@ -156,10 +164,6 @@ sub copy
 	($$self{mapread}) and @{$$new{maporder}} = @{$$self{maporder}};
 	($$self{locusread}) and @{$$new{markerorder}} = @{$$self{markerorder}};
     }
-    # If markers have been dropped, mark the dataset as inconsistent with the input files
-    (scalar (@{$$self{maporder}}) == scalar (@{$$new{maporder}}) &&
-     scalar (@{$$self{markerorder}}) == scalar (@{$$new{markerorder}}))
-	or $$new{consistent} = 0;
 
     # These fields always copy over, regardless of subsetting
     map {
@@ -748,6 +752,7 @@ sub deleteTrait
     for (; $idx < scalar (@{$$self{traitorder}}); $idx++) {
 	$$self{traits}{$$self{traitorder}[$idx]}{idx} = $idx;
     }
+    $$self{consistent} = 0;
     return (1);
 }
 
@@ -1281,7 +1286,7 @@ sub setMarker
 	$errstr = "no marker '$marker' in dataset";
 	return (undef);
     }
-    $$self->validateMapfields ([keys (%$href)])
+    $self->validateMapfields ([keys (%$href)])
 	or return (undef);
     # TODO: thie really ought to make sure that no misordering is introduced
     @{$$self{markers}{$marker}}{keys (%$href)} = @$href{keys (%$href)};
