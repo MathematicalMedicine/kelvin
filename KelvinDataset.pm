@@ -1236,6 +1236,31 @@ sub getAlleleFreqs
     
 }
 
+sub fabricate_mcsample_alleles {
+    # Given the number of alleles McSample made up for its fully informative
+    # pedigree samples, replaces ALL the alleles of ALL our markers with
+    # McSample-style faked alleles - numeric 1 through $allelecount, all with
+    # the same frequency, for every single marker.
+    
+    my ($self, $allelecount) = @_;
+    
+    unless (defined($allelecount) ) {
+        $errstr = "number of alleles not specified";
+        return (undef);
+    }
+    
+    # frequency for every allele
+    my $fakefreq = 1.0 / $allelecount;
+    
+    foreach my $marker (keys(%{$$self{markers}})) {
+        $$self{markers}{$marker}{alleles} = {};
+        foreach my $allele (1..$allelecount) {
+            $$self{markers}{$marker}{alleles}{$allele} = $fakefreq;
+        }
+    }
+    return(1);
+}
+
 sub mapFields
 {
     my ($self) = @_;
