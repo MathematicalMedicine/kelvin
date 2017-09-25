@@ -161,6 +161,8 @@ void kelvinInit (int argc, char *argv[])
 
   fillConfigDefaults (modelRange, modelOptions, modelType);
 
+  if (modelOptions->alternativeQTFlag == TRUE)
+    INFO("Experimental alternative QT mode ENABLED");
   if (modelOptions->polynomial == TRUE) {
     INFO ("Computation is done in polynomial mode");
 #ifdef POLYUSE_DL
