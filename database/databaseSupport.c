@@ -1144,6 +1144,9 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
   while (1) {
     ret = mysql_stmt_execute (studyDB.stmtGetWork);
     if( ret != 0) {
+      fprintf (stderr, "GETWORK non-zero sqlstate of %s, presuming DT so just in case...\n", mysql_stmt_sqlstate(studyDB.stmtGetWork));
+      fprintf (stderr, "Failed getting work for lowPosition %f: highPosition %f, locusListType %d\n", studyDB.lowPosition, studyDB.highPosition,
+	       studyDB.locusListType);
       if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "40001") != 0) &&
 	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "HY000") != 0)) {
 	ERROR("Cannot execute Get statement w/%G, %G, (%s, %s)", 
@@ -1331,6 +1334,11 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
   while (1) {
     ret = mysql_stmt_execute (studyDB.stmtPutWork);
     if ( ret != 0) {
+      fprintf (stderr, "PUTWORK non-zero sqlstate of %s, presuming DT so just in case...\n", mysql_stmt_sqlstate(studyDB.stmtPutWork));
+      fprintf (stderr, "Failed putting result for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G.\n", \
+	       studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
+	       studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);
+      
       if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") != 0) &&
 	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "HY000") != 0)) {
 	// print out more information, so we can fix the db by hand 
