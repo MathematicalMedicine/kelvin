@@ -284,7 +284,7 @@ DELIMITER //
 
 CREATE PROCEDURE BadScaling (IN inStudyId int)
 BEGIN
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE no_rows_indicator INT DEFAULT 0;
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
@@ -438,7 +438,7 @@ CREATE PROCEDURE GetDLikelihood (
  OUT outRegionId int, OUT outMarkerCount int, OUT outLikelihood real
 )
 BEGIN
-    DECLARE version char(64) DEFAULT '$Id$';
+    DECLARE version char(96) DEFAULT '$Id$';
     DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
 
     DECLARE no_rows_indicator INT DEFAULT 0;
@@ -532,7 +532,7 @@ CREATE PROCEDURE GetDParts (
   OUT outLC3BP real, OUT outLC3BLP real, OUT outLC3LBP real, OUT outLC3LP real
 )
 BEGIN
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
   -- Better to return the results as a result set than out parameters (which suck!)
   Select LC1.DGF,
@@ -570,7 +570,7 @@ CREATE PROCEDURE GetWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE no_rows_indicator INT DEFAULT 0;
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
@@ -650,7 +650,7 @@ CREATE PROCEDURE Cache2ptInitialWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
   Insert into Diag (Message) values (Concat('Cache2ptInitialWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
 	', ',convert(inHighPosition,char)));
@@ -731,7 +731,7 @@ CREATE PROCEDURE Cache2ptFinalWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
   Insert into Diag (Message) values (Concat('Cache2ptFinalWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
 	', ',convert(inHighPosition,char)));
@@ -799,7 +799,7 @@ CREATE PROCEDURE CacheCombinedWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
   -- Insert into Diag (Message) values (Concat('CacheCombinedWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
   --	', ',convert(inHighPosition,char)));
@@ -925,7 +925,7 @@ CREATE PROCEDURE CacheMarkerWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
 --  Insert into Diag (Message) values (Concat('CacheMarkerWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
 --	', ',convert(inHighPosition,char)));
@@ -1044,7 +1044,7 @@ CREATE PROCEDURE CacheTraitWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
 --  Insert into Diag (Message) values (Concat('CacheTraitWork: called w/ ', convert(inServerId,char)));
 
@@ -1122,7 +1122,7 @@ CREATE PROCEDURE CountWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE no_rows_indicator INT DEFAULT 0;
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
@@ -1186,7 +1186,7 @@ CREATE PROCEDURE PutWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
 --  Insert into Diag (Message) values (Concat('PutWork: called w/ ', convert(inServerId,char), ', ', convert(inPedPosId,char),', ',
 --	convert(inLC1MPId,char),', ', convert(inLC2MPId,char),', ', convert(inLC3MPId,char), ', ',
@@ -1267,7 +1267,7 @@ DELIMITER //
 CREATE PROCEDURE SetDummyNullLikelihood (IN inServerId int)
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
 -- Set all trait and marker likelhood Models for pedigrees handled by this ServerId to be finished and have an Likelihood of 1.0
 
@@ -1320,7 +1320,7 @@ DELIMITER //
 CREATE PROCEDURE CleanOrphans (IN inStudyId int)
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
 -- Put orphaned Models back up for adoption.
 
@@ -1363,7 +1363,7 @@ DELIMITER //
 CREATE PROCEDURE CleanStudy (IN inStudyId int)
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
 -- Remove all rows associated with a study
 
@@ -1389,7 +1389,7 @@ DELIMITER //
 CREATE PROCEDURE MoveStudy (IN inFromStudyId int, IN inToStudyId int)
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
 -- Move all rows associated with a StudyId to a new StudyId without violating integrity constraints
 
@@ -1421,7 +1421,7 @@ DELIMITER //
 CREATE PROCEDURE UnloadModelParts ()
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
   Select Concat(
     'Insert into DModelParts (MPId, DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen) values (',
