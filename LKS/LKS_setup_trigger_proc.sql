@@ -1715,7 +1715,7 @@ DELIMITER //
 CREATE PROCEDURE UnloadModelParts ()
 BEGIN
 
-  DECLARE version char(96) DEFAULT '$Id';
+  DECLARE version char(96) DEFAULT '$Id$';
 
   Select Concat(
     'Insert into DModelParts (MPId, DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen) values (',
