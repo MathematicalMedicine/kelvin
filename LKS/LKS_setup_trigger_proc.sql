@@ -115,7 +115,7 @@ DELIMITER //
 
 CREATE PROCEDURE BadScaling (IN inStudyId int)
 BEGIN
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE no_rows_indicator INT DEFAULT 0;
   DECLARE localMapId INT;
   DECLARE localMarkerName char(16);
@@ -262,7 +262,7 @@ CREATE PROCEDURE GetMarkerSetLikelihood (
  OUT outRegionId int, OUT outMarkerCount int, OUT outLikelihood real
 )
 BEGIN
-    DECLARE version char(64) DEFAULT '$Id$';
+    DECLARE version char(96) DEFAULT '$Id$';
     DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
     DECLARE outMarkerSetId INT DEFAULT -1;
     DECLARE no_rows_indicator INT DEFAULT 0;
@@ -313,7 +313,7 @@ CREATE PROCEDURE GetAnalysisId (
  IN inPedigreeNotRegEx varchar(1025),
  OUT outAnalysisId int)
 BEGIN
-    DECLARE version char(64) DEFAULT '$Id$';
+    DECLARE version char(96) DEFAULT '$Id$';
     DECLARE no_rows_indicator INT DEFAULT 0;
     DECLARE no_rows CONDITION FOR 1329;
     DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
@@ -354,7 +354,7 @@ CREATE PROCEDURE GetDLikelihood (
  OUT outRegionId int, OUT outMarkerCount int, OUT outLikelihood real
 )
 BEGIN
-    DECLARE version char(64) DEFAULT '$Id$';
+    DECLARE version char(96) DEFAULT '$Id$';
     DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood will not exist
     DECLARE localStudyId INT;
     DECLARE localChromosomeNo INT;
@@ -483,7 +483,7 @@ CREATE PROCEDURE GetQLikelihood (
  OUT outRegionId int, OUT outMarkerCount int, OUT outLikelihood real
 )
 BEGIN
-    DECLARE version char(64) DEFAULT '$Id$';
+    DECLARE version char(96) DEFAULT '$Id$';
     DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
     DECLARE localStudyId INT;
     DECLARE localChromosomeNo INT;
@@ -602,7 +602,7 @@ CREATE PROCEDURE GetDParts (
   OUT outLC3BP real, OUT outLC3BLP real, OUT outLC3LBP real, OUT outLC3LP real
 )
 BEGIN
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
   -- Better to return the results as a result set than out parameters (which suck!)
   Select LC1.DGF,
@@ -641,7 +641,7 @@ CREATE PROCEDURE GetQParts (
   OUT outLC1Threshold real, OUT outLC2Threshold real, OUT outLC3Threshold real
 )
 BEGIN
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
   -- Better to return the results as a result set than out parameters (which suck!)
   Select LC1.DGF,
@@ -687,7 +687,7 @@ CREATE PROCEDURE GetWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE realLocusListType INT DEFAULT 0;
   DECLARE totalSampleCount INT DEFAULT 0;
   DECLARE localResultRows INT DEFAULT 0;
@@ -788,7 +788,7 @@ CREATE PROCEDURE Cache2ptInitialWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE localKeepAliveFlag INT;
 
 --  Insert into Diag (Message) values (Concat('Cache2ptInitialWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
@@ -869,7 +869,7 @@ CREATE PROCEDURE Cache2ptFinalWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE localKeepAliveFlag INT;
 
 --  Insert into Diag (Message) values (Concat('Cache2ptFinalWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
@@ -937,7 +937,7 @@ CREATE PROCEDURE CacheCombinedWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE localKeepAliveFlag INT;
   DECLARE localCandidatePedPosId INT;
   DECLARE localCandidateLimit INT;
@@ -1081,7 +1081,7 @@ CREATE PROCEDURE CacheMarkerWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE localKeepAliveFlag INT;
 
 --  Insert into Diag (Message) values (Concat('CacheMarkerWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
@@ -1196,7 +1196,7 @@ CREATE PROCEDURE CacheTraitWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE localKeepAliveFlag INT;
 
 --  Insert into Diag (Message) values (Concat('CacheTraitWork: called w/ ', convert(inServerId,char)));
@@ -1276,7 +1276,7 @@ BEGIN
 
   DECLARE markerWork INT DEFAULT 0;
   DECLARE totalWork INT DEFAULT 0;
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE no_rows_indicator INT DEFAULT 0;
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
@@ -1389,7 +1389,7 @@ CREATE PROCEDURE PutWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE inSampleId int;
   DECLARE sampleCount int;
   DECLARE localOldSMRT INT;
@@ -1509,7 +1509,7 @@ DELIMITER //
 CREATE PROCEDURE SetDummyNullLikelihood (IN inServerId int)
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
 -- Set all trait and marker likelhood Models for pedigrees handled by this ServerId to be finished and have an Likelihood of 1.0
 
@@ -1566,7 +1566,7 @@ CREATE PROCEDURE CleanOrphans (IN inStudyLabel varchar(64))
 BEGIN
 
   DECLARE inStudyId int;
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE no_rows_indicator INT DEFAULT 0;
 
 -- Put orphaned Models back up for adoption.
@@ -1638,7 +1638,7 @@ CREATE PROCEDURE CleanStudy (IN inStudyLabel varchar(64))
 BEGIN
 
   DECLARE inStudyId int;
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
   DECLARE no_rows_indicator INT DEFAULT 0;
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
@@ -1686,7 +1686,7 @@ DELIMITER //
 CREATE PROCEDURE MoveStudy (IN inFromStudyId int, IN inToStudyId int)
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id$';
+  DECLARE version char(96) DEFAULT '$Id$';
 
 -- Move all rows associated with a StudyId to a new StudyId without violating integrity constraints
 -- NEW STUDYID MUST NOT ALREADY EXIST
@@ -1715,7 +1715,7 @@ DELIMITER //
 CREATE PROCEDURE UnloadModelParts ()
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id';
+  DECLARE version char(96) DEFAULT '$Id';
 
   Select Concat(
     'Insert into DModelParts (MPId, DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen) values (',
@@ -1950,6 +1950,7 @@ DELIMITER //
 -- StudyLabel, LiabilityClassCnt and ImprintingFlag combination should be unique
 CREATE PROCEDURE GetStudyId (IN inStudyLabel varchar(64), IN inLiabilityClassCnt int, IN inImprintingFlag char(1), OUT outStudyId int)
 BEGIN
+  DECLARE version char(96) DEFAULT '$Id$ in personal kelvin/trunk/LKS';
   DECLARE no_rows_indicator INT DEFAULT 0; 
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
