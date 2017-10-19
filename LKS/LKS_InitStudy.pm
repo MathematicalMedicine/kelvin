@@ -15,6 +15,8 @@ use English qw( -no_match_vars );
 use DBI; # Database interaction
 use DBI qw(:sql_types);
 
+use File::Basename; # Get map file name and not the 128+ character path
+
 use RunSQLScript;
 use KelvinDataset 1.40;
 use KelvinConfig 1.50;
@@ -122,7 +124,7 @@ sub perform_study {
     my $MapDescription;
     $dbh->do("CALL GetMapId(\'$StudyId\', \'"
             . (($$study{role} eq "CLIENT") ? 1 : 0)
-            . "\', \'$MapScale\', \'$MapFile\', \@MapId, \@MapScale, "
+            . "\', \'$MapScale\', \'".basename($MapFile)."\', \@MapId, \@MapScale, "
             . "\@MapDescription)");
     ($MapId, $MapScale, $MapDescription) = $dbh->selectrow_array(
             'SELECT @MapId, @MapScale, @MapDescription');
