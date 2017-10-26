@@ -329,14 +329,6 @@ void prepareDBStatements () {
 
   // Prepare the GetMarkerSetLikelihood_MCMC call
   strncpy(studyDB.strGetMarkerSetLikelihood_MCMC, "Select SampleId, Likelihood from MarkerSetLikelihood_MCMC where MarkerSetId=@outMarkerSetId order by SampleId", MAXSTMTLEN-1);
-  /*
-  studyDB.stmtGetMarkerSetLikelihood_MCMC = mysql_stmt_init (studyDB.connection);
-  memset (studyDB.bindGetMarkerSetLikelihood_MCMC, 0, sizeof(studyDB.bindGetMarkerSetLikelihood_MCMC));
-  if (mysql_stmt_prepare (studyDB.stmtGetMarkerSetLikelihood_MCMC, studyDB.strGetMarkerSetLikelihood_MCMC, strlen (studyDB.strGetMarkerSetLikelihood_MCMC)))
-    ERROR("Cannot prepare GetMarkerSetLikelihood_MCMC call statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihood_MCMC));
-  if (mysql_stmt_bind_param (studyDB.stmtGetMarkerSetLikelihood_MCMC, studyDB.bindGetMarkerSetLikelihood_MCMC))
-    ERROR("Cannot bind GetMarkerSetLikelihood_MCMC call statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerLikelihood_MCMC));
-  */
 
   // Prepare the GetMarkerSetLikelihood call
   studyDB.stmtGetMarkerSetLikelihood = mysql_stmt_init (studyDB.connection);
@@ -810,17 +802,12 @@ double GetMarkerSetLikelihood(int pedPosId, int regionNo, int parentRegionNo, do
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL.\n", studyDB.regionId);});
     return -1LL;
   } else {
-    /*
-        if(studyDB.MCMC_flag == 1 && toupper(*studyDB.role)=='S' && analysisLocusList->traitLocusIndex!=-1) {
-      GetMarkerSetLikelihood_MCMC(pedPosId);
-    }
-    */
-
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is %G.\n", studyDB.regionId, studyDB.lOD);});
     return studyDB.lOD;
   }
 }
 
+// This looks like it was cloned from the above code, and possibly incorrectly.
 int GetMarkerSetLikelihood_MCMC(int pedPosId)
 {
   int idx=0;
@@ -837,33 +824,35 @@ int GetMarkerSetLikelihood_MCMC(int pedPosId)
       ERROR("Cannot retrieve markerSetId (%s)", mysql_error(studyDB.connection));
     mysql_stmt_free_result(studyDB.stmtGetMarkerSetId);
   }
-
-    // now retreive the markerset likelihood for each sampling
-    if(mysql_query(studyDB.connection, studyDB.strGetMarkerSetLikelihood_MCMC))
-      ERROR("Cannot select from MarkerSetLikelihood_MCMC (%s:%s)", studyDB.strGetMarkerSetLikelihood_MCMC, mysql_error(studyDB.connection));
-    if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
-      ERROR("Cannot retrieve markerSetLikelihood_MCMC (%s)", mysql_error(studyDB.connection));
-    if (mysql_num_rows (studyDB.resultSet) == studyDB.totalSampleCount) {
-      sampleId=studyDB.sampleIdStart;
-      idx=0;
-      while (sampleId<=studyDB.sampleIdEnd && (studyDB.row = mysql_fetch_row (studyDB.resultSet)) != NULL){
-	if(atoi(studyDB.row[0])!=sampleId)
-	  continue;
-	studyDB.markerSetLikelihood[idx] = atof(studyDB.row[1]);
-	idx++;
-	sampleId++;
-      } // end of while
-      // mark we do have the markerSetlikelihood
-      studyDB.markerSetLikelihoodFlag=1;
-      studyDB.markerSetPedPosId = studyDB.pedPosId;
-    } // end of there is any row
-    else {
-      mysql_free_result(studyDB.resultSet);
-      return -1;
+  // Now retrieve the markerset likelihood for each sampling
+  if(mysql_query(studyDB.connection, studyDB.strGetMarkerSetLikelihood_MCMC))
+    ERROR("Cannot select from MarkerSetLikelihood_MCMC (%s:%s)", studyDB.strGetMarkerSetLikelihood_MCMC, mysql_error(studyDB.connection));
+  if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
+    ERROR("Cannot retrieve markerSetLikelihood_MCMC (%s)", mysql_error(studyDB.connection));
+  if (mysql_num_rows (studyDB.resultSet) == studyDB.totalSampleCount) {
+    sampleId=studyDB.sampleIdStart;
+    idx=0;
+    while (sampleId<=studyDB.sampleIdEnd && (studyDB.row = mysql_fetch_row (studyDB.resultSet)) != NULL){
+      if(atoi(studyDB.row[0])!=sampleId)
+	continue;
+      studyDB.markerSetLikelihood[idx] = atof(studyDB.row[1]);
+      idx++;
+      sampleId++;
     }
+    // Mark we do have the markerSetlikelihood
+    studyDB.markerSetLikelihoodFlag=1;
+    studyDB.markerSetPedPosId = studyDB.pedPosId;
+  } else {
+    WARNING ("Returning failure as mysql_num_rows (studyDB.resultSet) is %d, and studyDB.totalSampleCount is %d",
+	     mysql_num_rows (studyDB.resultSet), studyDB.totalSampleCount);
+    // If the likelihood is unavailable, it is not because of a failure in the database calls, since they're all set to ERROR on problems,
+    // so any retry work should be based upon whatever is causing the delay, and not be infinite!
     mysql_free_result(studyDB.resultSet);
-
-    return 0;
+    return -1;
+  }
+  mysql_free_result(studyDB.resultSet);
+  
+  return 0;
 }
 
 
