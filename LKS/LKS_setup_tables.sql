@@ -91,11 +91,13 @@ PRIMARY KEY (StudyId)) ENGINE=InnoDB comment='$Id$';
 
 CREATE TABLE Analyses (
 StudyId int(11) NOT NULL,
+Uniquey varbinary(767),
 PedigreeRegEx varchar(1024) NOT NULL,
 PedigreeNotRegEx varchar(1024) NOT NULL DEFAULT 'XYZZY',
 AnalysisId int(11) NOT NULL AUTO_INCREMENT,
 InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-KEY `AnalysisId` (AnalysisId)
+PRIMARY KEY (AnalysisId),
+UNIQUE KEY (StudyId, Uniquey)
 ) ENGINE=InnoDB comment='$Id$';
 
 CREATE TABLE Pedigrees (
@@ -122,7 +124,7 @@ PedigreeSId varchar(16) NOT NULL,
 ChromosomeNo int NOT NULL,
 RefTraitPosCM real NOT NULL,
 PedTraitPosCM real NULL,
-MarkerCount int NULL COMMENT 'Minimum desired MP marker count',
+MarkerCount int DEFAULT 0 COMMENT 'Minimum desired MP marker count',
 FreeModels int DEFAULT 0 COMMENT 'Amount of available work for this ped/pos',
 PendingLikelihoods int DEFAULT 0 COMMENT 'Amount of incomplete work for this ped/pos',
 SingleModelEstimate int NULL COMMENT 'Estimated non-polynomial runtime of models at this ped/pos (from SMRT run)',
@@ -142,7 +144,7 @@ StudyId int DEFAULT NULL,
 PedigreeSId varchar(16) NOT NULL,
 ChromosomeNo int NOT NULL,
 PedTraitPosCM real NOT NULL,
-MarkerCount int DEFAULT NULL,
+MarkerCount int DEFAULT 0,
 SingleModelRuntime int DEFAULT NULL,
 -- CONSTRAINT FOREIGN KEY (StudyId) references Studies (StudyId),
 PRIMARY KEY (StudyId, PedigreeSId, ChromosomeNo, PedTraitPosCM, MarkerCount)) ENGINE=InnoDB comment='$Id$';
@@ -233,7 +235,7 @@ PedPosId int NOT NULL,
 LC1MPId int NOT NULL,
 LC2MPId int NOT NULL,
 LC3MPId int NOT NULL,
-MarkerCount int NULL,
+MarkerCount int DEFAULT 0,
 ServerId int NULL,
 StartTime timestamp NULL,
 Likelihood double NULL,

@@ -314,24 +314,14 @@ CREATE PROCEDURE GetAnalysisId (
  OUT outAnalysisId int)
 BEGIN
     DECLARE version char(96) DEFAULT '$Id$';
-    DECLARE no_rows_indicator INT DEFAULT 0;
-    DECLARE no_rows CONDITION FOR 1329;
-    DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
+    -- This now relies exclusively on the unique key, which really should be PedigreRegEx and PedigreeNotRegEx, but
+    -- those have become unreasonably long.
+    Insert ignore into Analyses (StudyId, Uniquey, PedigreeRegEx, PedigreeNotRegEx) values
+      (inStudyId, COMPRESS(CONCAT(inPedigreeRegEx,'/',inPedigreeNotRegEx)), inPedigreeRegEx, inPedigreeNotRegEx);
 
-    Start transaction;
-
-    Set no_rows_indicator = 0;
     Select AnalysisId INTO outAnalysisId
     from Analyses where StudyId = inStudyId AND PedigreeRegEx = inPedigreeRegEx AND PedigreeNotRegEx = inPedigreeNotRegEx;
-
-    If no_rows_indicator THEN
-      Insert into Analyses (StudyId, PedigreeRegEx, PedigreeNotRegEx) values
-      (inStudyId, inPedigreeRegEx, inPedigreeNotRegEx);
-      Select LAST_INSERT_ID() INTO outAnalysisId;
-    END IF;
-
-    commit;
-
+      
 END;
 //
 DELIMITER ;
