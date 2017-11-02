@@ -21,89 +21,92 @@
 -- I wonder about @outModelId...but it is local to PutWork
 --
 
+-- All the careful tracking of available work is no longer necessary given our pipelined approach. It has been
+-- being phased out for some time, and finally we're dropping it and instead going to use FreeModels as a flag
+-- that is set in the pipeline after client and server-set runs.
 
 DELIMITER ;
 DROP TRIGGER IF EXISTS DecMarkers;
 
-DELIMITER //
-CREATE TRIGGER DecMarkers AFTER UPDATE ON MarkerSetLikelihood FOR EACH ROW
-BEGIN
-  Update PedigreePositions set FreeModels = FreeModels - 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.ServerId IS NULL AND
-    NEW.ServerId IS NOT NULL;
-  Update PedigreePositions set FreeModels = FreeModels + 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.ServerId IS NOT NULL AND
-    NEW.ServerId IS NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods - 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.Likelihood IS NULL AND
-    NEW.Likelihood IS NOT NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.Likelihood IS NOT NULL AND
-    NEW.Likelihood IS NULL;
-END;
-//
-DELIMITER ;
+-- DELIMITER //
+-- CREATE TRIGGER DecMarkers AFTER UPDATE ON MarkerSetLikelihood FOR EACH ROW
+-- BEGIN
+--   Update PedigreePositions set FreeModels = FreeModels - 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.ServerId IS NULL AND
+--     NEW.ServerId IS NOT NULL;
+--   Update PedigreePositions set FreeModels = FreeModels + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.ServerId IS NOT NULL AND
+--     NEW.ServerId IS NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods - 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.Likelihood IS NULL AND
+--     NEW.Likelihood IS NOT NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.Likelihood IS NOT NULL AND
+--     NEW.Likelihood IS NULL;
+-- END;
+-- //
+-- DELIMITER ;
 
 DROP TRIGGER IF EXISTS IncMarkers;
 
-DELIMITER //
-CREATE TRIGGER IncMarkers AFTER INSERT ON MarkerSetLikelihood FOR EACH ROW
-BEGIN
-  Update PedigreePositions set FreeModels = FreeModels + 1 where
-    PedPosId = NEW.PedPosId AND
-    NEW.ServerId IS NULL AND
-    NEW.Likelihood IS NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
-    PedPosId = NEW.PedPosId AND
-    NEW.Likelihood IS NULL;
-END;
-//
-DELIMITER ;
+-- DELIMITER //
+-- CREATE TRIGGER IncMarkers AFTER INSERT ON MarkerSetLikelihood FOR EACH ROW
+-- BEGIN
+--   Update PedigreePositions set FreeModels = FreeModels + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     NEW.ServerId IS NULL AND
+--     NEW.Likelihood IS NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     NEW.Likelihood IS NULL;
+-- END;
+-- //
+-- DELIMITER ;
 
 DROP TRIGGER IF EXISTS DecModels;
 
-DELIMITER //
-CREATE TRIGGER DecModels AFTER UPDATE ON Models FOR EACH ROW
-BEGIN
-  Update PedigreePositions set FreeModels = FreeModels - 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.ServerId IS NULL AND
-    NEW.ServerId IS NOT NULL;
-  Update PedigreePositions set FreeModels = FreeModels + 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.ServerId IS NOT NULL AND
-    NEW.ServerId IS NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods - 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.Likelihood IS NULL AND
-    NEW.Likelihood IS NOT NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.Likelihood IS NOT NULL AND
-    NEW.Likelihood IS NULL;
-END;
-//
-DELIMITER ;
+-- DELIMITER //
+-- CREATE TRIGGER DecModels AFTER UPDATE ON Models FOR EACH ROW
+-- BEGIN
+--   Update PedigreePositions set FreeModels = FreeModels - 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.ServerId IS NULL AND
+--     NEW.ServerId IS NOT NULL;
+--   Update PedigreePositions set FreeModels = FreeModels + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.ServerId IS NOT NULL AND
+--     NEW.ServerId IS NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods - 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.Likelihood IS NULL AND
+--     NEW.Likelihood IS NOT NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.Likelihood IS NOT NULL AND
+--     NEW.Likelihood IS NULL;
+-- END;
+-- //
+-- DELIMITER ;
 
 DROP TRIGGER IF EXISTS IncModels;
 
-DELIMITER //
-CREATE TRIGGER IncModels AFTER INSERT ON Models FOR EACH ROW
-BEGIN
-  Update PedigreePositions set FreeModels = FreeModels + 1 where
-    PedPosId = NEW.PedPosId AND
-    NEW.ServerId IS NULL AND
-    NEW.Likelihood IS NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
-    PedPosId = NEW.PedPosId AND
-    NEW.Likelihood IS NULL;
-END;
-//
-DELIMITER ;
+-- DELIMITER //
+-- CREATE TRIGGER IncModels AFTER INSERT ON Models FOR EACH ROW
+-- BEGIN
+--   Update PedigreePositions set FreeModels = FreeModels + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     NEW.ServerId IS NULL AND
+--     NEW.Likelihood IS NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     NEW.Likelihood IS NULL;
+-- END;
+-- //
+-- DELIMITER ;
 
 DROP PROCEDURE IF EXISTS BadScaling;
 
@@ -1511,7 +1514,7 @@ BEGIN
       from
 	PedigreePositions PP, MarkerSetLikelihood M, Servers S
       where
-	S.ServerId = inServerId AND PP.StudyId = S.StudyId AND PP.FreeModels > 0 AND PP.MarkerCount = 1 AND
+	S.ServerId = inServerId AND PP.StudyId = S.StudyId AND PP.FreeModels > 0 AND PP.MarkerCount = 1 AND -- WANT TO NOT CONSIDER FREE MODELS ANYMORE...
         PP.PedigreeSId in (select PedigreeSId from ServerPedigrees where ServerId=inServerId) and
         PP.ChromosomeNo = S.ChromosomeNo AND
 	PP.PedPosId = M.PedPosId AND M.ServerId IS NULL;
@@ -1520,7 +1523,7 @@ BEGIN
       from
 	PedigreePositions PP, Models M, Servers S
       where
-	S.ServerId = inServerId AND PP.StudyId = S.StudyId AND PP.FreeModels > 0 AND PP.MarkerCount = 1 AND
+	S.ServerId = inServerId AND PP.StudyId = S.StudyId AND PP.FreeModels > 0 AND PP.MarkerCount = 1 AND -- WANT TO NOT CONSIDER FREE MODELS ANYMORE...
         PP.PedigreeSId in (select PedigreeSId from ServerPedigrees where ServerId=inServerId) and
         PP.ChromosomeNo = S.ChromosomeNo AND
 	PP.RefTraitPosCM = -9999.99 AND PP.PedPosId = M.PedPosId AND M.ServerId IS NULL;
@@ -1812,6 +1815,15 @@ WholeThing: LOOP
     Leave WholeThing;
   END IF;
 
+  -- FixFree: Turn on or off FreeModels flags for appropriate PedigreePositions
+  IF inWhich = 'FixFree' THEN
+    Update PedigreePositions set FreeModels = 0 where FreeModels <> 0;
+    Create temporary table FreeModelCounts as Select PedPosId, count(*) 'FreeModels' from Models where Likelihood IS NULL group by PedPosId;
+    Update PedigreePositions a, FreeModelCounts b set a.FreeModels = b.FreeModels where a.PedPosId = b.PedPosId;
+    Drop table FreeModelCounts;
+    Leave WholeThing;
+  END IF;
+
    Create temporary table Q_help (Keyword varchar(32), Action varchar(120));
    Insert into Q_help (Keyword, Action) values
 	('Progress','Snapshot of statistics for the entire database'),
@@ -1821,7 +1833,8 @@ WholeThing: LOOP
 	('Delta', 'Loop showing overall work progress for the last minute using servers active in the last hour'),
 	('Free', 'Show unallocated work by StudyId/PedPosId with SingleModelRuntime'),
 	('TotalFree', 'Show total unallocated work by StudyLabel'),
-	('Reconcile', 'Mark any servers not really in processlist with ExitStatus 42');
+	('Reconcile', 'Mark any servers not really in processlist with ExitStatus 42'),
+	('FixFree', 'Reset FreeModels flags');
    Select * from Q_help;
    Drop table Q_help;
 
