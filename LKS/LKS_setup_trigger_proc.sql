@@ -1812,6 +1812,8 @@ WholeThing: LOOP
   -- Reconcile: Mark any servers not really in processlist with ExitStatus 42
   IF inWhich = 'Reconcile' THEN
     Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from INFORMATION_SCHEMA.PROCESSLIST) AND ExitStatus IS NULL;
+    Update Models a, Servers b set a.ServerId = NULL, a.StartTime = NULL where a.ServerId = b.ServerId AND b.ExitStatus = 42 AND a.Likelihood IS NULL;
+ 
     Leave WholeThing;
   END IF;
 
@@ -1833,7 +1835,7 @@ WholeThing: LOOP
 	('Delta', 'Loop showing overall work progress for the last minute using servers active in the last hour'),
 	('Free', 'Show unallocated work by StudyId/PedPosId with SingleModelRuntime'),
 	('TotalFree', 'Show total unallocated work by StudyLabel'),
-	('Reconcile', 'Mark any servers not really in processlist with ExitStatus 42'),
+	('Reconcile', 'Mark any servers not really in processlist with ExitStatus 42, then release their incomplete work'),
 	('FixFree', 'Reset FreeModels flags');
    Select * from Q_help;
    Drop table Q_help;
