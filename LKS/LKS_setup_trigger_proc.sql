@@ -1811,7 +1811,17 @@ WholeThing: LOOP
 
   -- Reconcile: Mark any servers not really in processlist with ExitStatus 42
   IF inWhich = 'Reconcile' THEN
-    Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from INFORMATION_SCHEMA.PROCESSLIST) AND ExitStatus IS NULL;
+    --Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from INFORMATION_SCHEMA.PROCESSLIST) AND ExitStatus IS NULL;
+    -- This use of a temporary table is a tad silly. We *would* just go with
+    -- what's above rather than using a temporary table as a go-between, but
+    -- apparently when you have a sufficiently large number of connections
+    -- getting started at a given time MySQL goes all "omg wtf nooooooo" and
+    -- gives us the singularly unhelpful error message:
+    -- Data too long for column 'USER' at row 1
+    -- A lot of trial and error revealed that putting in a temporary table
+    -- for the subquery "fixes" it. Thanks, MySQL!
+    Create temporary table silly_mysql_bug_workaround_for_reconcile as Select ID from INFORMATION_SCHEMA.PROCESSLIST;
+    Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from silly_mysql_bug_workaround_for_reconcile) AND ExitStatus IS NULL;
     Update Models a, Servers b set a.ServerId = NULL, a.StartTime = NULL where a.ServerId = b.ServerId AND b.ExitStatus = 42 AND a.Likelihood IS NULL;
  
     Leave WholeThing;
