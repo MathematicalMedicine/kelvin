@@ -3,14 +3,14 @@ use strict;
 use warnings;
 use POSIX qw(ceil fmod);
 use KelvinIO;
-use KelvinFamily 1.7;
+use KelvinFamily 1.8;
 #
 # KelvinDataset: an object for managing a Kelvin-compatible marker files
 # (marker map, frequencies, and locus files, and pedigree files).
 #
 package KelvinDataset;
 our $errstr='';
-our $VERSION=1.7;
+our $VERSION=1.8;
 
 our $ROUNDING_ERROR=0.001;
 
@@ -460,6 +460,7 @@ sub readMapfile
     my $mapfunction;
     my $origchr = undef;
     my $lastpos = undef;
+    my $lastphys = undef;
     my ($line, @arr);
     my $misordered = $$self{misordered};
     my @markerorder;
@@ -561,7 +562,12 @@ sub readMapfile
 	    $errstr = "$$self{mapfile}, line $lineno: marker $$href{name} out of centiMorgan order";
 	    return (undef);
 	}
+        if (exists ($$href{phys}) && defined ($lastphys) && $$href{phys} <= $lastphys) {
+	    $errstr = "$$self{mapfile}, line $lineno: marker $$href{name} out of physical order";
+	    return (undef);
+        }
 	($origchr, $lastpos) = @$href{qw/chr avgpos/};
+        exists ($$href{phys}) and $lastphys = $$href{phys};
 	$markers{$$href{name}} = $href;
 	push (@maporder, $$href{name});
     }
@@ -1426,6 +1432,13 @@ sub mapread
     my ($self) = @_;
 
     return ($$self{mapread});
+}
+
+sub locusread
+{
+    my ($self) = @_;
+
+    return ($$self{locusread});
 }
 
 sub misordered
