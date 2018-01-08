@@ -250,7 +250,7 @@ sub check_paths
     # Check versions ('use' would have done for us automatically)
     KelvinDataset->VERSION (1.30);
     KelvinConfig->VERSION (1.20);
-    KelvinFamily->VERSION (1.30);
+    KelvinFamily->VERSION (1.80);
 }
 
 sub fatal
