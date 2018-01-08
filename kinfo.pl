@@ -36,9 +36,6 @@ my ($dataref);
 my ($config);
 my ($dataset);
 
-# Something I'd expected to find in Kelvin* but wasn't there...
-my (%families);
-
 my $KELVIN_ROOT='no_kelvin_root';
 
 GetOptions (
@@ -117,13 +114,16 @@ my $markerOrder = $dataset->markerOrder;
 
 if ($pedigrees) {
     # Read, validate and describe the pedigrees
-    my $family; my $totalInds;
+    my $family;
+    my $totalInds = 0;
+    my $totalFams = 0;
 
     my $pc=5; # Five percent
     my $mc=(scalar(@{$$dataset{maporder}}) + 1) * $pc / 100;
 
-    print "Ped\tType\t#Ind\t#Fdr\t#Nfdr\t2N-F\t#Gen>$pc\%\t#Phen\t#Aff\t#G+A\t#Dum\t%Het\t%Msg\n";
+    print "Ped\tType\t#Ind\t#Fdr\t#Nfdr\t2N-F\t#Gen>$pc\%\t#Phen\t#Aff\t#G+A\t#Dum\t%Het\t%Msg\tLoops\n";
     while ($family = $dataset->readFamily) {
+        $totalFams++;
 	$$dataset{origfmt} = $$family{origfmt};
 	$totalInds += $$family{count};
 	my ($gC, $pC, $aC, $gaC, $dmC) = (0, 0, 0, 0, 0);
@@ -176,14 +176,13 @@ if ($pedigrees) {
 	} elsif ($gC == 0) {
 	    $f = "ui-null";
 	}
-	printf $$family{pedid}."\t".sprintf("%7.7s\t%d\t%d\t%d\t%d\t",$f, $$family{count}, $$family{founders}, $$family{nonfounders}, (2 * $$family{nonfounders}) - $$family{founders});
-	print $gC."\t".$pC."\t".$aC."\t".$gaC."\t".$dmC."\t".int($het*100/($totmk > 0 ? $totmk : 1))."\t".int($msgmk*100/($totmk > 0 ? $totmk : 1))."\n";
-	$families{$$family{pedid}} = $family;
+        print (join ("\t", $$family{pedid}, sprintf ("%7.7s", $f), $$family{count}, $$family{founders}, $$family{nonfounders}, (2 * $$family{nonfounders}) - $$family{founders}));
+        print (join ("\t", "", $gC, $pC, $aC, $gaC, $dmC, int($het*100/($totmk > 0 ? $totmk : 1)), int($msgmk*100/($totmk > 0 ? $totmk : 1)), defined ($family->loopids) ? "Y" : "N"), "\n");
+
     }
     (defined ($family))
 	or error ("Read of pedigree file \"".$$dataref{PedigreeFile}."\" failed, $KelvinDataset::errstr");
-    print $$dataset{origfmt}."-makeped format file with ".scalar(@{$$dataset{markerorder}})." markers, ".
-	scalar(keys %families)." families and $totalInds individuals.\n";
+    print $$dataset{origfmt}."-makeped format file with ".scalar(@{$$dataset{markerorder}})." markers, $totalFams families and $totalInds individuals.\n";
 }
 
 if ($map) {
