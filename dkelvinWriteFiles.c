@@ -370,6 +370,7 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
 	threshold = (modelOptions->imprintingFlag) ? -99.0 :
 	  deNormalizeMean (modelType, model->pen[liabIdx].threshold);
 	/* Theshold */
+      //fprintf (stderr, "threshold %f %f before after denormalization\n",model->pen[liabIdx].threshold, threshold);
 	fprintf (fpMOD, ",%.3f", threshold);
     }
     fprintf (fpMOD, ")");

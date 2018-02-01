@@ -159,6 +159,10 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
       }
     }
 
+    //When CT, total_dim already excluded 1 dim for threhold.
+    // I don't need to subtract total_dim.        thredhold is fixed at a value  12/8/2017
+    
+
     s = &init_state;
     initialize_state (s, xl, xu, dim);
 
@@ -273,9 +277,12 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 #endif 
 
   j = 1;        // j=0 for gfrequency
+
+  /* threshold for QT  the value is fixed at the value provided in Kelvin.conf*/
   if (modelType->trait == CT) {
-    threshold = x[s->ndim - 1];
-  }
+    //threshold = x[s->ndim - 1];
+    threshold = modelRange->tthresh[0][0]; // Only one value for all liability classes. // 12/8/2017
+  } 
   for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
     mean_DD = x[j];
     mean_Dd = (x[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 1];
@@ -599,7 +606,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
            * } */
         }
         if (modelType->trait == CT) {
-          localmax_x[k] = x[k - 1];
+          localmax_x[k] = threshold; //  1/30/2018x[k - 1];
           k++;
         }
       }
@@ -996,9 +1003,12 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
 
   /* this should be MEAN + SD */
   j = 1;
+
+  /* threshold for QT  the value is fixed at the value provided in Kelvin.conf*/
   if (modelType->trait == CT) {
-    threshold = x[s->ndim - 1];
-  }
+    //threshold = x[s->ndim - 1];
+    threshold = modelRange->tthresh[0][0]; // Only one value for all liability classes. // 12/8/2017
+  } 
   if (modelOptions->markerAnalysis == FALSE) {
     for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
       mean_DD = x[j];
@@ -1046,12 +1056,6 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
           dk_curModel.pen[liabIdxLocal].threshold = deNormalizeMean (modelType, threshold);
       }
 
-      /* threshold for QT *
-       * if (modelType->trait == CT) {
-       * threshold = x[j];      // modelRange->tthresh[liabIdxLocal][thresholdIdx];
-       * j++;
-       * } */
-
 
       /* check against the hard coded constraint */
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
@@ -1078,6 +1082,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
       pTrait->cutoffValue[liabIdxLocal] = threshold;
 
     }   /* liability class Index */
+
 
     if (modelOptions->polynomial == TRUE);
     else
@@ -1331,7 +1336,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
            * } */
         }
         if (modelType->trait == CT) {
-          localmax_x[k] = x[k - 1];
+          localmax_x[k] = threshold; //1/30/2018 x[k - 1];
           k++;
         }
       }
@@ -1749,9 +1754,11 @@ void integrateMain ()
     if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
       total_dim += modelRange->nlclass;
     }
+
+    /* This branch fixes threshold at a value, so do NOT increase the total_dim
     if (modelType->trait == CT) {
       total_dim++;      //  One threshold for all LCs    //   = modelRange->nlclass;
-    }
+    }*/
   }
 
   size_BR = total_dim;
@@ -1869,12 +1876,17 @@ void integrateMain ()
        * 
        * } */
     }   // retangular volume region is calculated and stored in volume_region
+
+    
+    /* Fixing threshold at a value, so do NOT add this  12/8/2017
     if (modelType->trait == CT) {
       xl[k] = 0.0;      // modelRange->tthresh[liabIdxLocal][0];//0.3;
       xu[k] = 3.0;
       volume_region *= (xu[k] - xl[k]);
       k++;
-    }
+    }*/
+
+
     // fprintf (stderr,"The number of dimension for calculation of BR is %d\n",k);
   }
 
@@ -2193,7 +2205,7 @@ void integrateMain ()
                 maxima_x[0] = dk_globalmax.theta[0] = fixed_thetaM;
                 maxima_x[1] = dk_globalmax.theta[1] = fixed_thetaF;
               }
-              dk_copyMaxModel (localmax_x, &dk_globalmax, size_BR);
+              dk_copyMaxModel (localmax_x, &dk_globalmax, size_BR+1);  // for the fized threhold
               memcpy (&(maxima_x[2]), localmax_x, sizeof (double) * 18);
             }
 	    if (overallMin > localMOD)
@@ -2206,20 +2218,20 @@ void integrateMain ()
                 dprime0_MOD = localMOD;
                 dk_dprime0max.dprime[0] = fixed_dprime;
                 dk_dprime0max.theta[0] = dk_dprime0max.theta[1] = fixed_theta;
-                dk_copyMaxModel (localmax_x, &dk_dprime0max, size_BR);
+                dk_copyMaxModel (localmax_x, &dk_dprime0max, size_BR+1); // for the fized threhold
               }
 	      
 	      if (i==114){ //D'=1 theta =0
 		dprimeP1_MOD = localMOD;
                 dk_dprimeP1max.dprime[0] = fixed_dprime;
                 dk_dprimeP1max.theta[0] = dk_dprimeP1max.theta[1] = fixed_theta;
-                dk_copyMaxModel (localmax_x, &dk_dprimeP1max, size_BR);
+                dk_copyMaxModel (localmax_x, &dk_dprimeP1max, size_BR+1);// for the fized threhold
 	      }
 	      if (i==50){ //D'=-1 theta =0
 		dprimeN1_MOD = localMOD;
                 dk_dprimeN1max.dprime[0] = fixed_dprime;
                 dk_dprimeN1max.theta[0] = dk_dprimeN1max.theta[1] = fixed_theta;
-                dk_copyMaxModel (localmax_x, &dk_dprimeN1max, size_BR);
+                dk_copyMaxModel (localmax_x, &dk_dprimeN1max, size_BR+1);// for the fized threhold
 	      }
 
 	      //fprintf(stderr,"i=%d dprime =%f theta=%f MOD=%f\n", i,fixed_dprime, fixed_theta, localMOD);
@@ -2235,7 +2247,7 @@ void integrateMain ()
                 if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
                   dk_theta0max.dprime[0] = fixed_dprime;
                 dk_theta0max.theta[0] = dk_theta0max.theta[1] = fixed_theta;
-                dk_copyMaxModel (localmax_x, &dk_theta0max, size_BR);
+                dk_copyMaxModel (localmax_x, &dk_theta0max, size_BR+1);// for the fized threhold
               }
 
             } else if (modelOptions->mapFlag == SS) {
@@ -2248,7 +2260,7 @@ void integrateMain ()
                   dk_theta0max.dprime[0] = 0.0;
                 dk_theta0max.theta[0] = fixed_thetaM;
                 dk_theta0max.theta[1] = fixed_thetaF;
-                dk_copyMaxModel (localmax_x, &dk_theta0max, size_BR);
+                dk_copyMaxModel (localmax_x, &dk_theta0max, size_BR+1);// for the fized threhold
               }
             }
             if ((modelOptions->mapFlag == SA) && (modelOptions->equilibrium == LINKAGE_EQUILIBRIUM) && (i == 9)) {
@@ -2905,7 +2917,7 @@ void integrateMain ()
 #endif
       dk_writeMPBRData (posIdx, traitPos, ppl, integral, max_scale);
 
-      dk_copyMaxModel (localmax_x, &dk_globalmax, size_BR);
+      dk_copyMaxModel (localmax_x, &dk_globalmax, size_BR+1);
       dk_writeMPMODData (posIdx, traitPos, localMOD, &dk_globalmax);
 
       if (fpDK != NULL) {
