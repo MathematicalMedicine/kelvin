@@ -140,7 +140,7 @@ INDEX (StudyId, ChromosomeNo, RefTraitPosCM)
 
 -- Must be independent of PedigreePositions both for multiple MarkerCount issues and map-merge issues
 CREATE TABLE SingleModelRuntimes (
-StudyId int DEFAULT NULL,
+StudyId int NOT NULL,
 PedigreeSId varchar(16) NOT NULL,
 ChromosomeNo int NOT NULL,
 PedTraitPosCM real NOT NULL,

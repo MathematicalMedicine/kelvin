@@ -1811,7 +1811,7 @@ WholeThing: LOOP
 
   -- Reconcile: Mark any servers not really in processlist with ExitStatus 42
   IF inWhich = 'Reconcile' THEN
-    --Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from INFORMATION_SCHEMA.PROCESSLIST) AND ExitStatus IS NULL;
+    -- Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from INFORMATION_SCHEMA.PROCESSLIST) AND ExitStatus IS NULL;
     -- This use of a temporary table is a tad silly. We *would* just go with
     -- what's above rather than using a temporary table as a go-between, but
     -- apparently when you have a sufficiently large number of connections
