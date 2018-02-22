@@ -1,51 +1,29 @@
 
-/* ***BEGIN PROLOGUE DCUHRE */
+/* ***BEGIN PROLOGUE DCUHRE
 
-/* ***DATE WRITTEN   900116   (YYMMDD) */
-
-/* ***REVISION DATE  900116   (YYMMDD) */
-
-/* ***CATEGORY NO. H2B1A1 */
-
-/* ***AUTHOR */
-
-/*            Jarle Berntsen, The Computing Centre, */
-
-/*            University of Bergen, Thormohlens gt. 55, */
-
-/*            N-5008 Bergen, Norway */
-
-/*            Phone..  47-5-544055 */
-
-/*            Email..  jarle@eik.ii.uib.no */
-
-/*            Terje O. Espelid, Department of Informatics, */
-
-/*            University of Bergen, Thormohlens gt. 55, */
-
-/*            N-5008 Bergen, Norway */
-
-/*            Phone..  47-5-544180 */
-
-/*            Email..  terje@eik.ii.uib.no */
-
-/*            Alan Genz, Computer Science Department, Washington State */
-
-/*            University, Pullman, WA 99163-2752, USA */
-
-/*            Email..  acg@eecs.wsu.edu */
-
-/* ***KEYWORDS automatic multidimensional integrator, */
-
-/*            n-dimensional hyper-rectangles, */
-
-/*            general purpose, global adaptive */
-
-/* ***PURPOSE  The routine calculates an approximation to a given */
-
-/*            vector of definite integrals */
-
-
+   ***DATE WRITTEN   900116   (YYMMDD)
+   ***REVISION DATE  900116   (YYMMDD)
+   ***CATEGORY NO. H2B1A1
+   ***AUTHOR
+              Jarle Berntsen, The Computing Centre,
+              University of Bergen, Thormohlens gt. 55,
+              N-5008 Bergen, Norway
+              Phone..  47-5-544055
+              Email..  jarle@eik.ii.uib.no
+              Terje O. Espelid, Department of Informatics,
+              University of Bergen, Thormohlens gt. 55,
+              N-5008 Bergen, Norway
+              Phone..  47-5-544180
+              Email..  terje@eik.ii.uib.no
+              Alan Genz, Computer Science Department, Washington State
+              University, Pullman, WA 99163-2752, USA
+              Email..  acg@eecs.wsu.edu
+   ***KEYWORDS automatic multidimensional integrator,
+              n-dimensional hyper-rectangles,
+              general purpose, global adaptive
+   ***PURPOSE  The routine calculates an approximation to a given
+              vector of definite integrals
+*/
 /***********************************************************************
    Translated into C version by f2c then rewritten to incorporate structures
    by Sang-Cheol Seok
@@ -322,20 +300,28 @@ dadhre_ (dcuhre_state * s)
 
 #ifdef STUDYDB
     // About to check for a split, so preserve the current dcuhre state for restoration. We should
-    // only need to preserve this one state because we only split once for any given client position in LKS.
+    // only need to preserve this one state because we only split once for any given region per LKS cycle.
+    // This is because we expect that the split will have created a whole new set of bogus likelihoods.
+
     MALCHOKE(held_dcuhre_state, sizeof (dcuhre_state), dcuhre_state *);
     memcpy (held_dcuhre_state, s, sizeof (dcuhre_state));
     fprintf (stderr, "DCUHRE split being considered w/%d bogus evaluation results subregion %d, tentative BR %g, real error %g...",
 	     s->sbrg_heap[s->next_sbrg]->bogusLikelihoods, s->next_sbrg, real_result, real_error);
+
+    // If there are no bogus likelihoods in the current subregion AND Sang-Cheol says so...
     if (
 	(s->sbrg_heap[s->next_sbrg]->bogusLikelihoods == 0) &&
 	(
-	 (real_result < 0.0) || ((real_error > s->epsabs) && (s->cur_diff_suc< s->aim_diff_suc))// && (s->cur_num_smallBR< s->aim_num_smallBR) )
+	 (real_result < 0.0) || ((real_error > s->epsabs) && (s->cur_diff_suc< s->aim_diff_suc))
 	)
-       ) { //short and consecutive 2*nlclass of diff(BR)< error_tol
+       ) { // Short and consecutive 2*nlclass of diff(BR)< error_tol
 #else
-      if ( (real_result <0.0)||((real_error > s->epsabs)&&(s->cur_diff_suc< s->aim_diff_suc))){//&& (s->cur_num_smallBR< s->aim_num_smallBR))){//short and consecutive 2*nlclass of diff(BR)< error_tol
+      // If Sang-Cheol says so...
+    if (
+	 (real_result <0.0) || ((real_error > s->epsabs) && (s->cur_diff_suc< s->aim_diff_suc))
+       ) { // Short and consecutive 2*nlclass of diff(BR)< error_tol
 #endif
+
       /*   If we are allowed to divide further, */
       /*   prepare to apply basic rule over each half of the */
       /*   NDIV subregions with greatest errors. */
@@ -373,7 +359,6 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->lchild_id = 0;
 
       if (s->verbose > 1) {
-    fprintf (stderr, "B");
 	print_sbrg (cw_sbrg, s->ndim);
       }
       drlhre_ (s, cw_sbrg);
@@ -389,6 +374,8 @@ dadhre_ (dcuhre_state * s)
 		 s->sbrgns, s->result, s->error);
       }
 #ifdef STUDYDB
+      // This is purely informative.
+
       fprintf (stderr, "DCUHRE split performed from parent %d, direction %d!\n", cw_sbrg->parent_id, parent_sbrg->dir);
       fprintf(stderr, "Left half region %d w/%d bogus evaluation results\n", 
 	      s->sbrgns, 
@@ -418,7 +405,6 @@ dadhre_ (dcuhre_state * s)
       cw_sbrg->lchild_id = 0;
 
       if (s->verbose > 1) {
-    fprintf (stderr, "C");
 	print_sbrg (cw_sbrg, s->ndim);
       }
       drlhre_ (s, cw_sbrg);
@@ -441,17 +427,21 @@ dadhre_ (dcuhre_state * s)
       }
 
 #ifdef STUDYDB
+      // This is purely informative.
+
       fprintf(stderr, "Right half region %d w/%d bogus evaluation results\n", 
 	      s->sbrgns, 
 	      s->sbrg_heap[s->sbrgns]->bogusLikelihoods);
 #endif
       s->sbrgns++;
+
 #ifdef STUDYDB
       if (studyDB.bogusLikelihoods > 0) {
 	// Did a split, but with bogus results we need to PRETEND that we didn't by
 	// resetting s back to the pre-split state? Ew!
 	memcpy (s, held_dcuhre_state, sizeof (dcuhre_state));
-	// Turns out that s is not all that has to be restored, so recalculate the real_result and real_error
+	// Turns out that "s" is not all that has to be restored, so recalculate the real_result and real_error
+	// NOTE that this is being done after new region work, but should be OK because it is only using "s"
 	real_result = s->result / s->vol_rate;
 	real_error = s->error / s->vol_rate;
 	free (held_dcuhre_state);
@@ -475,6 +465,7 @@ dadhre_ (dcuhre_state * s)
       }
       s->ifail = 1;
     } else {
+
 #ifdef STUDYDB
       // Didn't do a split
       free (held_dcuhre_state);
@@ -518,15 +509,22 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   divaxn = 0;
 
 #ifdef STUDYDB
+  // Attempt to retrieve a subregion cache file and return it's contents instead of calculating one
+  // in order to reduce the load on the database when running in LKS mode. I'm not entirely sure why
+  // this is only implemented for LKS (STUDYDB) as it _should_ work the same in any context.
+
   tpl_node *tn;
   char *regionTPLFormat = "iiffii";
   char *regionFileFormat = "study_%d-anl_%d-pos_%g-reg_%d.dat";
   char fileName[256];
   FILE *file;
 
+  // Subregion cache file names are specific to analysis, trait position and region ID.
   sprintf (fileName, regionFileFormat, studyDB.studyId, studyDB.analysisId, traitPos , cw_sbrg->region_id);
+  // The cache file contains the components of a subregion structure - the results of a previous successful
+  // calculation, which we will use to populate cw_sbrg and return.
   tn = tpl_map (regionTPLFormat, &cw_sbrg->parent_id, &cw_sbrg->region_level, &cw_sbrg->local_result, &cw_sbrg->local_error, &cw_sbrg->dir, &cw_sbrg->cur_scale);
-  fprintf (stderr, "StudyId: %d, trait pos: %g, seeking subregion %d...", studyDB.studyId, traitPos , cw_sbrg->region_id);
+  fprintf (stderr, "StudyId: %d, analysisId: %d,traitPos: %g, seeking subregion %d...", studyDB.studyId, studyDB.analysisId, traitPos , cw_sbrg->region_id);
 
   if ((file = fopen (fileName, "r"))) {
     fprintf (stderr, "OK\n");
@@ -723,8 +721,12 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   }
 
 #ifdef STUDYDB
-
-  if (cw_sbrg->bogusLikelihoods == 0 && (cw_sbrg->region_id != 0 || studyDB.bogusLikelihoods == 0)) {
+  /* We cannot tolerate ANY bogus likelihoods when we write a cache since the marker set likelihood, which is not a part of any region,
+     might fail to be retrieved for some reason (database pain, server failure, who knows?), and NOT getting it leads to calculating an
+     incorrect tentative local BR (and error).
+  */
+  //  if (->bogusLikelihoods == 0 && (cw_sbrg->region_id != 0 || studyDB.bogusLikelihoods == 0)) {
+  if (studyDB.bogusLikelihoods == 0) {
     fprintf (stderr, "Saving cw_sbrg->region_id: %d, cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d, studyDB.bogusLikelihoods: %d\n",
 	     cw_sbrg->region_id, cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale, studyDB.bogusLikelihoods);
 

@@ -2623,6 +2623,11 @@ void integrateMain ()
 
 #ifdef STUDYDB
       
+      /* A positive value in freeModels ensures a position is checked for work. Note that this check is done only once
+	 for each server at each position, and it can fall victim to race conditions, so it is possible (and tolerable)
+	 if no actual free models exist where some are indicated.  Also, the actual count of freeModels is irrelevant,
+	 as the only consideration is >0 or not.
+      */
       int freeModels = 0;
 
       studyDB.driverPosIdx = posIdx;

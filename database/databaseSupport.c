@@ -843,8 +843,8 @@ int GetMarkerSetLikelihood_MCMC(int pedPosId)
     studyDB.markerSetLikelihoodFlag=1;
     studyDB.markerSetPedPosId = studyDB.pedPosId;
   } else {
-    WARNING ("Returning failure as mysql_num_rows (studyDB.resultSet) is %d, and studyDB.totalSampleCount is %d",
-	     mysql_num_rows (studyDB.resultSet), studyDB.totalSampleCount);
+    WARNING ("Returning failure as mysql_num_rows (studyDB.resultSet) is %lu, and studyDB.totalSampleCount is %d",
+	     (unsigned long) mysql_num_rows (studyDB.resultSet), studyDB.totalSampleCount);
     // If the likelihood is unavailable, it is not because of a failure in the database calls, since they're all set to ERROR on problems,
     // so any retry work should be based upon whatever is causing the delay, and not be infinite!
     mysql_free_result(studyDB.resultSet);
