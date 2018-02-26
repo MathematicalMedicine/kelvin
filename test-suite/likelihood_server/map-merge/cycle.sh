@@ -23,14 +23,27 @@ set -x
 # Any queuing modifier, like using -q johntest
 qmods=""
 
-# Don't just quit if nothing is available -- wait for it.
-alias qrsh="qrsh -now no $qmods"
-
-# These are for nodes other than Levi-Montalcini, where SGE is not available
-if test "$HOSTNAME" != "Levi-Montalcini" ; then
-    alias qrsh="bash -c "
-    alias nq="bash -c "
-fi
+# Handle unique job submission situations.
+case $HOSTNAME in
+    Levi-Montalcini )
+        # Don't just quit if nothing is available -- wait for it.
+        alias qrsh="qrsh -now no $qmods "
+        lks_server_count=${lks_server_count-8}
+    ;;
+    opt* ) # OSC's Opteron cluster
+        lks_server_count=${lks_server_count-8}
+    ;;
+    master | node* ) # StarCluster
+        alias qrsh="qrsh -now no $qmods "
+        alias nq="qsub -cwd "
+        lks_server_count=${lks_server_count-2}
+    ;;
+    * ) # Everything else
+        alias qrsh="bash -c "
+        alias nq="bash -c "
+        lks_server_count=${lks_server_count-2}
+    ;;
+esac
 
 # Do the initialization only if there was no command line parameter
 if test -z "$1" ; then
@@ -56,6 +69,11 @@ StudyId=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names
 # Get the AnalysisId from the database.
 AnalysisId=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="Select AnalysisId from Analyses where StudyId = $StudyId AND PedigreeRegEx = '$8' AND PedigreeNotRegEx = '$9'")
 
+if test -z "$StudyId"; then
+    echo "ERROR - STUDY directive in configuration file specified StudyLabel ($2) that was not found in the database, exiting!"
+    exit 2
+fi
+
 # Setup the Single-Model RunTimes so bucket loading can be intelligent
 SMRTs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions a, SingleModelRuntimes b set a.SingleModelEstimate = b.SingleModelRuntime, a.SingleModelRuntime = b.SingleModelRuntime where a.StudyId = $StudyId AND a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.PedTraitPosCM = b.PedTraitPosCM;")
 if test $SMRTs -ne 0 ; then
@@ -65,6 +83,9 @@ fi
 
 while :
 do
+  # Reveal work to be done
+    FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
+
   # Enqueue a few servers and...
   nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset1 $qmods" &
   nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset1 $qmods" &
@@ -80,6 +101,9 @@ do
   # Make sure that nothing remains undone
   while :
   do
+    # Reveal work to be done
+    FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
+
     ToDos=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId;")
     if test $ToDos -eq 0 ; then
         break;
@@ -92,6 +116,8 @@ do
     echo Waiting for servers to finish
     sleep 300
   done
+  # Reveal work to be done
+  FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
   # Run the client to see if any splits occur
   qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
   grep WARNING br.out || { break; }
