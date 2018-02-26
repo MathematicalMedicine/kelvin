@@ -21,10 +21,16 @@ if test -z "$StudyId"; then
     exit 2
 fi
 
+# Reveal work to be done
+FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
+
 # Run a single partial server - will do a subset of the pedigrees for all positions
 qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server-just-a-few"
 ToDos=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId;")
 echo Original client still has $ToDos models pending.
+
+# Reveal work to be done
+FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
 
 # Run the full client
 rm study_*.dat || true
@@ -32,25 +38,40 @@ qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --Progre
 grep WARNING br.out || true
 echo Original client cannot complete analysis due to pending models.
 
+# Reveal work to be done
+FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
+
 # Try the reduced client
 qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client-only-1.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
 grep WARNING br.out || true
 echo Reduced client finishes fine.
 
+# Reveal work to be done
+FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
+
 # Verify that positions are pending for the full client
 TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct a.RefTraitPosCM from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId AND a.RefTraitPosCM > 0.0;" | tr "\n" " ")
 echo Positions $TPs are pending.
+
+# Reveal work to be done
+FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
 
 # Finish the pending full client models
 qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server"
 ToDos=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId;")
 echo Original client still has $ToDos models pending.
 
+# Reveal work to be done
+FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
+
 # Run the full client again to add more models (we know it splits)
 rm study_*.dat || true
 qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
 grep WARNING br.out || true
 echo Original client cannot complete analysis due to pending models.
+
+# Reveal work to be done
+FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
 
 # Run the reduced client to show that it is unaffected by the newly-added models
 rm study_*.dat || true
@@ -61,6 +82,8 @@ echo Reduced client finishes fine.
 # Run the full server and client a few more times to get final results
 while :
 do
+  # Reveal work to be done
+  FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
   qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server"
   qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
   grep WARNING br.out || { break; }
