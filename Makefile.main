@@ -5,7 +5,9 @@
 
 # Generally there should be no need to make changes to this file.
 
-
+.PHONY: list
+list:
+	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
 
 ## Command used to download files from the Web. Used to build patched Merlin.
 ## This is necessary because Merlin's licensing terms do not allow us to
