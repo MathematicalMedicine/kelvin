@@ -1,3 +1,5 @@
+SEQUPDATE_BINARY ?= missing
+
 test :
 	- rm -rf br.updated ppl.updated
 	$(SEQUPDATE_BINARY) -O br.updated br1.out br2.out > ppl.updated
