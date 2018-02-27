@@ -54,14 +54,17 @@ TP=`perl -we 'use strict;
 	      @p = sort { $a <=> $b } (keys (%p));
 	      $i = int (scalar (@p) / $ENV{SGE_TASK_LAST}) + 1;
 	      $s = $i * ($ENV{SGE_TASK_ID} - 1);
-              print (join (",", splice (@p, $s, $i)), "\n");'`
+	      ($s < scalar (@p)) and print (join (",", splice (@p, $s, $i)), "\n");
+	      exit (0);'`
+RETVAL=$?
 
 if [ -z "$TP" ] ; then
     # This is not necessarily an error: when the number of tasks approaches the 
     # the number of trait positions, the last task may end up with no positions, 
     # depending on the math.
     echo "no trait positions to calculate, exiting"
-    if [ $SGE_TASK_ID -eq $SGE_TASK_LAST ] ; then
+    if [ "$RETVAL" = "0" ] ; then 
+    # if [ $SGE_TASK_ID -eq $SGE_TASK_LAST ] ; then
 	# Leave an empty BR file (and MOD file, if called for), so the merge doesn't croak
         echo "" > $BR.$SGE_TASK_ID
 	[ "$MOD" ] && echo "" > $MOD.$SGE_TASK_ID

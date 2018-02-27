@@ -1,19 +1,27 @@
 #!/usr/bin/env perl
 use strict;
 use warnings FATAL => qw(all);
-use FindBin; use lib split(/:+/, "!:$ENV{'TOOLPATH'}:$FindBin::Bin");
+use FindBin;
+use lib $FindBin::Bin;
+use lib ($ENV{TOOLPATH} ? split (/:/, $ENV{TOOLPATH}) : ' ');
 use DBI;
 use POSIX ":sys_wait_h";
 
-my $max_children = 4;
+my $max_children = 8;
 my $loop_delay = 5;
-my $tooldir = '/export/local/bcmmtools/lks';
+my $tooldir = '/home/burianj/kelvin/LKS';
+#my $tooldir = '/export/local/bcmmtools/lks';
 my $cleanupscript = "$tooldir/merlin_lk_cleanup.sh";
-my $cyclescript = "$tooldir/merlin_lk_cycle.sh";
+my $cyclescript = "$tooldir/mcmc_lk_cycle.sh";
+# Set this to empty string to make the cycle script call InitStudy
+my $noinit = "";
 
 my %child_pids;
 my @workdirs;
 my $ret;
+
+(exists ($ENV{MAX_CHILDREN}) && $ENV{MAX_CHILDREN} =~ /^\d+$/)
+        and $max_children = $ENV{MAX_CHILDREN};
 
 ( -x $cleanupscript && -x $cyclescript )
     or die ("cycle scripts are missing not executable in '$tooldir'\n");
@@ -62,7 +70,7 @@ sub spawn_child
     chdir ($dir)
 	or die ("$$: chdir '$dir' failed, $!\n");
 
-    $ret = system ("$cyclescript > cycle.out 2>&1");
+    $ret = system ("$cyclescript $noinit > cycle.out.1 2>&1");
     if ($ret == -1) {
 	print ("$$: WARNING system first '$cyclescript' failed, $!\n");
 	exit ($ret);
@@ -80,7 +88,7 @@ sub spawn_child
 	exit ($ret);
     }
 
-    $ret = system ("$cyclescript > cycle.out 2>&1");
+    $ret = system ("$cyclescript $noinit > cycle.out.2 2>&1");
     if ($ret == -1) {
 	print ("$$: WARNING system second '$cyclescript' failed, $!\n");
 	exit ($ret);
