@@ -28,6 +28,10 @@ $whole_RIGHT =~ s/\$Id.* \$//g; # Ignore comparisons of SVN or CVS version Ids
 # Split the files into lists delimited by whitespace, commas, newlines and parens, and keep delimiters
 @chunks_LEFT = split (/([\s\n]+|[,\(\)])/, $whole_LEFT);
 @chunks_RIGHT = split (/([\s\n]+|[,\(\)])/, $whole_RIGHT);
+if (scalar(@chunks_LEFT) != scalar(@chunks_RIGHT)) {
+    print "Files have different number of chunks!\n";
+    exit (1);
+}
 # Compare all of the tokens and delimiters
 for ($i = 0; $i < $#chunks_LEFT; $i++) {
     $left = $chunks_LEFT[$i]; $right = $chunks_RIGHT[$i];
