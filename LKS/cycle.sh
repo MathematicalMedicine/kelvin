@@ -79,22 +79,23 @@ if test "$SMRTs" != "0" ; then
     # Assuming SOME finished, any that we missed should be treated as if they took too long..
     Singles=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions set SingleModelRuntime = 999999 where StudyId = $StudyId AND PedTraitPosCM <> 9999.99 AND SingleModelRuntime IS NULL;")
 fi
-
-# Reveal work to be done
-FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
 c=1
 while :
 do
+  # Reveal work to be done
+    FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
+
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
   for ((servs=1; servs<lks_server_count; servs++)); do
     qsub -cwd $KELVIN_ROOT/LKS/run_server.sh server $qmods
   done
   # Run a single one blocking further processing until most work is done
   qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server"
-  # Reveal work to be done
-  FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
   while :
   do
+    # Reveal work to be done
+    FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
+
     ToDos=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId;")
     if test $ToDos -eq 0 ; then
         break;
