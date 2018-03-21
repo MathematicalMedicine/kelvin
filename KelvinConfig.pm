@@ -373,7 +373,7 @@ sub setDirective
 
 =item $bool = $config->removeDirective ($directive);
 
-Removes $directive completely frmothe configuration. Returns
+Removes $directive completely from the configuration. Returns
 undef if $directive is illegal or is not present in the 
 configuration, or return 1 otherwise.
 
@@ -401,7 +401,7 @@ sub removeDirective
 
 =item $arrayref = $config->directives;
 
-Returns a reference to an array containing the canonical namesa
+Returns a reference to an array containing the canonical names
 of all the directives in the configuration.
 
 =back 
@@ -698,39 +698,69 @@ sub defaultPhenoCodes
     }
 }
 
+
+# The following two methods are directive-specific, which is generally frowned
+# upon and to be avoided. The Study directive, however, is a bit of an unruly
+# special case. A more realistic fix would be to make the Study directive less
+# unruly and more standardized, but that would require more time than we have.
+# So, instead, we have these two methods that allow us to manipulate it via a
+# standardized hashref.
+
 sub readStudyLine {
     # Returns a hashref containing the contents of the Study line in a Kelvin
     # config file.
     my ($self) = @_;
     
-    my $arg = ${$self->isConfigured("Study")}[0];
-    
-    # The following regex is taken from InitStudy.pl and allows for quoting of
-    # StudyLabel and Password.
-    # Narration: optionally match a single or full quote, then a string
-    # excluding single or full quotes, and finally, if some quote was found,
-    # require its closure. Only shortcoming is not allowing embedded single or
-    # full quotes.
-    # Groups 1 and 7 are used as part of "internal processing" and so will not
-    # have useful values. If any of other groups are blank or otherwise
-    # undefined, then this is an invalid Study directive.
-    $arg =~ /(["'])?([^"']+)(?(1)\1|)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(["'])?([^"']+)(?(7)\7|)\s+(\S+)\s+(\S+)/;
-    
-    if ($2) {
-        return {
-                label => $2,
-                role => uc($3),
-                host => $4,
-                database => $5,
-                username => $6,
-                password => $8,
-                pedregex => $9,
-                pednotregex => $10
-        }
-    } else {
-        $errstr = "Invalid Study directive $arg";
+    # Make sure we have a legal Study directive to work with!
+    unless (defined($self->legalDirective("Study"))) {
+        # legalDirective will set errstr for us
         return (undef);
     }
+    
+    my $studyline = ${$self->isConfigured("Study")}[0];
+    $studyline =~ /^$directives{study}{regex}$/i;
+    return {
+            label => $1,
+            role => uc($2),
+            host => $3,
+            database => $4,
+            username => $5,
+            password => $6,
+            pedregex => $7,
+            pednotregex => $8,
+            mcmc => $9,
+            mcmctotal => $10,
+            mcmcstart => $11,
+            mcmcend => $12
+    }
+}
+
+sub setStudyLine {
+    # Takes a hashref that sets the contents of the Study line in a Kelvin
+    # config file.
+    my ($self, $setref) = @_;
+    
+    my $directivefields = [];
+    # Validate each field's presence as we add it.
+    foreach my $fieldname ("label", "role", "host", "database", "username", "password", "pedregex", "pednotregex") {
+        unless (defined($$setref{$fieldname})) {
+            $errstr = "Study hashref missing required field $fieldname";
+            return (undef);
+        }
+        push(@$directivefields, $$setref{$fieldname});
+    }
+    if (defined($$setref{mcmc})) {
+        push(@$directivefields, "MCMC");
+        foreach my $fieldname ("mcmctotal", "mcmcstart", "mcmcend") {
+            unless (defined($$setref{$fieldname})) {
+                $errstr = "Study hashref missing required field $fieldname";
+                return (undef);
+            }
+            push(@$directivefields, $$setref{$fieldname});
+        }
+    }
+    
+    return $self->setDirective("Study", join(" ", @$directivefields));
 }
 
 1;

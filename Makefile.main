@@ -57,7 +57,7 @@ SEQUPDATE_BINARY := $(KELVIN_ROOT)/seq_update/$(CALC_UPDATED_PPL)
 
 # Repository where we can find the pipeline scripts
 # Note that this will probably only work internally for obvious reasons!
-PIPELINE_SVNROOT:=https://hodgkin/svn/bcmmtools
+PIPELINE_SVNROOT:=https://chase.crii.org/svn/bcmmtools
 
 ## Directories in which optional header files and libraries can be found (GSL,
 ## etc). Remember you can specify these as command-line macros, e.g. at OSC:
@@ -425,6 +425,7 @@ clean-merlin :
 	mv merlin merlin-cleaning
 	mkdir merlin
 	mv merlin-cleaning/$(MERLIN_PATCH) merlin
+	if [[ -d merlin-cleaning/.svn ]]; then mv merlin-cleaning/.svn merlin; fi
 	rm -rf merlin-cleaning
 
 .PHONY : test-USE_DL
@@ -503,34 +504,33 @@ bt_scriptnames := \
 # Pipeline scripts included in SVN bcmmtools/cleaning/
 btc_scriptnames := \
     cleaning_arrayjob.sh \
+    jobcheck.sh \
     cleaning_common.sh \
     error_handling.sh \
     cmdline_parser.sh \
     template_control_analysis_portable.sh \
     template_settings_portable.sh \
-    get_ped_complexity.sh \
+    makeped.pl \
     LKS_sortPedsForRun.pm \
     MCMC_setup.sh \
+    copy_samples.sh \
     MCMC_sizing.sh \
     MCMC_size_pedigree.sh \
+    LKS_MCMCSizeReporting.pm \
     MCMC_sampling.sh \
     MCMC_sample_pedigree.sh \
-    MCMC_gathering.sh \
-    collect_MCMC_pedigrees.pl \
-    source_a_script.sh \
-    transient_MySQL_LKS_setup.sh \
-    initial_LKS_runs.sh \
-    MCMC_kelvin_MP_only_setup.sh \
-    LKS_iteration.sh \
-    MCMC_kelvin_server_pedigree.sh \
-    LKS_pool_ppl.sh \
-    LKS_KelvinSplitClient.pm \
+    MCMC_assembly.sh \
+    LKS_MCMCSampleAssembly.pm \
     LKS_transient_servers.sh \
     transient_server_common_custopts.sh \
-    mp_marker_strip.pl \
+    transient_MySQL_LKS_setup.sh \
     mysql-transient-ramdisk.cnf \
-    LKS_MCMCSizeReporting.pm \
-    makeped.pl
+    LKS_MergeDBConnectInfo.pm \
+    LKS_PopulateDatabase.pm \
+    LKS_iteration.sh \
+    LKS_KelvinSplitClient.pm \
+    MCMC_kelvin_server_pedigree.sh \
+    LKS_pool_ppl.sh
 # Pipeline scripts included in SVN bcmmtools/cleaning/ that require special
 # handling at install time
 btc_scriptspecials := \
@@ -611,7 +611,6 @@ lks_target_names := \
     DModelParts.sql \
     QModelParts.sql \
     LKS_InitStudy.pm \
-    remove_study.sh \
     merlin_lk_prepare.pl \
     merlin_lk_server.pl
 bindir_lks = $(patsubst %,$(BINDIR)/%, $(lks_target_names))

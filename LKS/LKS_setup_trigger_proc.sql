@@ -1,85 +1,112 @@
+--
+-- Dangerous @-sign GLOBALS...look for test-set-act sequences that can deadlock and break during the act
+-- because even if they are in a transaction, the set is not something that gets rolled back.
+--
+-- @outMarkerSetId is...
+--   1. Set to LAST_INSERT_ID into MarkerSetLikelihood at the very end of GetMarkerSetLikelihood
+--   2. Set to outLC2MPId or -1 at 3 places in GetWork, eeeeeuuuugh!
+--   3. Set to LAST_INSERT_ID into MarkerSetLikelihood in CacheMarkerWork
+--   4. In a diagnostic "print" and as key in select/counting, inserting and updating MarkerSetLikelihood_MCMC in PutWork
+--
+-- @MCMC_flag is...
+--   1. Set to 1 or 0 in GetWork
+--   2. Tested in CacheCombinedWork
+--   3. Tested in PutWork
+--
+-- @outLCM1MPId is...
+--   1. Conditionally set to -1 in GetWork if realLocusListType = 1 (right after call to CacheMarkerWork)
+--   2. Tested for >= 0 in PutWork
+--   AND NEVER CHANGES?! This has _got_ to be broken.
+--
+-- I wonder about @outModelId...but it is local to PutWork
+--
+
+-- All the careful tracking of available work is no longer necessary given our pipelined approach. It has been
+-- being phased out for some time, and finally we're dropping it and instead going to use FreeModels as a flag
+-- that is set in the pipeline after client and server-set runs.
+
 DELIMITER ;
 DROP TRIGGER IF EXISTS DecMarkers;
 
-DELIMITER //
-CREATE TRIGGER DecMarkers AFTER UPDATE ON MarkerSetLikelihood FOR EACH ROW
-BEGIN
-  Update PedigreePositions set FreeModels = FreeModels - 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.ServerId IS NULL AND
-    NEW.ServerId IS NOT NULL;
-  Update PedigreePositions set FreeModels = FreeModels + 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.ServerId IS NOT NULL AND
-    NEW.ServerId IS NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods - 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.Likelihood IS NULL AND
-    NEW.Likelihood IS NOT NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.Likelihood IS NOT NULL AND
-    NEW.Likelihood IS NULL;
-END;
-//
-DELIMITER ;
+-- DELIMITER //
+-- CREATE TRIGGER DecMarkers AFTER UPDATE ON MarkerSetLikelihood FOR EACH ROW
+-- BEGIN
+--   Update PedigreePositions set FreeModels = FreeModels - 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.ServerId IS NULL AND
+--     NEW.ServerId IS NOT NULL;
+--   Update PedigreePositions set FreeModels = FreeModels + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.ServerId IS NOT NULL AND
+--     NEW.ServerId IS NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods - 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.Likelihood IS NULL AND
+--     NEW.Likelihood IS NOT NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.Likelihood IS NOT NULL AND
+--     NEW.Likelihood IS NULL;
+-- END;
+-- //
+-- DELIMITER ;
 
 DROP TRIGGER IF EXISTS IncMarkers;
 
-DELIMITER //
-CREATE TRIGGER IncMarkers AFTER INSERT ON MarkerSetLikelihood FOR EACH ROW
-BEGIN
-  Update PedigreePositions set FreeModels = FreeModels + 1 where
-    PedPosId = NEW.PedPosId AND
-    NEW.ServerId IS NULL AND
-    NEW.Likelihood IS NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
-    PedPosId = NEW.PedPosId AND
-    NEW.Likelihood IS NULL;
-END;
-//
-DELIMITER ;
+-- DELIMITER //
+-- CREATE TRIGGER IncMarkers AFTER INSERT ON MarkerSetLikelihood FOR EACH ROW
+-- BEGIN
+--   Update PedigreePositions set FreeModels = FreeModels + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     NEW.ServerId IS NULL AND
+--     NEW.Likelihood IS NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     NEW.Likelihood IS NULL;
+-- END;
+-- //
+-- DELIMITER ;
 
 DROP TRIGGER IF EXISTS DecModels;
 
-DELIMITER //
-CREATE TRIGGER DecModels AFTER UPDATE ON Models FOR EACH ROW
-BEGIN
-  Update PedigreePositions set FreeModels = FreeModels - 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.ServerId IS NULL AND
-    NEW.ServerId IS NOT NULL;
-  Update PedigreePositions set FreeModels = FreeModels + 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.ServerId IS NOT NULL AND
-    NEW.ServerId IS NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods - 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.Likelihood IS NULL AND
-    NEW.Likelihood IS NOT NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
-    PedPosId = NEW.PedPosId AND
-    OLD.Likelihood IS NOT NULL AND
-    NEW.Likelihood IS NULL;
-END;
-//
-DELIMITER ;
+-- DELIMITER //
+-- CREATE TRIGGER DecModels AFTER UPDATE ON Models FOR EACH ROW
+-- BEGIN
+--   Update PedigreePositions set FreeModels = FreeModels - 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.ServerId IS NULL AND
+--     NEW.ServerId IS NOT NULL;
+--   Update PedigreePositions set FreeModels = FreeModels + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.ServerId IS NOT NULL AND
+--     NEW.ServerId IS NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods - 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.Likelihood IS NULL AND
+--     NEW.Likelihood IS NOT NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     OLD.Likelihood IS NOT NULL AND
+--     NEW.Likelihood IS NULL;
+-- END;
+-- //
+-- DELIMITER ;
 
 DROP TRIGGER IF EXISTS IncModels;
 
-DELIMITER //
-CREATE TRIGGER IncModels AFTER INSERT ON Models FOR EACH ROW
-BEGIN
-  Update PedigreePositions set FreeModels = FreeModels + 1 where
-    PedPosId = NEW.PedPosId AND
-    NEW.ServerId IS NULL AND
-    NEW.Likelihood IS NULL;
-  Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
-    PedPosId = NEW.PedPosId AND
-    NEW.Likelihood IS NULL;
-END;
-//
-DELIMITER ;
+-- DELIMITER //
+-- CREATE TRIGGER IncModels AFTER INSERT ON Models FOR EACH ROW
+-- BEGIN
+--   Update PedigreePositions set FreeModels = FreeModels + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     NEW.ServerId IS NULL AND
+--     NEW.Likelihood IS NULL;
+--   Update PedigreePositions set PendingLikelihoods = PendingLikelihoods + 1 where
+--     PedPosId = NEW.PedPosId AND
+--     NEW.Likelihood IS NULL;
+-- END;
+-- //
+-- DELIMITER ;
 
 DROP PROCEDURE IF EXISTS BadScaling;
 
@@ -91,8 +118,10 @@ DELIMITER //
 
 CREATE PROCEDURE BadScaling (IN inStudyId int)
 BEGIN
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
   DECLARE no_rows_indicator INT DEFAULT 0;
+  DECLARE localMapId INT;
+  DECLARE localMarkerName char(16);
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
@@ -162,7 +191,7 @@ WholeThing: LOOP
   Downscale: LOOP
 
     SET no_rows_indicator = 0;
-    Select MapId, MarkerName into @MapId, @MarkerName from MapMarkers where
+    Select MapId, MarkerName into localMapId, localMarkerName from MapMarkers where
 	StudyId = inStudyId AND
 	(Scale > 10.0 OR Scale < 0.1) AND Scale IS NOT NULL limit 1;
     IF no_rows_indicator THEN
@@ -236,29 +265,31 @@ CREATE PROCEDURE GetMarkerSetLikelihood (
  OUT outRegionId int, OUT outMarkerCount int, OUT outLikelihood real
 )
 BEGIN
-    DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+    DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
     DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
     DECLARE outMarkerSetId INT DEFAULT -1;
     DECLARE no_rows_indicator INT DEFAULT 0;
+    DECLARE localStudyId INT;
+    DECLARE localChromosomeNo INT;
+    DECLARE localRefTraitPosCM DOUBLE;
     DECLARE no_rows CONDITION FOR 1329;
     DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
-    set @traitType=0;
     Start transaction;
 
     -- Get the RegionId 
 
-    Select StudyId, ChromosomeNo, RefTraitPosCM INTO @StudyId, @ChromosomeNo, @RefTraitPosCM
+    Select StudyId, ChromosomeNo, RefTraitPosCM INTO localStudyId, localChromosomeNo, localRefTraitPosCM
     from PedigreePositions where PedPosId = inPedPosId;
 
     Set no_rows_indicator = 0;
     Select RegionId into outRegionId from Regions where
-    StudyId = @StudyId AND AnalysisId = inAnalysisId AND ChromosomeNo = @ChromosomeNo AND 
-    RefTraitPosCM = @RefTraitPosCM AND RegionNo = inRegionNo;
+    StudyId = localStudyId AND AnalysisId = inAnalysisId AND ChromosomeNo = localChromosomeNo AND 
+    RefTraitPosCM = localRefTraitPosCM AND RegionNo = inRegionNo;
 
     If no_rows_indicator THEN
       Insert into Regions (StudyId, AnalysisId, ChromosomeNo, RefTraitPosCM, RegionNo, ParentRegionNo, ParentRegionError, ParentRegionSplitDir) values
-      (@StudyId, inAnalysisId, @ChromosomeNo, @RefTraitPosCM, inRegionNo, inParentRegionNo, inParentRegionError, inParentRegionSplitDir);
+      (localStudyId, inAnalysisId, localChromosomeNo, localRefTraitPosCM, inRegionNo, inParentRegionNo, inParentRegionError, inParentRegionSplitDir);
       Select LAST_INSERT_ID() INTO outRegionId;
     END IF;
 
@@ -285,25 +316,15 @@ CREATE PROCEDURE GetAnalysisId (
  IN inPedigreeNotRegEx varchar(1025),
  OUT outAnalysisId int)
 BEGIN
-    DECLARE version char(64) DEFAULT '$Id$';
-    DECLARE no_rows_indicator INT DEFAULT 0;
-    DECLARE no_rows CONDITION FOR 1329;
-    DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
+    DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
+    -- This now relies exclusively on the unique key, which really should be PedigreRegEx and PedigreeNotRegEx, but
+    -- those have become unreasonably long.
+    Insert ignore into Analyses (StudyId, Uniquey, PedigreeRegEx, PedigreeNotRegEx) values
+      (inStudyId, COMPRESS(CONCAT(inPedigreeRegEx,'/',inPedigreeNotRegEx)), inPedigreeRegEx, inPedigreeNotRegEx);
 
-    Start transaction;
-
-    Set no_rows_indicator = 0;
     Select AnalysisId INTO outAnalysisId
     from Analyses where StudyId = inStudyId AND PedigreeRegEx = inPedigreeRegEx AND PedigreeNotRegEx = inPedigreeNotRegEx;
-
-    If no_rows_indicator THEN
-      Insert into Analyses (StudyId, PedigreeRegEx, PedigreeNotRegEx) values
-      (inStudyId, inPedigreeRegEx, inPedigreeNotRegEx);
-      Select LAST_INSERT_ID() INTO outAnalysisId;
-    END IF;
-
-    commit;
-
+      
 END;
 //
 DELIMITER ;
@@ -326,29 +347,34 @@ CREATE PROCEDURE GetDLikelihood (
  OUT outRegionId int, OUT outMarkerCount int, OUT outLikelihood real
 )
 BEGIN
-    DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+    DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
     DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood will not exist
-
+    DECLARE localStudyId INT;
+    DECLARE localChromosomeNo INT;
+    DECLARE localRefTraitPosCM DOUBLE;
+    DECLARE localLC1MPId INT;
+    DECLARE localLC2MPId INT;
+    DECLARE localLC3MPId INT;
+    DECLARE localModelId INT;
     DECLARE no_rows_indicator INT DEFAULT 0;
     DECLARE no_rows CONDITION FOR 1329;
     DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
-    set @traitType=0;
     Start transaction;
 
     -- Get the RegionId 
 
-    Select StudyId, ChromosomeNo, RefTraitPosCM INTO @StudyId, @ChromosomeNo, @RefTraitPosCM
+    Select StudyId, ChromosomeNo, RefTraitPosCM INTO localStudyId, localChromosomeNo, localRefTraitPosCM
     from PedigreePositions where PedPosId = inPedPosId;
 
     Set no_rows_indicator = 0;
     Select RegionId into outRegionId from Regions where
-    StudyId = @StudyId AND AnalysisId = inAnalysisId AND ChromosomeNo = @ChromosomeNo AND
-    RefTraitPosCM = @RefTraitPosCM AND RegionNo = inRegionNo;
+    StudyId = localStudyId AND AnalysisId = inAnalysisId AND ChromosomeNo = localChromosomeNo AND
+    RefTraitPosCM = localRefTraitPosCM AND RegionNo = inRegionNo;
 
     If no_rows_indicator THEN
       Insert into Regions (StudyId, AnalysisId, ChromosomeNo, RefTraitPosCM, RegionNo, ParentRegionNo, ParentRegionError, ParentRegionSplitDir) values
-      (@StudyId, inAnalysisId, @ChromosomeNo, @RefTraitPosCM, inRegionNo, inParentRegionNo, inParentRegionError, inParentRegionSplitDir);
+      (localStudyId, inAnalysisId, localChromosomeNo, localRefTraitPosCM, inRegionNo, inParentRegionNo, inParentRegionError, inParentRegionSplitDir);
       Select LAST_INSERT_ID() INTO outRegionId;
     END IF;
 
@@ -367,38 +393,38 @@ BEGIN
       -- This is a trait or combined likelihood, so the trait model is relevant
       -- There's always at least one liability class...
       SET no_rows_indicator = 0;
-      Select MPId into @LC1MPId from DModelParts where
+      Select MPId into localLC1MPId from DModelParts where
       DGF = convert(inDGF, DECIMAL(32,30)) AND BigPen = convert(inLC1BigPen, DECIMAL(32,30)) AND BigLittlePen = convert(inLC1BigLittlePen, DECIMAL(32,30)) AND 
       LittleBigPen = convert(inLC1LittleBigPen, DECIMAL(32,30)) AND LittlePen = convert(inLC1LittlePen, DECIMAL(32,30));
 
       IF no_rows_indicator THEN
         Insert into DModelParts (DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen)
         values (inDGF, inLC1BigPen, inLC1BigLittlePen, inLC1LittleBigPen, inLC1LittlePen);
-        Select LAST_INSERT_ID() INTO @LC1MPId;
+        Select LAST_INSERT_ID() INTO localLC1MPId;
         SET WNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
-      Select MPId into @LC2MPId from DModelParts where
+      Select MPId into localLC2MPId from DModelParts where
       DGF = convert(inDGF, DECIMAL(32,30)) AND BigPen = convert(inLC2BigPen, DECIMAL(32,30)) AND BigLittlePen = convert(inLC2BigLittlePen, DECIMAL(32,30)) AND 
       LittleBigPen = convert(inLC2LittleBigPen, DECIMAL(32,30)) AND LittlePen = convert(inLC2LittlePen, DECIMAL(32,30));
     
       IF no_rows_indicator THEN
         Insert into DModelParts (DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen)
         values (inDGF, inLC2BigPen, inLC2BigLittlePen, inLC2LittleBigPen, inLC2LittlePen);
-        Select LAST_INSERT_ID() INTO @LC2MPId;
+        Select LAST_INSERT_ID() INTO localLC2MPId;
         SET WNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
-      Select MPId into @LC3MPId from DModelParts where
+      Select MPId into localLC3MPId from DModelParts where
       DGF = convert(inDGF, DECIMAL(32,30)) AND BigPen = convert(inLC3BigPen, DECIMAL(32,30)) AND BigLittlePen = convert(inLC3BigLittlePen, DECIMAL(32,30)) AND 
       LittleBigPen = convert(inLC3LittleBigPen, DECIMAL(32,30)) AND LittlePen = convert(inLC3LittlePen, DECIMAL(32,30));
     
       IF no_rows_indicator THEN
         Insert into DModelParts (DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen)
         values (inDGF, inLC3BigPen, inLC3BigLittlePen, inLC3LittleBigPen, inLC3LittlePen);
-        Select LAST_INSERT_ID() INTO @LC3MPId;
+        Select LAST_INSERT_ID() INTO localLC3MPId;
         SET WNE_indicator = 1;
       END IF;
 
@@ -407,20 +433,20 @@ BEGIN
         -- Some of the model parts are not even in the table, so this model was not either,
 	-- although that does not guarentee that it isn't there now.
         Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
-  	(inPedPosId, @LC1MPId, @LC2MPId, @LC3MPId);
+  	(inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
       END IF;
 
       -- Go for the Likelihood! If it doesn't exist, request it and return the NULL.
       SET no_rows_indicator = 0;
       Select Likelihood, MarkerCount into outLikelihood, outMarkerCount from
-      Models where PedPosId = inPedPosId AND LC1MPId = @LC1MPId AND
-        LC2MPId = @LC2MPId AND LC3MPId = @LC3MPId order by MarkerCount desc limit 1;
+      Models where PedPosId = inPedPosId AND LC1MPId = localLC1MPId AND
+        LC2MPId = localLC2MPId AND LC3MPId = localLC3MPId order by MarkerCount desc limit 1;
 
       IF no_rows_indicator THEN
         Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
-        (inPedPosId, @LC1MPId, @LC2MPId, @LC3MPId);
-        Select LAST_INSERT_ID() INTO @ModelId;
-        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, @ModelId);
+        (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
+        Select LAST_INSERT_ID() INTO localModelId;
+        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId);
       END IF;
     END IF;
     Commit;
@@ -450,29 +476,34 @@ CREATE PROCEDURE GetQLikelihood (
  OUT outRegionId int, OUT outMarkerCount int, OUT outLikelihood real
 )
 BEGIN
-    DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+    DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
     DECLARE WNE_indicator INT DEFAULT 0; -- For when we know the Likelihood _will_ not exist
-
+    DECLARE localStudyId INT;
+    DECLARE localChromosomeNo INT;
+    DECLARE localRefTraitPosCM DOUBLE;
+    DECLARE localLC1MPId INT;
+    DECLARE localLC2MPId INT;
+    DECLARE localLC3MPId INT;
+    DECLARE localModelId INT;
     DECLARE no_rows_indicator INT DEFAULT 0;
     DECLARE no_rows CONDITION FOR 1329;
     DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
-    set @traitType=1;
     Start transaction;
 
     -- Get the RegionId
 
-    Select StudyId, ChromosomeNo, RefTraitPosCM INTO @StudyId, @ChromosomeNo, @RefTraitPosCM
+    Select StudyId, ChromosomeNo, RefTraitPosCM INTO localStudyId, localChromosomeNo, localRefTraitPosCM
     from PedigreePositions where PedPosId = inPedPosId;
 
     Set no_rows_indicator = 0;
     Select RegionId into outRegionId from Regions where
-    StudyId = @StudyId AND AnalysisId = inAnalysisId AND ChromosomeNo = @ChromosomeNo AND 
-    RefTraitPosCM = @RefTraitPosCM AND RegionNo = inRegionNo;
+    StudyId = localStudyId AND AnalysisId = inAnalysisId AND ChromosomeNo = localChromosomeNo AND 
+    RefTraitPosCM = localRefTraitPosCM AND RegionNo = inRegionNo;
 
     If no_rows_indicator THEN
       Insert into Regions (StudyId, AnalysisId, ChromosomeNo, RefTraitPosCM, RegionNo, ParentRegionNo, ParentRegionError, ParentRegionSplitDir) values
-      (@StudyId, inAnalysisId, @ChromosomeNo, @RefTraitPosCM, inRegionNo, inParentRegionNo, inParentRegionError, inParentRegionSplitDir);
+      (localStudyId, inAnalysisId, localChromosomeNo, localRefTraitPosCM, inRegionNo, inParentRegionNo, inParentRegionError, inParentRegionSplitDir);
       Select LAST_INSERT_ID() INTO outRegionId;
     END IF;
 
@@ -491,38 +522,38 @@ BEGIN
       -- This is a trait or combined likelihood, so the trait model is relevant
       -- There's always at least one liability class...
       SET no_rows_indicator = 0;
-      Select MPId into @LC1MPId from QModelParts where
+      Select MPId into localLC1MPId from QModelParts where
         DGF = convert(inDGF, DECIMAL(32,30)) AND BigMean = convert(inLC1BigMean, DECIMAL(32,30)) AND BigLittleMean = convert(inLC1BigLittleMean, DECIMAL(32,30)) AND 
         LittleBigMean = convert(inLC1LittleBigMean, DECIMAL(32,30)) AND LittleMean = convert(inLC1LittleMean, DECIMAL(32,30)) AND BigSD=convert(inLC1BigSD, Decimal(32,30)) AND BigLittleSD=convert(inLC1BigLittleSD, Decimal(32,30)) AND LittleBigSD=convert(inLC1LittleBigSD, Decimal(32,30)) AND LittleSD=convert(inLC1LittleSD, Decimal(32,30)) AND Threshold=convert(inLC1Threshold, Decimal(32,30));
 
       IF no_rows_indicator THEN
         Insert into QModelParts (DGF, BigMean, BigLittleMean, LittleBigMean, LittleMean, BigSD, BigLittleSD, LittleBigSD, LittleSD, Threshold)
         values (inDGF, inLC1BigMean, inLC1BigLittleMean, inLC1LittleBigMean, inLC1LittleMean, inLC1BigSD, inLC1BigLittleSD, inLC1LittleBigSD, inLC1LittleSD, inLC1Threshold);
-        Select LAST_INSERT_ID() INTO @LC1MPId;
+        Select LAST_INSERT_ID() INTO localLC1MPId;
         SET WNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
-      Select MPId into @LC2MPId from QModelParts where
+      Select MPId into localLC2MPId from QModelParts where
       DGF = convert(inDGF, DECIMAL(32,30)) AND BigMean = convert(inLC2BigMean, DECIMAL(32,30)) AND BigLittleMean = convert(inLC2BigLittleMean, DECIMAL(32,30)) AND 
       LittleBigMean = convert(inLC2LittleBigMean, DECIMAL(32,30)) AND LittleMean = convert(inLC2LittleMean, DECIMAL(32,30)) AND BigSD=convert(inLC2BigSD, Decimal(32,30)) AND BigLittleSD=convert(inLC2BigLittleSD, Decimal(32,30)) AND LittleBigSD=convert(inLC2LittleBigSD, Decimal(32,30)) AND LittleSD=convert(inLC2LittleSD, Decimal(32,30)) AND Threshold=convert(inLC2Threshold, Decimal(32,30));
     
       IF no_rows_indicator THEN
         Insert into QModelParts (DGF, BigMean, BigLittleMean, LittleBigMean, LittleMean, BigSD, BigLittleSD, LittleBigSD, LittleSD, Threshold)
         values (inDGF, inLC2BigMean, inLC2BigLittleMean, inLC2LittleBigMean, inLC2LittleMean, inLC2BigSD, inLC2BigLittleSD, inLC2LittleBigSD, inLC2LittleSD, inLC2Threshold);
-        Select LAST_INSERT_ID() INTO @LC2MPId;
+        Select LAST_INSERT_ID() INTO localLC2MPId;
         SET WNE_indicator = 1;
       END IF;
 
       SET no_rows_indicator = 0;
-      Select MPId into @LC3MPId from QModelParts where
+      Select MPId into localLC3MPId from QModelParts where
       DGF = convert(inDGF, DECIMAL(32,30)) AND BigMean = convert(inLC3BigMean, DECIMAL(32,30)) AND BigLittleMean = convert(inLC3BigLittleMean, DECIMAL(32,30)) AND 
       LittleBigMean = convert(inLC3LittleBigMean, DECIMAL(32,30)) AND LittleMean = convert(inLC3LittleMean, DECIMAL(32,30)) AND BigSD=convert(inLC3BigSD, Decimal(32,30)) AND BigLittleSD=convert(inLC3BigLittleSD, Decimal(32,30)) AND LittleBigSD=convert(inLC3LittleBigSD, Decimal(32,30)) AND LittleSD=convert(inLC3LittleSD, Decimal(32,30)) AND Threshold=convert(inLC3Threshold, Decimal(32,30));
     
       IF no_rows_indicator THEN
         Insert into QModelParts (DGF, BigMean, BigLittleMean, LittleBigMean, LittleMean, BigSD, BigLittleSD, LittleBigSD, LittleSD, Threshold)
         values (inDGF, inLC3BigMean, inLC3BigLittleMean, inLC3LittleBigMean, inLC3LittleMean, inLC3BigSD, inLC3BigLittleSD, inLC3LittleBigSD, inLC3LittleSD, inLC3Threshold);
-        Select LAST_INSERT_ID() INTO @LC3MPId;
+        Select LAST_INSERT_ID() INTO localLC3MPId;
         SET WNE_indicator = 1;
       END IF;
 
@@ -531,21 +562,21 @@ BEGIN
         -- Some of the model parts are not even in the table, so this model was not either,
 	-- although that does not guarentee that it isn't there now.
         Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
-  	(inPedPosId, @LC1MPId, @LC2MPId, @LC3MPId);
-        Select LAST_INSERT_ID() INTO @ModelId;
+  	(inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
+        Select LAST_INSERT_ID() INTO localModelId;
       END IF;
 
       -- Go for the Likelihood! If it doesn't exist, request it and return the NULL.
       SET no_rows_indicator = 0;
       Select Likelihood, MarkerCount into outLikelihood, outMarkerCount from
-      Models where PedPosId = inPedPosId AND LC1MPId = @LC1MPId AND
-        LC2MPId = @LC2MPId AND LC3MPId = @LC3MPId order by MarkerCount desc limit 1;
+      Models where PedPosId = inPedPosId AND LC1MPId = localLC1MPId AND
+        LC2MPId = localLC2MPId AND LC3MPId = localLC3MPId order by MarkerCount desc limit 1;
 	
       IF no_rows_indicator THEN
         Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
-        (inPedPosId, @LC1MPId, @LC2MPId, @LC3MPId);
-        Select LAST_INSERT_ID() INTO @ModelId;
-        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, @ModelId);
+        (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
+        Select LAST_INSERT_ID() INTO localModelId;
+        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId);
       END IF;
     END IF;
     Commit;
@@ -564,8 +595,7 @@ CREATE PROCEDURE GetDParts (
   OUT outLC3BP real, OUT outLC3BLP real, OUT outLC3LBP real, OUT outLC3LP real
 )
 BEGIN
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
-  set @traitType=0;
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
 
   -- Better to return the results as a result set than out parameters (which suck!)
   Select LC1.DGF,
@@ -604,8 +634,7 @@ CREATE PROCEDURE GetQParts (
   OUT outLC1Threshold real, OUT outLC2Threshold real, OUT outLC3Threshold real
 )
 BEGIN
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
-  set @traitType=1;
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
 
   -- Better to return the results as a result set than out parameters (which suck!)
   Select LC1.DGF,
@@ -651,15 +680,17 @@ CREATE PROCEDURE GetWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
   DECLARE realLocusListType INT DEFAULT 0;
   DECLARE totalSampleCount INT DEFAULT 0;
+  DECLARE localResultRows INT DEFAULT 0;
+  DECLARE localWorkId INT;
   DECLARE no_rows_indicator INT DEFAULT 0;
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
 --  Insert into Diag (Message) values (Concat('GetWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
---	', ',convert(inHighPosition,char), ' traitType:', convert(@traitType, char)));
+--	', ',convert(inHighPosition,char)));
 
   Create temporary table if not exists CachedWork (
 	WorkId int auto_increment,
@@ -680,7 +711,7 @@ BEGIN
 
   SET no_rows_indicator = 0;
   Select WorkId, PedPosId, PedigreeSId, PedTraitPosCM, LC1MPId, LC2MPId, LC3MPId
-  into @WorkId, outPedPosId, outPedigreeSId, outPedTraitPosCM, outLC1MPId, outLC2MPId, outLC3MPId
+  into localWorkId, outPedPosId, outPedigreeSId, outPedTraitPosCM, outLC1MPId, outLC2MPId, outLC3MPId
   from CachedWork order by PedigreeSId limit 1;
   -- Overloaindg outLC2MPId to represent MarkerSetId
   IF realLocusListType = 1 THEN
@@ -692,20 +723,20 @@ BEGIN
     -- Someday we may want to verify that we didn't accidently change positions here and orphan a lot of work
 
     IF realLocusListType = 1 THEN
-      call CacheMarkerWork(inServerId, inLowPosition, inHighPosition, @ResultRows);
+      call CacheMarkerWork(inServerId, inLowPosition, inHighPosition, localResultRows);
       set @outLC1MPId = -1;
     ELSE
       IF realLocusListType = 2 THEN
-        call CacheTraitWork(inServerId, @ResultRows);
+        call CacheTraitWork(inServerId, localResultRows);
       ELSE
         IF realLocusListType = 3 THEN
-          call CacheCombinedWork(inServerId, inLowPosition, inHighPosition, @ResultRows);
+          call CacheCombinedWork(inServerId, inLowPosition, inHighPosition, localResultRows);
         ELSE
           IF realLocusListType = 100 THEN
-            call Cache2ptInitialWork(inServerId, inLowPosition, inHighPosition, @ResultRows);
+            call Cache2ptInitialWork(inServerId, inLowPosition, inHighPosition, localResultRows);
           ELSE
             IF realLocusListType = 101 THEN
-              call Cache2ptFinalWork(inServerId, inLowPosition, inHighPosition, @ResultRows);
+              call Cache2ptFinalWork(inServerId, inLowPosition, inHighPosition, localResultRows);
             ELSE
 	      Insert into Diag (Message) values (Concat('GetWork: unexpected inLocusListType of ',convert(inLocusListType,char)));
             END IF;
@@ -718,7 +749,7 @@ BEGIN
 
     SET no_rows_indicator = 0;
     Select WorkId, PedPosId, PedigreeSId, PedTraitPosCM, LC1MPId, LC2MPId, LC3MPId
-    into @WorkId, outPedPosId, outPedigreeSId, outPedTraitPosCM, outLC1MPId, outLC2MPId, outLC3MPId
+    into localWorkId, outPedPosId, outPedigreeSId, outPedTraitPosCM, outLC1MPId, outLC2MPId, outLC3MPId
     from CachedWork order by PedigreeSId limit 1;
     IF realLocusListType = 1 THEN
       set @outMarkerSetId = outLC2MPId;
@@ -732,7 +763,7 @@ BEGIN
   ELSE
 --    Insert into Diag (Message) values (Concat('GetWork: returning ', convert(outPedPosId,char),', ', outPedigreeSId, ', ',
 --    convert(outPedTraitPosCM,char),', ', convert(outLC1MPId,char),', ', convert(outLC2MPId,char),', ', convert(outLC3MPId,char)));
-    Delete from CachedWork where WorkId = @WorkId;
+    Delete from CachedWork where WorkId = localWorkId;
 
   END IF;
 
@@ -750,7 +781,8 @@ CREATE PROCEDURE Cache2ptInitialWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
+  DECLARE localKeepAliveFlag INT;
 
 --  Insert into Diag (Message) values (Concat('Cache2ptInitialWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
 --	', ',convert(inHighPosition,char)));
@@ -764,8 +796,8 @@ BEGIN
   -- otherwise, it's infinite!
   Cache2ptInitialWork: LOOP
 
-    Select KeepAliveFlag into @KeepAliveFlag from Servers where ServerId = inServerId;
-    IF @KeepAliveFlag = 0 THEN
+    Select KeepAliveFlag into localKeepAliveFlag from Servers where ServerId = inServerId;
+    IF localKeepAliveFlag = 0 THEN
       LEAVE Cache2ptInitialWork;
     END IF;
     Commit;
@@ -830,7 +862,8 @@ CREATE PROCEDURE Cache2ptFinalWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
+  DECLARE localKeepAliveFlag INT;
 
 --  Insert into Diag (Message) values (Concat('Cache2ptFinalWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
 --	', ',convert(inHighPosition,char)));
@@ -844,8 +877,8 @@ BEGIN
   -- otherwise, it's infinite!
   Cache2ptFinalWork: LOOP
 
-    Select KeepAliveFlag into @KeepAliveFlag from Servers where ServerId = inServerId;
-    IF @KeepAliveFlag = 0 THEN
+    Select KeepAliveFlag into localKeepAliveFlag from Servers where ServerId = inServerId;
+    IF localKeepAliveFlag = 0 THEN
       LEAVE Cache2ptFinalWork;
     END IF;
     Commit;
@@ -897,7 +930,15 @@ CREATE PROCEDURE CacheCombinedWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
+  DECLARE localKeepAliveFlag INT;
+  DECLARE localCandidatePedPosId INT;
+  DECLARE localCandidateLimit INT;
+  DECLARE localCandidateSMRT INT;
+  DECLARE localCandidateFreeModels INT;
+  DECLARE localExclusionCount INT;
+
+  SET @dSString = "Not a SQL statement"; -- This cannot be a local DECLARE as prepared statement would be lost on exit, so I'm just flagging it.
 
 --  Insert into Diag (Message) values (Concat('CacheCombinedWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
 -- 	', ',convert(inHighPosition,char)));
@@ -912,24 +953,24 @@ BEGIN
   -- otherwise, it's infinite, so be careful!
   CacheCombinedWork: LOOP
 
-    Select KeepAliveFlag into @KeepAliveFlag from Servers where ServerId = inServerId;
-    IF @KeepAliveFlag = 0 THEN
+    Select KeepAliveFlag into localKeepAliveFlag from Servers where ServerId = inServerId;
+    IF localKeepAliveFlag = 0 THEN
 --      Insert into Diag (Message) values ('CacheCombinedWork: no longer kept alive');
       LEAVE CacheCombinedWork;
     END IF;
 
     SET outResultRows = 0;
-    SET @candidatePedPosId = NULL;
-    SET @candidateLimit = 51;
+    SET localCandidatePedPosId = NULL;
+    SET localCandidateLimit = 51;
 
-    Start transaction;
+    -- The transaction can start AFTER the selection of a pedigree position to work on.
 
     -- Pick a random candidate PedigreePosition and limit Models to that PedPosId so we get a tolerable total runtime.
     -- Note that a server will have done all Trait and Marker Set models FIRST for any position, so we don't have to
     -- exclude them from our work selection.
 
     Select PP.PedPosId, PP.SingleModelRuntime, PP.FreeModels
-      into @candidatePedPosId, @candidateSMRT, @candidateFreeModels
+      into localCandidatePedPosId, localCandidateSMRT, localCandidateFreeModels
    	from PedigreePositions PP, Servers S where
 	S.ServerId = inServerId AND
 	PP.StudyId = S.StudyId AND
@@ -943,45 +984,52 @@ BEGIN
 --        order by RAND() 
         limit 1 for update;
 
-    IF @candidatePedPosId IS NULL THEN
+    IF localCandidatePedPosId IS NULL THEN
 --      Insert into Diag (Message) values ('CacheCombinedWork: no work found');
       SET outResultRows = 0;
       LEAVE CacheCombinedWork;
     --    ELSE
---      Insert into Diag (Message) values (Concat('CacheCombinedWork: work with SMRT of ', convert(@candidateSMRT,char), ' found for PedPosId ', convert(@candidatePedPosId,char)));
+--      Insert into Diag (Message) values (Concat('CacheCombinedWork: work with SMRT of ', convert(localCandidateSMRT,char), ' found for PedPosId ', convert(localCandidatePedPosId,char)));
     END IF;
 
-    IF @candidateSMRT IS NULL THEN
-      Select avg(RunTimeCostSec) into @candidateSMRT from Models where PedPosId=@candidatePedPosId and RunTimeCostSec is not NULL;
-    END IF;
-    IF @candidateSMRT IS NULL THEN
-      SET @candidateLimit = 5;
-    ELSE
-      IF @candidateSMRT = 0 THEN
-        SET @candidateLimit = 51;
+    Start transaction;
+
+    -- This is pointless for MC-MC since it'll do it 3000 times, so REALLY avoid the avg() call in Models
+    IF @MCMC_flag = 1 THEN
+      IF localCandidateSMRT IS NULL THEN
+        Select avg(RunTimeCostSec) into localCandidateSMRT from Models where PedPosId=localCandidatePedPosId and RunTimeCostSec is not NULL;
+      END IF;
+      IF localCandidateSMRT IS NULL THEN
+        SET localCandidateLimit = 5;
       ELSE
-        SET @candidateLimit = convert((60*60) / @candidateSMRT, decimal(5,0));
-        IF @candidateLimit < 1 THEN
-          SET @candidateSMRT = 0;
-          SET @candidateLimit = 1;
-        END IF;
-        IF @candidateLimit > 51 THEN
-          SET @candidateLimit = 51;
+        IF localCandidateSMRT = 0 THEN
+          SET localCandidateLimit = 51;
+        ELSE
+          SET localCandidateLimit = convert((60*60) / localCandidateSMRT, decimal(5,0));
+          IF localCandidateLimit < 1 THEN
+            SET localCandidateSMRT = 0;
+            SET localCandidateLimit = 1;
+          END IF;
+          IF localCandidateLimit > 51 THEN
+            SET localCandidateLimit = 51;
+          END IF;
         END IF;
       END IF;
+    ELSE
+      SET localCandidateLimit = 51;
     END IF;
---    Insert into Diag (Message) values (Concat('CacheCombinedWork: work for PedPosId ', convert(@candidatePedPosId,char), ' with SMRT ', convert(@candidateSMRT,char), ' limited to ', convert(@candidateLimit,char)));
-    Update Servers set CurrentPedPosId = @candidatePedPosId, CurrentLimit = @candidateLimit  where ServerId = inServerId;
+--    Insert into Diag (Message) values (Concat('CacheCombinedWork: work for PedPosId ', convert(localCandidatePedPosId,char), ' with SMRT ', convert(localCandidateSMRT,char), ' limited to ', convert(localCandidateLimit,char)));
+    Update Servers set CurrentPedPosId = localCandidatePedPosId, CurrentLimit = localCandidateLimit  where ServerId = inServerId;
 
     SET @dSString = Concat(
     	'Insert into CachedWork (PedPosId, PedigreeSId, PedTraitPosCM, LC1MPId, LC2MPId, LC3MPId, ServerId, MarkerCount) ',
 	'select PP.PedPosId, PP.PedigreeSId, PP.PedTraitPosCM, M.LC1MPId, M.LC2MPId, M.LC3MPId, S.ServerId, S.MarkerCount ',
 	'from PedigreePositions PP, Models M, Servers S ',
 	'where S.ServerId = ', convert(inServerId,char),
-	' AND PP.PedPosId = ', convert(@candidatePedPosId,char),
-	' AND M.PedPosId = ', convert(@candidatePedPosId,char),
+	' AND PP.PedPosId = ', convert(localCandidatePedPosId,char),
+	' AND M.PedPosId = ', convert(localCandidatePedPosId,char),
 	' AND M.ServerId IS NULL limit ',
-	convert(@candidateLimit,char), ' for update;');
+	convert(localCandidateLimit,char), ' for update;');
     PREPARE dSHandle from @dSString;
     EXECUTE dSHandle;
     DEALLOCATE PREPARE dSHandle;
@@ -989,9 +1037,9 @@ BEGIN
     Select count(*) from CachedWork into outResultRows;
 
     IF outResultRows = 0 THEN
-      Insert into ExcludedPedPosIds (PedPosId) value (@candidatePedPosId);
-      Select count(*) from ExcludedPedPosIds into @foo;
---      Insert into Diag (Message) values (Concat('CacheCombinedWork: no actual work (not ', convert(@candidateFreeModels,char), ') found for ServerId ', convert(inServerId,char), ', PedPosId ', convert(@candidatePedPosId,char), ', excluded ', convert(@foo,char), ', looping'));
+      Insert into ExcludedPedPosIds (PedPosId) value (localCandidatePedPosId);
+--      Select count(*) from ExcludedPedPosIds into localExclusionCount;
+--      Insert into Diag (Message) values (Concat('CacheCombinedWork: no actual work (not ', convert(localCandidateFreeModels,char), ') found for ServerId ', convert(inServerId,char), ', PedPosId ', convert(localCandidatePedPosId,char), ', excluded ', convert(localExclusionCount,char), ', looping'));
       -- We don't leave, we try again with a different PedPosId (hopefully)
       Commit;
     ELSE
@@ -1026,7 +1074,8 @@ CREATE PROCEDURE CacheMarkerWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
+  DECLARE localKeepAliveFlag INT;
 
 --  Insert into Diag (Message) values (Concat('CacheMarkerWork: called w/ ', convert(inServerId,char),', ',convert(inLowPosition,char),
 --	', ',convert(inHighPosition,char)));
@@ -1040,8 +1089,8 @@ BEGIN
   -- otherwise, it's infinite!
   CacheMarkerWork: LOOP
 
-    Select KeepAliveFlag into @KeepAliveFlag from Servers where ServerId = inServerId;
-    IF @KeepAliveFlag = 0 THEN
+    Select KeepAliveFlag into localKeepAliveFlag from Servers where ServerId = inServerId;
+    IF localKeepAliveFlag = 0 THEN
       LEAVE CacheMarkerWork;
     END IF;
     Commit;
@@ -1140,9 +1189,10 @@ CREATE PROCEDURE CacheTraitWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
+  DECLARE localKeepAliveFlag INT;
 
---  Insert into Diag (Message) values (Concat('CacheTraitWork: called w/ ', convert(inServerId,char), ' traitType: ', convert(@traitType, char)));
+--  Insert into Diag (Message) values (Concat('CacheTraitWork: called w/ ', convert(inServerId,char)));
 
   Update Servers set LastHeartbeat = CURRENT_TIMESTAMP where ServerId = inServerId;
   Commit;
@@ -1153,8 +1203,8 @@ BEGIN
   -- otherwise, it's infinite!
   CacheTraitWork: LOOP
 
-    Select KeepAliveFlag into @KeepAliveFlag from Servers where ServerId = inServerId;
-    IF @KeepAliveFlag = 0 THEN
+    Select KeepAliveFlag into localKeepAliveFlag from Servers where ServerId = inServerId;
+    IF localKeepAliveFlag = 0 THEN
       LEAVE CacheTraitWork;
     END IF;
     Commit;
@@ -1219,7 +1269,7 @@ BEGIN
 
   DECLARE markerWork INT DEFAULT 0;
   DECLARE totalWork INT DEFAULT 0;
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
   DECLARE no_rows_indicator INT DEFAULT 0;
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
@@ -1332,9 +1382,14 @@ CREATE PROCEDURE PutWork (
 )
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id: Likelihood_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
   DECLARE inSampleId int;
   DECLARE sampleCount int;
+  DECLARE localOldSMRT INT;
+  DECLARE localNewSMRT INT;
+  DECLARE localOldLimit INT;
+  DECLARE localOutModelId INT;
+  DECLARE localOutWeightedLRComponent DOUBLE;
 
 --  Insert into Diag (Message) values (Concat('PutWork: called w/ ', convert(inServerId,char), ', ', convert(inPedPosId,char),', ',
 --	convert(inLC1MPId,char),', ', convert(inLC2MPId,char),', ', convert(inLC3MPId,char), ', ',
@@ -1342,40 +1397,46 @@ BEGIN
 
 --  Insert into Diag (Message) values (Concat('PutWork: @outMarkerSetId ', convert(@outMarkerSetId, char)));
 
-  Set @newSMRT = 0;
+  Set localNewSMRT = 0;
 
-  start transaction; 
-
-  -- Lock the PedigreePosition row first to avoid deadlock with CacheCombinedWork.
-  -- Both routines have the same locking order this way, with PedigreePositions table first.
-  -- Updating likelihood should be quick.
-  Select PedPosId into inPedPosId from PedigreePositions where PedPosId = inPedPosId for update;
-
-  Select ModelId INTO @outModelId from Models where
+  -- This doesn't have to be in the transaction
+  Select ModelId INTO localOutModelId from Models where
 	PedPosId = inPedPosId AND
 	LC1MPId = inLC1MPId AND
 	LC2MPId = inLC2MPId AND
 	LC3MPId = inLC3MPId AND
 	ServerId = inServerId;
+
+  start transaction; 
+
+  -- NO LONGER lock the PedigreePosition row first to avoid deadlock with CacheCombinedWork.
+  -- Both routines have the same locking order this way, with PedigreePositions table first.
+  -- Updating likelihood should HAVE beEN quick. BUT MCMC DOES A GAZILLION UPDATES.
+  Select PedPosId into inPedPosId from PedigreePositions where PedPosId = inPedPosId for update;
+
   IF inMarkerCount = 100 THEN
     -- 2pt, only have the initial first half, hold onto it.
-    Insert into TP2MP (ModelId, WeightedLRComponent, RuntimeCostSec) values (@outModelId, inLikelihood, inRuntimeCostSec);
+    Insert into TP2MP (ModelId, WeightedLRComponent, RuntimeCostSec) values (localOutModelId, inLikelihood, inRuntimeCostSec);
   ELSE
     IF inMarkerCount = 101 THEN
       -- 2pt, got the final half, combine them and truely finish the job.
-      Select WeightedLRComponent, RuntimeCostSec into @outWeightedLRComponent, @newSMRT from TP2MP where ModelId = @outModelId;
---      Insert into Diag (Message) values (Concat('PutWork: Adding inLikelihood ', convert(inLikelihood,char), ' to existing ', convert(@outWeightedLRComponent,char)));
-      Update Models set Likelihood = inLikelihood+@outWeightedLRComponent, RuntimeCostSec = inRuntimeCostSec+@newSMRT,
-	MarkerCount = inMarkerCount, EndTime = CURRENT_TIMESTAMP where ModelId = @outModelId;
+      Select WeightedLRComponent, RuntimeCostSec into localOutWeightedLRComponent, localNewSMRT from TP2MP where ModelId = localOutModelId;
+--      Insert into Diag (Message) values (Concat('PutWork: Adding inLikelihood ', convert(inLikelihood,char), ' to existing ', convert(localOutWeightedLRComponent,char)));
+      Update Models set Likelihood = inLikelihood+localOutWeightedLRComponent, RuntimeCostSec = inRuntimeCostSec+localNewSMRT,
+	MarkerCount = inMarkerCount, EndTime = CURRENT_TIMESTAMP where ModelId = localOutModelId;
     ELSE
       -- Classic multipoint
       IF @outLC1MPId >= 0 THEN
         -- trait or combined likelihood
         Update Models set Likelihood = inLikelihood, RuntimeCostSec = inRuntimeCostSec, MarkerCount = inMarkerCount, EndTime = CURRENT_TIMESTAMP where
-	  ModelId = @outModelId;
+	  ModelId = localOutModelId;
       ELSE
-        -- markerset likelihood
-	IF @MCMC_flag = 1 THEN
+        -- Markerset likelihood
+	IF @MCMC_flag = 0 THEN
+	  Update MarkerSetLikelihood set Likelihood = inLikelihood, RuntimeCostSec = inRuntimeCostSec, MarkerCount = inMarkerCount, EndTime = CURRENT_TIMESTAMP where
+	  PedPosId = inPedPosId AND ServerId = inServerId;
+	ELSE
+	  -- MCMC weirdness
 	  set inSampleId = (inMarkerCount - 200) / 10; 
 	  IF inSampleId > 0 THEN
             select count(*) into sampleCount from MarkerSetLikelihood_MCMC where MarkerSetId=@outMarkerSetId and SampleId = inSampleId;
@@ -1391,14 +1452,11 @@ BEGIN
 	    Update MarkerSetLikelihood set Likelihood = 1, RunTimeCostSec = inRuntimeCostSec, MarkerCount = inMarkerCount, EndTime = CURRENT_TIMESTAMP where
 	    PedPosId = inPedPosId AND ServerId = inServerId;
           END IF;
-	ELSE
-	  Update MarkerSetLikelihood set Likelihood = inLikelihood, RuntimeCostSec = inRuntimeCostSec, MarkerCount = inMarkerCount, EndTime = CURRENT_TIMESTAMP where
-	  PedPosId = inPedPosId AND ServerId = inServerId;
 	END IF;
       END IF;
     END IF;
     -- Clear-out any RegionModels so we know they're not pending
-    Delete from RegionModels where ModelId = @outModelId;
+    Delete from RegionModels where ModelId = localOutModelId;
 
   END IF;
 --  END IF;
@@ -1408,18 +1466,18 @@ BEGIN
   -- If you wonder why we have to do this, look at the variation on SingleModelRuntimes using a query like this:
   -- Select PedPosId, count(*), max(RuntimeCostSec), min(RuntimeCostSec), avg(RuntimeCostSec), stddev_pop(RuntimeCostSec) from Models where PedPosId in (Select PedPosId from PedigreePositions where StudyId = 8) group by PedPosId order by max(RuntimeCostSec) desc limit 20;
   IF inRuntimeCostSec > 60 THEN
-    Select SingleModelRuntime into @oldSMRT from PedigreePositions where PedPosId = inPedPosId;
-    IF @oldSMRT IS NULL THEN
-      SET @oldSMRT = 0;
+    Select SingleModelRuntime into localOldSMRT from PedigreePositions where PedPosId = inPedPosId;
+    IF localOldSMRT IS NULL THEN
+      SET localOldSMRT = 0;
     END IF;
-    IF (inRuntimeCostSec * 0.70) > @oldSMRT THEN
+    IF (inRuntimeCostSec * 0.70) > localOldSMRT THEN
       -- Set the SingleModelRuntime to the new value
       Update PedigreePositions set SingleModelRuntime = inRuntimeCostSec where PedPosId = inPedPosId;
---      Insert into Diag (Message) values (Concat('PutWork: Reset SMRT due to ', convert(inRuntimeCostSec,char), 's model for PedPosId ', convert(inPedPosId,char), ', which had ', convert(@oldSMRT,char), 's SMRT'));
+--      Insert into Diag (Message) values (Concat('PutWork: Reset SMRT due to ', convert(inRuntimeCostSec,char), 's model for PedPosId ', convert(inPedPosId,char), ', which had ', convert(localOldSMRT,char), 's SMRT'));
     END IF;
     -- We can't just look at the oldSMRT because we could be holding work for which some other server just updated the cost.
-    Select inRuntimeCostSec * count(*) into @oldLimit from CachedWork;
-    IF @oldLimit > (60*60*0.70) THEN
+    Select inRuntimeCostSec * count(*) into localOldLimit from CachedWork;
+    IF localOldLimit > (60*60*0.70) THEN
       -- Release the models we haven't processed
       Update Models a, CachedWork b  set a.ServerId = NULL, a.MarkerCount = b.MarkerCount, a.StartTime = NULL where
 	a.PedPosId = b.PedPosId AND
@@ -1429,7 +1487,7 @@ BEGIN
 	a.ServerId = inServerId;
       -- Clear-out everything so we get a new, fresh bunch of PROPERLY SIZED work
       Delete from CachedWork;
---      Insert into Diag (Message) values (Concat('PutWork: flushed remaining work due to ', convert(inRuntimeCostSec,char), 's model for PedPosId ', convert(inPedPosId,char), ', which had ', convert(@oldSMRT,char), 's SMRT'));
+--      Insert into Diag (Message) values (Concat('PutWork: flushed remaining work due to ', convert(inRuntimeCostSec,char), 's model for PedPosId ', convert(inPedPosId,char), ', which had ', convert(localOldSMRT,char), 's SMRT'));
     END IF;
   END IF;
 
@@ -1444,7 +1502,7 @@ DELIMITER //
 CREATE PROCEDURE SetDummyNullLikelihood (IN inServerId int)
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
 
 -- Set all trait and marker likelhood Models for pedigrees handled by this ServerId to be finished and have an Likelihood of 1.0
 
@@ -1456,7 +1514,7 @@ BEGIN
       from
 	PedigreePositions PP, MarkerSetLikelihood M, Servers S
       where
-	S.ServerId = inServerId AND PP.StudyId = S.StudyId AND PP.FreeModels > 0 AND PP.MarkerCount = 1 AND
+	S.ServerId = inServerId AND PP.StudyId = S.StudyId AND PP.FreeModels > 0 AND PP.MarkerCount = 1 AND -- WANT TO NOT CONSIDER FREE MODELS ANYMORE...
         PP.PedigreeSId in (select PedigreeSId from ServerPedigrees where ServerId=inServerId) and
         PP.ChromosomeNo = S.ChromosomeNo AND
 	PP.PedPosId = M.PedPosId AND M.ServerId IS NULL;
@@ -1465,7 +1523,7 @@ BEGIN
       from
 	PedigreePositions PP, Models M, Servers S
       where
-	S.ServerId = inServerId AND PP.StudyId = S.StudyId AND PP.FreeModels > 0 AND PP.MarkerCount = 1 AND
+	S.ServerId = inServerId AND PP.StudyId = S.StudyId AND PP.FreeModels > 0 AND PP.MarkerCount = 1 AND -- WANT TO NOT CONSIDER FREE MODELS ANYMORE...
         PP.PedigreeSId in (select PedigreeSId from ServerPedigrees where ServerId=inServerId) and
         PP.ChromosomeNo = S.ChromosomeNo AND
 	PP.RefTraitPosCM = -9999.99 AND PP.PedPosId = M.PedPosId AND M.ServerId IS NULL;
@@ -1501,7 +1559,7 @@ CREATE PROCEDURE CleanOrphans (IN inStudyLabel varchar(64))
 BEGIN
 
   DECLARE inStudyId int;
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
   DECLARE no_rows_indicator INT DEFAULT 0;
 
 -- Put orphaned Models back up for adoption.
@@ -1573,7 +1631,7 @@ CREATE PROCEDURE CleanStudy (IN inStudyLabel varchar(64))
 BEGIN
 
   DECLARE inStudyId int;
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
   DECLARE no_rows_indicator INT DEFAULT 0;
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
@@ -1621,7 +1679,7 @@ DELIMITER //
 CREATE PROCEDURE MoveStudy (IN inFromStudyId int, IN inToStudyId int)
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id: AltL_server.sql 118 2010-10-07 15:24:05Z whv001 $';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
 
 -- Move all rows associated with a StudyId to a new StudyId without violating integrity constraints
 -- NEW STUDYID MUST NOT ALREADY EXIST
@@ -1650,7 +1708,7 @@ DELIMITER //
 CREATE PROCEDURE UnloadModelParts ()
 BEGIN
 
-  DECLARE version char(64) DEFAULT '$Id';
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $';
 
   Select Concat(
     'Insert into DModelParts (MPId, DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen) values (',
@@ -1689,6 +1747,7 @@ BEGIN
 
   DECLARE localTotal int;
   DECLARE localIgnore int;
+  DECLARE localStartTime TIME;
 
 WholeThing: LOOP
 
@@ -1725,10 +1784,10 @@ WholeThing: LOOP
   -- Delta: Loop showing overall work progress for the last minute using servers active in the last hour
   IF inWhich = 'Delta' THEN
     MPS: LOOP
-      Select SubTime(Now(), '01:00') into @startTime from dual;
-      Select count(*) into localTotal from Servers s, Models m where m.ServerId = s.ServerId AND m.Likelihood is NOT NULL AND s.LastHeartbeat > @startTime;
+      Select SubTime(Now(), '01:00') into localStartTime from dual;
+      Select count(*) into localTotal from Servers s, Models m where m.ServerId = s.ServerId AND m.Likelihood is NOT NULL AND s.LastHeartbeat > localStartTime;
       Select Sleep (60) into localIgnore;
-      Select Now(), (count(*) - localTotal)/60.0 'MPS' from Servers s, Models m where m.ServerId = s.ServerId AND m.Likelihood is NOT NULL AND s.LastHeartbeat > @startTime;
+      Select Now(), (count(*) - localTotal)/60.0 'MPS' from Servers s, Models m where m.ServerId = s.ServerId AND m.Likelihood is NOT NULL AND s.LastHeartbeat > localStartTime;
     END LOOP MPS;
     Leave WholeThing;
   END IF;
@@ -1752,7 +1811,28 @@ WholeThing: LOOP
 
   -- Reconcile: Mark any servers not really in processlist with ExitStatus 42
   IF inWhich = 'Reconcile' THEN
-    Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from INFORMATION_SCHEMA.PROCESSLIST) AND ExitStatus IS NULL;
+    --Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from INFORMATION_SCHEMA.PROCESSLIST) AND ExitStatus IS NULL;
+    -- This use of a temporary table is a tad silly. We *would* just go with
+    -- what's above rather than using a temporary table as a go-between, but
+    -- apparently when you have a sufficiently large number of connections
+    -- getting started at a given time MySQL goes all "omg wtf nooooooo" and
+    -- gives us the singularly unhelpful error message:
+    -- Data too long for column 'USER' at row 1
+    -- A lot of trial and error revealed that putting in a temporary table
+    -- for the subquery "fixes" it. Thanks, MySQL!
+    Create temporary table silly_mysql_bug_workaround_for_reconcile as Select ID from INFORMATION_SCHEMA.PROCESSLIST;
+    Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from silly_mysql_bug_workaround_for_reconcile) AND ExitStatus IS NULL;
+    Update Models a, Servers b set a.ServerId = NULL, a.StartTime = NULL where a.ServerId = b.ServerId AND b.ExitStatus = 42 AND a.Likelihood IS NULL;
+ 
+    Leave WholeThing;
+  END IF;
+
+  -- FixFree: Turn on or off FreeModels flags for appropriate PedigreePositions
+  IF inWhich = 'FixFree' THEN
+    Update PedigreePositions set FreeModels = 0 where FreeModels <> 0;
+    Create temporary table FreeModelCounts as Select PedPosId, count(*) 'FreeModels' from Models where Likelihood IS NULL group by PedPosId;
+    Update PedigreePositions a, FreeModelCounts b set a.FreeModels = b.FreeModels where a.PedPosId = b.PedPosId;
+    Drop table FreeModelCounts;
     Leave WholeThing;
   END IF;
 
@@ -1765,7 +1845,8 @@ WholeThing: LOOP
 	('Delta', 'Loop showing overall work progress for the last minute using servers active in the last hour'),
 	('Free', 'Show unallocated work by StudyId/PedPosId with SingleModelRuntime'),
 	('TotalFree', 'Show total unallocated work by StudyLabel'),
-	('Reconcile', 'Mark any servers not really in processlist with ExitStatus 42');
+	('Reconcile', 'Mark any servers not really in processlist with ExitStatus 42, then release their incomplete work'),
+	('FixFree', 'Reset FreeModels flags');
    Select * from Q_help;
    Drop table Q_help;
 
@@ -1884,6 +1965,7 @@ DELIMITER //
 -- StudyLabel, LiabilityClassCnt and ImprintingFlag combination should be unique
 CREATE PROCEDURE GetStudyId (IN inStudyLabel varchar(64), IN inLiabilityClassCnt int, IN inImprintingFlag char(1), OUT outStudyId int)
 BEGIN
+  DECLARE version char(96) DEFAULT '$Id: LKS_setup_trigger_proc.sql 4215 2017-12-26 18:24:32Z jcv001 $ in personal kelvin/trunk/LKS';
   DECLARE no_rows_indicator INT DEFAULT 0; 
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;

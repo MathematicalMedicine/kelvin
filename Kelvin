@@ -4,7 +4,7 @@ use FindBin; use lib split(/:+/, "!:$ENV{'KELVIN_ROOT'}:NO_KELVIN_ROOT:$ENV{'TOO
 use warnings FATAL=>qw(all);
 use Data::Dumper;
 use File::Basename;
-use KelvinDataset 1.40;
+use KelvinDataset 1.60;
 use KelvinConfig 1.40;
 use KelvinFamily 1.50;
 no warnings qw(once);
@@ -81,21 +81,20 @@ if (@ARGV) {
     $config->validate
 	or error ("$KelvinConfig::errstr");
 }
+
+# Open the dataset. This reads the locus and map (and frequency file, if
+# one is present) and sets up the pedigree file for reading. The presence 
+# of a frequency file is preferred, because prior knowledge of the presence
+# of microsats will save us effort later.
+$dataset = KelvinDataset->new ($config)
+    or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
+
+# Get the phenotype codes from the config, and use that to set the 
+# undefined phenotype for the dataset, so we can properly identify 
+# family case/control pedigrees.
 $aref = $config->isConfigured ("PhenoCodes");
 @phenocodes{$UNDEFINED, $UNAFFECTED, $AFFECTED} = split (/,\s*/, $$aref[0]);
 map { defined ($phenocodes{$_}) and $phenomap{$phenocodes{$_}} = $_ } keys (%phenocodes);
-
-# Open dataset (that is, read the locus, map and freq files, and set up the
-# pedigree file for reading). We include the freq file, if one is available,
-# because prior knowledge of the presence of microsats will save us effort
-# later.
-$$href{PedigreeFile} = $ {$config->isConfigured ("PedigreeFile")}[0];
-$$href{LocusFile} = $ {$config->isConfigured ("LocusFile")}[0];
-$$href{MapFile} = $ {$config->isConfigured ("MapFile")}[0];
-($aref = $config->isConfigured ("FrequencyFile"))
-    and $$href{FrequencyFile} = $$aref[0];
-$dataset = KelvinDataset->new ($href)
-    or error ("KelvinDataset->new failed, $KelvinDataset::errstr");
 $dataset->setUndefPhenocode ($phenocodes{$UNDEFINED});
 
 # Set up for allele frequency estimation. This will also validate the
@@ -190,6 +189,7 @@ sub setup_pedcount
     $$state{kelvinargs} = [];
 
     if ($config->isConfigured ("Multipoint") ||
+	$config->isConfigured ("MarkerToMarker") ||
 	$config->isConfigured ("CountFile") ||
 	$config->isConfigured ("QT") ||
 	$config->isConfigured ("QTT") ||

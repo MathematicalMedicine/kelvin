@@ -144,6 +144,7 @@ struct StudyDB studyDB;
 }
 
 int dBInitNotDone = TRUE, dBStmtsNotReady = TRUE;
+int dBRetryDelays[MAX_DB_RETRIES+1] = {0, 1, 5, 30, 300, 1800};
 
 void initializeDB () {
   int ret;
@@ -154,15 +155,20 @@ void initializeDB () {
 
   /* Weird problem connecting to Walker. Error 2003, message 110. No log entry. Only happens once in a while, so
      we're just going to try to avoid it by attempting connection multiple times with intervening delays. */
-  int retries = 3;
-  while ((--retries > 0) && (!mysql_real_connect(studyDB.connection, studyDB.dBHostname, studyDB.username, studyDB.password, 
+  int retries = 0;
+  while ((++retries <= 3) && (!mysql_real_connect(studyDB.connection, studyDB.dBHostname, studyDB.username, studyDB.password, 
 						 NULL, 0, NULL, CLIENT_MULTI_RESULTS /* Important discovery here */))) {
-    WARNING("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%d: %s) with attempt %d", studyDB.dBHostname, 
-	    studyDB.username, studyDB.password, mysql_errno(studyDB.connection), mysql_error(studyDB.connection), 3-retries);
-    sleep(10);
+    WARNING("Cannot connect to MySQL on hostname [%s] as username [%s/%s] (%d: %s), sleeping %ds", studyDB.dBHostname, 
+	    studyDB.username, studyDB.password, mysql_errno(studyDB.connection), mysql_error(studyDB.connection), dBRetryDelays[retries]);
+    sleep(dBRetryDelays[retries]);
+    if ((mysql_errno(studyDB.connection) == 1040) && (retries == 3)) {
+      retries = 2;  // Never get tired of trying if it is because of too many connections!
+      WARNING("Still cannot connect to MySQL on hostname [%s] as username [%s/%s] (%d: %s), repeating sleep of  %ds indefinitely", studyDB.dBHostname, 
+	      studyDB.username, studyDB.password, mysql_errno(studyDB.connection), mysql_error(studyDB.connection), dBRetryDelays[retries]);
+    }
   }
-  if (retries <= 0)
-    ERROR("Failed to connect to database after 3 tries and 10 second delays");
+  if (retries > 3)
+    ERROR("Failed to connect to database after 3 retries with escalating delays");
 
   /* Change database. */
   if (mysql_select_db(studyDB.connection, studyDB.dBName))
@@ -183,6 +189,7 @@ void initializeDB () {
   if (mysql_stmt_bind_param(studyDB.stmtGetStudyId, studyDB.bindGetStudyId))
     ERROR("Cannot bind GetStudyId call statement (%s)", mysql_stmt_error(studyDB.stmtGetStudyId));
 
+  retries = 0;
   while(1) {
     ret = mysql_stmt_execute(studyDB.stmtGetStudyId);
     if (ret != 0) {
@@ -195,8 +202,10 @@ void initializeDB () {
 				      mysql_stmt_errno(studyDB.stmtGetStudyId), 
 				      mysql_stmt_error(studyDB.stmtGetStudyId), 
 				      mysql_stmt_sqlstate(studyDB.stmtGetStudyId));});
-	swLogProgress(5, 0, "Retrying deadlock in 1 second in GetStudyId");
-	sleep(1);
+	if (++retries > MAX_DB_RETRIES)
+	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
+	INFO("Retry #%d of presumed deadlock after %d second in GetStudyId", retries, dBRetryDelays[retries]);
+	sleep(dBRetryDelays[retries]);
 	continue;
       }
     }
@@ -239,6 +248,7 @@ void GetAnalysisId () {
   if (mysql_stmt_bind_param(studyDB.stmtGetAnalysisId, studyDB.bindGetAnalysisId))
     ERROR("Cannot bind GetAnalysisId call statement (%s)", mysql_stmt_error(studyDB.stmtGetAnalysisId));
 
+  int retries = 0;
   while(1) {
     ret = mysql_stmt_execute(studyDB.stmtGetAnalysisId);
     if (ret != 0) {
@@ -251,8 +261,10 @@ void GetAnalysisId () {
 				      mysql_stmt_errno(studyDB.stmtGetAnalysisId), 
 				      mysql_stmt_error(studyDB.stmtGetAnalysisId), 
 				      mysql_stmt_sqlstate(studyDB.stmtGetAnalysisId));});
-	swLogProgress(5, 0, "Retrying deadlock in 1 second in GetAnalysisId");
-	sleep(1);
+	if (++retries > MAX_DB_RETRIES)
+	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
+	INFO("Retry #%d of presumed deadlock after %d second in GetAnalysisId", retries, dBRetryDelays[retries]);
+	sleep(dBRetryDelays[retries]);
 	continue;
       }
     }
@@ -317,14 +329,6 @@ void prepareDBStatements () {
 
   // Prepare the GetMarkerSetLikelihood_MCMC call
   strncpy(studyDB.strGetMarkerSetLikelihood_MCMC, "Select SampleId, Likelihood from MarkerSetLikelihood_MCMC where MarkerSetId=@outMarkerSetId order by SampleId", MAXSTMTLEN-1);
-  /*
-  studyDB.stmtGetMarkerSetLikelihood_MCMC = mysql_stmt_init (studyDB.connection);
-  memset (studyDB.bindGetMarkerSetLikelihood_MCMC, 0, sizeof(studyDB.bindGetMarkerSetLikelihood_MCMC));
-  if (mysql_stmt_prepare (studyDB.stmtGetMarkerSetLikelihood_MCMC, studyDB.strGetMarkerSetLikelihood_MCMC, strlen (studyDB.strGetMarkerSetLikelihood_MCMC)))
-    ERROR("Cannot prepare GetMarkerSetLikelihood_MCMC call statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihood_MCMC));
-  if (mysql_stmt_bind_param (studyDB.stmtGetMarkerSetLikelihood_MCMC, studyDB.bindGetMarkerSetLikelihood_MCMC))
-    ERROR("Cannot bind GetMarkerSetLikelihood_MCMC call statement (%s)", mysql_stmt_error(studyDB.stmtGetMarkerLikelihood_MCMC));
-  */
 
   // Prepare the GetMarkerSetLikelihood call
   studyDB.stmtGetMarkerSetLikelihood = mysql_stmt_init (studyDB.connection);
@@ -760,6 +764,7 @@ double GetMarkerSetLikelihood(int pedPosId, int regionNo, int parentRegionNo, do
   studyDB.parentRegionSplitDir = parentRegionSplitDir;
   studyDB.markerSetLikelihoodFlag=0;
   studyDB.markerSetPedPosId = studyDB.pedPosId;
+  int retries = 0;
   while (1) {
     ret = mysql_stmt_execute (studyDB.stmtGetMarkerSetLikelihood);
     if (ret != 0) {
@@ -772,8 +777,10 @@ double GetMarkerSetLikelihood(int pedPosId, int regionNo, int parentRegionNo, do
 				     mysql_stmt_errno(studyDB.stmtGetMarkerSetLikelihood), 
 				     mysql_stmt_error(studyDB.stmtGetMarkerSetLikelihood), 
 				     mysql_stmt_sqlstate(studyDB.stmtGetMarkerSetLikelihood));});
-	swLogProgress(5, 0, "Retrying deadlock in 1 second in GetMarkerSetLikelihood");
-	sleep(1);
+	if (++retries > MAX_DB_RETRIES)
+	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
+	INFO("Retry #%d of presumed deadlock after %d second in GetMarkerSetLikelihood", retries, dBRetryDelays[retries]);
+	sleep(dBRetryDelays[retries]);
 	continue;
       }
     }
@@ -795,17 +802,12 @@ double GetMarkerSetLikelihood(int pedPosId, int regionNo, int parentRegionNo, do
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is NULL.\n", studyDB.regionId);});
     return -1LL;
   } else {
-    /*
-        if(studyDB.MCMC_flag == 1 && toupper(*studyDB.role)=='S' && analysisLocusList->traitLocusIndex!=-1) {
-      GetMarkerSetLikelihood_MCMC(pedPosId);
-    }
-    */
-
     DIAG (ALTLSERVER, 1, { fprintf (stderr, "In RegionId %d, Likelihood is %G.\n", studyDB.regionId, studyDB.lOD);});
     return studyDB.lOD;
   }
 }
 
+// This looks like it was cloned from the above code, and possibly incorrectly.
 int GetMarkerSetLikelihood_MCMC(int pedPosId)
 {
   int idx=0;
@@ -822,33 +824,35 @@ int GetMarkerSetLikelihood_MCMC(int pedPosId)
       ERROR("Cannot retrieve markerSetId (%s)", mysql_error(studyDB.connection));
     mysql_stmt_free_result(studyDB.stmtGetMarkerSetId);
   }
-
-    // now retreive the markerset likelihood for each sampling
-    if(mysql_query(studyDB.connection, studyDB.strGetMarkerSetLikelihood_MCMC))
-      ERROR("Cannot select from MarkerSetLikelihood_MCMC (%s:%s)", studyDB.strGetMarkerSetLikelihood_MCMC, mysql_error(studyDB.connection));
-    if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
-      ERROR("Cannot retrieve markerSetLikelihood_MCMC (%s)", mysql_error(studyDB.connection));
-    if (mysql_num_rows (studyDB.resultSet) == studyDB.totalSampleCount) {
-      sampleId=studyDB.sampleIdStart;
-      idx=0;
-      while (sampleId<=studyDB.sampleIdEnd && (studyDB.row = mysql_fetch_row (studyDB.resultSet)) != NULL){
-	if(atoi(studyDB.row[0])!=sampleId)
-	  continue;
-	studyDB.markerSetLikelihood[idx] = atof(studyDB.row[1]);
-	idx++;
-	sampleId++;
-      } // end of while
-      // mark we do have the markerSetlikelihood
-      studyDB.markerSetLikelihoodFlag=1;
-      studyDB.markerSetPedPosId = studyDB.pedPosId;
-    } // end of there is any row
-    else {
-      mysql_free_result(studyDB.resultSet);
-      return -1;
+  // Now retrieve the markerset likelihood for each sampling
+  if(mysql_query(studyDB.connection, studyDB.strGetMarkerSetLikelihood_MCMC))
+    ERROR("Cannot select from MarkerSetLikelihood_MCMC (%s:%s)", studyDB.strGetMarkerSetLikelihood_MCMC, mysql_error(studyDB.connection));
+  if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
+    ERROR("Cannot retrieve markerSetLikelihood_MCMC (%s)", mysql_error(studyDB.connection));
+  if (mysql_num_rows (studyDB.resultSet) == studyDB.totalSampleCount) {
+    sampleId=studyDB.sampleIdStart;
+    idx=0;
+    while (sampleId<=studyDB.sampleIdEnd && (studyDB.row = mysql_fetch_row (studyDB.resultSet)) != NULL){
+      if(atoi(studyDB.row[0])!=sampleId)
+	continue;
+      studyDB.markerSetLikelihood[idx] = atof(studyDB.row[1]);
+      idx++;
+      sampleId++;
     }
+    // Mark we do have the markerSetlikelihood
+    studyDB.markerSetLikelihoodFlag=1;
+    studyDB.markerSetPedPosId = studyDB.pedPosId;
+  } else {
+    WARNING ("Returning failure as mysql_num_rows (studyDB.resultSet) is %d, and studyDB.totalSampleCount is %d",
+	     mysql_num_rows (studyDB.resultSet), studyDB.totalSampleCount);
+    // If the likelihood is unavailable, it is not because of a failure in the database calls, since they're all set to ERROR on problems,
+    // so any retry work should be based upon whatever is causing the delay, and not be infinite!
     mysql_free_result(studyDB.resultSet);
-
-    return 0;
+    return -1;
+  }
+  mysql_free_result(studyDB.resultSet);
+  
+  return 0;
 }
 
 
@@ -879,6 +883,7 @@ double GetDLikelihood (int pedPosId, double dGF,
   studyDB.parentRegionError = parentRegionError;
   studyDB.parentRegionSplitDir = parentRegionSplitDir;
 
+  int retries = 0;
   while (1) {
     ret = mysql_stmt_execute (studyDB.stmtGetDLikelihood);
     if (ret != 0) {
@@ -894,8 +899,10 @@ double GetDLikelihood (int pedPosId, double dGF,
 				     mysql_stmt_errno(studyDB.stmtGetDLikelihood), 
 				     mysql_stmt_error(studyDB.stmtGetDLikelihood), 
 				     mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood));});
-	swLogProgress(5, 0, "Retrying deadlock in 1 second in GetDLikelihood");
-	sleep(1);
+	if (++retries > MAX_DB_RETRIES)
+	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
+	INFO("Retry #%d of presumed deadlock after %d second in GetDLikelihood", retries, dBRetryDelays[retries]);
+	sleep(dBRetryDelays[retries]);
 	continue;
       }
     }
@@ -967,6 +974,7 @@ double GetQLikelihood (int pedPosId, double dGF,
   studyDB.parentRegionError = parentRegionError;
   studyDB.parentRegionSplitDir = parentRegionSplitDir;
 
+  int retries = 0;
   while (1) {
     ret = mysql_stmt_execute (studyDB.stmtGetQLikelihood);
     if( ret != 0) {
@@ -982,8 +990,10 @@ double GetQLikelihood (int pedPosId, double dGF,
 				     mysql_stmt_errno(studyDB.stmtGetQLikelihood), 
 				     mysql_stmt_error(studyDB.stmtGetQLikelihood), 
 				     mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood));});
-	swLogProgress(5, 0, "Retrying deadlock in 1 second in GetQLikelihood");
-	sleep(1);
+	if (++retries > MAX_DB_RETRIES)
+	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
+	INFO("Retry #%d of presumed deadlock after %d second in GetQLikelihood", retries, dBRetryDelays[retries]);
+	sleep(dBRetryDelays[retries]);
 	continue;
       }
     }
@@ -1091,6 +1101,7 @@ int CountWork (double lowPosition, double highPosition)
   studyDB.highPosition = highPosition;
 
   // CountWork
+  int retries = 0;
   while (1) {
     ret = mysql_stmt_execute (studyDB.stmtCountWork);
     if (ret !=0 ) {
@@ -1104,8 +1115,10 @@ int CountWork (double lowPosition, double highPosition)
 				     mysql_stmt_errno(studyDB.stmtCountWork), 
 				     mysql_stmt_error(studyDB.stmtCountWork), 
 				     mysql_stmt_sqlstate(studyDB.stmtCountWork));});
-	swLogProgress(5, 0, "Retrying deadlock in 1 second in CountWork");
-	sleep(1);
+	if (++retries > MAX_DB_RETRIES)
+	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
+	INFO("Retry #%d of presumed deadlock after %d second in CountWork", retries, dBRetryDelays[retries]);
+	sleep(dBRetryDelays[retries]);
 	continue;
       }
     }
@@ -1141,9 +1154,13 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
   }
 
   // GetWork
+  int retries = 0;
   while (1) {
     ret = mysql_stmt_execute (studyDB.stmtGetWork);
     if( ret != 0) {
+      fprintf (stderr, "GETWORK non-zero sqlstate of %s, presuming DT so just in case...\n", mysql_stmt_sqlstate(studyDB.stmtGetWork));
+      fprintf (stderr, "Failed getting work for lowPosition %f: highPosition %f, locusListType %d\n", studyDB.lowPosition, studyDB.highPosition,
+	       studyDB.locusListType);
       if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "40001") != 0) &&
 	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtGetWork), "HY000") != 0)) {
 	ERROR("Cannot execute Get statement w/%G, %G, (%s, %s)", 
@@ -1154,8 +1171,10 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
 				    mysql_stmt_errno(studyDB.stmtGetWork), 
 				    mysql_stmt_error(studyDB.stmtGetWork), 
 				    mysql_stmt_sqlstate(studyDB.stmtGetWork));});
-	swLogProgress(5, 0, "Retrying presumed deadlock in 1 second in GetDWork");
-	sleep(1);
+	if (++retries > MAX_DB_RETRIES)
+	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
+	INFO("Retry #%d of presumed deadlock after %d second in GetDWork", retries, dBRetryDelays[retries]);
+	sleep(dBRetryDelays[retries]);
 	continue;
       }
     }
@@ -1229,6 +1248,7 @@ int GetQWork (double lowPosition, double highPosition, int locusListType, double
   }
 
   // GetWork
+  int retries = 0;
   while (1) {
     ret = mysql_stmt_execute (studyDB.stmtGetWork);
     if (ret != 0) {
@@ -1242,8 +1262,10 @@ int GetQWork (double lowPosition, double highPosition, int locusListType, double
 				    mysql_stmt_errno(studyDB.stmtGetWork), 
 				    mysql_stmt_error(studyDB.stmtGetWork), 
 				    mysql_stmt_sqlstate(studyDB.stmtGetWork));});
-	swLogProgress(5, 0, "Retrying presumed deadlock in 1 second in GetQWork");
-	sleep(1);
+	if (++retries > MAX_DB_RETRIES)
+	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
+	INFO("Retry #%d of presumed deadlock after %d second in GetQWork", retries, dBRetryDelays[retries]);
+	sleep(dBRetryDelays[retries]);
 	continue;
       }
     }
@@ -1328,9 +1350,15 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
   studyDB.runtimeCostSec = runtimeCostSec;
 
   // PutWork...if this fails due to a lost connection (like, it took days to compute), then we've lost context and temporary tables, so just do salvage.
+  int retries = 0;
   while (1) {
     ret = mysql_stmt_execute (studyDB.stmtPutWork);
     if ( ret != 0) {
+      fprintf (stderr, "PUTWORK non-zero sqlstate of %s, presuming DT so just in case...\n", mysql_stmt_sqlstate(studyDB.stmtPutWork));
+      fprintf (stderr, "Failed putting result for PedPosId %d: pedigree %s, position %f, DGF %G, DD %G, Dd %G, dD %G, dd %G.\n", \
+	       studyDB.pedPosId, studyDB.pedigreeSId, studyDB.pedTraitPosCM, studyDB.dGF, \
+	       studyDB.lC1BigPen, studyDB.lC1BigLittlePen, studyDB.lC1LittleBigPen, studyDB.lC1LittlePen);
+      
       if ((strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "40001") != 0) &&
 	  (strcmp (mysql_stmt_sqlstate(studyDB.stmtPutWork), "HY000") != 0)) {
 	// print out more information, so we can fix the db by hand 
@@ -1357,8 +1385,10 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
 				    mysql_stmt_errno(studyDB.stmtPutWork), 
 				    mysql_stmt_error(studyDB.stmtPutWork), 
 				    mysql_stmt_sqlstate(studyDB.stmtPutWork));});
-	swLogProgress(5, 0, "Retrying presumed deadlock in 1 second in PutWork");
-	sleep(1);
+	if (++retries > MAX_DB_RETRIES)
+	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
+	INFO("Retry #%d of presumed deadlock after %d second in PutWork", retries, dBRetryDelays[retries]);
+	sleep(dBRetryDelays[retries]);
 	continue;
       }
     }

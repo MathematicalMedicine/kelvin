@@ -5,7 +5,7 @@
 
 package LKS_InitStudy;
 
-our $VERSION = '$Id$';
+our $VERSION = '$Id: LKS_InitStudy.pm 4202 2017-10-27 16:24:36Z jcv001 $';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,21 +15,53 @@ use English qw( -no_match_vars );
 use DBI; # Database interaction
 use DBI qw(:sql_types);
 
+use File::Basename; # Get map file name and not the 128+ character path
+use Digest::MD5;
+use IO::File;
+
+use BCMM::CLIParser;
+use BCMMTools;
 use RunSQLScript;
 use KelvinDataset 1.40;
 use KelvinConfig 1.50;
 use KelvinFamily 1.40;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(perform_study);
+our @EXPORT_OK = qw(init_study_tables insert_initial_study_data);
 
 $OUTPUT_AUTOFLUSH= 1 ;  # Show the output when I say so.
 
 my $optssetup = [
     "Creates a new Study within a LKS database and adds that which the study "
             . "will be analyzing to same.",
-    "conffile!",
+    
+    {   # custom option --clientconf (client config file)
+        NAME => "clientconf",
+        REQUIRED => 1,
+        ARGTYPE => "client config file",
+        HELP => "Specifies the Kelvin LKS client config file to use",
+        VALIDATE => \&BCMM::CLIParser::validate_file_arg
+    },
+    {   # custom option --serverconfs (server config files)
+        NAME => "serverconfs",
+        REQUIRED => 1,
+        ARGTYPE => "serverconf,serverconf,...",
+        HELP => "Comma-separated list of Kelvin LKS server configs to use",
+        VALIDATE => (
+            sub {
+                BCMM::CLIParser::validate_file_arg(@ARG, undef, "listmode");
+            }
+        ),
+    },
+    "outprefix",
+    {   # custom option --checkoutfile (checksum output file)
+        NAME => "checkoutfile",
+        ARGTYPE => "checksums output file",
+        HELP => "File to output checksums of our conf files to, to serve as a "
+                . "touchstone for prereq-checking systems like depcheck",
+    }
 ];
+
 
 sub main {
     $main::VERSION = $VERSION;  # needed for --version option to work
@@ -39,16 +71,71 @@ sub main {
 sub init_study {
     my $opts = BCMM::CLIParser::autoparse_cmdline($optssetup, \@ARG);
     
-    my $config = KelvinConfig->new($$opts{conffile})
-            or error("new KelvinConfig failed: $KelvinConfig::errstr");
+    # potentially prep for checksum output
+    my $checkout;
+    if ($$opts{checkoutfile}) {
+        $checkout = IO::File->new(
+                "$$opts{outprefix}/$$opts{checkoutfile}.working", "w")
+                or error("could not open checksum output file: $!");
+    }
     
-    $config->validate or error("$KelvinConfig::errstr");
-    $config->isConfigured("Study")
-            or error("Study directive must be provided");
-    $config->isConfigured("Multipoint")
-            or error("Must be a multipoint analysis");
+    foreach my $conffile (($$opts{clientconf}, @{$$opts{serverconfs}})) {
+        my $config = KelvinConfig->new($conffile)
+                or error("new KelvinConfig failed: $KelvinConfig::errstr");
+        
+        $config->validate or error("$KelvinConfig::errstr");
+        $config->isConfigured("Study")
+                or error("Study directive must be provided");
+        $config->isConfigured("Multipoint")
+                or error("Must be a multipoint analysis");
+        
+        my $study = $config->readStudyLine();
+        if ($$study{role} eq "CLIENT") {
+            init_study_tables($$study{host}, $$study{database},
+                    $$study{username}, $$study{password}, $$opts{verbose});
+        }
+        insert_initial_study_data($config);
+        
+        if (defined($checkout)) {
+            my $checksum = Digest::MD5->new();
+            my $confdata = IO::File->new($conffile, "r")
+                    or error("could not open $conffile: $!");
+            $checksum->addfile($confdata);
+            $checkout->print("$conffile: " . $checksum->hexdigest . "\n");
+            $confdata->close();
+        }
+    }
     
-    perform_study($config);
+    if (defined($checkout)) { $checkout->close(); }
+    rename("$$opts{outprefix}/$$opts{checkoutfile}.working",
+            "$$opts{outprefix}/$$opts{checkoutfile}");
+}
+
+sub init_study_tables {
+    # Given the login info for a database, sets up that database with the
+    # tables and procedures for LKS.
+    
+    my ($host, $dbname, $user, $pass, $verbosemode) = @ARG;
+    
+    # SQL scripts that need to be run, in this order, to initialize a new LKS
+    # database
+    my $sqlscriptnames = [
+        ["LKS_setup_tables.sql", undef],
+        ["LKS_setup_trigger_proc.sql", undef],
+        ["DModelParts.sql", "lazyparse"],
+        ["QModelParts.sql", "lazyparse"],
+    ];
+    
+    my $dbh = RunSQLScript::connect_to_db($host, $dbname, $user, $pass,
+            undef, undef, $verbosemode);
+    my $rowcount = $dbh->do("Set SQL_MODE=STRICT_ALL_TABLES");
+    
+    foreach my $sqlscriptpair (@$sqlscriptnames) {
+        my ($sqlscriptfile, $lazyparse) = @$sqlscriptpair;
+        my $sqlscript = BCMMTools::find_in_path($sqlscriptfile);
+        my $sqlcmds = RunSQLScript::split_sql_script($sqlscript, $lazyparse);
+        RunSQLScript::run_sql_cmdlist($dbh, $sqlcmds, undef, $verbosemode);
+    }
 }
 
 #
@@ -67,7 +154,7 @@ sub init_study {
 #    not warrant it when it is unlikely to be needed.
 #    
 
-sub perform_study {
+sub insert_initial_study_data {
     my ($config) = @ARG;
     
     my $study = $config->readStudyLine();
@@ -101,6 +188,14 @@ sub perform_study {
     my $phenocodes = $config->isConfigured("PhenoCodes");
     $dataset->setUndefPhenocode((split (/,\s*/, $$phenocodes[0]))[0]);
     
+    # If we're running a client, clean out our study just for safety's sake
+    # (we wait until now just in case something goes wrong with setting up the
+    # KelvinDataset - don't want to touch the DB until we're sure we have what
+    # we need)
+    if ($$study{role} eq "CLIENT") {
+        $dbh->do("CALL CleanStudy('$$study{label}')");
+    }
+    
     # Get or insert the Study
     my $StudyId;
     #my $sth = $dbh->prepare("Call GetStudyId(?, ?, ?, ?)")
@@ -122,7 +217,7 @@ sub perform_study {
     my $MapDescription;
     $dbh->do("CALL GetMapId(\'$StudyId\', \'"
             . (($$study{role} eq "CLIENT") ? 1 : 0)
-            . "\', \'$MapScale\', \'$MapFile\', \@MapId, \@MapScale, "
+            . "\', \'$MapScale\', \'".basename($MapFile)."\', \@MapId, \@MapScale, "
             . "\@MapDescription)");
     ($MapId, $MapScale, $MapDescription) = $dbh->selectrow_array(
             'SELECT @MapId, @MapScale, @MapDescription');
@@ -158,9 +253,6 @@ sub perform_study {
             # NOTE that inclusion and exclusion regexps are ignored since the
             # kelvin client processes all pedigrees. Only servers have a
             # restricted view.
-            # FIXME: possibly should explicitly check errors and verify that
-            # the only errors ARE duplicates, altho INSERT IGNORE *should* take
-            # care of that for us...
             $dbh->do("INSERT IGNORE INTO Pedigrees (StudyId, PedigreeSId) "
                     . "VALUES (?,?)", undef, $StudyId, $PedigreeSId);
         } else {
@@ -184,92 +276,51 @@ sub perform_study {
                 . "SELECT DISTINCT $StudyId, PedigreeSId, ChromosomeNo, "
                 . "-9999.99, -9999.99, MarkerCount, 0 FROM PedigreePositions "
                 . "WHERE StudyId = $StudyId", undef);
-        return; # All client-only from here on out...
-    }
-    
-    # 'Freshen' the Positions tables
-    # Three cases we know of: marker, individual value, and range 
-    # specification, and all can be in lists
-    my $JointTPs = join(',', @{$config->isConfigured("TraitPositions")});
-    $JointTPs =~ s/\s+//g;
-    my @TPs = split(',',$JointTPs);
-    $ChromosomeNo = $$dataset{chromosome};
-    # First find where "begin" and "end" are for the current set of markers.
-    my $lastMarkerPos = 0;
-    my $firstMarkerPos = 9999.9;
-    %markers = %{$$dataset{markers}};
-    foreach my $marker (keys %markers) {
-        $lastMarkerPos = $markers{$marker}{avgpos}
-                if ($markers{$marker}{avgpos} > $lastMarkerPos);
-        $firstMarkerPos = $markers{$marker}{avgpos}
-                if ($markers{$marker}{avgpos} < $firstMarkerPos);
-    }
-    for my $TP (@TPs) {
-        if ($TP =~ /.*-end:(\d*.?\d*)/) {
-            my $newEnd = $lastMarkerPos + $1;
-            $TP =~ s/-end:/-$newEnd:/;
-        }
-        if ($TP =~ /begin-(\d*.?\d*):(\d*.?\d*)/) {
-            my $newBegin = int($firstMarkerPos / $2) * $2;
-            $TP =~ s/begin-/$newBegin-/;
-        }
-        if (uc $TP eq "MARKER") {
-            $dbh->do("INSERT IGNORE INTO Positions (StudyId, ChromosomeNo, "
-                    . "RefTraitPosCM) SELECT $StudyId, $ChromosomeNo, AvePosCM"
-                    . " FROM MapMarkers WHERE StudyId = $StudyId "
-                    . "AND MapId = $MapId AND AvePosCM NOT IN "
-                    . "(SELECT DISTINCT RefTraitPosCM FROM Positions WHERE "
-                    . "StudyId = $StudyId)", undef);
-        } elsif ($TP =~ /(\d*.?\d*)-(\d*.?\d*):(\d*.?\d*)/) {
-            my ($begin, $end, $inc, $precision, $va) = ($1, $2, $3, $3, 0);
-            $precision =~ s/^[^\.]\.?(\d*)?/$1/;
-            my $PosCM;
-            do {
-                $PosCM = sprintf("%0.*f", length($precision),
-                        $begin + $inc * $va++);
-                $dbh->do("INSERT IGNORE INTO Positions (StudyId, ChromosomeNo,"
-                        . " RefTraitPosCM) VALUES (?,?,?)", undef, $StudyId,
-                        $ChromosomeNo, $PosCM);
-            } while ($PosCM < $end);
-        } else {
+    } else {
+        # 'Freshen' the Positions tables
+        my $TPs = $dataset->expand_traitpositions(
+                ${$config->isConfigured("TraitPositions")}[0]);
+        $ChromosomeNo = $$dataset{chromosome};
+        foreach my $TP (@$TPs) {
             $dbh->do("INSERT IGNORE INTO Positions (StudyId, ChromosomeNo, "
                     . "RefTraitPosCM) VALUES (?,?,?)", undef, $StudyId,
                     $ChromosomeNo, $TP);
         }
+        
+        # Random name for temp table
+        my $temptable = "PPs_" . join ('',
+                map { chr(int(rand() * 26) + 65) } (0 .. 7));
+        
+        # Turn off automatic error handling for these final statements
+        $dbh->{PrintError} = $dbh->{RaiseError} = 0;
+        
+        # Finally, freshen the PedigreePositions as needed...
+        my $MPMarkers = ${$config->isConfigured("Multipoint")}[0];
+        
+        until ($dbh->do("CREATE TEMPORARY TABLE $temptable "
+                . "SELECT a.StudyId, a.PedigreeSId, b.ChromosomeNo, "
+                . "b.RefTraitPosCM, $MPMarkers 'MarkerCount' FROM "
+                . "Pedigrees a, Positions b WHERE a.StudyId = $StudyId "
+                . "AND a.StudyId = b.StudyId")) {
+            check_mysql_retry($dbh);
+        }
+        until ($dbh->do("INSERT INTO PedigreePositions (StudyId, PedigreeSId, "
+                . "ChromosomeNo, RefTraitPosCM, MarkerCount) "
+                . "SELECT a.StudyId, a.PedigreeSId, a.ChromosomeNo, "
+                . "a.RefTraitPosCM, a.MarkerCount FROM $temptable a "
+                . "LEFT OUTER JOIN PedigreePositions b "
+                . "ON a.StudyId = $StudyId AND a.StudyId = b.StudyId "
+                . "AND a.PedigreeSId = b.PedigreeSId "
+                . "AND a.ChromosomeNo = b.ChromosomeNo "
+                . "AND a.RefTraitPosCM = b.RefTraitPosCM "
+                . "WHERE b.StudyId IS NULL")) {
+            check_mysql_retry($dbh);
+        }
+        until ($dbh->do("CALL BadScaling(?)", undef, $StudyId)) {
+            check_mysql_retry($dbh);
+        }
+        
     }
-    
-    # Random name for temp table
-    my $temptable = "PPs_" . join ('',
-            map { chr(int(rand() * 26) + 65) } (0 .. 7));
-    
-    # Turn off automatic error handling
-    $dbh->{PrintError} = $dbh->{RaiseError} = 0;
-    
-    # Finally, freshen the PedigreePositions as needed...
-    my $MPMarkers = ${$config->isConfigured("Multipoint")}[0];
-    
-    until ($dbh->do("CREATE TEMPORARY TABLE $temptable "
-            . "SELECT a.StudyId, a.PedigreeSId, b.ChromosomeNo, "
-            . "b.RefTraitPosCM, $MPMarkers 'MarkerCount' FROM Pedigrees a, "
-            . "Positions b WHERE a.StudyId = $StudyId "
-            . "AND a.StudyId = b.StudyId")) {
-        check_mysql_retry($dbh);
-    }
-    until ($dbh->do("INSERT INTO PedigreePositions (StudyId, PedigreeSId, "
-            . "ChromosomeNo, RefTraitPosCM, MarkerCount) "
-            . "SELECT a.StudyId, a.PedigreeSId, a.ChromosomeNo, "
-            . "a.RefTraitPosCM, a.MarkerCount FROM $temptable a "
-            . "LEFT OUTER JOIN PedigreePositions b ON a.StudyId = $StudyId "
-            . "AND a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND"
-            . " a.ChromosomeNo = b.ChromosomeNo AND "
-            . "a.RefTraitPosCM = b.RefTraitPosCM WHERE b.StudyId IS NULL")) {
-        check_mysql_retry($dbh);
-    }
-    until ($dbh->do("CALL BadScaling(?)", undef, $StudyId)) {
-        check_mysql_retry($dbh);
-    }
-    
-    return;
 }
 
 sub check_mysql_retry
@@ -279,11 +330,6 @@ sub check_mysql_retry
     ($DBI::errstr =~ /try restarting transaction/)
             or die("DBI failure executing '", $handle->{Statement}, "'\n",
             "$DBI::errstr\n");
-}
-
-sub fatal
-{
-    die ("FATAL - ABORTING, @ARG");
 }
 
 sub error

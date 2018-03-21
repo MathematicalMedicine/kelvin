@@ -1,15 +1,16 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use POSIX qw(ceil fmod);
 use KelvinIO;
-use KelvinFamily 1.5;
+use KelvinFamily 1.8;
 #
 # KelvinDataset: an object for managing a Kelvin-compatible marker files
 # (marker map, frequencies, and locus files, and pedigree files).
 #
 package KelvinDataset;
 our $errstr='';
-our $VERSION=1.6;
+our $VERSION=1.8;
 
 our $ROUNDING_ERROR=0.001;
 
@@ -17,6 +18,7 @@ sub new
 {
     my ($class, $arg) = @_;
     my $self = bless ({}, $class);
+    my $conf;
     
     # Initialize the fields: 
     #   markers: a hash of all markers in the set, indexed by name
@@ -64,7 +66,7 @@ sub new
 	$errstr = "missing argument";
 	return (undef);
     } elsif (ref ($arg) eq "HASH") {
-	# A hashref is allowed to specify mapfile, locusfile and freqfile
+        # A hashref is allowed to specify mapfile, locusfile, pedfile and freqfile
 	foreach (keys (%$arg)) {
 	    if (/^map/i) { $$self{mapfile} = $$arg{$_}; }
 	    elsif (/^locus/i) { $$self{locusfile} = $$arg{$_}; }
@@ -75,6 +77,13 @@ sub new
 		return (undef);
 	    }
 	}
+
+    } elsif (ref ($arg) eq "KelvinConfig") {
+        ($conf = $arg->isConfigured ("PedigreeFile")) and $$self{pedigreefile} = $$conf[0];
+        ($conf = $arg->isConfigured ("LocusFile")) and $$self{locusfile} = $$conf[0];
+        ($conf = $arg->isConfigured ("MapFile")) and $$self{mapfile} = $$conf[0];
+        ($conf = $arg->isConfigured ("FrequencyFile")) and $$self{freqfile} = $$conf[0];
+
     } else {
 	# A single arg should be mapfile only. 
 	$$self{mapfile} = $arg;
@@ -155,10 +164,6 @@ sub copy
 	($$self{mapread}) and @{$$new{maporder}} = @{$$self{maporder}};
 	($$self{locusread}) and @{$$new{markerorder}} = @{$$self{markerorder}};
     }
-    # If markers have been dropped, mark the dataset as inconsistent with the input files
-    (scalar (@{$$self{maporder}}) == scalar (@{$$new{maporder}}) &&
-     scalar (@{$$self{markerorder}}) == scalar (@{$$new{markerorder}}))
-	or $$new{consistent} = 0;
 
     # These fields always copy over, regardless of subsetting
     map {
@@ -455,6 +460,7 @@ sub readMapfile
     my $mapfunction;
     my $origchr = undef;
     my $lastpos = undef;
+    my $lastphys = undef;
     my ($line, @arr);
     my $misordered = $$self{misordered};
     my @markerorder;
@@ -556,7 +562,12 @@ sub readMapfile
 	    $errstr = "$$self{mapfile}, line $lineno: marker $$href{name} out of centiMorgan order";
 	    return (undef);
 	}
+        if (exists ($$href{phys}) && defined ($lastphys) && $$href{phys} <= $lastphys) {
+	    $errstr = "$$self{mapfile}, line $lineno: marker $$href{name} out of physical order";
+	    return (undef);
+        }
 	($origchr, $lastpos) = @$href{qw/chr avgpos/};
+        exists ($$href{phys}) and $lastphys = $$href{phys};
 	$markers{$$href{name}} = $href;
 	push (@maporder, $$href{name});
     }
@@ -747,6 +758,7 @@ sub deleteTrait
     for (; $idx < scalar (@{$$self{traitorder}}); $idx++) {
 	$$self{traits}{$$self{traitorder}[$idx]}{idx} = $idx;
     }
+    $$self{consistent} = 0;
     return (1);
 }
 
@@ -1230,6 +1242,31 @@ sub getAlleleFreqs
     
 }
 
+sub fabricate_mcsample_alleles {
+    # Given the number of alleles McSample made up for its fully informative
+    # pedigree samples, replaces ALL the alleles of ALL our markers with
+    # McSample-style faked alleles - numeric 1 through $allelecount, all with
+    # the same frequency, for every single marker.
+    
+    my ($self, $allelecount) = @_;
+    
+    unless (defined($allelecount) ) {
+        $errstr = "number of alleles not specified";
+        return (undef);
+    }
+    
+    # frequency for every allele
+    my $fakefreq = 1.0 / $allelecount;
+    
+    foreach my $marker (keys(%{$$self{markers}})) {
+        $$self{markers}{$marker}{alleles} = {};
+        foreach my $allele (1..$allelecount) {
+            $$self{markers}{$marker}{alleles}{$allele} = $fakefreq;
+        }
+    }
+    return(1);
+}
+
 sub mapFields
 {
     my ($self) = @_;
@@ -1280,7 +1317,7 @@ sub setMarker
 	$errstr = "no marker '$marker' in dataset";
 	return (undef);
     }
-    $$self->validateMapfields ([keys (%$href)])
+    $self->validateMapfields ([keys (%$href)])
 	or return (undef);
     # TODO: thie really ought to make sure that no misordering is introduced
     @{$$self{markers}{$marker}}{keys (%$href)} = @$href{keys (%$href)};
@@ -1397,11 +1434,93 @@ sub mapread
     return ($$self{mapread});
 }
 
+sub locusread
+{
+    my ($self) = @_;
+
+    return ($$self{locusread});
+}
+
 sub misordered
 {
     my ($self) = @_;
 
     return ($$self{misordered});
+}
+
+
+sub expand_traitpositions {
+    # Given a TraitPositions directive in "summarized" format, converts it to
+    # an explicit list of all trait positions that would be analyzed in this
+    # dataset.
+    
+    my ($self, $traitpositiondirectives) = @_;
+    
+    # The following is taken from the Kelvin Split Client.
+    # 
+    # Another attempted implementation of this was found as part of
+    # parse_traitpositionlist() in mp_marker_strip.pl. The tokenization
+    # approach it uses doesn't strike me as quite as trustworthy, though, since
+    # it includes checks for illegal tokens ("begin") and bails out if the
+    # "Marker" string is included (but only if it's in allcaps). So, yeah,
+    # we're not using that. It's included below for reference, but commented
+    # out.
+
+    my ($posstart, $posend, $posinterval, %uniquepos);
+    foreach my $postoken (split(/,/, $traitpositiondirectives)) {
+        if (($posstart, $posend, $posinterval) =
+                ($postoken =~ 
+                /(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?|end):(\d+(?:\.\d+)?)/)) {
+            if ($posend eq "end") {
+                $posend = POSIX::ceil(${$self->getMarker(
+                        ${$self->mapOrder}[-1])}{avgpos});
+                while (POSIX::fmod($posend, $posinterval)) { $posend++; }
+            }
+            for (my ($p, $x) = ($posstart, 1); $p <= $posend;
+                    $p = $posstart + ($posinterval * $x++)) {
+                $uniquepos{$p} = "";
+            }
+        } else {
+            map { $uniquepos{$_} = ""; } split (/[, ]+/, $postoken);
+        }
+    }
+    my $traitpositions = [sort { $a <=> $b } (keys(%uniquepos))];
+    return $traitpositions;
+    
+    
+    # The aforementioned alternate implementation of the above follows.
+    #my $markermap = $dataset->mapOrder;
+    #my $markercount = scalar(@$markermap)
+    #my $firstMarkerPos = ${$dataset->getMarker($$markermap[0])}{avgpos};
+    #my $lastMarkerPos = ${$dataset->getMarker($$markermap[-1])}{avgpos};
+    #print "Processing TPs $traitpositiondirectives with $flankingmarkers flanking markers using $markercount markers from $firstMarkerPos to $lastMarkerPos\n";
+    #
+    #my @pos = ();
+    #
+    #for my $TP (@TPs) {
+    #    if ($TP =~ /.*-end:(\d*.?\d*)/) {
+    #        my $newEnd = int($lastMarkerPos + 0.9999);
+    #        $TP =~ s/-end:/-$newEnd:/;
+    #    }
+    #    if ($TP =~ /begin-(\d*.?\d*):(\d*.?\d*)/) {
+    #        my $newBegin = int($firstMarkerPos / $2) * $2;
+    #        $TP =~ s/begin-/$newBegin-/;
+    #    }
+    #    if (uc $TP eq "MARKER") {
+    #        die "All markers are included as 'TraitPosition Marker' is specified";
+    #    } elsif ($TP =~ /(\d*.?\d*)-(\d*.?\d*):(\d*.?\d*)/) {
+    #        my ($begin, $end, $inc, $precision, $va) = ($1, $2, $3, $3, 0);
+    #        $precision =~ s/^[^\.]\.?(\d*)?/$1/;
+    #        my $PosCM;
+    #        do {
+    #            $PosCM = sprintf ("%0.*f", length ($precision), $begin + $inc * $va++);
+    #            push @pos,$PosCM;
+    #        } while ($PosCM < $end);
+    #    } else {
+    #        push @pos,$TP;
+    #    }
+    #}
+    #my @spos = sort { $a <=> $b } @pos;
 }
 
 1;

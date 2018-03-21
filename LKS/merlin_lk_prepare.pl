@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use strict;
-use warnings;
 use FindBin; use lib split(/:+/, "!:$ENV{'KELVIN_ROOT'}:NO_KELVIN_ROOT:$ENV{'TOOLPATH'}:$FindBin::Bin");
+use warnings;
 use KelvinConfig;
 use DBI;
 

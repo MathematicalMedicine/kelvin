@@ -39,3 +39,5 @@ int GetQWork (double, double, int, double *, char *, double *,
 double GetMarkerSetLikelihood(int pedPosId, int regionNo, int parentRegionNo, double parentRegionError, int parentRegionSplitDir);
 int GetMarkerSetLikelihood_MCMC(int pedPosId);
 
+#define MAX_DB_RETRIES 5
+

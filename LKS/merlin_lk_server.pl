@@ -12,7 +12,7 @@ use Data::Dumper;
 my $taskcount = 9;
 my $batchsize;
 my $prefix = 'merlin';
-my $svn_version='$Id$';
+my $svn_version='$Id: merlin_lk_server.pl 4186 2017-09-29 21:39:17Z jcv001 $';
 
 my $configfile = shift (@ARGV);
 my $config;

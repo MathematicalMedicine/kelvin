@@ -773,10 +773,14 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
 	if(studyDB.MCMC_flag !=0 && analysisLocusList->numLocus>1 && analysisLocusList->traitLocusIndex >= 0) {
 	  // if we are doing alternative likelihood under MCMC
 	  // we need retrieve the markerset likelihood for each sample
+	  int delays = 0;
 	  while (GetMarkerSetLikelihood_MCMC(studyDB.pedPosId) != 0) {
-	    // This code bit us and we don't know why it is here, but at least it won't silently spin now. More to come.
-	    WARNING ("Unexpected return status from GetMarkerSetLikelihood_MCMC, waiting 60 seconds and then retrying for some reason\n");
-	    sleep(60);
+	    // This is not a database problem, but a progress problem, so retry a few times then ERROR out.
+	    if (delays++ <= 3) {
+	      WARNING ("Sample-based marker set likelihood not yet available for pedPosId %d, retrying at %d minutes\n", studyDB.pedPosId, delays * 5);
+	      sleep(300);
+	    } else
+	      ERROR ("Sample-based marker set likelihood not available from GetMarkerSetLikelihood_MCMC after 15 minutes!\n");
 	  }
 	}
 

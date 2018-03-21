@@ -7,7 +7,7 @@ use warnings;
 #
 package KelvinFamily;
 our $errstr='';
-our $VERSION=1.6;
+our $VERSION=1.8;
 
 sub new
 {
@@ -27,7 +27,7 @@ sub new
 
     @$family{qw/pedid pedtype count founders nonfounders/} = (undef, undef, 0, 0, 0);
     @$family{qw/founderpairs multmarriages individuals/} = (0, 0, []);
-    @$family{qw/dad mom kids origfmt/} = (undef, undef, undef, undef);
+    @$family{qw/dad mom kids origfmt loopids/} = (undef, undef, undef, undef, undef);
     
     unless (scalar (@$aref) > 0) {
 	$errstr = "array of individuals is empty";
@@ -65,12 +65,22 @@ sub new
     }
     
     @{$$family{individuals}} = @$aref;
+    # Sort individuals such that no one precedes their parents. This is
+    # required for makeped(), and handy for find_loops().
+    if ($$family{count} > 1) {
+        $family->sort_family or return (undef);
+    }
+
     if ($$aref[0]{makeped} eq 'pre') {
 	$family->makeped or return (undef);
 	$$family{origfmt} = 'pre';
     } else {
 	($$family{count} == 1 || $family->verify_links) or return (undef);
 	$$family{origfmt} = 'post';
+    }
+    if (! $family->find_loops && $$family{origfmt} eq "post") {
+        $errstr = "family $$family{famid} has loops involving individuals $$family{loopids}";
+        return (undef);
     }
     
     (defined ($traits = $dataset->traitOrder))
@@ -387,11 +397,6 @@ sub makeped
     my ($pedid, $indid, $dadid, $momid, $kidid);
     my $setlist = [];
 
-    # Sort individuals such that no one precedes their parents 
-    if ($$self{count} > 1) {
-	$self->sort_family or return (undef);
-    }
-
     for ($va = 0; $va < scalar (@{$$self{individuals}}); $va++) {
 	$individual = $$self{individuals}[$va];
 	if ($$individual{makeped} ne 'pre') {
@@ -458,6 +463,46 @@ sub makeped
 	# $$individual{indid} = $hash{$indid}{newid};
     }
     $$self{individuals}[0]{proband} = 1;
+    return (1);
+}
+
+sub add_to_set
+{
+    my ($list, @ids) = @_;
+    my $merge = 0;
+    my $id;
+    my ($va, $vb);
+    
+
+    for ($va = 0; $va < scalar (@$list); $va++) {
+	foreach $id (@ids) {
+	    if (exists $$list[$va]{$id})  {
+		map { $$list[$va]{$_} = '' } @ids;
+		$merge = 1;
+	    }
+	}
+    }
+    if (! $merge) {
+	push (@$list, {});
+	map { $$list[-1]{$_} = '' } @ids;
+    } else {
+	$va = 0;
+	while ($va < scalar (@$list)) {
+	    $vb = $va + 1;
+	    while ($vb < scalar (@$list)) {
+		$merge = 0;
+		map { exists ($$list[$va]{$_}) and $merge = 1; } (keys (%{$$list[$vb]}));
+		if ($merge) {
+		    map { $$list[$va]{$_} = ''; } (keys (%{$$list[$vb]}));
+		    splice (@$list, $vb, 1);
+		} else {
+		    $vb++;
+		}
+	    }
+	    $va++;
+	}
+    }
+    @$list = sort {scalar (keys (%$b)) <=> scalar (keys (%$a))} (@$list);
     return (1);
 }
 
@@ -555,44 +600,79 @@ sub by_founder_desc
     }
 }
 
-sub add_to_set
+sub find_loops
 {
-    my ($list, @ids) = @_;
-    my $merge = 0;
-    my $id;
-    my ($va, $vb);
-    
+    # The logic here is stolen from the kelvin binary. Each individual and
+    # mating pair is a node (vertex) in a graph; edges run between the mating
+    # pair nodes and the individual nodes for the mates in, or the offspring of,
+    # the pair. So a trio (Dad ID 1, Mom ID 2, Offspring ID 3) has four nodes,
+    # labeled "1", "2" and "3" (the individuals) and "1+2" (the mating pair).
+    # Edges run from "1" to "1+2", "2" to "1+2" and "3" to "1+2". Once the
+    # graph is built, we repeatedly traverse the graph, looking for (and
+    # removing) nodes with zero or one edge. If we reach a point where no more
+    # nodes can be removed, then the individuals remaining are involved in a 
+    # loop of some sort (either consanguinous or marriage).
 
-    for ($va = 0; $va < scalar (@$list); $va++) {
-	foreach $id (@ids) {
-	    if (exists $$list[$va]{$id})  {
-		map { $$list[$va]{$_} = '' } @ids;
-		$merge = 1;
-	    }
-	}
+    my ($self) = @_;
+    my %nodes;
+    my $individual;
+    my $key;
+    my $lastcount;
+
+    # Nodes are identified by the keys of the hash. Edges are elements in
+    # the array refs that are the values of the hash. The edge is recorded
+    # in the array ref for both of the nodes that the edge connects.
+    foreach $individual (@{$$self{individuals}}) {
+        $nodes{$$individual{indid}} = [];
+        $$individual{dadid} eq "0" and next;
+        $key = $$individual{dadid} . "+" . $$individual{momid};
+        if (! exists ($nodes{$key})) {
+            push (@{$nodes{$$individual{dadid}}}, $key);
+            push (@{$nodes{$$individual{momid}}}, $key);
+            $nodes{$key} =  [ $$individual{dadid}, $$individual{momid} ];
+        }
+        push (@{$nodes{$$individual{indid}}}, $key);
+        push (@{$nodes{$key}}, $$individual{indid});
     }
-    if (! $merge) {
-	push (@$list, {});
-	map { $$list[-1]{$_} = '' } @ids;
-    } else {
-	$va = 0;
-	while ($va < scalar (@$list)) {
-	    $vb = $va + 1;
-	    while ($vb < scalar (@$list)) {
-		$merge = 0;
-		map { exists ($$list[$va]{$_}) and $merge = 1; } (keys (%{$$list[$vb]}));
-		if ($merge) {
-		    map { $$list[$va]{$_} = ''; } (keys (%{$$list[$vb]}));
-		    splice (@$list, $vb, 1);
-		} else {
-		    $vb++;
-		}
-	    }
-	    $va++;
-	}
+
+    while ($lastcount = scalar (keys (%nodes))) {
+        foreach $key (keys (%nodes)) {
+            if (scalar (@{$nodes{$key}}) == 1) {
+                # Node has one edge. Delete node and edge.
+                delete_edge (\%nodes, $nodes{$key}[0], $key);
+                delete ($nodes{$key});
+            } elsif (scalar (@{$nodes{$key}}) == 0) {
+                # Node has no edges. Delete the node.
+                delete ($nodes{$key});
+            }
+        }
+        # True if no nodes were deleted this time through.
+        ($lastcount == scalar (keys (%nodes))) and last;
     }
-    @$list = sort {scalar (keys (%$b)) <=> scalar (keys (%$a))} (@$list);
+    if ($lastcount > 0) {
+        # One or more loops exist. We only want to report the individuals,
+        # not the mating pairs.
+        foreach $key (keys (%nodes)) {
+            $key =~ /\+/ and delete ($nodes{$key});
+        }
+        $$self{loopids} = join (", ", keys (%nodes));
+    }
     return (1);
+}
+
+sub delete_edge
+{
+    my ($nodes, $node, $edge) = @_;
+    my $va = 0;
+
+    while ($va < scalar (@{$$nodes{$node}})) {
+        if ($$nodes{$node}[$va] eq $edge) {
+            splice (@{$$nodes{$node}}, $va, 1);
+            return (1);
+        }
+        $va++;
+    }
+    return (undef);
 }
 
 sub pedid
@@ -628,6 +708,13 @@ sub mom
     my ($self) = @_;
 
     return ($$self{mom});
+}
+
+sub loopids
+{
+    my ($self) = @_;
+
+    return ($$self{loopids});
 }
 
 sub children
@@ -924,6 +1011,30 @@ sub getGenotype
     $idx = $$dataset{markers}{$marker}{idx};
     @$aref = @{$$self{markers}[$idx]};
     return ($aref);
+}
+
+sub getAllGenotypes {
+    # Returns *all* our markers.
+    my ($self) = @_;
+    
+    return ($$self{markers});
+}
+sub setAllGenotypes {
+    # Given an arrayref with marker info, sets all our markers en masse.
+    # Used primarily when assembling MC-MC fully informative pedigree samples.
+    my ($self, $markers) = @_;
+    my $dataset = $$self{dataset};
+    
+    # minor sanity check - verify that we have the same number of markers as is
+    # in the dataset
+    my $datasetcount = scalar(@{$dataset->markerOrder()});
+    unless (scalar(@$markers) == $datasetcount) {
+        $errstr = "count mismatch between provided and dataset markers";
+        return (undef)
+    }
+    
+    $$self{markers} = $markers;
+    return (1);
 }
 
 sub dataset
