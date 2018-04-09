@@ -25,6 +25,19 @@
 -- being phased out for some time, and finally we're dropping it and instead going to use FreeModels as a flag
 -- that is set in the pipeline after client and server-set runs.
 
+DROP TRIGGER IF EXISTS BeforeInsertDiag;
+
+DELIMITER //
+CREATE TRIGGER BeforeInsertDiag BEFORE INSERT ON Diag FOR EACH ROW
+BEGIN
+  IF new.ConnectionId IS NULL
+  THEN
+    SET new.ConnectionId = CONNECTION_ID();
+  END IF;
+END;
+//
+DELIMITER ;
+
 DELIMITER ;
 DROP TRIGGER IF EXISTS DecMarkers;
 
@@ -393,6 +406,7 @@ BEGIN
       -- This is a trait or combined likelihood, so the trait model is relevant
       -- There's always at least one liability class...
       SET no_rows_indicator = 0;
+      -- PERFORMANCE-WISE, this combination of constraint columns is explicitly indexed by a UNIQUE KEY
       Select MPId into localLC1MPId from DModelParts where
       DGF = convert(inDGF, DECIMAL(32,30)) AND BigPen = convert(inLC1BigPen, DECIMAL(32,30)) AND BigLittlePen = convert(inLC1BigLittlePen, DECIMAL(32,30)) AND 
       LittleBigPen = convert(inLC1LittleBigPen, DECIMAL(32,30)) AND LittlePen = convert(inLC1LittlePen, DECIMAL(32,30));
@@ -405,6 +419,7 @@ BEGIN
       END IF;
 
       SET no_rows_indicator = 0;
+      -- PERFORMANCE-WISE, this is explicitly indexed
       Select MPId into localLC2MPId from DModelParts where
       DGF = convert(inDGF, DECIMAL(32,30)) AND BigPen = convert(inLC2BigPen, DECIMAL(32,30)) AND BigLittlePen = convert(inLC2BigLittlePen, DECIMAL(32,30)) AND 
       LittleBigPen = convert(inLC2LittleBigPen, DECIMAL(32,30)) AND LittlePen = convert(inLC2LittlePen, DECIMAL(32,30));
@@ -417,6 +432,7 @@ BEGIN
       END IF;
 
       SET no_rows_indicator = 0;
+      -- PERFORMANCE-WISE, this is explicitly indexed
       Select MPId into localLC3MPId from DModelParts where
       DGF = convert(inDGF, DECIMAL(32,30)) AND BigPen = convert(inLC3BigPen, DECIMAL(32,30)) AND BigLittlePen = convert(inLC3BigLittlePen, DECIMAL(32,30)) AND 
       LittleBigPen = convert(inLC3LittleBigPen, DECIMAL(32,30)) AND LittlePen = convert(inLC3LittlePen, DECIMAL(32,30));
@@ -438,6 +454,7 @@ BEGIN
 
       -- Go for the Likelihood! If it doesn't exist, request it and return the NULL.
       SET no_rows_indicator = 0;
+      -- PERFORMANCE-WISE, this is a PK query, therefore indexed
       Select Likelihood, MarkerCount into outLikelihood, outMarkerCount from
       Models where PedPosId = inPedPosId AND LC1MPId = localLC1MPId AND
         LC2MPId = localLC2MPId AND LC3MPId = localLC3MPId order by MarkerCount desc limit 1;
@@ -446,7 +463,6 @@ BEGIN
         Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
         (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
         Select LAST_INSERT_ID() INTO localModelId;
-        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId);
       END IF;
     END IF;
     Commit;
@@ -576,7 +592,6 @@ BEGIN
         Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
         (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
         Select LAST_INSERT_ID() INTO localModelId;
-        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId);
       END IF;
     END IF;
     Commit;
@@ -1455,9 +1470,6 @@ BEGIN
 	END IF;
       END IF;
     END IF;
-    -- Clear-out any RegionModels so we know they're not pending
-    Delete from RegionModels where ModelId = localOutModelId;
-
   END IF;
 --  END IF;
 
@@ -1648,7 +1660,6 @@ BEGIN
 
 -- Remove all rows associated with a study
 
-  Delete from RegionModels where RegionId in (Select distinct a.RegionId from Regions a, Analyses b where a.AnalysisId = b.AnalysisId AND b.StudyId = inStudyId);
   Delete from ServerPedigrees where ServerId in (Select ServerId from Servers where StudyId = inStudyId);
   Delete from MarkerSetLikelihood_MCMC where MarkerSetId in (Select MarkerSetId from MarkerSetLikelihood where PedPosId in (Select PedPosId from PedigreePositions where StudyId = inStudyId));
   Delete from MarkerSetLikelihood where PedPosId in (Select PedPosId from PedigreePositions where StudyId = inStudyId);
@@ -1802,7 +1813,7 @@ WholeThing: LOOP
 
   -- TotalFree: Show total unallocated work by StudyLabel
   IF inWhich = 'TotalFree' THEN
-    Select S.StudyLabel, P.PedigreeSId, count(*) from
+    Select S.StudyId, S.StudyLabel, P.PedigreeSId, count(*) from
       Studies S, Pedigrees P, PedigreePositions PP, Models M where
       S.StudyId = P.StudyId AND P.PedigreeSId = PP.PedigreeSId AND S.StudyId = PP.StudyId AND
       PP.PedPosId = M.PedPosId AND M.ServerId is NULL group by S.StudyLabel, P.PedigreeSId;
