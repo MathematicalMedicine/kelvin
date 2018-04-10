@@ -1427,7 +1427,7 @@ BEGIN
   -- NO LONGER lock the PedigreePosition row first to avoid deadlock with CacheCombinedWork.
   -- Both routines have the same locking order this way, with PedigreePositions table first.
   -- Updating likelihood should HAVE beEN quick. BUT MCMC DOES A GAZILLION UPDATES.
-  Select PedPosId into inPedPosId from PedigreePositions where PedPosId = inPedPosId; -- REMOVE for update
+  --Select PedPosId into inPedPosId from PedigreePositions where PedPosId = inPedPosId for update;
 
   IF inMarkerCount = 100 THEN
     -- 2pt, only have the initial first half, hold onto it.
