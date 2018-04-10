@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
-use FindBin; use lib split(/:+/, "!:$ENV{'KELVIN_ROOT'}:NO_KELVIN_ROOT:$ENV{'TOOLPATH'}:$FindBin::Bin");
+use FindBin;
+use lib split(/:+/, "!:$ENV{'KELVIN_ROOT'}:NO_KELVIN_ROOT:$ENV{'TOOLPATH'}:$FindBin::Bin");
 use warnings;
 use KelvinConfig;
 use DBI;
@@ -19,6 +20,7 @@ my $lc_select = '';
 my $aref;
 my $rows;
 my $modelPartTable = 'DModelParts';
+my $retries = 0;
 
 # build insert ... select statement based on config (liability classes, mostly)
 # execute
@@ -84,17 +86,19 @@ $sql =~ s/  */ /g;
 ($sth = $dbh->prepare ($sql))
     or die ("prepare insert into LGModels failed, $DBI::errstr\n");
 
+print (ts(), "Inserting rows into LGModels\n");
 while (1) {
     if (! ($rows = $sth->execute (@study{qw/id pedregex pednotregex/}))) {
 	($DBI::errstr !~ /try restarting transaction/)
 	    and die ("insert into LGModels failed, $DBI::errstr\n");
 	print ("retrying insert into LGModels\n");
+        $retries++;
     } else {
 	last;
     }
 }
 $dbh->commit or die ("commit insert into LGModels failed, $DBI::errstr\n");
-print (ts(), "Inserted $rows into LGModels\n");
+print (ts(), "Inserted $rows into LGModels with $retries retries\n");
 
 exit (0);
 
