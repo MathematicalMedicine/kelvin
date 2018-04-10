@@ -836,7 +836,7 @@ BEGIN
 	PP.PedTraitPosCM <= inHighPosition AND
 	PP.PedPosId = M.PedPosId AND
 	M.ServerId IS NULL
-      limit 50 for update; -- No ordering for best performance
+      limit 50; -- No ordering for best performance, REMOVE for update
 --      order by ModelId limit 10; -- Test version that keeps the models in-order
 --      order by RAND() limit 10; -- The RAND() bit keeps identical servers from fighting too much.
     Select count(*) from CachedWork into outResultRows;
@@ -918,7 +918,7 @@ BEGIN
 	M.ServerId = S.ServerId AND
 	M.ModelId = T.ModelId AND
 	M.EndTime IS NULL
-      limit 50 for update; -- No ordering for best performance
+      limit 50; -- No ordering for best performance, REMOVE for update
 --      order by ModelId limit 10; -- Test version that keeps the models in-order
 --      order by RAND() limit 10; -- The RAND() bit keeps identical servers from fighting too much.
     Select count(*) from CachedWork into outResultRows;
@@ -997,7 +997,7 @@ BEGIN
 	PP.PedTraitPosCM > inLowPosition AND
 	PP.PedTraitPosCM <= inHighPosition
 --        order by RAND() 
-        limit 1 for update;
+        limit 1; -- REMOVE for update
 
     IF localCandidatePedPosId IS NULL THEN
 --      Insert into Diag (Message) values ('CacheCombinedWork: no work found');
@@ -1044,7 +1044,7 @@ BEGIN
 	' AND PP.PedPosId = ', convert(localCandidatePedPosId,char),
 	' AND M.PedPosId = ', convert(localCandidatePedPosId,char),
 	' AND M.ServerId IS NULL limit ',
-	convert(localCandidateLimit,char), ' for update;');
+	convert(localCandidateLimit,char), ';'); -- REMOVE for update
     PREPARE dSHandle from @dSString;
     EXECUTE dSHandle;
     DEALLOCATE PREPARE dSHandle;
@@ -1129,7 +1129,7 @@ BEGIN
 	  PP.PedTraitPosCM <= inHighPosition AND
 	  PP.PedPosId = M.PedPosId AND
 	  M.ServerId IS NULL
-	  limit 50 for update; -- No ordering for best performance
+	  limit 50; -- No ordering for best performance, REMOVE for update
 --      order by ModelId limit 10; -- Test version that keeps the models in-order
 --      order by RAND() limit 10; -- The RAND() bit keeps identical servers from fighting too much.
     Select count(*) from CachedWork into outResultRows;
@@ -1158,7 +1158,7 @@ BEGIN
 		M1.PedPosId = M2.PedPosId AND
 		M2.MarkerCount = S.MarkerCount
 		)
-   	    limit 50 for update;
+   	    limit 50; -- REMOVE for update
       Select count(*) from CachedWork into outResultRows;
 
       IF outResultRows = 0 THEN
@@ -1242,7 +1242,7 @@ BEGIN
 	PP.RefTraitPosCM = -9999.99 AND
 	PP.PedPosId = M.PedPosId AND
 	M.ServerId IS NULL
-        limit 50 for update; -- No ordering for best performance
+        limit 50; -- No ordering for best performance, REMOVE for update
 --      order by ModelId limit 10; -- Test version that keeps the models in-order
 --      order by RAND() limit 10; -- The RAND() bit keeps identical servers from fighting too much.
     Select count(*) from CachedWork into outResultRows;
@@ -1427,7 +1427,7 @@ BEGIN
   -- NO LONGER lock the PedigreePosition row first to avoid deadlock with CacheCombinedWork.
   -- Both routines have the same locking order this way, with PedigreePositions table first.
   -- Updating likelihood should HAVE beEN quick. BUT MCMC DOES A GAZILLION UPDATES.
-  Select PedPosId into inPedPosId from PedigreePositions where PedPosId = inPedPosId for update;
+  Select PedPosId into inPedPosId from PedigreePositions where PedPosId = inPedPosId; -- REMOVE for update
 
   IF inMarkerCount = 100 THEN
     -- 2pt, only have the initial first half, hold onto it.
