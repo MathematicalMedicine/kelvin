@@ -393,7 +393,8 @@ sub db_get_model_batch
 
     my @MPIds = ();
     my @Models = ();
-    my @modelids = ();
+    my @lgmodelids = ();
+    my %modelids = ();
     my @markersetids = ();
     my ($modelid, $markersetid, $pedid, $traitpos, $key);
     my $colnames = '';
@@ -424,10 +425,9 @@ sub db_get_model_batch
     (scalar (@MPIds) == 0) and return ($batch);
 
     foreach (@MPIds) {
-	push (@modelids, shift (@$_));
+	push (@lgmodelids, shift (@$_));
     }
-    db_update_lgmodels ($study, $serverid, \@modelids);
-    @modelids = ();
+    db_update_lgmodels ($study, $serverid, \@lgmodelids);
 
     # select trait/combined modelIDs from Models based on the LCxMPIds we got from LGModels
 
@@ -489,12 +489,13 @@ sub db_get_model_batch
 	    } else {
 		$$batch{$key}{$pedid}{$traitpos} = $modelid;
 	    }
-	    push (@modelids, $modelid);
+            defined ($modelids{$pedid}) or $modelids{$pedid} = [];
+	    push (@{$modelids{$pedid}}, $modelid);
 	}
 	print (ts(), "Select returned ". scalar (@Models). " rows\n");
     }
     $sth->finish;
-    db_update_modelids ($study, $serverid, \@modelids);
+    db_update_modelids ($study, $serverid, \%modelids);
 
     # This next bit only needs to be done by one process, so we're only going
     # to try it if 1) we're apparently running as a standalone (not an array) job,
@@ -571,14 +572,14 @@ sub db_update_lgmodels
 
 sub db_update_modelids
 {
-    my ($study, $serverid, $modelids, $batchsize) = @_;
+    my ($study, $serverid, $modelids) = @_;
     my $sth;
     my @status;
-    my @batch;
     my @errors;
     my $count = 0;
     my $retries = 0;
-    my $batchcount;
+    my $pedid;
+    my ($batchcount, $batchsize) = (0, 0);;
 
     db_connect ($study);
     ($sth = $dbh->prepare ("update Models set ServerId = $serverid, ".
@@ -587,15 +588,17 @@ sub db_update_modelids
 			   "where ModelId = ?"))
 	or die ("DBI prepare update Models failed, $DBI::errstr\n");
 
-    (defined ($batchsize)) or $batchsize = scalar (@$modelids);
-    $batchcount = ceil (scalar (@$modelids) / $batchsize);
-    print (ts(), "Updating trait LK and combined LK model ID in $batchcount batches of $batchsize records\n");
-    while (scalar (@$modelids)) {
-	@batch = splice (@$modelids, 0, $batchsize);
+    foreach $pedid (keys (%$modelids)) {
+        $batchsize += scalar (@{$$modelids{$pedid}});
+    }
+    $batchcount = scalar (keys (%$modelids));
+    $batchsize = int ($batchsize / $batchcount);
+    print (ts(), "Updating trait LK and combined LK model ID in $batchcount batches averaging $batchsize records\n");
+    foreach $pedid (keys (%$modelids)) {
 	while (1) {
-	    if ($sth->execute_array ({ArrayTupleStatus => \@status}, \@batch)) {
-		#print ("updated ", scalar (@batch), " Models\n");
-		$count += scalar (@batch);
+	    if ($sth->execute_array ({ArrayTupleStatus => \@status}, $$modelids{$pedid})) {
+		#print ("updated ", scalar (@{$$modelids{$pedid}}), " Models\n");
+		$count += scalar (@{$$modelids{$pedid}});
 		last;
 	    } elsif (! all_retry_errors (\@status, \@errors)) {
 		die ("execute update Models failed:\n", map { "$_\n" } @errors);
