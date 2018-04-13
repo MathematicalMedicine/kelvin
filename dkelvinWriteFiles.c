@@ -378,39 +378,82 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
   return;
 }
 
-
 void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
 {
   int j, idx;
+  //int MEAN_STD_MODE =2;
 
   max->dgf = arr[0];
   max->alpha = arr[1];
 
   j=2;
   for (idx = 0; idx < modelRange->nlclass; idx++) {
-    max->pen[idx].DD = arr[j++];
-    max->pen[idx].Dd = arr[j++];
-    if (! modelOptions->imprintingFlag) {
-      max->pen[idx].dd = arr[j++];
-    } else {
-      max->pen[idx].dD = arr[j++];
-      max->pen[idx].dd = arr[j++];
-    }
-    if (modelType->trait != DICHOTOMOUS) {
-      if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-	max->pen[idx].DDSD = arr[j];//arr[j++];
-	max->pen[idx].DdSD = arr[j];//arr[j++];
-	if (! modelOptions->imprintingFlag) {
-	  max->pen[idx].ddSD = arr[j];//arr[j++];
-	} else {
-	  max->pen[idx].dDSD = arr[j];//arr[j++];
-	  max->pen[idx].ddSD = arr[j];//arr[j++];
-	}
+    if (modelOptions->qtMeanSDMode==QT_MODE_MEANS){
+      max->pen[idx].DD = arr[j++];
+      max->pen[idx].Dd = arr[j++];
+      if (! modelOptions->imprintingFlag) {
+	max->pen[idx].dd = arr[j++];
+      } else {
+	max->pen[idx].dD = arr[j++];
+	max->pen[idx].dd = arr[j++];
       }
-      if (modelType->trait == CT) 
-	max->pen[idx].threshold = arr[num-1];  //arr[j++];
+      if (modelType->trait != DICHOTOMOUS) {
+	if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
+	  max->pen[idx].DDSD = arr[j];//arr[j++];
+	  max->pen[idx].DdSD = arr[j];//arr[j++];
+	  if (! modelOptions->imprintingFlag) {
+	    max->pen[idx].ddSD = arr[j];//arr[j++];
+	  } else {
+	    max->pen[idx].dDSD = arr[j];//arr[j++];
+	    max->pen[idx].ddSD = arr[j];//arr[j++];
+	  }
+	}
+	if (modelType->trait == CT) 
+	  max->pen[idx].threshold = arr[num-1];  //arr[j++];
+      }
+    } else if (modelOptions->qtMeanSDMode ==QT_MODE_STDEV){
+      max->pen[idx].DD = max->pen[idx].Dd = max->pen[idx].dD = max->pen[idx].dd = arr[j++];
+      if (modelType->trait != DICHOTOMOUS) {
+	if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
+	  max->pen[idx].DDSD = arr[j++];
+	  max->pen[idx].DdSD = arr[j++];
+	  if (! modelOptions->imprintingFlag) {
+	    max->pen[idx].ddSD = arr[j++];
+	  } else {
+	    max->pen[idx].dDSD = arr[j++];
+	    max->pen[idx].ddSD = arr[j++];
+	  }
+	}
+	if (modelType->trait == CT) 
+	  max->pen[idx].threshold = arr[num-1];  //arr[j++];
+      }
+    }else if (modelOptions->qtMeanSDMode ==QT_MODE_BOTH){
+      max->pen[idx].DD = arr[j++];
+      max->pen[idx].Dd = arr[j++];
+      if (! modelOptions->imprintingFlag) {
+	max->pen[idx].dd = arr[j++];
+      } else {
+	max->pen[idx].dD = arr[j++];
+	max->pen[idx].dd = arr[j++];
+      }
+      if (modelType->trait != DICHOTOMOUS) {
+	if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
+	  max->pen[idx].DDSD = arr[j++];//arr[j++];
+	  max->pen[idx].DdSD = arr[j++];//arr[j++];
+	  if (! modelOptions->imprintingFlag) {
+	    max->pen[idx].ddSD = arr[j++];//arr[j++];
+	  } else {
+	    max->pen[idx].dDSD = arr[j++];//arr[j++];
+	    max->pen[idx].ddSD = arr[j++];//arr[j++];
+	  }
+	}
+	if (modelType->trait == CT) 
+	  max->pen[idx].threshold = arr[num-1];  //arr[j++];
+      }
     }
   }
   /*if (modelType->trait == CT) 
     max->pen[idx].threshold = arr[j++];*/
 }
+
+
