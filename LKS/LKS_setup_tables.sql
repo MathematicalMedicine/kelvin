@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS TP2MP;
+DROP TABLE IF EXISTS RegionModels;
 DROP TABLE IF EXISTS Models;
 DROP TABLE IF EXISTS LGModels;
 DROP TABLE IF EXISTS QModelParts;
@@ -252,6 +253,14 @@ INDEX (ServerId),
 UNIQUE KEY (ModelId),
 INDEX (PedPosId, LC1MPId, LC2MPId, LC3MPId, ServerId),
 PRIMARY KEY (PedPosID, LC1MPID, LC2MPId, LC3MPId, MarkerCount)) ENGINE=InnoDB comment='$Id$';
+
+-- Indicates which Regions are affected by a particular ModelId
+CREATE TABLE RegionModels (
+RegionId int NOT NULL,
+ModelId int NOT NULL,
+PRIMARY KEY (RegionId, ModelId),
+INDEX (ModelId)
+) ENGINE=InnoDB comment='$Id$' AUTO_INCREMENT=1110;
 
 CREATE TABLE LGModels (
 LGModelID int NOT NULL AUTO_INCREMENT,

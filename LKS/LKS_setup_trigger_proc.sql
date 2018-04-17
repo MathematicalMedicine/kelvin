@@ -463,6 +463,7 @@ BEGIN
         Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
         (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
         Select LAST_INSERT_ID() INTO localModelId;
+        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
       END IF;
     END IF;
     Commit;
@@ -592,6 +593,7 @@ BEGIN
         Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
         (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
         Select LAST_INSERT_ID() INTO localModelId;
+        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
       END IF;
     END IF;
     Commit;
@@ -1470,6 +1472,8 @@ BEGIN
 	END IF;
       END IF;
     END IF;
+    -- Clear-out any RegionModels so we know they're not pending
+    Delete from RegionModels where ModelId = localOutModelId;
   END IF;
 --  END IF;
 
@@ -1660,6 +1664,7 @@ BEGIN
 
 -- Remove all rows associated with a study
 
+  Delete from RegionModels where RegionId in (Select distinct a.RegionId from Regions a, Analyses b where a.AnalysisId = b.AnalysisId AND b.StudyId = inStudyId);
   Delete from ServerPedigrees where ServerId in (Select ServerId from Servers where StudyId = inStudyId);
   Delete from MarkerSetLikelihood_MCMC where MarkerSetId in (Select MarkerSetId from MarkerSetLikelihood where PedPosId in (Select PedPosId from PedigreePositions where StudyId = inStudyId));
   Delete from MarkerSetLikelihood where PedPosId in (Select PedPosId from PedigreePositions where StudyId = inStudyId);
