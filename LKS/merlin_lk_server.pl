@@ -395,7 +395,7 @@ sub db_get_model_batch
     my @Models = ();
     my @lgmodelids = ();
     my %modelids = ();
-    my @markersetids = ();
+    my %markersetids = ();
     my ($modelid, $markersetid, $pedid, $traitpos, $key);
     my $colnames = '';
     my $sth;
@@ -535,9 +535,10 @@ sub db_get_model_batch
     foreach $aref (@Models) {
         ($markersetid, $pedid, $traitpos) = @$aref;
 	$$batch{marker}{$pedid}{$traitpos} = $markersetid;
-	push (@markersetids, $markersetid);
+        exists ($markersetids{$pedid}) or $markersetids{$pedid} = [];
+	push (@{$markersetids{$pedid}}, $markersetid);
     }
-    db_update_markersetids ($study, $serverid, \@markersetids);
+    db_update_markersetids ($study, $serverid, \%markersetids);
 
     return ($batch);
 }
@@ -593,7 +594,7 @@ sub db_update_modelids
     }
     $batchcount = scalar (keys (%$modelids));
     $batchsize = int ($batchsize / $batchcount);
-    print (ts(), "Updating trait LK and combined LK model ID in $batchcount batches averaging $batchsize records\n");
+    print (ts(), "Updating trait LK and combined LK model IDs in $batchcount batches averaging $batchsize records\n");
     foreach $pedid (keys (%$modelids)) {
 	while (1) {
 	    if ($sth->execute_array ({ArrayTupleStatus => \@status}, $$modelids{$pedid})) {
@@ -615,14 +616,14 @@ sub db_update_modelids
 
 sub db_update_markersetids
 {
-    my ($study, $serverid, $markersetids, $batchsize) = @_;
+    my ($study, $serverid, $markersetids) = @_;
     my $sth;
     my @status;
-    my @batch;
     my @errors;
     my $count = 0;
     my $retries = 0;
-    my $batchcount;
+    my $pedid;
+    my ($batchcount, $batchsize);
 
     db_connect ($study);
     ($sth = $dbh->prepare ("update MarkerSetLikelihood set ServerId = $serverid, ".
@@ -631,15 +632,17 @@ sub db_update_markersetids
 			   "where MarkerSetId = ?"))
 	or die ("DBI prepare update MarkerSetLikelihood failed, $DBI::errstr\n");
 
-    (defined ($batchsize)) or $batchsize = scalar (@$markersetids);
-    $batchcount = ceil (scalar (@$markersetids) / $batchsize);
-    print (ts(), "Updating marker LK IDs in $batchcount batches of $batchsize records\n");
-    while (scalar (@$markersetids)) {
-	@batch = splice (@$markersetids, 0, $batchsize);
+    foreach $pedid (keys (%$markersetids)) {
+        $batchsize += scalar (@{$$markersetids{$pedid}});
+    }
+    $batchcount = scalar (keys (%$markersetids));
+    $batchsize = int ($batchsize / $batchcount);
+    print (ts(), "Updating marker LK IDs in $batchcount batches averaging $batchsize records\n");
+    foreach $pedid (keys (%$markersetids)) {
 	while (1) {
-	    if ($sth->execute_array ({ArrayTupleStatus => \@status}, \@batch)) {
-		#print ("updated ", scalar (@batch), " MarkerSetLikelihoods\n");
-		$count += scalar (@batch);
+	    if ($sth->execute_array ({ArrayTupleStatus => \@status}, $$markersetids{$pedid})) {
+		#print ("updated ", scalar (@{$$markersetids{$pedid}}), " MarkerSetLikelihoods\n");
+		$count += scalar (@{$$markersetids{$pedid}});
 		last;
 	    } elsif (! all_retry_errors (\@status, \@errors)) {
 		die ("execute update MarkerSetLikelihood failed:\n", map { "$_\n" } @errors);
