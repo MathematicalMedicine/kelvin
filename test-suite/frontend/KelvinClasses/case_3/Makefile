@@ -5,6 +5,7 @@ test :
 	diff -b locus.new locus.dat-test
 	diff -b map.new map.dat-test
 	diff -b freq.new freq.dat-test
+	- rm -rf *.new
 
 clean :
 	- rm -rf *.new
