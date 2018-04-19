@@ -7,7 +7,7 @@ use warnings;
 #
 package KelvinFamily;
 our $errstr='';
-our $VERSION=1.8;
+our $VERSION=1.9;
 
 sub new
 {
@@ -744,7 +744,7 @@ sub individuals
 #
 package KelvinIndividual;
 our $errstr='';
-our $VERSION=1.4;
+our $VERSION=1.9;
 
 sub new
 {
@@ -758,9 +758,10 @@ sub new
     my $colcount;
     my $ind = { pedid => undef, indid => undef, dadid => undef, momid => undef,
 		firstchildid => undef, patsibid => undef, matsibid => undef,
-		origpedid => undef, origindid => undef, sex => undef, proband => undef,
-		traits => [], markers => [], genotyped => 0, phenotyped => undef,
-		phased => undef, dataset => $dataset, makeped => undef };
+		origpedid => undef, origindid => undef, sex => undef,
+                proband => undef, traits => [], markers => [], genotyped => 0,
+                phenotyped => undef, heterozygous => 0, phased => undef,
+                dataset => $dataset, makeped => undef };
 
     $colcount = scalar (@{$$dataset{markerorder}}) * 2 + scalar (@{$$dataset{traitorder}});
     (defined ($$dataset{undefpheno})) and $$ind{phenotyped} = 0;
@@ -847,6 +848,7 @@ sub new
 		} @arr[$markercol, $markercol+1];
 	    }
 	    $$ind{genotyped}++;
+            $arr[$markercol] ne $arr[$markercol+1] and $$ind{heterozygous}++;
 	}
 	# Assign genotypes to the correct index in the individual's array of genotypes
 	$$ind{markers}[$idx] = [ $arr[$markercol], $arr[$markercol+1] ];
@@ -859,9 +861,10 @@ sub new_from_count
     my ($class, $dataset, $pedid, $traits, $labelmap, $aref) = @_;
     my $ind = { pedid => $pedid, indid => 1, dadid => 0, momid => 0,
 		firstchildid => 0, patsibid => 0, matsibid => 0,
-		origpedid => $pedid, origindid => 1, sex => undef, proband => 0,
-		traits => [], markers => [], genotyped => 0, phenotyped => 0,
-		phased => 0, dataset => $dataset, makeped => 1 };
+		origpedid => $pedid, origindid => 1, sex => undef,
+                proband => 0, traits => [], markers => [], genotyped => 0,
+                phenotyped => 0, heterozygous => 0, phased => 0,
+                dataset => $dataset, makeped => 1 };
     my $trait;
     my $marker;
     my ($allele1, $allele2);
@@ -879,6 +882,7 @@ sub new_from_count
 	if (exists ($$labelmap[$va]{$allele1}) && exists ($$labelmap[$va]{$allele2})) {
 	    $$ind{markers}[$va] = [@{$$labelmap[$va]}{($allele1, $allele2)}];
 	    $$ind{genotyped}++;
+            $$ind{markers}[$va][0] ne $$ind{markers}[$va][1] and $$ind{heterozygous}++;
 	} else {
 	    $$ind{markers}[$va] = [0, 0];
 	}
@@ -892,7 +896,8 @@ sub map
     my $oldset = $$self{dataset};
     my $trait;
     my $marker;
-    my $new = {traits => [], markers => [], genotyped => 0, phenotyped => 0, dataset => $newset};
+    my $new = {traits => [], markers => [], genotyped => 0, phenotyped => 0,
+               heterozygous => 0, dataset => $newset};
     
     map {
 	$$new{$_} = $$self{$_};
@@ -911,7 +916,10 @@ sub map
     foreach $marker (@{$$newset{markerorder}}) {
 	if (exists ($$oldset{markers}{$marker})) {
 	    push (@{$$new{markers}}, [ @{$$self{markers}[$$oldset{markers}{$marker}{idx}]} ]);
-	    ($$new{markers}[-1][0] ne '0') and $$new{genotyped}++;
+	    if ($$new{markers}[-1][0] ne '0') {
+                $$new{genotyped}++;
+                $$new{markers}[-1][0] ne $$new{markers}[-1][1] and $$new{heterozygous}++;
+            }
 	} else {
 	    push (@{$$new{markers}}, [ 'x', 'x' ]);
 	}
@@ -1098,6 +1106,13 @@ sub genotyped
     my ($self) = @_;
 
     return ($$self{genotyped});
+}
+
+sub heterozygous
+{
+    my ($self) = @_;
+
+    return ($$self{heterozygous});
 }
 
 sub phased
