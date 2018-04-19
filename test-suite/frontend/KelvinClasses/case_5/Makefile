@@ -13,6 +13,7 @@ test :
 	diff -b freq.new freq.dat-baseline
 	diff -b map.new map.dat-baseline
 	diff -b locus.new locus.dat-baseline
+	- rm -rf *.new
 
 clean :
 	- rm -rf *.new
