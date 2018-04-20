@@ -460,7 +460,9 @@ BEGIN
         LC2MPId = localLC2MPId AND LC3MPId = localLC3MPId order by MarkerCount desc limit 1;
 
       IF no_rows_indicator THEN
-        Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
+        -- insert ignore because we just might have inserted it earlier if the
+        -- WNE_indicator was set
+        Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
         (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
         Select LAST_INSERT_ID() INTO localModelId;
         Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
@@ -590,7 +592,9 @@ BEGIN
         LC2MPId = localLC2MPId AND LC3MPId = localLC3MPId order by MarkerCount desc limit 1;
 	
       IF no_rows_indicator THEN
-        Insert into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
+        -- insert ignore because we just might have inserted it earlier if the
+        -- WNE_indicator was set
+        Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
         (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
         Select LAST_INSERT_ID() INTO localModelId;
         Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
