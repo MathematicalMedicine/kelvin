@@ -51,6 +51,7 @@ my $dbh;
 my $aref;
 my $href;
 my $line;
+my $debug = 1;
 
 print (ts(), "$0 starting on $ENV{HOSTNAME} in $ENV{PWD}, pid $$". (exists ($ENV{JOB_ID}) ? ", job ID $ENV{JOB_ID}" : ""). "\n");
 print (ts(), "Version $svn_version\n");
@@ -563,6 +564,7 @@ sub db_update_lgmodels
 	    die ("execute update Models failed:\n", map { "$_\n" } @errors);
 	}
 	$retries++;
+        ($debug) and print (ts(), "Updating model part IDs, total $retries retries\n");
     }
     $dbh->commit or die ("commit update LGModels failed, $DBI::errstr\n");
     $sth->finish;
@@ -604,6 +606,7 @@ sub db_update_modelids
 	    } elsif (! all_retry_errors (\@status, \@errors)) {
 		die ("execute update Models failed:\n", map { "$_\n" } @errors);
 	    }
+            ($debug) and print (ts(), "Updating trait LK and combined LK model IDs for $pedid, total $retries retries\n");
 	    $retries++;
 	}
 	$dbh->commit or die ("commit update Models failed, $DBI::errstr\n");
@@ -648,6 +651,7 @@ sub db_update_markersetids
 		die ("execute update MarkerSetLikelihood failed:\n", map { "$_\n" } @errors);
 	    }
 	    $retries++;
+            ($debug) and print (ts(), "Updating marker LK IDs for $pedid, total $retries retries\n");
 	}
 	$dbh->commit or die ("commit update MarkerSetLikelihood failed, $DBI::errstr\n");
     }
@@ -690,6 +694,7 @@ sub db_update_modelLKs
 		die ("execute update model LKs failed:\n", map { "$_\n" } @errors);
 	    }
 	    $retries++;
+            print (ts(), "Updating model LKs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
 	}
 	$dbh->commit or die ("commit update model LKs failed, $DBI::errstr\n");
     }
@@ -732,6 +737,7 @@ sub db_update_markersetLKs
 		die ("execute update markerset LKs failed:\n", map { "$_\n" } @errors);
 	    }
 	    $retries++;
+            print (ts(), "Updating marker LKs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
 	}
 	$dbh->commit or die ("commit update markerset LKs failed, $DBI::errstr\n");
     }
