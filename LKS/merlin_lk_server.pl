@@ -395,8 +395,8 @@ sub db_get_model_batch
     my @MPIds = ();
     my @Models = ();
     my @lgmodelids = ();
-    my %modelids = ();
-    my %markersetids = ();
+    my @modelids = ();
+    my @markersetids = ();
     my ($modelid, $markersetid, $pedid, $traitpos, $key);
     my $colnames = '';
     my $sth;
@@ -490,13 +490,12 @@ sub db_get_model_batch
 	    } else {
 		$$batch{$key}{$pedid}{$traitpos} = $modelid;
 	    }
-            defined ($modelids{$pedid}) or $modelids{$pedid} = [];
-	    push (@{$modelids{$pedid}}, $modelid);
+            push (@modelids, $modelid);
 	}
 	print (ts(), "Select returned ". scalar (@Models). " rows\n");
     }
     $sth->finish;
-    db_update_modelids ($study, $serverid, \%modelids);
+    db_update_modelids ($study, $serverid, \@modelids, 100);
 
     # This next bit only needs to be done by one process, so we're only going
     # to try it if 1) we're apparently running as a standalone (not an array) job,
@@ -536,10 +535,9 @@ sub db_get_model_batch
     foreach $aref (@Models) {
         ($markersetid, $pedid, $traitpos) = @$aref;
 	$$batch{marker}{$pedid}{$traitpos} = $markersetid;
-        exists ($markersetids{$pedid}) or $markersetids{$pedid} = [];
-	push (@{$markersetids{$pedid}}, $markersetid);
+        push (@markersetids, $markersetid);
     }
-    db_update_markersetids ($study, $serverid, \%markersetids);
+    db_update_markersetids ($study, $serverid, \@markersetids, 100);
 
     return ($batch);
 }
@@ -575,14 +573,14 @@ sub db_update_lgmodels
 
 sub db_update_modelids
 {
-    my ($study, $serverid, $modelids) = @_;
+    my ($study, $serverid, $modelids, $batchsize) = @_;
     my $sth;
     my @status;
+    my @batch;
     my @errors;
     my $count = 0;
     my $retries = 0;
-    my $pedid;
-    my ($batchcount, $batchsize) = (0, 0);;
+    my $batchcount;
 
     db_connect ($study);
     ($sth = $dbh->prepare ("update Models set ServerId = $serverid, ".
@@ -591,22 +589,20 @@ sub db_update_modelids
 			   "where ModelId = ?"))
 	or die ("DBI prepare update Models failed, $DBI::errstr\n");
 
-    foreach $pedid (keys (%$modelids)) {
-        $batchsize += scalar (@{$$modelids{$pedid}});
-    }
-    $batchcount = scalar (keys (%$modelids));
-    $batchsize = int ($batchsize / $batchcount);
-    print (ts(), "Updating trait LK and combined LK model IDs in $batchcount batches averaging $batchsize records\n");
-    foreach $pedid (keys (%$modelids)) {
+    (defined ($batchsize)) or $batchsize = scalar (@$modelids);
+    $batchcount = ceil (scalar (@$modelids) / $batchsize);
+    print (ts(), "Updating trait LK and combined LK model ID in $batchcount batches of $batchsize records\n");
+    while (scalar (@$modelids)) {
+        @batch = splice (@$modelids, 0, $batchsize);
 	while (1) {
-	    if ($sth->execute_array ({ArrayTupleStatus => \@status}, $$modelids{$pedid})) {
-		#print ("updated ", scalar (@{$$modelids{$pedid}}), " Models\n");
-		$count += scalar (@{$$modelids{$pedid}});
+	    if ($sth->execute_array ({ArrayTupleStatus => \@status}, \@batch)) {
+		#print ("updated ", scalar (@batch), " Models\n");
+		$count += scalar (@batch);
 		last;
 	    } elsif (! all_retry_errors (\@status, \@errors)) {
 		die ("execute update Models failed:\n", map { "$_\n" } @errors);
 	    }
-            ($debug) and print (ts(), "Updating trait LK and combined LK model IDs for $pedid, total $retries retries\n");
+            ($debug) and print (ts(), "Updating trait LK and combined LK model IDs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
 	    $retries++;
 	}
 	$dbh->commit or die ("commit update Models failed, $DBI::errstr\n");
@@ -619,14 +615,14 @@ sub db_update_modelids
 
 sub db_update_markersetids
 {
-    my ($study, $serverid, $markersetids) = @_;
+    my ($study, $serverid, $markersetids, $batchsize) = @_;
     my $sth;
     my @status;
+    my @batch;
     my @errors;
     my $count = 0;
     my $retries = 0;
-    my $pedid;
-    my ($batchcount, $batchsize);
+    my $batchcount;
 
     db_connect ($study);
     ($sth = $dbh->prepare ("update MarkerSetLikelihood set ServerId = $serverid, ".
@@ -635,23 +631,21 @@ sub db_update_markersetids
 			   "where MarkerSetId = ?"))
 	or die ("DBI prepare update MarkerSetLikelihood failed, $DBI::errstr\n");
 
-    foreach $pedid (keys (%$markersetids)) {
-        $batchsize += scalar (@{$$markersetids{$pedid}});
-    }
-    $batchcount = scalar (keys (%$markersetids));
-    $batchsize = int ($batchsize / $batchcount);
-    print (ts(), "Updating marker LK IDs in $batchcount batches averaging $batchsize records\n");
-    foreach $pedid (keys (%$markersetids)) {
+    (defined ($batchsize)) or $batchsize = scalar (@$markersetids);
+    $batchcount = ceil (scalar (@$markersetids) / $batchsize);
+    print (ts(), "Updating marker LK IDs in $batchcount batches of $batchsize records\n");
+    while (scalar (@$markersetids)) {
+        @batch = splice (@$markersetids, 0, $batchsize);
 	while (1) {
-	    if ($sth->execute_array ({ArrayTupleStatus => \@status}, $$markersetids{$pedid})) {
-		#print ("updated ", scalar (@{$$markersetids{$pedid}}), " MarkerSetLikelihoods\n");
-		$count += scalar (@{$$markersetids{$pedid}});
+	    if ($sth->execute_array ({ArrayTupleStatus => \@status}, \@batch)) {
+		#print ("updated ", scalar (@batch), " MarkerSetLikelihoods\n");
+		$count += scalar (@batch);
 		last;
 	    } elsif (! all_retry_errors (\@status, \@errors)) {
 		die ("execute update MarkerSetLikelihood failed:\n", map { "$_\n" } @errors);
 	    }
 	    $retries++;
-            ($debug) and print (ts(), "Updating marker LK IDs for $pedid, total $retries retries\n");
+            ($debug) and print (ts(), "Updating marker LK IDs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
 	}
 	$dbh->commit or die ("commit update MarkerSetLikelihood failed, $DBI::errstr\n");
     }
@@ -694,7 +688,7 @@ sub db_update_modelLKs
 		die ("execute update model LKs failed:\n", map { "$_\n" } @errors);
 	    }
 	    $retries++;
-            print (ts(), "Updating model LKs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
+            ($debug) and print (ts(), "Updating model LKs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
 	}
 	$dbh->commit or die ("commit update model LKs failed, $DBI::errstr\n");
     }
@@ -737,7 +731,7 @@ sub db_update_markersetLKs
 		die ("execute update markerset LKs failed:\n", map { "$_\n" } @errors);
 	    }
 	    $retries++;
-            print (ts(), "Updating marker LKs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
+            ($debug) and print (ts(), "Updating marker LKs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
 	}
 	$dbh->commit or die ("commit update markerset LKs failed, $DBI::errstr\n");
     }
