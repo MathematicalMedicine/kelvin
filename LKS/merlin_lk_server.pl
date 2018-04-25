@@ -331,8 +331,7 @@ sub db_connect
     (defined ($dsn)) or $dsn = "DBI:mysql:host=$$study{dbhost};database=$$study{dbname}";
 
     $dbh = DBI->connect_cached ($dsn, $$study{dbuser}, $$study{dbpasswd},
-#				{AutoCommit => 0})
-				{AutoCommit => 0, PrintError => 0})
+				{AutoCommit => 1, PrintError => 0})
 	or die ("DBI connect to '$dsn' as $study{dbuser} failed, $DBI::errstr\n");
 }
 
