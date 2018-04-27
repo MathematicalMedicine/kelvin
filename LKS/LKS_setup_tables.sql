@@ -294,7 +294,6 @@ CREATE TABLE MarkerSetLikelihood_MCMC (
   MarkerSetId int NOT NULL, 
   SampleId int NOT NULL,
   Likelihood double NULL,
-  InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX(MarkerSetId), 
   PRIMARY KEY (MarkerSetId, SampleId)
 ) ENGINE=InnoDB comment='$Id$';
