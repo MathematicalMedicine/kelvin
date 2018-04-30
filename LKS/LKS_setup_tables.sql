@@ -42,7 +42,7 @@ CREATE TABLE Diag (
 DiagId int NOT NULL AUTO_INCREMENT,
 ConnectionId bigint(21) unsigned,
 InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-Message varchar(120) NULL,
+Message text,
 PRIMARY KEY (DiagId)) ENGINE=InnoDB comment='$Id$';
 
 CREATE TABLE Markers (
