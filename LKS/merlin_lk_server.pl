@@ -51,7 +51,8 @@ my $dbh;
 my $aref;
 my $href;
 my $line;
-my $debug = 1;
+my $debug = 1;   # Used globally
+my $auto = 1;    # Used globally
 
 print (ts(), "$0 starting on $ENV{HOSTNAME} in $ENV{PWD}, pid $$". (exists ($ENV{JOB_ID}) ? ", job ID $ENV{JOB_ID}" : ""). "\n");
 print (ts(), "Version $svn_version\n");
@@ -331,7 +332,7 @@ sub db_connect
     (defined ($dsn)) or $dsn = "DBI:mysql:host=$$study{dbhost};database=$$study{dbname}";
 
     $dbh = DBI->connect_cached ($dsn, $$study{dbuser}, $$study{dbpasswd},
-				{AutoCommit => 1, PrintError => 0})
+				{AutoCommit => $auto, PrintError => 0})
 	or die ("DBI connect to '$dsn' as $study{dbuser} failed, $DBI::errstr\n");
 }
 
@@ -563,7 +564,7 @@ sub db_update_lgmodels
 	$retries++;
         ($debug) and print (ts(), "Updating model part IDs, total $retries retries\n");
     }
-    $dbh->commit or die ("commit update LGModels failed, $DBI::errstr\n");
+    ($auto || $dbh->commit) or die ("commit update LGModels failed, $DBI::errstr\n");
     $sth->finish;
     print (ts(), "Updated ". scalar (@$LGModelIds). " model part IDs with $retries retries\n");
     return (1);
@@ -604,7 +605,7 @@ sub db_update_modelids
             ($debug) and print (ts(), "Updating trait LK and combined LK model IDs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
 	    $retries++;
 	}
-	$dbh->commit or die ("commit update Models failed, $DBI::errstr\n");
+	($auto || $dbh->commit) or die ("commit update Models failed, $DBI::errstr\n");
     }
     $sth->finish;
     print (ts(), "Updated $count model IDs with $retries retries\n");
@@ -646,7 +647,7 @@ sub db_update_markersetids
 	    $retries++;
             ($debug) and print (ts(), "Updating marker LK IDs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
 	}
-	$dbh->commit or die ("commit update MarkerSetLikelihood failed, $DBI::errstr\n");
+	($auto || $dbh->commit) or die ("commit update MarkerSetLikelihood failed, $DBI::errstr\n");
     }
     $sth->finish;
     print (ts(), "Updated $count marker LK IDs with $retries retries\n");
@@ -689,7 +690,7 @@ sub db_update_modelLKs
 	    $retries++;
             ($debug) and print (ts(), "Updating model LKs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
 	}
-	$dbh->commit or die ("commit update model LKs failed, $DBI::errstr\n");
+	($auto || $dbh->commit) or die ("commit update model LKs failed, $DBI::errstr\n");
     }
     $sth->finish;
     print (ts(), "Updated $count model LKs with $retries retries\n");
@@ -732,7 +733,7 @@ sub db_update_markersetLKs
 	    $retries++;
             ($debug) and print (ts(), "Updating marker LKs, on batch ", int ($count / $batchsize), ", total $retries retries\n");
 	}
-	$dbh->commit or die ("commit update markerset LKs failed, $DBI::errstr\n");
+	($auto || $dbh->commit) or die ("commit update markerset LKs failed, $DBI::errstr\n");
     }
     $sth->finish;
     print (ts(), "Updated $count marker LKs with $retries retries\n");
@@ -749,7 +750,7 @@ sub db_set_server_status
     (($sth = $dbh->prepare ("call ServerSignOff (?, ?)")) &&
      $sth->execute ($serverid, $status))
 	or warn ("DBI call ServerSignOff() failed, $DBI::errstr\n");
-    $dbh->commit or warn ("DBI commit update Servers failed, $DBI::errstr\n");
+    ($auto || $dbh->commit) or warn ("DBI commit update Servers failed, $DBI::errstr\n");
     return (1);
 }
 
