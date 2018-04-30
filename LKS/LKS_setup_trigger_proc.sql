@@ -293,7 +293,7 @@ BEGIN
     DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
     Insert into Diag (Message) values (Concat('GetMarkerSetLikelihood: called w/ ',
-      convert(inPedPosIdId,char),', ',
+      convert(inPedPosId,char),', ',
       convert(inAnalysisId,char),', ',
       convert(inRegionNo,char),', ',
       convert(inParentRegionNo,char),', ',
