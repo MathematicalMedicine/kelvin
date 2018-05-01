@@ -1983,8 +1983,8 @@ Select a.StudyId, a.LiabilityClassCnt 'Liability Classes', a.ImprintingFlag 'Imp
     pow(2,(((4+(a.ImprintingFlag='y'))*a.LiabilityClassCnt)))
   ) 'DCUHRE models',
   concat(
-    convert(IFNULL(
-      convert,'NULL')(
+    convert(
+      convert(
         (1+
           8*((4+(a.ImprintingFlag='y'))*a.LiabilityClassCnt)+
           2*((4+(a.ImprintingFlag='y'))*a.LiabilityClassCnt)*(((4+(a.ImprintingFlag='y'))*a.LiabilityClassCnt)-1)+
@@ -1997,8 +1997,8 @@ Select a.StudyId, a.LiabilityClassCnt 'Liability Classes', a.ImprintingFlag 'Imp
       ),
     char),
     ' ',
-    convert(IFNULL(
-      sec,'NULL')_to_time(
+    convert(
+      sec_to_time(
         (1+
           8*((4+(a.ImprintingFlag='y'))*a.LiabilityClassCnt)+
           2*((4+(a.ImprintingFlag='y'))*a.LiabilityClassCnt)*(((4+(a.ImprintingFlag='y'))*a.LiabilityClassCnt)-1)+
