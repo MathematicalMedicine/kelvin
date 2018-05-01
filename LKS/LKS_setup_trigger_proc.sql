@@ -298,7 +298,7 @@ BEGIN
       convert(IFNULL(inRegionNo,'NULL'),char),', ',
       convert(IFNULL(inParentRegionNo,'NULL'),char),', ',
       convert(IFNULL(inParentRegionError,'NULL'),char),', ',
-      convert(IFNULL(ininParentRegionSplitDir,'NULL'),char)
+      convert(IFNULL(inParentRegionSplitDir,'NULL'),char)
     ));
 
     Start transaction;
@@ -404,9 +404,9 @@ BEGIN
     Insert into Diag (Message) values (Concat('GetDLikelihood: called w/ ',
       convert(IFNULL(inPedPosId,'NULL'),char),', ',
       convert(IFNULL(inDGF,'NULL'),char),', ',
-      convert(IFNULL(inC1BigPen,'NULL'),char),', ', convert(IFNULL(inC1BigLittlePen,'NULL'),char),', ', convert(IFNULL(inC1LittleBigPen,'NULL'),char),', ', convert(IFNULL(inC1LittlePen,'NULL'),char),', ',
-      convert(IFNULL(inC2BigPen,'NULL'),char),', ', convert(IFNULL(inC2BigLittlePen,'NULL'),char),', ', convert(IFNULL(inC2LittleBigPen,'NULL'),char),', ', convert(IFNULL(inC2LittlePen,'NULL'),char),', ',
-      convert(IFNULL(inC3BigPen,'NULL'),char),', ', convert(IFNULL(inC3BigLittlePen,'NULL'),char),', ', convert(IFNULL(inC3LittleBigPen,'NULL'),char),', ', convert(IFNULL(inC3LittlePen,'NULL'),char),', ',
+      convert(IFNULL(inLC1BigPen,'NULL'),char),', ', convert(IFNULL(inLC1BigLittlePen,'NULL'),char),', ', convert(IFNULL(inLC1LittleBigPen,'NULL'),char),', ', convert(IFNULL(inLC1LittlePen,'NULL'),char),', ',
+      convert(IFNULL(inLC2BigPen,'NULL'),char),', ', convert(IFNULL(inLC2BigLittlePen,'NULL'),char),', ', convert(IFNULL(inLC2LittleBigPen,'NULL'),char),', ', convert(IFNULL(inLC2LittlePen,'NULL'),char),', ',
+      convert(IFNULL(inLC3BigPen,'NULL'),char),', ', convert(IFNULL(inLC3BigLittlePen,'NULL'),char),', ', convert(IFNULL(inLC3LittleBigPen,'NULL'),char),', ', convert(IFNULL(inLC3LittlePen,'NULL'),char),', ',
       convert(IFNULL(inAnalysisId,'NULL'),char),', ',
       convert(IFNULL(inRegionNo,'NULL'),char),', ',
       convert(IFNULL(inParentRegionNo,'NULL'),char),', ',
@@ -558,12 +558,12 @@ BEGIN
     Insert into Diag (Message) values (Concat('GetQLikelihood: called w/ ',
       convert(IFNULL(inPedPosId,'NULL'),char),', ',
       convert(IFNULL(inDGF,'NULL'),char),', ',
-      convert(IFNULL(inC1BigMean,'NULL'),char),', ', convert(IFNULL(inC1BigLittleMean,'NULL'),char),', ', convert(IFNULL(inC1LittleBigMean,'NULL'),char),', ', convert(IFNULL(inC1LittleMean,'NULL'),char),', ',
-      convert(IFNULL(inC2BigMean,'NULL'),char),', ', convert(IFNULL(inC2BigLittleMean,'NULL'),char),', ', convert(IFNULL(inC2LittleBigMean,'NULL'),char),', ', convert(IFNULL(inC2LittleMean,'NULL'),char),', ',
-      convert(IFNULL(inC3BigMean,'NULL'),char),', ', convert(IFNULL(inC3BigLittleMean,'NULL'),char),', ', convert(IFNULL(inC3LittleBigMean,'NULL'),char),', ', convert(IFNULL(inC3LittleMean,'NULL'),char),', ',
-      convert(IFNULL(inC1BigSD,'NULL'),char),', ', convert(IFNULL(inC1BigLittleSD,'NULL'),char),', ', convert(IFNULL(inC1LittleBigSD,'NULL'),char),', ', convert(IFNULL(inC1LittleSD,'NULL'),char),', ',
-      convert(IFNULL(inC2BigSD,'NULL'),char),', ', convert(IFNULL(inC2BigLittleSD,'NULL'),char),', ', convert(IFNULL(inC2LittleBigSD,'NULL'),char),', ', convert(IFNULL(inC2LittleSD,'NULL'),char),', ',
-      convert(IFNULL(inC3BigSD,'NULL'),char),', ', convert(IFNULL(inC3BigLittleSD,'NULL'),char),', ', convert(IFNULL(inC3LittleBigSD,'NULL'),char),', ', convert(IFNULL(inC3LittleSD,'NULL'),char),', ',
+      convert(IFNULL(inLC1BigMean,'NULL'),char),', ', convert(IFNULL(inLC1BigLittleMean,'NULL'),char),', ', convert(IFNULL(inLC1LittleBigMean,'NULL'),char),', ', convert(IFNULL(inLC1LittleMean,'NULL'),char),', ',
+      convert(IFNULL(inLC2BigMean,'NULL'),char),', ', convert(IFNULL(inLC2BigLittleMean,'NULL'),char),', ', convert(IFNULL(inLC2LittleBigMean,'NULL'),char),', ', convert(IFNULL(inLC2LittleMean,'NULL'),char),', ',
+      convert(IFNULL(inLC3BigMean,'NULL'),char),', ', convert(IFNULL(inLC3BigLittleMean,'NULL'),char),', ', convert(IFNULL(inLC3LittleBigMean,'NULL'),char),', ', convert(IFNULL(inLC3LittleMean,'NULL'),char),', ',
+      convert(IFNULL(inLC1BigSD,'NULL'),char),', ', convert(IFNULL(inLC1BigLittleSD,'NULL'),char),', ', convert(IFNULL(inLC1LittleBigSD,'NULL'),char),', ', convert(IFNULL(inLC1LittleSD,'NULL'),char),', ',
+      convert(IFNULL(inLC2BigSD,'NULL'),char),', ', convert(IFNULL(inLC2BigLittleSD,'NULL'),char),', ', convert(IFNULL(inLC2LittleBigSD,'NULL'),char),', ', convert(IFNULL(inLC2LittleSD,'NULL'),char),', ',
+      convert(IFNULL(inLC3BigSD,'NULL'),char),', ', convert(IFNULL(inLC3BigLittleSD,'NULL'),char),', ', convert(IFNULL(inLC3LittleBigSD,'NULL'),char),', ', convert(IFNULL(inLC3LittleSD,'NULL'),char),', ',
       convert(IFNULL(inLC1Threshold,'NULL'),char),', ', convert(IFNULL(inLC2Threshold,'NULL'),char),', ', convert(IFNULL(inLC3Threshold,'NULL'),char),', ',
       convert(IFNULL(inAnalysisId,'NULL'),char),', ',
       convert(IFNULL(inRegionNo,'NULL'),char),', ',
