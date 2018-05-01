@@ -1108,7 +1108,7 @@ BEGIN
         IF localCandidateSMRT = 0 THEN
           SET localCandidateLimit = 51;
         ELSE
-          SET localCandidateLimit = convert(IFNULL((60,'NULL')*60) / localCandidateSMRT, decimal(5,0));
+          SET localCandidateLimit = convert((60*60) / localCandidateSMRT, decimal(5,0));
           IF localCandidateLimit < 1 THEN
             SET localCandidateSMRT = 0;
             SET localCandidateLimit = 1;
