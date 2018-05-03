@@ -187,7 +187,7 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
     else
       s->vol_rate /= 6.0;
       }*/
-  if((modelOptions->qtMeanSDMode==QT_MODE_MEANS)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)) {   // Thsi is only for same std mode or both 
+  if((modelType->trait == DT)||(modelOptions->qtMeanSDMode==QT_MODE_MEANS)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)) {   // Thsi is only for same std mode or both 
     for (i = 0; i < s->nlclass; i++) {
       if (modelOptions->imprintingFlag)
         s->vol_rate /= 16.0;

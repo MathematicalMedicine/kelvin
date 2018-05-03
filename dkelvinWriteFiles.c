@@ -388,7 +388,7 @@ void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
 
   j=2;
   for (idx = 0; idx < modelRange->nlclass; idx++) {
-    if (modelOptions->qtMeanSDMode==QT_MODE_MEANS){
+    if((modelType->trait == DT)|| (modelOptions->qtMeanSDMode==QT_MODE_MEANS)){
       max->pen[idx].DD = arr[j++];
       max->pen[idx].Dd = arr[j++];
       if (! modelOptions->imprintingFlag) {
