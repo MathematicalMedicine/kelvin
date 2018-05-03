@@ -204,7 +204,7 @@ void initializeDB () {
 				      mysql_stmt_sqlstate(studyDB.stmtGetStudyId));});
 	if (++retries > MAX_DB_RETRIES)
 	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
-	INFO("Retry #%d of presumed deadlock after %d second in GetStudyId", retries, dBRetryDelays[retries]);
+	INFO("Retry #%d of failed query after %d second in GetStudyId", retries, dBRetryDelays[retries]);
 	sleep(dBRetryDelays[retries]);
 	continue;
       }
@@ -263,7 +263,7 @@ void GetAnalysisId () {
 				      mysql_stmt_sqlstate(studyDB.stmtGetAnalysisId));});
 	if (++retries > MAX_DB_RETRIES)
 	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
-	INFO("Retry #%d of presumed deadlock after %d second in GetAnalysisId", retries, dBRetryDelays[retries]);
+	INFO("Retry #%d of failed query after %d second in GetAnalysisId", retries, dBRetryDelays[retries]);
 	sleep(dBRetryDelays[retries]);
 	continue;
       }
@@ -783,7 +783,7 @@ double GetMarkerSetLikelihood(int pedPosId, int regionNo, int parentRegionNo, do
 				     mysql_stmt_sqlstate(studyDB.stmtGetMarkerSetLikelihood));});
 	if (++retries > MAX_DB_RETRIES)
 	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
-	INFO("Retry #%d of presumed deadlock after %d second in GetMarkerSetLikelihood", retries, dBRetryDelays[retries]);
+	INFO("Retry #%d of failed query after %d second in GetMarkerSetLikelihood", retries, dBRetryDelays[retries]);
 	sleep(dBRetryDelays[retries]);
 	continue;
       }
@@ -913,7 +913,7 @@ double GetDLikelihood (int pedPosId, double dGF,
 				     mysql_stmt_sqlstate(studyDB.stmtGetDLikelihood));});
 	if (++retries > MAX_DB_RETRIES)
 	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
-	INFO("Retry #%d of presumed deadlock after %d second in GetDLikelihood", retries, dBRetryDelays[retries]);
+	INFO("Retry #%d of failed query after %d second in GetDLikelihood", retries, dBRetryDelays[retries]);
 	sleep(dBRetryDelays[retries]);
 	continue;
       }
@@ -1004,7 +1004,7 @@ double GetQLikelihood (int pedPosId, double dGF,
 				     mysql_stmt_sqlstate(studyDB.stmtGetQLikelihood));});
 	if (++retries > MAX_DB_RETRIES)
 	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
-	INFO("Retry #%d of presumed deadlock after %d second in GetQLikelihood", retries, dBRetryDelays[retries]);
+	INFO("Retry #%d of failed query after %d second in GetQLikelihood", retries, dBRetryDelays[retries]);
 	sleep(dBRetryDelays[retries]);
 	continue;
       }
@@ -1129,7 +1129,7 @@ int CountWork (double lowPosition, double highPosition)
 				     mysql_stmt_sqlstate(studyDB.stmtCountWork));});
 	if (++retries > MAX_DB_RETRIES)
 	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
-	INFO("Retry #%d of presumed deadlock after %d second in CountWork", retries, dBRetryDelays[retries]);
+	INFO("Retry #%d of failed query after %d second in CountWork", retries, dBRetryDelays[retries]);
 	sleep(dBRetryDelays[retries]);
 	continue;
       }
@@ -1185,7 +1185,7 @@ int GetDWork (double lowPosition, double highPosition, int locusListType, double
 				    mysql_stmt_sqlstate(studyDB.stmtGetWork));});
 	if (++retries > MAX_DB_RETRIES)
 	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
-	INFO("Retry #%d of presumed deadlock after %d second in GetDWork", retries, dBRetryDelays[retries]);
+	INFO("Retry #%d of failed query after %d second in GetDWork", retries, dBRetryDelays[retries]);
 	sleep(dBRetryDelays[retries]);
 	continue;
       }
@@ -1276,7 +1276,7 @@ int GetQWork (double lowPosition, double highPosition, int locusListType, double
 				    mysql_stmt_sqlstate(studyDB.stmtGetWork));});
 	if (++retries > MAX_DB_RETRIES)
 	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
-	INFO("Retry #%d of presumed deadlock after %d second in GetQWork", retries, dBRetryDelays[retries]);
+	INFO("Retry #%d of failed query after %d second in GetQWork", retries, dBRetryDelays[retries]);
 	sleep(dBRetryDelays[retries]);
 	continue;
       }
@@ -1399,7 +1399,7 @@ void PutWork (int markerCount, double lOD, int runtimeCostSec)
 				    mysql_stmt_sqlstate(studyDB.stmtPutWork));});
 	if (++retries > MAX_DB_RETRIES)
 	  ERROR("Database operation exceeded %d retries", MAX_DB_RETRIES);
-	INFO("Retry #%d of presumed deadlock after %d second in PutWork", retries, dBRetryDelays[retries]);
+	INFO("Retry #%d of failed query after %d second in PutWork", retries, dBRetryDelays[retries]);
 	sleep(dBRetryDelays[retries]);
 	continue;
       }
