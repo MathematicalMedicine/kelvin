@@ -1,7 +1,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <errno.h>
-#include "sw.h"
+#include "utils/sw.h"
 
 int main (int argc, char *argv[]) {
   int i, segid;

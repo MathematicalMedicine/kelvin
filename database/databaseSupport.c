@@ -314,7 +314,11 @@ void prepareDBStatements () {
   if (mysql_stmt_bind_result (studyDB.stmtGetPedPosId, studyDB.bindGetPedPosIdResults))
     ERROR("Cannot bind GetPedPosId results (%s)", mysql_stmt_error(studyDB.stmtGetPedPosId));
 
-  // Prepare the GetMarkerSetId call
+  /* Prepare the GetMarkerSetId call - this whole thing is EVIL and IF I EVER CATCH ANYONE DOING THIS AGAIN...
+     This statement is not retrieving a value, it is setting a MySQL global in the context of the connection.
+     The global (@outMarkerSetId) is used and also set in the SPs themselves -- a debugging nightmare, and
+     a really innovative way of making completely unintelligible code. Rant, rant, rant. And rant - whv001 */
+
   studyDB.stmtGetMarkerSetId = mysql_stmt_init (studyDB.connection);
   memset (studyDB.bindGetMarkerSetId, 0, sizeof(studyDB.bindGetMarkerSetId));
 
@@ -813,33 +817,41 @@ int GetMarkerSetLikelihood_MCMC(int pedPosId)
   int idx=0;
   int sampleId;
 
-  if(studyDB.markerSetPedPosId == pedPosId && studyDB.markerSetLikelihoodFlag == 1)
+  if(studyDB.markerSetPedPosId == pedPosId && studyDB.markerSetLikelihoodFlag == 1) {
     // we already have the results
     return 0;
+  }
+
+  INFO ("Holding markerSetLikelihood results for pedPosId %d, asked for results for pedPosId %d", studyDB.markerSetPedPosId, pedPosId);
   if(studyDB.markerSetPedPosId != pedPosId) {
-    // need to get the markerSetId first
+    // Apparently we need to get the markerSetId for the current pedPosId first
     if(mysql_stmt_execute(studyDB.stmtGetMarkerSetId))
       ERROR("Cannot execute GetMarkerSetId select statement(%s:%s)", studyDB.strGetMarkerSetId, mysql_stmt_error(studyDB.stmtGetMarkerSetId));
     if(mysql_stmt_store_result(studyDB.stmtGetMarkerSetId) != 0)
       ERROR("Cannot retrieve markerSetId (%s)", mysql_error(studyDB.connection));
     mysql_stmt_free_result(studyDB.stmtGetMarkerSetId);
+    INFO("MySQL context is now holding global value @markerSetId for pedPosId %d", studyDB.markerSetPedPosId);
   }
+
   // Now retrieve the markerset likelihood for each sampling
   if(mysql_query(studyDB.connection, studyDB.strGetMarkerSetLikelihood_MCMC))
-    ERROR("Cannot select from MarkerSetLikelihood_MCMC (%s:%s)", studyDB.strGetMarkerSetLikelihood_MCMC, mysql_error(studyDB.connection));
+    ERROR("Query failure selecting from MarkerSetLikelihood_MCMC (%s:%s)", studyDB.strGetMarkerSetLikelihood_MCMC, mysql_error(studyDB.connection));
   if ((studyDB.resultSet = mysql_store_result (studyDB.connection)) == NULL)
-    ERROR("Cannot retrieve markerSetLikelihood_MCMC (%s)", mysql_error(studyDB.connection));
+    ERROR("Cannot retrieve buffered result set for markerSetLikelihood_MCMC (%s)", mysql_error(studyDB.connection));
+  // Check the count of rows in the result set. This should be all of them since we used mysql_store_result.
   if (mysql_num_rows (studyDB.resultSet) == studyDB.totalSampleCount) {
+    // Count is good, get them all, verifying order (silly, because our query orders them)
     sampleId=studyDB.sampleIdStart;
     idx=0;
     while (sampleId<=studyDB.sampleIdEnd && (studyDB.row = mysql_fetch_row (studyDB.resultSet)) != NULL){
+      // This is a bit wacked -- we silently skip to the next result set item if the order is incorrect?!
       if(atoi(studyDB.row[0])!=sampleId)
 	continue;
       studyDB.markerSetLikelihood[idx] = atof(studyDB.row[1]);
       idx++;
       sampleId++;
     }
-    // Mark we do have the markerSetlikelihood
+    // Indicate that we now have the markerSetlikelihood
     studyDB.markerSetLikelihoodFlag=1;
     studyDB.markerSetPedPosId = studyDB.pedPosId;
   } else {
