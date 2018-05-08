@@ -810,6 +810,12 @@ BEGIN
   ELSE
     set @MCMC_flag=0;
   END IF;
+  Insert into Diag (Message) values (Concat('GetWork: 1st try global @MCMC_flag is ', 
+    convert(IFNULL(@MCMC_flag,'NULL'),char),
+    ', local realLocusListType is ', convert(IFNULL(realLocusListType,'NULL'),char),
+    ', local totalSampleCount is ', convert(IFNULL(totalSampleCount,'NULL'),char)
+    ));
+
 -- See if our cached work table has a row for us to return...
 
   SET no_rows_indicator = 0;
@@ -820,6 +826,9 @@ BEGIN
   IF realLocusListType = 1 THEN
     set @outMarkerSetId = outLC2MPId;
   END IF;
+  Insert into Diag (Message) values (Concat('Select from CachedWork got no_rows_indicator of ', convert(IFNULL(no_rows_indicator,'NULL'),char),
+    ', global @outMarkerSetId is ', convert(IFNULL(@outMarkerSetId,'NULL'),char)
+    ));
 
   IF no_rows_indicator THEN
 
@@ -849,6 +858,7 @@ BEGIN
     END IF;
  
     -- Now try again...
+    Insert into Diag (Message) values ('GetWork: 2nd attempt (after refreshing CachedWork');
 
     SET no_rows_indicator = 0;
     Select WorkId, PedPosId, PedigreeSId, PedTraitPosCM, LC1MPId, LC2MPId, LC3MPId
@@ -859,6 +869,11 @@ BEGIN
     END IF;
   END IF;
 --  END IF;
+  Insert into Diag (Message) values (Concat('GetWork: 2nd try global @MCMC_flag is ', 
+    convert(IFNULL(@MCMC_flag,'NULL'),char),
+    ', local realLocusListType is ', convert(IFNULL(realLocusListType,'NULL'),char),
+    ', local totalSampleCount is ', convert(IFNULL(totalSampleCount,'NULL'),char)
+    ));
 
   IF no_rows_indicator THEN
     Insert into Diag (Message) values ('GetWork: no work found at all');
@@ -924,7 +939,7 @@ BEGIN
 	PP.PedTraitPosCM <= inHighPosition AND
 	PP.PedPosId = M.PedPosId AND
 	M.ServerId IS NULL
-      limit 50; -- No ordering for best performance, REMOVE for update
+        limit 50 FOR UPDATE SKIP LOCKED; -- No ordering for best performance, SKIP LOCKED ignores already-locked rows
 --      order by ModelId limit 10; -- Test version that keeps the models in-order
 --      order by RAND() limit 10; -- The RAND() bit keeps identical servers from fighting too much.
     Select count(*) from CachedWork into outResultRows;
@@ -1006,7 +1021,7 @@ BEGIN
 	M.ServerId = S.ServerId AND
 	M.ModelId = T.ModelId AND
 	M.EndTime IS NULL
-      limit 50; -- No ordering for best performance, REMOVE for update
+        limit 50 FOR UPDATE SKIP LOCKED; -- No ordering for best performance, SKIP LOCKED ignores already-locked rows
 --      order by ModelId limit 10; -- Test version that keeps the models in-order
 --      order by RAND() limit 10; -- The RAND() bit keeps identical servers from fighting too much.
     Select count(*) from CachedWork into outResultRows;
@@ -1132,7 +1147,7 @@ BEGIN
 	' AND PP.PedPosId = ', convert(IFNULL(localCandidatePedPosId,'NULL'),char),
 	' AND M.PedPosId = ', convert(IFNULL(localCandidatePedPosId,'NULL'),char),
 	' AND M.ServerId IS NULL limit ',
-	convert(IFNULL(localCandidateLimit,'NULL'),char), ';'); -- REMOVE for update
+	convert(IFNULL(localCandidateLimit,'NULL'),char), ' FOR UPDATE SKIP LOCKED;');
     PREPARE dSHandle from @dSString;
     EXECUTE dSHandle;
     DEALLOCATE PREPARE dSHandle;
@@ -1217,7 +1232,7 @@ BEGIN
 	  PP.PedTraitPosCM <= inHighPosition AND
 	  PP.PedPosId = M.PedPosId AND
 	  M.ServerId IS NULL
-	  limit 50; -- No ordering for best performance, REMOVE for update
+	  limit 50 FOR UPDATE SKIP LOCKED; -- No ordering for best performance, SKIP LOCKED ignores already-locked rows
 --      order by ModelId limit 10; -- Test version that keeps the models in-order
 --      order by RAND() limit 10; -- The RAND() bit keeps identical servers from fighting too much.
     Select count(*) from CachedWork into outResultRows;
@@ -1246,7 +1261,7 @@ BEGIN
 		M1.PedPosId = M2.PedPosId AND
 		M2.MarkerCount = S.MarkerCount
 		)
-   	    limit 50; -- REMOVE for update
+	    limit 50 FOR UPDATE SKIP LOCKED; -- No ordering for best performance, SKIP LOCKED ignores already-locked rows
       Select count(*) from CachedWork into outResultRows;
 
       IF outResultRows = 0 THEN
@@ -1330,7 +1345,7 @@ BEGIN
 	PP.RefTraitPosCM = -9999.99 AND
 	PP.PedPosId = M.PedPosId AND
 	M.ServerId IS NULL
-        limit 50; -- No ordering for best performance, REMOVE for update
+        limit 50 FOR UPDATE SKIP LOCKED; -- No ordering for best performance, SKIP LOCKED ignores already-locked rows
 --      order by ModelId limit 10; -- Test version that keeps the models in-order
 --      order by RAND() limit 10; -- The RAND() bit keeps identical servers from fighting too much.
     Select count(*) from CachedWork into outResultRows;
