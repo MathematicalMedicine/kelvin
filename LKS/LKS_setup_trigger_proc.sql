@@ -1296,7 +1296,7 @@ BEGIN
 
     ELSE
       -- Work we found has not been done at all, update the rows
-      Insert into Diag (Message) values (Concat('CacheMarkerWork: found ', convert(IFNULL(outResultRows,'NULL'),char), ' rows of undone work, marking'));
+      -- DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheMarkerWork: found ', convert(IFNULL(outResultRows,'NULL'),char), ' rows of undone work, marking'));
       Select count(*) from CachedWork into outResultRows;
       Update MarkerSetLikelihood a, CachedWork b  set a.ServerId = b.ServerId, a.MarkerCount = b.MarkerCount, a.StartTime = CURRENT_TIMESTAMP where
        	a.PedPosId = b.PedPosId AND
