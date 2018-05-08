@@ -21,24 +21,31 @@
 -- I wonder about @outModelId...but it is local to PutWork
 --
 
+-- NOTE: A number of comments are marked as follows:
+    --DEBUG_DIAGTABLE 
+-- These are for statements that populate a "Diag" table that logs a whole
+-- lot of diagnostic output. It gets really really large really really quickly,
+-- tho, so we generally will not have it turned on.
+
+
 -- All the careful tracking of available work is no longer necessary given our pipelined approach. It has been
 -- being phased out for some time, and finally we're dropping it and instead going to use FreeModels as a flag
 -- that is set in the pipeline after client and server-set runs.
 
 DROP TRIGGER IF EXISTS BeforeInsertDiag;
 
-DELIMITER //
-CREATE TRIGGER BeforeInsertDiag BEFORE INSERT ON Diag FOR EACH ROW
-BEGIN
-  IF new.ConnectionId IS NULL
-  THEN
-    SET new.ConnectionId = CONNECTION_ID();
-  END IF;
-END;
-//
-DELIMITER ;
+--DEBUG_DIAGTABLE DELIMITER //
+--DEBUG_DIAGTABLE CREATE TRIGGER BeforeInsertDiag BEFORE INSERT ON Diag FOR EACH ROW
+--DEBUG_DIAGTABLE BEGIN
+--DEBUG_DIAGTABLE   IF new.ConnectionId IS NULL
+--DEBUG_DIAGTABLE   THEN
+--DEBUG_DIAGTABLE     SET new.ConnectionId = CONNECTION_ID();
+--DEBUG_DIAGTABLE   END IF;
+--DEBUG_DIAGTABLE END;
+--DEBUG_DIAGTABLE //
+--DEBUG_DIAGTABLE DELIMITER ;
 
-DELIMITER ;
+-- DELIMITER ;
 DROP TRIGGER IF EXISTS DecMarkers;
 
 -- DELIMITER //
@@ -138,7 +145,7 @@ BEGIN
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
-  Insert into Diag (Message) values (Concat('BadScaling: called w/ ', convert(IFNULL(inStudyId,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('BadScaling: called w/ ', convert(IFNULL(inStudyId,'NULL'),char)));
 
 WholeThing: LOOP
 
@@ -267,7 +274,7 @@ WholeThing: LOOP
 
 END LOOP WholeThing;
 
-  Insert into Diag (Message) values (Concat('BadScaling: returning.'));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('BadScaling: returning.'));
 
 END;
 //
@@ -292,14 +299,14 @@ BEGIN
     DECLARE no_rows CONDITION FOR 1329;
     DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
-    Insert into Diag (Message) values (Concat('GetMarkerSetLikelihood: called w/ ',
-      convert(IFNULL(inPedPosId,'NULL'),char),', ',
-      convert(IFNULL(inAnalysisId,'NULL'),char),', ',
-      convert(IFNULL(inRegionNo,'NULL'),char),', ',
-      convert(IFNULL(inParentRegionNo,'NULL'),char),', ',
-      convert(IFNULL(inParentRegionError,'NULL'),char),', ',
-      convert(IFNULL(inParentRegionSplitDir,'NULL'),char)
-    ));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetMarkerSetLikelihood: called w/ ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inPedPosId,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inAnalysisId,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inRegionNo,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inParentRegionNo,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inParentRegionError,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inParentRegionSplitDir,'NULL'),char)
+    --DEBUG_DIAGTABLE ));
 
     Start transaction;
 
@@ -330,11 +337,11 @@ BEGIN
     set @outMarkerSetId = outMarkerSetId;
     commit;
 
-  Insert into Diag (Message) values (Concat('GetMarkerSetLikelihood: returning w/ ',
-    convert(IFNULL(outRegionId,'NULL'),char),', ',
-    convert(IFNULL(outMarkerCount,'NULL'),char),', ',
-    convert(IFNULL(outLikelihood,'NULL'),char),', '
-    ));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetMarkerSetLikelihood: returning w/ ',
+  --DEBUG_DIAGTABLE   convert(IFNULL(outRegionId,'NULL'),char),', ',
+  --DEBUG_DIAGTABLE   convert(IFNULL(outMarkerCount,'NULL'),char),', ',
+  --DEBUG_DIAGTABLE   convert(IFNULL(outLikelihood,'NULL'),char),', '
+  --DEBUG_DIAGTABLE   ));
 
 END;
 //
@@ -352,10 +359,10 @@ BEGIN
     -- This now relies exclusively on the unique key, which really should be PedigreRegEx and PedigreeNotRegEx, but
     -- those have become unreasonably long.
 
-    Insert into Diag (Message) values (Concat('GetAnalysisId: called w/ ',
-      convert(IFNULL(inStudyId,'NULL'),char),', ',
-      convert(IFNULL(inPedigreeRegEx,'NULL'),char),', ',
-      convert(IFNULL(inPedigreeNotRegEx,'NULL'),char)));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetAnalysisId: called w/ ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inStudyId,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inPedigreeRegEx,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inPedigreeNotRegEx,'NULL'),char)));
 
     Insert ignore into Analyses (StudyId, Uniquey, PedigreeRegEx, PedigreeNotRegEx) values
       (inStudyId, COMPRESS(CONCAT(inPedigreeRegEx,'/',inPedigreeNotRegEx)), inPedigreeRegEx, inPedigreeNotRegEx);
@@ -363,8 +370,8 @@ BEGIN
     Select AnalysisId INTO outAnalysisId
     from Analyses where StudyId = inStudyId AND PedigreeRegEx = inPedigreeRegEx AND PedigreeNotRegEx = inPedigreeNotRegEx;
 
-    Insert into Diag (Message) values (Concat('GetAnalysisId: returning w/ ',
-      convert(IFNULL(outAnalysisId,'NULL'),char)));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetAnalysisId: returning w/ ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(outAnalysisId,'NULL'),char)));
       
 END;
 //
@@ -401,18 +408,18 @@ BEGIN
     DECLARE no_rows CONDITION FOR 1329;
     DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
-    Insert into Diag (Message) values (Concat('GetDLikelihood: called w/ ',
-      convert(IFNULL(inPedPosId,'NULL'),char),', ',
-      convert(IFNULL(inDGF,'NULL'),char),', ',
-      convert(IFNULL(inLC1BigPen,'NULL'),char),', ', convert(IFNULL(inLC1BigLittlePen,'NULL'),char),', ', convert(IFNULL(inLC1LittleBigPen,'NULL'),char),', ', convert(IFNULL(inLC1LittlePen,'NULL'),char),', ',
-      convert(IFNULL(inLC2BigPen,'NULL'),char),', ', convert(IFNULL(inLC2BigLittlePen,'NULL'),char),', ', convert(IFNULL(inLC2LittleBigPen,'NULL'),char),', ', convert(IFNULL(inLC2LittlePen,'NULL'),char),', ',
-      convert(IFNULL(inLC3BigPen,'NULL'),char),', ', convert(IFNULL(inLC3BigLittlePen,'NULL'),char),', ', convert(IFNULL(inLC3LittleBigPen,'NULL'),char),', ', convert(IFNULL(inLC3LittlePen,'NULL'),char),', ',
-      convert(IFNULL(inAnalysisId,'NULL'),char),', ',
-      convert(IFNULL(inRegionNo,'NULL'),char),', ',
-      convert(IFNULL(inParentRegionNo,'NULL'),char),', ',
-      convert(IFNULL(inParentRegionError,'NULL'),char),', ',
-      convert(IFNULL(inParentRegionSplitDir,'NULL'),char)
-      ));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetDLikelihood: called w/ ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inPedPosId,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inDGF,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inLC1BigPen,'NULL'),char),', ', convert(IFNULL(inLC1BigLittlePen,'NULL'),char),', ', convert(IFNULL(inLC1LittleBigPen,'NULL'),char),', ', convert(IFNULL(inLC1LittlePen,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inLC2BigPen,'NULL'),char),', ', convert(IFNULL(inLC2BigLittlePen,'NULL'),char),', ', convert(IFNULL(inLC2LittleBigPen,'NULL'),char),', ', convert(IFNULL(inLC2LittlePen,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inLC3BigPen,'NULL'),char),', ', convert(IFNULL(inLC3BigLittlePen,'NULL'),char),', ', convert(IFNULL(inLC3LittleBigPen,'NULL'),char),', ', convert(IFNULL(inLC3LittlePen,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inAnalysisId,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inRegionNo,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inParentRegionNo,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inParentRegionError,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inParentRegionSplitDir,'NULL'),char)
+    --DEBUG_DIAGTABLE   ));
 
     Start transaction;
 
@@ -511,10 +518,10 @@ BEGIN
     END IF;
     Commit;
 
-    Insert into Diag (Message) values (Concat('GetDLikelihood: returning w/ ',
-    convert(IFNULL(outRegionId,'NULL'),char),', ',
-    convert(IFNULL(outMarkerCount,'NULL'),char),', ',
-    convert(IFNULL(outLikelihood,'NULL'),char)));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetDLikelihood: returning w/ ',
+    --DEBUG_DIAGTABLE convert(IFNULL(outRegionId,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE convert(IFNULL(outMarkerCount,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE convert(IFNULL(outLikelihood,'NULL'),char)));
 
 END
 //
@@ -555,22 +562,22 @@ BEGIN
     DECLARE no_rows CONDITION FOR 1329;
     DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
-    Insert into Diag (Message) values (Concat('GetQLikelihood: called w/ ',
-      convert(IFNULL(inPedPosId,'NULL'),char),', ',
-      convert(IFNULL(inDGF,'NULL'),char),', ',
-      convert(IFNULL(inLC1BigMean,'NULL'),char),', ', convert(IFNULL(inLC1BigLittleMean,'NULL'),char),', ', convert(IFNULL(inLC1LittleBigMean,'NULL'),char),', ', convert(IFNULL(inLC1LittleMean,'NULL'),char),', ',
-      convert(IFNULL(inLC2BigMean,'NULL'),char),', ', convert(IFNULL(inLC2BigLittleMean,'NULL'),char),', ', convert(IFNULL(inLC2LittleBigMean,'NULL'),char),', ', convert(IFNULL(inLC2LittleMean,'NULL'),char),', ',
-      convert(IFNULL(inLC3BigMean,'NULL'),char),', ', convert(IFNULL(inLC3BigLittleMean,'NULL'),char),', ', convert(IFNULL(inLC3LittleBigMean,'NULL'),char),', ', convert(IFNULL(inLC3LittleMean,'NULL'),char),', ',
-      convert(IFNULL(inLC1BigSD,'NULL'),char),', ', convert(IFNULL(inLC1BigLittleSD,'NULL'),char),', ', convert(IFNULL(inLC1LittleBigSD,'NULL'),char),', ', convert(IFNULL(inLC1LittleSD,'NULL'),char),', ',
-      convert(IFNULL(inLC2BigSD,'NULL'),char),', ', convert(IFNULL(inLC2BigLittleSD,'NULL'),char),', ', convert(IFNULL(inLC2LittleBigSD,'NULL'),char),', ', convert(IFNULL(inLC2LittleSD,'NULL'),char),', ',
-      convert(IFNULL(inLC3BigSD,'NULL'),char),', ', convert(IFNULL(inLC3BigLittleSD,'NULL'),char),', ', convert(IFNULL(inLC3LittleBigSD,'NULL'),char),', ', convert(IFNULL(inLC3LittleSD,'NULL'),char),', ',
-      convert(IFNULL(inLC1Threshold,'NULL'),char),', ', convert(IFNULL(inLC2Threshold,'NULL'),char),', ', convert(IFNULL(inLC3Threshold,'NULL'),char),', ',
-      convert(IFNULL(inAnalysisId,'NULL'),char),', ',
-      convert(IFNULL(inRegionNo,'NULL'),char),', ',
-      convert(IFNULL(inParentRegionNo,'NULL'),char),', ',
-      convert(IFNULL(inParentRegionError,'NULL'),char),', ',
-      convert(IFNULL(inParentRegionSplitDir,'NULL'),char)
-      ));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetQLikelihood: called w/ ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inPedPosId,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inDGF,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inLC1BigMean,'NULL'),char),', ', convert(IFNULL(inLC1BigLittleMean,'NULL'),char),', ', convert(IFNULL(inLC1LittleBigMean,'NULL'),char),', ', convert(IFNULL(inLC1LittleMean,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inLC2BigMean,'NULL'),char),', ', convert(IFNULL(inLC2BigLittleMean,'NULL'),char),', ', convert(IFNULL(inLC2LittleBigMean,'NULL'),char),', ', convert(IFNULL(inLC2LittleMean,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inLC3BigMean,'NULL'),char),', ', convert(IFNULL(inLC3BigLittleMean,'NULL'),char),', ', convert(IFNULL(inLC3LittleBigMean,'NULL'),char),', ', convert(IFNULL(inLC3LittleMean,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inLC1BigSD,'NULL'),char),', ', convert(IFNULL(inLC1BigLittleSD,'NULL'),char),', ', convert(IFNULL(inLC1LittleBigSD,'NULL'),char),', ', convert(IFNULL(inLC1LittleSD,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inLC2BigSD,'NULL'),char),', ', convert(IFNULL(inLC2BigLittleSD,'NULL'),char),', ', convert(IFNULL(inLC2LittleBigSD,'NULL'),char),', ', convert(IFNULL(inLC2LittleSD,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inLC3BigSD,'NULL'),char),', ', convert(IFNULL(inLC3BigLittleSD,'NULL'),char),', ', convert(IFNULL(inLC3LittleBigSD,'NULL'),char),', ', convert(IFNULL(inLC3LittleSD,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inLC1Threshold,'NULL'),char),', ', convert(IFNULL(inLC2Threshold,'NULL'),char),', ', convert(IFNULL(inLC3Threshold,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inAnalysisId,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inRegionNo,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inParentRegionNo,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inParentRegionError,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE   convert(IFNULL(inParentRegionSplitDir,'NULL'),char)
+    --DEBUG_DIAGTABLE   ));
 
     Start transaction;
 
@@ -666,10 +673,10 @@ BEGIN
     END IF;
     Commit;
 
-    Insert into Diag (Message) values (Concat('GetQLikelihood: returning w/ ',
-    convert(IFNULL(outRegionId,'NULL'),char),', ',
-    convert(IFNULL(outMarkerCount,'NULL'),char),', ',
-    convert(IFNULL(outLikelihood,'NULL'),char)));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetQLikelihood: returning w/ ',
+    --DEBUG_DIAGTABLE convert(IFNULL(outRegionId,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE convert(IFNULL(outMarkerCount,'NULL'),char),', ',
+    --DEBUG_DIAGTABLE convert(IFNULL(outLikelihood,'NULL'),char)));
 
 END
 //
@@ -688,11 +695,11 @@ CREATE PROCEDURE GetDParts (
 BEGIN
   DECLARE version char(96) DEFAULT '$Id$';
 
-  Insert into Diag (Message) values (Concat('GetDParts: called w/ ',
-    convert(IFNULL(inLC1MPId,'NULL'),char),', ',
-    convert(IFNULL(inLC2MPId,'NULL'),char),', ',
-    convert(IFNULL(inLC3MPId,'NULL'),char)
-    ));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetDParts: called w/ ',
+  --DEBUG_DIAGTABLE   convert(IFNULL(inLC1MPId,'NULL'),char),', ',
+  --DEBUG_DIAGTABLE   convert(IFNULL(inLC2MPId,'NULL'),char),', ',
+  --DEBUG_DIAGTABLE   convert(IFNULL(inLC3MPId,'NULL'),char)
+  --DEBUG_DIAGTABLE   ));
 
   -- Better to return the results as a result set than out parameters (which suck!)
   Select LC1.DGF,
@@ -707,10 +714,10 @@ BEGIN
   from DModelParts LC1, DModelParts LC2, DModelParts LC3
   where LC1.MPId = inLC1MPId AND LC2.MPId = inLC2MPId AND LC3.MPId = inLC3MPId;
     
-  Insert into Diag (Message) values (Concat('GetDParts: returning ', convert(IFNULL(outDGF,'NULL'),char),', ',
-	convert(IFNULL(outLC1BP,'NULL'),char),', ', convert(IFNULL(outLC1BLP,'NULL'),char),', ', convert(IFNULL(outLC1LBP,'NULL'),char),', ', convert(IFNULL(outLC1LP,'NULL'),char),', ', 
-	convert(IFNULL(outLC2BP,'NULL'),char),', ', convert(IFNULL(outLC2BLP,'NULL'),char),', ', convert(IFNULL(outLC2LBP,'NULL'),char),', ', convert(IFNULL(outLC2LP,'NULL'),char),', ', 
-	convert(IFNULL(outLC3BP,'NULL'),char),', ', convert(IFNULL(outLC3BLP,'NULL'),char),', ', convert(IFNULL(outLC3LBP,'NULL'),char),', ', convert(IFNULL(outLC3LP,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetDParts: returning ', convert(IFNULL(outDGF,'NULL'),char),', ',
+  --DEBUG_DIAGTABLE 	convert(IFNULL(outLC1BP,'NULL'),char),', ', convert(IFNULL(outLC1BLP,'NULL'),char),', ', convert(IFNULL(outLC1LBP,'NULL'),char),', ', convert(IFNULL(outLC1LP,'NULL'),char),', ', 
+  --DEBUG_DIAGTABLE 	convert(IFNULL(outLC2BP,'NULL'),char),', ', convert(IFNULL(outLC2BLP,'NULL'),char),', ', convert(IFNULL(outLC2LBP,'NULL'),char),', ', convert(IFNULL(outLC2LP,'NULL'),char),', ', 
+  --DEBUG_DIAGTABLE 	convert(IFNULL(outLC3BP,'NULL'),char),', ', convert(IFNULL(outLC3BLP,'NULL'),char),', ', convert(IFNULL(outLC3LBP,'NULL'),char),', ', convert(IFNULL(outLC3LP,'NULL'),char)));
 
 END
 //
@@ -733,11 +740,11 @@ CREATE PROCEDURE GetQParts (
 BEGIN
   DECLARE version char(96) DEFAULT '$Id$';
 
-  Insert into Diag (Message) values (Concat('GetQParts: called w/ ',
-    convert(IFNULL(inLC1MPId,'NULL'),char),', ',
-    convert(IFNULL(inLC2MPId,'NULL'),char),', ',
-    convert(IFNULL(inLC3MPId,'NULL'),char)
-    ));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetQParts: called w/ ',
+  --DEBUG_DIAGTABLE   convert(IFNULL(inLC1MPId,'NULL'),char),', ',
+  --DEBUG_DIAGTABLE   convert(IFNULL(inLC2MPId,'NULL'),char),', ',
+  --DEBUG_DIAGTABLE   convert(IFNULL(inLC3MPId,'NULL'),char)
+  --DEBUG_DIAGTABLE   ));
 
   -- Better to return the results as a result set than out parameters (which suck!)
   Select LC1.DGF,
@@ -760,10 +767,10 @@ BEGIN
   from QModelParts LC1, QModelParts LC2, QModelParts LC3
   where LC1.MPId = inLC1MPId AND LC2.MPId = inLC2MPId AND LC3.MPId = inLC3MPId;
     
-  Insert into Diag (Message) values (Concat('GetQParts: returning ', convert(IFNULL(outDGF,'NULL'),char),', ',
-	convert(IFNULL(outLC1BMean,'NULL'),char),', ', convert(IFNULL(outLC1BLMean,'NULL'),char),', ', convert(IFNULL(outLC1LBMean,'NULL'),char),', ', convert(IFNULL(outLC1LMean,'NULL'),char),', ', 
-	convert(IFNULL(outLC2BMean,'NULL'),char),', ', convert(IFNULL(outLC2BLMean,'NULL'),char),', ', convert(IFNULL(outLC2LBMean,'NULL'),char),', ', convert(IFNULL(outLC2LMean,'NULL'),char),', ', 
-	convert(IFNULL(outLC3BMean,'NULL'),char),', ', convert(IFNULL(outLC3BLMean,'NULL'),char),', ', convert(IFNULL(outLC3LBMean,'NULL'),char),', ', convert(IFNULL(outLC3LMean,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetQParts: returning ', convert(IFNULL(outDGF,'NULL'),char),', ',
+  --DEBUG_DIAGTABLE 	convert(IFNULL(outLC1BMean,'NULL'),char),', ', convert(IFNULL(outLC1BLMean,'NULL'),char),', ', convert(IFNULL(outLC1LBMean,'NULL'),char),', ', convert(IFNULL(outLC1LMean,'NULL'),char),', ', 
+  --DEBUG_DIAGTABLE 	convert(IFNULL(outLC2BMean,'NULL'),char),', ', convert(IFNULL(outLC2BLMean,'NULL'),char),', ', convert(IFNULL(outLC2LBMean,'NULL'),char),', ', convert(IFNULL(outLC2LMean,'NULL'),char),', ', 
+  --DEBUG_DIAGTABLE 	convert(IFNULL(outLC3BMean,'NULL'),char),', ', convert(IFNULL(outLC3BLMean,'NULL'),char),', ', convert(IFNULL(outLC3LBMean,'NULL'),char),', ', convert(IFNULL(outLC3LMean,'NULL'),char)));
 
 END
 //
@@ -792,8 +799,8 @@ BEGIN
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
-  Insert into Diag (Message) values (Concat('GetWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
-	', ',convert(IFNULL(inHighPosition,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
+  --DEBUG_DIAGTABLE 	', ',convert(IFNULL(inHighPosition,'NULL'),char)));
 
   Create temporary table if not exists CachedWork (
 	WorkId int auto_increment,
@@ -810,11 +817,11 @@ BEGIN
   ELSE
     set @MCMC_flag=0;
   END IF;
-  Insert into Diag (Message) values (Concat('GetWork: 1st try global @MCMC_flag is ', 
-    convert(IFNULL(@MCMC_flag,'NULL'),char),
-    ', local realLocusListType is ', convert(IFNULL(realLocusListType,'NULL'),char),
-    ', local totalSampleCount is ', convert(IFNULL(totalSampleCount,'NULL'),char)
-    ));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetWork: 1st try global @MCMC_flag is ', 
+  --DEBUG_DIAGTABLE   convert(IFNULL(@MCMC_flag,'NULL'),char),
+  --DEBUG_DIAGTABLE   ', local realLocusListType is ', convert(IFNULL(realLocusListType,'NULL'),char),
+  --DEBUG_DIAGTABLE   ', local totalSampleCount is ', convert(IFNULL(totalSampleCount,'NULL'),char)
+  --DEBUG_DIAGTABLE   ));
 
 -- See if our cached work table has a row for us to return...
 
@@ -826,9 +833,9 @@ BEGIN
   IF realLocusListType = 1 THEN
     set @outMarkerSetId = outLC2MPId;
   END IF;
-  Insert into Diag (Message) values (Concat('Select from CachedWork got no_rows_indicator of ', convert(IFNULL(no_rows_indicator,'NULL'),char),
-    ', global @outMarkerSetId is ', convert(IFNULL(@outMarkerSetId,'NULL'),char)
-    ));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('Select from CachedWork got no_rows_indicator of ', convert(IFNULL(no_rows_indicator,'NULL'),char),
+  --DEBUG_DIAGTABLE   ', global @outMarkerSetId is ', convert(IFNULL(@outMarkerSetId,'NULL'),char)
+  --DEBUG_DIAGTABLE   ));
 
   IF no_rows_indicator THEN
 
@@ -849,8 +856,8 @@ BEGIN
           ELSE
             IF realLocusListType = 101 THEN
               call Cache2ptFinalWork(inServerId, inLowPosition, inHighPosition, localResultRows);
-            ELSE
-	      Insert into Diag (Message) values (Concat('GetWork: unexpected inLocusListType of ',convert(IFNULL(inLocusListType,'NULL'),char)));
+            --DEBUG_DIAGTABLE ELSE
+	    --DEBUG_DIAGTABLE   Insert into Diag (Message) values (Concat('GetWork: unexpected inLocusListType of ',convert(IFNULL(inLocusListType,'NULL'),char)));
             END IF;
           END IF;
         END IF;
@@ -858,7 +865,7 @@ BEGIN
     END IF;
  
     -- Now try again...
-    Insert into Diag (Message) values ('GetWork: 2nd attempt (after refreshing CachedWork');
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values ('GetWork: 2nd attempt (after refreshing CachedWork');
 
     SET no_rows_indicator = 0;
     Select WorkId, PedPosId, PedigreeSId, PedTraitPosCM, LC1MPId, LC2MPId, LC3MPId
@@ -869,18 +876,18 @@ BEGIN
     END IF;
   END IF;
 --  END IF;
-  Insert into Diag (Message) values (Concat('GetWork: 2nd try global @MCMC_flag is ', 
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetWork: 2nd try global @MCMC_flag is ', 
     convert(IFNULL(@MCMC_flag,'NULL'),char),
     ', local realLocusListType is ', convert(IFNULL(realLocusListType,'NULL'),char),
     ', local totalSampleCount is ', convert(IFNULL(totalSampleCount,'NULL'),char)
     ));
 
   IF no_rows_indicator THEN
-    Insert into Diag (Message) values ('GetWork: no work found at all');
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values ('GetWork: no work found at all');
     Truncate table CachedWork;
   ELSE
-    Insert into Diag (Message) values (Concat('GetWork: returning ', convert(IFNULL(outPedPosId,'NULL'),char),', ', outPedigreeSId, ', ',
-    convert(IFNULL(outPedTraitPosCM,'NULL'),char),', ', convert(IFNULL(outLC1MPId,'NULL'),char),', ', convert(IFNULL(outLC2MPId,'NULL'),char),', ', convert(IFNULL(outLC3MPId,'NULL'),char)));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetWork: returning ', convert(IFNULL(outPedPosId,'NULL'),char),', ', outPedigreeSId, ', ',
+    --DEBUG_DIAGTABLE convert(IFNULL(outPedTraitPosCM,'NULL'),char),', ', convert(IFNULL(outLC1MPId,'NULL'),char),', ', convert(IFNULL(outLC2MPId,'NULL'),char),', ', convert(IFNULL(outLC3MPId,'NULL'),char)));
     Delete from CachedWork where WorkId = localWorkId;
 
   END IF;
@@ -902,8 +909,8 @@ BEGIN
   DECLARE version char(96) DEFAULT '$Id$';
   DECLARE localKeepAliveFlag INT;
 
-  Insert into Diag (Message) values (Concat('Cache2ptInitialWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
-	', ',convert(IFNULL(inHighPosition,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('Cache2ptInitialWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
+  --DEBUG_DIAGTABLE 	', ',convert(IFNULL(inHighPosition,'NULL'),char)));
 
   Update Servers set LastHeartbeat = CURRENT_TIMESTAMP where ServerId = inServerId;
   Commit;
@@ -945,12 +952,12 @@ BEGIN
     Select count(*) from CachedWork into outResultRows;
 
     IF outResultRows = 0 THEN
-      Insert into Diag (Message) values ('Cache2ptInitialWork: no work found at all');
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values ('Cache2ptInitialWork: no work found at all');
       LEAVE Cache2ptInitialWork;
     ELSE
       -- Work we found has not been done at all, update the rows
       Select count(*) from CachedWork into outResultRows;
-      Insert into Diag (Message) values (Concat('Cache2ptInitialWork: found ', convert(IFNULL(outResultRows,'NULL'),char), ' rows of undone work, marking'));
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('Cache2ptInitialWork: found ', convert(IFNULL(outResultRows,'NULL'),char), ' rows of undone work, marking'));
       Update Models a, CachedWork b set a.ServerId = b.ServerId, a.MarkerCount = b.MarkerCount, a.StartTime = CURRENT_TIMESTAMP where
 	a.PedPosId = b.PedPosId AND
 	a.LC1MPId = b.LC1MPId AND
@@ -964,7 +971,7 @@ BEGIN
 
   Commit;
 
-  Insert into Diag (Message) values (Concat('Cache2ptInitialWork: returning ', convert(IFNULL(outResultRows,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('Cache2ptInitialWork: returning ', convert(IFNULL(outResultRows,'NULL'),char)));
 
 END
 //
@@ -983,8 +990,8 @@ BEGIN
   DECLARE version char(96) DEFAULT '$Id$';
   DECLARE localKeepAliveFlag INT;
 
-  Insert into Diag (Message) values (Concat('Cache2ptFinalWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
-    ', ',convert(IFNULL(inHighPosition,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('Cache2ptFinalWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
+  --DEBUG_DIAGTABLE   ', ',convert(IFNULL(inHighPosition,'NULL'),char)));
 
   Update Servers set LastHeartbeat = CURRENT_TIMESTAMP where ServerId = inServerId;
   Commit;
@@ -1032,7 +1039,7 @@ BEGIN
 
   Commit;
 
-  Insert into Diag (Message) values (Concat('Cache2ptFinalWork: returning ', convert(IFNULL(outResultRows,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('Cache2ptFinalWork: returning ', convert(IFNULL(outResultRows,'NULL'),char)));
 
 END
 //
@@ -1058,8 +1065,8 @@ BEGIN
 
   SET @dSString = "Not a SQL statement"; -- This cannot be a local DECLARE as prepared statement would be lost on exit, so I'm just flagging it.
 
-  Insert into Diag (Message) values (Concat('CacheCombinedWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
- 	', ',convert(IFNULL(inHighPosition,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheCombinedWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
+  --DEBUG_DIAGTABLE 	', ',convert(IFNULL(inHighPosition,'NULL'),char)));
 
   Update Servers set LastHeartbeat = CURRENT_TIMESTAMP where ServerId = inServerId;
 
@@ -1073,7 +1080,7 @@ BEGIN
 
     Select KeepAliveFlag into localKeepAliveFlag from Servers where ServerId = inServerId;
     IF localKeepAliveFlag = 0 THEN
-      Insert into Diag (Message) values ('CacheCombinedWork: no longer kept alive');
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values ('CacheCombinedWork: no longer kept alive');
       LEAVE CacheCombinedWork;
     END IF;
 
@@ -1103,11 +1110,11 @@ BEGIN
         limit 1; -- REMOVE for update
 
     IF localCandidatePedPosId IS NULL THEN
-      Insert into Diag (Message) values ('CacheCombinedWork: no work found');
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values ('CacheCombinedWork: no work found');
       SET outResultRows = 0;
       LEAVE CacheCombinedWork;
-    ELSE
-      Insert into Diag (Message) values (Concat('CacheCombinedWork: work with SMRT of ', convert(IFNULL(localCandidateSMRT,'NULL'),char), ' found for PedPosId ', convert(IFNULL(localCandidatePedPosId,'NULL'),char)));
+    --DEBUG_DIAGTABLE ELSE
+    --DEBUG_DIAGTABLE   Insert into Diag (Message) values (Concat('CacheCombinedWork: work with SMRT of ', convert(IFNULL(localCandidateSMRT,'NULL'),char), ' found for PedPosId ', convert(IFNULL(localCandidatePedPosId,'NULL'),char)));
     END IF;
 
     Start transaction;
@@ -1136,7 +1143,7 @@ BEGIN
     ELSE
       SET localCandidateLimit = 51;
     END IF;
-    Insert into Diag (Message) values (Concat('CacheCombinedWork: work for PedPosId ', convert(IFNULL(localCandidatePedPosId,'NULL'),char), ' with SMRT ', convert(IFNULL(localCandidateSMRT,'NULL'),char), ' limited to ', convert(IFNULL(localCandidateLimit,'NULL'),char)));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheCombinedWork: work for PedPosId ', convert(IFNULL(localCandidatePedPosId,'NULL'),char), ' with SMRT ', convert(IFNULL(localCandidateSMRT,'NULL'),char), ' limited to ', convert(IFNULL(localCandidateLimit,'NULL'),char)));
     Update Servers set CurrentPedPosId = localCandidatePedPosId, CurrentLimit = localCandidateLimit  where ServerId = inServerId;
 
     SET @dSString = Concat(
@@ -1157,11 +1164,11 @@ BEGIN
     IF outResultRows = 0 THEN
       Insert into ExcludedPedPosIds (PedPosId) value (localCandidatePedPosId);
       Select count(*) from ExcludedPedPosIds into localExclusionCount;
-      Insert into Diag (Message) values (Concat('CacheCombinedWork: no actual work (not ', convert(IFNULL(localCandidateFreeModels,'NULL'),char), ') found for ServerId ', convert(IFNULL(inServerId,'NULL'),char), ', PedPosId ', convert(IFNULL(localCandidatePedPosId,'NULL'),char), ', excluded ', convert(IFNULL(localExclusionCount,'NULL'),char), ', looping'));
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheCombinedWork: no actual work (not ', convert(IFNULL(localCandidateFreeModels,'NULL'),char), ') found for ServerId ', convert(IFNULL(inServerId,'NULL'),char), ', PedPosId ', convert(IFNULL(localCandidatePedPosId,'NULL'),char), ', excluded ', convert(IFNULL(localExclusionCount,'NULL'),char), ', looping'));
       -- We don't leave, we try again with a different PedPosId (hopefully)
       Commit;
     ELSE
-      Insert into Diag (Message) values (Concat('CacheCombinedWork: found ', convert(IFNULL(outResultRows,'NULL'),char), ' rows of undone work, marking'));
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheCombinedWork: found ', convert(IFNULL(outResultRows,'NULL'),char), ' rows of undone work, marking'));
       Update Models a, CachedWork b set a.ServerId = b.ServerId, a.MarkerCount = b.MarkerCount, a.StartTime = CURRENT_TIMESTAMP where
 	a.PedPosId = b.PedPosId AND
 	a.LC1MPId = b.LC1MPId AND
@@ -1176,7 +1183,7 @@ BEGIN
   Drop table ExcludedPedPosIds;
   Commit;
 
-  Insert into Diag (Message) values (Concat('CacheCombinedWork: returning ', convert(IFNULL(outResultRows,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheCombinedWork: returning ', convert(IFNULL(outResultRows,'NULL'),char)));
 
 END
 //
@@ -1195,8 +1202,8 @@ BEGIN
   DECLARE version char(96) DEFAULT '$Id$';
   DECLARE localKeepAliveFlag INT;
 
-  Insert into Diag (Message) values (Concat('CacheMarkerWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
-	', ',convert(IFNULL(inHighPosition,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheMarkerWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
+  --DEBUG_DIAGTABLE 	', ',convert(IFNULL(inHighPosition,'NULL'),char)));
 
   Update Servers set LastHeartbeat = CURRENT_TIMESTAMP where ServerId = inServerId;
   Commit;
@@ -1239,7 +1246,7 @@ BEGIN
 
     IF outResultRows = 0 THEN
 
-      Insert into Diag (Message) values ('CacheMarkerWork: found no undone work, checking lesser quality work');
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values ('CacheMarkerWork: found no undone work, checking lesser quality work');
 
       SET outResultRows = 0;
         Insert into CachedWork (PedPosId, PedigreeSId, PedTraitPosCM, LC1MPId, LC2MPId, LC3MPId, ServerId, MarkerCount)
@@ -1265,10 +1272,10 @@ BEGIN
       Select count(*) from CachedWork into outResultRows;
 
       IF outResultRows = 0 THEN
-	Insert into Diag (Message) values ('CacheMarkerWork: no work found at all');
+	--DEBUG_DIAGTABLE Insert into Diag (Message) values ('CacheMarkerWork: no work found at all');
         LEAVE CacheMarkerWork;
       ELSE
-	Insert into Diag (Message) values (Concat('CacheMarkerWork: found ', convert(IFNULL(outResultRows,'NULL'),char), ' rows of lesser-quality, prepping by inserting new Models row'));
+	--DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheMarkerWork: found ', convert(IFNULL(outResultRows,'NULL'),char), ' rows of lesser-quality, prepping by inserting new Models row'));
         Insert into MarkerSetLikelihood (PedPosId, ServerId, MarkerCount, StartTime)
 	 select PedPosId, ServerId, MarkerCount, CURRENT_TIMESTAMP from CachedWork;
 	select LAST_INSERT_ID() into @outMarkerSetId;
@@ -1291,7 +1298,7 @@ BEGIN
 
   Commit;
 
-  Insert into Diag (Message) values (Concat('CacheMarkerWork: returning ', convert(IFNULL(outResultRows,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheMarkerWork: returning ', convert(IFNULL(outResultRows,'NULL'),char)));
 
 END
 //
@@ -1310,7 +1317,7 @@ BEGIN
   DECLARE version char(96) DEFAULT '$Id$';
   DECLARE localKeepAliveFlag INT;
 
-  Insert into Diag (Message) values (Concat('CacheTraitWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheTraitWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char)));
 
   Update Servers set LastHeartbeat = CURRENT_TIMESTAMP where ServerId = inServerId;
   Commit;
@@ -1351,11 +1358,11 @@ BEGIN
     Select count(*) from CachedWork into outResultRows;
 
     IF outResultRows = 0 THEN
-      Insert into Diag (Message) values ('CacheTraitWork: found no undone work (none at all for traits!)');
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values ('CacheTraitWork: found no undone work (none at all for traits!)');
       LEAVE CacheTraitWork;
     ELSE
       -- Work we found has not been done at all, update the rows
-      Insert into Diag (Message) values (Concat('CacheTraitWork: found ', convert(IFNULL(outResultRows,'NULL'),char), ' rows of undone work, marking'));
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheTraitWork: found ', convert(IFNULL(outResultRows,'NULL'),char), ' rows of undone work, marking'));
       Select count(*) from CachedWork into outResultRows;
       Update Models a, CachedWork b set a.ServerId = b.ServerId, a.MarkerCount = b.MarkerCount, a.StartTime = CURRENT_TIMESTAMP where
 	a.PedPosId = b.PedPosId AND
@@ -1370,7 +1377,7 @@ BEGIN
 
   Commit;
 
-  Insert into Diag (Message) values (Concat('CacheTraitWork: returning ', convert(IFNULL(outResultRows,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CacheTraitWork: returning ', convert(IFNULL(outResultRows,'NULL'),char)));
 
 END
 //
@@ -1392,8 +1399,8 @@ BEGIN
   DECLARE no_rows CONDITION FOR 1329;
   DECLARE CONTINUE HANDLER FOR no_rows SET no_rows_indicator = 1;
 
-  Insert into Diag (Message) values (Concat('CountWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
-	', ',convert(IFNULL(inHighPosition,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CountWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char),', ',convert(IFNULL(inLowPosition,'NULL'),char),
+  --DEBUG_DIAGTABLE 	', ',convert(IFNULL(inHighPosition,'NULL'),char)));
 
   -- make sure we have trait position in the given range first before the expensive join
   SET no_rows_indicator = 0;
@@ -1441,7 +1448,7 @@ BEGIN
 	PP.PedPosId = M.PedPosId AND
 	M.ServerId IS NULL;
   SET outWorkCount = outWorkCount + markerWork;
-  Insert into Diag (Message) values (Concat('CountWork: found ', convert(IFNULL(outWorkCount,'NULL'),char),' undone work'));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CountWork: found ', convert(IFNULL(outWorkCount,'NULL'),char),' undone work'));
   IF outWorkCount= 0 THEN
     Select count(*) into outWorkCount
     from
@@ -1483,7 +1490,7 @@ BEGIN
 		);
 
     SET outWorkCount = outWorkCount + markerWork;
-    Insert into Diag (Message) values (Concat('CountWork: found ', convert(IFNULL(outWorkCount,'NULL'),char),' lower-quality  work'));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CountWork: found ', convert(IFNULL(outWorkCount,'NULL'),char),' lower-quality  work'));
   END IF;
   END IF;
 END
@@ -1509,11 +1516,11 @@ BEGIN
   DECLARE localOutModelId INT;
   DECLARE localOutWeightedLRComponent DOUBLE;
 
-  Insert into Diag (Message) values (Concat('PutWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char), ', ', convert(IFNULL(inPedPosId,'NULL'),char),', ',
-	convert(IFNULL(inLC1MPId,'NULL'),char),', ', convert(IFNULL(inLC2MPId,'NULL'),char),', ', convert(IFNULL(inLC3MPId,'NULL'),char), ', ',
-	convert(IFNULL(inMarkerCount,'NULL'),char),', ', convert(IFNULL(inLikelihood,'NULL'),char),', ', convert(IFNULL(inRuntimeCostSec,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('PutWork: called w/ ', convert(IFNULL(inServerId,'NULL'),char), ', ', convert(IFNULL(inPedPosId,'NULL'),char),', ',
+  --DEBUG_DIAGTABLE 	convert(IFNULL(inLC1MPId,'NULL'),char),', ', convert(IFNULL(inLC2MPId,'NULL'),char),', ', convert(IFNULL(inLC3MPId,'NULL'),char), ', ',
+  --DEBUG_DIAGTABLE 	convert(IFNULL(inMarkerCount,'NULL'),char),', ', convert(IFNULL(inLikelihood,'NULL'),char),', ', convert(IFNULL(inRuntimeCostSec,'NULL'),char)));
 
-  Insert into Diag (Message) values (Concat('PutWork: @outMarkerSetId ', convert(IFNULL(@outMarkerSetId,'NULL'), char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('PutWork: @outMarkerSetId ', convert(IFNULL(@outMarkerSetId,'NULL'), char)));
 
   Set localNewSMRT = 0;
 
@@ -1540,7 +1547,7 @@ BEGIN
     IF inMarkerCount = 101 THEN
       -- 2pt, got the final half, combine them and truely finish the job.
       Select WeightedLRComponent, RuntimeCostSec into localOutWeightedLRComponent, localNewSMRT from TP2MP where ModelId = localOutModelId;
-      Insert into Diag (Message) values (Concat('PutWork: Adding inLikelihood ', convert(IFNULL(inLikelihood,'NULL'),char), ' to existing ', convert(IFNULL(localOutWeightedLRComponent,'NULL'),char)));
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('PutWork: Adding inLikelihood ', convert(IFNULL(inLikelihood,'NULL'),char), ' to existing ', convert(IFNULL(localOutWeightedLRComponent,'NULL'),char)));
       Update Models set Likelihood = inLikelihood+localOutWeightedLRComponent, RuntimeCostSec = inRuntimeCostSec+localNewSMRT,
 	MarkerCount = inMarkerCount, EndTime = CURRENT_TIMESTAMP where ModelId = localOutModelId;
     ELSE
@@ -1591,7 +1598,7 @@ BEGIN
     IF (inRuntimeCostSec * 0.70) > localOldSMRT THEN
       -- Set the SingleModelRuntime to the new value
       Update PedigreePositions set SingleModelRuntime = inRuntimeCostSec where PedPosId = inPedPosId;
-      Insert into Diag (Message) values (Concat('PutWork: Reset SMRT due to ', convert(IFNULL(inRuntimeCostSec,'NULL'),char), 's model for PedPosId ', convert(IFNULL(inPedPosId,'NULL'),char), ', which had ', convert(IFNULL(localOldSMRT,'NULL'),char), 's SMRT'));
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('PutWork: Reset SMRT due to ', convert(IFNULL(inRuntimeCostSec,'NULL'),char), 's model for PedPosId ', convert(IFNULL(inPedPosId,'NULL'),char), ', which had ', convert(IFNULL(localOldSMRT,'NULL'),char), 's SMRT'));
     END IF;
     -- We can't just look at the oldSMRT because we could be holding work for which some other server just updated the cost.
     Select inRuntimeCostSec * count(*) into localOldLimit from CachedWork;
@@ -1605,7 +1612,7 @@ BEGIN
 	a.ServerId = inServerId;
       -- Clear-out everything so we get a new, fresh bunch of PROPERLY SIZED work
       Delete from CachedWork;
-      Insert into Diag (Message) values (Concat('PutWork: flushed remaining work due to ', convert(IFNULL(inRuntimeCostSec,'NULL'),char), 's model for PedPosId ', convert(IFNULL(inPedPosId,'NULL'),char), ', which had ', convert(IFNULL(localOldSMRT,'NULL'),char), 's SMRT'));
+      --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('PutWork: flushed remaining work due to ', convert(IFNULL(inRuntimeCostSec,'NULL'),char), 's model for PedPosId ', convert(IFNULL(inPedPosId,'NULL'),char), ', which had ', convert(IFNULL(localOldSMRT,'NULL'),char), 's SMRT'));
     END IF;
   END IF;
 
@@ -1647,7 +1654,7 @@ BEGIN
 	PP.RefTraitPosCM = -9999.99 AND PP.PedPosId = M.PedPosId AND M.ServerId IS NULL;
   DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET EmptyCursor = 1;
 
-  Insert into Diag (Message) values (Concat('SetDummyNullLikelihood: called w/ ', convert(IFNULL(inServerId,'NULL'),char)));
+  --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('SetDummyNullLikelihood: called w/ ', convert(IFNULL(inServerId,'NULL'),char)));
 
   OPEN DummyMarkerModels;
   REPEAT
@@ -1666,7 +1673,7 @@ BEGIN
   UNTIL EmptyCursor END REPEAT;
   CLOSE DummyTraitModels;
 
-    Insert into Diag (Message) values (Concat('GetDLikelihood: returning.'));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetDLikelihood: returning.'));
 
 END;
 //
@@ -1707,7 +1714,7 @@ BEGIN
   SET no_rows_indicator = 0;
   Select StudyId into inStudyId from Studies where StudyLabel = inStudyLabel;
   IF no_rows_indicator THEN
---    Insert into Diag (Message) values (Concat('CleanOrphans(', inStudyLabel, '): cannot find the study!'));
+--DEBUG_DIAGTABLE     Insert into Diag (Message) values (Concat('CleanOrphans(', inStudyLabel, '): cannot find the study!'));
       Leave WholeThing;      
   END IF;
 
@@ -1762,7 +1769,7 @@ BEGIN
   SET no_rows_indicator = 0;
   Select StudyId into inStudyId from Studies where StudyLabel = inStudyLabel;
   IF no_rows_indicator THEN
-    Insert into Diag (Message) values (Concat('CleanStudy(', inStudyLabel, '): cannot find the study!'));
+    --DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('CleanStudy(', inStudyLabel, '): cannot find the study!'));
     LEAVE WholeThing;
   END IF;
 
