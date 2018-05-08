@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS TP2MP;
+--DEBUG_RMTABLE 
 DROP TABLE IF EXISTS RegionModels;
 DROP TABLE IF EXISTS Models;
 DROP TABLE IF EXISTS LGModels;
@@ -16,10 +17,11 @@ DROP TABLE IF EXISTS Studies;
 DROP TABLE IF EXISTS MapMarkers;
 DROP TABLE IF EXISTS Maps;
 DROP TABLE IF EXISTS Markers;
-DROP TABLE IF EXISTS Diag;
+--DEBUG_DIAGTABLE DROP TABLE IF EXISTS Diag;
 DROP TABLE IF EXISTS SingleSizingRuns;
 DROP TABLE IF EXISTS HundredBlockSizingRuns;
 DROP TABLE IF EXISTS MarkerSetLikelihood;
+DROP TABLE IF EXISTS MarkerSetLikelihood_MCMC;
 DROP TABLE IF EXISTS ServerPedigrees;
 
 CREATE TABLE HundredBlockSizingRuns (
@@ -38,12 +40,12 @@ PRIMARY KEY (Directory),
 KEY `StudyId` (StudyId)
 ) ENGINE=InnoDB AUTO_INCREMENT=100000 comment='$Id$';
 
-CREATE TABLE Diag (
-DiagId int NOT NULL AUTO_INCREMENT,
-ConnectionId bigint(21) unsigned,
-InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-Message text,
-PRIMARY KEY (DiagId)) ENGINE=InnoDB comment='$Id$';
+--DEBUG_DIAGTABLE CREATE TABLE Diag (
+--DEBUG_DIAGTABLE DiagId int NOT NULL AUTO_INCREMENT,
+--DEBUG_DIAGTABLE ConnectionId bigint(21) unsigned,
+--DEBUG_DIAGTABLE InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--DEBUG_DIAGTABLE Message text,
+--DEBUG_DIAGTABLE PRIMARY KEY (DiagId)) ENGINE=InnoDB comment='$Id$';
 
 CREATE TABLE Markers (
 StudyId int NOT NULL,
@@ -254,12 +256,19 @@ UNIQUE KEY (ModelId),
 INDEX (PedPosId, LC1MPId, LC2MPId, LC3MPId, ServerId),
 PRIMARY KEY (PedPosID, LC1MPID, LC2MPId, LC3MPId, MarkerCount)) ENGINE=InnoDB comment='$Id$';
 
+--DEBUG_RMTABLE 
 -- Indicates which Regions are affected by a particular ModelId
+--DEBUG_RMTABLE 
 CREATE TABLE RegionModels (
+--DEBUG_RMTABLE 
 RegionId int NOT NULL,
+--DEBUG_RMTABLE 
 ModelId int NOT NULL,
+--DEBUG_RMTABLE 
 PRIMARY KEY (RegionId, ModelId),
+--DEBUG_RMTABLE 
 INDEX (ModelId)
+--DEBUG_RMTABLE 
 ) ENGINE=InnoDB comment='$Id$' AUTO_INCREMENT=1110;
 
 CREATE TABLE LGModels (
@@ -287,8 +296,6 @@ INDEX (ServerId),
 INDEX(PedPosID, MarkerCount),
 PRIMARY KEY (MarkerSetId)
 ) ENGINE=InnoDB comment='$Id$';
-
-DROP TABLE IF EXISTS MarkerSetLikelihood_MCMC;
 
 CREATE TABLE MarkerSetLikelihood_MCMC (
   MarkerSetId int NOT NULL, 

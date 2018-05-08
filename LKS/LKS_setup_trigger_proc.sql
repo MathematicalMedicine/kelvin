@@ -26,6 +26,16 @@
 -- These are for statements that populate a "Diag" table that logs a whole
 -- lot of diagnostic output. It gets really really large really really quickly,
 -- tho, so we generally will not have it turned on.
+-- 
+-- Others are marked as follows:
+    --DEBUG_RMTABLE 
+
+-- This is for the "RegionModels" table, which is a much smaller diagnostic
+-- tool.
+--
+-- These are being turned "on" and "off" by search-and-replacing those strings
+-- (without leading whitespace) and either appending or removing a trailing
+-- newline.
 
 
 -- All the careful tracking of available work is no longer necessary given our pipelined approach. It has been
@@ -513,7 +523,8 @@ BEGIN
         Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
         (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
         Select LAST_INSERT_ID() INTO localModelId;
-        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
+        --DEBUG_RMTABLE 
+Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
       END IF;
     END IF;
     Commit;
@@ -668,7 +679,8 @@ BEGIN
         Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
         (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
         Select LAST_INSERT_ID() INTO localModelId;
-        Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
+        --DEBUG_RMTABLE 
+Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
       END IF;
     END IF;
     Commit;
@@ -1581,8 +1593,10 @@ BEGIN
 	END IF;
       END IF;
     END IF;
-    -- Clear-out any RegionModels so we know they're not pending
-    Delete from RegionModels where ModelId = localOutModelId;
+    --DEBUG_RMTABLE 
+-- Clear-out any RegionModels so we know they're not pending
+    --DEBUG_RMTABLE 
+Delete from RegionModels where ModelId = localOutModelId;
   END IF;
 --  END IF;
 
@@ -1775,7 +1789,8 @@ BEGIN
 
 -- Remove all rows associated with a study
 
-  Delete from RegionModels where RegionId in (Select distinct a.RegionId from Regions a, Analyses b where a.AnalysisId = b.AnalysisId AND b.StudyId = inStudyId);
+  --DEBUG_RMTABLE 
+Delete from RegionModels where RegionId in (Select distinct a.RegionId from Regions a, Analyses b where a.AnalysisId = b.AnalysisId AND b.StudyId = inStudyId);
   Delete from ServerPedigrees where ServerId in (Select ServerId from Servers where StudyId = inStudyId);
   Delete from MarkerSetLikelihood_MCMC where MarkerSetId in (Select MarkerSetId from MarkerSetLikelihood where PedPosId in (Select PedPosId from PedigreePositions where StudyId = inStudyId));
   Delete from MarkerSetLikelihood where PedPosId in (Select PedPosId from PedigreePositions where StudyId = inStudyId);
