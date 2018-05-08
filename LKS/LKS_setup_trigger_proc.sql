@@ -889,10 +889,10 @@ BEGIN
   END IF;
 --  END IF;
   -- DEBUG_DIAGTABLE Insert into Diag (Message) values (Concat('GetWork: 2nd try global @MCMC_flag is ', 
-    convert(IFNULL(@MCMC_flag,'NULL'),char),
-    ', local realLocusListType is ', convert(IFNULL(realLocusListType,'NULL'),char),
-    ', local totalSampleCount is ', convert(IFNULL(totalSampleCount,'NULL'),char)
-    ));
+  -- DEBUG_DIAGTABLE   convert(IFNULL(@MCMC_flag,'NULL'),char),
+  -- DEBUG_DIAGTABLE   ', local realLocusListType is ', convert(IFNULL(realLocusListType,'NULL'),char),
+  -- DEBUG_DIAGTABLE   ', local totalSampleCount is ', convert(IFNULL(totalSampleCount,'NULL'),char)
+  -- DEBUG_DIAGTABLE   ));
 
   IF no_rows_indicator THEN
     -- DEBUG_DIAGTABLE Insert into Diag (Message) values ('GetWork: no work found at all');
