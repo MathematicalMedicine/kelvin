@@ -1952,7 +1952,9 @@ WholeThing: LOOP
   END IF;
 
   -- Reconcile: Mark any servers not really in processlist with ExitStatus 42
+  -- and free up any reserved models for servers that failed for any reason
   IF inWhich = 'Reconcile' THEN
+    -- Mark any servers that never got the chance to report doom
     -- Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from INFORMATION_SCHEMA.PROCESSLIST) AND ExitStatus IS NULL;
     -- This use of a temporary table is a tad silly. We *would* just go with
     -- what's above rather than using a temporary table as a go-between, but
@@ -1964,7 +1966,9 @@ WholeThing: LOOP
     -- for the subquery "fixes" it. Thanks, MySQL!
     Create temporary table silly_mysql_bug_workaround_for_reconcile as Select ID from INFORMATION_SCHEMA.PROCESSLIST;
     Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from silly_mysql_bug_workaround_for_reconcile) AND ExitStatus IS NULL;
-    Update Models a, Servers b set a.ServerId = NULL, a.StartTime = NULL where a.ServerId = b.ServerId AND b.ExitStatus = 42 AND a.Likelihood IS NULL;
+    -- Free all still reserved models for which the server did not exit
+    -- successfully.
+    Update Models a, Servers b set a.ServerId = NULL, a.StartTime = NULL where a.ServerId = b.ServerId AND b.ExitStatus != 0 AND a.Likelihood IS NULL;
  
     Leave WholeThing;
   END IF;
@@ -1987,7 +1991,7 @@ WholeThing: LOOP
 	('Delta', 'Loop showing overall work progress for the last minute using servers active in the last hour'),
 	('Free', 'Show unallocated work by StudyId/PedPosId with SingleModelRuntime'),
 	('TotalFree', 'Show total unallocated work by StudyLabel'),
-	('Reconcile', 'Mark any servers not really in processlist with ExitStatus 42, then release their incomplete work'),
+	('Reconcile', 'Mark any servers not really in processlist with ExitStatus 42 and release any incomplete work'),
 	('FixFree', 'Reset FreeModels flags');
    Select * from Q_help;
    Drop table Q_help;
