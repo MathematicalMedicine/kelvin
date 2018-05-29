@@ -1,51 +1,23 @@
-DROP TABLE IF EXISTS TP2MP;
--- DEBUG_RMTABLE 
-DROP TABLE IF EXISTS RegionModels;
-DROP TABLE IF EXISTS Models;
-DROP TABLE IF EXISTS LGModels;
-DROP TABLE IF EXISTS QModelParts;
-DROP TABLE IF EXISTS DModelParts;
+DROP TABLE IF EXISTS Markers;
+DROP TABLE IF EXISTS Maps;
+DROP TABLE IF EXISTS MapMarkers;
+DROP TABLE IF EXISTS Studies;
+DROP TABLE IF EXISTS Analyses;
+DROP TABLE IF EXISTS Pedigrees;
+DROP TABLE IF EXISTS Positions;
+DROP TABLE IF EXISTS PedigreePositions;
+DROP TABLE IF EXISTS Regions;
 DROP TABLE IF EXISTS Servers;
 DROP VIEW IF EXISTS servers;
-DROP TABLE IF EXISTS Regions;
-DROP TABLE IF EXISTS SingleModelRuntimes;
-DROP TABLE IF EXISTS PedigreePositions;
-DROP TABLE IF EXISTS Positions;
-DROP TABLE IF EXISTS Pedigrees;
-DROP TABLE IF EXISTS Analyses;
-DROP TABLE IF EXISTS Studies;
-DROP TABLE IF EXISTS MapMarkers;
-DROP TABLE IF EXISTS Maps;
-DROP TABLE IF EXISTS Markers;
--- DEBUG_DIAGTABLE DROP TABLE IF EXISTS Diag;
-DROP TABLE IF EXISTS SingleSizingRuns;
-DROP TABLE IF EXISTS HundredBlockSizingRuns;
+DROP TABLE IF EXISTS DModelParts;
+DROP TABLE IF EXISTS QModelParts;
+DROP TABLE IF EXISTS TP2MP;
+DROP TABLE IF EXISTS Models;
+DROP TABLE IF EXISTS LGModels;
 DROP TABLE IF EXISTS MarkerSetLikelihood;
 DROP TABLE IF EXISTS MarkerSetLikelihood_MCMC;
 DROP TABLE IF EXISTS ServerPedigrees;
 
-CREATE TABLE HundredBlockSizingRuns (
-Directory varchar(255) NOT NULL,
-HundredBlock int(11) NOT NULL AUTO_INCREMENT,
-InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-PRIMARY KEY (Directory),
-KEY `HundredBlock` (HundredBlock)
-) ENGINE=InnoDB AUTO_INCREMENT=1110 comment='$Id$';
-
-CREATE TABLE SingleSizingRuns (
-Directory varchar(255) NOT NULL,
-StudyId int(11) NOT NULL AUTO_INCREMENT,
-InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-PRIMARY KEY (Directory),
-KEY `StudyId` (StudyId)
-) ENGINE=InnoDB AUTO_INCREMENT=100000 comment='$Id$';
-
--- DEBUG_DIAGTABLE CREATE TABLE Diag (
--- DEBUG_DIAGTABLE DiagId int NOT NULL AUTO_INCREMENT,
--- DEBUG_DIAGTABLE ConnectionId bigint(21) unsigned,
--- DEBUG_DIAGTABLE InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
--- DEBUG_DIAGTABLE Message text,
--- DEBUG_DIAGTABLE PRIMARY KEY (DiagId)) ENGINE=InnoDB comment='$Id$';
 
 CREATE TABLE Markers (
 StudyId int NOT NULL,
@@ -140,17 +112,6 @@ INDEX (StudyId, ChromosomeNo, PedTraitPosCM),
 INDEX (StudyId, ChromosomeNo, PedTraitPosCM, MarkerCount, FreeModels),
 INDEX (StudyId, ChromosomeNo, RefTraitPosCM)
 ) ENGINE=InnoDB comment='$Id$';
-
--- Must be independent of PedigreePositions both for multiple MarkerCount issues and map-merge issues
-CREATE TABLE SingleModelRuntimes (
-StudyId int NOT NULL,
-PedigreeSId varchar(16) NOT NULL,
-ChromosomeNo int NOT NULL,
-PedTraitPosCM real NOT NULL,
-MarkerCount int DEFAULT 0,
-SingleModelRuntime int DEFAULT NULL,
--- CONSTRAINT FOREIGN KEY (StudyId) references Studies (StudyId),
-PRIMARY KEY (StudyId, PedigreeSId, ChromosomeNo, PedTraitPosCM, MarkerCount)) ENGINE=InnoDB comment='$Id$';
 
 CREATE TABLE Regions (
 RegionId int NOT NULL AUTO_INCREMENT,
@@ -256,21 +217,6 @@ UNIQUE KEY (ModelId),
 -- INDEX (PedPosId, LC1MPId, LC2MPId, LC3MPId, ServerId),
 PRIMARY KEY (PedPosID, LC1MPID, LC2MPId, LC3MPId, MarkerCount)) ENGINE=InnoDB comment='$Id$';
 
--- DEBUG_RMTABLE 
--- Indicates which Regions are affected by a particular ModelId
--- DEBUG_RMTABLE 
-CREATE TABLE RegionModels (
--- DEBUG_RMTABLE 
-RegionId int NOT NULL,
--- DEBUG_RMTABLE 
-ModelId int NOT NULL,
--- DEBUG_RMTABLE 
-PRIMARY KEY (RegionId, ModelId),
--- DEBUG_RMTABLE 
-INDEX (ModelId)
--- DEBUG_RMTABLE 
-) ENGINE=InnoDB comment='$Id$' AUTO_INCREMENT=1110;
-
 CREATE TABLE LGModels (
 LGModelID int NOT NULL AUTO_INCREMENT,
 StudyId int NOT NULL,
@@ -311,3 +257,60 @@ CREATE TABLE ServerPedigrees (
 
   PRIMARY KEY (ServerId, PedigreeSId)
 ) ENGINE=InnoDB comment='$Id$';
+
+
+
+-- "Unused" tables follow
+-- 
+-- Technically, these tables aren't actually regularly used at the moment. They
+-- are retained nonetheless because while some team members here work best with
+-- comments in code, other team members here work best with the presence of
+-- tables in the database. So we leave them in the schema, and change whether
+-- or not they're getting used in LKS_setup_trigger_proc.sql.
+DROP TABLE IF EXISTS RegionModels;
+DROP TABLE IF EXISTS HundredBlockSizingRuns;
+DROP TABLE IF EXISTS SingleSizingRuns;
+DROP TABLE IF EXISTS SingleModelRuntimes;
+DROP TABLE IF EXISTS Diag;
+
+-- Indicates which Regions are affected by a particular ModelId
+CREATE TABLE RegionModels (
+RegionId int NOT NULL,
+ModelId int NOT NULL,
+PRIMARY KEY (RegionId, ModelId),
+INDEX (ModelId)
+) ENGINE=InnoDB comment='$Id$' AUTO_INCREMENT=1110;
+
+CREATE TABLE HundredBlockSizingRuns (
+Directory varchar(255) NOT NULL,
+HundredBlock int(11) NOT NULL AUTO_INCREMENT,
+InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+PRIMARY KEY (Directory),
+KEY `HundredBlock` (HundredBlock)
+) ENGINE=InnoDB AUTO_INCREMENT=1110 comment='$Id$';
+
+CREATE TABLE SingleSizingRuns (
+Directory varchar(255) NOT NULL,
+StudyId int(11) NOT NULL AUTO_INCREMENT,
+InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+PRIMARY KEY (Directory),
+KEY `StudyId` (StudyId)
+) ENGINE=InnoDB AUTO_INCREMENT=100000 comment='$Id$';
+
+-- Must be independent of PedigreePositions both for multiple MarkerCount issues and map-merge issues
+CREATE TABLE SingleModelRuntimes (
+StudyId int NOT NULL,
+PedigreeSId varchar(16) NOT NULL,
+ChromosomeNo int NOT NULL,
+PedTraitPosCM real NOT NULL,
+MarkerCount int DEFAULT 0,
+SingleModelRuntime int DEFAULT NULL,
+-- CONSTRAINT FOREIGN KEY (StudyId) references Studies (StudyId),
+PRIMARY KEY (StudyId, PedigreeSId, ChromosomeNo, PedTraitPosCM, MarkerCount)) ENGINE=InnoDB comment='$Id$';
+
+CREATE TABLE Diag (
+DiagId int NOT NULL AUTO_INCREMENT,
+ConnectionId bigint(21) unsigned,
+InsertTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+Message text,
+PRIMARY KEY (DiagId)) ENGINE=InnoDB comment='$Id$';
