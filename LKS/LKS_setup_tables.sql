@@ -245,7 +245,7 @@ Likelihood double NULL,
 RuntimeCostSec int NULL,
 EndTime timestamp NULL,
 -- CONSTRAINT FOREIGN KEY (PedPosId) references PedigreePositions (PedPosId),
-INDEX (PedPosId),
+-- INDEX (PedPosId),
 -- CONSTRAINT FOREIGN KEY (LC1MPId) references DModelParts (MPId),
 INDEX (LC1MPId),
 -- CONSTRAINT FOREIGN KEY (LC2MPId) references DModelParts (MPId),
@@ -253,7 +253,7 @@ INDEX (LC1MPId),
 -- CONSTRAINT FOREIGN KEY (ServerId) references Servers (ServerId),
 INDEX (ServerId),
 UNIQUE KEY (ModelId),
-INDEX (PedPosId, LC1MPId, LC2MPId, LC3MPId, ServerId),
+-- INDEX (PedPosId, LC1MPId, LC2MPId, LC3MPId, ServerId),
 PRIMARY KEY (PedPosID, LC1MPID, LC2MPId, LC3MPId, MarkerCount)) ENGINE=InnoDB comment='$Id$';
 
 -- DEBUG_RMTABLE 
