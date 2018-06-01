@@ -5,9 +5,8 @@ use warnings;
 #
 # KelvinFamily: an object for managing groups of related KelvinIndividuals (families).
 #
-package KelvinFamily;
+package KelvinFamily v1.9.0;
 our $errstr='';
-our $VERSION=1.9;
 
 sub new
 {

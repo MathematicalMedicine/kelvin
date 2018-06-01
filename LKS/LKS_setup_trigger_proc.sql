@@ -29,7 +29,6 @@
 -- 
 -- Others are marked as follows:
     -- DEBUG_RMTABLE 
-
 -- This is for the "RegionModels" table, which is a much smaller diagnostic
 -- tool.
 --
@@ -523,8 +522,7 @@ BEGIN
         Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
         (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
         Select LAST_INSERT_ID() INTO localModelId;
-        -- DEBUG_RMTABLE 
-Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
+        -- DEBUG_RMTABLE Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
       END IF;
     END IF;
     Commit;
@@ -679,8 +677,7 @@ BEGIN
         Insert ignore into Models (PedPosId, LC1MPId, LC2MPId, LC3MPId) values
         (inPedPosId, localLC1MPId, localLC2MPId, localLC3MPId);
         Select LAST_INSERT_ID() INTO localModelId;
-        -- DEBUG_RMTABLE 
-Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
+        -- DEBUG_RMTABLE Insert ignore into RegionModels (RegionId, ModelId) values (outRegionId, localModelId); -- still a valuable diagnostic
       END IF;
     END IF;
     Commit;
@@ -1593,10 +1590,12 @@ BEGIN
 	END IF;
       END IF;
     END IF;
-    -- DEBUG_RMTABLE 
--- Clear-out any RegionModels so we know they're not pending
-    -- DEBUG_RMTABLE 
-Delete from RegionModels where ModelId = localOutModelId;
+  -- Clear-out any RegionModels so we know they're not pending
+  -- 
+  -- Note that we're not actually regularly using RegionModels nowadays, but it
+  -- can get used now and again in debug situations, and, well, better safe
+  -- than sorry.
+  Delete from RegionModels where ModelId = localOutModelId;
   END IF;
 --  END IF;
 
@@ -1789,8 +1788,6 @@ BEGIN
 
 -- Remove all rows associated with a study
 
-  -- DEBUG_RMTABLE 
-Delete from RegionModels where RegionId in (Select distinct a.RegionId from Regions a, Analyses b where a.AnalysisId = b.AnalysisId AND b.StudyId = inStudyId);
   Delete from ServerPedigrees where ServerId in (Select ServerId from Servers where StudyId = inStudyId);
   Delete from MarkerSetLikelihood_MCMC where MarkerSetId in (Select MarkerSetId from MarkerSetLikelihood where PedPosId in (Select PedPosId from PedigreePositions where StudyId = inStudyId));
   Delete from MarkerSetLikelihood where PedPosId in (Select PedPosId from PedigreePositions where StudyId = inStudyId);
@@ -1806,6 +1803,11 @@ Delete from RegionModels where RegionId in (Select distinct a.RegionId from Regi
   Delete from Maps where StudyId = inStudyId;
   Delete from Analyses where StudyId = inStudyId;
   Delete from Studies where StudyId = inStudyId;
+  -- These next three statements are for tables we don't currently use, but
+  -- better safe than sorry
+  Delete from RegionModels where RegionId in (Select distinct a.RegionId from Regions a, Analyses b where a.AnalysisId = b.AnalysisId AND b.StudyId = inStudyId);
+  Delete from SingleSizingRuns where StudyId = inStudyId;
+  Delete from SingleModelRuntimes where StudyId = inStudyId;
 
   Leave WholeThing;
 	
@@ -1837,6 +1839,8 @@ BEGIN
   Update Regions set StudyId = inToStudyId where StudyId = inFromStudyId;
   Update Servers set StudyId = inToStudyId where StudyId = inFromStudyId;
   Update LGModels set StudyId = inToStudyId where StudyId = inFromStudyId;
+  -- These next two statements are for tables we don't currently use, but
+  -- better safe than sorry
   Update SingleSizingRuns set StudyId = inToStudyId where StudyId = inFromStudyId;
   Update SingleModelRuntimes set StudyId = inToStudyId where StudyId = inFromStudyId;
 

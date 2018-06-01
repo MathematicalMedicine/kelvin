@@ -3,14 +3,13 @@ use strict;
 use warnings;
 use POSIX qw(ceil fmod);
 use KelvinIO;
-use KelvinFamily 1.9;
+use KelvinFamily v1.9.0;
 #
 # KelvinDataset: an object for managing a Kelvin-compatible marker files
 # (marker map, frequencies, and locus files, and pedigree files).
 #
-package KelvinDataset;
+package KelvinDataset v1.9.0;
 our $errstr='';
-our $VERSION=1.9;
 
 our $ROUNDING_ERROR=0.001;
 

@@ -38,9 +38,8 @@ undef on failure.
 
 =cut
 
-package KelvinConfig;
+package KelvinConfig v1.6.0;
 our $errstr='';
-our $VERSION=1.6;
 use File::Spec::Functions qw(splitpath splitdir catpath catdir);
 
 

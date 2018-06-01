@@ -3,14 +3,12 @@
 # Creates a new Study within a LKS database and adds that which the study will
 # be analyzing to same.
 
-package LKS_InitStudy;
+package LKS_InitStudy v2.0.0;
 
-our $VERSION = '$Id$';
-
-use strict;
-use warnings FATAL => qw(all);
+use v5.20;
+use warnings 'FATAL';
 use lib ($ENV{TOOLPATH} ? split (/:/, $ENV{TOOLPATH}) : ' ');
-use English qw( -no_match_vars );
+use English;
 
 use DBI; # Database interaction
 use DBI qw(:sql_types);
@@ -22,14 +20,15 @@ use IO::File;
 use BCMM::CLIParser;
 use BCMMTools;
 use RunSQLScript;
-use KelvinDataset 1.40;
-use KelvinConfig 1.50;
-use KelvinFamily 1.40;
+use KelvinDataset v1.4.0;
+use KelvinConfig v1.5.0;
+use KelvinFamily v1.4.0;
 
 use Exporter qw(import);
 our @EXPORT_OK = qw(init_study_tables insert_initial_study_data);
 
 $OUTPUT_AUTOFLUSH= 1 ;  # Show the output when I say so.
+my $svnid = '$Id$';
 
 my $optssetup = [
     "Creates a new Study within a LKS database and adds that which the study "
@@ -64,7 +63,7 @@ my $optssetup = [
 
 
 sub main {
-    $main::VERSION = $VERSION;  # needed for --version option to work
+    $main::VERSION = our $VERSION;  # needed for --version option to work
     init_study(\@ARGV);
 }
 

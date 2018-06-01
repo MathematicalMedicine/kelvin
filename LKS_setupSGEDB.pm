@@ -3,24 +3,22 @@
 # Adds an allocatable "database" resource to our compute nodes. Necessary for
 # Kelvin-LKS to function properly!
 
-package LKS_setupSGEDB;
-require Exporter;
+package LKS_setupSGEDB v0.1.0;
 
-our $VERSION = '$Id$';
-
-use strict;
-use warnings FATAL => qw(all);
+use v5.20;
+use warnings 'FATAL';
 use lib ($ENV{TOOLPATH} ? split (/:/, $ENV{TOOLPATH}) : ' ');
-use English qw( -no_search_vars );
+use English;
 
 use Getopt::Long qw(:config posix_default auto_version no_ignore_case);
 use List::MoreUtils qw(any);
 use File::Temp;
 
-our @ISA = qw(Exporter);
+use Explorer qw(import)
 our @EXPORT_OK = qw(init_lks_db find_in_path);
 
 $OUTPUT_AUTOFLUSH = 1;
+my $svnid = '$Id$';
 
 
 # Global - need to know if any qconf/qhost/etc. commands should be run using
