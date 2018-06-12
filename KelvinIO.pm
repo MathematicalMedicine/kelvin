@@ -27,7 +27,7 @@ sub getline
     while ($line = $self->SUPER::getline) {
 	$lineno++;
         # Drop leading or trailing spaces, new lines, carriage returns and inline comments
-        $line =~ s/(^\s*|(?:\s*\#.*)?\s*[\n\r]+$)//g
+        $line =~ s/(^\s*|(?:\s*\#.*)?\s*[\n\r]+$)//g;
 	if ($line) {
 	    # This is clumsy. How to do it better?
 	    (ref ($ref) eq 'SCALAR' && $$ref =~ /^\d+$/) and $$ref += $lineno;
