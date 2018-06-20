@@ -767,7 +767,7 @@ sub new
 
     # Pipes indicate phased genotypes. Rearrange the whitespace around the pipes so
     # splitting on whitespace still works like it does with unphased genotypes.
-    $$ind{phased} = (($line =~ s/\s*\|\s*/| /g) > 0);
+    ($$ind{phased} = ($line =~ s/\s*\|\s*/| /g)) or $$ind{phased} = 0;
     
     # Cut off the original pedigree and person IDs, split on whitespace
 
@@ -812,6 +812,14 @@ sub new
     if (($$ind{dadid} eq '0') != ($$ind{momid} eq '0')) {
 	$errstr = "pedid $$ind{pedid}, person $$ind{indid} parents must both be either known or unknown";
 	return (undef);
+    }
+    if ($$ind{indid} eq $$ind{dadid} || $$ind{indid} eq $$ind{momid}) {
+        $errstr = "pedid $$ind{pedid}, person $$ind{indid} is coded as their own parent";
+        return (undef);
+    }
+    if ($$ind{dadid} ne "0" && $$ind{dadid} eq $$ind{momid}) {
+        $errstr = "pedid $$ind{pedid}, person $$ind{indid} parents are coded as the same person";
+        return (undef);
     }
     
     foreach $trait (@{$$dataset{traitorder}}) {
@@ -885,6 +893,29 @@ sub new_from_count
 	} else {
 	    $$ind{markers}[$va] = [0, 0];
 	}
+    }
+    return (bless ($ind, $class));
+}
+
+sub new_dummy
+{
+    my ($class, $dataset, $pedid, $indid, $sex) = @_;
+    my $ind = { pedid => $pedid, indid => $indid, dadid => 0, momid => 0,
+		firstchildid => 0, patsibid => 0, matsibid => 0,
+		origpedid => $pedid, origindid => $indid, sex => $sex,
+                proband => 0, traits => [], markers => [], genotyped => 0,
+                phenotyped => 0, heterozygous => 0, phased => 0,
+                dataset => $dataset, makeped => 'pre' };
+    my $trait;
+    my $marker;
+    my ($allele1, $allele2);
+    my $va;
+
+    foreach $trait (@{$$dataset{traitorder}}) {
+	push (@{$$ind{traits}}, 'x');
+    }
+    for ($va = 0; $va < scalar (@{$$dataset{markerorder}}); $va++) {
+        $$ind{markers}[$va] = [0, 0];
     }
     return (bless ($ind, $class));
 }
@@ -1058,11 +1089,27 @@ sub pedid
     return ($$self{pedid});
 }
 
+sub setPedid
+{
+    my ($self, $pedid) = @_;
+
+    $$self{pedid} = $pedid;
+    return (1);
+}
+
 sub indid
 {
     my ($self) = @_;
 
     return ($$self{indid});
+}
+
+sub setIndid
+{
+    my ($self, $indid) = @_;
+
+    $$self{indid} = $indid;
+    return (1);
 }
 
 sub origindid
@@ -1079,6 +1126,14 @@ sub dadid
     return ($$self{dadid});
 }
 
+sub setDadid
+{
+    my ($self, $dadid) = @_;
+
+    $$self{dadid} = $dadid;
+    return (1);
+}
+
 sub momid
 {
     my ($self) = @_;
@@ -1086,11 +1141,27 @@ sub momid
     return ($$self{momid});
 }
 
+sub setMomid
+{
+    my ($self, $momid) = @_;
+
+    $$self{momid} = $momid;
+    return (1);
+}
+
 sub sex
 {
     my ($self) = @_;
 
     return ($$self{sex});
+}
+
+sub setSex
+{
+    my ($self, $sex) = @_;
+
+    $$self{sex} = $sex;
+    return (1);
 }
 
 sub phenotyped
