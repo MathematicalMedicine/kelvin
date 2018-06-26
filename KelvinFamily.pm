@@ -77,7 +77,8 @@ sub new
 	($$family{count} == 1 || $family->verify_links) or return (undef);
 	$$family{origfmt} = 'post';
     }
-    if (! $family->find_loops && $$family{origfmt} eq "post") {
+    $family->find_loops;
+    if (defined ($$family{loopids}) && $$family{origfmt} eq "post") {
         $errstr = "family $$family{famid} has loops involving individuals $$family{loopids}";
         return (undef);
     }
