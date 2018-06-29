@@ -1981,17 +1981,17 @@ void integrateMain ()
 
         if (modelOptions->qtMeanSDMode ==QT_MODE_MEANS){
 	  xl[k] = 0.5; // changed on 6/4/2018  from 0.7;
-	  xu[k] = 2.0;
+	  xu[k] = 1.5;
 	  volume_region *= (xu[k] - xl[k]);
 	  k++;
 	} else if ((modelOptions->qtMeanSDMode ==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode ==QT_MODE_BOTH)){
 	  xl[k] = xl[k+1] = xl[k+2] = 0.5; // changed on 6/4/2018  from 0.7;
-	  xu[k] = xu[k+1] = xu[k+2] = 2.0;
+	  xu[k] = xu[k+1] = xu[k+2] = 1.5;
 	  volume_region *= (xu[k] - xl[k])*(xu[k+1] - xl[k+1])*(xu[k+2] - xl[k+2]);
           k += 3;
 	  if (modelOptions->imprintingFlag) {
 	    xl[k] = 0.5; // changed on 6/4/2018  from 0.7; 
-	    xu[k] = 2.0; // from 0.0 to 4.0 is going to be the standard
+	    xu[k] = 1.5; // from 0.0 to 4.0 is going to be the standard
             volume_region *= (xu[k] - xl[k]);
             k++;  
 	  }
