@@ -248,9 +248,9 @@ sub check_paths
     require KelvinConfig;
     require KelvinFamily;
     # Check versions ('use' would have done for us automatically)
-    KelvinDataset->VERSION (1.30);
-    KelvinConfig->VERSION (1.20);
-    KelvinFamily->VERSION (1.80);
+    KelvinDataset->VERSION (v1.3.0);
+    KelvinConfig->VERSION (v1.2.0);
+    KelvinFamily->VERSION (v1.8.0);
 }
 
 sub fatal
