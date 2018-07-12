@@ -341,7 +341,8 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
     if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
 
-      if  (modelOptions->qtMeanSDMode==QT_MODE_MEANS){ 
+      SD_DD = SD_Dd = SD_dD = SD_dd = 1; // Fixing std at 1. 7/12/2018
+      /*if  (modelOptions->qtMeanSDMode==QT_MODE_MEANS){ 
         SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
       } else if ((modelOptions->qtMeanSDMode==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
         SD_DD = x[j];         
@@ -353,8 +354,8 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 	  SD_dd = x[j+2];      
           SD_dD= SD_Dd;
 	}
-	j += pen_size;   
-      }
+	}*/
+      j += pen_size;   
       //SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
       /*SD_DD = x[j];           
        * SD_Dd = x[j + 1];      
@@ -654,17 +655,17 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 	       * if(modelOptions->imprintingFlag)
 	       * localmax_x[k + 3] = x[k + 2];
 	       * k += pen_size; */
-	      localmax_x[k] = x[k - 1];
+	      localmax_x[k] = SD_DD; //x[k - 1];
 	      k++;
 	    }else if((modelOptions->qtMeanSDMode==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-	      localmax_x[k ] = x[k-1]; // SD_DD 
+	      localmax_x[k ] = SD_DD; //x[k-1]; // SD_DD 
 	      if (modelOptions->imprintingFlag) {
-		localmax_x[k + 1] = x[k]; //SD_Dd;
-		localmax_x[k + 2] = x[k + 1]; //SD_dD
-		localmax_x[k + 3] = x[k + 2]; //SD_dd
+		localmax_x[k + 1] = SD_Dd; //x[k]; //SD_Dd;
+		localmax_x[k + 2] = SD_dD; //x[k + 1]; //SD_dD
+		localmax_x[k + 3] = SD_dd; //x[k + 2]; //SD_dd
 	      } else {
-		localmax_x[k + 1] = x[k]; // SD_Dd;
-		localmax_x[k + 2] = x[k + 1]; // SD_Dd;
+		localmax_x[k + 1] = SD_Dd; //x[k]; // SD_Dd;
+		localmax_x[k + 2] = SD_dd; //x[k + 1]; // SD_dd;
 	      }
 	      k += pen_size;
 	    }
@@ -1120,8 +1121,8 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
          * }
          * j += pen_size; */
 
-        //SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
-        if (modelOptions->qtMeanSDMode==QT_MODE_MEANS){ 
+        SD_DD = SD_Dd = SD_dD = SD_dd = 1; // Fixing std at 1 7/12/2018
+        /*if (modelOptions->qtMeanSDMode==QT_MODE_MEANS){ 
           SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
 	} else if ((modelOptions->qtMeanSDMode==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
           SD_DD = x[j];         
@@ -1133,8 +1134,8 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
 	    SD_dd = x[j+2];      
 	    SD_dD= SD_Dd;
 	  }
-	  j += pen_size;   
-        }
+	  }*/
+	j += pen_size;   
 
         if (fpIR != NULL) {
           dk_curModel.pen[liabIdxLocal].DDSD = deNormalizeStdev (modelType, SD_DD);
@@ -1425,17 +1426,17 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
 	       * if(modelOptions->imprintingFlag)
 	       * localmax_x[k + 3] = x[k + 2];
 	       * k += pen_size; */
-	      localmax_x[k] = x[k - 1];
+	      localmax_x[k] = SD_DD; //x[k - 1];
 	      k++;
 	    }else if((modelOptions->qtMeanSDMode==QT_MODE_STDEV)||(modelOptions->qtMeanSDMode==QT_MODE_BOTH)){
-	      localmax_x[k ] = x[k-1]; // SD_DD 
+	      localmax_x[k ] = SD_DD; //x[k-1]; // SD_DD 
 	      if (modelOptions->imprintingFlag) {
-		localmax_x[k + 1] = x[k]; //SD_Dd;
-		localmax_x[k + 2] = x[k + 1]; //SD_dD
-		localmax_x[k + 3] = x[k + 2]; //SD_dd
+		localmax_x[k + 1] = SD_Dd; //x[k]; //SD_Dd;
+		localmax_x[k + 2] = SD_dD; //x[k + 1]; //SD_dD
+		localmax_x[k + 3] = SD_dd; //x[k + 2]; //SD_dd
 	      } else {
-		localmax_x[k + 1] = x[k]; // SD_Dd;
-		localmax_x[k + 2] = x[k + 1]; // SD_Dd;
+		localmax_x[k + 1] = SD_Dd; //x[k]; // SD_Dd;
+		localmax_x[k + 2] = SD_dd; //x[k + 1]; // SD_dd;
 	      }
 	      k += pen_size;
 	    }

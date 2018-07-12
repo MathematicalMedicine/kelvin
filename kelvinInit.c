@@ -61,6 +61,9 @@ void kelvinInit (int argc, char *argv[])
   // State the special modification made for version
   INFO ("kelvin %s edit %s built %s %s on %s with the following special modification", programVersion, svnVersion, __DATE__, __TIME__, getenv("HOSTNAME"));
   INFO ("\n\n\t This version fixes the threshold value QTT analysis at the value provided in Kelvin.conf\n\t Ex. Threshold 1,1 \n\t instead of the range of [0,3] The default value is 0.\n\t Currently this applies to both 2p and MT QT analysis, and both LE and LD\n");
+
+  INFO ("\n\n\t This version additionally fixes the std at 1. Please use same std to reduce compuational time, 7/12/2018.\n");
+  
   INFO ("Reference for this version of kelvin:\n\n\tVieland VJ, Huang Y, Seok S-C, Burian J, Catalyurek U, O'Connell J,\n\tSegre A, Valentine-Cooper W. Kelvin: A software package for rigorous\n\tmeasurement of statistical evidence in human genetics. Hum Hered\n\t72(4):276-288, 2011.\n");
   //  INFO ("%s", kelvinVersion);
   //  INFO ("%s", likelihoodVersion);
