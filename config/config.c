@@ -165,7 +165,8 @@ int set_qt_degfreedom (char **toks, int numtoks, void *unused);
 int set_qt_standarddev (char **toks, int numtoks, void *unused);
 int set_qt_threshold (char **toks, int numtoks, void *unused);
 int set_qt_truncation (char **toks, int numtoks, void *unused);
-int set_qt_mean_sd_mode (char **toks, int numtoks, void *unused);
+int set_qt_mean_mode (char **toks, int numtoks, void *unused);
+int set_qt_standarddev_mode (char **toks, int numtoks, void *unused);
 int set_affectionStatus (char **toks, int numtoks, void *unused);
 int set_study_parameters (char **toks, int numtoks, void *unused);
 int set_resultsprefix (char **toks, int numtoks, void *unused);
@@ -204,7 +205,8 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"MaxIterations", set_int, &staticModelOptions.maxIterations},
 
                                 {"MODThreshold", set_double, &staticModelOptions.modThreshold},
-                                {"QTMeanSDMode", set_qt_mean_sd_mode, NULL},
+                                {"QTMeanMode", set_qt_mean_mode, NULL},
+                                {"QTStandardDevMode", set_qt_standarddev_mode, NULL},
                                 {"AlternativeQT", set_flag, &staticModelOptions.alternativeQTFlag},
 
 				{"TraitPositions", set_traitPositions, NULL},
@@ -301,7 +303,8 @@ void initializeDefaults ()
   staticModelOptions.LDprior = 0.02;          /* Prior probability of LD given close linkage */
 
   staticModelOptions.modThreshold = DBL_MAX;
-  staticModelOptions.qtMeanSDMode = 0;
+  staticModelOptions.qtMeanMode = 0;
+  staticModelOptions.qtStandardDevMode = 0;
   staticModelOptions.alternativeQTFlag = FALSE;
   
   staticModelRange.nalleles = 2;
@@ -480,8 +483,10 @@ void validateConfig ()
       INFO ("MarkerToMarker will write no output to NIDetailFile");
     if (staticModelOptions.modThreshold != DBL_MAX)
       fault ("MODThreshold is incompatible with MarkerToMarker\n");
-    if (staticModelOptions.qtMeanSDMode != 0)
-      fault ("QTMeanSDMode is incompatible with MarkerToMarker\n");
+    if (staticModelOptions.qtMeanMode != 0)
+      fault ("QTMeanMode is incompatible with MarkerToMarker\n");
+    if (staticModelOptions.qtStandardDevMode != 0)
+      fault ("qtStandardDevMode is incompatible with MarkerToMarker\n");
 
     if (! staticModelOptions.integration) {
       if (staticModelRange.ndprime == 0 && staticModelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM)
@@ -543,8 +548,10 @@ void validateConfig ()
     fault ("%s requires %s Normal or %s Normal\n", MEAN_STR, QT_STR, QTT_STR);
   if (observed.standardDev && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
     fault ("%s requires %s Normal or %s Normal\n", STANDARDDEV_STR, QT_STR, QTT_STR);
-  if (staticModelOptions.qtMeanSDMode != 0 && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
-    fault ("QTMeanSDMode requires %s Normal or %s Normal\n", QT_STR, QTT_STR);
+  if (staticModelOptions.qtMeanMode != 0 && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
+    fault ("QTMeanMode requires %s Normal or %s Normal\n", QT_STR, QTT_STR);
+  if (staticModelOptions.qtStandardDevMode != 0 && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
+    fault ("QTStandardDevMode requires %s Normal or %s Normal\n", QT_STR, QTT_STR);
 #ifdef DISTRIBUTION
   if (observed.degOfFreedom)
     fault ("ChiSq distribution is still under development and unavailable at this time\n");
@@ -583,8 +590,10 @@ void validateConfig ()
     return;
   }
 
-  if (staticModelOptions.qtMeanSDMode != 0)
-    fault ("QTMeanSDMode is not compatible with FixedModels\n");
+  if (staticModelOptions.qtMeanMode != 0)
+    fault ("QTMeanMode is not compatible with FixedModels\n");
+  if (staticModelOptions.qtStandardDevMode != 0)
+    fault ("QTStandardDevDMode is not compatible with FixedModels\n");
   
   /* So much for the low-hanging fruit... */
   
@@ -775,28 +784,30 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
   if (staticModelOptions.integration == TRUE) {
     if (staticModelType.distrib == QT_FUNCTION_T) {
       if (! observed.mean) {
-	addPenetrance (&staticModelRange, 0, -3.0);
-	addPenetrance (&staticModelRange, 0, 3.0);
+	addPenetrance (&staticModelRange, 0, QT_INTEG_MIN_MEAN);
+	addPenetrance (&staticModelRange, 0, QT_INTEG_MAX_MEAN);
       }
       if (! observed.standardDev) {
-	addParameter (&staticModelRange, 0, 0.7);
-	addParameter (&staticModelRange, 0, 1.0);
+	addParameter (&staticModelRange, 0, QT_INTEG_MIN_STDEV);
+	addParameter (&staticModelRange, 0, QT_INTEG_MAX_STDEV);
       }
       if (staticModelType.trait == CT && staticModelRange.ntthresh == 0) {
-	addTraitThreshold (&staticModelRange, 0);
-	addTraitThreshold (&staticModelRange, 3);
+	addTraitThreshold (&staticModelRange, QT_INTEG_NORM_MIN_THRESH);
+	addTraitThreshold (&staticModelRange, QT_INTEG_NORM_MAX_THRESH);
       }
-      if (staticModelOptions.qtMeanSDMode == 0)
-        staticModelOptions.qtMeanSDMode = QT_MODE_MEANS;
+      if (staticModelOptions.qtMeanMode == 0)
+        staticModelOptions.qtMeanMode = QT_MODE_VARY;
+      if (staticModelOptions.qtStandardDevMode == 0)
+        staticModelOptions.qtStandardDevMode = QT_MODE_SAME;
     }
     if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE) {
       if (! observed.degOfFreedom) {
-	addPenetrance (&staticModelRange, 0, 0.05);
-	addPenetrance (&staticModelRange, 0, 30);
+	addPenetrance (&staticModelRange, 0, QT_INTEG_MIN_DOF);
+	addPenetrance (&staticModelRange, 0, QT_INTEG_MAX_DOF);
       }
       if (staticModelType.trait == CT && staticModelRange.ntthresh == 0) {
-	addTraitThreshold (&staticModelRange, 0.05);
-	addTraitThreshold (&staticModelRange, 30);
+	addTraitThreshold (&staticModelRange, QT_INTEG_CHI_MIN_THRESH);
+	addTraitThreshold (&staticModelRange, QT_INTEG_CHI_MAX_THRESH);
       }
     }
     if (staticModelType.trait != DT) 
@@ -824,6 +835,15 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
   MALCHOKE (staticModelRange.lclassLabels, sizeof (int) * staticModelRange.nlclass, int *);
   for (i = 0; i < staticModelRange.nlclass; i++)
     staticModelRange.lclassLabels[i] = i+1;
+
+  /* If the user asks for a MOD file, enable the Amoeba maximizing routine by
+     setting the MOD threshold to 0 */
+  if (strlen (staticModelOptions.modfile) != 0 && staticModelOptions.modThreshold == DBL_MAX)
+    staticModelOptions.modThreshold = 0;
+  /* If the user specifies a MOD threshold, but didn't ask for a MOD file,
+     force creation of a MOD file */
+  if (staticModelOptions.modThreshold != DBL_MAX && strlen (staticModelOptions.modfile) == 0)
+    strcpy (staticModelOptions.modfile, DEFAULTMODFILENAME);
 
   /* Copy our statically-allocated structures over to their global page-allocated
    * counterparts so we can protect them from monkeying.
@@ -1496,18 +1516,36 @@ int set_qt_truncation (char **toks, int numtoks, void *unused)
 }
 
 
-int set_qt_mean_sd_mode (char **toks, int numtoks, void *unused)
+int set_qt_mean_mode (char **toks, int numtoks, void *unused)
 {
   if (numtoks < 2)
     bail ("missing argument to directive '%s'\n", toks[0]);
   if (numtoks > 2)
     bail ("extra arguments to directive '%s'\n", toks[0]);
-  if (strncasecmp (toks[1], "Means", strlen (toks[1])) == 0)
-    staticModelOptions.qtMeanSDMode = QT_MODE_MEANS;
-  else if (strncasecmp (toks[1], "StDev", strlen (toks[1])) == 0)
-    staticModelOptions.qtMeanSDMode = QT_MODE_STDEV;
-  else if (strncasecmp (toks[1], "Both", strlen (toks[1])) == 0)
-    staticModelOptions.qtMeanSDMode = QT_MODE_BOTH;
+  if (strncasecmp (toks[1], "Vary", strlen (toks[1])) == 0)
+    staticModelOptions.qtMeanMode = QT_MODE_VARY;
+  else if (strncasecmp (toks[1], "Same", strlen (toks[1])) == 0)
+    staticModelOptions.qtMeanMode = QT_MODE_SAME;
+  else if (strncasecmp (toks[1], "Fixed", strlen (toks[1])) == 0)
+    staticModelOptions.qtMeanMode = QT_MODE_FIXED;
+  else
+    bail ("unknown argument to directive '%s'\n", toks[1]);
+  return (0);
+}
+
+
+int set_qt_standarddev_mode (char **toks, int numtoks, void *unused)
+{
+  if (numtoks < 2)
+    bail ("missing argument to directive '%s'\n", toks[0]);
+  if (numtoks > 2)
+    bail ("extra arguments to directive '%s'\n", toks[0]);
+  if (strncasecmp (toks[1], "Vary", strlen (toks[1])) == 0)
+    staticModelOptions.qtStandardDevMode = QT_MODE_VARY;
+  else if (strncasecmp (toks[1], "Same", strlen (toks[1])) == 0)
+    staticModelOptions.qtStandardDevMode = QT_MODE_SAME;
+  else if (strncasecmp (toks[1], "Fixed", strlen (toks[1])) == 0)
+    staticModelOptions.qtStandardDevMode = QT_MODE_FIXED;
   else
     bail ("unknown argument to directive '%s'\n", toks[1]);
   return (0);

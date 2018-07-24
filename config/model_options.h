@@ -36,6 +36,8 @@
 #define DEFAULTAVGHETFILENAME "br.out"
 /// File name used for output of PPL results if none specified in the configuration file.
 #define DEFAULTPPLFILENAME "ppl.out"
+/// File name used for output of MOD results if none specified in the configuration file.
+#define DEFAULTMODFILENAME "mod.out"
 /// Path name used for locating saved results if none specified in the configuration file.
 #define DEFAULTRESULTSPREFIX "./"
 
@@ -66,10 +68,15 @@ enum MapFlag {
 /// Phenotype code (affection status) for a dichotomous trait known to be affected.
 #define AFFECTION_STATUS_AFFECTED       2
 
-/* For experimental QT-normal analysis integrating over multiple SD and/or means. */
-#define QT_MODE_MEANS    1      // Old-style, fix StDev and integrate over means
-#define QT_MODE_STDEV    2      // Fix mean and integrate over StDevs
-#define QT_MODE_BOTH     3      // Inntegrate over both means and StDevs
+/* For experimental dynamic-grid QT-normal analysis, used to control if means
+ * or standard deviations can vary (parameter is sampled, and may vary between
+ * trait genotypes), are the same (parameter is sampled, but does not vary 
+ * betgween trait genotypes) or is fixed (is not sampled, but is set to a 
+ * fixed value for all models).
+ */
+#define QT_MODE_VARY    1    // Sampled and varies
+#define QT_MODE_SAME    2    // Sampled but does not vary
+#define QT_MODE_FIXED   3    // Fixed
 
 typedef struct ModelOptions
 {
@@ -115,7 +122,8 @@ typedef struct ModelOptions
   int alternativeQTFlag;        ///< Flag to indicate if experimental alternative QT algorithm is to be used.
 
   /* For experimental QT analysis integrating over multiple SD and/or means. */
-  int qtMeanSDMode;
+  int qtMeanMode;
+  int qtStandardDevMode;
   
   int dryRun;                   ///< Flag indicating dry run to get statistics for complexity.
   int forceAvghetFile;          ///< Flag to force open a BR file, regardless of other directives.

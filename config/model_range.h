@@ -26,6 +26,7 @@ typedef struct ModelRange
   double **penetLimits;         /* 2D array of raw penetrance limits by allele and min/max */
 
   double ****param;		/* 4D array of extra parameters for QT and CT */
+  double paramLimits[2];        /* array of raw parameter limits by min/max */
   int npardim;			/* Number of parameters for given distribution */
   int nparam;			/* Number of parameter records */
 
@@ -128,6 +129,21 @@ Constraint;
 #define SEXAV 0
 #define SEXML 0
 #define SEXFM 1
+
+/* Default min/max values for QT/QTT parameters, under dynamic sampling only */
+/* For Normal (T) distribution */
+#define QT_INTEG_MIN_MEAN -3.0
+#define QT_INTEG_MAX_MEAN  3.0
+#define QT_INTEG_MIN_STDEV 0.7
+#define QT_INTEG_MAX_STDEV 1.0
+#define QT_INTEG_NORM_MIN_THRESH  0.0
+#define QT_INTEG_NORM_MAX_THRESH  3.0
+/* fro Chi-squared distribution */
+#define QT_INTEG_MIN_DOF   0.05
+#define QT_INTEG_MAX_DOF  30.0
+#define QT_INTEG_CHI_MIN_THRESH   0.05
+#define QT_INTEG_CHI_MAX_THRESH  30.0
+
 
 extern char *op_strs[];
 extern char *mp_strs[];

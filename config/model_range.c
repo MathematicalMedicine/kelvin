@@ -356,6 +356,11 @@ void addParameter (ModelRange * range, int dim, double val)
     MALCHOKE(range->param, sizeof (double ***), void *);
     MALCHOKE(range->param[0], sizeof (double **), void *);
     MALCHOKE(range->param[0][0], range->npardim * sizeof (double *), void *);
+
+    /* Initialize the paramLimits min/max values, too */
+    range->paramLimits[0] = 999999999.00;
+    range->paramLimits[1] = -999999999.00;
+
     for (i = 0; i < range->npardim; i++)
       MALCHOKE(range->param[0][0][i], CHUNKSIZE * sizeof (double), void *);
 
@@ -381,6 +386,12 @@ void addParameter (ModelRange * range, int dim, double val)
   /* Add the element. */
   range->param[0][0][dim][paramcnt[dim]] = val;
   paramcnt[dim]++;
+
+  /* See if it's a raw maximum or minimum */
+  if (range->paramLimits[0] > val)
+    range->paramLimits[0] = val;
+  if (range->paramLimits[1] < val)
+    range->paramLimits[1] = val;
 }
 
 
