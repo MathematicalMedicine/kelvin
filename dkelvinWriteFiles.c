@@ -378,6 +378,32 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
   return;
 }
 
+void dk_copyMaxModel2(st_DKMaxModel *dest, st_DKMaxModel *cur){
+  // copies some contents of cur to dest 7/26/2018
+
+  int idx;
+
+  dest->dgf = cur->dgf;
+  dest->alpha = cur->alpha;
+  for (idx = 0; idx < modelRange->nlclass; idx++){
+    dest->pen[idx].DD = cur->pen[idx].DD;
+    dest->pen[idx].Dd = cur->pen[idx].Dd;
+    dest->pen[idx].dD = cur->pen[idx].dD;
+    dest->pen[idx].dd = cur->pen[idx].dd;
+    if(modelType->trait == QT){
+      dest->pen[idx].DDSD = cur->pen[idx].DDSD;
+      dest->pen[idx].DdSD = cur->pen[idx].DdSD;
+      dest->pen[idx].dDSD = cur->pen[idx].dDSD;
+      dest->pen[idx].ddSD = cur->pen[idx].ddSD;
+    }
+
+    if (modelType->trait == CT) 
+      dest->pen[idx].threshold = cur->pen[idx].threshold;
+  }
+
+}
+
+
 void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
 {
   int j, idx;
@@ -386,7 +412,94 @@ void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
   max->dgf = arr[0];
   max->alpha = arr[1];
 
-  j=2;
+  j=2; 
+  for (idx = 0; idx < modelRange->nlclass; idx++) {
+    if(modelType->trait == DT){
+      max->pen[idx].DD = arr[j++];
+      max->pen[idx].Dd = arr[j++];
+      if (! modelOptions->imprintingFlag) {
+	max->pen[idx].dd = arr[j++];
+      } else {
+	max->pen[idx].dD = arr[j++];
+	max->pen[idx].dd = arr[j++];
+      }
+    }else {   // QT case
+
+      //First take care of mean
+      if ((modelOptions->qtMeanMode==QT_MODE_VARY)||(modelType->distrib == QT_FUNCTION_CHI_SQUARE)) {
+	max->pen[idx].DD = arr[j++];
+	max->pen[idx].Dd = arr[j++];
+	if (! modelOptions->imprintingFlag) {
+	  max->pen[idx].dd = arr[j++];
+	} else {
+	  max->pen[idx].dD = arr[j++];
+	  max->pen[idx].dd = arr[j++];
+	}
+      }else if (modelOptions->qtMeanMode==QT_MODE_SAME){
+	max->pen[idx].DD = arr[j];//arr[j++];
+	max->pen[idx].Dd = arr[j];//arr[j++];
+	if (! modelOptions->imprintingFlag) {
+	  max->pen[idx].dd = arr[j];//arr[j++];
+	} else {
+	  max->pen[idx].dD = arr[j];//arr[j++];
+	  max->pen[idx].dd = arr[j];//arr[j++];
+	}
+	j++;
+      }else if (modelOptions->qtMeanMode==QT_MODE_FIXED){
+	max->pen[idx].DD = modelRange->penetLimits[0][0];//arr[j];//arr[j++];
+	max->pen[idx].Dd = modelRange->penetLimits[0][0];//arr[j];//arr[j++];
+	if (! modelOptions->imprintingFlag) {
+	  max->pen[idx].dd = modelRange->penetLimits[0][0];//arr[j];//arr[j++];
+	} else {
+	  max->pen[idx].dD = modelRange->penetLimits[0][0];//arr[j];//arr[j++];
+	  max->pen[idx].dd = modelRange->penetLimits[0][0];//arr[j];//arr[j++];
+	}
+      }
+
+      //Then take care of std
+      if (modelOptions->qtStandardDevMode==QT_MODE_VARY) {
+	max->pen[idx].DDSD = arr[j++];
+	max->pen[idx].DdSD = arr[j++];
+	if (! modelOptions->imprintingFlag) {
+	  max->pen[idx].ddSD = arr[j++];
+	} else {
+	  max->pen[idx].dDSD = arr[j++];
+	  max->pen[idx].ddSD = arr[j++];
+	}
+      }else if (modelOptions->qtMeanMode==QT_MODE_SAME){
+	max->pen[idx].DDSD = arr[j];//arr[j++];
+	max->pen[idx].DdSD = arr[j];//arr[j++];
+	if (! modelOptions->imprintingFlag) {
+	  max->pen[idx].ddSD = arr[j];//arr[j++];
+	} else {
+	  max->pen[idx].dDSD = arr[j];//arr[j++];
+	  max->pen[idx].ddSD = arr[j];//arr[j++];
+	}
+	j++;
+      }else if (modelOptions->qtMeanMode==QT_MODE_FIXED){
+	max->pen[idx].DDSD = modelRange->paramLimits[0];//arr[j];//arr[j++];
+	max->pen[idx].DdSD = modelRange->paramLimits[0];//arr[j];//arr[j++];
+	if (! modelOptions->imprintingFlag) {
+	  max->pen[idx].ddSD = modelRange->paramLimits[0];//arr[j];//arr[j++];
+	} else {
+	  max->pen[idx].dDSD = modelRange->paramLimits[0];//arr[j];//arr[j++];
+	  max->pen[idx].ddSD = modelRange->paramLimits[0];//arr[j];//arr[j++];
+	}
+      }
+
+
+
+      if (modelType->trait == CT) {
+	if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10){	  
+	  max->pen[idx].threshold = arr[num-1];  //arr[j++];
+	}else{
+	  max->pen[idx].threshold = modelRange->tthresh[0][0];  //arr[j++];
+	}
+      } // end of CT
+    } // end of QT
+  } // end of for loop over lc
+
+  /*  j=2;
   for (idx = 0; idx < modelRange->nlclass; idx++) {
     if((modelType->trait == DT)|| (modelOptions->qtMeanSDMode==QT_MODE_MEANS)){
       max->pen[idx].DD = arr[j++];
@@ -451,7 +564,7 @@ void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
 	  max->pen[idx].threshold = arr[num-1];  //arr[j++];
       }
     }
-  }
+    }*/
   /*if (modelType->trait == CT) 
     max->pen[idx].threshold = arr[j++];*/
 }

@@ -321,7 +321,7 @@ dadhre_ (dcuhre_state * s)
 	 (real_result <0.0) || ((real_error > s->epsabs) && (s->cur_diff_suc< s->aim_diff_suc))
        ) { // Short and consecutive 2*nlclass of diff(BR)< error_tol
 #endif
-      fprintf (stderr,"splitting!\n");
+      //fprintf (stderr,"splitting!\n");
 
       /*   If we are allowed to divide further, */
       /*   prepare to apply basic rule over each half of the */
