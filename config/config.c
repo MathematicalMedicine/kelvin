@@ -585,7 +585,7 @@ void validateConfig ()
     
     if (staticModelType.trait == CT && staticModelRange.ntthresh > 0) {
       if (staticModelOptions.qtThresholdMode == QT_MODE_FIXED) {
-        if (staticModelRange.ntthresh != 2)
+        if (staticModelRange.ntthresh != 1)
           fault ("QTT with fixed threshold allows only one Threshold value\n");
       } else {
         if (staticModelRange.ntthresh != 2)
@@ -1502,9 +1502,9 @@ int set_qt_threshold (char **toks, int numtoks, void *unused)
   
   if (numtoks < 2)
     bail ("missing arguments to directive '%s'\n", toks[0]);
-  if (strcasecmp (toks[1], "Fixed")) {
+  if (strcasecmp (toks[1], "Fixed") == 0) {
     /* First argument of 'Fixed' allows exactly one threshold value */
-    if (((numvals = expandVals (&toks[2], numtoks-1, &vals, NULL)) <= 0) || numvals != 1)
+    if (((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0) || numvals != 1)
       bail ("illegal argument to directive '%s'\n", toks[0]);
     staticModelOptions.qtThresholdMode = QT_MODE_FIXED;
     addTraitThreshold (&staticModelRange, vals[0]);
