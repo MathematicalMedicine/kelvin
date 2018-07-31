@@ -285,7 +285,8 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
   j = 1;        // j=0 for gfrequency
   if (modelType->trait == CT) {
-    if (modelRange->tthresh[0][0]>=modelRange->tthresh[0][1]-1.0e-10){
+    if (modelOptions->qtThresholdMode == QT_MODE_FIXED){
+    //if (modelRange->tthresh[0][0]>=modelRange->tthresh[0][1]-1.0e-10){
       threshold = modelRange->tthresh[0][0];
     }else{
       threshold = x[s->ndim - 1];
@@ -1076,7 +1077,8 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   /* this should be MEAN + SD */
   j = 1;
   if (modelType->trait == CT) {
-    if(modelRange->tthresh[0][0] >= modelRange->tthresh[0][1]-1.0e-10){
+    if (modelOptions->qtThresholdMode == QT_MODE_FIXED){
+      //if(modelRange->tthresh[0][0] >= modelRange->tthresh[0][1]-1.0e-10){
       threshold = modelRange->tthresh[0][0];
     }else{
       threshold = x[s->ndim - 1];
@@ -1898,7 +1900,8 @@ void integrateMain ()
       }
     }
     if (modelType->trait == CT) {
-      if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
+      //fprintf(stderr," \n\n CT mode \n\n\n");
+      if (modelOptions->qtThresholdMode == QT_MODE_VARY) //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
 	total_dim++;      //  One threshold for all LCs    //   = modelRange->nlclass;
     }
   }
@@ -2054,7 +2057,8 @@ void integrateMain ()
        * } */
     }   // retangular volume region is calculated and stored in volume_region
     if (modelType->trait == CT) {
-      if (modelRange->tthresh[0][0] <= modelRange->tthresh[0][1]+1.0e-10){  // do not use this when threshold is fixed
+      if (modelOptions->qtThresholdMode == QT_MODE_VARY){ //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
+	//if (modelRange->tthresh[0][0] <= modelRange->tthresh[0][1]+1.0e-10){  // do not use this when threshold is fixed
 	xl[k] =  modelRange->tthresh[0][0];//0.0;
 	xu[k] =  modelRange->tthresh[0][1]; // 3.0;
 	volume_region *= (xu[k] - xl[k]);

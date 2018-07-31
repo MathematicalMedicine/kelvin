@@ -390,12 +390,14 @@ void dk_copyMaxModel2(st_DKMaxModel *dest, st_DKMaxModel *cur){
     dest->pen[idx].Dd = cur->pen[idx].Dd;
     dest->pen[idx].dD = cur->pen[idx].dD;
     dest->pen[idx].dd = cur->pen[idx].dd;
-    if(modelType->trait == QT){
+    //if(modelType->trait == QT){
       dest->pen[idx].DDSD = cur->pen[idx].DDSD;
       dest->pen[idx].DdSD = cur->pen[idx].DdSD;
       dest->pen[idx].dDSD = cur->pen[idx].dDSD;
       dest->pen[idx].ddSD = cur->pen[idx].ddSD;
-    }
+
+      //fprintf(stderr,"DDSD =%f DdSD=%f   ddSD =%f\n", dest->pen[idx].DDSD,dest->pen[idx].DdSD,dest->pen[idx].ddSD);
+      //}
 
     if (modelType->trait == CT) 
       dest->pen[idx].threshold = cur->pen[idx].threshold;
