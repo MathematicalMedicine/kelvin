@@ -81,6 +81,7 @@ typedef struct
 } st_DKMaxModel;
 
 st_DKMaxModel dk_globalmax, dk_dprime0max, dk_dprimeP1max, dk_dprimeN1max, dk_theta0max, dk_curModel;
+st_DKMaxModel dk_localmax;   // 7/26/2018
 
 SubLocusList traitLocusList;
 SubLocusList markerLocusList;
