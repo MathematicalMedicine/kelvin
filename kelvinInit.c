@@ -171,9 +171,44 @@ void kelvinInit (int argc, char *argv[])
     polynomialInitialization (modelOptions->polynomialScale);
   } else
     INFO ("Computation is done in non-polynomial (direct evaluation) mode");
-  if (modelOptions->integration == TRUE)
+  if (modelOptions->integration == TRUE) {
     INFO ("Integration is done numerically (dkelvin)");
-  else
+    if (modelType->trait == DT) {
+      INFO ("Trait type is dichotomous");
+    } else {
+      if (modelType->trait == QT) {
+        INFO ("Trait type is quantitative");
+      } else {
+        INFO ("Trait type is quantitative with threshold"); 
+      }
+      if (modelType->distrib == QT_FUNCTION_T) {
+        INFO ("Trait distribution is normal");
+        if (modelOptions->qtMeanMode == QT_MODE_VARY) {
+          INFO ("Means will vary across trait genotypes");
+        } else if (modelOptions->qtMeanMode == QT_MODE_SAME) {
+          INFO ("Means will be the same across trait genotypes");
+        } else {
+          INFO ("Means are fixed constant");
+        }
+        if (modelOptions->qtStandardDevMode == QT_MODE_VARY) {
+          INFO ("Standard deviation will vary across trait genotypes");
+        } else if (modelOptions->qtStandardDevMode == QT_MODE_SAME) {
+          INFO ("Standard deviation will be the same across trait genotypes");
+        } else {
+          INFO ("Standard deviation is fixed constant");
+        }
+        if (modelType->trait == CT) {
+          if (modelOptions->qtThresholdMode == QT_MODE_VARY) {
+            INFO ("Threshold will be integrated");
+          } else {
+            INFO ("Threshold is fixed constant");
+          }
+        }
+      } else {
+        INFO ("Trait distribution is Chi-squared");
+      }
+    }
+  } else
     INFO ("Integration is done with iteration (original kelvin)");
 
   if (swProgressDelaySeconds > 0)

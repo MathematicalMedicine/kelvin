@@ -551,8 +551,8 @@ void validateConfig ()
     fault ("%s requires %s Normal or %s Normal\n", STANDARDDEV_STR, QT_STR, QTT_STR);
   if (staticModelOptions.qtMeanMode != 0 && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
     fault ("QTMeanMode requires %s Normal or %s Normal\n", QT_STR, QTT_STR);
-  if (staticModelRange.ntthresh > 0 && staticModelType.trait == DT) 
-    fault ("%s requires %s or %s\n", THRESHOLD_STR, QT_STR, QTT_STR);
+  if (staticModelRange.ntthresh > 0 && staticModelType.trait != CT) 
+    fault ("%s requires %s Normal or %s ChiSq\n", THRESHOLD_STR, QTT_STR, QTT_STR);
   if (staticModelOptions.qtStandardDevMode != 0 && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
     fault ("QTStandardDevMode requires %s Normal or %s Normal\n", QT_STR, QTT_STR);
 #ifdef DISTRIBUTION
