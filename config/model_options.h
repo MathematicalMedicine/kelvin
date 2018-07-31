@@ -124,6 +124,7 @@ typedef struct ModelOptions
   /* For experimental QT analysis integrating over multiple SD and/or means. */
   int qtMeanMode;
   int qtStandardDevMode;
+  int qtThresholdMode;
   
   int dryRun;                   ///< Flag indicating dry run to get statistics for complexity.
   int forceAvghetFile;          ///< Flag to force open a BR file, regardless of other directives.

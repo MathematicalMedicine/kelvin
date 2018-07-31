@@ -305,6 +305,7 @@ void initializeDefaults ()
   staticModelOptions.modThreshold = DBL_MAX;
   staticModelOptions.qtMeanMode = 0;
   staticModelOptions.qtStandardDevMode = 0;
+  staticModelOptions.qtThresholdMode = 0;
   staticModelOptions.alternativeQTFlag = FALSE;
   
   staticModelRange.nalleles = 2;
@@ -453,7 +454,7 @@ void validateConfig ()
       fault ("Trait directives (%s) are incompatible with MarkerToMarker\n", QT_STR);
     if (staticModelType.trait == CT) 
       fault ("Trait directives (%s) are incompatible with MarkerToMarker\n", QTT_STR);
-    if (staticModelRange.ntthresh > 0)
+    if (staticModelRange.ntthresh > 0 || staticModelOptions.qtThresholdMode != 0)
       fault ("Trait directives (%s) are incompatible with MarkerToMarker\n", THRESHOLD_STR);
     if (staticModelType.minOriginal != -999999999.00 || staticModelType.maxOriginal != 999999999.00)
       fault ("Trait directives (Truncate) are incompatible with MarkerToMarker\n");
@@ -550,6 +551,8 @@ void validateConfig ()
     fault ("%s requires %s Normal or %s Normal\n", STANDARDDEV_STR, QT_STR, QTT_STR);
   if (staticModelOptions.qtMeanMode != 0 && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
     fault ("QTMeanMode requires %s Normal or %s Normal\n", QT_STR, QTT_STR);
+  if (staticModelRange.ntthresh > 0 && staticModelType.trait == DT) 
+    fault ("%s requires %s or %s\n", THRESHOLD_STR, QT_STR, QTT_STR);
   if (staticModelOptions.qtStandardDevMode != 0 && (staticModelType.trait == DT || staticModelType.distrib != QT_FUNCTION_T))
     fault ("QTStandardDevMode requires %s Normal or %s Normal\n", QT_STR, QTT_STR);
 #ifdef DISTRIBUTION
@@ -581,8 +584,13 @@ void validateConfig ()
       fault ("Alpha requires FixedModels\n");
     
     if (staticModelType.trait == CT && staticModelRange.ntthresh > 0) {
-      if (staticModelRange.ntthresh != 2)
-	fault ("QTT allows exactly two Threshold values (min and max)\n");
+      if (staticModelOptions.qtThresholdMode == QT_MODE_FIXED) {
+        if (staticModelRange.ntthresh != 2)
+          fault ("QTT with fixed threshold allows only one Threshold value\n");
+      } else {
+        if (staticModelRange.ntthresh != 2)
+          fault ("QTT allows exactly two Threshold values (min and max)\n");
+      }
     }
 
     if (fault)
@@ -795,10 +803,27 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
 	addTraitThreshold (&staticModelRange, QT_INTEG_NORM_MIN_THRESH);
 	addTraitThreshold (&staticModelRange, QT_INTEG_NORM_MAX_THRESH);
       }
-      if (staticModelOptions.qtMeanMode == 0)
-        staticModelOptions.qtMeanMode = QT_MODE_VARY;
-      if (staticModelOptions.qtStandardDevMode == 0)
-        staticModelOptions.qtStandardDevMode = QT_MODE_SAME;
+      if (staticModelOptions.qtMeanMode == 0) {
+        if (staticModelRange.penetLimits[0][0] != staticModelRange.penetLimits[0][1]) {
+          staticModelOptions.qtMeanMode = QT_MODE_VARY;
+        } else {
+          staticModelOptions.qtMeanMode = QT_MODE_FIXED;
+        }
+      }
+      if (staticModelOptions.qtStandardDevMode == 0) {
+        if (staticModelRange.paramLimits[0] != staticModelRange.paramLimits[1]) {
+          staticModelOptions.qtStandardDevMode = QT_MODE_SAME;
+        } else {
+          staticModelOptions.qtStandardDevMode = QT_MODE_FIXED;
+        }
+      }
+      if (staticModelOptions.qtThresholdMode == 0) {
+        if (staticModelRange.tthresh[0][0] != staticModelRange.tthresh[0][1]) {
+          staticModelOptions.qtThresholdMode = QT_MODE_VARY;
+        } else {
+          staticModelOptions.qtThresholdMode = QT_MODE_FIXED;
+        }
+      }
     }
     if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE) {
       if (! observed.degOfFreedom) {
@@ -1474,14 +1499,22 @@ int set_qt_threshold (char **toks, int numtoks, void *unused)
 {
   int numvals, va;
   double *vals=NULL;
-
+  
   if (numtoks < 2)
     bail ("missing arguments to directive '%s'\n", toks[0]);
-  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
-    bail ("illegal argument to directive '%s'\n", toks[0]);
-  for (va = 0; va < numvals; va++)
-    addTraitThreshold (&staticModelRange, vals[va]);
-  free (vals);
+  if (strcasecmp (toks[1], "Fixed")) {
+    /* First argument of 'Fixed' allows exactly one threshold value */
+    if (((numvals = expandVals (&toks[2], numtoks-1, &vals, NULL)) <= 0) || numvals != 1)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    staticModelOptions.qtThresholdMode = QT_MODE_FIXED;
+    addTraitThreshold (&staticModelRange, vals[0]);
+  } else {
+    if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    for (va = 0; va < numvals; va++)
+      addTraitThreshold (&staticModelRange, vals[va]);
+    free (vals);
+  }
   return (0);
 }
 
