@@ -559,7 +559,7 @@ sub write
 	return (undef);
     }
     $$self{filename} = $configfile;
-    foreach $directive (keys (%{$$self{directives}})) {
+    foreach $directive (sort (keys (%{$$self{directives}}))) {
 	($nolocal && exists ($directives{lc($directive)}{local}) &&
 	 $directives{lc($directive)}{local} eq 'true')
 	    and next;
