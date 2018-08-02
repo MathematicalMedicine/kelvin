@@ -3106,7 +3106,8 @@ void integrateMain ()
 #endif
       dk_writeMPBRData (posIdx, traitPos, ppl, integral, max_scale);
 
-      dk_copyMaxModel (localmax_x, &dk_globalmax, size_BR);
+      dk_copyMaxModel2(&dk_globalmax, &dk_localmax);  // copy localmax to globalmax 7/26/2018   
+      //dk_copyMaxModel (localmax_x, &dk_globalmax, size_BR);
       dk_writeMPMODData (posIdx, traitPos, localMOD, &dk_globalmax);
 
       if (fpDK != NULL) {
