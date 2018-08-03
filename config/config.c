@@ -817,7 +817,7 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
           staticModelOptions.qtStandardDevMode = QT_MODE_FIXED;
         }
       }
-      if (staticModelOptions.qtThresholdMode == 0) {
+      if (staticModelType.trait == CT && staticModelOptions.qtThresholdMode == 0) {
         if (staticModelRange.tthresh[0][0] != staticModelRange.tthresh[0][1]) {
           staticModelOptions.qtThresholdMode = QT_MODE_VARY;
         } else {
