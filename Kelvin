@@ -4,9 +4,9 @@ use FindBin; use lib split(/:+/, "!:$ENV{'KELVIN_ROOT'}:NO_KELVIN_ROOT:$ENV{'TOO
 use warnings FATAL=>qw(all);
 use Data::Dumper;
 use File::Basename;
-use KelvinDataset 1.60;
-use KelvinConfig 1.40;
-use KelvinFamily 1.50;
+use KelvinDataset v1.6.0;
+use KelvinConfig v1.4.0;
+use KelvinFamily v1.5.0;
 no warnings qw(once);
 
 $|=1;
