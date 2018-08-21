@@ -175,11 +175,12 @@ while (1) {
 
     # $models{modelDetails}{pedigreeID}{"trait"|position} = ModelId  -- or --
     # $models{"marker"}{pedigreeID}{position} = ModelId 
-    # modelDetails (DT) = dgf:pen1dd:pen1Dd[:pen1dD]:pen1DD[:pen2dd...]
-    # modelDetails (QT-T) = dgf:SD1:mean1dd:mean1Dd[:mean1dD]:mean1DD[:SD2:mean2dd...]
-    # modelDetails (QTT-T) = dgf:SD1:mean1dd:mean1Dd[:mean1dD]:mean1DD:Threshold1[:SD2:mean2dd...]
-    # modelDetails (QT-ChiSq) = dgf:DoF1dd:DoF1Dd[:DoF1dD]:DoF1DD[:DoF2dd...]
-    # modelDetails (QTT-ChiSq) = dgf:DoF1dd:DoF1Dd[:DoF1dD]:DoF1DD:Threshold1[:DoF2dd...]
+    # modelDetails (DT) = dgf:pen1dd:pen1Dd[:pen1dD]:pen1DD
+    # modelDetails (QT-T) = dgf:SD1dd:SD1Dd[:SD1dD]:SD1DD:mean1dd:mean1Dd[:mean1dD]:mean1DD
+    # modelDetails (QTT-T) = dgf:SD1dd:SD1Dd[:SD1dD]:SD1DD:mean1dd:mean1Dd[:mean1dD]:mean1DD:Threshold1
+    # modelDetails (QT-ChiSq) = dgf:DoF1dd:DoF1Dd[:DoF1dD]:DoF1DD
+    # modelDetails (QTT-ChiSq) = dgf:DoF1dd:DoF1Dd[:DoF1dD]:DoF1DD:Threshold1
+    # for multiple liability classes, repeat everything except dgf for each class
 
     %positions = %reversemap = @args = ();
     $merlinmodelid = 1;
@@ -314,8 +315,8 @@ sub merlin_pens
     }
 
     if (exists ($$study{TraitDist}) && $$study{TraitDist} eq 'T') {
-	$format = "%s ". $format;
-	$count++;
+	$format = $format . " ". $format;
+	$count += $count;
     }
     if ($$study{TraitType} eq 'QTT') {
 	$format .= " %s";
@@ -388,8 +389,8 @@ sub db_get_model_batch
     my $batch = {};
 
     my $MPId_colnames = '';
-    my $DModelPart_colnames = '';
-    my $DModelPart_tabnames = '';
+    my $ModelPart_colnames = '';
+    my $ModelPart_tabnames = '';
     my $MPId_whereclause = '';
 
     my @MPIds = ();
@@ -432,10 +433,9 @@ sub db_get_model_batch
 
     # select trait/combined modelIDs from Models based on the LCxMPIds we got from LGModels
 
-    (exists ($$study{TraitDist}) && $$study{TraitDist} eq 'T') and $colnames = ", dXX.BigSD";
     if ($$study{TraitType} eq 'DT') {
 	map {
-	    $DModelPart_tabnames .= ", DModelParts d$_";
+	    $ModelPart_tabnames .= ", DModelParts d$_";
 	} (1 .. $$study{LiabilityClassCnt});
 	
 	$colnames .= ", dXX.LittlePen, dXX.BigLittlePen";
@@ -444,9 +444,14 @@ sub db_get_model_batch
 
     } else {
 	map {
-	    $DModelPart_tabnames .= ", QModelParts d$_";
+	    $ModelPart_tabnames .= ", QModelParts d$_";
 	} (1 .. $$study{LiabilityClassCnt});
 
+        if (exists ($$study{TraitDist}) && $$study{TraitDist} eq 'T') {
+            $colnames .= ", dXX.BigSD, dXX.BigLittleSD";
+            ($$study{ImprintingFlag} =~ /^y$/i) and $colnames .= ", dXX.LittleBigSD";
+            $colnames .= ", dXX.BigSD";
+        }
 	$colnames .= ", dXX.LittleMean, dXX.BigLittleMean";
 	($$study{ImprintingFlag} =~ /^y$/i) and $colnames .= ", dXX.LittleBigMean";
 	$colnames .= ", dXX.BigMean";
@@ -455,18 +460,18 @@ sub db_get_model_batch
     
     map {
 	$MPId_whereclause .= " and m.LC${_}MPId = d$_.MPId and m.LC${_}MPId = ?";
-	($DModelPart_colnames .= $colnames) =~ s/XX/$_/g;
+	($ModelPart_colnames .= $colnames) =~ s/XX/$_/g;
     } (1 .. $$study{LiabilityClassCnt});
 
-    # We're guaranteed to have at least 'DModelParts d1' in $DModelPart_tabnames, so it's
+    # We're guaranteed to have at least '[D|Q]ModelParts d1' in $ModelPart_tabnames, so it's
     # safe to refer to 'd1.DGF' in the static part of the SQL. Also, merlin_lk_prepare.pl
     # already excluded marker-only LK models (that is, DGF == -1), so we don't need to 
     # exclude those again here.
 
     ($sth = $dbh->prepare ("select m.ModelId, p.PedigreeSId, p.PedTraitPosCM, d1.DGF".
-			   $DModelPart_colnames . " ".
+			   $ModelPart_colnames . " ".
 			   "from Models m, PedigreePositions p".
-			   $DModelPart_tabnames . " ".
+			   $ModelPart_tabnames . " ".
 			   "where p.StudyId = ? ".
 			   "  and p.PedigreeSId in ".
 			   "    (select PedigreeSId from ServerPedigrees ".
