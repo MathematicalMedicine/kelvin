@@ -448,7 +448,7 @@ sub db_get_model_batch
 	} (1 .. $$study{LiabilityClassCnt});
 
         if (exists ($$study{TraitDist}) && $$study{TraitDist} eq 'T') {
-            $colnames .= ", dXX.BigSD, dXX.BigLittleSD";
+            $colnames .= ", dXX.LittleSD, dXX.BigLittleSD";
             ($$study{ImprintingFlag} =~ /^y$/i) and $colnames .= ", dXX.LittleBigSD";
             $colnames .= ", dXX.BigSD";
         }
