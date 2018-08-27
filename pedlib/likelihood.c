@@ -1116,6 +1116,8 @@ int compute_likelihood (char *fileName, int lineNo, PedigreeSet * pPedigreeList)
     pPedigree = pPedigreeList->ppPedigreeSet[i];
     if (modelOptions->polynomial == FALSE) {
       initialize_multi_locus_genotype (pPedigree);
+
+      //fprintf(stderr," %d th ped calling for compute_pedigree_likelihood which seems for both trait and marker or combined \n",i);
       compute_pedigree_likelihood (pPedigree);
 
 #ifdef STUDYDB
@@ -1231,6 +1233,8 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
   int k, l, j, condIdx, idx;
   Person *pLoopBreaker;
   LoopBreaker *loopStruct;
+
+  //fprintf(stderr," Starting of comput_pedigree_likelihood with analysisLocus numLocus =%d \n",analysisLocusList->numLocus);
 
 #ifdef STUDYDB
 
@@ -1360,6 +1364,7 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
         pLikelihoodPolynomial = plusExp (2, 1.0, pLikelihoodPolynomial, 1.0, timesExp (2, pConditional->lkslot.likelihoodPolynomial, 1, pConditional->wtslot.weightPolynomial, 1, 1), 1);
       } else {
         condL = pConditional->lkslot.likelihood * pConditional->wtslot.weight;
+
         tmpLikelihood += condL;
         sumCondL += condL;
         if (modelOptions->conditionalRun == 1) {
@@ -1422,6 +1427,8 @@ int compute_pedigree_likelihood (Pedigree * pPedigree)
 
     if (modelOptions->polynomial != TRUE)
       likelihood += tmpLikelihood;
+
+    //fprintf(stderr," tmpLikelihood =%e and likelihood =%e with ret =%d\n", tmpLikelihood, likelihood, ret);
 
     if (pPedigree->loopFlag) {
       if (modelOptions->polynomial == TRUE)
@@ -1603,7 +1610,10 @@ int peel_graph (NuclearFamily * pNucFam1, Person * pProband1, int peelingDirecti
   memcpy (&pProband->ppProbandGenotypeList[0], &pProband->ppGenotypeList[0], sizeof (Genotype *) * originalLocusList.numLocus);
   memcpy (&pProband->pProbandNumGenotype[0], &pProband->pNumGenotype[0], sizeof (int) * originalLocusList.numLocus);
 
-  DIAG (LIKELIHOOD, 1, {fprintf (stderr, "\t Proband (%s) haplotype: \n", pProband->sID); });
+  //DIAG (LIKELIHOOD, 1, {fprintf (stderr, "\t Proband (%s) haplotype: \n", pProband->sID); });
+  //fprintf (stderr, "\t Proband (%s) haplotype: \n", pProband->sID);
+
+
   if (pProband->ppHaplotype == NULL) {
     /*
      * allocate space for storing proband's haplotype if not
@@ -1650,7 +1660,8 @@ int peel_graph (NuclearFamily * pNucFam1, Person * pProband1, int peelingDirecti
             pConditional->lkslot.likelihood = 1;
           pConditional->lkslot.likelihood *= pConditional->tmpslot.tmpLikelihood;
           pConditional->tmpslot.tmpLikelihood = 0;
-          DIAG (LIKELIHOOD, 1, {fprintf (stderr, "Proband %s Conditional Likelihood (%d) = %e. Weight = %e\n", pProband->sID, i, pConditional->lkslot.likelihood, pConditional->wtslot.weight);});
+          DIAG (LIKELIHOOD, 1, {fprintf (stderr, "Proband %s Conditional Likelihood (%d) = %e. Weight = %e \n", pProband->sID, i, pConditional->lkslot.likelihood, pConditional->wtslot.weight);});
+          //fprintf (stderr, "  Proband %s Conditional Likelihood (%d) = %e. Weight = %e with pCond idx =%d\n", pProband->sID, i, pConditional->lkslot.likelihood, pConditional->wtslot.weight,pProband->pTmpLikelihoodIndex[i]);
         }
         pConditional->tmpTouched = FALSE;
       }
@@ -1658,7 +1669,10 @@ int peel_graph (NuclearFamily * pNucFam1, Person * pProband1, int peelingDirecti
     }
   }
 
+  //fprintf (stderr, "  Proband %s Conditional Likelihood (%d) = %e. Weight = %e with pCond idx =%d\n", pProband->sID, i, pConditional->lkslot.likelihood, pConditional->wtslot.weight,pProband->pTmpLikelihoodIndex[i]);
+
   DIAG (LIKELIHOOD, 1, {fprintf (stderr, "Nuclear Family %d with parents %s x %s.\n", pNucFam->nuclearFamilyIndex, pNucFam->pParents[DAD]->sID, pNucFam->pParents[MOM]->sID);});
+  //fprintf (stderr, "Nuclear Family %d with parents %s x %s.\n", pNucFam->nuclearFamilyIndex, pNucFam->pParents[DAD]->sID, pNucFam->pParents[MOM]->sID);
 
   /*
    * mark the proband as been touched - we have done some likelihood
@@ -2591,6 +2605,13 @@ int calculate_likelihood (int multiLocusIndex[2],       ///< Input, index into p
 
     }
   }     /* loop over each parent */
+
+  if (modelType->type == MP){ // let's apply this only to mp analysis with NonPolynomial 8/27/2018
+    if (analysisLocusList->numLocus>1){ // scale for marker and alternative likelihoods 8/23/2018 to address too small marker likelihood problem.
+      newWeight[0] = 1000.0*newWeight[0] ;
+      newWeight[1] = 1000.0*newWeight[1] ;
+    }
+  }
 
   /* when calcFlag ==2, we just use existing results */
   if (calcFlag != 2) {
