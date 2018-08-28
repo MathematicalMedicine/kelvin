@@ -174,10 +174,10 @@ void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel 
   
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
     if (! modelRange->lclassEmpty[liabIdx]) {
-      Pen_DD = deNormalizeMean (modelType, model->pen[liabIdx].DD);
-      Pen_Dd = deNormalizeMean (modelType, model->pen[liabIdx].Dd);
-      Pen_dD = deNormalizeMean (modelType, model->pen[liabIdx].dD);
-      Pen_dd = deNormalizeMean (modelType, model->pen[liabIdx].dd);
+      Pen_DD = model->pen[liabIdx].DD; // deNormalizeMean (modelType, model->pen[liabIdx].DD);
+      Pen_Dd = model->pen[liabIdx].Dd; //deNormalizeMean (modelType, model->pen[liabIdx].Dd);
+      Pen_dD = model->pen[liabIdx].dD; //deNormalizeMean (modelType, model->pen[liabIdx].dD);
+      Pen_dd = model->pen[liabIdx].dd; //deNormalizeMean (modelType, model->pen[liabIdx].dd);
     } else 
       Pen_DD = Pen_Dd = Pen_dD = Pen_dd = -99.0;
     if (! modelOptions->imprintingFlag)
@@ -190,10 +190,10 @@ void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel 
     if (modelType->trait != DICHOTOMOUS) {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
 	if (! modelRange->lclassEmpty[liabIdx]) {
-	  SD_DD = deNormalizeStdev (modelType, model->pen[liabIdx].DDSD);
-	  SD_Dd = deNormalizeStdev (modelType, model->pen[liabIdx].DdSD);
-	  SD_dD = deNormalizeStdev (modelType, model->pen[liabIdx].dDSD);
-	  SD_dd = deNormalizeStdev (modelType, model->pen[liabIdx].ddSD);
+	  SD_DD = model->pen[liabIdx].DDSD; //deNormalizeStdev (modelType, model->pen[liabIdx].DDSD);
+	  SD_Dd = model->pen[liabIdx].DdSD; //deNormalizeStdev (modelType, model->pen[liabIdx].DdSD);
+	  SD_dD = model->pen[liabIdx].dDSD; //deNormalizeStdev (modelType, model->pen[liabIdx].dDSD);
+	  SD_dd = model->pen[liabIdx].ddSD; //deNormalizeStdev (modelType, model->pen[liabIdx].ddSD);
 	} else 
 	  SD_DD = SD_Dd = SD_dD = SD_dd = -99.0;
 	if (! modelOptions->imprintingFlag)
@@ -205,7 +205,7 @@ void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel 
       }
       if (modelType->trait == CT) {
 	threshold = (modelOptions->imprintingFlag) ? -99.0 :
-	  deNormalizeMean (modelType, model->pen[liabIdx].threshold);
+	  model->pen[liabIdx].threshold; //deNormalizeMean (modelType, model->pen[liabIdx].threshold);
 	/* Theshold */
 	fprintf (fpMOD, ",%.3f", threshold);
       }
@@ -337,10 +337,10 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
 	    
   for (liabIdx = 0; liabIdx < modelRange->nlclass; liabIdx++) {
     if (! modelRange->lclassEmpty[liabIdx]) {
-      Pen_DD = deNormalizeMean (modelType, model->pen[liabIdx].DD);
-      Pen_Dd = deNormalizeMean (modelType, model->pen[liabIdx].Dd);
-      Pen_dD = deNormalizeMean (modelType, model->pen[liabIdx].dD);
-      Pen_dd = deNormalizeMean (modelType, model->pen[liabIdx].dd);
+      Pen_DD = model->pen[liabIdx].DD; //deNormalizeMean (modelType, model->pen[liabIdx].DD);
+      Pen_Dd = model->pen[liabIdx].Dd; //deNormalizeMean (modelType, model->pen[liabIdx].Dd);
+      Pen_dD = model->pen[liabIdx].dD; //deNormalizeMean (modelType, model->pen[liabIdx].dD);
+      Pen_dd = model->pen[liabIdx].dd; //deNormalizeMean (modelType, model->pen[liabIdx].dd);
     } else 
       Pen_DD = Pen_Dd = Pen_dD = Pen_dd = -99.0;
     if (! modelOptions->imprintingFlag)
@@ -353,10 +353,10 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
     if (modelType->trait != DICHOTOMOUS) {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
 	if (! modelRange->lclassEmpty[liabIdx]) {
-	  SD_DD = deNormalizeStdev (modelType, model->pen[liabIdx].DDSD);
-	  SD_Dd = deNormalizeStdev (modelType, model->pen[liabIdx].DdSD);
-	  SD_dD = deNormalizeStdev (modelType, model->pen[liabIdx].dDSD);
-	  SD_dd = deNormalizeStdev (modelType, model->pen[liabIdx].ddSD);
+	  SD_DD = model->pen[liabIdx].DDSD; //deNormalizeStdev (modelType, model->pen[liabIdx].DDSD);
+	  SD_Dd = model->pen[liabIdx].DdSD; //deNormalizeStdev (modelType, model->pen[liabIdx].DdSD);
+	  SD_dD = model->pen[liabIdx].dDSD; //deNormalizeStdev (modelType, model->pen[liabIdx].dDSD);
+	  SD_dd = model->pen[liabIdx].ddSD; //deNormalizeStdev (modelType, model->pen[liabIdx].ddSD);
 	} else 
 	  SD_DD = SD_Dd = SD_dD = SD_dd = -99.0;
 	if (! modelOptions->imprintingFlag)
@@ -368,7 +368,7 @@ void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model)
       }
       if (modelType->trait == CT)
 	threshold = (modelOptions->imprintingFlag) ? -99.0 :
-	  deNormalizeMean (modelType, model->pen[liabIdx].threshold);
+	  model->pen[liabIdx].threshold; //deNormalizeMean (modelType, model->pen[liabIdx].threshold);
 	/* Theshold */
 	fprintf (fpMOD, ",%.3f", threshold);
     }
