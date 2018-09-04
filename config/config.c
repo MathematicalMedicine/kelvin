@@ -207,7 +207,6 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
                                 {"MODThreshold", set_double, &staticModelOptions.modThreshold},
                                 {"QTMeanMode", set_qt_mean_mode, NULL},
                                 {"QTStandardDevMode", set_qt_standarddev_mode, NULL},
-                                {"AlternativeQT", set_flag, &staticModelOptions.alternativeQTFlag},
 
 				{"TraitPositions", set_traitPositions, NULL},
 				{"MarkerAlleleFrequency", set_alleleFreq, NULL},

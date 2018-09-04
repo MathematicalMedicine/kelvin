@@ -118,9 +118,6 @@ typedef struct ModelOptions
   /* For experimental LOD maximization algorithm */
   double modThreshold;          ///< Threshold over which LOD maximization kicks in
 
-  /* Flag for experimental alternative QT mode, which may become our default in the future (but not now). */
-  int alternativeQTFlag;        ///< Flag to indicate if experimental alternative QT algorithm is to be used.
-
   /* For experimental QT analysis integrating over multiple SD and/or means. */
   int qtMeanMode;
   int qtStandardDevMode;
