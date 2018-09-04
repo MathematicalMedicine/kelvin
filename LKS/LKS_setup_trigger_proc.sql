@@ -1885,6 +1885,20 @@ END;
 //
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS FixFree;
+DELIMITER //
+
+CREATE PROCEDURE FixFree(IN inAnalysisId int)
+BEGIN
+  DROP TABLE IF EXISTS FreeModelFlags;
+  CREATE TEMPORARY TABLE FreeModelFlags AS SELECT a.PedPosId, 0 StillFreeModels FROM
+  PedigreePositions a, Analyses b WHERE a.PedigreeSId RLIKE b.PedigreeRegEx AND a.PedigreeSId NOT RLIKE b.PedigreeNotRegEx AND b.AnalysisId = inAnalysisId;
+  UPDATE FreeModelFlags a, Models b SET a.StillFreeModels = 1 WHERE a.PedPosId = b.PedPosId AND b.Likelihood IS NULL;
+  UPDATE PedigreePositions a, FreeModelFlags b SET a.FreeModels = b.StillFreeModels WHERE a.PedPosId = b.PedPosId;
+END;
+//
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS Q;
 DELIMITER //
 
@@ -1976,7 +1990,6 @@ WholeThing: LOOP
  
     Leave WholeThing;
   END IF;
-
   -- FixFree: Turn on or off FreeModels flags for appropriate PedigreePositions
   IF inWhich = 'FixFree' THEN
     Update PedigreePositions set FreeModels = 0 where FreeModels <> 0;
