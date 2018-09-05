@@ -305,8 +305,8 @@ void initializeDefaults ()
   staticModelOptions.qtMeanMode = 0;
   staticModelOptions.qtStandardDevMode = 0;
   staticModelOptions.qtThresholdMode = 0;
-  staticModelOptions.alternativeQTFlag = FALSE;
-  
+  staticModelOptions.alphaMode = 0;
+
   staticModelRange.nalleles = 2;
   staticModelRange.nlclass = 1;
   staticModelRange.npardim = 0;
@@ -579,11 +579,9 @@ void validateConfig ()
       fault ("DiseaseGeneFrequency requires FixedModels\n");
     if (staticModelRange.nafreq > 0)
       fault ("MarkerAlleleFrequency requires FixedModels\n");
-    if (staticModelRange.nalpha > 0)
-      fault ("Alpha requires FixedModels\n");
     
     if (staticModelType.trait == CT && staticModelRange.ntthresh > 0) {
-      if (staticModelOptions.qtThresholdMode == QT_MODE_FIXED) {
+      if (staticModelOptions.qtThresholdMode == PARAM_MODE_FIXED) {
         if (staticModelRange.ntthresh != 1)
           fault ("QTT with fixed threshold allows only one Threshold value\n");
       } else {
@@ -591,7 +589,12 @@ void validateConfig ()
           fault ("QTT allows exactly two Threshold values (min and max)\n");
       }
     }
-
+    if (staticModelRange.nalpha > 0) {
+      if (staticModelOptions.alphaMode != PARAM_MODE_FIXED || 
+          staticModelRange.nalpha != 1)
+        fault ("Under dynamic sampling, Alpha may only be fixed at a single value\n");
+    }
+  
     if (fault)
       ERROR ("%d configuration errors detected", fault);
     return;
@@ -804,23 +807,23 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
       }
       if (staticModelOptions.qtMeanMode == 0) {
         if (staticModelRange.penetLimits[0][0] != staticModelRange.penetLimits[0][1]) {
-          staticModelOptions.qtMeanMode = QT_MODE_VARY;
+          staticModelOptions.qtMeanMode = PARAM_MODE_VARY;
         } else {
-          staticModelOptions.qtMeanMode = QT_MODE_FIXED;
+          staticModelOptions.qtMeanMode = PARAM_MODE_FIXED;
         }
       }
       if (staticModelOptions.qtStandardDevMode == 0) {
         if (staticModelRange.paramLimits[0] != staticModelRange.paramLimits[1]) {
-          staticModelOptions.qtStandardDevMode = QT_MODE_SAME;
+          staticModelOptions.qtStandardDevMode = PARAM_MODE_SAME;
         } else {
-          staticModelOptions.qtStandardDevMode = QT_MODE_FIXED;
+          staticModelOptions.qtStandardDevMode = PARAM_MODE_FIXED;
         }
       }
       if (staticModelType.trait == CT && staticModelOptions.qtThresholdMode == 0) {
         if (staticModelRange.tthresh[0][0] != staticModelRange.tthresh[0][1]) {
-          staticModelOptions.qtThresholdMode = QT_MODE_VARY;
+          staticModelOptions.qtThresholdMode = PARAM_MODE_VARY;
         } else {
-          staticModelOptions.qtThresholdMode = QT_MODE_FIXED;
+          staticModelOptions.qtThresholdMode = PARAM_MODE_FIXED;
         }
       }
     }
@@ -834,6 +837,8 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
 	addTraitThreshold (&staticModelRange, QT_INTEG_CHI_MAX_THRESH);
       }
     }
+    if (staticModelOptions.alphaMode == 0)
+      staticModelOptions.alphaMode = PARAM_MODE_VARY;
     if (staticModelType.trait != DT) 
       duplicatePenets (&staticModelRange, staticModelOptions.imprintingFlag);
     
@@ -1161,11 +1166,23 @@ int set_alpha (char **toks, int numtoks, void *unused)
 
   if (numtoks < 2)
     bail ("missing argument to directive '%s'\n", toks[0]);
-  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
-    bail ("illegal argument to directive '%s'\n", toks[0]);
-  for (va = 0; va < numvals; va++)
-    addAlpha (&staticModelRange, vals[va]);
-  free (vals);
+  if (strcasecmp (toks[1], "Fixed") == 0) {
+    staticModelOptions.alphaMode = PARAM_MODE_FIXED;
+    if (numtoks == 2) {
+      addAlpha (&staticModelRange, 1);
+    } else {
+      if (((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0) || numvals != 1)
+        bail ("illegal argument to directive '%s'\n", toks[0]); 
+      addAlpha (&staticModelRange, vals[0]);
+      free (vals);
+   }
+  } else {
+    if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    for (va = 0; va < numvals; va++)
+      addAlpha (&staticModelRange, vals[va]);
+    free (vals);
+  }
   return (0);
 }
 
@@ -1505,15 +1522,15 @@ int set_qt_threshold (char **toks, int numtoks, void *unused)
     /* First argument of 'Fixed' allows exactly one threshold value */
     if (((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0) || numvals != 1)
       bail ("illegal argument to directive '%s'\n", toks[0]);
-    staticModelOptions.qtThresholdMode = QT_MODE_FIXED;
+    staticModelOptions.qtThresholdMode = PARAM_MODE_FIXED;
     addTraitThreshold (&staticModelRange, vals[0]);
   } else {
     if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
       bail ("illegal argument to directive '%s'\n", toks[0]);
     for (va = 0; va < numvals; va++)
       addTraitThreshold (&staticModelRange, vals[va]);
-    free (vals);
   }
+  free (vals);
   return (0);
 }
 
@@ -1555,11 +1572,11 @@ int set_qt_mean_mode (char **toks, int numtoks, void *unused)
   if (numtoks > 2)
     bail ("extra arguments to directive '%s'\n", toks[0]);
   if (strncasecmp (toks[1], "Vary", strlen (toks[1])) == 0)
-    staticModelOptions.qtMeanMode = QT_MODE_VARY;
+    staticModelOptions.qtMeanMode = PARAM_MODE_VARY;
   else if (strncasecmp (toks[1], "Same", strlen (toks[1])) == 0)
-    staticModelOptions.qtMeanMode = QT_MODE_SAME;
+    staticModelOptions.qtMeanMode = PARAM_MODE_SAME;
   else if (strncasecmp (toks[1], "Fixed", strlen (toks[1])) == 0)
-    staticModelOptions.qtMeanMode = QT_MODE_FIXED;
+    staticModelOptions.qtMeanMode = PARAM_MODE_FIXED;
   else
     bail ("unknown argument to directive '%s'\n", toks[1]);
   return (0);
@@ -1573,11 +1590,11 @@ int set_qt_standarddev_mode (char **toks, int numtoks, void *unused)
   if (numtoks > 2)
     bail ("extra arguments to directive '%s'\n", toks[0]);
   if (strncasecmp (toks[1], "Vary", strlen (toks[1])) == 0)
-    staticModelOptions.qtStandardDevMode = QT_MODE_VARY;
+    staticModelOptions.qtStandardDevMode = PARAM_MODE_VARY;
   else if (strncasecmp (toks[1], "Same", strlen (toks[1])) == 0)
-    staticModelOptions.qtStandardDevMode = QT_MODE_SAME;
+    staticModelOptions.qtStandardDevMode = PARAM_MODE_SAME;
   else if (strncasecmp (toks[1], "Fixed", strlen (toks[1])) == 0)
-    staticModelOptions.qtStandardDevMode = QT_MODE_FIXED;
+    staticModelOptions.qtStandardDevMode = PARAM_MODE_FIXED;
   else
     bail ("unknown argument to directive '%s'\n", toks[1]);
   return (0);

@@ -181,22 +181,22 @@ void kelvinInit (int argc, char *argv[])
       }
       if (modelType->distrib == QT_FUNCTION_T) {
         INFO ("Trait distribution is normal");
-        if (modelOptions->qtMeanMode == QT_MODE_VARY) {
+        if (modelOptions->qtMeanMode == PARAM_MODE_VARY) {
           INFO ("Means will vary across trait genotypes");
-        } else if (modelOptions->qtMeanMode == QT_MODE_SAME) {
+        } else if (modelOptions->qtMeanMode == PARAM_MODE_SAME) {
           INFO ("Means will be the same across trait genotypes");
         } else {
           INFO ("Means are fixed constant");
         }
-        if (modelOptions->qtStandardDevMode == QT_MODE_VARY) {
+        if (modelOptions->qtStandardDevMode == PARAM_MODE_VARY) {
           INFO ("Standard deviation will vary across trait genotypes");
-        } else if (modelOptions->qtStandardDevMode == QT_MODE_SAME) {
+        } else if (modelOptions->qtStandardDevMode == PARAM_MODE_SAME) {
           INFO ("Standard deviation will be the same across trait genotypes");
         } else {
           INFO ("Standard deviation is fixed constant");
         }
         if (modelType->trait == CT) {
-          if (modelOptions->qtThresholdMode == QT_MODE_VARY) {
+          if (modelOptions->qtThresholdMode == PARAM_MODE_VARY) {
             INFO ("Threshold will be integrated");
           } else {
             INFO ("Threshold is fixed constant");
@@ -206,6 +206,8 @@ void kelvinInit (int argc, char *argv[])
         INFO ("Trait distribution is Chi-squared");
       }
     }
+    if (modelOptions->alphaMode == PARAM_MODE_FIXED)
+      INFO ("Alpha is fixed constant");
   } else
     INFO ("Integration is done with iteration (original kelvin)");
 

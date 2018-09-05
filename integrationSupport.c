@@ -187,7 +187,7 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
     else
       s->vol_rate /= 6.0;
       }*/
-  if((modelType->trait == DT)||(modelOptions->qtMeanMode==QT_MODE_VARY)) {   // Thsi is only for same std mode or both 
+  if((modelType->trait == DT)||(modelOptions->qtMeanMode==PARAM_MODE_VARY)) {   // Thsi is only for same std mode or both 
     for (i = 0; i < s->nlclass; i++) {
       if (modelOptions->imprintingFlag)
         s->vol_rate /= 16.0;
@@ -285,7 +285,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
   j = 1;        // j=0 for gfrequency
   if (modelType->trait == CT) {
-    if (modelOptions->qtThresholdMode == QT_MODE_FIXED){
+    if (modelOptions->qtThresholdMode == PARAM_MODE_FIXED){
     //if (modelRange->tthresh[0][0]>=modelRange->tthresh[0][1]-1.0e-10){
       threshold = modelRange->tthresh[0][0];
     }else{
@@ -305,7 +305,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     }
     j += pen_size;*/
 
-    if (modelOptions->qtMeanMode==QT_MODE_VARY) {
+    if (modelOptions->qtMeanMode==PARAM_MODE_VARY) {
       mean_DD = x[j];
       mean_Dd = (x[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 1];
 
@@ -317,10 +317,10 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
         mean_dD = mean_Dd;
       }
       j += pen_size;
-    } else if (modelOptions->qtMeanMode==QT_MODE_SAME){
+    } else if (modelOptions->qtMeanMode==PARAM_MODE_SAME){
       mean_DD = mean_Dd = mean_dD = mean_dd = x[j];
       j ++; 
-    } else {   // qtMeanMode== QT_MODE_FIXED case: use the fixed value
+    } else {   // qtMeanMode== PARAM_MODE_FIXED case: use the fixed value
         mean_DD = mean_Dd = mean_dD = mean_dd = modelRange->penetLimits[0][0];
     }
 
@@ -334,9 +334,9 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 
     if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
 
-      if  (modelOptions->qtStandardDevMode==QT_MODE_SAME){ 
+      if  (modelOptions->qtStandardDevMode==PARAM_MODE_SAME){ 
         SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
-      } else if (modelOptions->qtStandardDevMode==QT_MODE_VARY){
+      } else if (modelOptions->qtStandardDevMode==PARAM_MODE_VARY){
         SD_DD = x[j];         
 	SD_Dd = x[j + 1];    
 	if(modelOptions->imprintingFlag){
@@ -347,7 +347,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
           SD_dD= SD_Dd;
 	}
 	j += pen_size;   
-      }else{  // qtStandardDevMode== QT_MODE_FIXED case: use the fixed value
+      }else{  // qtStandardDevMode== PARAM_MODE_FIXED case: use the fixed value
 	SD_DD = SD_Dd = SD_dD = SD_dd = modelRange->paramLimits[0];
       }
 
@@ -630,7 +630,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
         k = 2;
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
 
-          if (modelOptions->qtMeanMode==QT_MODE_VARY){
+          if (modelOptions->qtMeanMode==PARAM_MODE_VARY){
 	    localmax_x[k] = x[k - 1];
 	    localmax_x[k + 1] = (x[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k];
 
@@ -641,17 +641,17 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
 	      localmax_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
 	    }
 	    k += pen_size;
-          }else if(modelOptions->qtMeanMode==QT_MODE_SAME){
+          }else if(modelOptions->qtMeanMode==PARAM_MODE_SAME){
 	    localmax_x[k] = x[k - 1];  // mean_DD, mean_Dd, mean_dD, mean_dd
 	    k++;
-	  } // QT_MODE_FIXED must be taken care directly.
+	  } // PARAM_MODE_FIXED must be taken care directly.
 
 	  if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-            if (modelOptions->qtStandardDevMode==QT_MODE_SAME){
+            if (modelOptions->qtStandardDevMode==PARAM_MODE_SAME){
 	      
 	      localmax_x[k] = x[k - 1];
 	      k++;
-	    }else if(modelOptions->qtStandardDevMode==QT_MODE_VARY){
+	    }else if(modelOptions->qtStandardDevMode==PARAM_MODE_VARY){
 	      localmax_x[k ] = x[k-1]; // SD_DD 
 	      if (modelOptions->imprintingFlag) {
 		localmax_x[k + 1] = x[k]; //SD_Dd;
@@ -683,7 +683,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     //fprintf(stderr,"hetLR = %e gf=%f meanDD=%f meanDd=%f meandd=%f SD=%f\n", avg_hetLR,gfreq,mean_DD,mean_Dd,mean_dd,SD_DD);
 
     /* Jacobian */// This is required only for the constraint on penetrances
-    if (modelOptions->qtMeanMode==QT_MODE_VARY){  
+    if (modelOptions->qtMeanMode==PARAM_MODE_VARY){  
       k = 1; // starting index of penetrance
       for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
 	avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
@@ -1077,7 +1077,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   /* this should be MEAN + SD */
   j = 1;
   if (modelType->trait == CT) {
-    if (modelOptions->qtThresholdMode == QT_MODE_FIXED){
+    if (modelOptions->qtThresholdMode == PARAM_MODE_FIXED){
       //if(modelRange->tthresh[0][0] >= modelRange->tthresh[0][1]-1.0e-10){
       threshold = modelRange->tthresh[0][0];
     }else{
@@ -1087,7 +1087,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   if (modelOptions->markerAnalysis == FALSE) {
     for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
 
-      if (modelOptions->qtMeanMode==QT_MODE_VARY) {
+      if (modelOptions->qtMeanMode==PARAM_MODE_VARY) {
         mean_DD = x[j];
         mean_Dd = (x[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 1];
 
@@ -1099,10 +1099,10 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
           mean_dD = mean_Dd;
         }
         j += pen_size;
-      } else if (modelOptions->qtMeanMode==QT_MODE_SAME){
+      } else if (modelOptions->qtMeanMode==PARAM_MODE_SAME){
         mean_DD = mean_Dd = mean_dD = mean_dd = x[j];
         j ++; 
-      } else{ // qtMeanMode = QT_MODE_FIXED
+      } else{ // qtMeanMode = PARAM_MODE_FIXED
 	mean_DD = mean_Dd = mean_dD = mean_dd = modelRange->penetLimits[0][0];
         j++;
       }
@@ -1127,9 +1127,9 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
          * j += pen_size; */
         //SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
 
-        if (modelOptions->qtStandardDevMode==QT_MODE_SAME){ 
+        if (modelOptions->qtStandardDevMode==PARAM_MODE_SAME){ 
           SD_DD = SD_Dd = SD_dD = SD_dd = x[j++];
-	} else if (modelOptions->qtStandardDevMode==QT_MODE_VARY){
+	} else if (modelOptions->qtStandardDevMode==PARAM_MODE_VARY){
           SD_DD = x[j];         
 	  SD_Dd = x[j + 1];    
 	  if(modelOptions->imprintingFlag){
@@ -1140,7 +1140,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
 	    SD_dD= SD_Dd;
 	  }
 	  j += pen_size;   
-        }else { // qtStandardDevMode = QT_MODE_FIXED case: use the fixed value
+        }else { // qtStandardDevMode = PARAM_MODE_FIXED case: use the fixed value
 	  SD_DD = SD_Dd = SD_dD = SD_dd = modelRange->paramLimits[0];
 	}
 
@@ -1419,7 +1419,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         k = 2;
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
 
-          if (modelOptions->qtMeanMode==QT_MODE_VARY){
+          if (modelOptions->qtMeanMode==PARAM_MODE_VARY){
 	    localmax_x[k] = x[k - 1];
 	    localmax_x[k + 1] = (x[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k];
 
@@ -1430,15 +1430,15 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
 	      localmax_x[k + 2] = (x[k + 1] - xl[k + 1]) * (x[k] - xl[k]) / (xu[k] - xl[k]) * (x[k - 1] - xl[k - 1]) / (xu[k - 1] - xl[k - 1]) + xl[k + 1];
 	    }
 	    k += pen_size;
-          }else if(modelOptions->qtMeanMode==QT_MODE_SAME){
+          }else if(modelOptions->qtMeanMode==PARAM_MODE_SAME){
 	    localmax_x[k] = x[k - 1];  // mean_DD, mean_Dd, mean_dD, mean_dd
 	    k++;
-	  } // QT_MODE_FIXED must be taken separately
+	  } // PARAM_MODE_FIXED must be taken separately
 	  if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-            if (modelOptions->qtStandardDevMode==QT_MODE_SAME){
+            if (modelOptions->qtStandardDevMode==PARAM_MODE_SAME){
 	      localmax_x[k] = x[k - 1];
 	      k++;
-	    }else if(modelOptions->qtStandardDevMode==QT_MODE_VARY){
+	    }else if(modelOptions->qtStandardDevMode==PARAM_MODE_VARY){
 	      localmax_x[k ] = x[k-1]; // SD_DD 
 	      if (modelOptions->imprintingFlag) {
 		localmax_x[k + 1] = x[k]; //SD_Dd;
@@ -1471,7 +1471,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
     avg_hetLR = alpha_integral;
 
     /* Jacobian */
-    if (modelOptions->qtMeanMode==QT_MODE_VARY){
+    if (modelOptions->qtMeanMode==PARAM_MODE_VARY){
       k = 1;
       for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
 	avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
@@ -1883,25 +1883,25 @@ void integrateMain ()
       total_dim += modelRange->nlclass;   //dD
 
   }else { // QT case
-    if (modelOptions->qtMeanMode == QT_MODE_VARY){
+    if (modelOptions->qtMeanMode == PARAM_MODE_VARY){
         total_dim += 3* modelRange->nlclass;
         if (modelOptions->imprintingFlag)
           total_dim += modelRange->nlclass;   //dD
-    }else if (modelOptions->qtMeanMode == QT_MODE_VARY){
+    }else if (modelOptions->qtMeanMode == PARAM_MODE_VARY){
         total_dim += modelRange->nlclass;
     }
     if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
-      if (modelOptions->qtStandardDevMode==QT_MODE_VARY){
+      if (modelOptions->qtStandardDevMode==PARAM_MODE_VARY){
         total_dim += 3* modelRange->nlclass;
         if (modelOptions->imprintingFlag)
           total_dim += modelRange->nlclass;   //dD
-      }else if (modelOptions->qtStandardDevMode == QT_MODE_SAME){
+      }else if (modelOptions->qtStandardDevMode == PARAM_MODE_SAME){
         total_dim += modelRange->nlclass;
       }
     }
     if (modelType->trait == CT) {
       //fprintf(stderr," \n\n CT mode \n\n\n");
-      if (modelOptions->qtThresholdMode == QT_MODE_VARY) //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
+      if (modelOptions->qtThresholdMode == PARAM_MODE_VARY) //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
 	total_dim++;      //  One threshold for all LCs    //   = modelRange->nlclass;
     }
   }
@@ -1965,14 +1965,14 @@ void integrateMain ()
     for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
       if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
 
-        if (modelOptions->qtMeanMode ==QT_MODE_VARY){
+        if (modelOptions->qtMeanMode ==PARAM_MODE_VARY){
 	  xl[k] = xl[k + 1] = xl[k + 2] = modelRange->penetLimits[0][0]; //-3.0;
 	  xu[k] = xu[k + 1] = xu[k + 2] = modelRange->penetLimits[0][1]; //3.0;
 	  if (modelOptions->imprintingFlag) {
 	    xl[k + 3] = modelRange->penetLimits[0][0]; //-3;
 	    xu[k + 3] = modelRange->penetLimits[0][1]; //3;
 	  }
-	} else if (modelOptions->qtMeanMode ==QT_MODE_SAME){
+	} else if (modelOptions->qtMeanMode ==PARAM_MODE_SAME){
 	  xl[k] = modelRange->penetLimits[0][0]; //-3.0;
 	  xu[k] = modelRange->penetLimits[0][1]; //3.0;
 	}
@@ -1994,7 +1994,7 @@ void integrateMain ()
         //fprintf(stderr,"modelranage= %f %f %f %f %f %f %f %f\n",modelRange->penetLimits[0][0],modelRange->penetLimits[1][0],modelRange->penetLimits[2][0],modelRange->penetLimits[3][0],modelRange->penetLimits[0][1],modelRange->penetLimits[1][1],modelRange->penetLimits[2][1],modelRange->penetLimits[3][1]);
       }
 
-      if (modelOptions->qtMeanMode ==QT_MODE_VARY){
+      if (modelOptions->qtMeanMode ==PARAM_MODE_VARY){
 	volume_region *= (xu[k] - xl[k]);
 	volume_region *= (xu[k + 1] - xl[k + 1]);
 	volume_region *= (xu[k + 2] - xl[k + 2]);
@@ -2003,7 +2003,7 @@ void integrateMain ()
 	  k++;
 	}
 	k += 3;
-      } else if (modelOptions->qtMeanMode ==QT_MODE_SAME){
+      } else if (modelOptions->qtMeanMode ==PARAM_MODE_SAME){
         volume_region *= (xu[k] - xl[k]);
 	k++;
       }
@@ -2027,12 +2027,12 @@ void integrateMain ()
          * k += 3;
          */
 
-        if (modelOptions->qtStandardDevMode ==QT_MODE_SAME){
+        if (modelOptions->qtStandardDevMode ==PARAM_MODE_SAME){
 	  xl[k] = modelRange->paramLimits[0]; //0.5; // changed on 6/4/2018  from 0.7;
 	  xu[k] = modelRange->paramLimits[1]; //1.5;
 	  volume_region *= (xu[k] - xl[k]);
 	  k++;
-	} else if (modelOptions->qtStandardDevMode ==QT_MODE_VARY){
+	} else if (modelOptions->qtStandardDevMode ==PARAM_MODE_VARY){
 	  xl[k] = xl[k+1] = xl[k+2] = modelRange->paramLimits[0]; //0.5; // changed on 6/4/2018  from 0.7;
 	  xu[k] = xu[k+1] = xu[k+2] = modelRange->paramLimits[1]; //1.5;
 	  volume_region *= (xu[k] - xl[k])*(xu[k+1] - xl[k+1])*(xu[k+2] - xl[k+2]);
@@ -2057,7 +2057,7 @@ void integrateMain ()
        * } */
     }   // retangular volume region is calculated and stored in volume_region
     if (modelType->trait == CT) {
-      if (modelOptions->qtThresholdMode == QT_MODE_VARY){ //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
+      if (modelOptions->qtThresholdMode == PARAM_MODE_VARY){ //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
 	//if (modelRange->tthresh[0][0] <= modelRange->tthresh[0][1]+1.0e-10){  // do not use this when threshold is fixed
 	xl[k] =  modelRange->tthresh[0][0];//0.0;
 	xu[k] =  modelRange->tthresh[0][1]; // 3.0;
@@ -2950,6 +2950,8 @@ void integrateMain ()
           /* save the likelihood at null */
           pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
           pPedigreeLocal->markerLikelihood = pPedigreeLocal->likelihood;
+
+printf("Marker set likelihood for this position for pedigree %d is %g\n", pedIdx, pPedigreeLocal->likelihood);
         }
         pedigreeSet.markerLikelihood = pedigreeSet.likelihood;
         pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;

@@ -428,7 +428,7 @@ void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
     }else {   // QT case
 
       //First take care of mean
-      if ((modelOptions->qtMeanMode==QT_MODE_VARY)||(modelType->distrib == QT_FUNCTION_CHI_SQUARE)) {
+      if ((modelOptions->qtMeanMode==PARAM_MODE_VARY)||(modelType->distrib == QT_FUNCTION_CHI_SQUARE)) {
 	max->pen[idx].DD = arr[j++];
 	max->pen[idx].Dd = arr[j++];
 	if (! modelOptions->imprintingFlag) {
@@ -437,7 +437,7 @@ void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
 	  max->pen[idx].dD = arr[j++];
 	  max->pen[idx].dd = arr[j++];
 	}
-      }else if (modelOptions->qtMeanMode==QT_MODE_SAME){
+      }else if (modelOptions->qtMeanMode==PARAM_MODE_SAME){
 	max->pen[idx].DD = arr[j];//arr[j++];
 	max->pen[idx].Dd = arr[j];//arr[j++];
 	if (! modelOptions->imprintingFlag) {
@@ -447,7 +447,7 @@ void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
 	  max->pen[idx].dd = arr[j];//arr[j++];
 	}
 	j++;
-      }else if (modelOptions->qtMeanMode==QT_MODE_FIXED){
+      }else if (modelOptions->qtMeanMode==PARAM_MODE_FIXED){
 	max->pen[idx].DD = modelRange->penetLimits[0][0];//arr[j];//arr[j++];
 	max->pen[idx].Dd = modelRange->penetLimits[0][0];//arr[j];//arr[j++];
 	if (! modelOptions->imprintingFlag) {
@@ -459,7 +459,7 @@ void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
       }
 
       //Then take care of std
-      if (modelOptions->qtStandardDevMode==QT_MODE_VARY) {
+      if (modelOptions->qtStandardDevMode==PARAM_MODE_VARY) {
 	max->pen[idx].DDSD = arr[j++];
 	max->pen[idx].DdSD = arr[j++];
 	if (! modelOptions->imprintingFlag) {
@@ -468,7 +468,7 @@ void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
 	  max->pen[idx].dDSD = arr[j++];
 	  max->pen[idx].ddSD = arr[j++];
 	}
-      }else if (modelOptions->qtMeanMode==QT_MODE_SAME){
+      }else if (modelOptions->qtMeanMode==PARAM_MODE_SAME){
 	max->pen[idx].DDSD = arr[j];//arr[j++];
 	max->pen[idx].DdSD = arr[j];//arr[j++];
 	if (! modelOptions->imprintingFlag) {
@@ -478,7 +478,7 @@ void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num)
 	  max->pen[idx].ddSD = arr[j];//arr[j++];
 	}
 	j++;
-      }else if (modelOptions->qtMeanMode==QT_MODE_FIXED){
+      }else if (modelOptions->qtMeanMode==PARAM_MODE_FIXED){
 	max->pen[idx].DDSD = modelRange->paramLimits[0];//arr[j];//arr[j++];
 	max->pen[idx].DdSD = modelRange->paramLimits[0];//arr[j];//arr[j++];
 	if (! modelOptions->imprintingFlag) {

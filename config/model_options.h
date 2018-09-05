@@ -74,9 +74,9 @@ enum MapFlag {
  * betgween trait genotypes) or is fixed (is not sampled, but is set to a 
  * fixed value for all models).
  */
-#define QT_MODE_VARY    1    // Sampled and varies
-#define QT_MODE_SAME    2    // Sampled but does not vary
-#define QT_MODE_FIXED   3    // Fixed
+#define PARAM_MODE_VARY    1    // Sampled and varies
+#define PARAM_MODE_SAME    2    // Sampled but does not vary
+#define PARAM_MODE_FIXED   3    // Fixed
 
 typedef struct ModelOptions
 {
@@ -122,6 +122,7 @@ typedef struct ModelOptions
   int qtMeanMode;
   int qtStandardDevMode;
   int qtThresholdMode;
+  int alphaMode;
   
   int dryRun;                   ///< Flag indicating dry run to get statistics for complexity.
   int forceAvghetFile;          ///< Flag to force open a BR file, regardless of other directives.
