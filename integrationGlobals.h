@@ -28,6 +28,8 @@ double alpha[5][2] = { //{0.8, 1.0},  //This is for LOD not for HLOD
 {0.95309, 0.118463443}
 };
 
+int num_alpha=5; 
+
 dcuhre_state *s,init_state;
 double *xl;   //xl[17] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0 };
 double *xu;   //xu[17] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1 };

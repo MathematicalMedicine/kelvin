@@ -498,7 +498,10 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
   }
   if (strstr (partialPolynomialFunctionName, "_T") == NULL)
     strcat (partialPolynomialFunctionName, "_T");
+
+  //fprintf(stderr," Calling compute_likelihood in comput_mp_qt function \n ");
   compute_likelihood (&pedigreeSet);
+   
   cL[3]++; // MP QT alternative likelihood
 #ifdef STUDYDB
     if (toupper(*studyDB.role) == 'S') 
@@ -530,13 +533,24 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     if (isnan (likelihood_ratio))
       ERROR ("Likelihood ratio for the pedigree set is not a number");
 
+
+
+    if (modelOptions->alphaMode == PARAM_MODE_FIXED){
+      num_alpha =1;
+      alphaV = modelRange->alpha[0];
+    }
     /* caculating the HET */
-    for (j = 0; j < 5; j++) {
-      alphaV = alpha[j][0];
+    for (j = 0; j < num_alpha; j++) {
+      if (modelOptions->alphaMode == PARAM_MODE_FIXED){
+	num_alpha =1;
+	alphaV = modelRange->alpha[0];
+      }else{
+	alphaV =  alpha[j][0];
+      }
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
         alphaV2 = 0;
-
+  
       if(pedigreeSet.numPedigree ==1){   // One pedigree then alpha is fixed at 1.
         alphaV=1.0;
         alphaV2 = 0;
@@ -613,7 +627,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
-      if(pedigreeSet.numPedigree ==1)
+      if((pedigreeSet.numPedigree ==1)||(num_alpha==1))
         alpha_integral = hetLR ;
       else
         alpha_integral += hetLR * alpha[j][1];
@@ -675,7 +689,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
         */
 
       }  // end of updating MOD
-      if(pedigreeSet.numPedigree ==1)
+      if((pedigreeSet.numPedigree ==1)||(num_alpha==1))
 	  j=5;
     }
 
@@ -901,14 +915,24 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
     }
     //fprintf(stderr," trait %e marker %e alter %e lr %e \n", log(pedigreeSet.nullLikelihood[0]) , log(pPedigreeLocal->markerLikelihood),log(pPedigreeLocal->likelihood), pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[0] * pPedigreeLocal->markerLikelihood));
     /* caculating the HET */
-    for (j = 0; j < 5; j++) {
-      //for (j = 0; j < 1; j++) {
-      alphaV = alpha[j][0];
+
+    if (modelOptions->alphaMode == PARAM_MODE_FIXED){
+      num_alpha =1;
+      alphaV = modelRange->alpha[0];
+    }
+    /* caculating the HET */
+    for (j = 0; j < num_alpha; j++) {
+      if (modelOptions->alphaMode == PARAM_MODE_FIXED){
+	num_alpha =1;
+	alphaV = modelRange->alpha[0];
+      }else{
+	alphaV =  alpha[j][0];
+      }
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
         alphaV2 = 0;
-
-      if(pedigreeSet.numPedigree ==1){
+  
+      if(pedigreeSet.numPedigree ==1){   // One pedigree then alpha is fixed at 1.
         alphaV=1.0;
         alphaV2 = 0;
       }
@@ -976,7 +1000,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
-      if(pedigreeSet.numPedigree ==1)
+      if((pedigreeSet.numPedigree ==1)||(num_alpha==1))
         alpha_integral = hetLR ;
       else
         alpha_integral += hetLR * alpha[j][1];
@@ -1001,7 +1025,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
         }
 	*/
       }  // end of updating MOD
-      if(pedigreeSet.numPedigree ==1)
+      if((pedigreeSet.numPedigree ==1)||(num_alpha==1))
 	  j=5;
     }   /* end of calculating HET LR */
 
@@ -1021,7 +1045,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 void compute_hlod_2p_qt (double x[], double *f, int *scale)
 {
 
-  int k, j, ret;
+  int k, j, ret;  
   int pedIdx, liabIdxLocal = 0, statusLocal, pen_size = 3;
   double constraint = 0.0;
   double mean_DD = 0.0, mean_Dd = 0.0, mean_dD = 0.0, mean_dd = 0.0;
@@ -1056,6 +1080,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
     thetaM = fixed_theta;
     thetaF = fixed_theta;
   }
+  //thetaM = thetaF =0.0;
   //fprintf(stderr, "          Before avg hetLR calculation 2p qt\n");
   if (1 && modelOptions->markerAnalysis == FALSE) {
     pLocus->pAlleleFrequency[0] = gfreq;
@@ -1143,6 +1168,9 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         }else { // qtStandardDevMode = PARAM_MODE_FIXED case: use the fixed value
 	  SD_DD = SD_Dd = SD_dD = SD_dd = modelRange->paramLimits[0];
 	}
+
+        //SD_DD=SD_Dd=SD_dD=0.5;
+        //SD_dd=1.0;
 
         //if (fpIR != NULL) {
           dk_curModel.pen[liabIdxLocal].DDSD = deNormalizeStdev (modelType, SD_DD);
@@ -1311,10 +1339,18 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
       }
     }
 
+    if (modelOptions->alphaMode == PARAM_MODE_FIXED){
+      num_alpha =1;
+      alphaV = modelRange->alpha[0];
+    }
     /* caculating the HET */
-    for (j = 0; j < 5; j++) {
-      //for (j = 0; j < 1; j++) {
-      alphaV = alpha[j][0];
+    for (j = 0; j < num_alpha; j++) {
+      if (modelOptions->alphaMode == PARAM_MODE_FIXED){
+	num_alpha =1;
+	alphaV = modelRange->alpha[0];
+      }else{
+	alphaV =  alpha[j][0];
+      }
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
         alphaV2 = 0;
@@ -1401,7 +1437,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
-      if(pedigreeSet.numPedigree ==1)
+      if((pedigreeSet.numPedigree ==1)||(num_alpha==1))
         alpha_integral = hetLR ;
       else
         alpha_integral += hetLR * alpha[j][1];
@@ -1463,7 +1499,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
         */
 
       }
-      if(pedigreeSet.numPedigree ==1)
+      if((pedigreeSet.numPedigree ==1)||(num_alpha==1))
 	  j=5;
 
     }
@@ -1710,15 +1746,22 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
       }
     }
 
-
+    if (modelOptions->alphaMode == PARAM_MODE_FIXED){
+      num_alpha =1;
+      alphaV = modelRange->alpha[0];
+    }
     /* caculating the HET */
-    for (j = 0; j < 5; j++) {
-      //for (j = 0; j < 1; j++) {
-      alphaV = alpha[j][0];
+    for (j = 0; j < num_alpha; j++) {
+      if (modelOptions->alphaMode == PARAM_MODE_FIXED){
+	num_alpha =1;
+	alphaV = modelRange->alpha[0];
+      }else{
+	alphaV =  alpha[j][0];
+      }
       alphaV2 = 1 - alphaV;
       if (alphaV2 < 0)
         alphaV2 = 0;
-
+  
       if(pedigreeSet.numPedigree ==1){   // One pedigree then alpha is fixed at 1.
         alphaV=1.0;
         alphaV2 = 0;
@@ -1794,7 +1837,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
         hetLR = pow (10, newLog10HetLR);
       }
 
-      if(pedigreeSet.numPedigree ==1)
+      if((pedigreeSet.numPedigree ==1)||(num_alpha==1))
         alpha_integral = hetLR ;
       else
         alpha_integral += hetLR * alpha[j][1];
@@ -1822,7 +1865,7 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
       } // end of MOD updating
       // fprintf(fphlod,"%f %f %f %f %f %f %f\n", log10(hetLR*x[1]*x[1]*x[2]), gfreq, pen_DD,pen_Dd, pen_dd, alphaV,fixed_theta);
 
-      if(pedigreeSet.numPedigree ==1)
+      if((pedigreeSet.numPedigree ==1)||(num_alpha==1))
 	  j=5;
     }   //end of calculating the HET         
 
@@ -1905,6 +1948,8 @@ void integrateMain ()
 	total_dim++;      //  One threshold for all LCs    //   = modelRange->nlclass;
     }
   }
+
+  //fprintf(stderr,"DBL_MIN =%e and DBL_MIN_10_EXP=%d\n", DBL_MIN, DBL_MIN_10_EXP);
 
   size_BR = total_dim;
   if (modelType->type == TP) {
@@ -2722,6 +2767,7 @@ void integrateMain ()
       if (modelOptions->polynomial == TRUE){
         sprintf (partialPolynomialFunctionName, "MQT_LC%d_C%d_P%%sSL%d", modelRange->nlclass, (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, modelOptions->sexLinked);
 	cL[1]++; // MP QT trait likelihood
+
 	compute_likelihood (&pedigreeSet);
       }
     }
@@ -2943,8 +2989,9 @@ void integrateMain ()
           strcat (partialPolynomialFunctionName, markerNo);
         }
         cL[2]++; // MP marker likelihood
+	//fprintf(stderr," Before calling compute marker likelihood  2951\n");
         compute_likelihood (&pedigreeSet);
-
+	//fprintf(stderr," After calling compute marker likelihood  2953\n");
         /* save the results for marker likelihood */
         for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
           /* save the likelihood at null */
