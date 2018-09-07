@@ -411,13 +411,19 @@ sub db_get_model_batch
     (defined ($ENV{SGE_TASK_ID}) && $ENV{SGE_TASK_ID} != 1)
 	and sleep (5);
 
-    $MPId_colnames = join (', ', map { "LC${_}MPId" } (1 .. $$study{LiabilityClassCnt}));
+    $MPId_colnames = join (', ', map { "l.LC${_}MPId" } (1 .. $$study{LiabilityClassCnt}));
     
     print (ts(), "Selecting model part IDs\n");
-    (($sth = $dbh->prepare ("select LGModelId, $MPId_colnames from LGModels ".
-			    "where StudyId = ? and ServerId is NULL ".
+    (($sth = $dbh->prepare ("select l.LGModelId, $MPId_colnames ".
+                            "  from Analyses a, LGModels l ".
+			    "where a.StudyId = ? ".
+                            "  and a.PedigreeRegEx = ? ".
+                            "  and a.PedigreeNotRegEx = ? ".
+                            "  and l.StudyId = a.StudyId ".
+                            "  and l.AnalysisId = a.AnalysisId ".
+                            "  and ServerId is NULL ".
 			    "limit $batchsize for update"))
-     && $sth->execute ($study{id}))
+     && $sth->execute (@$study{qw/id pedregex pednotregex/}))
 	or die ("select from LGModels failed, $DBI::errstr\n");
     # @MPIds will contain a list of arrayrefs. Each arrayref contains one or more model
     # part Ids, depending on the number of liability classes
@@ -427,6 +433,8 @@ sub db_get_model_batch
     (scalar (@MPIds) == 0) and return ($batch);
 
     foreach (@MPIds) {
+        # This strips the LGModelId off of every row returned, leaving only
+        # the model part IDs in each element of @MPIds.
 	push (@lgmodelids, shift (@$_));
     }
     db_update_lgmodels ($study, $serverid, \@lgmodelids);
