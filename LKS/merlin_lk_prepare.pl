@@ -50,24 +50,21 @@ $dbh = DBI->connect ($dsn, $study{dbuser}, $study{dbpasswd},
     or die ("DBI connect to '$dsn' as $study{dbuser} failed, $DBI::errstr\n");
 
 db_get_studyid ($dbh, \%study);  
-db_get_analysisid ($dbh, \%study);  
 
-print (ts(), "StudyLabel $study{label}, Id $study{studyid}, Analysis $study{analysisid}");
+print (ts(), "StudyLabel $study{label}, Id $study{id}");
 print (($liability > 1) ? ", $liability liability classes\n" : ", 1 liability class\n");
 
 db_cleanup_old ($dbh, \%study);
 
-$lc_select = join ('', map { ", LC${_}MPId" } (1 .. $liability));
+$lc_select = join (", ", map { "LC${_}MPId" } (1 .. $liability));
 
-$sql = "insert into LGModels (LGModelId, StudyId, AnalysisID" . $lc_select. ") ".
-       "select distinct 0, a.StudyId, a.AnalysisId" . $lc_select . " ".
-       "from PedigreePositions p, Analyses a, Models m, ". $modelPartTable. " d ".
-       "where a.StudyId = ? ".
-       "  and a.PedigreeRegEx = ? ".
-       "  and a.PedigreeNotRegEx = ? ".
-       "  and p.StudyId = a.StudyId ".
-       "  and p.PedigreeSId regexp a.PedigreeRegEx ".
-       "  and p.PedigreeSId not regexp a.PedigreeNotRegEx ".
+$sql = "insert into LGModels (LGModelId, StudyId, PedigreeRexEx, " .
+       "  PedigreeNotRegEx, " . $lc_select. ") ".
+       "select distinct 0, p.StudyId, ?, ?, " . $lc_select . " ".
+       "from PedigreePositions p, Models m, ". $modelPartTable. " d ".
+       "where p.StudyId = ? ".
+       "  and p.PedigreeSId regexp ? ".
+       "  and p.PedigreeSId not regexp ? ".
        "  and m.Likelihood is NULL ".
        "  and m.ServerId is NULL ".
        "  and p.PedPosId = m.PedPosId ".
@@ -82,7 +79,7 @@ print ("SQL is '$sql'\n");
 
 print (ts(), "Inserting rows into LGModels\n");
 while (1) {
-    if (! ($rows = $sth->execute (@study{qw/id pedregex pednotregex/}))) {
+    if (! ($rows = $sth->execute (@study{qw/pedregex pednotregex id pedregex pednotregex/}))) {
 	($DBI::errstr !~ /try restarting transaction/)
 	    and die ("insert into LGModels failed, $DBI::errstr\n");
 	print ("retrying insert into LGModels\n");
@@ -109,26 +106,7 @@ sub db_get_studyid
         or die ("select from Studies failed, $DBI::errstr\n");
     (defined ($aref = $sth->fetchrow_arrayref))
         or die ("select from Studies returned no data\n");
-    $$study{studyid} = $$aref[0];
-    return (1);
-}
-
-
-sub db_get_analysisid
-{
-    my ($dbh, $study) = @_;
-    my $sth;
-    my $aref;
-
-    (($sth = $dbh->prepare ("select AnalysisId from Analyses ".
-                            "where StudyId = ? ".
-                            "  and PedigreeRegEx = ? ".
-                            "  and PedigreeNotRegEx = ?"))
-     && $sth->execute (@$study{qw/studyid pedregex pednotregex/}))
-        or die ("select from Analyses failed, $DBI::errstr\n");
-    (defined ($aref = $sth->fetchrow_arrayref))
-        or die ("select from Analyses returned no data\n");
-    $$study{analysisid} = $$aref[0];
+    $$study{id} = $$aref[0];
     return (1);
 }
 
@@ -139,8 +117,9 @@ sub db_cleanup_old
 
     (($sth = $dbh->prepare ("delete from LGModels ".
                             "where StudyId = ? ".
-                            "  and AnaysisID = ?"))
-     && ($rows = $sth->execute (@$study{/studyid analysisid/})))
+                            "  and PedigreeRegEx = ? ".
+                            "  and PedigreeNotRegEx = ?"))
+     && ($rows = $sth->execute (@$study{/id pedregex pednotregex/})))
         or die ("delete from LGModels failed, $DBI::errstr\n");
     $dbh->commit or die ("commit delete from LGModels failed, $DBI::errstr\n");
     print (ts(), "Deleted $rows from LGModels\n");

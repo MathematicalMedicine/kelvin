@@ -220,7 +220,8 @@ PRIMARY KEY (PedPosID, LC1MPID, LC2MPId, LC3MPId, MarkerCount)) ENGINE=InnoDB co
 CREATE TABLE LGModels (
 LGModelID int NOT NULL AUTO_INCREMENT,
 StudyId int NOT NULL,
-AnalysisId int NOT NULL,
+PedigreeRegEx varchar(1024) NOT NULL,
+PedigreeNotRegEx varchar(1024) NOT NULL DEFAULT 'XYZZY',
 ServerId int,
 LC1MPId int,
 LC2MPId int,
