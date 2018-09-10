@@ -58,7 +58,7 @@ db_cleanup_old ($dbh, \%study);
 
 $lc_select = join (", ", map { "LC${_}MPId" } (1 .. $liability));
 
-$sql = "insert into LGModels (LGModelId, StudyId, PedigreeRexEx, " .
+$sql = "insert into LGModels (LGModelId, StudyId, PedigreeRegEx, " .
        "  PedigreeNotRegEx, " . $lc_select. ") ".
        "select distinct 0, p.StudyId, ?, ?, " . $lc_select . " ".
        "from PedigreePositions p, Models m, ". $modelPartTable. " d ".
