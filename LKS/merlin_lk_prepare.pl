@@ -119,7 +119,7 @@ sub db_cleanup_old
                             "where StudyId = ? ".
                             "  and PedigreeRegEx = ? ".
                             "  and PedigreeNotRegEx = ?"))
-     && ($rows = $sth->execute (@$study{/id pedregex pednotregex/})))
+     && ($rows = $sth->execute (@$study{qw(id pedregex pednotregex)})))
         or die ("delete from LGModels failed, $DBI::errstr\n");
     $dbh->commit or die ("commit delete from LGModels failed, $DBI::errstr\n");
     print (ts(), "Deleted $rows from LGModels\n");
