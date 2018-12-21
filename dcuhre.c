@@ -43,12 +43,15 @@
 #include "dcuhre.h"
 #include "utils/utils.h"
 #include "config/model.h" // for LINKAGE_DISEQUILIBRIUM
+#include "kelvinGlobals.h"
 
 #ifdef STUDYDB
 #include "utils/tpl.h"
 #include "database/StudyDB.h"
 #include "database/databaseSupport.h"
 extern struct StudyDB studyDB;
+extern double localMOD;
+extern st_DKMaxModel dk_localmax;
 #endif
 
 extern double traitPos;
@@ -515,7 +518,7 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   // this is only implemented for LKS (STUDYDB) as it _should_ work the same in any context.
 
   tpl_node *tn;
-  char *regionTPLFormat = "iiffii";
+  char *regionTPLFormat = "iiffiififfffffffffffffff";
   char *regionFileFormat = "study_%d-anl_%d-pos_%g-reg_%d.dat";
   char fileName[256];
   FILE *file;
@@ -524,7 +527,11 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   sprintf (fileName, regionFileFormat, studyDB.studyId, studyDB.analysisId, traitPos , cw_sbrg->region_id);
   // The cache file contains the components of a subregion structure - the results of a previous successful
   // calculation, which we will use to populate cw_sbrg and return.
-  tn = tpl_map (regionTPLFormat, &cw_sbrg->parent_id, &cw_sbrg->region_level, &cw_sbrg->local_result, &cw_sbrg->local_error, &cw_sbrg->dir, &cw_sbrg->cur_scale);
+  tn = tpl_map (regionTPLFormat, &cw_sbrg->parent_id, &cw_sbrg->region_level, &cw_sbrg->local_result, &cw_sbrg->local_error, &cw_sbrg->dir, &cw_sbrg->cur_scale,
+		&localMOD, &dk_localmax.posIdx, &dk_localmax.dprime, &dk_localmax.theta[0], &dk_localmax.theta[1],
+		&dk_localmax.alpha, &dk_localmax.dgf, &dk_localmax.mf, &dk_localmax.r2,
+		&dk_localmax.pen->DD, &dk_localmax.pen->Dd, &dk_localmax.pen->dD, &dk_localmax.pen->dd,
+		&dk_localmax.pen->DDSD, &dk_localmax.pen->DdSD, &dk_localmax.pen->dDSD, &dk_localmax.pen->ddSD, &dk_localmax.pen->threshold);
   fprintf (stderr, "StudyId: %d, analysisId: %d,traitPos: %g, seeking subregion %d...", studyDB.studyId, studyDB.analysisId, traitPos , cw_sbrg->region_id);
 
   if ((file = fopen (fileName, "r"))) {
@@ -533,6 +540,20 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
     tpl_load (tn, TPL_FILE, fileName);
     tpl_unpack (tn, 0);
     tpl_free (tn);
+    fprintf (stderr, "Read cw_sbrg->region_id: %d, cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, "
+	     "cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d, localMOD: %g, dk_localmax.posIdx: %d, "
+	     "dk_localmax.dprime: %g, dk_localmax.theta[0]: %g, dk_localmax.theta[1]: %g, dk_localmax.alpha: %g, "
+	     "dk_localmax.dgf: %g, dk_localmax.mf: %g, dk_localmax.r2: %g, "
+	     "dk_localmax.pen->DD: %g, dk_localmax.pen->Dd: %g, dk_localmax.pen->dD: %g, dk_localmax.pen->dd: %g, "
+	     "dk_localmax.pen->DDSD: %g, dk_localmax.pen->DdSD: %g, dk_localmax.pen->dDSD: %g, dk_localmax.pen->ddSD: %g, "
+	     "dk_localmax.pen->threshold: %g\n",
+	     cw_sbrg->region_id, cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, 
+	     cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale, localMOD, dk_localmax.posIdx,
+	     dk_localmax.dprime, dk_localmax.theta[0], dk_localmax.theta[1], dk_localmax.alpha,
+	     dk_localmax.dgf, dk_localmax.mf, dk_localmax.r2,
+	     dk_localmax.pen->DD, dk_localmax.pen->Dd, dk_localmax.pen->dD, dk_localmax.pen->dd,
+	     dk_localmax.pen->DDSD, dk_localmax.pen->DdSD, dk_localmax.pen->dDSD, dk_localmax.pen->ddSD,
+	     dk_localmax.pen->threshold);
     cw_sbrg->lchild_id = 0; cw_sbrg->rchild_id = 0;
     return 0;
   }
@@ -728,8 +749,20 @@ drlhre_ (dcuhre_state * s, sub_region * cw_sbrg)
   */
   //  if (->bogusLikelihoods == 0 && (cw_sbrg->region_id != 0 || studyDB.bogusLikelihoods == 0)) {
   if (studyDB.bogusLikelihoods == 0) {
-    fprintf (stderr, "Saving cw_sbrg->region_id: %d, cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d, studyDB.bogusLikelihoods: %d\n",
-	     cw_sbrg->region_id, cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result, cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale, studyDB.bogusLikelihoods);
+    fprintf (stderr, "Saving cw_sbrg->region_id: %d, cw_sbrg->parent_id: %d, cw_sbrg->region_level: %d, cw_sbrg->local_result: %g, " 
+	     "cw_sbrg->local_error: %g, cw_sbrg->dir: %d, cw_sbrg->cur_scale: %d, localMOD: %g, dk_localmax.posIdx: %d, "
+	     "dk_localmax.dprime: %g, dk_localmax.theta[0]: %g, dk_localmax.theta[1]: %g, dk_localmax.alpha: %g, "
+	     "dk_localmax.dgf: %g, dk_localmax.mf: %g, dk_localmax.r2: %g, "
+	     "dk_localmax.pen->DD: %g, dk_localmax.pen->Dd: %g, dk_localmax.pen->dD: %g, dk_localmax.pen->dd: %g, "
+	     "dk_localmax.pen->DDSD: %g, dk_localmax.pen->DdSD: %g, dk_localmax.pen->dDSD: %g, dk_localmax.pen->ddSD: %g, "
+	     "dk_localmax.pen->threshold: %g\n",
+	     cw_sbrg->region_id, cw_sbrg->parent_id, cw_sbrg->region_level, cw_sbrg->local_result,
+	     cw_sbrg->local_error, cw_sbrg->dir, cw_sbrg->cur_scale, localMOD, dk_localmax.posIdx,
+	     dk_localmax.dprime, dk_localmax.theta[0], dk_localmax.theta[1], dk_localmax.alpha,
+	     dk_localmax.dgf, dk_localmax.mf, dk_localmax.r2,
+	     dk_localmax.pen->DD, dk_localmax.pen->Dd, dk_localmax.pen->dD, dk_localmax.pen->dd,
+	     dk_localmax.pen->DDSD, dk_localmax.pen->DdSD, dk_localmax.pen->dDSD, dk_localmax.pen->ddSD,
+	     dk_localmax.pen->threshold);
 
     tpl_pack (tn, 0);
     tpl_dump (tn, TPL_FILE, fileName);
