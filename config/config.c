@@ -306,6 +306,9 @@ void initializeDefaults ()
   staticModelOptions.qtStandardDevMode = 0;
   staticModelOptions.qtThresholdMode = 0;
   staticModelOptions.alphaMode = 0;
+  staticModelOptions.thetaMode = 0;
+  staticModelOptions.dPrimeMode = 0;
+  staticModelOptions.gFreqMode = 0;
 
   staticModelRange.nalleles = 2;
   staticModelRange.nlclass = 1;
@@ -571,10 +574,6 @@ void validateConfig ()
       fault ("%s with trait genotypes requires FixedModels\n", DEGOFFREEDOM_STR);
     if (observed.constraints)
       fault ("Constraint requires FixedModels\n");
-    if (staticModelRange.thetacnt != NULL)
-      fault ("%s requires FixedModels\n", THETA_STR);
-    if (staticModelRange.ndprime > 0)
-      fault ("DPrime requires FixedModels\n");
     if (staticModelRange.ngfreq > 0)
       fault ("DiseaseGeneFrequency requires FixedModels\n");
     if (staticModelRange.nafreq > 0)
@@ -590,9 +589,16 @@ void validateConfig ()
       }
     }
     if (staticModelRange.nalpha > 0) {
-      if (staticModelOptions.alphaMode != PARAM_MODE_FIXED || 
-          staticModelRange.nalpha != 1)
+      if (staticModelOptions.alphaMode != PARAM_MODE_FIXED || staticModelRange.nalpha != 1)
         fault ("Under dynamic sampling, Alpha may only be fixed at a single value\n");
+    }
+    if (staticModelRange.thetacnt && staticModelRange.thetacnt[SEXAV] > 0) {
+      if (staticModelOptions.thetaMode != PARAM_MODE_FIXED || staticModelRange.thetacnt[SEXAV] != 1)
+        fault ("Under dynamic sampling, Theta may only be fixed at a single value\n");
+    }
+    if (staticModelRange.ndprime > 0) {
+      if (staticModelOptions.dPrimeMode != PARAM_MODE_FIXED || staticModelRange.ndprime != 1)
+        fault ("Under dynamic sampling, DPrime may only be fixed at a single value\n");
     }
   
     if (fault)
@@ -839,6 +845,12 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
     }
     if (staticModelOptions.alphaMode == 0)
       staticModelOptions.alphaMode = PARAM_MODE_VARY;
+    if (staticModelOptions.thetaMode == 0)
+      staticModelOptions.thetaMode = PARAM_MODE_VARY;
+    if (staticModelOptions.dPrimeMode == 0)
+      staticModelOptions.dPrimeMode = PARAM_MODE_VARY;
+    if (staticModelOptions.gFreqMode == 0)
+      staticModelOptions.gFreqMode = PARAM_MODE_VARY;
     if (staticModelType.trait != DT) 
       duplicatePenets (&staticModelRange, staticModelOptions.imprintingFlag);
     
@@ -1117,11 +1129,17 @@ int set_geneFreq (char **toks, int numtoks, void *unused)
 
   if (numtoks < 2)
     bail ("missing argument to directive '%s'\n", toks[0]);
-  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
-    bail ("illegal argument to directive '%s'\n", toks[0]);
-  for (va = 0; va < numvals; va++)
-    addGeneFreq (&staticModelRange, vals[va]);
-  free (vals);
+  if (strcasecmp (toks[1], "Fixed") == 0) {
+    if (numtoks > 2)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    staticModelOptions.gFreqMode = PARAM_MODE_FIXED;
+  } else {
+    if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    for (va = 0; va < numvals; va++)
+      addGeneFreq (&staticModelRange, vals[va]);
+    free (vals);
+  }
   return (0);
 }
 
@@ -1133,28 +1151,51 @@ int set_dprime (char **toks, int numtoks, void *unused)
 
   if (numtoks < 2)
     bail ("missing argument to directive '%s'\n", toks[0]);
-  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
-    bail ("illegal argument to directive '%s'\n", toks[0]);
-  for (va = 0; va < numvals; va++)
-    addDPrime (&staticModelRange, vals[va]);
-  free (vals);
+  if (strcasecmp (toks[1], "Fixed") == 0) {
+    staticModelOptions.dPrimeMode = PARAM_MODE_FIXED;
+    if (numtoks == 2) { 
+      addDPrime (&staticModelRange, 1);
+    } else {
+      if (((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0) || numvals != 1)
+        bail ("illegal argument to directive '%s'\n", toks[0]);
+      addDPrime (&staticModelRange, vals[0]);
+      free (vals);
+    }
+  } else {
+    if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    for (va = 0; va < numvals; va++)
+      addDPrime (&staticModelRange, vals[va]);
+    free (vals);
+  }
   return (0);
 }
 
 
 int set_theta (char **toks, int numtoks, void *unused)
 {
-  int numvals, va=0, type=0;
+  int numvals, va=0, type=THETA_AVG;
   double *vals;
 
   if (numtoks < 2)
     bail ("missing argument to directive '%s'\n", toks[0]);
-  if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
-    bail ("illegal argument to directive '%s'\n", toks[0]);
-  type = THETA_AVG;
-  for (va = 0; va < numvals; va++)
-    addTheta (&staticModelRange, type, vals[va]);
-  free (vals);
+  if (strcasecmp (toks[1], "Fixed") == 0) {
+    staticModelOptions.thetaMode = PARAM_MODE_FIXED;
+    if (numtoks == 2) { 
+      addTheta (&staticModelRange, type, 0);
+    } else {
+      if (((numvals = expandVals (&toks[2], numtoks-2, &vals, NULL)) <= 0) || numvals != 1)
+        bail ("illegal argument to directive '%s'\n", toks[0]);
+      addTheta (&staticModelRange, type, vals[0]);
+      free (vals);
+    }
+  } else {
+    if ((numvals = expandVals (&toks[1], numtoks-1, &vals, NULL)) <= 0)
+      bail ("illegal argument to directive '%s'\n", toks[0]);
+    for (va = 0; va < numvals; va++)
+      addTheta (&staticModelRange, type, vals[va]);
+    free (vals);
+  }
   return (0);
 }
 

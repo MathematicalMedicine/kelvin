@@ -68,11 +68,12 @@ enum MapFlag {
 /// Phenotype code (affection status) for a dichotomous trait known to be affected.
 #define AFFECTION_STATUS_AFFECTED       2
 
-/* For experimental dynamic-grid QT-normal analysis, used to control if means
- * or standard deviations can vary (parameter is sampled, and may vary between
- * trait genotypes), are the same (parameter is sampled, but does not vary 
- * betgween trait genotypes) or is fixed (is not sampled, but is set to a 
- * fixed value for all models).
+/* For dynamic-grid QT analysis, used to control if various model parameters 
+ * are sampled or fixed at a single value. Also, in the case of means or standard
+ * deviations, control if the parameter can vary (parameter is sampled, and may
+ * vary between trait genotypes), or is  the same (parameter is sampled, but does
+ * not vary  betgween trait genotypes). Multiple fixed values per parameter is
+ * not supported.
  */
 #define PARAM_MODE_VARY    1    // Sampled and varies
 #define PARAM_MODE_SAME    2    // Sampled but does not vary
@@ -122,7 +123,11 @@ typedef struct ModelOptions
   int qtMeanMode;
   int qtStandardDevMode;
   int qtThresholdMode;
+  /* For fixing model parameters under dynamic sampling */
   int alphaMode;
+  int thetaMode;
+  int dPrimeMode;
+  int gFreqMode;
   
   int dryRun;                   ///< Flag indicating dry run to get statistics for complexity.
   int forceAvghetFile;          ///< Flag to force open a BR file, regardless of other directives.

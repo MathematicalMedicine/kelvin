@@ -208,6 +208,12 @@ void kelvinInit (int argc, char *argv[])
     }
     if (modelOptions->alphaMode == PARAM_MODE_FIXED)
       INFO ("Alpha is fixed constant");
+    if (modelOptions->thetaMode == PARAM_MODE_FIXED)
+      INFO ("Theta is fixed constant");
+    if (modelOptions->dPrimeMode == PARAM_MODE_FIXED)
+      INFO ("DPrime is fixed constant");
+    if (modelOptions->gFreqMode == PARAM_MODE_FIXED)
+      INFO ("Disease Gene Frequency is fixed to marker allele frequency");
   } else
     INFO ("Integration is done with iteration (original kelvin)");
 
