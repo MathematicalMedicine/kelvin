@@ -135,8 +135,8 @@ Constraint;
 #define QT_INTEG_MIN_MEAN -3.0
 #define QT_INTEG_MAX_MEAN  3.0
 /* "Classic" StDev range was 0.7 - 1.0 */
-#define QT_INTEG_MIN_STDEV 1.0
-#define QT_INTEG_MAX_STDEV 1.0
+#define QT_INTEG_MIN_STDEV 0.0
+#define QT_INTEG_MAX_STDEV 4.0
 #define QT_INTEG_NORM_MIN_THRESH  0.0
 #define QT_INTEG_NORM_MAX_THRESH  3.0
 /* fro Chi-squared distribution */
