@@ -135,13 +135,10 @@ sub copy
 		return (undef);
 	    }
 	    map { $hash{$_} = 1; } @{$$arg{preserve}};
-	}
-	if (scalar (keys (%hash)) == 0) {
-	    if (scalar (@{$$self{maporder}})) {
-		map { $hash{$_} = 1; } @{$$self{maporder}};
-	    } else {
-		map { $hash{$_} = 1; } @{$$self{markerorder}};
-	    }
+	} elsif (scalar (@{$$self{maporder}})) {
+            map { $hash{$_} = 1; } @{$$self{maporder}};
+        } else {
+            map { $hash{$_} = 1; } @{$$self{markerorder}};
 	}
 	if (exists ($$arg{purge})) {
 	    if (ref ($$arg{purge}) ne 'ARRAY') {
