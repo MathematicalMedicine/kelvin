@@ -415,9 +415,6 @@ sub readFreqfile
 	} else {
 	    $$self{snps} = 1;
 	}
-    } else { 
-	$errstr = "$$self{freqfile} contains no markers";
-	return (undef);
     }
 
     # If no map has been read, use the order of the markers in the frequency file
@@ -568,10 +565,6 @@ sub readMapfile
 	push (@maporder, $$href{name});
     }
     $fh->close;
-    if (scalar (@maporder) == 0) {
-	$errstr = "$$self{mapfile} contains no markers";
-	return (undef);
-    }
 
     if ($$self{locusread}) {
 	$lastpos = -9999;
