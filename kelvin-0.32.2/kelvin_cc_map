@@ -1,0 +1,16 @@
+# generate Kelvin datafile.dat, mapfile.dat
+
+if [ $# -lt 3 ]; then
+  echo "Usage: <input file> <output file prefix> <chr>"
+  exit -1
+fi
+infname=$1
+outfname=$2
+chr=$3
+
+# assume the first line contains columns of SNP names 
+echo "T trait" > $outfname.data
+awk '($1!="MARKER" && substr($1,0,1)!="#"){print "M", $1}' $infname >> $outfname.data
+echo "CHR MARKER KOSAMBI" > $outfname.map
+awk -v chr=$chr '($1!="MARKER" && substr($1,0,1)!="#"){print chr, $1, NR}'  $infname >> $outfname.map
+
