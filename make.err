@@ -1,0 +1,9 @@
+/home/yungui/code/kelvin-0.0.30/utils
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.30/utils'
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.30/utils'
+/home/yungui/code/kelvin-0.0.30/pedlib
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.30/pedlib'
+tools.c: In function ‘REALLOC’:
+tools.c:137: warning: unused variable ‘oldPtr’
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.30/pedlib'
+gcc -Wall			 -O3	 			 -Wall -I/home/yungui/code/kelvin-0.0.30/include -L/home/yungui/code/kelvin-0.0.30/lib -I/usr/local/include -L/usr/local/lib kelvin.c config.c ppl.c -o kelvin  -lped -lutils -lgsl -lgslcblas -lm 
