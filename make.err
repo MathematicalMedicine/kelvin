@@ -1,0 +1,205 @@
+/home/yungui/code/kelvin-0.0.28/utils
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.28/utils'
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.28/utils'
+/home/yungui/code/kelvin-0.0.28/pedlib
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.28/pedlib'
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.28/pedlib'
+/home/yungui/code/kelvin-0.0.28/RADSMM
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.28/RADSMM'
+make[1]: *** No rule to make target `fresh'.  Stop.
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.28/RADSMM'
+make: [clean] Error 2 (ignored)
+/home/yungui/code/kelvin-0.0.28/utils
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.28/utils'
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.28/utils'
+/home/yungui/code/kelvin-0.0.28/pedlib
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.28/pedlib'
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.28/pedlib'
+gcc -Wall			 -g  -DDEBUG		 -Wall -I/home/yungui/code/kelvin-0.0.28/include -L/home/yungui/code/kelvin-0.0.28/lib -I/usr/local/include -L/usr/local/lib kelvin.c config.c ppl.c -o kelvin  -lped -lutils -lgsl -lgslcblas -lm 
+In file included from kelvin.c:14:
+kelvin.h:24:45: error: pedlib.h: No such file or directory
+In file included from kelvin.c:14:
+kelvin.h:194: error: expected declaration specifiers or ‘...’ before ‘ModelOptions’
+kelvin.h:196: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘*’ token
+kelvin.h:248: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘modelOptions’
+kelvin.h:260: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘*’ token
+kelvin.c:15:24: error: likelihood.h: No such file or directory
+kelvin.c:36: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘modelOptions’
+kelvin.c:72: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘*’ token
+kelvin.c:73: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘*’ token
+kelvin.c:75: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘*’ token
+kelvin.c: In function ‘main’:
+kelvin.c:106: error: ‘PedigreeSet’ undeclared (first use in this function)
+kelvin.c:106: error: (Each undeclared identifier is reported only once
+kelvin.c:106: error: for each function it appears in.)
+kelvin.c:106: error: expected ‘;’ before ‘pedigreeSet’
+kelvin.c:112: error: ‘Pedigree’ undeclared (first use in this function)
+kelvin.c:112: error: ‘pPedigree’ undeclared (first use in this function)
+kelvin.c:125: error: ‘Locus’ undeclared (first use in this function)
+kelvin.c:125: error: ‘pLocus’ undeclared (first use in this function)
+kelvin.c:126: error: ‘pLocus1’ undeclared (first use in this function)
+kelvin.c:126: error: ‘pLocus2’ undeclared (first use in this function)
+kelvin.c:126: warning: left-hand operand of comma expression has no effect
+kelvin.c:127: error: ‘Trait’ undeclared (first use in this function)
+kelvin.c:127: error: ‘pTrait’ undeclared (first use in this function)
+kelvin.c:134: error: ‘LDLoci’ undeclared (first use in this function)
+kelvin.c:134: error: ‘pLDLoci’ undeclared (first use in this function)
+kelvin.c:136: error: ‘TraitLocus’ undeclared (first use in this function)
+kelvin.c:136: error: ‘pTraitLocus’ undeclared (first use in this function)
+kelvin.c:175: error: ‘SubLocusList’ undeclared (first use in this function)
+kelvin.c:175: error: expected ‘;’ before ‘savedLocusList’
+kelvin.c:176: error: expected ‘;’ before ‘nullLocusList’
+kelvin.c:182: error: ‘Polynomial’ undeclared (first use in this function)
+kelvin.c:182: error: ‘initialProbPoly’ undeclared (first use in this function)
+kelvin.c:183: error: ‘initialProbPoly2’ undeclared (first use in this function)
+kelvin.c:191: error: ‘savedLocusList’ undeclared (first use in this function)
+kelvin.c:192: error: ‘nullLocusList’ undeclared (first use in this function)
+kelvin.c:265: error: ‘modelOptions’ undeclared (first use in this function)
+kelvin.c:286: error: too many arguments to function ‘readConfigFile’
+kelvin.c:297: error: ‘DICHOTOMOUS’ undeclared (first use in this function)
+kelvin.c:299: error: ‘COMBINED’ undeclared (first use in this function)
+kelvin.c:304: error: ‘QUANTITATIVE’ undeclared (first use in this function)
+kelvin.c:329: error: ‘TWOPOINT’ undeclared (first use in this function)
+kelvin.c:335: error: ‘LINKAGE_EQUILIBRIUM’ undeclared (first use in this function)
+kelvin.c:346: warning: implicit declaration of function ‘polynomialInitialization’
+kelvin.c:359: warning: implicit declaration of function ‘read_mapfile’
+kelvin.c:362: error: ‘originalLocusList’ undeclared (first use in this function)
+kelvin.c:364: warning: implicit declaration of function ‘read_datafile’
+kelvin.c:375: warning: implicit declaration of function ‘add_allele’
+kelvin.c:379: warning: implicit declaration of function ‘add_trait’
+kelvin.c:392: error: ‘QT_FUNCTION_T’ undeclared (first use in this function)
+kelvin.c:397: error: ‘AFFECTION_STATUS_UNKNOWN’ undeclared (first use in this function)
+kelvin.c:399: error: ‘AFFECTION_STATUS_UNAFFECTED’ undeclared (first use in this function)
+kelvin.c:401: error: ‘AFFECTION_STATUS_AFFECTED’ undeclared (first use in this function)
+kelvin.c:406: warning: implicit declaration of function ‘read_markerfile’
+kelvin.c:411: warning: implicit declaration of function ‘construct_original_allele_set_list’
+kelvin.c:415: error: ‘pedigreeSet’ undeclared (first use in this function)
+kelvin.c:416: warning: implicit declaration of function ‘read_pedfile’
+kelvin.c:421: warning: implicit declaration of function ‘read_ccfile’
+kelvin.c:442: error: ‘pLambdaCell’ undeclared (first use in this function)
+kelvin.c:442: warning: implicit declaration of function ‘findLambdas’
+kelvin.c:456: error: ‘LOCUS_TYPE_TRAIT’ undeclared (first use in this function)
+kelvin.c:459: error: ‘SEX_AVERAGED’ undeclared (first use in this function)
+kelvin.c:465: warning: implicit declaration of function ‘initialize_parental_pair_workspace’
+kelvin.c:465: error: ‘parentalPairSpace’ undeclared (first use in this function)
+kelvin.c:468: warning: implicit declaration of function ‘build_xmission_matrix’
+kelvin.c:468: error: ‘nullMatrix’ undeclared (first use in this function)
+kelvin.c:469: error: ‘altMatrix’ undeclared (first use in this function)
+kelvin.c:470: error: ‘xmissionMatrix’ undeclared (first use in this function)
+kelvin.c:473: warning: implicit declaration of function ‘initialize_loci’
+kelvin.c:480: warning: implicit declaration of function ‘constantExp’
+kelvin.c:510: error: ‘MULTIPOINT’ undeclared (first use in this function)
+kelvin.c:576: warning: implicit declaration of function ‘stat_parental_pair_workspace’
+kelvin.c:580: warning: implicit declaration of function ‘allocate_parental_pair_workspace’
+kelvin.c:584: warning: implicit declaration of function ‘allocate_likelihood_space’
+kelvin.c:680: error: expected expression before ‘)’ token
+kelvin.c:702: error: ‘locusList’ undeclared (first use in this function)
+kelvin.c:721: warning: implicit declaration of function ‘populate_xmission_matrix’
+kelvin.c:729: warning: implicit declaration of function ‘makePolynomialStamp’
+kelvin.c:740: error: ‘LOCUS_TYPE_MARKER’ undeclared (first use in this function)
+kelvin.c:751: error: ‘LINKAGE_DISEQUILIBRIUM’ undeclared (first use in this function)
+kelvin.c:757: warning: implicit declaration of function ‘reallocate_LD_loci’
+kelvin.c:809: warning: implicit declaration of function ‘update_locus’
+kelvin.c:842: warning: implicit declaration of function ‘isDPrime0’
+kelvin.c:846: warning: implicit declaration of function ‘setup_LD_haplotype_freq’
+kelvin.c:896: warning: implicit declaration of function ‘update_penetrance’
+kelvin.c:907: warning: implicit declaration of function ‘set_null_dprime’
+kelvin.c:908: warning: implicit declaration of function ‘copy_haploFreq’
+kelvin.c:910: warning: implicit declaration of function ‘copy_DValue’
+kelvin.c:943: warning: implicit declaration of function ‘compute_likelihood’
+kelvin.c:996: warning: implicit declaration of function ‘copy_dprime’
+kelvin.c:1046: error: ‘MAP_MALE’ undeclared (first use in this function)
+kelvin.c:1051: error: ‘MAP_FEMALE’ undeclared (first use in this function)
+kelvin.c:1236: error: ‘QT_FUNCTION_CHI_SQUARE’ undeclared (first use in this function)
+kelvin.c:1911: error: ‘ERROR_MARGIN’ undeclared (first use in this function)
+kelvin.c:2218: warning: implicit declaration of function ‘pedigreeSetPolynomialClearance’
+kelvin.c:2219: warning: implicit declaration of function ‘partialPolynomialClearance’
+kelvin.c:2224: error: ‘ADJACENTMARKER’ undeclared (first use in this function)
+kelvin.c:2333: warning: implicit declaration of function ‘add_markers_to_locuslist’
+kelvin.c:2375: error: ‘SEX_SPECIFIC’ undeclared (first use in this function)
+kelvin.c:2379: warning: implicit declaration of function ‘get_map_position’
+kelvin.c:2379: warning: assignment makes pointer from integer without a cast
+kelvin.c:2401: warning: implicit declaration of function ‘cm_to_recombination_fraction’
+kelvin.c:2404: error: ‘map’ undeclared (first use in this function)
+kelvin.c:2412: warning: assignment makes pointer from integer without a cast
+kelvin.c:2415: warning: assignment makes pointer from integer without a cast
+kelvin.c:2454: warning: assignment makes pointer from integer without a cast
+kelvin.c:2456: warning: assignment makes pointer from integer without a cast
+kelvin.c:2514: warning: assignment makes pointer from integer without a cast
+kelvin.c:2520: warning: assignment makes pointer from integer without a cast
+kelvin.c:3372: warning: implicit declaration of function ‘free_parental_pair_workspace’
+kelvin.c:3379: warning: implicit declaration of function ‘free_LD_loci’
+kelvin.c:3385: warning: implicit declaration of function ‘polynomialClearance’
+kelvin.c:3389: warning: implicit declaration of function ‘free_likelihood_space’
+kelvin.c:3390: warning: implicit declaration of function ‘free_pedigree_set’
+kelvin.c:3391: warning: implicit declaration of function ‘free_sub_locus_list’
+kelvin.c:3394: warning: implicit declaration of function ‘final_cleanup’
+In file included from config.c:8:
+kelvin.h:24:45: error: pedlib.h: No such file or directory
+In file included from config.c:8:
+kelvin.h:194: error: expected declaration specifiers or ‘...’ before ‘ModelOptions’
+kelvin.h:196: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘*’ token
+kelvin.h:248: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘modelOptions’
+kelvin.h:260: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘*’ token
+config.c:166: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘*’ token
+config.c:181: error: expected declaration specifiers or ‘...’ before ‘ModelOptions’
+config.c: In function ‘readConfigFile’:
+config.c:204: error: ‘TWOPOINT’ undeclared (first use in this function)
+config.c:204: error: (Each undeclared identifier is reported only once
+config.c:204: error: for each function it appears in.)
+config.c:205: error: ‘DICHOTOMOUS’ undeclared (first use in this function)
+config.c:206: error: ‘modelOptions’ undeclared (first use in this function)
+config.c:206: error: ‘LINKAGE_EQUILIBRIUM’ undeclared (first use in this function)
+config.c:279: error: ‘MULTIPOINT’ undeclared (first use in this function)
+config.c:280: error: ‘SEX_SPECIFIC’ undeclared (first use in this function)
+config.c:288: error: ‘SEX_AVERAGED’ undeclared (first use in this function)
+config.c:309: error: ‘MARKERTOMARKER’ undeclared (first use in this function)
+config.c:316: error: ‘ADJACENTMARKER’ undeclared (first use in this function)
+config.c:344: error: ‘AFFECTION_STATUS_UNKNOWN’ undeclared (first use in this function)
+config.c:346: error: ‘AFFECTION_STATUS_UNAFFECTED’ undeclared (first use in this function)
+config.c:348: error: ‘AFFECTION_STATUS_AFFECTED’ undeclared (first use in this function)
+config.c:380: error: ‘QUANTITATIVE’ undeclared (first use in this function)
+config.c:381: error: ‘QT_FUNCTION_NORMAL’ undeclared (first use in this function)
+config.c:401: error: ‘QT_FUNCTION_T’ undeclared (first use in this function)
+config.c:429: error: ‘QT_FUNCTION_CHI_SQUARE’ undeclared (first use in this function)
+config.c:937: error: ‘LINKAGE_DISEQUILIBRIUM’ undeclared (first use in this function)
+config.c:947: error: ‘COMBINED’ undeclared (first use in this function)
+config.c: In function ‘addTheta’:
+config.c:1098: error: ‘modelOptions’ undeclared (first use in this function)
+config.c:1098: error: ‘SEX_SPECIFIC’ undeclared (first use in this function)
+config.c: In function ‘addRange’:
+config.c:1497: error: ‘ERROR_MARGIN’ undeclared (first use in this function)
+config.c: In function ‘expandRange’:
+config.c:2234: error: ‘modelOptions’ undeclared (first use in this function)
+config.c:2234: error: ‘SEX_AVERAGED’ undeclared (first use in this function)
+config.c: At top level:
+config.c:2660: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘*’ token
+config.c: In function ‘showRange’:
+config.c:2752: error: ‘DICHOTOMOUS’ undeclared (first use in this function)
+In file included from ppl.c:8:
+kelvin.h:24:45: error: pedlib.h: No such file or directory
+In file included from ppl.c:8:
+kelvin.h:194: error: expected declaration specifiers or ‘...’ before ‘ModelOptions’
+kelvin.h:196: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘*’ token
+kelvin.h:248: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘modelOptions’
+kelvin.h:260: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘*’ token
+ppl.c: In function ‘calculate_PPL’:
+ppl.c:40: error: ‘modelOptions’ undeclared (first use in this function)
+ppl.c:40: error: (Each undeclared identifier is reported only once
+ppl.c:40: error: for each function it appears in.)
+ppl.c:40: error: ‘SEX_AVERAGED’ undeclared (first use in this function)
+ppl.c: In function ‘get_average_LD_LR’:
+ppl.c:228: error: ‘pLambdaCell’ undeclared (first use in this function)
+ppl.c: In function ‘calculate_PPLD’:
+ppl.c:298: error: ‘modelOptions’ undeclared (first use in this function)
+ppl.c:298: error: ‘ERROR_MARGIN’ undeclared (first use in this function)
+ppl.c:304: error: ‘pLambdaCell’ undeclared (first use in this function)
+ppl.c:319: warning: implicit declaration of function ‘isDPrime0’
+ppl.c: In function ‘get_average_LR’:
+ppl.c:391: error: ‘pLambdaCell’ undeclared (first use in this function)
+ppl.c:420: error: ‘DICHOTOMOUS’ undeclared (first use in this function)
+ppl.c: In function ‘allocate_tp_result_storage’:
+ppl.c:535: error: ‘pLambdaCell’ undeclared (first use in this function)
+ppl.c: At top level:
+ppl.c:583: error: expected ‘)’ before ‘*’ token
+make: *** [kelvin] Error 1
