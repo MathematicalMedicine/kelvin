@@ -1,0 +1,7 @@
+Current limitations of Kelvin:
+
+1. Can only handle single disease locus model
+2. When not doing marker to marker analysis, disease locus is expected to be the
+first locus in the list (default datafile.dat)
+3. Can only handle diallelic disease
+

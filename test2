@@ -1,0 +1,16 @@
+PD pedfile.dat
+MP mapfile.dat
+MK markers.dat
+TP
+LC 2
+QT normal
+DA 2
+GF 0.1; 0.3; 0.5
+dd 0.0
+Dd 0.2
+DD 0.4; 0.5
+P1 0.0; 0.3; 0.5
+P1 DD > P1 Dd
+P1 Dd >= P1 dd
+P1 DD != P1 Dd; P1 Dd != P1 dd
+Th 0.0 0.5 0.1
