@@ -1,0 +1,4 @@
+1. Added parsing of DP and on-demand expansion into lambda arrays.
+2. Added some constraint checking.
+3. Added ERROR_MARGIN handling for ranges of values that may exceed max
+   because of binary arithmetic.
