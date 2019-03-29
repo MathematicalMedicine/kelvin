@@ -1,0 +1,25 @@
+# Meant to be invoked as a sub-make while building Kelvin
+# Some variables undefined otherwise
+
+CC = cc
+CFLAGS := -Wall -O3 
+
+INCS = utils.h
+OBJS = utils.o
+
+all : $(KVNLIBDIR)/libutils.a $(KVNINCDIR)/utils.h
+
+clean :
+	rm -f $(OBJS) libutils.a
+
+$(KVNINCDIR)/utils.h : utils.h
+	cp utils.h $(KVNINCDIR)
+
+$(KVNLIBDIR)/libutils.a : libutils.a
+	cp libutils.a $(KVNLIBDIR)
+
+libutils.a : $(OBJS)
+	ar -rsc libutils.a $(OBJS)
+
+$(OBJS) : %.o : %.c $(INCS)
+	$(CC) -c $(CFLAGS) $< -o $@

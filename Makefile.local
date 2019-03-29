@@ -1,0 +1,44 @@
+include /usr/local/src/Include.mk
+
+CC := gcc
+CFLAGS := -Wall -O3 -I$(INCDIR) -I./include
+LDFLAGS := -L$(LIBDIR) -L./lib -lped -lutils -lgsl -lgslcblas -lm
+
+KVNLIBDIR := $(PWD)/lib
+KVNINCDIR := $(PWD)/include
+export KVNLIBDIR KVNINCDIR
+
+OBJS = kelvin.o ppl.o config.o
+INCS = kelvin.h 
+
+# Kelvin doesn't use NICE at the moment
+# NICEDIR := $(ROOTDIR)/nice
+# CFLAGS += -I$(NICEDIR)/include
+# LDFLAGS += -L$(NICEDIR)/lib -lnice
+
+# Kelvin doesn't use RADSMM just now, either
+# RADSMMDIR := $(ROOTDIR)
+# CFLAGS += -I$(RADSMMDIR)/include
+# LDFLAGS += -L$(RADSMMDIR)/lib -lRADSMM
+
+$(OBJS) : %.o : %.c $(INCS)
+	$(CC) -c $(CFLAGS) $< -o $@
+
+.PHONY : libs
+libs :
+	make -C utils -f Makefile.local all
+	make -C pedlib -f Makefile.local all
+
+kelvin : libs $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+
+$(BINDIR)/kelvin-0.0.26 : kelvin
+	install -o root -g root -m 0755 -p kelvin $(BINDIR)/kelvin-0.0.26
+
+install : $(BINDIR)/kelvin-0.0.26
+
+clean :
+	make -C pedlib -f Makefile.local clean
+	make -C utils -f Makefile.local clean
+	rm -f $(OBJS) kelvin
+
