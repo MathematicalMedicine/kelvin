@@ -1,0 +1,2283 @@
+2,7c2,5
+<  * Kelvin - Linkage and Linkage Disequalibrium Analysis Program
+<  * Yungui Huang, Alberto Maria Segre
+<  * RADSMM storage code - Martin Milder
+<  * Regex code - Nathan Burnette
+<  * config.c and error logging modules - Alberto Maria Segre
+<  * Polynomial features - Hongling Wang
+---
+>  * Multiprocessor Linkage Analysis
+>  * Alberto Maria Segre, Yungui Huang
+>  * RADSMM storage code Martin Milder
+>  * Regex code Nathan Burnette
+9c7
+<  * Copyright 2007, Columbus Children's Research Institute.  All rights reserved.
+---
+>  * Copyright 2006, The University of Iowa.  All rights reserved.
+14a13
+> #include <mcheck.h>
+25,26d23
+< char pplfile[KMAXFILENAMELEN + 1] = "ppl.out";
+< char ldPPLfile[KMAXFILENAMELEN + 1] = "ldppl.out";
+29,30d25
+< FILE *fpPPL = NULL;		/* PPL output file */
+< 
+34a30
+> char sUnknownPedID[] = "0";
+35a32
+> /* temporarily for GAW project */
+42d38
+<   double het_lr_avg;		/* average of HET log(LR) */
+45,52c41,45
+<   /* for max MOD */
+<   double max_lr;		/* max het lr - MOD */
+<   double max_alpha;		/* alpha value that maximizes lr */
+<   double max_gfreq;		/* gfreq that maximizes lr */
+<   int max_penIdx;		/* penetrance that maximizes lr */
+<   double max_mf;		/* marker allele frequency that maximizes lr 
+< 				 * only applies in bi-allelic case */
+<   double R_square;		/* only applies in bi-allelic, i.e. SNPs */
+---
+>   /* for max */
+>   double max_lr;		/* max het lr */
+>   double max_alpha;
+>   double max_gfreq;
+>   int max_penIdx;
+54,58c47
+<   /* for max BR */
+<   double max_br_lr;		/* max for BR - with trait parameters integrated out */
+<   double max_br_mf;		/* marker allele freq that gives the max_br_lr */
+<   double max_br_theta;		/* theta that gives the max BR for the given D prime */
+<   double max_br_dprime;		/* dprime gives the overal max BR */
+---
+>   double R_square;		/* only applies in bi-allelic, i.e. SNPs */
+66,98d54
+< /* two dimensional array for storing average LR after integrating out 
+<  * trait parameters and marker allele frequencies (when applicable) and leaving
+<  * just theta and d prime 
+<  * This will be used for PPL, LD-PPL, and PPLD calculations 
+<  */
+< typedef struct SUMMARY_STAT2
+< {
+<   double het_lr_avg;
+< } SUMMARY_STAT2;
+< 
+< /* one dimensional array for storing max LR per D prime */
+< typedef struct SUMMARY_STAT3
+< {
+<   double max_lr_avg;		/* with trait and marker allele frequencies integrated out */
+<   double max_theta;
+< } SUMMARY_STAT3;
+< 
+< /* overal max */
+< typedef struct SUMMARY_STAT4
+< {
+<   double max_lr_avg;
+<   double max_dprime;
+<   double max_theta;
+< 
+<   /* max with theta constrained at 0 */
+<   double max_lr_at_theta0;
+<   double max_dprime_at_theta0;
+< 
+<   /* max with dprime constrained at 0 */
+<   double max_lr_at_dprime0;
+<   double max_theta_at_dprime0;
+< } SUMMARY_STAT4;
+< 
+107c63
+< /* three dimensional array for the two point summary results *
+---
+> /* two dimensional array for the two point summary results *
+110,120c66,67
+<  * second dimension is theta values 
+<  * third dimension is marker allele frequency, for LE, only one element in this dimension */
+< SUMMARY_STAT ***tp_result;
+< /* two dimensional array per (dprime, theta) 
+<  * this will be used to calculate PPL
+<  */
+< SUMMARY_STAT2 **tp_result2;
+< /* one dimensional array per dprime */
+< SUMMARY_STAT3 *tp_result3;
+< /* overal max */
+< SUMMARY_STAT4 tp_result4;
+---
+>  * second dimension is theta values */
+> SUMMARY_STAT **tp_result;
+138,140d84
+< XMission *nullMatrix;
+< XMission *altMatrix;
+< 
+143d86
+< int loopMarkerFreqFlag = 0;
+144a88,89
+> XMission *nullMatrix;
+> XMission *altMatrix;
+146,148d90
+< void free_likelihood_storage ();
+< /* allocate two point analysis result space */
+< int allocate_tp_result_storage ();
+149a92
+> int allocate_tp_result_storage ();
+151,158c94
+< /* using the average at each theta to calculate PPL - posterior probability of linkage */
+< double calculate_PPL (SUMMARY_STAT ** result);
+< /* calculate posterior probability of LD given linakge */
+< double calculate_PPLD (SUMMARY_STAT *** result);
+< /* get the mean of LR among all D primes for each theta */
+< int get_average_LD_LR (SUMMARY_STAT *** result);
+< /* integrate out marker allele frequencies and get the max MOD */
+< int get_average_LR (SUMMARY_STAT *** result);
+---
+> void free_likelihood_storage ();
+219d154
+<   double ldppl, ppld;
+231,242d165
+<   int dprime0Idx = 0;
+<   int mkrFreqIdx;
+<   double mkrFreq;
+<   int maxThetaIdx = 0;
+<   int maxDPrimeIdx = 0;
+<   int maxDPrimeIdx_at_theta0 = 0;
+<   double max_at_theta0;
+<   double lr;
+<   int theta0Idx = 0;
+<   double max_at_dprime0;
+<   int maxTheta_at_dprime0;
+<   double dprime;
+251a175
+> 
+257a182
+> 
+269a195
+>   //logSet(LOGSETRECODING, LOGDEBUG);
+273d198
+<   //logSet(LOGSETRECODING, LOGDEBUG);
+333,342d257
+<   /* set default values for PPL calculations */
+<   /* LRs are weighted heavier for theta less than the cutoff */
+<   modelOptions.thetaCutoff = 0.05;
+<   /* weight ofr theta less than the cutoff */
+<   modelOptions.thetaWeight = 0.95;
+<   /* prior probability of linkage */
+<   modelOptions.prior = 0.02;
+<   /* prior probability of LD given close linkage */
+<   modelOptions.LDprior = 0.02;
+< 
+381,393d295
+<   if (modelType.type == TP)
+<     {
+<       fpPPL = fopen (pplfile, "w");
+<       KASSERT (fpPPL != NULL, "Error in opening file %s for write.\n",
+< 	       pplfile);
+<       fprintf (fpPPL, "%4s %15s %9s %6s ", "CHR", "MARKER", "cM", "PPL");
+<       if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+< 	{
+< 	  fprintf (fpPPL, "%6s %6s ", "LD-PPL", "PPLD");
+< 	}
+<       fprintf (fpPPL, "\n");
+<       fflush (fpPPL);
+<     }
+427d328
+<       add_allele (pLocus, "D", 0.5);
+428a330
+>       add_allele (pLocus, "D", 0.5);
+438,439d339
+< 	  pTrait->sampleMean = modelType.mean;
+< 	  pTrait->sampleSD = modelType.sd;
+501a402
+> 
+509a411,412
+> 
+> 
+525a429,432
+> 
+> 
+> 
+>   //#ifndef NO_POLYNOMIAL
+588c495
+< 
+---
+>   //#endif
+743c650
+< 	  if (modelOptions.markerAnalysis == MARKERTOMARKER
+---
+> 	  if (modelOptions.markerToMarker == TRUE
+765,766d671
+< 		  pLDLoci->numAllele1 = pLocus1->numOriginalAllele;
+< 		  pLDLoci->numAllele2 = pLocus2->numOriginalAllele;
+774,784d678
+< 	      loopMarkerFreqFlag = 0;
+< 	      if (modelRange.nafreq >= 2
+< 		  && modelOptions.equilibrium == LINKAGE_DISEQUILIBRIUM
+< 		  && pLocus2->numOriginalAllele == 2)
+< 		loopMarkerFreqFlag = 1;
+< 	      else if (modelRange.nafreq == 0)
+< 		{
+< 		  /* add a fake one to facilitate loops and other handlings */
+< 		  addAlleleFreq (&modelRange, pLocus2->pAlleleFrequency[0]);
+< 		}
+< 
+788,791c682,685
+< 	      /* we will force marker allele frequency loop to execute at least once */
+< 	      for (mkrFreqIdx = 0;
+< 		   mkrFreqIdx == 0 || mkrFreqIdx < modelRange.nafreq;
+< 		   mkrFreqIdx++)
+---
+> 	      /* Loop over the penetrances, genefrequencies, thetas and call
+> 	         the likelihood calculation, storing each value obtained to
+> 	         disk. */
+> 	      if (pTrait->type == DICHOTOMOUS)
+793,796c687,688
+< 		  mkrFreq = pLocus2->pAlleleFrequency[0];
+< 		  /* we should only loop over marker allele frequency under twopoint
+< 		   * and when markers are SNPs (only have two alleles) */
+< 		  if (loopMarkerFreqFlag)
+---
+> 
+> 		  for (penIdx = 0; penIdx < modelRange.npenet; penIdx++)
+798,801c690,712
+< 		      mkrFreq = modelRange.afreq[mkrFreqIdx];
+< 		      /* update the locus */
+< 		      pLocus2->pAlleleFrequency[0] = mkrFreq;
+< 		      pLocus2->pAlleleFrequency[1] = 1 - mkrFreq;
+---
+> 		      if (modelOptions.markerToMarker == FALSE)
+> 			{
+> 			  for (liabIdx = 0; liabIdx < modelRange.nlclass;
+> 			       liabIdx++)
+> 			    {
+> 			      pen_DD = modelRange.penet[liabIdx][0][penIdx];
+> 			      pen_Dd = modelRange.penet[liabIdx][1][penIdx];
+> 			      pen_dd = modelRange.penet[liabIdx][2][penIdx];
+> 			      pTrait->penetrance[2][liabIdx][0][0] = pen_dd;
+> 			      pTrait->penetrance[2][liabIdx][0][1] = pen_Dd;
+> 			      pTrait->penetrance[2][liabIdx][1][0] = pen_Dd;
+> 			      pTrait->penetrance[2][liabIdx][1][1] = pen_DD;
+> 			      pTrait->penetrance[1][liabIdx][0][0] =
+> 				1 - pen_dd;
+> 			      pTrait->penetrance[1][liabIdx][0][1] =
+> 				1 - pen_Dd;
+> 			      pTrait->penetrance[1][liabIdx][1][0] =
+> 				1 - pen_Dd;
+> 			      pTrait->penetrance[1][liabIdx][1][1] =
+> 				1 - pen_DD;
+> 			    }
+> 
+> 
+803,806c714,717
+< 		      if (modelOptions.polynomial == TRUE)
+< 			;
+< 		      else
+< 			update_locus (&pedigreeSet, loc2);
+---
+> 			  if (modelOptions.polynomial == TRUE)
+> 			    ;
+> 			  else
+> 			    update_penetrance (&pedigreeSet, traitLocus);
+808c719
+< 		      update_locus (&pedigreeSet, loc2);
+---
+> 			  update_penetrance (&pedigreeSet, traitLocus);
+810,817c721,723
+< 		    }
+< 		  /* Loop over the penetrances, genefrequencies, thetas and call
+< 		     the likelihood calculation, storing each value obtained to
+< 		     disk. */
+< 		  if (pTrait->type == DICHOTOMOUS)
+< 		    {
+< 
+< 		      for (penIdx = 0; penIdx < modelRange.npenet; penIdx++)
+---
+> 			}
+> 		      for (gfreqInd = 0; gfreqInd < modelRange.ngfreq;
+> 			   gfreqInd++)
+819,820c725,726
+< 			  if (modelOptions.markerAnalysis == FALSE
+< 			      && pLocus1->locusType == LOCUS_TYPE_TRAIT)
+---
+> 			  gfreq = modelRange.gfreq[gfreqInd];
+> 			  if (modelOptions.markerToMarker == FALSE)
+821a728,770
+> 			      pLocus->pAlleleFrequency[1] = gfreq;
+> 			      pLocus->pAlleleFrequency[0] = 1 - gfreq;
+> 
+> #ifndef NO_POLYNOMIAL
+> 			      if (modelOptions.polynomial == TRUE)
+> 				;
+> 			      else
+> 				update_locus (&pedigreeSet, traitLocus);
+> #else
+> 			      update_locus (&pedigreeSet, traitLocus);
+> #endif
+> 			    }
+> 			  /* get the likelihood at 0.5 first and LD=0 */
+> 			  if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+> 			    {
+> 			      set_null_dprime (pLDLoci);
+> 			      setup_LD_haplotype_freq (pLDLoci);
+> 			    }
+> 			  locusList->pNextLocusDistance[0] = 0.5;
+> 			  locusList->pPrevLocusDistance[1] = 0.5;
+> 
+> 			  /* populate the matrix */
+> 			  status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,	/* probability */
+> 							     0,	/* cell index */
+> 							     -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
+> 							     0,	/* number of het loci */
+> 							     0);	/* current locus - start with 0 */
+> 
+> 			  compute_likelihood (&pedigreeSet);
+> 
+> 
+> 			  if (numberOfCompute == 0)
+> 			    {
+> 			      time1 = clock ();
+> 			    }
+> 			  numberOfCompute++;
+> 
+> 			  if (pedigreeSet.likelihood == 0.0 &&
+> 			      pedigreeSet.log10Likelihood == -9999.99)
+> 			    {
+> 			      fprintf (stderr,
+> 				       "Theta 0.5 has likelihood 0\n");
+> 			      fprintf (stderr, "dgf=%f\n", gfreq);
+831,846c780,783
+< 				  pTrait->penetrance[2][liabIdx][0][0] =
+< 				    pen_DD;
+< 				  pTrait->penetrance[2][liabIdx][0][1] =
+< 				    pen_Dd;
+< 				  pTrait->penetrance[2][liabIdx][1][0] =
+< 				    pen_Dd;
+< 				  pTrait->penetrance[2][liabIdx][1][1] =
+< 				    pen_dd;
+< 				  pTrait->penetrance[1][liabIdx][0][0] =
+< 				    1 - pen_DD;
+< 				  pTrait->penetrance[1][liabIdx][0][1] =
+< 				    1 - pen_Dd;
+< 				  pTrait->penetrance[1][liabIdx][1][0] =
+< 				    1 - pen_Dd;
+< 				  pTrait->penetrance[1][liabIdx][1][1] =
+< 				    1 - pen_dd;
+---
+> 				  fprintf (stderr,
+> 					   "Liab %d penentrance %f %f %f\n",
+> 					   liabIdx + 1, pen_DD, pen_Dd,
+> 					   pen_dd);
+849,857c786
+< 
+< #ifndef NO_POLYNOMIAL
+< 			      if (modelOptions.polynomial == TRUE)
+< 				;
+< 			      else
+< 				update_penetrance (&pedigreeSet, traitLocus);
+< #else
+< 			      update_penetrance (&pedigreeSet, traitLocus);
+< #endif
+---
+> 			      exit (-1);
+859,860c788,790
+< 			  for (gfreqInd = 0; gfreqInd < modelRange.ngfreq;
+< 			       gfreqInd++)
+---
+> 			  /* save the results for NULL */
+> 			  for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree;
+> 			       pedIdx++)
+862,866c792,796
+< 			      gfreq = modelRange.gfreq[gfreqInd];
+< 			      if (modelOptions.markerAnalysis == FALSE)
+< 				{
+< 				  pLocus->pAlleleFrequency[0] = gfreq;
+< 				  pLocus->pAlleleFrequency[1] = 1 - gfreq;
+---
+> 			      /* save the likelihood at null */
+> 			      pPedigree = pedigreeSet.ppPedigreeSet[pedIdx];
+> 			      pedigreeSet.nullLikelihood[pedIdx] =
+> 				pPedigree->likelihood;
+> 			    }
+868,877c798,801
+< #ifndef NO_POLYNOMIAL
+< 				  if (modelOptions.polynomial == TRUE)
+< 				    ;
+< 				  else
+< 				    update_locus (&pedigreeSet, loc1);
+< #else
+< 				  update_locus (&pedigreeSet, loc1);
+< #endif
+< 				}
+< 			      /* get the likelihood at 0.5 first and LD=0 */
+---
+> 			  log10_likelihood_null = pedigreeSet.log10Likelihood;
+> 			  for (dprimeIdx = 0;
+> 			       dprimeIdx < pLambdaCell->ndprime; dprimeIdx++)
+> 			    {
+881c805,807
+< 				  set_null_dprime (pLDLoci);
+---
+> 				  copy_dprime (pLDLoci,
+> 					       pLambdaCell->
+> 					       lambda[dprimeIdx]);
+882a809,819
+> 				  /* calculate R square if the marker is a SNP */
+> 				  if (R_square_flag == TRUE)
+> 				    R_square =
+> 				      calculate_R_square (pLocus1->
+> 							  pAlleleFrequency[0],
+> 							  pLocus2->
+> 							  pAlleleFrequency[0],
+> 							  pLDLoci->
+> 							  ppDValue[0][0]);
+> 				  else
+> 				    R_square = -1;
+884,885d820
+< 			      locusList->pNextLocusDistance[0] = 0.5;
+< 			      locusList->pPrevLocusDistance[1] = 0.5;
+887,897c822,823
+<                           /* populate the matrix */
+<                           status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,        /* probability */
+<                                                              0, /* cell index */
+<                                                              -1, -1,    /* last het locus & last het pattern (P-1 or M-2) */
+<                                                              0, /* number of het loci */
+<                                                              0);        /* current locus - start with 0 */
+< 
+< 			      compute_likelihood (&pedigreeSet);
+< 
+< 
+< 			      if (numberOfCompute == 0)
+---
+> 			      for (thetaInd = 0; thetaInd < modelRange.ntheta;
+> 				   thetaInd++)
+899,901c825,834
+< 				  time1 = clock ();
+< 				}
+< 			      numberOfCompute++;
+---
+> 				  theta = modelRange.theta[0][thetaInd];
+> 				  locusList->pNextLocusDistance[0] = theta;
+> 				  locusList->pPrevLocusDistance[1] = theta;
+> 
+> 				  /* populate the matrix */
+> 				  status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,	/* probability */
+> 								     0,	/* cell index */
+> 								     -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
+> 								     0,	/* number of het loci */
+> 								     0);	/* current locus - start with 0 */
+903,911c836,842
+< 			      if (pedigreeSet.likelihood == 0.0 &&
+< 				  pedigreeSet.log10Likelihood == -9999.99)
+< 				{
+< 				  fprintf (stderr,
+< 					   "Theta 0.5 has likelihood 0\n");
+< 				  fprintf (stderr, "dgf=%f\n", gfreq);
+< 				  for (liabIdx = 0;
+< 				       liabIdx < modelRange.nlclass;
+< 				       liabIdx++)
+---
+> 				  compute_likelihood (&pedigreeSet);
+> 
+> 				  log10_likelihood_alternative =
+> 				    pedigreeSet.log10Likelihood;
+> 				  if (pedigreeSet.likelihood == 0.0
+> 				      && pedigreeSet.log10Likelihood ==
+> 				      -9999.99)
+913,922c844
+< 				      pen_DD =
+< 					modelRange.penet[liabIdx][0][penIdx];
+< 				      pen_Dd =
+< 					modelRange.penet[liabIdx][1][penIdx];
+< 				      pen_dd =
+< 					modelRange.penet[liabIdx][2][penIdx];
+< 				      fprintf (stderr,
+< 					       "Liab %d penentrance %f %f %f\n",
+< 					       liabIdx + 1, pen_DD, pen_Dd,
+< 					       pen_dd);
+---
+> 				      log10_likelihood_ratio = 0;
+924,945c846
+< 
+< 				  exit (-1);
+< 				}
+< 			      /* save the results for NULL */
+< 			      for (pedIdx = 0;
+< 				   pedIdx < pedigreeSet.numPedigree; pedIdx++)
+< 				{
+< 				  /* save the likelihood at null */
+< 				  pPedigree =
+< 				    pedigreeSet.ppPedigreeSet[pedIdx];
+< 				  pedigreeSet.nullLikelihood[pedIdx] =
+< 				    pPedigree->likelihood;
+< 				}
+< 
+< 			      log10_likelihood_null =
+< 				pedigreeSet.log10Likelihood;
+< 			      for (dprimeIdx = 0;
+< 				   dprimeIdx < pLambdaCell->ndprime;
+< 				   dprimeIdx++)
+< 				{
+< 				  if (modelOptions.equilibrium !=
+< 				      LINKAGE_EQUILIBRIUM)
+---
+> 				  else
+947,970c848,850
+< 				      copy_dprime (pLDLoci,
+< 						   pLambdaCell->
+< 						   lambda[dprimeIdx]);
+< 				      setup_LD_haplotype_freq (pLDLoci);
+< 				      /* calculate R square if the marker is a SNP */
+< 				      if (R_square_flag == TRUE)
+< 					R_square =
+< 					  calculate_R_square (pLocus1->
+< 							      pAlleleFrequency
+< 							      [0],
+< 							      pLocus2->
+< 							      pAlleleFrequency
+< 							      [0],
+< 							      pLDLoci->
+< 							      ppDValue[0][0]);
+< 				      else
+< 					R_square = -1;
+< 
+< 				      if (-ERROR_MARGIN <=
+< 					  pLambdaCell->lambda[dprimeIdx][0][0]
+< 					  && pLambdaCell->
+< 					  lambda[dprimeIdx][0][0] <=
+< 					  ERROR_MARGIN)
+< 					dprime0Idx = dprimeIdx;
+---
+> 				      log10_likelihood_ratio =
+> 					log10_likelihood_alternative -
+> 					log10_likelihood_null;
+972,975c852,855
+< 
+< 				  for (thetaInd = 0;
+< 				       thetaInd < modelRange.ntheta;
+< 				       thetaInd++)
+---
+> 				  likelihood_ratio =
+> 				    pow (10.0, log10_likelihood_ratio);
+> 				  /* caculating the HET */
+> 				  for (j = 0; j < modelRange.nalpha; j++)
+977,996c857,864
+< 				      theta = modelRange.theta[0][thetaInd];
+< 				      locusList->pNextLocusDistance[0] =
+< 					theta;
+< 				      locusList->pPrevLocusDistance[1] =
+< 					theta;
+< 
+< /* populate the matrix */
+<                                   status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,        /* probability */
+<                                                                      0, /* cell index */
+<                                                                      -1, -1,    /* last het locus & last het pattern (P-1 or M-2) */
+<                                                                      0, /* number of het loci */
+<                                                                      0);        /* current locus - start with 0 */
+< 
+< 				      compute_likelihood (&pedigreeSet);
+< 
+< 				      log10_likelihood_alternative =
+< 					pedigreeSet.log10Likelihood;
+< 				      if (pedigreeSet.likelihood == 0.0
+< 					  && pedigreeSet.log10Likelihood ==
+< 					  -9999.99)
+---
+> 				      alphaV = modelRange.alpha[j];
+> 				      alphaV2 = 1 - alphaV;
+> 				      if (alphaV2 < 0)
+> 					alphaV2 = 0;
+> 				      log10HetLR = 0;
+> 				      for (pedIdx = 0;
+> 					   pedIdx < pedigreeSet.numPedigree;
+> 					   pedIdx++)
+998c866,873
+< 					  log10_likelihood_ratio = 0;
+---
+> 					  pPedigree =
+> 					    pedigreeSet.ppPedigreeSet[pedIdx];
+> 					  homoLR =
+> 					    pPedigree->likelihood /
+> 					    pedigreeSet.
+> 					    nullLikelihood[pedIdx];
+> 					  log10HetLR +=
+> 					    log10 (alphaV * homoLR + alphaV2);
+1000c875,882
+< 				      else
+---
+> 				      hetLR = pow (10, log10HetLR);
+> 				      tp_result[dprimeIdx][thetaInd].
+> 					het_lr_total += hetLR;
+> 				      if (tp_result[dprimeIdx][thetaInd].
+> 					  max_penIdx < 0
+> 					  || hetLR >
+> 					  tp_result[dprimeIdx][thetaInd].
+> 					  max_lr)
+1002,1004c884,893
+< 					  log10_likelihood_ratio =
+< 					    log10_likelihood_alternative -
+< 					    log10_likelihood_null;
+---
+> 					  tp_result[dprimeIdx][thetaInd].
+> 					    max_lr = hetLR;
+> 					  tp_result[dprimeIdx][thetaInd].
+> 					    max_alpha = alphaV;
+> 					  tp_result[dprimeIdx][thetaInd].
+> 					    max_gfreq = gfreq;
+> 					  tp_result[dprimeIdx][thetaInd].
+> 					    max_penIdx = penIdx;
+> 					  tp_result[dprimeIdx][thetaInd].
+> 					    R_square = R_square;
+1006,1078c895,904
+< 				      likelihood_ratio =
+< 					pow (10.0, log10_likelihood_ratio);
+< 				      /* caculating the HET */
+< 				      for (j = 0; j < modelRange.nalpha; j++)
+< 					{
+< 					  alphaV = modelRange.alpha[j];
+< 					  alphaV2 = 1 - alphaV;
+< 					  if (alphaV2 < 0)
+< 					    alphaV2 = 0;
+< 					  log10HetLR = 0;
+< 					  for (pedIdx = 0;
+< 					       pedIdx <
+< 					       pedigreeSet.numPedigree;
+< 					       pedIdx++)
+< 					    {
+< 					      pPedigree =
+< 						pedigreeSet.
+< 						ppPedigreeSet[pedIdx];
+< 					      homoLR =
+< 						pPedigree->likelihood /
+< 						pedigreeSet.
+< 						nullLikelihood[pedIdx];
+< 					      log10HetLR +=
+< 						log10 (alphaV * homoLR +
+< 						       (1 - alphaV));
+< 					    }
+< 					  hetLR = pow (10, log10HetLR);
+< 					  tp_result[dprimeIdx][thetaInd]
+< 					    [mkrFreqIdx].het_lr_total +=
+< 					    hetLR;
+< 					  if (tp_result[dprimeIdx][thetaInd]
+< 					      [mkrFreqIdx].max_penIdx < 0
+< 					      || hetLR >
+< 					      tp_result[dprimeIdx][thetaInd]
+< 					      [mkrFreqIdx].max_lr)
+< 					    {
+< 					      tp_result[dprimeIdx][thetaInd]
+< 						[mkrFreqIdx].max_lr = hetLR;
+< 					      tp_result[dprimeIdx][thetaInd]
+< 						[mkrFreqIdx].max_alpha =
+< 						alphaV;
+< 					      tp_result[dprimeIdx][thetaInd]
+< 						[mkrFreqIdx].max_gfreq =
+< 						gfreq;
+< 					      tp_result[dprimeIdx][thetaInd]
+< 						[mkrFreqIdx].max_penIdx =
+< 						penIdx;
+< 					      tp_result[dprimeIdx][thetaInd]
+< 						[mkrFreqIdx].R_square =
+< 						R_square;
+< 					      tp_result[dprimeIdx][thetaInd]
+< 						[mkrFreqIdx].max_mf = mkrFreq;
+< 					    }
+< 					}	/* end of calculating HET LR */
+< 				      /* add the result to the right placeholder */
+< 				      tp_result[dprimeIdx][thetaInd]
+< 					[mkrFreqIdx].lr_total +=
+< 					likelihood_ratio;
+< 				      tp_result[dprimeIdx][thetaInd]
+< 					[mkrFreqIdx].lr_count++;
+< 				      //fprintf(stderr, "likelihood ratio: %e.\n", likelihood_ratio);
+< 
+< 				    }	/* end of theta loop */
+< 				}	/* end of D prime loop */
+< 			      if (modelOptions.markerAnalysis ==
+< 				  MARKERTOMARKER)
+< 				{
+< 				  /* marker to marker analysis, marker allele frequency is fixed */
+< 				  gfreqInd = modelRange.ngfreq;
+< 				  break;
+< 				}
+< 			    }	/* end of genFreq loop */
+< 			  if (modelOptions.markerAnalysis == MARKERTOMARKER)
+---
+> 				    }	/* end of calculating HET LR */
+> 				  /* add the result to the right placeholder */
+> 				  tp_result[dprimeIdx][thetaInd].lr_total +=
+> 				    likelihood_ratio;
+> 				  tp_result[dprimeIdx][thetaInd].lr_count++;
+> 				  //fprintf(stderr, "likelihood ratio: %e.\n", likelihood_ratio);
+> 
+> 				}	/* end of theta loop */
+> 			    }	/* end of D prime loop */
+> 			  if (modelOptions.markerToMarker == TRUE)
+1080c906,907
+< 			      /* marker to marker analysis, penetrance stays at 1 */
+---
+> 			      /* marker to marker analysis, marker allele frequency is fixed */
+> 			      gfreqInd = modelRange.ngfreq;
+1083,1086c910,921
+< 			}	/* end of penetrance loop */
+< 		    }		/* end of TP */
+< 		  else
+< 		    /* should be QT or COMBINED - twopoint */
+---
+> 			}	/* end of genFreq loop */
+> 		      if (modelOptions.markerToMarker == TRUE)
+> 			{
+> 			  /* marker to marker analysis, penetrance stays at 1 */
+> 			  break;
+> 			}
+> 		    }		/* end of penetrance loop */
+> 		}		/* end of TP */
+> 	      else
+> 		/* should be QT or COMBINED - twopoint */
+> 		{
+> 		  for (gfreqInd = 0; gfreqInd < modelRange.ngfreq; gfreqInd++)
+1088,1089c923,924
+< 		      for (gfreqInd = 0; gfreqInd < modelRange.ngfreq;
+< 			   gfreqInd++)
+---
+> 		      gfreq = modelRange.gfreq[gfreqInd];
+> 		      if (modelOptions.markerToMarker == FALSE)
+1091,1095c926,927
+< 			  gfreq = modelRange.gfreq[gfreqInd];
+< 			  if (modelOptions.markerAnalysis == FALSE)
+< 			    {
+< 			      pLocus->pAlleleFrequency[0] = gfreq;
+< 			      pLocus->pAlleleFrequency[1] = 1 - gfreq;
+---
+> 			  pLocus->pAlleleFrequency[1] = gfreq;
+> 			  pLocus->pAlleleFrequency[0] = 1 - gfreq;
+1097,1101c929,936
+< 			      update_locus (&pedigreeSet, traitLocus);
+< 			    }
+< 			  /* this should be MEAN + SD */
+< 			  for (paramIdx = 0; paramIdx < modelRange.nparam;
+< 			       paramIdx++)
+---
+> 			  update_locus (&pedigreeSet, traitLocus);
+> 			}
+> 		      /* this should be MEAN + SD */
+> 		      for (paramIdx = 0; paramIdx < modelRange.nparam;
+> 			   paramIdx++)
+> 			{
+> 			  for (penIdx = 0; penIdx < modelRange.npenet;
+> 			       penIdx++)
+1103,1104c938,941
+< 			      for (penIdx = 0; penIdx < modelRange.npenet;
+< 				   penIdx++)
+---
+> 			      breakFlag = FALSE;
+> 			      for (thresholdIdx = 0;
+> 				   thresholdIdx < modelRange.ntthresh;
+> 				   thresholdIdx++)
+1106,1109c943
+< 				  breakFlag = FALSE;
+< 				  for (thresholdIdx = 0;
+< 				       thresholdIdx < modelRange.ntthresh;
+< 				       thresholdIdx++)
+---
+> 				  if (modelOptions.markerToMarker == FALSE)
+1111,1112c945,947
+< 				      if (modelOptions.markerAnalysis ==
+< 					  FALSE)
+---
+> 				      for (liabIdx = 0;
+> 					   liabIdx < modelRange.nlclass;
+> 					   liabIdx++)
+1114,1154c949,980
+< 					  for (liabIdx = 0;
+< 					       liabIdx < modelRange.nlclass;
+< 					       liabIdx++)
+< 					    {
+< 					      mean_DD =
+< 						modelRange.
+< 						penet[liabIdx][0][penIdx];
+< 					      mean_Dd =
+< 						modelRange.
+< 						penet[liabIdx][1][penIdx];
+< 					      mean_dd =
+< 						modelRange.
+< 						penet[liabIdx][2][penIdx];
+< 					      SD_DD =
+< 						modelRange.
+< 						param[liabIdx][0][0]
+< 						[paramIdx];
+< 					      SD_Dd =
+< 						modelRange.
+< 						param[liabIdx][1][0]
+< 						[paramIdx];
+< 					      SD_dd =
+< 						modelRange.
+< 						param[liabIdx][2][0]
+< 						[paramIdx];
+< 					      /* threshold for QT */
+< 					      threshold =
+< 						modelRange.
+< 						tthresh[liabIdx]
+< 						[thresholdIdx];
+< 
+< 
+< 					      /* check against the hard coded constraint */
+< 					      constraint =
+< 						pow (1.0 - gfreq,
+< 						     2) * mean_dd * SD_dd +
+< 						2 * gfreq * (1 -
+< 							     gfreq) *
+< 						mean_Dd * SD_Dd + pow (gfreq,
+< 								       2) *
+< 						mean_DD * SD_DD;
+---
+> 					  mean_DD =
+> 					    modelRange.
+> 					    penet[liabIdx][0][penIdx];
+> 					  mean_Dd =
+> 					    modelRange.
+> 					    penet[liabIdx][1][penIdx];
+> 					  mean_dd =
+> 					    modelRange.
+> 					    penet[liabIdx][2][penIdx];
+> 					  SD_DD =
+> 					    modelRange.
+> 					    param[liabIdx][0][0][paramIdx];
+> 					  SD_Dd =
+> 					    modelRange.
+> 					    param[liabIdx][1][0][paramIdx];
+> 					  SD_dd =
+> 					    modelRange.
+> 					    param[liabIdx][2][0][paramIdx];
+> 					  /* threshold for QT */
+> 					  threshold =
+> 					    modelRange.
+> 					    tthresh[liabIdx][thresholdIdx];
+> 
+> 
+> 					  /* check against the hard coded constraint */
+> 					  constraint =
+> 					    pow (1.0 - gfreq,
+> 						 2) * mean_dd * SD_dd +
+> 					    2 * gfreq * (1 -
+> 							 gfreq) * mean_Dd *
+> 					    SD_Dd + pow (gfreq,
+> 							 2) * mean_DD * SD_DD;
+1160,1200c986,991
+< 					      if (constraint >= 3.0
+< 						  || constraint <= -3.0)
+< 						{
+< 						  breakFlag = TRUE;
+< 						  break;
+< 						}
+< 
+< 					      pTrait->means[liabIdx][0][0] =
+< 						mean_DD;
+< 					      pTrait->means[liabIdx][0][1] =
+< 						mean_Dd;
+< 					      pTrait->means[liabIdx][1][0] =
+< 						mean_Dd;
+< 					      pTrait->means[liabIdx][1][1] =
+< 						mean_dd;
+< 					      pTrait->stddev[liabIdx][0][0] =
+< 						SD_DD;
+< 					      pTrait->stddev[liabIdx][0][1] =
+< 						SD_Dd;
+< 					      pTrait->stddev[liabIdx][1][0] =
+< 						SD_Dd;
+< 					      pTrait->stddev[liabIdx][1][1] =
+< 						SD_dd;
+< 
+< 					      /* threshold for QT */
+< 					      pTrait->cutoffValue[liabIdx] =
+< 						threshold;
+< 
+< 					    }	/* liability class Index */
+< 					  if (breakFlag == TRUE)
+< 					    continue;
+< 					  update_penetrance (&pedigreeSet,
+< 							     traitLocus);
+< 					}	/* marker to marker analysis */
+< 				      /* get the likelihood at 0.5 first and LD=0 */
+< 				      if (modelOptions.equilibrium !=
+< 					  LINKAGE_EQUILIBRIUM)
+< 					{
+< 					  set_null_dprime (pLDLoci);
+< 					  setup_LD_haplotype_freq (pLDLoci);
+< 					}
+---
+> 					  if (constraint >= 3.0
+> 					      || constraint <= -3.0)
+> 					    {
+> 					      breakFlag = TRUE;
+> 					      break;
+> 					    }
+1202,1203c993,1026
+< 				      locusList->pNextLocusDistance[0] = 0.5;
+< 				      locusList->pPrevLocusDistance[1] = 0.5;
+---
+> 					  pTrait->means[liabIdx][0][0] =
+> 					    mean_DD;
+> 					  pTrait->means[liabIdx][0][1] =
+> 					    mean_Dd;
+> 					  pTrait->means[liabIdx][1][0] =
+> 					    mean_Dd;
+> 					  pTrait->means[liabIdx][1][1] =
+> 					    mean_dd;
+> 					  pTrait->stddev[liabIdx][0][0] =
+> 					    SD_DD;
+> 					  pTrait->stddev[liabIdx][0][1] =
+> 					    SD_Dd;
+> 					  pTrait->stddev[liabIdx][1][0] =
+> 					    SD_Dd;
+> 					  pTrait->stddev[liabIdx][1][1] =
+> 					    SD_dd;
+> 
+> 					  /* threshold for QT */
+> 					  pTrait->cutoffValue[liabIdx] =
+> 					    threshold;
+> 
+> 					}	/* liability class Index */
+> 				      if (breakFlag == TRUE)
+> 					continue;
+> 				      update_penetrance (&pedigreeSet,
+> 							 traitLocus);
+> 				    }	/* marker to marker analysis */
+> 				  /* get the likelihood at 0.5 first and LD=0 */
+> 				  if (modelOptions.equilibrium !=
+> 				      LINKAGE_EQUILIBRIUM)
+> 				    {
+> 				      set_null_dprime (pLDLoci);
+> 				      setup_LD_haplotype_freq (pLDLoci);
+> 				    }
+1205,1210c1028,1035
+<                                   /* populate the matrix */
+<                                   status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,        /* probability */
+<                                                                      0, /* cell index */
+<                                                                      -1, -1,    /* last het locus & last het pattern (P-1 or M-2) */
+<                                                                      0, /* number of het loci */
+<                                                                      0);        /* current locus - start with 0 */
+---
+> 				  locusList->pNextLocusDistance[0] = 0.5;
+> 				  locusList->pPrevLocusDistance[1] = 0.5;
+> 				  /* populate the matrix */
+> 				  status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,	/* probability */
+> 								     0,	/* cell index */
+> 								     -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
+> 								     0,	/* number of het loci */
+> 								     0);	/* current locus - start with 0 */
+1211a1037
+> 				  compute_likelihood (&pedigreeSet);
+1213d1038
+< 				      compute_likelihood (&pedigreeSet);
+1214a1040,1044
+> 				  if (numberOfCompute == 0)
+> 				    {
+> 				      time1 = clock ();
+> 				    }
+> 				  numberOfCompute++;
+1216c1046,1054
+< 				      if (numberOfCompute == 0)
+---
+> 				  if (pedigreeSet.likelihood == 0.0 &&
+> 				      pedigreeSet.log10Likelihood == -9999.99)
+> 				    {
+> 				      fprintf (stderr,
+> 					       "Theta 0.5 has likelihood 0\n");
+> 				      fprintf (stderr, "dgf=%f\n", gfreq);
+> 				      for (liabIdx = 0;
+> 					   liabIdx < modelRange.nlclass;
+> 					   liabIdx++)
+1218c1056,1068
+< 					  time1 = clock ();
+---
+> 					  pen_DD =
+> 					    modelRange.
+> 					    penet[liabIdx][0][penIdx];
+> 					  pen_Dd =
+> 					    modelRange.
+> 					    penet[liabIdx][1][penIdx];
+> 					  pen_dd =
+> 					    modelRange.
+> 					    penet[liabIdx][2][penIdx];
+> 					  fprintf (stderr,
+> 						   "Liab %d penentrance %f %f %f\n",
+> 						   liabIdx + 1, pen_DD,
+> 						   pen_Dd, pen_dd);
+1220d1069
+< 				      numberOfCompute++;
+1222,1246c1071,1072
+< 				      if (pedigreeSet.likelihood == 0.0 &&
+< 					  pedigreeSet.log10Likelihood ==
+< 					  -9999.99)
+< 					{
+< 					  fprintf (stderr,
+< 						   "Theta 0.5 has likelihood 0\n");
+< 					  fprintf (stderr, "dgf=%f\n", gfreq);
+< 					  for (liabIdx = 0;
+< 					       liabIdx < modelRange.nlclass;
+< 					       liabIdx++)
+< 					    {
+< 					      pen_DD =
+< 						modelRange.
+< 						penet[liabIdx][0][penIdx];
+< 					      pen_Dd =
+< 						modelRange.
+< 						penet[liabIdx][1][penIdx];
+< 					      pen_dd =
+< 						modelRange.
+< 						penet[liabIdx][2][penIdx];
+< 					      fprintf (stderr,
+< 						       "Liab %d penentrance %f %f %f\n",
+< 						       liabIdx + 1, pen_DD,
+< 						       pen_Dd, pen_dd);
+< 					    }
+---
+> 				      exit (-1);
+> 				    }
+1248,1249c1074,1083
+< 					  exit (-1);
+< 					}
+---
+> 				  for (pedIdx = 0;
+> 				       pedIdx < pedigreeSet.numPedigree;
+> 				       pedIdx++)
+> 				    {
+> 				      /* save the likelihood at null */
+> 				      pPedigree =
+> 					pedigreeSet.ppPedigreeSet[pedIdx];
+> 				      pedigreeSet.nullLikelihood[pedIdx] =
+> 					pPedigree->likelihood;
+> 				    }
+1251,1253c1085,1092
+< 				      for (pedIdx = 0;
+< 					   pedIdx < pedigreeSet.numPedigree;
+< 					   pedIdx++)
+---
+> 				  log10_likelihood_null =
+> 				    pedigreeSet.log10Likelihood;
+> 				  for (dprimeIdx = 0;
+> 				       dprimeIdx < pLambdaCell->ndprime;
+> 				       dprimeIdx++)
+> 				    {
+> 				      if (modelOptions.equilibrium !=
+> 					  LINKAGE_EQUILIBRIUM)
+1255,1259c1094,1097
+< 					  /* save the likelihood at null */
+< 					  pPedigree =
+< 					    pedigreeSet.ppPedigreeSet[pedIdx];
+< 					  pedigreeSet.nullLikelihood[pedIdx] =
+< 					    pPedigree->likelihood;
+---
+> 					  copy_dprime (pLDLoci,
+> 						       pLambdaCell->
+> 						       lambda[dprimeIdx]);
+> 					  setup_LD_haplotype_freq (pLDLoci);
+1261,1266c1099,1101
+< 
+< 				      log10_likelihood_null =
+< 					pedigreeSet.log10Likelihood;
+< 				      for (dprimeIdx = 0;
+< 					   dprimeIdx < pLambdaCell->ndprime;
+< 					   dprimeIdx++)
+---
+> 				      for (thetaInd = 0;
+> 					   thetaInd < modelRange.ntheta;
+> 					   thetaInd++)
+1268,1269c1103,1123
+< 					  if (modelOptions.equilibrium !=
+< 					      LINKAGE_EQUILIBRIUM)
+---
+> 					  theta =
+> 					    modelRange.theta[0][thetaInd];
+> 					  locusList->pNextLocusDistance[0] =
+> 					    theta;
+> 					  locusList->pPrevLocusDistance[1] =
+> 					    theta;
+> 
+> 					  /* populate the matrix */
+> 					  status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,	/* probability */
+> 									     0,	/* cell index */
+> 									     -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
+> 									     0,	/* number of het loci */
+> 									     0);	/* current locus - start with 0 */
+> 
+> 					  compute_likelihood (&pedigreeSet);
+> 
+> 					  log10_likelihood_alternative =
+> 					    pedigreeSet.log10Likelihood;
+> 					  if (pedigreeSet.likelihood == 0.0
+> 					      && pedigreeSet.
+> 					      log10Likelihood == -9999.99)
+1271,1275c1125
+< 					      copy_dprime (pLDLoci,
+< 							   pLambdaCell->
+< 							   lambda[dprimeIdx]);
+< 					      setup_LD_haplotype_freq
+< 						(pLDLoci);
+---
+> 					      log10_likelihood_ratio = 0;
+1277,1279c1127
+< 					  for (thetaInd = 0;
+< 					       thetaInd < modelRange.ntheta;
+< 					       thetaInd++)
+---
+> 					  else
+1281,1307c1129,1148
+< 					      theta =
+< 						modelRange.theta[0][thetaInd];
+< 					      locusList->
+< 						pNextLocusDistance[0] = theta;
+< 					      locusList->
+< 						pPrevLocusDistance[1] = theta;
+< 
+<                                   /* populate the matrix */
+<                                   status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,        /* probability */
+<                                                                      0, /* cell index */
+<                                                                      -1, -1,    /* last het locus & last het pattern (P-1 or M-2) */
+<                                                                      0, /* number of het loci */
+<                                                                      0);        /* current locus - start with 0 */
+< 
+< 
+< 					      compute_likelihood
+< 						(&pedigreeSet);
+< 					      log10_likelihood_alternative =
+< 						pedigreeSet.log10Likelihood;
+< 					      if (pedigreeSet.likelihood ==
+< 						  0.0
+< 						  && pedigreeSet.
+< 						  log10Likelihood == -9999.99)
+< 						{
+< 						  log10_likelihood_ratio = 0;
+< 						}
+< 					      else
+---
+> 					      log10_likelihood_ratio =
+> 						log10_likelihood_alternative -
+> 						log10_likelihood_null;
+> 					    }
+> 					  likelihood_ratio =
+> 					    pow (10.0,
+> 						 log10_likelihood_ratio);
+> 					  /* caculating the HET */
+> 					  for (j = 0; j < modelRange.nalpha;
+> 					       j++)
+> 					    {
+> 					      alphaV = modelRange.alpha[j];
+> 					      alphaV2 = 1 - alphaV;
+> 					      if (alphaV2 < 0)
+> 						alphaV2 = 0;
+> 					      hetLR = 0;
+> 					      for (pedIdx = 0;
+> 						   pedIdx <
+> 						   pedigreeSet.numPedigree;
+> 						   pedIdx++)
+1309,1311c1150,1159
+< 						  log10_likelihood_ratio =
+< 						    log10_likelihood_alternative
+< 						    - log10_likelihood_null;
+---
+> 						  pPedigree =
+> 						    pedigreeSet.
+> 						    ppPedigreeSet[pedIdx];
+> 						  homoLR =
+> 						    pPedigree->likelihood /
+> 						    pedigreeSet.
+> 						    nullLikelihood[pedIdx];
+> 						  hetLR +=
+> 						    log10 (alphaV * homoLR +
+> 							   alphaV2);
+1313,1318c1161,1168
+< 					      likelihood_ratio =
+< 						pow (10.0,
+< 						     log10_likelihood_ratio);
+< 					      /* caculating the HET */
+< 					      for (j = 0;
+< 						   j < modelRange.nalpha; j++)
+---
+> 					      hetLR = pow (10, hetLR);
+> 					      tp_result[dprimeIdx][thetaInd].
+> 						het_lr_total += hetLR;
+> 					      if (tp_result[dprimeIdx]
+> 						  [thetaInd].max_penIdx < 0
+> 						  || hetLR >
+> 						  tp_result[dprimeIdx]
+> 						  [thetaInd].max_lr)
+1320,1345d1169
+< 						  alphaV =
+< 						    modelRange.alpha[j];
+< 						  alphaV2 = 1 - alphaV;
+< 						  if (alphaV2 < 0)
+< 						    alphaV2 = 0;
+< 						  hetLR = 0;
+< 						  for (pedIdx = 0;
+< 						       pedIdx <
+< 						       pedigreeSet.
+< 						       numPedigree; pedIdx++)
+< 						    {
+< 						      pPedigree =
+< 							pedigreeSet.
+< 							ppPedigreeSet[pedIdx];
+< 						      homoLR =
+< 							pPedigree->
+< 							likelihood /
+< 							pedigreeSet.
+< 							nullLikelihood
+< 							[pedIdx];
+< 						      hetLR +=
+< 							log10 (alphaV *
+< 							       homoLR +
+< 							       alphaV2);
+< 						    }
+< 						  hetLR = pow (10, hetLR);
+1347,1381c1171,1183
+< 						    [thetaInd][mkrFreqIdx].
+< 						    het_lr_total += hetLR;
+< 						  if (tp_result[dprimeIdx]
+< 						      [thetaInd][mkrFreqIdx].
+< 						      max_penIdx < 0
+< 						      || hetLR >
+< 						      tp_result[dprimeIdx]
+< 						      [thetaInd][mkrFreqIdx].
+< 						      max_lr)
+< 						    {
+< 						      tp_result[dprimeIdx]
+< 							[thetaInd]
+< 							[mkrFreqIdx].max_lr =
+< 							hetLR;
+< 						      tp_result[dprimeIdx]
+< 							[thetaInd]
+< 							[mkrFreqIdx].
+< 							max_alpha = alphaV;
+< 						      tp_result[dprimeIdx]
+< 							[thetaInd]
+< 							[mkrFreqIdx].
+< 							max_gfreq = gfreq;
+< 						      tp_result[dprimeIdx]
+< 							[thetaInd]
+< 							[mkrFreqIdx].
+< 							max_penIdx = penIdx;
+< 						      tp_result[dprimeIdx]
+< 							[thetaInd]
+< 							[mkrFreqIdx].
+< 							R_square = R_square;
+< 						      tp_result[dprimeIdx]
+< 							[thetaInd]
+< 							[mkrFreqIdx].max_mf =
+< 							mkrFreq;
+< 						    }
+---
+> 						    [thetaInd].max_lr = hetLR;
+> 						  tp_result[dprimeIdx]
+> 						    [thetaInd].max_alpha =
+> 						    alphaV;
+> 						  tp_result[dprimeIdx]
+> 						    [thetaInd].max_gfreq =
+> 						    gfreq;
+> 						  tp_result[dprimeIdx]
+> 						    [thetaInd].max_penIdx =
+> 						    penIdx;
+> 						  tp_result[dprimeIdx]
+> 						    [thetaInd].R_square =
+> 						    R_square;
+1383,1398c1185,1195
+< 					      /* add the result to the right placeholder */
+< 					      tp_result[dprimeIdx][thetaInd]
+< 						[mkrFreqIdx].lr_total +=
+< 						likelihood_ratio;
+< 					      tp_result[dprimeIdx][thetaInd]
+< 						[mkrFreqIdx].lr_count++;
+< 					      //fprintf(stderr, "likelihood ratio: %e.\n", likelihood_ratio);
+< 
+< 					    }	/* end of theta */
+< 					}	/* end of D prime */
+< 				      if (modelOptions.markerAnalysis ==
+< 					  MARKERTOMARKER)
+< 					break;
+< 				    }	/* end of threshold loop */
+< 				  if (modelOptions.markerAnalysis ==
+< 				      MARKERTOMARKER)
+---
+> 					    }
+> 					  /* add the result to the right placeholder */
+> 					  tp_result[dprimeIdx][thetaInd].
+> 					    lr_total += likelihood_ratio;
+> 					  tp_result[dprimeIdx][thetaInd].
+> 					    lr_count++;
+> 					  //fprintf(stderr, "likelihood ratio: %e.\n", likelihood_ratio);
+> 
+> 					}	/* end of theta */
+> 				    }	/* end of D prime */
+> 				  if (modelOptions.markerToMarker == TRUE)
+1400,1402c1197,1198
+< 				}	/* end of penetrance loop */
+< 			      if (modelOptions.markerAnalysis ==
+< 				  MARKERTOMARKER)
+---
+> 				}	/* end of threshold loop */
+> 			      if (modelOptions.markerToMarker == TRUE)
+1404,1405c1200,1201
+< 			    }	/* end of parameter loop */
+< 			  if (modelOptions.markerAnalysis == MARKERTOMARKER)
+---
+> 			    }	/* end of penetrance loop */
+> 			  if (modelOptions.markerToMarker == TRUE)
+1407,1418c1203,1207
+< 			}	/* end of gene freq */
+< 		    }		/* end of QT */
+< 		  /* only loop marker allele frequencies when doing LD */
+< 		  if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
+< 		    break;
+< 		  /* we can only do SNPs when looping over marker allele frequency */
+< 		  if (pLocus2->numOriginalAllele > 2)
+< 		    break;
+< 		}		/* end of marker allele frequency looping */
+< 
+< 	      /* calculate the average BR */
+< 	      get_average_LR (tp_result);
+---
+> 			}	/* end of parameter loop */
+> 		      if (modelOptions.markerToMarker == TRUE)
+> 			break;
+> 		    }		/* end of gene freq */
+> 		}		/* end of QT */
+1420d1208
+< #if 0
+1433,1437c1221,1223
+< 				   tp_result[dprimeIdx][thetaInd][0].
+< 				   lr_total /
+< 				   tp_result[dprimeIdx][thetaInd][0].lr_count,
+< 				   tp_result[dprimeIdx][thetaInd][0].
+< 				   lr_count);
+---
+> 				   tp_result[dprimeIdx][thetaInd].lr_total /
+> 				   tp_result[dprimeIdx][thetaInd].lr_count,
+> 				   tp_result[dprimeIdx][thetaInd].lr_count);
+1443c1229
+< 				   tp_result[dprimeIdx][thetaInd][0].lr_count,
+---
+> 				   tp_result[dprimeIdx][thetaInd].lr_count,
+1445c1231
+< 				   log10 (tp_result[dprimeIdx][thetaInd][0].
+---
+> 				   log10 (tp_result[dprimeIdx][thetaInd].
+1447c1233
+< 					  tp_result[dprimeIdx][thetaInd][0].
+---
+> 					  tp_result[dprimeIdx][thetaInd].
+1453,1504d1238
+< 	      fflush (fpHomo);
+< #endif
+< 	      /* for each D prime and theta, print out average and maximizing model information - MOD */
+< 	      fprintf (fpHet, "# %-d  %s %s \n", loc2, pLocus1->sName,
+< 		       pLocus2->sName);
+< 	      fprintf (fpHet,
+< 		       "DPrime Theta(M, F) COUNT AVG_LR MAX_HLOD R2 ALPHA DGF MF PEN_DD PEN_Dd PEN_dd\n");
+< 	      for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime;
+< 		   dprimeIdx++)
+< 		{
+< 		  for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++)
+< 		    {
+< 		      theta = modelRange.theta[0][thetaInd];
+< 		      max =
+< 			log10 (tp_result[dprimeIdx][thetaInd]
+< 			       [modelRange.nafreq].max_lr);
+< 		      gfreq =
+< 			tp_result[dprimeIdx][thetaInd][modelRange.nafreq].
+< 			max_gfreq;
+< 		      alphaV =
+< 			tp_result[dprimeIdx][thetaInd][modelRange.nafreq].
+< 			max_alpha;
+< 		      penIdx =
+< 			tp_result[dprimeIdx][thetaInd][modelRange.nafreq].
+< 			max_penIdx;
+< 		      fprintf (fpHet,
+< 			       "%5.2f (%6.4f, %6.4f) %6d %8.4f %8.4f %6.4f %4.2f %6.4f %6.4f ",
+< 			       pLambdaCell->lambda[dprimeIdx][0][0], theta,
+< 			       theta,
+< 			       modelRange.nalpha *
+< 			       tp_result[dprimeIdx][thetaInd][modelRange.
+< 							      nafreq].
+< 			       lr_count,
+< 			       tp_result[dprimeIdx][thetaInd][modelRange.
+< 							      nafreq].
+< 			       het_lr_avg, max,
+< 			       tp_result[dprimeIdx][thetaInd][modelRange.
+< 							      nafreq].
+< 			       R_square, alphaV, gfreq,
+< 			       tp_result[dprimeIdx][thetaInd][modelRange.
+< 							      nafreq].max_mf);
+< 		      for (liabIdx = 0; liabIdx < modelRange.nlclass;
+< 			   liabIdx++)
+< 			{
+< 			  pen_DD = modelRange.penet[liabIdx][0][penIdx];
+< 			  pen_Dd = modelRange.penet[liabIdx][1][penIdx];
+< 			  pen_dd = modelRange.penet[liabIdx][2][penIdx];
+< 			  fprintf (fpHet, " %5.3f %5.3f %5.3f ", pen_DD,
+< 				   pen_Dd, pen_dd);
+< 			}
+< 		      fprintf (fpHet, "\n");
+< 		      fflush (fpHet);
+1506,1513c1240,1241
+< 		    }		/* theta loop */
+< 
+< 		}		/* dprime loop */
+< 	      fprintf (stderr, "# %-d  %s %s Max Het LR\n", loc2,
+< 		       pLocus2->sName, pLocus1->sName);
+< 	      max = -99999;
+< 	      max_at_theta0 = -99999;
+< 	      max_at_dprime0 = -99999;
+---
+> 	      fprintf (fpHet, "# %-d  \"%s %s \" \n", loc2, pLocus2->sName,
+> 		       pLocus1->sName);
+1517d1244
+< 		  dprime = pLambdaCell->lambda[dprimeIdx][0][0];
+1521,1531c1248
+< 		      lr =
+< 			tp_result[dprimeIdx][thetaInd][modelRange.nafreq].
+< 			max_lr;
+< 		      if (lr > max)
+< 			{
+< 			  /* overall max */
+< 			  max = lr;
+< 			  maxDPrimeIdx = dprimeIdx;
+< 			  maxThetaIdx = thetaInd;
+< 			}
+< 		      if (-ERROR_MARGIN <= theta && theta <= ERROR_MARGIN)
+---
+> 		      if (modelOptions.equilibrium == LINKAGE_EQUILIBRIUM)
+1533,1539c1250,1257
+< 			  /* find the max for models with theta equal to 0 */
+< 			  theta0Idx = thetaInd;
+< 			  if (lr > max_at_theta0)
+< 			    {
+< 			      max_at_theta0 = lr;
+< 			      maxDPrimeIdx_at_theta0 = dprimeIdx;
+< 			    }
+---
+> 			  fprintf (fpHet, "\t (%f,%f)  %12.8f(%d)\n",
+> 				   theta, theta,
+> 				   tp_result[dprimeIdx][thetaInd].
+> 				   het_lr_total / (modelRange.nalpha *
+> 						   tp_result[dprimeIdx]
+> 						   [thetaInd].lr_count),
+> 				   modelRange.nalpha *
+> 				   tp_result[dprimeIdx][thetaInd].lr_count);
+1541c1259
+< 		      if (-ERROR_MARGIN <= dprime && dprime <= ERROR_MARGIN)
+---
+> 		      else
+1543,1549c1261,1270
+< 			  /* find the max for models with D prime equal to 0 */
+< 			  dprime0Idx = dprimeIdx;
+< 			  if (lr > max_at_dprime0)
+< 			    {
+< 			      max_at_dprime0 = lr;
+< 			      maxTheta_at_dprime0 = thetaInd;
+< 			    }
+---
+> 			  fprintf (fpHet, "%f %d %f %12.8f\n",
+> 				   pLambdaCell->lambda[dprimeIdx][0][0],
+> 				   modelRange.nalpha *
+> 				   tp_result[dprimeIdx][thetaInd].lr_count,
+> 				   theta,
+> 				   log10 (tp_result[dprimeIdx][thetaInd].
+> 					  het_lr_total / (modelRange.nalpha *
+> 							  tp_result[dprimeIdx]
+> 							  [thetaInd].
+> 							  lr_count)));
+1551d1271
+< 
+1553,1621d1272
+< 		}
+< 	      fprintf (stderr,
+< 		       "Chr     Marker   Position   MOD   DPrime Theta R2 ALPHA DGF PEN_DD PEN_Dd PEN_dd\n");
+< 	      /* overal maximizing model - MOD */
+< 	      fprintf (stderr, "# Overal MOD maximizing model:\n");
+< 	      theta = modelRange.theta[0][maxThetaIdx];
+< 	      gfreq =
+< 		tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].
+< 		max_gfreq;
+< 	      alphaV =
+< 		tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].
+< 		max_alpha;
+< 	      penIdx =
+< 		tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].
+< 		max_penIdx;
+< 	      R_square =
+< 		tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].
+< 		R_square;
+< 	      fprintf (stderr,
+< 		       "%4d %15s %8.4f %8.4f %5.2f %6.4f %5.3f %4.2f %6.4f",
+< 		       pLocus2->pMapUnit->chromosome, pLocus2->sName,
+< 		       pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max),
+< 		       pLambdaCell->lambda[maxDPrimeIdx][0][0], theta,
+< 		       R_square, alphaV, gfreq);
+< 	      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+< 		{
+< 		  pen_DD = modelRange.penet[liabIdx][0][penIdx];
+< 		  pen_Dd = modelRange.penet[liabIdx][1][penIdx];
+< 		  pen_dd = modelRange.penet[liabIdx][2][penIdx];
+< 		  fprintf (stderr, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd,
+< 			   pen_dd);
+< 		}
+< 	      fprintf (stderr, "\n");
+< 	      fflush (stderr);
+< 
+< 	      /* maximizing model at theta equal to 0 - MOD */
+< 	      fprintf (stderr, "# MOD maximizing model for theta=0:\n");
+< 	      gfreq =
+< 		tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.
+< 							     nafreq].
+< 		max_gfreq;
+< 	      alphaV =
+< 		tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.
+< 							     nafreq].
+< 		max_alpha;
+< 	      penIdx =
+< 		tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.
+< 							     nafreq].
+< 		max_penIdx;
+< 	      R_square =
+< 		tp_result[maxDPrimeIdx_at_theta0][theta0Idx][modelRange.
+< 							     nafreq].R_square;
+< 	      fprintf (stderr,
+< 		       "%4d %15s %8.4f %8.4f %5.2f %6.4f %5.3f %4.2f %6.4f",
+< 		       pLocus2->pMapUnit->chromosome, pLocus2->sName,
+< 		       pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
+< 		       log10 (max_at_theta0),
+< 		       pLambdaCell->lambda[maxDPrimeIdx_at_theta0][0][0], 0.0,
+< 		       R_square, alphaV, gfreq);
+< 	      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+< 		{
+< 		  pen_DD = modelRange.penet[liabIdx][0][penIdx];
+< 		  pen_Dd = modelRange.penet[liabIdx][1][penIdx];
+< 		  pen_dd = modelRange.penet[liabIdx][2][penIdx];
+< 		  fprintf (stderr, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd,
+< 			   pen_dd);
+< 		}
+< 	      fprintf (stderr, "\n");
+< 	      fflush (stderr);
+1623,1649d1273
+< 	      /* maximizing model at d prime equal to 0 - MOD */
+< 	      fprintf (stderr, "# MOD maximizing model for dprime=0:\n");
+< 	      gfreq =
+< 		tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].
+< 		max_gfreq;
+< 	      alphaV =
+< 		tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].
+< 		max_alpha;
+< 	      penIdx =
+< 		tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].
+< 		max_penIdx;
+< 	      R_square =
+< 		tp_result[dprime0Idx][maxTheta_at_dprime0][modelRange.nafreq].
+< 		R_square;
+< 	      fprintf (stderr,
+< 		       "%4d %15s %8.4f %8.4f %5.2f %6.4f %5.3f %4.2f %6.4f",
+< 		       pLocus2->pMapUnit->chromosome, pLocus2->sName,
+< 		       pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
+< 		       log10 (max_at_dprime0), 0.0, 0.0, R_square, alphaV,
+< 		       gfreq);
+< 	      for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+< 		{
+< 		  pen_DD = modelRange.penet[liabIdx][0][penIdx];
+< 		  pen_Dd = modelRange.penet[liabIdx][1][penIdx];
+< 		  pen_dd = modelRange.penet[liabIdx][2][penIdx];
+< 		  fprintf (stderr, " %5.3f %5.3f %5.3f ", pen_DD, pen_Dd,
+< 			   pen_dd);
+1651,1652c1275
+< 	      fprintf (stderr, "\n");
+< 	      fflush (stderr);
+---
+> 	      fprintf (fpHet, "-	Total 1234(1234)\n");
+1654,1658c1277,1279
+< 	      /* find the overal maximizing theta and dprime - LR
+< 	       * with the other parameter integrated out */
+< 	      max = -9999.99;
+< 	      max_at_dprime0 = -9999.99;
+< 	      max_at_theta0 = -9999.99;
+---
+> 	      fprintf (stderr, "# %-d  \"%s %s \" Max Het LR\n", loc2,
+> 		       pLocus2->sName, pLocus1->sName);
+> 	      max = -99999;
+1662d1282
+< 		  dprime = pLambdaCell->lambda[dprimeIdx][0][0];
+1666,1667c1286
+< 		      lr = tp_result[dprimeIdx][thetaInd][0].het_lr_avg;
+< 		      if (lr > max)
+---
+> 		      if (tp_result[dprimeIdx][thetaInd].max_lr > max)
+1669,1679c1288
+< 			  max = lr;
+< 			  maxThetaIdx = thetaInd;
+< 			  maxDPrimeIdx = dprimeIdx;
+< 			}
+< 		      if (-ERROR_MARGIN <= theta && theta <= ERROR_MARGIN)
+< 			{
+< 			  if (lr > max_at_theta0)
+< 			    {
+< 			      max_at_theta0 = lr;
+< 			      maxDPrimeIdx_at_theta0 = dprimeIdx;
+< 			    }
+---
+> 			  max = tp_result[dprimeIdx][thetaInd].max_lr;
+1681,1691d1289
+< 		      if (-ERROR_MARGIN <= dprime && dprime <= ERROR_MARGIN)
+< 			{
+< 			  /* find the max for models with D prime equal to 0 */
+< 			  dprime0Idx = dprimeIdx;
+< 			  if (lr > max_at_dprime0)
+< 			    {
+< 			      max_at_dprime0 = lr;
+< 			      maxTheta_at_dprime0 = thetaInd;
+< 			    }
+< 			}
+< 
+1694,1703c1292
+< 	      /* overal maximizing model - LR */
+< 	      fprintf (stderr, "# Overal LR maximizing model:\n");
+< 	      theta = modelRange.theta[0][maxThetaIdx];
+< 	      //gfreq = tp_result[maxDPrimeIdx][maxThetaIdx][modelRange.nafreq].max_gfreq;
+< 	      fprintf (stderr,
+< 		       "%4d %15s %8.4f %8.4f %5.2f %6.4f\n",
+< 		       pLocus2->pMapUnit->chromosome, pLocus2->sName,
+< 		       pLocus2->pMapUnit->mapPos[SEX_AVERAGED], log10 (max),
+< 		       pLambdaCell->lambda[maxDPrimeIdx][0][0], theta);
+< 	      fflush (stderr);
+---
+> 	      fprintf (stderr, "MOD: %10.6f\n", log10 (max));
+1705,1714c1294
+< 	      /* maximizing model at theta equal to 0 - LR */
+< 	      fprintf (stderr, "# LR maximizing model for theta=0:\n");
+< 	      fprintf (stderr,
+< 		       "%4d %15s %8.4f %8.4f %5.2f %6.4f\n",
+< 		       pLocus2->pMapUnit->chromosome, pLocus2->sName,
+< 		       pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
+< 		       log10 (max_at_theta0),
+< 		       pLambdaCell->lambda[maxDPrimeIdx_at_theta0][0][0],
+< 		       0.0);
+< 	      fflush (stderr);
+---
+> 	      /* Print out maximizing model for each theta */
+1716,1717d1295
+< 	      /* maximizing model at d prime equal to 0 - LR */
+< 	      fprintf (stderr, "# LR maximizing model for dprime=0:\n");
+1719,1734c1297,1298
+< 		       "%4d %15s %8.4f %8.4f %5.2f %6.4f\n",
+< 		       pLocus2->pMapUnit->chromosome, pLocus2->sName,
+< 		       pLocus2->pMapUnit->mapPos[SEX_AVERAGED],
+< 		       log10 (max_at_dprime0), 0.0, 0.0);
+< 	      fflush (stderr);
+< 
+< 
+< 	      /* output PPL now */
+< 	      /* chromosome, marker name, position, PPL */
+< 	      ppl = calculate_PPL (tp_result[dprime0Idx]);
+< 	      fprintf (fpPPL, "%4d %15s %9.4f %6.4f ",
+< 		       pLocus2->pMapUnit->chromosome, pLocus2->sName,
+< 		       pLocus2->pMapUnit->mapPos[SEX_AVERAGED], ppl);
+< 	      fflush (fpPPL);
+< 	      /* output LD-PPL now if needed */
+< 	      if (modelOptions.equilibrium != LINKAGE_EQUILIBRIUM)
+---
+> 		       "Theta         LR      HLOD  alpha gfreq penDD.1 penDd.1 pendd.1 penDD.2 penDd.2 pendd.2 ... \n");
+> 	      for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++)
+1736,1746c1300,1315
+< 		  /* calculate the LD LR average first */
+< 		  get_average_LD_LR (tp_result);
+< 		  /* calculate the LD-PPL - posterior probability of linkage allowing for LD */
+< 		  ldppl = calculate_PPL (tp_result[pLambdaCell->ndprime]);
+< 		  /* now calculate the PPLD - posterior probability of LD given linkage */
+< 		  ppld = calculate_PPLD (tp_result);
+< 		  fprintf (fpPPL, "%6.4f %6.4f ", ldppl, ppld);
+< 
+< 		}
+< 	      fprintf (fpPPL, "\n");
+< 	      fflush (fpPPL);
+---
+> 		  theta = modelRange.theta[0][thetaInd];
+> 		  max = tp_result[0][thetaInd].max_lr;
+> 		  gfreq = tp_result[0][thetaInd].max_gfreq;
+> 		  alphaV = tp_result[0][thetaInd].max_alpha;
+> 		  penIdx = tp_result[0][thetaInd].max_penIdx;
+> 		  fprintf (stderr, "%f %10.6f %8.4f %f %f ",
+> 			   theta, max, log10 (max), alphaV, gfreq);
+> 		  for (liabIdx = 0; liabIdx < modelRange.nlclass; liabIdx++)
+> 		    {
+> 		      pen_DD = modelRange.penet[liabIdx][0][penIdx];
+> 		      pen_Dd = modelRange.penet[liabIdx][1][penIdx];
+> 		      pen_dd = modelRange.penet[liabIdx][2][penIdx];
+> 		      fprintf (stderr, " %f %f %f ", pen_DD, pen_Dd, pen_dd);
+> 		    }
+> 		  fprintf (stderr, "\n");
+> 		}		/* end of looping theta for output */
+1748a1318
+> 	      prevNumDPrime = pLambdaCell->ndprime;
+1751d1320
+< 	      prevNumDPrime = pLambdaCell->ndprime;
+1763c1332,1333
+< 	      if (modelOptions.markerAnalysis == ADJACENTMARKER)
+---
+> 	      if (modelOptions.markerToMarker == TRUE
+> 		  && modelOptions.adjacentOnly == TRUE)
+1767,1772c1337
+< 	  /* Used to read: modelOptions.markerToMarker != TRUE which
+< 	     is the same as markerAnalysis == FALSE as long as the old
+< 	     markerToMarker and adjacentMarker flags were truly
+< 	     orthogonal. Otherwise, it should be markerAnalysis !=
+< 	     ADJACENTMARKER. */
+< 	  if (modelOptions.markerAnalysis == FALSE)
+---
+> 	  if (modelOptions.markerToMarker != TRUE)
+1894,1898d1458
+< 
+< 	  /* do NULL hypothesis first */
+< 	  locusList = &nullLocusList;
+< 	  //count_likelihood_space(&pedigreeSet);
+< 
+1901d1460
+< #ifndef NO_POLYNOMIAL
+1903a1463,1465
+> 		  locusList = &nullLocusList;
+> 
+> #ifndef NO_POLYNOMIAL
+1909a1472,1479
+> 		  /* populate the matrix */
+> 		  status = populate_xmission_matrix (nullMatrix, totalLoci, initialProbAddr,	/* probability */
+> 						     0,	/* cell index */
+> 						     -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
+> 						     0,	/* number of het loci */
+> 						     0);	/* current locus - start with 0 */
+> 
+> 
+1918c1488
+< 			  pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
+---
+> 			  pTrait->penetrance[2][liabIdx][0][0] = pen_dd;
+1921,1922c1491,1492
+< 			  pTrait->penetrance[2][liabIdx][1][1] = pen_dd;
+< 			  pTrait->penetrance[1][liabIdx][0][0] = 1 - pen_DD;
+---
+> 			  pTrait->penetrance[2][liabIdx][1][1] = pen_DD;
+> 			  pTrait->penetrance[1][liabIdx][0][0] = 1 - pen_dd;
+1925c1495
+< 			  pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
+---
+> 			  pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_DD;
+1945,1946c1515,1516
+< 			  pLocus->pAlleleFrequency[0] = gfreq;
+< 			  pLocus->pAlleleFrequency[1] = 1 - gfreq;
+---
+> 			  pLocus->pAlleleFrequency[1] = gfreq;
+> 			  pLocus->pAlleleFrequency[0] = 1 - gfreq;
+1959c1529,1530
+<                           xmissionMatrix = nullMatrix;
+---
+> 			  xmissionMatrix = nullMatrix;
+> 
+1961,1963d1531
+< 			  //printAllVariables(); 
+< //fprintf(stderr," Null Likelihood=%e log10Likelihood=%e \n",
+< //pedigreeSet.likelihood,pedigreeSet.log10Likelihood); 
+1964a1533,1535
+> 			  //printAllVariables(); 
+> 			  //fprintf(stderr," Null Likelihood=%e log10Likelihood=%e \n",
+> 			  //pedigreeSet.likelihood,pedigreeSet.log10Likelihood); 
+1996d1566
+< #ifndef NO_POLYNOMIAL
+1999d1568
+< #endif
+2003d1571
+< #ifndef NO_POLYNOMIAL
+2011a1580
+> 	      locusList = &savedLocusList;
+2013a1583
+> #ifndef NO_POLYNOMIAL
+2019c1589,1598
+< 		}
+---
+> #endif
+> 		}		/* end of locus list changed */
+> 
+> 	      /* populate the matrix */
+> 	      status = populate_xmission_matrix (altMatrix, totalLoci, initialProbAddr,	/* probability */
+> 						 0,	/* cell index */
+> 						 -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
+> 						 0,	/* number of het loci */
+> 						 0);	/* current locus - start with 0 */
+> 
+2029c1608
+< 		      pTrait->penetrance[2][liabIdx][0][0] = pen_DD;
+---
+> 		      pTrait->penetrance[2][liabIdx][0][0] = pen_dd;
+2032,2033c1611,1612
+< 		      pTrait->penetrance[2][liabIdx][1][1] = pen_dd;
+< 		      pTrait->penetrance[1][liabIdx][0][0] = 1 - pen_DD;
+---
+> 		      pTrait->penetrance[2][liabIdx][1][1] = pen_DD;
+> 		      pTrait->penetrance[1][liabIdx][0][0] = 1 - pen_dd;
+2036c1615
+< 		      pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_dd;
+---
+> 		      pTrait->penetrance[1][liabIdx][1][1] = 1 - pen_DD;
+2039a1619
+> #ifndef NO_POLYNOMIAL
+2044a1625,1627
+> #else
+> 		  update_penetrance (&pedigreeSet, traitLocus);
+> #endif
+2050,2051c1633,1634
+< 		      pLocus->pAlleleFrequency[0] = gfreq;
+< 		      pLocus->pAlleleFrequency[1] = 1 - gfreq;
+---
+> 		      pLocus->pAlleleFrequency[1] = gfreq;
+> 		      pLocus->pAlleleFrequency[0] = 1 - gfreq;
+2053a1637
+> #ifndef NO_POLYNOMIAL
+2057a1642,1643
+> #else
+> 		      update_locus (&pedigreeSet, traitLocus);
+2062c1648
+<                       xmissionMatrix = altMatrix;
+---
+> 		      xmissionMatrix = altMatrix;
+2065c1651,1652
+< //fprintf(stderr," Alternative Likelihood=%e log10Likelihood=%e\n",pedigreeSet.likelihood,pedigreeSet.log10Likelihood);
+---
+> 		      //fprintf(stderr," Alternative Likelihood=%e log10Likelihood=%e\n",
+> 		      //pedigreeSet.likelihood,pedigreeSet.log10Likelihood);
+2077d1663
+< #ifndef NO_POLYNOMIAL
+2083,2087d1668
+< #else
+< 			  log10_likelihood_ratio =
+< 			    log10_likelihood_alternative -
+< 			    log10_likelihood_null;
+< #endif
+2102d1682
+< #ifndef NO_POLYNOMIAL
+2105,2113d1684
+< #else
+< 			      homoLR =
+< 				pPedigree->likelihood /
+< 				pedigreeSet.nullLikelihood[pedIdx];
+< #endif
+< 			      if (alphaV * homoLR + alphaV2 < 0)
+< 				fprintf (stderr,
+< 					 "HET LR less than 0. Check!!!\n");
+< 
+2231,2236c1802,1807
+<                                   /* populate the matrix */
+<                                   status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,        /* probability */
+<                                                                      0, /* cell index */
+<                                                                      -1, -1,    /* last het locus & last het pattern (P-1 or M-2) */
+<                                                                      0, /* number of het loci */
+<                                                                      0);        /* current locus - start with 0 */
+---
+> 				  /* populate the matrix */
+> 				  status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,	/* probability */
+> 								     0,	/* cell index */
+> 								     -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
+> 								     0,	/* number of het loci */
+> 								     0);	/* current locus - start with 0 */
+2276d1846
+< #ifndef NO_POLYNOMIAL
+2280d1849
+< #endif
+2285,2288d1853
+< 				  if (isnan (log10_likelihood_null))
+< 				    fprintf (stderr,
+< 					     "NULL likelihood is NAN.\n");
+< #ifndef NO_POLYNOMIAL
+2292a1858
+> #ifndef NO_POLYNOMIAL
+2383,2387c1949,1954
+<                               status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,    /* probability */
+<                                                                  0,     /* cell index */
+<                                                                  -1, -1,        /* last het locus & last het pattern (P-1 or M-2) */
+<                                                                  0,     /* number of het loci */
+<                                                                  0);    /* current locus - start with 0 */
+---
+> 			      /* populate the matrix */
+> 			      status = populate_xmission_matrix (xmissionMatrix, totalLoci, initialProbAddr,	/* probability */
+> 								 0,	/* cell index */
+> 								 -1, -1,	/* last het locus & last het pattern (P-1 or M-2) */
+> 								 0,	/* number of het loci */
+> 								 0);	/* current locus - start with 0 */
+2401d1967
+< #ifndef NO_POLYNOMIAL
+2407,2411d1972
+< #else
+< 				  log10_likelihood_ratio =
+< 				    log10_likelihood_alternative -
+< 				    log10_likelihood_null;
+< #endif
+2432d1992
+< #ifndef NO_POLYNOMIAL
+2437,2441d1996
+< #else
+< 				      homoLR =
+< 					pPedigree->likelihood /
+< 					pedigreeSet.nullLikelihood[pedIdx];
+< #endif
+2502,2509d2056
+< #ifndef NO_POLYNOMIAL
+<   if (modelOptions.polynomial == TRUE)
+<     {
+< //   polyStatistics (NULL);
+< //   dismantle();
+<     }
+< #endif
+< 
+2537a2085
+>   //  free(half_pow);
+2564,2567d2111
+<   if (modelType.type == TP)
+<     {
+<       fclose (fpPPL);
+<     }
+2573,2574d2116
+< /* allocate one extra D prime to store average LR for all D primes 
+<  * allocate one extra marker allele frequency to store average LR per (Dprime, Theta) pair */
+2578,2579c2120
+<   int i, j, k;
+<   int num;
+---
+>   int i, j;
+2582,2584c2123,2124
+<     (SUMMARY_STAT ***) calloc (pLambdaCell->ndprime + 1,
+< 			       sizeof (SUMMARY_STAT **));
+<   for (i = 0; i < pLambdaCell->ndprime + 1; i++)
+---
+>     (SUMMARY_STAT **) calloc (pLambdaCell->ndprime, sizeof (SUMMARY_STAT *));
+>   for (i = 0; i < pLambdaCell->ndprime; i++)
+2587,2589c2127,2128
+< 	(SUMMARY_STAT **) calloc (modelRange.ntheta + 1,
+< 				  sizeof (SUMMARY_STAT *));
+<       for (j = 0; j < modelRange.ntheta + 1; j++)
+---
+> 	(SUMMARY_STAT *) calloc (modelRange.ntheta, sizeof (SUMMARY_STAT));
+>       for (j = 0; j < modelRange.ntheta; j++)
+2591,2597c2130
+< 	  num = modelRange.nafreq + 1;
+< 	  tp_result[i][j] =
+< 	    (SUMMARY_STAT *) calloc (num, sizeof (SUMMARY_STAT));
+< 	  for (k = 0; k < num; k++)
+< 	    {
+< 	      tp_result[i][j][k].max_penIdx = -1;
+< 	    }
+---
+> 	  tp_result[i][j].max_penIdx = -1;
+2606c2139
+<   int i, j;
+---
+>   int i;
+2608c2141
+<   for (i = 0; i < ndprime + 1; i++)
+---
+>   for (i = 0; i < ndprime; i++)
+2610,2613d2142
+<       for (j = 0; j < modelRange.ntheta + 1; j++)
+< 	{
+< 	  free (tp_result[i][j]);
+< 	}
+2668d2196
+< 
+2681,2980d2208
+< 
+< 
+< /* Calculate PPL 
+<  * Input:
+<  *   modelOptions.thetaCutoff r - (0, r) will have modelOptions.thetaWeight
+<  *                   while (r, 0.5) will have 1 - modelOptions.thetaWeight
+<  *
+<  */
+< double
+< calculate_PPL (SUMMARY_STAT ** result)
+< {
+<   int i;
+<   double w1, w2;
+<   double integral;
+<   double a;
+<   double theta1, theta2;
+<   double avgLR1, avgLR2;
+<   int numTheta = modelRange.ntheta;
+<   double PPL;
+< 
+<   integral = 0;
+<   w1 = modelOptions.thetaWeight / modelOptions.thetaCutoff;
+<   w2 = (1.0 - modelOptions.thetaWeight) / (0.5 - modelOptions.thetaCutoff);
+<   for (i = 0; i < numTheta - 1; i++)
+<     {
+<       /* sex averaged theta */
+<       theta1 = modelRange.theta[0][i];
+<       theta2 = modelRange.theta[0][i + 1];
+<       avgLR1 = result[i][modelRange.nafreq].het_lr_avg;
+<       avgLR2 = result[i + 1][modelRange.nafreq].het_lr_avg;
+< 
+<       if (theta2 <= modelOptions.thetaCutoff)
+< 	{
+< 	  integral += 0.5 * w1 * (theta2 - theta1) * (avgLR1 + avgLR2);
+< 	}
+<       else if (theta1 <= modelOptions.thetaCutoff
+< 	       && modelOptions.thetaCutoff < theta2)
+< 	{
+< 	  a =
+< 	    avgLR1 + (avgLR2 - avgLR1) / (theta2 -
+< 					  theta1) *
+< 	    (modelOptions.thetaCutoff - theta1);
+< 	  integral +=
+< 	    0.5 * w1 * (modelOptions.thetaCutoff - theta1) * (avgLR1 + a);
+< 	  integral +=
+< 	    0.5 * w2 * (theta2 - modelOptions.thetaCutoff) * (avgLR2 + a);
+< 	}
+<       else
+< 	{
+< 	  /* modelOptions.thetaCutoff < theta1 */
+< 	  integral += 0.5 * w2 * (theta2 - theta1) * (avgLR1 + avgLR2);
+< 	}
+<     }
+< 
+<   PPL =
+<     (modelOptions.prior * integral) / ((modelOptions.prior * integral) +
+< 				       (1.0 - modelOptions.prior));
+< 
+<   return PPL;
+< }
+< 
+< /* This only applies to two point 
+<  * Calculate the mean of LR at each theta point for all given D primes including 0
+<  * Once this function is called, calculate_PPL(tp_result[pLambdaCell->ndprime])
+<  * could be called to calculate LDPPL
+<  * 
+<  */
+< int
+< get_average_LD_LR (SUMMARY_STAT *** result)
+< {
+<   int i, j;
+<   double sumLR;
+<   double avgLR;
+<   int numDPrime;
+< 
+<   numDPrime = pLambdaCell->ndprime;
+<   for (i = 0; i < modelRange.ntheta; i++)
+<     {
+<       sumLR = 0;
+<       for (j = 0; j < numDPrime; j++)
+< 	{
+< 	  sumLR += result[j][i][modelRange.nafreq].het_lr_avg;
+< 	}
+<       avgLR = sumLR / numDPrime;
+<       result[numDPrime][i][modelRange.nafreq].het_lr_avg = avgLR;
+<     }
+<   return 0;
+< }
+< 
+< /* calculate PPLD (posterior probability of LD ) given linkage 
+<  * This only applies to two point 
+<  */
+< double
+< calculate_PPLD (SUMMARY_STAT *** result)
+< {
+<   int dprimeIdx;
+<   int thetaInd;
+<   double dprime;
+<   double theta;
+<   double ld_lr = 0;
+<   double le_lr = 0;
+<   double lr;
+<   double ld_weight;
+<   double ppl;
+<   double temp;
+<   double num_small_theta;
+<   double num_big_theta;
+< 
+<   num_small_theta = 0;
+<   num_big_theta = 0;		/* not including 0.5 */
+<   for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++)
+<     {
+<       theta = modelRange.theta[0][thetaInd];
+<       if (theta <= modelOptions.thetaCutoff + ERROR_MARGIN)
+< 	num_small_theta++;
+<       else if (theta < 0.5 - ERROR_MARGIN)
+< 	num_big_theta++;
+<     }
+< 
+<   if (pLambdaCell->ndprime > 1)
+<     ld_weight = 1.0 / (pLambdaCell->ndprime - 1);
+<   else
+<     ld_weight = 0;
+< 
+<   for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++)
+<     {
+<       dprime = pLambdaCell->lambda[dprimeIdx][0][0];
+<       for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++)
+< 	{
+< 	  theta = modelRange.theta[0][thetaInd];
+< 	  lr = result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg;
+< 	  /* if d prime is not 0 */
+< 	  if (theta <= modelOptions.thetaCutoff + ERROR_MARGIN
+< 	      && (-ERROR_MARGIN > dprime || dprime > ERROR_MARGIN))
+< 	    {
+< 	      /* under LD and theta less than cutoff - closely linked */
+< 	      ld_lr += lr;
+< 	    }
+< 	  else
+< 	    if (theta <= (0.5 - ERROR_MARGIN)
+< 		&& (-ERROR_MARGIN <= dprime && dprime <= ERROR_MARGIN))
+< 	    {
+< 	      /* d prime is 0 and under linkage theta not 0.5 */
+< 	      if (theta <= modelOptions.thetaCutoff + ERROR_MARGIN)
+< 		{
+< 		  le_lr +=
+< 		    lr * modelOptions.thetaWeight / num_small_theta * (1.0 -
+< 								       modelOptions.
+< 								       LDprior);
+< 		}
+< 	      else
+< 		{
+< 		  le_lr +=
+< 		    lr * (1.0 - modelOptions.thetaWeight) / num_big_theta;
+< 		}
+< 	    }
+< 	}
+< 
+<     }
+<   temp =
+<     modelOptions.LDprior * ld_weight * ld_lr * modelOptions.thetaWeight /
+<     num_small_theta;
+<   ppl = temp / (temp + le_lr);
+<   return ppl;
+< }
+< 
+< /* per (Dprime, Theta) pair, calculate the average and max LR by
+<  * integrating out trait parameters first, then average over marker allele frequencies
+<  */
+< int
+< get_average_LR (SUMMARY_STAT *** result)
+< {
+<   int dprimeIdx;
+<   int thetaInd;
+<   int mkrFreqIdx;
+<   //  int maxFreqIdx;
+<   double total_lr;
+<   double max_lr_dprime_theta;
+<   double max_max_lr_dprime_theta;
+<   int count;
+<   int max_mf;
+<   int max_max_mf;
+<   double max_lr_dprime;
+<   double max_max_lr_dprime;
+<   double max_lr;
+<   double max_max_lr;
+<   double dprime;
+<   double theta;
+<   double lr;
+<   int max_theta;
+<   int max_max_theta;
+<   int max_dprime;
+<   int max_max_dprime;
+<   double maxLR;
+< 
+<   for (dprimeIdx = 0; dprimeIdx < pLambdaCell->ndprime; dprimeIdx++)
+<     {
+<       dprime = pLambdaCell->lambda[dprimeIdx][0][0];
+<       for (thetaInd = 0; thetaInd < modelRange.ntheta; thetaInd++)
+< 	{
+< 	  /* sex averaged theta */
+< 	  theta = modelRange.theta[0][thetaInd];
+< 	  total_lr = 0;
+< 	  count = 0;
+< 	  for (mkrFreqIdx = 0; mkrFreqIdx < modelRange.nafreq; mkrFreqIdx++)
+< 	    {
+< 	      /* het_lr_total has trait parameters already integrated out - get the average */
+< 	      lr = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_total /
+< 		(tp_result[dprimeIdx][thetaInd][mkrFreqIdx].lr_count *
+< 		 modelRange.nalpha);
+< 	      tp_result[dprimeIdx][thetaInd][mkrFreqIdx].het_lr_avg = lr;
+< 	      /* add up BR for each marker allele frequency */
+< 	      total_lr += lr;
+< 	      count++;
+< 	      /* keep track of the MOD for each marker allele frequency */
+< 	      maxLR = tp_result[dprimeIdx][thetaInd][mkrFreqIdx].max_lr;
+< 	      /* find max BR per (dprime, theta) pair */
+< 	      if (mkrFreqIdx == 0 || (lr > max_lr_dprime_theta))
+< 		{
+< 		  max_lr_dprime_theta = lr;
+< 		  max_mf = mkrFreqIdx;
+< 		}
+< 	      /* find the max MOD per (dprime, theta) pair */
+< 	      if (mkrFreqIdx == 0 || (maxLR > max_max_lr_dprime_theta))
+< 		{
+< 		  max_max_lr_dprime_theta = maxLR;
+< 		  max_max_mf = mkrFreqIdx;
+< 		}
+< 	      /* find max BR per dprime */
+< 	      if ((thetaInd == 0 && mkrFreqIdx == 0) || (lr > max_lr_dprime))
+< 		{
+< 		  max_lr_dprime = lr;
+< 		  max_theta = thetaInd;
+< 		}
+< 	      /* find max MOD per dprime */
+< 	      if ((thetaInd == 0 && mkrFreqIdx == 0)
+< 		  || (maxLR > max_max_lr_dprime))
+< 		{
+< 		  max_max_lr_dprime = maxLR;
+< 		  max_max_theta = thetaInd;
+< 		}
+< 
+< 	      /* find overal max BR  */
+< 	      if ((thetaInd == 0 && mkrFreqIdx == 0 && dprimeIdx == 0) ||
+< 		  (lr > max_lr))
+< 		{
+< 		  max_lr = lr;
+< 		  /* max theta would be in tp_result[max_dprime][#theta][#mf] */
+< 		  max_dprime = dprimeIdx;
+< 		}
+< 	      /* find overal max MOD  */
+< 	      if ((thetaInd == 0 && mkrFreqIdx == 0 && dprimeIdx == 0) ||
+< 		  (maxLR > max_max_lr))
+< 		{
+< 		  max_max_lr = maxLR;
+< 		  /* max theta would be in tp_result[max_dprime][#theta][#mf] */
+< 		  max_max_dprime = dprimeIdx;
+< 		}
+< 
+< 	    }			/* end of looping marker allele frequencies */
+< 	  /* recording the average and max */
+< 	  memcpy (&tp_result[dprimeIdx][thetaInd][modelRange.nafreq],
+< 		  &tp_result[dprimeIdx][thetaInd][max_max_mf],
+< 		  sizeof (SUMMARY_STAT));
+< 	  tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_lr =
+< 	    max_max_lr_dprime_theta;
+< 	  tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_mf =
+< 	    modelRange.afreq[max_max_mf];
+< 	  /* this is the BR after integrating out marker allele frequencies */
+< 	  tp_result[dprimeIdx][thetaInd][modelRange.nafreq].het_lr_avg =
+< 	    total_lr / count;
+< 	  tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_br_lr =
+< 	    max_lr_dprime_theta;
+< 	  tp_result[dprimeIdx][thetaInd][modelRange.nafreq].max_br_mf =
+< 	    modelRange.afreq[max_mf];
+< 	}			/* end of theta loop */
+<       /* recording the max per dprime */
+<       memcpy (&tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq],
+< 	      &tp_result[dprimeIdx][max_max_theta][max_max_mf],
+< 	      sizeof (SUMMARY_STAT));
+<       tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_lr =
+< 	max_lr_dprime;
+<       tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_mf =
+< 	tp_result[dprimeIdx][max_theta][modelRange.nafreq].max_mf;
+<       tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].
+< 	max_br_theta = modelRange.theta[0][thetaInd];
+<     }				/* end of d prime loop */
+< 
+<   /* record the max overal */
+<   memcpy (&tp_result[modelRange.ndprime][modelRange.ntheta]
+< 	  [modelRange.nafreq],
+< 	  &tp_result[max_max_dprime][max_max_theta][max_max_mf],
+< 	  sizeof (SUMMARY_STAT));
+<   tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_lr =
+<     max_lr;
+<   tp_result[dprimeIdx][modelRange.ntheta][modelRange.nafreq].max_br_dprime =
+<     dprimeIdx;
+< 
+<   return 0;
+< }

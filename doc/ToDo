@@ -1,0 +1,30 @@
+**************
+Current Issues:
+1. performance problem
+2. memory runs out for >4 markers w/polynomial (snps)
+3. walking chromosome works but gets slower on each position
+
+*********************
+Near future Additions:
+Differentiate different OS and include different h files for INFINITY 
+  and NAN or get rid of these in the code
+Write out lods.out file
+sex specific for TP
+sex specific for MP
+sex linked chromosome analysis
+Integrate marker allele frequencies instead of fixing them under LD
+Allele frequency estimation - MLE
+loops
+Allow imprinting
+Lander green algorithm
+
+*******************
+Associated Programs:
+seq_update needs to be updated to reflect the new output file
+
+************************
+Long shots (low priority):
+covariates
+allow >2 alleles for disease locus
+allow >1 disease loci
+
