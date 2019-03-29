@@ -1,0 +1,58 @@
+# Vitesse Pedigree Library
+# Yungui Huang
+#
+# Copyright (c) 2005, The University of Iowa.  All rights reserved.
+# Permission is hereby given to use and reproduce this software 
+# for non-profit educational purposes only.
+
+# Compile options:
+#
+CC = gcc
+#CFLGS = -g -Wall
+CFLGS = -O4 -Wall
+
+######################################################################
+# No user changes below this point!
+
+# Object files
+OBJ = read_pedfile.o locus.o tools.o \
+	utils.o \
+	allele_set_recoding.o \
+	genotype_elimination.o \
+	parental_pair.o \
+	likelihood.o
+
+# Include files
+INC = pedigree.h locus.h program_option.h \
+	utils.h \
+	allele_set_recoding.h \
+	genotype_elimination.h \
+	likelihood.h
+
+# Libraries
+LIB = -lm
+
+# Default (and only) target
+libped.a: Makefile $(OBJ)
+	-@ar -rsc libped.a $(OBJ)
+
+# Make an object file from source
+%.o      : %.c $(INCS)
+	-@$(CC) -c $(CFLGS) -o $@ $<
+
+# Test driver
+.PHONY: test
+test : Makefile $(OBJ) 
+	$(CC) $(CFLGS) -o test $(OBJ) main.c $(LIB)
+
+######################################################################
+# Utilities.
+
+# To ensure a clean build, use "make fresh."
+.PHONY: fresh
+fresh: clean libped.a
+
+# Deletes all compiled files.
+.PHONY: clean
+clean:
+	rm -f libped.a *.o *~ test
