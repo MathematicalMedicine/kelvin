@@ -1,0 +1,11 @@
+# assume the first line is the marker name line 
+
+if [ $# -lt 2 ] ; then
+  echo "Please provide <input file> <output file>" 
+  exit -1
+fi
+#input file
+infname=$1
+outfname=$2
+
+awk 'BEGIN{ctrl1=-1; ctrl2=-1}; ($1=="MARKER") {for(i=2; i<=NF;i++){ if($i=="ctrl11"){ctrl11=i}; if($i=="ctrl12"){ctrl12=i}; if($i=="ctrl22"){ctrl22=i}; if($i=="ctrl1"){ctrl1=i}; if($i=="ctrl2"){ctrl2=i} }}; ($1!="MARKER" && substr($1,0,1) != "#") { a1=($ctrl11)*2+$ctrl12; count=($ctrl11+$ctrl12+$ctrl22)*2; if(ctrl1!=-1){a1+=$ctrl1; count+=$ctrl1}; if(ctrl2!=-1){count+=$ctrl2}; if(1 || count!=0){ af1=a1/count; if(a1==0){af1=0.0001}; if(a1==count){af1=0.9999}; print "M", $1; printf( "F %6.4f %6.4f\n", af1, 1-af1)}}' $infname > $outfname 
