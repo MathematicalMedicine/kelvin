@@ -1,0 +1,499 @@
+Script started on Mon May 15 09:50:14 2006
+howang@forkhead:~/code/poly-vitesse/testdata/nv-typed$ pico locus.cls[Kpico read_pedfile.cls[Kpico parental_pair.cls[Kcd poly-vitessels[Kcd codels[K[1Pwpico  utils.c             cd ..
+howang@forkhead:~/code/poly-vitesse/testdata$ ls
+[00m[00mdatafile.dat[00m    [01;34mnv-missing[00m          [01;34mnv-nuc-typed-ld[00m        [00mpedpost.7[00m           [00mttt.out[00m
+[00mdatafile.dat.4[00m  [01;34mnv-mp-nuc-typed[00m     [01;34mnv-qt[00m                  [00mpedpost.loop[00m        [00mttt_ld.out[00m
+[00mdatafile.dat.7[00m  [01;34mnv-mp-two-founders[00m  [01;34mnv-typed[00m               [00mpedpost.loop.phase[00m  [01;34mvit[00m
+[01;34mlipedloop[00m       [01;34mnv-nuc-missing[00m      [01;34mnv-typed-two-founders[00m  [00mpedpost.noliab[00m      [01;34mvit-ld[00m
+[00mmapfile.dat[00m     [01;34mnv-nuc-missing-ld[00m   [00moutput.loop[00m            [00mtest.out.7[00m
+[01;34mmlip-qt[00m         [01;34mnv-nuc-typed[00m        [00mpedfile.dat[00m            [00mtest.out.7.bak[00m
+[mhowang@forkhead:~/code/poly-vitesse/testdata$ cd nv-u nuc-typed
+howang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ cd nv-nuc-typedls[Kcd ..     ./../test pedfile.nuc.post ../mapfil e.dat datafile.dat.7
+bash: ./../test: No such file or directory
+howang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ ls
+[00m[00mdatafile.dat.7[00m  [00mpedfile.nuc.post[00m  [00mpedfile.nuc.pre[00m
+[mhowang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ ls./../test pedfile.nuc.post ../mapfilee.dat datafile.dat.7
+bash: ./../test: No such file or directory
+howang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ 
+howang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ 
+howang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ ./../test pedfile.nuc.post ../mapfilee.dat datafile.dat.7[Ahowang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ ./../test pedfile.nuc.post ../mapfi../../test pedfile.nuc.post ../mapfil[1@e[Awang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ .
+
+Total number of markers in map: 670
+Total number of markers in data: 1
+Total number of trait locus in data: 1
+LE
+Computing likelihood.
+	 Proband (1) haplotype: 
+			 2|2 
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 2.025000e-06
+			 2|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 2.655000e-05
+			 2|1 
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 4.485938e-06
+			 2|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 2.919375e-05
+			 1|2 
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 4.485938e-06
+			 1|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 5.625000e-06
+			 1|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 2.919375e-05
+			 1|1 
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 1.068750e-06
+			 1|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 2.025000e-06
+			 1|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 8.325000e-06
+Sum of log Likelihood is: -6.939333e+00
+	 Proband (1) haplotype: 
+			 2|2 
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 1.521000e-06
+			 2|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.232100e-05
+			 2|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.232100e-05
+			 2|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 1.521000e-06
+			 2|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 2.025000e-06
+			 2|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 3.173400e-05
+			 2|1 
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 1.858500e-06
+			 2|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 7.933500e-06
+			 2|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 7.933500e-06
+			 2|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 1.858500e-06
+			 2|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 3.083400e-05
+			 1|2 
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 1.858500e-06
+			 1|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 7.933500e-06
+			 1|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 7.933500e-06
+			 1|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 1.858500e-06
+			 1|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 5.625000e-06
+			 1|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 3.083400e-05
+			 1|1 
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 4.140000e-07
+			 1|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.764000e-06
+			 1|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.764000e-06
+			 1|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 4.140000e-07
+			 1|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 2.025000e-06
+			 1|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 8.406000e-06
+Sum of log Likelihood is: -6.926806e+00
+Likelihood at 0.5: 1.149919e-07
+Likelihood at 0.200000: 1.183570e-07
+LOD score at 0.200000: 1.252687e-02
+howang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ 
+howang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ 
+howang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ 
+howang@forkhead:~/code/poly-vitesse/testdata/nv-nuc-typed$ exit
+exit
+
+Script done on Mon May 15 09:54:09 2006

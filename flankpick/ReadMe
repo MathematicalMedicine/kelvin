@@ -1,0 +1,63 @@
+Alberto,
+    I've attached the FlankPick code. It is also available on forkhead at
+/home/mmilder/code/nflank/FlankPick.c
+    I've also attached a sample input and output for FlankPick.
+
+    The Following is an excerpt from the /home/mmilder/code/nflank/doc
+
+------------------------------------------------------------------
+
+Method code
+
+consists of 3 numbers seperated by a single space
+
+First number of the number of flanking pairs of markers.
+  How many pairs of marker to each side of the Point of Interest to use.
+Note: you must double this number to determine the actually number of
+markers that will be used. 0 to 9 is allowed.
+
+Second number is the midpoint flag.
+   if 1 then will add one more marker. Will be the first "free" marker to the
+left or right depending on the if the PoI is closest to a marker on the right
+or the left.
+
+The Third number is currently not implimented.
+   It will be for selecting markers based on closeness. You can 1 to 9 addition
+markers based on which markers are the closest unused (i.e. not already picked
+for flanking for
+
+When on the ends, the rules change. The program will preserve the number of
+markers at all costs.
+
+
+Nflank internally calls a program called FlankPick. nflank can not run without
+FlankPick, It is the brains of nflank. FlankPick should not be called directly
+by the user. It reads from STDIN and writes to STDOUT.
+
+----------------------------------------------------------------
+
+FlankPick
+   Reads from STDIN, writes to STDout
+
+Inputs.
+   Method code. (Even #, Midpt flag, Closest # ) (see above)
+   Step size,  Starting offset, ending offset.
+   (K)osambi or (H)aldane
+   List of markers with distances in centimorgans
+   -1 <EOF>
+
+
+Output
+1 line per vitesse run.
+Fields in each line are delimited by a '|'. The fields are...
+   1     location or "O" if offmap is needed
+   2     markermap, The ordering of the markers.
+   3     theta list
+   4     Vitesse "foo" value (second value on final line in datafile.dat)
+   5     A list of indexes of the markers to use.
+
+
+nflank directs FlankPick to read from a file named '.temp_dist_input'
+and write to a file named '.temp_dist_output'. These files are not deleted
+by nflank but the user can delete them after nflank has finished.
+

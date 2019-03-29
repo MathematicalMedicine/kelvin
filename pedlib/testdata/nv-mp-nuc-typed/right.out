@@ -1,0 +1,177 @@
+Total number of markers in map: 670
+Total number of markers in data: 2
+Total number of trait locus in data: 1
+LE
+Baseline Genotype Lists:
+Pedigree   1 Locus 1: 
+    Person 1: (2,1) (1,2) (1,1) 
+    Person 2: (2,2) 
+    Person 3: (2,2) 
+    Person 4: (2,1) (1,2) (1,1) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 1: 
+    Person 1: (2,1) (1,2) 
+    Person 2: (2,2) 
+    Person 3: (2,2) 
+    Person 4: (1,2) 
+Genotype Lists after set recoding :
+Pedigree   1 Locus 1: 
+    Person 1: (2,1) (1,2) 
+    Person 2: (2,2) 
+    Person 3: (2,2) 
+    Person 4: (1,2) 
+Baseline Genotype Lists:
+Pedigree   1 Locus 2: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (2,1) (1,2) 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (2,1) (1,2) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 2: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+Genotype Lists after set recoding :
+Pedigree   1 Locus 2: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+Baseline Genotype Lists:
+Pedigree   1 Locus 3: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (2,1) (1,2) 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (2,1) (1,2) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 3: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+Genotype Lists after set recoding :
+Pedigree   1 Locus 3: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+	 Proband (1) haplotype: 
+			 2|1 
+			 1|1 
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 2, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 2|2
+			 1|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 7.168534e-07
+			 2|1 			 2|2
+			 1|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.384695e-09
+			 2|1 			 2|2
+			 1|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.384695e-09
+			 2|1 			 2|2
+			 1|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 7.168534e-07
+Conditional log likelihood for nuclear family 0 is: -5.842702e+00
+			 1|2 
+			 1|1 
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 2, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 2|2
+			 1|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 7.168534e-07
+			 1|2 			 2|2
+			 1|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.384695e-09
+			 1|2 			 2|2
+			 1|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.384695e-09
+			 1|2 			 2|2
+			 1|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 7.168534e-07
+Conditional log likelihood for nuclear family 0 is: -5.842702e+00
+log Likelihood for pedigree 0 is: -9.791549e+00
+Computing likelihood.

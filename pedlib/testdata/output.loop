@@ -1,0 +1,31 @@
+Pedigree 69 Nuclear Families (5): 
+    0: Dad - 2 Mom - 15 
+       Children - 1  12  13  
+       Up Connectors:
+	 Nuclear Family Index   1, Connected Individual 2.
+       Down Connectors:
+    1: Dad - 4 Mom - 5 
+       Children - 2  
+       Up Connectors:
+	 Nuclear Family Index   4, Connected Individual 5.
+	 Nuclear Family Index   3, Connected Individual 4.
+       Down Connectors:
+	 Nuclear Family Index   0, Connected Individual 2.
+    2: Dad - 6 Mom - 14 
+       Children - 3  
+       Up Connectors:
+	 Nuclear Family Index   3, Connected Individual 6.
+       Down Connectors:
+    3: Dad - 8 Mom - 9 
+       Children - 4  6  
+       Up Connectors:
+       Down Connectors:
+	 Nuclear Family Index   2, Connected Individual 6.
+	 Nuclear Family Index   1, Connected Individual 4.
+    4: Dad - 10 Mom - 11 
+       Children - 5  7  
+       Up Connectors:
+       Down Connectors:
+	 Nuclear Family Index   1, Connected Individual 5.
+    Founder Nuclear Families:
+      3 4 

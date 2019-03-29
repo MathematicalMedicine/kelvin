@@ -1,0 +1,63 @@
+
+*****************************************************************
+*     This software expires on June 15, 2095.                   *
+*****************************************************************
+
+
+Compile Date: Jun 19 2006 at 14:40:23.
+
+Date: Sat Jul 15 01:28:31 2006
+Command line: vitesse2-broke 
+
+ Markers:                1   2 
+ Position on map:        1   2 
+ Number of alleles:      2   7 
+ Number of haplotypes: 14 
+
+THETAS     0.500000 
+------------------------------------------------------------
+Pedigree  :    Ln like   :     log 10 like    :   Lod Scores
+------------------------------------------------------------
+-------------------------------------------
+TOTALS      -31.316514        -13.600589  
+ -2 ln(like) =        62.633028  
+ LOD SCORE =     0.000000  
+-------------------------------------------
+-------------------------------------------
+  
+THETAS     0.200000 
+------------------------------------------------------------
+Pedigree  :    Ln like   :     log 10 like    :   Lod Scores
+------------------------------------------------------------
+-------------------------------------------
+TOTALS      -31.074101        -13.495311  
+ -2 ln(like) =        62.148203  
+ LOD SCORE =     0.105278  
+-------------------------------------------
+-------------------------------------------
+  
+THETAS     0.400000 
+------------------------------------------------------------
+Pedigree  :    Ln like   :     log 10 like    :   Lod Scores
+------------------------------------------------------------
+-------------------------------------------
+TOTALS      -31.203364        -13.551449  
+ -2 ln(like) =        62.406729  
+ LOD SCORE =     0.049140  
+-------------------------------------------
+-------------------------------------------
+  
+
+
+ If you use these results in any published work, please cite
+ the following papers:
+ 
+ O'Connell JR, Weeks DE (1995) The VITESSE algorithm for rapid exact multilocus linkage analysis
+ via genotype set-recoding and fuzzy inheritance, Nature Genetics 11:402-408
+
+ O'Connell JR (2001) Rapid Multipoint Linkage Analysis via Inheritance Vectors in 
+ the Elston-Stewart Algorithm, Hum Hered 51(4):226-40
+
+
+Total running time:      0 hr    0 min    0 sec
+

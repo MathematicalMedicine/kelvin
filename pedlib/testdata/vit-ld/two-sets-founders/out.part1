@@ -1,0 +1,94 @@
+
+*****************************************************************
+*     This copy of VITESSE expires on June 15, 2006.            *
+*****************************************************************
+
+
+VITESSE 2.0.1     (c) Jeff O'Connell  2000, 2002
+Compile Date: Jun 15 2004 at 20:15:33.
+
+Date: Tue Feb  7 16:10:07 2006
+Directory path: /home/yungui/code/vitesse/testdata/vit/two-sets-founders
+ 
+Command line: vitesse2-broke -F -1 f -p ped.part1 
+
+ Option -F: v_byfamily is TRUE
+
+ Output file: vfinal.dat 
+ Datafile: datafile.dat 
+ MLINK option 
+ Pedfile: ped.part1 
+ 
+ YOU ARE USING THE MORE MEMORY INTENSIVE VERSION OF VITESSE 
+
+ Markers:                1   2 
+ Position on map:        1   2 
+ Number of alleles:      2   7 
+ Number of haplotypes: 14 
+ Number of Pedigrees: 1
+
+ ################################################# 
+ No. 1/1  Processing pedigree 1
+ The pedigree has    4 persons
+
+ Peeling Nuclear Family: 
+ Father 1  Mother 2  Children:  3   4  
+ Connector 4 
+
+ Total Number of Parental Pairs: 6
+ This nuclear family will be peeled using Parental Pairs
+
+
+THETAS     0.500000 
+------------------------------------------------------------
+Pedigree  :    Ln like   :     log 10 like    :   Lod Scores
+------------------------------------------------------------
+  1         -15.978404         -6.939333         -0.000000  
+-------------------------------------------
+TOTALS      -15.978404         -6.939333  
+ -2 ln(like) =        31.956809  
+ LOD SCORE =     0.000000  
+-------------------------------------------
+-------------------------------------------
+  
+THETAS     0.200000 
+------------------------------------------------------------
+Pedigree  :    Ln like   :     log 10 like    :   Lod Scores
+------------------------------------------------------------
+  1         -15.949560         -6.926806          0.012527  
+-------------------------------------------
+TOTALS      -15.949560         -6.926806  
+ -2 ln(like) =        31.899120  
+ LOD SCORE =     0.012527  
+-------------------------------------------
+-------------------------------------------
+  
+THETAS     0.400000 
+------------------------------------------------------------
+Pedigree  :    Ln like   :     log 10 like    :   Lod Scores
+------------------------------------------------------------
+  1         -15.975158         -6.937923          0.001410  
+-------------------------------------------
+TOTALS      -15.975158         -6.937923  
+ -2 ln(like) =        31.950316  
+ LOD SCORE =     0.001410  
+-------------------------------------------
+-------------------------------------------
+  
+
+
+ If you use these results in any published work, please cite
+ the following papers:
+ 
+ O'Connell JR, Weeks DE (1995) The VITESSE algorithm for rapid exact multilocus linkage analysis
+ via genotype set-recoding and fuzzy inheritance, Nature Genetics 11:402-408
+
+ O'Connell JR (2001) Rapid Multipoint Linkage Analysis via Inheritance Vectors in 
+ the Elston-Stewart Algorithm, Hum Hered 51(4):226-40
+
+
+Total running time:      0 hr    0 min    0 sec
+
+
+
+Number of calls to likelihood function 1 

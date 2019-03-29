@@ -1,0 +1,148 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <strings.h>
+#include <string.h>
+#include <ctype.h>
+#include <math.h>
+
+#include "pedlib.h"
+#include "pedigree.h"
+#include "utils.h"
+#include "locus.h"
+#include "allele_set_recoding.h"
+#include "genotype_elimination.h"
+#include "likelihood.h"
+
+ModelType programOption;
+char sUnknownPedID[] = "0";
+
+int main(int argc, char *argv[])
+{
+  PedigreeSet pedigreeSet;
+  int locus;
+  int ped;
+  Pedigree *pPedigree;
+  Locus *pLocus;
+  double theta = 0.2;
+
+  if(argc < 4 ) {
+    fprintf(stderr, "%s <postped> <mapfile> <markerfile>.\n", argv[0]);
+    exit(-1);
+  }
+  if(argc > 4) 
+    theta = atof(argv[4]);
+
+  /* initialize logging */
+  logInit();
+  
+  /* set up logging type levels 
+   * all pedfile log messages with at least DEBUG level will be output */
+  //logSet(LOGPEDFILE, LOGDEBUG);
+  //logSet(LOGSETRECODING, LOGDEBUG);
+  logSet(LOGGENOELIM, LOGDEBUG);
+  logSet(LOGPARENTALPAIR, LOGDEBUG);
+  logSet(LOGPEELGRAPH, LOGDEBUG);
+  logSet(LOGLIKELIHOOD, LOGDEBUG);
+
+  programOption.sUnknownPersonID = sUnknownPedID;
+  programOption.analysisMode = LINKAGE_EQUILIBRIUM;
+
+  /* read map file */
+  read_mapfile(argv[2]);
+  fprintf(stderr, "Total number of markers in map: %d\n", 
+		  map.count);
+  /* read data file */
+  memset(&originalLocusList, 0, sizeof(originalLocusList));
+  read_datafile(argv[3]);
+  fprintf(stderr, "Total number of markers in data: %d\n", originalLocusList.numLocus-originalLocusList.numTraitLocus);
+  fprintf(stderr, "Total number of trait locus in data: %d\n", originalLocusList.numTraitLocus);
+  fprintf(stderr, "%s\n", (programOption.analysisMode==LINKAGE_EQUILIBRIUM)?"LE":"LD");
+
+  /* initialize the space to make sure pointers are initialized to NULL */
+  memset(&pedigreeSet, 0, sizeof(PedigreeSet));
+
+  /* read postmakeped pedigree file and load pedigree related data structure */
+  read_pedfile(argv[1], &pedigreeSet);
+
+
+  /* construct the baseline genotypes */
+  locus = 0;
+  while(locus < originalLocusList.numLocus) {
+    pLocus = originalLocusList.ppLocusList[locus];
+    ped = 0;
+    /* go through all pedigrees */
+    while(ped < pedigreeSet.numPedigree) {
+      pPedigree = pedigreeSet.ppPedigreeSet[ped];
+      /* depending on the locus type, we call different function */
+      if(pLocus->locusType == LOCUS_TYPE_TRAIT)
+        create_baseline_trait_genotypes(locus, pPedigree);
+      else
+	create_baseline_marker_genotypes(locus, pPedigree);
+      logMsg(LOGGENOELIM, LOGDEBUG, "Baseline Genotype Lists:\n");
+      print_pedigree_locus_genotype_list(pPedigree, locus);
+      
+      /* first step is do the set recoding: this should help speed up
+       * genotype elimination process */
+      allele_set_recoding(locus, pPedigree);
+      
+      /* do genotype elimination next */
+      pedigree_genotype_elimination(locus, pPedigree);
+      logMsg(LOGGENOELIM, LOGDEBUG, "Genotype Lists after genotype elimination :\n");
+      print_pedigree_locus_genotype_list(pPedigree, locus);
+
+      /* do the set recoding again */
+      allele_set_recoding(locus, pPedigree);
+
+      logMsg(LOGGENOELIM, LOGDEBUG, "Genotype Lists after set recoding :\n");
+      print_pedigree_locus_genotype_list(pPedigree, locus);
+      
+      ped++;
+    }
+    locus++;
+  }
+
+  /* set a subset of the locus list */
+  locusList.numLocus = 3;
+  //locusList.numLocus = 2;
+  locusList.pLocusIndex = (int *) malloc(sizeof(int) * 
+		  		locusList.numLocus);
+  locusList.pPrevLocusDistance = (double *) malloc(sizeof(double) * 
+		  locusList.numLocus);
+  locusList.pNextLocusDistance = (double *) malloc(sizeof(double) * 
+		  locusList.numLocus);
+  locusList.pLocusIndex[0] = 0;
+  locusList.pLocusIndex[1] = 1;
+  locusList.pLocusIndex[2] = 2;
+  locusList.pPrevLocusDistance[0]= -1;
+  locusList.pNextLocusDistance[0]= theta;
+  locusList.pPrevLocusDistance[1]= theta;
+  locusList.pNextLocusDistance[1]= 0.0421;
+  locusList.pPrevLocusDistance[2]= 0.0421;
+  locusList.pNextLocusDistance[locusList.numLocus-1]= -1;
+
+  printf("Set genotype weights.\n");
+  ped = 0;
+  /* go through all pedigrees */
+  while(ped < pedigreeSet.numPedigree) {
+    pPedigree = pedigreeSet.ppPedigreeSet[ped];
+    set_genotype_weight(pPedigree);
+    set_genotype_position(pPedigree);
+    allocate_multi_locus_genotype_storage(pPedigree);
+    initialize_multi_locus_genotype(pPedigree);
+    ped++;
+  }
+
+  
+  printf("Computing likelihood.\n");
+
+  /* now compute likelihood */
+  compute_likelihood(&pedigreeSet);
+  
+  /* set a subset of the locus list */
+  //locusList.pNextLocusDistance[0]= 0.5;
+  //locusList.pPrevLocusDistance[1]= 0.5;;
+  //compute_likelihood(&pedigreeSet);
+
+  return 0;
+}

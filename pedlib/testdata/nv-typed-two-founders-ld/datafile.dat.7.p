@@ -1,0 +1,17 @@
+# first line should be analysis type LD or LE
+LD POLY
+2 #Total number of loci
+trait 2 #disease  2 alleles
+# allele frequencies
+0.9 0.1 
+1 # Number of trait variables
+Affect 1 # affection status with 1 liability class
+0 0.1 0.9 # penetrance
+marker 7 #AFM214yg7   7 alleles
+# allele frequencies
+0.1 0.1 0.1 0.2 0.1 0.2 0.2
+# LD parameters
+LD 
+Loci=1,2 DPrime=0.25 0.25 0.25 0.25 0.25 0.25 
+
+

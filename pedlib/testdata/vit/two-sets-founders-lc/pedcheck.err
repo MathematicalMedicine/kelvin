@@ -1,0 +1,40 @@
+
+PedCheck 1.1     (c) Jeff O'Connell  1997,1999  University of Pittsburgh
+Last revision: November 24, 1998
+
+Date: Mon Jul 17 16:03:18 2006
+
+ Input Files:
+ Pedigree file: pedfile.dat
+ Data file: datafile.dat
+
+ *********** LEVEL 0 ERRORS ****************
+
+ ----- No Level 0 errors -----
+
+
+-------------------------------------------------
+! Summary of Errors: By Pedigree                !
+!                                               !
+! Summary of Errors: By Marker                  !
+-------------------------------------------------
+
+
+ 
+
+ ------------------------------------------------
+
+ PedCheck has found NO LEVEL 0 inconsistencies in the pedigree data.
+ PedCheck has found NO LEVEL 1 inconsistencies in the pedigree data.
+
+ RERUN USING LEVEL 2.
+
+
+ If you use PedCheck in any published work, please cite:
+
+ PedCheck: A Program for Identification of Genotype 
+ Incompatibilities in Linkage Analysis,
+ O'Connell JR, Weeks DE, Am J Hum Genet 63:259-266
+
+
+

@@ -1,0 +1,841 @@
+Total number of markers in map: 670
+Total number of markers in data: 1
+Total number of trait locus in data: 1
+Pedigree 1 Nuclear Families (1): 
+    0: Dad - 1 Mom - 2 
+       Children - 3  4  
+       Up Connectors:
+       Down Connectors:
+    Founder Nuclear Families:
+      0 
+Baseline Genotype Lists:
+Pedigree   1 Locus 1: 
+    Person 1: (2,2) (2,1) (1,2) (1,1) 
+    Person 2: (2,2) (2,1) (1,2) 
+    Person 3: (2,2) (2,1) (1,2) 
+    Person 4: (2,2) (2,1) (1,2) (1,1) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 1: 
+    Person 1: (2,2) (2,1) (1,2) (1,1) 
+    Person 2: (2,2) (2,1) (1,2) 
+    Person 3: (2,2) (2,1) (1,2) 
+    Person 4: (2,2) (2,1) (1,2) (1,1) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 1: 
+    Person 1: (2,2) (2,1) (1,2) (1,1) 
+    Person 2: (2,2) (2,1) (1,2) 
+    Person 3: (2,2) (2,1) (1,2) 
+    Person 4: (2,2) (2,1) (1,2) (1,1) 
+Baseline Genotype Lists:
+Pedigree   1 Locus 2: 
+    Person 1: (7,7) (7,6) (6,7) (6,6) (7,5) (5,7) (6,5) (5,6) (5,5) (7,4) (4,7) (6,4) (4,6) (5,4) (4,5) (4,4) (7,3) (3,7) (6,3) (3,6) (5,3) (3,5) (4,3) (3,4) (3,3) (7,2) (2,7) (6,2) (2,6) (5,2) (2,5) (4,2) (2,4) (3,2) (2,3) (2,2) (7,1) (1,7) (6,1) (1,6) (5,1) (1,5) (4,1) (1,4) (3,1) (1,3) (2,1) (1,2) (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (7,7) (7,6) (6,7) (6,6) (7,5) (5,7) (6,5) (5,6) (5,5) (7,4) (4,7) (6,4) (4,6) (5,4) (4,5) (4,4) (7,3) (3,7) (6,3) (3,6) (5,3) (3,5) (4,3) (3,4) (3,3) (7,2) (2,7) (6,2) (2,6) (5,2) (2,5) (4,2) (2,4) (3,2) (2,3) (2,2) (7,1) (1,7) (6,1) (1,6) (5,1) (1,5) (4,1) (1,4) (3,1) (1,3) (2,1) (1,2) (1,1) 
+    Person 4: (2,1) (1,2) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 2: 
+    Person 1: (7,2) (2,7) (6,2) (2,6) (5,2) (2,5) (4,2) (2,4) (3,2) (2,3) (2,2) (7,1) (1,7) (6,1) (1,6) (5,1) (1,5) (4,1) (1,4) (3,1) (1,3) (2,1) (1,2) (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (7,2) (6,2) (5,2) (4,2) (3,2) (2,2) (7,1) (6,1) (5,1) (4,1) (3,1) (2,1) (1,2) (1,1) 
+    Person 4: (2,1) (1,2) 
+allele_set_recoding.c (349): Nuclear Family 0: 
+allele_set_recoding.c (358):   DAD 1
+    Paternal Transmitted Alleles: 
+        1 2 
+    Maternal Transmitted Alleles: 
+        1 2 
+    Paternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+allele_set_recoding.c (358):   MOM 2
+    Typed:  (2,1) (1,2) 
+allele_set_recoding.c (365):     Child 3
+    Paternal Transmitted Alleles: 
+        
+    Maternal Transmitted Alleles: 
+        
+    Paternal Non-Transmitted Alleles: 
+        1 2 3 4 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        1 2 3 4 5 6 7 
+allele_set_recoding.c (365):     Child 4
+    Typed:  (2,1) (1,2) 
+Locus AFM214yg7
+  AlleleSet 0(0.100000):         1 
+  AlleleSet 1(0.100000):         2 
+  AlleleSet 2(0.100000):         3 
+  AlleleSet 3(0.200000):         4 
+  AlleleSet 4(0.100000):         5 
+  AlleleSet 5(0.200000):         6 
+  AlleleSet 6(0.200000):         7 
+  AlleleSet 7(0.800000):         3 4 5 6 7 
+  AlleleSet 8(1.000000):         1 2 3 4 5 6 7 
+Genotype after set recoding:
+    Person 1: (8,2) (2,8) (2,2) (8,1) (1,8) (2,1) (1,2) (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (9,9) 
+    Person 4: (2,1) (1,2) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 2: 
+    Person 1: (8,2) (2,8) (2,2) (8,1) (1,8) (2,1) (1,2) (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (9,9) 
+    Person 4: (2,1) (1,2) 
+Nuc Fam 0, proband 1, locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(4) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(5) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(6) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(7) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(8) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(9) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(10) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(11) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(12) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0, proband 1, locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(8, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(3) 1(2, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(4) 1(2, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(5) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(6) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(7) 1(8, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(8) 1(8, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(9) 1(1, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(10) 1(1, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(11) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(12) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(13) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(14) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(15) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(16) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 1.676700e-08
+			 1|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.786050e-08
+			 1|1 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 1.731375e-08
+			 1|1 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 1.731375e-08
+			 1|1 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 1.731375e-08
+			 1|1 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 1.731375e-08
+			 1|1 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 6.706800e-08
+			 1|1 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 7.144200e-08
+			 1|1 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 6.706800e-08
+			 1|1 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 7.144200e-08
+			 1|1 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 1.786050e-08
+			 1|1 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 1.676700e-08
+			 1|1 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 7.144200e-08
+			 1|1 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 6.706800e-08
+			 1|1 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 7.144200e-08
+			 1|1 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 6.706800e-08
+			 1|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.786050e-08
+			 1|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 1.676700e-08
+			 1|1 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 1.731375e-08
+			 1|1 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 1.731375e-08
+			 1|1 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 1.731375e-08
+			 1|1 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 1.731375e-08
+			 1|1 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 7.144200e-08
+			 1|1 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 6.706800e-08
+			 1|1 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 7.144200e-08
+			 1|1 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 6.706800e-08
+			 1|1 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 1.676700e-08
+			 1|1 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 1.786050e-08
+			 1|1 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 6.706800e-08
+			 1|1 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 7.144200e-08
+			 1|1 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 6.706800e-08
+			 1|1 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 7.144200e-08
+			 1|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 3.280500e-08
+			 1|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 3.280500e-08
+			 1|1 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 3.280500e-08
+			 1|1 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 3.280500e-08
+			 1|1 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 3.280500e-08
+			 1|1 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 3.280500e-08
+			 1|1 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 1.312200e-07
+			 1|1 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 1.312200e-07
+			 1|1 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 1.312200e-07
+			 1|1 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 1.312200e-07
+			 1|1 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 3.280500e-08
+			 1|1 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 3.280500e-08
+			 1|1 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 1.312200e-07
+			 1|1 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 1.312200e-07
+			 1|1 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 1.312200e-07
+			 1|1 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 1.312200e-07
+			 1|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 5.914013e-09
+			 1|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 8.620425e-09
+			 1|2 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 7.898715e-09
+			 1|2 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 6.635723e-09
+			 1|2 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 6.635723e-09
+			 1|2 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 7.898715e-09
+			 1|2 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 3.159486e-08
+			 1|2 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 3.736854e-08
+			 1|2 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 1.571724e-08
+			 1|2 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 3.159486e-08
+			 1|2 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 8.620425e-09
+			 1|2 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 5.914013e-09
+			 1|2 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 3.736854e-08
+			 1|2 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 3.159486e-08
+			 1|2 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 3.159486e-08
+			 1|2 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 1.571724e-08
+			 1|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 8.620425e-09
+			 1|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 5.914013e-09
+			 1|2 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 6.635723e-09
+			 1|2 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 7.898715e-09
+			 1|2 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 7.898715e-09
+			 1|2 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 6.635723e-09
+			 1|2 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 3.736854e-08
+			 1|2 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 3.159486e-08
+			 1|2 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 3.159486e-08
+			 1|2 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 1.571724e-08
+			 1|2 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 5.914013e-09
+			 1|2 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 8.620425e-09
+			 1|2 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 3.159486e-08
+			 1|2 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 3.736854e-08
+			 1|2 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 1.571724e-08
+			 1|2 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 3.159486e-08
+			 1|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 9.112500e-09
+			 1|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 9.112500e-09
+			 1|2 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 9.112500e-09
+			 1|2 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 9.112500e-09
+			 1|2 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 9.112500e-09
+			 1|2 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 9.112500e-09
+			 1|2 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 5.394600e-08
+			 1|2 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 5.394600e-08
+			 1|2 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 1.895400e-08
+			 1|2 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 1.895400e-08
+			 1|2 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 9.112500e-09
+			 1|2 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 9.112500e-09
+			 1|2 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 5.394600e-08
+			 1|2 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 5.394600e-08
+			 1|2 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 1.895400e-08
+			 1|2 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 1.895400e-08
+			 2|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 5.914013e-09
+			 2|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 8.620425e-09
+			 2|1 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 6.635723e-09
+			 2|1 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 7.898715e-09
+			 2|1 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 7.898715e-09
+			 2|1 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 6.635723e-09
+			 2|1 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 1.571724e-08
+			 2|1 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 3.159486e-08
+			 2|1 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 3.159486e-08
+			 2|1 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 3.736854e-08
+			 2|1 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 8.620425e-09
+			 2|1 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 5.914013e-09
+			 2|1 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 3.159486e-08
+			 2|1 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 1.571724e-08
+			 2|1 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 3.736854e-08
+			 2|1 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 3.159486e-08
+			 2|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 8.620425e-09
+			 2|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 5.914013e-09
+			 2|1 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 7.898715e-09
+			 2|1 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 6.635723e-09
+			 2|1 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 6.635723e-09
+			 2|1 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 7.898715e-09
+			 2|1 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 3.159486e-08
+			 2|1 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 1.571724e-08
+			 2|1 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 3.736854e-08
+			 2|1 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 3.159486e-08
+			 2|1 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 5.914013e-09
+			 2|1 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 8.620425e-09
+			 2|1 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 1.571724e-08
+			 2|1 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 3.159486e-08
+			 2|1 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 3.159486e-08
+			 2|1 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 3.736854e-08
+			 2|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 9.112500e-09
+			 2|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 9.112500e-09
+			 2|1 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 9.112500e-09
+			 2|1 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 9.112500e-09
+			 2|1 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 9.112500e-09
+			 2|1 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 9.112500e-09
+			 2|1 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 1.895400e-08
+			 2|1 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 1.895400e-08
+			 2|1 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 5.394600e-08
+			 2|1 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 5.394600e-08
+			 2|1 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 9.112500e-09
+			 2|1 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 9.112500e-09
+			 2|1 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 1.895400e-08
+			 2|1 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 1.895400e-08
+			 2|1 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 5.394600e-08
+			 2|1 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 5.394600e-08
+			 2|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 5.850000e-11
+			 2|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.665000e-10
+			 2|2 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 1.125000e-10
+			 2|2 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 1.125000e-10
+			 2|2 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 1.125000e-10
+			 2|2 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 1.125000e-10
+			 2|2 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 2.340000e-10
+			 2|2 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 6.660000e-10
+			 2|2 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 2.340000e-10
+			 2|2 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 6.660000e-10
+			 2|2 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 1.665000e-10
+			 2|2 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 5.850000e-11
+			 2|2 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 6.660000e-10
+			 2|2 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 2.340000e-10
+			 2|2 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 6.660000e-10
+			 2|2 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 2.340000e-10
+			 2|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.665000e-10
+			 2|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 5.850000e-11
+			 2|2 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 1.125000e-10
+			 2|2 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 1.125000e-10
+			 2|2 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 1.125000e-10
+			 2|2 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 1.125000e-10
+			 2|2 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 6.660000e-10
+			 2|2 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 2.340000e-10
+			 2|2 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 6.660000e-10
+			 2|2 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 2.340000e-10
+			 2|2 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 5.850000e-11
+			 2|2 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 1.665000e-10
+			 2|2 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 2.340000e-10
+			 2|2 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 6.660000e-10
+			 2|2 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 2.340000e-10
+			 2|2 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 6.660000e-10
+			 2|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 4.050000e-11
+			 2|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 4.050000e-11
+			 2|2 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 4.050000e-11
+			 2|2 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 4.050000e-11
+			 2|2 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 4.050000e-11
+			 2|2 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 4.050000e-11
+			 2|2 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 1.620000e-10
+			 2|2 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 1.620000e-10
+			 2|2 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 1.620000e-10
+			 2|2 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 1.620000e-10
+			 2|2 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 4.050000e-11
+			 2|2 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 4.050000e-11
+			 2|2 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 1.620000e-10
+			 2|2 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 1.620000e-10
+			 2|2 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 1.620000e-10
+			 2|2 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 1.620000e-10
+log Likelihood for nuclear family 0 is: -5.337273e+00
+Set genotype weights.
+Computing likelihood.

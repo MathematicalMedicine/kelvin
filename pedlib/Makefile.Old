@@ -1,0 +1,42 @@
+CC = cc
+CFLAGS = -O4 -Wall
+#CFLAGS = -g -Wall
+
+#INCFLAGS = -I /home/segre/vitesse-3.0
+
+OBJS = read_pedfile.o main.o locus.o tools.o \
+	utils.o \
+	allele_set_recoding.o \
+	genotype_elimination.o \
+	parental_pair.o \
+	likelihood.o
+
+INCS = pedigree.h locus.h program_option.h \
+	utils.h \
+	allele_set_recoding.h \
+	genotype_elimination.h \
+	likelihood.h
+
+#LIBFLAGS = -L /home/segre/vitesse-3.0
+
+#LIBS = -lutils 
+LIBS = -lm #-lutils 
+
+all:  nv
+
+nv : $(OBJS)
+	$(CC) $(CFLAGS) $(LIBFLAGS) -o nv $(OBJS) $(LIBS)
+
+#read_pedfile.o : read_pedfile.c pedigree.h
+#	$(CC) -c $(CFLAGS) $(INCFLAGS) -o read_pedfile.o read_pedfile.c
+
+#read_locusfile.o : read_locusfile.c locus.h 
+#	$(CC) -c $(CFLAGS) $(INCFLAGS) -o read_locusfile.o read_locusfile.c
+
+%.o      : %.c $(INCS)
+	$(CC) $(INCFLAGS) -c $(CFLAGS) -o $@ $<
+
+clean:
+	rm -f *.o
+	rm -f nv
+	rm -f *~

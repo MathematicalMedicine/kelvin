@@ -1,0 +1,69 @@
+
+*****************************************************************
+*     This copy of VITESSE expires on June 15, 2006.            *
+*****************************************************************
+
+
+VITESSE 2.0.1     (c) Jeff O'Connell  2000, 2002
+Compile Date: Jun 15 2004 at 20:15:33.
+
+Date: Mon Feb  6 11:48:53 2006
+Directory path: /home/yungui/code/vitesse/testdata/vit/typed
+ 
+Command line: vitesse2-broke -F -1 f -p pedfile.nuc.post 
+
+ Markers:                1   2 
+ Position on map:        1   2 
+ Number of alleles:      2   7 
+ Number of haplotypes: 14 
+
+THETAS     0.500000 
+------------------------------------------------------------
+Pedigree  :    Ln like   :     log 10 like    :   Lod Scores
+------------------------------------------------------------
+  1         -23.957777        -10.404730          0.000000  
+-------------------------------------------
+TOTALS      -23.957777        -10.404730  
+ -2 ln(like) =        47.915554  
+ LOD SCORE =     0.000000  
+-------------------------------------------
+-------------------------------------------
+  
+THETAS     0.200000 
+------------------------------------------------------------
+Pedigree  :    Ln like   :     log 10 like    :   Lod Scores
+------------------------------------------------------------
+  1         -23.727359        -10.304661          0.100069  
+-------------------------------------------
+TOTALS      -23.727359        -10.304661  
+ -2 ln(like) =        47.454717  
+ LOD SCORE =     0.100069  
+-------------------------------------------
+-------------------------------------------
+  
+THETAS     0.400000 
+------------------------------------------------------------
+Pedigree  :    Ln like   :     log 10 like    :   Lod Scores
+------------------------------------------------------------
+  1         -23.845016        -10.355759          0.048971  
+-------------------------------------------
+TOTALS      -23.845016        -10.355759  
+ -2 ln(like) =        47.690032  
+ LOD SCORE =     0.048971  
+-------------------------------------------
+-------------------------------------------
+  
+
+
+ If you use these results in any published work, please cite
+ the following papers:
+ 
+ O'Connell JR, Weeks DE (1995) The VITESSE algorithm for rapid exact multilocus linkage analysis
+ via genotype set-recoding and fuzzy inheritance, Nature Genetics 11:402-408
+
+ O'Connell JR (2001) Rapid Multipoint Linkage Analysis via Inheritance Vectors in 
+ the Elston-Stewart Algorithm, Hum Hered 51(4):226-40
+
+
+Total running time:      0 hr    0 min    0 sec
+

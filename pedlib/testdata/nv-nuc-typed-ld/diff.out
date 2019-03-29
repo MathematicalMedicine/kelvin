@@ -1,0 +1,203 @@
+28,32d27
+< Parental Pair(4) 1(2, 2) && 2(1, 1)
+< Child 3 #ofGenotypes: 1
+<   (2, 1)
+< Child 4 #ofGenotypes: 1
+<   (2, 1)
+46,51d40
+< 			 2|2 			 1|1
+< 			 1|1 			 1|2
+< 		 Likelihood = 0.000000e+00
+< 			 2|2 			 1|1
+< 			 1|1 			 2|1
+< 		 Likelihood = 0.000000e+00
+69a59
+> Conditional likelihood for nuclear family 0 is: 1.962256e-05
+81,82c71
+< Child 3 #ofGenotypes: 4
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 3
+92,93c81
+< Child 3 #ofGenotypes: 4
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 3
+102,108d89
+< Parental Pair(4) 1(2, 1) && 2(1, 1)
+< Child 3 #ofGenotypes: 2
+<   (1, 1)
+<   (2, 1)
+< Child 4 #ofGenotypes: 2
+<   (1, 1)
+<   (2, 1)
+122,127d102
+< 			 2|1 			 1|1
+< 			 1|1 			 1|2
+< 		 Likelihood = 0.000000e+00
+< 			 2|1 			 1|1
+< 			 1|1 			 2|1
+< 		 Likelihood = 0.000000e+00
+145a121
+> Conditional likelihood for nuclear family 0 is: 2.016061e-05
+157,158c133
+< Child 3 #ofGenotypes: 4
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 3
+168,169c143
+< Child 3 #ofGenotypes: 4
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 3
+178,184d151
+< Parental Pair(4) 1(1, 2) && 2(1, 1)
+< Child 3 #ofGenotypes: 2
+<   (1, 1)
+<   (2, 1)
+< Child 4 #ofGenotypes: 2
+<   (1, 1)
+<   (2, 1)
+198,203d164
+< 			 1|2 			 1|1
+< 			 1|1 			 1|2
+< 		 Likelihood = 0.000000e+00
+< 			 1|2 			 1|1
+< 			 1|1 			 2|1
+< 		 Likelihood = 0.000000e+00
+221a183
+> Conditional likelihood for nuclear family 0 is: 2.016061e-05
+231,232c193
+< Child 3 #ofGenotypes: 2
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 1
+238,239c199
+< Child 3 #ofGenotypes: 2
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 1
+244,248d203
+< Parental Pair(4) 1(1, 1) && 2(1, 1)
+< Child 3 #ofGenotypes: 1
+<   (1, 1)
+< Child 4 #ofGenotypes: 1
+<   (1, 1)
+262,267d216
+< 			 1|1 			 1|1
+< 			 1|1 			 1|2
+< 		 Likelihood = 0.000000e+00
+< 			 1|1 			 1|1
+< 			 1|1 			 2|1
+< 		 Likelihood = 0.000000e+00
+285a235,237
+> Conditional likelihood for nuclear family 0 is: 5.573690e-06
+> log Likelihood for pedigree 0 is: -7.136818e+00
+> Sum of log Likelihood is: -7.136818e+00
+309,313d260
+< Parental Pair(4) 1(2, 2) && 2(1, 1)
+< Child 3 #ofGenotypes: 1
+<   (2, 1)
+< Child 4 #ofGenotypes: 1
+<   (2, 1)
+327,332d273
+< 			 2|2 			 1|1
+< 			 1|1 			 1|2
+< 		 Likelihood = 0.000000e+00
+< 			 2|2 			 1|1
+< 			 1|1 			 2|1
+< 		 Likelihood = 0.000000e+00
+350a292
+> Conditional likelihood for nuclear family 0 is: 2.361868e-05
+362,363c304
+< Child 3 #ofGenotypes: 4
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 3
+373,374c314
+< Child 3 #ofGenotypes: 4
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 3
+383,389d322
+< Parental Pair(4) 1(2, 1) && 2(1, 1)
+< Child 3 #ofGenotypes: 2
+<   (1, 1)
+<   (2, 1)
+< Child 4 #ofGenotypes: 2
+<   (1, 1)
+<   (2, 1)
+403,408d335
+< 			 2|1 			 1|1
+< 			 1|1 			 1|2
+< 		 Likelihood = 0.000000e+00
+< 			 2|1 			 1|1
+< 			 1|1 			 2|1
+< 		 Likelihood = 0.000000e+00
+426a354
+> Conditional likelihood for nuclear family 0 is: 2.142501e-05
+438,439c366
+< Child 3 #ofGenotypes: 4
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 3
+449,450c376
+< Child 3 #ofGenotypes: 4
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 3
+459,465d384
+< Parental Pair(4) 1(1, 2) && 2(1, 1)
+< Child 3 #ofGenotypes: 2
+<   (1, 1)
+<   (2, 1)
+< Child 4 #ofGenotypes: 2
+<   (1, 1)
+<   (2, 1)
+479,484d397
+< 			 1|2 			 1|1
+< 			 1|1 			 1|2
+< 		 Likelihood = 0.000000e+00
+< 			 1|2 			 1|1
+< 			 1|1 			 2|1
+< 		 Likelihood = 0.000000e+00
+502a416
+> Conditional likelihood for nuclear family 0 is: 2.142501e-05
+512,513c426
+< Child 3 #ofGenotypes: 2
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 1
+519,520c432
+< Child 3 #ofGenotypes: 2
+<   (1, 1)
+---
+> Child 3 #ofGenotypes: 1
+525,529d436
+< Parental Pair(4) 1(1, 1) && 2(1, 1)
+< Child 3 #ofGenotypes: 1
+<   (1, 1)
+< Child 4 #ofGenotypes: 1
+<   (1, 1)
+543,548d449
+< 			 1|1 			 1|1
+< 			 1|1 			 1|2
+< 		 Likelihood = 0.000000e+00
+< 			 1|1 			 1|1
+< 			 1|1 			 2|1
+< 		 Likelihood = 0.000000e+00
+567c468,471
+< Computations are done with polynomials
+---
+> Conditional likelihood for nuclear family 0 is: 5.636130e-06
+> log Likelihood for pedigree 0 is: -7.124290e+00
+> Sum of log Likelihood is: -7.124290e+00
+> Computations are done without polynomials
+569,571c473,475
+< Likelihood at 0.5: 2.344737e-06
+< Likelihood at 0.200000: 2.467306e-06
+< LOD score at 0.200000: 2.212881e-02
+---
+> Likelihood at 0.5: 7.297635e-08
+> Likelihood at 0.200000: 7.511204e-08
+> LOD score at 0.200000: 1.252742e-02

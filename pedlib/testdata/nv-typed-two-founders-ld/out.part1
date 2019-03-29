@@ -1,0 +1,1327 @@
+Total number of markers in map: 670
+Total number of markers in data: 1
+Total number of trait locus in data: 1
+Baseline Genotype Lists:
+Pedigree   1 Locus 1: 
+    Person 1: (2,2) (2,1) (1,2) (1,1) 
+    Person 2: (2,2) (2,1) (1,2) 
+    Person 3: (2,2) (2,1) (1,2) 
+    Person 4: (2,2) (2,1) (1,2) (1,1) 
+    Person 5: (2,2) (2,1) (1,2) (1,1) 
+    Person 6: (2,2) (2,1) (1,2) 
+    Person 7: (2,2) (2,1) (1,2) (1,1) 
+    Person 8: (2,2) (2,1) (1,2) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 1: 
+    Person 1: (2,2) (2,1) (1,2) (1,1) 
+    Person 2: (2,2) (2,1) (1,2) 
+    Person 3: (2,2) (2,1) (1,2) 
+    Person 4: (2,2) (2,1) (1,2) (1,1) 
+    Person 5: (2,2) (2,1) (1,2) (1,1) 
+    Person 6: (2,2) (2,1) (1,2) 
+    Person 7: (2,2) (2,1) (1,2) (1,1) 
+    Person 8: (2,2) (2,1) (1,2) 
+Genotype Lists after set recoding :
+Pedigree   1 Locus 1: 
+    Person 1: (2,2) (2,1) (1,2) (1,1) 
+    Person 2: (2,2) (2,1) (1,2) 
+    Person 3: (2,2) (2,1) (1,2) 
+    Person 4: (2,2) (2,1) (1,2) (1,1) 
+    Person 5: (2,2) (2,1) (1,2) (1,1) 
+    Person 6: (2,2) (2,1) (1,2) 
+    Person 7: (2,2) (2,1) (1,2) (1,1) 
+    Person 8: (2,2) (2,1) (1,2) 
+Baseline Genotype Lists:
+Pedigree   1 Locus 2: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (2,1) (1,2) 
+    Person 5: (7,7) (7,6) (6,7) (6,6) (7,5) (5,7) (6,5) (5,6) (5,5) (7,4) (4,7) (6,4) (4,6) (5,4) (4,5) (4,4) (7,3) (3,7) (6,3) (3,6) (5,3) (3,5) (4,3) (3,4) (3,3) (7,2) (2,7) (6,2) (2,6) (5,2) (2,5) (4,2) (2,4) (3,2) (2,3) (2,2) (7,1) (1,7) (6,1) (1,6) (5,1) (1,5) (4,1) (1,4) (3,1) (1,3) (2,1) (1,2) (1,1) 
+    Person 6: (7,7) (7,6) (6,7) (6,6) (7,5) (5,7) (6,5) (5,6) (5,5) (7,4) (4,7) (6,4) (4,6) (5,4) (4,5) (4,4) (7,3) (3,7) (6,3) (3,6) (5,3) (3,5) (4,3) (3,4) (3,3) (7,2) (2,7) (6,2) (2,6) (5,2) (2,5) (4,2) (2,4) (3,2) (2,3) (2,2) (7,1) (1,7) (6,1) (1,6) (5,1) (1,5) (4,1) (1,4) (3,1) (1,3) (2,1) (1,2) (1,1) 
+    Person 7: (1,1) 
+    Person 8: (2,1) (1,2) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 2: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+    Person 5: (7,1) (1,7) (6,1) (1,6) (5,1) (1,5) (4,1) (1,4) (3,1) (1,3) (2,1) (1,2) (1,1) 
+    Person 6: (7,1) (1,7) (6,1) (1,6) (5,1) (1,5) (4,1) (1,4) (3,1) (1,3) (2,1) (1,2) (1,1) 
+    Person 7: (1,1) 
+    Person 8: (1,2) 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+    Person 5: (8,1) (1,8) (1,1) 
+    Person 6: (8,1) (1,8) (1,1) 
+    Person 7: (1,1) 
+    Person 8: (1,2) 
+Genotype Lists after set recoding :
+Pedigree   1 Locus 2: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+    Person 5: (8,1) (1,8) (1,1) 
+    Person 6: (8,1) (1,8) (1,1) 
+    Person 7: (1,1) 
+    Person 8: (1,2) 
+	 Proband (4) haplotype: 
+			 2|2 
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 4 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(4) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(5) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(6) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(7) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(8) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(9) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 4 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 1.020600e-10
+			 1|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 7.472250e-11
+			 1|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 7.472250e-11
+			 1|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 1.020600e-10
+			 1|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 4.556250e-10
+			 1|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 4.556250e-10
+			 2|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 1.020600e-10
+			 2|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 7.472250e-11
+			 2|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 7.472250e-11
+			 2|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 1.020600e-10
+			 2|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 4.556250e-10
+			 2|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 4.556250e-10
+			 2|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 4.680000e-12
+			 2|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 3.330000e-12
+			 2|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 3.330000e-12
+			 2|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 4.680000e-12
+			 2|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 2.025000e-11
+			 2|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 2.025000e-11
+log Likelihood for nuclear family 0 is: -8.587346e+00
+			 2|1 
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 4 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(3) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(4) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(5) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(6) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 4 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 2.296350e-10
+			 1|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 2.690010e-09
+			 1|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 2.690010e-09
+			 1|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 2.296350e-10
+			 2|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 2.296350e-10
+			 2|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 2.690010e-09
+			 2|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 2.690010e-09
+			 2|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 2.296350e-10
+			 2|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 1.053000e-11
+			 2|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.198800e-10
+			 2|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.198800e-10
+			 2|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 1.053000e-11
+log Likelihood for nuclear family 0 is: -7.923017e+00
+			 1|2 
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 4 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(4) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(5) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(6) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(7) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(8) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(9) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 4 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 2.624400e-09
+			 1|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 2.624400e-09
+			 1|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 2.624400e-09
+			 1|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 2.624400e-09
+			 1|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 1.640250e-08
+			 1|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 1.640250e-08
+			 1|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 9.185400e-10
+			 1|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 6.725025e-10
+			 1|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 6.725025e-10
+			 1|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 9.185400e-10
+			 1|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 4.100625e-09
+			 1|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 4.100625e-09
+			 2|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 9.185400e-10
+			 2|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 6.725025e-10
+			 2|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 6.725025e-10
+			 2|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 9.185400e-10
+			 2|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 4.100625e-09
+			 2|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 4.100625e-09
+log Likelihood for nuclear family 0 is: -7.180000e+00
+			 1|1 
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 4 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(4) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(5) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(6) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 1)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 4 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 7.290000e-10
+			 1|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.166400e-08
+			 1|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.166400e-08
+			 1|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 7.290000e-10
+			 1|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 2.551500e-10
+			 1|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 2.988900e-09
+			 1|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 2.988900e-09
+			 1|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 2.551500e-10
+			 2|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 2.551500e-10
+			 2|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 2.988900e-09
+			 2|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 2.988900e-09
+			 2|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 2.551500e-10
+log Likelihood for nuclear family 0 is: -7.422943e+00
+	 Proband (7) haplotype: 
+			 2|2 
+			 1|1 
+Nuc Fam 2 (Dad: 7 - Mom: 4) Proband: 7 locus 0, #ofChildren: 1
+Parental Pair(1) 7(2, 2) && 4(2, 2)
+Child 8 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 7(2, 2) && 4(2, 1)
+Child 8 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 7(2, 2) && 4(1, 2)
+Child 8 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(4) 7(2, 2) && 4(1, 1)
+Child 8 #ofGenotypes: 1
+  (2, 1)
+Nuc Fam 2 (Dad: 7 - Mom: 4) Proband: 7 locus 1, #ofChildren: 1
+Parental Pair(1) 7(1, 1) && 4(1, 2)
+Child 8 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 2:
+			 DAD(7)			 MOM(4)
+			 2|2 			 1|1
+			 1|1 			 1|2
+		 Likelihood = 1.888110e-10
+			 2|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 2.444563e-09
+			 2|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.552122e-10
+			 2|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 1.163768e-10
+log Likelihood for nuclear family 2 is: -8.536859e+00
+			 2|1 
+			 1|1 
+Nuc Fam 2 (Dad: 7 - Mom: 4) Proband: 7 locus 0, #ofChildren: 1
+Parental Pair(1) 7(2, 1) && 4(2, 2)
+Child 8 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 7(2, 1) && 4(2, 1)
+Child 8 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 7(2, 1) && 4(1, 2)
+Child 8 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(4) 7(2, 1) && 4(1, 1)
+Child 8 #ofGenotypes: 1
+  (2, 1)
+Nuc Fam 2 (Dad: 7 - Mom: 4) Proband: 7 locus 1, #ofChildren: 1
+Parental Pair(1) 7(1, 1) && 4(1, 2)
+Child 8 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 2:
+			 DAD(7)			 MOM(4)
+			 2|1 			 1|1
+			 1|1 			 1|2
+		 Likelihood = 8.496495e-10
+			 2|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 1.218978e-08
+			 2|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 7.521822e-10
+			 2|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 5.818838e-10
+log Likelihood for nuclear family 2 is: -7.842438e+00
+			 1|2 
+			 1|1 
+Nuc Fam 2 (Dad: 7 - Mom: 4) Proband: 7 locus 0, #ofChildren: 1
+Parental Pair(1) 7(1, 2) && 4(2, 2)
+Child 8 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 7(1, 2) && 4(2, 1)
+Child 8 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 7(1, 2) && 4(1, 2)
+Child 8 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(4) 7(1, 2) && 4(1, 1)
+Child 8 #ofGenotypes: 1
+  (2, 1)
+Nuc Fam 2 (Dad: 7 - Mom: 4) Proband: 7 locus 1, #ofChildren: 1
+Parental Pair(1) 7(1, 1) && 4(1, 2)
+Child 8 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 2:
+			 DAD(7)			 MOM(4)
+			 1|2 			 1|1
+			 1|1 			 1|2
+		 Likelihood = 8.496495e-10
+			 1|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 1.218978e-08
+			 1|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 7.521822e-10
+			 1|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 5.818838e-10
+log Likelihood for nuclear family 2 is: -7.842438e+00
+			 1|1 
+			 1|1 
+Nuc Fam 2 (Dad: 7 - Mom: 4) Proband: 7 locus 0, #ofChildren: 1
+Parental Pair(1) 7(1, 1) && 4(2, 2)
+Child 8 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 7(1, 1) && 4(2, 1)
+Child 8 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(3) 7(1, 1) && 4(1, 2)
+Child 8 #ofGenotypes: 1
+  (1, 2)
+Nuc Fam 2 (Dad: 7 - Mom: 4) Proband: 7 locus 1, #ofChildren: 1
+Parental Pair(1) 7(1, 1) && 4(1, 2)
+Child 8 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 2:
+			 DAD(7)			 MOM(4)
+			 1|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 2.642771e-09
+			 1|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.193940e-10
+			 1|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 1.293075e-10
+log Likelihood for nuclear family 2 is: -8.538881e+00
+	 Proband (5) haplotype: 
+			 2|2 
+			 8|1 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(2, 2) && 6(2, 2)
+Child 7 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 5(2, 2) && 6(2, 1)
+Child 7 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 5(2, 2) && 6(1, 2)
+Child 7 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(8, 1) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(8, 1) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(8, 1) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 2|2 			 1|2
+			 8|1 			 1|1
+		 Likelihood = 3.887653e-14
+			 2|2 			 1|2
+			 8|1 			 1|8
+		 Likelihood = 2.446157e-13
+			 2|2 			 1|2
+			 8|1 			 8|1
+		 Likelihood = 1.052731e-13
+			 2|2 			 2|1
+			 8|1 			 1|1
+		 Likelihood = 3.887653e-14
+			 2|2 			 2|1
+			 8|1 			 1|8
+		 Likelihood = 1.052731e-13
+			 2|2 			 2|1
+			 8|1 			 8|1
+		 Likelihood = 2.446157e-13
+			 2|2 			 2|2
+			 8|1 			 1|1
+		 Likelihood = 1.307233e-14
+			 2|2 			 2|2
+			 8|1 			 1|8
+		 Likelihood = 5.882550e-14
+			 2|2 			 2|2
+			 8|1 			 8|1
+		 Likelihood = 5.882550e-14
+log Likelihood for nuclear family 1 is: -1.204179e+01
+			 1|8 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(2, 2) && 6(2, 2)
+Child 7 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 5(2, 2) && 6(2, 1)
+Child 7 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 5(2, 2) && 6(1, 2)
+Child 7 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(1, 8) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(1, 8) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(1, 8) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 2|2 			 1|2
+			 1|8 			 1|1
+		 Likelihood = 3.887653e-14
+			 2|2 			 1|2
+			 1|8 			 1|8
+		 Likelihood = 2.446157e-13
+			 2|2 			 1|2
+			 1|8 			 8|1
+		 Likelihood = 1.052731e-13
+			 2|2 			 2|1
+			 1|8 			 1|1
+		 Likelihood = 3.887653e-14
+			 2|2 			 2|1
+			 1|8 			 1|8
+		 Likelihood = 1.052731e-13
+			 2|2 			 2|1
+			 1|8 			 8|1
+		 Likelihood = 2.446157e-13
+			 2|2 			 2|2
+			 1|8 			 1|1
+		 Likelihood = 1.307233e-14
+			 2|2 			 2|2
+			 1|8 			 1|8
+		 Likelihood = 5.882550e-14
+			 2|2 			 2|2
+			 1|8 			 8|1
+		 Likelihood = 5.882550e-14
+log Likelihood for nuclear family 1 is: -1.204179e+01
+			 1|1 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(2, 2) && 6(2, 2)
+Child 7 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 5(2, 2) && 6(2, 1)
+Child 7 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 5(2, 2) && 6(1, 2)
+Child 7 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(1, 1) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(1, 1) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(1, 1) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 2|2 			 1|2
+			 1|1 			 1|1
+		 Likelihood = 7.775306e-14
+			 2|2 			 1|2
+			 1|1 			 1|8
+		 Likelihood = 4.892315e-13
+			 2|2 			 1|2
+			 1|1 			 8|1
+		 Likelihood = 2.105461e-13
+			 2|2 			 2|1
+			 1|1 			 1|1
+		 Likelihood = 7.775306e-14
+			 2|2 			 2|1
+			 1|1 			 1|8
+		 Likelihood = 2.105461e-13
+			 2|2 			 2|1
+			 1|1 			 8|1
+		 Likelihood = 4.892315e-13
+			 2|2 			 2|2
+			 1|1 			 1|1
+		 Likelihood = 2.614467e-14
+			 2|2 			 2|2
+			 1|1 			 1|8
+		 Likelihood = 1.176510e-13
+			 2|2 			 2|2
+			 1|1 			 8|1
+		 Likelihood = 1.176510e-13
+log Likelihood for nuclear family 1 is: -1.174076e+01
+			 2|1 
+			 8|1 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(2, 1) && 6(2, 2)
+Child 7 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 5(2, 1) && 6(2, 1)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 5(2, 1) && 6(1, 2)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(8, 1) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(8, 1) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(8, 1) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 2|1 			 1|2
+			 8|1 			 1|1
+		 Likelihood = 3.496702e-13
+			 2|1 			 1|2
+			 8|1 			 1|8
+		 Likelihood = 1.196701e-12
+			 2|1 			 1|2
+			 8|1 			 8|1
+		 Likelihood = 1.950331e-12
+			 2|1 			 2|1
+			 8|1 			 1|1
+		 Likelihood = 3.496702e-13
+			 2|1 			 2|1
+			 8|1 			 1|8
+		 Likelihood = 1.950331e-12
+			 2|1 			 2|1
+			 8|1 			 8|1
+		 Likelihood = 1.196701e-12
+			 2|1 			 2|2
+			 8|1 			 1|1
+		 Likelihood = 4.892315e-13
+			 2|1 			 2|2
+			 8|1 			 1|8
+		 Likelihood = 2.201542e-12
+			 2|1 			 2|2
+			 8|1 			 8|1
+		 Likelihood = 2.201542e-12
+log Likelihood for nuclear family 1 is: -1.092497e+01
+			 1|8 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(2, 1) && 6(2, 2)
+Child 7 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 5(2, 1) && 6(2, 1)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 5(2, 1) && 6(1, 2)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(1, 8) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(1, 8) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(1, 8) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 2|1 			 1|2
+			 1|8 			 1|1
+		 Likelihood = 3.498342e-13
+			 2|1 			 1|2
+			 1|8 			 1|8
+		 Likelihood = 1.950331e-12
+			 2|1 			 1|2
+			 1|8 			 8|1
+		 Likelihood = 1.198176e-12
+			 2|1 			 2|1
+			 1|8 			 1|1
+		 Likelihood = 3.498342e-13
+			 2|1 			 2|1
+			 1|8 			 1|8
+		 Likelihood = 1.198176e-12
+			 2|1 			 2|1
+			 1|8 			 8|1
+		 Likelihood = 1.950331e-12
+			 2|1 			 2|2
+			 1|8 			 1|1
+		 Likelihood = 2.105461e-13
+			 2|1 			 2|2
+			 1|8 			 1|8
+		 Likelihood = 9.474575e-13
+			 2|1 			 2|2
+			 1|8 			 8|1
+		 Likelihood = 9.474575e-13
+log Likelihood for nuclear family 1 is: -1.104086e+01
+			 1|1 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(2, 1) && 6(2, 2)
+Child 7 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 5(2, 1) && 6(2, 1)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 5(2, 1) && 6(1, 2)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(1, 1) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(1, 1) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(1, 1) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 2|1 			 1|2
+			 1|1 			 1|1
+		 Likelihood = 6.995044e-13
+			 2|1 			 1|2
+			 1|1 			 1|8
+		 Likelihood = 3.147032e-12
+			 2|1 			 1|2
+			 1|1 			 8|1
+		 Likelihood = 3.148507e-12
+			 2|1 			 2|1
+			 1|1 			 1|1
+		 Likelihood = 6.995044e-13
+			 2|1 			 2|1
+			 1|1 			 1|8
+		 Likelihood = 3.148507e-12
+			 2|1 			 2|1
+			 1|1 			 8|1
+		 Likelihood = 3.147032e-12
+			 2|1 			 2|2
+			 1|1 			 1|1
+		 Likelihood = 6.997776e-13
+			 2|1 			 2|2
+			 1|1 			 1|8
+		 Likelihood = 3.148999e-12
+			 2|1 			 2|2
+			 1|1 			 8|1
+		 Likelihood = 3.148999e-12
+log Likelihood for nuclear family 1 is: -1.067803e+01
+			 1|2 
+			 8|1 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(1, 2) && 6(2, 2)
+Child 7 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 5(1, 2) && 6(2, 1)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 5(1, 2) && 6(1, 2)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(8, 1) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(8, 1) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(8, 1) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 1|2 			 1|2
+			 8|1 			 1|1
+		 Likelihood = 3.498342e-13
+			 1|2 			 1|2
+			 8|1 			 1|8
+		 Likelihood = 1.950331e-12
+			 1|2 			 1|2
+			 8|1 			 8|1
+		 Likelihood = 1.198176e-12
+			 1|2 			 2|1
+			 8|1 			 1|1
+		 Likelihood = 3.498342e-13
+			 1|2 			 2|1
+			 8|1 			 1|8
+		 Likelihood = 1.198176e-12
+			 1|2 			 2|1
+			 8|1 			 8|1
+		 Likelihood = 1.950331e-12
+			 1|2 			 2|2
+			 8|1 			 1|1
+		 Likelihood = 2.105461e-13
+			 1|2 			 2|2
+			 8|1 			 1|8
+		 Likelihood = 9.474575e-13
+			 1|2 			 2|2
+			 8|1 			 8|1
+		 Likelihood = 9.474575e-13
+log Likelihood for nuclear family 1 is: -1.104086e+01
+			 1|8 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(1, 2) && 6(2, 2)
+Child 7 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 5(1, 2) && 6(2, 1)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 5(1, 2) && 6(1, 2)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(1, 8) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(1, 8) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(1, 8) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 1|2 			 1|2
+			 1|8 			 1|1
+		 Likelihood = 3.496702e-13
+			 1|2 			 1|2
+			 1|8 			 1|8
+		 Likelihood = 1.196701e-12
+			 1|2 			 1|2
+			 1|8 			 8|1
+		 Likelihood = 1.950331e-12
+			 1|2 			 2|1
+			 1|8 			 1|1
+		 Likelihood = 3.496702e-13
+			 1|2 			 2|1
+			 1|8 			 1|8
+		 Likelihood = 1.950331e-12
+			 1|2 			 2|1
+			 1|8 			 8|1
+		 Likelihood = 1.196701e-12
+			 1|2 			 2|2
+			 1|8 			 1|1
+		 Likelihood = 4.892315e-13
+			 1|2 			 2|2
+			 1|8 			 1|8
+		 Likelihood = 2.201542e-12
+			 1|2 			 2|2
+			 1|8 			 8|1
+		 Likelihood = 2.201542e-12
+log Likelihood for nuclear family 1 is: -1.092497e+01
+			 1|1 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(1, 2) && 6(2, 2)
+Child 7 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 5(1, 2) && 6(2, 1)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 5(1, 2) && 6(1, 2)
+Child 7 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(1, 1) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(1, 1) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(1, 1) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 1|2 			 1|2
+			 1|1 			 1|1
+		 Likelihood = 6.995044e-13
+			 1|2 			 1|2
+			 1|1 			 1|8
+		 Likelihood = 3.147032e-12
+			 1|2 			 1|2
+			 1|1 			 8|1
+		 Likelihood = 3.148507e-12
+			 1|2 			 2|1
+			 1|1 			 1|1
+		 Likelihood = 6.995044e-13
+			 1|2 			 2|1
+			 1|1 			 1|8
+		 Likelihood = 3.148507e-12
+			 1|2 			 2|1
+			 1|1 			 8|1
+		 Likelihood = 3.147032e-12
+			 1|2 			 2|2
+			 1|1 			 1|1
+		 Likelihood = 6.997776e-13
+			 1|2 			 2|2
+			 1|1 			 1|8
+		 Likelihood = 3.148999e-12
+			 1|2 			 2|2
+			 1|1 			 8|1
+		 Likelihood = 3.148999e-12
+log Likelihood for nuclear family 1 is: -1.067803e+01
+			 1|1 
+			 8|1 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(1, 1) && 6(2, 2)
+Child 7 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 5(1, 1) && 6(2, 1)
+Child 7 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 5(1, 1) && 6(1, 2)
+Child 7 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(8, 1) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(8, 1) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(8, 1) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 1|1 			 1|2
+			 8|1 			 1|1
+		 Likelihood = 3.884618e-13
+			 1|1 			 1|2
+			 8|1 			 1|8
+		 Likelihood = 1.050545e-12
+			 1|1 			 1|2
+			 8|1 			 8|1
+		 Likelihood = 2.445611e-12
+			 1|1 			 2|1
+			 8|1 			 1|1
+		 Likelihood = 3.884618e-13
+			 1|1 			 2|1
+			 8|1 			 1|8
+		 Likelihood = 2.445611e-12
+			 1|1 			 2|1
+			 8|1 			 8|1
+		 Likelihood = 1.050545e-12
+			 1|1 			 2|2
+			 8|1 			 1|1
+		 Likelihood = 6.468073e-13
+			 1|1 			 2|2
+			 8|1 			 1|8
+		 Likelihood = 2.910633e-12
+			 1|1 			 2|2
+			 8|1 			 8|1
+		 Likelihood = 2.910633e-12
+log Likelihood for nuclear family 1 is: -1.084657e+01
+			 1|8 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(1, 1) && 6(2, 2)
+Child 7 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 5(1, 1) && 6(2, 1)
+Child 7 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 5(1, 1) && 6(1, 2)
+Child 7 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(1, 8) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(1, 8) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(1, 8) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 1|1 			 1|2
+			 1|8 			 1|1
+		 Likelihood = 3.884618e-13
+			 1|1 			 1|2
+			 1|8 			 1|8
+		 Likelihood = 1.050545e-12
+			 1|1 			 1|2
+			 1|8 			 8|1
+		 Likelihood = 2.445611e-12
+			 1|1 			 2|1
+			 1|8 			 1|1
+		 Likelihood = 3.884618e-13
+			 1|1 			 2|1
+			 1|8 			 1|8
+		 Likelihood = 2.445611e-12
+			 1|1 			 2|1
+			 1|8 			 8|1
+		 Likelihood = 1.050545e-12
+			 1|1 			 2|2
+			 1|8 			 1|1
+		 Likelihood = 6.468073e-13
+			 1|1 			 2|2
+			 1|8 			 1|8
+		 Likelihood = 2.910633e-12
+			 1|1 			 2|2
+			 1|8 			 8|1
+		 Likelihood = 2.910633e-12
+log Likelihood for nuclear family 1 is: -1.084657e+01
+			 1|1 
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 0, #ofChildren: 1
+Parental Pair(1) 5(1, 1) && 6(2, 2)
+Child 7 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 5(1, 1) && 6(2, 1)
+Child 7 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 5(1, 1) && 6(1, 2)
+Child 7 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 1 (Dad: 5 - Mom: 6) Proband: 5 locus 1, #ofChildren: 1
+Parental Pair(1) 5(1, 1) && 6(8, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(2) 5(1, 1) && 6(1, 8)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Parental Pair(3) 5(1, 1) && 6(1, 1)
+Child 7 #ofGenotypes: 1
+  (1, 1)
+Haplotype for nuclear family 1:
+			 DAD(5)			 MOM(6)
+			 1|1 			 1|2
+			 1|1 			 1|1
+		 Likelihood = 7.769236e-13
+			 1|1 			 1|2
+			 1|1 			 1|8
+		 Likelihood = 2.101090e-12
+			 1|1 			 1|2
+			 1|1 			 8|1
+		 Likelihood = 4.891222e-12
+			 1|1 			 2|1
+			 1|1 			 1|1
+		 Likelihood = 7.769236e-13
+			 1|1 			 2|1
+			 1|1 			 1|8
+		 Likelihood = 4.891222e-12
+			 1|1 			 2|1
+			 1|1 			 8|1
+		 Likelihood = 2.101090e-12
+			 1|1 			 2|2
+			 1|1 			 1|1
+		 Likelihood = 1.293615e-12
+			 1|1 			 2|2
+			 1|1 			 1|8
+		 Likelihood = 5.821266e-12
+			 1|1 			 2|2
+			 1|1 			 8|1
+		 Likelihood = 5.821266e-12
+log Likelihood for nuclear family 1 is: -1.054554e+01
+log Likelihood for pedigree 0 is: -1.157089e+01
+Set genotype weights.
+Computing likelihood.

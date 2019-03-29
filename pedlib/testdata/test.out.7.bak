@@ -1,0 +1,175 @@
+Total number of markers in map: 670
+Total number of markers in data: 1
+Total number of trait locus in data: 1
+Pedigree 1 Nuclear Families (4): 
+    0: Dad - 1 Mom - 2 
+       Children - 4  5  
+       Up Connectors:
+       Down Connectors:
+	 Nuclear Family Index   2, Connected Individual 5.
+	 Nuclear Family Index   1, Connected Individual 4.
+    1: Dad - 3 Mom - 4 
+       Children - 8  9  
+       Up Connectors:
+	 Nuclear Family Index   0, Connected Individual 4.
+       Down Connectors:
+	 Nuclear Family Index   3, Connected Individual 8.
+    2: Dad - 5 Mom - 6 
+       Children - 10  
+       Up Connectors:
+	 Nuclear Family Index   0, Connected Individual 5.
+       Down Connectors:
+    3: Dad - 7 Mom - 8 
+       Children - 11  
+       Up Connectors:
+	 Nuclear Family Index   1, Connected Individual 8.
+       Down Connectors:
+    Founder Nuclear Families:
+      0 
+Baseline Genotype Lists:
+Pedigree   1 Locus 1: 
+    Person 1: (2,2) (2,1) (1,2) 
+    Person 2: (2,2) (2,1) (1,2) (1,1) 
+    Person 3: (2,2) (2,1) (1,2) (1,1) 
+    Person 4: (2,2) (2,1) (1,2) (1,1) 
+    Person 5: (2,2) (2,1) (1,2) 
+    Person 6: (2,2) (2,1) (1,2) (1,1) 
+    Person 7: (2,2) (2,1) (1,2) 
+    Person 8: (2,2) (2,1) (1,2) (1,1) 
+    Person 9: (2,2) (2,1) (1,2) (1,1) 
+    Person 10: (2,2) (2,1) (1,2) 
+    Person 11: (2,2) (2,1) (1,2) (1,1) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 1: 
+    Person 1: (2,2) (2,1) (1,2) 
+    Person 2: (2,2) (2,1) (1,2) (1,1) 
+    Person 3: (2,2) (2,1) (1,2) (1,1) 
+    Person 4: (2,2) (2,1) (1,2) (1,1) 
+    Person 5: (2,2) (2,1) (1,2) 
+    Person 6: (2,2) (2,1) (1,2) (1,1) 
+    Person 7: (2,2) (2,1) (1,2) 
+    Person 8: (2,2) (2,1) (1,2) (1,1) 
+    Person 9: (2,2) (2,1) (1,2) (1,1) 
+    Person 10: (2,2) (2,1) (1,2) 
+    Person 11: (2,2) (2,1) (1,2) (1,1) 
+Baseline Genotype Lists:
+Pedigree   1 Locus 2: 
+    Person 1: (7,7) (7,6) (7,5) (7,4) (7,3) (7,2) (7,1) (6,7) (6,6) (6,5) (6,4) (6,3) (6,2) (6,1) (5,7) (5,6) (5,5) (5,4) (5,3) (5,2) (5,1) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 2: (7,7) (7,6) (7,5) (7,4) (7,3) (7,2) (7,1) (6,7) (6,6) (6,5) (6,4) (6,3) (6,2) (6,1) (5,7) (5,6) (5,5) (5,4) (5,3) (5,2) (5,1) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 3: (7,7) (7,6) (7,5) (7,4) (7,3) (7,2) (7,1) (6,7) (6,6) (6,5) (6,4) (6,3) (6,2) (6,1) (5,7) (5,6) (5,5) (5,4) (5,3) (5,2) (5,1) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 4: (7,7) (7,6) (7,5) (7,4) (7,3) (7,2) (7,1) (6,7) (6,6) (6,5) (6,4) (6,3) (6,2) (6,1) (5,7) (5,6) (5,5) (5,4) (5,3) (5,2) (5,1) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 5: (7,7) (7,6) (7,5) (7,4) (7,3) (7,2) (7,1) (6,7) (6,6) (6,5) (6,4) (6,3) (6,2) (6,1) (5,7) (5,6) (5,5) (5,4) (5,3) (5,2) (5,1) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 6: (7,7) (7,6) (7,5) (7,4) (7,3) (7,2) (7,1) (6,7) (6,6) (6,5) (6,4) (6,3) (6,2) (6,1) (5,7) (5,6) (5,5) (5,4) (5,3) (5,2) (5,1) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 7: (6,7) (7,6) 
+    Person 8: (4,3) (3,4) 
+    Person 9: (7,7) (7,6) (7,5) (7,4) (7,3) (7,2) (7,1) (6,7) (6,6) (6,5) (6,4) (6,3) (6,2) (6,1) (5,7) (5,6) (5,5) (5,4) (5,3) (5,2) (5,1) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 10: (2,1) (1,2) 
+    Person 11: (3,7) (7,3) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 2: 
+    Person 1: (7,7) (7,6) (7,5) (7,4) (7,3) (7,2) (7,1) (6,7) (6,6) (6,5) (6,4) (6,3) (6,2) (6,1) (5,7) (5,6) (5,5) (5,4) (5,3) (5,2) (5,1) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 2: (7,7) (7,6) (7,5) (7,4) (7,3) (7,2) (7,1) (6,7) (6,6) (6,5) (6,4) (6,3) (6,2) (6,1) (5,7) (5,6) (5,5) (5,4) (5,3) (5,2) (5,1) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 3: (7,4) (7,3) (6,4) (6,3) (5,4) (5,3) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,4) (2,3) (1,4) (1,3) 
+    Person 4: (7,4) (7,3) (6,4) (6,3) (5,4) (5,3) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,4) (2,3) (1,4) (1,3) 
+    Person 5: (7,2) (7,1) (6,2) (6,1) (5,2) (5,1) (4,2) (4,1) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 6: (7,2) (7,1) (6,2) (6,1) (5,2) (5,1) (4,2) (4,1) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 7: (6,7) (7,6) 
+    Person 8: (4,3) (3,4) 
+    Person 9: (7,7) (7,6) (7,5) (7,4) (7,3) (7,2) (7,1) (6,7) (6,6) (6,5) (6,4) (6,3) (6,2) (6,1) (5,7) (5,6) (5,5) (5,4) (5,3) (5,2) (5,1) (4,7) (4,6) (4,5) (4,4) (4,3) (4,2) (4,1) (3,7) (3,6) (3,5) (3,4) (3,3) (3,2) (3,1) (2,7) (2,6) (2,5) (2,4) (2,3) (2,2) (2,1) (1,7) (1,6) (1,5) (1,4) (1,3) (1,2) (1,1) 
+    Person 10: (2,1) (1,2) 
+    Person 11: (7,3) 
+allele_set_recoding.c (333): Nuclear Family 0: 
+allele_set_recoding.c (342):   DAD 1
+    Paternal Transmitted Alleles: 
+        1 2 3 4 
+    Maternal Transmitted Alleles: 
+        1 2 3 4 
+    Paternal Non-Transmitted Alleles: 
+        5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        5 6 7 
+allele_set_recoding.c (342):   MOM 2
+    Paternal Transmitted Alleles: 
+        1 2 3 4 
+    Maternal Transmitted Alleles: 
+        1 2 3 4 
+    Paternal Non-Transmitted Alleles: 
+        5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        5 6 7 
+allele_set_recoding.c (349):     Child 4
+    Paternal Transmitted Alleles: 
+        3 4 
+    Maternal Transmitted Alleles: 
+        3 4 
+    Paternal Non-Transmitted Alleles: 
+        1 2 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        1 2 5 6 7 
+allele_set_recoding.c (349):     Child 5
+    Paternal Transmitted Alleles: 
+        1 2 
+    Maternal Transmitted Alleles: 
+        1 2 
+    Paternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+allele_set_recoding.c (333): Nuclear Family 1: 
+allele_set_recoding.c (342):   DAD 3
+    Paternal Transmitted Alleles: 
+        3 4 
+    Maternal Transmitted Alleles: 
+        3 4 
+    Paternal Non-Transmitted Alleles: 
+        1 2 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        1 2 5 6 7 
+allele_set_recoding.c (342):   MOM 4
+    Paternal Transmitted Alleles: 
+        3 4 
+    Maternal Transmitted Alleles: 
+        3 4 
+    Paternal Non-Transmitted Alleles: 
+        1 2 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        1 2 5 6 7 
+allele_set_recoding.c (349):     Child 8
+    Typed:  (4,3) (3,4) 
+allele_set_recoding.c (349):     Child 9
+    Paternal Transmitted Alleles: 
+        
+    Maternal Transmitted Alleles: 
+        
+    Paternal Non-Transmitted Alleles: 
+        1 2 3 4 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        1 2 3 4 5 6 7 
+allele_set_recoding.c (333): Nuclear Family 2: 
+allele_set_recoding.c (342):   DAD 5
+    Paternal Transmitted Alleles: 
+        1 2 
+    Maternal Transmitted Alleles: 
+        1 2 
+    Paternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+allele_set_recoding.c (342):   MOM 6
+    Paternal Transmitted Alleles: 
+        1 2 
+    Maternal Transmitted Alleles: 
+        1 2 
+    Paternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+allele_set_recoding.c (349):     Child 10
+    Typed:  (2,1) (1,2) 
+allele_set_recoding.c (333): Nuclear Family 3: 
+allele_set_recoding.c (342):   DAD 7
+    Typed:  (6,7) (7,6) 
+allele_set_recoding.c (342):   MOM 8
+    Typed:  (4,3) (3,4) 
+allele_set_recoding.c (349):     Child 11
+    Typed:  (7,3) 

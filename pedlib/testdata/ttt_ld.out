@@ -1,0 +1,247 @@
+Total number of markers in map: 670
+Total number of markers in data: 1
+Total number of trait locus in data: 1
+Pedigree 1 Nuclear Families (1): 
+    0: Dad - 1 Mom - 2 
+       Children - 3  4  
+       Up Connectors:
+       Down Connectors:
+    Founder Nuclear Families:
+      0 
+Baseline Genotype Lists:
+Pedigree   1 Locus 1: 
+    Person 1: (2,2) (2,1) (1,2) (1,1) 
+    Person 2: (2,2) (2,1) (1,2) 
+    Person 3: (2,2) (2,1) (1,2) 
+    Person 4: (2,2) (2,1) (1,2) (1,1) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 1: 
+    Person 1: (2,2) (2,1) (1,2) (1,1) 
+    Person 2: (2,2) (2,1) (1,2) 
+    Person 3: (2,2) (2,1) (1,2) 
+    Person 4: (2,2) (2,1) (1,2) (1,1) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 1: 
+    Person 1: (2,2) (2,1) (1,2) (1,1) 
+    Person 2: (2,2) (2,1) (1,2) 
+    Person 3: (2,2) (2,1) (1,2) 
+    Person 4: (2,2) (2,1) (1,2) (1,1) 
+Baseline Genotype Lists:
+Pedigree   1 Locus 2: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (2,1) (1,2) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 2: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+allele_set_recoding.c (349): Nuclear Family 0: 
+allele_set_recoding.c (358):   DAD 1
+    Typed:  (1,1) 
+allele_set_recoding.c (358):   MOM 2
+    Typed:  (2,1) (1,2) 
+allele_set_recoding.c (365):     Child 3
+    Typed:  (1,1) 
+allele_set_recoding.c (365):     Child 4
+    Typed:  (1,2) 
+Locus AFM214yg7
+  AlleleSet 0:         1 
+  AlleleSet 1:         2 
+  AlleleSet 2:         3 
+  AlleleSet 3:         4 
+  AlleleSet 4:         5 
+  AlleleSet 5:         6 
+  AlleleSet 6:         7 
+Genotype after set recoding:
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+Genotype Lists after genotype elimination :
+Pedigree   1 Locus 2: 
+    Person 1: (1,1) 
+    Person 2: (2,1) (1,2) 
+    Person 3: (1,1) 
+    Person 4: (1,2) 
+Nuc Fam 0, proband 1, locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(4) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(5) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(6) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(7) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(8) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(9) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(10) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(11) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(12) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0, proband 1, locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 1)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 1|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+			 1|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 1|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+			 1|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 1|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+			 1|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 1|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+			 1|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 1|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+			 1|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 1|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+			 2|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 2|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+			 2|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 2|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+			 2|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 2|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+			 2|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 2|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+			 2|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 2|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+			 2|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 0.000000e+00
+			 2|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 0.000000e+00
+log Likelihood for nuclear family 0 is: -inf
+Set genotype weights.
+Computing likelihood.

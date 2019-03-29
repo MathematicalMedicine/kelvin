@@ -1,0 +1,3867 @@
+Total number of markers in map: 670
+Total number of markers in data: 1
+Total number of trait locus in data: 1
+LE
+allele_set_recoding.c (350): Nuclear Family 0: 
+allele_set_recoding.c (359):   DAD 1
+    Paternal Transmitted Alleles: 
+        1 2 
+    Maternal Transmitted Alleles: 
+        1 2 
+    Paternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+allele_set_recoding.c (359):   MOM 2
+    Typed:  (2,1) (1,2) 
+allele_set_recoding.c (366):     Child 3
+    Paternal Transmitted Alleles: 
+        
+    Maternal Transmitted Alleles: 
+        
+    Paternal Non-Transmitted Alleles: 
+        1 2 3 4 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        1 2 3 4 5 6 7 
+allele_set_recoding.c (366):     Child 4
+    Typed:  (2,1) (1,2) 
+Locus AFM214yg7
+  AlleleSet 0(0.100000):         1 
+  AlleleSet 1(0.100000):         2 
+  AlleleSet 2(0.100000):         3 
+  AlleleSet 3(0.200000):         4 
+  AlleleSet 4(0.100000):         5 
+  AlleleSet 5(0.200000):         6 
+  AlleleSet 6(0.200000):         7 
+  AlleleSet 7(0.800000):         3 4 5 6 7 
+  AlleleSet 8(1.000000):         1 2 3 4 5 6 7 
+Genotype after set recoding:
+allele_set_recoding.c (350): Nuclear Family 0: 
+allele_set_recoding.c (359):   DAD 1
+    Paternal Transmitted Alleles: 
+        1 2 
+    Maternal Transmitted Alleles: 
+        1 2 
+    Paternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        3 4 5 6 7 
+allele_set_recoding.c (359):   MOM 2
+    Typed:  (2,1) (1,2) 
+allele_set_recoding.c (366):     Child 3
+    Paternal Transmitted Alleles: 
+        
+    Maternal Transmitted Alleles: 
+        
+    Paternal Non-Transmitted Alleles: 
+        1 2 3 4 5 6 7 
+    Maternal Non-Transmitted Alleles: 
+        1 2 3 4 5 6 7 
+allele_set_recoding.c (366):     Child 4
+    Typed:  (2,1) (1,2) 
+Locus AFM214yg7
+  AlleleSet 0(0.100000):         1 
+  AlleleSet 1(0.100000):         2 
+  AlleleSet 2(0.100000):         3 
+  AlleleSet 3(0.200000):         4 
+  AlleleSet 4(0.100000):         5 
+  AlleleSet 5(0.200000):         6 
+  AlleleSet 6(0.200000):         7 
+  AlleleSet 7(0.800000):         3 4 5 6 7 
+  AlleleSet 8(1.000000):         1 2 3 4 5 6 7 
+Genotype after set recoding:
+	 Proband (1) haplotype: 
+			 2|2 
+			 8|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(8, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|2 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 2.025000e-06
+			 2|2 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 2.655000e-05
+Likelihood for this entire multi-locus genotype 0.000027 0.000003
+Weight=8.000000e-04 penetrance=1.000000e-01
+			 2|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|2 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 2.025000e-06
+			 2|2 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 2.655000e-05
+Likelihood for this entire multi-locus genotype 0.000027 0.000003
+Weight=8.000000e-04 penetrance=1.000000e-01
+			 2|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 4.050000e-06
+			 2|2 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 5.310000e-05
+Likelihood for this entire multi-locus genotype 0.000053 0.000005
+Weight=1.000000e-04 penetrance=1.000000e-01
+			 8|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(8, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|2 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 2.025000e-06
+			 2|2 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 2.655000e-05
+Likelihood for this entire multi-locus genotype 0.000027 0.000003
+Weight=8.000000e-04 penetrance=1.000000e-01
+			 1|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|2 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 5.625000e-06
+			 2|2 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 2.025000e-06
+			 2|2 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 2.655000e-05
+Likelihood for this entire multi-locus genotype 0.000027 0.000003
+Weight=8.000000e-04 penetrance=1.000000e-01
+			 2|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 4.050000e-06
+			 2|2 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 5.310000e-05
+Likelihood for this entire multi-locus genotype 0.000053 0.000005
+Weight=1.000000e-04 penetrance=1.000000e-01
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 4.050000e-06
+			 2|2 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 5.310000e-05
+Likelihood for this entire multi-locus genotype 0.000053 0.000005
+Weight=1.000000e-04 penetrance=1.000000e-01
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 4.050000e-06
+			 2|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 5.310000e-05
+Likelihood for this entire multi-locus genotype 0.000053 0.000005
+Weight=1.000000e-04 penetrance=1.000000e-01
+			 2|1 
+			 8|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(8, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 4.485938e-06
+			 2|1 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|1 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 2.919375e-05
+Likelihood for this entire multi-locus genotype 0.000029 0.000026
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 4.485938e-06
+			 2|1 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|1 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 2.919375e-05
+Likelihood for this entire multi-locus genotype 0.000029 0.000026
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 8.971875e-06
+			 2|1 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|1 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 8|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(8, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 4.485938e-06
+			 2|1 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|1 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 2.919375e-05
+Likelihood for this entire multi-locus genotype 0.000029 0.000026
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 1|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 4.485938e-06
+			 2|1 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 4.485938e-06
+			 2|1 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 5.625000e-06
+			 2|1 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 2.919375e-05
+Likelihood for this entire multi-locus genotype 0.000029 0.000026
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 8.971875e-06
+			 2|1 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|1 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 8.971875e-06
+			 2|1 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|1 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 8.971875e-06
+			 2|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 8.971875e-06
+			 2|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|2 
+			 8|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(8, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 4.485938e-06
+			 1|2 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 5.625000e-06
+			 1|2 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 2.919375e-05
+Likelihood for this entire multi-locus genotype 0.000029 0.000026
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 4.485938e-06
+			 1|2 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 5.625000e-06
+			 1|2 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 2.919375e-05
+Likelihood for this entire multi-locus genotype 0.000029 0.000026
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 8.971875e-06
+			 1|2 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 1|2 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 8|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(8, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 4.485938e-06
+			 1|2 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 5.625000e-06
+			 1|2 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 2.919375e-05
+Likelihood for this entire multi-locus genotype 0.000029 0.000026
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 1|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 4.485938e-06
+			 1|2 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 4.485938e-06
+			 1|2 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 5.625000e-06
+			 1|2 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 5.625000e-06
+Conditional likelihood for nuclear family 0 is: 2.919375e-05
+Likelihood for this entire multi-locus genotype 0.000029 0.000026
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 8.971875e-06
+			 1|2 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 1|2 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 8.971875e-06
+			 1|2 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 1|2 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 8.971875e-06
+			 1|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 8.971875e-06
+			 1|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 1|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|1 
+			 8|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(8, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 1.068750e-06
+			 1|1 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 2.025000e-06
+			 1|1 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 8.325000e-06
+Likelihood for this entire multi-locus genotype 0.000008 0.000008
+Weight=6.480000e-02 penetrance=1.000000e+00
+			 2|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 1.068750e-06
+			 1|1 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 2.025000e-06
+			 1|1 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 8.325000e-06
+Likelihood for this entire multi-locus genotype 0.000008 0.000008
+Weight=6.480000e-02 penetrance=1.000000e+00
+			 2|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 4.050000e-06
+			 1|1 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 1.665000e-05
+Likelihood for this entire multi-locus genotype 0.000017 0.000017
+Weight=8.100000e-03 penetrance=1.000000e+00
+			 8|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(8, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 1.068750e-06
+			 1|1 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 2.025000e-06
+			 1|1 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 8.325000e-06
+Likelihood for this entire multi-locus genotype 0.000008 0.000008
+Weight=6.480000e-02 penetrance=1.000000e+00
+			 1|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 1.068750e-06
+			 1|1 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 1.068750e-06
+			 1|1 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 2.025000e-06
+			 1|1 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 8.325000e-06
+Likelihood for this entire multi-locus genotype 0.000008 0.000008
+Weight=6.480000e-02 penetrance=1.000000e+00
+			 2|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 4.050000e-06
+			 1|1 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 1.665000e-05
+Likelihood for this entire multi-locus genotype 0.000017 0.000017
+Weight=8.100000e-03 penetrance=1.000000e+00
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 4.050000e-06
+			 1|1 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 1.665000e-05
+Likelihood for this entire multi-locus genotype 0.000017 0.000017
+Weight=8.100000e-03 penetrance=1.000000e+00
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 4.050000e-06
+			 1|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 1.665000e-05
+Likelihood for this entire multi-locus genotype 0.000017 0.000017
+Weight=8.100000e-03 penetrance=1.000000e+00
+Sum of log Likelihood is: -5.337273e+00
+likelihood is: 4.599675e-06
+	 Proband (1) haplotype: 
+			 2|2 
+			 8|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(8, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 8.325000e-06
+			 2|2 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 2.925000e-06
+			 2|2 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 2.925000e-06
+			 2|2 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 8.325000e-06
+			 2|2 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 2.025000e-06
+			 2|2 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 2.655000e-05
+Likelihood for this entire multi-locus genotype 0.000027 0.000003
+Weight=8.000000e-04 penetrance=1.000000e-01
+			 2|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 8.325000e-06
+			 2|2 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 2.925000e-06
+			 2|2 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 2.925000e-06
+			 2|2 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 8.325000e-06
+			 2|2 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 2.025000e-06
+			 2|2 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 2.655000e-05
+Likelihood for this entire multi-locus genotype 0.000027 0.000003
+Weight=8.000000e-04 penetrance=1.000000e-01
+			 2|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 1.665000e-05
+			 2|2 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 5.850000e-06
+			 2|2 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 5.850000e-06
+			 2|2 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 1.665000e-05
+			 2|2 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 4.050000e-06
+			 2|2 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 5.310000e-05
+Likelihood for this entire multi-locus genotype 0.000053 0.000005
+Weight=1.000000e-04 penetrance=1.000000e-01
+			 8|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(8, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 2.925000e-06
+			 2|2 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 8.325000e-06
+			 2|2 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 8.325000e-06
+			 2|2 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 2.925000e-06
+			 2|2 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 2.025000e-06
+			 2|2 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 2.655000e-05
+Likelihood for this entire multi-locus genotype 0.000027 0.000003
+Weight=8.000000e-04 penetrance=1.000000e-01
+			 1|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 2.925000e-06
+			 2|2 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 8.325000e-06
+			 2|2 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 8.325000e-06
+			 2|2 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 2.925000e-06
+			 2|2 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 2.025000e-06
+			 2|2 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 2.655000e-05
+Likelihood for this entire multi-locus genotype 0.000027 0.000003
+Weight=8.000000e-04 penetrance=1.000000e-01
+			 2|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 4.050000e-06
+			 2|2 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 5.310000e-05
+Likelihood for this entire multi-locus genotype 0.000053 0.000005
+Weight=1.000000e-04 penetrance=1.000000e-01
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 1.125000e-05
+			 2|2 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 4.050000e-06
+			 2|2 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 5.310000e-05
+Likelihood for this entire multi-locus genotype 0.000053 0.000005
+Weight=1.000000e-04 penetrance=1.000000e-01
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (2, 2)
+Child 4 #ofGenotypes: 1
+  (2, 2)
+Parental Pair(2) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 5.850000e-06
+			 2|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.665000e-05
+			 2|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.665000e-05
+			 2|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 5.850000e-06
+			 2|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 4.050000e-06
+			 2|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 5.310000e-05
+Likelihood for this entire multi-locus genotype 0.000053 0.000005
+Weight=1.000000e-04 penetrance=1.000000e-01
+			 2|1 
+			 8|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(8, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 5.766750e-06
+			 2|1 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 4.875750e-06
+			 2|1 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 4.875750e-06
+			 2|1 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 5.766750e-06
+			 2|1 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 8.325000e-06
+			 2|1 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 8.325000e-06
+Conditional likelihood for nuclear family 0 is: 3.793500e-05
+Likelihood for this entire multi-locus genotype 0.000038 0.000034
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 4.875750e-06
+			 2|1 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 2.425500e-06
+			 2|1 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 2.425500e-06
+			 2|1 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 4.875750e-06
+			 2|1 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 2.925000e-06
+			 2|1 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 2.925000e-06
+Conditional likelihood for nuclear family 0 is: 2.045250e-05
+Likelihood for this entire multi-locus genotype 0.000020 0.000018
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 1.064250e-05
+			 2|1 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 7.301250e-06
+			 2|1 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 7.301250e-06
+			 2|1 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 1.064250e-05
+			 2|1 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|1 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 8|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(8, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 4.875750e-06
+			 2|1 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 5.766750e-06
+			 2|1 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 5.766750e-06
+			 2|1 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 4.875750e-06
+			 2|1 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 8.325000e-06
+			 2|1 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 8.325000e-06
+Conditional likelihood for nuclear family 0 is: 3.793500e-05
+Likelihood for this entire multi-locus genotype 0.000038 0.000034
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 1|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 2.425500e-06
+			 2|1 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 4.875750e-06
+			 2|1 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 4.875750e-06
+			 2|1 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 2.425500e-06
+			 2|1 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 2.925000e-06
+			 2|1 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 2.925000e-06
+Conditional likelihood for nuclear family 0 is: 2.045250e-05
+Likelihood for this entire multi-locus genotype 0.000020 0.000018
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 9.751500e-06
+			 2|1 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 8.192250e-06
+			 2|1 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 8.192250e-06
+			 2|1 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 9.751500e-06
+			 2|1 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|1 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 8.192250e-06
+			 2|1 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 9.751500e-06
+			 2|1 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 9.751500e-06
+			 2|1 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 8.192250e-06
+			 2|1 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|1 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 2|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 7.301250e-06
+			 2|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.064250e-05
+			 2|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.064250e-05
+			 2|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 7.301250e-06
+			 2|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 2|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|2 
+			 8|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(8, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 4.875750e-06
+			 1|2 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 2.425500e-06
+			 1|2 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 2.425500e-06
+			 1|2 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 4.875750e-06
+			 1|2 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 2.925000e-06
+			 1|2 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 2.925000e-06
+Conditional likelihood for nuclear family 0 is: 2.045250e-05
+Likelihood for this entire multi-locus genotype 0.000020 0.000018
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 5.766750e-06
+			 1|2 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 4.875750e-06
+			 1|2 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 4.875750e-06
+			 1|2 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 5.766750e-06
+			 1|2 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 8.325000e-06
+			 1|2 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 8.325000e-06
+Conditional likelihood for nuclear family 0 is: 3.793500e-05
+Likelihood for this entire multi-locus genotype 0.000038 0.000034
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 1.064250e-05
+			 1|2 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 7.301250e-06
+			 1|2 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 7.301250e-06
+			 1|2 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 1.064250e-05
+			 1|2 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 1|2 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 8|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(8, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 2.425500e-06
+			 1|2 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 4.875750e-06
+			 1|2 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 4.875750e-06
+			 1|2 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 2.425500e-06
+			 1|2 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 2.925000e-06
+			 1|2 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 2.925000e-06
+Conditional likelihood for nuclear family 0 is: 2.045250e-05
+Likelihood for this entire multi-locus genotype 0.000020 0.000018
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 1|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 4.875750e-06
+			 1|2 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 5.766750e-06
+			 1|2 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 5.766750e-06
+			 1|2 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 4.875750e-06
+			 1|2 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 8.325000e-06
+			 1|2 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 8.325000e-06
+Conditional likelihood for nuclear family 0 is: 3.793500e-05
+Likelihood for this entire multi-locus genotype 0.000038 0.000034
+Weight=7.200000e-03 penetrance=9.000000e-01
+			 2|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 8.192250e-06
+			 1|2 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 9.751500e-06
+			 1|2 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 9.751500e-06
+			 1|2 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 8.192250e-06
+			 1|2 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 1|2 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 9.751500e-06
+			 1|2 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 8.192250e-06
+			 1|2 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 8.192250e-06
+			 1|2 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 9.751500e-06
+			 1|2 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 1.125000e-05
+			 1|2 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 2)
+Child 3 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 2)
+Parental Pair(2) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Parental Pair(3) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 3
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Child 4 #ofGenotypes: 4
+  (1, 1)
+  (1, 2)
+  (2, 1)
+  (2, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|2 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 7.301250e-06
+			 1|2 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 1.064250e-05
+			 1|2 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 1.064250e-05
+			 1|2 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 7.301250e-06
+			 1|2 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 1.125000e-05
+			 1|2 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 1.125000e-05
+Conditional likelihood for nuclear family 0 is: 5.838750e-05
+Likelihood for this entire multi-locus genotype 0.000058 0.000053
+Weight=9.000000e-04 penetrance=9.000000e-01
+			 1|1 
+			 8|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(8, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 8|2 			 1|2
+		 Likelihood = 1.102500e-06
+			 1|1 			 1|2
+			 8|2 			 2|1
+		 Likelihood = 1.035000e-06
+			 1|1 			 2|1
+			 8|2 			 1|2
+		 Likelihood = 1.035000e-06
+			 1|1 			 2|1
+			 8|2 			 2|1
+		 Likelihood = 1.102500e-06
+			 1|1 			 2|2
+			 8|2 			 1|2
+		 Likelihood = 2.025000e-06
+			 1|1 			 2|2
+			 8|2 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 8.325000e-06
+Likelihood for this entire multi-locus genotype 0.000008 0.000008
+Weight=6.480000e-02 penetrance=1.000000e+00
+			 2|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 2|8 			 1|2
+		 Likelihood = 1.102500e-06
+			 1|1 			 1|2
+			 2|8 			 2|1
+		 Likelihood = 1.035000e-06
+			 1|1 			 2|1
+			 2|8 			 1|2
+		 Likelihood = 1.035000e-06
+			 1|1 			 2|1
+			 2|8 			 2|1
+		 Likelihood = 1.102500e-06
+			 1|1 			 2|2
+			 2|8 			 1|2
+		 Likelihood = 2.025000e-06
+			 1|1 			 2|2
+			 2|8 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 8.325000e-06
+Likelihood for this entire multi-locus genotype 0.000008 0.000008
+Weight=6.480000e-02 penetrance=1.000000e+00
+			 2|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Parental Pair(2) 1(2, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 2|2 			 1|2
+		 Likelihood = 2.205000e-06
+			 1|1 			 1|2
+			 2|2 			 2|1
+		 Likelihood = 2.070000e-06
+			 1|1 			 2|1
+			 2|2 			 1|2
+		 Likelihood = 2.070000e-06
+			 1|1 			 2|1
+			 2|2 			 2|1
+		 Likelihood = 2.205000e-06
+			 1|1 			 2|2
+			 2|2 			 1|2
+		 Likelihood = 4.050000e-06
+			 1|1 			 2|2
+			 2|2 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 1.665000e-05
+Likelihood for this entire multi-locus genotype 0.000017 0.000017
+Weight=8.100000e-03 penetrance=1.000000e+00
+			 8|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(8, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(8, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 8|1 			 1|2
+		 Likelihood = 1.035000e-06
+			 1|1 			 1|2
+			 8|1 			 2|1
+		 Likelihood = 1.102500e-06
+			 1|1 			 2|1
+			 8|1 			 1|2
+		 Likelihood = 1.102500e-06
+			 1|1 			 2|1
+			 8|1 			 2|1
+		 Likelihood = 1.035000e-06
+			 1|1 			 2|2
+			 8|1 			 1|2
+		 Likelihood = 2.025000e-06
+			 1|1 			 2|2
+			 8|1 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 8.325000e-06
+Likelihood for this entire multi-locus genotype 0.000008 0.000008
+Weight=6.480000e-02 penetrance=1.000000e+00
+			 1|8 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 8) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 8) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|8 			 1|2
+		 Likelihood = 1.035000e-06
+			 1|1 			 1|2
+			 1|8 			 2|1
+		 Likelihood = 1.102500e-06
+			 1|1 			 2|1
+			 1|8 			 1|2
+		 Likelihood = 1.102500e-06
+			 1|1 			 2|1
+			 1|8 			 2|1
+		 Likelihood = 1.035000e-06
+			 1|1 			 2|2
+			 1|8 			 1|2
+		 Likelihood = 2.025000e-06
+			 1|1 			 2|2
+			 1|8 			 2|1
+		 Likelihood = 2.025000e-06
+Conditional likelihood for nuclear family 0 is: 8.325000e-06
+Likelihood for this entire multi-locus genotype 0.000008 0.000008
+Weight=6.480000e-02 penetrance=1.000000e+00
+			 2|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(2, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(2, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 2|1 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 1|2
+			 2|1 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 2|1 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 2|1 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|2
+			 2|1 			 1|2
+		 Likelihood = 4.050000e-06
+			 1|1 			 2|2
+			 2|1 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 1.665000e-05
+Likelihood for this entire multi-locus genotype 0.000017 0.000017
+Weight=8.100000e-03 penetrance=1.000000e+00
+			 1|2 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 2) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Parental Pair(2) 1(1, 2) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 2
+  (1, 2)
+  (2, 1)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|2 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 1|2
+			 1|2 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 1|2 			 1|2
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|1
+			 1|2 			 2|1
+		 Likelihood = 2.137500e-06
+			 1|1 			 2|2
+			 1|2 			 1|2
+		 Likelihood = 4.050000e-06
+			 1|1 			 2|2
+			 1|2 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 1.665000e-05
+Likelihood for this entire multi-locus genotype 0.000017 0.000017
+Weight=8.100000e-03 penetrance=1.000000e+00
+			 1|1 
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 0, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Parental Pair(3) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (1, 2)
+Child 4 #ofGenotypes: 2
+  (1, 1)
+  (1, 2)
+Nuc Fam 0 (Dad: 1 - Mom: 2) Proband: 1 locus 1, #ofChildren: 2
+Parental Pair(1) 1(1, 1) && 2(2, 1)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Parental Pair(2) 1(1, 1) && 2(1, 2)
+Child 3 #ofGenotypes: 1
+  (9, 9)
+Child 4 #ofGenotypes: 1
+  (1, 2)
+Haplotype for nuclear family No. 0:
+			 DAD(1)			 MOM(2)
+			 1|1 			 1|2
+			 1|1 			 1|2
+		 Likelihood = 2.070000e-06
+			 1|1 			 1|2
+			 1|1 			 2|1
+		 Likelihood = 2.205000e-06
+			 1|1 			 2|1
+			 1|1 			 1|2
+		 Likelihood = 2.205000e-06
+			 1|1 			 2|1
+			 1|1 			 2|1
+		 Likelihood = 2.070000e-06
+			 1|1 			 2|2
+			 1|1 			 1|2
+		 Likelihood = 4.050000e-06
+			 1|1 			 2|2
+			 1|1 			 2|1
+		 Likelihood = 4.050000e-06
+Conditional likelihood for nuclear family 0 is: 1.665000e-05
+Likelihood for this entire multi-locus genotype 0.000017 0.000017
+Weight=8.100000e-03 penetrance=1.000000e+00
+Sum of log Likelihood is: -5.337273e+00
+likelihood is: 4.599675e-06
+Computations are done without polynomials
+Computing likelihood.
+Likelihood at 0.5: 4.599675e-06 (log10: -5.337273e+00)
+Likelihood at 0.200000: 4.599675e-06 (log10: -5.337273e+00)
+LOD score at 0.200000: 0.000000

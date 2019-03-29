@@ -1,0 +1,13 @@
+# first line should be analysis type LD or LE
+LE POLY
+2 #Total number of loci
+trait 2 #disease  2 alleles
+# allele frequencies
+0.9 0.1
+1 # Number of trait variables
+DT 2 # affection status with 1 liability class
+0.707  0.707 0.707 
+0.707  0.707 0.707 
+marker 20 #AFM214yg7   2 alleles
+# allele frequencies
+0.05 0.05 0.05 0.05 0.05 0.05 0.05 .05 .05 .05 .05 .05 .05 .05 .05 .05 .05 .05 .05 .05

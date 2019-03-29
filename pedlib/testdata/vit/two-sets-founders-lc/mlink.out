@@ -1,0 +1,20 @@
+
+Program MLINK version  5.10 (1-Feb-1991)
+
+
+FASTLINK version 4.1P (30-Jun-1999)
+
+The program constants are set to the following maxima:
+     8 loci in mapping problem (maxlocus)
+    25 alleles at a single locus (maxall)
+ 50000 maximum of censoring array (maxcensor)
+  1000 individuals in all pedigrees combined (maxind)
+   150 pedigrees (maxped)
+    25 binary codes at a single locus (maxfact)
+     3 quantitative factor(s) at a single locus
+    60 liability classes
+    25 binary codes at a single locus
+    2.00 base scaling factor for likelihood (scale)
+    2.00 scale multiplier for each locus (scalemult)
+ 0.00000 frequency for elimination of heterozygotes (minfreq)
+
