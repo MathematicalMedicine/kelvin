@@ -1,0 +1,97 @@
+/home/yungui/code/kelvin-0.0.27/utils
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.27/utils'
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.27/utils'
+/home/yungui/code/kelvin-0.0.27/pedlib
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.27/pedlib'
+In file included from pedlib.h:51,
+                 from read_pedfile.c:38:
+locus.h:7:20: error: kelvin.h: No such file or directory
+In file included from pedlib.h:51,
+                 from read_pedfile.c:38:
+locus.h:434: error: expected ‘)’ before ‘*’ token
+make[1]: [read_pedfile.o] Error 1 (ignored)
+In file included from pedlib.h:51,
+                 from locus.c:24:
+locus.h:7:20: error: kelvin.h: No such file or directory
+In file included from pedlib.h:51,
+                 from locus.c:24:
+locus.h:434: error: expected ‘)’ before ‘*’ token
+locus.c:2004: error: expected ‘)’ before ‘*’ token
+make[1]: [locus.o] Error 1 (ignored)
+In file included from pedlib.h:51,
+                 from allele_set_recoding.c:10:
+locus.h:7:20: error: kelvin.h: No such file or directory
+In file included from pedlib.h:51,
+                 from allele_set_recoding.c:10:
+locus.h:434: error: expected ‘)’ before ‘*’ token
+make[1]: [allele_set_recoding.o] Error 1 (ignored)
+In file included from pedlib.h:51,
+                 from genotype_elimination.c:15:
+locus.h:7:20: error: kelvin.h: No such file or directory
+In file included from pedlib.h:51,
+                 from genotype_elimination.c:15:
+locus.h:434: error: expected ‘)’ before ‘*’ token
+make[1]: [genotype_elimination.o] Error 1 (ignored)
+In file included from pedlib.h:51,
+                 from parental_pair.c:16:
+locus.h:7:20: error: kelvin.h: No such file or directory
+In file included from pedlib.h:51,
+                 from parental_pair.c:16:
+locus.h:434: error: expected ‘)’ before ‘*’ token
+make[1]: [parental_pair.o] Error 1 (ignored)
+In file included from pedlib.h:51,
+                 from likelihood.c:12:
+locus.h:7:20: error: kelvin.h: No such file or directory
+In file included from pedlib.h:51,
+                 from likelihood.c:12:
+locus.h:434: error: expected ‘)’ before ‘*’ token
+make[1]: [likelihood.o] Error 1 (ignored)
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.27/pedlib'
+gcc -Wall			 -g  -DDEBUG		 -Wall -I/home/yungui/code/kelvin-0.0.27/include -L/home/yungui/code/kelvin-0.0.27/lib -I/usr/local/include -L/usr/local/lib kelvin.c config.c ppl.c -o kelvin  -lped -lutils -lgsl -lgslcblas -lm 
+In file included from /home/yungui/code/kelvin-0.0.27/include/pedlib.h:51,
+                 from kelvin.h:26,
+                 from kelvin.c:13:
+/home/yungui/code/kelvin-0.0.27/include/locus.h:7:20: error: kelvin.h: No such file or directory
+In file included from /home/yungui/code/kelvin-0.0.27/include/pedlib.h:51,
+                 from kelvin.h:26,
+                 from kelvin.c:13:
+/home/yungui/code/kelvin-0.0.27/include/locus.h:434: error: expected ‘)’ before ‘*’ token
+kelvin.c: In function ‘main’:
+kelvin.c:814: warning: implicit declaration of function ‘setup_LD_haplotype_freq’
+kelvin.c:956: error: ‘LDLoci’ has no member named ‘ppHaplotypeFreq’
+kelvin.c:1397: error: ‘LDLoci’ has no member named ‘ppHaplotypeFreq’
+kelvin.c:2174: error: expected expression before ‘else’
+kelvin.c:3335: error: expected declaration or statement at end of input
+kelvin.c:171: warning: unused variable ‘dist’
+kelvin.c:170: warning: unused variable ‘traitIndex’
+kelvin.c:169: warning: unused variable ‘relativePos’
+kelvin.c:168: warning: unused variable ‘marker2Pos’
+kelvin.c:168: warning: unused variable ‘marker1Pos’
+kelvin.c:148: warning: unused variable ‘currPos’
+kelvin.c:148: warning: unused variable ‘prevPos’
+kelvin.c:147: warning: unused variable ‘prevTraitInd’
+kelvin.c:146: warning: unused variable ‘prevLastMarker’
+kelvin.c:145: warning: unused variable ‘prevFirstMarker’
+kelvin.c:144: warning: unused variable ‘locusListChanged’
+kelvin.c:143: warning: unused variable ‘markerSetChanged’
+kelvin.c:140: warning: unused variable ‘avgLR’
+kelvin.c:137: warning: unused variable ‘leftMarker’
+kelvin.c:134: warning: unused variable ‘traitPos’
+kelvin.c:3335: warning: control reaches end of non-void function
+In file included from /home/yungui/code/kelvin-0.0.27/include/pedlib.h:51,
+                 from kelvin.h:26,
+                 from config.c:10:
+/home/yungui/code/kelvin-0.0.27/include/locus.h:7:20: error: kelvin.h: No such file or directory
+In file included from /home/yungui/code/kelvin-0.0.27/include/pedlib.h:51,
+                 from kelvin.h:26,
+                 from config.c:10:
+/home/yungui/code/kelvin-0.0.27/include/locus.h:434: error: expected ‘)’ before ‘*’ token
+In file included from /home/yungui/code/kelvin-0.0.27/include/pedlib.h:51,
+                 from kelvin.h:26,
+                 from ppl.c:1:
+/home/yungui/code/kelvin-0.0.27/include/locus.h:7:20: error: kelvin.h: No such file or directory
+In file included from /home/yungui/code/kelvin-0.0.27/include/pedlib.h:51,
+                 from kelvin.h:26,
+                 from ppl.c:1:
+/home/yungui/code/kelvin-0.0.27/include/locus.h:434: error: expected ‘)’ before ‘*’ token
+make: *** [kelvin] Error 1
