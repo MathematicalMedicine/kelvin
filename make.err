@@ -1,0 +1,97 @@
+/home/yungui/code/kelvin-0.32.1/utils
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.32.1/utils'
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.32.1/utils'
+/home/yungui/code/kelvin-0.32.1/pedlib
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.32.1/pedlib'
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.32.1/pedlib'
+gcc -Wall			 -g  		 -pedantic    -Wall -I/home/yungui/code/kelvin-0.32.1/include -L/home/yungui/code/kelvin-0.32.1/lib -I/usr/local/include -L/usr/local/lib kelvin.c config.c ppl.c -o kelvin  -lped -lutils -lgsl -lgslcblas -lm 
+In file included from kelvin.c:14:
+kelvin.h:18:1: warning: C++ style comments are not allowed in ISO C90
+kelvin.h:18:1: warning: (this will be reported only once per input file)
+In file included from kelvin.h:24,
+                 from kelvin.c:14:
+/home/yungui/code/kelvin-0.32.1/include/utils.h:139:27: warning: anonymous variadic macros were introduced in C99
+/home/yungui/code/kelvin-0.32.1/include/utils.h:152:40: warning: anonymous variadic macros were introduced in C99
+/home/yungui/code/kelvin-0.32.1/include/utils.h:170:28: warning: anonymous variadic macros were introduced in C99
+In file included from kelvin.h:25,
+                 from kelvin.c:14:
+/home/yungui/code/kelvin-0.32.1/include/pedlib.h:52:1: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/pedlib.h:52:1: warning: (this will be reported only once per input file)
+In file included from /home/yungui/code/kelvin-0.32.1/include/pedigree.h:13,
+                 from /home/yungui/code/kelvin-0.32.1/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from kelvin.c:14:
+/home/yungui/code/kelvin-0.32.1/include/polynomial.h:3:1: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/polynomial.h:3:1: warning: (this will be reported only once per input file)
+In file included from /home/yungui/code/kelvin-0.32.1/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from kelvin.c:14:
+/home/yungui/code/kelvin-0.32.1/include/pedigree.h:37:1: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/pedigree.h:37:1: warning: (this will be reported only once per input file)
+In file included from /home/yungui/code/kelvin-0.32.1/include/pedlib.h:59,
+                 from kelvin.h:25,
+                 from kelvin.c:14:
+/home/yungui/code/kelvin-0.32.1/include/locus.h:277:3: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/locus.h:277:3: warning: (this will be reported only once per input file)
+kelvin.c:30:1: warning: C++ style comments are not allowed in ISO C90
+kelvin.c:30:1: warning: (this will be reported only once per input file)
+In file included from config.c:8:
+kelvin.h:18:1: warning: C++ style comments are not allowed in ISO C90
+kelvin.h:18:1: warning: (this will be reported only once per input file)
+In file included from kelvin.h:24,
+                 from config.c:8:
+/home/yungui/code/kelvin-0.32.1/include/utils.h:139:27: warning: anonymous variadic macros were introduced in C99
+/home/yungui/code/kelvin-0.32.1/include/utils.h:152:40: warning: anonymous variadic macros were introduced in C99
+/home/yungui/code/kelvin-0.32.1/include/utils.h:170:28: warning: anonymous variadic macros were introduced in C99
+In file included from kelvin.h:25,
+                 from config.c:8:
+/home/yungui/code/kelvin-0.32.1/include/pedlib.h:52:1: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/pedlib.h:52:1: warning: (this will be reported only once per input file)
+In file included from /home/yungui/code/kelvin-0.32.1/include/pedigree.h:13,
+                 from /home/yungui/code/kelvin-0.32.1/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from config.c:8:
+/home/yungui/code/kelvin-0.32.1/include/polynomial.h:3:1: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/polynomial.h:3:1: warning: (this will be reported only once per input file)
+In file included from /home/yungui/code/kelvin-0.32.1/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from config.c:8:
+/home/yungui/code/kelvin-0.32.1/include/pedigree.h:37:1: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/pedigree.h:37:1: warning: (this will be reported only once per input file)
+In file included from /home/yungui/code/kelvin-0.32.1/include/pedlib.h:59,
+                 from kelvin.h:25,
+                 from config.c:8:
+/home/yungui/code/kelvin-0.32.1/include/locus.h:277:3: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/locus.h:277:3: warning: (this will be reported only once per input file)
+config.c:996:3: warning: C++ style comments are not allowed in ISO C90
+config.c:996:3: warning: (this will be reported only once per input file)
+In file included from ppl.c:8:
+kelvin.h:18:1: warning: C++ style comments are not allowed in ISO C90
+kelvin.h:18:1: warning: (this will be reported only once per input file)
+In file included from kelvin.h:24,
+                 from ppl.c:8:
+/home/yungui/code/kelvin-0.32.1/include/utils.h:139:27: warning: anonymous variadic macros were introduced in C99
+/home/yungui/code/kelvin-0.32.1/include/utils.h:152:40: warning: anonymous variadic macros were introduced in C99
+/home/yungui/code/kelvin-0.32.1/include/utils.h:170:28: warning: anonymous variadic macros were introduced in C99
+In file included from kelvin.h:25,
+                 from ppl.c:8:
+/home/yungui/code/kelvin-0.32.1/include/pedlib.h:52:1: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/pedlib.h:52:1: warning: (this will be reported only once per input file)
+In file included from /home/yungui/code/kelvin-0.32.1/include/pedigree.h:13,
+                 from /home/yungui/code/kelvin-0.32.1/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from ppl.c:8:
+/home/yungui/code/kelvin-0.32.1/include/polynomial.h:3:1: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/polynomial.h:3:1: warning: (this will be reported only once per input file)
+In file included from /home/yungui/code/kelvin-0.32.1/include/pedlib.h:58,
+                 from kelvin.h:25,
+                 from ppl.c:8:
+/home/yungui/code/kelvin-0.32.1/include/pedigree.h:37:1: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/pedigree.h:37:1: warning: (this will be reported only once per input file)
+In file included from /home/yungui/code/kelvin-0.32.1/include/pedlib.h:59,
+                 from kelvin.h:25,
+                 from ppl.c:8:
+/home/yungui/code/kelvin-0.32.1/include/locus.h:277:3: warning: C++ style comments are not allowed in ISO C90
+/home/yungui/code/kelvin-0.32.1/include/locus.h:277:3: warning: (this will be reported only once per input file)
+ppl.c:371:3: warning: C++ style comments are not allowed in ISO C90
+ppl.c:371:3: warning: (this will be reported only once per input file)
