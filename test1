@@ -1,0 +1,19 @@
+PD pedfile.dat
+MP mapfile.dat
+MK markers.dat
+SA 3
+DT
+DA 2
+TL 1; 2; 3
+TL 3 50 2
+GF 0.001; 0.01; 0.1; 0.3; 0.5
+dd 0.0
+Dd 0.2
+DD 0.4; 0.5
+DD 1 >= DD 2
+DD 1 >= Dd 1
+DD != Dd; Dd != dd
+#Th 0.0 0.4 0.1; 0.4 0.5 0.01
+Tm 0.0 0.5 0.1
+Tf 0.0 0.3 0.1
+AL 0.5 0.9 0.1

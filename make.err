@@ -1,0 +1,30 @@
+/home/yungui/code/kelvin-0.0.15/utils
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.15/utils'
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.15/utils'
+/home/yungui/code/kelvin-0.0.15/pedlib
+make[1]: Entering directory `/export/home/yungui/code/kelvin-0.0.15/pedlib'
+read_pedfile.c: In function ‘create_nuclear_family’:
+read_pedfile.c:1023: error: ‘NuclearFamily’ has no member named ‘ppParentalPair’
+read_pedfile.c:1026: error: ‘NuclearFamily’ has no member named ‘ppParentalPair’
+read_pedfile.c:1028: error: ‘NuclearFamily’ has no member named ‘pNumParentalPair’
+make[1]: [read_pedfile.o] Error 1 (ignored)
+likelihood.c: In function ‘compute_nuclear_family_likelihood’:
+likelihood.c:652: warning: unused variable ‘i’
+likelihood.c:651: warning: unused variable ‘pNextPair’
+likelihood.c:651: warning: unused variable ‘pPair’
+likelihood.c: In function ‘loop_parental_pair’:
+likelihood.c:820: error: invalid type argument of ‘->’
+likelihood.c:821: error: ‘numPair’ undeclared (first use in this function)
+likelihood.c:821: error: (Each undeclared identifier is reported only once
+likelihood.c:821: error: for each function it appears in.)
+likelihood.c:822: error: invalid type argument of ‘->’
+likelihood.c:917: error: ‘ParentalPairSpace’ has no member named ‘ppParentalPairs’
+likelihood.c:1193: error: ‘NuclearFamily’ has no member named ‘pHaplotypePairs’
+likelihood.c:1193: error: ‘NuclearFamily’ has no member named ‘numHaplotypePairs’
+likelihood.c:1195: error: ‘NuclearFamily’ has no member named ‘numHaplotypePairs’
+likelihood.c:1199: error: ‘ParentalPairSpace’ has no member named ‘ppParentalPairs’
+likelihood.c: In function ‘loop_child_multi_locus_genotype’:
+likelihood.c:1242: error: ‘ParentalPairSpace’ has no member named ‘ppParentalPairs’
+make[1]: [likelihood.o] Error 1 (ignored)
+make[1]: Leaving directory `/export/home/yungui/code/kelvin-0.0.15/pedlib'
+gcc -Wall			 -g -pg -DDEBUG		 -DNO_POLYNOMIAL -Wall -I/home/yungui/code/kelvin-0.0.15/include -L/home/yungui/code/kelvin-0.0.15/lib -I/usr/local/nice/include -L/usr/local/nice/lib kelvin.c config.c -o kelvin  -lped -lutils -lcdflib -lgsl -lgslcblas -lm 
