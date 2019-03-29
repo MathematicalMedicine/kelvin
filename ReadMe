@@ -1,0 +1,7 @@
+This version includes trait locus and trait threshold values, along with other
+changes to the input configuration file format.
+
+see doc/ReadMe.conf for instructions on how to configure.
+
+see doc/ReadMe-0.0.14 for information about the changes
+.
