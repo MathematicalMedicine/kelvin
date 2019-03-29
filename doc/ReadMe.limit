@@ -1,0 +1,21 @@
+Limitations of this implementation of vitesee 2.0 are listed below. These
+features are implemented in the original vitesee 2.0, but not in this 
+rewrite. As we gradually add more features into this, we can shorten this
+list. 
+
+Single (or no) disease locus model only
+  No forseeable need for this feature as of now
+
+1 Liability class 
+  flexible number of liability classes will give mlip quite a grieve to
+  handle unpredicable layers of loops - trouble for partition
+
+Pedigree file doesn't allow spec of group of alleles for any locus
+  don't see a need for this yet
+doesn't allow half typed person (only paternal or maternal known)
+
+Doesn't allow the changes of marker allele frequencies yet. But this 
+capability should be easily added without too much of effort. Basically
+the super allele frequencies and genotype weights should be evaluated 
+in the loop of marker allele frequencies.
+
