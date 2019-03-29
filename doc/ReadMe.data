@@ -1,0 +1,24 @@
+sample datafile.dat format:
+
+T diseaseName
+M marker1Name
+M marker2Name
+...
+
+
+sample markers.dat format: 
+M marker1Name
+F 0.2 0.2 0.2 0.2 0.2
+M marker2Name
+F 0.25 0.25 0.25 0.25
+
+
+sample mapfile.dat format:
+mapFunction=Kosambi
+chr Marker sex-ave
+1   M1      0.5
+2   M2      10.5
+3   M3      12
+4   M4      14
+
+
