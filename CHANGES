@@ -1,0 +1,22 @@
+Version 0.0.23:
+  Memory usage on polynomial has been reduced
+  Added Chi-Square distribution for quantitative trait analysis
+
+Version 0.0.22:
+  Added sex-specific analyses to both twopoint and multipoint
+  Added X chromosome analysis capability
+  Fixed multiple marriage bug
+  Optimized transmission matrix implementation
+
+Version 0.0.21:
+  Merged changes to transmission matrix with polynomial implementation
+  Added PPL-LD implementation
+  Fixed QT and Combied Trait analysis. Dataset mean and SD are 
+    required input now.
+  Check for likelihood ratio overflow and underflow problem
+
+Version 0.0.20:
+  This version includes trait locus and trait threshold values, along with other
+  changes to the input configuration file format.
+
+see doc/ReadMe.conf for instructions on how to configure.
