@@ -2998,7 +2998,7 @@ void integrateMain ()
           pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
           pPedigreeLocal->markerLikelihood = pPedigreeLocal->likelihood;
 
-printf("Marker set likelihood for this position for pedigree %d is %g\n", pedIdx, pPedigreeLocal->likelihood);
+	  //printf("Marker set likelihood for this position for pedigree %d is %g\n", pedIdx, pPedigreeLocal->likelihood);
         }
         pedigreeSet.markerLikelihood = pedigreeSet.likelihood;
         pedigreeSet.log10MarkerLikelihood = pedigreeSet.log10Likelihood;
