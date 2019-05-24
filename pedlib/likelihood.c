@@ -2606,10 +2606,13 @@ int calculate_likelihood (int multiLocusIndex[2],       ///< Input, index into p
     }
   }     /* loop over each parent */
 
+  // the scaling works only for the MP(both DT and QT) analysis with Non-Polynomial run
+  // The scaling factor depends on the pedigree structure only and is 10^(6* number of nucfamilies)
+  // The scaling is only applied to marker and alternative likelihoods (not trait lk)
   if (modelType->type == MP){ // let's apply this only to mp analysis with NonPolynomial 8/27/2018
     if (analysisLocusList->numLocus>1){ // scale for marker and alternative likelihoods 8/23/2018 to address too small marker likelihood problem.
-      newWeight[0] = 1000.0*newWeight[0] ;
-      newWeight[1] = 1000.0*newWeight[1] ;
+      newWeight[0] = 1000*newWeight[0] ;
+      newWeight[1] = 1000*newWeight[1] ;
     }
   }
 
