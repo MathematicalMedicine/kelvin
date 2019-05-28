@@ -1,6 +1,6 @@
 #!perl -w
 use strict;
-use KelvinDataset 1.9.0;
+use KelvinDataset v1.9.0;
 
 my $dataset;
 my $ind;
