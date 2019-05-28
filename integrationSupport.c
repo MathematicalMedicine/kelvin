@@ -941,7 +941,7 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
       for (pedIdx = 0; pedIdx < pedigreeSet.numPedigree; pedIdx++) {
         pPedigreeLocal = pedigreeSet.ppPedigreeSet[pedIdx];
         homoLR = pPedigreeLocal->likelihood / (pedigreeSet.nullLikelihood[pedIdx] * pPedigreeLocal->markerLikelihood);
-	//	fprintf(stderr,"j=%d pedIdx=%d  %e %e %e %e \n",j, pedIdx,pPedigreeLocal->likelihood,pedigreeSet.nullLikelihood[pedIdx] , pPedigreeLocal->markerLikelihood, homoLR);
+	//fprintf(stderr,"j=%d pedIdx=%d  %e %e %e %e has %d numclear families\n",j, pedIdx,pPedigreeLocal->likelihood,pedigreeSet.nullLikelihood[pedIdx] , pPedigreeLocal->markerLikelihood, homoLR, pPedigreeLocal->numNuclearFamily);
         if (alphaV * homoLR + alphaV2 < 0)
           WARNING ("Heterogenous Likelihood Ratio is less than zero");
         //log10HetLR += log10 (alphaV * homoLR + alphaV2);
@@ -1930,7 +1930,7 @@ void integrateMain ()
         total_dim += 3* modelRange->nlclass;
         if (modelOptions->imprintingFlag)
           total_dim += modelRange->nlclass;   //dD
-    }else if (modelOptions->qtMeanMode == PARAM_MODE_VARY){
+    }else if (modelOptions->qtMeanMode == PARAM_MODE_SAME){
         total_dim += modelRange->nlclass;
     }
     if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
@@ -1941,7 +1941,12 @@ void integrateMain ()
       }else if (modelOptions->qtStandardDevMode == PARAM_MODE_SAME){
         total_dim += modelRange->nlclass;
       }
+    }else{
+      total_dim += 3* modelRange->nlclass;
+      if (modelOptions->imprintingFlag)
+        total_dim += modelRange->nlclass;   //dD
     }
+
     if (modelType->trait == CT) {
       //fprintf(stderr," \n\n CT mode \n\n\n");
       if (modelOptions->qtThresholdMode == PARAM_MODE_VARY) //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
@@ -1950,6 +1955,9 @@ void integrateMain ()
   }
 
   //fprintf(stderr,"DBL_MIN =%e and DBL_MIN_10_EXP=%d\n", DBL_MIN, DBL_MIN_10_EXP);
+
+  //fprintf(stderr,"vary = %d same =%d\n",PARAM_MODE_VARY,PARAM_MODE_SAME);
+  //fprintf(stderr,"total_dim=%d before theta and dprime qtMeanMode=%d qtStdMode=%d, qtThreshmod=%d trait = %d\n",total_dim,modelOptions->qtMeanMode, modelOptions->qtStandardDevMode,modelOptions->qtThresholdMode, modelType->trait);
 
   size_BR = total_dim;
   if (modelType->type == TP) {
@@ -1960,6 +1968,7 @@ void integrateMain ()
     if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
       total_dim += 1;   // dprime
   }
+  fprintf(stderr,"total_dim=%d after theta and dprime\n",total_dim);
 
   DETAIL (0, "Outer dimension is %d, inner (BR) dimension is %d", total_dim, size_BR);
   DETAIL (0, "Allocating and initializing storage for analysis");
