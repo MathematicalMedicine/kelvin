@@ -825,13 +825,6 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
           staticModelOptions.qtStandardDevMode = PARAM_MODE_FIXED;
         }
       }
-      if (staticModelType.trait == CT && staticModelOptions.qtThresholdMode == 0) {
-        if (staticModelRange.tthresh[0][0] != staticModelRange.tthresh[0][1]) {
-          staticModelOptions.qtThresholdMode = PARAM_MODE_VARY;
-        } else {
-          staticModelOptions.qtThresholdMode = PARAM_MODE_FIXED;
-        }
-      }
     }
     if (staticModelType.distrib == QT_FUNCTION_CHI_SQUARE) {
       if (! observed.degOfFreedom) {
@@ -841,6 +834,13 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
       if (staticModelType.trait == CT && staticModelRange.ntthresh == 0) {
 	addTraitThreshold (&staticModelRange, QT_INTEG_CHI_MIN_THRESH);
 	addTraitThreshold (&staticModelRange, QT_INTEG_CHI_MAX_THRESH);
+      }
+    }
+    if (staticModelType.trait == CT && staticModelOptions.qtThresholdMode == 0) {
+      if (staticModelRange.tthresh[0][0] != staticModelRange.tthresh[0][1]) {
+        staticModelOptions.qtThresholdMode = PARAM_MODE_VARY;
+      } else {
+        staticModelOptions.qtThresholdMode = PARAM_MODE_FIXED;
       }
     }
     if (staticModelOptions.alphaMode == 0)
