@@ -1885,10 +1885,44 @@ END;
 //
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS Reconcile;
+DELIMITER //
+
+CREATE PROCEDURE Reconcile(IN inAnalysisId int)
+-- Reconcile: Mark any servers not really in processlist with ExitStatus 42 and
+-- free up any reserved models for servers that failed for any reason
+  -- This was pulled out of 'Q' so we could parameterize with the analysis ID,
+  -- which is used to constrain the list of servers (otherwise, we get a lot of
+  -- lockups, particularly when doing byped analysis). It's used by cycle
+  -- scripts.
+BEGIN
+  -- Mark any servers that never got the chance to report doom
+  -- UPDATE Servers a, Analyses b SET a.ExitStatus = 42 WHERE a.ConnectionId NOT IN (SELECT ID FROM INFORMATION_SCHEMA.PROCESSLIST) AND a.ExitStatus IS NULL AND a.PedigreeRegEx = b.PedigreeRegEx AND a.PedigreeNotRegEx = b.PedigreeNotRegEx AND b.AnalysisId = inAnalysisId;
+  -- This use of a temporary table is a tad silly. We *would* just go with
+  -- what's above rather than using a temporary table as a go-between, but
+  -- apparently when you have a sufficiently large number of connections
+  -- getting started at a given time MySQL goes all "omg wtf nooooooo" and
+  -- gives us the singularly unhelpful error message:
+  -- Data too long for column 'USER' at row 1
+  -- A lot of trial and error revealed that putting in a temporary table
+  -- for the subquery "fixes" it. Thanks, MySQL!
+  DROP TABLE IF EXISTS silly_mysql_bug_workaround_for_reconcile;
+  CREATE TEMPORARY TABLE silly_mysql_bug_workaround_for_reconcile AS SELECT ID FROM INFORMATION_SCHEMA.PROCESSLIST;
+  UPDATE Servers a, Analyses b SET a.ExitStatus = 42 WHERE a.ConnectionId NOT IN (SELECT ID FROM silly_mysql_bug_workaround_for_reconcile) AND a.ExitStatus IS NULL AND a.PedigreeRegEx = b.PedigreeRegEx AND a.PedigreeNotRegEx = b.PedigreeNotRegEx AND b.AnalysisId = inAnalysisId;
+  -- Free all still reserved models for which the server did not exit successfully.
+  UPDATE Models a, Servers b, Analyses c SET a.ServerId = NULL, a.StartTime = NULL WHERE a.ServerId = b.ServerId AND b.ExitStatus IS NOT NULL AND a.Likelihood IS NULL AND b.PedigreeRegEx = c.PedigreeRegEx AND b.PedigreeNotRegEx = c.PedigreeNotRegEx AND c.AnalysisId = inAnalysisId;
+END;
+//
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS FixFree;
 DELIMITER //
 
 CREATE PROCEDURE FixFree(IN inAnalysisId int)
+-- FixFree: Turn on or off FreeModels flags for appropriate PedigreePositions
+  -- Pulled out of 'Q' so it can be parameterized with the analysis ID - needed
+  -- to keep this from causing a lot of lockup issues when it does updates.
+  -- It's used by cycle scripts.
 BEGIN
   DROP TABLE IF EXISTS FreeModelFlags;
   CREATE TEMPORARY TABLE FreeModelFlags AS SELECT a.PedPosId, 0 StillFreeModels FROM
@@ -1903,6 +1937,7 @@ DROP PROCEDURE IF EXISTS Q;
 DELIMITER //
 
 CREATE PROCEDURE Q (IN inWhich varchar(16))
+-- A series of predefined helpful queries.
 BEGIN
 
   DECLARE localTotal int;
@@ -1971,6 +2006,9 @@ WholeThing: LOOP
 
   -- Reconcile: Mark any servers not really in processlist with ExitStatus 42
   -- and free up any reserved models for servers that failed for any reason
+  -- DEPRECATED - this should ONLY be used if nothing else is interacting with
+  -- the server, as it can otherwise cause serious contention issues because of
+  -- the Update statements (see Reconcile(analysisid) above, instead)
   IF inWhich = 'Reconcile' THEN
     -- Mark any servers that never got the chance to report doom
     -- Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from INFORMATION_SCHEMA.PROCESSLIST) AND ExitStatus IS NULL;
@@ -1984,13 +2022,17 @@ WholeThing: LOOP
     -- for the subquery "fixes" it. Thanks, MySQL!
     Create temporary table silly_mysql_bug_workaround_for_reconcile as Select ID from INFORMATION_SCHEMA.PROCESSLIST;
     Update Servers set ExitStatus = 42 where ConnectionId NOT IN (Select ID from silly_mysql_bug_workaround_for_reconcile) AND ExitStatus IS NULL;
+    DROP TABLE IF EXISTS silly_mysql_bug_workaround_for_reconcile;
     -- Free all still reserved models for which the server did not exit
     -- successfully.
-    Update Models a, Servers b set a.ServerId = NULL, a.StartTime = NULL where a.ServerId = b.ServerId AND b.ExitStatus != 0 AND a.Likelihood IS NULL;
+    Update Models a, Servers b set a.ServerId = NULL, a.StartTime = NULL where a.ServerId = b.ServerId AND b.ExitStatus IS NOT NULL AND a.Likelihood IS NULL;
  
     Leave WholeThing;
   END IF;
   -- FixFree: Turn on or off FreeModels flags for appropriate PedigreePositions
+  -- DEPRECATED - this should ONLY be used if nothing else is interacting with
+  -- the server, as it can otherwise cause serious contention issues because of
+  -- the Update statements (see FixFree(analysisid) above, instead)
   IF inWhich = 'FixFree' THEN
     Update PedigreePositions set FreeModels = 0 where FreeModels <> 0;
     Create temporary table FreeModelCounts as Select PedPosId, count(*) 'FreeModels' from Models where Likelihood IS NULL group by PedPosId;
@@ -2008,8 +2050,8 @@ WholeThing: LOOP
 	('Delta', 'Loop showing overall work progress for the last minute using servers active in the last hour'),
 	('Free', 'Show unallocated work by StudyId/PedPosId with SingleModelRuntime'),
 	('TotalFree', 'Show total unallocated work by StudyLabel'),
-	('Reconcile', 'Mark any servers not really in processlist with ExitStatus 42 and release any incomplete work'),
-	('FixFree', 'Reset FreeModels flags');
+	('Reconcile', 'Mark any servers not really in processlist with ExitStatus 42 and release any incomplete work (DEPRECATED, use Reconcile(analysisid) instead)'),
+	('FixFree', 'Reset FreeModels flags (DEPRECATED, use FixFree(analysisid) instead)');
    Select * from Q_help;
    Drop table Q_help;
 

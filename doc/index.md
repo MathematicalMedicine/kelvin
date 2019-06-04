@@ -46,14 +46,14 @@ Build requirements are:
 Additional software requirements include:
 
 * Java 6 (or a later version)
-* MySQL client, version 5 or better, and associated libraries
+* MySQL client version 8 and associated libraries
 * Perl 5.8 (or a later version), with the following modules:
     * DBI
     * DBD::mysql
     * DBD::SQLite
     * List::MoreUtils
 
-Database nodes will need a prebuilt binary distribution of MySQL Server version 5 or better, NOT SET UP. This can be downloaded from mysql.com (look for "MySQL Community Server"'s "Linux - Generic", "Compressed TAR Archive").
+Database nodes will need a prebuilt binary distribution of MySQL Server version 8, NOT SET UP. This can be downloaded from mysql.com (look for "MySQL Community Server"'s "Linux - Generic", "Compressed TAR Archive").
 
 
 Installation
@@ -74,7 +74,7 @@ For Kelvin-LKS and Kelvin-original together, installation requires several steps
 
 4. Run `make install-lks`. Kelvin-LKS, Kelvin-original, and associated programs will be built, assembled, and installed in the location you specified in the Makefile.
 
-5. (optional) Verify that setup worked by running one or both of the two Acid Tests - these are preassembled analyses stored in tarballs in `PATHDIR` named `sa_dt-acid-test.tar.gz` and `merlin-only-sadt-acid-test.tar.gz`. The former tests the whole thing; the latter verifies that Merlin integration is working. (It is normal for sa_dt-acid-test to report a small difference in Bayes ratios at the end of the test; this is due to the nature of MC-MC analysis.)
+5. (optional) Verify that setup worked by running one or both of the two Acid Tests - these are preassembled analyses stored in tarballs in `PATHDIR` named `sa_dt-acid-test.tar.gz` and `merlin-only-sadt-acid-test.tar.gz`. The former tests the whole thing; the latter verifies that Merlin integration is working.
 
 Uninstallation may be done by running `make uninstall-lks`; this simply deletes all files that were installed.
 

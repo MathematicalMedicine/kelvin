@@ -896,7 +896,7 @@ In this reference, the following conventions are used to describe the valid argu
 
 #### Threshold
 :   `Threshold <min>, <max>`
-:   Specifies the minimum and maximum [values](#arguments) for the threshold for use with the [QTT](#qtt) directive, if needed. The default is for the minimum and maximum threshold values to be set using the smallest and largest values from the trait data in the pedigree file. If those values are less than 0 or greater than 30, then this directive must be specified. The `<min>` and `<max>` should be [values](#arguments). This directive requires the [QTT](#qtt) directive.
+:   Specifies the minimum and maximum [values](#arguments) for the threshold for use with the [QTT](#qtt) directive, if needed. The defaults are min=0, max=3. The `<min>` and `<max>` should be [values](#arguments). This directive requires the [QTT](#qtt) directive.
 
 #### TraitPositions
 :   `TraitPositions [ Marker | <value> | <range> ] {, ... }`
