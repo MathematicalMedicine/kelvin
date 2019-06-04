@@ -20,5 +20,5 @@ test :
 	#perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out ppl.out-by-Kelvin .000001 || log "wordDiff for target $@ in $(PWD) FAILED"
 
 clean :
-	- rm -f ped.post.counted ped.post.counts kelvin.freq* *.out
+	- rm -f ped.post.counted ped.post.counts kelvin.freq *.out
 
