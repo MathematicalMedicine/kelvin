@@ -261,6 +261,40 @@ CREATE TABLE ServerPedigrees (
 ) ENGINE=InnoDB comment='$Id$';
 
 
+-- These are a couple of views used for testing purposes; test cases can pull
+-- these into files and then do a comparison to make sure we haven't broken
+-- anything. Only two so far, but hoping to add more.
+DROP VIEW IF EXISTS models_likelihood_list;
+DROP VIEW IF EXISTS mcmc_likelihood_list;
+
+-- Models likelihood list - a simple join on the Models table that shows pedpos
+-- info for each model.
+-- FIXME: this doesn't really come up with unique rows with non-Likelihood
+-- columns, which makes it potentially problematic for comparisons. The Right
+-- Way to do that would be to also do joins with DModelParts and possibly also
+-- QModelParts, but I'm not sure how to usefully represent that. -jo
+CREATE VIEW models_likelihood_list AS
+    SELECT PP.PedigreeSId,
+            PP.ChromosomeNo,
+            PP.RefTraitPosCM,
+            M.Likelihood
+    FROM Models M
+    LEFT JOIN PedigreePositions PP ON M.PedPosId = PP.PedPosId
+    ORDER BY PedigreeSId, ChromosomeNo, RefTraitPosCM, Likelihood;
+
+-- MCMC likelihood list - shows per-sample per-pedigree-position likelihoods.
+CREATE VIEW mcmc_likelihood_list AS
+    SELECT PP.PedigreeSId,
+            PP.ChromosomeNo,
+            PP.RefTraitPosCM,
+            MSLMCMC.SampleId,
+            MSLMCMC.Likelihood
+    FROM MarkerSetLikelihood_MCMC MSLMCMC
+    LEFT JOIN MarkerSetLikelihood MSL
+            ON MSLMCMC.MarkerSetId = MSL.MarkerSetId
+    LEFT JOIN PedigreePositions PP ON MSL.PedPosId = PP.PedPosId
+    ORDER BY PedigreeSId, ChromosomeNo, RefTraitPosCM, SampleId;
+
 
 -- "Unused" tables follow
 -- 
