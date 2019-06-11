@@ -538,6 +538,9 @@ void validateConfig ()
       WARNING ("Multipoint analysis will write no output to PPLFile '%s', but will write PPLs in BayesRatioFile '%s'", staticModelOptions.pplfile, staticModelOptions.avghetfile);
     if (! observed.traitPositions) 
       fault ("Multipoint requires TraitPositions\n");
+    if (staticModelType.numMarkers <= 1)
+      fault ("Multipoint directive must specify 2 or more markers\n");
+
   } else {
     /* Two point */
     if (observed.traitPositions) 
