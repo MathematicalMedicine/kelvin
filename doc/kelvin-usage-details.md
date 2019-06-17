@@ -821,10 +821,12 @@ Kelvin can be configured to perform calculations based on fixed grids of paramet
 ##### NIDetailFile
 :   `NIDetailFile <filename>`
 :   This option is for debugging purposes.
+:   This file provides some dynimic grid specific information, ex, number of LR calculations (numLR) and error of the BR (error). 'numLR' is useful to find how many subgroups of dcuhre required to approximate the BR. 
 
 ##### SurfaceFile
 :   `SurfaceFile <filename>`
 :   This option is for debugging purposes.
+:   Prints out the LOD values in the middle of BR calculations for both dynamic and fixed grids. The LOD values are used either to validate the LOD values or to feed into the visualization tools (LiVit, DiVit, or PLOT). 
 
 ##### SurfacesPath
 :   `SurfacesPath <dirname>`
@@ -900,6 +902,7 @@ Kelvin can be configured to perform calculations based on fixed grids of paramet
 :   `StandardDev [ <value> | <range> ] {, ... }`
 :   Specifies the standard deviation values when using the normal distribution for a quantitative trait analysis. See [StandardDev](#standarddev) above for usage outside of a FixedModels context. With the FixedModels directive, this form of the directive must be used to specify the set of standard deviations. This directive requires the [FixedModels](#fixedmodels) directive, and either the [QT](#qt) or [QTT](#qtt) directives with the `Normal` distribution. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
 
+
 ##### DegreesOfFreedom
 :   `DegreesOfFreedom [ DD | Dd | dD | dd ] [ <value> | <range> ] {, ... }`
 :   Specifies the degrees of freedom values when using the Chi-squared distribution for a quantitative trait analysis. See [DegreesOfFreedom](#degreesoffreedom) above for usage outside of a FixedModels context. With the FixedModels directive, this form of the directive must be used to specify the set of degrees of freedom values to be considered for each trait genotype (`DD`, `Dd`, `dD` or `dd`). This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `ChiSq` distribution. The `dD` genotype is only legal if the [Imprinting](#imprinting) directive is also specified. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
@@ -907,14 +910,21 @@ Kelvin can be configured to perform calculations based on fixed grids of paramet
 
 #### Other
 
+
 ##### DiseaseAlleles
 :   `DiseaseAlleles <number>`
 :   Specifies the number of alleles for the hypothetical trait locus. Currently the only supported number of disease alleles is 2, which is also the default. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+:   
 
 ##### MaxIterations
 :   `MaxIterations <number>`
 :   Specifies that Kelvin's dynamic trait space sampling algorithm should go through at most `<number>` iterations.
 
-##### Study
-:   `Study <label> [ client | server ] <dbhost> <dbusername> <dbpassword> <pedids include regex> <pedids exclude regex> { MCMC <total samples> <start of sample ids> <end of sample ids> }`
-:   Specifies parameters for a "Likelihood Server" run. Likelihood Server is a highly experimental operating mode in Kelvin that enables more parallelization of analysis and the use of alternative likelihood calculation algorithms. Details can be found in the [Exotic Operating Modes documentation](kelvin-exotic.html).
+#### Threshold
+:   `Threshold <min>, <max>`
+:   `Threshold [ <value> | <range> ] {, ... }`
+:   Specifies the threshold [values](#arguments) for use with the [QTT](#qtt) directive. Without the [FixedModels](#fixedmodels) directive, the first form may used to specify a minimum and maximum threshold, but is not required. The `<min>` and `<max>` should be specified as [values](#arguments). With the FixedModels directive, the second form must be used to specify the set of thresholds. This directive requires the [QTT](#qtt) directive, and is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+#### MODThreshold
+:   `MODThreshold <min>`
+:   This sets the threshold of extra mod calculation in the dynamicd grid. The Kelvin inplemented an optimization technique, called amoeba. This maximization tool kicks in after the dcuhre, which is a br approximation algorith, to improve the MOD approximation. 
