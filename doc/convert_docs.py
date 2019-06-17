@@ -6,12 +6,11 @@ Assembles our Markdown documentation into HTML files.
 """
 
 import markdown
-import codecs
-import os
+from pathlib import Path
 import re
 
 # in the Orig Usage docs, there's some column number lines that get inserted
-# before certain code blocks. these takes care of them.
+# before certain code blocks. these take care of them.
 class AddColumnHeaders(markdown.extensions.Extension):
     def __init__(self, *args, **kwargs):
         try:
@@ -99,63 +98,37 @@ def convert_docs():
     
     """
     
-    def dpath(name):
-        """Converts documentation filenames into full paths."""
-        return os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                name)
-    
     # markdown extensions and config
     colheaders = AddColumnHeaders(starters=
             ['212 101 0   0   1   1   3   4   1   3   2   2   1   2   1   1',
             'CHR  MARKER       KOSAMBI'])
-    
     mdconf = {
             'extensions': ['toc', 'extra', 'codehilite', colheaders],
             'extension_configs': { 'codehilite': { 'linenums': True } },
             'encoding': 'utf-8'
             }
     
-    # filenames we'll be working with
-    docsmain_html = dpath("index.html")
-    origusage_html = dpath("kelvin-original-usage.html")
-    
-    header_name = dpath("raw/docsheader.html")
-    footer_name = dpath("raw/docsfooter.html")
-    
-    docsmain_md = dpath("index.md")
-    origusage_md = dpath("kelvin-original-usage.md")
-    
+    # where all our files are
+    docs = Path(__file__).parent
     
     # pull in header and footer
-    header = codecs.open(header_name, mode="r", encoding="utf-8")
+    header = open(docs / "raw" / "docsheader.html", mode="r", encoding="utf-8")
     header_html = header.read()
     header.close()
     
-    footer = codecs.open(footer_name, mode="r", encoding="utf-8")
+    footer = open(docs / "raw" / "docsfooter.html", mode="r", encoding="utf-8")
     footer_html = footer.read()
     footer.close()
     
-    # convert main docs
-    content = codecs.open(docsmain_html, mode="w", encoding="utf-8",
-            errors="xmlcharrefreplace")
-    content.write(header_html)
-    mdconf['output'] = content
-    markdown.markdownFromFile(input=docsmain_md, **mdconf)
-    content.write(footer_html)
-    content.close()
-    
-    # convert Orig Usage docs (and insert some bonus bits)
-    # this uses a dict with keys matching lines before which content should be
-    # inserted, and values representing the content to be inserted.
-    # said dict is at the top of this file.
-    
-    content = codecs.open(origusage_html, mode="w", encoding="utf-8",
-            errors="xmlcharrefreplace")
-    content.write(header_html)
-    mdconf['output'] = content
-    markdown.markdownFromFile(input=origusage_md, **mdconf)
-    content.write(footer_html)
-    content.close()
+    # convert all docs
+    for mdfile in docs.glob('*.md'):
+        with open(mdfile.with_suffix('.html'), mode="w", encoding="utf-8",
+                errors="xmlcharrefreplace") as content, \
+                open(mdfile, mode="r", encoding="utf-8",
+                errors="xmlcharrefreplace") as mdsource:
+            content.write(header_html)
+            content.write(markdown.markdown(mdsource.read(), **mdconf))
+            content.write(footer_html)
 
 if __name__ == "__main__":
     convert_docs()

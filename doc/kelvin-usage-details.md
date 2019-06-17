@@ -1,19 +1,31 @@
-Kelvin-original Usage Contents
-==============================
+Detailed Information On Kelvin And Its Usage
+============================================
 
 * [Source Code Info](#source-code-info)
-* [Preparing The Configuration File](#preparing-the-configuration-file)
+* [Preparation and Analysis Considerations](#preparation-and-analysis-considerations)
 * [Input Data File Formats](#input-data-file-formats)
+    * [Pedigree File](#pedigree-file)
+    * [Locus File](#locus-file)
+    * [Map File](#map-file)
+    * [Frequency File](#frequency-file)
 * [Running The Programs](#running-the-programs)
 * [Contents Of Output Files](#contents-of-output-files)
+    * [Bayes Ratio File](#bayes-ratio-file)
+    * [Posterior Probability of Linkage (PPL) File](#posterior-probability-of-linkage-ppl-file)
+    * [Maximizing Model (MOD) File](#maximizing-model-mod-file)
 * [Sequential Updating](#sequential-updating)
-* [Compiled Polynomials](#compiled-polynomials)
-* [Configuration File Directives Reference](#configuration-file-directives-reference)
+* [Configuration File Reference](#configuration-file-reference)
+    * [Configuration File Format](#configuration-file-format)
+    * [Directives](#directives)
+    * [Arguments](#arguments)
+    * [Sample Configuration File](#sample-configuration-file)
+    * [Directive Reference](#directive-reference)
+    * [Advanced Directive Reference](#advanced-directive-reference)
 
 ---
 
 Source Code Info
-================
+----------------
 
 Kelvin is written in ANSI C, with some supporting scripts in Perl. Kelvin can generally be expected to run on any relatively recent Linux or Unix distribution. It has been successfully built with various versions of the [GNU C Compiler (GCC)](http://gcc.gnu.org) and the Intel C Compiler (ICC).
 
@@ -30,57 +42,46 @@ Kelvin may make very extensive use of memory management, and can, under most cir
 
 ---
 
-Preparing The Configuration File
-================================
+Preparation and Analysis Considerations
+---------------------------------------
 
-Kelvin typically takes all of its configuration information from a single file specified on the command line. This file is composed of directives that describe the analysis to be performed, and the locations of supporting data files. We provide a complete reference to Kelvin directives and several examples [at the bottom of this document](#configuration-file-directives-reference)
-
-In addition to the configuration file, any valid directive may be specified on the command line by prepending the directive with '--' (two hyphens). Any additional arguments on the command line will be treated as arguments to the directive, up to the end of the line, or the next directive, which again must be prepended with '--'. Directives on the command line that specify input or output files will override the values set in the configuration file. Directives that take a series or range of values (like [TraitPositions](#traitpositions)), will add to the values, if any, specified in the configuration file. There is currently no way from the command line to remove values set in the configuration file.
+Kelvin typically takes all of its configuration information from a single file specified on the command line. This file is composed of directives that describe the analysis to be performed, and the locations of supporting data files. We provide a complete reference to Kelvin directives and several examples [at the bottom of this document](#configuration-file-reference)
 
 Kelvin supports a wide variety of analyses and options. These can be broken into general categories, with a small number of possibilities for each category. Some analyses/options are compatible with other analyses/options, some are not.
 
-Two-Point vs. Multipoint
-------------------------
+### Two-Point vs. Multipoint
 
 Two-point analysis is the default. Multipoint analysis is enabled with the [Multipoint](#multipoint) directive. Multipoint analysis is incompatible with [linkage disequilibrium](#linkage-disequilibrium-association-vs-linkage-equilibrium) and [marker-to-marker](#trait-to-marker-vs-marker-to-marker) analyses.
 
-Linkage Disequilibrium (Association) vs. Linkage Equilibrium
-------------------------------------------------------------
+### Linkage Disequilibrium (Association) vs. Linkage Equilibrium
 
 Linkage equilibrium is the default for [two-point](#two-point-vs-multipoint) analyses, and is the only option for [multipoint](#two-point-vs-multipoint) analyses. Linkage Disequilibrium can be enabled for two-point analyses with the [LD](#ld) directive.
 
-Dichotomous Trait vs. Quantitative Trait vs. Quantitative Trait With Threshold
-------------------------------------------------------------------------------
+### Dichotomous Trait vs. Quantitative Trait vs. Quantitative Trait With Threshold
 
 A dichotomous trait model is the default. A quantitative trait model can be specified with the [QT](#qt) directive. A quantitative trait model with a threshold can be specified with the [QTT](#qtt) and [Threshold](#threshold) directives.
 
-Sex Averaged vs. Sex Specific
------------------------------
+### Sex Averaged vs. Sex Specific
 
 By default, Kelvin will perform its calculations using the sex-averaged centiMorgan marker positions in the map file. If sex-specific marker positions are available, Kelvin can be made to use those with the [SexSpecific](#sexspecific) directive. Sex-specific maps are not supported for [LD](#linkage-disequilibrium-association-vs-linkage-equilibrium) analyses.
 
-Imprinting vs. Non-imprinting
------------------------------
+### Imprinting vs. Non-imprinting
 
 Kelvin will ignore the possibility of imprinting (parent-of-origin) effects by default. Imprinting effects can be allowed for by specifying the [Imprinting](#imprinting) directive.
 
-Trait-to-Marker vs. Marker-to-Marker
-------------------------------------
+### Trait-to-Marker vs. Marker-to-Marker
 
 Trait-to-marker analysis is the default, and considers the relationship between a hypothetical trait locus and a marker or group of markers. Marker-to-marker analysis is enabled with the [MarkerToMarker](#markertomarker) directive, and considers the relationship between pairs of markers only.
 
-Covariate-Dependent vs. Non-Covariate-Dependent
------------------------------------------------
+### Covariate-Dependent vs. Non-Covariate-Dependent
 
 By default, Kelvin does not condition penetrances (or QT parameters) on covariates. Kelvin can be made to allow covariate-dependent penetrances (or QT parameters) with the [LiabilityClasses](#liabilityclasses) directive, and appropriate entries in the [pedigree](#pedigree-file) and [locus](#locus-file) files, whieh assign individuals to different liability classe. Covariate dependence does not currently work with [epistasis](#single-locus-analysis-vs-epistasis) analyses.
 
-Single Locus Analysis vs. Epistasis
------------------------------------
+### Single Locus Analysis vs. Epistasis
 
 By default, Kelvin conducts single locus analysis. The [Epistasis](#epistasis) directive will provide a two-locus model in which penetrances at one locus are allowed to depend upon genotypes at a specified marker. Currently, this marker must be a SNP (two alleles only), and epistasis analysis does not work with additional [covariate dependence](#covariate-dependent-vs-non-covariate-dependent).
 
-Automatic Pedigree Counting
----------------------------
+### Automatic Pedigree Counting
 
 By default, Kelvin will attempt to count and bin pedigrees to reduce computation. It does this by examining the pedigree file prior to analysis, and identifying combinations of pedigree structure, phenotype and genotype that appear more than once. Each unique combination need only be analyzed once, thus reducing the total number of computations. This mechanism will realize the greatest gains for datasets containing mostly small pedigrees: cases-and-controls, trios and affected sib-pairs.
 
@@ -92,8 +93,7 @@ Automatic pedigree counting will be implicitly disabled if any of the following 
 
 Automatic pedigree counting can be explicitly disabled with the [SkipPedCount](#skippedcount) directive.
 
-Automatic Allele Frequency Estimation
--------------------------------------
+### Automatic Allele Frequency Estimation
 
 Kelvin typically requires that allele frequencies be provided using the [FrequencyFile](#frequencyfile) directive. However, Kelvin will estimate allele frequencies internally in specific circumstances:
 
@@ -110,12 +110,17 @@ Kelvin will exit with error if allele frequency estimation is not possible and t
 ---
 
 Input Data File Formats
-=======================
+-----------------------
+
+* [Pedigree File](#pedigree-file)
+* [Locus File](#locus-file)
+* [Map File](#map-file)
+* [Frequency File](#frequency-file)
+* [Example of File Formats](#example-of-file-formats)
 
 Kelvin typically requires four input data files: a pedigree file, a locus file, a map file, and a frequency file. The frequency file may be omitted if Kelvin is to estimate allele frequencies internally.
 
-Pedigree File
--------------
+### Pedigree File
 
 Kelvin will accept either a pre- or post-[MAKEPED](http://linkage.rockefeller.edu/soft/linkage/sec2.7.html) format pedigree file. MAKEPED is part of the LINKAGE package. The only exception is that for pedigrees that contain loops, or if the proband must be explicitly specified, then a post-MAKEPED pedigree file is required. While it is possible to create a post-MAKEPED pedigree file by hand, it's much easier to create a pre-MAKEPED pedigree file, and run it through MAKEPED. Each line of a pre-MAKEPED pedigree file must start with five columns:
 
@@ -127,8 +132,7 @@ Kelvin will accept either a pre- or post-[MAKEPED](http://linkage.rockefeller.ed
 
 The remaining columns in the pedigree file are governed by the [locus file](#locus-file). The pedigree file may contain any combination of cases-and-controls, nuclear families (defined as two founder parents and one or more children) or general pedigrees.
 
-Locus File
-----------
+### Locus File
 
 This file may be referred to as a 'data file' in documentation for older versions of Kelvin. Each line in a locus file consists of an identifier character, and a label. Each line corresponds to one (or two) columns in the pedigree file. The locus file defines the number and order of columns in the pedigree file. The identifier characters, and their meanings, are as follows:
 
@@ -139,8 +143,7 @@ This file may be referred to as a 'data file' in documentation for older version
 
 Kelvin currently requires that, if a phenotye status column is present, it must appear first, before any markers. If a covariate column is present, it must appear immediately after the phenotype status column, before any markers.
 
-Map File
---------
+### Map File
 
 This file lists the positions of markers on the chromosome, in either Kosambi or Haldane centiMorgans. The first line of the file may optionally explicitly indicate the map function in use:
 
@@ -157,8 +160,7 @@ The rest of the file must consist of three (or more) columns, each identified by
 
 If the map function is specified by both a `mapFunction` line and by a column header, the same map function must be specified. If the map function is specified by neither, the default is Kosambi.
 
-Frequency File
---------------
+### Frequency File
 
 This file identifies the alleles for each marker, and the specifies the frequencies for those alleles. This file is only required if Kelvin cannot [estimate allele frequencies](#automatic-allele-frequency-estimation) internally. The file is composed of a series of line groups. Each group begins with a marker line, followed by one or more allele lines. Similar to the [locus file](#locus-file), each line starts with an identifier character:
 
@@ -168,8 +170,7 @@ This file identifies the alleles for each marker, and the specifies the frequenc
 
 For any given marker, alleles must all be specified as labeled or unlabeled, although different markers in the same frequency file may use either method.
 
-Example of File Formats
------------------------
+### Example of File Formats
 
 Pedigree File (pre-MAKEPED):
 
@@ -232,7 +233,7 @@ The frequency file contains five line groups, one for each marker. Lines 1 throu
 ---
 
 Running The Programs
-====================
+--------------------
 
 Once you have installed Kelvin, you can run it from your data directory, where you keep your configuration and data files. Kelvin takes only one parameter, which is the name of the configuration file, e.g.:
 
@@ -250,8 +251,7 @@ Or, using `csh`/`tcsh` syntax:
 
 If you do need to send us information for diagnosis, please include the configuration and data files along with the output from the run.
 
-Status Messages
----------------
+### Status Messages
 
 When Kelvin is run, it first displays version, build and configuration information. All messages are prefaced with the current date and time. Messages fall into three categories:
 
@@ -302,21 +302,23 @@ Finally, progress indicators are displayed up through the end of the run.
 ---
 
 Contents Of Output Files
-========================
+------------------------
 
-Kelvin produces several different files of results depending upon the
-type of analysis performed.
+* [Bayes Ratio File](#bayes-ratio-file)
+* [Posterior Probability of Linkage (PPL) File](#posterior-probability-of-linkage-ppl-file)
+* [Maximizing Model (MOD) File](#maximizing-model-mod-file)
 
-Bayes Ratio File
-----------------
+Kelvin produces several different files of results depending upon the type of analysis performed.
+
+### Bayes Ratio File
 
 Integrated likelihood ratio (BR) information is produced for all runs. It is written to the file `br.out` by default, although that filename is configurable. The first line written to the file is a comment that contains the Kelvin version number, e.g.:
 
-    # Version V0.38.1 edit 2463
+    # Version V2.7.0 edit 4449
 
 This is included so that results can be associated with the version of Kelvin that produced them, and will allow for variations in algorithms, file formats and data precision. Subsequent lines contain different information for each type of analysis being performed:
 
-### Multipoint Analysis
+#### Multipoint Analysis
 
 For multipoint runs, a single table with a header line is output. The table consists of one row for each trait position. Columns are whitespace-delimited:
 
@@ -326,7 +328,7 @@ For multipoint runs, a single table with a header line is output. The table cons
 4. BayesRatio - integrated likelihood ratio.
 5. MarkerList(...) - parenthesised list of the closest N markers for each position, where N is the number of markers being considered at a time. Header text reflects actual count of columns.
 
-### Two-point Analysis
+#### Two-point Analysis
 
 Two-point analyses output separate tables for each locus. Each table is prefaced with a comment line that details the chromosome, name and position of the current marker, e.g.:
 
@@ -338,8 +340,7 @@ and consists of one row of whitespace-delimited values for each value of D' (in 
 2. Theta(M,F) - male and female theta values. They are identical for a sex-averaged analysis.
 3. BayesRatio - integrated likelihood ratio.
 
-Posterior Probability of Linkage (PPL) File
--------------------------------------------
+### Posterior Probability of Linkage (PPL) File
 
 Separate PPL information is produced for two-point and marker-to-marker analyses. It is written to the file `ppl.out` by default, although that filename in configurable. The first line is a comment that contains the Kelvin version number as with the Bayes Ratio file. The next line is a header, followed by one line of whitespace-delimited values for each marker in the run.
 
@@ -353,12 +354,11 @@ Separate PPL information is produced for two-point and marker-to-marker analyses
 8. PPLD|L (only for LD analyses) - Posterior probability of LD, given linkage. The PPLD|L is rounded like the PPL(LD).
 9. PPLD (only for LD analyses) - posterior probability of linkage and linkage disequilibrium, The PPLD is rounded like the PPL(LD).
 
-Maximizing Model (MOD) File
----------------------------
+### Maximizing Model (MOD) File
 
 All analyses can optionally write maximizing models to a separate file, named `mod.out` by default, although that name is configurable. In all cases, the first line is a comment line that identifies the version of Kelvin that created the file. Note that due to Kelvin's use of an efficient numerical integration algorithm, there is no guarantee that the maximum MOD will occur at the true maximum values of all parameters. The default integration routine can be overridden in order to perform maximization over a fixed grid of user-specified parameter values for precise maximization.
 
-### Multipoint Analysis
+#### Multipoint Analysis
 
 For multipoint runs, a single table with a header line is output. The table consits of one row for each trait position, containing the values of all trait parameters that maximized the likelihood at that position. Columns are whitespace delimited:
 
@@ -369,7 +369,7 @@ For multipoint runs, a single table with a header line is output. The table cons
 5. DGF - the maximizing disease gene frequency.
 6. LC`n`PV(...) - the maximizing penetrance vector, one for each liability (covariate) class in the analysis. For dichotomous trait runs, it is three (or four, if imprinting effects are being considered) columns of the maximizing penetrance for DD, Dd, (dD,) and dd. For quantitative trait (QT) runs with the normal distribution, it is three (or four) columns of means followed by three (or four) of standard deviations for the maximizing distributions for DD, Dd, (dD,) and dd, followed by the threshold in the case of the QTT model. Quantitative trait runs with the Chi-Square distribution have only three (or four) columns of degrees of freedom followed by the threshold. Values are comma-separated and enclosed in parentheses. Header text reflects actual count and nature of columns. Again, the models reported here may not represent true maximizing models, if the integration algorithm has bypassed the true overall maximum of the parameter space.
 
-### Two-point Analysis
+#### Two-point Analysis
 
 For two-point analyses, a separate table is output for each marker, or pair of markers, in the case of marker-to-marker analyses. Each table is prefaced with a comment line that details the chromosome, name and position of the marker (or markers). For marker-to-trait analyses, this line is identical to that in the Bayes Ratio file. For marker-to-marker, the line looks like:
 
@@ -387,12 +387,11 @@ Each table is prefaced with a header line. Columns are whitespace-delimited:
 ---
 
 Sequential Updating
-===================
+-------------------
 
 Sequential updating is a method for combining the results of multiple analyses in post-processing. Sequential updating tools are included in the Kelvin distribution.
 
-calc_updated_ppl
-----------------
+### calc_updated_ppl
 
 This program takes one or more Kelvin-format Bayes ratio files, and produces PPL (and, if appropriate) PPLD statistics. If a single Bayes ratio file is provided, `calc_updated_ppl` simply reproduces the PPL statistics generated by the original analysis. If multiple Bayes ratio files are provided, the Bayes ratios are sequentially updated and new PPL statistics are generated.
 
@@ -427,7 +426,7 @@ By default, `calc_updated_ppl` expects Bayes ratio files from two-point, sex-ave
 `-?`, `--help`
 :   Displays usage help.
 
-### Examples
+#### Examples
 
 Here's a simple example of updating across two two-point Bayes ratio files, and saving the updated statistics to a file:
 
@@ -445,8 +444,7 @@ Here's an example of using multipoint PPLs with a single two-point, LD Bayes rat
 
 `calc_updated_ppl --pplin mp-ppl.out br.out > cppld.out`
 
-convert_br.pl
--------------
+### convert_br.pl
 
 This Perl script will convert `avghet.out` or `br.out` files generated by
 older versions of Kelvin into the most recent format. Output is
@@ -458,7 +456,7 @@ always to the terminal.
 `-c [chrnum]`
 :   If the Bayes ratio file was generated by Kelvin 0.34.2 or earlier, there will be no Chromosome column. In this case, the user must specify the chromosome.
 
-### Examples
+#### Examples
 
 Here's an example that captures the output to a file:
 
@@ -468,175 +466,31 @@ Note in this example, `-c 12` specifies that `avghet-old.out` contains data from
 
 `convert_br.pl --help`
 
-
 ---
 
-Compiled Polynomials
-====================
+Configuration File Reference
+----------------------------
 
-If you have a homogeneous multi-machine Linux/GCC environment such as a Beowulf cluster and are performing long-running analyses, you may be able to benefit from using compiled polynomials, which can provide an order of magnitude improvement in evaluation performance, and a degree of reusability.
-
-How Does Kelvin use Polynomials?
---------------------------------
-
-In order to understand the value of polynomial compilation, one must first understand what polynomials are and how Kelvin uses them.
-
-When Kelvin performs an analysis, the majority of the work is calculating the likelihood of every pedigree's structure and characteristics for each combination of values in the trait model space, which is typically a range of 6 gene frequencies, 275 penetrances, and 20 alpha values, or 33,000 combinations of values. This is repeated for each trait position in the analysis.
-
-In (original) non-polynomial mode, the pedigree likelihood is explicitly calculated via a series of tests, loops and arithmetic operations in the compiled code that comprises Kelvin. Since these tests, loops and operations are all hard-coded in the program, they cannot be optimized or simplified in response to the nature of each pedigree, so the same full series of steps is followed for every combination of values.
-
-In polynomial mode, we go thru this same hard-coded path in Kelvin _one time only_ building a symbolic representation of the calculation using place-holder variables from the trait model space instead of actual numeric values. In effect, we build a polynomial that represents the structure and characteristics of the pedigree in terms of the variables from the trait model space. This polynomial representation can then be extensively simplified and optimized using mathematical and computational techniques so that when we assign trait model space values to the place-holder variables and evaluate it, it can perform the calculation orders of magnitude faster than the original hard-coded path in Kelvin.
-
-This process of generating polynomials has its own drawbacks. They can take a lot of time and memory to generate and optimize, and even when optimization is complete, their evaluation is symbolic and therefore slower than the equivalent binary operations. Ideally, we'd like to have both the optimized simplicity of the pedigree/position-specific polynomial _and_ the performance and reusability of compiled code. The solution is to generate and compile code representing each polynomial.
-
-What Polynomials Are Built?
----------------------------
-
-During a polynomial-mode analysis, a separate set of likelihood polynomials is built for each pedigree and combination of relative trait/marker positions. For example, a multipoint analysis with two pedigrees and three markers where evaluated trait positions occur between every pair of markers as well as before and after the markers would generate twelve polynomials:
-
-* trait likelihood for pedigree 1
-* trait likelihood for pedigree 2
-* marker set likelihood for M1, M2, M3 and pedigree 1
-* marker set likelihood for M1, M2, M3 and pedigree 2
-* combined likelihood for pedigree 1 and trait/marker pattern T-M1-M2-M3
-* combined likelihood for pedigree 2 and trait/marker pattern T-M1-M2-M3
-* combined likelihood for pedigree 1 and trait/marker pattern M1-T-M2-M3
-* combined likelihood for pedigree 2 and trait/marker pattern M1-T-M2-M3
-* combined likelihood for pedigree 1 and trait/marker pattern M1-M2-T-M3
-* combined likelihood for pedigree 2 and trait/marker pattern M1-M2-T-M3
-* combined likelihood for pedigree 1 and trait/marker pattern M1-M2-M3-T
-* combined likelihood for pedigree 2 and trait/marker pattern M1-M2-M3-T
-
-The trait and marker likelihood polynomials are extremely simple compared to the combined likelihood polynomials. Marker likelihood polynomials usually simplify to a constant, while combined likelihood polynomials usually have tens of thousands, and sometimes even billions of terms.
-
-
-What is Polynomial Compilation?
--------------------------------
-
-Polynomial compilation is a method of post-processing a discrete, nameable, in-memory polynomial generated by Kelvin so as to facilitate rapid evaluation and reuse. By discrete and nameable, we mean that all information required for the construction of the polynomial is available before construction begins, and that there are a relatively small number of attributes that can be used to distinguish this particular polynomial from other similar ones and therefore comprise a unique name. Fortunately, Kelvin has been written in such a way that all major polynomials generated are both discrete and nameable.
-
-When polynomial compilation is used, likelihood polynomials are built in-memory as usual in an initial Kelvin run, and then translated into C-language code and written to one or more source files which are then compiled into dynamic libraries. These dynamic libraries are reusable, distributable, compiled representations of the original polynomials that can be loaded on-demand and evaluated up to ten times faster than their original in-memory counterparts.
-
-Once a dynamic library is built for a given polynomial, the relatively slow and memory-intensive process of generating that polynomial need not be performed again unless one of the following changes:
-
-* Count or positions of markers.
-* Structure of pedigrees.
-* Phenotypic or genotypic characteristics of individuals.
-* Type of analysis such as LD vs LE (two-point and multipoint analyses create differently-named polynomials and can therefore co-exist).
-
-While compiled polynomial names incorporate enough information to uniquely identify them _within a given analysis run_, they do not contain an exhaustive description of the analysis, so it is important to be careful to remove any existing compiled polynomials (`*.so` files) when one of the aforementioned characteristics changes, otherwise Kelvin might crash, or worse -- the analysis results will be incorrect. You can, however, freely change any of the following analysis characteristics and still take advantage of any pre-existing compiled polynomials:
-
-* Pedigrees included/excluded (new ones can be compiled or just built and used without compilation).
-* Trait position values for multipoint analysis (may require additional polynomials).
-* Gene frequency values.
-* Penetrance values.
-* Alpha values.
-* D-prime values for LD analysis.
-
-When To Use Polynomial Compilation
-----------------------------------
-
-Generally, you should use polynomial compilation only when it is technically feasible in your computational environment and the cost and complexity of compiling and linking dynamic libraries is exceeded by the benefits of rapid and repeatable evaluation.
-
-### Indications
-
-* **When the ratio of evaluations to trait/marker position changes is high.** This is an indication to use polynomial evaluation in general, and compilation in particular, as the costs of generation will be outweighed by the gains during evaluation.
-* **When the run-time of an evaluation is prohibitive.** Compilation itself can reduce evaluation time by up to an order of magnitude. Furthermore, the compiled component polynomials of an analysis can be distributed easily across nodes in a cluster or throughout an entire network using middleware such as the Berkeley Open Infrastructure for Network Computing (BOINC). Evaluations that would take years in a serial context can be performed in days when widely-distributed.
-* **When the same set of markers will be used with varying sets of pedigrees in multiple analyses.** Since named polynomials are specific to pedigree and trait/marker position, analyses that consider various subsets of a group of pedigrees pay the price of compilation only once for each pedigree and trait/marker position, and then reuse them without additional cost.
-* **When a generated polynomial is extremely large.** Polynomials that are larger than physical memory can be generated successfully, but repeated evaluation becomes very costly as portions outside of physical memory must be swapped-in from disk for every iteration. Running at the boundaries of physical memory also tends to lead to more frequent crashes, so converting the polynomial to source code as soon as it is generated not only greatly reduces memory consumption and enhances evaluation performance, but also ensures that the work will not be lost to a crash.
-
-### Contraindications
-
-* When pedigrees are very simple.
-* When only a single evaluation will be performed.
-
-Phases in Compiled Polynomial Use
----------------------------------
-
-Compiled polynomial use consists of several phases that have very different requirements and optimization possibilities:
-
-1. **Polynomial build and code generation.** This is pretty much the same as the normal process of polynomial building that occurs whenever you use the `PE` directive in your analysis, coupled with the fairly quick additional step of generating a number of C-code files to represent the polynomial. This step is only performed if there is not already a compiled polynomial of the same name in the current default directory. As with the normal polynomial build process, this step can be very memory-intensive depending upon the structure of the pedigrees and number of positions in the analysis, and does not benefit significantly from running in a multi-threaded environment.
-
-2. **Code compilation and dynamic library (DL) linking.** Compilation can be performed at the time the source is generated by Kelvin itself, or by way of batch jobs submitted on multiple nodes.
-    Both approaches require:
-    * the GNU C Compiler
-    * `polynomial.h` and `polyDLLoop.c` from the distribution `pedlib/` directory copied to somewhere on the GCC include file search list, i.e. in `/usr/local/include` or in a directory specified by the `CPATH` environment variable.
-    * `compileDL.sh` from the top-level distribution directory copied to somewhere on the command path, i.e. in a directory specified in the `PATH` environment variable. This script file is executed from within Kelvin to build dynamic libraries, and should be protected from unauthorized modification, as it would otherwise present a potential security risk. Currently this script moves source files to a `compiled` subdirectory once a dynamic library is built. You may wish to modify it's behavior or change the compilation optimization level.
-
-    This step is only performed if code has been written and synchronous compilation specified.
-
-    The source files generated are currently sized to be as large as can be compiled in under 16Gb of physical memory in order to facilitate optimization, and are compiled serially, so this step does not benefit at all from running in a multi-threaded environment.
-
-3. **Compiled polynomial loading and evaluation.** An attempt is made to locate and load a dynamic library (`.so` file) for each polynomial (one per pedigree) required for evaluation at a specific position before evaluation begins. Only the current execution directory is searched -- **not** the normal default dynamic library paths, as moving the dynamic libraries out of their associated analysis directory would facilitate accidental misuse. Any polynomials not represented by an existing dynamic library are built, and may be coded, compiled and loaded. Evaluation of the polynomials for a position is done in parallel by pedigrees, and so takes advantage of a multi-threaded environment insofar as the pedigrees are of similar complexity.
-
-Kelvin Polynomial Run Types
----------------------------
-
-![Chart of relative performance](runtype_performance.jpg)
-
-As the different phases of compiled polynomial processing have very different performance characteristics, two distinct mechanisms have been setup in Kelvin to support them. The first is a simplistic linear single-run approach which does not fully exploit performance capabilities, but can provide a significant performance boost over regular polynomial processing. The second is a relatively complicated multiple run process that achieves maximal performance. This chart illustrates the performance characteristics of these two approaches, along with the characteristics of a non-polynomial run and a polynomial run without compilation. The illustration assumes a simplified case where there is a single trait position for which three significant polynomials are generated (P1, P2, and P3), two of which are simple enough to be described by a single source file (P1 and P3), and one which requires three source files (P2 F1, F2, and F3).
-
-The Kelvin binaries referenced below can be produced by executing `make specialty` in the top-level distribution directory. A future release of Kelvin will combine them all into a single binary whose operation will be controlled by command-line options.
-
-* **Non-Polynomial Run.** This approach uses the `kelvin-normal` binary without the `PE` directive in the configuration file. It requires very little physical memory, but has a relatively long execution time which cannot be improved with multi-threading. Total run-time is easily and accurately extrapolated from initial progress, so a decision can be made fairly quickly as to whether this approach is worth pursuing.
-* **Normal (No Compilation) Polynomial Run.** This approach uses the `kelvin-normal` binary with the `PE` directive specified in the configuration file. The initial phase - polynomial build - can take a large amount of memory and only benefits marginally by multi-threading. All pedigree polynomials share the same in-memory structure, which facilitates simplification. Once the polynomials are complete, they are evaluated symbolically, which benefits moderately from multi-threading, depending upon the number of pedigrees and their relative evaluation times.
-* **Compiled Single Run.** In this approach, a single binary, `kelvin-POLYCOMP_DL`, is used to perform all of the steps of processing, from the initial build thru compilation and evaluation. While this simplifies the process, it cannot take advantage of distribution of the workload across multiple computers, nor the association of processing steps with optimal platform characteristics. As each polynomial is built, all of the files associated with it are compiled serially and then linked into a dynamic library, so the full price in elapsed time is paid for every compiled polynomial. It is particularly important to pay attention to trade-offs when considering this type of compiled polynomial run.
-* **Compiled Multiple Runs.** In this approach, two different Kelvin binaries are used, and the best results are achieved using multiple machines. The initial polynomial build (and coding) step is performed all at once by `kelvin-POLYCODE_DL-FAKEEVALUATE`, which, as the name indicates, does not do a real evaluation of the polynomials as they are only being built in order to generate source files. This step is best performed on a single-processor machine with a large amount of memory, as it does not benefit significantly from multiple threads. As soon as the source files for the first polynomial have been generated, they can start being compiled into object files. Compilation is performed by `compileDL.sh`, which must be executed either interactively or in a batch stream for each named polynomial. `compileDL.sh` takes two parameters which are the name of the polynomial and the optimization level (0 or 1) to be used. If multiple source files were generated, `compileDL.sh` will compile them sequentially and then link them when finished. Multiple copies of `compileDL.sh` can be run on a single polynomial, in which case each will compile separate source files until all are done. In this situation, a final copy must be run to do the link.
-
-    In the illustrated example, there are three separate machines being used. In practice, our entire cluster of 64 machines has at times been used to quickly compile and link a large number of polynomials. Once all generated source has been compiled, a second Kelvin binary, `kelvin-POLYUSE_DL`, is run. It uses dynamic libraries whenever it finds them instead of building the equivalent polynomials. If no dynamic library is found for a polynomial, the polynomial will be built-in memory. This step is best performed on a multi-core machine, and will, in the near future, be able to be distributed by other mechanisms.
-
-
-### BCMM-specific Instructions for Compiled Single Run
-
-While this approach is the easy way out, it's also the least efficient. If you have very large polynomials, you'll be waiting a long time for the compiles to complete, and will have to run only on 16Gb nodes.
-
-Modify whatever shell script you use to run kelvin to:
-
-1. Ensure that a copy of `compileDL.sh` is somewhere on your path. You might want to modify the script to e-mail you should a compile fail, instead of emailing Bill. This will look something like: `export PATH=/usr/local/src/kelvin-0.37.2/:$PATH`
-2. Ensure that the `CPATH` environment variable includes the Kelvin source tree's `pedlib/` and `include/` directories. This will look something like: `export CPATH=/usr/local/src/kelvin-0.37.2/pedlib/:/usr/local/src/kelvin-0.37.2/include/`
-3. Instead of running regular `kelvin`, run `kelvin-POLYCOMP_DL`. This binary is built with the `POLYUSE_DL`, `POLYCODE_DL`, and `POLYCOMP_DL` compilation flags set.
-
-If a compile blows up, you'll need to not only fix the problem, which should be described in the `.out` file for the errant polynomial, but you'll also need to delete the `.compiling` file for that polynomial in order for a subsequent run to not skip it.
-
-If you need to build a polynomial that's over 16Gb, use the binary `kelvin-POLYCODE_DL-FAKEEVALUATE-SSD` and use the SSD by setting two environment variables:  
-`export sSDFileName=/ssd/cache.dat` (where `/ssd/` points to where the SSD is mounted)  
-`export sSDFileSizeInGb=28`
-
-If you need to restart a run, all you need to do to clean-up is get rid of `.compiling` files, and when you're using this approach, there should be only one of those. Note that once a dynamic library (`.so` file) is built for a polynomial, it needn't be built again. All `kelvin-POLY`-whatever programs are smart enough to simply use existing dynamic libraries and not try to recreate them. If you need to recreate them because the analysis changed in some fundamental way (see earlier documentation), then you'll need to delete the old `.so` files.
-
-The default optimization level for compiles is "0" (zero), which compiles fairly fast, but produces dynamic libraries that run about half as fast as level "1" (one). If you want level "1" (one), you can edit the `compileDL.sh` script on your path to make it the default. Beware that compilation time will increase by a factor of 5. Note, however, that if you've already gone thru the generation of dynamic libraries with optimization level "0", you don't have to regenerate the code to compile at optimization level "1". Just delete (or move) the old `.so` files, copy the generated source (`.c` and `.h` files) up from the `compiled` subdirectory, and execute your modified `compileDL.sh` on them.
-
-Finally, note that after you've gone thru the painful process of compiling all of the dynamic libraries needed for your analysis, you can start running `kelvin-POLYUSE_DL` to redo the analysis and get better performance not only because you're not doing compilation anymore, but also because `kelvin-POLYUSE_DL` is built with OpenMP support, unlike `kelvin-POLYCOMP_DL`. Remember to set `OMP_NUM_THREADS` to something like the number of available cores to get the most you can, and don't be disappointed if you don't see a big improvement -- our multi-threading is by pedigrees, so if there are only a couple, or they're very unbalanced (one huge one and a bunch of small ones), it might as well be single-threaded.
-
-### BCMM-specific Instructions for Compiled Multiple Runs
-
-This approach is best for many large pedigrees, and requires a bit of work. If you only have a few simple pedigrees, stick with the Compiled Single Run method.
-
-You won't be using kelvin to do the actual compiles this time, so no special setup is needed. All you need to do is run `kelvin-POLYCODE-FAKEEVALUATE` and let it start generating the source code for polynomials. Note that while it will produce output files, they're garbage (the `FAKEEVALUATE` bit) because the whole point here is to produce source code as quickly as possible.
-
-Now, as soon as `.h` files start being produced, you can start running `compileDL.sh` on them. I do this with a combination of a few scripts that find all `.h` files and automagically create batch jobs to execute commands (in this case `compileDL.sh`) on them. Look for `compile_1` and `compile_2` in my `.bashrc`. I do this multiple times when there are especially large polynomials involved, because each time `compileDL.sh` runs, it starts working on any as-yet-uncompiled components of the polynomial, so if there are 20 generated source files for a single polynomial, I could have as many as 20 copies of `compileDL.sh` productively running on it. Note that if you do have multiple copies of `compileDL.sh` running on a single polynomial, they'll compile all of the separate source components, but won't do the final link into a dynamic library for fear of missing pieces. Only a copy of `compileDL.sh` that doesn't skip any uncompiled pieces will attempt a link. This could be corrected by modifying `compileDL.sh` to do another check for any `.compiling` files once it's done, but I haven't had a chance to do that yet.
-
-Once all of the polynomials generated have been compiled -- and you can tell when that's the case by looking to see if there are any `.h` files left, you can start evaluation. Use `kelvin-POLYUSE_DL` with some largish `OMP_NUM_THREADS` for best performance.
-
----
-
-Configuration File Directives Reference
-=======================================
+* [Configuration File Format](#configuration-file-format)
+* [Directives](#directives)
+* [Arguments](#arguments)
+* [Sample Configuration File](#sample-configuration-file)
+* [Directive Reference](#directive-reference)
+* [Advanced Directive Reference](#advanced-directive-reference)
 
 Kelvin's configuration file format is intended to be easy to read and edit. Kelvin, in general, requires the user to explicitly specify what Kelvin is to do, and doesn't make any assumptions about what the user may or may not want. Kelvin will display helpful error messages and terminate if the configuration file contains incompatible directives.
 
-Configuration File Format
--------------------------
+In addition to the configuration file, any valid directive may be specified on the command line by prepending the directive with '--' (two hyphens). Any additional arguments on the command line will be treated as arguments to the directive, up to the end of the line, or the next directive, which again must be prepended with '--'. Directives on the command line that specify input or output files will override the values set in the configuration file. Directives that take a series or range of values (like [TraitPositions](#traitpositions)), will add to the values, if any, specified in the configuration file. There is currently no way from the command line to remove values set in the configuration file.
+
+### Configuration File Format
 
 The kelvin configuration file is a text file containing directives that describe the nature of the analysis to be performed, and the names of input and output files. Directives typically appear on separate lines, but multiple directives, separated by a semicolon (';'), may appear on the same line. Some directives require arguments, which must appear on the same line as the directive they modify. Blank lines in the configuration file are ignored. Extra white space (spaces and tabs) around directives and arguments is ignored. Comments may be embedded in a configuration file with a pound sign ('#'). The pound sign and any text, up to the end of the line, will be ignored. Comments may appear on a line by themselves, or at the end of a line that also contains a directive(s). In the latter case, a semicolon is not required to separate the directive and the comment.
 
-Directives
-----------
+### Directives
 
 Directives are words or combinations of words with no intervening spaces. This document will capitalize the individual words that make up a directive (for example, `MapFile`), but they may appear in the configuration file with any capitalization (`Mapfile`, `mapfile`, `MAPFILE`, etc.). Also, directives may be abbreviated, so long as the abbreviation is unique. For example, `MapFile` could be abbreviated to `Map`. `SexLinked` could be abbreviated to `SexL`, but not to `Sex`, since that could also be an abbreviation for `SexSpecific`.
 
-Arguments
----------
+### Arguments
 
 Most directives require one or more arguments, which will take one of the following forms:
 
@@ -645,8 +499,7 @@ Most directives require one or more arguments, which will take one of the follow
 * A Value - an integer or real number, depending on the directive.
 * A Range - a shorthand method for specifying a series of values with a regular interval. A range is specified as a start value, a literal '`-`', an end value, a literal '`:`', and an increment. Start, end and increment values may be integers or real numbers. Start and end values may be positive or negative, with the restriction that the end must be no less than the start. The increment must be a positive value. Intervening whitespace may be added for clarity, but is not necessary. Kelvin will expand the range into a list of values that begins with the start value, increases by the increment, and ends with the last value that is no greater than the end value. For example, a range that runs from -1 to 1 in increments of 0.1 would be specified as '`-1 - 1 : 0.1`'. A range specified as '`0-1:0.15`' would expand to `0, 0.15 ... 0.75, 0.90`.
 
-Sample Configuration File
--------------------------
+### Sample Configuration File
 
 Kelvin configuration files can be quite simple. Here's a file for a multipoint analysis that will generate PPLs for a dichotomous trait at one centiMorgan intervals, considering 4 markers around each trait position:
 
@@ -685,12 +538,12 @@ Here's a file for two-point analysis that will generate PPLs and linkage disequi
 
 Two-point analysis is the default, so no directive is necessary to specify that. Line 3 specifies a linkage disequilibrium analysis. Line 5 specifies the values that will appear in the affection status field of the pedigree. Lines 7-13 specify input and output files. Line 14 specifies that additional information should be written to the MOD file specified on line 13.
 
-Directive Summary
------------------
+
+### Directive Reference
 
 Kelvin directives are intended to be fairly self-descriptive.
 
-### Input And Output
+##### Common Input And Output
 * [PedigreeFile](#pedigreefile)
 * [LocusFile](#locusfile)
 * [FrequencyFile](#frequencyfile)
@@ -701,41 +554,40 @@ Kelvin directives are intended to be fairly self-descriptive.
 * [ExtraMODs](#extramods)
 * [ProgressLevel](#progresslevel)
 * [ProgressDelaySeconds](#progressdelayseconds)
-* [EpistasisPedigreeFile](#epistasispedigreefile)
-* [EpistasisLocusFile](#epistasislocusfile)
-* [EpistasisFrequencyFile](#epistasisfrequencyfile)
 
-### Analysis Type
+##### Analysis Type
 * [MultiPoint](#multipoint)
 * [LD](#ld)
 * [MarkerToMarker](#markertomarker)
 
-### Trait Model
+##### Trait Model - Quantitative
 * [QT](#qt)
 * [QTT](#qtt)
 * [Threshold](#threshold)
 * [LiabilityClasses](#liabilityclasses)
-* [Epistasis](#epistasis)
 
-### Options
+##### Trait Model - Epistasis
+* [Epistasis](#epistasis)
+* [EpistasisPedigreeFile](#epistasispedigreefile)
+* [EpistasisLocusFile](#epistasislocusfile)
+* [EpistasisFrequencyFile](#epistasisfrequencyfile)
+
+##### Options
 * [PhenoCodes](#phenocodes)
 * [TraitPositions](#traitpositions)
 * [SexLinked](#sexlinked)
 * [SexSpecific](#sexspecific)
 * [Imprinting](#imprinting)
-* [DiseaseAlleles](#diseasealleles)
 * [PolynomialScale](#polynomialscale)
 * [NonPolynomial](#nonpolynomial)
+* [TraitPrevalence](#traitprevalence)
+
+##### Other
 * [SkipPedCount](#skippedcount)
 * [SkipCountWeighting](#skipcountweighting)
 * [SkipEstimation](#skipestimation)
 * [SkipAnalysis](#skipanalysis)
-* [TraitPrevalence](#traitprevalence)
 * [DryRun](#dryrun)
-
-
-Directive Reference
--------------------
 
 In this reference, the following conventions are used to describe the valid arguments to directives.
 
@@ -755,59 +607,41 @@ In this reference, the following conventions are used to describe the valid argu
     the `TraitPositions` directive can take either a literal `Marker`, a single `<value>` or a `<range>`, and furthermore can take one or more of any of the preceding, after a separating comma.
 
 
-#### BayesRatioFile
-:   `BayesRatioFile <filename>`
-:   Specifies the name of the output file to which Bayes ratios will be written. For [multipoint](#two-point-vs-multipoint) analyses, PPLs will also be written to this file. For [Marker-to-marker](#trait-to-marker-vs-marker-to-marker) analyses, no output is written to this file. Defaults to `br.out` if not specified.
+#### Common Input And Output
 
-#### DiseaseAlleles
-:   `DiseaseAlleles <number>`
-:   Specifies the number of alleles for the hypothetical trait locus. Currently the only supported number of disease alleles is 2, which also the default. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+##### PedigreeFile
+:   `PedigreeFile <filename>`
+:   Specifies the name of the input file from which the pedigree data will be read. Defaults to `pedfile.dat` if not specified.
 
-#### DryRun
-:   `DryRun`
-:   Specifies that configuration and input data should be read and validated, and that the complexity of the analysis should be estimated, but no calculations are performed.
-
-#### Epistasis
-:   `Epistasis <markername>`
-:   Specifies that Kelvin should consider epistasis between the trait and the marker identified by `<markername>`. Marker genotype data for the selected marker must be provided using the [EpistasisPedigreeFile](#epistasispedigreefile) and [EpistasisLocusFile](#epistasislocusfile) directives. If the marker also appears in the dataset to be analyzed, it will be dropped. This directive is incompatible with the [LiabilityClasses](#liabilityclasses) directive.
-
-#### EpistasisPedigreeFile
-:   `EpistasisPedigreeFile <filename>`
-:   Specifies the pedigree file that contains genotype data for the marker specified with the [Epistasis](#epistasis) directive. This can be a pedigree file from another dataset (another chromosome, for example), or it can be the same file specified the the [PedigreeFile](#pedigreefile) directive. This directive requires the [Epistasis](#epistasis) and [EpistasisLocusFile](#epistasislocusfile) directives, and is incompatible with the [LiabilityClasses](#liabilityclasses) directive.
-
-#### EpistasisLocusFile
-:   `EpistasisLocusFile <filename>`
-:   Specifies the file that contains pedigree column layout information for the file specified by the [EpistasisPedigreeFile](#epistasispedigreefile) directive. This can be a locus file from a another dataset (another chromosome, for example), or it can be the same file specified with the [LocusFile](#locusfile) directive. This directive requires the [Epistasis](#epistasis) and [EpistasisPedigreeFile](#epistasispedigreefile) directives, and is incompatible with the [LiabilityClasses](#liabilityclasses) directive.
-
-#### EpistasisFrequencyFile
-:   `EpistasisFrequencyFile <filename>`
-:   Specifies the file that contains allele information for the marker specified by the [Epistasis](#epistasis) directive. This directive is only required if the epistasis marker alleles are not '1' and '2'. This directive requires the [Epistasis](#epistasis), [EpistasisPedigreeFile](#epistasispedigreefile) and [EpistasisLocusFile](#epistasislocusfile) directives, and is incompatible with the [LiabilityClasses](#liabilityclasses) directive.
-
-#### ExtraMODs
-:   `ExtraMODs`
-:   Specifes that additional data should be written to the file specified by the [MODFile](#modfile) directive. For [two-point](#two-point-vs-multipoint) analyses, an extra line containing MOD information where Theta is 0 will be written, and for [LD](#linkage-disequilibrium-association-vs-linkage-equilibrium) analyses, another line containing MOD information where D' is 0 will be written. This directive is incompatible with the [Multipoint](#multipoint) directive.
-
-#### FrequencyFile
-:   `FrequencyFile <filename>`
-:   Specifies the name of the input file from which marker allele frequencies will be read. Defaults to `markers.dat` if not specified.
-
-#### Imprinting
-:   `Imprinting`
-:   Specifies that imprinting, or parent-of-origin, effects on the trait should be considered. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
-
-#### LD
-:   `LD`
-:   Specifies that linkage disequilibrium statistics should be calculated. This directive is incompatible with the [MultiPoint](#multipoint) and [SexSpecific](#sexspecific) directives.
-
-#### LiabilityClasses
-:   `LiabilityClasses <number>`
-:   Specifies that individuals in the pedigrees have been categorized into two or more classes. The penetrance values for individuals in one class will be considered independently from the other class(es). Note that a column that identifies the class for each individual must appear in the pedigree file. Kelvin expects liability classes to be numbered contiguously, starting at 1. If Kelvin detects that one or more of the specified classes is empty, it will drop the empty classes, and consolidate the remaining classes. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
-
-#### LocusFile
+##### LocusFile
 :   `LocusFile <filename>`
 :   Specifies the name of the input file from which the pedigree column layout information will be read. This file is sometimes referred to as a 'data file.' Defaults to `datafile.dat` if not specified.
 
-#### ProgressLevel
+##### FrequencyFile
+:   `FrequencyFile <filename>`
+:   Specifies the name of the input file from which marker allele frequencies will be read. Defaults to `markers.dat` if not specified.
+
+##### MapFile
+:   `MapFile <filename>`
+:   Specifies the name of the input file from which the marker map data will be read. Defaults to `mapfile.dat` if not specified.
+
+##### BayesRatioFile
+:   `BayesRatioFile <filename>`
+:   Specifies the name of the output file to which Bayes ratios will be written. For [multipoint](#two-point-vs-multipoint) analyses, PPLs will also be written to this file. For [Marker-to-marker](#trait-to-marker-vs-marker-to-marker) analyses, no output is written to this file. Defaults to `br.out` if not specified.
+
+##### PPLFile
+:   `PPLFile <filename>`
+:   For two-point analyses, specifies the name of the output file to which PPLs will be written. For multipoint analyses, PPLs are written to the file specified by the [BayesRatioFile](#bayesratiofile) directive, and no data will written to the file specified with this directive. Defaults to `ppl.out` if not specified.
+
+##### MODFile
+:   `MODFile <filename>`
+:   Specifies the name of the output file to which maximizing model information will be written.
+
+##### ExtraMODs
+:   `ExtraMODs`
+:   Specifes that additional data should be written to the file specified by the [MODFile](#modfile) directive. For [two-point](#two-point-vs-multipoint) analyses, an extra line containing MOD information where Theta is 0 will be written, and for [LD](#linkage-disequilibrium-association-vs-linkage-equilibrium) analyses, another line containing MOD information where D' is 0 will be written. This directive is incompatible with the [Multipoint](#multipoint) directive.
+
+##### ProgressLevel
 :   `ProgressLevel <number>`
 :   Specifies the level of detail of progress information that Kelvin should generate while it runs:
 :   * 0, steps only, such as start and end of analysis
@@ -815,135 +649,218 @@ In this reference, the following conventions are used to describe the valid argu
 :   * 2 thru 8, increasing levels of detail, such as polynomial build or evaluation
 :   The default is 1. Use this in conjunction with the [ProgressDelaySeconds](#progressdelayseconds) directive to fine-tune the flow of progress information to suit your needs.
 
-#### ProgressDelaySeconds
+##### ProgressDelaySeconds
 :   `ProgressDelaySeconds <number>`
 :   Specifies the delay between progress notifications displayed by Kelvin. The intent of this directive is to stabilize the frequency of progress notifications and hence the overall volume of progress information. The default value is 120 seconds. This causes only the most recent progress notifications permitted by the [ProgressLevel](#progresslevel) directive to be displayed every two minutes. For example, if 32 pedigrees have been processed in the last two minutes, only the notification of the start of processing of the 33rd will be displayed. Note that this can cause progress messages to be delayed. If, in our example, the 33rd pedigree is start processing 2 seconds into the 120 second delay interval, the message displayed at the end of the interval will be 118 seconds old.
 :   If you require an earlier progress update, press `CTRL-\ `.
 :   If no fresh progress notifications are available, `...running...` will be displayed.
 :   Specifying 0 (zero) causes Kelvin to display all permitted levels of progress messages as they occur.
 
-#### MapFile
-:   `MapFile <filename>`
-:   Specifies the name of the input file from which the marker map data will be read. Defaults to `mapfile.dat` if not specified.
 
-#### MarkerToMarker
-:   `MarkerToMarker [ All | Adjacent ]`
-:   Specifies that only the relationships of pairs of markers should be considered, and that no trait is included in the analisys. Under linkage equilibrium, the intermarker distance is estimated. Under [linkage disequilibrium](#linkage-disequilibrium-association-vs-linkage-equilibrium), the degree of linkage disequilibrium between the markers is estimated. If `All` is specified, all possible pairs of markers in the dataset are considered. If `Adjacent` is specified, only adjacent pairs of markers are considered.
+#### Analysis Type
 
-#### MODFile
-:   `MODFile <filename>`
-:   Specifies the name of the output file to which maximizing model information will be written.
-
-#### MultiPoint
+##### MultiPoint
 :   `MultiPoint <count>`
-:   Specifies that Kelvin should perform a multipoint analysis, generating a multipoint PPL for each location specified with the [TraitPositions](#traitpositions) directive. Groups of `<count>` adjacent markers, centered on each trait location, will be used to calculate the PPL. This directive is incompatible with the [MarkerToMarker](#markertomarker) and [LD](#ld) directives.
+:   Specifies that (as opposed to the default two-point analysis) Kelvin should perform a multipoint analysis, generating a multipoint PPL for each location specified with the [TraitPositions](#traitpositions) directive. Groups of `<count>` adjacent markers, centered on each trait location, will be used to calculate the PPL. This directive is incompatible with the [MarkerToMarker](#markertomarker) and [LD](#ld) directives.
 
-#### NonPolynomial
-:   `NonPolynomial`
-:   Specifies that Kelvin should not internally represent the likelihood calculation as a polynomial. This option will dramatically reduce memory requirements, but can increase run time by orders of magnitude for complex analyses. This directive is incompatible with the [PolynomialScale](#polynomialscale) directive.
+##### LD
+:   `LD`
+:   Specifies that (as opposed to the default linkage equilibrium statistics) linkage disequilibrium statistics should be calculated. This directive is incompatible with the [MultiPoint](#multipoint) and [SexSpecific](#sexspecific) directives.
 
-#### PedigreeFile
-:   `PedigreeFile <filename>`
-:   Specifies the name of the input file from which the pedigree data will be read. Defaults to `pedfile.dat` if not specified.
+##### MarkerToMarker
+:   `MarkerToMarker [ All | Adjacent ]`
+:   Specifies that (as opposed to the default trait-to-marker analysis) only the relationships of pairs of markers should be considered, and that no trait is included in the analysis. Under linkage equilibrium, the intermarker distance is estimated. Under [linkage disequilibrium](#linkage-disequilibrium-association-vs-linkage-equilibrium), the degree of linkage disequilibrium between the markers is estimated. If `All` is specified, all possible pairs of markers in the dataset are considered. If `Adjacent` is specified, only adjacent pairs of markers are considered. This directive is incompatible with the [MultiPoint](#multipoint) directive.
 
-#### PhenoCodes
-:   `PhenoCodes <unknown>`
-:   `PhenoCodes <unknown>, <unaffected>, <affected>`
-:   Specifies the values that will appear in the affection status (phenotype) field of the pedigree file, to indicate if an individual is affected, unaffected, or if the affection status is unknown. For dichotomous traits, all three values must be integers; the defaults are 0 (for unknown), 1 (for unaffected) and 2 (for affected). For quantitative trait analyses, only the value for unknown affection status should be specified, which may be any real number; the default is -99.99. For quantitative threshold traits, all three must be specified; the defaults are -99.99, -88.88 and 88.88. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
 
-#### PolynomialScale
-:   `PolynomialScale <scale>`
-:   If the user knows in advance that an analysis will require large amounts of memory, this directive can be specified, and Kelvin will pre-allocate memory before it begins calculations. This will result in somewhat more efficient use of memory, compared to Kelvin incrementally allocating memory as it runs. The `<scale>` is an integer between 1 and 10. This directive is incompatible with the [NonPolynomial](#nonpolynomial) directive.
+#### Trait Model - Quantitative
 
-#### PPLFile
-:   `PPLFile <filename>`
-:   For two-point analyses, specifies the name of the output file to which PPLs will be written. For multipoint analyses, PPLs are written to the file specified by the [BayesRatioFile](#bayesratiofile) directive, and no data will written to the file specified with this directive. Defaults to `ppl.out` if not specified.
-
-#### QT
+##### QT
 :   `QT Normal { <mean>, <standarddeviation> }`
 :   `QT ChiSq`
 :   Specifies that the trait is quantitative, rather than dichotomous. The trait data in the pedigree file should be of a quantitative nature (values on a continuous scale, rather than discrete affected or unaffected values). Two distributions are available, Normal and Chi-squared. If `Normal` is specified, the sample `<mean>` and `<standarddeviation>` [values](#arguments) may be provided. Otherwise, a sample mean and standard deviation will be calculated using the trait values in the pedigree file. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
 
-#### QTT
+##### QTT
 :   `QTT Normal { <mean>, <standarddeviation> }`
 :   `QTT ChiSq`
-:   Like the [QT](#qt) directive, but in addition considers a threshold beyond which an individual as simply assumed to be affected. The minimum and maximum threshold may specified with the [Threshold](#threshold) directive, but that is not required. This directive in incompatible with the [MarkerToMarker](#markertomarker) directive.
+:   Like the [QT](#qt) directive, but in addition considers a threshold beyond which an individual as simply assumed to be affected. The minimum and maximum threshold may specified with the [Threshold](#threshold) directive, but that is not required. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
 
-#### SexLinked
+##### Threshold
+:   `Threshold [ <min>, <max> | Fixed <value> ]`
+:   Specifies the minimum and maximum [values](#arguments) for the threshold - or, optionally, a fixed threshold value - for use with the [QTT](#qtt) directive, if needed. The defaults are min=0, max=3. The `<min>` and `<max>` should be [values](#arguments). This directive requires the [QTT](#qtt) directive.
+
+##### LiabilityClasses
+:   `LiabilityClasses <number>`
+:   Specifies that individuals in the pedigrees have been categorized into two or more classes. The penetrance values for individuals in one class will be considered independently from the other class(es). Note that a column that identifies the class for each individual must appear in the pedigree file. Kelvin expects liability classes to be numbered contiguously, starting at 1. If Kelvin detects that one or more of the specified classes is empty, it will drop the empty classes, and consolidate the remaining classes. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+
+#### Trait Model - Epistasis
+
+##### Epistasis
+:   `Epistasis <markername>`
+:   Specifies that Kelvin should consider epistasis between the trait and the marker identified by `<markername>`. Marker genotype data for the selected marker must be provided using the [EpistasisPedigreeFile](#epistasispedigreefile) and [EpistasisLocusFile](#epistasislocusfile) directives. If the marker also appears in the dataset to be analyzed, it will be dropped. This directive is incompatible with the [LiabilityClasses](#liabilityclasses) directive.
+
+##### EpistasisPedigreeFile
+:   `EpistasisPedigreeFile <filename>`
+:   Specifies the pedigree file that contains genotype data for the marker specified with the [Epistasis](#epistasis) directive. This can be a pedigree file from another dataset (another chromosome, for example), or it can be the same file specified the the [PedigreeFile](#pedigreefile) directive. This directive requires the [Epistasis](#epistasis) and [EpistasisLocusFile](#epistasislocusfile) directives, and is incompatible with the [LiabilityClasses](#liabilityclasses) directive.
+
+##### EpistasisLocusFile
+:   `EpistasisLocusFile <filename>`
+:   Specifies the file that contains pedigree column layout information for the file specified by the [EpistasisPedigreeFile](#epistasispedigreefile) directive. This can be a locus file from a another dataset (another chromosome, for example), or it can be the same file specified with the [LocusFile](#locusfile) directive. This directive requires the [Epistasis](#epistasis) and [EpistasisPedigreeFile](#epistasispedigreefile) directives, and is incompatible with the [LiabilityClasses](#liabilityclasses) directive.
+
+##### EpistasisFrequencyFile
+:   `EpistasisFrequencyFile <filename>`
+:   Specifies the file that contains allele information for the marker specified by the [Epistasis](#epistasis) directive. This directive is only required if the epistasis marker alleles are not '1' and '2'. This directive requires the [Epistasis](#epistasis), [EpistasisPedigreeFile](#epistasispedigreefile) and [EpistasisLocusFile](#epistasislocusfile) directives, and is incompatible with the [LiabilityClasses](#liabilityclasses) directive.
+
+
+#### Options
+
+##### PhenoCodes
+:   `PhenoCodes <unknown>`
+:   `PhenoCodes <unknown>, <unaffected>, <affected>`
+:   Specifies the values that will appear in the affection status (phenotype) field of the pedigree file, to indicate if an individual is affected, unaffected, or if the affection status is unknown. For dichotomous traits, all three values must be integers; the defaults are 0 (for unknown), 1 (for unaffected) and 2 (for affected). For quantitative trait analyses, only the value for unknown affection status should be specified, which may be any real number; the default is -99.99. For quantitative threshold traits, all three must be specified; the defaults are -99.99, -88.88 and 88.88. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+##### TraitPositions
+:   `TraitPositions [ Marker | <value> | <range> ] {, ... }`
+:   Specifies the positions at which PPLs will be calculated in a multipoint analysis. The literal string `Marker` indicates that PPLs should be calculated at each marker position, in addition to any other positions. If a range is specified, the end value of the range may be specified as the literal `end`. In that case, Kelvin will expand the range so the last value is just past the last marker in the map. The literal `end` in a range specification is only valid with this directive. This directive requires the [MultiPoint](#multipoint) directive, and is thus implicitly incompatible with the [MarkerToMarker](#markertomarker) and [LD](#ld) directives.
+
+##### SexLinked
 :   `SexLinked`
 :   Specifies that the pedigree contains data for the X chromosome.
 
-#### SexSpecific
+##### SexSpecific
 :   `SexSpecific`
 :   Specifies that the [map file](#mapfile) contains sex-specific centiMorgan positions for the markers, and that the sex-specific positions should be used instead of sex-averaged positions during the analysis. Requires that the map file actually contains sex-specific positions. This directive is incompatible with the [LD](#ld) directive.
 
-#### SkipAnalysis
-:   `SkipAnalysis`
-:   Specifies that preprocessing steps (pedigree counting, allele frequency estimation) should be done, if applicable, but no other processing.
+##### Imprinting
+:   `Imprinting`
+:   Specifies that imprinting, or parent-of-origin, effects on the trait should be considered. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
 
-#### SkipEstimation
-:   `SkipEstimation`
-:   Specifies that automatic allele frequency estimation should be disabled. If this directive is present, then a allele frequencies must be provided using the
-    [FrequencyFile](#frequencyfile) directive. Note that allele frequency estimation may be [implcitly disabled](#automatic-allele-frequency-estimation) for certain datasets or types of analysis.
+##### PolynomialScale
+:   `PolynomialScale <scale>`
+:   If the user knows in advance that an analysis will require large amounts of memory, this directive can be specified, and Kelvin will pre-allocate memory before it begins calculations. This will result in somewhat more efficient use of memory, compared to Kelvin incrementally allocating memory as it runs. The `<scale>` is an integer between 1 and 10. This directive is incompatible with the [NonPolynomial](#nonpolynomial) directive.
 
-#### SkipPedCount
-:   `SkipPedCount`
-:   Specifies that automatic pedigree counting and binning should be disabled. Note that pedigree counting may be [implicitly disabled](#automatic-pedigree-counting) for certain datasets or types of analysis.
+##### NonPolynomial
+:   `NonPolynomial`
+:   Specifies that Kelvin should not internally represent the likelihood calculation as a polynomial. This option will dramatically reduce memory requirements, but can increase run time by orders of magnitude for complex analyses. This directive is incompatible with the [PolynomialScale](#polynomialscale) directive.
 
-#### SkipCountWeighting
-:   `SkipCountWeighting`
-:   Specifies that the default algorith for weighting cases and controls when counting and binning pedigrees should be disabled, and that absolute counts should be generated instead. Has no effect if pedigree counting is disabled, or if no cases and controls appear in the dataset.
-
-#### Threshold
-:   `Threshold <min>, <max>`
-:   Specifies the minimum and maximum [values](#arguments) for the threshold for use with the [QTT](#qtt) directive, if needed. The defaults are min=0, max=3. The `<min>` and `<max>` should be [values](#arguments). This directive requires the [QTT](#qtt) directive.
-
-#### TraitPositions
-:   `TraitPositions [ Marker | <value> | <range> ] {, ... }`
-:   Specifies the positions at which PPLs will be calculated in a multipoint analysis. The literal string `Marker` indicates that PPLs should be calculated at each marker position, in addition to any other positions. If a range is specified, the end value of the range may be specified as the literal `end`. In that case, Kelvin will expand the range so the last value is just past the last marker in the map. The literal `end` in a range specification is only valid with this directive. This directive requires the [MultiPoint](#multipoint) directive.
-
-#### TraitPrevalence
+##### TraitPrevalence
 :   `TraitPrevalence <value>`
 :   Specifies the prevalence of the trait, presumably in the general population. This directive is required for automatic allele frequency estimation if the pedigree file contains any cases-and-controls.
 
 
-Advanced Directive Summary
---------------------------
+#### Other
 
-Kelvin can be configured to perform calculations based on fixed grids of parameter values. This option should be used with extreme caution for purposes of computing PPLs because it is not compatible with Kelvin's underlying numerical integration routines and can return erroneous BRs. However, it can be useful in cases where, for instance, a very fine grid of values is wanted for purposes of increasing precision of the MOD and/or maximizing values, or for calculation of fixed-model LODs. It can also be configured to reproduce the "fixed-grid" numerical integration routines used by older versions of Kelvin for purposes of comparison with results generated under those versions. The [FixedModels](#fixedmodels) directive enables this behavior, and is required for any advanced directives that fix points of the trait model.
+##### SkipPedCount
+:   `SkipPedCount`
+:   Specifies that automatic pedigree counting and binning should be disabled. Note that pedigree counting may be [implicitly disabled](#automatic-pedigree-counting) for certain datasets or types of analysis.
 
-### Input and Output
+##### SkipCountWeighting
+:   `SkipCountWeighting`
+:   Specifies that the default algorithm for weighting cases and controls when counting and binning pedigrees should be disabled, and that absolute counts should be generated instead. Has no effect if pedigree counting is disabled, or if no cases and controls appear in the dataset.
+
+##### SkipEstimation
+:   `SkipEstimation`
+:   Specifies that automatic allele frequency estimation should be disabled. If this directive is present, then allele frequencies must be provided using the [FrequencyFile](#frequencyfile) directive. Note that allele frequency estimation may be [implcitly disabled](#automatic-allele-frequency-estimation) for certain datasets or types of analysis.
+
+##### SkipAnalysis
+:   `SkipAnalysis`
+:   Specifies that preprocessing steps (pedigree counting, allele frequency estimation) should be done, if applicable, but no other processing.
+
+##### DryRun
+:   `DryRun`
+:   Specifies that configuration and input data should be read and validated, and that the complexity of the analysis should be estimated, but no calculations are performed.
+
+
+Advanced Directive Reference
+----------------------------
+
+##### Input and Output
 * [CountFile](#countfile)
 * [ForceBRFile](#forcebrfile)
 * [NIDetailFile](#nidetailfile)
 * [SurfaceFile](#surfacefile)
 * [SurfacesPath](#surfacespath)
 
-### Trait Model
-* [Alpha](#alpha)
-* [Constraint](#constraint)
+##### Trait Model - Quantitative
+* [QTMeanMode](#qtmeanmode)
+* [QTStandardDevMode](#qtstandarddevmode)
+* [Mean](#mean)
+* [StandardDev](#standarddev)
 * [DegreesOfFreedom](#degreesoffreedom)
+
+##### Trait Model - Fixed Models
+* [FixedModels](#fixedmodels)
+* [Constraint](#constraint)
+* [Alpha](#alpha)
 * [DiseaseGeneFrequency](#diseasegenefrequency)
 * [DPrime](#dprime)
-* [FixedModels](#fixedmodels)
-* [Mean](#mean)
 * [Penetrance](#penetrance)
-* [StandardDev](#standarddev)
 * [Theta](#theta)
 * [Threshold](#threshold_1)
+* [Mean](#mean_1)
+* [StandardDev](#standarddev_1)
+* [DegreesOfFreedom](#degreesoffreedom_1)
 
-### Options
+##### Other
+* [DiseaseAlleles](#diseasealleles)
 * [MaxIterations](#maxiterations)
+* [Study](#study)
+
+Kelvin can be configured to perform calculations based on fixed grids of parameter values. This option should be used with extreme caution for purposes of computing PPLs because it is not compatible with Kelvin's underlying numerical integration routines and can return erroneous BRs. However, it can be useful in cases where, for instance, a very fine grid of values is wanted for purposes of increasing precision of the MOD and/or maximizing values, or for calculation of fixed-model LODs. It can also be configured to reproduce the "fixed-grid" numerical integration routines used by older versions of Kelvin for purposes of comparison with results generated under those versions. The [FixedModels](#fixedmodels) directive enables this behavior, and is required for any advanced directives that fix points of the trait model.
+
+#### Input and Output
+
+##### CountFile
+:   `CountFile <filename>`
+:   Specifies the name of the input file from which pedigree count information will be read. The default is that pedigrees are not counted. Pedigree counting can dramatically improve efficiency by skipping redundant calculations when multiple families have the exact same structure, genotypes and affection status. This makes it very useful for case/control, trio or affected sib-pair analyses.
+
+##### ForceBRFile
+:   `ForceBRFile`
+:   Specifies that a [BayesRatioFile](#bayesratiofile) be written during a [MarkerToMarker](#markertomarker) analysis. This option is for debugging purposes.
+
+##### NIDetailFile
+:   `NIDetailFile <filename>`
+:   This option is for debugging purposes.
+
+##### SurfaceFile
+:   `SurfaceFile <filename>`
+:   This option is for debugging purposes.
+
+##### SurfacesPath
+:   `SurfacesPath <dirname>`
+:   This option is for debugging purposes.
 
 
-Advanced Directive Reference
-----------------------------
+#### Trait Model - Quantitative
 
-#### Alpha
-:   `Alpha [ <value> | <range> ] {, ... }`
-:   Specifies the set of alpha values that will be considered during the analysis. This directive requires the [FixedModels](#fixedmodels) directive. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+##### QTMeanMode
+:   `QTMeanMode [ Vary | Same | Fixed <value> ]`
+:   Specifies constraints on mean values when using the normal distribution for a quantitative trait analysis. `Same` specifies that the mean can only vary between traits, whereas `Vary` allows it to vary between genotypes as well; the range of possible values is constrained using the [Mean](#mean) directive below. `Fixed` specifies a fixed mean. The default is `Vary`. This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `Normal` distribution. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
 
-#### Constraint
+##### QTStandardDevMode
+:   `QTStandardDevMode [ Vary | Same | Fixed <value> ]`
+:   Specifies constraints on standard deviation values when using the normal distribution for a quantitative trait analysis. `Same` specifies that the standard deviation can only vary between traits, whereas `Vary` allows it to vary between genotypes as well; the range of possible values is constrained using the [StandardDev](#standarddev) directive below. `Fixed` specifies a fixed standard deviation. The default is `Same`. This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `Normal` distribution. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+##### Mean
+:   `Mean <min>, <max>`
+:   Specifies the mean values when using the normal distribution for a quantitative trait analysis. The `<min>` and `<max>` should be specified as [values](#arguments). The defaults are min=-3, max=3. This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `Normal` distribution. This directive is specified differently (and is required) when using [FixedModels](#FixedModels) with a quantitative trait; see [Mean](#mean_1) below. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+##### StandardDev
+:   `StandardDev <min>, <max>`
+:   Specifies the standard deviation values when using the normal distribution for a quantitative trait analysis. The `<min>` and `<max>` should be specified as [values](#arguments). The defaults are min=0.25, max=2.5. This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `Normal` distribution. This directive is specified differently (and is required) when using [FixedModels](#FixedModels) with a quantitative trait; see [StandardDev](#standarddev_1) below. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+##### DegreesOfFreedom
+:   `DegreesOfFreedom <min>, <max>`
+:   Specifies the degrees of freedom values when using the Chi-squared distribution for a quantitative trait analysis. The `<min>` and `<max>` should be specified as [values](#arguments). This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `ChiSq` distribution. This directive is specified differently (and is required) when using [FixedModels](#FixedModels) with a quantitative trait; see [DegreesOfFreedom](#degreesoffreedom_1) below. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+
+#### Trait Model - Fixed Models
+
+##### FixedModels
+:   `FixedModels`
+:   Specifies that Kelvin should not sample the trait space using numerical techniques, but should calculate Bayes ratios at specific points in the trait space as specified using [trait model directives](#advanced-directive-summary).
+
+##### Constraint
 :   `Constraint Penetrance [ [ DD | Dd | dD | dd ] { <class> } [ == | != | > | >= ] [ DD | Dd | dD | dd ] { <class> } ] {, ... }`
 :   `Constraint Mean [ [ DD | Dd | dD | dd ] { <class> } [ == | != | > | >= ] [ DD | Dd | dD | dd ] { <class> } ] {, ... }`
 :   `Constraint StandardDev [ [ DD | Dd | dD | dd ] { <class> } [ == | != | > | >= ] [ DD | Dd | dD | dd ] { <class> } ] {, ... }`
@@ -951,63 +868,53 @@ Advanced Directive Reference
 :   `Constraint Threshold [ <class> [ == | != | > | >= ] <class> ] {, ... }`
 :   This directive allows the values specified using the various [trait model directives](#advanced-directive-summary) to be constrained based on trait genotype or liability class. For example, the trait penetrances might be constrained such that the penetrance given a single copy of the disease gene is always less than or equal to the penetrance given two copies of the disease gene. For constraints based solely on trait genotypes (no liability class is specified), the genotypes should be different. Constraints involving a liability class require that the [LiabilityClasses](#liabilityclasses) directive. Constraints on a given dimension of the trait model ([Penetrance](#penetrance), [Mean](#mean), [StandardDev](#standarddev), [DegreesOfFreedom](#degreesoffreedom), [Threshold](#threshold)) require that the respective directive be specified, with all the requirements those directives imply. Multiple constraints on the same dimension may appear, separated by a comma, on the same line. In this case, if either of conditions is true, the constraint is satisfied. Constraints that appear on separate lines will all be enforced. This directive requires [FixedModels](#fixedmodels).
 
-#### CountFile
-:   `CountFile <filename>`
-:   Specifies the name of the input file from which pedigree count information will be read. The default is that pedigrees are not counted. Pedigree counting can dramatically improve efficiency by skipping redundant calculations when multiple families have the exact same structure, genotypes and affection status. This makes it very useful for case/control, trio or affected sib-pair analyses.
+##### Alpha
+:   `Alpha [ <value> | <range> ] {, ... }`
+:   Specifies the set of alpha values that will be considered during the analysis. This directive requires the [FixedModels](#fixedmodels) directive. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
 
-#### DegreesOfFreedom
-:   `DegreesOfFreedom <min>, <max>`
-:   `DegreesOfFreedom [ DD | Dd | dD | dd ] [ <value> | <range> ] {, ... }`
-:   Specifies the degrees of freedom values when using the Chi-squared distribution for a quantitative trait analysis. Without the [FixedModels](#fixedmodels) directive, the first form may used to specify a minimum and maximum degrees of freedom but is not required. The `<min>` and `<max>` should be specified as [values](#arguments). With the FixedModels directive, the second form must be used to specify the set of degrees of freedom values to be considered for each trait genotype (`DD`, `Dd`, `dD` or `dd`). This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `ChiSq` distribution. The `dD` genotype is only legal if the [Imprinting](#imprinting) directive is also specified. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
-
-#### DiseaseGeneFrequency
+##### DiseaseGeneFrequency
 :   `DiseaseGeneFrequency [ <value> | <range> ] {, ... }`
 :   Specifies the set of disease gene frequency values that will be considered during the analysis. This directive requires the [FixedModels](#fixedmodels) directive, and is incompatible with the [MarkerToMarker](#markertomarker) directive.
 
-#### DPrime
+##### DPrime
 :   `DPrime [ <value> | <range> ] {, ... }`
 :   Specifies the set of D' values that will be considered during the analysis. This directive requires the [FixedModels](#fixedmodels) and [LD](#ld) directives, and is not compatible with the [MultiPoint](#multipoint) directive.
 
-#### FixedModels
-:   `FixedModels`
-:   Specifies that Kelvin should not sample the trait space using numerical techniques, but should calculate Bayes ratios at specific points in the trait space as specified using [trait model directives](#advanced-directive-summary).
-
-#### ForceBRFile
-:   `ForceBRFile`
-:   Specifies that a [BayesRatioFile](#bayesratiofile) be written during a [MarkerToMarker](#markertomarker) analysis. This option is for debugging purposes.
-
-#### MaxIterations
-:   `MaxIterations <number>`
-:   Specifies that Kelvin's dynamic trait space sampling algorithm should go through at most `<number>` iterations.
-
-#### Mean
-:   `Mean <min>, <max>`
-:   `Mean [ DD | Dd | dD | dd ] [ <value> | <range> ] {, ... }`
-:   Specifies the mean values when using the normal distribution for a quantitative trait analysis. Without the [FixedModels](#fixedmodels) directive, the first form may used to specify a minimum and maximum mean, but is not required. The `<min>` and `<max>` should be specified as [values](#arguments). With the FixedModels directive, the second form must be used to specify the set of mean values to be considered for each trait genotype (`DD`, `Dd`, `dD` or `dd`). This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `Normal` distribution. The `dD` genotype is only legal if the [Imprinting](#imprinting) directive is also specified. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
-
-#### NIDetailFile
-:   `NIDetailFile <filename>`
-
-#### Penetrance
+##### Penetrance
 :   `Penetrance [ DD | Dd | dD | dd ] [ <value> | <range> ] {, ... }`
-:   Specifies the set of penetrances to be considered for each trait genotype (`DD`, `Dd`, `dD` or `dd`), when conducting a dichotomous trait analysis. This directive requires the [FixedModels](#fixedmodels), and is incompatible with the [QT](#qt), [QTT](#qtt) and [MarkerToMarker](#markertomarker) directives. The `dD` genotype is only legal if the [Imprinting](#imprinting) directive is also specified.
+:   Specifies the set of penetrances to be considered for each trait genotype (`DD`, `Dd`, `dD` or `dd`), when conducting a dichotomous trait analysis. This directive requires the [FixedModels](#fixedmodels) directive, and is incompatible with the [QT](#qt), [QTT](#qtt) and [MarkerToMarker](#markertomarker) directives. The `dD` genotype is only legal if the [Imprinting](#imprinting) directive is also specified.
 
-#### StandardDev
-:   `StandardDev <min>, <max>`
-:   `StandardDev [ <value> | <range> ] {, ... }`
-:   Specifies the standard deviation values when using the normal distribution for a quantitative trait analysis. Without the [FixedModels](#fixedmodels) directive, the first form may used to specify a minimum and maximum standard deviation, but is not required. The `<min>` and `<max>` should be specified as [values](#arguments). With the FixedModels directive, the second form must be used to specify the set of standard deviations. This directive requires the [FixedModels](#fixedmodels) directive, and either the [QT](#qt) or [QTT](#qtt) directives with the `Normal` distribution. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
-
-#### SurfaceFile
-:   `SurfaceFile <filename>`
-
-#### SurfacesPath
-:   `SurfacePath <dirname>`
-
-#### Theta
+##### Theta
 :   `Theta [ <value> | <range> ] {, ... }`
 :   Specifies the set of sex-averaged thetas to be considered during the analysis. This directive requires [FixedModels](#fixedmodels), and is incompatible with the [SexSpecific](#sexspecific) directive.
 
-#### Threshold
-:   `Threshold <min>, <max>`
+##### Threshold
 :   `Threshold [ <value> | <range> ] {, ... }`
-:   Specifies the threshold [values](#arguments) for use with the [QTT](#qtt) directive. Without the [FixedModels](#fixedmodels) directive, the first form may used to specify a minimum and maximum threshold, but is not required. The `<min>` and `<max>` should be specified as [values](#arguments). With the FixedModels directive, the second form must be used to specify the set of thresholds. This directive requires the [QTT](#qtt) directive, and is incompatible with the [MarkerToMarker](#markertomarker) directive.
+:   Specifies the threshold [values](#arguments) for use with the [QTT](#qtt) directive. See [Threshold](#threshold) above for usage outside of a FixedModels context. With the FixedModels directive, this form of the directive must be used to specify the set of thresholds. This directive requires the [QTT](#qtt) directive, and is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+##### Mean
+:   `Mean [ DD | Dd | dD | dd ] [ <value> | <range> ] {, ... }`
+:   Specifies the mean values when using the normal distribution for a quantitative trait analysis. See [Mean](#mean) above for usage outside of a FixedModels context. With the FixedModels directive, this form of the directive must be used to specify the set of mean values to be considered for each trait genotype (`DD`, `Dd`, `dD` or `dd`). This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `Normal` distribution. The `dD` genotype is only legal if the [Imprinting](#imprinting) directive is also specified. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+##### StandardDev
+:   `StandardDev [ <value> | <range> ] {, ... }`
+:   Specifies the standard deviation values when using the normal distribution for a quantitative trait analysis. See [StandardDev](#standarddev) above for usage outside of a FixedModels context. With the FixedModels directive, this form of the directive must be used to specify the set of standard deviations. This directive requires the [FixedModels](#fixedmodels) directive, and either the [QT](#qt) or [QTT](#qtt) directives with the `Normal` distribution. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+##### DegreesOfFreedom
+:   `DegreesOfFreedom [ DD | Dd | dD | dd ] [ <value> | <range> ] {, ... }`
+:   Specifies the degrees of freedom values when using the Chi-squared distribution for a quantitative trait analysis. See [DegreesOfFreedom](#degreesoffreedom) above for usage outside of a FixedModels context. With the FixedModels directive, this form of the directive must be used to specify the set of degrees of freedom values to be considered for each trait genotype (`DD`, `Dd`, `dD` or `dd`). This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `ChiSq` distribution. The `dD` genotype is only legal if the [Imprinting](#imprinting) directive is also specified. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+
+#### Other
+
+##### DiseaseAlleles
+:   `DiseaseAlleles <number>`
+:   Specifies the number of alleles for the hypothetical trait locus. Currently the only supported number of disease alleles is 2, which is also the default. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+
+##### MaxIterations
+:   `MaxIterations <number>`
+:   Specifies that Kelvin's dynamic trait space sampling algorithm should go through at most `<number>` iterations.
+
+##### Study
+:   `Study <label> [ client | server ] <dbhost> <dbusername> <dbpassword> <pedids include regex> <pedids exclude regex> { MCMC <total samples> <start of sample ids> <end of sample ids> }`
+:   Specifies parameters for a "Likelihood Server" run. Likelihood Server is a highly experimental operating mode in Kelvin that enables more parallelization of analysis and the use of alternative likelihood calculation algorithms. Details can be found in the [Exotic Operating Modes documentation](kelvin-exotic.html).

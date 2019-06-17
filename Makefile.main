@@ -499,7 +499,6 @@ $(BINDIR)/Kelvin : Kelvin
 bt_scriptnames := \
     qtdt_munge.pl \
     RunSQLScript.pm \
-    kdtk.pl \
     BCMMTools.pm \
     depcheck_funcs.sh \
     depcheck.pl
@@ -510,18 +509,14 @@ btc_scriptnames := \
     cleaning_common.sh \
     error_handling.sh \
     cmdline_parser.sh \
-    template_control_analysis_portable.sh \
-    template_settings_portable.sh \
-    makeped.pl \
+    makeped.pm \
     LKS_sortPedsForRun.pm \
     MCMC_setup.sh \
     copy_samples.sh \
-    MCMC_sizing.sh \
     MCMC_size_pedigree.sh \
     LKS_MCMCSizeReporting.pm \
-    MCMC_sampling.sh \
+    MCMC_sampling_minder.sh \
     MCMC_sample_pedigree.sh \
-    MCMC_assembly.sh \
     LKS_MCMCSampleAssembly.pm \
     LKS_transient_servers.sh \
     transient_server_common_custopts.sh \
@@ -531,14 +526,22 @@ btc_scriptnames := \
     LKS_PopulateDatabase.pm \
     LKS_iteration.sh \
     LKS_KelvinSplitClient.pm \
-    MCMC_kelvin_server_pedigree.sh \
+    LKS_MCMCserver.pm
+# Pipeline scripts that are specific to Portable Edition
+# (svn bcmmtools/cleaning/portable-edition)
+btcp_scriptnames := \
+    template_control_analysis_portable.sh \
+    template_settings_portable.sh \
     LKS_pool_ppl.sh
 # Pipeline scripts included in SVN bcmmtools/cleaning/ that require special
 # handling at install time
 btc_scriptspecials := \
     BCMM \
-    ready_kelvin_lks_analysis.sh \
     site_settings.sh
+# A portable editin specific script that requires special handling at install
+# time
+btcp_scriptspecials := \
+    ready_kelvin_lks_analysis.sh
 # There's also a pair of tarballs, each with one of the Acid Tests; those are
 # handled below.
 
@@ -548,9 +551,10 @@ btc_scriptspecials := \
 # "intermediate" target names):
 bt_targets = $(patsubst %,pipeline-scripts/%,$(bt_scriptnames))
 btc_targets = $(patsubst %,pipeline-scripts/%,$(btc_scriptnames) $(btc_scriptspecials))
+btcp_targets = $(patsubst %,pipeline-scripts/%,$(btcp_scriptnames) $(btcp_scriptspecials))
 # Convert the lists above to a "$(BINDIR)/<scriptname>" list (our installation
 # target names):
-bindir_pipeline = $(patsubst %,$(wildcard $(BINDIR))/%,$(bt_scriptnames) $(btc_scriptnames) sa_dt-acid-test.tgz merlin-only-sadt-acid-test.tgz)
+bindir_pipeline = $(patsubst %,$(wildcard $(BINDIR))/%,$(bt_scriptnames) $(btc_scriptnames) $(btcp_scriptnames) sa_dt-acid-test.tgz merlin-only-sadt-acid-test.tgz)
 
 # How our scripts and/or acid test tarballs are brought in
 $(bt_targets) :
@@ -560,6 +564,10 @@ $(bt_targets) :
 $(btc_targets) :
 	@mkdir -p pipeline-scripts
 	svn export $(PIPELINE_SVNROOT)/cleaning/$(notdir $@) $@
+
+$(btcp_targets) :
+	@mkdir -p pipeline-scripts
+	svn export $(PIPELINE_SVNROOT)/cleaning/portable-edition/$(notdir $@) $@
 
 pipeline-scripts/%.tgz :
 	@mkdir -p pipeline-scripts
