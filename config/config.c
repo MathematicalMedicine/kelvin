@@ -427,9 +427,7 @@ void validateConfig ()
   /* Check that the configuration directives are both compatible and sufficient. We may
    * check the same combinations from multiple directions. For the most part, we don't
    * imply anything anymore (ex. implying a sex specific map by configuring male theta
-   * values). The user must specify what they want, we won't guess. One major exception
-   * is MarkerToMarker, which silently turns on FixedModels, if it's not on already.
-   */
+   * values). The user must specify what they want, we won't guess. */
 
   if (staticModelOptions.polynomialScale && ! staticModelOptions.polynomial)
     fault ("PolynomialScale is incompatible with NonPolynomial\n");
