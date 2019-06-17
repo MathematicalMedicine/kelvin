@@ -40,6 +40,10 @@ Kelvin releases have historically been tested on the following platforms:
 
 Kelvin may make very extensive use of memory management, and can, under most circumstances, definitely benefit from a drop-in allocator such as [Hoard](http://www.hoard.org/) or [ptmalloc3](http://www.malloc.de/en/). Either of these can easily halve execution time, and will keep memory fragmentation down when running in multi-threaded mode, but they are not required. These are controlled by the compilation conditionals `USE_PTMALLOC` and `USE_HOARD`; Hoard usage is disabled by default; ptmalloc3 usage is enabled if it is available on your platform and otherwise disabled by default.
 
+### Distribution Versions
+
+Some unsupported features of Kelvin are normally disabled for distribution purposes. They can be restored by removing -DDISTRIBUTION from FILE_CFLAGS in Makefile.main. Note that this is UNSUPPORTED; you do this at your own risk!
+
 ---
 
 Preparation and Analysis Considerations
@@ -55,7 +59,7 @@ Two-point analysis is the default. Multipoint analysis is enabled with the [Mult
 
 ### Linkage Disequilibrium (Association) vs. Linkage Equilibrium
 
-Linkage equilibrium is the default for [two-point](#two-point-vs-multipoint) analyses, and is the only option for [multipoint](#two-point-vs-multipoint) analyses. Linkage Disequilibrium can be enabled for two-point analyses with the [LD](#ld) directive.
+Linkage equilibrium is the default for [two-point](#two-point-vs-multipoint) analyses, and is the only option for [multipoint](#two-point-vs-multipoint) analyses. Linkage Disequilibrium can be enabled for two-point analyses with the [LD](#ld) directive. LD analyses with microsatellites are normally disabled for [distribution versions](#distribution-versions) of Kelvin.
 
 ### Dichotomous Trait vs. Quantitative Trait vs. Quantitative Trait With Threshold
 
@@ -787,6 +791,7 @@ Advanced Directive Reference
 * [Mean](#mean)
 * [StandardDev](#standarddev)
 * [DegreesOfFreedom](#degreesoffreedom)
+* [Truncate](#truncate)
 
 ##### Trait Model - Fixed Models
 * [FixedModels](#fixedmodels)
@@ -806,6 +811,22 @@ Advanced Directive Reference
 * [MaxIterations](#maxiterations)
 * [Study](#study)
 
+##### Diagnostics
+* [DiagOVERALL](#diagoverall)
+* [DiagLIKELIHOOD](#diaglikelihood)
+* [DiagREAD_PEDFILE](#diagread-pedfile)
+* [DiagALLELE_SET_RECODING](#diagallele-set-recoding)
+* [DiagGENOTYPE_ELIMINATION](#diaggenotype-elimination)
+* [DiagPARENTAL_PAIR](#diagparental-pair)
+* [DiagCONFIG](#diagconfig)
+* [DiagINPUTFILE](#diaginputfile)
+* [DiagXM](#diagxm)
+* [DiagDCUHRE](#diagdcuhre)
+* [DiagPOLYNOMIAL](#diagpolynomial)
+* [DiagALTLSERVER](#diagaltlserver)
+* [DiagMAX_DIAG_FACILITY](#diagmax-diag-facility)
+
+
 Kelvin can be configured to perform calculations based on fixed grids of parameter values. This option should be used with extreme caution for purposes of computing PPLs because it is not compatible with Kelvin's underlying numerical integration routines and can return erroneous BRs. However, it can be useful in cases where, for instance, a very fine grid of values is wanted for purposes of increasing precision of the MOD and/or maximizing values, or for calculation of fixed-model LODs. It can also be configured to reproduce the "fixed-grid" numerical integration routines used by older versions of Kelvin for purposes of comparison with results generated under those versions. The [FixedModels](#fixedmodels) directive enables this behavior, and is required for any advanced directives that fix points of the trait model.
 
 #### Input and Output
@@ -820,13 +841,11 @@ Kelvin can be configured to perform calculations based on fixed grids of paramet
 
 ##### NIDetailFile
 :   `NIDetailFile <filename>`
-:   This option is for debugging purposes.
-:   This file provides some dynimic grid specific information, ex, number of LR calculations (numLR) and error of the BR (error). 'numLR' is useful to find how many subgroups of dcuhre required to approximate the BR. 
+:   Specifies the name of an output file to which some dynamic grid information will be written. Examples include the number of likelihood ratio calculations (numLR) and error of the BR (error). This option is used for debugging purposes (for example, 'numLR' is useful to find out how many subgroups of DCUHRE are required to approximate the BR).
 
 ##### SurfaceFile
 :   `SurfaceFile <filename>`
-:   This option is for debugging purposes.
-:   Prints out the LOD values in the middle of BR calculations for both dynamic and fixed grids. The LOD values are used either to validate the LOD values or to feed into the visualization tools (LiVit, DiVit, or PLOT). 
+:   Specifies the name of an output file to which LOD values (arrived at in the middle of BR calculations for both dynamic and fixed grids) will be written. The LOD values are used either for validation purposes, or to feed into the visualization tools (LiVit, DiVit, or PLOT). This option is for debugging purposes.
 
 ##### SurfacesPath
 :   `SurfacesPath <dirname>`
@@ -853,14 +872,18 @@ Kelvin can be configured to perform calculations based on fixed grids of paramet
 
 ##### DegreesOfFreedom
 :   `DegreesOfFreedom <min>, <max>`
-:   Specifies the degrees of freedom values when using the Chi-squared distribution for a quantitative trait analysis. The `<min>` and `<max>` should be specified as [values](#arguments). This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `ChiSq` distribution. This directive is specified differently (and is required) when using [FixedModels](#FixedModels) with a quantitative trait; see [DegreesOfFreedom](#degreesoffreedom_1) below. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+:   Specifies the degrees of freedom values when using the Chi-squared distribution for a quantitative trait analysis. The `<min>` and `<max>` should be specified as [values](#arguments). This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `ChiSq` distribution. This directive is specified differently (and is required) when using [FixedModels](#FixedModels) with a quantitative trait; see [DegreesOfFreedom](#degreesoffreedom_1) below. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive. This directive is normally disabled for [distribution versions](#distribution-versions) of Kelvin.
+
+##### Truncate
+:   `Truncate <min>, <max>`
+:   Specifies minimum and maximum QT trait values to be allowed in the distribution, so that "long tails" on either end may be cut off. The `<min>` and `<max>` should be specified as [values](#arguments). This directive requires either the [QT](#qt) or [QTT](#qtt) directives, and is incompatible with the [MarkerToMarker](#markertomarker) directive.
 
 
 #### Trait Model - Fixed Models
 
 ##### FixedModels
 :   `FixedModels`
-:   Specifies that Kelvin should not sample the trait space using numerical techniques, but should calculate Bayes ratios at specific points in the trait space as specified using [trait model directives](#advanced-directive-summary).
+:   Specifies that Kelvin should not sample the trait space using numerical techniques, but should calculate Bayes ratios at specific points in the trait space as specified using trait model directives. This directive is normally disabled for [distribution versions](#distribution-versions) of Kelvin.
 
 ##### Constraint
 :   `Constraint Penetrance [ [ DD | Dd | dD | dd ] { <class> } [ == | != | > | >= ] [ DD | Dd | dD | dd ] { <class> } ] {, ... }`
@@ -905,26 +928,78 @@ Kelvin can be configured to perform calculations based on fixed grids of paramet
 
 ##### DegreesOfFreedom
 :   `DegreesOfFreedom [ DD | Dd | dD | dd ] [ <value> | <range> ] {, ... }`
-:   Specifies the degrees of freedom values when using the Chi-squared distribution for a quantitative trait analysis. See [DegreesOfFreedom](#degreesoffreedom) above for usage outside of a FixedModels context. With the FixedModels directive, this form of the directive must be used to specify the set of degrees of freedom values to be considered for each trait genotype (`DD`, `Dd`, `dD` or `dd`). This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `ChiSq` distribution. The `dD` genotype is only legal if the [Imprinting](#imprinting) directive is also specified. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
+:   Specifies the degrees of freedom values when using the Chi-squared distribution for a quantitative trait analysis. See [DegreesOfFreedom](#degreesoffreedom) above for usage outside of a FixedModels context. With the FixedModels directive, this form of the directive must be used to specify the set of degrees of freedom values to be considered for each trait genotype (`DD`, `Dd`, `dD` or `dd`). This directive requires either the [QT](#qt) or [QTT](#qtt) directives with the `ChiSq` distribution. The `dD` genotype is only legal if the [Imprinting](#imprinting) directive is also specified. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive. This directive is normally disabled for [distribution versions](#distribution-versions) of Kelvin.
 
 
 #### Other
 
-
 ##### DiseaseAlleles
 :   `DiseaseAlleles <number>`
 :   Specifies the number of alleles for the hypothetical trait locus. Currently the only supported number of disease alleles is 2, which is also the default. This directive is incompatible with the [MarkerToMarker](#markertomarker) directive.
-:   
 
 ##### MaxIterations
 :   `MaxIterations <number>`
 :   Specifies that Kelvin's dynamic trait space sampling algorithm should go through at most `<number>` iterations.
 
-#### Threshold
-:   `Threshold <min>, <max>`
-:   `Threshold [ <value> | <range> ] {, ... }`
-:   Specifies the threshold [values](#arguments) for use with the [QTT](#qtt) directive. Without the [FixedModels](#fixedmodels) directive, the first form may used to specify a minimum and maximum threshold, but is not required. The `<min>` and `<max>` should be specified as [values](#arguments). With the FixedModels directive, the second form must be used to specify the set of thresholds. This directive requires the [QTT](#qtt) directive, and is incompatible with the [MarkerToMarker](#markertomarker) directive.
+##### Study
+:   `Study <label> [ client | server ] <dbhost> <dbusername> <dbpassword> <pedids include regex> <pedids exclude regex> { MCMC <total samples> <start of sample ids> <end of sample ids> }`
+:   Specifies parameters for a "Likelihood Server" run. Likelihood Server is a highly experimental operating mode in Kelvin that enables more parallelization of analysis and the use of alternative likelihood calculation algorithms. Details can be found in the [Exotic Operating Modes documentation](kelvin-exotic.html).
 
-#### MODThreshold
-:   `MODThreshold <min>`
-:   This sets the threshold of extra mod calculation in the dynamicd grid. The Kelvin inplemented an optimization technique, called amoeba. This maximization tool kicks in after the dcuhre, which is a br approximation algorith, to improve the MOD approximation. 
+
+#### Diagnostics
+
+The Diagnostics directives are all for debugging purposes. They're separated by concern, and all take an integer indicating a "diagnostic level" that determines what level of detailed debugging output for that class of diagnostics should be shown.
+
+Diagnostics directives have no effect for [distribution versions](#distribution-versions) of Kelvin.
+
+##### DiagOVERALL
+:   `DiagOVERALL <value>`
+:   This option is for debugging purposes.
+
+##### DiagLIKELIHOOD
+:   `DiagLIKELIHOOD <value>`
+:   This option is for debugging purposes.
+
+##### DiagREAD_PEDFILE
+:   `DiagREAD_PEDFILE <value>`
+:   This option is for debugging purposes.
+
+##### DiagALLELE_SET_RECODING
+:   `DiagALLELE_SET_RECODING <value>`
+:   This option is for debugging purposes.
+
+##### DiagGENOTYPE_ELIMINATION
+:   `DiagGENOTYPE_ELIMINATION <value>`
+:   This option is for debugging purposes.
+
+##### DiagPARENTAL_PAIR
+:   `DiagPARENTAL_PAIR <value>`
+:   This option is for debugging purposes.
+
+##### DiagCONFIG
+:   `DiagCONFIG <value>`
+:   This option is for debugging purposes.
+
+##### DiagINPUTFILE
+:   `DiagINPUTFILE <value>`
+:   This option is for debugging purposes.
+
+##### DiagXM
+:   `DiagXM <value>`
+:   This option is for debugging purposes.
+
+##### DiagDCUHRE
+:   `DiagDCUHRE <value>`
+:   This option is for debugging purposes.
+
+##### DiagPOLYNOMIAL
+:   `DiagPOLYNOMIAL <value>`
+:   This option is for debugging purposes.
+
+##### DiagALTLSERVER
+:   `DiagALTLSERVER <value>`
+:   This option is for debugging purposes.
+
+##### DiagMAX_DIAG_FACILITY
+:   `DiagMAX_DIAG_FACILITY <value>`
+:   This option is for debugging purposes.
