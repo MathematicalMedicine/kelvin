@@ -204,7 +204,6 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"DiseaseAlleles", set_int, &staticModelRange.nalleles},
 				{"MaxIterations", set_int, &staticModelOptions.maxIterations},
 
-                                {"MODThreshold", set_double, &staticModelOptions.modThreshold},
                                 {"QTMeanMode", set_qt_mean_mode, NULL},
                                 {"QTStandardDevMode", set_qt_standarddev_mode, NULL},
 
