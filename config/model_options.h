@@ -116,9 +116,6 @@ typedef struct ModelOptions
   double prior;			///< Prior probability of linkage.
   double LDprior;		///< Prior probability of LD (D' not 0) given linkage and theta within thetaCutoff.
 
-  /* For experimental LOD maximization algorithm */
-  double modThreshold;          ///< Threshold over which LOD maximization kicks in
-
   /* For experimental QT analysis integrating over multiple SD and/or means. */
   int qtMeanMode;
   int qtStandardDevMode;

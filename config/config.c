@@ -231,7 +231,6 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				// {"condfile", set_condrun, &staticModelOptions.condFile},
 				{"ProgressDelaySeconds", set_int, &swProgressDelaySeconds},
 
-                                {"MODThreshold", set_double, &staticModelOptions.modThreshold},
 				{"ProgressLevel", set_int, &swProgressLevel},
 				{"Study", set_study_parameters, NULL},
 
@@ -300,7 +299,6 @@ void initializeDefaults ()
   staticModelOptions.prior = 0.02;            /* Prior probability of linkage */
   staticModelOptions.LDprior = 0.02;          /* Prior probability of LD given close linkage */
 
-  staticModelOptions.modThreshold = DBL_MAX;
   staticModelOptions.qtMeanMode = 0;
   staticModelOptions.qtStandardDevMode = 0;
   staticModelOptions.qtThresholdMode = 0;
@@ -483,8 +481,6 @@ void validateConfig ()
       INFO ("MarkerToMarker will write no output to BayesRatioFile");
     if (staticModelOptions.dkelvinoutfile[0] != '\0')
       INFO ("MarkerToMarker will write no output to NIDetailFile");
-    if (staticModelOptions.modThreshold != DBL_MAX)
-      fault ("MODThreshold is incompatible with MarkerToMarker\n");
     if (staticModelOptions.qtMeanMode != 0)
       fault ("QTMeanMode is incompatible with MarkerToMarker\n");
     if (staticModelOptions.qtStandardDevMode != 0)
@@ -878,15 +874,6 @@ void fillConfigDefaults (ModelRange *modelRange, ModelOptions *modelOptions, Mod
   MALCHOKE (staticModelRange.lclassLabels, sizeof (int) * staticModelRange.nlclass, int *);
   for (i = 0; i < staticModelRange.nlclass; i++)
     staticModelRange.lclassLabels[i] = i+1;
-
-  /* If the user asks for a MOD file, enable the Amoeba maximizing routine by
-     setting the MOD threshold to 0 */
-  if (strlen (staticModelOptions.modfile) != 0 && staticModelOptions.modThreshold == DBL_MAX)
-    staticModelOptions.modThreshold = 0;
-  /* If the user specifies a MOD threshold, but didn't ask for a MOD file,
-     force creation of a MOD file */
-  if (staticModelOptions.modThreshold != DBL_MAX && strlen (staticModelOptions.modfile) == 0)
-    strcpy (staticModelOptions.modfile, DEFAULTMODFILENAME);
 
   /* Copy our statically-allocated structures over to their global page-allocated
    * counterparts so we can protect them from monkeying.
