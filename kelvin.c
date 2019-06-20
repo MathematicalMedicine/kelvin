@@ -101,9 +101,6 @@
   also report on cross-module operations, i.e. one module allocates and
   another module frees the same chunk of memory.
 
-  - DMUSE - our own static memory management, implemented only for
-  experimental purposes. See sw.c for details.
-
   - Many COMPILE-TIME CONDITIONALS specific to polynomial representation
   are described in utils/polynomial.c.
 

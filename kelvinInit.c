@@ -68,9 +68,6 @@ void kelvinInit (int argc, char *argv[])
 #ifdef FAKEEVALUATE
   INFO ("Polynomial evaluation is being SKIPPED FOR TESTING, results will be wrong!");
 #endif
-#ifdef DMUSE
-  INFO ("Experimental static memory handling enabled!");
-#endif
 #ifdef DMTRACK
   INFO ("Dynamic memory usage dumping is turned on, so performance will be poor!");
 #endif

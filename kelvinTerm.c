@@ -78,10 +78,6 @@ void kelvinTerm () {
   if (modelOptions->polynomial == TRUE)
     polyStatistics ("End of run");
 #endif
-#ifdef DMUSE
-  INFO ("Missed/Used %d/%d 24s, %d/%d 48s, %d/%d 100s",
-	missed24s, used24s, missed48s, used48s, missed100s, used100s);
-#endif
 #ifdef DMTRACK
   swLogPeaks ("End of run");
   swDumpHeldTotals ();

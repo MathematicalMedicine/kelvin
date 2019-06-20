@@ -39,7 +39,6 @@ USE_PTMALLOC3 ?= $(shell if ldconfig -p 2>/dev/null | grep ptmalloc3 >/dev/null;
 
 
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
-LKS_VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`-`cat .lks`)
 #PLATFORM_NAME := $(shell echo `uname -m`-`uname -s`)
 #empty:=
 #space:= $(empty) $(empty)
@@ -153,9 +152,6 @@ FILE_LDFLAGS += -rdynamic
 #FILE_CFLAGS += -DMEMSTATUS
 #FILE_CFLAGS += -DMEMGRAPH
 
-## DMUSE - experimental in-house static memory management
-#FILE_CFLAGS += -DDMUSE
-
 ## DMTRACK - enable exhaustive memory management tracking.
 #FILE_CFLAGS += -DDMTRACK
 
@@ -191,20 +187,20 @@ FILE_LDFLAGS += -rdynamic
 ## time, you'll just want to run `make specialty` to take advantage of these.
 
 ## POLYUSE_DL - Use dynamic libraries built for named polynomials if they're
-## present in the current default directory. See olddoc/compiledPolys.html for
+## present in the current default directory. See doc/kelvin-exotic.html for
 ## usage details.
 #FILE_CFLAGS += -DPOLYUSE_DL
 #FILE_LDFLAGS += -ldl
 
 ## POLYCODE_DL - Generate C code for polynomials that can be compiled into
 ## dynamic libraries for later reuse by a Kelvin binary with POLYUSE_DL
-## enabled. See olddoc/compiledPolys.html for usage details.
+## enabled. See doc/kelvin-exotic.html for usage details.
 #FILE_CFLAGS += -DPOLYCODE_DL
 #FILE_LDFLAGS += -ldl
 
 ## POLYCOMP_DL - Compile any generated C code for dynamic polynomial libraries
 ## on the fly. (They can then be used if POLYUSE_DL is turned on.) See 
-## olddoc/compiledPolys.html for usage details.
+## doc/kelvin-exotic.html for usage details.
 #FILE_CFLAGS += -DPOLYCOMP_DL
 #FILE_LDFLAGS += -ldl
 
@@ -270,44 +266,38 @@ specialty : kelvin-$(VERSION)-no_GSL \
 	kelvin-normal
 
 dist : all-pipeline-scripts
-	- rm -rf kelvin-$(LKS_VERSION)
-	mkdir kelvin-$(LKS_VERSION)
-	#mkdir kelvin-$(LKS_VERSION)/bin
-	#cp -a bin/{kelvin,$(CALC_UPDATED_PPL)}.* kelvin-$(LKS_VERSION)/bin
-	cp -a README .maj .min .pat .lks .svnversion Kelvin Kelvin*.pm LKS_setupSGEDB.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kinfo.pl Makefile kelvin-$(LKS_VERSION)
-	perl -pe "s|#FILE_CFLAGS \+\= \-DDISTRIBUTION|FILE_CFLAGS \+\= \-DDISTRIBUTION|;" Makefile.main > kelvin-$(LKS_VERSION)/Makefile.main
-	mkdir kelvin-$(LKS_VERSION)/{lib,utils,pedlib,config,seq_update,database,merlin,LKS}
-	cp -a utils/Makefile utils/*.{c,h,pl} kelvin-$(LKS_VERSION)/utils
-	cp -a pedlib/Makefile pedlib/*.[ch] kelvin-$(LKS_VERSION)/pedlib
-	cp -a config/Makefile config/*.[ch] kelvin-$(LKS_VERSION)/config
-	cp -a database/Makefile database/*.[ch] kelvin-$(LKS_VERSION)/database
-	cp -a seq_update/Makefile seq_update/*.{c,h,pl} kelvin-$(LKS_VERSION)/seq_update
-	cp -a merlin/$(MERLIN_PATCH) kelvin-$(LKS_VERSION)/merlin
-	cp -a pipeline-scripts kelvin-$(LKS_VERSION)/
-	cp -a auxbin kelvin-$(LKS_VERSION)/
-	cd LKS/; cp -a $(lks_target_names) ../kelvin-$(LKS_VERSION)/LKS/; cd ..
-	mkdir -p kelvin-$(LKS_VERSION)/test-suite/dynamic-grid/PE/SA_DT
-	cp -a test-suite/Makefile kelvin-$(LKS_VERSION)/test-suite
-	cp -a test-suite/dynamic-grid/Makefile kelvin-$(LKS_VERSION)/test-suite/dynamic-grid
-	cp -a test-suite/dynamic-grid/PE/Makefile kelvin-$(LKS_VERSION)/test-suite/dynamic-grid/PE
-	cp -a test-suite/dynamic-grid/PE/SA_DT/* kelvin-$(LKS_VERSION)/test-suite/dynamic-grid/PE/SA_DT
-	mkdir -p kelvin-$(LKS_VERSION)/test-suite/seq_update/d-2pt-le
-	cp -a test-suite/seq_update/Makefile kelvin-$(LKS_VERSION)/test-suite/seq_update
-	cp -a test-suite/seq_update/d-2pt-le/* kelvin-$(LKS_VERSION)/test-suite/seq_update/d-2pt-le
-	mkdir -p kelvin-$(LKS_VERSION)/test-suite/frontend/KelvinClasses
-	cp -a test-suite/frontend/Makefile kelvin-$(LKS_VERSION)/test-suite/frontend
-	cp -a test-suite/frontend/KelvinClasses/* kelvin-$(LKS_VERSION)/test-suite/frontend/KelvinClasses
-	mkdir kelvin-$(LKS_VERSION)/doc
+	- rm -rf kelvin-$(VERSION)
+	mkdir kelvin-$(VERSION)
+	#mkdir kelvin-$(VERSION)/bin
+	#cp -a bin/{kelvin,$(CALC_UPDATED_PPL)}.* kelvin-$(VERSION)/bin
+	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm LKS_setupSGEDB.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kinfo.pl Makefile kelvin-$(VERSION)
+	perl -pe "s|#FILE_CFLAGS \+\= \-DDISTRIBUTION|FILE_CFLAGS \+\= \-DDISTRIBUTION|;" Makefile.main > kelvin-$(VERSION)/Makefile.main
+	mkdir kelvin-$(VERSION)/{lib,utils,pedlib,config,seq_update,database,merlin,LKS}
+	cp -a utils/Makefile utils/*.{c,h,pl} kelvin-$(VERSION)/utils
+	cp -a pedlib/Makefile pedlib/*.[ch] kelvin-$(VERSION)/pedlib
+	cp -a config/Makefile config/*.[ch] kelvin-$(VERSION)/config
+	cp -a database/Makefile database/*.[ch] kelvin-$(VERSION)/database
+	cp -a seq_update/Makefile seq_update/*.{c,h,pl} kelvin-$(VERSION)/seq_update
+	cp -a merlin/$(MERLIN_PATCH) kelvin-$(VERSION)/merlin
+	cp -a pipeline-scripts kelvin-$(VERSION)/
+	cp -a auxbin kelvin-$(VERSION)/
+	cd LKS/; cp -a $(lks_target_names) ../kelvin-$(VERSION)/LKS/; cd ..
+	mkdir -p kelvin-$(VERSION)/test-suite/dynamic-grid/PE/SA_DT
+	cp -a test-suite/Makefile kelvin-$(VERSION)/test-suite
+	cp -a test-suite/dynamic-grid/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid
+	cp -a test-suite/dynamic-grid/PE/Makefile kelvin-$(VERSION)/test-suite/dynamic-grid/PE
+	cp -a test-suite/dynamic-grid/PE/SA_DT/* kelvin-$(VERSION)/test-suite/dynamic-grid/PE/SA_DT
+	mkdir -p kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
+	cp -a test-suite/seq_update/Makefile kelvin-$(VERSION)/test-suite/seq_update
+	cp -a test-suite/seq_update/d-2pt-le/* kelvin-$(VERSION)/test-suite/seq_update/d-2pt-le
+	mkdir -p kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
+	cp -a test-suite/frontend/Makefile kelvin-$(VERSION)/test-suite/frontend
+	cp -a test-suite/frontend/KelvinClasses/* kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
+	mkdir kelvin-$(VERSION)/doc
 	doc/convert_docs.py
-	cp -a doc/*.md doc/*.html doc/*.jpg kelvin-$(LKS_VERSION)/doc
-	#html2text -rcfile doc/html2text.rc doc/index.html >kelvin-$(LKS_VERSION)/doc/index.txt
-	#html2text -rcfile doc/html2text.rc doc/Directives.html >kelvin-$(LKS_VERSION)/doc/Directives.txt
-	#html2text -rcfile doc/html2text.rc doc/Allocators.html >kelvin-$(LKS_VERSION)/doc/Allocators.txt
-	#html2text -rcfile doc/html2text.rc doc/SSDSupport.html >kelvin-$(LKS_VERSION)/doc/SSDSupport.txt
-	#html2text -rcfile doc/html2text.rc doc/compiledPolys.html >kelvin-$(LKS_VERSION)/doc/compiledPolys.txt
-	#cp -a doc/*.{html,png,gif} kelvin-$(LKS_VERSION)/doc
-	tar -cvzf kelvin-$(LKS_VERSION).tar.gz kelvin-$(LKS_VERSION)/
-	rm -rf kelvin-$(LKS_VERSION)
+	cp -a doc/*.md doc/*.html doc/*.jpg kelvin-$(VERSION)/doc
+	tar -cvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
+	rm -rf kelvin-$(VERSION)
 
 install : $(BINDIR) \
 	$(BINDIR)/kelvin-$(VERSION) \
@@ -415,8 +405,7 @@ endif
 clean : clean-build clean-merlin
 	make -C seq_update -f Makefile clean
 	make -C test-suite -f Makefile clean
-	rm -f kelvin-$(VERSION)-no_GSL kelvin-$(VERSION)-POLYUSE_DL kelvin-$(VERSION)-POLYCOMP_DL kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD kelvin-$(VERSION)-study kelvin-study kelvin-$(VERSION)-normal kelvin-normal
-	rm -f LKSPortableEdition-*.tar.gz
+	rm -f kelvin-$(VERSION)-* kelvin-study kelvin-normal
 
 .PHONY : clean-pscripts
 clean-pscripts : 
@@ -492,8 +481,8 @@ $(BINDIR)/Kelvin : Kelvin
 # Then, when it's time to install, we copy from that directory into $BINDIR.
 # Conceptually simple, but surprisingly awkward to implement in make.
 # 
-# It also doesn't help that there's two directories in the repository that, for
-# Portable Edition purposes, we want to convert into one...
+# It also doesn't help that there's three directories in the repository that,
+# for Portable Edition purposes, we want to convert into one...
 
 # Pipeline scripts included in SVN bcmmtools/
 bt_scriptnames := \
