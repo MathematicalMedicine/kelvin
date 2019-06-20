@@ -187,7 +187,7 @@ int kelvin_dcuhre_integrate (double *integralParam, double *abserrParam, double 
     else
       s->vol_rate /= 6.0;
       }*/
-  if((modelType->trait == DT)||(modelOptions->qtMeanMode==PARAM_MODE_VARY)) {   // Thsi is only for same std mode or both 
+  if((modelType->trait == DT)||(modelOptions->qtMeanMode==PARAM_MODE_VARY)||(modelType->distrib == QT_FUNCTION_CHI_SQUARE)) {   // Thsi is only for same std mode or both 
     for (i = 0; i < s->nlclass; i++) {
       if (modelOptions->imprintingFlag)
         s->vol_rate /= 16.0;
@@ -305,7 +305,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     }
     j += pen_size;*/
 
-    if (modelOptions->qtMeanMode==PARAM_MODE_VARY) {
+    if ((modelOptions->qtMeanMode==PARAM_MODE_VARY)||(modelType->distrib == QT_FUNCTION_CHI_SQUARE)) {
       mean_DD = x[j];
       mean_Dd = (x[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 1];
 
@@ -697,7 +697,7 @@ void compute_hlod_mp_qt (double x[], double *f, int *scale)
     //fprintf(stderr,"hetLR = %e gf=%f meanDD=%f meanDd=%f meandd=%f SD=%f\n", avg_hetLR,gfreq,mean_DD,mean_Dd,mean_dd,SD_DD);
 
     /* Jacobian */// This is required only for the constraint on penetrances
-    if (modelOptions->qtMeanMode==PARAM_MODE_VARY){  
+    if ((modelOptions->qtMeanMode==PARAM_MODE_VARY)||(modelType->distrib == QT_FUNCTION_CHI_SQUARE) ){  
       k = 1; // starting index of penetrance
       for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
 	avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
@@ -1112,7 +1112,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
   if (modelOptions->markerAnalysis == FALSE) {
     for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
 
-      if (modelOptions->qtMeanMode==PARAM_MODE_VARY) {
+      if ((modelOptions->qtMeanMode==PARAM_MODE_VARY) ||(modelType->distrib == QT_FUNCTION_CHI_SQUARE)) {
         mean_DD = x[j];
         mean_Dd = (x[j + 1] - xl[j + 1]) * (x[j] - xl[j]) / (xu[j] - xl[j]) + xl[j + 1];
 
@@ -1507,7 +1507,7 @@ void compute_hlod_2p_qt (double x[], double *f, int *scale)
     avg_hetLR = alpha_integral;
 
     /* Jacobian */
-    if (modelOptions->qtMeanMode==PARAM_MODE_VARY){
+    if ((modelOptions->qtMeanMode==PARAM_MODE_VARY)|| (modelType->distrib == QT_FUNCTION_CHI_SQUARE) ){
       k = 1;
       for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
 	avg_hetLR *= (x[k] - xl[k]) / (xu[k] - xl[k]);
@@ -1926,38 +1926,47 @@ void integrateMain ()
       total_dim += modelRange->nlclass;   //dD
 
   }else { // QT case
-    if (modelOptions->qtMeanMode == PARAM_MODE_VARY){
+    if ((modelOptions->qtMeanMode == PARAM_MODE_VARY)||(modelType->distrib == QT_FUNCTION_CHI_SQUARE)) {
         total_dim += 3* modelRange->nlclass;
         if (modelOptions->imprintingFlag)
           total_dim += modelRange->nlclass;   //dD
+
+	fprintf(stderr,"qtMeanMode = VARY now total_dim=%d\n", total_dim);
     }else if (modelOptions->qtMeanMode == PARAM_MODE_SAME){
         total_dim += modelRange->nlclass;
+	fprintf(stderr,"qtMeanMode = SAME now total_dim=%d\n", total_dim);
     }
     if (modelType->distrib != QT_FUNCTION_CHI_SQUARE) {
       if (modelOptions->qtStandardDevMode==PARAM_MODE_VARY){
         total_dim += 3* modelRange->nlclass;
         if (modelOptions->imprintingFlag)
           total_dim += modelRange->nlclass;   //dD
+
+	fprintf(stderr,"qtStandarDevMode = VARY now total_dim=%d\n", total_dim);
       }else if (modelOptions->qtStandardDevMode == PARAM_MODE_SAME){
         total_dim += modelRange->nlclass;
+	fprintf(stderr,"qtStandarDevMode = SAME now total_dim=%d\n", total_dim);
       }
     }else{
       total_dim += 3* modelRange->nlclass;
       if (modelOptions->imprintingFlag)
         total_dim += modelRange->nlclass;   //dD
+      fprintf(stderr,"qt CHI_SQUARE analysis now total_dim=%d\n", total_dim);
     }
 
     if (modelType->trait == CT) {
       //fprintf(stderr," \n\n CT mode \n\n\n");
       if (modelOptions->qtThresholdMode == PARAM_MODE_VARY) //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
 	total_dim++;      //  One threshold for all LCs    //   = modelRange->nlclass;
+
+      //fprintf(stderr,"qt ct analysis now total_dim=%d\n", total_dim);
     }
   }
 
   //fprintf(stderr,"DBL_MIN =%e and DBL_MIN_10_EXP=%d\n", DBL_MIN, DBL_MIN_10_EXP);
 
   //fprintf(stderr,"vary = %d same =%d\n",PARAM_MODE_VARY,PARAM_MODE_SAME);
-  //fprintf(stderr,"total_dim=%d before theta and dprime qtMeanMode=%d qtStdMode=%d, qtThreshmod=%d trait = %d\n",total_dim,modelOptions->qtMeanMode, modelOptions->qtStandardDevMode,modelOptions->qtThresholdMode, modelType->trait);
+  //fprintf(stderr," Before adding theta and dprime  total_dim=%d before theta and dprime qtMeanMode=%d qtStdMode=%d, qtThreshmod=%d trait = %d\n",total_dim,modelOptions->qtMeanMode, modelOptions->qtStandardDevMode,modelOptions->qtThresholdMode, modelType->trait);
 
   size_BR = total_dim;
   if (modelType->type == TP) {
@@ -1968,7 +1977,7 @@ void integrateMain ()
     if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM)
       total_dim += 1;   // dprime
   }
-  fprintf(stderr,"total_dim=%d after theta and dprime\n",total_dim);
+  fprintf(stderr,"total_dim=%d after theta and/or dprime\n",total_dim);
 
   DETAIL (0, "Outer dimension is %d, inner (BR) dimension is %d", total_dim, size_BR);
   DETAIL (0, "Allocating and initializing storage for analysis");
@@ -2046,9 +2055,10 @@ void integrateMain ()
           xu[k + 3] = modelRange->penetLimits[3][1];
         }
         //fprintf(stderr,"modelranage= %f %f %f %f %f %f %f %f\n",modelRange->penetLimits[0][0],modelRange->penetLimits[1][0],modelRange->penetLimits[2][0],modelRange->penetLimits[3][0],modelRange->penetLimits[0][1],modelRange->penetLimits[1][1],modelRange->penetLimits[2][1],modelRange->penetLimits[3][1]);
+	//fprintf(stderr,"modelranage= %f %f %f %f %f %f k=%d\n",xl[k],xl[k+1],xl[k+2],xu[k],xu[k+1],xu[k+2],k);
       }
 
-      if (modelOptions->qtMeanMode ==PARAM_MODE_VARY){
+      if ((modelOptions->qtMeanMode ==PARAM_MODE_VARY)||(modelType->distrib == QT_FUNCTION_CHI_SQUARE)){
 	volume_region *= (xu[k] - xl[k]);
 	volume_region *= (xu[k + 1] - xl[k + 1]);
 	volume_region *= (xu[k + 2] - xl[k + 2]);
@@ -2119,8 +2129,9 @@ void integrateMain ()
 	k++;
       }
     }
-    // fprintf (stderr,"The number of dimension for calculation of BR is %d\n",k);
   }
+
+  //fprintf(stderr,"volume_region =%f\n", volume_region);
 
   /*fpDK header */
   if (fpDK != NULL) {
