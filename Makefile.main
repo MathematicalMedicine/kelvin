@@ -7,7 +7,7 @@
 
 .PHONY: list
 list:
-	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
+	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$' -e '^pipeline-scripts' -e '^clean-' -e 'merlin'
 
 ## Command used to download files from the Web. Used to build patched Merlin.
 ## This is necessary because Merlin's licensing terms do not allow us to
@@ -36,6 +36,23 @@ USE_PTMALLOC3 ?= $(shell if ldconfig -p 2>/dev/null | grep ptmalloc3 >/dev/null;
 
 ## Enable use of Hoard. Don't forget to set LIBDIR (below) accordingly.
 # USE_HOARD := yes
+
+
+## LKS Portable Edition site-wide configuration
+## These values can be changed after installation by editing
+## $(BINDIR)/site_settings.sh
+# MySQL distribution location, for setting up transient MySQL servers
+LKSPE_MYSQL_BASE="/opt/mysql-8.0"
+
+# Directories that need to also go into $TOOLPATH. This is for if you had more
+# than one directory in DEFAULT_TOOLPATH in old versions of Portable Edition;
+# typically it's only used at sites that also need to include $MYSQL_BASE/bin
+LKSPE_EXTENDED_TOOLPATH=""
+
+# qsub command line arguments used to specify that a job will itself submit
+# jobs. If left blank, then it's assumed all jobs can submit subsequent jobs.
+LKSPE_JOB_SUBMITS_JOBS=$(shell if [[ "$$HOSTNAME" == "Levi-Montalcini"* ]]; then echo "-q headnode -P headnode"; fi)
+
 
 
 VERSION := $(shell echo `cat .maj`.`cat .min`.`cat .pat`)
@@ -70,6 +87,11 @@ ifndef INCDIR
   INCDIR=/usr/local/lib/include
 endif
 
+# Making sure PATHDIR is at least defined if it's unset
+ifndef PATHDIR
+    PATHDIR=
+endif
+
 ABSBINDIR=$(shell echo $(BINDIR))
 
 # FILE_CFLAGS and FILE_LDFLAGS are built internally based upon the configuration options
@@ -80,7 +102,9 @@ FILE_LDFLAGS := -dynamic -L$(LIBDIR)
 # FILE_CFLAGS += -Wshadow -Werror
 FILE_CFLAGS += -Wall
 
-## Enable debugging symbols. Inflicts a small drag (10%) on performance
+## Enable debugging symbols. Inflicts a small drag (10%) on performance.
+## We normally keep this turned on anyways, even for production builds (the
+## small drag isn't enough to justify losing debugging capability).
 FILE_CFLAGS += -g
 
 # Required to get re-entrant routines under Solaris, benign on other platforms
@@ -270,7 +294,7 @@ dist : all-pipeline-scripts
 	mkdir kelvin-$(VERSION)
 	#mkdir kelvin-$(VERSION)/bin
 	#cp -a bin/{kelvin,$(CALC_UPDATED_PPL)}.* kelvin-$(VERSION)/bin
-	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm LKS_setupSGEDB.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kinfo.pl Makefile kelvin-$(VERSION)
+	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm LKS_setupSGEDB.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kinfo.pl Makefile LKS_setupSGEDB.pm kelvin-$(VERSION)
 	perl -pe "s|#FILE_CFLAGS \+\= \-DDISTRIBUTION|FILE_CFLAGS \+\= \-DDISTRIBUTION|;" Makefile.main > kelvin-$(VERSION)/Makefile.main
 	mkdir kelvin-$(VERSION)/{lib,utils,pedlib,config,seq_update,database,merlin,LKS}
 	cp -a utils/Makefile utils/*.{c,h,pl} kelvin-$(VERSION)/utils
@@ -301,30 +325,30 @@ dist : all-pipeline-scripts
 
 install : $(BINDIR) \
 	$(BINDIR)/kelvin-$(VERSION) \
-          $(BINDIR)/$(CALC_UPDATED_PPL) \
-          $(BINDIR)/convert_br.pl \
-	  $(BINDIR)/compileDL.sh \
-	  $(BINDIR)/KelvinConfig.pm \
-	  $(BINDIR)/KelvinDataset.pm \
-	  $(BINDIR)/KelvinFamily.pm \
-	  $(BINDIR)/KelvinIO.pm \
-	  $(BINDIR)/Kelvin
+	$(BINDIR)/$(CALC_UPDATED_PPL) \
+	$(BINDIR)/convert_br.pl \
+	$(BINDIR)/KelvinConfig.pm \
+	$(BINDIR)/KelvinDataset.pm \
+	$(BINDIR)/KelvinFamily.pm \
+	$(BINDIR)/KelvinIO.pm \
+	$(BINDIR)/Kelvin
 
 #install-prebuilt : $(BINDIR)/kelvin.$(PLATFORM) \
-#          $(BINDIR)/convert_br.pl \
-#	  $(BINDIR)/compileDL.sh \
-#	  $(BINDIR)/$(MODS) \
-#	  $(BINDIR)/KelvinConfig.pm \
-#	  $(BINDIR)/KelvinDataset.pm \
-#	  $(BINDIR)/KelvinFamily.pm \
-#	  $(BINDIR)/KelvinIO.pm \
-#	  $(BINDIR)/Kelvin
+#       $(BINDIR)/convert_br.pl \
+#	$(BINDIR)/compileDL.sh \
+#	$(BINDIR)/$(MODS) \
+#	$(BINDIR)/KelvinConfig.pm \
+#	$(BINDIR)/KelvinDataset.pm \
+#	$(BINDIR)/KelvinFamily.pm \
+#	$(BINDIR)/KelvinIO.pm \
+#	$(BINDIR)/Kelvin
 
 install-specialty : install \
 	$(BINDIR)/kelvin-$(VERSION)-no_GSL \
 	$(BINDIR)/kelvin-$(VERSION)-POLYUSE_DL \
 	$(BINDIR)/kelvin-$(VERSION)-POLYCOMP_DL \
 	$(BINDIR)/kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD \
+	$(BINDIR)/compileDL.sh \
 	$(BINDIR)/kelvin-study \
 	$(BINDIR)/kelvin-normal
 
@@ -361,12 +385,12 @@ kelvin-$(VERSION) : libs $(OBJS) $(INCS)
 
 #kelvin.platform : clean check_dist_flag kelvin
 #	cp kelvin-$(VERSION) bin/kelvin.$(PLATFORM)
-
-check_dist_flag :
-ifeq ("$(findstring -DDISTRIBUTION,$(CFLAGS))", "")
-	echo You must enable the DISTRIBUTION compilation flag for prebuilt executables!
-	exit 1
-endif
+#
+#check_dist_flag :
+#ifeq ("$(findstring -DDISTRIBUTION,$(CFLAGS))", "")
+#	echo You must enable the DISTRIBUTION compilation flag for prebuilt executables!
+#	exit 1
+#endif
 
 
 .PHONY : seq_update/$(CALC_UPDATED_PPL)
@@ -454,12 +478,14 @@ $(BINDIR)/kelvin-$(VERSION) : kelvin-$(VERSION)
 
 $(BINDIR)/$(CALC_UPDATED_PPL) : seq_update/$(CALC_UPDATED_PPL)
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/$(CALC_UPDATED_PPL) $(BINDIR)/$(CALC_UPDATED_PPL)
+	if [ -d '$(PATHDIR)' ]; then ln -s $(BINDIR)/$(CALC_UPDATED_PPL) $(PATHDIR)/$(CALC_UPDATED_PPL); fi
 
 $(BINDIR)/convert_br.pl : seq_update/convert_br.pl
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p seq_update/convert_br.pl $(BINDIR)/convert_br.pl
 
 $(BINDIR)/compileDL.sh : compileDL.sh
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p compileDL.sh $(BINDIR)/compileDL.sh
+	if [ -d '$(PATHDIR)' ]; then ln -s $(BINDIR)/compileDL.sh $(PATHDIR)/compileDL.sh; fi
 
 $(BINDIR)/%.pm : %.pm
 	install -o $(OWNER) -g $(GROUP) -m 0644 -p $< $@
@@ -468,7 +494,7 @@ $(BINDIR)/Kelvin : Kelvin
 	perl -pe "s|NO_KELVIN_ROOT|$(ABSBINDIR)|; s|NO_KELVIN_BINARY|$(ABSBINDIR)/kelvin-$(VERSION)|; s|NO_SEQUPDATE_BINARY|$(ABSBINDIR)/$(CALC_UPDATED_PPL)|;" Kelvin > Kelvin.local
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p Kelvin.local $(BINDIR)/Kelvin
 	rm Kelvin.local
-	ln -s $(BINDIR)/Kelvin $(PATHDIR)/Kelvin
+	if [ -d '$(PATHDIR)' ]; then ln -s $(BINDIR)/Kelvin $(PATHDIR)/Kelvin; fi
 
 
 # Kelvin-LKS Portable Edition BCMMTools Pipeline Scripts
@@ -575,6 +601,7 @@ $(bindir_pipeline): $(wildcard $(BINDIR))/%: pipeline-scripts/% $(BINDIR)
 $(BINDIR)/ready_kelvin_lks_analysis.sh : pipeline-scripts/ready_kelvin_lks_analysis.sh
 	install -o $(OWNER) -g $(GROUP) -m 0755 -p $< $@
 	ln -s $@ $(PATHDIR)
+	if [ -d '$(PATHDIR)' ]; then ln -s $@ $(PATHDIR); fi
 # special case #2: site_settings.sh actually gets modified on the fly with
 # variables defined in this Makefile
 $(BINDIR)/site_settings.sh : pipeline-scripts/site_settings.sh
@@ -745,40 +772,52 @@ $(BINDIR)/kelvin-normal : kelvin-normal
 
 
 # Uninstallation routines follow.
+# Note that a pro-forma attempt is made to remove BINDIR in each case, because
+# for most installations, BINDIR is a Kelvin-specific directory. `rmdir` is
+# explicitly used simply because we can't guarantee it's Kelvin-specific (users
+# may choose otherwise), and so if it has any other contents whatsoever we just
+# let it go.
 
 uninstall :
-	rm -f $(BINDIR)/kelvin-$(VERSION) \ 
-	$(BINDIR)/$(CALC_UPDATED_PPL) \ 
-	$(BINDIR)/convert_br.pl \ 
-	$(BINDIR)/compileDL.sh \ 
-	$(BINDIR)/KelvinConfig.pm \ 
-	$(BINDIR)/KelvinDataset.pm \ 
-	$(BINDIR)/KelvinFamily.pm \ 
-	$(BINDIR)/KelvinIO.pm \ 
-	$(BINDIR)/Kelvin
+	rm -f $(BINDIR)/kelvin-$(VERSION) \
+	$(BINDIR)/$(CALC_UPDATED_PPL) \
+	$(PATHDIR)/$(CALC_UPDATED_PPL) \
+	$(BINDIR)/convert_br.pl \
+	$(BINDIR)/KelvinConfig.pm \
+	$(BINDIR)/KelvinDataset.pm \
+	$(BINDIR)/KelvinFamily.pm \
+	$(BINDIR)/KelvinIO.pm \
+	$(BINDIR)/Kelvin \
+	$(PATHDIR)/Kelvin
+	rmdir $(BINDIR) 2>/dev/null || true
 
 #uninstall-prebuilt : 
-#	rm -f $(BINDIR)/kelvin.$(PLATFORM) \ 
-#	$(BINDIR)/kelvin-$(VERSION) \ 
-#	$(BINDIR)/$(CALC_UPDATED_PPL)-$(VERSION) \ 
-#	$(BINDIR)/convert_br.pl \ 
-#	$(BINDIR)/compileDL.sh \ 
-#	$(BINDIR)/$(MODS) \ 
-#	$(BINDIR)/KelvinConfig.pm \ 
-#	$(BINDIR)/KelvinDataset.pm \ 
-#	$(BINDIR)/KelvinFamily.pm \ 
-#	$(BINDIR)/KelvinIO.pm \ 
+#	rm -f $(BINDIR)/kelvin.$(PLATFORM) \
+#	$(BINDIR)/kelvin-$(VERSION) \
+#	$(BINDIR)/$(CALC_UPDATED_PPL)-$(VERSION) \
+#	$(BINDIR)/convert_br.pl \
+#	$(BINDIR)/compileDL.sh \
+#	$(PATHDIR)/compileDL.sh \
+#	$(BINDIR)/$(MODS) \
+#	$(BINDIR)/KelvinConfig.pm \
+#	$(BINDIR)/KelvinDataset.pm \
+#	$(BINDIR)/KelvinFamily.pm \
+#	$(BINDIR)/KelvinIO.pm \
 #	$(BINDIR)/Kelvin
+#	rmdir $(BINDIR) 2>/dev/null || true
 
 uninstall-specialty :
-	rm -f $(BINDIR)/kelvin-$(VERSION)-no_GSL \ 
-	$(BINDIR)/kelvin-$(VERSION)-POLYUSE_DL \ 
-	$(BINDIR)/kelvin-$(VERSION)-POLYCOMP_DL \ 
-	$(BINDIR)/kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD \ 
-	$(BINDIR)/kelvin-$(VERSION)-study \ 
-	$(BINDIR)/kelvin-study \ 
-	$(BINDIR)/kelvin-$(VERSION)-normal \ 
+	rm -f $(BINDIR)/kelvin-$(VERSION)-no_GSL \
+	$(BINDIR)/kelvin-$(VERSION)-POLYUSE_DL \
+	$(BINDIR)/kelvin-$(VERSION)-POLYCOMP_DL \
+	$(BINDIR)/kelvin-$(VERSION)-POLYCODE_DL_FAKEEVALUATE_SSD \
+	$(BINDIR)/kelvin-$(VERSION)-study \
+	$(BINDIR)/compileDL.sh \
+	$(PATHDIR)/compileDL.sh \
+	$(BINDIR)/kelvin-study \
+	$(BINDIR)/kelvin-$(VERSION)-normal \
 	$(BINDIR)/kelvin-normal
+	rmdir $(BINDIR) 2>/dev/null || true
 
 uninstall-lks :
 	rm -rf $(BINDIR)/kelvin-$(VERSION) \
@@ -803,3 +842,4 @@ uninstall-lks :
 	$(BINDIR)/Kelvin \
 	$(PATHDIR)/Kelvin \
 	$(PATHDIR)/ready_kelvin_lks_analysis.sh
+	rmdir $(BINDIR) 2>/dev/null || true

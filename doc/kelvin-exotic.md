@@ -203,7 +203,7 @@ Installation of our pro forma scripting system requires several steps:
 
 2. Add a "database" INT resource to the scheduler and add it to each DB node's complex values. A Perl script (`LKS_setupSGEDB.pm`) is provided that can do this for you; run it with the `--help` option for guidance.
 
-3. Edit the Makefile as per step 1 in regular Kelvin building, and change these additional variables:
+3. Edit Makefile.main, and change these variables:
     `LKSPE_MYSQL_BASE`: This is the directory where the MySQL Server binary distribution is located on each "database" node.
     `LKSPE_JOB_SUBMITS_JOBS`: This should be set if your cluster requires some sort of additional command-line option(s) for qsub to indicate jobs that submit other jobs.
 

@@ -7,3 +7,4 @@ void dk_writeMPMODData (int posIdx, float traitPos, double value, st_DKMaxModel 
 void dk_write2ptMODHeader ();
 void dk_write2ptMODData (char *description, double value, st_DKMaxModel *model);
 void dk_copyMaxModel (double *arr, st_DKMaxModel *max, int num);
+void dk_copyMaxModel2 (st_DKMaxModel *dest, st_DKMaxModel *cur);
