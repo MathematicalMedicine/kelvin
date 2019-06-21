@@ -1947,19 +1947,23 @@ void integrateMain ()
         total_dim += modelRange->nlclass;
 	fprintf(stderr,"qtStandarDevMode = SAME now total_dim=%d\n", total_dim);
       }
-    }else{
+    }
+    /*else{
       total_dim += 3* modelRange->nlclass;
       if (modelOptions->imprintingFlag)
         total_dim += modelRange->nlclass;   //dD
       fprintf(stderr,"qt CHI_SQUARE analysis now total_dim=%d\n", total_dim);
-    }
+      }*/
 
     if (modelType->trait == CT) {
       //fprintf(stderr," \n\n CT mode \n\n\n");
-      if (modelOptions->qtThresholdMode == PARAM_MODE_VARY) //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
+      //if ((modelOptions->qtThresholdMode == PARAM_MODE_VARY)||(modelType->distrib == QT_FUNCTION_CHI_SQUARE)) 
+       //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
+      if (modelOptions->qtThresholdMode != PARAM_MODE_FIXED){
 	total_dim++;      //  One threshold for all LCs    //   = modelRange->nlclass;
+        fprintf(stderr,"qt ct analysis now total_dim=%d after adding variable threshold \n", total_dim);
+      }
 
-      //fprintf(stderr,"qt ct analysis now total_dim=%d\n", total_dim);
     }
   }
 
@@ -2121,8 +2125,9 @@ void integrateMain ()
        * } */
     }   // retangular volume region is calculated and stored in volume_region
     if (modelType->trait == CT) {
-      if (modelOptions->qtThresholdMode == PARAM_MODE_VARY){ //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
+      //if (modelOptions->qtThresholdMode == PARAM_MODE_VARY){ //if (modelRange->tthresh[0][0]<=modelRange->tthresh[0][1]+1.0e-10)
 	//if (modelRange->tthresh[0][0] <= modelRange->tthresh[0][1]+1.0e-10){  // do not use this when threshold is fixed
+      if (modelOptions->qtThresholdMode != PARAM_MODE_FIXED){
 	xl[k] =  modelRange->tthresh[0][0];//0.0;
 	xu[k] =  modelRange->tthresh[0][1]; // 3.0;
 	volume_region *= (xu[k] - xl[k]);
