@@ -541,7 +541,7 @@ btc_scriptnames := \
     LKS_PopulateDatabase.pm \
     LKS_iteration.sh \
     LKS_KelvinSplitClient.pm \
-    LKS_MCMCserver.pm
+    LKS_MCMCServer.pm
 # Pipeline scripts that are specific to Portable Edition
 # (svn bcmmtools/cleaning/portable-edition)
 btcp_scriptnames := \
