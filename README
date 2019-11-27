@@ -1,0 +1,11 @@
+This directory contains some third-party libraries that are needed to compile
+older versions of Kelvin as stored in this repository under releases/.
+
+cdflib is needed for Kelvin 0.0.15 and earlier. NICE is needed for kelvin
+0.34.0 and earlier (it was removed from the Makefile in 0.34.1). When
+attempting to build these versions of Kelvin, you'll want to build the
+necessary support libs and then add -I and -L flags pointing to these
+directories to the Makefile.
+
+Hope this helps!
+-jo

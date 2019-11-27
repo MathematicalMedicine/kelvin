@@ -1,0 +1,48 @@
+#!/usr/bin/sh
+
+# NICE version
+NICE=3.2.12
+
+# Find the node name
+HOST=`uname -n`
+
+# Find the OS
+OS=`uname -s`
+
+# Set the path to the NICED executable
+SBIN=$HOME/$NICE/$OS/local/sbin/niced
+
+# Check for the pid directory
+if [ ! -d $HOME/$NICE/PID ]; then
+  mkdir $HOME/$NICE/PID
+fi
+
+# Set the path to the pid file
+PIDFILE=$HOME/$NICE/PID/$HOST.pid
+
+# Find out what the pid should be
+if [ -f $PIDFILE ]; then
+  PID=`cat $PIDFILE`
+  touch $PIDFILE
+else
+  PID=0
+fi
+
+# Look for a running process
+if [ $PID -gt 0 ]; then
+  # We have a pid
+  PROC=`ps -ef | grep " $PID " | grep -v grep`
+  # If the process has died, restart it
+  if [ -z "$PROC" ]; then
+    /bin/rm -f $PIDFILE > /dev/null
+    nohup $SBIN &
+    echo "$!" > $PIDFILE
+  fi
+else
+  # No pid, so we'll assume the process isn't running, and
+  # we'll start it
+  /bin/rm -f $PIDFILE > /dev/null
+  nohup $SBIN &
+  echo "$!" > $PIDFILE
+fi
+

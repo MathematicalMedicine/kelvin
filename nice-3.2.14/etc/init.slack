@@ -1,0 +1,20 @@
+#!/bin/sh
+# Copyright (c) 1997-2005, The University of Iowa
+# Author: Alberto Maria Segre
+#         segre@cs.uiowa.edu
+#         101B MacLean Hall
+#         The University of Iowa
+#         Iowa City, IA  52242-1000
+
+# Works for Slackware.
+
+# Place this script in /etc/rc.d and make appropriate call in /etc/rc.d/rc.local
+
+test -s SBINDIR/niced || exit 0
+
+echo -n "Starting NICE daemon: "
+su -c "SBINDIR/niced < /dev/null > /dev/null 2> /dev/null" -s /bin/sh nobody
+echo "niced"
+
+exit 0
+

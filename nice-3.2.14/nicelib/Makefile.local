@@ -1,0 +1,79 @@
+include /usr/local/src/Include.mk
+
+# NICE System
+# Alberto Maria Segre
+#
+# Copyright (c) 1997-2005, The University of Iowa.  All rights reserved.
+# Permission is hereby given to use and reproduce this software 
+# for non-profit educational purposes only.
+
+SRC	= niceaux.c nicecom.c niceapi.c
+INC	= niceaux.h nicecom.h niceapi.h 
+TAR	= Makefile $(SRC) $(INC)
+
+# __USE_ISOC99  may be needed for vsscanf definition in stdio.h?
+#
+CFLGS	+= -D__USE_ISOC99
+
+######################################################################
+# Default target.
+
+install : $(NICELIBDIR) $(NICEINCDIR) \
+          $(NICELIBDIR)/libnicecom.a $(NICELIBDIR)/libniceaux.a $(NICELIBDIR)/libniceapi.a \
+          $(NICEINCDIR)/nicecom.h $(NICEINCDIR)/niceaux.h $(NICEINCDIR)/niceapi.h
+
+$(NICELIBDIR) :
+	install -d -o root -g root -m 0755 $(NICELIBDIR)
+
+$(NICEINCDIR) :
+	install -d -o root -g root -m 0755 $(NICEINCDIR)
+
+$(NICELIBDIR)/libnicecom.a : libnicecom.a
+	install -o root -g root -m 0644 -p libnicecom.a $(NICELIBDIR)
+
+$(NICELIBDIR)/libniceaux.a : libniceaux.a
+	install -o root -g root -m 0644 -p libniceaux.a $(NICELIBDIR)
+
+$(NICELIBDIR)/libniceapi.a : libniceapi.a
+	install -o root -g root -m 0644 -p libniceapi.a $(NICELIBDIR)
+
+$(NICEINCDIR)/nicecom.h : nicecom.h
+	install -o root -g root -m 0644 -p nicecom.h $(NICEINCDIR)
+
+$(NICEINCDIR)/niceaux.h : niceaux.h
+	install -o root -g root -m 0644 -p niceaux.h $(NICEINCDIR)
+
+$(NICEINCDIR)/niceapi.h : niceapi.h
+	install -o root -g root -m 0644 -p niceapi.h $(NICEINCDIR)
+
+
+######################################################################
+# Libraries.
+libnicecom.a: nicecom.o
+	@ar -rsc libnicecom.a nicecom.o
+
+libniceaux.a: niceaux.o
+	@ar -rsc libniceaux.a niceaux.o
+
+libniceapi.a: niceapi.o
+	@ar -rsc libniceapi.a niceapi.o 
+
+# NICE communication library.
+nicecom.o: nicecom.c 
+	@$(CC) -c $(CFLGS) nicecom.c
+
+# NICE software aux library.
+niceaux.o: niceaux.c 
+	@$(CC) -c $(CFLGS) niceaux.c
+
+# NICE API.
+niceapi.o: nicecom.c niceapi.c 
+	@$(CC) -c $(CFLGS) niceapi.c 
+
+######################################################################
+# Utilities.
+.PHONY: clean
+clean:
+	-@rm -f *~ nicecom.o niceaux.o niceapi.o TAGS
+	-@rm -f libnicecom.a libniceaux.a libniceapi.a nicelib-????????.ps
+

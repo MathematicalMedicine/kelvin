@@ -1,0 +1,56 @@
+#!/bin/sh
+# Copyright (c) 1997-2005, The University of Iowa
+# Author: Alberto Maria Segre
+#         segre@cs.uiowa.edu
+#         101B MacLean Hall
+#         The University of Iowa
+#         Iowa City, IA  52242-1000
+
+# Works for Debian Potato, Woody, and Sarge.
+
+# Place this script in /etc/init.d and make appropriate soft links to
+# /etc/rc?.d/
+
+. /etc/init.d/functions
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+test -s /usr/local/sbin/niced || exit 0
+
+case "$1" in
+  start)
+    echo -n "Starting NICE daemon: "
+    if daemon --user niced /usr/local/sbin/niced > /dev/null 2> /dev/null
+    then
+	echo "sucess."
+    fi
+    ;;
+  stop)
+    echo -n "Stopping NICE daemon: "
+    if killproc niced > /dev/null 2> /dev/null
+    then
+	echo "sucess."
+    fi
+
+    ;;
+  restart) 
+
+    echo -n "Stopping NICE daemon: "
+    if killproc niced > /dev/null 2> /dev/null
+    then
+	echo "sucess."
+    fi
+
+    echo -n "Starting NICE daemon: "
+    if daemon --user niced /usr/local/sbin/niced > /dev/null 2> /dev/null
+    then
+	echo "sucess."
+    fi
+    ;;
+  *)
+    echo "Usage: /etc/init.d/niced {start|stop|restart}"
+    exit 1
+esac
+
+exit 0
+

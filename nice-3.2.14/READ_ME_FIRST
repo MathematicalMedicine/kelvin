@@ -1,0 +1,13 @@
+I have made some changes to this distribution to get rid of "gotchas".
+
+Specifically, I have disabled the "install" target in every Makefile. This is
+because the 'nice' developers had a very not-nice habit of making it the
+default target, AND defaulting to installing in /usr! (G-d only knows what
+they were thinking with that call...)
+
+The part Kelvin actually wants is 'nicelib'; you should be able to get away
+with only compiling it. With all the installation targets disabled, it ends
+up being the new default, so just running `make` should suffice.
+
+Hope this helps!
+-jo

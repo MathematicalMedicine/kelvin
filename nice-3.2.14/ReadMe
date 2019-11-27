@@ -1,0 +1,31 @@
+NICE System
+Alberto Maria Segre
+
+Copyright (c) 1997-2005, The University of Iowa.  All rights reserved.
+Permission is hereby given to use and reproduce this software for
+non-profit educational purposes only.
+
+======================================================================
+This is the NICE distributed search infrastructure distribution.  To
+install, edit the Makefile to set SYSTYPE and DISTDIR appropriately,
+then "make install".
+
+You will have to edit niced.conf to configure the daemon on each
+machine. Read the comments to set the appropriate configuration.
+
+The most important configuration item is the selection of a parent
+processor. The root daemon should specify "localhost" as its parent
+node, while all other nodes should specify the root daemon name as the
+parent node. If you have a cluster of machines on a local network, you
+can set the root daemon as the parent of the gateway machine and use
+the gateway machine's internal IP address as the parent of all the
+other machines on the local network. Be sure to mark the gateway as a
+"barrier" node in niced.conf to avoid trying to promote machines with
+only local network addresses out into the outside world.
+
+You should also set the cardinality of the system, which governs how
+many new processes are started each time a request to run in parallel
+is received by that processor.  If you have access to only a single
+system, setting a cardinality value greater than 1 simulates multiple
+CPUs, and can be useful for debugging your code. If you have SMP
+machines, you should set the cardinality to number of CPUs.

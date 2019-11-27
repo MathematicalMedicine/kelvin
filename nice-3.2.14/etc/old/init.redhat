@@ -1,0 +1,45 @@
+#!/bin/sh
+# Copyright (c) 1997-2005, The University of Iowa
+# Author: Alberto Maria Segre
+#         segre@cs.uiowa.edu
+#         101B MacLean Hall
+#         The University of Iowa
+#         Iowa City, IA  52242-1000
+
+# Works for RedHat Linux 6.0.
+
+# Place this script in /etc/init.d and make appropriate soft links to
+# /etc/rc?.d/
+
+test -s SBINDIR/niced || exit 0
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# See how we were called.
+case "$1" in
+  start)
+	# Fire up daemon; don't use RedHat's daemon function since that
+	# would run daemon as root. Instead, run explicitly as nobody.
+	echo -n "Starting NICE daemon: "
+	su -c "SBINDIR/niced < /dev/null > /dev/null 2> /dev/null" -s /bin/sh nobody
+	touch /var/lock/subsys/niced
+	echo "niced"
+	;;
+  stop)
+	echo -n "Stopping NICE daemon: "
+	killproc niced
+	rm -f /var/lock/subsys/niced
+	echo ""
+	;;
+  status)
+        /sbin/pidof niced
+	;;
+  *)
+	echo "Usage: niced {start|stop|status}"
+	exit 1
+esac
+
+
+exit 0
+

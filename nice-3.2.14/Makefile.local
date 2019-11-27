@@ -1,0 +1,19 @@
+include /usr/local/src/Include.mk
+
+NICEDIR = $(ROOTDIR)/nice
+NICELIBDIR = $(NICEDIR)/lib
+NICEINCDIR = $(NICEDIR)/include
+
+CC      := gcc
+C++     := g++
+G77     := g77
+CFLGS   := -Wall -I$(NICEINCDIR) -L$(NICELIBDIR)
+
+export 
+
+install : 
+	make -C nicelib -f Makefile.local install
+
+clean :
+	make -C nicelib -f Makefile.local clean
+
