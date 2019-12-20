@@ -90,6 +90,8 @@ typedef struct ModelOptions
 		      the X chromosome. Should not be specified for X chromosome analyses that
 		   focus on the pseudoautosomal regions because they behave like autosomes. */
   enum MapFlag mapFlag; ///< Flag to indicate whether to use the sex-averaged or sex-specific map
+  int allowKosambiMap;  /**< Flag to indicate if we'll allow a map in Kosambi cM. Doesn't
+                           really belong in model_options, but it's convenient. */
   int imprintingFlag;	/**< Flag to indicate if imprinting is to be considered. Requires additional
 			   penetrance values (a set for each phase, e.g. dD and Dd) in the 
 			   configuration file. */

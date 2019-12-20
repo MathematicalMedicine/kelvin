@@ -192,6 +192,7 @@ st_dispatch dispatchTable[] = { {"FrequencyFile", set_optionfile, &staticModelOp
 				{"Imprinting", set_flag, &staticModelOptions.imprintingFlag},
 				{"SexLinked", set_flag, &staticModelOptions.sexLinked},
 #ifndef DISTRIBUTION
+                                {"AllowKosambiMap", set_flag, &staticModelOptions.allowKosambiMap},
 				{"FixedModels", clear_flag, &staticModelOptions.integration},
 #endif
 				{"DryRun", set_flag, &staticModelOptions.dryRun},

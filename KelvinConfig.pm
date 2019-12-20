@@ -182,6 +182,7 @@ my %directives = (
 		  polynomialscale=> {canon => 'PolynomialScale'},
 		  nonpolynomial=> {canon => 'NonPolynomial'},
 		  fixedmodels => {canon => 'FixedModels'},
+		  allowkosambimap => {canon => 'AllowKosambiMap'},
 		  dryrun => {canon => 'DryRun'},
 		  maxiterations => {canon => 'MaxIterations'},
 		  log=> {canon => 'Log',

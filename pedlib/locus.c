@@ -160,8 +160,17 @@ read_mapfile (char *sMapfileName, int sexspecific)
   if (sexspecific &&
       ! (mapheaders & 1 << MAP_MALEPOS_COL && mapheaders & 1 << MAP_FEMALEPOS_COL))
     ERROR ("SexSpecific analysis requires male and female positions in MapFile");
-  if (map.mapFunction == -1)
-    map.mapFunction = MAP_FUNCTION_KOSAMBI;
+
+  if (map.mapFunction == MAP_FUNCTION_KOSAMBI) {
+#ifndef DISTRIBUTION
+    if (! modelOptions->allowKosambiMap)      
+#endif
+      ERROR ("Kosambi map function is not supported at this time");
+  }
+  if (map.mapFunction == -1) {
+    INFO ("Genetic map function defaults to Haldane");
+    map.mapFunction = MAP_FUNCTION_HALDANE;
+  }
   
   /* read one line for each marker */
   pPrevMarker = NULL;
