@@ -145,11 +145,11 @@ This file may be referred to as a 'data file' in documentation for older version
 * `C` - Covariate (Liability Class). Corresponds to a single column in the pedigree file. The values in this column are used to group individuals into liability classes to allow for covariate dependence of the penetrances (or QT parameters).
 * `M` - Marker. Corresponds to two adjacent columns in the pedigree file. The values in these columns indicate the alleles of the named marker for each individual. Every marker that is listed in the locus file must also appear in the [map file](#map-file) and the [frequency file](#frequency-file).
 
-Kelvin currently requires that, if a phenotye status column is present, it must appear first, before any markers. If a covariate column is present, it must appear immediately after the phenotype status column, before any markers.
+Kelvin currently requires that, if a phenotype status column is present, it must appear first, before any markers. If a covariate column is present, it must appear immediately after the phenotype status column, before any markers.
 
 ### Map File
 
-This file lists the positions of markers on the chromosome, in either Kosambi or Haldane centiMorgans. The first line of the file may optionally explicitly indicate the map function in use:
+This file lists the positions of markers on the chromosome, in Haldane centiMorgans (Kosambi is implemented but unsupported). The first line of the file may optionally explicitly indicate the map function in use:
 
     mapFunction=haldane
 
@@ -157,12 +157,12 @@ The rest of the file must consist of three (or more) columns, each identified by
 
 * `CHROMOSOME` or `CHR` - The chromosome number. Kelvin currently does not allow map files to contain markers from multiple chromosomes.
 * `MARKER` or `NAME` - The marker name. Marker names may contain numbers, letters, underscores and hyphens only.
-* `POSITION` or `POS` or `KOSAMBI` or `HALDANE` - The sex-averaged centiMorgan position of the marker. If the column header is `KOSAMBI` or `HALDANE`, the map function will be set accordingly.
+* `POSITION` or `POS` or `HALDANE` or `KOSAMBI` - The sex-averaged centiMorgan position of the marker. If the column header is `HALDANE` or `KOSAMBI`, the map function will be set accordingly.
 * `MALE` or `MALEPOSITION` - The male sex-specific centiMorgan position of the marker. This column is only required for [sex-specific](#sex-averaged-vs-sex-specific) analyses, and will be ignored otherwise.
 * `FEMALE` or `FEMALEPOSITION` - Same as `MALE`, but for females.
 * `PHYSICAL` or `BASEPAIR` - The basepair position of the marker. This column is optional. If present, this value will appear in some output files.
 
-If the map function is specified by both a `mapFunction` line and by a column header, the same map function must be specified. If the map function is specified by neither, the default is Kosambi.
+If the map function is specified by both a `mapFunction` line and by a column header, the same map function must be specified. If the map function is specified by neither, the default is Haldane. Kosambi is only permitted if the [AllowKosambiMap](#allowkosambimap) directive is present in the configuration file; otherwise, if Kosambi centiMorgans are specified, Kelvin will exit with an error.
 
 ### Frequency File
 
@@ -207,14 +207,14 @@ where `ped.pre` is the pre-MAKEPED file you've created, `ped.post` is the post-M
 
 Map File:
 
-    CHR  MARKER       KOSAMBI
+    CHR  MARKER       POSITION
     2    rs2112       1.732
     2    SNP_A-90125  2.2361
     2    SNP_GO-7188  2.6458
     2    rs8675309    3.3166
     2    rs1984       3.6056
 
-The map file contains the minimum three columns: chromosome (column 1), marker (column 2) and sex-averaged centiMorgan position (column 3). The map function is not explicitly specified with a `mapFunction` line, but the header of the column 3 specifies a Kosambi map. If that header was `HALDANE`, then a Haldance map would be specified, or of the header was `POS` or `POSITION`, then the map function would default to Kosambi.
+The map file contains the minimum three columns: chromosome (column 1), marker (column 2) and sex-averaged centiMorgan position (column 3). The map function is not explicitly specified with a `mapFunction` line or by the header of column 3, and is therefore assumed to be Haldane.
 
 Frequency File:
 
@@ -781,6 +781,7 @@ Advanced Directive Reference
 ##### Input and Output
 * [CountFile](#countfile)
 * [ForceBRFile](#forcebrfile)
+* [AllowKosambiMap](#allowkosambimap)
 * [NIDetailFile](#nidetailfile)
 * [SurfaceFile](#surfacefile)
 * [SurfacesPath](#surfacespath)
@@ -838,6 +839,10 @@ Kelvin can be configured to perform calculations based on fixed grids of paramet
 ##### ForceBRFile
 :   `ForceBRFile`
 :   Specifies that a [BayesRatioFile](#bayesratiofile) be written during a [MarkerToMarker](#markertomarker) analysis. This option is for debugging purposes.
+
+##### AllowKosambiMap
+:   `AllowKosambiMap`
+:   Specifies that Kelvin should allow maps that use Kosambi centiMorgans; use of same has been deprecated in Kelvin and is no longer supported. This directive is normally disabled for [distribution versions](#distribution-versions) of Kelvin.
 
 ##### NIDetailFile
 :   `NIDetailFile <filename>`
