@@ -79,7 +79,7 @@ sub new
     }
     $family->find_loops;
     if (defined ($$family{loopids}) && $$family{origfmt} eq "post") {
-        $errstr = "family $$family{famid} has loops involving individuals $$family{loopids}";
+        $errstr = "family $$family{pedid} has loops involving individuals $$family{loopids}";
         return (undef);
     }
     
