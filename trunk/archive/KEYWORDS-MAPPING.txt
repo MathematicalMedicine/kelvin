@@ -1,95 +1,105 @@
-Use the following as examples:
+#
+# KEYWORDS used for tagging tests
+#
 
-Look for imprinting runs with more than one liability class:
-find . -name KEYWORDS -exec grep -Hv NOIMPR /dev/null \{\} \; | egrep -e LC2 -e LC3
+# Use the following as examples:
 
-Epistasis EPI ("new", with FE only, does multiple runs)
+# Look for imprinting runs with more than one liability class:
+# find . -name KEYWORDS -exec egrep -Hv "\bNOIMPR\b" /dev/null \{\} \; | egrep -e "\bLC2\b" -e "\bLC3\b"
 
-Phased Alleles PHASE ("new")
+# Get updated test count stats with:
+# while read l; do sl=${l%#*}; for w in ${sl}; do echo $w; find . -name KEYWORDS -exec grep -Hi "\b${w}\b" \{\} /dev/null \; | wc -l; done; done <KEYWORDS-MAPPING.txt
 
-Allele frequency estimation AFE ("new", FE only)
+EPI # NOT TAGGED YET; Epistasis ("new", with FE only, does multiple runs)
 
-Likelihood server variants NOLKS, CLIENT, SERVER
+PHASE # NOT TAGGED YET; Phased Alleles ("new")
 
-Single Pedigree SNGPD
-Multiple Pedigrees MLTPD
+AFE # NOT TAGGED YET; Allele frequency estimation ("new", FE only)
 
-Autosomal AUC
-Allosomal XC
+SNGPD # Single Pedigree (78)
+MLTPD # Multiple Pedigrees (293)
 
-SNPs SNP
-MSATs MSAT
-Mixed MXM
+AUC # Autosomal chromosome (255)
+XC # Sex-linked chromosome (116)
 
-Heterogeneity HET
-Homogeneity HOM
+SNP # SNPs (186)
+MSAT # MSATs (185)
+MXM # MAYBE NOT DIFFERENTIATED; Mixed (0)
 
-Trait-to-marker T2M
-Marker-to-marker M2M
+HET # Heterogeneity (6)
+HOM # Homogeneity (361)
 
-Adjacent markers ADJM
-All markers ALLM
+T2M # Trait-to-marker (367)
+M2M # Marker-to-marker (0)
 
-General pedigrees GENP
-Nuclear pedigrees NUCP
-Case control CC
-Trios TRIO
-Affected sibpairs ASP
-Mixed peds MXDP
+ADJM # NOT TAGGED YET; Adjacent markers
+ALLM # NOT TAGGED YET; All markers
 
-Multiple marriages MLTM
-Single marriages SNGLM
+GENP # General pedigrees (79)
+NUCP # Nuclear pedigrees (111)
+CC # Case control (2)
+TRIO # Trios (4)
+ASP # Affected sibpairs (2)
+MXDP # Mixed peds (173)
 
-Multiple Founders MLTF
-Single set founders SNGLF
+MLTM # Multiple marriages (69)
+SNGLM # Single marriages (300)
 
-Single kinship loop SKLP
-Multiple kinship loop MKLP
-Single marriage loop SMLP
-Multiple marriage loop MMLP
-Multiple mixed loop MXLP
-No Loops NOLP
+MLTF # Multiple Founders (258)
+SNGLF # Single set founders (111)
 
-Imprinting IMPR (runs will have 4 penetrances dd dD Dd DD)
-No Imprinting NOIMPR
+SKLP # Single kinship loop (11)
+MKLP # Multiple kinship loop (0)
+SMLP # Single marriage loop (61)
+MMLP # Multiple marriage loop (4)
+MXLP # Multiple mixed loop (0)
+NOLP # No Loops (295)
 
-Liability class 1,2,3,+ LC1, LC2, LC3, LC+
+IMPR # Imprinting IMPR (runs will have 4 penetrances dd dD Dd DD) (86)
+NOIMPR # No Imprinting (285)
 
-Dichotomous Trait DT
-Quantitative Trait QT
-Quantitative Trait threshold QTT
+LC1 LC2 LC3 LC+ # Liability class 1,2,3,+ (309, 56, 4, 0)
 
-Normal distribution NORM
-Chi-square distribution CHI2
-Chi-square distribution truncated CHI2R
-Student's T-distribution TDIST
-Student's T-distribution truncated TDISTR
+DT # Dichotomous Trait (160)
+QT # Quantitative Trait (98)
+QTT # Quantitative Trait threshold (108)
 
-Multipoint MLTPT
-Two-point 2PT
+NORM # Normal distribution (5)
+CHI2 # Chi-square distribution (99)
+CHI2R # Chi-square distribution truncated (0)
+TDIST # Student's T-distribution (102)
+TDISTR # Student's T-distribution truncated (0)
 
-Sex-averaged SA  {{MLTPT ONLY}}
-Sex-specfic SS
-Sex-Specific Two Point SSTP
+MLTPT # Multipoint (200)
+2PT # Two-point (171)
 
-Counts pedigree binning CNT  {{2PT ONLY}}
-Mixed pedigree binning MXCNT
-No binning NOCNT
+SA # Sex-averaged SA  {{MLTPT ONLY}} (162)
+SS # Sex-specfic (19)
+SSTP # Sex-Specific Two Point (21)
 
-Haldane map HMAP
-Kosambi map KMAP
+CNT # Counts pedigree binning {{2PT ONLY}} (6)
+MXCNT # Mixed pedigree binning (0)
+NOCNT # No binning (192)
 
-Linkage equilibrium LE
-Linkage disequilibrium LD
+HMAP # Haldane map (12)
+KMAP # Kosambi map (359)
 
-Standard fixed grid SFG
-Non-standard fixed grid NSFG
-Dynamic grid DYG
-Fixed model FXDM
+LE # Linkage equilibrium (336)
+LD # Linkage disequilibrium (35)
 
-Polynomial PE
-Nonpolynomial NPE
+SFG # Standard fixed grid (180)
+NSFG # Non-standard fixed grid (13)
+DYG # Dynamic grid (173)
+FXDM # Fixed model (5)
 
-Version K.V#.#, DK.V#.#
+PE # Polynomial (347)
+NPE # Nonpolynomial (23)
 
-Statlib DCD (35+), GSL (34-)
+DCD GSL # OBSOLETE/NOT RIGHT; Statlib type DCD (versions 0.35+), GSL (versions 0.34-) (371, 0)
+
+# Evidence strength in results:
+STRONGNO # Strong evidence against –PPL << 0.02 (for linkage), << 0.0004 for LD ()
+NEUTRAL # Neutral evidence -- PPL around 0.02, PPLD around 0.0004 ()
+WEAKYES # Weak evidence – PPL or PPLD around 0.05-0.1 ()
+SOLIDYES # Medium/strong evidence – PPL or PPLD around 50%-70% ()
+STRONGYES # Very strong evidence – PPL or PPLD > 90% ()
