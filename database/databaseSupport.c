@@ -129,8 +129,8 @@ struct StudyDB studyDB;
   WHERE.buffer_type = TYPE; \
   WHERE.buffer = &(WHAT);		 \
   WHERE.length = (unsigned long *) calloc (1, sizeof (unsigned long)); \
-  WHERE.is_null = (my_bool *) calloc (1, sizeof (my_bool)); \
-  WHERE.error = (my_bool *) calloc (1, sizeof (my_bool)); \
+  WHERE.is_null = (bool *) calloc (1, sizeof (bool)); \
+  WHERE.error = (bool *) calloc (1, sizeof (bool)); \
   WHERE.is_unsigned = 0; \
 }
 #define BINDSTRING(WHERE, WHAT, SIZE) {	 \
@@ -138,8 +138,8 @@ struct StudyDB studyDB;
   WHERE.buffer = &(WHAT);		 \
   WHERE.buffer_length = SIZE; \
   WHERE.length = (unsigned long *) calloc (1, sizeof (unsigned long)); \
-  WHERE.is_null = (my_bool *) calloc (1, sizeof (my_bool)); \
-  WHERE.error = (my_bool *) calloc (1, sizeof (my_bool)); \
+  WHERE.is_null = (bool *) calloc (1, sizeof (bool)); \
+  WHERE.error = (bool *) calloc (1, sizeof (bool)); \
   WHERE.is_unsigned = 0; \
 }
 
