@@ -534,37 +534,43 @@ strcpy(studyDB.imprintingFlag, modelOptions->imprintingFlag ? "y" : "n");
 
   if (modelOptions->dryRun == 1) {
     fpDry = fopen ("kelvin.dry", "w");
-    ASSERT (fpDry != NULL, "Error opening file %s for write.\n", "kelvin.dry");
+    ASSERT (fpDry != NULL, "Error opening file %s for write (%s).\n", "kelvin.dry",
+            strerror (errno));
     fprintf (fpDry, "# Version %s edit %s\n", programVersion, svnVersion);
   }
 
   if (modelOptions->markerAnalysis == FALSE || modelOptions->forceAvghetFile == TRUE) {
     fpHet = fopen (modelOptions->avghetfile, "w");
-    ASSERT (fpHet != NULL, "Error in opening file %s for write.\n", modelOptions->avghetfile);
+    ASSERT (fpHet != NULL, "Error in opening file %s for write (%s).\n",
+            modelOptions->avghetfile, strerror (errno));
     fprintf (fpHet, "# Version %s edit %s\n", programVersion, svnVersion);
   }
 
   if (modelType->type == TP) {
     fpPPL = fopen (modelOptions->pplfile, "w");
-    ASSERT (fpPPL != NULL, "Error in opening file %s for write.\n", modelOptions->pplfile);
+    ASSERT (fpPPL != NULL, "Error in opening file %s for write (%s).\n",
+            modelOptions->pplfile, strerror (errno));
     writePPLFileHeader ();
   }
 
   if (strlen (modelOptions->modfile) > 0) {
     fpMOD = fopen (modelOptions->modfile, "w");
-    ASSERT (fpMOD != NULL, "Error in opening file %s for write.\n", modelOptions->modfile);
+    ASSERT (fpMOD != NULL, "Error in opening file %s for write (%s).\n",
+            modelOptions->modfile, strerror (errno));
     fprintf (fpMOD, "# Version %s edit %s\n", programVersion, svnVersion);
   }
 
   if (strlen (modelOptions->intermediatefile) > 0) {
     fpIR = fopen (modelOptions->intermediatefile, "w");
-    ASSERT (fpIR != NULL, "Error in opening file %s for write.\n", modelOptions->intermediatefile);
+    ASSERT (fpIR != NULL, "Error in opening file %s for write (%s).\n",
+            modelOptions->intermediatefile, strerror (errno));
     ASSERT (setvbuf (fpIR, NULL, _IONBF, 0) == 0, "Error in setvbuf on fpIR\n");
   }
   // DKelvin intermediate results are written here.
   if ((modelOptions->integration) && (strlen (modelOptions->dkelvinoutfile) > 0)) {
     fpDK = fopen (modelOptions->dkelvinoutfile, "w");
-    ASSERT (fpDK != NULL, "Error in opening file %s for write.\n", modelOptions->dkelvinoutfile);
+    ASSERT (fpDK != NULL, "Error in opening file %s for write (%s).\n",
+            modelOptions->dkelvinoutfile, strerror (errno));
     setvbuf (fpDK, NULL, _IONBF, 0);
     ASSERT (setvbuf (fpDK, NULL, _IONBF, 0) == 0, "Error in setvbuf on fpDK\n");
   }
