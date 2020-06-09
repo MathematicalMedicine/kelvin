@@ -23,7 +23,7 @@ libklvndb.so : $(OBJS)
 
 # The -fno-common bit is just the old PowerMac way of saying PIC
 $(OBJS) : %.o : %.c $(INCS)
-	$(CC) -c -fno-common -fPIC -I/usr/local/mysql/include -I/usr/include/mysql $(CFLAGS) $(INCFLAGS) $< -o $@
+	$(CC) -c -fno-common -fPIC $(CFLAGS) $(INCFLAGS) $< -o $@
 
 .PHONY : clean
 clean :

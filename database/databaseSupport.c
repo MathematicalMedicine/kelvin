@@ -107,6 +107,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #include "../utils/sw.h"
 #include "../utils/utils.h"
