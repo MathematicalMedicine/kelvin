@@ -38,7 +38,7 @@ undef on failure.
 
 =cut
 
-package KelvinConfig v1.7.0;
+package KelvinConfig v1.7.1;
 our $errstr='';
 use File::Spec::Functions qw(splitpath splitdir catpath catdir);
 
@@ -300,7 +300,7 @@ the canonical version of $directive on success.
 sub addDirective
 {
     my ($self, $directive, $arg) = @_;
-    my $ref = undef;
+    my $canonical_arg = $arg;
     
     ($directive = $self->legalDirective ($directive))
 	or return (undef);
@@ -315,25 +315,25 @@ sub addDirective
 	    $errstr = "Illegal argument to directive $directive";
 	    return (undef);
 	} elsif (exists ($directives{lc($directive)}{parser}) &&
-		 ! ($ref = &{$directives{lc($directive)}{parser}} ($self, $directive, $arg))) {
+		 ! ($canonical_arg = &{$directives{lc($directive)}{parser}} ($self, $directive, $arg))) {
 	    return (undef);
 	}
 	if (exists ($directives{lc($directive)}{singlearg}) && 
 	    $directives{lc($directive)}{singlearg} eq 'true') {
-	    if (! defined ($ref)) {
+	    if (!ref($canonical_arg)) {
 		$$self{directives}{$directive}[0] = $arg;
-	    } elsif (ref ($ref) eq 'SCALAR') {
-		$$self{directives}{$directive}[0] = $$ref;
+	    } elsif (ref ($canonical_arg) eq 'SCALAR') {
+		$$self{directives}{$directive}[0] = $$canonical_arg;
 	    } else { # ref to an ARRAY
-		@{$$self{directives}{$directive}} = @$ref;
+		@{$$self{directives}{$directive}} = @$canonical_arg;
 	    }
 	} else {
-	    if (! defined ($ref)) {
+	    if (!ref($canonical_arg)) {
 		push (@{$$self{directives}{$directive}}, $arg);
-	    } elsif (ref ($ref) eq 'SCALAR') {
-		push (@{$$self{directives}{$directive}}, $$ref);
+	    } elsif (ref ($canonical_arg) eq 'SCALAR') {
+		push (@{$$self{directives}{$directive}}, $$canonical_arg);
 	    } else { # ref to an ARRAY
-		push (@{$$self{directives}{$directive}}, @$ref);
+		push (@{$$self{directives}{$directive}}, @$canonical_arg);
 	    }
 	}
     } else {
