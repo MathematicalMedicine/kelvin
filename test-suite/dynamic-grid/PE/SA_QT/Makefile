@@ -5,9 +5,15 @@ test :
 	(time $(TEST_KELVIN) kelvin.conf) >kelvin.out 2>&1 || log "$(TEST_KELVIN) run for target $@ in $(PWD) FAILED"
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001 || log "wordDiff for target $@ in $(PWD) FAILED"
 
+#test-FIXED :
+#	-rm -f LRTest*
+#	(perl $(KELVIN_ROOT)/LRTest.pl) >kelvin-FIXED.out 2>&1
 test-FIXED :
-	-rm -f LRTest*
-	(perl $(KELVIN_ROOT)/LRTest.pl) >kelvin-FIXED.out 2>&1
+        - rm -rf *.out
+        @echo -e "\n\
+    **** THIS TEST IS CURRENTLY DISABLED ****\n\
+"
+
 
 test-USE_DL :
 	- rm -rf *.out *.so compiled *.linking *.compiling
