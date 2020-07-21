@@ -9,8 +9,8 @@ test :
 #	-rm -f LRTest*
 #	(perl $(KELVIN_ROOT)/LRTest.pl) >kelvin-FIXED.out 2>&1
 test-FIXED :
-        - rm -rf *.out
-        @echo -e "\n\
+	- rm -rf *.out
+	@echo -e "\n\
     **** THIS TEST IS CURRENTLY DISABLED ****\n\
 "
 
