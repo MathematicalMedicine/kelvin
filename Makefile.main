@@ -32,7 +32,8 @@ USE_GSL := yes
 
 ## Enable use of ptmalloc3. Don't forget to set LIBDIR (below) accordingly.
 ## Not available on OSX. By default, it's enabled if it's available.
-USE_PTMALLOC3 ?= $(shell if ldconfig -p 2>/dev/null | grep ptmalloc3 >/dev/null; then echo "yes"; else echo "no"; fi)
+USE_PTMALLOC3 := no
+PTMALLOC3_AVAIL ?= $(shell if ldconfig -p 2>/dev/null | grep ptmalloc3 >/dev/null; then echo "yes"; else echo "no"; fi)
 
 ## Enable use of Hoard. Don't forget to set LIBDIR (below) accordingly.
 # USE_HOARD := yes
@@ -130,7 +131,9 @@ endif
 
 # If ptmalloc3 support has been enabled
 ifeq ($(strip $(USE_PTMALLOC3)), yes)
-  FILE_LDFLAGS += -lptmalloc3
+  ifeq ($(strip $(PTMALLOC3_AVAIL)), yes)
+    FILE_LDFLAGS += -lptmalloc3
+  endif
 endif
 
 # libpthread is required for the timing thread and various options
@@ -238,7 +241,9 @@ FILE_LDFLAGS += -rdynamic
 ## generating code for polynomials. NOT THREAD-SAFE!
 #FILE_CFLAGS += -DUSE_SSD
 
-
+## LKSDEBUG - VERY verbose output of component likelihoods, for detail
+## debugging. Enable sparingly.
+FILE_CFLAGS += -DLKSDEBUG
 
 ifeq ($(strip $(USE_STUDYDB)), yes)
   FILE_CFLAGS += -DSTUDYDB $(shell mysql_config --include)
