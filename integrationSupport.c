@@ -2143,7 +2143,7 @@ void integrateMain ()
     if (modelType->type == TP) {
       fprintf (fpDK, "num D1 Theta(M,F) numLR BR error scale MOD\n");
     } else {
-      fprintf (fpDK, "traitPos ppl BR error numLR scale MOD\n");
+      fprintf (fpDK, "Chr traitPos ppl BR error numLR scale MOD\n");
     }
     fflush (fpDK);
   }
@@ -3185,7 +3185,7 @@ void integrateMain ()
       dk_writeMPMODData (posIdx, traitPos, localMOD, &dk_globalmax);
 
       if (fpDK != NULL) {
-        fprintf (fpDK, "%f  %6.4f %12.8f %12.8f %d %d %f\n", traitPos, ppl, integral, abserr, num_eval, max_scale, localMOD);
+        fprintf (fpDK, "%d %f %6.4f %12.8f %12.8f %d %d %f\n", (originalLocusList.ppLocusList[1])->pMapUnit->chromosome, traitPos, ppl, integral, abserr, num_eval, max_scale, localMOD);
         fflush (fpDK);
       }
 
