@@ -264,16 +264,20 @@ while (<IN>) {
 #		       $1-(2*$scale), $1-$scale, $1, $1+$scale, $1+(2*$scale));
 	$new = sprintf("(%5.3f|%5.3f|%5.3f)", $1-$scale, $1, $1+$scale);
 	$new =~ s/( \-)0.000/ 0.000|-0.000/g;
-#	print "HLOD is [$old], using $new\n";
+	print "Fixed HLOD is [$old], broadening search with $new\n";
 	s/$old/$new/;
 	s/\-/\\\-/;
 	# Now just knock-off 5 zeros of worthless precision from the trait vector values
 	s/00000 / /g;
 	if (system("egrep \"".$_."\" LRTest.Dyn > LRTest.grep 2>&1") != 0) {
-	    print "Couldn't RE match slopped HLOD fixed output line \"$_\", with original dynamic of one of:\n";
+	    print "Couldn't RE match slopped HLOD fixed output line \"$_\", with original dynamic of one ";
+	    # Remove the slopped HLOD and search again to show what we should have found
 	    s/\(.+\)//;
-	    system("egrep \"".$_."\" LRTest.Dyn > LRTest.grep 2>&1");
+	    print "(\"$_\"):\n";
+	    system("egrep \"".$_."\" LRTest.Dyn > LRTest.missed-grep 2>&1");
 	    die "ERROR, fixed VS dynamic test failed in LRTest.Dyn\n";
+	} else {
+	    print "Found it! (so matched broad regular expression)\n";
 	}
     }
 }
