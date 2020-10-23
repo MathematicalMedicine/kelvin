@@ -111,7 +111,7 @@ sub parse_header {
     }
 }
 
-# Run kelvin on the config file with SurfaceFile directive
+# Run kelvin on the config file with SurfaceFile directive. THE SURFACE FILE HAS 5.3 PRECISION.
 print "Generating dynamic-grid trait space baseline.\n";
 my $commandLine='$TEST_KELVIN kelvin.conf --SurfaceFile LRTest.Dyn >LRTest.Out 2>&1';
 (system($commandLine) == 0)
@@ -207,6 +207,9 @@ while (<IN>) {
 }
 close IN;
 
+# NOW WE HAVE A CLEAN SET OF TEST CANDIDATES defined by HLOD, trait space vector,
+# and the source line number from LRTest.Dyn
+
 # Clean-out any earlier results. Allow this to fail.
 system('rm LRTest-* > /dev/null 2>&1');
 
@@ -239,14 +242,15 @@ for my $i (0..($offset - 1)) {
 (system('cat LRTest-*.Fix | sort | uniq > LRTest.Fix') == 0) or
     die "ERROR, Cannot concatenate, sort or uniq all fixed-grid results\n";
 
-# Find each fixed line in the dynamic output (using a possibly rounded HLOD).
+# Find each fixed line in the dynamic output (using a rounded HLOD and different precision TSV).
 print "Finding fixed results in dynamic results";
 open IN,"LRTest.Fix";
 while (<IN>) {
     chomp;
     print ".";
     if ($_ =~ /^([ \-][0-9]*\.[0-9]{3})/) {
-        # Heavy on the rounding slop. Go ahead and ask Sang for more surface precision!
+        # Heavy on the rounding slop. Go ahead and ask Sang for more surface precision! (teasing)
+	# Produce a regular expression with alternative (rounded) HLODs, e.g.: (0.00|0.01...)
 	my $old = $1;
 	my $new;
 	my $scale = 0.001;
@@ -263,9 +267,15 @@ while (<IN>) {
 #	print "HLOD is [$old], using $new\n";
 	s/$old/$new/;
 	s/\-/\\\-/;
+	# Now just knock-off 5 zeros of worthless precision from the trait vector values
+	s/00000 / /g;
+	if (system("egrep \"".$_."\" LRTest.Dyn > LRTest.grep 2>&1") != 0) {
+	    print "Couldn't RE match slopped HLOD fixed output line \"$_\", with original dynamic of one of:\n";
+	    s/\(.+\)//;
+	    system("egrep \"".$_."\" LRTest.Dyn > LRTest.grep 2>&1");
+	    die "ERROR, fixed VS dynamic test failed in LRTest.Dyn\n";
+	}
     }
-    (system("egrep \"".$_."\" LRTest.Dyn > LRTest.grep 2>&1") == 0) or
-	die "ERROR, Couldn't find line \"$_\" in LRTest.Dyn\n";
 }
 close IN;
 print "done!\n";
