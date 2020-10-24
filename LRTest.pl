@@ -214,7 +214,7 @@ close IN;
 system('rm LRTest-* > /dev/null 2>&1');
 
 # Generate all of the kelvin configuration variations and run them
-my $searchFormat = " " . ("%10.8f " x $paramCnt) . "%d";
+my $searchFormat = " " . ("%5.3f " x $paramCnt) . "%d";
 for my $i (0..($offset - 1)) {
     my $commandLine = '$TEST_KELVIN kelvin.conf --FixedModels';
 #    print "Test from line ".$PsLine[$i]." has HLOD ".
@@ -247,37 +247,43 @@ print "Finding fixed results in dynamic results";
 open IN,"LRTest.Fix";
 while (<IN>) {
     chomp;
-    print ".";
     if ($_ =~ /^([ \-][0-9]*\.[0-9]{3})/) {
         # Heavy on the rounding slop. Go ahead and ask Sang for more surface precision! (teasing)
-	# Produce a regular expression with alternative (rounded) HLODs, e.g.: (0.00|0.01...)
-	my $old = $1;
-	my $new;
-	my $scale = 0.001;
-#	$scale = 10**(int(log(abs($old))/log(10)) - 2) if (abs($old) >= 1.0);
-	$scale = 10**(-length((split(/\./, "$old"))[1]));
-        # Exact match for enumerated HLODs within +/-5%
-#	$new = sprintf("(%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f|%5.3f)",
-#		       $1-(6*$scale), $1-(5*$scale), $1-(4*$scale), $1-(3*$scale), $1-(2*$scale), $1-$scale, $1, 
-#		       $1+$scale, $1+(2*$scale), $1+(3*$scale), $1+(4*$scale), $1+(5*$scale), $1+(6*$scale));
-#	$new = sprintf("(5.3f|%5.3f|%5.3f|%5.3f|%5.3f)",
-#		       $1-(2*$scale), $1-$scale, $1, $1+$scale, $1+(2*$scale));
-	$new = sprintf("(%5.3f|%5.3f|%5.3f)", $1-$scale, $1, $1+$scale);
-	$new =~ s/( \-)0.000/ 0.000|-0.000/g;
+	# First come up with the scale at which we're going to vary things (usually last decimal place),
+	# and then produce a regular expression with broad alternative (rounded) HLODs, e.g.: (0.00|0.01...)
+	my $old = $1; # This is the fixed HLOD that was matched as a part of the 'if' statement.
+	my $d = length((split(/\./, "$old"))[1]); # Decimal places
+	my $scale = 10**(-$d);
+	print "Calculated scale is $scale and decimal width is $d\n";
+	# Override it these days? Uncomment to do so by 1 position...
+#	$scale =~ s/[0\.]1/1/; $d = $d - 1;
+	print "Using scale of $scale and decimal width of $d\n";
+	my $w = $d+2; # Format width
+	my $new; # Our new crazy RE static HLOD!
+	# Build an RE from the static HLOD with required slop!
+        # Slop of +/-6x scale expressed as an RE. With scale left as calculated, gives slop of +/- 0.006
+	$new = sprintf("(%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d.
+		       "f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d.
+		       "f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*)",
+		       $old-(6*$scale), $old-(5*$scale), $old-(4*$scale), $old-(3*$scale), $old-(2*$scale), $old-$scale, $old, 
+		       $old+$scale, $old+(2*$scale), $old+(3*$scale), $old+(4*$scale), $old+(5*$scale), $old+(6*$scale));
+	# Slop of +/-2x scale expressed as an RE. With scale left as calculated, gives slop of +/- 0.002
+#	$new = sprintf("(%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*)",
+#		       $old-(2*$scale), $old-$scale, $old, $old+$scale, $old+(2*$scale));
+	# Slop of +/-1x scale expressed as an RE. With scale left as calculated, gives slop of +/- 0.001
+#	$new = sprintf("(%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*|%".$w.".".$d."f[0-9]*)", $old-$scale, $old, $old+$scale);
+	$new =~ s/( \-)0.000/ 0.000|-0.000/g; # Do proportionate spacing whether there's a sign or not
 	print "Fixed HLOD is [$old], broadening search with $new\n";
-	s/$old/$new/;
-	s/\-/\\\-/;
-	# Now just knock-off 5 zeros of worthless precision from the trait vector values
-	s/00000 / /g;
+	s/$old/$new/; # In the line we're processing
+	s/\-[^9]/\\\-/; # Quote signs but not the dashes of the [0-9]* bit.
 	if (system("egrep \"".$_."\" LRTest.Dyn > LRTest.grep 2>&1") != 0) {
-	    print "Couldn't RE match slopped HLOD fixed output line \"$_\", with original dynamic of one ";
-	    # Remove the slopped HLOD and search again to show what we should have found
+	    print "Couldn't RE match our sloppy fixed HLOD output line:\n\"$_\"\n...with a dynamic HLOD\n";
+	    # Remove the sloppy HLOD altogether and search again to show what we is actually there
 	    s/\(.+\)//;
-	    print "(\"$_\"):\n";
 	    system("egrep \"".$_."\" LRTest.Dyn > LRTest.missed-grep 2>&1");
-	    die "ERROR, fixed VS dynamic test failed in LRTest.Dyn\n";
+	    die "ERROR, fixed VS dynamic test failed in LRTest.Dyn, see LRTest.missed-grep for the actual dynamic HLOD.\n";
 	} else {
-	    print "Found it! (so matched broad regular expression)\n";
+	    print "Found it!\n";
 	}
     }
 }
