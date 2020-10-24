@@ -955,13 +955,13 @@ void compute_hlod_mp_dt (double x[], double *f, int *scale)
 
         fprintf (fpIR, "%6.3f", log10HetLR);
 
-        fprintf (fpIR, " %9.8f %9.8f", dk_curModel.alpha, dk_curModel.dgf);
+        fprintf (fpIR, " %4.3f %4.3f", dk_curModel.alpha, dk_curModel.dgf);
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
-          fprintf (fpIR, " %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].DD, dk_curModel.pen[liabIdxLocal].Dd);
+          fprintf (fpIR, " %4.3f %4.3f", dk_curModel.pen[liabIdxLocal].DD, dk_curModel.pen[liabIdxLocal].Dd);
           if (modelOptions->imprintingFlag) {
-            fprintf (fpIR, " %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].dD, dk_curModel.pen[liabIdxLocal].dd);
+            fprintf (fpIR, " %4.3f %4.3f", dk_curModel.pen[liabIdxLocal].dD, dk_curModel.pen[liabIdxLocal].dd);
           } else {
-            fprintf (fpIR, " %9.8f", dk_curModel.pen[liabIdxLocal].dd);
+            fprintf (fpIR, " %4.3f", dk_curModel.pen[liabIdxLocal].dd);
           }
         }
         fprintf (fpIR, " %d\n", dk_curModel.posIdx);
@@ -1783,20 +1783,20 @@ void compute_hlod_2p_dt (double x[], double *f, int *scale)
 
         fprintf (fpIR, "%6.3f", log10HetLR);
         if (modelOptions->equilibrium != LINKAGE_EQUILIBRIUM) {
-          fprintf (fpIR, " %9.8f", dk_curModel.dprime[0]);
+          fprintf (fpIR, " %4.3f", dk_curModel.dprime[0]);
         }
         if (modelOptions->mapFlag == SA) {
-          fprintf (fpIR, " %9.8f", dk_curModel.theta[0]);
+          fprintf (fpIR, " %4.3f", dk_curModel.theta[0]);
         } else {
-          fprintf (fpIR, " %9.8f %9.8f", dk_curModel.theta[0], dk_curModel.theta[1]);
+          fprintf (fpIR, " %4.3f %4.3f", dk_curModel.theta[0], dk_curModel.theta[1]);
         }
-        fprintf (fpIR, " %9.8f %9.8f", dk_curModel.alpha, dk_curModel.dgf);
+        fprintf (fpIR, " %4.3f %4.3f", dk_curModel.alpha, dk_curModel.dgf);
         for (liabIdxLocal = 0; liabIdxLocal < modelRange->nlclass; liabIdxLocal++) {
-          fprintf (fpIR, " %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].DD, dk_curModel.pen[liabIdxLocal].Dd);
+          fprintf (fpIR, " %4.3f %4.3f", dk_curModel.pen[liabIdxLocal].DD, dk_curModel.pen[liabIdxLocal].Dd);
           if (modelOptions->imprintingFlag) {
-            fprintf (fpIR, " %9.8f %9.8f", dk_curModel.pen[liabIdxLocal].dD, dk_curModel.pen[liabIdxLocal].dd);
+            fprintf (fpIR, " %4.3f %4.3f", dk_curModel.pen[liabIdxLocal].dD, dk_curModel.pen[liabIdxLocal].dd);
           } else {
-            fprintf (fpIR, " %9.8f", dk_curModel.pen[liabIdxLocal].dd);
+            fprintf (fpIR, " %4.3f", dk_curModel.pen[liabIdxLocal].dd);
           }
         }
         fprintf (fpIR, " %d\n", dk_curModel.posIdx);
