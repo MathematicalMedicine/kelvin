@@ -14,7 +14,7 @@ test-USE_DL :
 
 test-FIXED :
 	-rm -f LRTest*
-	(perl $(KELVIN_ROOT)/LRTest.pl) >kelvin-FIXED.out 2>&1
+	(perl $(KELVIN_ROOT)/LRTest.pl) >kelvin-FIXED.out 2>&1 || log "$(TEST_KELVIN) and $(KELVIN_ROOT)/LRTest.pl FIXED run for target $@ in $(PWD) FAILED"
 
 clean :
 	- rm -rf *.out *.so *memory.dat compiled *.linking *.compiling LRTest*
