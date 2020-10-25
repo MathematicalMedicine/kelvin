@@ -1,6 +1,6 @@
 test :
 	- rm -f *.out kelvin.freq *pass?
-	(time $(KELVIN_SCRIPT) kelvin.conf) >kelvin.out 2>&1
+	(time $(KELVIN_SCRIPT) kelvin.conf) >kelvin.log 2>&1
 	diff -ib kelvin.freq-baseline kelvin.freq
 	diff -ib ped.post.pass0-baseline ped.post.pass0
 	diff -ib ped.post.pass1-baseline ped.post.pass1
