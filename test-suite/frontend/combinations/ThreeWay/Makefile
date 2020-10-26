@@ -7,8 +7,8 @@ test :
 	echo THIS TEST IS CURRENTLY DISABLED
 	cp br.out-baseline br.out
 	cp ppl.out-baseline ppl.out
-	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001 || log "wordDiff for target $@ in $(PWD) FAILED"
-	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out ppl.out-baseline .000001 || log "wordDiff for target $@ in $(PWD) FAILED"
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001 || log "Target $@ FAILED"
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out ppl.out-baseline .000001 || log "Target $@ FAILED"
 
 clean :
 	- rm -f ped.post.counted ped.post.counts *.out *pass? kelvin.freq

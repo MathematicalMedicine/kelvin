@@ -9,7 +9,7 @@ test :
 	$(TEST_KELVIN) kelvin.conf --PedigreeFile ped.post.3 --LocusFile locus.dat.3 \
 		--BayesRatioFile br.tmp >>kelvin.log 2>&1
 	fgrep -v Version br.tmp | perl -pe 's/Seq: 1/Seq: 3/' >> br.split
-	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.split br.out .000001 || log "wordDiff for target $@ in $(PWD) FAILED"
+	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.split br.out .000001 || log "Target $@ FAILED"
 
 test-USE_DL :
 	echo Compilation not appropriate for this test.
