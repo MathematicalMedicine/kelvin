@@ -4,10 +4,9 @@ test :
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .00001 || log "Target $@ FAILED"
 
 test-FIXED :
-	-rm -f LRTest*
-	#(perl $(KELVIN_ROOT)/LRTest.pl) >kelvin-FIXED.log 2>&1
-	echo Disabled
-	date
+	-rm -Rf *.out
+        @echo -e "\n\
+    **** THIS TEST IS DISABLED AS QTMeanMode and QTStandardDevMode are not compatible with FixedModels ****\n\
 
 test-USE_DL :
 	- rm -rf *.out *.so compiled *.linking *.compiling

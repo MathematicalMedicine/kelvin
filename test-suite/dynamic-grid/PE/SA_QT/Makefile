@@ -11,7 +11,7 @@ test :
 test-FIXED :
 	- rm -rf *.out
 	@echo -e "\n\
-    **** THIS TEST IS CURRENTLY DISABLED ****\n\
+    **** THIS TEST IS CURRENTLY DISABLED AS QTMeanMode and QTStandardDevMode are not compatible with FixedModels ****\n\
 "
 
 
