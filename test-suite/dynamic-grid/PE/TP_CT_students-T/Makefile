@@ -7,6 +7,7 @@ test-FIXED :
 	-rm -Rf *.out
 	@echo -e "\n\
     **** THIS TEST IS DISABLED AS QTMeanMode and QTStandardDevMode are not compatible with FixedModels ****\n\
+"
 
 test-USE_DL :
 	- rm -rf *.out *.so compiled *.linking *.compiling
