@@ -5,9 +5,8 @@ test :
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out ppl.out-baseline .000001 || log "Target $@ FAILED"
 
 test-FIXED :
-test-FIXED :
-        - rm -rf *.out
-        @echo -e "\n\
+	- rm -rf *.out
+	@echo -e "\n\
     **** THIS TEST IS DISABLED AS QTMeanMode and QTStandardDevMode are not compatible with FixedModels ****\n\
 
 test-USE_DL :
