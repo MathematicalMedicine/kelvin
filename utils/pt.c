@@ -79,7 +79,8 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
   double fO1, fO2;
   int eO1, eO2;
   struct polyList *pL;
-  char *promptString = "C/V/S/P/F/E/G/L/#/%%/?/Q/help> ";
+  // Compilers have problems with variable format strings
+  #define promptString "C/V/S/P/F/E/G/L/#/%%/?/Q/help> "
   char polyName[16];
 
   fprintf(outputFile, promptString);
@@ -249,7 +250,7 @@ void loopReading(FILE *inputFile, FILE *outputFile) {
       }
       pL = buildPolyList();
       polyListSorting(pHI->pP, pL);
-      sprintf (polyName, "P%d", nodeId - 1);
+      sprintf (polyName, "P%ld", nodeId - 1);
       codePoly(pHI->pP, pL, polyName);
       fprintf(outputFile, "Polynomial C function written to %s.c\n", polyName);
       break;
@@ -284,7 +285,7 @@ int main(int argc, char *argv[]) {
     if ((initFile = fopen(argv[1],"r")) != NULL) {
       nullFile = fopen("/dev/null","w");
       loopReading(initFile, nullFile);
-      close(initFile);
+      fclose(initFile);
     } else {
       perror("Cannot open input file");
       return(1);
