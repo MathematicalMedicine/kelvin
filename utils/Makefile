@@ -14,17 +14,17 @@ OBJS = utils.o sw.o polynomial.o tpl.o sSDHandler.o pageManagement.o $(HASH_OBJS
 
 all : ../lib/libklvnutls.a # ../lib/libklvnutls.so # pt sw sSDHandler
 
-pt : pt.c polynomial.c polynomial.h polynomial_internal.h sw.c dists.c $(NOGSL_INCS) $(NOGSL_OBJS)
-	gcc pt.c -o pt polynomial.c sw.c $(NOGSL_OBJS) $(CFLAGS) -DPOLYUSE_DL -DPOLYCODE_DL -ldl -lm -lpthread
+pt : pt.c polynomial.c polynomial.h polynomial_internal.h sw.c dists.c $(NOGSL_INCS) $(NOGSL_OBJS) $(HASH_INCS) $(HASH_OBJS)
+	$(CC) pt.c -o pt polynomial.c sw.c $(NOGSL_OBJS) $(HASH_OBJS) $(CFLAGS) -DPOLYUSE_DL -DPOLYCODE_DL -ldl -lm -lpthread
 
 sw : sw.c sw.h
-	gcc -DMAIN sw.c -o sw $(CFLAGS) -lpthread -lm
+	$(CC) -DMAIN sw.c -o sw $(CFLAGS) -lpthread -lm
 
 sSDHandler : sSDHandler.c sSDHandler.h
-	gcc -DMAIN sSDHandler.c -o sSDHandler
+	$(CC) -DMAIN sSDHandler.c -o sSDHandler
 
 listener : listener.c sw.h
-	gcc listener.c -o listener -lmysqlclient -I/usr/local/mysql/include -L/usr/local/mysql/lib \
+	$(CC) listener.c -o listener -lmysqlclient -I/usr/local/mysql/include -L/usr/local/mysql/lib \
 	-I/usr/include/mysql -L/usr/lib64/mysql
 
 ../lib/libklvnutls.a : libklvnutls.a
@@ -37,7 +37,7 @@ libklvnutls.a : $(OBJS)
 	ar -rsc libklvnutls.a $(OBJS)
 
 libklvnutls.so : $(OBJS)
-	gcc -shared -o libklvnutls.so $(OBJS) $(CFLAGS) $(LDFLAGS)
+	$(CC) -shared -o libklvnutls.so $(OBJS) $(CFLAGS) $(LDFLAGS)
 
 # The -fno-common bit is just the old PowerMac way of saying PIC
 $(OBJS) : %.o : %.c $(INCS)

@@ -235,6 +235,5 @@ double polyMemory ();
 void dependencyFlagging (Polynomial * p);
 #endif
 void doFreePolys (unsigned short keepMask);
-inline void discardPoly (Polynomial *p);
 
 #endif

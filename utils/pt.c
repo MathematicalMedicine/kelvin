@@ -28,7 +28,6 @@
 #include "polynomial.h"
 #include "sw.h"
 
-int polynomialScale = 1;
 struct swStopwatch *overallSW;
 
 #define MAXHANDLE 32
@@ -279,7 +278,7 @@ int main(int argc, char *argv[]) {
 
   overallSW = swCreate("overall");
   swStart(overallSW);
-  polynomialInitialization(polynomialScale);
+  polynomialInitialization(1);
 
   if (argc > 1) {
     if ((initFile = fopen(argv[1],"r")) != NULL) {
