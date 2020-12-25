@@ -21,13 +21,13 @@ GROUP=root
 ## The C compiler to be used to build executables. Pick one.
 ## GCC (GNU C Compiler)
 # The following work fine
-#CC := gcc
+CC := gcc
 #CC := clang 
 #CC := gcc-6
 #CC := gcc-7
 #CC := gcc-8
-CC := gcc-9
-# The following fail due to lost '.h' files
+#CC := gcc-9
+# The following fail due to lost '.h' files in the "#include_next fiasco with Xcode"
 #CC := gcc-4.9
 #CC := gcc-5
 # The following fail due to duplicate symbols (which appears to be a real problem)
