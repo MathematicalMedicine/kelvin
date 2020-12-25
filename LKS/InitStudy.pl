@@ -7,9 +7,14 @@ use Data::Dumper;
 use File::Basename;
 use DBI; # Database interaction
 use DBI qw(:sql_types);
-use KelvinDataset 1.40;
-use KelvinConfig 1.20;
-use KelvinFamily 1.40;
+# use KelvinDataset 1.40;
+# At some point these version requirements became 3-part, which
+# made the older, 2-part ones persistently fail.
+use KelvinDataset 1.4.0;
+#use KelvinConfig 1.20;
+use KelvinConfig 1.2.0;
+#use KelvinFamily 1.40;
+use KelvinFamily 1.4.0;
 $|=1; # Show the output when I say so.
 
 my $usage = "usage: $0 <configfile> [--directive ... ]\n";

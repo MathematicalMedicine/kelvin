@@ -73,12 +73,6 @@ if test -z "$StudyId"; then
     exit 2
 fi
 
-# Setup the Single-Model RunTimes so bucket loading can be intelligent
-SMRTs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions a, SingleModelRuntimes b set a.SingleModelEstimate = b.SingleModelRuntime, a.SingleModelRuntime = b.SingleModelRuntime where a.StudyId = $StudyId AND a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.PedTraitPosCM = b.PedTraitPosCM;")
-if test "$SMRTs" != "0" ; then
-    # Assuming SOME finished, any that we missed should be treated as if they took too long..
-    Singles=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions set SingleModelRuntime = 999999 where StudyId = $StudyId AND PedTraitPosCM <> 9999.99 AND SingleModelRuntime IS NULL;")
-fi
 c=1
 while :
 do
@@ -87,7 +81,7 @@ do
 
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
   for ((servs=1; servs<lks_server_count; servs++)); do
-    qsub -cwd $KELVIN_ROOT/LKS/run_server.sh server $qmods
+    qrsh "cd `pwd1`; $KELVIN_ROOT/LKS/run_server.sh server " & 
   done
   # Run a single one blocking further processing until most work is done
   qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server"
