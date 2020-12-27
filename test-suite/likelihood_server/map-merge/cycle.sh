@@ -25,7 +25,7 @@ qmods=""
 
 # Handle unique job submission situations.
 case $HOSTNAME in
-    Levi-Montalcini )
+    levi-Montalcini* )
         # Don't just quit if nothing is available -- wait for it.
         alias qrsh="qrsh -now no $qmods "
         lks_server_count=${lks_server_count-8}
@@ -47,7 +47,7 @@ esac
 
 # Do the initialization only if there was no command line parameter
 if test -z "$1" ; then
-    # Setup database tables
+    # Setup database tables - NOTICE THAT THERE ARE TWO SERVERS THIS TIME
     perl $KELVIN_ROOT/LKS/InitStudy.pl client.conf
     perl $KELVIN_ROOT/LKS/InitStudy.pl server-dataset1.conf
     perl $KELVIN_ROOT/LKS/InitStudy.pl server-dataset11.01.conf
@@ -74,31 +74,20 @@ if test -z "$StudyId"; then
     exit 2
 fi
 
-# Setup the Single-Model RunTimes so bucket loading can be intelligent
-SMRTs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions a, SingleModelRuntimes b set a.SingleModelEstimate = b.SingleModelRuntime, a.SingleModelRuntime = b.SingleModelRuntime where a.StudyId = $StudyId AND a.StudyId = b.StudyId AND a.PedigreeSId = b.PedigreeSId AND a.PedTraitPosCM = b.PedTraitPosCM;")
-if test $SMRTs -ne 0 ; then
-    # Assuming SOME finished, any that we missed should be treated as if they took too long..
-    Singles=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Update PedigreePositions set SingleModelRuntime = 999999 where StudyId = $StudyId AND PedTraitPosCM <> 9999.99 AND SingleModelRuntime IS NULL;")
-fi
-
+c=1
 while :
 do
   # Reveal work to be done
     FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
 
-  # Enqueue a few servers and...
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset1 $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset1 $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset1 $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset1 $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset11.01 $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset11.01 $qmods" &
-  nq "$KELVIN_ROOT/LKS/run_server.sh server-dataset11.01 $qmods" &
-
+  # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
+  for ((servs=1; servs<$((lks_server_count/2)); servs++)); do
+    qrsh "cd `pwd1`; $KELVIN_ROOT/LKS/run_server.sh server-dataset1 " & 
+    qrsh "cd `pwd1`; $KELVIN_ROOT/LKS/run_server.sh server-dataset11.01 " & 
+  done
   # Run single ones blocking further processing until most work is done
   qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server-dataset1"
   qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server-dataset11.01"
-  # Make sure that nothing remains undone
   while :
   do
     # Reveal work to be done
@@ -114,12 +103,13 @@ do
 	exit 1
     fi
     echo Waiting for servers to finish
-    sleep 300
   done
   # Reveal work to be done
   FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
   # Run the client to see if any splits occur
   qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
+  cp br.out br.out.$c
+  c=$((c+1))
   grep WARNING br.out || { break; }
   # Get the new set of trait positions
   TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct a.RefTraitPosCM from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId AND a.RefTraitPosCM > 0.0;" | tr "\n" " ")
