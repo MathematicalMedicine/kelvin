@@ -16,7 +16,7 @@ test : $(TESTS)
 test-USE_DL : ACTION := test-USE_DL
 test-USE_DL : $(TESTS)
 
-test-LKS : ACTION := test-USE_DL
+test-LKS : ACTION := test-LKS
 test-LKS : $(TESTS)
 
 test-FIXED : ACTION := test-FIXED

@@ -13,6 +13,8 @@ test : $(TESTS)
 check :
 	$(MAKE) -C KelvinClasses -f Makefile test
 
+test-LKS :
+
 test-USE_DL :
 
 test-FIXED :

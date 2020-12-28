@@ -13,6 +13,8 @@ check : $(TESTS)
 test-LKS : ACTION := test-LKS
 test-LKS : $(TESTS)
 
+test :
+
 test-FIXED :
 
 test-USE_DL :

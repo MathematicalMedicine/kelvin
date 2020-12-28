@@ -18,6 +18,8 @@ check :
 test-USE_DL : ACTION := test-USE_DL
 test-USE_DL : $(TESTS)
 
+test-LKS :
+
 test-FIXED :
 
 clean : ACTION := clean

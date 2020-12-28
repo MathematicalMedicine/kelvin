@@ -13,6 +13,8 @@ test : $(TESTS)
 check :
 	$(MAKE) -C d-2pt-le -f Makefile test
 
+test-LKS :
+
 test-USE_DL : 
 
 test-FIXED :

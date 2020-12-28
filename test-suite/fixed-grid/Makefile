@@ -10,6 +10,8 @@ TESTS = $(shell ls -d */ | cut -f1 -d\/)
 test : ACTION := test
 test : $(TESTS)
 
+test-LKS :
+
 test-USE_DL : ACTION := test-USE_DL
 test-USE_DL : $(TESTS)
 
