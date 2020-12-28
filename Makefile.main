@@ -448,6 +448,11 @@ clean-merlin :
 	if [[ -d merlin-cleaning/.svn ]]; then mv merlin-cleaning/.svn merlin; fi
 	rm -rf merlin-cleaning
 
+.PHONY : test-LKS
+# Likelihood server program-only tests
+test-LKS :
+	+make -C test-suite -f Makefile test-LKS
+
 .PHONY : test-USE_DL
 # Polynomial compilation tests
 test-USE_DL :

@@ -1,6 +1,6 @@
 test :
 	- rm -rf *.out
-	(time $(KELVIN_SCRIPT) kelvin.conf) >kelvin.log 2>&1
+	(time $(KELVIN_SCRIPT) kelvin.conf) >kelvin.log 2>&1 || log "Target $@ FAILED"
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline 0 || log "Target $@ FAILED"
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl ppl.out ppl.out-baseline 0 || log "Target $@ FAILED"
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl mod.out mod.out-baseline 0 || log "Target $@ FAILED"
