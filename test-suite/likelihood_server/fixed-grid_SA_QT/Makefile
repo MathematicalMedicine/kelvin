@@ -1,4 +1,4 @@
-test :
+test-LKS :
 	- rm -rf *.out adhoc* *memory.dat study_*.dat
 	$(KELVIN_ROOT)/LKS/remove_study.sh
 	(time $(KELVIN_ROOT)/LKS/cycle.sh) >cycle.out 2>&1

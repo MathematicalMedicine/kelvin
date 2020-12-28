@@ -1,12 +1,25 @@
-# This is a dummy makefile to prevent accidental execution of the whole archive.
+# Makefile to perform kelvin tests
 
-check :
+# find -maxdepth DNE on Solaris...
+#TESTS = $(shell find * -maxdepth 0 -type d)
+SHELL = bash
+TESTS = $(shell ls -d */ | cut -f1 -d\/)
 
-test :
+.PHONY : test-LKS clean $(TESTS)
+
+check : ACTION := check
+check : $(TESTS)
+
+test-LKS : ACTION := test-LKS
+test-LKS : $(TESTS)
 
 test-FIXED :
 
 test-USE_DL :
 
-clean :
+clean : ACTION := clean
+clean : $(TESTS)
+
+$(TESTS) : 
+	$(MAKE) -C $@ -f Makefile $(ACTION)
 

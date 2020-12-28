@@ -1,6 +1,6 @@
 # Identical to the SA_DT under dynamic PE
 
-test :
+test-LKS :
 	- rm -rf *.out adhoc* *memory.dat study_*.dat
 	$(KELVIN_ROOT)/LKS/remove_study.sh
 	(time ./script.sh) >script.out 2>&1

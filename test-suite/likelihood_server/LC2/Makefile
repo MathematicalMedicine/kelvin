@@ -1,8 +1,8 @@
 # Identical to the SA_DT under dynamic PE
 
-test :
+test-LKS :
 	- rm -rf *.out adhoc* *memory.dat study_*.dat
-	# $(KELVIN_ROOT)/LKS/remove_study.sh
+	$(KELVIN_ROOT)/LKS/remove_study.sh
 	(time $(KELVIN_ROOT)/LKS/cycle.sh) >cycle.out 2>&1
 	perl $(KELVIN_ROOT)/utils/wordDiff.pl br.out br.out-baseline .000001 || log "Target $@ FAILED"
 
