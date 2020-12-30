@@ -5,12 +5,12 @@ set -xe # Because it isn't enough for Darwin's cron for us to have it on the she
 # This doesn't work deep under Make:alias log='$HOME/kit/bin/log'
 export PATH=$HOME/kit/bin:$PATH # ...so this ought to do it
 
-echo `date`: Starting
+echo "`date`: Starting on $1"
 export KELVIN_ROOT=$HOME/specific/trunk
 export KELVIN_SCRIPT=$HOME/specific/trunk
 export LD_LIBRARY_PATH=$KELVIN_ROOT/lib:${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH}
 export OMP_NUM_THREADS=1
 make clean
-make $p1
+make $1
 
 

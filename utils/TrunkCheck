@@ -20,8 +20,13 @@
 # for f in $(find trunk/test-suite/ -name Makefile -print0 | xargs --null egrep --files-with-matches \
 #     'test-USE_DL :$' | grep SA_.T); \
 #     do cd $(dirname $f); echo -n "At $PWD: "; \
-#     qsub -cwd -v COMMAND="make test-USE_DL" -N adhoc ~/kit/bin/qsub_wrapper.sh; \
+#     qsub -cwd -v COMMAND="~/specific/SpotCheck test-USE_DL" -N adhoc ~/kit/bin/qsub_wrapper.sh; \
 #     cd $OLDPWD; done
+# or maybe...
+# for f in $(find trunk/test-suite/ -name Makefile -print0 | xargs -0 egrep --files-with-matches \
+#     'test-LKS :$' ); \
+#     do cd $(dirname $f); echo -n "At $PWD: "; \
+#     ~/specific/SpotCheck test-LKS & cd $OLDPWD; done
 
 trap onexit 0
 echo '$Id: TrunkCheck 291 2012-03-19 12:45:37Z whv001 $'
