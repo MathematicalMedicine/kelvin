@@ -16,6 +16,13 @@
 # version is run manually). E-mails me if there's a problem. The performance statistics are wrapped
 # in SQL in the $HOME/specific directory in a file with date stamp for execution under MySQL.
 #
+# IF YOU JUST WANT TO SPOT-CHECK some class of tests spread across the queuing system:
+# for f in $(find trunk/test-suite/ -name Makefile -print0 | xargs --null egrep --files-with-matches \
+#     'test-USE_DL :$' | grep SA_.T); \
+#     do cd $(dirname $f); echo -n "At $PWD: "; \
+#     qsub -cwd -v COMMAND="make test-USE_DL" -N adhoc ~/kit/bin/qsub_wrapper.sh; \
+#     cd $OLDPWD; done
+
 trap onexit 0
 echo '$Id: TrunkCheck 291 2012-03-19 12:45:37Z whv001 $'
 
@@ -102,16 +109,16 @@ make kelvin-no_GSL
 make seq_update/calc_updated_ppl
 echo `date`: Basic tests
 export OMP_NUM_THREADS=1
-# make test
+make test
 
 echo `date`: Fixed VS dynamic grid testing
-# make test-FIXED
+make test-FIXED
 
 echo "`date`: LKS programs & DB-only testing - not current scripting"
 # Make databaseSupport.c tolerable for frikin' new MySQL development
 perl -p -i -e 's/my_bool/bool/g' database/databaseSupport.c
 make kelvin-study
-# make test-LKS
+make test-LKS
 
 echo `date`: Polynomial compilation tests
 make kelvin-POLYCOMP_DL
