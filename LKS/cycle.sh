@@ -81,7 +81,7 @@ do
 
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
   for ((servs=1; servs<lks_server_count; servs++)); do
-    qrsh "cd `pwd1`; $KELVIN_ROOT/LKS/run_server.sh server " & 
+    qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server " & 
   done
   # Run a single one blocking further processing until most work is done
   qrsh "cd `pwd`; $KELVIN_ROOT/LKS/run_server.sh server"
