@@ -25,7 +25,7 @@ qmods=""
 
 # Handle unique job submission situations.
 case $HOSTNAME in
-    Levi-Montalcini )
+    levi-Montalcini* )
         # Don't just quit if nothing is available -- wait for it.
         alias qrsh="qrsh -now no $qmods "
         lks_server_count=${lks_server_count-8}
