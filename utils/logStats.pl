@@ -27,17 +27,17 @@ if (/cycle\..*out:(\d{2}\/\d{2}\/\d{2} \d{2}\:\d{2}\:\d{2}) kelvin.* V(.*) edit 
 #    print "C1=yes\n";
     ($RunDate, $Kelvin, $Build) = ($1, 'kelvin-study-'.$2, $3);
 } else {
-#    print "K1=no\n";
+#    print "C1=no\n";
 }
 if (/(dynamic|fixed)-grid\/(.*)\/kelvin.*log:real\s+(((\d*)[h:])?(\d*)[m:])?(\d+\.\d+)(s)?$/) {
 #    print "K2=yes\n";
-    print "Insert into testRuns (Kelvin, Build, Host, Test, Realtime, RunDate) values ('$Kelvin', '$Build', '".$ENV{HOSTNAME}."','$1/$2', ".(($5*3600)+($6*60)+$7).", STR_TO_DATE('$RunDate', '%y/%m/%d %H:%i:%s'));\n";
+    print "Insert ignore into testRuns (Kelvin, Build, Host, Test, Realtime, RunDate) values ('$Kelvin', '$Build', '".$ENV{HOSTNAME}."','$1/$2', ".(($5*3600)+($6*60)+$7).", STR_TO_DATE('$RunDate', '%y/%m/%d %H:%i:%s'));\n";
 } else {
 #    print "K2=no\n";
 }
 if (/(likelihood_server)\/(.*)\/cycle.*out:real\s+(((\d*)[h:])?(\d*)[m:])?(\d+\.\d+)(s)?$/) {
 #   print "C2=yes\n";
-    print "Insert into testRuns (Kelvin, Build, Host, Test, Realtime, RunDate) values ('$Kelvin', '$Build', '".$ENV{HOSTNAME}."','$1/$2', ".(($5*3600)+($6*60)+$7).", STR_TO_DATE('$RunDate', '%y/%m/%d %H:%i:%s'));\n";
+    print "Insert ignore into testRuns (Kelvin, Build, Host, Test, Realtime, RunDate) values ('$Kelvin', '$Build', '".$ENV{HOSTNAME}."','$1/$2', ".(($5*3600)+($6*60)+$7).", STR_TO_DATE('$RunDate', '%y/%m/%d %H:%i:%s'));\n";
 } else {
 #    print "C2=no\n";
 }
