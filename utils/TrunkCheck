@@ -109,8 +109,8 @@ esac
 # GSL tends to wander, so make sure that INCDIR and LIBDIR are set if needed
 echo `date`: Full build with INCDIR as $INCDIR and LIBDIR as $LIBDIR
 
+make kelvin-no_GSL # Need to do this first because it removes kelvin!
 make kelvin
-make kelvin-no_GSL
 make seq_update/calc_updated_ppl
 echo `date`: Basic tests
 export OMP_NUM_THREADS=1
