@@ -30,7 +30,7 @@ CC := gcc
 # The following fail due to lost '.h' files in the "#include_next fiasco with Xcode"
 #CC := gcc-4.9
 #CC := gcc-5
-# The following fail due to duplicate symbols (which appears to be a real problem)
+# The following only works after adding -fcommon to the CFLAGS (default changed to -fnocommon in GCC 10)
 #CC := gcc-10
 # The following is currently untested
 ## ICC (Intel C Compiler)
