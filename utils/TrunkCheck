@@ -51,13 +51,13 @@ function onexit() {
     if test $exit_status -ne 0 ; then
 
 	echo Exiting $BASH_SOURCE at `date` with status of $exit_status
-	cp $BASH_SOURCE.log $HOME/specific/kelvin_trunk_revision_${revision}_TESTED.BAD
+	cp $BASH_SOURCE.log $HOME/specific/kelvin_trunk_revision_${to_test}_TESTED.BAD
 	echo "Sending mail with [${MAIL}], [${BASH_SOURCE}] and [${HOSTNAME}]"
 	${MAIL} "$BASH_SOURCE on $HOSTNAME failed with status $exit_status" william.valentine-cooper@nationwidechildrens.org </dev/null
     else
 	${MAIL} "$BASH_SOURCE on $HOSTNAME succeeded" william.valentine-cooper@nationwidechildrens.org </dev/null
     fi
-#    exit $exit_status
+    exit $exit_status
 }
 set -xe # Because it isn't enough for Darwin's cron for us to have it on the shebang
 
@@ -91,20 +91,42 @@ case $HOSTNAME in
 	    echo Not testing further as last test failed.
 	    exit
 	fi
-	revision=$((revision + 1))
-	echo Will test revision ${revision}
-	if test -s trunk/kelvin.c; then
-	    echo "Already checked-out, will adjust to revision."
+	to_test=$((revision + 1))
+	evision=$(svn info $SVNBCMM/kelvin/trunk | grep 'evision')
+	latest=${evision#*evision* }
+	if test $to_test -gt $latest; then
+	    echo Not testing further as up-to-date.
+	    exit
+	fi
+	echo Will test revision ${to_test}
+	if test ! -s trunk/kelvin.c; then
+	    echo "Nothing checked-out, will check-out revision ${to_test} now."
+	    svn checkout -r ${to_test}  $SVNBCMM/kelvin/trunk
+	    cd trunk
+	else
+	    echo "Will adjust to revision ${to_test}."
 	    cd trunk
 	    make clean
-	    svn update -r ${revision}
-	else
-	    echo "Not checked-out, will do so now."
-	    svn checkout -r ${revision} $SVNBCMM/kelvin/trunk
-	    cd trunk
+	    svn update -r ${to_test}
 	fi
 	;;
 esac
+
+# Apply fixes to the management of tests
+svn update test-suite/frontend/EstimateFrequency/casecontrol-qt/Makefile 
+svn update test-suite/frontend/combinations/Epi+Estimate/Makefile
+svn update test-suite/frontend/combinations/Estimate+Count/Makefile
+svn update test-suite/frontend/combinations/ThreeWay/Makefile
+# Likelihood server tests are problematic until recently
+echo -n "Check likelihood server for revision ${to_test}..."
+if test ${to_test} -ge 4524 -a test ${to_test} -lt 4543; then
+    echo "NOPE, nothing doing!"
+    cd test-suite
+    rm -rf likelihood_server
+    cd ..
+else
+    echo "OK"
+fi
 
 # GSL tends to wander, so make sure that INCDIR and LIBDIR are set if needed
 echo `date`: Full build with INCDIR as $INCDIR and LIBDIR as $LIBDIR
@@ -123,7 +145,19 @@ echo "`date`: LKS programs & DB-only testing - not current scripting"
 # Make databaseSupport.c tolerable for frikin' new MySQL development
 perl -p -i -e 's/my_bool/bool/g' database/databaseSupport.c
 make kelvin-study
-make test-LKS
+if test -d test-suite/likelihood_server; then
+    cd test-suite/likelihood_server
+    if test "${HOSTNAME:0:4}" = "RESC"; then
+	# Make desktop/laptop runs do perly stuff correctly...
+	source ~/perl5/perlbrew/etc/bashrc || true
+	perlbrew use perl-5.32.0 || true
+	# ...and find the LOCAL database, not blackwell
+	find . -name \*.conf -exec perl -p -i -e 's/Blackwell/127.0.0.1/gi' \{\} \;
+    fi
+    make clean
+    make test-LKS || echo "Cannot make test-LKS"
+    cd ../..
+fi
 
 echo `date`: Polynomial compilation tests
 make kelvin-POLYCOMP_DL
@@ -155,4 +189,4 @@ if test "${HOSTNAME:0:4}" != "Levi"; then
     rm -rf trunk
 fi
 # Leave evidence of success
-cp $BASH_SOURCE.log $HOME/specific/kelvin_trunk_revision_${revision}_TESTED.GOOD
+cp $BASH_SOURCE.log $HOME/specific/kelvin_trunk_revision_${to_test}_TESTED.GOOD

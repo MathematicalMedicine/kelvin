@@ -77,7 +77,7 @@ c=1
 while :
 do
   # Reveal work to be done
-    FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
+    FixFree=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
 
   # Enqueue no more servers than DB server threads until we're sure they're needed (and then by hand)
   for ((servs=1; servs<lks_server_count; servs++)); do
@@ -88,13 +88,13 @@ do
   while :
   do
     # Reveal work to be done
-    FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
+    FixFree=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
 
-    ToDos=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId;")
+    ToDos=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId;")
     if test $ToDos -eq 0 ; then
         break;
     fi
-    Servers=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Servers where StudyId = $StudyId AND ExitStatus IS NULL;")
+    Servers=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="Select count(*) from Servers where StudyId = $StudyId AND ExitStatus IS NULL;")
     if test $Servers -eq 0 ; then
         echo There are still Regions with incomplete work and no more servers are running!
         exit 1
@@ -102,14 +102,14 @@ do
     echo Waiting for servers to finish
   done
   # Reveal work to be done
-  FixFree=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
+  FixFree=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="call Q('FixFree');")
   # Run the client to see if any splits occur
   qrsh "cd `pwd`; $KELVIN_ROOT/kelvin-study client-newTP.conf --ProgressLevel 2 --ProgressDelaySeconds 0"
   cp br.out br.out.$c
   c=$((c+1))
   grep WARNING br.out || { break; }
   # Get the new set of trait positions
-  TPs=$(mysql --host $4 --user $6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct a.RefTraitPosCM from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId AND a.RefTraitPosCM > 0.0;" | tr "\n" " ")
+  TPs=$(mysql --host=$4 --user=$6 --password=$7 $5 --batch --skip-column-names --execute="Select distinct a.RefTraitPosCM from Regions a, RegionModels b where a.AnalysisId = $AnalysisId AND a.RegionId = b.RegionId AND a.RefTraitPosCM > 0.0;" | tr "\n" " ")
   grep -vi TraitPosition client.conf > client-newTP.conf
   # Add them one per line to be safe with line length
   for tp in $TPs;  do   echo "In the loop";  echo "TraitPosition $tp" >> client-newTP.conf; done

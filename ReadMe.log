@@ -1,0 +1,1 @@
+[Wed Dec 16 17:00:32 EST 2020][RESC02DN2UNMD6R][whv001][/Users/whv001/source/kelvin/trunk] Had to export LIBDIR=/usr/local/Cellar/openssl\@1.1/1.1.1i/lib/ to avoid error linking with libssl for kelvin-study.
