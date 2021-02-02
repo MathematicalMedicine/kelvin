@@ -74,13 +74,24 @@ case $HOSTNAME in
     ygg** )  # yggdrasil has no contact, so we have to accept hand-outs
         tar xvzf ~/trunk.tar.gz
 	rm ~/trunk.tar.gz
+	version=$(cat trunk/.svnversion)
+	to_test=${version%:*}
+	cd trunk
 	;;
     opt* )   # OSC is in the same boat as yggie
         rebuildFlags="INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib"
 	# Don't delete as we may want it from outside
         tar xvzf ~/trunk.tar.gz
+	version=$(cat trunk/.svnversion)
+	to_test=${version%:*}
+	cd trunk
 	;;
     * )   # Assume we have svn access, so update or get a fresh copy
+	# Keep franklin on the rails
+	if test -s /etc/profile.d/z00_lmod.sh; then
+	    source /etc/profile.d/z00_lmod.sh
+	    module load GCC/7.3.0
+	fi
 	echo Identifying the latest successfully tested revision
 	last=$(ls -lsrt kelvin_trunk_revision_*_TESTED.* | tail -1)
 	echo Last run completed recorded as ${last}
@@ -109,14 +120,14 @@ case $HOSTNAME in
 	    make clean
 	    svn update -r ${to_test}
 	fi
+	# Apply fixes to the management of tests (for the old ones, but meh)
+	svn update test-suite/frontend/EstimateFrequency/casecontrol-qt/Makefile 
+	svn update test-suite/frontend/combinations/Epi+Estimate/Makefile
+	svn update test-suite/frontend/combinations/Estimate+Count/Makefile
+	svn update test-suite/frontend/combinations/ThreeWay/Makefile
 	;;
 esac
 
-# Apply fixes to the management of tests
-svn update test-suite/frontend/EstimateFrequency/casecontrol-qt/Makefile 
-svn update test-suite/frontend/combinations/Epi+Estimate/Makefile
-svn update test-suite/frontend/combinations/Estimate+Count/Makefile
-svn update test-suite/frontend/combinations/ThreeWay/Makefile
 # Likelihood server tests are problematic until recently
 echo -n "Check likelihood server for revision ${to_test}..."
 if test ${to_test} -ge 4524 -a test ${to_test} -lt 4543; then
@@ -127,6 +138,8 @@ if test ${to_test} -ge 4524 -a test ${to_test} -lt 4543; then
 else
     echo "OK"
 fi
+
+make clean
 
 # GSL tends to wander, so make sure that INCDIR and LIBDIR are set if needed
 echo `date`: Full build with INCDIR as $INCDIR and LIBDIR as $LIBDIR
