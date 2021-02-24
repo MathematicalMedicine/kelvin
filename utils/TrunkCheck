@@ -100,14 +100,14 @@ case $HOSTNAME in
 	# Note that either "GOOD" or "BROKEN" will move to the next version (or anything but "BAD"!)
 	if test "${quality}" = "BAD"; then
 	    echo Not testing further as last test failed.
-	    exit
+	    exit 8
 	fi
 	to_test=$((revision + 1))
 	evision=$(svn info $SVNBCMM/kelvin/trunk | grep 'evision')
 	latest=${evision#*evision* }
 	if test $to_test -gt $latest; then
 	    echo Not testing further as up-to-date.
-	    exit
+	    exit 0
 	fi
 	echo Will test revision ${to_test}
 	if test ! -s trunk/kelvin.c; then
@@ -195,6 +195,7 @@ esac
 cd $HOME/specific
 find . \( -name kelvin\*.log -or -name cycle.out \) -exec egrep -i -e "[kK]elvin.* V[0-9\.]+ edit [0-9\.]+|^real\s+[0-9]+"  \{\} /dev/null \; \
     | perl -S -n logStats.pl >>Inserts_$HOSTNAME-`date +"%Y%m%d"`.sql
+for i in Inserts_*sql; do cat "${i}" | mysql --defaults-extra-file=~/DATABASE-TO-USE.cnf log; rm "${i}"; done
 
 echo `date`: Clean-up if it is not on the cluster
 if test "${HOSTNAME:0:4}" != "Levi"; then
