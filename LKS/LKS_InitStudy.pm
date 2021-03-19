@@ -3,7 +3,7 @@
 # Creates a new Study within a LKS database and adds that which the study will
 # be analyzing to same.
 
-package LKS_InitStudy v2.0.0;
+package LKS_InitStudy v2.0.1;
 
 use v5.20;
 use warnings 'FATAL';
@@ -19,7 +19,7 @@ use IO::File;
 
 use BCMM::CLIParser;
 use BCMMTools;
-use RunSQLScript;
+use RunSQLScript v1.1.2;
 use KelvinDataset v1.4.0;
 use KelvinConfig v1.5.0;
 use KelvinFamily v1.4.0;
@@ -126,7 +126,7 @@ sub init_study_tables {
     ];
     
     my $dbh = RunSQLScript::connect_to_db($host, $dbname, $user, $pass,
-            undef, undef, $verbosemode);
+            undef, undef, undef, $verbosemode);
     my $rowcount = $dbh->do("Set SQL_MODE=STRICT_ALL_TABLES");
     
     foreach my $sqlscriptpair (@$sqlscriptnames) {
