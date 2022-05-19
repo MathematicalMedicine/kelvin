@@ -1,0 +1,69 @@
+cff-version: 1.2.0
+title: Kelvin
+message: "If you use this software, please cite the paper described below."
+type: software
+repository-code: 'https://github.com/MathematicalMedicine/kelvin'
+url: 'https://kelvin.mathmed.org'
+license: GPL-3.0-or-later
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Vieland
+      given-names: Veronica
+      affiliation: "Battelle Center for Mathematical Medicine, Research Institute at Nationwide Children's Hospital, Ohio State University, Columbus, Ohio; Department of Pediatrics and Statistics, Ohio State University, Columbus, Ohio"
+    - family-names: Huang
+      given-names: Yungui
+      affiliation: "Battelle Center for Mathematical Medicine, Research Institute at Nationwide Children's Hospital, Ohio State University, Columbus, Ohio"
+    - family-names: Seok
+      given-names: Sang-Cheol
+      affiliation: "Battelle Center for Mathematical Medicine, Research Institute at Nationwide Children's Hospital, Ohio State University, Columbus, Ohio"
+    - family-names: Burian
+      given-names: John
+      affiliation: "Battelle Center for Mathematical Medicine, Research Institute at Nationwide Children's Hospital, Ohio State University, Columbus, Ohio"
+    - family-names: Catalyurek
+      given-names: Umit
+      affiliation: "Department of Biomedical Informatics, Ohio State University, Columbus, Ohio"
+    - family-names: O'Connell
+      given-names: Jeffrey
+      affiliation: "Department of Medicine, University of Maryland School of Medicine, Baltimore, Md."
+    - family-names: Segre
+      given-names: Alberto
+      affiliation: "Department of Computer Science, University of Iowa, Iowa City, Iowa, USA"
+    - family-names: Valentine-Cooper
+      given-names: William
+      affiliation: "Battelle Center for Mathematical Medicine, Research Institute at Nationwide Children's Hospital, Ohio State University, Columbus, Ohio"
+  doi: "10.1159/000330634"
+  journal: "Human Heredity"
+  month: 12
+  start: 276
+  end: 288
+  title: "KELVIN: A Software Package for Rigorous Measurement of Statistical Evidence in Human Genetics"
+  issue: 72
+  year: 2011
+authors:
+  - family-names: Vieland
+    given-names: Veronica
+    email: vjv@mathmed.org
+    affiliation: Mathematical Medicine LLC
+  - family-names: Huang
+    given-names: Yungui
+  - family-names: Seok
+    given-names: Sang-Cheol
+    email: scs@mathmed.org
+  - family-names: Burian
+    given-names: John
+    email: jmb@mathmed.org
+  - family-names: Catalyurek
+    given-names: Umit
+  - family-names: O'Connell
+    given-names: Jeffrey
+  - family-names: Segre
+    given-names: Alberto
+  - family-names: Valentine-Cooper
+    given-names: William
+    email: wvc@mathmed.org
+    affiliation: Mathematical Medicine LLC
+  - family-names: Valentine-Cooper
+    given-names: Jo
+    email: jvc@mathmed.org
+    affiliation: Mathematical Medicine LLC

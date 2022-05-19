@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright (C) 2011, 2022 Mathematical Medicine LLC
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -5,8 +7,6 @@
 # any later version.
 # You should have received a copy of the GNU General Public License along
 # with this program. If not, see <https://www.gnu.org/licenses/>.
-
-#!/bin/bash
 kp=$(dirname $0)
 kp=${kp%/LKS*}
 $kp/kelvin-study $1.conf --ProgressLevel 2 --ProgressDelaySeconds 0 &
