@@ -1,13 +1,15 @@
-
-/**********************************************************************
- * Copyright 2010, Nationwide Children's Research Institute.  
- * All rights reserved.
- * Permission is hereby given to use this software 
- * for non-profit educational purposes only.
- **********************************************************************/
-
 #ifndef __PARENTALPAIR_H__
 #define __PARENTALPAIR_H__
+/* Copyright (C) 2006, 2010, 2022 Mathematical Medicine LLC
+ * 
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
 
 /* each nuclear family can have many ParentalPair depends on the 
  * possible genotypes of the father and mother 

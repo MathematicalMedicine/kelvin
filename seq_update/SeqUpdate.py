@@ -1,9 +1,21 @@
+#!/usr/bin/env python
 """
 This is a front-end to the Calculate Sequentially Updated PPL program that
 accompanies Kelvin, implemented as a dialog box that assembles a series of
 command line arguments based on user choices.
 
 """
+
+# Author: Sang-Cheol Seok
+# Converted to standalone form by Jo Valentine-Cooper
+#
+# Copyright (C) 2011, 2015, 2022 Mathematical Medicine LLC
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+# You should have received a copy of the GNU General Public License along
+# with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import os
 import wx

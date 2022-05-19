@@ -1,3 +1,12 @@
+-- Copyright (C) 2014, 2022 Mathematical Medicine LLC
+-- 
+-- This program is free software: you can redistribute it and/or modify it
+-- under the terms of the GNU General Public License as published by the Free
+-- Software Foundation, either version 3 of the License, or (at your option)
+-- any later version.
+-- 
+-- You should have received a copy of the GNU General Public License along
+-- with this program. If not, see <https://www.gnu.org/licenses/>.
 Insert into DModelParts (MPId, DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen) values (1,-1.000000000000000000000000000000,-1.000000000000000000000000000000,-1.000000000000000000000000000000,-1.000000000000000000000000000000,-1.000000000000000000000000000000);
 Insert into DModelParts (MPId, DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen) values (4453,0.005511584217331764000000000000,0.000000000000000000000000000000,0.000000000000000000000000000000,0.000000000000000000000000000000,0.000000000000000000000000000000);
 Insert into DModelParts (MPId, DGF, BigPen, BigLittlePen, LittleBigPen, LittlePen) values (13267,0.005511584217331764000000000000,0.011023168434663530000000000000,0.000243020484677924700000000000,0.000243020484677924700000000000,0.000060755121169481180000000000);

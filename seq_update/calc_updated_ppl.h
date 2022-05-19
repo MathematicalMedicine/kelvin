@@ -1,3 +1,13 @@
+/* Copyright (C) 2010, 2022 Mathematical Medicine LLC
+ * 
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
   /*Dcuhre rule points and weights for D' and theta or only theta */
 double old_dcuhre2[141][4] = {
   {0.0, 0.00234550385, 0.118463442, 0.0},

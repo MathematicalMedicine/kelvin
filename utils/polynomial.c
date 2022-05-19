@@ -1,15 +1,19 @@
 /**
 @file polynomial.c
 
- Polynomial - build and evaluate arbitrarily complex polynomials.
+  Polynomial - build and evaluate arbitrarily complex polynomials.
 
- Written by Hongling Wang. Polynomial reduction optimizations,
- reorganization, compilation, tuning and documentation by Bill 
- Valentine-Cooper.
+  Written by Hongling Wang. Polynomial reduction optimizations,
+  reorganization, compilation, tuning and documentation by Bill 
+  Valentine-Cooper.
 
- Copyright 2010, Nationwide Children's Research Institute.  All rights
- reserved.  Permission is hereby given to use this software for
- non-profit educational purposes only.
+  Copyright (C) 2007, 2008, 2010, 2022 Mathematical Medicine LLC
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by the Free
+  Software Foundation, either version 3 of the License, or (at your option)
+  any later version.
+  You should have received a copy of the GNU General Public License along
+  with this program. If not, see <https://www.gnu.org/licenses/>.
 
   Builds and evaluates arbitrarily complex polynomials. Collects
   subpolynomials of the same type (addition or multiplication) into

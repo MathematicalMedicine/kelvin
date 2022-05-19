@@ -1,7 +1,18 @@
 #!/usr/bin/env perl
+# Copyright (C) 2015, 2022 Mathematical Medicine LLC
+# 
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+# 
+# You should have received a copy of the GNU General Public License along
+# with this program. If not, see <https://www.gnu.org/licenses/>.
 
 # Adds an allocatable "database" resource to our compute nodes. Necessary for
 # Kelvin-LKS to function properly!
+# 
+# Author: Jo Valentine-Cooper <jvc@mathmed.org>
 
 package LKS_setupSGEDB v0.1.0;
 

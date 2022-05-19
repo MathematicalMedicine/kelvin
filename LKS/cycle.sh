@@ -15,6 +15,13 @@
 # for all pedigree/positions. Otherwise servers could be gobbling-up 50 models, each of which 
 # takes days to run, and running them in serial.
 #
+# Copyright (C) 2010, 2022 Mathematical Medicine LLC
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+# You should have received a copy of the GNU General Public License along
+# with this program. If not, see <https://www.gnu.org/licenses/>.
 # $Id$
 #
 shopt -s expand_aliases
