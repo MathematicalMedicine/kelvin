@@ -1,6 +1,6 @@
 #!/bin/bash -xe
 #
-# Acquire the kelvin trunk, build all flavors of kelvin, and test every bit of it and collect some
+# Acquire the kelvin repo, build all flavors of kelvin, and test every bit of it and collect some
 # performance statistics on 7 different platforms:
 #
 # - 64-bit Linux on our Levi-Montalcini cluster (our primary run environment)
@@ -16,20 +16,8 @@
 # version is run manually). E-mails me if there's a problem. The performance statistics are wrapped
 # in SQL in the $HOME/specific directory in a file with date stamp for execution under MySQL.
 #
-# IF YOU JUST WANT TO SPOT-CHECK some class of tests spread across the queuing system:
-# for f in $(find trunk/test-suite/ -name Makefile -print0 | xargs --null egrep --files-with-matches \
-#     'test-USE_DL :$' | grep SA_.T); \
-#     do cd $(dirname $f); echo -n "At $PWD: "; \
-#     qsub -cwd -v COMMAND="~/specific/SpotCheck test-USE_DL" -N adhoc ~/kit/bin/qsub_wrapper.sh; \
-#     cd $OLDPWD; done
-# or maybe...
-# for f in $(find trunk/test-suite/ -name Makefile -print0 | xargs -0 egrep --files-with-matches \
-#     'test-LKS :$' ); \
-#     do cd $(dirname $f); echo -n "At $PWD: "; \
-#     ~/specific/SpotCheck test-LKS & cd $OLDPWD; done
 
 trap onexit 0
-echo '$Id: TrunkCheck 291 2012-03-19 12:45:37Z whv001 $'
 
 function onexit() {
     local exit_status=${1:-$?}
@@ -45,17 +33,17 @@ function onexit() {
             MAIL="perl $HOME/kit/bin/NCHSendMail.pl -s "
 	    ;;
         * )  # Trust mailer configuration on everything else (hah!)
-	    MAIL="mail -r William.Valentine-Cooper@NationwideChildrens.org -s "
+	    MAIL="mail -r wvc@MathMed.org -s "
 	    ;;
     esac
     if test $exit_status -ne 0 ; then
 
 	echo Exiting $BASH_SOURCE at `date` with status of $exit_status
-	cp $BASH_SOURCE.log $HOME/specific/kelvin_trunk_revision_${to_test}_TESTED.BAD
+	cp $BASH_SOURCE.log $HOME/specific/kelvin_TESTED.BAD
 	echo "Sending mail with [${MAIL}], [${BASH_SOURCE}] and [${HOSTNAME}]"
-	${MAIL} "$BASH_SOURCE on $HOSTNAME failed with status $exit_status" william.valentine-cooper@nationwidechildrens.org </dev/null
+	${MAIL} "$BASH_SOURCE on $HOSTNAME failed with status $exit_status" wvc@MathMed.org </dev/null
     else
-	${MAIL} "$BASH_SOURCE on $HOSTNAME succeeded" william.valentine-cooper@nationwidechildrens.org </dev/null
+	${MAIL} "$BASH_SOURCE on $HOSTNAME succeeded" wvc@MathMed.org </dev/null
     fi
     exit $exit_status
 }
@@ -65,79 +53,10 @@ set -xe # Because it isn't enough for Darwin's cron for us to have it on the she
 export PATH=$HOME/kit/bin:$PATH # ...so this ought to do it
 
 echo `date`: Starting
-export KELVIN_ROOT=$HOME/specific/trunk
-export KELVIN_SCRIPT=$HOME/specific/trunk
+export KELVIN_ROOT=$HOME/source/kelvin
+export KELVIN_SCRIPT=$HOME/source/kelvin
 export LD_LIBRARY_PATH=$KELVIN_ROOT/lib:${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH}
-cd $HOME/specific
-
-case $HOSTNAME in
-    ygg** )  # yggdrasil has no contact, so we have to accept hand-outs
-        tar xvzf ~/trunk.tar.gz
-	rm ~/trunk.tar.gz
-	version=$(cat trunk/.svnversion)
-	to_test=${version%:*}
-	cd trunk
-	;;
-    opt* )   # OSC is in the same boat as yggie
-        rebuildFlags="INCDIR=/home/ccri0005/include LIBDIR=/home/ccri0005/lib"
-	# Don't delete as we may want it from outside
-        tar xvzf ~/trunk.tar.gz
-	version=$(cat trunk/.svnversion)
-	to_test=${version%:*}
-	cd trunk
-	;;
-    * )   # Assume we have svn access, so update or get a fresh copy
-	# Keep franklin on the rails
-	if test -s /etc/profile.d/z00_lmod.sh; then
-	    source /etc/profile.d/z00_lmod.sh
-	    module load GCC/7.3.0
-	fi
-	echo Identifying the latest successfully tested revision
-	last=$(ls -lsrt kelvin_trunk_revision_*_TESTED.* | tail -1)
-	echo Last run completed recorded as ${last}
-	left=${last%_TESTED*}; revision=${left#*revision_}
-	quality=${last#*_TESTED.}
-	# Note that either "GOOD" or "BROKEN" will move to the next version (or anything but "BAD"!)
-	if test "${quality}" = "BAD"; then
-	    echo Not testing further as last test failed.
-	    exit 8
-	fi
-	to_test=$((revision + 1))
-	evision=$(svn info $SVNBCMM/kelvin/trunk | grep 'evision')
-	latest=${evision#*evision* }
-	if test $to_test -gt $latest; then
-	    echo Not testing further as up-to-date.
-	    exit 0
-	fi
-	echo Will test revision ${to_test}
-	if test ! -s trunk/kelvin.c; then
-	    echo "Nothing checked-out, will check-out revision ${to_test} now."
-	    svn checkout -r ${to_test}  $SVNBCMM/kelvin/trunk
-	    cd trunk
-	else
-	    echo "Will adjust to revision ${to_test}."
-	    cd trunk
-	    make clean
-	    svn update -r ${to_test}
-	fi
-	# Apply fixes to the management of tests (for the old ones, but meh)
-	svn update test-suite/frontend/EstimateFrequency/casecontrol-qt/Makefile 
-	svn update test-suite/frontend/combinations/Epi+Estimate/Makefile
-	svn update test-suite/frontend/combinations/Estimate+Count/Makefile
-	svn update test-suite/frontend/combinations/ThreeWay/Makefile
-	;;
-esac
-
-# Likelihood server tests are problematic until recently
-echo -n "Check likelihood server for revision ${to_test}..."
-if test ${to_test} -ge 4524 -a test ${to_test} -lt 4543; then
-    echo "NOPE, nothing doing!"
-    cd test-suite
-    rm -rf likelihood_server
-    cd ..
-else
-    echo "OK"
-fi
+cd $HOME/source/kelvin
 
 make clean
 
@@ -158,38 +77,15 @@ echo "`date`: LKS programs & DB-only testing - not current scripting"
 # Make databaseSupport.c tolerable for frikin' new MySQL development
 perl -p -i -e 's/my_bool/bool/g' database/databaseSupport.c
 make kelvin-study
-if test -d test-suite/likelihood_server; then
-    cd test-suite/likelihood_server
-    if test "${HOSTNAME:0:4}" = "RESC"; then
-	# Make desktop/laptop runs do perly stuff correctly...
-	source ~/perl5/perlbrew/etc/bashrc || true
-	perlbrew use perl-5.32.0 || true
-	# ...and find the LOCAL database, not blackwell
-	find . -name \*.conf -exec perl -p -i -e 's/Blackwell/127.0.0.1/gi' \{\} \;
-    fi
-    make clean
-    make test-LKS || echo "Cannot make test-LKS"
-    cd ../..
-fi
+make clean
+make test-LKS || echo "Cannot make test-LKS"
 
 echo `date`: Polynomial compilation tests
 make kelvin-POLYCOMP_DL
 make kelvin-POLYUSE_DL
 make kelvin-POLYCODE_DL_FAKEEVALUATE_SSD
-
-case `uname -s` in
-    CYGWIN* ) # Takes too long
-        ;;
-    Darwin )  # Some kind of issue on Macs is hanging some multithreaded POLYUSE runs
-	# Let's see if that is still happening
-	export OMP_NUM_THREADS=8
-	make test-USE_DL
-	;;
-    * )
-	export OMP_NUM_THREADS=8
-	make test-USE_DL
-	;;
-esac
+export OMP_NUM_THREADS=8
+make test-USE_DL
 
 # Grab performance data while we can...
 cd $HOME/specific
@@ -197,10 +93,3 @@ find . \( -name kelvin\*.log -or -name cycle.out \) -exec egrep -i -e "[kK]elvin
     | perl -S -n logStats.pl >>Inserts_$HOSTNAME-`date +"%Y%m%d"`.sql
 for i in Inserts_*sql; do cat "${i}" | mysql --defaults-extra-file=~/DATABASE-TO-USE.cnf log; rm "${i}"; done
 
-echo `date`: Clean-up if it is not on the cluster
-if test "${HOSTNAME:0:4}" != "Levi"; then
-    cd $HOME/specific
-    rm -rf trunk
-fi
-# Leave evidence of success
-cp $BASH_SOURCE.log $HOME/specific/kelvin_trunk_revision_${to_test}_TESTED.GOOD
