@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 #
 # Run the likelihood server version of kelvin as cleverly as possible to minimize the overall
 # runtime. Study-specific versions are common, with changes reflecting the various servers
