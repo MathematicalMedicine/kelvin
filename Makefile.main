@@ -246,8 +246,12 @@ FILE_LDFLAGS += -rdynamic
 FILE_CFLAGS += -DLKSDEBUG
 
 ifeq ($(strip $(USE_STUDYDB)), yes)
-  FILE_CFLAGS += -DSTUDYDB $(shell mariadb_config --include)
-  FILE_LDFLAGS += -lklvndb $(shell mariadb_config --libs)
+  FILE_CFLAGS += -DSTUDYDB $(shell mysql_config --include)
+  FILE_LDFLAGS += -lklvndb $(shell mysql_config --libs)
+
+  # Why shouldn't this have to be there for
+  FILE_CFLAGS += $(shell pkg-config --cflags libzstd libssl libcrypto)
+  FILE_LDFLAGS += $(shell pkg-config --libs libzstd libssl libcrypto)
 endif
 
 # If GSL support has been enabled, in any fashion

@@ -1,2 +1,9 @@
 [Wed Dec 16 17:00:32 EST 2020][RESC02DN2UNMD6R][whv001][/Users/whv001/source/kelvin/trunk] Had to export LIBDIR=/usr/local/Cellar/openssl\@1.1/1.1.1i/lib/ to avoid error linking with libssl for kelvin-study.
 [Mon Jan 18 13:19:56 EST 2021][r1pl-hpcf-log01][whv001][/gpfs0/home/gdvielandlab/whv001/scratch/trunk] Testing on Franklin
+[Sun May  1 15:37:53 EDT 2022][Huygens.local][whv001][/Volumes/MathMed/source/git/kelvin] Had to brew install gsl
+[Sun May  1 16:02:40 EDT 2022][Huygens.local][whv001][/Volumes/MathMed/source/git/kelvin] Knew I needed pkg-config for gsl but it is already in.
+[Mon May  2 09:34:06 EDT 2022][Huygens.local][whv001][/Volumes/MathMed/source/git/kelvin] Need to export CPATH="/opt/homebrew/Cellar/mysql/8.0.28_1/include/mysql for finding mysql.h
+[Mon May  2 09:43:09 EDT 2022][Huygens.local][whv001][/Volumes/MathMed/source/git/kelvin] ATM, I have to add   -L/opt/homebrew/Cellar/mysql/8.0.28_1/lib/ -lmysqlclient explicitly to the linker command.
+[Mon May  2 16:16:00 EDT 2022][Huygens.local][whv001][/Volumes/MathMed/source/git/kelvin] Turns out I didn't have to stretch to find mysql stuff as all that was needed to change mariadb reference to mysql in Makefile
+[Mon May  2 16:18:52 EDT 2022][Huygens.local][whv001][/Volumes/MathMed/source/git/kelvin] For zstd, needed export LIBDIR=/opt/homebrew/lib/
+[Mon May  2 17:22:51 EDT 2022][Huygens.local][whv001][/Volumes/MathMed/source/git/kelvin] Had to set PKG_CONFIG_PATH to include openssl as: /Users/whv001/kit/arm64/Darwin/lib/pkgconfig:/Users/whv001/kit/arm64/Darwin/lib64/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/homebrew/Cellar/openssl@3/3.0.2/lib/pkgconfig, and add pkg-config --libs and such to Makefile.main to get a full rebuild.sh to work.
