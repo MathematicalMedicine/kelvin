@@ -1,10 +1,18 @@
+Version 2.8.0, 2022-06-01
+  First release unambiguously licensed under the GPL version 3, following
+    transfer of stewardship of Kelvin to Mathematical Medicine LLC.
+    (Earlier releases may also be used under GPLv3 owing to terms of compliance
+    with libmysqlclient and libgsl licenses, but were not explicitly noted as
+    such due to an oversight.)
+  We are also reevaluating our pro forma attempts to distribute our LKS
+    pipeline scripts. They continue to be included in the distribution but are
+    not current.
+
 Version 2.7.1, 2019-12-20
   IMPORTANT: Starting with this release, Kosambi centiMorgan maps are hereby
     deprecated due to unreconcilable errors discovered in their use. Kelvin
     now uses Haldane centiMorgan maps by default; Kosambi may be forced by use
     of the "AllowKosambiMap" directive.
-  We have also ceased pro forma attempts to distribute our internal-only LKS
-    pipeline scripts.
 
 Version 2.7.0, 2019-06-06
   LKS:
