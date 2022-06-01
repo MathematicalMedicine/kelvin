@@ -828,8 +828,6 @@ Advanced Directive Reference
 * [DiagMAX_DIAG_FACILITY](#diagmax-diag-facility)
 
 
-Kelvin can be configured to perform calculations based on fixed grids of parameter values. This option should be used with extreme caution for purposes of computing PPLs because it is not compatible with Kelvin's underlying numerical integration routines and can return erroneous BRs. However, it can be useful in cases where, for instance, a very fine grid of values is wanted for purposes of increasing precision of the MOD and/or maximizing values, or for calculation of fixed-model LODs. It can also be configured to reproduce the "fixed-grid" numerical integration routines used by older versions of Kelvin for purposes of comparison with results generated under those versions. The [FixedModels](#fixedmodels) directive enables this behavior, and is required for any advanced directives that fix points of the trait model.
-
 #### Input and Output
 
 ##### CountFile
@@ -850,7 +848,7 @@ Kelvin can be configured to perform calculations based on fixed grids of paramet
 
 ##### SurfaceFile
 :   `SurfaceFile <filename>`
-:   Specifies the name of an output file to which LOD values (arrived at in the middle of BR calculations for both dynamic and fixed grids) will be written. The LOD values are used either for validation purposes, or to feed into the visualization tools (LiVit, DiVit, or PLOT). This option is for debugging purposes.
+:   Specifies the name of an output file to which LOD values (arrived at in the middle of BR calculations for both dynamic and fixed grids) will be written. The LOD values are used either for validation purposes, or to feed into visualization tools (LiVit, DiVit, or PLOT). This option is for debugging purposes.
 
 ##### SurfacesPath
 :   `SurfacesPath <dirname>`
@@ -885,6 +883,8 @@ Kelvin can be configured to perform calculations based on fixed grids of paramet
 
 
 #### Trait Model - Fixed Models
+
+Kelvin can be configured to perform calculations based on fixed grids of parameter values. This option should be used with extreme caution for purposes of computing PPLs because it is not compatible with Kelvin's underlying numerical integration routines and can return erroneous BRs. However, it can be useful in cases where, for instance, a very fine grid of values is wanted for purposes of increasing precision of the MOD and/or maximizing values, or for calculation of fixed-model LODs. It can also be configured to reproduce the "fixed-grid" numerical integration routines used by older versions of Kelvin for purposes of comparison with results generated under those versions. The [FixedModels](#fixedmodels) directive enables this behavior, and is required for any advanced directives that fix points of the trait model.
 
 ##### FixedModels
 :   `FixedModels`

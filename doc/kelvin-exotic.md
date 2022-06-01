@@ -121,7 +121,7 @@ The Kelvin binaries referenced below can be produced by executing `make specialt
     In the illustrated example, there are three separate machines being used. In practice, our entire cluster of 64 machines has at times been used to quickly compile and link a large number of polynomials. Once all generated source has been compiled, a second Kelvin binary, `kelvin-POLYUSE_DL`, is run. It uses dynamic libraries whenever it finds them instead of building the equivalent polynomials. If no dynamic library is found for a polynomial, the polynomial will be built-in memory. This step is best performed on a multi-core machine, and will, in the near future, be able to be distributed by other mechanisms.
 
 
-### BCMM-specific Instructions for Compiled Single Run
+### MM-specific Instructions for Compiled Single Run
 
 While this approach is the easy way out, it's also the least efficient. If you have very large polynomials, you'll be waiting a long time for the compiles to complete, and will have to run only on 16Gb nodes.
 
@@ -143,7 +143,7 @@ The default optimization level for compiles is "0" (zero), which compiles fairly
 
 Finally, note that after you've gone thru the painful process of compiling all of the dynamic libraries needed for your analysis, you can start running `kelvin-POLYUSE_DL` to redo the analysis and get better performance not only because you're not doing compilation anymore, but also because `kelvin-POLYUSE_DL` is built with OpenMP support, unlike `kelvin-POLYCOMP_DL`. Remember to set `OMP_NUM_THREADS` to something like the number of available cores to get the most you can, and don't be disappointed if you don't see a big improvement -- our multi-threading is by pedigrees, so if there are only a couple, or they're very unbalanced (one huge one and a bunch of small ones), it might as well be single-threaded.
 
-### BCMM-specific Instructions for Compiled Multiple Runs
+### MM-specific Instructions for Compiled Multiple Runs
 
 This approach is best for many large pedigrees, and requires a bit of work. If you only have a few simple pedigrees, stick with the Compiled Single Run method.
 
@@ -158,7 +158,7 @@ Once all of the polynomials generated have been compiled -- and you can tell whe
 Likelihood Server
 =================
 
-"Likelihood Server" ("LKS") is an operating mode for Kelvin internal to BCMM's Vieland Lab. It makes use of a variant of the original Kelvin program, paired with additional analysis programs by way of a "likelihood server" (implemented using MySQL) to enable alternative likelihood calculation algorithms (MC-MC using blocked Gibbs sampling<sup>[1](#references)</sup> derived from [JPSGCS](http://balance.med.utah.edu/wiki/index.php/JPSGCS) and Lander-Green<sup>[2](#references)</sup> via Merlin<sup>[3](#references)</sup>) and parallelization of analysis.
+"Likelihood Server" ("LKS") is an operating mode for Kelvin internal to MathMed. It makes use of a variant of the original Kelvin program, paired with additional analysis programs by way of a "likelihood server" (implemented using MySQL) to enable alternative likelihood calculation algorithms (MC-MC using blocked Gibbs sampling<sup>[1](#references)</sup> derived from [JPSGCS](http://balance.med.utah.edu/wiki/index.php/JPSGCS) and Lander-Green<sup>[2](#references)</sup> via Merlin<sup>[3](#references)</sup>) and parallelization of analysis.
 
 Kelvin LKS presently **only** works with Multipoint analyses.
 
@@ -203,8 +203,8 @@ Installation of our pro forma scripting system requires several steps:
 
 2. Add a "database" INT resource to the scheduler and add it to each DB node's complex values. A Perl script (`LKS_setupSGEDB.pm`) is provided that can do this for you; run it with the `--help` option for guidance.
 
-3. Edit Makefile.main, and change these variables:
-    `LKSPE_MYSQL_BASE`: This is the directory where the MySQL Server binary distribution is located on each "database" node.
+3. Edit Makefile.main, and change these variables:  
+    `LKSPE_MYSQL_BASE`: This is the directory where the MySQL Server binary distribution is located on each "database" node.  
     `LKSPE_JOB_SUBMITS_JOBS`: This should be set if your cluster requires some sort of additional command-line option(s) for qsub to indicate jobs that submit other jobs.
 
 4. Run `make install-lks`. Kelvin-LKS, Kelvin-original, and associated programs will be built, assembled, and installed in the location you specified in the Makefile.
@@ -239,6 +239,6 @@ Final results of a Kelvin-LKS analysis will be in the file `pooled/pooled.ppl.ou
 References
 ==========
 
-1. Thomas A., Gutin A., Abkevich V., and Bansal A. (2000). Multilocus linkage analysis by blocked Gibbs sampling. _Stat. Comput._ 10, 259-269.
-2. Lander, E.S. & Green, P. Construction of multilocus genetic linkage maps in humans. _Proc Natl Acad Sci U S A_ 84, 2363-7 (1987). 
-3. Abecasis GR, Cherny SS, Cookson WO and Cardon LR (2002). Merlin-rapid analysis of dense genetic maps using sparse gene flow trees. _Nat Genet_ 30:97-101.
+1. Thomas A, Gutin A, Abkevich V, Bansal A. [Multilocus linkage analysis by blocked Gibbs sampling.](https://www.cs.princeton.edu/courses/archive/spr06/cos598C/papers/ThomasGutinAbkevichBansal2000.pdf) Stat Comput 10, 259-269, 2000. doi:[10.1023/A:1008947712763](https://doi.org/10.1023/A:1008947712763)
+2. Lander ES, Green P. [Construction of multilocus genetic linkage maps in humans.](https://doi.org/10.1073/pnas.84.8.2363) Proc Natl Acad Sci U S A 84, 2363-7, 1987. PMID: [3470801](https://pubmed.ncbi.nlm.nih.gov/3470801/), [PMC304651](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC304651/), doi:[10.1073/pnas.84.8.2363](https://doi.org/10.1073/pnas.84.8.2363)
+3. Abecasis GR, Cherny SS, Cookson WO, Cardon LR. [Merlin-rapid analysis of dense genetic maps using sparse gene flow trees.](https://doi.org/10.1038/ng786) Nat Genet 30(1):97-101, 202. PMID: [11731797](https://pubmed.ncbi.nlm.nih.gov/11731797/), doi:[10.1038/ng786](https://doi.org/10.1038/ng786)

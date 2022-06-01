@@ -110,7 +110,7 @@ def convert_docs():
     # markdown extensions and config
     colheaders = AddColumnHeaders(starters=
             ['212 101 0   0   1   1   3   4   1   3   2   2   1   2   1   1',
-            'CHR  MARKER       KOSAMBI'])
+            'CHR  MARKER       POSITION'])
     mdconf = {
             'extensions': ['toc', 'extra', 'codehilite', colheaders],
             'extension_configs': { 'codehilite': { 'linenums': True } },

@@ -6,7 +6,7 @@ Kelvin is a program suite for analysis of genetic data. It is based on the PPL f
 Kelvin consists of a binary core and Perl front-end combination genetic data analysis program based on the PPL framework, with likelihoods calculated via the Elston-Stewart algorithm<sup>[4](#references)</sup>. It is stable software, and has been tested on a number of hardware platforms.
 
 A discussion of the guiding philosophy of Kelvin and details on the underlying statistical methods can be found in the following reference:
-> [Vieland, V.J., et al. Kelvin: a Software Package for Rigorous Measurement of Statistical Evidence in Human Genetics. _Hum Hered_ 2011;72(4):276-88. Epub 2011 Dec 23. PMID:22189470](http://kelvin.mathmed.org/static/Kelvin.pdf)
+> Vieland VJ, Huang Y, Seok S-C, Burian J, Catalyurek U, O’Connell J, Segre A, Valentine-Cooper W. [KELVIN: a software package for rigorous measurement of statistical evidence in human genetics.](https://doi.org/10.1159/000330634) Hum Hered 72(4):276-288, 2011. PMID: [22189470](https://pubmed.ncbi.nlm.nih.gov/22189470/), [PMC3267994](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3267994/), doi:[10.1159/000330634](https://doi.org/10.1159/000330634)
 
 Details on the usage of Kelvin can be found in our [detailed usage documentation](kelvin-usage-details.html); this document provides a general overview and "getting started" information.
 
@@ -17,7 +17,7 @@ Kelvin has been tested and run on several platforms, but the reference and devel
 
 To install Kelvin, you will also need a working C compiler (GCC will do and is tested; ICC (the Intel C Compiler) has also been tested). You will also almost certainly want libgsl (the GNU Scientific Library); compiling without GSL is an option but not supported by default. pkg-config is also needed; normally this is included in any install of Linux development tools, but we've seen instances where it wasn't.
 
-Running Kelvin requires libgsl (if compiled with same) and Perl 5.8 (or any later version)
+Running Kelvin requires libgsl (if compiled with same) and Perl 5.8 (or any later version).
 
 
 Installation
@@ -78,13 +78,13 @@ Once your configuration file is created, invoke Kelvin as `Kelvin <configfile>`.
 Visualizing Results
 ===================
 
-Kelvin-formatted PPL output can be easily visualized using our graphing application, Kelviz. Kelviz is distributed separately; information on same can be found in the [Kelviz documentation](http://kelvin.mathmed.org/static/doc/kelviz/index.html) and downloads can be found on the [Kelvin website](http://kelvin.mathmed.org).
+Kelvin-formatted PPL output can be easily visualized using our graphing application, Kelviz. Kelviz is distributed separately<!--; information on same can be found in the [Kelviz documentation](http://kelvin.mathmed.org/static/doc/kelviz/index.html) and downloads can be found on the [Kelvin website](https://kelvin.mathmed.org)-->.
 
 
 References
 ==========
-1. Smith, C.A.B. Some comments on the statistical methods used in linkage investigations. _Am J Hum Genet_ 11, 289-304 (1959).
-2. Vieland, V.J. Bayesian linkage analysis, or: how I learned to stop worrying and love the posterior probability of linkage. _Am J Hum Genet_ 63, 947-54 PMID: 9758634 (1998).
-3. Vieland, V.J. Thermometers: something for statistical geneticists to think about. _Hum Hered_ 61, 144-56 PMID: 16770079 (2006).
-4. Elston, R.C. & Stewart, J. A general model for the genetic analysis of pedigree data. _Hum Hered_ 21, 523-42 (1971).
-5. Ott, J. (1976). A computer program for linkage analysis of general human pedigrees. _Am. J. Hum. Genet._ 28, 528-529.
+1. Smith C.A.B. [Some comments on the statistical methods used in linkage investigations.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1932043/) Am J Hum Genet 11(4):289-304, 1959. PMID: [13831904](https://pubmed.ncbi.nlm.nih.gov/13831904/), [PMC1932043](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1932043/)
+2. Vieland VJ. [Bayesian linkage analysis, or: How I learned to stop worrying and love the posterior probability of linkage.](https://doi.org/10.1086/302076) Am J Hum Genet 63(4):947-954, 1998. PMID: [9758634](https://pubmed.ncbi.nlm.nih.gov/9758634/), [PMC1377508](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1377508/), doi:[10.1086/302076](https://doi.org/10.1086/302076)
+3. Vieland VJ. [Thermometers: Something for statistical geneticists to think about.](https://doi.org/10.1159/000093775) Hum Hered 61:144-156, 2006. PMID: [16770079](https://pubmed.ncbi.nlm.nih.gov/16770079/), doi:[10.1159/000093775](https://doi.org/10.1159/000093775)
+4. Elston R.C. & Stewart J. [A general model for the genetic analysis of pedigree data.](https://doi.org/10.1159/000152448) Hum Hered 21:523-542, 1971. PMID: [5149961](https://pubmed.ncbi.nlm.nih.gov/5149961/), doi:[10.1159/000152448](https://doi.org/10.1159/000152448)
+5. Ott J. [A computer program for linkage analysis of general human pedigrees.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1685114/) An J Hum Genet 28(5):528-529, 1976. PMID: [984049](https://pubmed.ncbi.nlm.nih.gov/984049/), [PMC1685114](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1685114/)
