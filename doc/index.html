@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+    <title>Kelvin - User's Manual</title>
+    <style type="text/css" media="all">
+        body {
+            background-color: white;
+            color: black;
+            max-width: 55em;
+            min-width: 800px;
+            margin: auto;
+            font-family: verdana, arial, helvetica, sans-serif;
+            text-align: justify;
+        }
+        ul li {
+            padding: 0.25em;
+        }
+        img {
+            vertical-align: middle;
+            float: right;
+        }
+        dt {
+            padding-top: 0.5em;
+        }
+        .linenodiv, pre.colnum span {
+            background-color: silver;
+        }
+        pre.colnum {
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+        div.codehilite, div.codehilite pre, div.linenodiv, div.linenodiv pre {
+            margin: 0;
+            padding: 0;
+        }
+        h5+dl { margin-top: 0; }
+        h5+ul { margin-top: 0; }
+        h5 { margin-bottom: 0; }
+        dd ul { margin: 0; }
+    </style>
+</head><body>
+<h1 id="introduction-to-kelvin">Introduction to Kelvin</h1>
+<p>Kelvin is a program suite for analysis of genetic data. It is based on the PPL framework<sup><a href="#references">1, 2, 3</a></sup>, and produces output on the posterior probability (0,..,1) scale.</p>
+<p>Kelvin consists of a binary core and Perl front-end combination genetic data analysis program based on the PPL framework, with likelihoods calculated via the Elston-Stewart algorithm<sup><a href="#references">4</a></sup>. It is stable software, and has been tested on a number of hardware platforms.</p>
+<p>A discussion of the guiding philosophy of Kelvin and details on the underlying statistical methods can be found in the following reference:</p>
+<blockquote>
+<p>Vieland VJ, Huang Y, Seok S-C, Burian J, Catalyurek U, O’Connell J, Segre A, Valentine-Cooper W. <a href="https://doi.org/10.1159/000330634">KELVIN: a software package for rigorous measurement of statistical evidence in human genetics.</a> Hum Hered 72(4):276-288, 2011. PMID: <a href="https://pubmed.ncbi.nlm.nih.gov/22189470/">22189470</a>, <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3267994/">PMC3267994</a>, doi:<a href="https://doi.org/10.1159/000330634">10.1159/000330634</a></p>
+</blockquote>
+<p>Details on the usage of Kelvin can be found in our <a href="kelvin-usage-details.html">detailed usage documentation</a>; this document provides a general overview and "getting started" information.</p>
+<h1 id="prerequisites">Prerequisites</h1>
+<p>Kelvin has been tested and run on several platforms, but the reference and development platform is CentOS 6 (or any other Linux distribution of similar vintage).</p>
+<p>To install Kelvin, you will also need a working C compiler (GCC will do and is tested; ICC (the Intel C Compiler) has also been tested). You will also almost certainly want libgsl (the GNU Scientific Library); compiling without GSL is an option but not supported by default. pkg-config is also needed; normally this is included in any install of Linux development tools, but we've seen instances where it wasn't.</p>
+<p>Running Kelvin requires libgsl (if compiled with same) and Perl 5.8 (or any later version).</p>
+<h1 id="installation">Installation</h1>
+<ol>
+<li>
+<p>Edit the Makefile as follows:
+    <code>BINDIR</code>: This should point to where Kelvin and related modules and utility scripts should be located. The default is <code>/usr/local/share/kelvin</code>
+    <code>PATHDIR</code>: This should point to a directory on your $PATH where the Kelvin program will be linked. The default is <code>/usr/local/bin</code>
+    <code>OWNER</code> and <code>GROUP</code>: These should be the owner and group IDs for the Kelvin programs and utility files. The defaults are <code>root</code> for both.</p>
+</li>
+<li>
+<p>Run <code>make install</code>. Kelvin will be built, assembled, and installed in the location you specified in the Makefile.</p>
+</li>
+<li>
+<p>(optional) Verify the build worked by running <code>make check</code> (for a quick check) or <code>make test</code> (for a more involved one).</p>
+</li>
+</ol>
+<p>Uninstallation may be done by running <code>make uninstall</code>; this simply deletes all files that were installed.</p>
+<h1 id="using-kelvin">Using Kelvin</h1>
+<p>Kelvin requires four input data files, inspired by the de-facto standard formats employed by the LINKAGE program<sup><a href="#references">5</a></sup>. Details of the formats can be found in our detailed usage documentation under <a href="kelvin-usage-details.html#input-data-file-formats">"Input Data File Formats"</a>. Examples are given here showing an affected sib-pair family with three markers:</p>
+<ul>
+<li>
+<p>Pedigree File - This contains phenotypic and genotypic information. This will nearly always be in pre-MAKEPED format. (There are some cases where Kelvin will require post-MAKEPED format).</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><code><span class="err">fam1 papa 0 0 1 1 2 2 1 2 1 1</span>
+<span class="err">fam1 mama 0 0 2 1 1 1 1 2 1 1</span>
+<span class="err">fam1 kid1 papa mama 2 2 1 2 2 2 1 1</span>
+<span class="err">fam1 kid2 papa mama 1 2 2 1 1 1 1 1</span>
+</code></pre></div>
+</td></tr></table>
+</li>
+<li>
+<p>Locus File (also called Data File) - Describes marker column order in the pedigree file, starting with the position of the trait locus.</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><code><span class="err">T Trait</span>
+<span class="err">M MRK_1</span>
+<span class="err">M MRK_2</span>
+<span class="err">M MRK_3</span>
+</code></pre></div>
+</td></tr></table>
+</li>
+<li>
+<p>Frequency File - Gives the allele frequencies for the markers.</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><code><span class="err">M MRK_1</span>
+<span class="err">F 0.3 0.7</span>
+<span class="err">M MRK_2</span>
+<span class="err">F 0.35 0.65</span>
+<span class="err">M MRK_3</span>
+<span class="err">F 0.7 0.3</span>
+</code></pre></div>
+</td></tr></table>
+</li>
+<li>
+<p>Map File - Gives the chromosomal position of the markers.</p>
+<table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4</pre></div></td><td class="code"><div class="codehilite"><pre><span></span><code><span class="err">CHROMOSOME      MARKER          POSITION</span>
+<span class="err">3               MRK_1           0.33</span>
+<span class="err">3               MRK_2           0.66</span>
+<span class="err">3               MRK_2           0.99</span>
+</code></pre></div>
+</td></tr></table>
+</li>
+</ul>
+<p>Kelvin also requires a <em>configuration file</em>. Additional details on creation of same can be found in the detailed usage documentation under <a href="kelvin-usage-details.html#preparation-and-analysis-considerations">"Preparation and Analysis Considerations"</a> and the <a href="kelvin-usage-details.html#configuration-file-reference">"Configuration File Reference"</a>.</p>
+<p>Once your configuration file is created, invoke Kelvin as <code>Kelvin &lt;configfile&gt;</code>.</p>
+<h1 id="visualizing-results">Visualizing Results</h1>
+<p>Kelvin-formatted PPL output can be easily visualized using our graphing application, Kelviz. Kelviz is distributed separately<!--; information on same can be found in the <a href="http://kelvin.mathmed.org/static/doc/kelviz/index.html">Kelviz documentation</a> and downloads can be found on the <a href="https://kelvin.mathmed.org">Kelvin website</a>-->.</p>
+<h1 id="references">References</h1>
+<ol>
+<li>Smith C.A.B. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1932043/">Some comments on the statistical methods used in linkage investigations.</a> Am J Hum Genet 11(4):289-304, 1959. PMID: <a href="https://pubmed.ncbi.nlm.nih.gov/13831904/">13831904</a>, <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1932043/">PMC1932043</a></li>
+<li>Vieland VJ. <a href="https://doi.org/10.1086/302076">Bayesian linkage analysis, or: How I learned to stop worrying and love the posterior probability of linkage.</a> Am J Hum Genet 63(4):947-954, 1998. PMID: <a href="https://pubmed.ncbi.nlm.nih.gov/9758634/">9758634</a>, <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1377508/">PMC1377508</a>, doi:<a href="https://doi.org/10.1086/302076">10.1086/302076</a></li>
+<li>Vieland VJ. <a href="https://doi.org/10.1159/000093775">Thermometers: Something for statistical geneticists to think about.</a> Hum Hered 61:144-156, 2006. PMID: <a href="https://pubmed.ncbi.nlm.nih.gov/16770079/">16770079</a>, doi:<a href="https://doi.org/10.1159/000093775">10.1159/000093775</a></li>
+<li>Elston R.C. &amp; Stewart J. <a href="https://doi.org/10.1159/000152448">A general model for the genetic analysis of pedigree data.</a> Hum Hered 21:523-542, 1971. PMID: <a href="https://pubmed.ncbi.nlm.nih.gov/5149961/">5149961</a>, doi:<a href="https://doi.org/10.1159/000152448">10.1159/000152448</a></li>
+<li>Ott J. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1685114/">A computer program for linkage analysis of general human pedigrees.</a> An J Hum Genet 28(5):528-529, 1976. PMID: <a href="https://pubmed.ncbi.nlm.nih.gov/984049/">984049</a>, <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1685114/">PMC1685114</a></li>
+</ol></body>
+</html>
