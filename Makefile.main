@@ -9,6 +9,8 @@
 
 # Generally there should be no need to make changes to this file.
 
+SHELL=/bin/bash -O extglob
+
 .PHONY: list
 list:
 	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$' -e '^pipeline-scripts' -e '^clean-' -e 'merlin'
@@ -148,8 +150,9 @@ ifeq ($(strip $(USE_HOARD)), yes)
   FILE_LDFLAGS += -lhoard
 endif
 
-# If we're building in an svn-managed context, get AND preserve the latest svn version
-SVNVERSION := $(subst exported,,$(shell svnversion 2>/dev/null))
+# If we're building in a git repo, get AND preserve the current git commit hash
+#SVNVERSION := $(subst exported,,$(shell svnversion 2>/dev/null))
+SVNVERSION := $(subst exported,,$(shell .githash.sh 2>/dev/null))
 ifeq ("$(strip $(SVNVERSION))","")
   SVNVERSION := $(shell cat .svnversion)
 else
@@ -307,7 +310,7 @@ dist : all-pipeline-scripts
 	mkdir kelvin-$(VERSION)
 	#mkdir kelvin-$(VERSION)/bin
 	#cp -a bin/{kelvin,$(CALC_UPDATED_PPL)}.* kelvin-$(VERSION)/bin
-	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm LKS_setupSGEDB.pm CHANGES COPYRIGHT convertconfig.pl *.[ch] compileDL.sh kinfo.pl Makefile LKS_setupSGEDB.pm kelvin-$(VERSION)
+	cp -a README .maj .min .pat .svnversion Kelvin Kelvin*.pm LKS_setupSGEDB.pm CHANGES LICENSE convertconfig.pl *.[ch] compileDL.sh kinfo.pl Makefile kelvin-$(VERSION)
 	perl -pe "s|#FILE_CFLAGS \+\= \-DDISTRIBUTION|FILE_CFLAGS \+\= \-DDISTRIBUTION|;" Makefile.main > kelvin-$(VERSION)/Makefile.main
 	mkdir kelvin-$(VERSION)/{lib,utils,pedlib,config,seq_update,database,merlin,LKS}
 	cp -a utils/Makefile utils/*.{c,h,pl} kelvin-$(VERSION)/utils
@@ -331,7 +334,7 @@ dist : all-pipeline-scripts
 	cp -a test-suite/frontend/Makefile kelvin-$(VERSION)/test-suite/frontend
 	cp -a test-suite/frontend/KelvinClasses/* kelvin-$(VERSION)/test-suite/frontend/KelvinClasses
 	mkdir kelvin-$(VERSION)/doc
-	doc/convert_docs.py
+	python3 doc/convert_docs.py
 	cp -a doc/*.md doc/*.html doc/*.jpg kelvin-$(VERSION)/doc
 	tar -cvzf kelvin-$(VERSION).tar.gz kelvin-$(VERSION)/
 	rm -rf kelvin-$(VERSION)
