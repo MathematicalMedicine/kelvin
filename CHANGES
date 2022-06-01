@@ -1,31 +1,85 @@
-Version 2.4.6
-  Kelvin Binary
-    Meens and standard deviations that appear in the MOD files for
+Version 2.7.1, 2019-12-20
+  IMPORTANT: Starting with this release, Kosambi centiMorgan maps are hereby
+    deprecated due to unreconcilable errors discovered in their use. Kelvin
+    now uses Haldane centiMorgan maps by default; Kosambi may be forced by use
+    of the "AllowKosambiMap" directive.
+  We have also ceased pro forma attempts to distribute our internal-only LKS
+    pipeline scripts.
+
+Version 2.7.0, 2019-06-06
+  LKS:
+    Performance improvements for Merlin servers (by-ped analyses can now be run
+      in parallel), in restart cases (caching has been improved), and in
+      massively parallel analyses.
+
+Version 2.6.0, 2018-08-08
+  Kelvin binary and Front End:
+    New directives QTMeanMode and QTStandardDevMode, enabling changes to
+      operation of Kelvin's quantitative trait model analysis.
+  LKS:
+    Several bugfixes, performance improvements, and test suite fixes.
+    MySQL 8 support.
+  Front End:
+    Automatic heterozygosity calculation now in KelvinIndividual.pm.
+    Pedigree Editing and additional validation functions added to KelvinFamily.pm.
+    Other bugfixes.
+
+Version 2.5.0, 2018-02-19
+  LKS:
+    Many bugfixes and performance improvements. LKS is now capable of readily
+      handling scenarios in which server processes unexpectedly fail.
+    Several existing scripts updated and converted to modules.
+  Other:
+    Many test suite updates.
+
+Version 2.4.9-a1, 2015-07-31
+  Starting with this release, we are now making a pro forma effort to
+    distribute our current heretofore internal-only LKS pipeline scripts,
+    referred to as "LKS Portable Edition".
+  Documentation has been overhauled and brought up-to-date.
+
+Version 2.4.8, 2015-03-25
+  Kelvin Binary:
+    Original FIDs and IIDs are now shown in messages at all times.
+  LKS, Front End:
+    Minor bugfixes.
+
+Version 2.4.7, 2015-03-03
+  Minor bugfixes.
+  Front End:
+    Added renameMarker function to KelvinDataset.pm
+
+Version 2.4.6, 2014-11-03
+  Kelvin Binary:
+    Means and standard deviations that appear in the MOD files for
       QT and QTT analyses are now scaled using the sample mean and
       standard deviation, regardless of how the sample values are 
       provided (either specified in the configuration, or calculated
       from input phenotypes).
+  Other:
+    Removed outdated parts of the distribution (gKelvin and graphApp)
+    Incorporated all variant build targets into the Makefile.
 
-Version 2.4.5
+Version 2.4.5, 2013-09-27
   Patches, e.g. set and check maximum number of positions.
 
 Version 2.4.1
-  Kelvin Binary
+  Kelvin Binary:
     Verify that locus file markers are in map file order (required)
     Warn and skip uninformative markers (due to homogeneity or missingness)
     Repurpose dry run to portable sizing
     Support Windows Vista/7, Mac OS X 10.6
-  LKS
+  LKS:
     Extensive changes to support LG and MC-MC, facilitate use, etc.
 
 Version 2.3.3
   9 May 2011
-  Kelvin Binary
+  Kelvin Binary:
     Fix handling of PhenoCodes directive when non-default codes are used
 
 Version 2.3.2
   27 Apr 2011
-  Kelvin binary
+  Kelvin binary:
     Reorganize signal and exit handlers to better support SGE qdel.
     Make sure memory problems show up in the log as FATAL errors.
     Minor refactoring edits.
