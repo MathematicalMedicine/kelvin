@@ -21,15 +21,6 @@ no warnings qw(once);
 $|=1;
 
 # KELVIN frontend script 
-# Copyright (C) 2022 Mathematical Medicine LLC
-# 
-# This program is free software: you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the Free
-# Software Foundation, either version 3 of the License, or (at your option)
-# any later version.
-# 
-# You should have received a copy of the GNU General Public License along
-# with this program. If not, see <https://www.gnu.org/licenses/>.
 
 # These three variables are typically set during the 'make install'. If the
 # values are still 'NO_<variable_name>', then the script you are reading
@@ -171,7 +162,7 @@ if ($epiState{passes}) {
 	    $config->write ({configfile => $cleanup[-1], nolocal => 1, backupfile => 1});
 	}
 	(($ret = system ($KELVIN_BINARY, $config->filename, @ARGV, @{$freqState{kelvinargs}}, @{$countState{kelvinargs}}, @kelvinargs)) != 0)
-	    and error ("$KELVIN_BINARY failed, ", ($ret == -1) ? "$!" : "status $?");
+	    and error ("$KELVIN_BINARY failed,", $ret == -1 ? "$!" : sys_status ($?));
 	($countState{countable})
 	    and remove (@countState{qw/pedigreefile countfile/});
     }
@@ -711,7 +702,7 @@ sub run_epistasis
 	$pass = $$state{"pass$va"};
 	$config->write ({configfile => $$pass{files}{configfile}, nolocal => 1});
 	(($ret = system ($KELVIN_BINARY, $$pass{files}{configfile}, @ARGV, @{$$freqstate{kelvinargs}}, @{$$pass{kelvinargs}}, @{$$pass{countstate}{kelvinargs}})) != 0)
-	    and error ("$KELVIN_BINARY failed, ", ($ret == -1) ? "$!" : "status $?");
+	    and error ("$KELVIN_BINARY failed,", $ret == -1 ? "$!" : sys_status ($?));
     }
     
     if ($$state{passes} == 1) {
@@ -725,7 +716,7 @@ sub run_epistasis
 	# calc_updated_ppl will barf if one of its output files already exists
 	exists ($$state{conffiles}{pplfile}) and remove ($$state{conffiles}{pplfile});
 	(($ret = system ($SEQUPDATE_BINARY, @{$$state{sequpdateargs}})) != 0)
-	    and error ("$SEQUPDATE_BINARY failed, ", ($ret == -1) ? "$!" : "status $?");
+	    and error ("$SEQUPDATE_BINARY failed,", $ret == -1 ? "$!" : sys_status ($?));
 	if (exists ($$state{conffiles}{modfile})) {
 	    if (! $$state{multipoint}) {
 		epistasis_merge_TP_mod ($state);
@@ -1340,6 +1331,14 @@ sub find_versioned_kelvin
     }
     @arr = reverse (sort (@arr));
     return ("$dir/$arr[0]");
+}
+
+sub sys_status
+{
+    my ($code) = @_;
+
+    ($code & 127) or return ("exit code " . ($code >> 8));
+    return ("died on signal " . ($code & 127) . ($code & 128 ? ", core dumped" : ""));
 }
 
 sub fatal

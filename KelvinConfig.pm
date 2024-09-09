@@ -150,7 +150,7 @@ my %directives = (
 		  multipoint => {canon => 'MultiPoint'},
 		  markertomarker => {canon => 'MarkerToMarker',
 				     singlearg => 'true',
-				     default => ['adjacent'],
+				     # default => ['adjacent'],
 				     regex => '(?:all|adjacent)'},
 		  ld => {canon => 'LD'},
 		  epistasis => {canon => 'Epistasis',
