@@ -102,7 +102,8 @@ endif
 ABSBINDIR=$(shell echo $(BINDIR))
 
 # FILE_CFLAGS and FILE_LDFLAGS are built internally based upon the configuration options
-FILE_CFLAGS := -fcommon -O$(GCCOPT) -DGCCOPT=$(GCCOPT)
+# Add -std=c17 to allow function declarations without an explicit parameter list
+FILE_CFLAGS := -fcommon -O$(GCCOPT) -DGCCOPT=$(GCCOPT) -std=c17
 FILE_LDFLAGS := -dynamic -L$(LIBDIR)
 
 ## Compiler warnings. In development, abort on warning

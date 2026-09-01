@@ -9,7 +9,7 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include <stdlib.h>
-#include <string.h>
+#include <strings.h>
 #include <math.h>
 #include "model_range.h"
 #include "../utils/utils.h"
@@ -1514,7 +1514,7 @@ int lookup_modelparam (char *str)
  * Quicksort routines, used to sort values (both doubles and floats)
  * in the model specification.
  **********************************************************************/
-#define RANDINT(n) (random() % (n))
+#define RANDINT(n) (rand() % (n))
 
 /* Swap two doubles in array[] */
 inline void swap (double *array, int i, int j)

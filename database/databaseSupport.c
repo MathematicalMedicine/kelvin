@@ -1,3 +1,5 @@
+#define _DEFAULT_SOURCE
+
 /**
 @file databaseSupport.c
 
@@ -112,6 +114,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <strings.h>
 
 #include "../utils/sw.h"
 #include "../utils/utils.h"

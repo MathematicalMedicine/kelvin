@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 #include "cdflib.h"
 
 #include "sw.h"
@@ -145,6 +148,7 @@ double gaussian_pdf (double x, double mean, double stdDev) {
 #ifdef USE_GSL
   return (gsl_ran_gaussian_pdf (x, stdDev));
 #else
+
   return (1/(stdDev*sqrt(2.0*M_PI)))*exp(-((x-mean)*(x-mean)/(2*stdDev*stdDev)));
 #endif
 }

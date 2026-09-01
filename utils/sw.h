@@ -13,6 +13,7 @@
 #define SW_H
 
 #include <sys/resource.h>
+#include <sys/types.h>
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>

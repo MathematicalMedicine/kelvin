@@ -243,7 +243,12 @@ void initSSD() {
   if ((envVar = getenv ("sSDFileSizeInGb")) != NULL)
     sSDFileSizeInGb = atol(envVar);
   else {
-    dirnameIsDamaged = strdup (sSDFileName);
+
+// This shows how old I was...    dirnameIsDamaged = strdup (sSDFileName);
+    char * dirnameIsDamaged = malloc(strlen(sSDFileName) + 1);
+    if (dirnameIsDamaged != NULL)
+	strcpy(dirnameIsDamaged, sSDFileName);
+
     if (
 #ifdef __sun__
 	statfs(dirname(dirnameIsDamaged), &sSDStats, 0, 0)
