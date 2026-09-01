@@ -192,7 +192,7 @@ WholeThing: LOOP
   -- Insert a new temporary leftmost marker to permit scaling of positions to the left of the first marker
   Insert ignore into MapMarkers (StudyId, MapId, MarkerName, RefPosCM, AvePosCM, NextRefPosCM)
     Select StudyId, MapId, 'Dummy', min(RefPosCM)-320, min(RefPosCM)-320, min(RefPosCM)
-      from MapMarkers where StudyId = inStudyId group by MapId;
+      from MapMarkers where StudyId = inStudyId group by StudyId, MapId;
 
   -- Scaling table has next reference position...
   Create temporary table Scaling
@@ -201,7 +201,7 @@ WholeThing: LOOP
 		b.MapId = a.MapId+100000 AND
 		a.StudyId = inStudyId AND a.StudyId = b.StudyId AND
 		a.RefPosCM < b.RefPosCM AND a.MarkerName <> b.MarkerName 
-		group by a.MapId, a.MarkerName;
+		group by a.StudyId, a.MapId, a.MarkerName;
 
   Update MapMarkers a, Scaling b
 	set a.NextRefPosCM = b.NextPosCM, a.ScaleRefPosCM = b.NextPosCM where
@@ -217,7 +217,7 @@ WholeThing: LOOP
 		a.StudyId = inStudyId AND a.StudyId = b.StudyId AND
 		a.AvePosCM < b.AvePosCM AND
 		a.MarkerName <> b.MarkerName AND a.MapId = b.MapId
-		group by a.MapId, a.MarkerName;
+		group by a.StudyId, a.MapId, a.MarkerName;
 
   Update MapMarkers a, Scaling b
 	set a.ScaleAvePosCM = b.NextPosCM where
@@ -245,7 +245,7 @@ WholeThing: LOOP
 		a.StudyId = inStudyId AND a.StudyId = b.StudyId AND
 		(a.Scale > 10.0 OR a.Scale < 0.1) AND a.Scale IS NOT NULL AND
 		a.ScaleRefPosCM < b.ScaleRefPosCM AND a.MarkerName <> b.MarkerName AND a.MapId = b.MapId
-	        group by a.MapId, a.MarkerName;
+	        group by a.StudyId, a.MapId, a.MarkerName;
     Update MapMarkers a, Scaling b set a.ScaleRefPosCM = b.NextPosCM where
 	a.StudyId = inStudyId AND a.StudyId = b.StudyId AND
 	a.MapId = b. MapId AND a.MarkerName = b.MarkerName;
@@ -257,7 +257,7 @@ WholeThing: LOOP
 		a.StudyId = inStudyId AND a.StudyId = b.StudyId AND
 		(a.Scale > 10.0 OR a.Scale < 0.1) AND a.Scale IS NOT NULL AND
 		a.ScaleAvePosCM < b.ScaleAvePosCM AND a.MarkerName <> b.MarkerName AND a.MapId = b.MapId
-	        group by a.MapId, a.MarkerName;
+	        group by a.StudyId, a.MapId, a.MarkerName;
     Update MapMarkers a, Scaling b set a.ScaleAvePosCM = b.NextPosCM where
 	a.StudyId = inStudyId AND a.StudyId = b.StudyId AND
 	a.MapId = b. MapId AND a.MarkerName = b.MarkerName;
