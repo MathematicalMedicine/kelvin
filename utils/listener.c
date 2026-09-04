@@ -68,7 +68,7 @@ int doMySQLStuff() {
     exit(EXIT_FAILURE);
   }
   /* Prepare a statement. */
-  char *insertRunLog = "insert into RunLog (fromNode, logEntry) values (?, ?)";
+  char *insertRunLog = "INSERT INTO log (host, user, entry) VALUES (?, '(listener)', ?)";
   MYSQL_BIND boundValues[2];
   if (!(insertRunLogStmt = mysql_stmt_init(&mysql))) {
     fprintf(stderr, " Cannot initialize MySQL_STMT (%s)\n", mysql_error(&mysql));
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
       strcpy(fromNode, inet_ntoa(their_addr.sin_addr));
     else
       strcpy(fromNode, he->h_name);
-    printf("(%s): %s", fromNode, logEntry);
+    printf("(%s): %s\n", fromNode, logEntry);
 
     logEntryLength = strlen(logEntry);
     fromNodeLength = strlen(fromNode);

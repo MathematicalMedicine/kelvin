@@ -1059,7 +1059,7 @@ swLogMsg (FILE *stream, char *message)
 
   snprintf (udpBuffer, MAXUDPMSG, "PID: %d %s\n", (int) getpid (), message);
   // Don't need timestamp here because it'll show up with its own
-  if (udpSend ("levi-montalcini.ccri.net", 4950, udpBuffer) == EXIT_SUCCESS)
+  if (udpSend ("192.168.43.3", 4950, udpBuffer) == EXIT_SUCCESS)
     return;
 #endif
 #ifdef FULLLOG
